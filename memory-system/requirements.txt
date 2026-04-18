@@ -1,0 +1,10 @@
+graphiti-core[anthropic,kuzu]>=0.28.2
+anthropic>=0.39.0
+ollama>=0.4.0
+kuzu>=0.11.2
+pydantic>=2.0
+python-dotenv>=1.0
+pyyaml>=6.0
+numpy>=1.26
+fastapi>=0.115
+uvicorn[standard]>=0.32

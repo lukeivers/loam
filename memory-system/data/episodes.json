@@ -1,0 +1,246 @@
+[
+  {
+    "id": "ep001",
+    "name": "halcyon-kickoff",
+    "engagement": "halcyon",
+    "reference_time": "2027-03-14T10:00:00+00:00",
+    "body": "On 14 March 2027, Renji Okamoto (Aldermere Strategic Group, head of digital transformation) ran the kickoff meeting for the Halcyon Cartography engagement. Present: Tobi Imari (CEO of Halcyon), Yana Pesek (board chair). Project scope confirmed: migrate Halcyon's storage layer from the Frostvault format to a new substrate codenamed Aldermere by end of Q3. Project budget approved at 84,000 GBP. Mira Adelyn (Aldermere head of analytics) will provide analytics support."
+  },
+  {
+    "id": "ep002",
+    "name": "halcyon-frostvault-archival-decision",
+    "engagement": "halcyon",
+    "reference_time": "2027-04-22T15:30:00+00:00",
+    "body": "On 22 April 2027, Tobi Imari (CEO of Halcyon Cartography) decided to retain the Frostvault format for archival data, contrary to the original migration plan. Renji Okamoto noted the decision in the project log and flagged that it would constrain the migration timeline. The decision is to be revisited if board direction changes."
+  },
+  {
+    "id": "ep003",
+    "name": "halcyon-migration-plan",
+    "engagement": "halcyon",
+    "reference_time": "2027-05-30T14:00:00+00:00",
+    "body": "On 30 May 2027, Renji Okamoto delivered the migration plan for Halcyon Cartography. The plan accommodates Tobi Imari's archival-retention decision from April. Mira Adelyn provided the analytics underpinning, demonstrating that 78% of Halcyon's working data could move to Aldermere immediately, with the archival 22% remaining on Frostvault. Tobi Imari approved the plan."
+  },
+  {
+    "id": "ep004",
+    "name": "halcyon-board-supersession",
+    "engagement": "halcyon",
+    "reference_time": "2027-07-02T09:00:00+00:00",
+    "body": "On 2 July 2027, the Halcyon Cartography board (chaired by Yana Pesek) decided to abandon the Frostvault format entirely. The earlier April decision by Tobi Imari to retain Frostvault for archival data is reversed. Renji Okamoto will revise the migration plan to move all data, including archival, to Aldermere. Mira Adelyn will rerun the analytics."
+  },
+  {
+    "id": "ep005",
+    "name": "halcyon-completion",
+    "engagement": "halcyon",
+    "reference_time": "2027-09-18T16:00:00+00:00",
+    "body": "On 18 September 2027, the Halcyon Cartography migration was completed, ahead of schedule. The full storage layer, including archival data, now runs on Aldermere. Renji Okamoto delivered the closing report; Tobi Imari and Yana Pesek signed off. Final cost: 79,200 GBP, under the 84,000 GBP budget."
+  },
+
+  {
+    "id": "ep006",
+    "name": "cinnabar-kickoff",
+    "engagement": "cinnabar",
+    "reference_time": "2027-01-21T10:00:00+00:00",
+    "body": "On 21 January 2027, Tomek Vrbas (Aldermere Strategic Group, head of operational restructuring) ran the kickoff for the Cinnabar Looms engagement. Present: Pavla Strnad (CEO of Cinnabar), Lukasz Bortnik (COO). Scope: operational restructuring of the Quillgate fabric line. Budget approved at 62,000 GBP."
+  },
+  {
+    "id": "ep007",
+    "name": "cinnabar-quillgate-expansion-deferred",
+    "engagement": "cinnabar",
+    "reference_time": "2027-03-02T11:30:00+00:00",
+    "body": "On 2 March 2027, Lukasz Bortnik (COO of Cinnabar Looms) raised the option of expanding the Quillgate fabric line as part of the restructure. Tomek Vrbas noted the proposal but recommended deferring until the midpoint review. Pavla Strnad agreed to defer."
+  },
+  {
+    "id": "ep008",
+    "name": "cinnabar-midpoint-review",
+    "engagement": "cinnabar",
+    "reference_time": "2027-04-30T14:00:00+00:00",
+    "body": "On 30 April 2027, Tomek Vrbas delivered the midpoint review for Cinnabar Looms. Throughput targets revised upward by 12%, on the back of efficiency improvements identified in the first three months. Pavla Strnad and Lukasz Bortnik received the review."
+  },
+  {
+    "id": "ep009",
+    "name": "cinnabar-quillgate-expansion-approved",
+    "engagement": "cinnabar",
+    "reference_time": "2027-06-15T10:30:00+00:00",
+    "body": "On 15 June 2027, Pavla Strnad (CEO of Cinnabar Looms) approved the Quillgate fabric line expansion. The decision deferred from March is now confirmed. Tomek Vrbas will incorporate the expansion into the closing phase of the restructure."
+  },
+  {
+    "id": "ep010",
+    "name": "cinnabar-closeout",
+    "engagement": "cinnabar",
+    "reference_time": "2027-08-09T15:00:00+00:00",
+    "body": "On 9 August 2027, the Cinnabar Looms engagement closed. Tomek Vrbas delivered the final report; Pavla Strnad signed off. The Quillgate line restructure delivered a 14% throughput improvement (above the 12% revised target) and the line expansion is on track for Q4 2027."
+  },
+
+  {
+    "id": "ep011",
+    "name": "tideglass-kickoff",
+    "engagement": "tideglass",
+    "reference_time": "2027-08-25T10:00:00+00:00",
+    "body": "On 25 August 2027, Ines Saralegui (Aldermere Strategic Group, head of market entry advisory) ran the kickoff for the Tideglass Hydrology engagement. Present: Anders Vrelich (CEO of Tideglass), Marit Eliasson (CTO). Scope: market entry advisory for the Nordic markets. Budget approved at 110,000 GBP. Sefa Hristov assigned as delivery partner."
+  },
+  {
+    "id": "ep012",
+    "name": "tideglass-norway-blocker",
+    "engagement": "tideglass",
+    "reference_time": "2027-10-04T13:30:00+00:00",
+    "body": "On 4 October 2027, Marit Eliasson (CTO of Tideglass Hydrology) identified a regulatory blocker in the Norwegian water-licensing regime. Foreign water-systems firms cannot operate in Norway without a domestic partner. Ines Saralegui noted the blocker requires a partnership-led solution rather than a direct entry approach."
+  },
+  {
+    "id": "ep013",
+    "name": "tideglass-braten-introduction",
+    "engagement": "tideglass",
+    "reference_time": "2027-11-19T11:00:00+00:00",
+    "body": "On 19 November 2027, Klemen Doric (Aldermere head of partnerships) introduced Tideglass Hydrology to a Nordic partner: Sondre Braten of Braten Vannverk, a Norwegian water-systems firm. Anders Vrelich and Marit Eliasson met with Sondre Braten in Oslo. Partnership memo signed in principle, terms to be finalised."
+  },
+  {
+    "id": "ep014",
+    "name": "tideglass-partnership-approved",
+    "engagement": "tideglass",
+    "reference_time": "2028-01-08T15:00:00+00:00",
+    "body": "On 8 January 2028, Anders Vrelich (CEO of Tideglass Hydrology) approved the partnership-led market-entry strategy with Braten Vannverk. The Norwegian regulatory blocker identified by Marit Eliasson in October is resolved through the partnership. Sefa Hristov coordinated the legal terms."
+  },
+  {
+    "id": "ep015",
+    "name": "tideglass-closeout",
+    "engagement": "tideglass",
+    "reference_time": "2028-02-14T16:00:00+00:00",
+    "body": "On 14 February 2028, the Tideglass Hydrology engagement closed. Tideglass entered the Norwegian market via a joint venture with Braten Vannverk. Ines Saralegui delivered the final report; Anders Vrelich signed off. Sefa Hristov noted that the partnership-led approach can be reused as a template for other regulated markets."
+  },
+
+  {
+    "id": "ep016",
+    "name": "rookery-kickoff",
+    "engagement": "rookery",
+    "reference_time": "2027-11-12T10:00:00+00:00",
+    "body": "On 12 November 2027, Renji Okamoto ran the kickoff for the Rookery Holdings engagement. Present: Esra Kollar (managing director of Rookery), Petar Volk (head of operations). Scope: digital transformation of Rookery's portfolio reporting. Budget approved at 145,000 GBP. Mira Adelyn assigned to the analytics workstream."
+  },
+  {
+    "id": "ep017",
+    "name": "rookery-analytics-scope",
+    "engagement": "rookery",
+    "reference_time": "2028-01-22T14:00:00+00:00",
+    "body": "On 22 January 2028, Mira Adelyn delivered the analytics scoping memo for Rookery Holdings. The memo recommends consolidating reporting across 17 portfolio entities into a single platform. Renji Okamoto and Esra Kollar reviewed."
+  },
+  {
+    "id": "ep018",
+    "name": "rookery-cadence-revision",
+    "engagement": "rookery",
+    "reference_time": "2028-02-09T11:00:00+00:00",
+    "body": "On 9 February 2028, Esra Kollar (managing director of Rookery Holdings) challenged the proposed quarterly reporting cadence as insufficient for active portfolio management. Renji Okamoto revised the cadence to monthly. Mira Adelyn updated the analytics design accordingly."
+  },
+  {
+    "id": "ep019",
+    "name": "rookery-cost-overrun",
+    "engagement": "rookery",
+    "reference_time": "2028-04-03T16:30:00+00:00",
+    "body": "On 3 April 2028, Renji Okamoto delivered the Rookery Holdings reporting platform. The project exceeded budget by 18,000 GBP due to the cadence revision. Iva Petranek (Aldermere CFO) signed off on the cost overrun. Esra Kollar accepted the platform."
+  },
+  {
+    "id": "ep020",
+    "name": "rookery-closeout",
+    "engagement": "rookery",
+    "reference_time": "2028-05-21T15:00:00+00:00",
+    "body": "On 21 May 2028, the Rookery Holdings engagement closed. Petar Volk took ownership of the new portfolio-reporting platform. Renji Okamoto delivered the closing report; Esra Kollar signed off. Final cost 163,000 GBP against an original budget of 145,000 GBP."
+  },
+
+  {
+    "id": "ep021",
+    "name": "ardent-kickoff",
+    "engagement": "ardent",
+    "reference_time": "2028-04-17T10:00:00+00:00",
+    "body": "On 17 April 2028, Tomek Vrbas ran the kickoff for the Ardent Ferrous engagement. Present: Marin Zelenov (CEO of Ardent), Kaja Lindqvist (CFO). Scope: operational restructuring of the Stoneheath foundry. Budget approved at 95,000 GBP. Sefa Hristov assigned as delivery partner."
+  },
+  {
+    "id": "ep022",
+    "name": "ardent-labour-relations-risk",
+    "engagement": "ardent",
+    "reference_time": "2028-06-04T11:30:00+00:00",
+    "body": "On 4 June 2028, Tomek Vrbas identified a labour-relations risk at the Stoneheath foundry — the existing collective agreement does not accommodate the proposed shift restructuring. Engagement scope is to be extended to include union negotiations. Marin Zelenov acknowledged."
+  },
+  {
+    "id": "ep023",
+    "name": "ardent-revised-plan-approved",
+    "engagement": "ardent",
+    "reference_time": "2028-07-30T14:00:00+00:00",
+    "body": "On 30 July 2028, Marin Zelenov (CEO of Ardent Ferrous) approved the revised plan including union negotiations. Iva Petranek (Aldermere CFO) signed off on the additional 22,000 GBP for the extended scope. Sefa Hristov is coordinating with Stoneheath's HR director."
+  },
+  {
+    "id": "ep024",
+    "name": "ardent-stoneheath-completion",
+    "engagement": "ardent",
+    "reference_time": "2028-09-12T15:00:00+00:00",
+    "body": "On 12 September 2028, the Stoneheath foundry restructure completed. Kaja Lindqvist (CFO of Ardent Ferrous) reports a 9% cost reduction in the first month. Tomek Vrbas highlighted that the union negotiations carried over no contractual liabilities."
+  },
+  {
+    "id": "ep025",
+    "name": "ardent-closeout",
+    "engagement": "ardent",
+    "reference_time": "2028-10-22T15:00:00+00:00",
+    "body": "On 22 October 2028, the Ardent Ferrous engagement closed. Tomek Vrbas delivered the closing report; Marin Zelenov signed off. Final cost 117,000 GBP against an original budget of 95,000 GBP plus the approved 22,000 GBP overrun."
+  },
+
+  {
+    "id": "ep026",
+    "name": "velmar-kickoff",
+    "engagement": "velmar",
+    "reference_time": "2028-09-08T10:00:00+00:00",
+    "body": "On 8 September 2028, Ines Saralegui ran the kickoff for the Velmar Optical engagement. Present: Henrik Jondahl (CEO of Velmar), Saoirse Bevan (head of R&D). Scope: market entry advisory for the Latin American markets. Budget approved at 130,000 GBP."
+  },
+  {
+    "id": "ep027",
+    "name": "velmar-landscape-analysis",
+    "engagement": "velmar",
+    "reference_time": "2028-11-05T13:00:00+00:00",
+    "body": "On 5 November 2028, Saoirse Bevan delivered a competitive landscape analysis for Velmar Optical on the Latin American optics market. The analysis ranks the markets: Brazil (largest, fastest growing), Mexico (steady), Argentina (uncertain), Chile (small but high-margin). Ines Saralegui will use the ranking to drive the entry decision."
+  },
+  {
+    "id": "ep028",
+    "name": "velmar-brazil-decision",
+    "engagement": "velmar",
+    "reference_time": "2029-01-14T14:00:00+00:00",
+    "body": "On 14 January 2029, Henrik Jondahl (CEO of Velmar Optical) chose Brazil as the entry market for Velmar's Latin American expansion. Mexico ranked second and is held in reserve for a future phase. The decision aligns with Saoirse Bevan's November landscape analysis."
+  },
+  {
+    "id": "ep029",
+    "name": "velmar-saopaulo-introduction",
+    "engagement": "velmar",
+    "reference_time": "2029-02-22T11:30:00+00:00",
+    "body": "On 22 February 2029, Klemen Doric (Aldermere head of partnerships) introduced Velmar Optical to a Sao Paulo partner: Beatriz Carvalho of Lente Pampero, a Brazilian distributor. Henrik Jondahl met with Beatriz Carvalho. Partnership memo signed in principle for the Brazil entry."
+  },
+  {
+    "id": "ep030",
+    "name": "velmar-closeout",
+    "engagement": "velmar",
+    "reference_time": "2029-03-19T16:00:00+00:00",
+    "body": "On 19 March 2029, the Velmar Optical engagement closed. Velmar will enter Brazil in partnership with Lente Pampero. Ines Saralegui delivered the closing report; Henrik Jondahl signed off. Saoirse Bevan will lead the technical onboarding to the Brazilian market."
+  },
+
+  {
+    "id": "ep031",
+    "name": "aldermere-firm-overview",
+    "engagement": "firm",
+    "reference_time": "2027-01-05T09:00:00+00:00",
+    "body": "Aldermere Strategic Group is a boutique consulting firm based in Bristol, founded in 2024 by Vesna Karolak (managing partner). The firm has three practice areas: operational restructuring (led by Tomek Vrbas), market entry advisory (led by Ines Saralegui), and digital transformation (led by Renji Okamoto). Mira Adelyn is the head of analytics. Sefa Hristov is the head of client delivery. Iva Petranek is the chief financial officer. Klemen Doric is the head of partnerships."
+  },
+  {
+    "id": "ep032",
+    "name": "aldermere-quarterly-review-q3-2027",
+    "engagement": "firm",
+    "reference_time": "2027-10-05T15:00:00+00:00",
+    "body": "On 5 October 2027, Vesna Karolak chaired the Q3 2027 firm review. Active engagements at quarter end: Tideglass Hydrology (just begun, market entry, Nordic). The Halcyon Cartography migration completed in September. Cinnabar Looms closed in August. Tomek Vrbas's practice has capacity for new operational-restructuring work; Renji Okamoto's practice is preparing for the Rookery Holdings kickoff in November."
+  },
+  {
+    "id": "ep033",
+    "name": "aldermere-quarterly-review-q1-2028",
+    "engagement": "firm",
+    "reference_time": "2028-04-05T15:00:00+00:00",
+    "body": "On 5 April 2028, Vesna Karolak chaired the Q1 2028 firm review. Tideglass Hydrology closed in February with the Braten Vannverk partnership in place. Rookery Holdings is in delivery; cost overrun of 18,000 GBP has been signed off by Iva Petranek. Ardent Ferrous kicked off in April with Tomek Vrbas. The firm's two cost overruns to date are both signed off by Iva Petranek."
+  },
+  {
+    "id": "ep034",
+    "name": "aldermere-partnership-pattern",
+    "engagement": "firm",
+    "reference_time": "2029-03-25T11:00:00+00:00",
+    "body": "On 25 March 2029, Vesna Karolak noted the partnership-introduction pattern that has emerged at Aldermere: Klemen Doric has now introduced two clients to in-market partners — Tideglass to Sondre Braten in Norway (November 2027) and Velmar to Beatriz Carvalho in Brazil (February 2029). Both introductions led to successful market entries. The firm will formalise the partnership-introduction service as a market-entry add-on."
+  }
+]

@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+data/kuzu_db
+data/kuzu_db.*
+data/kuzu_db_*
+data/graphiti-service*.log
+data/runs/
+*.log
+.pytest_cache/
+.ruff_cache/

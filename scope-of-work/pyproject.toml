@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scope_of_work"
+version = "0.1.0"
+description = "Scope-of-work primitive for pOS v2 — event-sourced FSM with budget governance, observers, and escalation triggers."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2",
+    "pyee>=11",
+    "opentelemetry-api>=1.25",
+    "opentelemetry-sdk>=1.25",
+]
+
+[tool.setuptools]
+package-dir = {"scope_of_work" = "src"}
+packages = ["scope_of_work"]

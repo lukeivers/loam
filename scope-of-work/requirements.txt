@@ -1,0 +1,11 @@
+# Runtime deps (brief §"Permitted dependencies"):
+#   Python stdlib (sqlite3, asyncio, dataclasses, uuid)
+#   + pydantic, pyee, opentelemetry-api, opentelemetry-sdk
+# No other third-party library is imported by the primitive runtime.
+pydantic>=2
+pyee>=11
+opentelemetry-api>=1.25
+opentelemetry-sdk>=1.25
+# Test infrastructure (dev-only):
+pytest>=8
+pytest-asyncio>=0.23

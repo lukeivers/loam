@@ -1,0 +1,167 @@
+"""OpenTelemetry emission for scope lifecycle (D5 / v1.1 R11).
+
+The primitive emits OTel spans + events; no consumer is assumed to
+exist (A1 correction). When no consumer is configured, the SDK's
+default no-op tracer absorbs the calls — emission still succeeds.
+
+Span structure (proposal §2.6):
+
+  • One `invoke_scope` INTERNAL span per scope, opened on the first
+    transition into `active` and closed on terminal transition.
+  • Child `chat {model}` spans per LLM call (recorded via `debit`),
+    standard GenAI convention.
+  • Span events on the parent span at every state transition.
+
+Attributes (proposal §2.6):
+
+  • GenAI: gen_ai.agent.id, gen_ai.agent.name, gen_ai.agent.description,
+    gen_ai.usage.input_tokens, gen_ai.usage.output_tokens,
+    gen_ai.request.model
+  • pOS-namespaced: pos.scope.id, pos.scope.parent_id,
+    pos.scope.reversibility_class, pos.scope.budget.*.remaining,
+    pos.scope.escalation.reason, pos.scope.success_criteria.*
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+try:
+    from opentelemetry import trace
+    from opentelemetry.trace import (
+        SpanKind,
+        Status,
+        StatusCode,
+        set_span_in_context,
+    )
+    _OTEL_AVAILABLE = True
+except Exception:  # pragma: no cover -- never expected
+    _OTEL_AVAILABLE = False
+
+
+_TRACER_NAME = "pos.scope_of_work"
+
+
+def get_tracer():
+    if not _OTEL_AVAILABLE:
+        return None
+    return trace.get_tracer(_TRACER_NAME)
+
+
+def start_invoke_scope_span(
+    *,
+    scope_id: str,
+    parent_scope_id: str | None,
+    owner_persona: str | None,
+    goal: str,
+    reversibility_class: str,
+) -> Any:
+    """Start (but do not enter as current) the scope's `invoke_scope` span.
+
+    Returns the OTel Span object — caller stores it and calls
+    `end_span(span)` on terminal transition. We do NOT use
+    `start_as_current_span` because the span outlives a single asyncio
+    task and the contextvars-based current-span attach/detach dance is
+    not safe across task boundaries.
+    """
+    tracer = get_tracer()
+    if tracer is None:
+        return None
+    attrs = {
+        "gen_ai.agent.id": scope_id,
+        "gen_ai.agent.name": owner_persona or "unspecified",
+        "gen_ai.agent.description": goal,
+        "pos.scope.id": scope_id,
+        "pos.scope.reversibility_class": reversibility_class,
+    }
+    if parent_scope_id:
+        attrs["pos.scope.parent_id"] = parent_scope_id
+    return tracer.start_span(
+        "invoke_scope",
+        kind=SpanKind.INTERNAL,
+        attributes=attrs,
+    )
+
+
+def end_span(span: Any | None) -> None:
+    if span is None:
+        return
+    span.end()
+
+
+def emit_chat_span(
+    *,
+    model: str,
+    prompt_name: str | None,
+    input_tokens: int,
+    output_tokens: int,
+    scope_id: str,
+    parent_span: Any | None = None,
+) -> None:
+    tracer = get_tracer()
+    if tracer is None:
+        return
+    span_name = f"chat {model}"
+    attrs = {
+        "gen_ai.request.model": model,
+        "gen_ai.usage.input_tokens": input_tokens,
+        "gen_ai.usage.output_tokens": output_tokens,
+        "pos.scope.id": scope_id,
+    }
+    if prompt_name:
+        attrs["pos.prompt.name"] = prompt_name
+    parent_ctx = set_span_in_context(parent_span) if parent_span is not None else None
+    span = tracer.start_span(
+        span_name,
+        kind=SpanKind.CLIENT,
+        attributes=attrs,
+        context=parent_ctx,
+    )
+    span.end()
+
+
+def add_span_event(
+    span: Any | None, name: str, attributes: dict[str, Any] | None = None
+) -> None:
+    if span is None:
+        return
+    span.add_event(name, attributes=attributes or {})
+
+
+def set_span_attrs(span: Any | None, **attrs: Any) -> None:
+    if span is None:
+        return
+    for k, v in attrs.items():
+        if v is None:
+            continue
+        span.set_attribute(k, v)
+
+
+def fail_span(span: Any | None, reason: str) -> None:
+    if span is None or not _OTEL_AVAILABLE:
+        return
+    span.set_status(Status(StatusCode.ERROR, reason))
+
+
+def span_ids(span: Any | None) -> tuple[str | None, str | None]:
+    """Return (trace_id_hex, span_id_hex) for a given span, if available."""
+    if span is None or not _OTEL_AVAILABLE:
+        return None, None
+    ctx = span.get_span_context()
+    if not ctx.is_valid:
+        return None, None
+    return f"{ctx.trace_id:032x}", f"{ctx.span_id:016x}"
+
+
+def current_span_ids() -> tuple[str | None, str | None]:
+    """Best-effort current-span lookup. Falls back to (None, None) when
+    no span is active in the current context — which is most call sites
+    in the runtime now that we no longer attach the invoke_scope span
+    via contextvars."""
+    if not _OTEL_AVAILABLE:
+        return None, None
+    span = trace.get_current_span()
+    ctx = span.get_span_context()
+    if not ctx.is_valid:
+        return None, None
+    return f"{ctx.trace_id:032x}", f"{ctx.span_id:016x}"

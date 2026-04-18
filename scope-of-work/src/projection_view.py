@@ -16,7 +16,12 @@ from .spec import (
     ReversibilityClass,
     ScopeState,
 )
-from .triggers import active_seconds_elapsed, remaining_for_axis
+from .triggers import (
+    active_seconds_elapsed,
+    is_stuck,
+    remaining_for_axis,
+    seconds_since_first_activation,
+)
 
 
 @dataclass
@@ -45,6 +50,12 @@ class ScopeProjection:
     success_criteria_met: tuple[str, ...]
     success_criteria_not_met: tuple[str, ...]
     fired_trigger_ids: tuple[str, ...]
+    # D0 amendment (primary-persona D3 stuck-detection support).
+    expected_duration_seconds: float | None
+    first_activated_at: str | None
+    seconds_since_first_activation: float | None
+    state_events_since_start: int
+    is_stuck: bool
 
 
 def public_projection(proj: ScopeProjectionData) -> ScopeProjection:
@@ -73,4 +84,9 @@ def public_projection(proj: ScopeProjectionData) -> ScopeProjection:
         success_criteria_met=tuple(sorted(proj.success_criteria_met)),
         success_criteria_not_met=tuple(sorted(proj.success_criteria_not_met)),
         fired_trigger_ids=tuple(sorted(proj.fired_triggers)),
+        expected_duration_seconds=proj.expected_duration_seconds,
+        first_activated_at=proj.first_activated_at,
+        seconds_since_first_activation=seconds_since_first_activation(proj, now=now),
+        state_events_since_start=proj.state_events_since_start,
+        is_stuck=is_stuck(proj, now=now),
     )

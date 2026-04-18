@@ -42,6 +42,7 @@ def make_spec(
     observers=(),
     parent_close_policy=ParentClosePolicy.TERMINATE,
     owner_persona: str | None = None,
+    expected_duration_seconds: float | None = None,
 ):
     return ScopeSpec(
         goal=goal,
@@ -53,4 +54,5 @@ def make_spec(
         escalation_triggers=tuple(triggers),
         owner_persona=owner_persona,
         parent_close_policy=parent_close_policy,
+        expected_duration_seconds=expected_duration_seconds,
     )

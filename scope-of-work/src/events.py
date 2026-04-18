@@ -65,6 +65,10 @@ class ScopeCreated(_EventBase):
     owner_persona: str | None
     parent_close_policy: ParentClosePolicy
     parent_scope_id: str | None = None
+    # D0 amendment: opt-in stuck-detection hint for the background-
+    # work monitor (primary-persona layer D3). See ScopeSpec for
+    # semantics.
+    expected_duration_seconds: float | None = None
 
 
 class StateTransitioned(_EventBase):

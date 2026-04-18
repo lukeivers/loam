@@ -171,6 +171,7 @@ class ScopeRuntime:
                     owner_persona=spec.owner_persona,
                     parent_close_policy=spec.parent_close_policy,
                     parent_scope_id=parent_scope_id,
+                    expected_duration_seconds=spec.expected_duration_seconds,
                 )
             )
             self._fan_out(sid, ev)
@@ -428,10 +429,23 @@ class ScopeRuntime:
         parent_scope_id: str | None = None,
         owner_persona: str | None = None,
         include_pending_extension: bool | None = None,
+        stuck: bool | None = None,
     ) -> list[ScopeProjection]:
-        """Filterable enumeration — the data surface a future
-        background-work-monitor component polls (STATE.md rule #7,
-        brief D1 query surface)."""
+        """Filterable enumeration — the data surface the background-
+        work-monitor component polls (STATE.md rule #7, brief D3).
+
+        Filters:
+        - `states`: restrict to these lifecycle states.
+        - `parent_scope_id`: restrict to children of this scope.
+        - `owner_persona`: restrict to scopes owned by this persona.
+        - `include_pending_extension`: True = only paused-awaiting-
+          extension scopes; False = exclude them; None = no filter.
+        - `stuck`: True = only stuck scopes (D0 + D3); False = only
+          non-stuck; None = no filter. Stuck rule: scope declared
+          `expected_duration_seconds`, is non-terminal, has had no
+          state transitions after initial activation, and wall-clock
+          elapsed exceeds 2× expected.
+        """
         rows = self._store.list_states(
             states=[s.value for s in states] if states else None,
             parent_scope_id=parent_scope_id,
@@ -443,7 +457,12 @@ class ScopeRuntime:
                 continue
             if include_pending_extension is False and r.get("pending_extension_axis"):
                 continue
-            out.append(self._public(self._project(r["scope_id"])))
+            public = self._public(self._project(r["scope_id"]))
+            if stuck is True and not public.is_stuck:
+                continue
+            if stuck is False and public.is_stuck:
+                continue
+            out.append(public)
         return out
 
     def per_prompt_costs(self) -> list[dict[str, Any]]:

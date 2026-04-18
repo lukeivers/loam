@@ -67,6 +67,61 @@ def active_seconds_elapsed(
     return elapsed
 
 
+def seconds_since_first_activation(
+    proj: ScopeProjectionData, *, now: datetime | None = None
+) -> float | None:
+    """Wall-clock seconds since the scope first became active.
+
+    Returns None if the scope has never been activated. Unlike
+    `active_seconds_elapsed`, this includes time spent paused. It is
+    the clock stuck-detection measures against.
+    """
+    if proj.first_activated_at is None:
+        return None
+    try:
+        started = datetime.fromisoformat(proj.first_activated_at)
+    except Exception:
+        return None
+    current = now or datetime.now(tz=started.tzinfo)
+    return max(0.0, (current - started).total_seconds())
+
+
+def is_stuck(
+    proj: ScopeProjectionData,
+    *,
+    multiplier: float = 2.0,
+    now: datetime | None = None,
+) -> bool:
+    """Deterministic stuck-detection (brief D0 + D3).
+
+    A scope is stuck when:
+      1. It declared `expected_duration_seconds` (opt-in).
+      2. It is currently in a non-terminal state.
+      3. It has had no state_transitioned events after the initial
+         `proposed → active` transition.
+      4. Wall-clock elapsed since first activation exceeds
+         `multiplier × expected_duration_seconds`.
+
+    Default multiplier is 2.0 (Luke's decision, brief §"Luke's
+    decisions"). Scopes without `expected_duration_seconds` are never
+    stuck (the field is opt-in).
+    """
+    from .policies import is_terminal
+
+    if proj.expected_duration_seconds is None:
+        return False
+    if is_terminal(proj.state):
+        return False
+    if proj.first_activated_at is None:
+        return False
+    if proj.state_events_since_start > 0:
+        return False
+    elapsed = seconds_since_first_activation(proj, now=now)
+    if elapsed is None:
+        return False
+    return elapsed > multiplier * proj.expected_duration_seconds
+
+
 def evaluate_trigger(
     trigger: Trigger, proj: ScopeProjectionData, event: Any, *, now: datetime | None = None
 ) -> tuple[bool, Any]:

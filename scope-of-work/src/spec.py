@@ -301,3 +301,12 @@ class ScopeSpec(BaseModel):
     parent_close_policy: ParentClosePolicy = ParentClosePolicy.TERMINATE
     """Policy applied when THIS scope's parent is cancelled.
     (Named from the child's perspective per Temporal convention.)"""
+
+    # Opt-in stuck-detection hint consumed by the background-work
+    # monitor (primary-persona layer D3). When set, a scope whose
+    # wall-clock elapsed since first activation exceeds
+    # `2 × expected_duration_seconds` with no state events since start
+    # is reported as stuck via `list(stuck=True)`. Default `None` means
+    # the scope opts out — the monitor will not attempt stuck inference
+    # for it. (Luke's decision, brief §"Luke's decisions": default None.)
+    expected_duration_seconds: float | None = Field(default=None, ge=0)

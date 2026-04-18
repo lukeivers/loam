@@ -97,6 +97,19 @@ class ScopeProjectionData:
     children: list[str] = field(default_factory=list)
     # Debits indexed by call_id for refund reconciliation.
     debits_by_call: dict[str, tuple[int, int, int]] = field(default_factory=dict)
+    # D0 amendment: opt-in stuck-detection hint (primary-persona D3).
+    # None = scope has not declared an expected duration; monitor
+    # does not attempt stuck inference.
+    expected_duration_seconds: float | None = None
+    # First transition into active, preserved across pauses. The
+    # stuck-detection rule (elapsed-since-start, no state events) uses
+    # this as its epoch rather than `active_started_at` (which resets
+    # on resume).
+    first_activated_at: str | None = None
+    # Count of state_transitioned events since first activation.
+    # The monitor uses this to check the "no state events since start"
+    # clause in stuck detection.
+    state_events_since_start: int = 0
 
 
 def _as_dt(value: str) -> datetime:
@@ -123,6 +136,7 @@ def apply_event(proj: ScopeProjectionData, event: Any) -> None:
         proj.observers = {o.observer_id: o for o in event.observers}
         proj.success_criteria_ids = tuple(sc.criterion_id for sc in event.success_criteria)
         proj.last_transition_at = event.created_at
+        proj.expected_duration_seconds = event.expected_duration_seconds
         return
 
     if isinstance(event, StateTransitioned):
@@ -136,8 +150,16 @@ def apply_event(proj: ScopeProjectionData, event: Any) -> None:
             except Exception:
                 pass
             proj.active_started_at = None
+        # D0: track transitions AFTER the first activation so stuck-
+        # detection can check "no state events since start". The
+        # proposed → active transition is the "start" itself; any
+        # subsequent transition counts.
+        if proj.first_activated_at is not None:
+            proj.state_events_since_start += 1
         if event.to_state == ScopeState.active:
             proj.active_started_at = event.created_at
+            if proj.first_activated_at is None:
+                proj.first_activated_at = event.created_at
         proj.state = event.to_state
         proj.last_transition_at = event.created_at
         proj.pause_reason = event.pause_reason

@@ -1,4 +1,7 @@
-graphiti-core[anthropic,kuzu]>=0.28.2
+# graphiti-core 0.28.2 is PINNED — two KuzuDriver bugs are patched in
+# src/factory.py. Upgrading requires either removing the patches
+# (once upstream lands equivalents) or porting them to the new version.
+graphiti-core[anthropic,kuzu]==0.28.2
 anthropic>=0.39.0
 ollama>=0.4.0
 kuzu>=0.11.2
@@ -8,3 +11,5 @@ pyyaml>=6.0
 numpy>=1.26
 fastapi>=0.115
 uvicorn[standard]>=0.32
+# dev / test
+pytest>=9.0

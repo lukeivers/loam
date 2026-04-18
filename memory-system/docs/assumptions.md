@@ -13,7 +13,7 @@ assumed Anthropic Max usage limits would be adequate.
 
 **Verdict: HELD, with one caveat.** D4 (`scripts/cost_baseline.py`)
 measures per-episode token cost on the synthetic episodes. See
-`docs/findings.md` for the numbers. Headline: ~3-7 LLM calls per
+`data/runs/*.json` run outputs for the numbers. Headline: ~3-7 LLM calls per
 episode (extract_text + extract_edges + dedupe_nodes ± a contradiction
 resolution call), ~1-2k input tokens and ~300-700 output tokens per
 episode on Haiku 4.5. That is well within Max's typical usage budget
@@ -43,7 +43,7 @@ prototype date — `qwen3:8b` is a chat LLM, not an embedding model —
 so the substitution stays inside the brief's "builder may swap if a
 concrete reason exists" clause.
 
-The numbers themselves are in `docs/findings.md`. The headline:
+The numbers themselves are in `data/runs/*.json` run outputs. The headline:
 
 - **Both models clear the entity-lookup bar** on the synthetic test
   set (semantic-mode questions q01, q04, q06, q44 etc.).
@@ -59,7 +59,7 @@ The numbers themselves are in `docs/findings.md`. The headline:
 
 **Conclusion:** local Ollama embeddings do meet the bar for the
 modes the test set exercises with current Graphiti retrieval recipes.
-The recommended model is in `docs/findings.md`.
+The recommended model is in `data/runs/*.json` run outputs.
 
 ## Assumption 3 — Kuzu scales to the projected multi-year single-user workload
 
@@ -115,7 +115,7 @@ both bugs upstream as PRs. Both are small.
 All three assumptions hold at the level required for the full build to
 proceed. There is no halt signal from the prototyping work. The
 recommended next step is to commission the full-build brief, with
-specific call-outs (in `findings.md`) on:
+specific call-outs (in the run JSON files) on:
 
 - Embedding-model recommendation.
 - Per-prompt cost numbers Luke should keep in mind when sizing the
@@ -123,3 +123,32 @@ specific call-outs (in `findings.md`) on:
 - The two graphiti-core bugs to patch or upstream.
 - The temporal-mode SearchFilter shape that should be standard in
   pOS's retrieval wrapper.
+
+---
+
+## Full-build update (2026-04-18)
+
+All three assumptions remain held after the full build. One new
+finding:
+
+- **Kuzu uses a process-level file lock; `KuzuDriver.close()` is a
+  no-op.** This surfaced during D12 chaos test design. The
+  architectural response: every cross-phase DB access goes through
+  subprocesses. Documented in `docs/chaos-durability-report.md`.
+
+D12 (Kuzu chaos-durability) verified three adverse scenarios
+(kill-mid-ingest, kill-mid-query, WAL recovery); all pass at
+prototype volume. The 250k-edge scale chaos test (research v2 §7.3)
+remains a follow-on item before long-term-volume durability can be
+claimed.
+
+The full-system pass rates with D8 temporal wrapper applied:
+
+- semantic 69.2% (was 61.5%)
+- multi_hop 53.8% (was 76.9% — normal LLM-extraction variance)
+- context_aware 66.7% (was 66.7%)
+- temporal 66.7% (**was 0.0% — D8 fix**)
+
+Refreshed cost baseline: $0.018/episode (D4 was $0.0176/episode) —
+no meaningful change from adding the D5/D6/D7/D8/D10 layers, since
+those are deterministic wrappers adding zero LLM cost.

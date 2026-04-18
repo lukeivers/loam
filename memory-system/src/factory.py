@@ -156,6 +156,11 @@ async def make_graphiti(
     Token-usage observation: the LLMClient base class auto-instantiates
     a TokenUsageTracker; D4 reads `graphiti.llm_client.token_tracker`
     after ingest to break down cost by prompt name.
+
+    Full-build addition: after indices are built, ensure the Episodic
+    table carries the D10 `retention_class` column. We do it lazily at
+    first add_episode in MemoryAPI rather than here, to avoid a Kuzu
+    connection before build_indices_and_constraints runs.
     """
     llm_client = make_anthropic_client()
     embedder = make_ollama_embedder(embedder_model)
@@ -166,3 +171,18 @@ async def make_graphiti(
         graph_driver=driver,
     )
     return graphiti
+
+
+async def prepare_graphiti(graphiti: Graphiti) -> None:
+    """Run the idempotent graph init steps a MemoryAPI expects.
+
+    - build_indices_and_constraints (FTS, range, vector indices)
+    - ALTER TABLE Episodic ADD retention_class (D10)
+
+    Call this once after make_graphiti() for each session where
+    MemoryAPI is going to ingest. Safe to call multiple times.
+    """
+    from .retention import ensure_retention_column
+
+    await graphiti.build_indices_and_constraints()
+    await ensure_retention_column(graphiti.driver)

@@ -1,0 +1,140 @@
+# pOS v2 memory-system configuration.
+#
+# This file is the single configurable surface for the memory component.
+# Every knob that a workspace may want to tweak without editing code
+# lives here; code hardcodes NOTHING that the spec permits a workspace
+# to override.
+#
+# Editable at runtime — re-reading the file does not require a restart,
+# though behaviour may only reflect changes at the next ingest/query.
+
+# ----- D5 Ephemerality filter (narrow exclusion set per v1.1 R2) -----
+ephemerality:
+  # Default action for an input: accrue (save) unless matched as ephemeral.
+  # Spec v1.1 R2: "anything unlisted is accrued."
+  default: accrue
+
+  # Ephemeral classes — matched against the `source` string OR against
+  # the episode body via the optional `body_patterns` regex list. An
+  # input that matches ANY rule here is excluded from storage.
+  #
+  # Each rule has:
+  #   name: string — identifier for debugging and audit
+  #   sources: list[str] — match if any string is a substring (case-insensitive)
+  #                        of the episode's `source` / `source_description`
+  #   body_patterns: list[str] — optional regex(s) applied to the body;
+  #                               any match excludes the episode
+  #
+  # The narrow classes spec v1.1 R2 enumerates (not a general judgment).
+  exclude:
+    - name: cpu-readings
+      sources:
+        - cpu.usage
+        - cpu.reading
+        - "telemetry:cpu"
+      body_patterns:
+        - '^\s*(cpu[\s_-]*usage|cpu[\s_-]*percent)\s*[:=]\s*\d+'
+
+    - name: ticking-clocks
+      sources:
+        - clock.tick
+        - "heartbeat:clock"
+        - wall-clock-tick
+      body_patterns:
+        - '^\s*clock\s+tick\s*[:=]'
+
+    - name: volatile-ui-state
+      sources:
+        - ui.state
+        - "ui:scroll"
+        - "ui:hover"
+        - "ui:focus"
+        - ui.cursor.position
+      body_patterns: []
+
+    - name: transient-telemetry
+      sources:
+        - "telemetry:memory.rss"
+        - "telemetry:gpu"
+        - "telemetry:thermal"
+      body_patterns: []
+
+# ----- D6 Scope-of-work attribution -----
+scope:
+  # The scope-of-work PRIMITIVE RUNTIME is not yet built (soft dependency
+  # per brief §"Dependencies"). Memory ships with a mock scope source
+  # that lets ingest carry scope IDs from the caller; when the scope
+  # primitive lands, the mock is replaced by a real lookup.
+  mock:
+    # Fallback scope_id for ingests that do not specify one. The mock
+    # accepts any scope_id the caller supplies; this is only the default.
+    # Must be alphanumeric + dashes/underscores only (Graphiti group_id rule).
+    default_scope_id: "pos-v2_default"
+    # If true, the mock generates a minimal scope record for any scope_id
+    # the caller supplies (so retrieval-by-scope has something to list).
+    auto_register: true
+
+# ----- D7 Observability emission -----
+observability:
+  # Where to write OTel-shaped span records and token-usage rows. Two
+  # sinks today; a future OTel collector can subscribe to either.
+  #
+  # Sinks are JSON-line files; each line is one record. Append-only.
+  sink:
+    dir: "./data/observability"
+    spans_file: "spans.jsonl"
+    tokens_file: "tokens.jsonl"
+    audit_file: "audit.jsonl"
+  # Emit the `inputs` and `outputs` payload on spans. Disable in
+  # privacy-sensitive workspaces; default on for the prototype.
+  emit_payloads: true
+
+# ----- D10 Retention classes -----
+retention:
+  # Default class for an ingested episode. The proposal's accepted
+  # default is `normal` (Luke's decision 2026-04-18 09:23 per proposal
+  # §"Open questions"). Workspaces override per-ingest.
+  default_class: normal
+  classes:
+    - normal        # raw text persisted, structured facts extracted, everything retrievable
+    - derived-only  # structured facts only; raw text discarded after extraction
+    - ephemeral     # in-turn use only; no persisted memory beyond the immediate call
+
+# ----- D9 Upgrade-fidelity harness thresholds -----
+upgrade:
+  # Test-set probe that the upgrade harness replays pre/post upgrade.
+  probe_set_path: "./data/test_set.json"
+  # Episodes the probe reuses; must be stable across the upgrade (the
+  # same world, the same ingest order). The upgrade harness DOES NOT
+  # ingest; it runs retrieval against an existing graph state.
+  episodes_path: "./data/episodes.json"
+  # Pass/fail threshold for semantic equivalence between pre and post
+  # answer sets. Drift above the threshold fails the upgrade. The unit
+  # is "fraction of probe pairs where the pass/fail verdict flipped OR
+  # recall@10 changed by more than the per-query tolerance."
+  max_drift_fraction: 0.10
+  per_query_recall_tolerance: 0.15
+  # Snapshot of Kuzu DB is stored under this dir pre-upgrade.
+  snapshot_dir: "./data/snapshots"
+
+# ----- D11 Process-of-arrival capture -----
+process_of_arrival:
+  # Retention class applied to summarised stream-of-consciousness logs.
+  # Summaries are structured facts; the raw stream is NOT stored.
+  retention_class: derived-only
+  # Max tokens the summariser prompt passes to Claude. The summary
+  # itself is bounded by the model output budget (~500 tokens target).
+  max_stream_chars: 24000
+  summary_target_tokens: 500
+
+# ----- D8 Temporal-filter wrapper -----
+temporal:
+  # When a query is "active at T", the wrapper generates a SearchFilter
+  # equivalent to valid_at <= T AND (invalid_at > T OR invalid_at IS NULL).
+  # The wrapper targets the graphiti-core 0.28.2 Kuzu bug where the
+  # compound filter shape collapses into an always-false WHERE clause
+  # (diagnosed in scripts/diag_temporal2.py).
+  #
+  # No parameters today; kept here so workspace config can disable the
+  # wrapper if upstream lands an equivalent fix.
+  enabled: true

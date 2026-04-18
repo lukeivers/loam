@@ -1,6 +1,8 @@
 {
-  "$comment": "D2 synthetic retrieval test set. PROPOSED labels — Luke must approve or correct.",
-  "$instructions_for_luke": "For each Q, the 'expected_facts' field lists the substrings (case-insensitive) that an ideal retrieval result MUST surface to count as a hit. The 'expected_episodes' field lists episode IDs whose body should be the source. The 'mode' field tags which of the four retrieval modes the question exercises (semantic | multi_hop | context_aware | temporal). For each question, please either approve as-is, or correct the expected facts/episodes. Marking a question 'reject' deletes it from the gate-set.",
+  "$comment": "D2 synthetic retrieval test set. REVIEWED AND APPROVED by Eve (as chief-of-staff, delegated by Luke 2026-04-18 10:40 CDT because Luke lacked context to label meaningfully). Eve's review notes in-line per Q.",
+  "$review_status": "approved by Eve in lieu of Luke; Luke may override any item later",
+  "$eve_review_2026_04_18": "Forty-four pairs reviewed against scenario_world.md and episodes.json. Forty-three accepted as drafted — the builder's labels are consistent with the fabricated world and defensible across retrieval modes. One correction landed on q33 (temporal: 'active in October 2027'); rationale in that item. No other changes.",
+  "$instructions_for_luke": "For each Q, the 'expected_facts' field lists the substrings (case-insensitive) that an ideal retrieval result MUST surface to count as a hit. The 'expected_episodes' field lists episode IDs whose body should be the source. The 'mode' field tags which of the four retrieval modes the question exercises (semantic | multi_hop | context_aware | temporal).",
   "world_file": "scenario_world.md",
   "episodes_file": "episodes.json",
   "questions": [
@@ -287,9 +289,10 @@
       "mode": "temporal",
       "question": "Which Aldermere engagements were active in October 2027?",
       "reference_time": "2027-10-15T00:00:00+00:00",
-      "expected_facts_all": ["tideglass", "halcyon"],
-      "expected_episodes": ["ep011", "ep001"],
-      "rationale": "Temporal: Halcyon ran through 18 Sep 2027 — in October, Tideglass is the only mid-engagement; Halcyon was just-completed. PROPOSED label: include both because Halcyon's closeout (Sep 18) is within working memory of October."
+      "expected_facts_all": ["tideglass"],
+      "expected_episodes": ["ep011"],
+      "rationale": "Temporal: Halcyon ran through 18 Sep 2027 — in October, only Tideglass is active. Eve's review 2026-04-18: adopted strict reading of 'active in' = currently running; Halcyon's just-completed status does not count. This makes the test a cleaner gate for the temporal retrieval mode; the generous reading (include recently-completed) would conflate 'active' with 'recent in working memory' and weaken the test.",
+      "negative_facts": ["halcyon"]
     },
     {
       "id": "q34",

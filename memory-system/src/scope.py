@@ -4,13 +4,14 @@ Every memory entry is attributed to the scope-of-work it was produced
 within or about. Retrieval can be filtered by scope, and a scope's
 memory slice is enumerable.
 
-**Soft dependency:** the scope-of-work primitive runtime is not yet
-built (brief §"Dependencies"). This module ships as a wired-ready
-interface with a mock scope source. When the scope-of-work primitive
-lands in a later rebuild phase, wiring replaces the mock without
-re-architecting memory.
+**Status (2026-04-18):** the real scope-of-work primitive landed at
+`pos-v2/scope-of-work/`. Production wiring uses
+`scope_of_work.adapter.RealScopeSourceAdapter(runtime)` injected into
+the `MemoryAPI` constructor. The `MockScopeSource` below is preserved
+as a test-only fixture for memory-system tests that exercise this
+module in isolation; new code should not use it.
 
-The interface the mock fills is ScopeSource — a small protocol:
+The interface the adapter satisfies is `ScopeSource` — a small protocol:
 
     get_scope(scope_id) -> ScopeRecord | None
     register_scope(scope_id, metadata) -> ScopeRecord
@@ -20,10 +21,9 @@ Graphiti's `group_id` is the physical carrier of scope attribution
 inside Kuzu; we use scope_id == group_id for memory writes, so scope
 filtering is native ("retrieve within scope S" -> `group_ids=[S]`).
 
-The persistent scope registry (just a JSON file for the mock) lives at
-`data/scope_registry.json`. The real primitive will likely back this
-with a database row, but the file shape matches what any real
-implementation must expose.
+The mock persists to `data/scope_registry.json`; the real primitive
+backs scopes by a SQLite WAL event log (see
+`scope-of-work/src/store.py`).
 """
 
 from __future__ import annotations

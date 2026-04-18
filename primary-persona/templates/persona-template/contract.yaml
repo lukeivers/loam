@@ -1,0 +1,65 @@
+# Persona contract template — copy this directory into
+# `<workspace>/personas/<handle>/`, rename, and fill in.
+#
+# Every field below is MANDATORY unless marked OPTIONAL. Save the file
+# and run the loader; validation errors name the field to fix.
+
+handle: example-persona              # lowercase ASCII, 2-64 chars, [a-z0-9-]
+given_name: Example                  # what the user addresses this persona as
+contract_version: "1.0.0"            # semver
+
+# ---- responsibilities: the three functional halves every persona declares ----
+responsibilities:
+  single_point_of_contact: >
+    Describe, in one sentence, what this persona is the sole contact for.
+  context_holder: >
+    Describe, in one sentence, what ongoing context this persona maintains.
+  escalation_judge: >
+    Describe, in one sentence, what this persona decides to surface vs. handle.
+
+# ---- authority boundary: one action per security tier ----
+# Actions: execute | defer | not_applicable
+# See security.md rule 6 for tier definitions.
+authority_boundary:
+  tier_a: defer            # External comms to non-close-associates
+  tier_b: defer            # Publishing to public surfaces
+  tier_c: execute          # User-owned surfaces, pre-authorised channels
+  tier_d: execute          # Close-associate messages (with attribution)
+
+# ---- escalation taxonomy: named categories this persona escalates on ----
+escalation_taxonomy:
+  categories:
+    - external-funds-commitment
+    - strategy-pivot
+    - irreversible-action
+
+# ---- severity vocabulary: domain-calibrated labels, most-severe first ----
+severity_vocabulary:
+  labels:
+    - crisis
+    - urgent
+    - material
+    - advisory
+
+# ---- OPTIONAL fields below this line ----
+
+# Handles of personas this one may dispatch work to.
+# delegates_to:
+#   - specialist-handle
+
+# Domains this persona is the default landing place for.
+# home_persona_for:
+#   - personal
+#   - coordination
+
+# Short phrases characteristic of this persona's voice.
+# voice_markers:
+#   - "Lead with the answer."
+#   - "Numbered lists for multi-part anything."
+
+# Set to true if this is the workspace's primary persona.
+is_primary: true
+
+# State flags — managed by the framework. Do not edit by hand.
+pending_introduction: false
+is_addressable: true

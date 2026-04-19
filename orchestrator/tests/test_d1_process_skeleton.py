@@ -1,0 +1,154 @@
+"""D1 — orchestrator process skeleton.
+
+Acceptance (from brief):
+- Process starts and runs a main event loop.
+- SIGTERM triggers a clean flush followed by exit code 0.
+- Crash produces non-zero exit code.
+- Heartbeat writes to the local SQLite on a configured interval.
+"""
+
+from __future__ import annotations
+
+import asyncio
+
+import pytest
+
+from pos_orchestrator import Orchestrator
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_starts_and_stops_cleanly(tmp_config):
+    """Process starts, reaches the event loop, and shuts down cleanly."""
+    orch = Orchestrator(tmp_config)
+    async with orch.running():
+        # Give at least one heartbeat tick a chance to fire.
+        await asyncio.sleep(0.12)
+        # Process started event written.
+        started = orch.local_state.events_of_type("process_started")
+        assert len(started) == 1
+        assert started[0].payload["workspace"] == tmp_config.workspace_label
+
+    # After shutdown, a process_stopped event exists.
+    stopped = orch.local_state.events_of_type("process_stopped")
+    assert len(stopped) == 1
+
+
+@pytest.mark.asyncio
+async def test_heartbeat_writes_on_interval(tmp_config):
+    orch = Orchestrator(tmp_config)
+    async with orch.running():
+        await asyncio.sleep(0.18)  # ~3 ticks @ 0.05 interval
+    beats = orch.local_state.events_of_type("heartbeat")
+    assert len(beats) >= 2, f"expected >=2 heartbeats, got {len(beats)}"
+    # Each heartbeat has tick_id and uptime_seconds.
+    for b in beats:
+        assert "tick_id" in b.payload
+        assert "uptime_seconds" in b.payload
+
+
+@pytest.mark.asyncio
+async def test_sigterm_triggers_clean_flush(tmp_config):
+    """request_stop() mirrors SIGTERM path; must yield clean shutdown."""
+    orch = Orchestrator(tmp_config)
+
+    async def _shutdown_soon():
+        await asyncio.sleep(0.08)
+        orch.request_stop()
+
+    task = asyncio.create_task(orch.run())
+    stopper = asyncio.create_task(_shutdown_soon())
+    exit_code = await asyncio.wait_for(task, timeout=2.0)
+    await stopper
+
+    assert exit_code == 0
+    assert orch.local_state.events_of_type("process_stopped")
+
+
+@pytest.mark.asyncio
+async def test_crash_during_startup_yields_non_zero(tmp_path, monkeypatch):
+    """If _startup() raises an unexpected exception, exit code is non-zero."""
+    from pos_orchestrator import Orchestrator as Orch
+    from pos_orchestrator.config import OrchestratorConfig
+
+    from .conftest import _short_socket_path
+
+    root = tmp_path / "pos"
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "bootstrap.py").write_text("def register(o):\n    return None\n")
+    cfg = OrchestratorConfig(
+        root_dir=root,
+        socket_path=_short_socket_path(),
+        heartbeat_interval_seconds=0.05,
+        sigterm_grace_seconds=1.0,
+    )
+    orch = Orch(cfg)
+
+    async def boom(self):  # noqa: ARG001
+        raise RuntimeError("synthetic crash")
+
+    monkeypatch.setattr(Orch, "_startup", boom, raising=True)
+    code = await asyncio.wait_for(orch.run(), timeout=2.0)
+    assert code == 1
+    crashes = orch.local_state.events_of_type("process_crashed")
+    assert crashes and crashes[0].payload["type"] == "RuntimeError"
+
+
+@pytest.mark.asyncio
+async def test_missing_bootstrap_fails_closed(tmp_path):
+    """Brief: on missing bootstrap, orchestrator refuses to start."""
+    from pos_orchestrator import Orchestrator as Orch
+    from pos_orchestrator.config import OrchestratorConfig
+
+    from .conftest import _short_socket_path
+
+    root = tmp_path / "pos-empty"
+    root.mkdir(parents=True, exist_ok=True)
+    # Intentionally NOT writing bootstrap.py
+    cfg = OrchestratorConfig(
+        root_dir=root,
+        socket_path=_short_socket_path(),
+        heartbeat_interval_seconds=0.05,
+        sigterm_grace_seconds=1.0,
+        require_bootstrap=True,
+    )
+    orch = Orch(cfg)
+    code = await asyncio.wait_for(orch.run(), timeout=2.0)
+    assert code == 2
+    refused = orch.local_state.events_of_type("bootstrap_refused")
+    assert refused and refused[0].payload["reason"] == "missing"
+
+
+@pytest.mark.asyncio
+async def test_erroring_bootstrap_fails_closed(tmp_path):
+    from pos_orchestrator import Orchestrator as Orch
+    from pos_orchestrator.config import OrchestratorConfig
+
+    from .conftest import _short_socket_path
+
+    root = tmp_path / "pos-bad"
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "bootstrap.py").write_text(
+        'raise RuntimeError("bootstrap says no")\n'
+    )
+    cfg = OrchestratorConfig(
+        root_dir=root,
+        socket_path=_short_socket_path(),
+        heartbeat_interval_seconds=0.05,
+        sigterm_grace_seconds=1.0,
+        require_bootstrap=True,
+    )
+    orch = Orch(cfg)
+    code = await asyncio.wait_for(orch.run(), timeout=2.0)
+    assert code == 3
+    refused = orch.local_state.events_of_type("bootstrap_refused")
+    assert refused and refused[0].payload["reason"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_core_purity_assertion():
+    """Brief: a build-time check fails if any persona directory appears
+    in the orchestrator's paths."""
+    from pos_orchestrator.core_purity import assert_core_purity
+
+    # Runs at import; explicit call re-verifies.
+    assert_core_purity()

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pos_orchestrator"
+version = "0.1.0"
+description = "Session-resilient orchestrator for pOS v2 — asyncio process host, Unix-socket JSON-RPC, bind_scope dispatch layer, compaction-survival integration."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2",
+    "pyee>=11",
+    "opentelemetry-api>=1.25",
+    "opentelemetry-sdk>=1.25",
+    "pyyaml>=6",
+    "scope_of_work",
+    "objective_tracker",
+    "primary_persona",
+]
+
+[tool.setuptools]
+package-dir = {"pos_orchestrator" = "src"}
+packages = ["pos_orchestrator"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

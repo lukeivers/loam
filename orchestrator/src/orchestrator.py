@@ -371,7 +371,9 @@ class Orchestrator:
             proj = self.scope_runtime.get(scope_id)
             if proj is None:
                 raise ScopeNotPending(scope_id, "<not-found>")
-            if proj.state != ScopeState.pending:
+            # Scope-of-work uses `proposed` as the pre-active state;
+            # the brief calls it "pending" in prose — same semantics.
+            if proj.state != ScopeState.proposed:
                 raise ScopeNotPending(scope_id, proj.state.value)
 
             try:

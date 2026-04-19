@@ -101,6 +101,7 @@ class DegradationComponent:
     client: ClaudeClient | None = None
 
     active_episodes: dict[DegradationMode, ActiveEpisode] = field(default_factory=dict)
+    _user_initiated_probe: dict[DegradationMode, bool] = field(default_factory=dict)
 
     @classmethod
     def build(
@@ -260,19 +261,26 @@ class DegradationComponent:
             attempt_n=attempt,
             latency_seconds=probe.latency_seconds,
         )
-        # Feed the probe result through the detector so FSM advances.
-        synth_event = AdapterEvent(
-            call_id=f"probe-{uuid.uuid4()}",
-            prompt_name="degradation-probe",
-            model=self.cfg.narrative.model,
-            ok=probe.ok,
-            signal=None if probe.ok else (probe.signal or DegradationSignal.connection_error),
-            retry_after=None,
-            latency_seconds=probe.latency_seconds,
-            status_code=None,
-            timestamp=self.clock(),
-        )
-        await self.detector.record_event(synth_event)
+        # Feed the probe result DIRECTLY into the specific mode's FSM.
+        # Going through the detector would broadcast to all modes and
+        # apply normal classification — not what we want for a probe
+        # attributed to a single FSM.
+        fsm = self.detector.fsms[transition.mode]
+        if probe.ok:
+            t = fsm.record_success(now=self.clock())
+        else:
+            # Feed a signal the mode accepts to invalidate the probe.
+            signal_to_use: DegradationSignal | None = probe.signal
+            if signal_to_use is None or signal_to_use not in fsm.accepted_signals:
+                # Use the first accepted signal as a marker.
+                signal_to_use = (
+                    fsm.accepted_signals[0]
+                    if fsm.accepted_signals
+                    else DegradationSignal.connection_error
+                )
+            t = fsm.record_failure(signal_to_use, now=self.clock())
+        if t is not None:
+            await self._on_transition(t)
 
     async def _enter_closed(self, transition: FSMTransition) -> None:
         """Mode recovered. Apply resume policy for its active episode."""
@@ -282,7 +290,13 @@ class DegradationComponent:
             return
         elapsed = ep.elapsed(self.clock())
         # Gate on long-dwell: force gated instead of closed.
-        if elapsed >= self.cfg.resume.user_confirm_after_seconds:
+        # Exception: if transition's trigger is a user-initiated probe,
+        # the user already confirmed — long-dwell gate is skipped.
+        user_initiated = (
+            "user" in (transition.trigger or "")
+            or self._user_initiated_probe.get(mode, False)
+        )
+        if elapsed >= self.cfg.resume.user_confirm_after_seconds and not user_initiated:
             # Re-gate the FSM (closed → gated) — user must confirm.
             fsm = self.detector.fsms[mode]
             fsm.force_gated("long_dwell_gate")
@@ -290,12 +304,17 @@ class DegradationComponent:
             ep.threshold_trigger = ThresholdTrigger.time
             await self._maybe_fire_notification(ep, force=True)
             return
-        # Auto-resume if mode qualifies.
-        if mode.value not in self.cfg.resume.auto_resume_modes:
+        # Auto-resume if mode qualifies OR user just confirmed.
+        if (
+            mode.value not in self.cfg.resume.auto_resume_modes
+            and not user_initiated
+        ):
             # Gated mode (auth_broken) should never reach closed
             # without user_resume; if it does via a bug, still require
             # user confirmation by keeping the episode active.
             return
+        # Clear the user-initiated flag for this mode.
+        self._user_initiated_probe[mode] = False
         await self._auto_resume(ep)
 
     async def _auto_resume(self, ep: ActiveEpisode) -> None:
@@ -344,6 +363,7 @@ class DegradationComponent:
             return False
         fsm = self.detector.fsms[mode]
         fsm.user_resume()
+        self._user_initiated_probe[mode] = True
         # Probe fires through the standard half-open handler.
         await self._enter_half_open(
             FSMTransition(

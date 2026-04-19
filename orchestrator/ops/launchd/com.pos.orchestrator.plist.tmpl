@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Session-resilient orchestrator — launchd user agent (macOS).
+
+  Variables (filled by scripts/install_launchd.py):
+    ${LABEL}           — service label (com.pos.orchestrator)
+    ${PYTHON}          — absolute path to venv Python interpreter
+    ${WORKING_DIR}     — cwd for the process (usually the repo root)
+    ${STDOUT_LOG}      — absolute path to stdout log
+    ${STDERR_LOG}      — absolute path to stderr log
+    ${THROTTLE_SECS}   — rapid-crash throttle interval (brief §Luke: 30s)
+
+  KeepAlive=true means "restart no matter why it exited";
+  ThrottleInterval bounds the minimum gap between successive starts,
+  preventing a rapid-crash loop from burning CPU.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${LABEL}</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>${PYTHON}</string>
+        <string>-m</string>
+        <string>pos_orchestrator</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>${WORKING_DIR}</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>${THROTTLE_SECS}</integer>
+
+    <key>ProcessType</key>
+    <string>Interactive</string>
+
+    <key>StandardOutPath</key>
+    <string>${STDOUT_LOG}</string>
+
+    <key>StandardErrorPath</key>
+    <string>${STDERR_LOG}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+</dict>
+</plist>

@@ -1,0 +1,25 @@
+[Unit]
+# Session-resilient orchestrator — systemd user unit (Linux).
+#
+# Variables (filled by scripts/install_systemd.py):
+#   ${PYTHON}         — absolute path to venv Python interpreter
+#   ${WORKING_DIR}    — repo root or install dir
+#   ${THROTTLE_SECS}  — minimum gap between successive restarts (30s)
+#
+# Restart=always + RestartSec + StartLimit* gives launchd-parity
+# crash-loop throttling.
+Description=pOS session-resilient orchestrator
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=${WORKING_DIR}
+Environment=PYTHONUNBUFFERED=1
+ExecStart=${PYTHON} -m pos_orchestrator
+Restart=always
+RestartSec=${THROTTLE_SECS}
+StartLimitIntervalSec=60
+StartLimitBurst=2
+
+[Install]
+WantedBy=default.target

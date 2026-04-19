@@ -80,18 +80,37 @@ def _wait_for_pid(*, not_equal_to: int | None = None, timeout: float = 60.0) -> 
 
 
 def _measure_restart(signal_num: int) -> dict[str, Any]:
-    """Deliver a signal to the running pid, measure restart latency."""
+    """Deliver a signal to the running pid, measure restart latency.
+
+    On macOS, a launchd-managed PID is not signalable with os.kill from
+    a non-root process (EPERM — launchd owns the job). We ask launchd
+    itself to send the signal via `launchctl kill <SIGNAME>
+    <domain>/<label>`. This is the portable idiom for the measurement.
+    """
     old_pid, _ = _wait_for_pid(not_equal_to=None)
     if old_pid is None:
         return {"error": "no running pid before signal"}
-    try:
-        os.kill(old_pid, signal_num)
-    except ProcessLookupError:
-        return {"error": "old pid vanished before signal delivery"}
+    signal_name = signal.Signals(signal_num).name  # e.g. "SIGKILL"
+    rc = subprocess.run(
+        ["launchctl", "kill", signal_name, f"{_launchctl_domain()}/{LABEL}"],
+        capture_output=True,
+        text=True,
+    )
+    if rc.returncode != 0:
+        # Fallback to os.kill just in case (older macOS / different tier)
+        try:
+            os.kill(old_pid, signal_num)
+        except (ProcessLookupError, PermissionError) as e:
+            return {
+                "signal": signal_num,
+                "signal_name": signal_name,
+                "old_pid": old_pid,
+                "error": f"launchctl kill rc={rc.returncode} stderr={rc.stderr.strip()} os.kill={type(e).__name__}",
+            }
     new_pid, wait_s = _wait_for_pid(not_equal_to=old_pid)
     return {
         "signal": signal_num,
-        "signal_name": signal.Signals(signal_num).name if signal_num > 0 else "exit",
+        "signal_name": signal_name,
         "old_pid": old_pid,
         "new_pid": new_pid,
         "restart_seconds": round(wait_s, 3),

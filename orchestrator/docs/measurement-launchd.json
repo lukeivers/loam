@@ -1,0 +1,51 @@
+{
+  "first_boot_pid": 52352,
+  "first_boot_seconds": 0.008,
+  "throttle_seconds": 30,
+  "sigkill": {
+    "signal": 9,
+    "signal_name": "SIGKILL",
+    "old_pid": 52352,
+    "new_pid": 52822,
+    "restart_seconds": 7.146
+  },
+  "sigsegv": {
+    "signal": 11,
+    "signal_name": "SIGSEGV",
+    "old_pid": 52822,
+    "new_pid": 53091,
+    "restart_seconds": 0.007
+  },
+  "oom_approx": {
+    "signal": 6,
+    "signal_name": "SIGABRT",
+    "old_pid": 53091,
+    "new_pid": 54127,
+    "restart_seconds": 0.008
+  },
+  "rapid_crash": {
+    "results": [
+      {
+        "signal": 9,
+        "signal_name": "SIGKILL",
+        "old_pid": 54127,
+        "new_pid": 54941,
+        "restart_seconds": 0.008
+      },
+      {
+        "signal": 9,
+        "signal_name": "SIGKILL",
+        "old_pid": 54941,
+        "new_pid": 55727,
+        "restart_seconds": 30.097
+      },
+      {
+        "signal": 9,
+        "signal_name": "SIGKILL",
+        "old_pid": 55727,
+        "new_pid": 56108,
+        "restart_seconds": 30.02
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+ENV/
+env/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data directories (per-component)
+*/data/
+memory-system/data/
+scope-of-work/data/
+objective-tracker/data/
+orchestrator/data/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store

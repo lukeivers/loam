@@ -1,0 +1,16 @@
+# Session-resilient orchestrator — runtime dependencies (pos-v2 Phase 2).
+#
+# Per brief hard constraint 5: Python stdlib + this list only.
+# Any additional runtime dependency requires halt-and-signal.
+
+pydantic>=2
+pyee>=11
+opentelemetry-api>=1.25
+opentelemetry-sdk>=1.25
+PyYAML>=6
+
+# In-workspace editable installs (installed separately via pip install -e)
+#   ../scope-of-work
+#   ../objective-tracker
+#   ../primary-persona
+#   ../memory-system (optional; D8 corrections provider wires in when present)

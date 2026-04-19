@@ -10,6 +10,22 @@ from pathlib import Path
 import pytest
 
 from pos_orchestrator.config import OrchestratorConfig
+from scope_of_work import ScopeSpec
+from scope_of_work.spec import Budget, ReversibilityClass
+
+
+def make_scope_spec(goal: str, *, owner: str = "rune", tokens: int = 1000) -> ScopeSpec:
+    """Test helper — minimal ScopeSpec."""
+    return ScopeSpec(
+        goal=goal,
+        constraints=(),
+        budget=Budget(tokens=tokens),
+        reversibility_class=ReversibilityClass.fully_reversible,
+        success_criteria=(),
+        observers=(),
+        escalation_triggers=(),
+        owner_persona=owner,
+    )
 
 
 _BOOTSTRAP_CONTENT = '''"""Test-only bootstrap — no-op register()."""

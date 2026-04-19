@@ -546,12 +546,18 @@ class Orchestrator:
         assert self.monitor is not None
         timeout_s = self.config.awareness_pull_timeout_ms / 1000.0
 
-        async def _build() -> dict[str, Any]:
+        def _build_sync() -> dict[str, Any]:
             block = self.monitor.on_user_prompt(turn_id=turn_id)  # type: ignore[union-attr]
             return block.to_dict()
 
+        # Run the monitor snapshot in a worker thread so the asyncio
+        # timeout is honoured even when the snapshot is a slow sync
+        # call. In normal operation the snapshot is fast (<1ms); we
+        # pay the thread-hop cost for the 100ms-ceiling guarantee.
         try:
-            fresh = await asyncio.wait_for(_build(), timeout=timeout_s)
+            fresh = await asyncio.wait_for(
+                asyncio.to_thread(_build_sync), timeout=timeout_s
+            )
         except asyncio.TimeoutError:
             return self._stale_awareness(turn_id, reason="timeout")
         except Exception as e:

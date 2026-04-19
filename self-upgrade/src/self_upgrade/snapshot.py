@@ -183,6 +183,22 @@ def restore_substrate_snapshots(
     if not history_dir.exists():
         raise FileNotFoundError(f"no pre-upgrade snapshot for tag: {tag}")
 
+    # Fail hard if any expected component snapshot dir is missing — a
+    # silent skip here is exactly the clause-g anti-pattern the
+    # framework prohibits. The caller (rollback) records this as a
+    # failed step so the destructive-test runbook can detect it.
+    missing_snapshots = [
+        comp
+        for comp in components
+        if not (history_dir / comp).exists()
+        and _source_for(paths, comp).exists()
+    ]
+    if missing_snapshots:
+        raise FileNotFoundError(
+            f"pre-upgrade snapshot incomplete for tag {tag}: "
+            f"missing component dirs {missing_snapshots}"
+        )
+
     for comp in components:
         target = history_dir / comp
         if not target.exists():

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pos_self_upgrade"
+version = "0.1.0"
+description = "pOS self-upgrade framework — coordinates every sealed component's upgrade-fidelity surfaces into a single atomic operation enforcing the seven-clause acceptance (a–g)"
+requires-python = ">=3.13"
+dependencies = [
+  "pydantic>=2.5",
+  "pyee>=11.0",
+  "opentelemetry-api>=1.22",
+  "opentelemetry-sdk>=1.22",
+  "PyYAML>=6.0",
+  "duckdb>=0.10",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+pos = "self_upgrade.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,17 +1,26 @@
 """IPC wiring — registers reversibility methods on the shared IPCServer.
 
-Wrap ordering (Luke's ruling #1, brief §"Critical discipline anchors" #2):
+Wrap ordering (as finalised through Phase 3 and captured in
+`cost-governance/src/ipc_wiring.py`):
 
-    reversibility first → safety second → orchestrator orig_activate
+    registration:  reversibility → safety → cost
+    dispatch:      safety → reversibility → cost → orig_activate
 
-Because each wrap captures the prior handler as its `orig_activate`,
-registering in that order yields the call chain
-`reversibility → safety → orig_activate` at dispatch time.
+Each wrap captures the prior handler as its `orig_activate`, so the
+last-registered wrap runs first at dispatch time. Reversibility
+registers BEFORE safety so that at dispatch, safety (system-kill,
+ask-gate, dangerous-op) runs before reversibility's structural check.
+Cost registers last so it runs innermost against `orig_activate`.
 
 This module therefore MUST be invoked by the workspace bootstrap
-BEFORE `safety_layer.ipc_wiring.register_safety_ipc`. The workspace
+BEFORE `safety_layer.ipc_wiring.register_safety_ipc`, which itself
+must be invoked before `cost_governance` registration. The workspace
 bootstrap documents the order; `tests/test_safety_wrap_composition.py`
 locks it in with an integration test.
+
+Docstring corrected 2026-04-20 per Luke's ruling during bootstrap
+research — prior docstring claimed a pre-cost-governance two-wrap
+chain. Code was and is correct; only the docstring was stale.
 """
 
 from __future__ import annotations

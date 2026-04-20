@@ -1,0 +1,135 @@
+"""CostConfig — ceiling + rolling-window configuration loaded from YAML.
+
+Loaded from `~/.pos/cost/ceilings.yaml` by default; a path is injected
+for tests. Refuses negative ceilings and `warning_fraction` outside
+`(0.0, 1.0)` at load time (C28 — structural defence-in-depth).
+
+Eve-inferences held (proposal §8):
+  - Default rolling windows: daily + hourly, money-only (inference #1).
+  - `warning_fraction` default: 0.8 (inference #2).
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import yaml
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+# ---- session ceiling ------------------------------------------------
+
+
+class SessionCeiling(BaseModel):
+    """Aggregate cap across all scopes in one session."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    time_seconds: int | None = Field(default=None, ge=0)
+    tokens: int | None = Field(default=None, ge=0)
+    money_cents: int | None = Field(default=None, ge=0)
+
+
+# ---- rolling-window ceiling ----------------------------------------
+
+
+class RollingCeiling(BaseModel):
+    """Aggregate cap across a time window (sliding / closed-interval)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    window_kind: str
+    duration_seconds: int = Field(gt=0)
+    time_seconds: int | None = Field(default=None, ge=0)
+    tokens: int | None = Field(default=None, ge=0)
+    money_cents: int | None = Field(default=None, ge=0)
+
+
+# ---- top-level config ----------------------------------------------
+
+
+class CostConfig(BaseModel):
+    """Cost-governance configuration.
+
+    `warning_fraction` must be in `(0.0, 1.0)` exclusive — 0.0 would
+    fire on every activation, 1.0 is the ceiling itself (no warning).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    session: SessionCeiling = Field(default_factory=SessionCeiling)
+    rolling: list[RollingCeiling] = Field(default_factory=list)
+    warning_fraction: float = 0.8
+
+    @model_validator(mode="after")
+    def _validate_warning_fraction(self) -> "CostConfig":
+        wf = self.warning_fraction
+        if not (0.0 < wf < 1.0):
+            raise ValueError(
+                f"warning_fraction must be in (0.0, 1.0) exclusive; got {wf!r}"
+            )
+        # Reject duplicate window_kind on rolling ceilings.
+        seen: set[str] = set()
+        for r in self.rolling:
+            if r.window_kind in seen:
+                raise ValueError(
+                    f"duplicate rolling window_kind: {r.window_kind!r}"
+                )
+            seen.add(r.window_kind)
+        return self
+
+
+# ---- default-config factory (inferences #1, #2) --------------------
+
+
+def default_config() -> CostConfig:
+    """The v1.0 default — no ceilings, daily + hourly money-only windows
+    declared so the rollup infrastructure has a shape to close even
+    before a user sets caps.
+
+    Ceilings are `None` by default — cost governance is opt-in, not
+    opt-out. A workspace writes `~/.pos/cost/ceilings.yaml` to turn
+    enforcement on.
+    """
+    return CostConfig(
+        session=SessionCeiling(),
+        rolling=[
+            RollingCeiling(
+                window_kind="daily",
+                duration_seconds=24 * 60 * 60,
+            ),
+            RollingCeiling(
+                window_kind="hourly",
+                duration_seconds=60 * 60,
+            ),
+        ],
+        warning_fraction=0.8,
+    )
+
+
+# ---- loader --------------------------------------------------------
+
+
+def load_config(path: str | Path | None = None) -> CostConfig:
+    """Load cost config from YAML, or return the v1.0 default.
+
+    `path` defaults to `~/.pos/cost/ceilings.yaml`. If the file is
+    absent, the default config is returned — cost governance is
+    opt-in; a missing file is not an error.
+
+    Pydantic refuses malformed configs at load time (C28).
+    """
+    if path is None:
+        path = Path.home() / ".pos" / "cost" / "ceilings.yaml"
+    else:
+        path = Path(path)
+    if not path.exists():
+        return default_config()
+    data = yaml.safe_load(path.read_text()) or {}
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"ceilings.yaml must be a mapping at top level; got {type(data).__name__}"
+        )
+    return CostConfig(**data)

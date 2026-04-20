@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pos_workspace_bootstrap"
+version = "0.1.0"
+description = "pOS v2 workspace bootstrap — two-layer framework composing the ten foundational components into a running orchestrator + three-gate chain, plus the published Phase 4+ extension protocol."
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2",
+    "pyee>=11",
+    "opentelemetry-api>=1.25",
+    "opentelemetry-sdk>=1.25",
+    "PyYAML>=6",
+    "duckdb>=0.10",
+    "pos_orchestrator",
+    "pos_observability_aggregator",
+    "pos_safety_layer",
+    "pos_reversibility_primitive",
+    "pos_cost_governance",
+    "pos_self_correction",
+    "pos_self_upgrade",
+    "scope_of_work",
+    "objective_tracker",
+    "primary_persona",
+    "graceful_degradation",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.entry-points."pos.bootstrap.contributions"]
+# Foundational-adapter bundle — twelve contributions. Phase 4+
+# components ship their own `pos.bootstrap.contributions` entry-points
+# in their own packages; bootstrap's code does not need to change.
+observability_aggregator = "workspace_bootstrap.adapters.observability_aggregator:ObservabilityAggregatorContribution"
+scope_of_work = "workspace_bootstrap.adapters.scope_of_work:ScopeOfWorkContribution"
+objective_tracker = "workspace_bootstrap.adapters.objective_tracker:ObjectiveTrackerContribution"
+primary_persona = "workspace_bootstrap.adapters.primary_persona:PrimaryPersonaContribution"
+graceful_degradation = "workspace_bootstrap.adapters.graceful_degradation:GracefulDegradationContribution"
+memory_system = "workspace_bootstrap.adapters.memory_system:MemorySystemContribution"
+reversibility_primitive = "workspace_bootstrap.adapters.reversibility_primitive:ReversibilityPrimitiveContribution"
+safety_layer = "workspace_bootstrap.adapters.safety_layer:SafetyLayerContribution"
+cost_governance = "workspace_bootstrap.adapters.cost_governance:CostGovernanceContribution"
+self_correction = "workspace_bootstrap.adapters.self_correction:SelfCorrectionContribution"
+self_upgrade = "workspace_bootstrap.adapters.self_upgrade:SelfUpgradeContribution"
+workspace_bootstrap_py = "workspace_bootstrap.adapters.workspace_bootstrap_py:WorkspaceBootstrapPyContribution"
+
+[project.scripts]
+pos-bootstrap = "workspace_bootstrap.main:cli_main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pos_self_correction"
+version = "0.1.0"
+description = "Self-correction loop for pOS v2 — four-part protocol structurally enforced; consumer of safety + reversibility + cost gates."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2",
+    "pyee>=11",
+    "opentelemetry-api>=1.25",
+    "opentelemetry-sdk>=1.25",
+    "pyyaml>=6",
+    "scope_of_work",
+    "primary_persona",
+    "pos_orchestrator",
+    "pos_safety_layer",
+    "pos_reversibility_primitive",
+    "pos_cost_governance",
+    "pos_observability_aggregator",
+]
+
+[tool.setuptools]
+package-dir = {"self_correction" = "src"}
+packages = ["self_correction"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

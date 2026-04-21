@@ -25,6 +25,12 @@ A well-functioning primary persona is the reason a user who has no understanding
 
 The primary persona is a consistent, single interface. It is the one entity the user knows, trusts, and develops rapport with. Trust compounds in one relationship in ways that distributed trust across many specialists cannot.
 
+The translation is not only about what the user *says*; it extends to what the user is entitled to ignore. Token management is one of those things. A user — even a technically-competent one — should not need to understand context windows, token costs, or how an AI's ongoing operation consumes tokens to have the system work well on their behalf. The primary persona translates the user's intent into the most token-efficient execution path; the harness enforces the cost discipline underneath. If the user is thinking about tokens, the translation layer has failed.
+
+This applies not only to the primary persona's own operation but to artifacts the harness *builds* on the user's behalf. An app, script, or service produced by pOS and run for the user must not quietly inherit pOS's context or bleed tokens into ongoing execution that does not need them. Deterministic and self-contained is the default; LLM calls in the running artifact are scoped narrowly and only where they genuinely cannot be replaced by deterministic code. The harness-as-builder owes the user the same token discipline the harness-as-runtime owes them.
+
+*Observation motivating this framing:* a technical user of an earlier pOS release found that pulling one of their apps out of their pOS workspace into its own workspace saved roughly 25,000 tokens per run of its ingestion system. The context was leaking because the harness was not treating the built artifact's context hygiene as its own responsibility. That leak is a failure of the translation layer.
+
 ---
 
 ## The harness is the toolkit the primary persona draws from

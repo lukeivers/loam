@@ -679,3 +679,288 @@ def test_T19c_inventory_parser_parses_the_shipped_file() -> None:
     # Smoke check.
     assert data["schema_version"] == 1
     assert len(data["shared_venv"]["components"]) >= 10
+
+
+# ---- T20: editable-install amendment (2026-04-22) ------------------
+#
+# Failure class: missing editable-install phase — cross-component
+# imports fail on fresh clone.
+# Systemic cause: component packages were installed at build time
+# outside first-run scope, never wired into the shipped first-run flow.
+# Structural remedy: discover components via pyproject walk, topological
+# order from declared deps, idempotent on re-run.
+
+
+def test_T20_discover_components_finds_every_pyproject_under_root() -> None:
+    """Discovery returns every workspace component with a pyproject.toml.
+
+    The list must contain all 13 currently-shipped components. Discovery
+    is not hardcoded — adding a new component directory with a
+    pyproject.toml pulls it in automatically.
+    """
+    from first_run_helper import _discover_components
+
+    comps = _discover_components(REPO_ROOT)
+    names = {c["name"] for c in comps}
+    expected = {
+        "scope_of_work",
+        "objective_tracker",
+        "primary_persona",
+        "pos_safety_layer",
+        "pos_reversibility_primitive",
+        "pos_cost_governance",
+        "pos_self_correction",
+        "graceful_degradation",
+        "pos_orchestrator",
+        "pos_observability_aggregator",
+        "pos_self_upgrade",
+        "pos_workspace_bootstrap",
+        "pos_telegram_interface",
+    }
+    missing = expected - names
+    assert not missing, f"discovery missed shipped components: {missing}"
+    # Every discovered component resolves to a child directory of root.
+    for c in comps:
+        assert c["dir"].parent == REPO_ROOT
+
+
+def test_T20b_discover_components_excludes_non_component_dirs(
+    tmp_path: Path,
+) -> None:
+    """Discovery skips .venv, .git, data, docs, and nested pyprojects."""
+    from first_run_helper import _discover_components
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    # Real component.
+    (ws / "alpha").mkdir()
+    (ws / "alpha" / "pyproject.toml").write_text(
+        '[project]\nname = "alpha"\nversion = "0.1.0"\n'
+    )
+    # Excluded directories with pyprojects — must be skipped.
+    for excluded in (".venv", ".git", "data", "docs", "__pycache__"):
+        d = ws / excluded
+        d.mkdir()
+        (d / "pyproject.toml").write_text(
+            '[project]\nname = "excluded"\nversion = "0.1.0"\n'
+        )
+    # Nested pyproject (subdirectory of a real component) — must be skipped.
+    nested = ws / "alpha" / "tests"
+    nested.mkdir()
+    (nested / "pyproject.toml").write_text(
+        '[project]\nname = "alpha_nested"\nversion = "0.1.0"\n'
+    )
+
+    comps = _discover_components(ws)
+    assert [c["name"] for c in comps] == ["alpha"]
+
+
+def test_T20c_topological_order_respects_declared_dependencies() -> None:
+    """Every component ordered after all of its sibling dependencies."""
+    from first_run_helper import (
+        _discover_components,
+        _extract_dep_name,
+        _topological_order,
+    )
+
+    comps = _discover_components(REPO_ROOT)
+    ordered = _topological_order(comps)
+    sibling_names = {c["name"] for c in comps}
+
+    seen: set[str] = set()
+    for c in ordered:
+        for dep in c["deps"]:
+            bare = _extract_dep_name(dep)
+            if bare in sibling_names and bare != c["name"]:
+                assert bare in seen, (
+                    f"{c['name']} ordered before its dep {bare}"
+                )
+        seen.add(c["name"])
+
+    # Length preserved (no component dropped).
+    assert len(ordered) == len(comps)
+
+
+def test_T20d_topological_order_detects_cycles(tmp_path: Path) -> None:
+    """A declared cycle in sibling deps raises RuntimeError with the cycle members."""
+    from first_run_helper import _topological_order
+
+    components = [
+        {"name": "a", "dir": tmp_path / "a", "deps": ["b"]},
+        {"name": "b", "dir": tmp_path / "b", "deps": ["a"]},
+    ]
+    with pytest.raises(RuntimeError, match="editable-topological-cycle"):
+        _topological_order(components)
+
+
+def test_T20e_extract_dep_name_strips_version_pins() -> None:
+    """_extract_dep_name returns the bare name for PEP 508 specs."""
+    from first_run_helper import _extract_dep_name
+
+    assert _extract_dep_name("pydantic>=2") == "pydantic"
+    assert _extract_dep_name("pos-orchestrator") == "pos_orchestrator"
+    assert _extract_dep_name("scope_of_work") == "scope_of_work"
+    assert _extract_dep_name("foo[extras]>=1.0") == "foo"
+    assert _extract_dep_name("bar ; python_version>='3.13'") == "bar"
+
+
+def test_T20f_install_editable_is_idempotent(tmp_path: Path) -> None:
+    """End-to-end: editable install + re-run short-circuits.
+
+    Creates a two-component fixture workspace with a declared dep
+    between them, runs ``_install_editable_components`` twice in a
+    fresh venv, and asserts: first run pip-installs each; second run
+    short-circuits via ``_is_component_installed``.
+    """
+    from first_run_helper import _install_editable_components
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+
+    # Component A — no sibling deps.
+    (ws / "alpha-pkg").mkdir()
+    (ws / "alpha-pkg" / "pyproject.toml").write_text(
+        '[build-system]\n'
+        'requires = ["setuptools>=61"]\n'
+        'build-backend = "setuptools.build_meta"\n'
+        '\n'
+        '[project]\n'
+        'name = "alpha_pkg"\n'
+        'version = "0.1.0"\n'
+        'dependencies = []\n'
+        '\n'
+        '[tool.setuptools.packages.find]\n'
+        'where = ["src"]\n'
+    )
+    (ws / "alpha-pkg" / "src" / "alpha_pkg").mkdir(parents=True)
+    (ws / "alpha-pkg" / "src" / "alpha_pkg" / "__init__.py").write_text(
+        "VALUE = 'alpha'\n"
+    )
+
+    # Component B — depends on A.
+    (ws / "beta-pkg").mkdir()
+    (ws / "beta-pkg" / "pyproject.toml").write_text(
+        '[build-system]\n'
+        'requires = ["setuptools>=61"]\n'
+        'build-backend = "setuptools.build_meta"\n'
+        '\n'
+        '[project]\n'
+        'name = "beta_pkg"\n'
+        'version = "0.1.0"\n'
+        'dependencies = ["alpha_pkg"]\n'
+        '\n'
+        '[tool.setuptools.packages.find]\n'
+        'where = ["src"]\n'
+    )
+    (ws / "beta-pkg" / "src" / "beta_pkg").mkdir(parents=True)
+    (ws / "beta-pkg" / "src" / "beta_pkg" / "__init__.py").write_text(
+        "from alpha_pkg import VALUE\n"
+    )
+
+    # Fresh venv.
+    venv_dir = ws / ".venv"
+    subprocess.run(
+        [sys.executable, "-m", "venv", str(venv_dir)],
+        check=True,
+        capture_output=True,
+        timeout=60,
+    )
+    venv_python = venv_dir / "bin" / "python"
+
+    # First run — both components should install.
+    outcomes_1 = _install_editable_components(
+        pos_v2_root=ws, shared_venv_python=venv_python
+    )
+    names_1 = [o.component for o in outcomes_1]
+    # Topological order: alpha before beta.
+    assert names_1 == ["alpha_pkg", "beta_pkg"]
+    for o in outcomes_1:
+        assert o.ok, f"{o.component}: {o.stderr_tail}"
+        # First run actually invokes pip, not the short-circuit marker.
+        assert o.stderr_tail != "already-installed"
+
+    # Both packages importable in the venv after install.
+    import_check = subprocess.run(
+        [str(venv_python), "-c", "import beta_pkg; print(beta_pkg.VALUE)"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert import_check.returncode == 0, import_check.stderr
+    assert "alpha" in import_check.stdout
+
+    # Second run — idempotent: every component short-circuits.
+    outcomes_2 = _install_editable_components(
+        pos_v2_root=ws, shared_venv_python=venv_python
+    )
+    assert [o.component for o in outcomes_2] == ["alpha_pkg", "beta_pkg"]
+    for o in outcomes_2:
+        assert o.ok, f"{o.component}: {o.stderr_tail}"
+        assert o.stderr_tail == "already-installed", (
+            f"{o.component} did not short-circuit on re-run: {o.stderr_tail}"
+        )
+
+
+def test_T20g_install_editable_reports_failure_with_named_class(
+    tmp_path: Path,
+) -> None:
+    """A malformed pyproject produces a pip-install-failed:editable outcome."""
+    from first_run_helper import _install_editable_components
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "broken-pkg").mkdir()
+    # Missing [build-system] AND missing source → pip will fail to build.
+    (ws / "broken-pkg" / "pyproject.toml").write_text(
+        '[project]\n'
+        'name = "broken_pkg"\n'
+        'version = "0.1.0"\n'
+        'dependencies = []\n'
+        '\n'
+        '[tool.setuptools.packages.find]\n'
+        'where = ["nonexistent_src_dir"]\n'
+    )
+    venv_dir = ws / ".venv"
+    subprocess.run(
+        [sys.executable, "-m", "venv", str(venv_dir)],
+        check=True,
+        capture_output=True,
+        timeout=60,
+    )
+    venv_python = venv_dir / "bin" / "python"
+
+    outcomes = _install_editable_components(
+        pos_v2_root=ws, shared_venv_python=venv_python
+    )
+    assert len(outcomes) == 1
+    assert outcomes[0].component == "broken_pkg"
+    assert outcomes[0].ok is False
+    assert outcomes[0].stderr_tail  # non-empty diagnostic tail
+
+
+def test_T20h_phase_3e_installs_all_components_on_shipped_inventory() -> None:
+    """AC1 proxy: ordering output names every sealed-component package exactly once.
+
+    The 13 components in the shipped workspace must all appear in the
+    topological order, none missing. This is the fresh-clone AC1 proxy
+    that runs fast without spinning up a full venv.
+    """
+    from first_run_helper import _discover_components, _topological_order
+
+    comps = _discover_components(REPO_ROOT)
+    ordered = _topological_order(comps)
+    names_in_order = [c["name"] for c in ordered]
+
+    assert len(names_in_order) == 13
+    assert sorted(names_in_order) == sorted({c["name"] for c in comps})
+    # Canonical first-tier anchors.
+    assert "scope_of_work" in names_in_order
+    assert "pos_orchestrator" in names_in_order
+    assert "pos_workspace_bootstrap" in names_in_order
+    # pos_workspace_bootstrap depends on almost everything — must be
+    # installed after its siblings.
+    wb_idx = names_in_order.index("pos_workspace_bootstrap")
+    so_idx = names_in_order.index("scope_of_work")
+    orch_idx = names_in_order.index("pos_orchestrator")
+    assert wb_idx > so_idx
+    assert wb_idx > orch_idx

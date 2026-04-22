@@ -4,6 +4,12 @@ Invoked from ``first-run.sh`` once the top-level venv exists. Stdlib-only.
 
 Phases implemented here (proposal §3.1):
   * Phase 3 — per-component pip install (shared + dedicated venvs).
+  * Phase 3e — per-component editable install (``pip install -e``) for
+    every workspace component that ships a ``pyproject.toml``, in a
+    topological order derived from each ``[project].dependencies``
+    block. Added 2026-04-22 by the editable-install amendment; without
+    this step, cross-component imports (``import pos_orchestrator``,
+    ``import workspace_bootstrap``, etc.) fail on a fresh clone.
   * Phase 4 — plist/unit substitution + service bootstrap + health poll.
   * Phase 5 — confirmation sentence emission.
   * Phase 6 — self-retire: rewrite settings.json's SessionStart stanza
@@ -17,8 +23,11 @@ Error-code range: -32091..-32099 (inside hands-off-lifecycle's block).
   -32091  platform-unsupported:<label> (Phase 4 if OS not macos/linux —
           reuses the existing workspace-bootstrap code point)
   -32097  pip-install-failed:<component>:<tail>
+  -32097  pip-install-failed:editable:<component>:<tail> (Phase 3e)
   -32098  service-health-timeout:<label>
   -32099  hands-off-lifecycle-internal:<phase>:<detail>
+  -32099  hands-off-lifecycle-internal:editable-topological-cycle:<components>
+          (Phase 3e — pyproject ``dependencies`` declare a cycle)
 
 Runs in two modes:
   bootstrap — invoked on truly fresh clone; runs Phases 3..7 linearly.
@@ -40,6 +49,7 @@ import socket
 import subprocess
 import sys
 import time
+import tomllib
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -246,6 +256,310 @@ def _install_dedicated_venv(
         timeout_s=1800,  # Graphiti install can legitimately run long.
     )
     return venv_path, outcome
+
+
+# ---- editable-install discovery + topological ordering ---------------
+#
+# Added by the 2026-04-22 editable-install amendment.
+#
+# Failure class: missing editable-install phase — cross-component
+# imports fail on fresh clone.
+# Systemic cause: component packages were installed at build time
+# outside first-run scope, never wired into the shipped first-run flow.
+# Structural remedy: discover components via pyproject walk, topological
+# order from declared deps, idempotent on re-run.
+
+
+# Directories that are not workspace components and must never be
+# considered by the pyproject walk. Kept short so adding a new
+# component does not require editing this list.
+_EDITABLE_DISCOVERY_EXCLUDES = frozenset(
+    {
+        ".venv",
+        ".git",
+        ".pytest_cache",
+        "__pycache__",
+        "data",
+        "docs",
+        "node_modules",
+        ".claude",
+    }
+)
+
+
+def _discover_components(pos_v2_root: Path) -> list[dict[str, Any]]:
+    """Walk ``pos_v2_root`` for ``*/pyproject.toml`` and return component specs.
+
+    Each returned mapping has:
+      * ``dir``       — Path to the component directory (child of root)
+      * ``name``      — the ``[project].name`` declared in pyproject
+      * ``deps``      — raw ``[project].dependencies`` list (verbatim)
+
+    Only immediate children of ``pos_v2_root`` are considered. Nested
+    pyprojects (tests, fixtures) are ignored — first-run installs one
+    editable package per component directory, not arbitrary subprojects.
+
+    Discovery is deliberately not a hardcoded list: adding a new
+    component directory with a ``pyproject.toml`` pulls it into the
+    first-run install automatically. A hardcoded list is a regression
+    vector — the next new component would be silently missed.
+    """
+    components: list[dict[str, Any]] = []
+    for child in sorted(pos_v2_root.iterdir()):
+        if not child.is_dir():
+            continue
+        if child.name in _EDITABLE_DISCOVERY_EXCLUDES:
+            continue
+        if child.name.startswith("."):
+            continue
+        pyproject = child / "pyproject.toml"
+        if not pyproject.exists():
+            continue
+        try:
+            with open(pyproject, "rb") as fh:
+                data = tomllib.load(fh)
+        except (OSError, tomllib.TOMLDecodeError):
+            # Malformed or unreadable pyproject — skip silently; the
+            # underlying component's own test suite will catch it.
+            continue
+        project = data.get("project") or {}
+        name = project.get("name")
+        if not isinstance(name, str) or not name:
+            continue
+        deps_raw = project.get("dependencies") or []
+        deps = [d for d in deps_raw if isinstance(d, str)]
+        components.append({"dir": child, "name": name, "deps": deps})
+    return components
+
+
+def _extract_dep_name(dep_spec: str) -> str:
+    """Return the bare distribution name from a PEP 508 requirement string.
+
+    Only the prefix up to the first version/marker/extras punctuation is
+    returned. ``pydantic>=2`` → ``pydantic``; ``scope_of_work`` → ``scope_of_work``.
+    Dashes and underscores are normalised to underscores for comparison
+    with ``[project].name`` (which uses underscores in pos-v2).
+    """
+    # Punctuation that terminates the name portion of a PEP 508 spec.
+    terminators = ("<", ">", "=", "!", "~", ";", "[", " ", "@")
+    name = dep_spec
+    for t in terminators:
+        idx = name.find(t)
+        if idx >= 0:
+            name = name[:idx]
+    return name.strip().replace("-", "_")
+
+
+def _topological_order(components: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return ``components`` sorted so each item's sibling deps come first.
+
+    A component's ``deps`` list may contain both external deps (pydantic,
+    pyee, …) and sibling component names (``scope_of_work``,
+    ``pos_orchestrator``, …). Only sibling names participate in the
+    topological sort; external deps are ignored (pip resolves them).
+
+    Raises ``RuntimeError`` on a declared cycle — pos-v2's component
+    graph is a DAG by design and a cycle is a shipped-artifact defect.
+    """
+    name_to_component: dict[str, dict[str, Any]] = {
+        c["name"]: c for c in components
+    }
+    sibling_names = set(name_to_component.keys())
+
+    # Adjacency: component_name -> set of sibling names it depends on.
+    adj: dict[str, set[str]] = {}
+    for c in components:
+        siblings: set[str] = set()
+        for dep in c["deps"]:
+            bare = _extract_dep_name(dep)
+            if bare in sibling_names and bare != c["name"]:
+                siblings.add(bare)
+        adj[c["name"]] = siblings
+
+    # Kahn's algorithm — stable output via sorted() on each level.
+    ordered: list[dict[str, Any]] = []
+    remaining = dict(adj)
+    while remaining:
+        ready = sorted(name for name, deps in remaining.items() if not deps)
+        if not ready:
+            cycle_members = sorted(remaining.keys())
+            raise RuntimeError(
+                "editable-topological-cycle:" + ",".join(cycle_members)
+            )
+        for name in ready:
+            ordered.append(name_to_component[name])
+            del remaining[name]
+        for name in list(remaining.keys()):
+            remaining[name] = {d for d in remaining[name] if d in remaining}
+    return ordered
+
+
+def _is_component_installed(
+    venv_python: Path, component_name: str, component_dir: Path
+) -> bool:
+    """Return True iff ``component_name`` (distribution name) is already editable-installed.
+
+    Distribution name (``[project].name`` in pyproject) is not always
+    equal to the top-level import module name. Example: safety-layer's
+    dist name is ``pos_safety_layer`` but its importable module is
+    ``safety_layer``. Idempotency must therefore check by *distribution*
+    identity, not by import name.
+
+    Uses ``importlib.metadata.distribution()`` to resolve the dist, then
+    reads the ``direct_url.json`` dist-info file to confirm the install
+    is editable and rooted at ``component_dir`` (PEP 610). If the dist
+    is installed from a different source, we reinstall rather than
+    short-circuit — the user may have moved their workspace and a stale
+    editable-install would import from the wrong path.
+    """
+    probe_script = (
+        "import json, sys\n"
+        "from importlib.metadata import distribution, PackageNotFoundError\n"
+        "name = sys.argv[1]\n"
+        "try:\n"
+        "    d = distribution(name)\n"
+        "except PackageNotFoundError:\n"
+        "    print(json.dumps({'found': False}))\n"
+        "    raise SystemExit(0)\n"
+        "try:\n"
+        "    raw = d.read_text('direct_url.json') or ''\n"
+        "except Exception:\n"
+        "    raw = ''\n"
+        "info = json.loads(raw) if raw else {}\n"
+        "print(json.dumps({'found': True, 'direct_url': info}))\n"
+    )
+    result = subprocess.run(
+        [str(venv_python), "-c", probe_script, component_name],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    if result.returncode != 0:
+        return False
+    try:
+        payload = json.loads(result.stdout.strip() or "{}")
+    except json.JSONDecodeError:
+        return False
+    if not payload.get("found"):
+        return False
+    info = payload.get("direct_url") or {}
+    # PEP 610: editable install has dir_info.editable == true.
+    dir_info = info.get("dir_info") or {}
+    if not dir_info.get("editable"):
+        # Non-editable install — reinstall to make it editable.
+        return False
+    url = info.get("url") or ""
+    if not url.startswith("file://"):
+        return False
+    installed_path = Path(url[len("file://"):])
+    try:
+        return installed_path.resolve() == component_dir.resolve()
+    except (ValueError, OSError):
+        return str(installed_path) == str(component_dir)
+
+
+def _install_editable(
+    *,
+    venv_python: Path,
+    component_dir: Path,
+    component_name: str,
+    timeout_s: int = 300,
+) -> PipOutcome:
+    """Run ``pip install -e <component_dir>`` in the shared venv.
+
+    Uses ``--no-deps`` because all declared siblings are installed in
+    topological order by the caller (sibling deps are file-refs, not
+    PyPI releases — without ``--no-deps`` pip would try to resolve them
+    against PyPI and fail). External deps (pydantic, pyee, etc.) were
+    installed during the earlier shared-requirements phase, so pip
+    does not need to resolve them here either.
+    """
+    try:
+        result = subprocess.run(
+            [
+                str(venv_python),
+                "-m",
+                "pip",
+                "install",
+                "--disable-pip-version-check",
+                "--no-deps",
+                "-e",
+                str(component_dir),
+            ],
+            check=False,
+            capture_output=True,
+            timeout=timeout_s,
+            text=True,
+        )
+    except subprocess.TimeoutExpired:
+        return PipOutcome(
+            ok=False,
+            component=component_name,
+            venv_python=venv_python,
+            requirements_path=None,
+            returncode=-1,
+            stderr_tail=f"pip install -e {component_dir} timed out",
+        )
+    except Exception as e:  # pragma: no cover
+        return PipOutcome(
+            ok=False,
+            component=component_name,
+            venv_python=venv_python,
+            requirements_path=None,
+            returncode=-1,
+            stderr_tail=f"{type(e).__name__}: {e}",
+        )
+    tail_src = result.stderr or result.stdout or ""
+    tail = "\n".join(tail_src.splitlines()[-10:])
+    return PipOutcome(
+        ok=(result.returncode == 0),
+        component=component_name,
+        venv_python=venv_python,
+        requirements_path=None,
+        returncode=result.returncode,
+        stderr_tail=tail,
+    )
+
+
+def _install_editable_components(
+    *,
+    pos_v2_root: Path,
+    shared_venv_python: Path,
+) -> list[PipOutcome]:
+    """Discover components, topologically order them, and editable-install each.
+
+    Idempotent: already-installed components short-circuit without
+    invoking pip. The pip ``-e`` install is itself idempotent but
+    short-circuiting keeps the fresh-clone/re-run time difference
+    observable (and prevents rebuilding editable metadata pointlessly).
+    """
+    components = _discover_components(pos_v2_root)
+    ordered = _topological_order(components)
+    outcomes: list[PipOutcome] = []
+    for comp in ordered:
+        name: str = comp["name"]
+        cdir: Path = comp["dir"]
+        if _is_component_installed(shared_venv_python, name, cdir):
+            outcomes.append(
+                PipOutcome(
+                    ok=True,
+                    component=name,
+                    venv_python=shared_venv_python,
+                    requirements_path=None,
+                    returncode=0,
+                    stderr_tail="already-installed",
+                )
+            )
+            continue
+        outcomes.append(
+            _install_editable(
+                venv_python=shared_venv_python,
+                component_dir=cdir,
+                component_name=name,
+            )
+        )
+    return outcomes
 
 
 # ---- plist substitution via Amendment 4 ------------------------------
@@ -545,6 +859,42 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
                 "network or proxy issue, resolve it before reopening. If a\n"
                 "dependency cannot resolve, inspect\n"
                 f"{outcome.requirements_path} and adjust the pin.",
+            )
+            return 0
+
+    # ---- Phase 3e: per-component editable installs ----------------
+    # Discover every component shipping a pyproject.toml, topologically
+    # order by declared sibling dependencies, and ``pip install -e``
+    # each into the shared venv. Without this, cross-component imports
+    # (``import pos_orchestrator`` etc.) fail on fresh clone and the
+    # Phase 4 scaffold raises ``ImportError`` → -32099 scaffold-failed.
+    print("pos v2 first-run: installing component packages (editable)...")
+    try:
+        editable_outcomes = _install_editable_components(
+            pos_v2_root=pos_v2_root,
+            shared_venv_python=shared_python,
+        )
+    except RuntimeError as e:
+        _emit_diag(
+            ERR_HANDS_OFF_INTERNAL,
+            f"hands-off-lifecycle-internal:{e}",
+            "The component dependency graph declared a cycle — this is a\n"
+            "shipped-artifact defect in pos-v2 pyproject.toml files.",
+            "File an issue with the component names reported above; fix\n"
+            "the cycle by breaking one of the declared sibling deps.",
+        )
+        return 0
+    for outcome in editable_outcomes:
+        if not outcome.ok:
+            _emit_diag(
+                ERR_PIP_INSTALL_FAILED,
+                f"pip-install-failed:editable:{outcome.component}",
+                outcome.stderr_tail or f"returncode {outcome.returncode}",
+                "Next session will retry from this component. This is the\n"
+                "editable-install phase (pip install -e) — failures here\n"
+                "usually indicate a malformed pyproject.toml or missing\n"
+                "build-system requirements. Inspect the component's\n"
+                "pyproject.toml and adjust accordingly.",
             )
             return 0
 

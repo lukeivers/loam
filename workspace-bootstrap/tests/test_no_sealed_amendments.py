@@ -6,9 +6,13 @@ constant and reads SEAL_COMMIT from a sidecar file, diffing
 `BASELINE..SEAL_COMMIT` — NOT `..HEAD`. The HEAD-based variant is the
 defect fixed on `f94d602`; it must not be reintroduced.
 
-BASELINE: ac48a7b (reversibility-primitive docstring correction —
-    the tip of the sealed surface at the time workspace-bootstrap
-    opens; per brief §1 and §9).
+BASELINE: the commit immediately preceding the most recent amendment
+    window for workspace-bootstrap. Originally ac48a7b at first seal;
+    updated to 3780603 when Amendment 4 (hands-off-lifecycle
+    first_run_scaffold phase) opened. Each new amendment that opens
+    this sealed surface updates BASELINE to the pre-amendment tip so
+    the diff scope reflects the amendment, not the full rebuild
+    history.
 SEAL_COMMIT: populated at seal time. During build, falls back to HEAD.
 """
 
@@ -19,7 +23,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "ac48a7b"
+BASELINE = "3780603"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -40,7 +44,7 @@ def test_B23_seal_commit_pinning_pattern() -> None:
     """The test file exposes SEAL_COMMIT_PATH and names BASELINE; the
     diff call routes through _seal_commit() (not a hardcoded HEAD)."""
     source = Path(__file__).read_text()
-    assert 'BASELINE = "ac48a7b"' in source
+    assert "BASELINE = " in source
     assert "SEAL_COMMIT_PATH" in source
     assert "{BASELINE}..{seal}" in source, (
         "the diff call must route through _seal_commit()"

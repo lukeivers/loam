@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import stat
 import subprocess
 import sys
@@ -46,6 +47,12 @@ from ..spec import BaseContribution, ContributionMetadata, Phase
 
 ERR_PARTIAL_SCAFFOLD = -32090
 ERR_PLATFORM_UNSUPPORTED = -32091
+# -32099 is the hands-off-lifecycle-internal catch-all per the
+# lifecycle README's error-code table. The amendment-#6 (namespaced-
+# labels-and-bootout) failure modes are scaffold-internal conditions
+# and share this code; callers distinguish by the kind: prefix on the
+# message payload.
+ERR_HANDS_OFF_INTERNAL = -32099
 
 
 class PartialScaffoldError(BootstrapError):
@@ -54,6 +61,77 @@ class PartialScaffoldError(BootstrapError):
 
 class PlatformUnsupportedError(BootstrapError):
     code = ERR_PLATFORM_UNSUPPORTED
+
+
+class WorkspaceSlugUnrepresentableError(BootstrapError):
+    """Raised when the workspace-root basename has no valid slug form.
+
+    Introduced by amendment #6 (namespaced-labels-and-bootout). A slug
+    must match `^[a-z0-9][a-z0-9-]*$` after sanitisation; an empty slug
+    means the scaffold has no stable identity to name services under.
+    Refuse structurally rather than write unnamespaced service files.
+    """
+
+    code = ERR_HANDS_OFF_INTERNAL
+
+
+class ServiceManagerBootoutError(BootstrapError):
+    """Raised when launchctl bootout fails for reasons other than
+    `service not loaded`.
+
+    Introduced by amendment #6. Bootout must succeed (or be benignly
+    "not loaded") before we attempt bootstrap — otherwise the service
+    manager is in an ambiguous state and pushing a bootstrap through
+    would resurrect the exact failure class this amendment closes.
+    """
+
+    code = ERR_HANDS_OFF_INTERNAL
+
+
+# ---- workspace-slug + service-label derivation (amendment #6) --------
+#
+# Slugs are derived deterministically from the workspace root's
+# directory basename so two clones on one host do not collide on
+# launchd/systemd labels. The sanitisation is deliberately conservative
+# — disallowed characters become '-', runs collapse, leading/trailing
+# '-' trim — matching reverse-DNS label conventions on macOS and
+# systemd unit-name safety on Linux.
+
+
+_SLUG_ALLOWED_RE = re.compile(r"[^a-z0-9-]+")
+_SLUG_COLLAPSE_RE = re.compile(r"-+")
+
+
+def workspace_slug(workspace_root: Path | str) -> str:
+    """Return a stable, launchd/systemd-safe slug for a workspace root.
+
+    Raises ``WorkspaceSlugUnrepresentableError`` if the basename
+    contains no characters that survive sanitisation.
+    """
+    basename = Path(workspace_root).name
+    lowered = basename.lower()
+    slug = _SLUG_ALLOWED_RE.sub("-", lowered)
+    slug = _SLUG_COLLAPSE_RE.sub("-", slug)
+    slug = slug.strip("-")
+    if not slug:
+        raise WorkspaceSlugUnrepresentableError(
+            f"workspace-slug-unrepresentable:{basename!r}",
+            data={"basename": basename},
+        )
+    return slug
+
+
+# Service "kinds" installed by the first-run scaffold. The full label
+# on both platforms is `com.pos-v2.<slug>.<kind>`; the plist/unit
+# filename matches the label.
+_SERVICE_KINDS: tuple[str, ...] = ("memory-graphiti", "orchestrator")
+
+
+def service_label(kind: str, slug: str) -> str:
+    """Compose the reverse-DNS service label for a kind + workspace slug."""
+    if kind not in _SERVICE_KINDS:
+        raise ValueError(f"unknown service kind: {kind!r}")
+    return f"com.pos-v2.{slug}.{kind}"
 
 
 # ---- confirmation sentence (proposal Q7 — locked wording) ------------
@@ -292,6 +370,13 @@ def run_first_run_scaffold(
             data={"platform": plat, "pos_root": str(pos_root)},
         )
 
+    # Amendment #6 structural refusal: derive (and validate) the
+    # workspace slug before any file write. A workspace whose basename
+    # has no valid slug form cannot be named in service labels; we refuse
+    # here rather than land unnamespaced service files.
+    ws = _resolve_workspace_root(workspace_root)
+    slug = workspace_slug(ws)
+
     pos_root = Path(pos_root).expanduser()
     bootstrap_yaml = pos_root / "bootstrap.yaml"
 
@@ -340,12 +425,14 @@ def run_first_run_scaffold(
         _write_file(dest, content)
         written.append(rel)
 
-    # Install service-manager files.
-    ws = _resolve_workspace_root(workspace_root)
+    # Install service-manager files. The workspace root + slug were
+    # resolved at the top of this function (before any file write);
+    # reuse them here.
     service_runner = service_runner or ServiceManagerRunner(platform_label=plat)
     service_files = _install_service_manager_files(
         plat=plat,
         workspace_root=ws,
+        slug=slug,
         override_dir=service_manager_dir_override,
     )
 
@@ -376,7 +463,7 @@ def run_first_run_scaffold(
 
 
 _LAUNCHD_TEMPLATES: dict[str, str] = {
-    "com.pos-v2.memory-graphiti": """\
+    "memory-graphiti": """\
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTD/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -397,7 +484,7 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
 </dict>
 </plist>
 """,
-    "com.pos.orchestrator": """\
+    "orchestrator": """\
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTD/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -423,7 +510,7 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
 
 
 _SYSTEMD_TEMPLATES: dict[str, str] = {
-    "pos-v2-memory-graphiti": """\
+    "memory-graphiti": """\
 [Unit]
 Description=pos-v2 memory sidecar (Graphiti + Kuzu)
 After=default.target
@@ -441,7 +528,7 @@ StartLimitBurst=3
 [Install]
 WantedBy=default.target
 """,
-    "pos-orchestrator": """\
+    "orchestrator": """\
 [Unit]
 Description=pOS session-resilient orchestrator
 After=default.target
@@ -466,9 +553,15 @@ def _install_service_manager_files(
     *,
     plat: str,
     workspace_root: str,
+    slug: str,
     override_dir: Path | None,
 ) -> list[tuple[str, Path]]:
     """Write plist / .service files into the platform-appropriate dir.
+
+    Labels are computed per workspace slug (amendment #6):
+    ``com.pos-v2.<slug>.<kind>`` on both platforms. The filename
+    matches the label; the {label} placeholder in templates is
+    substituted with the full label string.
 
     Returns (label, absolute-path) pairs the caller can bootstrap.
     """
@@ -476,7 +569,8 @@ def _install_service_manager_files(
         dest_dir = override_dir or (Path.home() / "Library" / "LaunchAgents")
         dest_dir.mkdir(parents=True, exist_ok=True)
         out: list[tuple[str, Path]] = []
-        for label, tmpl in _LAUNCHD_TEMPLATES.items():
+        for kind, tmpl in _LAUNCHD_TEMPLATES.items():
+            label = service_label(kind, slug)
             path = dest_dir / f"{label}.plist"
             path.write_text(tmpl.format(label=label, workspace=workspace_root))
             path.chmod(0o644)
@@ -487,7 +581,8 @@ def _install_service_manager_files(
     dest_dir = override_dir or (Path.home() / ".config" / "systemd" / "user")
     dest_dir.mkdir(parents=True, exist_ok=True)
     out = []
-    for label, tmpl in _SYSTEMD_TEMPLATES.items():
+    for kind, tmpl in _SYSTEMD_TEMPLATES.items():
+        label = service_label(kind, slug)
         path = dest_dir / f"{label}.service"
         path.write_text(tmpl.format(workspace=workspace_root))
         path.chmod(0o644)
@@ -504,17 +599,61 @@ class ServiceManagerRunner:
     def __init__(self, *, platform_label: str) -> None:
         self._plat = platform_label
 
+    # Amendment #6 constants: stderr fragments launchctl emits when the
+    # target label is not currently loaded. Treating these as benign
+    # (not a bootout failure) lets the first-ever bootstrap on a fresh
+    # host succeed without the label needing to already exist.
+    _BENIGN_BOOTOUT_STDERR_FRAGMENTS = (
+        "Could not find specified service",
+        "No such process",
+        "Boot-out failed: 5: Input/output error",
+        "not loaded",
+    )
+
     def bootstrap(self, *, label: str, service_file: Path) -> None:
-        """Bring a service up. Non-blocking request to the service
-        manager; the manager itself supervises the long-lived process.
+        """Bring a service up, replacing any cached configuration.
+
+        Amendment #6 (namespaced-labels-and-bootout) behaviour:
+        always ``bootout`` the label first so launchd/systemd-user
+        drops any stale in-memory config, then install the fresh
+        plist/unit. Without this, launchd's ``bootstrap`` is a no-op
+        when the label is already loaded — the exact failure class
+        that broke pos3's first-run on 2026-04-22.
+
+        Non-fatal when bootout reports "service not loaded" (the
+        normal first-ever-bootstrap case); a structural refusal
+        otherwise via ``ServiceManagerBootoutError``.
 
         This never launches a child process itself — the
         ``SessionStart`` hook's FD-inheritance bug (Claude Code
         v2.1.87, issue #43123) is avoided by delegating to the
-        platform's service manager, which is FD-safe."""
+        platform's service manager, which is FD-safe.
+        """
         if self._plat == "macos":
             uid = os.getuid()
             binary = _which("launchctl") or "/bin/launchctl"
+            bootout = subprocess.run(
+                [binary, "bootout", f"gui/{uid}/{label}"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            if bootout.returncode != 0:
+                stderr = bootout.stderr or ""
+                if not any(
+                    frag in stderr
+                    for frag in self._BENIGN_BOOTOUT_STDERR_FRAGMENTS
+                ):
+                    raise ServiceManagerBootoutError(
+                        f"service-manager-bootout-failed:{label}:"
+                        f"{stderr.strip()[-200:]}",
+                        data={
+                            "label": label,
+                            "returncode": bootout.returncode,
+                            "stderr_tail": stderr.strip()[-200:],
+                        },
+                    )
             subprocess.run(
                 [binary, "bootstrap", f"gui/{uid}", str(service_file)],
                 check=False,
@@ -524,7 +663,15 @@ class ServiceManagerRunner:
             return
         if self._plat == "linux":
             binary = _which("systemctl") or "/bin/systemctl"
-            # Reload to pick up any new unit files, then start.
+            # Stop first so any cached unit config is released; benign
+            # when the unit isn't running.
+            subprocess.run(
+                [binary, "--user", "stop", label],
+                check=False,
+                capture_output=True,
+                timeout=10,
+            )
+            # Reload to pick up the rewritten unit file on disk.
             subprocess.run(
                 [binary, "--user", "daemon-reload"],
                 check=False,

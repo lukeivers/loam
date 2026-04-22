@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -66,6 +67,7 @@ if str(_HOOKS_DIR) not in sys.path:
 from first_run_inventory import (  # noqa: E402
     InventoryParseError,
     load_inventory,
+    resolve_service_labels,
     validate_inventory,
 )
 from first_run_progress import get_progress  # noqa: E402
@@ -91,6 +93,40 @@ ERR_PIP_INSTALL_FAILED = -32097
 ERR_SERVICE_HEALTH_TIMEOUT = -32098
 ERR_HANDS_OFF_INTERNAL = -32099
 ERR_PLATFORM_UNSUPPORTED = -32091
+
+
+# ---- workspace-slug derivation (amendment #6) ------------------------
+#
+# Duplicated from workspace_bootstrap.adapters.first_run_scaffold.
+# The worker runs under the system Python interpreter at the moment it
+# needs a slug (for inventory label resolution in Phase 4b), before the
+# shared venv is on this process's path — so a stdlib-only local copy
+# is needed. Both implementations must stay in lock-step; the amendment
+# ships a parity test (tests/test_workspace_slug_parity.py) asserting
+# they agree on a fixture set. Any change to sanitisation semantics
+# must land in both files in the same commit.
+
+
+_SLUG_ALLOWED_RE = re.compile(r"[^a-z0-9-]+")
+_SLUG_COLLAPSE_RE = re.compile(r"-+")
+
+
+def _workspace_slug(workspace_root: Path | str) -> str:
+    """Derive the workspace slug used in namespaced service labels."""
+    basename = Path(workspace_root).name
+    lowered = basename.lower()
+    slug = _SLUG_ALLOWED_RE.sub("-", lowered)
+    slug = _SLUG_COLLAPSE_RE.sub("-", slug)
+    slug = slug.strip("-")
+    if not slug:
+        # Propagate as ERR_HANDS_OFF_INTERNAL; the scaffold subprocess
+        # would normally refuse first, but the helper defends the
+        # health-poll path as well so a misconfigured harness does not
+        # silently degrade to probing the wrong labels.
+        raise ValueError(
+            f"workspace-slug-unrepresentable:{basename!r}"
+        )
+    return slug
 
 
 # ---- state-file integration (detachment amendment) ------------------
@@ -1166,6 +1202,43 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             user_remediation=(
                 "this is a bug in pos-v2 itself, not in your machine.\n"
                 "re-clone the repo or file an issue; next reopen retries."
+            ),
+        )
+        return 0
+
+    # Amendment #6: resolve the per-workspace slug in service labels
+    # before anything downstream consumes them. Invalid slug = refuse
+    # structurally rather than probe unnamespaced labels.
+    try:
+        slug = _workspace_slug(pos_v2_root)
+    except ValueError as e:
+        _emit_diag(
+            ERR_HANDS_OFF_INTERNAL,
+            f"hands-off-lifecycle-internal:{e}",
+            str(e),
+            "The pos-v2 workspace directory name contains no characters\n"
+            "that survive slug sanitisation. Rename the workspace\n"
+            "directory to something matching [a-z0-9-]+, then reopen.",
+            user_what="workspace directory name cannot be turned into a service slug.",
+            user_remediation=(
+                "rename the workspace directory to use letters, digits, and\n"
+                "hyphens (e.g. `pos-v2`), then reopen claude."
+            ),
+        )
+        return 0
+    try:
+        inventory = resolve_service_labels(inventory, slug)
+    except InventoryParseError as e:
+        _emit_diag(
+            ERR_HANDS_OFF_INTERNAL,
+            f"hands-off-lifecycle-internal:inventory-label-template:{e}",
+            str(e),
+            "The first-run inventory declares a service label template\n"
+            "with an unknown placeholder. This is a shipped-artifact\n"
+            "defect — file an issue.",
+            user_what="pos-v2's bundled install manifest has a bad label template.",
+            user_remediation=(
+                "this is a bug in pos-v2 itself. file an issue with the error above."
             ),
         )
         return 0

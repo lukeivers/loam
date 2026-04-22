@@ -178,9 +178,15 @@ def test_T13_prior_session_start_moved_aside(fresh_workspace: Path) -> None:
     assert live["hooks"]["SessionStart"][0]["matcher"] == ""
 
     # And confirmation sentence surfaces the displacement.
+    # Amendment #6: labels are workspace-slug scoped; the fixture slug
+    # is the basename of `fresh_workspace` (pytest tmp_path leaf).
+    sample_labels = [
+        "com.pos-v2.alpha.memory-graphiti",
+        "com.pos-v2.alpha.orchestrator",
+    ]
     sentence = _confirmation_sentence(
         merge_result=result,
-        service_labels=["com.pos-v2.memory-graphiti", "com.pos.orchestrator"],
+        service_labels=sample_labels,
     )
     assert result.backup_path.name in sentence
 
@@ -583,11 +589,16 @@ def test_T10_pip_install_failure_surfaces_diagnostic(
 
 
 def test_T14_inventory_declares_both_services() -> None:
-    """T14 — services list has both orchestrator and memory sidecar."""
+    """T14 — services list has both orchestrator and memory sidecar.
+
+    Amendment #6: labels are ``{slug}``-templated so the inventory is
+    workspace-agnostic. The assertion checks the template form — the
+    first-run helper resolves ``{slug}`` at load time.
+    """
     data = load_inventory(REPO_ROOT / "first-run-inventory.yaml")
     labels = [svc["label"] for svc in data["services"]]
-    assert "com.pos-v2.memory-graphiti" in labels
-    assert "com.pos.orchestrator" in labels
+    assert "com.pos-v2.{slug}.memory-graphiti" in labels
+    assert "com.pos-v2.{slug}.orchestrator" in labels
 
 
 def test_T15_service_health_timeout_surfaces_diagnostic(
@@ -598,13 +609,74 @@ def test_T15_service_health_timeout_surfaces_diagnostic(
 
     _emit_diag(
         ERR_SERVICE_HEALTH_TIMEOUT,
-        "service-health-timeout:com.pos.orchestrator",
-        "services did not report healthy within budget: ['com.pos.orchestrator']",
+        "service-health-timeout:com.pos-v2.alpha.orchestrator",
+        "services did not report healthy within budget: ['com.pos-v2.alpha.orchestrator']",
         "Next session will retry. Check service logs:",
     )
     captured = capsys.readouterr()
     assert "-32098" in captured.out
     assert "service-health-timeout" in captured.out
+
+
+# ---- Amendment #6 — AC7: health-poll targets computed labels --------
+
+
+def test_AC7_health_poll_resolves_labels_against_workspace_slug(
+    tmp_path: Path,
+) -> None:
+    """AC7 — ``resolve_service_labels`` substitutes ``{slug}`` in each
+    service label against the workspace slug derived from the
+    workspace-root basename. After resolution, the inventory's service
+    entries carry the full reverse-DNS label the first-run worker
+    probes in Phase 4b.
+    """
+    from first_run_inventory import resolve_service_labels
+    from first_run_helper import _workspace_slug
+
+    data = load_inventory(REPO_ROOT / "first-run-inventory.yaml")
+    # Confirm template form survives the loader.
+    raw_labels = [svc["label"] for svc in data["services"]]
+    assert all("{slug}" in lbl for lbl in raw_labels)
+
+    # Fixture: simulate a workspace basename.
+    fixture_root = tmp_path / "fixture-x"
+    fixture_root.mkdir()
+    slug = _workspace_slug(fixture_root)
+    assert slug == "fixture-x"
+
+    resolved = resolve_service_labels(data, slug)
+    resolved_labels = [svc["label"] for svc in resolved["services"]]
+    assert "com.pos-v2.fixture-x.memory-graphiti" in resolved_labels
+    assert "com.pos-v2.fixture-x.orchestrator" in resolved_labels
+    # Original inventory must NOT be mutated (resolve returns a new dict).
+    assert "{slug}" in data["services"][0]["label"]
+
+
+def test_AC7_workspace_slug_parity_with_workspace_bootstrap() -> None:
+    """AC7 cross-cutting — the helper's local ``_workspace_slug`` and
+    ``workspace_bootstrap.adapters.first_run_scaffold.workspace_slug``
+    must agree on a fixture set. Duplicated logic between the two
+    Python interpreters (system vs shared-venv) is the documented
+    trade-off; the parity test is how they stay in lock-step.
+    """
+    from workspace_bootstrap.adapters.first_run_scaffold import (
+        workspace_slug as canonical_workspace_slug,
+    )
+    from first_run_helper import _workspace_slug
+
+    fixtures = [
+        "pos3",
+        "POS3",
+        "pos_v2_dev",
+        "My.App",
+        "alpha---beta",
+        "ivers-corp-pos-v2",
+    ]
+    for name in fixtures:
+        root = Path("/tmp") / name
+        assert canonical_workspace_slug(root) == _workspace_slug(root), (
+            f"slug drift on {name!r}"
+        )
 
 
 # ---- T1: end-to-end flow via fixture --------------------------------

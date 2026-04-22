@@ -286,6 +286,44 @@ def load_inventory(path: Path) -> dict[str, Any]:
     return parse_inventory(text)
 
 
+def resolve_service_labels(inventory: dict[str, Any], slug: str) -> dict[str, Any]:
+    """Substitute ``{slug}`` in each service label against the workspace slug.
+
+    Amendment #6 (namespaced-labels-and-bootout). The first-run inventory
+    declares service labels as templates because label identity is
+    workspace-scoped; the helper resolves them at load time once the
+    workspace slug is known. Returns a new inventory mapping with the
+    resolved labels — the original is not mutated.
+
+    Templates use Python ``str.format`` syntax; only the ``{slug}``
+    placeholder is honoured. Other ``{...}`` tokens are surfaced as
+    ``InventoryParseError`` rather than silently passed through, so a
+    typo like ``{sulg}`` is named loudly.
+    """
+    services_in = inventory.get("services") or []
+    services_out: list[dict[str, Any]] = []
+    for svc in services_in:
+        if not isinstance(svc, dict):
+            services_out.append(svc)
+            continue
+        raw_label = svc.get("label")
+        if not isinstance(raw_label, str):
+            services_out.append(svc)
+            continue
+        try:
+            resolved = raw_label.format(slug=slug)
+        except (KeyError, IndexError) as e:
+            raise InventoryParseError(
+                f"unknown placeholder in service label {raw_label!r}: {e}"
+            ) from e
+        copied = dict(svc)
+        copied["label"] = resolved
+        services_out.append(copied)
+    resolved_inventory = dict(inventory)
+    resolved_inventory["services"] = services_out
+    return resolved_inventory
+
+
 # ---- schema validation ---------------------------------------------
 
 

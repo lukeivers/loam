@@ -42,6 +42,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # shared venv's Python via first_run_scaffold_runner.py; worker
 # invocation gained -u + PYTHONUNBUFFERED=1; timeout values unified to
 # the documented seconds unit).
+#
+# The next BASELINE advance (to 9f35979, pre-amendment tip for the
+# namespaced-labels-and-bootout amendment #6) happens in lockstep with
+# the seal commit, same as the workspace-bootstrap side.
 BASELINE = "101114d"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -101,6 +105,15 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         # the current `{matcher, hooks: [...]}` envelope, which requires
         # touching this file.
         ".claude",
+        # Amendment #6 (namespaced-labels-and-bootout) additions:
+        #   - `docs/rebuild/components/namespaced-labels-and-bootout/`
+        #     (proposal + brief live with the amendment; top-level
+        #     `docs` match lets first_prefix pass here — finer-grained
+        #     filtering lives in workspace-bootstrap's seal test).
+        #   - `first-run-inventory.yaml` — workspace-level manifest
+        #     templating service labels per workspace slug.
+        "docs",
+        "first-run-inventory.yaml",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

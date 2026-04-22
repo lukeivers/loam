@@ -2,7 +2,7 @@
 
 **Component:** `graceful_degradation` (pOS v2 Phase 2).
 **Ships on `pos-v2` branch at `/Users/lukeivers/ivers-corp-pos-v2/graceful-degradation/`.**
-**Authored against:** `context/pos-rebuild/components/graceful-degradation/{brief,proposal,research}.md`.
+**Authored against:** `../../docs/rebuild/components/graceful-degradation/{brief,proposal,research}.md`.
 
 ---
 

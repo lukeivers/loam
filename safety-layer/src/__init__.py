@@ -23,7 +23,7 @@ Error codes (IPC):
     -32043 safety_gate_channel_unavailable
 
 See docs/architecture.md for the full design and
-context/pos-rebuild/components/safety-layer/ for the governing documents.
+../../docs/rebuild/components/safety-layer/ for the governing documents.
 """
 
 from __future__ import annotations

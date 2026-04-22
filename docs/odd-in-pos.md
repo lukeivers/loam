@@ -80,7 +80,7 @@ proposals are authored as individual test-shaped statements — they map
 The safety-layer is the foundational component responsible for kill
 switches (scope, session, system), the always-ask list, and the
 dangerous-operation gate. Its proposal lives at
-`context/pos-rebuild/components/safety-layer/proposal.md` and declares
+`docs/rebuild/components/safety-layer/proposal.md` and declares
 twenty acceptance criteria grouped by spec clause.
 
 ### 3.1 How the criteria group

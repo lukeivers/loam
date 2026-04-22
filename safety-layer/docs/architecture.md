@@ -1,7 +1,7 @@
 # Safety layer — architecture
 
 **Status:** Built 2026-04-19. Binding proposal:
-`context/pos-rebuild/components/safety-layer/proposal.md`.
+`../../docs/rebuild/components/safety-layer/proposal.md`.
 
 This is the structural summary for future readers. For the decision
 record, read the proposal.

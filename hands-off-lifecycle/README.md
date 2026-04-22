@@ -26,14 +26,21 @@ self-correction -32070s, workspace-bootstrap -32080s).
 Currently claimed codes:
 
 - `-32090` partial_scaffold_detected (workspace-bootstrap adapter)
-- `-32091` platform_unsupported (workspace-bootstrap adapter)
+- `-32091` platform_unsupported (workspace-bootstrap adapter; also
+  reused by true-first-run for
+  `platform-unsupported:no-compatible-python-found` and
+  `platform-unsupported:python-venv-module-missing` — first-run's
+  Python-version gate is mechanically a platform-unsupported case)
 - `-32092` memory_unreachable (orchestrator supervisor)
 - `-32093` memory_corrupt (orchestrator supervisor, reserved)
 - `-32094` supervisor_lost_quorum (orchestrator supervisor, reserved)
 - `-32095` staging_overflow_hard_cap (memory-system staging)
 - `-32096` drain_poison_accumulation (memory-system drain)
-- `-32097..-32098` reserved
-- `-32099` hands_off_lifecycle_internal
+- `-32097` pip_install_failed (true-first-run helper)
+- `-32098` service_health_timeout (true-first-run helper)
+- `-32099` hands_off_lifecycle_internal (catch-all — inventory-parse
+  failures, self-retire verification failures, venv-creation failures,
+  etc.)
 
 ## SessionStart hook (Claude Code v2.1.87+)
 
@@ -43,8 +50,23 @@ process inheriting Claude Code's FDs — it delegates to
 `launchctl bootstrap` / `systemctl --user start`, which are
 FD-safe. This mitigates issue #43123.
 
-See `hooks/settings.json.fragment` for the exact hook stanza to
-merge into a workspace's `.claude/settings.json`.
+`hooks/settings.json.fragment` describes the exact supervisor-path
+hook stanza — its command string is what the ongoing-operation hook
+looks like. In practice, a pos-v2 workspace ships `.claude/settings.json`
+already authored at the repo root, pointing at
+`hands-off-lifecycle/hooks/first-run.sh`. That shell script creates
+the shared venv on a fresh clone, installs per-component dependencies,
+substitutes plists, bootstraps services, then **self-retires** by
+rewriting the `SessionStart` stanza to invoke
+`orchestrator/scripts/pos_session_start.py` directly (matching the
+fragment) and deleting itself from the filesystem. The fragment is
+therefore the post-self-retire target shape, not a hand-merge
+recipe for users.
+
+See `../context/pos-rebuild/components/true-first-run/` for the
+true-first-run build brief. See `../docs/rebuild/FUTURE_IDEAS.md` for
+the "setup scripts self-retire on success" Core Development Convention
+the lifecycle follows.
 
 ## Ownership
 

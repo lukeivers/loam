@@ -6,6 +6,14 @@ H20 — all sealed-component regression suites pass post-build.
 H21 — root README replaced with fresh content.
 
 These tests run fast (git + file existence) and are deterministic.
+
+Seal-test pattern (inherited from the f94d602 defect fix applied to
+cost-governance, reversibility-primitive, and self-correction):
+H19 diffs BASELINE..SEAL_COMMIT, reading SEAL_COMMIT from the
+tests/SEAL_COMMIT sidecar. The HEAD-based variant was the defect the
+other sealed components already patched; this component adopts the
+same pattern so follow-on work (e.g. true-first-run's build) does not
+re-break a seal that was valid at its sealing moment.
 """
 
 from __future__ import annotations
@@ -17,15 +25,30 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+BASELINE = "3780603"
+SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
+
+
+def _seal_commit() -> str:
+    """Resolve SEAL_COMMIT from the sidecar file, else HEAD.
+
+    Post-seal the sidecar holds the exact SHA; HEAD is the build-time
+    fallback. This mirrors workspace-bootstrap's seal-test pattern.
+    """
+    if SEAL_COMMIT_PATH.exists():
+        txt = SEAL_COMMIT_PATH.read_text().strip()
+        if txt and txt != "HEAD":
+            return txt
+    return "HEAD"
 
 
 # ---- H19 diff scope --------------------------------------------------
 
 
-def _file_prefixes_since(baseline: str) -> set[str]:
+def _file_prefixes_between(baseline: str, seal: str) -> set[str]:
     """Return the set of top-level component directories touched."""
     result = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "diff", "--name-only", f"{baseline}..HEAD"],
+        ["git", "-C", str(REPO_ROOT), "diff", "--name-only", f"{baseline}..{seal}"],
         capture_output=True,
         text=True,
         check=True,
@@ -43,7 +66,11 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
     """Pre-amendment baseline is 3780603 (the last commit before
     Amendment 1's first touch). The allowed set is the four amended
     sealed components plus the new hands-off-lifecycle/ surface plus
-    the root README (per H21). Anything else is a halt-signal."""
+    the root README (per H21). Anything else is a halt-signal.
+
+    Diff routes through ``{BASELINE}..{seal}`` with ``seal`` from the
+    SEAL_COMMIT sidecar — the HEAD-based pattern was the f94d602 defect.
+    """
     allowed = {
         "memory-system",
         "orchestrator",
@@ -52,7 +79,8 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         "hands-off-lifecycle",
         "README.md",
     }
-    touched = _file_prefixes_since("3780603")
+    seal = _seal_commit()
+    touched = _file_prefixes_between(BASELINE, seal)
     outside = touched - allowed
     assert not outside, f"amendment touched outside-scope paths: {outside}"
 

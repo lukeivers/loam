@@ -1,0 +1,79 @@
+# first-run-inventory.yaml — workspace-level manifest of components that
+# participate in pos-v2 first-run setup.
+#
+# Consumed by hands-off-lifecycle/hooks/first_run_helper.py via a
+# stdlib-only JSON-compatible YAML subset parser. The subset supports:
+#   * top-level keys with scalar values
+#   * top-level keys with list-of-mapping values
+#   * block-scalar and double-quoted strings
+#   * line comments (everything after '#' to end of line, outside strings)
+#
+# Schema (stable; additions require a schema_version bump):
+#   schema_version: int
+#   shared_venv:
+#     path: <relative path from pos-v2 root>
+#     python_version: <PEP 440-ish constraint; first-run only enforces 3.13+>
+#     components: [ <str>, ... ]
+#   dedicated_venvs:
+#     - component: <dir name under pos-v2 root>
+#       venv_path: <relative path from pos-v2 root>
+#       requirements: <relative path from pos-v2 root to requirements.txt>
+#       rationale: <one line>
+#   services:
+#     - label: <launchd/systemd service label>
+#       kind: "memory" | "orchestrator"
+#       health:
+#         kind: "http" | "unix_socket"
+#         host: "127.0.0.1"
+#         port: 8765
+#         path: "/health"
+#         timeout_s: 2.0
+#
+# Components that ship their own requirements.txt go into shared_venv.components
+# unless they declare shares_venv=false via a dedicated_venvs entry. Components
+# without a requirements.txt (pure-Python packages installed editable) still
+# belong in shared_venv.components — first-run detects requirements.txt absence
+# and skips pip install -r for them (no pyproject.toml editable installs in
+# this component's scope; components needing editable installs use the shared
+# venv's working set already established by Amendment 4's scaffold).
+
+schema_version: 1
+
+shared_venv:
+  path: ".venv"
+  python_version: ">=3.13"
+  components:
+    - "scope-of-work"
+    - "objective-tracker"
+    - "primary-persona"
+    - "safety-layer"
+    - "reversibility-primitive"
+    - "cost-governance"
+    - "self-correction"
+    - "graceful-degradation"
+    - "orchestrator"
+    - "observability-aggregator"
+    - "self-upgrade"
+    - "workspace-bootstrap"
+
+dedicated_venvs:
+  - component: "memory-system"
+    venv_path: "memory-system/.venv"
+    requirements: "memory-system/requirements.txt"
+    rationale: "Graphiti and Kuzu are heavy and segregated from the core workspace venv."
+
+services:
+  - label: "com.pos-v2.memory-graphiti"
+    kind: "memory"
+    health:
+      kind: "http"
+      host: "127.0.0.1"
+      port: 8765
+      path: "/health"
+      timeout_s: 2.0
+  - label: "com.pos.orchestrator"
+    kind: "orchestrator"
+    health:
+      kind: "unix_socket"
+      socket_path: "~/.pos/orchestrator.sock"
+      timeout_s: 2.0

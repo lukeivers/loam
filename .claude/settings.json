@@ -1,0 +1,13 @@
+{
+  "_comment": "Ship-time SessionStart hook for pos-v2. On first run in a fresh clone, first-run.sh creates the venv, installs dependencies, authors settings.json stanzas, substitutes plists, and brings services up — then self-retires by rewriting this file to invoke the sealed supervisor path (pos_session_start.py with the venv Python) directly and deleting itself. See hands-off-lifecycle/README.md for the lifecycle. See docs/rebuild/FUTURE_IDEAS.md for the self-retire convention.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "$CLAUDE_PROJECT_DIR/hands-off-lifecycle/hooks/first-run.sh",
+        "async": false,
+        "timeout": 120000
+      }
+    ]
+  }
+}

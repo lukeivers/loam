@@ -25,7 +25,12 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-BASELINE = "3780603"
+# BASELINE: the commit immediately preceding the most recent amendment
+# window for hands-off-lifecycle. Originally 3780603 at first seal;
+# advanced to 7711249 when the Claude Code hook schema amendment opened
+# (ship-time + post-self-retire stanzas migrated from the flat-object
+# shape to the current `{matcher, hooks: [...]}` envelope).
+BASELINE = "7711249"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

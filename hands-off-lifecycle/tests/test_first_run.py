@@ -75,7 +75,13 @@ def test_T11_settings_json_authored_from_scratch(fresh_workspace: Path) -> None:
     assert result.wrote is True
     assert settings_path.exists()
     data = json.loads(settings_path.read_text())
-    assert data["hooks"]["SessionStart"][0]["command"].endswith("first-run.sh")
+    # Current Claude Code schema: SessionStart[i] = {matcher, hooks: [...]}.
+    assert (
+        data["hooks"]["SessionStart"][0]["hooks"][0]["command"].endswith(
+            "first-run.sh"
+        )
+    )
+    assert data["hooks"]["SessionStart"][0]["matcher"] == ""
     assert result.backup_path is None
     assert result.prior_session_start_displaced is False
 
@@ -110,7 +116,11 @@ def test_T12_user_keys_preserved_outside_session_start(
     assert data["env"] == {"MY_USER_VAR": "42"}
     assert data["permissions"] == {"allow": ["Read(//**)"]}
     assert data["hooks"]["PreToolUse"][0]["command"] == "/bin/true"
-    assert data["hooks"]["SessionStart"][0]["command"].endswith("first-run.sh")
+    assert (
+        data["hooks"]["SessionStart"][0]["hooks"][0]["command"].endswith(
+            "first-run.sh"
+        )
+    )
     assert result.prior_session_start_displaced is False
     # Preserved user keys are advertised in the result for the
     # confirmation sentence to reference.
@@ -160,7 +170,12 @@ def test_T13_prior_session_start_moved_aside(fresh_workspace: Path) -> None:
     )
 
     live = json.loads(settings_path.read_text())
-    assert live["hooks"]["SessionStart"][0]["command"].endswith("first-run.sh")
+    assert (
+        live["hooks"]["SessionStart"][0]["hooks"][0]["command"].endswith(
+            "first-run.sh"
+        )
+    )
+    assert live["hooks"]["SessionStart"][0]["matcher"] == ""
 
     # And confirmation sentence surfaces the displacement.
     sentence = _confirmation_sentence(
@@ -215,13 +230,15 @@ def test_T16_T17_self_retire_removes_script_and_rewrites_stanza(
     assert not first_run_path.exists(), "T16 — shell script deleted"
 
     data = json.loads(settings_path.read_text())
-    cmd = data["hooks"]["SessionStart"][0]["command"]
+    # Current Claude Code schema: SessionStart[i] = {matcher, hooks: [...]}.
+    cmd = data["hooks"]["SessionStart"][0]["hooks"][0]["command"]
     # T17 — stanza points at pos_session_start.py with venv python.
     expected_python = str(fresh_workspace / ".venv" / "bin" / "python")
     expected_script = str(
         fresh_workspace / "orchestrator" / "scripts" / "pos_session_start.py"
     )
     assert cmd == f"{expected_python} {expected_script}"
+    assert data["hooks"]["SessionStart"][0]["matcher"] == ""
 
     # Phase 7 verification passes.
     ok, problems = _verify_self_retire(
@@ -315,10 +332,12 @@ def test_T3_supervisor_stanza_is_consistent_across_sessions(
     first = build_supervisor_stanza(fresh_workspace)
     second = build_supervisor_stanza(fresh_workspace)
     assert first == second
-    # Shape: venv python + script path, nothing else.
-    assert first["type"] == "command"
-    assert first["command"].endswith("pos_session_start.py")
-    assert "/.venv/bin/python" in first["command"]
+    # Shape: current Claude Code envelope — {matcher, hooks: [command-obj]}.
+    assert first["matcher"] == ""
+    inner = first["hooks"][0]
+    assert inner["type"] == "command"
+    assert inner["command"].endswith("pos_session_start.py")
+    assert "/.venv/bin/python" in inner["command"]
 
 
 # ---- T4: full preservation check -----------------------------------
@@ -355,7 +374,12 @@ def test_T4_rewritten_settings_preserves_user_keys_across_self_retire(
     data = json.loads(settings_path.read_text())
     assert data["env"] == {"MY_USER_VAR": "42"}
     assert data["hooks"]["PreToolUse"][0]["command"] == "/bin/true"
-    assert data["hooks"]["SessionStart"][0]["command"].endswith("pos_session_start.py")
+    # Current Claude Code schema: SessionStart[i] = {matcher, hooks: [...]}.
+    assert (
+        data["hooks"]["SessionStart"][0]["hooks"][0]["command"].endswith(
+            "pos_session_start.py"
+        )
+    )
 
 
 # ---- T5, T6: Python version gate (shell behaviour) ------------------

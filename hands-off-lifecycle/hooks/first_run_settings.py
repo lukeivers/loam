@@ -47,6 +47,31 @@ def _load_existing(path: Path) -> dict[str, Any]:
     return data
 
 
+def _iter_commands(stanza_entries: list[Any]) -> list[str]:
+    """Return every command string reachable within a SessionStart stanza list.
+
+    Accepts the current Claude Code hook envelope shape
+    (``{matcher, hooks: [{type: command, command: ...}, ...]}``) and
+    walks the inner ``hooks`` array. Returns an empty list when the
+    shape is malformed so callers treat the stanza as non-pos-v2-owned.
+    """
+    commands: list[str] = []
+    for entry in stanza_entries:
+        if not isinstance(entry, dict):
+            return []
+        inner = entry.get("hooks")
+        if not isinstance(inner, list):
+            return []
+        for cmd_entry in inner:
+            if not isinstance(cmd_entry, dict):
+                return []
+            cmd = cmd_entry.get("command")
+            if not isinstance(cmd, str):
+                return []
+            commands.append(cmd)
+    return commands
+
+
 def _is_pos_v2_owned(stanza_entries: list[Any]) -> bool:
     """Identify whether an existing SessionStart stanza is pos-v2's own.
 
@@ -54,29 +79,33 @@ def _is_pos_v2_owned(stanza_entries: list[Any]) -> bool:
     ``first-run.sh`` or ``pos_session_start.py``. Anything else is
     treated as user-authored and backed up before replacement.
     """
-    for entry in stanza_entries:
-        if not isinstance(entry, dict):
-            return False
-        cmd = entry.get("command")
-        if not isinstance(cmd, str):
-            return False
-        if "first-run.sh" in cmd or "pos_session_start.py" in cmd:
-            continue
+    commands = _iter_commands(stanza_entries)
+    if not commands:
         return False
-    return bool(stanza_entries)
+    for cmd in commands:
+        if "first-run.sh" not in cmd and "pos_session_start.py" not in cmd:
+            return False
+    return True
 
 
 def build_first_run_stanza(pos_v2_root: Path) -> dict[str, Any]:
     """The SessionStart stanza Claude Code runs while first-run is live.
 
-    Absolute path; no env-var substitution at this point.
+    Returns the full ``{matcher, hooks: [...]}`` envelope required by
+    the current Claude Code hook schema. Absolute path; no env-var
+    substitution at this point.
     """
     script = Path(pos_v2_root) / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     return {
-        "type": "command",
-        "command": str(script),
-        "async": False,
-        "timeout": 120000,
+        "matcher": "",
+        "hooks": [
+            {
+                "type": "command",
+                "command": str(script),
+                "async": False,
+                "timeout": 120000,
+            }
+        ],
     }
 
 
@@ -85,16 +114,23 @@ def build_supervisor_stanza(pos_v2_root: Path) -> dict[str, Any]:
 
     Invokes pos_session_start.py directly with the shared venv's Python.
     Matches the sealed hook fragment's intent (venv-python + supervisor
-    script) with a resolved absolute path.
+    script) with a resolved absolute path. Returns the full
+    ``{matcher, hooks: [...]}`` envelope required by the current
+    Claude Code hook schema.
     """
     pos_v2_root = Path(pos_v2_root)
     python = pos_v2_root / ".venv" / "bin" / "python"
     script = pos_v2_root / "orchestrator" / "scripts" / "pos_session_start.py"
     return {
-        "type": "command",
-        "command": f"{python} {script}",
-        "async": False,
-        "timeout": 20000,
+        "matcher": "",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{python} {script}",
+                "async": False,
+                "timeout": 20000,
+            }
+        ],
     }
 
 

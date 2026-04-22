@@ -415,7 +415,15 @@ def _verify_self_retire(
     if not isinstance(first, dict):
         problems.append("SessionStart stanza first entry is not a mapping")
         return False, problems
-    cmd = first.get("command", "")
+    # Current Claude Code schema: SessionStart[i] is {matcher, hooks: [...]}.
+    # Pull the first inner command entry out for verification.
+    inner = first.get("hooks")
+    if not isinstance(inner, list) or not inner or not isinstance(inner[0], dict):
+        problems.append(
+            "SessionStart stanza missing inner hooks array (schema regression)"
+        )
+        return False, problems
+    cmd = inner[0].get("command", "")
     if "pos_session_start.py" not in cmd:
         problems.append(
             f"SessionStart command does not point at supervisor: {cmd!r}"
@@ -452,7 +460,11 @@ def _is_already_retired(pos_v2_root: Path, settings_path: Path) -> bool:
     first = ss[0]
     if not isinstance(first, dict):
         return False
-    cmd = first.get("command", "")
+    # Current Claude Code schema: SessionStart[i] is {matcher, hooks: [...]}.
+    inner = first.get("hooks")
+    if not isinstance(inner, list) or not inner or not isinstance(inner[0], dict):
+        return False
+    cmd = inner[0].get("command", "")
     return "pos_session_start.py" in cmd and "first-run.sh" not in cmd
 
 

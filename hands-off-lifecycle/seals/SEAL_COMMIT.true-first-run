@@ -40,4 +40,29 @@
 # in hands-off-lifecycle/tests/test_cross_cutting.py is advanced to
 # b63c758 (the pre-amendment tip) so diff-scope reflects this
 # amendment only.
-1b28736
+#
+# Amendment cycle — session-start-detachment (2026-04-22, third
+# amendment): the SessionStart hook is the wrong container for the
+# 3-8 min first-run. Claude Code's hook ceiling was killing the
+# synchronous Python helper during the memory-system cold-cache pip
+# install silently — user saw nothing on screen during the attempt
+# AND nothing at the crash. On next session, the partial ~/.pos/
+# state raised PartialScaffoldError with "retry next session" as the
+# terminal user surface. The amendment rewrites first-run.sh as a
+# thin Python-detect shim that execs first_run_dispatch.py (a stdlib
+# state-file reader + detached-worker spawner). Heavy work runs in a
+# fully detached worker (new session group, stdio to ~/.pos/first-run.log,
+# close_fds). Progress and terminal state persist to
+# ~/.pos/first-run.state; next hook fire reads state and surfaces
+# completion / running / failed / silent-death as plain-language
+# additionalContext. workspace-bootstrap is amended in lockstep to
+# give run_first_run_scaffold a partial_recovery=True path that
+# writes missing files over an existing ~/.pos/ without clobbering,
+# closing the H4 terminal "retry next session" surface. Multi-
+# component amendment (hands-off-lifecycle + workspace-bootstrap).
+# SEAL_COMMIT is re-pinned at d962ffd; BASELINE in
+# hands-off-lifecycle/tests/test_cross_cutting.py is advanced to
+# 63b7cb8 (the pre-amendment tip); BASELINE in
+# workspace-bootstrap/tests/test_no_sealed_amendments.py is advanced
+# to 1a55969 (the prior SEAL_COMMIT SHA).
+d962ffd

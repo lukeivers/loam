@@ -27,14 +27,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 # window:
 #   - ac48a7b  at first seal
 #   - 3780603  when Amendment 4 (first_run_scaffold phase) opened
-#   - 1a55969  when the session-start-detachment amendment opened
+#   - 63b7cb8  when the session-start-detachment amendment opened
 #              (run_first_run_scaffold gains a partial_recovery=True
 #              path so the detached worker can complete a scaffold
 #              that crashed mid-flight, closing the H4 "retry next
-#              session" terminal user surface). 1a55969 is the prior
-#              SEAL_COMMIT SHA — bumping BASELINE to the prior seal
-#              keeps the diff scope to just this amendment's window.
-BASELINE = "1a55969"
+#              session" terminal user surface). 63b7cb8 is the tip
+#              immediately before this amendment's commit, so the
+#              diff scope captures only this amendment's work even
+#              though unrelated commits landed between the prior
+#              workspace-bootstrap seal (1a55969) and this one.
+BASELINE = "63b7cb8"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -72,7 +74,16 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
     changed = [ln for ln in out.splitlines() if ln.strip()]
 
     # `data/` is runtime test-output (aggregator spool, cost sqlite).
-    allowed_prefixes = ("workspace-bootstrap/", "data/")
+    # `hands-off-lifecycle/` is the amendment counterpart in the
+    # 2026-04-22 session-start-detachment multi-component amendment —
+    # run_first_run_scaffold gained a partial_recovery=True path here,
+    # and the detached worker that consumes it lives in
+    # hands-off-lifecycle. Both components' tests re-seal in lockstep.
+    allowed_prefixes = (
+        "workspace-bootstrap/",
+        "data/",
+        "hands-off-lifecycle/",
+    )
     allowed_files: set[str] = set()
 
     offending = []

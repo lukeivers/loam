@@ -12,4 +12,4 @@
 # behavioural amendment to the telegram-interface component ships
 # without a new amendment cycle that updates BASELINE and bumps this
 # SEAL_COMMIT.
-HEAD
+cdfb3f3

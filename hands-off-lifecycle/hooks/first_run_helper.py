@@ -1318,6 +1318,24 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         )
         return 0
 
+    # Integration-test opt-out: the amendment-#4 validation harness sets
+    # ``POS_V2_SKIP_LAUNCHCTL=1`` in its sandbox env to prevent the
+    # harness's launchctl calls from polluting the real user's launchd
+    # session (or, on Linux, systemctl --user). When set, we both skip
+    # the launchctl bootstrap invocation inside the scaffold and skip
+    # the Phase 4b health poll — there is no service to probe, and the
+    # sandbox's ~/.pos/ (HOME-overridden) is not where a real launchd
+    # service would write its socket anyway. Phases 5-7 proceed as
+    # usual so the harness can exercise the full self-retire path.
+    #
+    # This is a deterministic integration-test hook, not a degraded
+    # production mode. In normal first-run the env var is unset and the
+    # full launchd/systemd path runs. Added 2026-04-22 by the pyyaml-
+    # reachability amendment (#5) because amendment #4's validator
+    # always set the flag but no code honoured it — the flag was
+    # written for this moment; amendment #5 wires it up.
+    skip_launchctl = bool(os.environ.get("POS_V2_SKIP_LAUNCHCTL"))
+
     _advance_state(
         "running",
         phase="phase-4a-scaffold",
@@ -1328,7 +1346,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         _invoke_first_run_scaffold(
             pos_v2_root=pos_v2_root,
             shared_venv_python=shared_python,
-            service_bootstrap=True,
+            service_bootstrap=not skip_launchctl,
         )
     except Exception as e:
         _emit_diag(
@@ -1344,29 +1362,37 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # ---- Phase 4b: health poll ------------------------------------
     services = list(inventory.get("services", []))
     service_labels = [svc["label"] for svc in services]
-    _advance_state(
-        "running",
-        phase="phase-4b-health-poll",
-        detail=f"polling services for health: {', '.join(service_labels)}",
-    )
-    print(f"pos v2 first-run: polling services for health ({', '.join(service_labels)})...")
-    healthy, pending = _poll_services_healthy(
-        services=services,
-        timeout_s=60.0,  # < the 120s hook ceiling, room for self-retire below.
-        poll_interval_s=0.5,
-    )
-    if not healthy:
-        _emit_diag(
-            ERR_SERVICE_HEALTH_TIMEOUT,
-            f"service-health-timeout:{','.join(pending)}",
-            f"services did not report healthy within budget: {pending}",
-            "Next session will retry. Check service logs:\n"
-            "  ~/.pos/logs/ and ~/.pos/logs/*.err\n"
-            "Inspect the launchd / systemd status:\n"
-            "  macOS: launchctl print gui/$(id -u)/<LABEL>\n"
-            "  Linux: systemctl --user status <LABEL>",
+    if skip_launchctl:
+        _advance_state(
+            "running",
+            phase="phase-4b-health-poll",
+            detail="skipped: POS_V2_SKIP_LAUNCHCTL is set (integration-test mode)",
         )
-        return 0
+        print("pos v2 first-run: health poll skipped (POS_V2_SKIP_LAUNCHCTL set).")
+    else:
+        _advance_state(
+            "running",
+            phase="phase-4b-health-poll",
+            detail=f"polling services for health: {', '.join(service_labels)}",
+        )
+        print(f"pos v2 first-run: polling services for health ({', '.join(service_labels)})...")
+        healthy, pending = _poll_services_healthy(
+            services=services,
+            timeout_s=60.0,  # < the 120s hook ceiling, room for self-retire below.
+            poll_interval_s=0.5,
+        )
+        if not healthy:
+            _emit_diag(
+                ERR_SERVICE_HEALTH_TIMEOUT,
+                f"service-health-timeout:{','.join(pending)}",
+                f"services did not report healthy within budget: {pending}",
+                "Next session will retry. Check service logs:\n"
+                "  ~/.pos/logs/ and ~/.pos/logs/*.err\n"
+                "Inspect the launchd / systemd status:\n"
+                "  macOS: launchctl print gui/$(id -u)/<LABEL>\n"
+                "  Linux: systemctl --user status <LABEL>",
+            )
+            return 0
 
     # ---- Phase 5: confirmation sentence ---------------------------
     _advance_state(

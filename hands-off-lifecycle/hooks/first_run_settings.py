@@ -96,6 +96,12 @@ def build_first_run_stanza(pos_v2_root: Path) -> dict[str, Any]:
     substitution at this point.
     """
     script = Path(pos_v2_root) / "hands-off-lifecycle" / "hooks" / "first-run.sh"
+    # timeout is in seconds per Claude Code hook docs. 60s is a generous
+    # cap for the thin shim — the 2026-04-22 detachment amendment made
+    # first-run.sh return in under a second by spawning a detached
+    # worker. Pre-amendment callers had 120000 here, which at seconds is
+    # ~33 hours; the 2026-04-22 pyyaml-reachability amendment (#5)
+    # tightens the unit to be unambiguous and sets a realistic cap.
     return {
         "matcher": "",
         "hooks": [
@@ -103,7 +109,7 @@ def build_first_run_stanza(pos_v2_root: Path) -> dict[str, Any]:
                 "type": "command",
                 "command": str(script),
                 "async": False,
-                "timeout": 120000,
+                "timeout": 60,
             }
         ],
     }
@@ -121,6 +127,11 @@ def build_supervisor_stanza(pos_v2_root: Path) -> dict[str, Any]:
     pos_v2_root = Path(pos_v2_root)
     python = pos_v2_root / ".venv" / "bin" / "python"
     script = pos_v2_root / "orchestrator" / "scripts" / "pos_session_start.py"
+    # timeout is in seconds per Claude Code hook docs. The supervisor
+    # itself finishes well under 5s; 20s is a generous cap. Pre-
+    # amendment callers had 20000 here — ambiguous units — which the
+    # 2026-04-22 pyyaml-reachability amendment (#5) tightens to the
+    # documented seconds unit.
     return {
         "matcher": "",
         "hooks": [
@@ -128,7 +139,7 @@ def build_supervisor_stanza(pos_v2_root: Path) -> dict[str, Any]:
                 "type": "command",
                 "command": f"{python} {script}",
                 "async": False,
-                "timeout": 20000,
+                "timeout": 20,
             }
         ],
     }

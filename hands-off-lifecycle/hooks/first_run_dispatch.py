@@ -191,8 +191,24 @@ def _spawn_detached_worker(
     # this amendment.
     log_fh = open(log, "a", encoding="utf-8", buffering=1)
     devnull = open(os.devnull, "rb")
+    # ``-u`` is the Python "unbuffered" flag — forces stdout/stderr to
+    # be unbuffered so ``print()`` from the worker hits the log within
+    # the caller's perceived latency rather than block-buffering until
+    # the pipe fills. Added 2026-04-22 by the pyyaml-reachability
+    # amendment (#5) — without this, any print() in the worker was
+    # block-buffered into ~/.pos/first-run.log and users tailing the
+    # log saw long stretches of silence between phases. The direct
+    # state-file writes the worker also does are unaffected; ``-u``
+    # specifically rescues ``print()`` and any subprocess that writes
+    # via inherited stdout.
+    env = os.environ.copy()
+    # PYTHONUNBUFFERED is belt-and-braces alongside -u: some subprocess
+    # chains unset -u when they exec a child, but environment
+    # propagates. Either alone is enough; both together is cheap.
+    env["PYTHONUNBUFFERED"] = "1"
     cmd = [
         python,
+        "-u",
         str(helper),
         "--pos-v2-root",
         str(pos_v2_root),
@@ -214,6 +230,7 @@ def _spawn_detached_worker(
         stderr=log_fh,
         close_fds=True,
         start_new_session=True,
+        env=env,
     )
     # Close our end of the redirected fds — the child inherited dup'd
     # copies and owns its own writes.

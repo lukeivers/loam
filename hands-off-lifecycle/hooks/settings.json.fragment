@@ -10,7 +10,7 @@
             "type": "command",
             "command": "${POS_V2_REPO}/.venv/bin/python ${POS_V2_REPO}/orchestrator/scripts/pos_session_start.py",
             "async": false,
-            "timeout": 20000
+            "timeout": 20
           }
         ]
       }

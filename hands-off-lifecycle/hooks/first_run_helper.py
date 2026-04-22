@@ -703,42 +703,143 @@ def _install_editable_components(
 def _invoke_first_run_scaffold(
     *,
     pos_v2_root: Path,
+    shared_venv_python: Path,
     service_manager_dir_override: Path | None = None,
     service_bootstrap: bool = True,
-) -> Any:
-    """Call Amendment 4's run_first_run_scaffold() as a library.
+    pos_root: Path | None = None,
+) -> None:
+    """Invoke Amendment 4's run_first_run_scaffold() via a subprocess
+    under the shared venv's Python.
 
-    Per Eve inference #4 in the research (§10.4 Option A): consume the
-    scaffold adapter rather than reimplement. The adapter handles YAML
-    scaffold, plist/systemd-unit substitution, and service bootstrap.
+    ## Why a subprocess (amendment #5 rewrite)
 
-    Requires the workspace-bootstrap component to be importable from the
-    shared venv, which it is after Phase 3's shared-component install.
+    The detached first-run worker runs under the system interpreter
+    that ``first-run.sh`` detected on PATH — intentionally stdlib-only,
+    because the shared venv does not exist at the moment the shell hook
+    fires. ``run_first_run_scaffold`` lives inside the ``workspace-
+    bootstrap`` component whose ``__init__.py`` transitively imports
+    ``yaml`` (pyyaml), ``pydantic``, and ``opentelemetry``. Those are
+    installed only in the shared venv (Phase 3b). An in-process import
+    of the adapter under the worker's system interpreter crashed with
+    ``ModuleNotFoundError: No module named 'yaml'`` (and later
+    ``pydantic``, then ``opentelemetry``) before the scaffold function
+    body — which uses only stdlib — could run.
+
+    Rather than lazy-importing every transitive dep across the
+    workspace-bootstrap package (structural refactor crossing a sealed
+    component) or installing all three into the system interpreter
+    (explicitly excluded by the amendment brief), the scaffold is
+    invoked as a subprocess under the shared venv's Python. The venv
+    by Phase 4a is fully populated and contains every transitive dep
+    the adapter needs. The hands-off-lifecycle surface is the *only*
+    component touched by this fix.
+
+    ## Contract with the runner
+
+    ``first_run_scaffold_runner.py`` exits 0 on success, 1 on scaffold
+    exception, 2 on runner-internal failure. On exit 1 the runner
+    writes a single JSON line to stderr with the exception type +
+    message + code; this function parses that and raises a
+    ``RuntimeError`` whose ``args[0]`` carries a recognisable string.
+    The caller (``_run_bootstrap`` at the Phase 4a call site) already
+    has a ``try/except`` that routes any raised exception through
+    ``_emit_diag`` with a scaffold-failed diagnostic — the surfacing
+    semantics are preserved.
+
+    ## Parameters
+
+    Mirrors the adapter's own signature one-for-one so the call-site
+    change is minimal. ``pos_root`` defaults to ``Path.home() / ".pos"``
+    to match the adapter's own default for the production path, and
+    can be overridden for tests.
     """
-    # Add workspace-bootstrap's src dir to sys.path so the adapter is
-    # importable regardless of editable-install state.
-    wb_src = pos_v2_root / "workspace-bootstrap" / "src"
-    if wb_src.is_dir() and str(wb_src) not in sys.path:
-        sys.path.insert(0, str(wb_src))
+    runner = _HOOKS_DIR / "first_run_scaffold_runner.py"
+    if not runner.exists():
+        raise RuntimeError(
+            f"scaffold-runner-missing: {runner} not on disk. "
+            "This is a shipped-artifact defect — file an issue."
+        )
+    if not shared_venv_python.exists():
+        raise RuntimeError(
+            f"scaffold-runner-venv-missing: {shared_venv_python} not on "
+            "disk. Phase 3 did not complete; re-running next session."
+        )
+    effective_pos_root = pos_root or (Path.home() / ".pos")
+    cmd = [
+        str(shared_venv_python),
+        "-u",  # unbuffered — progress lines hit the worker's log promptly
+        str(runner),
+        "--pos-root",
+        str(effective_pos_root),
+        "--workspace-root",
+        str(pos_v2_root),
+        "--service-bootstrap",
+        "true" if service_bootstrap else "false",
+        "--partial-recovery",
+        "true",  # detachment amendment: always recover rather than halt
+        "--dry-run",
+        "false",
+    ]
+    if service_manager_dir_override is not None:
+        cmd.extend(
+            [
+                "--service-manager-dir-override",
+                str(service_manager_dir_override),
+            ]
+        )
 
-    from workspace_bootstrap.adapters.first_run_scaffold import (  # type: ignore
-        run_first_run_scaffold,
+    # Capture stderr so we can re-raise with the adapter's own
+    # exception-type/message info; stdout (scaffold's success marker)
+    # is routed to the worker log via the same fd inheritance as every
+    # other subprocess in this module. A 600s timeout is generous —
+    # the scaffold itself is file writes and launchctl invocations
+    # that finish in seconds; the cap is a safety net against a hung
+    # launchctl.
+    result = subprocess.run(
+        cmd,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=600,
     )
+    # Mirror stdout to our own stdout for log visibility — the worker
+    # has its fds redirected to ~/.pos/first-run.log, so this lands
+    # there for the user to tail.
+    if result.stdout:
+        sys.stdout.write(result.stdout)
+        sys.stdout.flush()
+    if result.returncode == 0:
+        return
 
-    return run_first_run_scaffold(
-        pos_root=Path.home() / ".pos",
-        dry_run=False,
-        service_bootstrap=service_bootstrap,
-        service_manager_dir_override=service_manager_dir_override,
-        workspace_root=pos_v2_root,
-        # Detachment amendment (2026-04-22): when the previous worker
-        # crashed mid-scaffold the ~/.pos/ directory exists without a
-        # bootstrap.yaml; pre-amendment this raised PartialScaffoldError
-        # with "retry next session" — itself the terminal failure mode.
-        # Partial recovery writes only the missing files and leaves any
-        # existing content alone, making re-runs idempotent.
-        partial_recovery=True,
+    # Parse the first line of stderr as JSON; fall back to a generic
+    # error if the runner died before emitting the structured payload.
+    stderr_text = result.stderr or ""
+    first_line = stderr_text.split("\n", 1)[0].strip()
+    parsed: dict[str, Any] = {}
+    if first_line.startswith("{"):
+        try:
+            parsed = json.loads(first_line)
+        except json.JSONDecodeError:
+            parsed = {}
+
+    # Preserve the full stderr (including the traceback the runner
+    # appended) in the worker log so post-mortem debugging works.
+    if stderr_text:
+        sys.stderr.write(stderr_text)
+        sys.stderr.flush()
+
+    exc_type = parsed.get("type") or "ScaffoldSubprocessFailure"
+    exc_msg = parsed.get("message") or (
+        f"scaffold runner exited {result.returncode}; stderr head: "
+        f"{stderr_text[:200]!r}"
     )
+    # Raise as a plain RuntimeError whose message is
+    # "<exc_type>: <message>" so the caller's exception-stringifier
+    # (``_emit_diag`` with ``f"{type(e).__name__}: {e}"``) naturally
+    # surfaces the scaffold's own class name, e.g.
+    # "PartialScaffoldError: partial-scaffold-detected". That matches
+    # the pre-amendment surfacing for the same failure modes.
+    raise RuntimeError(f"{exc_type}: {exc_msg}")
 
 
 # ---- health verification --------------------------------------------
@@ -1226,6 +1327,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     try:
         _invoke_first_run_scaffold(
             pos_v2_root=pos_v2_root,
+            shared_venv_python=shared_python,
             service_bootstrap=True,
         )
     except Exception as e:

@@ -1,5 +1,5 @@
 {
-  "_comment": "Ship-time SessionStart hook for pos-v2. On first run in a fresh clone, first-run.sh creates the venv, installs dependencies, authors settings.json stanzas, substitutes plists, and brings services up — then self-retires by rewriting this file to invoke the sealed supervisor path (pos_session_start.py with the venv Python) directly and deleting itself. See hands-off-lifecycle/README.md for the lifecycle. See docs/rebuild/FUTURE_IDEAS.md for the self-retire convention.",
+  "_comment": "Ship-time SessionStart hook for pos-v2. On first run in a fresh clone, first-run.sh is a thin shim that detects Python 3.13, hands off to first_run_dispatch.py (stdlib), which spawns a detached first-run worker and returns in under a second. The worker handles venv creation, dependency installs, scaffolding, plist substitution, service bootstrap, and self-retires this stanza to invoke the sealed supervisor path on completion. See hands-off-lifecycle/README.md for the lifecycle. timeout is specified in seconds per Claude Code hook docs; 60s is a generous cap for the thin shim (which measurably returns in well under 1s) and is not the worker budget (the worker runs detached, past the hook's lifetime). async:false is deliberate — see docs/rebuild/FUTURE_IDEAS.md: the hook is thin enough that shell-level detach outperforms Claude Code's async flag and the handoff message needs to be surfaced as additionalContext synchronously.",
   "hooks": {
     "SessionStart": [
       {
@@ -9,7 +9,7 @@
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/hands-off-lifecycle/hooks/first-run.sh",
             "async": false,
-            "timeout": 120000
+            "timeout": 60
           }
         ]
       }

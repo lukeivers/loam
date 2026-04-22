@@ -36,8 +36,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # detachment amendment opened (SessionStart hook rewritten as thin
 # status-report-and-handoff, heavy work detached via state file +
 # progress log, scaffold gained partial_recovery=True path, workspace-
-# bootstrap amended in lockstep).
-BASELINE = "63b7cb8"
+# bootstrap amended in lockstep); advanced to 101114d when the
+# pyyaml-reachability amendment (#5) opened (Phase-4a scaffold
+# invocation switched from in-process import to subprocess under the
+# shared venv's Python via first_run_scaffold_runner.py; worker
+# invocation gained -u + PYTHONUNBUFFERED=1; timeout values unified to
+# the documented seconds unit).
+BASELINE = "101114d"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

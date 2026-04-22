@@ -1,34 +1,70 @@
-# pOS v2 — greenfield rebuild
+# pOS v2 — personal OS, Claude-native
 
-This branch is the new pOS rebuild. Greenfield. Zero carryover from the
-current pOS framework on `main`.
+pos-v2 is a Claude-only personal operating system: a long-running
+background process (the orchestrator) plus a semantic memory store,
+a three-gate safety chain, a primary persona that translates your
+natural-language intent into AI-effective execution, and a supervisor
+that keeps the whole system healthy without you doing anything
+beyond opening a Claude Code session.
 
-## Scope of the current branch state
+## Status
 
-This commit covers the **memory-system prototyping phase** only — see
-`memory-system/` for the prototype code, synthetic test set, evaluation
-harness, and bundled documentation. The full nine-adaptation-layer build
-follows in a separate brief, gated on the prototype findings.
+Foundation-complete: twelve sealed components plus the
+hands-off-lifecycle amendments. See `docs/rebuild/STATE.md` for the
+full component status table.
 
-## What this branch is NOT
+## What running a session looks like
 
-- Not a fork of `main`. Different history, different language, different scope.
-- Not the production pOS. `main` continues to serve current pOS in maintenance
-  mode.
-- Not a commitment to ship. This is decision-input for the full-build brief.
+1. Open a Claude Code session in this workspace.
+2. First run: a single sentence reports what was scaffolded. Proceed.
+3. Normal runs: your primary persona greets you with what needs
+   attention — no "open the terminal and start the sidecar."
+4. Close the session. Background work continues. The supervisor
+   keeps services healthy; the loud-escalation channel tells you
+   when something needs founder attention.
 
 ## Layout
 
 ```
-memory-system/   # Phase 1 — memory prototypes (D1–D4)
-  src/           # Python source for prototypes
-  tests/         # Round-trip tests, evaluation harness
-  scripts/       # One-shot scripts (ingest, eval, snapshot)
-  data/          # Synthetic test set + episodes (no current-pOS content)
-  docs/          # Bundled documentation per spec v1.1 R4
-  launchd/       # Local-service hosting plists
+docs/rebuild/         — research, proposals, briefs per sealed component
+memory-system/        — semantic memory sidecar (FastAPI + Graphiti + Kuzu)
+orchestrator/         — long-lived asyncio process, Unix-socket JSON-RPC
+workspace-bootstrap/  — composition engine; twelve-adapter bundle
+safety-layer/
+reversibility-primitive/
+cost-governance/
+self-correction/      — the three-gate chain + self-correction loop
+graceful-degradation/
+objective-tracker/
+scope-of-work/
+primary-persona/      — runtime policy + primitives
+observability-aggregator/
+self-upgrade/         — infrastructure
+hands-off-lifecycle/  — Amendment bundle: supervisor, staging/drain,
+                        first-run scaffold, Claude Code SessionStart hook
 ```
 
-## Implementation language
+## Hands-off lifecycle
 
-Python 3.11+. Rebuild-wide decision (see brief).
+Opening a Claude Code session in a fresh workspace scaffolds
+`~/.pos/`, installs the memory-sidecar and orchestrator service
+files, asks the service manager to bring them up, and emits one
+confirmation sentence. Nothing else. Ongoing lifecycle concerns
+(sidecar health, drain on recovery, config drift) are the
+supervisor's problem, not yours — self-heal silently when possible,
+escalate loudly via your primary-persona channel when not. Degraded
+mode that silently stays degraded is a bug, not a satisfaction.
+
+See `hands-off-lifecycle/README.md` for the amendment bundle's
+full layout.
+
+## Implementation
+
+Python 3.13. See `docs/rebuild/STATE.md` rules 6–9 for
+language/test/file conventions.
+
+## License and contributions
+
+Personal-use software in heavy development. Not currently accepting
+external contributions; see `docs/rebuild/STATE.md` for the
+governing rules of the rebuild.

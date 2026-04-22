@@ -1,0 +1,14 @@
+{
+  "_comment": "Merge the `hooks.SessionStart` entry below into the workspace's .claude/settings.json.\n\nThe helper script never spawns a long-lived background process\ninheriting Claude Code's FDs (Claude Code v2.1.87 issue #43123\nmitigation) — it delegates to launchctl bootstrap / systemctl --user\nstart, which are FD-safe.\n\nOn platforms without launchd or systemd-user the script exits code 2\nwith the named diagnostic `platform-unsupported:<platform>` rather\nthan degrading to a subprocess-supervisor fallback.",
+
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "${POS_V2_REPO}/.venv/bin/python ${POS_V2_REPO}/orchestrator/scripts/pos_session_start.py",
+        "async": false,
+        "timeout": 20000
+      }
+    ]
+  }
+}

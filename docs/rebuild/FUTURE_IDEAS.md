@@ -128,6 +128,20 @@ Relationship to the "plan before code, always" CDC: that CDC's Subagent flow sub
 
 Applied immediately to all work from 2026-04-22 forward.
 
+## Core Development Convention — scope-only dispatch to delegated agents
+
+> **A handoff from a session or persona to a delegated agent — subagent, background agent, scheduled worker, another persona — carries only scope material. Scope material is the objective (what must be true at the end), the scope boundaries (what surface the work covers), the constraints (budget, dependency fence, authority bound, reversibility class, forbidden surfaces), the halt triggers, and the shape the acceptance check will take. Method — the files to edit, the symbols to name, the acceptance-criteria prose, the ordered steps of the work, the wording of the commit message — belongs in the receiving agent's plan, not in the dispatching prompt.**
+
+Rationale. This is ODD's delegator/builder split (`docs/odd-methodology.md` §1.1: the delegator authors objective + constraints + acceptance criterion; the builder authors method) applied to the specific surface of session-to-agent handoffs. When a dispatching prompt enumerates files, symbols, acceptance-criteria text, or step structure, the receiving agent's plan collapses into paperwork that documents decisions the dispatch already made — the delegator has silently crossed into the builder's territory, and the plan-before-code discipline produces a plan that verifies nothing that was not already decided elsewhere. The scope-only shape preserves what plan-before-code was set up to deliver: a durable artefact in which the builder commits, in writing, to a method that satisfies the scope *before* any of that method is executed. If scope is well-authored, the builder's plan is the first place method exists; the dispatching prompt never contains it.
+
+The rule is surface-agnostic. It applies to research dispatches, scope-of-work assignments, background monitoring runs, persona handoffs, code builds, doc authoring — every shape of delegated work. The input/output asymmetry is the same in all of them: the sender authors outcome and bound, the receiver authors method.
+
+Authoring the rule scope-only itself. What belongs in a dispatching prompt: objective, scope, constraints, halt triggers, and the shape (not the exact text) of the acceptance check the dispatcher will run. What does not: file paths beyond scope boundaries, symbol names, acceptance-criterion prose, numbered step lists, commit-message wording. This rule deliberately does not prescribe a layout or section ordering for a dispatch prompt — that would be method, and prescribing it would make the rule violate the rule it states.
+
+Companion to the plan-before-code CDC (which established that a plan must exist before code) and the all-work-through-background-agents CDC (which established that execution runs in a delegated agent). The three compose as a chain: plan-before-code says a plan must exist, background-agent-default says execution goes to a delegated agent, scope-only dispatch governs what the handoff to that delegated agent contains. Together they give the primary persona a structural boundary between delegator work (authored in scope) and builder work (authored in the receiving agent's plan).
+
+Applied immediately to all work from 2026-04-22 forward.
+
 ## Core Development Convention — setup scripts self-retire on success
 
 > **Work that happens once should leave no code behind that runs every session.** First-run setup completes its job, verifies the outcome, then removes itself — from the filesystem where the script lives, and from the hook registration that invoked it. Subsequent sessions never run first-run code because first-run code is not present to run. Future update-triggered setup ships its own self-removing script; setup logic is not reused session-after-session as check-and-skip scaffolding.

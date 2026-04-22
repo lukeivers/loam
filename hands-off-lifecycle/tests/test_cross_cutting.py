@@ -41,12 +41,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # invocation switched from in-process import to subprocess under the
 # shared venv's Python via first_run_scaffold_runner.py; worker
 # invocation gained -u + PYTHONUNBUFFERED=1; timeout values unified to
-# the documented seconds unit).
-#
-# The next BASELINE advance (to 9f35979, pre-amendment tip for the
-# namespaced-labels-and-bootout amendment #6) happens in lockstep with
-# the seal commit, same as the workspace-bootstrap side.
-BASELINE = "101114d"
+# the documented seconds unit); advanced to 9f35979 when the
+# namespaced-labels-and-bootout amendment (#6) opened (per-workspace
+# service-label namespacing + launchctl bootout-before-bootstrap so
+# multiple pos-v2 workspaces coexist on one host; multi-component
+# amendment with workspace-bootstrap in lockstep). 9f35979 is the
+# pre-amendment tip — the docs-migration chore commit immediately
+# before the amendment code commit.
+BASELINE = "9f35979"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

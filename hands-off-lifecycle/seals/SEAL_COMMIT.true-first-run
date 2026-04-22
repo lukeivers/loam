@@ -101,4 +101,48 @@
 # before this amendment's first commit). workspace-bootstrap's
 # BASELINE is unchanged because no workspace-bootstrap files were
 # touched this amendment.
-9b4bcd3
+#
+# Amendment cycle — namespaced-labels-and-bootout (#6, 2026-04-22,
+# sixth amendment): amendment #5 landed a clean detached first-run
+# but a real-world fresh-clone install (Luke's pos3 workspace) still
+# halted at phase-4b-health-poll with `service-health-timeout:com.
+# pos.orchestrator`. Root cause: ServiceManagerRunner.bootstrap called
+# `launchctl bootstrap gui/<uid> <plist>` without first issuing a
+# `launchctl bootout gui/<uid>/<label>` — launchd treats bootstrap as
+# a no-op when the label is already loaded, so any cached path from a
+# prior install (the test-harness tempdir in Luke's case) survives
+# across the scaffold's plist rewrite. Additional defect: service
+# labels were hard-coded (`com.pos.orchestrator`, `com.pos-v2.memory-
+# graphiti`), so two pos-v2 clones on one host would collide on a
+# single launchd/systemd-user identity.
+#
+# Amendment #6 closes both:
+#   - Derives a per-workspace slug from the workspace-root basename
+#     (lowercased, sanitised to `[a-z0-9-]+`, leading/trailing '-'
+#     trimmed); structural refusal (WorkspaceSlugUnrepresentableError,
+#     -32099) when the basename has no valid slug form — no unnamespaced
+#     service file is ever written.
+#   - Templates launchd plist / systemd unit labels as
+#     `com.pos-v2.<slug>.<kind>`; filenames match label. Two workspaces
+#     on one host coexist because their labels differ.
+#   - Bootout-before-bootstrap in ServiceManagerRunner.bootstrap: on
+#     macOS, launchctl bootout first (non-fatal on "service not loaded"
+#     stderr variants; structural refusal via ServiceManagerBootoutError
+#     on any other failure) then bootstrap. On Linux, stop +
+#     daemon-reload before start — symmetric semantic. Idempotent on
+#     re-run.
+#   - Inventory (first-run-inventory.yaml) templates service labels
+#     with `{slug}`; resolve_service_labels() in first_run_inventory.py
+#     substitutes at helper load-time so Phase 4b health poll targets
+#     the computed labels.
+#
+# Multi-component amendment (hands-off-lifecycle + workspace-bootstrap).
+# Nine acceptance criteria AC1–AC9 in docs/rebuild/components/
+# namespaced-labels-and-bootout/proposal.md, 1:1 criterion-to-test
+# mapping. SEAL_COMMIT is re-pinned at 68e0525; BASELINE in both
+# seal tests advances to 9f35979 (the pre-amendment tip — the docs-
+# migration chore commit immediately before this amendment's code
+# commit). No collision detection across workspaces; legacy-label
+# cleanup of already-loaded unscoped labels is explicitly out of
+# scope (owner handles manually after first clean install).
+68e0525

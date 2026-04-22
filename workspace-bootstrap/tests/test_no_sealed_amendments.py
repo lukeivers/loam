@@ -36,13 +36,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              diff scope captures only this amendment's work even
 #              though unrelated commits landed between the prior
 #              workspace-bootstrap seal (1a55969) and this one.
-#
-# The next BASELINE advance (to 9f35979, the pre-amendment tip for the
-# namespaced-labels-and-bootout amendment #6) happens in lockstep with
-# the seal commit — both BASELINE and the SEAL_COMMIT sidecar bump at
-# the same commit, which is the convention precedent-setting amendments
-# (pyyaml-reachability, session-start-detachment) both follow.
-BASELINE = "63b7cb8"
+#   - 9f35979  when the namespaced-labels-and-bootout amendment (#6)
+#              opened. Per-workspace service-label namespacing
+#              (`com.pos-v2.<slug>.<kind>`) + launchctl bootout-before-
+#              bootstrap so multiple pos-v2 workspaces coexist on one
+#              host and stale launchd cache is replaced rather than
+#              no-op'd (closes the pos3 first-run regression 2026-04-22).
+#              Multi-component amendment with hands-off-lifecycle in
+#              lockstep. 9f35979 is the pre-amendment tip — the docs-
+#              migration chore commit immediately before the amendment
+#              code commit.
+BASELINE = "9f35979"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

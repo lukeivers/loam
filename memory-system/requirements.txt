@@ -13,3 +13,4 @@ fastapi>=0.115
 uvicorn[standard]>=0.32
 # dev / test
 pytest>=9.0
+pytest-asyncio>=1.0

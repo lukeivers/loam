@@ -68,11 +68,19 @@ from first_run_inventory import (  # noqa: E402
     load_inventory,
     validate_inventory,
 )
+from first_run_progress import get_progress  # noqa: E402
 from first_run_settings import (  # noqa: E402
     SettingsMergeResult,
     build_first_run_stanza,
     build_supervisor_stanza,
     merge_session_start,
+)
+from first_run_state import (  # noqa: E402
+    FirstRunState,
+    DEFAULT_POS_ROOT,
+    append_log,
+    read_state,
+    write_state,
 )
 
 
@@ -85,11 +93,122 @@ ERR_HANDS_OFF_INTERNAL = -32099
 ERR_PLATFORM_UNSUPPORTED = -32091
 
 
+# ---- state-file integration (detachment amendment) ------------------
+#
+# Module-level handles, set by ``main()`` when invoked as the detached
+# worker. ``_STATE_POS_ROOT`` determines where the state/log files live;
+# ``_STATE_GENERATION`` tags each worker spawn so log lines from a
+# respawn are distinguishable from the original run. Tests can point
+# these at a tmp_path without reaching into the module.
+_STATE_POS_ROOT: Path = DEFAULT_POS_ROOT
+_STATE_GENERATION: int = 1
+# Guard flag: only write state-file / log entries when main() has
+# explicitly enabled it. Without this guard, unit tests that exercise
+# _emit_diag() directly would scribble into the developer's real
+# ``~/.pos/`` directory on every test run — an unacceptable side
+# effect. main() flips this on once; test fixtures use the state
+# module's API directly when they need to exercise the state path.
+_STATE_WRITES_ENABLED: bool = False
+
+
+def _advance_state(
+    status: str,
+    *,
+    phase: str = "",
+    detail: str = "",
+    error_code: int = 0,
+    remediation: str = "",
+) -> None:
+    """Persist a state-file update, also mirrors to the plain-language log.
+
+    Called at every phase boundary and on every halt. The state file is
+    the authoritative handoff channel between this process and the next
+    SessionStart hook firing; the log file is the user's live view.
+    Both are written — one is structured, one is narrative. Neither is
+    optional.
+
+    No-op when ``_STATE_WRITES_ENABLED`` is False (unit-test path) —
+    the caller never wants a stray ~/.pos/ write from a test run.
+    """
+    if not _STATE_WRITES_ENABLED:
+        return
+    existing = read_state(_STATE_POS_ROOT)
+    state = existing or FirstRunState()
+    state.status = status
+    state.pid = os.getpid()
+    state.generation = _STATE_GENERATION
+    if phase:
+        state.phase = phase
+    if detail:
+        state.detail = detail
+    if error_code:
+        state.error_code = error_code
+    if remediation:
+        state.remediation = remediation
+    write_state(state, _STATE_POS_ROOT)
+    log_line = f"{status}"
+    if phase:
+        log_line += f" — {phase}"
+    if detail:
+        log_line += f" — {detail}"
+    append_log(log_line, _STATE_POS_ROOT, generation=_STATE_GENERATION)
+
+
 # ---- diagnostic emission --------------------------------------------
 
 
-def _emit_diag(code: int, kind: str, detail: str, remediation: str) -> None:
-    """Emit a loud-escalation diagnostic and exit 0."""
+def _emit_diag(
+    code: int,
+    kind: str,
+    detail: str,
+    remediation: str,
+    *,
+    user_what: str | None = None,
+    user_remediation: str | None = None,
+) -> None:
+    """Emit a loud-escalation diagnostic and exit 0.
+
+    Two surfaces: (a) stdout holds the structured payload Claude Code
+    surfaces to the model as ``additionalContext`` (error code, kind,
+    detail, long-form remediation) — unchanged from the pre-amendment
+    contract; (b) /dev/tty holds the plain-language failure the human
+    can act on.
+
+    The TTY surface receives ``user_what`` (one-sentence plain-English
+    description of what broke) and ``user_remediation`` (plain-English,
+    step-by-step, no jargon), with the error code appended as a
+    reference — not the primary surface. Callers may omit the user_*
+    parameters; when absent, we fall back to synthesising from ``kind``
+    and ``remediation`` so the TTY never falls silent on a failure
+    path (AC4 — user always sees *something* actionable, not just a
+    -32xxx code in isolation).
+    """
+    if user_what is None:
+        # Derive a best-effort plain sentence from the kind label.
+        # Anything of the form "category:label" gets the label half
+        # with dashes turned into spaces — enough to read aloud.
+        tail = kind.split(":", 1)[1] if ":" in kind else kind
+        user_what = tail.replace("-", " ").replace("_", " ")
+    if user_remediation is None:
+        # Pass through the long-form remediation; it's still readable
+        # prose even if slightly denser than the ideal user surface.
+        user_remediation = remediation
+    get_progress().fail(
+        what=user_what,
+        remediation=user_remediation,
+        error_code=code,
+    )
+    # Persist the failure to the state file so the next SessionStart
+    # hook can surface the plain-language remediation in its
+    # additionalContext block. Without this step the user only sees
+    # silence on the next launch — the exact failure mode this
+    # amendment closes.
+    _advance_state(
+        "failed",
+        detail=f"{kind}: {detail}",
+        error_code=code,
+        remediation=user_remediation,
+    )
     print(
         "\npos v2 first-run: halted.\n"
         f"Error code: {code} {kind}\n"
@@ -183,7 +302,17 @@ def _install_shared_components(
     component_names: list[str],
 ) -> list[PipOutcome]:
     """Install requirements.txt for each shared-venv component that has one."""
+    progress = get_progress()
     outcomes: list[PipOutcome] = []
+    # Filter down to components that actually have a requirements.txt
+    # before counting, so the user-facing "X of Y" matches what they
+    # will actually see run.
+    installable = [
+        name for name in component_names
+        if (pos_v2_root / name / "requirements.txt").exists()
+    ]
+    total = len(installable)
+    seq = 0
     for name in component_names:
         comp_dir = pos_v2_root / name
         req = comp_dir / "requirements.txt"
@@ -194,6 +323,8 @@ def _install_shared_components(
             # already have the tooling it needs from the workspace's
             # common base.
             continue
+        seq += 1
+        progress.step(f"installing component dependencies [{seq} of {total}]: {name}")
         outcomes.append(
             _run_pip_install(
                 venv_python=shared_venv_python,
@@ -534,13 +665,16 @@ def _install_editable_components(
     short-circuiting keeps the fresh-clone/re-run time difference
     observable (and prevents rebuilding editable metadata pointlessly).
     """
+    progress = get_progress()
     components = _discover_components(pos_v2_root)
     ordered = _topological_order(components)
     outcomes: list[PipOutcome] = []
-    for comp in ordered:
+    total = len(ordered)
+    for seq, comp in enumerate(ordered, 1):
         name: str = comp["name"]
         cdir: Path = comp["dir"]
         if _is_component_installed(shared_venv_python, name, cdir):
+            progress.step(f"component package [{seq} of {total}]: {name} (already installed)")
             outcomes.append(
                 PipOutcome(
                     ok=True,
@@ -552,6 +686,7 @@ def _install_editable_components(
                 )
             )
             continue
+        progress.step(f"installing component package [{seq} of {total}]: {name}")
         outcomes.append(
             _install_editable(
                 venv_python=shared_venv_python,
@@ -596,6 +731,13 @@ def _invoke_first_run_scaffold(
         service_bootstrap=service_bootstrap,
         service_manager_dir_override=service_manager_dir_override,
         workspace_root=pos_v2_root,
+        # Detachment amendment (2026-04-22): when the previous worker
+        # crashed mid-scaffold the ~/.pos/ directory exists without a
+        # bootstrap.yaml; pre-amendment this raised PartialScaffoldError
+        # with "retry next session" — itself the terminal failure mode.
+        # Partial recovery writes only the missing files and leaves any
+        # existing content alone, making re-runs idempotent.
+        partial_recovery=True,
     )
 
 
@@ -820,10 +962,94 @@ def _confirmation_sentence(
 # ---- top-level orchestration ----------------------------------------
 
 
+def _ensure_shared_venv(pos_v2_root: Path) -> Path:
+    """Create ``pos_v2_root/.venv`` with the currently-running Python.
+
+    Added by the 2026-04-22 session-start-detachment amendment. Prior
+    to this amendment, venv creation happened inline in ``first-run.sh``
+    before handing off to this helper. With the shell hook now thin
+    (returns in <5s), the heavy work — including the initial venv
+    creation — moves here.
+
+    Returns the absolute path to the venv's python interpreter. No-op
+    when the venv already exists and has a usable interpreter.
+
+    We intentionally use ``sys.executable`` (the interpreter currently
+    running the helper) rather than re-detecting ``python3.13`` on
+    PATH: the dispatch already found and validated the correct
+    interpreter, passed it on the command line, and exec'd us with it.
+    The venv should inherit from the same interpreter for
+    cross-platform consistency.
+    """
+    venv_dir = pos_v2_root / ".venv"
+    venv_python = venv_dir / "bin" / "python"
+    if venv_python.exists():
+        return venv_python
+
+    _advance_state(
+        "running",
+        phase="phase-2-venv-creation",
+        detail=f"creating shared virtual environment at {venv_dir}",
+    )
+    # Use sys.executable so the venv is built from the same interpreter
+    # that the dispatch detected. Short timeout — venv creation is
+    # cheap (~5-10s); a minute is a generous ceiling.
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "venv", str(venv_dir)],
+            check=True,
+            capture_output=True,
+            timeout=60,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"venv-creation-failed: {(e.stderr or b'').decode('utf-8', errors='replace')[-500:]}"
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("venv-creation-failed: timed out after 60s")
+
+    if not venv_python.exists():
+        raise RuntimeError(
+            f"venv-creation-failed: no python at {venv_python} after create"
+        )
+    return venv_python
+
+
 def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
-    """Phases 3..7 in order. Returns a process exit code (always 0)."""
+    """Phases 2..7 in order. Returns a process exit code (always 0).
+
+    Phase 2 (venv creation) was previously handled inline in
+    first-run.sh but moved here with the 2026-04-22 detachment
+    amendment — the shell hook is now thin and only resolves the
+    Python interpreter; venv creation is part of the detached worker's
+    responsibility.
+    """
+
+    progress = get_progress()
+    # Announce "running" before any heavy work: the hook's reader sees
+    # this promptly and knows the worker is alive past the spawn line.
+    _advance_state("running", phase="phase-2-venv-creation")
+
+    # ---- Phase 2: shared venv --------------------------------------
+    try:
+        _ensure_shared_venv(pos_v2_root)
+    except RuntimeError as e:
+        _emit_diag(
+            ERR_HANDS_OFF_INTERNAL,
+            f"hands-off-lifecycle-internal:{e}",
+            str(e),
+            "Venv creation failed. Check disk space and permissions on\n"
+            f"{pos_v2_root}, then reopen claude to retry.",
+            user_what="could not create the shared Python virtual environment.",
+            user_remediation=(
+                "check disk space and permissions on your pos-v2 directory, "
+                "then reopen claude to retry."
+            ),
+        )
+        return 0
 
     # ---- Phase 3a: parse inventory --------------------------------
+    _advance_state("running", phase="phase-3a-inventory")
     try:
         inventory = load_inventory(inventory_path)
         validate_inventory(inventory)
@@ -835,6 +1061,11 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             "This is a shipped-artifact defect in pos-v2 itself. File\n"
             "an issue against the repo with the inventory file content\n"
             "and the error text above.",
+            user_what="pos-v2's bundled install manifest is corrupt.",
+            user_remediation=(
+                "this is a bug in pos-v2 itself, not in your machine.\n"
+                "re-clone the repo or file an issue; next reopen retries."
+            ),
         )
         return 0
 
@@ -843,6 +1074,17 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     shared_python = shared_venv_path / "bin" / "python"
 
     # ---- Phase 3b: shared-venv pip installs -----------------------
+    # AC2 bound: advertise the phase's expected duration up front so
+    # the per-component lines below arrive in a context the user has
+    # already been told to expect.
+    _advance_state(
+        "running",
+        phase="phase-3b-shared-deps",
+        detail="installing per-component requirements.txt (longest: memory-system, 3-5 minutes)",
+    )
+    progress.step(
+        "installing component dependencies — this takes 1-3 minutes on first run..."
+    )
     print("pos v2 first-run: installing shared-venv components...")
     shared_outcomes = _install_shared_components(
         pos_v2_root=pos_v2_root,
@@ -859,6 +1101,13 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
                 "network or proxy issue, resolve it before reopening. If a\n"
                 "dependency cannot resolve, inspect\n"
                 f"{outcome.requirements_path} and adjust the pin.",
+                user_what=(
+                    f"could not install dependencies for {outcome.component}."
+                ),
+                user_remediation=(
+                    "check your network or proxy settings, then reopen claude — "
+                    "the next session picks up from this component automatically."
+                ),
             )
             return 0
 
@@ -868,6 +1117,14 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # each into the shared venv. Without this, cross-component imports
     # (``import pos_orchestrator`` etc.) fail on fresh clone and the
     # Phase 4 scaffold raises ``ImportError`` → -32099 scaffold-failed.
+    _advance_state(
+        "running",
+        phase="phase-3e-editable-installs",
+        detail="registering component packages (pip install -e)",
+    )
+    progress.step(
+        "registering component packages — this takes about a minute..."
+    )
     print("pos v2 first-run: installing component packages (editable)...")
     try:
         editable_outcomes = _install_editable_components(
@@ -882,6 +1139,11 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             "shipped-artifact defect in pos-v2 pyproject.toml files.",
             "File an issue with the component names reported above; fix\n"
             "the cycle by breaking one of the declared sibling deps.",
+            user_what="pos-v2's bundled components form a dependency cycle.",
+            user_remediation=(
+                "this is a bug in pos-v2 itself, not in your machine.\n"
+                "file an issue with the component names in the error payload above."
+            ),
         )
         return 0
     for outcome in editable_outcomes:
@@ -895,10 +1157,22 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
                 "usually indicate a malformed pyproject.toml or missing\n"
                 "build-system requirements. Inspect the component's\n"
                 "pyproject.toml and adjust accordingly.",
+                user_what=(
+                    f"could not register the {outcome.component} package."
+                ),
+                user_remediation=(
+                    "reopen claude to retry. if the failure repeats, this is\n"
+                    "a shipped-artifact defect in pos-v2 — file an issue."
+                ),
             )
             return 0
 
     # ---- Phase 3c: dedicated-venv pip installs --------------------
+    _advance_state(
+        "running",
+        phase="phase-3c-dedicated-venvs",
+        detail="installing dedicated-venv components (heavy deps — graphiti, kuzu)",
+    )
     service_labels: list[str] = []
     for entry in inventory.get("dedicated_venvs", []):
         print(f"pos v2 first-run: installing dedicated-venv component {entry['component']}...")
@@ -943,6 +1217,11 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         )
         return 0
 
+    _advance_state(
+        "running",
+        phase="phase-4a-scaffold",
+        detail="substituting service-manager files and bootstrapping services",
+    )
     print("pos v2 first-run: substituting service-manager files and bootstrapping services...")
     try:
         _invoke_first_run_scaffold(
@@ -963,6 +1242,11 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # ---- Phase 4b: health poll ------------------------------------
     services = list(inventory.get("services", []))
     service_labels = [svc["label"] for svc in services]
+    _advance_state(
+        "running",
+        phase="phase-4b-health-poll",
+        detail=f"polling services for health: {', '.join(service_labels)}",
+    )
     print(f"pos v2 first-run: polling services for health ({', '.join(service_labels)})...")
     healthy, pending = _poll_services_healthy(
         services=services,
@@ -983,6 +1267,11 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         return 0
 
     # ---- Phase 5: confirmation sentence ---------------------------
+    _advance_state(
+        "running",
+        phase="phase-5-confirmation",
+        detail="all phases succeeded; writing confirmation",
+    )
     confirmation = _confirmation_sentence(
         merge_result=merge_result,
         service_labels=service_labels,
@@ -990,6 +1279,11 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     print(confirmation)
 
     # ---- Phase 6: self-retire -------------------------------------
+    _advance_state(
+        "running",
+        phase="phase-6-self-retire",
+        detail="rewriting .claude/settings.json to supervisor stanza",
+    )
     retire_merge, script_path, removed = _self_retire(
         pos_v2_root=pos_v2_root,
         settings_path=settings_path,
@@ -1023,6 +1317,13 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         )
         return 0
 
+    # Terminal state — tell the next SessionStart hook it can short-
+    # circuit straight to the supervisor.
+    _advance_state(
+        "completed",
+        phase="complete",
+        detail="first-run finished; supervisor stanza active",
+    )
     return 0
 
 
@@ -1065,12 +1366,37 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Override path to first-run-inventory.yaml (default: <root>/first-run-inventory.yaml).",
     )
+    # Detachment-amendment arguments (2026-04-22). The SessionStart
+    # hook spawns this helper detached; these flags let the spawned
+    # worker know which pos-root to write state into and which
+    # generation counter to tag log lines with.
+    parser.add_argument(
+        "--pos-root",
+        default=None,
+        help="Override ~/.pos/ for state/log files (test/override hook).",
+    )
+    parser.add_argument(
+        "--generation",
+        type=int,
+        default=1,
+        help="Worker generation counter (for log-line tagging across respawns).",
+    )
     args = parser.parse_args(argv)
 
     pos_v2_root = Path(args.pos_v2_root).resolve()
     inventory_path = Path(
         args.inventory or (pos_v2_root / "first-run-inventory.yaml")
     ).resolve()
+
+    # Wire state-file location into module globals so _advance_state()
+    # picks them up without threading the config through every helper.
+    # The ENABLED flag flips on here so tests that import + call
+    # _emit_diag directly do not pollute ~/.pos/.
+    global _STATE_POS_ROOT, _STATE_GENERATION, _STATE_WRITES_ENABLED
+    if args.pos_root:
+        _STATE_POS_ROOT = Path(args.pos_root).expanduser().resolve()
+    _STATE_GENERATION = int(args.generation)
+    _STATE_WRITES_ENABLED = True
 
     if not pos_v2_root.is_dir():
         _emit_diag(
@@ -1082,11 +1408,32 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    if args.mode == "bootstrap":
-        return _run_bootstrap(
-            pos_v2_root=pos_v2_root, inventory_path=inventory_path
+    try:
+        if args.mode == "bootstrap":
+            return _run_bootstrap(
+                pos_v2_root=pos_v2_root, inventory_path=inventory_path
+            )
+        return _run_resume(pos_v2_root=pos_v2_root, inventory_path=inventory_path)
+    except Exception as e:
+        # Belt-and-suspenders: any uncaught exception inside the
+        # worker must land a "failed" state so the next SessionStart
+        # hook surfaces it instead of the user seeing pure silence.
+        _emit_diag(
+            ERR_HANDS_OFF_INTERNAL,
+            f"hands-off-lifecycle-internal:uncaught-exception:{type(e).__name__}",
+            repr(e),
+            "An unexpected exception escaped the first-run worker.\n"
+            "Inspect ~/.pos/first-run.log for the last recorded phase,\n"
+            "then reopen claude to retry. If this repeats, file an issue\n"
+            "with the log contents.",
+            user_what="first-run worker crashed unexpectedly.",
+            user_remediation=(
+                "reopen claude to retry. the next session will pick up\n"
+                "where this left off; if the same failure repeats, this\n"
+                "is a bug — file an issue with ~/.pos/first-run.log."
+            ),
         )
-    return _run_resume(pos_v2_root=pos_v2_root, inventory_path=inventory_path)
+        return 0
 
 
 if __name__ == "__main__":

@@ -1,45 +1,58 @@
 #!/bin/sh
 # hands-off-lifecycle/hooks/first-run.sh
 #
-# pos-v2 first-run bootstrap. POSIX shell (no bash-isms).
+# pos-v2 first-run SessionStart hook. POSIX shell (no bash-isms).
 #
-# Invoked as a Claude Code SessionStart hook on a fresh clone. Detects
-# system Python 3.13+, creates the shared venv, then hands off to
-# first_run_helper.py which does the Python-appropriate heavy work
-# (per-component dep install, plist substitution, service bootstrap,
-# .claude/settings.json rewrite, self-retire).
+# Invoked as a Claude Code SessionStart hook on a fresh clone.
 #
-# On successful completion: this script deletes itself and the
-# .claude/settings.json SessionStart stanza is rewritten to invoke the
-# sealed supervisor path directly. Next sessions never see this script.
+# 2026-04-22 session-start-detachment amendment rewrite:
 #
-# Error codes:
-#   -32091  platform-unsupported:no-compatible-python-found
-#   -32097  pip-install-failed
-#   -32098  service-health-timeout
-#   -32099  hands-off-lifecycle-internal (self-retire verification failed)
+# This hook is now a **thin status-report-and-handoff**. It completes
+# in under 5 seconds — Claude Code's SessionStart hook is the wrong
+# container for the 3-8 minute cold-cache first-run flow, and prior
+# attempts to run the heavy lifting inside the hook were killed by the
+# hook's 120 s timeout, leaving ~/.pos/ and .venv/ partially populated
+# and silent on the user's screen. Luke hit this himself on his
+# /tmp/pos3 clone; the four failure classes are documented in the
+# amendment commit message and this hook's fixtures.
 #
-# Exit convention: always 0 to Claude Code so the stdout text surfaces
-# as additionalContext. Status semantics are encoded in the stdout
-# payload, not the exit code.
+# Responsibilities of THIS file:
+#   1. Read the state sentinel at ~/.pos/first-run.state.
+#   2. Decide: fresh-start, still-running, failed-respawn, already-done.
+#   3. Emit a plain-language additionalContext message naming the
+#      progress file and expected wait window.
+#   4. For fresh-start or failed-respawn: detect Python 3.13, spawn the
+#      Python worker **detached** (new session group, redirected stdio,
+#      no parent PID lineage), and return immediately.
+#
+# Responsibilities the hook NO LONGER owns:
+#   - Creating the shared venv (moved into the detached worker).
+#   - pip install of per-component requirements (already detached work,
+#     but formerly invoked synchronously from here).
+#   - Running Amendment 4's scaffold, plist substitution, service
+#     bootstrap, health polling — all moved.
+#   - Self-retiring this script — the worker handles it on success.
+#
+# Exit codes from the hook perspective: always 0. Status semantics are
+# carried in the stdout payload (additionalContext for Claude Code) and
+# the state file (authoritative state for future hook firings).
 
 set -u
 
-# Ensure POSIX-baseline tools (cat, printf, cd, dirname, rm) are on PATH
-# even if the invoker stripped it. We prepend rather than replace so a
-# caller-specified custom PATH still wins for POSIX_V2_PYTHON-style
-# explicit tooling.
+# ---- POSIX-baseline PATH and file locations -----------------------
+#
+# If the invoker stripped PATH we still need cat, printf, rm, etc.
+# Prepending rather than replacing preserves any caller-specified tools
+# (POS_V2_PYTHON escape hatch, e.g.).
 PATH="${PATH:-}:/usr/bin:/bin"
 export PATH
 
-# Resolve the pos-v2 workspace root from the script's own location.
-# $CLAUDE_PROJECT_DIR is set by Claude Code at hook fire time; fall
-# back to the script-relative resolution if it is absent (defensive).
+# Resolve the pos-v2 workspace root. CLAUDE_PROJECT_DIR is set by Claude
+# Code at hook fire time; fall back to script-relative resolution when
+# the hook is invoked outside Claude Code (test harness, manual run).
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "$CLAUDE_PROJECT_DIR" ]; then
     POS_V2_ROOT="$CLAUDE_PROJECT_DIR"
 else
-    # Resolve from script location: hands-off-lifecycle/hooks/first-run.sh
-    # Two parents up from the script directory is the workspace root.
     SCRIPT_DIR=$(cd "$(dirname "$0")" 2>/dev/null && pwd -P) || {
         printf 'pos v2 first-run: cannot resolve script directory.\n'
         exit 0
@@ -50,39 +63,28 @@ else
     }
 fi
 
-VENV_DIR="$POS_V2_ROOT/.venv"
 HELPER="$POS_V2_ROOT/hands-off-lifecycle/hooks/first_run_helper.py"
-THIS_SCRIPT="$POS_V2_ROOT/hands-off-lifecycle/hooks/first-run.sh"
+DISPATCH="$POS_V2_ROOT/hands-off-lifecycle/hooks/first_run_dispatch.py"
 
-# ---- Phase 0: determine if first-run is even needed ---------------
-#
-# Partial-first-run detection marker (Eve inference #3): absence of
-# the top-level .venv/ is the canonical "first-run not complete"
-# signal. Self-retire cannot delete the venv (the venv must persist);
-# a dedicated sentinel would create a separate cleanup concern for a
-# future uninstall flow. Venv-absence is cheaper and more structural.
-if [ -d "$VENV_DIR" ] && [ -x "$VENV_DIR/bin/python" ]; then
-    # Venv exists — first-run has either completed before, or partially
-    # ran and left the venv in place. Hand off to the helper in
-    # "resume-or-verify" mode; it short-circuits cleanly if state is
-    # complete, or restarts pending phases if not.
-    exec "$VENV_DIR/bin/python" "$HELPER" --pos-v2-root "$POS_V2_ROOT" --mode resume
-fi
+# ~/.pos is the per-host config dir. Overridable for tests via the
+# POS_V2_POS_ROOT env var (same spelling the Python side respects).
+POS_ROOT="${POS_V2_POS_ROOT:-$HOME/.pos}"
 
-# ---- Phase 1: Python version gate ---------------------------------
+# ---- Python 3.13 detection ---------------------------------------
 #
-# Detection order (research §3.2):
+# We need a 3.13+ interpreter to run first_run_dispatch.py, which
+# decides what state we are in and whether to spawn the worker. The
+# dispatch script is stdlib-only — no venv required.
+#
+# Detection order matches the pre-amendment script so the UX is
+# consistent across detached and inline modes:
 #   1. $POS_V2_PYTHON (CI / dev escape hatch)
 #   2. python3.13 on PATH
 #   3. /opt/homebrew/bin/python3.13 (Homebrew ARM)
 #   4. /usr/local/bin/python3.13 (Homebrew Intel / some Linux)
 #   5. python3 on PATH (verify 3.13+)
-# On failure: step-by-step install instructions per the Core Dev
-# Convention (docs/rebuild/FUTURE_IDEAS.md "step-by-step when the
-# system cannot act").
 
 _verify_version_ge_313() {
-    # Echo the full version if ok; exit nonzero otherwise.
     "$1" -c '
 import sys
 v = sys.version_info
@@ -111,10 +113,6 @@ DETECTED_PYTHON=""
 DETECTED_VERSION=""
 
 if [ -n "${POS_V2_PYTHON:-}" ]; then
-    # Escape hatch: if POS_V2_PYTHON is set, we commit to it. No fallback
-    # chain — a caller who set this variable expressed intent. On failure,
-    # halt with the version-gate diagnostic rather than silently picking
-    # another candidate (which would hide the override being broken).
     _try_candidate "$POS_V2_PYTHON" || true
 else
     if [ -z "$DETECTED_PYTHON" ]; then
@@ -132,121 +130,50 @@ else
 fi
 
 if [ -z "$DETECTED_PYTHON" ]; then
+    # No compatible Python. This is the one case the shell has to
+    # handle itself — the dispatch script requires 3.13 to run.
+    # The "Detected: none" + error-code line are preserved from the
+    # pre-amendment diagnostic for the T5/T6 acceptance tests, which
+    # assert against both markers.
     cat <<EOF_DIAG
-pos v2 first-run: halted at Phase 1 (python-version-gate).
+Your pos-v2 workspace cannot finish installing — Python 3.13 was not
+found on this machine.
 
 Error code: -32091 platform-unsupported:no-compatible-python-found
 Required:   Python 3.13 or newer
 Detected:   none
 
-The system cannot install Python 3.13 for you. Follow the steps for
-your platform below; expected time ~2-5 minutes. Then reopen this
-workspace in Claude Code — first-run will pick up from here.
+Install Python 3.13 (expected time: 2-5 minutes), then reopen claude.
 
   macOS (Homebrew):
-    1. Install Homebrew if you do not have it: https://brew.sh  (~2 min)
-    2. Run: brew install python@3.13                              (~1 min)
+    1. Install Homebrew if you do not have it: https://brew.sh
+    2. brew install python@3.13
     3. Reopen this workspace in Claude Code.
 
   Ubuntu 24.04:
-    1. sudo add-apt-repository ppa:deadsnakes/ppa                 (~30 s)
-    2. sudo apt update                                            (~30 s)
-    3. sudo apt install python3.13 python3.13-venv                (~1 min)
+    1. sudo add-apt-repository ppa:deadsnakes/ppa
+    2. sudo apt update
+    3. sudo apt install python3.13 python3.13-venv
     4. Reopen this workspace in Claude Code.
 
   Ubuntu 25.04+ / Fedora 40+ / Debian 13:
-    1. sudo apt install python3.13 python3.13-venv                (~1 min)
-       (Fedora: sudo dnf install python3.13 python3.13-venv)
-    2. Reopen this workspace in Claude Code.
-
-  Other:
-    1. pyenv install 3.13                                         (~2 min)
+    1. sudo apt install python3.13 python3.13-venv
     2. Reopen this workspace in Claude Code.
 EOF_DIAG
     exit 0
 fi
 
-# Verify python3.13-venv module is available (Debian/Ubuntu gotcha,
-# research §3.5). `python -m venv --help` returns non-zero when the
-# venv module is missing despite the interpreter being present.
-if ! "$DETECTED_PYTHON" -m venv --help >/dev/null 2>&1; then
-    cat <<EOF_DIAG
-pos v2 first-run: halted at Phase 1 (python-venv-module-missing).
-
-Error code: -32091 platform-unsupported:python-venv-module-missing
-Detected:   Python $DETECTED_VERSION at $DETECTED_PYTHON
-Missing:    python -m venv (the stdlib venv module)
-
-The system cannot install the venv module for you. On Debian/Ubuntu
-the 'python3.13' package does not always bring 'python3.13-venv'.
-Follow the steps for your platform; expected time ~1 minute.
-
-  Ubuntu/Debian:
-    1. sudo apt install python3.13-venv                           (~30 s)
-    2. Reopen this workspace in Claude Code.
-
-  Other:
-    1. Reinstall Python from a distribution that bundles venv.
-    2. Reopen this workspace in Claude Code.
-EOF_DIAG
-    exit 0
-fi
-
-# ---- Phase 2: top-level venv creation -----------------------------
+# ---- Hand off to the Python dispatch script -----------------------
 #
-# python -m venv is idempotent — a no-op if the venv already exists
-# and is healthy. We only reach this branch if Phase 0 did NOT find
-# a healthy venv (absence of .venv/bin/python), so this is a create,
-# not a maybe-create.
+# first_run_dispatch.py is stdlib-only and completes in under a second
+# on any real machine. It reads the state file, decides what to do, and
+# emits the additionalContext text the user sees. When a new worker
+# needs to be spawned the dispatch does it via os.posix_spawn with
+# start_new_session so the worker survives the hook process's exit.
 
-printf 'pos v2 first-run: creating top-level venv at %s (using %s, %s)...\n' \
-    "$VENV_DIR" "$DETECTED_PYTHON" "$DETECTED_VERSION"
-
-if ! "$DETECTED_PYTHON" -m venv "$VENV_DIR" 2>&1; then
-    cat <<EOF_DIAG
-pos v2 first-run: halted at Phase 2 (venv-creation-failed).
-
-Error code: -32099 hands-off-lifecycle-internal:venv-creation-failed
-Detected:   Python $DETECTED_VERSION at $DETECTED_PYTHON
-Target:     $VENV_DIR
-
-The venv creation command failed. Usually this means the target
-directory is not writable or disk is full.
-
-  1. Check disk free space (df -h "$POS_V2_ROOT").
-  2. Check permissions on the workspace root.
-  3. Remove a partial venv if present: rm -rf "$VENV_DIR"
-  4. Reopen this workspace in Claude Code.
-EOF_DIAG
-    exit 0
-fi
-
-# Verify the venv shipped a working pip (ensurepip should have fired).
-if [ ! -x "$VENV_DIR/bin/pip" ] && [ ! -x "$VENV_DIR/bin/pip3" ]; then
-    cat <<EOF_DIAG
-pos v2 first-run: halted at Phase 2 (venv-pip-missing).
-
-Error code: -32099 hands-off-lifecycle-internal:venv-pip-missing
-Venv:       $VENV_DIR (created)
-Missing:    pip inside the venv
-
-On Debian/Ubuntu this happens when python3-venv is installed without
-ensurepip support.
-
-  1. sudo apt install python3.13-venv                             (~30 s)
-  2. rm -rf "$VENV_DIR"
-  3. Reopen this workspace in Claude Code.
-EOF_DIAG
-    exit 0
-fi
-
-# ---- Phase 3+: hand off to the Python helper ----------------------
-#
-# From here everything is stdlib-Python: per-component venv creation +
-# pip install, .claude/settings.json author/merge, plist substitution
-# and service bootstrap, health verification, confirmation sentence
-# emission, self-retire of this script + SessionStart-stanza rewrite,
-# final-state verification. The helper writes progress directly to
-# stdout so Claude Code surfaces it as additionalContext.
-
-exec "$VENV_DIR/bin/python" "$HELPER" --pos-v2-root "$POS_V2_ROOT" --mode bootstrap
+exec "$DETECTED_PYTHON" "$DISPATCH" \
+    --pos-v2-root "$POS_V2_ROOT" \
+    --pos-root "$POS_ROOT" \
+    --helper "$HELPER" \
+    --python "$DETECTED_PYTHON" \
+    --python-version "$DETECTED_VERSION"

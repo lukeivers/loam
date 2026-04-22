@@ -242,6 +242,7 @@ def run_first_run_scaffold(
     service_manager_dir_override: Path | None = None,
     workspace_root: Path | None = None,
     service_runner: "ServiceManagerRunner | None" = None,
+    partial_recovery: bool = False,
 ) -> ScaffoldResult:
     """Deterministic scaffold implementation, test-callable.
 
@@ -271,6 +272,18 @@ def run_first_run_scaffold(
     service_runner:
         Injection hook that tests replace to avoid spawning real
         launchctl / systemctl.
+    partial_recovery:
+        Added by the 2026-04-22 session-start-detachment amendment.
+        When False (legacy default), a partial ``~/.pos/`` state
+        (directory exists without ``bootstrap.yaml``) raises
+        ``PartialScaffoldError`` — the original H4 structural refusal.
+        When True, the scaffold repairs the partial state by writing any
+        missing files on top of the existing directory, leaving
+        user-modified files untouched. Invoked by the detached first-run
+        worker on resume when the previous run crashed mid-scaffold —
+        the ``partial-scaffold-detected`` halt with "retry next session"
+        guidance was itself the terminal user-facing failure mode Luke
+        hit on his fresh-clone attempt, which this amendment closes.
     """
     plat = platform_override or detect_platform()
     if plat not in ("macos", "linux"):
@@ -282,18 +295,22 @@ def run_first_run_scaffold(
     pos_root = Path(pos_root).expanduser()
     bootstrap_yaml = pos_root / "bootstrap.yaml"
 
-    # First-run detection (Q6 heuristic).
+    # First-run detection (Q6 heuristic), with optional partial-recovery
+    # path (Phase-6 detachment amendment).
     if pos_root.exists() and not bootstrap_yaml.exists():
-        # Partial prior state — structural refusal (H4).
-        raise PartialScaffoldError(
-            "partial-scaffold-detected",
-            data={
-                "pos_root": str(pos_root),
-                "missing": str(bootstrap_yaml),
-            },
-        )
+        if not partial_recovery:
+            # Partial prior state — structural refusal (H4).
+            raise PartialScaffoldError(
+                "partial-scaffold-detected",
+                data={
+                    "pos_root": str(pos_root),
+                    "missing": str(bootstrap_yaml),
+                },
+            )
+        # partial_recovery=True: fall through to the write loop; it is
+        # idempotent per file (missing → write, present → leave alone).
 
-    if bootstrap_yaml.exists():
+    if bootstrap_yaml.exists() and not partial_recovery:
         return ScaffoldResult(
             ran=False,
             reason="already_scaffolded",
@@ -308,10 +325,18 @@ def run_first_run_scaffold(
             confirmation=CONFIRMATION_SENTENCE,
         )
 
-    # Write the nine YAML files.
+    # Write the nine YAML files. Under partial_recovery we skip files
+    # that already exist on disk so the user's edits survive; under a
+    # normal fresh scaffold this is the first time any file is written
+    # so the check is a no-op.
     written: list[str] = []
     for rel, content in _SCAFFOLD_FILES.items():
         dest = pos_root / rel
+        if partial_recovery and dest.exists():
+            # File survived from a prior partial run; keep whatever the
+            # user or the prior run left there. The scaffold's contract
+            # is "all files present," not "all files pristine."
+            continue
         _write_file(dest, content)
         written.append(rel)
 
@@ -339,7 +364,7 @@ def run_first_run_scaffold(
 
     return ScaffoldResult(
         ran=True,
-        reason="fresh_scaffold",
+        reason="partial_recovery" if partial_recovery else "fresh_scaffold",
         files_written=tuple(written),
         service_files_installed=tuple(p for _, p in service_files),
         services_bootstrapped=tuple(bootstrapped),

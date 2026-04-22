@@ -23,7 +23,18 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "3780603"
+# BASELINE advances when workspace-bootstrap opens a new amendment
+# window:
+#   - ac48a7b  at first seal
+#   - 3780603  when Amendment 4 (first_run_scaffold phase) opened
+#   - 1a55969  when the session-start-detachment amendment opened
+#              (run_first_run_scaffold gains a partial_recovery=True
+#              path so the detached worker can complete a scaffold
+#              that crashed mid-flight, closing the H4 "retry next
+#              session" terminal user surface). 1a55969 is the prior
+#              SEAL_COMMIT SHA — bumping BASELINE to the prior seal
+#              keeps the diff scope to just this amendment's window.
+BASELINE = "1a55969"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

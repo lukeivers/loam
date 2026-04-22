@@ -31,9 +31,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # (ship-time + post-self-retire stanzas migrated from the flat-object
 # shape to the current `{matcher, hooks: [...]}` envelope); advanced to
 # b63c758 when the editable-install amendment opened (Phase 3e added
-# per-component pip install -e discovery + topological ordering + idempotent
-# re-run).
-BASELINE = "b63c758"
+# per-component pip install -e discovery + topological ordering +
+# idempotent re-run); advanced to 63b7cb8 when the session-start-
+# detachment amendment opened (SessionStart hook rewritten as thin
+# status-report-and-handoff, heavy work detached via state file +
+# progress log, scaffold gained partial_recovery=True path, workspace-
+# bootstrap amended in lockstep).
+BASELINE = "63b7cb8"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

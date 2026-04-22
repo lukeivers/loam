@@ -83,6 +83,12 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         "workspace-bootstrap",
         "hands-off-lifecycle",
         "README.md",
+        # .claude/settings.json is the ship-time artifact hands-off-lifecycle
+        # authors a SessionStart stanza into. The 2026-04-22 Claude Code
+        # hook schema amendment (BASELINE 7711249) migrates the stanza to
+        # the current `{matcher, hooks: [...]}` envelope, which requires
+        # touching this file.
+        ".claude",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

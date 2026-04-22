@@ -11,4 +11,16 @@
 # Once sealed, overwrite with the exact commit SHA (8+ chars). No
 # behavioural amendment to the true-first-run component ships without
 # a new amendment cycle that updates BASELINE and bumps this SEAL_COMMIT.
-96f8e17
+#
+# Amendment cycle — Claude Code hook schema regression (2026-04-22):
+# the ship-time + post-self-retire SessionStart stanzas used the
+# obsolete flat-object shape (`{type: command, command: ...}` directly
+# in the SessionStart array). Current Claude Code schema rejects this
+# at session start. The amendment migrates both shapes — plus the
+# stanza-builder helpers and the settings-merge walkers — to the
+# current `{matcher, hooks: [...]}` envelope. No behavioural change
+# beyond the schema fix. SEAL_COMMIT is re-pinned at the amendment
+# commit; BASELINE in hands-off-lifecycle/tests/test_cross_cutting.py
+# is advanced to 7711249 (the pre-amendment tip) so diff-scope reflects
+# this amendment only.
+dbb2755

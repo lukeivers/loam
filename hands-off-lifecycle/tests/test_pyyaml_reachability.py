@@ -112,9 +112,9 @@ def test_P2_runner_surfaces_exception_as_json(tmp_path: Path) -> None:
     """Force a PlatformUnsupportedError via a made-up platform and
     verify the runner reports it as JSON on stderr line 1 with exit 1.
 
-    The scaffold itself only allows ``macos`` and ``linux``; we can't
-    easily force the failure via args without adding a platform_override
-    flag to the runner. Instead we exercise the JSON failure path via
+    The scaffold itself only allows ``macos``; we can't easily force
+    the failure via args without adding a platform_override flag to
+    the runner. Instead we exercise the JSON failure path via
     the helper's unit-level wrapper in P3 (which can monkeypatch the
     subprocess). Here we exercise the happy path + assert the runner's
     exit-code contract is preserved by running it with a malformed

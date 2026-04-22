@@ -2,10 +2,10 @@
 
 Runs in the new ``first_run_scaffold`` phase, before
 ``before_orchestrator_start``. Detects a fresh pos-v2 workspace and
-writes the per-component YAML defaults, installs the launchd /
-systemd-user service-manager files for the memory sidecar and the
-orchestrator, and invokes ``launchctl bootstrap`` / ``systemctl --user
-start`` so the services come up without the user doing anything manual.
+writes the per-component YAML defaults, installs the launchd
+service-manager files for the memory sidecar and the orchestrator, and
+invokes ``launchctl bootstrap`` so the services come up without the
+user doing anything manual.
 
 First-run detection heuristic (per proposal §9 inference #8):
 
@@ -15,10 +15,12 @@ If ``~/.pos/`` exists but ``bootstrap.yaml`` does not, the scaffold
 halts with a ``partial-scaffold-detected`` diagnostic rather than
 overwriting anything. This is the H4 structural refusal.
 
-Platform support is limited to macOS (launchd) and Linux
-(systemd-user). Any other platform halts with ``platform-unsupported:
-<platform>`` — the H3 structural refusal. A subprocess-fallback would
-violate the silent-stay-degraded prohibition.
+Platform support is limited to macOS (launchd). Any other platform
+halts with ``platform-unsupported:<platform>`` — the H3 structural
+refusal. A subprocess-fallback would violate the silent-stay-degraded
+prohibition. Amendment #10 (linux-removal) removed the Linux/systemd-
+user branch per docs/odd-methodology.md §2.5 — Linux was never a
+named supported-platform objective.
 
 Error-code range reserved for this component: -32090..-32099 (per
 proposal §9 inference #2). Only ``-32090`` (partial_scaffold) and
@@ -92,10 +94,9 @@ class ServiceManagerBootoutError(BootstrapError):
 #
 # Slugs are derived deterministically from the workspace root's
 # directory basename so two clones on one host do not collide on
-# launchd/systemd labels. The sanitisation is deliberately conservative
-# — disallowed characters become '-', runs collapse, leading/trailing
-# '-' trim — matching reverse-DNS label conventions on macOS and
-# systemd unit-name safety on Linux.
+# launchd labels. The sanitisation is deliberately conservative —
+# disallowed characters become '-', runs collapse, leading/trailing
+# '-' trim — matching reverse-DNS label conventions on macOS.
 
 
 _SLUG_ALLOWED_RE = re.compile(r"[^a-z0-9-]+")
@@ -103,7 +104,7 @@ _SLUG_COLLAPSE_RE = re.compile(r"-+")
 
 
 def workspace_slug(workspace_root: Path | str) -> str:
-    """Return a stable, launchd/systemd-safe slug for a workspace root.
+    """Return a stable, launchd-safe slug for a workspace root.
 
     Raises ``WorkspaceSlugUnrepresentableError`` if the basename
     contains no characters that survive sanitisation.
@@ -122,13 +123,12 @@ def workspace_slug(workspace_root: Path | str) -> str:
 
 
 # Service "kinds" installed by the first-run scaffold. The full label
-# on both platforms is `com.pos-v2.<slug>.<kind>`; the plist/unit
-# filename matches the label.
+# is `com.pos-v2.<slug>.<kind>`; the plist filename matches the label.
 _SERVICE_KINDS: tuple[str, ...] = ("memory-graphiti", "orchestrator")
 
 
 def service_label(kind: str, slug: str) -> str:
-    """Compose the reverse-DNS service label for a kind + workspace slug."""
+    """Compose the reverse-DNS launchd label for a kind + workspace slug."""
     if kind not in _SERVICE_KINDS:
         raise ValueError(f"unknown service kind: {kind!r}")
     return f"com.pos-v2.{slug}.{kind}"
@@ -268,16 +268,15 @@ _SCAFFOLD_FILES: dict[str, str] = {
 
 
 def detect_platform() -> str:
-    """Return 'macos', 'linux', or a named unsupported platform label.
+    """Return 'macos' or a named unsupported platform label.
 
     The label is what gets emitted in the platform-unsupported halt
-    diagnostic.
+    diagnostic. Amendment #10 (linux-removal) dropped the Linux branch;
+    any non-macOS label routes to structural refusal.
     """
     sysname = sys.platform.lower()
     if sysname == "darwin":
         return "macos"
-    if sysname.startswith("linux"):
-        return "linux"
     return sysname
 
 
@@ -332,16 +331,17 @@ def run_first_run_scaffold(
         If True, the check-then-write short-circuits and no side-effects
         happen. The return value reports what *would* have been done.
     platform_override:
-        Force a platform label for tests. ``"macos"`` / ``"linux"`` /
-        anything else routes to the platform-unsupported halt.
+        Force a platform label for tests. ``"macos"`` is the only
+        supported value; anything else routes to the platform-
+        unsupported halt.
     service_bootstrap:
         If False, service-manager files are written but the
-        ``launchctl bootstrap`` / ``systemctl --user start`` call is
-        skipped. Tests default to False.
+        ``launchctl bootstrap`` call is skipped. Tests default to
+        False.
     service_manager_dir_override:
-        Override for the ``~/Library/LaunchAgents`` or
-        ``~/.config/systemd/user`` destination so tests can inspect
-        written plists without touching the user's real agent dir.
+        Override for the ``~/Library/LaunchAgents`` destination so
+        tests can inspect written plists without touching the user's
+        real agent dir.
     workspace_root:
         Absolute path to the pos-v2 workspace (used when templating
         service-manager files). Defaults to the pos-v2 repo root if
@@ -349,7 +349,7 @@ def run_first_run_scaffold(
         in.
     service_runner:
         Injection hook that tests replace to avoid spawning real
-        launchctl / systemctl.
+        launchctl.
     partial_recovery:
         Added by the 2026-04-22 session-start-detachment amendment.
         When False (legacy default), a partial ``~/.pos/`` state
@@ -364,7 +364,7 @@ def run_first_run_scaffold(
         hit on his fresh-clone attempt, which this amendment closes.
     """
     plat = platform_override or detect_platform()
-    if plat not in ("macos", "linux"):
+    if plat != "macos":
         raise PlatformUnsupportedError(
             f"platform-unsupported:{plat}",
             data={"platform": plat, "pos_root": str(pos_root)},
@@ -509,46 +509,6 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
 }
 
 
-_SYSTEMD_TEMPLATES: dict[str, str] = {
-    "memory-graphiti": """\
-[Unit]
-Description=pos-v2 memory sidecar (Graphiti + Kuzu)
-After=default.target
-
-[Service]
-Type=simple
-WorkingDirectory={workspace}/memory-system
-Environment=PYTHONUNBUFFERED=1
-ExecStart={workspace}/memory-system/.venv/bin/python -m src.service
-Restart=always
-RestartSec=10
-StartLimitIntervalSec=60
-StartLimitBurst=3
-
-[Install]
-WantedBy=default.target
-""",
-    "orchestrator": """\
-[Unit]
-Description=pOS session-resilient orchestrator
-After=default.target
-
-[Service]
-Type=simple
-WorkingDirectory={workspace}
-Environment=PYTHONUNBUFFERED=1
-ExecStart={workspace}/.venv/bin/python -m pos_orchestrator
-Restart=always
-RestartSec=30
-StartLimitIntervalSec=60
-StartLimitBurst=2
-
-[Install]
-WantedBy=default.target
-""",
-}
-
-
 def _install_service_manager_files(
     *,
     plat: str,
@@ -556,35 +516,30 @@ def _install_service_manager_files(
     slug: str,
     override_dir: Path | None,
 ) -> list[tuple[str, Path]]:
-    """Write plist / .service files into the platform-appropriate dir.
+    """Write launchd plist files into the macOS LaunchAgents dir.
 
     Labels are computed per workspace slug (amendment #6):
-    ``com.pos-v2.<slug>.<kind>`` on both platforms. The filename
-    matches the label; the {label} placeholder in templates is
-    substituted with the full label string.
+    ``com.pos-v2.<slug>.<kind>``. The filename matches the label; the
+    {label} placeholder in templates is substituted with the full
+    label string.
 
     Returns (label, absolute-path) pairs the caller can bootstrap.
+    Amendment #10 (linux-removal) removed the systemd-user branch;
+    ``plat`` must equal ``"macos"`` — other values are rejected
+    upstream by the platform-unsupported halt.
     """
-    if plat == "macos":
-        dest_dir = override_dir or (Path.home() / "Library" / "LaunchAgents")
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        out: list[tuple[str, Path]] = []
-        for kind, tmpl in _LAUNCHD_TEMPLATES.items():
-            label = service_label(kind, slug)
-            path = dest_dir / f"{label}.plist"
-            path.write_text(tmpl.format(label=label, workspace=workspace_root))
-            path.chmod(0o644)
-            out.append((label, path))
-        return out
-
-    # linux
-    dest_dir = override_dir or (Path.home() / ".config" / "systemd" / "user")
+    if plat != "macos":
+        raise PlatformUnsupportedError(
+            f"platform-unsupported:{plat}",
+            data={"platform": plat},
+        )
+    dest_dir = override_dir or (Path.home() / "Library" / "LaunchAgents")
     dest_dir.mkdir(parents=True, exist_ok=True)
-    out = []
-    for kind, tmpl in _SYSTEMD_TEMPLATES.items():
+    out: list[tuple[str, Path]] = []
+    for kind, tmpl in _LAUNCHD_TEMPLATES.items():
         label = service_label(kind, slug)
-        path = dest_dir / f"{label}.service"
-        path.write_text(tmpl.format(workspace=workspace_root))
+        path = dest_dir / f"{label}.plist"
+        path.write_text(tmpl.format(label=label, workspace=workspace_root))
         path.chmod(0o644)
         out.append((label, path))
     return out
@@ -594,7 +549,7 @@ def _install_service_manager_files(
 
 
 class ServiceManagerRunner:
-    """Wraps ``launchctl`` / ``systemctl --user`` for testability."""
+    """Wraps ``launchctl`` for testability."""
 
     def __init__(self, *, platform_label: str) -> None:
         self._plat = platform_label
@@ -614,11 +569,11 @@ class ServiceManagerRunner:
         """Bring a service up, replacing any cached configuration.
 
         Amendment #6 (namespaced-labels-and-bootout) behaviour:
-        always ``bootout`` the label first so launchd/systemd-user
-        drops any stale in-memory config, then install the fresh
-        plist/unit. Without this, launchd's ``bootstrap`` is a no-op
-        when the label is already loaded — the exact failure class
-        that broke pos3's first-run on 2026-04-22.
+        always ``bootout`` the label first so launchd drops any stale
+        in-memory config, then install the fresh plist. Without this,
+        launchd's ``bootstrap`` is a no-op when the label is already
+        loaded — the exact failure class that broke pos3's first-run
+        on 2026-04-22.
 
         Non-fatal when bootout reports "service not loaded" (the
         normal first-ever-bootstrap case); a structural refusal
@@ -626,68 +581,45 @@ class ServiceManagerRunner:
 
         This never launches a child process itself — the
         ``SessionStart`` hook's FD-inheritance bug (Claude Code
-        v2.1.87, issue #43123) is avoided by delegating to the
-        platform's service manager, which is FD-safe.
+        v2.1.87, issue #43123) is avoided by delegating to launchd,
+        which is FD-safe. Amendment #10 (linux-removal) dropped the
+        systemd-user branch; non-macOS platforms are rejected
+        structurally.
         """
-        if self._plat == "macos":
-            uid = os.getuid()
-            binary = _which("launchctl") or "/bin/launchctl"
-            bootout = subprocess.run(
-                [binary, "bootout", f"gui/{uid}/{label}"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=15,
+        if self._plat != "macos":
+            raise PlatformUnsupportedError(
+                f"platform-unsupported:{self._plat}",
+                data={"platform": self._plat},
             )
-            if bootout.returncode != 0:
-                stderr = bootout.stderr or ""
-                if not any(
-                    frag in stderr
-                    for frag in self._BENIGN_BOOTOUT_STDERR_FRAGMENTS
-                ):
-                    raise ServiceManagerBootoutError(
-                        f"service-manager-bootout-failed:{label}:"
-                        f"{stderr.strip()[-200:]}",
-                        data={
-                            "label": label,
-                            "returncode": bootout.returncode,
-                            "stderr_tail": stderr.strip()[-200:],
-                        },
-                    )
-            subprocess.run(
-                [binary, "bootstrap", f"gui/{uid}", str(service_file)],
-                check=False,
-                capture_output=True,
-                timeout=15,
-            )
-            return
-        if self._plat == "linux":
-            binary = _which("systemctl") or "/bin/systemctl"
-            # Stop first so any cached unit config is released; benign
-            # when the unit isn't running.
-            subprocess.run(
-                [binary, "--user", "stop", label],
-                check=False,
-                capture_output=True,
-                timeout=10,
-            )
-            # Reload to pick up the rewritten unit file on disk.
-            subprocess.run(
-                [binary, "--user", "daemon-reload"],
-                check=False,
-                capture_output=True,
-                timeout=10,
-            )
-            subprocess.run(
-                [binary, "--user", "start", label],
-                check=False,
-                capture_output=True,
-                timeout=15,
-            )
-            return
-        raise PlatformUnsupportedError(
-            f"platform-unsupported:{self._plat}",
-            data={"platform": self._plat},
+        uid = os.getuid()
+        binary = _which("launchctl") or "/bin/launchctl"
+        bootout = subprocess.run(
+            [binary, "bootout", f"gui/{uid}/{label}"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if bootout.returncode != 0:
+            stderr = bootout.stderr or ""
+            if not any(
+                frag in stderr
+                for frag in self._BENIGN_BOOTOUT_STDERR_FRAGMENTS
+            ):
+                raise ServiceManagerBootoutError(
+                    f"service-manager-bootout-failed:{label}:"
+                    f"{stderr.strip()[-200:]}",
+                    data={
+                        "label": label,
+                        "returncode": bootout.returncode,
+                        "stderr_tail": stderr.strip()[-200:],
+                    },
+                )
+        subprocess.run(
+            [binary, "bootstrap", f"gui/{uid}", str(service_file)],
+            check=False,
+            capture_output=True,
+            timeout=15,
         )
 
 
@@ -732,9 +664,9 @@ class FirstRunScaffoldContribution(BaseContribution):
         pos_root = Path(host.config_dir)
         result = run_first_run_scaffold(
             pos_root=pos_root,
-            # Don't invoke launchctl/systemctl from within a pytest-
-            # managed bootstrap run; the session-start hook invokes
-            # them separately. Workspaces that want bootstrap-time
+            # Don't invoke launchctl from within a pytest-managed
+            # bootstrap run; the session-start hook invokes it
+            # separately. Workspaces that want bootstrap-time
             # service-bootstrap can override this by subclassing.
             service_bootstrap=False,
         )

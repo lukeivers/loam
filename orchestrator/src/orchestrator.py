@@ -20,8 +20,8 @@ Runtime contract:
     then performs a graceful flush and returns cleanly with exit
     code 0 (the caller invokes sys.exit).
   - On crash inside the event loop, the span records the exception
-    and the wrapper exits non-zero. launchd/systemd auto-restart
-    follows per D2.
+    and the wrapper exits non-zero. launchd auto-restart follows
+    per D2.
 
 Enforcement posture:
   - activate_scope runs the full dispatch sequence per brief §D5:

@@ -28,9 +28,9 @@ the surface that composes them into a running system:
 - It owns a small local SQLite for its own process-lifecycle state.
 - It exposes a Unix-domain-socket JSON-RPC API so an interactive
   Claude session can attach as a peer process.
-- It restarts cleanly via launchd on macOS (systemd-user on Linux)
-  and survives SIGKILL, reboots, API outages, and compaction events
-  with no loss of authoritative state.
+- It restarts cleanly via launchd on macOS and survives SIGKILL,
+  reboots, API outages, and compaction events with no loss of
+  authoritative state.
 
 ## Permitted runtime dependencies
 

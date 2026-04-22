@@ -50,8 +50,6 @@ Latency is measured as the wall-clock interval between "process exited"
   the 2nd and 3rd shots of three successive SIGKILLs are gated at
   30.10 s and 30.02 s respectively. `ThrottleInterval = 30` matches
   Luke's decision (ruling: 30 s throttle).
-- **Equivalent behaviour via systemd-user unit.** Documented in
-  `operations.md`; not measured on this macOS-only dispatch.
 
 ## Read
 

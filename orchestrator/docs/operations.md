@@ -55,25 +55,6 @@ python orchestrator/scripts/install_launchd.py --uninstall
 launchctl list | grep com.pos.orchestrator   # must return empty
 ```
 
-## Install (Linux — systemd-user unit)
-
-```bash
-mkdir -p ~/.config/systemd/user
-# Render the template (substitute PYTHON / WORKING_DIR / THROTTLE_SECS)
-# then:
-systemctl --user daemon-reload
-systemctl --user enable --now pos-orchestrator
-systemctl --user status pos-orchestrator
-```
-
-Uninstall:
-
-```bash
-systemctl --user disable --now pos-orchestrator
-rm ~/.config/systemd/user/pos-orchestrator.service
-systemctl --user daemon-reload
-```
-
 ## Logs
 
 - stdout: `~/.pos/logs/orchestrator.out`

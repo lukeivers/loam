@@ -31,7 +31,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              sealed surface for the first time; the pre-amendment tip
 #              is the amendment-#6 seal commit immediately preceding this
 #              amendment's code commit).
-BASELINE = "a5dbf8f"
+#   - 7d462e3  when the linux-removal amendment (#10) opened. Per
+#              docs/odd-methodology.md §2.5, Linux was never a named
+#              supported-platform objective; the orchestrator-side
+#              edits remove `ops/systemd/`, the systemd cases from
+#              `test_d2_launchd_systemd.py` (renamed `test_d2_launchd.py`),
+#              the linux branches in `pos_session_start.py`, and the
+#              `launchd/systemd` comment in `orchestrator.py`. 7d462e3
+#              is the pre-amendment tip — the graceful-degradation +
+#              observability-aggregator retrofit chore commit
+#              immediately before this amendment's code commit.
+BASELINE = "7d462e3"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -78,17 +88,32 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
     )
     changed = [ln for ln in out.splitlines() if ln.strip()]
 
+    # Amendment #10 (linux-removal) additions:
+    #   - `self-upgrade/` — dead `systemd_user_restart` + /proc branch
+    #     removed.
+    #   - `memory-system/` — orphan systemd template removed.
+    #   - `docs/rebuild/components/namespaced-labels-and-bootout/` —
+    #     superseded-by marker on AC3.
+    #   - `docs/rebuild/plans/` — the amendment's own plan file.
+    #   - `first-run-inventory.yaml` — comment text scrub.
     allowed_prefixes = (
         "orchestrator/",
         "hands-off-lifecycle/",
         "workspace-bootstrap/",
+        "self-upgrade/",
+        "memory-system/",
         "docs/rebuild/components/orchestrator-bootstrap-unification/",
+        "docs/rebuild/components/namespaced-labels-and-bootout/",
+        "docs/rebuild/plans/",
         "data/",
     )
+    allowed_files: set[str] = {"first-run-inventory.yaml"}
 
     offending = []
     for path in changed:
         if any(path.startswith(p) for p in allowed_prefixes):
+            continue
+        if path in allowed_files:
             continue
         offending.append(path)
     assert offending == [], (

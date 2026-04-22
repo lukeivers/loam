@@ -73,9 +73,9 @@ def rollback(
     """Execute the rollback sequence.
 
     ``restart_orchestrator`` is the caller-supplied function that runs
-    launchctl kickstart (or systemd restart) against the restored tree.
-    Pass ``None`` when the orchestrator was not stopped during the
-    upgrade attempt (e.g. rollback invoked before the symlink swap).
+    launchctl kickstart against the restored tree. Pass ``None`` when
+    the orchestrator was not stopped during the upgrade attempt (e.g.
+    rollback invoked before the symlink swap).
     """
     report = RollbackReport(
         tag=tag,

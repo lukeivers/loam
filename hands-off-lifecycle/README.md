@@ -9,7 +9,7 @@ content lives as amendments to four pre-existing sealed components:
 
 | Amendment | Target | What landed |
 |-----------|--------|-------------|
-| 1 | `memory-system/` | Staging store, drain worker, Linux systemd unit |
+| 1 | `memory-system/` | Staging store, drain worker, launchd plist |
 | 2 | `orchestrator/` | `MemorySupervisor`, `pos_session_start` helper |
 | 3 | `graceful-degradation/` | `memory_sidecar` mode + supervisor signals |
 | 4 | `workspace-bootstrap/` | `first_run_scaffold` phase + adapter |
@@ -47,8 +47,8 @@ Currently claimed codes:
 The hook invokes `orchestrator/scripts/pos_session_start.py` as a
 type: command hook. The helper never spawns a long-lived child
 process inheriting Claude Code's FDs — it delegates to
-`launchctl bootstrap` / `systemctl --user start`, which are
-FD-safe. This mitigates issue #43123.
+`launchctl bootstrap`, which is FD-safe. This mitigates issue
+#43123.
 
 `hooks/settings.json.fragment` describes the exact supervisor-path
 hook stanza — its command string is what the ongoing-operation hook

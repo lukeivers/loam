@@ -31,9 +31,10 @@ def _probe_fn(
     return _m, _o
 
 
-def test_platform_detection_returns_macos_or_linux() -> None:
+def test_platform_detection_returns_macos_or_unsupported_label() -> None:
     plat = detect_platform()
-    assert plat in ("macos", "linux", "darwin") or isinstance(plat, str)
+    assert isinstance(plat, str)
+    assert plat != ""
 
 
 def test_ready_path_when_both_services_up() -> None:

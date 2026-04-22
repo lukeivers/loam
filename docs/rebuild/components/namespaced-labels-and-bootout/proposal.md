@@ -76,10 +76,16 @@ unscoped filename (`com.pos.orchestrator.plist`,
 
 ### AC3 — systemd unit names embed the workspace slug (Linux)
 
-Symmetric to AC2 on Linux: units land as
-`com.pos-v2.<slug>.orchestrator.service` and
-`com.pos-v2.<slug>.memory-graphiti.service` under the override dir. No
-unscoped unit filenames written.
+**Superseded by amendment #10 (linux-removal, 2026-04-22).** Linux was
+never a named supported-platform objective in the v1.0/v1.1/v1.2 spec;
+per docs/odd-methodology.md §2.5 the systemd-user branch was
+non-objective method and was removed. The text below is preserved as
+historical record of what was originally accepted into the amendment.
+
+> Symmetric to AC2 on Linux: units land as
+> `com.pos-v2.<slug>.orchestrator.service` and
+> `com.pos-v2.<slug>.memory-graphiti.service` under the override dir. No
+> unscoped unit filenames written.
 
 ### AC4 — bootout-before-bootstrap, idempotent (macOS)
 
@@ -138,7 +144,7 @@ Three behaviours in §1 objective × split across nine criteria:
 
 | Behaviour | Criteria |
 |-----------|----------|
-| Workspace-scoped labels | AC1 (derivation), AC2 (macOS file naming), AC3 (Linux unit naming), AC7 (poll wiring), AC8 (negative case) |
+| Workspace-scoped labels | AC1 (derivation), AC2 (macOS file naming), AC3 (Linux unit naming — superseded by amendment #10), AC7 (poll wiring), AC8 (negative case) |
 | Bootstrap replaces prior config | AC4 (mechanic), AC5 (stale-path replacement) |
 | Coexistence across workspaces | AC6 |
 | Seal discipline | AC9 |

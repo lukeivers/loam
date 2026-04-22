@@ -20,7 +20,7 @@
 #       requirements: <relative path from pos-v2 root to requirements.txt>
 #       rationale: <one line>
 #   services:
-#     - label: <launchd/systemd service label>
+#     - label: <launchd service label>
 #       kind: "memory" | "orchestrator"
 #       health:
 #         kind: "http" | "unix_socket"

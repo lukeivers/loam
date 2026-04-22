@@ -79,27 +79,6 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
     }
 
 
-def test_H1_linux_writes_systemd_units(tmp_path: Path) -> None:
-    pos_root = tmp_path / ".pos"
-    service_dir = tmp_path / "systemd-user"
-    result = run_first_run_scaffold(
-        pos_root=pos_root,
-        platform_override="linux",
-        service_bootstrap=False,
-        service_manager_dir_override=service_dir,
-        workspace_root=tmp_path / "pos-v2",
-    )
-    assert result.ran is True
-    services = list(service_dir.glob("*.service"))
-    labels = {s.stem for s in services}
-    # Amendment #6: systemd unit names mirror the launchd label shape
-    # for cross-platform consistency (``com.pos-v2.<slug>.<kind>``).
-    assert labels == {
-        "com.pos-v2.pos-v2.memory-graphiti",
-        "com.pos-v2.pos-v2.orchestrator",
-    }
-
-
 # ---- H2 — confirmation emitted once -----------------------------------
 
 
@@ -486,24 +465,3 @@ def test_AC6_multi_workspace_writes_distinct_labels(tmp_path: Path) -> None:
     assert "com.pos-v2.beta.orchestrator" in labels_b
 
 
-# ---- Linux parity for AC4 --------------------------------------------
-
-
-def test_AC4_linux_stop_then_reload_then_start(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    """AC4 (Linux) — on systemd-user the equivalent of macOS bootout is
-    'stop + daemon-reload' before 'start', so the unit file on disk is
-    re-read and any cached unit content is dropped."""
-    import workspace_bootstrap.adapters.first_run_scaffold as fr
-
-    fake = _RecordingSubprocessRunner()
-    monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())
-
-    unit = tmp_path / "com.pos-v2.alpha.orchestrator.service"
-    unit.write_text("[Unit]\n")
-    runner = ServiceManagerRunner(platform_label="linux")
-    runner.bootstrap(label="com.pos-v2.alpha.orchestrator", service_file=unit)
-
-    verbs = [call[2] for call in fake.calls]  # systemctl --user <verb> ...
-    assert verbs == ["stop", "daemon-reload", "start"]

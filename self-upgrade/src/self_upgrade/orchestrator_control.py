@@ -5,19 +5,21 @@ live orchestrator by three mechanisms:
 
 1. Reading the orchestrator's PID file (written on boot).
 2. Sending ``SIGTERM`` to that pid for graceful shutdown.
-3. Invoking ``launchctl kickstart`` (macOS) or ``systemctl --user
-   restart`` (Linux) to bring the new orchestrator up on the swapped
-   tree.
+3. Invoking ``launchctl kickstart`` to bring the new orchestrator up
+   on the swapped tree.
 
 The orchestrator is sealed: this module does NOT call into it; it only
 signals it. Per the brief, the orchestrator already has a SIGTERM-
 graceful-shutdown handler and will rebind to the IPC socket on the new
 path once ``launchctl kickstart`` invokes it.
 
-Symlink swap uses ``os.replace`` — POSIX-atomic on APFS + ext4 per
-the research doc. If the target filesystem does not support atomic
-rename, the caller can detect this (returns a recovery string that
+Symlink swap uses ``os.replace`` — atomic on APFS per the research
+doc. If the target filesystem does not support atomic rename, the
+caller can detect this (returns a recovery string that
 ``test_orchestrator_control`` covers) and halt.
+
+Amendment #10 (linux-removal) dropped the systemd-user restart
+fallback; macOS launchd is the only supported supervisor.
 """
 
 from __future__ import annotations
@@ -68,10 +70,8 @@ def _pid_alive(pid: int) -> bool:
 
     Zombies (exited but not reaped by parent) are treated as dead for
     upgrade purposes — the process is no longer running even though
-    its pid entry lingers in the process table. We check ``/proc`` on
-    Linux and fall back to a non-blocking ``waitpid`` for children of
-    this process; for unrelated pids we accept that the zombie case
-    can only be distinguished on Linux.
+    its pid entry lingers in the process table. On macOS we use
+    ``ps -o state=`` to distinguish zombies (there is no /proc).
     """
     try:
         os.kill(pid, 0)
@@ -81,22 +81,7 @@ def _pid_alive(pid: int) -> bool:
             return True
         return False
 
-    # pid is "alive" per os.kill; check for zombie. On Linux, /proc
-    # exposes state. On macOS, use `ps` as a fallback.
-    proc_status = Path(f"/proc/{pid}/status")
-    if proc_status.exists():
-        try:
-            text = proc_status.read_text()
-            for line in text.splitlines():
-                if line.startswith("State:"):
-                    state = line.split(None, 2)[1]
-                    # Z = zombie; X = dead
-                    return state not in ("Z", "X")
-        except OSError:
-            pass
-        return True
-
-    # macOS: use `ps -o state= -p <pid>` (no /proc).
+    # pid is "alive" per os.kill; check for zombie using BSD ps.
     try:
         result = subprocess.run(
             ["ps", "-o", "state=", "-p", str(pid)],
@@ -202,7 +187,7 @@ def atomic_symlink_swap(link: Path, new_target: Path) -> float:
     return time.monotonic() - start
 
 
-# ---- launchctl / systemd restart ------------------------------------
+# ---- launchctl restart ----------------------------------------------
 
 
 @dataclass
@@ -235,30 +220,6 @@ def launchctl_kickstart(label: str, *, user: bool = True) -> RestartResult:
     except FileNotFoundError as exc:
         raise OrchestratorControlError(
             "launchctl not found — this build requires macOS launchd"
-        ) from exc
-    return RestartResult(
-        elapsed_s=time.monotonic() - start,
-        returncode=proc.returncode,
-        stdout=proc.stdout,
-        stderr=proc.stderr,
-    )
-
-
-def systemd_user_restart(unit: str) -> RestartResult:
-    """Linux fallback: ``systemctl --user restart <unit>``."""
-    start = time.monotonic()
-    cmd = ["systemctl", "--user", "restart", unit]
-    try:
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
-    except FileNotFoundError as exc:
-        raise OrchestratorControlError(
-            "systemctl not found"
         ) from exc
     return RestartResult(
         elapsed_s=time.monotonic() - start,

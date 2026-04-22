@@ -20,7 +20,7 @@ Error-code range: -32091..-32099 (inside hands-off-lifecycle's block).
 
   -32091  platform-unsupported:no-compatible-python-found (Phase 1;
           claimed by first-run.sh — this helper never enters that path)
-  -32091  platform-unsupported:<label> (Phase 4 if OS not macos/linux —
+  -32091  platform-unsupported:<label> (Phase 4 if OS is not macos —
           reuses the existing workspace-bootstrap code point)
   -32097  pip-install-failed:<component>:<tail>
   -32097  pip-install-failed:editable:<component>:<tail> (Phase 3e)
@@ -260,8 +260,6 @@ def _detect_platform() -> str:
     s = sys.platform.lower()
     if s == "darwin":
         return "macos"
-    if s.startswith("linux"):
-        return "linux"
     return s
 
 
@@ -1380,30 +1378,28 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
 
     # ---- Phase 4a: plist / unit substitution + service bootstrap --
     plat = _detect_platform()
-    if plat not in ("macos", "linux"):
+    if plat != "macos":
         _emit_diag(
             ERR_PLATFORM_UNSUPPORTED,
             f"platform-unsupported:{plat}",
-            "launchd or systemd-user is required for service bootstrap.",
-            "pos-v2 supports macOS and Linux. Windows is out of scope.\n"
-            "On WSL2, the Linux path works; run from inside the WSL2\n"
-            "shell.",
+            "launchd is required for service bootstrap.",
+            "pos-v2 supports macOS. Other platforms are out of scope.",
         )
         return 0
 
     # Integration-test opt-out: the amendment-#4 validation harness sets
     # ``POS_V2_SKIP_LAUNCHCTL=1`` in its sandbox env to prevent the
     # harness's launchctl calls from polluting the real user's launchd
-    # session (or, on Linux, systemctl --user). When set, we both skip
-    # the launchctl bootstrap invocation inside the scaffold and skip
-    # the Phase 4b health poll — there is no service to probe, and the
-    # sandbox's ~/.pos/ (HOME-overridden) is not where a real launchd
-    # service would write its socket anyway. Phases 5-7 proceed as
-    # usual so the harness can exercise the full self-retire path.
+    # session. When set, we both skip the launchctl bootstrap invocation
+    # inside the scaffold and skip the Phase 4b health poll — there is
+    # no service to probe, and the sandbox's ~/.pos/ (HOME-overridden)
+    # is not where a real launchd service would write its socket anyway.
+    # Phases 5-7 proceed as usual so the harness can exercise the full
+    # self-retire path.
     #
     # This is a deterministic integration-test hook, not a degraded
     # production mode. In normal first-run the env var is unset and the
-    # full launchd/systemd path runs. Added 2026-04-22 by the pyyaml-
+    # full launchd path runs. Added 2026-04-22 by the pyyaml-
     # reachability amendment (#5) because amendment #4's validator
     # always set the flag but no code honoured it — the flag was
     # written for this moment; amendment #5 wires it up.
@@ -1461,9 +1457,8 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
                 f"services did not report healthy within budget: {pending}",
                 "Next session will retry. Check service logs:\n"
                 "  ~/.pos/logs/ and ~/.pos/logs/*.err\n"
-                "Inspect the launchd / systemd status:\n"
-                "  macOS: launchctl print gui/$(id -u)/<LABEL>\n"
-                "  Linux: systemctl --user status <LABEL>",
+                "Inspect the launchd status:\n"
+                "  launchctl print gui/$(id -u)/<LABEL>",
             )
             return 0
 

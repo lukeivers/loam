@@ -9,7 +9,7 @@ working set from those logs on every cold start.
 
 ```
                                        ┌─────────────────────────────┐
-                                       │   launchd / systemd-user    │
+                                       │   launchd                   │
                                        │   (auto-start, restart on   │
                                        │   crash, 30s throttle)      │
                                        └──────────────┬──────────────┘
@@ -125,7 +125,7 @@ Activation flow:
 | Failure class | Behaviour |
 |---|---|
 | SIGTERM | clean flush; heartbeats stop; restart resumes pending work from Phase 1 event logs |
-| SIGKILL | launchd/systemd restarts within throttle; orchestrator replays Phase 1 logs; in-flight scopes self-resume or mark failed |
+| SIGKILL | launchd restarts within throttle; orchestrator replays Phase 1 logs; in-flight scopes self-resume or mark failed |
 | Reboot | auto-starts on login; pending work resumes |
 | API outage | `pause_activation` halts new activations; in-flight pause (not fail); `resume_activation` restores |
 | Compaction | session signals PreCompact via IPC; flag written; post-compaction UserPromptSubmit triggers restoration from authoritative sources |

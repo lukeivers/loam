@@ -149,16 +149,6 @@ Install Python 3.13 (expected time: 2-5 minutes), then reopen claude.
     1. Install Homebrew if you do not have it: https://brew.sh
     2. brew install python@3.13
     3. Reopen this workspace in Claude Code.
-
-  Ubuntu 24.04:
-    1. sudo add-apt-repository ppa:deadsnakes/ppa
-    2. sudo apt update
-    3. sudo apt install python3.13 python3.13-venv
-    4. Reopen this workspace in Claude Code.
-
-  Ubuntu 25.04+ / Fedora 40+ / Debian 13:
-    1. sudo apt install python3.13 python3.13-venv
-    2. Reopen this workspace in Claude Code.
 EOF_DIAG
     exit 0
 fi

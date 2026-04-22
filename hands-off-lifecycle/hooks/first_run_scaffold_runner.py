@@ -84,12 +84,12 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--service-bootstrap",
         choices=("true", "false"),
         default="true",
-        help="Whether to invoke launchctl/systemctl after writing files.",
+        help="Whether to invoke launchctl after writing files.",
     )
     parser.add_argument(
         "--service-manager-dir-override",
         default=None,
-        help="Override LaunchAgents/systemd-user dir (tests only).",
+        help="Override LaunchAgents dir (tests only).",
     )
     parser.add_argument(
         "--partial-recovery",

@@ -3,7 +3,7 @@
 Acceptance (from brief D7 + proposal §Restart semantics):
 - Graceful SIGTERM: flush completes; restart resumes pending work
   from Phase 1 event logs; no data loss.
-- SIGKILL: launchd/systemd restarts; orchestrator rebuilds state by
+- SIGKILL: launchd restarts; orchestrator rebuilds state by
   replaying Phase 1 logs; in-flight scopes either self-resume (if
   in_progress in scope-of-work's log) or are marked failed with
   recoverable state within a bounded window.

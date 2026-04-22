@@ -2,22 +2,23 @@
 
 Invoked by the Claude Code ``SessionStart`` hook (type: ``command``).
 Probes the memory sidecar + orchestrator; if either is down, asks
-``launchctl``/``systemctl --user`` to bring it up (non-blocking, FD-
-safe); reports a one-line additionalContext to Claude.
+``launchctl`` to bring it up (non-blocking, FD-safe); reports a
+one-line additionalContext to Claude.
 
 **Critical: the v2.1.87 FD-inheritance bug mitigation.** This script
 NEVER spawns a long-lived background process inheriting Claude Code's
-stdin/stdout/stderr. The service manager (launchd / systemd-user) is
-the thing that actually supervises the long-lived process. The hook
-is a trigger — short-lived, synchronous, exits promptly.
+stdin/stdout/stderr. launchd is the thing that actually supervises
+the long-lived process. The hook is a trigger — short-lived,
+synchronous, exits promptly.
 
 Exit code convention:
     0 → services up (either were already up, or came up within budget)
-    2 → platform unsupported (no launchctl/systemd --user)
+    2 → platform unsupported (no launchctl)
     3 → services did not come up within the budget; supervisor will
         escalate loudly once running
 
 The script is importable so tests can exercise it without subprocess.
+Amendment #10 (linux-removal) dropped the systemd-user branch.
 """
 
 from __future__ import annotations
@@ -42,8 +43,6 @@ def detect_platform() -> str:
     s = sys.platform.lower()
     if s == "darwin":
         return "macos"
-    if s.startswith("linux"):
-        return "linux"
     return s
 
 
@@ -126,65 +125,39 @@ def ask_service_manager_to_start(
     memory_label: str = "com.pos-v2.memory-graphiti",
     orchestrator_label: str = "com.pos.orchestrator",
     launch_agents_dir: Path | None = None,
-    systemd_user_labels: tuple[str, str] = (
-        "pos-v2-memory-graphiti",
-        "pos-orchestrator",
-    ),
 ) -> list[str]:
-    """Ask the platform service manager to bring services up.
+    """Ask launchd to bring services up.
 
-    Non-blocking: these commands *request* the service manager to
-    launch; they do NOT themselves spawn a child inheriting Claude's
-    FDs. This is the v2.1.87 issue #43123 mitigation — FD safety is
-    delegated to the service manager layer.
+    Non-blocking: these commands *request* launchd to launch; they do
+    NOT themselves spawn a child inheriting Claude's FDs. This is the
+    v2.1.87 issue #43123 mitigation — FD safety is delegated to
+    launchd.
 
     Returns a list of warning messages (empty on success). Does not
-    raise on service-manager error; the caller's probe-again step
-    catches that case.
+    raise on launchd error; the caller's probe-again step catches
+    that case.
     """
     warnings: list[str] = []
-    if plat == "macos":
-        binary = _which("launchctl") or "/bin/launchctl"
-        uid = os.getuid()
-        dir_ = launch_agents_dir or (Path.home() / "Library" / "LaunchAgents")
-        for label in (memory_label, orchestrator_label):
-            plist = dir_ / f"{label}.plist"
-            if not plist.exists():
-                warnings.append(f"{label}.plist not installed at {plist}")
-                continue
-            try:
-                subprocess.run(
-                    [binary, "bootstrap", f"gui/{uid}", str(plist)],
-                    check=False,
-                    capture_output=True,
-                    timeout=15,
-                )
-            except Exception as e:
-                warnings.append(f"launchctl bootstrap {label}: {e}")
+    if plat != "macos":
+        warnings.append(f"platform-unsupported:{plat}")
         return warnings
-    if plat == "linux":
-        binary = _which("systemctl") or "/bin/systemctl"
+    binary = _which("launchctl") or "/bin/launchctl"
+    uid = os.getuid()
+    dir_ = launch_agents_dir or (Path.home() / "Library" / "LaunchAgents")
+    for label in (memory_label, orchestrator_label):
+        plist = dir_ / f"{label}.plist"
+        if not plist.exists():
+            warnings.append(f"{label}.plist not installed at {plist}")
+            continue
         try:
             subprocess.run(
-                [binary, "--user", "daemon-reload"],
+                [binary, "bootstrap", f"gui/{uid}", str(plist)],
                 check=False,
                 capture_output=True,
-                timeout=10,
+                timeout=15,
             )
         except Exception as e:
-            warnings.append(f"systemctl daemon-reload: {e}")
-        for label in systemd_user_labels:
-            try:
-                subprocess.run(
-                    [binary, "--user", "start", label],
-                    check=False,
-                    capture_output=True,
-                    timeout=15,
-                )
-            except Exception as e:
-                warnings.append(f"systemctl --user start {label}: {e}")
-        return warnings
-    warnings.append(f"platform-unsupported:{plat}")
+            warnings.append(f"launchctl bootstrap {label}: {e}")
     return warnings
 
 
@@ -215,15 +188,15 @@ def run_session_start(
     pm = probe_memory_fn or (lambda: probe_memory())
     po = probe_orchestrator_fn or (lambda: probe_orchestrator())
 
-    if plat not in ("macos", "linux"):
+    if plat != "macos":
         return {
             "status": "platform-unsupported",
             "memory_up": False,
             "orchestrator_up": False,
             "additional_context": (
                 f"pos v2 session-start: platform-unsupported:{plat} — "
-                "launchd or systemd-user required. See "
-                "docs/platforms.md for the supported-platform matrix."
+                "launchd is required. See docs/platforms.md for the "
+                "supported-platform matrix."
             ),
             "exit_code": 2,
         }

@@ -58,7 +58,21 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              orchestrator/. a5dbf8f is the pre-amendment tip — the
 #              amendment-#6 seal commit immediately before this
 #              amendment's code commit.
-BASELINE = "a5dbf8f"
+#   - 7d462e3  when the linux-removal amendment (#10) opened. Per
+#              docs/odd-methodology.md §2.5, Linux was never a named
+#              supported-platform objective; `_SYSTEMD_TEMPLATES`, the
+#              linux branches in `detect_platform` / `_install_service_
+#              manager_files` / `ServiceManagerRunner.bootstrap`, and
+#              the `test_H1_linux_writes_systemd_units` +
+#              `test_AC4_linux_stop_then_reload_then_start` tests are
+#              removed. Multi-component amendment touching workspace-
+#              bootstrap, orchestrator, self-upgrade, hands-off-
+#              lifecycle, first-run-inventory.yaml, and amendment-#6's
+#              proposal (historical superseded-by marker). 7d462e3 is
+#              the pre-amendment tip — the graceful-degradation +
+#              observability-aggregator retrofit chore commit
+#              immediately before this amendment's code commit.
+BASELINE = "7d462e3"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -114,13 +128,24 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
     #     `require_bootstrap` field's upstream callers).
     #   - `docs/rebuild/components/orchestrator-bootstrap-unification/`
     #     — the proposal living with the amendment.
+    # Amendment #10 (linux-removal) additions:
+    #   - `self-upgrade/` — dead `systemd_user_restart` removed.
+    #   - `memory-system/` — orphan `memory-system/systemd/` directory
+    #     removed (unit template was never read by runtime code).
+    #   - `docs/rebuild/components/namespaced-labels-and-bootout/` —
+    #     already in the allowed list for amendment #6; the #10 edit is
+    #     the superseded-by marker on AC3.
+    #   - `docs/rebuild/plans/` — the amendment's own plan file.
     allowed_prefixes = (
         "workspace-bootstrap/",
         "data/",
         "hands-off-lifecycle/",
         "orchestrator/",
+        "self-upgrade/",
+        "memory-system/",
         "docs/rebuild/components/namespaced-labels-and-bootout/",
         "docs/rebuild/components/orchestrator-bootstrap-unification/",
+        "docs/rebuild/plans/",
     )
     allowed_files: set[str] = {"first-run-inventory.yaml"}
 

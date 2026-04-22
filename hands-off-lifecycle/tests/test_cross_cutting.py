@@ -53,8 +53,17 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # whose counterpart here is a BASELINE + docs-prefix bump so the diff
 # scope narrows to this amendment's surface. a5dbf8f is the
 # pre-amendment tip — the amendment-#6 seal commit immediately before
-# the amendment-#7 code commit.
-BASELINE = "a5dbf8f"
+# the amendment-#7 code commit. Advanced to 7d462e3 when the linux-
+# removal amendment (#10) opened — Linux was never a named supported-
+# platform objective, so per docs/odd-methodology.md §2.5 the Linux/
+# systemd branches in first_run_helper.py + the Ubuntu/Debian/Fedora
+# lines in first-run.sh are removed. Multi-component amendment touching
+# workspace-bootstrap, orchestrator, self-upgrade, hands-off-lifecycle,
+# first-run-inventory.yaml, and the amendment-#6 proposal's
+# superseded-by marker. 7d462e3 is the pre-amendment tip — the
+# graceful-degradation + observability-aggregator retrofit chore commit
+# immediately before this amendment's code commit.
+BASELINE = "7d462e3"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -106,6 +115,7 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         "graceful-degradation",
         "workspace-bootstrap",
         "hands-off-lifecycle",
+        "self-upgrade",
         "README.md",
         # .claude/settings.json is the ship-time artifact hands-off-lifecycle
         # authors a SessionStart stanza into. The 2026-04-22 Claude Code

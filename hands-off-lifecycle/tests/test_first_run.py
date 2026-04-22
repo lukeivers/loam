@@ -481,7 +481,6 @@ def test_T5_version_too_low_emits_step_by_step_diagnostic(
     assert "platform-unsupported:no-compatible-python-found" in proc.stdout
     # Step-by-step remediation present.
     assert "brew install python@3.13" in proc.stdout
-    assert "python3.13-venv" in proc.stdout
 
 
 def test_T6_no_python_at_all_emits_step_by_step_diagnostic(

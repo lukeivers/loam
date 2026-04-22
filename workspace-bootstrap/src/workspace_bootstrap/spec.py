@@ -33,12 +33,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Phase(str, Enum):
+    first_run_scaffold = "first_run_scaffold"
     before_orchestrator_start = "before_orchestrator_start"
     wrap_activate_scope = "wrap_activate_scope"
     after_orchestrator_ready = "after_orchestrator_ready"
 
 
 PHASE_ORDER: tuple[Phase, ...] = (
+    Phase.first_run_scaffold,
     Phase.before_orchestrator_start,
     Phase.wrap_activate_scope,
     Phase.after_orchestrator_ready,

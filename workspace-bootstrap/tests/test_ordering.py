@@ -205,13 +205,15 @@ def test_B9_phase_ordering_preserved(tmp_path: Path, write_manifest_fn) -> None:
     )
     bs = Bootstrapper(load_manifest(path))
     bs.resolve_and_order()
-    # Verify ordering by phase.
-    from workspace_bootstrap import PHASE_ORDER
+    # Verify ordering by phase. Use phase-name indexing so adding new
+    # phases (e.g. first_run_scaffold) doesn't invalidate the assertion
+    # about these three specific phases.
+    from workspace_bootstrap import Phase
 
     ordered = bs._ordered_by_phase
-    assert ordered[PHASE_ORDER[0]][0].name == "early_a"
-    assert ordered[PHASE_ORDER[1]][0].name == "wrap_a"
-    assert ordered[PHASE_ORDER[2]][0].name == "after_a"
+    assert ordered[Phase.before_orchestrator_start][0].name == "early_a"
+    assert ordered[Phase.wrap_activate_scope][0].name == "wrap_a"
+    assert ordered[Phase.after_orchestrator_ready][0].name == "after_a"
 
 
 def test_B9_after_ref_pointing_at_later_phase_refused(

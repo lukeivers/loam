@@ -29,8 +29,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # window for hands-off-lifecycle. Originally 3780603 at first seal;
 # advanced to 7711249 when the Claude Code hook schema amendment opened
 # (ship-time + post-self-retire stanzas migrated from the flat-object
-# shape to the current `{matcher, hooks: [...]}` envelope).
-BASELINE = "7711249"
+# shape to the current `{matcher, hooks: [...]}` envelope); advanced to
+# b63c758 when the editable-install amendment opened (Phase 3e added
+# per-component pip install -e discovery + topological ordering + idempotent
+# re-run).
+BASELINE = "b63c758"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

@@ -23,4 +23,21 @@
 # commit; BASELINE in hands-off-lifecycle/tests/test_cross_cutting.py
 # is advanced to 7711249 (the pre-amendment tip) so diff-scope reflects
 # this amendment only.
-dbb2755
+#
+# Amendment cycle — editable-install phase (2026-04-22, second
+# amendment): fresh clones could not complete first-run because
+# per-component Python packages were never placed on sys.path.
+# Phase 2 installed shared runtime deps from each component's
+# requirements.txt, but no phase ever ran `pip install -e` on the
+# components themselves. On fresh clone, Phase 4's scaffold raised
+# ImportError importing pos_orchestrator / workspace_bootstrap,
+# surfacing as -32099 scaffold-failed to the user. The amendment adds
+# a Phase 3e editable-install step: discover components via a
+# pyproject.toml walk (tomllib, stdlib), topological order by declared
+# [project].dependencies, `pip install --no-deps -e <dir>` per
+# component, idempotent re-run via PEP 610 direct_url.json inspection.
+# No new runtime deps. SEAL_COMMIT is re-pinned at 1b28736; BASELINE
+# in hands-off-lifecycle/tests/test_cross_cutting.py is advanced to
+# b63c758 (the pre-amendment tip) so diff-scope reflects this
+# amendment only.
+1b28736

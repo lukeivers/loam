@@ -3,7 +3,6 @@
 Usage:
     python -m pos_orchestrator.scripts.install_launchd
     python -m pos_orchestrator.scripts.install_launchd --uninstall
-    python -m pos_orchestrator.scripts.install_launchd --no-bootstrap
 
 Per Luke's brief-ruling for the build dispatch: launchd install is
 authorised for D2 measurement only and must be uninstalled at end of
@@ -66,7 +65,6 @@ def install(
     python_path: Path | None = None,
     working_dir: Path | None = None,
     throttle_secs: int = 30,
-    no_bootstrap_flag: bool = False,
 ) -> Path:
     python_path = python_path or Path(sys.executable)
     working_dir = working_dir or Path.cwd()

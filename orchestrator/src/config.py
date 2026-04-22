@@ -4,7 +4,11 @@ Defaults follow the brief:
   - ~/.pos/                 — root configuration / state dir
   - ~/.pos/orchestrator.sqlite
   - ~/.pos/orchestrator.sock    (0600)
-  - ~/.pos/bootstrap.py         (workspace-authored; fail-closed if missing)
+  - ~/.pos/bootstrap.py         (optional; loaded by the
+                                  workspace-bootstrap framework's
+                                  WorkspaceBootstrapPyContribution
+                                  adapter, not by the orchestrator
+                                  itself — amendment #7)
   - ~/.pos/precompact.flag      (written by session's PreCompact hook)
 
 Every path is configurable via OrchestratorConfig(...). YAML loader
@@ -49,9 +53,6 @@ class OrchestratorConfig:
 
     # IPC ------------------------------------------------------------
     socket_mode: int = 0o600
-
-    # Bootstrap behaviour (fail-closed per Luke's ruling) ------------
-    require_bootstrap: bool = True
 
     # Workspace label (OTel attribute) -------------------------------
     workspace_label: str = "pos-v2"

@@ -118,7 +118,6 @@ async def test_B18_synthetic_contribution_orders_against_foundational(
                 "socket_path": str(sock),
                 "heartbeat_interval_seconds": 0.05,
                 "sigterm_grace_seconds": 1.0,
-                "require_bootstrap": False,
             }
         )
     )

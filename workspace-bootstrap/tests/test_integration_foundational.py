@@ -42,7 +42,6 @@ def _write_orchestrator_yaml(workspace: Path) -> None:
         "socket_path": str(_short_socket_path()),
         "heartbeat_interval_seconds": 0.05,
         "sigterm_grace_seconds": 1.0,
-        "require_bootstrap": False,
     }
     (workspace / "config" / "orchestrator.yaml").write_text(yaml.safe_dump(cfg))
 

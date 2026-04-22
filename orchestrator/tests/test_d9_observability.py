@@ -120,30 +120,14 @@ async def test_orchestrator_emissions_cover_required_events(tmp_config):
         )
 
 
-def test_bootstrap_refused_emits_distinct_event(tmp_path):
-    """Bootstrap-missing failure emits a `bootstrap_refused` event
-    (local SQLite) + an OTel span-event named
-    pos.orchestrator.bootstrap_refused. The brief requires both.
-    """
-    import asyncio
-
-    from pos_orchestrator.config import OrchestratorConfig
-
-    from .conftest import _short_socket_path
-
-    root = tmp_path / "pos-no-bootstrap"
-    root.mkdir(parents=True, exist_ok=True)
-    cfg = OrchestratorConfig(
-        root_dir=root,
-        socket_path=_short_socket_path(),
-        heartbeat_interval_seconds=0.05,
-        require_bootstrap=True,
-    )
-    orch = Orchestrator(cfg)
-    code = asyncio.get_event_loop_policy().new_event_loop().run_until_complete(orch.run())
-    assert code == 2
-    refused = orch.local_state.events_of_type("bootstrap_refused")
-    assert refused and refused[0].payload["reason"] == "missing"
+# `test_bootstrap_refused_emits_distinct_event` was deleted by
+# amendment #7 (orchestrator-bootstrap-unification, 2026-04-22). The
+# orchestrator no longer emits a `bootstrap_refused` event from its
+# own startup — `bootstrap.py` is loaded by the workspace-bootstrap
+# framework's adapter, and the fail-closed point moved upstream to
+# missing `~/.pos/bootstrap.yaml` (framework's `MissingConfigError`,
+# code -32080). See
+# docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md.
 
 
 def test_span_processor_receives_spans_when_installed(tmp_path):

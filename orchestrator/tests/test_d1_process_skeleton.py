@@ -74,7 +74,6 @@ async def test_crash_during_startup_yields_non_zero(tmp_path, monkeypatch):
 
     root = tmp_path / "pos"
     root.mkdir(parents=True, exist_ok=True)
-    (root / "bootstrap.py").write_text("def register(o):\n    return None\n")
     cfg = OrchestratorConfig(
         root_dir=root,
         socket_path=_short_socket_path(),
@@ -93,55 +92,18 @@ async def test_crash_during_startup_yields_non_zero(tmp_path, monkeypatch):
     assert crashes and crashes[0].payload["type"] == "RuntimeError"
 
 
-@pytest.mark.asyncio
-async def test_missing_bootstrap_fails_closed(tmp_path):
-    """Brief: on missing bootstrap, orchestrator refuses to start."""
-    from pos_orchestrator import Orchestrator as Orch
-    from pos_orchestrator.config import OrchestratorConfig
-
-    from .conftest import _short_socket_path
-
-    root = tmp_path / "pos-empty"
-    root.mkdir(parents=True, exist_ok=True)
-    # Intentionally NOT writing bootstrap.py
-    cfg = OrchestratorConfig(
-        root_dir=root,
-        socket_path=_short_socket_path(),
-        heartbeat_interval_seconds=0.05,
-        sigterm_grace_seconds=1.0,
-        require_bootstrap=True,
-    )
-    orch = Orch(cfg)
-    code = await asyncio.wait_for(orch.run(), timeout=2.0)
-    assert code == 2
-    refused = orch.local_state.events_of_type("bootstrap_refused")
-    assert refused and refused[0].payload["reason"] == "missing"
-
-
-@pytest.mark.asyncio
-async def test_erroring_bootstrap_fails_closed(tmp_path):
-    from pos_orchestrator import Orchestrator as Orch
-    from pos_orchestrator.config import OrchestratorConfig
-
-    from .conftest import _short_socket_path
-
-    root = tmp_path / "pos-bad"
-    root.mkdir(parents=True, exist_ok=True)
-    (root / "bootstrap.py").write_text(
-        'raise RuntimeError("bootstrap says no")\n'
-    )
-    cfg = OrchestratorConfig(
-        root_dir=root,
-        socket_path=_short_socket_path(),
-        heartbeat_interval_seconds=0.05,
-        sigterm_grace_seconds=1.0,
-        require_bootstrap=True,
-    )
-    orch = Orch(cfg)
-    code = await asyncio.wait_for(orch.run(), timeout=2.0)
-    assert code == 3
-    refused = orch.local_state.events_of_type("bootstrap_refused")
-    assert refused and refused[0].payload["reason"] == "error"
+# Amendment #7 (orchestrator-bootstrap-unification, approved 2026-04-22)
+# deleted the `test_missing_bootstrap_fails_closed` +
+# `test_erroring_bootstrap_fails_closed` tests. They pinned a contract
+# this amendment intentionally removes: the orchestrator's `_startup`
+# no longer loads `~/.pos/bootstrap.py` directly, so no exit-code-2/3
+# branch exists. The framework now refuses fail-closed on missing
+# `~/.pos/bootstrap.yaml` (code -32080) and the adapter refuses when
+# `required: True` is set. Positive-space coverage lives in:
+#   * test_AC2_missing_bootstrap_py_is_not_a_fail_closed_condition (below)
+#   * workspace-bootstrap/tests/test_integration_foundational.py
+#     (AC3/AC4/AC5/AC6).
+# See docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md.
 
 
 @pytest.mark.asyncio

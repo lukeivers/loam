@@ -46,7 +46,19 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              lockstep. 9f35979 is the pre-amendment tip — the docs-
 #              migration chore commit immediately before the amendment
 #              code commit.
-BASELINE = "9f35979"
+#   - a5dbf8f  when the orchestrator-bootstrap-unification amendment
+#              (#7) opened. Orchestrator no longer self-loads
+#              `bootstrap.py`; the workspace-bootstrap framework's
+#              `WorkspaceBootstrapPyContribution` adapter is the sole
+#              loader, and missing `~/.pos/bootstrap.yaml` is the new
+#              fail-closed trigger (MissingConfigError, -32080). Adapter
+#              + integration-test edits land on this side because the
+#              removed `OrchestratorConfig.require_bootstrap` field was
+#              referenced here; the amendment's primary surface is
+#              orchestrator/. a5dbf8f is the pre-amendment tip — the
+#              amendment-#6 seal commit immediately before this
+#              amendment's code commit.
+BASELINE = "a5dbf8f"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -95,11 +107,20 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
     #   - `first-run-inventory.yaml` — workspace-level manifest; the
     #     amendment templates service labels with `{slug}` so the
     #     inventory is workspace-agnostic.
+    # Amendment #7 (orchestrator-bootstrap-unification) additions:
+    #   - `orchestrator/` — primary surface for the amendment (this
+    #     multi-component amendment's main edits land in orchestrator/
+    #     with counterpart edits on this side for the removed
+    #     `require_bootstrap` field's upstream callers).
+    #   - `docs/rebuild/components/orchestrator-bootstrap-unification/`
+    #     — the proposal living with the amendment.
     allowed_prefixes = (
         "workspace-bootstrap/",
         "data/",
         "hands-off-lifecycle/",
+        "orchestrator/",
         "docs/rebuild/components/namespaced-labels-and-bootout/",
+        "docs/rebuild/components/orchestrator-bootstrap-unification/",
     )
     allowed_files: set[str] = {"first-run-inventory.yaml"}
 

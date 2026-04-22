@@ -6,7 +6,14 @@ Composes:
   - ScopeRuntime             (scope-of-work; Phase 1)
   - ObjectiveTracker         (objective-tracker; Phase 1)
   - BackgroundWorkMonitor    (primary-persona; Phase 1)
-  - Workspace bootstrap loader
+
+Workspace bootstrap is loaded by the workspace-bootstrap framework's
+``WorkspaceBootstrapPyContribution`` adapter, NOT by _startup. See
+docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md
+(amendment #7). The orchestrator's own startup no longer has a
+fail-closed branch tied to a workspace Python file — the fail-closed
+point moved to missing ``~/.pos/bootstrap.yaml``, which the framework
+refuses on with ``MissingConfigError`` (-32080).
 
 Runtime contract:
   - `await Orchestrator(config).run()` runs until SIGTERM/SIGINT,
@@ -49,14 +56,12 @@ from scope_of_work import ScopeRuntime
 from scope_of_work.spec import ScopeState
 
 from . import observability as obs
-from .bootstrap import load_and_register
 from .config import OrchestratorConfig
-from .errors import BindRefused, BootstrapError, BootstrapMissing, ScopeNotPending
+from .errors import BindRefused, ScopeNotPending
 from .ipc import ApplicationError, IPCServer
 from .local_state import LocalStateStore
 
 
-_BOOTSTRAP_REFUSED_CODE = -32010
 _SCOPE_NOT_PENDING_CODE = -32020
 _BIND_REFUSED_CODE = 409
 _PAUSED_CODE = -32030
@@ -135,29 +140,6 @@ class Orchestrator:
             await self._startup()
             self._install_signal_handlers()
             await self._stop_event.wait()
-        except BootstrapMissing as e:
-            # Fail-closed on missing bootstrap (Luke's ruling).
-            self.local_state.append(
-                "bootstrap_refused",
-                {"reason": "missing", "path": str(self.config.bootstrap_path), "message": str(e)},
-            )
-            obs.emit_event(
-                self._process_span,
-                "pos.orchestrator.bootstrap_refused",
-                {"reason": "missing", "path": str(self.config.bootstrap_path)},
-            )
-            exit_code = 2
-        except BootstrapError as e:
-            self.local_state.append(
-                "bootstrap_refused",
-                {"reason": "error", "path": str(self.config.bootstrap_path), "message": str(e)},
-            )
-            obs.emit_event(
-                self._process_span,
-                "pos.orchestrator.bootstrap_refused",
-                {"reason": "error", "path": str(self.config.bootstrap_path)},
-            )
-            exit_code = 3
         except Exception as e:
             self.local_state.append(
                 "process_crashed",
@@ -204,10 +186,11 @@ class Orchestrator:
         self._register_ipc_methods(self.ipc_server)
         await self.ipc_server.start()
 
-        # Workspace bootstrap — fail-closed if missing (Luke's ruling).
-        if self.config.require_bootstrap:
-            assert self.config.bootstrap_path is not None
-            load_and_register(self.config.bootstrap_path, self)
+        # Workspace bootstrap is run by
+        # workspace_bootstrap.adapters.workspace_bootstrap_py as a
+        # late-phase contribution (amendment #7). The orchestrator no
+        # longer self-loads bootstrap.py — see
+        # docs/rebuild/components/orchestrator-bootstrap-unification.
 
         # Heartbeat task
         self._heartbeat_task = asyncio.create_task(

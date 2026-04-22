@@ -46,9 +46,17 @@ def _short_socket_path() -> Path:
 
 @pytest.fixture
 def tmp_config(tmp_path: Path) -> OrchestratorConfig:
-    """Build an OrchestratorConfig rooted at tmp_path with a no-op
-    bootstrap written in place. Socket is placed in /tmp to stay
-    under the AF_UNIX 104-byte path cap on macOS."""
+    """Build an OrchestratorConfig rooted at tmp_path. Socket is placed
+    in /tmp to stay under the AF_UNIX 104-byte path cap on macOS.
+
+    A no-op ``bootstrap.py`` is still written under ``pos_root`` so the
+    workspace-bootstrap integration tests that exercise the
+    ``WorkspaceBootstrapPyContribution`` adapter path find the expected
+    file. The orchestrator itself does not load it post-amendment #7
+    (docs/rebuild/components/orchestrator-bootstrap-unification/
+    proposal.md), but keeping the fixture's on-disk shape stable avoids
+    cross-suite churn.
+    """
     root = tmp_path / "pos"
     root.mkdir(parents=True, exist_ok=True)
     (root / "bootstrap.py").write_text(_BOOTSTRAP_CONTENT)
@@ -61,26 +69,6 @@ def tmp_config(tmp_path: Path) -> OrchestratorConfig:
     )
     yield cfg
     # Clean up stray socket file.
-    try:
-        if sock.exists():
-            sock.unlink()
-    except Exception:
-        pass
-
-
-@pytest.fixture
-def tmp_config_no_bootstrap(tmp_path: Path) -> OrchestratorConfig:
-    root = tmp_path / "pos"
-    root.mkdir(parents=True, exist_ok=True)
-    sock = _short_socket_path()
-    cfg = OrchestratorConfig(
-        root_dir=root,
-        socket_path=sock,
-        heartbeat_interval_seconds=0.05,
-        sigterm_grace_seconds=1.0,
-        require_bootstrap=False,
-    )
-    yield cfg
     try:
         if sock.exists():
             sock.unlink()

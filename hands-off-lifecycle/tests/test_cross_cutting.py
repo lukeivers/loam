@@ -47,8 +47,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # multiple pos-v2 workspaces coexist on one host; multi-component
 # amendment with workspace-bootstrap in lockstep). 9f35979 is the
 # pre-amendment tip — the docs-migration chore commit immediately
-# before the amendment code commit.
-BASELINE = "9f35979"
+# before the amendment code commit. Advanced to a5dbf8f when the
+# orchestrator-bootstrap-unification amendment (#7) opened — a
+# multi-component amendment whose primary surface is orchestrator/ and
+# whose counterpart here is a BASELINE + docs-prefix bump so the diff
+# scope narrows to this amendment's surface. a5dbf8f is the
+# pre-amendment tip — the amendment-#6 seal commit immediately before
+# the amendment-#7 code commit.
+BASELINE = "a5dbf8f"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -114,6 +120,11 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     filtering lives in workspace-bootstrap's seal test).
         #   - `first-run-inventory.yaml` — workspace-level manifest
         #     templating service labels per workspace slug.
+        # Amendment #7 (orchestrator-bootstrap-unification) additions:
+        #   - `docs/rebuild/components/orchestrator-bootstrap-unification/`
+        #     (proposal lives with the amendment; same top-level `docs`
+        #     bucket). Primary surface is orchestrator/ which is already
+        #     in the allowed set.
         "docs",
         "first-run-inventory.yaml",
     }

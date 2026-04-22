@@ -203,4 +203,63 @@
 # commit. Tests: 76 orchestrator, 81 workspace-bootstrap, 67
 # hands-off-lifecycle — all green. No sealed components outside the
 # three amendment targets touched.
-445a6b4
+#
+# Amendment cycle — linux-removal (#10, 2026-04-22, tenth amendment):
+# docs/odd-methodology.md §2.5 (codified in fd8c833) forbids code
+# without a backing objective. Audit surfaced Linux/systemd/systemctl
+# branches in twelve Python files + a first-run-inventory.yaml comment
+# + two service-manager-template directories — none of them backed by
+# any v1.0/v1.1/v1.2 spec objective naming Linux as a supported
+# platform. Per owner ruling 2026-04-22, only deletion is ODD-
+# compliant; promoting Linux to an objective or retrofitting a
+# structural guard both keep non-objective method in the artifact.
+#
+# Amendment #10 deletes:
+#   - _SYSTEMD_TEMPLATES + linux branches in workspace-bootstrap's
+#     first_run_scaffold.py (detect_platform, _install_service_manager_
+#     files, ServiceManagerRunner.bootstrap).
+#   - systemd_user_restart + /proc zombie-detection branch in
+#     self-upgrade's orchestrator_control.py (self-upgrade is not
+#     sealed, so no seal ritual).
+#   - orchestrator/ops/systemd/pos-orchestrator.service.tmpl.
+#   - memory-system/systemd/pos-v2-memory-graphiti.service.tmpl
+#     (orphan template never read by runtime code).
+#   - linux branches in orchestrator/scripts/pos_session_start.py
+#     (detect_platform, ask_service_manager_to_start,
+#     run_session_start gate; systemd_user_labels parameter removed).
+#   - test_H1_linux_writes_systemd_units and
+#     test_AC4_linux_stop_then_reload_then_start in workspace-
+#     bootstrap; the systemd cases from orchestrator's
+#     test_d2_launchd_systemd.py (renamed test_d2_launchd.py).
+#   - linux branch in hands-off-lifecycle's first_run_helper.py
+#     _detect_platform + Phase-4a platform check; Ubuntu/Debian/Fedora
+#     lines in first-run.sh Python-version-gate diagnostic.
+#   - first-run-inventory.yaml schema comment "launchd/systemd" →
+#     "launchd".
+#   - launchd/systemd references in orchestrator runtime docs
+#     (architecture.md, operations.md, README.md, measurement-
+#     launchd.md).
+#
+# Amendment #6's AC3 (systemd unit naming) and the Linux branch of
+# test_AC4_linux_stop_then_reload_then_start are formally superseded
+# by this removal; the proposal retains the original AC3 text as
+# historical record with a superseded-by marker.
+#
+# Multi-component amendment (workspace-bootstrap + orchestrator +
+# self-upgrade + hands-off-lifecycle; memory-system's orphan systemd
+# directory is removed without a seal ritual because memory-system's
+# test_no_sealed_amendments.py is in the in-flight Blocker-3 unstaged
+# set and this amendment honours the DO-NOT-TOUCH rule on those
+# files). Fourteen acceptance criteria AC1-AC14 in
+# docs/rebuild/plans/linux-removal-amendment.md; each AC names an
+# outcome (function returns X, directory absent, grep empty) rather
+# than method per §3.3. SEAL_COMMIT is re-pinned at 9373444 across
+# workspace-bootstrap, orchestrator, and hands-off-lifecycle sidecars
+# (all three advance from 445a6b4). BASELINE in workspace-bootstrap/
+# tests/test_no_sealed_amendments.py and orchestrator/tests/
+# test_no_sealed_amendments.py and hands-off-lifecycle/tests/
+# test_cross_cutting.py all advanced to 7d462e3 in the code commit.
+# Tests post-amendment: workspace-bootstrap 78/78, orchestrator
+# 73/73, self-upgrade 120/120, hands-off-lifecycle 66/66. Memory-
+# system 59/59 unchanged (the removed systemd file was orphan).
+9373444

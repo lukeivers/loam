@@ -65,4 +65,40 @@
 # 63b7cb8 (the pre-amendment tip); BASELINE in
 # workspace-bootstrap/tests/test_no_sealed_amendments.py is advanced
 # to 1a55969 (the prior SEAL_COMMIT SHA).
-d962ffd
+# Amendment cycle — pyyaml-reachability amendment (#5, 2026-04-22,
+# fifth amendment): amendment #4 unblocked the detachment + partial-
+# recovery path but left end-to-end S4 failing on fresh clones. The
+# detached worker's Phase-4a scaffold invocation imported workspace_
+# bootstrap.adapters.first_run_scaffold in-process under the system
+# Python 3.13 interpreter that first-run.sh detected on PATH. The
+# workspace_bootstrap package transitively loads yaml (pyyaml) via
+# manifest.py, pydantic via spec.py, and opentelemetry via host.py —
+# all three live only in the shared venv installed in Phase 3b; the
+# system interpreter had none. The worker crashed with
+# ``ModuleNotFoundError: No module named 'yaml'`` before the scaffold
+# ever ran. Amendment #5 invokes the scaffold as a subprocess under
+# the shared venv's Python via a new thin CLI runner
+# (hands-off-lifecycle/hooks/first_run_scaffold_runner.py). The
+# runner's top imports are stdlib-only; the adapter import happens
+# inside main() after argv parse. Exit code + stderr JSON protocol
+# preserves the adapter's exception class in the surfaced diagnostic.
+# Single-component amendment — workspace-bootstrap is NOT touched.
+# Minor findings folded in: worker invocation gains -u +
+# PYTHONUNBUFFERED=1 so print() lands in the log promptly; settings.
+# json + stanza-builder timeouts normalised to the documented
+# Claude Code seconds unit (60 ship-time, 20 supervisor);
+# POS_V2_SKIP_LAUNCHCTL env var wired into _run_bootstrap so the
+# amendment-#4 validation harness can complete S4 end-to-end without
+# the launchctl-bootstrap leak across sandbox boundaries. async: true
+# migration deferred — the shell-level detach works (S1 measures
+# hook return at <2s), swapping to async: true risks the handoff
+# additionalContext message not being surfaced synchronously under
+# Claude Code versions the amendment cannot test across. Validation:
+# /tmp/amendment4-validation-harness.py reports 7 of 7 scenarios
+# passing against 9b4bcd3. SEAL_COMMIT is re-pinned at 9b4bcd3;
+# BASELINE in hands-off-lifecycle/tests/test_cross_cutting.py is
+# advanced to 101114d (the prior seal commit — the tip immediately
+# before this amendment's first commit). workspace-bootstrap's
+# BASELINE is unchanged because no workspace-bootstrap files were
+# touched this amendment.
+9b4bcd3

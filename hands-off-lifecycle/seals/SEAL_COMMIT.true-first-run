@@ -145,4 +145,62 @@
 # commit). No collision detection across workspaces; legacy-label
 # cleanup of already-loaded unscoped labels is explicitly out of
 # scope (owner handles manually after first clean install).
-68e0525
+#
+# Amendment cycle — orchestrator-bootstrap-unification (#7,
+# 2026-04-22, seventh amendment): pos-v2 had two unrelated systems
+# both called "bootstrap" that were never reconciled. The
+# orchestrator's native loader (orchestrator/src/bootstrap.py,
+# called from Orchestrator._startup) hard-required ~/.pos/bootstrap.py
+# — fail-closed with exit code 2 on missing, exit 3 on import error.
+# The workspace-bootstrap framework, built later, ships a
+# WorkspaceBootstrapPyContribution adapter that loads the same file
+# with required=False by default (missing = silent no-op). The
+# native loader ran first at startup and fail-closed before the
+# adapter ever got a turn. First-run scaffolds bootstrap.yaml
+# (framework config), never a bootstrap.py — so every fresh install
+# hit the orchestrator's fail-closed exit-2 before the framework
+# could compose anything. The pos3 workspace first-run this session
+# surfaced it live; blocker 2 in the session's troubleshooting
+# series.
+#
+# Amendment #7 makes the framework canonical:
+#   - Orchestrator._startup removes the load_and_register call + the
+#     unreachable BootstrapMissing/BootstrapError handlers + the
+#     import from .bootstrap. The native bootstrap.py primitive
+#     remains as a public surface (still called by the framework's
+#     adapter) but zero callers live inside the orchestrator itself.
+#   - OrchestratorConfig.require_bootstrap field removed (it existed
+#     solely to control the now-dead branch); PrimaryPersonaContribution
+#     and two test YAML literals updated in lockstep.
+#   - python -m pos_orchestrator --no-bootstrap flag removed
+#     (argparse now rejects it; --help omits it). Dev/test semantics
+#     were redundant once required=False became the default story.
+#   - test_missing_bootstrap_fails_closed, test_erroring_bootstrap_fails_closed,
+#     and test_bootstrap_refused_emits_distinct_event deleted — they
+#     pinned the exact contract this amendment removes. Doc comments
+#     at the deletion sites cite the proposal for audit-trail
+#     continuity. AC2 is the positive-space inverse (asserts missing
+#     bootstrap.py is no longer fail-closed).
+#   - Missing ~/.pos/bootstrap.yaml is the new fail-closed trigger,
+#     surfaced by the framework's existing MissingConfigError
+#     (-32080) when load_manifest is called on a non-existent path.
+#     No new top-level error code introduced.
+#   - New orchestrator/tests/test_no_sealed_amendments.py — first
+#     proper seal-diff test for orchestrator. Mirrors the B20/B23
+#     pattern from workspace-bootstrap + hands-off-lifecycle; opens
+#     the orchestrator's seal window with BASELINE a5dbf8f (the
+#     amendment-#6 seal commit, which is the immediately-preceding
+#     tip).
+#
+# Multi-component amendment (orchestrator + workspace-bootstrap +
+# hands-off-lifecycle). Nine acceptance criteria AC1-AC9 in
+# docs/rebuild/components/orchestrator-bootstrap-unification/
+# proposal.md, 1:1 criterion-to-test mapping. SEAL_COMMIT is
+# re-pinned at 445a6b4 across all three component sidecars
+# (orchestrator's advances from 1dbe81b; workspace-bootstrap's from
+# 68e0525; hands-off-lifecycle's from 68e0525). BASELINE in both
+# seal-diff tests already advanced to a5dbf8f in the amendment code
+# commit. Tests: 76 orchestrator, 81 workspace-bootstrap, 67
+# hands-off-lifecycle — all green. No sealed components outside the
+# three amendment targets touched.
+445a6b4

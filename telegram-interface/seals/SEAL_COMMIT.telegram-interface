@@ -1,0 +1,15 @@
+# telegram-interface component seal sidecar.
+#
+# Per the SEAL_COMMIT sidecar pattern (workspace-bootstrap/tests/
+# test_no_sealed_amendments.py header): the actual commit SHA is
+# written here by the sealing ritual after the component build lands
+# and the owner confirms the seal commit. During build, this sidecar
+# holds the placeholder "HEAD" so the build's own verification passes
+# against the current tip without hardcoding a sha into the test
+# layer.
+#
+# Once sealed, overwrite with the exact commit SHA (8+ chars). No
+# behavioural amendment to the telegram-interface component ships
+# without a new amendment cycle that updates BASELINE and bumps this
+# SEAL_COMMIT.
+HEAD

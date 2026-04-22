@@ -11,4 +11,4 @@
 # Once sealed, overwrite with the exact commit SHA (8+ chars). No
 # behavioural amendment to the true-first-run component ships without
 # a new amendment cycle that updates BASELINE and bumps this SEAL_COMMIT.
-HEAD
+96f8e17

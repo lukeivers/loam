@@ -120,6 +120,71 @@ Objective restatements of the above:
   in an acceptance bullet.)
 - (No restatement — ordering was never an objective. Delete.)
 
+### 2.5 Forbidden: code for cases the objectives do not name
+
+The positive-space corollary of §2.4: **build only what the objectives
+require.** Every line of code, every branch, every test, every dependency
+in a deliverable must map to a named acceptance criterion backing a named
+objective. Code that handles a case, platform, configuration, or concern
+the objectives do not declare is an ODD violation regardless of how
+well-written it is — it is method that crept into the deliverable without
+a contract authorising it.
+
+§2.4 names method-in-acceptance — prescribing HOW inside the contract.
+§2.5 names method-in-code — executing HOW outside any contract at all.
+Both are the same class of error: over-specifying method beyond what the
+objectives require. The first is visible at authoring time; the second
+is visible at review time inside the diff.
+
+Anti-patterns:
+
+- A platform branch for an OS no objective names. ("pos-v2 supports
+  Linux" is not a stated objective — yet Linux branches exist in
+  service-manager code, test fixtures, and installer helpers. Added
+  incidentally because "POSIX-ish shells make it easy," not because a
+  contract required it. Luke's 2026-04-22 ruling formalised this rule.)
+- A configuration field/option/flag no acceptance criterion exercises.
+  The field is method-leakage; if the knob matters, it needs a criterion
+  that verifies its effect. If no criterion reaches for it, delete it.
+- A defensive `if/except` branch for a case the contract says cannot
+  arise (raises on an unknown enum value; wraps a call that can't fail;
+  handles a None where None is impossible). These are silent exception
+  branches from the §8.2.8 rule, rendered from the proposal side.
+- A dependency imported for a feature no objective requires. "We might
+  want X later" is not a current-objective backing.
+- A test that exercises a path no criterion declares. Tests without
+  backing criteria inflate the test surface without inflating the
+  covered contract; they also lock in non-objective code against
+  refactor, making the violation harder to remove later.
+
+The test: for every code block, every branch, every dependency, every
+test, point at the acceptance criterion it satisfies. If you cannot, the
+code should not exist. Two ways forward:
+
+1. **Re-extend up the objective chain** (per §4). Promote the case to a
+   named acceptance criterion with its own test. The code now has a
+   contract. This is the same mechanism §4 names for negative cases
+   discovered during build; §2.5 extends it to positive cases a builder
+   is tempted to include "because it's easy."
+2. **Delete the code.** If the case isn't worth an objective, it isn't
+   worth implementing either.
+
+"Might be useful later" is never a justification for current inclusion.
+If it's useful later, it gets a future objective and a future amendment.
+Current code matches current objectives only.
+
+The structural check is the same one §3.3's behaviour-count enforces,
+run in both directions:
+
+- **Forward (authoring):** every declared behaviour in every objective
+  has an acceptance criterion.
+- **Reverse (review):** every code path, test, branch, and dependency
+  in the diff has an acceptance criterion it maps back to.
+
+A diff where forward+reverse both pass is scope-clean by §2.5's rule.
+A diff that fails reverse has method-in-code leakage that must be
+corrected before landing — by re-extension or deletion.
+
 ---
 
 ## 3. Acceptance criteria in detail
@@ -525,17 +590,24 @@ The work has been built. You are reviewing the diff.
 8. **Silent exception branches.** Code paths that handle cases not named in
    the acceptance criteria. If the case is worth handling, it is worth
    naming — re-extend as a new criterion with a test, or remove the branch.
-9. **Acceptance tests that test method.** A test asserting a specific
-   implementation detail (class name, internal structure) rather than the
-   objective-level behaviour. Acceptance tests should test the observable
-   outcome; implementation tests (if any) belong elsewhere.
-10. **Acceptance criteria without tests.** A criterion was declared in the
+9. **Code for cases no objective names** (positive-case equivalent of #8,
+   see §2.5). Platform branches, configuration fields, dependencies, or
+   tests that do not map back to any acceptance criterion. Every orphan
+   code path is a §2.5 violation. Either re-extend up with a named
+   objective or delete the code — "might be useful later" is not a
+   backing. For every code block in the diff, point at the criterion it
+   satisfies; no criterion = no code.
+10. **Acceptance tests that test method.** A test asserting a specific
+    implementation detail (class name, internal structure) rather than the
+    objective-level behaviour. Acceptance tests should test the observable
+    outcome; implementation tests (if any) belong elsewhere.
+11. **Acceptance criteria without tests.** A criterion was declared in the
     brief but no test verifies it. Missing tests are missing verification —
     the component has not met the spec regardless of what other tests pass.
-11. **Tests that re-assert the method.** A test that says "the function
+12. **Tests that re-assert the method.** A test that says "the function
     returns X" where X is the internal method's return, not the
     outcome-level state, has tested method, not objective.
-12. **Advisory rules where structural checks would work.** A docstring says
+13. **Advisory rules where structural checks would work.** A docstring says
     "callers should not do Y" but the code permits Y. If Y can be prevented
     structurally (type system, schema, constructor), the advisory is a
     defect — promote to structural.
@@ -575,6 +647,15 @@ next time.
 4. Name the rationale in the commit message.
 5. If the gap exceeds the scope's remit, halt and signal.
 
+**Building only what the objectives require (§2.5):**
+1. For every branch, dependency, and test you're adding, point at the
+   acceptance criterion it satisfies. If you cannot, do not add it.
+2. "Might be useful later" is not a backing. Later objectives get
+   later amendments.
+3. When extending an existing component, audit whether the code you're
+   extending was itself objective-backed. Adding tests to a non-backed
+   branch propagates the violation.
+
 **Enforcing at runtime:**
 1. Prefer structural (Pydantic, schema, constructor) over advisory (prose,
    docstring).
@@ -591,7 +672,9 @@ next time.
 **Reviewing built work:**
 1. Check acceptance criteria all have tests.
 2. Check for silent exception branches.
-3. Check tests assert outcome, not method.
+3. Check for code/branches/tests with no backing acceptance criterion
+   (§2.5 — the reverse direction of the behaviour-count check).
+4. Check tests assert outcome, not method.
 
 ---
 

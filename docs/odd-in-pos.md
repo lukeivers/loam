@@ -638,6 +638,63 @@ fire-once, channel all in the criterion text. The test that verifies C14
 can assert all four; the author did not have to choose which of the four
 the test covered.
 
+### 9.7 Code for cases no objective names
+
+(`odd-methodology.md` §2.5 is the governing rule; this subsection
+documents the first pOS-v2 incident that surfaced the need to state it
+explicitly.)
+
+During the 2026-04-22 build session an unrelated review surfaced that
+pos-v2 shipped Linux/systemd/systemctl code paths across twelve Python
+files — service-manager templates, platform-branched installers,
+rollback helpers. No objective in spec v1.0, v1.1, or v1.2 names Linux
+as a supported platform. The code was added incidentally because
+"POSIX-ish shells make it easy" — a reason, but not a contract.
+
+Worse: amendment #6 (namespaced-labels-and-bootout) landed WITH new
+Linux acceptance criteria (AC3 systemd naming, AC4's Linux stop/
+reload/start) to verify behaviour in code that shouldn't have existed
+in the first place. The amendment's author saw the Linux branch in the
+pre-existing code and wrote ACs around it without checking whether
+Linux was a named objective at the spec level. The amendment
+perpetuated a §2.5 violation by formalising it with acceptance tests.
+
+The sequence of ODD failures:
+
+1. Original build added Linux branches without a Linux objective.
+   (§2.5 violation — invisible to review because no one ran the
+   "reverse direction" of the behaviour-count check: every branch
+   back to a criterion.)
+2. An amendment review scanned the diff for method-in-acceptance
+   (§8.1.1) and silent exception branches (§8.2.8) and found the
+   amendment complied with those rules as worded.
+3. But the review DID NOT ask "does the code this amendment extends
+   have a backing objective?" Because §2.5 was not a named rule yet.
+4. The amendment shipped, its Linux tests now lock in Linux-handling
+   as de-facto "supported" — harder to remove later than if the
+   original leak had never been formalised.
+
+What the corrected process would have looked like:
+
+- At original build: the behaviour-count check runs in both
+  directions. The builder's diff has `_SYSTEMD_TEMPLATES` and a
+  `plat == "linux"` branch. The reviewer asks: "which acceptance
+  criterion does this satisfy?" None. The branch is deleted or the
+  objective is added.
+- At amendment time: the amendment author reads the code being
+  extended and notices Linux has no objective backing. The amendment
+  halts-and-signals back to the owner: "the code I'm extending
+  contains §2.5 violations; should this amendment's scope expand to
+  remove them first, or should it remove Linux from the amendment's
+  surface?" Owner rules; work proceeds against the ruling.
+
+**Rule of thumb:** for every line of code in a diff, point at the
+acceptance criterion it satisfies. When extending existing code, audit
+the code being extended by the same rule — do not propagate
+violations. "It was already there" is not a backing criterion; the
+amendment's author carries responsibility for what lands at HEAD, not
+only what the amendment added to whatever came before.
+
 ---
 
 ## 10. Where to go next

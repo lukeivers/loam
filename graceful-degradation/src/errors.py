@@ -35,7 +35,14 @@ from typing import Any
 
 
 class DegradationSignal(str, Enum):
-    """Observed-failure class, one per Claude-side failure mode."""
+    """Observed-failure class, one per Claude-side failure mode.
+
+    ``memory_sidecar_down`` / ``memory_sidecar_recovered`` are consumed
+    by the hands-off-lifecycle supervisor integration (Amendment 3 of
+    hands-off-lifecycle). They enter the detection pipeline via
+    :meth:`DegradationDetector.record_supervisor_signal`, not via the
+    Claude-adapter path.
+    """
 
     connection_error = "connection_error"
     timeout = "timeout"
@@ -46,6 +53,8 @@ class DegradationSignal(str, Enum):
     bad_request = "bad_request"  # 400 — NOT a degradation signal
     garbage = "garbage"  # pOS detector
     latency_high = "latency_high"  # advisory
+    memory_sidecar_down = "memory_sidecar_down"  # supervisor signal
+    memory_sidecar_recovered = "memory_sidecar_recovered"  # supervisor signal
 
 
 # ---- pOS-side exception hierarchy --------------------------------------
@@ -253,5 +262,7 @@ def signal_to_mode(signal: DegradationSignal) -> "str | None":
         DegradationSignal.garbage: "garbage",
         DegradationSignal.latency_high: "latency_sustained",
         DegradationSignal.bad_request: None,
+        DegradationSignal.memory_sidecar_down: "memory_sidecar",
+        DegradationSignal.memory_sidecar_recovered: "memory_sidecar",
     }
     return mapping.get(signal)

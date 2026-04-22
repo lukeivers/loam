@@ -45,7 +45,14 @@ class FSMState(str, Enum):
 
 
 class DegradationMode(str, Enum):
-    """The six tracked modes. Names match the config keys verbatim."""
+    """The seven tracked modes. Names match the config keys verbatim.
+
+    ``memory_sidecar`` is added by Amendment 3 of hands-off-lifecycle
+    to close the memory-system detection blind spot documented in
+    architecture.md. It is driven by the supervisor's probe loop, not
+    by the Claude-adapter event stream, via
+    :meth:`DegradationDetector.record_supervisor_signal`.
+    """
 
     down = "down"
     overloaded = "overloaded"
@@ -53,6 +60,7 @@ class DegradationMode(str, Enum):
     garbage = "garbage"
     auth_broken = "auth_broken"
     latency_sustained = "latency_sustained"
+    memory_sidecar = "memory_sidecar"
 
 
 # ---- transition record -------------------------------------------------
@@ -437,5 +445,11 @@ def build_fsms(
             clock=clk,
             cfg=cfg.modes.latency_sustained,
             accepted_signals=(DegradationSignal.latency_high,),
+        ),
+        DegradationMode.memory_sidecar: WindowedFailureFSM(
+            mode=DegradationMode.memory_sidecar,
+            clock=clk,
+            cfg=cfg.modes.memory_sidecar,
+            accepted_signals=(DegradationSignal.memory_sidecar_down,),
         ),
     }

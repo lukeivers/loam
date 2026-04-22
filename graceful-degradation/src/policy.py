@@ -256,4 +256,8 @@ def build_defaults_from_config(cfg: Any) -> dict[DegradationMode, Policy]:
         DegradationMode.auth_broken: Policy(cfg.modes.auth_broken.default_policy),
         # latency is advisory; a dummy default is never applied.
         DegradationMode.latency_sustained: Policy.pause_llm_only,
+        # Amendment 3 (hands-off-lifecycle) — memory sidecar mode.
+        DegradationMode.memory_sidecar: Policy(
+            cfg.modes.memory_sidecar.default_policy
+        ),
     }

@@ -296,6 +296,42 @@ class DegradationDetector:
         )
         await self.record_event(event)
 
+    async def record_supervisor_signal(
+        self,
+        *,
+        signal: DegradationSignal,
+        now: float | None = None,
+        attrs: dict[str, Any] | None = None,
+    ) -> FSMTransition | None:
+        """Consume a supervisor-emitted signal (Amendment 3 of
+        hands-off-lifecycle).
+
+        The hands-off-lifecycle supervisor probes the memory sidecar
+        directly; on classified failure it calls this method with a
+        ``memory_sidecar_down`` signal. On recovery it calls this with
+        ``memory_sidecar_recovered`` which is routed through
+        ``record_success`` on the memory_sidecar FSM so the mode
+        returns to ``closed``.
+
+        Complementary to the existing `ClaudeClient`-adapter-based
+        detection — not replacing it. This closes the memory
+        detection blind spot logged in architecture.md.
+        """
+        t = self.clock() if now is None else now
+        fsm = self.fsms.get(DegradationMode.memory_sidecar)
+        if fsm is None:
+            return None
+        if signal is DegradationSignal.memory_sidecar_recovered:
+            transition = fsm.record_success(now=t)
+        elif signal is DegradationSignal.memory_sidecar_down:
+            transition = fsm.record_failure(signal, now=t)
+        else:
+            # Ignore signals this mode does not consume.
+            return None
+        if transition is not None and self.on_transition is not None:
+            await self.on_transition(transition)
+        return transition
+
     async def tick(self, now: float | None = None) -> list[FSMTransition]:
         """Clock-driven pass — moves dwelled FSMs to half_open."""
         out: list[FSMTransition] = []

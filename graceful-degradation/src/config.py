@@ -109,6 +109,19 @@ class ModesConfig(BaseModel):
             action="emit_signal_only",
         )
     )
+    # Amendment 3 (hands-off-lifecycle) — memory sidecar failure mode,
+    # signalled by the supervisor rather than the Claude adapter.
+    memory_sidecar: BinaryModeConfig = Field(
+        default_factory=lambda: BinaryModeConfig(
+            trip_threshold=BinaryTripConfig(failures=1, window_seconds=1),
+            half_open_dwell_seconds=30,
+            probe_success_requirement=1,
+            # Memory is the base layer; pause everything LLM-side
+            # while the sidecar is down so scopes don't accrue un-
+            # persisted state. Supervisor handles the heavy lifting.
+            default_policy="pause_llm_only",
+        )
+    )
 
 
 # ---- notification + resume + narrative ---------------------------------

@@ -294,6 +294,33 @@ This is the payoff for idea 4's investment. Without the profile depth, suggestio
 
 ---
 
+## Idea 6 — ODD as the default framing inside pos-v2 conversations
+
+Captured 2026-04-22.
+
+The primary persona should think in objectives by default. ODD is not only the methodology pos-v2 uses to author its own components (see `odd-methodology.md`) — it is also the shape the primary persona's *internal* model of every user request takes, inside every pos-v2 conversation.
+
+Luke's framing:
+
+> "how to get the primary persona to consistently 'think in objectives'. ODD should almost become the default way of framing all thoughts, or at least all requests, within any pos v2 conversation. but it also can't be overly technical and specific or it will make it impossible for nontechnical users to use. but i think enforcing tight bounds like with ODD in a transparent way will actually massively improve outcomes for non-tech users. they just won't know how to talk about it so clearly as a technical person might. so it would have to be carefully translate to and from the internal modeling into the way it discusses with users until they're able to learn more about what ODD is and what it means so they can start using it more impactfully."
+
+What this composes:
+
+- **Internal model is ODD-shaped** — objective + constraints + acceptance. The primary persona treats every request it receives as something to be represented internally in that shape before it acts, whether the request arrived as a one-line ask or as a long unstructured description.
+- **User surface is natural language** — no technical vocabulary required. The user never has to say "objective," "constraint," or "acceptance criterion." The user talks the way they already talk.
+- **Translation is the primary persona's responsibility.** This is the same translation layer described in `VALUE_PROPOSITION.md` — the persona translates between the user's natural-language intent and AI-effective execution. The new framing here is that the *AI-effective* side of that translation is specifically ODD-shaped, not just "well-structured" in some undefined way.
+- **Tight bounds + transparency help non-tech users more than tech users**, even though non-tech users cannot articulate why. A technical user can state objectives and constraints explicitly; a non-tech user cannot, but still benefits from the system behaving as if those bounds were stated — because the behaviour that follows from tight bounds (no drift, no scope creep, deterministic acceptance) is exactly the behaviour non-tech users lack the vocabulary to demand for themselves.
+
+Connection to Idea 2 (light-touch education): as the user engages with the system over time, the persona's ambient narration — "I made this a scheduled task because…," "the acceptance here is that X happens when Y" — gradually teaches the user the shape of ODD thinking without ever naming it. Users move up the sophistication curve on their own, at their own pace, and eventually begin framing requests in ODD-ish language themselves. At that point they can use the methodology more impactfully — they can name the constraints they care about, name the outcomes they want, and get proportionally better results from the system.
+
+Open questions (future work, not for resolution here):
+
+- How transparent should the internal ODD representation be to the user? Always surfaced? Surfaced on request? Surfaced only when ambiguity forces the persona to ask?
+- How does the persona signal that a request was ambiguous in a way that ODD framing resolved — without turning that signal into pedagogy the user didn't ask for?
+- What is the failure mode when the persona's internal ODD model diverges from what the user actually meant, and how does the user catch it?
+
+These are not scoped here. This idea records the principle, not the implementation.
+
 ## Catalogue discipline
 
 This file is the catalogue of future directions for pOS v2. Entries here are not commitments. When an idea is picked up, it becomes a real component cycle (research plan → research → proposal → brief → build → seal) and is retired from this file with a pointer to the component that now owns it. When an idea is deliberately dropped, it is retired with a one-line rationale.

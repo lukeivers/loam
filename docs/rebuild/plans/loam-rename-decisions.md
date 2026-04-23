@@ -1,5 +1,7 @@
 # loam rename — decisions
 
+**Status:** TABLED 2026-04-23. Rename decisions recorded; execution deferred pending prerequisite amendments (#26 teardown retrofit + open-source launch readiness per Idea 12) and available bandwidth. Un-table when ready to commence the multi-amendment migration.
+
 **Status:** approved 2026-04-23. Execution scheduled as a tiered rename
 sequence across multiple future amendments, kicked off after
 amendment #23 (frozen-H19 per-invariant baseline, sealed at `a27a833`).

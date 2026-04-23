@@ -425,6 +425,8 @@ This belongs in FUTURE_IDEAS rather than being scoped now because the collision 
 
 ## Idea 10 — Project rename to loam
 
+**Status:** TABLED 2026-04-23. Decisions recorded in `docs/rebuild/plans/loam-rename-decisions.md`; execution deferred pending prerequisite amendments (#26 teardown retrofit) and available bandwidth. Un-table when ready.
+
 Captured 2026-04-23.
 
 pOS v2 is being renamed to **`loam`** — substrate-not-plant metaphor

@@ -605,4 +605,69 @@
 # so the B20 diff window was empty during the amendment-commit test
 # run; the seal commit advances it to 3457caa, narrowing the diff
 # window to this amendment's own surface.
-3457caa
+#
+# Amendment cycle — D12 chaos-durability split pytest (amendment
+# #16, 2026-04-22): D12 is a named acceptance criterion in
+# docs/rebuild/components/memory-system/brief-full-build.md (Kuzu
+# chaos-durability — kill-mid-ingest, kill-mid-query, WAL-recovery).
+# The runner at memory-system/scripts/chaos_durability.py + the
+# 2026-04-18 report at memory-system/docs/chaos-durability-report.md
+# both ship, but no pytest test asserted D12 under the test_D12_*
+# naming contract; a standalone runner script is not a regression
+# surface under ODD §8.2 rule 9.
+#
+# Per Luke's prior ruling ("option c — split"), D12 gets two test
+# surfaces:
+#   - Fast bucket (default-on, in-process): three outcome-shaped
+#     tests asserting the durability-adjacent config defaults D12
+#     depends on — ``_database`` init on the Kuzu driver (single-
+#     writer invariant), idempotent FTS-index override on
+#     build_indices_and_constraints (kill-mid-query + reopen-replay
+#     preconditions), and ensure_retention_column wiring in
+#     prepare_graphiti (reopen-counts-episodes precondition).
+#   - Slow bucket (marked @pytest.mark.slow): one test that imports
+#     chaos_durability.main() directly (verified importable, no side
+#     effects beyond the runner's own sys.path prep) and asserts
+#     overall_passed==True plus the scenario set + per-scenario
+#     verdicts by parsing the newest data/runs/chaos_durability_*.
+#     json report. Runtime ~65s. Gates on a claude-OAuth precondition
+#     (the runner's workers construct the full Graphiti + subscription-
+#     routed LLM client); unauthed envs skip cleanly — auth is
+#     runner-precondition, not D12 AC.
+#
+# Marker convention: memory-system had no pyproject.toml / pytest.ini
+# / conftest.py / pre-existing marker. New memory-system/tests/
+# conftest.py registers the ``slow`` marker via pytest_configure and
+# auto-skips slow-marked tests when no marker expression is passed
+# (via pytest_collection_modifyitems), so default runs remain ergo-
+# nomic without requiring -m "not slow" at every invocation.
+#
+# Cadence (documented in the plan doc at docs/rebuild/plans/d12-
+# chaos-durability-split-pytest.md §6): the slow bucket runs manually
+# before any pos-v2 release cut AND on any PR whose diff touches
+# memory-system/src/factory.py, memory-system/src/retention.py, or
+# kuzu-adjacent memory-system/src/ surfaces. Runbook: cd memory-
+# system && .venv/bin/pytest -m slow tests/test_D12_chaos_durability.
+# py -v.
+#
+# Multi-component amendment (memory-system + hands-off-lifecycle).
+# Hands-off-lifecycle's counterpart is this BASELINE bump + SEAL_
+# COMMIT sidecar refresh + this amendment-cycle narrative note —
+# zero functional change. Tests post-amendment: memory-system 67 →
+# 70 passed + 1 skipped (default run; the slow test auto-skips when
+# no marker expr is passed) and 1 slow test selected under ``-m
+# slow``; hands-off-lifecycle 66 → 66 (unchanged); all other sealed
+# components unchanged, their test_no_sealed_amendments suites green.
+#
+# SEAL_COMMIT re-pinned at 552033c (the amendment commit). BASELINE
+# in memory-system/tests/test_no_sealed_amendments.py advances from
+# fd7c6cf to 1b144f6 (the pyyaml-reachability amendment-#5 follow-
+# up's seal commit immediately before amendment #16's code commit).
+# BASELINE in hands-off-lifecycle/tests/test_cross_cutting.py
+# advances from fd7c6cf to 1b144f6 (same pre-amendment tip). Both
+# SEAL_COMMIT sidecars were set to 1b144f6 at the amendment commit
+# itself (matching BASELINE, per the cost-governance amendment-#13
+# pattern) so the B20/H19 diff windows were empty during the
+# amendment-commit test run; this seal commit advances both to
+# 552033c, narrowing the diff windows to this amendment's own surface.
+552033c

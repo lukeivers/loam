@@ -21,8 +21,9 @@ Adopt **Graphiti** (Zep's open-source temporal knowledge graph) on embedded **Ku
 - **Implementation language:** Python. the owner's rebuild-wide decision 2026-04-18 09:18 — the new pOS is Python-native. Graphiti itself is Python; adaptation layers integrate natively with no language boundary.
 - **Knowledge engine:** Graphiti (graphiti-core ≥ 0.28.2), self-hosted as a local MCP service.
 - **Graph database:** Kuzu, embedded — zero network dependency.
-- **LLM for extraction, contradiction resolution, summarisation, reranking:** Claude via Anthropic Max subscription.
+- **LLM for extraction, contradiction resolution, summarisation:** Claude via Anthropic Max subscription.
 - **Embedding model:** local Ollama (candidate models: Qwen3 or bge-large, to be chosen by the builder on quality-vs-resource trade-off). This is the one component outside Max coverage and is evaluated vendor-free on merit.
+- **Reranker (cross-encoder):** local `BAAI/bge-reranker-v2-m3` via `sentence-transformers` (amendment #25 explicit wiring). graphiti-core 0.28.2 silently defaults an unset `cross_encoder` argument to `OpenAIRerankerClient`, which needs `OPENAI_API_KEY` we don't configure (the same billed-API coupling amendment #8 removed from the LLM path). The factory's explicit `cross_encoder=LazyBGERerankerClient()` closes that hole. No behaviour change on paths that don't exercise reranking; behaviour change on paths that do (silent `AuthenticationError` → local rank). Model load is deferred to first `rank()` call so factory construction and MCP service startup pay no reranker cost.
 
 ### Why this direction
 

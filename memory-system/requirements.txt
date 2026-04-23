@@ -16,6 +16,15 @@ numpy>=1.26
 # the streamable-HTTP transport.
 mcp>=1.27
 uvicorn[standard]>=0.32
+# Amendment #25 (2026-04-22, bge-reranker-swap) adds
+# sentence-transformers as a runtime dep. It backs
+# graphiti_core.cross_encoder.bge_reranker_client.BGERerankerClient,
+# which make_graphiti() now passes explicitly as cross_encoder to
+# avoid graphiti-core silently defaulting to OpenAIRerankerClient
+# (which requires OPENAI_API_KEY — a billed-API coupling we rejected
+# for the LLM path in amendment #8). Pin floor matches graphiti-core
+# 0.28.2's declared `sentence-transformers` optional-extra.
+sentence-transformers>=3.2.1
 # dev / test
 pytest>=9.0
 pytest-asyncio>=1.0

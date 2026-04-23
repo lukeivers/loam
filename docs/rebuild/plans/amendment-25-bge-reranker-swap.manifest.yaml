@@ -1,0 +1,74 @@
+schema_version: 1
+amendment:
+  number: 25
+  slug: bge-reranker-swap
+  title: "memory-system reranker: OpenAI default → BGE local"
+
+# BASELINE: 390c0c1 — the pre-amendment tip (pyyaml-reachability seal
+# for hands-off-lifecycle) immediately before this amendment's code
+# commit. Empty-diff window at amendment-commit time per the
+# established pattern (amendments #13 / #17 / #18 / #19 / #20 / #21 /
+# #22 / #23 / #24 all follow this shape); follow-on chore(seals)
+# commit advances the sidecar to the amendment SHA.
+baseline: 390c0c1
+plan: docs/rebuild/plans/amendment-25-bge-reranker-swap.md
+
+# One component affected: memory-system. The reranker swap is a
+# factory-internal change — no transport contract, no launchd
+# touchpoint, no cross-component surface. hands-off-lifecycle's H19
+# BASELINE is frozen at project-start per amendment #23 and gets no
+# bump when an amendment doesn't source-edit it. This amendment does
+# not source-edit H19; per the frozen-H19 pattern, H19 stays out of
+# the manifest entirely (no sidecar bump, no narrative append).
+components:
+  - name: memory-system
+    seal_test: memory-system/tests/test_no_sealed_amendments.py
+    sidecar: memory-system/tests/SEAL_COMMIT
+    # No extra_allowed_prefixes — memory-system/ and
+    # docs/rebuild/components/memory-system/ are already in the
+    # allowed tuple from prior amendments.
+
+# Universal admissions — per amendment #22's ruling #3 (docs/rebuild/
+# plans/ prefix + CLAUDE.md + docs/odd-*.md + FUTURE_IDEAS.md).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+
+narrative:
+  target: memory-system/tests/SEAL_COMMIT.notes
+  body: |
+    # Amendment #25 — memory-system BGE reranker swap
+
+    `make_graphiti` now passes an explicit `cross_encoder=
+    LazyBGERerankerClient()` to the `Graphiti` constructor.
+    Eliminates a latent missing-`OPENAI_API_KEY` failure in the
+    rerank path: graphiti-core 0.28.2 silently defaults unset
+    `cross_encoder` to `OpenAIRerankerClient()`, whose first
+    `rank()` call raises `openai.AuthenticationError` because we
+    never configure `OPENAI_API_KEY` (amendment #8 removed billed-
+    API coupling from the LLM path; the reranker was the last
+    holdout).
+
+    The local replacement is `graphiti_core.cross_encoder.
+    bge_reranker_client.BGERerankerClient`, backed by the
+    `BAAI/bge-reranker-v2-m3` cross-encoder via
+    `sentence-transformers` (new dep, `>=3.2.1` floor matching
+    graphiti-core's declared extra).
+
+    Lazy wrapper (`LazyBGERerankerClient`) defers the BGE model
+    load from `__init__` to first `rank()` call. Without it,
+    factory construction would trigger a ~1 GB HF download on
+    first run and seconds of weight load even when warm —
+    unacceptable for the pytest suite and for amendment #24's MCP
+    service startup (which calls `make_graphiti` at every launchd
+    KeepAlive restart). With it, only `graphiti.search()` calls
+    that actually exercise reranking pay the one-time load cost.
+
+    No behaviour change on paths that don't invoke reranking.
+    Shape-only assertion landed in
+    `memory-system/tests/test_factory.py::test_AC25_1_*`.

@@ -25,11 +25,56 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from graphiti_core import Graphiti
+from graphiti_core.cross_encoder.bge_reranker_client import BGERerankerClient
 from graphiti_core.driver.kuzu_driver import KuzuDriver
 from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
 from graphiti_core.llm_client.config import LLMConfig
 
 from .claude_print_client import ClaudePrintLLMClient
+
+
+class LazyBGERerankerClient(BGERerankerClient):
+    """Lazy-loading wrapper around graphiti-core's BGE reranker.
+
+    Amendment #25 (bge-reranker-swap, 2026-04-22). The parent class's
+    ``__init__`` calls ``CrossEncoder('BAAI/bge-reranker-v2-m3')``
+    synchronously, which triggers a ~1 GB Hugging Face download on
+    first run and several seconds of weight-load time even when warm.
+    Paying that cost at factory-construction time is unacceptable:
+
+    1. Every pytest run that imports ``make_graphiti`` would have to
+       either load the real model or mock at the
+       ``sentence_transformers`` boundary. The first is slow and
+       network-dependent; the second spreads mock surface across
+       every factory-adjacent test.
+    2. Amendment #24's MCP service ``lifespan`` calls
+       ``make_graphiti`` on every launchd KeepAlive restart. Startup
+       would block on weight load even when the reranker is never
+       exercised.
+
+    Reranking is only touched when ``graphiti.search()`` runs with a
+    reranker-enabled ``SearchConfig``. Deferring the model load until
+    first ``rank()`` lines cost up with value: no-rerank paths cost
+    zero; first rerank call pays the one-time load.
+
+    The subclass deliberately skips ``super().__init__()`` — that
+    method *is* the eager load. ``isinstance(x, BGERerankerClient)``
+    remains true (AC25.1 assertion), and ``rank()`` delegates to the
+    parent after ensuring the model is loaded.
+    """
+
+    def __init__(self) -> None:
+        # Do NOT call super().__init__(); that's the eager model
+        # load this wrapper exists to defer.
+        self.model = None  # type: ignore[assignment]
+
+    async def rank(
+        self, query: str, passages: list[str]
+    ) -> list[tuple[str, float]]:
+        if self.model is None:
+            from sentence_transformers import CrossEncoder
+            self.model = CrossEncoder("BAAI/bge-reranker-v2-m3")
+        return await super().rank(query, passages)
 
 
 # Embedding dimensions per supported model. Used to configure the
@@ -194,6 +239,16 @@ async def make_graphiti(
     table carries the D10 `retention_class` column. We do it lazily at
     first add_episode in MemoryAPI rather than here, to avoid a Kuzu
     connection before build_indices_and_constraints runs.
+
+    Amendment #25 (bge-reranker-swap) passes an explicit
+    ``cross_encoder=LazyBGERerankerClient()`` argument. Without it,
+    ``graphiti_core.Graphiti.__init__`` defaults unset
+    ``cross_encoder`` to ``OpenAIRerankerClient()`` — a billed-API
+    reranker that fails with ``openai.AuthenticationError`` on first
+    rerank when ``OPENAI_API_KEY`` is unset (which it is on our
+    fresh-first-run target; amendment #8 removed billed-API coupling
+    from the LLM path and this closes the parallel hole on the
+    reranker path).
     """
     llm_client = await make_claude_print_client()
     embedder = make_ollama_embedder(embedder_model)
@@ -202,6 +257,7 @@ async def make_graphiti(
         llm_client=llm_client,
         embedder=embedder,
         graph_driver=driver,
+        cross_encoder=LazyBGERerankerClient(),
     )
     return graphiti
 

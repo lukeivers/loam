@@ -1,12 +1,20 @@
 """Wire Graphiti up with the prototype's chosen backends.
 
 Single responsibility: construct a Graphiti instance with the configured
-LLM (Anthropic Claude), embedder (Ollama via OpenAI-compat endpoint),
-and graph driver (embedded Kuzu). All other concerns live elsewhere.
+LLM (subscription-routed ``claude -p`` by default; billed
+``AnthropicClient`` available on request for legacy eval scripts),
+embedder (Ollama via OpenAI-compat endpoint), and graph driver
+(embedded Kuzu). All other concerns live elsewhere.
 
-The brief constrains: Anthropic Max for all LLM work; local Ollama for
-embeddings; no other vendors. Embedder is the one outside-Max component
-(no Anthropic embedding API as of 2026-04-17).
+Amendment #8 (memory-system-subscription-routed-llm, 2026-04-22)
+swapped the default LLM backend from graphiti-core's ``AnthropicClient``
+(which reads ``ANTHROPIC_API_KEY`` and routes through the billed API)
+to ``ClaudePrintLLMClient`` (which subprocesses ``claude -p`` and
+routes through the user's Claude Max subscription via OAuth). The
+``make_anthropic_client()`` factory is kept for scripts that explicitly
+opt in to the billed path (cost_baseline.py, eval harnesses), but
+``make_graphiti()`` no longer invokes it on the default path — fresh
+first-run completes end-to-end without an ``ANTHROPIC_API_KEY``.
 """
 
 from __future__ import annotations
@@ -20,6 +28,8 @@ from graphiti_core.driver.kuzu_driver import KuzuDriver
 from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
 from graphiti_core.llm_client.anthropic_client import AnthropicClient
 from graphiti_core.llm_client.config import LLMConfig
+
+from .claude_print_client import ClaudePrintLLMClient
 
 
 # Embedding dimensions per supported model. Used to configure the
@@ -42,11 +52,17 @@ def load_env(env_path: str | Path | None = None) -> None:
 
 
 def make_anthropic_client(small: bool = False) -> AnthropicClient:
-    """Construct the Anthropic LLM client used by Graphiti.
+    """Construct the billed Anthropic LLM client.
+
+    **Not the default path after amendment #8.** ``make_graphiti()`` now
+    wires the subscription-routed ``ClaudePrintLLMClient`` by default;
+    this helper remains for eval / cost-baseline scripts that
+    explicitly opt in to the billed API path. Callers must have
+    ``ANTHROPIC_API_KEY`` set in the environment; this function raises
+    ``KeyError`` at call time if it is not.
 
     `small` selects the small-model field, used by Graphiti for cheaper
-    sub-prompts (entity dedupe, classification). The brief constraint
-    is Anthropic-only — no fallback to other vendors.
+    sub-prompts (entity dedupe, classification).
     """
     model = os.environ.get(
         "ANTHROPIC_SMALL_MODEL" if small else "ANTHROPIC_MODEL",
@@ -58,6 +74,24 @@ def make_anthropic_client(small: bool = False) -> AnthropicClient:
         small_model=os.environ.get("ANTHROPIC_SMALL_MODEL", "claude-haiku-4-5"),
     )
     return AnthropicClient(config=config)
+
+
+def make_claude_print_client(
+    *, skip_auth_probe: bool = False
+) -> ClaudePrintLLMClient:
+    """Construct the subscription-routed LLM client (amendment #8 default).
+
+    Fails closed at construction if the ``claude`` binary is missing
+    (``ClaudeBinaryMissingError``, code -32110) or if OAuth is absent
+    (``ClaudeUnauthenticatedError``, code -32111). No
+    ``ANTHROPIC_API_KEY`` is read; the child subprocess runs with a
+    scrubbed env so it cannot fall through to the billed API even when
+    the parent has the key set.
+    """
+    model = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
+    small = os.environ.get("ANTHROPIC_SMALL_MODEL", "claude-haiku-4-5")
+    config = LLMConfig(model=model, small_model=small)
+    return ClaudePrintLLMClient(config=config, skip_auth_probe=skip_auth_probe)
 
 
 def make_ollama_embedder(model: str | None = None) -> OpenAIEmbedder:
@@ -150,19 +184,31 @@ async def make_graphiti(
 ) -> Graphiti:
     """Build a fully-wired Graphiti instance.
 
+    After amendment #8 the LLM backend is ``ClaudePrintLLMClient`` —
+    every graphiti LLM call (entity extraction, deduplication,
+    summarisation, edge extraction, attribute extraction) subprocesses
+    ``claude -p`` and routes through the user's Claude Max subscription
+    via OAuth. No ``ANTHROPIC_API_KEY`` is required or consulted; the
+    factory fails closed if the ``claude`` binary is missing or OAuth
+    state is absent.
+
     The caller is responsible for `await graphiti.build_indices_and_constraints()`
     on first use (it's idempotent but does a round-trip per call).
 
     Token-usage observation: the LLMClient base class auto-instantiates
     a TokenUsageTracker; D4 reads `graphiti.llm_client.token_tracker`
-    after ingest to break down cost by prompt name.
+    after ingest to break down cost by prompt name. Amendment #8 adds a
+    parallel ``cost_tracker`` attribute on ``ClaudePrintLLMClient``
+    that records ``total_cost_usd`` from the ``claude -p`` JSON
+    envelope (typically 0.0 on Max, but Anthropic still reports an
+    equivalent-cost estimate useful for subscription-usage budgeting).
 
     Full-build addition: after indices are built, ensure the Episodic
     table carries the D10 `retention_class` column. We do it lazily at
     first add_episode in MemoryAPI rather than here, to avoid a Kuzu
     connection before build_indices_and_constraints runs.
     """
-    llm_client = make_anthropic_client()
+    llm_client = make_claude_print_client()
     embedder = make_ollama_embedder(embedder_model)
     driver = make_kuzu_driver(db_path)
     graphiti = Graphiti(

@@ -101,9 +101,12 @@ class ProcessOfArrivalReceiver:
     so this class does not depend on the full MemoryAPI construction
     path — tests substitute a fake ingest.
 
-    `llm_client` is a Graphiti AnthropicClient (or equivalent); we use
-    it to produce a summary. The brief requires Claude via Max; this
-    injection keeps that single-source rule.
+    `llm_client` is a Graphiti LLM client (after amendment #8 the
+    default is the subscription-routed ``ClaudePrintLLMClient``; any
+    ``LLMClient`` subclass works as long as its ``generate_response``
+    honours the standard signature). We use it to produce a summary.
+    The brief requires Claude via Max; the default injection honours
+    that single-source rule.
     """
 
     def __init__(

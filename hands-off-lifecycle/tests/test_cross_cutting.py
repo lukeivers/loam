@@ -62,8 +62,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # first-run-inventory.yaml, and the amendment-#6 proposal's
 # superseded-by marker. 7d462e3 is the pre-amendment tip — the
 # graceful-degradation + observability-aggregator retrofit chore commit
-# immediately before this amendment's code commit.
-BASELINE = "7d462e3"
+# immediately before this amendment's code commit. Advanced to 4ec9ae9
+# when the memory-system-subscription-routed-llm amendment (#8) opened
+# — a multi-component amendment whose primary surface is memory-system/
+# (new ClaudePrintLLMClient module routing all graphiti LLM work
+# through the user's Claude Max subscription via `claude -p`) with a
+# hands-off-lifecycle counterpart: a BASELINE bump here and a README
+# cross-reference to the new -32110..-32119 memory-system runtime
+# error-code block. 4ec9ae9 is the pre-amendment tip — the scope-only-
+# dispatch CDC commit immediately before this amendment's code commit.
+BASELINE = "4ec9ae9"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

@@ -42,6 +42,18 @@ Currently claimed codes:
   failures, self-retire verification failures, venv-creation failures,
   etc.)
 
+### Adjacent component blocks (for cross-reference only)
+
+- `-32100..-32109` telegram-interface (`IPC_TELEGRAM_*` — see
+  `telegram-interface/src/__init__.py`).
+- `-32110..-32119` memory-system runtime (claimed by amendment #8 for
+  `ClaudePrintLLMClient` fail-closed paths; -32110
+  claude-binary-missing, -32111 claude-unauthenticated, -32112
+  claude-print-response-malformed). Memory-system's historical
+  claim inside this component's block (-32095, -32096) stays with
+  its original owners; the runtime block is the first memory-system-
+  owned range outside the hands-off-lifecycle carve-out.
+
 ## SessionStart hook (Claude Code v2.1.87+)
 
 The hook invokes `orchestrator/scripts/pos_session_start.py` as a

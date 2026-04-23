@@ -293,6 +293,16 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     extension for the plan-before-code paper trail) lives
         #     in cost-governance/tests/test_no_sealed_amendments.py.
         "cost-governance",
+        # Amendment #18 (delete-method-in-brief-dispatch-docs):
+        #   - `observability-aggregator` admitted as a multi-component
+        #     partner whose SEAL_COMMIT sidecar + seal-diff test are
+        #     updated in lockstep. The deleted briefs themselves flow
+        #     through the `docs` top-level bucket; this addition
+        #     covers the observability-aggregator/tests/ edits to
+        #     allowed_prefixes and SEAL_COMMIT sidecar. The finer-
+        #     grained diff-scope filter lives in observability-
+        #     aggregator/tests/test_no_sealed_amendments.py.
+        "observability-aggregator",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

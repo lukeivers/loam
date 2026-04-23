@@ -129,13 +129,23 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
     #     superseded-by marker on AC3.
     #   - `docs/rebuild/plans/` — the amendment's own plan file.
     #   - `first-run-inventory.yaml` — comment text scrub.
-    # Amendment #18 (delete-method-in-brief-dispatch-docs) adds:
+    # Amendment #18 (delete-method-in-brief-dispatch-docs) is a multi-
+    # component amendment across seven brief-owning sealed components
+    # plus hands-off-lifecycle. Adds:
     #   - `docs/rebuild/components/session-resilient-orchestrator/` —
-    #     the deleted brief.md lives under the component's doc-slug
-    #     dir (session-resilient-orchestrator is this component's
-    #     doc-slug name, distinct from the orchestrator/ code tree).
-    #   - `docs/odd-in-pos.md` — §7.4 rewrite (brief = dispatch-time,
-    #     not committed canonical artifact).
+    #     orchestrator's deleted brief.md lives under its doc-slug
+    #     dir (session-resilient-orchestrator is the doc-slug name,
+    #     distinct from the orchestrator/ code tree).
+    #   - Six sibling doc dirs for the other brief-owning components:
+    #     primary-persona-loader/, graceful-degradation/, observability-
+    #     aggregator/, cost-governance/, scope-of-work/, objective-
+    #     tracker/.
+    #   - `cost-governance/`, `graceful-degradation/`, `observability-
+    #     aggregator/` — the three sibling brief-owning sealed
+    #     components whose seal-diff tests + SEAL_COMMIT sidecars are
+    #     updated in lockstep.
+    #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite (brief =
+    #     dispatch-time, not committed canonical artifact).
     allowed_prefixes = (
         "orchestrator/",
         "hands-off-lifecycle/",
@@ -145,8 +155,17 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
         "docs/rebuild/components/orchestrator-bootstrap-unification/",
         "docs/rebuild/components/namespaced-labels-and-bootout/",
         "docs/rebuild/components/session-resilient-orchestrator/",
+        "docs/rebuild/components/primary-persona-loader/",
+        "docs/rebuild/components/graceful-degradation/",
+        "docs/rebuild/components/observability-aggregator/",
+        "docs/rebuild/components/cost-governance/",
+        "docs/rebuild/components/scope-of-work/",
+        "docs/rebuild/components/objective-tracker/",
         "docs/rebuild/plans/",
         "data/",
+        "cost-governance/",
+        "graceful-degradation/",
+        "observability-aggregator/",
     )
     allowed_files: set[str] = {
         "first-run-inventory.yaml",

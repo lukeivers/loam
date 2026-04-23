@@ -76,20 +76,34 @@ def test_only_graceful_degradation_changed() -> None:
     # `data/` is runtime test-output (observability spans.jsonl etc.),
     # not source. It is not a sealed-component amendment — treat as
     # generated artifact alongside `graceful-degradation/`.
-    # Amendment #18 (delete-method-in-brief-dispatch-docs) adds:
-    #   - `docs/rebuild/components/graceful-degradation/` — the
-    #     deleted brief.md lives under the component's doc dir.
+    # Amendment #18 (delete-method-in-brief-dispatch-docs) is a multi-
+    # component amendment across seven brief-owning sealed components
+    # plus hands-off-lifecycle. Adds:
+    #   - `docs/rebuild/components/graceful-degradation/` and the six
+    #     sibling component doc dirs — the seven deleted briefs.
     #   - `docs/rebuild/plans/` — plan-before-code paper trail.
-    #   - `hands-off-lifecycle/` — cross-cutting seal counterpart
-    #     (every amendment touches this).
-    #   - `docs/odd-in-pos.md` — §7.4 rewrite (brief = dispatch-time,
-    #     not committed canonical artifact).
+    #   - `hands-off-lifecycle/` — cross-cutting seal counterpart.
+    #   - `cost-governance/`, `observability-aggregator/`,
+    #     `orchestrator/` — the three sibling brief-owning sealed
+    #     components whose seal-diff tests + SEAL_COMMIT sidecars are
+    #     updated in lockstep.
+    #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite (brief =
+    #     dispatch-time, not committed canonical artifact).
     allowed_prefixes = (
         "graceful-degradation/",
         "data/",
         "docs/rebuild/components/graceful-degradation/",
+        "docs/rebuild/components/primary-persona-loader/",
+        "docs/rebuild/components/session-resilient-orchestrator/",
+        "docs/rebuild/components/observability-aggregator/",
+        "docs/rebuild/components/cost-governance/",
+        "docs/rebuild/components/scope-of-work/",
+        "docs/rebuild/components/objective-tracker/",
         "docs/rebuild/plans/",
         "hands-off-lifecycle/",
+        "cost-governance/",
+        "observability-aggregator/",
+        "orchestrator/",
     )
     allowed_files: set[str] = {"docs/odd-in-pos.md"}
 

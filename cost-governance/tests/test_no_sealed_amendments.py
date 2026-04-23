@@ -84,16 +84,42 @@ def test_C23_only_cost_governance_changed() -> None:
     # Amendment #13 is the first cost-governance amendment to include
     # the cross-cutting seal counterpart in the diff window — earlier
     # cost-governance state never included any post-first-seal edits.
-    # Amendment #18 (delete-method-in-brief-dispatch-docs) adds
-    # `docs/rebuild/components/cost-governance/` (the brief.md deletion
-    # lives there) and `docs/odd-in-pos.md` (the §7.4 rewrite naming
-    # briefs as dispatch-time, not canonical).
+    # Amendment #18 (delete-method-in-brief-dispatch-docs) is a multi-
+    # component amendment across seven brief-owning sealed components
+    # plus hands-off-lifecycle. Adds, in addition to the already-
+    # admitted cost-governance/ / data/ / docs/rebuild/plans/ / hands-
+    # off-lifecycle/ surfaces:
+    #   - `docs/rebuild/components/cost-governance/` — cost-governance's
+    #     own deleted brief.md lives here.
+    #   - `docs/rebuild/components/primary-persona-loader/`,
+    #     `docs/rebuild/components/session-resilient-orchestrator/`,
+    #     `docs/rebuild/components/graceful-degradation/`,
+    #     `docs/rebuild/components/observability-aggregator/`,
+    #     `docs/rebuild/components/scope-of-work/`,
+    #     `docs/rebuild/components/objective-tracker/` — the other six
+    #     brief-owning components' deleted briefs (multi-component
+    #     partners in this amendment window).
+    #   - `graceful-degradation/`, `observability-aggregator/`,
+    #     `orchestrator/` — the three other brief-owning sealed
+    #     components whose seal-diff tests + SEAL_COMMIT sidecars are
+    #     updated in lockstep (multi-component partners).
+    #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite naming
+    #     briefs as dispatch-time, not canonical.
     allowed_prefixes = (
         "cost-governance/",
         "data/",
         "docs/rebuild/plans/",
         "hands-off-lifecycle/",
         "docs/rebuild/components/cost-governance/",
+        "docs/rebuild/components/primary-persona-loader/",
+        "docs/rebuild/components/session-resilient-orchestrator/",
+        "docs/rebuild/components/graceful-degradation/",
+        "docs/rebuild/components/observability-aggregator/",
+        "docs/rebuild/components/scope-of-work/",
+        "docs/rebuild/components/objective-tracker/",
+        "graceful-degradation/",
+        "observability-aggregator/",
+        "orchestrator/",
     )
     allowed_files: set[str] = {"docs/odd-in-pos.md"}
 

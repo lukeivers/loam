@@ -473,7 +473,109 @@ _Sources (4.x): `https://code.claude.com/docs/en/mcp`, `https://modelcontextprot
 
 ## 5. Plugin system
 
-<!-- PLACEHOLDER -->
+Plugins are self-contained directories of components (skills, commands, agents, hooks, MCP servers, LSP servers, background monitors, binaries, default settings) that extend Claude Code with namespaced functionality. They are the distribution unit for the pos-v2 Idea 3 plugin suite.
+
+### 5.1 Plugin structure
+
+Every plugin has a manifest at `.claude-plugin/plugin.json`:
+
+```json
+{
+  "name": "my-plugin",                // required; namespace prefix for skills
+  "description": "...",               // required; shown in plugin manager
+  "version": "1.0.0",                 // optional; git SHA used if omitted
+  "author": { "name": "..." },        // optional
+  "homepage": "...",                  // optional
+  "repository": "...",                // optional
+  "license": "..."                    // optional
+}
+```
+
+**Directory layout** (all relative to plugin root, NOT inside `.claude-plugin/`):
+
+| Directory / file | Purpose |
+|------------------|---------|
+| `.claude-plugin/plugin.json` | Manifest (only file that belongs inside `.claude-plugin/`) |
+| `skills/<name>/SKILL.md` | Skills — auto-discovered; namespace `/plugin-name:skill-name` |
+| `commands/<name>.md` | Legacy commands (same effect, no supporting files) |
+| `agents/<name>.md` | Custom subagent definitions |
+| `hooks/hooks.json` | Hook event handlers |
+| `.mcp.json` | MCP server configurations |
+| `.lsp.json` | LSP servers for code intelligence |
+| `monitors/monitors.json` | Background monitors — each stdout line becomes a Claude notification |
+| `bin/` | Executables added to Bash `PATH` while plugin is enabled |
+| `settings.json` | Default settings (currently only `agent` and `subagentStatusLine` honoured) |
+
+### 5.2 Plugin namespacing
+
+Plugin skills / commands / MCP tools are namespaced as `<plugin-name>:<component>` — pos-v2's `telegram-interface` ships tools like `mcp__plugin_telegram_telegram__reply` and skills like `/telegram:configure`, `/telegram:access`. Namespacing prevents conflicts when multiple plugins are installed and is the mechanism by which the plugin marketplace can safely host arbitrary user content.
+
+Plugin skills **cannot conflict** with project/user/enterprise skills because of namespacing. Project-scoped skills (in `.claude/skills/`) are unnamespaced (`/hello`); plugin skills are always namespaced (`/my-plugin:hello`).
+
+### 5.3 Marketplaces
+
+Plugin marketplaces are the distribution layer. A marketplace is a git repo or HTTP-served manifest listing plugins. Claude Code users add marketplaces via `claude plugin marketplace add <source>`; once added, users install individual plugins via `/plugin install <name>@<marketplace>` or `claude plugin install <name>@<marketplace>`.
+
+**Marketplace configuration in settings.json:**
+```json
+{
+  "enabledPlugins": {
+    "formatter@acme-tools": true,
+    "deployer@acme-tools": false
+  },
+  "extraKnownMarketplaces": {
+    "acme-tools": { "source": { "source": "github", "repo": "acme-corp/claude-plugins" } }
+  },
+  "strictKnownMarketplaces": [
+    { "source": "github", "repo": "acme-corp/approved-plugins" }
+  ]
+}
+```
+
+The official Anthropic marketplace accepts submissions via `claude.ai/settings/plugins/submit` or `platform.claude.com/plugins/submit`.
+
+### 5.4 Composes with pos-v2
+
+- **`telegram-interface` is already a plugin** (`plugin:telegram:telegram` namespace visible in the MCP tool names). The telegram-interface + telegram-interface-framework-integration work is the reference implementation for how pos-v2 ships a plugin.
+- **`workspace-bootstrap`** and **`hands-off-lifecycle`** together form the native foundational layer that every pos-v2 plugin is supposed to compose on. Idea 3 names these plugins as must-have-at-launch candidates, with dev/SDLC plugin as the first.
+- **Plugin monitors (`monitors/monitors.json`)** are exactly the shape STATE.md rule 7 background-work-awareness demands — a tail command becomes in-context notifications without pos-v2 reinventing the surface. `observability-aggregator` and `session-resilient-orchestrator` could emit to monitor-shaped outputs that a pos-v2 plugin picks up.
+- **Plugin `bin/` directory** is the distribution mechanism for pos-v2 CLI tools — `tools/pos-amend/` currently ships via the repo root; a future "pos-v2 dev/SDLC plugin" (Idea 3) could ship `pos-amend` as `bin/pos-amend` and get automatic PATH inclusion.
+- **Plugin `settings.json` with `agent`** is the mechanism for shipping an entire custom primary persona as a plugin — a "code-reviewer persona" or "research-assistant persona" plugin becomes a one-toggle override of the default agent.
+- **Workspace-specific pos-v2 compositions** (e.g. a workspace that wants a canned `/pos:context-load` skill for Idea 8's gate) become plugins once they stabilise; before then they live unnamespaced in `.claude/skills/`.
+
+### 5.5 Lifecycle
+
+1. **Install**: `/plugin install <name>@<marketplace>` or programmatic via SDK `plugins` option.
+2. **Enable/disable**: `enabledPlugins` in settings.json, or `/plugin` interactive manager.
+3. **Reload without restart**: `/reload-plugins` picks up skill, agent, hook, MCP, and LSP updates mid-session.
+4. **Update**: re-install pulls latest version per marketplace manifest; explicit `version` field in plugin.json gates updates, otherwise every commit SHA counts as new.
+5. **Uninstall**: `/plugin uninstall <name>@<marketplace>` or remove from `enabledPlugins`.
+
+### 5.6 Testing and development
+
+- **`--plugin-dir ./path`** loads a plugin from disk without marketplace install; the flag can be repeated for multiple plugins.
+- Local `--plugin-dir` plugin **overrides** an installed marketplace plugin of the same name (except managed-force-enabled plugins).
+- `/reload-plugins` picks up file changes.
+- `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PLUGIN_DATA}` are available inside plugin configs — the latter is the persistent data directory that survives updates.
+
+### 5.7 Pitfalls
+
+- **Common mistake:** putting `commands/`, `agents/`, `skills/`, `hooks/` inside `.claude-plugin/` — they must be at the plugin root, only `plugin.json` lives inside `.claude-plugin/`.
+- **No version field = every git SHA is a new version.** Users get churny update prompts. Set `version` explicitly for stable plugins.
+- **Plugin MCP servers** appear in `/mcp` alongside user-configured servers and inherit the prompt-injection risk (§4.4) — do not ship plugins that pull untrusted external content without documenting the risk.
+- **Managed-force-enabled plugins** cannot be overridden by local `--plugin-dir`; contradicts the "local wins" assumption.
+- **`strictKnownMarketplaces`** restricts which marketplaces can be added at all — silently blocks user self-installs on locked-down workspaces.
+- **Hooks in plugin `hooks/hooks.json`** use the same schema as settings.json hooks; the command receives JSON on stdin and must `jq` out the fields it needs.
+- Plugins loaded via `--plugin-dir` during testing do not persist across sessions — add to marketplace or `enabledPlugins` for durable install.
+
+### 5.8 End-user configuration surface
+
+- `/plugin` (interactive manager), `claude plugin install/uninstall/marketplace add`.
+- `enabledPlugins`, `extraKnownMarketplaces`, `strictKnownMarketplaces` in settings.json.
+- `--plugin-dir <path>` CLI flag (repeatable).
+- `/reload-plugins` slash command.
+
+_Sources (5.x): `https://code.claude.com/docs/en/plugins`, `https://code.claude.com/docs/en/plugins-reference` — fetched 2026-04-23._
 
 ---
 

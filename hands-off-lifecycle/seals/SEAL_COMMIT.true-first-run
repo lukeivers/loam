@@ -1001,3 +1001,64 @@
 # components' BASELINEs remain pinned at their respective prior
 # amendment windows.
 7d27f00
+
+# Amendment #22 — pos-amend CLI + universal-paths retrofit
+#
+# 2026-04-23. Introduces tools/pos-amend/ — a stdlib-heavy +
+# PyYAML Python CLI that mechanises the sealed-component amendment
+# cycle's bookkeeping (BASELINE literal advances, allowed_prefixes
+# / allowed_files tuple widening, tests/SEAL_COMMIT sidecar bumps,
+# narrative-sidecar appends). The tool reads a per-amendment YAML
+# manifest committed alongside the plan doc at
+# docs/rebuild/plans/amendment-N-<slug>.manifest.yaml; it never
+# commits, the human authors every commit.
+#
+# Research: /tmp/claude-output/pos-v2-ritual-streamlining-research.md
+# (2026-04-22), which measured amendment #18's bookkeeping cost at
+# 2.75x productive-to-bookkeeping ratio and proposed the tool plus
+# four companion streamlinings. Five rulings: (1) build the tool;
+# (2) manifest committed with plan; (3) universal admitted paths =
+# docs/rebuild/plans/ + docs/odd-*.md + CLAUDE.md +
+# docs/rebuild/FUTURE_IDEAS.md, keeping data/ and
+# docs/rebuild/components/<comp>/ per-component; (4) plan-doc
+# threshold = components > 1 OR lines > 100; (5) post-amendment,
+# `pos-amend apply --dry-run` green is a hard prereq for amendment
+# commits.
+#
+# Plan: docs/rebuild/plans/amendment-22-pos-amend-cli.md, with 14
+# acceptance criteria T1-T14 each mapped to a test function under
+# tools/pos-amend/tests/. Per ODD §2.5 every line of tool code
+# lands behind a named AC.
+#
+# The universal-paths retrofit is the tool's first self-validating
+# use: the retrofit manifest declares universal_paths.prefixes =
+# (docs/rebuild/plans/,) and universal_paths.files = (CLAUDE.md,
+# docs/odd-in-pos.md, docs/odd-methodology.md,
+# docs/rebuild/FUTURE_IDEAS.md); `pos-amend apply` widens every
+# affected component's tuple/set with the missing entries, de-
+# duplicated, with new entries sorted alphabetically among new.
+# Affected components: cost-governance, graceful-degradation,
+# memory-system, observability-aggregator, orchestrator,
+# reversibility-primitive, self-correction, telegram-interface,
+# workspace-bootstrap (nine sealed-component seal-diff tests) +
+# hands-off-lifecycle (test_cross_cutting.py uses a top-level-dir
+# `allowed` set, handled via the tool's `allowed` fallback).
+# safety-layer excluded — structural/import-based test with no
+# BASELINE / allowed_prefixes construct.
+#
+# Amendment-dispatch-speedups CDC (24d54cb) gains a note: as of
+# amendment #22, dispatch speedups are mechanically enforced by
+# `pos-amend apply --dry-run` which must be green before the
+# amendment commit lands. The reactive corrective-commit pattern
+# (amendment #18's 8bdf194; amendment #13's 9e3776b) is replaced
+# by the dry-run gate.
+#
+# CLAUDE.md "Where other guidance lives" section gains a
+# tools/pos-amend/ pointer so future authors find the tooling.
+#
+# BASELINE 9559ca7 across all ten affected components (pre-
+# amendment tip — CDC-2-tighten commit immediately before this
+# amendment's code commit). SEAL_COMMIT sidecars all land at
+# 9559ca7 on the amendment commit for the empty-diff window, and
+# are advanced to the amendment SHA in the seal commit via
+# `pos-amend seal`.

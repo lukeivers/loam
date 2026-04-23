@@ -47,6 +47,13 @@ class ComponentEntry:
     sidecar: str
     extra_allowed_prefixes: tuple[str, ...] = ()
     extra_allowed_files: tuple[str, ...] = ()
+    # When True, ``apply`` skips the module-top ``BASELINE = "<sha>"``
+    # literal bump for this component. Everything else (sidecar
+    # advance, tuple widening, narrative append) still runs. Introduced
+    # in amendment #23 so hands-off-lifecycle's frozen-H19 BASELINE
+    # is expressible in the manifest. Backward-compatible default
+    # preserves the amendment-#22 behaviour for all existing manifests.
+    frozen_baseline: bool = False
 
 
 @dataclass(frozen=True)
@@ -147,6 +154,11 @@ def load_manifest(path: Path) -> Manifest:
         if not isinstance(entry, dict):
             raise InvalidField(f"{path}: components[{idx}] must be a mapping")
         where = f"{path}:components[{idx}]"
+        frozen_raw = entry.get("frozen_baseline", False)
+        if not isinstance(frozen_raw, bool):
+            raise InvalidField(
+                f"{where}: 'frozen_baseline' must be a boolean if present"
+            )
         components.append(
             ComponentEntry(
                 name=_require_str(entry, "name", where),
@@ -158,6 +170,7 @@ def load_manifest(path: Path) -> Manifest:
                 extra_allowed_files=_optional_str_list(
                     entry, "extra_allowed_files", where
                 ),
+                frozen_baseline=frozen_raw,
             )
         )
 

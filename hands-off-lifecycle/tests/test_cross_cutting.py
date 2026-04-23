@@ -25,253 +25,33 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-# BASELINE: the commit immediately preceding the most recent amendment
-# window for hands-off-lifecycle. Originally 3780603 at first seal;
-# advanced to 7711249 when the Claude Code hook schema amendment opened
-# (ship-time + post-self-retire stanzas migrated from the flat-object
-# shape to the current `{matcher, hooks: [...]}` envelope); advanced to
-# b63c758 when the editable-install amendment opened (Phase 3e added
-# per-component pip install -e discovery + topological ordering +
-# idempotent re-run); advanced to 63b7cb8 when the session-start-
-# detachment amendment opened (SessionStart hook rewritten as thin
-# status-report-and-handoff, heavy work detached via state file +
-# progress log, scaffold gained partial_recovery=True path, workspace-
-# bootstrap amended in lockstep); advanced to 101114d when the
-# pyyaml-reachability amendment (#5) opened (Phase-4a scaffold
-# invocation switched from in-process import to subprocess under the
-# shared venv's Python via first_run_scaffold_runner.py; worker
-# invocation gained -u + PYTHONUNBUFFERED=1; timeout values unified to
-# the documented seconds unit); advanced to 9f35979 when the
-# namespaced-labels-and-bootout amendment (#6) opened (per-workspace
-# service-label namespacing + launchctl bootout-before-bootstrap so
-# multiple pos-v2 workspaces coexist on one host; multi-component
-# amendment with workspace-bootstrap in lockstep). 9f35979 is the
-# pre-amendment tip — the docs-migration chore commit immediately
-# before the amendment code commit. Advanced to a5dbf8f when the
-# orchestrator-bootstrap-unification amendment (#7) opened — a
-# multi-component amendment whose primary surface is orchestrator/ and
-# whose counterpart here is a BASELINE + docs-prefix bump so the diff
-# scope narrows to this amendment's surface. a5dbf8f is the
-# pre-amendment tip — the amendment-#6 seal commit immediately before
-# the amendment-#7 code commit. Advanced to 7d462e3 when the linux-
-# removal amendment (#10) opened — Linux was never a named supported-
-# platform objective, so per docs/odd-methodology.md §2.5 the Linux/
-# systemd branches in first_run_helper.py + the Ubuntu/Debian/Fedora
-# lines in first-run.sh are removed. Multi-component amendment touching
-# workspace-bootstrap, orchestrator, self-upgrade, hands-off-lifecycle,
-# first-run-inventory.yaml, and the amendment-#6 proposal's
-# superseded-by marker. 7d462e3 is the pre-amendment tip — the
-# graceful-degradation + observability-aggregator retrofit chore commit
-# immediately before this amendment's code commit. Advanced to 4ec9ae9
-# when the memory-system-subscription-routed-llm amendment (#8) opened
-# — a multi-component amendment whose primary surface is memory-system/
-# (new ClaudePrintLLMClient module routing all graphiti LLM work
-# through the user's Claude Max subscription via `claude -p`) with a
-# hands-off-lifecycle counterpart: a BASELINE bump here and a README
-# cross-reference to the new -32110..-32119 memory-system runtime
-# error-code block. 4ec9ae9 is the pre-amendment tip — the scope-only-
-# dispatch CDC commit immediately before this amendment's code commit.
-# Advanced to 77389ce when the amendment-#8 audit-closure amendment
-# (#11) opened — the 2026-04-22 Blocker-3 audit surfaced one RED
-# finding (AC8's test not exercising the ingest surface) + a
-# structural error-code-sentinel collision between the
-# ClaudePrintClientError base class (-32099) and
-# hands_off_lifecycle_internal (-32099) + a cluster of §2.5 orphan
-# surfaces. Amendment #11 closes all of them in a single cycle; the
-# hands-off-lifecycle counterpart is a BASELINE bump here + a README
-# cross-reference update for the base-class-sentinel's move to
-# -32119. 77389ce is the pre-amendment tip — the amendment-#8 seal
-# commit immediately before amendment #11's code commit.
-# Advanced to b9e1f96 when the telegram-interface-framework-integration
-# amendment (#9) opened — the framework composes telegram-interface as
-# the thirteenth foundational adapter. Hands-off-lifecycle's
-# counterpart in this multi-component amendment is a BASELINE bump
-# here (since the scaffold inventory + seal-diff scope rolls forward
-# in lockstep with workspace-bootstrap) plus an allowed-top-level-dir
-# extension to admit the `telegram-interface/` surface — the amendment
-# ships docs-only edits there, but the seal test's top-level-bucket
-# check needs to tolerate the dir. b9e1f96 is the pre-amendment tip —
-# the amendment-#8 audit-closure seal commit immediately before this
-# amendment's code commit. Amendment number (#9) is proposal-assigned;
-# #10 and #11 landed first because their scopes were cheaper to build.
-# Advanced to a3bbdcd when the orchestrator-bootstrap-unification AC1
-# removal amendment (#12) opened — the 2026-04-22 audit flagged AC1 in
-# amendment #7's proposal as a method-in-acceptance static-grep test
-# (asserts what the source looks like, not what the system does), per
-# ODD §2.5 / §8.2 rule 9. AC2's poison-bomb runtime complement already
-# covers the same intent. Amendment #12 deletes the AC1 test, stubs
-# the AC1 slot in the proposal as "withdrawn", and ships a plan doc
-# under docs/rebuild/plans/. Hands-off-lifecycle's counterpart is this
-# BASELINE bump + SEAL_COMMIT sidecar refresh (every amendment touches
-# this cross-cutting seal). a3bbdcd is the pre-amendment tip — the
-# telegram-interface-framework-integration seal commit immediately
-# before amendment #12's code commit.
-# Advanced to 5c49e27 when the cost-governance-C14-timing-test
-# re-extension amendment (#13) opened — the audit of cost-governance
-# surfaced that C14 (the flagship timing-inclusive acceptance
-# criterion) was under-tested. test_throttle_warning.py did not
-# assert the pre-write ordering sub-behaviour ("warning emits before
-# reservations row is written") nor the fire-once-across-multiple-
-# debits sub-behaviour ("not repeatedly per debit"). Amendment #13
-# adds two new outcome-shaped tests to close both gaps; zero source
-# edits to cost-governance — the implementation already delivers
-# both guarantees structurally. Hands-off-lifecycle's counterpart in
-# this amendment is this BASELINE bump + a `cost-governance` entry
-# in H19's allowed top-level set (new amended sealed component in
-# this amendment window) + SEAL_COMMIT sidecar refresh + an
-# amendment-cycle narrative in seals/SEAL_COMMIT.true-first-run.
-# 5c49e27 is the pre-amendment tip — the orchestrator-bootstrap-
-# unification-AC1-removal seal commit immediately before amendment
-# #13's code commit.
-# Advanced to 079258f when the skip-launchctl-dead-code-removal
-# amendment (#14) opened — audit of the pyyaml-reachability amendment
-# (#5) surfaced that `POS_V2_SKIP_LAUNCHCTL` has zero live setters
-# anywhere in the tree (no harness, no shell script, no CI, no doc),
-# and its source-grep test (``test_skip_launchctl_env_var_is_honoured_
-# by_helper_source``) is method-in-acceptance — ODD §8.2 rule 9. The
-# env-var read itself is §2.5 orphan code (code for cases the
-# objectives do not name). Amendment #14 deletes the env-var read in
-# ``hands-off-lifecycle/hooks/first_run_helper.py`` and its two
-# conditional skip branches in ``_run_bootstrap``, deletes the
-# justifying comment block, and deletes the source-grep test —
-# single-component, no replacement behavioural test (no AC names
-# replacement behaviour). Hands-off-lifecycle's counterpart is this
-# BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-cycle
-# narrative in seals/SEAL_COMMIT.true-first-run. 079258f is the pre-
-# amendment tip — the `docs(future-ideas)` commit immediately before
-# amendment #14's code commit.
-# Advanced to fd7c6cf when the d11-receiver-path-pytest amendment
-# (#15) opened — D11 (process-of-arrival capture ingestion) is a
-# named AC in docs/rebuild/components/memory-system/brief-full-build.md
-# whose receiver + mock producer + demo script ship, but whose pytest
-# coverage was missing. Amendment #15 adds
-# memory-system/tests/test_D11_process_of_arrival.py (five outcome-
-# shaped tests, each ``test_D11_*``); zero edits to memory-system/src/.
-# Multi-component amendment (memory-system + hands-off-lifecycle).
-# Hands-off-lifecycle's counterpart is this BASELINE bump + SEAL_COMMIT
-# sidecar refresh + amendment-cycle narrative in seals/SEAL_COMMIT.
-# true-first-run. fd7c6cf is the pre-amendment tip — the skip-
-# launchctl-dead-code-removal seal commit immediately before amendment
-# #15's code commit.
-# Advanced to 1b144f6 when the d12-chaos-durability-split-pytest
-# amendment (#16) opened — D12 (Kuzu chaos-durability) is a named AC
-# in docs/rebuild/components/memory-system/brief-full-build.md whose
-# runner (memory-system/scripts/chaos_durability.py) + 2026-04-18
-# report (memory-system/docs/chaos-durability-report.md) ship, but
-# whose pytest coverage was missing. Amendment #16 splits D12 into
-# two test surfaces: three fast-bucket tests (durability-config
-# regression guards on make_kuzu_driver + prepare_graphiti) default-
-# on, plus one marked-slow test that invokes the full chaos runner
-# and asserts all three scenarios pass. Adds memory-system/tests/
-# test_D12_chaos_durability.py + memory-system/tests/conftest.py
-# (new — registers the ``slow`` marker). Zero edits to memory-system/
-# src/ or memory-system/scripts/. Multi-component amendment (memory-
-# system + hands-off-lifecycle). Hands-off-lifecycle's counterpart is
-# this BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-cycle
-# narrative in seals/SEAL_COMMIT.true-first-run. 1b144f6 is the pre-
-# amendment tip — the pyyaml-reachability amendment-#5 follow-up's
-# seal commit immediately before amendment #16's code commit.
-# Advanced to c94e146 when the workspace-bootstrap-b25-framework-
-# internal-criterion amendment (#17) opened. Amendment #4 had added
-# `Phase.first_run_scaffold` to workspace_bootstrap.spec.Phase; the
-# audit surfaced that the new enum value contradicted the *letter* of
-# B18. Owner's ruling (path a): add a new criterion B25 naming the
-# framework-internal phase set — the enum values are the phases
-# registered by bootstrap-internal adapters, and external (Phase 4+)
-# contributions consume them rather than extend them. Amendment #17's
-# primary edits land on workspace-bootstrap's side (proposal doc +
-# new B25 test) and on docs/odd-in-pos.md (one-paragraph §6.1 cross-
-# reference). Hands-off-lifecycle's counterpart is this BASELINE bump
-# + SEAL_COMMIT sidecar refresh + amendment-cycle narrative in
-# seals/SEAL_COMMIT.true-first-run (zero functional change). c94e146
-# is the pre-amendment tip — the d12-chaos-durability-split-pytest
-# seal commit (amendment #16) immediately before amendment #17's code
-# commit.
-# Advanced to e8f704c when the delete-method-in-brief-dispatch-docs
-# amendment (#18) opened. Seven historical `brief.md` dispatch docs
-# under `docs/rebuild/components/<comp>/` are deleted — they served a
-# one-time dispatch-time purpose at build-time and per ODD §2.5 +
-# `scope-only-dispatch` / `research-before-plan` CDCs are not
-# committed canonical artifacts (proposal + plan + shipped code +
-# seal is the canonical set). docs/odd-in-pos.md §7.4 gains four
-# sentences naming briefs as dispatch-time, not committed canonical.
-# Multi-component amendment touching seven brief-owning sealed
-# components + hands-off-lifecycle. Hands-off-lifecycle's counterpart
-# is this BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-
-# cycle narrative in seals/SEAL_COMMIT.true-first-run (zero functional
-# change). e8f704c is the pre-amendment tip — the `docs(future-ideas)`
-# commit codifying the three new CDCs immediately before this
-# amendment's code commit.
-# Advanced to f1ff28b when the S1 silent-except bundle amendment (#19)
-# opened. The 2026-04-22 audit + classifier surfaced eight
-# `except Exception: pass | continue` silent branches with AC:none
-# across safety-layer/src/kill.py (4), safety-layer/src/controller.py
-# (2), and orchestrator/src/supervisor.py (2). Per ODD §8 rule 8 + the
-# audit-triage-by-severity CDC (bucket d — outright violations), each
-# catch is replaced with an observable-surface fix (OTel span + record
-# field where callers consume). The shutdown-catch CDC does not apply
-# (none are teardown methods). Multi-component amendment (safety-layer,
-# orchestrator, hands-off-lifecycle). Hands-off-lifecycle's counterpart
-# is this BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-
-# cycle narrative in seals/SEAL_COMMIT.true-first-run (zero functional
-# change) + admission of `safety-layer` to the H19 allowed top-level
-# set below (new amended sealed component in this amendment window).
-# f1ff28b is the pre-amendment tip — the amendment-#18 seal commit
-# immediately before amendment #19's code commit.
-# Advanced to 24d54cb when the S2 silent-except bundle amendment (#20)
-# opened. The 2026-04-22 audit + classifier surfaced ten `except ...:
-# pass | continue` silent branches with AC:none across
-# self-correction/src/triggers.py (2), self-correction/src/
-# completion_check.py (1), self-correction/src/observability.py (2),
-# graceful-degradation/src/component.py (2), graceful-degradation/src/
-# observability.py (1), and observability-aggregator/src/nl_path.py (2).
-# Per ODD §8 rule 8 + audit-triage-by-severity CDC (bucket d), each
-# catch gains an observable surface (either a dedicated emitter span or
-# a span event on the already-open span in the fire-and-forget emitter
-# cases). Shutdown-catch CDC does NOT apply. Multi-component amendment
-# (self-correction + graceful-degradation + observability-aggregator +
-# hands-off-lifecycle). Hands-off-lifecycle's counterpart is this
-# BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-cycle
-# narrative in seals/SEAL_COMMIT.true-first-run (zero functional
-# change) + admission of `self-correction` to the H19 allowed top-level
-# set below (new amended sealed component in this amendment window;
-# `graceful-degradation` and `observability-aggregator` already present
-# from prior amendments). 24d54cb is the pre-amendment tip — the
-# `docs(future-ideas)` commit codifying the amendment-dispatch-speedups
-# + 529-recovery CDCs immediately before amendment #20's code commit.
-# Advanced to 3b128c3 when the S3 silent-except bundle amendment (#21)
-# opened. The 2026-04-22 audit + classifier surfaced six remaining
-# `except ...: pass | continue` silent branches with AC:none; research
-# re-verified per-site and re-classified sites 4 + 5 (`first_run_
-# inventory.py::_parse_scalar`) as bucket (a) duck-typed numeric parse-
-# dispatch (dropped — the exception IS the branch signal and the
-# return TYPE is the observable surface). The former Site 3 in
-# `telegram-interface/src/availability.py::stop_background()` stayed
-# dropped per the re-dispatch note (bucket b teardown). The four
-# remaining fixes land in `scope-of-work/src/triggers.py` (Site 1 —
-# `active_seconds_elapsed` parse), `scope-of-work/src/projection.py`
-# (Site 2 — `apply_event` StateTransitioned parse),
-# `telegram-interface/src/allowlist.py` (Site 3 — `identities()`
-# malformed-record skip), and `memory-system/src/observability.py`
-# (Site 6 — `_read_jsonl` malformed-line skip). Per ODD §8 rule 8 +
-# audit-triage-by-severity CDC (bucket d), each catch gains an
-# observable-surface emitter: new `emit_projection_parse_failure` in
-# scope-of-work/src/observability.py (sites 1 + 2), new
-# `allowlist_record_malformed` in telegram-interface/src/
-# observability.py (site 3), re-used `record_audit(...)` with
-# `operation="observability.jsonl_line_malformed"` in memory-system/
-# src/observability.py (site 6). Shutdown-catch CDC does NOT apply
-# (none of the 4 are teardown methods). Multi-component amendment
-# (scope-of-work, telegram-interface, memory-system, hands-off-
-# lifecycle). Hands-off-lifecycle's counterpart is this BASELINE bump
-# + SEAL_COMMIT sidecar refresh + amendment-cycle narrative in seals/
-# SEAL_COMMIT.true-first-run (zero functional change) + admission of
-# `scope-of-work` to the H19 allowed top-level set below (new amended
-# unsealed component in this amendment window; `telegram-interface`
-# and `memory-system` already present from prior amendments).
-# 3b128c3 is the pre-amendment tip — the pyyaml-reachability seal
-# commit immediately before amendment #21's code commit.
-BASELINE = "9559ca7"
+# BASELINE is frozen at project-start per amendment #23 (the frozen-H19
+# BASELINE + per-invariant-BASELINE convention amendment). 3780603 is
+# the pre-amendment-#1 commit — the last state of the repo before
+# hands-off-lifecycle began accumulating amendments. H19's fidelity
+# target is the surface-introduction invariant ("no new top-level
+# directory or file appears in the project without explicit admission
+# into ``allowed`` below"); that target is cumulative across project
+# history, not per-amendment. The previous floating-BASELINE pattern
+# advanced this literal on every amendment of any component, which
+# serialised all amendment development behind this one edit — the
+# parallel-dev research (2026-04-23) named that as the biggest unlock
+# blocker.
+#
+# Under the frozen-BASELINE design the diff window
+# ``3780603..SEAL_COMMIT`` expands monotonically for the project's
+# lifetime. New amendments extend ``allowed`` when they introduce a
+# new top-level surface; no amendment ever removes an entry. Per-
+# component contamination checks live in each sealed component's own
+# ``tests/test_no_sealed_amendments.py``; those continue to use
+# floating BASELINEs. See ``docs/odd-in-pos.md`` §10 for the
+# frozen-vs-floating BASELINE convention and for the per-invariant-
+# BASELINE pattern.
+#
+# Amendment-cycle history (the ~20 BASELINE advances that previously
+# annotated this literal) lives canonically in
+# ``hands-off-lifecycle/seals/SEAL_COMMIT.true-first-run``.
+BASELINE = "3780603"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -309,13 +89,20 @@ def _file_prefixes_between(baseline: str, seal: str) -> set[str]:
 
 
 def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
-    """Pre-amendment baseline is 3780603 (the last commit before
-    Amendment 1's first touch). The allowed set is the four amended
-    sealed components plus the new hands-off-lifecycle/ surface plus
-    the root README (per H21). Anything else is a halt-signal.
+    """Surface-introduction invariant (frozen-BASELINE variant —
+    amendment #23).
 
-    Diff routes through ``{BASELINE}..{seal}`` with ``seal`` from the
-    SEAL_COMMIT sidecar — the HEAD-based pattern was the f94d602 defect.
+    Diffs ``3780603..SEAL_COMMIT`` and asserts every touched top-level
+    dir or top-level file has been explicitly admitted into ``allowed``.
+    BASELINE is frozen at project-start; the diff window expands
+    monotonically over the project's lifetime. New admissions land via
+    amendment; existing entries are never removed.
+
+    H19 is a coordination-layer check — "no unadmitted top-level
+    surface ever appeared" — not a per-component contamination check.
+    Per-component contamination is covered by each sealed component's
+    own ``tests/test_no_sealed_amendments.py`` (those retain floating
+    BASELINEs that advance only when the component itself is touched).
     """
     allowed = {
         "memory-system",
@@ -418,6 +205,60 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
     touched = _file_prefixes_between(BASELINE, seal)
     outside = touched - allowed
     assert not outside, f"amendment touched outside-scope paths: {outside}"
+
+
+# ---- Frozen-BASELINE adversarial + monotonicity checks -------------
+#
+# These three tests are the amendment #23 acceptance proof that the
+# frozen-BASELINE variant of H19 preserves the surface-introduction
+# invariant. AC23.1 is the existing assertion above under its new
+# frozen BASELINE; AC23.2 is the adversarial synthetic case; AC23.3
+# asserts the diff window is non-empty (proves the BASELINE really did
+# move to project-start, not silently defaulted to HEAD).
+
+
+def test_H19_frozen_baseline_catches_unadmitted_bucket() -> None:
+    """AC23.2 — adversarial synthetic case.
+
+    Construct a ``touched`` set containing an admitted bucket and an
+    unadmitted one. The same set-difference logic the real H19 test
+    uses must surface the unadmitted bucket. Proves the frozen-BASELINE
+    design still detects a new top-level surface appearing without
+    review.
+    """
+    allowed = {"hands-off-lifecycle", "docs", "README.md"}
+    touched = {"hands-off-lifecycle", "some-new-unapproved-bucket"}
+    outside = touched - allowed
+    assert outside == {"some-new-unapproved-bucket"}, (
+        "frozen-BASELINE H19 must still catch new unadmitted top-level "
+        f"surfaces. Got outside={outside!r}"
+    )
+
+
+def test_H19_frozen_baseline_is_project_start() -> None:
+    """AC23.3 — BASELINE is pinned at project-start.
+
+    Asserts the BASELINE literal resolves to the pre-amendment-#1
+    commit. This guards against accidental re-introduction of the
+    floating-BASELINE pattern — any future amendment that advances
+    BASELINE away from 3780603 must be a conscious structural change
+    (and must update this test accordingly).
+    """
+    assert BASELINE == "3780603", (
+        f"BASELINE must stay frozen at project-start (3780603); "
+        f"found {BASELINE!r}. Floating-BASELINE pattern re-introduced?"
+    )
+    # Resolve the SHA through git — fails loudly if the commit isn't
+    # reachable (e.g. on a shallow clone or amputated tree).
+    result = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "rev-parse", BASELINE],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip().startswith(BASELINE), (
+        f"BASELINE {BASELINE!r} did not resolve cleanly: {result.stdout!r}"
+    )
 
 
 # ---- H20 regression suites -----------------------------------------

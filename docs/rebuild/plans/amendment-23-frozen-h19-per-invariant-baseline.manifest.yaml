@@ -1,0 +1,98 @@
+schema_version: 1
+amendment:
+  number: 23
+  slug: frozen-h19-per-invariant-baseline
+  title: "frozen-H19 BASELINE + per-invariant-BASELINE convention"
+
+# BASELINE: d07af91 — the current git tip (amendment-22 research-
+# preservation commit). Empty-diff window at amendment-commit time per
+# the established pattern. This amendment itself freezes H19's BASELINE
+# at 3780603 (project-start) — that literal change is human-authored in
+# the amendment-code commit, NOT via the tool, because the component is
+# declared `frozen_baseline: true` for this and every subsequent
+# amendment.
+baseline: d07af91
+plan: docs/rebuild/plans/amendment-23-frozen-h19-per-invariant-baseline.md
+
+# Single component affected: hands-off-lifecycle. The tool self-edits
+# under tools/pos-amend/ are admitted via the `tools` top-level bucket
+# (already in H19's allowed set from amendment #22) and covered by the
+# amendment's own diff window; pos-amend doesn't currently run its own
+# seal-diff test, so there's no second manifest component to declare.
+#
+# `frozen_baseline: true` instructs the tool to skip the BASELINE literal
+# bump for hands-off-lifecycle — the literal is being hand-set to the
+# project-start SHA as part of the amendment-code changes. Everything
+# else (sidecar advance, narrative append) proceeds as usual.
+components:
+  - name: hands-off-lifecycle
+    seal_test: hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+
+narrative:
+  target: hands-off-lifecycle/seals/SEAL_COMMIT.true-first-run
+  body: |
+    # Amendment #23 — frozen-H19 BASELINE + per-invariant-BASELINE convention
+    #
+    # 2026-04-23. Eliminates the hands-off-lifecycle serialization
+    # bottleneck that forced every amendment (regardless of which
+    # component it touched) to advance H19's BASELINE literal. H19's
+    # fidelity target is the "surface-introduction" invariant — no
+    # new top-level directory or file appears in the project without
+    # explicit admission. That target is cumulative, not per-amendment,
+    # and does not require BASELINE to float.
+    #
+    # Research: /Users/lukeivers/ivers-corp-pos-v2/.scratch/claude-output/
+    # pos-v2-parallel-dev-research.md (design-research agent,
+    # 2026-04-22). §4.1 = frozen-H19 proposal. §4.2 = per-invariant
+    # BASELINE convention generalising amendment #21's `7d27f00`.
+    # Luke accepted both recommendations.
+    #
+    # Change 1 — H19's BASELINE literal moves from floating to frozen
+    # at `3780603` (project-start — the commit immediately before
+    # amendment #1's first touch). The `allowed` top-level-bucket set
+    # becomes monotonic: new amendments add buckets only. The diff
+    # window `3780603..SEAL_COMMIT` expands monotonically over the
+    # project's lifetime and catches any top-level dir that was ever
+    # introduced without review. The ~240 lines of amendment-history
+    # commentary above the BASELINE literal are deleted — that history
+    # lives canonically in seals/SEAL_COMMIT.true-first-run where
+    # amendment narratives belong.
+    #
+    # Change 2 — per-invariant-BASELINE convention codified in
+    # docs/odd-in-pos.md §10. Invariants whose fidelity is point-in-
+    # time (prove an invariant held as of a specific amendment
+    # window) declare function-scoped frozen BASELINE/SEAL constants.
+    # Module-top BASELINE stays for cumulative-admissibility tests
+    # only. The convention's prototype is the AC7 test pinned to
+    # amendment #9's window (`b9e1f96..4f8b933`), introduced at
+    # `7d27f00`. Retrofit of existing tests is optional; new
+    # invariants use the convention by default.
+    #
+    # Change 3 — pos-amend tool gains an optional per-component
+    # `frozen_baseline: bool` manifest field. Default False preserves
+    # existing behaviour. True instructs the tool to skip the
+    # module-top BASELINE literal bump for that component while
+    # still advancing the sidecar and widening tuples. Schema stays
+    # at version 1 — backward-compatible extension. hands-off-
+    # lifecycle's manifest entries declare `frozen_baseline: true`
+    # from this amendment forward.
+    #
+    # Parallel-development unlock: with H19 frozen and the per-
+    # invariant convention codified, Class A (research/plan/narrative)
+    # and Class B (disjoint-component source) amendments per research
+    # doc §3 can author in parallel without racing on BASELINE
+    # literals. Same-component amendments (Class C) remain
+    # appropriately serialised by ordinary git merge semantics.
+    #
+    # Deferred: §4.3 (`pos-amend merge`), §4.4 (stacked amendments),
+    # §4.5 (parallelism policy doc) per research doc recommendation —
+    # they're speculative until a concrete parallel-amendment pair
+    # surfaces real friction.
+    #
+    # Adversarial test case: test_H19_frozen_baseline_catches_
+    # unadmitted_bucket builds a synthetic touched-prefix set and
+    # asserts an unadmitted bucket surfaces — proves the surface-
+    # introduction invariant's fidelity is preserved under the
+    # frozen design.

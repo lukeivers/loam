@@ -713,7 +713,153 @@ only what the amendment added to whatever came before.
 
 ---
 
-## 10. Where to go next
+## 10. Frozen-vs-floating BASELINE convention (per-invariant BASELINE)
+
+Seal-diff tests pin a `BASELINE` SHA that scopes the window a test
+diffs against. Historically every `BASELINE` in pos-v2 *floated* — it
+advanced to the pre-amendment tip on every amendment, so the test's
+diff window was "what changed across the current amendment." That
+pattern works for per-component contamination checks but causes two
+problems when applied uniformly:
+
+1. **Coordination serialisation.** hands-off-lifecycle's H19 test uses
+   a whole-repo diff. Under a floating BASELINE, every amendment of
+   any component has to advance H19's BASELINE even when hands-off-
+   lifecycle itself is untouched. This serialises all amendment
+   development behind one edit.
+2. **Invariant-proof erosion.** A structural check authored in
+   amendment *N* that asserts "amendment N's fidelity held" stays
+   valid only as long as its BASELINE window hasn't moved. Advancing
+   BASELINE on subsequent amendments re-scopes the check to a later
+   window and silently weakens the proof.
+
+Amendment #23 (frozen-H19 BASELINE + per-invariant-BASELINE convention)
+codifies the two patterns that resolve both.
+
+### 10.1 Frozen BASELINE — for cumulative-admissibility checks
+
+A **frozen** BASELINE is pinned at a project-wide anchor (typically
+project-start) and never advances for the lifetime of the component's
+test file. The test's diff window expands monotonically. The check
+proves a cumulative invariant: "across all project history to date,
+no unadmitted surface ever appeared." New admissions land via an
+explicit edit to the `allowed` set; existing admissions stay.
+
+**When to use.**
+
+- The test's fidelity target is cumulative, not per-amendment (e.g.
+  surface-introduction checks, never-retracted rule lists,
+  accumulated-ledger assertions).
+- The test's diff window is cross-component (whole-repo) — floating
+  BASELINE creates coordination friction between amendments that
+  don't semantically interact.
+
+**Canonical example: hands-off-lifecycle's H19.**
+`hands-off-lifecycle/tests/test_cross_cutting.py`'s `BASELINE` is
+pinned at `3780603` (pre-amendment-#1 tip). The `allowed` set is the
+cumulative list of top-level dirs + top-level files ever admitted.
+Any new amendment that introduces a new bucket adds one entry to
+`allowed`; no amendment ever moves BASELINE.
+
+### 10.2 Floating BASELINE — for per-component contamination checks
+
+A **floating** BASELINE advances to the pre-amendment tip every time
+the component's own source is touched by an amendment. The test's
+diff window stays narrow — only the current amendment's changes are
+visible. The check proves a per-amendment invariant: "during this
+amendment's window, only the declared surfaces were edited."
+
+**When to use.**
+
+- The test's fidelity target is per-amendment contamination (e.g.
+  `tests/test_no_sealed_amendments.py` on every sealed component).
+- The test's diff window is scoped to the component's own directory
+  plus declared cross-component admissions.
+
+**Canonical example: any sealed component's `test_no_sealed_amendments.py`.**
+Each advances its BASELINE only when the component is itself in
+scope for the current amendment. A component that sits out several
+amendments keeps its BASELINE pinned to its last-touch tip, and its
+test stays trivially green.
+
+### 10.3 Per-invariant BASELINE — for point-in-time invariant proofs
+
+A **per-invariant** BASELINE is a pair of function-scoped SHA
+constants (`BASELINE` + `SEAL`) that pin a specific assertion to the
+exact window it was authored to prove. The test's module-top
+BASELINE (floating or frozen) is untouched. Once authored, the pair
+never moves unless the invariant itself is being restated.
+
+**When to use.**
+
+- The invariant is point-in-time: "during amendment *N*'s window,
+  property *P* held."
+- Subsequent amendments may legitimately break the property outside
+  amendment *N*'s window (e.g. an AC that forbade edits to a
+  directory is later amended to allow them) — pinning keeps the
+  original proof intact while letting the directory evolve.
+
+**Pattern (code template):**
+
+```python
+def test_AC7_no_telegram_interface_src_edits() -> None:
+    """AC7 (amendment #9): no edits to telegram-interface/src/
+    landed in amendment #9. Pinned to amendment #9's exact window.
+    """
+    amendment_9_baseline = "b9e1f96"
+    amendment_9_seal = "4f8b933"
+    out = subprocess.check_output(
+        ["git", "diff", "--name-only",
+         f"{amendment_9_baseline}..{amendment_9_seal}",
+         "--", "telegram-interface/src/"],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+    changed = [ln for ln in out.splitlines() if ln.strip()]
+    assert changed == [], (
+        "amendment #9 edited telegram-interface/src/ — AC7 halt-signal. "
+        f"Changed paths: {changed}"
+    )
+```
+
+**Canonical example: AC7 on telegram-interface.**
+`telegram-interface/tests/test_no_sealed_amendments.py::test_AC7_no_telegram_interface_src_edits`
+(introduced at `7d27f00` as amendment #21's corrective). The
+amendment-#9 AC7 invariant is pinned to `b9e1f96..4f8b933` for the
+project's lifetime. Amendment #21's legitimate edits to
+`telegram-interface/src/` under AC:S3 don't re-violate AC7 because
+the pinned window closes before amendment #21 begins.
+
+### 10.4 Migration guidance
+
+- **New invariants** use §10.3 by default. If the invariant's fidelity
+  is cumulative, use a §10.1-frozen module-top BASELINE instead.
+- **Existing invariants** are not retrofitted wholesale. When an
+  amendment touches a sealed-component test file for other reasons
+  (tuple widening, a new AC), the author is free to pin any existing
+  point-in-time invariant at that time. No audit sweep; conversion
+  is opportunistic.
+- The `pos-amend` tool's manifest accepts a per-component
+  `frozen_baseline: bool` field (introduced amendment #23). When
+  `true`, `apply` skips the module-top BASELINE literal bump for
+  that component while still advancing sidecars and tuples. Use
+  this on every amendment that affects hands-off-lifecycle (or any
+  other future frozen-BASELINE component).
+
+### 10.5 Parallel-development note
+
+Frozen H19 + per-invariant BASELINE together unlock disjoint-component
+parallel amendment development: two amendments touching non-overlapping
+sealed components no longer race on the hands-off-lifecycle BASELINE
+literal, and no in-flight point-in-time invariant-proof re-scopes
+when the other amendment lands. See
+`.scratch/claude-output/pos-v2-parallel-dev-research.md` §3 for the
+full classification (Class A — parallel under current rules; Class B —
+parallel post-amendment #23; Class C — structurally serial).
+
+---
+
+## 11. Where to go next
 
 - `odd-methodology.md` — the operational specification. When this doc and
   it disagree, it wins. Read it for definitions, the authoring order
@@ -730,7 +876,7 @@ only what the amendment added to whatever came before.
 
 ---
 
-## 11. Closing
+## 12. Closing
 
 ODD is not a new idea — outcome-based delegation is older than software.
 What pOS contributes is concrete operational discipline: the five-gate

@@ -46,6 +46,10 @@ components:
     sidecar: cost-governance/tests/SEAL_COMMIT
     extra_allowed_prefixes: []
     extra_allowed_files: []
+  - name: hands-off-lifecycle
+    seal_test: hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true  # H19's BASELINE pinned at project-start
   # ... one entry per affected sealed component
 universal_paths:
   prefixes: []       # empty for normal amendments
@@ -57,11 +61,24 @@ narrative:
     ...
 ```
 
+### `frozen_baseline` (per-component, optional; introduced amendment #23)
+
+Setting `frozen_baseline: true` on a component instructs `apply` to skip
+the module-top `BASELINE = "<sha>"` literal bump for that component.
+The sidecar still advances, tuple widenings still apply, and the seal
+cycle is otherwise unchanged. Default is `false` — backward-compatible
+with every pre-amendment-#23 manifest.
+
+Use this when the test file's BASELINE has been frozen at a point-in-
+time (e.g. hands-off-lifecycle's H19 check pinned at project-start per
+amendment #23). See `docs/odd-in-pos.md` §10 for the convention.
+
 ### Schema-version compatibility
 
 The tool fails loudly on any `schema_version` it does not know. Future
 schema migrations ship as a schema-version bump plus a migration note
-here.
+here. `frozen_baseline` is a backward-compatible extension to the v1
+schema; no version bump.
 
 ## Usage example — normal amendment
 

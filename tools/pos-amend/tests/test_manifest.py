@@ -71,3 +71,57 @@ components:
     )
     with pytest.raises(InvalidField):
         load_manifest(bad)
+
+
+def test_T15_frozen_baseline_field_defaults_false(tmp_path: Path) -> None:
+    """T15 — a component without ``frozen_baseline`` defaults to False,
+    preserving backward compatibility with pre-amendment-#23 manifests."""
+    m = load_manifest(FIXTURES / "valid-minimal.yaml")
+    assert m.components[0].frozen_baseline is False
+
+
+def test_T15_frozen_baseline_field_accepted(tmp_path: Path) -> None:
+    """T15 — a component declaring ``frozen_baseline: true`` parses,
+    and the field surfaces on the ComponentEntry."""
+    manifest = tmp_path / "frozen.yaml"
+    manifest.write_text(
+        """schema_version: 1
+amendment:
+  number: 23
+  slug: frozen
+  title: "frozen"
+baseline: abcdef0
+plan: docs/rebuild/plans/frozen.md
+components:
+  - name: hands-off-lifecycle
+    seal_test: hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+""",
+        encoding="utf-8",
+    )
+    m = load_manifest(manifest)
+    assert m.components[0].frozen_baseline is True
+
+
+def test_T15_frozen_baseline_field_rejects_non_bool(tmp_path: Path) -> None:
+    """T15 — a non-boolean value for ``frozen_baseline`` raises InvalidField."""
+    manifest = tmp_path / "bad-frozen.yaml"
+    manifest.write_text(
+        """schema_version: 1
+amendment:
+  number: 23
+  slug: frozen
+  title: "frozen"
+baseline: abcdef0
+plan: docs/rebuild/plans/frozen.md
+components:
+  - name: x
+    seal_test: x/tests/t.py
+    sidecar: x/tests/SEAL_COMMIT
+    frozen_baseline: "yes"
+""",
+        encoding="utf-8",
+    )
+    with pytest.raises(InvalidField):
+        load_manifest(manifest)

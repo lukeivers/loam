@@ -46,13 +46,21 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
             continue
         # 1. BASELINE bump (skip for files with no BASELINE, e.g.
         # safety-layer; those shouldn't appear in a manifest but we
-        # defend gracefully).
-        try:
-            changed = set_baseline(seal_test_path, manifest.baseline)
-            if changed:
-                changes.append(f"{comp.name}: BASELINE → {manifest.baseline}")
-        except BaselineNotFound:
-            print(f"note {comp.name}: no BASELINE literal (structural test?)")
+        # defend gracefully). When ``frozen_baseline`` is declared on
+        # the component, the module-top literal is held fixed for the
+        # project lifetime (amendment #23's frozen-H19 pattern) — skip
+        # the bump entirely while still advancing the sidecar below.
+        if comp.frozen_baseline:
+            print(
+                f"note {comp.name}: BASELINE frozen — skipping literal bump"
+            )
+        else:
+            try:
+                changed = set_baseline(seal_test_path, manifest.baseline)
+                if changed:
+                    changes.append(f"{comp.name}: BASELINE → {manifest.baseline}")
+            except BaselineNotFound:
+                print(f"note {comp.name}: no BASELINE literal (structural test?)")
         # 2. Widen bindings with universal + extras + cross-component
         # partners (excluding self).
         partners = sorted(partner_prefixes - {f"{comp.name}/"})

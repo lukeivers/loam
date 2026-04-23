@@ -900,12 +900,139 @@ _Sources (9.x): `https://code.claude.com/docs/en/cli-reference`, `https://code.c
 
 ## 10. Cross-capability notes
 
-<!-- PLACEHOLDER -->
+Observations that span multiple capability areas and are useful when shaping feature research.
+
+### 10.1 Where enforcement lives by feature shape
+
+When a pos-v2 feature needs to *enforce* a rule rather than *suggest* it, the right enforcement layer depends on the rule's shape:
+
+| Rule shape | Right enforcement layer |
+|------------|-------------------------|
+| "This tool must never run against this path" | `permissions.deny` in settings.json |
+| "This tool may run only after pre-check X passes" | `PreToolUse` hook with exit-2 on failure |
+| "This sequence of steps must happen every session start" | `SessionStart` hook (command / prompt / mcp_tool) |
+| "This skill must always run in isolation" | Skill frontmatter `context: fork` |
+| "This scope can only dispatch to these subagents" | Subagent `tools: Agent(a, b, c)` |
+| "This plugin must ship with this baseline config" | Plugin `settings.json` + hooks + agents directory |
+| "Context X must be loaded before planning" | `UserPromptSubmit` hook + context-injection skill |
+
+pos-v2 should prefer structural enforcement over prompt-level nag — matches the ODD preference for structural refusal (odd-methodology.md) and CLAUDE.md's Lens 1 ("compose on top of a Claude-native primitive rather than re-implement").
+
+### 10.2 Cost-governance composition map
+
+`cost-governance` (sealed component) has multiple Claude-native surfaces to consume rather than re-invent:
+
+- `/usage` / `/cost` / `/stats` — in-session session-cost visibility.
+- `--max-budget-usd` — print-mode hard ceiling.
+- `cache_read_input_tokens` / `cache_creation_input_tokens` in Messages API usage — cache-hit-ratio as a first-class metric.
+- Message Batches API — 50% discount for non-interactive bulk work.
+- `env.OTEL_*` settings — standard OpenTelemetry metric export without custom instrumentation.
+- `PostToolUse` / `SessionEnd` hooks — per-tool, per-session spend tracking.
+
+Idea 1 Step 4 (capability-map refresh) explicitly composes with cost-governance — a refresh scheduler that consumes budget before running.
+
+### 10.3 Safety-layer composition map
+
+`safety-layer` (sealed component) should lean on:
+
+- `permissions.deny` for hard path / tool denials.
+- `PreToolUse` hooks for contextual refusal (e.g. "this path is allowed only when X").
+- `permissionMode: "plan"` to gate read-only phases.
+- Subagent `disallowedTools` to structurally limit specialised workers.
+- MCP-tool-matcher regex patterns (`mcp__<server>__.*`) for per-server safety posture.
+- Plugin trust model — `strictKnownMarketplaces` to restrict where plugins come from; never install an MCP server from an untrusted source (prompt-injection surface).
+
+### 10.4 Background-work awareness (STATE.md rule 7) composition map
+
+The rule says the primary persona must never lose track of dispatched background work. Native primitives:
+
+- `Monitor` tool (§2.2, §8.2) — per-line event consumption, no polling.
+- Plugin `monitors/monitors.json` — shipped watchers auto-start with the plugin.
+- `/tasks` + `TaskCreated` + `TaskCompleted` hooks — background-task-scoped introspection.
+- `Bash.run_in_background: true` for in-session async work.
+- `/loop` for self-paced re-checks within session.
+- `/schedule` for cross-session routines.
+- Subagent `background: true` for always-detached agents.
+
+The composition is deep — pos-v2's background-work-awareness component design should enumerate which of these are used and why, rather than building a parallel awareness surface.
+
+### 10.5 Feature-research checklist (Lens 1)
+
+For every pos-v2 feature proposal, the Lens 1 gate asks "what Claude capability does this lean on or extend?" Before answering "nothing," check:
+
+1. Is there a **bundled skill** that does part of this? (`/simplify`, `/debug`, `/loop`, `/claude-api`, `/batch`, `/review`, `/security-review`, `/init`, `/schedule`, `/keybindings-help`, `/update-config`, `/fewer-permission-prompts`.)
+2. Is there a **hook event** that fires at the right moment? (Full list in §1.2.)
+3. Is there an **MCP server** on the registry that exposes the capability?
+4. Is there a **bundled subagent type** (Explore, Plan, general-purpose, Bash) that fits?
+5. Is there a **setting or env var** that already configures the behaviour?
+6. Is this a **skill, plugin, or subagent authoring** problem rather than a new pos-v2 component?
+7. Would a **one-line `/loop` or `/schedule`** replace the cadence primitive?
+
+If one of these says yes, the feature's shape probably composes rather than re-implements. This is the mechanical form of Lens 1 enforcement that FUTURE_IDEAS.md Idea 1 Step 3 will formalise.
+
+### 10.6 What this map deliberately does not cover
+
+Out of scope for this snapshot:
+- Claude Desktop app as a client (separate capability surface).
+- Claude.ai web client beyond `--remote` / `--teleport` touch points.
+- Claude GitHub Actions app and ultrareview/ultraplan cloud paths (referenced in §9.6 + /commands but not deep-mapped).
+- Anthropic Console features (prompt caching admin, usage billing, team management).
+- Third-party provider quirks (Bedrock, Vertex, Azure Foundry) beyond the fact that they exist.
+- Non-Claude MCP clients (ChatGPT, Cursor, VS Code Copilot, Zed, etc.).
+
+These are relevant if pos-v2 ever extends past Claude-attached workflows (CLAUDE.md Lens 1 says it will not by design) or if a future plugin consumes a non-mapped surface. Flag for Idea 1 Step 4 refresh if the scope expands.
+
+### 10.7 Volatility warning
+
+**Volatile surfaces** (likely to drift within weeks):
+- Model IDs and pricing tables.
+- Extended thinking behaviour differences across model generations (manual vs adaptive).
+- Citations feature capabilities.
+- Files API scope.
+- Memory API behaviour.
+- Bundled skills set (new ones ship regularly; `/ultraplan`, `/ultrareview`, `/insights`, `/team-onboarding` are recent).
+- Hook event types (new ones added per Claude Code release).
+- Channels capability (research preview as of 2026-04-23).
+
+**Stable surfaces** (unlikely to drift materially):
+- Core MCP protocol and transport types.
+- Slash-commands-are-skills convention.
+- Hook event types' exit-code semantics (0 = allow, 2 = block).
+- Agent Tool dispatch pattern.
+- Settings precedence hierarchy.
+
+When the Idea 1 Step 4 refresh runs, prioritise re-fetching the volatile areas; stable areas can be spot-checked.
 
 ---
 
 ## Source log
 
-Every non-trivial claim in this file is traceable to an entry below. URLs recorded with fetch date; claude-code-guide subagent dispatch count recorded at end.
+Every non-trivial claim in this file traces to one of the pages below. `claude-code-guide` subagent was not dispatched during this authoring — WebFetch against the official docs was sufficient.
 
-- _(populated as sections land)_
+| URL | Section(s) | Fetched |
+|-----|------------|---------|
+| `https://code.claude.com/docs/en/slash-commands` | §1.1, §6 | 2026-04-23 |
+| `https://code.claude.com/docs/en/hooks` | §1.2, §8.5 | 2026-04-23 |
+| `https://code.claude.com/docs/en/settings` | §1.3 | 2026-04-23 |
+| `https://code.claude.com/docs/en/cli-reference` | §1.4, §1.5, §9 | 2026-04-23 |
+| `https://code.claude.com/docs/en/agent-sdk/overview` | §2 | 2026-04-23 |
+| `https://platform.claude.com/docs/en/api/messages` | §3.1, §3.2 | 2026-04-23 |
+| `https://platform.claude.com/docs/en/docs/build-with-claude/prompt-caching` | §3.4 | 2026-04-23 |
+| `https://platform.claude.com/docs/en/docs/build-with-claude/batch-processing` | §3.5 | 2026-04-23 |
+| `https://platform.claude.com/docs/en/docs/build-with-claude/extended-thinking` | §3.3 | 2026-04-23 |
+| `https://code.claude.com/docs/en/mcp` | §4 | 2026-04-23 |
+| `https://modelcontextprotocol.io/docs` | §4 | 2026-04-23 |
+| `https://code.claude.com/docs/en/plugins` | §5 | 2026-04-23 |
+| `https://code.claude.com/docs/en/plugins-reference` | §5, §8.2 | 2026-04-23 |
+| `https://code.claude.com/docs/en/sub-agents` | §7 | 2026-04-23 |
+| `https://code.claude.com/docs/en/commands` | §8, §9 | 2026-04-23 |
+
+**Dispatch counts:** `claude-code-guide` subagent = 0. WebFetch calls = 15.
+
+**Latent sources not fully mapped (flagged for Step 4 refresh):** Files API, server-side Memory API, agent-teams, channels (research preview), output styles, auto-mode classifier rules, fullscreen rendering, fast mode, keybindings schema.
+
+---
+
+## Source log (abbreviated — full table in §10)
+
+See §10 "Source log" for the complete table of URLs + fetch dates + section mappings, plus the claude-code-guide subagent dispatch count and the list of latent sources not fully mapped.

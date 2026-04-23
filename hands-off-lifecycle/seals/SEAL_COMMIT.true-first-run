@@ -510,4 +510,29 @@
 # cost-governance 48/48 (46 baseline + 2 new C14 tests),
 # hands-off-lifecycle 67/67 (unchanged — only BASELINE + allowed-
 # set edits), all other sealed components unchanged.
-9e3776b
+#
+# Amendment cycle — skip-launchctl-dead-code-removal (2026-04-22,
+# amendment #14): audit of the pyyaml-reachability amendment (#5)
+# surfaced that POS_V2_SKIP_LAUNCHCTL has zero live setters anywhere
+# in the tree (no shell script, no test fixture, no CI config, no
+# doc). Its sole consumer was the read in
+# hands-off-lifecycle/hooks/first_run_helper.py, asserted by a
+# source-grep test in tests/test_pyyaml_reachability.py. The
+# source-grep test is method-in-acceptance (ODD §8.2 rule 9); the
+# env-var read itself is §2.5 orphan code — code for cases the
+# objectives do not name. The amendment-#4 validation harness the env
+# var was wired for never landed in the tree. Amendment #14 deletes
+# the env-var read, its propagation through _invoke_first_run_scaffold,
+# the two conditional skip branches in the Phase 4b health poll, the
+# justifying comment block, and the source-grep test. No replacement
+# behavioural test: no AC names the skipped behaviour. Single-
+# component amendment — only hands-off-lifecycle touched. Tests
+# post-amendment: hands-off-lifecycle 67 → 66 (−1), workspace-
+# bootstrap 86 (unchanged), memory-system 45 (unchanged, with
+# temporal/claude_print_client/scripts optional-dep modules skipped),
+# all other sealed components' test_no_sealed_amendments green.
+# SEAL_COMMIT re-pinned at 94bebcd (the amendment commit). BASELINE
+# in hands-off-lifecycle/tests/test_cross_cutting.py advances from
+# 5c49e27 to 079258f (the pre-amendment tip — docs(future-ideas):
+# capture GLiNER2, context-load gate, and slug-collision ideas).
+94bebcd

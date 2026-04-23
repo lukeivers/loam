@@ -360,96 +360,170 @@ def test_AC6_non_rate_limit_error_does_not_raise_RateLimitError() -> None:
 # ---- AC7 — error-code-block discipline -----------------------------
 
 
-def test_AC7_error_subclasses_occupy_32110_through_32119_block() -> None:
-    """Every ``ClaudePrintClientError`` subclass defined by this amendment
-    carries a ``.code`` inside the -32110..-32119 memory-system runtime
-    block. No subclass collides with the historical -32095/-32096 codes
-    owned by staging.py / drain.py.
+def test_AC7_error_classes_occupy_32110_through_32119_block() -> None:
+    """Every ``ClaudePrintClientError`` (base + subclasses) defined by
+    amendment #8 carries a ``.code`` inside the -32110..-32119
+    memory-system runtime block. No class collides with sibling
+    components' claimed codes.
 
-    The base ``ClaudePrintClientError`` class holds a -32099 sentinel
-    that is explicitly NOT the runtime code used by any concrete
-    subclass — its sole job is to be a LOG-ONLY fallback for the
-    abstract base; concrete failure paths always raise a subclass with
-    a real runtime block code. The assertion excludes the base class
-    and checks every other member of the hierarchy.
+    Amendment #11 audit-closure §F13: the base-class sentinel moved
+    from -32099 (which collided with
+    ``hands_off_lifecycle_internal`` per hands-off-lifecycle's README)
+    to -32119, the last slot of memory-system's own runtime block. The
+    assertion now includes the base class so future audits cannot
+    re-introduce the collision.
     """
     import src.claude_print_client as mod
     from src.claude_print_client import ClaudePrintClientError
 
-    # Find every subclass of ClaudePrintClientError defined in the
-    # amendment's module. Introspection over module attributes is the
-    # structural check the proposal names — future errors added to the
-    # client must stay inside the runtime block.
-    subclasses: list[type[ClaudePrintClientError]] = []
+    # Find every ClaudePrintClientError (base + subclasses) defined in
+    # the amendment's module. Introspection over module attributes is
+    # the structural check the proposal names — every error class
+    # including the base must sit inside the runtime block.
+    error_classes: list[type[ClaudePrintClientError]] = []
     for name in dir(mod):
         obj = getattr(mod, name)
         if (
             isinstance(obj, type)
             and issubclass(obj, ClaudePrintClientError)
-            and obj is not ClaudePrintClientError
         ):
-            subclasses.append(obj)
+            error_classes.append(obj)
 
-    assert subclasses, "expected at least one ClaudePrintClientError subclass"
+    # Sanity — base class plus the three concrete ones.
+    assert ClaudePrintClientError in error_classes
+    assert len(error_classes) >= 4, (
+        "expected at least base + 3 concrete subclasses in the hierarchy"
+    )
 
-    # Each concrete subclass .code is inside -32119 <= code <= -32110.
-    forbidden_collisions = {-32095, -32096}  # staging-overflow, drain-poison
-    for cls in subclasses:
+    # Each class's .code is inside -32119 <= code <= -32110.
+    forbidden_collisions = {
+        -32095,  # staging-overflow (memory-system staging)
+        -32096,  # drain-poison (memory-system drain)
+        -32099,  # hands_off_lifecycle_internal (hands-off-lifecycle README)
+    }
+    for cls in error_classes:
         code = cls.code
         assert -32119 <= code <= -32110, (
             f"{cls.__name__}.code={code} is outside the memory-system "
             "runtime block -32110..-32119 claimed by amendment #8"
         )
         assert code not in forbidden_collisions, (
-            f"{cls.__name__}.code={code} collides with an existing "
-            "hands-off-lifecycle-owned code"
+            f"{cls.__name__}.code={code} collides with a sibling "
+            "component's claimed code (staging -32095, drain -32096, "
+            "or hands_off_lifecycle_internal -32099)"
         )
 
-    # And the distinct-code invariant: no two subclasses share a code
-    # (otherwise the block would be misused as a debug label).
-    codes = [cls.code for cls in subclasses]
+    # Distinct-code invariant across the concrete subclasses (base may
+    # equal one — but here it sits on -32119 and no concrete subclass
+    # uses that slot, so all classes must have distinct codes).
+    codes = [cls.code for cls in error_classes]
     assert len(codes) == len(set(codes)), (
-        f"duplicate .code values across ClaudePrintClientError subclasses: {codes}"
+        f"duplicate .code values across ClaudePrintClientError classes: {codes}"
     )
+
+    # Explicit pin on the base-class sentinel — amendment #11 §F13
+    # fix. If a future refactor moves it back into a sibling-owned
+    # code, this line fires before the implicit collision-check above.
+    assert ClaudePrintClientError.code == -32119
 
 
 # ---- AC8 — reranker does not invoke billed OpenAI at ingest --------
 
 
+class _StubEmbedder:
+    """Fully-mocked embedder (amendment #11 §F10).
+
+    Returns zero-vectors. No network call. Used in the AC8 ingest test
+    so the memory-system factory's ingest path can run under fully
+    mocked I/O (subprocess + embedder + graph driver) without any
+    outbound HTTP.
+    """
+
+    def __init__(self, dim: int = 1024) -> None:
+        self.dim = dim
+        self.call_count = 0
+
+    async def create(self, input_data):  # type: ignore[no-untyped-def]
+        self.call_count += 1
+        return [0.0] * self.dim
+
+    async def create_batch(self, input_data_list):  # type: ignore[no-untyped-def]
+        self.call_count += len(input_data_list)
+        return [[0.0] * self.dim for _ in input_data_list]
+
+
+def _ingest_subprocess_envelope() -> str:
+    """Envelope returned for every LLM call during an AC8 ingest.
+
+    The ``.result`` field holds JSON that validates against graphiti's
+    extract-nodes and extract-edges response models simultaneously:
+    ``extracted_entities`` + ``edges`` are both empty lists, which
+    short-circuits the ingest pipeline — no entities means no
+    dedupe-search, no embeddings, no reranker activity. With the
+    extraction result empty, the only outbound work is the episode
+    write through the (also mocked) graph driver.
+    """
+    return _envelope(
+        json.dumps(
+            {
+                "extracted_entities": [],
+                "edges": [],
+                "summaries": [],
+                "attributes": {},
+                "name": "",
+                "summary": "",
+            }
+        )
+    )
+
+
 def test_AC8_ingest_path_issues_no_openai_api_call(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
-    """Memory-system's factory-assembled ``Graphiti`` must not issue any
-    outbound OpenAI API request as a side-effect of constructing the
-    default ingest path. Graphiti-core 0.28.2 auto-instantiates an
-    ``OpenAIRerankerClient`` that would route through whatever
-    OPENAI_API_KEY the environment exposes — but with all LLM work
-    routed through ClaudePrintLLMClient (amendment #8 default), zero
-    OpenAI calls should be issued at construction or at any point that
-    precedes a real ingest.
+    """AC8 — memory-system's ingest path (``graphiti.add_episode``)
+    must not issue any outbound OpenAI API request.
 
-    Full subscription-routing of the reranker (replacing the OpenAI
-    client wholesale) is scoped to a follow-up amendment; this AC pins
-    the invariant without blocking on that work. The test mocks the
-    openai client at module boundary and asserts its primary request
-    seam is never invoked during factory construction + a smoke
-    instantiation of the reranker client.
+    Amendment #11 audit-closure §F10 rewrite: the original test stopped
+    at factory construction, but AC8's text names *"memory-system's
+    default ingest surface"* — the test must actually exercise
+    ``add_episode`` behind fully-mocked subprocess + embedder + graph
+    driver, then assert zero OpenAI calls *across that ingest*.
+
+    Construction:
+      - subprocess: patched ``asyncio.create_subprocess_exec`` returns
+        a ``_ingest_subprocess_envelope`` for every call. Graphiti's
+        extract-nodes / extract-edges prompts all receive the same
+        empty-result JSON — no entities → no dedupe search → no
+        embeddings → no reranker activity.
+      - embedder: ``_StubEmbedder`` substituted onto ``graphiti.embedder``
+        + ``graphiti.clients.embedder`` right after factory construction.
+        No network calls to Ollama or OpenAI-compat endpoints.
+      - graph driver: Kuzu driver pointed at ``:memory:`` via the
+        factory. Kuzu is embedded; no network. ``build_indices_and_constraints``
+        is invoked so writes succeed.
+
+    Ingest:
+      - ``MemoryAPI.ingest(body, name=..., source="text")`` runs the
+        full memory-system ingest surface (D5 ephemerality → D6 scope
+        → D8/D10 retention plan → ``graphiti.add_episode``).
+
+    Assertion:
+      - The ``openai`` HTTP boundary count is 0 *after* ingest, not
+        only after construction.
     """
-    from src import factory
+    from src import factory, memory as memory_mod
 
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    # Proposal AC8: test-time uses OPENAI_API_KEY=ollama so the
-    # OpenAIRerankerClient constructs without error. Any actual call
-    # issued against OpenAI at ingest would hit this placeholder and
-    # surface as an authentication failure we'd catch below, but the
-    # AC is stronger: the call must never be issued at all during the
-    # construction path.
+    # Proposal AC8: OPENAI_API_KEY=ollama lets the auto-instantiated
+    # OpenAIRerankerClient construct without error. Any actual call
+    # issued against OpenAI would bypass this placeholder; this test
+    # asserts the call is never issued at all.
     monkeypatch.setenv("OPENAI_API_KEY", "ollama")
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
 
-    # Intercept OpenAI at the async client's request boundary. This
-    # covers both direct calls and reranker-issued calls, because the
-    # reranker client composes an AsyncOpenAI instance under the hood.
+    # Intercept OpenAI at both the async- and sync- HTTP client
+    # boundaries. The reranker composes an ``AsyncOpenAI`` under the
+    # hood; any call surfaces through ``.post``.
     openai_call_count = {"n": 0}
 
     async def _never_call(*args: object, **kwargs: object) -> None:
@@ -461,34 +535,140 @@ def test_AC8_ingest_path_issues_no_openai_api_call(
 
     import openai
 
-    monkeypatch.setattr(
-        openai.AsyncOpenAI, "post", _never_call, raising=False
-    )
-    # Also intercept the sync client's request path for completeness —
-    # some graphiti helpers use the sync surface for eager probes.
+    monkeypatch.setattr(openai.AsyncOpenAI, "post", _never_call, raising=False)
     monkeypatch.setattr(openai.OpenAI, "post", _never_call, raising=False)
 
-    with patch("src.claude_print_client.shutil.which", return_value="/bin/claude"):
-        exec_mock = _make_exec_mock(_envelope("ready"))
+    async def _drive_ingest() -> None:
+        # Construct via the factory so the subscription-routed LLM
+        # client + scrubbed env + probe path all exercise.
         with patch(
-            "src.claude_print_client.asyncio.create_subprocess_exec",
-            new=exec_mock,
+            "src.claude_print_client.shutil.which",
+            return_value="/bin/claude",
         ):
-            graphiti = asyncio.run(
-                factory.make_graphiti(db_path=str(tmp_path / "kuzu_db"))
-            )
+            with patch(
+                "src.claude_print_client.asyncio.create_subprocess_exec",
+                new=_make_exec_mock(_ingest_subprocess_envelope()),
+            ):
+                # `:memory:` Kuzu so writes are in-memory and fast.
+                graphiti = await factory.make_graphiti(db_path=":memory:")
+                # Replace the embedder with a stub so no Ollama call
+                # leaks. Graphiti's ``clients`` dataclass also carries
+                # the embedder reference; both slots get stubbed.
+                stub_embedder = _StubEmbedder()
+                graphiti.embedder = stub_embedder
+                graphiti.clients.embedder = stub_embedder
+                # prepare_graphiti runs build_indices_and_constraints
+                # + the D10 retention-class column add, so the full
+                # MemoryAPI.ingest flow (including retention.apply_plan)
+                # resolves.
+                await factory.prepare_graphiti(graphiti)
 
-    # No OpenAI call was made during factory construction.
+                # AC8 invariant: OpenAI must stay untouched across the
+                # ingest, not only construction.
+                assert openai.AsyncOpenAI.post is _never_call, (
+                    "OpenAI async client intercept was replaced before ingest"
+                )
+
+                # Isolated emitter so the test doesn't scribble into
+                # the shared ``data/observability/`` runtime spool.
+                from src.observability import Emitter
+
+                emitter = Emitter(sink_dir=tmp_path / "obs")
+                api = memory_mod.MemoryAPI(graphiti, emitter=emitter)
+                result = await api.ingest(
+                    body="memory-system AC8 ingest smoke",
+                    name="ac8-smoke",
+                    source="text",
+                )
+                # Ingest ran to completion: we got an episode uuid.
+                assert result.episode_uuid is not None
+
+    asyncio.run(_drive_ingest())
+
+    # Zero OpenAI calls across factory construction AND the ingest.
     assert openai_call_count["n"] == 0, (
-        f"factory construction made {openai_call_count['n']} OpenAI calls; "
-        "expected 0"
+        f"ingest made {openai_call_count['n']} OpenAI calls; expected 0"
     )
-    # And the llm_client is the subscription-routed one — confirms the
-    # default routing is actually the claude-print path, not a billed
-    # Anthropic or OpenAI client silently reintroduced.
-    from src.claude_print_client import ClaudePrintLLMClient
 
-    assert isinstance(graphiti.llm_client, ClaudePrintLLMClient)
+
+# ---- amendment #11 §F3 — span attribute wiring --------------------
+
+
+def test_memory_ingest_emits_claude_equivalent_cost_usd_span_attr(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Amendment #11 audit-closure §F3 — the landed implementation of
+    proposal §5 #4 observability ruling.
+
+    ``MemoryAPI.ingest`` snapshots ``cost_tracker.total_usd`` before
+    and after each ingest and emits the delta as a
+    ``claude.equivalent_cost_usd`` span attribute. Max-subscription
+    calls typically report 0.0 here, but the mock envelope sets a
+    non-zero cost to exercise the attribute-emission path.
+    """
+    from src import factory, memory as memory_mod
+    from src.observability import Emitter
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "ollama")
+
+    async def _drive() -> Emitter:
+        # Envelope with a non-zero total_cost_usd so the delta is
+        # observable on the span. The extraction result is still empty
+        # (ingest short-circuits).
+        cost_envelope = _envelope(
+            json.dumps(
+                {
+                    "extracted_entities": [],
+                    "edges": [],
+                    "summaries": [],
+                    "attributes": {},
+                    "name": "",
+                    "summary": "",
+                }
+            ),
+            cost=0.0125,
+        )
+        with patch(
+            "src.claude_print_client.shutil.which",
+            return_value="/bin/claude",
+        ):
+            with patch(
+                "src.claude_print_client.asyncio.create_subprocess_exec",
+                new=_make_exec_mock(cost_envelope),
+            ):
+                graphiti = await factory.make_graphiti(db_path=":memory:")
+                stub_embedder = _StubEmbedder()
+                graphiti.embedder = stub_embedder
+                graphiti.clients.embedder = stub_embedder
+                await factory.prepare_graphiti(graphiti)
+
+                # Isolated emitter writing under tmp_path so the test's
+                # spans don't mix with any shared default sink.
+                emitter = Emitter(sink_dir=tmp_path / "obs")
+                api = memory_mod.MemoryAPI(graphiti, emitter=emitter)
+                await api.ingest(
+                    body="span-attr smoke",
+                    name="ac11.5-smoke",
+                    source="text",
+                )
+                return emitter
+
+    emitter = asyncio.run(_drive())
+    spans = emitter.read_spans()
+    ingest_spans = [s for s in spans if s["name"] == "memory.ingest"]
+    assert len(ingest_spans) == 1, f"expected one memory.ingest span, got {ingest_spans}"
+    attrs = ingest_spans[0]["attributes"]
+    assert "claude.equivalent_cost_usd" in attrs, (
+        f"ingest span missing claude.equivalent_cost_usd attribute: {attrs}"
+    )
+    # The delta across the ingest is at least one call's cost
+    # (extract_nodes always fires once). With a 0.0125-per-call mock,
+    # the delta is some positive multiple of 0.0125.
+    cost = attrs["claude.equivalent_cost_usd"]
+    assert cost >= 0.0125 - 1e-9, (
+        f"expected at least one call's worth of cost, got {cost}"
+    )
 
 
 # ---- argv shape regression -----------------------------------------

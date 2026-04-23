@@ -78,6 +78,31 @@ class EpisodeRef:
     retention_class: str | None = None
 
 
+# ---- cost-snapshot helper (amendment #11 §F3) -------------------------
+
+
+def _subscription_cost_snapshot(llm_client: Any) -> float | None:
+    """Return the current ``cost_tracker.total_usd`` if the LLM client
+    is a ``ClaudePrintLLMClient`` (exposes a ``cost_tracker`` with a
+    ``total_usd`` float). Returns ``None`` otherwise so callers can
+    short-circuit the span attribute emission.
+
+    Probing for the attribute keeps this helper client-agnostic — a
+    test that injects a test-double LLM client (or graphiti's own
+    base class) won't trip on a missing field.
+    """
+    tracker = getattr(llm_client, "cost_tracker", None)
+    if tracker is None:
+        return None
+    total = getattr(tracker, "total_usd", None)
+    if total is None:
+        return None
+    try:
+        return float(total)
+    except (TypeError, ValueError):
+        return None
+
+
 # ---- MemoryAPI ---------------------------------------------------------
 
 
@@ -211,6 +236,17 @@ class MemoryAPI:
             if ref_time.tzinfo is None:
                 ref_time = ref_time.replace(tzinfo=timezone.utc)
             ep_type = _EPISODE_TYPES.get(source, EpisodeType.text)
+            # Amendment #11 audit-closure §F3: snapshot the subscription
+            # cost before the ingest so we can emit the per-ingest delta
+            # as a span attribute. The ClaudePrintLLMClient accumulates
+            # ``total_cost_usd`` from each ``claude -p`` JSON envelope
+            # into ``cost_tracker.total_usd``; Max-subscription calls
+            # typically report 0.0 but Anthropic still reports an
+            # equivalent-cost estimate useful for subscription-usage
+            # budgeting. The llm_client may not be a
+            # ClaudePrintLLMClient in every test context, so we probe
+            # for the attribute defensively.
+            cost_before = _subscription_cost_snapshot(self._graphiti.llm_client)
             result = await self._graphiti.add_episode(
                 name=name,
                 episode_body=body,
@@ -219,6 +255,7 @@ class MemoryAPI:
                 source=ep_type,
                 group_id=scope_rec.scope_id,
             )
+            cost_after = _subscription_cost_snapshot(self._graphiti.llm_client)
             # D10 — apply retention plan (tag + optional content scrub).
             await retention.apply_plan(
                 self._graphiti.driver,
@@ -235,6 +272,10 @@ class MemoryAPI:
             span.set_attr("episode_uuid", result.episode.uuid)
             span.set_attr("nodes_created", len(result.nodes))
             span.set_attr("edges_created", len(result.edges))
+            if cost_before is not None and cost_after is not None:
+                span.set_attr(
+                    "claude.equivalent_cost_usd", cost_after - cost_before
+                )
 
             return IngestResult(
                 episode_uuid=result.episode.uuid,

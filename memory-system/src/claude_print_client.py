@@ -27,6 +27,10 @@ no overloading.
     failure from a malformed ``claude -p --output-format json``
     payload. Non-fatal; graphiti's retry machinery catches and
     backs off.
+  * ``-32119`` ``claude-print-client-internal`` — base-class sentinel
+    (amendment #11 audit-closure §F13 moved this here from ``-32099``
+    so it no longer collides with hands-off-lifecycle's own
+    ``hands_off_lifecycle_internal`` catch-all).
 
 Subprocess shape (empirical, verified 2026-04-22):
 
@@ -57,11 +61,10 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 import os
 import shutil
 import typing
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from graphiti_core.llm_client.client import LLMClient
@@ -71,46 +74,33 @@ from graphiti_core.prompts.models import Message
 from pydantic import BaseModel, ValidationError
 
 
-logger = logging.getLogger(__name__)
-
-
 DEFAULT_MODEL = "claude-haiku-4-5"
-DEFAULT_SMALL_MODEL = "claude-haiku-4-5"
 
-# Explicit env allow-list for the child subprocess. Everything else
-# (notably ``ANTHROPIC_API_KEY`` / ``OPENAI_API_KEY`` / ``GEMINI_API_KEY``)
-# is dropped so the child cannot fall through to a billed API path.
+# Explicit env allow-list for the child subprocess. Only the minimum
+# vars tests actually verify. Anything else (notably
+# ``ANTHROPIC_API_KEY`` / ``OPENAI_API_KEY`` / ``GEMINI_API_KEY``) is
+# dropped so the child cannot fall through to a billed API path. If a
+# runtime failure later shows `claude -p` needs another var, add it
+# together with a concrete AC extension naming the failure observed
+# (amendment #11 audit-closure §F5 ruling).
 _ENV_ALLOWED_VARS = (
     "PATH",
     "HOME",
-    "USER",
-    "LOGNAME",
-    "SHELL",
-    "LANG",
-    "LC_ALL",
-    "LC_CTYPE",
-    "TERM",
-    "TMPDIR",
-    "XDG_CONFIG_HOME",
-    "XDG_DATA_HOME",
-    "XDG_CACHE_HOME",
 )
 
 # Markers (substring match, case-insensitive) that the probe subprocess
-# emits when OAuth is absent. Kept as a tuple so additional phrasings
-# surface over time can be appended without touching call sites.
+# emits when OAuth is absent.
 _UNAUTH_MARKERS = (
     "not logged in",
     "please run /login",
 )
 
 # Markers that indicate the model hit a subscription rate-limit.
+# Only the two substrings AC6's live tests exercise (amendment #11
+# audit-closure §F8 ruling). A new real-world phrasing surfaces with
+# an AC extension + a new marker together.
 _RATE_LIMIT_MARKERS = (
     "rate limit",
-    "rate-limit",
-    "rate_limit",
-    "429",
-    "too many requests",
     "usage limit",
 )
 
@@ -125,9 +115,17 @@ class ClaudePrintClientError(Exception):
     the failure into memory-system's reserved numeric block, ``kind``
     is a stable machine-readable label for structured logs / exception
     payload inspection.
+
+    The base-class ``.code`` sentinel sits at ``-32119`` — the last
+    slot of memory-system's own ``-32110..-32119`` runtime block. The
+    original draft used ``-32099`` which collided with
+    ``hands_off_lifecycle_internal`` (the hands-off-lifecycle README's
+    catch-all claim for that component's block). Amendment #11
+    audit-closure §F13 moved the sentinel into this component's own
+    block so the collision is structurally impossible.
     """
 
-    code: int = -32099
+    code: int = -32119
     kind: str = "claude-print-client-internal"
 
     def __init__(self, message: str) -> None:
@@ -181,16 +179,19 @@ class SubscriptionCostTracker:
     Max-subscription calls typically report 0.0 here, but the field is
     Anthropic's equivalent-cost estimate useful for subscription-usage
     budgeting even when no actual billing occurs.
+
+    ``MemoryAPI.ingest`` reads ``total_usd`` before and after each
+    ingest and emits the delta as the ``claude.equivalent_cost_usd``
+    span attribute (amendment #11 audit-closure §F3 ruling — the
+    landed implementation of proposal §5 #4 observability ruling).
     """
 
     total_usd: float = 0.0
     call_count: int = 0
-    per_call_usd: list[float] = field(default_factory=list)
 
     def record(self, cost_usd: float) -> None:
         self.total_usd += cost_usd
         self.call_count += 1
-        self.per_call_usd.append(cost_usd)
 
 
 # ---- probe: called at construction to detect AC4 / AC5 -------------
@@ -267,30 +268,19 @@ async def _probe_claude_authenticated(
     stdout = stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
     stderr = stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
 
-    # The "Not logged in" signal can appear in either stream depending
-    # on CLI version; check both.
+    # Substring match works uniformly whether stdout is raw CLI text
+    # ("Not logged in · Please run /login") or an envelope-wrapped
+    # JSON body ({"result":"Not logged in..."}) — both cases contain
+    # the marker substring. The earlier defensive JSON re-parse +
+    # ``except json.JSONDecodeError: pass`` branch (amendment #11
+    # audit-closure §F11) was a silent-except violating §8 rule 8
+    # and redundant with the substring check; removed.
     if _response_is_unauthenticated(stdout) or _response_is_unauthenticated(stderr):
         raise ClaudeUnauthenticatedError(
             "claude CLI is installed but not authenticated (OAuth state "
             "absent). Run `claude /login` interactively so the CLI can "
             "write an OAuth token to the system keychain."
         )
-
-    # Some probe responses are also wrapped in the JSON envelope — parse
-    # defensively so a "Not logged in" result surfacing as
-    # {"result": "Not logged in..."} still halts.
-    try:
-        payload = json.loads(stdout)
-        if isinstance(payload, dict):
-            text = payload.get("result", "") or ""
-            if _response_is_unauthenticated(text):
-                raise ClaudeUnauthenticatedError(
-                    "claude CLI emitted 'Not logged in' in probe response. "
-                    "Run `claude /login`."
-                )
-    except json.JSONDecodeError:
-        # Non-JSON probe output is fine as long as no unauth marker fired.
-        pass
 
 
 # ---- client ---------------------------------------------------------
@@ -319,12 +309,12 @@ class ClaudePrintLLMClient(LLMClient):
         if config is None:
             config = LLMConfig(
                 model=DEFAULT_MODEL,
-                small_model=DEFAULT_SMALL_MODEL,
+                small_model=DEFAULT_MODEL,
             )
         if config.model is None:
             config.model = DEFAULT_MODEL
         if config.small_model is None:
-            config.small_model = DEFAULT_SMALL_MODEL
+            config.small_model = DEFAULT_MODEL
 
         super().__init__(config, cache)
 
@@ -340,16 +330,31 @@ class ClaudePrintLLMClient(LLMClient):
         self._child_env: dict[str, str] = _build_child_env()
         self.cost_tracker = SubscriptionCostTracker()
 
-        # AC5: probe OAuth state before returning a "ready" client. The
-        # probe is synchronous-from-the-caller's-point-of-view; we run
-        # it via asyncio.run in a fresh loop so construction remains a
-        # plain synchronous call-path. ``skip_auth_probe`` is the seam
-        # tests use when the probe itself is being asserted about via
-        # mocked subprocess.
+        # AC5: probe OAuth state before returning a "ready" client.
+        # ``skip_auth_probe=True`` defers the probe to the async
+        # ``probe_authenticated()`` method — that seam is how
+        # ``make_claude_print_client`` (async) calls the probe without
+        # needing a sync-over-async bridge. Sync-context callers (AC4 /
+        # AC5 tests, ad-hoc instantiations) get the probe inline via
+        # ``asyncio.run`` — no running loop, no thread-pool fallback.
+        # Amendment #11 audit-closure §F2 removed the running-loop
+        # branch; callers in async contexts must use
+        # ``skip_auth_probe=True`` + ``await client.probe_authenticated()``.
         if not skip_auth_probe:
             _run_sync(
                 _probe_claude_authenticated(self._binary_path, self._child_env)
             )
+
+    async def probe_authenticated(self) -> None:
+        """Async-context variant of the construction-time OAuth probe.
+
+        Call this from an async factory (e.g. ``make_claude_print_client``)
+        after constructing the client with ``skip_auth_probe=True``.
+        Semantically equivalent to the probe that runs inside sync
+        ``__init__`` — raises ``ClaudeUnauthenticatedError`` on the
+        "Not logged in" signal, returns ``None`` on success.
+        """
+        await _probe_claude_authenticated(self._binary_path, self._child_env)
 
     # ---- LLMClient API ---------------------------------------------
 
@@ -501,7 +506,7 @@ def _extract_json_object(text: str) -> dict[str, Any]:
 
     Graphiti's prompt instructs the model to return bare JSON, but
     real-world responses sometimes prefix with markdown fencing or
-    trailing commentary. Mirror ``AnthropicClient._extract_json_from_text``.
+    trailing commentary.
     """
     try:
         start = text.find("{")
@@ -518,31 +523,24 @@ def _extract_json_object(text: str) -> dict[str, Any]:
 
 
 def _run_sync(coro: typing.Awaitable[Any]) -> Any:
-    """Execute a coroutine from a synchronous context.
+    """Execute a coroutine from a sync context (no running loop).
 
-    Factory construction is synchronous (``make_graphiti`` is async but
-    the client class itself is instantiated as part of its setup; we
-    call the probe from ``__init__``). When no event loop is running,
-    ``asyncio.run`` is fine. When a loop IS running (e.g. inside a
-    pytest-asyncio test that instantiates the client mid-coroutine), we
-    fall back to creating a nested loop in a thread so we don't
-    deadlock on the already-running loop.
+    Used by ``ClaudePrintLLMClient.__init__`` when the caller is in a
+    plain sync context (AC4/AC5 tests, ad-hoc instantiations). If an
+    event loop is already running in this thread, the caller is in
+    async context and must use ``skip_auth_probe=True`` +
+    ``await client.probe_authenticated()`` instead — amendment #11
+    audit-closure §F2 removed the threadpool-running-loop fallback
+    (no AC named that pathway; §2.5 violation).
     """
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
-        loop = None
-
-    if loop is None:
         return asyncio.run(coro)  # type: ignore[arg-type]
 
-    # Running-loop path: run the coro in a worker thread with its own
-    # fresh loop so we don't re-enter the caller's loop.
-    import concurrent.futures
-
-    def _runner() -> Any:
-        return asyncio.run(coro)  # type: ignore[arg-type]
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-        future = pool.submit(_runner)
-        return future.result()
+    raise RuntimeError(
+        "ClaudePrintLLMClient construction invoked from a running "
+        "event loop with skip_auth_probe=False. Pass "
+        "skip_auth_probe=True and `await client.probe_authenticated()` "
+        "from async context."
+    )

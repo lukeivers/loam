@@ -1,20 +1,21 @@
 """Wire Graphiti up with the prototype's chosen backends.
 
 Single responsibility: construct a Graphiti instance with the configured
-LLM (subscription-routed ``claude -p`` by default; billed
-``AnthropicClient`` available on request for legacy eval scripts),
-embedder (Ollama via OpenAI-compat endpoint), and graph driver
-(embedded Kuzu). All other concerns live elsewhere.
+LLM (subscription-routed ``claude -p``), embedder (Ollama via
+OpenAI-compat endpoint), and graph driver (embedded Kuzu). All other
+concerns live elsewhere.
 
 Amendment #8 (memory-system-subscription-routed-llm, 2026-04-22)
-swapped the default LLM backend from graphiti-core's ``AnthropicClient``
+swapped the LLM backend from graphiti-core's ``AnthropicClient``
 (which reads ``ANTHROPIC_API_KEY`` and routes through the billed API)
 to ``ClaudePrintLLMClient`` (which subprocesses ``claude -p`` and
-routes through the user's Claude Max subscription via OAuth). The
-``make_anthropic_client()`` factory is kept for scripts that explicitly
-opt in to the billed path (cost_baseline.py, eval harnesses), but
-``make_graphiti()`` no longer invokes it on the default path — fresh
+routes through the user's Claude Max subscription via OAuth). Fresh
 first-run completes end-to-end without an ``ANTHROPIC_API_KEY``.
+
+Amendment #11 audit-closure (§F1) deleted the residual
+``make_anthropic_client()`` factory + ``AnthropicClient`` import — no
+caller remained in the tree, so the "kept for eval scripts" claim was
+a §2.5 orphan surface.
 """
 
 from __future__ import annotations
@@ -26,7 +27,6 @@ from dotenv import load_dotenv
 from graphiti_core import Graphiti
 from graphiti_core.driver.kuzu_driver import KuzuDriver
 from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
-from graphiti_core.llm_client.anthropic_client import AnthropicClient
 from graphiti_core.llm_client.config import LLMConfig
 
 from .claude_print_client import ClaudePrintLLMClient
@@ -51,32 +51,7 @@ def load_env(env_path: str | Path | None = None) -> None:
     load_dotenv(env_path, override=False)
 
 
-def make_anthropic_client(small: bool = False) -> AnthropicClient:
-    """Construct the billed Anthropic LLM client.
-
-    **Not the default path after amendment #8.** ``make_graphiti()`` now
-    wires the subscription-routed ``ClaudePrintLLMClient`` by default;
-    this helper remains for eval / cost-baseline scripts that
-    explicitly opt in to the billed API path. Callers must have
-    ``ANTHROPIC_API_KEY`` set in the environment; this function raises
-    ``KeyError`` at call time if it is not.
-
-    `small` selects the small-model field, used by Graphiti for cheaper
-    sub-prompts (entity dedupe, classification).
-    """
-    model = os.environ.get(
-        "ANTHROPIC_SMALL_MODEL" if small else "ANTHROPIC_MODEL",
-        "claude-haiku-4-5",
-    )
-    config = LLMConfig(
-        api_key=os.environ["ANTHROPIC_API_KEY"],
-        model=model,
-        small_model=os.environ.get("ANTHROPIC_SMALL_MODEL", "claude-haiku-4-5"),
-    )
-    return AnthropicClient(config=config)
-
-
-def make_claude_print_client(
+async def make_claude_print_client(
     *, skip_auth_probe: bool = False
 ) -> ClaudePrintLLMClient:
     """Construct the subscription-routed LLM client (amendment #8 default).
@@ -87,11 +62,23 @@ def make_claude_print_client(
     ``ANTHROPIC_API_KEY`` is read; the child subprocess runs with a
     scrubbed env so it cannot fall through to the billed API even when
     the parent has the key set.
+
+    Amendment #11 audit-closure (§F2) made this helper ``async``. The
+    probe that validates OAuth state is itself async; running it from
+    sync ``__init__`` while the caller already has an event loop
+    running (the common case — ``make_graphiti`` is async) required a
+    sync-over-async bridge with no AC backing. The async form awaits
+    the probe directly. Sync-context callers instantiate
+    ``ClaudePrintLLMClient`` directly; they don't go through this
+    factory.
     """
     model = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
     small = os.environ.get("ANTHROPIC_SMALL_MODEL", "claude-haiku-4-5")
     config = LLMConfig(model=model, small_model=small)
-    return ClaudePrintLLMClient(config=config, skip_auth_probe=skip_auth_probe)
+    client = ClaudePrintLLMClient(config=config, skip_auth_probe=True)
+    if not skip_auth_probe:
+        await client.probe_authenticated()
+    return client
 
 
 def make_ollama_embedder(model: str | None = None) -> OpenAIEmbedder:
@@ -208,7 +195,7 @@ async def make_graphiti(
     first add_episode in MemoryAPI rather than here, to avoid a Kuzu
     connection before build_indices_and_constraints runs.
     """
-    llm_client = make_claude_print_client()
+    llm_client = await make_claude_print_client()
     embedder = make_ollama_embedder(embedder_model)
     driver = make_kuzu_driver(db_path)
     graphiti = Graphiti(

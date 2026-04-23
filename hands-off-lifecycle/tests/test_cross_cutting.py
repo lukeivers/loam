@@ -71,7 +71,18 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # cross-reference to the new -32110..-32119 memory-system runtime
 # error-code block. 4ec9ae9 is the pre-amendment tip — the scope-only-
 # dispatch CDC commit immediately before this amendment's code commit.
-BASELINE = "4ec9ae9"
+# Advanced to 77389ce when the amendment-#8 audit-closure amendment
+# (#11) opened — the 2026-04-22 Blocker-3 audit surfaced one RED
+# finding (AC8's test not exercising the ingest surface) + a
+# structural error-code-sentinel collision between the
+# ClaudePrintClientError base class (-32099) and
+# hands_off_lifecycle_internal (-32099) + a cluster of §2.5 orphan
+# surfaces. Amendment #11 closes all of them in a single cycle; the
+# hands-off-lifecycle counterpart is a BASELINE bump here + a README
+# cross-reference update for the base-class-sentinel's move to
+# -32119. 77389ce is the pre-amendment tip — the amendment-#8 seal
+# commit immediately before amendment #11's code commit.
+BASELINE = "77389ce"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

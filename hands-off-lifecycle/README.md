@@ -49,7 +49,10 @@ Currently claimed codes:
 - `-32110..-32119` memory-system runtime (claimed by amendment #8 for
   `ClaudePrintLLMClient` fail-closed paths; -32110
   claude-binary-missing, -32111 claude-unauthenticated, -32112
-  claude-print-response-malformed). Memory-system's historical
+  claude-print-response-malformed, -32119 claude-print-client-internal
+  — the base-class sentinel, moved here from -32099 in amendment #11
+  audit-closure so it no longer collides with
+  `hands_off_lifecycle_internal` below). Memory-system's historical
   claim inside this component's block (-32095, -32096) stays with
   its original owners; the runtime block is the first memory-system-
   owned range outside the hands-off-lifecycle carve-out.

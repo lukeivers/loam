@@ -41,7 +41,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              4ec9ae9 (scope-only dispatch CDC — current tip).
 #              BASELINE re-pins to 4ec9ae9 so diff-scope reflects
 #              this amendment only.
-BASELINE = "4ec9ae9"
+#   - 77389ce  at amendment #11 (amendment-#8 audit-closure). The
+#              2026-04-22 Blocker-3 audit surfaced one RED finding
+#              (AC8's test not exercising the ingest surface) + a
+#              structural collision (ClaudePrintClientError base
+#              class sentinel at -32099 overlapping
+#              hands_off_lifecycle_internal) + a cluster of §2.5
+#              orphan surfaces. Amendment #11 closes all of them in
+#              a single cycle. BASELINE re-pins to 77389ce — the
+#              amendment-#8 seal commit immediately before amendment
+#              #11's code commit.
+BASELINE = "77389ce"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -74,13 +84,14 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
     """``git diff --name-only BASELINE..SEAL_COMMIT`` produces only
     paths under the allowed amendment surfaces.
 
-    Amendment #8 is a multi-component amendment covering
-    ``memory-system/`` (primary surface — new ``ClaudePrintLLMClient``
-    module, factory wiring, tests, process_of_arrival docstring edit),
-    ``hands-off-lifecycle/`` (BASELINE bump in cross-cutting seal tests),
-    and two docs directories (the amendment's own proposal directory
-    plus the preserved-research directory for the deferred GLiNER2
-    expansion). ``data/`` is runtime spool.
+    Amendment #8 (original) + amendment #11 (audit-closure) both
+    target ``memory-system/`` (primary surface — ``ClaudePrintLLMClient``
+    module + factory wiring + tests + MemoryAPI.ingest span-attr wiring
+    for the cost tracker), ``hands-off-lifecycle/`` (BASELINE bump in
+    cross-cutting seal tests; README cross-reference update for the
+    base-class-sentinel move), and two docs directories (the amendment's
+    own proposal directory plus the preserved-research directory for
+    the deferred GLiNER2 expansion). ``data/`` is runtime spool.
     """
     seal = _seal_commit()
     out = subprocess.check_output(

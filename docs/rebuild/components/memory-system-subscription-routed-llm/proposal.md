@@ -259,6 +259,16 @@ Five distinct behaviours → nine criteria → every behaviour covered.
    as a Max-subscription-usage proxy even though no actual billing
    occurs.
 
+   **LANDED (amendment #11 audit-closure §F3):** custom span
+   attribute. `ClaudePrintLLMClient.cost_tracker` accumulates
+   `total_cost_usd` across calls; `MemoryAPI.ingest` snapshots the
+   tracker before and after each `graphiti.add_episode` and emits
+   the delta as the `claude.equivalent_cost_usd` attribute on the
+   `memory.ingest` span. Graphiti's `TokenUsageTracker` would have
+   required a vendor-side seam for cost (it tracks tokens, not
+   dollars); the span-attribute path keeps the observability surface
+   owned by memory-system without modifying graphiti-core.
+
 5–6. **GLiNER2 weights + `[gliner2]` extra.** DROPPED per option-1
 re-scope. See §0 revision note. Preserved research at
 `docs/rebuild/components/memory-system-gliner2-expansion/research.md`.

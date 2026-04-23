@@ -218,7 +218,28 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # set below (new amended sealed component in this amendment window).
 # f1ff28b is the pre-amendment tip — the amendment-#18 seal commit
 # immediately before amendment #19's code commit.
-BASELINE = "f1ff28b"
+# Advanced to 24d54cb when the S2 silent-except bundle amendment (#20)
+# opened. The 2026-04-22 audit + classifier surfaced ten `except ...:
+# pass | continue` silent branches with AC:none across
+# self-correction/src/triggers.py (2), self-correction/src/
+# completion_check.py (1), self-correction/src/observability.py (2),
+# graceful-degradation/src/component.py (2), graceful-degradation/src/
+# observability.py (1), and observability-aggregator/src/nl_path.py (2).
+# Per ODD §8 rule 8 + audit-triage-by-severity CDC (bucket d), each
+# catch gains an observable surface (either a dedicated emitter span or
+# a span event on the already-open span in the fire-and-forget emitter
+# cases). Shutdown-catch CDC does NOT apply. Multi-component amendment
+# (self-correction + graceful-degradation + observability-aggregator +
+# hands-off-lifecycle). Hands-off-lifecycle's counterpart is this
+# BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-cycle
+# narrative in seals/SEAL_COMMIT.true-first-run (zero functional
+# change) + admission of `self-correction` to the H19 allowed top-level
+# set below (new amended sealed component in this amendment window;
+# `graceful-degradation` and `observability-aggregator` already present
+# from prior amendments). 24d54cb is the pre-amendment tip — the
+# `docs(future-ideas)` commit codifying the amendment-dispatch-speedups
+# + 529-recovery CDCs immediately before amendment #20's code commit.
+BASELINE = "24d54cb"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -331,6 +352,18 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     diff-scope filter for orchestrator's surface lives in
         #     orchestrator/tests/test_no_sealed_amendments.py.
         "safety-layer",
+        # Amendment #20 (S2 silent-except bundle):
+        #   - `self-correction` admitted as a new amended sealed
+        #     component in this amendment window. Sites 1-5 land under
+        #     self-correction/src/{triggers,completion_check,
+        #     observability}.py + self-correction/tests/. Sites 6-8
+        #     land under graceful-degradation/ (already admitted from
+        #     prior amendments). Sites 9-10 land under observability-
+        #     aggregator/ (already admitted). hands-off-lifecycle's
+        #     counterpart is the BASELINE bump above + this admission
+        #     + SEAL_COMMIT sidecar refresh + amendment-cycle narrative
+        #     in seals/SEAL_COMMIT.true-first-run.
+        "self-correction",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

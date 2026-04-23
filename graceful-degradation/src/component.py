@@ -438,9 +438,18 @@ class DegradationComponent:
     def _any_paused_scope_user_relevant(self, ep: ActiveEpisode) -> bool:
         for sid in ep.paused_scope_ids:
             scope = None
+            # Amendment #20 — Site 6: replace silent continue with an
+            # emitter. A lookup failure that silently drops one scope
+            # from the user-relevance check could suppress notifications
+            # for a user-relevant episode.
             try:
                 scope = self.scope_runtime.get(sid)  # type: ignore[attr-defined]
-            except Exception:
+            except Exception as e:
+                obs.scope_lookup_failed(
+                    episode_id=ep.episode_id,
+                    scope_id=sid,
+                    exception_class=type(e).__name__,
+                )
                 continue
             if scope is not None and scope_has_user_relevant_escalation(scope):
                 return True
@@ -497,6 +506,11 @@ class DegradationComponent:
             # stored row.
             ep_row = self.store.get_episode(plan.active_episode_id)
             if ep_row is not None:
+                # Amendment #20 — Site 7: replace silent ValueError
+                # pass with an emitter. A stored mode/policy value
+                # that no longer maps to an enum (schema drift across
+                # restarts) is dropped from the in-memory rebuild; the
+                # span surfaces the drop so an operator sees it.
                 try:
                     mode = DegradationMode(ep_row.mode)
                     policy = Policy(ep_row.policy)
@@ -510,6 +524,11 @@ class DegradationComponent:
                         failed_scope_ids=list(ep_row.failed_scope_ids),
                         notification_sent=ep_row.notification_sent_at is not None,
                     )
-                except ValueError:
-                    pass
+                except ValueError as e:
+                    obs.reconcile_restore_failed(
+                        episode_id=ep_row.episode_id,
+                        mode_value=ep_row.mode,
+                        policy_value=ep_row.policy,
+                        exception_class=type(e).__name__,
+                    )
         return plan

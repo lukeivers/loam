@@ -137,12 +137,21 @@ def episode_started(
         span.set_attribute("pos.degradation.policy", policy)
         span.set_attribute("pos.degradation.mode", mode)
         span.set_attribute("pos.degradation.paused_scope_count", len(paused_scope_ids))
+        # Amendment #20 — Site 8: replace silent fallback with a span
+        # event on the already-open span so the attribute-set failure
+        # (e.g. string too long for SDK limit) is observable.
         try:
             span.set_attribute(
                 "pos.degradation.paused_scope_ids", ",".join(paused_scope_ids)
             )
-        except Exception:
-            pass
+        except Exception as e:
+            span.add_event(
+                "paused_scope_ids_attr_failed",
+                {
+                    "exception_class": type(e).__name__,
+                    "count": len(paused_scope_ids),
+                },
+            )
 
 
 def episode_resolved(
@@ -200,3 +209,53 @@ def notification_dispatched(
             "pos.degradation.threshold_triggered", threshold_triggered
         )
         span.set_attribute("pos.notification.tier", tier)
+
+
+# ---- Amendment #20 — S2 silent-except observability surfaces ----------
+#
+# Two emitters introduced by amendment #20 (2026-04-22 S2 silent-except
+# bundle) to replace two silent `except ...: pass|continue` branches in
+# component.py.
+
+
+def scope_lookup_failed(
+    *,
+    episode_id: str,
+    scope_id: str,
+    exception_class: str,
+) -> None:
+    """Site 6 surface — `_any_paused_scope_user_relevant` scope lookup.
+
+    A silent drop on a per-scope lookup failure could downgrade an
+    episode's user-relevance and suppress notifications; this span
+    makes the drop observable.
+    """
+    with _TRACER.start_as_current_span(
+        "pos.degradation.scope_lookup_failed"
+    ) as span:
+        span.set_attribute("pos.degradation.episode_id", episode_id)
+        span.set_attribute("pos.degradation.scope_id", scope_id)
+        span.set_attribute("pos.degradation.exception_class", exception_class)
+
+
+def reconcile_restore_failed(
+    *,
+    episode_id: str,
+    mode_value: str,
+    policy_value: str,
+    exception_class: str,
+) -> None:
+    """Site 7 surface — `reconcile_on_startup` in-memory rebuild.
+
+    A stored mode/policy value that no longer maps to an enum (schema
+    drift across restarts) is silently dropped; this span surfaces the
+    drop so an operator sees "startup reconciled N, 1 dropped-on-
+    restore."
+    """
+    with _TRACER.start_as_current_span(
+        "pos.degradation.reconcile_restore_failed"
+    ) as span:
+        span.set_attribute("pos.degradation.episode_id", episode_id)
+        span.set_attribute("pos.degradation.mode_value", mode_value)
+        span.set_attribute("pos.degradation.policy_value", policy_value)
+        span.set_attribute("pos.degradation.exception_class", exception_class)

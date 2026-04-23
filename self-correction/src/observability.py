@@ -115,11 +115,18 @@ def episode_refused(
                 **(details or {}),
             },
         )
+        # Amendment #20 — Site 4: replace silent fallback with a span
+        # event on the already-open span so the OTel-SDK/import failure
+        # is observable. The span's primary attrs still land; only the
+        # ERROR-status marker is lost, which the event now captures.
         try:
             from opentelemetry.trace.status import Status, StatusCode
             span.set_status(Status(StatusCode.ERROR, reason))
-        except Exception:
-            pass
+        except Exception as e:
+            span.add_event(
+                "status_set_failed",
+                {"exception_class": type(e).__name__},
+            )
 
 
 def cascade_escalated(
@@ -158,11 +165,15 @@ def cost_refusal_caught(
                 "pos.correction.cost_refusal_message": message,
             },
         )
+        # Amendment #20 — Site 5: same pattern as Site 4 (episode_refused).
         try:
             from opentelemetry.trace.status import Status, StatusCode
             span.set_status(Status(StatusCode.ERROR, message))
-        except Exception:
-            pass
+        except Exception as e:
+            span.add_event(
+                "status_set_failed",
+                {"exception_class": type(e).__name__},
+            )
 
 
 def record_part_persisted(
@@ -177,4 +188,76 @@ def record_part_persisted(
                 "pos.correction.episode_id": episode_id,
                 "pos.correction.record_type": record_type,
             },
+        )
+
+
+# ---- Amendment #20 — S2 silent-except observability surfaces ----------
+#
+# Three emitters introduced by amendment #20 (2026-04-22 S2 silent-except
+# bundle) to replace three silent `except ...: pass|continue` branches
+# across triggers.py and completion_check.py. Each emitter is the minimum
+# observable surface for its site's named concern (research doc §2).
+
+
+def span_attribute_lookup_failed(
+    *,
+    trigger_source: str,
+    attribute_name: str,
+    exception_class: str,
+) -> None:
+    """Site 1 surface — `build_trigger_from_span` scope-id lookup failed.
+
+    Preserves `scope_id=None` default; the dedup-degradation signal is
+    now observable instead of silently breaking dedup.
+    """
+    with _TRACER.start_as_current_span(
+        "pos.correction.span_attribute_lookup_failed"
+    ) as span:
+        _set(
+            span,
+            {
+                "pos.correction.trigger_source": trigger_source,
+                "pos.correction.attribute_name": attribute_name,
+                "pos.correction.exception_class": exception_class,
+            },
+        )
+
+
+def poll_tick(
+    *,
+    poller_name: str,
+    interval_seconds: int,
+) -> None:
+    """Site 2 surface — `OTelAnomalyPoller.run_forever` timeout iteration.
+
+    Fires once per timeout-driven loop iteration (the designed
+    sleep-with-early-wake control flow via `asyncio.wait_for` +
+    `_stopped.wait()`). Liveness is now observable.
+    """
+    with _TRACER.start_as_current_span("pos.correction.poll_tick") as span:
+        _set(
+            span,
+            {
+                "pos.correction.poller_name": poller_name,
+                "pos.correction.poll_interval_seconds": interval_seconds,
+            },
+        )
+
+
+def audit_notify_no_loop(
+    *,
+    episode_id: str,
+) -> None:
+    """Site 3 surface — `audit_subscription` one-on-one notify dropped.
+
+    The `episode_refused` span already fired upstream; this emitter
+    captures that the async notification was dropped because no running
+    loop existed to schedule it on.
+    """
+    with _TRACER.start_as_current_span(
+        "pos.correction.audit_notify_no_loop"
+    ) as span:
+        _set(
+            span,
+            {"pos.correction.episode_id": episode_id},
         )

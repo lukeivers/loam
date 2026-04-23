@@ -35,6 +35,7 @@ import re
 import uuid
 from typing import Any, Awaitable, Callable
 
+from . import observability as obs
 from .dedup import make_dedup_key, normalise_reason
 from .spec import CorrectionTrigger, TriggerSource
 
@@ -88,10 +89,18 @@ def build_trigger_from_state_transitioned(
 def build_trigger_from_span(*, span: Any) -> CorrectionTrigger:
     """Normalise an aggregator SpanRecord into a CorrectionTrigger."""
     scope_id = None
+    # Amendment #20 — Site 1: replace silent pass with an emitter. A
+    # failed scope-id extraction breaks downstream dedup (two real
+    # failures on the same scope would dedup as distinct triggers);
+    # the emitter surfaces the degradation instead of hiding it.
     try:
         scope_id = span.attributes.get("pos.scope.id")
-    except Exception:
-        pass
+    except Exception as e:
+        obs.span_attribute_lookup_failed(
+            trigger_source=TriggerSource.otel_anomaly.value,
+            attribute_name="pos.scope.id",
+            exception_class=type(e).__name__,
+        )
     name = getattr(span, "name", "") or ""
     status_message = getattr(span, "status_message", None) or ""
     normalised = normalise_reason(f"{name}:{status_message}")
@@ -249,6 +258,14 @@ class OTelAnomalyPoller:
                     self._stopped.wait(), timeout=self._interval
                 )
             except asyncio.TimeoutError:
+                # Amendment #20 — Site 2: timeout here IS the intended
+                # sleep-with-early-wake control flow (the alternate branch
+                # means _stopped was set). Emit a liveness span so the
+                # poll cadence is observable; keep the `continue`.
+                obs.poll_tick(
+                    poller_name="otel_anomaly",
+                    interval_seconds=self._interval,
+                )
                 continue
 
     def stop(self) -> None:

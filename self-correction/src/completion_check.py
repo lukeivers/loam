@@ -115,12 +115,18 @@ class CompletionPrecheck:
                 )
                 if notify is not None:
                     import asyncio
+                    # Amendment #20 — Site 3: replace silent RuntimeError
+                    # pass with an emitter. The `episode_refused` span
+                    # above already signalled the four-part-protocol
+                    # violation; this surface adds the no-loop drop so
+                    # operators can see the one-on-one notify was not
+                    # scheduled.
                     try:
                         loop = asyncio.get_running_loop()
                         loop.create_task(
                             notify(ep.episode_id, ",".join(missing_list))
                         )
                     except RuntimeError:
-                        pass
+                        obs.audit_notify_no_loop(episode_id=ep.episode_id)
 
         scope_runtime.emitter.on("*", _on_event)

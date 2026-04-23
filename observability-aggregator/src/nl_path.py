@@ -380,12 +380,22 @@ class NLPath:
             span.set_attribute("pos.prompt.type", "obs-nl-translate")
             span.set_attribute("nl.question", question[:500])
             if self._llm_translate is not None:
+                # Amendment #20 — Site 9: replace silent fallback with a
+                # span event on the already-open span so LLM-adapter
+                # regressions are observable. Fall-through to rule-based
+                # is the designed resilience path, preserved.
                 try:
                     t = self._llm_translate(question)
                     if isinstance(t, NLTranslation):
                         return t
-                except Exception:
-                    pass
+                except Exception as e:
+                    span.add_event(
+                        "llm_translate_failed",
+                        {
+                            "exception.class": type(e).__name__,
+                            "fallback": "rule_based",
+                        },
+                    )
             return rule_based_translate(question)
 
     def execute(self, question: str) -> tuple[NLTranslation, list[Any]]:
@@ -419,10 +429,17 @@ class NLPath:
             span.set_attribute("pos.prompt.type", "obs-nl-format")
             span.set_attribute("nl.rows_returned", len(rows))
             if self._llm_format is not None:
+                # Amendment #20 — Site 10: same pattern as Site 9.
                 try:
                     fmt = self._llm_format(question, rows)
                     if isinstance(fmt, CitedAnswer):
                         return fmt
-                except Exception:
-                    pass
+                except Exception as e:
+                    span.add_event(
+                        "llm_format_failed",
+                        {
+                            "exception.class": type(e).__name__,
+                            "fallback": "rule_based",
+                        },
+                    )
             return format_cited_answer(question, rows)

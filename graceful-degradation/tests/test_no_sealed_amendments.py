@@ -24,6 +24,24 @@ BASELINE history:
     the pre-amendment tip (the `docs(future-ideas)` commit codifying
     the three new CDCs immediately before this amendment's code
     commit).
+  - Advanced to 24d54cb when the S2 silent-except bundle amendment
+    (#20) opened. The 2026-04-22 audit + classifier surfaced three
+    `except ...: pass | continue` silent branches with AC:none in
+    graceful-degradation/ (site 6: component.py:443 scope lookup in
+    _any_paused_scope_user_relevant; site 7: component.py:513 ValueError
+    in reconcile_on_startup; site 8: observability.py:144 paused-scope-
+    ids attribute set). Per ODD §8 rule 8 + audit-triage-by-severity
+    CDC (bucket d — outright violations), each catch is replaced with
+    an observable-surface fix (emitter or span event). Shutdown-catch
+    CDC does NOT apply (none are teardown methods). Multi-component
+    amendment (self-correction + graceful-degradation + observability-
+    aggregator + hands-off-lifecycle). The new allowed prefixes below
+    admit the partner components (`self-correction/`,
+    `observability-aggregator/`) + `docs/rebuild/plans/` (research +
+    plan paper-trail per plan-before-code CDC). 24d54cb is the pre-
+    amendment tip — the `docs(future-ideas)` commit codifying the
+    amendment-dispatch-speedups + 529-recovery CDCs immediately before
+    amendment #20's code commit.
 
 SEAL_COMMIT: populated at seal time per the existing amendment ritual.
 """
@@ -35,7 +53,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "e8f704c"
+BASELINE = "24d54cb"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -55,7 +73,7 @@ def test_seal_commit_pinning_pattern() -> None:
     the SHA.
     """
     source = Path(__file__).read_text()
-    assert "BASELINE = \"e8f704c\"" in source
+    assert "BASELINE = \"24d54cb\"" in source
     assert "SEAL_COMMIT_PATH" in source
     # Diff call must route through _seal_commit(), not hardcoded HEAD.
     assert "{BASELINE}..{seal}" in source, (
@@ -89,6 +107,11 @@ def test_only_graceful_degradation_changed() -> None:
     #     updated in lockstep.
     #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite (brief =
     #     dispatch-time, not committed canonical artifact).
+    # Amendment #20 (S2 silent-except bundle) additions:
+    #   - `self-correction/` — partner component (sites 1-5 fixes).
+    #   - `observability-aggregator/` already present (sites 9-10).
+    #   - `docs/rebuild/plans/` already present (research + plan docs
+    #     per plan-before-code + research-before-plan CDCs).
     allowed_prefixes = (
         "graceful-degradation/",
         "data/",
@@ -104,6 +127,7 @@ def test_only_graceful_degradation_changed() -> None:
         "cost-governance/",
         "observability-aggregator/",
         "orchestrator/",
+        "self-correction/",
     )
     allowed_files: set[str] = {"docs/odd-in-pos.md"}
 

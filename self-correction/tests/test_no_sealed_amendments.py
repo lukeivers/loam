@@ -21,14 +21,19 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "f94d602"  # baseline for self-correction (per brief §9):
-# f94d602 is the tests-fix commit that pinned the seal-test pattern on
-# cost-governance and reversibility-primitive. It is the tip of the
-# sealed surface at the time self-correction opens. Diffing against
-# this commit shows ONLY self-correction's landing (plus `data/`
-# runtime output where applicable). The proposal §4.1 CR21 referenced
-# 04951b6 — the brief §9 locks in f94d602 as the authoritative
-# baseline; we follow the brief.
+BASELINE = "24d54cb"  # baseline advanced for amendment #20 (S2 silent-
+# except bundle, 2026-04-22). Prior baseline `f94d602` was the tests-fix
+# commit that pinned the seal-test pattern at self-correction's initial
+# seal; each amendment touching self-correction advances this in
+# lockstep with the SEAL_COMMIT sidecar so the diff window narrows to
+# the amendment's own surface. f94d602 → 24d54cb (the pre-amendment tip
+# — the `docs(future-ideas)` commit codifying amendment-dispatch-speedups
+# + 529-recovery CDCs immediately before amendment #20's code commit).
+#
+# Amendment #20 allowed_prefixes additions below admit the partner
+# components (`graceful-degradation/`, `observability-aggregator/`,
+# `hands-off-lifecycle/`) + `docs/rebuild/plans/` (research + plan paper-
+# trail per research-before-plan + plan-before-code CDCs).
 
 # SEAL_COMMIT is set at seal time. During build it is "HEAD" so the
 # test surfaces in-flight changes; once sealed, update to the exact
@@ -61,7 +66,7 @@ def test_CR24_seal_commit_pinning_pattern() -> None:
     """
     source = Path(__file__).read_text()
     # The module must name the BASELINE and SEAL_COMMIT_PATH constants.
-    assert "BASELINE = \"f94d602\"" in source
+    assert "BASELINE = \"24d54cb\"" in source
     assert "SEAL_COMMIT_PATH" in source
     # The diff call must use f"{BASELINE}..{seal}" with `seal` coming
     # from _seal_commit(), not "..HEAD" hardcoded. Verify the diff
@@ -85,7 +90,19 @@ def test_CR21_only_self_correction_changed() -> None:
     # `data/` is runtime test-output (observability spans.jsonl etc.),
     # not source. It is not a sealed-component amendment — treat as
     # generated artifact alongside `self-correction/`.
-    allowed_prefixes = ("self-correction/", "data/")
+    # Amendment #20 (S2 silent-except bundle) additions:
+    #   - `graceful-degradation/`, `observability-aggregator/` —
+    #     partner components (sites 6-8 + sites 9-10).
+    #   - `hands-off-lifecycle/` — cross-cutting seal counterpart.
+    #   - `docs/rebuild/plans/` — research + plan paper-trail.
+    allowed_prefixes = (
+        "self-correction/",
+        "data/",
+        "graceful-degradation/",
+        "observability-aggregator/",
+        "hands-off-lifecycle/",
+        "docs/rebuild/plans/",
+    )
     allowed_files: set[str] = set()
 
     offending = []

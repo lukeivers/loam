@@ -25,6 +25,21 @@ BASELINE history:
     the pre-amendment tip (the `docs(future-ideas)` commit codifying
     the three new CDCs immediately before this amendment's code
     commit).
+  - Advanced to 24d54cb when the S2 silent-except bundle amendment
+    (#20) opened. The 2026-04-22 audit + classifier surfaced two
+    `except Exception: pass` silent branches with AC:none in
+    observability-aggregator/src/nl_path.py (site 9: translate LLM
+    fall-through; site 10: answer LLM fall-through). Per ODD §8 rule 8
+    + audit-triage-by-severity CDC (bucket d), each catch gains a span
+    event (`llm_translate_failed` / `llm_format_failed`) on the already-
+    open pos.aggregator.nl_translate / pos.aggregator.nl_format span;
+    fall-through to rule-based translate/format is preserved. Multi-
+    component amendment (self-correction + graceful-degradation +
+    observability-aggregator + hands-off-lifecycle). The allowed
+    prefixes below admit the partner components
+    (`self-correction/`, `graceful-degradation/` already present) +
+    `docs/rebuild/plans/` (research + plan paper-trail per plan-before-
+    code CDC). 24d54cb is the pre-amendment tip.
 
 SEAL_COMMIT: populated at seal time per the existing amendment ritual.
 """
@@ -36,7 +51,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "e8f704c"
+BASELINE = "24d54cb"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -56,7 +71,7 @@ def test_seal_commit_pinning_pattern() -> None:
     the SHA.
     """
     source = Path(__file__).read_text()
-    assert "BASELINE = \"e8f704c\"" in source
+    assert "BASELINE = \"24d54cb\"" in source
     assert "SEAL_COMMIT_PATH" in source
     # Diff call must route through _seal_commit(), not hardcoded HEAD.
     assert "{BASELINE}..{seal}" in source, (
@@ -89,6 +104,10 @@ def test_only_observability_aggregator_changed() -> None:
     #     seal-diff tests + SEAL_COMMIT sidecars are updated in
     #     lockstep.
     #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite.
+    # Amendment #20 (S2 silent-except bundle) additions:
+    #   - `self-correction/` — partner component (sites 1-5 fixes).
+    #   - `graceful-degradation/` already present (sites 6-8).
+    #   - `docs/rebuild/plans/` already present (research + plan docs).
     allowed_prefixes = (
         "observability-aggregator/",
         "data/",
@@ -104,6 +123,7 @@ def test_only_observability_aggregator_changed() -> None:
         "cost-governance/",
         "graceful-degradation/",
         "orchestrator/",
+        "self-correction/",
     )
     allowed_files: set[str] = {"docs/odd-in-pos.md"}
 

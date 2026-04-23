@@ -733,4 +733,72 @@
 # windows were empty during the amendment-commit test run; this
 # seal commit advances both to 43d2f4a, narrowing the diff windows
 # to this amendment's own surface.
-43d2f4a
+#
+# 2026-04-22 — amendment #18 (delete-method-in-brief-dispatch-docs):
+# Seven `brief.md` files under `docs/rebuild/components/<comp>/` for
+# sealed components (primary-persona-loader, session-resilient-
+# orchestrator, graceful-degradation, observability-aggregator,
+# cost-governance, scope-of-work, objective-tracker) served a one-
+# time dispatch role at build-time — the proposal restated for a
+# background agent with dispatch detail (tools, halt triggers,
+# budget) — and were consumed when the builder picked up each
+# component. The components shipped and the seals landed. Per ODD
+# §2.5 and the just-landed `research-before-plan` +
+# `scope-only-dispatch` CDCs, the canonical committed-artifact set
+# going forward is proposal + plan + shipped code + seal; briefs
+# are dispatch-time artifacts, produced and consumed at dispatch
+# time, not retained as committed canonical artifacts. Per Luke's
+# R1 ruling at 2026-04-23, deleting the orphaned briefs and
+# clarifying ODD §7.4 fulfils the artifact-discipline CDC set.
+#
+# This amendment deletes all seven briefs (1328 lines of dispatch
+# paper, zero functional consumers verified by grep) and rewrites
+# `docs/odd-in-pos.md` §7.4 minimally (four sentences added, zero
+# deleted) so the brief is described as a dispatch-time artifact
+# rather than a committed canonical artifact in the five-gate
+# chain. The §2 five-gate table and the `research-plan → research
+# → proposal → brief → build` ASCII chain are unchanged — briefs
+# remain a *step*, just not a committed artifact.
+#
+# Four of the seven brief-owning components have
+# `test_no_sealed_amendments.py` seal-diff tests and required
+# allowed-prefixes / allowed-files tuple widenings (cost-
+# governance, graceful-degradation, observability-aggregator,
+# orchestrator — the last covering session-resilient-
+# orchestrator's doc slug). Three (primary-persona, scope-of-work,
+# objective-tracker) have no seal-diff test and no SEAL_COMMIT
+# sidecar; the deletions land with no seal-diff enforcement to
+# satisfy. A corrective commit extended the cost-governance,
+# graceful-degradation, observability-aggregator, orchestrator,
+# and hands-off-lifecycle tuples to cover the cross-reference
+# surface (each component's seal-diff test now tolerates every
+# other brief-owning component's `docs/rebuild/components/`
+# prefix, since the §7.4 narrative and the shared plan doc span
+# all nine components' documentation trees).
+#
+# Multi-component amendment (primary-persona-loader + session-
+# resilient-orchestrator + graceful-degradation + observability-
+# aggregator + cost-governance + scope-of-work + objective-
+# tracker + hands-off-lifecycle, nine sealed components in total
+# counting orchestrator as the session-resilient-orchestrator
+# host). Hands-off-lifecycle's counterpart is this BASELINE bump
+# + SEAL_COMMIT sidecar refresh + this amendment-cycle narrative
+# note — zero functional change. Tests post-amendment: hands-
+# off-lifecycle 8 → 8 passed (unchanged, BASELINE + narrative
+# edits only); all ten sealed components' seal-diff tests green
+# at 8bdf194; no functional module touched across the diff.
+#
+# SEAL_COMMIT re-pinned at 8bdf194 (the corrective tuple-widening
+# commit immediately following the amendment commit 4c385ed).
+# BASELINE in hands-off-lifecycle/tests/test_cross_cutting.py
+# advances from c94e146 to e8f704c (the pre-amendment tip just
+# before the amendment commit 4c385ed landed). BASELINEs in cost-
+# governance, graceful-degradation, observability-aggregator, and
+# orchestrator seal-diff tests advance to e8f704c as well. All
+# five affected SEAL_COMMIT sidecars were set to e8f704c at the
+# amendment commit itself (matching BASELINE, per the cost-
+# governance amendment-#13 pattern) so the diff windows were
+# empty during the amendment-commit and corrective-commit test
+# runs; this seal commit advances all five to 8bdf194, narrowing
+# the diff windows to this amendment cycle's own surface.
+8bdf194

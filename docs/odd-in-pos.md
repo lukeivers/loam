@@ -428,10 +428,17 @@ re-verify a scope-of-work surface before assuming it existed.
 
 ### 7.4 Brief
 
-Eve (or the proposal author) drafts the brief: the proposal restated for
-a background agent, with dispatch detail added (tools, halt triggers,
-budget). Objectives do not change between proposal and brief. If they do,
-the proposal was wrong and should be corrected first.
+Eve (or the proposal author) drafts the brief at dispatch time: the
+proposal restated for a background agent, with dispatch detail added
+(tools, halt triggers, budget). Objectives do not change between
+proposal and brief. If they do, the proposal was wrong and should be
+corrected first. The brief is a dispatch-time artifact — produced when a
+builder is dispatched, consumed by that builder, not retained as a
+committed canonical artifact. The canonical artifact set that lives in
+the repo is proposal + plan + shipped code + seal. (This matches the
+`scope-only-dispatch` CDC — the dispatch carries objective, scope,
+constraints, halt triggers, and ODD-check; the builder's own plan under
+`docs/rebuild/plans/` is the paper trail the repo keeps.)
 
 ### 7.5 Build
 

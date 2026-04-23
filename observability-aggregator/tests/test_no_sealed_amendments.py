@@ -11,12 +11,22 @@ self-correction retrofits. The sidecar at tests/SEAL_COMMIT carries the
 exact seal SHA; if absent or placeholder, _seal_commit() falls back to
 HEAD so mid-build diffs still exercise the test.
 
-BASELINE: a0906c1 (observability-aggregator D9 docs — the final build
+BASELINE history:
+  - a0906c1 (observability-aggregator D9 docs — the final build
     commit, tipped immediately before the 11:24 seal per STATE.md).
-SEAL_COMMIT: a0906c1 (same — retrofit diffs the seal against itself,
-    producing an empty diff that trivially passes. Future amendments
-    bump both BASELINE and SEAL_COMMIT to the new amendment's landing
-    SHA per the existing amendment ritual).
+  - Advanced to e8f704c when the delete-method-in-brief-dispatch-
+    docs amendment (#18) opened. The amendment deletes observability-
+    aggregator's historical `docs/rebuild/components/observability-
+    aggregator/brief.md` dispatch doc (per ODD §2.5 + `scope-only-
+    dispatch` / `research-before-plan` CDCs; briefs are dispatch-time
+    artifacts, not committed canonical ones) and edits docs/odd-in-
+    pos.md §7.4 accordingly. Multi-component amendment with six other
+    brief-owning sealed components + hands-off-lifecycle. e8f704c is
+    the pre-amendment tip (the `docs(future-ideas)` commit codifying
+    the three new CDCs immediately before this amendment's code
+    commit).
+
+SEAL_COMMIT: populated at seal time per the existing amendment ritual.
 """
 
 from __future__ import annotations
@@ -26,7 +36,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "a0906c1"
+BASELINE = "e8f704c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -46,7 +56,7 @@ def test_seal_commit_pinning_pattern() -> None:
     the SHA.
     """
     source = Path(__file__).read_text()
-    assert "BASELINE = \"a0906c1\"" in source
+    assert "BASELINE = \"e8f704c\"" in source
     assert "SEAL_COMMIT_PATH" in source
     # Diff call must route through _seal_commit(), not hardcoded HEAD.
     assert "{BASELINE}..{seal}" in source, (
@@ -67,8 +77,22 @@ def test_only_observability_aggregator_changed() -> None:
     # `data/` is runtime test-output (observability spans.jsonl etc.),
     # not source. It is not a sealed-component amendment — treat as
     # generated artifact alongside `observability-aggregator/`.
-    allowed_prefixes = ("observability-aggregator/", "data/")
-    allowed_files: set[str] = set()
+    # Amendment #18 (delete-method-in-brief-dispatch-docs) adds:
+    #   - `docs/rebuild/components/observability-aggregator/` — the
+    #     deleted brief.md lives under the component's doc dir.
+    #   - `docs/rebuild/plans/` — plan-before-code paper trail.
+    #   - `hands-off-lifecycle/` — cross-cutting seal counterpart
+    #     (every amendment touches this).
+    #   - `docs/odd-in-pos.md` — §7.4 rewrite (brief = dispatch-time,
+    #     not committed canonical artifact).
+    allowed_prefixes = (
+        "observability-aggregator/",
+        "data/",
+        "docs/rebuild/components/observability-aggregator/",
+        "docs/rebuild/plans/",
+        "hands-off-lifecycle/",
+    )
+    allowed_files: set[str] = {"docs/odd-in-pos.md"}
 
     offending = []
     for path in changed:

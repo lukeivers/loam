@@ -25,6 +25,19 @@ BASELINE history:
     new SHA. Advancing BASELINE to 5c49e27 (the orchestrator-
     bootstrap-unification-AC1-removal seal — the pre-amendment-#13
     tip) narrows the diff window to just this amendment's touches.
+  - Advanced to e8f704c when the delete-method-in-brief-dispatch-docs
+    amendment (#18) opened. The amendment deletes cost-governance's
+    historical `docs/rebuild/components/cost-governance/brief.md`
+    dispatch doc (the brief served a one-time dispatch-time purpose at
+    build-time; the canonical artifact set going forward is proposal
+    + plan + shipped code + seal per ODD §2.5 and the `scope-only-
+    dispatch` / `research-before-plan` CDCs) and edits
+    docs/odd-in-pos.md §7.4 to name briefs as dispatch-time artifacts
+    rather than committed canonical ones. Multi-component amendment
+    with six other brief-owning sealed components + hands-off-
+    lifecycle. e8f704c is the pre-amendment tip (the
+    `docs(future-ideas)` commit codifying the three new CDCs
+    immediately before this amendment's code commit).
 """
 
 from __future__ import annotations
@@ -34,7 +47,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "5c49e27"
+BASELINE = "e8f704c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -71,13 +84,18 @@ def test_C23_only_cost_governance_changed() -> None:
     # Amendment #13 is the first cost-governance amendment to include
     # the cross-cutting seal counterpart in the diff window — earlier
     # cost-governance state never included any post-first-seal edits.
+    # Amendment #18 (delete-method-in-brief-dispatch-docs) adds
+    # `docs/rebuild/components/cost-governance/` (the brief.md deletion
+    # lives there) and `docs/odd-in-pos.md` (the §7.4 rewrite naming
+    # briefs as dispatch-time, not canonical).
     allowed_prefixes = (
         "cost-governance/",
         "data/",
         "docs/rebuild/plans/",
         "hands-off-lifecycle/",
+        "docs/rebuild/components/cost-governance/",
     )
-    allowed_files: set[str] = set()  # no workspace-wide touches needed
+    allowed_files: set[str] = {"docs/odd-in-pos.md"}
 
     offending = []
     for path in changed:

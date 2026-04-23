@@ -11,11 +11,21 @@ seal-test diff away from HEAD. The sidecar at tests/SEAL_COMMIT carries
 the exact seal SHA; if absent or placeholder, _seal_commit() falls back
 to HEAD so mid-build diffs still exercise the test.
 
-BASELINE: dab49dd (Amendment-3 landing — the current seal surface).
-SEAL_COMMIT: dab49dd (same — retrofit diffs the seal against itself,
-    producing an empty diff that trivially passes. Future amendments
-    bump both BASELINE and SEAL_COMMIT to the new amendment's landing
-    SHA per the existing amendment ritual).
+BASELINE history:
+  - dab49dd (Amendment-3 landing — the initial seal surface at retrofit).
+  - Advanced to e8f704c when the delete-method-in-brief-dispatch-docs
+    amendment (#18) opened. The amendment deletes graceful-
+    degradation's historical `docs/rebuild/components/graceful-
+    degradation/brief.md` dispatch doc (per ODD §2.5 + `scope-only-
+    dispatch` / `research-before-plan` CDCs; briefs are dispatch-time
+    artifacts, not committed canonical ones) and edits docs/odd-in-
+    pos.md §7.4 accordingly. Multi-component amendment with six other
+    brief-owning sealed components + hands-off-lifecycle. e8f704c is
+    the pre-amendment tip (the `docs(future-ideas)` commit codifying
+    the three new CDCs immediately before this amendment's code
+    commit).
+
+SEAL_COMMIT: populated at seal time per the existing amendment ritual.
 """
 
 from __future__ import annotations
@@ -25,7 +35,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "dab49dd"
+BASELINE = "e8f704c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -45,7 +55,7 @@ def test_seal_commit_pinning_pattern() -> None:
     the SHA.
     """
     source = Path(__file__).read_text()
-    assert "BASELINE = \"dab49dd\"" in source
+    assert "BASELINE = \"e8f704c\"" in source
     assert "SEAL_COMMIT_PATH" in source
     # Diff call must route through _seal_commit(), not hardcoded HEAD.
     assert "{BASELINE}..{seal}" in source, (
@@ -66,8 +76,22 @@ def test_only_graceful_degradation_changed() -> None:
     # `data/` is runtime test-output (observability spans.jsonl etc.),
     # not source. It is not a sealed-component amendment — treat as
     # generated artifact alongside `graceful-degradation/`.
-    allowed_prefixes = ("graceful-degradation/", "data/")
-    allowed_files: set[str] = set()
+    # Amendment #18 (delete-method-in-brief-dispatch-docs) adds:
+    #   - `docs/rebuild/components/graceful-degradation/` — the
+    #     deleted brief.md lives under the component's doc dir.
+    #   - `docs/rebuild/plans/` — plan-before-code paper trail.
+    #   - `hands-off-lifecycle/` — cross-cutting seal counterpart
+    #     (every amendment touches this).
+    #   - `docs/odd-in-pos.md` — §7.4 rewrite (brief = dispatch-time,
+    #     not committed canonical artifact).
+    allowed_prefixes = (
+        "graceful-degradation/",
+        "data/",
+        "docs/rebuild/components/graceful-degradation/",
+        "docs/rebuild/plans/",
+        "hands-off-lifecycle/",
+    )
+    allowed_files: set[str] = {"docs/odd-in-pos.md"}
 
     offending = []
     for path in changed:

@@ -187,7 +187,22 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # is the pre-amendment tip — the d12-chaos-durability-split-pytest
 # seal commit (amendment #16) immediately before amendment #17's code
 # commit.
-BASELINE = "c94e146"
+# Advanced to e8f704c when the delete-method-in-brief-dispatch-docs
+# amendment (#18) opened. Seven historical `brief.md` dispatch docs
+# under `docs/rebuild/components/<comp>/` are deleted — they served a
+# one-time dispatch-time purpose at build-time and per ODD §2.5 +
+# `scope-only-dispatch` / `research-before-plan` CDCs are not
+# committed canonical artifacts (proposal + plan + shipped code +
+# seal is the canonical set). docs/odd-in-pos.md §7.4 gains four
+# sentences naming briefs as dispatch-time, not committed canonical.
+# Multi-component amendment touching seven brief-owning sealed
+# components + hands-off-lifecycle. Hands-off-lifecycle's counterpart
+# is this BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-
+# cycle narrative in seals/SEAL_COMMIT.true-first-run (zero functional
+# change). e8f704c is the pre-amendment tip — the `docs(future-ideas)`
+# commit codifying the three new CDCs immediately before this
+# amendment's code commit.
+BASELINE = "e8f704c"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

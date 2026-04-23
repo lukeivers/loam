@@ -58,7 +58,23 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              orchestrator/ but did land paths outside this component's
 #              allowed_prefixes — re-pinning narrows the diff to
 #              amendment #12's own surface.
-BASELINE = "a3bbdcd"
+#   - e8f704c  when the delete-method-in-brief-dispatch-docs amendment
+#              (#18) opened. The amendment deletes orchestrator's
+#              historical `docs/rebuild/components/session-resilient-
+#              orchestrator/brief.md` (session-resilient-orchestrator
+#              is this component's doc-slug name; the brief served a
+#              one-time dispatch-time purpose at build-time, the
+#              canonical artifact set going forward per ODD §2.5 +
+#              `scope-only-dispatch` / `research-before-plan` CDCs is
+#              proposal + plan + shipped code + seal) and edits
+#              docs/odd-in-pos.md §7.4 to name briefs as dispatch-time
+#              artifacts rather than committed canonical ones. Multi-
+#              component amendment with six other brief-owning sealed
+#              components + hands-off-lifecycle. e8f704c is the pre-
+#              amendment tip — the `docs(future-ideas)` commit
+#              codifying the three new CDCs immediately before this
+#              amendment's code commit.
+BASELINE = "e8f704c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -113,6 +129,13 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
     #     superseded-by marker on AC3.
     #   - `docs/rebuild/plans/` — the amendment's own plan file.
     #   - `first-run-inventory.yaml` — comment text scrub.
+    # Amendment #18 (delete-method-in-brief-dispatch-docs) adds:
+    #   - `docs/rebuild/components/session-resilient-orchestrator/` —
+    #     the deleted brief.md lives under the component's doc-slug
+    #     dir (session-resilient-orchestrator is this component's
+    #     doc-slug name, distinct from the orchestrator/ code tree).
+    #   - `docs/odd-in-pos.md` — §7.4 rewrite (brief = dispatch-time,
+    #     not committed canonical artifact).
     allowed_prefixes = (
         "orchestrator/",
         "hands-off-lifecycle/",
@@ -121,10 +144,14 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
         "memory-system/",
         "docs/rebuild/components/orchestrator-bootstrap-unification/",
         "docs/rebuild/components/namespaced-labels-and-bootout/",
+        "docs/rebuild/components/session-resilient-orchestrator/",
         "docs/rebuild/plans/",
         "data/",
     )
-    allowed_files: set[str] = {"first-run-inventory.yaml"}
+    allowed_files: set[str] = {
+        "first-run-inventory.yaml",
+        "docs/odd-in-pos.md",
+    }
 
     offending = []
     for path in changed:

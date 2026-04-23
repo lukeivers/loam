@@ -152,6 +152,43 @@ Applied immediately to true-first-run (Phase 5 second component): the first-run 
 
 Design principle for future components: any setup code should answer the question *"how do I remove myself on success?"* as part of its scope, not as a maintenance afterthought.
 
+## Core Development Convention — research before plan for non-trivial new work
+
+> **When building a new solution (including a bug fix that produces a net-new solution rather than modifying an existing one), if the work is more complex than a very simple task, a research step is required before the plan step.**
+
+Rationale. The existing plan-before-code CDC prevents "dive straight into editing." But for new solutions, the plan itself benefits from prior research — exploring adjacent components, reading authoritative docs, confirming constraints, surveying existing primitives — so the plan doesn't propose something that turns out to be infeasible, redundant with an existing surface, or structurally wrong. Research is not required for: (a) modifying an already-present solution, (b) tasks that are very simple (e.g. a rename, a single-line edit, a trivial deletion of orphaned code). Research IS required for: building a new component, adding a new cross-component surface, implementing a non-trivial feature inside an existing component, writing a non-trivial test harness, refactoring that crosses component boundaries. "Very simple" is a judgement call by the dispatcher; when uncertain, run research. The research step is bounded — produce a research document sized proportionately to the work, not an exhaustive survey.
+
+How to apply. Before drafting the plan document for non-trivial new work, produce a research artifact (a short research doc, a set of findings, a primary-source catalogue) at `docs/rebuild/plans/research/<name>.md` or inline in the plan's §"Research findings" section. The plan then builds on the research rather than inferring from first principles.
+
+Applied immediately to all new-solution work from 2026-04-22 forward.
+
+## Core Development Convention — shutdown-path broad-catch exception
+
+> **A broad `except Exception: pass` (or equivalent no-op) inside a `close()`, `stop()`, `cancel()`, `shutdown()`, `__aexit__`, or similar teardown method is ODD-legit without per-component acceptance-criterion backing. All other silent exception branches remain §8 rule 8 violations and require AC backing or explicit observable fallback.**
+
+Rationale. Pos-v2 components universally need to tear down cleanly without raising — shutdown noise shouldn't cascade or propagate. This pattern appeared in 44 places across 14 components during the 2026-04-22 silent-exception audit. Making each component individually author an AC like "shutdown completes without raising" is pure ritual; the pattern is a universal engineering invariant, not a per-component objective. This CDC codifies the tacit rule so future audits can filter these catches as legitimate rather than flagging them anew each pass.
+
+How to apply. When auditing exception-handling in production code, skip broad-catch blocks that sit inside teardown methods named `close`, `stop`, `cancel`, `shutdown`, `__aexit__`, `dispose`, or semantically-equivalent cleanup entrypoints. Flag every other silent except. When writing new teardown code, a broad catch in the teardown path is acceptable and doesn't require AC authorship; everywhere else, the standard §8 rule 8 applies.
+
+Applied immediately to all exception-handling audits from 2026-04-22 forward.
+
+## Core Development Convention — audit-finding triage by severity
+
+> **Audit findings where no named acceptance criterion backs the code in question (`AC:none`) are triaged by risk severity rather than treated as uniformly mandatory fixes. Outright silent-except violations (no observable surface, no typed-result conversion, no teardown-path exception per the shutdown-path CDC) are fixed. Patterns recognised as legitimate engineering practice are codified as CDC exceptions (like the shutdown-path CDC). Borderline cases (e.g. missing-file fallbacks) graduate by adding AC backing, promoting to violations, or codifying as accepted.**
+
+Rationale. Strict §2.5 read demands every line of production code map to a named AC. Realistically, some patterns are universal engineering invariants (teardown-path cleanup, structured-error return types, optional-config defaults) that don't require per-component AC authorship and would only be ceremony if required. Pragmatism requires a triage scheme. This CDC records the scheme explicitly so future audits don't re-raise already-resolved patterns, and so the boundary between "fix it" and "codify the exception" has a procedure rather than being re-negotiated per audit.
+
+How to apply. When an audit turns up a finding with `AC:none`, ask:
+
+1. Is this a pattern already codified as a CDC exception? If yes, skip.
+2. Is the exception observably surfaced to the caller (typed result, log, event emission)? If yes, likely legit — categorise as exception-to-result conversion, skip.
+3. Is this a recognised engineering-universal pattern worth codifying as a new CDC? If yes, propose the CDC first, then skip.
+4. Is this a genuine silent swallow with no observable surface? Fix it — promote to a violation, amend.
+
+The amendment that fixes (4) findings can batch them by risk profile (safety-critical paths first, user-visible next, internal/observability third).
+
+Applied immediately to all audit triage from 2026-04-22 forward.
+
 ---
 
 ## Idea 1 — Three-lens enforcement programme

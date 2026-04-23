@@ -917,4 +917,87 @@
 # this seal commit to narrow the diff window to this amendment's
 # own surface. The other sealed components' BASELINEs remain pinned
 # at their respective prior amendment windows.
-1c25a70
+#
+# ---- Amendment #21 (S3 silent-except bundle) --------------------
+#
+# The 2026-04-22 silent-exception audit + classifier surfaced six
+# remaining `except ...: pass | continue` branches tagged `AC:none`
+# after the S1 + S2 bundles. Research re-verified each site per the
+# audit-triage-by-severity CDC and dropped two (sites 4 + 5 in
+# `hands-off-lifecycle/hooks/first_run_inventory.py::_parse_scalar`
+# — textbook duck-typed numeric parse-dispatch; the exception IS
+# the branch signal and the return TYPE is the observable surface;
+# bucket (a)). The former Site 3 in
+# `telegram-interface/src/availability.py::stop_background()` stayed
+# dropped per the re-dispatch note (bucket (b) teardown catch). Four
+# fixes remain:
+#
+#   Site 1 — scope-of-work/src/triggers.py:65 — active_seconds_elapsed
+#            ISO-timestamp parse. Stale elapsed returned silently;
+#            time-axis budget remaining + stuck detection affected.
+#   Site 2 — scope-of-work/src/projection.py:150 — apply_event
+#            StateTransitioned time-accounting parse. Under-counted
+#            cumulative seconds with no diagnostic.
+#   Site 3 — telegram-interface/src/allowlist.py:150 — identities()
+#            loop skip on malformed pos_identities record. An
+#            operator could not distinguish "record corrupt" from
+#            "user unknown" on lookup misses.
+#   Site 6 — memory-system/src/observability.py:239 — _read_jsonl
+#            malformed-line skip. read_spans / read_tokens / read_
+#            audit + per_prompt_cost (R12) under-reported silently.
+#
+# Per ODD §8 rule 8 + audit-triage-by-severity CDC (bucket d —
+# outright violations), each site replaces its silent catch with an
+# observable surface: new emitter
+# `emit_projection_parse_failure(scope_id, field, exception_class)`
+# in scope-of-work/src/observability.py (covers Sites 1 + 2); new
+# emitter `allowlist_record_malformed(user_id, exception_class,
+# missing_key)` in telegram-interface/src/observability.py (covers
+# Site 3); re-used `record_audit(operation=
+# "observability.jsonl_line_malformed", ...)` in memory-system/src/
+# observability.py (covers Site 6 — the D7 contract keeps this
+# module OTel-SDK-free, so the module's own durable audit channel
+# is the correct surface). Each fix preserves existing behaviour at
+# the call site (stale-but-safe elapsed / None return / iteration
+# continuation / robust read). None of the 4 remaining sites are
+# teardown methods (shutdown-catch CDC does not apply). No public
+# exception-raising contract changes; no record shape is mutated;
+# no method begins raising a new exception class.
+#
+# Multi-component amendment (scope-of-work + telegram-interface +
+# memory-system + hands-off-lifecycle). scope-of-work is NOT a
+# sealed component (no SEAL_COMMIT sidecar, no per-component seal-
+# diff test); its diff-scope coverage rides on the H19 allowed-set
+# admission in tests/test_cross_cutting.py. Hands-off-lifecycle's
+# counterpart in this amendment is this BASELINE bump + SEAL_COMMIT
+# sidecar refresh + this amendment-cycle narrative + admission of
+# `scope-of-work` to the H19 allowed top-level set (new amended
+# unsealed component in this amendment window; `telegram-interface`
+# already present from amendment #9, `memory-system` already
+# present from amendment #8). Tests post-amendment: scope-of-work
+# 77 → 79 (+2 new-behaviour tests covering sites 1-2),
+# telegram-interface 30 → 31 (+1 new-behaviour test covering site
+# 3), memory-system 67 → 68 (+1 new-behaviour test covering site
+# 6), hands-off-lifecycle 66 → 66 (zero functional change). All ten
+# sealed components' seal-diff tests green at ff21e18.
+#
+# SEAL_COMMIT re-pinned at 7d27f00 (the corrective commit after the
+# amendment commit ff21e18 — amendment #9's AC7 structural check
+# needed pinning to amendment #9's exact window, since this
+# amendment #21 legitimately edits telegram-interface/src/; that
+# pinning landed as a corrective fix per the "no --amend; new
+# corrective commit if you miss a file" cycle rule). BASELINE in
+# hands-off-lifecycle/tests/test_cross_cutting.py advances from
+# 24d54cb to 3b128c3 (the pre-amendment tip — the pyyaml-
+# reachability seal commit immediately before amendment #21's
+# code commit). BASELINEs in telegram-interface/tests/
+# test_no_sealed_amendments.py and memory-system/tests/
+# test_no_sealed_amendments.py each advance to 3b128c3 in
+# lockstep; SEAL_COMMIT sidecars for the two (plus hands-off-
+# lifecycle) land at BASELINE (3b128c3) on the amendment commit
+# for the empty-diff window, and are advanced to 7d27f00 in this
+# seal commit to narrow the diff window to this amendment-cycle's
+# combined surface (amendment + corrective). The other sealed
+# components' BASELINEs remain pinned at their respective prior
+# amendment windows.
+7d27f00

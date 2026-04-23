@@ -501,6 +501,58 @@ the first reseal amendment.
 
 ---
 
+## Idea 12 — Open-source launch of loam
+
+Captured 2026-04-22.
+
+loam launches publicly as an open-source project once the core is
+release-ready and the Dev/SDLC plugin (Idea 3) ships. The research
+doc covers positioning, release-readiness checklist, repo hygiene,
+launch sequencing, engagement, success criteria, and risks.
+
+Top 3 next actions (from the research's executive summary):
+
+1. **Author the Dev/SDLC plugin research plan** — must-ship-at-v1
+   per Idea 3; makes loam's ODD pitch visible to the developer
+   audience.
+2. **Write single-page `docs/positioning.md`** — one-sentence pitch,
+   three-paragraph description, target personas, explicit non-goals.
+   Downstream artefacts (README, HN title, blog post) all quote from it.
+3. **Adopt Apache-2.0 + author LICENSE + CONTRIBUTING.md +
+   CODE_OF_CONDUCT.md + SECURITY.md** — signals "this is a real
+   project" to first-click reviewers; one-day task; costs the first
+   impression if missing.
+
+Biggest risk flagged by research: **maintainer burnout + bus-factor-1.**
+loam is a one-person foundation built against a health context
+(ADHD, autism, chronic pain, insomnia) that's explicitly design-in-scope
+and equally a maintenance-capacity input. Public launch adds 2-4 weeks
+of intense response labour (HN, PRs, first bugs). Without pre-launch
+recruited co-maintainer circle (or at minimum a shortlist), loam is one
+personal-circumstances change from unmaintained-famous-project failure
+mode — worse than niche adoption because it comes with stranded users.
+
+Open rulings pending from Luke:
+
+1. **Dormancy rename** (graceful-degradation → `dormancy`) pre-launch
+   or post-launch? Research recommends pre-launch.
+2. **v1 plugin count**: strictly Dev/SDLC only, or Dev/SDLC + one more?
+   Research recommends Dev/SDLC only.
+3. **Public repo ownership**: `lukeivers/loam` (personal) vs
+   `loamharness/loam` (product) vs `iverscorp/loam` (corporate)?
+   Research recommends product-brand.
+
+Full plan at `.scratch/claude-output/loam-open-source-launch-research.md`
+for timelines, repo hygiene detail, competitive positioning, content
+marketing, engagement, success criteria, and the 13-section full plan.
+
+Status: **planning phase.** Open-source launch is a project-level gate;
+loam core + Dev/SDLC plugin both need to be v1-ready before launch.
+No immediate execution; rulings on the three open questions unblock
+concrete preparation work.
+
+---
+
 ## Catalogue discipline
 
 This file is the catalogue of future directions for pOS v2. Entries here are not commitments. When an idea is picked up, it becomes a real component cycle (research plan → research → proposal → brief → build → seal) and is retired from this file with a pointer to the component that now owns it. When an idea is deliberately dropped, it is retired with a one-line rationale.

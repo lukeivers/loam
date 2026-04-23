@@ -39,6 +39,16 @@ These three lenses are captured as design principles now; the execution programm
 
 ---
 
+## Output conventions
+
+> *When any response produced by the primary persona or a dispatched agent would exceed roughly 40 lines or 400 words, the content is written to a predictable disk path and the path is referenced inline instead of inlining the content itself. The user opens the file with whatever tool fits the current interface — `open`, `less`, or `bat` from a terminal; an attachment through Telegram; the inline viewer or `open` from the Claude app.*
+
+Context tokens are finite, expensive, and lost to compaction. Inlining reports, plans, long analyses, and multi-section syntheses burns context that could otherwise carry forward useful state, and compaction discards the content regardless. Writing substantial output to disk persists the artefact at a stable path and makes it retrievable on demand without re-transmission. Short replies, direct answers, status updates, and brief summaries stay inline; the rule engages only when the content is large enough that a reader would naturally prefer a dedicated viewer over scrolling chat.
+
+In practice: when an output crosses the ~40-line / ~400-word threshold, choose a sensible path for the artefact — `/tmp/claude-output/<subject>.md` for ephemeral material, `docs/rebuild/plans/<name>.md` for canonical plans, a component-specific path for component-scoped artefacts — write the file, then inline a brief description plus the path. Format follows the content (markdown for prose and structure, plain text for logs). Opening the file is the user's call.
+
+---
+
 ## Where other guidance lives
 
 - `docs/odd-methodology.md` — the ODD methodology itself.
@@ -46,3 +56,4 @@ These three lenses are captured as design principles now; the execution programm
 - `docs/rebuild/FUTURE_IDEAS.md` — future ideas (including the Dev/SDLC plugin at Idea 3) and the currently-parked dev CDCs. The CDCs are temporary residents of that file; when the Dev/SDLC plugin lands, they migrate there.
 - `docs/rebuild/plans/` — per-amendment and per-scope plan docs (plan-before-code artefacts).
 - `docs/rebuild/components/` — proposal + seal narratives per sealed component.
+- The "Output conventions" section above governs any response from the primary persona or its dispatched agents.

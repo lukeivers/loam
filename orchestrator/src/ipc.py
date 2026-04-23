@@ -27,11 +27,15 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Awaitable, Callable
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 # Method handler signature: async def handler(params: dict) -> dict
@@ -114,12 +118,21 @@ class IPCServer:
             try:
                 w.close()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception to
+                # observability. No span in scope; logger.debug is the
+                # tightened-CDC fallback.
+                _LOGGER.debug(
+                    "ipc_server_stop_writer_close_failed",
+                    exc_info=True,
+                )
         self._clients.clear()
         try:
             if self._socket_path.exists():
                 self._socket_path.unlink()
         except FileNotFoundError:
+            # Narrow designed-branch (socket already removed) —
+            # bucket-(a) exception-to-result conversion; not covered by
+            # the tightened-CDC-2 bucket-(b) retrofit.
             pass
 
     def verify_permissions(self) -> int:
@@ -246,7 +259,12 @@ class IPCClient:
                 self._writer.close()
                 await self._writer.wait_closed()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception to
+                # observability. No span in scope; logger.debug is the
+                # tightened-CDC fallback.
+                _LOGGER.debug(
+                    "ipc_client_close_writer_failed", exc_info=True
+                )
         self._reader = None
         self._writer = None
 

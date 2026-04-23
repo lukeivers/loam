@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -46,6 +47,8 @@ from opentelemetry import trace
 
 
 _TRACER = trace.get_tracer("pos.hands_off_lifecycle", "0.1.0")
+
+_LOGGER = logging.getLogger(__name__)
 
 
 # ---- error codes reserved to this component --------------------------
@@ -265,8 +268,16 @@ class MemorySupervisor:
             self._probe_task.cancel()
             try:
                 await self._probe_task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError:
+                # Expected flow on cancel — bare pass per tightened CDC 2.
                 pass
+            except Exception:
+                # Amendment #26 — teardown CDC 2: surface exception to
+                # observability. No component-owned span open at this
+                # site; logger.debug is the tightened-CDC fallback.
+                _LOGGER.debug(
+                    "supervisor_stop_probe_task_failed", exc_info=True
+                )
             self._probe_task = None
 
     async def _loop(self) -> None:

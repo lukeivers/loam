@@ -21,7 +21,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "9559ca7"  # baseline advanced for amendment #20 (S2 silent-
+BASELINE = "dd11677"  # baseline advanced for amendment #20 (S2 silent-
 # except bundle, 2026-04-22). Prior baseline `f94d602` was the tests-fix
 # commit that pinned the seal-test pattern at self-correction's initial
 # seal; each amendment touching self-correction advances this in
@@ -66,7 +66,7 @@ def test_CR24_seal_commit_pinning_pattern() -> None:
     """
     source = Path(__file__).read_text()
     # The module must name the BASELINE and SEAL_COMMIT_PATH constants.
-    assert "BASELINE = \"9559ca7\"" in source
+    assert "BASELINE = \"dd11677\"" in source
     assert "SEAL_COMMIT_PATH" in source
     # The diff call must use f"{BASELINE}..{seal}" with `seal` coming
     # from _seal_commit(), not "..HEAD" hardcoded. Verify the diff
@@ -109,6 +109,7 @@ def test_CR21_only_self_correction_changed() -> None:
         "telegram-interface/",
         "tools/",
         "workspace-bootstrap/",
+        "safety-layer/",
     )
     allowed_files: set[str] = {"CLAUDE.md", "docs/odd-in-pos.md", "docs/odd-methodology.md", "docs/rebuild/FUTURE_IDEAS.md"}
 

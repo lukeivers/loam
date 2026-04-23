@@ -16,10 +16,14 @@ reversibility-primitive's store).
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 import threading
 from pathlib import Path
 from typing import Any, Iterable
+
+
+_LOGGER = logging.getLogger(__name__)
 
 from .spec import (
     CeilingAdjustment,
@@ -112,7 +116,12 @@ class CostStore:
             try:
                 self._conn.close()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception to
+                # observability. No span in scope at this catch site;
+                # logger.debug is the tightened-CDC fallback.
+                _LOGGER.debug(
+                    "cost_store_close_failed", exc_info=True
+                )
 
     # ---- reservations ----------------------------------------------
 

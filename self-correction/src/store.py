@@ -11,11 +11,15 @@ Four tables with WAL + `synchronous=FULL` + `foreign_keys=ON`:
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import threading
 import time
 from pathlib import Path
 from typing import Any
+
+
+_LOGGER = logging.getLogger(__name__)
 
 from .spec import (
     CorrectionEpisode,
@@ -117,7 +121,12 @@ class CorrectionStore:
             try:
                 self._conn.close()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception to
+                # observability. No span in scope; logger.debug is the
+                # tightened-CDC fallback.
+                _LOGGER.debug(
+                    "self_correction_store_close_failed", exc_info=True
+                )
 
     # ---- triggers --------------------------------------------------
 

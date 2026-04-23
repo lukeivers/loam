@@ -20,12 +20,16 @@ that directory exists; tests can skip persona loading by omitting it.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any, ClassVar
 
 import yaml
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class PrimaryPersonaContribution(BaseContribution):
@@ -85,6 +89,11 @@ class PrimaryPersonaContribution(BaseContribution):
                 await orch._shutdown(clean=False)
                 orch.close()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception via
+                # logger.debug (no span in scope at adapter shutdown).
+                _LOGGER.debug(
+                    "primary_persona_adapter_shutdown_failed",
+                    exc_info=True,
+                )
 
         host.register_shutdown("primary_persona", _shutdown)

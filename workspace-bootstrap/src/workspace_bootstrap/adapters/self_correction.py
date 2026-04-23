@@ -10,9 +10,13 @@ self-correction's brief, it is a consumer of the three-gate chain.
 
 from __future__ import annotations
 
+import logging
 from typing import ClassVar
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SelfCorrectionContribution(BaseContribution):
@@ -68,6 +72,11 @@ class SelfCorrectionContribution(BaseContribution):
             try:
                 store.close()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception via
+                # logger.debug (no span in scope at adapter shutdown).
+                _LOGGER.debug(
+                    "self_correction_adapter_shutdown_failed",
+                    exc_info=True,
+                )
 
         host.register_shutdown("self_correction", _shutdown)

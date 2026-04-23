@@ -6,9 +6,13 @@ reversibility runs between safety (outermost) and cost (innermost).
 
 from __future__ import annotations
 
+import logging
 from typing import Any, ClassVar
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ReversibilityPrimitiveContribution(BaseContribution):
@@ -75,6 +79,11 @@ class ReversibilityPrimitiveContribution(BaseContribution):
             try:
                 store.close()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception via
+                # logger.debug (no span in scope at adapter shutdown).
+                _LOGGER.debug(
+                    "reversibility_primitive_adapter_shutdown_failed",
+                    exc_info=True,
+                )
 
         host.register_shutdown("reversibility_primitive", _shutdown)

@@ -17,12 +17,16 @@ Config: `observability.yaml` under host.config_dir, with keys:
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import ClassVar
 
 import yaml
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ObservabilityAggregatorContribution(BaseContribution):
@@ -58,10 +62,18 @@ class ObservabilityAggregatorContribution(BaseContribution):
             try:
                 processor.shutdown()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception via
+                # logger.debug (no span in scope at adapter shutdown).
+                _LOGGER.debug(
+                    "aggregator_processor_shutdown_failed",
+                    exc_info=True,
+                )
             try:
                 exporter.shutdown()
             except Exception:
-                pass
+                _LOGGER.debug(
+                    "aggregator_exporter_shutdown_failed",
+                    exc_info=True,
+                )
 
         host.register_shutdown("observability_aggregator", _shutdown)

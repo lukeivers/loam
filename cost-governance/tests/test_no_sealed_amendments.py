@@ -47,7 +47,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "9559ca7"
+BASELINE = "dd11677"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -126,6 +126,7 @@ def test_C23_only_cost_governance_changed() -> None:
         "telegram-interface/",
         "tools/",
         "workspace-bootstrap/",
+        "safety-layer/",
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",

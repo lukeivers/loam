@@ -17,9 +17,13 @@ against the sealed integration test shows the inverse is required
 
 from __future__ import annotations
 
+import logging
 from typing import Any, ClassVar
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class CostGovernanceContribution(BaseContribution):
@@ -82,6 +86,11 @@ class CostGovernanceContribution(BaseContribution):
             try:
                 store.close()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception via
+                # logger.debug (no span in scope at adapter shutdown).
+                _LOGGER.debug(
+                    "cost_governance_adapter_shutdown_failed",
+                    exc_info=True,
+                )
 
         host.register_shutdown("cost_governance", _shutdown)

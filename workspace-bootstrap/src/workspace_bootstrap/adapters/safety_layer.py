@@ -6,9 +6,13 @@ so at dispatch time safety runs first.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, ClassVar
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SafetyLayerContribution(BaseContribution):
@@ -90,6 +94,11 @@ class SafetyLayerContribution(BaseContribution):
             try:
                 store.close()
             except Exception:
-                pass
+                # Amendment #26 — teardown CDC 2: surface exception via
+                # logger.debug (no span in scope at adapter shutdown).
+                _LOGGER.debug(
+                    "safety_layer_adapter_shutdown_failed",
+                    exc_info=True,
+                )
 
         host.register_shutdown("safety_layer", _shutdown)

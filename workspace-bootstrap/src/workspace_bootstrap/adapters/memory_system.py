@@ -27,6 +27,7 @@ become healthy within the timeout.
 
 from __future__ import annotations
 
+import logging
 import subprocess
 import time
 import urllib.error
@@ -38,6 +39,9 @@ import yaml
 
 from ..errors import AdapterRaisedError
 from ..spec import BaseContribution, ContributionMetadata, Phase
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class MemorySystemContribution(BaseContribution):
@@ -93,10 +97,21 @@ class MemorySystemContribution(BaseContribution):
                                     proc.terminate()
                                     proc.wait(timeout=5.0)
                                 except Exception:
+                                    # Amendment #26 — teardown CDC 2:
+                                    # surface terminate-path exception
+                                    # via logger.debug before falling
+                                    # back to SIGKILL.
+                                    _LOGGER.debug(
+                                        "memory_system_adapter_terminate_failed",
+                                        exc_info=True,
+                                    )
                                     try:
                                         proc.kill()
                                     except Exception:
-                                        pass
+                                        _LOGGER.debug(
+                                            "memory_system_adapter_kill_failed",
+                                            exc_info=True,
+                                        )
 
                             host.register_shutdown("memory_system", _shutdown)
                         return

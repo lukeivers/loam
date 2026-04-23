@@ -13,10 +13,14 @@ at the scale the gate fires.
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
+
+
+_LOGGER = logging.getLogger(__name__)
 
 from .events import (
     AskDecisionRecord,
@@ -76,7 +80,10 @@ class SafetyStore:
         try:
             self._conn.close()
         except Exception:
-            pass
+            # Amendment #26 — teardown CDC 2: surface exception to
+            # observability. No span in scope; logger.debug is the
+            # tightened-CDC fallback.
+            _LOGGER.debug("safety_store_close_failed", exc_info=True)
 
     # ---- ask decisions ----------------------------------------------
 

@@ -51,7 +51,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "9559ca7"
+BASELINE = "dd11677"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -71,7 +71,7 @@ def test_seal_commit_pinning_pattern() -> None:
     the SHA.
     """
     source = Path(__file__).read_text()
-    assert "BASELINE = \"9559ca7\"" in source
+    assert "BASELINE = \"dd11677\"" in source
     assert "SEAL_COMMIT_PATH" in source
     # Diff call must route through _seal_commit(), not hardcoded HEAD.
     assert "{BASELINE}..{seal}" in source, (
@@ -129,6 +129,7 @@ def test_only_observability_aggregator_changed() -> None:
         "telegram-interface/",
         "tools/",
         "workspace-bootstrap/",
+        "safety-layer/",
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",

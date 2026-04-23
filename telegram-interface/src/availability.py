@@ -14,6 +14,7 @@ is probe-only.
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import time
 from dataclasses import dataclass, field
@@ -22,6 +23,9 @@ from pathlib import Path
 from typing import Awaitable, Callable
 
 from . import observability as obs
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 PROBE_INTERVAL_S = 60.0
@@ -209,8 +213,16 @@ class AvailabilityProbe:
         self._background_task.cancel()
         try:
             await self._background_task
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError:
+            # Expected flow on cancel — bare pass per tightened CDC 2.
             pass
+        except Exception:
+            # Amendment #26 — teardown CDC 2: surface exception to
+            # observability. No span in scope; logger.debug is the
+            # tightened-CDC fallback.
+            _LOGGER.debug(
+                "availability_stop_background_failed", exc_info=True
+            )
         self._background_task = None
 
     async def _run_background(self) -> None:

@@ -52,7 +52,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "9559ca7"
+BASELINE = "dd11677"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -109,6 +109,7 @@ def test_tg23_only_telegram_interface_changed() -> None:
         "reversibility-primitive/",
         "self-correction/",
         "tools/",
+        "safety-layer/",
     )
     allowed_files: set[str] = {"CLAUDE.md", "docs/odd-in-pos.md", "docs/odd-methodology.md", "docs/rebuild/FUTURE_IDEAS.md"}
 

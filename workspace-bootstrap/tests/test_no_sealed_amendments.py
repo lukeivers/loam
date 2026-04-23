@@ -119,7 +119,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              c94e146 is the pre-amendment tip — amendment #16's
 #              seal commit (d12-chaos-durability-split-pytest)
 #              immediately before this amendment's code commit.
-BASELINE = "9559ca7"
+BASELINE = "dd11677"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -222,6 +222,7 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "reversibility-primitive/",
         "self-correction/",
         "tools/",
+        "safety-layer/",
     )
     allowed_files: set[str] = {
         "first-run-inventory.yaml",

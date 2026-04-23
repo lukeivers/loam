@@ -41,6 +41,7 @@ wiring co-located reads more cleanly than splitting them.
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import signal
 import time
@@ -60,6 +61,9 @@ from .config import OrchestratorConfig
 from .errors import BindRefused, ScopeNotPending
 from .ipc import ApplicationError, IPCServer
 from .local_state import LocalStateStore
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 _SCOPE_NOT_PENDING_CODE = -32020
@@ -221,8 +225,18 @@ class Orchestrator:
             self._heartbeat_task.cancel()
             try:
                 await self._heartbeat_task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError:
+                # Expected flow on cancel — bare pass per tightened CDC 2.
                 pass
+            except Exception as e:
+                # Amendment #26 — teardown CDC 2: _process_span is live
+                # through line 257; surface the exception via
+                # span.add_event.
+                obs.emit_event(
+                    self._process_span,
+                    "pos.orchestrator.heartbeat_stop_exception",
+                    {"exception_class": type(e).__name__},
+                )
             self._heartbeat_task = None
 
         if self.monitor is not None:
@@ -230,21 +244,47 @@ class Orchestrator:
                 await asyncio.wait_for(
                     self.monitor.stop(), timeout=self.config.sigterm_grace_seconds
                 )
-            except (asyncio.TimeoutError, Exception):
-                pass
+            except asyncio.TimeoutError as e:
+                # Amendment #26 — teardown CDC 2: sigterm_grace timeout
+                # is a distinct operational signal from broad-Exception,
+                # not expected-flow. Emit on _process_span (live here).
+                obs.emit_event(
+                    self._process_span,
+                    "pos.orchestrator.monitor_stop_timeout",
+                    {
+                        "exception_class": type(e).__name__,
+                        "grace_seconds": self.config.sigterm_grace_seconds,
+                    },
+                )
+            except Exception as e:
+                obs.emit_event(
+                    self._process_span,
+                    "pos.orchestrator.monitor_stop_exception",
+                    {"exception_class": type(e).__name__},
+                )
 
         if self.ipc_server is not None:
             try:
                 await self.ipc_server.stop()
-            except Exception:
-                pass
+            except Exception as e:
+                # Amendment #26 — teardown CDC 2: emit on _process_span.
+                obs.emit_event(
+                    self._process_span,
+                    "pos.orchestrator.ipc_server_stop_exception",
+                    {"exception_class": type(e).__name__},
+                )
             self.ipc_server = None
 
         if self.scope_runtime is not None:
             try:
                 self.scope_runtime.close()
-            except Exception:
-                pass
+            except Exception as e:
+                # Amendment #26 — teardown CDC 2: emit on _process_span.
+                obs.emit_event(
+                    self._process_span,
+                    "pos.orchestrator.scope_runtime_close_exception",
+                    {"exception_class": type(e).__name__},
+                )
 
         if clean:
             self.local_state.append(
@@ -285,7 +325,12 @@ class Orchestrator:
         try:
             self.local_state.close()
         except Exception:
-            pass
+            # Amendment #26 — teardown CDC 2: _process_span is already
+            # ended by the time close() runs; logger.debug is the
+            # tightened-CDC fallback when no span is in scope.
+            _LOGGER.debug(
+                "orchestrator_close_local_state_failed", exc_info=True
+            )
 
     # ------------------------------------------------------------------
     # Heartbeat

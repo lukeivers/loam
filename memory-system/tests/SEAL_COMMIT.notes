@@ -1,0 +1,30 @@
+# Amendment #25 — memory-system BGE reranker swap
+
+`make_graphiti` now passes an explicit `cross_encoder=
+LazyBGERerankerClient()` to the `Graphiti` constructor.
+Eliminates a latent missing-`OPENAI_API_KEY` failure in the
+rerank path: graphiti-core 0.28.2 silently defaults unset
+`cross_encoder` to `OpenAIRerankerClient()`, whose first
+`rank()` call raises `openai.AuthenticationError` because we
+never configure `OPENAI_API_KEY` (amendment #8 removed billed-
+API coupling from the LLM path; the reranker was the last
+holdout).
+
+The local replacement is `graphiti_core.cross_encoder.
+bge_reranker_client.BGERerankerClient`, backed by the
+`BAAI/bge-reranker-v2-m3` cross-encoder via
+`sentence-transformers` (new dep, `>=3.2.1` floor matching
+graphiti-core's declared extra).
+
+Lazy wrapper (`LazyBGERerankerClient`) defers the BGE model
+load from `__init__` to first `rank()` call. Without it,
+factory construction would trigger a ~1 GB HF download on
+first run and seconds of weight load even when warm —
+unacceptable for the pytest suite and for amendment #24's MCP
+service startup (which calls `make_graphiti` at every launchd
+KeepAlive restart). With it, only `graphiti.search()` calls
+that actually exercise reranking pay the one-time load cost.
+
+No behaviour change on paths that don't invoke reranking.
+Shape-only assertion landed in
+`memory-system/tests/test_factory.py::test_AC25_1_*`.

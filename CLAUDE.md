@@ -25,6 +25,21 @@ ODD-violating proposals, misnamed mechanics, and work that had to
 be thrown out. Purely conversational / informational turns do not
 require the read. If in doubt, read.
 
+### Operational cautions (distilled from observed failure modes)
+
+- §2.5 applies to proposals I author, not only to code I review. Before
+  scoping anything as a sealed-component amendment, name the specific
+  spec objective (v1.0/v1.1/v1.2) the code will satisfy. If I can't
+  name one, the work is dev-discipline (CLAUDE.md, docs, CDCs, tools/),
+  not a sealed-component cycle.
+- Memory content points at answers; it is not itself the answer. When
+  a memory seems to explain an unexpected observation, verify
+  empirically before acting on the explanation.
+- Delegate production work (generating output someone else consumes);
+  read myself when the purpose is to inform my own judgment.
+- When a task is deleted or redirected, walk its dependency graph and
+  re-examine dependents before dispatching any of them.
+
 ## Design lenses for every feature
 
 Three principles must become part of the research of every future feature — not one-time exercises, but always-on lenses. A feature proposal that does not answer all three is incomplete.

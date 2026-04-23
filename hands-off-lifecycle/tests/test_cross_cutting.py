@@ -153,7 +153,25 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # true-first-run. fd7c6cf is the pre-amendment tip — the skip-
 # launchctl-dead-code-removal seal commit immediately before amendment
 # #15's code commit.
-BASELINE = "fd7c6cf"
+# Advanced to 1b144f6 when the d12-chaos-durability-split-pytest
+# amendment (#16) opened — D12 (Kuzu chaos-durability) is a named AC
+# in docs/rebuild/components/memory-system/brief-full-build.md whose
+# runner (memory-system/scripts/chaos_durability.py) + 2026-04-18
+# report (memory-system/docs/chaos-durability-report.md) ship, but
+# whose pytest coverage was missing. Amendment #16 splits D12 into
+# two test surfaces: three fast-bucket tests (durability-config
+# regression guards on make_kuzu_driver + prepare_graphiti) default-
+# on, plus one marked-slow test that invokes the full chaos runner
+# and asserts all three scenarios pass. Adds memory-system/tests/
+# test_D12_chaos_durability.py + memory-system/tests/conftest.py
+# (new — registers the ``slow`` marker). Zero edits to memory-system/
+# src/ or memory-system/scripts/. Multi-component amendment (memory-
+# system + hands-off-lifecycle). Hands-off-lifecycle's counterpart is
+# this BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-cycle
+# narrative in seals/SEAL_COMMIT.true-first-run. 1b144f6 is the pre-
+# amendment tip — the pyyaml-reachability amendment-#5 follow-up's
+# seal commit immediately before amendment #16's code commit.
+BASELINE = "1b144f6"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

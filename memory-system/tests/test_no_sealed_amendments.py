@@ -62,7 +62,24 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              zero edits to memory-system/src/. BASELINE re-pins to
 #              fd7c6cf — the skip-launchctl-dead-code-removal seal
 #              commit immediately before amendment #15's code commit.
-BASELINE = "fd7c6cf"
+#   - 1b144f6  at amendment #16 (d12-chaos-durability-split-pytest).
+#              D12 is a named AC in docs/rebuild/components/memory-
+#              system/brief-full-build.md (Kuzu chaos-durability —
+#              kill-mid-ingest, kill-mid-query, WAL-recovery) whose
+#              runner (``memory-system/scripts/chaos_durability.py``)
+#              + 2026-04-18 report (``memory-system/docs/chaos-
+#              durability-report.md``) all ship, but whose pytest
+#              coverage gap left the AC unclosed under ODD §8.2 rule
+#              9. Amendment #16 adds ``memory-system/tests/test_D12_
+#              chaos_durability.py`` (three fast-bucket tests +
+#              one marked-slow runner wrapper, each ``test_D12_*``)
+#              plus a new ``memory-system/tests/conftest.py``
+#              registering the ``slow`` marker. Zero edits to
+#              ``memory-system/src/`` or ``memory-system/scripts/``.
+#              BASELINE re-pins to 1b144f6 — the pyyaml-reachability
+#              amendment-#5 follow-up's seal commit immediately before
+#              amendment #16's code commit.
+BASELINE = "1b144f6"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

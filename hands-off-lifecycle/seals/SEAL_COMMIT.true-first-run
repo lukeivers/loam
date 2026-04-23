@@ -801,4 +801,57 @@
 # empty during the amendment-commit and corrective-commit test
 # runs; this seal commit advances all five to 8bdf194, narrowing
 # the diff windows to this amendment cycle's own surface.
-8bdf194
+#
+# Amendment cycle — S1 silent-except bundle (#19, 2026-04-22,
+# nineteenth amendment): the 2026-04-22 silent-exception audit +
+# classifier run surfaced eight `except Exception: pass | continue`
+# branches with no acceptance-criterion backing (AC:none) across
+# safety-layer/src/kill.py (sites 1–4: pause_activation on kill_
+# session + kill_system; the cancel loop inside kill_system; and
+# request_stop at the tail), safety-layer/src/controller.py (sites
+# 5–6: persona_render inside _dispatch_ask_notification and
+# _dispatch_dangerous_op_notification), and orchestrator/src/
+# supervisor.py (sites 7–8: the open and close notifier calls
+# inside _open_escalation and _close_escalation). Per ODD §8 rule 8
+# and the audit-triage-by-severity CDC (bucket d — outright
+# violations in live operational paths), each silent catch is
+# replaced with an observable-surface fix: OTel span emission plus,
+# where the caller can consume a structured error, an additive
+# record field. The shutdown-catch exception CDC does NOT apply
+# (none of the eight are teardown methods). Two records gain a
+# backwards-compatible additive field —
+# KillEventRecord.failed_scope_ids (tuple, default empty) for site
+# 3 and EscalationRecord.notification_failures (int, default 0)
+# for site 7 — no public API shape changes; no method begins
+# raising a new exception class.
+#
+# Multi-component amendment (safety-layer + orchestrator +
+# hands-off-lifecycle). Hands-off-lifecycle's counterpart in this
+# amendment is this BASELINE bump + SEAL_COMMIT sidecar refresh +
+# this amendment-cycle narrative + admission of `safety-layer` to
+# the H19 allowed top-level set in tests/test_cross_cutting.py
+# (new amended sealed component in this amendment window). Tests
+# post-amendment: safety-layer 64 → 70 (+6 new-behaviour tests
+# covering all eight sites — three for kill_system, one for
+# kill_session, two for persona_render fall-through), orchestrator
+# 73 → 75 (+2 supervisor tests covering open-path notification-
+# failure counter bump and close-path state-reconciliation
+# resilience), hands-off-lifecycle 66 → 66 (zero functional
+# change). All ten sealed components' seal-diff tests green at
+# 55c74af.
+#
+# SEAL_COMMIT re-pinned at 55c74af (the amendment commit itself —
+# this amendment ships as a single amendment commit + this seal
+# commit; no corrective commit needed). BASELINE in hands-off-
+# lifecycle/tests/test_cross_cutting.py advances from e8f704c to
+# f1ff28b (the amendment-#18 seal commit immediately before
+# amendment #19's code commit). BASELINE in orchestrator/tests/
+# test_no_sealed_amendments.py advances to f1ff28b in lockstep.
+# The other sealed components' BASELINEs remain pinned at their
+# respective prior amendment windows (their seal-diff tests run
+# over frozen BASELINE..SEAL ranges that predate this amendment).
+# Safety-layer has no BASELINE..SEAL diff test — its
+# test_no_sealed_amendments.py carries only monkey-patch / import
+# guards — so no safety-layer SEAL_COMMIT sidecar exists or is
+# needed.
+55c74af

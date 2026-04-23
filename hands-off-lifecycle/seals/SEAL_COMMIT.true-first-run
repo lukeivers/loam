@@ -535,4 +535,74 @@
 # in hands-off-lifecycle/tests/test_cross_cutting.py advances from
 # 5c49e27 to 079258f (the pre-amendment tip — docs(future-ideas):
 # capture GLiNER2, context-load gate, and slug-collision ideas).
-94bebcd
+#
+# Amendment cycle — d11-receiver-path-pytest (2026-04-22, amendment
+# #15): D11 (process-of-arrival capture ingestion) is a named AC in
+# docs/rebuild/components/memory-system/brief-full-build.md whose
+# receiver (memory-system/src/process_of_arrival.py —
+# ProcessOfArrivalReceiver + MockStreamLogProducer), working demo
+# (memory-system/scripts/poa_demo.py), and real audit-run output
+# (memory-system/data/observability_poa/audit.jsonl from a 2026-04-18
+# run) all ship. The pytest surface that asserts the AC was missing —
+# under ODD §8.2 rule 9 a demo script is not a regression surface.
+# Amendment #15 closes that coverage gap test-only; zero edits to
+# memory-system/src/. D11's AC text explicitly declares the mocked
+# path is the full proof ("*mocked, since dispatch primitive not yet
+# built*"), so no real-dispatch integration test is dormant or
+# skipif'd, and no FUTURE_IDEAS entry is added (the real-dispatch
+# idea belongs to a future dispatch-primitive component's own scope).
+#
+# New file: memory-system/tests/test_D11_process_of_arrival.py (five
+# outcome-shaped tests, each named test_D11_*):
+#   - test_D11_mock_producer_log_is_summarised_and_ingested_as_two_
+#     episodes — AC sub-behaviour #1 + #3: the mocked dispatch path
+#     lands two linked episodes (outcome + reasoning) with a non-
+#     empty summary carrying the structured headings the receiver
+#     formats from the summariser response.
+#   - test_D11_both_episodes_share_scope_id_and_dispatch_linkage —
+#     AC sub-behaviour #2 (ingest-side precondition): both episodes
+#     share scope_id, their names encode dispatch_id, and the
+#     reasoning body cross-references the outcome episode.
+#   - test_D11_reasoning_episode_is_tagged_derived_only_and_outcome_
+#     is_normal — the receiver's retention-class contract (reasoning
+#     is DERIVED_ONLY, outcome is NORMAL — the necessary-and-
+#     sufficient precondition for the "raw stream not persisted"
+#     guarantee).
+#   - test_D11_audit_record_captures_the_process_of_arrival_ingest —
+#     D7 observability contract for D11 (audit names dispatch_id,
+#     both episode UUIDs, and the retention-class decision).
+#   - test_D11_oversized_stream_is_truncated_before_summarisation —
+#     receiver invariant (config §process_of_arrival.max_stream_chars):
+#     oversized logs are truncated at the configured cap before the
+#     summariser sees them; the truncation marker is embedded in the
+#     excerpt.
+#
+# Mocking strategy: both ProcessOfArrivalReceiver constructor
+# parameters (memory_ingest: callable; llm_client: Graphiti LLMClient)
+# are documented public injection points. Tests substitute a fake
+# async callable that captures kwargs per call and returns synthetic
+# UUIDs for memory_ingest, and a fake client exposing async
+# generate_response returning a fixed _StreamSummary-shaped payload
+# for llm_client. No private attribute or method inspection, no real
+# subprocess, no real Graphiti, no network, no real DB.
+#
+# Multi-component amendment (memory-system + hands-off-lifecycle).
+# Hands-off-lifecycle's counterpart is this BASELINE bump + SEAL_
+# COMMIT sidecar refresh + this amendment-cycle narrative note —
+# zero functional change. Tests post-amendment: memory-system 62 → 67
+# (+5 new D11 tests); hands-off-lifecycle 66 → 66 (unchanged — only
+# BASELINE + narrative edits); all other sealed components unchanged,
+# their test_no_sealed_amendments suites green.
+#
+# SEAL_COMMIT re-pinned at 3457caa (the amendment commit). BASELINE
+# in memory-system/tests/test_no_sealed_amendments.py advances from
+# 77389ce to fd7c6cf (the skip-launchctl-dead-code-removal seal
+# commit immediately before amendment #15's code commit). BASELINE
+# in hands-off-lifecycle/tests/test_cross_cutting.py advances from
+# 079258f to fd7c6cf (same pre-amendment tip). Memory-system SEAL_
+# COMMIT sidecar was set to fd7c6cf at the amendment commit itself
+# (matching BASELINE, per the cost-governance amendment-#13 pattern)
+# so the B20 diff window was empty during the amendment-commit test
+# run; the seal commit advances it to 3457caa, narrowing the diff
+# window to this amendment's own surface.
+3457caa

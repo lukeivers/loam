@@ -68,6 +68,7 @@ Nine adaptation components, each with a stated objective and acceptance. None pr
 
 **Objective:** run Graphiti as a managed local service available to pOS.
 **Acceptance:** the service auto-starts with the system, restarts on failure, exposes a health check, and is queryable through the MCP interface.
+**Landed transport (amendment #24, 2026-04-22):** FastMCP on streamable-HTTP, bound to `GRAPHITI_SERVICE_HOST` / `GRAPHITI_SERVICE_PORT` (defaults `127.0.0.1:8765`), invoked by launchd via the same `python -m src.service` entrypoint the prototyping build used. Four MCP tools — `add_episode`, `search`, `health`, `token_usage` — plus a `GET /health` Starlette route alongside the MCP surface. The prototyping phase shipped this as a FastAPI + uvicorn REST service as a transport stand-in; amendment #24 swapped to MCP per Luke's R5 ruling (2026-04-23), closing the "queryable through the MCP interface" clause of the acceptance criterion.
 
 ### 5. Upgrade-fidelity test harness *(v1.1 R1)*
 

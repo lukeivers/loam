@@ -9,7 +9,12 @@ pydantic>=2.0
 python-dotenv>=1.0
 pyyaml>=6.0
 numpy>=1.26
-fastapi>=0.115
+# Amendment #24 (2026-04-22) swapped the transport layer from FastAPI
+# + uvicorn to FastMCP (streamable-HTTP). fastapi was removed; uvicorn
+# is retained as an explicit pin though it now enters via mcp's
+# transitive closure. mcp ships its own Starlette + uvicorn stack for
+# the streamable-HTTP transport.
+mcp>=1.27
 uvicorn[standard]>=0.32
 # dev / test
 pytest>=9.0

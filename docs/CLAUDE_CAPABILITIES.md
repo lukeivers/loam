@@ -581,7 +581,61 @@ _Sources (5.x): `https://code.claude.com/docs/en/plugins`, `https://code.claude.
 
 ## 6. Skills
 
-<!-- PLACEHOLDER -->
+Skills are the primary authoring surface for user-facing pos-v2 functionality that feels like a slash command. Since the slash-commands-merged-into-skills change, skills subsume most of what custom commands used to do and add directory-supporting-files, invocation control, subagent-forking, and dynamic context injection. The broad slash-command mechanics are in §1.1; this section collects the Skills-specific design patterns relevant to pos-v2.
+
+### 6.1 Skill invocation modes (from pos-v2's perspective)
+
+| Invocation shape | pos-v2 analogue |
+|------------------|------------------|
+| User types `/skill-name` explicitly | The deterministic, user-controlled dispatch. Safe default for side-effecting skills. |
+| Claude auto-invokes when description matches | Useful for reference-shaped skills (conventions, style guides, internal API docs) and read-only research skills. |
+| `disable-model-invocation: true` | Required for any skill with side effects — deploy, commit, amend, send email. Mirrors pos-v2's safety-layer posture. |
+| `user-invocable: false` | Background knowledge the persona needs but the user would never invoke directly. E.g. a "how ODD is structured" skill that Claude loads when relevant but the user never types `/`. |
+
+### 6.2 Skill composition patterns
+
+**Reference-style skills.** Static conventions / style guides / domain knowledge. Short, always-loadable. Example: a `pos-v2-odd-conventions` skill that carries the ODD methodology primer — loadable any time Claude sees an ODD-shaped task. Composes naturally with FUTURE_IDEAS.md Idea 6 (ODD as default framing) — the persona pulls the skill when it needs to think about an objective but doesn't have the full methodology in context.
+
+**Task-style skills.** Explicit procedure with side effects. Usually `disable-model-invocation: true`. Example: `/pos-amend:apply` that wraps the `pos-amend` CLI. Runs when the user types it, never auto-loads.
+
+**Forked-context skills (`context: fork`).** Run in an isolated subagent with its own context; receive the skill body as the task prompt. Good for research-shaped work that shouldn't contaminate the main conversation. Example: a `deep-research` skill forked into the `Explore` agent that scans a topic and returns a summary. Maps to the Agent-tool dispatch pattern but with a skill manifest as the entrypoint.
+
+**Dynamic-context skills.** Inline `` !`command` `` blocks run before the prompt is sent to Claude — the command's stdout replaces the placeholder. Not Claude executing; preprocessing. Example: a `pr-summary` skill that runs `gh pr diff` + `gh pr view --comments` + `gh pr diff --name-only` and stuffs the results into Claude's prompt. Replaces the "Claude, fetch the PR then summarise" two-turn pattern with a one-turn pattern.
+
+### 6.3 Skill lifecycle inside a conversation
+
+- Skill content enters the conversation as a single message when invoked.
+- Content persists for the rest of the session — Claude Code does not re-read the file on subsequent turns.
+- Auto-compaction carries recent skill invocations forward (first 5000 tokens per skill, 25000 tokens combined budget, most-recently-invoked wins).
+- **Consequence:** write skill bodies as standing instructions for the whole task, not as one-off steps.
+- If a skill seems to "stop working," the content is usually still present — Claude is choosing other approaches. Strengthen description/instructions or move enforcement to hooks.
+
+### 6.4 Composes with pos-v2
+
+- **Bundled skills in Claude Code** (`/simplify`, `/debug`, `/loop`, `/claude-api`, `/batch`, `/review`, `/security-review`, `/init`, `/schedule`, `/keybindings-help`, `/update-config`, `/fewer-permission-prompts`) are immediately available to any pos-v2 session with no authoring cost. FUTURE_IDEAS.md Idea 1 Step 1 noted `/loop` specifically as composing with scope-of-work activation cycles; `/schedule` is the natural composition for the Step 4 refresh job that updates this file.
+- **pos-v2's telegram plugin** ships `/telegram:configure` and `/telegram:access` skills — reference pattern for any future pos-v2 plugin's user-facing surface.
+- **A `.claude/skills/pos-context-load/SKILL.md`** is a plausible implementation of Idea 8 (structural context-load gate) at the skill layer — the persona invokes it before planning, the skill enumerates the design docs that must be loaded, the skill body fails if any are missing. Mechanical enforcement without inventing new pos-v2 machinery.
+- **Reference-style skills for each sealed component** could surface the component's seal notes + amendment history the moment the persona touches that component — latent composition with the "component-scoped work reads that component's artefacts" session-start discipline (CLAUDE.md).
+- **`$ARGUMENTS` + `paths` glob trigger** lets a skill auto-activate only for specific file patterns, reducing false-positive auto-loads for skills that only matter inside one component's tree.
+
+### 6.5 Pitfalls specific to skills
+
+- **Description truncation** at 1536 chars per-entry (shared across `description` and `when_to_use`). Front-load the key-use-case phrase.
+- **Reference-style skill with no task** behaves like a no-op when `context: fork` is set — the subagent receives the guidelines but no actionable prompt.
+- **Live-reload directories** are watched only if they existed at session start. Creating `~/.claude/skills/` during a live session requires restart.
+- **Managed `disableSkillShellExecution: true`** disables `` !`command` `` blocks org-wide; dynamic-context skills degrade to "shell command execution disabled by policy."
+- **"Ultrathink" in a skill body enables extended thinking** for that skill's turn — subtle feature, easy to forget; can bill unexpectedly.
+- **Precedence order is enterprise > personal > project**, so a personal skill can silently override a project one with the same unnamespaced name; namespace plugin skills to avoid.
+
+### 6.6 End-user configuration surface
+
+- Skill files: `.claude/skills/<name>/SKILL.md` (project), `~/.claude/skills/<name>/SKILL.md` (personal), `<plugin>/skills/` (plugin).
+- Enterprise managed skills: managed-settings-controlled.
+- `disableSkillShellExecution: true` setting to kill `` !`command` `` preprocessing.
+- `Skill(name)` / `Skill(name *)` permission rules.
+- `/reload-plugins` for plugin skills, live-reload for filesystem skills.
+
+_Sources (6.x): same as §1.1 — `https://code.claude.com/docs/en/slash-commands` (fetched 2026-04-23)._
 
 ---
 

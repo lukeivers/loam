@@ -106,7 +106,24 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # this cross-cutting seal). a3bbdcd is the pre-amendment tip — the
 # telegram-interface-framework-integration seal commit immediately
 # before amendment #12's code commit.
-BASELINE = "a3bbdcd"
+# Advanced to 5c49e27 when the cost-governance-C14-timing-test
+# re-extension amendment (#13) opened — the audit of cost-governance
+# surfaced that C14 (the flagship timing-inclusive acceptance
+# criterion) was under-tested. test_throttle_warning.py did not
+# assert the pre-write ordering sub-behaviour ("warning emits before
+# reservations row is written") nor the fire-once-across-multiple-
+# debits sub-behaviour ("not repeatedly per debit"). Amendment #13
+# adds two new outcome-shaped tests to close both gaps; zero source
+# edits to cost-governance — the implementation already delivers
+# both guarantees structurally. Hands-off-lifecycle's counterpart in
+# this amendment is this BASELINE bump + a `cost-governance` entry
+# in H19's allowed top-level set (new amended sealed component in
+# this amendment window) + SEAL_COMMIT sidecar refresh + an
+# amendment-cycle narrative in seals/SEAL_COMMIT.true-first-run.
+# 5c49e27 is the pre-amendment tip — the orchestrator-bootstrap-
+# unification-AC1-removal seal commit immediately before amendment
+# #13's code commit.
+BASELINE = "5c49e27"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -188,6 +205,15 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     telegram-interface component's own seal-diff test, not
         #     via top-level bucket inspection here.
         "telegram-interface",
+        # Amendment #13 (cost-governance-C14-timing-test re-extension):
+        #   - `cost-governance` admitted as a new amended sealed
+        #     component. The amendment adds two new outcome-shaped
+        #     C14 tests (pre-write ordering + fire-once-across-debits)
+        #     without touching cost-governance/src/. The finer-grained
+        #     diff-scope filter (including the `docs/rebuild/plans/`
+        #     extension for the plan-before-code paper trail) lives
+        #     in cost-governance/tests/test_no_sealed_amendments.py.
+        "cost-governance",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

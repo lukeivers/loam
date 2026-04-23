@@ -1,6 +1,6 @@
-"""C23: git diff against the reversibility-sealed baseline (f657f8c)
-shows only cost-governance/ changes. Zero deltas to any sealed
-component.
+"""C23: git diff against the pre-amendment baseline shows only
+cost-governance/ changes (plus the allowed plan-doc path). Zero
+deltas to any sealed component.
 
 Structural remedy 2026-04-20: originally pinned to cost-governance's
 own seal commit as an inline constant (fixed on commit `f94d602`
@@ -12,7 +12,19 @@ falls back to HEAD when absent/placeholder so builds on an
 unfinished seal still exercise the test. Post-seal, tests/SEAL_COMMIT
 carries the exact SHA and the diff is deterministic.
 
-BASELINE: f657f8c (reversibility-primitive seal — the previous seal).
+BASELINE history:
+  - f657f8c (reversibility-primitive seal — the original anchor).
+  - Advanced to 5c49e27 when amendment #13 (cost-governance-C14-
+    timing-test re-extension) opened. The previous anchor was
+    acceptable while cost-governance had never been amended since
+    its original seal (so the `f657f8c..04951b6` diff naturally
+    narrowed to `cost-governance/` only). Amendment #13 bumps the
+    sidecar SEAL_COMMIT to the new amendment commit; if BASELINE
+    remained at f657f8c the diff window would widen to include every
+    unrelated sealed-component amendment between 04951b6 and the
+    new SHA. Advancing BASELINE to 5c49e27 (the orchestrator-
+    bootstrap-unification-AC1-removal seal — the pre-amendment-#13
+    tip) narrows the diff window to just this amendment's touches.
 """
 
 from __future__ import annotations
@@ -22,7 +34,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "f657f8c"
+BASELINE = "5c49e27"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -48,7 +60,16 @@ def test_C23_only_cost_governance_changed() -> None:
     # `data/` is runtime test-output (observability spans.jsonl etc.),
     # not source. It is not a sealed-component amendment — treat as
     # generated artifact alongside `cost-governance/`.
-    allowed_prefixes = ("cost-governance/", "data/")
+    # `docs/rebuild/plans/` admits the plan-before-code paper trail
+    # introduced by the plan-before-code CDC (first codified at fd8c833;
+    # amendment #10 set the precedent of committing plan files with
+    # the amendment's code commit — same pattern as memory-system's
+    # and orchestrator's seal tests).
+    allowed_prefixes = (
+        "cost-governance/",
+        "data/",
+        "docs/rebuild/plans/",
+    )
     allowed_files: set[str] = set()  # no workspace-wide touches needed
 
     offending = []

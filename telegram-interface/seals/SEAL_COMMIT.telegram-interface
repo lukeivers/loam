@@ -12,4 +12,59 @@
 # behavioural amendment to the telegram-interface component ships
 # without a new amendment cycle that updates BASELINE and bumps this
 # SEAL_COMMIT.
-cdfb3f3
+#
+# Amendment cycle — telegram-interface-framework-integration (#9,
+# 2026-04-22, ninth amendment): the telegram-interface component shipped
+# as a standalone adapter-pattern consumer of the Claude MCP Telegram
+# plugin, but no pos-v2 workspace composed it into its boot bundle —
+# so first-run scaffolds wrote a 12-entry `bootstrap.yaml` that silently
+# omitted the Telegram channel. Amendment #9 makes telegram-interface
+# the thirteenth foundational adapter in workspace-bootstrap's bundle:
+#   - New adapter `workspace_bootstrap.adapters.telegram_interface.
+#     TelegramInterfaceContribution` constructs a `TelegramAdapter`
+#     from telegram-interface's public surface (`AvailabilityProbe`,
+#     `AccessFile.load`, `TelegramAdapter.build_channel`) and publishes
+#     it on the host as `host.telegram_adapter`, `host.telegram_channel`,
+#     `host.channel_registry["telegram"]`. Phase `after_orchestrator_
+#     ready`, `after=("primary_persona","safety_layer")`, `required=
+#     False` — the ordering slot matches self-correction's pattern.
+#   - `_BOOTSTRAP_YAML` grows by one stanza (13 entries now); the
+#     header-comment and `CONFIRMATION_SENTENCE` both advance "twelve"
+#     → "thirteen" in lockstep.
+#   - New `_TELEGRAM_YAML` starter + `"telegram.yaml"` entry in
+#     `_SCAFFOLD_FILES` — the scaffold writes the per-workspace
+#     config starter (owner ruling on proposal §5 #4).
+#   - Fail-closed direction per proposal §2: at default (no
+#     telegram.yaml, no token, no allowlist) the adapter composes
+#     degraded-alive — `is_active=False`, `send` routes through the
+#     fallback, no exception surfaces. `required: true` in
+#     `~/.pos/telegram.yaml` flips the posture to fail-close, wrapping
+#     the component's -32102 (IPC_TELEGRAM_TOKEN_INVALID) or -32108
+#     (IPC_TELEGRAM_SETUP_FAILED) into workspace-bootstrap's
+#     AdapterRaisedError.
+#
+# Zero edits under `telegram-interface/src/` — AC7 sealed-API
+# invariant asserted by a dedicated structural test
+# (`test_AC7_no_telegram_interface_src_edits`). The adapter consumes
+# only symbols already exported by this component at `cdfb3f3`. Boot-
+# time probe is non-network per the AC3/AC6 determinism halt trigger;
+# the component's own background probe flips the channel to active
+# after boot on first successful getMe.
+#
+# Multi-component amendment (workspace-bootstrap + telegram-interface +
+# hands-off-lifecycle). Nine acceptance criteria AC1-AC9 in
+# docs/rebuild/components/telegram-interface-framework-integration/
+# proposal.md, 1:1 criterion-to-test mapping (AC1/AC2/AC3/AC4/AC5/AC6/
+# AC8 as explicit test functions, AC7/AC9 as structural seal-diff
+# assertions). SEAL_COMMIT re-pinned at 4f8b933; BASELINE in
+# telegram-interface/tests/test_no_sealed_amendments.py advances from
+# e1686e1 to b9e1f96 (the amendment-#8 audit-closure seal commit —
+# pre-amendment tip). Amendment number (#9) is proposal-assigned; #10
+# (linux-removal) and #11 (amendment-#8 audit closure) landed first
+# because their scopes were cheaper to build against the in-flight
+# Blocker-3 state.
+#
+# Tests post-amendment: workspace-bootstrap 86/86 (79 baseline + 7
+# new), telegram-interface 30/30 (29 baseline + 1 new AC7 structural
+# check), hands-off-lifecycle 67/67, memory-system 62/62 unchanged.
+4f8b933

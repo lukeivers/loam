@@ -376,4 +376,64 @@
 # amendment-#11 tip). Tests post-amendment: memory-system 62/62
 # (61 baseline + 1 new for AC11.5 span-attr wiring; AC8's test
 # rewrite kept the count stable), hands-off-lifecycle 67/67.
-8c8932f
+#
+# Amendment cycle — telegram-interface-framework-integration (#9,
+# 2026-04-22, ninth amendment by proposal number; landed after #10
+# and #11 because its scope required the framework + sealed-API
+# discipline to be in place): workspace-bootstrap's first-run
+# scaffold wrote a 12-entry `bootstrap.yaml`, silently omitting
+# telegram-interface even though that component had shipped at
+# cdfb3f3 as a standalone OneOnOneChannel adapter. Amendment #9
+# composes telegram-interface as the thirteenth foundational
+# adapter:
+#   - New workspace-bootstrap adapter
+#     `workspace_bootstrap.adapters.telegram_interface.
+#     TelegramInterfaceContribution` constructs a `TelegramAdapter`
+#     from telegram-interface's public surface (`AvailabilityProbe`,
+#     `AccessFile.load`, `TelegramAdapter.build_channel`) and
+#     publishes both adapter + channel on the host
+#     (`host.telegram_adapter`, `host.telegram_channel`,
+#     `host.channel_registry["telegram"]`). Phase `after_orchestrator_
+#     ready`, `after=("primary_persona","safety_layer")`,
+#     `required=False`.
+#   - `_BOOTSTRAP_YAML` grows by one stanza (13 entries); header
+#     comment + `CONFIRMATION_SENTENCE` advance "twelve" → "thirteen".
+#   - New `_TELEGRAM_YAML` starter + `"telegram.yaml"` entry in
+#     `_SCAFFOLD_FILES` (owner ruling on proposal §5 #4). Credentials
+#     remain in `~/.claude/channels/telegram/.env` — not relocated
+#     into `~/.pos/`.
+#   - Fail-closed direction per proposal §2: default shape is
+#     degraded-alive (no telegram.yaml, no token, no allowlist →
+#     adapter composes, `is_active=False`, no exception); `required:
+#     true` in `~/.pos/telegram.yaml` triggers AdapterRaisedError
+#     wrapping the component's -32102 / -32108 on missing creds.
+#
+# Zero edits under `telegram-interface/src/` (AC7 sealed-API
+# invariant; asserted structurally). Boot-time probe is non-network
+# per AC3/AC6 determinism halt trigger; the component's background
+# probe flips the channel active on first successful getMe.
+#
+# Multi-component amendment (workspace-bootstrap + telegram-interface
+# + hands-off-lifecycle). Nine ACs AC1-AC9 in
+# docs/rebuild/components/telegram-interface-framework-integration/
+# proposal.md, 1:1 criterion-to-test mapping. Hands-off-lifecycle's
+# counterpart is a BASELINE bump in tests/test_cross_cutting.py
+# (77389ce → b9e1f96), an allowed-top-level-dir extension for
+# `telegram-interface/`, and the amendment-cycle narrative here.
+#
+# SEAL_COMMIT re-pinned at 4f8b933 across workspace-bootstrap,
+# telegram-interface, and hands-off-lifecycle sidecars (telegram-
+# interface advances from cdfb3f3; workspace-bootstrap from 9373444;
+# hands-off-lifecycle from 8c8932f). BASELINE in workspace-bootstrap
+# /tests/test_no_sealed_amendments.py advances from 7d462e3 to
+# b9e1f96; BASELINE in telegram-interface/tests/test_no_sealed_
+# amendments.py advances from e1686e1 to b9e1f96; BASELINE in
+# hands-off-lifecycle/tests/test_cross_cutting.py advances from
+# 77389ce to b9e1f96.
+#
+# Tests post-amendment: workspace-bootstrap 86/86 (79 baseline + 7
+# new AC tests in test_telegram_interface_adapter.py), telegram-
+# interface 30/30 (29 baseline + 1 new AC7 structural check),
+# hands-off-lifecycle 67/67 (unchanged — only BASELINE comment and
+# allowed-set edits), memory-system 62/62 (sanity — unchanged).
+4f8b933

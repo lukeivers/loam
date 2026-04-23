@@ -271,7 +271,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # and `memory-system` already present from prior amendments).
 # 3b128c3 is the pre-amendment tip — the pyyaml-reachability seal
 # commit immediately before amendment #21's code commit.
-BASELINE = "3b128c3"
+BASELINE = "9559ca7"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -410,6 +410,9 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     SEAL_COMMIT sidecar, no per-component seal-diff test);
         #     its own diff-scope check rides on this H19 admission.
         "scope-of-work",
+        "reversibility-primitive",
+        "tools",
+        "CLAUDE.md",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

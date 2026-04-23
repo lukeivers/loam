@@ -101,7 +101,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              research and dropped. 3b128c3 is the pre-amendment tip
 #              — the pyyaml-reachability seal commit immediately
 #              before amendment #21's code commit.
-BASELINE = "3b128c3"
+BASELINE = "9559ca7"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -168,11 +168,28 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
         # amendment.
         "scope-of-work/",
         "telegram-interface/",
+        "cost-governance/",
+        "graceful-degradation/",
+        "observability-aggregator/",
+        "orchestrator/",
+        "reversibility-primitive/",
+        "self-correction/",
+        "tools/",
+        "workspace-bootstrap/",
     )
+    # Amendment #22 (pos-amend CLI + universal-paths retrofit) brings
+    # memory-system's seal-diff loop up to parity with the other sealed
+    # components by consulting an ``allowed_files`` set alongside the
+    # prefix tuple. The universal-file admissions (CLAUDE.md,
+    # docs/odd-*.md, docs/rebuild/FUTURE_IDEAS.md) populate this set via
+    # `pos-amend apply`.
+    allowed_files: set[str] = {"CLAUDE.md", "docs/odd-in-pos.md", "docs/odd-methodology.md", "docs/rebuild/FUTURE_IDEAS.md"}
 
     offending = []
     for path in changed:
         if any(path.startswith(p) for p in allowed_prefixes):
+            continue
+        if path in allowed_files:
             continue
         offending.append(path)
     assert offending == [], (

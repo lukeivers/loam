@@ -56,4 +56,5 @@ In practice: when an output crosses the ~40-line / ~400-word threshold, choose a
 - `docs/rebuild/FUTURE_IDEAS.md` — future ideas (including the Dev/SDLC plugin at Idea 3) and the currently-parked dev CDCs. The CDCs are temporary residents of that file; when the Dev/SDLC plugin lands, they migrate there.
 - `docs/rebuild/plans/` — per-amendment and per-scope plan docs (plan-before-code artefacts).
 - `docs/rebuild/components/` — proposal + seal narratives per sealed component.
+- `tools/pos-amend/` — amendment-dispatch tooling. The `pos-amend` CLI mechanises sealed-component amendment-cycle bookkeeping (BASELINE advances, allowed_prefixes/allowed_files widening, SEAL_COMMIT sidecar bumps, narrative appends) driven by a per-amendment YAML manifest committed alongside the plan doc. As of amendment #22, `pos-amend apply --dry-run` green is a hard prereq for amendment commits.
 - The "Output conventions" section above governs any response from the primary persona or its dispatched agents.

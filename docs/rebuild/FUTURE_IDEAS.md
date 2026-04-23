@@ -182,7 +182,7 @@ Rationale. Non-trivial amendments were running 25-45 min each. Breakdown: agents
 
 How to apply. In every dispatch prompt for a sealed-component amendment build, include the three rules above verbatim as constraints. The agent runs full suites only for components it actually touches; other components get seal-diff tests. The pre-seal test step runs only seal-diff tests, not full suites. Methodology snippets are quoted inline, not referenced by section number. The agent retains authority to read full source docs if it judges necessary for a specific question, but the default is to work from inlined excerpts. These speedups do NOT cut the research step (required by the research-before-plan CDC for non-trivial new work), do NOT cut the plan step, and do NOT violate the scope-only-dispatch CDC — they only shrink the re-read + test-scope phases.
 
-Applied immediately to every future sealed-component amendment dispatch after 2026-04-23.
+Applied immediately to every future sealed-component amendment dispatch after 2026-04-23. As of amendment #22 (pos-amend CLI + universal-paths retrofit), these dispatch speedups — and the reactive-widening pattern that produced amendment #18's corrective commit `8bdf194` — are mechanically enforced by `pos-amend apply --dry-run`, which must exit 0 before the amendment commit lands. See `tools/pos-amend/README.md`.
 
 ## Core Development Convention — 529 overload recovery
 

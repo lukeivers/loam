@@ -53,7 +53,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "24d54cb"
+BASELINE = "9559ca7"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -73,7 +73,7 @@ def test_seal_commit_pinning_pattern() -> None:
     the SHA.
     """
     source = Path(__file__).read_text()
-    assert "BASELINE = \"24d54cb\"" in source
+    assert "BASELINE = \"9559ca7\"" in source
     assert "SEAL_COMMIT_PATH" in source
     # Diff call must route through _seal_commit(), not hardcoded HEAD.
     assert "{BASELINE}..{seal}" in source, (
@@ -128,8 +128,18 @@ def test_only_graceful_degradation_changed() -> None:
         "observability-aggregator/",
         "orchestrator/",
         "self-correction/",
+        "memory-system/",
+        "reversibility-primitive/",
+        "telegram-interface/",
+        "tools/",
+        "workspace-bootstrap/",
     )
-    allowed_files: set[str] = {"docs/odd-in-pos.md"}
+    allowed_files: set[str] = {
+        "docs/odd-in-pos.md",
+        "CLAUDE.md",
+        "docs/odd-methodology.md",
+        "docs/rebuild/FUTURE_IDEAS.md",
+    }
 
     offending = []
     for path in changed:

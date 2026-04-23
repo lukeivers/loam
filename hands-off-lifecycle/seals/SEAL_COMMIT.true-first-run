@@ -436,4 +436,78 @@
 # interface 30/30 (29 baseline + 1 new AC7 structural check),
 # hands-off-lifecycle 67/67 (unchanged — only BASELINE comment and
 # allowed-set edits), memory-system 62/62 (sanity — unchanged).
-4f8b933
+#
+# Amendment cycle — cost-governance-C14-timing-test re-extension
+# (#13, 2026-04-22, thirteenth amendment): the 2026-04-22 audit of
+# cost-governance surfaced that C14 — the flagship timing-inclusive
+# acceptance criterion — was under-tested. C14 packs three
+# behaviours into one criterion text (per docs/odd-in-pos.md §5):
+# (1) trigger is the prospective-reservation math at activation,
+# (2) warning emission precedes the `reservations` row write,
+# (3) warning fires exactly once per crossing, not repeatedly per
+# debit. The existing test_throttle_warning.py covered (1) and part
+# of (3) — fire-once across multiple *reservations* on the same
+# crossing — but not the pre-write ordering at all, and not the
+# fire-once-across-debits failure mode C14's criterion text names
+# explicitly. Amendment #13 adds two new outcome-shaped tests to
+# close both gaps. The cost-governance implementation already
+# delivers both guarantees structurally — pre-write ordering is
+# enforced by the call-site order of `_check_axis` (lines 146-223)
+# relative to `store.insert_reservation` (line 233) in ledger.py's
+# `reserve_or_refuse`, and fire-once-across-debits is structurally
+# guaranteed because `_on_event`'s BudgetDebited path routes to
+# `_apply_debit` which does not call `_check_axis` at all. Zero
+# edits to cost-governance/src/.
+#
+# New tests in cost-governance/tests/test_throttle_warning.py:
+#   - test_C14_warning_emits_before_reservation_row_written — uses a
+#     shared ordered trace across a `CostStore` subclass (spying on
+#     insert_reservation) and a `CostNotifier` channel (spying on
+#     send). Runs reserve_or_refuse outside a running loop so the
+#     notifier sync-path at ledger.py:355 resolves synchronously;
+#     asserts trace == ["warning", "insert"]. The dispatch_fn path
+#     was rejected during build — dispatch_fn is always
+#     create_task-scheduled so the callback runs after the
+#     synchronous insert line, which would invalidate the ordering
+#     assertion even when the implementation's call-site ordering
+#     is correct.
+#   - test_C14_warning_fires_once_across_multiple_debits_in_same_scope
+#     — reserves at 85%, fires five BudgetDebited events keeping the
+#     scope in the warning band, asserts exactly one ceiling_warning
+#     dispatch. Reuses the `ledger._on_event(BudgetDebited(...))`
+#     idiom from test_reservation_lifecycle.py's C10 test.
+#
+# Multi-component amendment (cost-governance + hands-off-lifecycle).
+# Hands-off-lifecycle's counterpart is the cross-cutting seal surface:
+# BASELINE bump in tests/test_cross_cutting.py from a3bbdcd to
+# 5c49e27; H19's `allowed` top-level set extended with
+# "cost-governance" as a new amended sealed component in this
+# amendment window; SEAL_COMMIT sidecar refresh; this amendment-
+# cycle narrative note.
+#
+# Amendment #13 shipped as two code commits — the amendment commit
+# (2654053, containing the two new tests + BASELINE + plan doc +
+# the initial allowed_prefixes extension) and a follow-up corrective
+# commit (9e3776b) extending cost-governance's C23
+# allowed_prefixes tuple with `hands-off-lifecycle/` (the amendment
+# commit admitted `docs/rebuild/plans/` but missed the multi-
+# component partner's top-level prefix, which would have tripped
+# C23 once the sidecar bumped past the amendment SHA). Per the
+# two-commit audit-trail discipline the corrective is a new commit
+# rather than a --amend. The seal pins at 9e3776b (the corrective)
+# so C23's diff window includes both commits and passes.
+#
+# SEAL_COMMIT re-pinned at 9e3776b across cost-governance and
+# hands-off-lifecycle sidecars (cost-governance advances from
+# 04951b6 — the original first-seal tip, never amended until now —
+# to 9e3776b; hands-off-lifecycle advances from d25eef5 — the
+# amendment-#12 code commit — to 9e3776b). BASELINE in
+# cost-governance/tests/test_no_sealed_amendments.py advances from
+# f657f8c to 5c49e27 (the pre-amendment tip — the orchestrator-
+# bootstrap-unification-AC1-removal seal commit). BASELINE in
+# hands-off-lifecycle/tests/test_cross_cutting.py advances from
+# a3bbdcd to 5c49e27 (same pre-amendment tip). Tests post-amendment:
+# cost-governance 48/48 (46 baseline + 2 new C14 tests),
+# hands-off-lifecycle 67/67 (unchanged — only BASELINE + allowed-
+# set edits), all other sealed components unchanged.
+9e3776b

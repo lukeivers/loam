@@ -814,7 +814,87 @@ _Sources (8.x): `https://code.claude.com/docs/en/commands`, `https://code.claude
 
 ## 9. Session persistence
 
-<!-- PLACEHOLDER -->
+Session persistence is the substrate everything else composes on: without it, pOS v2's background-work awareness, session-resilient orchestration, and cross-session memory have nothing to attach to. §1.5 covers the CLI-level mechanics; this section collects the pos-v2-relevant details with additional features (checkpointing, rewinding, recap, remote-control, web-session teleport) that constitute the full persistence surface.
+
+### 9.1 On-disk session artefacts
+
+- Every interactive session has a UUID session ID, stored alongside a JSONL transcript on disk.
+- Retention governed by `cleanupPeriodDays` setting (default 30).
+- Hook events receive `transcript_path` for offline inspection.
+- `--no-session-persistence` (print mode only) skips disk write entirely — useful for scripted calls that shouldn't leave a trail.
+- Sessions may be **named** (`-n <name>`, `/rename`, `--remote-control-session-name-prefix`) for human-friendly resumption.
+
+**Composes with pos-v2.**
+- `observability-aggregator` harvests the transcript_path artefacts for cross-session analysis.
+- Long-term audit retention beyond `cleanupPeriodDays` needs explicit harvesting to a durable store — pos-v2 should capture transcripts that back amendments into the observability store before cleanup fires.
+- `session-resilient-orchestrator` correlates orchestrator-spawned sessions with their transcripts via explicit `--session-id` UUIDs.
+
+### 9.2 Resume / continue / fork
+
+- `claude -c` / `--continue` — load most recent conversation in cwd. Includes sessions that added cwd via `/add-dir`.
+- `claude -r <id|name>` / `--resume` / `/resume` / `/continue` — resume specific session; shows interactive picker without arg.
+- `claude --fork-session --resume <id>` — create new session ID from resumed session; both diverge.
+- `claude --from-pr <N>` — resume sessions linked to a GitHub PR (auto-linked at `gh pr create`).
+
+**Composes with pos-v2.** Amendment-cycle bookkeeping (`tools/pos-amend/`) could attach to session IDs so every amendment-commit has a traceable session-of-record; `--from-pr` is the GitHub-integrated version if amendments flow through PRs.
+
+### 9.3 Checkpointing and rewinding
+
+`/rewind` (alias `/checkpoint`, `/undo`) rewinds the conversation and/or code to a previous point, or summarises from a selected message.
+
+**Composes with pos-v2.**
+- `reversibility-primitive` composes naturally with `/rewind` — the primitive provides structural undo for actions; `/rewind` provides conversational undo for Claude Code's own state. Together they bracket "the system can go back" across the two relevant layers.
+- `self-correction-loop` could trigger a rewind when a scope failed in a way that compromises subsequent turns — clean restart to a known-good state.
+
+**Pitfalls.** `/rewind` affects both conversation and code (git working tree). Does not compose with background bashes that have side-effected outside the working tree (database writes, HTTP calls). `reversibility-primitive` is the broader surface for that.
+
+### 9.4 Context management
+
+- **`/compact [instructions]`** — free up context via summarisation. Optional instructions focus the summary.
+- **`/context`** — visualises current context usage as a coloured grid; shows optimisation suggestions.
+- **Auto-compaction** — triggers when context fills. Skills carry forward per §6.3.
+- **`PreCompact` / `PostCompact` hooks** — structural gates around compaction (§1.2).
+
+**Composes with pos-v2.**
+- `cost-governance` can attach to `PreCompact` to record spend-so-far before context is summarised and the usage accounting resets.
+- Long-running pos-v2 sessions with heavy context (the component rebuild is this shape) should set explicit compact points via `/compact` with focus instructions to preserve the bits that matter to the current component's build.
+
+### 9.5 Recap and insights
+
+- `/recap` — one-line session summary on demand. Automatic recap appears after idle time.
+- `/insights` — report across recent sessions: project areas, interaction patterns, friction points.
+- `/team-onboarding` — generate a teammate-onboarding guide from 30-day session history.
+
+**Composes with pos-v2.** These surface ambient session data that pos-v2 primitives (primary-persona, memory-system, observability) can consume without per-session instrumentation. `/insights` is a cheap substitute for bespoke analysis during the early pos-v2 evaluation-workspace phase.
+
+### 9.6 Remote control and web sessions
+
+- `claude remote-control` / `claude -rc` — start a Remote Control server; claude.ai or Claude app can drive the local session.
+- `claude --remote <task>` — create a new web session on claude.ai. No local session.
+- `claude --teleport` / `/teleport` (alias `/tp`) — pull a web session into the local terminal.
+- `claude --from-pr <N>` — resume via PR linkage.
+
+**Composes with pos-v2.**
+- Mobile-equivalent interaction for pOS v2 users who don't live in a terminal. Telegram channel (Idea 3's communications-plugin-ish shape) is the other mobile interface; web sessions are complementary.
+- **Not a safe surface for autonomous pos-v2 dispatch** — remote-control exposes the session to an external client; the `safety-layer` and `cost-governance` invariants must still hold. Managed settings should gate whether remote control is available in a given workspace.
+
+### 9.7 Pitfalls
+
+- `cleanupPeriodDays` default is 30. Long-term audit or research artefacts need explicit harvesting before cleanup.
+- `--no-session-persistence` is silent — no warning in logs that the session is ephemeral.
+- `/rewind` can undo work that Claude did in the current session, but not side effects outside the working tree or state held by background bashes.
+- Web sessions (`--remote`, `/teleport`) require GitHub connection via `/web-setup`. First-time routine setup prompts automatically.
+- Remote Control server runs on localhost by default; expose carefully if routing through tunnels.
+- Resume with `-c` loads the most recent session *in the current directory*; a session that was in a sibling directory is invisible until `--resume` by ID.
+
+### 9.8 End-user configuration surface
+
+- CLI: `-c`, `-r`, `--resume`, `--fork-session`, `--session-id`, `--no-session-persistence`, `--from-pr`, `--remote`, `--teleport`, `remote-control`.
+- Slash: `/resume`, `/continue`, `/rewind`, `/checkpoint`, `/undo`, `/compact`, `/context`, `/recap`, `/insights`, `/rename`, `/teleport`, `/remote-control`.
+- Settings: `cleanupPeriodDays`.
+- Hooks: `SessionStart`, `SessionEnd`, `PreCompact`, `PostCompact` — structural gates.
+
+_Sources (9.x): `https://code.claude.com/docs/en/cli-reference`, `https://code.claude.com/docs/en/commands`, `https://code.claude.com/docs/en/hooks` — all fetched 2026-04-23._
 
 ---
 

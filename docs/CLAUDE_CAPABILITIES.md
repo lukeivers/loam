@@ -181,7 +181,87 @@ _Sources (1.x): `https://code.claude.com/docs/en/slash-commands`, `https://code.
 
 ## 2. Claude Agent SDK
 
-<!-- PLACEHOLDER -->
+**Renamed from Claude Code SDK late-2025.** Available in Python (`claude_agent_sdk`) and TypeScript (`@anthropic-ai/claude-agent-sdk`). The SDK is the programmatic form of the Claude Code harness — the same tool loop, hook surface, subagent dispatch, and skills/commands discovery, but invoked as a library from your own Python or TypeScript process.
+
+### 2.1 Core primitive — `query()`
+
+**What it does.** `query(prompt, options)` returns an async iterator of messages. Claude handles the entire tool-use loop internally — it decides which tools to call, the harness executes them against the configured permission model, results stream back as messages. Unlike the raw Messages API (where you implement the `while stop_reason == "tool_use"` loop yourself), the Agent SDK owns the loop and just yields messages at each step.
+
+```python
+async for message in query(
+    prompt="Find and fix the bug in auth.py",
+    options=ClaudeAgentOptions(allowed_tools=["Read", "Edit", "Bash"]),
+):
+    print(message)
+```
+
+Message types: `SystemMessage` (session-init with `session_id`), `AssistantMessage`, `UserMessage`, `ToolUseMessage`, `ToolResultMessage`, `ResultMessage` (final, with `.result` on it). Streaming is per-message, not per-token — use `--include-partial-messages` equivalent SDK options for token-level streaming.
+
+**Composes with pos-v2.**
+- Every pos-v2 component that needs to call Claude programmatically — `memory-system`'s `ClaudePrintLLMClient`, background workers, orchestrator-dispatched scopes — is a candidate for migrating from subprocess `claude -p` to the Agent SDK. The SDK path is higher-throughput (no process spawn per query), gives first-class hook callbacks instead of stdout parsing, and supports typed message objects instead of JSON parsing.
+- `session-resilient-orchestrator` can call `query()` with an explicit `resume=<session_id>` option to reattach to durable sessions across orchestrator restarts. The SystemMessage init payload includes the new session ID which must be captured and persisted to survive crashes.
+- `self-correction-loop` maps onto the SDK's hook callback shape naturally — a `PostToolUse` callback in the SDK is a regular Python/TS function, easier to author than a shell-command hook declared in settings.json.
+
+**Pitfalls.**
+- The TypeScript SDK bundles a platform-specific Claude Code binary as an optional dep; the Python SDK does not bundle — it shells out to `claude` on PATH. Python deployments must install Claude Code separately.
+- Opus 4.7 (`claude-opus-4-7`) requires SDK ≥ v0.2.111; older pinned versions error with `thinking.type.enabled`.
+- Third-party providers (Bedrock, Vertex, Azure Foundry) work via env vars (`CLAUDE_CODE_USE_BEDROCK=1`, etc.) and credential files — the SDK does not accept provider SDKs directly. Non-Anthropic hosting means non-Anthropic rate limits and pricing.
+- Anthropic does not permit third parties to offer claude.ai-subscription-backed API access to their customers. SDK-built products must use API keys (or Bedrock/Vertex/Azure). This affects pos-v2 only if the eventual open-source launch (Idea 12) ever offers a managed tier.
+
+**End-user configuration surface.**
+- Auth: `ANTHROPIC_API_KEY` env var, or provider equivalents.
+- Options bag: `ClaudeAgentOptions` in Python / `options` object in TS. Fields include `allowed_tools`, `disallowed_tools`, `permission_mode`, `hooks`, `agents` (subagent definitions), `mcp_servers`, `resume`, `system_prompt` / `append_system_prompt`, `model`, `max_turns`, `setting_sources`.
+- Filesystem discovery: by default the SDK loads skills from `.claude/skills/`, commands from `.claude/commands/`, memory from `CLAUDE.md`, plugins from programmatic config. Restrict with `setting_sources=["user"|"project"|"local"]`.
+
+### 2.2 Built-in tools available via SDK
+
+Read, Write, Edit, Bash, **Monitor** (watch a background script and react to each output line as an event — directly relevant to pos-v2 orchestrator patterns), Glob, Grep, WebSearch, WebFetch, AskUserQuestion. Plus MCP tools wired via `mcp_servers` and the `Agent` tool for subagent dispatch.
+
+**Composes with pos-v2.**
+- The `Monitor` tool is the first-class primitive for STATE.md rule 7 (background-work awareness). `observability-aggregator` today parses process stdout; `Monitor` converts each stdout line into an in-context event, eliminating the parsing layer and letting the persona react per-line without polling.
+- `AskUserQuestion` is the structural way to elicit a ruling from the user with bounded multiple choice — compose with ODD's "any unresolved ambiguity halts" pattern. Beats free-form question-asking, which the persona is empirically bad at bounding.
+
+**Pitfalls.**
+- `allowed_tools` gates tool visibility; a tool absent from the list cannot be used. Forgetting to include `Agent` in `allowed_tools` when also defining subagents silently disables delegation.
+- Tool parallelism: Claude may batch multiple tool calls in a single turn (`PostToolBatch` hook fires after the whole batch). Hook callbacks must be idempotent per tool call.
+
+### 2.3 SDK hooks
+
+Same hook event types as Claude Code CLI (§1.2) but declared as **callback functions** in-process instead of shell commands. `HookMatcher(matcher="Edit|Write", hooks=[callback])`. Available events documented as `PreToolUse`, `PostToolUse`, `Stop`, `SessionStart`, `SessionEnd`, `UserPromptSubmit`, and more.
+
+**Composes with pos-v2.** Hooks authored in-process are easier to unit-test than shell hooks, easier to share state with the calling program, and easier to package into a Python/TS library. For future pos-v2 primitives that want to enforce a rule (safety-layer's refusal, cost-governance's spend check), an SDK hook callback may be a better home than a command hook in settings.json — especially inside the Python backend of `session-resilient-orchestrator`.
+
+**Pitfalls.**
+- Hook callbacks run in the same process as the SDK caller; an infinite loop or blocking I/O in a hook halts the whole agent turn.
+- Hooks declared programmatically via `ClaudeAgentOptions.hooks` compose with settings.json hooks — both fire. Avoid duplicate logic.
+
+### 2.4 Subagents via SDK
+
+`agents={"code-reviewer": AgentDefinition(description=..., prompt=..., tools=[...])}` defines a named subagent the main agent can dispatch. Messages from within a subagent context carry `parent_tool_use_id` for attribution. See §7 for the full subagent capability surface.
+
+### 2.5 MCP servers via SDK
+
+`mcp_servers={"playwright": {"command": "npx", "args": ["@playwright/mcp@latest"]}}` — the SDK spawns and manages MCP server lifecycles. See §4 for full MCP surface.
+
+### 2.6 Sessions via SDK
+
+First query emits a SystemMessage with `session_id`; subsequent queries pass `resume=<session_id>` to continue the same session. `--fork-session`-equivalent options available programmatically. pos-v2's `session-resilient-orchestrator` already relies on this pattern at the CLI level; migrating to SDK would let the orchestrator capture the session ID from the SystemMessage object directly instead of parsing init logs.
+
+### 2.7 Agent SDK vs Claude Client SDK (Anthropic SDK) vs Claude Code CLI
+
+| Use case | Best choice | Why |
+|----------|-------------|-----|
+| Interactive dev | Claude Code CLI | TUI, REPL, `/slash` surface |
+| Production automation | Agent SDK | Typed primitives, in-process hooks |
+| Pure API (no tool loop) | Client SDK (`anthropic`) | No loop, full control |
+| CI/CD | Agent SDK or CLI | Both work; SDK is cleaner error handling |
+| One-off scripts | `claude -p` | No setup |
+
+The Client SDK (`anthropic` / `@anthropic-ai/sdk`) is a thinner layer that directly wraps the Messages API — it does not ship the tool loop, the permission model, or skills/commands/hooks. Use it when you want raw model access or are building a different kind of agent (not Claude-Code-shaped). Use the Agent SDK when you want Claude-Code capabilities programmatically.
+
+**Composes with pos-v2.** pos-v2 today uses `claude -p` as subprocess (memory-system's `ClaudePrintLLMClient`). The Agent SDK is a natural migration target for any caller that benefits from typed messages, in-process hook callbacks, or programmatic subagent control. The Client SDK is a better fit when pos-v2 needs model calls without the harness — e.g. small-scope entity extraction where the tool loop is overkill.
+
+_Sources (2.x): `https://code.claude.com/docs/en/agent-sdk/overview` — fetched 2026-04-23._
 
 ---
 

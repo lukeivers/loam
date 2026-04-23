@@ -423,6 +423,45 @@ The third question is the disambiguation mechanism. Does the fix ship a slug-ove
 
 This belongs in FUTURE_IDEAS rather than being scoped now because the collision is a latent hazard, not a currently-biting bug — Luke operates one pos-v2 checkout at a time. When a second checkout is spun up for any reason (evaluation workspace, backup directory, parallel development line), the hazard becomes live and the idea graduates to a component cycle.
 
+## Idea 10 — Project rename to loam
+
+Captured 2026-04-23.
+
+pOS v2 is being renamed to **`loam`** — substrate-not-plant metaphor
+that matches the project's actual identity: the enriched medium the
+user cultivates their Claude agent in (user-intent = seed,
+Claude = genetic machinery, grown agent = plant). The seed framing
+already canonical at `docs/rebuild/spec/pos-v2-objectives-spec.md:73`
+is preserved — `loam` names the substrate; the seed / cultivar /
+growth metaphor in existing narrative is unchanged.
+
+Decisions recorded in `docs/rebuild/plans/loam-rename-decisions.md`.
+Migration research (inventory, bucketing, phased plan) in
+`.scratch/claude-output/loam-rename-migration-plan.md`.
+
+Approved Tier-1 renames (compressed):
+
+- `pos-v2` / `pOS v2` → `loam` (brand, docs, repo directory).
+- `~/.pos/` → `~/.loam/`.
+- `POS_V2_*` env vars → `LOAM_*`.
+- `com.pos-v2.<slug>.*` launchd labels → `com.loam.<slug>.*`
+  (drop version bake-in).
+- OTel `pos.*` → `loam.*`.
+- `pos-amend` CLI → `loam amend` under a unified `loam` top-level CLI.
+
+Tier-2: graceful-degradation → `dormancy`. Package layout: monolithic
+`loam.*` namespace. Kept technical (do NOT rename): memory-system,
+self-correction, scope-of-work primitive (with `plot` acceptable as
+user-facing CLI alias only). Historical record preserved —
+commit messages and seal narratives retain "pOS v2"; no retroactive
+rewrites.
+
+Execution: multi-amendment migration, kicked off after amendment #23
+(frozen-H19 per-invariant baseline, sealed `a27a833`, 2026-04-23).
+Phase 1 (documentary rebrand) scoped next.
+
+---
+
 ## Catalogue discipline
 
 This file is the catalogue of future directions for pOS v2. Entries here are not commitments. When an idea is picked up, it becomes a real component cycle (research plan → research → proposal → brief → build → seal) and is retired from this file with a pointer to the component that now owns it. When an idea is deliberately dropped, it is retired with a one-line rationale.

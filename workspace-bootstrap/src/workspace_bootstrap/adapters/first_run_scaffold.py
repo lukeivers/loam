@@ -138,7 +138,7 @@ def service_label(kind: str, slug: str) -> str:
 
 
 CONFIRMATION_SENTENCE = (
-    "pos v2 first-run scaffold complete: twelve foundational components "
+    "pos v2 first-run scaffold complete: thirteen foundational components "
     "configured at defaults (safety/always-ask, cost ceilings, "
     "reversibility, self-correction, memory, degradation), memory "
     "sidecar and orchestrator launched as user services, staging store "
@@ -151,7 +151,7 @@ CONFIRMATION_SENTENCE = (
 
 
 _BOOTSTRAP_YAML = """\
-# ~/.pos/bootstrap.yaml — twelve-foundational-adapter bundle
+# ~/.pos/bootstrap.yaml — thirteen-foundational-adapter bundle
 # Auto-generated on first run. Edit freely; the scaffold only runs on
 # a fresh workspace (no ~/.pos/ directory present) and never overwrites.
 
@@ -192,6 +192,9 @@ contributions:
   - name: workspace_bootstrap_py
     module: workspace_bootstrap.adapters.workspace_bootstrap_py
     class: WorkspaceBootstrapPyContribution
+  - name: telegram_interface
+    module: workspace_bootstrap.adapters.telegram_interface
+    class: TelegramInterfaceContribution
 """
 
 _MEMORY_YAML = """\
@@ -251,6 +254,25 @@ notification:
   auth_broken_tier: 1
 """
 
+# Amendment #9 (telegram-interface-framework-integration) — per-workspace
+# Telegram channel config. The framework adapter boots degraded-alive
+# without this file; it exists so workspaces can flip `required: true`
+# (fail-close boot if creds absent) and override the default paths the
+# telegram-interface component already recognises.
+# Credentials (bot token) live in ~/.claude/channels/telegram/.env per
+# proposal §5 #5 — never duplicated here.
+_TELEGRAM_YAML = """\
+# ~/.pos/telegram.yaml — per-workspace Telegram channel config.
+# Most fields are optional. Leaving this whole file out is fine;
+# the adapter boots in degraded-alive mode and the setup
+# walkthrough runs on session two.
+required: false                       # set true to fail-close boot if creds absent
+env_path: ~/.claude/channels/telegram/.env
+access_path: ~/.claude/channels/telegram/access.json
+default_tier: 2                       # degradation-config default
+probe_interval_s: 60                  # overrides telegram-interface default
+"""
+
 
 _SCAFFOLD_FILES: dict[str, str] = {
     "bootstrap.yaml": _BOOTSTRAP_YAML,
@@ -261,6 +283,7 @@ _SCAFFOLD_FILES: dict[str, str] = {
     "reversibility.yaml": _REVERSIBILITY_YAML,
     "self-correction.yaml": _SELF_CORRECTION_YAML,
     "degradation-config.yaml": _DEGRADATION_YAML,
+    "telegram.yaml": _TELEGRAM_YAML,
 }
 
 

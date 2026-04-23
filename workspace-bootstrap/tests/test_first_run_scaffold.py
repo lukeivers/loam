@@ -50,6 +50,7 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
     # ``com.pos-v2.pos-v2.{kind}`` labels. (Yes, the doubled ``pos-v2``
     # is an artefact of naming the test fixture after the repo — the
     # first ``pos-v2`` is the prefix constant, the second is the slug.)
+    # Amendment #9: ``telegram.yaml`` is the thirteenth scaffold file.
     result = run_first_run_scaffold(
         pos_root=pos_root,
         platform_override="macos",
@@ -68,6 +69,7 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
         "reversibility.yaml",
         "self-correction.yaml",
         "degradation-config.yaml",
+        "telegram.yaml",
     ):
         assert (pos_root / rel).exists(), f"missing {rel}"
     # Both service-manager files present under namespaced labels.
@@ -144,8 +146,12 @@ def test_H4_partial_prior_state_refuses_to_overwrite(tmp_path: Path) -> None:
 
 
 def test_H5_confirmation_sentence_is_Q7_approved_wording() -> None:
+    # Amendment #9 (telegram-interface-framework-integration) updated
+    # the adapter count from twelve to thirteen — the Q7 approved
+    # wording advances in lockstep. The body below tracks this
+    # amendment count and is the one place tests pin it.
     expected = (
-        "pos v2 first-run scaffold complete: twelve foundational "
+        "pos v2 first-run scaffold complete: thirteen foundational "
         "components configured at defaults (safety/always-ask, cost "
         "ceilings, reversibility, self-correction, memory, "
         "degradation), memory sidecar and orchestrator launched as "

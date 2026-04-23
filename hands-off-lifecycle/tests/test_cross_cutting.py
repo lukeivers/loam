@@ -82,7 +82,19 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # cross-reference update for the base-class-sentinel's move to
 # -32119. 77389ce is the pre-amendment tip — the amendment-#8 seal
 # commit immediately before amendment #11's code commit.
-BASELINE = "77389ce"
+# Advanced to b9e1f96 when the telegram-interface-framework-integration
+# amendment (#9) opened — the framework composes telegram-interface as
+# the thirteenth foundational adapter. Hands-off-lifecycle's
+# counterpart in this multi-component amendment is a BASELINE bump
+# here (since the scaffold inventory + seal-diff scope rolls forward
+# in lockstep with workspace-bootstrap) plus an allowed-top-level-dir
+# extension to admit the `telegram-interface/` surface — the amendment
+# ships docs-only edits there, but the seal test's top-level-bucket
+# check needs to tolerate the dir. b9e1f96 is the pre-amendment tip —
+# the amendment-#8 audit-closure seal commit immediately before this
+# amendment's code commit. Amendment number (#9) is proposal-assigned;
+# #10 and #11 landed first because their scopes were cheaper to build.
+BASELINE = "b9e1f96"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -156,6 +168,14 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     in the allowed set.
         "docs",
         "first-run-inventory.yaml",
+        # Amendment #9 (telegram-interface-framework-integration):
+        #   - `telegram-interface` top-level dir admitted because the
+        #     multi-component amendment ships docs-only edits there
+        #     (seal sidecar bump + amendment-cycle narrative). AC7
+        #     (zero `telegram-interface/src/` edits) is enforced on the
+        #     telegram-interface component's own seal-diff test, not
+        #     via top-level bucket inspection here.
+        "telegram-interface",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

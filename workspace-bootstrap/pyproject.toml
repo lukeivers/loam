@@ -25,6 +25,7 @@ dependencies = [
     "objective_tracker",
     "primary_persona",
     "graceful_degradation",
+    "pos_telegram_interface",
 ]
 
 [project.optional-dependencies]
@@ -34,7 +35,7 @@ test = [
 ]
 
 [project.entry-points."pos.bootstrap.contributions"]
-# Foundational-adapter bundle — twelve contributions. Phase 4+
+# Foundational-adapter bundle — thirteen contributions. Phase 4+
 # components ship their own `pos.bootstrap.contributions` entry-points
 # in their own packages; bootstrap's code does not need to change.
 observability_aggregator = "workspace_bootstrap.adapters.observability_aggregator:ObservabilityAggregatorContribution"
@@ -49,6 +50,7 @@ cost_governance = "workspace_bootstrap.adapters.cost_governance:CostGovernanceCo
 self_correction = "workspace_bootstrap.adapters.self_correction:SelfCorrectionContribution"
 self_upgrade = "workspace_bootstrap.adapters.self_upgrade:SelfUpgradeContribution"
 workspace_bootstrap_py = "workspace_bootstrap.adapters.workspace_bootstrap_py:WorkspaceBootstrapPyContribution"
+telegram_interface = "workspace_bootstrap.adapters.telegram_interface:TelegramInterfaceContribution"
 
 [project.scripts]
 pos-bootstrap = "workspace_bootstrap.main:cli_main"

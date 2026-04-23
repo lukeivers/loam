@@ -72,7 +72,31 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              the pre-amendment tip — the graceful-degradation +
 #              observability-aggregator retrofit chore commit
 #              immediately before this amendment's code commit.
-BASELINE = "7d462e3"
+#   - b9e1f96  when the telegram-interface-framework-integration
+#              amendment (#9) opened. The framework composes
+#              `telegram-interface` as the thirteenth foundational
+#              adapter: a new
+#              `workspace_bootstrap.adapters.telegram_interface.
+#              TelegramInterfaceContribution` constructs a
+#              `TelegramAdapter` from telegram-interface's public
+#              surface, publishes the channel on the host
+#              (`host.telegram_adapter`, `host.telegram_channel`,
+#              `host.channel_registry["telegram"]`), and composes
+#              with `is_active=False` (degraded-alive) at default
+#              config so boot succeeds without any Telegram
+#              credentials. `_BOOTSTRAP_YAML` grows by one stanza
+#              (13 entries now); `_TELEGRAM_YAML` is a new scaffold
+#              constant; the confirmation sentence updates "twelve"
+#              → "thirteen". Multi-component amendment with
+#              telegram-interface (docs-only; no src/ edits per AC7)
+#              and hands-off-lifecycle (BASELINE bump + allowed-
+#              prefix extension) in lockstep. b9e1f96 is the pre-
+#              amendment tip — the amendment-#8 audit-closure seal
+#              commit immediately before this amendment's code
+#              commit. Proposal numbering (#9) pre-dates amendments
+#              #10 and #11 which landed first; the number is
+#              assigned at proposal time, not landing time.
+BASELINE = "b9e1f96"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -136,6 +160,15 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
     #     already in the allowed list for amendment #6; the #10 edit is
     #     the superseded-by marker on AC3.
     #   - `docs/rebuild/plans/` — the amendment's own plan file.
+    # Amendment #9 (telegram-interface-framework-integration) additions:
+    #   - `telegram-interface/` — docs-only prefix so the seal-diff
+    #     test tolerates the amendment-cycle README / proposal edits on
+    #     this multi-component amendment. Per AC7 the amendment ships
+    #     zero edits under `telegram-interface/src/`; the
+    #     telegram-interface component's own seal test enforces that
+    #     structural invariant directly on `telegram-interface/src/`.
+    #   - `docs/rebuild/components/telegram-interface-framework-integration/`
+    #     — the proposal living with the amendment.
     allowed_prefixes = (
         "workspace-bootstrap/",
         "data/",
@@ -143,8 +176,10 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "orchestrator/",
         "self-upgrade/",
         "memory-system/",
+        "telegram-interface/",
         "docs/rebuild/components/namespaced-labels-and-bootout/",
         "docs/rebuild/components/orchestrator-bootstrap-unification/",
+        "docs/rebuild/components/telegram-interface-framework-integration/",
         "docs/rebuild/plans/",
     )
     allowed_files: set[str] = {"first-run-inventory.yaml"}

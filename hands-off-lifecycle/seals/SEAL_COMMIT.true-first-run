@@ -854,4 +854,67 @@
 # test_no_sealed_amendments.py carries only monkey-patch / import
 # guards — so no safety-layer SEAL_COMMIT sidecar exists or is
 # needed.
-55c74af
+#
+# Amendment cycle — S2 silent-except bundle (#20, 2026-04-22,
+# twentieth amendment): the 2026-04-22 silent-exception audit +
+# classifier run surfaced ten additional `except ...: pass | continue`
+# branches with no acceptance-criterion backing (AC:none) across
+# self-correction/src/triggers.py (sites 1-2: build_trigger_from_span
+# scope-id extraction; OTelAnomalyPoller.run_forever timeout iteration),
+# self-correction/src/completion_check.py (site 3: audit_subscription
+# no-loop fallback), self-correction/src/observability.py (sites 4-5:
+# episode_refused + cost_refusal_caught status-set fallbacks),
+# graceful-degradation/src/component.py (sites 6-7:
+# _any_paused_scope_user_relevant lookup failure;
+# reconcile_on_startup invalid-enum ValueError),
+# graceful-degradation/src/observability.py (site 8: episode_started
+# paused-scope-ids attribute-set failure), and observability-
+# aggregator/src/nl_path.py (sites 9-10: NLPath.translate +
+# NLPath.answer LLM fall-through). Per ODD §8 rule 8 and the audit-
+# triage-by-severity CDC (bucket d — outright violations in live
+# operational paths), each silent catch is replaced with an
+# observable-surface fix: a dedicated OTel emitter where the
+# surrounding function is not itself a span-emitter (sites 1-3, 6-7),
+# or a span event on the already-open enclosing span where the
+# function is itself a fire-and-forget emitter (sites 4-5, 8-10).
+# The shutdown-catch exception CDC does NOT apply (none of the ten
+# are teardown methods). No public exception-raising contract changes;
+# no record shape is mutated; no method begins raising a new exception
+# class. Existing behaviour is preserved at every site (rule-based
+# fall-through, loop-safety, per-scope iteration, empty default
+# return) — the amendment adds the observable surface the classifier
+# surfaced as missing without changing the semantic outcome of any
+# caller.
+#
+# Multi-component amendment (self-correction + graceful-degradation +
+# observability-aggregator + hands-off-lifecycle). Hands-off-
+# lifecycle's counterpart in this amendment is this BASELINE bump +
+# SEAL_COMMIT sidecar refresh + this amendment-cycle narrative +
+# admission of `self-correction` to the H19 allowed top-level set in
+# tests/test_cross_cutting.py (new amended sealed component in this
+# amendment window; `graceful-degradation` and `observability-
+# aggregator` already present from prior amendments). Tests post-
+# amendment: self-correction 77 → 82 (+5 new-behaviour tests covering
+# sites 1-5), graceful-degradation 101 → 104 (+3 new-behaviour tests
+# covering sites 6-8), observability-aggregator 62 → 64 (+2 new-
+# behaviour tests covering sites 9-10), hands-off-lifecycle 66 → 66
+# (zero functional change). All ten sealed components' seal-diff
+# tests green at 1c25a70.
+#
+# SEAL_COMMIT re-pinned at 1c25a70 (the amendment commit itself —
+# this amendment ships as a single amendment commit + this seal
+# commit; no corrective commit needed). BASELINE in hands-off-
+# lifecycle/tests/test_cross_cutting.py advances from f1ff28b to
+# 24d54cb (the pre-amendment tip — the `docs(future-ideas)` commit
+# codifying the amendment-dispatch-speedups + 529-recovery CDCs
+# immediately before amendment #20's code commit). BASELINEs in
+# self-correction/tests/test_no_sealed_amendments.py, graceful-
+# degradation/tests/test_no_sealed_amendments.py, and observability-
+# aggregator/tests/test_no_sealed_amendments.py each advance to
+# 24d54cb in lockstep; SEAL_COMMIT sidecars for the three (plus
+# hands-off-lifecycle) land at BASELINE (24d54cb) on the amendment
+# commit for the empty-diff window, and are advanced to 1c25a70 in
+# this seal commit to narrow the diff window to this amendment's
+# own surface. The other sealed components' BASELINEs remain pinned
+# at their respective prior amendment windows.
+1c25a70

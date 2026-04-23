@@ -381,26 +381,6 @@ def test_scaffold_runner_lives_in_hooks_directory() -> None:
     assert os.access(str(RUNNER), os.R_OK)
 
 
-def test_skip_launchctl_env_var_is_honoured_by_helper_source() -> None:
-    """Structural — the helper source reads ``POS_V2_SKIP_LAUNCHCTL``
-    from os.environ in ``_run_bootstrap`` and passes
-    ``service_bootstrap=not skip_launchctl`` into ``_invoke_first_run_scaffold``.
-
-    This is the integration-test hook that amendment #4's validation
-    harness expected (it set the flag but nothing consumed it); amendment
-    #5 wires it up. Full semantic coverage lives in the harness itself
-    (S4 end-to-end); this test asserts the source-level contract so a
-    future refactor cannot silently drop the wiring.
-    """
-    src = (HOOKS_DIR / "first_run_helper.py").read_text()
-    assert 'os.environ.get("POS_V2_SKIP_LAUNCHCTL")' in src, (
-        "POS_V2_SKIP_LAUNCHCTL env-var read is missing; harness integration broken"
-    )
-    assert "service_bootstrap=not skip_launchctl" in src, (
-        "skip flag is read but not propagated to the scaffold invocation"
-    )
-
-
 def test_scaffold_runner_is_stdlib_only_up_to_adapter_import() -> None:
     """Structural — the runner's top-of-file imports must be stdlib
     only; the adapter import must happen late (inside main() after

@@ -123,7 +123,24 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # 5c49e27 is the pre-amendment tip — the orchestrator-bootstrap-
 # unification-AC1-removal seal commit immediately before amendment
 # #13's code commit.
-BASELINE = "5c49e27"
+# Advanced to 079258f when the skip-launchctl-dead-code-removal
+# amendment (#14) opened — audit of the pyyaml-reachability amendment
+# (#5) surfaced that `POS_V2_SKIP_LAUNCHCTL` has zero live setters
+# anywhere in the tree (no harness, no shell script, no CI, no doc),
+# and its source-grep test (``test_skip_launchctl_env_var_is_honoured_
+# by_helper_source``) is method-in-acceptance — ODD §8.2 rule 9. The
+# env-var read itself is §2.5 orphan code (code for cases the
+# objectives do not name). Amendment #14 deletes the env-var read in
+# ``hands-off-lifecycle/hooks/first_run_helper.py`` and its two
+# conditional skip branches in ``_run_bootstrap``, deletes the
+# justifying comment block, and deletes the source-grep test —
+# single-component, no replacement behavioural test (no AC names
+# replacement behaviour). Hands-off-lifecycle's counterpart is this
+# BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-cycle
+# narrative in seals/SEAL_COMMIT.true-first-run. 079258f is the pre-
+# amendment tip — the `docs(future-ideas)` commit immediately before
+# amendment #14's code commit.
+BASELINE = "079258f"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

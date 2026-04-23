@@ -1126,3 +1126,78 @@
 # asserts an unadmitted bucket surfaces — proves the surface-
 # introduction invariant's fidelity is preserved under the
 # frozen design.
+
+# Amendment #24 — memory-system transport: FastAPI → MCP
+#
+# 2026-04-22. Swaps `memory-system/src/service.py` from a FastAPI
+# + uvicorn app to a FastMCP server on streamable-HTTP transport.
+# The launchd invocation (`{workspace}/memory-system/.venv/bin/
+# python -m src.service`) is unchanged; host + port env vars
+# (GRAPHITI_SERVICE_HOST / GRAPHITI_SERVICE_PORT) preserve their
+# defaults (127.0.0.1 / 8765).
+#
+# Per Luke's R5 ruling (2026-04-23) that memory-system's transport
+# land as MCP, matching (a) the proposal §Direction text ("self-
+# hosted as a local MCP service"), (b) the original proposal §0.1
+# specification, (c) research-v2's MCP recommendation, and (d)
+# Lens 1 (Claude-leverage-first) which favours MCP as Claude's
+# native tool-call primitive so primary-persona integration is
+# direct rather than bridged.
+#
+# Transport choice: streamable HTTP (FastMCP.run_streamable_http_
+# async). Rationale: launchd KeepAlive needs a long-lived process
+# with no parent client — rules out stdio. SSE is deprecated
+# upstream (March 2025) in favour of streamable HTTP. Streamable
+# HTTP is the exact same shape as the outgoing FastAPI app —
+# long-lived, port-bound, Graphiti instance held across requests.
+#
+# Tool-name mapping (HTTP → MCP):
+#   - GET /health       → health tool + GET /health custom_route
+#   - POST /ingest      → add_episode
+#   - POST /search      → search
+#   - GET /token-usage  → token_usage
+# Names are snake_case per MCP convention.
+#
+# Graphiti lifecycle preserved via FastMCP's lifespan= kwarg:
+# construct once on startup, build_indices_and_constraints, yield,
+# graphiti.close() on shutdown. Same @asynccontextmanager shape
+# the FastAPI app used.
+#
+# Dependency delta in memory-system/requirements.txt:
+#   removed: fastapi
+#   added:   mcp>=1.27
+#   kept:    uvicorn (transitive dep of mcp; retained as an
+#            explicit pin for clarity)
+# Net ~15 small transitive additions (httpx-sse, sse-starlette,
+# jsonschema + 3 transitives, pydantic-settings, python-
+# multipart, PyJWT, cryptography + 2, attrs, etc.) — not a
+# significant footprint change vs. the outgoing FastAPI tree.
+#
+# Seven new ODD-named ACs (AC24.1–AC24.7) land in
+# memory-system/tests/test_service.py — the first service-layer
+# tests to exist. Tests use a FakeGraphiti monkeypatch so no real
+# LLM/Claude/network call fires (halt trigger cleared).
+#
+# Scope boundaries honoured: no plist template edit, no factory
+# edit, no Graphiti-core pin change, no orchestrator integration
+# change, no primary-persona integration change. Two sealed
+# components touched (memory-system source + test surface;
+# hands-off-lifecycle sidecar + narrative via this block).
+# Third-component halt trigger cleared — workspace-bootstrap
+# stays untouched because `python -m src.service` remains the
+# invocation contract.
+#
+# Proposal update (docs/rebuild/components/memory-system/
+# proposal.md, Adaptation #4 Graphiti MCP hosting): one-line
+# landed-transport note confirming amendment #24 lands
+# streamable-HTTP FastMCP behind the long-stated MCP direction.
+#
+# BASELINE 494a5ef across both affected components (pre-amendment
+# tip — loam-rename decisions commit immediately before this
+# amendment's code commit). memory-system's floating BASELINE
+# advances to 494a5ef; hands-off-lifecycle's BASELINE stays
+# frozen at 3780603 per amendment #23 (manifest declares
+# frozen_baseline: true). SEAL_COMMIT sidecars both land at
+# 494a5ef on the amendment commit for the empty-diff window, and
+# are advanced to the amendment SHA in the seal commit via
+# `pos-amend seal`.

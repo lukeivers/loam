@@ -732,7 +732,83 @@ _Sources (7.x): `https://code.claude.com/docs/en/sub-agents` — fetched 2026-04
 
 ## 8. Background-task primitives
 
-<!-- PLACEHOLDER -->
+pOS v2 treats "the primary persona never loses track of background work" as a foundational rule (STATE.md rule 7). Claude Code ships several primitives that compose with that rule without pos-v2 re-inventing them.
+
+### 8.1 Bash `run_in_background: true`
+
+**What it does.** The Bash tool accepts `run_in_background: true` for commands the agent does not want to block on. Output is captured; the session remains interactive. `/tasks` (alias `/bashes`) lists and manages active background bashes. Background commands have their own task lifecycle events (`TaskCreated`, `TaskCompleted`).
+
+**Composes with pos-v2.**
+- `session-resilient-orchestrator` already spawns long-running Python workers outside Claude Code entirely. Where work is short enough to stay inside Claude Code (e.g. a test suite, a scan, a compile), `run_in_background` is the right primitive — avoids blocking the persona while work completes.
+- `hands-off-lifecycle`'s first-run shim detaches to a separate process; `run_in_background` is the in-Claude-Code equivalent when detach-from-Claude isn't required.
+
+**Pitfalls.** Background bash tasks still consume Claude Code memory for buffered output. A very-long-running task with heavy stdout bloats the session. Pair with `Monitor` (see below) for streaming consumption.
+
+### 8.2 Monitor tool
+
+**What it does.** Watch a background script and react to each stdout line as an event. Agent SDK ships `Monitor` as a built-in tool (§2.2). The monitor pattern: start a process (`tail -F`, a websocket reader, a long-poll), each line delivered as a notification Claude can respond to.
+
+**Composes with pos-v2.**
+- **This is the primary tool for STATE.md rule 7 (background-work awareness).** Today `observability-aggregator` consumes process stdout via its own polling loop; `Monitor` converts each line into an in-session event with no polling. The primary persona becomes event-driven rather than poll-driven for background work.
+- Plugin `monitors/monitors.json` (§5.1) is the plugin-level packaging of the same primitive — a plugin can declare "watch this log" and every plugin user gets it wired automatically.
+- `self-correction-loop` consumes failure events from background processes the moment they arrive.
+
+**Pitfalls.** High-volume lines can flood the session. Filter at the command level (`grep`, `tail -n 0`) not inside Claude. Monitors declared in plugin `monitors/monitors.json` start automatically when the plugin is active — no user action required — which can surprise users who don't expect a plugin to spawn processes at session start.
+
+### 8.3 `/loop` bundled skill
+
+**What it does.** `/loop [interval] [prompt]` re-runs a prompt repeatedly inside the current session. With interval: fixed cadence (e.g. `/loop 5m check if deploy finished`). Without interval: Claude self-paces. Without prompt: uses `.claude/loop.md` if present, else an autonomous maintenance check. Alias: `/proactive`.
+
+**Composes with pos-v2.**
+- FUTURE_IDEAS.md Idea 1 Step 1 named `/loop` specifically: "composes with scope-of-work activation cycles." A scope that wants periodic check-in (is the memory-system entity-extraction backlog draining? are any background workers stuck?) becomes `/loop <interval> <check>` instead of reimplementing the cadence in pos-v2 Python.
+- Persistent daily refresh of `CLAUDE_CAPABILITIES.md` (Idea 1 Step 4) could be authored as `.claude/loop.md` — the primary persona re-checks and amends this file when the loop fires. Alternative to `/schedule` (below) for session-local use.
+
+**Pitfalls.** Loop runs inside a live session — consumes context and bills each iteration. For long-horizon recurring work (daily, cross-session), `/schedule` is the right primitive; `/loop` is for same-session cadence.
+
+### 8.4 `/schedule` bundled skill
+
+**What it does.** `/schedule [description]` creates, updates, lists, or runs **routines** — scheduled Claude Code runs on cron or one-time at a specific time. Routines run as remote agents; web sessions pulled back with `/teleport`. Alias: `/routines`.
+
+**Composes with pos-v2.**
+- **Idea 1 Step 4 (capability-map refresh automation) maps directly onto `/schedule`** — a daily routine that re-fetches Claude docs and amends this file. Replaces building cron infra from scratch in pos-v2.
+- Any pos-v2 scope with a "check every N hours" cadence (scheduled backlog drains, digest generation, alert summarisation) is a routine candidate.
+- Composes with `cost-governance` — routines respect session-level cost ceilings; if a refresh would push spend over the cap, it defers (per Idea 1 Step 4's explicit design).
+
+**Pitfalls.**
+- Requires GitHub connection via `/web-setup` if the routine runs via web session.
+- One-time routines (`run this once at 3pm`) and recurring routines are both `/schedule` — distinction is in the prompt body.
+- Routines run in a separate session, not the current one. Results are viewed via `/schedule` listing or pulled via `/teleport`. If the user wants results in-line, `/loop` is better.
+
+### 8.5 Task events and `TaskStop` tool
+
+**What it does.** `TaskCreated` and `TaskCompleted` hook events fire around background task creation / completion (§1.2). The deferred `TaskStop` tool (surfaced to this doc-authoring session) lets an agent stop an active background task. `PreToolUse` on `TaskCreate` can block creation (exit 2 rolls back); `PostToolUse`-equivalent on `TaskCompleted` with `decision: "block"` can prevent completion.
+
+**Composes with pos-v2.**
+- `safety-layer` + `reversibility-primitive` can attach `PreToolUse` matchers on `TaskCreate` — a background task that would violate a safety invariant is refused at creation, not after it has run.
+- `cost-governance` attaches on `TaskCompleted` to record the spend of each background task.
+- `self-correction-loop` consumes `TaskCompleted` to detect completed-but-failed background scopes and trigger the correction arc.
+
+### 8.6 `/tasks` and observability
+
+`/tasks` (alias `/bashes`) lists active background bashes in-session. `/usage` (alias `/cost`, `/stats`) shows session cost; `/insights` generates an analysis report over recent sessions; `/recap` emits a one-line session summary on demand (automatic recap appears after idle time). These are the primary persona's introspection surface.
+
+### 8.7 Pitfalls
+
+- `/loop` and `/schedule` both require clear descriptions; an underspecified prompt ("check if things are OK") will self-define what "OK" means every iteration. Bind tightly.
+- Routines run outside the current session — no cached context, no working-directory assumption unless set via routine config. The routine prompt must be self-contained.
+- Plugin-shipped monitors (§5.1) have access to the plugin-declared environment but not necessarily the user's full env — workspace-sensitive monitors need explicit env-passing in `monitors.json`.
+- Background bash buffered output can silently OOM in pathological cases; cap with `head`, `tail -F`, or `grep` at the shell layer.
+
+### 8.8 End-user configuration surface
+
+- `/loop`, `/schedule`, `/tasks`, `/bashes`, `/insights`, `/recap`, `/usage` — in-session slash commands.
+- `.claude/loop.md` — default loop prompt.
+- Plugin `monitors/monitors.json` — packaged watchers.
+- `Bash.run_in_background: true` — one-off async exec.
+- Agent SDK `Monitor` tool — programmatic per-line event consumption.
+- Hooks on `TaskCreated` / `TaskCompleted` / `PreToolUse` for `TaskCreate` — structural gates.
+
+_Sources (8.x): `https://code.claude.com/docs/en/commands`, `https://code.claude.com/docs/en/hooks`, `https://code.claude.com/docs/en/plugins-reference` (monitors section), Agent SDK overview — all fetched 2026-04-23._
 
 ---
 

@@ -1201,3 +1201,88 @@
 # 494a5ef on the amendment commit for the empty-diff window, and
 # are advanced to the amendment SHA in the seal commit via
 # `pos-amend seal`.
+
+# Amendment #26 — teardown observability retrofit
+#
+# 2026-04-22. Retrofits 23 bucket-(b) teardown broad-catches across
+# eight components per tightened CDC 2 (`9559ca7`, 2026-04-23).
+# Bare `pass` in `except Exception` inside close() / stop() /
+# _shutdown / cancel() / dispose() is no longer ODD-legit; each
+# site must emit to observability while still swallowing the
+# exception (no-cascade guarantee preserved; forensic trail
+# restored).
+#
+# Fix shapes (two patterns):
+#  1) `span.add_event(name, {"exception": type(exc).__name__})`
+#     when a component-owned span is live at the catch site —
+#     used for the four orchestrator._shutdown sites in
+#     orchestrator.py that emit on `self._process_span`.
+#  2) `logger.debug("<context>_failed", exc_info=True)` with a
+#     module-top `logging.getLogger(__name__)` — used everywhere
+#     else (all six Store.close() sites, orchestrator.stop/close,
+#     telegram-interface.stop_background, the seven workspace-
+#     bootstrap adapter _shutdown closures).
+#
+# CancelledError split-out: five sites previously co-caught
+# `CancelledError` with broad `Exception`. Per tightened CDC 2
+# (and the §8 rule 8 expected-flow principle), CancelledError
+# keeps its bare-pass clause; the broad Exception clause gains
+# the emission.
+#
+# Touched components:
+#   - cost-governance: store.py close().
+#   - self-correction: store.py close().
+#   - observability-aggregator: store.py close().
+#   - reversibility-primitive: store.py close().
+#   - safety-layer: store.py close() (source edit; no seal-diff
+#     test to advance — admitted into every other component's
+#     allowed_prefixes via this amendment).
+#   - telegram-interface: availability.py stop_background().
+#   - orchestrator: 7 sites across supervisor.py (stop), ipc.py
+#     (stop + client close), orchestrator.py (_shutdown x4 +
+#     close).
+#   - workspace-bootstrap: 9 sites across seven adapter _shutdown
+#     closures (observability_aggregator, safety_layer,
+#     cost_governance, self_correction, memory_system x2 split
+#     terminate + kill, primary_persona, reversibility_primitive).
+#   - hands-off-lifecycle: sidecar + narrative only (frozen H19).
+#
+# Re-verified-and-dropped (deferred to follow-up amendment):
+#   - orchestrator/src/ipc.py:122 — narrow `except
+#     FileNotFoundError` on socket unlink; bucket-(a) designed-
+#     branch.
+#   - hands-off-lifecycle/hooks/first_run_progress.py:159 —
+#     narrow `except OSError` on stream close; bucket-(a).
+#   - workspace-bootstrap/adapters/memory_system.py:109-117 —
+#     failed-startup cleanup inside `contribute()`; enclosing
+#     method is NOT a teardown. Future-amendment decision: is
+#     startup-cleanup broad-catch a bucket-(b) equivalent
+#     under tightened CDC 2? Deferred.
+#
+# Brief pre-research estimate was "~44 sites"; post-research
+# inventory is 23. The delta (~21) is a mix of non-teardown-
+# enclosed sites (the scanner's looser teardown-keyword match
+# caught caller chains that passed through teardowns to non-
+# teardown helpers) and narrow-designed-branch catches (bucket-
+# (a) designed-branch, not bucket-(b) broad-catch). The dropped
+# sites are named in the research doc §5.
+#
+# Test delta: +7 new test files (one per component with source
+# edits), each parameterized across that component's retrofitted
+# sites, asserting the emission shape. safety-layer's test
+# lives in safety-layer/tests/ despite the component having no
+# seal-diff test.
+#
+# Allowed-prefix widenings (per component): the six sealed
+# components whose allowed_prefixes did NOT admit `safety-layer/`
+# gain that admission (cost-governance, self-correction,
+# observability-aggregator, reversibility-primitive, telegram-
+# interface, workspace-bootstrap). Orchestrator already admits
+# it from amendment #19.
+#
+# BASELINE dd11677 (pre-amendment tip). hands-off-lifecycle's
+# H19 BASELINE stays frozen at 3780603 per amendment #23 (manifest
+# declares frozen_baseline: true). SEAL_COMMIT sidecars for seven
+# other components land at dd11677 on the amendment commit for
+# the empty-diff window; advanced to the amendment SHA in the
+# seal commit via `pos-amend seal`.

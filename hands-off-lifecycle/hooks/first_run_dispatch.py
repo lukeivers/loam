@@ -6,10 +6,12 @@ Added by the 2026-04-22 session-start-detachment amendment.
 
 ``first-run.sh`` does the minimum needed to find a Python 3.13
 interpreter and hand off to this script. ``first_run_dispatch.py``
-reads ``~/.pos/first-run.state``, decides which of the five cases we
-are in, and either spawns the detached worker (``first_run_helper.py``
-in ``bootstrap`` / ``resume`` mode) or short-circuits with an
-appropriate additionalContext message.
+reads ``<workspace>/.pos/first-run.state`` (amendment #28: per-
+workspace, not ``~/.pos/first-run.state`` as in the original
+session-start-detachment amendment), decides which of the five
+cases we are in, and either spawns the detached worker
+(``first_run_helper.py`` in ``bootstrap`` / ``resume`` mode) or
+short-circuits with an appropriate additionalContext message.
 
 The dispatcher itself must be stdlib-only and complete in under a
 second. It owns zero heavy work — the only thing it invokes that
@@ -70,7 +72,6 @@ from first_run_state import (  # noqa: E402
     log_path,
     mark_failed_silently,
     read_state,
-    state_path,
     write_state,
 )
 
@@ -249,7 +250,7 @@ def _spawn_detached_worker(
 
 def _write_fresh_state(
     *,
-    pos_root: Path,
+    workspace_root: Path,
     pid: int,
     generation: int,
 ) -> FirstRunState:
@@ -257,9 +258,35 @@ def _write_fresh_state(
         status="starting",
         pid=pid,
         generation=generation,
+        workspace_root=str(Path(workspace_root).resolve()),
     )
-    write_state(state, pos_root)
+    write_state(state, workspace_root)
     return state
+
+
+def _state_belongs_to(state: FirstRunState, pos_v2_root: Path) -> bool:
+    """Amendment #28 — defence in depth against cross-workspace reads.
+
+    A state file located under ``<pos_v2_root>/.pos/`` *should* always
+    belong to that workspace by construction of the path. Still: if
+    the file's recorded ``workspace_root`` is non-empty and does not
+    match, trust the content — the workspace may have been renamed,
+    moved, or the file copied in by an admin. Empty
+    ``workspace_root`` means a pre-amendment-#28 state or a test
+    harness that did not fill it; refuse those too (fail-closed per
+    plan §2 constraint "Fail-closed direction").
+    """
+    if not state.workspace_root:
+        return False
+    try:
+        recorded = Path(state.workspace_root).resolve()
+    except (OSError, RuntimeError):
+        return False
+    try:
+        current = Path(pos_v2_root).resolve()
+    except (OSError, RuntimeError):
+        return False
+    return recorded == current
 
 
 def dispatch(
@@ -274,11 +301,24 @@ def dispatch(
     Pure function over filesystem state plus side-effects of spawning
     + state-file writes. Returns the user-facing string for stdout;
     caller prints.
+
+    Amendment #28: state is read from the workspace-local path
+    ``<pos_v2_root>/.pos/first-run.state``. A state whose recorded
+    ``workspace_root`` does not match the current ``pos_v2_root`` is
+    treated as absent (fail-closed); the dispatcher never touches
+    another workspace's state file.
     """
     log = log_path(pos_root)
     settings_path = pos_v2_root / ".claude" / "settings.json"
 
-    existing = read_state(pos_root)
+    existing = read_state(pos_v2_root)
+    # Defence in depth — reject a state whose content names a
+    # different workspace (or has no recorded workspace at all).
+    # Path routing plus the ``_state_belongs_to`` check together
+    # close AC11 (foreign-workspace state is fresh-spawn) and AC13
+    # (corrupt state is fresh-spawn via read_state returning None).
+    if existing is not None and not _state_belongs_to(existing, pos_v2_root):
+        existing = None
 
     # Case 2 — completed previously.
     if existing is not None and existing.status == "completed":
@@ -293,7 +333,7 @@ def dispatch(
     if existing is not None and is_stale_live_state(
         existing, stale_after_s=0.0
     ):
-        existing = mark_failed_silently(existing, pos_root)
+        existing = mark_failed_silently(existing, pos_v2_root)
         # Fall through to respawn, but remember we came from a silent
         # death so the user-facing text explains it.
         next_gen = int(existing.generation or 1) + 1
@@ -306,7 +346,7 @@ def dispatch(
             mode="resume",
         )
         _write_fresh_state(
-            pos_root=pos_root, pid=pid, generation=next_gen
+            workspace_root=pos_v2_root, pid=pid, generation=next_gen
         )
         return _msg_respawn_after_silent_death(existing, log)
 
@@ -330,7 +370,7 @@ def dispatch(
             mode="resume",
         )
         _write_fresh_state(
-            pos_root=pos_root, pid=pid, generation=next_gen
+            workspace_root=pos_v2_root, pid=pid, generation=next_gen
         )
         # The user-facing message still names what broke — they need
         # that context even though we already kicked off a retry.
@@ -355,7 +395,7 @@ def dispatch(
         generation=1,
         mode=mode,
     )
-    _write_fresh_state(pos_root=pos_root, pid=pid, generation=1)
+    _write_fresh_state(workspace_root=pos_v2_root, pid=pid, generation=1)
     return _msg_fresh_start(log, helper_version="1")
 
 

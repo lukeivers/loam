@@ -29,13 +29,26 @@ state, not the running process.
 
 ## Contract
 
-One state file per host: ``~/.pos/first-run.state``. The file is
-written atomically via ``.tmp`` sibling + rename, so concurrent
-readers always see a valid snapshot. The state machine transitions
-monotonically forward: ``absent`` -> ``starting`` -> ``running`` ->
-``completed`` (happy path) or ``failed`` (any halt). ``completed`` and
-``failed`` are terminal. A ``starting`` that never advances past the first write is
-treated as ``failed`` by the hook side after the grace window expires.
+One state file per **workspace**: ``<workspace>/.pos/first-run.state``.
+Amendment #28 (2026-04-23) moved this from the host-global
+``~/.pos/first-run.state`` — that prior shape had no workspace
+identity and, on a host with two pos-v2 workspaces, workspace A's
+completed state would short-circuit workspace B's first-run
+dispatch. Workspace identity is now enforced by path, with a
+``workspace_root`` field inside the state content as defence in
+depth for the "path moved by admin" edge case.
+
+The file is written atomically via ``.tmp`` sibling + rename, so
+concurrent readers always see a valid snapshot. The state machine
+transitions monotonically forward: ``absent`` -> ``starting`` ->
+``running`` -> ``completed`` (happy path) or ``failed`` (any halt).
+``completed`` and ``failed`` are terminal. A ``starting`` that never
+advances past the first write is treated as ``failed`` by the hook
+side after the grace window expires.
+
+The progress log (``first-run.log``) remains at the host-global
+``~/.pos/`` path — it is a tailable narrative surface, not a
+state artefact; the silent-death-diagnosis path does not read it.
 
 Stdlib only. No third-party deps.
 """
@@ -93,6 +106,12 @@ class FirstRunState:
 
     ``remediation`` is populated only when status=failed; it is the
     plain-language text the hook surfaces to the user.
+
+    ``workspace_root`` (added amendment #28) records the absolute path
+    of the workspace this state belongs to. Defence-in-depth against
+    a state file being moved out from under a workspace: the
+    dispatcher refuses a state whose ``workspace_root`` does not
+    match the current ``pos_v2_root``, treating it as absent.
     """
 
     status: str = "starting"
@@ -108,22 +127,38 @@ class FirstRunState:
     # session). Lets the log file distinguish between runs without
     # rotating on every hook fire.
     generation: int = 1
+    # Workspace identity — absolute path (resolved) of the workspace
+    # this state belongs to. Empty string on a pre-amendment-#28 state
+    # read from disk; such a state is interpreted as not-this-workspace
+    # by the dispatcher, matching the fail-closed direction in the
+    # amendment-#28 plan (constraint §2).
+    workspace_root: str = ""
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True) + "\n"
 
 
-def state_path(pos_root: Path = DEFAULT_POS_ROOT) -> Path:
-    return Path(pos_root).expanduser() / STATE_FILE
+def state_path(workspace_root: Path | str) -> Path:
+    """Path to a workspace's first-run state file.
+
+    Amendment #28: keyed by workspace, not host. ``workspace_root`` is
+    the pos-v2 workspace directory; the state file lives at
+    ``<workspace>/.pos/first-run.state``.
+    """
+    return Path(workspace_root).expanduser() / ".pos" / STATE_FILE
 
 
 def log_path(pos_root: Path = DEFAULT_POS_ROOT) -> Path:
     return Path(pos_root).expanduser() / LOG_FILE
 
 
-def read_state(pos_root: Path = DEFAULT_POS_ROOT) -> FirstRunState | None:
-    """Read and parse the state file. Returns None if absent/corrupt."""
-    p = state_path(pos_root)
+def read_state(workspace_root: Path | str) -> FirstRunState | None:
+    """Read and parse the workspace's state file. None if absent/corrupt.
+
+    Amendment #28 signature change: keyed by ``workspace_root`` rather
+    than the host-global ``pos_root``.
+    """
+    p = state_path(workspace_root)
     if not p.exists():
         return None
     try:
@@ -151,15 +186,22 @@ def read_state(pos_root: Path = DEFAULT_POS_ROOT) -> FirstRunState | None:
 
 def write_state(
     state: FirstRunState,
-    pos_root: Path = DEFAULT_POS_ROOT,
+    workspace_root: Path | str,
 ) -> None:
-    """Atomically persist ``state`` to the state file.
+    """Atomically persist ``state`` to the workspace's state file.
 
     Writes to a ``.tmp`` sibling then ``rename()`` — POSIX rename is
     atomic within a filesystem, so concurrent readers always see a
     complete snapshot (not a half-written file).
+
+    Amendment #28: when ``state.workspace_root`` is empty, it is
+    populated with the resolved absolute path of ``workspace_root``
+    so the written content names its owner (defence in depth).
     """
-    p = state_path(pos_root)
+    ws = Path(workspace_root).expanduser().resolve()
+    if not state.workspace_root:
+        state.workspace_root = str(ws)
+    p = state_path(ws)
     p.parent.mkdir(parents=True, exist_ok=True)
     state.updated_at = time.time()
     if state.started_at == 0.0:
@@ -239,13 +281,19 @@ def is_stale_live_state(
 
 def mark_failed_silently(
     state: FirstRunState,
-    pos_root: Path = DEFAULT_POS_ROOT,
+    workspace_root: Path | str,
 ) -> FirstRunState:
     """Flip a stale live state to failed and persist.
 
     Called by the hook when it detects ``is_stale_live_state(state)``.
     The failure mode is named ``worker-died-silently`` so it surfaces
     differently in diagnostics from a worker-reported failure.
+
+    Amendment #28 signature change: keyed by ``workspace_root``. A
+    dispatcher invocation for workspace B that sees a stale live
+    state for workspace A (via a cross-workspace state read — which
+    under path-routed state should never happen) must not touch A's
+    state file; path routing prevents this structurally.
     """
     state.status = "failed"
     state.error_code = -32099
@@ -259,5 +307,5 @@ def mark_failed_silently(
         "If this repeats, check ~/.pos/first-run.log for the last "
         "recorded phase."
     )
-    write_state(state, pos_root)
+    write_state(state, workspace_root)
     return state

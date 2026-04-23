@@ -120,23 +120,32 @@ def test_AC6_scaffold_default_still_raises_without_recovery_flag(
 
 
 def test_state_roundtrip_writes_and_reads_atomically(tmp_path: Path) -> None:
+    # Amendment #28: state is keyed by workspace root; the file lives
+    # at <workspace>/.pos/first-run.state.
+    ws = tmp_path / "alpha"
+    ws.mkdir()
     state = FirstRunState(
         status="running", pid=12345, phase="phase-3b-shared-deps"
     )
-    write_state(state, tmp_path)
-    assert (tmp_path / "first-run.state").exists()
-    roundtrip = read_state(tmp_path)
+    write_state(state, ws)
+    assert (ws / ".pos" / "first-run.state").exists()
+    roundtrip = read_state(ws)
     assert roundtrip is not None
     assert roundtrip.status == "running"
     assert roundtrip.pid == 12345
     assert roundtrip.phase == "phase-3b-shared-deps"
     assert roundtrip.started_at > 0
     assert roundtrip.updated_at > 0
+    # Defence-in-depth: content records its owning workspace.
+    assert roundtrip.workspace_root == str(ws.resolve())
 
 
 def test_state_read_returns_none_on_corrupt_file(tmp_path: Path) -> None:
-    (tmp_path / "first-run.state").write_text("not json {{{")
-    assert read_state(tmp_path) is None
+    # Amendment #28: state lives under <workspace>/.pos/.
+    ws = tmp_path / "alpha"
+    (ws / ".pos").mkdir(parents=True)
+    (ws / ".pos" / "first-run.state").write_text("not json {{{")
+    assert read_state(ws) is None
 
 
 def test_state_log_appends_generation_tagged_lines(tmp_path: Path) -> None:
@@ -181,17 +190,20 @@ def test_is_stale_live_state_ignores_terminal_states() -> None:
 
 
 def test_mark_failed_silently_flips_state_and_persists(tmp_path: Path) -> None:
+    # Amendment #28: state API keyed by workspace root.
+    ws = tmp_path / "alpha"
+    ws.mkdir()
     state = FirstRunState(
         status="running",
         pid=999_999_999,
         phase="phase-3b-shared-deps",
     )
-    write_state(state, tmp_path)
-    flipped = mark_failed_silently(state, tmp_path)
+    write_state(state, ws)
+    flipped = mark_failed_silently(state, ws)
     assert flipped.status == "failed"
     assert flipped.error_code == -32099
     assert "worker-died-silently" in flipped.detail
-    on_disk = read_state(tmp_path)
+    on_disk = read_state(ws)
     assert on_disk is not None and on_disk.status == "failed"
 
 
@@ -262,10 +274,11 @@ def _fake_helper(tmp_path: Path, behavior: str) -> Path:
             "p.add_argument('--pos-root')\n"
             "p.add_argument('--generation', type=int, default=1)\n"
             "a, _ = p.parse_known_args()\n"
-            "pr = Path(a.pos_root)\n"
-            "write_state(FirstRunState(status='running', pid=os.getpid(), generation=a.generation), pr)\n"
+            # Amendment #28: state is keyed by workspace root.
+            "ws = Path(a.pos_v2_root)\n"
+            "write_state(FirstRunState(status='running', pid=os.getpid(), generation=a.generation), ws)\n"
             "time.sleep(0.2)\n"
-            "write_state(FirstRunState(status='completed', pid=os.getpid(), generation=a.generation), pr)\n"
+            "write_state(FirstRunState(status='completed', pid=os.getpid(), generation=a.generation), ws)\n"
         )
     elif behavior == "die_silently":
         helper.write_text(
@@ -281,8 +294,9 @@ def _fake_helper(tmp_path: Path, behavior: str) -> Path:
             "p.add_argument('--pos-root')\n"
             "p.add_argument('--generation', type=int, default=1)\n"
             "a, _ = p.parse_known_args()\n"
-            "pr = Path(a.pos_root)\n"
-            "write_state(FirstRunState(status='starting', pid=os.getpid(), generation=a.generation), pr)\n"
+            # Amendment #28: state is keyed by workspace root.
+            "ws = Path(a.pos_v2_root)\n"
+            "write_state(FirstRunState(status='starting', pid=os.getpid(), generation=a.generation), ws)\n"
             # Suicide with SIGKILL-equivalent — emulates the exact hook-timeout
             # path where the worker is killed before it can transition.
             "os._exit(137)\n"
@@ -301,13 +315,14 @@ def _fake_helper(tmp_path: Path, behavior: str) -> Path:
             "p.add_argument('--pos-root')\n"
             "p.add_argument('--generation', type=int, default=1)\n"
             "a, _ = p.parse_known_args()\n"
-            "pr = Path(a.pos_root)\n"
+            # Amendment #28: state is keyed by workspace root.
+            "ws = Path(a.pos_v2_root)\n"
             "write_state(FirstRunState(\n"
             "    status='failed', pid=os.getpid(), generation=a.generation,\n"
             "    phase='phase-3b-shared-deps', error_code=-32097,\n"
             "    detail='simulated: memory-system pip timeout',\n"
             "    remediation='check your network, then reopen claude to retry.',\n"
-            "), pr)\n"
+            "), ws)\n"
         )
     elif behavior == "emit_then_sleep":
         helper.write_text(
@@ -323,8 +338,9 @@ def _fake_helper(tmp_path: Path, behavior: str) -> Path:
             "p.add_argument('--pos-root')\n"
             "p.add_argument('--generation', type=int, default=1)\n"
             "a, _ = p.parse_known_args()\n"
-            "pr = Path(a.pos_root)\n"
-            "write_state(FirstRunState(status='running', pid=os.getpid(), generation=a.generation, phase='phase-3b-shared-deps'), pr)\n"
+            # Amendment #28: state is keyed by workspace root.
+            "ws = Path(a.pos_v2_root)\n"
+            "write_state(FirstRunState(status='running', pid=os.getpid(), generation=a.generation, phase='phase-3b-shared-deps'), ws)\n"
             "time.sleep(60)\n"
         )
     else:
@@ -360,10 +376,11 @@ def test_AC1_fresh_dispatch_completes_in_under_5_seconds_with_plain_language(
     assert "installing" in proc.stdout
     assert str(pos_root / "first-run.log") in proc.stdout
     assert "minutes" in proc.stdout or "min" in proc.stdout
+    # Amendment #28: state is workspace-local, log stays host-global.
     # The state file must be written synchronously so the next
     # dispatch sees "starting" not "none."
-    assert (pos_root / "first-run.state").exists()
-    state = read_state(pos_root)
+    assert (ws / ".pos" / "first-run.state").exists()
+    state = read_state(ws)
     assert state is not None
     assert state.status in ("starting", "running", "completed")
 
@@ -380,10 +397,11 @@ def test_AC3_completed_state_yields_short_circuit_message(
     (ws / ".claude").mkdir(parents=True)
     pos_root = tmp_path / ".pos"
     pos_root.mkdir()
-    # Pre-seed a completed state.
+    # Amendment #28: state is workspace-local. Pre-seed a completed
+    # state for THIS workspace so the dispatch recognises it.
     write_state(
         FirstRunState(status="completed", pid=os.getpid()),
-        pos_root,
+        ws,
     )
     helper = _fake_helper(tmp_path, "emit_state")
     proc = _run_dispatch(
@@ -407,11 +425,12 @@ def test_AC4_silent_death_surfaces_crash_and_respawns(tmp_path: Path) -> None:
     helper_die = _fake_helper(tmp_path, "die_silently")
     _run_dispatch(pos_v2_root=ws, pos_root=pos_root, helper=helper_die)
 
+    # Amendment #28: state is workspace-local.
     # Wait for the spawned worker to die. Poll the state until pid is
     # dead; bail after 3 seconds (well above the fake helper's runtime).
     deadline = time.monotonic() + 3.0
     while time.monotonic() < deadline:
-        state = read_state(pos_root)
+        state = read_state(ws)
         if state is None:
             time.sleep(0.05)
             continue
@@ -455,7 +474,9 @@ def test_AC5_failed_state_surfaces_named_remediation(tmp_path: Path) -> None:
     (ws / ".claude").mkdir(parents=True)
     pos_root = tmp_path / ".pos"
     pos_root.mkdir()
-    # Pre-seed a failed state mimicking a worker-reported failure.
+    # Amendment #28: state is workspace-local. Pre-seed a failed state
+    # for THIS workspace so the dispatch recognises it (fills in the
+    # workspace_root field automatically).
     write_state(
         FirstRunState(
             status="failed",
@@ -468,7 +489,7 @@ def test_AC5_failed_state_surfaces_named_remediation(tmp_path: Path) -> None:
             ),
             generation=1,
         ),
-        pos_root,
+        ws,
     )
     # Any helper works here — the dispatch will spawn it as part of the
     # auto-retry on failed state.
@@ -482,7 +503,7 @@ def test_AC5_failed_state_surfaces_named_remediation(tmp_path: Path) -> None:
     assert "check your network" in proc.stdout
     assert "-32097" in proc.stdout
     # The retry was kicked off — generation incremented.
-    new_state = read_state(pos_root)
+    new_state = read_state(ws)
     assert new_state is not None
     assert new_state.generation == 2
 
@@ -497,17 +518,21 @@ def test_AC2_worker_advances_state_at_phase_boundaries(tmp_path: Path) -> None:
     Full end-to-end is exercised live (not in unit tests — would take
     minutes and require real pip). This test verifies the instrument.
     """
-    # Import under a generation tag + pos_root so writes go to tmp_path.
+    # Import under a generation tag + workspace so writes go to
+    # <workspace>/.pos/. Amendment #28: state is keyed by workspace.
     import importlib
     import first_run_helper
 
     importlib.reload(first_run_helper)
-    first_run_helper._STATE_POS_ROOT = tmp_path
+    ws = tmp_path / "pos-v2"
+    ws.mkdir()
+    first_run_helper._STATE_POS_ROOT = tmp_path  # log location
+    first_run_helper._STATE_WORKSPACE_ROOT = ws  # state location
     first_run_helper._STATE_GENERATION = 7
     first_run_helper._STATE_WRITES_ENABLED = True
 
     first_run_helper._advance_state("running", phase="phase-3b-shared-deps")
-    state = read_state(tmp_path)
+    state = read_state(ws)
     assert state is not None
     assert state.status == "running"
     assert state.phase == "phase-3b-shared-deps"
@@ -516,11 +541,11 @@ def test_AC2_worker_advances_state_at_phase_boundaries(tmp_path: Path) -> None:
     first_run_helper._advance_state(
         "running", phase="phase-3e-editable-installs"
     )
-    state = read_state(tmp_path)
+    state = read_state(ws)
     assert state.phase == "phase-3e-editable-installs"
 
     first_run_helper._advance_state("completed", phase="complete")
-    state = read_state(tmp_path)
+    state = read_state(ws)
     assert state.status == "completed"
 
 
@@ -533,10 +558,12 @@ def test_advance_state_is_noop_without_explicit_enable(tmp_path: Path) -> None:
 
     importlib.reload(first_run_helper)
     first_run_helper._STATE_POS_ROOT = tmp_path
+    first_run_helper._STATE_WORKSPACE_ROOT = tmp_path
     # NOT enabled — default-False guard.
     first_run_helper._advance_state("running", phase="phase-3b-shared-deps")
-    # No state file was written.
-    assert not (tmp_path / "first-run.state").exists()
+    # No state file was written. Amendment #28: state path is
+    # <workspace>/.pos/first-run.state.
+    assert not (tmp_path / ".pos" / "first-run.state").exists()
 
 
 # ---- hook-level smoke: shell wrapper dispatches correctly -----------

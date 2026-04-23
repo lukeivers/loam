@@ -132,11 +132,23 @@ def _workspace_slug(workspace_root: Path | str) -> str:
 # ---- state-file integration (detachment amendment) ------------------
 #
 # Module-level handles, set by ``main()`` when invoked as the detached
-# worker. ``_STATE_POS_ROOT`` determines where the state/log files live;
+# worker.
+#
+# ``_STATE_POS_ROOT`` determines where the host-global ``first-run.log``
+# lives (still host-global — it is a tailable narrative surface, not a
+# state artefact).
+#
+# ``_STATE_WORKSPACE_ROOT`` (amendment #28) determines where
+# ``first-run.state`` lives — inside the workspace, at
+# ``<workspace>/.pos/first-run.state`` — routing state by workspace
+# identity so first-run completion for workspace A does not short-
+# circuit workspace B.
+#
 # ``_STATE_GENERATION`` tags each worker spawn so log lines from a
 # respawn are distinguishable from the original run. Tests can point
 # these at a tmp_path without reaching into the module.
 _STATE_POS_ROOT: Path = DEFAULT_POS_ROOT
+_STATE_WORKSPACE_ROOT: Path = Path.cwd()
 _STATE_GENERATION: int = 1
 # Guard flag: only write state-file / log entries when main() has
 # explicitly enabled it. Without this guard, unit tests that exercise
@@ -168,7 +180,7 @@ def _advance_state(
     """
     if not _STATE_WRITES_ENABLED:
         return
-    existing = read_state(_STATE_POS_ROOT)
+    existing = read_state(_STATE_WORKSPACE_ROOT)
     state = existing or FirstRunState()
     state.status = status
     state.pid = os.getpid()
@@ -181,7 +193,7 @@ def _advance_state(
         state.error_code = error_code
     if remediation:
         state.remediation = remediation
-    write_state(state, _STATE_POS_ROOT)
+    write_state(state, _STATE_WORKSPACE_ROOT)
     log_line = f"{status}"
     if phase:
         log_line += f" — {phase}"
@@ -1561,10 +1573,16 @@ def main(argv: list[str] | None = None) -> int:
     # Wire state-file location into module globals so _advance_state()
     # picks them up without threading the config through every helper.
     # The ENABLED flag flips on here so tests that import + call
-    # _emit_diag directly do not pollute ~/.pos/.
-    global _STATE_POS_ROOT, _STATE_GENERATION, _STATE_WRITES_ENABLED
+    # _emit_diag directly do not pollute ~/.pos/ or any workspace tree.
+    #
+    # Amendment #28: state is per workspace
+    # (``<workspace>/.pos/first-run.state``); the host-global
+    # ``_STATE_POS_ROOT`` continues to own the progress log path.
+    global _STATE_POS_ROOT, _STATE_WORKSPACE_ROOT
+    global _STATE_GENERATION, _STATE_WRITES_ENABLED
     if args.pos_root:
         _STATE_POS_ROOT = Path(args.pos_root).expanduser().resolve()
+    _STATE_WORKSPACE_ROOT = pos_v2_root
     _STATE_GENERATION = int(args.generation)
     _STATE_WRITES_ENABLED = True
 

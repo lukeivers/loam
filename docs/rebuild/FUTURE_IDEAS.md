@@ -423,6 +423,8 @@ The third question is the disambiguation mechanism. Does the fix ship a slug-ove
 
 This belongs in FUTURE_IDEAS rather than being scoped now because the collision is a latent hazard, not a currently-biting bug — Luke operates one pos-v2 checkout at a time. When a second checkout is spun up for any reason (evaluation workspace, backup directory, parallel development line), the hazard becomes live and the idea graduates to a component cycle.
 
+**Update (2026-04-23, amendment #28).** Slug collision in launchd labels is not the only workspace-identity hazard — first-run *state-file routing* was a sibling defect. Under the session-start-detachment amendment the first-run completion state lived at the host-global `~/.pos/first-run.state` with no workspace identity, so workspace A's completed state short-circuited workspace B's dispatcher into a false-success message. Amendment #28 closes that sibling by routing state workspace-locally (`<workspace>/.pos/first-run.state`) and adding a `workspace_root` field inside the state content as defence in depth. The slug-collision hazard above — two workspaces with the same basename producing the same launchd labels — remains open for its own future cycle. When that cycle runs, it inherits amendment #28's finding that workspace-identity enforcement is cheapest when structural (paths) rather than advisory (remember-to-check).
+
 ## Idea 10 — Project rename to loam
 
 **Status:** TABLED 2026-04-23. Decisions recorded in `docs/rebuild/plans/loam-rename-decisions.md`; execution deferred pending prerequisite amendments (#26 teardown retrofit) and available bandwidth. Un-table when ready.

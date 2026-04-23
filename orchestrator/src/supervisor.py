@@ -107,12 +107,18 @@ ProbeFn = Callable[[], Awaitable[ProbeResult]]
 
 @dataclass
 class EscalationRecord:
+    """Amendment #19 adds the optional ``notification_failures`` field
+    (site 7) — a counter of per-escalation notifier failures surfaced
+    via the ``supervisor.notify_failed`` span. Default 0; backwards-
+    compatible additive extension."""
+
     id: str
     cls: EscalationClass
     opened_at: str  # ISO 8601
     notifications_sent: int = 0
     last_notified_at: str | None = None
     resolved_at: str | None = None
+    notification_failures: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -122,6 +128,7 @@ class EscalationRecord:
             "notifications_sent": self.notifications_sent,
             "last_notified_at": self.last_notified_at,
             "resolved_at": self.resolved_at,
+            "notification_failures": self.notification_failures,
         }
 
     @classmethod
@@ -133,6 +140,9 @@ class EscalationRecord:
             notifications_sent=int(d.get("notifications_sent", 0) or 0),
             last_notified_at=d.get("last_notified_at"),
             resolved_at=d.get("resolved_at"),
+            notification_failures=int(
+                d.get("notification_failures", 0) or 0
+            ),
         )
 
 
@@ -428,9 +438,24 @@ class MemorySupervisor:
                 await self._notify(cls, text, attrs)
                 self._current_escalation.notifications_sent += 1
                 self._current_escalation.last_notified_at = now_iso
-            except Exception:
-                # Never kill the loop on notifier failure.
-                pass
+            except Exception as e:
+                # Amendment #19 (site 7): loop-safety invariant —
+                # never kill the probe loop on notifier failure — is
+                # preserved. The observable surface is the span below
+                # plus the notification_failures counter on the
+                # persisted record. Operators can now see "escalation
+                # opened but notification failed N times" rather than
+                # the prior silent drop.
+                if self._current_escalation is not None:
+                    self._current_escalation.notification_failures += 1
+                with _TRACER.start_as_current_span(
+                    "pos.hands_off_lifecycle.supervisor.notify_failed"
+                ) as fail_span:
+                    fail_span.set_attribute("escalation.class", cls.value)
+                    fail_span.set_attribute(
+                        "exception.class", type(e).__name__
+                    )
+                    fail_span.set_attribute("phase", "open")
         self._persist_escalation()
         self._write_attention(self._render_alert(cls, attrs))
         with _TRACER.start_as_current_span(
@@ -455,8 +480,26 @@ class MemorySupervisor:
         if self._notify is not None:
             try:
                 await self._notify(prior_cls, text, {"reason": reason})
-            except Exception:
-                pass
+            except Exception as e:
+                # Amendment #19 (site 8): local-state invariant —
+                # _current_escalation is cleared + attention file
+                # removed even if the "resolved" notification failed
+                # to send — is preserved (those side-effects live
+                # outside this try-block). The observable surface is
+                # the span below; operators see the close-path notify
+                # failure without the user-visible state being
+                # corrupted.
+                with _TRACER.start_as_current_span(
+                    "pos.hands_off_lifecycle.supervisor.notify_failed"
+                ) as fail_span:
+                    fail_span.set_attribute(
+                        "escalation.class", prior_cls.value
+                    )
+                    fail_span.set_attribute(
+                        "exception.class", type(e).__name__
+                    )
+                    fail_span.set_attribute("close_reason", reason)
+                    fail_span.set_attribute("phase", "close")
         with _TRACER.start_as_current_span(
             "pos.hands_off_lifecycle.supervisor.escalation_closed"
         ) as span:

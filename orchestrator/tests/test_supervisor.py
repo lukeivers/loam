@@ -310,6 +310,83 @@ async def test_attention_md_written_on_escalation(tmp_path: Path) -> None:
 # ---- drain coordination on recovering / normal -------------------
 
 
+# ---- amendment #19 (sites 7, 8) — notifier failure observability ----
+
+
+@pytest.mark.asyncio
+async def test_amendment_19_open_escalation_notify_failure_surfaces(
+    tmp_path: Path,
+) -> None:
+    """S1 (amendment #19, site 7): a notifier raising on the open path
+    must not crash the probe loop (invariant preserved), and the
+    failure must surface via EscalationRecord.notification_failures.
+    Prior behaviour swallowed the exception silently."""
+    async def raising_notify(
+        cls: EscalationClass, text: str, attrs: dict[str, Any]
+    ) -> None:
+        raise RuntimeError("telegram-down")
+
+    s = _make_supervisor(
+        _probe_always_fail(), tmp_path, notify=raising_notify
+    )
+    # Drive the probe loop past the escalation threshold. The loop
+    # must not crash; the supervisor must reach 'escalated' state.
+    for _ in range(3):
+        await s.tick()
+    assert s.state is SupervisorState.escalated
+    assert s.current_escalation is not None
+    # The notify-failure counter is the observable surface introduced
+    # by amendment #19.
+    assert s.current_escalation.notification_failures >= 1
+    assert s.current_escalation.notifications_sent == 0
+    # The attention file is written independently of the notifier
+    # (file-write is outside the notifier try-block) — operators
+    # still see the escalation locally.
+    assert (tmp_path / "attention.md").exists()
+
+
+@pytest.mark.asyncio
+async def test_amendment_19_close_escalation_notify_failure_does_not_stall(
+    tmp_path: Path,
+) -> None:
+    """S1 (amendment #19, site 8): a notifier raising on the close
+    path must not stall state reconciliation. The supervisor must
+    still clear its escalation, remove attention.md, and reach
+    'normal'. Prior behaviour swallowed the exception silently."""
+    calls: list[str] = []
+
+    async def raising_on_close_notify(
+        cls: EscalationClass, text: str, attrs: dict[str, Any]
+    ) -> None:
+        # Raise only on the resolved/close notification. Open-path
+        # notifications succeed so the escalation opens normally.
+        if "resolved" in text or attrs.get("reason"):
+            calls.append("close-raise")
+            raise RuntimeError("telegram-down-on-close")
+        calls.append("open-ok")
+
+    s = _make_supervisor(
+        _probe_sequence(
+            ProbeResult(ok=False, error_class="refused"),
+            ProbeResult(ok=False, error_class="refused"),
+            ProbeResult(ok=False, error_class="refused"),
+            ProbeResult(ok=True, latency_ms=10.0),
+            ProbeResult(ok=True, latency_ms=10.0),
+            ProbeResult(ok=True, latency_ms=10.0),
+        ),
+        tmp_path,
+        notify=raising_on_close_notify,
+    )
+    for _ in range(6):
+        await s.tick()
+    # State reconciliation happens regardless of close-notify failure.
+    assert s.state is SupervisorState.normal
+    assert s.current_escalation is None
+    assert not (tmp_path / "attention.md").exists()
+    # The close-path did attempt a raise (not silently skipped).
+    assert "close-raise" in calls
+
+
 @pytest.mark.asyncio
 async def test_on_recovering_and_on_normal_callbacks_fire(
     tmp_path: Path,

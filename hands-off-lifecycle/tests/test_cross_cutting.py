@@ -202,7 +202,23 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # change). e8f704c is the pre-amendment tip — the `docs(future-ideas)`
 # commit codifying the three new CDCs immediately before this
 # amendment's code commit.
-BASELINE = "e8f704c"
+# Advanced to f1ff28b when the S1 silent-except bundle amendment (#19)
+# opened. The 2026-04-22 audit + classifier surfaced eight
+# `except Exception: pass | continue` silent branches with AC:none
+# across safety-layer/src/kill.py (4), safety-layer/src/controller.py
+# (2), and orchestrator/src/supervisor.py (2). Per ODD §8 rule 8 + the
+# audit-triage-by-severity CDC (bucket d — outright violations), each
+# catch is replaced with an observable-surface fix (OTel span + record
+# field where callers consume). The shutdown-catch CDC does not apply
+# (none are teardown methods). Multi-component amendment (safety-layer,
+# orchestrator, hands-off-lifecycle). Hands-off-lifecycle's counterpart
+# is this BASELINE bump + SEAL_COMMIT sidecar refresh + amendment-
+# cycle narrative in seals/SEAL_COMMIT.true-first-run (zero functional
+# change) + admission of `safety-layer` to the H19 allowed top-level
+# set below (new amended sealed component in this amendment window).
+# f1ff28b is the pre-amendment tip — the amendment-#18 seal commit
+# immediately before amendment #19's code commit.
+BASELINE = "f1ff28b"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -303,6 +319,18 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     grained diff-scope filter lives in observability-
         #     aggregator/tests/test_no_sealed_amendments.py.
         "observability-aggregator",
+        # Amendment #19 (S1 silent-except bundle):
+        #   - `safety-layer` admitted as the amendment's primary
+        #     surface. Sites 1–6 land under safety-layer/src/ +
+        #     safety-layer/tests/. Sites 7–8 land under
+        #     orchestrator/src/supervisor.py (already admitted via
+        #     `orchestrator/`). hands-off-lifecycle's counterpart is
+        #     the BASELINE bump above + this admission + SEAL_COMMIT
+        #     sidecar refresh + amendment-cycle narrative in
+        #     seals/SEAL_COMMIT.true-first-run. The finer-grained
+        #     diff-scope filter for orchestrator's surface lives in
+        #     orchestrator/tests/test_no_sealed_amendments.py.
+        "safety-layer",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

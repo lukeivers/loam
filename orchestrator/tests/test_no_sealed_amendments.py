@@ -74,7 +74,28 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              amendment tip — the `docs(future-ideas)` commit
 #              codifying the three new CDCs immediately before this
 #              amendment's code commit.
-BASELINE = "e8f704c"
+#   - f1ff28b  when the S1 silent-except bundle amendment (#19) opened.
+#              The 2026-04-22 audit + classifier run surfaced eight
+#              `except Exception: pass | continue` branches with no
+#              AC backing across safety-layer/src/kill.py,
+#              safety-layer/src/controller.py, and
+#              orchestrator/src/supervisor.py. Per ODD §8 rule 8 and
+#              the audit-triage-by-severity CDC (bucket d — outright
+#              violations in live operational paths), the fix is
+#              required. The shutdown-catch CDC does NOT apply (none
+#              of the eight are teardown methods). The amendment
+#              replaces each silent catch with an observable-surface
+#              emitter (OTel span + structured record field where
+#              callers consume it). Two sites carry backwards-
+#              compatible additive record extensions:
+#              KillEventRecord.failed_scope_ids and
+#              EscalationRecord.notification_failures. Multi-component
+#              amendment touching safety-layer/, orchestrator/
+#              (supervisor.py only), hands-off-lifecycle/ (BASELINE +
+#              SEAL_COMMIT + cross-cutting allowed-set bump). f1ff28b
+#              is the pre-amendment tip — the amendment-#18 seal
+#              commit immediately before amendment #19's code commit.
+BASELINE = "f1ff28b"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -146,6 +167,16 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
     #     updated in lockstep.
     #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite (brief =
     #     dispatch-time, not committed canonical artifact).
+    # Amendment #19 (S1 silent-except bundle):
+    #   - `safety-layer/` — the amendment's primary surface (sites 1–6:
+    #     kill.py, controller.py, observability.py, events.py, +
+    #     three new test files). orchestrator/ is a multi-component
+    #     partner (sites 7, 8: supervisor.py); safety-layer/ admission
+    #     here lets orchestrator's seal-diff walk the whole-repo diff
+    #     at its new BASELINE..SEAL window without flagging the
+    #     amendment-partner component's paths.
+    #   - `docs/rebuild/plans/research/` flows through the existing
+    #     `docs/rebuild/plans/` prefix entry (startswith).
     allowed_prefixes = (
         "orchestrator/",
         "hands-off-lifecycle/",
@@ -166,6 +197,7 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
         "cost-governance/",
         "graceful-degradation/",
         "observability-aggregator/",
+        "safety-layer/",
     )
     allowed_files: set[str] = {
         "first-run-inventory.yaml",

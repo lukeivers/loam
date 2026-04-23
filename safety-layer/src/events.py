@@ -55,7 +55,14 @@ class AskDecisionRecord(BaseModel):
 
 
 class KillEventRecord(BaseModel):
-    """Audit row for a single kill issuance."""
+    """Audit row for a single kill issuance.
+
+    Amendment #19 adds the optional ``failed_scope_ids`` field to
+    distinguish "nothing to cancel" from "per-scope cancel raised" on
+    system-kill; the field defaults to ``()`` so existing callers are
+    unaffected (backwards-compatible additive extension; no shape
+    change). See ``docs/rebuild/plans/amendment-19-s1-silent-excepts.md``.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -65,6 +72,7 @@ class KillEventRecord(BaseModel):
     scope_id: str | None = None
     issued_at: str
     cancelled_scope_ids: tuple[str, ...] = ()
+    failed_scope_ids: tuple[str, ...] = ()
 
 
 class SystemKillStateRecord(BaseModel):

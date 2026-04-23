@@ -121,3 +121,66 @@ def notification_dispatched(
         span.set_attribute("pos.safety.channel", channel)
         span.set_attribute("pos.safety.notification_outcome", outcome)
         span.set_attribute("pos.safety.notification_kind", kind)
+
+
+# ---- amendment #19: silent-except surface emitters -------------------
+# Per the 2026-04-22 audit + classifier (amendment #19 research doc at
+# docs/rebuild/plans/research/amendment-19-s1-silent-excepts-research.md),
+# four silent-except sites inside the safety layer are replaced with
+# observable-surface emitters. The reason-suffix / failed-id fields
+# carry the structured signal; these spans carry the OTel signal. All
+# four share the no-TracerProvider-construction discipline (A16).
+
+
+def pause_activation_failed(
+    *, level: str, reason: str, source: str, exception_class: str
+) -> None:
+    """Surfaces a `pause_activation` failure during kill_session /
+    kill_system. Amendment #19 sites 1 + 2."""
+    with _TRACER.start_as_current_span(
+        "pos.safety.pause_activation_failed"
+    ) as span:
+        span.set_attribute("pos.safety.level", level)
+        span.set_attribute("pos.safety.reason", reason)
+        span.set_attribute("pos.safety.source", source)
+        span.set_attribute("pos.safety.exception_class", exception_class)
+
+
+def scope_cancel_failed_during_kill(
+    *, level: str, scope_id: str, reason: str, exception_class: str
+) -> None:
+    """Surfaces a per-scope cancel failure inside the system-kill loop.
+    The failed scope id is also recorded in
+    ``KillEventRecord.failed_scope_ids`` so callers can distinguish
+    "nothing to cancel" from "cancellation failed." Amendment #19
+    site 3."""
+    with _TRACER.start_as_current_span(
+        "pos.safety.scope_cancel_failed_during_kill"
+    ) as span:
+        span.set_attribute("pos.safety.level", level)
+        span.set_attribute("pos.safety.scope_id", scope_id)
+        span.set_attribute("pos.safety.reason", reason)
+        span.set_attribute("pos.safety.exception_class", exception_class)
+
+
+def request_stop_failed(*, reason: str, exception_class: str) -> None:
+    """Surfaces a `request_stop` failure at the tail of kill_system.
+    The kill event + system-kill state row have already landed; this
+    span captures that the orchestrator stop event did not fire.
+    Amendment #19 site 4."""
+    with _TRACER.start_as_current_span(
+        "pos.safety.request_stop_failed"
+    ) as span:
+        span.set_attribute("pos.safety.reason", reason)
+        span.set_attribute("pos.safety.exception_class", exception_class)
+
+
+def persona_render_failed(*, kind: str, exception_class: str) -> None:
+    """Surfaces a persona-render failure during ask-gate / dangerous-op
+    notification dispatch. The un-rendered notification text is still
+    sent — fail-closed invariant preserved. Amendment #19 sites 5 + 6."""
+    with _TRACER.start_as_current_span(
+        "pos.safety.persona_render_failed"
+    ) as span:
+        span.set_attribute("pos.safety.notification_kind", kind)
+        span.set_attribute("pos.safety.exception_class", exception_class)

@@ -83,12 +83,25 @@ class KillEngine:
     async def kill_session(
         self, *, reason: str, source: KillSource
     ) -> KillEventRecord:
-        """Pause activation, cancel every non-terminal scope."""
+        """Pause activation, cancel every non-terminal scope.
+
+        Amendment #19 (site 1): a pause_activation failure is surfaced
+        via ``obs.pause_activation_failed`` + suffixed into the audit
+        record's ``reason`` field. The kill continues — a user-issued
+        session kill is not blocked by a transient pause failure
+        (fail-safe direction preserved)."""
         # Pause first so new scopes cannot activate while we iterate.
+        pause_failure_class: str | None = None
         try:
             self.orchestrator.pause_activation(f"safety:session_kill:{reason}")
-        except Exception:
-            pass
+        except Exception as e:
+            pause_failure_class = type(e).__name__
+            obs.pause_activation_failed(
+                level="session",
+                reason=reason,
+                source=source,
+                exception_class=pause_failure_class,
+            )
 
         active_ids = await self._list_non_terminal_scope_ids()
         cancelled: list[str] = []
@@ -98,12 +111,21 @@ class KillEngine:
                 cancelled.append(sid)
             except Exception:
                 # A scope that went terminal between list() and cancel()
-                # is not a kill failure — record and continue.
+                # is not a kill failure — record and continue. Amendment
+                # #19 research doc §3.1 records why this line is NOT
+                # widened in this amendment (not in classifier's 8-finding
+                # set; deliberate intentional-silence case named in
+                # comment above).
                 continue
 
+        audit_reason = (
+            f"{reason} (pause_failed:{pause_failure_class})"
+            if pause_failure_class
+            else reason
+        )
         record = KillEventRecord(
             level=KillLevel.session,
-            reason=reason,
+            reason=audit_reason,
             source=source,
             scope_id=None,
             issued_at=iso_now(),
@@ -152,32 +174,59 @@ class KillEngine:
                 )
 
         # Pause activation so nothing new starts.
+        # Amendment #19 (site 2): surface pause failure to OTel +
+        # suffix the audit reason; kill still proceeds (fail-safe).
+        pause_failure_class: str | None = None
         try:
             self.orchestrator.pause_activation(f"safety:system_kill:{reason}")
-        except Exception:
-            pass
+        except Exception as e:
+            pause_failure_class = type(e).__name__
+            obs.pause_activation_failed(
+                level="system",
+                reason=reason,
+                source=source,
+                exception_class=pause_failure_class,
+            )
 
         active_ids = await self._list_non_terminal_scope_ids()
         cancelled: list[str] = []
+        failed: list[str] = []
         for sid in active_ids:
             try:
                 await self.scope_runtime.cancel(sid, reason=f"safety:system_kill:{reason}")
                 cancelled.append(sid)
-            except Exception:
-                continue
+            except Exception as e:
+                # Amendment #19 (site 3): callers previously inferred
+                # from cancelled_scope_ids alone which scopes were
+                # killed — a failing cancel was silently dropped.
+                # Record the failed id + emit a per-scope span so the
+                # observable-surface carries the signal.
+                failed.append(sid)
+                obs.scope_cancel_failed_during_kill(
+                    level="system",
+                    scope_id=sid,
+                    reason=reason,
+                    exception_class=type(e).__name__,
+                )
 
         # Record the terminal system-kill state BEFORE the stop request —
         # if stop races the DB write we prefer the state row to exist
         # so the next bootstrap sees it (A4).
         self.store.record_system_kill(reason=reason, source=source)
 
+        audit_reason = (
+            f"{reason} (pause_failed:{pause_failure_class})"
+            if pause_failure_class
+            else reason
+        )
         record = KillEventRecord(
             level=KillLevel.system,
-            reason=reason,
+            reason=audit_reason,
             source=source,
             scope_id=None,
             issued_at=iso_now(),
             cancelled_scope_ids=tuple(cancelled),
+            failed_scope_ids=tuple(failed),
         )
         self.store.record_kill(record)
         obs.system_kill(
@@ -185,10 +234,17 @@ class KillEngine:
         )
 
         # Clean exit: trigger orchestrator's stop event.
+        # Amendment #19 (site 4): state row + audit already landed;
+        # a request_stop failure is surfaced via OTel — the contract
+        # "returns a KillEventRecord on issued system-kill" is
+        # preserved, and the next bootstrap still reads the persisted
+        # terminal state.
         try:
             self.orchestrator.request_stop()
-        except Exception:
-            pass
+        except Exception as e:
+            obs.request_stop_failed(
+                reason=reason, exception_class=type(e).__name__,
+            )
         return record
 
     # ---- helpers ----------------------------------------------------

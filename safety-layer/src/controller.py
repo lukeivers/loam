@@ -294,8 +294,16 @@ class SafetyController:
         if self.persona_render is not None:
             try:
                 text = await self.persona_render(text)
-            except Exception:
-                pass
+            except Exception as e:
+                # Amendment #19 (site 5): persona-render failure is
+                # surfaced to OTel; the un-rendered text is still a
+                # valid safety notification and the fail-closed
+                # "notifications must go out regardless of LLM
+                # availability" invariant is preserved.
+                obs.persona_render_failed(
+                    kind="ask_gate",
+                    exception_class=type(e).__name__,
+                )
         await self.notifier.send(
             SafetyNotification(kind="ask_gate", text=text, scope_id=scope_id)
         )
@@ -313,8 +321,13 @@ class SafetyController:
         if self.persona_render is not None:
             try:
                 text = await self.persona_render(text)
-            except Exception:
-                pass
+            except Exception as e:
+                # Amendment #19 (site 6): see site 5 comment — OTel
+                # surface + fail-closed preserved.
+                obs.persona_render_failed(
+                    kind="dangerous_op",
+                    exception_class=type(e).__name__,
+                )
         await self.notifier.send(
             SafetyNotification(kind="dangerous_op", text=text, scope_id=scope_id)
         )

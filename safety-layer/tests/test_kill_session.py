@@ -88,3 +88,58 @@ async def test_A2_session_kill_with_no_active_scopes(
     assert fake_orchestrator.is_paused
     assert record.cancelled_scope_ids == ()
     assert safety_store.list_kills()[0].level == KillLevel.session
+
+
+# ---- amendment #19 (site 1) -----------------------------------------
+
+
+class _RaisingPauseOrchestrator:
+    """FakeOrchestrator whose pause_activation raises — used to verify
+    amendment #19's observable-surface fix. Cancellation must still
+    run; the failure must be surfaced in the audit record's reason."""
+
+    def __init__(self) -> None:
+        self._stop_requested = False
+
+    def pause_activation(self, reason: str) -> None:
+        raise RuntimeError("pause-activation-blew-up")
+
+    def resume_activation(self) -> None:
+        pass
+
+    def request_stop(self) -> None:
+        self._stop_requested = True
+
+
+@pytest.mark.asyncio
+async def test_amendment_19_session_kill_pause_failure_is_surfaced(
+    scope_runtime, safety_store
+):
+    """S1 (amendment #19, site 1): a pause_activation failure must
+    surface into the audit record's reason string (and the OTel span,
+    not asserted here). Cancellation must still run — fail-safe
+    direction preserved for user-issued session kills."""
+    orch = _RaisingPauseOrchestrator()
+    engine = KillEngine(
+        scope_runtime=scope_runtime,
+        store=safety_store,
+        orchestrator=orch,
+    )
+    # One active scope that should still be cancelled despite the
+    # pause_activation failure.
+    await scope_runtime.create(_spec(), scope_id="s-amend19")
+    await scope_runtime.start("s-amend19")
+
+    record = await engine.kill_session(
+        reason="session-kill-pause-raises", source="cli"
+    )
+
+    # Pause failure is recorded in the audit reason.
+    assert "pause_failed:RuntimeError" in record.reason
+    # Cancellation still ran — the scope is terminal.
+    from scope_of_work import ScopeState
+    assert scope_runtime.get("s-amend19").state == ScopeState.cancelled
+    assert record.cancelled_scope_ids == ("s-amend19",)
+    # Kill audit row is persisted with the suffixed reason.
+    stored = safety_store.list_kills()
+    assert stored and "pause_failed:RuntimeError" in stored[0].reason

@@ -164,6 +164,26 @@ The amendment that fixes (4) findings can batch them by risk profile (safety-cri
 
 Applied immediately to all audit triage from 2026-04-22 forward.
 
+## Core Development Convention — amendment-dispatch test & context scope
+
+> **When dispatching a sealed-component amendment build, (a) scope full test-suite runs to components whose source or tests are actually touched; untouched sealed components get only their `test_no_sealed_amendments.py` (seal-diff check). (b) Skip the pre-seal full-suite rerun; sidecar-only edits in the seal commit cannot break real code, so seal-diff-tests-only is the appropriate post-seal verification. (c) Inline the specific methodology/CDC excerpts relevant to the dispatch in the prompt rather than directing the agent to re-read the full source docs.**
+
+Rationale. Non-trivial amendments were running 25-45 min each. Breakdown: agents re-read methodology docs (~2-3 min), ran full test suite across all 10+ sealed components twice (~4-10 min total), and often repeated reference reads across turns. Each of those is compressible without violating any other CDC. Narrower test scope is still correct because the sealed-component convention's purpose is to prove *the diff window* hasn't drifted — running untouched components' full suites doesn't add signal. Skipping pre-seal rerun is safe because seal commits only touch SEAL_COMMIT sidecars + narrative files, which cannot break code paths. Inlining excerpts preserves the authoritative source reference while trimming the agent's cold-start context read. Combined effect: ~25-40% wall-time reduction on non-trivial amendments, which also narrows the window any single dispatch sits exposed to API overload (CDC below).
+
+How to apply. In every dispatch prompt for a sealed-component amendment build, include the three rules above verbatim as constraints. The agent runs full suites only for components it actually touches; other components get seal-diff tests. The pre-seal test step runs only seal-diff tests, not full suites. Methodology snippets are quoted inline, not referenced by section number. The agent retains authority to read full source docs if it judges necessary for a specific question, but the default is to work from inlined excerpts. These speedups do NOT cut the research step (required by the research-before-plan CDC for non-trivial new work), do NOT cut the plan step, and do NOT violate the scope-only-dispatch CDC — they only shrink the re-read + test-scope phases.
+
+Applied immediately to every future sealed-component amendment dispatch after 2026-04-23.
+
+## Core Development Convention — 529 overload recovery
+
+> **HTTP 529 "Site is overloaded" returned by Anthropic's API is a global infrastructure signal, not an account-specific rate limit. When a dispatched background agent fails mid-amendment with a 529, the recovery pattern is: (a) verify the canonical tree's state via `git log` and `git status` to see which commits actually landed; (b) if commits landed but the amendment is incomplete, dispatch a small continuation agent scoped to finish the remaining work (e.g. a seal-completion agent that only bumps sidecars and commits); (c) if nothing landed, wait 5-15 minutes and re-dispatch the full amendment. Never `git commit --amend` to reshape the dead agent's commits; always use new corrective commits.**
+
+Rationale. 529s are service-side overload (distinct from 429 per-account rate-limits, 500 Anthropic bugs, 503 maintenance). The SDK retries 529 with exponential backoff but surfaces the error after a few attempts, which kills the agent. Amendment #18 lost ~22 minutes of wall-time this way (2026-04-23). Because the no-amend CDC means every coherent checkpoint is committed before the agent proceeds, the disk state after a 529 is always recoverable — the work that landed stays landed, and the remaining work can be completed by a follow-up scoped agent. This pattern costs time but never costs committed work. Reducing per-dispatch wall-time (CDC above) narrows the 529-exposure window for each amendment; combined with the commit-at-checkpoints discipline, the practical impact of a 529 is bounded.
+
+How to apply. When a background-agent `task-notification` returns with a 529 summary or an API Error message: (1) run `git log --oneline -5` and `git status --short` in the canonical tree to see what landed; (2) classify the interrupted state — amendment committed but no seal, corrective committed but no seal, nothing committed, etc.; (3) dispatch a continuation agent with a tight scope brief that names exactly the remaining step (e.g. "write the seal commit for the 4c385ed amendment and bump the N affected sidecars"); (4) do NOT attempt to re-run the full amendment dispatch — that re-does work, risks divergent commits, and wastes the agent's prior research. If no commits landed at all, wait for overload to clear (usually 5-15 min, often shorter off-peak), then re-dispatch the original amendment unchanged.
+
+Applied immediately to every dispatched amendment going forward, as the standard recovery playbook for service-side interruptions.
+
 ---
 
 ## Idea 1 — Three-lens enforcement programme

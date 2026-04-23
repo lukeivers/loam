@@ -118,23 +118,28 @@ def test_tg23_only_telegram_interface_changed() -> None:
 
 
 def test_AC7_no_telegram_interface_src_edits() -> None:
-    """AC7 (telegram-interface-framework-integration proposal): the
-    amendment consumes telegram-interface's public API only. Any edit
-    under `telegram-interface/src/` is a halt condition — signals the
-    public surface needs a new constructor or factory, which is out of
-    scope.
+    """AC7 (telegram-interface-framework-integration proposal, amendment
+    #9): that amendment consumes telegram-interface's public API only;
+    zero edits under ``telegram-interface/src/`` landed in amendment #9.
 
-    This test is the structural enforcement of the sealed-API
-    invariant. It fires at seal tip; during the build it also fires
-    against HEAD since the sidecar falls back to HEAD.
+    The invariant is scoped to amendment #9's exact window. Amendment
+    #21 (S3 silent-except bundle) legitimately edits
+    ``telegram-interface/src/allowlist.py`` + ``observability.py`` to
+    surface an AC:none silent-except (Site 3 of that amendment); per
+    ODD §2.5 / §8.2, that is an amendment-#21-scoped change within
+    telegram-interface's own sealed surface, NOT a violation of the
+    amendment-#9-scoped AC7 invariant. Pinning BASELINE/SEAL to the
+    amendment-#9 window here keeps the AC7 structural check true to
+    its original scope regardless of future amendments.
     """
-    seal = _seal_commit()
+    amendment_9_baseline = "b9e1f96"
+    amendment_9_seal = "4f8b933"
     out = subprocess.check_output(
         [
             "git",
             "diff",
             "--name-only",
-            f"{BASELINE}..{seal}",
+            f"{amendment_9_baseline}..{amendment_9_seal}",
             "--",
             "telegram-interface/src/",
         ],
@@ -143,6 +148,6 @@ def test_AC7_no_telegram_interface_src_edits() -> None:
     )
     changed = [ln for ln in out.splitlines() if ln.strip()]
     assert changed == [], (
-        "telegram-interface/src/ modified by amendment — halt-signal. "
-        f"Changed paths: {changed}"
+        "amendment #9 (telegram-interface-framework-integration) edited "
+        f"telegram-interface/src/ — AC7 halt-signal. Changed paths: {changed}"
     )

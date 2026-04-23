@@ -65,10 +65,17 @@ def test_C23_only_cost_governance_changed() -> None:
     # amendment #10 set the precedent of committing plan files with
     # the amendment's code commit — same pattern as memory-system's
     # and orchestrator's seal tests).
+    # `hands-off-lifecycle/` admits the cross-cutting seal counterpart
+    # every amendment touches (BASELINE bump + allowed-set extension
+    # + SEAL_COMMIT sidecar refresh + amendment-cycle narrative).
+    # Amendment #13 is the first cost-governance amendment to include
+    # the cross-cutting seal counterpart in the diff window — earlier
+    # cost-governance state never included any post-first-seal edits.
     allowed_prefixes = (
         "cost-governance/",
         "data/",
         "docs/rebuild/plans/",
+        "hands-off-lifecycle/",
     )
     allowed_files: set[str] = set()  # no workspace-wide touches needed
 

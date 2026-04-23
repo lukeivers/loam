@@ -335,6 +335,52 @@ Open questions (future work, not for resolution here):
 
 These are not scoped here. This idea records the principle, not the implementation.
 
+---
+
+## Idea 7 — GLiNER2 expansion for memory-system entity extraction
+
+Captured 2026-04-22.
+
+Amendment #8 swapped memory-system's LLM backend to `ClaudePrintLLMClient` so entity and relationship extraction runs through the owner's Claude Max subscription rather than a metered API key. That swap solved the cost-surface question for the extraction path memory-system currently exercises, and deliberately left a second, orthogonal question untouched: whether a local zero-shot NER/relationship-extraction model — GLiNER2 is the specific candidate — should also sit on memory-system's extraction surface, either complementing Claude-based extraction for high-volume paths or replacing it for paths where local inference is materially cheaper or faster. The two questions were disentangled at amendment time so the subscription-routed swap could land cleanly; this idea keeps the deferred one on the register rather than quietly losing it.
+
+GLiNER2 is an attractive shape on paper: open-weight, small, fast, zero-shot over arbitrary entity and relationship schemas, and free to run locally once loaded. The attraction depends on a structural question that the future cycle has to answer before anything else: does graphiti-core (memory-system's engine) expose a clean entity-extractor seam that a composed GLiNER2 adapter can slot into, or does the extractor live behind an implementation boundary that does not admit a second backend without a fork? If the seam exists, the question becomes one of composition shape — single-backend swap, dual-backend router with quality/cost heuristics, cascade pattern where GLiNER2 handles the cheap path and Claude handles edge cases. If the seam does not exist, the question shifts: is it worth widening the seam upstream, or does memory-system's own extraction surface grow a pre-extraction layer that funnels to the backend of choice.
+
+The second research question is empirical: what fraction of memory's extraction volume is cost-dominated versus quality-dominated under the subscription-routed baseline amendment #8 just landed? If the Claude-via-Max path is effectively free at the volumes pOS v2 actually runs at, the case for GLiNER2 is weaker — the cost argument that motivates it evaporates. If volumes are high enough that the subscription path feels slow, or the quality on specific entity shapes is worse than a purpose-built NER model delivers, the case strengthens. That determination cannot be made from the outside — it needs telemetry from memory-system in a real evaluation workspace, which is why this is not scoped now.
+
+This belongs in FUTURE_IDEAS rather than a near-term component cycle because both questions — the seam question and the volume/quality question — need data that does not yet exist. A research plan authored today would be speculation; a research plan authored after a few weeks of evaluation-workspace memory-system usage is grounded in numbers.
+
+---
+
+## Idea 8 — Structural context-load gate
+
+Captured 2026-04-22.
+
+Every pos-v2 session so far has rediscovered the same design corpus — `odd-methodology.md`, `odd-in-pos.md`, `FUTURE_IDEAS.md`, the proposal and seal notes for whatever component the current work touches — before it can plan or build correctly. The rediscovery cost is paid session after session because loading the relevant context is a social convention, not a mechanical precondition: the author remembers (or fails to remember) to read the design docs before dispatching work. When the author forgets, the work proceeds on incomplete context and the discrepancy surfaces in review, amendment, or audit instead of in the plan. A structural context-load gate removes the social layer: relevant design docs are *required* to be loaded before coding or planning begins, and the gate refuses to advance until they are.
+
+The idea composes naturally with the plan-before-code CDC and the scope-only-dispatch CDC already codified in this file. Plan-before-code says a written plan must exist before any source edit; scope-only dispatch says a dispatch carries only scope. The context-load gate is the upstream companion — it says the primary persona (or the orchestrator layer it runs inside) cannot author the plan, or the scope, or dispatch the builder, until the design context that informs those artefacts has been loaded into the session. The gate is mechanical in the same sense ODD's acceptance-criterion validator is mechanical: not "the author should check this," but "the author cannot proceed until this passes."
+
+The future research cycle has to answer several entangled design questions. Which contexts trigger the gate — build-dispatches only, or every pos-v2 work turn including questions and reviews? How does "relevant design docs" get computed without requiring the user to enumerate them — a static mapping of component to doc set, a dynamic lookup against the component's proposal/seal sidecar, a compose-with-the-Claude-capabilities-map approach, or something else? How does the gate compose with Claude's existing session-start hooks and with the skills ecosystem — is this a skill the primary persona invokes, a hook the harness enforces, or a primary-persona primitive authored at the pos-v2 layer? Is the gate workspace-wide (one gate across all pos-v2 components) or component-scoped (each component declares its own context set, the gate consults that declaration)?
+
+The deeper positioning question: does this idea sit inside the primary-persona layer (the persona gains a "load context before acting" primitive) or inside the bootstrap/framework layer (every pos-v2 session is wrapped in a phase that performs the load)? The answer shapes which existing work the gate composes with and which work it displaces. That determination belongs in a research plan, not here.
+
+This belongs in FUTURE_IDEAS rather than being scoped now because the shape of the gate depends on which Claude primitives end up backing it (Idea 1 Step 1 — the Claude-capabilities map — has not yet produced its deliverable) and on how much of the work is the primary persona's versus the harness's. Neither answer is available today.
+
+---
+
+## Idea 9 — Workspace-slug collision detection
+
+Captured 2026-04-22.
+
+Amendment #6 (`namespaced-labels-and-bootout`) moved hands-off-lifecycle's launchd labels from a single global name to workspace-namespaced names derived from the workspace basename — `com.pos.<slug>.orchestrator` rather than `com.pos.orchestrator`. The slug comes from the workspace directory's basename, which is deterministic and readable but is not a unique identifier: two workspaces with the same basename (two independent checkouts both named `pos-v2`, a `pos-v2` and a `pos-v2-backup/pos-v2`, a clone placed next to its origin without a rename) produce the same slug and therefore the same launchd labels. The bootout-before-bootstrap flow ensures only one of the two workspaces can be loaded at any moment — whichever boots second evicts the first — but the eviction is silent from the user's perspective and the second workspace believes it is running cleanly when it has just displaced a sibling. No current detection, warning, or disambiguation surface exists.
+
+The future research cycle has to decide where detection lives on the install/bootstrap timeline. An install-time check refuses to install hands-off-lifecycle into a workspace whose slug collides with another already-installed workspace — the user is named, the collision is named, a disambiguation knob is offered. A bootstrap-time check detects the collision at first-boot and refuses to boot until the user acknowledges the other workspace. The two options have different failure characteristics: install-time catches the collision before the state machine is live, which is the cleaner shape; bootstrap-time catches collisions that install-time could miss (e.g. a second workspace renamed after install to collide with a third). The cycle may conclude both are needed.
+
+The second open question is which component owns the detection. Hands-off-lifecycle is the component that actually issues the launchd labels, which argues for owning detection at its first-run path. Workspace-bootstrap is the framework layer that orchestrates first-run across components, which argues for owning cross-component concerns like slug uniqueness at its own layer. A cross-workspace registry (the detection has to see other workspaces' slugs, not only this workspace's) probably wants to live at the framework layer regardless, which tilts the answer toward workspace-bootstrap — but the hands-off-lifecycle install flow is where the failure surfaces, so the user-facing message probably surfaces there. The split is not obvious and deserves a real proposal.
+
+The third question is the disambiguation mechanism. Does the fix ship a slug-override knob the user can set to disambiguate (e.g. `POS_V2_WORKSPACE_SLUG=pos-v2-eval`)? Does it auto-suffix on collision and tell the user what it did? Does it refuse to proceed and require the user to rename the directory? Each shape has a different UX character and composes differently with the self-retiring-setup CDC and the step-by-step-when-the-system-cannot-act CDC already recorded above.
+
+This belongs in FUTURE_IDEAS rather than being scoped now because the collision is a latent hazard, not a currently-biting bug — Luke operates one pos-v2 checkout at a time. When a second checkout is spun up for any reason (evaluation workspace, backup directory, parallel development line), the hazard becomes live and the idea graduates to a component cycle.
+
 ## Catalogue discipline
 
 This file is the catalogue of future directions for pOS v2. Entries here are not commitments. When an idea is picked up, it becomes a real component cycle (research plan → research → proposal → brief → build → seal) and is retired from this file with a pointer to the component that now owns it. When an idea is deliberately dropped, it is retired with a one-line rationale.

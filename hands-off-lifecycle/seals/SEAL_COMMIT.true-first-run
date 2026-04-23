@@ -319,4 +319,61 @@
 # (59 baseline + 2 for AC7/AC8 that were absent at the original build
 # time), hands-off-lifecycle 67/67. No sealed components outside the
 # two amendment targets touched.
-7111602
+#
+# Amendment cycle — amendment-#8 audit closure (#11, 2026-04-22,
+# eleventh amendment): the 2026-04-22 Blocker-3 audit of amendment
+# #8 surfaced one RED finding + a structural error-code collision +
+# a cluster of §2.5 orphan surfaces. RED: AC8's test asserted zero
+# OpenAI calls during *factory construction* but AC8's text names
+# *"ingest path"* — the test never exercised graphiti.add_episode.
+# Collision: ClaudePrintClientError base-class .code = -32099
+# directly collided with hands-off-lifecycle README's
+# hands_off_lifecycle_internal claim. Orphans: make_anthropic_client
+# + AnthropicClient import (no callers), _run_sync's running-loop
+# ThreadPoolExecutor fallback (no AC backing), SubscriptionCostTracker
+# per_call_usd list (no consumer), unused logger + import logging,
+# 11 of 13 _ENV_ALLOWED_VARS entries beyond PATH/HOME (no AC),
+# DEFAULT_SMALL_MODEL duplicate of DEFAULT_MODEL, 4 of 6
+# _RATE_LIMIT_MARKERS untested, silent except json.JSONDecodeError: pass
+# in the probe.
+#
+# Amendment #11 closes all ten findings in a single cycle:
+#   - AC8's test rewritten to exercise the ingest surface
+#     (MemoryAPI.ingest → graphiti.add_episode, empty-extraction
+#     short-circuit) behind fully-mocked subprocess + embedder +
+#     in-memory Kuzu. Zero-OpenAI invariant now asserted across the
+#     whole ingest, not only construction.
+#   - ClaudePrintClientError.code sentinel moved from -32099 to
+#     -32119 (the last slot of memory-system's own runtime block);
+#     AC7's test now includes the base class and the -32099
+#     forbidden-collision check.
+#   - make_anthropic_client + AnthropicClient import deleted.
+#   - _run_sync's running-loop branch deleted; make_claude_print_client
+#     made async so the probe awaits directly via
+#     ClaudePrintLLMClient.probe_authenticated().
+#   - SubscriptionCostTracker wired via MemoryAPI.ingest to emit a
+#     claude.equivalent_cost_usd span attribute (the landed
+#     implementation of proposal §5 #4 observability ruling);
+#     per_call_usd list removed.
+#   - Unused logger + import logging deleted.
+#   - _ENV_ALLOWED_VARS trimmed to ("PATH", "HOME").
+#   - DEFAULT_SMALL_MODEL deleted.
+#   - _RATE_LIMIT_MARKERS trimmed to ("rate limit", "usage limit").
+#   - Silent except json.JSONDecodeError: pass removed from the probe
+#     (the substring-match check at the top already covers
+#     envelope-wrapped "Not logged in" responses).
+#
+# Multi-component amendment (memory-system + hands-off-lifecycle).
+# Primary surface memory-system; hands-off-lifecycle counterpart is
+# a README cross-reference update for the sentinel move + BASELINE
+# bump in the cross-cutting seal test. Twelve acceptance criteria
+# AC11.1–AC11.12 in docs/rebuild/plans/amendment-8-audit-closure.md.
+# SEAL_COMMIT is re-pinned at 8c8932f across memory-system and
+# hands-off-lifecycle sidecars (both advance from 7111602). BASELINE
+# in memory-system/tests/test_no_sealed_amendments.py and
+# hands-off-lifecycle/tests/test_cross_cutting.py both advance from
+# 4ec9ae9 to 77389ce (the amendment-#8 seal commit — the pre-
+# amendment-#11 tip). Tests post-amendment: memory-system 62/62
+# (61 baseline + 1 new for AC11.5 span-attr wiring; AC8's test
+# rewrite kept the count stable), hands-off-lifecycle 67/67.
+8c8932f

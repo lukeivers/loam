@@ -641,7 +641,92 @@ _Sources (6.x): same as §1.1 — `https://code.claude.com/docs/en/slash-command
 
 ## 7. Agent tool and subagents
 
-<!-- PLACEHOLDER -->
+The Agent tool (renamed from Task tool in Claude Code 2.1.63; `Task(...)` still works as alias) is Claude Code's dispatch primitive for delegating work to a subagent. A subagent runs in its own context window with a custom system prompt, tool restrictions, permissions, optional MCP servers, optional hooks, optional preloaded skills, optional persistent memory, and optional worktree isolation. This is the mechanism pos-v2 leans on most heavily during the rebuild — every component's build was dispatched through an Agent invocation.
+
+### 7.1 Built-in subagent types
+
+| Agent | Model | Tools | Use case |
+|-------|-------|-------|----------|
+| `general-purpose` | Inherits main | All tools | Multi-step tasks, exploration + modification, default choice |
+| `Explore` | Inherits main | Read-only | Codebase research, fast exploration |
+| `Plan` | Inherits main | Read-only | Plan mode research; cannot spawn other subagents |
+| `Bash` | Haiku (cheaper) | Bash + Read | Shell-heavy tasks where a small model is fine |
+| `statusline-setup` | Sonnet | scoped | Invoked automatically by `/statusline` |
+| `Claude Code Guide` | Haiku | scoped | Used when user asks questions about Claude Code features |
+
+### 7.2 Scope precedence for custom subagents
+
+Same precedence pattern as other Claude Code components:
+
+| Location | Scope | Priority |
+|----------|-------|---------:|
+| Managed settings `.claude/agents/` | Organization | 1 (highest) |
+| `--agents` CLI flag (JSON) | Session | 2 |
+| `.claude/agents/` | Project | 3 |
+| `~/.claude/agents/` | User | 4 |
+| Plugin `agents/` | Where plugin enabled | 5 (lowest) |
+
+### 7.3 Subagent frontmatter fields
+
+| Field | Description |
+|-------|-------------|
+| `name` (req) | lowercase-hyphen identifier |
+| `description` (req) | When Claude should delegate |
+| `tools` | Allowlist; inherits all if omitted. `Agent(worker, researcher)` restricts which agents can be spawned |
+| `disallowedTools` | Denylist; applied before `tools` |
+| `model` | `sonnet` / `opus` / `haiku` / full ID / `inherit` (default) |
+| `permissionMode` | `default` / `acceptEdits` / `auto` / `dontAsk` / `bypassPermissions` / `plan` |
+| `maxTurns` | Turn cap |
+| `skills` | Skills preloaded into subagent context at startup (full content, not just description) |
+| `mcpServers` | Inline MCP server defs or references to already-configured servers |
+| `hooks` | Lifecycle hooks scoped to this subagent |
+| `memory` | `user` / `project` / `local` — persistent MEMORY.md dir |
+| `background` | `true` = always runs as background task |
+| `effort` | `low` / `medium` / `high` / `xhigh` / `max` |
+| `isolation` | `worktree` = temporary git worktree copy |
+| `color` | Display colour in UI |
+| `initialPrompt` | Auto-submitted first user turn (when agent is main thread) |
+
+### 7.4 Isolation modes
+
+- **Default (no isolation).** Subagent starts in main conversation's cwd. `cd` in Bash tool calls inside the subagent does not persist between tool calls and does not affect the main conversation's cwd.
+- **`isolation: worktree`.** Subagent gets a temporary git worktree; cleaned up automatically if subagent makes no changes. Enables safe parallel-work patterns.
+- **`context: fork` via skill.** Alternative entrypoint — a skill with `context: fork` runs its body as the task in a fresh subagent of the named `agent` type. Inverse of `skills:` preloading (skill → agent vs agent ← skills).
+
+### 7.5 Composes with pos-v2
+
+- **Every component seal in pos-v2 was dispatched through the Agent tool.** The handoff-brief-then-dispatch pattern documented in STATE.md rule 1 is literally Agent(general-purpose) invocations with scoped briefs. Custom subagents would formalise this — e.g. a `.claude/agents/pos-v2-component-builder.md` that ships with the right defaults (permissionMode, skills preload for ODD methodology, persistent memory scoped to the component tree).
+- **`Explore` is the right default for research-plan authoring** — read-only scope matches the "read before editing" session-start discipline in CLAUDE.md.
+- **`Plan` subagent** is invoked during plan mode; pos-v2's plan-before-code CDC (see MEMORY.md) is the workflow layer above this — Plan handles the research, the output lands at `docs/rebuild/plans/<name>.md`.
+- **Persistent `memory: project`** on a pos-v2-specific agent would accumulate architectural insights across component builds, compose with `memory-system` at the workspace layer but scoped per-agent. Candidate for the future Dev/SDLC plugin (Idea 3).
+- **`Agent(worker, researcher)` restriction** in an agent with its own `tools` list implements "this orchestrator can dispatch only these two subagents" — structural enforcement matching pos-v2's safety posture.
+- **Subagent hooks** (`hooks:` in frontmatter) are the pattern for the "agent dispatches carry scope only" discipline (feedback_agent_prompts_scope_only in MEMORY.md). A future `pos-v2-builder` subagent could have a `PreToolUse` hook that refuses method-prescribing prompts — structural mechanisation of the current social convention.
+- **`background: true`** composes with STATE.md rule 7 — long-running research agents run in background, the primary persona remains interactive and polls / monitors.
+
+### 7.6 Agent teams (distinct from subagents)
+
+Agent teams are multiple agents in parallel across separate sessions that can communicate. Subagents are single-session delegation. Agent teams are the right primitive for "I want three researchers investigating three topics simultaneously"; subagents are the right primitive for "run one focused scope and return a summary." Agent teams surface teammate-idle and teammate-display configuration. Beyond scope for most pos-v2 work today; relevant if Idea 3's plugin suite grows parallel-research patterns.
+
+### 7.7 Pitfalls
+
+- **Subagents cannot spawn other subagents.** The `Plan` agent exists because plan mode needs research but must not recurse infinitely. Custom agents inherit this limit.
+- **Parent `bypassPermissions` / `acceptEdits` / `auto` take precedence** and cannot be overridden by subagent `permissionMode`.
+- **Subagents don't inherit skills from parent conversation.** Must list them explicitly in `skills:`. `disable-model-invocation: true` skills cannot be preloaded (same pool as invocable skills).
+- **Subagent gets only the system prompt** (plus cwd + basic env). Not the full Claude Code system prompt. Agent authors who assume the full harness's tool-use guidance is present will be surprised.
+- **Plugin subagents do not support `hooks`, `mcpServers`, or `permissionMode`** — those fields are silently ignored in plugin agents. Copy the agent file into `.claude/agents/` or `~/.claude/agents/` to use them.
+- **`Agent(agent_type)` restriction has no effect in subagent definitions** (subagents can't spawn anyway); only meaningful on main-thread agents.
+- **`--disallowedTools "Agent(Explore)"`** or `permissions.deny: ["Agent(name)"]` is how you block a built-in agent; same syntax for custom.
+- **Memory directory `MEMORY.md` is auto-truncated to first 200 lines or 25KB** at subagent system-prompt-time; agent is instructed to curate. Uncurated memory leads to loss.
+- **`--agent` makes an agent file the main thread** (with `initialPrompt`, top-level `agent` setting in settings.json possible) — this is how plugins ship custom primary personas.
+
+### 7.8 End-user configuration surface
+
+- `/agents` (TUI), `claude agents` (CLI list), `--agents` JSON flag, `--agent <name>` (main-thread override), `--disallowedTools "Agent(name)"`.
+- Files: `.claude/agents/<name>.md`, `~/.claude/agents/<name>.md`, plugin `agents/<name>.md`.
+- Settings: `agent` key for main-thread agent override; `permissions.deny: ["Agent(name)"]` for denylist.
+- Env: `CLAUDE_CODE_SUBAGENT_MODEL` globally overrides subagent model.
+
+_Sources (7.x): `https://code.claude.com/docs/en/sub-agents` — fetched 2026-04-23._
 
 ---
 

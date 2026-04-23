@@ -262,4 +262,61 @@
 # Tests post-amendment: workspace-bootstrap 78/78, orchestrator
 # 73/73, self-upgrade 120/120, hands-off-lifecycle 66/66. Memory-
 # system 59/59 unchanged (the removed systemd file was orphan).
-9373444
+#
+# Amendment cycle — memory-system-subscription-routed-llm (#8,
+# 2026-04-22, eighth amendment): the in-flight Blocker-3 build (a
+# prior background agent never landed the commit) swaps graphiti's
+# default LLM backend from the billed AnthropicClient to a new
+# ClaudePrintLLMClient that subprocesses `claude -p` and routes every
+# LLM call through the user's Claude Max subscription via OAuth. No
+# ANTHROPIC_API_KEY is consulted on the default path; the child
+# subprocess runs with a scrubbed env (PATH, HOME, and a short benign
+# allow-list only) so the parent's keys cannot leak into a billed API
+# path even when set. Fresh first-run completes end-to-end at zero
+# dollar cost.
+#
+# Option-1 re-scope (owner ruling 2026-04-22): GLiNER2 local-CPU
+# entity-extraction fast-path dropped from this amendment because
+# graphiti-core[gliner2] pulls the full torch/transformers ML stack
+# (~500MB) even for HTTP-API mode (GLiNER2Client module-scope-imports
+# gliner2). Research preserved at
+# docs/rebuild/components/memory-system-gliner2-expansion/research.md
+# for a future amendment if quality pressure warrants it.
+#
+# Fresh memory-system runtime error-code block -32110..-32119 claimed
+# (sits after telegram-interface's -32100..-32109; historical
+# -32095/-32096 stay with staging/drain inside the hands-off-lifecycle
+# block with no overloading). Codes: -32110 claude-binary-missing,
+# -32111 claude-unauthenticated, -32112 claude-print-response-
+# malformed. hands-off-lifecycle/README.md cross-references the new
+# block.
+#
+# AC7 + AC8 tests filled in during landing (the original Blocker-3
+# build left both AC slots empty; proposal §4's behaviour-count
+# invariant requires 1:1 AC-to-test mapping). AC9's seal-diff
+# allowed-prefix set extended to include docs/rebuild/plans/ (the
+# plan-before-code CDC codified at fd8c833 after the original
+# proposal draft; amendment #10 set the precedent for committing
+# plan files with the amendment).
+#
+# Multi-component amendment (memory-system + hands-off-lifecycle).
+# Nine acceptance criteria AC1-AC9 in
+# docs/rebuild/components/memory-system-subscription-routed-llm/
+# proposal.md, 1:1 criterion-to-test mapping. Memory-system gains its
+# first proper seal-diff test
+# (memory-system/tests/test_no_sealed_amendments.py) mirroring the
+# B20/B23 pattern from orchestrator and workspace-bootstrap. SEAL_COMMIT
+# is re-pinned at 7111602 across memory-system and hands-off-lifecycle
+# sidecars (memory-system's advances from 0df02d5 — the Amendment-1
+# create — to 7111602; hands-off-lifecycle's advances from 9373444).
+# BASELINE in memory-system/tests/test_no_sealed_amendments.py pins at
+# 4ec9ae9 (current tip — the scope-only-dispatch CDC commit
+# immediately before this amendment's code commit); BASELINE in
+# hands-off-lifecycle/tests/test_cross_cutting.py advances from
+# 7d462e3 to 4ec9ae9 (the Blocker-3-authored BASELINE bump hunk was
+# reverted during amendment #10's hunk-staging; re-authored here
+# against the current tip). Tests post-amendment: memory-system 61/61
+# (59 baseline + 2 for AC7/AC8 that were absent at the original build
+# time), hands-off-lifecycle 67/67. No sealed components outside the
+# two amendment targets touched.
+7111602

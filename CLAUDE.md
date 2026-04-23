@@ -4,6 +4,27 @@ pOS v2 is a general-purpose harness for Claude-attached workflows. It is explici
 
 ---
 
+## Session-start discipline
+
+Before acting on any non-trivial pos-v2 work — planning, proposing,
+editing code, dispatching agents, ruling on designs — read:
+
+- `docs/odd-methodology.md` (normative; this governs)
+- `docs/odd-in-pos.md` (worked examples)
+- `docs/rebuild/VALUE_PROPOSITION.md`
+- `docs/rebuild/STATE.md`
+- `docs/rebuild/FUTURE_IDEAS.md` (CDCs live here; they apply to every build)
+- Any `docs/rebuild/plans/amendment-*.md` whose amendment is in-flight
+
+Component-scoped work additionally reads that component's
+`docs/rebuild/components/<name>/` artefacts (proposal, research,
+seal narrative) before editing or proposing.
+
+Proceeding without those loaded is how past sessions produced
+ODD-violating proposals, misnamed mechanics, and work that had to
+be thrown out. Purely conversational / informational turns do not
+require the read. If in doubt, read.
+
 ## Design lenses for every feature
 
 Three principles must become part of the research of every future feature — not one-time exercises, but always-on lenses. A feature proposal that does not answer all three is incomplete.

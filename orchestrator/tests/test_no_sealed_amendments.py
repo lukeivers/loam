@@ -41,7 +41,24 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              is the pre-amendment tip — the graceful-degradation +
 #              observability-aggregator retrofit chore commit
 #              immediately before this amendment's code commit.
-BASELINE = "7d462e3"
+#   - a3bbdcd  when the orchestrator-bootstrap-unification AC1 removal
+#              amendment (#12) opened. The 2026-04-22 audit flagged
+#              AC1 in amendment #7's proposal as a method-in-acceptance
+#              static-grep (asserts what the source looks like, not
+#              what the system does), per ODD §2.5 / §8.2 rule 9.
+#              AC2's poison-bomb runtime complement already covers the
+#              same intent. Amendment #12 deletes the AC1 test, stubs
+#              the AC1 slot in the proposal as "withdrawn", and ships
+#              a plan doc under docs/rebuild/plans/. a3bbdcd is the
+#              pre-amendment tip — the telegram-interface-framework-
+#              integration seal commit immediately before amendment
+#              #12's code commit. BASELINE re-pins here because the
+#              intervening amendments (#8 memory-system, #9 telegram-
+#              interface, #11 audit-closure) did not touch
+#              orchestrator/ but did land paths outside this component's
+#              allowed_prefixes — re-pinning narrows the diff to
+#              amendment #12's own surface.
+BASELINE = "a3bbdcd"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

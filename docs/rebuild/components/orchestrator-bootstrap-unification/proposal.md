@@ -9,6 +9,17 @@ Possibly `workspace-bootstrap` (adapter default confirmation; likely zero edits)
 seal at `68e0525`), session-start-detachment amendment (multi-component
 seal at `d962ffd`).
 
+**Amendment history:**
+- #12 (2026-04-22): withdrew AC1. Audit flagged it as a
+  method-in-acceptance static-grep on orchestrator source
+  (asserted absence of `load_and_register` + `from .bootstrap`),
+  which ODD §2.5 / §8.2 rule 9 forbid. AC2's poison-bomb runtime
+  complement structurally covers the same intent. AC numbering
+  preserved (AC2..AC9 keep original numbers); the AC1 slot becomes
+  a "withdrawn" stub to avoid cascading renumbers into
+  `workspace-bootstrap/` (AC3–AC6 live there). See
+  `docs/rebuild/plans/amendment-7-ac1-removal.md`.
+
 ---
 
 ## 1. Objective
@@ -65,14 +76,35 @@ Three behaviours in one objective — §4 below counts criteria against it.
 
 Each criterion maps 1:1 to a test function in the build.
 
-### AC1 — Orchestrator._startup no longer loads bootstrap.py directly
+### AC1 — WITHDRAWN (amendment #12, 2026-04-22)
 
-After the amendment, `orchestrator/src/orchestrator.py` contains zero
-references to `load_and_register` and zero imports from
-`.bootstrap`. Test: static-grep the orchestrator sources; assert no
-hit. Runtime complement: invoke `Orchestrator._startup()` on a config
-whose `bootstrap_path` points at a file that raises on import; assert
-startup completes without reading that file.
+**Original text (preserved for audit trail):** "After the amendment,
+`orchestrator/src/orchestrator.py` contains zero references to
+`load_and_register` and zero imports from `.bootstrap`. Test:
+static-grep the orchestrator sources; assert no hit. Runtime
+complement: invoke `Orchestrator._startup()` on a config whose
+`bootstrap_path` points at a file that raises on import; assert
+startup completes without reading that file."
+
+**Withdrawal rationale.** The 2026-04-22 audit flagged AC1 as a
+method-in-acceptance assertion: it pinned what the orchestrator source
+*looks like* (grep for symbol absence) rather than what the system
+*does*. ODD §2.5 and §8.2 rule 9 forbid method-in-acceptance tests.
+AC1's "runtime complement" clause is exactly AC2 below — the
+poison-bomb test writes a `raise RuntimeError(...)` into the workspace
+`bootstrap.py` and asserts clean orchestrator exit (0) with no
+`bootstrap_refused` event. That assertion cannot hold if `_startup`
+still imports the workspace `bootstrap.py`, so AC2 structurally
+subsumes AC1's intent without asserting method.
+
+**Disposition.** The paired test
+(`test_AC1_startup_no_longer_loads_bootstrap_py`) is deleted in
+amendment #12. Numbering of AC2..AC9 is preserved (the AC1 slot stays
+as this withdrawn stub) so the numbering of AC3–AC6 — which live in
+`workspace-bootstrap/tests/test_bootstrap_unification.py`, a different
+sealed component — does not cascade-change. See
+`docs/rebuild/plans/amendment-7-ac1-removal.md` for the amendment-#12
+build plan.
 
 ### AC2 — Missing bootstrap.py no longer causes orchestrator exit code 2
 
@@ -147,12 +179,15 @@ seal commit.
 
 | Behaviour | Criteria |
 |-----------|----------|
-| Framework is the sole loader | AC1 (direct call removed), AC4 (adapter still works), AC5 (default-lenient), AC6 (opt-in-strict) |
+| Framework is the sole loader | AC2 (poison-bomb proves orchestrator does not self-load), AC4 (adapter still works), AC5 (default-lenient), AC6 (opt-in-strict) |
 | Fail-closed trigger moves to missing bootstrap.yaml | AC2 (old trigger gone), AC3 (new trigger present) |
 | No new on-disk surface for Python-stub scaffolding | AC7 (CLI surface disposition), AC8 (scaffold invariant) |
 | Seal discipline | AC9 |
 
-Four distinct behaviours → nine criteria → every behaviour covered.
+Four distinct behaviours → eight live criteria + one withdrawn (AC1
+in amendment #12) → every behaviour covered. AC2 doubles for the
+"framework is the sole loader" column because its poison-bomb fixture
+forces runtime exposure of any orchestrator-internal self-load path.
 
 ## 5. Flagged inferences (owner rulings, 2026-04-22)
 

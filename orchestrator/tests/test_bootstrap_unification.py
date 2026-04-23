@@ -5,12 +5,19 @@ corresponding AC in
 ``docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md``.
 
 Covered here (orchestrator-owned behaviours):
-  * AC1 — ``Orchestrator._startup`` no longer loads ``bootstrap.py``
-    directly.
   * AC2 — a missing ``bootstrap.py`` is not a fail-closed condition
-    anymore (exit 0, no ``bootstrap_refused`` event).
+    anymore (exit 0, no ``bootstrap_refused`` event). AC2's poison-bomb
+    fixture also structurally covers the intent of withdrawn-AC1
+    (orchestrator no longer self-loads ``bootstrap.py``): the fixture
+    writes a ``raise RuntimeError(...)`` into the workspace
+    ``bootstrap.py`` and asserts clean exit, which cannot hold if the
+    orchestrator still imports the workspace file.
   * AC7 — the ``--no-bootstrap`` flag is gone from argparse.
   * AC8 — ``run_first_run_scaffold`` does not write ``bootstrap.py``.
+
+AC1 was withdrawn by amendment #12 (2026-04-22) because it was a
+method-in-acceptance static-grep, which ODD §2.5 / §8.2 rule 9 forbid.
+See the proposal's §3 AC1 stub for the audit rationale.
 
 AC3/AC4/AC5/AC6 live in ``workspace-bootstrap/tests/`` because they
 exercise framework-side behaviour; AC9 (diff-scope) lives in
@@ -30,33 +37,6 @@ from pos_orchestrator import Orchestrator
 from pos_orchestrator.config import OrchestratorConfig
 
 from .conftest import _short_socket_path
-
-
-_ORCHESTRATOR_SRC = Path(__file__).resolve().parents[1] / "src"
-
-
-def test_AC1_startup_no_longer_loads_bootstrap_py() -> None:
-    """Static-grep complement: the orchestrator source contains no
-    reference to ``load_and_register`` and no import from
-    ``.bootstrap``. The workspace-authored file is loaded by the
-    framework's ``WorkspaceBootstrapPyContribution`` adapter; the
-    orchestrator itself must not call the loader directly.
-
-    Runtime complement: see AC2 — a ``bootstrap.py`` that would raise
-    on import is never read during ``_startup``, so startup completes
-    cleanly.
-    """
-    orch_py = (_ORCHESTRATOR_SRC / "orchestrator.py").read_text()
-    assert "load_and_register" not in orch_py, (
-        "orchestrator.py still references load_and_register — amendment #7 "
-        "requires the direct-call site to be removed."
-    )
-    assert "from .bootstrap" not in orch_py, (
-        "orchestrator.py still imports from .bootstrap — amendment #7 "
-        "requires the bootstrap module import to be dropped from the "
-        "orchestrator core. (The module itself is kept; only the "
-        "orchestrator-internal import goes away.)"
-    )
 
 
 @pytest.mark.asyncio

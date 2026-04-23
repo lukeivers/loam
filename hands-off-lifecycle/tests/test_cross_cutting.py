@@ -94,7 +94,19 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # the amendment-#8 audit-closure seal commit immediately before this
 # amendment's code commit. Amendment number (#9) is proposal-assigned;
 # #10 and #11 landed first because their scopes were cheaper to build.
-BASELINE = "b9e1f96"
+# Advanced to a3bbdcd when the orchestrator-bootstrap-unification AC1
+# removal amendment (#12) opened — the 2026-04-22 audit flagged AC1 in
+# amendment #7's proposal as a method-in-acceptance static-grep test
+# (asserts what the source looks like, not what the system does), per
+# ODD §2.5 / §8.2 rule 9. AC2's poison-bomb runtime complement already
+# covers the same intent. Amendment #12 deletes the AC1 test, stubs
+# the AC1 slot in the proposal as "withdrawn", and ships a plan doc
+# under docs/rebuild/plans/. Hands-off-lifecycle's counterpart is this
+# BASELINE bump + SEAL_COMMIT sidecar refresh (every amendment touches
+# this cross-cutting seal). a3bbdcd is the pre-amendment tip — the
+# telegram-interface-framework-integration seal commit immediately
+# before amendment #12's code commit.
+BASELINE = "a3bbdcd"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

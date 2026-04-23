@@ -670,4 +670,67 @@
 # pattern) so the B20/H19 diff windows were empty during the
 # amendment-commit test run; this seal commit advances both to
 # 552033c, narrowing the diff windows to this amendment's own surface.
-552033c
+#
+# 2026-04-22 — amendment #17 (workspace-bootstrap-b25-framework-
+# internal-criterion): Amendment #4 had added `Phase.first_run_
+# scaffold` to workspace_bootstrap.spec.Phase; the audit surfaced
+# that the new enum value contradicted the *letter* of B18's worked
+# example in docs/odd-in-pos.md §6 ("Zero change to bootstrap's
+# code" as a diff assertion). Owner's ruling (path a): add a new
+# criterion B25 naming the framework-internal phase set as
+# intentional, with rationale and deterministic bounds, restoring
+# coherence between code reality and the B-series criterion set.
+# B18 continues to govern the external-extension protocol
+# unchanged.
+#
+# B25 text (proposal §4.8): the Phase enum values ARE the framework-
+# internal phase set — every value has at least one adapter in
+# workspace_bootstrap.adapters declaring `phase=Phase.<value>`.
+# External (Phase 4+) contributions consume existing values; adding
+# an external contribution does not require extending the enum.
+# When the enum grows (Amendment #4 did, with first_run_scaffold),
+# the widening lands as a bootstrap amendment with its own ACs
+# (H1–H5 for #4), and B25 continues to hold over the grown set.
+# B18's "zero change to bootstrap's code" scopes to external-
+# contribution registration, not to bootstrap-amendment commits.
+#
+# B25 test (test_B25_framework_internal_phases_match_bootstrap_
+# source_adapters): outcome-shaped via dynamic pkgutil.iter_modules
+# on workspace_bootstrap.adapters, reading metadata.phase off each
+# Contribution class. Asserts set(adapter_phases) == set(Phase);
+# pins Phase.first_run_scaffold to exactly FirstRunScaffold-
+# Contribution. No source-grep.
+#
+# B18's existing three tests unchanged, still pass. B18's criterion
+# text in the proposal gets a one-sentence cross-reference to B25
+# (navigation aid). docs/odd-in-pos.md §6.1 gains one paragraph
+# noting B25 as the framework-internal-phase carve-out; the B18
+# worked-example narrative is unchanged.
+#
+# Test counts post-amendment: workspace-bootstrap 86 → 87 passed
+# (+1 B25 test); hands-off-lifecycle 66 → 66 (unchanged, BASELINE +
+# narrative edits only); all other sealed components unchanged,
+# their test_no_sealed_amendments suites green.
+#
+# Multi-component amendment (workspace-bootstrap + hands-off-
+# lifecycle). Hands-off-lifecycle's counterpart is this BASELINE
+# bump + SEAL_COMMIT sidecar refresh + this amendment-cycle
+# narrative note — zero functional change.
+#
+# SEAL_COMMIT re-pinned at 43d2f4a (the amendment commit). BASELINE
+# in workspace-bootstrap/tests/test_no_sealed_amendments.py
+# advances from b9e1f96 to c94e146 (the d12-chaos-durability-
+# split-pytest amendment #16's seal commit immediately before
+# amendment #17's code commit). BASELINE in hands-off-lifecycle/
+# tests/test_cross_cutting.py advances from 1b144f6 to c94e146
+# (same pre-amendment tip). Workspace-bootstrap's seal test gained
+# `docs/rebuild/components/workspace-bootstrap/` in allowed_
+# prefixes and `docs/odd-in-pos.md` in allowed_files (narrow
+# documentation surfaces this amendment touches; no top-level
+# `docs/` blanket). Both SEAL_COMMIT sidecars were set to c94e146
+# at the amendment commit itself (matching BASELINE, per the
+# cost-governance amendment-#13 pattern) so the B20/H19 diff
+# windows were empty during the amendment-commit test run; this
+# seal commit advances both to 43d2f4a, narrowing the diff windows
+# to this amendment's own surface.
+43d2f4a

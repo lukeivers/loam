@@ -462,6 +462,45 @@ Phase 1 (documentary rebrand) scoped next.
 
 ---
 
+## Idea 11 — Amendment-chain recollapse/reseal convention
+
+Captured 2026-04-22.
+
+As a component accumulates amendments (proposal + amendment #1,
+#2, … #N), reading the current state requires walking every
+amendment's seal narrative in order — the proposal describes the
+original behaviour and each amendment records a delta against the
+prior state. A **reseal** operation would let a component periodically
+fold that chain into a new baseline: archive prior narratives to
+`<comp>/seals/archive/`, reset the seal-diff BASELINE to the reseal
+commit, rewrite the proposal so current behaviour is the lede and
+amendment history moves to an appendix, and write a fresh v2 narrative.
+Source stays byte-identical to the pre-reseal tree; git history is
+untouched; every prior amendment remains reachable through the archive
+and the commit log.
+
+Detailed design proposal (archive layout, baseline-pointer mechanics,
+proposal-rewrite scope, sidecar model) lives at
+`.scratch/claude-output/loam-recollapse-reseal-research.md`.
+
+Rulings captured at capture-time:
+
+1. **Hypothetical right now** — no component currently warrants a
+   reseal; no tooling is built yet.
+2. **Reseal shipping: (a)** — when a reseal does happen, the
+   proposal-rewrite and the amendment-appendix move ship together
+   in the same reseal amendment, not split across two.
+3. **Sidecar backfill: lazy** — per-component narrative sidecars are
+   introduced only when that component reseals; no universal
+   backfill pass.
+
+Status: **deferred — no concrete trigger yet. Revisit when a
+component's amendment chain feels unwieldy.** When activated, the
+research doc's §3 proposed model plus the three rulings above govern
+the first reseal amendment.
+
+---
+
 ## Catalogue discipline
 
 This file is the catalogue of future directions for pOS v2. Entries here are not commitments. When an idea is picked up, it becomes a real component cycle (research plan → research → proposal → brief → build → seal) and is retired from this file with a pointer to the component that now owns it. When an idea is deliberately dropped, it is retired with a one-line rationale.

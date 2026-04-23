@@ -221,3 +221,105 @@ def test_B18_bootstrap_source_unchanged_diff_check() -> None:
             f"{py_file} mentions 'onboarding' — a Phase 4+ contribution "
             "name that bootstrap should not know about."
         )
+
+
+# ---- B25 — framework-internal phase set ------------------------------
+#
+# B25 (amendment #17) is the complementary criterion to B18. Where B18
+# governs the external-extension protocol (Phase 4+ contributions
+# register via the public extension surface with zero change to
+# bootstrap's source), B25 names the framework-internal phase surface:
+# every Phase enum value is claimed by at least one framework-internal
+# adapter in workspace_bootstrap.adapters, and external contributions
+# consume the enum rather than extend it. When a bootstrap amendment
+# widens the enum (Amendment #4 added first_run_scaffold), the
+# widening has explicit audit-trail affordance via this criterion.
+
+
+def test_B25_framework_internal_phases_match_bootstrap_source_adapters() -> None:
+    """B25 — the Phase enum values are the framework-internal phase set.
+
+    Every Phase enum member has at least one framework-internal adapter
+    (a module in ``workspace_bootstrap.adapters``) whose contribution
+    class declares ``phase=Phase.<value>`` in its ContributionMetadata.
+    Conversely, every framework-internal adapter's declared phase is a
+    valid Phase enum member. The two sets are equal.
+
+    Outcome-shaped — no source-grep. The test discovers adapters
+    dynamically via ``pkgutil.iter_modules`` on the adapters package,
+    inspects each module's ``Contribution`` subclasses, and reads the
+    ``metadata.phase`` attribute off the runtime metadata. If a future
+    bootstrap amendment adds a Phase enum value, this test fails until
+    a framework-internal adapter lands using it (failure message names
+    the orphan). If a future amendment removes an adapter without
+    removing the enum value, same failure mode.
+    """
+    import importlib
+    import pkgutil
+
+    from workspace_bootstrap import Phase
+    from workspace_bootstrap import adapters as adapters_pkg
+    from workspace_bootstrap.spec import BaseContribution, ContributionMetadata
+
+    phases_declared_by_adapters: set[Phase] = set()
+    per_adapter_phase: dict[str, Phase] = {}
+
+    for module_info in pkgutil.iter_modules(adapters_pkg.__path__):
+        mod_name = module_info.name
+        # Skip helper / private modules that do not ship contributions.
+        if mod_name.startswith("_"):
+            continue
+        mod = importlib.import_module(
+            f"{adapters_pkg.__name__}.{mod_name}"
+        )
+        # Collect classes in this adapter module that are subclasses of
+        # BaseContribution defined here (not re-imported from spec). The
+        # phase-bearing metadata lives on BaseContribution subclasses.
+        for attr_name in dir(mod):
+            obj = getattr(mod, attr_name)
+            if not isinstance(obj, type):
+                continue
+            if obj is BaseContribution:
+                continue
+            if not issubclass(obj, BaseContribution):
+                continue
+            # Only count classes defined in this module (ignore any
+            # re-export).
+            if getattr(obj, "__module__", None) != mod.__name__:
+                continue
+            md = getattr(obj, "metadata", None)
+            if not isinstance(md, ContributionMetadata):
+                continue
+            phases_declared_by_adapters.add(md.phase)
+            per_adapter_phase[f"{mod_name}.{obj.__name__}"] = md.phase
+
+    # Every Phase value has at least one framework-internal adapter.
+    unused_phases = set(Phase) - phases_declared_by_adapters
+    assert not unused_phases, (
+        f"Phase enum values without any framework-internal adapter: "
+        f"{sorted(p.value for p in unused_phases)}. Every Phase member "
+        "must be claimed by at least one adapter in "
+        "workspace_bootstrap.adapters; add an adapter using the phase "
+        "or remove the orphaned enum value."
+    )
+    # Every adapter's phase is a valid Phase member (tautological given
+    # ContributionMetadata's schema, but stated explicitly).
+    invalid = {n: p for n, p in per_adapter_phase.items() if p not in Phase}
+    assert not invalid, (
+        f"Adapters declaring non-enum phase values: {invalid}"
+    )
+
+    # Amendment #4 anchor: first_run_scaffold is claimed by exactly the
+    # FirstRunScaffoldContribution. This pins the #4 phase's
+    # single-purpose status in the criterion so a future regression
+    # (orphaning the phase, or adding a second framework-internal
+    # claimant) surfaces at test time.
+    first_run_claimants = [
+        n for n, p in per_adapter_phase.items()
+        if p is Phase.first_run_scaffold
+    ]
+    assert first_run_claimants == ["first_run_scaffold.FirstRunScaffoldContribution"], (
+        "Phase.first_run_scaffold must be claimed by exactly the "
+        "FirstRunScaffoldContribution adapter (Amendment #4 anchor). "
+        f"Got: {first_run_claimants}"
+    )

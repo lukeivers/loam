@@ -357,6 +357,15 @@ This shape generalises. Any time a component declares "X is configurable,"
 the outcome? If yes, write the criterion that way. If no, the feature is
 probably not actually configurable — it is just presumed to be.
 
+B25 (added in amendment #17) is the framework-internal complement to B18:
+it names the `Phase` enum values as the framework-internal phase set that
+bootstrap's own adapters register under, distinguishing a bootstrap
+amendment (which may add a phase-enum value, as Amendment #4's
+`first_run_scaffold` did) from a Phase 4+ contribution (which registers
+against the existing enum values via the external-extension protocol).
+B18's "zero change to bootstrap's code" scopes to external-contribution
+registration; B25 covers the framework-internal phase surface.
+
 ---
 
 ## 7. Adding an ODD-compliant component to pOS

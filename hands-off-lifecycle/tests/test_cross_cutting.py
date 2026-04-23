@@ -171,7 +171,23 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # narrative in seals/SEAL_COMMIT.true-first-run. 1b144f6 is the pre-
 # amendment tip — the pyyaml-reachability amendment-#5 follow-up's
 # seal commit immediately before amendment #16's code commit.
-BASELINE = "1b144f6"
+# Advanced to c94e146 when the workspace-bootstrap-b25-framework-
+# internal-criterion amendment (#17) opened. Amendment #4 had added
+# `Phase.first_run_scaffold` to workspace_bootstrap.spec.Phase; the
+# audit surfaced that the new enum value contradicted the *letter* of
+# B18. Owner's ruling (path a): add a new criterion B25 naming the
+# framework-internal phase set — the enum values are the phases
+# registered by bootstrap-internal adapters, and external (Phase 4+)
+# contributions consume them rather than extend them. Amendment #17's
+# primary edits land on workspace-bootstrap's side (proposal doc +
+# new B25 test) and on docs/odd-in-pos.md (one-paragraph §6.1 cross-
+# reference). Hands-off-lifecycle's counterpart is this BASELINE bump
+# + SEAL_COMMIT sidecar refresh + amendment-cycle narrative in
+# seals/SEAL_COMMIT.true-first-run (zero functional change). c94e146
+# is the pre-amendment tip — the d12-chaos-durability-split-pytest
+# seal commit (amendment #16) immediately before amendment #17's code
+# commit.
+BASELINE = "c94e146"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

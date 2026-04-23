@@ -96,7 +96,30 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              commit. Proposal numbering (#9) pre-dates amendments
 #              #10 and #11 which landed first; the number is
 #              assigned at proposal time, not landing time.
-BASELINE = "b9e1f96"
+#   - c94e146  when the workspace-bootstrap-b25-framework-internal-
+#              criterion amendment (#17) opened. Amendment #4 added
+#              `Phase.first_run_scaffold` to
+#              `workspace_bootstrap.spec.Phase`; the audit surfaced
+#              that the new enum value contradicted the *letter* of
+#              B18 ("Zero change to bootstrap's code"). Owner's ruling
+#              (path a): add a new criterion B25 naming the framework-
+#              internal phase set — the enum values are the phases
+#              registered by bootstrap-internal adapters, and external
+#              (Phase 4+) contributions consume them rather than
+#              extend them. B18 continues to govern external-
+#              contribution registration unchanged. B25's test is
+#              outcome-shaped (dynamic `pkgutil.iter_modules` over
+#              `workspace_bootstrap.adapters`, reading
+#              `metadata.phase` off each Contribution class). The
+#              amendment edits the proposal doc (new §4.8 + cross-
+#              reference in §4.5 after B19), appends one paragraph to
+#              `docs/odd-in-pos.md` §6.1, and adds the B25 test.
+#              Multi-component amendment in lockstep with
+#              hands-off-lifecycle (BASELINE bump + narrative note).
+#              c94e146 is the pre-amendment tip — amendment #16's
+#              seal commit (d12-chaos-durability-split-pytest)
+#              immediately before this amendment's code commit.
+BASELINE = "c94e146"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -169,6 +192,17 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
     #     structural invariant directly on `telegram-interface/src/`.
     #   - `docs/rebuild/components/telegram-interface-framework-integration/`
     #     — the proposal living with the amendment.
+    # Amendment #17 (workspace-bootstrap-b25-framework-internal-criterion)
+    # additions:
+    #   - `docs/rebuild/components/workspace-bootstrap/` — the proposal
+    #     doc gains a new §4.8 criterion (B25) + an optional cross-
+    #     reference in §4.5 after B19. This is the first proposal-doc
+    #     edit since the initial port at a11f081.
+    #   - `docs/odd-in-pos.md` — one-paragraph cross-reference appended
+    #     to §6.1 (the "pattern B18 teaches" subsection) noting B25's
+    #     existence as the framework-internal-phase carve-out. Admitted
+    #     via the precise `allowed_files` entry rather than a `docs/`
+    #     blanket so the diff-scope check stays tight.
     allowed_prefixes = (
         "workspace-bootstrap/",
         "data/",
@@ -180,9 +214,13 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/rebuild/components/namespaced-labels-and-bootout/",
         "docs/rebuild/components/orchestrator-bootstrap-unification/",
         "docs/rebuild/components/telegram-interface-framework-integration/",
+        "docs/rebuild/components/workspace-bootstrap/",
         "docs/rebuild/plans/",
     )
-    allowed_files: set[str] = {"first-run-inventory.yaml"}
+    allowed_files: set[str] = {
+        "first-run-inventory.yaml",
+        "docs/odd-in-pos.md",
+    }
 
     offending = []
     for path in changed:

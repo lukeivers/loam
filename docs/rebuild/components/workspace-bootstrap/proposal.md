@@ -95,7 +95,7 @@ Reserve `-32080..-32089` to bootstrap. Ship:
 
 ---
 
-## 4. Acceptance criteria (ODD — 24 objectives)
+## 4. Acceptance criteria (ODD — 25 objectives)
 
 ### 4.1 Framework — discovery & validation
 
@@ -131,6 +131,8 @@ Reserve `-32080..-32089` to bootstrap. Ship:
 - **B18.** Synthetic Phase 4 contribution: a mock `onboarding_adapter` module defines a `Contribution` subclass with metadata `{name: "onboarding", phase: "after_orchestrator_ready", after: ("self_correction",)}`. Adding one line to the test workspace's `bootstrap.yaml` enables it; the framework discovers, validates, orders, and invokes `contribute(host)`. **Zero change to bootstrap's code.**
 - **B19.** The same synthetic contribution with a cycle (`after: ("self_correction",), before: ("observability_aggregator",)`) trips `-32084`.
 
+See also **B25** (§4.8) for the complementary framework-internal phase-set criterion — B18 scopes "zero change to bootstrap's code" to external-contribution registration; B25 names the framework-internal phase surface that bootstrap amendments (e.g. Amendment #4's `first_run_scaffold`) may extend.
+
 ### 4.6 Cross-cutting integration
 
 - **B20.** `git diff --stat ac48a7b..<bootstrap-seal>` shows only `workspace-bootstrap/` changes (plus `data/` if runtime test output lands there). Zero deltas to any sealed component.
@@ -141,6 +143,37 @@ Reserve `-32080..-32089` to bootstrap. Ship:
 
 - **B23.** `tests/test_no_sealed_amendments.py` uses `SEAL_COMMIT` sidecar-file pattern with baseline `ac48a7b`. HEAD-based variant refused in test-code review.
 - **B24.** `ContributionMetadata` refuses empty `name`, phase values outside the three-enum set, or non-tuple `after`/`before`. SQL-equivalent structural defences: `name` uniqueness enforced by a dict lookup at framework load, not by SQL (no store needed for the framework itself — contributions are in-memory).
+
+### 4.8 Framework-internal phase set (added amendment #17)
+
+- **B25 — framework-internal phase set.** The `Phase` enum values in
+  `workspace_bootstrap.spec` are the phases registered by contributions
+  that live in `workspace-bootstrap/src/workspace_bootstrap/adapters/`
+  (the framework-internal adapter bundle). Every enum value has at
+  least one framework-internal adapter declaring
+  `phase=Phase.<value>` in its `ContributionMetadata`. An external
+  (Phase 4+) contribution declares its phase by referencing one of
+  these existing values; adding an external contribution does not
+  require extending the enum. If the framework-internal phase set
+  grows (e.g. Amendment #4 added `first_run_scaffold`), the addition
+  is a bootstrap amendment — not an external contribution — and the
+  B18 "zero change to bootstrap's code" clause scopes to
+  external-contribution registration, not to bootstrap-amendment
+  commits. B25 names the framework-internal phase surface so future
+  phase-enum additions have explicit audit-trail affordance rather
+  than landing as silent widenings of B18's letter.
+
+  Rationale. B18 asserts the external-extension contract — a Phase 4+
+  contribution registers without touching `workspace-bootstrap/src/`.
+  B25 asserts the complementary invariant — the phase-enum values ARE
+  the framework-internal phase set, and external contributions
+  consume them rather than extend them. Together B18 and B25 partition
+  the space: B18 governs the external-extension protocol, B25 names
+  the internal phase surface. When a future amendment widens the enum
+  (as #4 did with `first_run_scaffold`), the amendment lands as a
+  bootstrap amendment with its own ACs (H1–H5 for #4) and B25
+  continues to hold; the grown enum set stays "the phases the
+  bootstrap source itself registers."
 
 ---
 

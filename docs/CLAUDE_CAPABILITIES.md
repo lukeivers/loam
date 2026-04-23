@@ -392,7 +392,82 @@ _Sources (3.x): `https://platform.claude.com/docs/en/api/messages`, `https://pla
 
 ## 4. Model Context Protocol (MCP)
 
-<!-- PLACEHOLDER -->
+MCP is the open-source standard for connecting AI applications (clients like Claude Code, ChatGPT, Cursor, VS Code Copilot) to external systems (servers exposing tools, resources, prompts). From pos-v2's perspective: MCP is the external-integration surface that most plugins will lean on (per FUTURE_IDEAS.md Idea 3 introspection).
+
+### 4.1 What MCP exposes
+
+**Three server primitives:**
+- **Tools** — callable actions the model can invoke (e.g. `search_issues`, `create_draft`). Appear in Claude as `mcp__<server>__<tool>` names.
+- **Resources** — addressable read-only content the model can reference (e.g. document URIs).
+- **Prompts** — parametrised prompt templates the user can invoke (surfaced as slash-command-like suggestions in some clients).
+
+**Three transports:**
+- **stdio** — local subprocess over stdin/stdout. Zero network; fastest.
+- **HTTP (streamable-http)** — recommended for remote. Supports auth headers, Bearer tokens, OAuth 2.0.
+- **SSE (Server-Sent Events)** — deprecated; HTTP preferred. Still supported for older servers.
+
+**Lifecycle features:**
+- `list_changed` notifications — server can push tool/prompt/resource list updates; Claude Code auto-refreshes without reconnect.
+- Automatic reconnect (HTTP/SSE only) — exponential backoff, 5 attempts, starts at 1s. Stdio servers never auto-reconnect (they're local processes).
+- **Channels** — MCP servers can push messages into the session so Claude reacts to external events (Telegram messages, CI results, Discord chats, webhooks). Enable with `--channels plugin:<name>@<marketplace>` at startup. Server declares `claude/channel` capability.
+
+### 4.2 Composes with pos-v2
+
+- **`telegram-interface`** is already wired as an MCP server that ships via the pos-v2 `plugin:telegram:telegram` namespace; its tools (`reply`, `edit_message`, `react`, `download_attachment`) appear to the primary persona as MCP tools. The channel capability is what lets a Telegram message arriving while pos-v2 is idle wake the session. This is the reference MCP composition inside pos-v2.
+- **Any of the Idea 3 plugins** (communications, knowledge-management, project-management overlay, finance, creative, health, trading, legal) will almost certainly consume MCP. Gmail and Google Calendar already ship as MCP servers (`claude_ai_Gmail`, `claude_ai_Google_Calendar`) — the communications plugin is a workflow layer over them, not a reimplementation.
+- **`memory-system`** could expose itself as an MCP server so non-Claude-Code clients (the eventual open-source distribution per Idea 12) can consume pos-v2 memory.
+- **`safety-layer` + `reversibility-primitive`** compose with MCP via `PreToolUse` hook matchers on `mcp__<server>__.*` patterns — the safety gate can rule per-server or per-tool without the server having to cooperate.
+- **`cost-governance`** consumes `MAX_MCP_OUTPUT_TOKENS` as a first-class ceiling. Default is 10000 (with a warning); large-context MCP tools (file-search, database queries) may need raising explicitly.
+
+### 4.3 Scopes and configuration
+
+| Scope | Loads in | Shared with team? | Stored in |
+|-------|----------|-------------------|-----------|
+| **Local** (default) | Current project only | No | `~/.claude.json` |
+| **Project** | Current project only | Yes (checked into VCS) | `.mcp.json` in project root |
+| **User** | All your projects | No | `~/.claude.json` |
+| **Plugin** | When plugin enabled | Yes (ships with plugin) | `plugin/<name>/.mcp.json` or inline in `plugin.json` |
+
+**CLI:**
+```bash
+claude mcp add --transport http <name> <url>                     # remote http
+claude mcp add --transport stdio --env KEY=v <name> -- <cmd>    # local stdio
+claude mcp list                                                  # list all
+claude mcp get <name>                                            # details
+claude mcp remove <name>                                         # remove
+claude mcp reset-project-choices                                 # reset auth prompts
+/mcp                                                             # status + OAuth
+```
+
+**Flag ordering matters:** options (`--transport`, `--env`, `--scope`, `--header`) must come **before** the server name; `--` then separates name from subprocess command. Misordering is a common bug.
+
+### 4.4 Pitfalls
+
+- **Project-scoped servers from `.mcp.json` prompt for approval** on every fresh clone — security-intentional, but surfaces as "why isn't the server loading?" Reset with `claude mcp reset-project-choices`.
+- **Stdio servers do not auto-reconnect.** If the subprocess crashes, you must remove and re-add (or just restart Claude Code). Remote servers auto-reconnect up to 5 times.
+- **Prompt injection risk** is the largest MCP pitfall: any MCP server that pulls external content (Slack, email, web fetch, issue trackers) is a potential injection vector. The safety warning in the Claude Code MCP docs is explicit — Anthropic has not verified third-party servers. pos-v2's `safety-layer` is the structural mitigation; it must be considered whenever a new MCP server is added.
+- **`MAX_MCP_OUTPUT_TOKENS` default is 10000.** MCP tools returning more (e.g. database queries, large file reads) trigger a truncation warning. Set via env var.
+- **Windows + npx stdio** requires `cmd /c` wrapper or "Connection closed" errors hit silently.
+- **Scope confusion:** "local" MCP scope (in `~/.claude.json`) is different from "local settings" (`.claude/settings.local.json`). Two different files, two different concepts, both called "local."
+- **Channel allowlist:** `--channels` only accepts servers on the approved allowlist unless `--dangerously-load-development-channels` is passed.
+- **MCP tool matcher in hooks:** matcher strings are literal and regex-capable; use `mcp__<server>__.*` not `<server>/<tool>` style.
+
+### 4.5 Authoring new MCP servers
+
+Server SDKs exist for TypeScript, Python, Go, Rust, Java, C#, Swift, Kotlin (see `modelcontextprotocol.io`). Minimum shape: implement `list_tools`, `call_tool` for each tool; optionally `list_resources`, `read_resource`, `list_prompts`, `get_prompt`. Transport is a CLI choice — the SDK handles protocol framing.
+
+pos-v2-local MCP servers (e.g. a future `pos-memory-mcp` exposing memory-system as a tool) should be stdio-transport + project scope + plugin-bundled — that composition gives zero-config activation for every clone and no network exposure.
+
+### 4.6 End-user configuration surface
+
+- `claude mcp add/list/remove`, `/mcp` inside a session.
+- `.mcp.json` at project root (shared), `~/.claude.json` (user + local).
+- `MCP_TIMEOUT` env var for server startup (default 30s?).
+- `MAX_MCP_OUTPUT_TOKENS` env var for output cap.
+- `--channels` flag for opting into push notifications.
+- `--dangerously-load-development-channels` for unapproved channel sources.
+
+_Sources (4.x): `https://code.claude.com/docs/en/mcp`, `https://modelcontextprotocol.io/docs` — fetched 2026-04-23._
 
 ---
 

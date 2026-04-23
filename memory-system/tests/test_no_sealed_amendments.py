@@ -51,7 +51,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              a single cycle. BASELINE re-pins to 77389ce — the
 #              amendment-#8 seal commit immediately before amendment
 #              #11's code commit.
-BASELINE = "77389ce"
+#   - fd7c6cf  at amendment #15 (d11-receiver-path-pytest). D11 is a
+#              named AC in docs/rebuild/components/memory-system/
+#              brief-full-build.md (process-of-arrival capture
+#              ingestion) whose receiver + mock producer + demo script
+#              all ship, but whose pytest coverage gap left the AC
+#              unclosed under ODD §8.2 rule 9. Amendment #15 adds
+#              memory-system/tests/test_D11_process_of_arrival.py
+#              (five outcome-shaped tests, each ``test_D11_*``);
+#              zero edits to memory-system/src/. BASELINE re-pins to
+#              fd7c6cf — the skip-launchctl-dead-code-removal seal
+#              commit immediately before amendment #15's code commit.
+BASELINE = "fd7c6cf"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

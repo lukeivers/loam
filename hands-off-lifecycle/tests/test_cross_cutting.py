@@ -140,7 +140,20 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # narrative in seals/SEAL_COMMIT.true-first-run. 079258f is the pre-
 # amendment tip — the `docs(future-ideas)` commit immediately before
 # amendment #14's code commit.
-BASELINE = "079258f"
+# Advanced to fd7c6cf when the d11-receiver-path-pytest amendment
+# (#15) opened — D11 (process-of-arrival capture ingestion) is a
+# named AC in docs/rebuild/components/memory-system/brief-full-build.md
+# whose receiver + mock producer + demo script ship, but whose pytest
+# coverage was missing. Amendment #15 adds
+# memory-system/tests/test_D11_process_of_arrival.py (five outcome-
+# shaped tests, each ``test_D11_*``); zero edits to memory-system/src/.
+# Multi-component amendment (memory-system + hands-off-lifecycle).
+# Hands-off-lifecycle's counterpart is this BASELINE bump + SEAL_COMMIT
+# sidecar refresh + amendment-cycle narrative in seals/SEAL_COMMIT.
+# true-first-run. fd7c6cf is the pre-amendment tip — the skip-
+# launchctl-dead-code-removal seal commit immediately before amendment
+# #15's code commit.
+BASELINE = "fd7c6cf"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 

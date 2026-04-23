@@ -146,7 +146,22 @@ class AccessFile:
                     added_at=rec["added_at"],
                     blocked_at=rec.get("blocked_at"),
                 )
-            except (KeyError, TypeError):
+            except (KeyError, TypeError) as exc:
+                # Amendment #21 S3 silent-except bundle: surface the
+                # previously silent per-record skip via OTel so an
+                # operator can distinguish "record corrupt" from "user
+                # unknown" on a downstream `lookup(...)` miss. The
+                # `continue` remains — a record missing a required
+                # field is unrecoverable at read time, so dropping it
+                # from the returned dict is the only correct action.
+                missing_key: str | None = None
+                if isinstance(exc, KeyError) and exc.args:
+                    missing_key = str(exc.args[0])
+                obs.allowlist_record_malformed(
+                    user_id=str(uid),
+                    exception_class=type(exc).__name__,
+                    missing_key=missing_key,
+                )
                 continue
         return out
 

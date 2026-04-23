@@ -147,8 +147,18 @@ def apply_event(proj: ScopeProjectionData, event: Any) -> None:
                 ended = _as_dt(event.created_at)
                 delta = max(0, int((ended - started).total_seconds()))
                 proj.active_cumulative_seconds += delta
-            except Exception:
-                pass
+            except Exception as exc:
+                # Amendment #21 S3 silent-except bundle: surface the
+                # previously silent parse failure via OTel while
+                # preserving the existing behaviour (projection still
+                # advances past the bad event; cumulative seconds is
+                # under-counted on this one transition).
+                from .observability import emit_projection_parse_failure
+                emit_projection_parse_failure(
+                    scope_id=proj.scope_id,
+                    field="StateTransitioned.active_started_at_or_created_at",
+                    exception_class=type(exc).__name__,
+                )
             proj.active_started_at = None
         # D0: track transitions AFTER the first activation so stuck-
         # detection can check "no state events since start". The

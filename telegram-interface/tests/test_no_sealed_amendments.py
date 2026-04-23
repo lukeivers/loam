@@ -23,6 +23,26 @@ window:
              amendment-#8 audit-closure seal commit immediately
              before this amendment's code commit. Amendment number
              (#9) is proposal-assigned; #10 and #11 landed first.
+  - 3b128c3  when the S3 silent-except bundle amendment (#21) opened.
+             The 2026-04-22 audit + classifier surfaced one remaining
+             AC:none silent catch inside `telegram-interface/src/
+             allowlist.py::AccessFile.identities()` (loop skip on
+             malformed `pos_identities` records). Per ODD §8 rule 8 +
+             the audit-triage-by-severity CDC (bucket d — outright
+             violation), the fix replaces the silent skip with a new
+             `allowlist_record_malformed` OTel emitter while
+             preserving the `continue` (unrecoverable drop still
+             correct). Multi-component amendment (scope-of-work,
+             telegram-interface, memory-system, hands-off-lifecycle).
+             This amendment also adds `scope-of-work/` and
+             `memory-system/` to the allowed-prefix tuple because the
+             amendment's full diff spans those surfaces too. Sites 4
+             + 5 (`first_run_inventory.py::_parse_scalar`) were
+             re-classified bucket (a) during research and dropped;
+             the former Site 3 in `availability.py` stayed dropped
+             per the re-dispatch note. 3b128c3 is the pre-amendment
+             tip — the pyyaml-reachability seal commit immediately
+             before amendment #21's code commit.
 """
 
 from __future__ import annotations
@@ -32,7 +52,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BASELINE = "b9e1f96"
+BASELINE = "3b128c3"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -69,6 +89,9 @@ def test_tg23_only_telegram_interface_changed() -> None:
     # docs/rebuild/components/telegram-interface-framework-integration/
     # (the proposal + plan). docs/rebuild/plans/ is admitted because
     # the plan-before-code CDC lives alongside the amendment commit.
+    # Amendment #21 (S3 silent-except bundle) extends with
+    # `scope-of-work/` and `memory-system/` — the other two source-
+    # editing partners in that multi-component amendment.
     allowed_prefixes = (
         "telegram-interface/",
         "data/",
@@ -77,6 +100,8 @@ def test_tg23_only_telegram_interface_changed() -> None:
         "docs/rebuild/plans/",
         "workspace-bootstrap/",
         "hands-off-lifecycle/",
+        "scope-of-work/",
+        "memory-system/",
     )
     allowed_files: set[str] = set()
 

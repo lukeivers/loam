@@ -79,7 +79,29 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              BASELINE re-pins to 1b144f6 — the pyyaml-reachability
 #              amendment-#5 follow-up's seal commit immediately before
 #              amendment #16's code commit.
-BASELINE = "1b144f6"
+#   - 3b128c3  at amendment #21 (S3 silent-except bundle). The
+#              2026-04-22 audit + classifier surfaced one remaining
+#              AC:none silent catch inside ``memory-system/src/
+#              observability.py::_read_jsonl`` (a malformed JSONL
+#              line was silently skipped from ``read_spans`` /
+#              ``read_tokens`` / ``read_audit``, under-reporting
+#              R12's per-prompt-type cost attribution). Per ODD §8
+#              rule 8 + audit-triage-by-severity CDC (bucket d), the
+#              fix surfaces each drop via ``record_audit(
+#              operation="observability.jsonl_line_malformed",
+#              ...)`` — the module's own durable audit channel, used
+#              because the D7 contract keeps this module OTel-SDK-
+#              free. Multi-component amendment (scope-of-work,
+#              telegram-interface, memory-system, hands-off-
+#              lifecycle). This amendment extends the allowed-prefix
+#              tuple with ``scope-of-work/`` and
+#              ``telegram-interface/`` — the other two source-
+#              editing partners. Sites 4 + 5 (first_run_inventory.py
+#              ``_parse_scalar``) were re-classified bucket (a) during
+#              research and dropped. 3b128c3 is the pre-amendment tip
+#              — the pyyaml-reachability seal commit immediately
+#              before amendment #21's code commit.
+BASELINE = "3b128c3"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -141,6 +163,11 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
         # that amendment's code commit).
         "docs/rebuild/plans/",
         "data/",
+        # Amendment #21 (S3 silent-except bundle) additions — the
+        # other two source-editing partners in this multi-component
+        # amendment.
+        "scope-of-work/",
+        "telegram-interface/",
     )
 
     offending = []

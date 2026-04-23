@@ -62,8 +62,17 @@ def active_seconds_elapsed(
             started = datetime.fromisoformat(proj.active_started_at)
             current = now or datetime.now(tz=started.tzinfo)
             elapsed += max(0, int((current - started).total_seconds()))
-        except Exception:
-            pass
+        except Exception as exc:
+            # Amendment #21 S3 silent-except bundle: surface the
+            # previously silent parse failure via OTel while preserving
+            # the "return stale elapsed" fallback (callers see an int,
+            # the span communicates the data-integrity signal).
+            from .observability import emit_projection_parse_failure
+            emit_projection_parse_failure(
+                scope_id=proj.scope_id,
+                field="active_started_at",
+                exception_class=type(exc).__name__,
+            )
     return elapsed
 
 

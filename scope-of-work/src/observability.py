@@ -143,6 +143,42 @@ def fail_span(span: Any | None, reason: str) -> None:
     span.set_status(Status(StatusCode.ERROR, reason))
 
 
+def emit_projection_parse_failure(
+    *,
+    scope_id: str,
+    field: str,
+    exception_class: str,
+) -> None:
+    """Fire-and-forget span for a projection-parse failure.
+
+    Covers the two AC:none silent-except sites cleared by amendment #21
+    (S3 silent-except bundle) — `triggers.py:active_seconds_elapsed`'s
+    ISO-timestamp parse and `projection.py:apply_event`'s
+    StateTransitioned time-accounting parse. The `field` attribute
+    distinguishes the two call sites so an operator can filter by
+    site when triaging projection-data-integrity issues.
+
+    No caller-visible return; the callers keep their existing return
+    values (stale-but-safe elapsed / None for apply_event), preserving
+    their public contracts. The span IS the observable surface that
+    the former silent `pass` branches lacked.
+    """
+    tracer = get_tracer()
+    if tracer is None:
+        return
+    span = tracer.start_span(
+        "pos.scope.projection_parse_failed",
+        kind=SpanKind.INTERNAL,
+        attributes={
+            "pos.scope.id": scope_id,
+            "pos.scope.projection_field": field,
+            "exception.class": exception_class,
+        },
+    )
+    span.set_status(Status(StatusCode.ERROR, "projection parse failed"))
+    span.end()
+
+
 def span_ids(span: Any | None) -> tuple[str | None, str | None]:
     """Return (trace_id_hex, span_id_hex) for a given span, if available."""
     if span is None or not _OTEL_AVAILABLE:

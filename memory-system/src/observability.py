@@ -230,13 +230,33 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
         return []
     rows: list[dict[str, Any]] = []
     with path.open("rt", encoding="utf-8") as fh:
-        for line in fh:
-            line = line.strip()
+        for line_no, raw in enumerate(fh, start=1):
+            line = raw.strip()
             if not line:
                 continue
             try:
                 rows.append(json.loads(line))
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as exc:
+                # Amendment #21 S3 silent-except bundle: surface the
+                # previously silent malformed-line drop via the module's
+                # own durable audit channel (the D7 contract is JSONL-
+                # only — no OTel SDK dep — so `record_audit` is the
+                # right surface here). The `continue` remains; a
+                # malformed line cannot be recovered at read time.
+                record_audit(
+                    operation="observability.jsonl_line_malformed",
+                    actor="memory-system",
+                    rationale=(
+                        f"JSONDecodeError parsing line {line_no} of "
+                        f"{path.name}"
+                    ),
+                    extras={
+                        "path": str(path),
+                        "line_no": line_no,
+                        "exception_class": type(exc).__name__,
+                        "message": str(exc),
+                    },
+                )
                 continue
     return rows
 

@@ -239,7 +239,39 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # from prior amendments). 24d54cb is the pre-amendment tip — the
 # `docs(future-ideas)` commit codifying the amendment-dispatch-speedups
 # + 529-recovery CDCs immediately before amendment #20's code commit.
-BASELINE = "24d54cb"
+# Advanced to 3b128c3 when the S3 silent-except bundle amendment (#21)
+# opened. The 2026-04-22 audit + classifier surfaced six remaining
+# `except ...: pass | continue` silent branches with AC:none; research
+# re-verified per-site and re-classified sites 4 + 5 (`first_run_
+# inventory.py::_parse_scalar`) as bucket (a) duck-typed numeric parse-
+# dispatch (dropped — the exception IS the branch signal and the
+# return TYPE is the observable surface). The former Site 3 in
+# `telegram-interface/src/availability.py::stop_background()` stayed
+# dropped per the re-dispatch note (bucket b teardown). The four
+# remaining fixes land in `scope-of-work/src/triggers.py` (Site 1 —
+# `active_seconds_elapsed` parse), `scope-of-work/src/projection.py`
+# (Site 2 — `apply_event` StateTransitioned parse),
+# `telegram-interface/src/allowlist.py` (Site 3 — `identities()`
+# malformed-record skip), and `memory-system/src/observability.py`
+# (Site 6 — `_read_jsonl` malformed-line skip). Per ODD §8 rule 8 +
+# audit-triage-by-severity CDC (bucket d), each catch gains an
+# observable-surface emitter: new `emit_projection_parse_failure` in
+# scope-of-work/src/observability.py (sites 1 + 2), new
+# `allowlist_record_malformed` in telegram-interface/src/
+# observability.py (site 3), re-used `record_audit(...)` with
+# `operation="observability.jsonl_line_malformed"` in memory-system/
+# src/observability.py (site 6). Shutdown-catch CDC does NOT apply
+# (none of the 4 are teardown methods). Multi-component amendment
+# (scope-of-work, telegram-interface, memory-system, hands-off-
+# lifecycle). Hands-off-lifecycle's counterpart is this BASELINE bump
+# + SEAL_COMMIT sidecar refresh + amendment-cycle narrative in seals/
+# SEAL_COMMIT.true-first-run (zero functional change) + admission of
+# `scope-of-work` to the H19 allowed top-level set below (new amended
+# unsealed component in this amendment window; `telegram-interface`
+# and `memory-system` already present from prior amendments).
+# 3b128c3 is the pre-amendment tip — the pyyaml-reachability seal
+# commit immediately before amendment #21's code commit.
+BASELINE = "3b128c3"
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
 
@@ -364,6 +396,20 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     + SEAL_COMMIT sidecar refresh + amendment-cycle narrative
         #     in seals/SEAL_COMMIT.true-first-run.
         "self-correction",
+        # Amendment #21 (S3 silent-except bundle):
+        #   - `scope-of-work` admitted as a new amended (unsealed)
+        #     component in this amendment window. Site 1 lands under
+        #     scope-of-work/src/triggers.py + scope-of-work/src/
+        #     observability.py (new emitter); Site 2 lands under
+        #     scope-of-work/src/projection.py. Site 3 lands under
+        #     telegram-interface/src/ (already admitted from
+        #     amendment #9). Site 6 lands under memory-system/src/
+        #     observability.py (already admitted from amendment #8).
+        #     Sites 4 + 5 were re-classified bucket (a) during
+        #     research and dropped. scope-of-work is NOT sealed (no
+        #     SEAL_COMMIT sidecar, no per-component seal-diff test);
+        #     its own diff-scope check rides on this H19 admission.
+        "scope-of-work",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

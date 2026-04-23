@@ -163,6 +163,33 @@ def allowlist_modified(
         )
 
 
+def allowlist_record_malformed(
+    *, user_id: str, exception_class: str, missing_key: str | None
+) -> None:
+    """Fire-and-forget span for a malformed ``pos_identities`` record.
+
+    Covers the AC:none silent-except site cleared by amendment #21
+    (S3 silent-except bundle) in ``AccessFile.identities()``. A record
+    that is missing a required key (``user_id`` / ``display_name`` /
+    ``authority_class`` / ``added_at``) or is not a mapping was
+    previously skipped silently — an operator could not distinguish
+    "record corrupt" from "user unknown" on a ``lookup(...)`` miss.
+    The span now carries the offending record's id and the missing
+    key (when available from the ``KeyError``).
+    """
+    with _TRACER.start_as_current_span(
+        "pos.telegram.allowlist_record_malformed"
+    ) as span:
+        _set(
+            span,
+            {
+                "telegram.user_id": user_id,
+                "exception.class": exception_class,
+                "telegram.allowlist.malformed_key": missing_key or "<unknown>",
+            },
+        )
+
+
 def confirmation_flow(
     *, action: str, identity: str, outcome: str, elapsed_s: float | None = None
 ) -> None:

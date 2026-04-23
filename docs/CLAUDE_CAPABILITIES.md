@@ -267,7 +267,126 @@ _Sources (2.x): `https://code.claude.com/docs/en/agent-sdk/overview` — fetched
 
 ## 3. Anthropic API (Messages + adjacent)
 
-<!-- PLACEHOLDER -->
+The layer Claude Code and the Agent SDK compose on top of. pos-v2 rarely touches the raw API directly today (memory-system uses Claude-via-Max through `claude -p`), but several pos-v2 primitives are cleaner when authored against the API directly.
+
+### 3.1 Messages API (`POST /v1/messages`)
+
+**What it does.** Stateless request/response to Claude. Required params: `model`, `max_tokens`, `messages[]` (alternating user/assistant). Optional: `system`, `tools`, `tool_choice`, `temperature`, `top_p`, `top_k`, `stream`, `stop_sequences`, `thinking`, `cache_control`, `metadata`.
+
+Message content can be a plain string or an array of blocks. Block types: `text`, `image`, `document`, `tool_use`, `tool_result`, `thinking`. Responses contain a `content` array (same block types plus model-generated `tool_use` / `thinking` / `text`), a `stop_reason` (`end_turn` / `tool_use` / `max_tokens` / `stop_sequence`), and a `usage` object (`input_tokens`, `output_tokens`, `cache_creation_input_tokens`, `cache_read_input_tokens`).
+
+Tool loop is caller's responsibility: if `stop_reason == "tool_use"`, execute each tool_use block, append a `tool_result` user message, call `/v1/messages` again. Repeat until `end_turn`.
+
+**Composes with pos-v2.**
+- `memory-system`'s extraction path could migrate from `claude -p` subprocess to direct Messages API for lower latency and finer-grained error recovery. Amendment #8's `ClaudePrintLLMClient` abstraction is the composition seam — add a sibling `ClaudeAPIClient` that the subscription-vs-API routing decision feeds.
+- `self-correction-loop` benefits from direct API access when the loop needs to inspect `stop_reason` and `usage` for pacing decisions (e.g. back off when output_tokens is spiking).
+- `objective-tracker` and `foundation-audit` both benefit from structured-output features — the `output_config` JSON schema param forces validated JSON without the full Claude Code tool loop.
+
+**Pitfalls.**
+- Roles must alternate strictly (user, assistant, user, …). A trailing assistant message errors.
+- `max_tokens` is not the total turn budget; it's the completion cap. Large max_tokens + streaming can bill heavily even if the response stops early.
+- `stop_reason == "max_tokens"` is silent failure from a product standpoint — the model did not finish its thought. Surface it as an error, not a success.
+- Model IDs drift: `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` are current as of 2026-04-23; older model IDs eventually retire.
+
+**End-user configuration surface.**
+- Auth: `x-api-key` header, `ANTHROPIC_API_KEY` env var, or provider-specific auth (Bedrock/Vertex/Foundry).
+- SDK shortcuts: `anthropic` (Python), `@anthropic-ai/sdk` (TS), `anthropic-sdk` (Go, Java, others).
+- Beta headers via `anthropic-beta` for features like interleaved thinking, files, some batch variants.
+
+### 3.2 Tool use
+
+Tool definitions are passed in `tools[]`; each is `{name, description, input_schema (JSON Schema)}`. Model emits `tool_use` blocks; caller runs the tool, returns `tool_result` block; loop until `end_turn`. Tool choice modes: `{"type": "auto"}`, `{"type": "any"}`, `{"type": "none"}`, `{"type": "tool", "name": "..."}` — but `any` and named choice are incompatible with extended thinking.
+
+**Composes with pos-v2.** The Agent SDK wraps this loop, so most pos-v2 code that needs tool use goes through the SDK (§2) rather than touching tool use directly. Raw API tool use is preferable when the toolset is custom or small and the pos-v2 Python process wants full control over the loop — e.g. a scope that needs exactly two tools and no filesystem access.
+
+### 3.3 Extended thinking
+
+**What it does.** `thinking: {type: "enabled", budget_tokens: N, display: "summarized"|"omitted"}` adds a `thinking` content block to the response containing Claude's internal reasoning. Opus 4.7+ requires **adaptive thinking** via the `effort` parameter instead of manual `budget_tokens` (manual mode returns 400 on Opus 4.7+).
+
+| Model | Thinking support |
+|-------|------------------|
+| Opus 4.7 | Adaptive only; manual → 400 |
+| Opus 4.6 | Adaptive recommended; manual deprecated |
+| Sonnet 4.6 | Manual + interleaved (deprecated) |
+| Sonnet 3.7 | Full manual |
+
+**Composes with pos-v2.**
+- `self-correction-loop` and `foundation-audit` are reasoning-heavy scopes that benefit from extended thinking / adaptive thinking. The `effort: "high"` or `"xhigh"` knob on Opus 4.7 replaces the old manual budget without re-tuning.
+- `primary-persona-loader` + ODD-authoring interactions benefit from adaptive thinking during plan drafting (the persona needs to consider constraints + acceptance fully).
+
+**Pitfalls.**
+- **Tool loops with thinking must pass thinking blocks back** on subsequent calls — dropping them corrupts the reasoning chain. `signature` field is encrypted proof of the block; the API validates it.
+- `tool_choice: any` and explicit tool selection are **not compatible** with extended thinking — use `auto` or `none`.
+- Thinking parameter changes between turns **invalidate message cache breakpoints** (system cache survives).
+- `display: "summarized"` (default on Claude 4) returns a summary but **you still pay for full thinking tokens**. `"omitted"` streams faster but same cost.
+- Interleaved thinking (think between tool calls): Mythos Preview automatic, Opus 4.6/4.7 via adaptive thinking, Sonnet 4.6 via beta header `interleaved-thinking-2025-05-14` (deprecated).
+
+**End-user configuration surface.** `thinking.type`, `thinking.budget_tokens` (pre-Opus-4.7), `thinking.display`, `effort` param (Opus 4.7+), beta headers.
+
+### 3.4 Prompt caching
+
+**What it does.** Marking content blocks with `cache_control: {type: "ephemeral"}` lets Anthropic cache the prefix and charge **0.1x base rate** (90% off) on cache hits. Writes cost 1.25x (5m TTL) or 2x (1h TTL). Up to 4 explicit breakpoints; automatic caching (top-level `cache_control`) moves the breakpoint forward for multi-turn conversations.
+
+**Cacheable:** tool definitions, system, messages, images, documents, tool_use/tool_result blocks. **Not cacheable to mark:** thinking blocks, empty text, citation sub-blocks (but thinking blocks do get cached alongside other content).
+
+**Minimum prompt length:** 4096 tokens (Opus 4.5/4.6/4.7, Haiku 4.5), 2048 tokens (Sonnet 4.6, Haiku 3.5), 1024 tokens (older). Below minimum, cache fields return 0 silently.
+
+**Composes with pos-v2.**
+- `memory-system`, `self-correction-loop`, and any pos-v2 component running repeated Claude calls with large stable prefixes (system prompts, tool definitions, canonical docs) should mark them `cache_control` — 90% cost reduction on hits.
+- `cost-governance` can surface cache hit/miss ratio via the usage fields (`cache_read_input_tokens` / `cache_creation_input_tokens`) as a first-class metric. Amendment-level regressions that silently drop cache hits would show up immediately.
+- ODD methodology docs + CLAUDE.md itself become a natural cache breakpoint when the primary persona is invoked — same content every turn.
+
+**Pitfalls.**
+- **Timestamps in cached blocks** = cache never hits. Mark breakpoint on the last *stable* block; leave volatile content uncached.
+- 20-block lookback limit: in growing conversations, add a second breakpoint when the moving breakpoint drifts past 20 blocks from the last write.
+- Invalidation cascades: changing tools → full cache gone. Changing system (web search on/off, citations on/off) → system+messages gone. Changing tool_choice → messages gone. Changing speed setting → system+messages gone. Adding non-tool user text after extended thinking → all prior thinking blocks stripped.
+- Longer TTL must come before shorter in the same request.
+
+**End-user configuration surface.** `cache_control: {type: "ephemeral", ttl: "5m"|"1h"}` on blocks; automatic top-level `cache_control`.
+
+### 3.5 Message Batches API
+
+**What it does.** Asynchronous bulk request processing. **50% cost reduction** vs real-time, most batches finish in <1 hour. Poll status, retrieve all results at once. Up to tens of thousands of requests per batch.
+
+**Composes with pos-v2.**
+- `memory-system`'s bulk entity extraction over historical transcripts is a natural batch fit — no latency SLA, 50% cheaper.
+- `foundation-audit` running against every component's artefact set is another batch candidate when the audit is not interactive.
+- Scheduled daily refreshes (Idea 1 Step 4 — this file's refresh job) fit the batch pattern: no user waiting, cheaper.
+
+**Pitfalls.**
+- **Not ZDR-eligible** (Zero Data Retention). Batched data is retained per standard policy. Workspaces with ZDR requirements cannot use batches.
+- No streaming; no partial results during processing.
+- Failed requests inside a batch are returned in the result set, not raised synchronously — consumer must inspect per-request status.
+
+**End-user configuration surface.** `POST /v1/messages/batches` to create, `GET /v1/messages/batches/{id}` to poll, `GET /v1/messages/batches/{id}/results` to retrieve.
+
+### 3.6 Citations
+
+**What it does.** When documents are passed in user content with `citations: {enabled: true}`, Claude returns responses with auto-attributed `citation` sub-blocks pointing at source document spans. Supported document types: PDF (via Files API), plain text, custom JSON chunks.
+
+**Composes with pos-v2.**
+- Any future research-shaped plugin (legal, knowledge-management, long-form editorial per Idea 3) benefits — auto-citations turn Claude outputs into verifiable artefacts without post-hoc retrieval.
+- `memory-system` interplay: citations source documents from the request, not from memory. For memory-backed citations, the retrieval layer must surface source-citation-ready chunks.
+
+**Pitfalls.** Citations invalidate some cache paths. Not all models support citations; check current model docs before relying on them.
+
+_Volatile — likely to drift within weeks._
+
+### 3.7 Files API
+
+Upload files once, reference by ID across many requests. Supports PDFs, images, large text documents. Composes with citations (upload document → reference by file_id → get citations back). Not all providers (Bedrock/Vertex) mirror the Files API.
+
+_Unclear from available sources as of 2026-04-23 whether pos-v2's current usage patterns need Files API; flagged for Idea 1 Step 4 refresh._
+
+### 3.8 Memory API
+
+Anthropic's server-side memory tool (distinct from `memory-system` the pos-v2 component) — a model-managed key/value store that the API can read and write across conversations. Offered as a client-tool type in some configurations.
+
+**Composes with pos-v2.** Potential shortcut for simple workspace memory needs, but pos-v2's `memory-system` is substantially richer (graphiti-based knowledge graph, entity+relationship extraction, deep personalisation per Idea 4). The Anthropic Memory API is a thin alternative; the pos-v2 memory-system is the durable answer for this workspace.
+
+_Unclear from available sources as of 2026-04-23; flagged for Idea 1 Step 4 refresh._
+
+_Sources (3.x): `https://platform.claude.com/docs/en/api/messages`, `https://platform.claude.com/docs/en/docs/build-with-claude/prompt-caching`, `https://platform.claude.com/docs/en/docs/build-with-claude/batch-processing`, `https://platform.claude.com/docs/en/docs/build-with-claude/extended-thinking` — all fetched 2026-04-23._
 
 ---
 

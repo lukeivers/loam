@@ -505,6 +505,8 @@ the first reseal amendment.
 
 Captured 2026-04-22.
 
+**Status:** TABLED 2026-04-23. Awaiting owner rulings on three open questions (below) and the completion of prerequisite amendments (#26 teardown retrofit + full loam-rename sequence + Dev/SDLC plugin per Idea 3) before this idea becomes actionable again.
+
 loam launches publicly as an open-source project once the core is
 release-ready and the Dev/SDLC plugin (Idea 3) ships. The research
 doc covers positioning, release-readiness checklist, repo hygiene,
@@ -542,7 +544,7 @@ Open rulings pending from Luke:
    `loamharness/loam` (product) vs `iverscorp/loam` (corporate)?
    Research recommends product-brand.
 
-Full plan at `.scratch/claude-output/loam-open-source-launch-research.md`
+Full plan at `docs/rebuild/plans/research/loam-open-source-launch-research.md`
 for timelines, repo hygiene detail, competitive positioning, content
 marketing, engagement, success criteria, and the 13-section full plan.
 

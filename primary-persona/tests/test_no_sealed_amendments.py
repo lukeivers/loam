@@ -34,7 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              load-gate.md. First time the primary-persona component
 #              carries a seal-diff test + SEAL_COMMIT sidecar; BASELINE
 #              pins at the pre-amendment tip (the #31 seal commit).
-BASELINE = "3844f2f92f44a244ae31b44cd969ecc6fbf31430"
+BASELINE = "8e7c558"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

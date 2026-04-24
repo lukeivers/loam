@@ -10,6 +10,10 @@ import pytest
 
 # Make `src` importable as `src.*` and `primary_persona.*`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Make test-local helpers importable (e.g. ``_helpers_d7``). Non-test
+# helper modules live alongside tests but pytest doesn't add the tests/
+# directory to sys.path automatically.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # Install an in-memory OTel exporter at the process level BEFORE any
 # tracer is created. Once a tracer is obtained, the provider cannot be

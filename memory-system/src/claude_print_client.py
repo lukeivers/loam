@@ -83,9 +83,23 @@ DEFAULT_MODEL = "claude-haiku-4-5"
 # runtime failure later shows `claude -p` needs another var, add it
 # together with a concrete AC extension naming the failure observed
 # (amendment #11 audit-closure §F5 ruling).
+#
+# ``USER`` admitted by amendment #30 (memory-system-env-scrubber-user):
+# macOS launchd's gui-domain session injects USER into agent-spawned
+# processes, and ``claude -p``'s OAuth keychain lookup requires USER
+# to match the real login name. Without USER in the child env the
+# CLI emits "Not logged in · Please run /login" even on an
+# authenticated host. Research §Q1 empirical bisection
+# (docs/rebuild/plans/research/memory-system-env-scrubber-research.md)
+# pins the minimum allowlist at PATH + USER; HOME retains membership
+# for future ``~/.claude/*`` config reads per §Q3 row 2. Every other
+# candidate surveyed (LOGNAME, TMPDIR, SHELL, LANG,
+# __CF_USER_TEXT_ENCODING, …) is ruled OUT with evidence and must
+# stay OUT under the §2.5 code-for-cases-no-objective-names rule.
 _ENV_ALLOWED_VARS = (
     "PATH",
     "HOME",
+    "USER",
 )
 
 # Markers (substring match, case-insensitive) that the probe subprocess

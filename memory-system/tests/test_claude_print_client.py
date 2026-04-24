@@ -125,12 +125,27 @@ def test_AC2_subprocess_argv_and_env_scrubbed(
 ) -> None:
     """Client spawns ``claude -p --no-session-persistence --output-format
     json --model <model> "<prompt>"``; env kwarg excludes
-    ANTHROPIC_API_KEY / OPENAI_API_KEY even when parent has them set."""
+    ANTHROPIC_API_KEY / OPENAI_API_KEY even when parent has them set.
+
+    Amendment #30 extension (AC-i,
+    docs/rebuild/plans/amendment-30-memory-system-env-scrubber-user.md):
+    positive-assert that USER is preserved from the parent env into the
+    scrubbed child env. Closes the USER-missing defect that shipped
+    through amendments #8 and #11 — the pre-amendment AC2 test asserted
+    API-key absence and PATH presence but never positive-presence of
+    USER, so the silent drop of USER from the allowlist was invisible
+    to this test by construction.
+    """
     from src.claude_print_client import ClaudePrintLLMClient
 
     # Seed the parent env with keys that MUST NOT leak into the child.
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-parent-should-never-reach-child")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-another-leak-candidate")
+    # Amendment #30 AC-i: USER must survive the scrubbing pass. Use a
+    # deliberately distinctive controlled-value so the assertion proves
+    # the exact parent→child propagation, not a coincidental match with
+    # whatever the CI runner's real USER happens to be.
+    monkeypatch.setenv("USER", "amendment30-login-user")
 
     exec_mock = _make_exec_mock(_envelope('{"kind":"x","count":1}'))
     with patch("src.claude_print_client.shutil.which", return_value="/bin/claude"):
@@ -166,6 +181,60 @@ def test_AC2_subprocess_argv_and_env_scrubbed(
     assert "ANTHROPIC_API_KEY" not in env
     assert "OPENAI_API_KEY" not in env
     assert "PATH" in env  # child needs this to resolve claude-adjacent tools
+    # Amendment #30 AC-i: USER preserved with the parent-env value.
+    assert env["USER"] == "amendment30-login-user"
+
+
+# ---- AC-ii (amendment #30) — pre-spawn structural check on child env -
+
+
+def test_AC30_child_env_contains_login_user_at_spawn_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Amendment #30 AC-ii (pre-spawn structural check,
+    docs/rebuild/plans/amendment-30-memory-system-env-scrubber-user.md).
+
+    At the moment memory-system is about to spawn a ``claude -p``
+    subprocess, the dict that will be handed to the OS as the child's
+    env contains ``USER`` bound to the login user's value — determined
+    at construction time from the parent process's env.
+
+    The scrubbed child-env dict is captured directly from the
+    constructed ``ClaudePrintLLMClient._child_env`` attribute; no real
+    subprocess ever executes. The invariant is structural on the
+    scrubber's output, not a behavioural observation of a real
+    ``claude`` process. Future regression of the USER-missing defect
+    surfaces as a failing deterministic dict-invariant assertion, not
+    as a runtime "Not logged in · Please run /login" message in
+    production.
+    """
+    from src.claude_print_client import ClaudePrintLLMClient
+
+    # Controlled login-user value the parent env carries at construction
+    # time. The scrubber must propagate it verbatim into the child env.
+    monkeypatch.setenv("USER", "amendment30-login-user-spawn-check")
+
+    with patch("src.claude_print_client.shutil.which", return_value="/bin/claude"):
+        with patch(
+            "src.claude_print_client.asyncio.create_subprocess_exec",
+            new=_make_exec_mock(_envelope("ready")),
+        ):
+            # skip_auth_probe=True so the test's pre-spawn inspection
+            # runs against the ``_child_env`` dict populated in
+            # ``__init__`` without depending on probe-subprocess
+            # completion semantics.
+            client = ClaudePrintLLMClient(skip_auth_probe=True)
+
+    # Pre-spawn structural inspection: the dict that ``_generate_response``
+    # will pass as ``env=self._child_env`` already exists on the client
+    # after construction. No subprocess is ever actually executed —
+    # AC-ii's invariant is on the scrubber's output dict.
+    assert "USER" in client._child_env, (
+        "pre-spawn child env is missing USER; amendment #30 AC-ii: the "
+        "scrubber must preserve USER from the parent env so the "
+        "claude CLI's OAuth keychain lookup succeeds"
+    )
+    assert client._child_env["USER"] == "amendment30-login-user-spawn-check"
 
 
 # ---- AC3 — JSON parsing into expected dict -------------------------

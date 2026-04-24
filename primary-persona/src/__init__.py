@@ -41,6 +41,19 @@ from .loader import (
 )
 from .monitor import AwarenessBlock, BackgroundWorkMonitor, AwarenessCategory
 from .compaction import CompactionSurvivor, SURVIVAL_LIST
+from .context_composer import (
+    ADDITIONAL_CONTEXT_CAP,
+    AdditionalContextCapExceededError,
+    ComposedContextPayload,
+    ContributorRegistrationError,
+    CorpusGateState,
+    RegisteredContributor,
+    SessionPayload,
+    SessionPayloadMissingError,
+    TriggerKind,
+    TurnPayload,
+)
+from .session_start_gate import compose_session_fields
 from .creation_triggers import CreationTrigger, CreationTriggerDetector, TriggerSignal
 from .authoring import (
     AuthoringOutcome,
@@ -57,6 +70,8 @@ from .introduction import (
 from .retirement import retire_persona, RetirementReason
 
 __all__ = [
+    "ADDITIONAL_CONTEXT_CAP",
+    "AdditionalContextCapExceededError",
     "AuthorityBoundary",
     "AuthoringOutcome",
     "AuthoringPipeline",
@@ -65,6 +80,9 @@ __all__ = [
     "AwarenessCategory",
     "BackgroundWorkMonitor",
     "CompactionSurvivor",
+    "ComposedContextPayload",
+    "ContributorRegistrationError",
+    "CorpusGateState",
     "CreationTrigger",
     "CreationTriggerDetector",
     "EscalationTaxonomy",
@@ -80,13 +98,19 @@ __all__ = [
     "PersonaState",
     "PersonaTier",
     "PersonaValidationError",
+    "RegisteredContributor",
     "Responsibilities",
     "RetirementReason",
     "SURVIVAL_LIST",
     "SelfReviewVerdict",
+    "SessionPayload",
+    "SessionPayloadMissingError",
     "SeverityVocabulary",
     "TierAction",
+    "TriggerKind",
     "TriggerSignal",
+    "TurnPayload",
+    "compose_session_fields",
     "load_contract",
     "retire_persona",
 ]

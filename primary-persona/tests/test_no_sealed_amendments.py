@@ -1,0 +1,111 @@
+"""B20 / B23 — primary-persona seal-diff test (amendment #32).
+
+Primary-persona historically shipped without a ``SEAL_COMMIT`` sidecar
+surface; amendment #32 (session-start-context-load-gate, D8) lands the
+surface alongside the first behaviour change to establish sealed-
+component discipline on the primary-persona layer. Mirrors the
+``memory-system/tests/test_no_sealed_amendments.py`` pattern (amendment
+#8 was the matching introduction there).
+
+Seal-test pattern (B23): BASELINE names the pre-amendment tip;
+SEAL_COMMIT is read from the sidecar sibling file so the diff runs
+``BASELINE..SEAL_COMMIT`` — NOT ``..HEAD``. The HEAD-based variant was
+the ``f94d602`` defect patched across the other sealed components; it
+must not be reintroduced.
+
+BASELINE advances when a new amendment opens this sealed surface.
+Initial value ``3844f2f`` — the pre-amendment tip (the seal commit for
+amendment #31 / workspace-bootstrap-plist-path) immediately before
+amendment #32's first touch of the primary-persona sealed surface.
+"""
+
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+# BASELINE history:
+#   - 3844f2f  at amendment #32 (session-start-context-load-gate / D8).
+#              Primary-persona layer lands the ``ComposedContextPayload``
+#              shared composer + session-level corpus-load gate per
+#              docs/rebuild/plans/amendment-32-session-start-context-
+#              load-gate.md. First time the primary-persona component
+#              carries a seal-diff test + SEAL_COMMIT sidecar; BASELINE
+#              pins at the pre-amendment tip (the #31 seal commit).
+BASELINE = "3844f2f92f44a244ae31b44cd969ecc6fbf31430"
+
+SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
+
+
+def _seal_commit() -> str:
+    """Resolve SEAL_COMMIT from the sidecar file, else HEAD.
+
+    Once sealed, tests/SEAL_COMMIT holds the exact SHA and the diff
+    runs against that — the HEAD defect cannot recur.
+    """
+    if SEAL_COMMIT_PATH.exists():
+        txt = SEAL_COMMIT_PATH.read_text().strip()
+        if txt and txt != "HEAD":
+            return txt
+    return "HEAD"
+
+
+def test_B23_seal_commit_pinning_pattern() -> None:
+    """The test file exposes SEAL_COMMIT_PATH and names BASELINE; the
+    diff call routes through _seal_commit() (not a hardcoded HEAD)."""
+    source = Path(__file__).read_text()
+    assert "BASELINE = " in source
+    assert "SEAL_COMMIT_PATH" in source
+    assert "{BASELINE}..{seal}" in source, (
+        "the diff call must route through _seal_commit()"
+    )
+
+
+def test_D8_S_only_primary_persona_surfaces_changed() -> None:
+    """``git diff --name-only BASELINE..SEAL_COMMIT`` produces only
+    paths under the allowed amendment surfaces.
+
+    Amendment #32 (session-start-context-load-gate / D8) targets
+    ``primary-persona/`` (primary surface — the new
+    ``ComposedContextPayload`` composer + session-level gate + AC
+    tests + sidecar surface) plus the amendment's own plan / research
+    artefacts under ``docs/rebuild/plans/``. Universal paths
+    (CLAUDE.md, docs/odd-*.md, docs/rebuild/FUTURE_IDEAS.md) are
+    admitted per amendment #22 ruling #3.
+    """
+    seal = _seal_commit()
+    out = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{BASELINE}..{seal}"],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+    changed = [ln for ln in out.splitlines() if ln.strip()]
+
+    allowed_prefixes = (
+        "primary-persona/",
+        # plan-before-code CDC paper trail: this amendment's plan +
+        # research + manifest live under docs/rebuild/plans/.
+        "docs/rebuild/plans/",
+    )
+    # Universal-file admissions per amendment #22 ruling #3. Written
+    # by ``pos-amend apply``; kept stable across amendments.
+    allowed_files: set[str] = {
+        "CLAUDE.md",
+        "docs/odd-in-pos.md",
+        "docs/odd-methodology.md",
+        "docs/rebuild/FUTURE_IDEAS.md",
+    }
+
+    offending = []
+    for path in changed:
+        if any(path.startswith(p) for p in allowed_prefixes):
+            continue
+        if path in allowed_files:
+            continue
+        offending.append(path)
+    assert offending == [], (
+        f"Sealed-component paths modified: {offending}. "
+        "Halt-signal condition."
+    )

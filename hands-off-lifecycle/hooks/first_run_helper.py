@@ -902,6 +902,45 @@ def _probe_http(host: str, port: int, path: str, timeout_s: float) -> bool:
         return False
 
 
+def _probe_http_with_identity(
+    host: str,
+    port: int,
+    path: str,
+    timeout_s: float,
+    *,
+    expected_workspace_root: str,
+) -> bool:
+    """Return True iff the HTTP probe returns 200 AND the response
+    body's ``workspace_root`` field matches ``expected_workspace_root``.
+
+    Amendment #29 (AC29.5): the memory-sidecar's /health response
+    carries a ``workspace_root`` field (populated from the process's
+    ``POS_V2_WORKSPACE_ROOT`` env var, which the first-run scaffold
+    injects via the launchd plist's ``EnvironmentVariables`` dict).
+    The phase-4b probe verifies the responding sidecar's workspace
+    identity equals the dispatching workspace's own root; mismatch
+    or missing field is reported as not-healthy so the probe cannot
+    be satisfied by an orphan sidecar or another workspace's sidecar.
+    """
+    url = f"http://{host}:{port}{path}"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout_s) as resp:
+            if resp.status != 200:
+                return False
+            body = resp.read()
+    except (urllib.error.URLError, socket.error, TimeoutError):
+        return False
+    except Exception:  # pragma: no cover
+        return False
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    if not isinstance(payload, dict):
+        return False
+    return payload.get("workspace_root") == expected_workspace_root
+
+
 def _probe_unix_socket(socket_path: str, timeout_s: float) -> bool:
     resolved = Path(socket_path).expanduser()
     try:
@@ -923,10 +962,32 @@ def _probe_unix_socket(socket_path: str, timeout_s: float) -> bool:
         return False
 
 
-def _service_health(svc: dict[str, Any]) -> bool:
+def _service_health(
+    svc: dict[str, Any],
+    *,
+    expected_workspace_root: str | None = None,
+) -> bool:
+    """Probe a single service and return whether it is healthy.
+
+    Amendment #29 (AC29.5): when ``expected_workspace_root`` is
+    provided and the service is HTTP-probed, verify the response
+    body's ``workspace_root`` equals that value. The orchestrator's
+    unix-socket probe is unaffected — its workspace identity is
+    enforced by the socket path (workspace-local by construction)
+    rather than by a payload field, so the identity gate is narrowly
+    scoped to the HTTP path.
+    """
     health = svc.get("health") or {}
     kind = health.get("kind")
     if kind == "http":
+        if expected_workspace_root is not None:
+            return _probe_http_with_identity(
+                host=health.get("host", "127.0.0.1"),
+                port=int(health.get("port", 0)),
+                path=health.get("path", "/health"),
+                timeout_s=float(health.get("timeout_s", 2.0)),
+                expected_workspace_root=expected_workspace_root,
+            )
         return _probe_http(
             host=health.get("host", "127.0.0.1"),
             port=int(health.get("port", 0)),
@@ -946,14 +1007,25 @@ def _poll_services_healthy(
     *,
     timeout_s: float,
     poll_interval_s: float,
+    expected_workspace_root: str | None = None,
 ) -> tuple[bool, list[str]]:
     """Poll services until all healthy, up to ``timeout_s``.
+
+    Amendment #29 (AC29.5): ``expected_workspace_root`` is passed
+    through to ``_service_health`` so the HTTP probe verifies the
+    responding sidecar belongs to the probing workspace.
 
     Returns (all_healthy, pending_labels).
     """
     deadline = time.monotonic() + float(timeout_s)
     while True:
-        pending = [svc["label"] for svc in services if not _service_health(svc)]
+        pending = [
+            svc["label"]
+            for svc in services
+            if not _service_health(
+                svc, expected_workspace_root=expected_workspace_root
+            )
+        ]
         if not pending:
             return True, []
         if time.monotonic() >= deadline:
@@ -1435,6 +1507,12 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         services=services,
         timeout_s=60.0,  # < the 120s hook ceiling, room for self-retire below.
         poll_interval_s=0.5,
+        # Amendment #29 (AC29.5): identity-aware probe — only the
+        # dispatching workspace's own sidecar can satisfy phase-4b.
+        # An orphan sidecar, or another workspace's sidecar reached
+        # via port collision, carries a mismatched
+        # ``POS_V2_WORKSPACE_ROOT`` env and cannot complete the probe.
+        expected_workspace_root=str(pos_v2_root),
     )
     if not healthy:
         _emit_diag(

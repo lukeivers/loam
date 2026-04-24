@@ -40,6 +40,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
+import yaml
+
 from ..errors import BootstrapError
 from ..spec import BaseContribution, ContributionMetadata, Phase
 
@@ -311,6 +313,37 @@ def _which(binary: str) -> str | None:
     return None
 
 
+# ---- memory.yaml → plist EnvironmentVariables propagation (amendment #29)
+
+
+def _resolve_memory_host_port(memory_yaml_path: Path) -> tuple[str, int]:
+    """Return (host, port) from the workspace's ``memory.yaml``.
+
+    Amendment #29 AC29.2: the plist's ``EnvironmentVariables`` dict
+    must carry the workspace-local host + port so launchd starts the
+    memory-sidecar with ``GRAPHITI_SERVICE_PORT`` set to the value the
+    operator owns. The ``memory.yaml`` file is the source of truth
+    (same seam ``adapters/memory_system.py`` already reads for the
+    health-probe URL); this function is the read-back that wires the
+    value into plist rendering.
+
+    Fallback contract mirrors ``adapters/memory_system.py``'s own
+    config-read shape: absent keys fall to the starter-template
+    values, matching both the scaffolded ``_MEMORY_YAML`` defaults
+    and the sidecar's own ``service.py`` env-var defaults. This
+    matches the partial-recovery case where a user-edited
+    ``memory.yaml`` remnant (e.g. a comments-only leftover from a
+    crashed prior run) must survive the recovery per
+    ``test_AC6_scaffold_partial_recovery_writes_missing_and_keeps_existing``.
+    """
+    loaded = yaml.safe_load(memory_yaml_path.read_text()) or {}
+    if not isinstance(loaded, dict):
+        loaded = {}
+    host = str(loaded.get("host") or "127.0.0.1")
+    port = int(loaded.get("port") or 8765)
+    return host, port
+
+
 # ---- scaffold result -------------------------------------------------
 
 
@@ -451,12 +484,24 @@ def run_first_run_scaffold(
     # Install service-manager files. The workspace root + slug were
     # resolved at the top of this function (before any file write);
     # reuse them here.
+    #
+    # Amendment #29 (AC29.2 / AC29.3): resolve the per-workspace
+    # memory-sidecar host + port from the scaffolded ``memory.yaml``
+    # so the plist's ``EnvironmentVariables`` dict carries the
+    # workspace-local values rather than the sidecar's built-in
+    # defaults. The read-back path gives the starter-default on a
+    # fresh scaffold (``_MEMORY_YAML`` declares ``port: 8765``); it
+    # honours an operator-edited value on partial-recovery re-runs.
+    memory_host, memory_port = _resolve_memory_host_port(pos_root / "memory.yaml")
+
     service_runner = service_runner or ServiceManagerRunner(platform_label=plat)
     service_files = _install_service_manager_files(
         plat=plat,
         workspace_root=ws,
         slug=slug,
         override_dir=service_manager_dir_override,
+        memory_host=memory_host,
+        memory_port=memory_port,
     )
 
     bootstrapped: list[str] = []
@@ -503,7 +548,7 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
     <key>ThrottleInterval</key><integer>10</integer>
     <key>StandardOutPath</key><string>{workspace}/memory-system/data/graphiti-service.log</string>
     <key>StandardErrorPath</key><string>{workspace}/memory-system/data/graphiti-service.err.log</string>
-    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string></dict>
+    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>GRAPHITI_SERVICE_HOST</key><string>{memory_host}</string><key>GRAPHITI_SERVICE_PORT</key><string>{memory_port}</string><key>POS_V2_WORKSPACE_ROOT</key><string>{workspace}</string></dict>
 </dict>
 </plist>
 """,
@@ -538,6 +583,8 @@ def _install_service_manager_files(
     workspace_root: str,
     slug: str,
     override_dir: Path | None,
+    memory_host: str,
+    memory_port: int,
 ) -> list[tuple[str, Path]]:
     """Write launchd plist files into the macOS LaunchAgents dir.
 
@@ -545,6 +592,12 @@ def _install_service_manager_files(
     ``com.pos-v2.<slug>.<kind>``. The filename matches the label; the
     {label} placeholder in templates is substituted with the full
     label string.
+
+    Amendment #29 (AC29.2 / AC29.3): the memory-graphiti template's
+    ``EnvironmentVariables`` dict receives the per-workspace host +
+    port values so launchd hands them to the sidecar process at
+    service start. The orchestrator template does not carry memory
+    port placeholders; its ``.format(...)`` ignores the extra kwargs.
 
     Returns (label, absolute-path) pairs the caller can bootstrap.
     Amendment #10 (linux-removal) removed the systemd-user branch;
@@ -562,7 +615,14 @@ def _install_service_manager_files(
     for kind, tmpl in _LAUNCHD_TEMPLATES.items():
         label = service_label(kind, slug)
         path = dest_dir / f"{label}.plist"
-        path.write_text(tmpl.format(label=label, workspace=workspace_root))
+        path.write_text(
+            tmpl.format(
+                label=label,
+                workspace=workspace_root,
+                memory_host=memory_host,
+                memory_port=memory_port,
+            )
+        )
         path.chmod(0o644)
         out.append((label, path))
     return out

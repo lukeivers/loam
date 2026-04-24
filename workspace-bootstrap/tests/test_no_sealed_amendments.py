@@ -119,7 +119,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              c94e146 is the pre-amendment tip — amendment #16's
 #              seal commit (d12-chaos-durability-split-pytest)
 #              immediately before this amendment's code commit.
-BASELINE = "dd11677"
+BASELINE = "b0e3152"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

@@ -548,7 +548,7 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
     <key>ThrottleInterval</key><integer>10</integer>
     <key>StandardOutPath</key><string>{workspace}/memory-system/data/graphiti-service.log</string>
     <key>StandardErrorPath</key><string>{workspace}/memory-system/data/graphiti-service.err.log</string>
-    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>GRAPHITI_SERVICE_HOST</key><string>{memory_host}</string><key>GRAPHITI_SERVICE_PORT</key><string>{memory_port}</string><key>POS_V2_WORKSPACE_ROOT</key><string>{workspace}</string></dict>
+    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>GRAPHITI_SERVICE_HOST</key><string>{memory_host}</string><key>GRAPHITI_SERVICE_PORT</key><string>{memory_port}</string><key>POS_V2_WORKSPACE_ROOT</key><string>{workspace}</string><key>PATH</key><string>{path}</string></dict>
 </dict>
 </plist>
 """,
@@ -570,11 +570,38 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
     <key>ProcessType</key><string>Interactive</string>
     <key>StandardOutPath</key><string>{workspace}/orchestrator.out.log</string>
     <key>StandardErrorPath</key><string>{workspace}/orchestrator.err.log</string>
-    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string></dict>
+    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>PATH</key><string>{path}</string></dict>
 </dict>
 </plist>
 """,
 }
+
+
+# Amendment #31 (D5.1/D5.2/D5.3): launchd's default PATH
+# (``/usr/bin:/bin:/usr/sbin:/sbin``) does not resolve user-installed
+# binaries — notably ``claude`` under ``~/.local/bin``. The scaffold
+# emits a canonical PATH list into both plists' ``EnvironmentVariables``
+# dict so the spawned services can `shutil.which("claude")` at
+# construction. Single source of truth: both templates consume the same
+# helper output, so D5.2's parse-back equivalence is structural.
+#
+# Ordering follows research §7.1 flagged-default: user-local bins
+# first, Homebrew ARM path next, user-local Homebrew next, then the
+# launchd defaults. Host-adaptive resolution (reading the scaffold-
+# invoker's ``$PATH``) was rejected per amendment plan §7 inference 1
+# because the invoker's env is non-deterministic under the first-run
+# hook.
+def _launchd_path() -> str:
+    """Canonical PATH emitted into launchd plist EnvironmentVariables."""
+    return ":".join([
+        str(Path.home() / ".local" / "bin"),
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+        "/usr/bin",
+        "/bin",
+        "/usr/sbin",
+        "/sbin",
+    ])
 
 
 def _install_service_manager_files(
@@ -621,6 +648,7 @@ def _install_service_manager_files(
                 workspace=workspace_root,
                 memory_host=memory_host,
                 memory_port=memory_port,
+                path=_launchd_path(),
             )
         )
         path.chmod(0o644)

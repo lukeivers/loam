@@ -119,7 +119,23 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              c94e146 is the pre-amendment tip — amendment #16's
 #              seal commit (d12-chaos-durability-split-pytest)
 #              immediately before this amendment's code commit.
-BASELINE = "b0e3152"
+#   - 795768c  when the workspace-bootstrap-plist-path amendment (#31)
+#              opened. Fresh-clone first-run's scaffolded launchd
+#              plists now emit a canonical PATH in their
+#              EnvironmentVariables so the memory-graphiti service's
+#              shutil.which("claude") at construction resolves the
+#              user-installed `claude` binary under ~/.local/bin; the
+#              orchestrator plist receives the same PATH via a shared
+#              helper so the latent same-class hazard on the
+#              orchestrator surface is closed by construction. Single-
+#              component amendment on the `workspace-bootstrap`
+#              surface (hands-off-lifecycle did NOT join the manifest
+#              — the D5.1 real-launchctl seal test lives in
+#              workspace-bootstrap/tests/ directly). 795768c is the
+#              pre-amendment tip — amendment #30's seal commit
+#              (chore(seals): memory-system-env-scrubber-user seal)
+#              immediately before this amendment's code commit.
+BASELINE = "795768cd87e7e923e976c9e2c28cce1b48c4c3d4"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

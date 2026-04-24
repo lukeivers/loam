@@ -1358,3 +1358,113 @@
 # state-file routing is now closed by this amendment; the
 # slug-collision hazard in launchd labels remains open for
 # its own future cycle.
+
+# Amendment #29 — per-workspace memory-sidecar port + workspace-identity health probe
+#
+# 2026-04-24. Closes the second workspace-identity sibling in the
+# memory-sidecar surface: two pos-v2 workspaces on one host could
+# not run their memory sidecars concurrently because both bound
+# the hardcoded TCP port 127.0.0.1:8765 and the second-booted
+# sidecar crashloops on `[Errno 48] address already in use`. The
+# third sibling (workspace-identity at the /health probe layer)
+# was folded in as AC29.5 per owner ruling D6 (2026-04-24): the
+# probe had no way to confirm that a 200 response on the probed
+# port actually came from *this* workspace's sidecar as opposed
+# to an orphan or another workspace's.
+#
+# Re-extension of amendment #6's AC6 per ODD §4 (precedent set by
+# amendment #28 which closed the state-file-routing sibling of
+# the same family). No spec v1.x amendment per owner ruling D1.
+#
+# Structural remedy (S1 per research §7.1):
+#  - The scaffold's `memory.yaml` seam is the port-propagation
+#    source of truth. Scaffold reads `port` from
+#    `~/.pos/memory.yaml` (falling through the starter default
+#    when pre-seeded by a prior scaffold), and writes
+#    `GRAPHITI_SERVICE_PORT` into the launchd plist's
+#    `EnvironmentVariables` dict alongside the pre-existing
+#    `PYTHONUNBUFFERED`. The sidecar's `service.py` env-var read
+#    already reached for `GRAPHITI_SERVICE_PORT` (amendment #24
+#    AC24.6); this amendment is the consumer wiring that lets
+#    the env var actually reach the sidecar in the non-test
+#    path.
+#  - The `/health` response body gains a `workspace_root` field
+#    populated from `POS_V2_WORKSPACE_ROOT` (also injected via
+#    the plist's `EnvironmentVariables`). Hands-off-lifecycle's
+#    phase-4b probe verifies the body's `workspace_root` matches
+#    the dispatching workspace's own root; mismatch is treated
+#    as "not healthy" and surfaces in the pending-services
+#    diagnostic.
+#
+# Method-level choices (builder's call per ODD §1.1):
+#  - Port source: scaffold writes the starter default (8765)
+#    into every fresh `memory.yaml`; distinct workspaces on one
+#    host require the operator (or a future Idea 9 cycle) to
+#    edit one workspace's `memory.yaml` to a different port.
+#    The amendment lands the propagation seam, not a port-
+#    derivation policy — AC29.3 verifies the seam by
+#    pre-seeding distinct values per-workspace rather than
+#    asserting a derivation formula. Slug-derivation remains
+#    a future Idea 9 scope.
+#  - Workspace identity source: `POS_V2_WORKSPACE_ROOT` env var
+#    injected via launchd plist's `EnvironmentVariables`. Empty
+#    string is the explicit "unknown" value; the probe treats
+#    mismatch-or-missing as structural failure.
+#
+# Fail-closed behaviours:
+#  - /health probe with mismatched workspace_root → probe
+#    reports not-healthy → phase-4b times out → user sees the
+#    service-health-timeout diagnostic (no silent success on an
+#    orphan sidecar).
+#  - /health probe with absent workspace_root in body → treated
+#    as mismatch → same failure path.
+#  - Pre-existing `memory.yaml` with `port: 8765` → scaffold
+#    respects the existing value; no forced migration
+#    (amendment #28 non-migration precedent).
+#
+# AC surface (AC29.1–AC29.7):
+#  - AC29.1: service binds env-var port across distinct values
+#    (memory-system).
+#  - AC29.2: scaffold propagates memory.yaml port → plist +
+#    inventory (workspace-bootstrap).
+#  - AC29.3: distinct workspace configs → distinct plist ports
+#    (workspace-bootstrap).
+#  - AC29.4: two subprocess instances bind distinct ports
+#    without EADDRINUSE (memory-system; CI-friendly subprocess-
+#    bind-only per owner ruling 2026-04-24).
+#  - AC29.5: /health carries workspace_root; probe verifies
+#    match (memory-system + hands-off-lifecycle).
+#  - AC29.6: seal-diff discipline — three components + universal
+#    paths only.
+#  - AC29.7: no regression on amendments #6, #24, #28.
+#
+# Preserved failure-class closures:
+#  - Amendment #6 namespaced-label derivation unchanged (slug
+#    still drives launchd Label; only EnvironmentVariables grows).
+#  - Amendment #24 MCP transport + four-tool surface (add_episode,
+#    search, health, token_usage) unchanged.
+#  - Amendment #28 workspace-identity-routed first-run state
+#    unchanged (state file routing still `<workspace>/.pos/
+#    first-run.state`).
+#
+# Full-stack coexistence (real claude + Ollama + /health → 200
+# on two sidecars) documented in
+# `memory-system/tests/integration/coexistence.sh` — manual
+# repro, NOT a CI gate (per amendment plan §AC29.4 and
+# POST_FIRST_RUN_REVIEW entry #3 anti-pattern avoidance).
+#
+# BASELINE b0e3152 (pre-amendment tip). hands-off-lifecycle's
+# H19 BASELINE stays frozen at 3780603 per amendment #23
+# (manifest declares `frozen_baseline: true`). SEAL_COMMIT
+# sidecars for memory-system and workspace-bootstrap land at
+# b0e3152 on the amendment commit for the empty-diff window;
+# advanced to the amendment SHA in the seal commit via
+# `pos-amend seal`.
+#
+# FUTURE_IDEAS Idea 9 updated with a paragraph noting that
+# memory-sidecar port binding is now closed by this amendment;
+# the slug-collision hazard in launchd labels remains open for
+# its own future cycle. Port-layer slug-collision (two
+# workspaces with the same slug → same scaffolded port → the
+# hazard this amendment does not close alone) inherits the
+# label-slug concern.

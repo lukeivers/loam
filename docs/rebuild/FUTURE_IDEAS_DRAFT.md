@@ -32,7 +32,7 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
 
 - **Master plan §6.3 AC3 tightening.** `first-run-primary-persona-default-agent-wiring.md`'s parent AC has loose "additionalContext payload that names the loaded persona" wording; symmetric to the AC37.5 tightening done post-#33 but in the master plan. Marginal value vs. cost; opportunistic batch candidate.
 
-- **`personas/primary/` at canonical root cleanup.** Apr 18 mtime, untracked, predates the persona-setup amendments. Decide: gitignore `personas/` at repo root, commit a working-state sentinel, or delete the stale directory. Currently noise in `git status`.
+- **`personas/primary/` at canonical root cleanup.** Apr 18 mtime, untracked, predates the persona-setup amendments. Decide: gitignore `personas/` at repo root, commit a working-state sentinel, or delete the stale directory. Currently noise in `git status`. **Cause identified by #42 build agent (2026-04-25):** some test in workspace-bootstrap's full-suite invokes `run_first_run_scaffold` without `workspace_root` set; the `_resolve_workspace_root` walk-up heuristic falls through to the canonical repo root, materialising `personas/primary/` there. Fix is workspace-bootstrap-test-side: tests should always pass an explicit `workspace_root` (tmp dir).
 
 - **#20 empirical finding: parallel doc-edit + dev-discipline-build is safe.** `feedback_serialize_amendment_builds` may be over-broad — the rule applies specifically to sealed-component-amendment-build pairs racing on `pos-amend`, not generic git activity. Tighten the memory to clarify scope.
 
@@ -84,6 +84,8 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
   - **`pos-amend apply` should run BEFORE the amendment commit**, so BASELINE bump + sidecar advance + narrative append are bundled INTO the feature commit. The #41 build ran apply AFTER the amendment commit, causing a corrective "manifest-apply" commit + a doubled seal commit. Workflow doc should clarify the order; future plan-doc dispatch template should bake it into the build-step ordering.
   - **Pre-author plan §14 method-decision register heading** in plan docs before running `pos-amend seal --plan-doc`. The seal automation backfills the SHAs subsection inside an existing §14, but doesn't create the heading from scratch. Plan-doc skeleton template should include the §14 heading as a pre-authored section.
   - **One-file-per-AC test convention is the precedent** (matches AC35.x / AC40.x / AC.A.x), even when a plan §12 register suggests fewer test files. Plan-doc skeleton template should standardise this expectation.
+
+- **`.scratch/` should be in root `.gitignore`.** `pos-amend`'s dirty-tree halt rejected `.scratch/` despite per-dir gitignore (the dir itself isn't in root `.gitignore`); the #42 build agent had to move it aside temporarily mid-build. Tiny one-line fix; removes friction for future amendments. Surfaced by #42 build agent.
 
 ---
 

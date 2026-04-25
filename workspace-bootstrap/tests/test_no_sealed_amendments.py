@@ -135,7 +135,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              pre-amendment tip — amendment #30's seal commit
 #              (chore(seals): memory-system-env-scrubber-user seal)
 #              immediately before this amendment's code commit.
-BASELINE = "795768cd87e7e923e976c9e2c28cce1b48c4c3d4"
+BASELINE = "057afdb"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

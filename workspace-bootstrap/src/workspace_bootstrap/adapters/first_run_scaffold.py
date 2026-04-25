@@ -33,10 +33,12 @@ from __future__ import annotations
 import os
 import platform
 import re
+import shutil
 import stat
 import subprocess
 import sys
-from dataclasses import dataclass
+import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -92,6 +94,19 @@ class ServiceManagerBootoutError(BootstrapError):
     code = ERR_HANDS_OFF_INTERNAL
 
 
+class PersonaHandleRejectedError(BootstrapError):
+    """Raised when ``resolve_persona_handle`` is asked for a handle
+    that pOS reserves (master plan D3 (a): ``eve`` is ivers-corp
+    branding and must not collide with the workspace's primary-
+    persona handle).
+
+    Introduced by amendment #36. The diagnostic carries the rejected
+    raw input so a UX layer can re-prompt with a clear reason.
+    """
+
+    code = ERR_HANDS_OFF_INTERNAL
+
+
 # ---- workspace-slug + service-label derivation (amendment #6) --------
 #
 # Slugs are derived deterministically from the workspace root's
@@ -120,6 +135,65 @@ def workspace_slug(workspace_root: Path | str) -> str:
         raise WorkspaceSlugUnrepresentableError(
             f"workspace-slug-unrepresentable:{basename!r}",
             data={"basename": basename},
+        )
+    return slug
+
+
+# ---- persona-handle resolution (amendment #36) -----------------------
+#
+# The first-run flow resolves the workspace primary-persona handle
+# from a single user input (default empty → ``primary``). This pure
+# function implements the resolution; UX layers (now or later) hand
+# it the raw input string and consume the resolved handle.
+#
+# Master-plan D3 (a) constraint: ``eve`` is reserved as ivers-corp
+# branding and must not become a workspace handle. This function
+# rejects ``eve`` (and only ``eve``) with
+# ``PersonaHandleRejectedError`` so the caller can re-prompt.
+
+# Default handle when the user provides no input.
+DEFAULT_PERSONA_HANDLE = "primary"
+
+# Reserved handles — currently just ``eve`` per master plan D3 (a).
+RESERVED_PERSONA_HANDLES: frozenset[str] = frozenset({"eve"})
+
+
+def resolve_persona_handle(raw_input: str | None) -> str:
+    """Return the resolved persona handle for a one-question prompt.
+
+    - ``None`` or empty/whitespace → ``DEFAULT_PERSONA_HANDLE``
+      (``primary``).
+    - Otherwise → sluggified via the same shape as ``workspace_slug``
+      (lowercase, ASCII-letters/digits/dashes, dashes collapsed,
+      leading/trailing dashes trimmed). Idempotent:
+      ``resolve_persona_handle(resolve_persona_handle(x)) ==
+      resolve_persona_handle(x)``.
+    - Resolved handle in ``RESERVED_PERSONA_HANDLES`` →
+      ``PersonaHandleRejectedError`` (master plan D3 (a)).
+    - Empty post-slug (e.g., ``"!!!"``) → falls back to
+      ``DEFAULT_PERSONA_HANDLE``. The user gave non-blank input but
+      every character was unrepresentable; the only stable contract
+      we can offer is the default rather than refusing.
+    """
+    if raw_input is None or not raw_input.strip():
+        return DEFAULT_PERSONA_HANDLE
+    lowered = raw_input.strip().lower()
+    slug = _SLUG_ALLOWED_RE.sub("-", lowered)
+    slug = _SLUG_COLLAPSE_RE.sub("-", slug)
+    slug = slug.strip("-")
+    if not slug:
+        return DEFAULT_PERSONA_HANDLE
+    if slug in RESERVED_PERSONA_HANDLES:
+        raise PersonaHandleRejectedError(
+            f"persona-handle-reserved:{slug}",
+            data={
+                "raw_input": raw_input,
+                "resolved": slug,
+                "reason": (
+                    "the handle 'eve' is reserved as ivers-corp "
+                    "branding; please pick a different handle."
+                ),
+            },
         )
     return slug
 
@@ -355,6 +429,13 @@ class ScaffoldResult:
     service_files_installed: tuple[str, ...] = ()
     services_bootstrapped: tuple[str, ...] = ()
     confirmation: str | None = None
+    # Amendment #36: persona-directory scaffold output. ``persona_dir``
+    # is the absolute path to ``<workspace>/personas/<handle>/`` when
+    # the scaffold either just installed it or detected it pre-existed
+    # (idempotent no-op); ``persona_installed`` is True only when this
+    # invocation wrote the directory.
+    persona_dir: Path | None = None
+    persona_installed: bool = False
 
 
 # ---- adapter body ----------------------------------------------------
@@ -376,6 +457,8 @@ def run_first_run_scaffold(
     workspace_root: Path | None = None,
     service_runner: "ServiceManagerRunner | None" = None,
     partial_recovery: bool = False,
+    persona_handle: str = DEFAULT_PERSONA_HANDLE,
+    persona_template_override: Path | None = None,
 ) -> ScaffoldResult:
     """Deterministic scaffold implementation, test-callable.
 
@@ -418,6 +501,21 @@ def run_first_run_scaffold(
         the ``partial-scaffold-detected`` halt with "retry next session"
         guidance was itself the terminal user-facing failure mode Luke
         hit on his fresh-clone attempt, which this amendment closes.
+    persona_handle:
+        Amendment #36 — handle the workspace's primary-persona
+        directory is materialised under
+        (``<workspace>/personas/<handle>/``). Default
+        ``"primary"`` per master-plan D3 (a). Pre-resolve via
+        ``resolve_persona_handle`` if the value comes from user
+        input. The scaffold itself does not solicit input; resolution
+        is the caller's responsibility (today the default is always
+        used; the resolver is exposed so future first-run UX layers
+        can wire in a one-question prompt without touching this
+        adapter).
+    persona_template_override:
+        Test-only override for the framework persona-template source
+        directory. Defaults to ``<repo>/primary-persona/templates/
+        persona-template/`` when ``None``.
     """
     plat = platform_override or detect_platform()
     if plat != "macos":
@@ -517,6 +615,20 @@ def run_first_run_scaffold(
                 # up.
                 written.append(f"# service-bootstrap warning for {label}: {e}")
 
+    # Amendment #36: install the workspace's primary-persona directory
+    # from the framework template if it does not already exist. The
+    # scaffold writes only when ``personas/<handle>/`` is absent
+    # (idempotency per AC36.3); a malformed prior write surfaces a
+    # structured diagnostic via ``_install_persona_directory``
+    # (AC36.5). The framework-template surface is consumed read-only;
+    # the scaffold's only mutations on the copy are setting the
+    # ``handle`` field and ``is_starter: true`` (AC36.6).
+    persona_installed, persona_dir = _install_persona_directory(
+        workspace_root=Path(ws),
+        handle=persona_handle,
+        template_override=persona_template_override,
+    )
+
     return ScaffoldResult(
         ran=True,
         reason="partial_recovery" if partial_recovery else "fresh_scaffold",
@@ -524,6 +636,8 @@ def run_first_run_scaffold(
         service_files_installed=tuple(p for _, p in service_files),
         services_bootstrapped=tuple(bootstrapped),
         confirmation=CONFIRMATION_SENTENCE,
+        persona_dir=persona_dir,
+        persona_installed=persona_installed,
     )
 
 
@@ -749,6 +863,135 @@ def _resolve_workspace_root(workspace_root: Path | None) -> str:
     # Fallback: a templating placeholder. The scaffold still writes,
     # but the user has to edit the path in. Safer than guessing wrong.
     return "{WORKSPACE}"
+
+
+# ---- persona-template + persona-directory install (amendment #36) ----
+
+
+# Filename for the persona contract emitted by the scaffold. The
+# loader's `_load_one` reads `contract.yaml` + `prompt.md` from each
+# persona-directory; this constant pins the contract filename so the
+# scaffold and the loader agree.
+_PERSONA_CONTRACT_FILENAME = "contract.yaml"
+_PERSONA_PROMPT_FILENAME = "prompt.md"
+
+
+def _resolve_persona_template_dir(
+    template_override: Path | None = None,
+) -> Path:
+    """Locate the framework-shipped persona template directory.
+
+    Returns ``<repo>/primary-persona/templates/persona-template/``.
+    The scaffold consumes this as a read-only source. ``template_
+    override`` is exposed for tests so a tmpfs template can be
+    substituted without touching the framework copy.
+    """
+    if template_override is not None:
+        return Path(template_override).resolve()
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = (
+            parent
+            / "primary-persona"
+            / "templates"
+            / "persona-template"
+        )
+        if candidate.is_dir():
+            return candidate.resolve()
+    raise BootstrapError(
+        "persona-template-not-found",
+        data={"searched_from": str(here)},
+    )
+
+
+def _install_persona_directory(
+    *,
+    workspace_root: Path,
+    handle: str,
+    template_override: Path | None = None,
+) -> tuple[bool, Path]:
+    """Materialise ``<workspace>/personas/<handle>/`` from the
+    framework's persona template, with ``handle`` and
+    ``is_starter: true`` set on the resulting contract.
+
+    Returns ``(installed, persona_dir)``:
+
+    - ``installed=True`` — this invocation wrote the directory.
+    - ``installed=False`` — the directory pre-existed; left
+      untouched (idempotency per AC36.3).
+
+    Raises ``PartialScaffoldError`` (with ``kind=
+    "persona-scaffold-malformed"`` in the data payload) when the
+    persona directory exists but ``contract.yaml`` is empty (zero
+    bytes) — the partial-state failure mode the AC36.5 diagnostic
+    surfaces. Other malformed-but-non-empty contract content is
+    left to the loader's own validator at session start; the
+    scaffold's responsibility is the structural "did the prior run
+    finish writing the file" check.
+
+    Implementation: copytree to a sibling staging directory, mutate
+    the contract YAML in place (handle + is_starter), then rename
+    into ``personas/<handle>/``. Atomic-on-success; partial failure
+    leaves the staging dir for partial-recovery to clean up.
+    """
+    workspace_root = Path(workspace_root).resolve()
+    personas_dir = workspace_root / "personas"
+    persona_dir = personas_dir / handle
+
+    contract_path = persona_dir / _PERSONA_CONTRACT_FILENAME
+    if persona_dir.exists():
+        # Idempotent: if the contract file is present and non-empty,
+        # leave the whole directory alone regardless of is_starter
+        # value (AC36.3). If the contract is missing or zero-bytes,
+        # treat the directory as half-written and surface the
+        # AC36.5 diagnostic.
+        if not contract_path.exists() or contract_path.stat().st_size == 0:
+            raise PartialScaffoldError(
+                "partial-scaffold-detected",
+                data={
+                    "kind": "persona-scaffold-malformed",
+                    "persona_dir": str(persona_dir),
+                    "contract_path": str(contract_path),
+                    "reason": (
+                        "persona directory exists but contract.yaml "
+                        "is missing or empty — prior scaffold likely "
+                        "interrupted mid-write."
+                    ),
+                },
+            )
+        return (False, persona_dir)
+
+    template_dir = _resolve_persona_template_dir(template_override)
+
+    personas_dir.mkdir(parents=True, exist_ok=True)
+    # Stage into a sibling temp dir so the rename into place is the
+    # only operation that makes the dir visible to the loader.
+    with tempfile.TemporaryDirectory(
+        prefix=f".{handle}.staging.", dir=personas_dir
+    ) as staging_root:
+        staging = Path(staging_root) / handle
+        shutil.copytree(template_dir, staging)
+        # Mutate the contract YAML — set handle + is_starter.
+        staging_contract = staging / _PERSONA_CONTRACT_FILENAME
+        contract_text = staging_contract.read_text()
+        loaded = yaml.safe_load(contract_text)
+        if not isinstance(loaded, dict):
+            raise BootstrapError(
+                "persona-template-malformed",
+                data={
+                    "template_dir": str(template_dir),
+                    "contract_path": str(staging_contract),
+                },
+            )
+        loaded["handle"] = handle
+        loaded["is_starter"] = True
+        staging_contract.write_text(
+            yaml.safe_dump(loaded, sort_keys=False, default_flow_style=False)
+        )
+        # Atomic move into final position.
+        os.rename(staging, persona_dir)
+
+    return (True, persona_dir)
 
 
 # ---- bootstrap contribution -----------------------------------------

@@ -1,0 +1,226 @@
+schema_version: 1
+amendment:
+  number: 36
+  slug: workspace-bootstrap-persona-scaffold
+  title: "workspace-bootstrap first-run scaffold writes personas/<handle>/"
+
+# BASELINE: 057afdb — the commit immediately preceding this
+# amendment commit (docs(plans): record amendment #35 commit SHAs in
+# method-decision register). Mirrors amendment #29 / #34 / #35
+# pattern: BASELINE is HEAD~1 of the amendment commit, not the prior
+# workspace-bootstrap seal commit (3cab3e3 — the #31 plist-path
+# seal). This keeps the BASELINE..HEAD diff narrow to amendment
+# #36's surface and avoids spurious cross-component "missing
+# admission" reports for intervening commits (#33 memory-consumer-
+# wiring, #34 memory-system-d1-conformance, #35 primary-persona
+# renderer + onboarding) that landed under their own amendments
+# between workspace-bootstrap's prior seal and this amendment.
+baseline: 057afdb
+
+plan: docs/rebuild/plans/amendment-36-workspace-bootstrap-persona-scaffold.md
+
+# Single-component amendment per amendment plan §2: workspace-
+# bootstrap only. No surface change to primary-persona,
+# hands-off-lifecycle, or any other sealed component (sub-plan #36's
+# AC36.S enforces this; sibling sub-plans #35 + #37 own the cross-
+# component surfaces). primary-persona/templates/persona-template/
+# is consumed read-only — same shape as a workspace would consume
+# the template manually.
+components:
+  - name: workspace-bootstrap
+    seal_test: workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+
+narrative:
+  target: workspace-bootstrap/seals/SEAL_COMMIT.persona-scaffold
+  body: |
+    # Amendment #36 — workspace-bootstrap first-run scaffold
+    #                  writes personas/<handle>/
+
+    2026-04-25. Delivers the second sealed-component amendment of
+    the first-run primary-persona-default-agent-wiring family per
+    master plan `docs/rebuild/plans/first-run-primary-persona-
+    default-agent-wiring.md` and sub-plan `docs/rebuild/plans/
+    amendment-36-workspace-bootstrap-persona-scaffold.md`.
+    Predecessor amendment #35 (primary-persona renderer + onboarding
+    + is_starter field) sealed at ce07242; sibling amendment #37
+    (hands-off-lifecycle Claude-Code default-agent wiring) consumes
+    the persona-directory output landed here.
+
+    The amendment lands one new responsibility on the existing
+    `first_run_scaffold` adapter inside the `workspace-bootstrap`
+    fence:
+
+      - `workspace-bootstrap/src/workspace_bootstrap/adapters/
+        first_run_scaffold.py` — gains
+        `resolve_persona_handle(raw_input) -> str` (pure function),
+        `_install_persona_directory(...)` (template-copy +
+        contract-mutate), `DEFAULT_PERSONA_HANDLE`,
+        `RESERVED_PERSONA_HANDLES`, and a new
+        `PersonaHandleRejectedError` exception class. The
+        `run_first_run_scaffold(...)` entry point gains optional
+        `persona_handle` and `persona_template_override` keyword
+        parameters. The `ScaffoldResult` dataclass gains
+        `persona_dir` and `persona_installed` fields reporting
+        whether this invocation materialised the persona directory.
+
+    Behaviour:
+
+      - On a fresh workspace (no `personas/` directory), the
+        scaffold copies `primary-persona/templates/persona-template/`
+        into `<workspace>/personas/<handle>/`, mutates the
+        contract's `handle` field to the resolved handle, and sets
+        `is_starter: true` on the contract. `prompt.md` is byte-
+        identical to the template.
+      - Default handle is `primary` (master plan D3 (a)). The
+        resolver sluggifies user input via the existing
+        `workspace_slug` shape — lowercase, ASCII alphanumerics +
+        dashes, runs collapsed, leading/trailing dashes trimmed,
+        idempotent. Resolved handle `eve` is rejected via
+        `PersonaHandleRejectedError` (master plan D3 (a) — `eve` is
+        ivers-corp branding).
+      - Re-running the scaffold against an already-installed
+        persona directory is a no-op. The full first-run path
+        short-circuits via the existing `already_scaffolded`
+        return; the persona-directory installer separately treats
+        a present-and-valid directory as idempotent regardless of
+        the contract's current `is_starter` value.
+      - A persona directory in a half-written state (zero-byte
+        `contract.yaml`, or `prompt.md` present without
+        `contract.yaml`) raises the existing `PartialScaffoldError`
+        with the data payload extended with `kind="persona-
+        scaffold-malformed"`. The exception class is unchanged so
+        downstream H4 handlers continue to route uniformly.
+
+    No source edits to `discovery.py`, `errors.py`, `host.py`,
+    `main.py`, `manifest.py`, `ordering.py`, `spec.py`, or any other
+    `workspace-bootstrap` adapter. The new surfaces are purely
+    additive.
+
+    Crucially, no source edits to any other sealed component.
+    `primary-persona/templates/persona-template/` is consumed
+    read-only via the new `_resolve_persona_template_dir` helper;
+    this is structurally identical to a workspace operator copying
+    the template manually, which is the exact use case the template
+    surface was authored for.
+
+    AC surface (AC36.1 – AC36.6 + AC36.S) — 31 tests covering 6
+    outcome-shaped criteria:
+
+      - AC36.1: fresh-clone first-run produces a valid persona
+        directory; loader.load() returns a single LoadedPersona
+        whose contract validates against PersonaContract; custom
+        handles round-trip through the loader.
+      - AC36.2: scaffolded contract has `is_starter is True` after
+        model_validate; on-disk YAML carries the literal
+        `is_starter: true` line so a hand-audit shows the flag.
+      - AC36.3: re-installation is a no-op with `is_starter: true`
+        AND with `is_starter: false` post-elicitation; full
+        scaffold re-run does not raise; contract.yaml + prompt.md
+        mtimes + content hashes unchanged across re-runs.
+      - AC36.4: empty/whitespace input → `primary`; free-text input
+        sluggifies; sluggifier idempotent on the AC fixture set;
+        `eve` rejected (case-insensitive) with structured
+        diagnostic; resolver is pure (no I/O).
+      - AC36.5: zero-byte contract.yaml in an existing persona dir
+        raises PartialScaffoldError carrying `kind=
+        "persona-scaffold-malformed"` and the persona-dir path;
+        the half-written file is not overwritten by the diagnostic
+        raise; missing-contract-in-existing-dir also raises.
+      - AC36.6: framework persona-template sentinel sentence
+        appears in the scaffolded prompt.md (provenance);
+        `workspace-bootstrap/src/` carries no persona-prose
+        sentinel constants; scaffold mutates only `handle` and
+        `is_starter` in the contract; `prompt.md` is byte-
+        identical to the template.
+      - AC36.S: seal-diff discipline — only workspace-bootstrap/ +
+        plans/ + universal paths changed (verified by
+        test_no_sealed_amendments.py + cross-component sweep).
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - D-build.1 (handle prompt UX): the scaffold defaults the
+        handle to `primary` always; the resolver
+        `resolve_persona_handle(raw_input)` is exposed as a pure
+        function for caller-side prompts. Future first-run UX
+        (#37 + onboarding) wires the prompt without touching this
+        adapter. Plan §11 D-build.1 named (a) and (b) as
+        candidates; (c) "minimal-friction shape" is what shipped —
+        a function-shaped seam — because (a) would require touching
+        hands-off-lifecycle (out of scope for this amendment) and
+        (b) collapses the AC's prompt-fixture surface into a
+        rename path that is harder to verify cleanly.
+
+      - D-build.2 (template-copy mechanism): `shutil.copytree` of
+        the framework template into a sibling staging directory
+        under `personas/`, then YAML round-trip on `contract.yaml`
+        to set `handle` and `is_starter: true`, then `os.rename`
+        atomic-on-success into `personas/<handle>/`. Per plan
+        recommendation; partial failure leaves the staging dir for
+        partial-recovery cleanup.
+
+      - D-build.3 (sluggifier shape): re-uses the existing
+        `workspace_slug` regex pair (`_SLUG_ALLOWED_RE` and
+        `_SLUG_COLLAPSE_RE`). Already parity-tested at #33;
+        same lowercase + ASCII + dashes + collapse-runs shape
+        required by AC36.4.
+
+      - D-build.4 (partial_recovery diagnostic): extends the
+        existing `PartialScaffoldError` payload with
+        `kind="persona-scaffold-malformed"` and `persona_dir` /
+        `contract_path` data fields. The exception class stays
+        unchanged so existing H4 handlers route uniformly; the
+        data payload distinguishes sub-cause.
+
+    Fail-closed behaviours:
+
+      - A persona directory already present with a valid contract
+        is left untouched on every re-run, regardless of the
+        contract's `is_starter` value (idempotency).
+      - A persona directory present with a malformed (zero-byte or
+        absent) contract.yaml halts via PartialScaffoldError —
+        never silently overwrites or silently completes.
+      - A reserved handle (`eve`, case-insensitive) raises
+        PersonaHandleRejectedError so the caller can re-prompt;
+        no silent fallback to `primary`.
+      - Template not found on disk raises BootstrapError with
+        `persona-template-not-found` so the failure is structurally
+        observable; no silent skip.
+
+    Out of scope (sub-plan §7):
+
+      - Renderer + onboarding work — amendment #35 (sealed at
+        ce07242).
+      - Settings.json + agent-file write at first-run —
+        amendment #37.
+      - Multiple personas per workspace (autonomous-authoring D5/
+        D6 path) — orthogonal.
+      - Re-elicitation slash command — defer.
+      - Domain-aware starter prompts — defer.
+      - Slug collision detection across workspaces (FUTURE_IDEAS
+        Idea 9) — orthogonal.
+      - Default handle alternatives beyond `primary` + `eve`-
+        rejection — D3 ruling stands.
+
+    BASELINE 057afdb (pre-amendment tip — the commit immediately
+    preceding amendment #36). workspace-bootstrap's SEAL_COMMIT
+    sidecar advances to the amendment commit on the empty-diff
+    window; advanced to the seal SHA via `pos-amend seal` on the
+    seal commit.
+
+    Sibling sub-plan #37 (hands-off-lifecycle-default-agent-wiring)
+    is now cleared to dispatch — its hard prerequisite (this
+    amendment's seal + the `personas/<handle>/` scaffold output on
+    a fresh-clone first-run) is satisfied.

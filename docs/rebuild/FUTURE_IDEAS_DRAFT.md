@@ -72,6 +72,12 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
 
 - **Path-mismatch (#39 ↔ #40) fix direction.** Graduated to FUTURE_IDEAS.md Idea 14 on 2026-04-25 (active fix folded into sub-plan E; comprehensive resolver-pattern direction stays deferred under Idea 13's multi-workspace umbrella).
 
+- **G-activation-first dissolves D.** If sub-plan G (shared host-level memory-graphiti instance + workspace-keying via group_id) activates first at multi-workspace reactivation time, sub-plan D (per-workspace memory-graphiti port auto-allocation) becomes moot — one shared instance means no port-collision problem. Worth flagging at reactivation-time triage so we don't redundantly build D before G. Surfaced by doc-update agent 2026-04-25 (captured as G's D-G.4).
+
+- **Lazy-projection trigger ↔ amendment #32 session-start gate composition.** When sub-plan #17 (heavy-b-phase-α/β/γ-migration) reactivates as the lazy-projection job triggered by dev_intent=yes, the cheapest available attach point is amendment #32's session-start gate — same lifecycle event, contract is already loaded at that point, one read + one dispatch decision. Method-level note for #17's future builder. Surfaced by doc-update agent 2026-04-25 (captured as #17 D-build.6).
+
+- **C may activate as "audit + cleanup" rather than "migrate" when multi-workspace lands.** D-MASTER.2's owner-revised mirror of `~/.claude/` (global + workspace-override) collapsed C's migration burden; if any of the resolver pattern is partially in place by reactivation time, C's scope shifts from "migrate state files" to "audit existing layout for compliance + close gaps." Worth the triage at reactivation. Surfaced by doc-update agent 2026-04-25.
+
 ---
 
 *New entries appended to bottom; review-and-graduate happens post-initial-phase.*

@@ -493,3 +493,46 @@ test fixtures. A tighter trigger would distinguish AC TEXT amendments
 (real halt) from AC FIXTURE updates (mechanical, AC-preserving).
 Worth surfacing for future plan-template authoring.
 
+### Commit SHAs
+
+- Amendment feature commit: `12952ddc` —
+  `feat(primary-persona): onboarding dev-intent question — sub-plan
+  A (amendment #41)` (the source-side build: contract field, fourth
+  question, write-back normaliser, two new OTel events, resolver +
+  reader, 35 new tests across 8 files, 3 mechanical AC35.x fixture
+  updates).
+- Sibling sub-plans land commit: `27048c6` —
+  `docs(plans): land sibling sub-plan stubs (B/E/F) authored by
+  master-plan agent` (universal admission under
+  `docs/rebuild/plans/`; lands the prior-session-authored sibling
+  stubs that were untracked at sub-plan A's build time).
+- Manifest-apply commit: `fb32563` —
+  `chore(amendment-#41): apply manifest — bump BASELINE + advance
+  SEAL_COMMIT + write narrative` (corrective follow-up; the original
+  amendment commit landed without first running `pos-amend apply`,
+  so the BASELINE bump in `test_no_sealed_amendments.py` + the
+  initial SEAL_COMMIT sidecar advance + the seal narrative file
+  were split into this NEW commit per Git Safety Protocol — no
+  `--amend`).
+- First seal commit: `c33ace6` —
+  `chore(seals): primary-persona-onboarding-dev-intent —
+  primary-persona at fb32563` (initial seal commit pointing
+  SEAL_COMMIT at the apply commit; halted on §14-missing — §14 not
+  yet authored).
+- §14 commit: `d449714` —
+  `docs(plans): append §14 method-decision record to sub-plan A`
+  (this section).
+- Final seal commit: `85a82f7` —
+  `chore(seals): primary-persona-onboarding-dev-intent —
+  primary-persona at d449714` (advances SEAL_COMMIT to `d449714`,
+  picking up §14 inside the seal-diff window).
+
+Per ODD §1.1 the seal-flow choreography is method-level. The
+non-canonical sequence above (amendment → sibling-subplans →
+manifest-apply → first-seal-attempt → §14 → second-seal) reflects
+the halt-and-resume context (predecessor agent halted before
+running `pos-amend apply`; resume agent picked up post-halt and
+discovered the apply skip mid-seal). A canonical sequence would be
+amendment-with-apply-bundled-in → §14-pre-authored → single-seal,
+which the seal-automation expects. Worth surfacing for future plan
+templates.

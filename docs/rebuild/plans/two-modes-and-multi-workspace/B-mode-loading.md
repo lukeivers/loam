@@ -377,3 +377,78 @@ registration order in `.claude/settings.json`, the OTel event names
    artefacts to a developer (recoverable: re-run onboarding). The
    asymmetry is in the cost of being wrong; AC.B5 codifies the safer
    direction.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+Sub-plan B was unblocked via amendment #45 (`merge_session_start`
+multi-contributor generalisation; sealed `763c15b`). Sub-plan B's
+ACs (AC.B1–AC.B5 + AC.B.S) are satisfied by the same amendment
+commit `0702d25`:
+
+- **AC.B1** — `compute_session_mode` + `read_dev_intent_safe` in
+  `tools/loam-mode/src/loam_mode/session_start.py`. Tests at
+  `tools/loam-mode/tests/test_AC_B1_compute_session_mode.py`.
+- **AC.B2** — `build_loam_mode_inner_hook` registered as the seam
+  hands-off-lifecycle's stanza builders compose against (via
+  amendment #45's `extra_inner_hooks` parameter on
+  `build_first_run_stanza` / `build_supervisor_stanza`). Tests at
+  `tools/loam-mode/tests/test_AC_B2_session_start_hook_install.py`.
+- **AC.B3** — `emit_session_start_context` returns the
+  `CLAUDE.dev.md` content in dev mode and empty in user mode. Tests
+  at `tools/loam-mode/tests/test_AC_B3_dev_extension_loaded_iff_dev_mode.py`.
+- **AC.B4** — End-to-end mode-aware corpus: F's `select_corpus`
+  partition + B's emitter agree (CLAUDE.dev.md is in F's `dev_only`
+  set; user-mode payload empty; dev-mode payload non-empty). Tests
+  at `tools/loam-mode/tests/test_AC_B4_corpus_mode_aware_end_to_end.py`.
+- **AC.B5** — Fail-soft chain: corrupt contract.yaml, missing
+  personas dir, missing dev-extension all return without raising;
+  CLI subcommand exits 0 on every code path. Tests at
+  `tools/loam-mode/tests/test_AC_B5_selector_failure_fail_soft.py`.
+- **AC.B.S** — B's emitter does NOT import any sealed component at
+  module-import time; `loam-mode session-start` subcommand
+  registered. Tests at `tools/loam-mode/tests/test_AC_B_S_seal_diff.py`.
+
+### D-B.1 (selector home, sub-plan-local)
+
+**Choice:** Standalone tool (`tools/loam-mode/`). Already declared
+in §10 D-B.1; reaffirmed at build time. The emitter lives at
+`tools/loam-mode/src/loam_mode/session_start.py` alongside F's
+selector + manifest, both within the same dev-discipline package.
+
+### D-B.2 (dev-extension delivery, sub-plan-local)
+
+**Choice:** Separate `CLAUDE.dev.md` file (per §10 D-B.2). F sealed
+the partition with CLAUDE.dev.md in `dev_only`; B's emitter reads
+it directly via `Path.read_text()`. Filename is configurable via
+the `dev_extension_filename` parameter (defaults to
+`DEFAULT_DEV_EXTENSION_FILENAME = "CLAUDE.dev.md"`).
+
+### D-B.3 (mode caching, sub-plan-local)
+
+**Choice:** Per-session via SessionStart hook fan-out. Each new
+Claude Code session fires the hook; loam-mode reads
+`personas/<handle>/contract.yaml` once and emits the payload. No
+cross-session cache; the I/O is sub-second. Per §10 D-B.3.
+
+### Sealed-vs-dev-discipline split (post-build clarification)
+
+The original §2 framing held sub-plan B as "dev-discipline §2"
+across the board. Post-halt-finding-2 the registration seam was
+identified as requiring sealed-component change to
+`hands-off-lifecycle/`; that piece landed under amendment #45 (a
+sealed-component cycle). The emitter + AC tests remain dev-
+discipline (`tools/loam-mode/`), per the clean split halt-finding-2
+recommended.
+
+---
+
+### Post-build commit SHAs
+
+- Amendment #45 (the sealed-component piece — registration seam):
+  `0702d25`.
+- Seal commit: `763c15b`.
+- Plan-SHA backfill: `5c59e9a`.
+- Sub-plan B's ACs (AC.B1–AC.B5 + AC.B.S) all satisfied by
+  amendment commit `0702d25`'s tests.

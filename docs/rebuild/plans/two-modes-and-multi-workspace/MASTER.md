@@ -282,24 +282,31 @@ ARE included. Lives in primary-persona's session-start-gate test tree
 dev artefacts they don't need), AC.PO.2 (toolkit primitive: the
 persona's session-start corpus composer becomes mode-aware).
 
-### AC.PROG.3 — `classify_workspace` does not consume `VALUE_PROPOSITION.md` presence
+### AC.PROG.3 — Workspace classification is decoupled from `VALUE_PROPOSITION.md` presence
 
-**Outcome:** `workspace_bootstrap.adapters.tracker_seed.classify_workspace`
-returns the workspace's classification (dev / non-dev) by reading the
-workspace-local dev-intent answer (location decided in sub-plan A);
-when the answer is absent, defaults to non-dev (per locked owner ruling
-4 — defensive default, "shouldn't happen"). The function does NOT call
-`Path.is_file()` on `docs/rebuild/VALUE_PROPOSITION.md` for the
-purpose of classification. (`VALUE_PROPOSITION.md` is still read by the
-seed's value-prop-loader for dev workspaces — a different surface,
+**Outcome:** the workspace classification surface (dev / non-dev)
+returns its verdict by reading the workspace-local dev-intent answer
+(location decided in sub-plan A); when the answer is absent, defaults
+to non-dev per locked owner ruling 4 (defensive default,
+"shouldn't happen"). The classification is NOT derived from the
+presence-or-absence of `docs/rebuild/VALUE_PROPOSITION.md` for any
+purpose. (`VALUE_PROPOSITION.md` is still read by the seed's
+value-prop-loader for dev workspaces — a different surface,
 unchanged by E.)
 
-**Test shape:** unit test in workspace-bootstrap's test tree that
-constructs a workspace with `VALUE_PROPOSITION.md` present and the
-dev-intent answer "no" — `classify_workspace` returns "user". Mirror
-test with no `VALUE_PROPOSITION.md` and dev-intent "yes" — returns
-"pos-v2-dev". Mirror test with no answer at all (defensive) — returns
-"user".
+**Test shape:** workspace-bootstrap test tree exercises three
+fixtures: (1) `VALUE_PROPOSITION.md` present + dev-intent answer "no"
+→ classifies non-dev; (2) `VALUE_PROPOSITION.md` absent + dev-intent
+answer "yes" → classifies dev; (3) dev-intent answer absent (defensive)
+→ classifies non-dev. The exact function name + I/O shape is method.
+
+**AC text precision note (post-#17 sweep 2026-04-25):** the original
+AC.PROG.3 text named `Path.is_file()` and the literal symbol
+`workspace_bootstrap.adapters.tracker_seed.classify_workspace`,
+mirroring AC.E4's loose text (which was tightened in commit
+`177a4a9`). Tightened here for symmetry per
+`feedback_loose_AC_text_fix_AC_not_implementation`; outcome semantics
+preserved.
 
 **Maps to:** AC.PO.1 (translation burden absorbed: the dev-marker is
 now the user's own statement of intent, not an artefact-presence

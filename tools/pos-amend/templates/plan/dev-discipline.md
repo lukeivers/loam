@@ -124,6 +124,10 @@ ACs' outcome bounds. This section is populated post-build.
 
 ### Commit SHAs
 
+(placeholder; auto-filled by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
+
+### Commit SHAs
+
 (populated by `pos-amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)
 
 ### Dependents cleared to dispatch

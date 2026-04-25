@@ -358,4 +358,7 @@ AC outcomes preserved.
 
 ### Commit SHAs
 
-(Filled at seal time by `pos-amend seal` automation.)
+- Amendment commit: `8b3933a44ef5dc614936975f97c1ecdd4ea667a8` —
+  `feat(workspace-bootstrap): classify_workspace replacement + path-mismatch fold — sub-plan E (amendment #42)`
+- Seal commit: `ad0d211d5e52b44f86d8e232e077d5ad2976bc83` —
+  `chore(seals): workspace-bootstrap-classify-workspace-dev-intent — workspace-bootstrap at 8b3933a`

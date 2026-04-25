@@ -63,18 +63,48 @@ def _require_graphiti() -> Any:
     return _graphiti
 
 
-@asynccontextmanager
-async def lifespan(server: FastMCP):
-    """Build Graphiti once at process start; close on shutdown.
+async def _ensure_graphiti() -> Any:
+    """Construct ``_graphiti`` once; idempotent on re-entry.
 
-    Mirrors the outgoing FastAPI ``lifespan`` verbatim. FastMCP hands
-    the server instance to the lifespan callable (FastAPI handed the
-    app); the construct-yield-close discipline is identical.
+    Amendment #34 (AC34.1): the FastMCP-wrapped Starlette app routes
+    the user lifespan to the lower-level ``MCPServer.run`` path, which
+    is invoked per MCP session by ``StreamableHTTPSessionManager``.
+    That means the lifespan's construct half does not run at process
+    start — it runs the first time a client opens an MCP session. The
+    ``GET /health`` Starlette ``custom_route`` reads ``_graphiti`` at
+    request time and returns 503 ``{"status":"initialising"}`` when
+    ``_graphiti is None``, so launchd / hands-off-lifecycle's phase-4b
+    probe (which never opens an MCP session) sees 503 forever.
+
+    The fix moves construction to a coroutine the entry point awaits
+    before ``mcp.run_streamable_http_async()`` enters its serve loop.
+    The lifespan's construct half now delegates to this coroutine; the
+    ``if _graphiti is not None: return`` guard makes per-session enters
+    no-ops on the construct side, while the lifespan's
+    yield/finally close-on-exit half preserves verbatim.
     """
     global _graphiti
+    if _graphiti is not None:
+        return _graphiti
     load_env()
     _graphiti = await make_graphiti()
     await _graphiti.build_indices_and_constraints()
+    return _graphiti
+
+
+@asynccontextmanager
+async def lifespan(server: FastMCP):
+    """Build Graphiti once (idempotent); close on shutdown.
+
+    Construct half delegates to ``_ensure_graphiti()`` — when the
+    process-startup path has already populated ``_graphiti`` (the
+    amendment #34 path), this is a no-op. When entered cold (e.g. by
+    AC24.1's direct test invocation), ``_ensure_graphiti()`` does the
+    first-time construction. Either way the body's contract is
+    "``_graphiti`` is populated on yield, closed on exit."
+    """
+    global _graphiti
+    await _ensure_graphiti()
     try:
         yield {"graphiti": _graphiti}
     finally:
@@ -321,11 +351,22 @@ def run() -> None:
     invocation contract the outgoing FastAPI service honoured so the
     launchd plist template (``workspace-bootstrap`` scaffold) needs
     no change.
+
+    Amendment #34 (AC34.1): awaits ``_ensure_graphiti()`` BEFORE
+    entering ``mcp.run_streamable_http_async()`` so ``_graphiti`` is
+    populated before uvicorn begins accepting requests. This is what
+    makes ``GET /health`` return 200 from the first probe onwards
+    (rather than 503 until the first MCP session opens). Both
+    awaitables share the same event loop via a single
+    ``asyncio.run`` call.
     """
     import asyncio
 
-    load_env()
-    asyncio.run(mcp.run_streamable_http_async())
+    async def _serve() -> None:
+        await _ensure_graphiti()
+        await mcp.run_streamable_http_async()
+
+    asyncio.run(_serve())
 
 
 if __name__ == "__main__":

@@ -135,7 +135,39 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              pre-amendment tip — amendment #30's seal commit
 #              (chore(seals): memory-system-env-scrubber-user seal)
 #              immediately before this amendment's code commit.
-BASELINE = "057afdb"
+#   - 057afdb  when the workspace-bootstrap-persona-scaffold amendment
+#              (#36) opened. First-run scaffolded
+#              `<workspace>/personas/<handle>/` from the framework
+#              persona-template; ScaffoldResult gained `persona_dir`
+#              + `persona_installed`; pure-function
+#              `resolve_persona_handle` exposed for caller-side
+#              prompts. 057afdb is the pre-amendment tip immediately
+#              preceding amendment #36's code commit.
+#   - fa15127  when the workspace-bootstrap-tracker-seed amendment
+#              (#39) opened. First-run scaffold gains an additive
+#              tracker-seed responsibility: on a workspace whose
+#              tracker DB does not yet carry a value-prop root, the
+#              scaffold seeds the workspace's
+#              `~/.pos/objective_tracker.sqlite` with a value-prop
+#              root + spec-tier descendants. On pos-v2 dev workspaces
+#              (`docs/rebuild/VALUE_PROPOSITION.md` present at the
+#              workspace root) the seed reads the canonical doc as
+#              source. On non-dev workspaces it reads
+#              `<workspace>/value-prop.md`; if absent, the seed
+#              skips with a structured diagnostic. Idempotent by
+#              query (uses amendment #38's
+#              `query_projection_view` filter on
+#              `lifted_from.source_doc` to detect already-seeded
+#              records and skip). Single-component amendment on the
+#              `workspace-bootstrap` surface; consumes amendment
+#              #38's `LiftedFrom` + `ObjectiveFilter` +
+#              `query_projection_view` API; no source change to any
+#              other sealed component. fa15127 is the pre-amendment
+#              tip — amendment #38's plan-SHA backfill commit
+#              immediately before this amendment's code commit.
+#              Mirrors amendments #34 / #35 / #36 / #37 / #38
+#              BASELINE-as-HEAD~1 pattern.
+BASELINE = "fa15127"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

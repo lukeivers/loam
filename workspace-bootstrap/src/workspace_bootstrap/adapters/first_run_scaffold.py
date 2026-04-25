@@ -436,6 +436,20 @@ class ScaffoldResult:
     # invocation wrote the directory.
     persona_dir: Path | None = None
     persona_installed: bool = False
+    # Amendment #39: tracker-seed scaffold output. The first-run flow
+    # seeds the workspace's objective-tracker DB with the value-prop
+    # root + spec-tier descendants; ``tracker_seeded`` is True iff
+    # this invocation created at least one tracker record. The other
+    # fields surface the seed's structured outcome so tests + the
+    # confirmation surface can observe what landed. ``classification``
+    # is one of ``"pos-v2-dev" | "user"`` per
+    # ``tracker_seed.classify_workspace``.
+    tracker_seeded: bool = False
+    tracker_seed_reason: str | None = None
+    tracker_classification: str | None = None
+    tracker_root_id: str | None = None
+    tracker_descendants_seeded: tuple[str, ...] = ()
+    tracker_value_prop_source: str | None = None
 
 
 # ---- adapter body ----------------------------------------------------
@@ -459,6 +473,8 @@ def run_first_run_scaffold(
     partial_recovery: bool = False,
     persona_handle: str = DEFAULT_PERSONA_HANDLE,
     persona_template_override: Path | None = None,
+    value_prop_path_override: Path | None = None,
+    tracker_seed_runner: "Any | None" = None,
 ) -> ScaffoldResult:
     """Deterministic scaffold implementation, test-callable.
 
@@ -516,6 +532,21 @@ def run_first_run_scaffold(
         Test-only override for the framework persona-template source
         directory. Defaults to ``<repo>/primary-persona/templates/
         persona-template/`` when ``None``.
+    value_prop_path_override:
+        Amendment #39 — test-only override for the value-prop source
+        path the tracker-seed reads. On a workspace classified
+        ``"pos-v2-dev"`` the seed reads
+        ``<workspace>/docs/rebuild/VALUE_PROPOSITION.md`` by default;
+        on a non-dev workspace it reads
+        ``<workspace>/value-prop.md``. The override substitutes
+        whichever path applies.
+    tracker_seed_runner:
+        Amendment #39 — synchronous-callable injection seam for the
+        tracker-seed step so tests can substitute a fault-injecting
+        runner without touching ``asyncio``. The default invokes
+        ``tracker_seed.run_seed_synchronously``. Signature:
+        ``runner(*, workspace_root, tracker_db_path, classification,
+        value_prop) -> TrackerSeedResult``.
     """
     plat = platform_override or detect_platform()
     if plat != "macos":
@@ -629,6 +660,23 @@ def run_first_run_scaffold(
         template_override=persona_template_override,
     )
 
+    # Amendment #39: seed the workspace's objective-tracker DB with
+    # the value-prop root + spec-tier descendants. Idempotent by
+    # query (the seed-runner uses ``query_projection_view`` to detect
+    # already-seeded records and skip). On a workspace classified as
+    # pos-v2 dev (``docs/rebuild/VALUE_PROPOSITION.md`` present at
+    # the workspace root), the seed reads that doc as the source of
+    # the root's goal + criteria. On a workspace classified non-dev,
+    # the seed reads ``<workspace>/value-prop.md`` if present, else
+    # skips with a structured diagnostic. AC39.1 / AC39.5 measure
+    # the two outcomes; AC39.6 enforces no-payload-in-source.
+    tracker_seed_result = _run_tracker_seed(
+        workspace_root=Path(ws),
+        pos_root=pos_root,
+        value_prop_path_override=value_prop_path_override,
+        runner=tracker_seed_runner,
+    )
+
     return ScaffoldResult(
         ran=True,
         reason="partial_recovery" if partial_recovery else "fresh_scaffold",
@@ -638,6 +686,47 @@ def run_first_run_scaffold(
         confirmation=CONFIRMATION_SENTENCE,
         persona_dir=persona_dir,
         persona_installed=persona_installed,
+        tracker_seeded=tracker_seed_result.seeded,
+        tracker_seed_reason=tracker_seed_result.reason,
+        tracker_classification=tracker_seed_result.classification,
+        tracker_root_id=tracker_seed_result.root_id,
+        tracker_descendants_seeded=tracker_seed_result.descendants_seeded,
+        tracker_value_prop_source=tracker_seed_result.value_prop_source,
+    )
+
+
+def _run_tracker_seed(
+    *,
+    workspace_root: Path,
+    pos_root: Path,
+    value_prop_path_override: Path | None,
+    runner: Any | None,
+) -> "tracker_seed.TrackerSeedResult":
+    """Helper that classifies the workspace, loads the value-prop
+    source, and dispatches the synchronous tracker-seed runner.
+
+    Imported lazily so the scaffold's import graph stays acyclic
+    against ``objective_tracker`` (the seed module imports from
+    objective_tracker; importing it at module-load time would force
+    every workspace-bootstrap consumer to install the tracker even
+    when they're invoking unrelated scaffold code paths).
+    """
+    from . import tracker_seed
+
+    classification = tracker_seed.classify_workspace(workspace_root)
+    value_prop = tracker_seed.load_value_prop_source(
+        workspace_root,
+        classification,
+        value_prop_path_override=value_prop_path_override,
+    )
+    tracker_db_path = tracker_seed.tracker_db_path_for(pos_root)
+
+    seed_runner = runner or tracker_seed.run_seed_synchronously
+    return seed_runner(
+        workspace_root=workspace_root,
+        tracker_db_path=tracker_db_path,
+        classification=classification,
+        value_prop=value_prop,
     )
 
 

@@ -106,7 +106,7 @@ Each AC maps to at least one test function named `test_AC40_<n>_<slug>` in `prim
 
 ### AC40.1 — Tracker-context contributor produces non-empty `additionalContext` when in-flight objectives exist
 
-A contributor (name is method; example: `tracker-context`) registered on the persona's `ComposedContextPayload` registry produces a non-empty textual block when invoked under a workspace whose tracker DB carries at least one objective with `status in {started, decomposed}` chain-up to the workspace's value-prop root. The block contains at minimum the goal text of each in-flight objective. **Exact projection shape (goals only, goals + status, goals + parentage, structured tree) is method.** The block is surfaced via the registry's existing turn-level or session-level surface (builder's call on which trigger kind).
+A contributor (name is method; example: `tracker-context`) registered on the persona's `ComposedContextPayload` registry produces a non-empty textual block when invoked under a workspace whose tracker DB carries at least one in-flight (pre-terminal) objective chain-up to the workspace's value-prop root. The block contains at minimum the goal text of each in-flight objective. **Exact projection shape (goals only, goals + status, goals + parentage, structured tree) and the specific status-string set that maps to "in-flight" against the tracker's actual `ObjectiveStatus` lifecycle are method** (see §13/§14 — implementation pins `IN_FLIGHT_STATUSES = {proposed, active}` for the v1.0 lifecycle `proposed → active → {achieved | abandoned}`). The block is surfaced via the registry's existing turn-level or session-level surface (builder's call on which trigger kind).
 
 **Test shape:** scaffold a fresh tmpfs workspace through the existing first-run-test harness (which runs amendment #39's seed first per dependency order); start one or more objectives from the seeded tree (call `tracker.start(objective_id)` directly, since the seed is the source of objectives at this point); register the tracker-context contributor against a stand-in registry; invoke the registry under the appropriate trigger; assert the contributor's output contains the goal text of every started objective.
 
@@ -535,3 +535,51 @@ hands-off-lifecycle) runs green.
   closing scope) lands the migration data path; primary-persona's
   contributor is now in place to surface the migrated tree as
   ambient context.
+
+### Post-seal AC40.1 text tightening (2026-04-25)
+
+Per owner ruling on the same day as the seal commit (`22473a5`),
+AC40.1's declaration was tightened to remove method-shaped status-
+string vocabulary from the AC text.
+
+**Before:** "...whose tracker DB carries at least one objective with
+`status in {started, decomposed}` chain-up to the workspace's
+value-prop root."
+
+**After:** "...whose tracker DB carries at least one in-flight (pre-
+terminal) objective chain-up to the workspace's value-prop root."
+The specific status-string set is now explicitly named as method,
+with the implementation's `IN_FLIGHT_STATUSES = {proposed, active}`
+constant cited in §13 / §14 (this section above) rather than in the
+AC text.
+
+**Rationale:** the original AC text pinned `{started, decomposed}`
+as the in-flight set, but the actual `objective_tracker.spec.
+ObjectiveStatus` enum is `{proposed, active, achieved, abandoned}`
+(lifecycle `proposed → active → {achieved | abandoned}`). The build
+correctly applied ODD §2.5 — AC bounds outcome ("non-empty when in-
+flight objectives exist"), method picks the actual enum values —
+and surfaced the vocabulary mismatch as the "Halt-and-surface ODD
+finding" entry in this section. Per the owner's loose-AC-text rule
+(`feedback_loose_AC_text_fix_AC_not_implementation` memory), the
+corrective is to TIGHTEN the AC, not retrofit the implementation:
+the AC's job is to bound outcome, and method-shaped vocabulary
+(specific status-string sets, specific enum values) belongs in §13
+/ §14, not in the AC declaration. Same shape as the AC37.5
+tightening at commit `88ac7d2` (split-surface outcome).
+
+The three AC40.1 tests in `primary-persona/tests/test_AC40_1_in_
+flight_non_empty.py` were already authored against the tightened
+reading (they assert the outcome — non-empty when in-flight, empty
+when terminal — and use the actual `proposed`/`active`/`achieved`
+enum values via `IN_FLIGHT_STATUSES`); they pass unchanged under
+the tightened text. No source code or test code changed; only this
+plan doc's §4 AC40.1 declaration. §3 Lens-2 AC-trace already used
+abstract "in-flight objectives exist" phrasing and needed no
+edit. §5 behaviour-count summary row already abstract. §11 D-
+build.2 reference already abstract.
+
+Per ODD §3 acceptance criteria say the AC names what must be true;
+the loose `{started, decomposed}` vocabulary overstated the AC by
+pinning method-level enum values that turned out not to match the
+tracker's actual lifecycle.

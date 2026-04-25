@@ -484,8 +484,10 @@ amendment). Rationale documented inline in the test source.
 
 ### Commit SHAs
 
-- Amendment commit: `<filled in post-commit>`
-- Seal commit: `<filled in post-seal>`
+- Amendment commit: `d9ec507858ce51e76c7c467183177edb99aeb524` —
+  `feat(hands-off-lifecycle): Claude-Code default-agent wiring — amendment #37`
+- Seal commit: `c97472ecdba9689ec4a2086ba4077ec1aa967bac` —
+  `chore(seals): default-agent-wiring seal — hands-off-lifecycle at d9ec507`
 
 ### Dependents cleared to dispatch
 

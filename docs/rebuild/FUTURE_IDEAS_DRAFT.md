@@ -54,6 +54,12 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
 
 - **Asymmetric finding from integration test approach itself:** the "fresh-clone first-run with sandbox isolation + Monitors" pattern could become a reusable harness for any future integration test (post-amendment regression, cross-clone sanity, etc.). Currently a one-shot agent; could be extracted to a `tools/integration-test/` script. Worth considering after the current integration test concludes and we know the pattern actually worked.
 
+- **Scaffold-runner observability gap.** `first_run_scaffold_runner.py` discards the `ScaffoldResult` returned by `run_first_run_scaffold` — the `tracker_seeded` / `tracker_seed_reason` / `tracker_classification` fields never reach the worker log. A `skipped_no_value_prop` outcome would be silent (exactly the silent-failure shape that misled the integration-test agent's Finding 2 hypothesis). One-line diagnostic emit on success path would prevent future investigations from having to re-derive seed outcome.
+
+- **Integration-test methodology gap on SQLite file inspection.** Bare `stat()` on the main `.sqlite` file mid-WAL can mislead — the size doesn't reflect committed data until WAL checkpoints. Future integration-test fixtures should sample sibling `-wal`/`-shm` files AND open-then-close a `sqlite3` connection before size-checking. The 0-byte Finding 2 was caused by this methodology gap, not a real bug.
+
+- **Pos-amend `--bare` mode use case.** `claude --bare --settings .claude/settings.json` could be useful for clean experiments / scripted scenarios where the full pos-v2 harness shouldn't load. Document the recipe somewhere if it becomes a recurring need.
+
 ---
 
 *New entries appended to bottom; review-and-graduate happens post-initial-phase.*

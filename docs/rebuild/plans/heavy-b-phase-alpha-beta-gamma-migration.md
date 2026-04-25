@@ -2,31 +2,34 @@
 
 Dev-discipline data work. **NOT** a sealed-component amendment. No `pos-amend` manifest, no SEAL_COMMIT bump, no seal commit. The migration is the body of work that populates the workspace's tracker DB with the value-prop-rooted tree (root + spec phases + sealed components + amendment ACs + test bindings) per the Heavy-B research's three-phase recommendation. Companion to amendments #38 (`objective-tracker` schema widening) + #39 (`workspace-bootstrap` tracker seed) + #40 (primary-persona tracker-context contributor) and the pos-amend-tracker-integration plan.
 
+**Reframed 2026-04-25 mid-session:** the migration is no longer scoped as a "canonical-only one-shot" body of work. It is **lazy-projected**: triggered by `dev_intent=yes` on a workspace's PersonaContract (per sub-plan A in the two-modes-and-multi-workspace programme), executes once per workspace when the signal first flips on, and runs in any dev-intent workspace — not just canonical. End users in DEV MODE get the dev objective tree projected automatically when they signal dev intent; no manual canonical-side step. Continuous registration via `pos-amend` (Phase γ's persistent shape) remains unchanged once the initial projection has happened. The existing ACs (AC.D-mig.1–AC.D-mig.6) describe post-phase outcomes that hold regardless of trigger — the reframe changes the trigger, not the outcomes; no AC additions or modifications.
+
 **Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/`.
 **Companion research:** `docs/rebuild/plans/research/value-prop-as-root-heavy-b-migration-research.md` — the Heavy-B master research artefact; this plan is the data-migration body of work surfaced at research §B.2 ruled D-5 + D-6.
 **Prior dev-discipline plan precedent:** `docs/rebuild/plans/pos-amend-install-instructions-fix.md` (commit `045f6db`) + `pos-amend-tracker-integration.md` (sibling plan in this programme).
 
-**Sibling work in the Heavy-B programme.** This plan depends on **all four amendments + the pos-amend integration landing first**.
+**Sibling work in the Heavy-B programme.** This plan depends on **all four amendments + the pos-amend integration + sub-plan A landing first**.
 
 - **#38:** `objective-tracker` schema widening + query API. **Hard prerequisite.**
 - **#39:** `workspace-bootstrap` first-run tracker seed (value-prop root + spec descendants). **Hard prerequisite — overlaps with Phase α scope.**
 - **#40:** `primary-persona` tracker-context contributor. **Hard prerequisite — the contributor is the consumer that makes the migrated content useful.**
 - **`pos-amend-tracker-integration.md`:** manifest `objectives` block + `apply` registration + `seal` `source_commit` write. **Hard prerequisite — Phase γ "continuous registration" uses pos-amend's surface.**
-- **This plan:** the α / β / γ phasing (Phase α: root + spec + components; Phase β: component ACs; Phase γ: amendment ACs + test bindings + continuous registration going forward).
+- **Sub-plan A (`docs/rebuild/plans/two-modes-and-multi-workspace/A-onboarding-dev-intent.md`):** `dev_intent` field on PersonaContract. **Hard prerequisite for the lazy-projection trigger — phase migration consults this signal to know whether to run.** Without A's storage location settled, the lazy trigger has no signal to read; the migration cannot self-activate. (Pre-A: the migration could still run as a manually-invoked script in canonical, but the reframed shape relies on A.)
+- **This plan:** the α / β / γ phasing (Phase α: root + spec + components; Phase β: component ACs; Phase γ: amendment ACs + test bindings + continuous registration going forward) **plus the lazy-projection trigger that consults A's `dev_intent` signal**.
 
 ---
 
 ## 1. Summary / TLDR
 
-The Heavy-B migration populates the workspace's tracker DB in three phases, per research §B.2 + owner ruling D-6:
+The Heavy-B migration populates a dev-intent workspace's tracker DB in three phases, per research §B.2 + owner ruling D-6. **Lazy-projection trigger (reframed 2026-04-25):** the phases run automatically on the first session where the workspace's PersonaContract carries `dev_intent="yes"` (per sub-plan A in the two-modes-and-multi-workspace programme) AND the dev tree has not already been projected. Re-runs are no-ops by `lifted_from` idempotency (per §6 constraint 6). The trigger applies in any dev-intent workspace — not just canonical; an end-user in DEV MODE gets the dev objective tree projected automatically when they signal dev intent. No manual canonical-side step.
 
-1. **Phase α — Root + spec + components (~30 records, manual seed).** The value-prop root + spec v1.0 / v1.1 / v1.2 phase objectives + the 13 sealed component root objectives. Most of this is delivered by amendment #39's first-run seed (which seeds root + spec descendants); Phase α extends that on the existing pos-v2 dev workspace by adding the 13 sealed-component objective records.
-2. **Phase β — Component ACs (~130–200 records, automated extractor + manual review).** Each sealed component's proposal-declared ACs (e.g., safety-layer A1–A20, memory D1–D9, scope-of-work, reversibility B18–B25, etc.) lift into ObjectiveSpec records under their component objective. Authored as a one-time extractor script with manual placeholder seeding for ambiguous cases per owner ruling D-5.
-3. **Phase γ — Amendment ACs + test bindings + continuous registration (~500 records, automated extractor + pos-amend hook).** Every amendment plan from #1 onward (best-effort per owner ruling D-5) lifts its declared ACs into ObjectiveSpec records under the relevant component objective, with `lifted_from.source_doc` pointing at the plan file and `lifted_from.source_commit` populated from the amendment's commit SHA. Test functions backing the ACs bind via a scripted second pass. After Phase γ lands, every new amendment registers its records via the pos-amend integration's `objectives` manifest block (continuous registration, no extractor needed).
+1. **Phase α — Root + spec + components (~30 records, manual seed).** The value-prop root + spec v1.0 / v1.1 / v1.2 phase objectives + the 13 sealed component root objectives. Most of this is delivered by amendment #39's first-run seed (which seeds root + spec descendants); Phase α extends that on a dev-intent workspace by adding the 13 sealed-component objective records. **Lazy trigger:** executes when `dev_intent` flips on, if not already projected (idempotency by `lifted_from.source_doc`).
+2. **Phase β — Component ACs (~130–200 records, automated extractor + manual review).** Each sealed component's proposal-declared ACs (e.g., safety-layer A1–A20, memory D1–D9, scope-of-work, reversibility B18–B25, etc.) lift into ObjectiveSpec records under their component objective. Authored as a one-time extractor script with manual placeholder seeding for ambiguous cases per owner ruling D-5. **Lazy trigger:** executes when `dev_intent` flips on, after Phase α completes, if not already projected.
+3. **Phase γ — Amendment ACs + test bindings + continuous registration (~500 records, automated extractor + pos-amend hook).** Every amendment plan from #1 onward (best-effort per owner ruling D-5) lifts its declared ACs into ObjectiveSpec records under the relevant component objective, with `lifted_from.source_doc` pointing at the plan file and `lifted_from.source_commit` populated from the amendment's commit SHA. Test functions backing the ACs bind via a scripted second pass. **Lazy trigger:** executes when `dev_intent` flips on, after Phase β completes, if not already projected. After Phase γ lands, every new amendment registers its records via the pos-amend integration's `objectives` manifest block (continuous registration, no extractor needed) — continuous registration is unchanged by the lazy-projection reframe and runs every time `pos-amend apply` runs in a dev-intent workspace.
 
-The migration is data, not code. **Nothing in this plan touches sealed-component source.** The work composes against amendment #38's schema + query API, amendment #39's seeded root, amendment #40's consumer, and pos-amend's `objectives` block. All extractor logic lives in `tools/pos-amend/` (or a sibling `tools/heavy-b-migrate/` — exact home is method) as dev-discipline tooling.
+The migration is data, not code. **Nothing in this plan touches sealed-component source.** The work composes against amendment #38's schema + query API, amendment #39's seeded root, amendment #40's consumer, sub-plan A's `dev_intent` field, and pos-amend's `objectives` block. All extractor logic lives in `tools/pos-amend/` (or a sibling `tools/heavy-b-migrate/` — exact home is method) as dev-discipline tooling.
 
-The migration is split into three phases per ODD §2.5 ("build only what the objectives require") + research §B.2: a single big-bang of 700 records would author records the migration's ACs do not require to test in one commit. Phasing lets each phase's ACs verify exactly what that phase landed.
+The migration is split into three phases per ODD §2.5 ("build only what the objectives require") + research §B.2: a single big-bang of 700 records would author records the migration's ACs do not require to test in one commit. Phasing lets each phase's ACs verify exactly what that phase landed. The lazy-projection trigger preserves the phase ordering (AC.D-mig.6) — α before β before γ — and the per-phase idempotency rule.
 
 ---
 
@@ -197,8 +200,10 @@ Six declared behaviours; six ACs cover them. No method-in-AC. Dev-discipline pla
 8. **Data quality bound.** The extractor is a regex/parser-based tool; ambiguous extractions get placeholders (AC.D-mig.5), not garbage. The migration log lists every placeholder-seeded plan so the human reviewer can prioritise post-migration cleanup.
 9. **Authority bound.** Builder may refine the extractor's parser shape, the placeholder-seeded record convention, the manifest-fixture shape for AC.D-mig.4 verification, the migration-log schema, the phase-runner CLI surface. Builder may NOT relax ordering (AC.D-mig.6), idempotency (per §6 constraint 6), or `authored_by="user"` (§6 constraint 7).
 10. **CDC adherence.** Plan-before-code, background-agent default, scope-only dispatch. Multi-phase work runs serially in the same working tree per the serialise-amendment-builds-in-the-same-working-tree memory; phase α background agent + phase β background agent must not race the same tracker DB.
-11. **All four upstream deliverables must seal/land before this work begins** — verified at builder's pre-edit gate.
+11. **All five upstream deliverables must seal/land before this work begins** — verified at builder's pre-edit gate. The five are: amendments #38 / #39 / #40, the pos-amend-tracker-integration plan, AND sub-plan A (the `dev_intent` field on PersonaContract that the lazy-projection trigger consults).
 12. **Dev-discipline framing — no SEAL_COMMIT bump, no manifest, no seal commit.** This work lands as one or more conventional `chore(migrate)` / `feat(tools)` commits per phase.
+13. **Lazy-projection trigger — read-only consumer of A's signal.** The trigger reads `dev_intent` from the PersonaContract; it does not write the field, modify A's surface, or extend the contract schema. Any need to extend A's surface is a halt — that's a re-extension of A, not a property of this plan.
+14. **Idempotency by `lifted_from` is the lazy-projection guard.** When the trigger fires on a workspace whose dev tree was already projected, every phase is a no-op (records present per `lifted_from.source_doc + source_ac` are skipped per §6 constraint 6). The trigger does not need its own "already projected" sentinel — `lifted_from`-based idempotency covers it.
 
 ---
 
@@ -220,23 +225,24 @@ Six declared behaviours; six ACs cover them. No method-in-AC. Dev-discipline pla
 ## 8. Implementation order (suggested — builder's call to refine)
 
 1. Read session-start corpus per CLAUDE.md.
-2. Read Heavy-B research artefact + amendments #38/#39/#40 plans + pos-amend-tracker-integration plan + this plan + STATE.md + the 13 component proposal.md files + the 26 amendment plan files.
-3. Verify all four upstream deliverables have landed (per §6 constraint 11).
-4. Write builder-plan to `docs/rebuild/plans/heavy-b-phase-alpha-beta-gamma-migration.builder-plan.md` naming specific phase-extractor files + symbols expected to be touched.
-5. Phase α — author the sealed-component objective seeder; run it against the workspace tracker; verify AC.D-mig.1.
-6. Phase β — author the component-proposal AC extractor; run it; verify AC.D-mig.2 + AC.D-mig.5 (placeholder paths exercised on at least one ambiguous case).
-7. Phase γ — author the amendment-plan AC extractor + test-binding pass; run it; verify AC.D-mig.3.
-8. Verify continuous registration via a fixture amendment cycle; verify AC.D-mig.4.
-9. Verify phase ordering enforcement (AC.D-mig.6).
-10. Update `tools/pos-amend/README.md` (or `tools/heavy-b-migrate/README.md`) with the migration surface + how to re-run it (idempotently).
-11. Conventional commits land each phase + the docs update (no `--amend`, no SEAL_COMMIT bump, no seal commit). Suggest one commit per phase for clean rollback.
+2. Read Heavy-B research artefact + amendments #38/#39/#40 plans + pos-amend-tracker-integration plan + sub-plan A + this plan + STATE.md + the 13 component proposal.md files + the 26 amendment plan files.
+3. Verify all five upstream deliverables have landed (per §6 constraint 11).
+4. Write builder-plan to `docs/rebuild/plans/heavy-b-phase-alpha-beta-gamma-migration.builder-plan.md` naming specific phase-extractor files + symbols expected to be touched, including the lazy-projection trigger surface.
+5. Author the lazy-projection trigger — a small surface that reads `dev_intent` from the PersonaContract on the relevant lifecycle event (e.g., session-start, scaffold completion, or pos-amend invocation — exact attach point is method) and dispatches the phase runner if the workspace is dev-intent and the dev tree is not yet projected. Method-level decision: where the trigger attaches in the lifecycle.
+6. Phase α — author the sealed-component objective seeder; trigger runs it against the workspace tracker; verify AC.D-mig.1.
+7. Phase β — author the component-proposal AC extractor; trigger runs it after α; verify AC.D-mig.2 + AC.D-mig.5 (placeholder paths exercised on at least one ambiguous case).
+8. Phase γ — author the amendment-plan AC extractor + test-binding pass; trigger runs it after β; verify AC.D-mig.3.
+9. Verify continuous registration via a fixture amendment cycle; verify AC.D-mig.4.
+10. Verify phase ordering enforcement (AC.D-mig.6) AND lazy-trigger idempotency (re-firing the trigger on an already-projected workspace is a no-op via `lifted_from`).
+11. Update `tools/pos-amend/README.md` (or `tools/heavy-b-migrate/README.md`) with the migration surface + how to re-run it (idempotently) + the lazy-trigger attach point.
+12. Conventional commits land each phase + the docs update (no `--amend`, no SEAL_COMMIT bump, no seal commit). Suggest one commit per phase for clean rollback.
 
 ---
 
 ## 9. Halt triggers (builder halts + signals owner)
 
-1. **Cross-component scope expansion beyond `tools/`.** Any required source edit to `objective-tracker/`, `workspace-bootstrap/`, `primary-persona/`, `hands-off-lifecycle/`, or any other sealed component → halt.
-2. **Any of the four upstream deliverables has not landed before this work begins.** Halt.
+1. **Cross-component scope expansion beyond `tools/`.** Any required source edit to `objective-tracker/`, `workspace-bootstrap/`, `primary-persona/`, `hands-off-lifecycle/`, or any other sealed component → halt. **Note:** the lazy-projection trigger reads `dev_intent` from the PersonaContract; if the trigger's attach point requires extending a sealed component's surface (e.g., a new persona-side hook, a new scaffold-runner branch), halt — that re-extension is a separate sealed-component amendment, not part of this dev-discipline plan.
+2. **Any of the five upstream deliverables has not landed before this work begins** (amendments #38 / #39 / #40, pos-amend-tracker-integration, sub-plan A's `dev_intent` field). Halt.
 3. **The extractor cannot reach idempotency** because `query_projection_view` does not support filtering by both `source_doc` AND `source_ac` together (the dual-key idempotency check). Halt — coordinate with #38 territory or surface for owner.
 4. **The phase ordering cannot be enforced structurally** (e.g., Phase β somehow legitimately needs to seed a record under a Phase α-implied parent that does not yet exist). Halt — that contradicts the research §B.2 phasing model.
 5. **The placeholder-seeded record class produces a record that fails ObjectiveSpec validation** (e.g., the cited plan has no parseable goal text). Halt — surface for owner; the placeholder convention may need a new field or a different `time_bound` shape.
@@ -252,6 +258,7 @@ Six declared behaviours; six ACs cover them. No method-in-AC. Dev-discipline pla
 
 This plan is dev-discipline; no manifest, no SEAL_COMMIT bump, no seal commit. Conventional commits land each phase. Suggested commit-message families per phase:
 
+- Lazy-projection trigger: `feat(tools): heavy-b lazy-projection trigger reads dev_intent + dispatches phases`
 - Phase α: `chore(migrate): heavy-b phase α — sealed-component objectives seeded`
 - Phase β: `chore(migrate): heavy-b phase β — component ACs extracted`
 - Phase γ: `chore(migrate): heavy-b phase γ — amendment ACs + test bindings`
@@ -269,8 +276,9 @@ The following items remain method-level builder choices within this scope. Maste
 - **D-build.3 — Phase γ amendment authoring policy.** Two reasonable shapes: (a) every amendment is `authored_by="user"` (per research §A.4 dominant case); (b) authoring is determined per-amendment from git log + plan-doc author conventions. **Master-research recommendation:** (a) for simplicity unless an amendment's plan explicitly names a primary-persona author. **Builder's call within scope.** §6 constraint 7 measures outcome.
 - **D-build.4 — Continuous-registration verification mechanism.** Two reasonable shapes: (a) a CI check that compares manifest `objectives` count to tracker record count for the manifest's plan; (b) a one-shot verification pass run after Phase γ that exits 0 if tree matches expected post-Phase-γ state. **Master-research recommendation:** (b) for now — CI integration is a follow-on. **Builder's call within scope.** AC.D-mig.4 measures outcome.
 - **D-build.5 — Per-phase test scope.** Phases run independently; per-phase test scope covers that phase + the upstream-prerequisite-verification harness. The builder may unify all six ACs in a single test suite or split per phase; either is acceptable.
+- **D-build.6 — Lazy-projection trigger attach point.** Three reasonable shapes for where the trigger consults `dev_intent` and dispatches the phase runner: (a) a session-start hook in primary-persona's contributor surface (cheap to read, fires every session); (b) a one-shot dispatch on first-run scaffold completion when a dev-intent contract is detected; (c) a pre-`pos-amend apply` check that ensures the dev tree is projected before continuous registration writes new records. **Master-research recommendation:** (a) — session-start is the established lifecycle event the contract is already loaded against (per amendment #32's gate); the trigger reads the contract once, dispatches the phases if needed, and the work is idempotent on subsequent sessions. (b) and (c) are method-acceptable but require additional plumbing. **Builder's call within scope.** §6 constraint 13 (read-only consumer) and §6 constraint 14 (idempotency) measure outcome regardless.
 
-These five are surfaced to make the dispatch brief tighter; they are not blockers for plan approval.
+These six are surfaced to make the dispatch brief tighter; they are not blockers for plan approval.
 
 ---
 
@@ -304,7 +312,7 @@ When the brief is drafted, it carries these CDC + ODD enforcement requirements v
 
 - Working directory: `/Users/lukeivers/ivers-corp-pos-v2/`. No cd-out.
 - Session-start corpus read mandatory before any code edit.
-- **Pre-edit gate:** verify all four upstream deliverables have landed (`objective-tracker/tests/SEAL_COMMIT` past #38 + `lifted_from` field present + `query_projection_view` callable; `workspace-bootstrap/tests/SEAL_COMMIT` past #39 + freshly-scaffolded workspace's tracker carries the value-prop root; `primary-persona/tests/SEAL_COMMIT` past #40 + tracker-context contributor importable; pos-amend's `objectives` manifest block accepted by validate). Halt if any unmet.
+- **Pre-edit gate:** verify all five upstream deliverables have landed (`objective-tracker/tests/SEAL_COMMIT` past #38 + `lifted_from` field present + `query_projection_view` callable; `workspace-bootstrap/tests/SEAL_COMMIT` past #39 + freshly-scaffolded workspace's tracker carries the value-prop root; `primary-persona/tests/SEAL_COMMIT` past #40 + tracker-context contributor importable; pos-amend's `objectives` manifest block accepted by validate; **sub-plan A landed — `primary-persona/tests/SEAL_COMMIT` post-A + PersonaContract carries `dev_intent` field readable from any consumer**). Halt if any unmet.
 - Plan-before-code: builder writes its own builder-plan to disk before touching source (per phase if needed).
 - ODD §2.4 + §2.5: no method-in-acceptance, no non-objective-backed code (criteria are AC.D-mig.x because no spec clause anchors this dev-discipline data work; the §2.5 framing in §2 above explains why).
 - Strong-ODD-adherence: halt if the builder believes an ODD break is strongly required.

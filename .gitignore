@@ -27,3 +27,6 @@ orchestrator/data/
 
 # OS
 .DS_Store
+
+# Scratch / agent working files
+.scratch/

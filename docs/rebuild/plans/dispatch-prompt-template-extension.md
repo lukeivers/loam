@@ -502,7 +502,7 @@ satisfied.
 
 ### Commit SHAs
 
-(populated post-commit; see git log for the build commit hash)
+- `dbabd37` — `feat(tools): pos-amend template engine — dispatch + plan-doc families (AC.D-tpl.1–AC.D-tpl.7)`
 
 ### Dependents cleared to dispatch
 

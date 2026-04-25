@@ -1,6 +1,8 @@
 """loam-mode — pos-v2 dev-mode auto-load partition selector + audit.
 
-Sub-plan F (two-modes-and-multi-workspace programme).
+Sub-plan F (two-modes-and-multi-workspace programme) — partition
+data + selector + audit. Sub-plan B (amendment #45 + dev-discipline
+companion) — SessionStart emitter that consumes the partition.
 """
 
 from loam_mode.manifest import (
@@ -15,6 +17,13 @@ from loam_mode.audit import (
     audit_partition,
     scan_cross_mode_references,
 )
+from loam_mode.session_start import (
+    DEFAULT_DEV_EXTENSION_FILENAME,
+    build_loam_mode_inner_hook,
+    compute_session_mode,
+    emit_session_start_context,
+    read_dev_intent_safe,
+)
 
 __all__ = [
     "Manifest",
@@ -25,4 +34,9 @@ __all__ = [
     "AuditReport",
     "audit_partition",
     "scan_cross_mode_references",
+    "DEFAULT_DEV_EXTENSION_FILENAME",
+    "build_loam_mode_inner_hook",
+    "compute_session_mode",
+    "emit_session_start_context",
+    "read_dev_intent_safe",
 ]

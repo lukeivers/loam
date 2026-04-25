@@ -222,6 +222,28 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         # SEAL_COMMIT window first surfaces them via hands-off-
         # lifecycle's own amendment).
         "primary-persona",
+        # Amendment #38 (objective-tracker schema widening; sealed
+        # at 92bead1) introduced the `objective-tracker/` top-level
+        # bucket. Amendment #45 (the current hands-off-lifecycle
+        # amendment) is the first H/L amendment whose SEAL_COMMIT
+        # window crosses the #38 commit, so the admission lands
+        # here per ODD §10's per-invariant-BASELINE convention.
+        # Finer-grained diff-scope filter lives in
+        # objective-tracker/tests/test_no_sealed_amendments.py.
+        "objective-tracker",
+        # Amendment #44 (sub-plan F dev-mode partition; sealed at
+        # cb584ba) introduced the `CLAUDE.dev.md` top-level file as
+        # the dev-only counterpart to CLAUDE.md (per F's D-build
+        # choice 4). Amendment #45 admits it at H/L's first
+        # opportunity; the file is consumed by amendment #45's
+        # sub-plan B emitter as the dev-extension fragment.
+        "CLAUDE.dev.md",
+        # Amendment #44's sibling commit (f7cb781,
+        # `chore(gitignore): add .scratch/ to root ignore list`)
+        # touched root `.gitignore`. Amendment #45 admits the file
+        # at H/L's first opportunity per the per-invariant-BASELINE
+        # convention.
+        ".gitignore",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

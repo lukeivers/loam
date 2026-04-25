@@ -6,6 +6,9 @@ Subcommands:
   - ``select`` — print the selected corpus for a given mode (AC.F2
     debug helper). Not load-bearing for B's mechanism; B calls the
     Python API directly.
+  - ``session-start`` — emit the SessionStart additionalContext
+    payload for the current workspace's mode (AC.B3 + AC.B4).
+    Always exits 0 (AC.B5 fail-soft).
 """
 
 from __future__ import annotations
@@ -17,6 +20,7 @@ from pathlib import Path
 from loam_mode.audit import audit_partition
 from loam_mode.manifest import load_manifest
 from loam_mode.selector import select_corpus
+from loam_mode.session_start import cli_session_start
 
 
 _DEFAULT_MANIFEST_REL = "docs/rebuild/dev-mode-manifest.yaml"
@@ -57,6 +61,11 @@ def _cmd_select(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_session_start(args: argparse.Namespace) -> int:
+    workspace_root = _resolve_workspace(args.workspace)
+    return cli_session_start(workspace_root=workspace_root)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="loam-mode",
@@ -80,6 +89,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_select.add_argument("--manifest", type=Path, default=None)
     p_select.add_argument("mode", choices=["user", "dev"])
     p_select.set_defaults(func=_cmd_select)
+
+    p_ss = sub.add_parser(
+        "session-start",
+        help=(
+            "Emit the SessionStart additionalContext payload for the "
+            "workspace's current mode (AC.B3 + AC.B4). Always exits 0 "
+            "per AC.B5 fail-soft."
+        ),
+    )
+    p_ss.add_argument("--workspace", type=Path, default=None)
+    p_ss.set_defaults(func=_cmd_session_start)
 
     return parser
 

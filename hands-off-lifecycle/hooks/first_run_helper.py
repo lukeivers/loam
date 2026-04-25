@@ -90,6 +90,47 @@ from agent_file_authoring import (  # noqa: E402
 )
 
 
+# ---- amendment #45 — multi-contributor SessionStart composition ------
+#
+# The workspace's loam-mode session-start command is registered as a
+# second inner hook on the SessionStart envelope (per amendment #45's
+# generalisation of ``build_first_run_stanza`` /
+# ``build_supervisor_stanza``). The import of
+# ``loam_mode.session_start.build_loam_mode_inner_hook`` is wrapped so
+# a missing or broken loam-mode install degrades gracefully to the
+# pre-amendment-#45 single-inner-hook shape (AC.45.5 backwards-compat
+# in the degraded path). When the import succeeds the inner hook is
+# composed into the stanza; when it fails the helper logs nothing and
+# proceeds — Claude Code's SessionStart fan-out simply does not get
+# the loam-mode emit.
+
+
+def _loam_mode_inner_hooks(pos_v2_root: Path) -> list[dict]:
+    """Return the extra inner-hook list for the SessionStart envelope.
+
+    Imports are lazy; ImportError or any unexpected exception yields
+    an empty list (the stanza degrades to single-inner-hook shape).
+    """
+    try:
+        # Prefer the workspace venv's site-packages so a workspace
+        # whose loam-mode install differs from the host's is resolved
+        # correctly. The shared venv is at ``<root>/.venv``.
+        venv_site = (
+            pos_v2_root / ".venv" / "lib"
+        )
+        if venv_site.is_dir():
+            for site_dir in venv_site.iterdir():
+                site_pkgs = site_dir / "site-packages"
+                if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
+                    sys.path.insert(0, str(site_pkgs))
+        from loam_mode.session_start import (  # type: ignore[import-not-found]
+            build_loam_mode_inner_hook,
+        )
+        return [build_loam_mode_inner_hook(pos_v2_root)]
+    except Exception:  # noqa: BLE001 — fail-soft per AC.45.5
+        return []
+
+
 # ---- error codes -----------------------------------------------------
 
 
@@ -1057,7 +1098,10 @@ def _self_retire(
     path or a degraded re-run), the field is left untouched —
     backwards-compat with every pre-amendment-#37 caller.
     """
-    supervisor_stanza = build_supervisor_stanza(pos_v2_root)
+    supervisor_stanza = build_supervisor_stanza(
+        pos_v2_root,
+        extra_inner_hooks=_loam_mode_inner_hooks(pos_v2_root),
+    )
     merge_result = merge_session_start(
         settings_path=settings_path,
         new_entry=supervisor_stanza,
@@ -1467,7 +1511,10 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # While first-run is still live, keep the stanza pointing at
     # first-run.sh. Phase 6 rewrites this to the supervisor path.
     settings_path = pos_v2_root / ".claude" / "settings.json"
-    first_run_stanza = build_first_run_stanza(pos_v2_root)
+    first_run_stanza = build_first_run_stanza(
+        pos_v2_root,
+        extra_inner_hooks=_loam_mode_inner_hooks(pos_v2_root),
+    )
     merge_result = merge_session_start(
         settings_path=settings_path,
         new_entry=first_run_stanza,
@@ -1659,7 +1706,10 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         try:
             merge_result = merge_session_start(
                 settings_path=settings_path,
-                new_entry=first_run_stanza,
+                new_entry=build_first_run_stanza(
+                    pos_v2_root,
+                    extra_inner_hooks=_loam_mode_inner_hooks(pos_v2_root),
+                ),
                 agent_handle=agent_handle,
             )
         except OSError as e:

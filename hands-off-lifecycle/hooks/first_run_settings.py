@@ -72,28 +72,89 @@ def _iter_commands(stanza_entries: list[Any]) -> list[str]:
     return commands
 
 
+# Set of substrings that mark a command as pos-v2-owned (per
+# amendment #45's multi-contributor SessionStart shape). Any inner
+# hook whose ``command`` contains one of these substrings is
+# considered shipped by pos-v2 and does NOT trigger the user-stanza
+# backup path. The set grows when a future amendment registers a
+# new SessionStart contributor under hands-off-lifecycle's wiring.
+_POS_V2_COMMAND_MARKERS: tuple[str, ...] = (
+    "first-run.sh",
+    "pos_session_start.py",
+    # Amendment #45 (sub-plan B): loam-mode SessionStart emitter
+    # composed onto the shipped stanza by ``build_*_stanza`` when the
+    # caller passes ``extra_inner_hooks``. Recognised here so a
+    # re-run of merge_session_start over a stanza we wrote does not
+    # treat the loam-mode inner hook as "user-authored".
+    "loam_mode.cli session-start",
+    "loam_mode.cli session_start",
+    "-m loam_mode",
+)
+
+
 def _is_pos_v2_owned(stanza_entries: list[Any]) -> bool:
     """Identify whether an existing SessionStart stanza is pos-v2's own.
 
-    pos-v2's shipped stanza contains a command ending in
-    ``first-run.sh`` or ``pos_session_start.py``. Anything else is
-    treated as user-authored and backed up before replacement.
+    Pre-amendment-#45: pos-v2's shipped stanza contained a single
+    inner-hook command ending in ``first-run.sh`` or
+    ``pos_session_start.py``; the predicate required EVERY command
+    to match.
+
+    Amendment #45 (multi-contributor generalisation, AC.45.1 +
+    AC.45.2 + AC.45.3): pos-v2 ships multi-inner-hook stanzas where
+    additional contributors compose alongside the first-run /
+    supervisor command. The predicate now treats a stanza as pos-v2-
+    owned iff every inner-hook command matches one of the recognised
+    pos-v2 command markers (``first-run.sh``, ``pos_session_start.py``,
+    or the loam-mode session-start command). A wholly user-authored
+    stanza or one that mixes user-authored and pos-v2 inner hooks is
+    still treated as displaceable — backup behaviour is preserved.
     """
     commands = _iter_commands(stanza_entries)
     if not commands:
         return False
     for cmd in commands:
-        if "first-run.sh" not in cmd and "pos_session_start.py" not in cmd:
+        if not any(marker in cmd for marker in _POS_V2_COMMAND_MARKERS):
             return False
     return True
 
 
-def build_first_run_stanza(pos_v2_root: Path) -> dict[str, Any]:
+def _compose_inner_hooks(
+    base_inner_hook: dict[str, Any],
+    extra_inner_hooks: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    """Compose the outer envelope's ``hooks`` array.
+
+    Amendment #45 (AC.45.2 + AC.45.3): when ``extra_inner_hooks`` is
+    None or empty, the resulting list is ``[base_inner_hook]`` —
+    byte-identical to the pre-amendment single-inner-hook shape. When
+    non-empty, the extras are appended in caller-supplied order so
+    Claude Code's SessionStart fan-out invokes the base command (the
+    first-run shim or supervisor) BEFORE the additional contributors.
+    """
+    if not extra_inner_hooks:
+        return [base_inner_hook]
+    return [base_inner_hook, *extra_inner_hooks]
+
+
+def build_first_run_stanza(
+    pos_v2_root: Path,
+    *,
+    extra_inner_hooks: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """The SessionStart stanza Claude Code runs while first-run is live.
 
     Returns the full ``{matcher, hooks: [...]}`` envelope required by
     the current Claude Code hook schema. Absolute path; no env-var
     substitution at this point.
+
+    Amendment #45 (AC.45.2): accepts an optional
+    ``extra_inner_hooks`` list of additional inner-hook entries to
+    compose into the outer envelope. When ``None`` or empty (the
+    pre-amendment-#45 default), the envelope is byte-identical to the
+    legacy single-inner-hook shape. When non-empty, the extra inner
+    hooks are appended after the first-run shim entry; Claude Code's
+    SessionStart fan-out invokes them all in order.
     """
     script = Path(pos_v2_root) / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     # timeout is in seconds per Claude Code hook docs. 60s is a generous
@@ -102,20 +163,23 @@ def build_first_run_stanza(pos_v2_root: Path) -> dict[str, Any]:
     # worker. Pre-amendment callers had 120000 here, which at seconds is
     # ~33 hours; the 2026-04-22 pyyaml-reachability amendment (#5)
     # tightens the unit to be unambiguous and sets a realistic cap.
+    base_inner_hook: dict[str, Any] = {
+        "type": "command",
+        "command": str(script),
+        "async": False,
+        "timeout": 60,
+    }
     return {
         "matcher": "",
-        "hooks": [
-            {
-                "type": "command",
-                "command": str(script),
-                "async": False,
-                "timeout": 60,
-            }
-        ],
+        "hooks": _compose_inner_hooks(base_inner_hook, extra_inner_hooks),
     }
 
 
-def build_supervisor_stanza(pos_v2_root: Path) -> dict[str, Any]:
+def build_supervisor_stanza(
+    pos_v2_root: Path,
+    *,
+    extra_inner_hooks: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """The SessionStart stanza Claude Code runs after first-run self-retires.
 
     Invokes pos_session_start.py directly with the shared venv's Python.
@@ -123,6 +187,13 @@ def build_supervisor_stanza(pos_v2_root: Path) -> dict[str, Any]:
     script) with a resolved absolute path. Returns the full
     ``{matcher, hooks: [...]}`` envelope required by the current
     Claude Code hook schema.
+
+    Amendment #45 (AC.45.3): accepts an optional
+    ``extra_inner_hooks`` list of additional inner-hook entries to
+    compose into the outer envelope. ``None`` or empty preserves the
+    pre-amendment-#45 single-inner-hook shape (AC.45.5 backwards-
+    compat); non-empty appends contributors after the supervisor
+    entry.
     """
     pos_v2_root = Path(pos_v2_root)
     python = pos_v2_root / ".venv" / "bin" / "python"
@@ -132,16 +203,15 @@ def build_supervisor_stanza(pos_v2_root: Path) -> dict[str, Any]:
     # amendment callers had 20000 here — ambiguous units — which the
     # 2026-04-22 pyyaml-reachability amendment (#5) tightens to the
     # documented seconds unit.
+    base_inner_hook: dict[str, Any] = {
+        "type": "command",
+        "command": f"{python} {script}",
+        "async": False,
+        "timeout": 20,
+    }
     return {
         "matcher": "",
-        "hooks": [
-            {
-                "type": "command",
-                "command": f"{python} {script}",
-                "async": False,
-                "timeout": 20,
-            }
-        ],
+        "hooks": _compose_inner_hooks(base_inner_hook, extra_inner_hooks),
     }
 
 
@@ -162,12 +232,24 @@ def merge_session_start(
 
     Behaviour on the SessionStart stanza itself:
       * no prior stanza: write ``[new_entry]``.
-      * prior stanza is pos-v2's own (command points at first-run.sh or
-        pos_session_start.py): replace with ``[new_entry]``, no backup.
+      * prior stanza is pos-v2's own (command points at first-run.sh,
+        pos_session_start.py, or loam-mode session-start — see the
+        amendment #45 multi-contributor extension to ``_is_pos_v2_owned``):
+        replace with ``[new_entry]``, no backup.
       * prior stanza is user-authored: write the whole prior settings.json
         to ``<settings_path>.user-backup-<timestamp>.json`` and replace
         the SessionStart stanza with ``[new_entry]``. The caller surfaces
         the displacement in the confirmation sentence.
+
+    Amendment #45 (multi-contributor generalisation, AC.45.1): the
+    ``new_entry`` envelope ``{"matcher": ..., "hooks": [...]}`` may
+    carry one OR many inner-hook entries. The function composes the
+    OUTER SessionStart list as ``[new_entry]`` exactly as before; the
+    composition of the inner-hook list is done by
+    ``build_first_run_stanza`` / ``build_supervisor_stanza`` via
+    their ``extra_inner_hooks`` parameter. Zero-or-one contributor
+    produces output byte-identical to pre-amendment-#45 (AC.45.5
+    backwards-compat).
 
     Top-level ``"agent": <agent_handle>`` merge (amendment #37,
     AC37.1):

@@ -515,16 +515,12 @@ hands-off-lifecycle) runs green.
 
 ### Commit SHAs
 
-- Amendment commit: `<TBD-amendment-sha>` —
+- Amendment commit: `bfe66c90b3be63ebc0c782388d64b2db564c053a` —
   `feat(primary-persona): tracker-context contributor — surfaces
   in-flight objective tree (amendment #40)`
-- Seal commit: `<TBD-seal-sha>` — `chore(seals):
-  tracker-context-contributor seal — primary-persona at
-  <amendment-sha-short>`
-
-(SHAs backfilled by a follow-up `docs(plans): record amendment #40
-commit SHAs in method-decision register` commit, mirroring #38/#39
-post-seal pattern.)
+- Seal commit: `22473a5fb3b0850702d2b26ab60e051a2f212c70` —
+  `chore(seals): tracker-context-contributor seal — primary-persona
+  at bfe66c9`
 
 ### Dependents cleared to dispatch
 

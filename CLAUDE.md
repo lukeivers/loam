@@ -90,6 +90,7 @@ In practice: when an output crosses the ~40-line / ~400-word threshold, choose a
 - `docs/odd-methodology.md` — the ODD methodology itself.
 - `docs/odd-in-pos.md` — ODD applied to pOS v2 specifically, including worked examples.
 - `docs/rebuild/FUTURE_IDEAS.md` — future ideas (including the Dev/SDLC plugin at Idea 3) and the currently-parked dev CDCs. The CDCs are temporary residents of that file; when the Dev/SDLC plugin lands, they migrate there.
+- `docs/rebuild/FUTURE_IDEAS_DRAFT.md` — no-overhead capture surface for improvement ideas (companion to FUTURE_IDEAS.md). Every improvement idea (Luke's or assistant's) lands here at point-of-occurrence; daily rigor (post-initial-phase) reviews and graduates entries to FUTURE_IDEAS.md or drops them. Agents surface to chat; parent appends.
 - `docs/rebuild/plans/` — per-amendment and per-scope plan docs (plan-before-code artefacts).
 - `docs/rebuild/components/` — proposal + seal narratives per sealed component.
 - `tools/pos-amend/` — amendment-dispatch tooling. The `pos-amend` CLI mechanises sealed-component amendment-cycle bookkeeping (BASELINE advances, allowed_prefixes/allowed_files widening, SEAL_COMMIT sidecar bumps, narrative appends) driven by a per-amendment YAML manifest committed alongside the plan doc. As of amendment #22, `pos-amend apply --dry-run` green is a hard prereq for amendment commits.

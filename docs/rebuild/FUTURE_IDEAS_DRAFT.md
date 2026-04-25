@@ -46,15 +46,15 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
 
 - **AC text precision sweep.** Opportunistic batch of post-seal AC tightenings (similar to AC37.5, AC40.1) — when an AC pins specific vocabulary that turns out to be method-not-objective, tighten the AC. Could batch across multiple sealed amendments in one doc-only sweep.
 
-- **`TRACKER_DB_FILENAME` repeated across three consumers.** The constant `"objective_tracker.sqlite"` lives in `workspace_bootstrap.adapters.tracker_seed`, `primary_persona.tracker_context`, and now `pos_amend.tracker_registration` (post-#16). A fourth consumer would warrant extraction into a shared `pos_paths` (or similar) helper module so the convention is single-sourced. Surfaced by #16 build agent.
+- **`TRACKER_DB_FILENAME` repeated across three consumers.** Graduated to FUTURE_IDEAS.md Idea 15 on 2026-04-25.
 
-- **Pos-amend pokes tracker SQLite directly for `update_source_commits`.** Works against amendment #38's stable schema, but a future tracker amendment changing the `lifted_from` JSON shape would silently break `pos_amend.tracker_registration.update_source_commits` without an obvious test signal in pos-amend. Future safeguard: add a tracker public API like `tracker.rewrite_lifted_from_source_commit(objective_id, sha)` so pos-amend stops touching the SQLite directly. Worth raising when (a) a fourth tracker consumer arrives, OR (b) the next tracker amendment touches `lifted_from`'s shape. Surfaced by #16 build agent.
+- **Pos-amend pokes tracker SQLite directly for `update_source_commits`.** Graduated to FUTURE_IDEAS.md Idea 16 on 2026-04-25.
 
-- **Dispatch-template + Heavy-B-phase-migration could compose** so the dispatch-template engine itself uses the persona-tracker context (per #40) to know which sub-agent shape applies. Stretch — surfaced as broader-applicability of the dispatch-template work; only valuable once both land. Surface for review post-initial-phase.
+- **Dispatch-template + Heavy-B-phase-migration could compose.** Graduated to FUTURE_IDEAS.md Idea 17 on 2026-04-25.
 
-- **Asymmetric finding from integration test approach itself:** the "fresh-clone first-run with sandbox isolation + Monitors" pattern could become a reusable harness for any future integration test (post-amendment regression, cross-clone sanity, etc.). Currently a one-shot agent; could be extracted to a `tools/integration-test/` script. Worth considering after the current integration test concludes and we know the pattern actually worked.
+- **Asymmetric finding from integration test approach itself.** Graduated to FUTURE_IDEAS.md Idea 18 on 2026-04-25 (reusable integration-test harness extraction).
 
-- **Scaffold-runner observability gap.** `first_run_scaffold_runner.py` discards the `ScaffoldResult` returned by `run_first_run_scaffold` — the `tracker_seeded` / `tracker_seed_reason` / `tracker_classification` fields never reach the worker log. A `skipped_no_value_prop` outcome would be silent (exactly the silent-failure shape that misled the integration-test agent's Finding 2 hypothesis). One-line diagnostic emit on success path would prevent future investigations from having to re-derive seed outcome.
+- **Scaffold-runner observability gap.** Graduated to FUTURE_IDEAS.md Idea 19 on 2026-04-25.
 
 - **Integration-test methodology gap on SQLite file inspection.** Bare `stat()` on the main `.sqlite` file mid-WAL can mislead — the size doesn't reflect committed data until WAL checkpoints. Future integration-test fixtures should sample sibling `-wal`/`-shm` files AND open-then-close a `sqlite3` connection before size-checking. The 0-byte Finding 2 was caused by this methodology gap, not a real bug.
 
@@ -68,15 +68,9 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
 
 - **Template `description` frontmatter doubles as `list` one-liner.** The introspection-surface frontmatter the engine requires gives `pos-amend template list` its descriptions for free; useful pattern when memory-doc / commit-message families land.
 
-- **System-design concern: shipped runtime vs dev-time machinery — TWO MODES (LOAD-BEARING — see chat).** Owner ruled 2026-04-25 that pos-v2 is downloaded from GitHub by end users; their clone IS pos-v2 for them; no separate "canonical" exists for end users. **Refined 2026-04-25 (same session):**
-  - Single distribution (GitHub repo) ships everything — runtime + dev-time machinery — because anyone using pos-v2 might also want to develop on it.
-  - **Two modes**: NORMAL USE (no dev tools auto-load) and DEV MODE (dev tools auto-load on intent signal).
-  - Easy mode toggle. The user shouldn't have to manually configure anything heavyweight to switch.
-  - **Dev intent signal trigger** TBD — owner ruling pending.
-  - **MULTI-WORKSPACE is a v1 requirement, not v2.** Owner intends to run more than one pos-v2 workspace concurrently on this machine. All host-global state (`~/.pos/orchestrator.sqlite`, `scope_of_work.sqlite`, post-#39 `objective_tracker.sqlite`, default port 8765) breaks multi-workspace and must be addressed.
-  - Implications: (1) `classify_workspace` in #39 needs replacement — VALUE_PROPOSITION.md presence is no longer a viable dev-marker since every GitHub-cloned user has it; classification should track "dev intent" instead. (2) Host-global `~/.pos/` SQLite files migrate to workspace-local (extending amendment #28's pattern). (3) Default-port 8765 for memory-graphiti needs per-workspace allocation (open Idea 9-family work — amendment #29 named the fix, didn't ship the auto-allocation). (4) What auto-loads in dev mode: `pos-amend`, plan docs, manifest YAMLs, BASELINE conventions, SEAL_COMMITs, sealed-component conventions, dispatch-template, spec docs, component proposals + seal narratives, ODD methodology, dev CDCs from FUTURE_IDEAS.md. (5) What stays loaded in normal use: the runtime harness (memory-system, scope-of-work, primary-persona, objective-tracker, all the Phase 1–4 sealed components), VALUE_PROPOSITION.md (still load-bearing for tracker root), basic settings, plus end-user-facing docs/help.
+- **System-design concern: shipped runtime vs dev-time machinery — TWO MODES.** Graduated to FUTURE_IDEAS.md Idea 13 on 2026-04-25 (umbrella for the broader two-modes-and-multi-workspace programme; the active part is in flight as A/B/E/F sub-plans, the deferred parts C/D/G sit under the idea's umbrella).
 
-- **Path-mismatch (#39 ↔ #40) fix direction.** Tracker DB write path (`tracker_seed.tracker_db_path_for(pos_root)`) vs read path (`primary_persona.tracker_context.tracker_db_path_for(workspace_root)`). Owner has leaned **B (#39 writes to workspace_root)** consistent with #28's workspace-locality and end-user-shipped principle. Fix held pending the broader shipped-vs-dev-time scoping ruling. Real latent bug — bites the moment #40's contributor is wired to live persona registration.
+- **Path-mismatch (#39 ↔ #40) fix direction.** Graduated to FUTURE_IDEAS.md Idea 14 on 2026-04-25 (active fix folded into sub-plan E; comprehensive resolver-pattern direction stays deferred under Idea 13's multi-workspace umbrella).
 
 ---
 

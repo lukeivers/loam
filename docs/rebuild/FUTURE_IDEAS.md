@@ -559,6 +559,125 @@ concrete preparation work.
 
 ---
 
+## Idea 13 — Two modes (NORMAL USE / DEV MODE) and multi-workspace umbrella
+
+Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`).
+
+pos-v2 ships as a single GitHub-distributed repository serving both end users and contributors. Two operating modes — **NORMAL USE** (no dev tools auto-load) and **DEV MODE** (dev tools auto-load on intent signal) — live in the same clone. A workspace-local persona-onboarding answer is the authoritative dev-intent signal; the user shouldn't have to manually configure anything heavyweight to switch modes. **Multi-workspace concurrency** (running more than one pos-v2 workspace concurrently on a single host) is captured here as a future direction; it is not part of v1 but the design preserves the migration path.
+
+This idea is the umbrella for the broader two-modes-and-multi-workspace programme. The **active part** is in flight as a master-plan + four sub-plans at `docs/rebuild/plans/two-modes-and-multi-workspace/` (sub-plans A → E → B → F — persona-onboarding dev-intent question, classify_workspace replacement with the path-mismatch fix folded in, two-mode loading mechanism, dev-mode auto-load partition). The **deferred parts** sit under this idea's umbrella for activation when the multi-workspace cycle is picked up:
+
+- **Sub-plan C** (`C-state-file-migration.md`) — multi-workspace state-file migration: every host-global `~/.pos/` SQLite + YAML file gets a workspace-local override path per the `~/.claude/` + `<workspace>/.claude/` pattern owner ruled in D-MASTER.2.
+- **Sub-plan D** (`D-memory-port-auto-allocation.md`) — per-workspace memory-graphiti port auto-allocation. Default port 8765 is a multi-workspace collision risk; auto-allocation via `bind(0)` at scaffold time eliminates it.
+- **Sub-plan G** (`G-shared-memory-workspace-keying.md`, NEW stub authored 2026-04-25) — shared host-level memory-graphiti instance + workspace-keying via graphiti's `group_id` parameter. A single shared instance serves N workspaces; content is keyed per-workspace by default with an explicit "global" channel for cross-workspace memories (user preferences, identity facts). Sub-plan G captures the design direction; if it activates first at multi-workspace reactivation, it absorbs sub-plan D's outcome (one shared instance, no port collisions).
+
+**Implications already partially addressed by the active programme:**
+
+- `classify_workspace` in amendment #39 is replaced by sub-plan E — `VALUE_PROPOSITION.md` presence is no longer a viable dev-marker since every GitHub-cloned user has it; classification tracks the user's own dev-intent answer instead.
+- Host-global `~/.pos/` SQLite files migrate to workspace-local on a per-file basis (extending amendment #28's pattern); the global-vs-workspace partition mirrors Claude Code's own `~/.claude/` + `<workspace>/.claude/` pattern.
+- What auto-loads in DEV MODE: `pos-amend`, plan docs, manifest YAMLs, BASELINE conventions, SEAL_COMMITs, sealed-component conventions, dispatch-template, spec docs, component proposals + seal narratives, ODD methodology, dev CDCs from FUTURE_IDEAS.md.
+- What stays loaded in NORMAL USE: the runtime harness (memory-system, scope-of-work, primary-persona, objective-tracker, all the Phase 1–4 sealed components), `VALUE_PROPOSITION.md` (still load-bearing for tracker root), basic settings, plus end-user-facing docs/help.
+
+The deferred sub-plans (C, D, G) reactivate when the multi-workspace cycle is picked up. They compose under this idea's umbrella; the master plan's §11.5 explains the deferral rationale. Full reactivation requires a fresh proposal cycle (the sub-plan files on disk are the design seed, not the final shape).
+
+---
+
+## Idea 14 — Path-mismatch (#39 ↔ #40) fix direction (active fix folded into E; comprehensive resolver deferred)
+
+Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`).
+
+A real latent bug in the post-#39/#40 surface: tracker DB write path (`workspace_bootstrap.adapters.tracker_seed.tracker_db_path_for(pos_root)`) vs read path (`primary_persona.tracker_context.tracker_db_path_for(workspace_root)`). The same helper accepts different roots from different callers — the writer passes `pos_root`, the reader passes `workspace_root`. Bites the moment #40's contributor wires to live persona registration: the persona reads from `workspace_root`'s tracker DB and finds it empty, because #39 seeded into `pos_root`'s.
+
+Owner-leaned fix direction (recorded mid-session 2026-04-25): **B (#39 writes to `workspace_root`)** consistent with amendment #28's workspace-locality and the end-user-shipped principle (the workspace is the unit; pos_root is the install location, not the data location).
+
+**Active fix.** Folded into sub-plan E (the `classify_workspace` replacement, in-flight as the active two-modes programme): a small additive change to `tracker_seed.py` — change the write path argument from `pos_root` to `workspace_root` to match #40's read path. Because E already touches `tracker_seed.py`, the fix folds in without expanding scope (single-component, single amendment). Documented in the master plan's §11.5.
+
+**Comprehensive resolver (deferred under Idea 13's multi-workspace umbrella).** A more thorough fix would extract a workspace-aware path-resolver pattern that all multi-workspace path consumers share (`tracker_seed`, `tracker_context`, `pos_amend.tracker_registration`, the cost / scope-of-work / orchestrator adapters per sub-plan C). The shared resolver enforces consistency: callers can't pass the wrong root because they don't pass a root at all — they pass a workspace handle, and the resolver derives both `pos_root` and `workspace_root` consistently. This deeper fix waits for sub-plan C's reactivation; the active fix in E is sufficient for the single-workspace v1.
+
+**Trigger to activate the comprehensive direction:** when sub-plan C reactivates (multi-workspace cycle), the path-resolver pattern absorbs C's per-component path-rewriting work. Composes with Idea 15 (shared `pos_paths` helper) — the resolver lives in or alongside that helper module.
+
+---
+
+## Idea 15 — Shared `pos_paths` helper for `TRACKER_DB_FILENAME` and sibling path constants
+
+Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced by amendment #16 build agent).
+
+The constant `"objective_tracker.sqlite"` is now duplicated across three consumers: `workspace_bootstrap.adapters.tracker_seed` (writer per #39), `primary_persona.tracker_context` (reader per #40), and `pos_amend.tracker_registration` (registrar per the pos-amend-tracker-integration plan post-#16). Each consumer hard-codes the filename. A fourth consumer would warrant extraction; the third was the trigger flagged at #16 build, but the extraction cost was not worth a dedicated amendment then.
+
+**Direction.** A shared helper module — working name `pos_paths` — that single-sources the workspace-relative path constants every cross-component consumer needs. Tracker DB filename is the first; sibling candidates include the orchestrator SQLite filename, the scope-of-work SQLite filename, the first-run state filename (per amendment #28), the persona-contract directory layout (per amendment #36), and the memory-yaml override path (per amendment #29).
+
+**Composition with Idea 14.** The path-resolver pattern (Idea 14's deferred direction) can live in or alongside `pos_paths`. The resolver answers "which root applies for this consumer" while `pos_paths` answers "what is the workspace-relative path for this state file." Together they replace the duplicated string-constant + path-arithmetic pattern with one source of truth.
+
+**Trigger to activate.** Either: (a) a fourth consumer of `TRACKER_DB_FILENAME` arrives (the Idea-15 trigger from the original draft entry), OR (b) sub-plan C reactivates (multi-workspace cycle) and the resolver pattern needs a home, OR (c) any sealed-component amendment introduces a third hard-coded sibling constant (orchestrator / scope-of-work SQLite filenames are the next candidates).
+
+**Out of scope for activation.** The helper does not introduce new state surfaces; it consolidates existing ones. Its activation should not require any sealed component to expose new path semantics; if it does, the activation is mis-scoped.
+
+---
+
+## Idea 16 — Tracker public API for source-commit rewriting (replace pos-amend's direct SQLite poke)
+
+Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced by amendment #16 build agent).
+
+`pos_amend.tracker_registration.update_source_commits` currently reaches into the tracker's SQLite directly to rewrite the `lifted_from.source_commit` JSON field after seal. Works against amendment #38's stable schema, but a future tracker amendment changing the `lifted_from` JSON shape would silently break pos-amend without an obvious test signal in pos-amend's own test surface — pos-amend doesn't own the schema, so it can't detect schema drift.
+
+**Direction.** A tracker public API — working name `tracker.rewrite_lifted_from_source_commit(objective_id, sha)` (or equivalent) — that owns the SQLite read/write at the tracker layer. pos-amend calls the API; the tracker enforces the schema; schema changes break the API contract (which pos-amend's test suite catches via the API surface), not the storage layout silently.
+
+**Composition.** This is a sealed-component amendment to `objective-tracker` — small surface, narrow API addition, no schema change at first. The amendment's AC count is small (one new public function, one test verifying the function rewrites the SHA, one test verifying the schema-error path).
+
+**Trigger to activate.** Either: (a) a fourth tracker SQLite consumer appears (each new consumer multiplies the schema-drift surface area), OR (b) the next tracker amendment touches `lifted_from`'s shape (which would break pos-amend silently today; the API guard prevents the silent failure). Lightly-coupled to Heavy-B Phase γ — when continuous registration runs at every amendment, pos-amend's poke happens more often, raising the value of the API guard.
+
+**Out of scope.** Migrating other pos-amend ↔ tracker boundaries to API form (e.g. the `objectives` block's apply-time write path) is a separate cycle. This idea names only the post-seal source-commit rewrite.
+
+---
+
+## Idea 17 — Dispatch-template ↔ persona-tracker composition (stretch)
+
+Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`).
+
+Stretch idea about composing two existing surfaces. The dispatch-template engine (research+plan task #23, building toward a templated agent-dispatch authoring shape) could lean on the persona-tracker context (per amendment #40) to know which sub-agent shape applies for a given workflow — the template's variable defaults could be computed from the workspace's current tracker state rather than hand-supplied per dispatch.
+
+**Why this is a stretch.** The leverage requires both the dispatch-template engine AND the persona-tracker context to be settled in shape. Neither is fully settled today (dispatch-template is in flight; tracker-context is post-#40 but its surface evolves with each amendment). The composition is high-leverage when both stabilise; it is medium-cost speculation today.
+
+**Composition.** Templates declare which tracker-context fields they consume; the dispatch-template engine queries the persona-tracker context at expansion time; the engine fills the template's defaults from the tracker. Example: a "build-agent dispatch" template with a `{{IN_FLIGHT_AMENDMENT}}` placeholder computes its default from the tracker's "what amendment is active in this workspace" query.
+
+**Trigger to activate.** When all three of the following are true: (a) dispatch-template engine has stabilised (post-research-and-plan-#23, post-first-batch of templates landing), (b) persona-tracker context has stabilised (post-Heavy-B-phase-γ continuous registration is steady-state), (c) a concrete dispatch shape benefits from the composition (the abstract benefit is not enough; a specific repeated dispatch pattern needs the auto-fill).
+
+**Inverse-asymmetric concern.** The composition is tempting but can over-couple two surfaces that are independently useful. Surface for review post-initial-phase per the original draft entry; do not pull this in pre-emptively.
+
+---
+
+## Idea 18 — Reusable integration-test harness extraction
+
+Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced by the 2026-04-25 integration-test agent).
+
+The "fresh-clone first-run with sandbox isolation + Monitors" pattern that the 2026-04-25 integration-test agent used is a one-shot today — the agent's prompt + scratch fixtures + post-run analysis carry the harness shape. The pattern could become a reusable harness for any future integration test (post-amendment regression checks, cross-clone sanity checks, multi-workspace fixtures per sub-plan C / Idea 13's deferred parts, etc.).
+
+**Direction.** A `tools/integration-test/` script (or sub-package under `tools/pos-amend/`) that captures the pattern: fresh-clone bootstrap → first-run dispatch under Monitor → controlled-fixture state inspection → structured findings report. The harness is dev-discipline (`tools/`-resident, no sealed-component changes); each integration test is a small recipe that names what to scaffold, what to run, what to inspect. The harness handles sandbox isolation, Monitor wiring, output paths, and findings-report shape.
+
+**Composition.** Future integration tests (sub-plan C's two-workspace fixture per AC.PROG.1, sub-plan G's cross-workspace memory-isolation test, post-amendment regression sweeps) all benefit. The harness is the difference between "spin up a fresh agent prompt with the entire fixture-shape inline" (today) and "write a 30-line recipe that the harness expands" (future).
+
+**Trigger to activate.** Worth considering once a second integration-test pattern surfaces — the second use is what calibrates "is the abstraction right" before extraction. Before then, every recurring fixture pattern feels like the right abstraction; after, the actual shape is empirically validated. The integration-test agent run from 2026-04-25 was the first; the second is yet to happen.
+
+**Out of scope for activation.** Generic test-runner functionality (pytest already covers it). The harness specifically captures the fresh-clone + Monitor + first-run pattern, not generic Python-test execution.
+
+---
+
+## Idea 19 — Scaffold-runner observability: emit ScaffoldResult fields into the worker log
+
+Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced by the 2026-04-25 integration-test agent's Finding-2 investigation).
+
+`workspace_bootstrap`'s `first_run_scaffold_runner.py` discards the `ScaffoldResult` returned by `run_first_run_scaffold` — the fields `tracker_seeded`, `tracker_seed_reason`, `tracker_classification` (added by amendment #39) never reach the worker log. A `skipped_no_value_prop` outcome would be silent: the scaffold completes, the tracker is empty, the user sees "first-run done" with no signal that seeding was skipped. The 2026-04-25 integration-test agent's Finding-2 hypothesis was caused (in part) by exactly this silent-failure shape — the agent had to re-derive the seed outcome from secondary signals because the primary signal was discarded.
+
+**Direction.** A one-line diagnostic emit on the success path of `run_first_run_scaffold`'s caller — log the seed outcome (one structured event with `tracker_seeded`, `tracker_seed_reason`, `tracker_classification`) at the worker-log surface. Future investigations of seed behaviour read the log directly; no re-derivation needed.
+
+**Composition.** This is a sealed-component amendment to `workspace-bootstrap` (the scaffold-runner is in workspace-bootstrap's territory). Small surface — one log emit, one test verifying the log carries the expected fields after a fresh scaffold. Could batch with sub-plan E's amendment if both land in the same `tracker_seed.py` neighbourhood; otherwise its own narrow amendment.
+
+**Trigger to activate.** Either: (a) sub-plan E activates and the amendment can absorb the diagnostic emit (cheapest), OR (b) a second silent-failure investigation surfaces (the integration-test agent's Finding-2 was the first), OR (c) any future amendment to the scaffold-runner surface area where the diagnostic is in the same neighbourhood.
+
+**Out of scope.** A full structured-events programme for first-run observability (telemetry, OTel events, dashboard surfaces). This idea is the one-line emit, not the framework — composable with future telemetry work but not blocked by it.
+
+---
+
 ## Catalogue discipline
 
 This file is the catalogue of future directions for pOS v2. Entries here are not commitments. When an idea is picked up, it becomes a real component cycle (research plan → research → proposal → brief → build → seal) and is retired from this file with a pointer to the component that now owns it. When an idea is deliberately dropped, it is retired with a one-line rationale.

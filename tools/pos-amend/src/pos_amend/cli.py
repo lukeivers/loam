@@ -151,11 +151,22 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "apply":
         return apply_cmd.run(args.manifest, dry_run=args.dry_run)
     if args.command == "seal":
+        # Normalise --plan-doc to an absolute path before any
+        # downstream `Path.relative_to(repo_root)` walk. Relative
+        # paths surfaced under a different cwd than the repo root
+        # crash `relative_to` with ValueError; resolving here gives
+        # the seal subcommand a path it can reliably reason about
+        # regardless of caller cwd. (Surfaced by the #41 build:
+        # operator passed `docs/rebuild/plans/...` as a relative
+        # arg from inside the repo and the seal step crashed.)
+        plan_doc = (
+            args.plan_doc.resolve() if args.plan_doc is not None else None
+        )
         return seal_cmd.run(
             args.manifest,
             no_finalize=args.no_finalize,
             scoped_sweep=args.scoped_sweep,
-            plan_doc=args.plan_doc,
+            plan_doc=plan_doc,
         )
     if args.command == "template":
         templates_root = args.templates_root or template_cmd.DEFAULT_TEMPLATES_ROOT

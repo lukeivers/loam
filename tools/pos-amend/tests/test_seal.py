@@ -758,3 +758,63 @@ def test_AC_D_sa_7_missing_section_14_halts_with_diagnostic(
     captured = capsys.readouterr()
     combined = captured.out + captured.err
     assert "plan-doc-missing-section-14" in combined or "## 14" in combined
+
+
+def test_AC_D_sa_7_plan_doc_accepts_relative_path(
+    sealed_repo, monkeypatch
+) -> None:
+    """`--plan-doc <relative-path>` resolves cleanly without
+    crashing on `Path.relative_to`.
+
+    Pre-fix behaviour: passing a relative path crashes inside
+    `_finalize` at the post-backfill `plan_doc.relative_to(repo_root)`
+    call (relative paths don't carry the repo root as an ancestor).
+    Post-fix: the CLI dispatch normalises `--plan-doc` to its
+    resolved absolute form before handing off to the subcommand,
+    so the same backfill walk works against any cwd.
+    """
+    repo = sealed_repo
+    plan_path = (
+        repo / "docs" / "rebuild" / "plans" / "amendment-953-relpath.md"
+    )
+    _write_plan_doc_with_section_14(plan_path)
+    _git(repo, "add", "--", str(plan_path.relative_to(repo)))
+    _git(repo, "commit", "-q", "-m", "fixture: plan-doc for relpath test")
+
+    manifest_path = _write_manifest(
+        repo,
+        components=["alpha"],
+        number=953,
+        slug="relpath",
+        seal_description="relpath",
+    )
+    amendment_sha = _make_amendment_commit(
+        repo, "alpha", payload="ac7d-relpath"
+    )
+
+    # Invoke `cli_main` from inside the repo with a RELATIVE plan-doc
+    # path. Pre-fix this crashed; post-fix the CLI resolves the path
+    # before passing it to the subcommand.
+    monkeypatch.chdir(repo)
+    rel_plan_str = str(plan_path.relative_to(repo))
+    rel_manifest_str = str(manifest_path.relative_to(repo))
+    assert not Path(rel_plan_str).is_absolute(), (
+        "fixture sanity: rel_plan_str must be a relative path"
+    )
+
+    rc = cli_main(
+        ["seal", "--plan-doc", rel_plan_str, rel_manifest_str]
+    )
+    assert rc == 0, "relative --plan-doc must not crash relative_to"
+
+    # Plan doc carries `### Commit SHAs` under §14
+    plan_text = plan_path.read_text(encoding="utf-8")
+    assert "### Commit SHAs" in plan_text
+    assert amendment_sha in plan_text
+
+    # HEAD is the deterministic follow-up commit
+    head_subject = _git(repo, "log", "-1", "--format=%s").stdout.strip()
+    assert (
+        head_subject
+        == "docs(plans): record amendment #953 commit SHAs in method-decision register"
+    )

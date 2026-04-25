@@ -257,9 +257,28 @@ If any surfaces as a hard prereq, halt-and-surface (umbrella plan §11).
 
 ## 8. Commit-SHAs (to be backfilled by `pos-amend seal --plan-doc`)
 
-```
-Amendment commit:  <pending>
-Seal commit:       <pending>
-```
+See §14 below for the canonical record.
 
-Per pos-amend-seal-automation-extension's §14 backfill convention.
+---
+
+## 14. Method-decision register
+
+Method-level decisions live in §3.1 (D-build.1 through D-build.8).
+This section exists per the pos-amend-seal-automation-extension's
+§14 backfill convention so `pos-amend seal --plan-doc` can append
+the commit-SHA subsection automatically.
+
+### Commit SHAs
+
+```
+Amendment commits:
+  6e1cb0c  feat(primary-persona, hands-off-lifecycle): wire session-start
+           + user-prompt-submit emitters + starter-pending body
+           (amendment #46, AC46.1–AC46.S)
+  de678f5  fix(hands-off-lifecycle): repair AC45.S seal-diff window
+           for §2.5 (amendment #46 corrective)
+
+Seal commit:
+  2f44bbb  chore(seals): primary-persona session-start + turn-start
+           emitters — primary-persona+hands-off-lifecycle at de678f5
+```

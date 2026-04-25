@@ -450,6 +450,16 @@ class ScaffoldResult:
     tracker_root_id: str | None = None
     tracker_descendants_seeded: tuple[str, ...] = ()
     tracker_value_prop_source: str | None = None
+    # Amendment #47: workspace-local `.mcp.json` writer output.
+    # ``mcp_json_path`` is the absolute path to the workspace's
+    # ``.mcp.json`` (set whenever the writer ran, regardless of
+    # whether it produced a write); ``mcp_json_wrote`` is True
+    # only when this invocation actually changed the file's
+    # bytes; ``mcp_json_reason`` is the structured outcome label
+    # from ``mcp_json_writer.MCPJsonWriteResult``.
+    mcp_json_path: Path | None = None
+    mcp_json_wrote: bool = False
+    mcp_json_reason: str | None = None
 
 
 # ---- adapter body ----------------------------------------------------
@@ -660,6 +670,22 @@ def run_first_run_scaffold(
         template_override=persona_template_override,
     )
 
+    # Amendment #47: write the workspace-local ``.mcp.json`` so
+    # Claude Code discovers the per-workspace memory-graphiti
+    # FastMCP service at session-load and binds its tools as
+    # ``mcp__memory-graphiti__<tool>``. The ``(host, port)`` pair
+    # already resolved above for the launchd plist (line ~624) is
+    # the source of truth — the same per-workspace
+    # ``memory.yaml`` value flows into both the launchd
+    # EnvironmentVariables (#29) and the MCP-server URL (#47).
+    # Fail-soft: write failures surface a structured outcome on
+    # ``ScaffoldResult`` and the scaffold completes (AC47.3).
+    mcp_json_result = _run_mcp_json_writer(
+        workspace_root=Path(ws),
+        memory_host=memory_host,
+        memory_port=memory_port,
+    )
+
     # Amendment #39: seed the workspace's objective-tracker DB with
     # the value-prop root + spec-tier descendants. Idempotent by
     # query (the seed-runner uses ``query_projection_view`` to detect
@@ -691,6 +717,35 @@ def run_first_run_scaffold(
         tracker_root_id=tracker_seed_result.root_id,
         tracker_descendants_seeded=tracker_seed_result.descendants_seeded,
         tracker_value_prop_source=tracker_seed_result.value_prop_source,
+        mcp_json_path=mcp_json_result.path,
+        mcp_json_wrote=mcp_json_result.wrote,
+        mcp_json_reason=mcp_json_result.reason,
+    )
+
+
+def _run_mcp_json_writer(
+    *,
+    workspace_root: Path,
+    memory_host: str,
+    memory_port: int,
+) -> "mcp_json_writer.MCPJsonWriteResult":
+    """Helper that invokes the amendment #47 ``.mcp.json`` writer.
+
+    Imported lazily so the scaffold's import graph stays acyclic
+    and matches the lazy-import pattern already used for
+    ``tracker_seed`` (below). The writer module is stdlib-only,
+    so the lazy import is purely structural — there is no
+    optional-dependency reason. Returns the raw
+    ``MCPJsonWriteResult``; the scaffold consumes its three fields
+    and surfaces them on ``ScaffoldResult``. AC47.1 / AC47.2 /
+    AC47.3 pivot on this seam.
+    """
+    from . import mcp_json_writer
+
+    return mcp_json_writer.write_mcp_json(
+        workspace_root=workspace_root,
+        host=memory_host,
+        port=memory_port,
     )
 
 

@@ -332,3 +332,154 @@ When the brief is drafted, it carries these CDC + ODD enforcement requirements v
 - No `git commit --amend`.
 - Amendment-dispatch speedups: narrow test scope to `objective-tracker/` + seal-diff on others; skip pre-seal full rerun; methodology snippets inlined.
 - objective-tracker is not a frozen-baseline component — manifest sets `frozen_baseline: false`.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left D-build.1 through D-build.4 to the builder. This
+section records the choices made and the rationale, plus the test
+breakdown and commit SHAs.
+
+### D-build.1 — `LiftedFrom` Pydantic shape: nested `BaseModel`
+
+`LiftedFrom` is a Pydantic `BaseModel` with `model_config = ConfigDict(
+extra="forbid", frozen=True)`. Three fields: `source_doc: str
+(min_length=1)`, `source_ac: str (min_length=1)`, `source_commit: str
+| None = None` (with a `field_validator` rejecting empty / whitespace-
+only strings when set). `ObjectiveSpec.lifted_from: LiftedFrom | None
+= None` is added at the bottom of the field list.
+
+**Rationale:** plan §11 D-build.1 candidate (a) — preserves the
+`ObjectiveSpec` strict-shape pattern recursively. `TimeBound` is the
+existing precedent (same `extra="forbid" / frozen=True` config); the
+new model mirrors it. Candidate (b) (`TypedDict`) would have lost the
+recursive frozen contract and split validation across two layers
+(field-validator + TypedDict). AC38.1 measures the validation tightness
+without method-in-acceptance.
+
+### D-build.2 — `query_projection_view` filter signature: Pydantic `ObjectiveFilter`
+
+`ObjectiveTracker.query_projection_view(filter: ObjectiveFilter |
+None = None) -> tuple[ObjectiveProjection, ...]`. `ObjectiveFilter`
+lives in `objective-tracker/src/filter.py`, is `extra="forbid"` +
+`frozen=True`, and declares two optional fields: `authored_by: str |
+None = None` and `lifted_from_source_doc: str | None = None`. An
+empty / `None` filter returns the full record set; set fields AND
+together. An `is_empty()` helper on the filter exposes the
+"no-constraint" semantic.
+
+**Rationale:** plan §11 D-build.2 candidate (b) — Pydantic-shaped
+filters self-document and reject unknown keys at construction.
+Candidate (a) (`**filter_kwargs`) would have allowed silent typo
+acceptance, which §2.5 forbids. Future filter expressiveness lands as
+new optional fields on `ObjectiveFilter` (additive widening); the
+filter-language extension is its own future amendment per plan §7.
+
+### D-build.3 — Storage representation: `lifted_from_json` text column
+
+The `objective_state` schema gains `lifted_from_json TEXT NOT NULL
+DEFAULT 'null'`. `projection_to_state_row` writes either
+`proj.lifted_from.model_dump_json()` (when populated) or the literal
+string `"null"` (when `lifted_from is None`). An in-place ALTER TABLE
+guard in `EventStore.__init__` adds the column to legacy DBs that
+already have the table without it (PRAGMA table_info → check column
+set → ADD COLUMN if missing).
+
+**Rationale:** plan §11 D-build.3 candidate (a) — matches the
+existing convention (`time_bound_json`, `criteria_json`,
+`criteria_latest_json` are all JSON-serialised text columns).
+Candidate (b) (three discrete columns) would have required three new
+indexes for the same query selectivity and complicated the in-place
+ALTER. The `'null'` sentinel is parseable by `json.loads` and round-
+trips through the public projection as `lifted_from is None`.
+
+### D-build.4 — D8 probe-fixture extension: extend the existing probe set
+
+A new test file `test_AC38_4_d8_lifted_from_probes.py` seeds four
+records covering the named provenance shapes (full / partial /
+explicit-None / omitted), captures the pre-upgrade probe set via the
+existing `capture_pre_upgrade` helper, replays via
+`replay_post_upgrade`, and asserts `total_drift == 0` against
+`assert_no_drift(threshold=0)`. The `lifted_from_json` column flows
+through `projection_to_state_row` → `state_row` → drift comparison
+without harness modification.
+
+**Rationale:** plan §11 D-build.4 candidate (a) — single probe set,
+single drift threshold, no harness fork. Candidate (b) (separate D8
+sub-suite) would have doubled the threshold-management surface for
+zero coverage gain.
+
+### Test breakdown
+
+- **Objective-tracker:** **132 passed** (86 baseline + 46 new AC38.x
+  tests). Test files added:
+  `tests/test_AC38_1_lifted_from_field.py` (17 tests),
+  `tests/test_AC38_2_round_trip_preservation.py` (8),
+  `tests/test_AC38_3_query_projection_view.py` (12),
+  `tests/test_AC38_4_d8_lifted_from_probes.py` (4),
+  `tests/test_AC38_5_existing_suite_unchanged.py` (3),
+  `tests/test_no_sealed_amendments.py` (2 — AC38.S + the B23
+  pinning-pattern meta-test).
+- Existing D1–D8 baseline suites: no regressions; AC38.5
+  structurally asserts the file-list discipline.
+- **Cross-component seal-diff** (per amendment-dispatch-speedups):
+  every other sealed component's `test_no_sealed_amendments.py`
+  (or `test_cross_cutting.py` for hands-off-lifecycle) green at its
+  pinned SEAL_COMMIT — cost-governance, graceful-degradation,
+  memory-system, observability-aggregator, orchestrator,
+  primary-persona, reversibility-primitive, safety-layer (sealed
+  via import-shape probes, not git-diff), self-correction,
+  telegram-interface, workspace-bootstrap, hands-off-lifecycle.
+- `pos-amend apply --dry-run`: green pre-amendment-commit and
+  post-seal-commit (objective-tracker is not a frozen-baseline
+  component; the BASELINE literal bump completed cleanly to
+  `5ad573d226b14571ebdeac357cfdb56097be90ab`).
+
+### Sealed-component sidecar surface introduction
+
+Objective-tracker historically shipped without a `tests/SEAL_COMMIT`
+sidecar or a seal-diff test (per amendment #18 seal narrative
+`f1ff28b`). Amendment #38 lands the surface inside the same fence as
+the first behaviour change, mirroring the precedent set in amendment
+#32 for primary-persona. Two new files:
+
+- `objective-tracker/tests/test_no_sealed_amendments.py` — diff
+  `BASELINE..SEAL_COMMIT` admits only `objective-tracker/` +
+  `docs/rebuild/plans/` + universal files.
+- `objective-tracker/tests/SEAL_COMMIT` — sidecar carrying the
+  BASELINE post-`pos-amend apply` (empty-diff window), advanced to
+  the seal commit SHA via `pos-amend seal`.
+
+The amendment also creates `objective-tracker/seals/` as the
+narrative-target directory, with `SEAL_COMMIT.schema-widening` as the
+amendment-cycle narrative file (per the manifest's `narrative.target`
+spec).
+
+### Commit SHAs
+
+- Amendment commit: `be7737bbadc03586c94a06f5c70619a75d593ef1` —
+  `feat(objective-tracker): schema widening — lifted_from + query_projection_view (amendment #38)`
+- Seal commit: `92bead1719d26d32957a2a19f4ed4921dba6d69f` —
+  `chore(seals): schema-widening seal — objective-tracker at be7737b`
+
+### Dependents cleared to dispatch
+
+The Heavy-B foundation is in place. The four downstream Heavy-B
+amendments / dev-discipline plans inherit a satisfied schema-widening
+precondition:
+
+- **#39** (workspace-bootstrap tracker seed) — depends on #38;
+  `LiftedFrom` + `query_projection_view` available; cleared to
+  dispatch.
+- **#40** (primary-persona tracker-context contributor) — depends on
+  #38 + #39; tracker-context query surface available; cleared to
+  dispatch (post-#39).
+- **`pos-amend-tracker-integration.md`** (dev-discipline) — depends
+  on #38; `LiftedFrom.source_commit` write surface available; cleared
+  to dispatch.
+- **`heavy-b-phase-alpha-beta-gamma-migration.md`** (dev-discipline)
+  — depends on #38, #39, #40, and pos-amend integration; cleared to
+  dispatch (post-#39 + #40 + integration).
+
+No remaining objective-tracker dependency lurks on the Heavy-B chain.

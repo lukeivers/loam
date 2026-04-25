@@ -357,3 +357,139 @@ the tuple, or before user_name — owner is indifferent; recommendation
    distinct from onboarding is medium cost (new contributor, new
    trigger) for low leverage (the answer is one question; tying it to
    an existing flow saves the surface). Dropped.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left method choices to the builder. This section records
+the choices made and the rationale, plus the test breakdown and
+commit SHAs (per AC.D-sa.7).
+
+### D-build.1 — Pydantic field type: `Literal["unanswered","yes","no"]`
+
+`PersonaContract.dev_intent` is typed as `Literal["unanswered","yes","no"]`
+with default `"unanswered"`. Pydantic's `Literal` typing structurally
+constrains the admissible set at validation time; any other string
+raises `ValidationError`.
+
+**Rationale:** ODD §5.3 reach-for-default — Pydantic + `field_validator`
+is the framework's reach-for. `Literal` is the lighter-weight option
+than `StrEnum` for a closed set of three string values; there is no
+behaviour attached to the values, so the enum machinery (`.name` /
+`.value`) would be unused. Plan §11 explicitly leaves this to the
+builder; AC.A.2 measures structural refusal (the AC bounds outcome,
+not the type construct).
+
+### D-build.2 — Synonym normalisation set
+
+The transcript-time normaliser `_normalise_dev_intent` accepts:
+- yes-tokens: `{yes, y, develop, dev, pos-v2, true}` → `"yes"`
+- no-tokens: `{no, n, use, user, harness, false}` → `"no"`
+
+Case-insensitive, whitespace-trimmed. Anything else non-empty raises
+`OnboardingTranscriptError`.
+
+**Rationale:** The user types in chat; the contract's Literal accepts
+only the three sentinel values. The normaliser is the sanitiser
+between free-text and structural validation. The synonym set covers
+the two natural framings of the question ("are you developing?" vs.
+"are you using as a harness?") plus their canonical short forms.
+Free-text outside that set is structural (the user gave an unmappable
+answer) — distinct from incomplete-transcript (which is normal).
+AC.A.3 measures the normalisation outcome, not the specific token
+set.
+
+### D-build.3 — OTel event-name shape
+
+Two new event types:
+- `pos.persona.onboarding.dev_intent_question` — fires once per
+  starter session at question time (alongside the generic
+  `onboarding.question` event).
+- `pos.persona.onboarding.dev_intent_answer` — fires once per
+  recorded answer; carries the normalised contract literal in
+  `pos.persona.onboarding.dev_intent.answer`, NOT the user's
+  free-text input (STATE.md rule 4 — workspace-supplied content is
+  not emitted; bounded vocabulary is).
+
+**Rationale:** Distinct event types let observability consumers count
+dev-intent prompts without filtering on the generic `question_id`
+attribute. The shape mirrors the existing `pos.persona.onboarding.<event>`
+namespace from amendment #35; AC.A.7 measures the event presence and
+attribute keys.
+
+### D-build.4 — Storage-path resolver shape
+
+`dev_intent_storage_path(workspace_root)` returns
+`<workspace_root>/personas` — the directory the reader walks to find
+the primary persona's `contract.yaml`. The reader (`read_dev_intent`)
+prefers a primary-flagged contract; otherwise alphabetical first.
+
+**Rationale:** Locked owner ruling D-MASTER.1 (a) — the answer lives
+on the persona contract itself; the path-resolver hides the walk so
+sub-plans E / B / F compose on a stable seam. Returning the
+`personas/` directory rather than a specific contract path allows the
+walk to handle the unknown-handle case (workspace-bootstrap chooses
+the handle at scaffold time; consumers don't statically know it).
+AC.A.5 measures workspace-rooting + distinctness; the returned path's
+specific layout is method-level.
+
+### D-build.5 — Incomplete transcript keeps unanswered + starter True
+
+When the transcript omits dev_intent, the contract field stays at
+`"unanswered"` (its prior default-on-scaffold value) and `is_starter`
+stays True (incomplete-transcript path inherited from amendment #35).
+
+**Rationale:** Mirrors amendment #35's best-effort partial-application
+shape — answers present are written, missing required answers leave
+`is_starter` True. The reader returns `"absent"` per AC.A.6's mapping;
+sub-plan E's `"absent"` → "no" mapping then takes effect downstream
+(locked owner ruling 4). The user can re-run onboarding in the next
+session to complete the answer (per locked owner ruling D-MASTER.4 —
+re-running onboarding is the v1 toggle path).
+
+### Test breakdown
+
+35 new tests across 8 files (one file per AC):
+
+- `test_AC_A_1_questions_tuple_carries_dev_intent.py` — 3 tests
+- `test_AC_A_2_dev_intent_validator_refuses_unknown_values.py` — 7 tests
+- `test_AC_A_3_persist_writes_dev_intent.py` — 5 tests
+- `test_AC_A_4_starter_pending_contributor_count.py` — 3 tests
+- `test_AC_A_5_storage_path_resolver_workspace_local.py` — 5 tests
+- `test_AC_A_6_read_dev_intent_default.py` — 5 tests
+- `test_AC_A_7_otel_events_emitted.py` — 4 tests
+- `test_AC_A_S_seal_diff_single_component_scope.py` — 3 tests
+
+Plus 3 mechanically-updated AC35.x test fixtures (per owner ruling
+2026-04-25 (a) — fixture data updates preserve AC outcome shapes;
+AC35.x AC text unchanged).
+
+Full primary-persona suite: 234 tests pass.
+
+### Halt-and-resume notes
+
+The first dispatch halted at ~70% completion when extending
+`_is_complete_transcript` to require `dev_intent` invalidated three
+existing AC35.x test fixtures. Sub-plan §6 halt-trigger 1 ("any
+AC35.x test amendments") was over-specified — it conflated AC TEXT
+amendments (which would warrant halt) with FIXTURE data updates
+(mechanical, AC-preserving). Owner ruling 2026-04-25 mid-session
+approved option (a): update the three fixtures to include the new
+fourth answer; AC35.x ACs unchanged. The halt artefacts are
+preserved at `.scratch/halt-surface-A/work-in-progress.diff` +
+`.scratch/halt-surface-A/HALT_REPORT.md`. Resumption applied the
+WIP diff, extended `_is_complete_transcript` (already in place via
+the existing `for q in ONBOARDING_QUESTIONS` loop checking
+`q.required` — the new entry's `required=True` flag suffices), and
+authored the remaining test files + manifest + seal.
+
+### Asymmetric finding for FUTURE_IDEAS_DRAFT
+
+Sub-plan halt-trigger language is itself a candidate for tightening.
+"Halt on any AC<N>.x test amendment" is too broad if the plan also
+explicitly authors a re-extension that necessarily touches AC<N>.x
+test fixtures. A tighter trigger would distinguish AC TEXT amendments
+(real halt) from AC FIXTURE updates (mechanical, AC-preserving).
+Worth surfacing for future plan-template authoring.
+

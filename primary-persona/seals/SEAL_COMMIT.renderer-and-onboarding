@@ -1,0 +1,195 @@
+# Amendment #35 — primary-persona to_agent_md renderer +
+#                  onboarding module + is_starter field
+
+2026-04-25. Delivers the dependency root for the first-run
+primary-persona-default-agent-wiring family per master plan
+`docs/rebuild/plans/first-run-primary-persona-default-agent-
+wiring.md` and sub-plan `docs/rebuild/plans/amendment-35-primary-
+persona-renderer-and-onboarding.md`. Sibling amendments #36
+(workspace-bootstrap persona scaffold) and #37 (hands-off-
+lifecycle Claude-Code default-agent wiring) consume the surfaces
+landed here; both are blocked on this seal.
+
+The amendment lands one new field, two new modules, and four new
+observability events inside the primary-persona fence:
+
+  - `primary-persona/src/contract.py` — `PersonaContract` gains a
+    strict-typed Boolean `is_starter` field (default False). The
+    field round-trips through `model_validate` → `to_yaml()` →
+    `model_validate`; non-Boolean values reject at validation
+    time. Existing v1.0/v1.1/v1.2 contract surface unchanged.
+
+  - `primary-persona/src/agent_md.py` — new module exposing
+    `to_agent_md(contract, *, prompt_text=None) -> str`. Pure
+    function projecting a loaded `PersonaContract` onto the
+    Claude-Code subagent-file shape (`name`/`description`/`model`
+    frontmatter + identity-anchor body + persona-prompt body).
+    Same contract → same string (idempotence — no caching shadows
+    contract changes). A structurally-malformed contract (built
+    via `model_construct` bypass) raises
+    `AgentMdProjectionError` rather than emitting silent garbage.
+    Per master plan recommendation, the renderer is a
+    contract↔file projector — every call rebuilds from the
+    contract argument so amendment #37's first-run write surface
+    renders fresh on each invocation.
+
+  - `primary-persona/src/onboarding.py` — new module owning the
+    starter-elicitation flow. Surface:
+    - `ONBOARDING_QUESTIONS`: canonical three-question tuple
+      (user_name, persona_given_name, domain_focus). Question
+      prompts are framework-level scaffolding (about the
+      contract, not in the persona's voice).
+    - `STARTER_PENDING_MARKER`: structurally-detectable prefix
+      on the starter-pending contributor's first line.
+    - `build_starter_pending_contributor(loaded_persona)`:
+      factory returning the contributor that registers against
+      the D8 (amendment #32) `ComposedContextPayload` registry
+      at `TriggerKind.session`. Late-binding — contributor reads
+      the contract every invocation; flipping `is_starter` to
+      False is reflected on the next session-start composition
+      without re-registration.
+    - `persist_elicitation_transcript(...)`: write-back surface.
+      Complete transcript flips `is_starter` to False and writes
+      via `PersonaContract.to_yaml()`. Incomplete transcript
+      leaves `is_starter` True (next session re-opens
+      elicitation; no silent half-state).
+      Malformed transcript (unknown question id, non-str value)
+      raises `OnboardingTranscriptError` — distinct from
+      incomplete (a normal state).
+
+  - `primary-persona/src/observability.py` — extended with five
+    onboarding-lifecycle events under
+    `pos.persona.onboarding.*`: render, question, answer,
+    writeback, starter_flag_transition. Events carry handle and
+    (when applicable) workspace_slug attributes. Answer events
+    record length only — never the user's prose (STATE.md rule
+    4 holds).
+
+No source edits to `loader.py`, `monitor.py`, `compaction.py`,
+`context_composer.py`, `session_start_gate.py`,
+`memory_consumer.py`, `creation_triggers.py`, `authoring.py`,
+`introduction.py`, `retirement.py`. The new surfaces are purely
+additive; existing primary-persona D1–D9 ACs stay green
+(180 passed / 1 skipped on the full primary-persona suite).
+
+AC surface (AC35.1 – AC35.7 + AC35.S) — 35 tests covering 7
+outcome-shaped criteria:
+
+  - AC35.1: `is_starter` field default False; round-trips
+    through model_validate + to_yaml; non-Boolean rejected;
+    existing D1 contract suite green.
+  - AC35.2: `to_agent_md()` frontmatter `name`/`description`/
+    `model` derived from contract; body contains identity anchor
+    addressed by handle + given_name; persona-prompt section
+    carries supplied prompt_text or pointer to
+    personas/<handle>/prompt.md; idempotent given same contract;
+    malformed contract raises AgentMdProjectionError (negative
+    case via `model_construct` bypass).
+  - AC35.3: starter-pending contributor returns marker-prefixed
+    block under starter-flagged contract; empty contribution
+    under non-starter; registers against D8
+    `ComposedContextPayload.register(...)` at TriggerKind.session;
+    late-binding contract change picks up on subsequent session.
+  - AC35.4: complete transcript persists answers via to_yaml(),
+    flips is_starter to False; incomplete leaves is_starter
+    True (best-effort partial application of any present
+    answers); empty/whitespace answers count as missing;
+    unknown question id or non-str value raises
+    OnboardingTranscriptError.
+  - AC35.5: render twice with same contract → string equality;
+    mutate given_name → string inequality on identity-anchor
+    block; mutate responsibilities.single_point_of_contact →
+    inequality on frontmatter description; no caching shadows
+    contract changes across repeated mutate-render cycles.
+  - AC35.6: renderer output carries sentinel prose from contract
+    (handle, given_name, responsibility-marker); renderer output
+    does NOT contain template placeholders; existing D2
+    framework-tree-scan still raises PersonaInCoreError
+    appropriately; renderer source carries no
+    content-shaped-token literals (no Eve / Iris / Luke /
+    domain-prose constants in src/agent_md.py).
+  - AC35.7: each renderer call emits one render event;
+    complete transcript fires question events (one per known
+    question), answer events (one per non-empty required
+    answer), one writeback event with completed=True, one
+    starter-flag-transition event True→False; incomplete
+    transcript fires writeback completed=False with no
+    flag-transition event; all events under pos.persona.
+    onboarding.* with handle attribute.
+  - AC35.S: seal-diff discipline — only primary-persona/ +
+    plans/ + universal paths changed (verified by
+    test_no_sealed_amendments.py per amendment #32 pattern).
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - D-build.1 (renderer location): new module
+    `primary-persona/src/agent_md.py`. Co-locating in contract.py
+    would couple persona-data shape with Claude-Code projection
+    surface; a separate module keeps contract.py's surface
+    unchanged for the contract suite and lets AC35.2/AC35.5/
+    AC35.6 tests target a single import path.
+
+  - D-build.2 (onboarding question count): three questions
+    (user_name, persona_given_name, domain_focus). Lower bound
+    of master plan D2(d)'s 3–5 range. Three exercises the AC's
+    three load-bearing write-back paths (given_name,
+    responsibilities prose, transcript-flip outcome); fewer
+    skips one path; more dilutes AC35.4's negative-case fidelity.
+
+  - D-build.3 (identity-anchor block): structural-marker +
+    contract-derived prose. Output frame is
+    "I am <given_name> (<handle>). I serve as the workspace's
+    primary persona ... defer to the contract file as the
+    authoritative source." Tokens (<given_name>, <handle>,
+    the path personas/<handle>/contract.yaml) come from the
+    contract; the framing speaks *about* the contract, not
+    *as* a persona. AC35.6 sentinel-trace verifies prose
+    provenance.
+
+  - D-build.4 (starter-pending marker wording): literal prefix
+    "[primary-persona/onboarding starter-pending]" on the first
+    line of the contributor's output. Matches the existing
+    `[name]` block-prefix convention in
+    `_serialise_session`/`_serialise_turn` of context_composer.py.
+    Body is one sentence (~2 minutes, skippable) the persona's
+    first turn extends naturally.
+
+Fail-closed behaviours:
+
+  - Starter contract that fails Pydantic validation never
+    reaches the renderer (loader fail-closed unchanged).
+  - Renderer with malformed contract raises
+    AgentMdProjectionError; never silent garbage.
+  - Incomplete elicitation leaves is_starter True; next session
+    re-opens elicitation without forcing the user to re-answer
+    already-given answers (best-effort partial application).
+  - Malformed transcript raises structurally; never silently
+    applied.
+  - Non-starter contract under the contributor returns empty —
+    registry's "empty output is no-op" convention.
+
+Out of scope (sub-plan §7):
+
+  - Workspace-bootstrap scaffold work — amendment #36.
+  - Settings.json + agent-file write at first-run —
+    amendment #37.
+  - Re-elicitation slash command (master plan §11) — defer.
+  - Persona-handoff during ongoing work — defer.
+  - Domain-aware starter prompts — defer.
+  - Slug collision detection — orthogonal.
+  - Drift-detector for hand-edited agent files — defer.
+  - Default-handle selection at first-run — bootstrap concern
+    (#36).
+  - Onboarding-as-Claude-Code-skill — D5(d) rejected;
+    D5(a) selected.
+
+BASELINE bea9f47 (pre-amendment tip — the commit immediately
+preceding amendment #35). primary-persona's SEAL_COMMIT sidecar
+advances to the amendment commit on the empty-diff window;
+advanced to the seal SHA via `pos-amend seal` on the seal commit.
+
+Sibling sub-plans #36 (workspace-bootstrap-persona-scaffold) and
+#37 (hands-off-lifecycle-default-agent-wiring) are now cleared
+to dispatch — their hard prerequisite (this amendment's seal +
+the `to_agent_md()` + `is_starter` + onboarding-module surfaces
+on disk) is satisfied.

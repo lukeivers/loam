@@ -72,7 +72,7 @@ Yes — this amendment is the closing piece. After #35 + #36, the loader passes 
 - **AC37.2 → AC.PO.1.** First-run writes `.claude/agents/<handle>.md` from amendment #35's renderer → Claude Code re-loads the agent body on context refresh → persona identity persists across compaction → user does not have to re-explain who the persona is → translation burden absorbed across long-running sessions.
 - **AC37.3 → AC.PO.1.** Re-running first-run on a workspace whose `personas/<handle>/contract.yaml` has `is_starter: false` does not regenerate the agent file (no-op) → user-edited contract content reaches the agent file via the persona-layer reload path, not via the first-run path → user's edits are durable across re-runs → translation burden absorbed.
 - **AC37.4 → AC.PO.1.** Agent-file write failure degrades gracefully → session still proceeds (as generic-Claude with context-load-gate's additionalContext) → user does not see a hard halt because of an environmental issue → translation burden absorbed at the failure boundary too.
-- **AC37.5 → AC.PO.1.** SessionStart additionalContext from the persona layer names the loaded persona (handle + given_name) → the gate's payload composes correctly with the agent-file identity anchor → no two-source-of-truth confusion → translation burden absorbed (no debugging "why does it call itself X but the docs say Y?").
+- **AC37.5 → AC.PO.1.** Across two artefacts: the SessionStart `additionalContext` payload (from amendment #35's starter-pending contributor) carries the persona's `given_name`, and the on-disk `.claude/agents/<handle>.md` (from this amendment) names the persona by both `handle` (frontmatter + file path) and `given_name` (identity-anchor body) → the gate's runtime context composes with the agent-file's compaction-resilient identity anchor → no two-source-of-truth confusion → translation burden absorbed (no debugging "why does it call itself X but the docs say Y?").
 
 **Harness test.** *Does this add to the toolkit the primary persona can draw from?*
 
@@ -153,13 +153,18 @@ If `<workspace>/.claude/agents/<handle>.md` cannot be written (simulated via per
 
 **Maps to:** graceful-degradation component objective + v1.0 line 153 (degraded persona-presence is preferable to halt) → AC.PO.1.
 
-### AC37.5 — SessionStart additionalContext names the loaded persona
+### AC37.5 — SessionStart payload + on-disk agent file together name the loaded persona
 
-After first-run + a SessionStart hook invocation against the same workspace (the integration shape amendment #32's gate establishes), the `additionalContext` payload composed by the gate names the loaded persona by `handle` and `given_name`. The agent-file's identity-anchor block is present in `<workspace>/.claude/agents/<handle>.md` (read from disk, not re-rendered for this assertion).
+After first-run + a SessionStart hook invocation against the same workspace (the integration shape amendment #32's gate establishes), the loaded persona is identified across two complementary artefacts that compose at session start:
 
-**Test shape:** scaffold + first-run; fire the SessionStart entry point (test harness pattern from amendment #32); inspect emitted `additionalContext`; assert it contains the persona's handle + given_name. Read `.claude/agents/<handle>.md`; assert the identity-anchor marker is present in the body (per AC35.2's renderer contract, which this AC verifies on-disk rather than in-memory).
+- **Gate payload (additionalContext, from amendment #35's contributor).** When the contract is starter-flagged, the `additionalContext` payload composed by the gate carries the persona's `given_name` (interpolated by `build_starter_pending_contributor` per amendment #35 AC35.3).
+- **On-disk agent file (from this amendment).** `<workspace>/.claude/agents/<handle>.md` exists with both the `handle` (frontmatter `name: <handle>` and the file path itself, `<handle>.md`) and the `given_name` (in the identity-anchor body sentence "I am `<given_name>` (`<handle>`)..." per amendment #35 AC35.2's renderer contract). Both tokens are read from disk, not re-rendered for this assertion.
 
-**Maps to:** v1.0 line 153 (session-start test) + amendment #32 gate contract → AC.PO.1.
+The two artefacts together close the master-plan AC3 outcome: the gate carries runtime context naming the persona by given_name, and the on-disk agent file is the compaction-resilient identity anchor naming the persona by both handle and given_name.
+
+**Test shape:** scaffold + first-run; fire the SessionStart entry point (test harness pattern from amendment #32) with the starter-pending contributor registered; assert `additionalContext` contains the persona's `given_name` and the `STARTER_PENDING_MARKER`. Read `.claude/agents/<handle>.md` from disk; assert the identity-anchor marker is present, the frontmatter `name:` matches the handle, and the body anchor sentence contains both `given_name` and `handle`. Verify the agent-file path itself is `<handle>.md` (path-as-identifier).
+
+**Maps to:** v1.0 line 153 (session-start test) + amendment #32 gate contract + amendment #35 AC35.2 (renderer's identity-anchor contract) + amendment #35 AC35.3 (contributor's given_name interpolation) → AC.PO.1.
 
 ### AC37.6 — No persona content shipped from `hands-off-lifecycle/`
 
@@ -191,7 +196,7 @@ H19's frozen BASELINE per amendment #23 holds.
 | 2. First-run writes `.claude/agents/<handle>.md` from the renderer | AC37.2, AC37.6 (provenance) |
 | 3. Re-run is a no-op when persona is non-starter | AC37.3 |
 | 4. Graceful failure on agent-file write | AC37.4 |
-| 5. SessionStart additionalContext names the loaded persona | AC37.5 |
+| 5. SessionStart payload + on-disk agent file together name the loaded persona | AC37.5 |
 | cross-cutting | AC37.S (seal-diff) |
 
 Five declared behaviours; six ACs cover them plus the cross-cutting seal-diff invariant. No method-in-AC.
@@ -240,7 +245,7 @@ Five declared behaviours; six ACs cover them plus the cross-cutting seal-diff in
 6. Land the agent-file write inside the first-run hook. Use amendment #35's `to_agent_md()` + amendment #36's scaffolded contract. Verify AC37.2 + AC37.6.
 7. Land the no-overwrite policy for the re-run case. Verify AC37.3.
 8. Land the graceful-degradation path for write failures. Verify AC37.4.
-9. Verify AC37.5 — SessionStart additionalContext names the loaded persona — using amendment #32's gate test harness.
+9. Verify AC37.5 — SessionStart payload + on-disk agent file together name the loaded persona — using amendment #32's gate test harness for the gate-payload side and on-disk reads for the agent-file side.
 10. Run AC37.1–AC37.6 + the existing hands-off-lifecycle seal-diff suite + the existing first-run integration test.
 11. `pos-amend apply --dry-run` green gate (with `frozen_baseline: true` for hands-off-lifecycle per amendment #23).
 12. Amendment commit.
@@ -488,6 +493,43 @@ amendment). Rationale documented inline in the test source.
   `feat(hands-off-lifecycle): Claude-Code default-agent wiring — amendment #37`
 - Seal commit: `c97472ecdba9689ec4a2086ba4077ec1aa967bac` —
   `chore(seals): default-agent-wiring seal — hands-off-lifecycle at d9ec507`
+
+### Post-seal AC37.5 text tightening (2026-04-25)
+
+Per owner ruling on the same day as the seal commit (`c97472e`),
+AC37.5's declaration was tightened to accurately describe the
+split-surface outcome the implementation already delivers.
+
+**Before:** "the additionalContext payload composed by the gate
+names the loaded persona by `handle` and `given_name`. The
+agent-file's identity-anchor block is present in
+`<workspace>/.claude/agents/<handle>.md`."
+
+**After:** AC37.5 now explicitly names the two complementary
+artefacts: (a) the gate's `additionalContext` carries `given_name`
+(via amendment #35's `build_starter_pending_contributor`, which
+interpolates given_name only); (b) the on-disk agent file carries
+both `handle` (frontmatter `name:` + file path `<handle>.md`) and
+`given_name` (identity-anchor body sentence "I am `<given_name>`
+(`<handle>`)..." per amendment #35's renderer).
+
+**Rationale:** the original AC text read as if the gate's payload
+alone names both tokens, but the contributor body interpolates
+only `given_name`; the `handle` is named exclusively on the
+on-disk artefact this amendment writes. The four AC37.5 tests
+were already authored against the split-surface outcome and pass
+under the tightened text without any implementation or test
+change. ODD §3 acceptance criteria say the AC names what must be
+true — the loose text overstated the gate-payload side and
+understated the on-disk side. The §3 Lens-2 AC-trace, the §5
+behaviour-count summary, and the §8 implementation-order step 9
+were updated for internal consistency.
+
+No source code or test code changed; only this plan doc + the
+amendment-37 plan's §3, §4, §5, §8, §14 text. Master plan §6.3
+AC3 retains its original (loose) wording per the post-seal
+no-historical-edit convention; the §12 master-plan AC mapping
+table in this plan was already tight on the split.
 
 ### Dependents cleared to dispatch
 

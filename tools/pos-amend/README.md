@@ -87,13 +87,20 @@ paths exist. Pick one.
 ## Subcommand surface
 
 ```
-pos-amend validate <manifest.yaml>          # schema-lint
-pos-amend apply --dry-run <manifest.yaml>   # simulate; exit 1 on missing admissions
-pos-amend apply <manifest.yaml>             # perform file edits (no commit)
-pos-amend seal <manifest.yaml>              # advance sidecars to HEAD; append narrative
+pos-amend validate <manifest.yaml>            # schema-lint
+pos-amend apply --dry-run <manifest.yaml>     # simulate; exit 1 on missing admissions
+pos-amend apply <manifest.yaml>               # perform file edits (no commit)
+pos-amend seal <manifest.yaml>                # finalise the amendment cycle in one shot
+pos-amend seal --no-finalize <manifest.yaml>  # legacy: advance sidecars + append narrative only
+pos-amend seal --scoped-sweep <manifest.yaml> # restrict sweep to manifest-listed components
+pos-amend seal --plan-doc <plan.md> <manifest.yaml>
+                                              # also append §14 SHA backfill + follow-up commit
 ```
 
-All subcommands read the manifest; none commit. The human writes commits.
+`validate`, `apply`, and `apply --dry-run` do not commit. **`seal` does
+commit by default** — it finalises the amendment cycle (see below). To
+restore the pre-extension non-committing behaviour, pass
+`--no-finalize`.
 
 ## Manifest schema (v1)
 
@@ -156,12 +163,75 @@ schema; no version bump.
    the baseline SHA (empty-diff window at commit time).
 5. `pos-amend apply --dry-run <manifest>` — verify clean.
 6. `git add` + `git commit` the amendment. This is the amendment commit.
-7. `pos-amend seal <manifest>` — advances every listed sidecar to the
-   amendment SHA, appends the narrative block.
-8. `git add` + `git commit` the seal. This is the seal commit.
+7. `pos-amend seal --plan-doc <plan> <manifest>` — finalises the cycle:
+   advances every listed sidecar to the amendment SHA, appends the
+   narrative, runs the touched components' pytest suite, runs the
+   cross-component seal-diff sweep, creates the seal commit with the
+   deterministic message, verifies post-seal `apply --dry-run` is green,
+   and (with `--plan-doc`) backfills the plan-doc §14 SHA subsection +
+   `docs(plans):` follow-up commit.
 
 The dry-run in step 5 replaces the reactive corrective-commit pattern
-(see amendment #18's `8bdf194`).
+(see amendment #18's `8bdf194`). The single-invocation finalisation in
+step 7 replaces the five hand-run commands the build agent ran before
+the `pos-amend seal` extension landed.
+
+### `pos-amend seal` finalisation behaviour
+
+By default `pos-amend seal` performs the following sequence in one
+invocation (per `docs/rebuild/plans/pos-amend-seal-automation-extension.md`
+ACs D-sa.1 – D-sa.7):
+
+1. Refuses to proceed if the working tree carries unrelated dirty
+   paths (anything outside the sidecars + narrative target).
+2. Advances every manifest-listed component's `tests/SEAL_COMMIT`
+   sidecar to the current HEAD SHA.
+3. Appends the `narrative.body` to `narrative.target`.
+4. Runs `pytest <comp>/tests/` for every manifest-listed component.
+5. Runs `pytest <comp>/tests/test_no_sealed_amendments.py` (or
+   `test_cross_cutting.py` for hands-off-lifecycle) for every sealed
+   component in the workspace (the cross-component sweep). Use
+   `--scoped-sweep` to restrict this to the manifest-listed components
+   only.
+6. Stages the sidecar(s) + narrative file(s).
+7. Creates a deterministic seal commit with subject
+   `chore(seals): <description> — <comp1>[+<comp2>...] at <amendment-sha-short>`.
+   `<description>` is sourced from the manifest's optional
+   `seal_description:` field, falling back to `slug` when absent. The
+   `Co-Authored-By:` trailer is included only when invoked under a
+   Claude-Code-attributed environment (env-var-detected).
+8. Verifies post-seal `pos-amend apply --dry-run <manifest>` exits 0.
+9. (Optional, when `--plan-doc <path>` is supplied) appends a
+   deterministic `### Commit SHAs` subsection under the plan doc's
+   `## 14.` heading, then creates a follow-up commit with the
+   subject `docs(plans): record amendment #N commit SHAs in
+   method-decision register`.
+
+#### Failure-mode (recoverable checkpoint)
+
+A failing component pytest, a failing sweep target, or a failing
+`git add`/`git commit` halts before the seal commit is created and
+leaves the sidecar + narrative changes uncommitted. A non-zero
+post-seal `apply --dry-run` leaves the seal commit **in place** (per
+the no-amend CDC); the operator inspects the diagnostic and authors a
+corrective commit. Per-AC details and the failure-class taxonomy live
+in `docs/rebuild/plans/pos-amend-seal-automation-extension.md`.
+
+#### Optional manifest field — `seal_description`
+
+```yaml
+schema_version: 1
+amendment:
+  number: 41
+  slug: example-slug
+  title: "..."
+seal_description: "tracker-context contributor"
+# ...
+```
+
+When set, replaces `slug` in the seal-commit subject's `<description>`
+slot. Backwards-compatible — the field is optional, no schema-version
+bump.
 
 ## Idempotency
 

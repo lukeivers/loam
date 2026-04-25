@@ -39,9 +39,43 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     p_seal = sub.add_parser(
-        "seal", help="advance sidecars to HEAD and append narrative"
+        "seal",
+        help=(
+            "finalise an amendment cycle (advance sidecars + narrative, "
+            "run touched + sweep tests, create deterministic seal commit, "
+            "verify post-seal apply --dry-run)"
+        ),
     )
     p_seal.add_argument("manifest", type=Path)
+    p_seal.add_argument(
+        "--no-finalize",
+        action="store_true",
+        help=(
+            "preserve pre-extension behaviour: advance sidecars + "
+            "append narrative only; do not stage, run tests, sweep, "
+            "commit, or verify"
+        ),
+    )
+    p_seal.add_argument(
+        "--scoped-sweep",
+        action="store_true",
+        help=(
+            "restrict cross-component sweep to manifest-listed "
+            "components (default: sweep every sealed component in "
+            "the workspace)"
+        ),
+    )
+    p_seal.add_argument(
+        "--plan-doc",
+        type=Path,
+        default=None,
+        help=(
+            "plan doc path; when set, append the deterministic "
+            "`### Commit SHAs` subsection under §14 and create a "
+            "`docs(plans): record amendment #N commit SHAs ...` "
+            "follow-up commit (per AC.D-sa.7)"
+        ),
+    )
 
     return parser
 
@@ -54,6 +88,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "apply":
         return apply_cmd.run(args.manifest, dry_run=args.dry_run)
     if args.command == "seal":
-        return seal_cmd.run(args.manifest)
+        return seal_cmd.run(
+            args.manifest,
+            no_finalize=args.no_finalize,
+            scoped_sweep=args.scoped_sweep,
+            plan_doc=args.plan_doc,
+        )
     parser.error(f"unknown command: {args.command}")
     return 2  # unreachable

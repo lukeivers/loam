@@ -79,6 +79,13 @@ class Manifest:
     components: tuple[ComponentEntry, ...]
     universal_paths: UniversalPaths = field(default_factory=UniversalPaths)
     narrative: NarrativeSpec | None = None
+    # Optional human-readable seal description used as the
+    # `<description>` slot in the deterministic seal-commit subject
+    # (per AC.D-sa.2). When absent, the seal step falls back to
+    # ``slug``. Backward-compatible — pre-extension manifests omit
+    # the field and the slug-fallback applies. No schema-version
+    # bump required.
+    seal_description: str | None = None
 
 
 def _require(mapping: dict[str, Any], key: str, where: str) -> Any:
@@ -193,6 +200,15 @@ def load_manifest(path: Path) -> Manifest:
             body=_require_str(narrative_raw, "body", where),
         )
 
+    seal_description_raw = data.get("seal_description")
+    seal_description: str | None = None
+    if seal_description_raw is not None:
+        if not isinstance(seal_description_raw, str) or not seal_description_raw:
+            raise InvalidField(
+                f"{path}: 'seal_description' must be a non-empty string if present"
+            )
+        seal_description = seal_description_raw
+
     return Manifest(
         schema_version=schema_version,
         number=number,
@@ -203,4 +219,5 @@ def load_manifest(path: Path) -> Manifest:
         components=tuple(components),
         universal_paths=universal,
         narrative=narrative,
+        seal_description=seal_description,
     )

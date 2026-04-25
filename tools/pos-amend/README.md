@@ -152,6 +152,86 @@ schema migrations ship as a schema-version bump plus a migration note
 here. `frozen_baseline` is a backward-compatible extension to the v1
 schema; no version bump.
 
+## Manifest schema (v2) — `objectives` block (tracker integration)
+
+Schema v2 adds an optional `objectives` block. v2 manifests
+additionally register `ObjectiveSpec` records into the workspace's
+tracker DB at `apply` time and update each record's
+`lifted_from.source_commit` at `seal` time.
+
+```yaml
+schema_version: 2
+amendment:
+  number: 41
+  slug: example
+  title: "..."
+baseline: abcdef0
+plan: docs/rebuild/plans/amendment-41-example.md
+components:
+  - name: example-component
+    seal_test: example-component/tests/test_no_sealed_amendments.py
+    sidecar: example-component/tests/SEAL_COMMIT
+objectives:
+  - goal: "Reduce caller translation burden via X"
+    parent_id: "value-prop-root"   # OR `parent_root: true`, exactly one
+    acceptance_criteria:
+      - kind: prose
+        criterion_id: AC41.1
+        prose: "Caller path A produces outcome B."
+      - kind: prose
+        criterion_id: AC41.2
+        prose: "..."
+    time_bound:
+      evergreen: true               # OR `deadline: "2026-12-31T00:00:00Z"`
+      review_cadence: "amendment-driven"   # only with evergreen=true
+    authored_by: "user"             # any string; persona handles permitted
+    lifted_from:
+      source_doc: "docs/rebuild/plans/amendment-41-example.md"
+      source_ac: "AC41.1"
+      # source_commit is reserved — `pos-amend seal` writes it.
+```
+
+### Schema-version gate
+
+- `schema_version: 1` MUST NOT carry an `objectives` block.
+- `schema_version: 2` MUST carry an `objectives` block.
+
+Mismatches reject at `pos-amend validate` / `pos-amend apply` parse
+time with `InvalidField` / `MissingField`.
+
+### `apply` semantics with `objectives` block
+
+`pos-amend apply <v2-manifest>` registers each `objectives` entry as
+an `ObjectiveSpec` record in the workspace's tracker DB
+(`<workspace>/objective_tracker.sqlite`) BEFORE performing its
+existing manifest operations (BASELINE bump, allowed_prefixes /
+allowed_files widening, sidecar bumps). Idempotent — entries whose
+`(lifted_from.source_doc, lifted_from.source_ac)` pair is already
+present in the tracker are skipped (no duplicate records, no extra
+events).
+
+If the tracker DB is unreadable (missing parent dir, corrupt SQLite,
+permission error, schema mismatch), `apply` exits 3 with a structured
+diagnostic naming the failure class. No partial registration; no
+manifest edits land.
+
+### `seal` semantics with `objectives` block
+
+`pos-amend seal <v2-manifest>` updates each registered record's
+`lifted_from.source_commit` to the amendment's HEAD SHA after
+sidecar/narrative advance and before running the touched-component
+tests. Idempotent against a stable HEAD. v1 manifests + the
+`--no-finalize` legacy path are byte-identical to pre-extension
+behaviour (no tracker interaction).
+
+### Reserved field — `lifted_from.source_commit`
+
+Manifest authors MUST NOT set `lifted_from.source_commit` — the seal
+step writes it. Setting it in the manifest YAML rejects at parse
+time. Backwards-compat for v1 manifests is total: every existing
+manifest under `docs/rebuild/plans/amendment-*.manifest.yaml` parses
+and applies unchanged.
+
 ## Usage example — normal amendment
 
 1. Author the plan at `docs/rebuild/plans/amendment-N-<slug>.md`.
@@ -238,6 +318,11 @@ bump.
 `apply` and `seal` are idempotent. Running either twice against an
 already-applied tree produces no additional diff. This makes recovery
 from a mid-apply interruption safe.
+
+For schema-v2 manifests carrying an `objectives` block, idempotency
+extends to the tracker: `apply` skips already-registered records
+(matched by `lifted_from.source_doc + lifted_from.source_ac`); `seal`
+no-ops the source-commit rewrite when the SHA already matches.
 
 ## Exit codes
 

@@ -270,3 +270,151 @@ When the brief is drafted, it carries these CDC + ODD enforcement requirements v
 - No `git commit --amend`. Corrective new commits if the builder misses a file.
 - No SEAL_COMMIT bump, no `pos-amend` manifest, no seal commit. Dev-discipline framing.
 - Dispatch-speedups apply: narrow test scope to `tools/pos-amend/` (no sealed-component test surface to narrow).
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+Built per the dispatch dated 2026-04-25. Builder-plan companion:
+`pos-amend-tracker-integration.builder-plan.md`. Test surface lands at
+`tools/pos-amend/tests/test_tracker_integration.py` (8 ACs covering
+AC.D-pa.1 – AC.D-pa.5) and `tools/pos-amend/tests/test_manifest.py`
+(6 schema-v2 parse cases). All 73 pos-amend tests green; objective-
+tracker seal-diff sweep remains green.
+
+### D-build.1 — `objectives` block YAML structure
+
+**Choice:** option (a). Flat list of dict-entries; each entry carries
+`goal`, `parent_id` xor `parent_root: true`, `acceptance_criteria` (list
+of dicts with `kind` discriminator), `time_bound` (mapping passed to
+`TimeBound`), `authored_by`, and `lifted_from` (`source_doc` +
+`source_ac`; `source_commit` is reserved for the seal step and rejects
+at parse time if set).
+
+**Rationale:** master-research recommendation taken; explicit beats
+shorthand for v1. Manifest authors get fast structural feedback at
+`pos-amend validate`; the runtime tracker re-validates every Pydantic
+field at `ObjectiveSpec` construction. Reserved-key check on
+`source_commit` is an authoring-error firewall (an author who sets it
+in YAML expects the seal step to honour their value; it would not).
+
+### D-build.2 — Schema-version bump mechanism
+
+**Choice:** option (a). Bidirectional gate:
+
+- `schema_version: 1` MUST NOT carry an `objectives` key (rejects
+  with `InvalidField`).
+- `schema_version: 2` MUST carry an `objectives` key (rejects
+  with `MissingField`).
+
+`SUPPORTED_SCHEMA_VERSIONS = (1, 2)` named in `manifest.py`.
+Pre-existing `SCHEMA_VERSION = 1` constant retained for any external
+caller that may have imported it.
+
+**Rationale:** master-research recommendation taken. Surfaces
+authoring drift loudly at parse time. The pre-existing T2 test fixture
+(`invalid-unknown-schema-version.yaml`) was bumped from
+`schema_version: 2` to `schema_version: 99` — fixture-only edit
+preserving the test's intent (some unsupported version still rejects);
+this was the only pre-existing test edit needed.
+
+### D-build.3 — `source_commit` resolution at seal time
+
+**Choice:** option (a). `update_source_commits(manifest, repo_root,
+amendment_sha)` takes the SHA from the seal step's existing
+`_head_sha(repo_root)` call (already used to build the seal-commit
+subject). No new manifest field, no extra git invocation, symmetric
+with the seal step's existing amendment-SHA reading at the top of
+`_finalize`.
+
+**Rationale:** master-research recommendation taken. The seal step
+runs after the amendment commit lands and before its own seal commit,
+so `HEAD == amendment_sha` at the moment `update_source_commits` is
+called. Read-once + pass-around minimises drift surface.
+
+### D-build.4 — Tracker DB path resolution from pos-amend
+
+**Choice:** option (a). Inline the
+`<workspace>/objective_tracker.sqlite` filename convention (matching
+`workspace_bootstrap.adapters.tracker_seed.TRACKER_DB_FILENAME` and
+`primary_persona.tracker_context.TRACKER_DB_FILENAME`) inside
+`pos_amend.tracker_registration.TRACKER_DB_FILENAME`. No
+`--tracker-db` CLI flag introduced.
+
+**Rationale:** master-research recommendation taken. pos-amend is
+invoked inside a workspace; the convention is already established by
+two consumers. Three repeated string constants is a known cost (a
+follow-up extraction into a shared helper module is on the table when
+a fourth consumer arrives — surfaced to FUTURE_IDEAS_DRAFT discipline
+post-build).
+
+### D-build.5 — `update_source_commits` implementation strategy (within-scope refinement)
+
+**Choice:** Direct SQLite `UPDATE` against the workspace tracker DB.
+Rewrites the JSON `payload` of `objective_created` event rows whose
+embedded `lifted_from` matches the manifest's
+`(source_doc, source_ac)` keys, and aligned-updates the
+`lifted_from_json` column of `objective_state` rows for the affected
+objective IDs.
+
+**Rationale:** the tracker has no public API for rewriting an
+existing record's `lifted_from` (the field is event-sourced from the
+authoring `ObjectiveCreated` event). The seal-time rewrite mirrors
+the upgrader pattern in `objective_tracker/src/upgrade.py` (which
+also rewrites event payloads in place when a schema migration
+requires it). Directly going through SQLite keeps pos-amend a thin
+consumer rather than forcing a sealed-component API change in #38's
+territory (which §6 constraint 3 forbids).
+
+**Scope-fence note:** this is a write to a sealed-component's
+runtime data file, not a write to the sealed-component's source.
+`tools/pos-amend/` source ownership is unchanged. The write goes
+through the same SQLite handle the tracker's own runtime uses, and
+the rewrite shape is internal-only — no public API surface defined
+in #38 is bypassed.
+
+### D-build.6 — Failure-class taxonomy for `TrackerUnavailableError`
+
+**Choice:** four named classes — `tracker-db-missing-parent`,
+`tracker-db-corrupt`, `tracker-db-permission`,
+`tracker-db-schema-mismatch`. Each maps to the existing exit-code 3
+("repo / git / io error") per §6 constraint 5 (no new exit code
+introduced).
+
+**Rationale:** AC.D-pa.5 names "structured diagnostic"; the four
+classes cover the realistic failure surface for a workspace whose
+tracker DB lives on local disk. The taxonomy mirrors the
+`_FailureCheckpoint.klass` convention from the seal-automation
+extension, so operators reading either diagnostic surface see the
+same shape.
+
+### Test-file structure
+
+- `test_tracker_integration.py` — 8 tests, one per AC plus an
+  idempotency case for AC.D-pa.3 and a missing-parent case for
+  AC.D-pa.5. Fixture seeds the tracker DB with a `value-prop-root`
+  object so manifests can declare `parent_id: "value-prop-root"`
+  cleanly — mirrors workspace-bootstrap's first-run seed contract.
+- `test_manifest.py::test_T16_*` — 6 schema-v2 parse cases (positive
+  parse, v1+objectives reject, v2 no-objectives reject, parent_id xor
+  parent_root, source_commit reservation, v1 empty-tuple
+  round-trip).
+- `valid-with-objectives.yaml` — a positive-case fixture for parser
+  tests, mirrors the `valid-multi-component.yaml` shape.
+
+### Backwards-compat verification
+
+- All 19 real amendment manifests
+  (`docs/rebuild/plans/amendment-*.manifest.yaml`) parse with
+  schema_version 1 and exit OK.
+- The pre-existing 59-test pos-amend suite remains green (now 73
+  with the +14 added; AC.D-sa.6 enforces this regression gate).
+- The seal-automation extension's `--no-finalize` legacy path is
+  byte-identical (AC.D-sa.4 test stays green).
+- v1 manifests applied against a tracker-seeded workspace produce
+  zero tracker interaction (AC.D-pa.4 explicit assertion).
+
+### Commit SHAs
+
+(populated by the build commit + any follow-up commits below)
+

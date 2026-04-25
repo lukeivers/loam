@@ -1,4 +1,10 @@
-"""``pos-amend apply [--dry-run]`` — dry-run or mutate the tree per manifest."""
+"""``pos-amend apply [--dry-run]`` — dry-run or mutate the tree per manifest.
+
+Schema-v2 manifests carrying an ``objectives`` block additionally
+register ObjectiveSpec records into the workspace's tracker DB at
+the start of the (non-dry-run) apply step. See
+``pos-amend-tracker-integration.md`` AC.D-pa.1 / AC.D-pa.2 / AC.D-pa.5.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +16,10 @@ from pos_amend.manifest import ManifestError, load_manifest
 from pos_amend.paths import find_repo_root
 from pos_amend.seal_diff import BindingNotFound, widen_binding
 from pos_amend.sidecar import write_sidecar
+from pos_amend.tracker_registration import (
+    TrackerUnavailableError,
+    register_objectives,
+)
 
 
 def run(manifest_path: Path, *, dry_run: bool) -> int:
@@ -30,6 +40,31 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
         if any(r.missing_admissions or r.skipped_reason for r in reports):
             return 1
         return 0
+
+    # AC.D-pa.1 + AC.D-pa.2 + AC.D-pa.5: register the manifest's
+    # ``objectives`` block (if any) BEFORE the BASELINE / sidecar /
+    # widening edits. Putting the registration first means a tracker-
+    # unavailable failure leaves the tree absolutely untouched (no
+    # partial-state rollback needed). v1 manifests have an empty
+    # ``manifest.objectives`` tuple and the helper is a no-op.
+    if manifest.objectives:
+        try:
+            result = register_objectives(manifest, repo_root)
+        except TrackerUnavailableError as exc:
+            print(f"halt: {exc.klass}")
+            print(exc.detail)
+            return 3
+        if result.created:
+            print(f"registered {len(result.created)} objective(s):")
+            for ac in result.created:
+                print(f"  + {ac}")
+        if result.skipped:
+            print(
+                f"skipped {len(result.skipped)} already-registered "
+                "objective(s):"
+            )
+            for ac in result.skipped:
+                print(f"  = {ac}")
 
     # Real apply: (1) bump BASELINE literal, (2) widen allowed_* bindings,
     # (3) write sidecar to baseline (empty-diff window).

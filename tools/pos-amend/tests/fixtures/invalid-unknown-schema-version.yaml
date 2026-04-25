@@ -1,4 +1,4 @@
-schema_version: 2
+schema_version: 99
 amendment:
   number: 99
   slug: test-bad-schema

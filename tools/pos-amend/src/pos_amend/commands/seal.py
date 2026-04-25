@@ -34,6 +34,10 @@ from pos_amend.manifest import Manifest, ManifestError, load_manifest
 from pos_amend.narrative import append_narrative
 from pos_amend.paths import find_repo_root
 from pos_amend.sidecar import write_sidecar
+from pos_amend.tracker_registration import (
+    TrackerUnavailableError,
+    update_source_commits,
+)
 
 
 # Co-Authored-By trailer per D-5: include only when invoked under a
@@ -423,6 +427,38 @@ def _finalize(
         else:
             # Idempotent — narrative already present.
             narrative_target_str = manifest.narrative.target
+
+    # ------------------------------------------------------------------
+    # (c.5) AC.D-pa.3: rewrite each registered objective's
+    # ``lifted_from.source_commit`` to point at the amendment SHA.
+    # No-op for v1 manifests (manifest.objectives is empty). Runs
+    # before tests so a tracker-unavailable failure halts before
+    # any commit is created.
+    # ------------------------------------------------------------------
+    if manifest.objectives:
+        try:
+            updated_n = update_source_commits(
+                manifest, repo_root, amendment_sha
+            )
+        except TrackerUnavailableError as exc:
+            _emit_diagnostic(
+                _FailureCheckpoint(
+                    code=3,
+                    klass=exc.klass,
+                    detail=(
+                        exc.detail
+                        + "\nSidecar + narrative changes left "
+                        "uncommitted. Restore the tracker DB and "
+                        "re-invoke."
+                    ),
+                )
+            )
+            return 3
+        if updated_n:
+            print(
+                f"tracker: source_commit pinned on {updated_n} "
+                "registered objective(s)"
+            )
 
     # ------------------------------------------------------------------
     # (d) Run touched components' full pytest suites.

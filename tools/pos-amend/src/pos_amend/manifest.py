@@ -1,13 +1,24 @@
-"""Per-amendment manifest schema (v1) + loader.
+"""Per-amendment manifest schema (v1, v2) + loader.
 
-See plan doc (amendment-22-pos-amend-cli.md) for the schema rationale.
+See plan doc (amendment-22-pos-amend-cli.md) for the v1 schema rationale
+and ``pos-amend-tracker-integration.md`` for the v2 ``objectives`` block.
 The manifest is the formalised scope declaration for an amendment: which
 components are touched, which baseline to pin to, which extra admissions
-the diff window needs, and where the seal narrative lands.
+the diff window needs, where the seal narrative lands, and (v2) which
+objective records the amendment authors into the workspace tracker.
 
 T2 requires ``UnknownSchemaVersion`` surfaces explicitly when the tool
 encounters an unrecognised schema version.
 T3 requires missing required fields surface with the field name.
+
+Schema v2 (per pos-amend-tracker-integration plan) adds an optional
+``objectives`` block. Per plan §6 constraint 6:
+
+- ``schema_version: 1`` MUST NOT carry an ``objectives`` block.
+- ``schema_version: 2`` MUST carry an ``objectives`` block.
+
+Mismatched cases raise ``InvalidField``. v1 manifests continue to parse
+and apply unchanged (AC.D-pa.4).
 """
 
 from __future__ import annotations
@@ -21,6 +32,7 @@ import yaml
 
 
 SCHEMA_VERSION = 1
+SUPPORTED_SCHEMA_VERSIONS = (1, 2)
 _SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 
 
@@ -69,6 +81,45 @@ class NarrativeSpec:
 
 
 @dataclass(frozen=True)
+class LiftedFromEntry:
+    """Minimal provenance pointer for a manifest objective entry.
+
+    Mirrors the public ``objective_tracker.LiftedFrom`` shape but is
+    declared inside pos-amend so the manifest loader has no
+    objective_tracker import. The registration helper translates this
+    plain dataclass into the runtime ``LiftedFrom`` model when calling
+    ``ObjectiveTracker.create``. Schema v2 introduction.
+
+    ``source_commit`` is intentionally omitted from the manifest YAML —
+    the seal step writes it after the fact (AC.D-pa.3 / D-build.3).
+    """
+
+    source_doc: str
+    source_ac: str
+
+
+@dataclass(frozen=True)
+class ObjectiveEntry:
+    """A single ``objectives`` block entry (schema v2).
+
+    The shape mirrors ``ObjectiveSpec``'s authoring fields verbatim
+    (D-build.1 option (a)). Acceptance criteria are carried as a list
+    of plain dicts with the discriminator key ``kind``; the
+    registration helper hands them to the runtime ``Criterion`` union
+    for validation. Missing/invalid values surface as
+    ``InvalidField`` / ``MissingField`` at parse time.
+    """
+
+    goal: str
+    parent_id: str | None
+    parent_root: bool
+    acceptance_criteria: tuple[dict[str, Any], ...]
+    time_bound: dict[str, Any]
+    authored_by: str
+    lifted_from: LiftedFromEntry
+
+
+@dataclass(frozen=True)
 class Manifest:
     schema_version: int
     number: int
@@ -86,6 +137,11 @@ class Manifest:
     # the field and the slug-fallback applies. No schema-version
     # bump required.
     seal_description: str | None = None
+    # Schema v2 only: the ``objectives`` block, parsed into a tuple
+    # of ``ObjectiveEntry``. v1 manifests carry the empty tuple. The
+    # presence of entries is what the apply / seal commands key on
+    # for tracker registration (AC.D-pa.1, AC.D-pa.3).
+    objectives: tuple[ObjectiveEntry, ...] = ()
 
 
 def _require(mapping: dict[str, Any], key: str, where: str) -> Any:
@@ -113,6 +169,117 @@ def _optional_str_list(mapping: dict[str, Any], key: str, where: str) -> tuple[s
     return tuple(value)
 
 
+def _parse_objectives_block(
+    block_raw: Any, where: str
+) -> tuple[ObjectiveEntry, ...]:
+    """Parse the ``objectives`` block (schema v2) into ``ObjectiveEntry``.
+
+    Each entry must declare:
+
+    - ``goal`` (str)
+    - exactly one of ``parent_id`` (str) or ``parent_root: true`` (bool)
+    - ``acceptance_criteria`` (non-empty list of mapping with ``kind``)
+    - ``time_bound`` (mapping; passed through to the runtime
+      ``TimeBound`` model for validation at registration time)
+    - ``authored_by`` (str)
+    - ``lifted_from`` (mapping with ``source_doc`` + ``source_ac``)
+
+    Validation is structural: the runtime tracker re-validates every
+    field at ``ObjectiveTracker.create`` time. We catch shape errors
+    here so manifest authors get fast feedback at ``validate`` time.
+    """
+    if not isinstance(block_raw, list) or not block_raw:
+        raise InvalidField(
+            f"{where}: 'objectives' must be a non-empty list when present"
+        )
+    out: list[ObjectiveEntry] = []
+    for idx, entry in enumerate(block_raw):
+        if not isinstance(entry, dict):
+            raise InvalidField(f"{where}[{idx}]: must be a mapping")
+        ewhere = f"{where}[{idx}]"
+        goal = _require_str(entry, "goal", ewhere)
+
+        parent_id_raw = entry.get("parent_id")
+        parent_root_raw = entry.get("parent_root", False)
+        if not isinstance(parent_root_raw, bool):
+            raise InvalidField(
+                f"{ewhere}: 'parent_root' must be a boolean if present"
+            )
+        if parent_id_raw is not None and parent_root_raw:
+            raise InvalidField(
+                f"{ewhere}: declare exactly one of 'parent_id' or "
+                "'parent_root: true', not both"
+            )
+        if parent_id_raw is None and not parent_root_raw:
+            raise MissingField(
+                f"{ewhere}: must declare either 'parent_id' (str) or "
+                "'parent_root: true'"
+            )
+        if parent_id_raw is not None:
+            if not isinstance(parent_id_raw, str) or not parent_id_raw:
+                raise InvalidField(
+                    f"{ewhere}: 'parent_id' must be a non-empty string"
+                )
+
+        ac_raw = entry.get("acceptance_criteria")
+        if not isinstance(ac_raw, list) or not ac_raw:
+            raise InvalidField(
+                f"{ewhere}: 'acceptance_criteria' must be a non-empty list"
+            )
+        criteria: list[dict[str, Any]] = []
+        for cidx, c in enumerate(ac_raw):
+            if not isinstance(c, dict):
+                raise InvalidField(
+                    f"{ewhere}.acceptance_criteria[{cidx}]: must be a mapping"
+                )
+            if "kind" not in c:
+                raise MissingField(
+                    f"{ewhere}.acceptance_criteria[{cidx}]: 'kind' is required"
+                )
+            criteria.append(dict(c))
+
+        tb_raw = entry.get("time_bound")
+        if not isinstance(tb_raw, dict):
+            raise InvalidField(
+                f"{ewhere}: 'time_bound' must be a mapping (deadline=... "
+                "or evergreen=true [+ review_cadence])"
+            )
+
+        authored_by = _require_str(entry, "authored_by", ewhere)
+
+        lf_raw = entry.get("lifted_from")
+        if not isinstance(lf_raw, dict):
+            raise InvalidField(
+                f"{ewhere}: 'lifted_from' is required and must be a mapping "
+                "with 'source_doc' + 'source_ac'"
+            )
+        lf_where = f"{ewhere}.lifted_from"
+        source_doc = _require_str(lf_raw, "source_doc", lf_where)
+        source_ac = _require_str(lf_raw, "source_ac", lf_where)
+        # ``source_commit`` is reserved — manifest authors never set it
+        # at authoring time; the seal step writes it (AC.D-pa.3).
+        if "source_commit" in lf_raw:
+            raise InvalidField(
+                f"{lf_where}: 'source_commit' is written by `pos-amend "
+                "seal`; do not set it in the manifest"
+            )
+
+        out.append(
+            ObjectiveEntry(
+                goal=goal,
+                parent_id=parent_id_raw if parent_id_raw is not None else None,
+                parent_root=parent_root_raw,
+                acceptance_criteria=tuple(criteria),
+                time_bound=dict(tb_raw),
+                authored_by=authored_by,
+                lifted_from=LiftedFromEntry(
+                    source_doc=source_doc, source_ac=source_ac
+                ),
+            )
+        )
+    return tuple(out)
+
+
 def load_manifest(path: Path) -> Manifest:
     """Parse the YAML manifest at *path* and return a validated ``Manifest``.
 
@@ -129,10 +296,10 @@ def load_manifest(path: Path) -> Manifest:
         raise InvalidField(f"{path}: top-level YAML must be a mapping")
 
     schema_version = data.get("schema_version")
-    if schema_version != SCHEMA_VERSION:
+    if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         raise UnknownSchemaVersion(
             f"{path}: unsupported schema_version {schema_version!r}; "
-            f"this tool supports {SCHEMA_VERSION}"
+            f"this tool supports {SUPPORTED_SCHEMA_VERSIONS}"
         )
 
     amendment = _require(data, "amendment", str(path))
@@ -209,6 +376,28 @@ def load_manifest(path: Path) -> Manifest:
             )
         seal_description = seal_description_raw
 
+    # Schema v2 only: parse the ``objectives`` block. The schema-version
+    # gate is bidirectional (plan §6 constraint 6 / D-build.2 (a)):
+    #   - v1 manifests MUST NOT carry an ``objectives`` key
+    #   - v2 manifests MUST carry an ``objectives`` key
+    # Mismatches reject as ``InvalidField`` — explicit beats implicit.
+    objectives_raw = data.get("objectives")
+    objectives: tuple[ObjectiveEntry, ...] = ()
+    if schema_version == 1:
+        if objectives_raw is not None:
+            raise InvalidField(
+                f"{path}: 'objectives' is a schema_version 2 field; "
+                "either remove it or bump 'schema_version: 2'"
+            )
+    elif schema_version == 2:
+        if objectives_raw is None:
+            raise MissingField(
+                f"{path}: schema_version 2 requires the 'objectives' "
+                "block; either author the block or downgrade "
+                "'schema_version: 1'"
+            )
+        objectives = _parse_objectives_block(objectives_raw, str(path))
+
     return Manifest(
         schema_version=schema_version,
         number=number,
@@ -220,4 +409,5 @@ def load_manifest(path: Path) -> Manifest:
         universal_paths=universal,
         narrative=narrative,
         seal_description=seal_description,
+        objectives=objectives,
     )

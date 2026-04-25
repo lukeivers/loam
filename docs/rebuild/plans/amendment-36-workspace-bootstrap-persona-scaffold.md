@@ -337,3 +337,129 @@ When the brief is drafted, it carries these CDC + ODD enforcement requirements v
 - Scope-only downstream dispatches.
 - No `git commit --amend`.
 - Amendment-dispatch speedups: narrow test scope to `workspace-bootstrap/` + seal-diff on others; skip pre-seal full rerun; methodology snippets inlined.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left D-build.1 through D-build.4 to the builder. This
+section records the choices made and the rationale.
+
+### D-build.1 — Handle prompt UX integration: pure-function resolver, scaffold defaults to `primary`
+
+The scaffold defaults the persona handle to `primary` always; the
+resolver is exposed as a pure function `resolve_persona_handle(raw_input)`
+that callers (a future first-run UX layer, or the onboarding flow
+landed by amendment #35) hand a raw input string and consume the
+resolved handle from. No new I/O surface is added to the first-run
+flow under this amendment.
+
+**Rationale:** plan §9 #4 names "cannot integrate without adding a
+new I/O surface" as a halt condition. Plan §11 D-build.1 named
+candidate (a) ("extend the existing first-run-confirmation surface
+with a one-question pre-step") and candidate (b) ("defer the prompt
+to onboarding and rename the persona dir post-elicitation"). (a)
+would require touching `hands-off-lifecycle/` source, which is
+amendment #37's fence — that's the §9 #1 cross-component-scope
+halt. (b) collapses AC36.4's prompt-fixture surface into a rename
+path that is harder to verify deterministically (the rename step is
+state-dependent on prior elicitation completion). Candidate (c)
+"some other minimal-friction shape" is what shipped: a
+function-shaped seam. The AC measures the resolver's outcome on a
+fixture set, which a pure function satisfies cleanly without any
+cross-component reach.
+
+### D-build.2 — Template-copy mechanism: `shutil.copytree` + YAML round-trip + atomic rename
+
+`_install_persona_directory` uses
+`tempfile.TemporaryDirectory(dir=personas_dir)` to stage a copy of
+`primary-persona/templates/persona-template/` under
+`<workspace>/personas/.<handle>.staging.<rand>/<handle>/`, mutates
+`contract.yaml` in place via `yaml.safe_load` → set `handle` +
+`is_starter: true` → `yaml.safe_dump`, then `os.rename` into the
+final `<workspace>/personas/<handle>/` position. The staging
+directory is automatically cleaned by the context manager;
+partial-write failures leave nothing visible to the loader.
+
+**Rationale:** plan §11 D-build.2 recommendation. Tree is small;
+mutation is two fields; atomic rename is the cleanest crash-safety
+contract on a posix filesystem.
+
+### D-build.3 — Sluggifier shape: re-use existing `workspace_slug`
+
+`resolve_persona_handle` re-uses the same regex pair
+(`_SLUG_ALLOWED_RE`, `_SLUG_COLLAPSE_RE`) that
+`workspace_bootstrap.adapters.first_run_scaffold.workspace_slug`
+already uses. Lowercase + ASCII alphanumerics + dashes + collapse-
+runs + leading/trailing-dash-trim. Idempotent on the AC fixture
+set (`""`, `"Iris"`, `"Iris  Bright"`, `"Iris's"`, `"IRIS"`,
+`"Iris-Bright"`).
+
+**Rationale:** plan §11 D-build.3 master-plan recommendation. The
+existing sluggifier is parity-tested under amendment #33; reusing
+it avoids divergence between handle-slug and workspace-slug shapes
+(consistent UX). All AC36.4 fixtures pass; no fixture exposed an
+edge case requiring extension. `eve` rejection is layered on top
+as a post-slug check (`if slug in RESERVED_PERSONA_HANDLES`)
+rather than embedded in the sluggifier — keeps the sluggifier pure
+and the rejection observable.
+
+### D-build.4 — `partial_recovery` diagnostic: extend `PartialScaffoldError` data payload
+
+`_install_persona_directory` raises the existing
+`PartialScaffoldError` (introduced under amendment #4 for the H4
+partial-scaffold-detected case) with the `data` payload extended
+to include `kind="persona-scaffold-malformed"`, `persona_dir`,
+`contract_path`, and a human-readable `reason`. The exception
+class is unchanged so any downstream H4 handler routes uniformly;
+the `kind` sub-cause is observable for callers that want to
+distinguish.
+
+**Rationale:** plan §11 D-build.4 master-plan recommendation.
+Introducing a new exception class would have widened the partial-
+recovery contract surface unnecessarily; reusing the existing class
++ payload-discriminator keeps the cross-component diagnostic
+convention coherent.
+
+### Test results
+
+- AC36.1 — 3/3 green (`test_AC36_1_persona_scaffold_fresh_clone.py`).
+- AC36.2 — 2/2 green (`test_AC36_2_is_starter_true.py`).
+- AC36.3 — 3/3 green (`test_AC36_3_idempotent_re_run.py`).
+- AC36.4 — 14/14 green (`test_AC36_4_handle_resolver.py`,
+  including parameterised cases).
+- AC36.5 — 3/3 green (`test_AC36_5_partial_recovery_persona_dir.py`).
+- AC36.6 — 4/4 green (`test_AC36_6_framework_not_content.py`).
+- AC36.S — covered by `test_no_sealed_amendments.py`; BASELINE
+  advanced via `pos-amend apply` to `057afdb`; SEAL_COMMIT advanced
+  via `pos-amend seal` to the amendment SHA. Both test_B23 + test_B20
+  green post-seal.
+- Existing H1–H5 + AC6 partial-recovery + AC29 memory-port-
+  propagation + D5 plist-PATH-emission suites: no regressions. Full
+  workspace-bootstrap suite: **133 passed** (102 baseline + 31 new).
+- Cross-component seal-diff (per amendment-dispatch-speedups):
+  every other sealed component's `test_no_sealed_amendments.py`
+  green (telegram-interface, primary-persona, reversibility-
+  primitive, safety-layer, orchestrator, self-correction,
+  observability-aggregator, memory-system, graceful-degradation,
+  cost-governance).
+- `pos-amend apply --dry-run`: green pre-amendment-commit and
+  post-seal-commit.
+
+### Commit SHAs
+
+- Amendment commit: `ae75d283288d30afb4da5d50f34884c1920c3b1c` —
+  `feat(workspace-bootstrap): persona-scaffold writes personas/<handle>/ — amendment #36`
+- Seal commit: `0031d1e91c114801e99a13ad42abb13371d3f7b4` —
+  `chore(seals): persona-scaffold seal — workspace-bootstrap at ae75d28`
+
+### Dependents cleared to dispatch
+
+Sibling sub-plan #37 (hands-off-lifecycle-default-agent-wiring)
+had a hard prerequisite on this amendment's seal:
+
+- **#37** — depends on the `personas/<handle>/` scaffold output on
+  a fresh-clone first-run + the `is_starter: true` flag set on the
+  scaffolded contract. Both surfaces are now on disk.
+
+#37 is now unblocked.

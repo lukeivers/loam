@@ -20,20 +20,74 @@ health probe.
 
 This tool detects those orphans and remediates them reversibly.
 
-## Install
+## Run
+
+This is a one-shot remediation tool. You do not need to install it.
+The recommended path runs the source directly using the Python that
+pos-v2 already requires (`python3.13`, present on any host that
+completed pos-v2 first-run).
+
+**Prerequisites:** macOS, plus `python3.13` available at
+`/opt/homebrew/bin/python3.13` (Homebrew's `python@3.13` formula —
+already installed if pos-v2 first-run has run on this host). To
+confirm:
 
 ```
-pip install -e tools/orphan-plist-cleanup/
+/opt/homebrew/bin/python3.13 --version
 ```
 
-Registers the `orphan-plist-cleanup` console script. Requires
-Python 3.11+. macOS only.
+You should see `Python 3.13.<something>`. If that command errors,
+install Homebrew Python 3.13 with `brew install python@3.13` first
+(roughly two minutes on a warm cache).
+
+### Dry-run (read-only — list orphans, do not change anything)
+
+From the pos-v2 workspace root, run this single line. Estimated
+wall-clock: under one second.
+
+```
+PYTHONPATH=tools/orphan-plist-cleanup/src /opt/homebrew/bin/python3.13 -m orphan_plist_cleanup --dry-run
+```
+
+You will see one absolute path per detected orphan (or no output if
+no orphans exist). Exit code 0 either way.
+
+### Apply (mutating — bootout each orphan and rename it aside)
+
+When you have reviewed the dry-run output and want to remediate:
+
+```
+PYTHONPATH=tools/orphan-plist-cleanup/src /opt/homebrew/bin/python3.13 -m orphan_plist_cleanup --apply
+```
+
+Each orphan is booted out and renamed to `*.orphan-disabled.bak` next
+to the original. The plist file is never deleted; recovery is
+documented under "What apply mode does" below.
+
+### Optional — install as a PATH-resolvable command
+
+If you would rather type `orphan-plist-cleanup` than the
+`PYTHONPATH=… python3.13 -m …` line, install it editable into a
+Python 3.13 environment. The simplest no-side-effects path uses a
+throwaway venv:
+
+```
+/opt/homebrew/bin/python3.13 -m venv /tmp/opc-venv
+/tmp/opc-venv/bin/pip install -e tools/orphan-plist-cleanup/
+/tmp/opc-venv/bin/orphan-plist-cleanup --dry-run
+```
+
+Estimated wall-clock: under thirty seconds. To remove afterwards:
+`rm -rf /tmp/opc-venv`. Do not run a bare `pip install -e
+tools/orphan-plist-cleanup/` — on most macOS shells the default
+`pip` resolves to a Python below 3.11 and the install fails with
+`Package 'orphan-plist-cleanup' requires a different Python`.
 
 ## Subcommand surface
 
 ```
-orphan-plist-cleanup --dry-run    # list detected orphans; default mode
-orphan-plist-cleanup --apply      # bootout + rename-aside each detected orphan
+--dry-run    # list detected orphans; default mode
+--apply      # bootout + rename-aside each detected orphan
 ```
 
 `--dry-run` is the default; running with no flags is equivalent.

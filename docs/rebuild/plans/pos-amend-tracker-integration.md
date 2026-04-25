@@ -416,5 +416,6 @@ same shape.
 
 ### Commit SHAs
 
-(populated by the build commit + any follow-up commits below)
+- Build commit: `afc5858` — `feat(tools): pos-amend tracker integration
+  — schema v2 objectives block (AC.D-pa.1–AC.D-pa.5)`
 

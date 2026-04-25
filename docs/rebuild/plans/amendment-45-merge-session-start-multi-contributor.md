@@ -33,7 +33,18 @@ Re-extension of amendment #37's surface (hands-off-lifecycle default-agent wirin
 - **AC.45.1** — `merge_session_start` accepts a list of SessionStart-contributor stanzas (zero or more) and composes them into the resulting `.claude/settings.json` such that the final `hooks["SessionStart"]` list contains all contributor inner-hooks in the order supplied. Existing single-contributor callers remain byte-identical (regression-safe).
 - **AC.45.2** — `build_first_run_stanza` emits a multi-inner-hook envelope: the existing first-run shim AS the first inner hook, the loam-mode-selector AS the second inner hook (when sub-plan B's emitter is registered). Both invoke at SessionStart; the first-run shim retains its self-retire path; the loam-mode-selector remains across self-retire.
 - **AC.45.3** — `build_supervisor_stanza` emits a multi-inner-hook envelope: the supervisor entry AS the first inner hook, the loam-mode-selector AS the second inner hook (when registered). Existing supervisor-stanza tests remain green for the single-contributor case (when no extra contributor registered).
-- **AC.45.4** — Sub-plan B's AC.B1-B5 are satisfied by this amendment's seam. Specifically: B's emitter at `tools/loam-mode/src/loam_mode/session_start.py` (~140 lines per halt-finding-2.md) produces the inner-hook stanza; the contributor registry surface is consumed by `merge_session_start`'s new composition logic.
+- **AC.45.4** — Sub-plan B's AC.B1-B5 are satisfied by this amendment's seam. The B-side emitter (placed in `tools/loam-mode/` per dev-discipline §2 of B's plan) produces the inner-hook stanza; the contributor registry surface is consumed by `merge_session_start`'s new composition logic.
+
+  **AC text precision note (post-#45 tightening 2026-04-25):** the
+  original AC text pinned the emitter at the literal path
+  `tools/loam-mode/src/loam_mode/session_start.py` and cited a
+  line-count ("~140 lines per halt-finding-2.md") — both are method
+  (the path is D-build.2's choice; the line count is a sketch).
+  Per `feedback_loose_AC_text_fix_AC_not_implementation`, tightened
+  to outcome-shape (an emitter under `tools/loam-mode/` produces the
+  inner-hook stanza; the registry consumes it). The build's actual
+  emitter location is recorded in §14 / D-build.2; the AC.B1-B5
+  tests assert outcome and pass unchanged.
 - **AC.45.5** — Backwards-compat: amendment #32 (session-start context-load gate) and amendment #37 (default-agent wiring) test suites stay green. The contributor registry preserves their existing inner-hook semantics.
 - **AC.45.S** — Seal-diff: changes confined to `hands-off-lifecycle/` source + tests, `tools/loam-mode/` (within H19's `tools` admission), and the relevant plan docs. No surface change to other sealed components.
 

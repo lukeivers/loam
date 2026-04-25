@@ -112,18 +112,29 @@ locked owner ruling 4.
 
 **Maps to:** AC.PO.1 + AC.PO.2 + AC.PROG.3.
 
-### AC.E4 — `classify_workspace` does NOT inspect `VALUE_PROPOSITION.md`
+### AC.E4 — `classify_workspace`'s classification source of truth is `dev_intent`, not `VALUE_PROPOSITION.md`
 
-For the purpose of classification, `classify_workspace` does not call
-`Path.is_file()` (or any other read) on
-`docs/rebuild/VALUE_PROPOSITION.md`. The function's body's I/O is
-limited to `read_dev_intent`'s call (which itself reads sub-plan A's
-storage location).
+The classification's source of truth is the dev-intent answer (sub-
+plan A's resolver), not the presence of
+`docs/rebuild/VALUE_PROPOSITION.md`. A workspace where
+`VALUE_PROPOSITION.md` IS present but `dev_intent == "no"` classifies
+as `"user"`; a workspace where `VALUE_PROPOSITION.md` is ABSENT but
+`dev_intent == "yes"` classifies as `"pos-v2-dev"`.
 
-**Test shape:** static AST check OR a fixture where
-`VALUE_PROPOSITION.md` is present AND `dev_intent` is `"no"` — assert
-classification returns `"user"`. (The negative case proves the
-function is reading `dev_intent`, not the file.)
+**Test shape:** fixture where `VALUE_PROPOSITION.md` is present AND
+`dev_intent` is `"no"` — assert classification returns `"user"`
+(proves the function reads `dev_intent`, not the file).
+
+**AC text precision note (post-#42 tightening 2026-04-25):** the
+original AC text constrained `classify_workspace`'s implementation
+("does not call `Path.is_file()`", "function's body's I/O is limited
+to `read_dev_intent`'s call"), which prescribed method — what other
+I/O is or is not invoked is a function-internal choice. Per
+`feedback_loose_AC_text_fix_AC_not_implementation`, tightened to
+outcome-shape (the classification result tracks `dev_intent`, not
+the file). The existing AC.E4 test (fixture with file present +
+`dev_intent="no"` returning `"user"`) is the outcome-shaped probe
+and passes under the tightened text without any change.
 
 **Maps to:** AC.PROG.3.
 

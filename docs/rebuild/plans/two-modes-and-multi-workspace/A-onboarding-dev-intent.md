@@ -126,15 +126,27 @@ sentinel resolved by the path-resolver (D-MASTER.1 (b)).
 
 ### AC.A2 — `PersonaContract` carries a `dev_intent` field with structural validation
 
-Under D-MASTER.1 (a): the contract Pydantic model has a `dev_intent`
-field whose type is constrained to a small enum (`"yes"`, `"no"`,
-or — defensive — `""` denoting unanswered, with a `@model_validator`
-that refuses any other string).
+Under D-MASTER.1 (a): the contract carries a `dev_intent` field whose
+admissible values form a small closed set — `"yes"`, `"no"`, and an
+unanswered sentinel — and the contract structurally refuses any
+other value at validation time.
 
 **Test shape:** construct a `PersonaContract` with `dev_intent="yes"`
 and `dev_intent="no"` — both succeed. Construct with `dev_intent="maybe"`
-— Pydantic raises validation error. Construct without specifying —
-field defaults to the unanswered sentinel.
+— validation raises. Construct without specifying — field defaults
+to the unanswered sentinel.
+
+**AC text precision note (post-#41 tightening 2026-04-25):** the
+original AC text named `Pydantic` + `@model_validator` as the
+mechanism for structural refusal, which prescribed method (D-build.1
+chose `Literal["unanswered","yes","no"]`, not a `@model_validator`,
+and either is admissible under the outcome). Per
+`feedback_loose_AC_text_fix_AC_not_implementation`, tightened to
+outcome-shape (the validation refuses the bad value; the type
+construct is method). The unanswered sentinel's specific spelling
+(`""` vs `"unanswered"`) is also method (D-A.1 / D-build.1 chose
+`"unanswered"`). The existing AC.A2 tests pass under the tightened
+text without any test or implementation change.
 
 **Maps to:** AC.PO.1 (structural refusal: the persona cannot end up
 in an undefined dev-mode state) + AC.PO.2 (toolkit primitive: the
@@ -146,8 +158,9 @@ When the transcript carries a `"yes"` or `"no"` value at key
 `"dev_intent"`, the contract on disk has the corresponding field set;
 when the transcript omits the question, the field stays at its prior
 value (or the unanswered sentinel on first scaffold). The starter-
-flag transition path (lines 233–253 of current onboarding.py) is
-extended to consider `dev_intent` as a required answer for completion.
+flag transition treats `dev_intent` as a required answer for
+completion (the contract drops out of starter state only when every
+required answer has been recorded).
 
 **Test shape:** in a tmp-fs fixture, scaffold a fresh persona, run
 `persist_elicitation_transcript` with all four answers; assert the
@@ -156,6 +169,17 @@ and an OTel event `pos.persona.onboarding.answer` with
 `question_id="dev_intent"`. Then run with three answers (omit
 dev_intent); assert `is_starter=True` (incomplete) and the contract
 is written without dev_intent set.
+
+**AC text precision note (post-#41 tightening 2026-04-25):** the
+original AC text pinned the starter-flag transition to "lines 233–253
+of current onboarding.py" — line numbers drift with refactor and are
+method, not outcome. Per
+`feedback_loose_AC_text_fix_AC_not_implementation`, tightened to
+outcome-shape (the transition treats `dev_intent` as a required
+answer). The build's actual mechanism — re-using the existing
+`for q in ONBOARDING_QUESTIONS` loop checking `q.required` — is
+documented in §14 / D-build.5 (the new question's `required=True`
+flag suffices), not in the AC text.
 
 **Maps to:** AC.PO.1 + AC.PO.2.
 

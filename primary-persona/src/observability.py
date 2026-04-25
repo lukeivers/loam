@@ -253,3 +253,53 @@ def onboarding_starter_flag_transition_event(
                 "pos.persona.onboarding.starter_flag.to": to_value,
             },
         )
+
+
+# ---- tracker-context contributor (amendment #40) --------------------
+
+
+def tracker_context_composed_event(
+    *, handle: str, in_flight_count: int, truncated_count: int
+) -> None:
+    """One event per successful tracker-context contribution (AC40.x).
+
+    Fires whether the contribution is empty (in_flight_count == 0,
+    AC40.5) or non-empty (AC40.1). Non-zero ``truncated_count`` flags
+    that the cap-guard elided some bullets (AC40.4).
+    """
+    with _tracer().start_as_current_span(
+        "pos.persona.tracker_context.composed"
+    ) as span:
+        span.add_event(
+            "pos.persona.tracker_context.composed",
+            {
+                "pos.persona.tracker_context.handle": handle,
+                "pos.persona.tracker_context.in_flight_count": in_flight_count,
+                "pos.persona.tracker_context.truncated_count": truncated_count,
+            },
+        )
+
+
+def tracker_context_unavailable_event(
+    *, handle: str, failure_class: str, detail: str
+) -> None:
+    """One event per tracker-context graceful-degradation (AC40.3).
+
+    Fires when the tracker cannot be opened, the query fails, or any
+    other tracker-side error renders the contributor unable to
+    produce a populated block. ``failure_class`` names the exception
+    class (e.g., ``OperationalError``, ``PermissionError``,
+    ``FileNotFoundError``); ``detail`` names which path tripped
+    (``tracker_open_failed`` | ``query_projection_view_failed``).
+    """
+    with _tracer().start_as_current_span(
+        "pos.persona.tracker_context.unavailable"
+    ) as span:
+        span.add_event(
+            "pos.persona.tracker_context.unavailable",
+            {
+                "pos.persona.tracker_context.handle": handle,
+                "pos.persona.tracker_context.failure_class": failure_class,
+                "pos.persona.tracker_context.detail": detail,
+            },
+        )

@@ -41,7 +41,19 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              preceding the amendment commit (HEAD~1 pattern per
 #              amendment #34's narrative). Sub-plan §10's manifest
 #              records the BASELINE rationale.
-BASELINE = "bea9f47"
+#   - 61ad8f9  at amendment #40 (primary-persona tracker-context
+#              contributor — Heavy-B sub-plan #3 of 4). Registers a
+#              session-level tracker-context contributor on the
+#              existing ComposedContextPayload registry: surfaces the
+#              workspace's value-prop-rooted in-flight objective tree
+#              in additionalContext at SessionStart; consumes amendment
+#              #38's `query_projection_view` + `trace_to_root` and
+#              amendment #39's seeded value-prop root. Single-component
+#              amendment on the `primary-persona` surface. Advanced via
+#              `pos-amend apply` to the commit immediately preceding
+#              the amendment commit (HEAD~1 pattern). Sub-plan §10's
+#              manifest records the BASELINE rationale.
+BASELINE = "61ad8f907b8a347908402c12a9542c7bb14422ce"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

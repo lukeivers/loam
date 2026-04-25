@@ -377,3 +377,165 @@ When the brief is drafted, it carries these CDC + ODD enforcement requirements v
 - Amendment-dispatch speedups: narrow test scope to `primary-persona/` + seal-diff on others; skip pre-seal full rerun; methodology snippets inlined.
 - primary-persona is not a frozen-baseline component — manifest sets `frozen_baseline: false`.
 - **No v1.3 spec addendum authored** — owner ruling D-2 corrected forbids it.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left D-build.1 through D-build.5 to the builder. This
+section records the choices made and the rationale, plus the test
+breakdown and commit SHAs.
+
+### D-build.1 — Trigger kind: `SessionStart` only
+
+`register_tracker_context` registers the contributor under
+`TriggerKind.session`. The contributor fires once per session-start;
+turn-firing does NOT invoke it.
+
+**Rationale:** plan §11 D-build.1 candidate (a) — master-research
+recommendation. The objective-tree state changes at human cadence
+(seeded once, status transitions on the order of hours/days); a
+session-start contributor is the natural moment for "here's what's
+in flight." Per-turn freshness adds cold-start cost without v1
+value; future amendments may add a turn-level "alignment check"
+contributor that re-checks the current scope's objective-trace
+(out of scope per plan §7).
+
+### D-build.2 — Projection shape: goals + status + parentage
+
+Each in-flight bullet shows `<objective_id> [<status>]: <goal>` with
+a `(<- <parent_goal> -> root)` parentage hint. Goal text is
+truncated at 100 chars; parent goals at 50 chars; the root summary
+line at 200 chars.
+
+**Rationale:** slight extension over master-research candidate (b)
+"goals + status." Parentage costs ~30 chars per bullet and
+substantially improves compaction resilience: even after compaction
+collapses interior context, the persona retains the lineage
+(`obj-id [active]: goal (<- intermediate -> root)`) so the structural
+relationship between work in flight and the workspace's prime
+objective survives. The first line of the block is an identity-
+anchor-style bracketed marker (`[primary-persona/tracker-context]`),
+which the persona retains as a structural signal through compaction.
+
+### D-build.3 — Truncation policy: depth-first cap + marker line
+
+Hard cap at `objective_id_cap = 20` bullets (depth-first walk
+order; deterministic). When the cap-guard trims further (sub-cap
+2000 chars; configurable via `char_cap`), additional bullets are
+dropped on a line boundary and a final marker line surfaces the
+elided count: `[N more in-flight objectives truncated for cap]`.
+
+**Rationale:** plan §11 D-build.3 candidate (a) — master-research
+recommendation. Deterministic; easy to test; no method-in-AC issue
+(the AC bounds outcome: cap not raised, dropped count surfaced).
+Parentage-aware summarisation (candidate b) is a future
+optimisation if the in-flight set ever exceeds 20 objectives in
+practice — by then the workload will inform the right policy.
+
+### D-build.4 — Diagnostic event names
+
+`pos.persona.tracker_context.composed` (success path) carrying
+`pos.persona.tracker_context.{handle, in_flight_count,
+truncated_count}`. `pos.persona.tracker_context.unavailable`
+(graceful-degradation path) carrying `pos.persona.tracker_context.{
+handle, failure_class, detail}`.
+
+**Rationale:** plan §11 D-build.4 master-research recommendation.
+Matches the existing `pos.persona.<event>` naming convention
+(amendments #32 D8, #33 D7, #35 onboarding). The `failure_class` +
+`detail` attributes let downstream consumers discriminate between
+tracker open failures (`detail="tracker_open_failed"`) and query
+failures (`detail="query_projection_view_failed"`).
+
+### D-build.5 — Workspace-identity-to-tracker-path resolution
+
+Private constant `TRACKER_DB_FILENAME = "objective_tracker.sqlite"`
+with pure-function `tracker_db_path_for(workspace_root) ->
+Path`. Convention parity with workspace-bootstrap's
+`TRACKER_DB_FILENAME` constant (amendment #39, written at first-run
+time). The persona layer derives the path from the existing
+workspace-identity primitive (`workspace_root: Path` already passed
+to `ComposedContextPayload.on_session_start`).
+
+**Rationale:** plan §11 D-build.5 candidate (a)/(b) hybrid that
+avoids a cross-component import surface. Importing
+`workspace_bootstrap.adapters.tracker_seed.TRACKER_DB_FILENAME`
+would add a workspace-bootstrap dep on the persona layer's import
+surface; D-build.5's documented method-level constant + AC40.6
+outcome-measurement is the same approach amendment #33 used for
+the parity-with-`workspace-bootstrap` workspace-slug primitive.
+Future amendment that reconciles the constants is a one-line edit.
+
+### Halt-and-surface ODD finding (vocabulary mapping)
+
+The plan's AC40.1 names statuses `{started, decomposed}`; the actual
+`objective_tracker.spec.ObjectiveStatus` enum uses `{proposed,
+active, achieved, abandoned}`. "In flight" maps to
+`{proposed, active}` (pre-terminal) — the build adopts the tracker's
+actual vocabulary as method per ODD §2.5 (the AC bounds outcome:
+"non-empty when in-flight objectives exist", verifiable in the
+tracker's actual vocabulary). Documented in
+`tracker_context.py:IN_FLIGHT_STATUSES` and the AC40.5 test
+docstring. Surfaced to owner in deliverable; NOT a halt.
+
+### Test breakdown (AC40.1 – AC40.7 + AC40.S)
+
+- **AC40.1** — `tests/test_AC40_1_in_flight_non_empty.py` — 3 tests:
+  in-flight goals appear; terminal records excluded; registration
+  under `TriggerKind.session`.
+- **AC40.2** — `tests/test_AC40_2_workspace_root_filter.py` — 2 tests:
+  secondary-rooted records excluded; orphan trace-terminals excluded.
+- **AC40.3** — `tests/test_AC40_3_graceful_failure.py` — 3 tests: open
+  failure → no raise + `pos.persona.tracker_context.unavailable`
+  event with `failure_class="OSError"`, `detail="tracker_open_failed"`;
+  query failure → no raise + diagnostic + `tracker.close()` called;
+  sibling contributors continue firing.
+- **AC40.4** — `tests/test_AC40_4_cap_guard.py` — 2 tests: 50×500-char
+  oversized in-flight set does not raise composer cap; truncation
+  marker surfaces dropped count.
+- **AC40.5** — `tests/test_AC40_5_empty_when_none_in_flight.py` — 2
+  tests: only-terminal-records → empty contribution; no-records-at-all
+  → empty contribution.
+- **AC40.6** — `tests/test_AC40_6_workspace_identity_path.py` — 3
+  tests: pure path-resolver; two parallel workspaces each see own
+  tree; default factory targets workspace-identity-derived path.
+- **AC40.7** — `tests/test_AC40_7_framework_not_content.py` — 3 tests:
+  no value-prop prose markers in `primary-persona/src/`; no spec-doc
+  prose markers; `tracker_context.py` source structurally references
+  runtime API and carries no concrete content constants.
+- **AC40.S** — covered by the existing
+  `tests/test_no_sealed_amendments.py` at BASELINE 61ad8f9 +
+  per-component `test_no_sealed_amendments.py` sweep.
+
+Total new tests: 18. primary-persona suite: 198 passed, 1 skipped
+(pre-existing skip). Every other sealed component's
+`test_no_sealed_amendments.py` (or `test_cross_cutting.py` for
+hands-off-lifecycle) runs green.
+
+### Commit SHAs
+
+- Amendment commit: `<TBD-amendment-sha>` —
+  `feat(primary-persona): tracker-context contributor — surfaces
+  in-flight objective tree (amendment #40)`
+- Seal commit: `<TBD-seal-sha>` — `chore(seals):
+  tracker-context-contributor seal — primary-persona at
+  <amendment-sha-short>`
+
+(SHAs backfilled by a follow-up `docs(plans): record amendment #40
+commit SHAs in method-decision register` commit, mirroring #38/#39
+post-seal pattern.)
+
+### Dependents cleared to dispatch
+
+- `pos-amend-tracker-integration.md` (dev-discipline) — formerly
+  blocked by amendment #38; now further blocked by the seal-
+  automation extension research+plan agent (per dispatch brief
+  Pipeline note). Inherits a satisfied tracker-context-contributor
+  precondition.
+- `heavy-b-phase-alpha-beta-gamma-migration.md` (dev-discipline) —
+  inherits a satisfied amendment chain (#38 + #39 + #40 sealed).
+  The fourth Heavy-B amendment (Heavy-B sealed-component family
+  closing scope) lands the migration data path; primary-persona's
+  contributor is now in place to surface the migrated tree as
+  ambient context.

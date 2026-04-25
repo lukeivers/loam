@@ -85,7 +85,9 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
   - **Pre-author plan §14 method-decision register heading** in plan docs before running `pos-amend seal --plan-doc`. The seal automation backfills the SHAs subsection inside an existing §14, but doesn't create the heading from scratch. Plan-doc skeleton template should include the §14 heading as a pre-authored section.
   - **One-file-per-AC test convention is the precedent** (matches AC35.x / AC40.x / AC.A.x), even when a plan §12 register suggests fewer test files. Plan-doc skeleton template should standardise this expectation.
 
-- **`.scratch/` should be in root `.gitignore`.** `pos-amend`'s dirty-tree halt rejected `.scratch/` despite per-dir gitignore (the dir itself isn't in root `.gitignore`); the #42 build agent had to move it aside temporarily mid-build. Tiny one-line fix; removes friction for future amendments. Surfaced by #42 build agent.
+- **`.scratch/` should be in root `.gitignore`.** `pos-amend`'s dirty-tree halt rejected `.scratch/` despite per-dir gitignore (the dir itself isn't in root `.gitignore`); the #42 build agent had to move it aside temporarily mid-build. Tiny one-line fix; removes friction for future amendments. Surfaced by #42 build agent. **ACTIONED 2026-04-25** in commit `f7cb781` (root `.gitignore` updated).
+
+- **Cross-mode reference debt: `memory-system/launchd/README.md` references dev-only path.** F's AC.F3 reference scanner found `memory-system/launchd/README.md` (an always-loaded artefact) references `docs/rebuild/components/true-first-run/research.md` (a dev-only artefact). Editing the README would breach F's sealed-component fence (memory-system is sealed; F is dev-discipline). F captured as `KNOWN_CROSS_MODE_DEBT` allowlist so AC.F3 passes; allowlist must shrink to empty when fixed. **Two resolution paths:** (a) future memory-system amendment scrubs the cross-ref (preferred — minimal partition surface); (b) partition relaxes locked ruling 4 to carve out `memory-system/launchd/` from sealed-component coverage (worse — undermines partition's structural simplicity). Surfaced by #44 (sub-plan F build).
 
 ---
 

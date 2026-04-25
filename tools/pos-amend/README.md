@@ -95,6 +95,9 @@ pos-amend seal --no-finalize <manifest.yaml>  # legacy: advance sidecars + appen
 pos-amend seal --scoped-sweep <manifest.yaml> # restrict sweep to manifest-listed components
 pos-amend seal --plan-doc <plan.md> <manifest.yaml>
                                               # also append §14 SHA backfill + follow-up commit
+pos-amend template list                       # enumerate registered markdown templates
+pos-amend template render <family>/<id> ...   # render a template (stdout or --out)
+pos-amend template validate <family>/<id>     # parse-check a template + report its variables
 ```
 
 `validate`, `apply`, and `apply --dry-run` do not commit. **`seal` does
@@ -332,6 +335,118 @@ no-ops the source-commit rewrite when the SHA already matches.
 2   manifest invalid
 3   repo / git / io error
 ```
+
+## `template` subcommand — markdown template engine
+
+Renders authored-artefact boilerplate (dispatch prompts, plan-doc
+skeletons, future families) from per-template markdown files with
+`{{KEY}}` placeholders. Drives the dispatch + plan-doc speedups
+described in `docs/rebuild/plans/dispatch-prompt-template-extension.md`.
+
+### Modes
+
+```
+pos-amend template list
+pos-amend template render <family>/<id> [--var KEY=VALUE]... [--vars-file PATH] [--out PATH] [--force]
+pos-amend template validate <family>/<id>
+```
+
+`--templates-root <PATH>` (before the mode) overrides the default
+templates root (the package's bundled `templates/` directory). Tests
+inject an alternate root via this flag; normal use does not.
+
+### Authoring a template
+
+A template is a UTF-8 markdown file at
+`tools/pos-amend/templates/<family>/<id>.md` carrying a YAML
+frontmatter block with the variables contract:
+
+```markdown
+---
+description: "One-line summary; appears in `template list`."
+required:
+  - VAR_A
+  - VAR_B
+optional:
+  VAR_C: "default value"
+  VAR_D: ""
+---
+Body text. Substitute {{VAR_A}}, {{VAR_B}}, optionally {{VAR_C}} / {{VAR_D}}.
+
+Use \{{ literal \}} to embed literal double braces.
+```
+
+Every `{{NAME}}` placeholder in the body must appear in either
+`required` or `optional`. Variables provided at render time but not
+declared in the contract reject as `unrecognised-variable`. Missing
+required variables reject as `missing-required-variable`. Substitution
+is one-pass — defaults are not recursively expanded.
+
+### Rendering — variable sources
+
+Variables come from `--var KEY=VALUE` flags (repeatable) or a YAML
+`--vars-file <path>` carrying a flat mapping. When both are provided,
+`--var` flags override `--vars-file` entries.
+
+```bash
+# Inline flags:
+.venv/bin/pos-amend template render dispatch/sealed-component-build \
+  --var COMPONENT=alpha --var AMENDMENT_NUMBER=42 \
+  --var AC_PREFIX=AC.A.x --var PLAN_PATH=docs/rebuild/plans/amendment-42.md \
+  --var OBJECTIVE='...' --var SCOPE_FENCE='...'
+
+# YAML vars-file (preferred for templates with many variables):
+.venv/bin/pos-amend template render dispatch/sealed-component-build \
+  --vars-file /tmp/dispatch-vars.yaml
+
+# Render to file (refuses overwrite without --force):
+.venv/bin/pos-amend template render plan/dev-discipline \
+  --vars-file /tmp/plan-vars.yaml \
+  --out docs/rebuild/plans/new-plan.md
+```
+
+Default output is stdout. `--out <path>` writes to the named path,
+creating parent directories as needed; an existing file at the target
+rejects with exit 3 unless `--force` is passed.
+
+### Initial templates shipped at v1
+
+```
+templates/dispatch/sealed-component-build.md   # sealed-component build dispatch boilerplate
+templates/plan/dev-discipline.md               # 13-section dev-discipline plan-doc skeleton
+```
+
+Run `pos-amend template list` for the current registry; run
+`pos-amend template validate <family>/<id>` for any template's
+`required` / `optional` / placeholder list.
+
+### Failure modes
+
+Exit codes follow the existing pos-amend taxonomy:
+
+```
+0 — render succeeded
+2 — template/vars contract failure (unknown id, malformed template,
+    missing required variable, unrecognised variable, malformed
+    --var flag, malformed --vars-file)
+3 — IO error (--out target exists without --force, write failed)
+```
+
+Every failure mode emits a structured diagnostic to stderr in
+`template error [<failure-class>]: <detail>` form; rendering halts
+before any output reaches stdout or the `--out` target.
+
+### What's out of scope at v1
+
+- Rendered-output schema validation (e.g. "every plan template's
+  rendered output contains a §14 heading"). The engine validates the
+  template + the variables contract; output-shape validation is
+  future work.
+- Memory-doc and commit-message template families — additive
+  (drop a new `<family>/<id>.md` under `templates/`; no engine work).
+- Auto-population of variables from external state (manifest, current
+  HEAD, etc.) — author the vars-file by hand.
+- Template versioning — git history is the version trail.
 
 ## Tests
 

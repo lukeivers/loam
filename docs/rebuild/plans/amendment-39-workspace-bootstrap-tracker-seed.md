@@ -364,3 +364,191 @@ When the brief is drafted, it carries these CDC + ODD enforcement requirements v
 - No `git commit --amend`.
 - Amendment-dispatch speedups: narrow test scope to `workspace-bootstrap/` + seal-diff on others; skip pre-seal full rerun; methodology snippets inlined.
 - workspace-bootstrap is not a frozen-baseline component — manifest sets `frozen_baseline: false`.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left D-build.1 through D-build.4 to the builder. This
+section records the choices made and the rationale, plus the test
+breakdown and commit SHAs.
+
+### D-build.1 — pos-v2-dev classifier: presence of canonical VALUE_PROPOSITION.md
+
+`tracker_seed.classify_workspace(workspace_root)` returns
+`"pos-v2-dev"` iff `<workspace>/docs/rebuild/VALUE_PROPOSITION.md`
+exists, else `"user"`. Pure function; no metadata surface added;
+the existing artefact is sufficient as a discriminator.
+
+**Rationale:** plan §11 D-build.1 candidate (a) — master-research
+recommendation. Minimal blast radius. The classifier checks for the
+same file the seed reads as source on the dev path, so the
+"classifier matched but loader can't find the file" branch is
+structurally impossible (and surfaces loudly via `FileNotFoundError`
+if it ever did happen). Candidates (b) (repo metadata) and (c)
+(explicit config flag) would have widened the workspace-identity
+surface or added a YAML knob without lift.
+
+### D-build.2 — Spec-tier descendant shape: one objective per spec phase
+
+Three descendants — one each for v1.0, v1.1, v1.2. Each has
+`authored_by="user"`, `parent_id=ROOT_OBJECTIVE_ID`, a single prose
+criterion (`"spec-{phase}-met"`), evergreen time-bound, and
+`lifted_from=LiftedFrom(source_doc=
+"docs/rebuild/spec/pos-v2-objectives-spec.md", source_ac=phase)`.
+Stable IDs `spec-v1.0` / `spec-v1.1` / `spec-v1.2` keep the
+re-run query-then-skip check deterministic.
+
+**Rationale:** plan §11 D-build.2 candidate (a) — master-research
+recommendation. Compact tree (4 records total: root + 3
+descendants); matches research §B.2 Phase α subset. Candidate (b)
+(one objective per `R*` clause) would have ballooned to ~25 records
+and violated the explicit out-of-scope "this amendment's scope is
+the value-prop root + spec descendants; the dev CDCs are a separate
+seeding operation."
+
+### D-build.3 — Non-dev workspace UX: templated path with skip-on-absent
+
+On a workspace classified as `"user"`, the seed reads
+`<workspace>/value-prop.md` if present and seeds against that;
+if absent, it returns `TrackerSeedResult(seeded=False,
+reason="skipped_no_value_prop", ...)` and the scaffold completes
+without raising. The user can supply the file later and re-invoke
+`seed_tracker` to complete the seed (covered by AC39.5's "re-run
+after value prop supplied" test).
+
+**Rationale:** plan §11 D-build.3 candidate (b) — master-research
+recommendation. Non-interactive, durable, parallels amendment
+#36's persona template-from-disk shape. Candidate (a) (interactive
+prompt) would have required new I/O surface in the scaffold —
+plan §9 #10 names that as a halt condition. Candidate (c) (defer +
+emit diagnostic) is structurally what shipped, since the skip
+result IS a structured diagnostic the caller can route on.
+
+### D-build.4 — Seed transaction boundary: root first, descendants individually
+
+`seed_tracker` creates the root via `tracker.create(root_spec,
+objective_id=ROOT_OBJECTIVE_ID)`, then iterates the spec phases
+creating each descendant individually, querying via
+`query_projection_view(ObjectiveFilter(lifted_from_source_doc=...))`
+to detect already-seeded records and skip. The root + each
+descendant land in their own create() call, so an interrupted seed
+that wrote the root + one descendant resumes by creating only the
+remaining descendants on the next invocation.
+
+**Rationale:** plan §11 D-build.4 candidate (b) — master-research
+recommendation. Matches the partial-recovery contract — AC39.4
+test fixtures simulate root-only and root+one-descendant interrupted
+states; both resume cleanly with `reason="completed_partial"`.
+Candidate (a) (single transaction) would have blocked partial-
+recovery resumption: an aborted transaction leaves zero records,
+and a successful one leaves the full tree, but the actual fault
+shape (process crash mid-seed) does not map to either.
+
+### Zero-content tension resolution (research §F.4 / sub-plan §1)
+
+The chosen method satisfies STATE.md rule #4 ("pOS core ships zero
+personas/content") AND the single-tree ruling AND owner D-4
+ruling (b) simultaneously:
+
+- pos-v2 source code (`workspace-bootstrap/src/`) embeds **zero**
+  literal value-prop prose. AC39.6's sentinel-scan test verifies
+  that the canonical VALUE_PROPOSITION.md sentences ("AI has a
+  usability problem", "primary persona is a translation layer",
+  "do this thing every 12 hours", etc.) do not appear hard-coded
+  in any `.py` file under `workspace-bootstrap/src/`.
+- The "template source" for pos-v2 dev workspaces is the
+  canonical doc `docs/rebuild/VALUE_PROPOSITION.md` itself —
+  framework documentation that lives in `docs/`, not bootstrap-
+  seed payload bundled in source. The seed `read_text()`s the doc
+  at first-run-time. Reading from disk at runtime is structurally
+  identical in shape to amendment #36's persona-template-from-
+  disk pattern.
+- Single tree: there is exactly ONE `docs/rebuild/VALUE_PROPOSITION.md`
+  in the framework. Forks of pos-v2 that classify as pos-v2 dev
+  (because the classifier looks for that file) inherit the same
+  content — which is the explicit template-from-Luke shape D-4
+  ruling (b) sanctions. A workspace user who forks pos-v2 to
+  build their own thing replaces `docs/rebuild/VALUE_PROPOSITION.md`
+  with their own content; the classifier still routes to the dev
+  path; the seed reads the user's now-replaced file. Authority
+  remains with the workspace.
+- Non-dev workspaces never inherit Luke's content: the seed
+  reads `<workspace>/value-prop.md` (workspace-user authored),
+  or skips entirely. AC39.5 cross-checks framework sentinels do
+  not leak into a user workspace's tracker tree.
+
+### Test breakdown
+
+- **AC39.1** — 5 tests (`test_AC39_1_fresh_clone_seeds_root_and_
+  descendants.py`): root carries goal + AC.PO.1 + AC.PO.2 +
+  evergreen + `lifted_from`; descendants chain via `trace_to_root`;
+  `bind_scope` succeeds; `query_projection_view` returns seeded
+  subset; `ScaffoldResult` reports outcome.
+- **AC39.2** — 3 tests (`test_AC39_2_authored_by_user_invariant.py`):
+  every record `authored_by="user"`; chain is user-authored end-to-
+  end; no record carries persona/bootstrap `authored_by`.
+- **AC39.3** — 4 tests (`test_AC39_3_re_run_is_noop.py`): direct
+  `seed_tracker` re-call → `already_seeded`; `run_first_run_scaffold`
+  re-call → `already_scaffolded` + tracker untouched; user transitions
+  survive re-seeds; one ObjectiveCreated event per ID.
+- **AC39.4** — 3 tests (`test_AC39_4_partial_recovery_resumes.py`):
+  root-only state resumes (`completed_partial`); root+one-descendant
+  resumes only missing; no duplicate records.
+- **AC39.5** — 5 tests (`test_AC39_5_non_dev_workspace_user_supplied.py`):
+  classifier returns `"user"`; user file with `value-prop.md`
+  seeds from local file; absent file skips cleanly; framework
+  sentinels do not leak; re-invoke after supply completes.
+- **AC39.6** — 4 tests (`test_AC39_6_no_tracker_payload_in_source.py`):
+  no VP sentinels in src; no spec-doc sentinels in src;
+  `tracker_seed.py` reads at runtime; consumes #38's API.
+- **AC39.S** — covered by `test_no_sealed_amendments.py`;
+  BASELINE advanced via `pos-amend apply` to
+  `fa15127134ad5dfa68166b9641cfa6cc174e66df`; SEAL_COMMIT
+  advanced via `pos-amend seal` to the amendment commit
+  `3f0cd8d3e352481e5cc3b191113630e87038c969`. test_B23 +
+  test_B20 green post-seal.
+- Existing baseline suite: no regressions. **Full workspace-
+  bootstrap suite: 157 passed (133 baseline + 24 new AC39
+  tests).**
+- **Cross-component seal-diff sweep** (per amendment-dispatch-
+  speedups): every other sealed component's
+  `test_no_sealed_amendments.py` (or `test_cross_cutting.py` for
+  hands-off-lifecycle) green at its pinned SEAL_COMMIT —
+  cost-governance, graceful-degradation, memory-system,
+  observability-aggregator, orchestrator, primary-persona,
+  reversibility-primitive, safety-layer, self-correction,
+  telegram-interface, objective-tracker, hands-off-lifecycle.
+- `pos-amend apply --dry-run`: green pre-amendment-commit and
+  post-seal-commit (workspace-bootstrap is not a frozen-baseline
+  component; the BASELINE literal advance completed cleanly).
+
+### Commit SHAs
+
+- Amendment commit: `3f0cd8d3e352481e5cc3b191113630e87038c969` —
+  `feat(workspace-bootstrap): tracker-seed — first-run seeds
+  value-prop-rooted tree (amendment #39)`
+- Seal commit: `13770df7410d0dd4489594e4a15aaaccc3413769` —
+  `chore(seals): tracker-seed seal — workspace-bootstrap at
+  3f0cd8d`
+
+### Dependents cleared to dispatch
+
+The Heavy-B chain advances. Sibling sub-plan #40 (primary-persona
+tracker-context contributor) and the two dev-discipline plans
+(`pos-amend-tracker-integration.md`, `heavy-b-phase-alpha-beta-
+gamma-migration.md`) inherit a satisfied workspace-bootstrap-
+seeded-tracker precondition:
+
+- **#40** (primary-persona tracker-context contributor) — depends
+  on #38 + #39; tracker DB carries the value-prop root + spec
+  descendants on a fresh-clone first-run; cleared to dispatch.
+- **`pos-amend-tracker-integration.md`** (dev-discipline) —
+  depends on #38; `LiftedFrom.source_commit` write surface +
+  query API available; cleared to dispatch.
+- **`heavy-b-phase-alpha-beta-gamma-migration.md`** (dev-
+  discipline) — depends on #38 + #39 + #40 + pos-amend
+  integration; ready for dispatch after #40 + integration land.
+
+No remaining workspace-bootstrap dependency lurks on the Heavy-B
+chain.

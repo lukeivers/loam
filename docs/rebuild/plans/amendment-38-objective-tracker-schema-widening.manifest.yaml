@@ -1,0 +1,212 @@
+schema_version: 1
+amendment:
+  number: 38
+  slug: objective-tracker-schema-widening
+  title: "objective-tracker schema widening (lifted_from + query_projection_view)"
+
+# BASELINE: 5ad573d — pre-amendment tip (the commit immediately
+# preceding this amendment commit, "docs(plans): record amendment #37
+# commit SHAs in method-decision register"). Mirrors the BASELINE-as-
+# HEAD~1 pattern amendments #29 / #34 / #35 / #36 / #37 used: pin to
+# the immediate-prior commit, not the prior objective-tracker seal,
+# so the BASELINE..HEAD diff is narrow to amendment #38's surface and
+# avoids spurious cross-component "missing admission" reports for
+# unrelated commits intervening between objective-tracker's prior
+# touch and this amendment.
+#
+# Note: objective-tracker historically shipped without a seal-diff
+# test + SEAL_COMMIT sidecar (per amendment #18 seal narrative
+# f1ff28b). This amendment introduces both inside the objective-
+# tracker fence per plan §10. The manifest's seal_test / sidecar
+# paths become real files inside this amendment, mirroring the
+# precedent set in amendment #32 for primary-persona.
+baseline: 5ad573d226b14571ebdeac357cfdb56097be90ab
+
+plan: docs/rebuild/plans/amendment-38-objective-tracker-schema-widening.md
+
+# Single-component amendment per amendment plan §2: objective-tracker
+# only. No surface change to pos-amend, primary-persona, scope-of-work,
+# workspace-bootstrap, or any other sealed component. Sub-plan #38's
+# AC38.S enforces this.
+components:
+  - name: objective-tracker
+    seal_test: objective-tracker/tests/test_no_sealed_amendments.py
+    sidecar: objective-tracker/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+
+narrative:
+  target: objective-tracker/seals/SEAL_COMMIT.schema-widening
+  body: |
+    # Amendment #38 — objective-tracker schema widening
+    #                  (`lifted_from` provenance + `query_projection_view` API)
+
+    2026-04-25. Foundation for the four-amendment Heavy-B programme
+    delivering VALUE_PROPOSITION-as-prime-objective migration, per
+    sub-plan `docs/rebuild/plans/amendment-38-objective-tracker-
+    schema-widening.md` + master research artefact `docs/rebuild/
+    plans/research/value-prop-as-root-heavy-b-migration-research.md`.
+    Predecessor amendments #35 / #36 / #37 closed the persona-setup
+    family at ce07242 / 0031d1e / c97472e respectively, leaving a
+    satisfied persona-setup precondition for the Heavy-B chain.
+
+    The amendment lands two additive primitives inside the
+    objective-tracker fence:
+
+      - `LiftedFrom` Pydantic model (`objective-tracker/src/spec.py`)
+        — strict-shape (`extra="forbid"`, `frozen=True`) provenance
+        pointer carrying `source_doc` (non-empty), `source_ac`
+        (non-empty), and optional `source_commit`. Mirrors the
+        recursive Pydantic shape `TimeBound` already exemplifies.
+
+      - `lifted_from: LiftedFrom | None = None` field on
+        `ObjectiveSpec` (additive optional; defaults to None on
+        records authored without provenance — preserves the pre-
+        widening shape under D8 semantic round-trip).
+
+      - `lifted_from` threaded through the event log
+        (`ObjectiveCreated.lifted_from`), the projection
+        (`ObjectiveProjectionData.lifted_from`), the projection
+        cache row (`lifted_from_json` column on `objective_state`,
+        with NOT NULL DEFAULT 'null' and an in-place ALTER TABLE
+        guard for legacy DBs), and the public read-model
+        (`ObjectiveProjection.lifted_from`).
+
+      - `ObjectiveFilter` Pydantic model (`objective-tracker/src/
+        filter.py`, new) — strict-shape filter with two declared
+        keys: `authored_by` (existing semantics) and
+        `lifted_from_source_doc` (new). Future filter expressiveness
+        lands as new optional fields under §4 re-extension.
+
+      - `ObjectiveTracker.query_projection_view(filter:
+        ObjectiveFilter | None = None) -> tuple[ObjectiveProjection,
+        ...]` — new public read-side query. Empty/None filter returns
+        the full record set in `last_event_id` ASC order; set fields
+        AND together; records with `lifted_from is None` are excluded
+        when the filter names a `lifted_from_source_doc` value.
+
+    Behaviour:
+
+      - Records authored without `lifted_from` carry `None` on every
+        public surface; existing read-side queries (`get`, `list`,
+        `list_by_root`, `trace_to_root`, `child_closure_status`)
+        return identical results pre/post widening. The 86 pre-
+        existing tests pass unchanged.
+      - Records authored with `lifted_from` populated round-trip
+        through the event log; cold-restart projection equals live;
+        D8 semantic round-trip threshold of 0 holds across the four
+        named probe shapes (full, partial, explicit-None, omitted).
+      - The query API is intended as a SURFACE for the future doc-
+        projection renderer (research §C.1). Method (Pydantic-
+        shaped `ObjectiveFilter` per builder D-build.2; named keys
+        `authored_by` and `lifted_from_source_doc`) is the builder's
+        call within the AC envelope.
+      - Existing `objective-tracker/data/objectives.db` (if any)
+        upgrades in-place via the `EventStore.__init__` ALTER TABLE
+        guard — no migration script ships here. Pre-widening rows
+        take the `lifted_from_json = 'null'` sentinel.
+
+    No source edits to pos-amend, primary-persona, workspace-
+    bootstrap, scope-of-work, or any other sealed component. Sibling
+    Heavy-B amendments #39 (workspace-bootstrap tracker seed), #40
+    (primary-persona tracker-context contributor), the dev-discipline
+    pos-amend tracker integration, and the α/β/γ migration plan all
+    depend on this amendment's surface and are now cleared to
+    dispatch.
+
+    AC surface (AC38.1 – AC38.5 + AC38.S) — 46 tests covering five
+    outcome-shaped criteria + the seal-diff invariant:
+
+      - AC38.1: `lifted_from` field exists on `ObjectiveSpec` and
+        validates; round-trips through `model_validate` →
+        serialisation → `model_validate`; malformed / extra-key /
+        missing-required-key / non-dict-scalar shapes reject; the
+        nested model is frozen.
+      - AC38.2: pre-widening records load with `lifted_from is None`;
+        existing read-side queries unchanged; legacy DBs upgrade
+        in-place via ALTER TABLE; provenance-bearing records round-
+        trip through the event log.
+      - AC38.3: `query_projection_view(filter)` returns matching
+        projections; empty / None filter returns full set with
+        deterministic ordering; `lifted_from_source_doc` excludes
+        records with `lifted_from is None`; AND across set fields;
+        unknown filter keys reject; filter is frozen.
+      - AC38.4: D8 semantic round-trip harness covers the four
+        `lifted_from` probe shapes with zero drift; probe-set JSON
+        round-trip preserves `lifted_from`; new `lifted_from_json`
+        column carries the serialised provenance; drift detected on
+        post-capture mutation.
+      - AC38.5: pre-existing baseline test files (D1–D8) ship
+        unrenamed; AC38 test files are present alongside; seal-diff
+        test ships in this amendment.
+      - AC38.S: seal-diff discipline — only `objective-tracker/` +
+        `docs/rebuild/plans/` + universal paths changed (verified
+        by `objective-tracker/tests/test_no_sealed_amendments.py` at
+        BASELINE 5ad573d + per-component
+        test_no_sealed_amendments.py sweep across every other sealed
+        component).
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - D-build.1 (LiftedFrom Pydantic shape): nested `BaseModel`
+        with `extra="forbid"`, `frozen=True`. Master-research
+        recommendation (a). Preserves the recursive strict-shape
+        pattern `TimeBound` exemplifies.
+
+      - D-build.2 (query_projection_view filter signature):
+        Pydantic `ObjectiveFilter` model. Master-research
+        recommendation (b). Self-documents in a Pydantic-first
+        codebase; future filter extension lands as new declared
+        fields, not free-form kwargs.
+
+      - D-build.3 (storage representation): JSON-serialised text
+        in a single new `lifted_from_json` column on
+        `objective_state`. Master-research recommendation (a).
+        Matches existing `criteria_json` / `time_bound_json` /
+        `criteria_latest_json` convention. In-place ALTER TABLE
+        guard handles legacy DB upgrade.
+
+      - D-build.4 (D8 probe-fixture extension): extend the existing
+        probe set with `lifted_from`-shaped probes. Master-research
+        recommendation (a). Single probe set, single drift
+        threshold.
+
+    Out of scope (sub-plan §7):
+
+      - Migration data seeding — heavy-b-phase-α/β/γ-migration plan.
+      - pos-amend `objectives` manifest block + `project` /
+        `audit-coverage` subcommands — pos-amend-tracker-integration
+        plan.
+      - Primary-persona tracker-context contributor — amendment #40.
+      - Workspace-bootstrap first-run tracker seed — amendment #39.
+      - Drift detection between projected plan docs and tracker
+        state — dev-discipline (consumer-side).
+      - A query filter language richer than `authored_by` +
+        `lifted_from_source_doc` — future amendments under §4
+        re-extension.
+      - Removing `list()` / `list_by_root()` — unchanged;
+        `query_projection_view` is purely additive.
+      - New criterion variants — research §A.2 (prose suffices).
+      - Cycle / DAG enforcement changes — research §A.3 (current
+        policy correct under Heavy-B).
+
+    BASELINE 5ad573d (pre-amendment tip — HEAD~1 of the amendment
+    commit). SEAL_COMMIT sidecar lands at HEAD on the amendment
+    commit's empty-diff window; advanced to the seal SHA via
+    `pos-amend seal` on the seal commit.
+
+    With this amendment, the Heavy-B foundation is in place. The
+    schema + query API are sealed inside the objective-tracker
+    fence; the four downstream Heavy-B amendments / dev-discipline
+    plans inherit a satisfied schema-widening precondition and are
+    cleared to dispatch.

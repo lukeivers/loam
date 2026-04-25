@@ -30,12 +30,14 @@ from .errors import (
     OrphanRootError,
     UnresolvedObjectiveError,
 )
+from .filter import ObjectiveFilter
 from .projection_view import CriterionEvaluation, ObjectiveProjection
 from .runtime import ObjectiveTracker
 from .spec import (
     ChildClosureCriterion,
     Criterion,
     ExternalPredicateCriterion,
+    LiftedFrom,
     ObjectiveSpec,
     ObjectiveStatus,
     ParentCloseEventKind,
@@ -52,7 +54,9 @@ __all__ = [
     "DAGRejected",
     "ExternalPredicateCriterion",
     "IllegalTransitionError",
+    "LiftedFrom",
     "MissingRationaleError",
+    "ObjectiveFilter",
     "ObjectiveProjection",
     "ObjectiveSpec",
     "ObjectiveStatus",

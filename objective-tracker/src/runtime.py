@@ -38,6 +38,7 @@ from .events import (
     ScopeBound,
     StatusTransitioned,
 )
+from .filter import ObjectiveFilter
 from .policies import TERMINAL_STATES, is_legal, is_terminal
 from .projection import (
     ObjectiveProjectionData,
@@ -47,6 +48,7 @@ from .projection import (
 from .projection_view import ObjectiveProjection, public_projection
 from .spec import (
     Criterion,
+    LiftedFrom,
     ObjectiveSpec,
     ObjectiveStatus,
     ParentCloseEventKind,
@@ -158,6 +160,7 @@ class ObjectiveTracker:
                         authored_by=spec.authored_by,
                         owner=spec.owner,
                         parent_close_policy=spec.parent_close_policy,
+                        lifted_from=spec.lifted_from,
                     ),
                     span=span,
                 )
@@ -595,6 +598,38 @@ class ObjectiveTracker:
             for child_row in self._store.list_states(parent_id=cur):
                 stack.append(child_row["objective_id"])
         return out
+
+    def query_projection_view(
+        self, filter: ObjectiveFilter | None = None
+    ) -> tuple[ObjectiveProjection, ...]:
+        """Return projections matching `filter` in deterministic order.
+
+        Amendment #38: the surface every Heavy-B downstream consumer
+        composes against (pos-amend's `project` subcommand, primary-
+        persona's tracker-context contributor). An empty / `None`
+        filter returns the full record set in `last_event_id` ASC
+        order — the same ordering `list_states` already exposes, so
+        the ordering is stable across calls on a stable DB.
+
+        Filter semantics: every set field is an equality match
+        AND-ed together. A filter that names
+        `lifted_from_source_doc` excludes records whose
+        `lifted_from is None`.
+        """
+        flt = filter if filter is not None else ObjectiveFilter()
+        rows = self._store.list_states(
+            authored_by=flt.authored_by,
+        )
+        out: list[ObjectiveProjection] = []
+        for r in rows:
+            proj = public_projection(self._project(r["objective_id"]))
+            if flt.lifted_from_source_doc is not None:
+                if proj.lifted_from is None:
+                    continue
+                if proj.lifted_from.source_doc != flt.lifted_from_source_doc:
+                    continue
+            out.append(proj)
+        return tuple(out)
 
     def trace_to_root(self, objective_id: str) -> list[ObjectiveProjection]:
         """Return the ordered ancestor chain, terminal root last.

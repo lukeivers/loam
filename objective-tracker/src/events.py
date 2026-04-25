@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .spec import (
     Criterion,
+    LiftedFrom,
     ObjectiveStatus,
     ParentClosePolicy,
     ParentCloseEventKind,
@@ -62,6 +63,9 @@ class ObjectiveCreated(_EventBase):
     authored_by: str
     owner: str | None = None
     parent_close_policy: ParentClosePolicy
+    lifted_from: LiftedFrom | None = None
+    """Amendment #38: optional source-document provenance pointer.
+    Pre-widening events deserialise with `None` (additive default)."""
 
 
 class StatusTransitioned(_EventBase):

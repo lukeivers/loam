@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS objective_state (
     parent_close_policy  TEXT NOT NULL,
     last_event_id        INTEGER NOT NULL,
     last_transition_at   TEXT NOT NULL,
-    criteria_latest_json TEXT NOT NULL DEFAULT '{}'
+    criteria_latest_json TEXT NOT NULL DEFAULT '{}',
+    lifted_from_json     TEXT NOT NULL DEFAULT 'null'
 );
 CREATE INDEX IF NOT EXISTS idx_obj_state_parent   ON objective_state(parent_id);
 CREATE INDEX IF NOT EXISTS idx_obj_state_status   ON objective_state(status);
@@ -90,6 +91,24 @@ class EventStore:
         self._conn.execute("PRAGMA synchronous=FULL")
         self._conn.execute("PRAGMA foreign_keys=ON")
         self._conn.executescript(_SCHEMA)
+        # Amendment #38: in-place additive widening for pre-widening
+        # databases that already have `objective_state` without the
+        # new `lifted_from_json` column. SQLite has no IF NOT EXISTS
+        # for ADD COLUMN; check the existing column set and add only
+        # if missing. NOT NULL DEFAULT 'null' fills existing rows
+        # with the no-provenance sentinel — the AC38.2 round-trip
+        # preservation invariant.
+        cols = {
+            row[1]
+            for row in self._conn.execute(
+                "PRAGMA table_info(objective_state)"
+            ).fetchall()
+        }
+        if "lifted_from_json" not in cols:
+            self._conn.execute(
+                "ALTER TABLE objective_state ADD COLUMN "
+                "lifted_from_json TEXT NOT NULL DEFAULT 'null'"
+            )
 
     @property
     def path(self) -> Path:

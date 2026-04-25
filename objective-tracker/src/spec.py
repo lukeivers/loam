@@ -216,6 +216,48 @@ class TimeBound(BaseModel):
         return self
 
 
+# ---- LiftedFrom — provenance pointer (amendment #38) ------------------
+
+
+class LiftedFrom(BaseModel):
+    """Source-document provenance for an extracted objective.
+
+    Records which document, which clause within that document, and
+    (optionally) at which commit a tracker record was lifted from.
+    Additive metadata on `ObjectiveSpec` introduced by amendment #38
+    to make plan-doc-as-projection (Heavy-B downstream) tractable.
+
+    Strict-shape contract mirrors `TimeBound`: `extra="forbid"`,
+    `frozen=True`, every key validated. The parent `ObjectiveSpec`
+    keeps `lifted_from = None` as the default; a record with no
+    provenance pointer is well-formed (all pre-amendment-#38 records
+    deserialise this way under D8 semantic round-trip).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source_doc: str = Field(min_length=1)
+    """Path or URI of the source document (e.g. plan doc path)."""
+
+    source_ac: str = Field(min_length=1)
+    """The clause/AC label inside the source document this record
+    was lifted from (e.g. "AC38.1")."""
+
+    source_commit: str | None = None
+    """Optional commit SHA at which the source clause was canonical.
+    Empty string rejects; missing/None is allowed."""
+
+    @field_validator("source_commit")
+    @classmethod
+    def _source_commit_non_empty_when_set(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            raise ValueError(
+                "source_commit must be a non-empty string when set; "
+                "use None to omit"
+            )
+        return v
+
+
 # ---- ObjectiveSpec — the seven-field primitive ------------------------
 
 
@@ -251,6 +293,10 @@ class ObjectiveSpec(BaseModel):
     authored_by: str = Field(min_length=1)
     owner: str | None = None
     parent_close_policy: ParentClosePolicy = ParentClosePolicy.notify
+    lifted_from: LiftedFrom | None = None
+    """Optional source-document provenance (amendment #38). Defaults
+    to None for records authored without provenance — preserves the
+    pre-widening shape under D8 semantic round-trip."""
 
     @field_validator("acceptance_criteria")
     @classmethod

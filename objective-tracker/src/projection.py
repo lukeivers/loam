@@ -23,6 +23,7 @@ from .events import (
 )
 from .spec import (
     Criterion,
+    LiftedFrom,
     ObjectiveStatus,
     ParentClosePolicy,
     TimeBound,
@@ -57,6 +58,7 @@ class ObjectiveProjectionData:
     time_bound: TimeBound | None = None
     criteria: tuple[Criterion, ...] = ()
     parent_close_policy: ParentClosePolicy = ParentClosePolicy.notify
+    lifted_from: LiftedFrom | None = None
     last_event_id: int = 0
     last_transition_at: str = ""
     # criterion_id -> latest evaluation record
@@ -77,6 +79,7 @@ def apply_event(proj: ObjectiveProjectionData, event: Any) -> ObjectiveProjectio
         proj.time_bound = event.time_bound
         proj.criteria = event.acceptance_criteria
         proj.parent_close_policy = event.parent_close_policy
+        proj.lifted_from = event.lifted_from
         proj.status = ObjectiveStatus.proposed
         proj.last_event_id = event.event_id
         proj.last_transition_at = event.created_at
@@ -149,4 +152,7 @@ def projection_to_state_row(proj: ObjectiveProjectionData) -> dict[str, Any]:
         "last_event_id": proj.last_event_id,
         "last_transition_at": proj.last_transition_at,
         "criteria_latest_json": json.dumps(latest, default=str),
+        "lifted_from_json": (
+            proj.lifted_from.model_dump_json() if proj.lifted_from else "null"
+        ),
     }

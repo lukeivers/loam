@@ -13,7 +13,13 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 
 from .projection import CriterionEvalRecord, ObjectiveProjectionData
-from .spec import Criterion, ObjectiveStatus, ParentClosePolicy, TimeBound
+from .spec import (
+    Criterion,
+    LiftedFrom,
+    ObjectiveStatus,
+    ParentClosePolicy,
+    TimeBound,
+)
 
 
 class CriterionEvaluation(BaseModel):
@@ -46,6 +52,10 @@ class ObjectiveProjection(BaseModel):
     criteria_history: tuple[CriterionEvaluation, ...]
     scope_bindings: tuple[str, ...]
     parent_close_notifications: tuple[dict[str, Any], ...]
+    lifted_from: LiftedFrom | None = None
+    """Amendment #38: optional source-document provenance pointer
+    surfaced from `ObjectiveSpec.lifted_from`. `None` for records
+    authored without provenance — preserves the pre-widening shape."""
 
     @property
     def is_root(self) -> bool:
@@ -98,4 +108,5 @@ def public_projection(data: ObjectiveProjectionData) -> ObjectiveProjection:
         criteria_history=tuple(_eval_to_public(r) for r in data.criteria_history),
         scope_bindings=tuple(data.scope_bindings),
         parent_close_notifications=tuple(data.parent_close_notifications),
+        lifted_from=data.lifted_from,
     )

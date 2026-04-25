@@ -55,6 +55,36 @@ Read it fully before any code lands. ACs ({{AC_PREFIX}}) are outcome-shaped; met
 - Backwards-compat: existing tests stay green.
 - **Halt and surface ODD violations** in your work or surrounding code.
 
+# Cycle mechanics (session-accumulated lessons)
+
+These bind the amendment cycle's mechanical shape — divergence costs
+corrective commits the no-`--amend` rule then prevents collapsing.
+
+- **`pos-amend apply` runs BEFORE the amendment commit.** The BASELINE
+  bumps + initial SEAL_COMMIT advances + narrative writes are bundled
+  INTO the feature commit, not split into a follow-up "manifest-apply"
+  commit. Skipping pre-commit `pos-amend apply` forces a corrective
+  commit + a doubled seal cycle (#41 had to recover from this).
+- **§14 method-decision register heading is pre-authored in the plan
+  doc.** `pos-amend seal --plan-doc` backfills the `### Commit SHAs`
+  subsection INSIDE an existing `## 14.` heading; it does NOT create
+  the heading. Verify the plan's §14 heading is present before sealing
+  (otherwise the seal halts on `plan-doc-missing-section-14`, leaving
+  the seal commit in place per #41 recovery).
+- **`pos-amend seal --plan-doc <ABSOLUTE PATH>`.** Relative paths
+  crash `Path.relative_to`. Pass an absolute path.
+- **One test file per AC.** Convention from AC35.x / AC40.x / AC.A.x
+  onward — `tests/test_<AC_id>_<short_name>.py`, one file per AC,
+  multiple test functions inside as needed. Aids ODD §2.5 reverse
+  audit (every diff line traces to a named AC).
+- **H19 admission debt.** When the amendment introduces a new
+  top-level path (new component, new `tools/` subdir, new `docs/`
+  subdir, root-level dotfile) AND the seal-diff window crosses
+  `hands-off-lifecycle/`, proactively admit the new path in
+  `hands-off-lifecycle/tests/test_cross_cutting.py`'s `allowed` set
+  per ODD §10 per-invariant-BASELINE convention (the cross-cutting
+  test is hands-off-lifecycle's seal-diff bouncer).
+
 # Concurrent agents
 
 {{PARALLEL_AGENTS_NOTE}}

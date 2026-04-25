@@ -259,6 +259,25 @@ class PersonaContract(BaseModel):
         description="False while pending_introduction; flips True on user acknowledgement.",
     )
 
+    # ---- starter-flag (amendment #35 — first-run elicitation) ----
+
+    is_starter: bool = Field(
+        default=False,
+        strict=True,
+        description=(
+            "True while the contract is a freshly-scaffolded starter "
+            "awaiting first-run conversational elicitation. The "
+            "workspace-bootstrap scaffold (amendment #36) sets this "
+            "to true on materialisation; the onboarding flow "
+            "(amendment #35) flips it to false on completed "
+            "transcript write-back. Default false: any contract "
+            "constructed without an explicit value is non-starter. "
+            "Strict-typed: only Python ``bool`` values are accepted; "
+            "a non-Boolean (e.g., a YAML string) rejects at "
+            "validation time."
+        ),
+    )
+
     # ---- validators ----
 
     @field_validator("handle")

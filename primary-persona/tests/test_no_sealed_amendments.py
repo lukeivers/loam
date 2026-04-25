@@ -34,7 +34,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              load-gate.md. First time the primary-persona component
 #              carries a seal-diff test + SEAL_COMMIT sidecar; BASELINE
 #              pins at the pre-amendment tip (the #31 seal commit).
-BASELINE = "8e7c558"
+#   - 8e7c558  at amendment #33 (memory-consumer wiring / D7) —
+#              advanced to the #32 seal commit per `pos-amend apply`.
+#   - bea9f47  at amendment #35 (renderer + onboarding + is_starter) —
+#              advanced via `pos-amend apply` to the commit immediately
+#              preceding the amendment commit (HEAD~1 pattern per
+#              amendment #34's narrative). Sub-plan §10's manifest
+#              records the BASELINE rationale.
+BASELINE = "bea9f47"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

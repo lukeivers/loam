@@ -157,3 +157,99 @@ def retirement_event(*, handle: str, reason: str) -> None:
                 "pos.persona.retirement.reason": reason,
             },
         )
+
+
+# ---- onboarding lifecycle (amendment #35) ---------------------------
+
+
+def onboarding_render_event(*, handle: str, length: int) -> None:
+    """One event per ``to_agent_md()`` invocation (AC35.7).
+
+    Names the handle the renderer projected from + the rendered
+    length (so audit can correlate render calls with downstream
+    agent-file writes once amendment #37 lands the write surface).
+    Emits whether or not a span is currently active.
+    """
+    with _tracer().start_as_current_span("pos.persona.onboarding.render") as span:
+        span.add_event(
+            "pos.persona.onboarding.render",
+            {
+                "pos.persona.onboarding.handle": handle,
+                "pos.persona.onboarding.render.length": length,
+            },
+        )
+
+
+def onboarding_question_event(
+    *, handle: str, question_id: str, workspace_slug: str | None = None
+) -> None:
+    """One event per onboarding question dispatched (AC35.7)."""
+    with _tracer().start_as_current_span("pos.persona.onboarding.question") as span:
+        attrs: dict[str, Any] = {
+            "pos.persona.onboarding.handle": handle,
+            "pos.persona.onboarding.question_id": question_id,
+        }
+        if workspace_slug is not None:
+            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
+        span.add_event("pos.persona.onboarding.question", attrs)
+
+
+def onboarding_answer_event(
+    *, handle: str, question_id: str, answer_length: int
+) -> None:
+    """One event per recorded answer (AC35.7).
+
+    Records the answer's length, not its content — the answer body is
+    workspace-supplied content (STATE.md rule 4); observability
+    captures auditable metadata, not the prose itself.
+    """
+    with _tracer().start_as_current_span("pos.persona.onboarding.answer") as span:
+        span.add_event(
+            "pos.persona.onboarding.answer",
+            {
+                "pos.persona.onboarding.handle": handle,
+                "pos.persona.onboarding.question_id": question_id,
+                "pos.persona.onboarding.answer.length": answer_length,
+            },
+        )
+
+
+def onboarding_writeback_event(
+    *, handle: str, completed: bool, workspace_slug: str | None = None
+) -> None:
+    """One event per contract write-back (AC35.7).
+
+    ``completed`` is True when the transcript was complete and the
+    write-back also flipped ``is_starter`` to False; False on a
+    partial write-back (incomplete transcript) where ``is_starter``
+    remains True.
+    """
+    with _tracer().start_as_current_span("pos.persona.onboarding.writeback") as span:
+        attrs: dict[str, Any] = {
+            "pos.persona.onboarding.handle": handle,
+            "pos.persona.onboarding.writeback.completed": completed,
+        }
+        if workspace_slug is not None:
+            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
+        span.add_event("pos.persona.onboarding.writeback", attrs)
+
+
+def onboarding_starter_flag_transition_event(
+    *, handle: str, from_value: bool, to_value: bool
+) -> None:
+    """One event per ``is_starter`` transition (AC35.7).
+
+    Fires only on actual transitions (from != to) so steady-state
+    re-loads of a non-starter contract do not produce noise.
+    """
+    with _tracer().start_as_current_span(
+        "pos.persona.onboarding.starter_flag_transition"
+    ) as span:
+        span.add_event(
+            "pos.persona.onboarding.starter_flag_transition",
+            {
+                "pos.persona.onboarding.handle": handle,
+                "pos.persona.onboarding.starter_flag.from": from_value,
+                "pos.persona.onboarding.starter_flag.to": to_value,
+            },
+        )

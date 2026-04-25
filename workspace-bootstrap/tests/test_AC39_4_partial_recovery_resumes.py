@@ -41,6 +41,10 @@ from workspace_bootstrap.adapters.tracker_seed import (
 
 
 def _build_workspace(tmp_path: Path) -> tuple[Path, Path]:
+    """Build a dev-classified workspace with a partially-seeded
+    tracker. Sub-plan E (amendment #42): pre-create the persona
+    contract carrying ``dev_intent: yes`` so ``classify_workspace``
+    returns "pos-v2-dev"."""
     workspace = tmp_path / "ws-partial"
     workspace.mkdir()
     (workspace / "docs" / "rebuild").mkdir(parents=True)
@@ -53,9 +57,45 @@ def _build_workspace(tmp_path: Path) -> tuple[Path, Path]:
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(
         framework_vp.read_text()
     )
+    _seed_dev_intent_contract(workspace)
     pos_root = tmp_path / ".pos"
     pos_root.mkdir()
     return workspace, pos_root
+
+
+def _seed_dev_intent_contract(workspace: Path) -> None:
+    """Pre-create a persona contract carrying ``dev_intent: yes`` so
+    sub-plan E's ``classify_workspace`` reads "pos-v2-dev"."""
+    from primary_persona.contract import PersonaContract
+    from primary_persona.onboarding import dev_intent_storage_path
+
+    personas_dir = dev_intent_storage_path(workspace)
+    persona_dir = personas_dir / "primary"
+    persona_dir.mkdir(parents=True)
+    contract = PersonaContract.model_validate(
+        {
+            "handle": "primary",
+            "given_name": "Primary",
+            "contract_version": "1.0.0",
+            "responsibilities": {
+                "single_point_of_contact": "Coordinator.",
+                "context_holder": "Holds context.",
+                "escalation_judge": "Decides surfacing.",
+            },
+            "authority_boundary": {
+                "tier_a": "defer",
+                "tier_b": "defer",
+                "tier_c": "execute",
+                "tier_d": "execute",
+            },
+            "escalation_taxonomy": {"categories": ["x"]},
+            "severity_vocabulary": {"labels": ["a", "b"]},
+            "is_starter": False,
+            "is_primary": True,
+            "dev_intent": "yes",
+        }
+    )
+    (persona_dir / "contract.yaml").write_text(contract.to_yaml())
 
 
 def _seed_root_only(workspace: Path, db_path: Path) -> None:
@@ -113,8 +153,8 @@ def test_AC39_4_root_only_state_resumes_to_full_tree(tmp_path: Path) -> None:
     """A tracker carrying only the value-prop root (no descendants)
     completes to the full tree on the next ``seed_tracker``
     invocation. The result reports ``completed_partial``."""
-    workspace, pos_root = _build_workspace(tmp_path)
-    db_path = tracker_db_path_for(pos_root)
+    workspace, _ = _build_workspace(tmp_path)
+    db_path = tracker_db_path_for(workspace)
     _seed_root_only(workspace, db_path)
 
     classification = classify_workspace(workspace)
@@ -145,8 +185,8 @@ def test_AC39_4_partial_descendants_state_resumes_to_full_tree(
 ) -> None:
     """A tracker carrying root + one descendant (two missing) creates
     only the missing descendants; the existing one is untouched."""
-    workspace, pos_root = _build_workspace(tmp_path)
-    db_path = tracker_db_path_for(pos_root)
+    workspace, _ = _build_workspace(tmp_path)
+    db_path = tracker_db_path_for(workspace)
     _seed_root_and_one_descendant(workspace, db_path)
 
     classification = classify_workspace(workspace)
@@ -196,8 +236,8 @@ def test_AC39_4_no_duplicate_records_after_resume(tmp_path: Path) -> None:
     """Cross-check after partial-recovery: every objective ID present
     exactly once (deterministic ID enumeration via the tracker's
     ``list`` surface)."""
-    workspace, pos_root = _build_workspace(tmp_path)
-    db_path = tracker_db_path_for(pos_root)
+    workspace, _ = _build_workspace(tmp_path)
+    db_path = tracker_db_path_for(workspace)
     _seed_root_only(workspace, db_path)
 
     classification = classify_workspace(workspace)

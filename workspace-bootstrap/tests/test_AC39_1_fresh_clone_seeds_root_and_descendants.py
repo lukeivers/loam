@@ -45,7 +45,10 @@ from workspace_bootstrap.adapters.tracker_seed import (
 
 def _seed_pos_v2_dev_workspace(tmp_path: Path) -> tuple[Path, Path]:
     """Create a workspace classified as pos-v2-dev (it carries the
-    canonical VALUE_PROPOSITION.md at the framework path), run the
+    canonical VALUE_PROPOSITION.md at the framework path AND a
+    persona contract carrying ``dev_intent: yes`` — sub-plan E
+    AC.E.5: classification source-of-truth moved to the dev_intent
+    answer; the file-presence is now content, not a marker), run the
     scaffold, return ``(workspace_root, pos_root)``."""
     workspace = tmp_path / "ws-dev"
     workspace.mkdir()
@@ -59,6 +62,7 @@ def _seed_pos_v2_dev_workspace(tmp_path: Path) -> tuple[Path, Path]:
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(
         framework_vp.read_text()
     )
+    _seed_dev_intent_contract(workspace)
     pos_root = tmp_path / ".pos"
     agents = tmp_path / "LaunchAgents"
     run_first_run_scaffold(
@@ -71,12 +75,49 @@ def _seed_pos_v2_dev_workspace(tmp_path: Path) -> tuple[Path, Path]:
     return workspace, pos_root
 
 
+def _seed_dev_intent_contract(workspace: Path) -> None:
+    """Pre-create a persona contract carrying ``dev_intent: yes`` so
+    sub-plan E's ``classify_workspace`` reads "pos-v2-dev". The
+    scaffold's ``_install_persona_directory`` is idempotent (AC36.3)
+    and leaves a pre-existing persona dir alone."""
+    from primary_persona.contract import PersonaContract
+    from primary_persona.onboarding import dev_intent_storage_path
+
+    personas_dir = dev_intent_storage_path(workspace)
+    persona_dir = personas_dir / "primary"
+    persona_dir.mkdir(parents=True)
+    contract = PersonaContract.model_validate(
+        {
+            "handle": "primary",
+            "given_name": "Primary",
+            "contract_version": "1.0.0",
+            "responsibilities": {
+                "single_point_of_contact": "Coordinator.",
+                "context_holder": "Holds context.",
+                "escalation_judge": "Decides surfacing.",
+            },
+            "authority_boundary": {
+                "tier_a": "defer",
+                "tier_b": "defer",
+                "tier_c": "execute",
+                "tier_d": "execute",
+            },
+            "escalation_taxonomy": {"categories": ["x"]},
+            "severity_vocabulary": {"labels": ["a", "b"]},
+            "is_starter": False,
+            "is_primary": True,
+            "dev_intent": "yes",
+        }
+    )
+    (persona_dir / "contract.yaml").write_text(contract.to_yaml())
+
+
 def test_AC39_1_root_record_carries_value_prop_shape(tmp_path: Path) -> None:
     """The seeded root carries goal + AC.PO.1 + AC.PO.2 + evergreen
     time-bound + ``lifted_from.source_doc`` pointing at the framework
     value-prop doc."""
-    _, pos_root = _seed_pos_v2_dev_workspace(tmp_path)
-    db_path = tracker_db_path_for(pos_root)
+    workspace, _ = _seed_pos_v2_dev_workspace(tmp_path)
+    db_path = tracker_db_path_for(workspace)
     assert db_path.exists(), "tracker DB not materialised by first-run"
 
     tracker = ObjectiveTracker(db_path)
@@ -106,8 +147,8 @@ def test_AC39_1_spec_descendants_chain_to_root(tmp_path: Path) -> None:
     """Each spec-tier descendant chains to the value-prop root via
     ``trace_to_root`` and carries ``lifted_from.source_doc`` pointing
     at the spec doc."""
-    _, pos_root = _seed_pos_v2_dev_workspace(tmp_path)
-    tracker = ObjectiveTracker(tracker_db_path_for(pos_root))
+    workspace, _ = _seed_pos_v2_dev_workspace(tmp_path)
+    tracker = ObjectiveTracker(tracker_db_path_for(workspace))
     try:
         for suffix, ac_label, _ in _SPEC_TIER_PHASES:
             obj_id = f"spec-{suffix}"
@@ -130,8 +171,8 @@ def test_AC39_1_bind_scope_against_descendant_succeeds(tmp_path: Path) -> None:
     """``tracker.bind_scope`` against a seeded descendant succeeds —
     the user-authored-root invariant on the terminal ancestor (D2 +
     D4) is satisfied by every record the seed produces."""
-    _, pos_root = _seed_pos_v2_dev_workspace(tmp_path)
-    tracker = ObjectiveTracker(tracker_db_path_for(pos_root))
+    workspace, _ = _seed_pos_v2_dev_workspace(tmp_path)
+    tracker = ObjectiveTracker(tracker_db_path_for(workspace))
     try:
         # Use the v1.0 descendant as the bind target.
         binding = asyncio.run(
@@ -150,8 +191,8 @@ def test_AC39_1_query_projection_view_returns_seeded_records(tmp_path: Path) -> 
     surface amendment #38 introduced is the read-side the seed
     relies on for idempotency, and downstream consumers (#40) will
     use the same surface."""
-    _, pos_root = _seed_pos_v2_dev_workspace(tmp_path)
-    tracker = ObjectiveTracker(tracker_db_path_for(pos_root))
+    workspace, _ = _seed_pos_v2_dev_workspace(tmp_path)
+    tracker = ObjectiveTracker(tracker_db_path_for(workspace))
     try:
         from_value_prop = tracker.query_projection_view(
             ObjectiveFilter(
@@ -188,6 +229,7 @@ def test_AC39_1_scaffold_result_reports_seed_outcome(tmp_path: Path) -> None:
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(
         framework_vp.read_text()
     )
+    _seed_dev_intent_contract(workspace)
     pos_root = tmp_path / ".pos"
     agents = tmp_path / "LaunchAgents"
     result = run_first_run_scaffold(

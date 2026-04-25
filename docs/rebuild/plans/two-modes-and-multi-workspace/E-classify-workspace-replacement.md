@@ -263,3 +263,99 @@ lazy), the caching strategy, the test fixture's tmp-fs shape.
    into workspace-bootstrap's contract. The seam-via-resolver shape
    (sub-plan A's `read_dev_intent` + this sub-plan's classifier
    wrapping it) keeps the layering clean. Dropped from this sub-plan.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left method choices to the builder. This section records
+the choices made and the rationale, plus the test breakdown and
+commit SHAs.
+
+### Folded scope: path-mismatch (#39 ↔ #40) fix
+
+Per master-plan §11.5, the path-mismatch fix folds into E because both
+changes touch `tracker_seed.py`. E's AC suite extends to cover the fold:
+
+- **AC.E.6** — `tracker_db_path_for(workspace_root)` returns
+  `<workspace_root>/objective_tracker.sqlite` (workspace-rooted, not
+  pos_root-rooted). Aligns with
+  `primary_persona.tracker_context.tracker_db_path_for`.
+- **AC.E.7** — `_run_tracker_seed` invokes `tracker_db_path_for` with
+  `workspace_root`, not `pos_root`. The seed and the contributor read
+  the same DB.
+- **AC.E.S** — sub-plan E is single-component (workspace-bootstrap
+  only). Manifest shape enforced.
+
+The original AC.E1–AC.E5 retained as authored.
+
+### D-build.E1 — Lazy import of `read_dev_intent`
+
+`classify_workspace` lazily imports `read_dev_intent` from
+`primary_persona.onboarding` inside the function body (not at module
+load).
+
+**Rationale:** Mirrors amendment #40's lazy-import pattern. Keeps
+`tracker_seed`'s import graph acyclic against primary-persona's
+loader chain. Plan §10 D-E.1 recommended this.
+
+### D-build.E2 — No caching
+
+`classify_workspace` performs the read-and-map on every call; no
+in-process cache.
+
+**Rationale:** Plan §10 D-E.2 recommended caching but D-build choice
+is no-cache. The seed runs once per scaffold; the cost is one YAML
+load. Marginal optimisation; defer to a profile-driven amendment if
+ever needed.
+
+### D-build.E3 — No defensive try/except in `classify_workspace`
+
+`read_dev_intent` is itself fail-safe (returns `"absent"` on malformed
+contracts per amendment #41 AC.A.6). `classify_workspace` simply maps
+the three-value Literal to the two-value classification.
+
+**Rationale:** Plan §10 D-E.3 said "fail-soft to user-mode";
+`read_dev_intent` already enforces that. Wrapping again would dilute
+the seam.
+
+### D-build.E4 — `tracker_db_path_for` parameter rename
+
+`tracker_db_path_for(workspace_root)` (was `pos_root`). Callers
+updated:
+- `_run_tracker_seed` — passes `workspace_root` (already in scope);
+  `pos_root` parameter dropped from `_run_tracker_seed`'s signature
+  (no longer needed for the tracker DB path).
+- AC39.x test fixtures — `tracker_db_path_for(pos_root)` →
+  `tracker_db_path_for(workspace)`. Mechanical, AC-preserving — the
+  AC outcomes are about seed records inside the DB, not the literal
+  path.
+
+**Rationale:** Single source of truth — `primary_persona.tracker_context.tracker_db_path_for(workspace_root)`
+already exists; aligning the seed surface closes the latent #39 ↔ #40
+bug at the source.
+
+### D-build.E5 — AC39 dev-fixture pre-creates persona contract with `dev_intent: yes`
+
+AC39.1 / AC39.2 / AC39.3 / AC39.4 dev-workspace fixtures pre-create
+`<workspace>/personas/primary/contract.yaml` carrying
+`dev_intent: yes` BEFORE invoking `run_first_run_scaffold`. Scaffold's
+`_install_persona_directory` is idempotent (AC36.3); pre-existing
+contract is left alone. `classify_workspace` then reads the seeded
+answer and returns "pos-v2-dev".
+
+AC39.5 user-workspace fixtures unchanged (no contract → "absent" →
+"user").
+
+**Rationale:** Plan AC.E.5 explicitly says "the test that needs
+amendment is the classification-input fixture (it now seeds
+`dev_intent` rather than file presence)." Mechanical fixture update,
+AC outcomes preserved.
+
+### Test breakdown
+
+(Filled at build completion.)
+
+### Commit SHAs
+
+(Filled at seal time by `pos-amend seal` automation.)

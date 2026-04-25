@@ -32,6 +32,13 @@ from workspace_bootstrap.adapters.tracker_seed import (
 
 
 def _seed_dev(tmp_path: Path) -> Path:
+    """Seed a dev-classified workspace. Sub-plan E (amendment #42):
+    classification source-of-truth is the persona contract's
+    ``dev_intent`` answer, so the fixture pre-creates the contract
+    with ``dev_intent: yes`` BEFORE the scaffold runs. The scaffold's
+    persona-install is idempotent (AC36.3) and leaves the pre-created
+    dir alone. Returns the workspace path (the workspace-rooted
+    tracker DB lives there per sub-plan E AC.E.6)."""
     workspace = tmp_path / "ws-auth"
     workspace.mkdir()
     (workspace / "docs" / "rebuild").mkdir(parents=True)
@@ -44,6 +51,7 @@ def _seed_dev(tmp_path: Path) -> Path:
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(
         framework_vp.read_text()
     )
+    _seed_dev_intent_contract(workspace)
     pos_root = tmp_path / ".pos"
     agents = tmp_path / "LaunchAgents"
     run_first_run_scaffold(
@@ -53,14 +61,49 @@ def _seed_dev(tmp_path: Path) -> Path:
         service_manager_dir_override=agents,
         workspace_root=workspace,
     )
-    return pos_root
+    return workspace
+
+
+def _seed_dev_intent_contract(workspace: Path) -> None:
+    """Pre-create a persona contract carrying ``dev_intent: yes`` so
+    sub-plan E's ``classify_workspace`` reads "pos-v2-dev"."""
+    from primary_persona.contract import PersonaContract
+    from primary_persona.onboarding import dev_intent_storage_path
+
+    personas_dir = dev_intent_storage_path(workspace)
+    persona_dir = personas_dir / "primary"
+    persona_dir.mkdir(parents=True)
+    contract = PersonaContract.model_validate(
+        {
+            "handle": "primary",
+            "given_name": "Primary",
+            "contract_version": "1.0.0",
+            "responsibilities": {
+                "single_point_of_contact": "Coordinator.",
+                "context_holder": "Holds context.",
+                "escalation_judge": "Decides surfacing.",
+            },
+            "authority_boundary": {
+                "tier_a": "defer",
+                "tier_b": "defer",
+                "tier_c": "execute",
+                "tier_d": "execute",
+            },
+            "escalation_taxonomy": {"categories": ["x"]},
+            "severity_vocabulary": {"labels": ["a", "b"]},
+            "is_starter": False,
+            "is_primary": True,
+            "dev_intent": "yes",
+        }
+    )
+    (persona_dir / "contract.yaml").write_text(contract.to_yaml())
 
 
 def test_AC39_2_every_seeded_record_authored_by_user(tmp_path: Path) -> None:
     """Enumerate every seeded record via the tracker — each carries
     ``authored_by == "user"``."""
-    pos_root = _seed_dev(tmp_path)
-    tracker = ObjectiveTracker(tracker_db_path_for(pos_root))
+    workspace = _seed_dev(tmp_path)
+    tracker = ObjectiveTracker(tracker_db_path_for(workspace))
     try:
         ids_to_check = [ROOT_OBJECTIVE_ID] + [
             f"spec-{suffix}" for suffix, _, _ in _SPEC_TIER_PHASES
@@ -78,8 +121,8 @@ def test_AC39_2_every_seeded_record_authored_by_user(tmp_path: Path) -> None:
 def test_AC39_2_trace_to_root_chain_every_link_user(tmp_path: Path) -> None:
     """For each seeded descendant, the trace_to_root chain terminates
     at the value-prop root and every link is user-authored."""
-    pos_root = _seed_dev(tmp_path)
-    tracker = ObjectiveTracker(tracker_db_path_for(pos_root))
+    workspace = _seed_dev(tmp_path)
+    tracker = ObjectiveTracker(tracker_db_path_for(workspace))
     try:
         for suffix, _, _ in _SPEC_TIER_PHASES:
             chain = tracker.trace_to_root(f"spec-{suffix}")
@@ -99,8 +142,8 @@ def test_AC39_2_no_record_has_persona_or_bootstrap_authored_by(
     """Cross-check: no seeded record has ``authored_by`` set to any
     persona handle or to ``"workspace-bootstrap"`` — the seed is the
     user's authoring action structurally, not the framework's."""
-    pos_root = _seed_dev(tmp_path)
-    tracker = ObjectiveTracker(tracker_db_path_for(pos_root))
+    workspace = _seed_dev(tmp_path)
+    tracker = ObjectiveTracker(tracker_db_path_for(workspace))
     try:
         all_recs = tracker.list()
         forbidden = {"primary-persona", "workspace-bootstrap", "primary"}

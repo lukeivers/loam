@@ -89,7 +89,7 @@ def test_AC39_5_user_workspace_with_value_prop_seeds_from_local_file(
     assert result.tracker_seed_reason == "fresh_seed"
     assert result.tracker_value_prop_source == WORKSPACE_VALUE_PROP_RELPATH
 
-    tracker = ObjectiveTracker(tracker_db_path_for(pos_root))
+    tracker = ObjectiveTracker(tracker_db_path_for(workspace))
     try:
         root = tracker.get(ROOT_OBJECTIVE_ID)
         assert root is not None
@@ -145,7 +145,7 @@ def test_AC39_5_user_workspace_without_value_prop_skips_cleanly(
 
     # Tracker DB may exist as an empty file (sqlite3 connect creates
     # the file) — but no records inside it.
-    db_path = tracker_db_path_for(pos_root)
+    db_path = tracker_db_path_for(workspace)
     if db_path.exists():
         tracker = ObjectiveTracker(db_path)
         try:
@@ -180,7 +180,7 @@ def test_AC39_5_no_framework_content_in_user_workspace_tree(
         workspace_root=workspace,
     )
 
-    tracker = ObjectiveTracker(tracker_db_path_for(pos_root))
+    tracker = ObjectiveTracker(tracker_db_path_for(workspace))
     try:
         root = tracker.get(ROOT_OBJECTIVE_ID)
         assert root is not None
@@ -256,7 +256,7 @@ def test_AC39_5_re_run_after_value_prop_supplied_completes_seed(
     # is callable on its own.
     classification = classify_workspace(workspace)
     vp = load_value_prop_source(workspace, classification)
-    db_path = tracker_db_path_for(pos_root)
+    db_path = tracker_db_path_for(workspace)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     result_post = asyncio.run(
         seed_tracker(

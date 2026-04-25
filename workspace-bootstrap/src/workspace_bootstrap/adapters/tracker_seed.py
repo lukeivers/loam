@@ -47,16 +47,17 @@ from objective_tracker import (
 )
 
 
-# ---- workspace classification (D-build.1: presence of VALUE_PROPOSITION.md)
+# ---- workspace classification (sub-plan E — read dev_intent answer)
 
 
 # Path of the canonical pos-v2 value-prop doc, relative to a workspace
-# root. The classifier checks for this file's presence to distinguish
-# a pos-v2 dev workspace (the framework checkout itself, or any clone
-# whose user has populated the same path) from a workspace that does
-# not host the framework template. Sub-plan §11 D-build.1 candidate
-# (a) — minimal blast radius, no new metadata surface, existing
-# artefact is sufficient.
+# root. Amendment #39 used this file's presence as the dev-marker; sub-
+# plan E (amendment #42, two-modes-and-multi-workspace) replaces that
+# heuristic — every fresh GitHub clone ships VALUE_PROPOSITION.md, so
+# end-user clones were misclassified as pos-v2-dev. The constant
+# remains load-bearing for ``load_value_prop_source`` (the dev path
+# still reads this file as content); only the CLASSIFICATION source-
+# of-truth moves to ``read_dev_intent``.
 FRAMEWORK_VALUE_PROP_RELPATH = "docs/rebuild/VALUE_PROPOSITION.md"
 
 # Path of the workspace-user-authored value-prop doc on a workspace
@@ -72,16 +73,38 @@ CLASSIFICATION_USER = "user"
 
 
 def classify_workspace(workspace_root: Path | str) -> str:
-    """Return ``"pos-v2-dev"`` if the workspace hosts the framework's
-    canonical VALUE_PROPOSITION.md, ``"user"`` otherwise.
+    """Return ``"pos-v2-dev"`` iff the workspace's persona contract
+    carries ``dev_intent="yes"``; ``"user"`` otherwise.
 
-    Pure function. The workspace classification decides which value-
-    prop source the seed reads at first-run time (AC39.1 dev path vs
-    AC39.5 user path). No I/O beyond the existence check.
+    Sub-plan E (amendment #42) — replaces amendment #39's
+    ``VALUE_PROPOSITION.md``-presence heuristic with a read of the
+    workspace-local dev-intent answer (sub-plan A's
+    ``read_dev_intent``).
+
+    Mapping:
+        - ``read_dev_intent == "yes"``  -> ``"pos-v2-dev"``
+        - ``read_dev_intent == "no"``   -> ``"user"``
+        - ``read_dev_intent == "absent"`` -> ``"user"`` (defensive
+          default per locked owner ruling 4 + AC.E.3).
+
+    The ``read_dev_intent`` reader is itself fail-safe (returns
+    ``"absent"`` on missing or malformed contracts), so this function
+    never raises on contract-shape issues — the failure mode is
+    fail-soft to user-mode.
+
+    Lazy import of ``read_dev_intent`` mirrors amendment #40's pattern
+    (``primary_persona.tracker_context``'s lazy import of
+    ``objective_tracker``) — keeps the import graph acyclic against
+    primary-persona's loader chain.
+
+    Pure function from the caller's perspective: the only I/O is the
+    persona-contract read inside ``read_dev_intent``.
     """
     workspace_root = Path(workspace_root)
-    candidate = workspace_root / FRAMEWORK_VALUE_PROP_RELPATH
-    if candidate.is_file():
+    from primary_persona.onboarding import read_dev_intent
+
+    answer = read_dev_intent(workspace_root)
+    if answer == "yes":
         return CLASSIFICATION_POS_V2_DEV
     return CLASSIFICATION_USER
 
@@ -360,18 +383,28 @@ class TrackerSeedResult:
     value_prop_source: str | None
 
 
-# Trackers DB path under the workspace's pos_root. Mirrors
-# ``OrchestratorConfig.objective_tracker_db`` default at
-# ``orchestrator/src/config.py:81`` so the seed populates the same DB
-# the orchestrator will later open. The path is method-level
-# (sub-plan §7 "uses whatever path workspace-bootstrap currently uses
-# for objective-tracker"); we name the constant here so tests can
-# observe the seam.
+# Trackers DB path. Sub-plan E (amendment #42) — the seed writes to a
+# *workspace-rooted* path, parallel to
+# ``primary_persona.tracker_context.tracker_db_path_for(workspace_root)``
+# (amendment #40's contributor read path). Closes the latent
+# #39 ↔ #40 path-mismatch (the seed wrote to ``pos_root``, the
+# contributor read from ``workspace_root`` — the moment #40's
+# contributor wires to live persona registration the bug bites).
+# Single source of truth for the tracker DB location: workspace-
+# rooted. Method-level constant; tests can observe the seam.
 TRACKER_DB_FILENAME = "objective_tracker.sqlite"
 
 
-def tracker_db_path_for(pos_root: Path | str) -> Path:
-    return Path(pos_root) / TRACKER_DB_FILENAME
+def tracker_db_path_for(workspace_root: Path | str) -> Path:
+    """Return the tracker DB path for ``workspace_root``.
+
+    Sub-plan E (amendment #42) — argument source moves from
+    ``pos_root`` to ``workspace_root`` to align with
+    ``primary_persona.tracker_context.tracker_db_path_for``. The
+    returned path is ``<workspace_root>/objective_tracker.sqlite``;
+    the seed writes here and amendment #40's contributor reads here.
+    """
+    return Path(workspace_root) / TRACKER_DB_FILENAME
 
 
 async def seed_tracker(

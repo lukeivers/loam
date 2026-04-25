@@ -39,6 +39,9 @@ from workspace_bootstrap.adapters.tracker_seed import (
 
 
 def _seed_dev(tmp_path: Path, suffix: str = "") -> tuple[Path, Path]:
+    """Seed a dev-classified workspace. Sub-plan E (amendment #42):
+    pre-create the persona contract carrying ``dev_intent: yes`` so
+    ``classify_workspace`` returns "pos-v2-dev"."""
     workspace = tmp_path / f"ws-noop{suffix}"
     workspace.mkdir()
     (workspace / "docs" / "rebuild").mkdir(parents=True)
@@ -51,6 +54,7 @@ def _seed_dev(tmp_path: Path, suffix: str = "") -> tuple[Path, Path]:
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(
         framework_vp.read_text()
     )
+    _seed_dev_intent_contract(workspace)
     pos_root = tmp_path / f".pos{suffix}"
     agents = tmp_path / f"LaunchAgents{suffix}"
     run_first_run_scaffold(
@@ -61,6 +65,41 @@ def _seed_dev(tmp_path: Path, suffix: str = "") -> tuple[Path, Path]:
         workspace_root=workspace,
     )
     return workspace, pos_root
+
+
+def _seed_dev_intent_contract(workspace: Path) -> None:
+    """Pre-create a persona contract carrying ``dev_intent: yes`` so
+    sub-plan E's ``classify_workspace`` reads "pos-v2-dev"."""
+    from primary_persona.contract import PersonaContract
+    from primary_persona.onboarding import dev_intent_storage_path
+
+    personas_dir = dev_intent_storage_path(workspace)
+    persona_dir = personas_dir / "primary"
+    persona_dir.mkdir(parents=True)
+    contract = PersonaContract.model_validate(
+        {
+            "handle": "primary",
+            "given_name": "Primary",
+            "contract_version": "1.0.0",
+            "responsibilities": {
+                "single_point_of_contact": "Coordinator.",
+                "context_holder": "Holds context.",
+                "escalation_judge": "Decides surfacing.",
+            },
+            "authority_boundary": {
+                "tier_a": "defer",
+                "tier_b": "defer",
+                "tier_c": "execute",
+                "tier_d": "execute",
+            },
+            "escalation_taxonomy": {"categories": ["x"]},
+            "severity_vocabulary": {"labels": ["a", "b"]},
+            "is_starter": False,
+            "is_primary": True,
+            "dev_intent": "yes",
+        }
+    )
+    (persona_dir / "contract.yaml").write_text(contract.to_yaml())
 
 
 def _record_snapshot(tracker: ObjectiveTracker, ids: list[str]) -> dict:
@@ -95,7 +134,7 @@ def test_AC39_3_seed_tracker_re_invocation_is_noop(tmp_path: Path) -> None:
     produces ``reason == "already_seeded"`` on the second call and
     leaves every record unchanged."""
     workspace, pos_root = _seed_dev(tmp_path)
-    db_path = tracker_db_path_for(pos_root)
+    db_path = tracker_db_path_for(workspace)
     classification = classify_workspace(workspace)
     vp = load_value_prop_source(workspace, classification)
 
@@ -137,7 +176,7 @@ def test_AC39_3_full_scaffold_re_run_does_not_raise(tmp_path: Path) -> None:
     the seed's idempotency contract is verified by the direct
     re-invocation test above)."""
     workspace, pos_root = _seed_dev(tmp_path)
-    db_path = tracker_db_path_for(pos_root)
+    db_path = tracker_db_path_for(workspace)
 
     ids = [ROOT_OBJECTIVE_ID] + [
         f"spec-{suffix}" for suffix, _, _ in _SPEC_TIER_PHASES
@@ -170,7 +209,7 @@ def test_AC39_3_re_run_preserves_user_modifications(tmp_path: Path) -> None:
     """A user-driven status transition on a seeded descendant survives
     a direct re-invocation of ``seed_tracker``. The seed never clobbers."""
     workspace, pos_root = _seed_dev(tmp_path)
-    db_path = tracker_db_path_for(pos_root)
+    db_path = tracker_db_path_for(workspace)
     classification = classify_workspace(workspace)
     vp = load_value_prop_source(workspace, classification)
 
@@ -209,7 +248,7 @@ def test_AC39_3_only_one_objective_created_event_per_seed_id(
     ``ObjectiveCreated`` event in the event log after multiple
     re-runs of ``seed_tracker``."""
     workspace, pos_root = _seed_dev(tmp_path)
-    db_path = tracker_db_path_for(pos_root)
+    db_path = tracker_db_path_for(workspace)
     classification = classify_workspace(workspace)
     vp = load_value_prop_source(workspace, classification)
 

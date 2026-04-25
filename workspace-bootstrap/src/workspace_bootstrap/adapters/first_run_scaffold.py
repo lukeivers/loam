@@ -672,7 +672,6 @@ def run_first_run_scaffold(
     # the two outcomes; AC39.6 enforces no-payload-in-source.
     tracker_seed_result = _run_tracker_seed(
         workspace_root=Path(ws),
-        pos_root=pos_root,
         value_prop_path_override=value_prop_path_override,
         runner=tracker_seed_runner,
     )
@@ -698,7 +697,6 @@ def run_first_run_scaffold(
 def _run_tracker_seed(
     *,
     workspace_root: Path,
-    pos_root: Path,
     value_prop_path_override: Path | None,
     runner: Any | None,
 ) -> "tracker_seed.TrackerSeedResult":
@@ -710,6 +708,12 @@ def _run_tracker_seed(
     objective_tracker; importing it at module-load time would force
     every workspace-bootstrap consumer to install the tracker even
     when they're invoking unrelated scaffold code paths).
+
+    Sub-plan E (amendment #42) — ``tracker_db_path_for`` now takes
+    ``workspace_root`` (was ``pos_root``); the seed writes to the
+    workspace-rooted DB path that amendment #40's contributor reads.
+    The previous ``pos_root`` parameter is no longer needed by this
+    helper (it was only used to compute the tracker DB path).
     """
     from . import tracker_seed
 
@@ -719,7 +723,7 @@ def _run_tracker_seed(
         classification,
         value_prop_path_override=value_prop_path_override,
     )
-    tracker_db_path = tracker_seed.tracker_db_path_for(pos_root)
+    tracker_db_path = tracker_seed.tracker_db_path_for(workspace_root)
 
     seed_runner = runner or tracker_seed.run_seed_synchronously
     return seed_runner(

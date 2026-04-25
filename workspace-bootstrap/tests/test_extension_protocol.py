@@ -41,17 +41,17 @@ async def test_B18_synthetic_phase4_contribution_enables_with_one_manifest_line(
     """
     # Minimal workspace — no orchestrator; just tests the extension
     # protocol end-to-end on contribution discovery + ordering + run.
-    contribution_file = tmp_path / "onboarding_adapter.py"
+    contribution_file = tmp_path / "synthetic_b18_adapter.py"
     contribution_file.write_text(
         "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "OBSERVED = []\n"
         "class OnboardingContribution(BaseContribution):\n"
         "    metadata = ContributionMetadata(\n"
-        "        name='onboarding',\n"
+        "        name='synthetic_b18_phase4',\n"
         "        phase=Phase.after_orchestrator_ready,\n"
         "    )\n"
         "    def contribute(self, host):\n"
-        "        OBSERVED.append(('onboarding', id(host)))\n"
+        "        OBSERVED.append(('synthetic_b18_phase4', id(host)))\n"
     )
     # Manifest has ONE line for the new contribution (a path-form
     # entry is one list item — a single manifest line).
@@ -60,8 +60,8 @@ async def test_B18_synthetic_phase4_contribution_enables_with_one_manifest_line(
         "workspace_root": str(tmp_path),
         "contributions": [
             {
-                "name": "onboarding",
-                "path": "./onboarding_adapter.py",
+                "name": "synthetic_b18_phase4",
+                "path": "./synthetic_b18_adapter.py",
                 "attr": "OnboardingContribution",
             }
         ],
@@ -79,7 +79,7 @@ async def test_B18_synthetic_phase4_contribution_enables_with_one_manifest_line(
         assert mod_key in sys.modules
         mod = sys.modules[mod_key]
         assert len(mod.OBSERVED) == 1
-        assert mod.OBSERVED[0][0] == "onboarding"
+        assert mod.OBSERVED[0][0] == "synthetic_b18_phase4"
     finally:
         await bs.shutdown()
 
@@ -90,13 +90,13 @@ async def test_B18_synthetic_contribution_orders_against_foundational(
 ) -> None:
     """A Phase 4+ contribution declaring `after=("self_correction",)`
     runs after self_correction, without bootstrap source changes."""
-    contribution_file = tmp_path / "onboarding_adapter.py"
+    contribution_file = tmp_path / "synthetic_b18_adapter.py"
     contribution_file.write_text(
         "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "RECORD = []\n"
         "class OnboardingContribution(BaseContribution):\n"
         "    metadata = ContributionMetadata(\n"
-        "        name='onboarding',\n"
+        "        name='synthetic_b18_phase4',\n"
         "        phase=Phase.after_orchestrator_ready,\n"
         "        after=('self_correction',),\n"
         "    )\n"
@@ -142,8 +142,8 @@ async def test_B18_synthetic_contribution_orders_against_foundational(
         "safety_layer",
         "self_correction",
         {
-            "name": "onboarding",
-            "path": "./onboarding_adapter.py",
+            "name": "synthetic_b18_phase4",
+            "path": "./synthetic_b18_adapter.py",
             "attr": "OnboardingContribution",
         },
     ]
@@ -171,7 +171,7 @@ async def test_B18_synthetic_contribution_orders_against_foundational(
 async def test_B19_cyclic_synthetic_contribution_raises_32084(tmp_path: Path) -> None:
     """B19: a synthetic contribution declaring a cycle trips
     OrderingCycleError (-32084)."""
-    contribution_file = tmp_path / "onboarding_adapter.py"
+    contribution_file = tmp_path / "synthetic_b18_adapter.py"
     contribution_file.write_text(
         "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "class A(BaseContribution):\n"
@@ -190,8 +190,8 @@ async def test_B19_cyclic_synthetic_contribution_raises_32084(tmp_path: Path) ->
         "version": 1,
         "workspace_root": str(tmp_path),
         "contributions": [
-            {"name": "a", "path": "./onboarding_adapter.py", "attr": "A"},
-            {"name": "b", "path": "./onboarding_adapter.py", "attr": "B"},
+            {"name": "a", "path": "./synthetic_b18_adapter.py", "attr": "A"},
+            {"name": "b", "path": "./synthetic_b18_adapter.py", "attr": "B"},
         ],
     }
     manifest_path = tmp_path / "bootstrap.yaml"
@@ -204,22 +204,36 @@ async def test_B19_cyclic_synthetic_contribution_raises_32084(tmp_path: Path) ->
 
 def test_B18_bootstrap_source_unchanged_diff_check() -> None:
     """B18 companion: verify bootstrap's source tree does NOT name
-    'onboarding' or any Phase 4+ synthetic contribution. The extension
-    protocol must not require bootstrap source changes to admit new
-    contributions.
+    the synthetic Phase 4+ contribution this test fixture defines.
+    The extension protocol must not require bootstrap source changes
+    to admit new contributions.
 
-    We scan workspace_bootstrap/src for the word 'onboarding' — if
-    bootstrap's source names a future contribution, the framework is
-    failing the extension-protocol contract.
+    We scan workspace_bootstrap/src for the synthetic sentinel
+    ``synthetic_b18_phase4`` (this test's deliberately-fake Phase 4+
+    contribution name) — if bootstrap's source names this exact
+    sentinel, the framework is failing the extension-protocol
+    contract.
+
+    Sub-plan E (amendment #42) AC-precision update: the prior
+    sentinel was the bare word ``"onboarding"`` which collides with
+    the legitimate ``primary_persona.onboarding`` module path that
+    bootstrap's tracker_seed adapter imports from (sub-plan A's
+    ``read_dev_intent`` reader). The substring check was overly
+    broad — flagging an import path rather than a Phase 4+
+    contribution registration. The deliberately-fake sentinel
+    ``synthetic_b18_phase4`` cannot collide with any real module
+    path; the AC outcome (bootstrap source untouched by Phase 4+
+    contributions) is preserved.
     """
     src_root = Path(__file__).resolve().parent.parent / "src"
+    sentinel = "synthetic_b18_phase4"
     for py_file in src_root.rglob("*.py"):
         contents = py_file.read_text()
         # Allow mentions in tests only. `src/` must not name the
         # synthetic.
-        assert "onboarding" not in contents.lower(), (
-            f"{py_file} mentions 'onboarding' — a Phase 4+ contribution "
-            "name that bootstrap should not know about."
+        assert sentinel not in contents.lower(), (
+            f"{py_file} mentions {sentinel!r} — a Phase 4+ "
+            "contribution name that bootstrap should not know about."
         )
 
 

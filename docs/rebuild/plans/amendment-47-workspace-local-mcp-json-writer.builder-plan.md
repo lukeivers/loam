@@ -436,3 +436,10 @@ other sealed components.
 ### Commit-SHAs
 
 (populated by `pos-amend seal --plan-doc` post-seal)
+
+### Commit SHAs
+
+- Amendment commit: `d5d65a4c47a4239abc477f4fafcf277f9122593f` —
+  `chore(workspace-bootstrap): advance BASELINE + SEAL_COMMIT for amendment #47 window`
+- Seal commit: `1498c86532cddd72ec9fe706e07c04b0ebfef8ca` —
+  `chore(seals): workspace-local-mcp-json-writer — workspace-bootstrap at d5d65a4`

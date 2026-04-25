@@ -10,14 +10,79 @@ See `docs/rebuild/plans/amendment-22-pos-amend-cli.md` for the
 authoring plan and `/tmp/claude-output/pos-v2-ritual-streamlining-
 research.md` for the research doc that justified the tool.
 
-## Install
+## Run
+
+`pos-amend` is invoked inside a pos-v2 workspace whose first-run has
+completed. First-run already created the workspace's shared venv at
+`<workspace>/.venv/`, installed Python 3.13 + `PyYAML`, and installed
+`pos-amend` itself as a console script at `.venv/bin/pos-amend`. **You
+do not need to install anything to use the tool.**
+
+**Prerequisites:** macOS, plus a populated `.venv/` at the workspace
+root (i.e. pos-v2 first-run has run on this checkout). To confirm,
+from the pos-v2 workspace root:
 
 ```
-pip install -e tools/pos-amend/
+.venv/bin/python --version
+ls .venv/bin/pos-amend
 ```
 
-Registers the `pos-amend` console script. Requires Python 3.11+ and
-`PyYAML` (declared dep; already present in the repo venv).
+You should see `Python 3.13.<something>` and a path to the
+`pos-amend` script. If either command errors, run pos-v2 first-run
+on this checkout before continuing (roughly two minutes the first
+time, instant on a warm checkout).
+
+### Primary invocation
+
+From the pos-v2 workspace root, run `pos-amend` directly out of the
+workspace venv. Estimated wall-clock: under one second per call.
+
+```
+.venv/bin/pos-amend --help
+```
+
+Use the same prefix for every subcommand, e.g.:
+
+```
+.venv/bin/pos-amend validate docs/rebuild/plans/amendment-N-<slug>.manifest.yaml
+.venv/bin/pos-amend apply --dry-run docs/rebuild/plans/amendment-N-<slug>.manifest.yaml
+```
+
+If you would rather type bare `pos-amend`, activate the venv first
+(`source .venv/bin/activate`); subsequent calls in that shell can
+omit the `.venv/bin/` prefix.
+
+### Fallback — if `.venv/bin/pos-amend` is missing
+
+This shouldn't happen on a workspace where first-run completed, but
+if `ls .venv/bin/pos-amend` errors, two no-blast-radius recovery
+paths exist. Pick one.
+
+1. **Run the source directly via `PYTHONPATH`** (no install
+   performed; estimated wall-clock under one second). From the
+   workspace root:
+
+   ```
+   PYTHONPATH=tools/pos-amend/src .venv/bin/python -m pos_amend --help
+   ```
+
+   Use the same prefix for any subcommand. PyYAML is already in the
+   workspace venv, so this works without installing anything.
+
+2. **Reinstall the console script into the workspace venv**
+   (estimated wall-clock under fifteen seconds). From the workspace
+   root:
+
+   ```
+   .venv/bin/pip install -e tools/pos-amend/
+   .venv/bin/pos-amend --help
+   ```
+
+   Do not run a bare `pip install -e tools/pos-amend/` — on most
+   macOS shells the default `pip` resolves to a Python below 3.11
+   and the install fails with `Package 'pos-amend' requires a
+   different Python` (or, on stock-macOS shells, a setuptools-shape
+   error). Always name the workspace venv's `pip` explicitly.
 
 ## Subcommand surface
 
@@ -115,8 +180,10 @@ from a mid-apply interruption safe.
 
 ## Tests
 
+From the pos-v2 workspace root, using the workspace venv:
+
 ```
-cd tools/pos-amend && pytest -q
+.venv/bin/python -m pytest tools/pos-amend/tests/ -q
 ```
 
 The integration test (`test_integration_universal_paths`) runs the

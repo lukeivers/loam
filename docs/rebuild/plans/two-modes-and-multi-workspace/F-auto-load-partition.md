@@ -381,6 +381,12 @@ skips pre-commit by design.
 
 ### Commit SHAs
 
-*Filled by `pos-amend seal --plan-doc` post-amendment when applicable;
-F is dev-discipline (no `pos-amend` manifest), so the SHA lines are
-hand-authored on the follow-up `docs(plans):` commit.*
+- Amendment commit: `cb584ba` — feat(loam-mode): dev-mode auto-load
+  partition (sub-plan F, AC.F1–AC.F5 + AC.F.S)
+- Follow-up SHA-backfill commit: this commit.
+
+F is dev-discipline (no `pos-amend` manifest, no SEAL_COMMIT sidecar
+bump, no separate seal commit). The amendment ships in a single
+`feat:` commit; this follow-up records the SHA into §14 by hand,
+mirroring the `pos-amend-install-instructions-fix.md` +
+`pos-amend-seal-automation-extension.md` precedent.

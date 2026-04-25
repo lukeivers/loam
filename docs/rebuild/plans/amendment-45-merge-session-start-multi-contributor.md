@@ -214,3 +214,10 @@ surface light (PyYAML is already a dep).
   seal --plan-doc <abs-path>`_.
 - Amendment commit: _to be backfilled_.
 - Seal commit: _to be backfilled_.
+
+### Commit SHAs
+
+- Amendment commit: `0702d25ee97927aa6035e6dcff0a7490ec5cb5fd` —
+  `feat(hands-off-lifecycle, loam-mode): merge_session_start multi-contributor generalisation + sub-plan B emitter (amendment #45, AC.45.1–AC.45.5 + AC.45.S + AC.B1–AC.B5 + AC.B.S)`
+- Seal commit: `763c15b065f705fc1bd639fa6e51d678e829fd40` —
+  `chore(seals): merge-session-start-multi-contributor — hands-off-lifecycle at 0702d25`

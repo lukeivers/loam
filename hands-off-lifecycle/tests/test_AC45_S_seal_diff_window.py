@@ -10,6 +10,19 @@ The existing H19 frozen-BASELINE check
 (``test_cross_cutting.py::test_H19_diff_scope_covers_only_approved_surfaces``)
 covers the cross-component check at project level; this test
 provides the per-amendment confirmation.
+
+Amendment #46 §2.5 fix: the original v1 of this test diffed
+``BASELINE..HEAD`` rather than ``BASELINE..SEAL_COMMIT``. That made
+the diff window expand monotonically as later amendments landed —
+intervening commits (#38–#44 and the heavy-b-migrate / pos-amend
+extensions that landed after #45's seal) naturally fell outside #45's
+admission set, breaking the test on every later seal cycle. Per
+``test_no_sealed_amendments.py``'s ``_seal_commit()`` pattern (the
+project-wide convention every other sealed-component seal-diff test
+uses), the upper bound of an amendment-window diff is the amendment's
+SEAL_COMMIT, not HEAD. Per ODD §2.5 + the dispatcher-side "halt and
+surface §2.5 violations in surrounding code" CDC, amendment #46
+repairs this rather than silently extending the broken assertion.
 """
 
 from __future__ import annotations
@@ -35,6 +48,23 @@ _ALLOWED_PREFIXES: tuple[str, ...] = (
 )
 
 
+# Amendment-#45-specific upper bound: the test asserts amendment #45's
+# diff window was clean. That window is by construction
+# ``c046f78..0702d25`` (#45's pre-amendment tip → #45's seal commit).
+# Both endpoints are constants after #45 sealed; the test must NOT
+# float either endpoint with subsequent amendment cycles, otherwise
+# the assertion drifts away from its declared invariant. The
+# component-wide ``hands-off-lifecycle/tests/SEAL_COMMIT`` sidecar
+# legitimately advances on every later amendment (#46 advances it),
+# but that sidecar tracks the LATEST seal — not #45's.
+#
+# Per ODD §2.5 the AC's intent maps to a constant range. The fix
+# matches the per-invariant-BASELINE pattern documented in
+# ``docs/odd-in-pos.md`` §10 (extended here to cover the upper bound
+# of an amendment-specific window).
+_AMENDMENT_45_SEAL_COMMIT = "0702d25ee97927aa6035e6dcff0a7490ec5cb5fd"
+
+
 def _diff_paths(baseline: str, head: str) -> list[str]:
     result = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "diff", "--name-only",
@@ -51,21 +81,14 @@ def _diff_paths(baseline: str, head: str) -> list[str]:
 
 
 def test_AC45_S_no_path_outside_admitted_prefixes_against_HEAD() -> None:
-    """Every path touched between the amendment BASELINE (the commit
-    immediately preceding the amendment commit) and HEAD lives under
-    an admitted prefix.
+    """Every path touched between the amendment BASELINE and the
+    amendment's SEAL_COMMIT lives under an admitted prefix.
 
-    The BASELINE is resolved at runtime by reading the manifest yaml
-    so this test stays in lock-step with the manifest as the seal
-    cycle progresses. Pre-amendment-commit, BASELINE may not be
-    reachable (the manifest is authored alongside the amendment); in
-    that window the test resolves BASELINE via HEAD~1.
+    Test name retains the historical ``_against_HEAD`` suffix for
+    test-discovery stability across amendment #46's §2.5 repair; the
+    upper bound now resolves through ``_seal_commit()`` per the
+    project-wide convention.
     """
-    # Resolve BASELINE: prefer the manifest's value (the canonical
-    # pre-amendment tip the seal cycle pinned). Fall back to HEAD —
-    # i.e. an empty diff window — when the manifest is not yet
-    # authored (pre-amendment-commit). This keeps the test green
-    # during the pre-commit window and load-bearing post-commit.
     manifest_path = (
         REPO_ROOT
         / "docs"
@@ -84,7 +107,7 @@ def test_AC45_S_no_path_outside_admitted_prefixes_against_HEAD() -> None:
         # commit yet introduces the amendment surface).
         baseline = "HEAD"
 
-    paths = _diff_paths(baseline, "HEAD")
+    paths = _diff_paths(baseline, _AMENDMENT_45_SEAL_COMMIT)
     outside = [
         p for p in paths
         if not any(p.startswith(prefix) for prefix in _ALLOWED_PREFIXES)

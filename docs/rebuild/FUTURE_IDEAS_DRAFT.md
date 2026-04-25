@@ -78,6 +78,13 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
 
 - **C may activate as "audit + cleanup" rather than "migrate" when multi-workspace lands.** D-MASTER.2's owner-revised mirror of `~/.claude/` (global + workspace-override) collapsed C's migration burden; if any of the resolver pattern is partially in place by reactivation time, C's scope shifts from "migrate state files" to "audit existing layout for compliance + close gaps." Worth the triage at reactivation. Surfaced by doc-update agent 2026-04-25.
 
+- **`pos-amend seal --plan-doc` crashes on relative path argument.** `Path.relative_to` raises ValueError when invoked from repo root with a relative `--plan-doc` arg. Worked around in #41 build by hand-authoring the SHA subsection. Fix: normalise to absolute path inside the subcommand before resolution, or document the absolute-path requirement clearly. Surfaced by #41 build agent.
+
+- **Amendment-cycle workflow refinements** (3 sub-items, surfaced by #41 build):
+  - **`pos-amend apply` should run BEFORE the amendment commit**, so BASELINE bump + sidecar advance + narrative append are bundled INTO the feature commit. The #41 build ran apply AFTER the amendment commit, causing a corrective "manifest-apply" commit + a doubled seal commit. Workflow doc should clarify the order; future plan-doc dispatch template should bake it into the build-step ordering.
+  - **Pre-author plan §14 method-decision register heading** in plan docs before running `pos-amend seal --plan-doc`. The seal automation backfills the SHAs subsection inside an existing §14, but doesn't create the heading from scratch. Plan-doc skeleton template should include the §14 heading as a pre-authored section.
+  - **One-file-per-AC test convention is the precedent** (matches AC35.x / AC40.x / AC.A.x), even when a plan §12 register suggests fewer test files. Plan-doc skeleton template should standardise this expectation.
+
 ---
 
 *New entries appended to bottom; review-and-graduate happens post-initial-phase.*

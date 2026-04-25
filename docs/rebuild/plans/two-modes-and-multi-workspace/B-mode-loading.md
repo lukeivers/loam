@@ -23,9 +23,12 @@ The mechanism:
    surface) calls a small selector that reads `dev_intent_storage_path`
    (sub-plan A's resolver) and chooses between two CLAUDE.md fragments
    (or assembles one from a base + dev-extension).
-2. The session-start gate (sub-plan F's partition) is consumed by
-   `primary-persona/src/session_start_gate.py`'s
-   `discover_baseline_corpus` so the corpus list adapts to mode.
+2. The session-start corpus is mode-aware: in user mode it contains
+   F's `always_loaded`; in dev mode it contains `always_loaded ∪
+   dev_only`. Mechanism is the builder's call (CLAUDE.md fragment
+   composition, hook-time wrap-around, settings.json field, etc.) —
+   sealed-component code (including `primary-persona/src/session_start_gate.py`)
+   is unchanged per B's dev-discipline §2 framing.
 3. Mode is read at session-start time — no live mid-session toggle in
    v1 (per D-MASTER.4 (a)). Re-running onboarding (A's flow) is the
    change path.
@@ -170,21 +173,35 @@ extension content. With `dev_intent="no"`, assert it does not.
 
 **Maps to:** AC.PO.1 + AC.PO.2.
 
-### AC.B4 — Mode-aware corpus discovery in `session_start_gate`
+### AC.B4 — Mode-aware session-start corpus
 
-`primary-persona/src/session_start_gate.discover_baseline_corpus`
-returns the user-mode subset of paths (sub-plan F's partition) when
-mode is `"user"` and returns the full set (user-mode + dev-mode) when
-mode is `"dev"`. The function reads mode via the selector from AC.B1.
+The persona's session-start corpus is mode-aware. In user mode the
+persona receives only F's `always_loaded` partition. In dev mode the
+persona additionally receives F's `dev_only` partition. Mechanism is
+the builder's call (CLAUDE.md fragment composition, hook-time
+context-injection wrapper, settings.json field, or any other shape
+that achieves the outcome). The existing
+`primary-persona/src/session_start_gate.py` is unchanged — B's
+mechanism composes around it rather than modifying it. (Note: B is
+dev-discipline per §2; sealed-component code is not modified.)
 
-**Test shape:** unit test in primary-persona's test tree fires
-`discover_baseline_corpus` against fixture workspaces of each mode;
-assert the returned list contains/excludes the dev-only paths from F.
+**Test shape:** end-to-end test fires the SessionStart hook flow
+against fixture workspaces of each mode and asserts the persona's
+`additionalContext` (or equivalent loaded-corpus surface) contains
+F's `always_loaded` paths in both modes and F's `dev_only` paths only
+in dev mode. The exact mechanism observable in the test is
+method-level (whichever shape the builder chose for the wrap-around
+composition).
 
-(Note: this AC re-extends amendment #32's surface.
-**Halt trigger:** if the reverse §2.5 audit finds amendment #32's
-existing tests need amendment, surface — that's a re-extension of
-#32 needing owner approval.)
+**AC text precision note (post-#42 tightening 2026-04-25):** the
+original AC.B4 text named the specific function
+`session_start_gate.discover_baseline_corpus` as the mode-aware
+surface, which (a) prescribed method, (b) required modifying a
+sealed Phase-2 component contradicting B's dev-discipline §2 framing.
+Per `feedback_loose_AC_text_fix_AC_not_implementation`, the AC was
+tightened to outcome-shape (this version). Implementation behaviour
+is unchanged in spirit; the mechanism is the builder's call within
+the dev-discipline scope.
 
 **Maps to:** AC.PO.1 + AC.PO.2.
 
@@ -239,10 +256,12 @@ discipline).
 2. **The settings.json SessionStart hook surface conflicts with
    amendment #37's first-run-default-agent-wiring.** Halt and surface;
    this is a #37 re-extension that needs owner approval.
-3. **AC.B4 requires changes to the sealed `primary-persona` component
-   that AREN'T already covered by amendment #32's session-start gate
-   re-extension surface.** Halt — sub-plan B is dev-discipline; if it
-   needs sealed-component code, the design is wrong.
+3. **AC.B4's mode-aware-corpus mechanism requires modifying any sealed
+   component.** Halt — sub-plan B is dev-discipline; if it needs
+   sealed-component code, the design is wrong (the AC was tightened
+   2026-04-25 to outcome-shape; mechanism is the builder's call within
+   dev-discipline scope and must compose around sealed code, not modify
+   it).
 4. **The selector's storage read introduces a circular dependency**
    (e.g. the selector reads from a state file the SessionStart hook is
    responsible for writing). Halt and surface; the design needs
@@ -282,8 +301,12 @@ When B's brief is drafted:
 - WD: canonical.
 - Plan-before-code: builder writes `loam-mode-selector.builder-plan.md`
   first.
-- Sub-plan F is a dependency input (the partition declaration) — F
-  must land before B's AC.B4 lands, or be merged simultaneously.
+- Sub-plan F is a hard dependency input (its `always_loaded` and
+  `dev_only` partition data is what B's mechanism consumes). F MUST
+  land before B's build dispatches; ordering revised 2026-04-25 from
+  the original A → E → B → F to A → E → F → B per the AC.B4 tightening
+  + #43 build's halt finding (B's mechanism is small once F's data is
+  fixed).
 - ODD §2.4 + §2.5 audit run on every diff line.
 - No `git commit --amend`.
 
@@ -296,7 +319,7 @@ When B's brief is drafted:
 | AC.B1 | Mode is computed once, persona reads it. | Pure-function selector — toolkit primitive. |
 | AC.B2 | Hook installs at scaffold time; user does not configure it. | Extends the .claude/settings.json scaffold surface. |
 | AC.B3 | Dev artefacts never reach a user session. | Composes on existing additionalContext channel. |
-| AC.B4 | Corpus discovery is mode-aware; no manual filtering. | Extends amendment #32's gate. |
+| AC.B4 | Corpus is mode-aware without user-facing filtering. | Composes around amendment #32's gate (sealed code unchanged); F's partition consumed at composition time. |
 | AC.B5 | Selector failure does not propagate to the user. | Observability extended. |
 | AC.B6 | Toggle path is the existing onboarding surface. | Composes on sub-plan A. |
 
@@ -330,7 +353,7 @@ registration order in `.claude/settings.json`, the OTel event names
 | AC.B1 | `tools/loam-mode/tests/test_selector.py` | `test_AC_B1_compute_session_mode` |
 | AC.B2 | `workspace-bootstrap/tests/test_dev_mode_scaffold.py` | `test_AC_B2_scaffold_writes_session_start_hook` |
 | AC.B3 | `workspace-bootstrap/tests/test_dev_mode_scaffold.py` | `test_AC_B3_dev_extension_loaded_iff_dev_mode` |
-| AC.B4 | `primary-persona/tests/test_session_start_gate_mode.py` | `test_AC_B4_corpus_discovery_mode_aware` |
+| AC.B4 | `tools/loam-mode/tests/test_corpus_mode_aware.py` (or wherever the builder lands the mode-aware composition test — outside any sealed component) | `test_AC_B4_corpus_mode_aware_end_to_end` |
 | AC.B5 | `tools/loam-mode/tests/test_selector.py` | `test_AC_B5_selector_failure_fail_soft_to_user` |
 | AC.B6 | docs-only | `docs/rebuild/help/dev-mode.md` (path is a method decision) |
 

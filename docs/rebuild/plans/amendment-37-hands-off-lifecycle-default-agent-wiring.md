@@ -374,3 +374,133 @@ When the brief is drafted, it carries these CDC + ODD enforcement requirements v
 - No `git commit --amend`.
 - Amendment-dispatch speedups: narrow test scope to `hands-off-lifecycle/` + seal-diff on others; skip pre-seal full rerun; methodology snippets inlined.
 - H19 frozen BASELINE per amendment #23 — manifest sets `frozen_baseline: true` for hands-off-lifecycle.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left D-build.1 through D-build.4 to the builder. This
+section records the choices made and the rationale.
+
+### D-build.1 — Settings.json merge generalisation shape: parameterise `merge_session_start`
+
+`merge_session_start(...)` gains an optional keyword argument
+`agent_handle: str | None = None`. When non-None the merger sets
+`existing["agent"] = agent_handle` after the SessionStart-stanza
+merge; when None (the default — backwards-compatible with every
+pre-amendment-#37 call site) the field is left untouched.
+
+**Rationale:** plan §11 D-build.1 candidate (a) — minimal blast
+radius. The existing settings-merge surface is well-tested (T11–T18,
+detachment + workspace-identity-routing tests); a generic merger
+refactor (candidate b) would have widened the seal-diff surface
+without buying a measurable AC outcome. The parameter is additive;
+no callers need to migrate. AC37.1 measures the outcome (`"agent"`
+field present, prior keys preserved, `agent_handle=None` is a no-op)
+without method-in-acceptance.
+
+### D-build.2 — Agent-file write atomicity: `.tmp` sibling + `os.replace`
+
+`agent_file_authoring.write_agent_file()` writes the encoded body
+to `<target>.tmp`, then `os.replace(tmp, target)`. On success the
+target file is either fully the new bytes or fully the old bytes
+— never a partial concatenation. On any OSError during the write
+or rename, the `.tmp` sibling is best-effort-unlinked and the
+original target is left intact (verified by AC37.4).
+
+**Rationale:** plan §11 D-build.2 recommendation. Mirrors the
+existing settings-merge atomic-write pattern in
+`first_run_settings.py`. Direct-write would be simpler but loses
+the crash-safety contract; the atomic rename costs one extra
+file-creation per first-run.
+
+### D-build.3 — Diagnostic surface routing: `_advance_state` with `phase-4c-agent-file-authorship`
+
+Every Phase 4c failure branch (subprocess timeout, JSON parse
+error, runner non-zero exit, write-permission denied, JSON
+envelope missing fields, settings-merge OSError) calls
+`_advance_state("running", phase="phase-4c-agent-file-authorship",
+detail=<failure-class>:<error>)`. State stays `running` (the
+failure is non-fatal); the next phase proceeds. The detail string
+follows a `<failure-class>:<exception-info>` shape so log readers
+can route on the prefix.
+
+**Rationale:** plan §11 D-build.3 recommendation. Matches the
+existing observability surface (`_advance_state` is the helper's
+canonical state-update channel). No new event taxonomy invented;
+the existing pattern carries the new phase name.
+
+### D-build.4 — Write-only-if-different: byte-compare existing target before write
+
+`write_agent_file()` reads the existing file's bytes (best-effort;
+read failure falls through to write) and compares to the encoded
+body. On equality the call returns `reason="skipped-identical"`
+without touching the file (mtime preserved). On inequality (or
+absence) the atomic-rename write proceeds.
+
+**Rationale:** plan §11 D-build.4 recommendation. Single
+`read_bytes()` per first-run is trivially cheap on a file
+expected to be a few kilobytes. Preserves mtime stability across
+re-runs (AC37.3 measures this) and avoids file-watch tooling
+churn for editors / IDEs that watch `.claude/agents/`.
+
+### Test breakdown
+
+- Hands-off-lifecycle: **104 passed** (75 baseline + 29 new
+  AC37.x tests). Test files added:
+  `tests/test_AC37_1_settings_agent_merge.py` (7 tests),
+  `tests/test_AC37_2_agent_file_written.py` (4),
+  `tests/test_AC37_3_rerun_no_op.py` (5),
+  `tests/test_AC37_4_graceful_failure.py` (5),
+  `tests/test_AC37_5_session_start_names_persona.py` (4),
+  `tests/test_AC37_6_no_persona_content_in_source.py` (4).
+- Existing T1–T18 + AC29 + detachment + workspace-identity-routing +
+  pyyaml-reachability suites: no regressions.
+- Cross-component seal-diff (per amendment-dispatch-speedups):
+  every other sealed component's `test_no_sealed_amendments.py`
+  green (self-correction, memory-system, graceful-degradation,
+  cost-governance, workspace-bootstrap, reversibility-primitive,
+  safety-layer, orchestrator, observability-aggregator,
+  telegram-interface, primary-persona).
+- `pos-amend apply --dry-run`: green pre-amendment-commit and
+  post-seal-commit (frozen_baseline=true suppresses the BASELINE
+  literal bump per amendment #23 convention).
+- H19 cross-cutting test: green at frozen BASELINE 3780603 with
+  `primary-persona` admitted in this amendment's window (the
+  admission was deferred from amendment #35 to #37 per the
+  per-invariant-BASELINE convention — H19 trips when the
+  SEAL_COMMIT window first surfaces a new top-level surface, and
+  hands-off-lifecycle's SEAL_COMMIT advances to amendment #37's
+  commit at this seal moment).
+
+### H19 admission record
+
+This amendment widens the H19 frozen-BASELINE allowed-set in
+`hands-off-lifecycle/tests/test_cross_cutting.py` to admit
+`primary-persona` (introduced into the SEAL_COMMIT window by
+amendment #35; surfaced now because hands-off-lifecycle's
+SEAL_COMMIT advances past that window for the first time at this
+amendment). Rationale documented inline in the test source.
+
+### Commit SHAs
+
+- Amendment commit: `<filled in post-commit>`
+- Seal commit: `<filled in post-seal>`
+
+### Dependents cleared to dispatch
+
+The first-run primary-persona-default-agent-wiring family is now
+complete (#35 + #36 + #37 sealed). The Heavy-B chain inherits a
+satisfied persona-setup precondition:
+
+- **#38** (objective-tracker schema widening) — no remaining
+  persona-setup dependency.
+- **#39** (workspace-bootstrap tracker seed) — no remaining
+  persona-setup dependency.
+- **#40** (primary-persona tracker context contributor) — depends
+  on #38 + #39, not on persona-setup; persona-setup precondition
+  satisfied.
+- Dev-discipline plans — no remaining persona-setup dependency.
+
+All four Heavy-B dependents are cleared to dispatch from a
+persona-setup perspective.

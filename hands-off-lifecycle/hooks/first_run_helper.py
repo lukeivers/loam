@@ -84,6 +84,10 @@ from first_run_state import (  # noqa: E402
     read_state,
     write_state,
 )
+from agent_file_authoring import (  # noqa: E402
+    AgentFileWriteResult,
+    write_agent_file,
+)
 
 
 # ---- error codes -----------------------------------------------------
@@ -1040,15 +1044,24 @@ def _self_retire(
     *,
     pos_v2_root: Path,
     settings_path: Path,
+    agent_handle: str | None = None,
 ) -> tuple[SettingsMergeResult, Path, bool]:
     """Rewrite settings.json to invoke the supervisor directly; delete first-run.sh.
 
     Returns (merge_result, removed_script_path, script_removed).
+
+    Amendment #37: when ``agent_handle`` is provided, the post-retire
+    ``settings.json`` carries the top-level ``"agent": <agent_handle>``
+    field so a fresh Claude Code session selects the workspace persona
+    as its default subagent (AC37.1). When ``None`` (the unwiring
+    path or a degraded re-run), the field is left untouched —
+    backwards-compat with every pre-amendment-#37 caller.
     """
     supervisor_stanza = build_supervisor_stanza(pos_v2_root)
     merge_result = merge_session_start(
         settings_path=settings_path,
         new_entry=supervisor_stanza,
+        agent_handle=agent_handle,
     )
 
     script_path = pos_v2_root / "hands-off-lifecycle" / "hooks" / "first-run.sh"
@@ -1494,6 +1507,174 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         )
         return 0
 
+    # ---- Phase 4c: agent-file authorship (amendment #37) ----------
+    #
+    # AC37.1 + AC37.2: render
+    # ``<workspace>/.claude/agents/<handle>.md`` from amendment #35's
+    # ``to_agent_md(contract)`` against the persona-directory the
+    # workspace-bootstrap scaffold (Phase 4a; amendment #36) just
+    # materialised, then merge ``"agent": "<handle>"`` into
+    # ``<workspace>/.claude/settings.json`` so a fresh Claude Code
+    # session selects the workspace persona as its default subagent.
+    #
+    # Graceful-degradation contract (AC37.4): any failure here is
+    # non-fatal — the persona scaffold is already in place, the
+    # session can proceed as generic-Claude with the context-load
+    # gate's additionalContext (amendment #32). We surface a
+    # structured diagnostic via ``_advance_state`` and continue.
+    #
+    # Method (D-build.1 / D-build.2 / D-build.3 / D-build.4 — see
+    # amendment-37 plan §11):
+    #  - Render via ``agent_file_runner.py`` subprocess under the
+    #    shared venv (the renderer needs pydantic + pyyaml +
+    #    opentelemetry; the worker is stdlib-only).
+    #  - Write atomically via ``write_agent_file()`` with write-only-
+    #    if-different policy.
+    #  - Merge the ``"agent"`` field into settings.json via the
+    #    generalised ``merge_session_start(agent_handle=...)``.
+    #  - Diagnostic via ``_advance_state`` (status=running, phase=
+    #    phase-4c-agent-file-authorship, detail names the failure
+    #    class).
+    _advance_state(
+        "running",
+        phase="phase-4c-agent-file-authorship",
+        detail="rendering .claude/agents/<handle>.md from persona contract",
+    )
+    print(
+        "pos v2 first-run: rendering .claude/agents/<handle>.md from persona contract..."
+    )
+    agent_handle: str | None = None
+    try:
+        agent_runner = _HOOKS_DIR / "agent_file_runner.py"
+        run_result = subprocess.run(
+            [
+                str(shared_python),
+                "-u",
+                str(agent_runner),
+                "--workspace-root",
+                str(pos_v2_root),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if run_result.returncode == 0:
+            try:
+                envelope = json.loads(run_result.stdout)
+            except json.JSONDecodeError as e:
+                _advance_state(
+                    "running",
+                    phase="phase-4c-agent-file-authorship",
+                    detail=(
+                        "agent-file-render-output-malformed: "
+                        f"{type(e).__name__}: {e}"
+                    ),
+                )
+                envelope = None
+            if isinstance(envelope, dict):
+                handle = envelope.get("handle")
+                body = envelope.get("body")
+                if isinstance(handle, str) and handle and isinstance(body, str):
+                    write_result = write_agent_file(
+                        workspace_root=pos_v2_root,
+                        handle=handle,
+                        body=body,
+                    )
+                    if write_result.wrote or write_result.reason == "skipped-identical":
+                        agent_handle = handle
+                        _advance_state(
+                            "running",
+                            phase="phase-4c-agent-file-authorship",
+                            detail=(
+                                f"agent-file {write_result.reason} at "
+                                f"{write_result.path}"
+                            ),
+                        )
+                    else:
+                        _advance_state(
+                            "running",
+                            phase="phase-4c-agent-file-authorship",
+                            detail=(
+                                f"agent-file-write-failed:{write_result.reason}: "
+                                f"{write_result.error_detail}"
+                            ),
+                        )
+                else:
+                    _advance_state(
+                        "running",
+                        phase="phase-4c-agent-file-authorship",
+                        detail=(
+                            "agent-file-render-envelope-missing-fields: "
+                            f"keys={sorted(envelope) if isinstance(envelope, dict) else type(envelope).__name__}"
+                        ),
+                    )
+        else:
+            # Render failure — JSON payload on stderr line 1, traceback
+            # in plain text after. Capture the JSON for the diagnostic.
+            stderr_text = run_result.stderr or ""
+            first_line = stderr_text.split("\n", 1)[0].strip()
+            parsed: dict[str, Any] = {}
+            if first_line.startswith("{"):
+                try:
+                    parsed = json.loads(first_line)
+                except json.JSONDecodeError:
+                    parsed = {}
+            _advance_state(
+                "running",
+                phase="phase-4c-agent-file-authorship",
+                detail=(
+                    "agent-file-render-failed: "
+                    f"rc={run_result.returncode} "
+                    f"type={parsed.get('type', 'Unknown')} "
+                    f"message={parsed.get('message', stderr_text[:200])!r}"
+                ),
+            )
+    except subprocess.TimeoutExpired:
+        _advance_state(
+            "running",
+            phase="phase-4c-agent-file-authorship",
+            detail="agent-file-render-timeout: subprocess exceeded 60s",
+        )
+    except Exception as e:  # noqa: BLE001 — graceful-degradation per AC37.4
+        # Any unexpected failure — surface as a diagnostic and proceed.
+        # Hard-halt would defeat the v1.0 line 153 contract by making a
+        # transient environmental issue take down session-start.
+        _advance_state(
+            "running",
+            phase="phase-4c-agent-file-authorship",
+            detail=(
+                "agent-file-render-unexpected: "
+                f"{type(e).__name__}: {e}"
+            ),
+        )
+
+    # Re-merge settings.json now that we have the resolved agent
+    # handle (AC37.1). This is additive over the Phase 3d merge; the
+    # SessionStart stanza is left in place (still pointing at first-
+    # run.sh until Phase 6 rewrites it). When ``agent_handle`` is
+    # None (Phase 4c failure path) the merge is a no-op for the
+    # ``"agent"`` field — the previous Phase 3d state is preserved.
+    if agent_handle is not None:
+        try:
+            merge_result = merge_session_start(
+                settings_path=settings_path,
+                new_entry=first_run_stanza,
+                agent_handle=agent_handle,
+            )
+        except OSError as e:
+            # Settings.json unwriteable — surface a diagnostic. The
+            # supervisor stanza rewrite at Phase 6 will retry the
+            # merge and may succeed if the failure is transient.
+            _advance_state(
+                "running",
+                phase="phase-4c-agent-file-authorship",
+                detail=(
+                    "agent-field-merge-failed: "
+                    f"{type(e).__name__}: {e}"
+                ),
+            )
+
     # ---- Phase 4b: health poll ------------------------------------
     services = list(inventory.get("services", []))
     service_labels = [svc["label"] for svc in services]
@@ -1544,9 +1725,16 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         phase="phase-6-self-retire",
         detail="rewriting .claude/settings.json to supervisor stanza",
     )
+    # Amendment #37: thread the resolved agent handle through self-
+    # retire so the post-retire settings.json carries the
+    # ``"agent": "<handle>"`` field (AC37.1). When Phase 4c failed to
+    # resolve a handle (graceful-degradation path), ``agent_handle``
+    # is None and the retire merge leaves the field untouched —
+    # whatever Phase 3d / Phase 4c last wrote remains.
     retire_merge, script_path, removed = _self_retire(
         pos_v2_root=pos_v2_root,
         settings_path=settings_path,
+        agent_handle=agent_handle,
     )
     if not removed:
         _emit_diag(

@@ -200,6 +200,28 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         "reversibility-primitive",
         "tools",
         "CLAUDE.md",
+        # Amendment #35 (primary-persona-renderer-and-onboarding):
+        #   - `primary-persona` admitted as a new amended sealed
+        #     component. Amendment #35 added the to_agent_md()
+        #     renderer + onboarding module + is_starter contract
+        #     field under primary-persona/src/. Sealed at ce07242.
+        #     The finer-grained diff-scope filter for primary-
+        #     persona's surface lives in primary-persona/tests/
+        #     test_no_sealed_amendments.py.
+        # Amendment #36 (workspace-bootstrap-persona-scaffold)
+        # extended primary-persona/ ONLY in the read-only template
+        # consumption sense (no source edits), so no separate
+        # admission for #36 is needed here; workspace-bootstrap is
+        # already in the allowed set above.
+        # Amendment #37 (this amendment, hands-off-lifecycle-
+        # default-agent-wiring) advances SEAL_COMMIT past the
+        # window where #35's primary-persona/ edits land — hence
+        # this admission was deferred to #37 per ODD §10's
+        # per-invariant-BASELINE convention (the H19 frozen
+        # BASELINE is project-start; admissions land when the
+        # SEAL_COMMIT window first surfaces them via hands-off-
+        # lifecycle's own amendment).
+        "primary-persona",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

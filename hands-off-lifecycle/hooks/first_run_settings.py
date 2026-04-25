@@ -150,11 +150,13 @@ def merge_session_start(
     settings_path: Path,
     new_entry: dict[str, Any],
     now_iso: str | None = None,
+    agent_handle: str | None = None,
 ) -> SettingsMergeResult:
     """Merge ``new_entry`` into settings.json's SessionStart stanza.
 
     Preserves:
-      * all top-level keys other than ``hooks.SessionStart``
+      * all top-level keys other than ``hooks.SessionStart`` and the
+        ``"agent"`` key (when ``agent_handle`` is provided)
       * all ``hooks.*`` keys other than ``SessionStart``
       * the top-level ``_comment`` field if present (documentation)
 
@@ -166,6 +168,19 @@ def merge_session_start(
         to ``<settings_path>.user-backup-<timestamp>.json`` and replace
         the SessionStart stanza with ``[new_entry]``. The caller surfaces
         the displacement in the confirmation sentence.
+
+    Top-level ``"agent": <agent_handle>`` merge (amendment #37,
+    AC37.1):
+      * When ``agent_handle`` is non-None, set
+        ``existing["agent"] = agent_handle`` after the SessionStart
+        merge so a fresh Claude Code session selects the workspace
+        persona as its default subagent. Any pre-existing ``"agent"``
+        value is overwritten — the workspace's resolved handle is the
+        authoritative source. Other top-level keys remain untouched
+        (the AC37.1 outcome is "agent merged, prior keys preserved").
+      * When ``agent_handle`` is None, the ``"agent"`` field is left
+        untouched — preserves backwards compatibility with every
+        pre-amendment-#37 call site that did not pass the parameter.
 
     Writes atomically via a .tmp sibling and rename.
     """
@@ -197,6 +212,14 @@ def merge_session_start(
     hooks["SessionStart"] = [new_entry]
     existing["hooks"] = hooks
 
+    # Amendment #37 (AC37.1): merge the top-level "agent" field when
+    # the caller has resolved a handle. The merge is additive over a
+    # pre-existing settings.json — every other top-level key remains
+    # in place. When ``agent_handle`` is None this branch is skipped
+    # entirely (backwards-compat for pre-amendment-#37 callers).
+    if agent_handle is not None:
+        existing["agent"] = agent_handle
+
     # Atomic write.
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     tmp = settings_path.with_suffix(settings_path.suffix + ".tmp")
@@ -206,9 +229,9 @@ def merge_session_start(
     )
     tmp.replace(settings_path)
 
-    preserved_keys = tuple(k for k in existing.keys() if k != "hooks") + tuple(
-        f"hooks.{k}" for k in hooks.keys() if k != "SessionStart"
-    )
+    preserved_keys = tuple(
+        k for k in existing.keys() if k not in ("hooks", "agent")
+    ) + tuple(f"hooks.{k}" for k in hooks.keys() if k != "SessionStart")
 
     return SettingsMergeResult(
         wrote=True,

@@ -464,9 +464,8 @@ Sequence inside `_finalize`: (a) compute amendment SHA; (b) pre-flight dirt chec
 
 ### Commit SHAs
 
-- Build commit: `<TBD-build-sha>` — `feat(tools): pos-amend seal finalisation extension (AC.D-sa.1–AC.D-sa.7)`
-
-(SHA backfilled in a follow-up `docs(plans):` commit per the same SHA-backfill convention this very extension mechanises for sealed-component amendments.)
+- Build commit: `474a8851f9621cdb3a302de046f2074f59e5d352` — `feat(tools): pos-amend seal finalisation extension (AC.D-sa.1–AC.D-sa.7)`
+- SHA-backfill commit: `<TBD-this-commit>` — `docs(plans): record pos-amend-seal-automation-extension build SHA`
 
 ### Dependents cleared to dispatch
 

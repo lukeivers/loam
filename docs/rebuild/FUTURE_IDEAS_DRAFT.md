@@ -60,6 +60,18 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
 
 - **Pos-amend `--bare` mode use case.** `claude --bare --settings .claude/settings.json` could be useful for clean experiments / scripted scenarios where the full pos-v2 harness shouldn't load. Document the recipe somewhere if it becomes a recurring need.
 
+- **Template engine: one-pass substitution authoring discipline.** The dispatch-template engine's `{{var}}` substitution doesn't recursively expand defaults — a default containing `{{OTHER_VAR}}` renders the literal placeholder. Caught early in #25 build (the dispatch template's `PRIME_OBJECTIVE_FRAMING` default contained `{{AC_PREFIX}}`). Worth documenting in the dispatch-template authoring guide alongside the future skills wrapping.
+
+- **Template engine: package-data declaration for wheel form.** Templates root resolves via `__file__` parents — works for editable installs (the only mode pos-amend ships in today). If pos-amend ever lands in PyPI / wheel form, templates need `package-data` declaration in `pyproject.toml`. Not blocking; noted for the eventual packaging story.
+
+- **`pos-amend new-plan <slug>` orchestration.** Plan-doc skeleton has 13 required vars — that's a lot to author by hand for every plan. A `pos-amend new-plan <slug>` orchestration that scaffolds the vars-file with empty defaults (or pre-fills `TITLE` / `AC_PREFIX` from CLI args) would be a high-leverage follow-up — bigger leverage than the D-3c skills wrapping. Surfaced by #25 build.
+
+- **Template `description` frontmatter doubles as `list` one-liner.** The introspection-surface frontmatter the engine requires gives `pos-amend template list` its descriptions for free; useful pattern when memory-doc / commit-message families land.
+
+- **System-design concern: shipped runtime vs dev-time machinery (LOAD-BEARING — see chat).** Owner ruled 2026-04-25 that pos-v2 is downloaded from GitHub by end users; their clone IS pos-v2 for them; no separate "canonical" exists for end users. Implications for the system, surfaced in chat: (1) `classify_workspace` in #39 uses `docs/rebuild/VALUE_PROPOSITION.md` presence as the "dev" marker — every GitHub-cloned end user has it, so end users get classified as "dev" wrongly; (2) host-global `~/.pos/` SQLite files (`orchestrator.sqlite`, `scope_of_work.sqlite`, post-#39 `objective_tracker.sqlite`) cross-workspace contaminate; (3) what ships in the GitHub-distributed form vs what's dev-time machinery (`pos-amend`, plan docs, manifest YAMLs, BASELINE conventions, SEAL_COMMITs, sealed-component conventions, dispatch-template, spec docs, component proposals + seal narratives) — all dev-only, probably shouldn't ship for end users. Awaits owner ruling on whether to scope a broader "shipped-vs-dev-time surface review" before further fixes.
+
+- **Path-mismatch (#39 ↔ #40) fix direction.** Tracker DB write path (`tracker_seed.tracker_db_path_for(pos_root)`) vs read path (`primary_persona.tracker_context.tracker_db_path_for(workspace_root)`). Owner has leaned **B (#39 writes to workspace_root)** consistent with #28's workspace-locality and end-user-shipped principle. Fix held pending the broader shipped-vs-dev-time scoping ruling. Real latent bug — bites the moment #40's contributor is wired to live persona registration.
+
 ---
 
 *New entries appended to bottom; review-and-graduate happens post-initial-phase.*

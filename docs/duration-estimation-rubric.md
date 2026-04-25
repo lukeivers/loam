@@ -104,6 +104,6 @@ cluster at one end, widen if they span widely.
 
 ---
 
-*Maintained alongside `odd-methodology.md`, `odd-in-pos.md`, and the
-CDCs in `docs/rebuild/FUTURE_IDEAS.md` as durable builder-discipline
-reference.*
+*Maintained alongside the ODD methodology + worked-examples docs and
+the dev-mode CDC catalogue (all DEV MODE only) as durable
+builder-discipline reference.*

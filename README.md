@@ -10,8 +10,8 @@ beyond opening a Claude Code session.
 ## Status
 
 Foundation-complete: twelve sealed components plus the
-hands-off-lifecycle amendments. See `docs/rebuild/STATE.md` for the
-full component status table.
+hands-off-lifecycle amendments. The full component status table lives
+in the dev-mode tracker docs (DEV MODE only).
 
 ## What running a session looks like
 
@@ -60,11 +60,11 @@ full layout.
 
 ## Implementation
 
-Python 3.13. See `docs/rebuild/STATE.md` rules 6–9 for
-language/test/file conventions.
+Python 3.13. Language/test/file conventions live in the DEV MODE
+tracker docs.
 
 ## License and contributions
 
 Personal-use software in heavy development. Not currently accepting
-external contributions; see `docs/rebuild/STATE.md` for the
-governing rules of the rebuild.
+external contributions; rebuild rules live in the DEV MODE tracker
+docs.

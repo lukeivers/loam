@@ -2,7 +2,7 @@
 
 - **Snapshot date:** 2026-04-23
 - **Version:** 0.1 (skeleton — being filled incrementally)
-- **Stewarded by:** primary persona; future refresh automation per `docs/rebuild/FUTURE_IDEAS.md` Idea 1 Step 4
+- **Stewarded by:** primary persona; future refresh automation per the dev-mode FUTURE_IDEAS catalogue Idea 1 Step 4
 - **Refresh cadence (target):** daily, budget-permitting, once Step 4 lands
 - **Scope:** the Claude-attached capability surface available to pOS v2 feature research — Claude Code CLI, Claude Agent SDK, Anthropic API, MCP, plugins, skills, subagents, background tasks, session persistence
 
@@ -19,7 +19,7 @@ The map is deliberately a **2026-04-23 snapshot**. Claude's surface drifts weekl
 Every capability entry has four parts:
 
 1. **What it does** — one line.
-2. **How it composes with pos-v2** — which sealed components already use it or could latently compose with it. Citations are to `docs/rebuild/components/<name>/` narratives where relevant.
+2. **How it composes with pos-v2** — which sealed components already use it or could latently compose with it. Citations are to per-component narratives (DEV MODE only) where relevant.
 3. **Pitfalls** — known footguns, version skew risks, rate limits, silent-failure modes.
 4. **End-user configuration surface** — where a user turns the capability on, off, or tunes it. Typically a file path, a CLI flag, an env var, or a settings key.
 
@@ -52,8 +52,8 @@ Claude Code is the terminal-first harness the primary persona runs inside. Every
 
 **Composes with pos-v2.**
 - `telegram-interface` already ships user-facing slash skills (`/telegram:configure`, `/telegram:access`) — the Skill pattern is proven inside pos-v2 already.
-- `tools/pos-amend/` is a CLI today; a future Skill wrapper (`.claude/skills/pos-amend/SKILL.md`) would let the primary persona trigger amendment-cycle bookkeeping through the same `/` dispatch surface as everything else. Latent composition.
-- `docs/rebuild/FUTURE_IDEAS.md` Idea 8 (structural context-load gate) can likely be authored as a Skill invoked at session-start or a Skill called by a SessionStart hook, depending on where the gate lives.
+- The dev-mode pos-amend CLI is a tool today; a future Skill wrapper (`.claude/skills/pos-amend/SKILL.md`) would let the primary persona trigger amendment-cycle bookkeeping through the same `/` dispatch surface as everything else. Latent composition.
+- The dev-mode FUTURE_IDEAS catalogue's Idea 8 (structural context-load gate) can likely be authored as a Skill invoked at session-start or a Skill called by a SessionStart hook, depending on where the gate lives.
 
 **Pitfalls.**
 - Skills default to being both user-invocable AND auto-loaded by Claude. Workflows with side effects (deploy, commit, amend) need `disable-model-invocation: true` or the persona may run them unprompted.
@@ -539,7 +539,7 @@ The official Anthropic marketplace accepts submissions via `claude.ai/settings/p
 - **`telegram-interface` is already a plugin** (`plugin:telegram:telegram` namespace visible in the MCP tool names). The telegram-interface + telegram-interface-framework-integration work is the reference implementation for how pos-v2 ships a plugin.
 - **`workspace-bootstrap`** and **`hands-off-lifecycle`** together form the native foundational layer that every pos-v2 plugin is supposed to compose on. Idea 3 names these plugins as must-have-at-launch candidates, with dev/SDLC plugin as the first.
 - **Plugin monitors (`monitors/monitors.json`)** are exactly the shape STATE.md rule 7 background-work-awareness demands — a tail command becomes in-context notifications without pos-v2 reinventing the surface. `observability-aggregator` and `session-resilient-orchestrator` could emit to monitor-shaped outputs that a pos-v2 plugin picks up.
-- **Plugin `bin/` directory** is the distribution mechanism for pos-v2 CLI tools — `tools/pos-amend/` currently ships via the repo root; a future "pos-v2 dev/SDLC plugin" (Idea 3) could ship `pos-amend` as `bin/pos-amend` and get automatic PATH inclusion.
+- **Plugin `bin/` directory** is the distribution mechanism for pos-v2 CLI tools — the dev-mode pos-amend CLI currently ships via the repo root; a future "pos-v2 dev/SDLC plugin" (Idea 3) could ship pos-amend as `bin/pos-amend` and get automatic PATH inclusion.
 - **Plugin `settings.json` with `agent`** is the mechanism for shipping an entire custom primary persona as a plugin — a "code-reviewer persona" or "research-assistant persona" plugin becomes a one-toggle override of the default agent.
 - **Workspace-specific pos-v2 compositions** (e.g. a workspace that wants a canned `/pos:context-load` skill for Idea 8's gate) become plugins once they stabilise; before then they live unnamespaced in `.claude/skills/`.
 
@@ -697,7 +697,7 @@ Same precedence pattern as other Claude Code components:
 
 - **Every component seal in pos-v2 was dispatched through the Agent tool.** The handoff-brief-then-dispatch pattern documented in STATE.md rule 1 is literally Agent(general-purpose) invocations with scoped briefs. Custom subagents would formalise this — e.g. a `.claude/agents/pos-v2-component-builder.md` that ships with the right defaults (permissionMode, skills preload for ODD methodology, persistent memory scoped to the component tree).
 - **`Explore` is the right default for research-plan authoring** — read-only scope matches the "read before editing" session-start discipline in CLAUDE.md.
-- **`Plan` subagent** is invoked during plan mode; pos-v2's plan-before-code CDC (see MEMORY.md) is the workflow layer above this — Plan handles the research, the output lands at `docs/rebuild/plans/<name>.md`.
+- **`Plan` subagent** is invoked during plan mode; pos-v2's plan-before-code CDC (see MEMORY.md) is the workflow layer above this — Plan handles the research, the output lands at the dev-mode plans directory (DEV MODE only).
 - **Persistent `memory: project`** on a pos-v2-specific agent would accumulate architectural insights across component builds, compose with `memory-system` at the workspace layer but scoped per-agent. Candidate for the future Dev/SDLC plugin (Idea 3).
 - **`Agent(worker, researcher)` restriction** in an agent with its own `tools` list implements "this orchestrator can dispatch only these two subagents" — structural enforcement matching pos-v2's safety posture.
 - **Subagent hooks** (`hooks:` in frontmatter) are the pattern for the "agent dispatches carry scope only" discipline (feedback_agent_prompts_scope_only in MEMORY.md). A future `pos-v2-builder` subagent could have a `PreToolUse` hook that refuses method-prescribing prompts — structural mechanisation of the current social convention.
@@ -836,7 +836,7 @@ Session persistence is the substrate everything else composes on: without it, pO
 - `claude --fork-session --resume <id>` — create new session ID from resumed session; both diverge.
 - `claude --from-pr <N>` — resume sessions linked to a GitHub PR (auto-linked at `gh pr create`).
 
-**Composes with pos-v2.** Amendment-cycle bookkeeping (`tools/pos-amend/`) could attach to session IDs so every amendment-commit has a traceable session-of-record; `--from-pr` is the GitHub-integrated version if amendments flow through PRs.
+**Composes with pos-v2.** Amendment-cycle bookkeeping (the dev-mode pos-amend CLI) could attach to session IDs so every amendment-commit has a traceable session-of-record; `--from-pr` is the GitHub-integrated version if amendments flow through PRs.
 
 ### 9.3 Checkpointing and rewinding
 

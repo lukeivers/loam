@@ -296,3 +296,91 @@ two sets), the audit command's exact output shape, the glob library
    automatically when a new amendment adds a file, but the manifest
    is owner-authored per design (the partition is intent, not
    discovery). Auto-update would erode that property. Dropped.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+*Pre-authored §14 heading per the #41 build finding; populated after
+F's amendment commit lands.*
+
+### D-build.x method choices
+
+- **D-build.1 — Manifest format.** YAML with `roots`, `audit_excludes`,
+  `always_loaded`, `dev_only` keys. Each entry is either
+  `{path: ...}` or `{glob: ..., exclude: [...]}`. Matches D-F.1
+  (YAML) + D-F.2 (`docs/rebuild/dev-mode-manifest.yaml` location).
+  Rationale: stays consistent with `manifest.yaml`/`memory.yaml`
+  conventions; the schema is small enough that hand-authoring stays
+  cheap.
+- **D-build.2 — Glob semantics.** Shell-style with `**` (cross-segment)
+  and `*` (single-segment, does NOT cross `/`). Implemented as a
+  segment-by-segment regex builder (no external `pathspec` dep,
+  consistent with the workspace's no-extra-deps posture). Rationale:
+  shell-style matches operator intuition; sealed-component carve-outs
+  needed precise sub-tree exclusion (AC.F4) which `fnmatch`'s
+  cross-segment `*` would not deliver.
+- **D-build.3 — Locked-partition fidelity.** No sub-tree carve-outs
+  inside sealed-component glob entries (e.g. `seals/`, `tests/SEAL_COMMIT`
+  ride with `<component>/**`). Rationale: locked ruling 4
+  ("every Phase 1–4 sealed component's source surface is always-loaded")
+  is owner-authored; F formalises, doesn't relax. Carve-outs would
+  require a separate owner ruling.
+- **D-build.4 — CLAUDE.md scrub via relocation, not deletion.** The
+  pre-scrub session-start-discipline + where-other-guidance-lives
+  sections moved to a new `CLAUDE.dev.md` (added to `dev_only`) — a
+  shape consistent with B's AC.B3 enumerated mechanism options
+  (separate `CLAUDE.dev.md` is one of B's named candidates).
+  Rationale: preserves dev-mode readability for the interim window
+  before B lands the SessionStart-routed delivery; minimises
+  information loss in the always-load shell.
+- **D-build.5 — AC.F3 known-debt allowlist.** `memory-system/launchd/README.md`
+  references `docs/rebuild/components/true-first-run/research.md` (a
+  dev-only path); editing that README would breach the memory-system
+  sealed-component fence (AC.F3 halt-trigger 1). The reference is
+  recorded as known-debt in
+  `tools/loam-mode/tests/test_partition_references.py::KNOWN_CROSS_MODE_DEBT`
+  with a comment naming the future memory-system amendment as the
+  right home for the scrub. Rationale: choosing the allowlist over
+  partition-revision (carving `memory-system/launchd/` into `dev_only`)
+  preserves owner authority over locked ruling 4; the allowlist must
+  shrink to empty when the memory-system fence next opens.
+- **D-build.6 — AC.F.S as commit-subject-gated.** F's seal-diff test
+  (`test_F_S_seal_diff.py`) skips when HEAD is not recognisably an
+  F-amendment commit; it bites only on the amendment-commit window
+  itself. Rationale: dev-discipline plans don't have BASELINE/SEAL_COMMIT
+  sidecars; checking `HEAD~1..HEAD` against the F commit is the
+  closest equivalent without forcing a sentinel SHA into the test
+  source.
+
+### Test breakdown
+
+- AC.F1: 3 tests in `test_partition_manifest.py` — disjointness on the
+  real shipped manifest, well-formedness invariants, malformed-entry
+  rejection.
+- AC.F2: 5 tests in `test_selector_partition.py` — user/dev mode
+  output, user-mode-excludes-dev, dev-is-strict-superset, mode
+  validation, glob-entry handling.
+- AC.F3: 7 tests in `test_partition_references.py` — real-manifest
+  cross-mode-ref check (with known-debt allowlist), URL ignored,
+  inline-code-without-path-shape ignored, dev-path flagged,
+  Markdown-link flagged, anchor-only ignored, directory-glob in
+  dev-set matches sub-path refs.
+- AC.F4: 3 tests in `test_partition_manifest.py` — glob-with-exclusion,
+  `**` recursive matching, single-segment `*`-without-`**`.
+- AC.F5: 6 tests in `test_partition_audit.py` — clean fixture exits 0,
+  orphan detection, overlap detection, audit_excludes effectiveness,
+  real-manifest audit smoke-test, CLI select subcommand.
+- AC.F.S: 2 tests in `test_F_S_seal_diff.py` — HEAD-vs-HEAD~1 path
+  scope (skips outside amendment window), allowed-surfaces register
+  completeness.
+
+Total: 26 tests across 5 files (one file per AC family per the #41
+one-file-per-AC convention). All pass; one (the AC.F.S window check)
+skips pre-commit by design.
+
+### Commit SHAs
+
+*Filled by `pos-amend seal --plan-doc` post-amendment when applicable;
+F is dev-discipline (no `pos-amend` manifest), so the SHA lines are
+hand-authored on the follow-up `docs(plans):` commit.*

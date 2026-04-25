@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-mode"
+version = "0.1.0"
+description = "pos-v2 dev-mode auto-load partition selector + audit (sub-plan F)."
+requires-python = ">=3.11"
+dependencies = ["PyYAML>=6"]
+
+[project.scripts]
+loam-mode = "loam_mode.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

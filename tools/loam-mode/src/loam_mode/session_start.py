@@ -235,8 +235,21 @@ def cli_session_start(workspace_root: Path | None = None) -> int:
     the empty-payload + diagnostic-line outcomes both satisfy
     "session proceeds in user mode rather than blocking on selector
     error".
+
+    Side-effect (heavy-b-migrate lazy-projection trigger, dev-discipline,
+    plan ``heavy-b-phase-alpha-beta-gamma-migration.md`` D-build.6):
+    if ``heavy_b_migrate`` is importable AND the workspace's
+    ``dev_intent`` answer is ``"yes"`` AND the dev-objective tree has
+    not yet been fully projected, the trigger runs Phase α / β / γ
+    against the workspace's tracker DB. The trigger is itself fail-
+    soft (every exception is swallowed inside ``run_if_dev_intent``);
+    its outcome does NOT modify the SessionStart payload returned to
+    Claude Code. Idempotency-by-`lifted_from` makes re-runs cheap on
+    already-projected workspaces (the phases short-circuit per-record
+    on the existing-key set).
     """
     root = workspace_root if workspace_root is not None else Path.cwd()
+    _invoke_lazy_projection(root)
     try:
         payload = emit_session_start_context(root)
     except Exception:  # noqa: BLE001 — defensive AC.B5
@@ -246,3 +259,22 @@ def cli_session_start(workspace_root: Path | None = None) -> int:
         if not payload.endswith("\n"):
             sys.stdout.write("\n")
     return 0
+
+
+def _invoke_lazy_projection(workspace_root: Path) -> None:
+    """Fire-and-forget heavy-b-migrate trigger; never raises.
+
+    Late import keeps loam-mode independent at install time; an
+    ``ImportError`` (heavy-b-migrate not on path in this workspace)
+    is swallowed silently so the SessionStart hook proceeds normally.
+    Per plan §6 constraints 13/14 the trigger is a read-only consumer
+    of ``dev_intent`` + idempotent via ``lifted_from``.
+    """
+    try:
+        from heavy_b_migrate.trigger import run_if_dev_intent
+    except ImportError:
+        return
+    try:
+        run_if_dev_intent(workspace_root)
+    except Exception:  # noqa: BLE001 — defensive AC.B5
+        return

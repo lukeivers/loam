@@ -89,6 +89,27 @@ _POS_V2_COMMAND_MARKERS: tuple[str, ...] = (
     "loam_mode.cli session-start",
     "loam_mode.cli session_start",
     "-m loam_mode",
+    # Amendment #46: primary-persona session-start emitter composed
+    # onto the SessionStart envelope alongside loam-mode (probe →
+    # persona → loam-mode ordering per umbrella plan §6 D5).
+    # Recognised here so re-merge over a stanza we wrote does not
+    # back up the persona inner hook as user-authored.
+    "primary_persona.cli session-start",
+    "primary_persona.cli session_start",
+    "-m primary_persona",
+)
+
+
+# Set of substrings that mark a UserPromptSubmit inner hook as pos-v2-
+# owned. Single-contributor for now (AC46.6 defers multi-contributor
+# generalisation analogous to amendment #45's SessionStart registry).
+# When a future amendment introduces additional UserPromptSubmit
+# contributors, generalise this set + the merge function the same way
+# amendment #45 generalised the SessionStart counterparts.
+_POS_V2_USER_PROMPT_SUBMIT_COMMAND_MARKERS: tuple[str, ...] = (
+    "primary_persona.cli user-prompt-submit",
+    "primary_persona.cli user_prompt_submit",
+    "-m primary_persona",
 )
 
 
@@ -314,6 +335,109 @@ def merge_session_start(
     preserved_keys = tuple(
         k for k in existing.keys() if k not in ("hooks", "agent")
     ) + tuple(f"hooks.{k}" for k in hooks.keys() if k != "SessionStart")
+
+    return SettingsMergeResult(
+        wrote=True,
+        backup_path=backup_path,
+        prior_session_start_displaced=displaced,
+        preserved_user_keys=preserved_keys,
+    )
+
+
+# ---- amendment #46 — UserPromptSubmit hook merge --------------------
+
+
+def _is_pos_v2_owned_user_prompt_submit(stanza_entries: list[Any]) -> bool:
+    """Identify whether an existing UserPromptSubmit stanza is pos-v2's.
+
+    AC46.5 + AC46.6: the persona's user-prompt-submit subcommand is
+    the canonical pos-v2-owned UserPromptSubmit inner hook. A stanza
+    whose every inner-hook command matches one of the recognised
+    persona-side command markers is pos-v2-owned and may be replaced
+    without a user-stanza backup. Any other shape (user-authored, mixed,
+    malformed) triggers the backup path mirroring the SessionStart
+    convention.
+    """
+    commands = _iter_commands(stanza_entries)
+    if not commands:
+        return False
+    for cmd in commands:
+        if not any(
+            marker in cmd
+            for marker in _POS_V2_USER_PROMPT_SUBMIT_COMMAND_MARKERS
+        ):
+            return False
+    return True
+
+
+def merge_user_prompt_submit(
+    *,
+    settings_path: Path,
+    new_entry: dict[str, Any],
+    now_iso: str | None = None,
+) -> SettingsMergeResult:
+    """Merge ``new_entry`` into settings.json's UserPromptSubmit stanza.
+
+    AC46.5: writes ``hooks.UserPromptSubmit = [new_entry]``. Single-
+    contributor (AC46.6) — multi-contributor generalisation is a
+    future amendment analogous to #45's SessionStart registry.
+
+    Behaviour mirrors ``merge_session_start``:
+      * no prior stanza: write ``[new_entry]``.
+      * prior stanza is pos-v2's own (command matches the persona's
+        user-prompt-submit markers): replace with ``[new_entry]``,
+        no backup.
+      * prior stanza is user-authored: write the whole prior
+        settings.json to a timestamped backup and replace the
+        UserPromptSubmit stanza with ``[new_entry]``.
+
+    Other top-level keys (including ``hooks.SessionStart``,
+    ``hooks.<other>``, ``agent``, etc.) are preserved unchanged.
+    Atomic write via ``.tmp`` sibling + rename.
+    """
+    settings_path = Path(settings_path)
+    existing = _load_existing(settings_path)
+
+    backup_path: Path | None = None
+    displaced = False
+
+    hooks = existing.get("hooks")
+    if not isinstance(hooks, dict):
+        hooks = {}
+        existing["hooks"] = hooks
+
+    prior = hooks.get("UserPromptSubmit")
+    if (
+        isinstance(prior, list)
+        and prior
+        and not _is_pos_v2_owned_user_prompt_submit(prior)
+    ):
+        ts = now_iso or _now_utc_iso_for_filename()
+        backup_path = settings_path.with_name(
+            f"{settings_path.name}.user-backup-{ts}.json"
+        )
+        backup_path.write_text(
+            json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        displaced = True
+
+    hooks["UserPromptSubmit"] = [new_entry]
+    existing["hooks"] = hooks
+
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = settings_path.with_suffix(settings_path.suffix + ".tmp")
+    tmp.write_text(
+        json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    tmp.replace(settings_path)
+
+    preserved_keys = tuple(
+        k for k in existing.keys() if k not in ("hooks", "agent")
+    ) + tuple(
+        f"hooks.{k}" for k in hooks.keys() if k != "UserPromptSubmit"
+    )
 
     return SettingsMergeResult(
         wrote=True,

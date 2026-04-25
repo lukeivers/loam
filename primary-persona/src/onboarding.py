@@ -175,12 +175,94 @@ def build_starter_pending_contributor(
         # sub-plan A D-A.3 — adding a fifth question in the future
         # never silently drifts the body text.
         question_count = len(ONBOARDING_QUESTIONS)
-        body = (
-            f"{STARTER_PENDING_MARKER}\n"
-            f"The workspace's persona contract is in starter state. "
-            f"{contract.given_name} opens elicitation on the next user "
-            f"turn ({question_count} questions, ~2 minutes, skippable)."
+
+        # Resolve the contract path so the write-back instructions can
+        # name an exact target (AC46.7). The loaded persona carries
+        # ``directory`` (loader.LoadedPersona); contract.yaml is the
+        # canonical filename. Fall back to a placeholder if the
+        # attribute is absent (test fixtures using a stand-in
+        # _FakeLoadedPersona without ``directory``).
+        directory = getattr(loaded_persona, "directory", None)
+        if directory is not None:
+            contract_path_str = f"{directory}/contract.yaml"
+        else:
+            contract_path_str = "<workspace>/personas/<handle>/contract.yaml"
+
+        # AC46.7 — body widening. Preserves AC35.3 (first line is the
+        # marker) and AC.A.4 (body contains "{count} questions").
+        # Body now includes the question id+prompt list and write-back
+        # instructions naming ``persist_elicitation_transcript`` so the
+        # loaded persona can conduct the elicitation from
+        # additionalContext alone (without persona-prompt customisation).
+        lines: list[str] = [
+            STARTER_PENDING_MARKER,
+            (
+                f"The workspace's persona contract is in starter state. "
+                f"{contract.given_name} opens elicitation on the next "
+                f"user turn ({question_count} questions, ~2 minutes, "
+                f"skippable)."
+            ),
+            "",
+            "questions:",
+        ]
+        for q in ONBOARDING_QUESTIONS:
+            lines.append(
+                f"  - id={q.id} required={q.required} prompt={q.prompt}"
+            )
+        lines.extend(
+            [
+                "",
+                "write-back:",
+                (
+                    "  Call "
+                    "primary_persona.onboarding.persist_elicitation_"
+                    "transcript(loaded_persona=<persona>, "
+                    "transcript={<id>: <answer>, ...}, "
+                    f"contract_path=Path({contract_path_str!r})) "
+                    "after collecting non-empty answers for every "
+                    "required id. The call flips is_starter to False "
+                    "on a complete transcript and writes the contract "
+                    "yaml back to disk."
+                ),
+            ]
         )
+        body = "\n".join(lines)
+
+        # Per-contributor budget guard (AC46.7): keep the body under
+        # 2,000 chars so the SessionStart payload's other contributors
+        # fit alongside under the composer's 10,000-char cap. The
+        # canonical 4-question tuple produces ~800 chars; defensive
+        # truncation kicks in only if a future contract author appends
+        # very-long-prompt questions.
+        _BUDGET = 2000
+        if len(body) > _BUDGET:
+            # Hard-trim trailing question prompts; retain the marker,
+            # introductory line, every question id (so the persona can
+            # still iterate the schema), and the write-back block.
+            ellipsis = "  [body trimmed to fit per-contributor budget]"
+            head = (
+                f"{STARTER_PENDING_MARKER}\n"
+                f"The workspace's persona contract is in starter "
+                f"state. {contract.given_name} opens elicitation on "
+                f"the next user turn ({question_count} questions, ~2 "
+                f"minutes, skippable).\n\nquestions:"
+            )
+            ids_only = "\n".join(
+                f"  - id={q.id}" for q in ONBOARDING_QUESTIONS
+            )
+            tail = lines[-3] + "\n" + lines[-2] + "\n" + lines[-1]
+            body = head + "\n" + ids_only + "\n" + ellipsis + "\n" + tail
+            if len(body) > _BUDGET:
+                # Truly defensive: the static text already exceeds the
+                # budget. Preserve the marker + ellipsis only. The
+                # elicitation surface degrades; the marker still
+                # signals starter-pending so the persona knows to act.
+                body = (
+                    f"{STARTER_PENDING_MARKER}\n"
+                    f"{question_count} questions; body exceeded "
+                    f"{_BUDGET}-char budget — see "
+                    "primary_persona.onboarding.ONBOARDING_QUESTIONS."
+                )
         return body
 
     return contributor

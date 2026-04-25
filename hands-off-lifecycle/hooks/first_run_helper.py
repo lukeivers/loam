@@ -76,6 +76,7 @@ from first_run_settings import (  # noqa: E402
     build_first_run_stanza,
     build_supervisor_stanza,
     merge_session_start,
+    merge_user_prompt_submit,
 )
 from first_run_state import (  # noqa: E402
     FirstRunState,
@@ -129,6 +130,113 @@ def _loam_mode_inner_hooks(pos_v2_root: Path) -> list[dict]:
         return [build_loam_mode_inner_hook(pos_v2_root)]
     except Exception:  # noqa: BLE001 — fail-soft per AC.45.5
         return []
+
+
+# ---- amendment #46 — primary-persona session-start + UserPromptSubmit --
+#
+# The persona's session-start emitter is registered as an inner hook on
+# the SessionStart envelope alongside loam-mode (AC46.5). Ordering per
+# umbrella plan §6 D5: probe (first-run.sh / pos_session_start.py) →
+# persona emit → loam-mode emit. Both helpers are independently fail-
+# soft; a missing primary-persona install degrades only the persona
+# inner hook (loam-mode still composes).
+#
+# The persona's user-prompt-submit emitter lands as a single inner hook
+# under hooks.UserPromptSubmit via merge_user_prompt_submit (AC46.5).
+# Single-contributor for now; AC46.6 defers multi-contributor
+# generalisation analogous to amendment #45's SessionStart registry.
+
+
+def _persona_inner_hooks(pos_v2_root: Path) -> list[dict]:
+    """Return the persona's SessionStart inner-hook entry as a list.
+
+    Lazy import + fail-soft per AC46.4. Mirrors ``_loam_mode_inner_hooks``
+    shape: missing or broken primary-persona install yields an empty
+    list and the SessionStart envelope falls back to omitting only the
+    persona inner hook (probe + loam-mode still compose).
+    """
+    try:
+        venv_site = pos_v2_root / ".venv" / "lib"
+        if venv_site.is_dir():
+            for site_dir in venv_site.iterdir():
+                site_pkgs = site_dir / "site-packages"
+                if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
+                    sys.path.insert(0, str(site_pkgs))
+        from primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
+            build_persona_session_start_inner_hook,
+        )
+        return [build_persona_session_start_inner_hook(pos_v2_root)]
+    except Exception:  # noqa: BLE001 — fail-soft per AC46.4
+        return []
+
+
+def _extra_session_start_hooks(pos_v2_root: Path) -> list[dict]:
+    """Return the SessionStart envelope's ``extra_inner_hooks`` list.
+
+    Order per umbrella plan §6 D5 (D-build.6 in the builder plan):
+    persona → loam-mode. The base inner hook (first-run.sh in
+    `build_first_run_stanza`; supervisor in `build_supervisor_stanza`)
+    composes BEFORE these via the stanza builder; the final order at
+    Claude Code's hook fan-out is: probe (base) → persona → loam-mode.
+
+    Either helper independently returning ``[]`` is graceful; the
+    envelope simply omits that hook and the rest compose normally.
+    """
+    return _persona_inner_hooks(pos_v2_root) + _loam_mode_inner_hooks(pos_v2_root)
+
+
+def _persona_user_prompt_submit_stanza(pos_v2_root: Path) -> dict | None:
+    """Return the persona's UserPromptSubmit envelope, or ``None`` when
+    the persona's emitter is unavailable.
+
+    Lazy import + fail-soft per AC46.4. Returning ``None`` signals the
+    caller to skip ``merge_user_prompt_submit`` entirely (the
+    UserPromptSubmit hook is simply not registered — pre-amendment-#46
+    behaviour preserved).
+    """
+    try:
+        venv_site = pos_v2_root / ".venv" / "lib"
+        if venv_site.is_dir():
+            for site_dir in venv_site.iterdir():
+                site_pkgs = site_dir / "site-packages"
+                if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
+                    sys.path.insert(0, str(site_pkgs))
+        from primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
+            build_persona_user_prompt_submit_inner_hook,
+        )
+        return {
+            "matcher": "",
+            "hooks": [build_persona_user_prompt_submit_inner_hook(pos_v2_root)],
+        }
+    except Exception:  # noqa: BLE001 — fail-soft per AC46.4
+        return None
+
+
+def _maybe_merge_user_prompt_submit(
+    *, pos_v2_root: Path, settings_path: Path
+) -> None:
+    """Invoke ``merge_user_prompt_submit`` when the persona's emitter
+    is available; no-op otherwise.
+
+    Wraps the merge so call sites can fire-and-forget; settings.json
+    write failures are caught (matching the surrounding Phase-3d /
+    Phase-4c / Phase-6 settings.json handling — those phases also
+    tolerate transient I/O errors).
+    """
+    stanza = _persona_user_prompt_submit_stanza(pos_v2_root)
+    if stanza is None:
+        return
+    try:
+        merge_user_prompt_submit(
+            settings_path=settings_path,
+            new_entry=stanza,
+        )
+    except Exception:  # noqa: BLE001 — fail-soft per AC46.4
+        # Settings.json write failure or merge exception. The
+        # SessionStart hook still fires; the workspace simply lacks
+        # the UserPromptSubmit hook this run. A subsequent first-run
+        # / supervisor cycle re-attempts the merge.
+        return
 
 
 # ---- error codes -----------------------------------------------------
@@ -1100,12 +1208,19 @@ def _self_retire(
     """
     supervisor_stanza = build_supervisor_stanza(
         pos_v2_root,
-        extra_inner_hooks=_loam_mode_inner_hooks(pos_v2_root),
+        extra_inner_hooks=_extra_session_start_hooks(pos_v2_root),
     )
     merge_result = merge_session_start(
         settings_path=settings_path,
         new_entry=supervisor_stanza,
         agent_handle=agent_handle,
+    )
+    # Amendment #46: register the persona's UserPromptSubmit hook
+    # alongside the supervisor SessionStart merge. Fail-soft per
+    # AC46.4 — missing or broken primary-persona install degrades to
+    # no-UserPromptSubmit-hook (pre-amendment-#46 behaviour).
+    _maybe_merge_user_prompt_submit(
+        pos_v2_root=pos_v2_root, settings_path=settings_path
     )
 
     script_path = pos_v2_root / "hands-off-lifecycle" / "hooks" / "first-run.sh"
@@ -1513,11 +1628,17 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     settings_path = pos_v2_root / ".claude" / "settings.json"
     first_run_stanza = build_first_run_stanza(
         pos_v2_root,
-        extra_inner_hooks=_loam_mode_inner_hooks(pos_v2_root),
+        extra_inner_hooks=_extra_session_start_hooks(pos_v2_root),
     )
     merge_result = merge_session_start(
         settings_path=settings_path,
         new_entry=first_run_stanza,
+    )
+    # Amendment #46: register the persona's UserPromptSubmit hook at
+    # Phase 3d so the workspace's first user-prompt after first-run
+    # gets memory retrieval. Fail-soft per AC46.4.
+    _maybe_merge_user_prompt_submit(
+        pos_v2_root=pos_v2_root, settings_path=settings_path
     )
 
     # ---- Phase 4a: plist / unit substitution + service bootstrap --
@@ -1708,9 +1829,15 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
                 settings_path=settings_path,
                 new_entry=build_first_run_stanza(
                     pos_v2_root,
-                    extra_inner_hooks=_loam_mode_inner_hooks(pos_v2_root),
+                    extra_inner_hooks=_extra_session_start_hooks(pos_v2_root),
                 ),
                 agent_handle=agent_handle,
+            )
+            # Amendment #46: re-merge the UserPromptSubmit hook
+            # alongside the Phase 4c re-merge. Idempotent — the
+            # merge writes the same envelope shape every time.
+            _maybe_merge_user_prompt_submit(
+                pos_v2_root=pos_v2_root, settings_path=settings_path
             )
         except OSError as e:
             # Settings.json unwriteable — surface a diagnostic. The

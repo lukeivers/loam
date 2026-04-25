@@ -54,6 +54,15 @@ from .context_composer import (
     TurnPayload,
 )
 from .session_start_gate import compose_session_fields
+from .session_start_emitter import (
+    build_persona_session_start_inner_hook,
+    build_persona_user_prompt_submit_inner_hook,
+    build_session_composer,
+    cli_session_start,
+    cli_user_prompt_submit,
+    emit_session_start_context,
+    emit_user_prompt_submit_context,
+)
 from .creation_triggers import CreationTrigger, CreationTriggerDetector, TriggerSignal
 from .authoring import (
     AuthoringOutcome,
@@ -110,7 +119,14 @@ __all__ = [
     "TriggerKind",
     "TriggerSignal",
     "TurnPayload",
+    "build_persona_session_start_inner_hook",
+    "build_persona_user_prompt_submit_inner_hook",
+    "build_session_composer",
+    "cli_session_start",
+    "cli_user_prompt_submit",
     "compose_session_fields",
+    "emit_session_start_context",
+    "emit_user_prompt_submit_context",
     "load_contract",
     "retire_persona",
 ]

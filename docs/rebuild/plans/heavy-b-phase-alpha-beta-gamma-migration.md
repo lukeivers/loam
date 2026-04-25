@@ -321,3 +321,23 @@ When the brief is drafted, it carries these CDC + ODD enforcement requirements v
 - No SEAL_COMMIT bump, no `pos-amend` manifest, no seal commit.
 - Phases run sequentially in the same working tree (per the serialise-amendment-builds-in-the-same-working-tree memory). Background agents are appropriate per phase per the background-default memory; do not run phases α + β + γ in parallel against the same tracker DB.
 - Dispatch-speedups apply: narrow test scope to `tools/heavy-b-migrate/` (or sibling); run upstream-prereq probes only (don't re-run full sealed-component test suites).
+
+---
+
+## 14. Method-decision register (build-time backfill)
+
+Authored before commits per CLAUDE.md plan-before-code; SHAs backfilled
+post-build. Companion builder-plan: `heavy-b-phase-alpha-beta-gamma-migration.builder-plan.md`.
+
+- **D-build.1 — Extractor home.** **(a)** New `tools/heavy-b-migrate/` package, sibling to `tools/pos-amend/` and `tools/loam-mode/`. Master-research recommendation; clean separation from pos-amend's amendment-cycle role.
+- **D-build.2 — Phase β placeholder convention.** **(a)** One placeholder ObjectiveSpec per component proposal that fails to parse. Visible in `query_projection_view` filtered by `lifted_from.source_doc`.
+- **D-build.3 — Phase γ amendment authoring policy.** **(a)** Every amendment is `authored_by="user"` per research §A.4 dominant case.
+- **D-build.4 — Continuous-registration verification.** **(b)** One-shot post-Phase-γ verification harness (`heavy-b-migrate verify-continuous` subcommand) running against an isolated tracker DB.
+- **D-build.5 — Per-phase test scope.** One test file per AC (`test_ac_d_mig_<n>_<name>.py`).
+- **D-build.6 — Lazy-projection trigger attach point.** **(a-prime)** Wired into loam-mode's session-start emitter (`tools/loam-mode/src/loam_mode/session_start.py`), NOT primary-persona's contributor surface as the master-research §11 (a) literally specified. **Deviation rationale:** primary-persona is a sealed component (Phase 1, sealed 2026-04-18). Editing its contributor surface is a sealed-component amendment, not dev-discipline; that contradicts §6 constraint 2 ("scope fence — `tools/` only") and §6 constraint 3 ("no edit to amendments #38/#39/#40"). Loam-mode's session-start emitter (sub-plan B, dev-discipline, in `tools/loam-mode/`) is functionally equivalent — it runs every session via the multi-contributor mechanism #45 generalised, already reads `dev_intent`, and stays inside the scope fence. Per `feedback_critical_thinking_on_deviations`: enumerated; balance picked. The behaviour the plan asks for (session-start lifecycle attach + read `dev_intent` + dispatch the phase runner) is preserved.
+
+Commit SHAs (backfilled):
+
+- Heavy-b-migrate scaffold + extractors: `dc9dccb`
+- Loam-mode lazy-projection wire: `df596ab`
+- Plan-doc SHA backfill: this commit (chain top after merge).

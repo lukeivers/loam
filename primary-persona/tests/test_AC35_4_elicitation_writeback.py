@@ -71,6 +71,13 @@ def test_AC35_4_complete_transcript_persists_answers_and_flips_is_starter(
             "Coordinator for personal finance and life-admin work. "
             "Sub-clauses follow."
         ),
+        # Sub-plan A (two-modes-and-multi-workspace) extends the
+        # canonical question tuple with a fourth required entry
+        # (``dev_intent``). The AC35.4 outcome shape — complete
+        # transcript flips ``is_starter`` to False — is unchanged;
+        # the fixture data advances to match the extended definition
+        # of "complete transcript" per owner ruling 2026-04-25 (a).
+        "dev_intent": "no",
     }
 
     new_contract = persist_elicitation_transcript(
@@ -213,6 +220,9 @@ def test_AC35_4_complete_transcript_round_trips_through_to_yaml(tmp_path: Path):
         "user_name": "Luke",
         "persona_given_name": "Aurelia",
         "domain_focus": "Helper for technical research and writing.",
+        # Sub-plan A extension — fourth required answer (see
+        # complete-transcript test above for rationale).
+        "dev_intent": "yes",
     }
 
     persist_elicitation_transcript(

@@ -32,7 +32,7 @@ from __future__ import annotations
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -275,6 +275,25 @@ class PersonaContract(BaseModel):
             "Strict-typed: only Python ``bool`` values are accepted; "
             "a non-Boolean (e.g., a YAML string) rejects at "
             "validation time."
+        ),
+    )
+
+    # ---- dev-intent (sub-plan A — two-modes-and-multi-workspace) ----
+
+    dev_intent: Literal["unanswered", "yes", "no"] = Field(
+        default="unanswered",
+        description=(
+            "Workspace-local answer to the dev-intent onboarding "
+            "question (sub-plan A of two-modes-and-multi-workspace). "
+            "``\"yes\"`` — operator intends to develop pos-v2 itself; "
+            "``\"no\"`` — operator intends to use pos-v2 as a harness "
+            "only; ``\"unanswered\"`` — the question has not been put "
+            "to the operator yet (default for any contract scaffolded "
+            "without going through onboarding write-back). The "
+            "Literal constraint structurally rejects any other "
+            "string at validation time. Sub-plan E's "
+            "``classify_workspace`` consumes ``read_dev_intent`` "
+            "with the documented mapping ``unanswered`` → non-dev."
         ),
     )
 

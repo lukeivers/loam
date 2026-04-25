@@ -40,9 +40,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
-from .contract import PersonaContract
+from .contract import PersonaContract, load_contract
 from . import observability as obs
 
 
@@ -74,10 +74,14 @@ class OnboardingQuestion:
     required: bool = True
 
 
-# Canonical question-shape tuple. D-build.2 selected three questions:
-# user_name (the user's preferred address), persona_given_name (the
-# persona's own name; default is workspace-bootstrap's pick), and
-# domain_focus (one-sentence prose into responsibilities.single_point_of_contact).
+# Canonical question-shape tuple. D-build.2 (amendment #35) selected
+# three questions: user_name (the user's preferred address),
+# persona_given_name (the persona's own name; default is workspace-
+# bootstrap's pick), and domain_focus (one-sentence prose into
+# responsibilities.single_point_of_contact). Sub-plan A of the two-
+# modes-and-multi-workspace programme adds a fourth question
+# (``dev_intent``) that captures whether the operator intends to
+# develop pos-v2 itself or use it as a harness only — see AC.A.1.
 ONBOARDING_QUESTIONS: tuple[OnboardingQuestion, ...] = (
     OnboardingQuestion(
         id="user_name",
@@ -100,7 +104,26 @@ ONBOARDING_QUESTIONS: tuple[OnboardingQuestion, ...] = (
         contract_field="responsibilities.single_point_of_contact",
         required=True,
     ),
+    OnboardingQuestion(
+        id="dev_intent",
+        prompt=(
+            "Are you here to develop pos-v2 itself, or to use it as "
+            "a harness for your own work? (yes = developing pos-v2; "
+            "no = using it.)"
+        ),
+        contract_field="dev_intent",
+        required=True,
+    ),
 )
+
+
+# Accepted dev-intent answer literals. The contract's
+# ``Literal["unanswered", "yes", "no"]`` typing rejects anything else
+# structurally; this set is the transcript-time sanitiser so a free-
+# text user reply normalises to the contract's admissible values
+# before the contract validator sees them.
+_DEV_INTENT_YES = frozenset({"yes", "y", "develop", "dev", "pos-v2", "true"})
+_DEV_INTENT_NO = frozenset({"no", "n", "use", "user", "harness", "false"})
 
 
 # Note on ``user_name``: the persona contract holds ``given_name`` for
@@ -148,11 +171,15 @@ def build_starter_pending_contributor(
         contract = loaded_persona.contract
         if not getattr(contract, "is_starter", False):
             return ""
+        # Question count derived from the canonical tuple per
+        # sub-plan A D-A.3 — adding a fifth question in the future
+        # never silently drifts the body text.
+        question_count = len(ONBOARDING_QUESTIONS)
         body = (
             f"{STARTER_PENDING_MARKER}\n"
             f"The workspace's persona contract is in starter state. "
             f"{contract.given_name} opens elicitation on the next user "
-            f"turn (3 questions, ~2 minutes, skippable)."
+            f"turn ({question_count} questions, ~2 minutes, skippable)."
         )
         return body
 
@@ -222,6 +249,12 @@ def persist_elicitation_transcript(
         obs.onboarding_question_event(
             handle=handle, question_id=q.id, workspace_slug=workspace_slug
         )
+        # Sub-plan A AC.A.7 — distinct dev-intent question event so
+        # consumers can count it without filtering on question_id.
+        if q.id == "dev_intent":
+            obs.onboarding_dev_intent_question_event(
+                handle=handle, workspace_slug=workspace_slug
+            )
         answer = transcript.get(q.id, "")
         if isinstance(answer, str) and answer.strip():
             obs.onboarding_answer_event(
@@ -244,6 +277,26 @@ def persist_elicitation_transcript(
     domain_focus = transcript.get("domain_focus", "").strip()
     if domain_focus:
         payload["responsibilities"]["single_point_of_contact"] = domain_focus
+
+    # Sub-plan A AC.A.3 — dev-intent write-back. Normalise the user's
+    # free-text answer to the contract's Literal admissible values; an
+    # unrecognised non-empty answer raises OnboardingTranscriptError
+    # (distinct from "incomplete" — the user gave an answer the
+    # framework cannot map to yes/no, which is structural).
+    dev_intent_raw = transcript.get("dev_intent", "")
+    if isinstance(dev_intent_raw, str) and dev_intent_raw.strip():
+        normalised = _normalise_dev_intent(dev_intent_raw)
+        if normalised is None:
+            raise OnboardingTranscriptError(
+                f"transcript value for 'dev_intent' must be a yes/no answer, "
+                f"got {dev_intent_raw!r}"
+            )
+        payload["dev_intent"] = normalised
+        obs.onboarding_dev_intent_answer_event(
+            handle=handle,
+            answer=normalised,
+            workspace_slug=workspace_slug,
+        )
 
     # user_name does not map to a contract field in this amendment's
     # scope (see module-docstring note). Its presence is recorded via
@@ -269,3 +322,103 @@ def persist_elicitation_transcript(
         )
 
     return new_contract
+
+
+# ---- dev-intent helpers (sub-plan A — two-modes-and-multi-workspace) -
+
+
+def _normalise_dev_intent(raw: str) -> Literal["yes", "no"] | None:
+    """Map a free-text answer to the contract's Literal yes/no.
+
+    Returns ``None`` for any non-empty input that is neither a known
+    yes-token nor a known no-token; callers translate ``None`` to
+    ``OnboardingTranscriptError``. The normaliser is intentionally
+    case-insensitive and trims surrounding whitespace.
+    """
+    token = raw.strip().lower()
+    if not token:
+        return None
+    if token in _DEV_INTENT_YES:
+        return "yes"
+    if token in _DEV_INTENT_NO:
+        return "no"
+    return None
+
+
+def dev_intent_storage_path(workspace_root: Path) -> Path:
+    """Return the on-disk location of the workspace's dev-intent
+    answer (sub-plan A AC.A.5).
+
+    Per locked owner ruling D-MASTER.1 (a) the dev-intent answer
+    lives on the persona contract itself. The workspace's primary
+    persona contract is at
+    ``<workspace>/personas/<handle>/contract.yaml``. The handle is
+    not statically known (workspace-bootstrap chooses it at scaffold
+    time), so the resolver returns the *personas* directory path
+    that the reader walks to find the primary contract.
+
+    Sub-plans E, B, F consume this resolver — not the contract
+    directly — so the storage shape is substitutable without
+    re-reading those sub-plans (per AC.A.5 rationale + sub-plan A
+    asymmetric observation #2: resolver-as-API).
+    """
+    return Path(workspace_root) / "personas"
+
+
+def _primary_contract_path(workspace_root: Path) -> Path | None:
+    """Locate the workspace's primary-persona ``contract.yaml``.
+
+    Returns the first ``personas/<handle>/contract.yaml`` whose
+    ``is_primary: true`` or — if no contract claims primary — the
+    first persona contract found. Returns ``None`` when no contract
+    exists yet (fresh workspace, scaffold not run, mid-starter).
+    """
+    personas_dir = dev_intent_storage_path(workspace_root)
+    if not personas_dir.is_dir():
+        return None
+    candidates: list[Path] = []
+    for child in sorted(personas_dir.iterdir()):
+        if not child.is_dir():
+            continue
+        contract_path = child / "contract.yaml"
+        if contract_path.is_file():
+            candidates.append(contract_path)
+    if not candidates:
+        return None
+    # Prefer a primary-flagged contract; otherwise return the first
+    # alphabetical contract (deterministic).
+    for candidate in candidates:
+        try:
+            contract = load_contract(candidate)
+        except Exception:  # noqa: BLE001 — fail-safe on malformed contract
+            continue
+        if getattr(contract, "is_primary", False):
+            return candidate
+    return candidates[0]
+
+
+def read_dev_intent(
+    workspace_root: Path,
+) -> Literal["yes", "no", "absent"]:
+    """Return the workspace's dev-intent answer (sub-plan A AC.A.6).
+
+    Returns ``"yes"`` / ``"no"`` when the persona contract carries
+    an answered ``dev_intent`` field. Returns ``"absent"`` when the
+    workspace has no contract yet, when the contract fails to load,
+    or when the contract's ``dev_intent`` is the documented
+    ``"unanswered"`` sentinel. Per locked owner ruling D-MASTER.4
+    consumers (sub-plan E) treat ``"absent"`` as "no".
+    """
+    contract_path = _primary_contract_path(workspace_root)
+    if contract_path is None:
+        return "absent"
+    try:
+        contract = load_contract(contract_path)
+    except Exception:  # noqa: BLE001 — fail-safe on malformed contract
+        return "absent"
+    answer = getattr(contract, "dev_intent", "unanswered")
+    if answer == "yes":
+        return "yes"
+    if answer == "no":
+        return "no"
+    return "absent"

@@ -97,6 +97,12 @@ def test_AC35_7_complete_transcript_emits_full_event_set(
         "user_name": "Luke",
         "persona_given_name": "Aurelia",
         "domain_focus": "Helper for technical research.",
+        # Sub-plan A (two-modes-and-multi-workspace) — fourth
+        # required answer in the canonical question tuple. The
+        # AC35.7 outcome shape (full event set fires) is unchanged;
+        # the answer-event count derives from the tuple length per
+        # owner ruling 2026-04-25 (a).
+        "dev_intent": "yes",
     }
     persist_elicitation_transcript(
         loaded_persona=persona,
@@ -106,7 +112,10 @@ def test_AC35_7_complete_transcript_emits_full_event_set(
     )
     spans = span_exporter_clean.get_finished_spans()
 
-    # Question events: one per ONBOARDING_QUESTIONS entry.
+    # Question events: one per ONBOARDING_QUESTIONS entry. The
+    # canonical tuple now carries four entries (sub-plan A); the
+    # ``>= 3`` lower bound holds and is preserved as the AC35.7
+    # outcome — count not pinned to a literal.
     question_events = _events_named(spans, "pos.persona.onboarding.question")
     assert len(question_events) >= 3
     for ev in question_events:
@@ -115,8 +124,12 @@ def test_AC35_7_complete_transcript_emits_full_event_set(
         assert attrs["pos.persona.onboarding.workspace_slug"] == "my-workspace"
 
     # Answer events: one per non-empty answered required question.
+    # Derive expected count from the tuple so a future fifth
+    # question doesn't silently drift this assertion.
+    from src.onboarding import ONBOARDING_QUESTIONS
+
     answer_events = _events_named(spans, "pos.persona.onboarding.answer")
-    assert len(answer_events) == 3  # all three answers non-empty
+    assert len(answer_events) == len(ONBOARDING_QUESTIONS)
 
     # Writeback event: exactly one, completed=True.
     writeback_events = _events_named(spans, "pos.persona.onboarding.writeback")

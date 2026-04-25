@@ -234,6 +234,55 @@ def onboarding_writeback_event(
         span.add_event("pos.persona.onboarding.writeback", attrs)
 
 
+def onboarding_dev_intent_question_event(
+    *, handle: str, workspace_slug: str | None = None
+) -> None:
+    """One event per dev-intent question dispatched (sub-plan A AC.A.7).
+
+    Distinct from the generic ``onboarding_question_event`` so
+    observability consumers can count dev-intent prompts without
+    pattern-matching the question_id attribute. Fires once per
+    starter session at the moment the dev-intent question is
+    surfaced (currently: alongside the rest of the question batch
+    in ``persist_elicitation_transcript``).
+    """
+    with _tracer().start_as_current_span(
+        "pos.persona.onboarding.dev_intent_question"
+    ) as span:
+        attrs: dict[str, Any] = {
+            "pos.persona.onboarding.handle": handle,
+        }
+        if workspace_slug is not None:
+            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
+        span.add_event(
+            "pos.persona.onboarding.dev_intent_question", attrs
+        )
+
+
+def onboarding_dev_intent_answer_event(
+    *, handle: str, answer: str, workspace_slug: str | None = None
+) -> None:
+    """One event per dev-intent answer recorded (sub-plan A AC.A.7).
+
+    ``answer`` is the normalised contract value (``"yes"`` /
+    ``"no"``) — bounded vocabulary, not free-text user prose, so
+    emitting it satisfies STATE.md rule 4 (the field carries
+    framework-level state, not workspace-supplied content).
+    """
+    with _tracer().start_as_current_span(
+        "pos.persona.onboarding.dev_intent_answer"
+    ) as span:
+        attrs: dict[str, Any] = {
+            "pos.persona.onboarding.handle": handle,
+            "pos.persona.onboarding.dev_intent.answer": answer,
+        }
+        if workspace_slug is not None:
+            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
+        span.add_event(
+            "pos.persona.onboarding.dev_intent_answer", attrs
+        )
+
+
 def onboarding_starter_flag_transition_event(
     *, handle: str, from_value: bool, to_value: bool
 ) -> None:

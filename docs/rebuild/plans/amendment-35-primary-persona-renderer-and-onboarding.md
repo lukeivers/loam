@@ -432,8 +432,10 @@ Body is one sentence the persona's first turn can extend naturally.
 
 ### Commit SHAs
 
-- Amendment commit: _filled in after commit lands_
-- Seal commit: _filled in after seal commit lands_
+- Amendment commit: `5fcf28827686a2517d3f6ded45ec197f16e86750` —
+  `feat(primary-persona): renderer + onboarding + is_starter — amendment #35`
+- Seal commit: `ce07242913808fbfd94f8f25a86a6462cd179ca3` —
+  `chore(seals): renderer-and-onboarding seal — primary-persona at 5fcf288`
 
 ### Dependents cleared to dispatch
 

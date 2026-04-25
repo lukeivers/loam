@@ -46,6 +46,14 @@ This is a draft surface for *every* improvement idea about pos-v2 — Luke's or 
 
 - **AC text precision sweep.** Opportunistic batch of post-seal AC tightenings (similar to AC37.5, AC40.1) — when an AC pins specific vocabulary that turns out to be method-not-objective, tighten the AC. Could batch across multiple sealed amendments in one doc-only sweep.
 
+- **`TRACKER_DB_FILENAME` repeated across three consumers.** The constant `"objective_tracker.sqlite"` lives in `workspace_bootstrap.adapters.tracker_seed`, `primary_persona.tracker_context`, and now `pos_amend.tracker_registration` (post-#16). A fourth consumer would warrant extraction into a shared `pos_paths` (or similar) helper module so the convention is single-sourced. Surfaced by #16 build agent.
+
+- **Pos-amend pokes tracker SQLite directly for `update_source_commits`.** Works against amendment #38's stable schema, but a future tracker amendment changing the `lifted_from` JSON shape would silently break `pos_amend.tracker_registration.update_source_commits` without an obvious test signal in pos-amend. Future safeguard: add a tracker public API like `tracker.rewrite_lifted_from_source_commit(objective_id, sha)` so pos-amend stops touching the SQLite directly. Worth raising when (a) a fourth tracker consumer arrives, OR (b) the next tracker amendment touches `lifted_from`'s shape. Surfaced by #16 build agent.
+
+- **Dispatch-template + Heavy-B-phase-migration could compose** so the dispatch-template engine itself uses the persona-tracker context (per #40) to know which sub-agent shape applies. Stretch — surfaced as broader-applicability of the dispatch-template work; only valuable once both land. Surface for review post-initial-phase.
+
+- **Asymmetric finding from integration test approach itself:** the "fresh-clone first-run with sandbox isolation + Monitors" pattern could become a reusable harness for any future integration test (post-amendment regression, cross-clone sanity, etc.). Currently a one-shot agent; could be extracted to a `tools/integration-test/` script. Worth considering after the current integration test concludes and we know the pattern actually worked.
+
 ---
 
 *New entries appended to bottom; review-and-graduate happens post-initial-phase.*

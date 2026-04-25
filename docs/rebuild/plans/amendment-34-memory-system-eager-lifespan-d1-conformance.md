@@ -382,5 +382,7 @@ change. The idempotency guard mirrors the existing
 
 ### Commit SHAs
 
-- Amendment commit: <filled in seal commit's body>
-- Seal commit: <filled in seal commit's body>
+- Amendment commit: `135398d372bb6398d2d78eec0e14406cc031d18e` —
+  `fix(memory-system): eager lifespan / D1 health-check conformance — amendment #34`
+- Seal commit: `ee52a15a0d3ef115945b00df7509f13a062f020e` —
+  `chore(seals): memory-system-eager-lifespan-d1-conformance seal — memory-system at 135398d`

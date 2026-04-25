@@ -1,9 +1,17 @@
 # Two-modes + multi-workspace — master plan
 
-**Status:** authored 2026-04-25. Research-and-planning only. NO CODE,
-NO COMMITS produced from this artefact. Plan-before-code per dev CDC.
-Plans-only authoring; sub-plans below ladder to specific spec
-objectives or are explicitly framed as dev-discipline (§2.5).
+**Status:** authored 2026-04-25; reduced 2026-04-25 mid-session. Research-
+and-planning only. NO CODE, NO COMMITS produced from this artefact.
+Plan-before-code per dev CDC. Plans-only authoring; sub-plans below
+ladder to specific spec objectives or are explicitly framed as dev-
+discipline (§2.5).
+
+**Programme reduction (2026-04-25 mid-session ruling).** The active
+programme reduces to **A → E → B → F** (four sub-plans). Sub-plans
+**C, D, G** are DEFERRED — see §11.5 below. The deferred work is
+multi-workspace prep that the active programme does not require to
+ship its outcome; it migrates to FUTURE_IDEAS.md (Idea 13's umbrella)
+and reactivates with the multi-workspace cycle.
 
 **Working directory (canonical):** `/Users/lukeivers/ivers-corp-pos-v2/`.
 
@@ -46,40 +54,40 @@ per work item. Each sub-plan ladders its acceptance criteria to a
 specific spec objective (where one applies) or frames itself as
 dev-discipline §2.5 work.
 
-The high-level dependency graph (one-line summary):
+The high-level dependency graph for the **active four-sub-plan programme**
+(post-reduction; one-line summary):
 
-> A (persona-onboarding question) → C (state-file migration) → E
-> (`classify_workspace` replacement); D (per-workspace memory-port
-> auto-allocation) is parallel to A/C/E; B (mode-loading mechanism) +
-> F (auto-load partition) compose on E's signal. Across the programme:
-> A is structurally upstream of E and B/F; C is parallel to A but
-> mutually unblocked once any single sealed-component amendment in the
-> set lands; D is independent.
+> A (persona-onboarding question) → E (`classify_workspace` replacement,
+> with the path-mismatch fix folded in) → B (mode-loading mechanism) +
+> F (auto-load partition). C / D / G are DEFERRED to the multi-workspace
+> cycle (Idea 13 umbrella in FUTURE_IDEAS.md); see §11.5.
 
-The six work items and their sub-plans:
+The four **active** work items and their sub-plans:
 
 | Code | Topic | Sub-plan |
 |------|-------|----------|
 | **A** | Persona-onboarding dev-intent question + workspace-local storage of the answer | `A-onboarding-dev-intent.md` |
 | **B** | Two-mode loading mechanism (NORMAL vs DEV; CLAUDE.md / settings / hook surface) | `B-mode-loading.md` |
-| **C** | Multi-workspace state-file migration: every host-global `~/.pos/` SQLite + YAML moves workspace-local | `C-state-file-migration.md` |
-| **D** | Per-workspace memory-graphiti port auto-allocation (collision-free at scaffold time) | `D-memory-port-auto-allocation.md` |
-| **E** | `classify_workspace` replacement: read the dev-intent answer instead of `VALUE_PROPOSITION.md` presence | `E-classify-workspace-replacement.md` |
+| **E** | `classify_workspace` replacement: read the dev-intent answer instead of `VALUE_PROPOSITION.md` presence (path-mismatch fix folded in — see §11.5) | `E-classify-workspace-replacement.md` |
 | **F** | Dev-mode auto-load partition (precise file/dir/tool list per mode + circular-dependency check) | `F-auto-load-partition.md` |
 
-Recommended landing order (rationale in §6 below):
+The **deferred** work items (sub-plan files retained on disk for design
+reference; reactivate with multi-workspace):
+
+| Code | Topic | Sub-plan | Status |
+|------|-------|----------|--------|
+| **C** | Multi-workspace state-file migration: every host-global `~/.pos/` SQLite + YAML moves workspace-local | `C-state-file-migration.md` | DEFERRED |
+| **D** | Per-workspace memory-graphiti port auto-allocation (collision-free at scaffold time) | `D-memory-port-auto-allocation.md` | DEFERRED |
+| **G** | Shared host-level memory-graphiti instance + workspace-keying via graphiti `group_id` (sub-plan G is a stub captured this session for the future direction) | `G-shared-memory-workspace-keying.md` | DEFERRED |
+
+Recommended landing order for the active programme (rationale in §6 below):
 
 1. **A** lands first (sealed-component amendment to primary-persona;
    establishes the workspace-local signal storage).
-2. **C** lands second (sealed-component amendments touching every
-   component that currently writes to `~/.pos/`; orthogonal to A but
-   easier with A's storage location settled).
-3. **E** lands third (sealed-component amendment to workspace-bootstrap
-   adapters/tracker_seed; reads A's answer; consumes C's workspace-local
-   storage location convention).
-4. **D** can land in parallel with A/C/E (independent surface — memory.yaml
-   port-allocation logic).
-5. **B** + **F** land last (dev-discipline — `tools/`, `CLAUDE.md`, the
+2. **E** lands second (sealed-component amendment to workspace-bootstrap
+   adapters/tracker_seed; reads A's answer; folds in the small path-
+   mismatch fix per §11.5).
+3. **B** + **F** land last (dev-discipline — `tools/`, `CLAUDE.md`, the
    `.claude/settings.json` hook surface). Dev-discipline because no
    spec v1.x objective names "two-mode CLAUDE.md loading" — the loading
    shape composes on Claude-Code's own settings/hook primitives. §2.5
@@ -623,12 +631,18 @@ and the sub-plan code (A/B/C/D/E/F).
 
 ## 10. Pointer to sub-plans
 
+**Active programme (four sub-plans):**
+
 - `A-onboarding-dev-intent.md`
 - `B-mode-loading.md`
+- `E-classify-workspace-replacement.md` (path-mismatch fix folded in per §11.5)
+- `F-auto-load-partition.md`
+
+**Deferred (retained on disk for design reference; reactivate with multi-workspace cycle — see §11.5):**
+
 - `C-state-file-migration.md`
 - `D-memory-port-auto-allocation.md`
-- `E-classify-workspace-replacement.md`
-- `F-auto-load-partition.md`
+- `G-shared-memory-workspace-keying.md` (stub authored 2026-04-25 capturing the shared-memory-instance + workspace-keying direction)
 
 ---
 
@@ -654,12 +668,121 @@ discipline plans (`pos-amend-seal-automation-extension.md`,
 
 ---
 
+## 11.5 Deferred sub-plans (programme reduction — 2026-04-25 mid-session)
+
+**Context.** Mid-session 2026-04-25 the design converged on a smaller
+active programme. The original six sub-plans (A/B/C/D/E/F) were authored
+when multi-workspace concurrency was treated as a v1 requirement. Owner
+ruled mid-session that multi-workspace prep is *deferred* (proper curated
+graduation per the draft workflow); the active programme reduces to
+**A → E → B → F** — the four sub-plans whose outcome is "two modes ship
+in a single distribution and the dev-marker is the user's own statement
+of intent." Multi-workspace state migration, memory-port auto-allocation,
+and shared-memory workspace-keying are captured as deferred sub-plans
+under FUTURE_IDEAS.md Idea 13's umbrella (graduated this session) and
+reactivate with the multi-workspace cycle.
+
+### What deferred and why
+
+- **C — state-file migration.** Owner-revised D-MASTER.2 (the global-
+  vs-workspace partition mirroring `~/.claude/` + `<workspace>/.claude/`)
+  collapsed C's migration burden but C still names a multi-workspace
+  outcome (AC.PROG.1 — two workspaces co-exist on one host without
+  state collision). Without multi-workspace as a v1 requirement, the
+  outcome's load-bearing-ness drops to "good design hygiene" — not a
+  shipping requirement. Sub-plan file kept on disk; design work is
+  reusable when multi-workspace lands.
+- **D — memory-port auto-allocation.** Same logic: collision-free
+  per-workspace port assignment is a multi-workspace property. Single-
+  workspace pos-v2 keeps using the default port from `memory.yaml`
+  (amendment #29's manual-edit shape remains the v1 answer). Sub-plan
+  file kept on disk.
+- **G — shared host-level memory + workspace-keying via `group_id`**
+  (NEW stub authored this session). The design captured: a single host-
+  shared memory-graphiti instance serves multiple workspaces; content
+  is keyed per-workspace by graphiti's `group_id` parameter, with an
+  explicit "global" group for cross-workspace memories (user
+  preferences, identity). Stub captures the direction; full proposal
+  lands when multi-workspace activates.
+
+### Path-mismatch fix folded into E
+
+The `#39 ↔ #40` path-mismatch (tracker DB write at
+`tracker_seed.tracker_db_path_for(pos_root)` vs read at
+`primary_persona.tracker_context.tracker_db_path_for(workspace_root)`)
+is a real latent bug — bites the moment #40's contributor wires to live
+persona registration. Owner-leaned fix direction is **B (#39 writes to
+workspace_root)** consistent with #28's workspace-locality.
+
+The fix is a small additive change to `tracker_seed.py` — change the
+write path argument from `pos_root` to `workspace_root`. Because E
+already touches `tracker_seed.py` (the `classify_workspace` body), the
+fix folds into E without expanding scope: same file, same component,
+same amendment cycle. Keeps E single-component (workspace-bootstrap)
+and avoids a separate amendment dispatch for a one-argument change.
+
+E's sub-plan file is unchanged in the reduction commit; the fold is
+documented here in MASTER.md and surfaces in E's builder-plan at build-
+dispatch time. (If the fold turns out to expand E's AC count or touch
+files outside `tracker_seed.py`, halt-and-surface — that contradicts
+the "small additive" framing.)
+
+### Lazy-projection reframe of sub-plan #17 (`heavy-b-phase-alpha-beta-gamma-migration.md`)
+
+Sub-plan #17 was originally scoped as "canonical-only one-shot data
+migration." Mid-session 2026-04-25 owner ruled the dev objective tree
+should be **lazy-projected**: built when `dev_intent=yes` is signalled
+(per A's contract field) — not eagerly seeded into every clone. The
+reframe lets any dev-intent workspace project the dev tree
+automatically when the user signals dev intent — no manual canonical-
+side step. Sub-plan #17's reframed body lives in its own plan file
+(`docs/rebuild/plans/heavy-b-phase-alpha-beta-gamma-migration.md`); see
+that file for the lazy-trigger framing.
+
+### Active programme dependency graph (post-reduction)
+
+```
+                  ┌────────────────────────────────┐
+                  │  A  persona-onboarding         │
+                  │     dev-intent question +      │
+                  │     workspace-local storage    │
+                  └─────────────┬──────────────────┘
+                                │ supplies the answer-storage location
+                                │ that E reads + B/F gate on
+                                ▼
+                  ┌────────────────────────────────┐
+                  │  E  classify_workspace         │
+                  │     replacement                │
+                  │     (+ path-mismatch fix folded)│
+                  └─────────────┬──────────────────┘
+                                │ supplies the deterministic dev-mode
+                                │ signal B/F gate on
+                                ▼
+        ┌────────────────────┐         ┌────────────────────┐
+        │  B  two-mode       │         │  F  auto-load      │
+        │     loading        │ ◀──────▶│     partition      │
+        │     mechanism      │         │     (declarative)  │
+        └────────────────────┘         └────────────────────┘
+```
+
+(The earlier §5 graph showing C/D as parallel surfaces is preserved
+above for historical context but does not reflect the active programme.)
+
+---
+
 ## 12. Closing
 
 This master plan inherits the locked owner rulings (1–6, recorded
-2026-04-25), surfaces six entangled work items, links to one sub-plan
-per item, names cross-cutting invariants AC.PROG.1–AC.PROG.3, and
-ladders every AC trace to AC.PO.1 / AC.PO.2 via Lens-2. Decisions
+2026-04-25), originally surfaced six entangled work items, and
+post-reduction (2026-04-25 mid-session) drives **four** active sub-
+plans (A → E → B → F) with **three** deferred (C, D, G) carried
+under FUTURE_IDEAS.md Idea 13. Cross-cutting invariants AC.PROG.1–
+AC.PROG.3 are authored against the original six-item programme:
+AC.PROG.1 (two-workspace co-existence) is a deferred-programme
+invariant per §11.5; AC.PROG.2 (dev-only artefacts don't auto-load
+in NORMAL USE) and AC.PROG.3 (`classify_workspace` does not consume
+`VALUE_PROPOSITION.md` presence) remain active and bind A/E/B/F.
+Every AC trace ladders to AC.PO.1 / AC.PO.2 via Lens-2. Decisions
 remaining for owner ruling are explicit in §9 with recommendations.
 Halt triggers are explicit in §6.
 

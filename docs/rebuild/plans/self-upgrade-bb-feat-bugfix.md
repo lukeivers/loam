@@ -571,8 +571,10 @@ ACs' outcome bounds. This section is populated post-build.
 
 ### Commit SHAs
 
-(placeholder; auto-filled by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
-
+- Amendment commit: `4da967edcb3926e5cbb7dfb776fc54aa9609e253` —
+  `feat(self-upgrade): clause-(h) audit + state.yaml + workspace-local audit-path bugfix (amendment #55, AC.HFX.1–AC.HFX.3 + AC.HFX.S)`
+- Seal commit: `670cfab6e68cb029982cf4b1c2fad32eeb1bbf40` —
+  `chore(seals): self-upgrade BB-feat #54 follow-on bugfix — clause-(h) audit + state.yaml + workspace-local audit-path — self-upgrade at 4da967e`
 ### Commit SHAs
 
 (populated by `pos-amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)

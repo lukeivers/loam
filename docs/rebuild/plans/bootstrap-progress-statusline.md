@@ -251,3 +251,10 @@ The build agent halts and signals to the dispatcher if any of the following surf
 - Settings fragment authority: `hands-off-lifecycle/hooks/settings.json.fragment`.
 - Claude Code status-line behavioural research: `/Users/lukeivers/pos3/.scratch/claude-output/claude-code-statusline-research.md`.
 - FUTURE_IDEAS CDCs: `docs/rebuild/FUTURE_IDEAS.md` (research-before-plan, plan-before-code, scope-only-dispatch, amendment-dispatch test-scope).
+
+### Commit SHAs
+
+- Amendment commit: `945b8f53a3ac7202ee3e4f31a75f8b932a38613d` —
+  `feat(hands-off-lifecycle): bootstrap-progress visualization in Claude Code statusLine`
+- Seal commit: `5f235c7defc0a8e40b5d96b0e2013259b3401282` —
+  `chore(seals): bootstrap-progress visualization in Claude Code statusLine — hands-off-lifecycle at 945b8f5`

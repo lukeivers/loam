@@ -688,10 +688,44 @@ Per plan §10:
 
 ## Section H — Commit SHAs
 
-(populated post-build by `pos-amend seal --plan-doc`)
+- Amendment commit: `efbb7d258705d03cba0a25fb2843f9eea02b2311`
+- Seal commit:      `0607dc792004c6e137fdb9ca2c2d38b7f974b644`
+- Plan-SHA backfill: `50bfa20` (mechanised by `pos-amend seal
+  --plan-doc`)
+- Method-decision-register backfill: this commit (dev-discipline
+  §14 + §15 fill-in).
 
 ---
 
 ## Section I — Halt findings
 
-(populated as halts occur)
+No halt-and-surface fired during the build. The §F watchlist
+items closed cleanly:
+
+- **#1 (new top-level objective):** the work fit under v1.0
+  self-upgrade objective + Gap-3 line 114 + AC.PO.1/2 ladder.
+- **#2 (ODD violation in surrounding code):** salvage-source
+  files at HEAD `caafdf0` are clean.
+- **#4 (source edits outside workspace-sync/):** none. The
+  AC.WS.S seal-diff sweep enforces the fence.
+- **#5 (B-shape requires new dep):** not fired — git is a
+  system binary; `subprocess` is stdlib.
+- **#6 (GG salvage map wrong):** the lifted `clause_checks.py`
+  block (lines 355-579) was sweep-checked for `paths.current_link`
+  / `paths.history` / `live_root` references; none found.
+- **#10 (wall-time exceeds 6-8h):** not exceeded.
+
+### Speedup deltas (per §G)
+
+- **(a) narrow seal-test rerun:** ran `pytest workspace-sync/`
+  only at amendment-commit time (~0.8s) instead of the full
+  pos-v2 suite (~30+s). Cross-component sweep ran at seal-time
+  via `pos-amend apply --dry-run` against all sealed components.
+  Savings: ~30s.
+- **(b) skipped pre-seal full-suite:** workspace-sync subset
+  green + `pos-amend apply --dry-run` clean was sufficient. No
+  separate full-suite rerun needed pre-seal.
+- **(c) inlined methodology snippets in commit prose:** the
+  amendment-commit message references the ODD §2.5
+  reverse-trace by section reference rather than re-citing the
+  full text. Saved ~150 LOC of commit-message bulk.

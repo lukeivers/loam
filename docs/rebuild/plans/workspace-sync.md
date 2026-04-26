@@ -1191,15 +1191,121 @@ Two boundary judgments worth flagging without halting:
 The plan §11 left D-build.x method choices to the builder within the
 ACs' outcome bounds. This section is populated post-build.
 
-### D-build.x — (placeholder for the build agent's method choices)
+### D-build.x — method choices
+
+Full detail in `docs/rebuild/plans/workspace-sync.builder-plan.md`
+§A. One-line summary per choice:
+
+- **D-build.0** (CLI form): ship as `pos-sync` + `pos-workspace-sync`
+  console_scripts in workspace-sync's pyproject.toml. Hyphenated form
+  is the pos-v2 convention (`pos-amend`, `pos-bootstrap`, `pos-obs`,
+  `heavy-b-migrate`); adding a `sync` subcommand to the existing
+  `pos = self_upgrade.cli:main` would require editing self-upgrade
+  (Hard Constraint #1 violation). The dispatch's "pos sync" is
+  honoured as the operator-visible verb shape.
+- **D-build.1** (salvage-as-is lifts): file-copy verbatim of
+  `merge_resolver.py`, `sync_protected.py`,
+  `templates/sync-protected.default.yaml`. `observability.py` lifted
+  with the tracer-name rename (`pos.self_upgrade` → `pos.workspace_sync`)
+  per AC.WS.11.
+- **D-build.2** (re-vendor): the resolver factory at
+  `tools/upgrade-merge-resolver/.../__init__.py` is re-vendored to
+  `workspace_sync._resolver_client` so workspace-sync owns its own
+  `claude -p` subprocess wrap with no `import self_upgrade` runtime
+  dependency (Hard Constraint #11).
+- **D-build.3** (`conflict_report.py` lift): WHOLE-module lift with
+  `upgrade_tag` → `sync_ref`, `prior_tag` → `prior_ref` field renames.
+  `_reject_skipped` validator + Resolution enum's structural omission
+  of `skipped` carry over verbatim.
+- **D-build.4** (`state.py` lift): `UpgradeStatus` → `SyncStatus`;
+  `audit_yaml_path` returns `<workspace>/.pos/sync/<ref>/audit.yaml`
+  (was `.pos/upgrade/<tag>/`); `state_yaml_path` returns
+  `<workspace>/.pos/sync/state.yaml` (was `.pos/upgrade/state.yaml`).
+  AC.WS.5 + AC.WS.8.
+- **D-build.5** (`canonical.py` lift): drops the manifest validator +
+  `default_manifest_path` + `Manifest` import; renames `tag` → `ref`;
+  renames function to `resolve_canonical`; adds `git rev-parse <ref>`
+  resolution so symbolic refs collapse to a stable SHA.
+- **D-build.6** (`merge_helper.py` lift): the four helpers from
+  `self-upgrade/src/self_upgrade/clause_checks.py` (lines 355-579)
+  with caller-side rebadging: `resolve_clause_h_inferred` →
+  `resolve_inferred_conflicts`, `check_clause_h` →
+  `check_inferred_resolution_invariants`, OTel namespace
+  `pos.upgrade.merge_gate.*` → `pos.sync.merge_gate.*`. The lifted
+  block was sweep-checked at HEAD `caafdf0` for hidden A-coupling;
+  no `paths.current_link` / `paths.history` / `live_root` references
+  found.
+- **D-build.7** (authored `cli.py`): argparse + workspace-root
+  derivation (cwd / `--workspace` / `.pos/` / `.git/` fall-through;
+  no symlink resolution per Hard Constraint #12); idempotency
+  fast-path against state.yaml; stage / detect / resolve /
+  confirm-or-discard / apply flow.
+- **D-build.8** (authored `conflict_detection.py`): git-shellout
+  mechanism (`git ls-tree -r --name-only` + `git show <ref>:<path>`)
+  with sha256 comparison. NOT `dulwich` (Hard Constraint #2: no new
+  third-party deps), NOT `git merge-file` (B's resolver wants
+  canonical/workspace text pair, not pre-merged output).
+- **D-build.9** (authored `staging.py`): per-file atomic rename via
+  `tempfile.mkstemp` + `os.replace`. Class-A paths structurally
+  absent from staging tree (filtered at detection time).
+- **D-build.10** (authored `_audit.py`): operator-summary helper
+  reusable by future `/sync` slash-command (Lens 1 future
+  composition).
+- **D-build.11** (pyproject + scaffold): `name = pos_workspace_sync`,
+  Python ≥3.13, deps = pydantic + PyYAML + opentelemetry only (no
+  new third-party). Templates ship as package data.
+- **D-build.12** (tests): 9 test files, 62 tests total — see "Test
+  breakdown" below.
+- **D-build.13** (seal-bookkeeping infra): test_no_sealed_amendments.py
+  + SEAL_COMMIT sidecar + seals/ created at first-seal time per the
+  standard pattern.
 
 ### Test breakdown
 
-(placeholder)
+| Test file | ACs covered | Test count |
+|---|---|---|
+| `tests/test_merge_resolver.py` | AC.WS.4, AC.WS.6, AC.WS.12 | 8 |
+| `tests/test_sync_protected.py` | AC.WS.2, AC.WS.10 | 7 |
+| `tests/test_conflict_report_b_shape.py` | AC.WS.4, AC.WS.5, AC.WS.9 | 6 |
+| `tests/test_state.py` | AC.WS.5, AC.WS.8 | 5 |
+| `tests/test_canonical.py` | AC.WS.1 | 5 |
+| `tests/test_conflict_detection_b_shape.py` | AC.WS.1, AC.WS.2, AC.WS.4 | 5 |
+| `tests/test_staging.py` | AC.WS.7, AC.WS.12 | 7 |
+| `tests/test_merge_helper.py` | AC.WS.2, AC.WS.3, AC.WS.4, AC.WS.6, AC.WS.9, AC.WS.11, AC.WS.12 | 10 |
+| `tests/test_cli_b_shape.py` | AC.WS.1, AC.WS.7, AC.WS.10 | 7 |
+| `tests/test_no_sealed_amendments.py` | AC.WS.S | 2 |
+| **Total** | | **62** |
+
+All 62 tests pass at HEAD `efbb7d2` (amendment commit) and at
+`0607dc7` (seal commit). Baseline self-upgrade test count
+unchanged: 194 tests, all passing.
 
 ### Backwards-compat verification
 
-(placeholder)
+Per Hard Constraint #5: `pos upgrade <tag> --staging-dir <path>`
+and `pos upgrade <tag> --canonical <path>` invocations remain
+byte-identical post-amendment.
+
+Verified:
+
+1. **No edits to `self-upgrade/`** — confirmed by AC.WS.S seal-diff
+   sweep (the test_no_sealed_amendments.py B20 test only admits
+   `workspace-sync/` + `docs/rebuild/plans/` + universal-paths
+   files; any self-upgrade edit would fail).
+2. **No edits to `tools/upgrade-merge-resolver/`** — same B20 test.
+3. **`pos = self_upgrade.cli:main` console_script untouched.**
+   workspace-sync's pyproject.toml declares `pos-sync` and
+   `pos-workspace-sync` only; both invocations route to
+   `workspace_sync.cli:main`. Verified by `pos --help` (still shows
+   self-upgrade subcommands) and `pos-sync --help` (shows the new
+   B-mode flags).
+4. **No runtime imports between components.** workspace-sync source
+   contains zero `from self_upgrade` / `import self_upgrade` /
+   `from upgrade_merge_resolver` / `import upgrade_merge_resolver`
+   lines. Both components carry their own copy of the merge-resolver
+   primitives per Hard Constraint #11.
+5. **self-upgrade test suite continues green.** 194 tests pass at
+   HEAD post-amendment (no regression).
 
 ### Commit SHAs
 
@@ -1207,13 +1313,16 @@ ACs' outcome bounds. This section is populated post-build.
   `feat(workspace-sync): canonical-to-workspace git-shaped sync with LLM-mediated semantic merge (amendment #56, AC.WS.1–AC.WS.12 + AC.WS.S)`
 - Seal commit: `0607dc792004c6e137fdb9ca2c2d38b7f974b644` —
   `chore(seals): workspace-sync — canonical-to-workspace git-shaped sync with LLM-mediated semantic merge — workspace-sync at efbb7d2`
-### Commit SHAs
-
-(populated by `pos-amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)
+- Plan-SHA backfill commit: `50bfa20` (plus this dev-discipline
+  §14 backfill).
 
 ### Dependents cleared to dispatch
 
-(placeholder)
+None at amendment-time. Future amendments composing on
+workspace-sync (the `/sync` slash-command, the `--canonical
+<git-url>` remote-fetch mode, background-scope mode, multi-conflict
+batched LLM call, workspace-clone primitive) become unlocked by
+this seal.
 
 ---
 

@@ -1203,8 +1203,10 @@ ACs' outcome bounds. This section is populated post-build.
 
 ### Commit SHAs
 
-(placeholder; auto-filled by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
-
+- Amendment commit: `efbb7d258705d03cba0a25fb2843f9eea02b2311` —
+  `feat(workspace-sync): canonical-to-workspace git-shaped sync with LLM-mediated semantic merge (amendment #56, AC.WS.1–AC.WS.12 + AC.WS.S)`
+- Seal commit: `0607dc792004c6e137fdb9ca2c2d38b7f974b644` —
+  `chore(seals): workspace-sync — canonical-to-workspace git-shaped sync with LLM-mediated semantic merge — workspace-sync at efbb7d2`
 ### Commit SHAs
 
 (populated by `pos-amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)

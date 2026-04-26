@@ -255,4 +255,23 @@ Neither blocks A1 dispatch. Both can be answered in the builder plan without a r
 
 ---
 
+## 14. Method-decision register (post-build, builder-backfilled)
+
+Method-level decisions made during the build land here at
+seal time per `pos-amend seal --plan-doc` convention. Empty
+at plan-author time.
+
+### Commit SHAs
+
+- Amendment commit: `b3218b4309bc755c91366e4203f55c38a8f8e0d6` —
+  `feat(structural-enforcement-a1): substrate (workspace-mode + sentinels + objective-manifest table)`
+- Apply commit: `c41da3ad8593cc888fa546f49401523256926913` —
+  `chore(objective-tracker, hands-off-lifecycle): advance BASELINE + SEAL_COMMIT for structural-enforcement-a1 window`
+- Corrective commit: `97f78290f6a810957dc0bd0c8a6a1d4b96524f65` —
+  `chore(hands-off-lifecycle): repair stale AC37.6 sentinel-prose test (method-coupling cleanup)`
+- Seal commit: `d4dcfa91764a1a270aec7a91c3c94e432bc71571` —
+  `chore(seals): structural-enforcement A1 substrate (workspace-mode + sentinels + objective-manifest table) — objective-tracker+hands-off-lifecycle at 97f7829`
+
+---
+
 *End of plan-doc. Builder plan + manifest authored after owner approval.*

@@ -30,6 +30,7 @@ from .conflict_report import (
     ConflictEntry,
     ConflictReport,
     Resolution,
+    save_conflict_report,
 )
 from .manifest import ChangeKind, Manifest, verify_file_against
 from .merge_resolver import (
@@ -40,6 +41,13 @@ from .merge_resolver import (
 )
 from .observability import span as otel_span
 from .paths import Paths
+from .state import (
+    StateRecord,
+    UpgradeStatus,
+    audit_yaml_path,
+    make_state_record,
+    save_state,
+)
 from .sync_protected import FileClass, SyncProtected
 
 
@@ -395,9 +403,11 @@ def resolve_clause_h_inferred(
     Raises:
         BudgetExhausted: cumulative resolver budget hit; halt-and-
             resume per AC.H.6. ``report`` is mutated up to the halt
-            point (caller persists it as the audit).
+            point and the audit + state are persisted before the
+            exception propagates (per AC.HFX.1 + AC.HFX.2).
         ResolverFailure: LLM call failed for any conflict. Fail-closed
-            per AC.H.12. ``report`` is mutated up to the failure point.
+            per AC.H.12. ``report`` is mutated up to the failure
+            point; audit + state persisted before propagation.
     """
     resolved_count = 0
     deferred_count = 0
@@ -527,6 +537,44 @@ def resolve_clause_h_inferred(
         with otel_span(
             "pos.upgrade.merge_gate.summary", summary_attrs
         ):
+            pass
+
+        # AC.HFX.1 + AC.HFX.2 + AC.HFX.3: every clause-(h) execution
+        # leaves both the workspace-local audit YAML and the state
+        # YAML behind, regardless of clean-pass / BudgetExhausted /
+        # ResolverFailure terminus. The writes happen after the
+        # OTel summary span so observability records the run-level
+        # outcome before disk-persistence.
+        try:
+            audit_target = audit_yaml_path(workspace_root, report.upgrade_tag)
+            save_conflict_report(report, audit_target)
+
+            if halt_reason is not None:
+                status = UpgradeStatus.FAILURE
+            elif report.has_pending() or deferred_count > 0:
+                status = UpgradeStatus.PARTIAL
+            else:
+                status = UpgradeStatus.SUCCESS
+
+            state = make_state_record(
+                upgrade_tag=report.upgrade_tag,
+                workspace_root=workspace_root,
+                total_conflicts=len(report.conflicts),
+                resolved_count=resolved_count,
+                deferred_count=deferred_count,
+                cumulative_tokens_used=resolver.cumulative_used,
+                status=status,
+                halt_reason=halt_reason,
+            )
+            save_state(state, workspace_root)
+        except Exception:
+            # Persistence failure must not mask the in-flight
+            # BudgetExhausted / ResolverFailure exception that the
+            # outer try-block is propagating. We swallow disk-write
+            # errors in the finally so callers see the clause-(h)
+            # halt reason, not the persistence error. (Callers can
+            # still spot the missing artefact at clean-pass time;
+            # in practice tmpdir + ~/.pos targets are writable.)
             pass
 
 

@@ -216,10 +216,9 @@ def test_cli_canonical_pending_writes_audit_yaml(
     audit shape + Class-A file is byte-identical pre-/post- the
     invocation.
 
-    NOTE: AS-BUILT behavior pinned. The plan §2 names
-    `<workspace>/.pos/upgrade/<tag>/audit.yaml` but the actual write
-    target is `~/.pos/framework/history/<tag>-conflicts.yaml`. This is
-    the documented divergence in the test-plan halt-and-surface block.
+    NOTE: amendment #55 (BB-feat bugfix) closes the AC.H.5 path
+    divergence — when invoked via --canonical, the audit lands at
+    `<workspace>/.pos/upgrade/<tag>/audit.yaml` per plan §2.
     """
     pos_base = tmp_path / "pos-base"
     workspace_canonical = tmp_path / "canonical"
@@ -298,8 +297,14 @@ def test_cli_canonical_pending_writes_audit_yaml(
     captured = capsys.readouterr()
     # Pending conflict → rc=3, audit written.
     assert rc == 3, captured.out + captured.err
-    audit_path = paths.conflicts_yaml(tag)
+    # AC.HFX.3: workspace-local audit path under --canonical.
+    audit_path = prior / ".pos" / "upgrade" / tag / "audit.yaml"
     assert audit_path.exists(), f"audit YAML not written at {audit_path}"
+    # Legacy global path is NOT used in --canonical mode.
+    legacy_path = paths.conflicts_yaml(tag)
+    assert not legacy_path.exists(), (
+        f"unexpected legacy audit YAML at {legacy_path} under --canonical mode"
+    )
 
     audit = load_conflict_report(audit_path)
     assert audit.upgrade_tag == tag
@@ -678,7 +683,8 @@ def test_cli_canonical_without_merge_resolver_module_skips_clause_h(
         ]
     )
     assert rc == 3  # pending conflict
-    audit_path = paths.conflicts_yaml("pos-v2-v0.2.0")
+    # AC.HFX.3: workspace-local audit path under --canonical.
+    audit_path = prior / ".pos" / "upgrade" / "pos-v2-v0.2.0" / "audit.yaml"
     assert audit_path.exists()
     audit = load_conflict_report(audit_path)
     # Without --merge-resolver-module, clause-h skipped → all PENDING.
@@ -725,18 +731,15 @@ def test_cli_canonical_seeds_default_sync_protected_on_first_run(
 def test_halt_surface_audit_not_written_on_clean_clause_h_pass(
     tmp_path: Path,
 ) -> None:
-    """HALT-AND-SURFACE: AC.H.5 says EVERY clause-(h) upgrade writes
-    audit.yaml. The cli.py `cmd_upgrade` only calls
-    `save_conflict_report` on BudgetExhausted, ResolverFailure, or
-    `report.has_pending()`. A successful clause-(h) pass that resolves
-    every entry produces NO on-disk audit at the conflicts path.
+    """AC.HFX.1 (closes #54 AC.H.5 success-path gap): every clause-(h)
+    execution writes the workspace-local audit YAML, including the
+    clean-pass terminus where every conflict was resolved.
 
-    This test pins the AS-BUILT behavior so a follow-on amendment that
-    fixes the gap will trigger this test to start failing — the test
-    asserts the bug as specified, not the spec'd behavior.
-
-    Documented in `docs/rebuild/plans/research/bb-feat-synthetic-validation-plan.md`
-    as halt-and-surface for owner ruling.
+    Pre-amendment-#55 behaviour pinned by this test as a halt-surface
+    marker (commit `90246dc`): the helper did not write the audit on
+    success. Amendment #55 lands the in-helper finally-block writer
+    so audit.yaml exists after every helper invocation; this test is
+    flipped to assert the spec'd behaviour.
     """
     canonical = tmp_path / "canonical"
     canonical.mkdir()
@@ -784,29 +787,38 @@ def test_halt_surface_audit_not_written_on_clean_clause_h_pass(
         resolver=resolver,
     )
 
-    # All entries resolved.
+    # All entries resolved in-memory.
     assert report.has_pending() is False
     e = report.conflicts[0]
     assert e.resolution is Resolution.INFERRED_ACCEPT_CANONICAL
-
-    # AS-BUILT: helper does not write to disk. Caller (cli.py) does.
-    # The CLI's branch that writes save_conflict_report is gated by
-    # `report.has_pending()` or BudgetExhausted/ResolverFailure — none
-    # of which fire on a clean pass. So this test simply confirms the
-    # in-memory mutation succeeded; the on-disk audit is the gap.
     assert e.confidence == 0.91
     assert e.rationale == "superseded"
 
+    # AC.HFX.1 + AC.HFX.3: audit YAML exists at the workspace-local
+    # path AFTER the helper's clean-pass terminus.
+    audit_path = (
+        workspace / ".pos" / "upgrade" / "pos-v2-v0.2.0" / "audit.yaml"
+    )
+    assert audit_path.exists(), (
+        f"audit YAML not written at {audit_path} on clean clause-(h) pass"
+    )
+    persisted = load_conflict_report(audit_path)
+    assert persisted.upgrade_tag == "pos-v2-v0.2.0"
+    assert len(persisted.conflicts) == 1
+    persisted_e = persisted.conflicts[0]
+    assert persisted_e.resolution is Resolution.INFERRED_ACCEPT_CANONICAL
+    assert persisted_e.confidence == 0.91
+    assert persisted_e.rationale == "superseded"
+
 
 def test_halt_surface_state_yaml_not_implemented(tmp_path: Path) -> None:
-    """HALT-AND-SURFACE: AC.H.8 specifies state recorded at
-    `<workspace>/.pos/upgrade/state.yaml`. No code path in
-    `self-upgrade/src/` writes such a file.
+    """AC.HFX.2 (closes #54 AC.H.8 idempotency gap): every clause-(h)
+    execution writes `<workspace>/.pos/upgrade/state.yaml`.
 
-    This test pins the absence: after an apparent successful clause-h
-    pass via the helper, no state.yaml exists in the workspace's .pos.
-    A follow-on amendment that adds state.yaml writing will flip this
-    assertion (test inverts the spec to mark current divergence).
+    Pre-amendment-#55 behaviour pinned by this test as a halt-surface
+    marker (commit `90246dc`): no code path wrote state.yaml.
+    Amendment #55 lands the helper-side writer; this test is flipped
+    to assert the spec'd behaviour.
     """
     workspace = tmp_path / "workspace"
     workspace.mkdir()
@@ -854,8 +866,138 @@ def test_halt_surface_state_yaml_not_implemented(tmp_path: Path) -> None:
     )
 
     state_path = workspace / ".pos" / "upgrade" / "state.yaml"
-    # AS-BUILT: state.yaml is NOT written. This test pins the gap.
-    assert not state_path.exists(), (
-        "If this test fails: state.yaml writing has been added — "
-        "remove this halt-surface test and update AC.H.8 verification."
+    # AC.HFX.2: state.yaml exists + Pydantic-loadable + status=success.
+    assert state_path.exists(), (
+        f"state.yaml not written at {state_path} after clause-(h) pass"
+    )
+
+    from self_upgrade.state import StateRecord, UpgradeStatus
+
+    raw = yaml.safe_load(state_path.read_text())
+    record = StateRecord.model_validate(raw)
+    assert record.upgrade_tag == "pos-v2-v0.2.0"
+    assert record.status is UpgradeStatus.SUCCESS
+    assert record.total_conflicts == 1
+    assert record.resolved_count == 1
+    assert record.deferred_count == 0
+    assert record.cumulative_tokens_used == 100
+    assert record.halt_reason is None
+    # audit_path points at the sibling workspace-local audit YAML.
+    assert record.audit_path.endswith(
+        "/.pos/upgrade/pos-v2-v0.2.0/audit.yaml"
+    )
+    assert Path(record.audit_path).exists()
+
+
+def test_cli_auto_discovers_prior_state_yaml_on_canonical_rerun(
+    tmp_path: Path, capsys
+) -> None:
+    """AC.HFX.2 auto-discovery: re-running `pos upgrade --canonical`
+    against a workspace with a prior state.yaml resumes from the
+    prior audit without operator-supplied --conflicts-from.
+
+    Pre-amendment-#55, idempotency required passing `--conflicts-from
+    <prior-yaml>` by hand. This test exercises the auto-discovery
+    branch added in `cmd_upgrade` (load prior state.yaml; if it
+    matches the current tag, load the prior audit as the starting
+    report).
+    """
+    pos_base = tmp_path / "pos-base"
+    canonical = tmp_path / "canonical"
+    _make_canonical(canonical, tag="pos-v2-v0.2.0")
+    (canonical / "framework").mkdir()
+    canonical_content = b"# upstream\n"
+    (canonical / "framework" / "a.py").write_bytes(canonical_content)
+    manifest_path = (
+        canonical / "self-upgrade" / "manifests" / "pos-v2-v0.2.0.yaml"
+    )
+    manifest_path.write_text(
+        yaml.safe_dump(
+            {
+                "release_tag": "pos-v2-v0.2.0",
+                "commit_sha": "abc1234",
+                "files": [
+                    {
+                        "path": "framework/a.py",
+                        "expected_pre_sha": None,
+                        "expected_post_sha": _sha(canonical_content),
+                        "change_kind": "new",
+                    }
+                ],
+            }
+        )
+    )
+    paths = Paths(pos_base)
+    prior = paths.release_dir("pos-v2-v0.1.0")
+    prior.mkdir(parents=True)
+    (prior / "framework").mkdir()
+    (prior / "framework" / "a.py").write_bytes(b"# workspace edit\n")
+    paths.current_link.parent.mkdir(parents=True, exist_ok=True)
+    if paths.current_link.exists() or paths.current_link.is_symlink():
+        paths.current_link.unlink()
+    os.symlink(str(prior), str(paths.current_link))
+
+    # Seed a prior state.yaml + audit.yaml mimicking a prior
+    # successful clause-(h) run that resolved framework/a.py
+    # via INFERRED_ACCEPT_CANONICAL.
+    audit_dir = prior / ".pos" / "upgrade" / "pos-v2-v0.2.0"
+    audit_dir.mkdir(parents=True)
+    audit_target = audit_dir / "audit.yaml"
+    seeded = ConflictReport(
+        upgrade_tag="pos-v2-v0.2.0",
+        detected_at="2026-04-26T00:00:00+00:00",
+        conflicts=[
+            ConflictEntry(
+                path="framework/a.py",
+                prior_release_sha256="a" * 64,
+                installed_sha256="b" * 64,
+                new_release_sha256="c" * 64,
+                change_kind=ConflictChangeKind.UPSTREAM_MODIFIED_AND_LOCAL_MODIFIED,
+                resolution=Resolution.INFERRED_ACCEPT_CANONICAL,
+                rationale="seeded from prior run",
+                confidence=0.95,
+            )
+        ],
+    )
+    save_conflict_report(seeded, audit_target)
+
+    from self_upgrade.state import (
+        StateRecord,
+        UpgradeStatus,
+        save_state,
+    )
+
+    save_state(
+        StateRecord(
+            upgrade_tag="pos-v2-v0.2.0",
+            timestamp="2026-04-26T01:00:00+00:00",
+            audit_path=str(audit_target.resolve()),
+            total_conflicts=1,
+            resolved_count=1,
+            deferred_count=0,
+            cumulative_tokens_used=200,
+            status=UpgradeStatus.SUCCESS,
+        ),
+        prior,
+    )
+
+    # Re-invoke the CLI WITHOUT --conflicts-from. The auto-discovery
+    # branch loads the prior audit as the starting report; the
+    # already-resolved entry stays non-PENDING; rc != 3 (no pending
+    # block).
+    rc = main(
+        [
+            "--pos-base-dir", str(pos_base),
+            "upgrade", "pos-v2-v0.2.0",
+            "--canonical", str(canonical),
+            "--prior-tag", "pos-v2-v0.1.0",
+        ]
+    )
+    captured = capsys.readouterr()
+    # rc == 2 (no --adapters-module) is acceptable here — the
+    # important assertion is that the pending-block (rc=3) is NOT
+    # entered, because the prior audit pre-resolved the conflict.
+    assert rc != 3, (
+        f"auto-discovery did not resume from prior state.yaml "
+        f"(rc={rc}): {captured.out}{captured.err}"
     )

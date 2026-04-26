@@ -57,6 +57,7 @@ from .notification import (
     wait_for_confirmation,
 )
 from .paths import Paths
+from .state import audit_yaml_path, load_state
 from .sync_protected import (
     SyncProtected,
     load_sync_protected,
@@ -185,9 +186,34 @@ def cmd_upgrade(args: argparse.Namespace) -> int:
         manifest, live_root, prior_tag=args.prior_tag
     )
 
-    conflicts_yaml = paths.conflicts_yaml(manifest.release_tag)
+    # AC.HFX.3: audit lands at the workspace-local path
+    # (`<workspace>/.pos/upgrade/<tag>/audit.yaml`) when invoked
+    # via --canonical (clause-(h)-eligible mode); legacy
+    # --staging-dir continues writing at the global
+    # `~/.pos/framework/history/<tag>-conflicts.yaml` per Hard
+    # Constraint 5 backward-compat.
+    if canonical_resolution is not None:
+        conflicts_yaml = audit_yaml_path(live_root, manifest.release_tag)
+    else:
+        conflicts_yaml = paths.conflicts_yaml(manifest.release_tag)
+
+    # AC.HFX.2 auto-discovery: when --conflicts-from is not
+    # supplied, look for a prior state.yaml at the workspace's
+    # `.pos/upgrade/state.yaml`. If the prior state matches the
+    # current tag and points at an existing audit.yaml, load that
+    # audit as the starting report. The clause-(h) helper's
+    # already-non-PENDING-skip branch makes the resolver call-count
+    # zero on the second invocation.
     if args.conflicts_from and Path(args.conflicts_from).exists():
         report = load_conflict_report(args.conflicts_from)
+    elif canonical_resolution is not None:
+        prior = load_state(live_root)
+        if (
+            prior is not None
+            and prior.upgrade_tag == manifest.release_tag
+            and Path(prior.audit_path).exists()
+        ):
+            report = load_conflict_report(prior.audit_path)
 
     # Clause-(h) pre-stage hook — runs ONLY when --canonical mode is
     # active and an LLM merge resolver has been wired by the caller.

@@ -88,6 +88,15 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
         # relaxation — one workspace-bootstrap test edit + the
         # SEAL_COMMIT sidecar bump it carries).
         "workspace-bootstrap/tests/",
+        # Cross-component partner admission (amendment #52 R1 ruling
+        # — A8 dispatch-wrapper widens fence to orchestrator/ for the
+        # new activate_scope_with_spec + record_dispatch_close IPC
+        # methods that the persona-side wrapper consumes; seal-diff
+        # window admits orchestrator/src/ + orchestrator/tests/ +
+        # orchestrator/pyproject.toml under this allowed_prefixes
+        # tuple, matching the manifest's component list).
+        "orchestrator/src/",
+        "orchestrator/tests/",
     )
     allowed_files: set[str] = {
         "primary-persona/pyproject.toml",

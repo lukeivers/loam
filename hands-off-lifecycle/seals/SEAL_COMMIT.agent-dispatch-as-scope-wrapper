@@ -1,0 +1,112 @@
+# Amendment #52 — primary-persona Agent-dispatch-as-scope
+#                  wrapper (A8) + orchestrator
+#                  activate_scope_with_spec IPC
+
+2026-04-26. Closes the audit's "highest-leverage move" headline
+(`docs/rebuild/plans/research/harness-usage-audit-2026-04-26.md`
+§11): every persona-issued Agent dispatch now opens a
+`ScopeSpec` over IPC and exercises the four-gate chain
+(safety / reversibility / cost / orchestrator). Prior to this
+amendment, exactly one production code path constructed a
+`ScopeSpec` (`self-correction/src/spec_builder.py`); every
+Agent dispatch ran outside `activate_scope` and outside the
+wrap chain — cost-governance ledger empty, 80%-throttling
+unreachable, `cost.status` IPC zero callers.
+
+R1 ruling (locked by Luke 2026-04-26 — same pattern as the X
+D5 ruling): the original plan §3 fence pinned to primary-
+persona/ only was structurally incomplete. Empirical
+verification (halt-surface report at
+`.scratch/claude-output/A8-halt-surface-2026-04-26.md`) showed
+`activate_scope` IPC takes only ids and the production
+`spec_resolver` defaults to None for any scope not constructed
+in-process by the orchestrator runtime — so the cost-gov
+wrap's reservation step silently skips. Fence widened to
+primary-persona/ + orchestrator/.
+
+Surface added (primary-persona):
+
+  - `primary-persona/src/dispatch_wrapper.py` (new) — D3.
+    Exposes `dispatch_with_scope(...)` (single persona-callable
+    surface per AC.A8.9) and helpers `_build_scope_spec` /
+    `_infer_budget_from_duration` (D4 inline duration-rubric
+    constant). Per-dispatch `IPCClient` open-and-close (D9).
+    Fail-soft fallback when orchestrator unreachable
+    (D1: NDJSON diagnostic to
+    `<workspace>/.pos/dispatch-wrapper.log`, then proceed
+    unwrapped — AC.A8.6). Default reversibility class
+    compensatable (D2). Objective-id ambient-fallback to the
+    amendment #39 tracker seed when caller omits (D5).
+    Money-axis budget omitted by default (D6: time + tokens
+    only; ledger accepts None money). Returns structured
+    refusal as value, not exception (AC.A8.7).
+  - `primary-persona/src/__init__.py` — re-exports
+    `dispatch_with_scope`.
+
+Surface added (orchestrator):
+
+  - `orchestrator/src/orchestrator.py` —
+    `activate_scope_with_spec(scope_id, objective_id,
+    spec_payload)` Python surface (AC.A8.A1). Decodes spec
+    via Pydantic, calls
+    `scope_runtime.create(spec, scope_id=...)` in-process so
+    the in-memory CostLedger subscriber sees the
+    `ScopeCreated` event, then invokes the standard
+    `activate_scope` path. IPC handler registered alongside
+    the existing `activate_scope` (AC.A8.A2 unchanged).
+    Includes a channel-registry hook so the workspace-bootstrap
+    cost-governance adapter's `spec_resolver(scope_id)` finds
+    the spec via the in-process create() path's projection.
+  - Existing `activate_scope` IPC + Python surface unchanged
+    per AC.A8.A2; `test_d5_bind_scope.py` stays green.
+
+Behaviour:
+
+  - The persona's `dispatch_with_scope(...)` opens a fresh
+    `IPCClient`, builds a `ScopeSpec` from the dispatch shape,
+    calls `activate_scope_with_spec` over IPC, awaits the
+    gate-chain verdict. On approval, runs the underlying
+    `Agent` tool and emits `BudgetDebited` events recording
+    the agent-reported `total_tokens` post-dispatch
+    (AC.A8.4). On dispatch close, transitions the scope to
+    `completed | failed | cancelled` (AC.A8.5). On gate-chain
+    refusal, returns a structured refusal value with code +
+    rejecting gate + reason (AC.A8.7) without invoking the
+    underlying `Agent`.
+  - Retries open distinct scopes; cost ledger does not
+    double-count (AC.A8.8).
+  - Orchestrator unreachable → NDJSON diagnostic +
+    unwrapped fallback dispatch (AC.A8.6).
+
+AC surface (AC.A8.1 – AC.A8.S + AC.A8.A1 / AC.A8.A2 /
+AC.A8.A3) —
+outcome-shaped per locked plan §5. Test files mirror the
+one-file-per-AC convention from amendments #46 / #48 / #50.
+
+Method-level decisions D1–D10 LOCKED in plan §6. D10 records
+the R1 ruling re-extension per ODD §4.
+
+BASELINE 5ad5f68 (pre-amendment tip — HEAD at dispatch).
+Both components' BASELINEs advance via `pos-amend apply` to
+the amendment commit's HEAD~1; SEAL_COMMIT sidecars land at
+the amendment commit on the empty-diff window and advance
+to the seal SHA via `pos-amend seal`.
+
+Out of scope (locked plan §9, named explicitly):
+
+  - Persona-prompt content authoring (the §"Harness surfaces
+    I draw from" block — separate amendment per D8).
+  - Money-axis budget inference (D6 — money axis None by
+    default; per-model rate-table is a future amendment).
+  - Awareness-block contributor for `cost.status`.
+  - Self-correction wiring of dispatch failures (audit A9).
+  - Path-choice ranking (`reversibility-primitive`
+    `rank_alternatives` consumer — audit A7).
+  - Background-task / scheduled-routine wrapping.
+
+With this amendment, persona-issued Agent dispatches are
+first-class scopes participating in the four-gate chain.
+The cost ledger fills; the 80% throttling pathway is
+reachable on non-correction work; the harness's structural-
+governance toolkit is productive on the dominant traffic
+shape.

@@ -112,6 +112,14 @@ class FirstRunState:
     a state file being moved out from under a workspace: the
     dispatcher refuses a state whose ``workspace_root`` does not
     match the current ``pos_v2_root``, treating it as absent.
+
+    ``progress_pct`` (added amendment #49) is an additive 0-100
+    integer the worker writes at every recognised ``_advance_state``
+    call from a static phase->pct map. The status-line renderer
+    consumes it as one of the inputs to AC.SL.1's plain-English
+    progress line. Backwards-compat: a pre-amendment state file
+    read from disk simply parses the field as 0 (the default). Per
+    locked plan D1 (a) ruling, 2026-04-26.
     """
 
     status: str = "starting"
@@ -133,6 +141,13 @@ class FirstRunState:
     # by the dispatcher, matching the fail-closed direction in the
     # amendment-#28 plan (constraint §2).
     workspace_root: str = ""
+    # Per-phase progress percentage (0-100). Additive amendment #49
+    # field; defaulted to 0 for backwards compatibility with state
+    # files written before the amendment landed. The worker writes
+    # this from a static phase->pct map at every ``_advance_state``
+    # call; the status-line renderer reads it as one input to the
+    # rendered progress line (AC.SL.1).
+    progress_pct: int = 0
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True) + "\n"

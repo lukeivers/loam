@@ -76,6 +76,7 @@ from first_run_settings import (  # noqa: E402
     build_first_run_stanza,
     build_supervisor_stanza,
     merge_session_start,
+    merge_status_line,
     merge_stop,
     merge_user_prompt_submit,
 )
@@ -304,6 +305,60 @@ def _maybe_merge_stop(
         return
 
 
+# ---- amendment #49 — top-level ``statusLine`` registration ----------
+#
+# The renderer script at ``hands-off-lifecycle/hooks/statusline.py``
+# is registered at the top-level ``statusLine`` field of
+# ``.claude/settings.json`` so Claude Code spawns it every ~1 s
+# during first-run. Per locked plan §6 D-build.5, the merge fires
+# from the same call sites as the SessionStart / UserPromptSubmit /
+# Stop merges (Phase 3d settings authorship + Phase 6 self-retire).
+# Fail-soft (D-build.3 mirror): a settings.json write failure must
+# not block first-run, since the status-line install is additive UX
+# on top of the SessionStart `additionalContext` channel that
+# already conveys the structured failure path.
+
+
+def _status_line_stanza(pos_v2_root: Path) -> dict[str, Any]:
+    """Return the canonical ``statusLine`` envelope for pos-v2.
+
+    Per locked plan §6 D-build.1: the renderer is invoked under the
+    interpreter ``sys.executable`` resolves to (the dispatch's
+    detection chain already validated ≥ 3.13). Post-completion the
+    supervisor's settings-touch path may rewrite the command to use
+    the workspace venv's Python for cold-start latency reduction —
+    that's method, not AC, and lives on the supervisor side.
+    """
+    pos_v2_root = Path(pos_v2_root)
+    script = pos_v2_root / "hands-off-lifecycle" / "hooks" / "statusline.py"
+    return {
+        "type": "command",
+        "command": f"{sys.executable} {script}",
+        "refreshInterval": 1,
+    }
+
+
+def _maybe_merge_status_line(
+    *, pos_v2_root: Path, settings_path: Path
+) -> None:
+    """Invoke ``merge_status_line`` fail-soft.
+
+    The renderer is co-located with the rest of hands-off-lifecycle's
+    hooks; no lazy-import probe is needed (unlike persona helpers
+    which depend on a workspace-bootstrap-time install). Settings.json
+    write failures are caught — the locked plan §5 fail-closed
+    direction applies here as well: a transient I/O error during
+    Phase 3d / Phase 6 must not regress first-run.
+    """
+    try:
+        merge_status_line(
+            settings_path=settings_path,
+            new_entry=_status_line_stanza(pos_v2_root),
+        )
+    except Exception:  # noqa: BLE001 — fail-soft per locked plan §5
+        return
+
+
 # ---- error codes -----------------------------------------------------
 
 
@@ -377,6 +432,28 @@ _STATE_GENERATION: int = 1
 _STATE_WRITES_ENABLED: bool = False
 
 
+# Per-phase progress percentage (0-100) the worker writes alongside
+# every recognised ``_advance_state`` call. Per amendment #49 plan
+# §6 D-build.6 / D-build.7: builder calibrates the values; co-located
+# with the worker's ``_advance_state`` so a phase introduction
+# without a pct update is visible in the same diff (plan §13 risk
+# mitigation). Phases not present here leave the prior progress_pct
+# untouched.
+_PHASE_PCT: dict[str, int] = {
+    "phase-2-venv-creation": 5,
+    "phase-3a-inventory": 10,
+    "phase-3b-shared-deps": 25,
+    "phase-3e-editable-installs": 55,
+    "phase-3c-dedicated-venvs": 70,
+    "phase-4a-scaffold": 80,
+    "phase-4c-agent-file-authorship": 85,
+    "phase-4b-health-poll": 90,
+    "phase-5-confirmation": 95,
+    "phase-6-self-retire": 98,
+    "complete": 100,
+}
+
+
 def _advance_state(
     status: str,
     *,
@@ -393,6 +470,11 @@ def _advance_state(
     Both are written — one is structured, one is narrative. Neither is
     optional.
 
+    Amendment #49: when ``phase`` matches a recognised key in
+    ``_PHASE_PCT``, ``state.progress_pct`` is bumped to the mapped
+    value. The status-line renderer reads this field as one input
+    to the rendered progress line (AC.SL.1).
+
     No-op when ``_STATE_WRITES_ENABLED`` is False (unit-test path) —
     the caller never wants a stray ~/.pos/ write from a test run.
     """
@@ -405,6 +487,8 @@ def _advance_state(
     state.generation = _STATE_GENERATION
     if phase:
         state.phase = phase
+        if phase in _PHASE_PCT:
+            state.progress_pct = _PHASE_PCT[phase]
     if detail:
         state.detail = detail
     if error_code:
@@ -1294,6 +1378,14 @@ def _self_retire(
     _maybe_merge_stop(
         pos_v2_root=pos_v2_root, settings_path=settings_path
     )
+    # Amendment #49: register the renderer at top-level ``statusLine``
+    # so Claude Code spawns it every ~1 s post-completion (the AC.SL.2
+    # steady-state window) and on every future session that starts in
+    # this workspace. Fail-soft — a settings.json I/O failure here
+    # must not regress self-retire.
+    _maybe_merge_status_line(
+        pos_v2_root=pos_v2_root, settings_path=settings_path
+    )
 
     script_path = pos_v2_root / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     removed = False
@@ -1718,6 +1810,13 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     _maybe_merge_stop(
         pos_v2_root=pos_v2_root, settings_path=settings_path
     )
+    # Amendment #49: register the renderer at top-level ``statusLine``
+    # at Phase 3d so the live first-run progress is visible in the
+    # current session's terminal — not just on subsequent sessions
+    # post-self-retire. Fail-soft per locked plan §5.
+    _maybe_merge_status_line(
+        pos_v2_root=pos_v2_root, settings_path=settings_path
+    )
 
     # ---- Phase 4a: plist / unit substitution + service bootstrap --
     plat = _detect_platform()
@@ -1920,6 +2019,12 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             # Amendment #48: re-merge the Stop hook alongside the
             # Phase 4c re-merge. Idempotent.
             _maybe_merge_stop(
+                pos_v2_root=pos_v2_root, settings_path=settings_path
+            )
+            # Amendment #49: re-merge the statusLine entry alongside
+            # the Phase 4c re-merge. Idempotent — same envelope
+            # shape every time.
+            _maybe_merge_status_line(
                 pos_v2_root=pos_v2_root, settings_path=settings_path
             )
         except OSError as e:

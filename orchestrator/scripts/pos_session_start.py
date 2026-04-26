@@ -248,10 +248,64 @@ def run_session_start(
     }
 
 
+# ---- amendment #49 — existing-workspace statusLine retrofit ---------
+#
+# Per locked plan `docs/rebuild/plans/bootstrap-progress-statusline.md`
+# §6 D-build.5 + decision D5 (LOCKED 2026-04-26): the supervisor's
+# settings-touch path calls `merge_status_line` so a workspace whose
+# first-run already completed before amendment #49 landed picks up
+# the top-level `statusLine` entry on its next supervisor session-
+# start (AC.SL.8). Fail-soft: any failure here must NOT block the
+# supervisor's main path — the retrofit is additive UX, not load-
+# bearing.
+
+
+def _maybe_install_status_line(pos_v2_root: Path) -> None:
+    """Existing-workspace retrofit for the top-level ``statusLine`` entry.
+
+    Mirrors the ``_maybe_merge_status_line`` shape used by the worker
+    side (``first_run_helper.py``) but lives on the supervisor path
+    so workspaces already past first-run gain the entry without re-
+    bootstrapping. Lazy-imports `merge_status_line` from the hooks
+    directory; any exception is swallowed so the supervisor's main
+    path is never blocked.
+
+    Per locked plan §5 fail-closed direction.
+    """
+    try:
+        hooks_dir = pos_v2_root / "hands-off-lifecycle" / "hooks"
+        if not hooks_dir.is_dir():
+            return
+        if str(hooks_dir) not in sys.path:
+            sys.path.insert(0, str(hooks_dir))
+        # Lazy import — the supervisor must not crash on a workspace
+        # whose hooks directory is in an unexpected shape.
+        from first_run_settings import merge_status_line  # type: ignore[import-not-found]
+
+        settings_path = pos_v2_root / ".claude" / "settings.json"
+        script = hooks_dir / "statusline.py"
+        new_entry: dict[str, Any] = {
+            "type": "command",
+            "command": f"{sys.executable} {script}",
+            "refreshInterval": 1,
+        }
+        merge_status_line(
+            settings_path=settings_path,
+            new_entry=new_entry,
+        )
+    except Exception:  # noqa: BLE001 — fail-soft per locked plan §5
+        return
+
+
 def main(argv: list[str] | None = None) -> int:
     result = run_session_start()
     # Stdout becomes additionalContext per Claude Code convention.
     print(result["additional_context"])
+    # Amendment #49: best-effort retrofit of the top-level statusLine
+    # entry for workspaces already past first-run. Fail-soft so a
+    # transient settings.json I/O error never blocks the supervisor.
+    pos_v2_root = Path(__file__).resolve().parents[2]
+    _maybe_install_status_line(pos_v2_root)
     return int(result["exit_code"])
 
 

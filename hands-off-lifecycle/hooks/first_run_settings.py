@@ -125,6 +125,14 @@ _POS_V2_STOP_COMMAND_MARKERS: tuple[str, ...] = (
 )
 
 
+# Set of substrings that mark a top-level ``statusLine`` value as
+# pos-v2-owned. The renderer script's path is the canonical marker.
+# Per amendment #49 plan §6 D-build.3.
+_POS_V2_STATUS_LINE_COMMAND_MARKERS: tuple[str, ...] = (
+    "hands-off-lifecycle/hooks/statusline.py",
+)
+
+
 def _is_pos_v2_owned(stanza_entries: list[Any]) -> bool:
     """Identify whether an existing SessionStart stanza is pos-v2's own.
 
@@ -553,6 +561,101 @@ def merge_stop(
     ) + tuple(
         f"hooks.{k}" for k in hooks.keys() if k != "Stop"
     )
+
+    return SettingsMergeResult(
+        wrote=True,
+        backup_path=backup_path,
+        prior_session_start_displaced=displaced,
+        preserved_user_keys=preserved_keys,
+    )
+
+
+# ---- amendment #49 — top-level ``statusLine`` merge -----------------
+
+
+def _is_pos_v2_owned_status_line(entry: Any) -> bool:
+    """Identify whether an existing ``statusLine`` value is pos-v2's own.
+
+    AC.SL.7: the top-level ``statusLine`` field is a single mapping
+    (not a list of stanzas like ``hooks.<event>``). The pos-v2-owned
+    shape carries a ``command`` substring naming the renderer script
+    by path. Any other shape (user-authored, malformed, missing
+    ``command``) is treated as user-authored and triggers the backup
+    path.
+    """
+    if not isinstance(entry, dict):
+        return False
+    cmd = entry.get("command")
+    if not isinstance(cmd, str):
+        return False
+    return any(
+        marker in cmd for marker in _POS_V2_STATUS_LINE_COMMAND_MARKERS
+    )
+
+
+def merge_status_line(
+    *,
+    settings_path: Path,
+    new_entry: dict[str, Any],
+    now_iso: str | None = None,
+) -> SettingsMergeResult:
+    """Merge ``new_entry`` into settings.json's top-level ``statusLine``.
+
+    AC.SL.6: writes ``statusLine = new_entry`` at the top level (NOT
+    under ``hooks.*``; Claude Code's status-line schema lives at the
+    top level). AC.SL.7: backs up the entire prior ``settings.json``
+    to a timestamped sibling when the prior ``statusLine`` is user-
+    authored, mirroring the SessionStart / UserPromptSubmit / Stop
+    backup convention exactly.
+
+    Behaviour:
+      * no prior ``statusLine``: write ``new_entry``.
+      * prior is pos-v2's own (renderer-script command marker
+        present): replace with ``new_entry``, no backup.
+      * prior is user-authored: write the entire prior
+        ``settings.json`` to a timestamped backup and replace the
+        ``statusLine`` value with ``new_entry``.
+
+    Other top-level keys (``hooks.SessionStart``,
+    ``hooks.UserPromptSubmit``, ``hooks.Stop``, ``hooks.<other>``,
+    ``agent``, ``_comment``, etc.) are preserved unchanged. Atomic
+    write via ``.tmp`` sibling + rename.
+    """
+    settings_path = Path(settings_path)
+    existing = _load_existing(settings_path)
+
+    backup_path: Path | None = None
+    displaced = False
+
+    prior = existing.get("statusLine")
+    if prior is not None and not _is_pos_v2_owned_status_line(prior):
+        ts = now_iso or _now_utc_iso_for_filename()
+        backup_path = settings_path.with_name(
+            f"{settings_path.name}.user-backup-{ts}.json"
+        )
+        backup_path.write_text(
+            json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        displaced = True
+
+    existing["statusLine"] = new_entry
+
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = settings_path.with_suffix(settings_path.suffix + ".tmp")
+    tmp.write_text(
+        json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    tmp.replace(settings_path)
+
+    hooks_existing = existing.get("hooks") if isinstance(
+        existing.get("hooks"), dict
+    ) else {}
+    preserved_keys = tuple(
+        k for k in existing.keys()
+        if k not in ("hooks", "agent", "statusLine")
+    ) + tuple(f"hooks.{k}" for k in hooks_existing.keys())
 
     return SettingsMergeResult(
         wrote=True,

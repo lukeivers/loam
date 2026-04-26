@@ -922,8 +922,10 @@ ACs' outcome bounds. This section is populated post-build.
 
 ### Commit SHAs
 
-(placeholder; auto-filled by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
-
+- Amendment commit: `0737e7ccf74caaf6f0defbb759c3952b9bb599f2` —
+  `feat(self-upgrade): clause-(h) canonical pull + LLM-mediated semantic-merge gate (amendment #54, AC.H.1–AC.H.12 + AC.H.S)`
+- Seal commit: `1fd826afe150327135024dde99d9a7bd4f41fa57` —
+  `chore(seals): self-upgrade clause-(h) — canonical pull + LLM-mediated semantic-merge gate — self-upgrade at 0737e7c`
 ### Commit SHAs
 
 (populated by `pos-amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)

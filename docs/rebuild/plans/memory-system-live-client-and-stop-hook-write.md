@@ -819,6 +819,12 @@ specifies WD `/Users/lukeivers/ivers-corp-pos-v2/`.
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `a193c32ce4e98186c2b341d7dbe191961db69892` —
+  `chore(primary-persona, hands-off-lifecycle): advance BASELINE + SEAL_COMMIT for amendment #48 window`
+- Seal commit: `452e7d45feb63d4024d7d6bd123b65f1e5da7ffe` —
+  `chore(seals): primary-persona live MCP client + Stop-hook turn-close — primary-persona+hands-off-lifecycle at a193c32`
 ## 15. References
 
 - Research doc:

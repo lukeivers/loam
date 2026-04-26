@@ -381,8 +381,10 @@ ACs' outcome bounds. This section is populated post-build.
 
 ### Commit SHAs
 
-(placeholder; auto-filled by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
-
+- Amendment commit: `636549fc025d007ce0a9c29205a0dd05dba80946` —
+  `feat(self-upgrade): seal-bookkeeping retrofit (amendment #53, AC.SU-sb.1–AC.SU-sb.S)`
+- Seal commit: `10961758722efd4099fe1a6f31e5d4a0f1f85af5` —
+  `chore(seals): self-upgrade seal-bookkeeping retrofit — self-upgrade at 636549f`
 ### Commit SHAs
 
 (populated by `pos-amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)

@@ -1,0 +1,164 @@
+# Amendment — structural-enforcement A1 substrate
+#
+# 2026-04-26. Per the locked plan-doc
+# `docs/rebuild/plans/structural-enforcement-a1-substrate.md`
+# and the locked research artefact
+# `docs/rebuild/plans/research/structural-enforcement-of-critical-requirements-research.md`.
+#
+# A1 lands the foundational primitives every later structural-
+# enforcement amendment (A2 objective-binding gate, A3 TDD-
+# guard, A4 Bash/Agent-context guards) composes on. NO USER-
+# VISIBLE GATE FIRES IN A1. The substrate is observable end-
+# to-end: a sentinel can be written and read, the manifest
+# table accepts and returns rows, the workspace-mode bit is
+# reachable from a hook context. A2 is the first amendment
+# that turns the substrate into a deny.
+#
+# Surface added (objective-tracker, sealed):
+#
+#   - `objective-tracker/src/store.py` — new
+#     `objective_manifest` table inside `_SCHEMA`
+#     (`CREATE TABLE IF NOT EXISTS` semantics; PRIMARY KEY
+#     enforces row-tuple uniqueness; two indexes for
+#     component + ac_id queries). Four new methods on
+#     `EventStore`: `insert_manifest_row` (idempotent,
+#     INSERT OR IGNORE on duplicate; structural-validation at
+#     write boundary), `list_manifest_rows_for_component`,
+#     `list_manifest_rows_for_ac`,
+#     `list_manifest_rows_matching_source_path` (Python-side
+#     `fnmatch` over the row set).
+#   - `objective-tracker/src/errors.py` — new
+#     `ManifestRowError(ObjectiveTrackerError)` with `field`,
+#     `value`, `reason` attributes (structured refusal
+#     observable to caller without leaking sqlite3 exceptions).
+#   - `objective-tracker/src/runtime.py` — four public
+#     wrapper methods on `ObjectiveTracker`:
+#     `register_source_binding(*, component, ac_id, source_path_glob)`,
+#     `manifest_rows_for_component(component)`,
+#     `manifest_rows_for_ac(component, ac_id)`,
+#     `manifest_rows_matching_source_path(workspace_relative_path)`.
+#   - `objective-tracker/src/__init__.py` — export
+#     `ManifestRowError`.
+#
+# Surface added (hands-off-lifecycle, sealed):
+#
+#   - `hands-off-lifecycle/hooks/active_scope_sentinel.py`
+#     (new) — pure-stdlib library exposing
+#     `ScopeBinding`, `ActiveScopeSentinel`,
+#     `ActiveScopeWriteResult`,
+#     `write_active_scope_sentinel(...)`,
+#     `read_active_scope_sentinel(...)`. Atomic write via
+#     `.tmp` sibling + `os.replace`. Reader returns typed
+#     dataclass or None on absent / malformed / unreadable
+#     (never raises).
+#   - `hands-off-lifecycle/hooks/corpus_load_sentinel.py`
+#     (new) — pure-stdlib-plus-loam-mode-consumer library:
+#     `workspace_mode(workspace_root)` returns
+#     `"dev-mode" | "normal-use"` (consumer of loam-mode's
+#     existing `read_dev_intent_safe` + `compute_session_mode`),
+#     `compute_corpus_paths_required(workspace_root, mode)`
+#     (consumer of `loam_mode.selector.select_corpus`),
+#     `write_corpus_load_sentinel(...)`,
+#     `read_corpus_load_sentinel(...)`. AC.SE.5 enforces mode-
+#     aware required-corpus computation. Atomic write +
+#     fail-soft on every environmental failure.
+#   - `hands-off-lifecycle/hooks/corpus_load_session_start.py`
+#     (new) — SessionStart CLI entry: reads stdin Claude Code
+#     SessionStart JSON envelope, extracts
+#     `workspace.project_dir` + `session_id`, writes the
+#     corpus-load sentinel, exits 0 on every path
+#     (fail-soft per the SessionStart contract).
+#   - `hands-off-lifecycle/hooks/first_run_settings.py` —
+#     `_POS_V2_COMMAND_MARKERS` extended with
+#     `corpus_load_session_start.py` so re-merge over a stanza
+#     we wrote does not back up the corpus-load inner hook as
+#     user-authored.
+#   - `hands-off-lifecycle/hooks/first_run_helper.py` —
+#     `_corpus_load_inner_hooks(pos_v2_root)` builds the
+#     SessionStart inner-hook envelope (5s timeout matching
+#     loam-mode + persona budgets); composed last in the
+#     `_extra_session_start_hooks` chain (probe → persona →
+#     loam-mode → corpus-load).
+#
+# Universal-paths admission (`.gitignore`): root `.gitignore`
+# gains a `.pos/` entry per AC.SE.8 — the workspace-local
+# sentinel directory must never be tracked. Admitted via the
+# universal-paths block (amendment #44 precedent).
+#
+# Behaviour:
+#
+#   - Workspace-mode bit: `workspace_mode(workspace_root)`
+#     returns `"dev-mode"` iff the workspace's primary-persona
+#     contract carries `dev_intent: yes`; `"normal-use"`
+#     otherwise (fail-closed-to-permissive — DEV-MODE is
+#     opt-in). Sub-100ms p95 over the persona-contract YAML
+#     read.
+#   - Active-scope sentinel: `<workspace>/.pos/active-scope.json`
+#     declares which `(scope_id, plan_path, bindings,
+#     created_at, session_id)` the current dispatch is operating
+#     against. Write contract: byte-equal idempotency, atomic
+#     overwrite on different scope_id, structured result on
+#     environmental failure (never raises). Read contract: typed
+#     dataclass on success, None on absent / malformed /
+#     unreadable.
+#   - Corpus-load sentinel: per (workspace, session_id) JSON
+#     file at `<workspace>/.pos/session-state/<session_id>.json`
+#     records `corpus_paths_required` (mode-aware), state
+#     ∈ {loaded, partial, missing}, created_at. Written by the
+#     SessionStart inner hook within the 5s budget; the hook
+#     exits 0 on every path including missing manifest /
+#     malformed JSON / empty stdin (fail-soft).
+#   - Objective-manifest table: `(component, ac_id,
+#     source_path_glob)` rows persisted in the existing
+#     objective-tracker SQLite store. Insertion idempotent on
+#     duplicate, structurally refused on empty fields or
+#     invalid fnmatch patterns (raises `ManifestRowError`,
+#     never leaks `sqlite3.IntegrityError`). Three documented
+#     query shapes: per-component, per-AC, per-source-path
+#     (fnmatch).
+#   - Forward-compat: schema extends additively via
+#     `ALTER TABLE ... ADD COLUMN` (the established #38
+#     pattern); existing manifest rows survive a future-
+#     amendment column addition with default-value fill.
+#   - Backwards-compat: workspaces without the substrate
+#     continue to function exactly as today. The active-scope
+#     sentinel's absence is a declared state (None from
+#     reader); the corpus-load sentinel's absence is the
+#     no-consumer state for A1 (no consumer ships in A1).
+#
+# AC surface (AC.SE.1 – AC.SE.S) — outcome-shaped per the
+# locked plan-doc §4. Test layout: one file per AC + the seal-
+# diff invariant. 13 new objective-tracker tests
+# (AC.SE.6 + AC.SE.7 + AC.SE.S), 34 new hands-off-lifecycle
+# tests (AC.SE.1–AC.SE.5 + AC.SE.8 + AC.SE.S).
+#
+# ODD §2.5 reverse-direction audit clean: every code path,
+# branch, dependency, and test in the diff traces back to a
+# named AC. No silent exception branches; no defensive `if`
+# for cases the ACs do not name; no method-in-AC drift.
+#
+# Out of scope (locked plan-doc §7, named explicitly):
+#
+#   - A2 objective-binding gate (PreToolUse Edit/Write deny
+#     when no AC binding).
+#   - A3 TDD-guard test-first.
+#   - A4 Bash/Agent-context guards.
+#   - Audit-log retention/rotation.
+#   - Cross-amendment manifest queries.
+#   - DEV-MODE-vs-universal partition for individual gates.
+#   - Sentinel garbage collection.
+#   - Persona-side surfacing of corpus-load sentinel into
+#     additionalContext.
+#
+# BASELINE 3bf30e9 (pre-amendment tip — HEAD at dispatch).
+# objective-tracker SEAL_COMMIT sidecar advances to the
+# amendment commit on the empty-diff window; advanced to the
+# seal SHA via `pos-amend seal`. hands-off-lifecycle is H19-
+# frozen at 3780603; only the SEAL_COMMIT sidecar advances.
+#
+# With this amendment, A2 / A3 / A4 are unblocked: they
+# consume A1's substrate (manifest API, sentinel files,
+# workspace-mode bit) without a substrate change. Per locked
+# plan-doc constraint 9, A1's substrate is sealed-after-A1 —
+# any future substrate change is a NEW A1.x amendment, not a
+# silent extension folded into A2/A3/A4.

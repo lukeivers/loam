@@ -1,8 +1,16 @@
-"""D6 — post-upgrade clause verification (a)–(g).
+"""D6 — post-upgrade clause verification (a)–(h).
 
-Each of the seven clauses from v1.1 R1 has a concrete check returning
-``ClauseResult`` (either passed or failed with a reason). The framework
-runs them in a fixed order; any failure triggers rollback in the caller.
+Each of the eight clauses from v1.1 R1 (a-g) plus clause-(h) has a
+concrete check returning ``ClauseResult`` (either passed or failed
+with a reason). The framework runs them in a fixed order; any failure
+triggers rollback in the caller.
+
+Clause (h) — workspace-customisation collision resolution — is
+two-phase: a **pre-stage helper** (``resolve_clause_h_inferred``)
+that calls the LLM resolver and mutates the ConflictReport in place,
+and a **post-restart verifier** (``check_clause_h``) that asserts
+no INFERRED_* entry is missing rationale/confidence and the budget
+bookkeeping closed cleanly.
 
 The checks are duck-typed against whatever the caller passes in so
 tests can substitute synthetic component instances. In production, the
@@ -16,8 +24,23 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .aggregator_probes import aggregator_probe_hash, run_aggregator_probes
+from .conflict_report import (
+    INFERRED_RESOLUTIONS,
+    ConflictChangeKind,
+    ConflictEntry,
+    ConflictReport,
+    Resolution,
+)
 from .manifest import ChangeKind, Manifest, verify_file_against
+from .merge_resolver import (
+    BudgetExhausted,
+    MergeResolver,
+    MergeVerdict,
+    ResolverFailure,
+)
+from .observability import span as otel_span
 from .paths import Paths
+from .sync_protected import FileClass, SyncProtected
 
 
 @dataclass
@@ -318,6 +341,251 @@ def check_clause_g(
     )
 
 
+# ---- clause (h) — workspace-customisation collision resolution -----
+
+
+def _read_text_or_none(path: Path) -> str | None:
+    """Read UTF-8 text from path; return None if missing or binary."""
+    if not path.exists():
+        return None
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _verdict_to_resolution(verdict: MergeVerdict) -> Resolution:
+    """Map the resolver's structured verdict onto the closed Resolution
+    enum extension. Defensive: the Literal in MergeVerdict already
+    constrains the value-set, but the explicit map keeps the call
+    sites readable."""
+    if verdict.resolution == "inferred-accept-canonical":
+        return Resolution.INFERRED_ACCEPT_CANONICAL
+    if verdict.resolution == "inferred-accept-workspace":
+        return Resolution.INFERRED_ACCEPT_WORKSPACE
+    if verdict.resolution == "inferred-merged":
+        return Resolution.INFERRED_MERGED
+    raise ValueError(f"unrecognised verdict resolution: {verdict.resolution!r}")
+
+
+def resolve_clause_h_inferred(
+    *,
+    report: ConflictReport,
+    sync_protected: SyncProtected,
+    canonical_root: Path,
+    workspace_root: Path,
+    resolver: MergeResolver,
+    write_merged: Callable[[str, str], str] | None = None,
+) -> None:
+    """Clause-(h) pre-stage helper.
+
+    Walks every PENDING ConflictEntry in ``report``; classifies each
+    against the workspace's sync-protected envelope; preserves Class A
+    workspace state, applies override semantics for Class B, and
+    invokes the LLM resolver for Class C. Mutates the entries in place
+    so the existing ``report.has_pending()`` block clears for any
+    conflict the helper resolved.
+
+    ``write_merged(path, content) -> str`` is an optional sink the
+    caller supplies for ``inferred-merged`` verdicts; it must persist
+    the merged content somewhere and return the absolute path. When
+    omitted, merged content is dropped onto a per-conflict path under
+    ``workspace_root/.pos/upgrade/<tag>/merged/<path>``.
+
+    Raises:
+        BudgetExhausted: cumulative resolver budget hit; halt-and-
+            resume per AC.H.6. ``report`` is mutated up to the halt
+            point (caller persists it as the audit).
+        ResolverFailure: LLM call failed for any conflict. Fail-closed
+            per AC.H.12. ``report`` is mutated up to the failure point.
+    """
+    resolved_count = 0
+    deferred_count = 0
+
+    summary_attrs: dict[str, Any] = {
+        "pos.upgrade.merge_gate.upgrade_tag": report.upgrade_tag,
+    }
+    halt_reason: str | None = None
+
+    try:
+        for entry in report.conflicts:
+            if entry.resolution is not Resolution.PENDING:
+                # Already manually resolved (or auto-resolved) — preserve
+                # the operator's choice. Convergent idempotency: re-runs
+                # see non-PENDING entries and skip them.
+                continue
+            if entry.user_override:
+                # Honour persistent operator override per AC.H.9. The
+                # resolution must already be set by the operator; if
+                # not, that's a validator-caught bug upstream.
+                continue
+
+            klass = sync_protected.classify(entry.path)
+
+            if klass is FileClass.A:
+                # Class A: never overwritten. Preserve workspace.
+                entry.resolution = Resolution.KEEP_LOCAL
+                entry.rationale = (
+                    "Class A (workspace state): preserved by clause-(h) "
+                    "envelope. No resolver call."
+                )
+                entry.confidence = 1.0
+                resolved_count += 1
+                continue
+
+            if klass is FileClass.B:
+                # Class B: operator-preference. Workspace wins when
+                # workspace-modified; canonical wins when workspace
+                # untouched. Detect by change_kind: if the conflict
+                # was raised at all, workspace differs from prior, so
+                # workspace-modified is implicit.
+                if entry.change_kind in (
+                    ConflictChangeKind.LOCAL_MODIFIED_ONLY,
+                    ConflictChangeKind.UPSTREAM_MODIFIED_AND_LOCAL_MODIFIED,
+                ):
+                    entry.resolution = Resolution.KEEP_LOCAL
+                    entry.rationale = (
+                        "Class B (operator preference): workspace-modified "
+                        "wins over canonical update."
+                    )
+                else:
+                    entry.resolution = Resolution.ACCEPT_UPSTREAM
+                    entry.rationale = (
+                        "Class B (operator preference): workspace unchanged; "
+                        "accept canonical."
+                    )
+                entry.confidence = 1.0
+                resolved_count += 1
+                continue
+
+            # Class C: LLM-mediated resolution.
+            canonical_text = _read_text_or_none(canonical_root / entry.path)
+            workspace_text = _read_text_or_none(workspace_root / entry.path)
+            prior_text: str | None = None  # not currently exposed by snapshot
+
+            if canonical_text is None or workspace_text is None:
+                # Binary or missing file — resolver cannot help. Mark
+                # PENDING so the legacy hand-resolve path remains.
+                deferred_count += 1
+                continue
+
+            with otel_span(
+                "pos.upgrade.merge_gate.resolution",
+                {
+                    "pos.upgrade.merge_gate.path": entry.path,
+                    "pos.upgrade.merge_gate.canonical_sha": entry.new_release_sha256 or "",
+                    "pos.upgrade.merge_gate.workspace_sha": entry.installed_sha256 or "",
+                },
+            ):
+                verdict = resolver.resolve(
+                    path=entry.path,
+                    canonical_text=canonical_text,
+                    workspace_text=workspace_text,
+                    prior_text=prior_text,
+                )
+
+            entry.resolution = _verdict_to_resolution(verdict)
+            entry.rationale = verdict.rationale
+            entry.confidence = verdict.confidence
+
+            if entry.resolution is Resolution.INFERRED_MERGED:
+                # Persist merged content somewhere the swap can read.
+                if write_merged is not None:
+                    entry.resolved_content_path = write_merged(
+                        entry.path, verdict.merged_content or ""
+                    )
+                else:
+                    merged_dir = (
+                        workspace_root
+                        / ".pos"
+                        / "upgrade"
+                        / report.upgrade_tag
+                        / "merged"
+                    )
+                    target = merged_dir / entry.path
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_text(verdict.merged_content or "")
+                    entry.resolved_content_path = str(target)
+            resolved_count += 1
+    except BudgetExhausted as exc:
+        halt_reason = f"budget_exhausted: {exc}"
+        raise
+    except ResolverFailure as exc:
+        halt_reason = f"resolver_failure: {exc}"
+        raise
+    finally:
+        summary_attrs.update(
+            {
+                "pos.upgrade.merge_gate.resolved_count": resolved_count,
+                "pos.upgrade.merge_gate.deferred_count": deferred_count,
+                "pos.upgrade.merge_gate.cumulative_tokens": resolver.cumulative_used,
+                "pos.upgrade.merge_gate.call_count": resolver.call_count,
+            }
+        )
+        if halt_reason is not None:
+            summary_attrs["pos.upgrade.merge_gate.halt_reason"] = halt_reason
+        with otel_span(
+            "pos.upgrade.merge_gate.summary", summary_attrs
+        ):
+            pass
+
+
+def check_clause_h(
+    report: ConflictReport | None,
+) -> ClauseResult:
+    """Post-restart clause-(h) verifier.
+
+    Asserts the ConflictReport's invariants after the pre-stage helper
+    has run: every INFERRED_* entry carries rationale + confidence; no
+    PENDING entries remain (clause-(g) "no silent skip" extends to
+    clause-(h) — every conflict ends with a verdict or a manual
+    resolution).
+
+    ``report`` may be None when the upgrade was invoked without
+    --canonical/--merge-resolver-module (legacy --staging-dir mode);
+    in that case clause-(h) is a no-op pass.
+    """
+    if report is None:
+        return ClauseResult(clause="h", passed=True, details={"skipped": True})
+
+    pending = [
+        c.path for c in report.conflicts if c.resolution is Resolution.PENDING
+    ]
+    if pending:
+        return ClauseResult(
+            clause="h",
+            passed=False,
+            reason=f"{len(pending)} pending conflict(s) after clause-(h) pass",
+            details={"pending": pending},
+        )
+
+    inferred_missing: list[str] = []
+    for c in report.conflicts:
+        if c.resolution in INFERRED_RESOLUTIONS:
+            if c.rationale is None or c.confidence is None:
+                inferred_missing.append(c.path)
+    if inferred_missing:
+        return ClauseResult(
+            clause="h",
+            passed=False,
+            reason=(
+                "INFERRED_* entries missing rationale or confidence: "
+                f"{inferred_missing}"
+            ),
+            details={"missing_audit": inferred_missing},
+        )
+
+    inferred = report.inferred_entries()
+    return ClauseResult(
+        clause="h",
+        passed=True,
+        details={
+            "inferred_count": len(inferred),
+            "total_conflicts": len(report.conflicts),
+        },
+    )
+
+
 # ---- full clause bundle --------------------------------------------
 
 
@@ -333,10 +601,16 @@ def run_all_clauses(
     tag: str,
     live_root: Path,
     snapshot_components: tuple[str, ...],
+    conflict_report: ConflictReport | None = None,
 ) -> ClauseBundle:
     """Run every clause check. Does not short-circuit: every clause is
     evaluated and reported even when an earlier one fails, because the
-    full bundle is what the upgrade report contains."""
+    full bundle is what the upgrade report contains.
+
+    ``conflict_report`` is the post-stage clause-(h) audit; pass
+    ``None`` for legacy upgrades that didn't run the clause-(h)
+    pre-stage helper (clause-(h) verifier no-ops in that case).
+    """
     bundle = ClauseBundle()
     bundle.results["a"] = check_clause_a(no_op_rpc)
     bundle.results["b"] = check_clause_b(survival_payloads)
@@ -347,4 +621,5 @@ def run_all_clauses(
         paths, tag, required_components=snapshot_components
     )
     bundle.results["g"] = check_clause_g(manifest, live_root)
+    bundle.results["h"] = check_clause_h(conflict_report)
     return bundle

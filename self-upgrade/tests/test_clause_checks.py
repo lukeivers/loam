@@ -339,7 +339,7 @@ def test_run_all_clauses_happy_path(tmp_path: Path, monkeypatch) -> None:
         snapshot_components=("memory",),
     )
     assert bundle.all_passed, bundle.failing()
-    assert set(bundle.results.keys()) == {"a", "b", "c", "d", "e", "f", "g"}
+    assert set(bundle.results.keys()) == {"a", "b", "c", "d", "e", "f", "g", "h"}
 
 
 def test_run_all_clauses_evaluates_every_clause_even_on_early_failure(
@@ -368,5 +368,5 @@ def test_run_all_clauses_evaluates_every_clause_even_on_early_failure(
         live_root=live,
         snapshot_components=("memory",),
     )
-    assert set(bundle.results.keys()) == {"a", "b", "c", "d", "e", "f", "g"}
+    assert set(bundle.results.keys()) == {"a", "b", "c", "d", "e", "f", "g", "h"}
     assert set(bundle.failing()) >= {"a", "b", "c", "d", "f"}

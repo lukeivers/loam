@@ -26,6 +26,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .canonical import (
+    CanonicalPullError,
+    StagingResolution,
+    resolve_canonical_to_staging,
+)
+from .clause_checks import resolve_clause_h_inferred
 from .config import AutoUpdateMode, UpgradeConfig
 from .conflict_detection import detect_conflicts
 from .conflict_report import (
@@ -35,6 +41,12 @@ from .conflict_report import (
     save_conflict_report,
 )
 from .manifest import Manifest, load_manifest
+from .merge_resolver import (
+    BudgetExhausted,
+    MergeResolver,
+    ResolverBudget,
+    ResolverFailure,
+)
 from .notification import (
     ConfirmationDecision,
     notify_accepted,
@@ -45,6 +57,11 @@ from .notification import (
     wait_for_confirmation,
 )
 from .paths import Paths
+from .sync_protected import (
+    SyncProtected,
+    load_sync_protected,
+    write_default_if_absent,
+)
 from .upgrade import UpgradeResult, execute_upgrade
 
 
@@ -122,14 +139,38 @@ def cmd_upgrade(args: argparse.Namespace) -> int:
         print(f"error: {err}", file=sys.stderr)
         return 2
 
-    manifest = load_manifest(args.manifest)
-    if manifest.release_tag != args.tag:
-        print(
-            f"error: manifest release_tag={manifest.release_tag!r} "
-            f"disagrees with CLI tag={args.tag!r}",
-            file=sys.stderr,
-        )
-        return 2
+    # Canonical-as-source pull (clause-(h) AC.H.1). Resolve
+    # canonical_path → (staging_dir, manifest). The argparse mutex
+    # group already guarantees exactly one of --canonical / --staging-dir.
+    canonical_resolution: StagingResolution | None = None
+    if args.canonical:
+        try:
+            canonical_resolution = resolve_canonical_to_staging(
+                Path(args.canonical),
+                tag=args.tag,
+                manifest_path=Path(args.manifest) if args.manifest else None,
+            )
+        except CanonicalPullError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        manifest = canonical_resolution.manifest
+        staging_dir = canonical_resolution.staging_dir
+    else:
+        if not args.manifest:
+            print(
+                "error: --manifest is required when --staging-dir is used",
+                file=sys.stderr,
+            )
+            return 2
+        manifest = load_manifest(args.manifest)
+        if manifest.release_tag != args.tag:
+            print(
+                f"error: manifest release_tag={manifest.release_tag!r} "
+                f"disagrees with CLI tag={args.tag!r}",
+                file=sys.stderr,
+            )
+            return 2
+        staging_dir = Path(args.staging_dir)
 
     config = UpgradeConfig.load_or_default(paths.upgrade_config)
 
@@ -147,6 +188,46 @@ def cmd_upgrade(args: argparse.Namespace) -> int:
     conflicts_yaml = paths.conflicts_yaml(manifest.release_tag)
     if args.conflicts_from and Path(args.conflicts_from).exists():
         report = load_conflict_report(args.conflicts_from)
+
+    # Clause-(h) pre-stage hook — runs ONLY when --canonical mode is
+    # active and an LLM merge resolver has been wired by the caller.
+    # When inactive, the legacy conflict-resolution path is preserved
+    # byte-identical (Hard Constraint #5 backward-compat).
+    if canonical_resolution is not None and args.merge_resolver_module:
+        try:
+            resolver = _load_merge_resolver(args.merge_resolver_module)
+            sp = _load_or_seed_sync_protected(live_root)
+            resolve_clause_h_inferred(
+                report=report,
+                sync_protected=sp,
+                canonical_root=canonical_resolution.staging_dir,
+                workspace_root=live_root,
+                resolver=resolver,
+            )
+        except BudgetExhausted as exc:
+            paths.history.mkdir(parents=True, exist_ok=True)
+            save_conflict_report(report, conflicts_yaml)
+            print(
+                f"upgrade halted: clause-(h) budget exhausted "
+                f"({exc.used} >= {exc.ceiling}). Audit at:",
+                file=sys.stderr,
+            )
+            print(f"  {conflicts_yaml}", file=sys.stderr)
+            print(
+                "  (raise the cumulative ceiling or hand-resolve the "
+                "deferred conflicts.)",
+                file=sys.stderr,
+            )
+            return 3
+        except ResolverFailure as exc:
+            paths.history.mkdir(parents=True, exist_ok=True)
+            save_conflict_report(report, conflicts_yaml)
+            print(
+                f"upgrade halted: clause-(h) resolver failure: {exc}",
+                file=sys.stderr,
+            )
+            print(f"  audit at: {conflicts_yaml}", file=sys.stderr)
+            return 3
 
     if report.has_abort():
         print("upgrade aborted via conflict report")
@@ -190,7 +271,7 @@ def cmd_upgrade(args: argparse.Namespace) -> int:
         manifest=manifest,
         paths=paths,
         config=config,
-        staging_dir=Path(args.staging_dir),
+        staging_dir=staging_dir,
         prior_tag=args.prior_tag,
         adapters=adapters,
         progress=progress,
@@ -261,6 +342,35 @@ def _load_adapters(module_path: str) -> Any:
     return factory()
 
 
+def _load_merge_resolver(module_path: str) -> MergeResolver:
+    """Import ``module_path:build_merge_resolver`` and call it.
+
+    Returns a ``MergeResolver`` instance — the caller wires its LLM
+    client + budget at construction time. Used by the clause-(h)
+    pre-stage hook.
+    """
+    import importlib
+
+    module_name, _, attr = module_path.partition(":")
+    attr = attr or "build_merge_resolver"
+    mod = importlib.import_module(module_name)
+    factory = getattr(mod, attr)
+    resolver = factory()
+    if not isinstance(resolver, MergeResolver):
+        raise TypeError(
+            f"{module_path}: factory must return MergeResolver, "
+            f"got {type(resolver).__name__}"
+        )
+    return resolver
+
+
+def _load_or_seed_sync_protected(workspace_root: Path) -> SyncProtected:
+    """Return the workspace's sync-protected envelope, writing the
+    default template if absent (clause-(h) AC.H.10 first-run path)."""
+    target = write_default_if_absent(workspace_root)
+    return load_sync_protected(target)
+
+
 # ---- main ----------------------------------------------------------
 
 
@@ -281,13 +391,30 @@ def build_parser() -> argparse.ArgumentParser:
     up.add_argument("tag", help="Release tag, e.g. pos-v2-v0.2.0")
     up.add_argument(
         "--manifest",
-        required=True,
-        help="Path to the release's pos-release.yml",
+        default=None,
+        help=(
+            "Path to the release's pos-release.yml. Required with "
+            "--staging-dir; optional with --canonical (defaults to "
+            "<canonical>/self-upgrade/manifests/<tag>.yaml)."
+        ),
     )
-    up.add_argument(
+    # Mutually-exclusive source group: --canonical (clause-(h) pull
+    # from a local canonical git tree) OR --staging-dir (pre-unpacked
+    # release tree). Exactly one must be supplied.
+    src_group = up.add_mutually_exclusive_group(required=True)
+    src_group.add_argument(
         "--staging-dir",
-        required=True,
-        help="Staging dir containing the unpacked new release tree",
+        default=None,
+        help="Staging dir containing the unpacked new release tree.",
+    )
+    src_group.add_argument(
+        "--canonical",
+        default=None,
+        help=(
+            "Local canonical git working tree to pull the release from. "
+            "Implies clause-(h) pre-stage merge resolution when paired "
+            "with --merge-resolver-module."
+        ),
     )
     up.add_argument(
         "--prior-tag",
@@ -305,6 +432,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Import path for the live-adapter factory "
             "(format: 'pkg.mod' or 'pkg.mod:build_adapters')"
+        ),
+    )
+    up.add_argument(
+        "--merge-resolver-module",
+        default=None,
+        help=(
+            "Import path for the clause-(h) merge-resolver factory "
+            "(format: 'pkg.mod' or 'pkg.mod:build_merge_resolver'). "
+            "Activates clause-(h) pre-stage resolver pass when paired "
+            "with --canonical."
         ),
     )
     up.add_argument(

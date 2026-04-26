@@ -9,8 +9,8 @@ Plan §4 AC36.6 outcomes:
 - The scaffold's only mutations on the copy are: rename to the
   resolved handle, set ``is_starter: true``, replace the
   placeholder ``handle`` field.
-- A known sentinel string from the template appears in the
-  scaffolded output (provenance evidence).
+- The scaffolded ``prompt.md`` is byte-identical to the template
+  (provenance evidence — method-free).
 - ``workspace-bootstrap/src/`` source carries no persona-prose
   constants.
 
@@ -49,37 +49,18 @@ def _scaffold_fresh(tmp_path: Path) -> Path:
     return workspace
 
 
-def test_AC36_6_template_sentinels_appear_in_scaffold_output(
-    tmp_path: Path,
-) -> None:
-    """A unique sentinel sentence in the persona-template files
-    appears in the scaffolded output — proving the prose came from
-    the template, not from scaffold source."""
-    template_dir = _resolve_persona_template_dir()
-    template_prompt = (template_dir / "prompt.md").read_text()
-
-    # Pick a sentinel sentence that is template-specific and unlikely
-    # to be re-derived by accident anywhere else.
-    sentinel = (
-        'This file is free prose. pOS does not parse it.'
-    )
-    assert sentinel in template_prompt, (
-        "test fixture: chosen sentinel must exist in the framework "
-        f"persona-template prompt.md; not found in {template_dir / 'prompt.md'}"
-    )
-
-    workspace = _scaffold_fresh(tmp_path)
-    scaffolded_prompt = (
-        workspace
-        / "personas"
-        / DEFAULT_PERSONA_HANDLE
-        / "prompt.md"
-    ).read_text()
-
-    assert sentinel in scaffolded_prompt, (
-        "scaffolded prompt.md does not carry the framework template's "
-        "sentinel sentence — provenance broken."
-    )
+# NOTE: A previous test in this file
+# (`test_AC36_6_template_sentinels_appear_in_scaffold_output`) pinned
+# a hardcoded substring sentinel from the prior persona-template
+# prose ("This file is free prose. pOS does not parse it.") to verify
+# the scaffold copies template prose unmodified. That test was deleted
+# under amendment #50 per ODD §8.2.10 (testing method, not outcome) on
+# owner ruling — the sibling test
+# `test_AC36_6_prompt_md_byte_identical_to_template` (below) verifies
+# AC36.6's outcome strictly via byte-equality, which is method-free
+# and survives template-content updates. The substring sentinel was
+# defense-in-depth coupled to a specific prior template; the byte-
+# identical check supersedes it.
 
 
 def test_AC36_6_workspace_bootstrap_src_has_no_persona_prose_constants() -> None:

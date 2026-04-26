@@ -1,47 +1,58 @@
-"""First-run conversational elicitation (amendment #35).
+"""First-run conversational onboarding (amendment #50).
 
-The onboarding module owns the starter-elicitation flow: a small set
-of question-shape templates the persona uses on session one to refine
-a starter-flagged contract into the user's persona, plus the
-transcript→contract write-back that persists user answers and flips
-``is_starter`` to False on completion.
+The onboarding module owns the starter-elicitation surface: a
+``starter-pending`` SessionStart contributor that points the
+loaded persona at its `prompt.md` playbook, plus a structured
+write-back surface (``persist_grounding``) that closes the
+contract / `prompt.md` / `.claude/agents/<handle>.md` triplet
+when the persona has captured enough grounding from the
+conversation to commit.
+
+Discovery is conversational (driven by the playbook in
+`prompt.md`); the write-back accepts a structured
+``GroundingCapture`` payload the persona produces when it
+pivots from listening to proposing.
 
 Surface:
 
-- ``ONBOARDING_QUESTIONS`` — the canonical question-shape tuple. Each
-  question has an id (used in transcript dicts and OTel events) and a
-  prompt. The prompts are *framework-level scaffolding* — they speak
-  about the contract, not in the persona's voice. The answers (the
-  workspace-supplied content) flow into the contract.
+- ``STARTER_PENDING_MARKER`` — first-line marker on the
+  starter-pending contributor's body. Unchanged.
+- ``GroundingCapture`` — structured payload the persona
+  builds at the proposal moment.
+- ``OnboardingGroundingError`` — raised on a malformed
+  ``GroundingCapture``; no file is written.
+- ``build_starter_pending_contributor(loaded_persona)`` —
+  returns the SessionStart contributor. Body points at the
+  playbook in `prompt.md` and at the ``persist_grounding``
+  call surface; no question list, no question ids.
+- ``persist_grounding(*, loaded_persona, grounding,
+  contract_path, workspace_slug=None,
+  memory_client_factory=None)`` — write-back that updates
+  ``contract.yaml`` from the captured grounding, regenerates
+  ``prompt.md`` (with substitution-token rendering) and
+  ``.claude/agents/<handle>.md`` (via ``to_agent_md``), and
+  optionally writes one ``add_episode`` memory episode tagged
+  ``"onboarding-grounding"``.
 
-- ``build_starter_pending_contributor(loaded_persona)`` — returns the
-  callable that registers against
-  ``ComposedContextPayload.register(name=..., trigger_kind=session)``.
-  When invoked under a starter-flagged contract the contributor
-  produces an additionalContext block carrying a structurally-
-  detectable starter-pending marker. Under a non-starter contract the
-  contributor returns the empty string (per the registry's "empty
-  output is no-op contribution" convention).
+Read-side dev-intent surface (preserved verbatim from sub-plan A):
 
-- ``persist_elicitation_transcript(loaded_persona, transcript, contract_path)``
-  — write-back surface. Given a complete transcript (all required
-  question ids answered with non-empty strings), writes the answers
-  back into the contract via ``PersonaContract.to_yaml()`` and flips
-  ``is_starter`` to False. Given an incomplete transcript leaves
-  ``is_starter`` True. The fail-closed direction matches plan §6
-  constraint 7.
+- ``dev_intent_storage_path(workspace_root) -> Path``
+- ``read_dev_intent(workspace_root) -> Literal["yes", "no", "absent"]``
 
-Per ODD §2.5 every code path traces back to AC35.3 (contributor
-registration), AC35.4 (transcript→write-back), or AC35.7
-(observability).
+Per ODD §2.5 every code path traces back to AC.O.1, AC.O.2,
+AC.O.3, AC.O.4, AC.O.5, AC.O.6, AC.O.7, or AC.O.8 (locked plan
+``primary-persona-conversational-onboarding-and-default-archetype.md``).
 """
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Awaitable, Callable, Literal
 
+from .agent_md import to_agent_md
 from .contract import PersonaContract, load_contract
 from . import observability as obs
 
@@ -49,121 +60,97 @@ from . import observability as obs
 # ---- exceptions ------------------------------------------------------
 
 
-class OnboardingTranscriptError(ValueError):
-    """Raised on a structurally-malformed transcript (e.g., a
-    non-string value, an unknown question id). Distinct from "transcript
-    incomplete" — incomplete is a normal state; malformed is a defect."""
+class OnboardingGroundingError(ValueError):
+    """Raised on a malformed ``GroundingCapture`` payload (empty
+    required field, invalid dev-intent value, empty captured-summary).
+    The disk write-back is **never** attempted on a malformed
+    payload — failure is fail-closed at validation time."""
 
 
-# ---- question shapes -------------------------------------------------
+# ---- captured-grounding payload --------------------------------------
 
 
 @dataclass(frozen=True)
-class OnboardingQuestion:
-    """A single elicitation question.
+class GroundingCapture:
+    """Structured grounding captured by the persona at the proposal
+    moment of session-1 conversational onboarding (per the
+    conversation playbook in the persona's `prompt.md`).
 
-    Question prompts are framework-level scaffolding — they speak
-    *about* the contract (e.g., "What should I call you?") and are not
-    persona-prose. The answer is the workspace-supplied content that
-    populates a contract field.
+    Fields are the persona's distillation of what the user said
+    during the funnel + reflection phase, not literal user prose.
+    Each field is required; ``persist_grounding`` validates shape
+    before any file is written.
+
+    - ``user_preferred_name``: how the persona will address the user
+      (the persona's translation of "what should I call you?", which
+      may be inferred from the conversation rather than asked
+      directly).
+    - ``persona_given_name``: the persona's own name as the user
+      chose it (or kept it).
+    - ``single_point_of_contact`` / ``context_holder`` /
+      ``escalation_judge``: the persona's distillation of the user's
+      day-walkthrough into the three responsibilities-prose fields
+      the contract carries.
+    - ``dev_intent``: literal ``"yes"`` or ``"no"``, inferred from
+      the day-walkthrough's mention (or absence) of pos-v2-dev work.
+    - ``captured_summary``: tuple of non-empty bullets — the
+      persona's distillation of what it heard, used both as
+      observability material and as the body of the optional
+      memory episode.
     """
 
-    id: str
-    prompt: str
-    contract_field: str  # dotted path into PersonaContract; see _SET_FIELD_HANDLERS
-    required: bool = True
+    user_preferred_name: str
+    persona_given_name: str
+    single_point_of_contact: str
+    context_holder: str
+    escalation_judge: str
+    dev_intent: Literal["yes", "no"]
+    captured_summary: tuple[str, ...]
 
 
-# Canonical question-shape tuple. D-build.2 (amendment #35) selected
-# three questions: user_name (the user's preferred address),
-# persona_given_name (the persona's own name; default is workspace-
-# bootstrap's pick), and domain_focus (one-sentence prose into
-# responsibilities.single_point_of_contact). Sub-plan A of the two-
-# modes-and-multi-workspace programme adds a fourth question
-# (``dev_intent``) that captures whether the operator intends to
-# develop pos-v2 itself or use it as a harness only — see AC.A.1.
-ONBOARDING_QUESTIONS: tuple[OnboardingQuestion, ...] = (
-    OnboardingQuestion(
-        id="user_name",
-        prompt="What should I call you?",
-        contract_field="user_name",  # not on the contract directly; see note below
-        required=True,
-    ),
-    OnboardingQuestion(
-        id="persona_given_name",
-        prompt=(
-            "What should I call myself? "
-            "(You can also pick a different name later.)"
-        ),
-        contract_field="given_name",
-        required=True,
-    ),
-    OnboardingQuestion(
-        id="domain_focus",
-        prompt="What kinds of work do you most want me to handle?",
-        contract_field="responsibilities.single_point_of_contact",
-        required=True,
-    ),
-    OnboardingQuestion(
-        id="dev_intent",
-        prompt=(
-            "Are you here to develop pos-v2 itself, or to use it as "
-            "a harness for your own work? (yes = developing pos-v2; "
-            "no = using it.)"
-        ),
-        contract_field="dev_intent",
-        required=True,
-    ),
-)
+# ---- structurally-detectable marker ----------------------------------
 
-
-# Accepted dev-intent answer literals. The contract's
-# ``Literal["unanswered", "yes", "no"]`` typing rejects anything else
-# structurally; this set is the transcript-time sanitiser so a free-
-# text user reply normalises to the contract's admissible values
-# before the contract validator sees them.
-_DEV_INTENT_YES = frozenset({"yes", "y", "develop", "dev", "pos-v2", "true"})
-_DEV_INTENT_NO = frozenset({"no", "n", "use", "user", "harness", "false"})
-
-
-# Note on ``user_name``: the persona contract holds ``given_name`` for
-# the persona's own name; the *user's* preferred address lives in the
-# workspace's ``prompt.md`` body or in user-context the persona learns
-# (memory). Recording the user_name answer in the transcript and
-# emitting an observability event is sufficient for AC35.4 (the AC
-# measures persistence of answers; user_name is intentionally a non-
-# contract write-back so the value flows into prompt.md if a future
-# amendment writes one — outside this amendment's scope). The
-# transcript's user_name entry is preserved through the write-back
-# call and emitted as an event for downstream consumers.
-
-
-# Structurally-detectable marker prefix on the starter-pending
-# contributor's first line. AC35.3 measures presence of this prefix.
+# Preserved from amendment #35; the marker prefix is what the
+# session-start hook detects to know the workspace is in starter
+# state. The hook surface (D8 composer) is unchanged.
 STARTER_PENDING_MARKER = "[primary-persona/onboarding starter-pending]"
 
 
-# ---- starter-pending contributor ------------------------------------
+# ---- starter-pending contributor (AC.O.2) ----------------------------
 
 
 def build_starter_pending_contributor(
     loaded_persona: Any,
 ) -> Callable[[dict[str, Any]], str]:
-    """Return the callable registered on
+    """Return the callable registered against
     ``ComposedContextPayload.register(name="starter-pending",
     trigger_kind=TriggerKind.session, fn=<returned callable>)``.
 
     On every ``on_session_start`` the contributor inspects the
-    loaded persona's contract; if ``is_starter`` is True it returns a
-    starter-pending block whose first line carries
-    ``STARTER_PENDING_MARKER`` (AC35.3 measures this); else returns the
-    empty string (the composer's convention for "no contribution
-    this turn").
+    loaded persona's contract; if ``is_starter`` is True it returns
+    a starter-pending block whose:
+
+    - first line is ``STARTER_PENDING_MARKER``;
+    - body points the persona at the conversation playbook in
+      ``prompt.md``;
+    - body names the ``persist_grounding`` write-back surface and
+      the resolved contract path;
+    - body does **not** carry a numbered question list, and does
+      **not** name the prior elicitation question ids
+      (``user_name``, ``persona_given_name``, ``domain_focus``,
+      ``dev_intent`` as bare ``id=...`` markers — the new shape
+      inverts the prior list shape entirely);
+    - total length is ≤ 2,000 chars (preserved per-contributor
+      budget per AC46.7).
+
+    Under a non-starter contract the contributor returns the empty
+    string (the composer's convention for "no contribution this
+    turn").
 
     ``loaded_persona`` is the late-bound persona reference — the
     contributor reads ``loaded_persona.contract`` on each invocation,
-    so a contract whose ``is_starter`` was flipped during the session
-    (by ``persist_elicitation_transcript``) is reflected on the next
+    so a contract whose ``is_starter`` was flipped during the
+    session (by ``persist_grounding``) is reflected on the next
     session-start without re-registration.
     """
 
@@ -171,260 +158,399 @@ def build_starter_pending_contributor(
         contract = loaded_persona.contract
         if not getattr(contract, "is_starter", False):
             return ""
-        # Question count derived from the canonical tuple per
-        # sub-plan A D-A.3 — adding a fifth question in the future
-        # never silently drifts the body text.
-        question_count = len(ONBOARDING_QUESTIONS)
 
-        # Resolve the contract path so the write-back instructions can
-        # name an exact target (AC46.7). The loaded persona carries
-        # ``directory`` (loader.LoadedPersona); contract.yaml is the
-        # canonical filename. Fall back to a placeholder if the
-        # attribute is absent (test fixtures using a stand-in
-        # _FakeLoadedPersona without ``directory``).
         directory = getattr(loaded_persona, "directory", None)
         if directory is not None:
             contract_path_str = f"{directory}/contract.yaml"
+            prompt_path_str = f"{directory}/prompt.md"
         else:
             contract_path_str = "<workspace>/personas/<handle>/contract.yaml"
+            prompt_path_str = "<workspace>/personas/<handle>/prompt.md"
 
-        # AC46.7 — body widening. Preserves AC35.3 (first line is the
-        # marker) and AC.A.4 (body contains "{count} questions").
-        # Body now includes the question id+prompt list and write-back
-        # instructions naming ``persist_elicitation_transcript`` so the
-        # loaded persona can conduct the elicitation from
-        # additionalContext alone (without persona-prompt customisation).
-        lines: list[str] = [
-            STARTER_PENDING_MARKER,
-            (
-                f"The workspace's persona contract is in starter state. "
-                f"{contract.given_name} opens elicitation on the next "
-                f"user turn ({question_count} questions, ~2 minutes, "
-                f"skippable)."
-            ),
-            "",
-            "questions:",
-        ]
-        for q in ONBOARDING_QUESTIONS:
-            lines.append(
-                f"  - id={q.id} required={q.required} prompt={q.prompt}"
-            )
-        lines.extend(
-            [
-                "",
-                "write-back:",
-                (
-                    "  Call "
-                    "primary_persona.onboarding.persist_elicitation_"
-                    "transcript(loaded_persona=<persona>, "
-                    "transcript={<id>: <answer>, ...}, "
-                    f"contract_path=Path({contract_path_str!r})) "
-                    "after collecting non-empty answers for every "
-                    "required id. The call flips is_starter to False "
-                    "on a complete transcript and writes the contract "
-                    "yaml back to disk."
-                ),
-            ]
+        body = (
+            f"{STARTER_PENDING_MARKER}\n"
+            f"The workspace's persona contract is in starter state. "
+            f"{contract.given_name} opens conversational onboarding "
+            f"on the next user turn — see the playbook in "
+            f"{prompt_path_str}.\n"
+            "\n"
+            "playbook:\n"
+            "  Open with the three seed questions, run a funnel "
+            "with two reflections per question, and pivot from "
+            "listening to proposing when the 3-of-5 rule fires "
+            "(see the Pivot rule section of prompt.md). At the "
+            "proposal moment, reflect what was heard, offer 2–3 "
+            "concrete deliverables, and close with a question.\n"
+            "\n"
+            "write-back:\n"
+            "  When the user picks a deliverable, build a "
+            "GroundingCapture from the conversation and call "
+            "primary_persona.onboarding.persist_grounding("
+            "loaded_persona=<persona>, grounding=<GroundingCapture>, "
+            f"contract_path=Path({contract_path_str!r})). The call "
+            "writes the contract, regenerates prompt.md and "
+            ".claude/agents/<handle>.md, flips is_starter to False, "
+            "and records an onboarding-grounding memory episode "
+            "(if the live MCP client is available)."
         )
-        body = "\n".join(lines)
 
-        # Per-contributor budget guard (AC46.7): keep the body under
-        # 2,000 chars so the SessionStart payload's other contributors
-        # fit alongside under the composer's 10,000-char cap. The
-        # canonical 4-question tuple produces ~800 chars; defensive
-        # truncation kicks in only if a future contract author appends
-        # very-long-prompt questions.
+        # Per-contributor budget guard (AC46.7 inheritance — kept
+        # verbatim from the prior shape). The new body is small
+        # (~1,000 chars at typical workspace path lengths); the
+        # guard is defence-in-depth for unusually long workspace
+        # paths. AC.O.2 measures ≤ 2,000.
         _BUDGET = 2000
         if len(body) > _BUDGET:
-            # Hard-trim trailing question prompts; retain the marker,
-            # introductory line, every question id (so the persona can
-            # still iterate the schema), and the write-back block.
-            ellipsis = "  [body trimmed to fit per-contributor budget]"
-            head = (
+            body = (
                 f"{STARTER_PENDING_MARKER}\n"
-                f"The workspace's persona contract is in starter "
-                f"state. {contract.given_name} opens elicitation on "
-                f"the next user turn ({question_count} questions, ~2 "
-                f"minutes, skippable).\n\nquestions:"
+                f"{contract.given_name} opens conversational "
+                f"onboarding next turn — see playbook at "
+                f"{prompt_path_str}; write back via "
+                "persist_grounding."
             )
-            ids_only = "\n".join(
-                f"  - id={q.id}" for q in ONBOARDING_QUESTIONS
-            )
-            tail = lines[-3] + "\n" + lines[-2] + "\n" + lines[-1]
-            body = head + "\n" + ids_only + "\n" + ellipsis + "\n" + tail
-            if len(body) > _BUDGET:
-                # Truly defensive: the static text already exceeds the
-                # budget. Preserve the marker + ellipsis only. The
-                # elicitation surface degrades; the marker still
-                # signals starter-pending so the persona knows to act.
-                body = (
-                    f"{STARTER_PENDING_MARKER}\n"
-                    f"{question_count} questions; body exceeded "
-                    f"{_BUDGET}-char budget — see "
-                    "primary_persona.onboarding.ONBOARDING_QUESTIONS."
-                )
         return body
 
     return contributor
 
 
-# ---- transcript shape + write-back ----------------------------------
+# ---- captured-grounding write-back (AC.O.3 / AC.O.4 / AC.O.5) -------
 
 
-def _is_complete_transcript(transcript: dict[str, str]) -> bool:
-    """All required questions answered with non-empty strings."""
-    for q in ONBOARDING_QUESTIONS:
-        if not q.required:
-            continue
-        value = transcript.get(q.id)
+def _validate_grounding_payload(grounding: GroundingCapture) -> None:
+    """Reject a malformed ``GroundingCapture`` before any file write.
+
+    The fail-closed direction (locked plan §7 constraint 6): on
+    any malformed field, raise ``OnboardingGroundingError`` and do
+    not write any file. The caller's contract is "if this returns,
+    the payload is safe to apply"; if it raises, no on-disk state
+    has been mutated.
+    """
+
+    def _ensure_nonempty(field: str, value: Any) -> None:
         if not isinstance(value, str) or not value.strip():
-            return False
-    return True
-
-
-def _validate_transcript_shape(transcript: dict[str, str]) -> None:
-    """Reject malformed transcripts — non-str values, unknown ids."""
-    known_ids = {q.id for q in ONBOARDING_QUESTIONS}
-    for k, v in transcript.items():
-        if k not in known_ids:
-            raise OnboardingTranscriptError(
-                f"transcript carries unknown question id: {k!r}"
-            )
-        if not isinstance(v, str):
-            raise OnboardingTranscriptError(
-                f"transcript value for {k!r} must be str, got {type(v).__name__}"
+            raise OnboardingGroundingError(
+                f"GroundingCapture.{field} must be a non-empty "
+                f"string; got {value!r}"
             )
 
+    _ensure_nonempty("user_preferred_name", grounding.user_preferred_name)
+    _ensure_nonempty("persona_given_name", grounding.persona_given_name)
+    _ensure_nonempty("single_point_of_contact", grounding.single_point_of_contact)
+    _ensure_nonempty("context_holder", grounding.context_holder)
+    _ensure_nonempty("escalation_judge", grounding.escalation_judge)
 
-def persist_elicitation_transcript(
+    if grounding.dev_intent not in ("yes", "no"):
+        raise OnboardingGroundingError(
+            "GroundingCapture.dev_intent must be 'yes' or 'no'; "
+            f"got {grounding.dev_intent!r}"
+        )
+
+    if not isinstance(grounding.captured_summary, tuple):
+        raise OnboardingGroundingError(
+            "GroundingCapture.captured_summary must be a tuple of "
+            f"non-empty strings; got {type(grounding.captured_summary).__name__}"
+        )
+    if len(grounding.captured_summary) == 0:
+        raise OnboardingGroundingError(
+            "GroundingCapture.captured_summary must be a non-empty "
+            "tuple of summary bullets"
+        )
+    for i, bullet in enumerate(grounding.captured_summary):
+        if not isinstance(bullet, str) or not bullet.strip():
+            raise OnboardingGroundingError(
+                f"GroundingCapture.captured_summary[{i}] must be a "
+                f"non-empty string; got {bullet!r}"
+            )
+
+
+def _resolve_template_prompt_body() -> str:
+    """Locate the framework-shipped persona-template prompt.md and
+    return its body text.
+
+    Walks ``Path(__file__).parents`` for a directory layout
+    ``primary-persona/templates/persona-template/prompt.md``. This
+    mirrors the resolver used by ``workspace-bootstrap``'s scaffold
+    (``_resolve_persona_template_dir``); the persona layer reads
+    its own template directly here rather than import from the
+    workspace-bootstrap component.
+
+    Raises ``OnboardingGroundingError`` if the template cannot be
+    located — a structural failure that surfaces to the caller as a
+    grounding-write rejection (the disk write-back cannot proceed
+    without a template body). This branch maps to AC.O.4 (template
+    body must be readable to substitute names into).
+    """
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = (
+            parent / "primary-persona" / "templates"
+            / "persona-template" / "prompt.md"
+        )
+        if candidate.is_file():
+            return candidate.read_text()
+        # The persona-template lives under primary-persona/; if we
+        # are inside primary-persona/src/, the template is at
+        # ../templates/persona-template/prompt.md.
+        sibling = (
+            parent / "templates" / "persona-template" / "prompt.md"
+        )
+        if sibling.is_file():
+            return sibling.read_text()
+    raise OnboardingGroundingError(
+        "framework persona-template prompt.md not found while "
+        "rendering onboarding grounding write-back"
+    )
+
+
+def _render_prompt_md(
+    template_body: str,
+    *,
+    user_preferred_name: str,
+    persona_given_name: str,
+) -> str:
+    """Substitute the ``{user_preferred_name}`` and
+    ``{persona_given_name}`` tokens in the template body via
+    ``str.format``.
+
+    The template author escapes any literal ``{`` / ``}`` outside
+    these two tokens as ``{{`` / ``}}`` per Python's str.format
+    convention. AC.O.1 verifies the tokens are present in the
+    template; AC.O.4 verifies the substituted output carries the
+    user-chosen names and no leftover token literal.
+    """
+    return template_body.format(
+        user_preferred_name=user_preferred_name,
+        persona_given_name=persona_given_name,
+    )
+
+
+def _build_episode_body(grounding: GroundingCapture) -> str:
+    """Compose the body of the onboarding-grounding memory
+    episode from the captured grounding.
+
+    Includes the captured-summary bullets and the inferred fields
+    so a future retrieval surface (out of scope for this amendment)
+    can reconstruct the user's session-1 self-description without
+    re-asking. AC.O.5 measures presence of the captured-summary
+    text in the emitted episode body.
+    """
+    summary_block = "\n".join(
+        f"- {bullet}" for bullet in grounding.captured_summary
+    )
+    return (
+        f"Onboarding grounding captured during session 1.\n\n"
+        f"User preferred name: {grounding.user_preferred_name}\n"
+        f"Persona given name: {grounding.persona_given_name}\n"
+        f"dev_intent: {grounding.dev_intent}\n\n"
+        f"Single point of contact:\n  {grounding.single_point_of_contact}\n\n"
+        f"Context holder:\n  {grounding.context_holder}\n\n"
+        f"Escalation judge:\n  {grounding.escalation_judge}\n\n"
+        f"Captured summary:\n{summary_block}\n"
+    )
+
+
+def persist_grounding(
     *,
     loaded_persona: Any,
-    transcript: dict[str, str],
+    grounding: GroundingCapture,
     contract_path: Path,
     workspace_slug: str | None = None,
+    memory_client_factory: Callable[[], Any | None] | None = None,
 ) -> PersonaContract:
-    """Write transcript answers back to the contract on disk.
+    """Write the captured grounding back across the three persona
+    surfaces (contract / prompt.md / .claude/agents/<handle>.md)
+    and optionally record one onboarding-grounding memory episode.
 
-    Validates the transcript shape (raises ``OnboardingTranscriptError``
-    on structural malformation). On a *complete* transcript: applies
-    every required-question answer to the corresponding contract
-    field, flips ``is_starter`` to False, serialises via
-    ``contract.to_yaml()``, writes ``contract_path``, and returns the
-    new contract. On an *incomplete* transcript: applies any answers
-    present (best-effort), keeps ``is_starter`` True, serialises +
-    writes, returns the new contract. The next session re-opens
-    elicitation (AC35.4 negative path).
+    Validation (fail-closed): the ``GroundingCapture`` payload is
+    validated first; any malformed field raises
+    ``OnboardingGroundingError`` and **no file is written**.
 
-    Emits OTel events for each question dispatched, each answer
-    recorded, the write-back outcome, and any starter-flag transition
-    (AC35.7).
+    On a well-formed payload:
+
+    1. Build the new contract from the loaded persona's serialised
+       form, applying the captured fields. ``is_starter`` flips to
+       False. ``dev_intent`` is set to the captured literal.
+    2. Validate via ``PersonaContract.model_validate``; any
+       validation failure raises ``OnboardingGroundingError`` (no
+       file write).
+    3. Write the new contract YAML to ``contract_path``.
+    4. Render and write ``<persona_dir>/prompt.md`` from the
+       framework template body with substitution-token rendering.
+    5. Render and write ``<workspace>/.claude/agents/<handle>.md``
+       via ``to_agent_md`` (carrying the rendered prompt body).
+    6. If ``memory_client_factory`` is provided and returns a
+       non-None client: drive one ``add_episode`` call with
+       ``source_description="onboarding-grounding"``. On client
+       failure (None factory result, raise during the call), the
+       failure is observable via an event but the disk write-back
+       is unaffected — the call never raises out of the memory
+       step (AC.O.5 fail-soft).
+
+    Returns the new validated ``PersonaContract``.
     """
-    _validate_transcript_shape(transcript)
+    _validate_grounding_payload(grounding)
 
     current = loaded_persona.contract
     handle = current.handle
 
-    # Emit one question + answer event per known question (whether or
-    # not it has a transcript entry — observability spans the
-    # elicitation lifecycle, not just the answered subset).
-    for q in ONBOARDING_QUESTIONS:
-        obs.onboarding_question_event(
-            handle=handle, question_id=q.id, workspace_slug=workspace_slug
-        )
-        # Sub-plan A AC.A.7 — distinct dev-intent question event so
-        # consumers can count it without filtering on question_id.
-        if q.id == "dev_intent":
-            obs.onboarding_dev_intent_question_event(
-                handle=handle, workspace_slug=workspace_slug
-            )
-        answer = transcript.get(q.id, "")
-        if isinstance(answer, str) and answer.strip():
-            obs.onboarding_answer_event(
-                handle=handle,
-                question_id=q.id,
-                answer_length=len(answer),
-            )
-
-    completed = _is_complete_transcript(transcript)
-
-    # Build the updated contract dict — start from the current
-    # contract's serialised form so all preserved fields keep their
-    # values; mutate only the fields with answers.
+    # ---- 1+2. Build + validate the new contract --------------
     payload = current.model_dump(mode="json")
+    payload["given_name"] = grounding.persona_given_name
+    payload["responsibilities"]["single_point_of_contact"] = (
+        grounding.single_point_of_contact
+    )
+    payload["responsibilities"]["context_holder"] = grounding.context_holder
+    payload["responsibilities"]["escalation_judge"] = grounding.escalation_judge
+    payload["dev_intent"] = grounding.dev_intent
+    payload["is_starter"] = False
 
-    persona_given_name = transcript.get("persona_given_name", "").strip()
-    if persona_given_name:
-        payload["given_name"] = persona_given_name
+    try:
+        new_contract = PersonaContract.model_validate(payload)
+    except Exception as exc:  # noqa: BLE001 — wrap as grounding error
+        raise OnboardingGroundingError(
+            f"new contract failed validation after applying "
+            f"GroundingCapture: {exc}"
+        ) from exc
 
-    domain_focus = transcript.get("domain_focus", "").strip()
-    if domain_focus:
-        payload["responsibilities"]["single_point_of_contact"] = domain_focus
-
-    # Sub-plan A AC.A.3 — dev-intent write-back. Normalise the user's
-    # free-text answer to the contract's Literal admissible values; an
-    # unrecognised non-empty answer raises OnboardingTranscriptError
-    # (distinct from "incomplete" — the user gave an answer the
-    # framework cannot map to yes/no, which is structural).
-    dev_intent_raw = transcript.get("dev_intent", "")
-    if isinstance(dev_intent_raw, str) and dev_intent_raw.strip():
-        normalised = _normalise_dev_intent(dev_intent_raw)
-        if normalised is None:
-            raise OnboardingTranscriptError(
-                f"transcript value for 'dev_intent' must be a yes/no answer, "
-                f"got {dev_intent_raw!r}"
-            )
-        payload["dev_intent"] = normalised
-        obs.onboarding_dev_intent_answer_event(
-            handle=handle,
-            answer=normalised,
-            workspace_slug=workspace_slug,
-        )
-
-    # user_name does not map to a contract field in this amendment's
-    # scope (see module-docstring note). Its presence is recorded via
-    # the answer event above; no payload mutation here.
-
-    new_is_starter = False if completed else current.is_starter
-    payload["is_starter"] = new_is_starter
-
-    new_contract = PersonaContract.model_validate(payload)
-
-    # Write the YAML to disk via the contract's existing surface.
+    # ---- 3. Write contract.yaml ------------------------------
+    contract_path = Path(contract_path)
     contract_path.write_text(new_contract.to_yaml())
 
-    # Emit write-back + starter-flag-transition events.
-    obs.onboarding_writeback_event(
-        handle=handle, completed=completed, workspace_slug=workspace_slug
+    # ---- 4+5. Render + write prompt.md and agent file --------
+    template_body = _resolve_template_prompt_body()
+    rendered_prompt = _render_prompt_md(
+        template_body,
+        user_preferred_name=grounding.user_preferred_name,
+        persona_given_name=grounding.persona_given_name,
     )
-    if current.is_starter != new_is_starter:
+
+    persona_dir = contract_path.parent
+    prompt_path = persona_dir / "prompt.md"
+    prompt_path.write_text(rendered_prompt)
+
+    # workspace_root = <workspace>/personas/<handle>/contract.yaml
+    #                              ^^^^^^^^^^^^^^^^^^
+    # persona_dir.parent = <workspace>/personas
+    # persona_dir.parent.parent = <workspace>
+    workspace_root = persona_dir.parent.parent
+    claude_agents_dir = workspace_root / ".claude" / "agents"
+    claude_agents_dir.mkdir(parents=True, exist_ok=True)
+    agent_md_path = claude_agents_dir / f"{handle}.md"
+    agent_md_text = to_agent_md(new_contract, prompt_text=rendered_prompt)
+    agent_md_path.write_text(agent_md_text)
+
+    # ---- 6. Optional memory episode (AC.O.5) -----------------
+    if memory_client_factory is not None:
+        _maybe_write_grounding_episode(
+            grounding=grounding,
+            handle=handle,
+            workspace_slug=workspace_slug,
+            factory=memory_client_factory,
+        )
+
+    # Observability: grounding-persisted event so audit can
+    # correlate with the contract write.
+    obs.onboarding_grounding_persisted_event(
+        handle=handle, workspace_slug=workspace_slug
+    )
+
+    # Starter-flag transition is observable on every successful
+    # persist_grounding (the only path that flips is_starter to
+    # False). Reuse the existing event from amendment #35.
+    if current.is_starter and not new_contract.is_starter:
         obs.onboarding_starter_flag_transition_event(
             handle=handle,
             from_value=current.is_starter,
-            to_value=new_is_starter,
+            to_value=new_contract.is_starter,
         )
 
     return new_contract
 
 
-# ---- dev-intent helpers (sub-plan A — two-modes-and-multi-workspace) -
+def _maybe_write_grounding_episode(
+    *,
+    grounding: GroundingCapture,
+    handle: str,
+    workspace_slug: str | None,
+    factory: Callable[[], Any | None],
+) -> None:
+    """Drive one ``add_episode`` call against the memory client the
+    factory produces. Fail-soft: on no-client / client-raise the
+    function emits an observability event and returns; the caller
+    treats this as best-effort.
 
-
-def _normalise_dev_intent(raw: str) -> Literal["yes", "no"] | None:
-    """Map a free-text answer to the contract's Literal yes/no.
-
-    Returns ``None`` for any non-empty input that is neither a known
-    yes-token nor a known no-token; callers translate ``None`` to
-    ``OnboardingTranscriptError``. The normaliser is intentionally
-    case-insensitive and trims surrounding whitespace.
+    The factory is called fresh on every invocation so the live
+    MCP client's per-call session lifecycle is honoured (mirrors
+    the pattern used by ``cli_memory_write`` in ``stop_emitter.py``).
     """
-    token = raw.strip().lower()
-    if not token:
-        return None
-    if token in _DEV_INTENT_YES:
-        return "yes"
-    if token in _DEV_INTENT_NO:
-        return "no"
-    return None
+    try:
+        client = factory()
+    except Exception as exc:  # noqa: BLE001 — fail-soft per AC.O.5
+        obs.onboarding_grounding_episode_failed_event(
+            handle=handle,
+            workspace_slug=workspace_slug,
+            stage="factory",
+            error=f"{type(exc).__name__}: {exc}",
+        )
+        return
+
+    if client is None:
+        # Pre-Stop-hook-landing state, or workspace without a live
+        # MCP client. The disk write-back has already succeeded;
+        # the no-episode path is the documented graceful default.
+        return
+
+    body = _build_episode_body(grounding)
+    name = f"onboarding-grounding-{handle}"
+    reference_time = datetime.now(timezone.utc)
+    # ``source`` per amendment #24 / #48 schema — onboarding
+    # episodes use the deterministic "message" source per the
+    # write-side contract (the persona's distillation is a
+    # message-shape episode, not e.g. JSON or code).
+    source = "message"
+    # ``group_id`` per amendment #24 — the workspace slug isolates
+    # episodes per-workspace. Fall back to the handle when the
+    # slug is not provided (test fixtures often omit it).
+    group_id = workspace_slug or handle
+
+    add = client.add_episode
+
+    try:
+        result = add(
+            name=name,
+            body=body,
+            source_description="onboarding-grounding",
+            reference_time=reference_time,
+            source=source,
+            group_id=group_id,
+        )
+    except Exception as exc:  # noqa: BLE001 — fail-soft per AC.O.5
+        obs.onboarding_grounding_episode_failed_event(
+            handle=handle,
+            workspace_slug=workspace_slug,
+            stage="call",
+            error=f"{type(exc).__name__}: {exc}",
+        )
+        return
+
+    # If ``add_episode`` is async (live MCP client uses asyncio),
+    # the call returns a coroutine — drive it to completion via
+    # ``asyncio.run``. A sync fake client returns a dict directly;
+    # both shapes work without isinstance gymnastics on
+    # asyncio.iscoroutine.
+    if isinstance(result, Awaitable):
+        try:
+            asyncio.run(result)
+        except Exception as exc:  # noqa: BLE001 — fail-soft per AC.O.5
+            obs.onboarding_grounding_episode_failed_event(
+                handle=handle,
+                workspace_slug=workspace_slug,
+                stage="await",
+                error=f"{type(exc).__name__}: {exc}",
+            )
+
+
+# ---- dev-intent helpers (sub-plan A — preserved verbatim) ------------
 
 
 def dev_intent_storage_path(workspace_root: Path) -> Path:
@@ -435,14 +561,14 @@ def dev_intent_storage_path(workspace_root: Path) -> Path:
     lives on the persona contract itself. The workspace's primary
     persona contract is at
     ``<workspace>/personas/<handle>/contract.yaml``. The handle is
-    not statically known (workspace-bootstrap chooses it at scaffold
-    time), so the resolver returns the *personas* directory path
-    that the reader walks to find the primary contract.
+    not statically known (workspace-bootstrap chooses it at
+    scaffold time), so the resolver returns the *personas*
+    directory path that the reader walks to find the primary
+    contract.
 
     Sub-plans E, B, F consume this resolver — not the contract
     directly — so the storage shape is substitutable without
-    re-reading those sub-plans (per AC.A.5 rationale + sub-plan A
-    asymmetric observation #2: resolver-as-API).
+    re-reading those sub-plans.
     """
     return Path(workspace_root) / "personas"
 
@@ -467,12 +593,10 @@ def _primary_contract_path(workspace_root: Path) -> Path | None:
             candidates.append(contract_path)
     if not candidates:
         return None
-    # Prefer a primary-flagged contract; otherwise return the first
-    # alphabetical contract (deterministic).
     for candidate in candidates:
         try:
             contract = load_contract(candidate)
-        except Exception:  # noqa: BLE001 — fail-safe on malformed contract
+        except Exception:  # noqa: BLE001 — fail-safe
             continue
         if getattr(contract, "is_primary", False):
             return candidate
@@ -486,17 +610,16 @@ def read_dev_intent(
 
     Returns ``"yes"`` / ``"no"`` when the persona contract carries
     an answered ``dev_intent`` field. Returns ``"absent"`` when the
-    workspace has no contract yet, when the contract fails to load,
-    or when the contract's ``dev_intent`` is the documented
-    ``"unanswered"`` sentinel. Per locked owner ruling D-MASTER.4
-    consumers (sub-plan E) treat ``"absent"`` as "no".
+    workspace has no contract yet, when the contract fails to
+    load, or when the contract's ``dev_intent`` is the documented
+    ``"unanswered"`` sentinel.
     """
     contract_path = _primary_contract_path(workspace_root)
     if contract_path is None:
         return "absent"
     try:
         contract = load_contract(contract_path)
-    except Exception:  # noqa: BLE001 — fail-safe on malformed contract
+    except Exception:  # noqa: BLE001 — fail-safe
         return "absent"
     answer = getattr(contract, "dev_intent", "unanswered")
     if answer == "yes":

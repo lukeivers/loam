@@ -180,109 +180,6 @@ def onboarding_render_event(*, handle: str, length: int) -> None:
         )
 
 
-def onboarding_question_event(
-    *, handle: str, question_id: str, workspace_slug: str | None = None
-) -> None:
-    """One event per onboarding question dispatched (AC35.7)."""
-    with _tracer().start_as_current_span("pos.persona.onboarding.question") as span:
-        attrs: dict[str, Any] = {
-            "pos.persona.onboarding.handle": handle,
-            "pos.persona.onboarding.question_id": question_id,
-        }
-        if workspace_slug is not None:
-            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
-        span.add_event("pos.persona.onboarding.question", attrs)
-
-
-def onboarding_answer_event(
-    *, handle: str, question_id: str, answer_length: int
-) -> None:
-    """One event per recorded answer (AC35.7).
-
-    Records the answer's length, not its content — the answer body is
-    workspace-supplied content (STATE.md rule 4); observability
-    captures auditable metadata, not the prose itself.
-    """
-    with _tracer().start_as_current_span("pos.persona.onboarding.answer") as span:
-        span.add_event(
-            "pos.persona.onboarding.answer",
-            {
-                "pos.persona.onboarding.handle": handle,
-                "pos.persona.onboarding.question_id": question_id,
-                "pos.persona.onboarding.answer.length": answer_length,
-            },
-        )
-
-
-def onboarding_writeback_event(
-    *, handle: str, completed: bool, workspace_slug: str | None = None
-) -> None:
-    """One event per contract write-back (AC35.7).
-
-    ``completed`` is True when the transcript was complete and the
-    write-back also flipped ``is_starter`` to False; False on a
-    partial write-back (incomplete transcript) where ``is_starter``
-    remains True.
-    """
-    with _tracer().start_as_current_span("pos.persona.onboarding.writeback") as span:
-        attrs: dict[str, Any] = {
-            "pos.persona.onboarding.handle": handle,
-            "pos.persona.onboarding.writeback.completed": completed,
-        }
-        if workspace_slug is not None:
-            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
-        span.add_event("pos.persona.onboarding.writeback", attrs)
-
-
-def onboarding_dev_intent_question_event(
-    *, handle: str, workspace_slug: str | None = None
-) -> None:
-    """One event per dev-intent question dispatched (sub-plan A AC.A.7).
-
-    Distinct from the generic ``onboarding_question_event`` so
-    observability consumers can count dev-intent prompts without
-    pattern-matching the question_id attribute. Fires once per
-    starter session at the moment the dev-intent question is
-    surfaced (currently: alongside the rest of the question batch
-    in ``persist_elicitation_transcript``).
-    """
-    with _tracer().start_as_current_span(
-        "pos.persona.onboarding.dev_intent_question"
-    ) as span:
-        attrs: dict[str, Any] = {
-            "pos.persona.onboarding.handle": handle,
-        }
-        if workspace_slug is not None:
-            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
-        span.add_event(
-            "pos.persona.onboarding.dev_intent_question", attrs
-        )
-
-
-def onboarding_dev_intent_answer_event(
-    *, handle: str, answer: str, workspace_slug: str | None = None
-) -> None:
-    """One event per dev-intent answer recorded (sub-plan A AC.A.7).
-
-    ``answer`` is the normalised contract value (``"yes"`` /
-    ``"no"``) — bounded vocabulary, not free-text user prose, so
-    emitting it satisfies STATE.md rule 4 (the field carries
-    framework-level state, not workspace-supplied content).
-    """
-    with _tracer().start_as_current_span(
-        "pos.persona.onboarding.dev_intent_answer"
-    ) as span:
-        attrs: dict[str, Any] = {
-            "pos.persona.onboarding.handle": handle,
-            "pos.persona.onboarding.dev_intent.answer": answer,
-        }
-        if workspace_slug is not None:
-            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
-        span.add_event(
-            "pos.persona.onboarding.dev_intent_answer", attrs
-        )
-
-
 def onboarding_starter_flag_transition_event(
     *, handle: str, from_value: bool, to_value: bool
 ) -> None:
@@ -301,6 +198,64 @@ def onboarding_starter_flag_transition_event(
                 "pos.persona.onboarding.starter_flag.from": from_value,
                 "pos.persona.onboarding.starter_flag.to": to_value,
             },
+        )
+
+
+# ---- conversational-onboarding grounding (amendment #50) -------------
+
+
+def onboarding_grounding_persisted_event(
+    *, handle: str, workspace_slug: str | None = None
+) -> None:
+    """One event per successful grounding write-back (AC.O.5 / AC.O.4
+    cross-cutting).
+
+    Fires after the contract / prompt.md / .claude/agents/<handle>.md
+    triplet has been written; observability captures the structural
+    completion of the captured-grounding write-back. The optional
+    memory episode is reported separately via
+    ``onboarding_grounding_episode_failed_event`` on failure.
+    """
+    with _tracer().start_as_current_span(
+        "pos.persona.onboarding.grounding_persisted"
+    ) as span:
+        attrs: dict[str, Any] = {
+            "pos.persona.onboarding.handle": handle,
+        }
+        if workspace_slug is not None:
+            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
+        span.add_event(
+            "pos.persona.onboarding.grounding_persisted", attrs
+        )
+
+
+def onboarding_grounding_episode_failed_event(
+    *,
+    handle: str,
+    workspace_slug: str | None = None,
+    stage: str,
+    error: str,
+) -> None:
+    """One event per ``add_episode`` write-failure during
+    ``persist_grounding`` (AC.O.5 fail-soft direction).
+
+    The disk write-back already succeeded by the time this fires;
+    the memory episode is best-effort. ``stage`` names which step
+    failed (``factory`` | ``call`` | ``await``); ``error`` names
+    the exception class + message tail.
+    """
+    with _tracer().start_as_current_span(
+        "pos.persona.onboarding.grounding_episode_failed"
+    ) as span:
+        attrs: dict[str, Any] = {
+            "pos.persona.onboarding.handle": handle,
+            "pos.persona.onboarding.grounding_episode.stage": stage,
+            "pos.persona.onboarding.grounding_episode.error": error,
+        }
+        if workspace_slug is not None:
+            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
+        span.add_event(
+            "pos.persona.onboarding.grounding_episode_failed", attrs
         )
 
 

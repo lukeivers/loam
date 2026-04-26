@@ -172,19 +172,54 @@ def _persona_inner_hooks(pos_v2_root: Path) -> list[dict]:
         return []
 
 
+def _corpus_load_inner_hooks(pos_v2_root: Path) -> list[dict]:
+    """Return the corpus-load sentinel SessionStart inner-hook entry.
+
+    Structural-enforcement A1 substrate (AC.SE.4). The CLI lives at
+    ``hands-off-lifecycle/hooks/corpus_load_session_start.py``; the
+    inner hook invokes it under the workspace's shared venv Python so
+    the optional ``loam_mode`` import inside the sentinel module is
+    resolvable. The CLI is fail-soft — every exception path returns
+    exit 0 — so this helper is fire-and-forget at session-start.
+    """
+    venv_python = pos_v2_root / ".venv" / "bin" / "python"
+    script = (
+        pos_v2_root
+        / "hands-off-lifecycle"
+        / "hooks"
+        / "corpus_load_session_start.py"
+    )
+    return [
+        {
+            "type": "command",
+            "command": f"{venv_python} {script}",
+            "async": False,
+            # 5s matches loam-mode + persona inner-hook timeouts (the
+            # established A1 substrate budget per plan-doc §5
+            # constraint 3).
+            "timeout": 5,
+        }
+    ]
+
+
 def _extra_session_start_hooks(pos_v2_root: Path) -> list[dict]:
     """Return the SessionStart envelope's ``extra_inner_hooks`` list.
 
     Order per umbrella plan §6 D5 (D-build.6 in the builder plan):
-    persona → loam-mode. The base inner hook (first-run.sh in
-    `build_first_run_stanza`; supervisor in `build_supervisor_stanza`)
-    composes BEFORE these via the stanza builder; the final order at
-    Claude Code's hook fan-out is: probe (base) → persona → loam-mode.
+    persona → loam-mode → corpus-load. The base inner hook
+    (first-run.sh in `build_first_run_stanza`; supervisor in
+    `build_supervisor_stanza`) composes BEFORE these via the stanza
+    builder; the final order at Claude Code's hook fan-out is:
+    probe (base) → persona → loam-mode → corpus-load.
 
-    Either helper independently returning ``[]`` is graceful; the
-    envelope simply omits that hook and the rest compose normally.
+    Each contributor independently fail-soft; one returning ``[]`` is
+    graceful (the envelope simply omits that hook).
     """
-    return _persona_inner_hooks(pos_v2_root) + _loam_mode_inner_hooks(pos_v2_root)
+    return (
+        _persona_inner_hooks(pos_v2_root)
+        + _loam_mode_inner_hooks(pos_v2_root)
+        + _corpus_load_inner_hooks(pos_v2_root)
+    )
 
 
 def _persona_user_prompt_submit_stanza(pos_v2_root: Path) -> dict | None:

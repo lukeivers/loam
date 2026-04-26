@@ -662,6 +662,50 @@ class ObjectiveTracker:
     def snapshot(self, target_path: str | Path) -> Path:
         return self._store.snapshot_to(target_path)
 
+    # ------------------------------------------------------------------
+    # Public API: objective-manifest registry (structural-enforcement A1)
+    # ------------------------------------------------------------------
+
+    def register_source_binding(
+        self,
+        *,
+        component: str,
+        ac_id: str,
+        source_path_glob: str,
+    ) -> None:
+        """Register a (component, ac_id, source_path_glob) manifest row.
+
+        AC.SE.6 / AC.SE.7. Idempotent on duplicate. Raises
+        ``ManifestRowError`` on empty fields or invalid fnmatch
+        patterns. The refusal is observable to the caller without
+        leaking a SQLite exception.
+        """
+        self._store.insert_manifest_row(
+            component=component,
+            ac_id=ac_id,
+            source_path_glob=source_path_glob,
+        )
+
+    def manifest_rows_for_component(
+        self, component: str
+    ) -> list[dict[str, Any]]:
+        """All manifest rows for ``component`` (AC.SE.6)."""
+        return self._store.list_manifest_rows_for_component(component)
+
+    def manifest_rows_for_ac(
+        self, component: str, ac_id: str
+    ) -> list[dict[str, Any]]:
+        """All manifest rows for the (component, ac_id) tuple (AC.SE.6)."""
+        return self._store.list_manifest_rows_for_ac(component, ac_id)
+
+    def manifest_rows_matching_source_path(
+        self, workspace_relative_path: str
+    ) -> list[dict[str, Any]]:
+        """Every manifest row whose glob matches the path (AC.SE.6)."""
+        return self._store.list_manifest_rows_matching_source_path(
+            workspace_relative_path
+        )
+
     async def poll_external_events(self, last_event_id: int = 0) -> int:
         new_events = self._store.events_since(last_event_id)
         for ev in new_events:

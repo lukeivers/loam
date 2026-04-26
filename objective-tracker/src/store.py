@@ -13,13 +13,17 @@ the spec targets (≤10⁴ events/year) this is fine.
 
 from __future__ import annotations
 
+import fnmatch
 import json
+import re
 import sqlite3
 import threading
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
+from .errors import ManifestRowError
 from .events import ObjectiveEvent, event_from_row
 
 
@@ -60,6 +64,24 @@ CREATE TABLE IF NOT EXISTS scope_objective_binding (
     bound_at       TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_binding_obj ON scope_objective_binding(objective_id);
+
+-- Structural-enforcement A1 substrate (amendment for AC.SE.6 / AC.SE.7).
+-- Source-binding registry: maps (component, ac_id) tuples to the
+-- workspace-relative source-path glob pattern that satisfies them.
+-- Future amendments (A2 objective-binding gate, A3 TDD-guard) consult
+-- the table when deciding whether an Edit/Write tool call binds to a
+-- declared AC. PRIMARY KEY enforces uniqueness on the row tuple
+-- (AC.SE.6); the read API ignores duplicate-row inserts via INSERT OR
+-- IGNORE so callers can re-register idempotently.
+CREATE TABLE IF NOT EXISTS objective_manifest (
+    component         TEXT NOT NULL,
+    ac_id             TEXT NOT NULL,
+    source_path_glob  TEXT NOT NULL,
+    created_at        TEXT NOT NULL,
+    PRIMARY KEY (component, ac_id, source_path_glob)
+);
+CREATE INDEX IF NOT EXISTS idx_obj_manifest_component ON objective_manifest(component);
+CREATE INDEX IF NOT EXISTS idx_obj_manifest_ac        ON objective_manifest(ac_id);
 """
 
 
@@ -277,6 +299,93 @@ class EventStore:
             rows = cur.fetchall()
         return [dict(r) for r in rows]
 
+    # -- objective manifest (structural-enforcement A1 substrate) ------
+    #
+    # AC.SE.6 / AC.SE.7 — the source-binding manifest table maps
+    # (component, ac_id) tuples to the workspace-relative source-path
+    # glob pattern that satisfies them. The write API validates row
+    # shape at the boundary (AC.SE.7); the read API exposes the four
+    # query shapes named in the plan-doc (AC.SE.6).
+
+    def insert_manifest_row(
+        self,
+        *,
+        component: str,
+        ac_id: str,
+        source_path_glob: str,
+    ) -> None:
+        """Register a (component, ac_id, source_path_glob) row.
+
+        Idempotent on duplicate-row insert (PRIMARY KEY conflict →
+        INSERT OR IGNORE). Refuses empty fields and invalid fnmatch
+        patterns at the API boundary (AC.SE.7) by raising
+        ``ManifestRowError`` — the refusal is observable to the
+        caller without leaking a SQLite exception.
+        """
+        _validate_manifest_field("component", component)
+        _validate_manifest_field("ac_id", ac_id)
+        _validate_manifest_field("source_path_glob", source_path_glob)
+        _validate_manifest_glob(source_path_glob)
+        created_at = datetime.now(tz=timezone.utc).isoformat()
+        with self._lock:
+            self._conn.execute(
+                "INSERT OR IGNORE INTO objective_manifest("
+                "component, ac_id, source_path_glob, created_at) "
+                "VALUES (?, ?, ?, ?)",
+                (component, ac_id, source_path_glob, created_at),
+            )
+
+    def list_manifest_rows_for_component(
+        self, component: str
+    ) -> list[dict[str, Any]]:
+        """All manifest rows for ``component``, sorted by created_at."""
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT component, ac_id, source_path_glob, created_at "
+                "FROM objective_manifest WHERE component = ? "
+                "ORDER BY created_at ASC, ac_id ASC, source_path_glob ASC",
+                (component,),
+            )
+            rows = cur.fetchall()
+        return [dict(r) for r in rows]
+
+    def list_manifest_rows_for_ac(
+        self, component: str, ac_id: str
+    ) -> list[dict[str, Any]]:
+        """All manifest rows for the (component, ac_id) tuple."""
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT component, ac_id, source_path_glob, created_at "
+                "FROM objective_manifest WHERE component = ? AND ac_id = ? "
+                "ORDER BY created_at ASC, source_path_glob ASC",
+                (component, ac_id),
+            )
+            rows = cur.fetchall()
+        return [dict(r) for r in rows]
+
+    def list_manifest_rows_matching_source_path(
+        self, workspace_relative_path: str
+    ) -> list[dict[str, Any]]:
+        """Every manifest row whose ``source_path_glob`` matches the path.
+
+        Python-side fnmatch over the row set keeps the test portable
+        across SQLite GLOB dialects. Returns rows in deterministic
+        order (created_at then component then ac_id).
+        """
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT component, ac_id, source_path_glob, created_at "
+                "FROM objective_manifest "
+                "ORDER BY created_at ASC, component ASC, ac_id ASC, "
+                "source_path_glob ASC"
+            )
+            rows = cur.fetchall()
+        return [
+            dict(r)
+            for r in rows
+            if fnmatch.fnmatchcase(workspace_relative_path, r["source_path_glob"])
+        ]
+
     # -- snapshot (D8) -------------------------------------------------
 
     def snapshot_to(self, target_path: str | Path) -> Path:
@@ -293,3 +402,28 @@ def _row_to_event(row: sqlite3.Row) -> Any:
     payload = json.loads(row["payload"])
     payload["event_id"] = row["event_id"]
     return event_from_row(row["kind"], payload)
+
+
+# Recognise structurally-invalid fnmatch patterns. The Python stdlib's
+# fnmatch.translate doesn't surface unbalanced brackets as an error; we
+# scan for the one canonical defect (an opening ``[`` with no closing
+# ``]``) and refuse it explicitly. AC.SE.7 names this surface.
+_FNMATCH_UNBALANCED_BRACKET = re.compile(r"\[[^\]]*$")
+
+
+def _validate_manifest_field(name: str, value: str) -> None:
+    if not isinstance(value, str) or not value:
+        raise ManifestRowError(
+            field=name,
+            value=str(value),
+            reason="must be a non-empty string",
+        )
+
+
+def _validate_manifest_glob(pattern: str) -> None:
+    if _FNMATCH_UNBALANCED_BRACKET.search(pattern):
+        raise ManifestRowError(
+            field="source_path_glob",
+            value=pattern,
+            reason="invalid fnmatch pattern: unbalanced bracket",
+        )

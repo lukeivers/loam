@@ -46,3 +46,23 @@ class MissingRationaleError(ObjectiveTrackerError):
 
 class DAGRejected(ObjectiveTrackerError):
     """Attempted to author an objective that would form a DAG or cycle."""
+
+
+class ManifestRowError(ObjectiveTrackerError):
+    """Refused an `objective_manifest` row insert due to a structural
+    failure (empty field or invalid fnmatch pattern).
+
+    Per the structural-enforcement A1 substrate (AC.SE.7) the
+    manifest's write API refuses malformed rows at the API boundary
+    rather than at SQLite-projection time. ``field`` names which
+    field rejected the value; ``value`` carries the rejected literal.
+    """
+
+    def __init__(self, field: str, value: str, reason: str) -> None:
+        super().__init__(
+            f"objective_manifest refused row: field={field!r} "
+            f"value={value!r} reason={reason!r}"
+        )
+        self.field = field
+        self.value = value
+        self.reason = reason

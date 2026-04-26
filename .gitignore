@@ -30,3 +30,9 @@ orchestrator/data/
 
 # Scratch / agent working files
 .scratch/
+
+# Workspace-local pos-v2 sentinel directory (first-run state, active-
+# scope sentinel, session-state sentinels). Per the structural-
+# enforcement A1 substrate amendment (AC.SE.8). The directory holds
+# runtime-written files only and must never be tracked.
+.pos/

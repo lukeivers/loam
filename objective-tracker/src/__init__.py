@@ -25,6 +25,7 @@ from __future__ import annotations
 from .errors import (
     DAGRejected,
     IllegalTransitionError,
+    ManifestRowError,
     MissingRationaleError,
     ObjectiveTrackerError,
     OrphanRootError,
@@ -55,6 +56,7 @@ __all__ = [
     "ExternalPredicateCriterion",
     "IllegalTransitionError",
     "LiftedFrom",
+    "ManifestRowError",
     "MissingRationaleError",
     "ObjectiveFilter",
     "ObjectiveProjection",

@@ -97,6 +97,12 @@ _POS_V2_COMMAND_MARKERS: tuple[str, ...] = (
     "primary_persona.cli session-start",
     "primary_persona.cli session_start",
     "-m primary_persona",
+    # Structural-enforcement A1 substrate (AC.SE.4): the corpus-load
+    # sentinel SessionStart inner hook composes onto the multi-
+    # contributor envelope alongside loam-mode and primary-persona.
+    # Path substring is the canonical marker (the script lives at
+    # hands-off-lifecycle/hooks/corpus_load_session_start.py).
+    "corpus_load_session_start.py",
 )
 
 

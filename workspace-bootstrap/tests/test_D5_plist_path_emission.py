@@ -131,15 +131,28 @@ def test_D5_1_memory_graphiti_scaffold_plist_reaches_health_200(
     if shutil.which("launchctl") is None:
         pytest.skip("launchctl absent (non-macOS host)")
 
-    # Scaffold emits a plist against the canonical memory-system tree
-    # so ProgramArguments / WorkingDirectory resolve to a real venv
-    # and importable src.service module. D5.1 asserts the *emitted*
-    # plist (modulo Label + stdout redirection for sandbox isolation)
-    # brings up /health — the PATH emission is the load-bearing edit.
+    # Scaffold emits a plist whose ProgramArguments / WorkingDirectory
+    # must resolve to the canonical memory-system venv + importable
+    # src.service module. D5.1 asserts the *emitted* plist (modulo
+    # Label + stdout redirection for sandbox isolation) brings up
+    # /health — the PATH emission is the load-bearing edit.
+    #
+    # To keep the scaffold's side-effect writes (personas/, .mcp.json,
+    # tracker DB) out of the canonical tree, the scaffold runs against
+    # a tmp workspace whose ``memory-system`` is symlinked to the
+    # canonical one. The plist emits paths under tmp_workspace; the
+    # symlink redirects ProgramArguments/WorkingDirectory through to
+    # the canonical venv at runtime. Personas + auxiliary writes land
+    # under tmp_workspace and are reaped with tmp_path.
     port = _free_port()
+    tmp_workspace = tmp_path / "ws"
+    tmp_workspace.mkdir()
+    (tmp_workspace / "memory-system").symlink_to(
+        _REPO_ROOT / "memory-system"
+    )
     mg_plist_path, _orch_plist_path = _scaffold_fresh_sandbox(
         tmp_path=tmp_path,
-        workspace_root=_REPO_ROOT,
+        workspace_root=tmp_workspace,
         port=port,
     )
 

@@ -160,7 +160,12 @@ class _FailureCheckpoint:
 
 
 def _emit_diagnostic(checkpoint: _FailureCheckpoint) -> None:
-    print(f"halt: {checkpoint.klass}")
+    # Emit on stdout with an uppercase HALT prefix so the line is
+    # scannable across all pos-amend subcommands and survives
+    # contexts where stderr is dropped (e.g. some Bash-tool eval-
+    # wrapper invocations). Per AC.PA-hv.1 / AC.PA-hv.2 of
+    # `docs/rebuild/plans/pos-amend-halt-visibility.md`.
+    print(f"HALT: {checkpoint.klass}")
     print(checkpoint.detail)
 
 

@@ -205,6 +205,12 @@ def _yaml_string(value: str) -> str:
 
 
 def _emit_diagnostic(exc: NewPlanError) -> None:
+    # Emit on stdout AND stderr. Stdout carries the scannable HALT
+    # line for stderr-dropped contexts (e.g. some Bash-tool eval-
+    # wrapper invocations); stderr carries the existing detail
+    # for back-compat with prior assertions. Per AC.PA-hv.1 /
+    # AC.PA-hv.2 of `docs/rebuild/plans/pos-amend-halt-visibility.md`.
+    print(f"HALT: {exc.failure_class}: {exc}")
     print(f"new-plan error [{exc.failure_class}]: {exc}", file=sys.stderr)
 
 

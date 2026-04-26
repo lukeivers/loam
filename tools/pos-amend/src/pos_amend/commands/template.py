@@ -46,7 +46,18 @@ DEFAULT_TEMPLATES_ROOT = _PKG_ROOT / "templates"
 
 
 def _emit_diagnostic(exc: TemplateError) -> None:
-    """Emit a structured diagnostic to stderr (AC.D-tpl.5)."""
+    """Emit a structured diagnostic to stderr (AC.D-tpl.5).
+
+    Note: per AC.D-tpl.5 (existing test
+    ``test_AC_D_tpl_5_no_partial_stdout_on_render_failure``) the
+    template-render halt path must NOT write to stdout — it would
+    contaminate the stdout stream that callers redirect with `>`
+    when capturing rendered template output. Halt visibility for
+    template halts is provided via stderr only; the seal + new-plan
+    halts (where stdout-redirection is not a concern) carry the
+    ``HALT:`` stdout prefix per
+    ``docs/rebuild/plans/pos-amend-halt-visibility.md``.
+    """
     print(f"template error [{exc.failure_class}]: {exc}", file=sys.stderr)
 
 
@@ -190,6 +201,8 @@ def run_render(
         return 2
 
     # --out shape (AC.D-tpl.3): refuse to overwrite without --force.
+    # Per AC.D-tpl.5 the render halt path must not contaminate stdout
+    # (callers redirect stdout with `>` to capture rendered output).
     if out is not None:
         if out.exists() and not force:
             print(

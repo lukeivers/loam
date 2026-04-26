@@ -13,6 +13,7 @@ from pathlib import Path
 
 from pos_amend import __version__
 from pos_amend.commands import apply as apply_cmd
+from pos_amend.commands import new_plan as new_plan_cmd
 from pos_amend.commands import seal as seal_cmd
 from pos_amend.commands import template as template_cmd
 from pos_amend.commands import validate as validate_cmd
@@ -140,6 +141,62 @@ def _build_parser() -> argparse.ArgumentParser:
         "spec", help="template id in '<family>/<id>' form"
     )
 
+    # ``new-plan`` subcommand — scaffold a vars-file (and optionally
+    # render the plan-doc) for a new plan slug. Per
+    # ``docs/rebuild/plans/pos-amend-new-plan-orchestration.md``
+    # AC.D-np.1–AC.D-np.7. Purely additive; existing subcommands are
+    # untouched (AC.D-np.6).
+    p_new_plan = sub.add_parser(
+        "new-plan",
+        help=(
+            "scaffold a vars-file for a new plan-doc at "
+            "<repo>/docs/rebuild/plans/<slug>.vars.yaml; with --render "
+            "also produce the plan-doc"
+        ),
+    )
+    p_new_plan.add_argument("slug", help="plan filename slug, ^[a-z][a-z0-9-]*$")
+    p_new_plan.add_argument(
+        "--title",
+        default=None,
+        help="pre-fill the TITLE variable in the scaffolded vars-file",
+    )
+    p_new_plan.add_argument(
+        "--ac-prefix",
+        default=None,
+        help="pre-fill the AC_PREFIX variable",
+    )
+    p_new_plan.add_argument(
+        "--vars-out",
+        type=Path,
+        default=None,
+        help=(
+            "override the vars-file output path "
+            "(default: <repo>/docs/rebuild/plans/<slug>.vars.yaml)"
+        ),
+    )
+    p_new_plan.add_argument(
+        "--plan-out",
+        type=Path,
+        default=None,
+        help=(
+            "override the plan-doc output path when --render is set "
+            "(default: <repo>/docs/rebuild/plans/<slug>.md)"
+        ),
+    )
+    p_new_plan.add_argument(
+        "--render",
+        action="store_true",
+        help=(
+            "after scaffolding the vars-file, render the plan-doc "
+            "to --plan-out (delegates to `pos-amend template render`)"
+        ),
+    )
+    p_new_plan.add_argument(
+        "--force",
+        action="store_true",
+        help="overwrite existing --vars-out / --plan-out (default: refuse)",
+    )
+
     return parser
 
 
@@ -188,5 +245,15 @@ def main(argv: list[str] | None = None) -> int:
             )
         parser.error(f"unknown template mode: {args.template_mode}")
         return 2  # unreachable
+    if args.command == "new-plan":
+        return new_plan_cmd.run(
+            args.slug,
+            title=args.title,
+            ac_prefix=args.ac_prefix,
+            vars_out=args.vars_out,
+            plan_out=args.plan_out,
+            render=args.render,
+            force=args.force,
+        )
     parser.error(f"unknown command: {args.command}")
     return 2  # unreachable

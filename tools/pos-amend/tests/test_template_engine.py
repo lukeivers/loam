@@ -703,7 +703,10 @@ def test_AC_D_tpl_7_bundled_plan_renders_against_fixture_vars(
         "HARD_CONSTRAINTS: \"Constraints.\"\n"
         "OUT_OF_SCOPE: \"Out of scope.\"\n"
         "IMPLEMENTATION_ORDER: \"Order.\"\n"
+        "SECTION_9_HEADING: \"Impact / motivation\"\n"
+        "SECTION_9_BODY: \"Body of section 9.\"\n"
         "HALT_TRIGGERS: \"Halts.\"\n"
+        "DECISIONS_DETAIL: \"Detail.\"\n"
         "DECISIONS_SUMMARY: \"Summary.\"\n"
         "HALT_FINDINGS: \"Findings.\"\n",
         encoding="utf-8",

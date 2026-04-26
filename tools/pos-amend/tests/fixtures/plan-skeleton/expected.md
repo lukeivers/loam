@@ -1,120 +1,119 @@
----
-description: "Dev-discipline plan-doc skeleton (13 sections + §14 method-decision register placeholder + §15 references)."
-required:
-  - TITLE
-  - TLDR
-  - AC_PREFIX
-  - SPEC_PLACEMENT
-  - LENS_ANALYSIS
-  - ACCEPTANCE_CRITERIA
-  - BEHAVIOUR_COUNT
-  - HARD_CONSTRAINTS
-  - OUT_OF_SCOPE
-  - IMPLEMENTATION_ORDER
-  - SECTION_9_HEADING
-  - SECTION_9_BODY
-  - HALT_TRIGGERS
-  - DECISIONS_DETAIL
-  - DECISIONS_SUMMARY
-  - HALT_FINDINGS
-optional:
-  COMPANIONS: ""
-  ANCESTOR_RECORD: ""
-  STATUS_LINE: ""
-  RESEARCH_PATH: ""
-  WORKING_DIRECTORY: "/Users/lukeivers/ivers-corp-pos-v2/"
-  REFERENCES: |
-    - CLAUDE.md (project + global)
-    - `docs/odd-methodology.md`, `docs/odd-in-pos.md`
-    - `docs/rebuild/VALUE_PROPOSITION.md`, `docs/rebuild/STATE.md`, `docs/rebuild/FUTURE_IDEAS.md`
----
-# {{TITLE}} — plan
+# Fixture Plan Title — plan
 
 Dev-discipline work. **NOT** a sealed-component amendment. No `pos-amend` manifest, no `SEAL_COMMIT` bump, no seal commit. Plan-before-code per the dev CDC; corrective new commits land the change.
 
-**Status:** {{STATUS_LINE}}
-**Working directory:** {{WORKING_DIRECTORY}}
-**Companions:** {{COMPANIONS}}
-**Ancestor record:** {{ANCESTOR_RECORD}}
-**Research:** {{RESEARCH_PATH}}
+**Status:** fixture status (pre-dispatch). 2026-01-01.
+**Working directory:** /fixture/working/dir/
+**Companions:** fixture-companion-path.md
+**Ancestor record:** fixture ancestor record.
+**Research:** docs/rebuild/plans/research/fixture-research.md
 
 ---
 
 ## 1. Summary / TLDR
 
-{{TLDR}}
+TLDR fixture body — one paragraph naming the work + the headline outcome.
+
 
 ---
 
 ## 2. Spec-objective placement (per CLAUDE.md §2.5 framing)
 
-{{SPEC_PLACEMENT}}
+Spec-objective placement fixture body.
+
 
 ---
 
 ## 3. Three-lens analysis (per CLAUDE.md design lenses)
 
-{{LENS_ANALYSIS}}
+### Lens 1 — Claude leverage
+
+Lens 1 fixture body.
+
+### Lens 2 — Harness + primary-persona value
+
+Lens 2 fixture body.
+
+### Lens 3 — ODD authoring
+
+Lens 3 fixture body.
+
 
 ---
 
-## 4. Acceptance criteria ({{AC_PREFIX}} — dev-discipline plan)
+## 4. Acceptance criteria (AC.FIX.x — dev-discipline plan)
 
-{{ACCEPTANCE_CRITERIA}}
+- AC.FIX.1 — fixture acceptance criterion.
+
 
 ---
 
 ## 5. Behaviour-count check (ODD §3.3 forward; applied as dev-discipline check)
 
-{{BEHAVIOUR_COUNT}}
+| # | Declared behaviour | AC |
+|---|--------------------|-----|
+| 1 | fixture behaviour | AC.FIX.1 |
+
 
 ---
 
 ## 6. Hard constraints
 
-{{HARD_CONSTRAINTS}}
+1. Fixture constraint one.
+2. Fixture constraint two.
+
 
 ---
 
 ## 7. Out of scope (explicit)
 
-{{OUT_OF_SCOPE}}
+- Fixture out-of-scope item.
+
 
 ---
 
 ## 8. Implementation order (suggested — builder's call to refine)
 
-{{IMPLEMENTATION_ORDER}}
+1. Fixture step one.
+2. Fixture step two.
+
 
 ---
 
-## 9. {{SECTION_9_HEADING}}
+## 9. Bookkeeping surface
 
-{{SECTION_9_BODY}}
+Section 9 fixture body — bookkeeping surface variant.
+
 
 ---
 
 ## 10. Halt triggers (builder halts + signals owner)
 
-{{HALT_TRIGGERS}}
+1. Fixture halt trigger one.
+
 
 ---
 
 ## 11. Decisions remaining for the owner to rule on
 
-{{DECISIONS_DETAIL}}
+D-fix-1 — fixture decision body.
+
 
 ---
 
 ## 12. Summary of named decisions (owner-readable)
 
-{{DECISIONS_SUMMARY}}
+| Decision | Recommendation | Why it matters |
+|---|---|---|
+| D-fix-1 | recommendation | rationale |
+
 
 ---
 
 ## 13. Halt-and-surface findings encountered during plan authoring
 
-{{HALT_FINDINGS}}
+Fixture halt-and-surface findings — none observed.
+
 
 ---
 
@@ -149,4 +148,6 @@ ACs' outcome bounds. This section is populated post-build.
 
 ## 15. References
 
-{{REFERENCES}}
+- Fixture reference one.
+- Fixture reference two.
+

@@ -98,6 +98,8 @@ pos-amend seal --plan-doc <plan.md> <manifest.yaml>
 pos-amend template list                       # enumerate registered markdown templates
 pos-amend template render <family>/<id> ...   # render a template (stdout or --out)
 pos-amend template validate <family>/<id>     # parse-check a template + report its variables
+pos-amend new-plan <slug> [--title T] [--ac-prefix AC.X.x] [--render]
+                                              # scaffold a vars-file (and optionally render the plan-doc) for a new plan
 ```
 
 `validate`, `apply`, and `apply --dry-run` do not commit. **`seal` does
@@ -413,7 +415,9 @@ rejects with exit 3 unless `--force` is passed.
 
 ```
 templates/dispatch/sealed-component-build.md   # sealed-component build dispatch boilerplate
-templates/plan/dev-discipline.md               # 13-section dev-discipline plan-doc skeleton
+templates/plan/dev-discipline.md               # 13-section + §14 register + §15 references plan-doc skeleton
+                                                  # 16 required + 6 optional vars; SECTION_9_HEADING/BODY
+                                                  # absorb the dev-discipline / sealed-component split
 ```
 
 Run `pos-amend template list` for the current registry; run
@@ -435,6 +439,50 @@ Exit codes follow the existing pos-amend taxonomy:
 Every failure mode emits a structured diagnostic to stderr in
 `template error [<failure-class>]: <detail>` form; rendering halts
 before any output reaches stdout or the `--out` target.
+
+## `new-plan` subcommand — plan-doc scaffolding orchestration
+
+Sugar over `pos-amend template render plan/dev-discipline`: scaffolds
+a YAML vars-file pre-stubbed against the plan-doc skeleton's 16 required
+variables (and 6 optional variables) so a plan author edits content,
+not structure. Per `docs/rebuild/plans/pos-amend-new-plan-orchestration.md`
+ACs D-np.1 – D-np.7.
+
+```
+pos-amend new-plan <slug>
+  [--title <title-string>]
+  [--ac-prefix <prefix-string>]
+  [--vars-out <path>]
+  [--plan-out <path>]
+  [--render]
+  [--force]
+```
+
+Default behaviour (no `--render`): writes the vars-file to
+`<repo>/docs/rebuild/plans/<slug>.vars.yaml` only. The plan author
+then edits the vars-file and renders via:
+
+```bash
+.venv/bin/pos-amend template render plan/dev-discipline \
+  --vars-file docs/rebuild/plans/<slug>.vars.yaml \
+  --out docs/rebuild/plans/<slug>.md \
+  --force
+```
+
+With `--render`, both files are produced in one invocation:
+
+```bash
+.venv/bin/pos-amend new-plan my-new-feature \
+  --title "My new feature" \
+  --ac-prefix AC.MNF.x \
+  --render
+```
+
+`<slug>` must match `^[a-z][a-z0-9-]*$` (lowercase, hyphens, leading
+letter; no slashes). Default targets refuse to overwrite without
+`--force`. Failures emit a structured `new-plan error [<class>]: ...`
+diagnostic to stderr; exit codes follow the standard pos-amend taxonomy
+(2 for invalid slug / contract failure, 3 for IO failure / refuse-overwrite).
 
 ### What's out of scope at v1
 

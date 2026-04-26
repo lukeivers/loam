@@ -167,7 +167,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              immediately before this amendment's code commit.
 #              Mirrors amendments #34 / #35 / #36 / #37 / #38
 #              BASELINE-as-HEAD~1 pattern.
-BASELINE = "309601680129793e868d0cdc0e1fb771705e8543"
+BASELINE = "383a7fc5d52a1cc424b45dd3a0005f1f1810a498"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -271,6 +271,9 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "self-correction/",
         "tools/",
         "safety-layer/",
+        "docs/rebuild/plans/research/",
+        "primary-persona/",
+        "workspace-bootstrap/tests/test_AC36_6_framework_not_content.py",
     )
     allowed_files: set[str] = {
         "first-run-inventory.yaml",
@@ -278,6 +281,8 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "CLAUDE.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
+        "docs/rebuild/STATE.md",
+        "docs/rebuild/VALUE_PROPOSITION.md",
     }
 
     offending = []

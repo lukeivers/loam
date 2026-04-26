@@ -77,6 +77,12 @@ from .mcp_memory_client import (
     LiveMCPMemoryClient,
     build_live_mcp_memory_client,
 )
+from .dispatch_wrapper import (
+    DispatchOutcome,
+    DispatchRefusal,
+    DispatchShape,
+    dispatch_with_scope,
+)
 from .creation_triggers import CreationTrigger, CreationTriggerDetector, TriggerSignal
 from .authoring import (
     AuthoringOutcome,
@@ -133,6 +139,9 @@ __all__ = [
     "TriggerKind",
     "TriggerSignal",
     "TurnPayload",
+    "DispatchOutcome",
+    "DispatchRefusal",
+    "DispatchShape",
     "LiveMCPMemoryClient",
     "StopEnvelope",
     "TurnContent",
@@ -147,6 +156,7 @@ __all__ = [
     "cli_user_prompt_submit",
     "compose_session_fields",
     "derive_turn_id",
+    "dispatch_with_scope",
     "emit_session_start_context",
     "emit_user_prompt_submit_context",
     "handle_stop_envelope",

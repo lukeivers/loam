@@ -95,7 +95,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              SEAL_COMMIT + cross-cutting allowed-set bump). f1ff28b
 #              is the pre-amendment tip — the amendment-#18 seal
 #              commit immediately before amendment #19's code commit.
-BASELINE = "dd11677"
+BASELINE = "5ad5f689a3b713a008117bcadb00ceaa0f97bd66"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -202,6 +202,7 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
         "self-correction/",
         "telegram-interface/",
         "tools/",
+        "primary-persona/",
     )
     allowed_files: set[str] = {
         "first-run-inventory.yaml",

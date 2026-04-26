@@ -462,6 +462,102 @@ class Orchestrator:
             }
 
     # ------------------------------------------------------------------
+    # Amendment #52 (A8 R1) — activate_scope_with_spec + record_dispatch_close
+    # ------------------------------------------------------------------
+    #
+    # The persona-side dispatch wrapper (primary-persona/src/
+    # dispatch_wrapper.py) cannot drive the cost/safety/reversibility
+    # gate chain through `activate_scope` alone: that IPC takes only
+    # ids, and the production cost-governance `spec_resolver` returns
+    # None for any scope not constructed in-process by the orchestrator
+    # runtime (verified empirically at amendment authoring — see
+    # `.scratch/claude-output/A8-halt-surface-2026-04-26.md`).
+    #
+    # `activate_scope_with_spec` accepts a JSON-encoded `ScopeSpec`,
+    # registers it with the in-process `ScopeRuntime` so the in-memory
+    # CostLedger subscriber sees `ScopeCreated`, then routes through
+    # the existing wrapped IPC chain so the gate verdict fires
+    # identically to a direct `activate_scope` call.
+    #
+    # `record_dispatch_close` is the close-emission surface paired with
+    # `activate_scope_with_spec`: emit `BudgetDebited` for the agent-
+    # reported tokens and transition the scope to a terminal state.
+
+    async def activate_scope_with_spec(
+        self,
+        scope_id: str,
+        objective_id: str,
+        spec_payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Activate a scope from a caller-supplied ScopeSpec payload.
+
+        Sequence:
+          1. Decode `spec_payload` into a `ScopeSpec` (Pydantic
+             validation; malformed payload raises `ValidationError`).
+          2. If `scope_id` is not yet registered in the runtime,
+             call `scope_runtime.create(spec, scope_id=...)` to
+             register it in-process so the in-memory subscribers
+             (notably the cost-governance ledger) see ScopeCreated.
+             If the scope is already registered (idempotent retry),
+             skip the create and proceed.
+          3. Delegate to `self.activate_scope(scope_id, objective_id)`
+             so the existing dispatch sequence (verify pending →
+             bind_scope → start) fires unchanged.
+
+        Returns the `activate_scope` result dict augmented with
+        `scope_id` echoed back. Wrap-chain firing happens on the IPC
+        path (see `_register_ipc_methods.activate_scope_with_spec`) —
+        this Python surface is the unwrapped path used by tests.
+        """
+        from scope_of_work import ScopeSpec
+
+        assert self.scope_runtime is not None
+        spec = ScopeSpec.model_validate(spec_payload)
+        existing = self.scope_runtime.get(scope_id)
+        if existing is None:
+            await self.scope_runtime.create(spec, scope_id=scope_id)
+        result = await self.activate_scope(scope_id, objective_id)
+        return {**result, "scope_id": scope_id}
+
+    async def record_dispatch_close(
+        self,
+        scope_id: str,
+        *,
+        terminal_state: str,
+        debited_tokens: int = 0,
+    ) -> dict[str, Any]:
+        """Emit BudgetDebited (if tokens > 0) and transition the scope
+        to a terminal state.
+
+        The persona-side wrapper calls this once per dispatch close
+        with the agent-reported `total_tokens` and the terminal state
+        ("completed" | "failed" | "cancelled").
+        """
+        assert self.scope_runtime is not None
+        if terminal_state not in ("completed", "failed", "cancelled"):
+            raise ApplicationError(
+                -32602,
+                "terminal_state must be 'completed' | 'failed' | 'cancelled'",
+            )
+        if debited_tokens > 0:
+            await self.scope_runtime.debit(
+                scope_id, output_tokens=int(debited_tokens)
+            )
+        if terminal_state == "completed":
+            await self.scope_runtime.complete(scope_id)
+        elif terminal_state == "failed":
+            await self.scope_runtime.fail(scope_id, reason="dispatch_failed")
+        else:  # cancelled
+            await self.scope_runtime.cancel(
+                scope_id, reason="dispatch_cancelled"
+            )
+        return {
+            "scope_id": scope_id,
+            "terminal_state": terminal_state,
+            "debited_tokens": int(debited_tokens),
+        }
+
+    # ------------------------------------------------------------------
     # Pause / resume hooks for graceful-degradation component
     # ------------------------------------------------------------------
 
@@ -682,6 +778,73 @@ class Orchestrator:
                     },
                 )
 
+        async def activate_scope_with_spec(params: dict[str, Any]) -> Any:
+            """Amendment #52 (A8 R1): activate a scope from a caller-
+            supplied ScopeSpec payload, then route through the
+            wrap-chain `activate_scope` handler so cost / safety /
+            reversibility gates fire identically to a direct
+            `activate_scope` call.
+            """
+            from pydantic import ValidationError as _PydValidationError
+            from scope_of_work import ScopeSpec
+
+            scope_id = params.get("scope_id")
+            objective_id = params.get("objective_id")
+            spec_payload = params.get("spec")
+            if not isinstance(scope_id, str) or not isinstance(
+                objective_id, str
+            ):
+                raise ApplicationError(
+                    -32602,
+                    "scope_id and objective_id (strings) are required",
+                )
+            if not isinstance(spec_payload, dict):
+                raise ApplicationError(
+                    -32602, "spec (object) is required"
+                )
+            try:
+                spec = ScopeSpec.model_validate(spec_payload)
+            except _PydValidationError as e:
+                raise ApplicationError(
+                    -32602, f"spec validation failed: {e}"
+                )
+            assert self.scope_runtime is not None
+            existing = self.scope_runtime.get(scope_id)
+            if existing is None:
+                await self.scope_runtime.create(spec, scope_id=scope_id)
+            wrapped = server._handlers.get("activate_scope")
+            if wrapped is None:
+                raise ApplicationError(
+                    -32601, "activate_scope not registered on orchestrator"
+                )
+            return await wrapped(
+                {"scope_id": scope_id, "objective_id": objective_id}
+            )
+
+        async def record_dispatch_close(params: dict[str, Any]) -> Any:
+            """Amendment #52 (A8 R1): emit BudgetDebited and transition
+            the scope to a terminal state."""
+            scope_id = params.get("scope_id")
+            terminal_state = params.get("terminal_state")
+            debited_tokens = params.get("debited_tokens", 0)
+            if not isinstance(scope_id, str):
+                raise ApplicationError(-32602, "scope_id (string) is required")
+            if terminal_state not in ("completed", "failed", "cancelled"):
+                raise ApplicationError(
+                    -32602,
+                    "terminal_state must be 'completed' | 'failed' | "
+                    "'cancelled'",
+                )
+            if not isinstance(debited_tokens, int) or debited_tokens < 0:
+                raise ApplicationError(
+                    -32602, "debited_tokens must be a non-negative integer"
+                )
+            return await self.record_dispatch_close(
+                scope_id,
+                terminal_state=terminal_state,
+                debited_tokens=debited_tokens,
+            )
+
         async def pause(params: dict[str, Any]) -> dict[str, Any]:
             reason = str(params.get("reason") or "unspecified")
             self.pause_activation(reason)
@@ -714,6 +877,13 @@ class Orchestrator:
         server.register("status", status)
         server.register("awareness", awareness)
         server.register("activate_scope", activate_scope)
+        # Amendment #52 (A8 R1) — paired IPC methods for the persona-
+        # side dispatch wrapper. activate_scope_with_spec composes onto
+        # the existing activate_scope wrap chain (registered above);
+        # record_dispatch_close drives BudgetDebited + terminal-state
+        # transition.
+        server.register("activate_scope_with_spec", activate_scope_with_spec)
+        server.register("record_dispatch_close", record_dispatch_close)
         server.register("pause", pause)
         server.register("resume", resume)
         server.register("mark_precompact", mark_precompact)

@@ -1141,6 +1141,12 @@ specifies WD `/Users/lukeivers/ivers-corp-pos-v2/`.
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `5acbd4ed3073c10f55d23f55c54e858a036d199c` —
+  `chore(primary-persona): widen AC.M.S seal-diff window for amendment #52 surfaces`
+- Seal commit: `950002bf394afc6b4d9c7d621760951bdac26a0e` —
+  `chore(seals): primary-persona dispatch wrapper + orchestrator activate_scope_with_spec IPC (A8 R1-revised) — primary-persona+orchestrator at 5acbd4e`
 ## 15. References
 
 - Locked research (governs):

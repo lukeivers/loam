@@ -1,0 +1,1266 @@
+# workspace-sync — canonical-to-workspace git-shaped sync with LLM-mediated semantic merge — plan
+
+**Sealed-component amendment** introducing a NEW component at
+`workspace-sync/`. Carries a `pos-amend` manifest (sketch in §9.2;
+builder finalises at `docs/rebuild/plans/workspace-sync.manifest.yaml`),
+creates the `workspace-sync/tests/SEAL_COMMIT` sidecar +
+`workspace-sync/tests/test_no_sealed_amendments.py` first-seal infra,
+lands a deterministic seal commit per the seal-automation extension.
+First seal of the component (no retrofit needed; bookkeeping infra
+created at first seal alongside the source). Plan-before-code per the
+dev CDC. Per amendment #46 / #47 / #54 precedent; the dev-discipline
+plan template was used for the §14+§15 skeleton per #51 (the
+template's "NOT a sealed-component amendment" lede was overridden in
+this paragraph because the §-skeleton is the only piece of the
+template needed and the sealed-component build template doesn't
+expose those §§).
+
+**Status:** plan (pre-dispatch). 2026-04-26.
+**Working directory:** /Users/lukeivers/ivers-corp-pos-v2/
+**Companions:** - **GG adversarial code review** (governs salvage decisions):
+  `docs/rebuild/plans/research/bb-cycle-architecture-b-retarget-review.md`
+  — per-file salvage verdicts + the high-risk hidden coupling
+  list. Source-of-truth for §9.1 salvage attribution map.
+- **FF architecture conventions research** (governs
+  architecture choice): `docs/rebuild/plans/research/upgrade-architecture-conventions-research.md`
+  — Pattern P3 (git-shaped sync) ⇒ Architecture B for
+  framework code; Pattern P2 (binary swap) ⇒ Architecture A
+  only for the `pos` CLI binary itself.
+- **AA original sync research:** `docs/rebuild/plans/research/canonical-to-workspace-sync-research.md`
+  — D-1 through D-7 sync decisions. D-2 through D-7 carry
+  over LOCKED into this plan.
+- **BB-feat plan (the carryover source):**
+  `docs/rebuild/plans/self-upgrade-clause-h-llm-merge.md`
+  — much of §1, §3, §4 shape carries over via §9.1 salvage.
+- **Spec anchors:** `docs/rebuild/spec/pos-v2-objectives-spec.md`
+  line 81 (v1.0 self-upgrade objective), line 114 (Gap-3
+  acceptance — "no silent skip" + "explicit resolution
+  options"), line 213 (v1.1 R1 semantic round-trip).
+- **ODD references:** `docs/odd-methodology.md` §2.5 (no
+  non-objective code), §5.3 (Pydantic + model_validators
+  as reach-for default), §10 (per-invariant BASELINE).
+  `docs/odd-in-pos.md` §4 (clause-g pattern as canonical
+  structural-enforcement example).
+- **Amendment precedents:** amendment #46 (multi-component
+  plan-shape with §14 method-decision register), amendment
+  #47 (single-sealed-component manifest + plan-doc shape),
+  amendment #50 (primary-persona conversational-onboarding
+  — translation-burden absorption pattern this plan
+  ladders to), amendment #53 (self-upgrade seal-bookkeeping
+  retrofit — pattern reused as workspace-sync's
+  first-seal infra), amendment #54 (BB clause-(h) seal
+  SHA `0737e7c`).
+
+**Ancestor record:** - **Owner rulings 2026-04-26 (locked):** D-A1 = hybrid B/A,
+  D-A2 = salvage option (i), A3/A4/A5 cache/concurrency/
+  symlink rulings.
+- **GG adversarial code review (2026-04-26):** ~70%
+  salvageable; per-file verdicts; high-risk list led by the
+  cli.py:184 `live_root = paths.current_link.resolve()`
+  hidden coupling.
+- **FF architecture conventions research (2026-04-26):** B
+  is the dominant pattern across every comparable AI harness
+  for framework authoring surface; P2 (binary swap) only fits
+  the `pos` CLI itself, not the framework code.
+- **AA sync research (2026-04-26, 277 lines):** D-1 through
+  D-7 decisions; recommended composition over new component
+  BEFORE the architecture re-evaluation. The architecture
+  relock means this plan is the new home (workspace-sync)
+  rather than self-upgrade clause-(h) being the home.
+- **BB-feat (#54, sealed 0737e7c → 1fd826a):** clause-(h)
+  landed in self-upgrade. The salvage map (§9.1) lifts ~70%
+  of that work into workspace-sync; ~30% (cli.py glue,
+  manifest infra, A-fixture tests) stays put under
+  self-upgrade per ruling A5 (canonical-only A-mode) and
+  Hard Constraint #1 (no edits to self-upgrade).
+- **Recent precedent for B-shape mechanism in pos-v2:** none
+  — workspace-sync is the first B-mode component. ALL prior
+  sealed components run on the canonical maintainer's
+  machine OR are workspace-state primitives that don't pull
+  from canonical.
+- **Recent precedent for first-seal-with-bookkeeping-built-in:**
+  every sealed component before #53 was sealed with
+  seal-bookkeeping infra at the time; the #53 retrofit was
+  needed only because self-upgrade pre-dated the convention.
+  workspace-sync follows the modern convention — seal-test
+  + sidecar + seals/ created at first seal.
+
+**Research:** Multiple research docs ladder up to this plan:
+- `docs/rebuild/plans/research/canonical-to-workspace-sync-research.md` (AA — original sync mechanism design, D-1 through D-7)
+- `docs/rebuild/plans/research/upgrade-architecture-conventions-research.md` (FF — A vs B architecture choice; locks B for framework code, A for the `pos` binary only)
+- `docs/rebuild/plans/research/bb-cycle-architecture-b-retarget-review.md` (GG — per-file salvage verdicts; ~70% of BB-cycle code carries over)
+
+
+---
+
+## 1. Summary / TLDR
+
+Introduces a NEW sealed component **`workspace-sync/`** that pulls
+canonical changes into a downstream workspace clone (e.g. pos3) under
+Architecture B (per-workspace embedded framework, locked
+2026-04-26). The component is the keystone for Luke's milestone:
+*running upgrade on pos3 doesn't lose workspace-specific content.*
+
+Architecture B (per-workspace embedded framework) replaces
+Architecture A (global symlink swap) for downstream-workspace pull
+semantics. The existing `self-upgrade/` framework is preserved as
+the canonical-only A-mode mechanism (clauses (a)–(g) operate on
+`~/.pos/framework/current/` on the canonical maintainer's machine
+per ruling A5).
+
+At-rest comparison is **git-tree-vs-working-tree**, not
+manifest-vs-staging. The CLI takes `--canonical <path>` (a local
+canonical git working tree) plus optional `--ref <commit-or-tag>`
+(defaults to canonical HEAD); the workspace root is derived from
+cwd or a `--workspace <path>` flag. The three-class envelope
+(A=preserve, B=structural-merge, C=LLM-merge) governs per-file
+handling. Audit log + `state.yaml` land workspace-local under
+`<workspace>/.pos/sync/`. Re-runs are convergent-idempotent via
+state.yaml.
+
+The plan inherits ~70% of the BB-cycle's clause-(h) primitives
+per the GG adversarial code review: the resolver Protocol, the
+three-class envelope schema, the audit-extension fields, the
+state.yaml shape, and the merge-resolver factory salvage as-is
+(~910 LOC). The clause-checks helper (`resolve_clause_h_inferred`
++ `check_clause_h`) salvages with caller-side rebadging only
+(~280 LOC). The cli.py upgrade glue, the manifest infrastructure,
+and four CLI-driven validation tests are A-shaped and discarded
+(~1300 LOC); the new entry point is authored fresh against B's
+shape. Salvage attribution: ~52% as-is + ~21% with edits + ~27%
+authored fresh.
+
+Workspace data loss is structurally impossible by the same
+framework-floor pattern self-upgrade already proves: Class-A
+paths in the Pydantic-validated `sync-protected.yaml` are NEVER
+overwritten. The Resolution enum extension contains no value
+that authorises overwriting a Class-A path. The CLI fails closed
+on resolver failure and halts on budget exhaustion with a
+resume-able audit.
+
+
+---
+
+## 2. Spec-objective placement (per CLAUDE.md §2.5 framing)
+
+This plan binds to **v1.0 self-upgrade objective** (spec line 81)
+and **Gap-3 acceptance line 114** ("after a framework upgrade …
+the user's active sessions, personas, memory, in-flight tasks,
+workspace-local customisation … are preserved … any change that
+cannot be applied due to conflict with user customisation is
+surfaced with explicit resolution options rather than silently
+dropped"). Under Architecture B (locked 2026-04-26), spec line
+81's *"upgrade its own framework components without meaningfully
+disrupting the user's running configuration"* reinterprets cleanly
+to **"a downstream workspace clone pulls canonical framework
+changes into its working tree without losing workspace-specific
+content."** The "in-place symlink swap on one machine" reading
+scopes to canonical-side self-upgrade only (ruling A5);
+workspace-side pull is the same objective applied across the
+canonical/downstream split.
+
+**No new top-level objective is required.** The v1.0 self-upgrade
+objective is mission-shape: *"the framework upgrades without
+disrupting workspace customisation."* Architecture A and
+Architecture B are two execution paths under one objective; B
+is the path for downstream clones. Gap-3 acceptance line 114's
+seven-axis contract — active session, persona load, memory
+equivalence, in-flight tasks, breaking-change surfacing,
+reversibility, no-silent-skip — applies to both paths. The new
+component answers the workspace-customisation-collision axis the
+existing seven do not name; that's the same gap clause-(h)
+closed in the BB cycle, now relocated to the B-shape execution
+path.
+
+**Halt note.** The plan author considered surfacing a "new
+top-level objective" halt (per dispatch trigger 1) and ruled
+against. The boundary judgment is: clause-(h) under self-upgrade
+v0.2 already named "inference-mediated conflict resolution
+with audit and override" as a verified property (the BB
+cycle); workspace-sync inherits that property and re-houses it
+on B's execution path. No new outcome-axis appears; the
+re-housing is method-shape, not objective-shape. **Halt
+trigger 1 does not fire** — but flagged in §13 with the
+reasoning so the owner can override if they read it
+differently.
+
+**Reverse trace per CLAUDE.md §2.5.** Every AC below traces
+back to spec line 81 + line 114 + maps forward to AC.PO.1
+(translation-burden) and/or AC.PO.2 (toolkit-primitive growth):
+
+- **AC.PO.1 (translation-burden):** the operator says "pull
+  the latest canonical into this workspace without losing my
+  state." The persona translates to `pos sync --canonical
+  <path>` — one verb. The persona reads the workspace-local
+  audit on the operator's behalf, summarises low-confidence
+  resolutions in natural language, surfaces only what needs
+  review. The operator never learns the three-class envelope,
+  the resolver-prompt contract, the state.yaml schema, the
+  git-tree-diff mechanics, or the audit-YAML field set.
+- **AC.PO.2 (toolkit-primitive):** workspace-sync adds three
+  primitives the persona composes against:
+  1. **Workspace-local audit (`<workspace>/.pos/sync/<ref>/audit.yaml`)**
+     — structured artefact the persona summarises on demand.
+  2. **Per-workspace data envelope (`sync-protected.yaml`)** —
+     Pydantic-validated, framework-floor-refused-on-removal.
+     Future tooling (workspace-export, workspace-clone, plan-doc
+     semantic-compare) composes on the same envelope.
+  3. **LLM-merge-gate scope** — budgeted scope through the
+     four-gate chain. Future plans (memory supersession
+     inference, plan-doc semantic compare, persona-contract
+     merge) compose against the same shape.
+
+**Why workspace-sync is the right home.** Self-upgrade today
+encodes A-mode mechanics: `paths.current_link.resolve()`,
+`refuse_if_invoked_from_live_path`, the manifest-keyed
+`verify_file_against` SHA bookkeeping, the symlink-swap
+pipeline. Re-targeting clause-(h) inside self-upgrade for
+workspace-pull use forces self-upgrade to carry two execution
+paths (A and B) in one CLI; the GG review found the cli.py
+glue is A-strong and the live-path bug at L184 means audit
+writes land at `~/.pos/framework/.pos/upgrade/<tag>/audit.yaml`
+under B (wrong path). Owner rules A5 + D-A1 fenced this
+cleanly: self-upgrade stays canonical-only A-mode;
+workspace-sync is the new B-mode mechanism. The component
+fence is exact.
+
+
+---
+
+## 3. Three-lens analysis (per CLAUDE.md design lenses)
+
+### Lens 1 — Claude leverage
+
+Composes on Claude-native primitives without inventing new ones:
+
+1. **Claude SDK structured-output.** The resolver invokes Claude
+   with a Pydantic-typed response shape `{resolution,
+   merged_content, rationale, confidence}`. The salvaged
+   `tools/upgrade-merge-resolver/` factory wraps `claude -p` via
+   subprocess, parses JSON-envelope output, returns a typed
+   `MergeVerdict`. Already used in pos-v2 (memory-system's
+   Graphiti-mediated extraction; primary-persona's authoring
+   pipeline). No new model surface.
+2. **Cost-governance budgeted scope.** Each per-conflict resolver
+   call runs as a budgeted scope through the existing four-gate
+   chain. Halt-trigger fires structurally on overrun (workspace-
+   sync surfaces "K conflicts deferred — bump budget or
+   hand-resolve"). Per-conflict 5k / cumulative 100k defaults
+   locked from BB.
+3. **Slash-command primitive.** Future amendment can wrap `pos
+   sync` as a `/sync` slash-command for direct persona-
+   invokability. Out of scope for this amendment but unlocked
+   by it (the CLI is the substrate).
+4. **Observability-aggregator OTel spans.** `pos.sync.merge_gate.*`
+   spans tagged with conflict path, model, token cost,
+   confidence, override flag. Composes on v1.1 R11 OTel
+   discipline.
+5. **Plugin / skill / MCP cache delegation (ruling A3).** The
+   `~/.claude/{plugins,skills}/` cache + MCP servers are
+   Claude Code's responsibility. workspace-sync does NOT manage
+   them. The workspace's `.mcp.json` (amendment #47) IS Class A
+   — preserved, never overwritten. The persona-invokable plugin
+   declarations live in workspace files the framework-floor
+   protects. **Halt trigger 5 (LLM surface that doesn't exist)
+   does not fire** — the resolver uses existing structured-
+   output + budget primitives.
+6. **Git as the diff substrate.** B's at-rest comparison is
+   `git diff <ref>..HEAD` against a canonical working tree, not
+   SHA-bookkeeping against a manifest. Git already produces
+   three-way merge data; workspace-sync composes on it rather
+   than re-implementing. **No new diff machinery.**
+
+### Lens 2 — Harness + primary-persona value
+
+**Primary-persona test.** Reduces translation burden: today, a
+pos3 operator who wants the latest canonical features has no
+path other than `git pull && git merge upstream/main` plus
+hand-curating which framework files clobbered which workspace
+files. The naive git-merge clobbers the tracker DB, persona
+contracts, and `.mcp.json` because git's textual merge has no
+concept of the three-class envelope. workspace-sync absorbs
+both translation chores: the persona invokes one verb, the
+envelope structurally protects state, the resolver handles
+semantic merges, and the audit summarises on review. **Pass.**
+
+**Harness test.** Adds three primitives to the persona's toolkit
+(audit-YAML, sync-protected envelope, merge-gate budgeted
+scope — listed in §2 above). Each is invocable by the persona;
+the audit lives in a stable workspace-local path the persona
+reads to answer "what changed in the last sync and was anything
+risky?" — without re-fetching context. **Pass.**
+
+Per AC trace:
+- **AC.WS.1 → AC.PO.1.** `pos sync --canonical <path>`
+  absorbs "fetch + diff + classify + merge + write audit"
+  into one invocation.
+- **AC.WS.2 + AC.WS.3 → AC.PO.1.** Class-A envelope means
+  the operator never has to translate "which of my files
+  did the sync overwrite?" — A-paths are structurally
+  untouched.
+- **AC.WS.4 + AC.WS.5 → AC.PO.1.** LLM-mediated Class-C
+  resolution with audit absorbs "what changed and why."
+- **AC.WS.6 → AC.PO.2.** Per-conflict budgeted scope is a
+  toolkit primitive future callers compose against (semantic
+  merges in other contexts).
+- **AC.WS.7 → AC.PO.1 + AC.PO.2.** Stage-then-atomic-accept
+  is a single yes/no/review gate, not a partial-state
+  recovery procedure.
+- **AC.WS.8 → AC.PO.1.** Convergent-idempotency via
+  state.yaml — re-runs are safe, persona never has to ask
+  "did I already do this?"
+- **AC.WS.9 → AC.PO.2.** Override persistence — the
+  operator's override IS persistent toolkit context.
+- **AC.WS.10 → AC.PO.1.** Default-shipping safe envelope —
+  non-tech operators get protected-by-default behaviour.
+- **AC.WS.11 + AC.WS.12 → AC.PO.2.** OTel span +
+  fail-closed-on-error compose on existing observability /
+  error-handling primitives.
+
+### Lens 3 — ODD authoring
+
+ACs §4 are outcome-shaped; each names a state of the world
+the amendment must make true with deterministic test shape.
+No method-in-AC (no "uses Pydantic", no "calls
+ClaudeAdapter", no "implements Protocol X"). Method choices
+(resolver client wiring, audit-file serialisation order,
+integration test fixture shape, exact CLI flag names below
+the entry-point shape) are the builder's call inside §8 and
+§14; the AC tests outcome only.
+
+Behaviour-count check applied in §5. ODD §2.5 reverse trace
+is the builder's pre-seal check captured in the builder-plan
+(one row per code path → AC).
+
+Halt-and-surface triggers per §10; explicit per
+`feedback_subagent_odd_violation_halt`.
+
+
+---
+
+## 4. Acceptance criteria (AC.WS — sealed-component amendment)
+
+Twelve outcome-shaped acceptance criteria (AC.WS.1–12) plus
+the seal-diff invariant (AC.WS.S). Each carries the
+deterministic test shape; method is the builder's call.
+
+**AC.WS.1 — Canonical-as-source pull, B-shape.** Invoking
+`pos sync --canonical <repo-path>` (with optional
+`--ref <commit-or-tag>`; defaults to canonical HEAD) against
+a workspace at `<workspace_root>` (cwd by default; overrideable
+via `--workspace <path>`) reads the canonical tree at the
+resolved ref and produces the at-rest comparison data
+(canonical content + workspace content per path) without
+consulting a tag-keyed manifest, without resolving any
+`current_link` symlink, and without refusing-on-live-path. A
+`pos sync` invocation outside a workspace (no
+`sync-protected.yaml` write target derivable from cwd or
+--workspace) halts with a structured argument-validation error
+naming the missing workspace-root.
+
+**AC.WS.2 — Class A workspace-state preservation.** A workspace
+path declared Class A in `<workspace>/.pos/sync-protected.yaml`
+is NEVER overwritten by a sync — verified by a fixture in which
+a Class-A file (e.g. `personas/<handle>/contract.yaml`,
+`<workspace>/.pos/objective_tracker.sqlite`,
+`<workspace>/.mcp.json`) is modified on both sides between
+canonical-prior and canonical-target refs. Post-sync the
+workspace-side content is byte-identical to its pre-sync
+state and the audit log records `class: A, action: preserved`
+for that path.
+
+**AC.WS.3 — Class B operator-preference resolution.** A
+workspace path declared Class B is overwritten by canonical's
+value when the workspace has not modified it; preserved when
+the workspace has modified it (override resolution). Verified
+by a fixture where Class-B file `<workspace>/memory.yaml` is
+modified workspace-side; canonical's matching change is dropped
+from the sync and the audit records `class: B, action:
+workspace-override`.
+
+**AC.WS.4 — Class C inference-mediated resolution.** A Class-C
+file with both-sides changes triggers the LLM-mediated
+resolver. The resolver returns a structured verdict; the
+verdict's resolution lands one of three Resolution-enum
+extensions (`inferred-accept-canonical`,
+`inferred-accept-workspace`, `inferred-merged`); the audit log
+records the path, both-sides shas, the verdict, the rationale
+(free-text), the confidence (0.0–1.0 float), and
+`user_override: false`.
+
+**AC.WS.5 — Audit log shape.** Every workspace-sync run writes
+`<workspace>/.pos/sync/<ref>/audit.yaml` containing one entry
+per resolved conflict. The schema is Pydantic-validated on
+every load; missing required fields raise schema error. The
+audit is sorted with low-confidence resolutions first
+(deterministic ordering test). The schema rejects
+`resolution: skipped` at load — the no-silent-skip rule
+carries over from clause-(g)/clause-(h).
+
+**AC.WS.6 — Per-conflict budget ceiling.** Each per-conflict
+resolver invocation runs inside a budgeted scope; cumulative
+sync budget is bounded by a per-sync ceiling read from
+`~/.pos/sync-config.yaml` (default values declared in the
+schema, workspace-tunable). When the ceiling is hit, the sync
+halts before any further resolver calls; staging is
+preserved; the audit records resolved-vs-deferred counts;
+the operator can re-run with a higher ceiling or
+hand-resolve the deferred conflicts.
+
+**AC.WS.7 — Stage-then-atomic-accept.** When all conflicts
+have a resolution (auto, classified, or inferred), the staging
+tree contains the full post-merge view. The operator (or
+auto-accept if configured + all confidences exceed a tunable
+threshold) fires acceptance: the staging tree applies
+atomically to the workspace (single-commit-or-equivalent
+apply). On reject, staging is discarded; workspace state is
+byte-identical to pre-sync.
+
+**AC.WS.8 — Convergent idempotency.** Re-running the same
+`pos sync --canonical <p> --ref <r>` against the same
+workspace state is a no-op (no resolver calls, no staging
+mutation, no audit re-write). State is recorded at
+`<workspace>/.pos/sync/state.yaml`; a fixture that perturbs
+workspace state between runs and re-invokes produces a
+converged result equivalent to a clean invocation from the
+perturbed start.
+
+**AC.WS.9 — User override persistence.** A user-edited audit
+entry that flips `user_override: true` and supplies
+`override_rationale` is honoured on the next re-run for the
+same `(path, both-sides-shas)` triple — the resolver is NOT
+re-invoked; the override resolution is applied directly.
+Verified by a fixture that overrides one entry and re-invokes
+with the same canonical state.
+
+**AC.WS.10 — Class-A envelope ships safe by default.** A
+workspace with no `sync-protected.yaml` (fresh clone) receives
+a default envelope from canonical's
+`workspace-sync/templates/sync-protected.default.yaml` (or
+equivalent shipped path, salvaged from
+self-upgrade/templates/) on the first sync. The default
+envelope's Class-A floor — workspace-state DBs, persona
+contracts, `.mcp.json`, `.pos/`, `.scratch/` — is
+Pydantic-validated as a framework floor: a workspace cannot
+remove framework-floor entries without hitting a load-time
+refusal. Verified by a fixture that deletes a framework-floor
+key from `sync-protected.yaml`; the next sync refuses to start
+with a structured error.
+
+**AC.WS.11 — Observability span.** Every workspace-sync
+resolution emits a `pos.sync.merge_gate.resolution` OTel span
+with attributes for path, both-sides-shas, model name, token
+cost, latency, resolution verdict, confidence, override flag.
+Aggregated cost per sync run emitted as
+`pos.sync.merge_gate.summary` once per run. Verified by a
+fixture that captures the in-process span exporter and
+asserts one span per resolution + one summary span per run.
+
+**AC.WS.12 — Fail-closed on resolver failure.** When the
+resolver fails (network error, retries exhausted, schema
+reject) or the cumulative budget exhausts mid-run, the sync
+fails closed: no staging applies; the workspace is
+byte-identical to pre-sync; the audit + state.yaml record
+the failure with the deferred conflicts; no partial
+application. The `Resolution` enum extension contains no
+value that authorises overwriting a Class-A path under any
+failure mode (structural enforcement, not advisory). On
+resume, the operator can re-run after raising the budget or
+fixing the network condition; convergent idempotency
+(AC.WS.8) guarantees previously-resolved entries are not
+re-resolved.
+
+**AC.WS.S — Seal-diff invariant.** Diff between BASELINE and
+SEAL_COMMIT is confined to `workspace-sync/` plus
+amendment-universal admissions (`docs/rebuild/plans/`,
+`CLAUDE.md` if needed, `docs/rebuild/FUTURE_IDEAS.md` if
+needed, `docs/odd-*.md` if needed). Verified by
+`workspace-sync/tests/test_no_sealed_amendments.py` and the
+cross-component sweep at seal-time. Carryover edits to
+`self-upgrade/` are FORBIDDEN by AC.WS.S — the salvage map
+(§9.x) lifts code from self-upgrade INTO workspace-sync
+by file-copy, not by cross-component import; self-upgrade's
+source remains untouched.
+
+
+---
+
+## 5. Behaviour-count check (ODD §3.3 forward)
+
+Twelve declared behaviours; twelve outcome-shaped ACs; one
+seal-invariant. Match.
+
+| # | Declared behaviour | AC |
+|---|--------------------|-----|
+| 1 | Canonical-as-source B-shape pull, workspace-rooted | AC.WS.1 |
+| 2 | Class A workspace-state never overwritten | AC.WS.2 |
+| 3 | Class B operator-preference override resolution | AC.WS.3 |
+| 4 | Class C LLM-mediated resolution with verdict + audit | AC.WS.4 |
+| 5 | Audit log Pydantic-validated, low-confidence-first ordering, no `skipped` | AC.WS.5 |
+| 6 | Per-conflict budget + cumulative ceiling halt | AC.WS.6 |
+| 7 | Stage-then-atomic-accept (atomic apply or atomic discard) | AC.WS.7 |
+| 8 | Convergent idempotency on re-run | AC.WS.8 |
+| 9 | User override persisted across re-runs | AC.WS.9 |
+| 10 | Class-A envelope ships safe by default; framework-floor refused if removed | AC.WS.10 |
+| 11 | OTel span per resolution + summary per run | AC.WS.11 |
+| 12 | Fail-closed on resolver failure or budget exhaustion (atomic, no partial apply) | AC.WS.12 |
+| S | Seal-diff invariant: only `workspace-sync/` + universal paths; self-upgrade untouched | AC.WS.S |
+
+Forward direction (every behaviour → AC) verified above.
+Reverse direction (every code path / branch / dependency →
+AC) is the builder's pre-seal check captured in the
+builder-plan's §5.
+
+
+---
+
+## 6. Hard constraints
+
+1. **Sealed-component fence: `workspace-sync/` only** (plus
+   universal-paths admissions). Any source-edit OUTSIDE
+   `workspace-sync/` triggers halt-and-surface (§10 trigger 4).
+   Specifically: **NO source edits to `self-upgrade/`** beyond
+   what file-copy salvage requires (and salvage is by COPY,
+   not by amend — the salvaged files land as new
+   `workspace-sync/src/...` files, sourced from but not
+   dependent on `self-upgrade/`). Per ruling A5,
+   self-upgrade remains the canonical-only A-mode mechanism;
+   this amendment does NOT touch it. Test-fixture additions
+   in adjacent components (e.g. a stub canonical-tree fixture
+   under `workspace-sync/tests/fixtures/`) are permitted and
+   belong inside the new fence.
+
+2. **No new third-party runtime dependency.** The resolver
+   wraps the salvaged `tools/upgrade-merge-resolver/`
+   package's `_ClaudePrintResolverClient` (subprocess wrap of
+   `claude -p`). Pydantic ≥2 (already a dep), PyYAML
+   (already a dep), stdlib only otherwise. If a new
+   dependency surfaces (e.g. for git-tree diffing beyond
+   `git diff --name-only` shellout), halt-and-surface
+   (§10 trigger 5).
+
+3. **No `--amend`.** Corrective new commits only per
+   `feedback_no_amend_in_agent_dispatches`.
+
+4. **Plan-before-code.** This plan exists; the builder
+   authors a builder-plan at
+   `docs/rebuild/plans/workspace-sync.builder-plan.md`
+   before editing any source.
+
+5. **Backward-compat preserved unconditionally for self-upgrade.**
+   A `pos upgrade <tag> --staging-dir <path>` invocation (the
+   existing self-upgrade A-mode CLI) remains byte-identical
+   in behaviour. `pos upgrade <tag> --canonical <path>` (the
+   BB-cycle clause-(h) entry) ALSO remains byte-identical
+   unchanged; clause-(h) stays where #54 sealed it. The
+   `pos sync` CLI is a NEW entry point, not a modification
+   of the existing one. (Future amendment may deprecate the
+   `--canonical` flag on `pos upgrade` once `pos sync` is
+   proven; that's out of scope.)
+
+6. **Workspace data loss is structurally impossible.**
+   Class-A protection lives in the salvaged Pydantic schema
+   with framework-floor validator (`sync_protected.py`).
+   The validator must refuse construction of a `SyncProtected`
+   instance missing any framework-floor key. The `Resolution`
+   enum extension does NOT include any value that authorises
+   overwriting a Class-A path. The CLI halts on
+   framework-floor removal at load.
+
+7. **Resolver is fail-closed.** When the LLM call fails or
+   returns a verdict the schema rejects, the sync fails
+   closed and rolls staging back. The framework MUST NOT
+   silently treat a resolver failure as `accept-canonical` or
+   `accept-workspace`. AC.WS.12 is the test-shaped form.
+
+8. **Auto-accept is opt-in, not default.** Default behaviour
+   is "operator confirms acceptance after audit." Auto-accept
+   on high-confidence requires an explicit
+   `~/.pos/sync-config.yaml` opt-in plus a declared
+   confidence floor; fail-closed if either is absent.
+
+9. **CDC adherence.** scope-only-dispatch CDC. Standard
+   pos-amend manifest discipline. `pos-amend seal --plan-doc
+   <abs-path>` backfills §14.
+
+10. **No top-level objective added.** Per dispatch + §2: this
+    composes on the existing v1.0 self-upgrade objective +
+    v1.1 R1 + AC.PO.1/2 ladder. If the build surfaces a hard
+    need for a new top-level objective, halt-and-surface
+    (§10 trigger 1) — do NOT silently promote.
+
+11. **Salvage by COPY, not import.** Files lifted from
+    `self-upgrade/src/self_upgrade/` (per §9.x map) land as
+    new files under `workspace-sync/src/workspace_sync/`,
+    with the salvage-with-edits scope applied during the
+    copy (rename `tag` → `ref`, drop manifest validator,
+    caller-side rebadging of `report.upgrade_tag` semantic,
+    etc. per the GG review §"Per-file verdict table"). The
+    new component does NOT `import self_upgrade.merge_resolver`
+    or any other self-upgrade module; both components carry
+    their own copy of the merge-resolver primitives. This is
+    load-bearing for the seal-diff invariant (AC.WS.S) and
+    for ruling A5 (self-upgrade is canonical-only A-mode;
+    workspace-sync is downstream-only B-mode; they share
+    design DNA but no runtime coupling).
+
+12. **Workspace-root determination is structural.**
+    `--workspace <path>` is honoured if supplied and is a
+    directory. Otherwise `Path.cwd()` is the workspace root.
+    The CLI verifies the workspace root contains either an
+    existing `.pos/sync-protected.yaml` (existing workspace)
+    or is git-tree-shaped (`.git/` present — so a fresh
+    first-run-sync can seed the envelope). If neither holds,
+    halt with a structured argument-validation error naming
+    both fall-through conditions. **No symlink resolution
+    anywhere in the workspace-root derivation** — that's the
+    A-coupling bug at `self-upgrade/cli.py:184` the GG review
+    flagged (`live_root = paths.current_link.resolve()`).
+    workspace-sync's live root IS `Path.cwd()` (or
+    `--workspace`), full stop.
+
+
+---
+
+## 7. Out of scope (explicit)
+
+Per ODD §2.5 and the dispatch's locked owner rulings:
+
+- **`/sync` slash-command surface.** Composes on this
+  amendment's `pos sync` CLI but is a separate amendment
+  (Lens 1 future work; either dispatch-template family or
+  a targeted persona amendment). Out of scope here.
+- **`--canonical <git-url>` remote-fetch mode.** This
+  amendment ships local-canonical pull only (`--canonical
+  <path>` → a local working tree). Future amendment can
+  fetch a remote into a tmp worktree. The minimum surface
+  needed.
+- **Cross-workspace sync between two non-canonical clones.**
+  Out of scope — clones pull from canonical, not from each
+  other.
+- **Background-scope mode.** D-3 of the AA research locked
+  background-scope as a future shape. This amendment ships
+  foreground (operator runs `pos sync`, sees the audit,
+  accepts/rejects). Future amendment composes the
+  `BackgroundWorkMonitor` integration.
+- **Multi-conflict batched LLM call.** Each conflict gets its
+  own resolver call. Future amendment may batch
+  low-confidence-only into one call.
+- **Auto-accept by default for non-tech UX.** Locked against
+  by Luke's hard requirement "every conflict resolution
+  surfaces what was decided + why, so the user can review and
+  override." Auto-accept opt-in only.
+- **Workspace-clone primitive.** A `pos clone-workspace <src>
+  <dst>` primitive — not required for canonical-pull. Future
+  amendment.
+- **Resolver model selection / cost-tier tuning.** The
+  resolver uses the harness default Claude model. Per-conflict
+  model choice based on file size or class is a future
+  tuning amendment.
+- **Telegram-channel surfacing of audit.** `pos.sync.*` OTel
+  spans flow into observability-aggregator; how the persona
+  delivers the audit to the user (Telegram, inline-text, etc.)
+  is the persona's call, not this amendment.
+- **Multi-workspace concurrency primitives** (per ruling A4).
+  Each workspace upgrades independently; there is no shared
+  state to coordinate. No new locks, no new global
+  coordinator, no concurrency primitives.
+- **Plugin / skill / MCP cache management** (per ruling A3).
+  Claude Code owns `~/.claude/`; workspace-sync delegates.
+  Workspace-side `.mcp.json` is Class A (preserved); plugins
+  declared by the workspace are Class A (preserved); the
+  cache contents at `~/.claude/plugins/` are not in scope.
+- **Repurposing `~/.pos/framework/current/` symlink** (per
+  ruling A5). Self-upgrade keeps it for canonical-only
+  A-mode upgrades. workspace-sync does not touch
+  `~/.pos/framework/`.
+- **Discarding any code in `self-upgrade/`.** Per Hard
+  Constraint #1 and ruling A5, self-upgrade stays where it
+  is. The "discard" verdicts in the GG review (`pos-v2-
+  v0.2.0.yaml`, `_build_manifest.py`, four CLI-driven
+  validation tests) refer to *not carrying those forward
+  into workspace-sync*, not to deleting them from
+  self-upgrade. self-upgrade remains the canonical-only
+  A-mode mechanism; what it ships, ships.
+- **Seal-bookkeeping retrofit for workspace-sync.** This
+  amendment is the FIRST seal of `workspace-sync/`, so it
+  creates the seal-test + sidecar + seals/ directory at
+  seal-time per the standard sealed-component shape. This
+  is "create at first seal," not retrofit; the amendment
+  is bundled rather than two-step.
+
+
+---
+
+## 8. Implementation order (suggested — builder's call to refine)
+
+Suggested order — builder's call to refine in the builder-plan:
+
+1. **Read session-start corpus** (CLAUDE.md project + global,
+   ODD docs, VALUE_PROPOSITION, STATE, FUTURE_IDEAS) **+
+   this plan + the GG adversarial review + the FF
+   architecture-conventions research + the AA sync
+   research + the BB clause-(h) plan-doc.**
+2. **Author builder-plan** at
+   `docs/rebuild/plans/workspace-sync.builder-plan.md`
+   before any source edit. Builder-plan captures D-build.x
+   method choices and the §2.5 reverse-direction trace.
+3. **Verify the salvage map's per-file verdicts against the
+   actual code on the post-#54 tip.** The GG review was
+   authored against the BB-cycle code; if amendment #54's
+   seal touched any of the salvaged files, re-confirm the
+   verdict before lifting. Halt-and-surface (§10 trigger 6)
+   if a "salvage-as-is" file actually has hidden A-coupling
+   not flagged in the review.
+4. **Scaffold `workspace-sync/` package** — `pyproject.toml`,
+   `src/workspace_sync/__init__.py`, `tests/`, `templates/`,
+   `seals/`, README. No code yet.
+5. **Lift salvage-as-is files** (per §9.x salvage map) —
+   `merge_resolver.py`, `sync_protected.py`,
+   `state.py`, `templates/sync-protected.default.yaml`,
+   `tools/upgrade-merge-resolver/` (or its key files —
+   builder's call whether to lift the whole package or
+   vendor the factory in-tree). Plus the INFERRED_*
+   extensions from `conflict_report.py` (the schema
+   additions; not the whole module). Tests for the
+   framework-floor refusal, the resolver Protocol, the
+   state-yaml round-trip transfer with the files.
+6. **Lift salvage-with-edits files** — `canonical.py`
+   (rename `tag` → `ref`; drop manifest validator;
+   drop `default_manifest_path`); the
+   `resolve_clause_h_inferred` + `check_clause_h` helpers
+   from `clause_checks.py` into a workspace-sync-resident
+   module (caller-side rebadging only of
+   `report.upgrade_tag` → workspace-sync's ref semantic).
+   Direct-helper tests salvage with the same caller-side
+   rebadging.
+7. **Author the new B-shape conflict-detection surface** —
+   replace the manifest-vs-staging `detect_conflicts` with
+   git-tree-vs-working-tree diffing. Builder's call on
+   mechanism: shellout to `git diff` against the canonical
+   working tree, or `git merge-file` for three-way merge,
+   or pure-Python via `dulwich` (only if no new dep —
+   halt-and-surface if needed). Tests: a fixture canonical
+   repo + a workspace clone with both-sides modifications;
+   assert the conflict-detector lists the right paths and
+   classifies each.
+8. **Author the new `pos sync` CLI entry point** —
+   argparse with `--canonical <path>` (required; or
+   `--ref <commit-or-tag>`, optional, defaults to
+   canonical HEAD), `--workspace <path>` (optional,
+   defaults to cwd), `--dry-run`,
+   `--merge-resolver-module`, `--budget-tokens` (cumulative
+   ceiling override). Workspace-root derivation per Hard
+   Constraint #12. NO `paths.current_link`, NO
+   `refuse_if_invoked_from_live_path`, NO `--prior-tag`,
+   NO `--staging-dir`. Tests: argparse error on
+   missing-canonical; argparse honours --workspace;
+   fresh-clone first-run seeds `sync-protected.yaml`.
+9. **Wire the staging directory + atomic-accept gate** —
+   `<workspace>/.pos/sync/staging/<ref>/`. Stage all
+   canonical-clean writes + per-conflict resolved content;
+   present audit; on accept, rsync-or-equivalent the
+   staging tree onto the workspace; on reject, drop
+   staging. Tests: fixture for stage-then-accept (workspace
+   reflects canonical post-accept); fixture for
+   stage-then-reject (workspace byte-identical to pre-sync);
+   fixture for atomic-accept (no partial-apply visible to
+   a concurrent reader).
+10. **Wire the LLM-merge resolver invocation** — per-conflict
+    budgeted scope; structured-output call via the salvaged
+    `_ClaudePrintResolverClient`; verdict validation;
+    audit-YAML write under `<workspace>/.pos/sync/<ref>/`.
+    Tests: stub resolver for deterministic verdicts;
+    one integration test against the real adapter
+    (skip-if-no-key gate per existing convention in
+    memory-system / primary-persona); fail-closed on
+    resolver failure.
+11. **Wire OTel span emission + summary span.** Tests with
+    the in-process span exporter.
+12. **Wire convergent-idempotency state.yaml** (already
+    salvaged; this is the call-site). On every sync,
+    write state.yaml; on re-run, read state.yaml; if
+    `(canonical_ref, workspace_state)` unchanged, fast-
+    path past resolver invocations. Tests: re-run no-op;
+    re-run after canonical advance; re-run after
+    workspace perturbation.
+13. **Author the seal-bookkeeping infra** — first seal of
+    `workspace-sync/`, so create
+    `tests/test_no_sealed_amendments.py` + `tests/SEAL_COMMIT`
+    + `seals/` with the standard structure (mirrors
+    what amendment #53 retrofitted onto self-upgrade).
+14. **Run touched-component suite** then `pos-amend apply
+    --dry-run`; if clean, run amendment commit; then
+    `pos-amend seal --plan-doc <abs-path>`.
+15. **Verify backward-compat** — `pos upgrade <tag>
+    --staging-dir <path>` and `pos upgrade <tag>
+    --canonical <path>` invocations on a fixture; assert
+    byte-identical behaviour to pre-amendment.
+
+
+---
+
+## 9. Bookkeeping surface, salvage map, and pos-amend manifest
+
+Sealed-component amendment landing a NEW component at
+`workspace-sync/`. First seal of the component, so the
+amendment creates the seal-bookkeeping infra (tests/
+SEAL_COMMIT sidecar + tests/test_no_sealed_amendments.py +
+seals/ directory) alongside the source code, per the
+standard pattern (no retrofit). Cross-component sweep
+applies at seal-time per existing convention.
+
+### 9.1 Salvage attribution map
+
+Inherits the GG adversarial review's per-file verdicts
+verbatim. Subtotal: ~2070 LOC inherited (~52% as-is +
+~21% with edits) + ~770 LOC authored fresh (~27%) of the
+~2840 LOC the BB cycle touched. Discarded: ~1300 LOC
+(left in self-upgrade per Hard Constraint #1; not lifted).
+
+**Salvage-as-is — copy file to `workspace-sync/src/workspace_sync/`,
+zero edits (~910 LOC):**
+
+| Source | Target | Notes |
+|---|---|---|
+| `self-upgrade/src/self_upgrade/merge_resolver.py` | `workspace-sync/src/workspace_sync/merge_resolver.py` | Resolver Protocol, ResolverBudget, BudgetExhausted, ResolverFailure, MergeVerdict, build_prompt, MergeResolver class. ~190 LOC. Architecture-neutral by accident. |
+| `self-upgrade/src/self_upgrade/sync_protected.py` | `workspace-sync/src/workspace_sync/sync_protected.py` | A/B/C envelope, FileClass enum, FRAMEWORK_FLOOR, classify, default_sync_protected, write_default_if_absent. ~170 LOC. Workspace-shaped from day one. |
+| `self-upgrade/src/self_upgrade/state.py` | `workspace-sync/src/workspace_sync/state.py` | StateRecord, UpgradeStatus, audit_yaml_path, state_yaml_path, load_state, save_state, make_state_record. ~130 LOC. 100% workspace-rooted. Optional rename `upgrade_tag` → `sync_ref` for accuracy (builder's call); not required for the schema to keep working. |
+| `self-upgrade/templates/sync-protected.default.yaml` | `workspace-sync/templates/sync-protected.default.yaml` | 30-line YAML; default Class-A floor + memory.yaml as Class B. |
+| `tools/upgrade-merge-resolver/src/upgrade_merge_resolver/__init__.py` | builder's call: re-vendor under `workspace-sync/src/workspace_sync/_resolver_client.py` OR keep at `tools/upgrade-merge-resolver/` and import (only allowed if NOT a self-upgrade dep) | `_ClaudePrintResolverClient`, build_merge_resolver factory. ~270 LOC. Subprocess wrap of `claude -p`, env-allowlist, JSON-envelope parsing, token-cost extraction. Architecture-blind. |
+| `self-upgrade/src/self_upgrade/conflict_report.py` INFERRED_* extensions | `workspace-sync/src/workspace_sync/conflict_report.py` | INFERRED_* enum values + ConflictEntry rationale/confidence/user_override/override_rationale fields + `sorted_low_confidence_first` + `inferred_entries` + `_reject_skipped` validator. ~120 LOC of additions. Builder's call whether to lift the WHOLE conflict_report module or only the clause-(h)-relevant subset; lifting whole gives a cleaner, B-shape-only conflict-report; lifting subset means workspace-sync's conflict-detection authors a fresh `ConflictEntry` shape and merges in the audit fields. Recommended: lift WHOLE (~400 LOC), drop the manifest-keyed sha-comparison surface inside it; replace with B-shape git-diff input. |
+
+**Salvage-with-edits — copy + scoped edits (~860 LOC):**
+
+| Source | Target | Edits |
+|---|---|---|
+| `self-upgrade/src/self_upgrade/canonical.py` | `workspace-sync/src/workspace_sync/canonical.py` | Drop `manifest.release_tag != tag` validator (manifest goes away under B). Drop `default_manifest_path` (no manifest under B). Rename `tag` parameter → `ref` (B uses commit-SHAs / refs, not release-tags). Keep the canonical_path .git existence check; keep `staging_dir == canonical_path` semantic (canonical tree IS the comparison source under B). ~80 LOC remain. |
+| `self-upgrade/src/self_upgrade/clause_checks.py::resolve_clause_h_inferred` + `check_clause_h` + helpers `_read_text_or_none`, `_verdict_to_resolution` | `workspace-sync/src/workspace_sync/merge_helper.py` (or similar — builder's call) | Caller-side rebadging only: `report.upgrade_tag` references retain semantic but the calling sync-shape supplies a ref-or-commit-SHA in that field. The helper takes `canonical_root: Path` + `workspace_root: Path` as Path injections; the `audit_yaml_path(workspace_root, ...)` and `save_state(state, workspace_root)` lines work unchanged. ~280 LOC. **Hidden coupling check**: confirm at lift time that the helper does not reach for `paths.current_link` / `paths.history` anywhere — GG verdict says it doesn't, builder verifies (§10 trigger 6). |
+| Direct-helper tests in `self-upgrade/tests/test_bb_feat_synthetic_validation.py` (7 of 12) | `workspace-sync/tests/test_clause_h_helper_synthetic.py` | Tests that invoke `resolve_clause_h_inferred` directly with `canonical_root` + `workspace_root` Path arguments survive with caller-side rebadging only. Specifically (per GG §"What survives with cosmetic / minor edits"): `test_class_b_workspace_modified_keeps_local`, `test_class_b_workspace_unmodified_accepts_canonical`, `test_cli_canonical_pending_writes_audit_yaml_with_class_a_passthrough` (despite name — direct-helper), `test_cli_canonical_idempotent_rerun_no_resolver_calls`, `test_cli_user_override_idempotent_across_runs` (despite name — direct-helper), `test_cli_canonical_seeds_default_sync_protected_on_first_run`, `test_halt_surface_audit_not_written_on_clean_clause_h_pass`. ~500 LOC. Builder's call whether to lift the whole file with the four CLI-driven tests skipped, or extract the seven into a fresh test module. |
+
+**Authored fresh — no salvage; B-shape requires (~770 LOC):**
+
+| New artefact | Purpose |
+|---|---|
+| `workspace-sync/src/workspace_sync/cli.py` | New `pos sync` argparse + entry point. NO `--prior-tag`, NO `--staging-dir`, NO `paths.current_link`, NO `refuse_if_invoked_from_live_path`. Workspace-root derivation per Hard Constraint #12 (cwd or --workspace). |
+| `workspace-sync/src/workspace_sync/conflict_detection.py` | B-shape git-tree-vs-working-tree conflict detector. Replaces self-upgrade's manifest-vs-staging `detect_conflicts`. Reads canonical at `<canonical_path>` + ref; reads workspace at `<workspace_root>`; produces per-path both-sides-changed records the resolver consumes. Builder's call on git-shellout vs `git merge-file` vs `dulwich`. |
+| `workspace-sync/src/workspace_sync/staging.py` | Stage-then-atomic-accept primitive. Stages to `<workspace>/.pos/sync/staging/<ref>/`; atomic-accept applies via single rsync-or-rename; reject discards. |
+| `workspace-sync/tests/test_cli_b_shape.py` | New CLI-driven tests against the B-shape entry point. Covers AC.WS.1's halt-on-missing-workspace-root, AC.WS.10's first-run defaults seeding, AC.WS.7's stage-then-accept and stage-then-reject. |
+| `workspace-sync/tests/test_conflict_detection_b_shape.py` | Tests for the new git-tree diff classifier. Fixture: a canonical tree at ref X, workspace clone with both-sides changes at paths spanning Class A/B/C. |
+| `workspace-sync/tests/test_no_sealed_amendments.py` | First-seal seal-test for workspace-sync. Standard shape per amendment #53's retrofit pattern. |
+| `workspace-sync/seals/SEAL_COMMIT.workspace-sync` | Narrative seal artefact. |
+| `workspace-sync/README.md` | Component-level docs: scope, B-shape vs A-shape, ruling A5 fence, salvage attribution. |
+
+**Discarded — left in self-upgrade per Hard Constraint #1; NOT lifted:**
+
+| Source | Why discarded |
+|---|---|
+| `self-upgrade/src/self_upgrade/cli.py::cmd_upgrade` glue | A-strong; `live_root` derivation hangs off `paths.current_link.resolve()` (the GG-flagged hidden coupling). Authored fresh in `workspace-sync/cli.py`. |
+| `refuse_if_invoked_from_live_path` | Actively blocks B's normal mode (running from cwd = workspace = "live" under B). Not lifted. |
+| `self-upgrade/manifests/pos-v2-v0.2.0.yaml` (799 LOC) | B uses commit-SHA-or-ref + git-tree diff. No tag-keyed manifest under B. |
+| `self-upgrade/manifests/_build_manifest.py` | Manifest generator; manifest discarded → generator dead. |
+| 4 CLI-driven tests in `test_bb_feat_synthetic_validation.py` | Bake `paths.release_dir(prior)` + `os.symlink(prior, current_link)` A-fixtures. Functionally redundant with direct-helper tests for clause-(h) coverage. New CLI tests authored fresh against B's shape. |
+| `--prior-tag`, `--staging-dir` argparse args | A-mode concepts. workspace-sync has neither. |
+
+### 9.2 `pos-amend` manifest sketch (builder finalises in `workspace-sync.manifest.yaml`)
+
+```yaml
+schema_version: 1
+amendment:
+  number: <N>  # next free amendment number at dispatch time
+  slug: workspace-sync
+  title: "workspace-sync — canonical-to-workspace git-shaped sync with LLM-mediated semantic merge"
+
+baseline: <HEAD~1 SHA>
+plan: docs/rebuild/plans/workspace-sync.md
+
+components:
+  - name: workspace-sync
+    seal_test: workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # First seal of the component. The seal_test + sidecar
+    # are CREATED by this amendment alongside the component
+    # source. The cross-component sweep applies at seal-time.
+
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+
+narrative:
+  target: workspace-sync/seals/SEAL_COMMIT.workspace-sync
+  body: |
+    # Amendment #<N> — workspace-sync (B-mode canonical→workspace)
+    <builder finalises>
+```
+
+**Frozen-baseline:** `false`. workspace-sync is not the
+hands-off-lifecycle frozen-BASELINE component (per ODD §10).
+
+**Dependents cleared at seal:** none in-flight at this
+authoring time. Future amendments composing on workspace-sync
+(the `/sync` slash-command, the `--canonical <git-url>`
+remote-fetch extension, background-scope mode, multi-conflict
+batched LLM call) become unlocked once this seals.
+
+
+---
+
+## 10. Halt triggers (builder halts + signals owner)
+
+Builder halts and signals owner if any of the following fire.
+Each carries a specific surface check; the builder does NOT
+silently extend a violation per
+`feedback_subagent_odd_violation_halt`.
+
+1. **A required new top-level spec objective surfaces.** §2
+   argued composition under v1.0 self-upgrade objective; if
+   during build the work cannot fit under the existing
+   objective + AC.PO.1/2 ladder, halt. (E.g. a structural
+   property emerges that's not implied by spec line 81 +
+   line 114 — workspace-sync needs to express something the
+   existing self-upgrade contract doesn't imply at all.)
+2. **ODD violation observed in surrounding code/docs.** Per
+   `feedback_subagent_odd_violation_halt`, halt and surface;
+   do NOT extend a violating surface. Specifically: if any
+   module being lifted from `self-upgrade/` carries §2.5
+   violations (code paths without backing AC), halt before
+   lifting. Salvage-with-edits is permitted; salvage-while-
+   extending-a-violation is not.
+3. **An AC cannot be authored outcome-shaped.** If a
+   behaviour the build needs to satisfy can only be tested
+   by asserting a method choice (a specific class name, a
+   specific module's import), halt — owner rewrites as
+   outcome.
+4. **Required source-edit outside `workspace-sync/`.** Halt
+   and surface. Specifically: any edit to `self-upgrade/`
+   beyond zero (the salvage is by COPY, Hard Constraint #11)
+   fires this trigger. Test-fixture additions in adjacent
+   components are permitted only via
+   `extra_allowed_prefixes` (test-only); source edits are
+   not. Universal-paths admissions
+   (`docs/rebuild/plans/`, top-level docs) are exempt.
+5. **B-shape mechanism requires a new dependency.** Per Hard
+   Constraint #2: stdlib + Pydantic + PyYAML only. If git
+   diff machinery requires `dulwich` or another lib, halt
+   and surface — owner rules whether to add the dep or
+   re-shape via `git` shellout.
+6. **GG salvage map turns out wrong on close inspection.**
+   If a "salvage-as-is" file actually has hidden A-coupling
+   (e.g. an import of `paths.current_link` not flagged by
+   the review), halt before lifting. The builder verifies
+   each lift against the actual code at the post-#54 tip;
+   do not trust the GG table without the verify step.
+7. **Workspace data loss reproducible under any legitimate
+   input.** AC.WS.2 + AC.WS.10 + AC.WS.12 are hard
+   requirements. If any fixture produces a state where a
+   Class-A path was overwritten or a resolver-failure
+   produces partial application, halt — the structural
+   validator is broken.
+8. **Architecture B turns out incompatible with spec text
+   not yet read.** Per dispatch halt-trigger: if some spec
+   clause (v1.0, v1.1, v1.2) requires a property that B's
+   execution path cannot deliver (e.g. "active session
+   continues without restart" — clause-(a) — has a
+   workspace-sync semantic the builder hadn't anticipated),
+   halt. Owner rules whether B needs adjustment or the spec
+   needs a workspace-side carveout.
+9. **Self-upgrade's clauses (a)–(g) implicitly carry over.**
+   If during build the workspace-sync mechanism's correctness
+   depends on running clause-(a)–(g) verifiers (e.g. R1's
+   semantic-round-trip must verify post-sync), halt. The
+   dispatch's locked B-mode shape says workspace-sync is
+   orchestrator-agnostic; if it isn't, owner rules.
+10. **Wall-time exceeds projected 6–8 hours of build.** Halt
+    with current-state report; owner triages whether to
+    continue or split into sub-amendments.
+11. **Amendment scope expansion crosses sealed-component
+    fences beyond test-fixture admissions.** Halt.
+
+
+---
+
+## 11. Decisions remaining for the owner to rule on
+
+Most decisions are LOCKED by:
+- Owner rulings 2026-04-26 (D-A1 through D-A5: hybrid B/A,
+  salvage option (i), Claude Code owns plugin/skill/MCP
+  cache, independent per-workspace, repurpose
+  ~/.pos/framework/current/ for canonical-only).
+- The AA research-doc D-2 through D-7 (CLI surface = both
+  eventually but CLI-only this amendment; per-conflict
+  budget; A/B/C envelope; stage-then-atomic-accept;
+  convergent idempotency).
+- The BB clause-(h) plan-doc D-1 (100k cumulative / 5k
+  per-conflict) and D-2 (0.90 confidence floor).
+
+Two decisions remained uncertain at plan-author time. Both
+**LOCKED 2026-04-26 by primary persona under confidence-delegation**
+(Luke's "highly confident → go with recommendation" directive),
+recorded inline below:
+
+- **D-1 LOCKED:** `pos sync` short form with `pos workspace-sync`
+  alias for unambiguity. Future `/sync` slash-command mirrors.
+  Rationale: Luke's "want to go to a command line" directive +
+  Lens 2 translation-burden + reversibility (CLI verb is amendable).
+- **D-2 LOCKED:** Inherit BB-cycle defaults verbatim (100k cumulative
+  / 5k per-conflict) and use a SEPARATE `~/.pos/sync-config.yaml`
+  config file (parallel to `~/.pos/upgrade-config.yaml`, not
+  unified). Rationale: cognitive consistency across A/B modes +
+  ruling A4's "independent per-workspace" + tunability without
+  cross-mode coupling.
+
+Both decisions are reversible at the cost of a follow-on amendment;
+neither is foundational. Detail of each preserved below for
+audit-trail purposes.
+
+### D-1. CLI surface name and verb shape (LOCKED 2026-04-26)
+
+**Question.** The dispatch left it open: `pos sync` vs
+`pos workspace-sync`. Some considerations:
+- `pos sync` is short (Lens 2: persona translates "sync
+  from canonical" → one verb), but ambiguous against
+  future syncs (e.g. multi-workspace, peer-sync).
+- `pos workspace-sync` is precise but verbose; the
+  persona invokes the long form just as easily as the
+  short, but operators typing it from a terminal pay the
+  keystrokes.
+- Existing self-upgrade CLI is `pos upgrade <tag>` (tag-
+  positional). workspace-sync's positional could be the
+  canonical path (`pos sync <canonical-path>`), but the
+  GG review's `--canonical <path>` flag form composes
+  cleanly with the salvaged `canonical.py` shape —
+  builder's call whether to keep flag-shape or hoist to
+  positional.
+
+**Why genuinely uncertain.** Lens 2's "shortest verb"
+argument vs Lens 1's "future composition with peer-sync /
+multi-workspace" argument pull opposite ways. The default
+matters because the slash-command in a future amendment
+will mirror it (`/sync` vs `/workspace-sync`).
+
+**Recommendation. `pos sync`** (short form) with
+`pos workspace-sync` as an alias for unambiguity.
+Slash-command future amendment uses `/sync`. Rationale:
+Lens 2 wins on the persona-invocability axis; future
+peer-sync / multi-workspace mechanisms can take their own
+verbs (`pos peer-sync`, `pos multi-sync`) without
+collision. Workspace tunability is moot — the framework
+ships one default.
+
+### D-2. Per-sync cumulative budget default vs BB-cycle's 100k (LOCKED 2026-04-26)
+
+**Question.** BB locked 100k cumulative / 5k per-conflict
+for the canonical-side `pos upgrade --canonical` flow. Does
+workspace-sync inherit those defaults verbatim, or do
+downstream-workspace pulls warrant different defaults?
+
+**Why genuinely uncertain.** Downstream syncs may run more
+often than canonical-side upgrades (small canonical
+advances pulled frequently → many small syncs vs a few
+big upgrades). 100k might be too generous (most syncs touch
+≤3 files) or too small (a big release with many Class-C
+conflicts could halt mid-stream more often than the
+BB-cycle expected). The data point: pos-v2 typical
+amendment touches ≤10 files; ≤3 are Class C; so 5k per
+conflict × 3 conflicts ≈ 15k typical; 100k headroom is
+~20× typical.
+
+**Recommendation. Inherit 100k/5k verbatim** — defaults
+match self-upgrade's clause-(h) for cognitive consistency
+(one set of defaults across both A and B mode). Workspace
+-tunable via `~/.pos/sync-config.yaml` (parallel file to
+`~/.pos/upgrade-config.yaml`; builder's call whether to
+unify or keep separate per ruling A4's "independent
+per-workspace" — recommend separate so a workspace can
+tune sync without affecting upgrade). If owner prefers a
+tighter default for sync (e.g. 50k cumulative because
+syncs are smaller/more-frequent), confirm at dispatch
+time.
+
+### Decisions LOCKED by owner ruling 2026-04-26 + AA research + BB plan
+(NOT for owner ruling here — captured for builder reference):
+
+- **D-A1 (locked):** Hybrid B/A — B for framework code,
+  A for the `pos` CLI binary. workspace-sync ships under B.
+- **D-A2 (locked):** Salvage option (i) — repurpose BB
+  primitives into workspace-sync (this plan).
+- **A3 (locked):** Plugin/skill/MCP cache delegated to
+  Claude Code; workspace-sync does NOT manage `~/.claude/`.
+- **A4 (locked):** Multi-workspace concurrency = independent
+  per-workspace, no shared state.
+- **A5 (locked):** `~/.pos/framework/current/` repurposed
+  for canonical-only self-upgrade; downstream workspaces
+  don't use it.
+- **D-AA-2 (CLI surface):** CLI in this amendment;
+  slash-command future composition.
+- **D-AA-3 (resolver timing):** foreground per-conflict in
+  this amendment; background-scope future composition.
+- **D-AA-4 (envelope):** A/B/C class via Pydantic-validated
+  `sync-protected.yaml`, framework-floor refused on
+  removal.
+- **D-AA-5 (per-conflict budget):** per-conflict budgeted
+  scope; cumulative ceiling above (D-2).
+- **D-AA-6 (failure mode):** stage-then-atomic-accept.
+- **D-AA-7 (idempotency):** convergent via state.yaml.
+- **BB D-2 (confidence floor):** 0.90 default for
+  auto-accept opt-in.
+
+
+---
+
+## 12. Summary of named decisions (owner-readable)
+
+| Decision | Status | Resolution | Why it matters |
+|---|---|---|---|
+| D-1. CLI surface name (`pos sync` vs `pos workspace-sync`) | **LOCKED 2026-04-26** (primary persona, confidence-delegation) | `pos sync` short form + `pos workspace-sync` alias; future `/sync` slash-command mirrors | Persona-invocability (Lens 2 short verb) + Luke's command-line directive; alias preserves unambiguity for terminal-typed workflows; reversible |
+| D-2. Per-sync cumulative budget default | **LOCKED 2026-04-26** (primary persona, confidence-delegation) | Inherit 100k cumulative / 5k per-conflict from BB; SEPARATE `~/.pos/sync-config.yaml` (not unified with upgrade-config.yaml) | Cognitive consistency across A/B modes; ≤10-file typical pos-v2 amendment fits with 20× headroom; A4 "independent per-workspace" supports separate config |
+
+All decisions LOCKED. Builder proceeds against locked values; no
+owner ruling required before dispatch.
+
+
+---
+
+## 13. Halt-and-surface findings encountered during plan authoring
+
+Per `feedback_subagent_odd_violation_halt`: halt and surface
+any ODD violation observed in surrounding code/docs.
+
+Plan-authoring scope (read-only audit of the corpus listed in
+§15 + the salvage-source files in `self-upgrade/src/`):
+
+- **None observed in the salvage-source files at
+  `self-upgrade/src/self_upgrade/`.** The `Resolution` enum's
+  structural exclusion of `skipped` is exemplary (clause-g
+  pattern; canonical example in `odd-in-pos.md` §4). The
+  `ConflictEntry` model_validator structurally refuses
+  INFERRED_* without rationale + confidence. The
+  `SyncProtected` framework-floor validator structurally
+  refuses removal of floor entries. The `MergeVerdict`
+  schema refuses inferred-merged without merged_content and
+  rationale-empty cases.
+- **None observed in the BB-cycle plan-doc
+  (`self-upgrade-clause-h-llm-merge.md`).** ACs are
+  outcome-shaped; the §2.5 reverse-trace is captured;
+  method choices are confined to the builder-plan §14.
+- **None observed in the FF research, GG review, or AA
+  research.** Decisions are cleanly numbered with
+  recommendations; halt-triggers evaluated; locked rulings
+  captured.
+- **None observed in the spec text (line 81, line 114, R1).**
+  The self-upgrade objective is outcome-shaped; the Gap-3
+  acceptance is enumerated by clause; R1 is testable.
+
+### §4 re-extension register (ODD §2.4)
+
+Per `odc-methodology.md` §2.4 + `feedback_loose_AC_text_fix_AC_not_implementation`:
+none at plan authoring time. AC.WS.1–12 + AC.WS.S authored
+outcome-shaped against the GG salvage map's surface; revisions
+during build land in this register.
+
+| # | Date | Driver | Surface | Note |
+|---|------|--------|---------|------|
+| 1 | 2026-04-26 | (none — first revision of this plan) | — | Plan authored against locked rulings; no prior revisions to record. |
+
+### Boundary-judgment surfacings (not halts; owner-readable)
+
+Two boundary judgments worth flagging without halting:
+
+1. **§2's "no new top-level objective" ruling.** The plan
+   argues composition under v1.0 self-upgrade objective + Gap-3
+   line 114. Boundary is whether "downstream workspace pulls
+   canonical updates" is a fresh outcome-axis or a method
+   re-housing of clause-(h)'s already-named property. Plan-
+   author rules method-re-housing; flagged here so owner can
+   overrule.
+2. **CLI surface name.** D-1 above. Recommendation `pos sync`;
+   alternative `pos workspace-sync`. Either is defensible.
+
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left D-build.x method choices to the builder within the
+ACs' outcome bounds. This section is populated post-build.
+
+### D-build.x — (placeholder for the build agent's method choices)
+
+### Test breakdown
+
+(placeholder)
+
+### Backwards-compat verification
+
+(placeholder)
+
+### Commit SHAs
+
+(placeholder; auto-filled by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
+
+### Commit SHAs
+
+(populated by `pos-amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)
+
+### Dependents cleared to dispatch
+
+(placeholder)
+
+---
+
+## 15. References
+
+- CLAUDE.md (project + global)
+- `docs/odd-methodology.md`, `docs/odd-in-pos.md`
+- `docs/rebuild/VALUE_PROPOSITION.md`, `docs/rebuild/STATE.md`,
+  `docs/rebuild/FUTURE_IDEAS.md`
+- `docs/rebuild/spec/pos-v2-objectives-spec.md` (v1.0 + v1.1
+  + v1.2 — self-upgrade objective at line 81; clause-g +
+  workspace-customisation conflict surfacing at line 114;
+  v1.1 R1 at line 213)
+- `docs/rebuild/plans/research/bb-cycle-architecture-b-retarget-review.md`
+  (GG adversarial code review — per-file salvage verdicts,
+  the cli.py:184 hidden-coupling flag, the synthetic-test
+  A-fixture trap. Source-of-truth for §9.1.)
+- `docs/rebuild/plans/research/upgrade-architecture-conventions-research.md`
+  (FF architecture conventions research — P1/P2/P3 patterns;
+  Architecture B for framework, A for the `pos` binary only.)
+- `docs/rebuild/plans/research/canonical-to-workspace-sync-research.md`
+  (AA sync research, 277 lines, 2026-04-26; D-1 through D-7
+  decisions; locked compositional reframing 2026-04-26.)
+- `docs/rebuild/plans/self-upgrade-clause-h-llm-merge.md`
+  (BB-feat plan-doc, sealed via #54 at `0737e7c → 1fd826a`;
+  salvage source for ~70% of workspace-sync's primitives.)
+- `self-upgrade/src/self_upgrade/merge_resolver.py` (salvage
+  source — Resolver Protocol, ResolverBudget,
+  BudgetExhausted, ResolverFailure, MergeVerdict, build_prompt,
+  MergeResolver class)
+- `self-upgrade/src/self_upgrade/sync_protected.py` (salvage
+  source — A/B/C envelope schema)
+- `self-upgrade/src/self_upgrade/conflict_report.py` (salvage
+  source — INFERRED_* extensions + ConflictEntry rationale/
+  confidence/user_override/override_rationale fields)
+- `self-upgrade/src/self_upgrade/state.py` (salvage source —
+  StateRecord, UpgradeStatus, audit_yaml_path)
+- `self-upgrade/src/self_upgrade/clause_checks.py`
+  (salvage-with-edits source — `resolve_clause_h_inferred` +
+  `check_clause_h` helpers + `_read_text_or_none` +
+  `_verdict_to_resolution`)
+- `self-upgrade/src/self_upgrade/canonical.py`
+  (salvage-with-edits source — `resolve_canonical_to_staging`
+  minus the manifest validator)
+- `self-upgrade/templates/sync-protected.default.yaml`
+  (salvage source — default Class-A floor template)
+- `tools/upgrade-merge-resolver/src/upgrade_merge_resolver/__init__.py`
+  (salvage source — `_ClaudePrintResolverClient`,
+  `build_merge_resolver()` factory)
+- `self-upgrade/src/self_upgrade/cli.py` (NOT salvaged —
+  A-strong; A-mode glue stays in self-upgrade per ruling A5)
+

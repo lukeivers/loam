@@ -1,0 +1,100 @@
+# Amendment #50 — primary-persona conversational onboarding
+#                  + default archetype content + write-back-on-rename closure
+
+2026-04-26. Primary-persona's onboarding shape converts from a
+fixed-question elicitation transcript to a conversational
+grounding flow driven by the persona's own prompt.md playbook.
+The framework's persona-template (`primary-persona/templates/
+persona-template/`) gains default archetype prose (eager-new-
+hire chief-of-staff, ODD-shaped, light-touch educational) +
+archetype-aligned contract defaults (`tier_d: defer`, sensible
+`responsibilities` shape, `dev_intent: unanswered`). The new
+`persist_grounding(...)` API closes the write-back-on-rename
+gap by emitting the contract.yaml + prompt.md +
+`.claude/agents/<handle>.md` triplet atomically with optional
+tagged-learning memory episode (`"onboarding-grounding"`).
+
+Surface delta inside `primary-persona/`:
+
+  - `primary-persona/templates/persona-template/contract.yaml`
+    — replaced placeholder responsibilities prose with
+    archetype-aligned defaults; `tier_d: defer`;
+    `dev_intent: unanswered`; `is_primary: true`.
+  - `primary-persona/templates/persona-template/prompt.md` —
+    full rewrite to default archetype prose with eleven named
+    sections (5 traits + 6 rules) + 8 structural sections
+    (identity, voice, seed questions, funnel/OARS, pivot rule,
+    proposal moment, failure-mode guards, no-expertise
+    variant). Carries `{user_preferred_name}` +
+    `{persona_given_name}` substitution tokens.
+  - `primary-persona/src/onboarding.py` — full rewrite.
+    Removed: `OnboardingQuestion`, `ONBOARDING_QUESTIONS`,
+    `persist_elicitation_transcript`,
+    `OnboardingTranscriptError`, `_normalise_dev_intent`,
+    `_DEV_INTENT_YES`, `_DEV_INTENT_NO`,
+    `_is_complete_transcript`, `_validate_transcript_shape`.
+    Added: `OnboardingGroundingError`, `GroundingCapture`
+    dataclass, `persist_grounding(...)` writing the contract /
+    prompt.md / `.claude/agents/<handle>.md` triplet + optional
+    one-episode memory write tagged `"onboarding-grounding"`.
+    Preserved verbatim: `STARTER_PENDING_MARKER`,
+    `dev_intent_storage_path`, `_primary_contract_path`,
+    `read_dev_intent` (the read-side dev-intent surface, locked
+    plan §8).
+  - `primary-persona/src/observability.py` — added
+    `onboarding_grounding_persisted_event`,
+    `onboarding_grounding_episode_failed_event`. Removed five
+    orphan event helpers
+    (`onboarding_question_event`, `onboarding_answer_event`,
+    `onboarding_writeback_event`,
+    `onboarding_dev_intent_question_event`,
+    `onboarding_dev_intent_answer_event`) — they had no
+    remaining caller after `persist_elicitation_transcript`
+    was removed.
+  - `primary-persona/tests/` — eight obsolete tests deleted
+    (each imported a removed symbol; coverage migrates to
+    AC.O.* tests). One partial rewrite
+    (`test_AC35_7_observability.py`). One re-target
+    (`test_AC_A_6_read_dev_intent_default.py` retargeted at
+    `persist_grounding` for setup; read surface unchanged).
+    Eight new AC.O.* tests landed (AC.O.1 through AC.O.8).
+
+Surface delta inside `workspace-bootstrap/` (D-OWNER.2 RELAXED
+for one test deletion only — owner ruling option (b) per
+ODD §8.2.10):
+
+  - `workspace-bootstrap/tests/test_AC36_6_framework_not_content.py`
+    — function `test_AC36_6_template_sentinels_appear_in_scaffold_output`
+    deleted. The function pinned the substring "This file is
+    free prose. pOS does not parse it." from the prior
+    persona-template prose, which the new archetype prose does
+    not (and should not) carry. Per ODD §8.2.10 the deleted
+    check tested method (substring presence in copied prose),
+    not outcome (the scaffold copies template prose unmodified).
+    AC36.6's outcome remains verified by the sibling
+    `test_AC36_6_prompt_md_byte_identical_to_template` — a
+    method-free byte-equality check that supersedes the
+    substring sentinel and survives template-content updates.
+    No workspace-bootstrap source edits; no scaffold-behaviour
+    change.
+
+AC surface (AC.O.1 – AC.O.8 + AC.O.S) — covers three declared
+behaviours (conversational onboarding rewrite, default
+archetype content, write-back-on-rename closure) plus the
+seal-diff invariant. Reverse-trace per locked plan §5: every
+ladded/removed/changed surface maps to a named AC.
+
+Method-level decisions (builder's call per ODD §1.1) +
+relaxations (owner-ruled at build time):
+
+  - D-OWNER.2 RELAXED: option (b) — delete the method-coupled
+    AC36.6 test per ODD §8.2.10. AC36.6 outcome remains
+    verified by the byte-identical sibling. One test-file
+    edit in workspace-bootstrap; no source edits;
+    `extra_allowed_prefixes` admits the single test path.
+
+BASELINE 383a7fc (pre-amendment tip — HEAD prior to amendment
+commit). primary-persona's + workspace-bootstrap's
+SEAL_COMMIT sidecars advance to the amendment commit on the
+empty-diff window; advanced to the seal SHA via
+`pos-amend seal` on the seal commit.

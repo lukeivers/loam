@@ -76,6 +76,7 @@ from first_run_settings import (  # noqa: E402
     build_first_run_stanza,
     build_supervisor_stanza,
     merge_session_start,
+    merge_stop,
     merge_user_prompt_submit,
 )
 from first_run_state import (  # noqa: E402
@@ -236,6 +237,70 @@ def _maybe_merge_user_prompt_submit(
         # SessionStart hook still fires; the workspace simply lacks
         # the UserPromptSubmit hook this run. A subsequent first-run
         # / supervisor cycle re-attempts the merge.
+        return
+
+
+# ---- amendment #48 — Stop hook merge --------------------------------
+#
+# The persona's Stop emitter is registered as a single inner hook
+# under hooks.Stop via merge_stop (AC.M.11). Single-contributor for
+# now (plan §9 defers multi-contributor generalisation). At each of
+# the three SessionStart-merge call sites where
+# _maybe_merge_user_prompt_submit already runs (Phase 3d, Phase 4c,
+# Phase 6), an additional _maybe_merge_stop call lands so the
+# settings.json gains hooks.Stop alongside hooks.SessionStart and
+# hooks.UserPromptSubmit. Lazy-imported with fail-soft — missing or
+# broken primary-persona install degrades to no-Stop-hook behaviour
+# (pre-amendment-#48 behaviour preserved).
+
+
+def _persona_stop_stanza(pos_v2_root: Path) -> dict | None:
+    """Return the persona's Stop envelope, or ``None`` when the
+    persona's emitter is unavailable.
+
+    Lazy import + fail-soft per AC.M.4. Returning ``None`` signals
+    the caller to skip ``merge_stop`` entirely (the Stop hook is
+    simply not registered — pre-amendment-#48 behaviour preserved).
+    """
+    try:
+        venv_site = pos_v2_root / ".venv" / "lib"
+        if venv_site.is_dir():
+            for site_dir in venv_site.iterdir():
+                site_pkgs = site_dir / "site-packages"
+                if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
+                    sys.path.insert(0, str(site_pkgs))
+        from primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
+            build_persona_stop_inner_hook,
+        )
+        return {
+            "matcher": "",
+            "hooks": [build_persona_stop_inner_hook(pos_v2_root)],
+        }
+    except Exception:  # noqa: BLE001 — fail-soft per AC.M.4
+        return None
+
+
+def _maybe_merge_stop(
+    *, pos_v2_root: Path, settings_path: Path
+) -> None:
+    """Invoke ``merge_stop`` when the persona's emitter is available;
+    no-op otherwise.
+
+    Mirrors ``_maybe_merge_user_prompt_submit`` shape exactly: lazy-
+    import + fail-soft so call sites can fire-and-forget; settings.json
+    write failures are caught (matching the surrounding Phase-3d /
+    Phase-4c / Phase-6 settings.json handling — those phases also
+    tolerate transient I/O errors).
+    """
+    stanza = _persona_stop_stanza(pos_v2_root)
+    if stanza is None:
+        return
+    try:
+        merge_stop(
+            settings_path=settings_path,
+            new_entry=stanza,
+        )
+    except Exception:  # noqa: BLE001 — fail-soft per AC.M.4
         return
 
 
@@ -1222,6 +1287,13 @@ def _self_retire(
     _maybe_merge_user_prompt_submit(
         pos_v2_root=pos_v2_root, settings_path=settings_path
     )
+    # Amendment #48: register the persona's Stop hook alongside the
+    # supervisor SessionStart + UserPromptSubmit merges. Fail-soft per
+    # AC.M.4 — missing or broken primary-persona install degrades to
+    # no-Stop-hook (pre-amendment-#48 behaviour).
+    _maybe_merge_stop(
+        pos_v2_root=pos_v2_root, settings_path=settings_path
+    )
 
     script_path = pos_v2_root / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     removed = False
@@ -1640,6 +1712,12 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     _maybe_merge_user_prompt_submit(
         pos_v2_root=pos_v2_root, settings_path=settings_path
     )
+    # Amendment #48: register the persona's Stop hook at Phase 3d so
+    # every turn-close after first-run drives the per-turn aggregated
+    # episode write. Fail-soft per AC.M.4.
+    _maybe_merge_stop(
+        pos_v2_root=pos_v2_root, settings_path=settings_path
+    )
 
     # ---- Phase 4a: plist / unit substitution + service bootstrap --
     plat = _detect_platform()
@@ -1837,6 +1915,11 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             # alongside the Phase 4c re-merge. Idempotent — the
             # merge writes the same envelope shape every time.
             _maybe_merge_user_prompt_submit(
+                pos_v2_root=pos_v2_root, settings_path=settings_path
+            )
+            # Amendment #48: re-merge the Stop hook alongside the
+            # Phase 4c re-merge. Idempotent.
+            _maybe_merge_stop(
                 pos_v2_root=pos_v2_root, settings_path=settings_path
             )
         except OSError as e:

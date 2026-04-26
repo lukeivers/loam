@@ -113,6 +113,18 @@ _POS_V2_USER_PROMPT_SUBMIT_COMMAND_MARKERS: tuple[str, ...] = (
 )
 
 
+# Set of substrings that mark a Stop inner hook as pos-v2-owned.
+# Single-contributor for now (amendment #48 plan §9 defers the multi-
+# contributor Stop registry generalisation analogous to amendment
+# #45's SessionStart registry). When a future amendment introduces
+# additional Stop contributors, generalise this set + ``merge_stop``
+# the same way.
+_POS_V2_STOP_COMMAND_MARKERS: tuple[str, ...] = (
+    "primary_persona.cli stop",
+    "-m primary_persona",
+)
+
+
 def _is_pos_v2_owned(stanza_entries: list[Any]) -> bool:
     """Identify whether an existing SessionStart stanza is pos-v2's own.
 
@@ -437,6 +449,109 @@ def merge_user_prompt_submit(
         k for k in existing.keys() if k not in ("hooks", "agent")
     ) + tuple(
         f"hooks.{k}" for k in hooks.keys() if k != "UserPromptSubmit"
+    )
+
+    return SettingsMergeResult(
+        wrote=True,
+        backup_path=backup_path,
+        prior_session_start_displaced=displaced,
+        preserved_user_keys=preserved_keys,
+    )
+
+
+# ---- amendment #48 — Stop hook merge --------------------------------
+
+
+def _is_pos_v2_owned_stop(stanza_entries: list[Any]) -> bool:
+    """Identify whether an existing Stop stanza is pos-v2's own.
+
+    AC.M.11: the persona's ``stop`` subcommand is the canonical
+    pos-v2-owned Stop inner hook. A stanza whose every inner-hook
+    command matches one of the recognised persona-side command
+    markers is pos-v2-owned and may be replaced without a user-
+    stanza backup. Any other shape (user-authored, mixed,
+    malformed) triggers the backup path mirroring the SessionStart
+    + UserPromptSubmit conventions.
+    """
+    commands = _iter_commands(stanza_entries)
+    if not commands:
+        return False
+    for cmd in commands:
+        if not any(
+            marker in cmd
+            for marker in _POS_V2_STOP_COMMAND_MARKERS
+        ):
+            return False
+    return True
+
+
+def merge_stop(
+    *,
+    settings_path: Path,
+    new_entry: dict[str, Any],
+    now_iso: str | None = None,
+) -> SettingsMergeResult:
+    """Merge ``new_entry`` into settings.json's Stop stanza.
+
+    AC.M.11: writes ``hooks.Stop = [new_entry]``. Single-contributor
+    — multi-contributor generalisation deferred (plan §9).
+
+    Behaviour mirrors ``merge_session_start`` /
+    ``merge_user_prompt_submit``:
+      * no prior stanza: write ``[new_entry]``.
+      * prior stanza is pos-v2's own (command matches the persona's
+        stop markers): replace with ``[new_entry]``, no backup.
+      * prior stanza is user-authored: write the whole prior
+        settings.json to a timestamped backup and replace the Stop
+        stanza with ``[new_entry]``.
+
+    Other top-level keys (``hooks.SessionStart``,
+    ``hooks.UserPromptSubmit``, ``hooks.<other>``, ``agent``, etc.)
+    are preserved unchanged. Atomic write via ``.tmp`` sibling +
+    rename.
+    """
+    settings_path = Path(settings_path)
+    existing = _load_existing(settings_path)
+
+    backup_path: Path | None = None
+    displaced = False
+
+    hooks = existing.get("hooks")
+    if not isinstance(hooks, dict):
+        hooks = {}
+        existing["hooks"] = hooks
+
+    prior = hooks.get("Stop")
+    if (
+        isinstance(prior, list)
+        and prior
+        and not _is_pos_v2_owned_stop(prior)
+    ):
+        ts = now_iso or _now_utc_iso_for_filename()
+        backup_path = settings_path.with_name(
+            f"{settings_path.name}.user-backup-{ts}.json"
+        )
+        backup_path.write_text(
+            json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        displaced = True
+
+    hooks["Stop"] = [new_entry]
+    existing["hooks"] = hooks
+
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = settings_path.with_suffix(settings_path.suffix + ".tmp")
+    tmp.write_text(
+        json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    tmp.replace(settings_path)
+
+    preserved_keys = tuple(
+        k for k in existing.keys() if k not in ("hooks", "agent")
+    ) + tuple(
+        f"hooks.{k}" for k in hooks.keys() if k != "Stop"
     )
 
     return SettingsMergeResult(

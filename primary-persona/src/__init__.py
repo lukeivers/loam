@@ -56,12 +56,26 @@ from .context_composer import (
 from .session_start_gate import compose_session_fields
 from .session_start_emitter import (
     build_persona_session_start_inner_hook,
+    build_persona_stop_inner_hook,
     build_persona_user_prompt_submit_inner_hook,
     build_session_composer,
     cli_session_start,
     cli_user_prompt_submit,
     emit_session_start_context,
     emit_user_prompt_submit_context,
+)
+from .stop_emitter import (
+    StopEnvelope,
+    TurnContent,
+    cli_memory_write,
+    cli_stop,
+    derive_turn_id,
+    handle_stop_envelope,
+    parse_stop_envelope,
+)
+from .mcp_memory_client import (
+    LiveMCPMemoryClient,
+    build_live_mcp_memory_client,
 )
 from .creation_triggers import CreationTrigger, CreationTriggerDetector, TriggerSignal
 from .authoring import (
@@ -119,14 +133,24 @@ __all__ = [
     "TriggerKind",
     "TriggerSignal",
     "TurnPayload",
+    "LiveMCPMemoryClient",
+    "StopEnvelope",
+    "TurnContent",
+    "build_live_mcp_memory_client",
     "build_persona_session_start_inner_hook",
+    "build_persona_stop_inner_hook",
     "build_persona_user_prompt_submit_inner_hook",
     "build_session_composer",
+    "cli_memory_write",
     "cli_session_start",
+    "cli_stop",
     "cli_user_prompt_submit",
     "compose_session_fields",
+    "derive_turn_id",
     "emit_session_start_context",
     "emit_user_prompt_submit_context",
+    "handle_stop_envelope",
     "load_contract",
+    "parse_stop_envelope",
     "retire_persona",
 ]

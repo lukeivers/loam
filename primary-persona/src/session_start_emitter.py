@@ -72,11 +72,31 @@ factory returning a FakeMemoryClient to exercise the populated path."""
 
 
 def _default_memory_client_factory(workspace_root: Path) -> MemoryClient | None:
-    """Default production-side memory-client factory. Returns None
-    until amendment #47 wires a live MCP client. AC46.2's graceful-
-    empty path is the dominant production state pre-#47.
+    """Default production-side memory-client factory.
+
+    Amendment #48 (AC.M.1 + AC.M.3): delegates to
+    ``mcp_memory_client.build_live_mcp_memory_client`` which returns
+    a live streamable-HTTP MCP client when the workspace's
+    ``.mcp.json`` (authored by amendment #47's writer) carries a
+    well-formed ``memory-graphiti`` entry, else ``None``. The
+    AC46.2 graceful-empty branch (no client available → contributor
+    not registered, retrieval block omitted) remains intact via the
+    ``return None`` path.
+
+    Lazy import keeps the heavy ``mcp`` package off
+    ``session_start_emitter``'s import-time surface; tests that
+    inject their own factory don't pay the cost.
     """
-    return None
+    try:
+        from .mcp_memory_client import (  # noqa: WPS433
+            build_live_mcp_memory_client,
+        )
+    except Exception:  # noqa: BLE001 — AC.M.3 graceful-empty
+        # The mcp package is the only declared dep new to amendment
+        # #48; if its import surface fails (resolver inconsistency,
+        # platform-specific issue), AC.M.3 says graceful-empty.
+        return None
+    return build_live_mcp_memory_client(workspace_root)
 
 
 def build_session_composer(
@@ -290,6 +310,33 @@ def build_persona_session_start_inner_hook(pos_v2_root: Path) -> dict:
     return {
         "type": "command",
         "command": f"{python} -m primary_persona.cli session-start",
+        "async": False,
+        "timeout": 5,
+    }
+
+
+def build_persona_stop_inner_hook(pos_v2_root: Path) -> dict:
+    """Return the inner-hook dict the Stop envelope composes against
+    the persona's ``stop`` CLI subcommand.
+
+    Amendment #48 (AC.M.11): used by ``hands-off-lifecycle/hooks/
+    first_run_helper.py``'s ``_persona_stop_stanza``. Single-
+    contributor for now (plan §9 explicit out-of-scope: multi-
+    contributor Stop registry is a future amendment analogous to
+    amendment #45's SessionStart generalisation).
+
+    Timeout 5s per D6 — the hook detaches the actual ``add_episode``
+    write to a background subprocess and returns in milliseconds;
+    5s is the precedent from loam-mode + persona session-start +
+    user-prompt-submit and is generous for the work the Stop hook
+    itself performs (transcript walk + per-turn-id read/write +
+    Popen).
+    """
+    pos_v2_root = Path(pos_v2_root)
+    python = pos_v2_root / ".venv" / "bin" / "python"
+    return {
+        "type": "command",
+        "command": f"{python} -m primary_persona.cli stop",
         "async": False,
         "timeout": 5,
     }

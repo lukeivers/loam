@@ -1,0 +1,63 @@
+# Amendment #53 — self-upgrade seal-bookkeeping retrofit
+
+2026-04-26. Retrofits the seal-bookkeeping infrastructure that
+self-upgrade did not receive at original seal time
+(2026-04-19 14:12 per `docs/rebuild/STATE.md`). Same shape as
+the memory-system retrofit (amendment #8) and the graceful-
+degradation + observability-aggregator retrofit (chore commit
+`7d462e3`, 2026-04-22).
+
+Surface added (self-upgrade — tests + bookkeeping only):
+
+  - `self-upgrade/tests/test_no_sealed_amendments.py` (new) —
+    AC.SU-sb.1. Mirrors the memory-system / graceful-degradation
+    pattern. Two tests: `test_B23_seal_commit_pinning_pattern`
+    (structural pinning — file contains `BASELINE = ` literal,
+    `SEAL_COMMIT_PATH`, and the `{BASELINE}..{seal}` diff form
+    routing through `_seal_commit()`) and
+    `test_B20_only_self_upgrade_surfaces_changed` (runtime
+    `git diff --name-only BASELINE..SEAL_COMMIT` confined to
+    the allowed-prefix tuple).
+  - `self-upgrade/tests/SEAL_COMMIT` (new) — AC.SU-sb.2.
+    Sidecar carrying the authoritative seal SHA. Initial value
+    = pre-amendment tip; advanced to the seal commit SHA by
+    `pos-amend seal`.
+  - `self-upgrade/seals/.gitkeep` (new) — AC.SU-sb.3.
+    Placeholder so the seals/ directory tracks in git, ready
+    for future `pos-amend seal` runs to write
+    `SEAL_COMMIT.<slug>` narrative files into. Mirrors the
+    directory pattern at `primary-persona/seals/`,
+    `workspace-bootstrap/seals/`, `objective-tracker/seals/`,
+    `telegram-interface/seals/`, and
+    `hands-off-lifecycle/seals/`.
+
+Zero edits to `self-upgrade/src/` — retrofit-only. Existing
+self-upgrade test suite stays green (120 tests pre-amendment;
+122 tests post-amendment — the two new pinning + diff-scope
+tests).
+
+BASELINE `edf6429` (pre-amendment tip = current HEAD at plan
+authoring, post amendment #52 SHA-record commit). The
+BASELINE..HEAD diff window opens empty at amendment-commit
+time per the standard retrofit pattern; future amendments
+advance both BASELINE (via `pos-amend apply`) and SEAL_COMMIT
+(via `pos-amend seal`).
+
+With this amendment, all 14 sealed components carry the
+seal-diff bookkeeping pipeline (12 had it pre-amendment;
+self-upgrade is #13; safety-layer's seal-diff test is a
+monkey-patch import guard with a separate shape and is not
+counted in this 14). The cross-component seal-diff sweep gains
+a new entry for self-upgrade. BB-feat (clause-(h) LLM-merge,
+next amendment) re-dispatches against the post-retrofit tip
+and is now enforceable through the standard seal-diff window.
+
+Out of scope (retrofit-only):
+  - Clause-(h) LLM-merge implementation (BB-feat, next
+    amendment).
+  - Any source edits to `self-upgrade/src/`.
+  - Reviving the prior-BB stale clause-h plan-doc / builder-
+    plan / vars (untracked files left for BB-feat dispatch).
+
+With this amendment, the harness's seal-diff substrate is at
+parity across every Phase 2 sealed component.

@@ -74,6 +74,8 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
     allowed_prefixes = (
         "primary-persona/src/",
         "primary-persona/tests/",
+        "primary-persona/templates/",
+        "primary-persona/seals/",
         "hands-off-lifecycle/hooks/",
         "hands-off-lifecycle/tests/",
         # Seal narrative target lives under hands-off-lifecycle/seals/
@@ -81,6 +83,11 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
         "hands-off-lifecycle/seals/",
         # Universal admissions (per amendment #22 ruling #3).
         "docs/rebuild/plans/",
+        "docs/rebuild/plans/research/",
+        # Cross-component partner admission (amendment #50 D-OWNER.2
+        # relaxation — one workspace-bootstrap test edit + the
+        # SEAL_COMMIT sidecar bump it carries).
+        "workspace-bootstrap/tests/",
     )
     allowed_files: set[str] = {
         "primary-persona/pyproject.toml",
@@ -88,6 +95,8 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
         "docs/odd-in-pos.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
+        "docs/rebuild/STATE.md",
+        "docs/rebuild/VALUE_PROPOSITION.md",
     }
 
     offending: list[str] = []

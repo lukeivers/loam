@@ -1289,13 +1289,7 @@ at plan-author time.
 
 ### Commit SHAs
 
-```
-Amendment commits:
-  <SHA>  feat(primary-persona): conversational onboarding rewrite
-         + default archetype + write-back-on-rename closure
-         (amendment <N>, AC.O.1–AC.O.S)
-
-Seal commit:
-  <SHA>  chore(seals): conversational-onboarding-and-default-archetype
-         seal — primary-persona at <SHA>
-```
+- Amendment commit: `6c90b9cfedfb0c0754eeb53730f3cf56dc04942b` —
+  `chore(primary-persona): widen AC.M.S seal-diff window test for amendment #50 surfaces`
+- Seal commit: `8f430196e592f8e70348779e7636e7093b5da889` —
+  `chore(seals): primary-persona-conversational-onboarding-and-default-archetype — primary-persona+workspace-bootstrap at 6c90b9c`

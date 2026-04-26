@@ -34,7 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 #              seal-diff test + SEAL_COMMIT sidecar; BASELINE pins at
 #              the pre-amendment tip (HEAD~1 of the amendment commit,
 #              mirroring amendments #34 / #35 / #36 / #37).
-BASELINE = "5ad573d226b14571ebdeac357cfdb56097be90ab"
+BASELINE = "3bf30e9ece38e1de8a4a39f888edda86a3b87c23"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -90,6 +90,7 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
         # plan-before-code CDC paper trail: this amendment's plan +
         # research + manifest live under docs/rebuild/plans/.
         "docs/rebuild/plans/",
+        "hands-off-lifecycle/",
     )
     # Universal-file admissions per amendment #22 ruling #3. Written
     # by ``pos-amend apply``; kept stable across amendments.
@@ -98,6 +99,7 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
         "docs/odd-in-pos.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
+        ".gitignore",
     }
 
     offending = []

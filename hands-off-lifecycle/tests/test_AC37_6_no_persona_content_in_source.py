@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -43,7 +44,14 @@ def test_AC37_6_sentinel_prose_flows_through_renderer(tmp_path: Path) -> None:
     """Inject sentinel strings into the contract; after the runner
     renders, the on-disk agent file carries those sentinels — proving
     the prose came from the workspace's contract, not from a hands-
-    off-lifecycle/ source constant."""
+    off-lifecycle/ source constant.
+
+    Mutation strategy: YAML round-trip on the contract dict, NOT
+    fragile substring replacement. Per ODD §8.2.10 the test asserts
+    the OUTCOME (contract prose flows through renderer) without
+    coupling to specific template substrings, so template prose
+    changes (e.g. amendment #50's archetype rewrite) do not break
+    this test."""
     SENTINEL_GIVEN_NAME = "ZorkBlatherSentinel42"
     SENTINEL_RESPONSIBILITY = (
         "Sentinel prose marker for AC37.6: handle banana coordination."
@@ -56,19 +64,13 @@ def test_AC37_6_sentinel_prose_flows_through_renderer(tmp_path: Path) -> None:
     persona_dir.parent.mkdir(parents=True)
     shutil.copytree(template, persona_dir)
     contract_path = persona_dir / "contract.yaml"
-    txt = contract_path.read_text()
-    txt = txt.replace("handle: example-persona", "handle: primary")
-    txt = txt.replace("given_name: Example", f"given_name: {SENTINEL_GIVEN_NAME}")
-    # Replace the single_point_of_contact YAML literal-block content.
-    # The template uses `single_point_of_contact: >\n    <prose>\n` form;
-    # we substitute the prose block by replacing the example sentence.
-    txt = txt.replace(
-        "Describe, in one sentence, what this persona is the sole contact for.",
-        SENTINEL_RESPONSIBILITY,
-    )
-    if "is_starter:" not in txt:
-        txt += "\nis_starter: true\n"
-    contract_path.write_text(txt)
+    contract = yaml.safe_load(contract_path.read_text())
+    contract["handle"] = "primary"
+    contract["given_name"] = SENTINEL_GIVEN_NAME
+    contract.setdefault("responsibilities", {})
+    contract["responsibilities"]["single_point_of_contact"] = SENTINEL_RESPONSIBILITY
+    contract["is_starter"] = True
+    contract_path.write_text(yaml.safe_dump(contract, sort_keys=False))
 
     runner = HOOKS_DIR / "agent_file_runner.py"
     venv_python = REPO_ROOT / ".venv" / "bin" / "python"

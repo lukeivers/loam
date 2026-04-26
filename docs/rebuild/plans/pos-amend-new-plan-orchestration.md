@@ -390,27 +390,71 @@ If an ODD violation is discovered during the *build* of this plan, the builder r
 
 ## 14. Method-decision record (builder, post-build)
 
-The plan §11 left D-build.x method choices to the builder within the ACs' outcome bounds. This section is populated post-build.
+The plan §11 left D-build.x method choices to the builder within the ACs' outcome bounds.
 
-### D-build.x — (placeholder for the build agent's method choices)
+### D-build.1 — Skeleton extension shape (within locked D-2 bounds)
 
-(populated post-build)
+Extended `tools/pos-amend/templates/plan/dev-discipline.md` in place:
+- `required:` grew from 13 to 16 entries: added `SECTION_9_HEADING` + `SECTION_9_BODY` (new — absorb dev/sealed §9 split per locked D-2); promoted `DECISIONS_DETAIL` from optional to required (research §3 inventory's "16 required" count).
+- `optional:` grew from 4 to 6 entries: kept `COMPANIONS` + `ANCESTOR_RECORD`; dropped `IMPACT_BLOCK` (its content folded into `SECTION_9_BODY`); dropped `DECISIONS_DETAIL` (promoted); added `STATUS_LINE` (default empty), `RESEARCH_PATH` (default empty — orchestration fills), `WORKING_DIRECTORY` (default = standard repo path), `REFERENCES` (default = standard refs stub).
+- §0 frontmatter lines: added `**Status:** {{STATUS_LINE}}`, `**Working directory:** {{WORKING_DIRECTORY}}`, `**Research:** {{RESEARCH_PATH}}`.
+- §9: heading became `## 9. {{SECTION_9_HEADING}}`, body `{{SECTION_9_BODY}}`.
+- §15 References: new section using optional `{{REFERENCES}}` with default-stub content.
+- §14 scaffold: byte-identical preserved (locked AC.D-np.7).
+
+### D-build.2 — Default-stubs for HARD_CONSTRAINTS / IMPLEMENTATION_ORDER / HALT_TRIGGERS / Lens scaffold (locked D-3 + D-4)
+
+The engine's `optional:` defaulting only applies to optional vars; the three sections above + the LENS_ANALYSIS subsection-headings are REQUIRED vars in the skeleton. Pre-stubs live one level out — in the orchestration's vars-file scaffold (`new_plan.py:_vars_file_content`). Honours D-3 and D-4 spirit (recurring content pre-filled at the surface the plan author touches) while respecting the engine's contract (required = required).
+
+### D-build.3 — `new_plan.py` module structure
+
+Single `run(slug, *, title, ac_prefix, vars_out, plan_out, render, force, repo_root) -> int` entry point. `repo_root` is a testing hook; default resolution via `git rev-parse --show-toplevel`. Slug validation: locked `^[a-z][a-z0-9-]*$` regex (D-6). Default vars-out: `<repo>/docs/rebuild/plans/<slug>.vars.yaml` (locked D-1). Default plan-out: `<repo>/docs/rebuild/plans/<slug>.md`. `--render` delegates to `pos_amend.commands.template.run("render", ...)` — no engine duplication. Refuse-overwrite checks fire before any disk write (AC.D-np.4 no-partial-output invariant).
+
+### D-build.4 — Tests (one file per AC convention)
+
+Seven new test files (one per AC under `AC.D-np.1`–`AC.D-np.7`):
+- `test_AC_D_np_1_scaffold_vars_file.py` (6 functions)
+- `test_AC_D_np_2_pre_fill_title_and_ac_prefix.py` (5 functions)
+- `test_AC_D_np_3_render_after_scaffold.py` (6 functions)
+- `test_AC_D_np_4_failure_modes.py` (10 functions, 8 from parametrize)
+- `test_AC_D_np_5_skeleton_renders_clean.py` (4 functions)
+- `test_AC_D_np_6_backward_compat.py` (6 functions)
+- `test_AC_D_np_7_section_14_preserved.py` (3 functions)
+Plus 1 fixture-test data update in `test_template_engine.py`'s `test_AC_D_tpl_7_bundled_plan_renders_against_fixture_vars` (supplies the 3 newly-required vars; behaviour unchanged).
+
+### D-build.5 — Fixture authoring (AC.D-np.5)
+
+Fixtures at `tools/pos-amend/tests/fixtures/plan-skeleton/vars.yaml` + `expected.md`. Expected output authored by running `pos-amend template render plan/dev-discipline --vars-file <vars> --out <expected>` against the post-extension skeleton, then committed as test data. Test asserts byte-identity; divergence loudly surfaces structural changes to the skeleton.
 
 ### Test breakdown
 
-(placeholder)
+Pre-amendment baseline: 106 tests green in `tools/pos-amend/tests/`.
+Post-amendment: 151 tests green (106 pre-existing + 45 new across 7 new test files + 0 changed; one test-data update inside `test_template_engine.py` for the widened required-vars list).
 
 ### Backwards-compat verification
 
-(placeholder)
+- Pre-existing 106 tests pass byte-identical post-commit (AC.D-np.6).
+- `pyproject.toml` dependency list unchanged: still `["PyYAML>=6"]`. No new third-party dependency (test-asserted in `test_AC_D_np_6_backward_compat.py`).
+- `pos-amend template list` enumerates both `dispatch/sealed-component-build` and `plan/dev-discipline` (test-asserted).
+- `pos-amend --help` lists every pre-existing subcommand (`validate`, `apply`, `seal`, `template`) plus the new `new-plan` (test-asserted).
+- The §14 scaffold is byte-identical to the pre-extension reference block (AC.D-np.7 test-asserted; the duplicate `### Commit SHAs` heading typo is preserved per the byte-identity constraint — see findings below).
 
 ### Commit SHAs
 
-(placeholder; auto-filled by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. Dev-discipline plan with no manifest — the SHA backfill is appended manually if/when the build agent runs `pos-amend seal --plan-doc` against a fabricated manifest, or simply edited by the build agent at completion.)
+- Amendment commit: `76a5ea8` — `feat(tools): pos-amend new-plan orchestration + plan-doc skeleton extension (AC.D-np.1–7)`.
+- Plan-SHA backfill commit (this commit): records the amendment SHA in §14. Manual append (dev-discipline plan; no manifest; `pos-amend seal --plan-doc` not invoked).
 
 ### Dependents cleared to dispatch
 
-(placeholder)
+The skills-wiring follow-up named in §7 + §10 of the plan can now dispatch (a `.claude/skills/new-plan/` skill wrapping `pos-amend new-plan`). Memory-doc + commit-message generalisations (`pos-amend new-memory <slug>` + `pos-amend new-commit <kind>`) named in FUTURE_IDEAS_DRAFT are now mechanical follow-ups against this orchestration's shape.
+
+### Halt-and-surface findings during build
+
+1. **Pre-existing duplicate `### Commit SHAs` heading.** The pre-extension `tools/pos-amend/templates/plan/dev-discipline.md` had a duplicate `### Commit SHAs` subsection inside §14 (lines 125 and 129 of the pre-extension file). Per the AC.D-np.7 byte-identity constraint, the duplicate is preserved — correcting it would break the seal-automation extension's heading-locator. Surface this for owner ruling: a future small commit could deduplicate the heading once the seal-automation logic is verified to handle either shape. Not blocking; recorded here.
+
+2. **No ODD violations identified in surrounding code or docs during build.** The plan's halt-trigger #11 was not triggered. Working tree carried L-build (amendment #50) stash residue per the dispatch note (modified files in `docs/rebuild/plans/primary-persona-conversational-onboarding-*` + `docs/rebuild/FUTURE_IDEAS_DRAFT.md`); these were NOT staged into this amendment commit (they belong to a separate operator action).
+
+3. **Pre-amendment `apply --dry-run`** on amendment #50's manifest reports MISSING_ADMISSION (because my new files exist outside its scope) — exit 0, expected behaviour for a non-applicable manifest. This is NOT a halt for the dev-discipline plan; the dev-discipline plan has no manifest.
 
 ---
 

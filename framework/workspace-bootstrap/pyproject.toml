@@ -54,6 +54,11 @@ telegram_interface = "workspace_bootstrap.adapters.telegram_interface:TelegramIn
 
 [project.scripts]
 pos-bootstrap = "workspace_bootstrap.main:cli_main"
+# D-migration D.4 (amendment #65): fresh-workspace bootstrap primitive
+# (β.2 absorption). Composes on the existing run_first_run_scaffold
+# API + git clone; lives next to pos-bootstrap so the import boundary
+# is tight (one component owns the scaffold + the bootstrap CLI).
+pos-new-workspace = "workspace_bootstrap.new_workspace:cli_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

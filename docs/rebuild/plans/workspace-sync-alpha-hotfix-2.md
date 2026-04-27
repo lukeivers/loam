@@ -266,11 +266,10 @@ None — the dispatch enumerates the four bugs explicitly, the fix shape is boun
 
 ### Commit SHAs
 
-- Amendment commit: `<TBD>` —
+- Amendment commit: `8bae39ab2303bc655387db6ec89f59ea9826e057` —
   `feat(workspace-sync): α-hotfix-2 — close 4 correctness bugs of the verdict-without-stage class (amendment #60, AC.α-hotfix-2.1–.4 + AC.α-hotfix-2.S)`
-- Seal commit: `<TBD>` —
-  `chore(seals): workspace-sync — α-hotfix-2: close 4 correctness bugs of the verdict-without-stage class — workspace-sync at <amendment-sha>`
-
+- Seal commit: `7452b201645895bbd3b746319f24340cf0c9864a` —
+  `chore(seals): workspace-sync — α-hotfix-2: close 4 correctness bugs of the verdict-without-stage class — workspace-sync at 8bae39a`
 ## 15. Backwards-compat verification
 
 (Backfilled post-build with concrete numbers.)

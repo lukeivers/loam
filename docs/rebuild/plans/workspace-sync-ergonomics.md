@@ -498,8 +498,10 @@ Per Hard Constraint #1 (binding):
 
 ### Commit SHAs
 
-(placeholder; auto-filled by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion. If D-β.4 splits the bundle, each AC's plan-doc carries its own §14 register.)
-
+- Amendment commit: `cd4c2f2d3ddad07012aa515dd8fb8cab91e7cf26` —
+  `chore(workspace-sync): advance BASELINE + SEAL_COMMIT for amendment #58 window`
+- Seal commit: `6860e4df3eec2822dffad2871f5720718c5d6d7d` —
+  `chore(seals): workspace-sync — Bundle β.1 ergonomics: workspace canonical-source config + pos-sync no-args — workspace-sync at cd4c2f2`
 ### Dependents cleared to dispatch
 
 (placeholder; post-β: workspace-clone primitive (out-of-scope here), `/sync` slash-command surface (Lens 1 future work), telegram-channel integration of pos-new-workspace, etc.)

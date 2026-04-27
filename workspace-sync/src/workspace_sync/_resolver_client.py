@@ -33,6 +33,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -54,6 +55,18 @@ _ENV_ALLOWED_VARS = ("PATH", "HOME", "USER")
 
 _UNAUTH_MARKERS = ("not logged in", "please run /login")
 
+# Empty MCP config payload used by α.3 MCP-isolation (AC.WSα.8). The
+# resolver subprocess invokes ``claude -p`` with
+# ``--strict-mcp-config --mcp-config <path>`` referencing a tempfile
+# whose contents are exactly this object. Strict-MCP-config tells
+# Claude to ignore every other MCP-config source (project, user,
+# environment); pointing it at an empty servers map disables every
+# MCP server in the subprocess. Prevents bun-process contention with
+# the parent session's MCP servers (e.g. the user's telegram MCP,
+# memory-graphiti MCP). Verified empirically 2026-04-27 to work
+# under Claude Max OAuth without ``ANTHROPIC_API_KEY``.
+_EMPTY_MCP_CONFIG: dict[str, dict[str, Any]] = {"mcpServers": {}}
+
 
 class _ClaudePrintResolverClient:
     """Duck-typed ``LLMClient`` for ``MergeResolver``.
@@ -63,6 +76,15 @@ class _ClaudePrintResolverClient:
     by spawning ``claude -p --output-format json`` per call and
     parsing the JSON envelope. Failures translate to
     :class:`ResolverFailure` (fail-closed per AC.WS.12).
+
+    α.3 MCP-isolation (AC.WSα.8). At init time the client writes an
+    empty MCP config (``{"mcpServers": {}}``) to a process-cached
+    tempfile path; every ``invoke()`` call appends
+    ``--strict-mcp-config --mcp-config <path>`` to argv so the
+    subprocess loads no MCP servers (preserving the parent session's
+    bun MCP processes from contention). The OAuth/Claude-Max path is
+    preserved — no env-scrubber changes; no ``ANTHROPIC_API_KEY``
+    requirement.
     """
 
     def __init__(
@@ -83,6 +105,30 @@ class _ClaudePrintResolverClient:
         self._model = model
         self._timeout_s = timeout_s
         self._child_env = self._build_child_env()
+        self._empty_mcp_config_path = self._write_empty_mcp_config()
+
+    @staticmethod
+    def _write_empty_mcp_config() -> str:
+        """Write the empty MCP config to a process-cached tempfile.
+
+        Returns the absolute path. The file is left in place at
+        process exit (best-effort cleanup); it is small (~25 bytes)
+        and lives in ``$TMPDIR`` / ``/tmp``. The tempfile is
+        ``delete=False`` because the subprocess inherits the path
+        and reads it after the writing handle is closed.
+        """
+        fd = tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix="-pos-sync-empty-mcp.json",
+            delete=False,
+            encoding="utf-8",
+        )
+        try:
+            json.dump(_EMPTY_MCP_CONFIG, fd)
+            fd.flush()
+        finally:
+            fd.close()
+        return fd.name
 
     @staticmethod
     def _build_child_env() -> dict[str, str]:
@@ -112,6 +158,14 @@ class _ClaudePrintResolverClient:
         full_prompt = self._build_prompt(prompt, response_model)
         argv = [
             self._binary_path,
+            # α.3 MCP-isolation (AC.WSα.8). Order matters: these
+            # flags must precede ``-p`` so they bind to the print-
+            # mode invocation. ``--strict-mcp-config`` plus an
+            # empty ``--mcp-config`` makes Claude ignore every
+            # other MCP source; the subprocess loads zero servers.
+            "--strict-mcp-config",
+            "--mcp-config",
+            self._empty_mcp_config_path,
             "-p",
             "--no-session-persistence",
             "--output-format",

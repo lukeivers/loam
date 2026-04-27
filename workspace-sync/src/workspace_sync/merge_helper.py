@@ -35,9 +35,19 @@ at HEAD ``caafdf0`` before lifting; no such references found.
 
 from __future__ import annotations
 
+import hashlib
+import subprocess
 from pathlib import Path
 from typing import Any, Callable
 
+from .ancestor_detection import (
+    DEFAULT_DEPTH_CAP,
+    AncestorCacheEntry,
+    cache_path,
+    load_cache,
+    save_cache,
+    walk_ancestors,
+)
 from .conflict_report import (
     ConflictChangeKind,
     ConflictEntry,
@@ -61,6 +71,43 @@ from .state import (
     save_state,
 )
 from .sync_protected import FileClass, SyncProtected
+
+
+class _FallthroughToGenerator(Exception):
+    """Internal control-flow signal: α.2 deterministic chain declined.
+
+    Carries the structured fallback_reason that lands in the audit's
+    ``fallback_reason`` field. Caught immediately within the
+    Class-C loop body and translated to a generator call.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+def _resolve_canonical_head_sha(canonical_path: Path, ref: str) -> str | None:
+    """Resolve <ref> to a stable commit SHA on the canonical repo.
+
+    Returns the full hex SHA on success, None on failure. Used to
+    key the ancestor cache so a canonical-ref advance (HEAD moves
+    forward) invalidates the cache wholesale.
+    """
+    try:
+        completed = subprocess.run(  # noqa: S603 — argv constructed
+            ["git", "-C", str(canonical_path), "rev-parse", ref],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+    except OSError:
+        return None
+    if completed.returncode != 0:
+        return None
+    sha = completed.stdout.strip()
+    return sha if sha else None
 
 
 def _read_text_or_none(path: Path) -> str | None:
@@ -87,6 +134,127 @@ def _verdict_to_resolution(verdict: MergeVerdict) -> Resolution:
     raise ValueError(f"unrecognised verdict resolution: {verdict.resolution!r}")
 
 
+def _try_deterministic_merge(
+    *,
+    entry: ConflictEntry,
+    canonical_text: str,
+    workspace_text: str,
+    resolver: MergeResolver,
+) -> MergeVerdict:
+    """α.2 deterministic-merge-with-LLM-verify-gate (AC.WSα.3-.5).
+
+    Implementation lands in Phase C of the build (this is a phase-B
+    stub that always raises ``_FallthroughToGenerator`` so the
+    Class-C branch behaves identically to #56's generator-only
+    behaviour while α.1 is wired). The Phase-C implementation
+    replaces this body with the classifier+primitive+verifier
+    chain and only raises ``_FallthroughToGenerator`` on classifier-
+    unknown / primitive-failed / verifier-rejected.
+
+    Imports the classifier + verifier from
+    ``workspace_sync.merge_primitives`` once that module lands.
+    Returns the produced ``MergeVerdict`` on success.
+
+    Phase-B placeholder behaviour: always raise with reason
+    ``"alpha2-not-yet-implemented"`` so every Class-C conflict
+    falls through to today's path. Phase C replaces.
+    """
+    try:
+        from .merge_primitives import (
+            MergeClassDeclined,
+            classify_file,
+            run_primitive,
+            verify_merge,
+        )
+    except ImportError:
+        # Phase-B fallback: module not yet authored.
+        raise _FallthroughToGenerator("alpha2-not-yet-implemented")
+
+    # Phase-C real chain.
+    try:
+        classification, classify_tokens = classify_file(
+            llm_client=resolver.llm_client,
+            path=entry.path,
+            canonical_text=canonical_text,
+            workspace_text=workspace_text,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise _FallthroughToGenerator(
+            f"primitive-failed: classifier raised {type(exc).__name__}: {exc}"
+        )
+
+    with otel_span(
+        "pos.sync.merge_gate.classify",
+        {
+            "pos.sync.merge_gate.path": entry.path,
+            "pos.sync.merge_gate.class": classification.merge_class,
+            "pos.sync.merge_gate.tokens": classify_tokens,
+            "pos.sync.merge_gate.classifier_confidence": classification.confidence,
+        },
+    ):
+        pass
+
+    if classification.merge_class == "unknown":
+        raise _FallthroughToGenerator("classifier-unknown")
+
+    try:
+        merged_text, primitive_trace = run_primitive(
+            classification.merge_class, canonical_text, workspace_text
+        )
+    except MergeClassDeclined as exc:
+        raise _FallthroughToGenerator(f"primitive-failed: {exc}")
+
+    try:
+        verification, verify_tokens = verify_merge(
+            llm_client=resolver.llm_client,
+            path=entry.path,
+            canonical_text=canonical_text,
+            workspace_text=workspace_text,
+            candidate_merged_text=merged_text,
+            classification=classification,
+            primitive_trace=primitive_trace,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise _FallthroughToGenerator(
+            f"primitive-failed: verifier raised {type(exc).__name__}: {exc}"
+        )
+
+    with otel_span(
+        "pos.sync.merge_gate.verify",
+        {
+            "pos.sync.merge_gate.path": entry.path,
+            "pos.sync.merge_gate.passed": verification.passed,
+            "pos.sync.merge_gate.class_mismatch": verification.class_mismatch,
+            "pos.sync.merge_gate.tokens": verify_tokens,
+        },
+    ):
+        pass
+
+    if not verification.passed:
+        raise _FallthroughToGenerator("verifier-rejected")
+
+    # Verifier passed. Set entry fields here (matches the path
+    # where _try_deterministic_merge SUCCEEDED — caller checks
+    # entry.classifier_class is not None to skip its own assignment).
+    entry.classifier_class = classification.merge_class
+    entry.deterministic_primitive = primitive_trace.operation
+    entry.confidence = verification.confidence
+    entry.rationale = (
+        f"deterministic {classification.merge_class} merge "
+        f"({primitive_trace.operation}); verifier passed at "
+        f"{verification.confidence:.2f}"
+    )
+    if verification.concerns:
+        entry.rationale = entry.rationale + f" — concerns: {verification.concerns}"
+
+    return MergeVerdict(
+        resolution="inferred-merged",
+        merged_content=merged_text,
+        rationale=entry.rationale,
+        confidence=verification.confidence,
+    )
+
+
 def resolve_inferred_conflicts(
     *,
     report: ConflictReport,
@@ -95,6 +263,8 @@ def resolve_inferred_conflicts(
     workspace_root: Path,
     resolver: MergeResolver,
     write_merged: Callable[[str, str], str] | None = None,
+    canonical_ref: str | None = None,
+    ancestor_depth_cap: int = DEFAULT_DEPTH_CAP,
 ) -> None:
     """Pre-stage helper: resolve every PENDING conflict against the
     workspace's three-class envelope.
@@ -106,6 +276,26 @@ def resolve_inferred_conflicts(
     invokes the LLM resolver for Class C (AC.WS.4). Mutates entries
     in place so the existing ``report.has_pending()`` block clears
     for any conflict the helper resolved.
+
+    Bundle α (#57) extension. The Class-C path now first tries
+    α.1 ancestor-detection (workspace-content matches a canonical-
+    history ancestor commit's blob → fast-path
+    ``inferred-accept-canonical``; AC.WSα.1 + AC.WSα.2). On
+    decline, α.2 deterministic-merge-with-LLM-verify-gate runs
+    (classifier + per-class primitive + verifier; AC.WSα.3 through
+    AC.WSα.5). On any α.2 step decline (classifier-unknown,
+    primitive-failed, verifier-rejected) the existing LLM-generator
+    path runs unchanged (AC.WSα.6 — preserves the correctness
+    ceiling). The α.3 MCP-isolated subprocess (AC.WSα.8) is wired
+    automatically through ``_resolver_client.py``.
+
+    ``canonical_ref`` (optional) names the canonical ref the sync is
+    pulling. When supplied, α.1 ancestor-detection is enabled (uses
+    the ref to resolve a stable canonical-HEAD SHA for cache-keying
+    and to drive the ``git log --all --follow`` walk on
+    ``canonical_root``). When None, α.1 is disabled and the helper
+    falls through to the existing Class-C path. ``ancestor_depth_cap``
+    bounds the walk (default 200; D-1 LOCKED).
 
     ``write_merged(path, content) -> str`` is an optional sink the
     caller supplies for ``inferred-merged`` verdicts; it must persist
@@ -129,6 +319,20 @@ def resolve_inferred_conflicts(
         "pos.sync.merge_gate.sync_ref": report.sync_ref,
     }
     halt_reason: str | None = None
+
+    # α.1 ancestor-detection cache. Loaded lazily on first Class-C
+    # conflict; persisted at end-of-run via the finally block. Only
+    # populated when canonical_ref is supplied (the helper's caller
+    # owns the wiring; when None, α.1 is disabled and we fall through
+    # to the existing Class-C path unchanged).
+    _ancestor_cache_state: dict[str, Any] = {
+        "cache": None,
+        "canonical_head_sha": None,
+        "loaded": False,
+    }
+    # Per-run counters (audit + summary span).
+    ancestor_match_count = 0
+    ancestor_walk_count = 0
 
     try:
         for entry in report.conflicts:
@@ -182,7 +386,137 @@ def resolve_inferred_conflicts(
                 resolved_count += 1
                 continue
 
-            # Class C: LLM-mediated resolution (AC.WS.4).
+            # Class C: bundle-α extended path.
+            #
+            #   1. α.1 ancestor-detection (AC.WSα.1 + AC.WSα.2):
+            #      walk canonical history for <path>; on
+            #      content-match → fast-path
+            #      INFERRED_ACCEPT_CANONICAL with confidence 1.0,
+            #      no LLM call.
+            #   2. α.2 deterministic-merge-with-LLM-verify-gate
+            #      (AC.WSα.3 — .5): classify + per-class primitive
+            #      + verifier; on pass → INFERRED_MERGED with the
+            #      deterministic candidate.
+            #   3. AC.WSα.6 fall-back: classifier-unknown OR
+            #      primitive-failed OR verifier-rejected → existing
+            #      LLM-generator path runs unchanged (preserves
+            #      AC.WS.4 / AC.WS.12 correctness ceiling).
+
+            # α.1: try ancestor fast-path FIRST (zero LLM cost on hit).
+            if (
+                canonical_ref is not None
+                and entry.installed_sha256 is not None
+                and entry.installed_sha256 != ""
+            ):
+                # Lazy-load cache on first Class-C conflict.
+                if not _ancestor_cache_state["loaded"]:
+                    head_sha = _resolve_canonical_head_sha(
+                        canonical_root, canonical_ref
+                    ) or canonical_ref
+                    _ancestor_cache_state["canonical_head_sha"] = head_sha
+                    _ancestor_cache_state["cache"] = load_cache(
+                        workspace_root, report.sync_ref, head_sha
+                    )
+                    _ancestor_cache_state["loaded"] = True
+
+                cache = _ancestor_cache_state["cache"]
+                cached = cache.get(entry.path, entry.installed_sha256)
+                if cached is not None:
+                    # Cache hit: replay the prior walk's verdict.
+                    if cached.ancestor_sha is not None:
+                        with otel_span(
+                            "pos.sync.merge_gate.ancestor_check",
+                            {
+                                "pos.sync.merge_gate.path": entry.path,
+                                "pos.sync.merge_gate.matched": True,
+                                "pos.sync.merge_gate.ancestor_sha": cached.ancestor_sha,
+                                "pos.sync.merge_gate.walk_depth": cached.walk_depth,
+                                "pos.sync.merge_gate.cache_hit": True,
+                            },
+                        ):
+                            pass
+                        entry.resolution = Resolution.INFERRED_ACCEPT_CANONICAL
+                        entry.rationale = (
+                            f"workspace path matches canonical-history "
+                            f"ancestor at {cached.ancestor_sha[:7]}; "
+                            "not edited"
+                        )
+                        entry.confidence = 1.0
+                        entry.ancestor_match_sha = cached.ancestor_sha
+                        ancestor_match_count += 1
+                        resolved_count += 1
+                        continue
+                    # Cached miss: don't re-walk; fall through to
+                    # legacy resolver path. Span emitted for parity.
+                    with otel_span(
+                        "pos.sync.merge_gate.ancestor_check",
+                        {
+                            "pos.sync.merge_gate.path": entry.path,
+                            "pos.sync.merge_gate.matched": False,
+                            "pos.sync.merge_gate.walk_depth": cached.walk_depth,
+                            "pos.sync.merge_gate.walk_short": cached.walk_short,
+                            "pos.sync.merge_gate.cache_hit": True,
+                        },
+                    ):
+                        pass
+                else:
+                    # Cache miss: walk now.
+                    match, walk_depth, walk_short = walk_ancestors(
+                        canonical_path=canonical_root,
+                        ref=canonical_ref,
+                        conflict_path=entry.path,
+                        target_sha256=entry.installed_sha256,
+                        depth_cap=ancestor_depth_cap,
+                    )
+                    ancestor_walk_count += 1
+                    cache.put(
+                        AncestorCacheEntry(
+                            path=entry.path,
+                            workspace_sha256=entry.installed_sha256,
+                            ancestor_sha=(
+                                match.commit_sha if match is not None else None
+                            ),
+                            walk_depth=walk_depth,
+                            walk_short=walk_short,
+                        )
+                    )
+                    if match is not None:
+                        with otel_span(
+                            "pos.sync.merge_gate.ancestor_check",
+                            {
+                                "pos.sync.merge_gate.path": entry.path,
+                                "pos.sync.merge_gate.matched": True,
+                                "pos.sync.merge_gate.ancestor_sha": match.commit_sha,
+                                "pos.sync.merge_gate.walk_depth": walk_depth,
+                                "pos.sync.merge_gate.cache_hit": False,
+                            },
+                        ):
+                            pass
+                        entry.resolution = Resolution.INFERRED_ACCEPT_CANONICAL
+                        entry.rationale = (
+                            f"workspace path matches canonical-history "
+                            f"ancestor at {match.short_sha}; not edited"
+                        )
+                        entry.confidence = 1.0
+                        entry.ancestor_match_sha = match.commit_sha
+                        ancestor_match_count += 1
+                        resolved_count += 1
+                        continue
+                    # No match: fall through to legacy path. Span
+                    # captures walk metrics for observability.
+                    with otel_span(
+                        "pos.sync.merge_gate.ancestor_check",
+                        {
+                            "pos.sync.merge_gate.path": entry.path,
+                            "pos.sync.merge_gate.matched": False,
+                            "pos.sync.merge_gate.walk_depth": walk_depth,
+                            "pos.sync.merge_gate.walk_short": walk_short,
+                            "pos.sync.merge_gate.cache_hit": False,
+                        },
+                    ):
+                        pass
+
+            # α.1 declined (or disabled). Read both sides and proceed.
             canonical_text = _read_text_or_none(canonical_root / entry.path)
             workspace_text = _read_text_or_none(workspace_root / entry.path)
             prior_text: str | None = None  # not currently exposed by snapshot
@@ -193,24 +527,46 @@ def resolve_inferred_conflicts(
                 deferred_count += 1
                 continue
 
-            with otel_span(
-                "pos.sync.merge_gate.resolution",
-                {
-                    "pos.sync.merge_gate.path": entry.path,
-                    "pos.sync.merge_gate.canonical_sha": entry.new_release_sha256 or "",
-                    "pos.sync.merge_gate.workspace_sha": entry.installed_sha256 or "",
-                },
-            ):
-                verdict = resolver.resolve(
-                    path=entry.path,
+            # α.2 deterministic-merge-with-LLM-verify-gate (AC.WSα.3-.6).
+            # On any decline, raise _FallthroughToGenerator with a
+            # structured reason; the inner except block translates
+            # to the legacy resolver path and records fallback_reason.
+            verdict: MergeVerdict | None = None
+            try:
+                verdict = _try_deterministic_merge(
+                    entry=entry,
                     canonical_text=canonical_text,
                     workspace_text=workspace_text,
-                    prior_text=prior_text,
+                    resolver=resolver,
                 )
+            except _FallthroughToGenerator as fallthrough:
+                entry.fallback_reason = fallthrough.reason
+                with otel_span(
+                    "pos.sync.merge_gate.resolution",
+                    {
+                        "pos.sync.merge_gate.path": entry.path,
+                        "pos.sync.merge_gate.canonical_sha": entry.new_release_sha256 or "",
+                        "pos.sync.merge_gate.workspace_sha": entry.installed_sha256 or "",
+                        "pos.sync.merge_gate.fallback_reason": fallthrough.reason,
+                    },
+                ):
+                    verdict = resolver.resolve(
+                        path=entry.path,
+                        canonical_text=canonical_text,
+                        workspace_text=workspace_text,
+                        prior_text=prior_text,
+                    )
+
+            assert verdict is not None  # one of the two paths sets it
 
             entry.resolution = _verdict_to_resolution(verdict)
-            entry.rationale = verdict.rationale
-            entry.confidence = verdict.confidence
+            # If α.2 succeeded, _try_deterministic_merge already set
+            # rationale/confidence/classifier_class/deterministic_primitive
+            # on the entry (it just returns the verdict for type-flow).
+            # If we fell through to the generator path, set them now.
+            if entry.fallback_reason is not None or entry.classifier_class is None:
+                entry.rationale = verdict.rationale
+                entry.confidence = verdict.confidence
 
             if entry.resolution is Resolution.INFERRED_MERGED:
                 # Persist merged content somewhere the staging apply
@@ -245,6 +601,8 @@ def resolve_inferred_conflicts(
                 "pos.sync.merge_gate.deferred_count": deferred_count,
                 "pos.sync.merge_gate.cumulative_tokens": resolver.cumulative_used,
                 "pos.sync.merge_gate.call_count": resolver.call_count,
+                "pos.sync.merge_gate.ancestor_match_count": ancestor_match_count,
+                "pos.sync.merge_gate.ancestor_walk_count": ancestor_walk_count,
             }
         )
         if halt_reason is not None:
@@ -253,6 +611,20 @@ def resolve_inferred_conflicts(
             "pos.sync.merge_gate.summary", summary_attrs
         ):
             pass
+
+        # Persist the α.1 ancestor cache if we touched it. Failure
+        # is non-fatal (mirrors the audit/state persistence-error
+        # swallow below — cache is a performance optimisation, not
+        # a correctness primitive).
+        if _ancestor_cache_state["loaded"]:
+            try:
+                save_cache(
+                    _ancestor_cache_state["cache"],
+                    workspace_root,
+                    report.sync_ref,
+                )
+            except Exception:  # noqa: BLE001
+                pass
 
         # AC.WS.5 + AC.WS.8 + AC.WS.12: every sync execution leaves
         # both the workspace-local audit YAML and the state YAML

@@ -138,6 +138,24 @@ class ConflictEntry(BaseModel):
     user_override: bool = False
     override_rationale: str | None = None
 
+    # Bundle α (#57) extension fields. All optional; existing entries
+    # deserialise unchanged. Each field is set by exactly one α path:
+    #   - ancestor_match_sha: α.1 ancestor-detection fast-path
+    #     (AC.WSα.1; full SHA of the matching canonical-ancestor commit)
+    #   - classifier_class: α.2 classifier (AC.WSα.3; the named class
+    #     used by the deterministic primitive — "append-only-list",
+    #     "log", "tracker-table", "free-prose", or "unknown")
+    #   - deterministic_primitive: α.2 primitive (AC.WSα.4; the
+    #     primitive's operation summary, e.g. "concatenate-dedup")
+    #   - fallback_reason: α.2 fall-back (AC.WSα.6; one of
+    #     "classifier-unknown", "primitive-failed: <reason>",
+    #     "verifier-rejected") set when the deterministic chain
+    #     fell back to the existing LLM-generator path
+    ancestor_match_sha: str | None = None
+    classifier_class: str | None = None
+    deterministic_primitive: str | None = None
+    fallback_reason: str | None = None
+
     @model_validator(mode="after")
     def _resolution_requires(self) -> "ConflictEntry":
         r = self.resolution

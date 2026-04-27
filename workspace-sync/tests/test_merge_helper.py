@@ -27,16 +27,61 @@ from workspace_sync.merge_resolver import (
     ResolverFailure,
 )
 from workspace_sync.state import SyncStatus, audit_yaml_path, load_state, state_yaml_path
+from workspace_sync.merge_primitives import (
+    MergeClassification,
+    MergeVerification,
+)
 from workspace_sync.sync_protected import default_sync_protected
 
 
 class StubLLMClient:
-    def __init__(self, queued: list[tuple[MergeVerdict, int]]) -> None:
-        self.queued = list(queued)
+    """Test-double LLM client.
+
+    Type-aware (α.2-compatible). When the resolver/helper invokes
+    with ``response_model=MergeClassification`` (the α.2 classify
+    call), the stub returns a canned classifier output: by default
+    ``merge_class="unknown"`` so α.2 falls through to the legacy
+    LLM-generator path immediately. Tests that exercise α.2 happy
+    paths supply their own ``MergeClassification`` queue entry.
+
+    When the helper invokes with ``response_model=MergeVerification``
+    (α.2 verify call), the stub returns ``passed=false`` — forces
+    fall-through. Same opt-in pattern: tests that want pass return
+    a custom queue entry.
+
+    When the resolver invokes with ``response_model=MergeVerdict``
+    (today's generator path), the stub pops from ``queued`` (the
+    legacy behaviour).
+    """
+
+    def __init__(
+        self,
+        queued: list[tuple[MergeVerdict, int]] | None = None,
+        *,
+        classify_responses: list[tuple[MergeClassification, int]] | None = None,
+        verify_responses: list[tuple[MergeVerification, int]] | None = None,
+    ) -> None:
+        self.queued = list(queued or [])
+        self.classify_responses = list(classify_responses or [])
+        self.verify_responses = list(verify_responses or [])
         self.calls = 0
 
     def invoke(self, prompt: str, response_model: type[BaseModel]):
         self.calls += 1
+        if response_model is MergeClassification:
+            if self.classify_responses:
+                v, t = self.classify_responses.pop(0)
+                return v, t
+            return MergeClassification(
+                merge_class="unknown", confidence=0.0, reasoning="stub default"
+            ), 50
+        if response_model is MergeVerification:
+            if self.verify_responses:
+                v, t = self.verify_responses.pop(0)
+                return v, t
+            return MergeVerification(
+                passed=False, class_mismatch=False, concerns="stub default", confidence=0.0
+            ), 100
         if not self.queued:
             raise ResolverFailure("stub: out of canned verdicts")
         v, t = self.queued.pop(0)
@@ -156,7 +201,13 @@ def test_class_c_invokes_resolver_writes_audit(tmp_path: Path) -> None:
         resolver=resolver,
     )
 
-    assert stub.calls == 1
+    # Bundle α (#57): the helper now calls classify (returns
+    # unknown by default) before invoking the generator. So
+    # total call count is 2 (classify + generator). What matters
+    # for AC.WS.4 is that the generator IS invoked — verified by
+    # consuming the queued verdict.
+    assert stub.calls >= 1
+    assert stub.queued == [], "queued generator verdict was consumed"
     assert report.conflicts[0].resolution in INFERRED_RESOLUTIONS
 
     # Audit + state YAML written.
@@ -330,3 +381,228 @@ def test_check_inferred_invariants_pending_fails() -> None:
 def test_check_inferred_invariants_no_report_passes() -> None:
     passed, _ = check_inferred_resolution_invariants(None)
     assert passed
+
+
+# ----------------------------------------------------------------------
+# Bundle α (#57) integration tests — α.2 classifier+primitive+verifier.
+# ----------------------------------------------------------------------
+
+
+def _classify(merge_class: str = "append-only-list", confidence: float = 0.9) -> MergeClassification:
+    return MergeClassification(
+        merge_class=merge_class, confidence=confidence, reasoning="t"
+    )
+
+
+def _verification(passed: bool = True, class_mismatch: bool = False, confidence: float = 0.9) -> MergeVerification:
+    return MergeVerification(
+        passed=passed,
+        class_mismatch=class_mismatch,
+        concerns=None,
+        confidence=confidence,
+    )
+
+
+def test_alpha2_happy_path_accepts_deterministic_merge(tmp_path: Path) -> None:
+    """AC.WSα.3 + .4 + .5: classify pass → primitive succeeds → verify pass → INFERRED_MERGED."""
+    canonical_root = tmp_path / "canon"
+    workspace_root = tmp_path / "ws"
+    canonical_root.mkdir()
+    workspace_root.mkdir()
+    (canonical_root / "list.md").write_text("- a\n- b\n")
+    (workspace_root / "list.md").write_text("- a\n- b\n- c\n")
+
+    stub = StubLLMClient(
+        classify_responses=[(_classify("append-only-list"), 50)],
+        verify_responses=[(_verification(passed=True), 100)],
+    )
+    resolver = MergeResolver(stub)
+    report = _make_report(_entry("list.md"))
+
+    resolve_inferred_conflicts(
+        report=report,
+        sync_protected=default_sync_protected(),
+        canonical_root=canonical_root,
+        workspace_root=workspace_root,
+        resolver=resolver,
+    )
+
+    e = report.conflicts[0]
+    assert e.resolution is Resolution.INFERRED_MERGED
+    assert e.classifier_class == "append-only-list"
+    assert e.deterministic_primitive is not None
+    assert "concat-dedup" in e.deterministic_primitive
+    # The generator was NOT invoked — there are no queued generator verdicts.
+    assert stub.queued == []
+    assert e.fallback_reason is None
+
+
+def test_alpha2_classifier_unknown_falls_through_to_generator(tmp_path: Path) -> None:
+    """AC.WSα.6: classifier returns unknown → generator runs; fallback_reason recorded."""
+    canonical_root = tmp_path / "canon"
+    workspace_root = tmp_path / "ws"
+    canonical_root.mkdir()
+    workspace_root.mkdir()
+    (canonical_root / "binary-ish").write_text("\x00\x01\x02")
+    (workspace_root / "binary-ish").write_text("\x00\x01\x03")
+
+    stub = StubLLMClient(
+        queued=[(_verdict(), 200)],
+        classify_responses=[(_classify("unknown", confidence=0.0), 30)],
+    )
+    resolver = MergeResolver(stub)
+    report = _make_report(_entry("binary-ish"))
+
+    resolve_inferred_conflicts(
+        report=report,
+        sync_protected=default_sync_protected(),
+        canonical_root=canonical_root,
+        workspace_root=workspace_root,
+        resolver=resolver,
+    )
+
+    e = report.conflicts[0]
+    assert e.fallback_reason == "classifier-unknown"
+    # Generator verdict was consumed.
+    assert stub.queued == []
+
+
+def test_alpha2_primitive_decline_falls_through_to_generator(tmp_path: Path) -> None:
+    """AC.WSα.6: primitive raises MergeClassDeclined → generator runs; fallback_reason recorded."""
+    canonical_root = tmp_path / "canon"
+    workspace_root = tmp_path / "ws"
+    canonical_root.mkdir()
+    workspace_root.mkdir()
+    # Append-only-list classifier but the file has no bullets — primitive declines.
+    (canonical_root / "x.md").write_text("just prose\n")
+    (workspace_root / "x.md").write_text("different prose\n")
+
+    stub = StubLLMClient(
+        queued=[(_verdict(), 200)],
+        classify_responses=[(_classify("append-only-list"), 30)],
+    )
+    resolver = MergeResolver(stub)
+    report = _make_report(_entry("x.md"))
+
+    resolve_inferred_conflicts(
+        report=report,
+        sync_protected=default_sync_protected(),
+        canonical_root=canonical_root,
+        workspace_root=workspace_root,
+        resolver=resolver,
+    )
+
+    e = report.conflicts[0]
+    assert e.fallback_reason is not None
+    assert e.fallback_reason.startswith("primitive-failed")
+    assert stub.queued == []  # generator consumed
+
+
+def test_alpha2_verifier_rejects_falls_through_to_generator(tmp_path: Path) -> None:
+    """AC.WSα.6: verifier returns passed=False → generator runs."""
+    canonical_root = tmp_path / "canon"
+    workspace_root = tmp_path / "ws"
+    canonical_root.mkdir()
+    workspace_root.mkdir()
+    (canonical_root / "list.md").write_text("- a\n- b\n")
+    (workspace_root / "list.md").write_text("- a\n- b\n- c\n")
+
+    stub = StubLLMClient(
+        queued=[(_verdict(), 200)],
+        classify_responses=[(_classify("append-only-list"), 30)],
+        verify_responses=[(_verification(passed=False), 80)],
+    )
+    resolver = MergeResolver(stub)
+    report = _make_report(_entry("list.md"))
+
+    resolve_inferred_conflicts(
+        report=report,
+        sync_protected=default_sync_protected(),
+        canonical_root=canonical_root,
+        workspace_root=workspace_root,
+        resolver=resolver,
+    )
+
+    e = report.conflicts[0]
+    assert e.fallback_reason == "verifier-rejected"
+    assert stub.queued == []
+
+
+def test_alpha2_otel_spans_emitted(tmp_path: Path) -> None:
+    """AC.WSα.7: classify + verify spans emit under pos.sync.merge_gate.* namespace."""
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+
+    # Add a processor to the EXISTING provider rather than overriding
+    # (the prior test has already set one, and OTel's provider is
+    # process-singleton).
+    exporter = InMemorySpanExporter()
+    provider = trace.get_tracer_provider()
+    if not isinstance(provider, TracerProvider):
+        # First test in this process to use OTel — install a real provider.
+        provider = TracerProvider()
+        trace.set_tracer_provider(provider)
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+
+    canonical_root = tmp_path / "canon"
+    workspace_root = tmp_path / "ws"
+    canonical_root.mkdir()
+    workspace_root.mkdir()
+    (canonical_root / "list.md").write_text("- a\n- b\n")
+    (workspace_root / "list.md").write_text("- a\n- b\n- c\n")
+
+    stub = StubLLMClient(
+        classify_responses=[(_classify("append-only-list"), 50)],
+        verify_responses=[(_verification(passed=True), 100)],
+    )
+    resolver = MergeResolver(stub)
+    report = _make_report(_entry("list.md"))
+
+    resolve_inferred_conflicts(
+        report=report,
+        sync_protected=default_sync_protected(),
+        canonical_root=canonical_root,
+        workspace_root=workspace_root,
+        resolver=resolver,
+    )
+
+    span_names = [s.name for s in exporter.get_finished_spans()]
+    assert "pos.sync.merge_gate.classify" in span_names
+    assert "pos.sync.merge_gate.verify" in span_names
+    assert "pos.sync.merge_gate.summary" in span_names
+
+
+def test_alpha_backcompat_falls_through_to_existing_generator_path(tmp_path: Path) -> None:
+    """Hard Constraint #4: with α.2 declines, the resolver path matches #56's behaviour byte-for-byte."""
+    canonical_root = tmp_path / "canon"
+    workspace_root = tmp_path / "ws"
+    canonical_root.mkdir()
+    workspace_root.mkdir()
+    (canonical_root / "code.py").write_text("def f():\n    return 1\n")
+    (workspace_root / "code.py").write_text("def f():\n    return 2\n")
+
+    queued = [(_verdict(resolution="inferred-accept-canonical"), 250)]
+    stub = StubLLMClient(
+        queued=queued,
+        # Classifier returns 'unknown' — α.2 falls through immediately.
+        classify_responses=[(_classify("unknown"), 30)],
+    )
+    resolver = MergeResolver(stub)
+    report = _make_report(_entry("code.py"))
+
+    resolve_inferred_conflicts(
+        report=report,
+        sync_protected=default_sync_protected(),
+        canonical_root=canonical_root,
+        workspace_root=workspace_root,
+        resolver=resolver,
+    )
+
+    e = report.conflicts[0]
+    # Verdict matches what the queued #56-shape generator returned.
+    assert e.resolution is Resolution.INFERRED_ACCEPT_CANONICAL
+    assert e.fallback_reason == "classifier-unknown"

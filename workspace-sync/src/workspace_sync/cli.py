@@ -235,6 +235,10 @@ def _execute_sync(
             write_merged=lambda p, c: _write_merged_to_staging(
                 staging_path, p, c
             ),
+            # Bundle α (#57) — pass the resolved canonical ref so
+            # α.1 ancestor-detection can walk canonical's history
+            # for each Class-C conflict.
+            canonical_ref=resolved_ref,
         )
     except (BudgetExhausted, ResolverFailure) as exc:
         halt_exception = exc

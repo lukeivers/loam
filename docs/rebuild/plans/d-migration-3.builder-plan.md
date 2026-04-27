@@ -260,10 +260,181 @@ Estimated wall-time: **3-4h** (per dispatch projection).
 
 ## §14. Method-decision register (post-build backfill)
 
-(Backfilled post-seal per AC.D-sa.7 + dispatch §10 procedure step.)
+Per AC.D-sa.7 + the dispatch's §10 procedure step. Records the method choices the builder made within each AC's outcome bound, the test breakdown, and the commit SHAs from the apply+seal cycle.
+
+### Method choices
+
+- **D.3-build.A (framework/ as a git working tree).** Built per recommendation. The fixture-builder helper `make_framework_workspace` (in `tests/conftest.py`) clones the fixture canonical repo into `<fixture-ws>/framework/`. The CLI's new `_ensure_framework_git_tree(workspace_root)` validates that `<ws>/framework/.git/` exists and emits a structured halt error pointing at `pos-new-workspace` (D.4) when absent. The pos3 smoke (HC#5) defers to D.4's β.2-absorption — pos3 today does NOT have a `framework/` git working tree, so the HC#5 verification cannot run against pos3 until D.4 lands. Captured in §15 verdict.
+
+- **D.3-build.B (idempotent canonical-remote configuration).** Built per recommendation. `_configure_canonical_remote` reads `git config --get remote.canonical.url`; on existing match returns no-op; on mismatch issues `git remote set-url canonical <url>`; on absent issues `git remote add canonical <url>`. Verified by `test_cli_argparse_canonical_flag_overrides_config`.
+
+- **D.3-build.C (branch resolution).** Default ref shifted from the dispatched `canonical/HEAD` symbol (which doesn't exist post-fetch unless `git remote set-head` is called) to `canonical/<current-local-branch>` (mirrors `git pull`'s default and is what `git fetch` populates without extra config). Detached-HEAD falls back to `FETCH_HEAD`. Tests use the default-branch path; explicit `--ref` is exercised via `test_cli_argparse_canonical_flag_overrides_config`.
+
+- **D.3-build.D (audit + state shape).** State simplified to 4-field `SyncState` Pydantic model (`last_synced_sha`, `last_synced_at`, `last_branch`, `last_outcome`). The audit derives from `git log <prev>..<new> --oneline` printed to stderr post-fast-forward. On the LLM-resolver fallback path, per-conflict `MergeVerdict` records persist at `<ws>/workspace/.pos/sync/resolver-runs/<sha>/<sanitised-rel-path>.yaml`. Verified by `test_AC_D_3_3_resolver_run_recorded_under_workspace_state`.
+
+- **D.3-build.E (sync_protected.py vestigial).** Kept unchanged per recommendation — `FRAMEWORK_FLOOR` constant + `SyncProtected` schema retained for back-compat with already-scaffolded workspace `<ws>/workspace/.pos/sync-protected.yaml` files. The CLI no longer reads the envelope for classification; structural enforcement comes from the directory boundary (HC#6).
+
+- **D.3-build.F (canonical_cache.py retention).** Kept unchanged. The dispatch's note about "the canonical_cache.py clean-write enumeration" was a wording mismatch — the actual clean-write enumeration lived in `staging.py` + `merge_helper.py`, both retired. URL-form `canonical_source:` continues to use `ensure_cache_clone` to materialise the cache clone; the cache directory's absolute path becomes the `canonical` remote URL on `<ws>/framework/.git`.
+
+- **D.3-build.G (canonical.py retention).** Kept unchanged. `resolve_canonical(canonical_path, ref)` validates a local canonical path is a git working tree; the CLI calls it for absolute-path canonical_source values.
+
+- **D.3-build.H (_audit.py simplification).** Built per recommendation — `summarize_audit_for_operator(ConflictReport)` retired; replaced with `summarize_resolver_runs(list[(rel_path, MergeVerdict)])` (~30 LOC). `confirmed_by_operator` (TTY-confirm helper) preserved unchanged.
+
+- **D.3-build.I (conflict_report.py retired).** Built per recommendation — the dispatch's "conflict_report shape (used by fallback path)" was loose-text guidance; under D.3's simpler fallback, the per-conflict `MergeVerdict` from `MergeResolver.resolve()` carries everything the resolver-runs need. No external readers (verified via grep). Surfaced as deviation in §15 verdict.
+
+- **D.3-build.J (merge_resolver.py retention).** Kept unchanged. The fallback path constructs `prior_text` from `git merge-base HEAD canonical/<branch>` content and passes it to `resolver.resolve(...)` for the three-way merge prompt.
+
+- **D.3-build.K (_resolver_client.py retention).** Kept unchanged. `--strict-mcp-config` + empty MCP-config tempfile preserved; AC.WSα.8 verification still passes.
+
+- **D.3-build.L (cli.py rewritten).** Wrote ~640 LOC (vs target ~250). The extra LOC come from comprehensive halt-and-error-message coverage (workspace-root derivation halt, framework-not-git-tree halt, canonical-source-absent halt, fetch failure, ref-resolve failure, merge-abort on resolver halt, etc.). Each halt path has a structured stderr message naming the failure mode + recovery action. The control flow itself is ~300 LOC; the rest is parsing + error handling.
+
+- **D.3-build.M (test surface).** Retired test files: 7 (`test_ancestor_detection.py`, `test_cli_b_shape.py`, `test_conflict_detection_b_shape.py`, `test_conflict_report_b_shape.py`, `test_merge_helper.py`, `test_merge_primitives.py`, `test_staging.py`) totalling 2911 LOC. New test files: 2 (`test_cli_d_shape.py` 678 LOC + `_stub_resolver.py` 96 LOC). Updated: `conftest.py` (added `make_framework_workspace`, `advance_canonical`, `workspace_commit` fixtures), `test_state.py` (rewritten for `SyncState` shape, 5 tests).
+
+- **D.3-build.N (__init__.py).** Updated docstring to describe the git-merge architecture; bumped version 0.1.0 → 0.2.0 to mark the architecture change.
+
+- **D.3-build.O (idempotency fast-path).** Built per recommendation. Post-fetch SHA equality between `HEAD` and target ref short-circuits with `UP_TO_DATE` outcome. Verified by `test_AC_D_3_2_idempotent_on_already_synced`.
+
+- **D.3-build.P (HC#4 byte-content-match).** Built. `test_AC_D_3_2_byte_content_match_post_ff` advances canonical (modify foo.py, add added.py, delete keep.py); runs pos-sync; asserts each framework/<file> byte-equals canonical's HEAD bytes; deleted file absent. **HC#4 binding satisfied.**
+
+- **D.3-build.Q (HC#6 structural-guard).** Built. `test_AC_D_3_4_workspace_state_byte_identical_pre_post_sync` snapshots SHA-256 of every file under `<fixture-ws>/workspace/` pre-sync; runs pos-sync; re-snapshots; asserts equality (modulo `state.yaml` which is the CLI's own write). Plus `test_AC_D_3_4_pos_sync_does_not_touch_workspace_subtree` directly asserts `git rev-parse --show-toplevel` inside framework/ returns framework/ (not the workspace root) and that workspace/ paths are not in framework/'s git index. **HC#6 binding satisfied.**
+
+- **D.3-build.R (speedups).** Applied (a) + (b) + (c). Seal-test rerun confined to workspace-sync via `--scoped-sweep`; pre-seal full-suite skipped (touched-component pytest was the gate); commit prose carries D.3-build.A through .R inline.
+
+### Test breakdown
+
+**New tests (1 file, 19 tests in `test_cli_d_shape.py`):**
+
+- `test_AC_D_3_1_git_fetch_advances_remote_ref` — fetch advances `refs/remotes/canonical/<branch>` post-invocation.
+- `test_AC_D_3_2_fast_forward_advances_workspace_HEAD` — FF advances framework/HEAD; CLI exit 0; SyncState records FAST_FORWARD outcome.
+- `test_AC_D_3_2_byte_content_match_post_ff` — HC#4: every framework/<file> byte-equals canonical's HEAD bytes; deletions propagate.
+- `test_AC_D_3_2_idempotent_on_already_synced` — re-running against already-synced workspace produces UP_TO_DATE outcome with same SHA.
+- `test_AC_D_3_3_non_ff_falls_through_to_resolver` — workspace+canonical both edit same path; stub resolver fires; resulting framework/<file> carries merged content; git log shows merge commit; SyncState records CONFLICT_FALLBACK.
+- `test_AC_D_3_3_resolver_run_recorded_under_workspace_state` — fallback persists `<ws>/workspace/.pos/sync/resolver-runs/<sha>/<sanitised>.yaml` with MergeVerdict shape.
+- `test_AC_D_3_4_workspace_state_byte_identical_pre_post_sync` — HC#6: snapshot-compare every workspace-state file pre/post sync.
+- `test_AC_D_3_4_pos_sync_does_not_touch_workspace_subtree` — direct structural check that framework/.git's toplevel is framework/, not workspace root; workspace/ paths absent from framework/'s git index.
+- `test_AC_D_3_5_audit_summary_references_git_log` — fast-forward summary contains canonical commit subjects (distinctive marker test).
+- `test_AC_D_3_6_retired_modules_absent` — 6 retired source modules absent from disk.
+- `test_AC_D_3_6_retained_modules_present` — 11 retained source modules present.
+- `test_AC_D_3_6_cli_does_not_import_retired_modules` — cli.py source contains zero references to retired modules.
+- `test_workspace_root_derivation_post_D` — derive accepts framework/.git/ marker.
+- `test_workspace_root_derivation_post_D2` — derive accepts workspace/.pos/sync-protected.yaml marker.
+- `test_workspace_root_derivation_pre_D2_back_compat` — derive accepts pre-D.2 marker.
+- `test_workspace_root_derivation_no_marker_fails` — halts with WorkspaceRootError when no marker present.
+- `test_cli_halts_when_framework_git_absent` — fail-fast halt with structured error pointing at pos-new-workspace.
+- `test_cli_halts_when_no_canonical_source` — argparse halt when neither `--canonical` nor sync-config provides source.
+- `test_cli_argparse_canonical_flag_overrides_config` — `--canonical` flag overrides sync-config.yaml.
+
+**Updated tests (`test_state.py`, 5 tests):**
+
+- `test_state_path_under_workspace_pos_sync` — path lands at `<ws>/workspace/.pos/sync/state.yaml`.
+- `test_state_save_load_round_trip` — SyncState round-trips cleanly.
+- `test_load_state_missing_returns_none` — absent state returns None.
+- `test_state_yaml_uses_d3_field_names` — D.3 fields present; pre-D.3 fields absent.
+- `test_all_outcomes_round_trip` — every SyncOutcome enum value round-trips.
+
+**Retired tests (7 files, ~110 tests, 2911 LOC):**
+
+- `test_ancestor_detection.py` (497 LOC) — tested retired ancestor_detection.py.
+- `test_cli_b_shape.py` (994 LOC) — tested retired CLI pipeline.
+- `test_conflict_detection_b_shape.py` (124 LOC) — tested retired conflict_detection.py.
+- `test_conflict_report_b_shape.py` (222 LOC) — tested retired conflict_report.py.
+- `test_merge_helper.py` (640 LOC) — tested retired merge_helper.py.
+- `test_merge_primitives.py` (346 LOC) — tested retired merge_primitives.py.
+- `test_staging.py` (88 LOC) — tested retired staging.py.
+
+**Net test count: pre-D.3 ~165 tests / 5085 LOC (workspace-sync); post-D.3 77 tests / ~2200 LOC. Net retired: ~88 tests / ~2900 LOC.**
+
+### Backwards-compat (HC#2)
+
+Touched-component test results post-D.3:
+
+- workspace-sync: **77 passed** (D.3-shape + retained modules).
+- workspace-bootstrap: **218 passed** (one ambient-flake test passes on retry).
+- hands-off-lifecycle: **214 passed**.
+- primary-persona: **226 passed**.
+- self-upgrade: **194 passed**.
+
+Total: 929 passing across the touched + adjacent sealed components. Zero regressions traceable to D.3 (the workspace-bootstrap flake reproduced both pre- and post-D.3 in stress runs).
+
+### HC#4 byte-content results
+
+`test_AC_D_3_2_byte_content_match_post_ff` advances canonical with three operations (modify, add, delete) and asserts:
+
+- `framework/README.md` — bytes match canonical HEAD.
+- `framework/src/foo.py` — bytes match canonical HEAD (post-modification).
+- `framework/src/added.py` — bytes match canonical HEAD (post-addition).
+- `framework/src/keep.py` — file absent (post-deletion).
+
+All assertions pass. **HC#4 binding closed.**
+
+### HC#6 structural-guard test result
+
+`test_AC_D_3_4_workspace_state_byte_identical_pre_post_sync` seeds 5 workspace-state files (`.pos/foo.txt`, `.pos/sync/state.yaml`, `personas/handle/contract.yaml`, `memory.yaml`, `.scratch/notes.md`); runs pos-sync (advancing canonical); asserts every workspace-state file is byte-identical pre/post (modulo `state.yaml` which is the CLI's own write).
+
+`test_AC_D_3_4_pos_sync_does_not_touch_workspace_subtree` directly asserts `git rev-parse --show-toplevel` inside `framework/` returns `framework/` (not the workspace root) and that `workspace/` paths are absent from framework/'s git index.
+
+**HC#6 binding closed.**
+
+### LOC retired count
+
+**Source: 2369 LOC retired** (ancestor_detection 242 + conflict_detection 249 + conflict_report 336 + merge_helper 883 + merge_primitives 518 + staging 141). Plus cli.py was 679 LOC pre-D.3, ~640 LOC post-D.3 (rewritten in place; not a retirement, but the bulk of the bespoke pipeline orchestration logic is gone).
+
+**Tests: 2911 LOC retired** (ancestor_detection 497 + cli_b_shape 994 + conflict_detection_b_shape 124 + conflict_report_b_shape 222 + merge_helper 640 + merge_primitives 346 + staging 88).
+
+**Total: 5280 LOC retired.** Plus 38 LOC removed from `state.py` + cli.py rewritten in place + `_audit.py` simplified. Net diff (per `git show e53463b --stat`): **2289 insertions, 5925 deletions, ~3636 LOC net drop**.
+
+### D.1.5 rename-aware classification
+
+`pos-amend apply`'s rename-aware logic classified workspace-sync as **substantive** (rename-only=False) — verified by the apply output:
+
+```
+[workspace-sync]
+  rename-only: False
+  ok
+applied:
+  - workspace-sync: BASELINE → 231a0b02ffd33817ddd757e404b924225960d12c
+  - workspace-sync: SEAL_COMMIT → 231a0b02ffd33817ddd757e404b924225960d12c
+```
+
+Substantive change (cli.py rewrite + 6 module retirements + new tests) — BASELINE advances correctly. No bump-skip.
+
+### Speedup deltas
+
+- (a) narrow seal-test rerun: workspace-sync only via `--scoped-sweep`; saved ~3-5 minutes vs full-repo sweep.
+- (b) pre-seal full-suite skipped: touched-component sweep (workspace-sync + adjacent self-upgrade + workspace-bootstrap + primary-persona + hands-off-lifecycle) was the gate; saved ~5 minutes pre-seal wall-time.
+- (c) inline methodology snippets: amendment commit message carries D.3-build.A through .R inline; no separate research-citation pass.
+
+Estimated savings: 25-40% wall-time reduction vs unaccelerated baseline.
+
+### Commit SHAs
+
+- amendment commit: `e53463b`
+- apply chore: `9a15485`
+- seal commit: `209b6af`
+- §14 + §15 backfill: (this commit)
 
 ---
 
 ## §15. Verdict
 
-(Backfilled post-seal.)
+D.3 lands clean. The keystone semantic change of D-migration is delivered: pos-sync's bespoke resolve→stage→apply pipeline retired in favour of `git fetch + git merge --ff-only` against `<workspace>/framework/`, with the LLM resolver demoted to the rare-conflict fallback path. Net ~3600 LOC removal; the architecture simplification is structural — every test that was previously asserting bespoke-pipeline correctness is gone, replaced by a much smaller test suite that exercises git's mature merge tooling.
+
+**HC#6 (structural promise) is now structurally enforced.** All git operations run with `-C <workspace>/framework`. Files under `<workspace>/workspace/` are unreachable by the merge mechanics — verified by both byte-content snapshot comparison and direct git-toplevel assertion.
+
+**HC#4 (byte-content match) closed.** Post-fast-forward, every file in `framework/` byte-equals canonical's HEAD bytes; deletions propagate; additions land. The bug class that triggered D-migration (α-hotfix-2's stage-without-canonical-content fault) is structurally impossible under git-merge semantics.
+
+**HC#5 (pos3 empirical smoke) deferred to post-D.4.** pos3 today does NOT have a `framework/` git working tree — it has the legacy flat-tree layout (with workspace-state at `<ws>/.pos/`, `<ws>/personas/`, etc.) that pre-dates D.2's directory split. D.2's amendment intentionally did NOT auto-migrate pos3 (HC#5 of D.2 honoured); D.4 will ship `pos-new-workspace --from <repo>` which sets up the post-D layout (including `<ws>/framework/` as a git clone). Once D.4 lands and Luke runs `pos-new-workspace --from <canonical> /Users/lukeivers/pos3-d` (or the operator-driven migration script), the HC#5 smoke can run against that post-D-shaped workspace. **Recommendation: surface this for owner ruling before D.4 dispatches** — Luke may want to defer the pos3 cutover to a separate amendment or include it in D.4's scope.
+
+### Notable mid-build deviations
+
+1. **D.3-build.C — branch resolution shifted from `canonical/HEAD` to `canonical/<current-local-branch>`.** The dispatched recommendation used `canonical/HEAD` but git fetch does not by default populate `refs/remotes/canonical/HEAD` — it only does so when `git remote set-head` is explicitly called. The shift to `canonical/<current-local-branch>` matches what `git pull` does without extra config. Test failures during initial test runs caught this; the fix was a 5-line shift in `_resolve_target_ref`.
+
+2. **D.3-build.I — `conflict_report.py` retired.** The dispatch's wording suggested `conflict_report shape (used by fallback path)` should stay; on closer reading the loose AC text in plan §4 D.3 does not require it, and the new fallback path is much simpler than the dispatch envisaged (per-conflict `MergeVerdict` is enough). No external readers (verified via grep). Per `feedback_loose_AC_text_fix_AC_not_implementation` + `feedback_critical_thinking_on_deviations`, builder ruled retire. If owner disagrees, the file can be re-introduced at zero structural cost (it's a Pydantic model file with no runtime side-effects).
+
+3. **D.3-build.F — `canonical_cache.py` "clean-write enumeration" wording mismatch.** The dispatch's note about retiring "the canonical_cache.py clean-write enumeration" did not match the actual code surface — `canonical_cache.py` only carries the URL→cache-clone shape, no clean-write enumeration. The clean-write enumeration lived in `staging.py` + `merge_helper.py` (both retired). `canonical_cache.py` kept unchanged. Surfaced for transparency.
+
+4. **Workspace-bootstrap ambient flake.** During the touched-component sweep, `test_D5_1_memory_graphiti_scaffold_plist_reaches_health_200` failed once (ambient-state interference between concurrent test runs); passes on isolated re-run + on a clean full-suite re-run. **Not a D.3 regression** — pre-existing flake under stress. Captured for transparency; not blocking.
+
+### What goes next
+
+D.4 dispatches against the post-D.3 tree. D.4 ships `pos-new-workspace --from <repo>` console-script (β.2 absorption) which is the verb that makes pos3-style workspaces post-D-compatible. Once D.4 lands, HC#5's empirical pos3 smoke becomes runnable. D.5 is optional — at end of D.3 build, no transition surface was left behind needing cleanup (the `sync_protected.py` vestigial retention is intentional documentation surface, not transition-window debt). Plan-author may close D.5 as a no-op + this plan's tracking entry.

@@ -2350,3 +2350,139 @@ With this amendment, a non-tech user opening Claude in a fresh
 pos-v2 clone sees live ambient feedback at the bottom of the
 terminal during the entire first-run window — no log-tailing,
 no wait-and-hope, no guessing whether the system is stuck.
+
+# Amendment #61 — D-migration D.1 — framework/ directory restructure
+
+2026-04-26. First of five amendments (D.1 → D.5) implementing the
+strict two-directory split (framework/ vs workspace/) per
+`docs/rebuild/plans/d-migration.md`. D.1 lands the framework/
+side: every framework component directory now lives at
+`framework/<name>/`; tools/ moves to `framework/tools/`;
+`first-run-inventory.yaml` moves to `framework/first-run-inventory.yaml`;
+the canonical-side tracked `.claude/settings.json` is renamed to
+`framework/hands-off-lifecycle/canonical-dev/settings.dev-template.json`
+(per plan §13 finding 1). Path-aware code in `first_run_helper.py`
+discovery, `first_run_scaffold.py` plist templates, `pos-amend`
+sealed-component glob, and 14 sealed-component seal-diff tests
+updated to reflect the new layout.
+
+The bug-class research that triggered D-migration is closed at
+the framework-side structural level: `framework/` is the
+git-tracked subtree the canonical maintainer (and downstream
+workspaces, post-D.2/D.3) operates against; workspace-state
+lives outside `framework/`. D.2 establishes the workspace-state
+directory; D.3 retrofits `pos-sync` onto `git fetch + merge
+--ff-only` against `framework/`. Together D.1 + D.2 form the
+structural boundary.
+
+Surface moved (by `git mv`):
+
+  - 16 component directories: cost-governance,
+    graceful-degradation, hands-off-lifecycle, memory-system,
+    objective-tracker, observability-aggregator, orchestrator,
+    primary-persona, reversibility-primitive, safety-layer,
+    scope-of-work, self-correction, self-upgrade,
+    telegram-interface, workspace-bootstrap, workspace-sync.
+  - tools/ → framework/tools/ (loam-mode, pos-amend,
+    heavy-b-migrate, orphan-plist-cleanup,
+    upgrade-merge-resolver).
+  - first-run-inventory.yaml → framework/first-run-inventory.yaml.
+  - .claude/settings.json (tracked) →
+    framework/hands-off-lifecycle/canonical-dev/settings.dev-template.json
+    with content updated to reference framework/hands-off-lifecycle/
+    hook paths.
+
+Surface edited:
+
+  - framework/hands-off-lifecycle/hooks/first_run_helper.py:
+    `_discover_components(pos_v2_root)` walks
+    `pos_v2_root / "framework"`; all `pos_v2_root / "<comp>"`
+    path constructions become `pos_v2_root / "framework" /
+    "<comp>"`.
+  - framework/workspace-bootstrap/src/workspace_bootstrap/
+    adapters/first_run_scaffold.py: `_LAUNCHD_TEMPLATES`'s
+    memory-graphiti template references
+    `{workspace}/framework/memory-system/...`. Orchestrator +
+    memory-write-worker plists keep `{workspace}/.venv/bin/python`
+    and `{workspace}/<...>` log paths (workspace shared venv +
+    log paths stay at workspace root for D.1; D.2 relocates to
+    `workspace/<...>`).
+  - framework/first-run-inventory.yaml: `dedicated_venvs[0]`
+    path entries gain the `framework/` prefix.
+  - framework/tools/pos-amend/src/pos_amend/commands/seal.py:
+    `_discover_sealed_components` glob + `_seal_diff_test_path`
+    candidates updated.
+  - 14 sealed-component seal-diff tests (and one cross-cutting
+    H19 test at framework/hands-off-lifecycle/tests/
+    test_cross_cutting.py): REPO_ROOT depth bumped from
+    `parent.parent.parent` to `parents[3]`; `allowed_prefixes`
+    tuples updated to use `framework/<comp>/` form;
+    `allowed_files` entries updated where they referenced
+    moved files.
+  - framework/hands-off-lifecycle/tests/test_cross_cutting.py:
+    `allowed` set gains `framework` for the new top-level
+    first-segment.
+  - workspace-bootstrap test test_D5_plist_path_emission.py:
+    canonical-tree path `_REPO_ROOT / "memory-system"` becomes
+    `_REPO_ROOT / "framework" / "memory-system"` (test fixture
+    path).
+
+New test:
+
+  - framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py
+    — HC#4 binding. Hardcoded SHA-256 hashes from the pre-move
+    snapshot of 15 representative files (5 each from
+    primary-persona, workspace-bootstrap, scope-of-work) are
+    compared against post-move file content. Any builder-side
+    accidental edit during git mv would break the test;
+    `git mv` of unchanged content keeps SHA-256 identical.
+
+Behaviour:
+
+  - Editable-install topology preserved: `_discover_components`
+    finds the same 12 shared-venv components + 1 dedicated-venv
+    component (memory-system) at the new `framework/<comp>/`
+    paths. Topological sort produces the same DAG ordering.
+    `import scope_of_work`, `import primary_persona`, etc. work
+    unchanged in the shared `.venv`.
+  - Plist templates now reference framework/memory-system/.venv/
+    bin/python for the memory-graphiti service. Workspace-bootstrap
+    scaffolds these templates verbatim on first-run.
+  - pos-amend `_discover_sealed_components` finds the 14 sealed
+    components at `framework/<comp>/tests/SEAL_COMMIT`.
+  - Each sealed component's seal-diff test admits its own
+    `framework/<comp>/` plus other components' moved paths
+    (widened by `pos-amend apply`); H19 admits the new
+    `framework` first-segment. Sealed-component fence integrity
+    preserved across the move.
+
+Backwards-compat:
+
+  - HC#2: every pre-existing component test passes post-D.1
+    modulo path-shift mechanical updates (REPO_ROOT depth,
+    plist test fixture paths, allowed_prefixes self-and-partner
+    widening). These count as mechanical fixture updates per
+    ODD §3.4, not regressions.
+  - HC#4: byte-content-match regression test enforces the
+    promise that `git mv` preserves file bytes byte-identically.
+    The test catches any builder-side accidental edit during
+    the restructure window.
+  - HC#5: post-seal verification deferred to primary persona's
+    smoke test against pos3 (per dispatch). pos3 still
+    operates on the pre-D.1 layout; pos-sync (which D.3
+    replaces) treats canonical's framework/ as a new
+    top-level dir and either pulls it as Class-A code or
+    flags it as an unknown surface. Plan §10 trigger 7
+    applies — operator-confirmed empirical run after seal.
+
+BASELINE 57d735f (pre-amendment tip — HEAD at dispatch). Each
+component's BASELINE advances per `pos-amend apply`.
+hands-off-lifecycle's H19 frozen BASELINE stays at 3780603 per
+amendment #23 (manifest declares `frozen_baseline: true`).
+SEAL_COMMIT sidecars land at the amendment commit on the empty-diff
+window; advanced to the seal SHA via `pos-amend seal`.
+
+Next: D.2 establishes `<workspace>/workspace/` and the
+workspace-state migration script. Same-tree-serialize per
+`feedback_serialize_amendment_builds` — D.2 dispatches after
+D.1 seals + primary persona's pos3 verification.

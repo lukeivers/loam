@@ -99,11 +99,66 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
     # diagnostic line carries the prior-state SHAs from the same read
     # the conditional bump branches on.
     head_sha = _git_head_sha(repo_root)
+    # AC.D.1.5.5 (amendment #62): components named in
+    # ``cleanup_directives:`` are bypassed by the standard component
+    # loop. The cleanup-pass below writes their pre-bump values
+    # explicitly; bumping then reverting in one apply is wasteful and
+    # produces noise in the diagnostic output.
+    cleanup_protected = {d.comp_name for d in manifest.cleanup_directives}
     for comp in manifest.components:
         seal_test_path = repo_root / comp.seal_test
         sidecar_path = repo_root / comp.sidecar
         if not seal_test_path.exists():
             print(f"skip {comp.name}: seal-test missing at {comp.seal_test}")
+            continue
+
+        # If a cleanup_directive applies to this component, the cleanup
+        # pass below handles BASELINE + SEAL_COMMIT. Standard loop
+        # widens admissions only.
+        if comp.name in cleanup_protected:
+            # Still run the widening pass so prefix admissions advance
+            # for downstream amendments. Skip bumps + sidecar advance.
+            partners = sorted(
+                partner_prefixes - {f"{comp.name}/", f"framework/{comp.name}/"}
+            )
+            prefixes = (
+                list(manifest.universal_paths.prefixes)
+                + list(comp.extra_allowed_prefixes)
+                + partners
+            )
+            files = (
+                list(manifest.universal_paths.files)
+                + list(comp.extra_allowed_files)
+            )
+            if prefixes:
+                try:
+                    did, _new, added = widen_binding(
+                        seal_test_path,
+                        "allowed_prefixes",
+                        prefixes,
+                        mode="tuple",
+                    )
+                    if did:
+                        changes.append(
+                            f"{comp.name}: allowed_prefixes += {added!r}"
+                        )
+                except BindingNotFound:
+                    pass
+            if files:
+                try:
+                    did, _new, added = widen_binding(
+                        seal_test_path,
+                        "allowed_files",
+                        files,
+                        mode="set",
+                        create_if_missing_after="allowed_prefixes",
+                    )
+                    if did:
+                        changes.append(
+                            f"{comp.name}: allowed_files += {added!r}"
+                        )
+                except BindingNotFound:
+                    pass
             continue
 
         # Rename-only verdict for the component's BASELINE..HEAD window.

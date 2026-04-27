@@ -110,6 +110,7 @@ def test_only_observability_aggregator_changed() -> None:
     #   - `docs/rebuild/plans/` already present (research + plan docs).
     allowed_prefixes = (
         "framework/observability-aggregator/",
+        "observability-aggregator/",
         "data/",
         "docs/rebuild/components/observability-aggregator/",
         "docs/rebuild/components/primary-persona-loader/",

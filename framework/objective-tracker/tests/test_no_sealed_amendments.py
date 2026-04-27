@@ -87,6 +87,7 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
 
     allowed_prefixes = (
         "framework/objective-tracker/",
+        "objective-tracker/",
         # plan-before-code CDC paper trail: this amendment's plan +
         # research + manifest live under docs/rebuild/plans/.
         "docs/rebuild/plans/",

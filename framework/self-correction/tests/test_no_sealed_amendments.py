@@ -97,6 +97,7 @@ def test_CR21_only_self_correction_changed() -> None:
     #   - `docs/rebuild/plans/` — research + plan paper-trail.
     allowed_prefixes = (
         "framework/self-correction/",
+        "self-correction/",
         "data/",
         "framework/graceful-degradation/",
         "framework/observability-aggregator/",

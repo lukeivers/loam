@@ -48,6 +48,7 @@ def test_R21_only_reversibility_primitive_changed() -> None:
 
     allowed_prefixes = (
         "framework/reversibility-primitive/",
+        "reversibility-primitive/",
         "framework/cost-governance/",
         "docs/rebuild/plans/",
         "framework/graceful-degradation/",

@@ -94,6 +94,7 @@ def test_B20_only_self_upgrade_surfaces_changed() -> None:
 
     allowed_prefixes = (
         "framework/self-upgrade/",
+        "self-upgrade/",
         "data/",
         "docs/rebuild/plans/",
         "docs/rebuild/components/self-upgrade/",

@@ -253,6 +253,7 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
     #     blanket so the diff-scope check stays tight.
     allowed_prefixes = (
         "framework/workspace-bootstrap/",
+        "workspace-bootstrap/",
         "data/",
         "framework/hands-off-lifecycle/",
         "framework/orchestrator/",

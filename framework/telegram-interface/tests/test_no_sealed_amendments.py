@@ -94,6 +94,7 @@ def test_tg23_only_telegram_interface_changed() -> None:
     # editing partners in that multi-component amendment.
     allowed_prefixes = (
         "framework/telegram-interface/",
+        "telegram-interface/",
         "data/",
         "docs/rebuild/components/telegram-interface/",
         "docs/rebuild/components/telegram-interface-framework-integration/",

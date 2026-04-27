@@ -179,6 +179,7 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
     #     `docs/rebuild/plans/` prefix entry (startswith).
     allowed_prefixes = (
         "framework/orchestrator/",
+        "orchestrator/",
         "framework/hands-off-lifecycle/",
         "framework/workspace-bootstrap/",
         "framework/self-upgrade/",

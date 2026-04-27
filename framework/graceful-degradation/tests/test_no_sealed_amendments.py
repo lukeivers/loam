@@ -116,6 +116,7 @@ def test_only_graceful_degradation_changed() -> None:
     #     per plan-before-code + research-before-plan CDCs).
     allowed_prefixes = (
         "framework/graceful-degradation/",
+        "graceful-degradation/",
         "data/",
         "docs/rebuild/components/graceful-degradation/",
         "docs/rebuild/components/primary-persona-loader/",

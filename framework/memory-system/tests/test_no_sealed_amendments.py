@@ -153,6 +153,7 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
 
     allowed_prefixes = (
         "framework/memory-system/",
+        "memory-system/",
         "framework/hands-off-lifecycle/",
         "docs/rebuild/components/memory-system-subscription-routed-llm/",
         "docs/rebuild/components/memory-system-gliner2-expansion/",

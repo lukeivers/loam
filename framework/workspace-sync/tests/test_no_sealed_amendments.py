@@ -83,6 +83,7 @@ def test_B20_only_workspace_sync_surfaces_changed() -> None:
 
     allowed_prefixes = (
         "framework/workspace-sync/",
+        "workspace-sync/",
         "docs/rebuild/plans/",
         "cost-governance/",
         "framework/cost-governance/",

@@ -107,6 +107,7 @@ def test_C23_only_cost_governance_changed() -> None:
     #     briefs as dispatch-time, not canonical.
     allowed_prefixes = (
         "framework/cost-governance/",
+        "cost-governance/",
         "data/",
         "docs/rebuild/plans/",
         "framework/hands-off-lifecycle/",

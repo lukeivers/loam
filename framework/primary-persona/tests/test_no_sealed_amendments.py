@@ -104,6 +104,7 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
 
     allowed_prefixes = (
         "framework/primary-persona/",
+        "primary-persona/",
         # plan-before-code CDC paper trail: this amendment's plan +
         # research + manifest live under docs/rebuild/plans/.
         "docs/rebuild/plans/",

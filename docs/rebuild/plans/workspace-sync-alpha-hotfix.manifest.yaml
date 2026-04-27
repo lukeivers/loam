@@ -1,0 +1,149 @@
+schema_version: 1
+amendment:
+  number: 59
+  slug: workspace-sync-alpha-hotfix
+  title: "workspace-sync — α-hotfix: NN-resolved entries actually overwrite workspace files"
+
+# BASELINE = current HEAD before the amendment commit. The amendment
+# commit lands on top of `44d470d` ("docs(plans): backfill workspace-
+# sync-ergonomics plan §14 prose for amendment #58 (β.1)"). Per the
+# BASELINE-as-HEAD~1 pattern (#29 / #34-#58).
+baseline: 44d470d1a15bab73ffa714197bf7a798d2f0704d
+
+plan: docs/rebuild/plans/workspace-sync-alpha-hotfix.md
+
+seal_description: "workspace-sync — α-hotfix: NN-resolved entries actually overwrite workspace files"
+
+# One sealed component touched: workspace-sync. The hotfix patches
+# both NN branches in merge_helper.py + adds one regression test
+# in test_cli_b_shape.py. No edits to self-upgrade/ (HC#2). No
+# edits to workspace-bootstrap/ (HC#2 carve-out).
+components:
+  - name: workspace-sync
+    seal_test: workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+
+narrative:
+  target: workspace-sync/seals/SEAL_COMMIT.alpha-hotfix
+  body: |
+    # Amendment #59 — workspace-sync α-hotfix: NN-resolved entries actually overwrite workspace files
+
+    2026-04-27. Critical bug-fix on Bundle α (#57, sealed `e619b6a`).
+    The α.1 NN ancestor-detection accept-canonical fast-path in
+    `merge_helper.py` set the verdict but never staged canonical's
+    HEAD content, so `apply_staging_atomically` silently no-op'd
+    on every NN-resolved path. Workspace files stayed at pre-apply
+    state while `state.yaml` advanced to "applied" — false-success.
+
+    Empirical reproduction (verified by primary persona 2026-04-27):
+    `pos-sync --workspace /Users/lukeivers/pos3 --auto-accept
+    --confidence-floor 0.85` against canonical at `44d470d`. Output
+    reported `applied: <ref>`; `state.yaml` advanced; audit showed
+    46 NN-resolved entries with `resolved_content_path: null`;
+    workspace files DID NOT match canonical's HEAD blob byte-for-byte.
+
+    Single locked decision (D-build.1) drives the surface:
+
+      - **D-build.1** — restructure both NN branches (cache-hit at
+        438-447, cache-miss at 495-504) so the verdict is set ONLY
+        AFTER canonical's HEAD content is successfully read and
+        staged. Read via a new helper
+        `_read_canonical_blob_at_ref(canonical_path, ref, rel_path)`
+        that wraps `git show <ref>:<path>` (mirrors the existing
+        `_resolve_canonical_head_sha` shellout shape). Decode UTF-8;
+        on `UnicodeDecodeError`, leave the entry PENDING so the
+        legacy resolver path handles it. Call the existing
+        `write_merged` callable (already wired by `cli.py`'s
+        `_write_merged_to_staging`) to drop the content into
+        staging. Set `entry.resolved_content_path` accordingly.
+
+    Surface added under `workspace-sync/`:
+
+      - `src/workspace_sync/merge_helper.py` (EXTENDED, +~30 / -2 LOC)
+        — `_read_canonical_blob_at_ref` helper (~15 LOC, mirrors
+        `_resolve_canonical_head_sha`'s shellout pattern). Both NN
+        branches (cache-hit + cache-miss) restructured to read +
+        decode + stage before sealing the verdict. The
+        `INFERRED_MERGED` write_merged path (line 575) is unchanged.
+
+      - `tests/test_cli_b_shape.py` (EXTENDED, +1 test, ~80 LOC) —
+        `test_alpha_hotfix_NN_resolved_paths_actually_overwrite_workspace_file`
+        builds a real two-commit canonical (ancestor + HEAD), seeds
+        a workspace with the ancestor's content, runs cli.main with
+        `--auto-accept`, and asserts post-apply that the workspace
+        file's bytes equal canonical's HEAD blob byte-for-byte
+        (HC#4 binding — the file-content-on-disk assertion is the
+        regression-test primitive that catches this bug class).
+
+      - `tests/SEAL_COMMIT` advanced from `cd4c2f2` (#58 seal) to
+        the amendment-#59 commit SHA via `pos-amend apply`.
+
+      - `tests/test_no_sealed_amendments.py` BASELINE bumped to
+        the amendment-commit's HEAD~1 = `44d470d`.
+
+    Tests (workspace-sync — 1 new):
+
+      - `test_cli_b_shape.py::test_alpha_hotfix_NN_resolved_paths_actually_overwrite_workspace_file` (1).
+
+    Backwards-compatibility verified (HC#2 + HC#3 binding):
+
+      - All 139 existing #56 + #57 + #58 tests remain green at the
+        amendment commit; post-hotfix total = 140.
+      - The `INFERRED_MERGED` write_merged path (line 575) is
+        unchanged. Bundle α's verifier-passes path continues to
+        work via the same `entry.resolved_content_path` contract.
+      - Class-A protection unchanged.
+      - State.yaml / audit.yaml shapes unchanged (the only field
+        that changes is `resolved_content_path` — pre-hotfix it
+        was `null` for NN-resolved entries; post-hotfix it points
+        to the staging file).
+      - No new third-party deps (HC#5): subprocess + stdlib only.
+      - Zero edits to `self-upgrade/`.
+      - Zero edits to `workspace-bootstrap/`.
+      - The `--canonical type=str` argparse shape from #58 is
+        unchanged; the cli.py orchestration is unchanged.
+
+    Halt-trigger surface review (per plan-doc §10):
+
+      #1 (other correctness gap exposed): FIRED — three findings
+         surfaced as HALT-FOUND #1, #2, #3 in plan-doc §13:
+           HALT-FOUND #1 — cli.py:271-274 `INFERRED_ACCEPT_CANONICAL`
+             from the LLM resolver itself is also unstaged.
+           HALT-FOUND #2 — cli.py:275-278 Class-B `ACCEPT_UPSTREAM`
+             post-stage `clean_writes.append` never restages.
+           HALT-FOUND #3 — `conflict_report.py` validator does not
+             require `resolved_content_path` for
+             `INFERRED_ACCEPT_CANONICAL`.
+         All three deferred to follow-on amendment #60 per HC#1's
+         named-scope binding. Owner ruling requested per plan-doc
+         §11.
+      #2 (performance): not fired — 46 paths × 1 git show ≈ 200ms
+         is acceptable per dispatch.
+      #3 (test setup harder than expected): not fired — existing
+         `tests/conftest.py` fixture machinery composes cleanly.
+      #4 (wall-time exceeds 2-3h projection): not exceeded.
+
+    Composition unlocked / repaired by this amendment:
+
+      - The α.1 NN ancestor-detection fast-path now actually
+        delivers its observable: workspace files match canonical's
+        HEAD content post-sync.
+      - The "milestone closed" claim from Bundle α's seal is now
+        operationally true for the NN-resolved code path.
+      - β.1's no-args `pos-sync` flow (sealed at #58) now produces
+        a successful end-to-end sync against pos3 (where the bug
+        was empirically reproduced) — pending follow-on amendment
+        #60 closure of HALT-FOUND #1 + #2 for full coverage of
+        the LLM-resolver `INFERRED_ACCEPT_CANONICAL` and Class-B
+        `ACCEPT_UPSTREAM` code paths.

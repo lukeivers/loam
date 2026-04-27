@@ -337,3 +337,198 @@ def test_main_canonical_relative_path_halts(
     assert rc == 2
     captured = capsys.readouterr()
     assert "must be one of" in captured.err
+
+
+# ---- α-hotfix #59 regression — NN-resolved entries actually overwrite -----
+
+
+def test_alpha_hotfix_NN_resolved_paths_actually_overwrite_workspace_file(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """AC.α-hotfix.1 binding regression: an NN ancestor-detection
+    accept-canonical entry must result in the workspace file's bytes
+    matching canonical's HEAD blob byte-for-byte after pos-sync
+    --auto-accept.
+
+    Pre-α-hotfix: the NN cache-miss / cache-hit branches in
+    merge_helper.py set the verdict but skipped write_merged. The
+    apply step walked the staging tree, found no file for the
+    NN-resolved path, silently no-op'd, and state.yaml advanced to
+    "applied" while the workspace file stayed at pre-apply state.
+
+    Post-α-hotfix: both NN branches read canonical's HEAD content
+    via _read_canonical_blob_at_ref + call write_merged before
+    sealing the verdict. apply_staging_atomically picks the file
+    up via the existing staging tree machinery.
+
+    Test shape (HC#4 binding):
+      - Build a real two-commit canonical (ancestor + HEAD).
+      - Seed a workspace with the ancestor's content for one path.
+      - Run cli.main with --auto-accept.
+      - Read the workspace file's bytes post-apply.
+      - Assert byte-for-byte equality with canonical HEAD's blob
+        (NOT just the verdict shape; NOT just state.yaml).
+    """
+    # ---- 1. Build a two-commit canonical -------------------------
+    canonical = tmp_path / "canonical"
+    canonical.mkdir()
+    subprocess.run(
+        ["git", "-C", str(canonical), "init", "-q"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(canonical), "config", "user.email", "t@t"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(canonical), "config", "user.name", "t"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(canonical), "config", "commit.gpgsign", "false"],
+        check=True,
+    )
+
+    # Commit 1 (ancestor): payload at v1-content. Commit a second
+    # path so the bare-repo ls-tree still has content at HEAD.
+    payload_path = "framework/payload.py"
+    other_path = "framework/other.py"
+    (canonical / "framework").mkdir()
+    (canonical / payload_path).write_text("v1-content\n")
+    (canonical / other_path).write_text("other-stable\n")
+    subprocess.run(
+        ["git", "-C", str(canonical), "add", "-A"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(canonical), "commit", "-q", "-m", "v1"],
+        check=True,
+    )
+
+    # Commit 2 (HEAD): edit payload to v2-canonical-head.
+    (canonical / payload_path).write_text("v2-canonical-head\n")
+    subprocess.run(
+        ["git", "-C", str(canonical), "add", "-A"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(canonical), "commit", "-q", "-m", "v2"],
+        check=True,
+    )
+
+    canonical_head_blob = subprocess.check_output(
+        ["git", "-C", str(canonical), "show", f"HEAD:{payload_path}"],
+    )
+    # Pre-condition: ancestor != HEAD (the bug only fires on actual
+    # divergence between workspace and canonical HEAD).
+    ancestor_blob = subprocess.check_output(
+        ["git", "-C", str(canonical), "show", f"HEAD~1:{payload_path}"],
+    )
+    assert ancestor_blob != canonical_head_blob, (
+        "test setup: ancestor and HEAD must differ"
+    )
+
+    # ---- 2. Build a workspace at the ancestor's content ----------
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "framework").mkdir()
+    (workspace / payload_path).write_bytes(ancestor_blob)
+    (workspace / other_path).write_bytes(
+        subprocess.check_output(
+            ["git", "-C", str(canonical), "show", f"HEAD:{other_path}"]
+        )
+    )
+    # Seed default sync-protected envelope; framework/* is Class-C
+    # (no rule matches → default Class C → resolver-handled).
+    from workspace_sync.sync_protected import write_default_if_absent
+    write_default_if_absent(workspace)
+
+    # Pre-condition: the workspace file does NOT yet match canonical
+    # HEAD (it matches the ancestor instead).
+    assert (workspace / payload_path).read_bytes() != canonical_head_blob
+    assert (workspace / payload_path).read_bytes() == ancestor_blob
+
+    # ---- 3. Stub the resolver factory --------------------------
+    # The α.1 NN ancestor-detection fast-path runs BEFORE the LLM
+    # resolver and resolves to INFERRED_ACCEPT_CANONICAL with no
+    # LLM call. The resolver should never be invoked for our
+    # NN-matched entry. We supply a stub that errors if invoked
+    # to make the test fail loudly if α.1 ever stops engaging.
+    import workspace_sync.cli as cli_mod
+
+    def fake_factory(module_spec: str, *, budget=None) -> MergeResolver:
+        class NeverInvoked:
+            def invoke(self, prompt, response_model):
+                raise AssertionError(
+                    "α.1 NN ancestor-detection should resolve our "
+                    "entry without an LLM call"
+                )
+
+        return MergeResolver(NeverInvoked(), budget or ResolverBudget())
+
+    monkeypatch.setattr(cli_mod, "_load_merge_resolver", fake_factory)
+
+    # ---- 4. Run pos-sync with --auto-accept --------------------
+    rc = main(
+        [
+            "--canonical",
+            str(canonical),
+            "--workspace",
+            str(workspace),
+            "--auto-accept",
+            "--confidence-floor",
+            "0.85",
+        ]
+    )
+    assert rc == 0, (
+        f"pos-sync exited non-zero (rc={rc}); "
+        f"stdout/stderr=\n{capsys.readouterr()}"
+    )
+
+    # ---- 5. The binding HC#4 assertion -------------------------
+    # Read the workspace file's bytes post-apply. Compare to
+    # canonical HEAD's blob byte-for-byte. This is the assertion
+    # that catches the α-hotfix bug class — verdict-shape only
+    # tests would let the bug ship.
+    workspace_payload_bytes = (workspace / payload_path).read_bytes()
+    assert workspace_payload_bytes == canonical_head_blob, (
+        f"AC.α-hotfix.1 violated: workspace file at "
+        f"{workspace / payload_path} does not match canonical HEAD blob "
+        f"byte-for-byte after --auto-accept apply.\n"
+        f"  workspace bytes: {workspace_payload_bytes!r}\n"
+        f"  canonical HEAD:  {canonical_head_blob!r}\n"
+        f"  ancestor blob:   {ancestor_blob!r}\n"
+        f"This is the original Bundle α (#57) bug shape: the NN "
+        f"ancestor-detection fast-path set the verdict but did not "
+        f"stage canonical's content."
+    )
+
+    # Also confirm the audit reports the entry as
+    # INFERRED_ACCEPT_CANONICAL (verdict-shape correctness; the
+    # supplementary check that our test exercised the NN path,
+    # not some other resolution).
+    import yaml as _yaml
+    audit_dir = workspace / ".pos" / "sync"
+    head_sha = _git_head_sha(canonical)
+    audit_yaml = audit_dir / head_sha / "audit.yaml"
+    assert audit_yaml.exists(), (
+        f"audit.yaml not found at {audit_yaml}; sync did not persist "
+        f"audit. dir contents: "
+        f"{list(audit_dir.glob('*')) if audit_dir.exists() else '(missing)'}"
+    )
+    audit_data = _yaml.safe_load(audit_yaml.read_text())
+    payload_entries = [
+        c for c in audit_data["conflicts"]
+        if c["path"] == payload_path
+    ]
+    assert len(payload_entries) == 1, (
+        f"expected exactly one audit entry for {payload_path}; "
+        f"got {len(payload_entries)}"
+    )
+    entry = payload_entries[0]
+    assert entry["resolution"] == "inferred-accept-canonical", (
+        f"expected resolution=inferred-accept-canonical (the α.1 NN "
+        f"fast-path verdict); got {entry['resolution']}"
+    )
+    assert entry["resolved_content_path"] is not None, (
+        "AC.α-hotfix.1 invariant: NN-resolved entries must carry "
+        "resolved_content_path post-fix; the original bug left it "
+        f"null. entry: {entry!r}"
+    )

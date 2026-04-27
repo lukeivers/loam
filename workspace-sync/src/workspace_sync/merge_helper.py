@@ -110,6 +110,90 @@ def _resolve_canonical_head_sha(canonical_path: Path, ref: str) -> str | None:
     return sha if sha else None
 
 
+def _read_canonical_blob_at_ref(
+    canonical_path: Path, ref: str, rel_path: str
+) -> bytes | None:
+    """Resolve ``<ref>:<rel_path>`` on the canonical repo to its blob bytes.
+
+    Returns the blob's raw bytes on success, None on failure (path
+    missing at ref, submodule, symlink, ref unresolvable, or
+    subprocess error).
+
+    α-hotfix #59 staging primitive: the α.1 NN ancestor-detection
+    accept-canonical fast-path uses this to read canonical's HEAD
+    content for the resolved path so the staging tree carries the
+    file before ``apply_staging_atomically`` runs. Mirrors the
+    shellout shape used by ``_resolve_canonical_head_sha`` above
+    and by ``conflict_detection._git_show_bytes``.
+    """
+    try:
+        completed = subprocess.run(  # noqa: S603 — argv constructed
+            ["git", "-C", str(canonical_path), "show", f"{ref}:{rel_path}"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except OSError:
+        return None
+    if completed.returncode != 0:
+        return None
+    return completed.stdout
+
+
+def _stage_canonical_for_nn_match(
+    *,
+    entry: ConflictEntry,
+    canonical_root: Path,
+    canonical_ref: str,
+    workspace_root: Path,
+    sync_ref: str,
+    write_merged: Callable[[str, str], str] | None,
+) -> bool:
+    """Stage canonical's HEAD content for an NN ancestor-match entry.
+
+    α-hotfix #59: the α.1 NN ancestor-detection accept-canonical
+    fast-path historically set the verdict but never staged content,
+    causing ``apply_staging_atomically`` to silently no-op on the
+    path. This helper reads canonical's HEAD content for
+    ``entry.path`` via ``git show <ref>:<path>``, decodes UTF-8, and
+    drops the content into staging via the supplied ``write_merged``
+    callable (or falls back to the same per-conflict merged path
+    used by ``INFERRED_MERGED`` when ``write_merged`` is None,
+    mirroring lines below for the ``INFERRED_MERGED`` case).
+
+    Returns True on success (``entry.resolved_content_path`` is
+    populated and the staging file exists), False on failure
+    (binary content, missing path at ref, ref unresolvable). On
+    False the caller MUST NOT seal the
+    ``INFERRED_ACCEPT_CANONICAL`` verdict — leaving the entry
+    PENDING lets the legacy resolver path handle it instead of
+    re-introducing the false-success bug.
+    """
+    canonical_bytes = _read_canonical_blob_at_ref(
+        canonical_root, canonical_ref, entry.path
+    )
+    if canonical_bytes is None:
+        return False
+    try:
+        canonical_text = canonical_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    if write_merged is not None:
+        entry.resolved_content_path = write_merged(entry.path, canonical_text)
+    else:
+        # Mirror the INFERRED_MERGED else-branch (write to per-
+        # conflict merged path under workspace .pos/sync/<ref>/merged/).
+        merged_dir = (
+            workspace_root / ".pos" / "sync" / sync_ref / "merged"
+        )
+        target = merged_dir / entry.path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(canonical_text)
+        entry.resolved_content_path = str(target)
+    return True
+
+
 def _read_text_or_none(path: Path) -> str | None:
     """Read UTF-8 text from path; return None if missing or binary."""
     if not path.exists():
@@ -424,6 +508,49 @@ def resolve_inferred_conflicts(
                 if cached is not None:
                     # Cache hit: replay the prior walk's verdict.
                     if cached.ancestor_sha is not None:
+                        # α-hotfix #59: stage canonical's HEAD content
+                        # BEFORE sealing the verdict. If staging fails
+                        # (binary file / missing at ref / ref
+                        # unresolvable), leave the entry PENDING and
+                        # let the legacy resolver path handle it —
+                        # do NOT seal the verdict without staged
+                        # content, or apply_staging_atomically will
+                        # silently no-op on the path (the original
+                        # bug).
+                        staged = _stage_canonical_for_nn_match(
+                            entry=entry,
+                            canonical_root=canonical_root,
+                            canonical_ref=canonical_ref,
+                            workspace_root=workspace_root,
+                            sync_ref=report.sync_ref,
+                            write_merged=write_merged,
+                        )
+                        if staged:
+                            with otel_span(
+                                "pos.sync.merge_gate.ancestor_check",
+                                {
+                                    "pos.sync.merge_gate.path": entry.path,
+                                    "pos.sync.merge_gate.matched": True,
+                                    "pos.sync.merge_gate.ancestor_sha": cached.ancestor_sha,
+                                    "pos.sync.merge_gate.walk_depth": cached.walk_depth,
+                                    "pos.sync.merge_gate.cache_hit": True,
+                                },
+                            ):
+                                pass
+                            entry.resolution = Resolution.INFERRED_ACCEPT_CANONICAL
+                            entry.rationale = (
+                                f"workspace path matches canonical-history "
+                                f"ancestor at {cached.ancestor_sha[:7]}; "
+                                "not edited"
+                            )
+                            entry.confidence = 1.0
+                            entry.ancestor_match_sha = cached.ancestor_sha
+                            ancestor_match_count += 1
+                            resolved_count += 1
+                            continue
+                        # Stage failed: fall through to legacy path.
+                        # Span emitted with matched=True but
+                        # stage_failed=True for observability.
                         with otel_span(
                             "pos.sync.merge_gate.ancestor_check",
                             {
@@ -432,20 +559,10 @@ def resolve_inferred_conflicts(
                                 "pos.sync.merge_gate.ancestor_sha": cached.ancestor_sha,
                                 "pos.sync.merge_gate.walk_depth": cached.walk_depth,
                                 "pos.sync.merge_gate.cache_hit": True,
+                                "pos.sync.merge_gate.stage_failed": True,
                             },
                         ):
                             pass
-                        entry.resolution = Resolution.INFERRED_ACCEPT_CANONICAL
-                        entry.rationale = (
-                            f"workspace path matches canonical-history "
-                            f"ancestor at {cached.ancestor_sha[:7]}; "
-                            "not edited"
-                        )
-                        entry.confidence = 1.0
-                        entry.ancestor_match_sha = cached.ancestor_sha
-                        ancestor_match_count += 1
-                        resolved_count += 1
-                        continue
                     # Cached miss: don't re-walk; fall through to
                     # legacy resolver path. Span emitted for parity.
                     with otel_span(
@@ -481,6 +598,40 @@ def resolve_inferred_conflicts(
                         )
                     )
                     if match is not None:
+                        # α-hotfix #59: stage canonical's HEAD content
+                        # BEFORE sealing the verdict (see cache-hit
+                        # branch above for the full rationale).
+                        staged = _stage_canonical_for_nn_match(
+                            entry=entry,
+                            canonical_root=canonical_root,
+                            canonical_ref=canonical_ref,
+                            workspace_root=workspace_root,
+                            sync_ref=report.sync_ref,
+                            write_merged=write_merged,
+                        )
+                        if staged:
+                            with otel_span(
+                                "pos.sync.merge_gate.ancestor_check",
+                                {
+                                    "pos.sync.merge_gate.path": entry.path,
+                                    "pos.sync.merge_gate.matched": True,
+                                    "pos.sync.merge_gate.ancestor_sha": match.commit_sha,
+                                    "pos.sync.merge_gate.walk_depth": walk_depth,
+                                    "pos.sync.merge_gate.cache_hit": False,
+                                },
+                            ):
+                                pass
+                            entry.resolution = Resolution.INFERRED_ACCEPT_CANONICAL
+                            entry.rationale = (
+                                f"workspace path matches canonical-history "
+                                f"ancestor at {match.short_sha}; not edited"
+                            )
+                            entry.confidence = 1.0
+                            entry.ancestor_match_sha = match.commit_sha
+                            ancestor_match_count += 1
+                            resolved_count += 1
+                            continue
+                        # Stage failed: fall through to legacy path.
                         with otel_span(
                             "pos.sync.merge_gate.ancestor_check",
                             {
@@ -489,19 +640,10 @@ def resolve_inferred_conflicts(
                                 "pos.sync.merge_gate.ancestor_sha": match.commit_sha,
                                 "pos.sync.merge_gate.walk_depth": walk_depth,
                                 "pos.sync.merge_gate.cache_hit": False,
+                                "pos.sync.merge_gate.stage_failed": True,
                             },
                         ):
                             pass
-                        entry.resolution = Resolution.INFERRED_ACCEPT_CANONICAL
-                        entry.rationale = (
-                            f"workspace path matches canonical-history "
-                            f"ancestor at {match.short_sha}; not edited"
-                        )
-                        entry.confidence = 1.0
-                        entry.ancestor_match_sha = match.commit_sha
-                        ancestor_match_count += 1
-                        resolved_count += 1
-                        continue
                     # No match: fall through to legacy path. Span
                     # captures walk metrics for observability.
                     with otel_span(

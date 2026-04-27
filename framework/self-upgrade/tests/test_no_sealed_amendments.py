@@ -40,7 +40,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #     edits to ``self-upgrade/src/`` — retrofit-only. Empty
 #     BASELINE..HEAD window at apply time per the standard
 #     retrofit pattern.
-BASELINE = "90246dc4dafa953c1f5ad5d97819e24d97a761a7"
+BASELINE = "9221fa0b39bfe3652e47279cab2874538ebdfc65"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

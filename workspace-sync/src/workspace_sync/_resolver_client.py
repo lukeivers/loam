@@ -289,7 +289,9 @@ def build_merge_resolver(
     Returns a :class:`MergeResolver` whose LLM client spawns
     ``claude -p`` per call. Budgets default to BB D-1 locks
     (5_000 / 100_000); workspace-tunable via
-    ``~/.pos/sync-config.yaml`` (locked plan §11 D-2).
+    ``<workspace>/.pos/sync-config.yaml`` or
+    ``~/.pos/sync-config.yaml`` (β.1 wires the precedence chain
+    via ``cli.py``; locked plan §11 D-2).
     """
     client = _ClaudePrintResolverClient()
     return MergeResolver(client, budget or ResolverBudget())

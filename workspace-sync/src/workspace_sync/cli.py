@@ -1,20 +1,23 @@
 """External CLI: ``pos-sync`` (and ``pos-workspace-sync`` alias).
 
-Authored fresh. The B-mode entry point: an operator runs ``pos-sync
---canonical <path>`` from a workspace clone and the framework pulls
-canonical changes into the workspace under the three-class envelope.
+Authored fresh. The B-mode entry point: an operator runs ``pos-sync``
+(no flags from inside a configured workspace, post-#58 / β.1) or
+``pos-sync --canonical <path>`` (the explicit form, byte-identical
+to today) and the framework pulls canonical changes into the
+workspace under the three-class envelope.
 
 Argparse:
 
-  pos-sync --canonical <path>
-           [--ref <commit-or-tag>]      default: HEAD
-           [--workspace <path>]         default: cwd
-           [--dry-run]                  print plan; no apply
-           [--merge-resolver-module M]  factory; default
-                                        workspace_sync._resolver_client
-           [--budget-tokens N]          cumulative-ceiling override
-           [--auto-accept]              opt-in fast-path past confirm
-           [--confidence-floor F]       default 0.90 (BB D-2)
+  pos-sync [--canonical <path-or-url>]   optional post-β.1; falls
+                                         through to sync-config.yaml
+           [--ref <commit-or-tag>]       default: HEAD
+           [--workspace <path>]          default: cwd
+           [--dry-run]                   print plan; no apply
+           [--merge-resolver-module M]   factory; default
+                                         workspace_sync._resolver_client
+           [--budget-tokens N]           cumulative-ceiling override
+           [--auto-accept]               opt-in fast-path past confirm
+           [--confidence-floor F]        default 0.90 (BB D-2)
 
 Workspace-root derivation (Hard Constraint #12, no symlink resolution):
 
@@ -23,6 +26,20 @@ Workspace-root derivation (Hard Constraint #12, no symlink resolution):
   3. Else ``Path.cwd()`` if it contains ``.git/`` (fresh first-run).
   4. Else: halt with structured argument-validation error naming
      both fall-through conditions (AC.WS.1).
+
+Canonical-source resolution (β.1, AC.β.1):
+
+  Precedence (highest → lowest):
+  1. ``--canonical <path-or-url>`` CLI flag.
+  2. ``<workspace>/.pos/sync-config.yaml``'s ``canonical_source:``.
+  3. ``~/.pos/sync-config.yaml``'s ``canonical_source:``.
+  4. Halt with structured error naming all three fall-through paths.
+
+  When the resolved string is a URL (``http(s)://`` or ``git@``),
+  ``ensure_cache_clone`` clones to ``~/.pos/canonical-cache/<repo-id>/``
+  and runs ``git fetch --all --tags`` (always-fetch per D-β.1 LOCKED).
+  When it is an absolute POSIX path, it is used directly (back-compat
+  with #56's pos-sync invocation pattern).
 """
 
 from __future__ import annotations
@@ -37,6 +54,7 @@ from .canonical import (
     CanonicalPullError,
     resolve_canonical,
 )
+from .canonical_cache import CanonicalCacheError, ensure_cache_clone
 from .conflict_detection import detect_b_shape_conflicts
 from .conflict_report import (
     ConflictReport,
@@ -67,6 +85,10 @@ from .state import (
     make_state_record,
     save_state,
     state_yaml_path,
+)
+from .sync_config import (
+    canonical_source_kind,
+    load_sync_config,
 )
 from .sync_protected import (
     SyncProtected,
@@ -373,9 +395,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--canonical",
-        required=True,
-        type=Path,
-        help="Local canonical git working tree to pull from.",
+        required=False,
+        default=None,
+        type=str,
+        help=(
+            "Canonical source: an absolute path to a local git working "
+            "tree, an http(s) URL, or a git@-style SSH spec. Optional "
+            "post-β.1: when absent, pos-sync reads canonical_source from "
+            "<workspace>/.pos/sync-config.yaml or ~/.pos/sync-config.yaml. "
+            "When passed, the CLI flag overrides the config-file value."
+        ),
     )
     parser.add_argument(
         "--ref",
@@ -443,10 +472,55 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(str(exc))
         return 2  # unreachable; parser.error raises SystemExit(2)
 
+    # β.1 (AC.β.1): canonical-source precedence chain.
+    #   CLI flag > workspace-local sync-config.yaml > ~/-rooted > halt.
+    try:
+        sync_cfg = load_sync_config(workspace_root)
+    except Exception as exc:
+        print(
+            f"[workspace-sync] sync-config.yaml load failed: {exc}",
+            file=sys.stderr,
+        )
+        return 2
+
+    canonical_source_str = (
+        args.canonical
+        if args.canonical is not None
+        else sync_cfg.canonical_source
+    )
+    if canonical_source_str is None:
+        parser.error(
+            "no canonical source: pass --canonical <path-or-url>, OR "
+            "set canonical_source: in <workspace>/.pos/sync-config.yaml, "
+            "OR set canonical_source: in ~/.pos/sync-config.yaml"
+        )
+        return 2  # unreachable; parser.error raises SystemExit(2)
+
+    # β.1 (D-β.1 LOCKED): URL-vs-local-path discrimination.
+    try:
+        kind = canonical_source_kind(canonical_source_str)
+    except ValueError as exc:
+        print(f"[workspace-sync] {exc}", file=sys.stderr)
+        return 2
+
+    if kind == "url":
+        try:
+            canonical_input_path = ensure_cache_clone(
+                canonical_source_str, ref=args.ref
+            )
+        except CanonicalCacheError as exc:
+            print(
+                f"[workspace-sync] canonical cache failed: {exc}",
+                file=sys.stderr,
+            )
+            return 2
+    else:  # "local"
+        canonical_input_path = Path(canonical_source_str)
+
     # Canonical resolution (AC.WS.1).
     try:
         canonical = resolve_canonical(
-            args.canonical,
+            canonical_input_path,
             ref=args.ref,
         )
     except CanonicalPullError as exc:
@@ -471,12 +545,31 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    # Resolver factory.
-    budget_override = (
-        ResolverBudget(cumulative_token_budget=args.budget_tokens)
-        if args.budget_tokens is not None
-        else None
-    )
+    # Resolver factory. β.1 (HALT-FOUND #2 closure): the
+    # ``_resolver_client.py:292`` docstring promised file-tunable
+    # budgets; β.1 wires the precedence chain.
+    #   CLI flag (--budget-tokens) > workspace-local file
+    #     > ~/-rooted file > ResolverBudget defaults.
+    if args.budget_tokens is not None:
+        budget_override = ResolverBudget(
+            cumulative_token_budget=args.budget_tokens
+        )
+    elif (
+        sync_cfg.cumulative_token_budget is not None
+        or sync_cfg.per_conflict_token_budget is not None
+    ):
+        budget_kwargs: dict[str, int] = {}
+        if sync_cfg.cumulative_token_budget is not None:
+            budget_kwargs["cumulative_token_budget"] = (
+                sync_cfg.cumulative_token_budget
+            )
+        if sync_cfg.per_conflict_token_budget is not None:
+            budget_kwargs["per_conflict_token_budget"] = (
+                sync_cfg.per_conflict_token_budget
+            )
+        budget_override = ResolverBudget(**budget_kwargs)
+    else:
+        budget_override = None
     try:
         resolver = _load_merge_resolver(
             args.merge_resolver_module, budget=budget_override

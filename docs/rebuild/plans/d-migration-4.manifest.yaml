@@ -9,7 +9,7 @@ amendment:
 # + §15 verdict`). Per BASELINE-as-HEAD~1 pattern (#29 / #34-#62), when
 # D.4's feat commit lands HEAD advances and apply runs against this
 # BASELINE.
-baseline: 09f5fa83fffaaab14f1be3aab1c6c4d97e29f2cb
+baseline: 09f5fa84fb1dd790a6eb934565a93ea39f57d053
 
 plan: docs/rebuild/plans/d-migration-4.builder-plan.md
 

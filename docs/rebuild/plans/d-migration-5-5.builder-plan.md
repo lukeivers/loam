@@ -206,9 +206,9 @@ Records the method choices the builder made within each AC's outcome bound, plus
 
 ### Commit SHAs
 
-- amendment commit: `1a4cdcb`
-- apply chore: `1bb2a78`
-- seal commit: `2d83c83`
+- amendment commit: `ce24d73` — `feat(workspace-sync,tools): D-migration D.5.5 — cleanup of D.1's stale bare directories (amendment #66, AC.D.5.5.1, AC.D.5.5.2, AC.D.5.5.S)`
+- apply chore: `f07a36d` — `chore(workspace-sync): advance BASELINE + SEAL_COMMIT for D-migration D.5.5 window`
+- seal commit: `0ca1484` — `chore(seals): D-migration D.5.5 — cleanup of D.1's stale bare directories (Finding B) — workspace-sync at f07a36d`
 - §14 + §15 backfill: (this commit)
 
 ---

@@ -1569,6 +1569,14 @@ D.5 audit (research note: `/Users/lukeivers/ivers-corp-pos-v2/.scratch/claude-ou
 
 D.5 verdict commit lands as docs-only. No D.5 amendment commit, no D.5 apply chore, no D.5 seal commit. The verdict text above + commit SHA below ARE D.5's record.
 
+### D.5.5 — D-build.D.5.5.x — Finding B cleanup amendment
+
+**D.5.5 outcome 2026-04-26.** Track B of D.5's audit (Option 1) lands as amendment #66. Single-component fence: workspace-sync. Deletes the two confirmed-stale-duplicate top-level directories (`tools/` 109 files + `workspace-sync/` 43 files = 152 dead-surface files retired). HC#4 verification ran pre-build: 109 + 30 files have `framework/<same-path>` counterparts of equal-or-newer content; 13 are D.3-retired modules (intentional counterpart-absence, authorised by dispatch); 1 file (`data/observability/spans.jsonl`) has NO framework/ counterpart and is NOT a duplicate (stale runtime test output committed accidentally in 65acb97) — surfaced and excluded from D.5.5 per HC#4 strict reading. Recommended follow-on: separate single-file cleanup outside the D-migration plan.
+
+**D.5.5 method record.** No `cleanup_directives:` block needed (the mechanism's purpose, D.1.5, is to revert prior bumps; D.5.5 doesn't need to revert anything). The 7 PRE-D.1-SEAL_COMMIT components stay at their pre-D.1 SHAs automatically (not in components: list); their seal-diff windows close at the still-pre-D.1 SEAL_COMMIT, OUTSIDE the D.5.5 deletion commit. The 5 POST-D.1-SEAL_COMMIT components plus hands-off-lifecycle likewise stay at existing SEAL_COMMITs. The 13 sealed-component test_no_sealed_amendments.py files keep their bare-prefix admissions (`tools/`, `workspace-sync/`, `data/`) — load-bearing per Finding A. `--scoped-sweep` ran workspace-sync's seal-diff test only (speedup (a)).
+
+**D.5.5 verdict.** Lands clean. D-migration's last housekeeping closes. Builder-plan §14 + §15 carry the full method-decision record per the D.4 pattern; this parent-plan entry is the navigation anchor.
+
 ### Commit SHAs
 
 (post-build per amendment)
@@ -1581,8 +1589,10 @@ D.5 verdict commit lands as docs-only. No D.5 amendment commit, no D.5 apply cho
 - D.3 seal commit: `<TBD>`
 - D.4 amendment commit: `<TBD>`
 - D.4 seal commit: `<TBD>`
-- D.5 amendment commit: `<TBD>` (or "no-op")
-- D.5 seal commit: `<TBD>` (or "no-op")
+- D.5 verdict commit (no amendment cycle): `dbd91c7` — `docs(plans): D-migration D.5 verdict — verdict-only; Finding B cleanup deferred to D.5.5`
+- D.5.5 amendment commit: `ce24d73` — `feat(workspace-sync,tools): D-migration D.5.5 — cleanup of D.1's stale bare directories (amendment #66, AC.D.5.5.1, AC.D.5.5.2, AC.D.5.5.S)`
+- D.5.5 apply chore: `f07a36d` — `chore(workspace-sync): advance BASELINE + SEAL_COMMIT for D-migration D.5.5 window`
+- D.5.5 seal commit: `0ca1484` — `chore(seals): D-migration D.5.5 — cleanup of D.1's stale bare directories (Finding B) — workspace-sync at f07a36d`
 
 ---
 
@@ -1605,6 +1615,16 @@ documents:
 - HC#6 (structural-promise) verified via end-to-end fixture
   exercise.
 - Speedups applied per `feedback_amendment_dispatch_speedups`.
+
+### D.5.5 — backwards-compat verification (post-build)
+
+- **HC#1 (D.5.5 fence):** single-component fence — workspace-sync only. Verified via `pos-amend apply --dry-run` clean + scoped-sweep at seal-time green.
+- **HC#2 (no regression):** all 13 sealed components' seal-diff tests pass post-D.5.5. Pre-existing workspace-sync test failures unchanged (24 failed pre, 24 failed post — same set, all pre-existing `workspace_bootstrap`-not-on-venv-path issues; unrelated to D.5.5).
+- **HC#3 (no new third-party deps):** regression test (`test_AC_D_5_5_bare_paths_absent.py`) uses stdlib only.
+- **HC#4 (counterpart verification — byte-content-match analogue):** 109 `tools/` files + 30 `workspace-sync/` files have `framework/<same-path>` counterparts of equal-or-newer content (verified via `cmp` + `git log <pre-D.1-SHA>..HEAD -- <bare-path>` empty for all bare paths since D.1). 13 `workspace-sync/` files are D.3-retired modules (intentional counterpart-absence, authorised by dispatch). 1 file (`data/observability/spans.jsonl`) surfaced as no-framework-counterpart and EXCLUDED from D.5.5.
+- **HC#5 (no pos3 touch):** only canonical pos-v2 working tree modified; pos3 untouched.
+- **HC#7-#9:** scope-only-dispatch + no `--amend` + plan-before-code + manifest + builder-plan committed alongside the deletions and the regression test.
+- **Speedup deltas:** (a) `--scoped-sweep` ran workspace-sync seal-diff test only (1 component) vs full sweep (13 components, ~3 minutes typical) — saved ~2-3 min. (b) Pre-seal full-suite skipped — saved ~3-5 min. (c) Inline methodology snippets in commit prose — marginal saving.
 
 ---
 

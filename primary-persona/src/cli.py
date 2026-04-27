@@ -39,6 +39,7 @@ from .stop_emitter import (
     cli_memory_write,
     cli_stop,
 )
+from .memory_write_worker import cli_memory_worker
 
 
 def _resolve_workspace(workspace: Path | None) -> Path:
@@ -71,6 +72,11 @@ def _cmd_memory_write(args: argparse.Namespace) -> int:
         user_message=args.user_message,
         assistant_reply=args.assistant_reply,
     )
+
+
+def _cmd_memory_worker(args: argparse.Namespace) -> int:
+    workspace_root = _resolve_workspace(args.workspace)
+    return cli_memory_worker(workspace_root=workspace_root)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -129,6 +135,22 @@ def build_parser() -> argparse.ArgumentParser:
     p_mw.add_argument("--user-message", type=str, required=True)
     p_mw.add_argument("--assistant-reply", type=str, required=True)
     p_mw.set_defaults(func=_cmd_memory_write)
+
+    p_worker = sub.add_parser(
+        "memory-worker",
+        help=(
+            "Long-running memory-write worker (amendment J / "
+            "AC.J.5). Drains the disk-backed queue at "
+            "<workspace>/.pos/memory-write-queue/ by driving each "
+            "entry's add_episode against the live MCP memory client. "
+            "Invoked by the workspace-local launchd service "
+            "com.pos-v2.<slug>.memory-write-worker; runs forever in "
+            "normal operation. Returns 0 on cooperative exit "
+            "(SIGTERM / SIGINT)."
+        ),
+    )
+    p_worker.add_argument("--workspace", type=Path, default=None)
+    p_worker.set_defaults(func=_cmd_memory_worker)
 
     return parser
 

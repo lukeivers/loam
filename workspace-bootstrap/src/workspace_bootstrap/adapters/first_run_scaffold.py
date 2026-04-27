@@ -200,7 +200,17 @@ def resolve_persona_handle(raw_input: str | None) -> str:
 
 # Service "kinds" installed by the first-run scaffold. The full label
 # is `com.pos-v2.<slug>.<kind>`; the plist filename matches the label.
-_SERVICE_KINDS: tuple[str, ...] = ("memory-graphiti", "orchestrator")
+#
+# Amendment J (AC.J.5): ``memory-write-worker`` is the long-running
+# drain process for the disk-backed memory-write queue. It composes
+# on the same launchd-supervised pattern as ``memory-graphiti`` and
+# ``orchestrator`` — workspace-bootstrap provisions the plist; launchd
+# owns lifecycle (KeepAlive=true; RunAtLoad=true; ThrottleInterval).
+_SERVICE_KINDS: tuple[str, ...] = (
+    "memory-graphiti",
+    "orchestrator",
+    "memory-write-worker",
+)
 
 
 def service_label(kind: str, slug: str) -> str:
@@ -686,6 +696,22 @@ def run_first_run_scaffold(
         memory_port=memory_port,
     )
 
+    # Amendment J (AC.J.1 / AC.J.4): write the workspace-local
+    # ``ollama-prewarm-recommended.txt`` + ``memory-worker.yaml``
+    # under <workspace>/.pos/. Both are advisory + config surfaces
+    # the persona/worker reads back; idempotent (won't clobber user
+    # edits on partial-recovery or re-runs). Per Hard Constraint 12,
+    # pos-v2 does NOT touch the operator's homebrew Ollama plist —
+    # the advisory file names the operator-side commands they run
+    # themselves.
+    j_advisory_written, j_worker_cfg_written = (
+        _write_amendment_j_workspace_files(Path(ws))
+    )
+    if j_advisory_written:
+        written.append(f"<workspace>/.pos/{PREWARM_ADVISORY_FILENAME}")
+    if j_worker_cfg_written:
+        written.append(f"<workspace>/.pos/{WORKER_CONFIG_FILENAME}")
+
     # Amendment #39: seed the workspace's objective-tracker DB with
     # the value-prop root + spec-tier descendants. Idempotent by
     # query (the seed-runner uses ``query_projection_view`` to detect
@@ -789,6 +815,128 @@ def _run_tracker_seed(
     )
 
 
+# ---- amendment J — workspace-local advisory + worker config helpers
+
+
+WORKSPACE_POS_DIR = ".pos"
+PREWARM_ADVISORY_FILENAME = "ollama-prewarm-recommended.txt"
+WORKER_CONFIG_FILENAME = "memory-worker.yaml"
+
+
+def _write_amendment_j_workspace_files(
+    workspace_root: Path,
+) -> tuple[bool, bool]:
+    """Write the amendment-J workspace-local advisory + worker config.
+
+    Per Hard Constraint 12 + locked plan §11 D-1: workspace-bootstrap
+    is the propagation surface for the operator-facing pre-warm
+    recommendation. The file is advisory only — pos-v2 does NOT
+    touch the operator's homebrew-installed Ollama plist. The
+    persona reads this file on demand via
+    ``primary_persona.memory_prewarm.read_prewarm_advisory`` and
+    surfaces a recommendation when the env var remains unset
+    (AC.J.6).
+
+    Per locked D-3: the worker-config file scaffolds the retry-curve
+    defaults; workspaces tune by editing the file. The worker's
+    ``load_worker_config`` falls back to the same defaults when the
+    file is absent.
+
+    Idempotent: existing files are not overwritten (so user edits
+    survive partial-recovery + re-runs). Returns
+    ``(advisory_written, worker_config_written)`` — True iff the
+    file was actually authored on this invocation.
+    """
+    pos_dir = Path(workspace_root) / WORKSPACE_POS_DIR
+    pos_dir.mkdir(parents=True, exist_ok=True)
+    advisory_path = pos_dir / PREWARM_ADVISORY_FILENAME
+    worker_cfg_path = pos_dir / WORKER_CONFIG_FILENAME
+    advisory_written = False
+    worker_config_written = False
+    if not advisory_path.exists():
+        advisory_path.write_text(_OLLAMA_PREWARM_ADVISORY)
+        advisory_path.chmod(0o644)
+        advisory_written = True
+    if not worker_cfg_path.exists():
+        worker_cfg_path.write_text(_MEMORY_WORKER_YAML)
+        worker_cfg_path.chmod(0o644)
+        worker_config_written = True
+    return advisory_written, worker_config_written
+
+
+# ---- amendment J — workspace-local advisory + worker config ---------
+#
+# Per locked plan §11 D-1 + Hard Constraint 12: pos-v2 does NOT touch
+# homebrew-installed files. The advisory file is the operator-facing
+# surface that names the recommended OLLAMA_KEEP_ALIVE value (D-5
+# locked at 24h) + the operator-side commands to apply it. The
+# persona reads this surface back via
+# ``primary_persona.memory_prewarm.read_prewarm_advisory`` (AC.J.6).
+#
+# The worker config file at ``<workspace>/.pos/memory-worker.yaml``
+# carries the D-3 retry-curve defaults (5 retries, 2s→60s exp
+# backoff). Workspaces tune by editing the file; the worker's
+# ``load_worker_config`` helper falls back to the same defaults when
+# the file is absent.
+
+_OLLAMA_PREWARM_ADVISORY = """\
+OLLAMA_KEEP_ALIVE=24h
+
+# Amendment J / AC.J.1 / D-5 lock — OLLAMA_KEEP_ALIVE recommendation.
+#
+# pos-v2 cannot set this on the operator's behalf because the env var
+# is read by the OLLAMA SERVER process (homebrew-managed launchd
+# service), not by memory-system or any pos-v2 component. Per Hard
+# Constraint 12, pos-v2 does not edit homebrew-installed files.
+#
+# To apply the recommendation on this machine, run ONE of:
+#
+#   # Session-scoped (cleared on logout):
+#   launchctl setenv OLLAMA_KEEP_ALIVE 24h
+#   brew services restart ollama
+#
+#   # Persistent across reboots — edit the homebrew Ollama plist:
+#   #   /opt/homebrew/Cellar/ollama/<version>/homebrew.mxcl.ollama.plist
+#   # Add to its EnvironmentVariables dict:
+#   #   <key>OLLAMA_KEEP_ALIVE</key><string>24h</string>
+#   # Then:
+#   launchctl bootout gui/$(id -u)/homebrew.mxcl.ollama
+#   launchctl bootstrap gui/$(id -u) /opt/homebrew/Cellar/ollama/<version>/homebrew.mxcl.ollama.plist
+#
+# Why 24h: spans typical session-pause envelopes (overnight resumption,
+# afternoon breaks). Ollama's eviction logic frees the model from VRAM
+# on memory pressure regardless of keep-alive — there is no
+# memory-pressure cost.
+"""
+
+
+_MEMORY_WORKER_YAML = """\
+# ~/.pos/memory-worker.yaml — amendment J / AC.J.4 retry-curve.
+# Workspace-tunable defaults for the long-running memory-write
+# worker (drains <workspace>/.pos/memory-write-queue/).
+
+# How many failed attempts before a queue entry moves to the
+# dead-letter log (<workspace>/.pos/memory-write-deadletter.log).
+max_retries: 5
+
+# Exponential backoff curve: delay_n = initial * 2^(n-1), capped
+# at backoff_max_s. Default: 2, 4, 8, 16, 32, 60 (capped) seconds.
+backoff_initial_s: 2.0
+backoff_max_s: 60.0
+
+# Worker drain-loop poll interval — how long to sleep between
+# drain passes when the queue is empty. Lower = faster drain,
+# higher CPU. Higher = batchier drain, lower CPU.
+poll_interval_s: 1.0
+
+# Stale .tmp file cleanup age — orphaned tmp files older than
+# this are removed by the worker's periodic cleanup pass. Real
+# enqueues complete the tmp+rename in milliseconds; anything
+# older is a never-completed enqueue.
+tmp_cleanup_age_s: 3600.0
+"""
+
+
 # ---- service-manager file templating ---------------------------------
 
 
@@ -833,6 +981,40 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
     <key>StandardOutPath</key><string>{workspace}/orchestrator.out.log</string>
     <key>StandardErrorPath</key><string>{workspace}/orchestrator.err.log</string>
     <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>PATH</key><string>{path}</string></dict>
+</dict>
+</plist>
+""",
+    # Amendment J / AC.J.5: long-running memory-write-worker drains
+    # the per-workspace queue at <workspace>/.pos/memory-write-queue/.
+    # Composes on the same launchd-supervised pattern as
+    # ``memory-graphiti`` (KeepAlive=true; RunAtLoad=true). Throttle
+    # matches the memory-graphiti shape (10s) — short enough that a
+    # crash recovers within a typical user-perceived turn cadence,
+    # long enough that a launchd-restart-storm cannot hammer the
+    # MCP transport. The worker drives ``primary_persona.cli
+    # memory-worker --workspace <ws>``; the {workspace} placeholder
+    # binds to the per-workspace .venv whose ``primary_persona``
+    # editable install carries the worker module.
+    "memory-write-worker": """\
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTD/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>{label}</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>{workspace}/.venv/bin/python</string>
+      <string>-m</string><string>primary_persona.cli</string>
+      <string>memory-worker</string>
+      <string>--workspace</string><string>{workspace}</string>
+    </array>
+    <key>WorkingDirectory</key><string>{workspace}</string>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>ThrottleInterval</key><integer>10</integer>
+    <key>StandardOutPath</key><string>{workspace}/memory-write-worker.out.log</string>
+    <key>StandardErrorPath</key><string>{workspace}/memory-write-worker.err.log</string>
+    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>POS_V2_WORKSPACE_ROOT</key><string>{workspace}</string><key>PATH</key><string>{path}</string></dict>
 </dict>
 </plist>
 """,

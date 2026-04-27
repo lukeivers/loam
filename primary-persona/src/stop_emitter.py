@@ -1,4 +1,4 @@
-"""Stop-hook turn-close emitter (amendment #48 / D2 / D3 / D4 / D7 / D8 / D11).
+"""Stop-hook turn-close emitter (amendment #48 + amendment J).
 
 The Stop hook is Claude Code's once-per-turn-close trigger. This
 module is the persona-side handler:
@@ -6,32 +6,45 @@ module is the persona-side handler:
   - :func:`cli_stop` reads Claude Code's Stop envelope from stdin,
     recovers the user message + assistant reply from the envelope's
     ``transcript_path``, derives a stable per-turn id, deduplicates
-    on a workspace-local marker, and detaches the actual
-    ``add_episode`` write to a background subprocess.
+    on a workspace-local marker, and **enqueues** the turn record to
+    the disk-backed queue at
+    ``<workspace>/.pos/memory-write-queue/`` (amendment J / AC.J.2).
     Returns 0 unconditionally (AC.M.4 + AC.M.7 — a non-zero exit
     blocks Claude Code's normal stop behaviour, the OPPOSITE of
     what we want).
 
-  - :func:`cli_memory_write` is the detached subprocess's entry
-    point. It constructs the live MCP client, drives one
-    ``add_episode`` synchronously to completion, logs a structured
-    diagnostic to ``<workspace>/.pos/memory-writes.log``, and
-    returns 0. AC.M.6 + AC.M.10.
+  - :func:`cli_memory_write` is the legacy synchronous entry point.
+    Pre-amendment-J it was invoked from a detached subprocess; post-J
+    the long-running worker (``memory_write_worker.run_worker_loop``)
+    drives the equivalent drain via ``_process_one_entry``. The
+    function is preserved as a still-callable surface for tests
+    that exercise the per-turn-record write contract directly
+    (AC.M.6 / AC.M.10).
 
-Per the locked plan §6:
-  - D3: detachment via ``subprocess.Popen(..., start_new_session=True,
-    stdin/stdout/stderr=DEVNULL)`` from inside ``cli_stop``. Tests
-    monkeypatch the Popen call site to assert detachment shape.
-  - D4: turn id = ``f"{session_id}:{user_message_sha256[:12]}"``;
-    idempotency via ``<workspace>/.pos/last-turn-id``.
-  - D7: detached child catches connection failure, logs, exits.
-  - D8: diagnostic log at ``<workspace>/.pos/memory-writes.log``;
-    NDJSON.
-  - D11: ``/compact`` and ESC interrupt produce empty user_message
-    or empty assistant_reply; both are graceful no-ops (AC.M.9).
+Per the locked plan §6 + amendment J §11:
+  - D3 (#48) → amendment J D-4: in-process detachment is replaced by
+    a disk-backed queue + supervised worker. The Stop-hook still
+    returns in milliseconds; the actual ``add_episode`` runs out of
+    band in the worker process.
+  - D4 (#48): turn id = ``f"{session_id}:{user_message_sha256[:12]}"``;
+    idempotency via ``<workspace>/.pos/last-turn-id``. Amendment J
+    AC.J.7 adds a second-line dedupe: the on-disk filename is keyed
+    on turn-id, so a marker miss + repeat enqueue overwrites in place
+    rather than producing a duplicate queue entry.
+  - D7 (#48): per-call MCP failures absorbed by the worker's bounded
+    retry + dead-letter (amendment J AC.J.4).
+  - D8 (#48): diagnostic log at ``<workspace>/.pos/memory-writes.log``;
+    NDJSON. The worker appends new ``kind`` values
+    (``worker-ok``/``worker-retry``/``worker-deadletter``/etc.) per
+    Hard Constraint 4 — the existing #48 ``kind`` values are
+    preserved byte-identically.
+  - D11 (#48): ``/compact`` and ESC interrupt produce empty
+    user_message or empty assistant_reply; both are graceful no-ops
+    (AC.M.9 / AC.J.8).
 
-Per ODD §2.5 every code path traces back to AC.M.4–AC.M.10. Defensive
-``if``s without an AC anchor are not introduced.
+Per ODD §2.5 every code path traces back to AC.M.4–AC.M.10 +
+AC.J.2 / AC.J.7 / AC.J.8. Defensive ``if``s without an AC anchor
+are not introduced.
 """
 
 from __future__ import annotations
@@ -40,12 +53,13 @@ import asyncio
 import hashlib
 import json
 import os
-import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from . import memory_write_queue as _mwq
 
 
 # ---- public dataclasses + parsing -----------------------------------
@@ -302,7 +316,7 @@ def _append_diag(workspace_root: Path, entry: dict[str, Any]) -> None:
         return
 
 
-# ---- background-write detachment (D3 / AC.M.7) ----------------------
+# ---- queue-enqueue (amendment J / AC.J.2 / AC.J.3 / AC.J.7) ---------
 
 
 def _spawn_memory_write(
@@ -313,44 +327,34 @@ def _spawn_memory_write(
     user_message: str,
     assistant_reply: str,
 ) -> None:
-    """Detach a background subprocess driving ``cli_memory_write``.
+    """Enqueue a turn record to the disk-backed memory-write queue.
 
-    D3: ``Popen(..., start_new_session=True, stdin=DEVNULL,
-    stdout=DEVNULL, stderr=DEVNULL)`` produces a child detached
-    from the Stop subprocess; the child outlives the Stop hook
-    even when the Stop subprocess returns immediately. The child
-    invokes the persona CLI's ``memory-write`` subcommand with the
-    recovered turn content as argv.
+    Amendment J / AC.J.2: replaces the #48 detached-Popen pattern
+    with a fire-and-forget queue write. The function still:
 
-    The Python interpreter is resolved as ``sys.executable`` so the
-    child runs under the same venv this Stop subprocess does — the
-    venv has the ``mcp`` runtime dep declared by amendment #48.
+      - returns in milliseconds (Hard Constraint 5 + AC.J.2),
+      - is invoked with the same kwargs as the #48 surface
+        (``workspace_root`` / ``turn_id`` / ``session_id`` /
+        ``user_message`` / ``assistant_reply``) so existing AC.M.5
+        monkeypatch tests at the persona-module level still
+        capture the kwargs,
+      - guarantees durability via tmp-file + ``os.replace``
+        (Hard Constraint 7 + AC.J.3).
+
+    The actual ``add_episode`` write runs out-of-band in the
+    long-running worker process supervised by launchd
+    (``memory_write_worker.run_worker_loop`` / AC.J.5). The legacy
+    function name ``_spawn_memory_write`` is preserved (rather
+    than renaming to ``_enqueue_memory_write``) so tests that
+    monkeypatch the symbol at module level continue to bind to
+    the same call site — the AC.M.5 surface is untouched.
     """
-    # ``-Xfrozen_modules=off`` is not needed; the persona CLI is a
-    # standard package import.
-    cmd = [
-        sys.executable,
-        "-m",
-        "primary_persona.cli",
-        "memory-write",
-        "--workspace",
-        str(workspace_root),
-        "--turn-id",
-        turn_id,
-        "--session-id",
-        session_id,
-        "--user-message",
-        user_message,
-        "--assistant-reply",
-        assistant_reply,
-    ]
-    subprocess.Popen(  # noqa: S603 — intentional detached child
-        cmd,
-        start_new_session=True,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        close_fds=True,
+    _mwq.enqueue(
+        workspace_root=Path(workspace_root),
+        turn_id=turn_id,
+        session_id=session_id,
+        user_message=user_message,
+        assistant_reply=assistant_reply,
     )
 
 

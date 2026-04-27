@@ -72,12 +72,16 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
         "telegram.yaml",
     ):
         assert (pos_root / rel).exists(), f"missing {rel}"
-    # Both service-manager files present under namespaced labels.
+    # Service-manager files present under namespaced labels.
+    # Amendment J / AC.J.5 added the ``memory-write-worker`` kind to
+    # the launchd-supervised set; the per-workspace label list grows
+    # accordingly.
     plists = list(service_dir.glob("*.plist"))
     labels = {p.stem for p in plists}
     assert labels == {
         "com.pos-v2.pos-v2.memory-graphiti",
         "com.pos-v2.pos-v2.orchestrator",
+        "com.pos-v2.pos-v2.memory-write-worker",
     }
 
 

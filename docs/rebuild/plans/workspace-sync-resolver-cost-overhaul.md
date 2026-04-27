@@ -1267,29 +1267,104 @@ preserved) — but the AC carries the burden D-3 routes.
 The plan §11 left D-build.x method choices to the builder within the
 ACs' outcome bounds. This section is populated post-build.
 
-### D-build.x — (placeholder for the build agent's method choices)
+### D-build.x — method choices
+
+Full detail in `docs/rebuild/plans/workspace-sync-resolver-cost-overhaul.builder-plan.md` §A. One-line summary per choice:
+
+- **D-build.0** (module placement): α.1 logic in new `ancestor_detection.py`; α.2 logic in new `merge_primitives.py`; α.3 wired in existing `_resolver_client.py`; orchestration in extended `merge_helper.py`. New audit fields on `ConflictEntry`.
+- **D-build.1** (α.1 helper placement): new module `workspace-sync/src/workspace_sync/ancestor_detection.py` with pure-function walker + Pydantic `AncestorMatch` / `AncestorCache` / `AncestorCacheEntry`. Wired through inline `α.1` block in `merge_helper.resolve_inferred_conflicts` Class-C branch.
+- **D-build.2** (α.1 walk shape): `git -C <canonical> log --all --follow --format=%H -- <path>` walked top-to-bottom; sha256-byte compare each historical blob via `git show <commit>:<path>`. First match wins. `walk_short=True` when `git log` returns FEWER than `depth_cap` commits AND no match — surfaces in audit (D-1 LOCKED decline-on-shallow). Depth cap 200; sha256 byte content.
+- **D-build.3** (cache shape): YAML cache at `<workspace>/.pos/sync/<ref>/ancestor-cache.yaml`; Pydantic-validated `AncestorCache(schema_version, canonical_ref_sha, entries: dict[str, AncestorCacheEntry])`; key = `f"{path}|{workspace_sha256}"`. Cache invalidates wholesale when `canonical_ref_sha` differs from the current canonical-HEAD. Rewritten at end-of-run.
+- **D-build.4** (file-class taxonomy): five-class `Literal` exactly as plan §4 AC.WSα.3 minimum: `append-only-list`, `log`, `tracker-table`, `free-prose`, `unknown`. Named `MergeClass` to avoid collision with `sync_protected.FileClass` (A/B/C).
+- **D-build.5** (per-class deterministic primitives): `merge_append_only_list` (concatenate-with-dedupe by stripped first-line of each bullet block; raises `MergeClassDeclined` on prefix mismatch); `merge_log` (line-set-union preserving canonical order); `merge_tracker_table` (header-must-match + body-row-set-union). All emit `PrimitiveTrace(operation, canonical_sha256, workspace_sha256, merged_sha256, note)`. All idempotent (verified by property test). `free-prose` and `unknown` raise `MergeClassDeclined` from the dispatcher `run_primitive`.
+- **D-build.6** (classify-call prompt): truncated input (50-first + 10-last lines per side; literal `... <middle truncated, M lines> ...` marker; full file ≤60 lines per D-2 LOCKED). Output schema `MergeClassification(merge_class, confidence, reasoning)`. Bounded ≤200 tokens output.
+- **D-build.7** (verify-call prompt): full canonical + full workspace + full candidate + NAMED class + primitive trace summary as inputs (D-2 LOCKED). 3-step rubric: (1) structural class check FIRST (Hard Constraint #8 rubber-stamp prevention) — `class_mismatch=true` triggers `passed=false` via Pydantic `model_validator`; (2) primitive correctness; (3) line-level information. Output schema `MergeVerification(passed, class_mismatch, concerns, confidence)`. Bounded ≤500 tokens output.
+- **D-build.8** (α.3 MCP-isolation): `_ClaudePrintResolverClient.__init__` writes `{"mcpServers": {}}` once via `tempfile.NamedTemporaryFile(delete=False)`; path stored on `self._empty_mcp_config_path`. Every `invoke()` argv inserts `--strict-mcp-config --mcp-config <path>` between binary and `-p` (order matters; flags must precede `-p`). No env-scrubber changes; `_ENV_ALLOWED_VARS` unchanged. OAuth path preserved (D-3 RE-LOCKED).
+- **D-build.9** (α.1 + α.2 wiring into `merge_helper.py`): Class-C branch of `resolve_inferred_conflicts` extended in two stages:
+  1. α.1 ancestor fast-path: lazy-load cache on first Class-C conflict; per-conflict cache lookup → cache-hit fast-path skips walk; cache-miss runs `walk_ancestors` + records result; on match, set `INFERRED_ACCEPT_CANONICAL` + `confidence=1.0` + `ancestor_match_sha`; emit `pos.sync.merge_gate.ancestor_check` span.
+  2. α.2 chain via private helper `_try_deterministic_merge`: classify → run_primitive → verify; on any decline, raises `_FallthroughToGenerator(reason)` with structured reason. Outer `try/except _FallthroughToGenerator` translates to existing generator path; sets `entry.fallback_reason`. On success, `_try_deterministic_merge` populates `classifier_class` + `deterministic_primitive` + `confidence` + `rationale` directly on the entry and returns a synthesised `MergeVerdict(resolution="inferred-merged", merged_content=..., ...)`.
+- **D-build.10** (audit-entry extension fields): four new `Optional[str] = None` fields on `ConflictEntry`: `ancestor_match_sha` (α.1), `classifier_class` (α.2), `deterministic_primitive` (α.2), `fallback_reason` (α.2 fall-back). All forward-compat: `extra="forbid"` allows new fields; `None` defaults preserve existing entries.
+- **D-build.11** (test fixtures): the test_merge_helper.py StubLLMClient was made type-aware so existing #56-shape tests (queueing only `MergeVerdict`) continue to pass when α.2's classifier/verifier hooks are auto-invoked. Default behaviour: classify → `unknown` (forces α.2 fall-through); verify → `passed=False` (forces fall-through). Tests that exercise α.2 happy path opt-in via `classify_responses=` / `verify_responses=` constructor kwargs.
 
 ### Test breakdown
 
-(placeholder)
+| Test file | ACs covered | Test count |
+|---|---|---|
+| `tests/test_resolver_client_mcp_isolation.py` (NEW) | AC.WSα.8 | 2 |
+| `tests/test_ancestor_detection.py` (NEW) | AC.WSα.1, AC.WSα.2 | 11 |
+| `tests/test_merge_primitives.py` (NEW) | AC.WSα.3, AC.WSα.4, AC.WSα.5 | 20 |
+| `tests/test_merge_helper.py` (extensions) | AC.WSα.1, AC.WSα.5, AC.WSα.6, AC.WSα.7 | 6 |
+| (existing #56 tests, unchanged) | AC.WS.1–AC.WS.12, AC.WS.S | 62 |
+| **Total post-α** | | **101** |
+
+39 new tests; 62 #56 baseline preserved. AC-by-AC mapping:
+
+| AC | Test(s) — pass/fail |
+|---|---|
+| AC.WSα.1 | `test_workspace_matches_ancestor_walk_returns_match` ✅, `test_alpha1_ancestor_match_skips_resolver` ✅ |
+| AC.WSα.2 | `test_walk_short_*` ✅, `test_walk_terminates_at_depth_cap` ✅, `test_load_cache_*` ✅ (3 tests), `test_save_and_round_trip_cache` ✅, `test_alpha1_cache_hit_avoids_re_walk` ✅, `test_alpha1_cache_invalidates_on_canonical_advance` ✅ |
+| AC.WSα.3 | `test_classify_file_returns_typed_classification` ✅, `test_classify_file_truncates_long_inputs` ✅ |
+| AC.WSα.4 | `test_append_only_list_*` ✅ (5 tests), `test_log_*` ✅ (3), `test_tracker_table_*` ✅ (3), `test_run_primitive_*` ✅ (3) |
+| AC.WSα.5 | `test_verify_class_mismatch_forces_failure` ✅, `test_verify_merge_returns_typed_verification` ✅, `test_verify_merge_prompt_includes_named_class` ✅, `test_alpha2_happy_path_accepts_deterministic_merge` ✅ |
+| AC.WSα.6 | `test_alpha2_classifier_unknown_falls_through_to_generator` ✅, `test_alpha2_primitive_decline_falls_through_to_generator` ✅, `test_alpha2_verifier_rejects_falls_through_to_generator` ✅, `test_alpha_backcompat_falls_through_to_existing_generator_path` ✅ |
+| AC.WSα.7 | `test_alpha2_otel_spans_emitted` ✅ |
+| AC.WSα.8 | `test_argv_carries_strict_mcp_config_flags` ✅, `test_empty_mcp_config_file_contains_empty_servers` ✅ |
+| AC.WSα.S | `test_B23_seal_commit_pinning_pattern` ✅, `test_B20_only_workspace_sync_surfaces_changed` ✅ |
 
 ### Backwards-compat verification
 
-(placeholder)
+Per Hard Constraint #4 (binding):
+
+1. **62 existing #56 tests remain green** at amendment + seal commits. Verified by the seal-step's component test sweep.
+2. **`pos-sync --canonical <path>` invocations against post-#56 workspaces continue to work.** The CLI signature is unchanged. The new `canonical_ref` kwarg on `resolve_inferred_conflicts` is OPTIONAL with `None` default; when None, α.1 is disabled and the helper falls through to the existing flow byte-for-byte. The CLI now passes `canonical_ref=resolved_ref` so production users get α.1 by default.
+3. **Audit YAML shape: forward-compatible.** Four new `Optional[str] = None` fields on `ConflictEntry`. Existing audit YAMLs deserialise unchanged.
+4. **Class-A protection unchanged.** `merge_helper.py`'s Class-A branch (KEEP_LOCAL pre-resolution) is not touched.
+5. **Fail-closed preserved.** Outer `try/except/finally` block's `BudgetExhausted` / `ResolverFailure` propagation paths unchanged. The new `_FallthroughToGenerator` is a private control-flow exception caught immediately within the Class-C loop body — never escapes.
+6. **No new third-party deps** (Hard Constraint #3 verified).
+7. **Zero edits to `self-upgrade/`** (Hard Constraint #1 verified by `test_B20_only_workspace_sync_surfaces_changed`).
+8. **Zero edits to `tools/upgrade-merge-resolver/`** (HC #1 carve-out verified).
+9. **Verifier rubber-stamp prevention structurally enforced** (Hard Constraint #5/#8): `MergeVerification.model_validator` raises `ValidationError` if `class_mismatch=True` and `passed=True`; `test_verify_class_mismatch_forces_failure` covers.
+
+### Halt-trigger surface review (per plan §10)
+
+None fired during build:
+
+  - #1 (new top-level objective): no — composition under v1.0 + Gap-3.
+  - #2 (ODD violation in surrounding code): none observed; pre-build sweep clean.
+  - #4 (source edit outside `workspace-sync/`): none.
+  - #5 (LLM-merge needs new SDK surface): no — composes on existing `_ClaudePrintResolverClient`.
+  - #6 (verifier rubber-stamp risk): mitigated structurally via `class_mismatch` → `passed=False` model_validator.
+  - #7 (--bare auth issue): redirected — D-3 RE-LOCKED uses MCP-isolation flags.
+  - #9 (wall-time): build completed within projected envelope.
+  - #10 (sealed-component fence): not crossed.
+
+### Speedup deltas vs baseline
+
+Per Luke's amendment-dispatch-speedups directive:
+  - (a) Component tests run per-phase (workspace-sync only), not full suite. Cross-component sweep deferred to seal-time.
+  - (b) Pre-seal full-suite skipped; relied on `pos-amend seal`'s built-in cross-component sweep.
+  - (c) Methodology snippets inlined in commit prose (HC text references included; AC mappings + decision lock state).
 
 ### Commit SHAs
 
-- Amendment commit: `afcbc7ae8661360e264244157767f0969481bb61` —
+(updated below by `pos-amend seal --plan-doc <this-file> ...`)
+
+### Commit SHAs
+
+- Amendment commit: `f6a1cfdf89b96b8334a3c3a9d0954bd32438cf4c` —
+  `feat(workspace-sync): resolver cost overhaul (Bundle α: ancestor-detection + classifier+verifier merge + MCP-isolation) (amendment #57, AC.WSα.1–AC.WSα.8 + AC.WSα.S)`
+- BASELINE/SEAL_COMMIT bump (corrective): `afcbc7ae8661360e264244157767f0969481bb61` —
   `chore(workspace-sync): bump BASELINE + SEAL_COMMIT for amendment #57 window`
 - Seal commit: `e619b6abb18ad9f12cb4fbd99225ef2702e7a90d` —
   `chore(seals): workspace-sync — resolver cost overhaul (Bundle α: ancestor-detection + classifier+verifier merge + MCP-isolation) — workspace-sync at afcbc7a`
-### Commit SHAs
-
-(populated by `pos-amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)
+- Plan-SHA backfill (mechanised): `a3504b9` — `docs(plans): record amendment #57 commit SHAs in method-decision register`
+- §14 prose backfill: this commit.
 
 ### Dependents cleared to dispatch
 
-(placeholder)
+- Milestone live-test re-run becomes feasible (cost-budget realistic; α.1 alone fast-paths 45/46 of pos3's conflicts).
+- β bundle (ergonomics — KK/LL/MM/PP) becomes structurally independent; no α dependency.
+- FUTURE_IDEAS Idea 20 (LLM-as-classifier+verifier meta-pattern) gets its first manifestation.
 
 ---
 

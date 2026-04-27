@@ -1551,9 +1551,23 @@ D-build.D.x.Z).
 
 (post-build)
 
-### D.5 — D-build.D.5.x
+### D.5 — D-build.D.5.x — verdict-only, no amendment cycle
 
-(post-build, if D.5 is non-no-op)
+**D.5 verdict 2026-04-27** (primary persona ruling, Option 1 of audit's three options):
+
+D.5 audit (research note: `/Users/lukeivers/ivers-corp-pos-v2/.scratch/claude-output/d-migration-d5-audit-2026-04-26.md`) found two things that overturn D.5's original "optional cleanup" framing:
+
+**Finding A — load-bearing, not transitional.** The bare-prefix admissions in 13 sealed-component `test_no_sealed_amendments.py` files (added at commit `c7fb441` for D.1's rename window) are **permanently load-bearing for 7 of 13 components**, NOT transitional as D.5's dispatch assumed. D.1.5's commit `9d90782` deliberately reverted SEAL_COMMITs to PRE-D.1 SHAs for cost-governance, graceful-degradation, memory-system, observability-aggregator, reversibility-primitive, self-correction, and telegram-interface; their seal-diff windows genuinely span pre-D.1 paths via `git diff --name-only`'s rename-deletion half. Removing the bare prefix would break the seal tests. Empirically verified during the audit.
+
+**Finding B — D.1 silently `git cp`'d instead of `git mv` for 3 paths.** `tools/` (109 files), `workspace-sync/` (43 files), and `data/observability/spans.jsonl` exist in canonical's tree as **stale duplicates** of their `framework/` counterparts, frozen at pre-D.1 state. The bare `workspace-sync/` still contains D.3-retired modules (`ancestor_detection.py`, `conflict_detection.py`, `staging.py`, etc.) that should have been removed when D.3 retired them. Tests pass today only because allowed_prefixes admit both `framework/X/` and bare `X/` (Finding A's transitional-prefix patch). Risk: pos-amend / pytest run from canonical may pick up the stale bare paths instead of framework/ paths.
+
+**D.5 verdict:** verdict-only docs commit (this section). No amendment cycle for D.5 itself. Finding B becomes its own multi-component cleanup amendment **D.5.5** dispatched separately.
+
+**D-migration outcome:** D.1 + D.2 + D.3 + D.4 all sealed. The bug-class that triggered D-migration (resolve→stage→apply pipeline's verdict-without-stage failures) is structurally eliminated by D.3's `git fetch + git merge --ff-only` mechanism. Class-A protection is structural via D.2's `framework/` vs `workspace/` directory split. β.2 absorbed into D.4's `pos-new-workspace`. Workspace-sync source LOC: pre-D ~5085 → post-D ~2200 (3636 LOC net drop). Test count: pre-D ~165 → post-D 77. Outstanding: pos3's actual cutover to D-shape (separate post-D.5.5 amendment) + Finding B cleanup (D.5.5).
+
+### D-build.D.5.x — verdict commit
+
+D.5 verdict commit lands as docs-only. No D.5 amendment commit, no D.5 apply chore, no D.5 seal commit. The verdict text above + commit SHA below ARE D.5's record.
 
 ### Commit SHAs
 

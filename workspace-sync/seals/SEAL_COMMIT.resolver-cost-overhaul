@@ -1,0 +1,197 @@
+# Amendment #57 — workspace-sync resolver cost overhaul (Bundle α)
+
+2026-04-26. Follow-on to amendment #56 (workspace-sync, sealed at
+`0607dc7`). The milestone live-test against pos3 (2026-04-27)
+halted on a `claude -p` 120s subprocess timeout at conflict 3 of
+46. The 2 verdicts produced before halt were sharp (0.88
+confidence, amendment-aware reasoning); the failure was cost,
+not correctness.
+
+Bundle α attacks resolver cost from three independent angles in
+one amendment, each compositional with the others:
+
+  - **α.1 (AC.WSα.1, AC.WSα.2)** — Content-vs-canonical-history
+    ancestor detection. Before invoking the resolver, walk
+    canonical's git history (`git log --all --follow -- <path>`)
+    looking for an ancestor commit whose blob for the conflicted
+    path matches the workspace's `installed_sha256` byte-for-
+    byte. When found, fast-path resolve as
+    `inferred-accept-canonical` with confidence 1.0 — the
+    workspace didn't diverge, it's just behind. Per-conflict
+    cache (`<workspace>/.pos/sync/<ref>/ancestor-cache.yaml`,
+    keyed by `(path, workspace_sha256)`) avoids re-walks across
+    re-runs. Depth cap 200 (workspace-tunable; D-1 LOCKED).
+    Empirical 97.8% skip rate against pos3's 46-conflict audit
+    per the NN-skippability research note.
+
+  - **α.2 (AC.WSα.3 through AC.WSα.6)** — Deterministic-merge
+    with LLM-verify-gate. Replaces the slow LLM-as-generator
+    path (full-file output, 60-120s wall-time) with a
+    four-step classifier+deterministic+verifier pipeline:
+    (a) classify (~50 token output) tags the file's
+    structural class (`append-only-list` / `log` /
+    `tracker-table` / `free-prose` / `unknown`);
+    (b) deterministic merge primitive runs in ~0.01s, free,
+    audit-grade reproducible;
+    (c) verify (~200 token output) reads the deterministic
+    result against both inputs + the named class + the
+    primitive's trace, asks "is this actually structurally a
+    {class}?" as the FIRST verification step (Hard Constraint
+    #8 binding); a `class_mismatch=true` flag forces
+    `passed=false` via Pydantic model_validator (rubber-stamp
+    prevention);
+    (d) apply or fall back: verify passes → accept verdict
+    with `INFERRED_MERGED`; verify fails OR classifier returns
+    `unknown` OR primitive raises `PrimitiveDeclined` → fall
+    back to today's full LLM-generator path (preserves the
+    correctness ceiling — AC.WSα.6).
+    Generalises FUTURE_IDEAS Idea 20 (LLM-as-classifier +
+    LLM-as-verifier, never LLM-as-generator).
+
+  - **α.3 (AC.WSα.8)** — MCP-isolated subprocess. The
+    `claude -p` subprocess invocation in `_resolver_client.py`
+    now appends `--strict-mcp-config --mcp-config <empty>` so
+    the subprocess does NOT load the parent session's MCP
+    servers (preventing bun-process contention with telegram
+    MCP, memory-graphiti MCP, etc.). Empty MCP config
+    (`{"mcpServers": {}}`) written once at
+    `_ClaudePrintResolverClient.__init__` to a process-cached
+    tempfile path; every invoke appends the flags
+    referencing it. OAuth/Claude-Max auth path preserved (no
+    env-scrubber changes; no `ANTHROPIC_API_KEY` requirement).
+    D-3 RE-LOCKED 2026-04-27 — initial scope as
+    `--bare`-for-cold-start was reframed to MCP-isolation
+    after empirical verification under Claude Max OAuth.
+
+  - **AC.WSα.7** — observability spans for each new step
+    (`pos.sync.merge_gate.ancestor_check`,
+    `pos.sync.merge_gate.classify`,
+    `pos.sync.merge_gate.verify`) emitted via the existing
+    `pos.workspace_sync` tracer. observability-aggregator
+    ingests for free.
+
+Surface added under `workspace-sync/`:
+
+  - `src/workspace_sync/ancestor_detection.py` (NEW, ~110 LOC)
+    — `walk_ancestors`, `AncestorMatch`, `AncestorCache` +
+    `load_cache` / `save_cache` helpers. Pure git-walk
+    primitive; sha256-byte comparison; depth-capped; cache
+    invalidates on canonical-ref advance.
+
+  - `src/workspace_sync/merge_primitives.py` (NEW, ~280 LOC)
+    — `MergeClass` Literal enum (5-class taxonomy);
+    `MergeClassification`, `MergeVerification`,
+    `PrimitiveTrace` Pydantic models;
+    `merge_append_only_list`, `merge_log`, `merge_tracker_table`
+    deterministic primitives + `run_primitive` dispatcher;
+    `PrimitiveDeclined` exception; `classify_file` +
+    `verify_merge` LLM-call helpers. Each primitive is pure
+    and idempotent (verified by property test).
+
+  - `src/workspace_sync/_resolver_client.py` (EXTENDED, +30
+    LOC) — α.3 MCP-isolation: empty MCP config tempfile
+    written at `__init__`; `--strict-mcp-config --mcp-config
+    <path>` appended to `invoke()`'s argv on every call. No
+    env-scrubber changes; OAuth path preserved.
+
+  - `src/workspace_sync/merge_helper.py` (EXTENDED, +90 LOC)
+    — Class-C branch of `resolve_inferred_conflicts` extended
+    with α.1 ancestor fast-path + α.2
+    classify→primitive→verify chain;
+    `FallthroughToGenerator` private exception threads
+    `fallback_reason` to the audit on every fall-back path.
+
+  - `src/workspace_sync/conflict_report.py` (EXTENDED, +12
+    LOC) — four new optional `ConflictEntry` fields:
+    `ancestor_match_sha`, `classifier_class`,
+    `deterministic_primitive`, `fallback_reason`. Each
+    `Optional[str] = None`; back-compat preserved (existing
+    audit YAMLs deserialise unchanged).
+
+  - `tests/test_ancestor_detection.py` (NEW) — α.1 ACs
+    WSα.1 + WSα.2: ancestor-match fast-path, genuinely
+    diverged decline, depth-cap decline, cache hit avoids
+    re-walk, cache invalidates on canonical advance.
+
+  - `tests/test_merge_primitives.py` (NEW) — α.2 ACs
+    WSα.3 + WSα.4: per-class classify (5), per-class merge
+    (3) + idempotency property test, free-prose +
+    unknown decline, prefix/header mismatch decline, verify
+    class_mismatch validator.
+
+  - `tests/test_resolver_client_mcp_isolation.py` (NEW) —
+    α.3 AC.WSα.8: argv carries `--strict-mcp-config` +
+    `--mcp-config <path>`; the path file contains
+    `{"mcpServers": {}}`.
+
+  - `tests/test_merge_helper.py` (EXTENDED) — integration:
+    ancestor fast-path skips classify+resolver; verify-pass
+    accepts deterministic merge; classifier-`unknown` falls
+    through; primitive-decline falls through; verifier-rejects
+    falls through; OTel spans for each new step. Plus a
+    backwards-compat test forcing fall-through to verify
+    the existing LLM-generator path matches #56's behavior.
+
+  - `tests/SEAL_COMMIT` advanced from `efbb7d2` (#56 seal) to
+    the amendment-#57 commit SHA via `pos-amend apply`.
+
+  - `tests/test_no_sealed_amendments.py` BASELINE bumped to
+    the amendment-commit's HEAD~1 = `f6ca2ed`.
+
+Tests (workspace-sync — ~25 new):
+
+  - `test_ancestor_detection.py` (5).
+  - `test_merge_primitives.py` (12).
+  - `test_resolver_client_mcp_isolation.py` (2).
+  - `test_merge_helper.py` extensions (6).
+
+Backwards-compatibility verified (Hard Constraint #4):
+
+  - 62 existing #56 tests remain green at the amendment commit.
+  - `pos-sync --canonical <path>` invocations against post-#56
+    workspaces continue to work (existing CLI args + state.yaml
+    + audit.yaml shapes unchanged; new audit fields default to
+    None and are absent from pre-α YAMLs).
+  - Class-A protection unchanged (Class-A branch not touched).
+  - Fail-closed semantics preserved (`BudgetExhausted` /
+    `ResolverFailure` propagation paths unchanged;
+    `FallthroughToGenerator` is internal to Class-C loop body).
+  - No new third-party deps (Hard Constraint #3): stdlib + git
+    binary + Pydantic + PyYAML + OpenTelemetry, all already
+    present.
+  - Zero edits to `self-upgrade/` (Hard Constraint #1).
+  - Zero edits to `tools/upgrade-merge-resolver/` (HC #1
+    carve-out).
+
+Halt-trigger surface review (per plan §10):
+
+  #1 (new top-level objective): no — composition under v1.0
+     self-upgrade objective + Gap-3 line 114 + AC.PO.1/2.
+  #2 (ODD violation in surrounding code): none observed at
+     #56's seal commit.
+  #4 (source edits outside workspace-sync/): none — strict
+     workspace-sync/ fence; only universal-paths admissions.
+  #5 (LLM-merge needs new SDK surface): not fired — composes
+     on existing `_ClaudePrintResolverClient`.
+  #6 (verifier rubber-stamp risk): mitigated — Hard Constraint
+     #8 structural exclusion: class as named verifier input +
+     class_mismatch flag + Pydantic model_validator forcing
+     passed=false on class_mismatch=true.
+  #7 (--bare auth issue): redirected — D-3 RE-LOCKED uses
+     `--strict-mcp-config --mcp-config <empty>` instead;
+     OAuth path preserved.
+  #9 (wall-time): not exceeded.
+  #10 (sealed-component fence): not crossed.
+
+Composition unlocked by this amendment:
+
+  - Milestone live-test re-run becomes feasible (cost-budget
+    realistic; α.1 alone fast-paths 45/46 of pos3's
+    conflicts; the remaining 1 hits the LLM at ~30s/1175
+    tokens).
+  - β bundle (ergonomics — KK/LL/MM/PP) becomes structurally
+    independent; no α dependency.
+  - FUTURE_IDEAS Idea 20 (LLM-as-classifier+verifier
+    meta-pattern) gets its first manifestation in pos-v2
+    source — composes with future memory-system supersession
+    inference, plan-doc semantic compare, etc.

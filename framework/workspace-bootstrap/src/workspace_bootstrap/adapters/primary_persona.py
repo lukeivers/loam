@@ -43,9 +43,12 @@ class PrimaryPersonaContribution(BaseContribution):
         from pos_orchestrator import Orchestrator
         from pos_orchestrator.config import OrchestratorConfig, load_config
 
+        from ..workspace_paths import pos_subdir
+
         # Load orchestrator config. Priority:
         #   1. `orchestrator.yaml` under host.config_dir (if present)
-        #   2. OrchestratorConfig with root_dir=host.workspace_root/.pos
+        #   2. OrchestratorConfig with root_dir = pos_subdir(workspace_root)
+        #      = ``<workspace>/workspace/.pos`` post-D.2
         #
         # Amendment #7: orchestrator no longer self-loads bootstrap.py,
         # so no ``require_bootstrap=False`` disambiguator is needed
@@ -55,7 +58,7 @@ class PrimaryPersonaContribution(BaseContribution):
             config = load_config(cfg_path)
         else:
             config = OrchestratorConfig(
-                root_dir=host.workspace_root / ".pos",
+                root_dir=pos_subdir(host.workspace_root),
             )
         config.ensure_dirs()
 

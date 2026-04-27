@@ -36,12 +36,13 @@ class SafetyLayerContribution(BaseContribution):
         from safety_layer.notification import SafetyChannel
 
         from ._channels import resolve_channel
+        from ..workspace_paths import data_subdir
 
         server = host.require("ipc_server")
         scope_runtime = host.require("scope_runtime")
         orchestrator = host.require("orchestrator")
 
-        store_path = host.workspace_root / "data" / "safety" / "safety.sqlite"
+        store_path = data_subdir(host.workspace_root) / "safety" / "safety.sqlite"
         store_path.parent.mkdir(parents=True, exist_ok=True)
         store = SafetyStore(store_path)
 

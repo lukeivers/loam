@@ -106,7 +106,7 @@ def _seed_completed_workspace(workspace: Path) -> None:
         json.dumps(settings, indent=2)
     )
 
-    state_dir = workspace / ".pos"
+    state_dir = workspace / "workspace" / ".pos"
     state_dir.mkdir(parents=True, exist_ok=True)
     state = {
         "status": "completed",

@@ -102,16 +102,20 @@ def write_persona_dir(
 
 @pytest.fixture
 def workspace(tmp_path: Path) -> Path:
-    """A scratch workspace directory with `personas/` ready."""
-    personas = tmp_path / "personas"
-    personas.mkdir()
+    """A scratch workspace directory with `workspace/personas/` ready.
+
+    D-migration D.2 (amendment #63): personas live under
+    ``<workspace>/workspace/personas/`` post-D.2.
+    """
+    personas = tmp_path / "workspace" / "personas"
+    personas.mkdir(parents=True)
     return tmp_path
 
 
 @pytest.fixture
 def workspace_with_primary(workspace: Path) -> Path:
     """Workspace containing exactly one primary persona, `eve`."""
-    write_persona_dir(workspace / "personas", "eve")
+    write_persona_dir(workspace / "workspace" / "personas", "eve")
     return workspace
 
 

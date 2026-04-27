@@ -204,7 +204,7 @@ def test_valid_contract_constructs_and_serialises():
 
 
 def test_load_contract_from_yaml(tmp_path: Path, workspace_with_primary: Path):
-    contract_path = workspace_with_primary / "personas" / "eve" / "contract.yaml"
+    contract_path = workspace_with_primary / "workspace" / "personas" / "eve" / "contract.yaml"
     c = load_contract(contract_path)
     assert c.handle == "eve"
     assert c.is_primary is True

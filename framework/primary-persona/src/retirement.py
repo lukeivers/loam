@@ -45,8 +45,14 @@ def retire_persona(
     Raises `FileNotFoundError` if the persona directory does not
     exist. Emits an OTel event with the handle and reason (D9).
     """
+    # D-migration D.2 (amendment #63): personas live under
+    # <ws>/workspace/personas/ post-D.2.
+    from workspace_bootstrap.workspace_paths import (
+        personas_dir as _personas_dir,
+    )
+
     workspace = Path(workspace_root)
-    personas = workspace / "personas"
+    personas = _personas_dir(workspace)
     source = personas / handle
     if not source.exists() or not source.is_dir():
         raise FileNotFoundError(f"persona directory not found: {source}")

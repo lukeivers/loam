@@ -38,7 +38,7 @@ def test_AC_J_1_fresh_scaffold_writes_advisory_file(tmp_path: Path) -> None:
         workspace_root=workspace,
     )
 
-    advisory = workspace / WORKSPACE_POS_DIR / PREWARM_ADVISORY_FILENAME
+    advisory = workspace / "workspace" / WORKSPACE_POS_DIR / PREWARM_ADVISORY_FILENAME
     assert advisory.exists(), f"advisory file not written at {advisory}"
     text = advisory.read_text(encoding="utf-8")
     # AC.J.1 + D-5: 24h is the recommended value.
@@ -66,7 +66,7 @@ def test_AC_J_1_re_run_does_not_clobber_user_edits(tmp_path: Path) -> None:
         workspace_root=workspace,
     )
 
-    advisory = workspace / WORKSPACE_POS_DIR / PREWARM_ADVISORY_FILENAME
+    advisory = workspace / "workspace" / WORKSPACE_POS_DIR / PREWARM_ADVISORY_FILENAME
     # Operator edits the advisory.
     advisory.write_text("OLLAMA_KEEP_ALIVE=12h\n# operator-customised\n")
 
@@ -103,7 +103,7 @@ def test_AC_J_1_advisory_under_workspace_pos_not_user_pos(tmp_path: Path) -> Non
         workspace_root=workspace,
     )
 
-    workspace_advisory = workspace / WORKSPACE_POS_DIR / PREWARM_ADVISORY_FILENAME
+    workspace_advisory = workspace / "workspace" / WORKSPACE_POS_DIR / PREWARM_ADVISORY_FILENAME
     user_advisory = pos_root / PREWARM_ADVISORY_FILENAME
     assert workspace_advisory.exists()
     assert not user_advisory.exists(), (

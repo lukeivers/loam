@@ -19,7 +19,7 @@ from _helpers_d7 import FakeMemoryClient
 
 
 def _read_log_lines(workspace: Path) -> list[dict]:
-    log = workspace / ".pos" / "memory-writes.log"
+    log = workspace / "workspace" / ".pos" / "memory-writes.log"
     if not log.exists():
         return []
     return [

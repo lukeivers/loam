@@ -401,10 +401,17 @@ def tracker_db_path_for(workspace_root: Path | str) -> Path:
     Sub-plan E (amendment #42) — argument source moves from
     ``pos_root`` to ``workspace_root`` to align with
     ``primary_persona.tracker_context.tracker_db_path_for``. The
-    returned path is ``<workspace_root>/objective_tracker.sqlite``;
+    returned path is ``<workspace_root>/workspace/objective_tracker.sqlite``;
     the seed writes here and amendment #40's contributor reads here.
+
+    D-migration D.2 (amendment #63 / AC.D.2.1): post-D.2 the tracker
+    DB lives under ``<workspace>/workspace/`` per the workspace-state
+    structural-split. Delegates to the canonical
+    ``workspace_paths.tracker_db_path`` helper.
     """
-    return Path(workspace_root) / TRACKER_DB_FILENAME
+    from workspace_bootstrap.workspace_paths import tracker_db_path
+
+    return tracker_db_path(workspace_root)
 
 
 async def seed_tracker(

@@ -40,7 +40,7 @@ def _completed_state(workspace: Path, *, age_s: float) -> None:
     write_state(state, workspace)
     # ``write_state`` rewrites updated_at to time.time(); restore.
     state.updated_at = now - age_s
-    workspace_state = workspace / ".pos" / "first-run.state"
+    workspace_state = workspace / "workspace" / ".pos" / "first-run.state"
     workspace_state.write_text(state.to_json())
 
 

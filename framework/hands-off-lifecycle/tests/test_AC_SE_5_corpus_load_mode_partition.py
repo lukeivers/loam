@@ -102,7 +102,7 @@ def test_AC_SE_5_normal_use_writes_sentinel_with_mode_correct_required(
         tmp_path, session_id="normal-1", mode="normal-use"
     )
     on_disk = json.loads(
-        (tmp_path / ".pos" / "session-state" / "normal-1.json").read_text()
+        (tmp_path / "workspace" / ".pos" / "session-state" / "normal-1.json").read_text()
     )
     assert "CLAUDE.dev.md" not in on_disk["corpus_paths_required"]
 
@@ -116,7 +116,7 @@ def test_AC_SE_5_dev_mode_writes_sentinel_with_mode_correct_required(
         tmp_path, session_id="dev-1", mode="dev-mode"
     )
     on_disk = json.loads(
-        (tmp_path / ".pos" / "session-state" / "dev-1.json").read_text()
+        (tmp_path / "workspace" / ".pos" / "session-state" / "dev-1.json").read_text()
     )
     assert "CLAUDE.dev.md" in on_disk["corpus_paths_required"]
 
@@ -133,7 +133,7 @@ def test_AC_SE_5_writes_sentinel_even_when_manifest_missing(
     )
     assert result.wrote is True
     on_disk = json.loads(
-        (tmp_path / ".pos" / "session-state" / "degraded.json").read_text()
+        (tmp_path / "workspace" / ".pos" / "session-state" / "degraded.json").read_text()
     )
     # Manifest unreadable → empty required-set → state = missing.
     assert on_disk["state"] == "missing"

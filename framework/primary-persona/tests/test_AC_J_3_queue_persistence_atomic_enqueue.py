@@ -34,7 +34,7 @@ def test_AC_J_3_enqueue_is_atomic_no_tmp_left_behind(tmp_path: Path) -> None:
         user_message="hi",
         assistant_reply="ok",
     )
-    qdir = tmp_path / ".pos" / "memory-write-queue"
+    qdir = tmp_path / "workspace" / ".pos" / "memory-write-queue"
     files = list(qdir.iterdir())
     assert len(files) == 1, f"expected one queue file; got {files}"
     assert files[0] == final
@@ -74,7 +74,7 @@ def test_AC_J_3_list_walk_ignores_in_flight_tmp_files(tmp_path: Path) -> None:
         user_message="real",
         assistant_reply="real",
     )
-    qdir = tmp_path / ".pos" / "memory-write-queue"
+    qdir = tmp_path / "workspace" / ".pos" / "memory-write-queue"
     # Drop a stray .tmp file simulating an enqueue mid-rename.
     (qdir / "s1_inflight.json.tmp").write_text(
         '{"turn_id": "s1:inflight"}', encoding="utf-8"
@@ -89,7 +89,7 @@ def test_AC_J_3_list_walk_ignores_in_flight_tmp_files(tmp_path: Path) -> None:
 def test_AC_J_3_cleanup_stale_tmp_removes_old_orphans(tmp_path: Path) -> None:
     """Stale tmp files older than the cleanup age are removed by the
     worker's periodic cleanup pass."""
-    qdir = tmp_path / ".pos" / "memory-write-queue"
+    qdir = tmp_path / "workspace" / ".pos" / "memory-write-queue"
     qdir.mkdir(parents=True, exist_ok=True)
     stale = qdir / "stale.json.tmp"
     stale.write_text("{}", encoding="utf-8")

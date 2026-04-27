@@ -77,13 +77,25 @@ def _now_iso() -> str:
 
 
 def state_yaml_path(workspace_root: Path) -> Path:
-    """Return ``<workspace_root>/.pos/upgrade/state.yaml``."""
-    return Path(workspace_root) / ".pos" / "upgrade" / "state.yaml"
+    """Return ``<workspace_root>/workspace/.pos/upgrade/state.yaml``.
+
+    D-migration D.2 (amendment #63): workspace-state under
+    ``<workspace>/workspace/.pos/``.
+    """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "upgrade" / "state.yaml"
 
 
 def audit_yaml_path(workspace_root: Path, tag: str) -> Path:
-    """Return ``<workspace_root>/.pos/upgrade/<tag>/audit.yaml``."""
-    return Path(workspace_root) / ".pos" / "upgrade" / tag / "audit.yaml"
+    """Return ``<workspace_root>/workspace/.pos/upgrade/<tag>/audit.yaml``.
+
+    D-migration D.2 (amendment #63): workspace-state under
+    ``<workspace>/workspace/.pos/``.
+    """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "upgrade" / tag / "audit.yaml"
 
 
 def load_state(workspace_root: Path) -> StateRecord | None:

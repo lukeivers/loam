@@ -35,7 +35,7 @@ def _seed_half_written(workspace: Path, handle: str = DEFAULT_PERSONA_HANDLE) ->
     """Create ``<workspace>/personas/<handle>/`` with a zero-byte
     ``contract.yaml`` — simulating an interrupted prior install.
     Returns the persona-dir path."""
-    persona_dir = workspace / "personas" / handle
+    persona_dir = workspace / "workspace" / "personas" / handle
     persona_dir.mkdir(parents=True, exist_ok=True)
     (persona_dir / "contract.yaml").write_bytes(b"")
     return persona_dir
@@ -90,7 +90,7 @@ def test_AC36_5_missing_contract_in_existing_dir_raises(tmp_path: Path) -> None:
     contract authoring crashed before the file was created."""
     workspace = tmp_path / "ws-no-contract"
     workspace.mkdir()
-    persona_dir = workspace / "personas" / DEFAULT_PERSONA_HANDLE
+    persona_dir = workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE
     persona_dir.mkdir(parents=True)
     # Add only prompt.md — contract.yaml missing.
     (persona_dir / "prompt.md").write_text("placeholder")

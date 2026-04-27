@@ -222,7 +222,7 @@ def test_AC_J_4_corrupt_entry_routes_to_deadletter(tmp_path: Path) -> None:
 
 def test_AC_J_4_workspace_yaml_overrides_default_config(tmp_path: Path) -> None:
     """``<workspace>/.pos/memory-worker.yaml`` overrides defaults."""
-    cfg_path = tmp_path / ".pos" / "memory-worker.yaml"
+    cfg_path = tmp_path / "workspace" / ".pos" / "memory-worker.yaml"
     cfg_path.parent.mkdir(parents=True, exist_ok=True)
     cfg_path.write_text(
         "max_retries: 7\nbackoff_initial_s: 1.5\nbackoff_max_s: 30.0\n",

@@ -71,10 +71,15 @@ def test_both_sides_modified_produces_pending_class_c(make_canonical_repo, make_
 
 
 def test_class_a_path_pre_resolved_to_keep_local(make_canonical_repo, make_workspace) -> None:
-    """AC.WS.2: Class-A paths are pre-resolved to KEEP_LOCAL at detection."""
-    canonical = make_canonical_repo({".mcp.json": "{\"canonical\":1}"})
-    workspace = make_workspace({".mcp.json": "{\"workspace\":1}"})
-    sp = default_sync_protected()  # .mcp.json is Class A
+    """AC.WS.2: Class-A paths are pre-resolved to KEEP_LOCAL at detection.
+
+    D-migration D.2 (amendment #63): post-D.2 the framework-floor
+    Class-A patterns prefix every workspace-state path with
+    ``workspace/`` — ``workspace/.mcp.json`` etc.
+    """
+    canonical = make_canonical_repo({"workspace/.mcp.json": "{\"canonical\":1}"})
+    workspace = make_workspace({"workspace/.mcp.json": "{\"workspace\":1}"})
+    sp = default_sync_protected()  # workspace/.mcp.json is Class A
 
     report, _ = detect_b_shape_conflicts(
         canonical_path=canonical,
@@ -84,7 +89,7 @@ def test_class_a_path_pre_resolved_to_keep_local(make_canonical_repo, make_works
     )
     assert len(report.conflicts) == 1
     entry = report.conflicts[0]
-    assert entry.path == ".mcp.json"
+    assert entry.path == "workspace/.mcp.json"
     # Pre-resolved (NOT pending) — the helper would never enter
     # the resolver for this path.
     assert entry.resolution is Resolution.KEEP_LOCAL

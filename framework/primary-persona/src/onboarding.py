@@ -428,12 +428,17 @@ def persist_grounding(
     prompt_path = persona_dir / "prompt.md"
     prompt_path.write_text(rendered_prompt)
 
-    # workspace_root = <workspace>/personas/<handle>/contract.yaml
-    #                              ^^^^^^^^^^^^^^^^^^
-    # persona_dir.parent = <workspace>/personas
-    # persona_dir.parent.parent = <workspace>
-    workspace_root = persona_dir.parent.parent
-    claude_agents_dir = workspace_root / ".claude" / "agents"
+    # D-migration D.2 (amendment #63): personas live under
+    # <workspace>/workspace/personas/<handle>/contract.yaml. The
+    # contract path's parent is the persona dir, parent.parent is
+    # personas/, parent.parent.parent is <workspace>/workspace/, and
+    # parent.parent.parent.parent is <workspace>. Per D-Q.A4 lock,
+    # .claude/ lives at workspace root (NOT under workspace/), so we
+    # walk one more level than pre-D.2.
+    from workspace_bootstrap.workspace_paths import claude_dir
+
+    workspace_root = persona_dir.parent.parent.parent
+    claude_agents_dir = claude_dir(workspace_root) / "agents"
     claude_agents_dir.mkdir(parents=True, exist_ok=True)
     agent_md_path = claude_agents_dir / f"{handle}.md"
     agent_md_text = to_agent_md(new_contract, prompt_text=rendered_prompt)
@@ -569,8 +574,15 @@ def dev_intent_storage_path(workspace_root: Path) -> Path:
     Sub-plans E, B, F consume this resolver — not the contract
     directly — so the storage shape is substitutable without
     re-reading those sub-plans.
+
+    D-migration D.2 (amendment #63): personas live under
+    ``<workspace>/workspace/personas/`` post-D.2.
     """
-    return Path(workspace_root) / "personas"
+    from workspace_bootstrap.workspace_paths import (
+        personas_dir as _personas_dir,
+    )
+
+    return _personas_dir(workspace_root)
 
 
 def _primary_contract_path(workspace_root: Path) -> Path | None:

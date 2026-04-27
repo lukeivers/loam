@@ -55,7 +55,7 @@ def test_AC36_1_fresh_scaffold_writes_persona_directory_files(
 ) -> None:
     workspace, result = _scaffold_fresh(tmp_path=tmp_path)
 
-    persona_dir = workspace / "personas" / DEFAULT_PERSONA_HANDLE
+    persona_dir = workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE
     contract_path = persona_dir / "contract.yaml"
     prompt_path = persona_dir / "prompt.md"
 
@@ -96,7 +96,7 @@ def test_AC36_1_custom_handle_round_trips_through_loader(
         tmp_path=tmp_path, persona_handle="iris"
     )
 
-    persona_dir = workspace / "personas" / "iris"
+    persona_dir = workspace / "workspace" / "personas" / "iris"
     assert persona_dir.is_dir()
     assert (persona_dir / "contract.yaml").is_file()
     assert (persona_dir / "prompt.md").is_file()

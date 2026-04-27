@@ -31,17 +31,17 @@ def test_default_envelope_carries_floor() -> None:
 def test_classify_class_a_workspace_state() -> None:
     """AC.H.2: workspace-state paths classify as A."""
     sp = default_sync_protected()
-    assert classify("personas/loam/contract.yaml", sp) is FileClass.A
-    assert classify(".pos/objective_tracker.sqlite", sp) is FileClass.A
-    assert classify(".pos/upgrade/state.yaml", sp) is FileClass.A
-    assert classify(".scratch/notes.md", sp) is FileClass.A
-    assert classify(".mcp.json", sp) is FileClass.A
+    assert classify("workspace/personas/loam/contract.yaml", sp) is FileClass.A
+    assert classify("workspace/.pos/objective_tracker.sqlite", sp) is FileClass.A
+    assert classify("workspace/.pos/upgrade/state.yaml", sp) is FileClass.A
+    assert classify("workspace/.scratch/notes.md", sp) is FileClass.A
+    assert classify("workspace/.mcp.json", sp) is FileClass.A
 
 
 def test_classify_class_b_operator_pref() -> None:
     """AC.H.3: operator-pref paths classify as B."""
     sp = default_sync_protected()
-    assert classify("memory.yaml", sp) is FileClass.B
+    assert classify("workspace/memory.yaml", sp) is FileClass.B
 
 
 def test_classify_class_c_default() -> None:
@@ -72,7 +72,7 @@ def test_floor_refused_on_removal() -> None:
     incomplete = [
         SyncProtectedRule(pattern=p, klass=k)
         for p, k in FRAMEWORK_FLOOR
-        if p != ".mcp.json"  # drop one floor entry
+        if p != "workspace/.mcp.json"  # drop one floor entry
     ]
     with pytest.raises(ValueError, match="missing framework-floor rules"):
         SyncProtected(framework_floor=incomplete, workspace_rules=[])
@@ -94,7 +94,7 @@ def test_load_rejects_floor_violation(tmp_path: Path) -> None:
         yaml.safe_dump(
             {
                 "framework_floor": [
-                    {"pattern": ".mcp.json", "klass": "A"},
+                    {"pattern": "workspace/.mcp.json", "klass": "A"},
                     # rest of floor missing
                 ],
                 "workspace_rules": [],
@@ -109,15 +109,15 @@ def test_write_default_if_absent_writes_when_missing(tmp_path: Path) -> None:
     """AC.H.10: first-run writes the default envelope."""
     written = write_default_if_absent(tmp_path)
     assert written.exists()
-    assert written == tmp_path / ".pos" / "sync-protected.yaml"
+    assert written == tmp_path / "workspace" / ".pos" / "sync-protected.yaml"
     sp = load_sync_protected(written)
     assert len(sp.framework_floor) == len(FRAMEWORK_FLOOR)
 
 
 def test_write_default_if_absent_idempotent(tmp_path: Path) -> None:
     """AC.H.10: pre-existing files are not overwritten."""
-    target_dir = tmp_path / ".pos"
-    target_dir.mkdir()
+    target_dir = tmp_path / "workspace" / ".pos"
+    target_dir.mkdir(parents=True)
     target = target_dir / "sync-protected.yaml"
     # Build a custom envelope (still floor-valid) with a workspace rule.
     sp = SyncProtected(

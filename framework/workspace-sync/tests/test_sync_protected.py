@@ -22,16 +22,16 @@ from workspace_sync.sync_protected import (
 
 def test_class_a_paths_classify_as_a() -> None:
     sp = default_sync_protected()
-    assert sp.classify("personas/luke/contract.yaml") is FileClass.A
-    assert sp.classify(".pos/objective_tracker.sqlite") is FileClass.A
-    assert sp.classify(".pos/state.yaml") is FileClass.A
-    assert sp.classify(".scratch/tmp.txt") is FileClass.A
-    assert sp.classify(".mcp.json") is FileClass.A
+    assert sp.classify("workspace/personas/luke/contract.yaml") is FileClass.A
+    assert sp.classify("workspace/.pos/objective_tracker.sqlite") is FileClass.A
+    assert sp.classify("workspace/.pos/state.yaml") is FileClass.A
+    assert sp.classify("workspace/.scratch/tmp.txt") is FileClass.A
+    assert sp.classify("workspace/.mcp.json") is FileClass.A
 
 
 def test_class_b_memory_yaml_classifies_as_b() -> None:
     sp = default_sync_protected()
-    assert sp.classify("memory.yaml") is FileClass.B
+    assert sp.classify("workspace/memory.yaml") is FileClass.B
 
 
 def test_class_c_default_for_unmatched() -> None:
@@ -46,7 +46,7 @@ def test_framework_floor_refusal_on_removal() -> None:
     incomplete_floor = [
         SyncProtectedRule(pattern=p, klass=k)
         for p, k in FRAMEWORK_FLOOR
-        if p != ".pos/**"  # remove a floor entry
+        if p != "workspace/.pos/**"  # remove a floor entry
     ]
     with pytest.raises(ValueError):
         SyncProtected(framework_floor=incomplete_floor, workspace_rules=[])
@@ -55,7 +55,7 @@ def test_framework_floor_refusal_on_removal() -> None:
 def test_write_default_if_absent_idempotent(tmp_path: Path) -> None:
     """First-call writes; subsequent calls do not overwrite."""
     target = write_default_if_absent(tmp_path)
-    assert target == tmp_path / ".pos" / "sync-protected.yaml"
+    assert target == tmp_path / "workspace" / ".pos" / "sync-protected.yaml"
     assert target.exists()
 
     # Hand-edit a workspace_rule then call again.
@@ -86,4 +86,6 @@ def test_workspace_rules_first_match_wins() -> None:
 
 def test_classify_module_level_wrapper() -> None:
     sp = default_sync_protected()
-    assert classify("memory.yaml", sp) is FileClass.B
+    # D-migration D.2 (amendment #63): post-D.2 the framework-floor
+    # patterns prefix every workspace-state path with ``workspace/``.
+    assert classify("workspace/memory.yaml", sp) is FileClass.B

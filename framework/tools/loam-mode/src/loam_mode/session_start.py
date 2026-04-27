@@ -60,11 +60,18 @@ def _personas_dir(workspace_root: Path) -> Path:
     """Mirror primary-persona's ``dev_intent_storage_path`` semantics.
 
     Per sub-plan A AC.A.5 the dev-intent answer lives on the persona
-    contract at ``<workspace>/personas/<handle>/contract.yaml``. The
-    standalone resolver here intentionally does NOT import primary-
-    persona (sealed); it walks the conventional path directly.
+    contract at ``<workspace>/workspace/personas/<handle>/contract.yaml``
+    post-D.2 (amendment #63). Pre-D.2 it lived at
+    ``<workspace>/personas/<handle>/contract.yaml``. The standalone
+    resolver here intentionally does NOT import primary-persona
+    (sealed); per AC.B.S it also does NOT import workspace-bootstrap
+    (sealed). Path constants duplicated inline per D.2-build.B
+    pattern (mirrors hands-off-lifecycle hooks). Canonical source:
+    ``framework/workspace-bootstrap/src/workspace_bootstrap/
+      workspace_paths.py`` (``WORKSPACE_STATE_SUBDIR``,
+    ``PERSONAS_SUBDIR``).
     """
-    return Path(workspace_root) / "personas"
+    return Path(workspace_root) / "workspace" / "personas"
 
 
 def read_dev_intent_safe(

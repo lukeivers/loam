@@ -93,8 +93,14 @@ def tracker_db_path_for(workspace_root: Path | str) -> Path:
     ``ComposedContextPayload.on_session_start``). Two parallel
     workspaces resolve to two distinct paths; cross-workspace bleed
     is structurally impossible.
+
+    D-migration D.2 (amendment #63): the tracker DB lives under
+    ``<workspace>/workspace/`` post-D.2. Delegates to the canonical
+    ``workspace_paths.tracker_db_path`` helper.
     """
-    return Path(workspace_root) / TRACKER_DB_FILENAME
+    from workspace_bootstrap.workspace_paths import tracker_db_path
+
+    return tracker_db_path(workspace_root)
 
 
 # ---- TrackerClient protocol -----------------------------------------

@@ -128,7 +128,9 @@ class IntroductionDispatcher:
                     "introductions are one-on-one only."
                 )
         if self.queue_dir is None:
-            self.queue_dir = Path(self.workspace_root) / ".pos" / "intro_queue"
+            from workspace_bootstrap.workspace_paths import pos_subdir
+
+            self.queue_dir = pos_subdir(self.workspace_root) / "intro_queue"
         self.queue_dir.mkdir(parents=True, exist_ok=True)
 
     async def introduce(
@@ -246,7 +248,11 @@ class IntroductionDispatcher:
         NOT a retire instruction. The loaded persona is re-read from
         disk; the contract is serialised back with the flags updated.
         """
-        persona_dir = Path(self.workspace_root) / "personas" / handle
+        from workspace_bootstrap.workspace_paths import (
+            personas_dir as _personas_dir,
+        )
+
+        persona_dir = _personas_dir(self.workspace_root) / handle
         contract_path = persona_dir / "contract.yaml"
         if not contract_path.exists():
             return

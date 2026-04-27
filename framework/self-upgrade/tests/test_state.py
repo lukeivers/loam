@@ -29,14 +29,14 @@ from self_upgrade.state import (
 def test_state_yaml_path_workspace_relative(tmp_path: Path) -> None:
     """state.yaml lives at ``<workspace>/.pos/upgrade/state.yaml``."""
     p = state_yaml_path(tmp_path)
-    assert p == tmp_path / ".pos" / "upgrade" / "state.yaml"
+    assert p == tmp_path / "workspace" / ".pos" / "upgrade" / "state.yaml"
 
 
 def test_audit_yaml_path_includes_tag(tmp_path: Path) -> None:
     """audit.yaml lives at ``<workspace>/.pos/upgrade/<tag>/audit.yaml``."""
     p = audit_yaml_path(tmp_path, "pos-v2-v0.2.0")
     assert p == (
-        tmp_path / ".pos" / "upgrade" / "pos-v2-v0.2.0" / "audit.yaml"
+        tmp_path / "workspace" / ".pos" / "upgrade" / "pos-v2-v0.2.0" / "audit.yaml"
     )
 
 

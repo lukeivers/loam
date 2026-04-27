@@ -46,7 +46,7 @@ def _write_transcript(path: Path) -> None:
 
 
 def _read_queue_entries(workspace_root: Path) -> list[dict[str, Any]]:
-    qdir = workspace_root / ".pos" / "memory-write-queue"
+    qdir = workspace_root / "workspace" / ".pos" / "memory-write-queue"
     if not qdir.exists():
         return []
     out: list[dict[str, Any]] = []

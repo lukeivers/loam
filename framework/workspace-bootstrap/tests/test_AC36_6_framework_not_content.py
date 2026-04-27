@@ -107,6 +107,7 @@ def test_AC36_6_scaffold_only_mutates_handle_and_is_starter(
     scaffolded_contract = yaml.safe_load(
         (
             workspace
+            / "workspace"
             / "personas"
             / DEFAULT_PERSONA_HANDLE
             / "contract.yaml"
@@ -146,6 +147,7 @@ def test_AC36_6_prompt_md_byte_identical_to_template(tmp_path: Path) -> None:
     workspace = _scaffold_fresh(tmp_path)
     scaffolded_prompt = (
         workspace
+        / "workspace"
         / "personas"
         / DEFAULT_PERSONA_HANDLE
         / "prompt.md"

@@ -86,7 +86,7 @@ async def test_introduction_delivered_to_active_channel(
     )
 
     # Persist a pending persona (as authoring would).
-    persona_dir = workspace_with_primary / "personas" / "sip"
+    persona_dir = workspace_with_primary / "workspace" / "personas" / "sip"
     persona_dir.mkdir(parents=True)
     contract_yaml = (
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: sip")
@@ -133,7 +133,7 @@ async def test_introduction_queued_when_no_active_channel(
         channels=[inactive], workspace_root=workspace_with_primary
     )
 
-    persona_dir = workspace_with_primary / "personas" / "sip"
+    persona_dir = workspace_with_primary / "workspace" / "personas" / "sip"
     persona_dir.mkdir(parents=True)
     (persona_dir / "contract.yaml").write_text(
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: sip")
@@ -177,7 +177,7 @@ async def test_flush_queue_delivers_when_channel_activates(
         channels=[channel], workspace_root=workspace_with_primary
     )
 
-    persona_dir = workspace_with_primary / "personas" / "sip"
+    persona_dir = workspace_with_primary / "workspace" / "personas" / "sip"
     persona_dir.mkdir(parents=True)
     (persona_dir / "contract.yaml").write_text(
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: sip")
@@ -213,7 +213,7 @@ async def test_flush_queue_delivers_when_channel_activates(
 
 
 def test_make_addressable_flips_flags(workspace_with_primary: Path):
-    persona_dir = workspace_with_primary / "personas" / "sip"
+    persona_dir = workspace_with_primary / "workspace" / "personas" / "sip"
     persona_dir.mkdir(parents=True)
     (persona_dir / "contract.yaml").write_text(
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: sip")
@@ -238,7 +238,7 @@ def test_make_addressable_flips_flags(workspace_with_primary: Path):
 
 
 def test_guard_raises_for_pending_persona(workspace_with_primary: Path):
-    persona_dir = workspace_with_primary / "personas" / "sip"
+    persona_dir = workspace_with_primary / "workspace" / "personas" / "sip"
     persona_dir.mkdir(parents=True)
     (persona_dir / "contract.yaml").write_text(
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: sip")
@@ -262,7 +262,7 @@ def test_guard_raises_for_pending_persona(workspace_with_primary: Path):
 
 
 def test_guard_allows_addressable_persona(workspace_with_primary: Path):
-    persona_dir = workspace_with_primary / "personas" / "eve"
+    persona_dir = workspace_with_primary / "workspace" / "personas" / "eve"
     contract = load_contract(persona_dir / "contract.yaml")
     loaded = LoadedPersona(
         handle="eve", directory=persona_dir, contract=contract, prompt_text="x"
@@ -276,7 +276,7 @@ def test_guard_allows_addressable_persona(workspace_with_primary: Path):
 def test_guard_ignores_mismatched_handle(workspace_with_primary: Path):
     # Guard is only checking the persona identified as sender; if the
     # persona given is a different handle, guard is a no-op.
-    persona_dir = workspace_with_primary / "personas" / "eve"
+    persona_dir = workspace_with_primary / "workspace" / "personas" / "eve"
     contract = load_contract(persona_dir / "contract.yaml")
     loaded = LoadedPersona(
         handle="eve", directory=persona_dir, contract=contract, prompt_text="x"

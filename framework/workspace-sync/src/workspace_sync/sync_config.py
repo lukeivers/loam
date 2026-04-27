@@ -77,8 +77,14 @@ class SyncConfig(BaseModel):
 
 
 def workspace_sync_config_path(workspace_root: Path) -> Path:
-    """Return ``<workspace_root>/.pos/sync-config.yaml``."""
-    return workspace_root / ".pos" / "sync-config.yaml"
+    """Return ``<workspace_root>/workspace/.pos/sync-config.yaml``.
+
+    D-migration D.2 (amendment #63): workspace-state under
+    ``<workspace>/workspace/.pos/``.
+    """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "sync-config.yaml"
 
 
 def user_sync_config_path() -> Path:

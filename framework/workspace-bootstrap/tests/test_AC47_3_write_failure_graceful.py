@@ -49,7 +49,8 @@ def test_AC47_3_malformed_existing_file_is_preserved_not_overwritten(
     workspace = tmp_path / "alpha-ws"
     workspace.mkdir()
 
-    malformed = workspace / MCP_JSON_FILENAME
+    malformed = workspace / "workspace" / MCP_JSON_FILENAME
+    malformed.parent.mkdir(parents=True, exist_ok=True)
     bad_text = "{ this is not valid json :::"
     malformed.write_text(bad_text)
 
@@ -72,7 +73,8 @@ def test_AC47_3_non_dict_root_existing_file_is_preserved(
     workspace = tmp_path / "alpha-ws"
     workspace.mkdir()
 
-    target = workspace / MCP_JSON_FILENAME
+    target = workspace / "workspace" / MCP_JSON_FILENAME
+    target.parent.mkdir(parents=True, exist_ok=True)
     array_root = "[1, 2, 3]"
     target.write_text(array_root)
 
@@ -121,7 +123,7 @@ def test_AC47_3_permission_denied_is_graceful(
     # placement). The .tmp leak is cleaned up by the writer's
     # exception handler; verify no leftover .mcp.json.* files
     # accumulate.
-    target = workspace / MCP_JSON_FILENAME
+    target = workspace / "workspace" / MCP_JSON_FILENAME
     assert not target.exists()
 
 
@@ -139,7 +141,8 @@ def test_AC47_3_scaffold_completes_when_writer_skips(
 
     # Pre-write a malformed .mcp.json the scaffold's writer must
     # leave alone.
-    target = workspace / MCP_JSON_FILENAME
+    target = workspace / "workspace" / MCP_JSON_FILENAME
+    target.parent.mkdir(parents=True, exist_ok=True)
     bad_text = "not valid json"
     target.write_text(bad_text)
 

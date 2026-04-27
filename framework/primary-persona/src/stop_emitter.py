@@ -259,8 +259,14 @@ def derive_turn_id(*, session_id: str, user_message: str) -> str:
 
 
 def _last_turn_id_path(workspace_root: Path) -> Path:
-    """Workspace-local marker file (D4)."""
-    return Path(workspace_root) / ".pos" / "last-turn-id"
+    """Workspace-local marker file (D4).
+
+    D-migration D.2 (amendment #63): now under
+    ``<workspace>/workspace/.pos/``.
+    """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "last-turn-id"
 
 
 def _read_last_turn_id(workspace_root: Path) -> str:
@@ -295,10 +301,13 @@ def _diag_log_path(workspace_root: Path) -> Path:
     """Workspace-local NDJSON diagnostic log (D8).
 
     One line per write attempt (success or failure). Outside any
-    sealed-component source tree (lives under ``<workspace>/.pos/``,
-    by convention since amendment #28).
+    sealed-component source tree (lives under
+    ``<workspace>/workspace/.pos/`` post-D.2 amendment #63; was
+    ``<workspace>/.pos/`` pre-D.2 since amendment #28).
     """
-    return Path(workspace_root) / ".pos" / "memory-writes.log"
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "memory-writes.log"
 
 
 def _append_diag(workspace_root: Path, entry: dict[str, Any]) -> None:

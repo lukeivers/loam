@@ -214,7 +214,7 @@ async def test_authoring_span_with_step_children(
 async def test_introduction_event_names_handle_and_channel(
     workspace_with_primary: Path, span_exporter_clean
 ):
-    persona_dir = workspace_with_primary / "personas" / "sip"
+    persona_dir = workspace_with_primary / "workspace" / "personas" / "sip"
     persona_dir.mkdir(parents=True)
     (persona_dir / "contract.yaml").write_text(
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: sip")
@@ -261,7 +261,7 @@ async def test_introduction_event_names_handle_and_channel(
 def test_retirement_event_names_handle_and_reason(
     workspace_with_primary: Path, span_exporter_clean
 ):
-    write_persona_dir(workspace_with_primary / "personas", "mara")
+    write_persona_dir(workspace_with_primary / "workspace" / "personas", "mara")
     retire_persona(
         workspace_root=workspace_with_primary,
         handle="mara",

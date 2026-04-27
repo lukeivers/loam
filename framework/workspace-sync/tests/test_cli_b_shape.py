@@ -26,8 +26,8 @@ def _git_head_sha(canonical: Path) -> str:
 
 
 def test_derive_workspace_root_from_pos_marker(tmp_path: Path) -> None:
-    (tmp_path / ".pos").mkdir()
-    (tmp_path / ".pos" / "sync-protected.yaml").write_text("framework_floor: []")
+    (tmp_path / "workspace" / ".pos").mkdir(parents=True)
+    (tmp_path / "workspace" / ".pos" / "sync-protected.yaml").write_text("framework_floor: []")
     assert derive_workspace_root(workspace_arg=None, cwd=tmp_path) == tmp_path
 
 
@@ -56,10 +56,12 @@ def test_derive_workspace_root_invalid_arg(tmp_path: Path) -> None:
 def test_seed_default_envelope_first_run(tmp_path: Path) -> None:
     """AC.WS.10: first-run writes the default envelope."""
     sp = _seed_default_envelope(tmp_path)
-    target = tmp_path / ".pos" / "sync-protected.yaml"
+    target = tmp_path / "workspace" / ".pos" / "sync-protected.yaml"
     assert target.exists()
     # Class-A floor entries are present.
-    assert any(r.pattern == ".mcp.json" for r in sp.framework_floor)
+    # D-migration D.2 (amendment #63): post-D.2 the framework-floor
+    # patterns prefix every workspace-state path with ``workspace/``.
+    assert any(r.pattern == "workspace/.mcp.json" for r in sp.framework_floor)
 
 
 def test_ref_already_applied_no_state_returns_false(tmp_path: Path) -> None:
@@ -179,7 +181,7 @@ def test_main_canonical_via_workspace_config(
     _stub_resolver_factory(monkeypatch)
 
     # Write workspace-local sync-config.yaml with canonical_source.
-    sync_cfg_path = workspace / ".pos" / "sync-config.yaml"
+    sync_cfg_path = workspace / "workspace" / ".pos" / "sync-config.yaml"
     sync_cfg_path.parent.mkdir(parents=True, exist_ok=True)
     sync_cfg_path.write_text(f"canonical_source: {canonical}\n")
 
@@ -228,7 +230,7 @@ def test_main_cli_flag_overrides_config(
     _patch_home(monkeypatch, home)
     _stub_resolver_factory(monkeypatch)
 
-    sync_cfg_path = workspace / ".pos" / "sync-config.yaml"
+    sync_cfg_path = workspace / "workspace" / ".pos" / "sync-config.yaml"
     sync_cfg_path.parent.mkdir(parents=True, exist_ok=True)
     sync_cfg_path.write_text("canonical_source: /nonexistent/path\n")
 
@@ -505,7 +507,7 @@ def test_alpha_hotfix_NN_resolved_paths_actually_overwrite_workspace_file(
     # supplementary check that our test exercised the NN path,
     # not some other resolution).
     import yaml as _yaml
-    audit_dir = workspace / ".pos" / "sync"
+    audit_dir = workspace / "workspace" / ".pos" / "sync"
     head_sha = _git_head_sha(canonical)
     audit_yaml = audit_dir / head_sha / "audit.yaml"
     assert audit_yaml.exists(), (

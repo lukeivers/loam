@@ -257,12 +257,15 @@ def _build_scope_spec(
 def _resolve_socket_path(workspace_root: Path) -> Path:
     """Return the orchestrator's Unix socket path for this workspace.
 
-    Production convention: ``<workspace>/.pos/orchestrator.sock``
-    (set by workspace-bootstrap; verified on every active
-    install). Tests pass an explicit override via the
-    ``ipc_socket_path`` parameter on `dispatch_with_scope`.
+    Production convention post-D.2 (amendment #63):
+    ``<workspace>/workspace/.pos/orchestrator.sock`` (set by
+    workspace-bootstrap; verified on every active install). Tests
+    pass an explicit override via the ``ipc_socket_path`` parameter
+    on `dispatch_with_scope`.
     """
-    return workspace_root / ".pos" / "orchestrator.sock"
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "orchestrator.sock"
 
 
 def _resolve_objective_id(
@@ -272,14 +275,16 @@ def _resolve_objective_id(
 
     1. If the caller supplies one, use it.
     2. Otherwise, read the ambient seed from
-       ``<workspace>/.pos/ambient-objective-id`` (a single-line
-       text file authored by amendment #39's workspace-bootstrap
+       ``<workspace>/workspace/.pos/ambient-objective-id`` (a single-
+       line text file authored by amendment #39's workspace-bootstrap
        contributor).
     3. If neither is available, return None (AC.A8.6 fallback).
     """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
     if supplied:
         return supplied
-    seed_path = workspace_root / ".pos" / "ambient-objective-id"
+    seed_path = pos_subdir(workspace_root) / "ambient-objective-id"
     if not seed_path.exists():
         return None
     try:
@@ -290,7 +295,9 @@ def _resolve_objective_id(
 
 
 def _diagnostic_log_path(workspace_root: Path) -> Path:
-    return workspace_root / ".pos" / "dispatch-wrapper.log"
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "dispatch-wrapper.log"
 
 
 def _append_diagnostic(workspace_root: Path, record: dict[str, Any]) -> None:

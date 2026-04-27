@@ -70,7 +70,7 @@ def test_AC47_1_fresh_clone_writes_mcp_json_with_memory_graphiti_entry(
     )
 
     # AC47.1: file exists at workspace root.
-    mcp_json_path = workspace / MCP_JSON_FILENAME
+    mcp_json_path = workspace / "workspace" / MCP_JSON_FILENAME
     assert mcp_json_path.exists(), (
         f"`.mcp.json` was not written; "
         f"ScaffoldResult.mcp_json_path={result.mcp_json_path!r}, "
@@ -135,7 +135,7 @@ def test_AC47_1_url_port_reflects_workspace_specific_memory_yaml_port(
         tracker_seed_runner=_stub_tracker_seed_runner,
     )
 
-    mcp_json_path = workspace / MCP_JSON_FILENAME
+    mcp_json_path = workspace / "workspace" / MCP_JSON_FILENAME
     assert mcp_json_path.exists()
     parsed = json.loads(mcp_json_path.read_text())
     entry = parsed["mcpServers"][MEMORY_GRAPHITI_SERVER_NAME]

@@ -35,13 +35,16 @@ from workspace_bootstrap.adapters.tracker_seed import (
 
 def test_AC_E_6_path_is_workspace_rooted(tmp_path: Path) -> None:
     """``tracker_db_path_for(workspace_root)`` returns
-    ``<workspace_root>/objective_tracker.sqlite``."""
+    ``<workspace_root>/workspace/objective_tracker.sqlite`` post-D.2
+    (was ``<workspace_root>/objective_tracker.sqlite`` pre-D.2
+    amendment #63).
+    """
     workspace = tmp_path / "ws-1"
     workspace.mkdir()
 
     out = tracker_db_path_for(workspace)
-    assert out == workspace / TRACKER_DB_FILENAME
-    assert out.parent == workspace
+    assert out == workspace / "workspace" / TRACKER_DB_FILENAME
+    assert out.parent == workspace / "workspace"
 
 
 def test_AC_E_6_path_matches_primary_persona_contributor(tmp_path: Path) -> None:

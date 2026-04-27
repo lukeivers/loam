@@ -31,7 +31,7 @@ def _write_persona_contract(
     workspace_root: Path, *, dev_intent: str
 ) -> Path:
     """Write a minimal persona contract carrying the dev_intent value."""
-    persona_dir = workspace_root / "personas" / "primary"
+    persona_dir = workspace_root / "workspace" / "personas" / "primary"
     persona_dir.mkdir(parents=True, exist_ok=True)
     contract = persona_dir / "contract.yaml"
     contract.write_text(
@@ -70,7 +70,7 @@ def test_AC_SE_1_returns_normal_use_when_contract_unreadable(
 ) -> None:
     """A contract file with malformed YAML returns ``normal-use``
     rather than raising."""
-    persona_dir = tmp_path / "personas" / "primary"
+    persona_dir = tmp_path / "workspace" / "personas" / "primary"
     persona_dir.mkdir(parents=True)
     (persona_dir / "contract.yaml").write_text(
         "this is: not\n  valid yaml: [unclosed\n",

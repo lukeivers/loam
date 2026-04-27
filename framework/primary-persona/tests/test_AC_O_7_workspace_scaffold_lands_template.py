@@ -61,7 +61,7 @@ def test_AC_O_7_scaffold_installs_persona_at_default_handle(tmp_path: Path):
     directory lands at ``<workspace>/personas/<DEFAULT_HANDLE>/``."""
     result, workspace = _run_scaffold(tmp_path)
     assert result.persona_installed is True
-    persona_dir = workspace / "personas" / DEFAULT_PERSONA_HANDLE
+    persona_dir = workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE
     assert persona_dir.is_dir()
     assert (persona_dir / "prompt.md").is_file()
     assert (persona_dir / "contract.yaml").is_file()
@@ -72,7 +72,7 @@ def test_AC_O_7_workspace_prompt_md_equals_template_body(tmp_path: Path):
     template's prompt.md body verbatim."""
     _, workspace = _run_scaffold(tmp_path)
     workspace_prompt = (
-        workspace / "personas" / DEFAULT_PERSONA_HANDLE / "prompt.md"
+        workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE / "prompt.md"
     ).read_text()
     template_body = TEMPLATE_PROMPT.read_text()
     assert workspace_prompt == template_body
@@ -86,7 +86,7 @@ def test_AC_O_7_workspace_contract_matches_template_except_handle_and_starter(
     differing."""
     _, workspace = _run_scaffold(tmp_path)
     workspace_raw = yaml.safe_load(
-        (workspace / "personas" / DEFAULT_PERSONA_HANDLE / "contract.yaml").read_text()
+        (workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE / "contract.yaml").read_text()
     )
     template_raw = yaml.safe_load(TEMPLATE_CONTRACT.read_text())
 

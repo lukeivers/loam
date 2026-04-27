@@ -56,9 +56,11 @@ class _FakeLoadedPersona:
     directory: Path | None = None
 
 
-def _seed(tmp_path: Path) -> tuple[_FakeLoadedPersona, Path]:
+def _seed(tmp_path: Path) -> tuple[_FakeLoadedPersona, Path]:  # noqa: D401
+    # D-migration D.2 (amendment #63): personas live under
+    # <ws>/workspace/personas/ post-D.2.
     contract = PersonaContract.model_validate(_starter_contract_dict())
-    persona_dir = tmp_path / "personas" / "iris"
+    persona_dir = tmp_path / "workspace" / "personas" / "iris"
     persona_dir.mkdir(parents=True)
     contract_path = persona_dir / "contract.yaml"
     contract_path.write_text(contract.to_yaml())
@@ -151,7 +153,7 @@ def test_AC_O_4_creates_claude_agents_dir_if_absent(tmp_path: Path):
     """If the workspace's .claude/agents/ directory does not
     pre-exist, persist_grounding creates it (mkdir parents=True)."""
     contract = PersonaContract.model_validate(_starter_contract_dict())
-    persona_dir = tmp_path / "personas" / "iris"
+    persona_dir = tmp_path / "workspace" / "personas" / "iris"
     persona_dir.mkdir(parents=True)
     contract_path = persona_dir / "contract.yaml"
     contract_path.write_text(contract.to_yaml())

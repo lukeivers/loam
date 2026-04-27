@@ -121,11 +121,13 @@ def test_class_b_workspace_modified_keeps_local(tmp_path: Path) -> None:
     canonical.mkdir()
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    (canonical / "memory.yaml").write_text("default: 5\nfresh: true\n")
-    (workspace / "memory.yaml").write_text("default: 99\nuser_pref: yes\n")
+    (canonical / "workspace").mkdir()
+    (workspace / "workspace").mkdir()
+    (canonical / "workspace" / "memory.yaml").write_text("default: 5\nfresh: true\n")
+    (workspace / "workspace" / "memory.yaml").write_text("default: 99\nuser_pref: yes\n")
 
     entry = ConflictEntry(
-        path="memory.yaml",
+        path="workspace/memory.yaml",
         prior_release_sha256="a" * 64,
         installed_sha256="b" * 64,
         new_release_sha256="c" * 64,
@@ -167,11 +169,13 @@ def test_class_b_workspace_unmodified_accepts_canonical(tmp_path: Path) -> None:
     canonical.mkdir()
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    (canonical / "memory.yaml").write_text("v: 2\n")
-    (workspace / "memory.yaml").write_text("v: 2\n")
+    (canonical / "workspace").mkdir()
+    (workspace / "workspace").mkdir()
+    (canonical / "workspace" / "memory.yaml").write_text("v: 2\n")
+    (workspace / "workspace" / "memory.yaml").write_text("v: 2\n")
 
     entry = ConflictEntry(
-        path="memory.yaml",
+        path="workspace/memory.yaml",
         prior_release_sha256="a" * 64,
         installed_sha256="b" * 64,
         new_release_sha256="b" * 64,
@@ -236,8 +240,8 @@ def test_cli_canonical_pending_writes_audit_yaml(
     )
 
     # Class A file in canonical (would be Class-A protected).
-    (workspace_canonical / ".pos").mkdir()
-    (workspace_canonical / ".pos" / "objective_tracker.sqlite").write_bytes(
+    (workspace_canonical / "workspace" / ".pos").mkdir(parents=True)
+    (workspace_canonical / "workspace" / ".pos" / "objective_tracker.sqlite").write_bytes(
         b"canonical-state"
     )
 
@@ -277,9 +281,9 @@ def test_cli_canonical_pending_writes_audit_yaml(
 
     # Class A workspace file (in the live tree); the upgrade must NOT
     # overwrite it. We snapshot its content before the upgrade.
-    (prior / ".pos").mkdir()
+    (prior / "workspace" / ".pos").mkdir(parents=True)
     workspace_pos_content = b"workspace-tracker-state-byte-identical"
-    (prior / ".pos" / "objective_tracker.sqlite").write_bytes(
+    (prior / "workspace" / ".pos" / "objective_tracker.sqlite").write_bytes(
         workspace_pos_content
     )
 
@@ -298,7 +302,7 @@ def test_cli_canonical_pending_writes_audit_yaml(
     # Pending conflict → rc=3, audit written.
     assert rc == 3, captured.out + captured.err
     # AC.HFX.3: workspace-local audit path under --canonical.
-    audit_path = prior / ".pos" / "upgrade" / tag / "audit.yaml"
+    audit_path = prior / "workspace" / ".pos" / "upgrade" / tag / "audit.yaml"
     assert audit_path.exists(), f"audit YAML not written at {audit_path}"
     # Legacy global path is NOT used in --canonical mode.
     legacy_path = paths.conflicts_yaml(tag)
@@ -314,7 +318,7 @@ def test_cli_canonical_pending_writes_audit_yaml(
 
     # Class A file untouched: the workspace's .pos sqlite content
     # matches what we wrote pre-invocation.
-    after = (prior / ".pos" / "objective_tracker.sqlite").read_bytes()
+    after = (prior / "workspace" / ".pos" / "objective_tracker.sqlite").read_bytes()
     assert after == workspace_pos_content, (
         "Class A workspace file was modified by the upgrade halt path"
     )
@@ -345,8 +349,10 @@ def test_cli_canonical_pending_writes_audit_yaml_with_class_a_passthrough(
         '{"mcpServers": {"workspace-only": {"command": "magic"}}}'
     )
     canonical_mcp_content = '{"mcpServers": {}}'
-    (canonical / ".mcp.json").write_text(canonical_mcp_content)
-    (workspace / ".mcp.json").write_text(workspace_mcp_content)
+    (canonical / "workspace").mkdir()
+    (workspace / "workspace").mkdir()
+    (canonical / "workspace" / ".mcp.json").write_text(canonical_mcp_content)
+    (workspace / "workspace" / ".mcp.json").write_text(workspace_mcp_content)
 
     # Class-C: framework code conflict that needs LLM.
     canonical_framework = "# canonical fw\n"
@@ -365,7 +371,7 @@ def test_cli_canonical_pending_writes_audit_yaml_with_class_a_passthrough(
         detected_at="2026-04-26T00:00:00+00:00",
         conflicts=[
             ConflictEntry(
-                path=".mcp.json",
+                path="workspace/.mcp.json",
                 prior_release_sha256="a" * 64,
                 installed_sha256="b" * 64,
                 new_release_sha256="c" * 64,
@@ -411,7 +417,7 @@ def test_cli_canonical_pending_writes_audit_yaml_with_class_a_passthrough(
     )
 
     # AC.H.2: Class A → KEEP_LOCAL with confidence 1.0.
-    a_entry = next(c for c in report.conflicts if c.path == ".mcp.json")
+    a_entry = next(c for c in report.conflicts if c.path == "workspace/.mcp.json")
     assert a_entry.resolution is Resolution.KEEP_LOCAL
     assert a_entry.confidence == 1.0
     assert "Class A" in (a_entry.rationale or "")
@@ -435,7 +441,7 @@ def test_cli_canonical_pending_writes_audit_yaml_with_class_a_passthrough(
 
     # Class A file still byte-identical to its pre-resolve state.
     assert (
-        (workspace / ".mcp.json").read_text() == workspace_mcp_content
+        (workspace / "workspace" / ".mcp.json").read_text() == workspace_mcp_content
     ), "Class A workspace .mcp.json content drifted during clause-h"
 
 
@@ -684,7 +690,7 @@ def test_cli_canonical_without_merge_resolver_module_skips_clause_h(
     )
     assert rc == 3  # pending conflict
     # AC.HFX.3: workspace-local audit path under --canonical.
-    audit_path = prior / ".pos" / "upgrade" / "pos-v2-v0.2.0" / "audit.yaml"
+    audit_path = prior / "workspace" / ".pos" / "upgrade" / "pos-v2-v0.2.0" / "audit.yaml"
     assert audit_path.exists()
     audit = load_conflict_report(audit_path)
     # Without --merge-resolver-module, clause-h skipped → all PENDING.
@@ -713,7 +719,7 @@ def test_cli_canonical_seeds_default_sync_protected_on_first_run(
 
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    target = workspace / ".pos" / "sync-protected.yaml"
+    target = workspace / "workspace" / ".pos" / "sync-protected.yaml"
     assert not target.exists()
 
     sp = _load_or_seed_sync_protected(workspace)
@@ -797,7 +803,7 @@ def test_halt_surface_audit_not_written_on_clean_clause_h_pass(
     # AC.HFX.1 + AC.HFX.3: audit YAML exists at the workspace-local
     # path AFTER the helper's clean-pass terminus.
     audit_path = (
-        workspace / ".pos" / "upgrade" / "pos-v2-v0.2.0" / "audit.yaml"
+        workspace / "workspace" / ".pos" / "upgrade" / "pos-v2-v0.2.0" / "audit.yaml"
     )
     assert audit_path.exists(), (
         f"audit YAML not written at {audit_path} on clean clause-(h) pass"
@@ -865,7 +871,7 @@ def test_halt_surface_state_yaml_not_implemented(tmp_path: Path) -> None:
         resolver=resolver,
     )
 
-    state_path = workspace / ".pos" / "upgrade" / "state.yaml"
+    state_path = workspace / "workspace" / ".pos" / "upgrade" / "state.yaml"
     # AC.HFX.2: state.yaml exists + Pydantic-loadable + status=success.
     assert state_path.exists(), (
         f"state.yaml not written at {state_path} after clause-(h) pass"
@@ -940,7 +946,7 @@ def test_cli_auto_discovers_prior_state_yaml_on_canonical_rerun(
     # Seed a prior state.yaml + audit.yaml mimicking a prior
     # successful clause-(h) run that resolved framework/a.py
     # via INFERRED_ACCEPT_CANONICAL.
-    audit_dir = prior / ".pos" / "upgrade" / "pos-v2-v0.2.0"
+    audit_dir = prior / "workspace" / ".pos" / "upgrade" / "pos-v2-v0.2.0"
     audit_dir.mkdir(parents=True)
     audit_target = audit_dir / "audit.yaml"
     seeded = ConflictReport(

@@ -478,7 +478,11 @@ class AuthoringPipeline:
         """Write the new persona directory. Contract has
         pending_introduction=True, is_addressable=False already (set
         during synthesis parse)."""
-        personas_dir = self.workspace_root / "personas"
+        from workspace_bootstrap.workspace_paths import (
+            personas_dir as _personas_dir,
+        )
+
+        personas_dir = _personas_dir(self.workspace_root)
         persona_dir = personas_dir / contract.handle
         persona_dir.mkdir(parents=True, exist_ok=False)
         (persona_dir / "contract.yaml").write_text(contract.to_yaml())

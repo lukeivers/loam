@@ -398,7 +398,8 @@ def resolve_clause_h_inferred(
     caller supplies for ``inferred-merged`` verdicts; it must persist
     the merged content somewhere and return the absolute path. When
     omitted, merged content is dropped onto a per-conflict path under
-    ``workspace_root/.pos/upgrade/<tag>/merged/<path>``.
+    ``workspace_root/workspace/.pos/upgrade/<tag>/merged/<path>``
+    (post-D.2 amendment #63).
 
     Raises:
         BudgetExhausted: cumulative resolver budget hit; halt-and-
@@ -500,14 +501,17 @@ def resolve_clause_h_inferred(
 
             if entry.resolution is Resolution.INFERRED_MERGED:
                 # Persist merged content somewhere the swap can read.
+                # D-migration D.2 (amendment #63): workspace-state
+                # under <workspace>/workspace/.pos/.
                 if write_merged is not None:
                     entry.resolved_content_path = write_merged(
                         entry.path, verdict.merged_content or ""
                     )
                 else:
+                    from workspace_bootstrap.workspace_paths import pos_subdir
+
                     merged_dir = (
-                        workspace_root
-                        / ".pos"
+                        pos_subdir(workspace_root)
                         / "upgrade"
                         / report.upgrade_tag
                         / "merged"

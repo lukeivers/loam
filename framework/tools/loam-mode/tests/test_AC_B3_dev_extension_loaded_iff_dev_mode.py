@@ -23,11 +23,11 @@ from loam_mode.session_start import emit_session_start_context
 def _scaffold_workspace(tmp_path: Path, dev_intent: str | None) -> Path:
     """Build a fixture workspace with the given dev_intent answer."""
     ws = tmp_path / "ws"
-    (ws / "personas" / "primary").mkdir(parents=True)
+    (ws / "workspace" / "personas" / "primary").mkdir(parents=True)
     contract_lines = ["handle: primary", "is_primary: true"]
     if dev_intent is not None:
         contract_lines.append(f"dev_intent: {dev_intent}")
-    (ws / "personas" / "primary" / "contract.yaml").write_text(
+    (ws / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "\n".join(contract_lines) + "\n",
         encoding="utf-8",
     )

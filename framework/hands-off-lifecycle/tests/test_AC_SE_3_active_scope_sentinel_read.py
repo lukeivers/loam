@@ -57,8 +57,8 @@ def test_AC_SE_3_round_trip_returns_typed_structure(
 
 
 def test_AC_SE_3_returns_none_on_malformed_json(tmp_path: Path) -> None:
-    pos = tmp_path / ".pos"
-    pos.mkdir()
+    pos = tmp_path / "workspace" / ".pos"
+    pos.mkdir(parents=True)
     (pos / "active-scope.json").write_text("not { valid json", encoding="utf-8")
     assert read_active_scope_sentinel(tmp_path) is None
 
@@ -66,8 +66,8 @@ def test_AC_SE_3_returns_none_on_malformed_json(tmp_path: Path) -> None:
 def test_AC_SE_3_returns_none_on_missing_required_field(
     tmp_path: Path,
 ) -> None:
-    pos = tmp_path / ".pos"
-    pos.mkdir()
+    pos = tmp_path / "workspace" / ".pos"
+    pos.mkdir(parents=True)
     (pos / "active-scope.json").write_text(
         '{"scope_id": "x"}\n', encoding="utf-8"
     )
@@ -78,8 +78,8 @@ def test_AC_SE_3_returns_none_on_bad_binding_shape(
     tmp_path: Path,
 ) -> None:
     """Bindings entries must each be a {component, ac_id} dict."""
-    pos = tmp_path / ".pos"
-    pos.mkdir()
+    pos = tmp_path / "workspace" / ".pos"
+    pos.mkdir(parents=True)
     (pos / "active-scope.json").write_text(
         '{"scope_id": "x", "plan_path": "p", "bindings": '
         '[{"component": "c"}], "created_at": "2026-01-01T00:00:00Z"}\n',
@@ -93,8 +93,8 @@ def test_AC_SE_3_reader_never_raises_on_environmental_failure(
     tmp_path: Path,
 ) -> None:
     """OSError on read returns None, not an exception."""
-    pos = tmp_path / ".pos"
-    pos.mkdir()
+    pos = tmp_path / "workspace" / ".pos"
+    pos.mkdir(parents=True)
     target = pos / "active-scope.json"
     # Make the path a directory rather than a file — reading it as
     # text will OSError. The reader catches and returns None.

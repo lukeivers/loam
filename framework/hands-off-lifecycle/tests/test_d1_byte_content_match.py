@@ -48,7 +48,13 @@ _SAMPLE_FILES = (
     ("framework/primary-persona/src/__init__.py",
      "8301c65db74060d1cfb7f6ed4caf3bfbcd734d9b430700dffa862ac8ad6728c3"),
     ("framework/primary-persona/src/onboarding.py",
-     "fa4ab7761ec323d453286731203077f22cccb379d7718909242359b695c76da4"),
+     # D-migration D.2 (amendment #63): SHA updated post-D.2 because
+     # onboarding.py is one of the readers cut over to the
+     # workspace-paths helper (per the locked wider-fence ruling).
+     # The D.1 byte-content guarantee was for the rename window only;
+     # subsequent amendment edits are tracked here as the canonical
+     # post-edit hash.
+     "e077c38790e2a41780a72e63fcf2e07691ee8c019f62897b6c77cabcfadd52c4"),
     ("framework/primary-persona/src/session_start_emitter.py",
      "772d3d77c9da675d70fedf4f887dfed15da7cc8abd1e2d7dd013b9a456f97099"),
     ("framework/primary-persona/pyproject.toml",

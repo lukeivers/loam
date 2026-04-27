@@ -23,7 +23,7 @@ def _git_head(canonical: Path) -> str:
 
 def test_staging_root_path(tmp_path: Path) -> None:
     p = staging_root(tmp_path, "abc123")
-    assert p == tmp_path / ".pos" / "sync" / "staging" / "abc123"
+    assert p == tmp_path / "workspace" / ".pos" / "sync" / "staging" / "abc123"
 
 
 def test_stage_canonical_clean_writes_copies_from_git(make_canonical_repo, make_workspace) -> None:
@@ -51,7 +51,7 @@ def test_stage_resolved_content_writes_to_staging(tmp_path: Path) -> None:
 def test_apply_staging_atomically_writes_workspace_files(tmp_path: Path) -> None:
     workspace = tmp_path / "ws"
     workspace.mkdir()
-    sroot = workspace / ".pos" / "sync" / "staging" / "ref"
+    sroot = workspace / "workspace" / ".pos" / "sync" / "staging" / "ref"
     sroot.mkdir(parents=True)
     (sroot / "x.py").write_text("staged_x")
     (sroot / "sub").mkdir()
@@ -68,7 +68,7 @@ def test_apply_staging_replaces_existing_files(tmp_path: Path) -> None:
     workspace.mkdir()
     (workspace / "x.py").write_text("old_content")
 
-    sroot = workspace / ".pos" / "sync" / "staging" / "ref"
+    sroot = workspace / "workspace" / ".pos" / "sync" / "staging" / "ref"
     sroot.mkdir(parents=True)
     (sroot / "x.py").write_text("new_content")
 

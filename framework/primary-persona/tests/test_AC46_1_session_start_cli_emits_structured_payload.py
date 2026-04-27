@@ -60,8 +60,10 @@ def _seed_workspace(root: Path, *, with_starter_persona: bool = True) -> None:
     (root / "docs" / "rebuild" / "FUTURE_IDEAS.md").write_text("ideas")
     (root / "docs" / "rebuild" / "plans").mkdir()
     (root / "docs" / "rebuild" / "plans" / "amendment-x.md").write_text("#x")
-    pos = root / ".pos"
-    pos.mkdir()
+    # D-migration D.2 (amendment #63): workspace-state under
+    # <ws>/workspace/.pos/ post-D.2.
+    pos = root / "workspace" / ".pos"
+    pos.mkdir(parents=True)
     (pos / "first-run.state").write_text(
         json.dumps({"completed_at": "2026-04-25T00:00:00Z"})
     )
@@ -69,7 +71,7 @@ def _seed_workspace(root: Path, *, with_starter_persona: bool = True) -> None:
         json.dumps({"mtd_spend_usd": "12.34", "ceiling_usd": "500.00"})
     )
     if with_starter_persona:
-        personas = root / "personas"
+        personas = root / "workspace" / "personas"
         personas.mkdir()
         starter = personas / "primary"
         starter.mkdir()

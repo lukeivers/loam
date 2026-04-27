@@ -63,13 +63,20 @@ class SyncProtectedRule(BaseModel):
 # Class-A paths cover workspace state the framework never touches.
 # memory.yaml is Class B because canonical may legitimately update
 # defaults but workspace-side edits should win.
+#
+# D-migration D.2 (amendment #63): post-D.2 workspace state lives
+# under ``workspace/`` so the patterns prefix every workspace-state
+# match accordingly. ``memory.yaml`` remains workspace-root-relative
+# per its operator-preference shape (lives under ``workspace/.pos/``
+# in the new layout but the synced ref pattern keeps the bare name
+# for backwards-compat with prior envelopes).
 FRAMEWORK_FLOOR: tuple[tuple[str, FileClass], ...] = (
-    ("personas/**/contract.yaml", FileClass.A),
-    (".pos/objective_tracker.sqlite", FileClass.A),
-    (".pos/**", FileClass.A),
-    (".scratch/**", FileClass.A),
-    (".mcp.json", FileClass.A),
-    ("memory.yaml", FileClass.B),
+    ("workspace/personas/**/contract.yaml", FileClass.A),
+    ("workspace/.pos/objective_tracker.sqlite", FileClass.A),
+    ("workspace/.pos/**", FileClass.A),
+    ("workspace/.scratch/**", FileClass.A),
+    ("workspace/.mcp.json", FileClass.A),
+    ("workspace/memory.yaml", FileClass.B),
 )
 
 
@@ -154,11 +161,17 @@ def save_sync_protected(sp: SyncProtected, path: str | Path) -> None:
 
 
 def write_default_if_absent(workspace_root: Path) -> Path:
-    """Write the default envelope to ``<workspace>/.pos/sync-protected.yaml``
-    if absent. Returns the path either way. Idempotent: existing files
-    are not overwritten.
+    """Write the default envelope to
+    ``<workspace>/workspace/.pos/sync-protected.yaml`` if absent.
+    Returns the path either way. Idempotent: existing files are not
+    overwritten.
+
+    D-migration D.2 (amendment #63): workspace-state under
+    ``<workspace>/workspace/.pos/``.
     """
-    target = workspace_root / ".pos" / "sync-protected.yaml"
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    target = pos_subdir(workspace_root) / "sync-protected.yaml"
     if target.exists():
         return target
     save_sync_protected(default_sync_protected(), target)

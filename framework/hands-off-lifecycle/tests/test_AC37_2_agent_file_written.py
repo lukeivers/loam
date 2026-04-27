@@ -52,7 +52,7 @@ def workspace_with_persona(tmp_path: Path) -> Path:
     ws.mkdir()
     # Materialise the same shape amendment #36's scaffold produces.
     template = REPO_ROOT / "framework" / "primary-persona" / "templates" / "persona-template"
-    persona_dir = ws / "personas" / "primary"
+    persona_dir = ws / "workspace" / "personas" / "primary"
     persona_dir.parent.mkdir(parents=True)
     shutil.copytree(template, persona_dir)
     # Mutate handle + is_starter the same way amendment #36's scaffold

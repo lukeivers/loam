@@ -47,7 +47,7 @@ def workspace_with_persona(tmp_path: Path) -> Path:
     ws = tmp_path / "ws"
     ws.mkdir()
     template = REPO_ROOT / "framework" / "primary-persona" / "templates" / "persona-template"
-    persona_dir = ws / "personas" / "primary"
+    persona_dir = ws / "workspace" / "personas" / "primary"
     persona_dir.parent.mkdir(parents=True)
     shutil.copytree(template, persona_dir)
     contract_path = persona_dir / "contract.yaml"

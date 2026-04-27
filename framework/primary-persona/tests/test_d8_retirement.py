@@ -30,8 +30,8 @@ from tests.conftest import write_persona_dir
 
 def test_retirement_moves_directory(workspace_with_primary: Path):
     # Add a second persona to retire (cannot retire the only primary).
-    write_persona_dir(workspace_with_primary / "personas", "mara")
-    assert (workspace_with_primary / "personas" / "mara").exists()
+    write_persona_dir(workspace_with_primary / "workspace" / "personas", "mara")
+    assert (workspace_with_primary / "workspace" / "personas" / "mara").exists()
 
     record = retire_persona(
         workspace_root=workspace_with_primary,
@@ -40,7 +40,7 @@ def test_retirement_moves_directory(workspace_with_primary: Path):
     )
 
     assert isinstance(record, RetirementRecord)
-    assert not (workspace_with_primary / "personas" / "mara").exists()
+    assert not (workspace_with_primary / "workspace" / "personas" / "mara").exists()
     # Record names the new directory.
     assert record.to_dir.exists()
     assert record.to_dir.parent.name == "_retired"
@@ -52,7 +52,7 @@ def test_retirement_moves_directory(workspace_with_primary: Path):
 def test_retired_persona_not_loaded_by_active_loader(
     workspace_with_primary: Path,
 ):
-    write_persona_dir(workspace_with_primary / "personas", "mara")
+    write_persona_dir(workspace_with_primary / "workspace" / "personas", "mara")
 
     retire_persona(
         workspace_root=workspace_with_primary,
@@ -72,7 +72,7 @@ def test_retired_persona_not_loaded_by_active_loader(
 def test_retired_persona_cannot_be_reloaded_by_handle(
     workspace_with_primary: Path,
 ):
-    write_persona_dir(workspace_with_primary / "personas", "mara")
+    write_persona_dir(workspace_with_primary / "workspace" / "personas", "mara")
     retire_persona(
         workspace_root=workspace_with_primary,
         handle="mara",
@@ -97,7 +97,7 @@ def test_retirement_of_nonexistent_raises(workspace_with_primary: Path):
 def test_retirement_preserves_contract_contents(
     workspace_with_primary: Path,
 ):
-    write_persona_dir(workspace_with_primary / "personas", "mara")
+    write_persona_dir(workspace_with_primary / "workspace" / "personas", "mara")
     record = retire_persona(
         workspace_root=workspace_with_primary,
         handle="mara",
@@ -111,7 +111,7 @@ def test_retirement_preserves_contract_contents(
 def test_un_retirement_is_manual_move(workspace_with_primary: Path):
     """Brief D8: 'a retired persona cannot be reloaded without explicit
     un-retirement (moving the directory back).'"""
-    write_persona_dir(workspace_with_primary / "personas", "mara")
+    write_persona_dir(workspace_with_primary / "workspace" / "personas", "mara")
     record = retire_persona(
         workspace_root=workspace_with_primary,
         handle="mara",
@@ -120,7 +120,7 @@ def test_un_retirement_is_manual_move(workspace_with_primary: Path):
     # Manually move back.
     import shutil
 
-    target = workspace_with_primary / "personas" / "mara"
+    target = workspace_with_primary / "workspace" / "personas" / "mara"
     shutil.move(str(record.to_dir), str(target))
     loader = PersonaLoader(
         workspace_with_primary, enforce_no_personas_in_core=False
@@ -130,10 +130,10 @@ def test_un_retirement_is_manual_move(workspace_with_primary: Path):
 
 
 def test_retirement_reason_carried_on_record(workspace_with_primary: Path):
-    write_persona_dir(workspace_with_primary / "personas", "mara")
+    write_persona_dir(workspace_with_primary / "workspace" / "personas", "mara")
     for reason in RetirementReason:
         # re-create mara each time
-        write_persona_dir(workspace_with_primary / "personas", "mara")
+        write_persona_dir(workspace_with_primary / "workspace" / "personas", "mara")
         record = retire_persona(
             workspace_root=workspace_with_primary,
             handle="mara",

@@ -200,10 +200,12 @@ def stage_canonical_at_ref(
         entry.resolved_content_path = write_merged(entry.path, canonical_text)
     else:
         # Mirror the INFERRED_MERGED else-branch (write to per-
-        # conflict merged path under workspace .pos/sync/<ref>/merged/).
-        merged_dir = (
-            workspace_root / ".pos" / "sync" / sync_ref / "merged"
-        )
+        # conflict merged path under workspace/.pos/sync/<ref>/merged/).
+        # D-migration D.2 (amendment #63): workspace-state under
+        # <workspace>/workspace/.pos/.
+        from workspace_bootstrap.workspace_paths import pos_subdir
+
+        merged_dir = pos_subdir(workspace_root) / "sync" / sync_ref / "merged"
         target = merged_dir / entry.path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(canonical_text)
@@ -730,14 +732,17 @@ def resolve_inferred_conflicts(
             if entry.resolution is Resolution.INFERRED_MERGED:
                 # Persist merged content somewhere the staging apply
                 # can read.
+                # D-migration D.2 (amendment #63): workspace-state
+                # under <workspace>/workspace/.pos/.
                 if write_merged is not None:
                     entry.resolved_content_path = write_merged(
                         entry.path, verdict.merged_content or ""
                     )
                 else:
+                    from workspace_bootstrap.workspace_paths import pos_subdir
+
                     merged_dir = (
-                        workspace_root
-                        / ".pos"
+                        pos_subdir(workspace_root)
                         / "sync"
                         / report.sync_ref
                         / "merged"

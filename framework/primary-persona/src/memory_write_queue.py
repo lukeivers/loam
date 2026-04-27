@@ -39,14 +39,27 @@ def queue_dir(workspace_root: Path | str) -> Path:
     """Return the workspace-local queue directory path.
 
     AC.J.2: each enqueued turn record lives at
-    ``<workspace>/.pos/memory-write-queue/<turn-id>.json``.
+    ``<workspace>/workspace/.pos/memory-write-queue/<turn-id>.json``
+    post-D.2 (amendment #63). The legacy constant ``QUEUE_DIRNAME``
+    is preserved as ``.pos/memory-write-queue`` for backwards-compat
+    with operator scripts that compose it manually; the production
+    consumer uses this helper which delegates to the canonical
+    workspace_paths helper.
     """
-    return Path(workspace_root) / QUEUE_DIRNAME
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "memory-write-queue"
 
 
 def deadletter_path(workspace_root: Path | str) -> Path:
-    """Return the workspace-local dead-letter log path (AC.J.4)."""
-    return Path(workspace_root) / DEADLETTER_FILENAME
+    """Return the workspace-local dead-letter log path (AC.J.4).
+
+    D-migration D.2 (amendment #63): now under
+    ``<workspace>/workspace/.pos/memory-write-deadletter.log``.
+    """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "memory-write-deadletter.log"
 
 
 # ---- enqueue (AC.J.2 / AC.J.3 / Hard Constraint 7) -------------------
@@ -294,14 +307,20 @@ DEFAULT_WORKER_CONFIG: dict[str, Any] = {
 
 
 def load_worker_config(workspace_root: Path) -> dict[str, Any]:
-    """Read ``<workspace>/.pos/memory-worker.yaml`` with defaults.
+    """Read ``<workspace>/workspace/.pos/memory-worker.yaml`` with
+    defaults.
 
     Per locked D-3: workspace-tunable retry policy. Missing /
     malformed config → defaults silently. The worker NEVER
     crashes on config — it logs at startup and uses defaults.
+
+    D-migration D.2 (amendment #63): config now under
+    ``<workspace>/workspace/.pos/`` post-D.2.
     """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
     config = dict(DEFAULT_WORKER_CONFIG)
-    path = Path(workspace_root) / WORKER_CONFIG_FILENAME
+    path = pos_subdir(workspace_root) / "memory-worker.yaml"
     if not path.exists():
         return config
     try:

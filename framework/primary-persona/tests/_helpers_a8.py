@@ -87,9 +87,13 @@ def make_workspace(
     ambient_objective: str | None = "obj-ambient",
 ) -> Path:
     """Build a workspace root with optional socket sentinel and
-    ambient-objective seed."""
+    ambient-objective seed.
+
+    D-migration D.2 (amendment #63): workspace-state under
+    ``<ws>/workspace/.pos/`` post-D.2.
+    """
     root = tmp_path / "ws"
-    pos_dir = root / ".pos"
+    pos_dir = root / "workspace" / ".pos"
     pos_dir.mkdir(parents=True, exist_ok=True)
     if socket_present:
         # The socket file is just touched — the wrapper checks

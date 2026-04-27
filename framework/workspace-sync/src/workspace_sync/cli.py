@@ -124,6 +124,13 @@ def derive_workspace_root(
             )
         return workspace_arg
 
+    # D-migration D.2 (amendment #63): post-D.2 the workspace-state
+    # file lives at ``workspace/.pos/sync-protected.yaml``. Pre-D.2
+    # workspaces have it at ``.pos/sync-protected.yaml`` — keep both
+    # checks during the migration window so D.2.5's pos3 in-place
+    # migration doesn't have to reload the cwd derivation logic.
+    if (cwd / "workspace" / ".pos" / "sync-protected.yaml").exists():
+        return cwd
     if (cwd / ".pos" / "sync-protected.yaml").exists():
         return cwd
     if (cwd / ".git").exists():
@@ -131,7 +138,8 @@ def derive_workspace_root(
 
     raise WorkspaceRootError(
         f"workspace root not derivable from cwd={cwd}: neither "
-        ".pos/sync-protected.yaml (existing workspace) nor .git/ "
+        "workspace/.pos/sync-protected.yaml (post-D.2 workspace) nor "
+        ".pos/sync-protected.yaml (pre-D.2 workspace) nor .git/ "
         "(fresh first-run) is present. Pass --workspace <path> to "
         "specify explicitly."
     )

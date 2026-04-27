@@ -138,8 +138,10 @@ def probe_service_state(workspace_root: Path) -> dict[str, str]:
 
 
 def _probe_memory(workspace_root: Path) -> str:
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
     port = 8765
-    port_file = workspace_root / ".pos" / "memory-port"
+    port_file = pos_subdir(workspace_root) / "memory-port"
     if port_file.exists():
         try:
             port = int(port_file.read_text(encoding="utf-8").strip() or "8765")
@@ -160,8 +162,10 @@ def _probe_memory(workspace_root: Path) -> str:
 
 
 def _probe_orchestrator(workspace_root: Path) -> str:
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
     candidates: list[Path] = [
-        workspace_root / ".pos" / "orchestrator.sock",
+        pos_subdir(workspace_root) / "orchestrator.sock",
         Path.home() / ".pos" / "orchestrator.sock",
     ]
     for candidate in candidates:
@@ -191,7 +195,9 @@ def read_cost_headroom(workspace_root: Path) -> dict[str, Any]:
     """
     import json
 
-    path = workspace_root / ".pos" / "cost-headroom.json"
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    path = pos_subdir(workspace_root) / "cost-headroom.json"
     if not path.exists():
         return {}
     try:
@@ -209,12 +215,15 @@ def read_first_run_completion(workspace_root: Path) -> str | None:
     """Read the recent first-run completion timestamp if recorded.
 
     Per amendment #28 first-run routing: the first-run state lives at
-    ``<workspace>/.pos/first-run.state`` (workspace-local routing).
-    Returns the ``completed_at`` field value if present, else None.
+    ``<workspace>/workspace/.pos/first-run.state`` post-D.2 (was
+    ``<workspace>/.pos/first-run.state`` pre-D.2). Returns the
+    ``completed_at`` field value if present, else None.
     """
     import json
 
-    path = workspace_root / ".pos" / "first-run.state"
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    path = pos_subdir(workspace_root) / "first-run.state"
     if not path.exists():
         return None
     try:

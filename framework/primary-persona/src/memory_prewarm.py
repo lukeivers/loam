@@ -79,9 +79,11 @@ def read_prewarm_advisory(workspace_root: Path) -> PrewarmState:
     + ``recommendation_active=False``. Malformed file → same shape.
     Never raises.
     """
-    advisory_path = (
-        Path(workspace_root) / mwq.PREWARM_RECOMMEND_FILENAME
-    )
+    # D-migration D.2 (amendment #63): advisory under
+    # <workspace>/workspace/.pos/ollama-prewarm-recommended.txt.
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    advisory_path = pos_subdir(workspace_root) / "ollama-prewarm-recommended.txt"
     advisory_value: str | None = None
     if advisory_path.exists():
         try:

@@ -38,6 +38,8 @@ class ObservabilityAggregatorContribution(BaseContribution):
     def contribute(self, host) -> None:
         from pos_observability_aggregator.ingest import register_otel_provider
 
+        from ..workspace_paths import data_subdir
+
         cfg_path = host.config_dir / "observability.yaml"
         cfg: dict = {}
         if cfg_path.exists():
@@ -47,7 +49,7 @@ class ObservabilityAggregatorContribution(BaseContribution):
 
         spool_path = Path(
             cfg.get("spool_path")
-            or str(host.workspace_root / "data" / "aggregator" / "spans.jsonl")
+            or str(data_subdir(host.workspace_root) / "aggregator" / "spans.jsonl")
         ).expanduser()
         spool_path.parent.mkdir(parents=True, exist_ok=True)
 

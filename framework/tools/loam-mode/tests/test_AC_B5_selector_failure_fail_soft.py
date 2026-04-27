@@ -28,8 +28,8 @@ from loam_mode.session_start import (
 def test_AC_B5_corrupt_contract_yaml_returns_absent(tmp_path: Path) -> None:
     """A malformed contract.yaml does NOT raise; ``read_dev_intent_safe``
     returns ``"absent"`` (user mode)."""
-    (tmp_path / "personas" / "primary").mkdir(parents=True)
-    (tmp_path / "personas" / "primary" / "contract.yaml").write_text(
+    (tmp_path / "workspace" / "personas" / "primary").mkdir(parents=True)
+    (tmp_path / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "::: this is not valid yaml :::\n[broken\n",
         encoding="utf-8",
     )
@@ -47,8 +47,8 @@ def test_AC_B5_emit_returns_empty_on_corrupt_contract(tmp_path: Path) -> None:
     """``emit_session_start_context`` is fail-soft: corrupt
     contract.yaml + dev-extension on disk → still returns empty
     (user-mode default)."""
-    (tmp_path / "personas" / "primary").mkdir(parents=True)
-    (tmp_path / "personas" / "primary" / "contract.yaml").write_text(
+    (tmp_path / "workspace" / "personas" / "primary").mkdir(parents=True)
+    (tmp_path / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "::: broken yaml\n",
         encoding="utf-8",
     )
@@ -66,8 +66,8 @@ def test_AC_B5_emit_returns_diagnostic_when_dev_extension_missing(
     """Dev session, but ``CLAUDE.dev.md`` is missing → emitter
     returns a fail-soft diagnostic line rather than raising. Session
     proceeds; user-visible string explains what happened."""
-    (tmp_path / "personas" / "primary").mkdir(parents=True)
-    (tmp_path / "personas" / "primary" / "contract.yaml").write_text(
+    (tmp_path / "workspace" / "personas" / "primary").mkdir(parents=True)
+    (tmp_path / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "handle: primary\nis_primary: true\ndev_intent: yes\n",
         encoding="utf-8",
     )
@@ -89,8 +89,8 @@ def test_AC_B5_cli_returns_zero_on_every_path(
     assert rc == 0
 
     # Path 2 — corrupt contract.
-    (tmp_path / "personas" / "primary").mkdir(parents=True)
-    (tmp_path / "personas" / "primary" / "contract.yaml").write_text(
+    (tmp_path / "workspace" / "personas" / "primary").mkdir(parents=True)
+    (tmp_path / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "::: broken yaml\n",
         encoding="utf-8",
     )
@@ -98,7 +98,7 @@ def test_AC_B5_cli_returns_zero_on_every_path(
     assert rc == 0
 
     # Path 3 — dev workspace, dev-ext present.
-    (tmp_path / "personas" / "primary" / "contract.yaml").write_text(
+    (tmp_path / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "handle: primary\nis_primary: true\ndev_intent: yes\n",
         encoding="utf-8",
     )

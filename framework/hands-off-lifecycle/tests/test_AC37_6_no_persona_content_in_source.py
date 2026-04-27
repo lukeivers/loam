@@ -60,7 +60,7 @@ def test_AC37_6_sentinel_prose_flows_through_renderer(tmp_path: Path) -> None:
     ws = tmp_path / "ws"
     ws.mkdir()
     template = REPO_ROOT / "framework" / "primary-persona" / "templates" / "persona-template"
-    persona_dir = ws / "personas" / "primary"
+    persona_dir = ws / "workspace" / "personas" / "primary"
     persona_dir.parent.mkdir(parents=True)
     shutil.copytree(template, persona_dir)
     contract_path = persona_dir / "contract.yaml"

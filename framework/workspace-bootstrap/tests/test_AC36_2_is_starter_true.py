@@ -58,7 +58,7 @@ def test_AC36_2_yaml_text_carries_is_starter_true_line(tmp_path: Path) -> None:
     scaffold to write the flag."""
     workspace = _scaffold_fresh(tmp_path)
     contract_path = (
-        workspace / "personas" / DEFAULT_PERSONA_HANDLE / "contract.yaml"
+        workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE / "contract.yaml"
     )
     text = contract_path.read_text()
 

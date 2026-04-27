@@ -154,7 +154,9 @@ def test_AC10_dispatch_for_second_workspace_spawns_worker_not_completed(
         FirstRunState(status="completed", pid=os.getpid()),
         alpha,
     )
-    assert (alpha / ".pos" / "first-run.state").exists()
+    # D-migration D.2 (amendment #63): workspace-state under
+    # <workspace>/workspace/.pos/ post-D.2.
+    assert (alpha / "workspace" / ".pos" / "first-run.state").exists()
 
     # Dispatch for beta with a recording helper.
     helper = _recording_helper(tmp_path)

@@ -43,8 +43,8 @@ def test_AC_B1_compute_session_mode_unexpected_returns_user() -> None:
 def test_AC_B1_read_dev_intent_safe_yes(tmp_path: Path) -> None:
     """Fixture workspace whose primary contract has ``dev_intent: yes``
     → reader returns ``"yes"``."""
-    (tmp_path / "personas" / "primary").mkdir(parents=True)
-    (tmp_path / "personas" / "primary" / "contract.yaml").write_text(
+    (tmp_path / "workspace" / "personas" / "primary").mkdir(parents=True)
+    (tmp_path / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "handle: primary\nis_primary: true\ndev_intent: yes\n",
         encoding="utf-8",
     )
@@ -52,8 +52,8 @@ def test_AC_B1_read_dev_intent_safe_yes(tmp_path: Path) -> None:
 
 
 def test_AC_B1_read_dev_intent_safe_no(tmp_path: Path) -> None:
-    (tmp_path / "personas" / "primary").mkdir(parents=True)
-    (tmp_path / "personas" / "primary" / "contract.yaml").write_text(
+    (tmp_path / "workspace" / "personas" / "primary").mkdir(parents=True)
+    (tmp_path / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "handle: primary\nis_primary: true\ndev_intent: no\n",
         encoding="utf-8",
     )
@@ -70,8 +70,8 @@ def test_AC_B1_compute_session_mode_chained_with_reader(
 ) -> None:
     """End-to-end: dev_intent on disk → reader → compute → mode.
     AC.B1 is satisfiable as a pipeline; this smoke-tests the chain."""
-    (tmp_path / "personas" / "primary").mkdir(parents=True)
-    (tmp_path / "personas" / "primary" / "contract.yaml").write_text(
+    (tmp_path / "workspace" / "personas" / "primary").mkdir(parents=True)
+    (tmp_path / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         "handle: primary\nis_primary: true\ndev_intent: yes\n",
         encoding="utf-8",
     )

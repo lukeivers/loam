@@ -201,8 +201,11 @@ def write_mcp_json(
     ``os.rename`` into final position. This avoids a torn-file
     state if the write is interrupted mid-flight.
     """
+    from ..workspace_paths import mcp_json_path as _mcp_json_path
+
     workspace_root = Path(workspace_root).resolve()
-    target = workspace_root / MCP_JSON_FILENAME
+    target = _mcp_json_path(workspace_root)
+    target.parent.mkdir(parents=True, exist_ok=True)
 
     existing: dict[str, Any]
     pre_existed = target.exists()

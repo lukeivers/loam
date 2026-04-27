@@ -145,17 +145,23 @@ def _entry(
 
 
 def test_class_a_path_resolves_keep_local_no_resolver_call(tmp_path: Path) -> None:
-    """AC.WS.2: Class-A entries skip the resolver entirely."""
+    """AC.WS.2: Class-A entries skip the resolver entirely.
+
+    D-migration D.2 (amendment #63): Class-A paths are now under
+    ``workspace/`` per the post-D.2 FRAMEWORK_FLOOR.
+    """
     canonical_root = tmp_path / "canon"
     workspace_root = tmp_path / "ws"
     canonical_root.mkdir()
     workspace_root.mkdir()
-    (canonical_root / ".mcp.json").write_text("{}")
-    (workspace_root / ".mcp.json").write_text("workspace")
+    (canonical_root / "workspace").mkdir()
+    (workspace_root / "workspace").mkdir()
+    (canonical_root / "workspace" / ".mcp.json").write_text("{}")
+    (workspace_root / "workspace" / ".mcp.json").write_text("workspace")
 
     stub = StubLLMClient([])  # would ResolverFailure if invoked
     resolver = MergeResolver(stub)
-    report = _make_report(_entry(".mcp.json"))
+    report = _make_report(_entry("workspace/.mcp.json"))
 
     resolve_inferred_conflicts(
         report=report,
@@ -171,17 +177,23 @@ def test_class_a_path_resolves_keep_local_no_resolver_call(tmp_path: Path) -> No
 
 
 def test_class_b_workspace_modified_keeps_local(tmp_path: Path) -> None:
-    """AC.WS.3: Class-B + workspace-modified → KEEP_LOCAL."""
+    """AC.WS.3: Class-B + workspace-modified → KEEP_LOCAL.
+
+    D-migration D.2 (amendment #63): Class-B ``memory.yaml`` is under
+    ``workspace/`` per the post-D.2 FRAMEWORK_FLOOR.
+    """
     canonical_root = tmp_path / "canon"
     workspace_root = tmp_path / "ws"
     canonical_root.mkdir()
     workspace_root.mkdir()
-    (canonical_root / "memory.yaml").write_text("canonical")
-    (workspace_root / "memory.yaml").write_text("workspace")
+    (canonical_root / "workspace").mkdir()
+    (workspace_root / "workspace").mkdir()
+    (canonical_root / "workspace" / "memory.yaml").write_text("canonical")
+    (workspace_root / "workspace" / "memory.yaml").write_text("workspace")
 
     resolver = MergeResolver(StubLLMClient([]))
     report = _make_report(
-        _entry("memory.yaml", change_kind=ConflictChangeKind.UPSTREAM_MODIFIED_AND_LOCAL_MODIFIED)
+        _entry("workspace/memory.yaml", change_kind=ConflictChangeKind.UPSTREAM_MODIFIED_AND_LOCAL_MODIFIED)
     )
 
     resolve_inferred_conflicts(

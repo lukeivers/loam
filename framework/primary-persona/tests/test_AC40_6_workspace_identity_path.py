@@ -41,8 +41,10 @@ def test_AC40_6_path_resolver_is_pure_workspace_identity_function(
     path_a = tracker_db_path_for(ws_a)
     path_b = tracker_db_path_for(ws_b)
 
-    assert path_a == ws_a / TRACKER_DB_FILENAME
-    assert path_b == ws_b / TRACKER_DB_FILENAME
+    # D-migration D.2 (amendment #63): tracker DB lives under
+    # <ws>/workspace/objective_tracker.sqlite post-D.2.
+    assert path_a == ws_a / "workspace" / TRACKER_DB_FILENAME
+    assert path_b == ws_b / "workspace" / TRACKER_DB_FILENAME
     assert path_a != path_b
     # Filename is the convention-parity constant (workspace-bootstrap
     # writes the same filename per amendment #39).

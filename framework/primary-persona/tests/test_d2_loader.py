@@ -70,7 +70,7 @@ def test_empty_personas_dir_raises(workspace: Path):
 
 
 def test_missing_contract_file_rejects(workspace: Path):
-    persona_dir = workspace / "personas" / "broken"
+    persona_dir = workspace / "workspace" / "personas" / "broken"
     persona_dir.mkdir(parents=True)
     # Only prompt.md, no contract.yaml.
     (persona_dir / "prompt.md").write_text("p")
@@ -81,7 +81,7 @@ def test_missing_contract_file_rejects(workspace: Path):
 
 
 def test_missing_prompt_file_rejects(workspace: Path):
-    persona_dir = workspace / "personas" / "missing-prompt"
+    persona_dir = workspace / "workspace" / "personas" / "missing-prompt"
     persona_dir.mkdir(parents=True)
     (persona_dir / "contract.yaml").write_text(
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: missing-prompt")
@@ -93,7 +93,7 @@ def test_missing_prompt_file_rejects(workspace: Path):
 
 
 def test_invalid_contract_field_names_failing_field(workspace: Path):
-    persona_dir = workspace / "personas" / "invalid"
+    persona_dir = workspace / "workspace" / "personas" / "invalid"
     persona_dir.mkdir(parents=True)
     # Missing severity_vocabulary entirely.
     (persona_dir / "contract.yaml").write_text(
@@ -122,7 +122,7 @@ def test_invalid_contract_field_names_failing_field(workspace: Path):
 
 def test_handle_directory_mismatch_rejects(workspace: Path):
     # Directory name `x` but contract claims handle `y`.
-    persona_dir = workspace / "personas" / "x"
+    persona_dir = workspace / "workspace" / "personas" / "x"
     persona_dir.mkdir(parents=True)
     (persona_dir / "contract.yaml").write_text(
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: y")
@@ -140,7 +140,7 @@ def test_handle_directory_mismatch_rejects(workspace: Path):
 def test_zero_primaries_rejects(workspace: Path):
     # Single persona with is_primary: false.
     write_persona_dir(
-        workspace / "personas",
+        workspace / "workspace" / "personas",
         "sidekick",
         yaml_override=VALID_CONTRACT_YAML.replace(
             "handle: eve", "handle: sidekick"
@@ -153,10 +153,10 @@ def test_zero_primaries_rejects(workspace: Path):
 
 
 def test_multiple_primaries_rejects(workspace: Path):
-    write_persona_dir(workspace / "personas", "eve")
+    write_persona_dir(workspace / "workspace" / "personas", "eve")
     # Second primary:
     write_persona_dir(
-        workspace / "personas",
+        workspace / "workspace" / "personas",
         "also-primary",
         yaml_override=VALID_CONTRACT_YAML.replace(
             "handle: eve", "handle: also-primary"
@@ -184,7 +184,7 @@ def test_reload_produces_identical_results(workspace_with_primary: Path):
 
 def test_retired_personas_ignored(workspace_with_primary: Path):
     # Add a directory under _retired/ — it must not load.
-    retired = workspace_with_primary / "personas" / "_retired" / "old-persona"
+    retired = workspace_with_primary / "workspace" / "personas" / "_retired" / "old-persona"
     retired.mkdir(parents=True)
     (retired / "contract.yaml").write_text(
         VALID_CONTRACT_YAML.replace("handle: eve", "handle: old-persona")

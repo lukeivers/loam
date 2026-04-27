@@ -25,7 +25,7 @@ from src import memory_write_queue as mwq
 
 def _write_advisory(workspace_root: Path, value: str = "24h") -> None:
     """Helper: emit a workspace-bootstrap-shaped advisory file."""
-    p = workspace_root / mwq.PREWARM_RECOMMEND_FILENAME
+    p = workspace_root / "workspace" / mwq.PREWARM_RECOMMEND_FILENAME
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(
         f"OLLAMA_KEEP_ALIVE={value}\n"
@@ -51,7 +51,7 @@ def test_AC_J_6_advisory_present_env_unset_recommends(tmp_path: Path, monkeypatc
     monkeypatch.delenv("OLLAMA_KEEP_ALIVE", raising=False)
 
     state = memory_prewarm.read_prewarm_advisory(tmp_path)
-    assert state.advisory_path == tmp_path / ".pos" / "ollama-prewarm-recommended.txt"
+    assert state.advisory_path == tmp_path / "workspace" / ".pos" / "ollama-prewarm-recommended.txt"
     assert state.advisory_value == "24h"
     assert state.env_value is None
     assert state.recommendation_active is True
@@ -67,7 +67,7 @@ def test_AC_J_6_advisory_present_env_set_no_recommendation(tmp_path: Path, monke
 
 
 def test_AC_J_6_malformed_advisory_does_not_crash(tmp_path: Path, monkeypatch) -> None:
-    p = tmp_path / mwq.PREWARM_RECOMMEND_FILENAME
+    p = tmp_path / "workspace" / mwq.PREWARM_RECOMMEND_FILENAME
     p.parent.mkdir(parents=True, exist_ok=True)
     # No OLLAMA_KEEP_ALIVE=... line.
     p.write_text("# random content\nno key\n", encoding="utf-8")

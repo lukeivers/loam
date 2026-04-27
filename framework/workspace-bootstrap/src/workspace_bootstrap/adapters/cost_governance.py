@@ -46,11 +46,12 @@ class CostGovernanceContribution(BaseContribution):
         from cost_governance.notification import CostChannel
 
         from ._channels import resolve_channel
+        from ..workspace_paths import data_subdir
 
         server = host.require("ipc_server")
         scope_runtime = host.require("scope_runtime")
 
-        store_path = host.workspace_root / "data" / "cost" / "cost.sqlite"
+        store_path = data_subdir(host.workspace_root) / "cost" / "cost.sqlite"
         store_path.parent.mkdir(parents=True, exist_ok=True)
         store = CostStore(store_path)
         config = default_config()

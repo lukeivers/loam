@@ -53,6 +53,13 @@ from pathlib import Path
 SENTINEL_DIR = ".pos"
 SENTINEL_FILE = "active-scope.json"
 
+# D-migration D.2 (amendment #63 / D.2-build.B): workspace-state lives
+# under ``<workspace>/workspace/`` post-D.2. Hook scripts duplicate the
+# constant per stdlib-only contract. Canonical source:
+# ``framework/workspace-bootstrap/src/workspace_bootstrap/
+#   workspace_paths.py`` (``WORKSPACE_STATE_SUBDIR``).
+WORKSPACE_STATE_SUBDIR = "workspace"
+
 
 @dataclass(frozen=True)
 class ScopeBinding:
@@ -92,8 +99,17 @@ class ActiveScopeWriteResult:
 
 
 def active_scope_path(workspace_root: Path | str) -> Path:
-    """Path to a workspace's active-scope sentinel file."""
-    return Path(workspace_root).expanduser() / SENTINEL_DIR / SENTINEL_FILE
+    """Path to a workspace's active-scope sentinel file.
+
+    D-migration D.2 (amendment #63): now under
+    ``<workspace>/workspace/.pos/active-scope.json``.
+    """
+    return (
+        Path(workspace_root).expanduser()
+        / WORKSPACE_STATE_SUBDIR
+        / SENTINEL_DIR
+        / SENTINEL_FILE
+    )
 
 
 def write_active_scope_sentinel(

@@ -27,8 +27,8 @@ from loam_mode.session_start import emit_session_start_context
 
 def _scaffold_workspace(tmp_path: Path, dev_intent: str) -> Path:
     ws = tmp_path / "ws"
-    (ws / "personas" / "primary").mkdir(parents=True)
-    (ws / "personas" / "primary" / "contract.yaml").write_text(
+    (ws / "workspace" / "personas" / "primary").mkdir(parents=True)
+    (ws / "workspace" / "personas" / "primary" / "contract.yaml").write_text(
         f"handle: primary\nis_primary: true\ndev_intent: {dev_intent}\n",
         encoding="utf-8",
     )

@@ -65,7 +65,7 @@ def test_AC36_3_re_install_is_noop_with_is_starter_true(tmp_path: Path) -> None:
     """The persona-dir installer is idempotent: a second call leaves
     contract.yaml + prompt.md mtimes + content hashes unchanged."""
     workspace = _scaffold_fresh(tmp_path)
-    persona_dir = workspace / "personas" / DEFAULT_PERSONA_HANDLE
+    persona_dir = workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE
 
     pre = _snapshot(persona_dir)
     # Sleep briefly so any spurious write would alter mtime detectably.
@@ -86,7 +86,7 @@ def test_AC36_3_re_install_is_noop_with_is_starter_false(tmp_path: Path) -> None
     a re-install must not flip the field back to true and must not
     overwrite the contract."""
     workspace = _scaffold_fresh(tmp_path)
-    persona_dir = workspace / "personas" / DEFAULT_PERSONA_HANDLE
+    persona_dir = workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE
     contract_path = persona_dir / "contract.yaml"
 
     # Simulate elicitation completion by flipping the flag on disk.
@@ -119,7 +119,7 @@ def test_AC36_3_full_scaffold_re_run_does_not_raise(tmp_path: Path) -> None:
     workspace returns the ``already_scaffolded`` short-circuit and
     leaves the persona directory unchanged."""
     workspace = _scaffold_fresh(tmp_path)
-    persona_dir = workspace / "personas" / DEFAULT_PERSONA_HANDLE
+    persona_dir = workspace / "workspace" / "personas" / DEFAULT_PERSONA_HANDLE
     pre = _snapshot(persona_dir)
     time.sleep(0.05)
 

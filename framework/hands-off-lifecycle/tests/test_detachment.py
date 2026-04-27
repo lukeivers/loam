@@ -67,7 +67,7 @@ def test_AC6_scaffold_partial_recovery_writes_missing_and_keeps_existing(
     )
 
     pos_root = tmp_path / ".pos"
-    pos_root.mkdir()
+    pos_root.mkdir(parents=True)
     # Leftover file from a crashed prior run — must survive the recovery
     # untouched so the user's in-flight edits are not lost.
     (pos_root / "memory.yaml").write_text("# user-edited leftover\n")
@@ -104,7 +104,7 @@ def test_AC6_scaffold_default_still_raises_without_recovery_flag(
     )
 
     pos_root = tmp_path / ".pos"
-    pos_root.mkdir()
+    pos_root.mkdir(parents=True)
     (pos_root / "memory.yaml").write_text("# leftover\n")
     with pytest.raises(PartialScaffoldError):
         run_first_run_scaffold(
@@ -128,7 +128,7 @@ def test_state_roundtrip_writes_and_reads_atomically(tmp_path: Path) -> None:
         status="running", pid=12345, phase="phase-3b-shared-deps"
     )
     write_state(state, ws)
-    assert (ws / ".pos" / "first-run.state").exists()
+    assert (ws / "workspace" / ".pos" / "first-run.state").exists()
     roundtrip = read_state(ws)
     assert roundtrip is not None
     assert roundtrip.status == "running"
@@ -143,8 +143,8 @@ def test_state_roundtrip_writes_and_reads_atomically(tmp_path: Path) -> None:
 def test_state_read_returns_none_on_corrupt_file(tmp_path: Path) -> None:
     # Amendment #28: state lives under <workspace>/.pos/.
     ws = tmp_path / "alpha"
-    (ws / ".pos").mkdir(parents=True)
-    (ws / ".pos" / "first-run.state").write_text("not json {{{")
+    (ws / "workspace" / ".pos").mkdir(parents=True)
+    (ws / "workspace" / ".pos" / "first-run.state").write_text("not json {{{")
     assert read_state(ws) is None
 
 
@@ -379,7 +379,7 @@ def test_AC1_fresh_dispatch_completes_in_under_5_seconds_with_plain_language(
     # Amendment #28: state is workspace-local, log stays host-global.
     # The state file must be written synchronously so the next
     # dispatch sees "starting" not "none."
-    assert (ws / ".pos" / "first-run.state").exists()
+    assert (ws / "workspace" / ".pos" / "first-run.state").exists()
     state = read_state(ws)
     assert state is not None
     assert state.status in ("starting", "running", "completed")
@@ -396,7 +396,7 @@ def test_AC3_completed_state_yields_short_circuit_message(
     ws = tmp_path / "pos-v2"
     (ws / ".claude").mkdir(parents=True)
     pos_root = tmp_path / ".pos"
-    pos_root.mkdir()
+    pos_root.mkdir(parents=True)
     # Amendment #28: state is workspace-local. Pre-seed a completed
     # state for THIS workspace so the dispatch recognises it.
     write_state(
@@ -473,7 +473,7 @@ def test_AC5_failed_state_surfaces_named_remediation(tmp_path: Path) -> None:
     ws = tmp_path / "pos-v2"
     (ws / ".claude").mkdir(parents=True)
     pos_root = tmp_path / ".pos"
-    pos_root.mkdir()
+    pos_root.mkdir(parents=True)
     # Amendment #28: state is workspace-local. Pre-seed a failed state
     # for THIS workspace so the dispatch recognises it (fills in the
     # workspace_root field automatically).
@@ -563,7 +563,7 @@ def test_advance_state_is_noop_without_explicit_enable(tmp_path: Path) -> None:
     first_run_helper._advance_state("running", phase="phase-3b-shared-deps")
     # No state file was written. Amendment #28: state path is
     # <workspace>/.pos/first-run.state.
-    assert not (tmp_path / ".pos" / "first-run.state").exists()
+    assert not (tmp_path / "workspace" / ".pos" / "first-run.state").exists()
 
 
 # ---- hook-level smoke: shell wrapper dispatches correctly -----------

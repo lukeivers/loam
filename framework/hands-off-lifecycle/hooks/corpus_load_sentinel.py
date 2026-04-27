@@ -59,6 +59,13 @@ from typing import Literal
 SENTINEL_DIR = ".pos"
 SESSION_STATE_SUBDIR = "session-state"
 
+# D-migration D.2 (amendment #63 / D.2-build.B): workspace-state lives
+# under ``<workspace>/workspace/`` post-D.2. Hook scripts duplicate
+# the constant per stdlib-only contract. Canonical source:
+# ``framework/workspace-bootstrap/src/workspace_bootstrap/
+#   workspace_paths.py`` (``WORKSPACE_STATE_SUBDIR``).
+WORKSPACE_STATE_SUBDIR = "workspace"
+
 WorkspaceMode = Literal["dev-mode", "normal-use"]
 CorpusState = Literal["loaded", "partial", "missing"]
 
@@ -138,9 +145,14 @@ class CorpusLoadWriteResult:
 def session_state_path(
     workspace_root: Path | str, session_id: str
 ) -> Path:
-    """Path to the (workspace, session_id) sentinel file."""
+    """Path to the (workspace, session_id) sentinel file.
+
+    D-migration D.2 (amendment #63): now under
+    ``<workspace>/workspace/.pos/session-state/<session_id>.json``.
+    """
     return (
         Path(workspace_root).expanduser()
+        / WORKSPACE_STATE_SUBDIR
         / SENTINEL_DIR
         / SESSION_STATE_SUBDIR
         / f"{session_id}.json"

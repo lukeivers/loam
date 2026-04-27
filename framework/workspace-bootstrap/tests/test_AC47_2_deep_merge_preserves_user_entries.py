@@ -63,7 +63,8 @@ def test_AC47_2_deep_merge_preserves_user_entries(
         },
         "_user_comment": "this top-level key is mine",
     }
-    target = workspace / MCP_JSON_FILENAME
+    target = workspace / "workspace" / MCP_JSON_FILENAME
+    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(user_authored, indent=2) + "\n")
 
     # Run the scaffold (fresh, with starter memory.yaml).
@@ -108,7 +109,7 @@ def test_AC47_2_idempotent_no_op_on_already_current_content(
     assert first.wrote is True
     assert first.reason == "fresh_write"
 
-    target = workspace / MCP_JSON_FILENAME
+    target = workspace / "workspace" / MCP_JSON_FILENAME
     bytes_after_first = target.read_bytes()
 
     # Second write: same input → already_current.
@@ -140,7 +141,8 @@ def test_AC47_2_re_merge_overwrites_stale_memory_graphiti_entry(
             "my-tool": {"type": "stdio", "command": "/bin/echo"},
         }
     }
-    target = workspace / MCP_JSON_FILENAME
+    target = workspace / "workspace" / MCP_JSON_FILENAME
+    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(stale, indent=2) + "\n")
 
     result = write_mcp_json(

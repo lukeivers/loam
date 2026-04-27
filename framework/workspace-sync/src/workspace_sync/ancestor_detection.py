@@ -96,8 +96,14 @@ class AncestorCache(BaseModel):
 
 
 def cache_path(workspace_root: Path, ref: str) -> Path:
-    """Return the absolute cache file path for a workspace + ref."""
-    return workspace_root / ".pos" / "sync" / ref / "ancestor-cache.yaml"
+    """Return the absolute cache file path for a workspace + ref.
+
+    D-migration D.2 (amendment #63): workspace-state under
+    ``<workspace>/workspace/.pos/sync/``.
+    """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "sync" / ref / "ancestor-cache.yaml"
 
 
 def load_cache(

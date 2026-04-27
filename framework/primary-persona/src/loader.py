@@ -116,7 +116,14 @@ class PersonaLoader:
 
     @property
     def personas_dir(self) -> Path:
-        return self.workspace_root / "personas"
+        # D-migration D.2 (amendment #63): personas live under
+        # <workspace>/workspace/personas/ post-D.2 (was
+        # <workspace>/personas/ pre-D.2).
+        from workspace_bootstrap.workspace_paths import (
+            personas_dir as _personas_dir,
+        )
+
+        return _personas_dir(self.workspace_root)
 
     @property
     def retired_dir(self) -> Path:

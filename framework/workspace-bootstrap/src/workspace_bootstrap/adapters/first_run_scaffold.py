@@ -698,19 +698,29 @@ def run_first_run_scaffold(
 
     # Amendment J (AC.J.1 / AC.J.4): write the workspace-local
     # ``ollama-prewarm-recommended.txt`` + ``memory-worker.yaml``
-    # under <workspace>/.pos/. Both are advisory + config surfaces
-    # the persona/worker reads back; idempotent (won't clobber user
-    # edits on partial-recovery or re-runs). Per Hard Constraint 12,
-    # pos-v2 does NOT touch the operator's homebrew Ollama plist —
-    # the advisory file names the operator-side commands they run
-    # themselves.
+    # under <workspace>/workspace/.pos/. Both are advisory + config
+    # surfaces the persona/worker reads back; idempotent (won't
+    # clobber user edits on partial-recovery or re-runs). Per Hard
+    # Constraint 12, pos-v2 does NOT touch the operator's homebrew
+    # Ollama plist — the advisory file names the operator-side
+    # commands they run themselves.
     j_advisory_written, j_worker_cfg_written = (
         _write_amendment_j_workspace_files(Path(ws))
     )
     if j_advisory_written:
-        written.append(f"<workspace>/.pos/{PREWARM_ADVISORY_FILENAME}")
+        written.append(f"<workspace>/workspace/.pos/{PREWARM_ADVISORY_FILENAME}")
     if j_worker_cfg_written:
-        written.append(f"<workspace>/.pos/{WORKER_CONFIG_FILENAME}")
+        written.append(f"<workspace>/workspace/.pos/{WORKER_CONFIG_FILENAME}")
+
+    # D-migration D.2 (amendment #63 / AC.D.2.1): scaffold a
+    # ``<workspace>/.gitignore`` declaring ``framework/`` as the only
+    # tracked subtree. Workspace-state under ``<workspace>/workspace/``
+    # is per-workspace runtime state and must not be committed in a
+    # derived workspace. Idempotent: existing ``.gitignore`` is left
+    # untouched (operator-edits survive).
+    workspace_gitignore_written = _write_workspace_gitignore(Path(ws))
+    if workspace_gitignore_written:
+        written.append("<workspace>/.gitignore")
 
     # Amendment #39: seed the workspace's objective-tracker DB with
     # the value-prop root + spec-tier descendants. Idempotent by
@@ -818,6 +828,12 @@ def _run_tracker_seed(
 # ---- amendment J — workspace-local advisory + worker config helpers
 
 
+# D.2 (amendment #63): the ``.pos/`` workspace-state directory now
+# lives under ``<workspace>/workspace/.pos/`` (not ``<workspace>/.pos/``).
+# ``WORKSPACE_POS_DIR`` is preserved as an exported constant for
+# backwards compatibility with tests that previously joined it onto
+# ``workspace_root``; tests should now use ``pos_subdir(workspace_root)``
+# from ``workspace_bootstrap.workspace_paths``.
 WORKSPACE_POS_DIR = ".pos"
 PREWARM_ADVISORY_FILENAME = "ollama-prewarm-recommended.txt"
 WORKER_CONFIG_FILENAME = "memory-worker.yaml"
@@ -847,7 +863,9 @@ def _write_amendment_j_workspace_files(
     ``(advisory_written, worker_config_written)`` — True iff the
     file was actually authored on this invocation.
     """
-    pos_dir = Path(workspace_root) / WORKSPACE_POS_DIR
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    pos_dir = pos_subdir(workspace_root)
     pos_dir.mkdir(parents=True, exist_ok=True)
     advisory_path = pos_dir / PREWARM_ADVISORY_FILENAME
     worker_cfg_path = pos_dir / WORKER_CONFIG_FILENAME
@@ -878,6 +896,41 @@ def _write_amendment_j_workspace_files(
 # backoff). Workspaces tune by editing the file; the worker's
 # ``load_worker_config`` helper falls back to the same defaults when
 # the file is absent.
+
+# D-migration D.2 (amendment #63 / AC.D.2.1): the scaffolded
+# ``<workspace>/.gitignore`` declares ``framework/`` as the only
+# tracked subtree. Workspace-state under ``workspace/`` is runtime
+# state; ``.claude/`` carries Claude-Code-discoverable artefacts the
+# operator may want versioned (per D-Q.A4); everything else is
+# off-by-default. Operator can opt anything in by editing the file.
+_WORKSPACE_GITIGNORE = """\
+# Auto-scaffolded by pos-v2 workspace-bootstrap (D-migration D.2,
+# amendment #63). framework/ is the only git-tracked subtree by
+# default; everything else is workspace-state and gitignored.
+# Operator may opt artefacts back in by adding `!<path>` lines.
+*
+!.gitignore
+!framework
+!framework/**
+!.claude
+!.claude/**
+"""
+
+
+def _write_workspace_gitignore(workspace_root: Path) -> bool:
+    """Scaffold ``<workspace>/.gitignore`` if absent.
+
+    Idempotent: existing ``.gitignore`` files are left untouched so
+    operator edits survive partial-recovery + re-runs. Returns True
+    iff the file was written on this invocation.
+    """
+    target = Path(workspace_root) / ".gitignore"
+    if target.exists():
+        return False
+    target.write_text(_WORKSPACE_GITIGNORE)
+    target.chmod(0o644)
+    return True
+
 
 _OLLAMA_PREWARM_ADVISORY = """\
 OLLAMA_KEEP_ALIVE=24h
@@ -973,13 +1026,13 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
       <string>{workspace}/.venv/bin/python</string>
       <string>-m</string><string>pos_orchestrator</string>
     </array>
-    <key>WorkingDirectory</key><string>{workspace}</string>
+    <key>WorkingDirectory</key><string>{workspace}/workspace</string>
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><true/>
     <key>ThrottleInterval</key><integer>30</integer>
     <key>ProcessType</key><string>Interactive</string>
-    <key>StandardOutPath</key><string>{workspace}/orchestrator.out.log</string>
-    <key>StandardErrorPath</key><string>{workspace}/orchestrator.err.log</string>
+    <key>StandardOutPath</key><string>{workspace}/workspace/orchestrator.out.log</string>
+    <key>StandardErrorPath</key><string>{workspace}/workspace/orchestrator.err.log</string>
     <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>PATH</key><string>{path}</string></dict>
 </dict>
 </plist>
@@ -1008,12 +1061,12 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
       <string>memory-worker</string>
       <string>--workspace</string><string>{workspace}</string>
     </array>
-    <key>WorkingDirectory</key><string>{workspace}</string>
+    <key>WorkingDirectory</key><string>{workspace}/workspace</string>
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><true/>
     <key>ThrottleInterval</key><integer>10</integer>
-    <key>StandardOutPath</key><string>{workspace}/memory-write-worker.out.log</string>
-    <key>StandardErrorPath</key><string>{workspace}/memory-write-worker.err.log</string>
+    <key>StandardOutPath</key><string>{workspace}/workspace/memory-write-worker.out.log</string>
+    <key>StandardErrorPath</key><string>{workspace}/workspace/memory-write-worker.err.log</string>
     <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>POS_V2_WORKSPACE_ROOT</key><string>{workspace}</string><key>PATH</key><string>{path}</string></dict>
 </dict>
 </plist>
@@ -1264,8 +1317,10 @@ def _install_persona_directory(
     into ``personas/<handle>/``. Atomic-on-success; partial failure
     leaves the staging dir for partial-recovery to clean up.
     """
+    from workspace_bootstrap.workspace_paths import personas_dir as _personas_dir
+
     workspace_root = Path(workspace_root).resolve()
-    personas_dir = workspace_root / "personas"
+    personas_dir = _personas_dir(workspace_root)
     persona_dir = personas_dir / handle
 
     contract_path = persona_dir / _PERSONA_CONTRACT_FILENAME

@@ -44,7 +44,7 @@ def workspace_with_persona(tmp_path: Path) -> Path:
     ws = tmp_path / "ws"
     ws.mkdir()
     template = REPO_ROOT / "framework" / "primary-persona" / "templates" / "persona-template"
-    persona_dir = ws / "personas" / "primary"
+    persona_dir = ws / "workspace" / "personas" / "primary"
     persona_dir.parent.mkdir(parents=True)
     shutil.copytree(template, persona_dir)
     contract_path = persona_dir / "contract.yaml"
@@ -154,8 +154,8 @@ def test_AC37_3_user_edited_handle_round_trips(
     the new path. AC37.3 third outcome: the agent-file path is not
     re-derived from a stale cached handle."""
     # User renames the persona directory + edits contract handle.
-    old_dir = workspace_with_persona / "personas" / "primary"
-    new_dir = workspace_with_persona / "personas" / "iris"
+    old_dir = workspace_with_persona / "workspace" / "personas" / "primary"
+    new_dir = workspace_with_persona / "workspace" / "personas" / "iris"
     old_dir.rename(new_dir)
     contract_path = new_dir / "contract.yaml"
     txt = contract_path.read_text()

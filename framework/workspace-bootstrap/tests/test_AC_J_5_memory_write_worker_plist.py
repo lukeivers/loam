@@ -49,9 +49,14 @@ def test_AC_J_5_scaffold_installs_memory_write_worker_plist(tmp_path: Path) -> N
     assert plist_path.exists(), f"worker plist missing: {plist_path}"
     text = plist_path.read_text()
 
-    # Label + WorkingDirectory.
+    # Label + WorkingDirectory. D-migration D.2 (amendment #63): the
+    # plist's WorkingDirectory now points at <ws>/workspace/ so cwd-
+    # relative writes land in the workspace-state tree.
     assert f"<key>Label</key><string>{label}</string>" in text
-    assert f"<key>WorkingDirectory</key><string>{workspace}</string>" in text
+    assert (
+        f"<key>WorkingDirectory</key><string>{workspace}/workspace</string>"
+        in text
+    )
 
     # AC.J.5: supervised-launchd shape.
     assert "<key>KeepAlive</key><true/>" in text
@@ -115,7 +120,7 @@ def test_AC_J_5_scaffold_writes_worker_config_yaml(tmp_path: Path) -> None:
         workspace_root=workspace,
     )
 
-    cfg = workspace / WORKSPACE_POS_DIR / WORKER_CONFIG_FILENAME
+    cfg = workspace / "workspace" / WORKSPACE_POS_DIR / WORKER_CONFIG_FILENAME
     assert cfg.exists()
     text = cfg.read_text(encoding="utf-8")
     # D-3 lock: 5 retries, 2s→60s exp backoff.
@@ -140,7 +145,7 @@ def test_AC_J_5_worker_config_idempotent_re_run(tmp_path: Path) -> None:
         workspace_root=workspace,
     )
 
-    cfg = workspace / WORKSPACE_POS_DIR / WORKER_CONFIG_FILENAME
+    cfg = workspace / "workspace" / WORKSPACE_POS_DIR / WORKER_CONFIG_FILENAME
     cfg.write_text("max_retries: 9\n# operator-tuned\n")
 
     run_first_run_scaffold(

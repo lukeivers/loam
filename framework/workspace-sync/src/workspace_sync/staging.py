@@ -31,8 +31,14 @@ from pathlib import Path
 
 
 def staging_root(workspace_root: Path, ref: str) -> Path:
-    """Return ``<workspace>/.pos/sync/staging/<ref>/``."""
-    return Path(workspace_root) / ".pos" / "sync" / "staging" / ref
+    """Return ``<workspace>/workspace/.pos/sync/staging/<ref>/``.
+
+    D-migration D.2 (amendment #63): workspace-state under
+    ``<workspace>/workspace/.pos/``.
+    """
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "sync" / "staging" / ref
 
 
 def stage_canonical_clean_writes(

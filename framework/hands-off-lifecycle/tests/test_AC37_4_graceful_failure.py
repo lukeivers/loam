@@ -46,7 +46,7 @@ def workspace_with_persona(tmp_path: Path) -> Path:
     ws = tmp_path / "ws"
     ws.mkdir()
     template = REPO_ROOT / "framework" / "primary-persona" / "templates" / "persona-template"
-    persona_dir = ws / "personas" / "primary"
+    persona_dir = ws / "workspace" / "personas" / "primary"
     persona_dir.parent.mkdir(parents=True)
     shutil.copytree(template, persona_dir)
     return ws
@@ -109,7 +109,7 @@ def test_AC37_4_persona_scaffold_remains_after_write_failure(
     finally:
         claude_dir.chmod(0o700)
 
-    persona_dir = workspace_with_persona / "personas" / "primary"
+    persona_dir = workspace_with_persona / "workspace" / "personas" / "primary"
     assert persona_dir.is_dir()
     assert (persona_dir / "contract.yaml").is_file()
     assert (persona_dir / "prompt.md").is_file()

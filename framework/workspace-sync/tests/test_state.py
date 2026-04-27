@@ -20,13 +20,13 @@ from workspace_sync.state import (
 def test_audit_path_under_pos_sync_ref(tmp_path: Path) -> None:
     """AC.WS.5: audit lands at <workspace>/.pos/sync/<ref>/audit.yaml."""
     p = audit_yaml_path(tmp_path, "abc123")
-    assert p == tmp_path / ".pos" / "sync" / "abc123" / "audit.yaml"
+    assert p == tmp_path / "workspace" / ".pos" / "sync" / "abc123" / "audit.yaml"
 
 
 def test_state_path_under_pos_sync(tmp_path: Path) -> None:
     """AC.WS.8: state.yaml lands at <workspace>/.pos/sync/state.yaml."""
     p = state_yaml_path(tmp_path)
-    assert p == tmp_path / ".pos" / "sync" / "state.yaml"
+    assert p == tmp_path / "workspace" / ".pos" / "sync" / "state.yaml"
 
 
 def test_state_save_load_round_trip(tmp_path: Path) -> None:
@@ -63,6 +63,6 @@ def test_state_record_uses_sync_ref_field(tmp_path: Path) -> None:
         status=SyncStatus.SUCCESS,
     )
     save_state(record, tmp_path)
-    raw = yaml.safe_load((tmp_path / ".pos" / "sync" / "state.yaml").read_text())
+    raw = yaml.safe_load((tmp_path / "workspace" / ".pos" / "sync" / "state.yaml").read_text())
     assert raw["sync_ref"] == "zzz"
     assert "upgrade_tag" not in raw

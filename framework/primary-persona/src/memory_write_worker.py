@@ -46,8 +46,13 @@ def _diag_log_path(workspace_root: Path) -> Path:
     The schema is shared (NDJSON ``kind:`` discriminator); the
     worker adds new ``kind`` values without changing existing
     semantics (#48 backward-compat per Hard Constraint 4).
+
+    D-migration D.2 (amendment #63): now under
+    ``<workspace>/workspace/.pos/``.
     """
-    return Path(workspace_root) / ".pos" / "memory-writes.log"
+    from workspace_bootstrap.workspace_paths import pos_subdir
+
+    return pos_subdir(workspace_root) / "memory-writes.log"
 
 
 def _append_diag(workspace_root: Path, entry: dict[str, Any]) -> None:

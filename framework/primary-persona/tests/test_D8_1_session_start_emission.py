@@ -57,9 +57,11 @@ def _seed_baseline_workspace(root: Path) -> None:
     # Two in-flight amendments; enumerated by glob.
     (root / "docs" / "rebuild" / "plans" / "amendment-one.md").write_text("#1")
     (root / "docs" / "rebuild" / "plans" / "amendment-two.md").write_text("#2")
-    # First-run state with a completed_at timestamp.
-    pos = root / ".pos"
-    pos.mkdir()
+    # First-run state with a completed_at timestamp. D-migration D.2
+    # (amendment #63): workspace-state under <ws>/workspace/.pos/
+    # post-D.2.
+    pos = root / "workspace" / ".pos"
+    pos.mkdir(parents=True)
     (pos / "first-run.state").write_text(
         json.dumps({"completed_at": "2026-04-24T00:00:00Z"})
     )

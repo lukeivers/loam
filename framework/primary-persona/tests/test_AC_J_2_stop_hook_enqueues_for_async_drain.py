@@ -61,7 +61,7 @@ def test_AC_J_2_cli_stop_returns_fast_and_enqueues_one_record(
         f"AC.J.2 budget exceeded: cli_stop took {elapsed_ms:.1f}ms"
     )
 
-    qdir = tmp_path / ".pos" / "memory-write-queue"
+    qdir = tmp_path / "workspace" / ".pos" / "memory-write-queue"
     assert qdir.is_dir()
     entries = sorted(qdir.glob("*.json"))
     assert len(entries) == 1, (
@@ -105,4 +105,4 @@ def test_AC_J_2_enqueue_does_not_open_mcp_transport(
     rc = cli_stop(workspace_root=tmp_path)
     assert rc == 0
     # The queue entry is the only side effect.
-    assert (tmp_path / ".pos" / "memory-write-queue").is_dir()
+    assert (tmp_path / "workspace" / ".pos" / "memory-write-queue").is_dir()

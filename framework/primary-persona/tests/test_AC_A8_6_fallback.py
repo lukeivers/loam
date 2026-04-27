@@ -29,7 +29,7 @@ from ._helpers_a8 import (
 
 
 def _read_log(workspace):
-    log = workspace / ".pos" / "dispatch-wrapper.log"
+    log = workspace / "workspace" / ".pos" / "dispatch-wrapper.log"
     if not log.exists():
         return []
     return [json.loads(ln) for ln in log.read_text().splitlines() if ln.strip()]

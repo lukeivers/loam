@@ -43,7 +43,7 @@ def test_AC_SE_2_writes_sentinel_with_required_fields(
     )
     assert result.wrote is True
     assert result.reason == "written"
-    on_disk = json.loads((tmp_path / ".pos" / "active-scope.json").read_text())
+    on_disk = json.loads((tmp_path / "workspace" / ".pos" / "active-scope.json").read_text())
     assert on_disk["scope_id"] == "A1-substrate"
     assert on_disk["plan_path"] == (
         "docs/rebuild/plans/structural-enforcement-a1-substrate.md"
@@ -69,7 +69,7 @@ def test_AC_SE_2_idempotent_on_byte_equal_rewrite(
         bindings=bindings,
         session_id=None,
     )
-    target = tmp_path / ".pos" / "active-scope.json"
+    target = tmp_path / "workspace" / ".pos" / "active-scope.json"
     mtime_after_first = target.stat().st_mtime_ns
     # The serialised payload contains created_at — for byte-equal
     # idempotency the second write must reuse the same content. We
@@ -157,7 +157,7 @@ def test_AC_SE_2_different_scope_id_overwrites(
         session_id=None,
     )
     on_disk = json.loads(
-        (tmp_path / ".pos" / "active-scope.json").read_text()
+        (tmp_path / "workspace" / ".pos" / "active-scope.json").read_text()
     )
     assert on_disk["scope_id"] == "second"
     assert on_disk["plan_path"] == "docs/b.md"
@@ -190,6 +190,6 @@ def test_AC_SE_2_session_id_optional(tmp_path: Path) -> None:
     )
     assert result.wrote is True
     on_disk = json.loads(
-        (tmp_path / ".pos" / "active-scope.json").read_text()
+        (tmp_path / "workspace" / ".pos" / "active-scope.json").read_text()
     )
     assert on_disk["session_id"] is None

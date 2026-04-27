@@ -64,7 +64,7 @@ def test_AC_SE_4_per_session_id_path(tmp_path: Path) -> None:
     """Two different session_ids produce two distinct sentinel files."""
     write_corpus_load_sentinel(tmp_path, session_id="a", mode="normal-use")
     write_corpus_load_sentinel(tmp_path, session_id="b", mode="normal-use")
-    files = list((tmp_path / ".pos" / "session-state").iterdir())
+    files = list((tmp_path / "workspace" / ".pos" / "session-state").iterdir())
     names = sorted(f.name for f in files)
     assert names == ["a.json", "b.json"]
 

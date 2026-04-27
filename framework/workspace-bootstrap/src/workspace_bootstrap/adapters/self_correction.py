@@ -38,12 +38,13 @@ class SelfCorrectionContribution(BaseContribution):
         )
 
         from ._channels import resolve_channel
+        from ..workspace_paths import data_subdir
 
         server = host.require("ipc_server")
         scope_runtime = host.require("scope_runtime")
 
         store_path = (
-            host.workspace_root / "data" / "self_correction" / "correction.sqlite"
+            data_subdir(host.workspace_root) / "self_correction" / "correction.sqlite"
         )
         store_path.parent.mkdir(parents=True, exist_ok=True)
         store = CorrectionStore(store_path)

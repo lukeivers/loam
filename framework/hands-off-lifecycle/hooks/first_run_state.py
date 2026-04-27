@@ -74,6 +74,19 @@ STATE_FILE = "first-run.state"
 LOG_FILE = "first-run.log"
 
 
+# D-migration D.2 (amendment #63 / D.2-build.B): workspace-state path
+# constants. Hook scripts run under launchd before the workspace's
+# .venv exists, so they cannot import
+# ``workspace_bootstrap.workspace_paths``; constants duplicated here
+# per the locked D.2-build.B decision. Canonical source:
+# ``framework/workspace-bootstrap/src/workspace_bootstrap/
+#   workspace_paths.py``. Keep in sync manually if the canonical
+# source changes.
+WORKSPACE_STATE_SUBDIR = "workspace"
+POS_SUBDIR = ".pos"
+TRACKER_DB_FILENAME = "objective_tracker.sqlite"
+
+
 # Terminal states.
 TERMINAL_STATES = frozenset({"completed", "failed"})
 
@@ -158,9 +171,15 @@ def state_path(workspace_root: Path | str) -> Path:
 
     Amendment #28: keyed by workspace, not host. ``workspace_root`` is
     the pos-v2 workspace directory; the state file lives at
-    ``<workspace>/.pos/first-run.state``.
+    ``<workspace>/workspace/.pos/first-run.state`` post-D.2 (was
+    ``<workspace>/.pos/first-run.state`` pre-D.2 amendment #63).
     """
-    return Path(workspace_root).expanduser() / ".pos" / STATE_FILE
+    return (
+        Path(workspace_root).expanduser()
+        / WORKSPACE_STATE_SUBDIR
+        / POS_SUBDIR
+        / STATE_FILE
+    )
 
 
 def log_path(pos_root: Path = DEFAULT_POS_ROOT) -> Path:

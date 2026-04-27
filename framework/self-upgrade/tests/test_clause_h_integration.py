@@ -76,13 +76,13 @@ def test_clause_h_class_a_preserved(tmp_path: Path) -> None:
     canonical.mkdir()
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    (canonical / ".pos").mkdir()
-    (canonical / ".pos" / "objective_tracker.sqlite").write_text("canonical-state")
-    (workspace / ".pos").mkdir()
-    (workspace / ".pos" / "objective_tracker.sqlite").write_text("workspace-state")
+    (canonical / "workspace" / ".pos").mkdir(parents=True)
+    (canonical / "workspace" / ".pos" / "objective_tracker.sqlite").write_text("canonical-state")
+    (workspace / "workspace" / ".pos").mkdir(parents=True)
+    (workspace / "workspace" / ".pos" / "objective_tracker.sqlite").write_text("workspace-state")
 
     report = _make_report(
-        conflicts=[_entry(".pos/objective_tracker.sqlite")]
+        conflicts=[_entry("workspace/.pos/objective_tracker.sqlite")]
     )
     sp = default_sync_protected()
     resolver = MergeResolver(StubLLMClient([]))  # unused for class A

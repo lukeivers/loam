@@ -40,7 +40,7 @@ def _write_transcript(path: Path) -> None:
 
 
 def _read_queue_entries(workspace_root: Path) -> list[dict[str, Any]]:
-    qdir = workspace_root / ".pos" / "memory-write-queue"
+    qdir = workspace_root / "workspace" / ".pos" / "memory-write-queue"
     if not qdir.exists():
         return []
     out: list[dict[str, Any]] = []
@@ -90,7 +90,7 @@ def test_AC_M_8_two_consecutive_stops_same_turn_yield_one_queue_entry(
         f"expected dedupe to one queue entry; got {len(entries)}"
     )
     # The marker file was written.
-    marker = tmp_path / ".pos" / "last-turn-id"
+    marker = tmp_path / "workspace" / ".pos" / "last-turn-id"
     assert marker.exists()
     assert marker.read_text(encoding="utf-8").strip().startswith("s1:")
     # AC.J.2: no Popen detach pattern in either fire.
@@ -148,7 +148,7 @@ def test_AC_M_8_marker_miss_does_not_double_enqueue(
     # Operator-style marker deletion: the marker is best-effort per
     # #48 D4. Removing it simulates a workspace-bootstrap race or a
     # manual reset.
-    (tmp_path / ".pos" / "last-turn-id").unlink()
+    (tmp_path / "workspace" / ".pos" / "last-turn-id").unlink()
 
     # Second fire: marker miss → re-enqueue. AC.J.7 says the on-disk
     # filename keyed on turn-id collapses this to ONE entry, not two.

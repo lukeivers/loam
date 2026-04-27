@@ -95,4 +95,4 @@ def test_AC_E_7_runner_receives_canonical_db_filename(tmp_path: Path) -> None:
 
     db_path = Path(runner.calls[0]["tracker_db_path"])
     assert db_path.name == TRACKER_DB_FILENAME
-    assert db_path == workspace / TRACKER_DB_FILENAME
+    assert db_path == workspace / "workspace" / TRACKER_DB_FILENAME

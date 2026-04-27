@@ -70,4 +70,6 @@ def test_AC_A_5_resolver_returns_personas_directory(tmp_path: Path):
     # method commitment but we test it via the read API (AC.A.6's
     # round-trip) to avoid pinning method here. AC.A.5's outcome is
     # the workspace-rooting + distinctness above.
-    assert out.parent == tmp_path
+    # D-migration D.2 (amendment #63): personas live under
+    # <ws>/workspace/personas/ post-D.2 (was <ws>/personas/ pre-D.2).
+    assert out.parent == tmp_path / "workspace"

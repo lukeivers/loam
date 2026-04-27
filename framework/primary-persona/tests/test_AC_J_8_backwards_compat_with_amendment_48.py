@@ -111,7 +111,7 @@ def test_AC_J_8_stop_hook_diag_log_kind_values_preserved(
     rc = cli_stop(workspace_root=tmp_path)
     assert rc == 0
 
-    diag_path = tmp_path / ".pos" / "memory-writes.log"
+    diag_path = tmp_path / "workspace" / ".pos" / "memory-writes.log"
     assert diag_path.exists()
     lines = [ln for ln in diag_path.read_text(encoding="utf-8").splitlines() if ln.strip()]
     assert len(lines) >= 1

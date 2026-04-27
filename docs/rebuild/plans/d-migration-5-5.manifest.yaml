@@ -1,0 +1,188 @@
+schema_version: 1
+amendment:
+  number: 66
+  slug: d-migration-5-5-stale-bare-directories-cleanup
+  title: "D-migration D.5.5 — cleanup of D.1's stale bare directories (Finding B)"
+
+# BASELINE: dbd91c7 — current HEAD at dispatch (D.5's verdict-only
+# docs commit `docs(plans): D-migration D.5 verdict — verdict-only;
+# Finding B cleanup deferred to D.5.5`). Per the BASELINE-as-HEAD~1
+# pattern (#29 / #34-#65), when D.5.5's feat commit lands HEAD
+# advances and apply runs against this BASELINE.
+baseline: dbd91c78e6a3f195ba8c31732a60404b6ce17d9b
+
+plan: docs/rebuild/plans/d-migration-5-5.builder-plan.md
+
+seal_description: "D-migration D.5.5 — cleanup of D.1's stale bare directories (Finding B)"
+
+# Single-component sealed amendment per builder-plan §0.B (D.5.5-build.B).
+# workspace-sync is the natural fence: the substantive deletion is the
+# bare workspace-sync/ directory (43 files), and the bare tools/ deletion
+# (109 files) is admitted by workspace-sync's existing `tools/` allowed-
+# prefix. The 7 PRE-D.1-SEAL_COMMIT components stay untouched (their
+# SEAL_COMMITs are at pre-D.1 SHAs per D.1.5's retroactive revert; the
+# D.5.5 commit lands AFTER their SEAL_COMMIT, so it sits OUTSIDE their
+# diff windows). The other 5 POST-D.1-SEAL_COMMIT components likewise
+# stay at their existing SEAL_COMMITs (not in this manifest → no apply
+# touch → window unchanged).
+#
+# No cleanup_directives: block needed. The mechanism's purpose (D.1.5)
+# is to revert prior bumps; D.5.5 does not need to revert anything.
+# Components stay at their current SEAL_COMMITs simply by virtue of
+# not being in the components: list.
+components:
+  - name: workspace-sync
+    seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+
+# Universal admissions per amendment #22 ruling #3 + D.1 / D.2 / D.3 /
+# D.4 precedent. workspace-sync's seal-test already admits `tools/`,
+# `workspace-sync/`, `framework/tools/`, `framework/workspace-sync/`,
+# `framework/hands-off-lifecycle/`, and `docs/rebuild/plans/`. No
+# widening required.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.true-first-run
+  body: |
+    # Amendment #66 — D-migration D.5.5 — cleanup of D.1's stale bare directories (Finding B)
+
+    2026-04-26. Final D-migration housekeeping. D.5's audit (research
+    note: `.scratch/claude-output/d-migration-d5-audit-2026-04-26.md`)
+    surfaced two findings: (A) bare-prefix admissions in 13 sealed-
+    component test_no_sealed_amendments.py files are permanently
+    load-bearing for 7 components per D.1.5's retroactive SEAL_COMMIT
+    reverts (NOT transitional — left in place); (B) D.1's `git mv` was
+    actually `git cp` for three top-level paths, leaving stale pre-D.1
+    duplicates of `tools/`, `workspace-sync/`, and one runtime test-
+    output file in the canonical tree. D.5 verdict-only docs commit
+    landed at dbd91c7. D.5.5 (this amendment) closes Finding B.
+
+    ## Surface deleted
+
+      - tools/ (109 files) — bare top-level pre-D.1 duplicate of
+        framework/tools/. Frozen at D.1's pre-restructure state; every
+        file has a framework/tools/<same-path> counterpart of equal-
+        or-newer content (HC#4 SAME-OR-NEWER bound verified pre-build
+        via cmp + git log).
+
+      - workspace-sync/ (43 files) — bare top-level pre-D.1 duplicate
+        of framework/workspace-sync/. Frozen at D.1's pre-restructure
+        state. 30 files have framework/ counterparts (post-D.3 advanced
+        for the kept modules); 13 are D.3-retired modules
+        (ancestor_detection.py, conflict_detection.py, conflict_report.py,
+        merge_helper.py, merge_primitives.py, staging.py, plus their
+        tests) intentionally counterpart-absent and authorised for
+        deletion by the dispatch.
+
+    ## Surface excluded (halt-and-surface)
+
+      - data/observability/spans.jsonl — single file flagged by the
+        D.5 audit as a possible third stale duplicate. HC#4 verification
+        found NO framework/ counterpart; the file is observability
+        runtime test output (12 OTLP-shaped jsonl records) committed
+        accidentally in 65acb97. Per HC#4 strict reading ("any file
+        without a framework/ counterpart → surface, do not delete in
+        this amendment"), excluded from D.5.5. Recommended follow-on:
+        single-file `git rm` outside the D-migration plan.
+
+    ## Surface added
+
+      - framework/workspace-sync/tests/test_AC_D_5_5_bare_paths_absent.py
+        (NEW) — 4 tests (AC.D.5.5.1 + AC.D.5.5.2): bare tools/ absent,
+        bare workspace-sync/ absent, framework/tools/ present with
+        content, framework/workspace-sync/ present with content.
+
+    ## Surface unchanged
+
+      - The 13 sealed-component test_no_sealed_amendments.py files
+        keep their bare-prefix admissions (`tools/`, `workspace-sync/`,
+        `data/`). These admissions are LOAD-BEARING per Finding A:
+        D.1.5's commit 9d90782 retroactively reverted SEAL_COMMITs to
+        pre-D.1 SHAs for cost-governance, graceful-degradation,
+        memory-system, observability-aggregator, reversibility-
+        primitive, self-correction, telegram-interface; their seal-
+        diff windows genuinely span pre-D.1 paths via `git diff
+        --name-only` rename-deletion semantics. Removing the
+        admissions would break those components' seal tests. Kept.
+
+    ## Fence + cleanup_directives design
+
+      - Single-component manifest: workspace-sync only. Workspace-sync
+        is the natural fence — the substantive deletion is the bare
+        workspace-sync/ directory; bare tools/ deletion is admitted
+        by workspace-sync's existing `tools/` prefix.
+
+      - No cleanup_directives: block. The mechanism's purpose (D.1.5,
+        Amendment #62) is to revert prior amendment bumps. D.5.5
+        does not need to revert anything. The 7 PRE-D.1-SEAL_COMMIT
+        components stay at their pre-D.1 SHAs automatically — they are
+        not in the components: list, so no apply-step touch, no seal-
+        step bump. Their seal-diff windows close at the still-pre-D.1
+        SEAL_COMMIT, OUTSIDE the D.5.5 deletion commit.
+
+      - The other 5 POST-D.1 components (objective-tracker, orchestrator,
+        primary-persona, self-upgrade, workspace-bootstrap) plus
+        hands-off-lifecycle stay at their existing SEAL_COMMITs for the
+        same reason. Their windows are unchanged.
+
+      - --scoped-sweep at seal time runs workspace-sync's seal-diff
+        test only (the only window that moves). Speedup (a).
+
+    ## ACs delivered
+
+      - AC.D.5.5.1 — Bare tools/ directory absent post-D.5.5.
+        Verified by test_AC_D_5_5_1_bare_tools_absent +
+        test_AC_D_5_5_1_framework_tools_present (HC#4 counterpart
+        preservation).
+
+      - AC.D.5.5.2 — Bare workspace-sync/ directory absent post-D.5.5.
+        Verified by test_AC_D_5_5_2_bare_workspace_sync_absent +
+        test_AC_D_5_5_2_framework_workspace_sync_present (HC#4
+        counterpart preservation).
+
+      - AC.D.5.5.3 — data/observability/spans.jsonl halt-and-surface.
+        No test (out of D.5.5 scope per HC#4 strict reading); captured
+        in builder-plan §0.A and the seal narrative above.
+
+      - AC.D.5.5.S — Seal-diff invariant. Single-component manifest;
+        workspace-sync's window admits all D.5.5 paths via existing
+        bare-prefix + framework-prefix + universal admissions. Other
+        12 sealed components' windows are static.
+
+    ## Backwards-compatibility (HC#2)
+
+      - All 13 sealed components' seal-diff tests pass post-D.5.5.
+        Bare-prefix admissions kept (load-bearing per Finding A).
+
+      - HC#3: no new third-party deps (stdlib only in regression test).
+
+      - HC#4: counterpart verification ran pre-build. 109 + 30 files
+        have framework/ counterparts of equal-or-newer content; 13
+        are D.3-retired (intentional counterpart-absence, authorised
+        by dispatch); 1 (data/observability/spans.jsonl) surfaced
+        and excluded.
+
+      - HC#5: only canonical pos-v2 working tree modified; pos3
+        untouched.
+
+      - HC#7-#9: scope-only-dispatch + no `--amend` + plan-before-
+        code + manifest + builder-plan committed alongside.
+
+    BASELINE dbd91c7 (D.5 verdict-only docs commit — HEAD at dispatch).
+    workspace-sync's BASELINE advances per `pos-amend apply`.
+
+    Next: D-migration's last housekeeping closes here. After D.5.5:
+    a separate post-D.5.5 amendment migrates pos3 to the D-shape
+    (the operational cutover; HC#5 of D.4 dispatch). The optional
+    `data/observability/spans.jsonl` follow-on can fold into that
+    amendment or land independently.

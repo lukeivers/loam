@@ -327,6 +327,62 @@ When a builder cannot re-extend (e.g., the gap is so large it requires the
 original author to re-scope), the sanctioned action is **halt and signal**,
 not quiet handling.
 
+### 4.5 When re-extension repeats: the architecture-level gap
+
+Single-AC re-extension (§4.1–§4.4) handles per-criterion gaps
+discovered during build. A different pattern arises when the
+same code area requires 2+ hotfixes in close succession: the
+gap is at the architecture level, not the AC level.
+
+The trigger: any sealed component or amendment chain that
+produces 2 or more hotfix amendments against the same code
+area should escalate to a first-principles review of the
+architecture. The hotfix loop indicates the AC-level
+re-extension mechanism is patching a structural problem that
+AC-level fixes cannot reach.
+
+The response: pause hotfix iteration; commission a research
+dispatch to first-principles the design choice underneath the
+hotfix surface; produce alternatives (typically including a
+structural redesign that eliminates the failure class per
+§5.1.1); ruling-grade decision before more hotfixes land.
+
+The methodology distinction: §4 governs gaps that fit inside
+the existing architecture; §4.5 governs gaps that do not. Both
+are sanctioned responses; the latter requires a higher
+ceremony commensurate with the larger blast radius.
+
+### 4.6 First-principles thinking triggers
+
+A standing list of signals that should trigger a first-principles
+review of the current architectural / design path, rather than
+continuing to apply incremental fixes:
+
+1. **N≥2 hotfixes on the same sealed component within K=14 days.**
+   Two or more corrective amendments touching the same component
+   within a fortnight is a signal the architecture (not the AC) is
+   the gap. Before dispatching the 3rd hotfix, run a first-
+   principles review.
+2. **Same root cause appears in N≥2 distinct code paths within one
+   fix cycle.** When fixing one bug surfaces siblings of the same
+   class, the architecture is wrong-shaped — the failure is not at
+   the AC level. The 2026-04-27 α-hotfix → α-hotfix-2 chain is the
+   canonical example.
+3. **Test-discipline failure** (tests pass + bug ships in
+   production behaviour). Test contract does not encode the right
+   invariants. First-principles review the test contract, not just
+   the bug.
+4. **Operator confusion event** ("how would a normal person do
+   this?", "why is this so complicated?"). Design model is
+   mismatched. First-principles review the user-facing model.
+5. **Estimate inflation that feels wrong** for the apparent scope.
+   Often signals the work is wrong-shaped.
+
+The triggers fire on observable signals; they do not impose a
+periodic checkpoint on every decision. Every-decision reflection
+is paralysis; never-reflect is decay; trigger-based is the
+middle path.
+
 ---
 
 ## 5. Enforcement at runtime — structural checks, not advisory rules
@@ -348,6 +404,34 @@ code cannot violate it without refactoring the structural check itself.
 ODD prefers structural over advisory every time. Advisory is the fallback for
 things structure cannot reach (e.g., persona voice, documentation clarity).
 Anything that *can* be expressed structurally *must* be.
+
+### 5.1.1 The relocate-vs-eliminate test (structural sharpening)
+
+"Structural over advisory" is necessary but not sufficient. Among
+structural options, prefer the one that *eliminates* the failure
+class over the one that merely *relocates* it to a new layer.
+
+Mechanisms are tools; impossibility is the goal. A structural
+option that depends on a future maintainer remembering to update
+the mechanism (a `.gitignore` pattern that must be added when
+new state files are introduced; a validator that must be amended
+when new categories are needed) has relocated the failure mode
+from "developer forgot the rule" to "developer forgot to update
+the mechanism." A structural option that makes the failed state
+unrepresentable (a directory split that prevents accidental
+modification because the wrong directory cannot be reached
+without explicit traversal; an enum without the forbidden value)
+has eliminated the failure class.
+
+The test: *"Can a future code change re-introduce the same
+failure class without active discipline?"* If yes, the option
+is rule-shaped despite using a structural mechanism, and a
+stronger structural option should be sought.
+
+This is the second-order corollary of §5.1's preference. The
+methodology defaults to structural-over-advisory; the sharpening
+defaults to elimination-over-relocation when both options are
+structural.
 
 ### 5.2 The clause-(g) pattern
 
@@ -405,6 +489,15 @@ Some things resist structural checks. Examples:
 - documentation clarity,
 - whether a user-facing message is helpful,
 - whether a chosen abstraction is the right one.
+- **LLM verdicts as gates.** An LLM call producing a confidence
+  score or accept/reject verdict is not a deterministic
+  structural mechanism: the same prompt and the same model can
+  return different verdicts across runs. When an LLM verdict is
+  the gate, the gate is not structurally guaranteed. Pair with
+  a deterministic floor (refuse-below-X is structural; the
+  score crossing X is the LLM's call) or an N-of-M agreement
+  protocol; do not treat fixed-floor + single-LLM-call as a
+  structural refusal.
 
 For these, ODD falls back to the objective + acceptance pattern with a
 test-based or review-based check, and accepts that the check is not
@@ -611,6 +704,16 @@ The work has been built. You are reviewing the diff.
     "callers should not do Y" but the code permits Y. If Y can be prevented
     structurally (type system, schema, constructor), the advisory is a
     defect — promote to structural.
+14. **Verdict-shape-only verification on state-mutating diffs.** A
+    test suite that asserts the verdict object's shape (status,
+    summary, audit row) but not the actual file-content on disk
+    leaves a gap a no-op apply can ship through. For amendments
+    whose effect is to mutate workspace files (sync, upgrade,
+    scaffold), at least one test must read the post-mutation
+    file from disk and byte-compare against the expected blob.
+    Output strings ("applied: <ref>") and audit shapes are
+    necessary but not sufficient — they describe the intent, not
+    the effect.
 
 ### 8.3 The two quick refusal rules
 

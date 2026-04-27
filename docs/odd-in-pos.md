@@ -711,6 +711,114 @@ violations. "It was already there" is not a backing criterion; the
 amendment's author carries responsibility for what lands at HEAD, not
 only what the amendment added to whatever came before.
 
+### 9.8 Byte-content verification on state-mutating amendments
+
+(`odd-methodology.md` §8.2.14 is the governing rule; this subsection
+documents the first pos-v2 incident that surfaced the need to state
+it explicitly.)
+
+Workspace-sync amendment #57 (Bundle α — resolver cost overhaul)
+shipped with 101 passing tests verifying verdict shape — the resolver
+produced the right `entry_status: "ancestor_match"` enum, the audit
+row was emitted, the apply step output `[workspace-sync] applied:
+<ref>`. Live-tested against pos3, the apply step ran clean: the
+verdict was right, the audit was right, the message printed. The
+files on disk were unchanged.
+
+The bug: `resolved_content_path: null` in the NN ancestor-detection
+path let `apply` silently no-op. Tests asserted the verdict
+structure; no test read a post-apply file from disk and compared
+bytes against canonical's expected blob.
+
+Amendment #59 (α-hotfix) closed AC.α-hotfix.1: NN-resolved entries
+actually overwrite workspace files. Amendment #60 (α-hotfix-2)
+closed four further correctness bugs of the verdict-without-stage
+class, identified once the byte-content discipline was applied.
+
+The lesson: for any amendment whose effect is to mutate workspace
+files (sync, upgrade, scaffold, install), verdict-shape tests are
+necessary but not sufficient. At least one test must read the
+post-mutation file from disk and byte-compare against the expected
+blob. The verdict describes the intent; only on-disk content
+describes the effect.
+
+### 9.9 Relocate vs eliminate — the workspace-sync D-decision
+
+(`odd-methodology.md` §5.1.1 is the governing rule.)
+
+The 2026-04-27 first-principles review of workspace-sync produced
+two structurally-sound alternatives:
+
+- **D′** — keep the current flat layout; rely on the existing
+  `.gitignore` to keep workspace state out of canonical's git
+  tree; reduce `pos-sync` to `git fetch + git merge --ff-only`
+  against a tracking branch.
+- **D** — directory-split the workspace into `framework/`
+  (git-tracked, pulled from canonical) and `workspace/`
+  (workspace state, never pulled).
+
+Both are nominally structural — neither relies on a runtime rule
+the operator must remember. But the relocate-vs-eliminate test
+distinguishes them:
+
+- D′ relocates the failure class. A future maintainer who
+  introduces a new state-file pattern must remember to add it to
+  the gitignore. Forgotten gitignore entries silently track
+  workspace state into canonical, exactly the failure mode the
+  mechanism was supposed to prevent. The mechanism shifts the
+  burden from "remember the sync rule" to "remember the gitignore
+  rule"; the failure class is preserved.
+- D eliminates the failure class. State files written under
+  `workspace/` cannot be tracked by canonical's pull because
+  canonical's pull operates against `framework/`. The wrong-
+  directory mistake is structurally unreachable; no future
+  maintainer can recreate the failure class without refactoring
+  the directory split itself.
+
+Luke ruled D over D′. The decision rationale: even though D′
+captures ~80% of D's benefit at ~20% of the migration cost, the
+~20% D adds *is* the elimination guarantee, and that guarantee
+is the property the sync mechanism's robustness depends on.
+
+The lesson: among structural options, prefer the one that makes
+the failed state unrepresentable. "Structural mechanism in place"
+is necessary; "failure class no longer reachable" is the goal.
+
+### 9.10 Bug-pattern-driven architectural review
+
+(`odd-methodology.md` §4.5 is the governing rule.)
+
+Workspace-sync's α stage shipped at #57. Live-test against pos3
+surfaced the byte-content bug (§9.8 above); amendment #59 closed
+the NN-resolved-overwrite gap as α-hotfix-1. Once the byte-content
+discipline was applied to the rest of the resolver, four sibling
+correctness bugs of the same class surfaced — each a `verdict-
+without-stage` failure where the resolver emitted the right
+verdict but never produced the staged file. Amendment #60 closed
+all four as α-hotfix-2.
+
+At that point the pattern itself was the signal: two hotfix
+amendments against the same code area within hours, with the
+sibling failures sharing a single root cause. The signal said
+"the gap is at the architecture level, not the AC level." Per
+§4.5, the response is to pause hotfix iteration and first-
+principles the design.
+
+The first-principles review (2026-04-27) commissioned a research
+dispatch evaluating four design alternatives (A′, B, C, D) plus
+the status-quo continuation. The output: D′ (gitignore-based)
+and D (directory-split) emerged as the structurally-sound
+alternatives. The relocate-vs-eliminate test (§9.9 above) ruled
+D over D′. D commitment closed the architecture-level gap; no
+further hotfix in the α chain landed.
+
+The lesson: 2 hotfixes in the same area is the structural signal
+that the architecture is wrong-shaped. The hotfix loop is a
+patch — necessary in the short term, evidence of an architectural
+gap in the medium term. First-principles review at the 2-hotfix
+threshold is the sanctioned response; pushing through to a 3rd
+hotfix without review is the failure mode.
+
 ---
 
 ## 10. Frozen-vs-floating BASELINE convention (per-invariant BASELINE)

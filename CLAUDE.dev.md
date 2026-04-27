@@ -20,6 +20,7 @@ editing code, dispatching agents, ruling on designs — read:
 - `docs/odd-in-pos.md` (worked examples)
 - `docs/rebuild/VALUE_PROPOSITION.md`
 - `docs/rebuild/STATE.md`
+- `docs/duration-estimation-rubric.md` (AI-build wall-time estimation rubric)
 - `docs/rebuild/FUTURE_IDEAS.md` (CDCs live here; they apply to every build)
 - Any `docs/rebuild/plans/amendment-*.md` whose amendment is in-flight
 
@@ -73,9 +74,9 @@ require the read. If in doubt, read.
   mechanises sealed-component amendment-cycle bookkeeping (BASELINE
   advances, allowed_prefixes/allowed_files widening, SEAL_COMMIT sidecar
   bumps, narrative appends) driven by a per-amendment YAML manifest
-  committed alongside the plan doc. As of amendment #22,
-  `pos-amend apply --dry-run` green is a hard prereq for amendment
-  commits.
+  committed alongside the plan doc. Per the pos-amend convention
+  (amendment #22), `pos-amend apply --dry-run` green is a hard
+  prereq for amendment commits.
 
 ---
 

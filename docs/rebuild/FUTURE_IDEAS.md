@@ -302,6 +302,8 @@ For each candidate, the question at planning time is: "does this naturally compo
 
 **Plugin selection discipline:** do not ship all eight. Pick the two or three that maximise early pOS-v2 value and prove the plugin ecosystem; let the community (or later phases) build the rest. The dev/SDLC plugin is the one that is definitely in because pOS itself needs it.
 
+**Dev/SDLC plugin sub-feature: objective-extraction skill for existing repos.** Captured 2026-04-26. Most users bring existing code with them — a job repo, a side project, an inherited codebase — and ODD's value-prop drops sharply if those projects can't be brought under the discipline retroactively. The proposed skill runs on a cloned repo and abstracts out what it believes the repo's objectives are: reverse ODD, walking UP the objective tree from concrete artefacts (files, methods, tests, configurations, deployment manifests) to a candidate objective list that the user can confirm, refine, or correct. Output: the objective list the project would have had if authored ODD-shape from the start, the ACs that would have backed each, and a coverage map flagging code that doesn't ladder up to any objective (ODD §2.5 violations the legacy code carries that the user can choose to address or sanction). **Critical implementation constraints, baked in from the start:** (a) handle very large repos via slice-and-swarm — slice the codebase into work units, plan a swarm of background sub-agents that each review a bounded set of files / methods / tests / configs, aggregate findings up; (b) token budget is the user's, not the harness's — instrument cumulative cost and pause / surface / resume rather than silently consuming budget; (c) work must be background-droppable — when the user requests something else, the extraction yields, parks state to disk, and resumes when bandwidth returns; (d) work must be background-pickup-able — the skill can be told "spend 30 minutes on this overnight while I'm not using the system" and make incremental progress without continuous user attention; (e) the slice/swarm/aggregate shape is itself an ODD pattern (each slice is a sub-objective + ACs scoped to its files; the aggregate is the umbrella objective). Composes with: parallelism trait (the swarm IS parallelism applied to a discovery problem); auto-skilling (this is itself a codified pattern, candidate for the skill ecosystem); cost-governance (token-budget-instrumented from day 1); Idea 4 (Deep personalisation — same "abstract structure from data" shape but for code rather than interactions); Idea 20 (LLM-as-classifier+verifier — slice-classify + deterministic-extract + verify shape). High leverage for SDLC plugin adoption — without this, ODD inside pos-v2 helps only greenfield work.
+
 ---
 
 ## Idea 4 — Deep personalisation through interaction capture
@@ -675,6 +677,77 @@ Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced by the 202
 **Trigger to activate.** Either: (a) sub-plan E activates and the amendment can absorb the diagnostic emit (cheapest), OR (b) a second silent-failure investigation surfaces (the integration-test agent's Finding-2 was the first), OR (c) any future amendment to the scaffold-runner surface area where the diagnostic is in the same neighbourhood.
 
 **Out of scope.** A full structured-events programme for first-run observability (telemetry, OTel events, dashboard surfaces). This idea is the one-line emit, not the framework — composable with future telemetry work but not blocked by it.
+
+---
+
+## Idea 20 — LLM-as-classifier + LLM-as-verifier, never LLM-as-generator (meta-pattern)
+
+A generalisable pattern surfaced 2026-04-27 from the workspace-sync milestone live-test. When the LLM acts as **content GENERATOR** (e.g. produces a fully merged file as `merged_content`), it must emit every line of the result — for a 100-line file that's ~5-7k output tokens, ~60-120s+ at typical rates. Asymmetric insight: **small-output LLM calls are cheap; large-output ones are not.**
+
+The pattern collapses generator-shaped problems into two small-output calls bracketing a deterministic primitive:
+
+1. **Classify** (small LLM call, ~50 token output): "Is this {file / case / situation} structurally tractable to {merge / transform / reshape}? If yes, what class?"
+2. **Apply** (deterministic primitive, ~0.01s, free, audit-grade reproducible): the matching transformation does the actual work.
+3. **Verify** (small LLM call, ~200 token output): "Did the deterministic step preserve {meaning / intent / content}? Any concerns?"
+4. **Apply or fall back**: verify passes → accept; verify fails → fall back to the slow LLM-generator path OR halt-and-surface.
+
+**Properties:**
+
+- **Speed:** generator-path → ~60-120s+; classifier+verifier path → ~10-30s. **3-8× faster** in observed cases.
+- **Cost:** LLM cost scales with output tokens. Small-output calls are cheap.
+- **Auditability:** the deterministic step is reproducible; the verify step is logged. The generator path produces opaque content trusted on faith.
+- **Safety:** verify-fail is a high-quality halt-and-surface signal. The generator path has no equivalent.
+
+**Generalises beyond merge resolution to** test generation (deterministic harness + LLM verifies coverage), code review (deterministic linters + LLM verifies semantic correctness), doc summarisation (deterministic outline extraction + LLM verifies fidelity), context compaction (deterministic dedupe + LLM verifies nothing-load-bearing-lost), and any "design + check" task where deterministic primitives can do the design.
+
+**Composes with:**
+
+- Idea 1 (three-lens enforcement): the meta-pattern is itself a candidate enforcement rule — when a feature requires LLM output >X tokens, prefer classifier+verifier shape.
+- Idea 4 (Deep personalisation): structured user-profile updates from interactions are deterministic; LLM verifies coherence.
+- Idea 6 (ODD as default framing): ODD-shaped tasks are themselves deterministic-primitive-shaped; the persona can verify rather than generate.
+- Cost-governance: classifier+verifier shape has known-bounded token budget; generator shape does not.
+
+**Origin and first manifestation:** workspace-sync clause-(h) merge resolver (#56) shipped as LLM-as-generator. Live-test against pos3 timed out on the first inferred-merged verdict (FUTURE_IDEAS_DRAFT.md, ~125 lines × 2 sides + JSON schema = ~5k+ input tokens, full file output forced 120s+ subprocess timeout). Refined design (Bundle α.2 in DRAFT) replaces the generator path. Captures the pattern as a meta-rule for all future LLM-mediated features.
+
+---
+
+## Idea 21 — Persona own-behaviour structural enforcement
+
+Captured 2026-04-27 (graduated from `FUTURE_IDEAS_DRAFT.md` after
+4+ documented failure modes in a single session).
+
+The primary persona has a recurring failure mode: asking permission
+on uncontroversial in-scope work despite explicit broad-autonomy
+directives ("want me to X?", "awaiting your call", "ruling
+needed"). Discipline-level reminders have failed empirically — the
+pattern is too easy to slip into mid-reply.
+
+Three structural-enforcement candidates:
+
+1. Stop-hook contributor that scans persona's outbound replies
+   (Telegram + terminal + Claude desktop) for permission-asking
+   patterns and either (a) rewrites them to action announcements
+   ("doing X unless you object") or (b) halts with a
+   self-correction step before send.
+2. Deterministic post-processor at Telegram-send time that converts
+   "awaiting your call on X" → "doing X unless you object" for
+   in-scope work, evaluated against the autonomy directive at
+   send time.
+3. Structural pre-send check baked into the reply tool wrapper.
+
+Composes with Idea 1 (three-lens enforcement substrate), Idea 6
+(ODD as default framing — own-behaviour is a class of in-scope
+work), Idea 20 (LLM-as-classifier+verifier — the rewrite step is
+exactly the meta-pattern).
+
+Sibling structural-enforcement candidates from the same review:
+default-action-verb rewrite ("I'm doing X" not "want me to X?"),
+dossier-canonical-truth deduplication (warn on dossier claims that
+disagree with git log / plan-doc §14 / manifest).
+
+Trigger to activate: A1 substrate (existing structural-enforcement
+programme) lands and is stable; this is a natural A2 / A3
+amendment on top.
 
 ---
 

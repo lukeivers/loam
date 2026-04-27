@@ -195,6 +195,37 @@ class ConflictEntry(BaseModel):
                     f"{self.path}: resolution=inferred-merged requires "
                     "resolved_content_path"
                 )
+            # α-hotfix-2 (#60) Bug C: structural-enforcement-default
+            # per ODD §5.3. INFERRED_ACCEPT_CANONICAL must carry a
+            # resolved_content_path pointing at staging — without it,
+            # apply_staging_atomically silently no-ops on the path
+            # (the entire fault-class α-hotfix #59 + this hotfix
+            # close). The validator gate prevents future regressions.
+            # INFERRED_ACCEPT_WORKSPACE remains ungated: the workspace
+            # already holds the content; staging is unnecessary.
+            if (
+                r is Resolution.INFERRED_ACCEPT_CANONICAL
+                and not self.resolved_content_path
+            ):
+                raise ValueError(
+                    f"{self.path}: resolution=inferred-accept-canonical "
+                    "requires resolved_content_path"
+                )
+        # α-hotfix-2 (#60) Bug C continued: ACCEPT_UPSTREAM (Class-B
+        # operator-prefers-canonical) is the same shape as
+        # INFERRED_ACCEPT_CANONICAL — canonical's content must be
+        # staged for apply to overwrite the workspace file. This
+        # rule lives outside the INFERRED_RESOLUTIONS branch above
+        # because ACCEPT_UPSTREAM is not an inferred resolution
+        # (it has no rationale/confidence requirement).
+        if (
+            r is Resolution.ACCEPT_UPSTREAM
+            and not self.resolved_content_path
+        ):
+            raise ValueError(
+                f"{self.path}: resolution=accept-upstream requires "
+                "resolved_content_path"
+            )
         # user_override demands override_rationale.
         if self.user_override and (
             self.override_rationale is None

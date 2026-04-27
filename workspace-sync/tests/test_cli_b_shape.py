@@ -532,3 +532,461 @@ def test_alpha_hotfix_NN_resolved_paths_actually_overwrite_workspace_file(
         "resolved_content_path post-fix; the original bug left it "
         f"null. entry: {entry!r}"
     )
+
+
+# ---- α-hotfix-2 #60 regressions — Bug A, Bug B, Bug D ---------------------
+#
+# All three are file-content-byte-match (or state-status) assertions that
+# catch the verdict-set-without-content-staged fault-class on the three
+# accept-canonical-flavored code paths α-hotfix #59 did not close
+# (HC#1 named-scope binding) plus the state.yaml hygiene bug primary
+# persona caught during post-#59 verification.
+# ----------------------------------------------------------------------
+
+
+def _build_canonical(canonical: Path) -> None:
+    """Helper: initialize a git repo with `git init -q` + identity config.
+    Tests below use it to build synthetic canonicals."""
+    subprocess.run(["git", "-C", str(canonical), "init", "-q"], check=True)
+    subprocess.run(
+        ["git", "-C", str(canonical), "config", "user.email", "t@t"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(canonical), "config", "user.name", "t"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(canonical), "config", "commit.gpgsign", "false"],
+        check=True,
+    )
+
+
+def test_alpha_hotfix_2_LLM_accept_canonical_overwrites_workspace_file(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """AC.α-hotfix-2.1 / Bug A: when the LLM resolver returns
+    inferred-accept-canonical (NOT via the α.1 NN fast-path), the
+    workspace file's bytes must match canonical's HEAD blob byte-for-
+    byte after pos-sync --auto-accept.
+
+    Pre-α-hotfix-2: cli.py:271-274 read `pass` for INFERRED_ACCEPT_CANONICAL
+    (the comment "do nothing extra" was wrong; clean_writes contains
+    only conflict-detector-clean writes, not paths the resolver later
+    resolved as accept-canonical). apply_staging_atomically silently
+    no-op'd → false-success.
+
+    Post-α-hotfix-2: cli.py post-resolve loop calls the centralized
+    stage_canonical_at_ref primitive on these entries, dropping
+    canonical's HEAD content into staging. apply picks it up.
+
+    Test shape (HC#3 binding):
+      - Build a single-commit canonical (no ancestor history → α.1 NN
+        cannot match → falls through to LLM resolver).
+      - Seed a workspace with different content for the same path.
+      - Stub the resolver factory to return MergeVerdict
+        (resolution="inferred-accept-canonical", confidence=0.9).
+      - Run cli.main with --auto-accept.
+      - Assert workspace file bytes equal canonical HEAD blob.
+    """
+    from workspace_sync.merge_primitives import (
+        MergeClassification,
+        MergeVerification,
+    )
+
+    # ---- 1. Single-commit canonical -----------------------------
+    canonical = tmp_path / "canonical"
+    canonical.mkdir()
+    _build_canonical(canonical)
+
+    payload_path = "framework/payload.py"
+    (canonical / "framework").mkdir()
+    (canonical / payload_path).write_text("v1-canonical-head\n")
+    subprocess.run(["git", "-C", str(canonical), "add", "-A"], check=True)
+    subprocess.run(
+        ["git", "-C", str(canonical), "commit", "-q", "-m", "v1"], check=True
+    )
+
+    canonical_head_blob = subprocess.check_output(
+        ["git", "-C", str(canonical), "show", f"HEAD:{payload_path}"]
+    )
+
+    # ---- 2. Workspace at unrelated content (NN won't match) ------
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "framework").mkdir()
+    # Random unrelated content — NOT in any canonical-history ancestor.
+    (workspace / payload_path).write_bytes(b"unrelated-workspace-content\n")
+
+    from workspace_sync.sync_protected import write_default_if_absent
+    write_default_if_absent(workspace)
+
+    assert (workspace / payload_path).read_bytes() != canonical_head_blob
+
+    # ---- 3. Stub the resolver factory --------------------------
+    # Return INFERRED_ACCEPT_CANONICAL for the generator-path call.
+    # α.2 classifier returns "unknown" by default → fallthrough to
+    # the generator path which returns our verdict.
+    import workspace_sync.cli as cli_mod
+
+    class TypedStubLLM:
+        def invoke(self, prompt, response_model):
+            if response_model is MergeClassification:
+                return MergeClassification(
+                    merge_class="unknown",
+                    confidence=0.0,
+                    reasoning="test stub",
+                ), 50
+            if response_model is MergeVerification:
+                return MergeVerification(
+                    passed=False,
+                    class_mismatch=False,
+                    concerns="stub",
+                    confidence=0.0,
+                ), 100
+            # MergeVerdict (legacy generator path).
+            return MergeVerdict(
+                resolution="inferred-accept-canonical",
+                merged_content=None,
+                rationale="LLM said accept canonical",
+                confidence=0.95,
+            ), 200
+
+    def fake_factory(module_spec: str, *, budget=None) -> MergeResolver:
+        return MergeResolver(TypedStubLLM(), budget or ResolverBudget())
+
+    monkeypatch.setattr(cli_mod, "_load_merge_resolver", fake_factory)
+
+    # ---- 4. Run pos-sync with --auto-accept --------------------
+    rc = main(
+        [
+            "--canonical",
+            str(canonical),
+            "--workspace",
+            str(workspace),
+            "--auto-accept",
+            "--confidence-floor",
+            "0.85",
+        ]
+    )
+    assert rc == 0, (
+        f"pos-sync exited non-zero (rc={rc}); "
+        f"stdout/stderr=\n{capsys.readouterr()}"
+    )
+
+    # ---- 5. Binding HC#3 assertion -----------------------------
+    workspace_payload_bytes = (workspace / payload_path).read_bytes()
+    assert workspace_payload_bytes == canonical_head_blob, (
+        f"AC.α-hotfix-2.1 violated: workspace file at "
+        f"{workspace / payload_path} does not match canonical HEAD blob "
+        f"byte-for-byte after --auto-accept apply.\n"
+        f"  workspace bytes: {workspace_payload_bytes!r}\n"
+        f"  canonical HEAD:  {canonical_head_blob!r}\n"
+        f"This is Bug A: the LLM-resolver INFERRED_ACCEPT_CANONICAL "
+        f"verdict-without-stage shape."
+    )
+
+
+def test_alpha_hotfix_2_class_B_accept_upstream_overwrites_workspace_file(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """AC.α-hotfix-2.2 / Bug B: when the merge_helper's Class-B branch
+    resolves to ACCEPT_UPSTREAM, the workspace file's bytes must match
+    canonical's HEAD blob byte-for-byte after pos-sync --auto-accept.
+
+    Pre-α-hotfix-2: cli.py:275-278 did clean_writes.append AFTER
+    stage_canonical_clean_writes had already run; the append was a
+    no-op. Class-B operator-prefers-canonical entries got the verdict
+    set but never staged canonical's content → false-success.
+
+    Post-α-hotfix-2: cli.py post-resolve loop calls
+    stage_canonical_at_ref directly for ACCEPT_UPSTREAM entries.
+
+    Test shape (HC#3 binding):
+      - Build a canonical with a Class-B path
+        (the default sync-protected.yaml's Class-B set; or a
+        synthetic Class-B rule via patched sync-protected).
+      - Patch detect_b_shape_conflicts to surface a Class-B PENDING
+        entry with change_kind=LOCAL_MODIFIED_EQUALS_UPSTREAM
+        (the natural conflict_detection flow filters convergent
+        change kinds; we bypass via stub to exercise the cli.py
+        post-resolve path).
+      - Run cli.main with --auto-accept.
+      - Assert workspace file bytes equal canonical HEAD blob.
+
+    Note: because Class-B ACCEPT_UPSTREAM is structurally hard to
+    reach from the natural conflict_detection flow (the change_kind
+    classifier filters convergent identical content), we use
+    monkeypatch on detect_b_shape_conflicts. The test exercises
+    cli.py's post-resolve loop and the centralized
+    stage_canonical_at_ref primitive — the binding bug-fix surface.
+    """
+    from workspace_sync.conflict_report import (
+        ConflictChangeKind,
+        ConflictEntry,
+        ConflictReport,
+        ConflictSummary,
+        Resolution,
+    )
+
+    # ---- 1. Canonical with one path -----------------------------
+    canonical = tmp_path / "canonical"
+    canonical.mkdir()
+    _build_canonical(canonical)
+
+    payload_path = "framework/class_b_path.py"
+    (canonical / "framework").mkdir()
+    (canonical / payload_path).write_text("canonical-class-b-content\n")
+    subprocess.run(["git", "-C", str(canonical), "add", "-A"], check=True)
+    subprocess.run(
+        ["git", "-C", str(canonical), "commit", "-q", "-m", "v1"], check=True
+    )
+
+    canonical_head_blob = subprocess.check_output(
+        ["git", "-C", str(canonical), "show", f"HEAD:{payload_path}"]
+    )
+
+    # ---- 2. Workspace with different content --------------------
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "framework").mkdir()
+    (workspace / payload_path).write_bytes(b"workspace-class-b-stale\n")
+
+    from workspace_sync.sync_protected import write_default_if_absent
+    write_default_if_absent(workspace)
+
+    assert (workspace / payload_path).read_bytes() != canonical_head_blob
+
+    # ---- 3. Patch detect_b_shape_conflicts --------------------
+    # Return a ConflictReport with the Class-B path as PENDING with
+    # change_kind=LOCAL_MODIFIED_EQUALS_UPSTREAM (so merge_helper's
+    # Class-B branch resolves to ACCEPT_UPSTREAM).
+    import workspace_sync.cli as cli_mod
+    import hashlib as _hashlib
+
+    canonical_bytes = (canonical / payload_path).read_bytes()
+    workspace_bytes = (workspace / payload_path).read_bytes()
+    canonical_sha = _hashlib.sha256(canonical_bytes).hexdigest()
+    workspace_sha = _hashlib.sha256(workspace_bytes).hexdigest()
+
+    def fake_detect(*, canonical_path, ref, workspace_root, sync_protected, prior_state=None):
+        report = ConflictReport(
+            sync_ref=ref,
+            detected_at="2026-04-26T00:00:00Z",
+            conflicts=[
+                ConflictEntry(
+                    path=payload_path,
+                    prior_release_sha256=None,
+                    installed_sha256=workspace_sha,
+                    new_release_sha256=canonical_sha,
+                    # The change_kind that routes Class-B → ACCEPT_UPSTREAM
+                    # in the merge_helper's branch (line 462-468 today).
+                    change_kind=ConflictChangeKind.LOCAL_MODIFIED_EQUALS_UPSTREAM,
+                    resolution=Resolution.PENDING,
+                ),
+            ],
+            summary=ConflictSummary(),
+        )
+        return report, []
+
+    monkeypatch.setattr(cli_mod, "detect_b_shape_conflicts", fake_detect)
+
+    # Patch sync_protected.classify to mark our path as Class-B.
+    from workspace_sync.sync_protected import FileClass, SyncProtected
+    orig_classify = SyncProtected.classify
+
+    def patched_classify(self, path: str) -> FileClass:
+        if path == payload_path:
+            return FileClass.B
+        return orig_classify(self, path)
+
+    monkeypatch.setattr(SyncProtected, "classify", patched_classify)
+
+    # Stub the resolver factory — Class-B doesn't invoke the resolver.
+    def fake_factory(module_spec: str, *, budget=None) -> MergeResolver:
+        class NeverInvoked:
+            def invoke(self, prompt, response_model):
+                raise AssertionError(
+                    "Class-B branch should resolve without an LLM call"
+                )
+
+        return MergeResolver(NeverInvoked(), budget or ResolverBudget())
+
+    monkeypatch.setattr(cli_mod, "_load_merge_resolver", fake_factory)
+
+    # ---- 4. Run pos-sync with --auto-accept --------------------
+    rc = main(
+        [
+            "--canonical",
+            str(canonical),
+            "--workspace",
+            str(workspace),
+            "--auto-accept",
+            "--confidence-floor",
+            "0.85",
+        ]
+    )
+    assert rc == 0, (
+        f"pos-sync exited non-zero (rc={rc}); "
+        f"stdout/stderr=\n{capsys.readouterr()}"
+    )
+
+    # ---- 5. Binding HC#3 assertion -----------------------------
+    workspace_payload_bytes = (workspace / payload_path).read_bytes()
+    assert workspace_payload_bytes == canonical_head_blob, (
+        f"AC.α-hotfix-2.2 violated: Class-B workspace file at "
+        f"{workspace / payload_path} does not match canonical HEAD blob "
+        f"byte-for-byte after --auto-accept apply.\n"
+        f"  workspace bytes: {workspace_payload_bytes!r}\n"
+        f"  canonical HEAD:  {canonical_head_blob!r}\n"
+        f"This is Bug B: Class-B ACCEPT_UPSTREAM verdict-without-"
+        f"stage shape."
+    )
+
+
+def test_alpha_hotfix_2_discard_path_does_not_advance_state_to_success(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """AC.α-hotfix-2.4 / Bug D: when --auto-accept's confidence floor is
+    not met and the CLI discards staging, state.yaml status MUST NOT be
+    SUCCESS. Otherwise next-run hits the convergent-idempotency
+    fast-path in _ref_already_applied and silently no-ops via
+    false-idempotency.
+
+    Pre-α-hotfix-2: merge_helper.py's finally-block wrote
+    status=SUCCESS unconditionally on clean-resolve, regardless of
+    whether the apply step ran. CLI confirm-or-discard returning
+    False → discard_staging → no apply. state.yaml stayed at
+    SUCCESS. Subsequent runs short-circuited.
+
+    Post-α-hotfix-2: merge_helper writes NEEDS_APPLY (new SyncStatus
+    value) on clean-resolve. cli.py post-apply remains the
+    authoritative SUCCESS writer. The idempotency fast-path requires
+    SUCCESS → NEEDS_APPLY does NOT short-circuit.
+
+    Test shape:
+      - Build a canonical + workspace with one Class-C path that
+        goes through LLM resolution at confidence=0.5.
+      - Run cli.main with --auto-accept --confidence-floor 0.85
+        → confirm gate returns False → discard_staging runs.
+      - Read state.yaml; assert status is NEEDS_APPLY (NOT SUCCESS).
+      - Bonus: invoke cli.main again with same args; assert it does
+        NOT print "already applied" (i.e., does not short-circuit).
+    """
+    from workspace_sync.merge_primitives import (
+        MergeClassification,
+        MergeVerification,
+    )
+    from workspace_sync.state import SyncStatus, load_state
+
+    # ---- 1. Canonical with one path ---------------------------
+    canonical = tmp_path / "canonical"
+    canonical.mkdir()
+    _build_canonical(canonical)
+
+    payload_path = "framework/low_confidence_path.py"
+    (canonical / "framework").mkdir()
+    (canonical / payload_path).write_text("canonical-content\n")
+    subprocess.run(["git", "-C", str(canonical), "add", "-A"], check=True)
+    subprocess.run(
+        ["git", "-C", str(canonical), "commit", "-q", "-m", "v1"], check=True
+    )
+
+    # ---- 2. Workspace with different content (NN won't match) ---
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "framework").mkdir()
+    (workspace / payload_path).write_bytes(b"workspace-stale-content\n")
+
+    from workspace_sync.sync_protected import write_default_if_absent
+    write_default_if_absent(workspace)
+
+    pre_apply_workspace_bytes = (workspace / payload_path).read_bytes()
+
+    # ---- 3. Stub the resolver to return low confidence -------
+    import workspace_sync.cli as cli_mod
+
+    class LowConfidenceStub:
+        def invoke(self, prompt, response_model):
+            if response_model is MergeClassification:
+                return MergeClassification(
+                    merge_class="unknown",
+                    confidence=0.0,
+                    reasoning="test stub",
+                ), 50
+            if response_model is MergeVerification:
+                return MergeVerification(
+                    passed=False,
+                    class_mismatch=False,
+                    concerns="stub",
+                    confidence=0.0,
+                ), 100
+            # Returns inferred-merged with confidence below floor.
+            return MergeVerdict(
+                resolution="inferred-merged",
+                merged_content="merged-content\n",
+                rationale="low-confidence test merge",
+                confidence=0.50,  # below 0.85 floor
+            ), 200
+
+    def fake_factory(module_spec: str, *, budget=None) -> MergeResolver:
+        return MergeResolver(LowConfidenceStub(), budget or ResolverBudget())
+
+    monkeypatch.setattr(cli_mod, "_load_merge_resolver", fake_factory)
+
+    # ---- 4. Run pos-sync with --auto-accept; expect discard ---
+    rc = main(
+        [
+            "--canonical",
+            str(canonical),
+            "--workspace",
+            str(workspace),
+            "--auto-accept",
+            "--confidence-floor",
+            "0.85",
+        ]
+    )
+    assert rc == 0, (
+        f"pos-sync should exit 0 on discard (the apply just doesn't "
+        f"run); got rc={rc}; stdout/stderr=\n{capsys.readouterr()}"
+    )
+
+    # The workspace file was NOT updated (discard path).
+    assert (workspace / payload_path).read_bytes() == pre_apply_workspace_bytes, (
+        "discard path should leave the workspace file untouched"
+    )
+
+    # ---- 5. Binding assertion: state.yaml is NOT SUCCESS -------
+    state = load_state(workspace)
+    assert state is not None, "state.yaml should have been written"
+    assert state.status is not SyncStatus.SUCCESS, (
+        f"AC.α-hotfix-2.4 violated: state.yaml status is SUCCESS after "
+        f"a discard path — re-runs would silently no-op via "
+        f"false-idempotency. status={state.status!r}"
+    )
+    assert state.status is SyncStatus.NEEDS_APPLY, (
+        f"expected status=needs-apply post-resolve-without-apply; "
+        f"got {state.status!r}"
+    )
+
+    # ---- 6. Bonus: re-run does NOT short-circuit ---------------
+    # Pre-fix, the second run would hit _ref_already_applied (which
+    # required SUCCESS) and print "already applied at ref ...; no-op."
+    # Post-fix, NEEDS_APPLY does NOT match the idempotency check, so
+    # the second run re-resolves.
+    capsys.readouterr()  # clear prior output
+    rc2 = main(
+        [
+            "--canonical",
+            str(canonical),
+            "--workspace",
+            str(workspace),
+            "--auto-accept",
+            "--confidence-floor",
+            "0.85",
+        ]
+    )
+    assert rc2 == 0
+    captured = capsys.readouterr()
+    assert "already applied" not in captured.err, (
+        f"Bug D: NEEDS_APPLY state should NOT trigger the "
+        f"already-applied fast-path. captured stderr:\n{captured.err}"
+    )

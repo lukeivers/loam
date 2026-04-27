@@ -29,14 +29,24 @@ Schema:
     status:                 "success"
     halt_reason:            null
 
-``status`` is one of ``success`` / ``failure`` / ``partial``:
+``status`` is one of ``success`` / ``failure`` / ``partial`` /
+``needs-apply``:
 
-- ``success`` — every conflict resolved without raising.
+- ``success`` — every conflict resolved AND staging applied to
+  the workspace tree. Only written by ``cli.py`` post-apply; the
+  merge_helper never writes ``success`` directly (α-hotfix-2 #60
+  Bug D fix).
 - ``failure`` — the helper raised ``BudgetExhausted`` or
   ``ResolverFailure``; the run aborted mid-stream.
 - ``partial`` — the helper completed without raising but some
   conflicts remained PENDING (e.g. binary files the resolver could
   not read).
+- ``needs-apply`` — the helper resolved every conflict cleanly,
+  but the apply step has not run (e.g. dry-run, or
+  ``--auto-accept``'s confidence floor not met → CLI discarded
+  staging). Idempotency fast-path (``_ref_already_applied``)
+  refuses to short-circuit on this status, so re-runs against the
+  same ref re-resolve correctly. (α-hotfix-2 #60 Bug D fix.)
 
 The state.yaml is read by the next workspace-sync invocation against
 the same workspace + ref; if the prior audit's already-resolved
@@ -62,6 +72,11 @@ class SyncStatus(str, Enum):
     SUCCESS = "success"
     FAILURE = "failure"
     PARTIAL = "partial"
+    # α-hotfix-2 (#60) Bug D: resolved cleanly but apply not run.
+    # cli.py's idempotency fast-path requires SUCCESS, so this
+    # state correctly forces a re-resolve on re-run instead of
+    # silently no-op'ing via false-idempotency.
+    NEEDS_APPLY = "needs-apply"
 
 
 class StateRecord(BaseModel):

@@ -114,7 +114,21 @@ def _entry(
     confidence: float | None = None,
     user_override: bool = False,
     override_rationale: str | None = None,
+    resolved_content_path: str | None = None,
 ) -> ConflictEntry:
+    # α-hotfix-2 #60 Bug C: when constructing an
+    # INFERRED_ACCEPT_CANONICAL or ACCEPT_UPSTREAM entry without an
+    # explicit resolved_content_path, supply a placeholder so the
+    # validator does not reject (the test factory's intent is shape-
+    # correctness; null-content-path is the bug shape the validator
+    # now refuses).
+    if resolved_content_path is None and resolution in (
+        Resolution.INFERRED_ACCEPT_CANONICAL,
+        Resolution.ACCEPT_UPSTREAM,
+        Resolution.INFERRED_MERGED,
+        Resolution.THREE_WAY_MERGE,
+    ):
+        resolved_content_path = f"/tmp/staging/{path}"
     return ConflictEntry(
         path=path,
         prior_release_sha256=None,
@@ -126,6 +140,7 @@ def _entry(
         confidence=confidence,
         user_override=user_override,
         override_rationale=override_rationale,
+        resolved_content_path=resolved_content_path,
     )
 
 
@@ -217,7 +232,12 @@ def test_class_c_invokes_resolver_writes_audit(tmp_path: Path) -> None:
     assert state_p.exists()
     state = load_state(workspace_root)
     assert state is not None
-    assert state.status is SyncStatus.SUCCESS
+    # α-hotfix-2 #60 Bug D: the merge_helper writes NEEDS_APPLY
+    # on clean-resolve (was SUCCESS pre-fix); cli.py post-apply is
+    # the authoritative SUCCESS writer. This test calls
+    # resolve_inferred_conflicts directly — no CLI apply path
+    # runs — so the terminal status is correctly NEEDS_APPLY.
+    assert state.status is SyncStatus.NEEDS_APPLY
 
 
 def test_budget_halt_persists_partial_state(tmp_path: Path) -> None:

@@ -63,6 +63,7 @@ from .conflict_report import (
 from .merge_helper import (
     check_inferred_resolution_invariants,
     resolve_inferred_conflicts,
+    stage_canonical_at_ref,
 )
 from .merge_resolver import (
     BudgetExhausted,
@@ -265,17 +266,81 @@ def _execute_sync(
     except (BudgetExhausted, ResolverFailure) as exc:
         halt_exception = exc
 
-    # Stage resolved content for INFERRED_ACCEPT_CANONICAL entries.
+    # Stage resolved content for accept-canonical-flavored verdicts.
+    # α-hotfix-2 #60 (Bug A + Bug B): the merge_helper NN branches
+    # stage their own content (α-hotfix #59), but the LLM-resolver
+    # INFERRED_ACCEPT_CANONICAL path and the Class-B ACCEPT_UPSTREAM
+    # path don't — close them here using the centralized
+    # stage_canonical_at_ref primitive (renamed + made public from
+    # merge_helper's _stage_canonical_for_nn_match).
+    #
+    # Pre-α-hotfix-2: Bug A read `pass` (the comment "do nothing
+    # extra" was wrong — clean_writes contains only conflict-detector
+    # canonical-clean writes, NOT paths the resolver later resolved
+    # as accept-canonical). Bug B did `clean_writes.append(...)`
+    # AFTER stage_canonical_clean_writes had already run, so the
+    # append was a no-op.
     if halt_exception is None:
         for entry in report.conflicts:
-            if entry.resolution is Resolution.INFERRED_ACCEPT_CANONICAL:
-                # Resolver said "accept canonical" — clean-writes path
-                # already staged the canonical; do nothing extra.
-                pass
+            if (
+                entry.resolution is Resolution.INFERRED_ACCEPT_CANONICAL
+                and entry.resolved_content_path is None
+            ):
+                # LLM-resolver returned accept-canonical (NOT via NN
+                # fast-path — those entries already populated
+                # resolved_content_path in #59). Stage canonical's
+                # HEAD content now.
+                staged = stage_canonical_at_ref(
+                    entry=entry,
+                    canonical_root=canonical_root,
+                    canonical_ref=resolved_ref,
+                    workspace_root=workspace_root,
+                    sync_ref=resolved_ref,
+                    write_merged=lambda p, c: _write_merged_to_staging(
+                        staging_path, p, c
+                    ),
+                )
+                if not staged:
+                    # cli.py runs AFTER the resolver helper — there
+                    # is no fallback. Failing closed (discard +
+                    # exit 2) is correct; the alternative is re-
+                    # introducing the verdict-without-stage bug on
+                    # the very path this primitive is meant to close.
+                    discard_staging(staging_path)
+                    print(
+                        f"[workspace-sync] failed to stage canonical "
+                        f"content for {entry.path} "
+                        f"(binary or unreadable at "
+                        f"{resolved_ref}); halting.",
+                        file=sys.stderr,
+                    )
+                    return 2
             elif entry.resolution is Resolution.ACCEPT_UPSTREAM:
                 # Class-B operator-prefers-canonical branch. Stage
-                # canonical content explicitly.
-                clean_writes.append(entry.path)
+                # canonical's HEAD content explicitly. Pre-α-hotfix-2
+                # this branch did clean_writes.append AFTER
+                # stage_canonical_clean_writes had already run — a
+                # no-op that left the workspace file untouched.
+                staged = stage_canonical_at_ref(
+                    entry=entry,
+                    canonical_root=canonical_root,
+                    canonical_ref=resolved_ref,
+                    workspace_root=workspace_root,
+                    sync_ref=resolved_ref,
+                    write_merged=lambda p, c: _write_merged_to_staging(
+                        staging_path, p, c
+                    ),
+                )
+                if not staged:
+                    discard_staging(staging_path)
+                    print(
+                        f"[workspace-sync] failed to stage canonical "
+                        f"content for Class-B path {entry.path} "
+                        f"(binary or unreadable at "
+                        f"{resolved_ref}); halting.",
+                        file=sys.stderr,
+                    )
+                    return 2
 
     # If we halted, fail closed: discard staging, audit + state are
     # already persisted by the helper's finally block.

@@ -141,7 +141,7 @@ def _read_canonical_blob_at_ref(
     return completed.stdout
 
 
-def _stage_canonical_for_nn_match(
+def stage_canonical_at_ref(
     *,
     entry: ConflictEntry,
     canonical_root: Path,
@@ -150,25 +150,42 @@ def _stage_canonical_for_nn_match(
     sync_ref: str,
     write_merged: Callable[[str, str], str] | None,
 ) -> bool:
-    """Stage canonical's HEAD content for an NN ancestor-match entry.
+    """Stage canonical's HEAD content for an accept-canonical-flavored entry.
 
-    α-hotfix #59: the α.1 NN ancestor-detection accept-canonical
-    fast-path historically set the verdict but never staged content,
-    causing ``apply_staging_atomically`` to silently no-op on the
-    path. This helper reads canonical's HEAD content for
-    ``entry.path`` via ``git show <ref>:<path>``, decodes UTF-8, and
-    drops the content into staging via the supplied ``write_merged``
-    callable (or falls back to the same per-conflict merged path
-    used by ``INFERRED_MERGED`` when ``write_merged`` is None,
-    mirroring lines below for the ``INFERRED_MERGED`` case).
+    α-hotfix #59 (originally `_stage_canonical_for_nn_match`):
+    the α.1 NN ancestor-detection accept-canonical fast-path
+    historically set the verdict but never staged content, causing
+    ``apply_staging_atomically`` to silently no-op on the path.
+
+    α-hotfix-2 #60 (renamed + made public): the SAME staging primitive
+    is needed for two more accept-canonical-flavored verdicts that
+    cli.py wires post-resolve:
+      - ``INFERRED_ACCEPT_CANONICAL`` returned by the LLM resolver
+        (not via NN fast-path; Bug A).
+      - ``ACCEPT_UPSTREAM`` for Class-B operator-prefers-canonical
+        entries (Bug B).
+    Centralizing the contract here means future amendments cannot
+    re-introduce a verdict-set-without-content-staged shape on any
+    accept-canonical-flavored resolution.
+
+    Reads canonical's HEAD content for ``entry.path`` via
+    ``git show <ref>:<path>``, decodes UTF-8, and drops the content
+    into staging via the supplied ``write_merged`` callable (or falls
+    back to the same per-conflict merged path used by
+    ``INFERRED_MERGED`` when ``write_merged`` is None, mirroring lines
+    below for the ``INFERRED_MERGED`` case).
 
     Returns True on success (``entry.resolved_content_path`` is
     populated and the staging file exists), False on failure
-    (binary content, missing path at ref, ref unresolvable). On
-    False the caller MUST NOT seal the
-    ``INFERRED_ACCEPT_CANONICAL`` verdict — leaving the entry
-    PENDING lets the legacy resolver path handle it instead of
-    re-introducing the false-success bug.
+    (binary content, missing path at ref, ref unresolvable). The
+    caller decides halt-vs-fall-through:
+      - merge_helper's NN branches: leave PENDING on False (legacy
+        resolver path handles it).
+      - cli.py post-resolve loop: the verdict is already sealed by
+        the time we get here, so False means halt-and-discard
+        (failing closed; the alternative is re-introducing the
+        verdict-without-stage bug on the very path this primitive
+        is meant to close).
     """
     canonical_bytes = _read_canonical_blob_at_ref(
         canonical_root, canonical_ref, entry.path
@@ -517,7 +534,7 @@ def resolve_inferred_conflicts(
                         # content, or apply_staging_atomically will
                         # silently no-op on the path (the original
                         # bug).
-                        staged = _stage_canonical_for_nn_match(
+                        staged = stage_canonical_at_ref(
                             entry=entry,
                             canonical_root=canonical_root,
                             canonical_ref=canonical_ref,
@@ -601,7 +618,7 @@ def resolve_inferred_conflicts(
                         # α-hotfix #59: stage canonical's HEAD content
                         # BEFORE sealing the verdict (see cache-hit
                         # branch above for the full rationale).
-                        staged = _stage_canonical_for_nn_match(
+                        staged = stage_canonical_at_ref(
                             entry=entry,
                             canonical_root=canonical_root,
                             canonical_ref=canonical_ref,
@@ -783,7 +800,16 @@ def resolve_inferred_conflicts(
             elif report.has_pending() or deferred_count > 0:
                 status = SyncStatus.PARTIAL
             else:
-                status = SyncStatus.SUCCESS
+                # α-hotfix-2 #60 Bug D: the helper resolved cleanly
+                # but the apply step has not run. cli.py post-apply
+                # is the AUTHORITATIVE writer of SUCCESS — we write
+                # NEEDS_APPLY here so the idempotency fast-path
+                # (which requires status=SUCCESS) does not short-
+                # circuit a re-run when staging was discarded
+                # (e.g., --auto-accept floor not met). Pre-fix this
+                # site wrote SUCCESS unconditionally → re-runs after
+                # discard silently no-op'd via false-idempotency.
+                status = SyncStatus.NEEDS_APPLY
 
             state = make_state_record(
                 sync_ref=report.sync_ref,

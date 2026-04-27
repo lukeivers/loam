@@ -90,12 +90,13 @@ class CleanupDirective:
 
     See ``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.5.
 
-    The directive is bookkeeping-shaped — it carries the pre-bump
-    BASELINE + SEAL_COMMIT values that ``apply`` writes back into
-    the named component's seal-test + sidecar. The seal-test path
-    + sidecar path are derived from the matching ``components`` entry
-    by ``comp_name`` lookup; if no matching component is declared,
-    apply halts (the directive is malformed).
+    The directive's ``comp_name`` references a corresponding entry in
+    the manifest's ``components:`` list — apply uses that entry's
+    ``seal_test`` + ``sidecar`` paths to write the pre-bump values
+    back. The seal step ALSO consults this list and SKIPS its
+    standard sidecar bump for components that carry a cleanup
+    directive (so the revert isn't clobbered by the seal step's
+    "advance every listed component to amendment SHA" behaviour).
 
     v1-compatible additive optional field — pre-D.1.5 manifests omit
     this block (default empty tuple) and apply behaves byte-identically

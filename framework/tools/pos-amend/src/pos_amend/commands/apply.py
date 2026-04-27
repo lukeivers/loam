@@ -237,17 +237,20 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
     # After the standard component loop, walk any cleanup_directives
     # the manifest declared and write the pre-bump BASELINE +
     # SEAL_COMMIT values back into each named component's seal-test +
-    # sidecar. Idempotent: re-running yields no additional change once
-    # the pre-bump values are in place.
+    # sidecar. Each directive's ``comp_name`` must resolve to a
+    # corresponding entry in the manifest's ``components:`` list (the
+    # seal step also consults the cleanup_directives set and skips
+    # its standard sidecar bump for those components — see
+    # ``commands/seal.py`` _finalize). Idempotent.
     if manifest.cleanup_directives:
         comp_by_name = {c.name: c for c in manifest.components}
         for directive in manifest.cleanup_directives:
             comp = comp_by_name.get(directive.comp_name)
             if comp is None:
                 print(
-                    f"halt: cleanup_directive references unknown comp_name "
-                    f"{directive.comp_name!r}; declare it under 'components:' "
-                    f"or remove the directive"
+                    f"halt: cleanup_directive references unknown "
+                    f"comp_name {directive.comp_name!r}; declare it "
+                    f"under 'components:' or remove the directive"
                 )
                 return 4
             seal_test_path = repo_root / comp.seal_test

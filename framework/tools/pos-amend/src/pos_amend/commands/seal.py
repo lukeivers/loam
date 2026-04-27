@@ -419,9 +419,21 @@ def _finalize(
 
     # ------------------------------------------------------------------
     # (c) Advance sidecars + append narrative (today's behaviour).
+    # AC.D.1.5.5 (amendment #62): components named in the manifest's
+    # ``cleanup_directives:`` block have their sidecars preserved at
+    # the cleanup-target value (set by ``apply``); the seal step does
+    # NOT advance their sidecars to the amendment SHA. Otherwise the
+    # retroactive revert would be clobbered.
     # ------------------------------------------------------------------
+    cleanup_protected = {d.comp_name for d in manifest.cleanup_directives}
     bumped_sidecars: list[str] = []
     for comp in manifest.components:
+        if comp.name in cleanup_protected:
+            print(
+                f"note {comp.name}: cleanup_directive — SEAL_COMMIT "
+                f"preserved at cleanup-target (sidecar bump skipped)"
+            )
+            continue
         sidecar_path = repo_root / comp.sidecar
         if write_sidecar(sidecar_path, amendment_sha):
             bumped_sidecars.append(f"{comp.sidecar} → {amendment_sha}")

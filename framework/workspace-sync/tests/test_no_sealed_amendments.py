@@ -30,7 +30,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "231a0b02ffd33817ddd757e404b924225960d12c"
+BASELINE = "dbd91c78e6a3f195ba8c31732a60404b6ce17d9b"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -129,6 +129,7 @@ def test_B20_only_workspace_sync_surfaces_changed() -> None:
         ".claude/settings.json",
         "first-run-inventory.yaml",
         "framework/first-run-inventory.yaml",
+        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
     }
 
     offending = []

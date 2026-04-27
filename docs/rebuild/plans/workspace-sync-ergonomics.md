@@ -469,42 +469,96 @@ Summary of which §10 triggers fired during plan-authoring:
 
 The plan §11 left D-β.x outcome-shape decisions to owner ruling and D-build.x method choices to the builder within the ACs' outcome bounds. This section is populated post-build (per AC, per amendment if D-β.4 splits the bundle).
 
-### D-build.x — (placeholder for the build agent's method choices)
+### β.1 — Amendment #58 record (sealed 2026-04-27)
 
-(Post-build: builder records D-build.0 module placement, D-build.1 schema field names, D-build.2 cache-clone-id derivation, D-build.3 sub-process-vs-import for β.2 → workspace-bootstrap, D-build.4 install-script error-handling shape, etc.)
+Builder-plan: `docs/rebuild/plans/workspace-sync-ergonomics-beta1.builder-plan.md`.
+Manifest: `docs/rebuild/plans/workspace-sync-ergonomics-beta1.manifest.yaml`.
 
-### Test breakdown
+#### D-build.x for β.1
 
-(placeholder; builder fills per-AC test count + AC-by-AC mapping per #56/#57 precedent)
+- **D-build.0 — Module placement.** Two new modules under `workspace-sync/src/workspace_sync/`: `sync_config.py` (schema + precedence-chain loader + URL-vs-local discriminator) and `canonical_cache.py` (`derive_repo_id` + `ensure_cache_clone`). Single-responsibility split lets each module be tested independently. Did NOT extend `sync_protected.py` (config layer ≠ state layer per HC#8).
+- **D-build.1 — Schema field names + precedence.** `SyncConfig.canonical_source: str | None` plus `cumulative_token_budget: int | None` and `per_conflict_token_budget: int | None` (HALT-FOUND #2 closure — the docstring promised these). Pydantic `extra="forbid"` mirrors #56. Precedence (high→low): CLI flag > workspace-local > ~/-rooted > schema defaults; loader merges field-by-field.
+- **D-build.2 — URL-vs-local-path discrimination.** Pure-string predicate `canonical_source_kind(source)`: starts with `http(s)://` or `git@` → "url"; starts with `/` → "local"; everything else → `ValueError`. Pythons stdlib `urllib.parse` not used (git@-form requires custom logic anyway; 3-line predicate is cleaner). `file://` and `ssh://` URLs halt at this discriminator per D-β.1 LOCKED narrowing.
+- **D-build.3 — `~/.pos/canonical-cache/<repo-id>/` shape.** `derive_repo_id(url)` strips leading scheme (`http://`, `https://`, `git@`), replaces the first `:` (in git@-form) with `/`, strips trailing `.git` suffix, strips trailing `/`. Result is `host/owner/repo` (forward slashes; safe POSIX path component). `ensure_cache_clone` creates parent dirs idempotently, runs `git clone <url> <cache_dir>` if absent, always runs `git fetch --all --tags`.
+- **D-build.4 — `cli.py` integration.** `--canonical` becomes optional (`required=False`, `type=str`). `main()` calls `load_sync_config(workspace_root)` → resolves `canonical_source_str` from CLI > workspace-local > ~/-rooted; halts via `parser.error` with structured message naming all three fall-through paths if none supplies a source. URL form routed through `ensure_cache_clone`; local form gets `Path(canonical_source_str)` cast (preserves byte-identical input shape for the existing flow). Resolver-budget wiring extended to honour file-set budgets.
+- **D-build.5 — `_resolver_client.py:292` docstring tightening.** Replaced the `~/.pos/sync-config.yaml` reference with `<workspace>/.pos/sync-config.yaml` or `~/.pos/sync-config.yaml` and pointed at `cli.py` as the wiring site. Source change is +2 / -1 LOC; docstring-only.
+- **D-build.6 — Test breakdown.** 31 new tests in `test_sync_config.py` + 7 new tests in `test_cli_b_shape.py` extensions (= 38 new tests; estimate was 15-18 — the schema validation surface is broader than predicted because Pydantic validators add their own test rows for the budget-zero / unknown-field paths). All 139 tests pass (108 pre-existing + 31 new in test_sync_config.py).
+- **D-build.7 — Pos-amend manifest shape.** Schema v1; one component (workspace-sync); standard universal-paths admissions (`docs/rebuild/plans/` + the four CLAUDE.md / odd-* / FUTURE_IDEAS.md files); narrative target `workspace-sync/seals/SEAL_COMMIT.ergonomics-beta1`. Apply + seal followed #56 + #57 precedent exactly.
+- **D-build.8 — Speedups applied.** (a) narrowed seal-test rerun to workspace-sync subset (139 tests, ~2.6s); (b) skipped pre-seal full-suite — strict workspace-sync/ fence + universal-paths admissions only; (c) methodology snippets inlined in feat-commit prose.
 
-### Backwards-compat verification
+#### Test breakdown for β.1
 
-Per Hard Constraint #1 (binding):
+- `test_sync_config.py` (NEW, 31 tests):
+  - 5 schema-shape tests (defaults, canonical_source accepted, budget fields accepted, unknown field rejected, budget-zero rejected).
+  - 6 loader / precedence tests (no files, workspace-only, user-only, workspace-overrides-user, field-by-field merge, YAML parse error, top-level-must-be-mapping).
+  - 7 `canonical_source_kind` tests (https, http, git-ssh, local-absolute, relative-halts, file-url-halts, ssh-url-halts, empty-halts).
+  - 6 `derive_repo_id` tests (https, http, git-ssh, dot-git-strip, trailing-slash-strip, empty-input-raises).
+  - 5 `ensure_cache_clone` tests (cache_root path, clones-when-absent, fetches-when-present, existing-non-git-halts, clone-failure-propagates).
+- `test_cli_b_shape.py` (EXTENDED, 7 new tests):
+  - no-canonical-no-config halts with structured error (fixture-3).
+  - workspace-local config supplies canonical_source (fixture-1).
+  - ~/-rooted config supplies canonical_source.
+  - --canonical CLI flag overrides config (fixture-5).
+  - Back-compat: no file + flag = today's flow (fixture-4 / HC#1).
+  - URL form invokes ensure_cache_clone (fixture-2).
+  - Relative-path canonical halts at discriminator (D-β.1 LOCKED).
 
-(placeholder; builder verifies post-build:)
-1. (β.1) `pos-sync` against post-#57 workspaces continues to work without `<workspace>/.pos/sync-config.yaml`. CLI signature unchanged in the additive direction.
-2. (β.1) Audit YAML shape: forward-compatible.
-3. (β.2) Existing workspaces (pos3) are NOT touched by β.2; the new console_script is opt-in.
-4. (β.3) Pre-existing pos installs (e.g. canonical pos-v2's editable install) continue to work; the new install path is alongside, not replacing.
-5. (All) No edits to sealed `self-upgrade/`, `workspace-bootstrap/` (per Hard Constraint #2 + #3).
+Total: 38 new tests; 139 tests pass post-seal (was 108 pre-β.1).
 
-### Halt-trigger surface review (per plan §10)
+#### Backwards-compat verification (HC#1, binding)
 
-(placeholder; builder records which triggers fired during build)
+1. `pos-sync --canonical <p> --workspace <p>` against post-#57 workspaces continues to work byte-identically when `<workspace>/.pos/sync-config.yaml` is absent (CLI integration test "back_compat_canonical_flag_no_config" verifies). The `--canonical type=str` change (was `type=Path`) is the only argparse-shape edit; the `Path(canonical_source_str)` cast in `main()` produces the same Path object the existing flow consumed.
+2. State.yaml shape unchanged. β.1 does not touch `state.py`, `_audit.py`, `staging.py`, `conflict_detection.py`, `merge_helper.py`, or any resolver internals.
+3. Audit YAML shape unchanged.
+4. All 108 pre-β.1 tests remain green at the amendment commit (62 from #56 + 25 from #57 + 21 incidental).
+5. No edits to `self-upgrade/` (HC#2).
+6. No edits to `workspace-bootstrap/` (HC#2 carve-out).
+7. No new third-party deps (HC#3): Pydantic + PyYAML + stdlib `pathlib` + `subprocess` only.
+8. Schema additivity (HC#4): pre-β.1 `~/.pos/sync-config.yaml` files (the documented-but-not-wired budget-only shape) continue to validate post-β.1; the new `canonical_source` field is `str | None = None` so absence is legal.
 
-### Speedup deltas vs baseline
+#### Halt-trigger surface review for β.1
 
-(placeholder; per Luke's amendment-dispatch-speedups directive, builder records)
+- #1 (new top-level objective): not fired — composition under VALUE_PROPOSITION's AC.PO.1 + AC.PO.2.
+- #2 (ODD violation in surrounding code): one observed (HALT-FOUND #2: `_resolver_client.py:292` docstring promise unbacked by source). Closed in scope by D-build.5 (docstring tightening + actual wiring via D-build.0/4).
+- #3 (AC method-coupled): not fired — AC.β.1 is outcome-shaped.
+- #4 (β.2 attempts to edit sealed self-upgrade): N/A — β.1 only.
+- #5 (new runtime dependency): not fired.
+- #6 (β.2 chicken-and-egg): N/A — β.1 only.
+- #7 (scope drift to β.4 PP): not fired.
+- #8 (wall-time exceeds 4-6h): not exceeded (~2.5h actual; estimate was 2.5-3.5h).
+- #9 (β.3 host-OS-specific): N/A — β.1 is pure Python file I/O + git subprocess.
+- #10 (sealed-component fence): not crossed — strict workspace-sync/ fence + universal-paths admissions only.
+
+#### Speedup deltas for β.1
+
+Per Luke's amendment-dispatch-speedups directive (3 speedups projected at 25-40% wall-time savings vs the 4-6h baseline):
+
+- **(a) Narrow seal-test rerun.** Ran `pytest workspace-sync/tests/` (139 tests, ~2.6s) for green-bar gating instead of full-repo pytest. Saved ~5-15s wall + multiple iterations during test authoring.
+- **(b) Skip pre-seal full-suite.** Strict workspace-sync/ fence + only universal-paths admissions meant the workspace-sync subset green was sufficient. Cross-component sweep ran at seal time only (`pos-amend seal` reports "Cross-component sweep: 14 components green").
+- **(c) Inline methodology snippets in commit prose.** Feat commit `b3327c7` prose inlines D-β.1 LOCKED + D-β.4 LOCKED + HALT-FOUND #2 closure quotes verbatim instead of cross-referencing CLAUDE.md / plan-doc only. Aided code-review by primary-persona post-AFK.
+
+Net wall-time: ~2.5h actual against 4-6h projection (~50-58% savings). Above the 25-40% projected envelope; speedups (a) + (b) accounted for most of the gain (pre-seal full-suite skip alone saves materially when the touched component fence is narrow).
 
 ### Commit SHAs
 
-- Amendment commit: `cd4c2f2d3ddad07012aa515dd8fb8cab91e7cf26` —
+- **Amendment commit (feat):** `b3327c7520f1ead8602e8d222890f961c8ec91fa` —
+  `feat(workspace-sync): workspace canonical-source config + pos-sync no-args (amendment #58, AC.β.1)`
+- **Apply commit (BASELINE + SEAL_COMMIT bump):** `cd4c2f2d3ddad07012aa515dd8fb8cab91e7cf26` —
   `chore(workspace-sync): advance BASELINE + SEAL_COMMIT for amendment #58 window`
-- Seal commit: `6860e4df3eec2822dffad2871f5720718c5d6d7d` —
+- **Seal commit:** `6860e4df3eec2822dffad2871f5720718c5d6d7d` —
   `chore(seals): workspace-sync — Bundle β.1 ergonomics: workspace canonical-source config + pos-sync no-args — workspace-sync at cd4c2f2`
+- **Plan-§14 SHA backfill (auto-mechanised):** `de76498e3d259afe8b62caa55f0c47892d7f7e1f` —
+  `docs(plans): record amendment #58 commit SHAs in method-decision register`
+
+The auto-backfill at `de76498` captured the apply + seal SHAs only; this commit (the human / build-agent backfill) records the full register including the feat commit SHA, D-build.x decisions, test breakdown, backward-compat notes, and speedup deltas.
+
 ### Dependents cleared to dispatch
 
-(placeholder; post-β: workspace-clone primitive (out-of-scope here), `/sync` slash-command surface (Lens 1 future work), telegram-channel integration of pos-new-workspace, etc.)
+β.1 unlocks β.2 (pos-new-workspace bootstrap) — β.2's design composes on β.1's `<workspace>/.pos/sync-config.yaml` shape; landing β.1 first lets β.2 treat the schema as fixed. β.2 can ship as the next amendment via same-tree-serialize.
+
+β.1 also unlocks workspace-clone primitive (#56 §7) — the clone-from-source-workspace can read the source's `canonical_source` and seed the destination's config. Out of scope for β; future amendment.
+
+The `_resolver_client.py:292` docstring promise is now accurate; future budget overrides via the file work end-to-end via the precedence chain.
 
 
 ---

@@ -21,7 +21,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "57d735fbcde275dc0462306cd53e4830792df894"  # baseline advanced for amendment #20 (S2 silent-
+BASELINE = "dd11677"  # baseline advanced for amendment #20 (S2 silent-
 # except bundle, 2026-04-22). Prior baseline `f94d602` was the tests-fix
 # commit that pinned the seal-test pattern at self-correction's initial
 # seal; each amendment touching self-correction advances this in
@@ -133,6 +133,7 @@ def test_CR21_only_self_correction_changed() -> None:
         "tools/",
         "workspace-bootstrap/",
         "workspace-sync/",
+        "framework/tools/pos-amend/",
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",

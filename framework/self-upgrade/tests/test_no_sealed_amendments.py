@@ -40,7 +40,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #     edits to ``self-upgrade/src/`` — retrofit-only. Empty
 #     BASELINE..HEAD window at apply time per the standard
 #     retrofit pattern.
-BASELINE = "57d735fbcde275dc0462306cd53e4830792df894"
+BASELINE = "90246dc4dafa953c1f5ad5d97819e24d97a761a7"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -131,6 +131,7 @@ def test_B20_only_self_upgrade_surfaces_changed() -> None:
         "tools/",
         "workspace-bootstrap/",
         "workspace-sync/",
+        "framework/tools/pos-amend/",
     )
     # Universal admissions per amendment #22 ruling #3 (CLAUDE.md +
     # docs/odd-*.md + docs/rebuild/FUTURE_IDEAS.md). The

@@ -1557,21 +1557,10 @@ D-build.D.x.Z).
 
 ### Commit SHAs
 
-(post-build per amendment)
-
-- D.1 amendment commit: `<TBD>`
-- D.1 seal commit: `<TBD>`
-- D.2 amendment commit: `<TBD>`
-- D.2 seal commit: `<TBD>`
-- D.3 amendment commit: `<TBD>`
-- D.3 seal commit: `<TBD>`
-- D.4 amendment commit: `<TBD>`
-- D.4 seal commit: `<TBD>`
-- D.5 amendment commit: `<TBD>` (or "no-op")
-- D.5 seal commit: `<TBD>` (or "no-op")
-
----
-
+- Amendment commit: `8acdff591cac810140210c85f1144af35d6b5d30` —
+  `chore(workspace-bootstrap): advance BASELINE + SEAL_COMMIT for D-migration D.4 window`
+- Seal commit: `8dbbb7abd5a774be099188eed1dc92736aaad464` —
+  `chore(seals): D-migration D.4 — pos-new-workspace --from <repo> console-script (β.2 absorbed) — workspace-bootstrap at 8acdff5`
 ## 15. Backwards-compat verification (per amendment, post-build)
 
 To be filled by builders post-build. Each amendment's record

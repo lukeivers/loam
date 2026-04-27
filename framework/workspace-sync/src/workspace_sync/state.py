@@ -1,59 +1,27 @@
-"""state.yaml + workspace-local audit-path resolution (B-shape).
+"""Workspace-local sync state record (D-migration D.3 shape).
 
-Salvaged from ``self-upgrade/src/self_upgrade/state.py`` with the
-following caller-side rebadgings:
+D-migration D.3 (amendment #64) — the pre-D.3 ``StateRecord`` model
+carried fields shaped around the bespoke resolve→stage→apply pipeline
+(``cumulative_tokens_used``, ``halt_reason``, ``deferred_count``,
+etc.). Under D.3's git-merge architecture those fields no longer
+carry information — the merge mechanics are git's; the per-run
+audit lives in ``git log``; resolver token usage (when the fallback
+fires) is already captured per-verdict in
+``<ws>/workspace/.pos/sync/resolver-runs/<sha>/<path>.yaml``.
 
-  - ``UpgradeStatus`` → ``SyncStatus`` (terminal status of a sync run).
-  - ``StateRecord.upgrade_tag`` → ``StateRecord.sync_ref`` (commit-SHA
-    or git ref, the B-mode equivalent of A-mode's release-tag).
-  - ``state_yaml_path`` returns ``<workspace>/.pos/sync/state.yaml``
-    (was ``.pos/upgrade/state.yaml``).
-  - ``audit_yaml_path`` returns ``<workspace>/.pos/sync/<ref>/audit.yaml``
-    (was ``.pos/upgrade/<tag>/audit.yaml``).
+The simplified ``SyncState`` records:
 
-AC.WS.5 mandates the new audit path; AC.WS.8 mandates state.yaml under
-the same ``.pos/sync/`` namespace. Self-upgrade's ``state.py`` keeps
-the ``.pos/upgrade/`` shape unchanged (Hard Constraint #1).
+  - ``last_synced_sha`` — git SHA of canonical's HEAD that was
+    merged into framework/HEAD (or framework/HEAD itself when
+    the sync was a no-op idempotency hit).
+  - ``last_synced_at`` — ISO-8601 UTC timestamp.
+  - ``last_branch`` — the framework/ branch that was advanced.
+  - ``last_outcome`` — the terminal outcome
+    (``up-to-date`` / ``fast-forward`` / ``merged`` /
+    ``conflict-fallback`` / ``resolver-halted``).
 
-Schema:
-
-.. code-block:: yaml
-
-    sync_ref:               "abc123def..."   # 7-40 char SHA or ref
-    timestamp:              "2026-04-26T13:30:00+00:00"
-    audit_path:             "/abs/.pos/sync/<ref>/audit.yaml"
-    total_conflicts:        3
-    resolved_count:         3
-    deferred_count:         0
-    cumulative_tokens_used: 1200
-    status:                 "success"
-    halt_reason:            null
-
-``status`` is one of ``success`` / ``failure`` / ``partial`` /
-``needs-apply``:
-
-- ``success`` — every conflict resolved AND staging applied to
-  the workspace tree. Only written by ``cli.py`` post-apply; the
-  merge_helper never writes ``success`` directly (α-hotfix-2 #60
-  Bug D fix).
-- ``failure`` — the helper raised ``BudgetExhausted`` or
-  ``ResolverFailure``; the run aborted mid-stream.
-- ``partial`` — the helper completed without raising but some
-  conflicts remained PENDING (e.g. binary files the resolver could
-  not read).
-- ``needs-apply`` — the helper resolved every conflict cleanly,
-  but the apply step has not run (e.g. dry-run, or
-  ``--auto-accept``'s confidence floor not met → CLI discarded
-  staging). Idempotency fast-path (``_ref_already_applied``)
-  refuses to short-circuit on this status, so re-runs against the
-  same ref re-resolve correctly. (α-hotfix-2 #60 Bug D fix.)
-
-The state.yaml is read by the next workspace-sync invocation against
-the same workspace + ref; if the prior audit's already-resolved
-entries cover the current ConflictReport's PENDING set, the resolver
-is not re-invoked (the helper's existing
-``if entry.resolution is not Resolution.PENDING: continue`` branch
-fires for every entry — convergent idempotency per AC.WS.8).
+Path: ``<workspace>/workspace/.pos/sync/state.yaml``. The
+workspace-state directory ships under ``workspace/`` per D.2.
 """
 
 from __future__ import annotations
@@ -63,36 +31,28 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
-class SyncStatus(str, Enum):
-    """Terminal status of a workspace-sync execution."""
+class SyncOutcome(str, Enum):
+    """Terminal outcome of a workspace-sync execution under D.3."""
 
-    SUCCESS = "success"
-    FAILURE = "failure"
-    PARTIAL = "partial"
-    # α-hotfix-2 (#60) Bug D: resolved cleanly but apply not run.
-    # cli.py's idempotency fast-path requires SUCCESS, so this
-    # state correctly forces a re-resolve on re-run instead of
-    # silently no-op'ing via false-idempotency.
-    NEEDS_APPLY = "needs-apply"
+    UP_TO_DATE = "up-to-date"
+    FAST_FORWARD = "fast-forward"
+    MERGED = "merged"
+    CONFLICT_FALLBACK = "conflict-fallback"
+    RESOLVER_HALTED = "resolver-halted"
 
 
-class StateRecord(BaseModel):
-    """Workspace-local sync state.yaml schema."""
+class SyncState(BaseModel):
+    """Workspace-local sync state.yaml schema (D.3 shape)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    sync_ref: str
-    timestamp: str
-    audit_path: str
-    total_conflicts: int = Field(ge=0)
-    resolved_count: int = Field(ge=0)
-    deferred_count: int = Field(ge=0)
-    cumulative_tokens_used: int = Field(ge=0)
-    status: SyncStatus
-    halt_reason: str | None = None
+    last_synced_sha: str
+    last_synced_at: str
+    last_branch: str
+    last_outcome: SyncOutcome
 
 
 def _now_iso() -> str:
@@ -103,30 +63,19 @@ def state_yaml_path(workspace_root: Path) -> Path:
     """Return ``<workspace_root>/workspace/.pos/sync/state.yaml``.
 
     D-migration D.2 (amendment #63): workspace-state under
-    ``<workspace>/workspace/.pos/``.
+    ``<workspace>/workspace/.pos/``. D.3 keeps the same path.
     """
     from workspace_bootstrap.workspace_paths import pos_subdir
 
     return pos_subdir(workspace_root) / "sync" / "state.yaml"
 
 
-def audit_yaml_path(workspace_root: Path, ref: str) -> Path:
-    """Return ``<workspace_root>/workspace/.pos/sync/<ref>/audit.yaml``.
+def load_state(workspace_root: Path) -> SyncState | None:
+    """Load the workspace's state.yaml; return None if absent.
 
-    D-migration D.2 (amendment #63): workspace-state under
-    ``<workspace>/workspace/.pos/``.
-    """
-    from workspace_bootstrap.workspace_paths import pos_subdir
-
-    return pos_subdir(workspace_root) / "sync" / ref / "audit.yaml"
-
-
-def load_state(workspace_root: Path) -> StateRecord | None:
-    """Load + validate the workspace's state.yaml; return None if absent.
-
-    Raises Pydantic validation error on a malformed file (the file is
-    framework-written, so a malformed file is a bug worth surfacing,
-    not a soft-fail).
+    Raises Pydantic validation error on a malformed file (the file
+    is framework-written, so a malformed file is a bug worth
+    surfacing, not a soft-fail).
     """
     p = state_yaml_path(workspace_root)
     if not p.exists():
@@ -134,11 +83,11 @@ def load_state(workspace_root: Path) -> StateRecord | None:
     raw = yaml.safe_load(p.read_text()) or {}
     if not isinstance(raw, dict):
         raise ValueError(f"{p}: top-level must be a mapping")
-    return StateRecord.model_validate(raw)
+    return SyncState.model_validate(raw)
 
 
-def save_state(record: StateRecord, workspace_root: Path) -> Path:
-    """Write the state.yaml for *workspace_root*. Returns the path."""
+def save_state(record: SyncState, workspace_root: Path) -> Path:
+    """Write the state.yaml for ``workspace_root``. Returns the path."""
     p = state_yaml_path(workspace_root)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(
@@ -149,34 +98,3 @@ def save_state(record: StateRecord, workspace_root: Path) -> Path:
         )
     )
     return p
-
-
-def make_state_record(
-    *,
-    sync_ref: str,
-    workspace_root: Path,
-    total_conflicts: int,
-    resolved_count: int,
-    deferred_count: int,
-    cumulative_tokens_used: int,
-    status: SyncStatus,
-    halt_reason: str | None = None,
-    timestamp: str | None = None,
-) -> StateRecord:
-    """Build a StateRecord with a freshly-stamped ISO-8601 timestamp.
-
-    Separates record construction from disk I/O so callers can compose
-    additional context (e.g. tests asserting individual fields) before
-    persisting.
-    """
-    return StateRecord(
-        sync_ref=sync_ref,
-        timestamp=timestamp or _now_iso(),
-        audit_path=str(audit_yaml_path(workspace_root, sync_ref).resolve()),
-        total_conflicts=total_conflicts,
-        resolved_count=resolved_count,
-        deferred_count=deferred_count,
-        cumulative_tokens_used=cumulative_tokens_used,
-        status=status,
-        halt_reason=halt_reason,
-    )

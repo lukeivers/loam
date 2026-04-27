@@ -1,21 +1,25 @@
-"""pOS v2 workspace-sync — canonical-to-workspace git-shaped sync.
+"""pOS v2 workspace-sync — git-merge-based canonical-to-workspace sync.
 
-Architecture B (per-workspace embedded framework, locked 2026-04-26):
-this component pulls canonical changes into a downstream workspace
-clone (e.g. pos3) under the three-class workspace-data envelope
-(A=preserve / B=operator-preference / C=LLM-resolved).
+D-migration D.3 (amendment #64) — pos-sync becomes a thin wrapper
+around `git fetch + git merge --ff-only` against
+``<workspace>/framework/``. The pre-D.3 bespoke resolve→stage→apply
+pipeline retired (~2400 LOC); the LLM-resolver primitives
+(``merge_resolver.py`` + ``_resolver_client.py`` with
+``--strict-mcp-config``) are preserved as the rare-conflict fallback
+the new CLI invokes only when ``git merge`` produces unresolved
+conflicts.
 
-The companion sealed component `self-upgrade/` is the canonical-only
-A-mode mechanism (in-place symlink swap on the canonical maintainer's
-machine). Both components share design DNA but no runtime coupling
-(per ruling A5 + Hard Constraint #11 of the workspace-sync plan).
+HC#6 of D-migration: the merge operates exclusively inside
+``<workspace>/framework/``; files under ``<workspace>/workspace/``
+are structurally untouchable.
 
 Operator-visible CLI verbs:
 
-    pos-sync --canonical <path> [--ref <commit-or-tag>] \\
-             [--workspace <path>] [--dry-run] [--auto-accept]
+    pos-sync [--canonical <path-or-url>] \\
+             [--ref <commit-or-branch>] [--workspace <path>] \\
+             [--auto-accept]
 
     pos-workspace-sync ...   # alias
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

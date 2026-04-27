@@ -1141,9 +1141,10 @@ mechanism.)
 
 ### Commit SHAs
 
-(Auto-filled by `pos-amend seal --plan-doc`. Format per
-amendment-#46 / #47 / #61 precedent.)
-
+- Amendment commit: `8908b1980dcfb3387a0473fde6fae3cf8d5b034c` —
+  `fix(framework/tools/pos-amend): apply skips bump-then-revert noise for cleanup_directive components`
+- Seal commit: `21e27f244deb3fe04ff8eac27b0ef8182f49acb7` —
+  `chore(seals): D-migration D.1.5 — pos-amend rename-aware seal + D.1 cleanup — cost-governance+graceful-degradation+memory-system+observability-aggregator+reversibility-primitive+self-correction+self-upgrade+telegram-interface at 8908b19`
 ### Method-shape decisions
 
 (Populated by builder during build. Expected entries:

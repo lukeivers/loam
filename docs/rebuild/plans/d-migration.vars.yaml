@@ -1,0 +1,335 @@
+# d-migration.vars.yaml
+#
+# Vars-file companion to `d-migration.md`. Captures the locked
+# decisions, per-amendment context, and dispatch-template-friendly
+# variables for the D.1–D.5 migration sequence (strict directory-split
+# workspace architecture).
+#
+# This file is consumable by future `pos-amend template render`
+# invocations (per the dispatch-prompt-template-extension plan)
+# OR readable directly by the per-amendment dispatchers.
+#
+# Decisions LOCKED at brief level (D-D1 through D-D5) and at plan-
+# author level (D-Q.A1 through D-Q.A5) are captured in dedicated
+# sections; per-amendment outcome bounds + AC IDs + seal-fence
+# manifests are cross-referenced.
+
+# --- Top-level migration metadata ---
+
+MIGRATION_NAME: "d-migration"
+MIGRATION_TITLE: "Strict Alternative D — directory-split workspace architecture (framework/ vs workspace/)"
+MIGRATION_DATE: "2026-04-27"
+MIGRATION_STATUS: "plan (pre-dispatch)"
+
+WORKING_DIRECTORY: "/Users/lukeivers/ivers-corp-pos-v2/"
+
+PLAN_DOC_PATH: "docs/rebuild/plans/d-migration.md"
+VARS_FILE_PATH: "docs/rebuild/plans/d-migration.vars.yaml"
+
+# --- Amendment count + sequence ---
+
+AMENDMENT_COUNT: 5
+AMENDMENT_SEQUENCE:
+  - id: "D.1"
+    title: "Directory restructure on canonical pos-v2"
+    shape: "sealed-component (multi-component)"
+    fence_components:
+      - scope-of-work
+      - objective-tracker
+      - primary-persona
+      - safety-layer
+      - reversibility-primitive
+      - cost-governance
+      - self-correction
+      - graceful-degradation
+      - orchestrator
+      - observability-aggregator
+      - self-upgrade
+      - workspace-bootstrap
+      - memory-system
+      - hands-off-lifecycle
+      - workspace-sync
+      - telegram-interface
+      - tools
+    estimated_walltime_hours: "4-6"
+    blocking_dependencies: []
+  - id: "D.2"
+    title: "Workspace-state directory established (<workspace>/workspace/)"
+    shape: "sealed-component (multi-component)"
+    fence_components:
+      - workspace-bootstrap
+      - hands-off-lifecycle
+      - workspace-sync
+      - self-upgrade  # if migration script lives here; builder's call
+    estimated_walltime_hours: "3-4"
+    blocking_dependencies: ["D.1"]
+  - id: "D.3"
+    title: "pos-sync becomes git-merge"
+    shape: "sealed-component (single-component)"
+    fence_components:
+      - workspace-sync
+    estimated_walltime_hours: "3-4"
+    blocking_dependencies: ["D.2"]
+  - id: "D.4"
+    title: "pos-new-workspace console-script (β.2 absorbed)"
+    shape: "sealed-component (single-component)"
+    fence_components:
+      - workspace-bootstrap
+    estimated_walltime_hours: "2-3"
+    blocking_dependencies: ["D.3"]
+  - id: "D.5"
+    title: "Optional cleanup of dead workspace-sync code"
+    shape: "sealed-component (single-component)"
+    fence_components:
+      - workspace-sync
+    estimated_walltime_hours: "1-2"
+    blocking_dependencies: ["D.3"]
+    optional: true  # may collapse to no-op if D.3 captures cleanup inline
+
+TOTAL_WALLTIME_ESTIMATE_HOURS: "13-19"  # AI-builder, sequential
+
+# --- Decisions LOCKED at brief level (Luke 2026-04-27) ---
+
+LOCKED_DECISIONS_BRIEF:
+  D-D1:
+    name: "Strict D over D' on merits"
+    ruling: "Commit to strict D, not D'. D's directory split eliminates the 'developer forgot to protect this path' failure class by structural construction; D' relocates the same failure class to .gitignore-pattern-maintenance."
+    rationale: "Architectural cleanliness compounds. Wall-time delta D vs D' is 1-2h AI-builder time; negligible."
+  D-D2:
+    name: "flat→directory-split target structure"
+    ruling: "framework/ contains all git-tracked code; workspace/ contains workspace-local state (.pos/, personas/, .mcp.json, .scratch/, memory.yaml, .claude/ at workspace root, .venv/ at workspace root, objective_tracker.sqlite, orchestrator/memory-write-worker logs)."
+    target_structure: |
+      ~/pos3/                          # (and analogous for canonical pos-v2)
+        framework/                     # git-tracked, pulled from canonical
+          primary-persona/
+          orchestrator/
+          workspace-sync/
+          self-upgrade/
+          workspace-bootstrap/
+          memory-system/
+          objective-tracker/
+          hands-off-lifecycle/
+          tools/
+          docs/
+          (other 8 components)
+          first-run-inventory.yaml
+          .gitignore (no .pos/, no personas/, no memory.yaml entries — those
+                       names don't exist inside framework/)
+          pyproject + lock files
+        workspace/                     # workspace-local state, gitignored
+          .pos/
+          personas/
+          .mcp.json
+          .scratch/
+          memory.yaml
+          objective_tracker.sqlite
+          orchestrator.{out,err}.log
+          memory-write-worker.{out,err}.log
+          data/
+        .claude/                       # workspace root — D-Q.A4 placement
+          settings.json
+          agents/
+        .venv/                         # shared workspace venv (per-workspace)
+        .gitignore                     # at workspace root; declares only
+                                       # framework/ as tracked
+  D-D3:
+    name: "pos-sync becomes git-merge under D"
+    ruling: "Internally pos-sync becomes 'cd framework && git fetch + git merge --ff-only'. LLM-resolver kept as rare-conflict fallback when git can't auto-resolve. Most syncs are fast-forwards."
+    rationale: "Drops ~2400 LOC + ~110 tests. Bug class collapse is structural."
+  D-D4:
+    name: "β.2 (new-workspace bootstrap) absorbs into D's migration sequence"
+    ruling: "pos-new-workspace --from <repo> becomes 'git clone <repo> <new-ws>/framework && pos init <new-ws>'. pos init seeds <new-ws>/workspace/."
+    rationale: "Composes naturally with the directory split."
+  D-D5:
+    name: "β.3 (global install) unchanged"
+    ruling: "Independent amendment. Not part of D-migration plan; lives in its own dispatch."
+    rationale: "Already orthogonal to architecture choice."
+
+# --- Decisions LOCKED at plan-author level (D-Q.A1 through D-Q.A5; surfaced for owner ruling per §11/§12) ---
+
+PLAN_AUTHOR_DECISIONS:
+  D-Q.A1:
+    question: "Per-amendment AC breakdown deviates from §4 outline?"
+    recommendation: "Accept §4 AC breakdown. No deviation."
+    confidence: "high"
+  D-Q.A2:
+    question: "Build sequence ordering deviates from D.1 → D.5?"
+    recommendation: "Accept D.1 → D.2 → D.3 → D.4 → D.5."
+    confidence: "high"
+    rejected_alternatives:
+      - "(b) D.3 first: fails — needs framework/ to exist."
+      - "(c) D.2 before D.1: fails — needs framework/ for plist EnvironmentVariables."
+  D-Q.A3:
+    question: "Sealed-component vs dev-discipline shape per amendment?"
+    recommendation: "All 5 sealed-component."
+    confidence: "high"
+  D-Q.A4:
+    question: ".claude/ at workspace root, or under <workspace>/workspace/?"
+    recommendation: "(a) .claude/ at workspace root."
+    rationale: "Honours Claude Code's expectation; structural-promise preserved (outside framework/); no operator chore. Symlink alternative (c) deferred — symlinks-in-pos3 historically caused issues per workspace-sync HC#12."
+    confidence: "high"
+  D-Q.A5:
+    question: "Class-B handling under D.3?"
+    recommendation: "(b) Drop Class-B as a category."
+    rationale: "Directory split makes memory.yaml Class-A by structural relocation. No merge driver needed."
+    confidence: "medium"
+    alternatives:
+      - "(a) Ship framework/.gitattributes with memory.yaml merge=ours — kept if owner wants explicit merge-driver back-compat."
+      - "(c) Documentation-only Class-B + resolver-handled rare case — kept if owner wants transition-window."
+
+# --- Hard Constraints (binding from dispatch) ---
+
+HARD_CONSTRAINTS:
+  HC1: "Each amendment fences cleanly per the per-amendment fence above."
+  HC2: "No regression of any landed amendment's tests. Existing tests continue to pass post-migration."
+  HC3: "No new third-party deps. Use git-shellout + Pydantic + stdlib."
+  HC4: "CRITICAL bug-class-elimination — each amendment's tests MUST include byte-content-match assertions for sample workspace files post-apply. Closes the test-shape-only verification gap that triggered this whole architectural review."
+  HC5: "Workspace-state preservation must be empirically verified end-to-end against pos3 (real apply, real cmp against canonical's HEAD blobs in framework/, real workspace-state retention check in workspace/)."
+  HC6: "D's structural promise — post-migration it must be IMPOSSIBLE to accidentally write workspace-state into framework/ or framework code into workspace/. Directory boundary is the structural contract."
+  HC7: "CDC adherence: scope-only-dispatch CDC; standard pos-amend manifest discipline."
+  HC8: "No --amend. Corrective new commits only."
+  HC9: "Plan-before-code. Each amendment's builder authors a builder-plan before editing source."
+
+# --- Halt triggers (per amendment) ---
+
+HALT_TRIGGERS:
+  - "Required new top-level spec objective surfaces."
+  - "ODD violation observed in surrounding code/docs."
+  - "AC cannot be authored outcome-shaped."
+  - "Required source-edit OUTSIDE the named amendment fence."
+  - "Pre-existing test fails post-restructure (D.1)."
+  - "D.2 migration script breaks pos3 mid-flight."
+  - "D.3's git-merge mechanics produce a workspace-file change inside <workspace>/workspace/."
+  - "Wall-time exceeds projected per-amendment estimate by >50%."
+  - "D.4's pos-new-workspace cannot land without touching sealed components outside workspace-bootstrap."
+  - "HC#5 empirical pos3 verification fails."
+
+# --- Per-amendment AC summary (outcome-shape only; method-shape is builder's call) ---
+
+ACCEPTANCE_CRITERIA:
+  D.1:
+    AC.D.1.1: "All 17 framework components moved under framework/. Pre-existing top-level paths gone."
+    AC.D.1.2: "Editable-install topology preserved post-move (_discover_components walks framework/, returns same components + ordering)."
+    AC.D.1.3: "Plist templates + .claude/settings.json reference {workspace}/framework/ paths post-move."
+    AC.D.1.4: "Canonical-side dev workflow continues (pytest, pos-amend, loam-mode, heavy-b-migrate work against framework/)."
+    AC.D.1.5: "byte-content-match for representative component source files pre/post move (HC#4 binding)."
+    AC.D.1.S: "Seal-diff invariant — multi-component scope as enumerated."
+  D.2:
+    AC.D.2.1: "workspace-bootstrap scaffolds workspace state at <workspace>/workspace/."
+    AC.D.2.2: ".claude/ at workspace root preserved (D-Q.A4 — pending owner ruling)."
+    AC.D.2.3: "Plist EnvironmentVariables reference <workspace>/workspace/ paths."
+    AC.D.2.4: "Workspace-state migration script — idempotent, atomic, byte-content-match (HC#4 binding)."
+    AC.D.2.5: "pos3 real-apply verification (HC#5 — empirical end-to-end)."
+    AC.D.2.S: "Seal-diff invariant — multi-component scope."
+  D.3:
+    AC.D.3.1: "pos-sync invokes git fetch against framework/'s remote."
+    AC.D.3.2: "pos-sync runs git merge --ff-only on success; exits 0 with structured summary."
+    AC.D.3.3: "Non-fast-forward fallback to git merge with merge driver; remaining conflicts go to LLM-resolver."
+    AC.D.3.4: "Class-A protection structural — files under <workspace>/workspace/ NEVER modified by pos-sync (HC#4 byte-content-match)."
+    AC.D.3.5: "Audit log derives from git log + LLM-resolver structured output."
+    AC.D.3.6: "Pre-D.3 workspace-sync code retired (~2400 LOC, ~110 tests)."
+    AC.D.3.S: "Seal-diff invariant — workspace-sync only."
+  D.4:
+    AC.D.4.1: "pos-new-workspace --from <repo> <new-ws-path> creates working workspace."
+    AC.D.4.2: "pos init is idempotent."
+    AC.D.4.3: "pos-new-workspace documented in workspace-bootstrap/README.md + STATE.md."
+    AC.D.4.S: "Seal-diff invariant — workspace-bootstrap only."
+  D.5:
+    AC.D.5.1: "Audited cleanup — every remaining-but-dead surface deleted, kept-with-justification, or re-extended with new AC."
+    AC.D.5.S: "Seal-diff invariant — workspace-sync only."
+
+# --- Halt-and-surface findings during plan authoring ---
+
+HALT_FINDINGS:
+  finding_1:
+    summary: ".claude/settings.json is BOTH framework-tracked AND workspace-scaffolded today (asymmetric)."
+    impact: "D.1's amendment fence MUST include the canonical-side .claude/settings.json rename to framework/<...>/settings.dev-template.json (or analogous; builder's call inside D.1 outcome bound)."
+    severity: "info — surfaced for D.1 builder confirmation"
+  finding_2:
+    summary: "memory-system/.venv/ is workspace-state, not framework code."
+    impact: "D.1 + D.2's combined fence must address venv path question. Plan-author leans toward <workspace>/.venv-memory-system/ at workspace root; builder's call inside outcome bound."
+    severity: "info — surfaced for builder awareness"
+  finding_3:
+    summary: "data/ directories are component-relative + gitignored via */data/. Post-D.1 path may need .gitignore extension or relocation."
+    impact: "Plan-author leans toward relocating per-component data to <workspace>/workspace/data/<component>/ (workspace-state class). Surface for owner ruling under D-Q.A4 extension."
+    severity: "info — surfaced for D.2 builder confirmation"
+  finding_4:
+    summary: "first-run-inventory.yaml is framework configuration; lives under framework/ post-D.1."
+    impact: "first_run_helper.py reads from <pos_v2_root>/framework/first-run-inventory.yaml post-D.1."
+    severity: "info — confirmation for D.1 builder"
+  finding_5:
+    summary: "tools/ moves to framework/tools/ in D.1; pos-amend + heavy-b-migrate use relative path resolution; should be clean."
+    impact: "Verify during D.1 build."
+    severity: "info — confirmation for D.1 builder"
+  finding_6:
+    summary: "Plist templates use {workspace} placeholders — already cross-machine-safe by construction."
+    impact: "No halt. D's template machinery is cross-machine-clean."
+    severity: "info — no action needed"
+  finding_7:
+    summary: "workspace-sync sync_protected.py's FRAMEWORK_FLOOR becomes vestigial under D — directory boundary is the structural contract."
+    impact: "Drop runtime classification under D.3. Surface to owner via D-Q.A5 + D.5 cleanup audit."
+    severity: "info — surfaced for D.3 / D.5 builders"
+  finding_8:
+    summary: "~/.pos/canonical-cache/ retain-or-retire — not structurally required post-D, but useful for multi-workspace freshness sharing."
+    impact: "Builder's call inside D.3 outcome bound; plan-author leans retain."
+    severity: "info — surfaced for D.3 builder awareness"
+
+# --- Speedups applied (per feedback_amendment_dispatch_speedups) ---
+
+SPEEDUPS:
+  - id: "(a) scoped-sweep seal"
+    description: "Each amendment's pos-amend seal --scoped-sweep runs only the touched component(s)' seal-diff tests. (D.1 exception: multi-component scope; sweep is wide.)"
+  - id: "(b) pre-seal smoke"
+    description: "Touched-component tests pass before commit; full repo-wide pytest skipped pre-seal."
+  - id: "(c) inline methodology snippets"
+    description: "Inline odd-methodology snippets in dispatch + commit prose."
+
+# --- Empirical verification (HC#5) ---
+
+EMPIRICAL_VERIFICATION:
+  pos3_workspace_path: "/Users/lukeivers/pos3/"
+  per_amendment_verification:
+    D.1: "operator-confirmed: fresh-clone + first-run + pytest smoke green against framework/ tree."
+    D.2: "migration script runs against pos3 in-place; byte-content-match every workspace-state file pre/post; first-run after migration produces green session."
+    D.3: "first sync after D.3 produces a fast-forward; <workspace>/workspace/ files byte-identical pre/post."
+    D.4: "pos-new-workspace --from <canonical-clone> <fresh-path> produces a working new workspace; first-run on it succeeds."
+    D.5: "no behaviour-shape regression; static analysis confirms no dead exports."
+
+# --- Companions / references ---
+
+COMPANIONS:
+  research_note: "docs/rebuild/plans/research/workspace-architecture-directory-split-2026-04-27.md"
+  first_principles: "/Users/lukeivers/pos3/.scratch/claude-output/workspace-sync-first-principles-2026-04-27.md"
+  architecture_being_migrated_from:
+    - "docs/rebuild/plans/workspace-sync.md  # #56"
+    - "docs/rebuild/plans/workspace-sync-resolver-cost-overhaul.md  # #57"
+    - "docs/rebuild/plans/workspace-sync-alpha-hotfix.md  # #59"
+    - "docs/rebuild/plans/workspace-sync-alpha-hotfix-2.md  # #60"
+  spec_anchors:
+    - "docs/rebuild/VALUE_PROPOSITION.md"
+    - "docs/odd-methodology.md"
+  amendment_precedents:
+    - "amendment #46: multi-component plan-shape"
+    - "amendment #47: single-component plan-shape + workspace-local config writer"
+    - "amendment #54: heavy-b-migrate sealed-floor-rebase fallback (relevant if D.1 needs it)"
+
+# --- Audit-trail ---
+
+AUDIT_TRAIL_EXPECTATION: |
+  Luke is engaged but minimum-touch. Primary persona will autonomously
+  dispatch the 5 D amendment builders sequentially after this plan
+  lands. Per-amendment dispatches reuse this vars-file (templated
+  rendering or direct parameterisation). Post-migration verification
+  per HC#5 — real apply against pos3, byte-content-match assertions,
+  workspace-state preserved.
+
+# --- Status of plan-authoring run ---
+
+PLAN_AUTHORING_RUN:
+  start_date: "2026-04-27"
+  walltime_minutes: "~45"  # well under the 1.5h ceiling
+  walltime_ceiling_minutes: 90
+  ceiling_reached: false
+  halts_surfaced: 0  # no critical halts; 8 informational findings surfaced for builders
+  decisions_for_owner: 5  # D-Q.A1 through D-Q.A5
+  outcome_decisions_only: true  # method-shape decisions deferred to per-amendment builders

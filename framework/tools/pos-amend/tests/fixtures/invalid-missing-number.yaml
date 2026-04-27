@@ -1,0 +1,10 @@
+schema_version: 1
+amendment:
+  slug: test-missing-number
+  title: "test: missing number"
+baseline: abcdef0
+plan: docs/rebuild/plans/bad.md
+components:
+  - name: example
+    seal_test: example/tests/test.py
+    sidecar: example/tests/SEAL_COMMIT

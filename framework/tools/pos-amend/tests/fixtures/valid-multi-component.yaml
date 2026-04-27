@@ -1,0 +1,28 @@
+schema_version: 1
+amendment:
+  number: 100
+  slug: test-multi
+  title: "test: multi-component valid"
+baseline: abcdef0
+plan: docs/rebuild/plans/test-multi.md
+components:
+  - name: alpha
+    seal_test: alpha/tests/test_no_sealed_amendments.py
+    sidecar: alpha/tests/SEAL_COMMIT
+    extra_allowed_prefixes:
+      - beta/
+  - name: beta
+    seal_test: beta/tests/test_no_sealed_amendments.py
+    sidecar: beta/tests/SEAL_COMMIT
+    extra_allowed_prefixes:
+      - alpha/
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+narrative:
+  target: alpha/seals/SEAL_COMMIT.narrative
+  body: |
+    # test narrative block
+    test body.

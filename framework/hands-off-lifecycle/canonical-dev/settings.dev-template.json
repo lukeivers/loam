@@ -1,0 +1,18 @@
+{
+  "_comment": "DEV-CANONICAL TEMPLATE — copy to <canonical-root>/.claude/settings.json on a fresh clone of canonical pos-v2 to wire the SessionStart hook for the canonical maintainer's interactive sessions. This file is the canonical-dev template (per d-migration plan §13 finding 1); workspace-side scaffolding scaffolds <workspace>/.claude/settings.json from a separate workspace-bootstrap template. Path references use $CLAUDE_PROJECT_DIR/framework/... per D.1's directory-restructure layout. See framework/hands-off-lifecycle/README.md for the SessionStart lifecycle.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/framework/hands-off-lifecycle/hooks/first-run.sh",
+            "async": false,
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

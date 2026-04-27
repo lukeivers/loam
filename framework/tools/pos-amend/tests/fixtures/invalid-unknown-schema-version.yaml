@@ -1,0 +1,11 @@
+schema_version: 99
+amendment:
+  number: 99
+  slug: test-bad-schema
+  title: "test: bad schema"
+baseline: abcdef0
+plan: docs/rebuild/plans/bad.md
+components:
+  - name: example
+    seal_test: example/tests/test.py
+    sidecar: example/tests/SEAL_COMMIT

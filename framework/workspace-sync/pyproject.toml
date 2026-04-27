@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pos_workspace_sync"
+version = "0.1.0"
+description = "pOS v2 workspace-sync — canonical-to-workspace git-shaped sync (Architecture B) with three-class workspace-data envelope and LLM-mediated semantic-merge gate. Companion to self-upgrade (Architecture A canonical-only)."
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.5",
+    "PyYAML>=6.0",
+    "opentelemetry-api>=1.22",
+    "opentelemetry-sdk>=1.22",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+# Hyphenated short-form (per pos-v2 convention: `pos-X = pkg.cli:main`).
+# Operator types `pos-sync --canonical <path>`; `pos-workspace-sync` is
+# the unambiguous alias the plan §11 D-1 LOCKED ruling describes.
+pos-sync = "workspace_sync.cli:main"
+pos-workspace-sync = "workspace_sync.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+workspace_sync = ["templates/*.yaml"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

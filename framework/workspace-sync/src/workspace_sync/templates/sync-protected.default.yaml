@@ -1,0 +1,32 @@
+# Default sync-protected envelope (clause-(h) workspace-data classes).
+#
+# Three classes:
+#   - A: workspace state, NEVER overwritten by an upgrade.
+#   - B: operator preference, override-resolved (workspace wins on edit).
+#   - C: framework code, LLM-resolved on conflict (default for unmatched).
+#
+# `framework_floor` is non-negotiable — the schema validator refuses any
+# envelope that removes one of these rules. Add new rules to
+# `workspace_rules` instead; they are matched first and can tighten
+# Class-A coverage.
+#
+# This file is written automatically on the first clause-(h) upgrade
+# invocation in a workspace that lacks .pos/sync-protected.yaml.
+# Hand-edit `workspace_rules` to taste; the upgrade will not touch
+# `framework_floor`.
+
+framework_floor:
+  - pattern: "personas/**/contract.yaml"
+    klass: A
+  - pattern: ".pos/objective_tracker.sqlite"
+    klass: A
+  - pattern: ".pos/**"
+    klass: A
+  - pattern: ".scratch/**"
+    klass: A
+  - pattern: ".mcp.json"
+    klass: A
+  - pattern: "memory.yaml"
+    klass: B
+
+workspace_rules: []

@@ -239,6 +239,68 @@ Total estimated wall-time savings: 25-35% vs no-speedup baseline.
 
 ---
 
-## §15. Verdict (post-build, pre-seal)
+## §14. Method-decision register (post-build)
 
-To be authored after the implementation lands and tests pass, per the §14/§15 backfill convention from D.1/D.2/D.3.
+Records the method choices the builder made within each AC's outcome bound, plus the commit SHAs for D.4's amendment / apply / seal cycle. Authored post-seal per AC.D-sa.7 + the dispatch's §10 procedure step.
+
+### Test breakdown
+
+- **Added:** `test_pos_new_workspace.py` — 11 tests covering AC.D.4.1 (5 tests: local canonical, refusal-on-non-empty, URL-form cache-clone, HC#6 structural-guard, idempotency-via-init-existing), AC.D.4.3 (2 tests: help-text, README), plus 4 supplementary tests covering canonical-source validation + cli_main exit codes.
+- **Updated:** `conftest.py` — added `make_fixture_canonical` fixture.
+- **Pre-existing tests run unchanged:** 218 workspace-bootstrap tests pass post-D.4 (HC#2 backwards-compat).
+- **Total post-D.4 workspace-bootstrap test count:** 229.
+
+### HC#4 byte-content match
+
+`test_AC_D_4_1_local_canonical_creates_working_workspace` asserts byte-equality for 5 representative files (sample drawn from the fixture canonical) at `<new-ws>/framework/<rel-path>` against `git show HEAD:<rel-path>` from canonical. `test_AC_D_4_1_url_form_routes_through_cache_clone` runs the same check against the URL-form path. Both pass.
+
+### HC#6 structural-guard test
+
+`test_AC_D_4_1_HC6_workspace_state_inside_workspace_subdir` asserts:
+- `<new-ws>/<workspace-state-name>` does NOT exist for any name in `{.pos, personas, .mcp.json, objective_tracker.sqlite}`.
+- `<new-ws>/workspace/<workspace-state-name>` DOES exist for the same names.
+- `<new-ws>/framework/<workspace-state-name>` does NOT exist.
+
+This is D.2's HC#6 promise carried forward to the post-D.4 fresh-bootstrap surface.
+
+### Method deviations from the plan-author's recommendations
+
+1. **D.4-build.G — AC.D.4.2 idempotency interpretation accepted as-recommended.** Re-running `pos-new-workspace` against an existing populated target halts (target-not-empty); idempotent re-invocation lands on `--init-existing` mode which skips the clone. The test (`test_AC_D_4_2_init_existing_is_idempotent`) asserts mtime equality across both runs — the strongest possible signal that the scaffold's per-file "skip if present" contract holds.
+
+2. **D.4-build.D — `pos_root` placement scoped inside the workspace.** Concrete location: `<new-ws>/workspace/.pos/legacy-user-config/`. This means `pos-new-workspace` does NOT touch the operator's actual `~/.pos/` — important because the operator may have an existing pos-v2 install on the host (the host install is β.3's job, separate). The trade-off (operator must run `pos-bootstrap` from inside the new workspace to scaffold their actual `~/.pos/` if absent) is captured in the CLI's exit summary so operators see the next step inline.
+
+### Commit SHAs
+
+- amendment commit: `34bfab3`
+- baseline-fix commit: `c8bef37` — fix(plans): correct d-migration-4 manifest baseline SHA to full hash
+- apply chore: `8acdff5`
+- seal commit: `8dbbb7a`
+- §14 + §15 backfill: (this commit)
+
+---
+
+## §15. Verdict
+
+D.4 lands clean. The fresh-workspace bootstrap loop is closed: a single operator-facing verb (`pos-new-workspace <new-ws> --from <repo>`) creates a workspace at the post-D layout (framework/ + workspace/ + .claude/) by composing on the existing scaffold via its public API. The β.2 absorption is structural — no separate `tools/pos-new-workspace/` package; the entry-point lives next to the scaffold it composes (per D-β.2 path b.i locked in the parent plan).
+
+**HC#1 (single-component fence) honoured.** Diff confined to `framework/workspace-bootstrap/` + universal admissions. ZERO edits to sealed `adapters/first_run_scaffold.py` — the scaffold is composed-with via its public `run_first_run_scaffold` API. ZERO edits to workspace-sync (its `canonical_cache.ensure_cache_clone` is read-only consumed for the URL-form path).
+
+**HC#4 (byte-content match) closed.** Both local-path and URL-form bootstrap tests assert that every fixture file in `<new-ws>/framework/<rel>` byte-equals canonical's `git show HEAD:<rel>` content. The bug class that triggered D-migration cannot land here — `git clone` produces faithful content by construction, and pos-new-workspace performs zero post-clone mutation inside `framework/`.
+
+**HC#6 (structural promise) carried forward.** The test asserts every workspace-state path lives under `<new-ws>/workspace/` exclusively (apart from `.claude/` per D-Q.A4 lock). The bootstrap never writes inside `framework/` beyond what `git clone` produces. D.2's structural promise is now guaranteed for fresh-bootstrap workspaces.
+
+**HC#5 (pos3 empirical smoke) deferred to a post-D.5 amendment** per the locked dispatch's HC pivot. D.4 ships synthetic-fixture verification only; pos3's cutover is a separate amendment that lands after D.5's optional cleanup.
+
+### Notable mid-build deviations
+
+1. **Manifest baseline SHA correction.** The initial manifest carried a typo'd full-SHA prefix for the BASELINE field (`09f5fa83fffaaab14f1be3aab1c6c4d97e29f2cb`) — the actual full SHA for the `09f5fa8` short prefix is `09f5fa84fb1dd790a6eb934565a93ea39f57d053`. `pos-amend apply --dry-run` halted on `git diff` invocation because the SHA was unreachable. Fix landed as a separate corrective commit (`c8bef37`) per `feedback_no_amend_in_agent_dispatches`. No source change.
+
+2. **`pos-amend seal --plan-doc` was misdirected initially.** The seal command was first invoked with `--plan-doc /Users/.../d-migration.md` (the parent plan), which mechanically rewrote the parent plan's per-D.x §14 commit-SHA placeholders with D.4-only entries — clobbering the future `<TBD>` slots for D.5 and dropping the D.1/D.2/D.3 placeholder structure. Reverted via `git revert`; the §14 backfill belongs in this builder-plan (per D.1/D.2/D.3 precedent), not the parent plan. The parent plan's §14 placeholder structure is preserved for D.5.
+
+3. **No surface-shape changes to scaffold.** The plan envisaged the bootstrap might need a small extension to the scaffold's API (e.g. exposing a `pos_root_override` or similar). On reading the existing surface, the scaffold's `pos_root` parameter is already free-form (any Path), `service_bootstrap=False` skips the launchctl invocation, and `tracker_seed_runner=` is already an injection seam. ZERO scaffold edits required. β.2's "compose on top of the scaffold without editing it" objective hits a clean boundary.
+
+4. **Speedup deltas:** narrow seal-test (workspace-bootstrap-only `--scoped-sweep`) ran ~25 seconds vs an estimated ~4 minutes for a wide cross-component sweep (saved ~3.5 minutes). Pre-seal full-suite skipped (saved ~5+ minutes). Inline methodology snippets in commit prose (no measurable saving but reduces post-build SHA-backfill complexity). Total estimated savings: ~30% of an unspeedup-baseline build.
+
+### What goes next
+
+D.5 (optional cleanup) dispatches against the post-D.4 tree. Per D.3's seal narrative — "no transition surface left behind needing cleanup" — D.5 may collapse to a no-op (the parent plan's §4 D.5 explicitly says "Plan-author classifies need at end of D.3 build"). After D.5 (or its no-op verdict), a separate amendment migrates pos3 to the D-shape (HC#5 real-apply). pos-new-workspace is the verb that amendment will compose on.

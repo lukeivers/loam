@@ -279,11 +279,10 @@ This append happens AFTER `stage_canonical_clean_writes` has already run (line 2
 
 ### Commit SHAs
 
-(Backfilled by `pos-amend seal --plan-doc` per AC.D-sa.7.)
-
-
----
-
+- Amendment commit: `f5190b645f37b871a0fb95fb3b85e90f3672b2f2` —
+  `feat(workspace-sync): α-hotfix — NN-resolved entries actually overwrite workspace files (amendment #59, AC.α-hotfix.1 + AC.α-hotfix.S)`
+- Seal commit: `f1abded6b0799d840385c9951d8600f92d580516` —
+  `chore(seals): workspace-sync — α-hotfix: NN-resolved entries actually overwrite workspace files — workspace-sync at f5190b6`
 ## 15. Backwards-compat verification
 
 (Backfilled post-build with concrete numbers.)

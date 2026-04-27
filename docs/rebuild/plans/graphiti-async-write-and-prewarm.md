@@ -1141,7 +1141,13 @@ primary_persona.cli memory-worker --workspace <workspace>`.
 
 ### Commit SHAs
 
-(populated post-build by manual append for dev-discipline plans)
+- Amendment commit (dev-discipline; not a sealed-component amendment
+  so no seal commit follows): **`262f50d`** —
+  `feat(primary-persona, workspace-bootstrap): graphiti async-write
+  queue + worker; Ollama prewarm advisory (amendment J /
+  AC.J.1–AC.J.8)`.
+- This plan-doc §14 backfill commit: **(this commit)** — populates
+  the commit SHA above + closes the dev-CDC paper trail.
 
 ### Dependents cleared to dispatch
 

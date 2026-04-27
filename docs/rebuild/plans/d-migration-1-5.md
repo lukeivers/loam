@@ -1147,11 +1147,153 @@ mechanism.)
   `chore(seals): D-migration D.1.5 — pos-amend rename-aware seal + D.1 cleanup — cost-governance+graceful-degradation+memory-system+observability-aggregator+reversibility-primitive+self-correction+self-upgrade+telegram-interface at 8908b19`
 ### Method-shape decisions
 
-(Populated by builder during build. Expected entries:
-exact rename-detection helper signature + module placement;
-exact wording of stdout diagnostic line; exact manifest
-shape for the cleanup directives; exact cleanup invocation
-verb; whether AC.D.1.5.6 was built or skipped.)
+#### Full commit chain
+
+- **Feat:** `50044e6` —
+  `feat(framework/tools/pos-amend): D-migration D.1.5 — rename-aware seal + D.1 cleanup (amendment #62, AC.D.1.5.1–AC.D.1.5.S)`
+- **Apply chore:** `9d90782` —
+  `chore(framework): retroactively revert D.1's spurious BASELINE+SEAL_COMMIT bumps for amendment #62 rename-only components`
+- **Fix #1:** `a12aee3` —
+  `fix(framework/tools/pos-amend): seal step must skip sidecar bump for cleanup_directive components` (discovered during seal — seal's standard sidecar advance was clobbering the cleanup revert)
+- **Fix #2:** `8908b19` —
+  `fix(framework/tools/pos-amend): apply skips bump-then-revert noise for cleanup_directive components` (cleanliness fix — apply was redundantly bumping then reverting)
+- **Seal:** `21e27f2` —
+  `chore(seals): D-migration D.1.5 — pos-amend rename-aware seal + D.1 cleanup — <8 components> at 8908b19`
+- **§14 backfill:** `e197b66` —
+  `docs(plans): record amendment #62 commit SHAs in method-decision register`
+
+#### M-decisions (per builder-plan §1)
+
+**M-1 — `rename_detection.py` module + `is_rename_only` signature.**
+New module at `framework/tools/pos-amend/src/pos_amend/rename_detection.py`.
+Public surface: `is_rename_only(repo_root, *, baseline, head, old_path,
+new_path, bookkeeping_leafnames=("SEAL_COMMIT",
+"test_no_sealed_amendments.py", "test_cross_cutting.py")) -> bool`.
+Algorithm: shellout to `git diff --find-renames=99% --name-status
+<baseline>..<head> -- <old> <new>`; parse entries; return False on
+any M / R<100 / non-bookkeeping A or D / no rename evidence in the
+window / empty diff. Empty-diff returns False (preserves
+pre-D.1.5 apply semantics for unchanged components per HC#1).
+
+**M-2 — Apply-side wiring.** Per-component rename-only verdict
+computed once up-front (HEAD SHA resolved via
+`git rev-parse HEAD`). When True: skip `set_baseline()` and
+`write_sidecar()`; widening still runs. Diagnostic format:
+`note <comp>: rename-only — BASELINE preserved at <prior-sha>;
+SEAL_COMMIT preserved at <prior-sha>; allowed_prefixes widened.`
+
+**M-3 — Manifest schema.** Optional `cleanup_directives:` v1-compatible
+field. Each entry carries `comp_name` + `pre_baseline` (7-40 char hex
+SHA) + `pre_seal_commit` (7-40 char hex SHA). Comp_name lookups into
+`components:` for the seal_test + sidecar paths. No schema bump.
+
+**M-4 — `--dry-run` reporting.** `ComponentReport.rename_only_verdict:
+bool | None` field. `format_reports` prints `rename-only: True/False`
+under each `[<comp>]` block in the preview output.
+
+**M-5 — Tests.** New tests under `framework/tools/pos-amend/tests/`:
+
+- `test_rename_detection.py` — 7 unit tests for `is_rename_only`
+  (pure rename, modify, partial rename R<100, unwhitelisted A/D,
+  bookkeeping admitted, empty diff, pure-A duplication).
+- `test_AC_D_1_5_2_apply_rename_only_skip.py` — 2 tests covering
+  rename-only skip + substantive control case.
+- `test_AC_D_1_5_3_dry_run_reports.py` — preview output contains
+  `rename-only: True/False` per component.
+- `test_AC_D_1_5_4_backwards_compat.py` — pre-D.1.5 test suite green.
+- `test_AC_D_1_5_5_cleanup_directives.py` — 5 tests covering apply
+  revert, idempotency, manifest parsing, SHA validation, and v1
+  backwards-compat (no cleanup_directives = empty tuple default).
+
+**M-6 — AC.D.1.5.6 NOT built (per D-Q.5 lock).** No `rename_only:`
+manifest override. Builder confirmed the heuristic is robust on
+D.1's window without a fixture surfacing an edge case.
+
+**M-7 — Apply chore commit shape.** Standard pos-amend pattern: feat
+commit lands code; `pos-amend apply` writes BASELINE/SEAL_COMMIT
+edits in-tree; operator stages + commits the apply chore; seal step
+finalises.
+
+**Build-time corrective fixes (HC#5 cascade discovery during seal).**
+
+- **a12aee3:** seal step's `_finalize` step (c) iterates
+  `manifest.components` and unconditionally bumps each component's
+  sidecar to `amendment_sha` — clobbering D.1.5's cleanup revert.
+  Fix: derive `cleanup_protected = {d.comp_name for d in
+  manifest.cleanup_directives}`; skip the sidecar bump (and emit a
+  note) for protected components.
+- **8908b19:** apply's standard component loop bumped BASELINE +
+  SEAL_COMMIT then immediately reverted via cleanup_directives —
+  net diff zero but noisy. Fix: apply's standard loop detects
+  cleanup-protected components, runs widening only, skips the bump
+  entirely.
+
+#### Component classification (D.1 window 57d735f..0d599bb, strict R100 + bookkeeping whitelist)
+
+**Rename-only (8 — SEAL_COMMIT + BASELINE reverted to pre-D.1):**
+cost-governance, graceful-degradation, memory-system,
+observability-aggregator, reversibility-primitive, self-correction,
+self-upgrade, telegram-interface.
+
+**Substantive (3 — bumps preserved per HC#4 false-positive avoidance):**
+
+- objective-tracker: A/D pair on `test_AC_SE_S_seal_diff_window.py` +
+  `test_d4_scope_binding.py` carries content edits.
+- orchestrator: A/D pair on `scripts/pos_session_start.py` carries
+  content edit.
+- primary-persona: A/D pairs on 5 test files carry content edits.
+
+**Other amendments' substantive components (already correctly bumped):**
+
+- hands-off-lifecycle: R<100 + 88 A/D entries.
+- workspace-bootstrap: R099 in first_run_scaffold.py.
+- workspace-sync: duplicated (not git-mv'd) — all-A entries, HC#4
+  false-negative tolerance.
+
+**No-op (no SEAL_COMMIT pre-D.1):** safety-layer, scope-of-work.
+
+#### HC#5 empirical post-seal verification (7 representative AC.X.S tests)
+
+| Test | Post-D.1.5 result |
+|------|-------------------|
+| primary-persona/tests/test_AC_M_S_seal_diff_window.py | **FAIL** — primary-persona NOT reverted (substantive); halt surface |
+| primary-persona/tests/test_AC_A_S_seal_diff_single_component_scope.py | **PASS** |
+| hands-off-lifecycle/tests/test_AC_SE_S_seal_diff_window.py | **PASS** |
+| hands-off-lifecycle/tests/test_AC45_S_seal_diff_window.py | **PASS** |
+| objective-tracker/tests/test_AC_SE_S_seal_diff_window.py | **PASS** |
+| workspace-bootstrap/tests/test_AC_E_S_seal_diff_single_component_scope.py | **PASS** |
+| tools/loam-mode/tests/test_AC_B_S_seal_diff.py | **PASS** |
+
+**6/7 cascade tests pass post-D.1.5.** The 1 failure (primary-persona's
+AC.M.S) is the **anticipated halt-and-surface case** per dispatch
+halt-trigger 6: primary-persona classified substantive per strict
+R100 (5 test files have content edits beyond bookkeeping);
+SEAL_COMMIT not reverted; AC.M.S window spans D.1 + sees
+`framework/...` paths it doesn't admit.
+
+**Halt-and-surface ruling required:** does Luke want to (a) widen
+the bookkeeping whitelist to cover REPO_ROOT-depth fixture-update
+edits (then primary-persona / orchestrator / objective-tracker would
+classify rename-only and the cascade would unwind), (b) add
+transitional admissions to primary-persona's AC.M.S
+`allowed_prefixes` (similar to D.1's c7fb441 transitional fix for
+`test_no_sealed_amendments.py`), (c) accept the pre-existing
+brittleness of AC.M.S as not D.1.5's scope and prune the test under
+ODD §4 / `feedback_loose_AC_text_fix_AC_not_implementation`, or
+(d) some other remediation? Surface to Luke for D.2-pre-dispatch
+ruling.
+
+#### Pos-amend test count
+- Pre-D.1.5: 154 tests passing.
+- Post-D.1.5: **170 tests passing** (+16 new D.1.5 tests).
+- HC#1 binding: every pre-D.1.5 test passes unchanged.
+
+#### Speedup deltas
+- (a) Scoped-sweep seal: ran 8 components (cleanup-target set) instead
+  of full 14 sealed components. ~40% sweep wall-time saved.
+- (b) Pre-seal smoke restricted to pos-amend tests (170 in ~36s) instead
+  of full repo-wide pytest. ~3-5min saved.
+- (c) Inline methodology snippets in commit prose (vs separate cite).
 
 ---
 

@@ -1,0 +1,121 @@
+# Amendment #65 — D-migration D.4 — pos-new-workspace --from <repo> console-script (β.2 absorbed)
+
+2026-04-26. Fourth of the five D-migration amendments. D.1 (sealed
+at 570092a, Amendment #61) restructured canonical pos-v2's
+`framework/<component>/` layout. D.1.5 (sealed at 21e27f2,
+Amendment #62) added rename-aware seal logic to pos-amend. D.2
+(sealed at 7ef1e23, Amendment #63) established the
+`<workspace>/workspace/` directory + cut over every reader of
+workspace-state paths. D.3 (sealed at 209b6af, Amendment #64)
+retired workspace-sync's bespoke pipeline in favour of `git
+fetch + git merge --ff-only` against `<workspace>/framework/`.
+D.4 closes the new-workspace bootstrap loop: `pos-new-workspace
+--from <repo> <new-ws-path>` is a one-verb operator surface that
+creates a fresh workspace at the D-shape (framework/ + workspace/
++ .claude/) by cloning canonical + scaffolding workspace-state.
+
+The previously-separate β.2 task (`workspace-sync-ergonomics.md`
+§β.2) is **absorbed** into this amendment per the locked D-D4
+ruling. β.2's design (separate `pos-new-workspace` console_script,
+NOT a `pos` subcommand) is preserved verbatim; the placement
+decision (D-β.2 path b.i) lands the entry-point in
+`framework/workspace-bootstrap/pyproject.toml` so the module
+sits next to the scaffold it composes.
+
+## Surface added
+
+  - framework/workspace-bootstrap/src/workspace_bootstrap/
+    new_workspace.py (NEW MODULE) — operator-facing CLI primitive
+    for fresh-workspace bootstrap. Public surface:
+      * cli_main(argv) — [project.scripts] entry point.
+      * build_parser() — argparse construction (testable).
+      * bootstrap_new_workspace(...) — programmatic API.
+      * BootstrapResult (frozen dataclass).
+      * NewWorkspaceError exception hierarchy.
+
+  - framework/workspace-bootstrap/tests/
+    test_pos_new_workspace.py (NEW) — AC.D.4.1 / AC.D.4.2 /
+    AC.D.4.3 verifications. HC#4 byte-content-match for
+    `<new-ws>/framework/<file>` against canonical bytes.
+    HC#6 structural-guard test asserting workspace-state lives
+    under `<new-ws>/workspace/` (never under framework/ or
+    workspace root apart from .claude/).
+
+  - framework/workspace-bootstrap/README.md (NEW) — top-level
+    component README documenting both console scripts
+    (pos-bootstrap, pos-new-workspace) and the post-bootstrap
+    directory shape. AC.D.4.3 discoverability surface.
+
+## Surface edited
+
+  - framework/workspace-bootstrap/pyproject.toml: add
+    `pos-new-workspace = "workspace_bootstrap.new_workspace:cli_main"`
+    to `[project.scripts]` (sibling to existing pos-bootstrap).
+
+  - framework/workspace-bootstrap/tests/conftest.py: add
+    `make_fixture_canonical` fixture for the bootstrap tests.
+
+## Surface preserved (unchanged)
+
+  - framework/workspace-bootstrap/src/workspace_bootstrap/
+    adapters/first_run_scaffold.py — composed-with via the
+    public `run_first_run_scaffold` API. ZERO edits.
+
+  - All other adapters under workspace_bootstrap/adapters/ —
+    composed-with via the scaffold; ZERO edits.
+
+  - workspace_sync.canonical_cache + workspace_sync.sync_config —
+    composed-with for URL-form canonical_source resolution. ZERO
+    edits to workspace-sync.
+
+## ACs delivered
+
+  - AC.D.4.1 — pos-new-workspace --from <repo> <new-ws-path>
+    creates a working workspace with framework/ cloned (HC#4
+    byte-content match), workspace/ scaffolded (.pos/, personas/,
+    .mcp.json, tracker DB), .claude/ at workspace root,
+    .gitignore declaring framework/ as the only tracked subtree,
+    and workspace/.pos/sync-config.yaml carrying canonical_source.
+
+  - AC.D.4.2 — pos-new-workspace --init-existing <existing-ws>
+    is idempotent (mtimes/content unchanged on second run).
+
+  - AC.D.4.3 — `--help` text describes --from + <new-ws-path>
+    positional + the resulting directory shape; README.md
+    documents both verbs.
+
+  - AC.D.4.S — Seal-diff invariant. Single-component fence;
+    diff confined to framework/workspace-bootstrap/ + universal
+    admissions.
+
+## Backwards-compatibility (HC#2)
+
+  - All existing workspace-bootstrap tests pass post-D.4.
+    D.4 is purely additive: new module + new tests + new entry
+    point. The scaffold is composed-with via its public API;
+    no scaffold edits.
+
+  - HC#3: no new third-party deps (stdlib + pre-existing
+    workspace_bootstrap + workspace_sync deps).
+
+  - HC#4: byte-content-match assertions in test_pos_new_workspace.py:
+    `<new-ws>/framework/<file>` byte-equals canonical's HEAD
+    bytes for every fixture file (local-path form + URL form).
+
+  - HC#5: pos3 in-place D.4 verification deferred to a post-D.5
+    amendment per the dispatch's HC pivot. D.4 ships
+    synthetic-fixture verification only.
+
+  - HC#6: structural-guard test asserts every workspace-state
+    path lands under `<new-ws>/workspace/<...>` (never under
+    framework/ or workspace root apart from .claude/).
+
+  - HC#7-#9: scope-only-dispatch + no `--amend` + plan-before-
+    code adhered.
+
+BASELINE 09f5fa8 (D.3's §14 backfill commit — HEAD at dispatch).
+workspace-bootstrap's BASELINE advances per `pos-amend apply`.
+
+Next: D.5 (optional cleanup) dispatches against the post-D.4 tree.
+Post-D.5, a separate amendment migrates pos3 to D-shape (HC#5
+real-apply, deferred per the locked D.4 dispatch).

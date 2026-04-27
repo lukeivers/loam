@@ -252,17 +252,84 @@ None — the dispatch enumerates the four bugs explicitly, the fix shape is boun
 
 ## 14. Method-decision record (builder, post-build)
 
-(Backfilled by build agent post-implementation.)
-
 ### α-hotfix-2 — Amendment #60 record
 
 #### D-build.x for α-hotfix-2
 
-(To be filled in post-build with the actual method choices made.)
+- **D-build.A — staging primitive centralization.** Renamed
+  `_stage_canonical_for_nn_match` (private; added in #59) →
+  `stage_canonical_at_ref` (public; same signature). The two NN
+  call sites in `merge_helper.py` (cache-hit + cache-miss branches)
+  were updated mechanically to use the new name. `cli.py` imports
+  the public function and invokes it from the post-resolve loop
+  for both `INFERRED_ACCEPT_CANONICAL` (when `resolved_content_path`
+  is None — NN entries already have it set) and `ACCEPT_UPSTREAM`
+  (Class-B). Halt-on-failure: `cli.py` runs AFTER the resolver
+  helper finished — no fallback path — so a False return from
+  `stage_canonical_at_ref` triggers `discard_staging` + exit 2.
+  Net delta in cli.py: +79 / -10 LOC (replaced the buggy `pass`
+  and `clean_writes.append` with explicit per-resolution staging
+  blocks, both with structured halt-and-surface diagnostics).
+
+- **D-build.B — validator extension.** Extended the existing
+  `_resolution_requires` model_validator in
+  `conflict_report.py`. Two new gates, one inside the
+  `INFERRED_RESOLUTIONS` branch (for `INFERRED_ACCEPT_CANONICAL`)
+  and one outside it (for `ACCEPT_UPSTREAM`, which is not an
+  inferred resolution and so does not have rationale/confidence
+  requirements). Net delta: +29 LOC (validator gates +
+  documentation comments). The `INFERRED_ACCEPT_WORKSPACE` +
+  `KEEP_LOCAL` resolutions remain ungated as planned.
+
+- **D-build.C — `SyncStatus.NEEDS_APPLY`.** Added the new enum
+  value to `state.py`. Updated `merge_helper.py` line 786 from
+  `status = SyncStatus.SUCCESS` → `status = SyncStatus.NEEDS_APPLY`
+  on clean-resolve in the finally block. `cli.py` post-apply
+  remains the authoritative SUCCESS writer (line 337 unchanged).
+  The `_ref_already_applied` idempotency check in `cli.py`
+  requires `state.status is SyncStatus.SUCCESS`, so
+  `NEEDS_APPLY` correctly does NOT short-circuit re-runs after
+  a discarded staging.
+
+- **D-build.D — fixture mechanical updates.** Three pre-existing
+  tests broke under the tightened validator:
+  1. `test_conflict_report_b_shape.py::test_sorted_low_confidence_first`
+     — three `_entry()` calls with `INFERRED_ACCEPT_CANONICAL` and
+     null `resolved_content_path`. Updated to supply
+     `resolved_content_path="/tmp/staging/<path>"`.
+  2. `test_merge_helper.py::test_class_c_invokes_resolver_writes_audit`
+     — assertion `state.status is SyncStatus.SUCCESS` updated to
+     `state.status is SyncStatus.NEEDS_APPLY` (the test calls
+     `resolve_inferred_conflicts` directly with no CLI apply, so
+     `NEEDS_APPLY` is now the correct terminal status).
+  3. `test_merge_helper.py::test_check_inferred_resolution_invariants_pass`
+     — the `_entry()` factory was extended to inject a placeholder
+     `resolved_content_path` for resolutions that now require it
+     (intent: the factory's job is shape-correctness; null content
+     paths are the bug shape the validator now refuses).
+
+  All three updates preserve the original test intent (verdict-shape
+  correctness; status-after-resolve correctness).
 
 #### Test breakdown
 
-(To be filled in post-build with the actual test count and names.)
+Six new tests (post-hotfix workspace-sync total: 146; pre-hotfix: 140):
+
+- `tests/test_cli_b_shape.py::test_alpha_hotfix_2_LLM_accept_canonical_overwrites_workspace_file`
+  (Bug A; HC#3 file-content-byte-match assertion).
+- `tests/test_cli_b_shape.py::test_alpha_hotfix_2_class_B_accept_upstream_overwrites_workspace_file`
+  (Bug B; HC#3 file-content-byte-match assertion).
+- `tests/test_cli_b_shape.py::test_alpha_hotfix_2_discard_path_does_not_advance_state_to_success`
+  (Bug D; state-status assertion + bonus re-run-no-short-circuit
+  assertion).
+- `tests/test_conflict_report_b_shape.py::test_alpha_hotfix_2_inferred_accept_canonical_requires_resolved_content_path`
+  (Bug C; validator-rejection assertion).
+- `tests/test_conflict_report_b_shape.py::test_alpha_hotfix_2_accept_upstream_requires_resolved_content_path`
+  (Bug C; validator-rejection assertion).
+- `tests/test_conflict_report_b_shape.py::test_alpha_hotfix_2_inferred_accept_workspace_remains_ungated`
+  (Bug C; explicit out-of-scope check — `INFERRED_ACCEPT_WORKSPACE`
+  with null `resolved_content_path` correctly constructs without
+  error).
 
 ### Commit SHAs
 
@@ -272,4 +339,37 @@ None — the dispatch enumerates the four bugs explicitly, the fix shape is boun
   `chore(seals): workspace-sync — α-hotfix-2: close 4 correctness bugs of the verdict-without-stage class — workspace-sync at 8bae39a`
 ## 15. Backwards-compat verification
 
-(Backfilled post-build with concrete numbers.)
+- **All 140 pre-existing workspace-sync tests pass post-hotfix.**
+  Three pre-existing tests required mechanical fixture updates to
+  satisfy the tightened validator (D-build.D); intent preserved.
+- **Post-hotfix workspace-sync total: 146 tests** (+6 new).
+- **HC#1 (no edits outside workspace-sync/) verified.** Seal-diff
+  test `tests/test_no_sealed_amendments.py::test_B20_only_workspace_sync_surfaces_changed`
+  passes against `BASELINE = 8083a02` and
+  `SEAL_COMMIT = 7452b20`. Only `workspace-sync/` and
+  `docs/rebuild/plans/` (universal-paths admission) paths in the
+  diff.
+- **HC#2 (no #56/57/58/59 regression) verified.** The α.1 NN
+  ancestor-detection path (#57 / #59) is unchanged; the
+  `INFERRED_MERGED` write_merged path is unchanged; Class-A
+  protection is unchanged; β.1 (#58) canonical-source resolution
+  is unchanged.
+- **HC#3 (regression tests assert byte-match / structural-rejection)
+  verified.** Bug A, Bug B tests use `Path.read_bytes()` against
+  `git show <ref>:<path>` byte-for-byte. Bug D test asserts
+  `state.status is not SyncStatus.SUCCESS` plus a bonus re-run-
+  no-short-circuit assertion. Bug C tests use
+  `pytest.raises(ValueError, match="resolved_content_path")`.
+- **HC#4 (no new third-party deps) verified.** `git diff
+  workspace-sync/uv.lock` is empty under this amendment.
+- **Speedups applied.**
+  - (a) Scoped-sweep seal: `pos-amend seal --scoped-sweep` ran
+    only the workspace-sync component's seal-diff test, not all
+    sealed components.
+  - (b) Pre-seal smoke: workspace-sync tests passed (146/146)
+    before commit; full repo-wide pytest skipped pre-seal per
+    speedup (b).
+  - (c) Inline methodology snippets in commit prose: the
+    amendment-commit message above includes structured
+    Bug A/B/C/D + D-build.A/B/C/D snippets verbatim from this
+    plan-doc rather than referencing them externally.

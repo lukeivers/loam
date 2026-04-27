@@ -520,4 +520,56 @@ Per dispatch §"Halt-and-surface": ceiling 6h. Plan §1 estimate
 
 ## 8. Method-decision register (post-build)
 
-(Fill at seal time — actual choices made + deviations from §2.)
+### Commit SHAs
+
+Hand-rolled seal flow (pos-amend seal's cross-component test sweep
+incompatible with rename-only multi-component moves; gap captured
+for D.1.5 to fix pos-amend's rename-aware-seal logic before D.2):
+
+- **Amendment commit (feat):** `0d599bb` — `feat(framework): D-migration D.1 — framework/ directory restructure (amendment #61, AC.D.1.1–AC.D.1.S)`
+- **Apply chore commit:** `97a4459` — `chore(framework): advance BASELINE + SEAL_COMMIT for amendment #61 window`
+- **Transitional prefix fix:** `c7fb441` — `fix(framework/*): add transitional OLD prefix to seal-diff tests for D.1 rename window`
+- **Seal commit:** `570092a` — `chore(seals): D-migration D.1 — framework/ directory restructure (multi-component) at c7fb441`
+- **§8 backfill commit:** (this commit)
+
+### Test sweep skipped per option (b) ruling 2026-04-27
+
+Cross-component test sweep was skipped because pos-amend's seal step
+bumps SEAL_COMMITs uniformly across all components in the manifest,
+including rename-only ones. Each prior amendment's `AC.X.S` seal-test
+hardcodes path prefixes for ITS amendment's fence; with SEAL_COMMITs
+advanced to point at D.1, those tests see a diff window spanning D.1's
+renames → fence-violation cascade.
+
+The 13 `test_no_sealed_amendments.py` tests got transitional OLD-prefix
+patches in `c7fb441`, but the inner amendment-fence tests (e.g.
+`test_AC_M_S_seal_diff_window.py` for #48) need the same treatment
+across many amendments. Estimated 20-50 tests; deferred to D.1.5
+(pos-amend rename-aware-seal) which fixes the root cause structurally
+rather than patching every test.
+
+### AC.D.1.S manual verification
+
+Diff window: `57d735f .. 570092a` (corpus-edit commit → D.1 seal commit).
+
+Seal-diff confined to:
+- `framework/` (every renamed component path)
+- `docs/rebuild/plans/` (universal admission — d-migration*.md, manifest, vars, builder-plan)
+- `.claude/settings.json` (renamed file — captured in 0d599bb)
+
+No paths outside the framework/ + universal-paths admissions. AC.D.1.S
+satisfied by manual inspection (`git diff --name-only 57d735f..570092a`
+output reviewed).
+
+### Deviations from §2 (for completeness)
+
+- **D-build.D.1.D (per-component allowed_prefixes update):** the planned
+  per-component test patch was DONE in `c7fb441` for the 13
+  `test_no_sealed_amendments.py` files, but did NOT cover the inner
+  AC.X.S amendment-fence tests. Those defer to D.1.5.
+- **Halt-and-surface fired at seal-step** (not at build-step): the
+  pos-amend seal cross-component sweep cycled on memory-system test
+  collection (graphiti_core / kuzu deps missing in canonical's .venv;
+  primary persona installed both during the seal cycle). Subsequent
+  AC.X.S fence violations across primary-persona triggered the
+  first-principles surface that produced the (b)+(c) ruling.

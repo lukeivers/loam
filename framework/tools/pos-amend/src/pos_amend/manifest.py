@@ -81,6 +81,33 @@ class NarrativeSpec:
 
 
 @dataclass(frozen=True)
+class CleanupDirective:
+    """One-shot retroactive BASELINE/SEAL_COMMIT revert for a
+    rename-only component classified retrospectively (i.e. the prior
+    amendment ran without the rename-only-aware bump path and bumped
+    the fence anyway). Introduced in amendment #62 (D.1.5) to revert
+    D.1's spurious bumps on rename-only components.
+
+    See ``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.5.
+
+    The directive is bookkeeping-shaped — it carries the pre-bump
+    BASELINE + SEAL_COMMIT values that ``apply`` writes back into
+    the named component's seal-test + sidecar. The seal-test path
+    + sidecar path are derived from the matching ``components`` entry
+    by ``comp_name`` lookup; if no matching component is declared,
+    apply halts (the directive is malformed).
+
+    v1-compatible additive optional field — pre-D.1.5 manifests omit
+    this block (default empty tuple) and apply behaves byte-identically
+    to pre-D.1.5.
+    """
+
+    comp_name: str
+    pre_baseline: str
+    pre_seal_commit: str
+
+
+@dataclass(frozen=True)
 class LiftedFromEntry:
     """Minimal provenance pointer for a manifest objective entry.
 
@@ -142,6 +169,12 @@ class Manifest:
     # presence of entries is what the apply / seal commands key on
     # for tracker registration (AC.D-pa.1, AC.D-pa.3).
     objectives: tuple[ObjectiveEntry, ...] = ()
+    # Optional retroactive cleanup directives — see ``CleanupDirective``.
+    # v1-compatible additive optional field; pre-D.1.5 manifests omit
+    # this block. Apply processes these AFTER the standard component
+    # loop, writing pre-bump BASELINE + SEAL_COMMIT values back into
+    # the named components' seal-tests + sidecars.
+    cleanup_directives: tuple[CleanupDirective, ...] = ()
 
 
 def _require(mapping: dict[str, Any], key: str, where: str) -> Any:
@@ -398,6 +431,44 @@ def load_manifest(path: Path) -> Manifest:
             )
         objectives = _parse_objectives_block(objectives_raw, str(path))
 
+    # Optional cleanup_directives block (D.1.5 / amendment #62).
+    # v1-compatible: missing block defaults to empty tuple. Each
+    # entry carries the pre-bump BASELINE + SEAL_COMMIT values for
+    # a rename-only component whose prior-amendment bumps need
+    # reverting.
+    cleanup_directives_raw = data.get("cleanup_directives", []) or []
+    if not isinstance(cleanup_directives_raw, list):
+        raise InvalidField(
+            f"{path}: 'cleanup_directives' must be a list when present"
+        )
+    cleanup_directives: list[CleanupDirective] = []
+    for idx, entry in enumerate(cleanup_directives_raw):
+        if not isinstance(entry, dict):
+            raise InvalidField(
+                f"{path}: cleanup_directives[{idx}] must be a mapping"
+            )
+        cwhere = f"{path}:cleanup_directives[{idx}]"
+        comp_name = _require_str(entry, "comp_name", cwhere)
+        pre_baseline = _require_str(entry, "pre_baseline", cwhere)
+        if not _SHA_RE.match(pre_baseline):
+            raise InvalidField(
+                f"{cwhere}: 'pre_baseline' must be a 7-40 char "
+                f"lowercase hex SHA; got {pre_baseline!r}"
+            )
+        pre_seal_commit = _require_str(entry, "pre_seal_commit", cwhere)
+        if not _SHA_RE.match(pre_seal_commit):
+            raise InvalidField(
+                f"{cwhere}: 'pre_seal_commit' must be a 7-40 char "
+                f"lowercase hex SHA; got {pre_seal_commit!r}"
+            )
+        cleanup_directives.append(
+            CleanupDirective(
+                comp_name=comp_name,
+                pre_baseline=pre_baseline,
+                pre_seal_commit=pre_seal_commit,
+            )
+        )
+
     return Manifest(
         schema_version=schema_version,
         number=number,
@@ -410,4 +481,5 @@ def load_manifest(path: Path) -> Manifest:
         narrative=narrative,
         seal_description=seal_description,
         objectives=objectives,
+        cleanup_directives=tuple(cleanup_directives),
     )

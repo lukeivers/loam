@@ -8,18 +8,32 @@ the start of the (non-dry-run) apply step. See
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
-from pos_amend.baseline import BaselineNotFound, set_baseline
+from pos_amend.baseline import BaselineNotFound, read_baseline, set_baseline
 from pos_amend.dry_run import analyse, format_reports
 from pos_amend.manifest import ManifestError, load_manifest
 from pos_amend.paths import find_repo_root
+from pos_amend.rename_detection import is_rename_only
 from pos_amend.seal_diff import BindingNotFound, widen_binding
-from pos_amend.sidecar import write_sidecar
+from pos_amend.sidecar import read_sidecar, write_sidecar
 from pos_amend.tracker_registration import (
     TrackerUnavailableError,
     register_objectives,
 )
+
+
+def _git_head_sha(repo_root: Path) -> str:
+    """Return the resolved HEAD SHA at *repo_root*."""
+    proc = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return proc.stdout.strip()
 
 
 def run(manifest_path: Path, *, dry_run: bool) -> int:
@@ -80,19 +94,57 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
     for _c in manifest.components:
         partner_prefixes.add(f"framework/{_c.name}/")
         partner_prefixes.add(f"{_c.name}/")
+    # AC.D.1.5.1 / AC.D.1.5.2 (amendment #62): per-component
+    # rename-only verdict. Computed once per component up-front so the
+    # diagnostic line carries the prior-state SHAs from the same read
+    # the conditional bump branches on.
+    head_sha = _git_head_sha(repo_root)
     for comp in manifest.components:
         seal_test_path = repo_root / comp.seal_test
         sidecar_path = repo_root / comp.sidecar
         if not seal_test_path.exists():
             print(f"skip {comp.name}: seal-test missing at {comp.seal_test}")
             continue
+
+        # Rename-only verdict for the component's BASELINE..HEAD window.
+        # When True: skip BASELINE + sidecar bumps; widening still runs.
+        # See `pos_amend.rename_detection.is_rename_only` + plan-doc
+        # AC.D.1.5.1.
+        rename_only = is_rename_only(
+            repo_root,
+            baseline=manifest.baseline,
+            head=head_sha,
+            old_path=f"{comp.name}/",
+            new_path=f"framework/{comp.name}/",
+        )
+        if rename_only:
+            # Read the prior-state SHAs for the diagnostic line. Use
+            # defensive defaults if the sidecar/BASELINE is missing.
+            try:
+                prior_baseline = read_baseline(seal_test_path)
+            except BaselineNotFound:
+                prior_baseline = "(no BASELINE literal)"
+            prior_seal_commit = read_sidecar(sidecar_path) or "(empty)"
+            print(
+                f"note {comp.name}: rename-only — "
+                f"BASELINE preserved at {prior_baseline}; "
+                f"SEAL_COMMIT preserved at {prior_seal_commit}; "
+                f"allowed_prefixes widened."
+            )
+            changes.append(
+                f"{comp.name}: rename-only (BASELINE + SEAL_COMMIT preserved)"
+            )
         # 1. BASELINE bump (skip for files with no BASELINE, e.g.
         # safety-layer; those shouldn't appear in a manifest but we
         # defend gracefully). When ``frozen_baseline`` is declared on
         # the component, the module-top literal is held fixed for the
         # project lifetime (amendment #23's frozen-H19 pattern) — skip
         # the bump entirely while still advancing the sidecar below.
-        if comp.frozen_baseline:
+        # When the component is rename-only (D.1.5), skip the literal
+        # bump — the fence didn't conceptually move.
+        if rename_only:
+            pass  # explicit no-op
+        elif comp.frozen_baseline:
             print(
                 f"note {comp.name}: BASELINE frozen — skipping literal bump"
             )
@@ -174,9 +226,53 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
                         f"note {comp.name}: neither allowed_files nor "
                         f"allowed binding found; skipping file widening"
                     )
-        # 3. Sidecar → baseline (empty-diff window).
-        if write_sidecar(sidecar_path, manifest.baseline):
-            changes.append(f"{comp.name}: SEAL_COMMIT → {manifest.baseline}")
+        # 3. Sidecar → baseline (empty-diff window). Skipped on
+        # rename-only components (D.1.5) — the fence's prior sidecar
+        # value is preserved.
+        if not rename_only:
+            if write_sidecar(sidecar_path, manifest.baseline):
+                changes.append(f"{comp.name}: SEAL_COMMIT → {manifest.baseline}")
+
+    # AC.D.1.5.5 (amendment #62): retroactive cleanup directives.
+    # After the standard component loop, walk any cleanup_directives
+    # the manifest declared and write the pre-bump BASELINE +
+    # SEAL_COMMIT values back into each named component's seal-test +
+    # sidecar. Idempotent: re-running yields no additional change once
+    # the pre-bump values are in place.
+    if manifest.cleanup_directives:
+        comp_by_name = {c.name: c for c in manifest.components}
+        for directive in manifest.cleanup_directives:
+            comp = comp_by_name.get(directive.comp_name)
+            if comp is None:
+                print(
+                    f"halt: cleanup_directive references unknown comp_name "
+                    f"{directive.comp_name!r}; declare it under 'components:' "
+                    f"or remove the directive"
+                )
+                return 4
+            seal_test_path = repo_root / comp.seal_test
+            sidecar_path = repo_root / comp.sidecar
+            if not seal_test_path.exists():
+                print(
+                    f"skip cleanup {directive.comp_name}: seal-test missing"
+                )
+                continue
+            try:
+                changed = set_baseline(seal_test_path, directive.pre_baseline)
+                if changed:
+                    changes.append(
+                        f"{directive.comp_name}: BASELINE reverted to "
+                        f"{directive.pre_baseline}"
+                    )
+            except BaselineNotFound:
+                print(
+                    f"note cleanup {directive.comp_name}: no BASELINE literal"
+                )
+            if write_sidecar(sidecar_path, directive.pre_seal_commit):
+                changes.append(
+                    f"{directive.comp_name}: SEAL_COMMIT reverted to "
+                    f"{directive.pre_seal_commit}"
+                )
 
     if not changes:
         print("no changes (idempotent re-run)")

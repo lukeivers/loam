@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pos_amend.manifest import ComponentEntry, Manifest
+from pos_amend.rename_detection import is_rename_only
 from pos_amend.seal_diff import BindingNotFound, read_entries
 
 
@@ -29,10 +30,26 @@ class ComponentReport:
     would_widen_prefixes: tuple[str, ...]
     would_widen_files: tuple[str, ...]
     skipped_reason: str | None = None
+    # AC.D.1.5.3 (amendment #62): per-component rename-only verdict
+    # surfaced in --dry-run preview. None when the verdict couldn't
+    # be computed (e.g. the seal-test file is missing).
+    rename_only_verdict: bool | None = None
 
     @property
     def ok(self) -> bool:
         return not self.missing_admissions and self.skipped_reason is None
+
+
+def _git_head_sha(repo_root: Path) -> str:
+    """Return the resolved HEAD SHA at *repo_root*."""
+    proc = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return proc.stdout.strip()
 
 
 def _git_diff_names(repo_root: Path, baseline: str, ref: str = "HEAD") -> list[str]:
@@ -107,9 +124,12 @@ def _cross_component_prefixes(manifest: Manifest, self_name: str) -> set[str]:
 def analyse(manifest: Manifest, repo_root: Path) -> list[ComponentReport]:
     """Run the dry-run analysis and return one report per component."""
     changed = _diff_with_working_tree(repo_root, manifest.baseline)
+    head_sha = _git_head_sha(repo_root)
     reports: list[ComponentReport] = []
     for comp in manifest.components:
-        reports.append(_analyse_component(comp, manifest, repo_root, changed))
+        reports.append(
+            _analyse_component(comp, manifest, repo_root, changed, head_sha)
+        )
     return reports
 
 
@@ -118,6 +138,7 @@ def _analyse_component(
     manifest: Manifest,
     repo_root: Path,
     changed: list[str],
+    head_sha: str,
 ) -> ComponentReport:
     seal_test_path = repo_root / comp.seal_test
     if not seal_test_path.exists():
@@ -128,6 +149,18 @@ def _analyse_component(
             would_widen_files=(),
             skipped_reason=f"seal-test file missing: {comp.seal_test}",
         )
+
+    # AC.D.1.5.3 (amendment #62): per-component rename-only verdict
+    # for the BASELINE..HEAD window. Reported in the preview so
+    # operators can see which components will skip the bump before
+    # the real apply runs.
+    rename_only = is_rename_only(
+        repo_root,
+        baseline=manifest.baseline,
+        head=head_sha,
+        old_path=f"{comp.name}/",
+        new_path=f"framework/{comp.name}/",
+    )
     # Resolve the component's current admissions.
     try:
         current_prefixes = read_entries(seal_test_path, "allowed_prefixes")
@@ -194,6 +227,7 @@ def _analyse_component(
         missing_admissions=tuple(missing),
         would_widen_prefixes=would_widen_prefixes,
         would_widen_files=would_widen_files,
+        rename_only_verdict=rename_only,
     )
 
 
@@ -204,6 +238,9 @@ def format_reports(reports: list[ComponentReport]) -> str:
         if r.skipped_reason:
             lines.append(f"  skipped: {r.skipped_reason}")
             continue
+        if r.rename_only_verdict is not None:
+            verdict_str = "True" if r.rename_only_verdict else "False"
+            lines.append(f"  rename-only: {verdict_str}")
         if r.missing_admissions:
             lines.append("  MISSING_ADMISSION:")
             for p in r.missing_admissions:

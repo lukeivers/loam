@@ -71,34 +71,53 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
     )
     changed = [ln for ln in out.splitlines() if ln.strip()]
 
+    # D-migration D.1 (amendment #61) prefixed every framework
+    # component path with ``framework/``; D.2 (amendment #63) under
+    # the wider-fence ruling cuts every workspace-state reader over
+    # to the workspace_paths helper inside workspace-bootstrap. The
+    # AC.M.S prefix list is widened correspondingly. AC.M.S is now
+    # tracking the *cumulative* fence of the amendment #48-line of
+    # primary-persona work (per D.2's loose-AC tightening rule).
     allowed_prefixes = (
-        "primary-persona/src/",
-        "primary-persona/tests/",
-        "primary-persona/templates/",
-        "primary-persona/seals/",
-        "hands-off-lifecycle/hooks/",
-        "hands-off-lifecycle/tests/",
-        # Seal narrative target lives under hands-off-lifecycle/seals/
-        # (per locked plan §10's narrative target).
-        "hands-off-lifecycle/seals/",
+        # Post-D.1 framework/ root.
+        "framework/primary-persona/src/",
+        "framework/primary-persona/tests/",
+        "framework/primary-persona/templates/",
+        "framework/primary-persona/seals/",
+        "framework/hands-off-lifecycle/hooks/",
+        "framework/hands-off-lifecycle/tests/",
+        "framework/hands-off-lifecycle/seals/",
+        "framework/workspace-bootstrap/src/",
+        "framework/workspace-bootstrap/tests/",
+        "framework/workspace-bootstrap/templates/",
+        "framework/orchestrator/src/",
+        "framework/orchestrator/tests/",
+        # D.2 wider-fence components — cut over to workspace_paths
+        # helper per D.2-build.A/G/H.
+        "framework/workspace-sync/src/",
+        "framework/workspace-sync/tests/",
+        "framework/self-upgrade/src/",
+        "framework/self-upgrade/tests/",
+        "framework/tools/",
         # Universal admissions (per amendment #22 ruling #3).
         "docs/rebuild/plans/",
         "docs/rebuild/plans/research/",
-        # Cross-component partner admission (amendment #50 D-OWNER.2
-        # relaxation — one workspace-bootstrap test edit + the
-        # SEAL_COMMIT sidecar bump it carries).
+        # Pre-D.1 paths (transitional admission per D.1's seal-diff
+        # window — the BASELINE pinned in test_no_sealed_amendments
+        # advanced past D.1, but transitional admission keeps the
+        # window stable for prior-rename comparisons).
+        "primary-persona/",
+        "hands-off-lifecycle/",
         "workspace-bootstrap/tests/",
-        # Cross-component partner admission (amendment #52 R1 ruling
-        # — A8 dispatch-wrapper widens fence to orchestrator/ for the
-        # new activate_scope_with_spec + record_dispatch_close IPC
-        # methods that the persona-side wrapper consumes; seal-diff
-        # window admits orchestrator/src/ + orchestrator/tests/ +
-        # orchestrator/pyproject.toml under this allowed_prefixes
-        # tuple, matching the manifest's component list).
         "orchestrator/src/",
         "orchestrator/tests/",
     )
     allowed_files: set[str] = {
+        # Post-D.1 framework/ root.
+        "framework/primary-persona/pyproject.toml",
+        "framework/workspace-bootstrap/pyproject.toml",
+        "framework/orchestrator/pyproject.toml",
+        # Pre-D.1 transitional.
         "primary-persona/pyproject.toml",
         "CLAUDE.md",
         "docs/odd-in-pos.md",
@@ -106,6 +125,10 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
         "docs/rebuild/FUTURE_IDEAS.md",
         "docs/rebuild/STATE.md",
         "docs/rebuild/VALUE_PROPOSITION.md",
+        # D.1 universal-admissions widened roots.
+        ".claude/settings.json",
+        "data/kuzu_db",
+        "data/scope_registry.json",
     }
 
     offending: list[str] = []

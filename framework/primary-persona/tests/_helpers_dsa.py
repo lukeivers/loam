@@ -128,15 +128,13 @@ def install_stub_tracker(monkeypatch, tracker: RecordingTracker) -> None:
 
 
 def disable_iso_second_wait(monkeypatch) -> None:
-    """No-op the deterministic ISO-second wait so tests run fast.
+    """No-op (amendment #75 backwards-compat shim).
 
-    Tests that explicitly verify the sentinel-before-manifest
-    timestamp ordering invoke ``_wait_until_next_iso_second`` directly;
-    other tests don't need to wait. This helper keeps the test suite
-    sub-second total.
+    Pre-amendment-#75 the dispatcher slept one ISO-second tick between
+    sentinel and manifest writes; the substrate fix in #75 (format γ
+    on both A1 emitters) removed the wait — so this helper is now a
+    no-op kept only so callers in AC.DSA.5/6/7/9 tests don't need to
+    be edited. The ``monkeypatch`` argument is unused but retained for
+    call-site compatibility.
     """
-    from primary_persona import dispatch_wrapper
-
-    monkeypatch.setattr(
-        dispatch_wrapper, "_wait_until_next_iso_second", lambda: None
-    )
+    del monkeypatch  # backwards-compat shim; nothing to patch any more.

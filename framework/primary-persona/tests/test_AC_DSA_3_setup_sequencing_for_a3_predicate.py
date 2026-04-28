@@ -7,32 +7,25 @@ sentinel's ``created_at`` in lexicographic comparison, satisfying
 A3's ``manifest_row.created_at > sentinel.created_at`` predicate
 (AC.TDG.4 / D-A3.4).
 
-The Q1 empirical answer (sub-second collisions; recorded in §14
-method-decision register at seal time) drove the deterministic
-ISO-second-tick wait between sentinel write and manifest registration.
-This AC's tests use the REAL ``_wait_until_next_iso_second`` so the
-empirical contract is verified end-to-end (not stubbed).
+Pre-amendment-#75 the sentinel emitted second-resolution Z-format and
+the manifest emitted microsecond-+00:00 format; same-second writes
+flipped the lex order (collision rate 100% in tight-loop empirical).
+The dispatcher mitigated by waiting one ISO-second tick between
+sentinel and manifest. Amendment #75 (AC.TFN.1, AC.TFN.2, AC.TFN.4)
+migrated both A1 emitters to format γ (microsecond-Z, fixed-width 27
+chars), eliminating the failure class structurally; the wait helper
+was removed and these tests now verify the AC.DSA.3 outcome on the
+post-fix substrate (no synthetic delay between writes).
 """
 
 from __future__ import annotations
 
-import asyncio
-import time
-from datetime import datetime, timezone
+import sys
+from pathlib import Path
 
-from primary_persona import DispatchShape, dispatch_with_scope
-from primary_persona.dispatch_wrapper import NewACSpec
-from primary_persona.dispatch_wrapper import (
-    _wait_until_next_iso_second,
-    _run_setup_phase,
-)
+from primary_persona.dispatch_wrapper import NewACSpec, _run_setup_phase
 
-from ._helpers_a8 import (
-    StubIPCClient,
-    build_stub_ipc_client_factory,
-    make_workspace,
-    stub_agent_runner_ok,
-)
+from ._helpers_a8 import make_workspace
 from ._helpers_dsa import (
     RecordingTracker,
     install_stub_active_scope_sentinel,
@@ -41,37 +34,34 @@ from ._helpers_dsa import (
 )
 
 
-def test_AC_DSA_3_wait_helper_advances_iso_second() -> None:
-    """``_wait_until_next_iso_second`` blocks until the next whole
-    second tick — the sentinel-vs-manifest sub-second collision
-    mitigation (§14 method-decision register; Q1 empirical fix)."""
-    before = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    _wait_until_next_iso_second()
-    after = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    assert after > before
+REPO_ROOT = Path(__file__).resolve().parents[3]
+HOOKS_DIR = REPO_ROOT / "framework" / "hands-off-lifecycle" / "hooks"
 
 
-def test_AC_DSA_3_manifest_created_at_lex_gt_sentinel(
-    tmp_path, monkeypatch
-) -> None:
+def test_AC_DSA_3_manifest_created_at_lex_gt_sentinel(tmp_path) -> None:
     """End-to-end sequencing: sentinel timestamp < manifest timestamp
-    in the EXACT lexicographic comparison A3 performs.
+    in the EXACT lexicographic comparison A3 performs, with NO
+    synthetic wait between writes.
 
-    Uses A1's real ``write_active_scope_sentinel`` (second-resolution
-    Z-suffixed) and A1's manifest-row format
-    (``datetime.now(tz=timezone.utc).isoformat()`` — microsecond
-    +00:00). The dispatcher's wait inserts the necessary tick.
+    Uses A1's real sentinel emitter (post-amendment-#75 format γ:
+    microsecond ``Z``) and A1's real manifest emitter (post-#75
+    format γ). Microsecond resolution distinguishes back-to-back
+    writes; lex-comparison reflects the temporal write order
+    structurally.
     """
-    # We don't need the real tracker — capture the manifest call's
-    # would-be created_at by sampling the wall clock right after the
-    # wait. The contract is: any manifest row written AFTER the wait
-    # has created_at > sentinel.created_at.
-    sentinel_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    _wait_until_next_iso_second()
-    manifest_ts = datetime.now(tz=timezone.utc).isoformat()
-    # The exact predicate A3 uses (line 334 of tdd_guard.py).
+    if str(HOOKS_DIR) not in sys.path:
+        sys.path.insert(0, str(HOOKS_DIR))
+    from active_scope_sentinel import _now_iso as _sentinel_now_iso
+
+    sentinel_ts = _sentinel_now_iso()
+    # No wait. Both sides emit format γ; microsecond resolution makes
+    # back-to-back lex-compare correct.
+    from objective_tracker.store import _now_iso_microsecond_z as _manifest_now_iso
+
+    manifest_ts = _manifest_now_iso()
+    # The exact predicate A3 uses.
     assert manifest_ts > sentinel_ts, (
-        f"sub-second collision regression: sentinel={sentinel_ts!r} "
+        f"same-second collision regression: sentinel={sentinel_ts!r} "
         f"manifest={manifest_ts!r}"
     )
 
@@ -84,14 +74,14 @@ def test_AC_DSA_3_setup_phase_writes_sentinel_before_manifest(
     ``register_source_binding`` is called."""
     workspace = make_workspace(tmp_path, ambient_objective="obj")
     stub_workspace_dev_mode(monkeypatch)
-    sentinel_recorder = install_stub_active_scope_sentinel(monkeypatch)
+    install_stub_active_scope_sentinel(monkeypatch)
     tracker = RecordingTracker()
 
     # Order via a shared event log.
     event_log: list[str] = []
 
     # Wrap the recorder's write so it logs its order.
-    real_write = sys_modules_active_scope_write_proxy(monkeypatch, event_log)
+    sys_modules_active_scope_write_proxy(monkeypatch, event_log)
 
     # Wrap tracker.register_source_binding to log its order.
     original = tracker.register_source_binding
@@ -102,12 +92,6 @@ def test_AC_DSA_3_setup_phase_writes_sentinel_before_manifest(
 
     tracker.register_source_binding = wrapped  # type: ignore[method-assign]
     install_stub_tracker(monkeypatch, tracker)
-
-    from primary_persona import dispatch_wrapper
-
-    monkeypatch.setattr(
-        dispatch_wrapper, "_wait_until_next_iso_second", lambda: None
-    )
 
     _run_setup_phase(
         workspace,

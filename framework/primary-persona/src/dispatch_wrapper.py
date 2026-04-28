@@ -68,7 +68,6 @@ from __future__ import annotations
 
 import json
 import os
-import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -394,24 +393,20 @@ def _append_diagnostic(workspace_root: Path, record: dict[str, Any]) -> None:
 #      ``framework/<comp>/tests/test_AC_<NORM>_placeholder.py``.
 #
 # The sentinel write is sequenced FIRST so manifest-row ``created_at``
-# lands strictly after sentinel ``created_at`` (AC.DSA.3 / D-DSA.4).
+# lands strictly after sentinel ``created_at`` (AC.DSA.3).
 #
-# Q1 EMPIRICAL ANSWER (sub-second collisions): A1's sentinel uses
-# ``time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())`` (second
-# resolution, ``Z``-suffixed); A1's manifest row uses
-# ``datetime.now(tz=timezone.utc).isoformat()`` (microsecond
-# resolution, ``+00:00``-suffixed). Lexicographic comparison
-# (A3's predicate at ``tdd_guard.evaluate`` line 334) collapses
-# same-second pairs to ``False`` because ``"."`` (0x2E) < ``"Z"``
-# (0x5A) — i.e. the manifest's microsecond-prefix is byte-smaller
-# than the sentinel's ``Z``. Tight-loop empirical: 100% collision
-# rate without mitigation.
-#
-# RESOLUTION (D-DSA.4 caveat / §14 method-decision): wait until the
-# wall-clock advances to the next whole ISO second between sentinel
-# write and the first manifest registration. Worst-case wait is one
-# second; typical wait is <500ms. Captured in §14 of the plan-doc at
-# seal time.
+# Pre-amendment-#75 the sentinel emitted second-resolution Z-format
+# while the manifest emitted microsecond-+00:00 format; lexicographic
+# comparison (A3's predicate at ``tdd_guard.evaluate``) collapsed
+# same-second pairs to ``False`` because ``"."`` (0x2E) sorts before
+# ``"Z"`` (0x5A). Tight-loop empirical at #74 build time: 100%
+# collision rate. Amendment #74 mitigated by waiting one ISO-second
+# tick between writes; amendment #75 (AC.TFN.1, AC.TFN.2, AC.TFN.4)
+# eliminated the failure class structurally by migrating both A1
+# emitters to format γ (microsecond-Z, fixed-width 27 chars). The
+# wait helper has been removed; back-to-back writes within the same
+# wall-clock second now produce strictly-increasing lex-comparable
+# strings via the microsecond field.
 
 _STUB_FILENAME_TEMPLATE = "test_AC_{normalised}_placeholder.py"
 _STUB_FUNCTION_TEMPLATE = "test_AC_{normalised}_placeholder"
@@ -594,29 +589,6 @@ def _write_stub_idempotent(
     }
 
 
-def _wait_until_next_iso_second() -> None:
-    """Block until the wall clock advances to the next whole ISO
-    second (AC.DSA.3 sequencing / D-DSA.4 caveat resolution).
-
-    A1's sentinel writes timestamps at second resolution
-    (``time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())``); A1's
-    manifest writes at microsecond resolution
-    (``datetime.now(tz=timezone.utc).isoformat()``). Lexicographic
-    string comparison of the two formats collides on same-second
-    writes (the manifest's ``"."`` byte sorts before the sentinel's
-    ``"Z"``). Waiting for the wall clock to tick to the next whole
-    second guarantees the manifest row's ISO string is strictly
-    lexicographically greater than the sentinel's, satisfying A3's
-    ``manifest_row.created_at > sentinel.created_at`` predicate
-    (AC.TDG.4) without mutating either A1 surface.
-
-    Worst-case wait is just under one second; typical <500ms.
-    """
-    start = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    while time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) == start:
-        time.sleep(0.005)
-
-
 def _read_workspace_mode(workspace_root: Path) -> str:
     """Read the workspace-mode bit per AC.DSA.6.
 
@@ -669,12 +641,18 @@ def _run_setup_phase(
     """Author sentinel + manifest rows + placeholder stubs (AC.DSA.1
     .. AC.DSA.10).
 
-    Sequence (AC.DSA.3 / D-DSA.4):
+    Sequence (AC.DSA.3):
       1. Write the active-scope sentinel binding the new ACs.
-      2. Wait until the wall clock advances to the next ISO second
-         (sub-second collision mitigation per Q1 empirical answer).
-      3. Register one manifest row per ``NewACSpec`` triple.
-      4. Write one placeholder test stub per ``NewACSpec``.
+      2. Register one manifest row per ``NewACSpec`` triple.
+      3. Write one placeholder test stub per ``NewACSpec``.
+
+    Pre-amendment-#75 there was a wall-clock wait between step 1 and
+    step 2 (``_wait_until_next_iso_second``) — A1's sentinel and
+    manifest emitters used incompatible timestamp formats whose
+    lexicographic comparison collided on same-second writes. Amendment
+    #75 (AC.TFN.1, AC.TFN.2, AC.TFN.4) migrated both A1 emitters to
+    format γ (microsecond ``Z``-suffix, fixed-width); the wait became
+    structurally unnecessary and was removed.
 
     Every step is fail-soft (AC.DSA.5): substrate failures emit a
     structured NDJSON diagnostic to ``dispatch-wrapper.log`` (AC.DSA.9
@@ -728,12 +706,11 @@ def _run_setup_phase(
         {"event": "setup", **sentinel_outcome},
     )
 
-    # AC.DSA.3 / D-DSA.4 — wait one ISO-second tick before manifest
-    # registration so manifest.created_at > sentinel.created_at in
-    # lexicographic comparison (Q1 §14 method-decision).
-    _wait_until_next_iso_second()
-
-    # AC.DSA.3 — register manifest rows.
+    # AC.DSA.3 — register manifest rows. Amendment #75 (AC.TFN.4)
+    # removed the iso-second wait that previously sat here: A1's
+    # sentinel + manifest emitters now produce microsecond-resolution
+    # ``Z``-suffixed timestamps (format γ), so lexicographic order
+    # follows wall-clock order without a synthetic delay.
     tracker = _open_tracker(workspace_root)
     for spec in new_acs:
         manifest_outcome: dict[str, Any] = {

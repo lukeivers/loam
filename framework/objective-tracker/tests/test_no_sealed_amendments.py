@@ -34,7 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              seal-diff test + SEAL_COMMIT sidecar; BASELINE pins at
 #              the pre-amendment tip (HEAD~1 of the amendment commit,
 #              mirroring amendments #34 / #35 / #36 / #37).
-BASELINE = "57d735fbcde275dc0462306cd53e4830792df894"
+BASELINE = "1ca6f62aed91ea066d10c26e84ee210029b8399c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -136,6 +136,7 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
         ".claude/settings.json",
         "first-run-inventory.yaml",
         "framework/first-run-inventory.yaml",
+        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
     }
 
     offending = []

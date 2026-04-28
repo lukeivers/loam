@@ -50,7 +50,6 @@ from __future__ import annotations
 
 import json
 import os
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -468,5 +467,15 @@ def _serialise_sentinel(
 
 
 def _now_iso() -> str:
-    """ISO-8601 UTC timestamp (Z-suffixed; matches first_run_state)."""
-    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    """ISO-8601 UTC timestamp for the corpus-load sentinel's
+    ``created_at`` field.
+
+    Format γ (microsecond resolution + ``Z`` suffix, fixed-width 27
+    chars). Delegates to ``_gate_helpers.now_iso_microsecond_z`` (the
+    single source-of-truth helper added by amendment #75 AC.TFN.3).
+    Pre-amendment-#75 this emitted second-resolution Z; see
+    active_scope_sentinel._now_iso for the rationale.
+    """
+    from _gate_helpers import now_iso_microsecond_z
+
+    return now_iso_microsecond_z()

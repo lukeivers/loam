@@ -91,6 +91,28 @@ class AppendedEvent:
     event: Any
 
 
+# ---------------------------------------------------------------------
+# A1-substrate timestamp helper (amendment #75 — AC.TFN.2 / AC.TFN.3)
+# ---------------------------------------------------------------------
+#
+# Format γ: microsecond-resolution, ``Z``-suffixed, fixed-width 27
+# chars (``%Y-%m-%dT%H:%M:%S.%fZ``). One-line mirror of the canonical
+# helper at ``framework/hands-off-lifecycle/hooks/_gate_helpers.py``
+# ``now_iso_microsecond_z``. The mirror exists because objective-tracker
+# unit tests run without the hands-off-lifecycle hooks dir on
+# ``sys.path``; importing the canonical helper would couple this
+# package's test-time dependencies to the hooks layer. The two
+# emitters share the same format string verbatim; AC.TFN.6 verifies
+# they stay byte-equivalent.
+def _now_iso_microsecond_z() -> str:
+    """ISO-8601 UTC microsecond ``Z``-suffixed timestamp (format γ).
+
+    See module-level note above + ``_gate_helpers.now_iso_microsecond_z``
+    for the canonical helper.
+    """
+    return datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
 class EventStore:
     """Thread-safe SQLite WAL store for the objective tracker.
 
@@ -326,7 +348,7 @@ class EventStore:
         _validate_manifest_field("ac_id", ac_id)
         _validate_manifest_field("source_path_glob", source_path_glob)
         _validate_manifest_glob(source_path_glob)
-        created_at = datetime.now(tz=timezone.utc).isoformat()
+        created_at = _now_iso_microsecond_z()
         with self._lock:
             self._conn.execute(
                 "INSERT OR IGNORE INTO objective_manifest("

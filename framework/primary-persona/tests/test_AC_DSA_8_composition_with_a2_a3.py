@@ -16,16 +16,12 @@ phase did not actually pre-condition the gate predicates.
 from __future__ import annotations
 
 import sys
-import time
 import types
 from datetime import datetime, timezone
 from pathlib import Path
 
-import pytest
-
 from primary_persona.dispatch_wrapper import NewACSpec
 from primary_persona.dispatch_wrapper import (
-    _wait_until_next_iso_second,
     _write_stub_idempotent,
 )
 
@@ -83,12 +79,12 @@ def test_AC_DSA_8_after_setup_a2_admits_path(tmp_path, monkeypatch) -> None:
         plan_path="docs/p.md",
         bindings=(ScopeBinding(component="primary-persona", ac_id="AC.DSA.99"),),
     )
-    _wait_until_next_iso_second()
-
-    # Stub a tracker carrying ONE manifest row whose created_at is
-    # AFTER the sentinel's (the new-AC predicate). The dispatcher's
-    # setup-phase wait guarantees this in production; we replicate
-    # the timing here for the unit test.
+    # Amendment #75 (AC.TFN.4): no synthetic wait. Both A1 emitters
+    # produce format γ (microsecond ``Z`` suffix); microsecond
+    # resolution makes the back-to-back lex-compare correct without
+    # the wait helper. The fixture below mirrors the post-#75 manifest
+    # emitter shape (``%Y-%m-%dT%H:%M:%S.%fZ``) so the lex-compare
+    # against the real γ-format sentinel is structurally correct.
     rows = [
         {
             "component": "primary-persona",
@@ -96,7 +92,9 @@ def test_AC_DSA_8_after_setup_a2_admits_path(tmp_path, monkeypatch) -> None:
             "source_path_glob": (
                 "framework/primary-persona/src/foo.py"
             ),
-            "created_at": datetime.now(tz=timezone.utc).isoformat(),
+            "created_at": datetime.now(tz=timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ"
+            ),
         }
     ]
     monkeypatch.setattr(
@@ -135,8 +133,8 @@ def test_AC_DSA_8_after_setup_a3_admits_path(tmp_path, monkeypatch) -> None:
         plan_path="docs/p.md",
         bindings=(ScopeBinding(component="primary-persona", ac_id="AC.DSA.99"),),
     )
-    _wait_until_next_iso_second()
-
+    # Amendment #75 (AC.TFN.4): no synthetic wait; format γ on both
+    # A1 emitters makes the lex-compare structurally correct.
     rows = [
         {
             "component": "primary-persona",
@@ -144,7 +142,9 @@ def test_AC_DSA_8_after_setup_a3_admits_path(tmp_path, monkeypatch) -> None:
             "source_path_glob": (
                 "framework/primary-persona/src/foo.py"
             ),
-            "created_at": datetime.now(tz=timezone.utc).isoformat(),
+            "created_at": datetime.now(tz=timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ"
+            ),
         }
     ]
     monkeypatch.setattr(
@@ -195,8 +195,8 @@ def test_AC_DSA_8_a3_denies_without_dispatcher_stub(
         plan_path="docs/p.md",
         bindings=(ScopeBinding(component="primary-persona", ac_id="AC.DSA.99"),),
     )
-    _wait_until_next_iso_second()
-
+    # Amendment #75 (AC.TFN.4): no synthetic wait; format γ on both
+    # A1 emitters makes the lex-compare structurally correct.
     rows = [
         {
             "component": "primary-persona",
@@ -204,7 +204,9 @@ def test_AC_DSA_8_a3_denies_without_dispatcher_stub(
             "source_path_glob": (
                 "framework/primary-persona/src/foo.py"
             ),
-            "created_at": datetime.now(tz=timezone.utc).isoformat(),
+            "created_at": datetime.now(tz=timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ"
+            ),
         }
     ]
     monkeypatch.setattr(

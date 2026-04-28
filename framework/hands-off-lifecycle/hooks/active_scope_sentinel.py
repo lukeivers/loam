@@ -45,7 +45,6 @@ from __future__ import annotations
 
 import json
 import os
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -277,6 +276,20 @@ def _serialise_sentinel(
 
 
 def _now_iso() -> str:
-    """ISO-8601 UTC timestamp matching the existing ``first_run_state``
-    convention (Z-suffixed, second resolution)."""
-    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    """ISO-8601 UTC timestamp for the active-scope sentinel's
+    ``created_at`` field.
+
+    Format γ (microsecond resolution + ``Z`` suffix, fixed-width 27
+    chars). Delegates to ``_gate_helpers.now_iso_microsecond_z`` which
+    is the single source-of-truth for the A1-substrate timestamp shape
+    per amendment #75 AC.TFN.3.
+
+    Pre-amendment-#75 this emitted ``%Y-%m-%dT%H:%M:%SZ`` (second
+    resolution); the format change closes the same-second collision
+    class A3's lex-compare predicate exhibited on tight back-to-back
+    sentinel + manifest writes (Q1 empirical: 1000/1000 collisions
+    pre-fix, 0/N post-fix).
+    """
+    from _gate_helpers import now_iso_microsecond_z
+
+    return now_iso_microsecond_z()

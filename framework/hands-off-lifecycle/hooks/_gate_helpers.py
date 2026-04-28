@@ -42,6 +42,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -280,8 +281,54 @@ def now_iso_z() -> str:
 
     Mirrors A2's ``time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())``
     pattern; centralised here so all gates share the same shape.
+
+    Used by audit-log writers (human-readable log lines, no compare).
+    For A1-substrate ``created_at`` fields that participate in
+    lex-comparison, use ``now_iso_microsecond_z`` instead — see
+    amendment #75 (AC.TFN.1 .. AC.TFN.6).
     """
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+# ---------------------------------------------------------------------
+# A1-substrate timestamp helper (amendment #75 — AC.TFN.3)
+# ---------------------------------------------------------------------
+#
+# Single source-of-truth for the A1 substrate's ``created_at`` shape.
+# Both sentinel writers (active_scope_sentinel._now_iso,
+# corpus_load_sentinel._now_iso) delegate to this helper. The
+# objective-tracker manifest insert (objective_tracker.store.
+# insert_manifest_row) carries a one-line mirror of this helper's body
+# under the ``_now_iso_microsecond_z`` private name in store.py — the
+# two-step delegation reflects the cross-component import constraint
+# (objective-tracker unit tests must run without the hands-off-lifecycle
+# hooks dir on sys.path). AC.TFN.6 verifies the two emitters stay in
+# byte-for-byte format agreement.
+#
+# Format γ (per amendment #75 plan §6 D-TFN.1): microsecond resolution,
+# ``Z`` zone-suffix, fixed-width 27 chars. The fixed width matters
+# because lexicographic comparison of γ-format strings is structurally
+# correct on any same-second pair (no edge case at microsecond=0;
+# strftime's ``%f`` always emits 6 digits).
+
+
+def now_iso_microsecond_z() -> str:
+    """ISO-8601 UTC timestamp with microsecond resolution + ``Z``
+    suffix (format γ).
+
+    Fixed-width 27 characters: ``YYYY-MM-DDTHH:MM:SS.ffffffZ``.
+    The format string is ``%Y-%m-%dT%H:%M:%S.%fZ`` applied to a
+    timezone-aware ``datetime.now(tz=timezone.utc)``; ``%f`` always
+    emits 6 digits (zero-padded), eliminating the variable-width
+    edge case that ``datetime.isoformat()`` exhibits on microsecond=0.
+
+    Used by the two A1 sentinel writers and (via a one-line mirror in
+    store.py) by the A1 manifest insert. Future A1-substrate
+    ``created_at`` emitters MUST use this helper so lexicographic
+    comparison remains structurally correct (per amendment #75
+    AC.TFN.1, AC.TFN.2, AC.TFN.3).
+    """
+    return datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
 # ---------------------------------------------------------------------

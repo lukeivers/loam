@@ -262,8 +262,7 @@ The D-build choices recorded above (D-build.1 .. D-build.10) are the method-deci
 
 ### Commit SHAs
 
-(Populated by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension.)
-
----
-
-*End of builder plan.*
+- Amendment commit: `ef02e7df325f18e902eee8792e3f979ee6f429ad` —
+  `feat(structural-enforcement-a2): objective-binding gate (PreToolUse Edit/Write/MultiEdit refusal-on-binding-miss)`
+- Seal commit: `052ad86e28466f8f4dbce0c345b07fa5c8909950` —
+  `chore(seals): structural-enforcement A2 objective-binding gate (PreToolUse Edit/Write/MultiEdit deny on binding miss; carve-out admission; NORMAL USE no-op; NDJSON audit log) — hands-off-lifecycle at ef02e7d`

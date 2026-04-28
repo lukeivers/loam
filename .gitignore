@@ -44,3 +44,4 @@ orchestrator/data/
 # on first-run for every clone and must never be committed.
 .mcp.json
 data/
+workspace/

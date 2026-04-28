@@ -1,0 +1,34 @@
+# Amendment #69 — AC.M.S structural redesign
+
+2026-04-28. AC.M.S converted from floating-SEAL_COMMIT
+cumulative-allowlist hybrid to per-invariant frozen-both-endpoints
+pin per ODD §10.3. Eliminates (per ODD §5.1.1) the AC.M.S
+widening-pressure failure class — the test's diff window is
+closed at amendment #48's seal commit (de5fe11..452e7d4); no
+future amendment can re-introduce widening pressure on AC.M.S
+because both endpoints are now constants in code.
+
+Trigger: ODD §4.5 N≥2 hotfix architecture-review threshold
+exceeded ~3x (six widenings against AC.M.S since amendment #48
+sealed: amendments #50, #52, D.1, D.2, #67, #68).
+
+Mirrors the canonical Option-C pattern already used by AC.45.S,
+AC.SE.S, AC.A.S, AC.E.S, AC.B.S — none of which suffer the
+widening-pressure failure mode. AC.M.S is now structurally
+consistent with its siblings.
+
+Adjacent: docs/odd-in-pos.md §10.3 tightened to name
+"frozen-both-endpoints" as the per-invariant default (rather
+than naming only "per-invariant BASELINE" which left the SEAL
+endpoint's frozen-ness implicit). Doc-only tightening to
+prevent future per-invariant tests from being authored with
+the floating-endpoint defect.
+
+No source edit. No new behaviour. No pos-amend schema change.
+No backfill across already-landed amendments. The post-#48
+widening admissions in the prior AC.M.S allowlist become dead
+history; their amendments' git diffs are unchanged.
+
+BASELINE 76cec04 (the chore commit immediately preceding
+amendment #69's dispatch). primary-persona's BASELINE advances
+per `pos-amend apply` to the pre-amendment-#69 tip.

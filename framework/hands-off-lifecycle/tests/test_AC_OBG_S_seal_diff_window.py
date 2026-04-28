@@ -46,13 +46,16 @@ _ALLOWED_FILES: frozenset[str] = frozenset(
 def _seal_commit_for_a2() -> str | None:
     """Return amendment #70's seal commit SHA.
 
-    Both endpoints are constants once the corrective commit lands per
-    the AC.MS-fix.S authoring pattern (the seal SHA isn't knowable at
-    amendment-author time). Pre-corrective the constant is None and
-    the test is informational (the window doesn't yet exist).
+    Both endpoints are constants per the AC.MS-fix.S authoring pattern.
+    The seal SHA isn't knowable at amendment-author time; filled by a
+    post-seal corrective commit immediately after the amendment's seal
+    commit lands. Both endpoints are constants once the corrective
+    commits.
     """
-    # Filled by post-seal corrective commit.
-    return None
+    # Amendment #70's seal commit SHA — `chore(seals): structural-
+    # enforcement A2 objective-binding gate ... — hands-off-lifecycle
+    # at ef02e7d`.
+    return "052ad86e28466f8f4dbce0c345b07fa5c8909950"
 
 
 def _baseline_from_manifest() -> str | None:

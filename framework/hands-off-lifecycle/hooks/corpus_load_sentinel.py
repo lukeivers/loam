@@ -172,6 +172,14 @@ def compute_corpus_paths_required(
     ``docs/rebuild/dev-mode-manifest.yaml`` via ``loam_mode``'s
     existing ``select_corpus`` surface (consumer-only).
 
+    Single-framework restructure (amendment #67, AC.SFR.3): when
+    ``<workspace>/docs/rebuild/dev-mode-manifest.yaml`` is absent,
+    falls through to
+    ``<workspace>/framework/docs/rebuild/dev-mode-manifest.yaml`` (the
+    framework-only branch's root copy). When the framework copy is
+    the source, ``select_corpus`` is called against the framework
+    root so the returned corpus paths resolve correctly.
+
     Fail-soft: if the manifest is missing or malformed, returns the
     empty list (the hook still writes a sentinel; ``state`` field
     surfaces the degradation as ``"missing"``).
@@ -185,13 +193,25 @@ def compute_corpus_paths_required(
     manifest_path = (
         workspace_root / "docs" / "rebuild" / "dev-mode-manifest.yaml"
     )
+    selector_root = workspace_root
+    if not manifest_path.exists():
+        framework_manifest = (
+            workspace_root
+            / "framework"
+            / "docs"
+            / "rebuild"
+            / "dev-mode-manifest.yaml"
+        )
+        if framework_manifest.exists():
+            manifest_path = framework_manifest
+            selector_root = workspace_root / "framework"
     try:
         manifest = load_manifest(manifest_path)
     except Exception:  # noqa: BLE001 — fail-soft on missing/malformed
         return []
     selector_mode = "dev" if mode == "dev-mode" else "user"
     try:
-        return list(select_corpus(manifest, workspace_root, selector_mode))
+        return list(select_corpus(manifest, selector_root, selector_mode))
     except Exception:  # noqa: BLE001
         return []
 
@@ -362,11 +382,21 @@ def _classify_corpus_state(
 
     Empty ``required_paths`` (manifest unreadable per AC.SE.5
     fail-soft) → ``"missing"``.
+
+    Single-framework restructure (amendment #67, AC.SFR.3): existence
+    check falls through to ``<workspace>/framework/<rel>`` when the
+    workspace-root path is absent, matching where ``pos-new-workspace
+    --from <canonical>`` lands corpus docs after cloning the
+    ``framework-only`` synthetic branch.
     """
     if not required_paths:
         return "missing"
     root = Path(workspace_root)
-    present = sum(1 for p in required_paths if (root / p).exists())
+    framework_root = root / "framework"
+    present = 0
+    for p in required_paths:
+        if (root / p).exists() or (framework_root / p).exists():
+            present += 1
     if present == len(required_paths):
         return "loaded"
     if present == 0:

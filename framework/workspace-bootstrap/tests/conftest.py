@@ -60,6 +60,7 @@ def _make_fixture_canonical(
     root: Path,
     *,
     files: dict[str, str] | None = None,
+    publish_framework_only: bool = True,
 ) -> Path:
     """Construct an ephemeral fixture canonical pos-v2 working tree.
 
@@ -70,6 +71,13 @@ def _make_fixture_canonical(
     (mirrors a stripped-down canonical layout — enough that the
     bootstrap's clone produces a non-trivial framework/ subtree but
     fast enough that test runtime is bounded).
+
+    Single-framework restructure (amendment #67, AC.SFR.1):
+    ``publish_framework_only=True`` (default) also synthesises the
+    ``framework-only`` branch via ``pos-publish-framework-only`` so
+    fixture canonicals match the post-restructure shape consumed by
+    ``pos-new-workspace``. Tests verifying the failure mode when
+    ``framework-only`` is absent pass ``publish_framework_only=False``.
     """
     if files is None:
         files = {
@@ -94,6 +102,17 @@ def _make_fixture_canonical(
         target.write_text(content)
     _git(["add", "-A"], cwd=root)
     _git(["commit", "-m", "fixture canonical initial commit"], cwd=root)
+
+    if publish_framework_only:
+        # Compose on the synthesis tool to publish the framework-only
+        # branch. The tool composes git plumbing (no working-tree
+        # mutation), so the pos-v2 branch is unchanged post-call
+        # (AC.SFR.5 binding: stranger-clones-canonical preserved).
+        from pos_publish_framework_only.synth import (  # noqa: PLC0415
+            synthesise_framework_only,
+        )
+        synthesise_framework_only(root)
+
     return root
 
 

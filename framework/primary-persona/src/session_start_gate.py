@@ -52,6 +52,33 @@ _NEXT_HEADER_RE = re.compile(r"^(##[^#]|---)\s*", re.MULTILINE)
 _BACKTICK_PATH_RE = re.compile(r"`([^`\n]+\.md)`")
 
 
+# Single-framework restructure (amendment #67). The four corpus-
+# discovery readers probe the workspace-root path first (preserving
+# behaviour for workspaces that scaffold their own workspace-root
+# CLAUDE.md / docs/), and fall through to ``<workspace>/framework/``
+# when the workspace-root copy is absent. ``framework-only`` carries
+# top-level docs at the synthetic-branch root, so the workspace's
+# clone lands them at ``<workspace>/framework/<doc>``.
+def _resolve_corpus_path(workspace_root: Path, rel: str) -> Path:
+    """Return the resolved on-disk path for a workspace-relative
+    corpus reference.
+
+    AC.SFR.3 binding: probes ``<workspace_root>/<rel>`` first; falls
+    through to ``<workspace_root>/framework/<rel>`` when the workspace-
+    root copy is absent. Returns the workspace-root path when neither
+    exists (caller's existence check then surfaces the absence in the
+    standard way, e.g. via ``compose_session_fields``'s
+    ``missing_paths``).
+    """
+    workspace_root_path = workspace_root / rel
+    if workspace_root_path.exists():
+        return workspace_root_path
+    framework_path = workspace_root / "framework" / rel
+    if framework_path.exists():
+        return framework_path
+    return workspace_root_path
+
+
 def discover_baseline_corpus(workspace_root: Path) -> list[str]:
     """Return the baseline corpus paths (workspace-relative).
 
@@ -61,9 +88,14 @@ def discover_baseline_corpus(workspace_root: Path) -> list[str]:
     The CLAUDE.md path itself is prepended because the discipline
     reads CLAUDE.md as the entry point — its own presence is also
     part of the gate.
+
+    Single-framework restructure (amendment #67, AC.SFR.3): when
+    ``<workspace>/CLAUDE.md`` is absent, falls through to
+    ``<workspace>/framework/CLAUDE.md`` (the framework-only branch's
+    root copy of CLAUDE.md, cloned in by ``pos-new-workspace``).
     """
     paths: list[str] = ["CLAUDE.md"]
-    claude_md = workspace_root / "CLAUDE.md"
+    claude_md = _resolve_corpus_path(workspace_root, "CLAUDE.md")
     if not claude_md.exists():
         paths.extend(_FALLBACK_BASELINE_PATHS)
         return paths
@@ -108,12 +140,27 @@ def enumerate_amendments_in_flight(workspace_root: Path) -> list[str]:
     """Return sorted amendment-*.md paths under
     ``docs/rebuild/plans/``. Empty list when the directory is absent
     or holds no matching files.
+
+    Single-framework restructure (amendment #67, AC.SFR.3): when
+    ``<workspace>/docs/rebuild/plans/`` is absent, falls through to
+    ``<workspace>/framework/docs/rebuild/plans/`` (the framework-only
+    branch's root copy of plans/). The returned paths remain
+    workspace-relative; when the framework path is the source, the
+    returned strings carry the ``framework/`` prefix so the caller
+    can read them at the right location.
     """
     plans_dir = workspace_root / "docs" / "rebuild" / "plans"
+    base_root = workspace_root
     if not plans_dir.is_dir():
-        return []
+        framework_plans_dir = (
+            workspace_root / "framework" / "docs" / "rebuild" / "plans"
+        )
+        if not framework_plans_dir.is_dir():
+            return []
+        plans_dir = framework_plans_dir
+        base_root = workspace_root  # paths are still rooted at workspace
     matches = sorted(
-        p.relative_to(workspace_root).as_posix()
+        p.relative_to(base_root).as_posix()
         for p in plans_dir.glob("amendment-*.md")
     )
     return matches
@@ -261,9 +308,12 @@ def compose_session_fields(workspace_root: Path) -> dict[str, Any]:
     baseline_paths = discover_baseline_corpus(workspace_root)
     corpus_pairs: list[tuple[str, bool]] = []
     missing: list[str] = []
+    # Single-framework restructure (amendment #67, AC.SFR.3): each
+    # corpus reference probes the workspace-root path first, then
+    # falls through to <workspace>/framework/<rel>.
     for rel in baseline_paths:
-        full = workspace_root / rel
-        present = full.is_file()
+        resolved = _resolve_corpus_path(workspace_root, rel)
+        present = resolved.is_file()
         corpus_pairs.append((rel, present))
         if not present:
             missing.append(rel)

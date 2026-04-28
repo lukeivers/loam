@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pos-publish-framework-only"
+version = "0.1.0"
+description = "Synthesise canonical's `framework-only` branch from `pos-v2`."
+requires-python = ">=3.11"
+
+[project.scripts]
+pos-publish-framework-only = "pos_publish_framework_only.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

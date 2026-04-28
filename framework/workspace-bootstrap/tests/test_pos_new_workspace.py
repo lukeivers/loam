@@ -104,21 +104,61 @@ def test_AC_D_4_1_local_canonical_creates_working_workspace(
     assert result.framework_dir.is_dir()
     assert (result.framework_dir / ".git").exists()
 
-    # AC.D.4.1 (HC#4): byte-content-match for every fixture file.
-    fixture_files = [
-        "framework/workspace-sync/src/workspace_sync/__init__.py",
-        "framework/workspace-bootstrap/src/workspace_bootstrap/__init__.py",
-        "framework/README.md",
-        "docs/odd-methodology.md",
-        "CLAUDE.md",
+    # AC.D.4.1 (HC#4) + AC.SFR.1: byte-content-match for every fixture
+    # file. Post single-framework restructure (amendment #67) the
+    # bootstrap clones the `framework-only` branch; canonical's
+    # `framework/<entry>` lands at `<new-ws>/framework/<entry>` (single
+    # level). Top-level docs land at `<new-ws>/framework/<doc>` because
+    # framework-only carries them at the synthetic-branch root.
+    #
+    # Each tuple is (canonical-pos-v2-path, workspace-side-path).
+    fixture_pairs = [
+        # framework entries: pos-v2 has `framework/X`, framework-only
+        # promotes to `X` at root, workspace-side lives at
+        # `<new-ws>/framework/X`.
+        ("framework/workspace-sync/src/workspace_sync/__init__.py",
+         "framework/workspace-sync/src/workspace_sync/__init__.py"),
+        ("framework/workspace-bootstrap/src/workspace_bootstrap/__init__.py",
+         "framework/workspace-bootstrap/src/workspace_bootstrap/__init__.py"),
+        ("framework/README.md", "framework/README.md"),
+        # Top-level docs: pos-v2 has them at root; framework-only
+        # carries them at root verbatim; workspace-side they land at
+        # `<new-ws>/framework/<doc>` (the readers fall through per
+        # AC.SFR.3).
+        ("docs/odd-methodology.md", "framework/docs/odd-methodology.md"),
+        ("CLAUDE.md", "framework/CLAUDE.md"),
     ]
-    for rel in fixture_files:
-        canonical_bytes = _read_canonical_blob(canonical, rel)
-        on_disk = (new_ws / "framework" / rel).read_text()
+    for canonical_rel, workspace_rel in fixture_pairs:
+        canonical_bytes = _read_canonical_blob(canonical, canonical_rel)
+        on_disk = (new_ws / workspace_rel).read_text()
         assert on_disk == canonical_bytes, (
-            f"HC#4 byte-content-match failed for {rel!r}: "
+            f"HC#4 byte-content-match failed for "
+            f"{canonical_rel!r} → {workspace_rel!r}: "
             f"on_disk={on_disk!r} vs canonical={canonical_bytes!r}"
         )
+
+    # AC.SFR.1: no doubling — `<new-ws>/framework/framework/` MUST NOT
+    # exist (the failure class the restructure eliminates).
+    assert not (new_ws / "framework" / "framework").exists(), (
+        f"AC.SFR.1: doubling failure class re-introduced; "
+        f"<new-ws>/framework/framework/ exists at "
+        f"{new_ws / 'framework' / 'framework'}"
+    )
+
+    # AC.SFR.1: workspace's framework/ tracks framework-only as origin
+    # (so subsequent pos-sync operates against the synthetic branch,
+    # AC.SFR.4 binding).
+    head_branch = subprocess.run(  # noqa: S603
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        cwd=str(new_ws / "framework"),
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert head_branch == "framework-only", (
+        f"AC.SFR.1: cloned branch is {head_branch!r}, expected "
+        f"'framework-only'"
+    )
 
     # AC.D.4.1: workspace/ scaffolded.
     workspace_state = new_ws / WORKSPACE_STATE_SUBDIR
@@ -253,9 +293,13 @@ def test_AC_D_4_1_url_form_routes_through_cache_clone(
     )
 
     # AC.D.4.1: framework/ cloned + byte-matches canonical.
+    # Post single-framework restructure (amendment #67) the cloned
+    # branch is `framework-only`; canonical's `framework/README.md`
+    # lands at `<new-ws>/framework/README.md` (framework/ promoted to
+    # root on the synthetic branch).
     assert (new_ws / "framework" / ".git").exists()
     canonical_readme = _read_canonical_blob(canonical, "framework/README.md")
-    assert (new_ws / "framework" / "framework" / "README.md").read_text() == (
+    assert (new_ws / "framework" / "README.md").read_text() == (
         canonical_readme
     )
 

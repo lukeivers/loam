@@ -158,6 +158,17 @@ def _canonical_source_kind(source: str) -> str:
 # ---- helpers --------------------------------------------------------
 
 
+# Single-framework restructure (amendment #67). The bootstrap clones
+# canonical's ``framework-only`` synthetic branch (rather than the
+# default ``pos-v2`` branch) so the resulting workspace has shape
+# ``<workspace>/framework/<comp>/`` (single level) plus
+# ``<workspace>/framework/CLAUDE.md`` etc. — no
+# ``framework/framework/<comp>/`` doubling. The corpus-discovery
+# readers fall through to ``<workspace>/framework/`` when the
+# workspace-root copy is absent (AC.SFR.3).
+FRAMEWORK_ONLY_BRANCH = "framework-only"
+
+
 def _target_is_empty(path: Path) -> bool:
     """Return True if ``path`` is a viable bootstrap target.
 
@@ -218,18 +229,78 @@ def _resolve_url_to_clone_source(url: str) -> str:
         raise CloneFailedError(
             f"canonical cache failed for {url!r}: {exc}"
         ) from exc
+
+    # Single-framework restructure (amendment #67, AC.SFR.1):
+    # ``ensure_cache_clone`` runs ``git clone <url>`` which makes the
+    # remote's branches available as remote-tracking refs
+    # (``refs/remotes/origin/framework-only``) but only checks out
+    # the default branch as a local branch (``refs/heads/pos-v2``).
+    # Subsequent ``git clone <cache-path>`` in ``_clone_canonical``
+    # only propagates LOCAL branches, so ``framework-only`` would be
+    # missing in the workspace's clone.
+    #
+    # Materialise ``framework-only`` as a local branch on the cache by
+    # re-pointing ``refs/heads/framework-only`` at the remote-tracking
+    # ref. Fail-soft: if the remote-tracking ref is absent (e.g. the
+    # canonical does not yet publish ``framework-only``), the
+    # downstream ``_clone_canonical`` checkout step surfaces the
+    # absence with a structured CloneFailedError naming
+    # ``framework-only``.
+    completed = subprocess.run(  # noqa: S603
+        [
+            "git",
+            "-C",
+            str(cache_path),
+            "update-ref",
+            f"refs/heads/{FRAMEWORK_ONLY_BRANCH}",
+            f"refs/remotes/origin/{FRAMEWORK_ONLY_BRANCH}",
+        ],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        text=True,
+    )
+    # Non-zero exit (e.g. remote-tracking ref absent) is non-fatal
+    # here; the downstream checkout step will diagnose precisely.
     return str(cache_path)
 
 
-def _clone_canonical(clone_source: str, target_framework_dir: Path) -> None:
-    """``git clone <clone_source> <target_framework_dir>``.
+def _clone_canonical(
+    clone_source: str,
+    target_framework_dir: Path,
+    *,
+    branch: str = FRAMEWORK_ONLY_BRANCH,
+) -> None:
+    """Clone canonical and check out ``branch``.
 
-    Raises ``CloneFailedError`` on non-zero exit. The target directory
-    is created by ``git clone``; the caller MUST have ensured the
-    parent (``<new-ws-path>/``) exists.
+    Single-framework restructure (amendment #67, AC.SFR.1): clones
+    canonical and checks out the ``framework-only`` synthetic branch.
+    The synthetic branch's tree promotes canonical's
+    ``framework/<entry>`` to root + carries top-level docs verbatim,
+    so the resulting workspace has shape
+    ``<workspace>/framework/<comp>/`` (single level, no doubling) with
+    ``<workspace>/framework/CLAUDE.md`` etc. at one level deeper than
+    the four corpus-discovery readers expect — the readers fall
+    through to ``<workspace>/framework/`` per AC.SFR.3.
+
+    The flow is two-step (``clone`` → ``checkout -B <branch>
+    origin/<branch>``) rather than one-step (``clone --branch
+    <branch>``) because the URL-form path routes through the cache
+    layer, which materialises non-default branches as remote-tracking
+    refs (``refs/remotes/origin/<branch>``) rather than as local
+    branches. ``git clone --branch <branch>`` against the cache then
+    fails with ``Remote branch <branch> not found in upstream
+    origin``. The two-step flow accepts both shapes (local branch on
+    the source OR remote-tracking ref) by issuing the explicit
+    ``checkout -B`` after the clone.
+
+    Raises ``CloneFailedError`` on non-zero exit at either step. The
+    target directory is created by ``git clone``; the caller MUST
+    have ensured the parent (``<new-ws-path>/``) exists.
     """
     target_framework_dir.parent.mkdir(parents=True, exist_ok=True)
-    completed = subprocess.run(  # noqa: S603 — argv constructed
+    clone_completed = subprocess.run(  # noqa: S603 — argv constructed
         ["git", "clone", clone_source, str(target_framework_dir)],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
@@ -237,11 +308,38 @@ def _clone_canonical(clone_source: str, target_framework_dir: Path) -> None:
         check=False,
         text=True,
     )
-    if completed.returncode != 0:
+    if clone_completed.returncode != 0:
         raise CloneFailedError(
-            f"git clone {clone_source!r} → {target_framework_dir!s} "
-            f"failed (exit {completed.returncode}): "
-            f"{(completed.stderr or '').strip()!r}"
+            f"git clone {clone_source!r} → "
+            f"{target_framework_dir!s} failed (exit "
+            f"{clone_completed.returncode}): "
+            f"{(clone_completed.stderr or '').strip()!r}"
+        )
+
+    checkout_completed = subprocess.run(  # noqa: S603
+        [
+            "git",
+            "-C",
+            str(target_framework_dir),
+            "checkout",
+            "-B",
+            branch,
+            f"origin/{branch}",
+        ],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        text=True,
+    )
+    if checkout_completed.returncode != 0:
+        raise CloneFailedError(
+            f"git checkout -B {branch} origin/{branch} in "
+            f"{target_framework_dir!s} failed (exit "
+            f"{checkout_completed.returncode}): "
+            f"{(checkout_completed.stderr or '').strip()!r}. "
+            f"Hint: canonical must publish a {branch!r} branch "
+            f"(synthesise with `pos-publish-framework-only`)."
         )
 
 

@@ -181,6 +181,11 @@ def emit_session_start_context(
     raising — Claude Code's SessionStart hook never blocks on
     selector error (AC.B5 generalised to emitter).
 
+    Single-framework restructure (amendment #67, AC.SFR.3): when
+    ``<workspace>/CLAUDE.dev.md`` is absent, falls through to
+    ``<workspace>/framework/CLAUDE.dev.md`` (the framework-only
+    branch's root copy of CLAUDE.dev.md).
+
     The function never raises: any unexpected error converts to the
     user-mode empty-payload outcome (defensive AC.B5 application).
     """
@@ -189,7 +194,14 @@ def emit_session_start_context(
         mode = compute_session_mode(intent)
         if mode == "user":
             return ""
-        dev_path = Path(workspace_root) / dev_extension_filename
+        workspace_root_path = Path(workspace_root)
+        dev_path = workspace_root_path / dev_extension_filename
+        if not dev_path.exists():
+            framework_dev_path = (
+                workspace_root_path / "framework" / dev_extension_filename
+            )
+            if framework_dev_path.exists():
+                dev_path = framework_dev_path
         try:
             if reader is not None:
                 return reader(dev_path)

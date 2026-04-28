@@ -434,8 +434,7 @@ Method-level decisions made during the build land here at seal time per `pos-ame
 
 ### Commit SHAs
 
-(populated by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
-
----
-
-*End of plan-doc. Builder plan + manifest authored after owner approval.*
+- Amendment commit: `a52e04a3b123c0849ec8c28f60e65781fd06f4fe` —
+  `feat(structural-enforcement-a3): TDD-guard test-pinned-to-objective (PreToolUse Edit/Write/MultiEdit deny on new-AC source edit without backing test)`
+- Seal commit: `ad7c50c36bdf6fbfcad9405af39cfebd1dc2ecd2` —
+  `chore(seals): structural-enforcement A3 TDD-guard (PreToolUse Edit/Write/MultiEdit deny on new-AC source edit without backing test; helper-library extraction; A2 refactored to consume; multi-contributor PreToolUse merge; NDJSON audit log) — hands-off-lifecycle at a52e04a`

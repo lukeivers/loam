@@ -1244,17 +1244,125 @@ at plan-author time.
 
 ### Selected seed primitives (Class A)
 
-(builder records the ≥ 5 selected primitives + selection
-rationale here at seal time)
+Five seeds across Class A (Claude Code) and Class A-prime
+(harness):
+
+1. **`claude-code/schedule.md`** — `/schedule` cron-shaped
+   scheduler skill. Highest-frequency Lens-1 trigger
+   ("daily briefing" / "every Monday" / "remind me each
+   morning"). Source: in-session skill-list description for
+   `/schedule`, fetch ts 2026-04-28.
+2. **`claude-code/loop.md`** — `/loop` self-pacing recurring
+   skill. Sibling to `/schedule`; the spine's
+   recurring-work index entry routes between them. Source:
+   in-session skill-list description, fetch ts 2026-04-28.
+3. **`claude-code/background-agents.md`** — Task tool +
+   `run_in_background` Bash + Monitor. Highest-leverage
+   parallelism primitive; pairs with the Class B
+   "background-agents-by-default" entry. Source:
+   in-session tool surface, fetch ts 2026-04-28.
+4. **`claude-code/hooks.md`** — settings.json hook event
+   surface (SessionStart, UserPromptSubmit, PreToolUse,
+   Stop, SubagentStop, etc.). Lens-2 structural-enforcement
+   reach; pairs naturally with the structural-enforcement
+   operational rule. Source: in-session `update-config`
+   skill description, fetch ts 2026-04-28.
+5. **`harness/scope-of-work.md`** — pos-v2's bounded-execution
+   primitive (Class A-prime). Highest-leverage harness
+   primitive — every plan/objective the persona authors
+   binds to a scope. Source:
+   `framework/scope-of-work/docs/api-reference.md`, fetch ts
+   2026-04-28.
+
+Selection rationale: the four Claude Code picks cover the
+four most-common Lens 1 dispatch shapes (recurring,
+self-paced, parallel, automated); the harness pick covers
+the most-common Lens 2 primitive (scope-binding). Other
+candidates from the plan §4 list (MCP registration, Agent
+tool, skills marketplace, settings.json, Telegram,
+memory-system MCP) are deferred to subsequent corpus
+authoring (β / δ accrual). The seed count is a
+demonstration of the pattern, not full coverage (plan §11
+risk #5).
 
 ### Selected seed patterns (Class B)
 
-(builder records the ≥ 3 selected patterns + selection
-rationale here at seal time)
+Three seeds, each cross-referenced to paired Class A
+entries:
+
+1. **`best-practice/background-agents-by-default.md`** —
+   "background agents by default for multi-artefact
+   authoring or ~30 s+ generation." Cross-references
+   `[primitive: claude-code:background-agents]`. Trust:
+   sources_count=1, validation_count=8 (every dispatched
+   amendment in the program follows this rule),
+   owner_acked=true.
+2. **`best-practice/scope-only-dispatch.md`** — "agent
+   prompts: scope only, no method prescription."
+   Cross-references `[primitive: claude-code:background-agents]`.
+   Trust: sources_count=1, validation_count=5
+   (multiple amendment dispatches), owner_acked=true.
+3. **`best-practice/verify-dispatch-before-sending.md`** —
+   "verify the dispatch is the right action before sending
+   it." Cross-references both
+   `[primitive: claude-code:background-agents]` and
+   `[primitive: harness:scope-of-work]`. Trust:
+   sources_count=1, validation_count=3,
+   owner_acked=true.
+
+Selection rationale: all three are top-of-mind owner
+directives Luke has explicitly named in MEMORY.md feedback
+files; all three pair with seed Class A entries from the
+list above, demonstrating the cross-class fetch pattern.
+
+### D-build.* method decisions surfaced during build
+
+- **D-build.1 — FUTURE_IDEAS_DRAFT.md leftover from #67
+  build.** The working tree at α-dispatch carried 14 lines
+  of un-committed FUTURE_IDEAS_DRAFT.md captures from the
+  amendment #67 build (single-framework restructure).
+  Resolution: committed them as a separate
+  `docs(rebuild): append amendment #67 build-findings
+  captures` chore commit (`ab4cb12`) BEFORE α's amendment
+  commit so α's diff window stays clean. BASELINE
+  re-pinned to `ab4cb12` accordingly.
+- **D-build.2 — AC.M.S widening for capability-corpus
+  tree.** Amendment #48's legacy `test_AC_M_S_seal_diff_window.py`
+  pins allowed_prefixes to a fence that has been widened
+  in lockstep with each subsequent universal-paths
+  admission (D.1 added `framework/`, D.2 added
+  workspace-sync + self-upgrade + tools). #68 adds
+  `docs/rebuild/capability-corpus/` to the same fence.
+  Landed in a corrective follow-on commit (`45e8fbc`)
+  per the no-amend-in-agent-dispatches feedback rule.
+  Structural fix (drift-resistant fence) captured in
+  FUTURE_IDEAS_DRAFT.md as "AC.M.S structural
+  brittleness" — separate amendment.
+- **D-build.3 — `workspace/` untracked dev-mode artefact
+  blocks pos-amend seal.** A pre-existing untracked
+  `workspace/` directory (per-developer dev-mode
+  artefact left by an earlier `run_first_run_scaffold`
+  invocation against the canonical tree) blocked the
+  pos-amend seal dirty-tree guard. Resolution: stashed
+  for the seal step. Surfaced as a FUTURE_IDEAS_DRAFT
+  capture for the dispatcher: add `workspace/` to
+  `.gitignore` (similar to `.pos/` and `.mcp.json`
+  precedent — runtime-created per-machine state).
 
 ### Commit SHAs
 
-- Amendment commit: `45e8fbc23197cd0a8d4e2bde3df736c78ad45157` —
-  `fix(primary-persona): widen AC.M.S allowed_prefixes for amendment #68's capability-corpus tree`
-- Seal commit: `dc7f84994322fae05b034e41f2a41fadd8898d8e` —
-  `chore(seals): claude-code-corpus prompt-spine and seed corpus — capability leverage spine + Lean on the corpus operational rule + AUTHORING.md + 5 Class A seeds + 3 Class B seeds — primary-persona at 45e8fbc`
+- **Pre-amendment chore commit:** `ab4cb12610cf25f82258feb5718bb868160f06f3` —
+  `docs(rebuild): append amendment #67 build-findings captures`
+  (absorbs leftover FUTURE_IDEAS_DRAFT entries from #67;
+  baseline-pin target for α).
+- **Amendment commit:** `d1eca6106c4837d25186b8ff45afac8387e23051` —
+  `feat(primary-persona,docs): Claude-Code-corpus prompt-spine + seed docs (amendment #68, AC.α.1–AC.α.S)`.
+- **Corrective fix commit:** `45e8fbc23197cd0a8d4e2bde3df736c78ad45157` —
+  `fix(primary-persona): widen AC.M.S allowed_prefixes for amendment #68's capability-corpus tree`.
+- **Seal commit:** `dc7f84994322fae05b034e41f2a41fadd8898d8e` —
+  `chore(seals): claude-code-corpus prompt-spine and seed corpus — … — primary-persona at 45e8fbc`.
+- **§14 backfill commit:** `f76e48d` —
+  `docs(plans): record amendment #68 commit SHAs in method-decision register`
+  (pos-amend seal --plan-doc auto-generated; this section
+  was then refined manually in a follow-on doc commit to
+  add seed-selection rationale + D-build.* entries).

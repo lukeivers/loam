@@ -398,16 +398,23 @@ def test_T4_rewritten_settings_preserves_user_keys_across_self_retire(
     # gate's stanza now occupies hooks.PreToolUse. Backup is
     # discoverable on disk.
     pre_tool_use = data["hooks"]["PreToolUse"]
-    # Multi-contributor as of structural-enforcement A3 (amendment
-    # #71): the outer PreToolUse list carries A2's objective-binding
-    # gate FIRST and A3's TDD-guard SECOND.
-    assert len(pre_tool_use) == 2
+    # Multi-contributor as of structural-enforcement A4 (amendment
+    # #72): the outer PreToolUse list carries A2's objective-binding
+    # gate FIRST, A3's TDD-guard SECOND, A4's Bash-guard THIRD,
+    # A4's Agent-guard FOURTH.
+    assert len(pre_tool_use) == 4
     assert (
         "objective_binding_gate.py"
         in pre_tool_use[0]["hooks"][0]["command"]
     )
     assert (
         "tdd_guard.py" in pre_tool_use[1]["hooks"][0]["command"]
+    )
+    assert (
+        "bash_guard.py" in pre_tool_use[2]["hooks"][0]["command"]
+    )
+    assert (
+        "agent_guard.py" in pre_tool_use[3]["hooks"][0]["command"]
     )
     backups = list(fresh_workspace.glob(".claude/settings.json.user-backup-*"))
     assert backups, "user-authored PreToolUse hook was not backed up"

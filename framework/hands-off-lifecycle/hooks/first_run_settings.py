@@ -140,13 +140,19 @@ _POS_V2_STATUS_LINE_COMMAND_MARKERS: tuple[str, ...] = (
 
 
 # Set of substrings that mark a PreToolUse inner hook as pos-v2-owned.
-# Multi-contributor as of structural-enforcement A3: A2's objective-
-# binding gate AND A3's TDD-guard both ship under hooks.PreToolUse.
-# A future A4 (Bash/Agent-context) will append an additional marker
-# here once the matcher set extends.
+# Multi-contributor as of structural-enforcement A3 (extended by A4):
+# A2's objective-binding gate, A3's TDD-guard, A4's Bash-guard, and
+# A4's Agent-guard all ship under hooks.PreToolUse. A2 + A3 share the
+# Edit|Write|MultiEdit matcher; A4_bash uses the Bash matcher; A4_task
+# uses the Task matcher. Each matcher is independent — Claude Code
+# fires only the inner hooks whose matcher value matches the tool
+# name, so cross-matcher non-interference is a Claude Code primitive,
+# not a property of this merge function.
 _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
     "objective_binding_gate.py",
     "tdd_guard.py",
+    "bash_guard.py",
+    "agent_guard.py",
 )
 
 

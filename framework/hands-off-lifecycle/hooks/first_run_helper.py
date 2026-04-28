@@ -470,21 +470,83 @@ def _tdd_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
     }
 
 
+def _bash_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
+    """Return the PreToolUse envelope for A4's Bash-guard.
+
+    Per locked plan §6 D-A4.1: matcher ``Bash`` (the matcher is
+    independent of A2/A3's ``Edit|Write|MultiEdit`` set — Claude Code
+    fires only the inner hooks whose matcher value matches the tool
+    name). The gate is stdlib-only at import; cold-start cost is
+    bounded by the Python-startup envelope.
+    """
+    pos_v2_root = Path(pos_v2_root)
+    script = (
+        pos_v2_root
+        / "framework"
+        / "hands-off-lifecycle"
+        / "hooks"
+        / "bash_guard.py"
+    )
+    return {
+        "matcher": "Bash",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{sys.executable} {script}",
+                "async": False,
+                "timeout": 5,
+            }
+        ],
+    }
+
+
+def _agent_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
+    """Return the PreToolUse envelope for A4's Agent-guard.
+
+    Per locked plan §6 D-A4.1: matcher ``Task`` (Claude Code's actual
+    tool name for Agent dispatch). The gate is stdlib-only at import;
+    cold-start cost is bounded by the Python-startup envelope.
+    """
+    pos_v2_root = Path(pos_v2_root)
+    script = (
+        pos_v2_root
+        / "framework"
+        / "hands-off-lifecycle"
+        / "hooks"
+        / "agent_guard.py"
+    )
+    return {
+        "matcher": "Task",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{sys.executable} {script}",
+                "async": False,
+                "timeout": 5,
+            }
+        ],
+    }
+
+
 def _maybe_merge_pre_tool_use(
     *, pos_v2_root: Path, settings_path: Path
 ) -> None:
     """Invoke ``merge_pre_tool_use`` fail-soft.
 
-    Multi-contributor as of structural-enforcement A3 (D-A3.8): the
-    outer PreToolUse list carries A2's objective-binding gate FIRST
-    and A3's TDD-guard SECOND. Claude Code admits multiple matcher
-    entries under one event and evaluates them sequentially; A2 deny
-    short-circuits A3.
+    Multi-contributor as of structural-enforcement A4: the outer
+    PreToolUse list carries four contributors in order — A2's
+    objective-binding gate, A3's TDD-guard, A4's Bash-guard, A4's
+    Agent-guard. Claude Code admits multiple matcher entries under
+    one event and evaluates them sequentially per matcher; A2 + A3
+    share the ``Edit|Write|MultiEdit`` matcher and run sequentially
+    (A2 deny short-circuits A3); A4_bash fires on ``Bash`` and
+    A4_task fires on ``Task`` — independent matcher surfaces, no
+    cross-matcher interference.
 
-    Both gate scripts are co-located with hands-off-lifecycle's hooks;
-    no lazy-import probe is needed. A settings.json write failure
-    must not regress first-run (locked plan §5 fail-closed direction
-    mirrors here).
+    All four gate scripts are co-located with hands-off-lifecycle's
+    hooks; no lazy-import probe is needed. A settings.json write
+    failure must not regress first-run (locked plan §5 fail-closed
+    direction mirrors here).
     """
     try:
         merge_pre_tool_use(
@@ -492,6 +554,8 @@ def _maybe_merge_pre_tool_use(
             new_entries=[
                 _objective_binding_gate_stanza(pos_v2_root),
                 _tdd_guard_stanza(pos_v2_root),
+                _bash_guard_stanza(pos_v2_root),
+                _agent_guard_stanza(pos_v2_root),
             ],
         )
     except Exception:  # noqa: BLE001 — fail-soft per locked plan §5

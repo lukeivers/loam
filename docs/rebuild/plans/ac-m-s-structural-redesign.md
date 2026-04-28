@@ -510,10 +510,7 @@ time.
 
 ### Commit SHAs
 
-(Builder fills via `pos-amend seal --plan-doc` post-seal.)
-
-- **Pre-amendment chore commit (if any):** _placeholder_.
-- **Amendment commit:** _placeholder_.
-- **Corrective fix commit (if any):** _placeholder_.
-- **Seal commit:** _placeholder_.
-- **§14 backfill commit:** _placeholder_.
+- Amendment commit: `05ebce7a7f3f24f2601f1ea7cb22b466b94c6f18` —
+  `feat(primary-persona,docs): AC.M.S structural redesign — frozen-both-endpoints per-invariant pin (amendment #69, AC.MS-fix.1–AC.MS-fix.S)`
+- Seal commit: `3be9a783fe2cf95315780c835f0d10bb7e0bf6bb` —
+  `chore(seals): ac-m-s-structural-redesign — frozen-both-endpoints AC.M.S — eliminates widening-pressure failure class per ODD §5.1.1 — primary-persona at 05ebce7`

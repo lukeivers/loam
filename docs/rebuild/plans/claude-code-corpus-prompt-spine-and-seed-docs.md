@@ -1254,13 +1254,7 @@ rationale here at seal time)
 
 ### Commit SHAs
 
-```
-Amendment commits:
-  <SHA>  feat(primary-persona,docs): Claude-Code-corpus
-         prompt-spine + ≥ 5 seed docs (amendment α,
-         AC.α.1–AC.α.S)
-
-Seal commit:
-  <SHA>  chore(seals): capability-spine-and-seed-corpus
-         seal — primary-persona at <SHA>
-```
+- Amendment commit: `45e8fbc23197cd0a8d4e2bde3df736c78ad45157` —
+  `fix(primary-persona): widen AC.M.S allowed_prefixes for amendment #68's capability-corpus tree`
+- Seal commit: `dc7f84994322fae05b034e41f2a41fadd8898d8e` —
+  `chore(seals): claude-code-corpus prompt-spine and seed corpus — capability leverage spine + Lean on the corpus operational rule + AUTHORING.md + 5 Class A seeds + 3 Class B seeds — primary-persona at 45e8fbc`

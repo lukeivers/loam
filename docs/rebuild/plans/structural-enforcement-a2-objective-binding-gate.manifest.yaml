@@ -1,0 +1,201 @@
+schema_version: 1
+amendment:
+  number: 70
+  slug: structural-enforcement-a2-objective-binding-gate
+  title: "structural-enforcement A2 objective-binding gate (PreToolUse Edit/Write/MultiEdit refusal-on-binding-miss)"
+
+# BASELINE: 3582054 — pre-amendment tip (HEAD at dispatch). Per the
+# established BASELINE-as-HEAD~1 pattern (#29 / #34 .. #69) the
+# manifest pins to the immediate-prior commit so the BASELINE..HEAD
+# diff is narrow to A2's surface.
+baseline: 3582054e67fbd73c6256fd97c5474933a8a7903d
+
+plan: docs/rebuild/plans/structural-enforcement-a2-objective-binding-gate.md
+
+seal_description: "structural-enforcement A2 objective-binding gate (PreToolUse Edit/Write/MultiEdit deny on binding miss; carve-out admission; NORMAL USE no-op; NDJSON audit log)"
+
+# Single sealed component per locked plan §2 (D3 / fence statement):
+# A2 only touches hands-off-lifecycle. objective-tracker is consumer-
+# only (A2 calls A1's public read API; no schema or runtime change).
+# loam-mode is consumer-only via the workspace-mode bit (already a
+# corpus_load_sentinel.workspace_mode() thin wrapper from A1).
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3 + amendment #44's
+# precedent. The plan-doc, research artefact, builder plan, and
+# manifest itself live under docs/rebuild/plans/.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.structural-enforcement-a2-objective-binding-gate
+  body: |
+    # Amendment — structural-enforcement A2 objective-binding gate
+    #
+    # 2026-04-28. Per the locked plan-doc
+    # `docs/rebuild/plans/structural-enforcement-a2-objective-binding-gate.md`
+    # and the locked research artefact
+    # `docs/rebuild/plans/research/structural-enforcement-a2-objective-binding-gate-research.md`.
+    #
+    # A2 is the FIRST gate-that-refuses in the structural-enforcement
+    # programme. A1 shipped the substrate (active-scope sentinel,
+    # objective-manifest table, workspace-mode bit) but no gate. A2
+    # turns the substrate into a Claude Code PreToolUse refusal:
+    # every Edit/Write/MultiEdit issued in a DEV MODE pos-v2
+    # workspace either traces to a manifest-registered (component,
+    # ac_id, source_path_glob) row that the active-scope sentinel
+    # binds against, falls under a dev-discipline carve-out path, or
+    # is denied with a structured permissionDecisionReason that
+    # names the failure + at least one repair direction.
+    #
+    # Surface added (hands-off-lifecycle, sealed):
+    #
+    #   - `framework/hands-off-lifecycle/hooks/objective_binding_gate.py`
+    #     (new) — PreToolUse hook script. Stdlib-only. Lazy-imports
+    #     A1's substrate readers (`active_scope_sentinel`,
+    #     `corpus_load_sentinel`) and `objective_tracker.
+    #     ObjectiveTracker` for manifest queries. Exits 0 on every
+    #     path; refusals emit the structured PreToolUse JSON envelope
+    #     (`hookSpecificOutput.permissionDecision: "deny"` +
+    #     `permissionDecisionReason`); allows emit empty stdout
+    #     (Claude Code's default-allow). Audit log appended on every
+    #     fire to `<workspace>/workspace/.pos/objective-binding-gate.log`
+    #     as NDJSON, atomic per-line append via O_APPEND.
+    #   - `framework/hands-off-lifecycle/hooks/first_run_settings.py`
+    #     — new `merge_pre_tool_use(*, settings_path, new_entry,
+    #     now_iso=None) -> SettingsMergeResult` helper mirroring
+    #     `merge_user_prompt_submit` byte-for-byte (single-
+    #     contributor; backup-on-displace; preserved-keys narration).
+    #     New `_POS_V2_PRE_TOOL_USE_COMMAND_MARKERS` tuple naming the
+    #     gate script's path substring as the canonical pos-v2-owned
+    #     marker.
+    #   - `framework/hands-off-lifecycle/hooks/first_run_helper.py`
+    #     — new `_objective_binding_gate_stanza(pos_v2_root)` builder
+    #     + `_maybe_merge_pre_tool_use(*, pos_v2_root, settings_path)`
+    #     fail-soft wrapper. Wired into the three SessionStart-merge
+    #     call sites (Phase 3d, Phase 4c, Phase 6) alongside the
+    #     existing `_maybe_merge_user_prompt_submit` /
+    #     `_maybe_merge_stop` / `_maybe_merge_status_line` calls.
+    #
+    # Eight new AC.OBG tests (one per AC):
+    #
+    #   - `tests/test_AC_OBG_1_deny_missing_sentinel.py` — DEV MODE +
+    #     no sentinel → deny with reason naming path + missing
+    #     sentinel + repair direction (Edit, Write, MultiEdit).
+    #   - `tests/test_AC_OBG_2_deny_no_manifest_row.py` — sentinel
+    #     binds (X, Y) but no manifest row exists for that pair → deny
+    #     with reason naming the binding + register_source_binding
+    #     repair.
+    #   - `tests/test_AC_OBG_3_deny_no_glob_match.py` — sentinel binds
+    #     (X, Y) with manifest row whose glob doesn't match path →
+    #     deny with reason naming path + bound globs.
+    #   - `tests/test_AC_OBG_4_allow_glob_matches.py` — bound row's
+    #     glob matches path → allow.
+    #   - `tests/test_AC_OBG_5_allow_carve_outs.py` — every dev-
+    #     discipline carve-out path admits even without a sentinel
+    #     in DEV MODE (parametrised over the full carve-out list).
+    #   - `tests/test_AC_OBG_6_normal_use_no_op.py` — NORMAL USE → no-
+    #     op; sentinel + tracker NOT consulted in evaluate().
+    #   - `tests/test_AC_OBG_7_audit_log.py` — every fire appends one
+    #     NDJSON line; on-disk byte-content read + schema assertions
+    #     (per ODD §8.2.14 byte-content verification); deny path emits
+    #     structured PreToolUse envelope to stdout.
+    #   - `tests/test_AC_OBG_S_seal_diff_window.py` — A2 seal-diff
+    #     invariant (per-invariant frozen-both-endpoints; SEAL_COMMIT
+    #     constant filled by post-seal corrective per AC.MS-fix.S
+    #     authoring pattern).
+    #
+    # One supplemental test for the settings-merge surface:
+    #
+    #   - `tests/test_AC_OBG_settings_merge.py` — `merge_pre_tool_use`
+    #     contract (first-write, re-merge over pos-v2-owned without
+    #     backup, re-merge over user-authored with backup, orthogonal-
+    #     stanza preservation). Q3 empirical answer: existing user-
+    #     authored PreToolUse hooks are preserved via the timestamped
+    #     backup convention (mirrors AC46.5 byte-for-byte).
+    #
+    # One pre-existing test updated:
+    #
+    #   - `tests/test_first_run.py::test_T4_rewritten_settings_
+    #     preserves_user_keys_across_self_retire` — the test seeded a
+    #     user-authored PreToolUse stanza and asserted it remained
+    #     untouched through self-retire. Pre-A2 that was correct (no
+    #     pos-v2 contributor wrote to PreToolUse). Post-A2 the
+    #     contract changes: the user-authored stanza is moved aside
+    #     to the timestamped backup (same convention SessionStart /
+    #     UserPromptSubmit / Stop / statusLine use) and the gate's
+    #     stanza takes its place. The test now verifies the new
+    #     contract (backup created + gate registered) per the
+    #     `feedback_loose_AC_text_fix_AC_not_implementation` rule —
+    #     the prior assertion reflected the absence of an A2-shaped
+    #     contributor, not an invariant.
+    #
+    # Behaviour:
+    #
+    #   - DEV MODE workspaces, sealed-component source path: gate
+    #     consults active-scope sentinel + objective-manifest table;
+    #     allow on glob-match, deny otherwise with structured reason.
+    #   - DEV MODE workspaces, dev-discipline carve-out paths
+    #     (docs/, tools/, .scratch/, personas/, framework/docs/,
+    #     framework/tools/, framework/personas/, CLAUDE*.md at root
+    #     or framework root, .gitignore at root or framework root,
+    #     and the universal-paths admissions): allow regardless of
+    #     sentinel/manifest state.
+    #   - NORMAL USE workspaces: no-op; sentinel + manifest NOT
+    #     consulted (mode-bit short circuit; sub-10ms cost path).
+    #   - Other tools (Read, Bash, Glob, Grep, ...): no-op (matcher
+    #     `Edit|Write|MultiEdit` registers the gate only on those
+    #     three).
+    #   - Forward-compat with future PreToolUse contributors (A3
+    #     TDD-guard, A4 Bash/Agent-context): the merge function is
+    #     single-contributor today; a future amendment generalises
+    #     the same way amendment #45 generalised SessionStart.
+    #   - Backwards-compat with workspaces lacking the gate: the gate
+    #     is additive; absence of the PreToolUse stanza preserves
+    #     pre-amendment-#70 behaviour (no refusals).
+    #
+    # AC surface (AC.OBG.1 – AC.OBG.S) — outcome-shaped per the
+    # locked plan-doc §4. Test layout: one file per AC + the seal-
+    # diff invariant + the settings-merge contract.
+    #
+    # ODD §2.5 reverse-direction audit clean: every code path,
+    # branch, dependency, and test in the diff traces back to a
+    # named AC. No silent exception branches; no defensive `if`
+    # for cases the ACs do not name; no method-in-AC drift.
+    #
+    # Out of scope (locked plan-doc §7, named explicitly):
+    #
+    #   - A3 TDD-guard test-pinned-to-objective.
+    #   - A4 Bash/Agent-context guards.
+    #   - A2.adjacent — Active-scope sentinel auto-author at
+    #     dispatch time (extends amendment #52's
+    #     `dispatch_with_scope`).
+    #   - A2.adjacent — Audit-log rotation.
+    #   - Cross-amendment manifest queries.
+    #   - Automatic manifest-row backfill from existing seal commits.
+    #   - Persona-side surfacing of A2 deny diagnostics.
+    #   - Composition with FIDRAFT-130 corpus-inlining.
+    #   - Composition with FIDRAFT-136 main-session-write-prevention.
+    #   - Audit-log consumers (FIDRAFT-143 dispatch-staleness, etc.).
+    #   - Settings.json migration on existing workspaces.
+    #
+    # BASELINE 3582054 (pre-amendment tip — HEAD at dispatch). hands-
+    # off-lifecycle is H19-frozen at 3780603; only the SEAL_COMMIT
+    # sidecar advances per the established frozen-baseline pattern.
+    #
+    # With this amendment, A3 (TDD-guard) is unblocked: A3 reads the
+    # same `manifest_rows_for_ac` API and the same active-scope
+    # sentinel, composing alongside A2 in the PreToolUse stanza.
+    # Per locked plan-doc constraint 9, A1's substrate stays sealed-
+    # after-A1; A2 consumes it without amending it.

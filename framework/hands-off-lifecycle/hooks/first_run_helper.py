@@ -75,6 +75,7 @@ from first_run_settings import (  # noqa: E402
     SettingsMergeResult,
     build_first_run_stanza,
     build_supervisor_stanza,
+    merge_pre_tool_use,
     merge_session_start,
     merge_status_line,
     merge_stop,
@@ -390,6 +391,70 @@ def _maybe_merge_status_line(
         merge_status_line(
             settings_path=settings_path,
             new_entry=_status_line_stanza(pos_v2_root),
+        )
+    except Exception:  # noqa: BLE001 — fail-soft per locked plan §5
+        return
+
+
+# ---- structural-enforcement A2 — PreToolUse objective-binding gate --
+#
+# The objective-binding gate is registered as a single inner hook
+# under ``hooks.PreToolUse`` via ``merge_pre_tool_use``. Single-
+# contributor for now (A3 TDD-guard / A4 Bash/Agent-context guards
+# will compose alongside via the same merge function once they ship,
+# generalised the same way amendment #45 generalised the SessionStart
+# counterparts). Matchers ``Edit|Write|MultiEdit`` per locked plan
+# D-A2.1. The gate is co-located with the rest of hands-off-lifecycle's
+# hooks; no lazy-import probe is needed. Fail-soft mirrors the locked
+# plan §5 fail-closed direction: a transient I/O error must not
+# regress first-run.
+
+
+def _objective_binding_gate_stanza(pos_v2_root: Path) -> dict[str, Any]:
+    """Return the PreToolUse envelope for the objective-binding gate.
+
+    Per locked plan §6 D-A2.1: matcher ``Edit|Write|MultiEdit`` (the
+    three textual-modification tools the gate covers). The gate script
+    is invoked under ``sys.executable``; per the existing convention
+    (amendment #49's status-line stanza) the interpreter path is
+    resolved at registration time. The gate is stdlib-only at import
+    so cold-start cost is the Python-startup envelope alone.
+    """
+    pos_v2_root = Path(pos_v2_root)
+    script = (
+        pos_v2_root
+        / "framework"
+        / "hands-off-lifecycle"
+        / "hooks"
+        / "objective_binding_gate.py"
+    )
+    return {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{sys.executable} {script}",
+                "async": False,
+                "timeout": 5,
+            }
+        ],
+    }
+
+
+def _maybe_merge_pre_tool_use(
+    *, pos_v2_root: Path, settings_path: Path
+) -> None:
+    """Invoke ``merge_pre_tool_use`` fail-soft.
+
+    The gate script is co-located with hands-off-lifecycle's hooks; no
+    lazy-import probe is needed. A settings.json write failure must
+    not regress first-run (locked plan §5 fail-closed direction
+    mirrors here).
+    """
+    try:
+        merge_pre_tool_use(
+            settings_path=settings_path,
+            new_entry=_objective_binding_gate_stanza(pos_v2_root),
         )
     except Exception:  # noqa: BLE001 — fail-soft per locked plan §5
         return
@@ -1436,6 +1501,13 @@ def _self_retire(
     _maybe_merge_status_line(
         pos_v2_root=pos_v2_root, settings_path=settings_path
     )
+    # Structural-enforcement A2: register the objective-binding gate
+    # under ``hooks.PreToolUse`` so every Edit/Write/MultiEdit fires
+    # the gate before the model can author text. Fail-soft per locked
+    # plan §5 fail-closed direction.
+    _maybe_merge_pre_tool_use(
+        pos_v2_root=pos_v2_root, settings_path=settings_path
+    )
 
     script_path = pos_v2_root / "framework" / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     removed = False
@@ -1867,6 +1939,13 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     _maybe_merge_status_line(
         pos_v2_root=pos_v2_root, settings_path=settings_path
     )
+    # Structural-enforcement A2: register the objective-binding gate
+    # at Phase 3d so the gate is live for the current session's first
+    # PreToolUse fire (not just subsequent sessions post-self-retire).
+    # Fail-soft per locked plan §5.
+    _maybe_merge_pre_tool_use(
+        pos_v2_root=pos_v2_root, settings_path=settings_path
+    )
 
     # ---- Phase 4a: plist / unit substitution + service bootstrap --
     plat = _detect_platform()
@@ -2075,6 +2154,12 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             # the Phase 4c re-merge. Idempotent — same envelope
             # shape every time.
             _maybe_merge_status_line(
+                pos_v2_root=pos_v2_root, settings_path=settings_path
+            )
+            # Structural-enforcement A2: re-merge the objective-binding
+            # gate alongside the Phase 4c re-merge. Idempotent — same
+            # envelope shape every time.
+            _maybe_merge_pre_tool_use(
                 pos_v2_root=pos_v2_root, settings_path=settings_path
             )
         except OSError as e:

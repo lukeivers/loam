@@ -357,8 +357,17 @@ def test_T3_supervisor_stanza_is_consistent_across_sessions(
 def test_T4_rewritten_settings_preserves_user_keys_across_self_retire(
     fresh_workspace: Path,
 ) -> None:
-    """T4 — after self-retire, every user-authored key outside SessionStart is
-    still present."""
+    """T4 — after self-retire, every user-authored key outside the
+    pos-v2-merged stanzas (SessionStart, UserPromptSubmit, Stop,
+    PreToolUse, statusLine) is still present.
+
+    Structural-enforcement A2 amendment (#70): self-retire now merges
+    a PreToolUse stanza for the objective-binding gate. A pre-existing
+    user-authored PreToolUse stanza is moved to a timestamped backup
+    via the same convention SessionStart / UserPromptSubmit /
+    Stop / statusLine use; the new gate stanza takes its place.
+    Other top-level keys (``env``) remain untouched.
+    """
     settings_path = fresh_workspace / ".claude" / "settings.json"
     # User adds their own keys alongside the shipped SessionStart stanza.
     settings_path.write_text(
@@ -384,7 +393,22 @@ def test_T4_rewritten_settings_preserves_user_keys_across_self_retire(
 
     data = json.loads(settings_path.read_text())
     assert data["env"] == {"MY_USER_VAR": "42"}
-    assert data["hooks"]["PreToolUse"][0]["command"] == "/bin/true"
+    # Per A2 (amendment #70): the prior user-authored PreToolUse
+    # stanza has been backed up via the timestamped sibling, and the
+    # gate's stanza now occupies hooks.PreToolUse. Backup is
+    # discoverable on disk.
+    pre_tool_use = data["hooks"]["PreToolUse"]
+    assert len(pre_tool_use) == 1
+    assert (
+        "objective_binding_gate.py"
+        in pre_tool_use[0]["hooks"][0]["command"]
+    )
+    backups = list(fresh_workspace.glob(".claude/settings.json.user-backup-*"))
+    assert backups, "user-authored PreToolUse hook was not backed up"
+    backup_data = json.loads(backups[0].read_text())
+    assert (
+        backup_data["hooks"]["PreToolUse"][0]["command"] == "/bin/true"
+    )
     # Current Claude Code schema: SessionStart[i] = {matcher, hooks: [...]}.
     assert (
         data["hooks"]["SessionStart"][0]["hooks"][0]["command"].endswith(

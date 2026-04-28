@@ -139,6 +139,18 @@ _POS_V2_STATUS_LINE_COMMAND_MARKERS: tuple[str, ...] = (
 )
 
 
+# Set of substrings that mark a PreToolUse inner hook as pos-v2-owned.
+# Single-contributor for now (structural-enforcement A2 — the
+# objective-binding gate is the only PreToolUse contributor pos-v2
+# ships at A2-time). When future amendments (A3 TDD-guard, A4 Bash/
+# Agent-context) introduce additional PreToolUse contributors,
+# generalise this set + ``merge_pre_tool_use`` the same way amendment
+# #45 generalised the SessionStart counterparts.
+_POS_V2_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
+    "objective_binding_gate.py",
+)
+
+
 def _is_pos_v2_owned(stanza_entries: list[Any]) -> bool:
     """Identify whether an existing SessionStart stanza is pos-v2's own.
 
@@ -566,6 +578,107 @@ def merge_stop(
         k for k in existing.keys() if k not in ("hooks", "agent")
     ) + tuple(
         f"hooks.{k}" for k in hooks.keys() if k != "Stop"
+    )
+
+    return SettingsMergeResult(
+        wrote=True,
+        backup_path=backup_path,
+        prior_session_start_displaced=displaced,
+        preserved_user_keys=preserved_keys,
+    )
+
+
+# ---- structural-enforcement A2 — PreToolUse hook merge --------------
+
+
+def _is_pos_v2_owned_pre_tool_use(stanza_entries: list[Any]) -> bool:
+    """Identify whether an existing PreToolUse stanza is pos-v2's.
+
+    AC.OBG.7 / merge contract: a stanza whose every inner-hook command
+    matches one of the recognised pos-v2 PreToolUse command markers is
+    pos-v2-owned and may be replaced without a user-stanza backup.
+    Any other shape (user-authored, mixed, malformed) triggers the
+    backup path mirroring the SessionStart / UserPromptSubmit / Stop
+    conventions exactly.
+    """
+    commands = _iter_commands(stanza_entries)
+    if not commands:
+        return False
+    for cmd in commands:
+        if not any(
+            marker in cmd
+            for marker in _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS
+        ):
+            return False
+    return True
+
+
+def merge_pre_tool_use(
+    *,
+    settings_path: Path,
+    new_entry: dict[str, Any],
+    now_iso: str | None = None,
+) -> SettingsMergeResult:
+    """Merge ``new_entry`` into settings.json's PreToolUse stanza.
+
+    Mirrors ``merge_user_prompt_submit`` byte-for-byte (single-
+    contributor; structural-enforcement A2 is the only PreToolUse
+    contributor pos-v2 ships at A2-time):
+
+      * no prior stanza: write ``[new_entry]``.
+      * prior stanza is pos-v2's own (command matches the gate's
+        markers): replace with ``[new_entry]``, no backup.
+      * prior stanza is user-authored: write the whole prior
+        settings.json to a timestamped backup and replace the
+        PreToolUse stanza with ``[new_entry]``.
+
+    Other top-level keys (including ``hooks.SessionStart``,
+    ``hooks.UserPromptSubmit``, ``hooks.Stop``, ``hooks.<other>``,
+    ``agent``, ``statusLine``, etc.) are preserved unchanged.
+    Atomic write via ``.tmp`` sibling + rename.
+    """
+    settings_path = Path(settings_path)
+    existing = _load_existing(settings_path)
+
+    backup_path: Path | None = None
+    displaced = False
+
+    hooks = existing.get("hooks")
+    if not isinstance(hooks, dict):
+        hooks = {}
+        existing["hooks"] = hooks
+
+    prior = hooks.get("PreToolUse")
+    if (
+        isinstance(prior, list)
+        and prior
+        and not _is_pos_v2_owned_pre_tool_use(prior)
+    ):
+        ts = now_iso or _now_utc_iso_for_filename()
+        backup_path = settings_path.with_name(
+            f"{settings_path.name}.user-backup-{ts}.json"
+        )
+        backup_path.write_text(
+            json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        displaced = True
+
+    hooks["PreToolUse"] = [new_entry]
+    existing["hooks"] = hooks
+
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = settings_path.with_suffix(settings_path.suffix + ".tmp")
+    tmp.write_text(
+        json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    tmp.replace(settings_path)
+
+    preserved_keys = tuple(
+        k for k in existing.keys() if k not in ("hooks", "agent")
+    ) + tuple(
+        f"hooks.{k}" for k in hooks.keys() if k != "PreToolUse"
     )
 
     return SettingsMergeResult(

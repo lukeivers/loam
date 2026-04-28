@@ -483,8 +483,7 @@ Method-level decisions made during the build land here at seal time per `pos-ame
 
 ### Commit SHAs
 
-(populated by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
-
----
-
-*End of plan-doc. Builder plan + manifest authored after owner approval.*
+- Amendment commit: `f1ae42beb052e1c89403f6bf50a28d3006e9391f` —
+  `feat(structural-enforcement-a4): Bash/Agent-context guards (PreToolUse Bash + Task; secret-commit + blast-radius universal; amend-in-subagent + pos-amend-dry-run + wrong-tree-write DEV-MODE-only; wrong-WD + method-enumerated + stale-dispatch DEV-MODE-only)`
+- Seal commit: `052c9b72cdd11695568c934331ede86ce5f4dad4` —
+  `chore(seals): structural-enforcement A4 Bash/Agent-context guards (PreToolUse Bash + Task; secret-commit + blast-radius universal; --amend in subagent + pos-amend-dry-run + wrong-tree-write DEV-MODE-only; wrong-WD-dispatch + method-enumerated-prompt + stale-dispatch DEV-MODE-only; helper-library extension; multi-contributor PreToolUse merge to four-element outer list; NDJSON audit logs) — hands-off-lifecycle at f1ae42b`

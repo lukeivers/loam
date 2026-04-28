@@ -28,6 +28,7 @@ in the per-invariant frozen-both-endpoints shape this amendment
 codifies. AC.MS-fix.S's SEAL_COMMIT constant is filled by a
 corrective commit immediately after the amendment's seal commit
 lands (the seal SHA isn't known at amendment-author time).
+Both endpoints are constants once the corrective commits.
 """
 
 from __future__ import annotations
@@ -96,12 +97,11 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
 # ---------------------------------------------------------------------------
 
 _AMENDMENT_69_BASELINE = "76cec04e0ececa483dba2dd0f22a5d04a571dda9"
-# Filled by a post-seal corrective commit. Pre-corrective: the feat
-# commit SHA, which already contains the entire amendment surface
-# (test rewrite + doc edit + plan + manifest); the seal commit only
-# adds the sidecar bump + narrative which are admitted by
-# `_AMENDMENT_69_ALLOWED_PREFIXES`.
-_AMENDMENT_69_SEAL_COMMIT = "__POST_SEAL_CORRECTIVE__"
+# Amendment #69's seal commit SHA (chore-seal commit produced by
+# `pos-amend seal`). Filled by post-seal corrective commit per the
+# AC.MS-fix.S authoring pattern (the seal SHA isn't knowable at
+# amendment-author time).
+_AMENDMENT_69_SEAL_COMMIT = "3be9a783fe2cf95315780c835f0d10bb7e0bf6bb"
 
 _AMENDMENT_69_ALLOWED_PREFIXES: tuple[str, ...] = (
     "framework/primary-persona/tests/",
@@ -116,37 +116,7 @@ _AMENDMENT_69_ALLOWED_FILES: frozenset[str] = frozenset({
 
 def test_AC_MS_fix_S_seal_diff_within_amendment_69_fence() -> None:
     """No path outside amendment #69's declared fence appears in the
-    amendment-#69 window. Frozen-both-endpoints per ODD §10.3.
-
-    The seal SHA isn't knowable at amendment-author time. Pre-
-    corrective the constant is the placeholder sentinel and the test
-    raises a visible NotImplementedError (NOT a silent skip — the
-    caller must see that AC.MS-fix.S is pending its post-seal
-    corrective). The seal step's pytest sweep tolerates the test
-    by virtue of pos-amend's `seal --plan-doc` flow only running
-    after the corrective lands; a pre-corrective sweep is the
-    operational halt-signal the dispatcher's report-shape requires.
-
-    Seal-time invocation: post-corrective, the constant is the seal
-    SHA and the assertion runs.
-    """
-    sentinel = "__POST_SEAL_CORRECTIVE__"
-    if _AMENDMENT_69_SEAL_COMMIT == sentinel:
-        # Pre-corrective. The amendment commit is on disk; the seal
-        # commit is not yet. The seal step's dirty-tree pre-flight
-        # would normally block sealing if this test failed; this
-        # branch makes the placeholder visible without a silent
-        # skip. The corrective commit must land first OR the seal
-        # step must be invoked with the seal SHA already known.
-        # The pos-amend seal flow hits this AFTER the seal commit
-        # exists at HEAD, so the corrective workflow is: feat →
-        # pos-amend seal (advances sidecar, runs tests) → at this
-        # point if test fails on sentinel we corrective-fix → seal
-        # commit lands → corrective commit fills constant.
-        # Practical: the test is run pre-seal in this branch and
-        # passes vacuously; the post-seal verification path is the
-        # dispatcher's synthetic-add-path test.
-        return
+    amendment-#69 window. Frozen-both-endpoints per ODD §10.3."""
     out = subprocess.check_output(
         ["git", "diff", "--name-only",
          f"{_AMENDMENT_69_BASELINE}..{_AMENDMENT_69_SEAL_COMMIT}"],

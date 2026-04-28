@@ -250,10 +250,10 @@ The plan §0 left D-build.x method choices to the builder within the ACs' outcom
 
 ### Commit SHAs
 
-(populated by `pos-amend seal --plan-doc <ABSOLUTE PATH>` after build per the seal-automation extension)
-
----
-
+- Amendment commit: `c57e3b5738c7a52583e07e95313fac8da42e179b` —
+  `feat(workspace-bootstrap,primary-persona,hands-off-lifecycle,tools): single-framework restructure — synthetic framework-only branch + reader fall-through (amendment #67, AC.SFR.1–AC.SFR.S)`
+- Seal commit: `8842042990619eb1e1f29eedea57e4cf10cecede` —
+  `chore(seals): single-framework-restructure — framework-only synthesis + bootstrap clones framework-only + corpus-discovery fall-through — workspace-bootstrap+primary-persona+hands-off-lifecycle at 040e577`
 ## §15. References
 
 - CLAUDE.md (project + global) — design lenses + output conventions.

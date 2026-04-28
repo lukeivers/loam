@@ -246,7 +246,7 @@ The plan §0 left D-build.x method choices to the builder within the ACs' outcom
 
 ---
 
-## §14. Method-decision register (placeholder)
+## 14. Method-decision register
 
 ### Commit SHAs
 

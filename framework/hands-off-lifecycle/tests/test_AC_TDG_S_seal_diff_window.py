@@ -52,7 +52,9 @@ def _seal_commit_for_a3() -> str | None:
     amendment-author time; filled by a post-seal corrective commit
     immediately after the amendment's seal commit lands.
     """
-    return None
+    # Amendment #71's seal commit SHA — `chore(seals): structural-
+    # enforcement A3 TDD-guard ... — hands-off-lifecycle at a52e04a`.
+    return "ad7c50c36bdf6fbfcad9405af39cfebd1dc2ecd2"
 
 
 def _baseline_from_manifest() -> str | None:

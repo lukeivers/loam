@@ -254,6 +254,19 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         # convention.
         ".gitignore",
         "workspace-sync",
+        # Amendment #67 (single-framework-restructure; this amendment)
+        # is the first H/L amendment whose SEAL_COMMIT window crosses
+        # D-migration D.5.5's chore commit (`39cfbb1`,
+        # `chore(repo): remove accidentally-committed runtime artifact
+        # + gitignore data/`) which deleted the inadvertently-committed
+        # top-level `data/` runtime-artifact bucket. The deletion
+        # surfaces `data` as a touched top-level prefix in the
+        # BASELINE..SEAL_COMMIT diff window. Admitted here at H/L's
+        # first opportunity per ODD §10's per-invariant-BASELINE
+        # convention (the H19 frozen BASELINE is project-start;
+        # interim top-level prefix changes are admitted when H/L's
+        # next SEAL_COMMIT advances past them).
+        "data",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

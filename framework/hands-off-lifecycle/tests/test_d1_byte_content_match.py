@@ -67,8 +67,20 @@ _SAMPLE_FILES = (
      "d3ce250ccc76974da7301cff2b1342a24b97c20f19287a109fed2cd7162fa5c8"),
     ("framework/workspace-bootstrap/src/workspace_bootstrap/host.py",
      "91465ef9fcc61e9fceffc0da957f726ea776a1f9a7a127bb0711e73bee48e9a7"),
-    ("framework/workspace-bootstrap/pyproject.toml",
-     "a8e187cf7507153dd580961d56fa738eb8305a4b8fd52536c3178ca29b9ed52d"),
+    # framework/workspace-bootstrap/pyproject.toml WAS in this list at
+    # D.1 seal time. D-migration D.4 (amendment #65, sealed at
+    # `8acdff5`) legitimately edited the file to add the
+    # `pos-new-workspace` entry-point. The byte-match invariant for
+    # this specific file no longer holds because D.4's intentional
+    # content edit lands inside the post-D.1 window — the file is no
+    # longer a pure-rename target. Replaced at amendment #67 (single-
+    # framework-restructure) with errors.py — a leaf module untouched
+    # since D.1 — to keep the workspace-bootstrap sample at ≥5 files
+    # per AC.D.1.5. The remaining sample files still serve the HC#4
+    # binding for D.1's git-mv discipline (no silent content-edit
+    # during the rename).
+    ("framework/workspace-bootstrap/src/workspace_bootstrap/errors.py",
+     "e1aa52137a62d551501e6da23071e414a6b0ed40236517a826ae98531434cbaf"),
     ("framework/workspace-bootstrap/src/workspace_bootstrap/discovery.py",
      "b58ed5e31591c2f4bec3b0dbad3c60d22c23acfa0da8af12e967ecbbc4c43062"),
     # scope-of-work — leaf component (no test_no_sealed sidecar; the

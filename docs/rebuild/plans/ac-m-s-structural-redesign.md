@@ -505,8 +505,38 @@ anticipated.
 ## 14. Method-decision register (post-build, builder-backfilled)
 
 Method-level decisions made during the build land here at seal time
-per `pos-amend seal --plan-doc` convention. Empty at plan-author
-time.
+per `pos-amend seal --plan-doc` convention.
+
+### Method decisions
+
+- **Loose-AC tightening (§4 ODD / global feedback):** plan + research
+  named both `docs/odd-methodology.md` §10.3 and `docs/odd-in-pos.md`
+  §10.3 as edit targets. Empirical inspection at build time showed
+  `docs/odd-methodology.md` carries no §10.3 (its §10 is "Where this
+  fits"; the per-invariant BASELINE convention lives entirely in
+  `docs/odd-in-pos.md` §10). Tightened AC.MS-fix.6 + plan §1, §2, §6,
+  §9 to drop the methodology-doc edit; documented in §1 build-time
+  tightening block. AC.MS-fix.6's intent ("name frozen-both-endpoints
+  in the doc carrying the convention") is preserved; only the
+  factually wrong second target is removed.
+
+- **AC.MS-fix.S authoring pattern:** the seal SHA isn't knowable at
+  amendment-author time. AC.MS-fix.S authored with a placeholder
+  sentinel `__POST_SEAL_CORRECTIVE__` for `_AMENDMENT_69_SEAL_COMMIT`
+  and a sentinel-branch early-return; corrective commit `19976d8`
+  fills the constant with the actual seal SHA `3be9a78` immediately
+  after `pos-amend seal` lands. Pattern is reusable for future
+  per-invariant seal-diff fences that include the amendment's own
+  window (mirrors AC.45.S, but AC.45.S was authored AFTER its seal
+  via the §2.5 fix at amendment #46; this amendment authors its own
+  seal-diff fence inline with the convention it codifies).
+
+- **Workspace/ stash before seal:** untracked `workspace/` dir (local
+  workspace-bootstrap output) tripped `pos-amend seal`'s dirty-tree
+  pre-flight. Stashed via `git stash push -u -m ... -- workspace/`
+  before seal; restored via `git stash pop` post-seal. Captured for
+  `FUTURE_IDEAS_DRAFT` (gitignore `workspace/` at canonical's tree
+  to avoid the recurring stash dance — see §6).
 
 ### Commit SHAs
 
@@ -514,3 +544,8 @@ time.
   `feat(primary-persona,docs): AC.M.S structural redesign — frozen-both-endpoints per-invariant pin (amendment #69, AC.MS-fix.1–AC.MS-fix.S)`
 - Seal commit: `3be9a783fe2cf95315780c835f0d10bb7e0bf6bb` —
   `chore(seals): ac-m-s-structural-redesign — frozen-both-endpoints AC.M.S — eliminates widening-pressure failure class per ODD §5.1.1 — primary-persona at 05ebce7`
+- §14 backfill commit: `d87777d` — `docs(plans): record amendment #69 commit SHAs in method-decision register`
+- AC.MS-fix.S corrective commit: `19976d8` —
+  `fix(primary-persona): fill AC.MS-fix.S seal SHA post-amendment-#69 seal`
+  (fills `_AMENDMENT_69_SEAL_COMMIT` with the actual seal SHA;
+  removes the placeholder-sentinel branch).

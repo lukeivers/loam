@@ -43,3 +43,4 @@ orchestrator/data/
 # per-workspace memory-sidecar port from `memory.yaml`). It is regenerated
 # on first-run for every clone and must never be committed.
 .mcp.json
+data/

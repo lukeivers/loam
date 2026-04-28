@@ -102,6 +102,15 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
         # Universal admissions (per amendment #22 ruling #3).
         "docs/rebuild/plans/",
         "docs/rebuild/plans/research/",
+        # Amendment #68 (α — Claude-Code-corpus prompt-spine + seed
+        # docs) widened universal_paths to include the new
+        # capability-corpus tree. Same widening pattern as D.1 / D.2:
+        # the cumulative fence of the amendment #48-line of
+        # primary-persona work expands as universal admissions
+        # broaden. Structural fix (FUTURE_IDEAS_DRAFT — "AC.M.S
+        # structural brittleness") replaces this drifting-fence
+        # pattern in a follow-on amendment.
+        "docs/rebuild/capability-corpus/",
         # Pre-D.1 paths (transitional admission per D.1's seal-diff
         # window — the BASELINE pinned in test_no_sealed_amendments
         # advanced past D.1, but transitional admission keeps the

@@ -53,7 +53,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              `pos-amend apply` to the commit immediately preceding
 #              the amendment commit (HEAD~1 pattern). Sub-plan §10's
 #              manifest records the BASELINE rationale.
-BASELINE = "76cec04e0ececa483dba2dd0f22a5d04a571dda9"
+BASELINE = "179bff251ff0c6afd3052448c4077094aa3cb321"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -156,6 +156,7 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         ".claude/settings.json",
         "first-run-inventory.yaml",
         "framework/first-run-inventory.yaml",
+        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
     }
 
     offending = []

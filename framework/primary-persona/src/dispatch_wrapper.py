@@ -1,4 +1,5 @@
-"""Agent-dispatch-as-scope wrapper (amendment #52, A8 R1-revised).
+"""Agent-dispatch-as-scope wrapper (amendment #52, A8 R1-revised) +
+dispatcher-side test-stub authoring (amendment #74, AC.DSA.*).
 
 The persona-side wrapper that turns a Claude-Code Agent dispatch into
 a first-class scope of work governed by the four-gate chain
@@ -21,20 +22,37 @@ wrapper:
        (AC.A8.6): log NDJSON diagnostic to
        ``<workspace>/.pos/dispatch-wrapper.log``, run the agent
        unwrapped, return its result.
-  4. Calls ``activate_scope_with_spec(scope_id, objective_id,
+  4. **Setup phase (amendment #74, AC.DSA.1–AC.DSA.10).** When
+     ``shape.new_acs`` is non-empty AND the workspace is in DEV MODE,
+     the wrapper authors three artefacts on disk BEFORE the IPC call:
+     (a) the active-scope sentinel binding the scope to the new ACs,
+     (b) one manifest row per (component, ac_id, source_path_glob)
+     triple via A1's ``register_source_binding`` API, (c) one
+     ``pytest.skip(...)`` placeholder test file per AC at
+     ``framework/<comp>/tests/test_AC_<NORM>_placeholder.py``.
+     Sentinel write strictly precedes manifest registration so A3's
+     ``manifest_row.created_at > sentinel.created_at`` "new AC in this
+     diff" predicate is satisfied (AC.DSA.3 + D-DSA.4 — sub-second
+     collisions resolved by waiting for the next ISO-second tick;
+     §14 method-decision register entry).
+     Setup is fail-soft (AC.DSA.5): every step's failure logs a
+     structured NDJSON diagnostic and the dispatch proceeds; the gates
+     (A2 / A3) provide the structural enforcement and surface the
+     failure to the operator at first-edit time.
+  5. Calls ``activate_scope_with_spec(scope_id, objective_id,
      spec_payload)`` — the new IPC method per amendment #52
      AC.A8.A1 (AC.A8.3).
      - Gate-chain refusal (`ApplicationError` with `-32060` /
        `-32061` / `-32062` cost codes; safety / reversibility codes)
        → return :class:`DispatchRefusal` as a value (AC.A8.7); do
        NOT raise, do NOT invoke the agent.
-  5. On approval, invokes ``agent_runner`` with the original
+  6. On approval, invokes ``agent_runner`` with the original
      dispatch payload, captures its result + reported tokens.
-  6. Calls ``record_dispatch_close(scope_id, terminal_state,
+  7. Calls ``record_dispatch_close(scope_id, terminal_state,
      debited_tokens)`` — AC.A8.A3 — to emit ``BudgetDebited`` and
      transition the scope to ``completed`` | ``failed`` |
      ``cancelled`` (AC.A8.4 / AC.A8.5).
-  7. Closes the IPC client. Returns the agent's result.
+  8. Closes the IPC client. Returns the agent's result.
 
 Default reversibility class is ``compensatable`` (D2 — locked
 2026-04-26). Default objective_id resolves to the workspace's
@@ -50,6 +68,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -120,12 +139,42 @@ _DURATION_RUBRIC: dict[str, dict[str, int]] = {
 
 
 @dataclass(frozen=True)
+class NewACSpec:
+    """A single (component, ac_id, source_path_glob) declaration of a
+    new acceptance criterion the dispatched agent will author.
+
+    AC.DSA.1 / AC.DSA.6: the persona declares one ``NewACSpec`` per
+    new AC the dispatch will introduce. The dispatcher uses each
+    triple to (a) bind the scope sentinel, (b) register a manifest
+    row via A1's ``register_source_binding``, and (c) author a
+    ``pytest.skip(...)`` placeholder test file the agent will replace
+    with a real test.
+
+    Fields are workspace-relative-canonical: ``component`` matches the
+    sealed-component name (e.g. ``"primary-persona"``); ``ac_id`` may
+    be either ``"AC.X.1"`` or ``"X.1"`` (A3's ``_normalise_ac_id`` is
+    case-insensitive on the leading ``AC.`` prefix); ``source_path_glob``
+    is the workspace-relative fnmatch glob the new AC's source edits
+    will match (e.g. ``"framework/primary-persona/src/foo.py"``).
+    """
+
+    component: str
+    ac_id: str
+    source_path_glob: str
+
+
+@dataclass(frozen=True)
 class DispatchShape:
     """The persona's natural-language Agent dispatch shape.
 
     AC.A8.1: the wrapper builds a `ScopeSpec` from these fields.
     AC.A8.9: the persona has a single callable surface taking this
     shape.
+    AC.DSA.1: an optional ``new_acs`` tuple declares the new ACs the
+    dispatch will introduce; when non-empty, the wrapper's setup
+    phase authors sentinel + manifest rows + placeholder test stubs
+    on disk before the IPC call. Default ``()`` preserves backwards
+    compatibility with every pre-amendment-#74 caller (AC.DSA.10).
     """
 
     objective: str
@@ -136,6 +185,10 @@ class DispatchShape:
     reversibility_class: str = "compensatable"  # D2 default
     agent_payload: dict[str, Any] = field(default_factory=dict)
     """Caller-opaque payload passed verbatim to ``agent_runner``."""
+    new_acs: tuple[NewACSpec, ...] = ()
+    """Amendment #74 / AC.DSA.1: declared new ACs the dispatch will
+    author. Empty tuple disables the setup phase (AC.DSA.10
+    backwards-compat); research+plan dispatches pass ``()``."""
 
 
 @dataclass(frozen=True)
@@ -326,6 +379,413 @@ def _append_diagnostic(workspace_root: Path, record: dict[str, Any]) -> None:
         pass
 
 
+# ---- amendment #74 setup phase (AC.DSA.1 – AC.DSA.10) ---------------
+#
+# When a build dispatch declares NEW ACs via ``DispatchShape.new_acs``,
+# the wrapper's setup phase authors three on-disk artefacts BEFORE the
+# IPC call to ``activate_scope_with_spec`` (D-DSA.7):
+#
+#   1. The active-scope sentinel (A1's ``write_active_scope_sentinel``
+#      surface) binding the dispatched agent to the (component, ac_id)
+#      pairs.
+#   2. One manifest row per ``NewACSpec`` triple via A1's
+#      ``register_source_binding``.
+#   3. One placeholder test stub at
+#      ``framework/<comp>/tests/test_AC_<NORM>_placeholder.py``.
+#
+# The sentinel write is sequenced FIRST so manifest-row ``created_at``
+# lands strictly after sentinel ``created_at`` (AC.DSA.3 / D-DSA.4).
+#
+# Q1 EMPIRICAL ANSWER (sub-second collisions): A1's sentinel uses
+# ``time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())`` (second
+# resolution, ``Z``-suffixed); A1's manifest row uses
+# ``datetime.now(tz=timezone.utc).isoformat()`` (microsecond
+# resolution, ``+00:00``-suffixed). Lexicographic comparison
+# (A3's predicate at ``tdd_guard.evaluate`` line 334) collapses
+# same-second pairs to ``False`` because ``"."`` (0x2E) < ``"Z"``
+# (0x5A) — i.e. the manifest's microsecond-prefix is byte-smaller
+# than the sentinel's ``Z``. Tight-loop empirical: 100% collision
+# rate without mitigation.
+#
+# RESOLUTION (D-DSA.4 caveat / §14 method-decision): wait until the
+# wall-clock advances to the next whole ISO second between sentinel
+# write and the first manifest registration. Worst-case wait is one
+# second; typical wait is <500ms. Captured in §14 of the plan-doc at
+# seal time.
+
+_STUB_FILENAME_TEMPLATE = "test_AC_{normalised}_placeholder.py"
+_STUB_FUNCTION_TEMPLATE = "test_AC_{normalised}_placeholder"
+
+
+def _normalise_ac_id(ac_id: str) -> str:
+    """Match A3's normalisation (``framework/hands-off-lifecycle/hooks/
+    tdd_guard.py:_normalise_ac_id``).
+
+    Drops a leading ``AC.`` (case-insensitive); replaces every ``.``
+    with ``_``; uppercases. The output keys both the test-file name
+    (``test_AC_<NORM>_placeholder.py``) and the function-name prefix
+    (``test_AC_<NORM>_``) — AC.DSA.2 names the byte-content shape.
+    Local duplication of A3's helper avoids a hooks-package import
+    cycle (the dispatch wrapper is in primary-persona, hooks live in
+    hands-off-lifecycle; a sibling import would be cross-component).
+    """
+    s = ac_id
+    if s[:3].lower() == "ac.":
+        s = s[3:]
+    s = s.replace(".", "_")
+    return s.upper()
+
+
+def _stub_path(workspace_root: Path, component: str, ac_id: str) -> Path:
+    """Resolve the placeholder test file path for a (component, ac_id)
+    pair (AC.DSA.2 / AC.DSA.3 — file at A3's expected glob).
+    """
+    norm = _normalise_ac_id(ac_id)
+    return (
+        workspace_root
+        / "framework"
+        / component
+        / "tests"
+        / _STUB_FILENAME_TEMPLATE.format(normalised=norm)
+    )
+
+
+def _render_stub_body(
+    *,
+    component: str,
+    ac_id: str,
+    scope_id: str,
+    plan_path: str,
+) -> str:
+    """Render the placeholder test file content (AC.DSA.2).
+
+    Body: module docstring naming the dispatcher + scope + plan;
+    ``import pytest``; one function ``test_AC_<NORM>_placeholder()``
+    whose body invokes ``pytest.skip(...)`` with a reason naming the
+    AC ID. The function-name matches A3's
+    ``^def\\s+test_AC_<NORM>_\\w*\\s*\\(`` regex (AC.DSA.2 + halt-trigger
+    8 verification).
+    """
+    norm = _normalise_ac_id(ac_id)
+    fn_name = _STUB_FUNCTION_TEMPLATE.format(normalised=norm)
+    return (
+        f'"""Dispatcher-authored placeholder for {ac_id} '
+        f'(component {component}).\n'
+        '\n'
+        'This file was created by the dispatch wrapper at scope-creation\n'
+        f'time (scope_id={scope_id!r}; plan={plan_path!r}) to satisfy\n'
+        "A3's pinned-test predicate. The build agent is expected to\n"
+        f'replace the placeholder function with a real test for {ac_id}.\n'
+        '\n'
+        f'A3 admits any test_AC_{norm}_* function in this file; the\n'
+        'build agent may rename or augment as needed.\n'
+        '"""\n'
+        '\n'
+        'import pytest\n'
+        '\n'
+        '\n'
+        f'def {fn_name}() -> None:\n'
+        '    pytest.skip(\n'
+        f'        "stub authored by dispatcher; replace with real test '
+        f'for {ac_id}"\n'
+        '    )\n'
+    )
+
+
+def _is_dispatcher_authored_stub(
+    existing: str, *, component: str, ac_id: str
+) -> bool:
+    """True iff ``existing`` looks byte-equivalent to the dispatcher's
+    skip-with-reason stub for (component, ac_id) (AC.DSA.4).
+
+    Tolerant to scope_id / plan_path drift across re-dispatches: the
+    canonical detection is the function name + the
+    ``stub authored by dispatcher`` skip reason. If those two markers
+    are present AND the file imports ``pytest`` AND the function body
+    calls ``pytest.skip``, treat the file as the dispatcher's
+    placeholder (re-author safe). Any other content is agent-authored;
+    the dispatcher does NOT overwrite (AC.DSA.4).
+    """
+    norm = _normalise_ac_id(ac_id)
+    fn_marker = f"def test_AC_{norm}_placeholder("
+    return (
+        fn_marker in existing
+        and "import pytest" in existing
+        and "pytest.skip" in existing
+        and "stub authored by dispatcher" in existing
+    )
+
+
+def _write_stub_idempotent(
+    workspace_root: Path,
+    spec: NewACSpec,
+    *,
+    scope_id: str,
+    plan_path: str,
+) -> dict[str, Any]:
+    """Write one placeholder stub idempotently (AC.DSA.4).
+
+    Outcomes (returned in the diagnostic dict for AC.DSA.9):
+      - ``"written"``: file did not exist; authored fresh.
+      - ``"skipped-identical"``: file existed with byte-equal content.
+      - ``"skipped-agent-authored"``: file existed but content does
+        NOT match the dispatcher's stub shape (the build agent has
+        already authored real content; respect it — AC.DSA.4).
+      - ``"failed-os-error"`` / ``"failed-permission"``: write raised;
+        AC.DSA.5 fail-soft; A3 surfaces the missing-test at first
+        edit time.
+    """
+    target = _stub_path(workspace_root, spec.component, spec.ac_id)
+    rendered = _render_stub_body(
+        component=spec.component,
+        ac_id=spec.ac_id,
+        scope_id=scope_id,
+        plan_path=plan_path,
+    )
+    if target.exists():
+        try:
+            existing = target.read_text(encoding="utf-8")
+        except OSError as e:
+            return {
+                "outcome": "failed-os-error",
+                "path": str(target),
+                "error_detail": f"{type(e).__name__}: {e}",
+            }
+        if existing == rendered:
+            return {
+                "outcome": "skipped-identical",
+                "path": str(target),
+            }
+        if _is_dispatcher_authored_stub(
+            existing, component=spec.component, ac_id=spec.ac_id
+        ):
+            # Dispatcher-authored shape with header drift (e.g.
+            # different scope_id / plan_path on a re-dispatch). The
+            # file already serves A3's predicate; AC.DSA.4 requires
+            # idempotent skip — do not corrupt the existing header.
+            return {
+                "outcome": "skipped-identical",
+                "path": str(target),
+            }
+        # Agent-authored content (or unrecognised). Per D-DSA.5, do
+        # NOT overwrite — the build agent's real test takes precedence.
+        return {
+            "outcome": "skipped-agent-authored",
+            "path": str(target),
+        }
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(rendered, encoding="utf-8")
+    except PermissionError as e:
+        return {
+            "outcome": "failed-permission",
+            "path": str(target),
+            "error_detail": f"{type(e).__name__}: {e}",
+        }
+    except OSError as e:
+        return {
+            "outcome": "failed-os-error",
+            "path": str(target),
+            "error_detail": f"{type(e).__name__}: {e}",
+        }
+    return {
+        "outcome": "written",
+        "path": str(target),
+    }
+
+
+def _wait_until_next_iso_second() -> None:
+    """Block until the wall clock advances to the next whole ISO
+    second (AC.DSA.3 sequencing / D-DSA.4 caveat resolution).
+
+    A1's sentinel writes timestamps at second resolution
+    (``time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())``); A1's
+    manifest writes at microsecond resolution
+    (``datetime.now(tz=timezone.utc).isoformat()``). Lexicographic
+    string comparison of the two formats collides on same-second
+    writes (the manifest's ``"."`` byte sorts before the sentinel's
+    ``"Z"``). Waiting for the wall clock to tick to the next whole
+    second guarantees the manifest row's ISO string is strictly
+    lexicographically greater than the sentinel's, satisfying A3's
+    ``manifest_row.created_at > sentinel.created_at`` predicate
+    (AC.TDG.4) without mutating either A1 surface.
+
+    Worst-case wait is just under one second; typical <500ms.
+    """
+    start = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    while time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) == start:
+        time.sleep(0.005)
+
+
+def _read_workspace_mode(workspace_root: Path) -> str:
+    """Read the workspace-mode bit per AC.DSA.6.
+
+    Lazy import of A1's ``corpus_load_sentinel.workspace_mode`` so the
+    module-load cost stays bounded for non-DEV-MODE workspaces. Failure
+    (module unavailable, contract unreadable) falls through to
+    ``"normal-use"`` — fail-closed-to-permissive at the import boundary;
+    the setup phase is gated behind ``"dev-mode"`` so a fall-through
+    skips the phase entirely (matches A2/A3's mode-bit handling).
+    """
+    try:
+        # The hooks/ dir is on sys.path inside any workspace where A1
+        # ships; a stdlib-style import path-fix is unnecessary because
+        # the persona's runtime context already reaches the hooks
+        # directory through the shared workspace .venv.
+        from corpus_load_sentinel import workspace_mode  # type: ignore[import-not-found]
+
+        return workspace_mode(workspace_root)
+    except Exception:  # noqa: BLE001 — fail-closed-to-permissive
+        return "normal-use"
+
+
+def _open_tracker(workspace_root: Path) -> Any | None:
+    """Open the workspace's ObjectiveTracker, or return None on failure.
+
+    AC.DSA.5: failure to open the tracker is fail-soft — the dispatch
+    proceeds; A2 surfaces the substrate failure at first-edit time.
+    """
+    try:
+        from objective_tracker import ObjectiveTracker  # type: ignore[import-not-found]
+        from workspace_bootstrap.workspace_paths import (  # type: ignore[import-not-found]
+            tracker_db_path,
+        )
+
+        db_path = tracker_db_path(workspace_root)
+        if not db_path.exists():
+            return None
+        return ObjectiveTracker(db_path)
+    except Exception:  # noqa: BLE001 — fail-closed-to-permissive
+        return None
+
+
+def _run_setup_phase(
+    workspace_root: Path,
+    *,
+    scope_id: str,
+    plan_path: str,
+    new_acs: tuple[NewACSpec, ...],
+) -> None:
+    """Author sentinel + manifest rows + placeholder stubs (AC.DSA.1
+    .. AC.DSA.10).
+
+    Sequence (AC.DSA.3 / D-DSA.4):
+      1. Write the active-scope sentinel binding the new ACs.
+      2. Wait until the wall clock advances to the next ISO second
+         (sub-second collision mitigation per Q1 empirical answer).
+      3. Register one manifest row per ``NewACSpec`` triple.
+      4. Write one placeholder test stub per ``NewACSpec``.
+
+    Every step is fail-soft (AC.DSA.5): substrate failures emit a
+    structured NDJSON diagnostic to ``dispatch-wrapper.log`` (AC.DSA.9
+    observability) and the dispatch continues. Idempotent on repeated
+    invocation (AC.DSA.4) — A1's sentinel + manifest APIs short-circuit
+    on byte-equal / duplicate; ``_write_stub_idempotent`` short-circuits
+    on byte-equal or agent-authored content.
+
+    Caller is expected to gate this whole function behind
+    ``new_acs != ()`` (AC.DSA.1) AND ``_read_workspace_mode(
+    workspace_root) == "dev-mode"`` (AC.DSA.6). The function does NOT
+    re-check those preconditions — keeping the gating at the call site
+    satisfies ODD §2.5 reverse direction (no defensive ``if`` without a
+    backing AC at the helper boundary).
+    """
+    # AC.DSA.3 — sentinel first.
+    sentinel_outcome: dict[str, Any] = {
+        "step": "sentinel",
+        "scope_id": scope_id,
+    }
+    try:
+        # Lazy import: avoids a primary-persona ↔ hands-off-lifecycle
+        # import-time dependency. The hooks dir is reachable through
+        # the workspace's shared .venv at runtime.
+        from active_scope_sentinel import (  # type: ignore[import-not-found]
+            ScopeBinding,
+            write_active_scope_sentinel,
+        )
+
+        bindings = tuple(
+            ScopeBinding(component=spec.component, ac_id=spec.ac_id)
+            for spec in new_acs
+        )
+        result = write_active_scope_sentinel(
+            workspace_root,
+            scope_id=scope_id,
+            plan_path=plan_path,
+            bindings=bindings,
+        )
+        sentinel_outcome["wrote"] = bool(result.wrote)
+        sentinel_outcome["reason"] = result.reason
+        sentinel_outcome["path"] = str(result.path)
+        if result.error_detail:
+            sentinel_outcome["error_detail"] = result.error_detail
+    except Exception as e:  # noqa: BLE001 — fail-soft per AC.DSA.5
+        sentinel_outcome["wrote"] = False
+        sentinel_outcome["reason"] = "failed-exception"
+        sentinel_outcome["error_detail"] = f"{type(e).__name__}: {e}"
+    _append_diagnostic(
+        workspace_root,
+        {"event": "setup", **sentinel_outcome},
+    )
+
+    # AC.DSA.3 / D-DSA.4 — wait one ISO-second tick before manifest
+    # registration so manifest.created_at > sentinel.created_at in
+    # lexicographic comparison (Q1 §14 method-decision).
+    _wait_until_next_iso_second()
+
+    # AC.DSA.3 — register manifest rows.
+    tracker = _open_tracker(workspace_root)
+    for spec in new_acs:
+        manifest_outcome: dict[str, Any] = {
+            "step": "manifest",
+            "scope_id": scope_id,
+            "component": spec.component,
+            "ac_id": spec.ac_id,
+            "source_path_glob": spec.source_path_glob,
+        }
+        if tracker is None:
+            manifest_outcome["outcome"] = "failed-tracker-unavailable"
+            _append_diagnostic(
+                workspace_root,
+                {"event": "setup", **manifest_outcome},
+            )
+            continue
+        try:
+            tracker.register_source_binding(
+                component=spec.component,
+                ac_id=spec.ac_id,
+                source_path_glob=spec.source_path_glob,
+            )
+            manifest_outcome["outcome"] = "registered"
+        except Exception as e:  # noqa: BLE001 — fail-soft per AC.DSA.5
+            manifest_outcome["outcome"] = "failed-exception"
+            manifest_outcome["error_detail"] = f"{type(e).__name__}: {e}"
+        _append_diagnostic(
+            workspace_root,
+            {"event": "setup", **manifest_outcome},
+        )
+
+    # AC.DSA.2 + AC.DSA.4 — write placeholder stubs.
+    for spec in new_acs:
+        stub_outcome = _write_stub_idempotent(
+            workspace_root,
+            spec,
+            scope_id=scope_id,
+            plan_path=plan_path,
+        )
+        _append_diagnostic(
+            workspace_root,
+            {
+                "event": "setup",
+                "step": "stub",
+                "scope_id": scope_id,
+                "component": spec.component,
+                "ac_id": spec.ac_id,
+                **stub_outcome,
+            },
+        )
+
+
 # ---- gate-code → rejecting-gate mapping (AC.A8.7) -------------------
 #
 # Error code ranges from sealed-component public surfaces:
@@ -472,6 +932,32 @@ async def dispatch_with_scope(
                 fallback=True,
             )
 
+        # AC.DSA.7 — setup phase strictly precedes
+        # activate_scope_with_spec when the dispatch declares NEW ACs
+        # AND the workspace is in DEV MODE. Empty ``new_acs`` ⇒ no-op
+        # (AC.DSA.1 backwards-compat for amendment-#52 callers and
+        # research+plan dispatches). NORMAL USE ⇒ no-op (AC.DSA.6).
+        if shape.new_acs and _read_workspace_mode(workspace_root) == "dev-mode":
+            # plan_path is bookkeeping on the sentinel record (gates
+            # do not read it). Pull a caller-supplied
+            # ``shape.agent_payload["plan_path"]`` when present;
+            # fall back to a truncated form of the objective so the
+            # sentinel JSON shape (A1's ``plan_path: str | non-empty``
+            # validator) is satisfied without a new ``DispatchShape``
+            # field.
+            plan_path_value = shape.agent_payload.get("plan_path")
+            plan_path = (
+                plan_path_value
+                if isinstance(plan_path_value, str) and plan_path_value
+                else (shape.objective[:200] or "<unspecified-plan>")
+            )
+            _run_setup_phase(
+                workspace_root,
+                scope_id=scope_id,
+                plan_path=plan_path,
+                new_acs=shape.new_acs,
+            )
+
         # AC.A8.3 — call activate_scope_with_spec (amendment #52
         # AC.A8.A1 IPC method).
         try:
@@ -560,5 +1046,6 @@ __all__ = [
     "DispatchOutcome",
     "DispatchRefusal",
     "DispatchShape",
+    "NewACSpec",
     "dispatch_with_scope",
 ]

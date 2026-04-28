@@ -399,10 +399,10 @@ Method-level decisions made during the build land here at seal time per `pos-ame
 
 ### Commit SHAs
 
-(Empty placeholder; populated by `pos-amend seal --plan-doc <abs-path>` at seal time.)
-
----
-
+- Amendment commit: `f23dee82638a4af7e084edd180de8f0ceb20d30d` —
+  `chore(seals): primary-persona dispatch-wrapper setup phase — sentinel-first sequencing + manifest registration + idempotent test-stub authoring (DEV-MODE-only) — primary-persona at 3b6aa89`
+- Seal commit: `69635b21a4f69ef4d3ba7dca66f584c3f0398058` —
+  `chore(seals): primary-persona dispatch-wrapper setup phase — sentinel-first sequencing + manifest registration + idempotent test-stub authoring (DEV-MODE-only) — primary-persona at f23dee8`
 ## 15. References
 
 - Locked research (governs):

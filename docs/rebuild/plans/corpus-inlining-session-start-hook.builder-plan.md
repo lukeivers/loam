@@ -221,12 +221,7 @@ No silent branches. No defensive `if`s without backing AC. The fail-soft `try/ex
 
 ### Commit SHAs
 
-Backfilled at seal time per `pos-amend seal --plan-doc` convention.
-
-- Amendment commit: `<post-build>`
-- Apply commit: `<post-build>`
-- Seal commit: `<post-build>`
-
----
-
-*End of builder plan.*
+- Amendment commit: `d0a65390d4309614d65080d4a56877ba71c5b90f` —
+  `docs(plans): normalize corpus-inlining plan §14 heading for pos-amend backfill`
+- Seal commit: `b9c1d202f79ca9e6e477bf84a67ca507148dacb7` —
+  `chore(seals): corpus-inlining SessionStart hook (DEV-MODE-only inline of always-load corpus + on-demand path-pointers; A1 sentinel corpus_paths_loaded populated) — hands-off-lifecycle at d0a6539`

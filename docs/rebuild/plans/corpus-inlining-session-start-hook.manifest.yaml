@@ -1,0 +1,233 @@
+schema_version: 1
+amendment:
+  number: 73
+  slug: corpus-inlining-session-start-hook
+  title: "corpus-inlining SessionStart hook (DEV-MODE-only inline of always-load corpus + on-demand path-pointers; updates A1 sentinel `corpus_paths_loaded`)"
+
+# BASELINE: b8caf7f — pre-amendment tip (HEAD at dispatch). Per the
+# established BASELINE-as-HEAD~1 pattern (#29 / #34 .. #72) the
+# manifest pins to the immediate-prior commit so the BASELINE..HEAD
+# diff is narrow to this amendment's surface. Surface: one new hook
+# script (corpus_inline_session_start.py), an additive extension to
+# A1's write_corpus_load_sentinel signature, the first_run_settings
+# command-marker tuple extension, the first_run_helper composition
+# extension (new builder + reordered _extra_session_start_hooks),
+# eight new AC.CI.* tests, and the SEAL_COMMIT.<slug> sidecar — all
+# inside the hands-off-lifecycle fence.
+baseline: b8caf7fc050ee96632afc344b08bc91b1efb2911
+
+plan: docs/rebuild/plans/corpus-inlining-session-start-hook.md
+
+seal_description: "corpus-inlining SessionStart hook (DEV-MODE-only inline of always-load corpus + on-demand path-pointers; A1 sentinel corpus_paths_loaded populated)"
+
+# Single sealed component per locked plan §2 (fence statement):
+# this amendment only touches hands-off-lifecycle. A1's substrate
+# extension is in-fence (same component); path-resolver helper is
+# duplicated inside the fence per D-CI.4 / D-build.2; loam-mode is
+# consumer-only via A1's workspace_mode wrapper (already a thin
+# corpus_load_sentinel.workspace_mode() shim from A1).
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3 + amendment #44's
+# precedent. The plan-doc, research artefact, builder plan, and
+# manifest itself live under docs/rebuild/plans/.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.corpus-inlining-session-start-hook
+  body: |
+    # Amendment — corpus-inlining SessionStart hook
+    #
+    # 2026-04-28. Per the locked plan-doc
+    # `docs/rebuild/plans/corpus-inlining-session-start-hook.md`,
+    # locked research artefact
+    # `docs/rebuild/plans/research/corpus-inlining-session-start-hook-research.md`,
+    # and builder plan
+    # `docs/rebuild/plans/corpus-inlining-session-start-hook.builder-plan.md`.
+    #
+    # This amendment closes the corpus-load failure class flagged in
+    # FIDRAFT (entry "SessionStart corpus_gate should inline corpus
+    # content into additionalContext, not just verify presence",
+    # captured 2026-04-28). Per ODD §5.1.1 this is *elimination* of
+    # the failure class, not relocation: the always-load corpus enters
+    # `additionalContext` at session-start; "always read corpus at
+    # session-start" stops being an advisory rule in MEMORY.md prose
+    # and becomes a substrate property — the model has the bytes in
+    # context the moment the session opens.
+    #
+    # The hook composes on existing A1 substrate primitives only. No
+    # new substrate; one more consumer of an existing one. Per Lens 1
+    # this is a recursive instance of the structural-enforcement
+    # programme finding: Claude Code's hook surface IS the structural-
+    # enforcement surface. Per Lens 2 the persona's translation
+    # burden drops (no rule to remember; the corpus is in context
+    # already) and the harness gains a new primitive (`corpus is in
+    # context` is a session-level harness property).
+    #
+    # Surface added (hands-off-lifecycle, sealed):
+    #
+    #   - `framework/hands-off-lifecycle/hooks/corpus_inline_session_start.py`
+    #     (new) — pure-stdlib SessionStart inner-hook script.
+    #     Reads SessionStart JSON envelope from stdin; resolves
+    #     workspace_root + session_id; reads workspace_mode via A1's
+    #     `corpus_load_sentinel.workspace_mode`; NORMAL USE → exit 0
+    #     empty stdout (AC.CI.3); DEV MODE → reads the static lean
+    #     always-load tier ({CLAUDE.md, VALUE_PROPOSITION.md,
+    #     STATE.md}) via duplicated `_resolve_corpus_path` helper
+    #     (workspace-root → framework subdir fall-through per #67
+    #     contract); emits per-file delimited content blocks to stdout
+    #     under a `=== pos-v2 always-loaded corpus (DEV MODE) ===`
+    #     banner; emits an `=== pos-v2 on-demand corpus ===` pointer
+    #     block listing on-demand workspace-relative paths
+    #     ({odd-methodology.md, odd-in-pos.md, FUTURE_IDEAS.md});
+    #     per-file 50_000-char ceiling with truncation marker
+    #     (AC.CI.6); updates A1's sentinel `corpus_paths_loaded` with
+    #     the inlined paths via the extended `write_corpus_load_sentinel`
+    #     surface (AC.CI.4); fail-soft on every error path (exit 0,
+    #     never raises into the SessionStart fan-out, AC.CI.7); 5s
+    #     SessionStart inner-hook budget (matches A1 / loam-mode /
+    #     persona precedent).
+    #   - `framework/hands-off-lifecycle/hooks/corpus_load_sentinel.py`
+    #     EXTENDED in-place. `write_corpus_load_sentinel` gains an
+    #     additional keyword-only parameter `corpus_paths_loaded:
+    #     list[str] | tuple[str, ...] | None = None`. Backwards-compat
+    #     by default-None — every existing call site (A1's
+    #     corpus_load_session_start.py CLI) still works without
+    #     change. When provided, the loaded list is serialised into
+    #     the sentinel JSON's `corpus_paths_loaded` field, and the
+    #     `state` field is recomputed from
+    #     `corpus_paths_loaded` ⊆ `corpus_paths_required` membership
+    #     (loaded / partial / missing). When None, the legacy
+    #     path-existence-derived `state` semantics are preserved.
+    #   - `framework/hands-off-lifecycle/hooks/first_run_settings.py`
+    #     — `_POS_V2_COMMAND_MARKERS` extended with
+    #     `corpus_inline_session_start.py` so re-merge over a stanza
+    #     we wrote does not back up the corpus-inline inner hook as
+    #     user-authored.
+    #   - `framework/hands-off-lifecycle/hooks/first_run_helper.py`
+    #     — adds `_corpus_inline_inner_hooks(pos_v2_root)` builder
+    #     mirroring `_corpus_load_inner_hooks` shape (5s timeout).
+    #     `_extra_session_start_hooks` is REORDERED: prior order
+    #     (persona → loam-mode → corpus-load) → new order (corpus-load
+    #     → corpus-inline → persona → loam-mode). The relative
+    #     ordering A1 → corpus-inline → persona is locked per plan
+    #     §6 D-build.4 / D-CI.6.(a) so the persona's dossier reads
+    #     A1's sentinel post-inline (a future micro-amendment can
+    #     grow a `corpus_inlined: true` marker without re-ordering).
+    #     AC46.5 stanza-builder tests do NOT pin the order out of
+    #     `_extra_session_start_hooks` (they pass extras directly to
+    #     the builder); the re-ordering is internal composition.
+    #   - `framework/hands-off-lifecycle/tests/test_AC_CI_*.py` (8
+    #     files, AC.CI.1..AC.CI.7 + AC.CI.S) — outcome-shaped per the
+    #     locked plan-doc §4. Per ODD §8.2.14 byte-content
+    #     verification, the AC.CI.4 test reads the on-disk sentinel
+    #     JSON and asserts schema; the AC.CI.1 + AC.CI.2 + AC.CI.6
+    #     tests grep the hook's stdout for the documented markers.
+    #
+    # Behaviour:
+    #
+    #   - DEV MODE (workspace_mode == "dev-mode"): hook fires; reads
+    #     the always-load tier from disk; emits content blocks +
+    #     pointer block to stdout (Claude Code captures stdout as
+    #     `additionalContext` per the established loam-mode + persona
+    #     emitter convention); updates A1's per-(workspace, session)
+    #     sentinel `corpus_paths_loaded` field with the actually-
+    #     inlined paths; sentinel `state` reflects the loaded subset.
+    #   - NORMAL USE (workspace_mode != "dev-mode"): hook fires;
+    #     observes mode bit; exits 0 with empty stdout; no sentinel
+    #     update. Persona's existing #46 dossier remains the NORMAL
+    #     USE shape unchanged.
+    #   - Path resolution: workspace-root probe first; fall-through
+    #     to `<workspace>/framework/<rel>` matches #67's reader
+    #     contract bit-for-bit. Workspace-root copy wins; framework-
+    #     only-clone shape is supported transparently.
+    #   - Per-file ceiling: 50_000 chars per file; truncation marker
+    #     `[truncated at 50000 chars; full file at <path>]` emitted
+    #     when the ceiling is hit. Other files in the same fire are
+    #     unaffected.
+    #   - Fail-soft: every error path returns exit 0. Missing always-
+    #     load files emit a `[missing]` marker; missing on-demand
+    #     files are silently omitted from the pointer block. Sentinel
+    #     write failure does NOT block stdout emission — the hook's
+    #     primary job is content emission, sentinel update is the
+    #     bookkeeping side-effect.
+    #
+    # Token budget verification (build-time):
+    #
+    #   - Always-load tier measured size (canonical pos-v2 HEAD,
+    #     2026-04-28): CLAUDE.md = 4,778 chars; VALUE_PROPOSITION.md
+    #     = 11,479 chars; STATE.md = 10,948 chars. Total = 27,205
+    #     chars ≈ 6,800 tokens (4:1 ratio). Within plan §6 D-CI.1
+    #     expected ~6.8k. Headroom against the persona's 10k-char
+    #     `ADDITIONAL_CONTEXT_CAP` is irrelevant — the new hook's
+    #     stdout is a separate stanza, not bound by the persona's
+    #     per-stanza cap (research §3.2). Cumulative session-start
+    #     emission well under any reasonable ceiling.
+    #
+    # Mode-aware partition (programme D4 lock + plan §6 D-build.8):
+    # this hook is DEV-MODE-only per D-CI.8. NORMAL USE workspaces
+    # have no shared corpus to read (no docs/odd-methodology.md, no
+    # docs/rebuild/STATE.md); inlining what doesn't exist degrades
+    # to no-op anyway. Consistency with A1 D4 (ODD-discipline gates
+    # DEV-MODE-only).
+    #
+    # AC surface (AC.CI.1 – AC.CI.7 + AC.CI.S) — outcome-shaped per
+    # the locked plan-doc §4. Behaviour count = 8; ACs declared = 8.
+    # Forward + reverse match.
+    #
+    # ODD §2.5 reverse-direction audit clean: every code path,
+    # branch, dependency, and test in the diff traces back to a
+    # named AC. No silent exception branches; no defensive `if`
+    # for cases the ACs do not name; no method-in-AC drift. Builder
+    # plan §4 records the audit.
+    #
+    # Out of scope (locked plan-doc §7, named explicitly):
+    #
+    #   - Section-anchor extraction for on-demand tier (research
+    #     §5.4 hybrid).
+    #   - Compaction-resilient corpus load (PreCompact-hook
+    #     territory).
+    #   - Caching across sessions (D-CI.3.(a) re-emit every session).
+    #   - Persona dossier `corpus_inlined` marker (follow-on
+    #     micro-amendment).
+    #   - NORMAL USE corpus inlining (CLAUDE.md only) — DEV MODE
+    #     only today; future amendment may widen.
+    #   - Manifest tightening (always-load source globs filter).
+    #   - Audit-on-corpus-loaded (downstream gate territory).
+    #
+    # FIDRAFT items closed by this amendment:
+    #   - "SessionStart corpus_gate should inline corpus content
+    #     into additionalContext, not just verify presence"
+    #     (captured 2026-04-28) — CLOSED by AC.CI.1 + AC.CI.2 +
+    #     AC.CI.4 (always-load content emitted; on-demand pointer
+    #     block emitted; A1 sentinel records the inlined paths).
+    #
+    # BASELINE b8caf7f (pre-amendment tip — HEAD at dispatch).
+    # hands-off-lifecycle is H19-frozen at the established baseline
+    # per amendment #23; only the SEAL_COMMIT sidecar advances per
+    # the established frozen-baseline pattern.
+    #
+    # Composes on (read-only consumers, no edits):
+    #
+    #   - `corpus_load_sentinel.workspace_mode` — DEV-MODE-vs-NORMAL-USE
+    #     bit (A1 substrate, AC.SE.1).
+    #   - `corpus_load_sentinel.write_corpus_load_sentinel` — extended
+    #     in-fence (additive keyword arg) per D-build.5.
+    #   - `_resolve_corpus_path` semantics — duplicated from
+    #     `framework/primary-persona/src/session_start_gate.py` per
+    #     D-CI.4.(b) / D-build.2.
+    #   - first_run_helper / first_run_settings composition surfaces
+    #     — extended in-fence (new builder + marker extension).

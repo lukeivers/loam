@@ -204,23 +204,68 @@ def _corpus_load_inner_hooks(pos_v2_root: Path) -> list[dict]:
     ]
 
 
+def _corpus_inline_inner_hooks(pos_v2_root: Path) -> list[dict]:
+    """Return the corpus-inlining SessionStart inner-hook entry.
+
+    Amendment 73 (AC.CI.7). The CLI lives at
+    ``hands-off-lifecycle/hooks/corpus_inline_session_start.py``; the
+    inner hook invokes it under the workspace's shared venv Python so
+    the optional ``loam_mode`` import (consumed indirectly via the
+    sibling ``corpus_load_sentinel`` module's ``workspace_mode`` /
+    ``compute_corpus_paths_required``) is resolvable. The CLI is fail-
+    soft — every exception path returns exit 0 — so this helper is
+    fire-and-forget at session-start.
+    """
+    venv_python = pos_v2_root / ".venv" / "bin" / "python"
+    script = (
+        pos_v2_root
+        / "framework"
+        / "hands-off-lifecycle"
+        / "hooks"
+        / "corpus_inline_session_start.py"
+    )
+    return [
+        {
+            "type": "command",
+            "command": f"{venv_python} {script}",
+            "async": False,
+            # 5s matches A1 corpus-load + loam-mode + persona inner-
+            # hook timeouts (the established session-start envelope
+            # budget; research §3.2 + §8.4 confirm <20ms expected for
+            # the lean always-load tier on local SSD).
+            "timeout": 5,
+        }
+    ]
+
+
 def _extra_session_start_hooks(pos_v2_root: Path) -> list[dict]:
     """Return the SessionStart envelope's ``extra_inner_hooks`` list.
 
-    Order per umbrella plan §6 D5 (D-build.6 in the builder plan):
-    persona → loam-mode → corpus-load. The base inner hook
-    (first-run.sh in `build_first_run_stanza`; supervisor in
-    `build_supervisor_stanza`) composes BEFORE these via the stanza
-    builder; the final order at Claude Code's hook fan-out is:
-    probe (base) → persona → loam-mode → corpus-load.
+    Order per amendment 73 plan §6 D-build.4 (locks D-CI.6.(a)):
+    corpus-load (A1) → corpus-inline (NEW) → persona → loam-mode.
+    The base inner hook (first-run.sh in `build_first_run_stanza`;
+    supervisor in `build_supervisor_stanza`) composes BEFORE these
+    via the stanza builder; the final order at Claude Code's hook
+    fan-out is:
 
-    Each contributor independently fail-soft; one returning ``[]`` is
-    graceful (the envelope simply omits that hook).
+        probe (base) → corpus-load → corpus-inline → persona → loam-mode
+
+    Rationale: A1's sentinel writer fires FIRST (writing the empty-
+    `corpus_paths_loaded` baseline); corpus-inline fires SECOND
+    (reads + emits content; updates A1's sentinel
+    `corpus_paths_loaded` with the inlined paths); persona fires
+    THIRD (its dossier reads A1's sentinel post-inline, so a future
+    micro-amendment can grow a `corpus_inlined: true` marker without
+    re-ordering); loam-mode keeps its slot at the tail.
+
+    Each contributor independently fail-soft; one returning ``[]``
+    is graceful (the envelope simply omits that hook).
     """
     return (
-        _persona_inner_hooks(pos_v2_root)
+        _corpus_load_inner_hooks(pos_v2_root)
+        + _corpus_inline_inner_hooks(pos_v2_root)
+        + _persona_inner_hooks(pos_v2_root)
         + _loam_mode_inner_hooks(pos_v2_root)
-        + _corpus_load_inner_hooks(pos_v2_root)
     )
 
 

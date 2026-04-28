@@ -1,0 +1,62 @@
+# Amendment — corpus-inlining SessionStart hook
+#
+# 2026-04-28. Per the locked plan-doc
+# `docs/rebuild/plans/corpus-inlining-session-start-hook.md`,
+# locked research artefact
+# `docs/rebuild/plans/research/corpus-inlining-session-start-hook-research.md`,
+# and builder plan
+# `docs/rebuild/plans/corpus-inlining-session-start-hook.builder-plan.md`.
+#
+# This amendment closes the corpus-load failure class flagged in
+# FIDRAFT (entry "SessionStart corpus_gate should inline corpus
+# content into additionalContext, not just verify presence",
+# captured 2026-04-28). Per ODD §5.1.1 this is *elimination* of
+# the failure class, not relocation: the always-load corpus enters
+# `additionalContext` at session-start; "always read corpus at
+# session-start" stops being an advisory rule in MEMORY.md prose
+# and becomes a substrate property — the model has the bytes in
+# context the moment the session opens.
+#
+# Surface added (hands-off-lifecycle, sealed):
+#
+#   - `framework/hands-off-lifecycle/hooks/corpus_inline_session_start.py`
+#     (new) — pure-stdlib SessionStart inner-hook script.
+#   - `framework/hands-off-lifecycle/hooks/corpus_load_sentinel.py`
+#     EXTENDED (additive `corpus_paths_loaded` keyword arg on
+#     `write_corpus_load_sentinel`).
+#   - `framework/hands-off-lifecycle/hooks/first_run_settings.py`
+#     — `_POS_V2_COMMAND_MARKERS` extended with
+#     `corpus_inline_session_start.py`.
+#   - `framework/hands-off-lifecycle/hooks/first_run_helper.py`
+#     — adds `_corpus_inline_inner_hooks(pos_v2_root)` builder; reorders
+#     `_extra_session_start_hooks` to corpus-load → corpus-inline →
+#     persona → loam-mode (D-build.4 / D-CI.6.(a) lock).
+#   - `framework/hands-off-lifecycle/tests/test_AC_CI_*.py` — eight
+#     new tests (AC.CI.1..AC.CI.7 + AC.CI.S).
+#
+# Behaviour:
+#
+#   - DEV MODE: hook fires; reads always-load tier; emits content +
+#     pointer block to stdout; updates A1's sentinel
+#     `corpus_paths_loaded`; `state` reflects the loaded subset.
+#   - NORMAL USE: hook fires; observes mode bit; exits 0; empty
+#     stdout; no sentinel update.
+#   - Path resolution: workspace-root → framework subdir fall-through
+#     matches #67 contract bit-for-bit.
+#   - Per-file ceiling: 50_000 chars; truncation marker emitted on
+#     overflow.
+#   - Fail-soft: every error path returns exit 0.
+#
+# AC surface (AC.CI.1 – AC.CI.7 + AC.CI.S) — outcome-shaped per the
+# locked plan-doc §4. Behaviour count = 8; ACs declared = 8. Forward
+# + reverse match.
+#
+# ODD §2.5 reverse-direction audit clean: every code path, branch,
+# dependency, and test in the diff traces back to a named AC.
+#
+# BASELINE b8caf7f (pre-amendment tip — HEAD at dispatch). hands-
+# off-lifecycle is H19-frozen at the established baseline per
+# amendment #23; only the SEAL_COMMIT sidecar advances per the
+# established frozen-baseline pattern. The SHA below is backfilled
+# by `pos-amend seal`.
+

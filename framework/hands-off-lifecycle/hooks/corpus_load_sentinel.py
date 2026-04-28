@@ -221,20 +221,35 @@ def write_corpus_load_sentinel(
     *,
     session_id: str,
     mode: WorkspaceMode | None = None,
+    corpus_paths_loaded: list[str] | tuple[str, ...] | None = None,
 ) -> CorpusLoadWriteResult:
     """Write the corpus-load sentinel for the current session.
 
     ``mode`` is computed via ``workspace_mode`` when None. The
     required-corpus path set is computed via
-    ``compute_corpus_paths_required``. The ``state`` field is
-    derived from path-existence checks at write time:
+    ``compute_corpus_paths_required``.
 
-      - ``"loaded"`` — every required path exists in the workspace.
-      - ``"partial"`` — at least one but not all required paths
-        exist.
-      - ``"missing"`` — no required paths exist (or the manifest
-        was unreadable, returning the empty required-set; the
-        sentinel still writes per AC.SE.5).
+    ``corpus_paths_loaded`` (amendment 73 / AC.CI.4 — additive):
+
+      - When ``None`` (the A1 default — A1's CLI uses this path):
+        the sentinel is written with ``corpus_paths_loaded: []`` and
+        ``state`` is computed from path-existence:
+          * ``"loaded"`` — every required path exists in the workspace.
+          * ``"partial"`` — at least one but not all required paths
+            exist.
+          * ``"missing"`` — no required paths exist (or the manifest
+            was unreadable, returning the empty required-set; the
+            sentinel still writes per AC.SE.5).
+        This preserves the A1 (amendment 51) contract byte-for-byte.
+
+      - When supplied (the corpus-inline hook's path): the loaded
+        list is serialised into the sentinel, AND ``state`` is
+        recomputed from ``corpus_paths_loaded ⊆ corpus_paths_required``
+        membership:
+          * ``"loaded"`` — every required path is in the loaded set.
+          * ``"partial"`` — at least one but not all required paths.
+          * ``"missing"`` — none of the required paths in the loaded
+            set (or required is empty).
 
     Atomic write via ``.tmp`` sibling + ``os.replace``. Returns
     ``CorpusLoadWriteResult`` on every path; environmental failures
@@ -252,13 +267,18 @@ def write_corpus_load_sentinel(
         mode = workspace_mode(workspace_root)
 
     required = compute_corpus_paths_required(workspace_root, mode)
-    state = _classify_corpus_state(workspace_root, required)
+    if corpus_paths_loaded is None:
+        loaded_tuple: tuple[str, ...] = ()
+        state = _classify_corpus_state(workspace_root, required)
+    else:
+        loaded_tuple = tuple(corpus_paths_loaded)
+        state = _classify_state_from_loaded(required, loaded_tuple)
     target = session_state_path(workspace_root, session_id)
 
     payload = _serialise_sentinel(
         session_id=session_id,
         corpus_paths_required=tuple(required),
-        corpus_paths_loaded=(),
+        corpus_paths_loaded=loaded_tuple,
         state=state,
         created_at=_now_iso(),
     )
@@ -400,6 +420,30 @@ def _classify_corpus_state(
     if present == len(required_paths):
         return "loaded"
     if present == 0:
+        return "missing"
+    return "partial"
+
+
+def _classify_state_from_loaded(
+    required_paths: list[str],
+    loaded_paths: tuple[str, ...],
+) -> CorpusState:
+    """Classify ``loaded`` / ``partial`` / ``missing`` from membership.
+
+    Amendment 73 / AC.CI.4: when the caller passes
+    ``corpus_paths_loaded``, the ``state`` field reflects the loaded
+    SUBSET against the required set, not raw path-existence. Empty
+    required → ``"missing"`` (no contract to satisfy; nothing got
+    loaded).
+    """
+    if not required_paths:
+        return "missing"
+    required_set = set(required_paths)
+    loaded_set = set(loaded_paths)
+    overlap = required_set & loaded_set
+    if len(overlap) == len(required_set):
+        return "loaded"
+    if len(overlap) == 0:
         return "missing"
     return "partial"
 

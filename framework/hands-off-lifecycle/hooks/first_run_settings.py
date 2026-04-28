@@ -103,6 +103,12 @@ _POS_V2_COMMAND_MARKERS: tuple[str, ...] = (
     # Path substring is the canonical marker (the script lives at
     # hands-off-lifecycle/hooks/corpus_load_session_start.py).
     "corpus_load_session_start.py",
+    # Amendment 73 (AC.CI.7): the corpus-inlining SessionStart inner
+    # hook composes onto the multi-contributor envelope alongside the
+    # A1 corpus-load sentinel + loam-mode + primary-persona. Path
+    # substring is the canonical marker (the script lives at
+    # hands-off-lifecycle/hooks/corpus_inline_session_start.py).
+    "corpus_inline_session_start.py",
 )
 
 

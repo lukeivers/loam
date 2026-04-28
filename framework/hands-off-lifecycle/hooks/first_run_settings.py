@@ -140,14 +140,13 @@ _POS_V2_STATUS_LINE_COMMAND_MARKERS: tuple[str, ...] = (
 
 
 # Set of substrings that mark a PreToolUse inner hook as pos-v2-owned.
-# Single-contributor for now (structural-enforcement A2 — the
-# objective-binding gate is the only PreToolUse contributor pos-v2
-# ships at A2-time). When future amendments (A3 TDD-guard, A4 Bash/
-# Agent-context) introduce additional PreToolUse contributors,
-# generalise this set + ``merge_pre_tool_use`` the same way amendment
-# #45 generalised the SessionStart counterparts.
+# Multi-contributor as of structural-enforcement A3: A2's objective-
+# binding gate AND A3's TDD-guard both ship under hooks.PreToolUse.
+# A future A4 (Bash/Agent-context) will append an additional marker
+# here once the matcher set extends.
 _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
     "objective_binding_gate.py",
+    "tdd_guard.py",
 )
 
 
@@ -616,27 +615,48 @@ def _is_pos_v2_owned_pre_tool_use(stanza_entries: list[Any]) -> bool:
 def merge_pre_tool_use(
     *,
     settings_path: Path,
-    new_entry: dict[str, Any],
+    new_entry: dict[str, Any] | None = None,
+    new_entries: list[dict[str, Any]] | None = None,
     now_iso: str | None = None,
 ) -> SettingsMergeResult:
-    """Merge ``new_entry`` into settings.json's PreToolUse stanza.
+    """Merge PreToolUse stanza(s) into settings.json.
 
-    Mirrors ``merge_user_prompt_submit`` byte-for-byte (single-
-    contributor; structural-enforcement A2 is the only PreToolUse
-    contributor pos-v2 ships at A2-time):
+    Multi-contributor as of structural-enforcement A3 (D-build.6):
 
-      * no prior stanza: write ``[new_entry]``.
-      * prior stanza is pos-v2's own (command matches the gate's
-        markers): replace with ``[new_entry]``, no backup.
+      * pass ``new_entry=<stanza>`` for the single-contributor case
+        (legacy A2 call shape). Output is byte-identical to pre-A3:
+        the OUTER ``hooks.PreToolUse`` list becomes ``[new_entry]``.
+      * pass ``new_entries=[stanza1, stanza2, ...]`` for multi-
+        contributor cases (A2 + A3). The OUTER list becomes the
+        supplied list in caller order.
+      * passing both is permitted but ``new_entries`` wins (the
+        single-contributor argument is treated as a backwards-compat
+        convenience).
+      * passing neither raises ``ValueError``.
+
+    Behaviour on the existing stanza:
+
+      * no prior stanza: write the supplied list.
+      * prior stanza is pos-v2's own (every inner-hook command matches
+        one of the recognised pos-v2 PreToolUse markers — A2 only,
+        A2 + A3, or any subset): replace, no backup.
       * prior stanza is user-authored: write the whole prior
-        settings.json to a timestamped backup and replace the
-        PreToolUse stanza with ``[new_entry]``.
+        settings.json to a timestamped backup and replace.
 
-    Other top-level keys (including ``hooks.SessionStart``,
-    ``hooks.UserPromptSubmit``, ``hooks.Stop``, ``hooks.<other>``,
+    Other top-level keys (``hooks.SessionStart``, ``hooks.<other>``,
     ``agent``, ``statusLine``, etc.) are preserved unchanged.
     Atomic write via ``.tmp`` sibling + rename.
     """
+    if new_entries is None:
+        if new_entry is None:
+            raise ValueError(
+                "merge_pre_tool_use requires either new_entry= or "
+                "new_entries=; both were None"
+            )
+        outer_list: list[dict[str, Any]] = [new_entry]
+    else:
+        outer_list = list(new_entries)
+
     settings_path = Path(settings_path)
     existing = _load_existing(settings_path)
 
@@ -664,7 +684,7 @@ def merge_pre_tool_use(
         )
         displaced = True
 
-    hooks["PreToolUse"] = [new_entry]
+    hooks["PreToolUse"] = outer_list
     existing["hooks"] = hooks
 
     settings_path.parent.mkdir(parents=True, exist_ok=True)

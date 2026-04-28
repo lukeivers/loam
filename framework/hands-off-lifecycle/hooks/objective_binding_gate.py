@@ -2,9 +2,11 @@
 trace to a manifest-registered (component, ac_id, source_path_glob) row
 that the active-scope sentinel binds against.
 
-Added by structural-enforcement A2 (objective-binding gate). Consumes
-A1's substrate (active-scope sentinel reader, objective-manifest
-queries, workspace-mode bit) — read-only against every A1 surface.
+Added by structural-enforcement A2 (objective-binding gate). Refactored
+in-place by structural-enforcement A3 (D-A3.7) to consume shared
+helpers from ``_gate_helpers.py`` — A4 will inherit the same library.
+The refactor is internal-only: every external symbol A2's tests reach
+for is preserved as a module-level shim that delegates to the helper.
 
 ## Failure class closed by this hook (AC.OBG.1 .. AC.OBG.7)
 
@@ -53,133 +55,80 @@ structured (research §3.2).
 
 Every fire (allow / deny / no-op / error) appends one NDJSON line to
 ``<workspace>/workspace/.pos/objective-binding-gate.log``. Atomic
-append via ``open(..., "a")`` + write of one line — POSIX guarantees
+append via ``os.O_APPEND`` + write of one line — POSIX guarantees
 single-write atomicity for writes shorter than ``PIPE_BUF`` (typically
 4 KB; a single decision row is well under that).
 
-Stdlib only (json, fnmatch, pathlib, os, sys, time). objective-tracker
-imported lazily inside the decision path so an environment without the
-shared venv on path still falls through to allow (fail-closed-to-
-permissive at the import boundary; the gate's deny path requires the
-substrate to be reachable).
+Stdlib only (json, fnmatch, pathlib, os, sys, time) plus shared
+``_gate_helpers``. objective-tracker imported lazily inside the
+helper's ``open_tracker_or_none`` so an environment without the shared
+venv on path still falls through to allow (fail-closed-to-permissive
+at the import boundary; the gate's deny path requires the substrate
+to be reachable).
 """
 
 from __future__ import annotations
 
 import fnmatch
 import json
-import os
 import sys
-import time
 from pathlib import Path
 from typing import Any
 
 
-# Ensure sibling modules (active_scope_sentinel, corpus_load_sentinel)
-# are importable when this script is invoked directly as
+# Ensure sibling modules (active_scope_sentinel, corpus_load_sentinel,
+# _gate_helpers) are importable when this script is invoked directly as
 # ``python <hooks-dir>/objective_binding_gate.py``.
 _HOOKS_DIR = Path(__file__).resolve().parent
 if str(_HOOKS_DIR) not in sys.path:
     sys.path.insert(0, str(_HOOKS_DIR))
 
 
-# D-migration D.2 (amendment #63): workspace-state lives under
-# ``<workspace>/workspace/`` post-D.2. Hook scripts duplicate the
-# constant per stdlib-only contract (canonical source:
-# ``framework/workspace-bootstrap/src/workspace_bootstrap/
-# workspace_paths.py`` ``WORKSPACE_STATE_SUBDIR``).
-WORKSPACE_STATE_SUBDIR = "workspace"
-POS_SUBDIR = ".pos"
+import _gate_helpers as _helpers  # noqa: E402
+
+
+# ---------------------------------------------------------------------
+# Module-level shims preserved for A2's existing test imports + A3's
+# regression equivalence (AC.TDG.8).
+#
+# A2's tests reach into module privates: ``gate._audit_log_path``,
+# ``gate._is_carve_out_path``, ``gate._workspace_relative``, etc. The
+# helper-extraction refactor must not break those imports — D-A3.7's
+# regression contract is byte-for-byte. The shims below delegate to
+# ``_gate_helpers`` while preserving every name A2's test surface
+# touched.
+# ---------------------------------------------------------------------
+
+WORKSPACE_STATE_SUBDIR = _helpers.WORKSPACE_STATE_SUBDIR
+POS_SUBDIR = _helpers.POS_SUBDIR
 AUDIT_LOG_FILENAME = "objective-binding-gate.log"
+
+_CARVE_OUT_PREFIXES = _helpers._CARVE_OUT_PREFIXES
+_CARVE_OUT_FILES = _helpers._CARVE_OUT_FILES
 
 TOOLS_GATED = ("Edit", "Write", "MultiEdit")
 
 
-# ---------------------------------------------------------------------
-# Carve-out path list (D-A2.6 — D1 dev-discipline)
-# ---------------------------------------------------------------------
-#
-# Workspace-relative path PREFIXES that admit edits regardless of
-# sentinel state. Per AC.OBG.5: paths under any of these admit allow
-# in DEV MODE. The list is union of pre-D-migration + post-D-migration
-# shapes per locked plan §D-A2.6 (the migration window admits both).
-#
-# The list is expansive by design — false-deny on operator dev-
-# discipline edits would erode trust in the gate. Method per ODD §7.4
-# is "prefix match against workspace-relative path"; ordering does not
-# affect correctness because the predicate is OR over prefixes.
-_CARVE_OUT_PREFIXES: tuple[str, ...] = (
-    "docs/",
-    "tools/",
-    ".scratch/",
-    "personas/",
-    "framework/docs/",
-    "framework/tools/",
-    "framework/personas/",
-)
-
-# Workspace-relative path FILES (exact match) admitted regardless of
-# sentinel. Includes CLAUDE*.md at root, framework root, and the
-# universal-paths admissions used in pos-amend manifests.
-_CARVE_OUT_FILES: frozenset[str] = frozenset(
-    {
-        "CLAUDE.md",
-        "CLAUDE.dev.md",
-        "framework/CLAUDE.md",
-        "framework/CLAUDE.dev.md",
-        ".gitignore",
-        "framework/.gitignore",
-        "docs/odd-methodology.md",
-        "docs/odd-in-pos.md",
-        "docs/rebuild/FUTURE_IDEAS.md",
-        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
-    }
-)
-
-
 def _is_carve_out_path(workspace_relative_path: str) -> bool:
-    """True iff ``workspace_relative_path`` is a dev-discipline carve-
-    out admitted by AC.OBG.5 regardless of sentinel state.
-
-    Method per ODD §7.4: prefix-match for tree carve-outs + exact-match
-    for file admissions. Path is workspace-relative, forward-slash
-    separated.
-    """
-    if workspace_relative_path in _CARVE_OUT_FILES:
-        return True
-    for prefix in _CARVE_OUT_PREFIXES:
-        if workspace_relative_path.startswith(prefix):
-            return True
-    return False
-
-
-# ---------------------------------------------------------------------
-# Path canonicalisation (R8 mitigation)
-# ---------------------------------------------------------------------
+    """Module-level shim → ``_gate_helpers.is_carve_out_path``."""
+    return _helpers.is_carve_out_path(workspace_relative_path)
 
 
 def _workspace_relative(
     file_path: str, workspace_root: Path
 ) -> str | None:
-    """Canonicalise ``file_path`` to a workspace-relative POSIX-style
-    string, OR return None when the path is not under workspace_root.
+    """Module-level shim → ``_gate_helpers.workspace_relative``."""
+    return _helpers.workspace_relative(file_path, workspace_root)
 
-    Per R8: tool_input.file_path may be absolute or relative. Resolve
-    both via ``Path.resolve()`` then compute the relative path. Returns
-    None when the path lies outside the workspace (the gate's scope is
-    workspace-relative; foreign paths are not gated — they fall through
-    to allow because no manifest row can match a non-workspace path).
-    """
-    try:
-        p = Path(file_path)
-        if not p.is_absolute():
-            p = workspace_root / p
-        p_resolved = p.resolve()
-        ws_resolved = workspace_root.resolve()
-        rel = p_resolved.relative_to(ws_resolved)
-    except (ValueError, OSError):
-        return None
-    return rel.as_posix()
+
+def _open_tracker(workspace_root: Path) -> Any | None:
+    """Module-level shim → ``_gate_helpers.open_tracker_or_none``."""
+    return _helpers.open_tracker_or_none(workspace_root)
+
+
+def _audit_log_path(workspace_root: Path) -> Path:
+    """Module-level shim → ``_gate_helpers.audit_log_path``."""
+    return _helpers.audit_log_path(workspace_root, AUDIT_LOG_FILENAME)
 
 
 # ---------------------------------------------------------------------
@@ -234,12 +183,7 @@ def evaluate(
     AC.OBG.4: at least one bound row's glob matches → allow.
     """
     # Mode-bit short circuit (AC.OBG.6).
-    try:
-        from corpus_load_sentinel import workspace_mode
-
-        mode = workspace_mode(workspace_root)
-    except Exception:  # noqa: BLE001 — fail-closed-to-permissive
-        mode = "normal-use"
+    mode = _helpers.read_workspace_mode_or_normal_use(workspace_root)
     if mode != "dev-mode":
         return Decision("no-op")
 
@@ -254,7 +198,7 @@ def evaluate(
     if not isinstance(raw_path, str) or not raw_path:
         return Decision("no-op")
 
-    rel_path = _workspace_relative(raw_path, workspace_root)
+    rel_path = _helpers.workspace_relative(raw_path, workspace_root)
     if rel_path is None:
         # Foreign path (outside workspace_root). The gate's scope is
         # workspace-relative; no manifest row can bind such a path.
@@ -264,16 +208,11 @@ def evaluate(
 
     # Carve-out (AC.OBG.5) — first check, so dev-discipline edits
     # admit regardless of sentinel/manifest state.
-    if _is_carve_out_path(rel_path):
+    if _helpers.is_carve_out_path(rel_path):
         return Decision("allow")
 
     # Read the active-scope sentinel (AC.OBG.1).
-    try:
-        from active_scope_sentinel import read_active_scope_sentinel
-
-        sentinel = read_active_scope_sentinel(workspace_root)
-    except Exception:  # noqa: BLE001 — fail-closed-to-permissive
-        sentinel = None
+    sentinel = _helpers.read_active_scope_sentinel_or_none(workspace_root)
 
     if sentinel is None:
         return Decision(
@@ -283,7 +222,9 @@ def evaluate(
         )
 
     # Resolve the tracker. Lazy import so the venv path-fix runs only
-    # when the gate reaches the manifest-query branch.
+    # when the gate reaches the manifest-query branch. The call goes
+    # through the module-level shim so test fixtures can patch
+    # ``gate._open_tracker`` (the convention A2's existing tests use).
     tracker = _open_tracker(workspace_root)
     if tracker is None:
         # Substrate unreachable. Fail-closed-to-permissive at the
@@ -399,50 +340,8 @@ def _reason_no_glob_matches(
 
 
 # ---------------------------------------------------------------------
-# Tracker open
+# Audit log (AC.OBG.7) — module-level shim around helper writer.
 # ---------------------------------------------------------------------
-
-
-def _open_tracker(workspace_root: Path) -> Any | None:
-    """Open the workspace's ObjectiveTracker, or return None on failure.
-
-    Lazy import + venv path-fix so a system-Python-invoked hook script
-    can still reach the shared venv's installed objective_tracker
-    package (matching the existing hands-off-lifecycle convention in
-    first_run_helper.py / corpus_load_sentinel.py).
-    """
-    try:
-        venv_lib = workspace_root / ".venv" / "lib"
-        if venv_lib.is_dir():
-            for site_dir in venv_lib.iterdir():
-                site_pkgs = site_dir / "site-packages"
-                if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
-                    sys.path.insert(0, str(site_pkgs))
-        from objective_tracker import ObjectiveTracker  # type: ignore[import-not-found]
-        from workspace_bootstrap.workspace_paths import (  # type: ignore[import-not-found]
-            tracker_db_path,
-        )
-
-        db_path = tracker_db_path(workspace_root)
-        if not db_path.exists():
-            return None
-        return ObjectiveTracker(db_path)
-    except Exception:  # noqa: BLE001 — fail-closed-to-permissive
-        return None
-
-
-# ---------------------------------------------------------------------
-# Audit log (AC.OBG.7)
-# ---------------------------------------------------------------------
-
-
-def _audit_log_path(workspace_root: Path) -> Path:
-    return (
-        workspace_root
-        / WORKSPACE_STATE_SUBDIR
-        / POS_SUBDIR
-        / AUDIT_LOG_FILENAME
-    )
 
 
 def _append_audit_line(
@@ -463,9 +362,14 @@ def _append_audit_line(
     AC.OBG.7: deterministic surface, append-only, atomic single-line
     writes (POSIX O_APPEND with a payload < PIPE_BUF). Path / format
     are method per ODD §7.4.
+
+    Refactored in A3: shape preserved byte-for-byte (every key still
+    written); the actual I/O is delegated to
+    ``_gate_helpers.append_audit_line`` which carries the atomic-
+    append + fail-soft logic shared with A3.
     """
     payload = {
-        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "ts": _helpers.now_iso_z(),
         "tool": tool_name,
         "path": raw_path,
         "rel_path": rel_path,
@@ -478,24 +382,7 @@ def _append_audit_line(
         "failure_class": decision.failure_class,
         "reason": decision.reason,
     }
-    target = _audit_log_path(workspace_root)
-    line = json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n"
-    encoded = line.encode("utf-8")
-    try:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        # O_APPEND atomicity for writes < PIPE_BUF (POSIX). Single
-        # NDJSON row is well under that boundary.
-        fd = os.open(
-            target, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644
-        )
-        try:
-            os.write(fd, encoded)
-        finally:
-            os.close(fd)
-    except OSError:
-        # Fail-soft per the surrounding hooks convention; log failure
-        # must never block the gate decision.
-        return
+    _helpers.append_audit_line(workspace_root, AUDIT_LOG_FILENAME, payload)
 
 
 # ---------------------------------------------------------------------
@@ -564,23 +451,18 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # Compute audit-log fields (best-effort; never raises into Claude).
-    rel_path = _workspace_relative(raw_path, workspace_root) if raw_path else None
-    try:
-        from corpus_load_sentinel import workspace_mode
-
-        mode = workspace_mode(workspace_root)
-    except Exception:  # noqa: BLE001 — fail-soft
-        mode = "normal-use"
-    try:
-        from active_scope_sentinel import read_active_scope_sentinel
-
-        sentinel_state = (
-            "present"
-            if read_active_scope_sentinel(workspace_root) is not None
-            else "absent"
-        )
-    except Exception:  # noqa: BLE001 — fail-soft
-        sentinel_state = "absent"
+    rel_path = (
+        _helpers.workspace_relative(raw_path, workspace_root)
+        if raw_path
+        else None
+    )
+    mode = _helpers.read_workspace_mode_or_normal_use(workspace_root)
+    sentinel_state = (
+        "present"
+        if _helpers.read_active_scope_sentinel_or_none(workspace_root)
+        is not None
+        else "absent"
+    )
 
     _append_audit_line(
         workspace_root,

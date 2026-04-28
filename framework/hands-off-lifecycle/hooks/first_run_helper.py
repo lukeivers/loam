@@ -441,20 +441,58 @@ def _objective_binding_gate_stanza(pos_v2_root: Path) -> dict[str, Any]:
     }
 
 
+def _tdd_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
+    """Return the PreToolUse envelope for A3's TDD-guard.
+
+    Per locked plan §6 D-A3.1: matcher ``Edit|Write|MultiEdit`` (same
+    set A2 covers — A3 inherits A2's matcher contract). Per D-A3.8 A3
+    runs AFTER A2 in the hook chain; this stanza is appended second
+    in the multi-contributor outer list.
+    """
+    pos_v2_root = Path(pos_v2_root)
+    script = (
+        pos_v2_root
+        / "framework"
+        / "hands-off-lifecycle"
+        / "hooks"
+        / "tdd_guard.py"
+    )
+    return {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{sys.executable} {script}",
+                "async": False,
+                "timeout": 5,
+            }
+        ],
+    }
+
+
 def _maybe_merge_pre_tool_use(
     *, pos_v2_root: Path, settings_path: Path
 ) -> None:
     """Invoke ``merge_pre_tool_use`` fail-soft.
 
-    The gate script is co-located with hands-off-lifecycle's hooks; no
-    lazy-import probe is needed. A settings.json write failure must
-    not regress first-run (locked plan §5 fail-closed direction
+    Multi-contributor as of structural-enforcement A3 (D-A3.8): the
+    outer PreToolUse list carries A2's objective-binding gate FIRST
+    and A3's TDD-guard SECOND. Claude Code admits multiple matcher
+    entries under one event and evaluates them sequentially; A2 deny
+    short-circuits A3.
+
+    Both gate scripts are co-located with hands-off-lifecycle's hooks;
+    no lazy-import probe is needed. A settings.json write failure
+    must not regress first-run (locked plan §5 fail-closed direction
     mirrors here).
     """
     try:
         merge_pre_tool_use(
             settings_path=settings_path,
-            new_entry=_objective_binding_gate_stanza(pos_v2_root),
+            new_entries=[
+                _objective_binding_gate_stanza(pos_v2_root),
+                _tdd_guard_stanza(pos_v2_root),
+            ],
         )
     except Exception:  # noqa: BLE001 — fail-soft per locked plan §5
         return

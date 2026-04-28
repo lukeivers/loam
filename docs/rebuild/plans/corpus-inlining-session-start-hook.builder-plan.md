@@ -206,7 +206,7 @@ No silent branches. No defensive `if`s without backing AC. The fail-soft `try/ex
 
 ---
 
-## 7. Method-decision register (post-build)
+## 14. Method-decision register (post-build)
 
 | ID | Decision | Choice | Rationale |
 |---|---|---|---|
@@ -219,7 +219,7 @@ No silent branches. No defensive `if`s without backing AC. The fail-soft `try/ex
 | D-build.7 | Caching | None — re-emit every session | D-CI.3.(a); sessions are isolated context windows |
 | D-build.8 | Mode-partition | DEV MODE only via `corpus_load_sentinel.workspace_mode` | D-CI.8; consumer-only on A1 |
 
-## 8. Commit SHAs
+### Commit SHAs
 
 Backfilled at seal time per `pos-amend seal --plan-doc` convention.
 

@@ -890,13 +890,26 @@ scope for the current amendment. A component that sits out several
 amendments keeps its BASELINE pinned to its last-touch tip, and its
 test stays trivially green.
 
-### 10.3 Per-invariant BASELINE — for point-in-time invariant proofs
+### 10.3 Per-invariant BASELINE (frozen-both-endpoints) — for point-in-time invariant proofs
 
 A **per-invariant** BASELINE is a pair of function-scoped SHA
 constants (`BASELINE` + `SEAL`) that pin a specific assertion to the
-exact window it was authored to prove. The test's module-top
-BASELINE (floating or frozen) is untouched. Once authored, the pair
-never moves unless the invariant itself is being restated.
+exact window it was authored to prove. **Both endpoints are frozen**
+in code — neither floats with subsequent amendments. The test's
+module-top BASELINE (floating or frozen) is untouched. Once
+authored, the pair never moves unless the invariant itself is being
+restated.
+
+The "frozen-both-endpoints" wording is load-bearing. Pinning only
+the BASELINE while leaving the SEAL endpoint resolved through a
+floating sidecar (e.g. via a `_seal_commit()` helper) re-introduces
+the widening-pressure failure class: every amendment that legitimately
+advances the component's SEAL_COMMIT sidecar drags the per-invariant
+test's upper bound forward, and any path admitted by sibling
+amendments enters the per-invariant test's window. Amendment #69
+(`docs/rebuild/plans/ac-m-s-structural-redesign.md`) documents the
+six-amendment widening tax this defect produced on AC.M.S before
+conversion to frozen-both-endpoints.
 
 **When to use.**
 
@@ -907,18 +920,24 @@ never moves unless the invariant itself is being restated.
   directory is later amended to allow them) — pinning keeps the
   original proof intact while letting the directory evolve.
 
-**Pattern (code template):**
+**Pattern (code template — frozen-both-endpoints):**
 
 ```python
+# Both endpoints are constants. Neither is read from a floating
+# sidecar or computed at test-run time. The pair pins amendment N's
+# window for the project's lifetime; subsequent amendments cannot
+# re-scope this assertion.
+_AMENDMENT_9_BASELINE = "b9e1f96"
+_AMENDMENT_9_SEAL = "4f8b933"
+
+
 def test_AC7_no_telegram_interface_src_edits() -> None:
     """AC7 (amendment #9): no edits to telegram-interface/src/
     landed in amendment #9. Pinned to amendment #9's exact window.
     """
-    amendment_9_baseline = "b9e1f96"
-    amendment_9_seal = "4f8b933"
     out = subprocess.check_output(
         ["git", "diff", "--name-only",
-         f"{amendment_9_baseline}..{amendment_9_seal}",
+         f"{_AMENDMENT_9_BASELINE}..{_AMENDMENT_9_SEAL}",
          "--", "telegram-interface/src/"],
         cwd=REPO_ROOT,
         text=True,
@@ -929,6 +948,15 @@ def test_AC7_no_telegram_interface_src_edits() -> None:
         f"Changed paths: {changed}"
     )
 ```
+
+The convention default for new per-invariant assertions is
+**frozen-both-endpoints**. A test that resolves either endpoint
+through a sidecar / live-resolver / `HEAD` fallback is not a
+well-formed per-invariant test — it's a hybrid of the per-invariant
+shape and the §10.2 floating-window shape, and the two protect
+different invariants. See AC.M.S → AC.MS-fix migration in amendment
+#69 for the worked example of converting a hybrid to the canonical
+frozen-both-endpoints shape.
 
 **Canonical example: AC7 on telegram-interface.**
 `telegram-interface/tests/test_no_sealed_amendments.py::test_AC7_no_telegram_interface_src_edits`

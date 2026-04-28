@@ -320,11 +320,10 @@ to verify on the post-fix substrate without semantic re-extension.
 
 ### Commit SHAs
 
-- Amendment commit: TBD (filled at seal time).
-- Seal commit: TBD (filled at seal time).
-
----
-
+- Amendment commit: `86373b36a3f1c6a12f669a4b99687e75f1061267` —
+  `chore(seals): A1 substrate timestamp-format normalization — format γ at all A1 emitters; #74 dispatcher wait helper removed — objective-tracker+hands-off-lifecycle+primary-persona at 0f14e18`
+- Seal commit: `de4bb4399c2eceeaab054cd4bad0d2540336fa53` —
+  `chore(seals): A1 substrate timestamp-format normalization — format γ at all A1 emitters; #74 dispatcher wait helper removed — objective-tracker+hands-off-lifecycle+primary-persona at 86373b3`
 ## 15. References
 
 - Locked research (governs):

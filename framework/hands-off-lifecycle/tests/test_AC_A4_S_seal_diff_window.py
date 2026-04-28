@@ -52,9 +52,10 @@ def _seal_commit_for_a4() -> str | None:
     at amendment-author time; filled by a post-seal corrective commit
     immediately after the amendment's seal commit lands.
     """
-    # Pre-seal placeholder — populated by the post-seal corrective
-    # commit per the established AC.OBG.S / AC.TDG.S authoring pattern.
-    return None
+    # Amendment #72's seal commit SHA — `chore(seals): structural-
+    # enforcement A4 Bash/Agent-context guards ... — hands-off-lifecycle
+    # at f1ae42b`.
+    return "052c9b72cdd11695568c934331ede86ce5f4dad4"
 
 
 def _baseline_from_manifest() -> str | None:

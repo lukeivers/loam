@@ -429,7 +429,7 @@ This belongs in FUTURE_IDEAS rather than being scoped now because the collision 
 
 ## Idea 10 — Project rename to loam
 
-**Status:** TABLED 2026-04-23. Decisions recorded in `docs/rebuild/plans/loam-rename-decisions.md`; execution deferred pending prerequisite amendments (#26 teardown retrofit) and available bandwidth. Un-table when ready.
+**Status:** UN-TABLED 2026-04-29 — prerequisite amendments (#26 teardown retrofit) shipped long ago (current amendment cycle at #75); Phase 1 documentary rebrand activated as part of v0.1.0 publish (Idea 12). Tier-2 dormancy rename also activated — owner ruling 2026-04-29 placed it pre-launch. Decisions recorded in `docs/rebuild/plans/loam-rename-decisions.md`.
 
 Captured 2026-04-23.
 
@@ -511,7 +511,7 @@ the first reseal amendment.
 
 Captured 2026-04-22.
 
-**Status:** TABLED 2026-04-23. Awaiting owner rulings on three open questions (below) and the completion of prerequisite amendments (#26 teardown retrofit + full loam-rename sequence + Dev/SDLC plugin per Idea 3) before this idea becomes actionable again.
+**Status:** ACTIVE 2026-04-29. All three open rulings closed (see resolved-rulings block below); prerequisite amendments (#26 teardown retrofit) shipped at #75-current; loam Phase-1 documentary rebrand and Dev/SDLC plugin authoring fold into the v0.1.0 publish work-plan at `docs/rebuild/plans/oss-v0-1-0-publish.md`.
 
 loam launches publicly as an open-source project once the core is
 release-ready and the Dev/SDLC plugin (Idea 3) ships. The research
@@ -540,15 +540,11 @@ recruited co-maintainer circle (or at minimum a shortlist), loam is one
 personal-circumstances change from unmaintained-famous-project failure
 mode — worse than niche adoption because it comes with stranded users.
 
-Open rulings pending from Luke:
+Resolved owner rulings (2026-04-29):
 
-1. **Dormancy rename** (graceful-degradation → `dormancy`) pre-launch
-   or post-launch? Research recommends pre-launch.
-2. **v1 plugin count**: strictly Dev/SDLC only, or Dev/SDLC + one more?
-   Research recommends Dev/SDLC only.
-3. **Public repo ownership**: `lukeivers/loam` (personal) vs
-   `loamharness/loam` (product) vs `iverscorp/loam` (corporate)?
-   Research recommends product-brand.
+1. **Dormancy rename:** **pre-launch** (matches research recommendation). Tier-2 graceful-degradation → dormancy executes inside the v0.1.0 publish sequence, not deferred to v0.2.
+2. **v1 plugin count:** **Dev/SDLC only** (matches research recommendation). Audit's deviation to "zero plugins" was rooted in human-time cost framing; AI-time correction undercut that reasoning.
+3. **Public repo ownership:** **`lukeivers/loam`** (personal account; deviates from research's product-brand recommendation). Reasoning: honest about bus-factor-1; low ceremony; easy to migrate to an org later if traction warrants.
 
 Full plan at `docs/rebuild/plans/research/loam-open-source-launch-research.md`
 for timelines, repo hygiene detail, competitive positioning, content
@@ -748,6 +744,92 @@ disagree with git log / plan-doc §14 / manifest).
 Trigger to activate: A1 substrate (existing structural-enforcement
 programme) lands and is stable; this is a natural A2 / A3
 amendment on top.
+
+---
+
+## Idea 22 — Memory-doc skeleton template (third member of the template family)
+
+Captured 2026-04-29 (graduated from `FUTURE_IDEAS_DRAFT.md`).
+
+The dispatch-template (`framework/tools/pos-amend/templates/dispatch/sealed-component-build.md`) and plan-doc-template (`framework/tools/pos-amend/templates/plan/dev-discipline.md`) shipped during the amendment cycle. Both follow the same shape: frontmatter (description + required + optional vars), then a `{{placeholder}}`-shaped body. Memory-doc authoring (the per-feedback files at `~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_*.md`) follows the same per-document structure — frontmatter (name / description / type) + Why + How-to-apply — but is propagated by precedent rather than mechanised.
+
+**Direction.** A third template at `framework/tools/pos-amend/templates/memory/feedback.md` (or similar) standardising the frontmatter fields and ensuring no field drifts over time as the memory ecosystem grows.
+
+**Composition.** Same template engine as the existing two templates; same `description` frontmatter doubles as `pos-amend template list` one-liner (per the DRAFT entry on the introspection-surface pattern). Memory authoring becomes `pos-amend new-memory <slug>` (parallel to the future `pos-amend new-plan <slug>` orchestration).
+
+**Trigger to activate.** Either: (a) a fourth memory file with drifted frontmatter is observed, OR (b) the memory-graphiti integration (Idea 7 GLiNER2) starts consuming memory-doc structure programmatically and benefits from rigid frontmatter.
+
+**Out of scope.** This is the template, not the memory ecosystem itself. Memory content (which feedbacks exist, what they say) remains a per-feedback authoring decision.
+
+---
+
+## Idea 23 — Research dispatches pre-filter recommendations through the scope-fence constraint
+
+Captured 2026-04-29 (graduated from `FUTURE_IDEAS_DRAFT.md`; recurring across #17, #68, A1 builds).
+
+Research dispatches today produce recommendations that the build dispatch then has to deviate from when the recommendation reaches a sealed component the build can't touch. The #17 build's D-build.6 hit exactly this: research recommended attaching the lazy-projection trigger via primary-persona's contributor surface, but primary-persona was sealed and the dispatch was dev-discipline (`tools/` fence). The deviation was forced at build time, not anticipated at research time.
+
+**Direction.** Research-author dispatch prompts grow an explicit "filter recommendations through the scope-fence constraint" instruction: every recommendation cites which surface it reaches and verifies that surface is admitted by the dispatch's scope fence. Recommendations that reach sealed components outside the fence get either (a) rewritten to a dev-discipline-equivalent attach point (loam-mode emitter, hooks dir, `tools/` etc.) OR (b) explicitly flagged as "build-time deviation needed" with the alternative attach point.
+
+**Composition.** Composes with Idea 1's three-lens enforcement (Step 3 enforcement layer can verify research docs cite scope-fence compliance) and amendment #72 A4's `agent_guard.py` (T2 method-enumerated-prompt detection — extending the same surface to detect research recommendations that cross fences). Lens 1 leverage: Claude-Code skills could carry the scope-fence-filter as a research-author skill loadable per dispatch.
+
+**Trigger to activate.** Next non-trivial research-then-build amendment cycle is the right time; the cost is one paragraph in the research-author dispatch boilerplate, the payoff is at least one less build-time deviation per non-trivial amendment.
+
+**Out of scope.** Generic research-author dispatch hardening (factual verification CDC etc.). This idea names only the scope-fence-filter dimension.
+
+---
+
+## Idea 24 — Bash-tool eval-wrapper hazards (glob expansion + stderr capture)
+
+Captured 2026-04-29 (graduated from `FUTURE_IDEAS_DRAFT.md` from two related findings).
+
+The Bash tool wraps commands in an `eval`-style shell that produces non-interactive-shell behaviour distinct from the user's interactive zsh. Two observed hazards:
+
+1. **Glob expansion failure** — `(eval):1: no matches found: <glob>` errors when a glob fails to expand, even when the interactive shell has `setopt nomatch` UNset. The same pattern via `bash -c '...'` or `find -name` works. Caused at least one false-positive "files don't exist" diagnosis during agent dispatches.
+2. **Stderr capture drop** — when pos-amend was invoked from a main session via the Bash tool, stderr (where halt diagnostics emit) was filtered/dropped and the tool appeared to silently return rc=0. A fresh agent session running pos-amend saw the halts correctly. Workaround for in-session pos-amend invocations: `2>&1 | tee /tmp/log` or wrap in a script that explicitly captures stderr to a file.
+
+**Direction.** Two structural-enforcement candidates compose:
+
+- A PreToolUse hook (matcher Bash) that warns when an unquoted glob is passed to the tool (zero-result glob would expand surprisingly), suggesting `find -name` or quoted alternatives. Composes with amendment #72 A4's `bash_guard.py` — extends its classifier surface, no new file.
+- A pos-amend-side wrapper that always emits structured halt diagnostics to stdout (or a log file), not just stderr, eliminating the stderr-drop failure class regardless of harness behaviour.
+
+**Composition.** Composes with Idea 1's three-lens Claude-leverage lens (PreToolUse is the right Claude primitive here) and Idea 21's persona own-behaviour structural enforcement (similar Stop-hook contributor shape). Lens 1 leverage: PreToolUse hook is a Claude-native primitive that exactly fits the shape.
+
+**Trigger to activate.** Either: (a) a third Bash-tool quirk surfaces (the third instance is what tips one-off-quirk into pattern), OR (b) the structural-enforcement programme adds a fifth A-amendment slot for general Bash-tool-quirk hardening, OR (c) a high-cost diagnosis (>30 minutes wasted on a quirk) recurs.
+
+**Out of scope.** Filing upstream Claude-Code feature requests for the eval-wrapper itself. The right surface is pos-v2-side detection + workaround, not begging the harness to change.
+
+---
+
+## Idea 25 — Workspace-level default-conversation-channel config slot
+
+Captured 2026-04-29 (graduated from `FUTURE_IDEAS_DRAFT.md`; locked behaviour confirmed 2026-04-26 for the pos3 workspace).
+
+Telegram is now the default conversation layer for the pos3 workspace, but the directive lives in the dossier prose — advisory. A persona session that opens against fresh context (no prior turn cached) depends on the persona reading the dossier and remembering to route to Telegram. The recurring miss class: persona replies in-terminal when the user is on Telegram.
+
+**Direction.** A workspace config slot (working name `primary_channel`, location candidates: persona contract field, `<workspace>/.pos/channel.json`, or `<workspace>/CLAUDE.md` frontmatter) that names the workspace's default conversation channel. Persona reads the slot at session-start (composes with #73's corpus-inlining hook) and routes default replies through the named channel's tool — Telegram via `mcp__plugin_telegram_telegram__reply`, terminal output secondary.
+
+**Composition.** Composes with the corpus-inlining hook (#73) — the channel slot becomes another sentinel field A1 substrate populates at session-start, indistinguishable from `workspace_mode` or `corpus_paths_loaded`. Composes with Idea 21 (own-behaviour enforcement) — channel-routing miss is a structural-enforcement candidate (Stop-hook contributor refuses to send to terminal when `primary_channel = telegram` and the message is a user reply). Composes with Idea 1's Claude-leverage lens — MCP reply tools are the Claude-native primitive the slot routes through.
+
+**Trigger to activate.** Either: (a) a second workspace adopts a non-terminal default channel (proves the abstraction is multi-tenant), OR (b) a third documented case of routing-miss-because-persona-forgot, OR (c) the structural-enforcement programme reaches A5+ slot.
+
+**Out of scope.** Multi-channel concurrency (replying to both Telegram and terminal simultaneously). This idea names only the default channel; secondary-channel rules belong in a separate cycle.
+
+---
+
+## Idea 26 — Workspace-specific corpus overrides via reader fall-through
+
+Captured 2026-04-29 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced as asymmetric finding by amendment #67 build agent).
+
+The `_resolve_corpus_path` helper that landed in `primary-persona/session_start_gate.py` per amendment #67 (AC.SFR.3, decision D5: probe-and-prefer-workspace-root) elegantly supports a feature that wasn't designed-for: workspaces shipping their own CLAUDE.md / docs/ overrides at the workspace root that take precedence over framework's defaults. No additional code is needed; the resolver already handles it.
+
+**Direction.** Surface this affordance explicitly to: (a) DEV-MODE workspace authors (write a workspace-local `CLAUDE.md` to override framework's three-lens defaults for that workspace), (b) customised personas (a workspace ships its own persona prompt that the loader prefers), (c) plugin-shipped corpus extensions (a plugin installs corpus files at workspace root that compose with framework's defaults).
+
+**Composition.** Composes with amendment #73's corpus-inlining SessionStart hook — workspace overrides flow into `additionalContext` automatically because the inliner reads through the same `_resolve_corpus_path` helper. Composes with Idea 13 (two-modes umbrella) — DEV MODE workspace overrides are a natural shape; NORMAL USE overrides for non-tech-user customisation are a future shape. Composes with Idea 3 (initial plugin suite) — plugins shipping corpus extensions become first-class.
+
+**Trigger to activate.** No activation needed — the affordance exists today; this idea is the *surface* of it. Concrete activation: (a) document the override pattern in onboarding flow when a second workspace adopts an override, (b) author the first reference override (e.g. a domain-specific persona prompt for a derived workspace), (c) when sub-plan G activates and plugins start shipping corpus, the resolver becomes the integration seam.
+
+**Out of scope.** A central registry of "what overrides what" — the current flat-fall-through shape is structurally simpler. If override interactions get complex, that warrants its own cycle.
 
 ---
 

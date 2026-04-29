@@ -966,6 +966,36 @@ project's lifetime. Amendment #21's legitimate edits to
 `telegram-interface/src/` under AC:S3 don't re-violate AC7 because
 the pinned window closes before amendment #21 begins.
 
+**Sub-pattern: placeholder-sentinel for tests authored alongside
+their own amendment.** When a per-invariant test must include the
+amendment's *own* seal-diff window, the author faces a chicken-and-egg
+problem: the test's frozen SEAL endpoint is the seal commit, but the
+seal commit references the test that locks the SEAL endpoint. The
+canonical resolution is a placeholder-sentinel constant
+(`__POST_SEAL_CORRECTIVE__`) paired with a sentinel-branch early-return
+in the test body; the corrective commit landed immediately after seal
+fills the constant with the actual SHA. The test stays well-formed
+(both endpoints are constants once filled) and the seal-window
+self-reference is broken without re-introducing the floating-SEAL
+defect §10.3 above forbids.
+
+```python
+_AMENDMENT_N_BASELINE = "abc1234"  # filled at plan-author time
+_AMENDMENT_N_SEAL = "__POST_SEAL_CORRECTIVE__"  # filled by post-seal corrective commit
+
+
+def test_AC_X_invariant_pinned_to_amendment_N() -> None:
+    if _AMENDMENT_N_SEAL == "__POST_SEAL_CORRECTIVE__":
+        # Pre-corrective state: SHA not yet known. Test is authored
+        # but inert until the corrective commit fills the sentinel.
+        return
+    # ... normal frozen-both-endpoints body using both constants ...
+```
+
+Canonical example: AC.MS-fix.S (amendment #69) — see
+`docs/rebuild/plans/ac-m-s-structural-redesign.md` §14 for the
+worked corrective-commit mechanics.
+
 ### 10.4 Migration guidance
 
 - **New invariants** use §10.3 by default. If the invariant's fidelity

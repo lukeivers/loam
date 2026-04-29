@@ -731,15 +731,10 @@ actual command(s) run.)
 
 ### Commit SHAs
 
-- M3.wire-clis sub-plan commit: `<TBD>` — `docs(plans): author M3 sub-plan + manifest — wire per-component CLIs as [project.scripts] console-script entries`
-- M3.wire-clis feature commit: `<TBD>` — `feat(wire-clis): M3 wire per-component CLIs as [project.scripts] console-script entries`
-- M3.wire-clis apply commit: `<TBD>` — `chore(wire-clis-apply): loam amend apply for amendment #84 (M3 wire per-component CLIs)`
-- M3.wire-clis corrective commit(s): `<TBD or none>`
-- M3.wire-clis seal commit: `<TBD>` — `chore(seals): M3 wire per-component CLIs as [project.scripts] console-script entries — …`
-- M3.wire-clis §14 SHA-register backfill: `<TBD>` — `docs(plans): record amendment #84 commit SHAs in M3 §14 method-decision register`
-
----
-
+- Amendment commit: `cf919e2495b35c53c6c4c70d445874d3a4a56708` —
+  `chore(wire-clis-apply): loam amend apply for amendment #84 (M3 wire per-component CLIs)`
+- Seal commit: `95f1ab2732d2170912b517bba4dcc08e3094613f` —
+  `chore(seals): M3 wire per-component CLIs as [project.scripts] console-script entries — register loam-kill = loam.safety_layer.cli:main (framework/safety-layer/pyproject.toml) + loam-cost = loam.cost_governance.cli:main (framework/cost-governance/pyproject.toml) + loam-correction = loam.self_correction.cli:main (framework/self-correction/pyproject.toml) + loam-reversibility = loam.reversibility_primitive.cli:main_reversibility + loam-rollback = loam.reversibility_primitive.cli:main_rollback (framework/reversibility-primitive/pyproject.toml) + author two NEW public shim functions main_reversibility(argv) + main_rollback(argv) in framework/reversibility-primitive/src/loam/reversibility_primitive/cli.py (each builds IPCClient from --socket / POS_SOCKET_PATH mirroring loam.safety_layer.cli pattern + wraps client.call as CliCall + dispatches to existing build_parser + dispatch surface scoped to its respective subtree; existing main(call, argv) preserved untouched per dispatch constraint + plan §10 D-build.M3.1) + 4 new tests (test_AC_OSS_M3_loam_kill_registered.py + test_AC_OSS_M3_loam_cost_registered.py + test_AC_OSS_M3_loam_correction_registered.py + test_AC_OSS_M3_loam_reversibility_registered.py [covers both loam-reversibility + loam-rollback]) + editable-install refresh per touched component (pip install -e framework/<comp>/ for safety-layer + cost-governance + self-correction + reversibility-primitive). Naming convention loam-* per master plan §5 M3 row + post-M1g rebrand (deviates from feature-usage-audit's in-text pos-* suggestion which pre-dates M1g; master plan + dispatch authoritative per plan §10 D-build.M3.5). Existing pos-* binaries (pos-obs + pos-bootstrap + pos-sync + pos-workspace-sync + pos) STAY on pos-* per M1g FIDRAFT-deferral — out of M3 scope. Socket env-var POS_SOCKET_PATH preserved in new shims per plan §10 D-build.M3.2 (M1b did NOT rename it; safety CLI still reads POS_SOCKET_PATH; consistency preserved). AC.OSS.2 (D-3 from feature-usage audit — per-component CLIs were authored but unregistered; M3 lands the registrations). Sealed-component fence: 4 components — safety-layer + cost-governance + self-correction + reversibility-primitive (HOL narrative-target only; not in components per plan §10 D-build.M3.4). HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE (no HC#4 sample paths under any of the 4 touched components impacted by M3 diff; verified at plan-authoring per plan §11 finding #6). — safety-layer+cost-governance+self-correction+reversibility-primitive at cf919e2`
 ## 15. References
 
 - **Programme master plan:** `docs/rebuild/plans/oss-v0-1-0-publish.md`

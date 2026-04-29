@@ -156,8 +156,8 @@ class AuthoringPipeline:
         with obs.authoring_span(
             signal=trigger_signal.value,
             **{
-                "pos.persona.authoring.domain": domain,
-                "pos.persona.authoring.scope_id": authoring_scope_id,
+                "loam.persona.authoring.domain": domain,
+                "loam.persona.authoring.scope_id": authoring_scope_id,
             },
         ):
             try:

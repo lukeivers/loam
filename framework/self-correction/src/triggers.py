@@ -94,11 +94,11 @@ def build_trigger_from_span(*, span: Any) -> CorrectionTrigger:
     # failures on the same scope would dedup as distinct triggers);
     # the emitter surfaces the degradation instead of hiding it.
     try:
-        scope_id = span.attributes.get("pos.scope.id")
+        scope_id = span.attributes.get("loam.scope.id")
     except Exception as e:
         obs.span_attribute_lookup_failed(
             trigger_source=TriggerSource.otel_anomaly.value,
-            attribute_name="pos.scope.id",
+            attribute_name="loam.scope.id",
             exception_class=type(e).__name__,
         )
     name = getattr(span, "name", "") or ""

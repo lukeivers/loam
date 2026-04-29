@@ -69,9 +69,9 @@ async def test_create_emits_span(tracker, otel_exporter):
     create_spans = [s for s in spans if s.name == "objective_tracker.create"]
     assert len(create_spans) == 1
     attrs = dict(create_spans[0].attributes)
-    assert attrs["pos.objective.id"] == proj.objective_id
-    assert attrs["pos.objective.authored_by"] == "user"
-    assert attrs["pos.objective.outcome"] == "success"
+    assert attrs["loam.objective.id"] == proj.objective_id
+    assert attrs["loam.objective.authored_by"] == "user"
+    assert attrs["loam.objective.outcome"] == "success"
 
 
 async def test_mark_achieved_emits_span_and_state_event(tracker, otel_exporter):
@@ -114,8 +114,8 @@ async def test_bind_scope_emits_span(tracker, otel_exporter):
     bs = [s for s in spans if s.name == "objective_tracker.bind_scope"]
     assert len(bs) == 1
     attrs = dict(bs[0].attributes)
-    assert attrs["pos.scope.id"] == "scope-42"
-    assert attrs["pos.objective.id"] == root.objective_id
+    assert attrs["loam.scope.id"] == "scope-42"
+    assert attrs["loam.objective.id"] == root.objective_id
 
 
 async def test_evaluate_criterion_emits_span(tracker, otel_exporter):
@@ -132,7 +132,7 @@ async def test_evaluate_criterion_emits_span(tracker, otel_exporter):
     ev = [s for s in spans if s.name == "objective_tracker.evaluate_criterion"]
     assert len(ev) == 1
     attrs = dict(ev[0].attributes)
-    assert attrs["pos.objective.criterion_id"] == "p"
+    assert attrs["loam.objective.criterion_id"] == "p"
 
 
 async def test_error_path_emits_error_outcome(tracker, otel_exporter):
@@ -148,4 +148,4 @@ async def test_error_path_emits_error_outcome(tracker, otel_exporter):
     ma = [s for s in spans if s.name == "objective_tracker.mark_achieved"]
     assert len(ma) == 1
     attrs = dict(ma[0].attributes)
-    assert attrs["pos.objective.outcome"] == "error"
+    assert attrs["loam.objective.outcome"] == "error"

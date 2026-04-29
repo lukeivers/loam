@@ -50,7 +50,7 @@ class SpanFilter(BaseModel):
     attributes_match: dict[str, Any] | None = None  # exact attr equality
     has_event: str | None = None  # filter spans with an event of this name
     status: str | None = None  # OK | ERROR
-    scope_id: str | None = None  # convenience: matches pos.scope.id attr
+    scope_id: str | None = None  # convenience: matches loam.scope.id attr
     retention_class: RetentionClass | None = None
 
 
@@ -92,7 +92,7 @@ class QueryAPI:
         spans = [self._row_to_span(r) for r in rows]
         # In-process post-filters: attributes_match, has_event, name_pattern, scope_id.
         if f.scope_id:
-            spans = [s for s in spans if s.attributes.get("pos.scope.id") == f.scope_id]
+            spans = [s for s in spans if s.attributes.get("loam.scope.id") == f.scope_id]
         if f.attributes_match:
             spans = [
                 s for s in spans

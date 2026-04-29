@@ -79,7 +79,7 @@ class BootstrapHost:
         # Acquire bootstrap's own tracer — A1 constraint: do NOT
         # construct a TracerProvider here. The observability_aggregator
         # contribution sets the global provider; `get_tracer` late-binds.
-        self.tracer = trace.get_tracer("pos.bootstrap")
+        self.tracer = trace.get_tracer("loam.bootstrap")
 
         # Channel registry — adapters register notification channels
         # by name for discoverability and reuse.

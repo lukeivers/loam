@@ -6,7 +6,7 @@ invocation of ``pos rollback``:
 1. Revert symlink to the prior release tree.
 2. Restore every substrate snapshot (memory + four SQLite + DuckDB).
 3. Restart orchestrator on the prior release (if it had been stopped).
-4. Emit ``pos.upgrade.rolled_back`` OTel span.
+4. Emit ``loam.upgrade.rolled_back`` OTel span.
 5. Write ``<tag>-rolled-back.json`` history record.
 
 Failed-rollback path (prototype-only per Luke's ruling) is covered by
@@ -85,11 +85,11 @@ def rollback(
     )
 
     with otel_span(
-        "pos.upgrade.rolled_back",
+        "loam.upgrade.rolled_back",
         {
-            "pos.upgrade.tag": tag,
-            "pos.upgrade.prior_tag": prior_tag or "",
-            "pos.upgrade.failing_clauses": ",".join(failing_clauses),
+            "loam.upgrade.tag": tag,
+            "loam.upgrade.prior_tag": prior_tag or "",
+            "loam.upgrade.failing_clauses": ",".join(failing_clauses),
         },
     ):
         # Step 1: revert symlink to prior release

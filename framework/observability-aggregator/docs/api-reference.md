@@ -36,7 +36,7 @@ api.find_spans(SpanFilter(scope_id="scope_42"))
 api.find_spans(SpanFilter(name_pattern=r"ingest|rollup"))
 
 # Spans matching attribute values exactly.
-api.find_spans(SpanFilter(attributes_match={"pos.objective.id": "obj_99"}))
+api.find_spans(SpanFilter(attributes_match={"loam.objective.id": "obj_99"}))
 
 # Spans with at least one event of a given name.
 api.find_spans(SpanFilter(has_event="state_changed"))
@@ -70,13 +70,13 @@ api.find_events(EventFilter(span_ids=["a1b2c3d4e5f60001"]))
 # All state-changed events in a trace.
 api.find_events(EventFilter(
     trace_ids=["..."],
-    name_exact="pos.scope.state_changed",
+    name_exact="loam.scope.state_changed",
 ))
 ```
 
 ### cost_by_prompt(time_range=None, components=None, pricing=None) → dict[str, PromptCost]
 
-v1.1 R12 — workspace-scoped cost attribution by `pos.prompt.type`.
+v1.1 R12 — workspace-scoped cost attribution by `loam.prompt.type`.
 
 ```python
 # All-time cost grouped by prompt name.
@@ -116,7 +116,7 @@ for event in rep.events: ...      # ordered by time
 rep.cost_summary                  # dict[prompt_name, PromptCost]
 ```
 
-Session ID derivation: spans carry `pos.session.id` attribute (set by primary-persona's monitor), or `session_id` is treated as a trace_id alias.
+Session ID derivation: spans carry `loam.session.id` attribute (set by primary-persona's monitor), or `session_id` is treated as a trace_id alias.
 
 ### replay_scope(scope_id) → ScopeReplay
 
@@ -156,7 +156,7 @@ class SpanFilter(BaseModel):
     attributes_match: dict[str, Any] | None = None
     has_event: str | None = None
     status: str | None = None             # OK | ERROR
-    scope_id: str | None = None           # convenience for pos.scope.id
+    scope_id: str | None = None           # convenience for loam.scope.id
     retention_class: RetentionClass | None = None
 ```
 

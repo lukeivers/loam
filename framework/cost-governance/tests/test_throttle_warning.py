@@ -82,7 +82,7 @@ def test_C14_warning_on_zero_pre_existing_spend(store: CostStore) -> None:
 
 
 def test_C14_warning_emits_before_reservation_row_written(tmp_path: Path) -> None:
-    """C14 ordering sub-behaviour: the `pos.cost.ceiling_warning`
+    """C14 ordering sub-behaviour: the `loam.cost.ceiling_warning`
     event is emitted BEFORE the `reservations` row is written.
 
     The assertion is a shared ordered trace across two documented

@@ -40,8 +40,8 @@ The tracker has four layers: the event log, the projection cache, the sidecar bi
 
              ▲                                    │
              │ pyee async fan-out                 │  OTel spans + events
-             │ (subscribe / subscribe_all /       │  (pos.objective.*
-             │  subscribe_scope_emitter)          │   pos.scope.*)
+             │ (subscribe / subscribe_all /       │  (loam.objective.*
+             │  subscribe_scope_emitter)          │   loam.scope.*)
              │                                    ▼
    Consumers (ODD harnesses,            Tracing backend / no-op
     dispatch layer, self-correction     (A1: no consumer required)
@@ -60,7 +60,7 @@ The tracker has four layers: the event log, the projection cache, the sidecar bi
 
 **SQLite WAL:** matches scope-of-work's pattern. Read-concurrent, write-serialised, one connection per tracker instance protected by a thread lock. Wrapped by `asyncio.Lock` at the runtime boundary so concurrent async callers can mutate different objectives simultaneously.
 
-**OTel spans (observability.py):** one INTERNAL span per public operation. Attributes are namespaced `pos.objective.*` and `pos.scope.*`. State transitions are emitted as span events on the operation's span. `pos.objective.outcome = success | error` is set automatically — errors set it to `error` and mark the span status as error.
+**OTel spans (observability.py):** one INTERNAL span per public operation. Attributes are namespaced `loam.objective.*` and `loam.scope.*`. State transitions are emitted as span events on the operation's span. `loam.objective.outcome = success | error` is set automatically — errors set it to `error` and mark the span status as error.
 
 **pyee emitter:** two channels — `objective:{id}` (per-objective) and `*` (global). Consumers subscribe via `subscribe(objective_id, cb)` or `subscribe_all(cb)`. The tracker itself subscribes to scope-of-work's emitter (via `subscribe_scope_emitter`) to auto-evaluate `ScopeSuccessCriterion`.
 

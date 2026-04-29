@@ -51,10 +51,10 @@ def test_loader_emits_span(
     )
     loader.load()
     spans = span_exporter_clean.get_finished_spans()
-    loader_spans = [s for s in spans if s.name == "pos.persona.loader"]
+    loader_spans = [s for s in spans if s.name == "loam.persona.loader"]
     assert len(loader_spans) >= 1
-    assert loader_spans[-1].attributes.get("pos.persona.load.outcome") == "loaded"
-    assert loader_spans[-1].attributes.get("pos.persona.load.count") == 1
+    assert loader_spans[-1].attributes.get("loam.persona.load.outcome") == "loaded"
+    assert loader_spans[-1].attributes.get("loam.persona.load.count") == 1
 
 
 def test_loader_failure_span_records_missing_dir(
@@ -66,9 +66,9 @@ def test_loader_failure_span_records_missing_dir(
     with pytest.raises(PersonaDirectoryNotFoundError):
         loader.load()
     spans = span_exporter_clean.get_finished_spans()
-    loader_spans = [s for s in spans if s.name == "pos.persona.loader"]
+    loader_spans = [s for s in spans if s.name == "loam.persona.loader"]
     assert any(
-        s.attributes.get("pos.persona.load.outcome") == "missing_dir"
+        s.attributes.get("loam.persona.load.outcome") == "missing_dir"
         for s in loader_spans
     )
 
@@ -89,10 +89,10 @@ async def test_monitor_injection_event_emitted(
         ev
         for span in spans
         for ev in span.events
-        if ev.name == "pos.persona.monitor.inject"
+        if ev.name == "loam.persona.monitor.inject"
     ]
     assert any(
-        ev.attributes.get("pos.persona.monitor.turn_id") == "turn-xyz"
+        ev.attributes.get("loam.persona.monitor.turn_id") == "turn-xyz"
         for ev in injection_events
     )
 
@@ -110,7 +110,7 @@ async def test_monitor_tick_event_emitted(
         ev
         for span in spans
         for ev in span.events
-        if ev.name == "pos.persona.monitor.tick"
+        if ev.name == "loam.persona.monitor.tick"
     ]
     assert len(tick_events) >= 1
 
@@ -191,18 +191,18 @@ async def test_authoring_span_with_step_children(
 
     spans = span_exporter_clean.get_finished_spans()
     names = {s.name for s in spans}
-    assert "pos.persona.authoring" in names
-    assert "pos.persona.authoring.style_harvest" in names
-    assert "pos.persona.authoring.domain_research" in names
-    assert "pos.persona.authoring.contract_synthesis" in names
-    assert "pos.persona.authoring.self_review" in names
+    assert "loam.persona.authoring" in names
+    assert "loam.persona.authoring.style_harvest" in names
+    assert "loam.persona.authoring.domain_research" in names
+    assert "loam.persona.authoring.contract_synthesis" in names
+    assert "loam.persona.authoring.self_review" in names
 
     # Self-review verdict event attached to its span.
     review_events = [
         ev
         for s in spans
         for ev in s.events
-        if ev.name == "pos.persona.authoring.self_review"
+        if ev.name == "loam.persona.authoring.self_review"
     ]
     assert len(review_events) >= 1
 
@@ -247,12 +247,12 @@ async def test_introduction_event_names_handle_and_channel(
         ev
         for s in spans
         for ev in s.events
-        if ev.name == "pos.persona.introduction.dispatched"
+        if ev.name == "loam.persona.introduction.dispatched"
     ]
     assert len(intro_events) >= 1
     ev = intro_events[-1]
-    assert ev.attributes.get("pos.persona.introduction.handle") == "sip"
-    assert ev.attributes.get("pos.persona.introduction.channel") == "t"
+    assert ev.attributes.get("loam.persona.introduction.handle") == "sip"
+    assert ev.attributes.get("loam.persona.introduction.channel") == "t"
 
 
 # ---- retirement event -----------------------------------------------
@@ -272,12 +272,12 @@ def test_retirement_event_names_handle_and_reason(
         ev
         for s in spans
         for ev in s.events
-        if ev.name == "pos.persona.retired"
+        if ev.name == "loam.persona.retired"
     ]
     assert len(retired_events) >= 1
     ev = retired_events[-1]
-    assert ev.attributes.get("pos.persona.retirement.handle") == "mara"
-    assert ev.attributes.get("pos.persona.retirement.reason") == "user_initiated"
+    assert ev.attributes.get("loam.persona.retirement.handle") == "mara"
+    assert ev.attributes.get("loam.persona.retirement.reason") == "user_initiated"
 
 
 # ---- emission without consumer --------------------------------------

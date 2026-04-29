@@ -136,7 +136,7 @@ See also **B25** (§4.8) for the complementary framework-internal phase-set crit
 ### 4.6 Cross-cutting integration
 
 - **B20.** `git diff --stat ac48a7b..<bootstrap-seal>` shows only `workspace-bootstrap/` changes (plus `data/` if runtime test output lands there). Zero deltas to any sealed component.
-- **B21.** OTel spans flow through the observability aggregator's registered tracer provider; bootstrap emits its own `pos.bootstrap.*` spans (`contribution_started`, `contribution_completed`, `contribution_failed`, `ordering_resolved`, `phase_complete`).
+- **B21.** OTel spans flow through the observability aggregator's registered tracer provider; bootstrap emits its own `loam.bootstrap.*` spans (`contribution_started`, `contribution_completed`, `contribution_failed`, `ordering_resolved`, `phase_complete`).
 - **B22.** Zero imports from current-gen Ruby pOS rules-file machinery.
 
 ### 4.7 Seal-test pattern + structural defences
@@ -188,7 +188,7 @@ See also **B25** (§4.8) for the complementary framework-internal phase-set crit
 - **Compose with existing `~/.pos/bootstrap.py`** — adapter #12 (`workspace_bootstrap_py`) preserves the orchestrator's existing loader.
 - **Seal-test pattern mandatory** — `SEAL_COMMIT` sidecar-file.
 - **Max-first.** No LLM inference inside the framework.
-- **A1 correction held.** `trace.get_tracer("pos.bootstrap")`; no TracerProvider construction.
+- **A1 correction held.** `trace.get_tracer("loam.bootstrap")`; no TracerProvider construction.
 - **Zero carryover from current pOS.**
 - **Halt on deviation.**
 
@@ -196,7 +196,7 @@ See also **B25** (§4.8) for the complementary framework-internal phase-set crit
 
 ## 6. File layout
 
-Builder's call. The component should follow the one-package pattern established in the prior ten sealed components — `src/` for implementation, `tests/` for tests, `pyproject.toml` declaring the `pos.bootstrap` entry-point group. File partition inside `src/` is a cohesion judgement the builder makes; the acceptance criteria in §4 define what must be true, not how the code is split.
+Builder's call. The component should follow the one-package pattern established in the prior ten sealed components — `src/` for implementation, `tests/` for tests, `pyproject.toml` declaring the `loam.bootstrap` entry-point group. File partition inside `src/` is a cohesion judgement the builder makes; the acceptance criteria in §4 define what must be true, not how the code is split.
 
 One output artefact that is a contract rather than an implementation detail: a short `docs/` or top-level document describing how a Phase 4+ component adds itself (one adapter file in their package, one entry-point line in their `pyproject.toml`, one line in the workspace's `bootstrap.yaml`). This is the public face of the extension protocol; it ships with the component.
 

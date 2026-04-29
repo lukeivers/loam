@@ -23,7 +23,7 @@ There are two ingest paths. Both write to the same store; both honour v1.1 R10 r
 
 **Path B — JSONL tailers for memory-system.** Memory writes `spans.jsonl`, `tokens.jsonl`, and `audit.jsonl` to its own observability sink directory. Three `JSONLTailer` instances watch those files, normalise each new record into the canonical Pydantic schema, and insert into the store. Each tailer persists a byte-offset cursor so a restart resumes where it left off; file truncation (memory-system data clear, log rotation) is detected and reset gracefully. Malformed lines are logged and skipped — never fatal.
 
-The aggregator's own spans are filtered at the exporter and the spool drainer using a tracer-name prefix match (`pos.aggregator.*`). Without this filter, every NL query would emit translate/format spans which would be ingested which would generate more spans — an infinite observation loop. The filter makes the aggregator's emissions diagnosable via the on-disk spool but invisible to the store.
+The aggregator's own spans are filtered at the exporter and the spool drainer using a tracer-name prefix match (`loam.aggregator.*`). Without this filter, every NL query would emit translate/format spans which would be ingested which would generate more spans — an infinite observation loop. The filter makes the aggregator's emissions diagnosable via the on-disk spool but invisible to the store.
 
 ## Storage substrate
 
@@ -42,7 +42,7 @@ The `RetentionJob` is idempotent — re-running it produces the same rollup tabl
 
 ## Retention class — v1.1 R10 honoured at ingest
 
-Every record carries a retention class — `normal`, `derived-only`, or `ephemeral`. The class is read from a `pos.retention.class` attribute on the source span (memory's records carry it as a top-level field; OTel components set it as a span attribute). Ingest applies the class strictly:
+Every record carries a retention class — `normal`, `derived-only`, or `ephemeral`. The class is read from a `loam.retention.class` attribute on the source span (memory's records carry it as a top-level field; OTel components set it as a span attribute). Ingest applies the class strictly:
 
 - `normal` → stored fully, payload preserved.
 - `derived-only` → payload attributes (`inputs`, `outputs`, `prompt`, `completion`, etc.) dropped before insert. Structural metadata (tracer name, component, scope ID, span name, status, timing) preserved.
@@ -54,7 +54,7 @@ Privacy verification: workloads producing `derived-only` and `ephemeral` records
 
 The structured Pydantic API is the canonical surface. Every other consumer composes over it. `find_spans(filter)`, `get_trace(trace_id)`, `get_span(span_id)`, `find_events(filter)`, `cost_by_prompt(window)`, `audit_search(...)`, plus three replay primitives — `replay_session(session_id)`, `replay_scope(scope_id)`, `replay_objective(objective_id)`. All inputs and outputs are Pydantic-validated.
 
-The natural-language path is the "show me why" surface for the primary persona. A two-LLM-call pattern: `nl_translate(question)` produces a structured Pydantic filter; the filter is executed against the structured API; `nl_format(rows, question)` produces a cited natural-language answer with span IDs always carried through. Both calls carry `pos.prompt.type` attributes (`obs-nl-translate`, `obs-nl-format`) so the aggregator's own LLM cost shows up in `cost_by_prompt` — reflexive cost attribution per v1.1 R12. A rule-based translator is the default (deterministic, no external dependency, evaluated on a 25-question corpus at ≥80% accuracy); production deployments wire Claude-via-Max via the `llm_translate` and `llm_format` callables.
+The natural-language path is the "show me why" surface for the primary persona. A two-LLM-call pattern: `nl_translate(question)` produces a structured Pydantic filter; the filter is executed against the structured API; `nl_format(rows, question)` produces a cited natural-language answer with span IDs always carried through. Both calls carry `loam.prompt.type` attributes (`obs-nl-translate`, `obs-nl-format`) so the aggregator's own LLM cost shows up in `cost_by_prompt` — reflexive cost attribution per v1.1 R12. A rule-based translator is the default (deterministic, no external dependency, evaluated on a 25-question corpus at ≥80% accuracy); production deployments wire Claude-via-Max via the `llm_translate` and `llm_format` callables.
 
 The `pos obs` CLI is a thin wrapper over the structured API — one subcommand per method, plus `pos obs why "<question>"` for the NL path. Output is JSON, pretty-printed by default; `--raw` for one-line.
 

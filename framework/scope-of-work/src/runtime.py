@@ -537,17 +537,17 @@ class ScopeRuntime:
             obs.set_span_attrs(
                 span,
                 **{
-                    "pos.scope.budget.tokens.remaining": (
+                    "loam.scope.budget.tokens.remaining": (
                         remaining_for_axis(proj, BudgetAxis.tokens)
                     ),
-                    "pos.scope.budget.money.remaining_cents": (
+                    "loam.scope.budget.money.remaining_cents": (
                         remaining_for_axis(proj, BudgetAxis.money)
                     ),
-                    "pos.scope.budget.time.remaining_seconds": (
+                    "loam.scope.budget.time.remaining_seconds": (
                         remaining_for_axis(proj, BudgetAxis.time)
                     ),
-                    "pos.scope.success_criteria.met": len(proj.success_criteria_met),
-                    "pos.scope.success_criteria.total": len(proj.success_criteria_ids),
+                    "loam.scope.success_criteria.met": len(proj.success_criteria_met),
+                    "loam.scope.success_criteria.total": len(proj.success_criteria_ids),
                 },
             )
             if to_state == ScopeState.failed:

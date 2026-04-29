@@ -1,10 +1,10 @@
 """OTel span emitters for self-correction.
 
-Uses `trace.get_tracer("pos.self_correction")` only — no TracerProvider
+Uses `trace.get_tracer("loam.self_correction")` only — no TracerProvider
 is constructed here (A1 correction, brief hard constraint). Span
-namespace: `pos.correction.*` (Eve-inference #8 — kept; consistent with
-the cost-governance parallel where tracer=`pos.cost_governance` and
-spans=`pos.cost.*`).
+namespace: `loam.correction.*` (Eve-inference #8 — kept; consistent with
+the cost-governance parallel where tracer=`loam.cost_governance` and
+spans=`loam.cost.*`).
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import Any
 from opentelemetry import trace
 
 
-_TRACER = trace.get_tracer("pos.self_correction", "0.1.0")
+_TRACER = trace.get_tracer("loam.self_correction", "0.1.0")
 
 
 def _set(span: trace.Span, attrs: dict[str, Any]) -> None:
@@ -34,14 +34,14 @@ def trigger_received(
     scope_id: str | None,
     failure_class_hint: str | None,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.correction.trigger_received") as span:
+    with _TRACER.start_as_current_span("loam.correction.trigger_received") as span:
         _set(
             span,
             {
-                "pos.correction.trigger_id": trigger_id,
-                "pos.correction.trigger_source": source,
-                "pos.correction.scope_id": scope_id,
-                "pos.correction.failure_class_hint": failure_class_hint,
+                "loam.correction.trigger_id": trigger_id,
+                "loam.correction.trigger_source": source,
+                "loam.correction.scope_id": scope_id,
+                "loam.correction.failure_class_hint": failure_class_hint,
             },
         )
 
@@ -49,13 +49,13 @@ def trigger_received(
 def trigger_deduplicated(
     *, trigger_id: str, dedup_key: str, source: str
 ) -> None:
-    with _TRACER.start_as_current_span("pos.correction.trigger_deduplicated") as span:
+    with _TRACER.start_as_current_span("loam.correction.trigger_deduplicated") as span:
         _set(
             span,
             {
-                "pos.correction.trigger_id": trigger_id,
-                "pos.correction.dedup_key": dedup_key,
-                "pos.correction.trigger_source": source,
+                "loam.correction.trigger_id": trigger_id,
+                "loam.correction.dedup_key": dedup_key,
+                "loam.correction.trigger_source": source,
             },
         )
 
@@ -67,14 +67,14 @@ def episode_opened(
     parent_correction_id: str | None,
     failure_class: str,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.correction.episode_opened") as span:
+    with _TRACER.start_as_current_span("loam.correction.episode_opened") as span:
         _set(
             span,
             {
-                "pos.correction.episode_id": episode_id,
-                "pos.correction.scope_id": correction_scope_id,
-                "pos.correction.parent_correction_id": parent_correction_id,
-                "pos.correction.failure_class": failure_class,
+                "loam.correction.episode_id": episode_id,
+                "loam.correction.scope_id": correction_scope_id,
+                "loam.correction.parent_correction_id": parent_correction_id,
+                "loam.correction.failure_class": failure_class,
             },
         )
 
@@ -86,14 +86,14 @@ def episode_closed(
     failure_class: str,
     records_present: int,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.correction.closed") as span:
+    with _TRACER.start_as_current_span("loam.correction.closed") as span:
         _set(
             span,
             {
-                "pos.correction.episode_id": episode_id,
-                "pos.correction.scope_id": correction_scope_id,
-                "pos.correction.failure_class": failure_class,
-                "pos.correction.records_present": records_present,
+                "loam.correction.episode_id": episode_id,
+                "loam.correction.scope_id": correction_scope_id,
+                "loam.correction.failure_class": failure_class,
+                "loam.correction.records_present": records_present,
             },
         )
 
@@ -105,13 +105,13 @@ def episode_refused(
     code: int,
     details: dict[str, Any] | None = None,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.correction.episode_refused") as span:
+    with _TRACER.start_as_current_span("loam.correction.episode_refused") as span:
         _set(
             span,
             {
-                "pos.correction.episode_id": episode_id,
-                "pos.correction.refusal_reason": reason,
-                "pos.correction.refusal_code": code,
+                "loam.correction.episode_id": episode_id,
+                "loam.correction.refusal_reason": reason,
+                "loam.correction.refusal_code": code,
                 **(details or {}),
             },
         )
@@ -137,15 +137,15 @@ def cascade_escalated(
     depth: int | None,
     window_count: int | None,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.correction.cascade_escalated") as span:
+    with _TRACER.start_as_current_span("loam.correction.cascade_escalated") as span:
         _set(
             span,
             {
-                "pos.correction.cascade_kind": kind,
-                "pos.correction.failure_class": failure_class,
-                "pos.correction.parent_correction_id": parent_correction_id,
-                "pos.correction.depth": depth,
-                "pos.correction.window_count": window_count,
+                "loam.correction.cascade_kind": kind,
+                "loam.correction.failure_class": failure_class,
+                "loam.correction.parent_correction_id": parent_correction_id,
+                "loam.correction.depth": depth,
+                "loam.correction.window_count": window_count,
             },
         )
 
@@ -156,13 +156,13 @@ def cost_refusal_caught(
     code: int,
     message: str,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.correction.cost_refusal_caught") as span:
+    with _TRACER.start_as_current_span("loam.correction.cost_refusal_caught") as span:
         _set(
             span,
             {
-                "pos.correction.episode_id": episode_id,
-                "pos.correction.cost_refusal_code": code,
-                "pos.correction.cost_refusal_message": message,
+                "loam.correction.episode_id": episode_id,
+                "loam.correction.cost_refusal_code": code,
+                "loam.correction.cost_refusal_message": message,
             },
         )
         # Amendment #20 — Site 5: same pattern as Site 4 (episode_refused).
@@ -181,12 +181,12 @@ def record_part_persisted(
     episode_id: str,
     record_type: str,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.correction.record_persisted") as span:
+    with _TRACER.start_as_current_span("loam.correction.record_persisted") as span:
         _set(
             span,
             {
-                "pos.correction.episode_id": episode_id,
-                "pos.correction.record_type": record_type,
+                "loam.correction.episode_id": episode_id,
+                "loam.correction.record_type": record_type,
             },
         )
 
@@ -211,14 +211,14 @@ def span_attribute_lookup_failed(
     now observable instead of silently breaking dedup.
     """
     with _TRACER.start_as_current_span(
-        "pos.correction.span_attribute_lookup_failed"
+        "loam.correction.span_attribute_lookup_failed"
     ) as span:
         _set(
             span,
             {
-                "pos.correction.trigger_source": trigger_source,
-                "pos.correction.attribute_name": attribute_name,
-                "pos.correction.exception_class": exception_class,
+                "loam.correction.trigger_source": trigger_source,
+                "loam.correction.attribute_name": attribute_name,
+                "loam.correction.exception_class": exception_class,
             },
         )
 
@@ -234,12 +234,12 @@ def poll_tick(
     sleep-with-early-wake control flow via `asyncio.wait_for` +
     `_stopped.wait()`). Liveness is now observable.
     """
-    with _TRACER.start_as_current_span("pos.correction.poll_tick") as span:
+    with _TRACER.start_as_current_span("loam.correction.poll_tick") as span:
         _set(
             span,
             {
-                "pos.correction.poller_name": poller_name,
-                "pos.correction.poll_interval_seconds": interval_seconds,
+                "loam.correction.poller_name": poller_name,
+                "loam.correction.poll_interval_seconds": interval_seconds,
             },
         )
 
@@ -255,9 +255,9 @@ def audit_notify_no_loop(
     loop existed to schedule it on.
     """
     with _TRACER.start_as_current_span(
-        "pos.correction.audit_notify_no_loop"
+        "loam.correction.audit_notify_no_loop"
     ) as span:
         _set(
             span,
-            {"pos.correction.episode_id": episode_id},
+            {"loam.correction.episode_id": episode_id},
         )

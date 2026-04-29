@@ -2,7 +2,7 @@
 
 Phase: before_orchestrator_start.
 Role: register the shared TracerProvider so every later span emitter
-(including bootstrap's own `pos.bootstrap.*` spans) lands in the
+(including bootstrap's own `loam.bootstrap.*` spans) lands in the
 aggregator spool.
 
 The sealed aggregator exposes `register_otel_provider(spool_path, ...)`

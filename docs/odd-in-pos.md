@@ -97,7 +97,7 @@ Each one is test-shaped. A1 reads:
 
 > **A1.** Scope kill issued against an active scope transitions the scope
 > and its TERMINATE-policy children to `cancelled` within 500ms p95.
-> Emits `pos.safety.scope_kill` span with level + reason + source. Writes a
+> Emits `loam.safety.scope_kill` span with level + reason + source. Writes a
 > `kill_events` row.
 
 The test writes itself: fire a scope kill, assert state transition, assert
@@ -252,7 +252,7 @@ The criterion as written:
 
 > **C14.** When a prospective reservation would push aggregate spend ≥ 80%
 > of any ceiling (session or rolling), the ledger emits
-> `pos.cost.ceiling_warning` and dispatches a single notification via the
+> `loam.cost.ceiling_warning` and dispatches a single notification via the
 > `OneOnOneChannel` (group-channel refusal inherited). The warning fires
 > **before the reservation is written** — so a scope that activates at 85%
 > of cap triggers the warning once, not repeatedly per debit.

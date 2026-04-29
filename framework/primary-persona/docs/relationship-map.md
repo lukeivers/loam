@@ -41,20 +41,20 @@ Until then, emission succeeds silently with no consumer (A1
 correction).
 
 Emitted spans:
-- `pos.persona.loader`
-- `pos.persona.monitor.snapshot`
-- `pos.persona.monitor.tick`
-- `pos.persona.authoring`
-- `pos.persona.authoring.{style_harvest,domain_research,contract_synthesis,self_review}`
-- `pos.persona.introduction`
-- `pos.persona.retirement`
+- `loam.persona.loader`
+- `loam.persona.monitor.snapshot`
+- `loam.persona.monitor.tick`
+- `loam.persona.authoring`
+- `loam.persona.authoring.{style_harvest,domain_research,contract_synthesis,self_review}`
+- `loam.persona.introduction`
+- `loam.persona.retirement`
 
 Emitted events:
-- `pos.persona.monitor.tick` (per tick, with category counts)
-- `pos.persona.monitor.inject` (per UserPromptSubmit)
-- `pos.persona.authoring.self_review` (per iteration, with verdict)
-- `pos.persona.introduction.dispatched`
-- `pos.persona.retired`
+- `loam.persona.monitor.tick` (per tick, with category counts)
+- `loam.persona.monitor.inject` (per UserPromptSubmit)
+- `loam.persona.authoring.self_review` (per iteration, with verdict)
+- `loam.persona.introduction.dispatched`
+- `loam.persona.retired`
 
 ### safety layer (future)
 
@@ -77,7 +77,7 @@ Per-prompt aggregation (v1.1 R12) via
 ### self-correction loop (future)
 
 When a self-correction loop component is built, it will subscribe
-to `pos.persona.authoring.self_review` events where the verdict was
+to `loam.persona.authoring.self_review` events where the verdict was
 "failed" — the rejection signal is the material the correction
 loop learns from. The current layer records the events; no direct
 wire is required.

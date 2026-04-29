@@ -589,11 +589,11 @@ def _execute_sync(
             workspace_root,
         )
         with otel_span(
-            "pos.sync.fast_forward",
+            "loam.sync.fast_forward",
             {
-                "pos.sync.from_sha": pre_merge_sha,
-                "pos.sync.to_sha": new_head,
-                "pos.sync.branch": branch,
+                "loam.sync.from_sha": pre_merge_sha,
+                "loam.sync.to_sha": new_head,
+                "loam.sync.branch": branch,
             },
         ):
             pass
@@ -971,12 +971,12 @@ def main(argv: list[str] | None = None) -> int:
         budget_override = None
 
     with otel_span(
-        "pos.sync.started",
+        "loam.sync.started",
         {
-            "pos.sync.workspace_root": str(workspace_root),
-            "pos.sync.canonical_source": canonical_url_or_path,
-            "pos.sync.canonical_kind": kind,
-            "pos.sync.ref_arg": args.ref or "canonical/HEAD",
+            "loam.sync.workspace_root": str(workspace_root),
+            "loam.sync.canonical_source": canonical_url_or_path,
+            "loam.sync.canonical_kind": kind,
+            "loam.sync.ref_arg": args.ref or "canonical/HEAD",
         },
     ):
         return _execute_sync(

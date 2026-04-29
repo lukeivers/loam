@@ -62,7 +62,7 @@ def otel_exporter(monkeypatch):
     exporter = InMemorySpanExporter()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     monkeypatch.setattr(
-        gd_obs, "_TRACER", provider.get_tracer("pos.degradation", "0.1.0")
+        gd_obs, "_TRACER", provider.get_tracer("loam.degradation", "0.1.0")
     )
     yield exporter
     exporter.clear()

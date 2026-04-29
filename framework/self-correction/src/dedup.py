@@ -2,7 +2,7 @@
 
 The dedup key is SHA-256 of `(scope_id, source, normalised_reason)`.
 Two identical triggers within the TTL produce exactly one episode; the
-second emits `pos.correction.trigger_deduplicated` and persists to the
+second emits `loam.correction.trigger_deduplicated` and persists to the
 dedup table.
 
 `normalised_reason` is a lowercased, trimmed, whitespace-collapsed

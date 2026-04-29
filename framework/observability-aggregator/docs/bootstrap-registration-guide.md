@@ -38,7 +38,7 @@ The orchestrator calls `register(self)` once at startup. From that point on:
 
 Python OTel's `trace.get_tracer(name)` returns a `ProxyTracer` when no provider is installed. The proxy delegates to whatever provider is set on first span emission. This means:
 
-- A sealed component can call `_TRACER = trace.get_tracer("pos.scope_of_work")` at module import time (before our bootstrap runs).
+- A sealed component can call `_TRACER = trace.get_tracer("loam.scope_of_work")` at module import time (before our bootstrap runs).
 - Our bootstrap can call `set_tracer_provider(...)` later.
 - The first span emitted from `_TRACER` after our `set_tracer_provider` call will route through our exporter.
 
@@ -70,7 +70,7 @@ cfg = AggregatorConfig(
         spool_path=None,                      # default ~/.loam/obs_spool.jsonl
         batch_size=256,
         batch_interval_seconds=2.0,
-        self_namespace_prefix="pos.aggregator",
+        self_namespace_prefix="loam.aggregator",
     ),
 )
 ```
@@ -117,7 +117,7 @@ from opentelemetry import trace
 from pos_observability_aggregator import open_store
 from pos_observability_aggregator.api import QueryAPI, SpanFilter
 
-tracer = trace.get_tracer("pos.scope_of_work")
+tracer = trace.get_tracer("loam.scope_of_work")
 with tracer.start_as_current_span("install_smoke_test"):
     pass
 

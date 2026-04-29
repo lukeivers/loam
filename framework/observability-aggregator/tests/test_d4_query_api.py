@@ -19,11 +19,11 @@ from pos_observability_aggregator.schema import (
 )
 
 
-def _span(span_id: str, name: str, *, scope_id=None, status="OK", attrs=None, comp="scope_of_work", tracer="pos.scope_of_work"):
+def _span(span_id: str, name: str, *, scope_id=None, status="OK", attrs=None, comp="scope_of_work", tracer="loam.scope_of_work"):
     now_ns = int(time.time() * 1e9)
     a = dict(attrs or {})
     if scope_id:
-        a["pos.scope.id"] = scope_id
+        a["loam.scope.id"] = scope_id
     return SpanRecord(
         trace_id="t" * 32,
         span_id=span_id,
@@ -39,7 +39,7 @@ def _span(span_id: str, name: str, *, scope_id=None, status="OK", attrs=None, co
 
 def test_find_spans_by_component(store):
     store.insert_span(_span("a" * 16, "op_a"))
-    store.insert_span(_span("b" * 16, "op_b", comp="orchestrator", tracer="pos.orchestrator"))
+    store.insert_span(_span("b" * 16, "op_b", comp="orchestrator", tracer="loam.orchestrator"))
     api = QueryAPI(store)
     res = api.find_spans(SpanFilter(components=["scope_of_work"]))
     assert {s.span_id for s in res} == {"a" * 16}
@@ -66,13 +66,13 @@ def test_find_spans_by_scope_id_via_attr(store):
 def test_find_spans_by_time_range(store):
     now = int(time.time() * 1e9)
     s_old = SpanRecord(
-        trace_id="t" * 32, span_id="a" * 16, name="old", tracer_name="pos.scope_of_work",
+        trace_id="t" * 32, span_id="a" * 16, name="old", tracer_name="loam.scope_of_work",
         component="scope_of_work",
         start_time_unix_nano=now - 86_400_000_000_000,
         end_time_unix_nano=now - 86_400_000_000_000 + 1000,
     )
     s_new = SpanRecord(
-        trace_id="t" * 32, span_id="b" * 16, name="new", tracer_name="pos.scope_of_work",
+        trace_id="t" * 32, span_id="b" * 16, name="new", tracer_name="loam.scope_of_work",
         component="scope_of_work",
         start_time_unix_nano=now, end_time_unix_nano=now + 1000,
     )

@@ -81,8 +81,8 @@ T8  Caller: rt.complete(research.id)
     └─→ ScopeRuntime
         ├─ append: StateTransitioned(active → completed)
         ├─ project: state = completed, active_cumulative_seconds = T8 - T1
-        ├─ set_span_attrs: pos.scope.budget.tokens.remaining = 6000,
-                           pos.scope.success_criteria.met = 1
+        ├─ set_span_attrs: loam.scope.budget.tokens.remaining = 6000,
+                           loam.scope.success_criteria.met = 1
         ├─ end_span(invoke_scope)
         └─ pyee.emit("scope:research", StateTransitioned)
 ```

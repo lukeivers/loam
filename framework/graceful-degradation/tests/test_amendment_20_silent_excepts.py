@@ -49,7 +49,7 @@ def setup_gd_exporter(monkeypatch):
     monkeypatch.setattr(
         gd_obs,
         "_TRACER",
-        provider.get_tracer("pos.degradation", "0.1.0"),
+        provider.get_tracer("loam.degradation", "0.1.0"),
     )
     yield exporter
     exporter.clear()
@@ -123,13 +123,13 @@ def test_S2_site6_any_paused_scope_user_relevant_surfaces_lookup_failures(
     failure_spans = [
         s
         for s in setup_gd_exporter.get_finished_spans()
-        if s.name == "pos.degradation.scope_lookup_failed"
+        if s.name == "loam.degradation.scope_lookup_failed"
     ]
     assert len(failure_spans) == 1
     attrs = dict(failure_spans[0].attributes or {})
-    assert attrs.get("pos.degradation.episode_id") == "ep-relevance"
-    assert attrs.get("pos.degradation.scope_id") == "s-raise"
-    assert attrs.get("pos.degradation.exception_class") == "RuntimeError"
+    assert attrs.get("loam.degradation.episode_id") == "ep-relevance"
+    assert attrs.get("loam.degradation.scope_id") == "s-raise"
+    assert attrs.get("loam.degradation.exception_class") == "RuntimeError"
 
 
 async def test_S2_site7_reconcile_on_startup_surfaces_invalid_stored_enum_values(
@@ -198,13 +198,13 @@ async def test_S2_site7_reconcile_on_startup_surfaces_invalid_stored_enum_values
     fail_spans = [
         s
         for s in setup_gd_exporter.get_finished_spans()
-        if s.name == "pos.degradation.reconcile_restore_failed"
+        if s.name == "loam.degradation.reconcile_restore_failed"
     ]
     assert len(fail_spans) == 1
     attrs = dict(fail_spans[0].attributes or {})
-    assert attrs.get("pos.degradation.episode_id") == "ep-drift"
-    assert attrs.get("pos.degradation.mode_value") == "not-a-real-mode"
-    assert attrs.get("pos.degradation.exception_class") == "ValueError"
+    assert attrs.get("loam.degradation.episode_id") == "ep-drift"
+    assert attrs.get("loam.degradation.mode_value") == "not-a-real-mode"
+    assert attrs.get("loam.degradation.exception_class") == "ValueError"
 
 
 def test_S2_site8_episode_started_surfaces_paused_scope_ids_attr_failure(
@@ -226,7 +226,7 @@ def test_S2_site8_episode_started_surfaces_paused_scope_ids_attr_failure(
             self.events: list[tuple[str, dict]] = []
 
         def set_attribute(self, key, value):
-            if key == "pos.degradation.paused_scope_ids":
+            if key == "loam.degradation.paused_scope_ids":
                 raise RuntimeError("attr-set boom")
             return self._inner.set_attribute(key, value)
 

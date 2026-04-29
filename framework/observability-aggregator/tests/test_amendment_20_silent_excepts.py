@@ -30,7 +30,7 @@ def setup_nl_exporter(monkeypatch):
     monkeypatch.setattr(
         nl_path_mod,
         "_TRACER",
-        provider.get_tracer("pos.aggregator.nl", "0.1.0"),
+        provider.get_tracer("loam.aggregator.nl", "0.1.0"),
     )
     yield exporter
     exporter.clear()
@@ -40,7 +40,7 @@ def test_S2_site9_nl_translate_surfaces_llm_failure_on_fallback(
     store, setup_nl_exporter
 ) -> None:
     """Site 9 — a raising llm_translate lands llm_translate_failed as a
-    span event on the already-open pos.aggregator.nl_translate span;
+    span event on the already-open loam.aggregator.nl_translate span;
     the function still falls back to rule_based_translate."""
     api = QueryAPI(store)
 
@@ -57,7 +57,7 @@ def test_S2_site9_nl_translate_surfaces_llm_failure_on_fallback(
 
     spans = setup_nl_exporter.get_finished_spans()
     translate_spans = [
-        s for s in spans if s.name == "pos.aggregator.nl_translate"
+        s for s in spans if s.name == "loam.aggregator.nl_translate"
     ]
     assert len(translate_spans) == 1
     events = translate_spans[0].events
@@ -73,7 +73,7 @@ def test_S2_site10_nl_answer_surfaces_llm_failure_on_fallback(
     store, setup_nl_exporter
 ) -> None:
     """Site 10 — a raising llm_format lands llm_format_failed as a span
-    event on the pos.aggregator.nl_format span; the function still
+    event on the loam.aggregator.nl_format span; the function still
     falls back to format_cited_answer."""
     api = QueryAPI(store)
 
@@ -89,7 +89,7 @@ def test_S2_site10_nl_answer_surfaces_llm_failure_on_fallback(
     assert "no records" in answer.summary.lower()
 
     spans = setup_nl_exporter.get_finished_spans()
-    fmt_spans = [s for s in spans if s.name == "pos.aggregator.nl_format"]
+    fmt_spans = [s for s in spans if s.name == "loam.aggregator.nl_format"]
     assert len(fmt_spans) == 1
     events = fmt_spans[0].events
     assert any(

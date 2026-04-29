@@ -43,7 +43,7 @@ def test_A16_observability_module_uses_default_tracer_api():
     # The only OTel symbol we import is `trace` (and contextmanager from stdlib).
     assert "from opentelemetry import trace" in src
     # Confirm the tracer namespace.
-    assert 'trace.get_tracer("pos.safety_layer"' in src
+    assert 'trace.get_tracer("loam.safety_layer"' in src
 
 
 def test_A16_spans_emit_without_consumer():

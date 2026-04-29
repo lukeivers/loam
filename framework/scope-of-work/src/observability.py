@@ -17,9 +17,9 @@ Attributes (proposal §2.6):
   • GenAI: gen_ai.agent.id, gen_ai.agent.name, gen_ai.agent.description,
     gen_ai.usage.input_tokens, gen_ai.usage.output_tokens,
     gen_ai.request.model
-  • pOS-namespaced: pos.scope.id, pos.scope.parent_id,
-    pos.scope.reversibility_class, pos.scope.budget.*.remaining,
-    pos.scope.escalation.reason, pos.scope.success_criteria.*
+  • pOS-namespaced: loam.scope.id, loam.scope.parent_id,
+    loam.scope.reversibility_class, loam.scope.budget.*.remaining,
+    loam.scope.escalation.reason, loam.scope.success_criteria.*
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ except Exception:  # pragma: no cover -- never expected
     _OTEL_AVAILABLE = False
 
 
-_TRACER_NAME = "pos.scope_of_work"
+_TRACER_NAME = "loam.scope_of_work"
 
 
 def get_tracer():
@@ -71,11 +71,11 @@ def start_invoke_scope_span(
         "gen_ai.agent.id": scope_id,
         "gen_ai.agent.name": owner_persona or "unspecified",
         "gen_ai.agent.description": goal,
-        "pos.scope.id": scope_id,
-        "pos.scope.reversibility_class": reversibility_class,
+        "loam.scope.id": scope_id,
+        "loam.scope.reversibility_class": reversibility_class,
     }
     if parent_scope_id:
-        attrs["pos.scope.parent_id"] = parent_scope_id
+        attrs["loam.scope.parent_id"] = parent_scope_id
     return tracer.start_span(
         "invoke_scope",
         kind=SpanKind.INTERNAL,
@@ -106,10 +106,10 @@ def emit_chat_span(
         "gen_ai.request.model": model,
         "gen_ai.usage.input_tokens": input_tokens,
         "gen_ai.usage.output_tokens": output_tokens,
-        "pos.scope.id": scope_id,
+        "loam.scope.id": scope_id,
     }
     if prompt_name:
-        attrs["pos.prompt.name"] = prompt_name
+        attrs["loam.prompt.name"] = prompt_name
     parent_ctx = set_span_in_context(parent_span) if parent_span is not None else None
     span = tracer.start_span(
         span_name,
@@ -167,11 +167,11 @@ def emit_projection_parse_failure(
     if tracer is None:
         return
     span = tracer.start_span(
-        "pos.scope.projection_parse_failed",
+        "loam.scope.projection_parse_failed",
         kind=SpanKind.INTERNAL,
         attributes={
-            "pos.scope.id": scope_id,
-            "pos.scope.projection_field": field,
+            "loam.scope.id": scope_id,
+            "loam.scope.projection_field": field,
             "exception.class": exception_class,
         },
     )

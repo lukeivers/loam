@@ -74,7 +74,18 @@ _SAMPLE_FILES = (
     ("framework/workspace-bootstrap/src/workspace_bootstrap/spec.py",
      "d3ce250ccc76974da7301cff2b1342a24b97c20f19287a109fed2cd7162fa5c8"),
     ("framework/workspace-bootstrap/src/workspace_bootstrap/host.py",
-     "91465ef9fcc61e9fceffc0da957f726ea776a1f9a7a127bb0711e73bee48e9a7"),
+     # M1d (amendment #79, sub-plan oss-v0-1-0-publish-rename-1d.md):
+     # SHA updated post-M1d OTel root rebrand. host.py line 82 carried
+     # `self.tracer = trace.get_tracer("pos.bootstrap")`; M1d rebrands
+     # the OTel tracer-name root `pos.` → `loam.` per
+     # loam-rename-decisions Tier-1 #5 (every span/event/tracer literal
+     # with first segment `pos` rebases to `loam`; second-and-below
+     # segments unchanged). ODD §4 in-band retire-and-rebaseline applied
+     # per M1d sub-plan §11 finding #3 (HC#4 byte-content sample
+     # enumeration confirmed exactly one M1d-touched file in the
+     # fifteen-file sample; the rebrand IS the AC-named work
+     # AC.RNM-1d.1).
+     "3ae99ddd80c0a7c39154491388b322aa504bb0d1220ed5734b77e75e8775b8ba"),
     # framework/workspace-bootstrap/pyproject.toml WAS in this list at
     # D.1 seal time. D-migration D.4 (amendment #65, sealed at
     # `8acdff5`) legitimately edited the file to add the

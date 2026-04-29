@@ -33,7 +33,7 @@ The safety layer does not touch sealed components. It consumes:
 | scope-of-work        | `ScopeRuntime.cancel`, `ScopeRuntime.list`, `ScopeSpec` |
 | orchestrator         | `pause_activation`, `resume_activation`, `request_stop`, `IPCServer.register` |
 | primary-persona      | `OneOnOneChannel`, `ChannelKind`                        |
-| observability-agg    | `trace.get_tracer("pos.safety_layer")` — no provider construction |
+| observability-agg    | `trace.get_tracer("loam.safety_layer")` — no provider construction |
 
 ## IPC-wrap composition
 

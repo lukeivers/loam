@@ -135,9 +135,9 @@ class Orchestrator:
         exit_code = 0
         self._process_span = obs.process_start_span(
             **{
-                "pos.orchestrator.workspace": self.config.workspace_label,
-                "pos.orchestrator.root_dir": str(self.config.root_dir),
-                "pos.orchestrator.pid": os.getpid(),
+                "loam.orchestrator.workspace": self.config.workspace_label,
+                "loam.orchestrator.root_dir": str(self.config.root_dir),
+                "loam.orchestrator.pid": os.getpid(),
             }
         )
         try:
@@ -151,7 +151,7 @@ class Orchestrator:
             )
             obs.emit_event(
                 self._process_span,
-                "pos.orchestrator.crashed",
+                "loam.orchestrator.crashed",
                 {"message": str(e), "type": type(e).__name__},
             )
             exit_code = 1
@@ -212,7 +212,7 @@ class Orchestrator:
         )
         obs.emit_event(
             self._process_span,
-            "pos.orchestrator.started",
+            "loam.orchestrator.started",
             {
                 "pid": os.getpid(),
                 "workspace": self.config.workspace_label,
@@ -234,7 +234,7 @@ class Orchestrator:
                 # span.add_event.
                 obs.emit_event(
                     self._process_span,
-                    "pos.orchestrator.heartbeat_stop_exception",
+                    "loam.orchestrator.heartbeat_stop_exception",
                     {"exception_class": type(e).__name__},
                 )
             self._heartbeat_task = None
@@ -250,7 +250,7 @@ class Orchestrator:
                 # not expected-flow. Emit on _process_span (live here).
                 obs.emit_event(
                     self._process_span,
-                    "pos.orchestrator.monitor_stop_timeout",
+                    "loam.orchestrator.monitor_stop_timeout",
                     {
                         "exception_class": type(e).__name__,
                         "grace_seconds": self.config.sigterm_grace_seconds,
@@ -259,7 +259,7 @@ class Orchestrator:
             except Exception as e:
                 obs.emit_event(
                     self._process_span,
-                    "pos.orchestrator.monitor_stop_exception",
+                    "loam.orchestrator.monitor_stop_exception",
                     {"exception_class": type(e).__name__},
                 )
 
@@ -270,7 +270,7 @@ class Orchestrator:
                 # Amendment #26 — teardown CDC 2: emit on _process_span.
                 obs.emit_event(
                     self._process_span,
-                    "pos.orchestrator.ipc_server_stop_exception",
+                    "loam.orchestrator.ipc_server_stop_exception",
                     {"exception_class": type(e).__name__},
                 )
             self.ipc_server = None
@@ -282,7 +282,7 @@ class Orchestrator:
                 # Amendment #26 — teardown CDC 2: emit on _process_span.
                 obs.emit_event(
                     self._process_span,
-                    "pos.orchestrator.scope_runtime_close_exception",
+                    "loam.orchestrator.scope_runtime_close_exception",
                     {"exception_class": type(e).__name__},
                 )
 
@@ -291,7 +291,7 @@ class Orchestrator:
                 "process_stopped", {"pid": os.getpid(), "reason": "sigterm"}
             )
             obs.emit_event(
-                self._process_span, "pos.orchestrator.stopped", {"pid": os.getpid()}
+                self._process_span, "loam.orchestrator.stopped", {"pid": os.getpid()}
             )
 
         obs.end_span(self._process_span)
@@ -348,7 +348,7 @@ class Orchestrator:
                 )
                 obs.emit_event(
                     self._process_span,
-                    "pos.orchestrator.heartbeat",
+                    "loam.orchestrator.heartbeat",
                     {"tick_id": self._tick_id, "uptime_seconds": round(uptime, 3)},
                 )
             except Exception:
@@ -374,7 +374,7 @@ class Orchestrator:
           1. Verify scope exists and is pending.
           2. tracker.bind_scope(scope_id, objective_id).
           3. On success: scope_runtime.start(scope_id).
-          4. Emit `pos.orchestrator.scope_activated` span event.
+          4. Emit `loam.orchestrator.scope_activated` span event.
 
         Raises:
           ScopeNotPending, BindRefused, or a degraded-mode error when
@@ -390,10 +390,10 @@ class Orchestrator:
             )
 
         with obs.operation_span(
-            "pos.orchestrator.activate_scope",
+            "loam.orchestrator.activate_scope",
             **{
-                "pos.scope.id": scope_id,
-                "pos.objective.id": objective_id,
+                "loam.scope.id": scope_id,
+                "loam.objective.id": objective_id,
             },
         ) as span:
             proj = self.scope_runtime.get(scope_id)
@@ -422,7 +422,7 @@ class Orchestrator:
                 )
                 obs.emit_event(
                     span,
-                    "pos.orchestrator.bind_refused",
+                    "loam.orchestrator.bind_refused",
                     {
                         "scope_id": scope_id,
                         "objective_id": objective_id,
@@ -448,7 +448,7 @@ class Orchestrator:
             )
             obs.emit_event(
                 span,
-                "pos.orchestrator.scope_activated",
+                "loam.orchestrator.scope_activated",
                 {
                     "scope_id": scope_id,
                     "objective_id": objective_id,
@@ -567,7 +567,7 @@ class Orchestrator:
         self.local_state.append("pause_activation", {"reason": reason})
         obs.emit_event(
             self._process_span,
-            "pos.orchestrator.pause_activation",
+            "loam.orchestrator.pause_activation",
             {"reason": reason},
         )
 
@@ -580,7 +580,7 @@ class Orchestrator:
         )
         obs.emit_event(
             self._process_span,
-            "pos.orchestrator.resume_activation",
+            "loam.orchestrator.resume_activation",
             {"prior_reason": prior},
         )
 
@@ -597,7 +597,7 @@ class Orchestrator:
         event = self.local_state.set_compaction_flag(session_id=session_id)
         obs.emit_event(
             self._process_span,
-            "pos.orchestrator.compaction_flag_set",
+            "loam.orchestrator.compaction_flag_set",
             {"session_id": session_id or ""},
         )
         return event.event_id
@@ -635,7 +635,7 @@ class Orchestrator:
         self.local_state.clear_compaction_flag()
         obs.emit_event(
             self._process_span,
-            "pos.orchestrator.compaction_restored",
+            "loam.orchestrator.compaction_restored",
             {"session_id": session_id or ""},
         )
         return payload.to_dict()
@@ -900,9 +900,9 @@ class Orchestrator:
         requests stop + awaits clean shutdown on exit."""
         self._process_span = obs.process_start_span(
             **{
-                "pos.orchestrator.workspace": self.config.workspace_label,
-                "pos.orchestrator.root_dir": str(self.config.root_dir),
-                "pos.orchestrator.pid": os.getpid(),
+                "loam.orchestrator.workspace": self.config.workspace_label,
+                "loam.orchestrator.root_dir": str(self.config.root_dir),
+                "loam.orchestrator.pid": os.getpid(),
             }
         )
         try:

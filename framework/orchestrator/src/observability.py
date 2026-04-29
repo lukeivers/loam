@@ -4,7 +4,7 @@ Every orchestrator operation emits a span or event. Per brief A1
 correction, emissions succeed with no consumer present — the default
 SDK noop tracer silently accepts every call.
 
-Span names follow the `pos.orchestrator.<verb>` convention.
+Span names follow the `loam.orchestrator.<verb>` convention.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import Any, Iterator
 
 from opentelemetry import trace
 
-_TRACER = trace.get_tracer("pos.orchestrator", "0.1.0")
+_TRACER = trace.get_tracer("loam.orchestrator", "0.1.0")
 
 
 @contextmanager
@@ -40,9 +40,9 @@ def emit_event(span: trace.Span | None, name: str, attrs: dict[str, Any]) -> Non
 
 
 def process_start_span(**attrs: Any) -> trace.Span:
-    """Start a long-lived `pos.orchestrator.process` span. Caller is
+    """Start a long-lived `loam.orchestrator.process` span. Caller is
     responsible for ending it."""
-    span = _TRACER.start_span("pos.orchestrator.process")
+    span = _TRACER.start_span("loam.orchestrator.process")
     for k, v in attrs.items():
         if v is None:
             continue

@@ -40,11 +40,11 @@ primary-persona     pos obs CLI            future UI / consumers
 
 | Component               | Emission                              | A1 status |
 |-------------------------|---------------------------------------|-----------|
-| scope-of-work           | OTel via `pos.scope_of_work`          | unchanged |
+| scope-of-work           | OTel via `loam.scope_of_work`          | unchanged |
 | primary-persona         | OTel via `pos_v2.primary_persona`     | unchanged |
-| objective-tracker       | OTel via `pos.objective_tracker`      | unchanged |
-| orchestrator            | OTel via `pos.orchestrator`           | unchanged |
-| graceful-degradation    | OTel via `pos.degradation`            | unchanged |
+| objective-tracker       | OTel via `loam.objective_tracker`      | unchanged |
+| orchestrator            | OTel via `loam.orchestrator`           | unchanged |
+| graceful-degradation    | OTel via `loam.degradation`            | unchanged |
 | memory-system           | JSONL: spans/tokens/audit             | unchanged |
 
 A1 status "unchanged" is verified at every aggregator build by re-running each sealed component's full test suite. Baseline counts: scope-of-work 77 + 1 skipped, primary-persona 101, objective-tracker 86, orchestrator 56, graceful-degradation 93, memory-system 30 (in its own venv). Aggregator changes that drop any of these counts by even one are a halt-and-signal event.

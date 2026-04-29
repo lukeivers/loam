@@ -1,7 +1,7 @@
 """AC35.7 — Observability for the renderer lifecycle.
 
 Each renderer call emits a span/event under
-``pos.persona.onboarding.render``. The events carry handle as an
+``loam.persona.onboarding.render``. The events carry handle as an
 attribute.
 
 Amendment #50 retired the transcript-write-back surface; the
@@ -60,11 +60,11 @@ def test_AC35_7_render_emits_onboarding_render_event(span_exporter_clean):
     contract = _starter_contract()
     to_agent_md(contract)
     spans = span_exporter_clean.get_finished_spans()
-    render_events = _events_named(spans, "pos.persona.onboarding.render")
+    render_events = _events_named(spans, "loam.persona.onboarding.render")
     assert len(render_events) == 1
     attrs = dict(render_events[0].attributes)
-    assert attrs["pos.persona.onboarding.handle"] == contract.handle
-    assert attrs["pos.persona.onboarding.render.length"] > 0
+    assert attrs["loam.persona.onboarding.handle"] == contract.handle
+    assert attrs["loam.persona.onboarding.render.length"] > 0
 
 
 def test_AC35_7_render_called_twice_emits_two_events(span_exporter_clean):
@@ -73,12 +73,12 @@ def test_AC35_7_render_called_twice_emits_two_events(span_exporter_clean):
     to_agent_md(contract)
     to_agent_md(contract)
     spans = span_exporter_clean.get_finished_spans()
-    render_events = _events_named(spans, "pos.persona.onboarding.render")
+    render_events = _events_named(spans, "loam.persona.onboarding.render")
     assert len(render_events) == 2
 
 
 def test_AC35_7_event_attributes_under_persona_namespace(span_exporter_clean):
-    """All onboarding events live under `pos.persona.onboarding.*`."""
+    """All onboarding events live under `loam.persona.onboarding.*`."""
     contract = _starter_contract()
     to_agent_md(contract)
     spans = span_exporter_clean.get_finished_spans()
@@ -86,13 +86,13 @@ def test_AC35_7_event_attributes_under_persona_namespace(span_exporter_clean):
         ev
         for span in spans
         for ev in span.events
-        if ev.name.startswith("pos.persona.onboarding.")
+        if ev.name.startswith("loam.persona.onboarding.")
     ]
     assert len(onboarding_events) >= 1
     for ev in onboarding_events:
         # All attributes should also be namespaced (the renderer-event
-        # attributes start with pos.persona.onboarding.).
+        # attributes start with loam.persona.onboarding.).
         for k in ev.attributes.keys():
-            assert k.startswith("pos.persona.onboarding."), (
-                f"event attribute {k!r} not under pos.persona.onboarding namespace"
+            assert k.startswith("loam.persona.onboarding."), (
+                f"event attribute {k!r} not under loam.persona.onboarding namespace"
             )

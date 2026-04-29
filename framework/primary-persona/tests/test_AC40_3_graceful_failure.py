@@ -64,7 +64,7 @@ def test_AC40_3_tracker_open_failure_does_not_raise(
 
     # Structured diagnostic emitted with the failure class.
     spans = span_exporter_clean.get_finished_spans()
-    matching = [s for s in spans if s.name == "pos.persona.tracker_context.unavailable"]
+    matching = [s for s in spans if s.name == "loam.persona.tracker_context.unavailable"]
     assert matching, (
         "AC40.3 — tracker_context_unavailable_event must fire on open failure"
     )
@@ -74,9 +74,9 @@ def test_AC40_3_tracker_open_failure_does_not_raise(
     for span in matching:
         for ev in span.events:
             attrs = dict(ev.attributes or {})
-            if attrs.get("pos.persona.tracker_context.failure_class") == "OSError":
+            if attrs.get("loam.persona.tracker_context.failure_class") == "OSError":
                 found_failure_class = True
-            if attrs.get("pos.persona.tracker_context.detail") == "tracker_open_failed":
+            if attrs.get("loam.persona.tracker_context.detail") == "tracker_open_failed":
                 found_detail = True
     assert found_failure_class, "AC40.3 — failure_class attr must name OSError"
     assert found_detail, "AC40.3 — detail must name tracker_open_failed"
@@ -106,7 +106,7 @@ def test_AC40_3_query_failure_does_not_raise(
     )
 
     spans = span_exporter_clean.get_finished_spans()
-    matching = [s for s in spans if s.name == "pos.persona.tracker_context.unavailable"]
+    matching = [s for s in spans if s.name == "loam.persona.tracker_context.unavailable"]
     assert matching, (
         "AC40.3 — tracker_context_unavailable_event must fire on query failure"
     )

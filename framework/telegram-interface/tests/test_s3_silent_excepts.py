@@ -3,7 +3,7 @@
 Covers Site 3:
   * ``src/allowlist.py::AccessFile.identities()`` — a malformed
     ``pos_identities`` record was previously skipped silently; the fix
-    emits ``pos.telegram.allowlist_record_malformed`` while preserving
+    emits ``loam.telegram.allowlist_record_malformed`` while preserving
     the ``continue`` so the returned dict still contains only the
     well-formed records.
 
@@ -89,7 +89,7 @@ def test_identities_surfaces_malformed_record(
     assert "333333" not in identities
 
     # Observable surface: one span per malformed record (2 expected).
-    spans = _spans_named(otel_exporter, "pos.telegram.allowlist_record_malformed")
+    spans = _spans_named(otel_exporter, "loam.telegram.allowlist_record_malformed")
     by_uid = {dict(s.attributes).get("telegram.user_id"): s for s in spans}
     assert "222222" in by_uid, (
         f"expected span for 222222; saw uids {list(by_uid)}"

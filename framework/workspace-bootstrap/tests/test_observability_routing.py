@@ -1,4 +1,4 @@
-"""B21 — bootstrap's `pos.bootstrap.*` spans flow through the
+"""B21 — bootstrap's `loam.bootstrap.*` spans flow through the
 observability aggregator's registered TracerProvider.
 
 We verify:
@@ -88,9 +88,9 @@ def test_B21_bootstrap_spans_land_in_aggregator(tmp_path: Path) -> None:
                 all_event_names.append(name)
 
     expected = {
-        "pos.bootstrap.contribution_started",
-        "pos.bootstrap.contribution_completed",
-        "pos.bootstrap.phase_complete",
+        "loam.bootstrap.contribution_started",
+        "loam.bootstrap.contribution_completed",
+        "loam.bootstrap.phase_complete",
     }
     missing = expected - set(all_event_names)
     assert not missing, (

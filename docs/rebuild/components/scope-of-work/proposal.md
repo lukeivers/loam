@@ -11,7 +11,7 @@
 
 ## Summary
 
-Build scope-of-work as a first-class Python primitive on the `pos-v2` branch, shipped on its own. It uses an event-sourced finite-state machine for lifecycle, SQLite WAL via stdlib `sqlite3` for persistence, a three-axis budget (time / tokens / money) with per-LLM-call debit, `pyee` for async observer emission, Pydantic discriminated-union predicates for escalation triggers, and OTel-native emission using the GenAI semantic conventions plus a `pos.scope.*` namespace. The API is thin, async, Pydantic-validated at construction — missing any of the seven spec fields rejects scope creation. The primitive ships standalone; every downstream consumer (objective tracker, primary persona loader, observability aggregator, cost governance, safety layer, reversibility primitive) subscribes to the emission surface when built. On landing, a 10-line adapter retires memory's `MockScopeSource`.
+Build scope-of-work as a first-class Python primitive on the `pos-v2` branch, shipped on its own. It uses an event-sourced finite-state machine for lifecycle, SQLite WAL via stdlib `sqlite3` for persistence, a three-axis budget (time / tokens / money) with per-LLM-call debit, `pyee` for async observer emission, Pydantic discriminated-union predicates for escalation triggers, and OTel-native emission using the GenAI semantic conventions plus a `loam.scope.*` namespace. The API is thin, async, Pydantic-validated at construction — missing any of the seven spec fields rejects scope creation. The primitive ships standalone; every downstream consumer (objective tracker, primary persona loader, observability aggregator, cost governance, safety layer, reversibility primitive) subscribes to the emission surface when built. On landing, a 10-line adapter retires memory's `MockScopeSource`.
 
 ## Direction
 
@@ -45,7 +45,7 @@ Build scope-of-work as a first-class Python primitive on the `pos-v2` branch, sh
 
 ### Observability
 
-- **Native OTel emission** using the GenAI semantic conventions (`gen_ai.agent.*`, `gen_ai.usage.*`) plus a `pos.scope.*` custom namespace for scope-specific attributes (budget remaining, reversibility class, escalation reason).
+- **Native OTel emission** using the GenAI semantic conventions (`gen_ai.agent.*`, `gen_ai.usage.*`) plus a `loam.scope.*` custom namespace for scope-specific attributes (budget remaining, reversibility class, escalation reason).
 - **One `invoke_scope` INTERNAL span per scope**, wrapping the active duration.
 - **Child `chat {model}` spans per LLM call**, standard GenAI convention.
 - **Span events for state transitions** (proposed→active, paused, resumed, completion, escalation).
@@ -81,7 +81,7 @@ Build scope-of-work as a first-class Python primitive on the `pos-v2` branch, sh
 
 ### D5. OTel observability emission
 
-**Objective:** scope lifecycle produces OTel spans and events using GenAI semantic conventions + `pos.scope.*` attributes.
+**Objective:** scope lifecycle produces OTel spans and events using GenAI semantic conventions + `loam.scope.*` attributes.
 **Acceptance:** starting a scope produces an `invoke_scope` INTERNAL span; LLM calls produce child `chat {model}` spans; state transitions produce span events; budget attributes appear on the scope's span; no consumer is required for emission to succeed.
 
 ### D6. Memory-mock retirement

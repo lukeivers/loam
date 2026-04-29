@@ -16,7 +16,7 @@ Session start
 │    - parses each contract.yaml                               │
 │    - validates against Pydantic PersonaContract              │
 │    - confirms prompt.md present                              │
-│    - emits OTel span: pos.persona.loader (outcome="loaded")  │
+│    - emits OTel span: loam.persona.loader (outcome="loaded")  │
 │    - returns [LoadedPersona, ...]                            │
 └──────────────────────────────────────────────────────────────┘
  │
@@ -49,7 +49,7 @@ Per UserPromptSubmit:
            recently_finished / escalated / failed
          - 5 rows per category max
          - trims from low-priority categories if > 1k tokens
-         - emits OTel event: pos.persona.monitor.inject
+         - emits OTel event: loam.persona.monitor.inject
          - returns AwarenessBlock.to_json() inserted into context
 ```
 
@@ -94,16 +94,16 @@ If yes:
 ┌──────────────────────────────────────────────────────────────┐
 │ AuthoringPipeline.author(...)                                │
 │                                                              │
-│ Root span: pos.persona.authoring (signal attr)               │
+│ Root span: loam.persona.authoring (signal attr)               │
 │                                                              │
 │ Step 1: style_harvest                                        │
 │   - LLM reads existing personas for voice consistency        │
-│   - Emits pos.persona.authoring.style_harvest span           │
+│   - Emits loam.persona.authoring.style_harvest span           │
 │   - Debits tokens against authoring_scope_id                 │
 │                                                              │
 │ Step 2: domain_research                                      │
 │   - LLM describes practitioner attention + failure modes     │
-│   - Emits pos.persona.authoring.domain_research span         │
+│   - Emits loam.persona.authoring.domain_research span         │
 │                                                              │
 │ Step 3: contract_synthesis                                   │
 │   - LLM returns two-part payload:                            │
@@ -119,7 +119,7 @@ If yes:
 │      - scope_fit                                             │
 │      - redundancy (vs existing home_persona_for)             │
 │      - contract_correctness                                  │
-│   - Emits pos.persona.authoring.self_review event            │
+│   - Emits loam.persona.authoring.self_review event            │
 │     per iteration.                                           │
 │   - On pass → persist to disk.                               │
 │   - On 3rd failure → AuthoringOutcome.rejected_after_retries │
@@ -138,7 +138,7 @@ If yes:
 │ - If no active channel → queue the payload; fires on         │
 │   next flush_queue() call.                                   │
 │ - On delivery: emits OTel event                              │
-│   pos.persona.introduction.dispatched                        │
+│   loam.persona.introduction.dispatched                        │
 └──────────────────────────────────────────────────────────────┘
  │
  ▼
@@ -158,7 +158,7 @@ If yes:
    retirement.retire_persona(handle, reason)
      - moves <workspace>/personas/<handle>/ →
             <workspace>/personas/_retired/<handle>-<timestamp>/
-     - emits OTel event pos.persona.retired
+     - emits OTel event loam.persona.retired
      - LoaderPersona.load() ignores _retired/* on the next call
 ```
 

@@ -48,7 +48,7 @@ User       CLI           Orchestrator    Substrates    Persona Channel
  |          |                                               |
  |          |   all clauses pass                            |
  |          |-- write <tag>-accepted.json                   |
- |          |-- emit pos.upgrade.accepted span              |
+ |          |-- emit loam.upgrade.accepted span              |
  |          |-- resume_activation()         --> orchestrator|
  |          |-- notify "upgrade <tag> accepted in 38.4s" -->[Eve → Luke]
  |          |                                               |
@@ -69,7 +69,7 @@ User       CLI           Orchestrator    Substrates    Persona Channel
  |          |    1. os.replace(current → prior release dir) |
  |          |    2. restore every substrate from -pre/      |
  |          |    3. launchctl kickstart (prior tree)        |
- |          |-- emit pos.upgrade.rolled_back span           |
+ |          |-- emit loam.upgrade.rolled_back span           |
  |          |-- write <tag>-rolled-back.json                |
  |          |-- notify "rolled back: clauses [c]" -------->[Eve → Luke]
  |          |-- resume_activation()                         |
@@ -114,7 +114,7 @@ User       CLI           Disk
  |          |                                               |
  |          |-- RollbackFailed raised                       |
  |          |-- write <tag>-rollback-failed.json            |
- |          |-- emit pos.upgrade.rollback_failed span       |
+ |          |-- emit loam.upgrade.rollback_failed span       |
  |          |-- notify "UPGRADE FAILED AND ROLLBACK FAILED" |
  |          |   (Tier 1, one-on-one channel)                |
  |<- exit 4 |                                               |

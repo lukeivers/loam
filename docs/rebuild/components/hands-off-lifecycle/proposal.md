@@ -140,7 +140,7 @@ Each an observable outcome, test-shaped, deterministic. Structural refusal prefe
 - **Silent-stay-degraded is forbidden.** Bounded retries then loud escalation; the fourth lens requires it.
 - **Zero manual lifecycle management.** Every ongoing-operation concern the user would otherwise have to manage is the supervisor's problem.
 - **Claude Code hook primitives only.** The auto-launch mechanic uses `SessionStart` with `type: command`; if the FD-inheritance bug's workaround (delegate to launchctl/systemctl) proves insufficient in practice, halt and signal.
-- **A1 correction held.** All OTel via `trace.get_tracer("pos.hands_off_lifecycle")` (or equivalent namespace). No `TracerProvider` construction.
+- **A1 correction held.** All OTel via `trace.get_tracer("loam.hands_off_lifecycle")` (or equivalent namespace). No `TracerProvider` construction.
 - **Error-code range `-32090..-32099` reserved** to this component. No overlap with the five already-allocated ranges.
 - **Seal-test pattern mandatory.** `SEAL_COMMIT` sidecar-file per component; new pattern for the multi-amendment case documented in the build.
 - **Halt on deviation.**
@@ -175,7 +175,7 @@ Phase shape recommendation only: the four amendments are ordered by dependency �
 4. **The new `first_run_scaffold` phase placement** before `before_orchestrator_start` is inferred from workspace-bootstrap's existing three-phase model. If the phase model has accepted patterns for where to place a pre-phase, follow those; if this is the first pre-phase ever added, the design choice is a fresh call the builder makes.
 5. **`~/.pos/attention.md`** as the durable unresolved-state surface is the research's choice. Challenge if a different surface (daily note, status bar entry, etc.) serves better.
 6. **Platform-halt diagnostic wording** — `platform-unsupported:<platform>` — is a placeholder; the builder authors the actual diagnostic after reviewing Claude Code's hook-failure error-surfacing conventions.
-7. **OTel span namespace** `pos.hands_off_lifecycle.*` inferred for consistency with `pos.safety.*`, `pos.reversibility.*`, etc. Challenge if a different namespace is cleaner (e.g., `pos.supervisor.*` if the supervisor is the recognisable surface).
+7. **OTel span namespace** `loam.hands_off_lifecycle.*` inferred for consistency with `loam.safety.*`, `loam.reversibility.*`, etc. Challenge if a different namespace is cleaner (e.g., `loam.supervisor.*` if the supervisor is the recognisable surface).
 8. **First-run detection heuristic** (absence of `~/.pos/` AND absence of `~/.pos/bootstrap.yaml`) is from research Q6. Challenge if a more robust heuristic is required (e.g., a dedicated `~/.pos/.scaffold-version` marker).
 
 ---

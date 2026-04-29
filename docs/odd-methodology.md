@@ -211,7 +211,7 @@ usually writes itself from a well-formed criterion:
 
 > **A1.** Scope kill issued against an active scope transitions the scope and
 > its TERMINATE-policy children to `cancelled` within 500ms p95. Emits
-> `pos.safety.scope_kill` span with level + reason + source. Writes a
+> `loam.safety.scope_kill` span with level + reason + source. Writes a
 > `kill_events` row.
 
 The test: fire a scope kill; assert state transition; assert child cancellation;

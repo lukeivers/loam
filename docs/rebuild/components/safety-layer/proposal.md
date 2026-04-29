@@ -47,7 +47,7 @@ A new package `safety-layer/` (Python, on `pos-v2`) exposes `SafetyController` �
 - **SafetyStore** — SQLite at `~/.pos/safety/safety.sqlite`. Tables: `ask_decisions`, `kill_events`, `system_kill_state`.
 - **Notification** — sends asks and gate-fires via `OneOnOneChannel` from `primary_persona.introduction` (inherits the `is_group=True` rejection; no group-channel escape).
 - **CLI** — `pos kill {scope|session|system}`, `pos safety resume-session`, `pos safety clear-system-kill`, `pos safety status`.
-- **Observability** — emits `pos.safety.*` spans via the aggregator's registered provider.
+- **Observability** — emits `loam.safety.*` spans via the aggregator's registered provider.
 
 ### 3.2 Integration — IPC-wrapping pattern
 
@@ -80,7 +80,7 @@ Each criterion is an ODD objective — tests are authored against it directly, n
 
 ### 4.1 Kill-switch acceptance (spec clause a)
 
-- **A1.** Scope kill issued against an active scope transitions the scope and its TERMINATE-policy children to `cancelled` within 500ms p95. Emits `pos.safety.scope_kill` span with level + reason + source. Writes a `kill_events` row.
+- **A1.** Scope kill issued against an active scope transitions the scope and its TERMINATE-policy children to `cancelled` within 500ms p95. Emits `loam.safety.scope_kill` span with level + reason + source. Writes a `kill_events` row.
 - **A2.** Session kill calls `pause_activation("safety:session_kill")`, cancels every active scope, writes `kill_events`, emits OTel, within 2s p95.
 - **A3.** System kill requires the two-step confirm (CLI `--yes-really`, IPC nonce token, persona LLM-mediated confirm). On commit: pause + cancel all scopes + write `system_kill_state` row + call `request_stop`. Within 5s p95.
 - **A4.** Next orchestrator bootstrap reads `system_kill_state` and refuses to activate any scope until `clear-system-kill` is run and records a `system_kill_cleared` row.

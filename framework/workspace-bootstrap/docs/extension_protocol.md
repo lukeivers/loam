@@ -111,7 +111,7 @@ The `host` object passed to `contribute(host)` exposes:
 
 - `host.config_dir` — where per-adapter config files live.
 - `host.workspace_root` — the workspace directory.
-- `host.tracer` — OpenTelemetry tracer for `pos.bootstrap.*` spans.
+- `host.tracer` — OpenTelemetry tracer for `loam.bootstrap.*` spans.
 - `host.channel_registry` — shared notification-channel registry.
 - `host.register_shutdown(name, fn)` — push a teardown hook.
 - `host.register_channel(name, channel)` — store a channel by name.

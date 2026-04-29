@@ -414,7 +414,7 @@ def resolve_clause_h_inferred(
     deferred_count = 0
 
     summary_attrs: dict[str, Any] = {
-        "pos.upgrade.merge_gate.upgrade_tag": report.upgrade_tag,
+        "loam.upgrade.merge_gate.upgrade_tag": report.upgrade_tag,
     }
     halt_reason: str | None = None
 
@@ -481,11 +481,11 @@ def resolve_clause_h_inferred(
                 continue
 
             with otel_span(
-                "pos.upgrade.merge_gate.resolution",
+                "loam.upgrade.merge_gate.resolution",
                 {
-                    "pos.upgrade.merge_gate.path": entry.path,
-                    "pos.upgrade.merge_gate.canonical_sha": entry.new_release_sha256 or "",
-                    "pos.upgrade.merge_gate.workspace_sha": entry.installed_sha256 or "",
+                    "loam.upgrade.merge_gate.path": entry.path,
+                    "loam.upgrade.merge_gate.canonical_sha": entry.new_release_sha256 or "",
+                    "loam.upgrade.merge_gate.workspace_sha": entry.installed_sha256 or "",
                 },
             ):
                 verdict = resolver.resolve(
@@ -530,16 +530,16 @@ def resolve_clause_h_inferred(
     finally:
         summary_attrs.update(
             {
-                "pos.upgrade.merge_gate.resolved_count": resolved_count,
-                "pos.upgrade.merge_gate.deferred_count": deferred_count,
-                "pos.upgrade.merge_gate.cumulative_tokens": resolver.cumulative_used,
-                "pos.upgrade.merge_gate.call_count": resolver.call_count,
+                "loam.upgrade.merge_gate.resolved_count": resolved_count,
+                "loam.upgrade.merge_gate.deferred_count": deferred_count,
+                "loam.upgrade.merge_gate.cumulative_tokens": resolver.cumulative_used,
+                "loam.upgrade.merge_gate.call_count": resolver.call_count,
             }
         )
         if halt_reason is not None:
-            summary_attrs["pos.upgrade.merge_gate.halt_reason"] = halt_reason
+            summary_attrs["loam.upgrade.merge_gate.halt_reason"] = halt_reason
         with otel_span(
-            "pos.upgrade.merge_gate.summary", summary_attrs
+            "loam.upgrade.merge_gate.summary", summary_attrs
         ):
             pass
 

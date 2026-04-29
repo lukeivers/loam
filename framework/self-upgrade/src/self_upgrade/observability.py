@@ -3,19 +3,19 @@
 The framework emits spans at every stage so the observability
 aggregator can ingest them:
 
-- ``pos.upgrade.started``
-- ``pos.upgrade.pre_snapshot_complete``
-- ``pos.upgrade.pre_probe_complete``
-- ``pos.upgrade.pause_activation``
-- ``pos.upgrade.drain_complete``
-- ``pos.upgrade.sigterm_complete``
-- ``pos.upgrade.swap_complete``
-- ``pos.upgrade.orchestrator_boot``
-- ``pos.upgrade.post_probe_complete``
-- ``pos.upgrade.clauses_verified``
-- ``pos.upgrade.accepted``
-- ``pos.upgrade.rolled_back``
-- ``pos.upgrade.rollback_failed``
+- ``loam.upgrade.started``
+- ``loam.upgrade.pre_snapshot_complete``
+- ``loam.upgrade.pre_probe_complete``
+- ``loam.upgrade.pause_activation``
+- ``loam.upgrade.drain_complete``
+- ``loam.upgrade.sigterm_complete``
+- ``loam.upgrade.swap_complete``
+- ``loam.upgrade.orchestrator_boot``
+- ``loam.upgrade.post_probe_complete``
+- ``loam.upgrade.clauses_verified``
+- ``loam.upgrade.accepted``
+- ``loam.upgrade.rolled_back``
+- ``loam.upgrade.rollback_failed``
 
 Dependency injection: the tracer is acquired lazily via
 ``opentelemetry.trace.get_tracer`` so tests can install a custom
@@ -30,7 +30,7 @@ from typing import Any, Iterator
 from opentelemetry import trace
 from opentelemetry.trace import Span, SpanKind, Status, StatusCode
 
-_TRACER_NAME = "pos.self_upgrade"
+_TRACER_NAME = "loam.self_upgrade"
 
 
 def get_tracer():

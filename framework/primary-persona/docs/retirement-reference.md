@@ -26,7 +26,7 @@ Four reasons are valid:
    identical.
 2. The active loader ignores `_retired/*` — retired personas never
    appear in `loader.load()` results.
-3. An OTel event `pos.persona.retired` fires with the handle and
+3. An OTel event `loam.persona.retired` fires with the handle and
    the reason.
 4. Memory and scope-of-work references to the retired handle
    continue to resolve via the preserved directory — a historical

@@ -105,13 +105,13 @@ def execute_upgrade(
             progress(stage, verdict, elapsed)
 
     with otel_span(
-        "pos.upgrade.started",
-        {"pos.upgrade.tag": tag, "pos.upgrade.commit_sha": manifest.commit_sha},
+        "loam.upgrade.started",
+        {"loam.upgrade.tag": tag, "loam.upgrade.commit_sha": manifest.commit_sha},
     ):
         # 1. Pre-upgrade snapshot (D3)
         stage_start = time.monotonic()
         with otel_span(
-            "pos.upgrade.pre_snapshot", {"pos.upgrade.tag": tag}
+            "loam.upgrade.pre_snapshot", {"loam.upgrade.tag": tag}
         ):
             probe_fn = lambda: post_upgrade_probe_hashes(paths)
             capture_substrate_snapshots(paths, tag, probe_fn=probe_fn)
@@ -120,7 +120,7 @@ def execute_upgrade(
         # 2. Pre-upgrade probe (D4)
         stage_start = time.monotonic()
         with otel_span(
-            "pos.upgrade.pre_probe", {"pos.upgrade.tag": tag}
+            "loam.upgrade.pre_probe", {"loam.upgrade.tag": tag}
         ):
             pre_bundle = collect_pre_probe(paths, tag)
             pre_bundle.save(paths.pre_probe_json(tag))
@@ -128,14 +128,14 @@ def execute_upgrade(
 
         # 3. pause_activation
         stage_start = time.monotonic()
-        with otel_span("pos.upgrade.pause_activation", {"pos.upgrade.tag": tag}):
+        with otel_span("loam.upgrade.pause_activation", {"loam.upgrade.tag": tag}):
             adapters.pause_activation(f"upgrade:{tag}")
         _tick("pause_activation", "ok", stage_start)
 
         # 4. Drain window
         stage_start = time.monotonic()
         try:
-            with otel_span("pos.upgrade.drain", {"pos.upgrade.tag": tag}):
+            with otel_span("loam.upgrade.drain", {"loam.upgrade.tag": tag}):
                 wait_for_drain(
                     is_drained=adapters.is_drained,
                     timeout_s=config.drain_timeout_seconds,
@@ -159,8 +159,8 @@ def execute_upgrade(
         try:
             if pid is not None:
                 with otel_span(
-                    "pos.upgrade.sigterm",
-                    {"pos.upgrade.tag": tag, "pos.upgrade.pid": pid},
+                    "loam.upgrade.sigterm",
+                    {"loam.upgrade.tag": tag, "loam.upgrade.pid": pid},
                 ):
                     sigterm_and_wait(pid, timeout_s=config.sigterm_timeout_seconds)
             _tick("sigterm", "ok", stage_start)
@@ -176,14 +176,14 @@ def execute_upgrade(
 
         # 6. Atomic symlink swap
         stage_start = time.monotonic()
-        with otel_span("pos.upgrade.swap", {"pos.upgrade.tag": tag}):
+        with otel_span("loam.upgrade.swap", {"loam.upgrade.tag": tag}):
             atomic_symlink_swap(paths.current_link, staging_dir)
         _tick("swap", "ok", stage_start)
 
         # 7. Restart orchestrator
         stage_start = time.monotonic()
         try:
-            with otel_span("pos.upgrade.orchestrator_restart", {"pos.upgrade.tag": tag}):
+            with otel_span("loam.upgrade.orchestrator_restart", {"loam.upgrade.tag": tag}):
                 adapters.restart_orchestrator()
         except Exception as exc:
             _tick("orchestrator_restart", "halt", stage_start)
@@ -212,7 +212,7 @@ def execute_upgrade(
 
         # 8. Post-upgrade probe + clause verification
         stage_start = time.monotonic()
-        with otel_span("pos.upgrade.post_probe", {"pos.upgrade.tag": tag}):
+        with otel_span("loam.upgrade.post_probe", {"loam.upgrade.tag": tag}):
             bundle = run_all_clauses(
                 no_op_rpc=adapters.no_op_rpc,
                 survival_payloads=adapters.post_survival_payloads(),
@@ -234,11 +234,11 @@ def execute_upgrade(
         if bundle.all_passed:
             stage_start = time.monotonic()
             with otel_span(
-                "pos.upgrade.accepted",
+                "loam.upgrade.accepted",
                 {
-                    "pos.upgrade.tag": tag,
-                    "pos.upgrade.duration_s": time.monotonic() - t0,
-                    "pos.upgrade.files_verified": len(manifest.files),
+                    "loam.upgrade.tag": tag,
+                    "loam.upgrade.duration_s": time.monotonic() - t0,
+                    "loam.upgrade.files_verified": len(manifest.files),
                 },
             ):
                 _write_accepted_json(paths, tag, bundle, t0, manifest)

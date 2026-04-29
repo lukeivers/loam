@@ -33,7 +33,7 @@ The orchestrator is the dispatch-layer boundary. Activation flow:
 2. Orchestrator verifies the scope exists and is in `pending` state (query scope-of-work).
 3. Orchestrator calls `tracker.bind_scope(scope_id, objective_id)`. On `UnresolvedObjectiveError` or `OrphanRootError`: record `bind_refused` event in local SQLite, emit OTel, return 409 to caller, scope stays pending.
 4. On success: `scope_runtime.start(scope_id)`.
-5. Emit `pos.orchestrator.scope_activated` span.
+5. Emit `loam.orchestrator.scope_activated` span.
 
 ### Restart semantics (failure-class matrix)
 

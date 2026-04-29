@@ -152,7 +152,7 @@ Ten deliverables D1–D10.
 **Objective:** a successful upgrade writes an `accepted.json` under the history directory, emits an `upgrade_accepted` OTel span, and clears the upgrade pause.
 **Acceptance:**
 - `accepted.json` contains the release tag, clause-by-clause verdicts, total duration, file counts.
-- OTel span `pos.upgrade.accepted` emitted with attributes for release, duration, clause verdicts.
+- OTel span `loam.upgrade.accepted` emitted with attributes for release, duration, clause verdicts.
 - `orchestrator.resume_activation()` called; scopes resume per orchestrator's normal resume path.
 
 ### D10. Bundled documentation + manual destructive-test script
@@ -179,7 +179,7 @@ Ten deliverables D1–D10.
 | v1.1 R1 clause (f) — upgrade reversible | D3 snapshots + D8 rollback |
 | v1.1 R1 clause (g) — no silent skip | D7 conflict-report + sha-verify + structural schema enforcement |
 | v1.1 R4 — bundled documentation | D10 |
-| v1.1 R11 — OTel observability | D9 `pos.upgrade.*` span emission + aggregator ingests it |
+| v1.1 R11 — OTel observability | D9 `loam.upgrade.*` span emission + aggregator ingests it |
 
 ---
 

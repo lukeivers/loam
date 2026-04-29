@@ -202,7 +202,7 @@ class BackgroundWorkMonitor:
         the prompt pipeline.
         """
         tid = turn_id or f"turn-{uuid.uuid4()}"
-        with obs.monitor_span("pos.persona.monitor.snapshot", **{"pos.persona.monitor.turn_id": tid}):
+        with obs.monitor_span("loam.persona.monitor.snapshot", **{"loam.persona.monitor.turn_id": tid}):
             block = self._build_block(tid)
             obs.monitor_injection_event(
                 turn_id=tid, token_estimate=block.token_estimate()
@@ -224,9 +224,9 @@ class BackgroundWorkMonitor:
             except Exception as e:  # noqa: BLE001 — intentional catch-all
                 # Record the failure as an event on a tick span; the
                 # monitor must survive.
-                with obs.monitor_span("pos.persona.monitor.tick") as span:
+                with obs.monitor_span("loam.persona.monitor.tick") as span:
                     span.record_exception(e)
-                    span.set_attribute("pos.persona.monitor.tick_outcome", "error")
+                    span.set_attribute("loam.persona.monitor.tick_outcome", "error")
             # Interruptible sleep so stop() returns promptly.
             try:
                 await asyncio.wait_for(
@@ -237,8 +237,8 @@ class BackgroundWorkMonitor:
 
     async def _tick(self) -> None:
         self._tick_count += 1
-        with obs.monitor_span("pos.persona.monitor.tick") as span:
-            span.set_attribute("pos.persona.monitor.tick_id", self._tick_count)
+        with obs.monitor_span("loam.persona.monitor.tick") as span:
+            span.set_attribute("loam.persona.monitor.tick_id", self._tick_count)
 
             # Pick up any scopes that have been closed since last tick
             # (completed / failed / cancelled) for the recently-

@@ -165,9 +165,9 @@ class Bootstrapper:
         first, then `wrap`, then `after`. Shutdown hooks registered
         during these runs fire in reverse on teardown."""
         with self.host.tracer.start_as_current_span(
-            "pos.bootstrap.ordering_resolved",
+            "loam.bootstrap.ordering_resolved",
             attributes={
-                "pos.bootstrap.phase_counts": _phase_counts_str(
+                "loam.bootstrap.phase_counts": _phase_counts_str(
                     self._ordered_by_phase
                 ),
             },
@@ -182,10 +182,10 @@ class Bootstrapper:
         self.host._enter_phase(phase)
         tracer = self.host.tracer
         with tracer.start_as_current_span(
-            "pos.bootstrap.phase",
+            "loam.bootstrap.phase",
             attributes={
-                "pos.bootstrap.phase": phase.value,
-                "pos.bootstrap.contribution_count": len(contributions),
+                "loam.bootstrap.phase": phase.value,
+                "loam.bootstrap.contribution_count": len(contributions),
             },
         ) as phase_span:
             for rc in contributions:
@@ -195,12 +195,12 @@ class Bootstrapper:
         # was NonRecording (e.g. before observability_aggregator's
         # contribution registers the TracerProvider).
         with tracer.start_as_current_span(
-            "pos.bootstrap.phase_complete_marker",
-            attributes={"pos.bootstrap.phase": phase.value},
+            "loam.bootstrap.phase_complete_marker",
+            attributes={"loam.bootstrap.phase": phase.value},
         ) as done_span:
             done_span.add_event(
-                "pos.bootstrap.phase_complete",
-                {"pos.bootstrap.phase": phase.value},
+                "loam.bootstrap.phase_complete",
+                {"loam.bootstrap.phase": phase.value},
             )
 
     async def _run_one(self, rc: ResolvedContribution, *, phase_span: Any) -> None:
@@ -219,27 +219,27 @@ class Bootstrapper:
                 await result
         except BootstrapError:
             with tracer.start_as_current_span(
-                "pos.bootstrap.contribution_failed_marker",
-                attributes={"pos.bootstrap.contribution_name": rc.name},
+                "loam.bootstrap.contribution_failed_marker",
+                attributes={"loam.bootstrap.contribution_name": rc.name},
             ) as fail_span:
                 fail_span.add_event(
-                    "pos.bootstrap.contribution_failed",
-                    {"pos.bootstrap.contribution_name": rc.name},
+                    "loam.bootstrap.contribution_failed",
+                    {"loam.bootstrap.contribution_name": rc.name},
                 )
             raise
         except Exception as e:
             with tracer.start_as_current_span(
-                "pos.bootstrap.contribution_failed_marker",
+                "loam.bootstrap.contribution_failed_marker",
                 attributes={
-                    "pos.bootstrap.contribution_name": rc.name,
-                    "pos.bootstrap.exception_type": type(e).__name__,
+                    "loam.bootstrap.contribution_name": rc.name,
+                    "loam.bootstrap.exception_type": type(e).__name__,
                 },
             ) as fail_span:
                 fail_span.add_event(
-                    "pos.bootstrap.contribution_failed",
+                    "loam.bootstrap.contribution_failed",
                     {
-                        "pos.bootstrap.contribution_name": rc.name,
-                        "pos.bootstrap.exception_type": type(e).__name__,
+                        "loam.bootstrap.contribution_name": rc.name,
+                        "loam.bootstrap.exception_type": type(e).__name__,
                     },
                 )
             raise AdapterRaisedError(
@@ -253,19 +253,19 @@ class Bootstrapper:
             ) from e
 
         with tracer.start_as_current_span(
-            "pos.bootstrap.contribution_completed_marker",
-            attributes={"pos.bootstrap.contribution_name": rc.name},
+            "loam.bootstrap.contribution_completed_marker",
+            attributes={"loam.bootstrap.contribution_name": rc.name},
         ) as done_span:
             # Emit both started and completed on the same post-contribute
             # span — start/complete pair is captured atomically after
             # the TracerProvider has been installed.
             done_span.add_event(
-                "pos.bootstrap.contribution_started",
-                {"pos.bootstrap.contribution_name": rc.name},
+                "loam.bootstrap.contribution_started",
+                {"loam.bootstrap.contribution_name": rc.name},
             )
             done_span.add_event(
-                "pos.bootstrap.contribution_completed",
-                {"pos.bootstrap.contribution_name": rc.name},
+                "loam.bootstrap.contribution_completed",
+                {"loam.bootstrap.contribution_name": rc.name},
             )
         self._completed_contributions.append(rc)
 
@@ -279,9 +279,9 @@ class Bootstrapper:
         """
         tracer = self.host.tracer
         with tracer.start_as_current_span(
-            "pos.bootstrap.shutdown",
+            "loam.bootstrap.shutdown",
             attributes={
-                "pos.bootstrap.hook_count": len(self.host._shutdown_hooks),
+                "loam.bootstrap.hook_count": len(self.host._shutdown_hooks),
             },
         ) as span:
             for name, hook in reversed(self.host._shutdown_hooks):
@@ -291,11 +291,11 @@ class Bootstrapper:
                         await result
                 except Exception as e:
                     span.add_event(
-                        "pos.bootstrap.shutdown_hook_failed",
+                        "loam.bootstrap.shutdown_hook_failed",
                         {
-                            "pos.bootstrap.hook_name": name,
-                            "pos.bootstrap.exception_type": type(e).__name__,
-                            "pos.bootstrap.message": str(e),
+                            "loam.bootstrap.hook_name": name,
+                            "loam.bootstrap.exception_type": type(e).__name__,
+                            "loam.bootstrap.message": str(e),
                         },
                     )
         self.host._exit_all_phases()

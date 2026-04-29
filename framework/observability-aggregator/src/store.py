@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator, Sequence
 
 
-_LOGGER = logging.getLogger("pos.aggregator.store")
+_LOGGER = logging.getLogger("loam.aggregator.store")
 
 from .config import AggregatorConfig, Substrate
 from .schema import (
@@ -450,7 +450,7 @@ class Store:
                 # Amendment #26 — teardown CDC 2: surface exception to
                 # observability. No span in scope; logger.debug is the
                 # tightened-CDC fallback. Module logger name follows
-                # ingest.py's convention (`pos.aggregator.*`).
+                # ingest.py's convention (`loam.aggregator.*`).
                 _LOGGER.debug(
                     "aggregator_store_close_failed", exc_info=True
                 )

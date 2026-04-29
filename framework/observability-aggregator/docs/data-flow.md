@@ -12,28 +12,28 @@ This document traces a representative pOS session end-to-end through the aggrega
 
 1. **Primary persona** opens its monitor turn:
    - tracer `pos_v2.primary_persona`
-   - span `pos.persona.monitor.tick` with `pos.session.id="sess_2026-04-19-12:30"`
-   - on dispatch: span `pos.persona.dispatch.scope_invoke`
+   - span `loam.persona.monitor.tick` with `loam.session.id="sess_2026-04-19-12:30"`
+   - on dispatch: span `loam.persona.dispatch.scope_invoke`
 
 2. **Orchestrator** receives a bind_scope IPC call:
-   - tracer `pos.orchestrator`
-   - span `pos.orchestrator.bind_scope` with `pos.scope.id="scope_001"`, `pos.objective.id="obj_reading"`
+   - tracer `loam.orchestrator`
+   - span `loam.orchestrator.bind_scope` with `loam.scope.id="scope_001"`, `loam.objective.id="obj_reading"`
    - state-changed event on the span when the scope flips active.
 
 3. **Scope-of-work** runs the dispatched scope:
-   - tracer `pos.scope_of_work`
-   - parent span `invoke_scope` with `pos.scope.id="scope_001"`, `pos.scope.budget.tokens.remaining=10000`
+   - tracer `loam.scope_of_work`
+   - parent span `invoke_scope` with `loam.scope.id="scope_001"`, `loam.scope.budget.tokens.remaining=10000`
    - state-changed events on each FSM transition
-   - per LLM call, a child span `chat claude-sonnet` with `gen_ai.usage.input_tokens=400`, `gen_ai.usage.output_tokens=120`, `pos.prompt.type=summarise_reading_list`
+   - per LLM call, a child span `chat claude-sonnet` with `gen_ai.usage.input_tokens=400`, `gen_ai.usage.output_tokens=120`, `loam.prompt.type=summarise_reading_list`
 
 4. **Memory-system** ingests one or two facts the scope produced:
-   - JSONL row in `spans.jsonl`: `name="memory.ingest"`, `attributes.pos.retention.class="normal"`
+   - JSONL row in `spans.jsonl`: `name="memory.ingest"`, `attributes.loam.retention.class="normal"`
    - JSONL row in `tokens.jsonl`: `prompt_name="extract_facts"`, `model="claude-haiku"`, `input_tokens=200`, `output_tokens=80`, `scope_id="scope_001"`
    - JSONL row in `audit.jsonl` if the ingest produced a supersession decision: `operation="supersession_inferred"`, `actor="memory_system"`, `rationale="newer entry contradicts..."`
 
 5. **Objective-tracker** records the bind:
-   - tracer `pos.objective_tracker`
-   - span `pos.objective.bind_scope` with `pos.scope.id="scope_001"`, `pos.objective.id="obj_reading"`
+   - tracer `loam.objective_tracker`
+   - span `loam.objective.bind_scope` with `loam.scope.id="scope_001"`, `loam.objective.id="obj_reading"`
 
 ## What the aggregator writes
 
@@ -51,12 +51,12 @@ Each `spans` row's `attributes` JSON column is shaped by the source span's reten
 User asks: *"Why did memory mark Alice's address as superseded?"*
 
 - The primary persona calls `nl.answer(question)`.
-- `NLPath.translate(question)` emits `pos.aggregator.nl_translate` (tagged `pos.prompt.type=obs-nl-translate`); returns `NLTranslation(mode="audit", audit_actor="memory_system", audit_operation="supersession_inferred")`.
+- `NLPath.translate(question)` emits `loam.aggregator.nl_translate` (tagged `loam.prompt.type=obs-nl-translate`); returns `NLTranslation(mode="audit", audit_actor="memory_system", audit_operation="supersession_inferred")`.
 - `QueryAPI.audit_search(operation="supersession_inferred", actor="memory_system")` returns the matching audit rows.
-- `NLPath` emits `pos.aggregator.nl_format` (tagged `pos.prompt.type=obs-nl-format`); returns `CitedAnswer(summary="...", citations=[...], cited_span_ids=[])`.
+- `NLPath` emits `loam.aggregator.nl_format` (tagged `loam.prompt.type=obs-nl-format`); returns `CitedAnswer(summary="...", citations=[...], cited_span_ids=[])`.
 - The persona renders the cited answer in its voice; the citations carry through.
 
-Both NL spans are filtered at exporter (their tracer is `pos.aggregator.nl`); they are visible in the spool log for diagnosis but not stored. They are tagged with their `pos.prompt.type` so the aggregator's own LLM cost shows up in the same `cost_by_prompt` view it serves — reflexive R12 attribution.
+Both NL spans are filtered at exporter (their tracer is `loam.aggregator.nl`); they are visible in the spool log for diagnosis but not stored. They are tagged with their `loam.prompt.type` so the aggregator's own LLM cost shows up in the same `cost_by_prompt` view it serves — reflexive R12 attribution.
 
 ## What's in the store after one day at typical volume
 

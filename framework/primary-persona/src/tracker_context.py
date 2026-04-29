@@ -384,7 +384,7 @@ def build_tracker_context_contributor(
     enforced via ``_render_projection_block`` (AC40.4). On any
     exception during open/query/trace, returns either an empty string
     or a structured graceful-degradation marker and emits the
-    ``pos.persona.tracker_context.unavailable`` event (AC40.3).
+    ``loam.persona.tracker_context.unavailable`` event (AC40.3).
     """
 
     def contributor(context: dict[str, Any]) -> str:

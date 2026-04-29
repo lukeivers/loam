@@ -39,7 +39,7 @@ def setup_sc_exporter(monkeypatch):
     monkeypatch.setattr(
         sc_obs,
         "_TRACER",
-        provider.get_tracer("pos.self_correction", "0.1.0"),
+        provider.get_tracer("loam.self_correction", "0.1.0"),
     )
     yield exporter
     exporter.clear()
@@ -57,7 +57,7 @@ class _SpanWithRaisingAttrs:
 
     def __init__(self) -> None:
         self.attributes = _RaisingAttrs()
-        self.name = "pos.test.failure"
+        self.name = "loam.test.failure"
         self.status = "ERROR"
         self.status_message = "boom"
         self.span_id = "sp-1"
@@ -77,12 +77,12 @@ def test_S2_site1_build_trigger_from_span_attribute_failure_emits_span(
     failure_spans = [
         s
         for s in finished
-        if s.name == "pos.correction.span_attribute_lookup_failed"
+        if s.name == "loam.correction.span_attribute_lookup_failed"
     ]
     assert len(failure_spans) == 1
     attrs = dict(failure_spans[0].attributes or {})
-    assert attrs.get("pos.correction.attribute_name") == "pos.scope.id"
-    assert attrs.get("pos.correction.exception_class") == "RuntimeError"
+    assert attrs.get("loam.correction.attribute_name") == "loam.scope.id"
+    assert attrs.get("loam.correction.exception_class") == "RuntimeError"
 
 
 class _FakeQueryAPI:
@@ -120,11 +120,11 @@ async def test_S2_site2_poll_tick_emits_span_on_timeout_iteration(
     tick_spans = [
         s
         for s in setup_sc_exporter.get_finished_spans()
-        if s.name == "pos.correction.poll_tick"
+        if s.name == "loam.correction.poll_tick"
     ]
     assert tick_spans, "expected at least one poll_tick span"
     attrs = dict(tick_spans[0].attributes or {})
-    assert attrs.get("pos.correction.poller_name") == "otel_anomaly"
+    assert attrs.get("loam.correction.poller_name") == "otel_anomaly"
 
 
 class _FakeStore:
@@ -192,11 +192,11 @@ def test_S2_site3_audit_subscription_drops_notify_with_no_loop_observably(
     no_loop_spans = [
         s
         for s in setup_sc_exporter.get_finished_spans()
-        if s.name == "pos.correction.audit_notify_no_loop"
+        if s.name == "loam.correction.audit_notify_no_loop"
     ]
     assert len(no_loop_spans) == 1
     attrs = dict(no_loop_spans[0].attributes or {})
-    assert attrs.get("pos.correction.episode_id") == "ep-123"
+    assert attrs.get("loam.correction.episode_id") == "ep-123"
 
 
 def test_S2_site4_episode_refused_status_set_failure_is_captured(
@@ -225,7 +225,7 @@ def test_S2_site4_episode_refused_status_set_failure_is_captured(
     refused_spans = [
         s
         for s in setup_sc_exporter.get_finished_spans()
-        if s.name == "pos.correction.episode_refused"
+        if s.name == "loam.correction.episode_refused"
     ]
     assert len(refused_spans) == 1
     events = refused_spans[0].events
@@ -257,7 +257,7 @@ def test_S2_site5_cost_refusal_caught_status_set_failure_is_captured(
     cost_spans = [
         s
         for s in setup_sc_exporter.get_finished_spans()
-        if s.name == "pos.correction.cost_refusal_caught"
+        if s.name == "loam.correction.cost_refusal_caught"
     ]
     assert len(cost_spans) == 1
     events = cost_spans[0].events

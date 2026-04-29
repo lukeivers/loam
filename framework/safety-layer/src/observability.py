@@ -1,10 +1,10 @@
 """OTel emission helpers for the safety layer.
 
-Uses `trace.get_tracer("pos.safety_layer")` only — no TracerProvider is
+Uses `trace.get_tracer("loam.safety_layer")` only — no TracerProvider is
 constructed here (A16). The observability-aggregator's `install_for_workspace`
 hook is responsible for routing spans; this module is a pure emitter.
 
-Span namespace: `pos.safety.*`.
+Span namespace: `loam.safety.*`.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from typing import Any, Iterator
 from opentelemetry import trace
 
 
-_TRACER = trace.get_tracer("pos.safety_layer", "0.1.0")
+_TRACER = trace.get_tracer("loam.safety_layer", "0.1.0")
 
 
 @contextmanager
@@ -36,43 +36,43 @@ def _apply_attrs(span: trace.Span, attrs: dict[str, Any]) -> None:
 
 
 def scope_kill(*, scope_id: str, reason: str, source: str) -> None:
-    with _TRACER.start_as_current_span("pos.safety.scope_kill") as span:
-        span.set_attribute("pos.safety.level", "scope")
-        span.set_attribute("pos.safety.scope_id", scope_id)
-        span.set_attribute("pos.safety.reason", reason)
-        span.set_attribute("pos.safety.source", source)
+    with _TRACER.start_as_current_span("loam.safety.scope_kill") as span:
+        span.set_attribute("loam.safety.level", "scope")
+        span.set_attribute("loam.safety.scope_id", scope_id)
+        span.set_attribute("loam.safety.reason", reason)
+        span.set_attribute("loam.safety.source", source)
 
 
 def session_kill(
     *, reason: str, source: str, cancelled_count: int
 ) -> None:
-    with _TRACER.start_as_current_span("pos.safety.session_kill") as span:
-        span.set_attribute("pos.safety.level", "session")
-        span.set_attribute("pos.safety.reason", reason)
-        span.set_attribute("pos.safety.source", source)
-        span.set_attribute("pos.safety.cancelled_count", cancelled_count)
+    with _TRACER.start_as_current_span("loam.safety.session_kill") as span:
+        span.set_attribute("loam.safety.level", "session")
+        span.set_attribute("loam.safety.reason", reason)
+        span.set_attribute("loam.safety.source", source)
+        span.set_attribute("loam.safety.cancelled_count", cancelled_count)
 
 
 def system_kill(
     *, reason: str, source: str, cancelled_count: int
 ) -> None:
-    with _TRACER.start_as_current_span("pos.safety.system_kill") as span:
-        span.set_attribute("pos.safety.level", "system")
-        span.set_attribute("pos.safety.reason", reason)
-        span.set_attribute("pos.safety.source", source)
-        span.set_attribute("pos.safety.cancelled_count", cancelled_count)
+    with _TRACER.start_as_current_span("loam.safety.system_kill") as span:
+        span.set_attribute("loam.safety.level", "system")
+        span.set_attribute("loam.safety.reason", reason)
+        span.set_attribute("loam.safety.source", source)
+        span.set_attribute("loam.safety.cancelled_count", cancelled_count)
 
 
 def system_kill_cleared(*, reason: str) -> None:
-    with _TRACER.start_as_current_span("pos.safety.system_kill_cleared") as span:
-        span.set_attribute("pos.safety.reason", reason)
+    with _TRACER.start_as_current_span("loam.safety.system_kill_cleared") as span:
+        span.set_attribute("loam.safety.reason", reason)
 
 
 def system_kill_block_activation(*, scope_id: str) -> None:
     with _TRACER.start_as_current_span(
-        "pos.safety.system_kill_block_activation"
+        "loam.safety.system_kill_block_activation"
     ) as span:
-        span.set_attribute("pos.safety.scope_id", scope_id)
+        span.set_attribute("loam.safety.scope_id", scope_id)
 
 
 def ask_gate_fired(
@@ -82,12 +82,12 @@ def ask_gate_fired(
     action_classes: list[str],
     outcome: str,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.safety.ask_gate_fired") as span:
+    with _TRACER.start_as_current_span("loam.safety.ask_gate_fired") as span:
         if scope_id is not None:
-            span.set_attribute("pos.safety.scope_id", scope_id)
-        span.set_attribute("pos.safety.spec_hash", spec_hash)
-        span.set_attribute("pos.safety.action_classes", ",".join(action_classes))
-        span.set_attribute("pos.safety.gate_outcome", outcome)
+            span.set_attribute("loam.safety.scope_id", scope_id)
+        span.set_attribute("loam.safety.spec_hash", spec_hash)
+        span.set_attribute("loam.safety.action_classes", ",".join(action_classes))
+        span.set_attribute("loam.safety.gate_outcome", outcome)
 
 
 def dangerous_op_gate_fired(
@@ -97,30 +97,30 @@ def dangerous_op_gate_fired(
     reasons: list[str],
     outcome: str,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.safety.dangerous_op_gate_fired") as span:
+    with _TRACER.start_as_current_span("loam.safety.dangerous_op_gate_fired") as span:
         if scope_id is not None:
-            span.set_attribute("pos.safety.scope_id", scope_id)
-        span.set_attribute("pos.safety.spec_hash", spec_hash)
-        span.set_attribute("pos.safety.trigger_reasons", ",".join(reasons))
-        span.set_attribute("pos.safety.gate_outcome", outcome)
+            span.set_attribute("loam.safety.scope_id", scope_id)
+        span.set_attribute("loam.safety.spec_hash", spec_hash)
+        span.set_attribute("loam.safety.trigger_reasons", ",".join(reasons))
+        span.set_attribute("loam.safety.gate_outcome", outcome)
 
 
 def ask_decision_recorded(
     *, spec_hash: str, state: str, action_classes: list[str]
 ) -> None:
-    with _TRACER.start_as_current_span("pos.safety.ask_decision_recorded") as span:
-        span.set_attribute("pos.safety.spec_hash", spec_hash)
-        span.set_attribute("pos.safety.state", state)
-        span.set_attribute("pos.safety.action_classes", ",".join(action_classes))
+    with _TRACER.start_as_current_span("loam.safety.ask_decision_recorded") as span:
+        span.set_attribute("loam.safety.spec_hash", spec_hash)
+        span.set_attribute("loam.safety.state", state)
+        span.set_attribute("loam.safety.action_classes", ",".join(action_classes))
 
 
 def notification_dispatched(
     *, channel: str, outcome: str, kind: str
 ) -> None:
-    with _TRACER.start_as_current_span("pos.safety.notification_dispatched") as span:
-        span.set_attribute("pos.safety.channel", channel)
-        span.set_attribute("pos.safety.notification_outcome", outcome)
-        span.set_attribute("pos.safety.notification_kind", kind)
+    with _TRACER.start_as_current_span("loam.safety.notification_dispatched") as span:
+        span.set_attribute("loam.safety.channel", channel)
+        span.set_attribute("loam.safety.notification_outcome", outcome)
+        span.set_attribute("loam.safety.notification_kind", kind)
 
 
 # ---- amendment #19: silent-except surface emitters -------------------
@@ -138,12 +138,12 @@ def pause_activation_failed(
     """Surfaces a `pause_activation` failure during kill_session /
     kill_system. Amendment #19 sites 1 + 2."""
     with _TRACER.start_as_current_span(
-        "pos.safety.pause_activation_failed"
+        "loam.safety.pause_activation_failed"
     ) as span:
-        span.set_attribute("pos.safety.level", level)
-        span.set_attribute("pos.safety.reason", reason)
-        span.set_attribute("pos.safety.source", source)
-        span.set_attribute("pos.safety.exception_class", exception_class)
+        span.set_attribute("loam.safety.level", level)
+        span.set_attribute("loam.safety.reason", reason)
+        span.set_attribute("loam.safety.source", source)
+        span.set_attribute("loam.safety.exception_class", exception_class)
 
 
 def scope_cancel_failed_during_kill(
@@ -155,12 +155,12 @@ def scope_cancel_failed_during_kill(
     "nothing to cancel" from "cancellation failed." Amendment #19
     site 3."""
     with _TRACER.start_as_current_span(
-        "pos.safety.scope_cancel_failed_during_kill"
+        "loam.safety.scope_cancel_failed_during_kill"
     ) as span:
-        span.set_attribute("pos.safety.level", level)
-        span.set_attribute("pos.safety.scope_id", scope_id)
-        span.set_attribute("pos.safety.reason", reason)
-        span.set_attribute("pos.safety.exception_class", exception_class)
+        span.set_attribute("loam.safety.level", level)
+        span.set_attribute("loam.safety.scope_id", scope_id)
+        span.set_attribute("loam.safety.reason", reason)
+        span.set_attribute("loam.safety.exception_class", exception_class)
 
 
 def request_stop_failed(*, reason: str, exception_class: str) -> None:
@@ -169,10 +169,10 @@ def request_stop_failed(*, reason: str, exception_class: str) -> None:
     span captures that the orchestrator stop event did not fire.
     Amendment #19 site 4."""
     with _TRACER.start_as_current_span(
-        "pos.safety.request_stop_failed"
+        "loam.safety.request_stop_failed"
     ) as span:
-        span.set_attribute("pos.safety.reason", reason)
-        span.set_attribute("pos.safety.exception_class", exception_class)
+        span.set_attribute("loam.safety.reason", reason)
+        span.set_attribute("loam.safety.exception_class", exception_class)
 
 
 def persona_render_failed(*, kind: str, exception_class: str) -> None:
@@ -180,7 +180,7 @@ def persona_render_failed(*, kind: str, exception_class: str) -> None:
     notification dispatch. The un-rendered notification text is still
     sent — fail-closed invariant preserved. Amendment #19 sites 5 + 6."""
     with _TRACER.start_as_current_span(
-        "pos.safety.persona_render_failed"
+        "loam.safety.persona_render_failed"
     ) as span:
-        span.set_attribute("pos.safety.notification_kind", kind)
-        span.set_attribute("pos.safety.exception_class", exception_class)
+        span.set_attribute("loam.safety.notification_kind", kind)
+        span.set_attribute("loam.safety.exception_class", exception_class)

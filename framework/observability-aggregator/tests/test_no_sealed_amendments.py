@@ -20,7 +20,7 @@ BASELINE history:
     aggregator/brief.md` dispatch doc (per ODD §2.5 + `scope-only-
     dispatch` / `research-before-plan` CDCs; briefs are dispatch-time
     artifacts, not committed canonical ones) and edits docs/odd-in-
-    pos.md §7.4 accordingly. Multi-component amendment with six other
+    loam.md §7.4 accordingly. Multi-component amendment with six other
     brief-owning sealed components + hands-off-lifecycle. e8f704c is
     the pre-amendment tip (the `docs(future-ideas)` commit codifying
     the three new CDCs immediately before this amendment's code
@@ -32,7 +32,7 @@ BASELINE history:
     fall-through; site 10: answer LLM fall-through). Per ODD §8 rule 8
     + audit-triage-by-severity CDC (bucket d), each catch gains a span
     event (`llm_translate_failed` / `llm_format_failed`) on the already-
-    open pos.aggregator.nl_translate / pos.aggregator.nl_format span;
+    open loam.aggregator.nl_translate / loam.aggregator.nl_format span;
     fall-through to rule-based translate/format is preserved. Multi-
     component amendment (self-correction + graceful-degradation +
     observability-aggregator + hands-off-lifecycle). The allowed

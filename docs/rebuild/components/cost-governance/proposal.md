@@ -44,10 +44,10 @@ A new package `cost-governance/` (Python, on `pos-v2`) exposes `CostController` 
 - **Activation-gate wrap** — IPC handler wrap of `activate_scope`, registered **first** so it becomes the innermost wrap at dispatch. Reads declared budget from `spec.budget.time_seconds / tokens / money_cents`; queries current rollups + active reservations; refuses if aggregate would exceed any applicable ceiling.
 - **`CostConfig`** — loaded from `~/.pos/cost/ceilings.yaml`. Session ceilings (money / tokens / time_seconds, each `Optional[int]`) plus a list of rolling-window configurations, each with `window_kind`, `duration_seconds`, and per-axis caps.
 - **Rollup runtime** — scheduled task; runs at `min(window.duration_seconds) / 10` interval (6 minutes for the default daily+hourly config). Idempotent interval-closure math keyed on `(window_kind, interval_end_unix)`.
-- **Throttle notification** — when a scope's reservation would push aggregate spend past a configurable fraction (default 80%) of any ceiling, the ledger emits `pos.cost.ceiling_warning` and dispatches via `OneOnOneChannel` (one-on-one inherited; no group-channel escape).
+- **Throttle notification** — when a scope's reservation would push aggregate spend past a configurable fraction (default 80%) of any ceiling, the ledger emits `loam.cost.ceiling_warning` and dispatches via `OneOnOneChannel` (one-on-one inherited; no group-channel escape).
 - **SQLite store** at `~/.pos/cost/cost.sqlite` with four tables: `reservations`, `session_rollups`, `rolling_rollups`, `ceiling_adjustments`. WAL + `synchronous=FULL` + `foreign_keys=ON`.
 - **CLI** — `pos cost status`, `pos cost scope <id>`, `pos cost session`, `pos cost rolling`, `pos cost adjust`.
-- **Observability** — emits `pos.cost.*` spans via `trace.get_tracer("pos.cost_governance")` (aggregator-registered `TracerProvider`).
+- **Observability** — emits `loam.cost.*` spans via `trace.get_tracer("loam.cost_governance")` (aggregator-registered `TracerProvider`).
 
 ### 3.2 Composition with safety + reversibility
 
@@ -119,19 +119,19 @@ Each is authored as an objective; tests target it directly.
 - **C5.** A scope declaring `money_cents = X` with rolling-window (daily) money remaining `< X` → cost wrap raises `-32062 COST_ROLLING_CEILING_EXCEEDED` with axis `money`, `window_kind=daily`.
 - **C6.** Rolling-window (hourly) money — same pattern for the hourly window.
 - **C7.** Per-axis independence: a scope declaring `money_cents` but with `tokens = None` and `time_seconds = None` is checked only on the money axis; `None`-axes contribute zero to their respective reservation math.
-- **C8.** Baseline pass case: a scope declaring budget well under every ceiling passes the gate; `INSERT reservations` fires; `pos.cost.reservation_created` span emitted; `orig_activate` runs.
+- **C8.** Baseline pass case: a scope declaring budget well under every ceiling passes the gate; `INSERT reservations` fires; `loam.cost.reservation_created` span emitted; `orig_activate` runs.
 
 ### 4.3 Reservation lifecycle (research §2.3, §4.2)
 
 - **C9.** On gate pass, `reservations` row is INSERTed with `state='active'` and the declared amounts in reserved columns. Timestamps populated.
 - **C10.** On `BudgetDebited` for an active scope, the session rollup + any applicable rolling-window rollup update in-place (total += debit amount). Reservation row accumulates actual values.
 - **C11.** On `BudgetRefunded`, rollups decrement correctly.
-- **C12.** On `StateTransitioned(to_state=terminal)` (completed / failed / cancelled / escalated), the reservation row flips to `state='reconciled'`, `reconciled_at` populated, final `actual_*` values written. `pos.cost.reservation_reconciled` span emitted.
+- **C12.** On `StateTransitioned(to_state=terminal)` (completed / failed / cancelled / escalated), the reservation row flips to `state='reconciled'`, `reconciled_at` populated, final `actual_*` values written. `loam.cost.reservation_reconciled` span emitted.
 - **C13.** A scope cancelled pre-debit has `actual_*` = 0; ceiling slack released for subsequent activations.
 
 ### 4.4 Throttling / pre-ceiling warning (ruling #2)
 
-- **C14.** When a prospective reservation would push aggregate spend ≥ 80% of any ceiling (session or rolling), the ledger emits `pos.cost.ceiling_warning` and dispatches a single notification via the `OneOnOneChannel` (group-channel refusal inherited). The warning fires before the reservation is written — so a scope that activates at 85% of cap triggers the warning once, not repeatedly per debit.
+- **C14.** When a prospective reservation would push aggregate spend ≥ 80% of any ceiling (session or rolling), the ledger emits `loam.cost.ceiling_warning` and dispatches a single notification via the `OneOnOneChannel` (group-channel refusal inherited). The warning fires before the reservation is written — so a scope that activates at 85% of cap triggers the warning once, not repeatedly per debit.
 - **C15.** The 80% threshold is configurable via `CostConfig.warning_fraction` with default `0.8`. Values outside `(0.0, 1.0)` are refused at config load.
 
 ### 4.5 Concurrent activation serialisation (research §2.3 Q10)
@@ -151,12 +151,12 @@ Each is authored as an objective; tests target it directly.
 
 ### 4.8 Ceiling adjustment (research §2.2 Q7)
 
-- **C22.** `cost.adjust_ceiling(ceiling_kind, axis, new_value, reason)` IPC writes a `ceiling_adjustments` row (audit), updates the in-memory cache, emits `pos.cost.ceiling_adjusted`, and returns `{ok: True, audit_record_id}`. Does NOT re-check active reservations — adjustments apply to new activations only.
+- **C22.** `cost.adjust_ceiling(ceiling_kind, axis, new_value, reason)` IPC writes a `ceiling_adjustments` row (audit), updates the in-memory cache, emits `loam.cost.ceiling_adjusted`, and returns `{ok: True, audit_record_id}`. Does NOT re-check active reservations — adjustments apply to new activations only.
 
 ### 4.9 Cross-cutting integration
 
 - **C23.** `git diff --stat f657f8c..<cost-commit>` shows only `cost-governance/` changes. Zero deltas to any sealed component.
-- **C24.** All OTel spans flow through `trace.get_tracer("pos.cost_governance")`. The component does not construct its own `TracerProvider`.
+- **C24.** All OTel spans flow through `trace.get_tracer("loam.cost_governance")`. The component does not construct its own `TracerProvider`.
 - **C25.** All user-facing notifications use `OneOnOneChannel` from `primary_persona.introduction`; `is_group=True` rejection inherited.
 - **C26.** Zero imports from current-gen Ruby pOS rules-file machinery.
 
@@ -196,7 +196,7 @@ cost-governance/
     rollup.py            # rolling-window interval-closure task
     controller.py        # CostController composes ledger + store + notifier
     ipc_wiring.py        # register_cost_governance_ipc — innermost wrap registration
-    observability.py     # pos.cost.* span helpers
+    observability.py     # loam.cost.* span helpers
     notification.py      # 80% threshold OneOnOneChannel dispatch
     cli.py               # `pos cost` subcommands
   tests/
@@ -252,7 +252,7 @@ These items are not direct quotes from the owner; challenge any with a halt sign
 2. **`warning_fraction` default 0.8.** The spec says "threshold below the ceiling" without naming a value. 80% is conventional (AWS / GCP precedent). If the builder has reason to pick differently, halt.
 3. **Session boundary = orchestrator process lifecycle.** Research recommended; there is no explicit session-id surface to bind to. If the workspace later needs finer session granularity, a schema migration handles it — but the v1.0 assumption is one-orchestrator-one-session. Challenge if wrong.
 4. **Ceiling-adjustment does NOT re-check active reservations.** Research default (matches safety/reversibility mid-session-change semantics). If the builder believes active reservations should be refused retroactively when the ceiling is tightened below them, halt.
-5. **Budget-extension interaction emits `pos.cost.ceiling_post_hoc_overrun` as diagnostic only.** Research §8 recommended; cost governance has no lever on an already-active scope. If the builder thinks the extension should itself be gated, halt (that would be a scope-of-work amendment anyway).
+5. **Budget-extension interaction emits `loam.cost.ceiling_post_hoc_overrun` as diagnostic only.** Research §8 recommended; cost governance has no lever on an already-active scope. If the builder thinks the extension should itself be gated, halt (that would be a scope-of-work amendment anyway).
 6. **Reservation rows prune 30d after reconciliation.** My extrapolation from decay-retention analysis candidate. Could be 7d or 90d depending on audit-query needs. Challenge if audit queries want longer retention.
 7. **Rolling-window rollups retained indefinitely.** My call based on low volume (~10k rows/year for default config). If the builder sees a storage or query-performance concern, halt.
 8. **Ceiling adjustment accepts absolute `new_value`, not delta.** Research §7.4 recommended to avoid sign confusion. If the builder thinks delta math is cleaner, halt.

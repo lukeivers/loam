@@ -12,7 +12,7 @@ from pos_observability_aggregator.schema import (
 )
 
 
-def _span(span_id, name, *, attrs, tracer="pos.scope_of_work", comp="scope_of_work", offset_ns=0):
+def _span(span_id, name, *, attrs, tracer="loam.scope_of_work", comp="scope_of_work", offset_ns=0):
     now_ns = int(time.time() * 1e9) + offset_ns
     return SpanRecord(
         trace_id="t" * 32, span_id=span_id, name=name,
@@ -23,9 +23,9 @@ def _span(span_id, name, *, attrs, tracer="pos.scope_of_work", comp="scope_of_wo
 
 
 def test_replay_session_returns_ordered_spans_and_events(store):
-    # Two spans tied by pos.session.id == "sess_1".
-    store.insert_span(_span("a" * 16, "first", attrs={"pos.session.id": "sess_1"}, offset_ns=0))
-    store.insert_span(_span("b" * 16, "second", attrs={"pos.session.id": "sess_1"}, offset_ns=10_000_000))
+    # Two spans tied by loam.session.id == "sess_1".
+    store.insert_span(_span("a" * 16, "first", attrs={"loam.session.id": "sess_1"}, offset_ns=0))
+    store.insert_span(_span("b" * 16, "second", attrs={"loam.session.id": "sess_1"}, offset_ns=10_000_000))
     # An event on the first span.
     store.insert_event(EventRecord(
         span_id="a" * 16, trace_id="t" * 32, name="state_changed",
@@ -41,12 +41,12 @@ def test_replay_session_returns_ordered_spans_and_events(store):
 
 
 def test_replay_scope_returns_decision_chain(store):
-    # Three spans bound to pos.scope.id == "scope_42".
+    # Three spans bound to loam.scope.id == "scope_42".
     for i, n in enumerate(["invoke_scope", "child_op", "another_child"]):
-        store.insert_span(_span(f"{i:016x}", n, attrs={"pos.scope.id": "scope_42"}, offset_ns=i * 1_000_000))
+        store.insert_span(_span(f"{i:016x}", n, attrs={"loam.scope.id": "scope_42"}, offset_ns=i * 1_000_000))
     # State transition events.
     store.insert_event(EventRecord(
-        span_id="0" * 16, trace_id="t" * 32, name="pos.scope.state_changed",
+        span_id="0" * 16, trace_id="t" * 32, name="loam.scope.state_changed",
         time_unix_nano=int(time.time() * 1e9), attributes={"to": "active"},
     ))
     # Audit entry tied to scope.
@@ -67,14 +67,14 @@ def test_replay_scope_returns_decision_chain(store):
 def test_replay_objective_returns_bound_scopes(store):
     # bind_scope spans linking objective_id -> scope_ids
     store.insert_span(_span("a" * 16, "bind_scope", attrs={
-        "pos.objective.id": "obj_99", "pos.scope.id": "scope_a",
-    }, tracer="pos.objective_tracker", comp="objective_tracker"))
+        "loam.objective.id": "obj_99", "loam.scope.id": "scope_a",
+    }, tracer="loam.objective_tracker", comp="objective_tracker"))
     store.insert_span(_span("b" * 16, "bind_scope", attrs={
-        "pos.objective.id": "obj_99", "pos.scope.id": "scope_b",
-    }, tracer="pos.objective_tracker", comp="objective_tracker"))
+        "loam.objective.id": "obj_99", "loam.scope.id": "scope_b",
+    }, tracer="loam.objective_tracker", comp="objective_tracker"))
     # Activity inside each scope.
-    store.insert_span(_span("c" * 16, "scope_work", attrs={"pos.scope.id": "scope_a"}))
-    store.insert_span(_span("d" * 16, "scope_work", attrs={"pos.scope.id": "scope_b"}))
+    store.insert_span(_span("c" * 16, "scope_work", attrs={"loam.scope.id": "scope_a"}))
+    store.insert_span(_span("d" * 16, "scope_work", attrs={"loam.scope.id": "scope_b"}))
     api = QueryAPI(store)
     rep = api.replay_objective("obj_99")
     assert rep.objective_id == "obj_99"
@@ -87,9 +87,9 @@ def test_replay_round_trip_preserves_input_ordering(store):
     """Round-trip: input ordering preserved in replay output."""
     # Insert in scrambled order; replay must return ordered.
     spans = [
-        _span("3" * 16, "third", attrs={"pos.session.id": "sx"}, offset_ns=2_000_000),
-        _span("1" * 16, "first", attrs={"pos.session.id": "sx"}, offset_ns=0),
-        _span("2" * 16, "second", attrs={"pos.session.id": "sx"}, offset_ns=1_000_000),
+        _span("3" * 16, "third", attrs={"loam.session.id": "sx"}, offset_ns=2_000_000),
+        _span("1" * 16, "first", attrs={"loam.session.id": "sx"}, offset_ns=0),
+        _span("2" * 16, "second", attrs={"loam.session.id": "sx"}, offset_ns=1_000_000),
     ]
     for s in spans:
         store.insert_span(s)

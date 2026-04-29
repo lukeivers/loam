@@ -139,9 +139,9 @@ class ObjectiveTracker:
         with obs.operation_span(
             "objective_tracker.create",
             **{
-                "pos.objective.id": oid,
-                "pos.objective.authored_by": spec.authored_by,
-                "pos.objective.parent_id": spec.parent_id,
+                "loam.objective.id": oid,
+                "loam.objective.authored_by": spec.authored_by,
+                "loam.objective.parent_id": spec.parent_id,
             },
         ) as span:
             if spec.parent_id is not None:
@@ -171,7 +171,7 @@ class ObjectiveTracker:
                 obs.add_event(
                     span,
                     "objective.created",
-                    {"pos.objective.id": oid, "pos.objective.status": proj.status.value},
+                    {"loam.objective.id": oid, "loam.objective.status": proj.status.value},
                 )
                 return public_projection(proj)
 
@@ -271,9 +271,9 @@ class ObjectiveTracker:
         with obs.operation_span(
             f"objective_tracker.{operation}",
             **{
-                "pos.objective.id": objective_id,
-                "pos.objective.authored_by": proj.authored_by,
-                "pos.objective.status": proj.status.value,
+                "loam.objective.id": objective_id,
+                "loam.objective.authored_by": proj.authored_by,
+                "loam.objective.status": proj.status.value,
             },
         ) as span:
             async with await self._lock_for(objective_id):
@@ -406,9 +406,9 @@ class ObjectiveTracker:
         with obs.operation_span(
             "objective_tracker.evaluate_criterion",
             **{
-                "pos.objective.id": objective_id,
-                "pos.objective.criterion_id": criterion_id,
-                "pos.objective.status": proj.status.value,
+                "loam.objective.id": objective_id,
+                "loam.objective.criterion_id": criterion_id,
+                "loam.objective.status": proj.status.value,
             },
         ) as span:
             async with await self._lock_for(objective_id):
@@ -479,8 +479,8 @@ class ObjectiveTracker:
         with obs.operation_span(
             "objective_tracker.bind_scope",
             **{
-                "pos.scope.id": scope_id,
-                "pos.objective.id": objective_id,
+                "loam.scope.id": scope_id,
+                "loam.objective.id": objective_id,
             },
         ) as span:
             chain = self.trace_to_root(objective_id)

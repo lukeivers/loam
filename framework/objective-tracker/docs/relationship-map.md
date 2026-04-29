@@ -86,7 +86,7 @@ Its SQLite database is separate from scope-of-work's.
 
 **How it consumes:** reads OTel spans via any configured tracer provider (OTLP collector, local exporter, etc.).
 
-**Tracker guarantees:** every public operation emits an INTERNAL span with `pos.objective.*` attributes. No consumer is required for emission to succeed (A1 correction).
+**Tracker guarantees:** every public operation emits an INTERNAL span with `loam.objective.*` attributes. No consumer is required for emission to succeed (A1 correction).
 
 ---
 

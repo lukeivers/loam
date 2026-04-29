@@ -5,7 +5,7 @@ Two-LLM-call pattern via Claude-via-Max:
   1. nl_translate(question, schema) → structured filter (Pydantic)
   2. nl_format(rows, question)      → cited natural-language answer
 
-Both calls carry distinct `pos.prompt.type` attributes
+Both calls carry distinct `loam.prompt.type` attributes
 (`obs-nl-translate`, `obs-nl-format`) so they appear in v1.1 R12
 cost-by-prompt aggregation.
 
@@ -36,7 +36,7 @@ from .schema import RetentionClass, SpanRecord
 
 
 # Aggregator's own tracer for NL spans (filtered out at ingest).
-_TRACER = trace.get_tracer("pos.aggregator.nl")
+_TRACER = trace.get_tracer("loam.aggregator.nl")
 
 
 class NLTranslation(BaseModel):
@@ -360,8 +360,8 @@ class NLPath:
     via-Max. Both are optional; the rule-based path is the default
     and is what the test corpus measures.
 
-    Both calls (when LLM is wired) are emitted as `pos.aggregator.nl_*`
-    spans tagged with `pos.prompt.type` for v1.1 R12 attribution.
+    Both calls (when LLM is wired) are emitted as `loam.aggregator.nl_*`
+    spans tagged with `loam.prompt.type` for v1.1 R12 attribution.
     """
 
     def __init__(
@@ -376,8 +376,8 @@ class NLPath:
         self._llm_format = llm_format
 
     def translate(self, question: str) -> NLTranslation:
-        with _TRACER.start_as_current_span("pos.aggregator.nl_translate") as span:
-            span.set_attribute("pos.prompt.type", "obs-nl-translate")
+        with _TRACER.start_as_current_span("loam.aggregator.nl_translate") as span:
+            span.set_attribute("loam.prompt.type", "obs-nl-translate")
             span.set_attribute("nl.question", question[:500])
             if self._llm_translate is not None:
                 # Amendment #20 — Site 9: replace silent fallback with a
@@ -425,8 +425,8 @@ class NLPath:
 
     def answer(self, question: str) -> CitedAnswer:
         t, rows = self.execute(question)
-        with _TRACER.start_as_current_span("pos.aggregator.nl_format") as span:
-            span.set_attribute("pos.prompt.type", "obs-nl-format")
+        with _TRACER.start_as_current_span("loam.aggregator.nl_format") as span:
+            span.set_attribute("loam.prompt.type", "obs-nl-format")
             span.set_attribute("nl.rows_returned", len(rows))
             if self._llm_format is not None:
                 # Amendment #20 — Site 10: same pattern as Site 9.

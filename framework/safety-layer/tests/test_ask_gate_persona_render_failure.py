@@ -1,7 +1,7 @@
 """Amendment #19 (sites 5, 6) — persona-render failure observability.
 
 A persona_render failure during ask-gate / dangerous-op notification
-dispatch is surfaced via the pos.safety.persona_render_failed OTel span
+dispatch is surfaced via the loam.safety.persona_render_failed OTel span
 and the un-rendered text is still sent to the OneOnOneChannel. This
 preserves the fail-closed "notifications must go out regardless of LLM
 availability" invariant while giving operators observability into the

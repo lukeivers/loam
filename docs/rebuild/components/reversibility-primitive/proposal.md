@@ -15,7 +15,7 @@ Deliver the reversibility primitive such that:
 - A scope declared `compensatable` or `irreversible` cannot activate without a registered compensation-path binding (or, for `irreversible`, an active safety-layer dangerous-op approval). The refusal is deterministic.
 - A registered compensation path is invokable via rollback with read access to the scope's committed state (events + projection).
 - `compensatable` and `fully_reversible` are distinct: `compensatable` requires a binding; `fully_reversible` does not.
-- When the workspace asks the primitive to rank alternative scope specs, the default preference is `fully_reversible > compensatable > irreversible`, and the choice is recorded in OTel as `pos.reversibility.path_chosen` with alternatives, class, reason, and a `downrank_warning` flag when a less-reversible option was chosen over a more-reversible alternative.
+- When the workspace asks the primitive to rank alternative scope specs, the default preference is `fully_reversible > compensatable > irreversible`, and the choice is recorded in OTel as `loam.reversibility.path_chosen` with alternatives, class, reason, and a `downrank_warning` flag when a less-reversible option was chosen over a more-reversible alternative.
 
 The design shape and acceptance evidence are in `research.md`; this proposal encodes the decisions the owner has ruled on and states the hard contract the builder works against.
 
@@ -45,7 +45,7 @@ A new package `reversibility-primitive/` (Python, on `pos-v2`) exposes `Reversib
 - **Activation-gate wrap** — IPC-handler wrap of `activate_scope`, registered on the shared `IPCServer` **before** safety's wrap so the call chain becomes `reversibility → safety → orig_activate`. Class dispatch: `fully_reversible` passes; `compensatable` requires a binding; `irreversible` requires a binding OR an active safety dangerous-op approval (peek into safety's store).
 - **Rollback runtime** — four-state FSM (`requested → in_progress → {succeeded|failed|degraded}`) persisted in a `rollback_invocation` table with `(scope_id, idempotency_key)` uniqueness constraint. Second invocation with same key returns cached result without re-running the handler.
 - **Cascade trigger** — pyee subscription to scope-of-work's emitter (`ScopeRuntime.subscribe_all`) invokes rollback on child-failure cascade when a binding exists for the failed child.
-- **`rank_alternatives(alternatives)`** — pure function returning a `RankedAlternatives` object. Emits `pos.reversibility.path_chosen` span with attributes in research §6.1. The primitive does not second-guess whether two specs are genuinely alternatives — the caller declares that.
+- **`rank_alternatives(alternatives)`** — pure function returning a `RankedAlternatives` object. Emits `loam.reversibility.path_chosen` span with attributes in research §6.1. The primitive does not second-guess whether two specs are genuinely alternatives — the caller declares that.
 - **SQLite store** at `~/.pos/reversibility/reversibility.sqlite`. Schema in research §2.6. WAL + `synchronous=FULL` + `foreign_keys=ON` per pos-v2 standard.
 - **CLI** — `pos reversibility bind`, `pos reversibility handlers`, `pos rollback scope <id>`, `pos rollback status <id>`.
 - **Notification** — `OneOnOneChannel` reuse for rollback-failure Tier-1 surfacing; group-channel rejection inherited.
@@ -76,14 +76,14 @@ Each criterion is authored as an objective, not a behaviour. Tests target the cr
 ### 4.1 Compensation-path contract (research §2.1, §4)
 
 - **R1.** `CompensationPathBinding` refuses empty `handle` or empty `idempotency_key` at construction (Pydantic validation).
-- **R2.** `reversibility.register_compensation` IPC method accepts a well-formed payload, writes the binding row, emits `pos.reversibility.binding_registered`, and returns `{ok: True, binding_id}`.
+- **R2.** `reversibility.register_compensation` IPC method accepts a well-formed payload, writes the binding row, emits `loam.reversibility.binding_registered`, and returns `{ok: True, binding_id}`.
 - **R3.** `pos reversibility bind <scope_id> --handle <name>` CLI reaches the same IPC path and produces the same side effects as R2.
 - **R4.** A binding registered against a `scope_id` that does not yet exist is accepted (activation is where enforcement happens, not registration).
-- **R5.** Registering a second binding for the same `scope_id` replaces the prior binding (last-writer-wins) and emits `pos.reversibility.binding_replaced` with a `prior_handle` attribute for audit.
+- **R5.** Registering a second binding for the same `scope_id` replaces the prior binding (last-writer-wins) and emits `loam.reversibility.binding_replaced` with a `prior_handle` attribute for audit.
 
 ### 4.2 Activation-gate enforcement (research §2.7, §8)
 
-- **R6.** A `fully_reversible` scope activates without regard to binding presence. Binding present produces no refusal and emits `pos.reversibility.binding_redundant` for audit; binding absent is the normal case.
+- **R6.** A `fully_reversible` scope activates without regard to binding presence. Binding present produces no refusal and emits `loam.reversibility.binding_redundant` for audit; binding absent is the normal case.
 - **R7.** A `compensatable` scope with no binding → wrap raises `-32050 REVERSIBILITY_MISSING_COMPENSATION`; orchestrator `activate_scope` does not run; scope stays `proposed`.
 - **R8.** A `compensatable` scope with a registered binding → wrap passes; safety's wrap runs; orchestrator activates on safety pass.
 - **R9.** An `irreversible` scope with a binding → wrap passes; safety's dangerous-op gate still independently fires on the irreversible class (binding does not substitute for owner approval); on both passes, orchestrator activates.
@@ -94,15 +94,15 @@ Each criterion is authored as an objective, not a behaviour. Tests target the cr
 ### 4.3 Rollback invocation and FSM (research §2.2, §5)
 
 - **R13.** `reversibility.rollback_scope(scope_id, reason)` IPC writes a `rollback_invocation` row in `requested` state, transitions to `in_progress`, invokes the handler with a `RollbackContext` carrying the full event log and projection, and records the `RollbackResult` outcome + narrative on the row.
-- **R14.** Rollback is idempotent by `(scope_id, idempotency_key)`. A second call with the same key returns the prior row's outcome without re-invoking the handler and emits `pos.reversibility.rollback_idempotent_hit`.
-- **R15.** Handler `RollbackResult(outcome="succeeded")` transitions the invocation to `succeeded`, drives the scope to `cancelled` via `ScopeRuntime.cancel(scope_id, reason="rollback_invoked")`, and emits `pos.reversibility.rollback_succeeded`.
-- **R16.** Handler failure (returns `failed`, raises, or exceeds `budget_seconds` when set) transitions to `failed`, records narrative, emits `pos.reversibility.rollback_failed`, and surfaces a Tier-1 notification via `OneOnOneChannel` (no group-channel escape).
+- **R14.** Rollback is idempotent by `(scope_id, idempotency_key)`. A second call with the same key returns the prior row's outcome without re-invoking the handler and emits `loam.reversibility.rollback_idempotent_hit`.
+- **R15.** Handler `RollbackResult(outcome="succeeded")` transitions the invocation to `succeeded`, drives the scope to `cancelled` via `ScopeRuntime.cancel(scope_id, reason="rollback_invoked")`, and emits `loam.reversibility.rollback_succeeded`.
+- **R16.** Handler failure (returns `failed`, raises, or exceeds `budget_seconds` when set) transitions to `failed`, records narrative, emits `loam.reversibility.rollback_failed`, and surfaces a Tier-1 notification via `OneOnOneChannel` (no group-channel escape).
 - **R17.** Rollback invoked against a scope that has not activated yet → IPC returns `-32052 REVERSIBILITY_NOT_ACTIVATED`. (Locks ruling #2.)
 - **R18.** Parent-cascade rollback: when a child scope transitions to `failed` (via pyee `subscribe_all`) and that child has a registered compensation binding, the runtime invokes rollback automatically with a generated `idempotency_key` keyed to the cascade event.
 
 ### 4.4 Path-choice ranking and telemetry (research §2.4, §6)
 
-- **R19.** `rank_alternatives([spec_i, spec_r])` where `spec_r.reversibility_class = fully_reversible` and `spec_i.reversibility_class = irreversible` returns `spec_r` as chosen. Emits `pos.reversibility.path_chosen` with `chosen_class=fully_reversible`, `alternatives_count=2`, `alternative_classes=["irreversible","fully_reversible"]`, `chosen_index=1`, `reason="default_preference"`, `downrank_warning=false`.
+- **R19.** `rank_alternatives([spec_i, spec_r])` where `spec_r.reversibility_class = fully_reversible` and `spec_i.reversibility_class = irreversible` returns `spec_r` as chosen. Emits `loam.reversibility.path_chosen` with `chosen_class=fully_reversible`, `alternatives_count=2`, `alternative_classes=["irreversible","fully_reversible"]`, `chosen_index=1`, `reason="default_preference"`, `downrank_warning=false`.
 - **R20.** Caller-supplied preference override (`preference=irreversible`) picks the irreversible alternative and emits the span with `override=true` and `downrank_warning=true`.
 
 ### 4.5 Cross-cutting integration (research §2.5, §8)

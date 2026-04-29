@@ -39,7 +39,7 @@ def test_format_always_cites_span_ids(store):
     now_ns = int(time.time() * 1e9)
     store.insert_span(SpanRecord(
         trace_id="t" * 32, span_id="s" * 16, name="probe_span",
-        tracer_name="pos.scope_of_work", component="scope_of_work",
+        tracer_name="loam.scope_of_work", component="scope_of_work",
         start_time_unix_nano=now_ns, end_time_unix_nano=now_ns + 1000,
     ))
     api = QueryAPI(store)
@@ -63,7 +63,7 @@ def test_format_no_uncited_claims_when_no_data(store):
 
 
 def test_nl_path_reflexive_cost_attribution(tmp_config, fresh_otel_provider):
-    """Both LLM-call spans (translate + format) carry pos.prompt.type."""
+    """Both LLM-call spans (translate + format) carry loam.prompt.type."""
     spool = Path(tmp_config.resolved_spool_path())
     spool.parent.mkdir(parents=True, exist_ok=True)
     provider, processor, exporter = register_otel_provider(
@@ -85,10 +85,10 @@ def test_nl_path_reflexive_cost_attribution(tmp_config, fresh_otel_provider):
     lines = [json.loads(l) for l in spool.read_text().splitlines() if l.strip()]
     nl_spans = [
         s for s in lines
-        if s["name"] in ("pos.aggregator.nl_translate", "pos.aggregator.nl_format")
+        if s["name"] in ("loam.aggregator.nl_translate", "loam.aggregator.nl_format")
     ]
     assert len(nl_spans) == 2
-    prompt_types = {s["attributes"].get("pos.prompt.type") for s in nl_spans}
+    prompt_types = {s["attributes"].get("loam.prompt.type") for s in nl_spans}
     assert prompt_types == {"obs-nl-translate", "obs-nl-format"}
 
 

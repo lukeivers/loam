@@ -43,11 +43,11 @@ def test_six_components_emit_into_spool(tmp_config, fresh_otel_provider):
         # AFTER we registered. Real components import-time get the proxy;
         # here we exercise the same surface.
         for tracer_name in (
-            "pos.scope_of_work",
+            "loam.scope_of_work",
             "pos_v2.primary_persona",
-            "pos.objective_tracker",
-            "pos.orchestrator",
-            "pos.degradation",
+            "loam.objective_tracker",
+            "loam.orchestrator",
+            "loam.degradation",
         ):
             tracer = trace.get_tracer(tracer_name)
             with tracer.start_as_current_span(f"{tracer_name}.demo_op") as span:
@@ -60,21 +60,21 @@ def test_six_components_emit_into_spool(tmp_config, fresh_otel_provider):
     lines = [l for l in spool.read_text().splitlines() if l.strip()]
     assert len(lines) >= 5
     names = {json.loads(l)["name"] for l in lines}
-    assert "pos.scope_of_work.demo_op" in names
+    assert "loam.scope_of_work.demo_op" in names
     assert "pos_v2.primary_persona.demo_op" in names
 
 
 def test_self_namespace_filtered_at_exporter(tmp_config, fresh_otel_provider):
-    """Aggregator's own pos.aggregator.* spans are not spooled."""
+    """Aggregator's own loam.aggregator.* spans are not spooled."""
     spool = Path(tmp_config.resolved_spool_path())
     spool.parent.mkdir(parents=True, exist_ok=True)
     provider, processor, exporter = register_otel_provider(spool)
     try:
-        agg_tracer = trace.get_tracer("pos.aggregator.test")
-        with agg_tracer.start_as_current_span("pos.aggregator.test_op") as span:
+        agg_tracer = trace.get_tracer("loam.aggregator.test")
+        with agg_tracer.start_as_current_span("loam.aggregator.test_op") as span:
             span.set_attribute("self", True)
         # And one normal span to prove filter is selective.
-        normal = trace.get_tracer("pos.scope_of_work")
+        normal = trace.get_tracer("loam.scope_of_work")
         with normal.start_as_current_span("normal_op"):
             pass
         provider.force_flush(timeout_millis=2000)
@@ -86,7 +86,7 @@ def test_self_namespace_filtered_at_exporter(tmp_config, fresh_otel_provider):
         lines = []
     names = [r["name"] for r in lines]
     assert "normal_op" in names
-    assert all("pos.aggregator" not in r["tracer_name"] for r in lines)
+    assert all("loam.aggregator" not in r["tracer_name"] for r in lines)
 
 
 def test_spool_buffers_during_aggregator_downtime(tmp_config, fresh_otel_provider):
@@ -95,7 +95,7 @@ def test_spool_buffers_during_aggregator_downtime(tmp_config, fresh_otel_provide
     spool.parent.mkdir(parents=True, exist_ok=True)
     provider, processor, exporter = register_otel_provider(spool)
     try:
-        tracer = trace.get_tracer("pos.scope_of_work")
+        tracer = trace.get_tracer("loam.scope_of_work")
         for i in range(5):
             with tracer.start_as_current_span(f"buffered_op_{i}") as s:
                 s.set_attribute("i", i)
@@ -141,7 +141,7 @@ def test_pre_existing_proxy_tracer_picks_up_provider(tmp_config, fresh_otel_prov
     """A tracer obtained BEFORE the provider was registered still routes
     spans through our exporter on next call (ProxyTracer late-binding)."""
     # Get tracer first — this is what sealed components do at import time.
-    early_tracer = trace.get_tracer("pos.scope_of_work")
+    early_tracer = trace.get_tracer("loam.scope_of_work")
     # Now register our provider.
     spool = Path(tmp_config.resolved_spool_path())
     spool.parent.mkdir(parents=True, exist_ok=True)

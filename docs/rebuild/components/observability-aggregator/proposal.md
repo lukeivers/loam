@@ -31,7 +31,7 @@ Build the observability aggregator as a single-user local-first trace store that
 ### Query surface — three layers
 
 1. **Structured Pydantic API:** `find_spans(filter)`, `get_trace(trace_id)`, `cost_by_prompt(window)`, `replay_session(session_id)`, `replay_scope(scope_id)`, `replay_objective(objective_id)`.
-2. **NL path for "why did you do X at time T":** two-LLM-call pattern via Claude (Max) — first call translates natural-language question into a structured Pydantic filter; second call formats the resulting spans into a cited narrative answer. Both calls tagged `pos.prompt.type` for reflexive v1.1 R12 cost attribution (the aggregator's own queries show up in the same cost view it serves). Output is a Pydantic-validated structured response, not free-form SQL.
+2. **NL path for "why did you do X at time T":** two-LLM-call pattern via Claude (Max) — first call translates natural-language question into a structured Pydantic filter; second call formats the resulting spans into a cited narrative answer. Both calls tagged `loam.prompt.type` for reflexive v1.1 R12 cost attribution (the aggregator's own queries show up in the same cost view it serves). Output is a Pydantic-validated structured response, not free-form SQL.
 3. **`pos obs` CLI:** thin wrapper over the structured API for direct user access.
 
 ### Replay — Reading A (read-only playback)
@@ -97,7 +97,7 @@ Nine deliverables D1–D9.
 **Acceptance:**
 - Each method has Pydantic-validated input + output schemas.
 - Representative queries against a populated store return the correct results.
-- `cost_by_prompt` aggregates tokens by `pos.prompt.type` across all components — workspace-scoped cost attribution per v1.1 R12.
+- `cost_by_prompt` aggregates tokens by `loam.prompt.type` across all components — workspace-scoped cost attribution per v1.1 R12.
 
 ### D5. NL-path query ("show me why")
 
@@ -105,7 +105,7 @@ Nine deliverables D1–D9.
 **Acceptance:**
 - A test-set of representative "show me why" questions produces structured-filter calls that return the right span sets (acceptance threshold per test, ≥80%).
 - The formatted output always includes cited span IDs — no uncited claims.
-- Both LLM calls tagged with `pos.prompt.type` (distinct values for translate and format) — they appear in the cost view at their own attribution.
+- Both LLM calls tagged with `loam.prompt.type` (distinct values for translate and format) — they appear in the cost view at their own attribution.
 - A test verifies the aggregator querying its own NL output doesn't produce an infinite loop (self-observation is a noop).
 
 ### D6. Replay — Reading A (read-only playback)

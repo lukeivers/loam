@@ -19,7 +19,7 @@ write fails, spans stay in the spool until next drain. On aggregator
 restart, the spool drains first thing.
 
 Self-observability filter: spans whose tracer_name starts with
-`pos.aggregator` are dropped at ingest to prevent the aggregator
+`loam.aggregator` are dropped at ingest to prevent the aggregator
 observing its own observation.
 """
 
@@ -56,7 +56,7 @@ from .schema import (
 )
 from .store import Store
 
-log = logging.getLogger("pos.aggregator.ingest")
+log = logging.getLogger("loam.aggregator.ingest")
 
 
 # =====================================================================
@@ -137,7 +137,7 @@ class AggregatorSpanExporter(SpanExporter):
     def __init__(
         self,
         spool_path: Path,
-        self_namespace_prefix: str = "pos.aggregator",
+        self_namespace_prefix: str = "loam.aggregator",
     ) -> None:
         self.spool_path = spool_path
         self.spool_path.parent.mkdir(parents=True, exist_ok=True)
@@ -173,7 +173,7 @@ def register_otel_provider(
     spool_path: Path,
     *,
     resource_attrs: dict[str, str] | None = None,
-    self_namespace_prefix: str = "pos.aggregator",
+    self_namespace_prefix: str = "loam.aggregator",
 ) -> tuple[TracerProvider, BatchSpanProcessor, AggregatorSpanExporter]:
     """Install a TracerProvider that routes every component's spans
     through the aggregator's spool exporter.
@@ -188,7 +188,7 @@ def register_otel_provider(
     their tracer before this hook fires (defeating late-binding),
     halt-and-signal. The detection test in tests/ verifies this.
     """
-    resource = Resource.create(resource_attrs or {"service.name": "pos.aggregator"})
+    resource = Resource.create(resource_attrs or {"service.name": "loam.aggregator"})
     provider = TracerProvider(resource=resource)
     exporter = AggregatorSpanExporter(spool_path, self_namespace_prefix=self_namespace_prefix)
     processor = BatchSpanProcessor(
@@ -326,7 +326,7 @@ def memory_span_to_canonical(record: dict[str, Any]) -> SpanRecord:
         span_id=record["span_id"],
         parent_span_id=record.get("parent_span_id"),
         name=name,
-        tracer_name="pos.memory",
+        tracer_name="loam.memory",
         component="memory_system",
         kind="INTERNAL",
         start_time_unix_nano=int(record["start_time_unix_nano"]),
@@ -402,7 +402,7 @@ class SpoolDrainer:
         self,
         store: Store,
         spool_path: Path,
-        self_namespace_prefix: str = "pos.aggregator",
+        self_namespace_prefix: str = "loam.aggregator",
         poll_interval_seconds: float = 1.0,
     ) -> None:
         self.store = store
@@ -526,12 +526,12 @@ class SpoolDrainer:
         if in_tok is None and out_tok is None:
             return
         prompt_name = (
-            attrs.get("pos.prompt.type")
+            attrs.get("loam.prompt.type")
             or attrs.get("gen_ai.prompt.name")
             or span.name
         )
         model = attrs.get("gen_ai.request.model") or attrs.get("gen_ai.response.model") or "unknown"
-        scope_id = attrs.get("pos.scope.id")
+        scope_id = attrs.get("loam.scope.id")
         # at_time: span end is the LLM call's completion.
         at_dt = datetime.fromtimestamp(span.end_time_unix_nano / 1e9, tz=timezone.utc)
         self.store.insert_token(

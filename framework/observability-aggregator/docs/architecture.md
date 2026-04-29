@@ -6,15 +6,15 @@
                     ┌────────────────────────────────────────────────────┐
                     │              Sealed pOS components                 │
                     │                                                    │
-   scope-of-work ───┤  trace.get_tracer("pos.scope_of_work")             │
+   scope-of-work ───┤  trace.get_tracer("loam.scope_of_work")             │
                     │   │                                                │
  primary-persona ───┤  trace.get_tracer("pos_v2.primary_persona")        │
                     │   │   (ProxyTracer; late-binding)                  │
-objective-tracker ──┤  trace.get_tracer("pos.objective_tracker")         │
+objective-tracker ──┤  trace.get_tracer("loam.objective_tracker")         │
                     │   │                                                │
-   orchestrator ────┤  trace.get_tracer("pos.orchestrator")              │
+   orchestrator ────┤  trace.get_tracer("loam.orchestrator")              │
                     │   │                                                │
-graceful-degradation┤  trace.get_tracer("pos.degradation")               │
+graceful-degradation┤  trace.get_tracer("loam.degradation")               │
                     │   │                                                │
                     │   ▼                                                │
                     │   global TracerProvider (installed by aggregator)  │
@@ -22,7 +22,7 @@ graceful-degradation┤  trace.get_tracer("pos.degradation")               │
                     │   BatchSpanProcessor                               │
                     │   │                                                │
                     │   AggregatorSpanExporter                           │
-                    │   │  (filters pos.aggregator.* — self-obs)         │
+                    │   │  (filters loam.aggregator.* — self-obs)         │
                     └───┼────────────────────────────────────────────────┘
                         │
                         ▼
@@ -60,17 +60,17 @@ graceful-degradation┤  trace.get_tracer("pos.degradation")               │
 │   (Pydantic)       │    │   (two-LLM, cited)       │    │   (thin wrapper)     │
 │                    │    │                          │    │                      │
 │ find_spans         │    │ translate(question)      │    │ find-spans           │
-│ get_trace          │    │   ↓ pos.aggregator.nl_   │    │ get-trace            │
+│ get_trace          │    │   ↓ loam.aggregator.nl_   │    │ get-trace            │
 │ get_span           │    │     translate            │    │ cost-by-prompt       │
-│ find_events        │    │   pos.prompt.type=       │    │ replay-{session,     │
+│ find_events        │    │   loam.prompt.type=       │    │ replay-{session,     │
 │ cost_by_prompt     │    │     obs-nl-translate     │    │   scope, objective}  │
 │ audit_search       │    │   ↓                      │    │ audit-search         │
 │ replay_session     │    │ execute(filter)          │    │ why "..."            │
 │ replay_scope       │    │   ↓                      │    │                      │
 │ replay_objective   │    │ format(rows, question)   │    │                      │
-│                    │    │   ↓ pos.aggregator.nl_   │    │                      │
+│                    │    │   ↓ loam.aggregator.nl_   │    │                      │
 │                    │    │     format               │    │                      │
-│                    │    │   pos.prompt.type=       │    │                      │
+│                    │    │   loam.prompt.type=       │    │                      │
 │                    │    │     obs-nl-format        │    │                      │
 │                    │    │   ↓                      │    │                      │
 │                    │    │ CitedAnswer (cites IDs)  │    │                      │

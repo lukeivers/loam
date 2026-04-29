@@ -115,7 +115,7 @@ result: AuthoringResult = await pipeline.author(
 
 `AuthoringResult.outcome` is one of `persisted | rejected_after_retries | failed`.
 On `persisted`, `result.persona_dir` points to the new directory.
-Per-step span names: `pos.persona.authoring.{style_harvest,domain_research,contract_synthesis,self_review}`.
+Per-step span names: `loam.persona.authoring.{style_harvest,domain_research,contract_synthesis,self_review}`.
 
 ## D7 — Introduction dispatcher
 
@@ -150,7 +150,7 @@ record = retire_persona(
     reason=RetirementReason.user_initiated,
 )
 # moves personas/<handle>/ -> personas/_retired/<handle>-<ts>/
-# emits OTel event pos.persona.retired
+# emits OTel event loam.persona.retired
 ```
 
 `RetirementReason`: `user_initiated`, `never_acknowledged`,

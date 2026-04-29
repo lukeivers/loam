@@ -12,7 +12,7 @@ Three replay primitives:
 
 Session derivation: pOS does not yet have a session-management
 primitive (research §16 q1; first-pass ruling: aggregator derives
-session_id from `pos.session.id` attribute when present, falls back
+session_id from `loam.session.id` attribute when present, falls back
 to grouping turn-events within an idle window).
 """
 
@@ -51,15 +51,15 @@ class SessionReplay(BaseModel):
 
     @classmethod
     def build(cls, api: "QueryAPI", session_id: str) -> "SessionReplay":
-        # Strategy: spans whose attributes contain `pos.session.id`
+        # Strategy: spans whose attributes contain `loam.session.id`
         # equal to session_id. Fallback when no such attribute exists:
         # treat session_id as a trace_id alias (caller convention).
         spans = api.find_spans(
-            SpanFilter(attributes_match={"pos.session.id": session_id}),
+            SpanFilter(attributes_match={"loam.session.id": session_id}),
             limit=10000,
         )
         # Filter by the attribute since the SQL ignores attributes_match.
-        spans = [s for s in spans if s.attributes.get("pos.session.id") == session_id]
+        spans = [s for s in spans if s.attributes.get("loam.session.id") == session_id]
         if not spans:
             # Fallback: treat as trace_id
             spans = api.get_trace(session_id)
@@ -96,12 +96,12 @@ class ScopeReplay(BaseModel):
 
     @classmethod
     def build(cls, api: "QueryAPI", scope_id: str) -> "ScopeReplay":
-        # All spans carrying pos.scope.id == scope_id.
+        # All spans carrying loam.scope.id == scope_id.
         all_spans = api.find_spans(
-            SpanFilter(attributes_match={"pos.scope.id": scope_id}),
+            SpanFilter(attributes_match={"loam.scope.id": scope_id}),
             limit=10000,
         )
-        spans = [s for s in all_spans if s.attributes.get("pos.scope.id") == scope_id]
+        spans = [s for s in all_spans if s.attributes.get("loam.scope.id") == scope_id]
         spans.sort(key=lambda s: s.start_time_unix_nano)
         # Root span: the earliest one, or one whose name is invoke_scope
         root = None
@@ -153,17 +153,17 @@ class ObjectiveReplay(BaseModel):
 
     @classmethod
     def build(cls, api: "QueryAPI", objective_id: str) -> "ObjectiveReplay":
-        # Spans where attribute pos.objective.id matches → scopes bound
+        # Spans where attribute loam.objective.id matches → scopes bound
         # to this objective. (objective-tracker emits this attribute on
         # bind_scope spans.)
         bind_spans = api.find_spans(
-            SpanFilter(attributes_match={"pos.objective.id": objective_id}),
+            SpanFilter(attributes_match={"loam.objective.id": objective_id}),
             limit=10000,
         )
-        bind_spans = [s for s in bind_spans if s.attributes.get("pos.objective.id") == objective_id]
+        bind_spans = [s for s in bind_spans if s.attributes.get("loam.objective.id") == objective_id]
         scope_ids = []
         for s in bind_spans:
-            sid = s.attributes.get("pos.scope.id")
+            sid = s.attributes.get("loam.scope.id")
             if sid and sid not in scope_ids:
                 scope_ids.append(sid)
         replays = [ScopeReplay.build(api, sid) for sid in scope_ids]
@@ -178,7 +178,7 @@ class ObjectiveReplay(BaseModel):
         # Status trail: pairs of (time, status) extracted from events.
         status_trail: list[tuple[datetime, str]] = []
         for e in events:
-            status = e.attributes.get("pos.objective.status") or e.attributes.get("status")
+            status = e.attributes.get("loam.objective.status") or e.attributes.get("status")
             if status:
                 status_trail.append(
                     (datetime.fromtimestamp(e.time_unix_nano / 1e9, tz=timezone.utc), str(status))

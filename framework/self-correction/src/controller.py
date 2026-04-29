@@ -13,7 +13,7 @@ Single construction site for self-correction. Composes:
 Cost-refusal catch path (CR19): the activate-scope IPC raises
 `ApplicationError(-32060/61/62)` when a correction scope's budget
 exceeds any ceiling. We catch at this layer, mark the episode
-`refused`, emit `pos.correction.cost_refusal_caught`, and dispatch a
+`refused`, emit `loam.correction.cost_refusal_caught`, and dispatch a
 `CorrectionChannel` notification. Silent drop is structurally refused.
 """
 

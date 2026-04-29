@@ -39,14 +39,14 @@ def _make_span(
         span_id=span_id,
         parent_span_id=None,
         name=name,
-        tracer_name="pos.test",
+        tracer_name="loam.test",
         component="other",
         kind="INTERNAL",
         start_time_unix_nano=now_ns,
         end_time_unix_nano=now_ns + 1_000_000,
         status=status,
         status_message="boom" if status == "ERROR" else None,
-        attributes={"pos.scope.id": "scope-xyz"},
+        attributes={"loam.scope.id": "scope-xyz"},
         retention_class=retention_class,
     )
 
@@ -65,7 +65,7 @@ def api(tmp_path: Path) -> QueryAPI:
 async def test_CR3_error_normal_span_fires_trigger(api: QueryAPI) -> None:
     api.store.insert_span(
         _make_span(
-            name="pos.cost.activation_refused",
+            name="loam.cost.activation_refused",
             status="ERROR",
             retention_class=RetentionClass.NORMAL,
         )
@@ -93,7 +93,7 @@ async def test_CR3_error_without_normal_retention_does_not_fire(
     # DERIVED_ONLY spans are sampled/reduced — anomaly poll skips them.
     api.store.insert_span(
         _make_span(
-            name="pos.other.failure",
+            name="loam.other.failure",
             status="ERROR",
             retention_class=RetentionClass.DERIVED_ONLY,
             span_id="sp-derived",
@@ -116,7 +116,7 @@ async def test_CR3_error_without_normal_retention_does_not_fire(
 async def test_CR3_ok_status_never_fires(api: QueryAPI) -> None:
     api.store.insert_span(
         _make_span(
-            name="pos.scope.ok",
+            name="loam.scope.ok",
             status="OK",
             retention_class=RetentionClass.NORMAL,
             span_id="sp-ok",
@@ -138,7 +138,7 @@ async def test_CR3_ok_status_never_fires(api: QueryAPI) -> None:
 async def test_CR3_poller_dedups_seen_span_ids(api: QueryAPI) -> None:
     api.store.insert_span(
         _make_span(
-            name="pos.cost.activation_refused",
+            name="loam.cost.activation_refused",
             status="ERROR",
             retention_class=RetentionClass.NORMAL,
             span_id="sp-once",
@@ -162,7 +162,7 @@ async def test_CR3_poller_dedups_seen_span_ids(api: QueryAPI) -> None:
 
 def test_build_trigger_from_span_shape() -> None:
     sp = _make_span(
-        name="pos.test.failure",
+        name="loam.test.failure",
         status="ERROR",
         retention_class=RetentionClass.NORMAL,
     )

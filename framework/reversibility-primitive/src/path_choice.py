@@ -48,7 +48,7 @@ def rank_alternatives(
       `override=True, downrank_warning=True` only if the fallback class
       is less reversible than the best available.
 
-    Emits `pos.reversibility.path_chosen` except when `len(alternatives)
+    Emits `loam.reversibility.path_chosen` except when `len(alternatives)
     == 1` (see module docstring).
     """
     if not alternatives:

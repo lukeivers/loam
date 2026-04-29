@@ -18,7 +18,7 @@ Deliver self-correction such that:
 - The correction scope cannot reach `completed` without four typed records in the sidecar: `FailureClassIdentified`, `InstanceFixed`, `CauseDiagnosed`, `StructuralRemedyApplied`. A pyee-subscribed terminal-transition pre-check raises `-32070 CORRECTION_INCOMPLETE_RECORDS` otherwise.
 - Recursion is bounded: depth cap 3 plus same-class-in-600s-window detection (threshold 3). Escalation on either bound fires a one-on-one channel notification.
 - Refusals from cost governance are caught and escalated to the user; correction never silently drops.
-- All correction activity emits `pos.correction.*` spans via the aggregator's registered provider.
+- All correction activity emits `loam.correction.*` spans via the aggregator's registered provider.
 
 The design and acceptance evidence are in `research.md`; this proposal encodes the owner's four rulings and states the hard contract.
 
@@ -54,7 +54,7 @@ A new package `self-correction/` (Python, on `pos-v2`) exposes `SelfCorrectionCo
 - **Spec builder** — deterministic `build_correction_spec(trigger) -> ScopeSpec` with objective text from a template, `reversibility_class="compensatable"` forced (declaring `irreversible` is refused at build time), and budget inherited-and-scaled per ruling #3.
 - **Compensation binding** — registered at scope construction via reversibility's `register_compensation` IPC; the handler reverts the structural remedy from the episode's records.
 - **Completion pre-check** — pyee subscription on the correction scope's own emitter for `StateTransitioned(to_state=completed)`. Queries `correction_episode_records` for the four record types. If any missing, raises `-32070 CORRECTION_INCOMPLETE_RECORDS` before the transition commits.
-- **OTel** — spans via `trace.get_tracer("pos.self_correction")`. Enumerated names in research §2.5.
+- **OTel** — spans via `trace.get_tracer("loam.self_correction")`. Enumerated names in research §2.5.
 - **Notification** — `OneOnOneChannel` subclass (`CorrectionChannel`); inherits `is_group=True` refusal.
 - **CLI** — `pos correction status`, `pos correction episode <id>`, `pos correction history --class <name>`, `pos correction trigger --source user --description "..."`.
 
@@ -98,12 +98,12 @@ Four tables — all WAL + `synchronous=FULL` + `foreign_keys=ON`:
 - **CR3.** An aggregator poll that finds a span matching `status="ERROR"` AND `retention_class="high"` fires a `CorrectionTrigger(source="otel_anomaly")`. The poll interval defaults to 30s; a bare `status=="ERROR"` without the retention_class match does NOT fire. (Locks ruling #2.)
 - **CR4.** `correction.report_review_verdict(scope_id, verdict="fail", reasons, reporter)` IPC fires a `CorrectionTrigger(source="review_verdict")`. `verdict="pass"` fires no trigger.
 - **CR5.** `correction.user_reported(description, related_scope_id?)` called from a primary-persona session fires a trigger; the same call from a non-persona caller is refused at the IPC boundary. (Locks ruling #4.)
-- **CR6.** Trigger dedup: the same trigger fired twice within 60s produces exactly one episode; the second emits `pos.correction.trigger_deduplicated` and persists to the dedup table.
+- **CR6.** Trigger dedup: the same trigger fired twice within 60s produces exactly one episode; the second emits `loam.correction.trigger_deduplicated` and persists to the dedup table.
 
 ### 4.2 Four-part structural enforcement
 
 - **CR7.** A correction episode with fewer than four record types at `completed`-transition time raises `-32070 CORRECTION_INCOMPLETE_RECORDS`. Enforced via `UNIQUE(episode_id, record_type)` lookup returning a set and comparing against `{class, instance, cause, remedy}`.
-- **CR8.** All four record types present → the terminal transition proceeds normally; episode state flips to `completed`; `pos.correction.closed` span emits.
+- **CR8.** All four record types present → the terminal transition proceeds normally; episode state flips to `completed`; `loam.correction.closed` span emits.
 - **CR9.** Record authoring via `correction.record_part(episode_id, part_type, payload)` IPC validates the Pydantic payload; malformed payloads rejected with `-32602 INVALID_PARAMS`. No LLM inference inside the validator.
 - **CR10.** Record ordering is any-order but order-preserving: the persisted `at` timestamp on each record tells the real story.
 
@@ -129,7 +129,7 @@ Four tables — all WAL + `synchronous=FULL` + `foreign_keys=ON`:
 ### 4.6 Cross-cutting integration
 
 - **CR21.** `git diff --stat 04951b6..<self-correction-seal>` shows only `self-correction/` changes. Zero deltas to any sealed component.
-- **CR22.** OTel spans flow through `trace.get_tracer("pos.self_correction")`; no `TracerProvider` construction.
+- **CR22.** OTel spans flow through `trace.get_tracer("loam.self_correction")`; no `TracerProvider` construction.
 - **CR23.** All user-facing escalation notifications use `CorrectionChannel` (subclass of `OneOnOneChannel`); group-channel refusal inherited.
 - **CR24.** `test_no_sealed_amendments.py` pins to `SEAL_COMMIT` constant (populated at seal time), diffs `04951b6..SEAL_COMMIT`, NOT `..HEAD`. (Structural remedy from commit `f94d602` — do not reintroduce the HEAD-based bug.)
 
@@ -169,7 +169,7 @@ self-correction/
     spec_builder.py      # build_correction_spec(trigger) -> ScopeSpec
     controller.py        # SelfCorrectionController composed runtime
     completion_check.py  # pyee terminal-transition pre-check for four-record enforcement
-    observability.py     # pos.correction.* span helpers
+    observability.py     # loam.correction.* span helpers
     notification.py      # CorrectionChannel (OneOnOneChannel subclass)
     cli.py               # pos correction ... subcommands
     ipc.py               # correction.record_part, correction.report_review_verdict, correction.user_reported
@@ -235,7 +235,7 @@ These items are the primary persona's extrapolation rather than the owner's dire
 5. **Correction scope objective template text.** drafted as `"Correct failure class '<class>' surfaced by <trigger_source>. Apply the four-part protocol..."`. Builder may refine wording if more specific phrasing helps the LLM execution produce better records.
 6. **Four-part record shape field names.** Proposed in research §2.2 — `class_name`, `fix_description`, `root_cause`, `change_description` etc. If different field names compose better with existing primary-persona authoring patterns, challenge.
 7. **`CorrectionChannel` subclass naming.** Pattern borrowed from cost's notification subclass. Challenge if the owner has a preferred name or if the notifier can use the existing `CorrectionChannel` equivalent from primary-persona without a new subclass.
-8. **OTel span names with `pos.correction.*` prefix.** Parallel to `pos.cost.*`, `pos.reversibility.*`, `pos.safety.*`. Challenge if the convention is meant to be `pos.self_correction.*` (matching the tracer name); the research used `pos.correction.*` throughout — the primary persona carried that forward.
+8. **OTel span names with `loam.correction.*` prefix.** Parallel to `loam.cost.*`, `loam.reversibility.*`, `loam.safety.*`. Challenge if the convention is meant to be `loam.self_correction.*` (matching the tracer name); the research used `loam.correction.*` throughout — the primary persona carried that forward.
 
 ---
 

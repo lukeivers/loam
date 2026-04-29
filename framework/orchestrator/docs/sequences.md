@@ -34,7 +34,7 @@ Session                Orchestrator              ObjectiveTracker       ScopeRun
    │                         │◀─── scope active ────────────────────────────│
    │                         │                          │                    │
    │                         │ append(scope_activated) to local SQLite        │
-   │                         │ emit pos.orchestrator.scope_activated span     │
+   │                         │ emit loam.orchestrator.scope_activated span     │
    │◀─── 200 + binding ──────│                          │                    │
 ```
 
@@ -66,7 +66,7 @@ Session                        Orchestrator                 primary-persona
   │                                  │                              │
   │                                  │ append(compaction_restored)  │
   │                                  │ to local SQLite              │
-  │                                  │ emit pos.orchestrator.       │
+  │                                  │ emit loam.orchestrator.       │
   │                                  │   compaction_restored span   │
   │◀── 5-item survival payload ──────│                              │
   │                                  │                              │

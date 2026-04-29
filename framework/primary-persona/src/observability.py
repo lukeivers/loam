@@ -39,11 +39,11 @@ def loader_span(
 ) -> Iterator[trace.Span]:
     """Root span for one loader run (D9: loader runs produce spans with
     outcome loaded / failed + field)."""
-    with _tracer().start_as_current_span("pos.persona.loader") as span:
-        span.set_attribute("pos.persona.dir", personas_dir)
-        span.set_attribute("pos.persona.load.outcome", outcome)
+    with _tracer().start_as_current_span("loam.persona.loader") as span:
+        span.set_attribute("loam.persona.dir", personas_dir)
+        span.set_attribute("loam.persona.load.outcome", outcome)
         if persona_count is not None:
-            span.set_attribute("pos.persona.load.count", persona_count)
+            span.set_attribute("loam.persona.load.count", persona_count)
         yield span
 
 
@@ -60,8 +60,8 @@ def monitor_span(name: str, **attributes: Any) -> Iterator[trace.Span]:
 @contextmanager
 def authoring_span(signal: str, **attributes: Any) -> Iterator[trace.Span]:
     """Parent span for an authoring pipeline run (D9)."""
-    with _tracer().start_as_current_span("pos.persona.authoring") as span:
-        span.set_attribute("pos.persona.authoring.trigger_signal", signal)
+    with _tracer().start_as_current_span("loam.persona.authoring") as span:
+        span.set_attribute("loam.persona.authoring.trigger_signal", signal)
         for k, v in attributes.items():
             if v is not None:
                 span.set_attribute(k, v)
@@ -72,8 +72,8 @@ def authoring_span(signal: str, **attributes: Any) -> Iterator[trace.Span]:
 def authoring_step_span(step_name: str) -> Iterator[trace.Span]:
     """Child span per authoring step (style_harvest | domain_research |
     contract_synthesis | self_review)."""
-    with _tracer().start_as_current_span(f"pos.persona.authoring.{step_name}") as span:
-        span.set_attribute("pos.persona.authoring.step", step_name)
+    with _tracer().start_as_current_span(f"loam.persona.authoring.{step_name}") as span:
+        span.set_attribute("loam.persona.authoring.step", step_name)
         yield span
 
 
@@ -93,15 +93,15 @@ def monitor_tick_event(
     """One event per monitor tick (D3 acceptance)."""
     span = trace.get_current_span()
     span.add_event(
-        "pos.persona.monitor.tick",
+        "loam.persona.monitor.tick",
         {
-            "pos.persona.monitor.tick_id": tick_id,
-            "pos.persona.monitor.active": active,
-            "pos.persona.monitor.pending": pending,
-            "pos.persona.monitor.stuck": stuck,
-            "pos.persona.monitor.finished": finished,
-            "pos.persona.monitor.escalated": escalated,
-            "pos.persona.monitor.failed": failed,
+            "loam.persona.monitor.tick_id": tick_id,
+            "loam.persona.monitor.active": active,
+            "loam.persona.monitor.pending": pending,
+            "loam.persona.monitor.stuck": stuck,
+            "loam.persona.monitor.finished": finished,
+            "loam.persona.monitor.escalated": escalated,
+            "loam.persona.monitor.failed": failed,
         },
     )
 
@@ -110,10 +110,10 @@ def monitor_injection_event(*, turn_id: str, token_estimate: int) -> None:
     """One event per UserPromptSubmit injection (D3 acceptance)."""
     span = trace.get_current_span()
     span.add_event(
-        "pos.persona.monitor.inject",
+        "loam.persona.monitor.inject",
         {
-            "pos.persona.monitor.turn_id": turn_id,
-            "pos.persona.monitor.tokens_est": token_estimate,
+            "loam.persona.monitor.turn_id": turn_id,
+            "loam.persona.monitor.tokens_est": token_estimate,
         },
     )
 
@@ -123,11 +123,11 @@ def self_review_verdict_event(*, iteration: int, verdict: str, reasons: str) -> 
     parent span (D9 acceptance)."""
     span = trace.get_current_span()
     span.add_event(
-        "pos.persona.authoring.self_review",
+        "loam.persona.authoring.self_review",
         {
-            "pos.persona.authoring.iteration": iteration,
-            "pos.persona.authoring.verdict": verdict,
-            "pos.persona.authoring.reasons": reasons,
+            "loam.persona.authoring.iteration": iteration,
+            "loam.persona.authoring.verdict": verdict,
+            "loam.persona.authoring.reasons": reasons,
         },
     )
 
@@ -137,24 +137,24 @@ def introduction_event(
 ) -> None:
     """Introduction dispatch emits an event with handle and channel (D9)."""
     attrs: dict[str, Any] = {
-        "pos.persona.introduction.handle": new_handle,
-        "pos.persona.introduction.channel": channel,
-        "pos.persona.introduction.outcome": outcome,
+        "loam.persona.introduction.handle": new_handle,
+        "loam.persona.introduction.channel": channel,
+        "loam.persona.introduction.outcome": outcome,
     }
     if reason:
-        attrs["pos.persona.introduction.reason"] = reason
-    with _tracer().start_as_current_span("pos.persona.introduction") as span:
-        span.add_event("pos.persona.introduction.dispatched", attrs)
+        attrs["loam.persona.introduction.reason"] = reason
+    with _tracer().start_as_current_span("loam.persona.introduction") as span:
+        span.add_event("loam.persona.introduction.dispatched", attrs)
 
 
 def retirement_event(*, handle: str, reason: str) -> None:
     """Retirement emits an event naming the persona and reason (D9)."""
-    with _tracer().start_as_current_span("pos.persona.retirement") as span:
+    with _tracer().start_as_current_span("loam.persona.retirement") as span:
         span.add_event(
-            "pos.persona.retired",
+            "loam.persona.retired",
             {
-                "pos.persona.retirement.handle": handle,
-                "pos.persona.retirement.reason": reason,
+                "loam.persona.retirement.handle": handle,
+                "loam.persona.retirement.reason": reason,
             },
         )
 
@@ -170,12 +170,12 @@ def onboarding_render_event(*, handle: str, length: int) -> None:
     agent-file writes once amendment #37 lands the write surface).
     Emits whether or not a span is currently active.
     """
-    with _tracer().start_as_current_span("pos.persona.onboarding.render") as span:
+    with _tracer().start_as_current_span("loam.persona.onboarding.render") as span:
         span.add_event(
-            "pos.persona.onboarding.render",
+            "loam.persona.onboarding.render",
             {
-                "pos.persona.onboarding.handle": handle,
-                "pos.persona.onboarding.render.length": length,
+                "loam.persona.onboarding.handle": handle,
+                "loam.persona.onboarding.render.length": length,
             },
         )
 
@@ -189,14 +189,14 @@ def onboarding_starter_flag_transition_event(
     re-loads of a non-starter contract do not produce noise.
     """
     with _tracer().start_as_current_span(
-        "pos.persona.onboarding.starter_flag_transition"
+        "loam.persona.onboarding.starter_flag_transition"
     ) as span:
         span.add_event(
-            "pos.persona.onboarding.starter_flag_transition",
+            "loam.persona.onboarding.starter_flag_transition",
             {
-                "pos.persona.onboarding.handle": handle,
-                "pos.persona.onboarding.starter_flag.from": from_value,
-                "pos.persona.onboarding.starter_flag.to": to_value,
+                "loam.persona.onboarding.handle": handle,
+                "loam.persona.onboarding.starter_flag.from": from_value,
+                "loam.persona.onboarding.starter_flag.to": to_value,
             },
         )
 
@@ -217,15 +217,15 @@ def onboarding_grounding_persisted_event(
     ``onboarding_grounding_episode_failed_event`` on failure.
     """
     with _tracer().start_as_current_span(
-        "pos.persona.onboarding.grounding_persisted"
+        "loam.persona.onboarding.grounding_persisted"
     ) as span:
         attrs: dict[str, Any] = {
-            "pos.persona.onboarding.handle": handle,
+            "loam.persona.onboarding.handle": handle,
         }
         if workspace_slug is not None:
-            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
+            attrs["loam.persona.onboarding.workspace_slug"] = workspace_slug
         span.add_event(
-            "pos.persona.onboarding.grounding_persisted", attrs
+            "loam.persona.onboarding.grounding_persisted", attrs
         )
 
 
@@ -245,17 +245,17 @@ def onboarding_grounding_episode_failed_event(
     the exception class + message tail.
     """
     with _tracer().start_as_current_span(
-        "pos.persona.onboarding.grounding_episode_failed"
+        "loam.persona.onboarding.grounding_episode_failed"
     ) as span:
         attrs: dict[str, Any] = {
-            "pos.persona.onboarding.handle": handle,
-            "pos.persona.onboarding.grounding_episode.stage": stage,
-            "pos.persona.onboarding.grounding_episode.error": error,
+            "loam.persona.onboarding.handle": handle,
+            "loam.persona.onboarding.grounding_episode.stage": stage,
+            "loam.persona.onboarding.grounding_episode.error": error,
         }
         if workspace_slug is not None:
-            attrs["pos.persona.onboarding.workspace_slug"] = workspace_slug
+            attrs["loam.persona.onboarding.workspace_slug"] = workspace_slug
         span.add_event(
-            "pos.persona.onboarding.grounding_episode_failed", attrs
+            "loam.persona.onboarding.grounding_episode_failed", attrs
         )
 
 
@@ -272,14 +272,14 @@ def tracker_context_composed_event(
     that the cap-guard elided some bullets (AC40.4).
     """
     with _tracer().start_as_current_span(
-        "pos.persona.tracker_context.composed"
+        "loam.persona.tracker_context.composed"
     ) as span:
         span.add_event(
-            "pos.persona.tracker_context.composed",
+            "loam.persona.tracker_context.composed",
             {
-                "pos.persona.tracker_context.handle": handle,
-                "pos.persona.tracker_context.in_flight_count": in_flight_count,
-                "pos.persona.tracker_context.truncated_count": truncated_count,
+                "loam.persona.tracker_context.handle": handle,
+                "loam.persona.tracker_context.in_flight_count": in_flight_count,
+                "loam.persona.tracker_context.truncated_count": truncated_count,
             },
         )
 
@@ -297,13 +297,13 @@ def tracker_context_unavailable_event(
     (``tracker_open_failed`` | ``query_projection_view_failed``).
     """
     with _tracer().start_as_current_span(
-        "pos.persona.tracker_context.unavailable"
+        "loam.persona.tracker_context.unavailable"
     ) as span:
         span.add_event(
-            "pos.persona.tracker_context.unavailable",
+            "loam.persona.tracker_context.unavailable",
             {
-                "pos.persona.tracker_context.handle": handle,
-                "pos.persona.tracker_context.failure_class": failure_class,
-                "pos.persona.tracker_context.detail": detail,
+                "loam.persona.tracker_context.handle": handle,
+                "loam.persona.tracker_context.failure_class": failure_class,
+                "loam.persona.tracker_context.detail": detail,
             },
         )

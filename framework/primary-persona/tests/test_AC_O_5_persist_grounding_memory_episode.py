@@ -209,11 +209,11 @@ def test_AC_O_5_raising_client_does_not_propagate(
         ev
         for sp in spans
         for ev in sp.events
-        if ev.name == "pos.persona.onboarding.grounding_episode_failed"
+        if ev.name == "loam.persona.onboarding.grounding_episode_failed"
     ]
     assert len(failure_events) == 1
     attrs = dict(failure_events[0].attributes)
-    assert "RuntimeError" in attrs["pos.persona.onboarding.grounding_episode.error"]
+    assert "RuntimeError" in attrs["loam.persona.onboarding.grounding_episode.error"]
 
 
 def test_AC_O_5_raising_factory_does_not_propagate(
@@ -238,7 +238,7 @@ def test_AC_O_5_raising_factory_does_not_propagate(
         ev
         for sp in spans
         for ev in sp.events
-        if ev.name == "pos.persona.onboarding.grounding_episode_failed"
+        if ev.name == "loam.persona.onboarding.grounding_episode_failed"
     ]
     assert len(failure_events) == 1
 
@@ -287,6 +287,6 @@ def test_AC_O_5_grounding_persisted_event_emitted(
         ev
         for sp in spans
         for ev in sp.events
-        if ev.name == "pos.persona.onboarding.grounding_persisted"
+        if ev.name == "loam.persona.onboarding.grounding_persisted"
     ]
     assert len(events) == 1

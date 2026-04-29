@@ -69,7 +69,7 @@ sealed component is amended.
  │                         └──────────────────────┘          │
  │                                                           │
  │  OTel emission (D9, A1-safe)                              │
- │  pos.degradation.{detection_event | fsm_transition |      │
+ │  loam.degradation.{detection_event | fsm_transition |      │
  │  episode_started | episode_resolved | policy_decision |   │
  │  probe_call | notification_dispatched}                    │
  └───────────────────────────────────────────────────────────┘
@@ -134,7 +134,7 @@ sealed component is amended.
 ### Downstream dependencies (future)
 
 - **Observability aggregator** — subscribes to the OTel
-  `pos.degradation.*` span namespace. Not required.
+  `loam.degradation.*` span namespace. Not required.
 - **Self-upgrade framework** — the own SQLite will participate in the
   upgrade-fidelity story via `snapshot_probe()` (v1.1 R1).
 
@@ -299,14 +299,14 @@ carries no tokens/money caps.
 
 ### OTel span namespace
 
-- `pos.degradation.claude_call` — per adapter call; carries
-  `pos.prompt.type`, `pos.model`, `pos.call_id`, and the embedded
-  `pos.degradation.detection_event` as an event on the span
-- `pos.degradation.fsm_transition` — per state transition
-- `pos.degradation.episode_started` / `.episode_resolved`
-- `pos.degradation.policy_decision`
-- `pos.degradation.probe_call`
-- `pos.degradation.notification_dispatched`
+- `loam.degradation.claude_call` — per adapter call; carries
+  `loam.prompt.type`, `loam.model`, `loam.call_id`, and the embedded
+  `loam.degradation.detection_event` as an event on the span
+- `loam.degradation.fsm_transition` — per state transition
+- `loam.degradation.episode_started` / `.episode_resolved`
+- `loam.degradation.policy_decision`
+- `loam.degradation.probe_call`
+- `loam.degradation.notification_dispatched`
 
 ---
 

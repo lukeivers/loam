@@ -55,7 +55,7 @@ def test_error_codes_in_reserved_range() -> None:
 
 def test_a1_correction_held_no_tracer_provider_construction() -> None:
     """A1 correction — observability.py does not construct its own
-    TracerProvider; it uses `trace.get_tracer("pos.telegram_interface")`
+    TracerProvider; it uses `trace.get_tracer("loam.telegram_interface")`
     only.
 
     The check strips docstrings/comments first, then asserts
@@ -64,7 +64,7 @@ def test_a1_correction_held_no_tracer_provider_construction() -> None:
     import ast
 
     src = inspect.getsource(obs)
-    assert 'get_tracer("pos.telegram_interface")' in src
+    assert 'get_tracer("loam.telegram_interface")' in src
 
     tree = ast.parse(src)
 

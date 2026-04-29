@@ -25,7 +25,7 @@ Retention: decaying granularity (0-7d full / 7-30d daily + top-N raw
 honoured at ingest: `normal` stored fully; `derived-only` drops
 payload at ingest; `ephemeral` stub-only.
 
-Self-observability: aggregator emits `pos.aggregator.*` spans;
+Self-observability: aggregator emits `loam.aggregator.*` spans;
 filtered at ingest to prevent recursion.
 
 A1 correction held: no sealed component knows about this aggregator.

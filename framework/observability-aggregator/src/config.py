@@ -49,7 +49,7 @@ class IngestConfig:
     batch_interval_seconds: float = 2.0
     # Aggregator's own tracer namespace; spans matching are filtered at
     # ingest to prevent observing-its-own-observation recursion.
-    self_namespace_prefix: str = "pos.aggregator"
+    self_namespace_prefix: str = "loam.aggregator"
 
 
 @dataclass

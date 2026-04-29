@@ -7,7 +7,7 @@ Acceptance (brief D5):
   following GenAI convention.
 - State transitions produce span events on the scope's span.
 - Budget remaining, reversibility class, and escalation reason appear
-  as `pos.scope.*` attributes.
+  as `loam.scope.*` attributes.
 - Extension-request events appear as OTel events; no consumer is
   required for emission to succeed.
 """
@@ -67,10 +67,10 @@ async def test_starting_scope_produces_invoke_scope_span(rt_with_otel):
     assert len(spans) >= 1
     span = spans[-1]
     attrs = dict(span.attributes)
-    assert attrs["pos.scope.id"] == proj.scope_id
+    assert attrs["loam.scope.id"] == proj.scope_id
     assert attrs["gen_ai.agent.id"] == proj.scope_id
     assert attrs["gen_ai.agent.name"] == "eve"
-    assert attrs["pos.scope.reversibility_class"] == "fully_reversible"
+    assert attrs["loam.scope.reversibility_class"] == "fully_reversible"
 
 
 async def test_llm_call_produces_chat_span_with_genai_attrs(rt_with_otel):
@@ -91,8 +91,8 @@ async def test_llm_call_produces_chat_span_with_genai_attrs(rt_with_otel):
     assert attrs["gen_ai.request.model"] == "claude-sonnet-4-5"
     assert attrs["gen_ai.usage.input_tokens"] == 100
     assert attrs["gen_ai.usage.output_tokens"] == 50
-    assert attrs["pos.prompt.name"] == "extract_facts"
-    assert attrs["pos.scope.id"] == proj.scope_id
+    assert attrs["loam.prompt.name"] == "extract_facts"
+    assert attrs["loam.scope.id"] == proj.scope_id
 
 
 async def test_state_transitions_recorded_as_span_events(rt_with_otel):
@@ -118,8 +118,8 @@ async def test_budget_attrs_on_terminal_span(rt_with_otel):
     await rt.complete(proj.scope_id, evaluations=[("c1", "met", None)])
     spans = _spans_named(exporter, "invoke_scope")
     attrs = dict(spans[-1].attributes)
-    assert attrs.get("pos.scope.budget.tokens.remaining") == 700
-    assert attrs.get("pos.scope.success_criteria.met") == 1
+    assert attrs.get("loam.scope.budget.tokens.remaining") == 700
+    assert attrs.get("loam.scope.success_criteria.met") == 1
 
 
 async def test_extension_request_does_not_require_consumer(rt_with_otel):

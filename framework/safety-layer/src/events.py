@@ -80,7 +80,7 @@ class SystemKillStateRecord(BaseModel):
 
     When a matching `cleared_at` row exists, the next bootstrap is
     permitted to activate scopes again. Otherwise it refuses to run
-    `activate_scope` and emits `pos.safety.system_kill_block_activation`.
+    `activate_scope` and emits `loam.safety.system_kill_block_activation`.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)

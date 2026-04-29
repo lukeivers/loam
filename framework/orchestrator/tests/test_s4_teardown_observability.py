@@ -184,27 +184,27 @@ def test_s4_orchestrator_close_local_state_logger(tmp_config, caplog):
         (
             "heartbeat",
             "heartbeat",
-            "pos.orchestrator.heartbeat_stop_exception",
+            "loam.orchestrator.heartbeat_stop_exception",
         ),
         (
             "monitor_stop_exception",
             "monitor_exc",
-            "pos.orchestrator.monitor_stop_exception",
+            "loam.orchestrator.monitor_stop_exception",
         ),
         (
             "monitor_stop_timeout",
             "monitor_timeout",
-            "pos.orchestrator.monitor_stop_timeout",
+            "loam.orchestrator.monitor_stop_timeout",
         ),
         (
             "ipc_server",
             "ipc_server",
-            "pos.orchestrator.ipc_server_stop_exception",
+            "loam.orchestrator.ipc_server_stop_exception",
         ),
         (
             "scope_runtime",
             "scope_runtime",
-            "pos.orchestrator.scope_runtime_close_exception",
+            "loam.orchestrator.scope_runtime_close_exception",
         ),
     ],
 )

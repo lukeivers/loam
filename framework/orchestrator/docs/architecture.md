@@ -118,7 +118,7 @@ Activation flow:
    - emit OTel span event
    - return 409 to caller; scope stays in its pre-active state
 4. On success: `scope_runtime.start(scope_id)`
-5. Emit `pos.orchestrator.scope_activated` span event.
+5. Emit `loam.orchestrator.scope_activated` span event.
 
 ## Restart semantics
 

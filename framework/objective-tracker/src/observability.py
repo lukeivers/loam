@@ -13,13 +13,13 @@ Span structure:
 
 Attributes (pOS-namespaced):
 
-  • pos.objective.id
-  • pos.objective.parent_id
-  • pos.objective.authored_by
-  • pos.objective.status
-  • pos.objective.outcome   (success / error)
-  • pos.objective.criterion_id
-  • pos.scope.id            (on bind_scope)
+  • loam.objective.id
+  • loam.objective.parent_id
+  • loam.objective.authored_by
+  • loam.objective.status
+  • loam.objective.outcome   (success / error)
+  • loam.objective.criterion_id
+  • loam.scope.id            (on bind_scope)
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ except Exception:  # pragma: no cover
     _OTEL_AVAILABLE = False
 
 
-_TRACER_NAME = "pos.objective_tracker"
+_TRACER_NAME = "loam.objective_tracker"
 
 
 def get_tracer():
@@ -51,7 +51,7 @@ def operation_span(
     """Open and auto-close an INTERNAL span for one tracker operation.
 
     Yields the span (or None when OTel isn't available). Sets a
-    pos.objective.outcome = "success" attribute by default; callers
+    loam.objective.outcome = "success" attribute by default; callers
     can override to "error" by calling `mark_span_error(span, reason)`
     before context exit.
     """
@@ -61,11 +61,11 @@ def operation_span(
         return
     filtered = {k: v for k, v in attrs.items() if v is not None}
     span = tracer.start_span(name, kind=SpanKind.INTERNAL, attributes=filtered)
-    span.set_attribute("pos.objective.outcome", "success")
+    span.set_attribute("loam.objective.outcome", "success")
     try:
         yield span
     except Exception as exc:
-        span.set_attribute("pos.objective.outcome", "error")
+        span.set_attribute("loam.objective.outcome", "error")
         span.set_status(Status(StatusCode.ERROR, str(exc)))
         span.end()
         raise
@@ -91,7 +91,7 @@ def set_attrs(span: Any | None, **attrs: Any) -> None:
 def mark_span_error(span: Any | None, reason: str) -> None:
     if span is None or not _OTEL_AVAILABLE:
         return
-    span.set_attribute("pos.objective.outcome", "error")
+    span.set_attribute("loam.objective.outcome", "error")
     span.set_status(Status(StatusCode.ERROR, reason))
 
 

@@ -14,7 +14,7 @@ def _span_at(ts: datetime, span_id: str, name: str = "op", duration_ns: int = 1_
     ns = int(ts.timestamp() * 1e9)
     return SpanRecord(
         trace_id="t" * 32, span_id=span_id, name=name,
-        tracer_name="pos.scope_of_work", component="scope_of_work",
+        tracer_name="loam.scope_of_work", component="scope_of_work",
         start_time_unix_nano=ns, end_time_unix_nano=ns + duration_ns,
         status=status, attributes=attrs or {},
     )
@@ -97,7 +97,7 @@ def test_yearly_rollup_after_365_days(store, tmp_config):
 def test_retention_class_normal_stored_fully(store):
     s = SpanRecord(
         trace_id="t" * 32, span_id="0" * 16, name="op",
-        tracer_name="pos.memory", component="memory_system",
+        tracer_name="loam.memory", component="memory_system",
         start_time_unix_nano=1000, end_time_unix_nano=2000,
         attributes={"inputs": "raw text", "k": "v"},
         retention_class=RetentionClass.NORMAL,
@@ -111,7 +111,7 @@ def test_retention_class_normal_stored_fully(store):
 def test_retention_class_derived_only_drops_payload(store):
     s = SpanRecord(
         trace_id="t" * 32, span_id="0" * 16, name="op",
-        tracer_name="pos.memory", component="memory_system",
+        tracer_name="loam.memory", component="memory_system",
         start_time_unix_nano=1000, end_time_unix_nano=2000,
         attributes={"inputs": "raw text", "outputs": "raw out", "kept": "yes"},
         retention_class=RetentionClass.DERIVED_ONLY,
@@ -127,7 +127,7 @@ def test_retention_class_derived_only_drops_payload(store):
 def test_retention_class_ephemeral_keeps_only_stub(store):
     s = SpanRecord(
         trace_id="t" * 32, span_id="0" * 16, name="op",
-        tracer_name="pos.memory", component="memory_system",
+        tracer_name="loam.memory", component="memory_system",
         start_time_unix_nano=1000, end_time_unix_nano=2000,
         attributes={"inputs": "raw text", "any_key": "value"},
         retention_class=RetentionClass.EPHEMERAL,
@@ -146,7 +146,7 @@ def test_retention_class_is_queryable(store):
     for i, rc in enumerate(classes):
         store.insert_span(SpanRecord(
             trace_id="t" * 32, span_id=f"{i:016x}", name=f"op_{rc.value}",
-            tracer_name="pos.memory", component="memory_system",
+            tracer_name="loam.memory", component="memory_system",
             start_time_unix_nano=1000 + i, end_time_unix_nano=2000 + i,
             attributes={},
             retention_class=rc,

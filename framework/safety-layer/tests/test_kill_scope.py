@@ -2,7 +2,7 @@
 
 A1. Scope kill issued against an active scope transitions the scope and
     its TERMINATE-policy children to `cancelled` within 500ms p95.
-    Emits `pos.safety.scope_kill` span; writes a `kill_events` row.
+    Emits `loam.safety.scope_kill` span; writes a `kill_events` row.
 
 A5 (scope slice). A wedged scope (slow-LLM stub, 10s awaitable) does
     not block the kill-issuance from returning within budget — only

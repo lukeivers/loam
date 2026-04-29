@@ -34,7 +34,7 @@ def _write_memory_span(path: Path, name: str, *, retention_class=None, payload=N
         "start_time_unix_nano": int(time.time() * 1e9),
         "end_time_unix_nano": int(time.time() * 1e9) + 1000,
         "attributes": {
-            **({"pos.retention.class": retention_class} if retention_class else {}),
+            **({"loam.retention.class": retention_class} if retention_class else {}),
             **({"inputs": payload} if payload else {}),
         },
         "status": "OK",
@@ -45,16 +45,16 @@ def _write_memory_span(path: Path, name: str, *, retention_class=None, payload=N
 
 
 def test_self_observability_aggregator_spans_filtered(tmp_config, fresh_otel_provider):
-    """Aggregator's own pos.aggregator.* spans never reach the store."""
+    """Aggregator's own loam.aggregator.* spans never reach the store."""
     spool = Path(tmp_config.resolved_spool_path())
     spool.parent.mkdir(parents=True, exist_ok=True)
     provider, _, _ = register_otel_provider(spool)
     try:
         # Both a normal span and several aggregator self-spans.
-        normal = trace.get_tracer("pos.scope_of_work")
+        normal = trace.get_tracer("loam.scope_of_work")
         with normal.start_as_current_span("normal_op"):
             pass
-        agg = trace.get_tracer("pos.aggregator.something")
+        agg = trace.get_tracer("loam.aggregator.something")
         for i in range(10):
             with agg.start_as_current_span(f"agg_internal_op_{i}"):
                 pass
@@ -141,7 +141,7 @@ def test_nl_format_correctness_cited_output(tmp_config):
         now_ns = int(time.time() * 1e9)
         store.insert_span(SpanRecord(
             trace_id="t" * 32, span_id="z" * 16, name="probe",
-            tracer_name="pos.scope_of_work", component="scope_of_work",
+            tracer_name="loam.scope_of_work", component="scope_of_work",
             start_time_unix_nano=now_ns, end_time_unix_nano=now_ns + 1000,
         ))
         api = QueryAPI(store)

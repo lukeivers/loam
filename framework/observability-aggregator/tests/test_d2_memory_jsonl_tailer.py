@@ -78,14 +78,14 @@ def test_memory_format_translators_match_documented_shape():
         "name": "memory.ingest",
         "start_time_unix_nano": 1000,
         "end_time_unix_nano": 2000,
-        "attributes": {"key": "value", "pos.retention.class": "derived-only"},
+        "attributes": {"key": "value", "loam.retention.class": "derived-only"},
         "status": "OK",
         "error": None,
     }
     sp = memory_span_to_canonical(sample_span)
     assert sp.trace_id == sample_span["trace_id"]
     assert sp.component == "memory_system"
-    assert sp.tracer_name == "pos.memory"
+    assert sp.tracer_name == "loam.memory"
     assert sp.retention_class.value == "derived-only"
 
     sample_tok = {

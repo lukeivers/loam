@@ -61,7 +61,7 @@ def apply_retention_class(
     if retention_class is RetentionClass.DERIVED_ONLY:
         return {k: v for k, v in attributes.items() if k not in PAYLOAD_ATTRIBUTE_KEYS}
     # EPHEMERAL: strip everything except the class marker.
-    return {"pos.retention.class": RetentionClass.EPHEMERAL.value}
+    return {"loam.retention.class": RetentionClass.EPHEMERAL.value}
 
 
 class SpanRecord(BaseModel):
@@ -122,7 +122,7 @@ class EventRecord(BaseModel):
 class TokenRecord(BaseModel):
     trace_id: str | None = None
     span_id: str | None = None
-    prompt_name: str  # the v1.1 R12 grouping key (`pos.prompt.type`)
+    prompt_name: str  # the v1.1 R12 grouping key (`loam.prompt.type`)
     model: str
     input_tokens: int
     output_tokens: int
@@ -147,14 +147,14 @@ class AuditRecord(BaseModel):
 # Map tracer-name prefix → component label.
 # Mirrors the actual emission namespaces in the six OTel components.
 TRACER_TO_COMPONENT = {
-    "pos.scope_of_work": "scope_of_work",
+    "loam.scope_of_work": "scope_of_work",
     "pos_v2.primary_persona": "primary_persona",
-    "pos.primary_persona": "primary_persona",
-    "pos.objective_tracker": "objective_tracker",
-    "pos.orchestrator": "orchestrator",
-    "pos.degradation": "degradation",
-    "pos.aggregator": "aggregator",
-    "pos.memory": "memory_system",
+    "loam.primary_persona": "primary_persona",
+    "loam.objective_tracker": "objective_tracker",
+    "loam.orchestrator": "orchestrator",
+    "loam.degradation": "degradation",
+    "loam.aggregator": "aggregator",
+    "loam.memory": "memory_system",
 }
 
 
@@ -168,13 +168,13 @@ def infer_component(tracer_name: str) -> str:
 
 
 def extract_retention_class(attributes: dict[str, Any]) -> RetentionClass:
-    """Read the `pos.retention.class` span attribute, defaulting to normal.
+    """Read the `loam.retention.class` span attribute, defaulting to normal.
 
     Memory-system records use `retention_class` (no prefix) on the
-    record root; OTel-emitting components use the `pos.retention.class`
+    record root; OTel-emitting components use the `loam.retention.class`
     attribute convention. Both are honoured here.
     """
-    raw = attributes.get("pos.retention.class") or attributes.get("retention_class")
+    raw = attributes.get("loam.retention.class") or attributes.get("retention_class")
     if not raw:
         return RetentionClass.NORMAL
     try:

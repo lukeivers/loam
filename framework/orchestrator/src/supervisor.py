@@ -46,7 +46,7 @@ from typing import Any, Awaitable, Callable, Iterable
 from opentelemetry import trace
 
 
-_TRACER = trace.get_tracer("pos.hands_off_lifecycle", "0.1.0")
+_TRACER = trace.get_tracer("loam.hands_off_lifecycle", "0.1.0")
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -303,7 +303,7 @@ class MemorySupervisor:
         any. Callable directly from tests — no wall-clock awaits."""
         async with self._lock:
             with _TRACER.start_as_current_span(
-                "pos.hands_off_lifecycle.supervisor.probe"
+                "loam.hands_off_lifecycle.supervisor.probe"
             ) as span:
                 try:
                     result = await self._probe()
@@ -410,7 +410,7 @@ class MemorySupervisor:
         self._state_entered_at = t.at
         self._transitions.append(t)
         with _TRACER.start_as_current_span(
-            "pos.hands_off_lifecycle.supervisor.state_transition"
+            "loam.hands_off_lifecycle.supervisor.state_transition"
         ) as span:
             span.set_attribute("from_state", t.from_state.value)
             span.set_attribute("to_state", t.to_state.value)
@@ -460,7 +460,7 @@ class MemorySupervisor:
                 if self._current_escalation is not None:
                     self._current_escalation.notification_failures += 1
                 with _TRACER.start_as_current_span(
-                    "pos.hands_off_lifecycle.supervisor.notify_failed"
+                    "loam.hands_off_lifecycle.supervisor.notify_failed"
                 ) as fail_span:
                     fail_span.set_attribute("escalation.class", cls.value)
                     fail_span.set_attribute(
@@ -470,7 +470,7 @@ class MemorySupervisor:
         self._persist_escalation()
         self._write_attention(self._render_alert(cls, attrs))
         with _TRACER.start_as_current_span(
-            "pos.hands_off_lifecycle.supervisor.escalation_opened"
+            "loam.hands_off_lifecycle.supervisor.escalation_opened"
         ) as span:
             span.set_attribute("escalation.class", cls.value)
             if self._current_escalation is not None:
@@ -501,7 +501,7 @@ class MemorySupervisor:
                 # failure without the user-visible state being
                 # corrupted.
                 with _TRACER.start_as_current_span(
-                    "pos.hands_off_lifecycle.supervisor.notify_failed"
+                    "loam.hands_off_lifecycle.supervisor.notify_failed"
                 ) as fail_span:
                     fail_span.set_attribute(
                         "escalation.class", prior_cls.value
@@ -512,7 +512,7 @@ class MemorySupervisor:
                     fail_span.set_attribute("close_reason", reason)
                     fail_span.set_attribute("phase", "close")
         with _TRACER.start_as_current_span(
-            "pos.hands_off_lifecycle.supervisor.escalation_closed"
+            "loam.hands_off_lifecycle.supervisor.escalation_closed"
         ) as span:
             span.set_attribute("escalation.class", prior_cls.value)
             span.set_attribute("reason", reason)

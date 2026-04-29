@@ -5,10 +5,10 @@ threshold crossing, and resume event produces an OTel span. Per A1
 correction, emission succeeds with no consumer present — the default
 SDK noop tracer silently accepts every call.
 
-Span namespace: `pos.degradation.*`.
+Span namespace: `loam.degradation.*`.
 
 v1.1 R12 compliance: narrative / judge / probe adapter calls carry
-`pos.prompt.type` on their spans so per-prompt-type cost attribution
+`loam.prompt.type` on their spans so per-prompt-type cost attribution
 downstream matches scope-of-work's per-prompt view.
 """
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover — hint only
     from .adapter import AdapterEvent
     from .errors import ClaudeAPIError
 
-_TRACER = trace.get_tracer("pos.degradation", "0.1.0")
+_TRACER = trace.get_tracer("loam.degradation", "0.1.0")
 
 
 # ---- generic helpers ---------------------------------------------------
@@ -68,14 +68,14 @@ def adapter_span(
 ) -> Iterator[trace.Span]:
     """Span around a single adapter.call invocation.
 
-    Always carries `pos.prompt.type` so v1.1 R12 can aggregate
+    Always carries `loam.prompt.type` so v1.1 R12 can aggregate
     per-prompt cost.
     """
-    with _TRACER.start_as_current_span("pos.degradation.claude_call") as span:
-        span.set_attribute("pos.prompt.type", prompt_name)
-        span.set_attribute("pos.prompt.name", prompt_name)
-        span.set_attribute("pos.model", model)
-        span.set_attribute("pos.call_id", call_id)
+    with _TRACER.start_as_current_span("loam.degradation.claude_call") as span:
+        span.set_attribute("loam.prompt.type", prompt_name)
+        span.set_attribute("loam.prompt.name", prompt_name)
+        span.set_attribute("loam.model", model)
+        span.set_attribute("loam.call_id", call_id)
         yield span
 
 
@@ -87,16 +87,16 @@ def emit_adapter_event(
 ) -> None:
     """Record the result of an adapter call on its span."""
     attrs: dict[str, Any] = {
-        "pos.call.ok": event.ok,
-        "pos.call.latency_seconds": event.latency_seconds,
+        "loam.call.ok": event.ok,
+        "loam.call.latency_seconds": event.latency_seconds,
     }
     if event.signal is not None:
-        attrs["pos.degradation.signal"] = event.signal.value
+        attrs["loam.degradation.signal"] = event.signal.value
     if event.retry_after is not None:
-        attrs["pos.retry_after_seconds"] = event.retry_after
+        attrs["loam.retry_after_seconds"] = event.retry_after
     if event.status_code is not None:
-        attrs["pos.http.status_code"] = event.status_code
-    span.add_event("pos.degradation.detection_event", attributes=attrs)
+        attrs["loam.http.status_code"] = event.status_code
+    span.add_event("loam.degradation.detection_event", attributes=attrs)
     if error is not None:
         span.record_exception(error)
         span.set_status(trace.Status(trace.StatusCode.ERROR, str(error)))
@@ -112,11 +112,11 @@ def fsm_transition(
     trigger: str,
     **extra: Any,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.degradation.fsm_transition") as span:
-        span.set_attribute("pos.degradation.mode", mode)
-        span.set_attribute("pos.degradation.from_state", from_state)
-        span.set_attribute("pos.degradation.to_state", to_state)
-        span.set_attribute("pos.degradation.trigger", trigger)
+    with _TRACER.start_as_current_span("loam.degradation.fsm_transition") as span:
+        span.set_attribute("loam.degradation.mode", mode)
+        span.set_attribute("loam.degradation.from_state", from_state)
+        span.set_attribute("loam.degradation.to_state", to_state)
+        span.set_attribute("loam.degradation.trigger", trigger)
         _apply_attrs(span, extra)
 
 
@@ -131,18 +131,18 @@ def episode_started(
     paused_scope_ids: list[str],
     mode: str,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.degradation.episode_started") as span:
-        span.set_attribute("pos.degradation.episode_id", episode_id)
-        span.set_attribute("pos.degradation.signal", signal)
-        span.set_attribute("pos.degradation.policy", policy)
-        span.set_attribute("pos.degradation.mode", mode)
-        span.set_attribute("pos.degradation.paused_scope_count", len(paused_scope_ids))
+    with _TRACER.start_as_current_span("loam.degradation.episode_started") as span:
+        span.set_attribute("loam.degradation.episode_id", episode_id)
+        span.set_attribute("loam.degradation.signal", signal)
+        span.set_attribute("loam.degradation.policy", policy)
+        span.set_attribute("loam.degradation.mode", mode)
+        span.set_attribute("loam.degradation.paused_scope_count", len(paused_scope_ids))
         # Amendment #20 — Site 8: replace silent fallback with a span
         # event on the already-open span so the attribute-set failure
         # (e.g. string too long for SDK limit) is observable.
         try:
             span.set_attribute(
-                "pos.degradation.paused_scope_ids", ",".join(paused_scope_ids)
+                "loam.degradation.paused_scope_ids", ",".join(paused_scope_ids)
             )
         except Exception as e:
             span.add_event(
@@ -161,34 +161,34 @@ def episode_resolved(
     resolution_kind: str,
     resumed_scope_count: int = 0,
 ) -> None:
-    with _TRACER.start_as_current_span("pos.degradation.episode_resolved") as span:
-        span.set_attribute("pos.degradation.episode_id", episode_id)
-        span.set_attribute("pos.degradation.duration_seconds", duration_seconds)
-        span.set_attribute("pos.degradation.resolution_kind", resolution_kind)
+    with _TRACER.start_as_current_span("loam.degradation.episode_resolved") as span:
+        span.set_attribute("loam.degradation.episode_id", episode_id)
+        span.set_attribute("loam.degradation.duration_seconds", duration_seconds)
+        span.set_attribute("loam.degradation.resolution_kind", resolution_kind)
         span.set_attribute(
-            "pos.degradation.resumed_scope_count", resumed_scope_count
+            "loam.degradation.resumed_scope_count", resumed_scope_count
         )
 
 
 def policy_decision(
     *, policy: str, episode_id: str, mode: str, reason: str = ""
 ) -> None:
-    with _TRACER.start_as_current_span("pos.degradation.policy_decision") as span:
-        span.set_attribute("pos.degradation.policy", policy)
-        span.set_attribute("pos.degradation.episode_id", episode_id)
-        span.set_attribute("pos.degradation.mode", mode)
+    with _TRACER.start_as_current_span("loam.degradation.policy_decision") as span:
+        span.set_attribute("loam.degradation.policy", policy)
+        span.set_attribute("loam.degradation.episode_id", episode_id)
+        span.set_attribute("loam.degradation.mode", mode)
         if reason:
-            span.set_attribute("pos.degradation.reason", reason)
+            span.set_attribute("loam.degradation.reason", reason)
 
 
 def probe_call(
     *, mode: str, result: str, attempt_n: int, latency_seconds: float
 ) -> None:
-    with _TRACER.start_as_current_span("pos.degradation.probe_call") as span:
-        span.set_attribute("pos.degradation.mode", mode)
-        span.set_attribute("pos.degradation.probe_result", result)
-        span.set_attribute("pos.degradation.probe_attempt", attempt_n)
-        span.set_attribute("pos.degradation.latency_seconds", latency_seconds)
+    with _TRACER.start_as_current_span("loam.degradation.probe_call") as span:
+        span.set_attribute("loam.degradation.mode", mode)
+        span.set_attribute("loam.degradation.probe_result", result)
+        span.set_attribute("loam.degradation.probe_attempt", attempt_n)
+        span.set_attribute("loam.degradation.latency_seconds", latency_seconds)
 
 
 def notification_dispatched(
@@ -200,15 +200,15 @@ def notification_dispatched(
     tier: int,
 ) -> None:
     with _TRACER.start_as_current_span(
-        "pos.degradation.notification_dispatched"
+        "loam.degradation.notification_dispatched"
     ) as span:
-        span.set_attribute("pos.degradation.episode_id", episode_id)
-        span.set_attribute("pos.degradation.channel", channel)
-        span.set_attribute("pos.degradation.notification_outcome", outcome)
+        span.set_attribute("loam.degradation.episode_id", episode_id)
+        span.set_attribute("loam.degradation.channel", channel)
+        span.set_attribute("loam.degradation.notification_outcome", outcome)
         span.set_attribute(
-            "pos.degradation.threshold_triggered", threshold_triggered
+            "loam.degradation.threshold_triggered", threshold_triggered
         )
-        span.set_attribute("pos.notification.tier", tier)
+        span.set_attribute("loam.notification.tier", tier)
 
 
 # ---- Amendment #20 — S2 silent-except observability surfaces ----------
@@ -231,11 +231,11 @@ def scope_lookup_failed(
     makes the drop observable.
     """
     with _TRACER.start_as_current_span(
-        "pos.degradation.scope_lookup_failed"
+        "loam.degradation.scope_lookup_failed"
     ) as span:
-        span.set_attribute("pos.degradation.episode_id", episode_id)
-        span.set_attribute("pos.degradation.scope_id", scope_id)
-        span.set_attribute("pos.degradation.exception_class", exception_class)
+        span.set_attribute("loam.degradation.episode_id", episode_id)
+        span.set_attribute("loam.degradation.scope_id", scope_id)
+        span.set_attribute("loam.degradation.exception_class", exception_class)
 
 
 def reconcile_restore_failed(
@@ -253,9 +253,9 @@ def reconcile_restore_failed(
     restore."
     """
     with _TRACER.start_as_current_span(
-        "pos.degradation.reconcile_restore_failed"
+        "loam.degradation.reconcile_restore_failed"
     ) as span:
-        span.set_attribute("pos.degradation.episode_id", episode_id)
-        span.set_attribute("pos.degradation.mode_value", mode_value)
-        span.set_attribute("pos.degradation.policy_value", policy_value)
-        span.set_attribute("pos.degradation.exception_class", exception_class)
+        span.set_attribute("loam.degradation.episode_id", episode_id)
+        span.set_attribute("loam.degradation.mode_value", mode_value)
+        span.set_attribute("loam.degradation.policy_value", policy_value)
+        span.set_attribute("loam.degradation.exception_class", exception_class)

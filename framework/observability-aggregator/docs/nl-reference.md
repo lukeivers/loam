@@ -25,14 +25,14 @@ for c in answer.citations:
 Input: the natural-language question + (in production) a schema description.
 Output: an `NLTranslation` Pydantic model — exactly one of `mode in {spans, events, cost, audit, replay_session, replay_scope, replay_objective}`.
 
-The translate call is emitted as `pos.aggregator.nl_translate` with `pos.prompt.type=obs-nl-translate` so it appears in `cost_by_prompt` — reflexive R12.
+The translate call is emitted as `loam.aggregator.nl_translate` with `loam.prompt.type=obs-nl-translate` so it appears in `cost_by_prompt` — reflexive R12.
 
 ### Call 2 — format
 
 Input: the question and the executed result rows.
 Output: a `CitedAnswer` Pydantic model with `summary`, `cited_span_ids`, `citations` (one per row), `rows_returned`.
 
-The format call is emitted as `pos.aggregator.nl_format` with `pos.prompt.type=obs-nl-format`.
+The format call is emitted as `loam.aggregator.nl_format` with `loam.prompt.type=obs-nl-format`.
 
 ## Wiring to Claude-via-Max
 
@@ -86,4 +86,4 @@ print(f"accuracy: {result['accuracy']:.0%} ({result['correct']}/{result['total']
 
 ## No infinite-loop guarantee
 
-The aggregator's NL spans (`pos.aggregator.nl_translate`, `pos.aggregator.nl_format`) are filtered at the spool exporter and at the spool drainer using the configured `self_namespace_prefix` (default `pos.aggregator`). Without this filter, every NL query would emit two spans which would be ingested which would generate two more spans on the next NL query — quickly degenerating into an unbounded log. The filter is verified by `test_self_observation_no_infinite_loop`.
+The aggregator's NL spans (`loam.aggregator.nl_translate`, `loam.aggregator.nl_format`) are filtered at the spool exporter and at the spool drainer using the configured `self_namespace_prefix` (default `loam.aggregator`). Without this filter, every NL query would emit two spans which would be ingested which would generate two more spans on the next NL query — quickly degenerating into an unbounded log. The filter is verified by `test_self_observation_no_infinite_loop`.

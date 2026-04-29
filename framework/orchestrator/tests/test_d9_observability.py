@@ -145,7 +145,7 @@ def test_span_processor_receives_spans_when_installed(tmp_path):
     # Regardless of provider type, operation_span must execute.
     from pos_orchestrator import observability as obs
 
-    with obs.operation_span("pos.orchestrator.sanity", **{"k": "v"}) as span:
+    with obs.operation_span("loam.orchestrator.sanity", **{"k": "v"}) as span:
         obs.emit_event(span, "sanity_event", {"a": 1})
     # Intentionally no assertion on exporter contents — this test's
     # purpose is to verify the emission code path does not throw

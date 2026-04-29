@@ -134,7 +134,7 @@ class GarbagePipeline:
             # Budget exhausted — assume fine and emit a log event via
             # OTel so the operator can see it happened.
             with obs.operation_span(
-                "pos.degradation.judge_budget_exhausted",
+                "loam.degradation.judge_budget_exhausted",
                 budget=self.judge_budget_per_hour,
             ):
                 pass

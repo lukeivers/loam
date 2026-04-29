@@ -3,7 +3,7 @@
 Acceptance (brief):
 - Detection events, FSM transitions, policy dispatches, notification-
   threshold crossings, resume events all produce OTel spans/events.
-- Narrative Claude calls produce spans with `pos.prompt.type =
+- Narrative Claude calls produce spans with `loam.prompt.type =
   degradation-narrative`.
 - Emission succeeds with no consumer present.
 """
@@ -46,7 +46,7 @@ def setup_otel_exporter(monkeypatch):
     exporter = InMemorySpanExporter()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     # Swap the module-level tracer.
-    monkeypatch.setattr(gd_obs, "_TRACER", provider.get_tracer("pos.degradation", "0.1.0"))
+    monkeypatch.setattr(gd_obs, "_TRACER", provider.get_tracer("loam.degradation", "0.1.0"))
     yield exporter
     exporter.clear()
 
@@ -80,17 +80,17 @@ async def test_adapter_emits_claude_call_span(tmp_path, setup_otel_exporter) -> 
     comp, orch, rt, client, clock = _build_component(tmp_path)
     await client.call(prompt_name="memory.extraction", text="x")
     spans = setup_otel_exporter.get_finished_spans()
-    call_spans = [s for s in spans if s.name == "pos.degradation.claude_call"]
+    call_spans = [s for s in spans if s.name == "loam.degradation.claude_call"]
     assert len(call_spans) == 1
     attrs = dict(call_spans[0].attributes or {})
-    assert attrs.get("pos.prompt.type") == "memory.extraction"
-    assert attrs.get("pos.model") == "claude-haiku-4-5"
+    assert attrs.get("loam.prompt.type") == "memory.extraction"
+    assert attrs.get("loam.model") == "claude-haiku-4-5"
 
 
 async def test_narrative_claude_call_uses_degradation_narrative_type(
     tmp_path, setup_otel_exporter
 ) -> None:
-    """v1.1 R12 — narrative spans carry `pos.prompt.type =
+    """v1.1 R12 — narrative spans carry `loam.prompt.type =
     degradation-narrative`."""
     comp, orch, rt, client, clock = _build_component(
         tmp_path, script=["A 2-sentence summary."]
@@ -103,9 +103,9 @@ async def test_narrative_claude_call_uses_degradation_narrative_type(
         paused_scope_count=1,
     )
     spans = setup_otel_exporter.get_finished_spans()
-    call_spans = [s for s in spans if s.name == "pos.degradation.claude_call"]
+    call_spans = [s for s in spans if s.name == "loam.degradation.claude_call"]
     assert any(
-        dict(s.attributes or {}).get("pos.prompt.type") == "degradation-narrative"
+        dict(s.attributes or {}).get("loam.prompt.type") == "degradation-narrative"
         for s in call_spans
     )
 
@@ -129,13 +129,13 @@ async def test_fsm_transition_emits_span(tmp_path, setup_otel_exporter) -> None:
 
     spans = setup_otel_exporter.get_finished_spans()
     transition_spans = [
-        s for s in spans if s.name == "pos.degradation.fsm_transition"
+        s for s in spans if s.name == "loam.degradation.fsm_transition"
     ]
     assert len(transition_spans) >= 1
     attrs = dict(transition_spans[0].attributes or {})
-    assert "pos.degradation.mode" in attrs
-    assert "pos.degradation.from_state" in attrs
-    assert "pos.degradation.to_state" in attrs
+    assert "loam.degradation.mode" in attrs
+    assert "loam.degradation.from_state" in attrs
+    assert "loam.degradation.to_state" in attrs
 
 
 async def test_episode_started_span_emitted(tmp_path, setup_otel_exporter) -> None:
@@ -158,7 +158,7 @@ async def test_episode_started_span_emitted(tmp_path, setup_otel_exporter) -> No
 
     spans = setup_otel_exporter.get_finished_spans()
     episode_spans = [
-        s for s in spans if s.name == "pos.degradation.episode_started"
+        s for s in spans if s.name == "loam.degradation.episode_started"
     ]
     assert len(episode_spans) == 1
 
@@ -183,7 +183,7 @@ async def test_notification_span_emitted(tmp_path, setup_otel_exporter) -> None:
     await comp._on_adapter_event(event)
     spans = setup_otel_exporter.get_finished_spans()
     notif_spans = [
-        s for s in spans if s.name == "pos.degradation.notification_dispatched"
+        s for s in spans if s.name == "loam.degradation.notification_dispatched"
     ]
     assert len(notif_spans) >= 1
 
@@ -246,5 +246,5 @@ async def test_probe_span_emitted_on_half_open(tmp_path, setup_otel_exporter) ->
     await comp.tick()
 
     spans = setup_otel_exporter.get_finished_spans()
-    probe_spans = [s for s in spans if s.name == "pos.degradation.probe_call"]
+    probe_spans = [s for s in spans if s.name == "loam.degradation.probe_call"]
     assert len(probe_spans) >= 1

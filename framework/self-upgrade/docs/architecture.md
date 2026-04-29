@@ -84,7 +84,7 @@ self_upgrade/
 | SIGTERM timeout | Rollback. No swap committed (symlink still at prior). `resume_activation`. |
 | Symlink swap fails | Halt; framework is in prior state. Report to user. |
 | Orchestrator boot timeout | Rollback; revert symlink; restart on prior tree. |
-| Clause a-g fail | Rollback. `<tag>-rolled-back.json` written; `pos.upgrade.rolled_back` span emitted. |
+| Clause a-g fail | Rollback. `<tag>-rolled-back.json` written; `loam.upgrade.rolled_back` span emitted. |
 | Rollback fails | `RollbackFailed` raised; `<tag>-rollback-failed.json` written; Tier 1 notification. Manual recovery. |
 | Conflict pending | Upgrade blocks until YAML resolved. `resolution: skipped` is parse-rejected. |
 | Silent schema bump | Clause (e) fails; rollback. |

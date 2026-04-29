@@ -26,9 +26,9 @@ def _populate(cfg: AggregatorConfig):
         now_ns = int(time.time() * 1e9)
         store.insert_span(SpanRecord(
             trace_id="t" * 32, span_id="a" * 16, name="cli_probe_op",
-            tracer_name="pos.scope_of_work", component="scope_of_work",
+            tracer_name="loam.scope_of_work", component="scope_of_work",
             start_time_unix_nano=now_ns, end_time_unix_nano=now_ns + 1000,
-            attributes={"pos.scope.id": "cli_scope"},
+            attributes={"loam.scope.id": "cli_scope"},
         ))
         store.insert_audit(AuditRecord(
             at_time=datetime.now(timezone.utc), operation="cli_op",

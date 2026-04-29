@@ -6,8 +6,8 @@ Covers Sites 1 and 2:
     StateTransitioned time-accounting.
 
 Each test asserts:
-  * The new ``pos.scope.projection_parse_failed`` span fires with
-    the expected ``pos.scope.projection_field`` attribute.
+  * The new ``loam.scope.projection_parse_failed`` span fires with
+    the expected ``loam.scope.projection_field`` attribute.
   * Existing behaviour is preserved (the caller sees the same return
     value / post-condition it would have under the pre-amendment
     silent-``pass`` branch).
@@ -55,7 +55,7 @@ def _spans_named(exporter, name):
 def test_active_seconds_elapsed_surfaces_parse_failure(otel_exporter):
     """Site 1: a malformed ``active_started_at`` previously silently
     returned the stale ``active_cumulative_seconds``; the fix emits
-    ``pos.scope.projection_parse_failed`` while preserving the stale
+    ``loam.scope.projection_parse_failed`` while preserving the stale
     fallback return value.
     """
     otel_exporter.clear()
@@ -71,10 +71,10 @@ def test_active_seconds_elapsed_surfaces_parse_failure(otel_exporter):
     assert result == 42
 
     # Observable surface: the new span fires with the expected field.
-    spans = _spans_named(otel_exporter, "pos.scope.projection_parse_failed")
+    spans = _spans_named(otel_exporter, "loam.scope.projection_parse_failed")
     matches = [
         s for s in spans
-        if dict(s.attributes).get("pos.scope.projection_field")
+        if dict(s.attributes).get("loam.scope.projection_field")
         == "active_started_at"
     ]
     assert len(matches) == 1, (
@@ -82,14 +82,14 @@ def test_active_seconds_elapsed_surfaces_parse_failure(otel_exporter):
         f"active_started_at; got {[dict(s.attributes) for s in spans]}"
     )
     attrs = dict(matches[0].attributes)
-    assert attrs["pos.scope.id"] == "scope-site1"
+    assert attrs["loam.scope.id"] == "scope-site1"
     assert attrs["exception.class"] == "ValueError"
 
 
 def test_apply_event_state_transitioned_surfaces_parse_failure(otel_exporter):
     """Site 2: a malformed ``created_at`` on a StateTransitioned event
     previously silently skipped the time-accounting delta; the fix
-    emits ``pos.scope.projection_parse_failed`` while preserving the
+    emits ``loam.scope.projection_parse_failed`` while preserving the
     ``proj.active_started_at = None`` post-condition and the state
     transition itself.
     """
@@ -114,10 +114,10 @@ def test_apply_event_state_transitioned_surfaces_parse_failure(otel_exporter):
     assert proj.state == ScopeState.paused
 
     # Observable surface.
-    spans = _spans_named(otel_exporter, "pos.scope.projection_parse_failed")
+    spans = _spans_named(otel_exporter, "loam.scope.projection_parse_failed")
     matches = [
         s for s in spans
-        if dict(s.attributes).get("pos.scope.projection_field")
+        if dict(s.attributes).get("loam.scope.projection_field")
         == "StateTransitioned.active_started_at_or_created_at"
     ]
     assert len(matches) == 1, (
@@ -125,5 +125,5 @@ def test_apply_event_state_transitioned_surfaces_parse_failure(otel_exporter):
         f"StateTransitioned; got {[dict(s.attributes) for s in spans]}"
     )
     attrs = dict(matches[0].attributes)
-    assert attrs["pos.scope.id"] == "scope-site2"
+    assert attrs["loam.scope.id"] == "scope-site2"
     assert attrs["exception.class"] == "ValueError"

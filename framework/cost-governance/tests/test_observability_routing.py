@@ -1,4 +1,4 @@
-"""C24: OTel spans flow through `trace.get_tracer("pos.cost_governance")`.
+"""C24: OTel spans flow through `trace.get_tracer("loam.cost_governance")`.
 The component does not construct its own TracerProvider.
 """
 
@@ -35,7 +35,7 @@ def test_C24_spans_emitted_via_shared_tracer(tmp_path) -> None:
         provider.force_flush()
         spans = exporter.get_finished_spans()
         names = [s.name for s in spans]
-        assert "pos.cost.reservation_created" in names
+        assert "loam.cost.reservation_created" in names
     finally:
         store.close()
 

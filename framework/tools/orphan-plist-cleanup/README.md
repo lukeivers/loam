@@ -1,35 +1,41 @@
 # orphan-plist-cleanup
 
-Detects and reversibly remediates pre-amendment-#6 orphan pos-v2
-launchd plists in `~/Library/LaunchAgents/` on a macOS host.
+Detects and reversibly remediates pre-amendment-#6 archaeological
+orphan launchd plists in `~/Library/LaunchAgents/` on a macOS host.
 
 Plan: `docs/rebuild/plans/orphan-plist-cleanup-tool.md`.
 
 ## Background
 
-Amendment #6 (`namespaced-labels-and-bootout`) moved pos-v2 launchd
+Amendment #6 (`namespaced-labels-and-bootout`) moved loam launchd
 labels from a global single-segment shape (e.g. `com.pos-v2.memory-
-graphiti`, `com.pos.orchestrator`) to a workspace-slug-namespaced
-shape (`com.pos-v2.<slug>.<kind>`). Hosts with a pos-v2 install from
-before #6 may carry orphan plists with the old shape — they survive
-across upgrades because the workspace's bootout-before-bootstrap loop
-only touches its own labels. The 2026-04-23 pos3 first-run session
-hit this: an orphan `com.pos-v2.memory-graphiti` daemon was loaded
-and bound port 8765, which falsely satisfied the new workspace's
-health probe.
+graphiti`, `com.pos.orchestrator` — the historical pre-#6 archaeological
+shapes) to a workspace-slug-namespaced shape (post-M1c rename:
+`com.loam.<slug>.<kind>`; pre-M1c the prefix was `com.pos-v2.` —
+that pre-M1c-live-shape transition is owned by the M1c migration
+helper at `framework/tools/loam-migrate-launchd-labels/`, not this
+tool). Hosts with an install from before #6 may carry orphan plists
+with the old single-segment shape — they survive across upgrades
+because the workspace's bootout-before-bootstrap loop only touches
+its own labels. The 2026-04-23 pos3 first-run session hit this: an
+orphan `com.pos-v2.memory-graphiti` daemon was loaded and bound
+port 8765, which falsely satisfied the new workspace's health probe.
 
-This tool detects those orphans and remediates them reversibly.
+This tool detects those pre-#6 archaeological orphans and remediates
+them reversibly. Post-M1c stale `com.pos-v2.<slug>.<kind>` plists are
+NOT this tool's mission — see the M1c migration helper for that
+transition.
 
 ## Run
 
 This is a one-shot remediation tool. You do not need to install it.
 The recommended path runs the source directly using the Python that
-pos-v2 already requires (`python3.13`, present on any host that
-completed pos-v2 first-run).
+loam already requires (`python3.13`, present on any host that
+completed loam first-run).
 
 **Prerequisites:** macOS, plus `python3.13` available at
 `/opt/homebrew/bin/python3.13` (Homebrew's `python@3.13` formula —
-already installed if pos-v2 first-run has run on this host). To
+already installed if loam first-run has run on this host). To
 confirm:
 
 ```
@@ -96,15 +102,18 @@ tools/orphan-plist-cleanup/` — on most macOS shells the default
 ## What counts as an orphan
 
 A plist file in `~/Library/LaunchAgents/` whose filename matches one
-of these pre-amendment-#6 shapes:
+of these pre-amendment-#6 archaeological shapes:
 
 - `com.pos-v2.<single-segment>.plist` — single segment after the
   `com.pos-v2.` prefix, no embedded dots in that segment.
 - `com.pos.<single-segment>.plist` — pre-pos-v2 v1-era shape.
 
-A plist file whose filename matches `com.pos-v2.<slug>.<kind>.plist`
-(workspace-slug-namespaced, two segments after `com.pos-v2.`) is
-**never** classified as an orphan — those belong to live workspaces.
+A plist file whose filename matches `com.loam.<slug>.<kind>.plist`
+(workspace-slug-namespaced post-M1c live shape, two segments after
+`com.loam.`) is **never** classified as an orphan — those belong to
+live workspaces. Pre-M1c stale 4-segment plists `com.pos-v2.<slug>.<kind>.plist`
+are also not this tool's mission — see the M1c migration helper at
+`framework/tools/loam-migrate-launchd-labels/` for that transition.
 
 ## What apply mode does
 

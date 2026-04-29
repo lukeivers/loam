@@ -5,7 +5,7 @@ the instructions from older revisions of this README.**
 
 ## Do not manually install the plist in this directory
 
-The file `com.pos-v2.memory-graphiti.plist` in this directory contains
+The file `com.loam.memory-graphiti.plist` in this directory contains
 **hardcoded absolute paths** (`/Users/lukeivers/ivers-corp-pos-v2/...`)
 and ships as a historical artifact from before the hands-off-lifecycle
 work moved plist generation into the first-run scaffold. It is NOT the
@@ -58,7 +58,7 @@ it is reference-only.
 
 ## Service behaviour (what the scaffold's plist produces)
 
-- Label: `com.pos-v2.memory-graphiti` (or a workspace-scoped variant).
+- Label: `com.loam.memory-graphiti` (or a workspace-scoped variant).
 - Auto-start on login (`RunAtLoad`).
 - Restart on crash (`KeepAlive` with a 10-second throttle).
 - Logs to `<workspace>/memory-system/data/graphiti-service.log` and
@@ -75,6 +75,6 @@ Uninstall (if you really need to — normally the scaffold owns
 lifecycle):
 
 ```bash
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.pos-v2.memory-graphiti.plist
-rm ~/Library/LaunchAgents/com.pos-v2.memory-graphiti.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.loam.memory-graphiti.plist
+rm ~/Library/LaunchAgents/com.loam.memory-graphiti.plist
 ```

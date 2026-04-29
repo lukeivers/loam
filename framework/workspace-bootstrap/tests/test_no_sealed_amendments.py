@@ -38,8 +38,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              workspace-bootstrap seal (1a55969) and this one.
 #   - 9f35979  when the namespaced-labels-and-bootout amendment (#6)
 #              opened. Per-workspace service-label namespacing
-#              (`com.pos-v2.<slug>.<kind>`) + launchctl bootout-before-
-#              bootstrap so multiple pos-v2 workspaces coexist on one
+#              (`com.loam.<slug>.<kind>`) + launchctl bootout-before-
+#              bootstrap so multiple loam workspaces coexist on one
 #              host and stale launchd cache is replaced rather than
 #              no-op'd (closes the pos3 first-run regression 2026-04-22).
 #              Multi-component amendment with hands-off-lifecycle in

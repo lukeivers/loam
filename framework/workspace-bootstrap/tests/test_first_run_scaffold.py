@@ -47,9 +47,10 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
     service_dir = tmp_path / "LaunchAgents"
     # Amendment #6: workspace basename becomes the slug in service
     # labels. A workspace at ``<tmp>/pos-v2`` yields slug ``pos-v2`` →
-    # ``com.pos-v2.pos-v2.{kind}`` labels. (Yes, the doubled ``pos-v2``
-    # is an artefact of naming the test fixture after the repo — the
-    # first ``pos-v2`` is the prefix constant, the second is the slug.)
+    # ``com.loam.pos-v2.{kind}`` labels. (Note: the workspace basename
+    # ``pos-v2`` here is a fixture artefact — namespace-shape work for
+    # the basename is deferred to M1e; M1c only rebrands the launchd-
+    # label reverse-DNS prefix to ``com.loam.``.)
     # Amendment #9: ``telegram.yaml`` is the thirteenth scaffold file.
     result = run_first_run_scaffold(
         pos_root=pos_root,
@@ -79,9 +80,9 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
     plists = list(service_dir.glob("*.plist"))
     labels = {p.stem for p in plists}
     assert labels == {
-        "com.pos-v2.pos-v2.memory-graphiti",
-        "com.pos-v2.pos-v2.orchestrator",
-        "com.pos-v2.pos-v2.memory-write-worker",
+        "com.loam.pos-v2.memory-graphiti",
+        "com.loam.pos-v2.orchestrator",
+        "com.loam.pos-v2.memory-write-worker",
     }
 
 
@@ -228,9 +229,9 @@ def test_AC1_workspace_slug_deterministic_across_inputs() -> None:
 
 def test_AC1_service_label_composed_from_kind_and_slug() -> None:
     """AC1 adjunct — label-composition is pure and reverse-DNS shaped."""
-    assert service_label("orchestrator", "pos3") == "com.pos-v2.pos3.orchestrator"
+    assert service_label("orchestrator", "pos3") == "com.loam.pos3.orchestrator"
     assert service_label("memory-graphiti", "alpha") == (
-        "com.pos-v2.alpha.memory-graphiti"
+        "com.loam.alpha.memory-graphiti"
     )
 
 
@@ -316,17 +317,17 @@ def test_AC4_bootout_precedes_bootstrap_on_macos(
     fake = _RecordingSubprocessRunner()
     monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())
 
-    plist = tmp_path / "com.pos-v2.alpha.orchestrator.plist"
+    plist = tmp_path / "com.loam.alpha.orchestrator.plist"
     plist.write_text("<plist/>")
     runner = ServiceManagerRunner(platform_label="macos")
     runner.bootstrap(
-        label="com.pos-v2.alpha.orchestrator", service_file=plist
+        label="com.loam.alpha.orchestrator", service_file=plist
     )
 
     argv_sequence = [tuple(call[1:3]) for call in fake.calls]
     # Exactly two launchctl calls, bootout first then bootstrap.
     assert argv_sequence == [
-        ("bootout", f"gui/{os.getuid()}/com.pos-v2.alpha.orchestrator"),
+        ("bootout", f"gui/{os.getuid()}/com.loam.alpha.orchestrator"),
         ("bootstrap", f"gui/{os.getuid()}"),
     ]
 
@@ -344,11 +345,11 @@ def test_AC4_bootout_benign_when_service_not_loaded(
     )
     monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())
 
-    plist = tmp_path / "com.pos-v2.alpha.orchestrator.plist"
+    plist = tmp_path / "com.loam.alpha.orchestrator.plist"
     plist.write_text("<plist/>")
     runner = ServiceManagerRunner(platform_label="macos")
     runner.bootstrap(
-        label="com.pos-v2.alpha.orchestrator", service_file=plist
+        label="com.loam.alpha.orchestrator", service_file=plist
     )
 
     assert [call[1] for call in fake.calls] == ["bootout", "bootstrap"]
@@ -368,12 +369,12 @@ def test_AC4_bootout_hard_failure_raises_before_bootstrap(
     )
     monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())
 
-    plist = tmp_path / "com.pos-v2.alpha.orchestrator.plist"
+    plist = tmp_path / "com.loam.alpha.orchestrator.plist"
     plist.write_text("<plist/>")
     runner = ServiceManagerRunner(platform_label="macos")
     with pytest.raises(ServiceManagerBootoutError) as excinfo:
         runner.bootstrap(
-            label="com.pos-v2.alpha.orchestrator", service_file=plist
+            label="com.loam.alpha.orchestrator", service_file=plist
         )
     assert excinfo.value.code == ERR_HANDS_OFF_INTERNAL
     # bootstrap call must not have been issued.
@@ -391,11 +392,11 @@ def test_AC4_idempotent_bootstrap_is_a_noop(
     fake = _RecordingSubprocessRunner()
     monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())
 
-    plist = tmp_path / "com.pos-v2.alpha.orchestrator.plist"
+    plist = tmp_path / "com.loam.alpha.orchestrator.plist"
     plist.write_text("<plist/>")
     runner = ServiceManagerRunner(platform_label="macos")
-    runner.bootstrap(label="com.pos-v2.alpha.orchestrator", service_file=plist)
-    runner.bootstrap(label="com.pos-v2.alpha.orchestrator", service_file=plist)
+    runner.bootstrap(label="com.loam.alpha.orchestrator", service_file=plist)
+    runner.bootstrap(label="com.loam.alpha.orchestrator", service_file=plist)
 
     verbs = [call[1] for call in fake.calls]
     assert verbs == ["bootout", "bootstrap", "bootout", "bootstrap"]
@@ -413,16 +414,16 @@ def test_AC5_stale_label_clears_on_rebootstrap(
     fake = _RecordingSubprocessRunner()
     monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())
 
-    old_plist = tmp_path / "old" / "com.pos-v2.alpha.orchestrator.plist"
-    new_plist = tmp_path / "new" / "com.pos-v2.alpha.orchestrator.plist"
+    old_plist = tmp_path / "old" / "com.loam.alpha.orchestrator.plist"
+    new_plist = tmp_path / "new" / "com.loam.alpha.orchestrator.plist"
     old_plist.parent.mkdir(parents=True)
     new_plist.parent.mkdir(parents=True)
     old_plist.write_text("<plist/>")
     new_plist.write_text("<plist/>")
 
     runner = ServiceManagerRunner(platform_label="macos")
-    runner.bootstrap(label="com.pos-v2.alpha.orchestrator", service_file=old_plist)
-    runner.bootstrap(label="com.pos-v2.alpha.orchestrator", service_file=new_plist)
+    runner.bootstrap(label="com.loam.alpha.orchestrator", service_file=old_plist)
+    runner.bootstrap(label="com.loam.alpha.orchestrator", service_file=new_plist)
 
     # Second bootstrap's bootout carries the same label — so launchd's
     # cache of the first (old_plist) is dropped before the second
@@ -430,7 +431,7 @@ def test_AC5_stale_label_clears_on_rebootstrap(
     bootouts = [call for call in fake.calls if call[1] == "bootout"]
     assert len(bootouts) == 2
     assert all(
-        f"com.pos-v2.alpha.orchestrator" in call[2] for call in bootouts
+        f"com.loam.alpha.orchestrator" in call[2] for call in bootouts
     )
     # Second bootstrap references new_plist, not old_plist.
     bootstraps = [call for call in fake.calls if call[1] == "bootstrap"]
@@ -471,7 +472,7 @@ def test_AC6_multi_workspace_writes_distinct_labels(tmp_path: Path) -> None:
     labels_b = {p.stem for p in agents_b.glob("*.plist")}
     # Label sets are distinct — no slug overlap.
     assert labels_a.isdisjoint(labels_b)
-    assert "com.pos-v2.alpha.orchestrator" in labels_a
-    assert "com.pos-v2.beta.orchestrator" in labels_b
+    assert "com.loam.alpha.orchestrator" in labels_a
+    assert "com.loam.beta.orchestrator" in labels_b
 
 

@@ -52,7 +52,7 @@ class TestDryRun:
         # Namespaced + unrelated plists must NOT appear in the
         # listing (AC5 + AC1 negative half).
         assert (
-            str(launch_agents_dir / "com.pos-v2.alpha.orchestrator.plist")
+            str(launch_agents_dir / "com.loam.alpha.orchestrator.plist")
             not in listed
         )
         assert (

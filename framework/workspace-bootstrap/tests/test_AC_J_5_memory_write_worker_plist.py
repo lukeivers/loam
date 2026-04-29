@@ -3,7 +3,7 @@ launchd plist.
 
 Outcome (per locked plan §4): the first-run scaffold provisions a
 launchd plist named
-``com.pos-v2.<slug>.memory-write-worker.plist`` carrying
+``com.loam.<slug>.memory-write-worker.plist`` carrying
 ``KeepAlive=true``, ``RunAtLoad=true``, ``ThrottleInterval=10``
 (matching the memory-graphiti shape per amendment #29). The plist's
 ``ProgramArguments`` invokes the persona CLI's ``memory-worker``

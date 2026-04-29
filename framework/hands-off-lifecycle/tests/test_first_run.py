@@ -186,8 +186,8 @@ def test_T13_prior_session_start_moved_aside(fresh_workspace: Path) -> None:
     # Amendment #6: labels are workspace-slug scoped; the fixture slug
     # is the basename of `fresh_workspace` (pytest tmp_path leaf).
     sample_labels = [
-        "com.pos-v2.alpha.memory-graphiti",
-        "com.pos-v2.alpha.orchestrator",
+        "com.loam.alpha.memory-graphiti",
+        "com.loam.alpha.orchestrator",
     ]
     sentence = _confirmation_sentence(
         merge_result=result,
@@ -639,8 +639,8 @@ def test_T14_inventory_declares_both_services() -> None:
     """
     data = load_inventory(REPO_ROOT / "framework" / "first-run-inventory.yaml")
     labels = [svc["label"] for svc in data["services"]]
-    assert "com.pos-v2.{slug}.memory-graphiti" in labels
-    assert "com.pos-v2.{slug}.orchestrator" in labels
+    assert "com.loam.{slug}.memory-graphiti" in labels
+    assert "com.loam.{slug}.orchestrator" in labels
 
 
 def test_T15_service_health_timeout_surfaces_diagnostic(
@@ -651,8 +651,8 @@ def test_T15_service_health_timeout_surfaces_diagnostic(
 
     _emit_diag(
         ERR_SERVICE_HEALTH_TIMEOUT,
-        "service-health-timeout:com.pos-v2.alpha.orchestrator",
-        "services did not report healthy within budget: ['com.pos-v2.alpha.orchestrator']",
+        "service-health-timeout:com.loam.alpha.orchestrator",
+        "services did not report healthy within budget: ['com.loam.alpha.orchestrator']",
         "Next session will retry. Check service logs:",
     )
     captured = capsys.readouterr()
@@ -688,8 +688,8 @@ def test_AC7_health_poll_resolves_labels_against_workspace_slug(
 
     resolved = resolve_service_labels(data, slug)
     resolved_labels = [svc["label"] for svc in resolved["services"]]
-    assert "com.pos-v2.fixture-x.memory-graphiti" in resolved_labels
-    assert "com.pos-v2.fixture-x.orchestrator" in resolved_labels
+    assert "com.loam.fixture-x.memory-graphiti" in resolved_labels
+    assert "com.loam.fixture-x.orchestrator" in resolved_labels
     # Original inventory must NOT be mutated (resolve returns a new dict).
     assert "{slug}" in data["services"][0]["label"]
 

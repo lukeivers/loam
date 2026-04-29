@@ -127,10 +127,10 @@ class TestApply:
         )
         # Namespaced plists still in place, untouched.
         assert (
-            launch_agents_dir / "com.pos-v2.alpha.memory-graphiti.plist"
+            launch_agents_dir / "com.loam.alpha.memory-graphiti.plist"
         ).exists()
         assert (
-            launch_agents_dir / "com.pos-v2.alpha.orchestrator.plist"
+            launch_agents_dir / "com.loam.alpha.orchestrator.plist"
         ).exists()
         # Unrelated plists still in place.
         assert (launch_agents_dir / "com.apple.something.plist").exists()

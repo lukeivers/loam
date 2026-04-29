@@ -443,7 +443,7 @@ def cli_memory_worker(
     """CLI entry point for the long-running worker.
 
     Invoked by the workspace-local launchd service
-    ``com.pos-v2.<slug>.memory-write-worker``. The plist's
+    ``com.loam.<slug>.memory-write-worker``. The plist's
     ``KeepAlive=true`` means a clean exit triggers a restart;
     the worker is intended to run forever in normal operation.
 

@@ -199,7 +199,7 @@ def resolve_persona_handle(raw_input: str | None) -> str:
 
 
 # Service "kinds" installed by the first-run scaffold. The full label
-# is `com.pos-v2.<slug>.<kind>`; the plist filename matches the label.
+# is `com.loam.<slug>.<kind>`; the plist filename matches the label.
 #
 # Amendment J (AC.J.5): ``memory-write-worker`` is the long-running
 # drain process for the disk-backed memory-write queue. It composes
@@ -217,7 +217,7 @@ def service_label(kind: str, slug: str) -> str:
     """Compose the reverse-DNS launchd label for a kind + workspace slug."""
     if kind not in _SERVICE_KINDS:
         raise ValueError(f"unknown service kind: {kind!r}")
-    return f"com.pos-v2.{slug}.{kind}"
+    return f"com.loam.{slug}.{kind}"
 
 
 # ---- confirmation sentence (proposal Q7 — locked wording) ------------
@@ -1112,8 +1112,8 @@ def _install_service_manager_files(
 ) -> list[tuple[str, Path]]:
     """Write launchd plist files into the macOS LaunchAgents dir.
 
-    Labels are computed per workspace slug (amendment #6):
-    ``com.pos-v2.<slug>.<kind>``. The filename matches the label; the
+    Labels are computed per workspace slug (amendment #6 + M1c rename):
+    ``com.loam.<slug>.<kind>``. The filename matches the label; the
     {label} placeholder in templates is substituted with the full
     label string.
 

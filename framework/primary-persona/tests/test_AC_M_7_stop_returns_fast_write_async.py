@@ -11,7 +11,7 @@ per-turn ``subprocess.Popen`` child to drive the write; post-J it
 enqueues a turn record under
 ``<workspace>/.pos/memory-write-queue/`` and returns. The actual
 write runs out-of-band in a launchd-supervised worker
-(``com.pos-v2.<slug>.memory-write-worker``).
+(``com.loam.<slug>.memory-write-worker``).
 
 This test asserts the post-J outcome:
 

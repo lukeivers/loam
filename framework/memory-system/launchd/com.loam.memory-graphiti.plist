@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.pos-v2.memory-graphiti</string>
+    <string>com.loam.memory-graphiti</string>
 
     <key>ProgramArguments</key>
     <array>

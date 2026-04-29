@@ -165,7 +165,7 @@ def test_D5_1_memory_graphiti_scaffold_plist_reaches_health_200(
     with open(mg_plist_path, "rb") as f:
         plist = plistlib.load(f)
     sandbox_token = f"d5-sandbox-{uuid.uuid4().hex[:12]}"
-    sandbox_label = f"com.pos-v2.{sandbox_token}.memory-graphiti"
+    sandbox_label = f"com.loam.{sandbox_token}.memory-graphiti"
     plist["Label"] = sandbox_label
     plist["StandardOutPath"] = str(tmp_path / "mg.out.log")
     plist["StandardErrorPath"] = str(tmp_path / "mg.err.log")

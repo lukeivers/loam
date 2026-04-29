@@ -67,7 +67,7 @@ services:
   # namespaced-labels-and-bootout). The ``{slug}`` placeholder is
   # resolved at load time by the first-run helper so two pos-v2
   # workspaces on the same host do not collide on service identities.
-  - label: "com.pos-v2.{slug}.memory-graphiti"
+  - label: "com.loam.{slug}.memory-graphiti"
     kind: "memory"
     health:
       kind: "http"
@@ -75,7 +75,7 @@ services:
       port: 8765
       path: "/health"
       timeout_s: 2.0
-  - label: "com.pos-v2.{slug}.orchestrator"
+  - label: "com.loam.{slug}.orchestrator"
     kind: "orchestrator"
     health:
       kind: "unix_socket"

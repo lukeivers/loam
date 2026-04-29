@@ -44,7 +44,15 @@ _SAMPLE_FILES = (
     # for these files specifically; D-mig plan §4 names primary-persona
     # as mid-graph but the named files are pure module bodies).
     ("framework/primary-persona/src/cli.py",
-     "5d391bb61e8eaf93141ed739b6725a9e38eb6165aae342acf9d7885ecd954be6"),
+     # M1c (amendment #78, sub-plan oss-v0-1-0-publish-rename-1c.md):
+     # SHA updated post-M1c launchd-label rebrand. The cli.py docstring
+     # at line ~147 referencing the memory-write-worker launchd label
+     # rebranded its reverse-DNS prefix to `com.loam.` (the version
+     # suffix was dropped concurrently per loam-rename-decisions Tier-1
+     # #4). ODD §4 in-band retire-and-rebaseline applied per M1c
+     # sub-plan §11 finding #9 (HC#4 byte-content breach surfaced at
+     # touched-test rerun; the docstring rebrand is the AC-named work).
+     "ed2398283ae6259baff172f4eb629f5a38041d8a14e45c8f8f3da3b08efdc5d2"),
     ("framework/primary-persona/src/__init__.py",
      "8301c65db74060d1cfb7f6ed4caf3bfbcd734d9b430700dffa862ac8ad6728c3"),
     ("framework/primary-persona/src/onboarding.py",

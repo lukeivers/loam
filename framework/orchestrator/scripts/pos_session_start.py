@@ -122,8 +122,8 @@ def probe_orchestrator(
 def ask_service_manager_to_start(
     *,
     plat: str,
-    memory_label: str = "com.pos-v2.memory-graphiti",
-    orchestrator_label: str = "com.pos.orchestrator",
+    memory_label: str = "com.loam.memory-graphiti",
+    orchestrator_label: str = "com.loam.orchestrator",
     launch_agents_dir: Path | None = None,
 ) -> list[str]:
     """Ask launchd to bring services up.

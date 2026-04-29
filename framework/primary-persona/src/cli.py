@@ -144,7 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
             "<workspace>/.pos/memory-write-queue/ by driving each "
             "entry's add_episode against the live MCP memory client. "
             "Invoked by the workspace-local launchd service "
-            "com.pos-v2.<slug>.memory-write-worker; runs forever in "
+            "com.loam.<slug>.memory-write-worker; runs forever in "
             "normal operation. Returns 0 on cooperative exit "
             "(SIGTERM / SIGINT)."
         ),

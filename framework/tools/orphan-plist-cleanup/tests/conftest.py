@@ -20,10 +20,14 @@ SAMPLE_FILES: dict[str, str] = {
     "com.pos-v2.orchestrator.plist": "<plist v2 orphan body/>",
     # ORPHAN_V1 (pre-pos-v2 v1 shape) — AC1 target
     "com.pos.orchestrator.plist": "<plist v1 orphan body/>",
-    # NAMESPACED_V2 (workspace-slug-namespaced — AC5 positive guard)
-    "com.pos-v2.alpha.memory-graphiti.plist": "<plist namespaced body/>",
-    "com.pos-v2.alpha.orchestrator.plist": "<plist namespaced body/>",
-    # NOT_POS_V2 — unrelated user/system plists
+    # NAMESPACED (workspace-slug-namespaced — AC5 positive guard).
+    # Post-M1c the live shape is `com.loam.<slug>.<kind>` (the version
+    # suffix was dropped concurrently with the brand rename per
+    # loam-rename-decisions.md Tier-1 #4). The fixtures' filenames
+    # describe the post-M1c live shape.
+    "com.loam.alpha.memory-graphiti.plist": "<plist namespaced body/>",
+    "com.loam.alpha.orchestrator.plist": "<plist namespaced body/>",
+    # NOT_LOAM — unrelated user/system plists
     "com.apple.something.plist": "<plist apple body/>",
     "com.example.user.daemon.plist": "<plist user body/>",
     # Non-plist file in the directory — must be ignored

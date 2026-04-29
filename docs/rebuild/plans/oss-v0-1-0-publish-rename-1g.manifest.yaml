@@ -1,0 +1,515 @@
+schema_version: 1
+amendment:
+  number: 82
+  slug: oss-v0-1-0-publish-rename-1g
+  title: "M1g — Tier-1 #6: pos-amend CLI → loam amend (subcommand under unified loam top-level CLI) + tools-tree namespace pivot for 4 residuals (pos-publish-framework-only, orphan-plist-cleanup, upgrade-merge-resolver, heavy-b-migrate) per M1e §11 finding #4 — directory framework/tools/pos-amend/ → framework/tools/loam/ via git mv + inner package pos_amend → loam_cli via git mv + subcommand restructure (loam_cli/amend/{cli.py, manifest.py, baseline.py, paths.py, sidecar.py, seal_diff.py, narrative.py, dry_run.py, template_engine.py, tracker_registration.py, rename_detection.py, commands/{apply.py, seal.py, validate.py, template.py, new_plan.py}}) + new top-level loam_cli/cli.py dispatcher with argparse subparsers (amend = first registered subcommand; namespace reserved for future loam scope, loam status, etc.) + ~30 internal pos_amend → loam_cli.amend import rebrands + 2 cross-tree heavy-b-migrate verify.py pos_amend imports rebrand to loam_cli.amend + HOL bash_guard.py _pos_amend_dry_run rename + binary path .venv/bin/pos-amend → .venv/bin/loam + subprocess args [apply, --dry-run] → [amend, apply, --dry-run] + failure_class 'pos-amend-dry-run-failure' → 'loam-amend-dry-run-failure' + HOL agent_guard.py re.compile(r'\\bpos-amend\\b') → re.compile(r'\\bloam amend\\b') + HOL test test_AC_BAG_4_pos_amend_dry_run.py → test_AC_BAG_4_loam_amend_dry_run.py via git mv + 11 cross-component test_no_sealed_amendments.py allowlist edits (8 hard 'framework/tools/pos-amend/' → 'framework/tools/loam/' + 3 narrative-comment live-fence rebrands) + ~10 framework/ src docstring/comment rebrands (objective-tracker filter.py + runtime.py, workspace-bootstrap tracker_seed.py, self-upgrade _build_manifest.py, heavy-b-migrate src + tests + README, loam-mode README + 5 tests + 2 src M1a-stragglers) + tools-tree namespace pivot for 4 residuals (pos-publish-framework-only, orphan-plist-cleanup, upgrade-merge-resolver, heavy-b-migrate) — internal package src/<old>/ → src/loam/<old>/ via git mv + pyproject project name rebrand (loam-<tool>) + script entry-point module path rebrand + ~75 internal-import rebrands across 4 tools + 3 cross-tree consumer rebrands (workspace-bootstrap tests/conftest.py + test_AC_SFR_4_pos_sync_composition.py for pos_publish_framework_only.synth + loam-mode/session_start.py for heavy_b_migrate.trigger). Closes M1.rename multi-amendment series. Hard cutover per series-master D-RNM.3 — no pos-amend shim binary; no transitional dual-binary registration; no from pos_amend re-export. CLI binary names for the 4 residual tools STAY unchanged per dispatch conservatism (FIDRAFT-tracked: pos-publish-framework-only, heavy-b-migrate awkwardness)."
+
+# BASELINE: af2e740 — M1f's §14 SHA-register backfill commit
+# (docs(plans): record amendment #81 commit SHAs in M1f §14 method-
+# decision register). M1f's seal commit `390e1ca` is the locked
+# sealed-state; the §14 backfill is the latest tip of the M1.rename
+# series at M1g-build time. M1g's BASELINE..HEAD diff is the M1g
+# sub-plan + manifest commit + the M1g feature commit + apply commit
+# + any corrective commits + seal commit.
+baseline: af2e740
+
+plan: docs/rebuild/plans/oss-v0-1-0-publish-rename-1g.md
+
+seal_description: "M1g Tier-1 #6 pos-amend → loam amend CLI rename + tools-tree namespace pivot — directory framework/tools/pos-amend/ → framework/tools/loam/ via git mv (preserving history) + inner package pos_amend → loam_cli via git mv + subcommand restructure (existing pos-amend subcommand surface migrated to loam_cli/amend/{cli.py, commands/{apply.py, seal.py, validate.py, template.py, new_plan.py}, manifest.py, baseline.py, paths.py, sidecar.py, seal_diff.py, narrative.py, dry_run.py, template_engine.py, tracker_registration.py, rename_detection.py}) + new top-level loam_cli/cli.py argparse-subparser dispatcher (amend first registered; namespace reserved for future loam scope, loam status, loam plot subcommands per loam-rename-decisions.md Tier-1 #6) + pyproject [project] name rebrand (pos-amend → loam-cli) + [project.scripts] pos-amend = pos_amend.cli:main → loam = loam_cli.cli:main + ~30 internal from pos_amend.X import → from loam_cli.amend.X import rebrands across loam_cli/amend/{cli.py, commands/*.py} + framework/tools/loam/tests/*.py + 2 cross-tree heavy-b-migrate verify.py pos_amend imports rebrand to loam_cli.amend (lines 76, 81 — late imports per heavy-b-migrate's clean-graph convention) + HOL bash_guard.py rebrand (function _pos_amend_dry_run → _loam_amend_dry_run + helper _reason_pos_amend_dry_run → _reason_loam_amend_dry_run + binary path .venv/bin/pos-amend → .venv/bin/loam + subprocess args [str(loam), 'amend', 'apply', '--dry-run', str(manifest)] + failure_class string 'pos-amend-dry-run-failure' → 'loam-amend-dry-run-failure' + Decision Literal type rebrand) + HOL agent_guard.py rebrand (re.compile(r'\\bpos-amend\\b') → re.compile(r'\\bloam amend\\b') in _LOAM_SURFACE_PATTERNS) + HOL test rebrand (test_AC_BAG_4_pos_amend_dry_run.py → test_AC_BAG_4_loam_amend_dry_run.py via git mv + monkeypatch targets + assert strings + test_AC_AG_1_wrong_wd_dispatch.py prompt fixture rebrand) + 11 cross-component test_no_sealed_amendments.py allowlist edits (8 hard 'framework/tools/pos-amend/' → 'framework/tools/loam/' across cost-governance, dormancy, memory-system, observability-aggregator, reversibility-primitive, self-correction, self-upgrade, telegram-interface + 3 narrative-comment live-fence rebrands across observability-aggregator schema-comment + self-correction shape-check + objective-tracker docstring; historical-record amendment-number-named comments preserved verbatim per plan §10 D-build.M1g.4) + ~10 framework src docstring/comment rebrands (objective-tracker filter.py:6 + runtime.py:608 + workspace-bootstrap tracker_seed.py:306 + self-upgrade _build_manifest.py:21 + heavy-b-migrate __init__.py:7,12 + cli.py:94 + amendment_acs.py:16 + verify.py:4-20,56,62,69-76 [pos_amend_repo_root parameter rename to loam_amend_repo_root per plan §10 D-build.M1g.5] + heavy-b-migrate tests + README + loam-mode README:18 + 5 loam-mode tests + 2 loam-mode src M1a-stragglers __init__.py:1 + cli.py:72) + tools-tree namespace pivot for 4 residuals per M1e §11 finding #4 (pos-publish-framework-only/src/pos_publish_framework_only/ → src/loam/publish_framework_only/ via git mv + pyproject name pos-publish-framework-only → loam-publish-framework-only + script module path rebrand + 2 cross-tree consumer rebrands in workspace-bootstrap/tests/{conftest.py, test_AC_SFR_4_pos_sync_composition.py}; orphan-plist-cleanup/src/orphan_plist_cleanup/ → src/loam/orphan_plist_cleanup/ via git mv + pyproject name orphan-plist-cleanup → loam-orphan-plist-cleanup + script module path rebrand; upgrade-merge-resolver/src/upgrade_merge_resolver/ → src/loam/upgrade_merge_resolver/ via git mv + pyproject name upgrade-merge-resolver → loam-upgrade-merge-resolver [library only, no CLI script]; heavy-b-migrate/src/heavy_b_migrate/ → src/loam/heavy_b_migrate/ via git mv + pyproject name heavy-b-migrate → loam-heavy-b-migrate + script module path rebrand + ~22 internal import rebrands in src + tests + 1 cross-tree consumer rebrand in loam-mode/session_start.py:293 from heavy_b_migrate.trigger → from loam.heavy_b_migrate.trigger). CLI binary names for the 4 residual tools (pos-publish-framework-only, orphan-plist-cleanup, heavy-b-migrate; upgrade-merge-resolver has no CLI) STAY unchanged per dispatch conservatism — FIDRAFT-tracked. Hard cutover per series-master D-RNM.3 — no pos-amend shim binary; no transitional dual-binary registration; no from pos_amend re-export module. M1g closes the M1.rename multi-amendment programme. Self-rename mechanism per plan §10 D-build.M1g.1: try (a) — rename → pip install -e → loam amend apply + loam amend seal; fallback (b) if pip install -e fails. HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE (M1e-rebaselined samples reside in primary-persona / workspace-bootstrap / scope-of-work, not framework/tools/; verified at plan-authoring per plan §11 finding #3). pos-bootstrap / pos-new-workspace console-scripts in workspace-bootstrap/pyproject.toml DEFERRED to FIDRAFT-tracked follow-on (out of M1g named scope per plan §11 finding #2). com.pos.orchestrator launchd-label stragglers DEFERRED to small M1c-corrective amendment per M1e §11 finding #1."
+
+# Sealed components in the M1g fence per locked plan §1 fence
+# statement: HOL anchor + 11 cross-component allowlist single-line edits
+# under universal admissions + tools-tree fence (7 tools touched —
+# pos-amend rename + 4 residual namespace pivots + loam-mode internal
+# consistency cleanup; the tools/ tree IS the structural fence for M1g).
+#
+# Empirical surface inventory at plan time (§1 + §11 findings):
+#
+#   Tools-tree (Surface A — pos-amend rename):
+#     - framework/tools/pos-amend/ → framework/tools/loam/ via git mv
+#     - inner package src/pos_amend/ → src/loam_cli/ via git mv
+#     - subcommand restructure: ~17 files reshape into loam_cli/amend/
+#       and loam_cli/amend/commands/
+#     - new top-level loam_cli/cli.py dispatcher (~50-80 LOC)
+#     - pyproject restructure (project name + scripts entry)
+#     - ~30 internal pos_amend → loam_cli.amend import rebrands across
+#       loam_cli/amend/*.py + tests
+#
+#   Tools-tree (Surface B — 4 residual-tool namespace pivots per
+#   M1e §11 finding #4):
+#     - pos-publish-framework-only:
+#       - src/pos_publish_framework_only/ → src/loam/publish_framework_only/
+#       - pyproject name + script module path
+#       - internal imports + 2 cross-tree consumers
+#     - orphan-plist-cleanup:
+#       - src/orphan_plist_cleanup/ → src/loam/orphan_plist_cleanup/
+#       - pyproject name + script module path
+#       - internal imports
+#     - upgrade-merge-resolver:
+#       - src/upgrade_merge_resolver/ → src/loam/upgrade_merge_resolver/
+#       - pyproject name (no CLI script — library-only)
+#       - internal imports
+#     - heavy-b-migrate:
+#       - src/heavy_b_migrate/ → src/loam/heavy_b_migrate/
+#       - pyproject name + script module path
+#       - ~22 internal imports + 1 cross-tree consumer in loam-mode
+#       - verify.py pos_amend internal-import rebrand (overlaps
+#         Surface A item 6)
+#
+#   loam-mode internal consistency cleanup (M1a stragglers + path
+#   fixture rebrands per item 12):
+#     - src/loam_mode/__init__.py:1 docstring "pos-v2 dev-mode" → "loam dev-mode"
+#     - src/loam_mode/cli.py:72 argparse description rebrand
+#     - README.md:18 path rebrand
+#     - tests/{test_partition_manifest.py, test_F_S_seal_diff.py,
+#       test_selector_partition.py, session_start.py for cross-tree consumer}
+#     - tests fixture path strings tools/pos-amend/ → tools/loam/
+#
+#   HOL (Surface anchor):
+#     - hooks/bash_guard.py — function rename + binary path + subprocess args
+#       + failure-class string + comments
+#     - hooks/agent_guard.py — re.compile pattern + comments
+#     - tests/test_AC_BAG_4_pos_amend_dry_run.py → test_AC_BAG_4_loam_amend_dry_run.py
+#       via git mv + monkeypatch targets + assert strings rebrand
+#     - tests/test_AC_AG_1_wrong_wd_dispatch.py — prompt fixture rebrand
+#     - tests/test_AC_CI_S_seal_diff_window.py + test_AC_SE_S_seal_diff_window.py
+#       + test_AC45_S_seal_diff_window.py — comment rebrands (preserve
+#       historical-record amendment-number references per plan §10 D-build.M1g.4)
+#
+#   Component seal-test allowlist edits (universal-style):
+#     - 8 hard "framework/tools/pos-amend/" → "framework/tools/loam/":
+#       cost-governance, dormancy, memory-system, observability-aggregator,
+#       reversibility-primitive, self-correction, self-upgrade, telegram-interface
+#     - 3 narrative-comment live-fence rebrands:
+#       observability-aggregator (line 74 shape-check + lines 159
+#       comment), self-correction (line 69 shape-check), objective-tracker
+#       (line 132 narrative comment "by ``pos-amend apply``")
+#
+#   Live src/code prose rebrands (10 callsites):
+#     - objective-tracker/src/loam/objective_tracker/{filter.py:6, runtime.py:608}
+#     - workspace-bootstrap/src/loam/workspace_bootstrap/adapters/tracker_seed.py:306
+#     - self-upgrade/manifests/_build_manifest.py:21
+#     - heavy-b-migrate src + tests + README (covers Surface B's
+#       internal narrative — 7 callsites: __init__.py:7,12 + cli.py:94 +
+#       amendment_acs.py:16 + verify.py docstrings + tests + README)
+#     - loam-mode README (1) + 3 tests + 2 src M1a-stragglers
+#
+# HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE.
+# Pre-build verification at plan-authoring time confirms NONE of the
+# M1e-rebaselined samples reside under framework/tools/. The HC#4
+# invariant is expected to remain GREEN through M1g.
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3 + the precedent
+# under which docs/rebuild/components/ + docs/rebuild/spec/ are admitted.
+#
+# framework/tools/ admits the entire tools-tree fence (M1g touches 7
+# tools: pos-amend rename + 4 residual namespace pivots + loam-mode
+# internal cleanup + the renamed loam tool — the tools/ subtree IS the
+# structural fence for M1g).
+#
+# Per-component test_no_sealed_amendments.py allowlist edits are
+# universal-style single-line edits — the diff is content-only inside
+# tests already-on-disk, not adding/removing files. Admitted via
+# universal_paths.files list (the 11 component-test paths).
+#
+# framework/objective-tracker/src/loam/objective_tracker/{filter.py,
+# runtime.py} + framework/workspace-bootstrap/src/loam/workspace_bootstrap/
+# adapters/tracker_seed.py + framework/self-upgrade/manifests/_build_manifest.py
+# admit the 4 cross-component live-source narrative-prose rebrands per
+# AC.RNM-1g.7. These are single-line docstring/comment edits that
+# follow from the rename; no behaviour change.
+#
+# framework/workspace-bootstrap/tests/{conftest.py,
+# test_AC_SFR_4_pos_sync_composition.py} admit the 2 cross-tree consumer
+# rebrands of pos_publish_framework_only.synth → loam.publish_framework_only.synth
+# per AC.RNM-1g.8.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+    - docs/rebuild/components/
+    - framework/tools/
+  files:
+    - CLAUDE.md
+    - CLAUDE.dev.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+    - docs/rebuild/STATE.md
+    - docs/rebuild/VALUE_PROPOSITION.md
+    - docs/rebuild/dev-mode-manifest.yaml
+    - framework/first-run-inventory.yaml
+    # Cross-component test_no_sealed_amendments.py allowlist edits
+    # (8 hard "framework/tools/pos-amend/" → "framework/tools/loam/"
+    # + 3 narrative-comment live-fence rebrands) per AC.RNM-1g.6.
+    - framework/cost-governance/tests/test_no_sealed_amendments.py
+    - framework/dormancy/tests/test_no_sealed_amendments.py
+    - framework/memory-system/tests/test_no_sealed_amendments.py
+    - framework/objective-tracker/tests/test_no_sealed_amendments.py
+    - framework/observability-aggregator/tests/test_no_sealed_amendments.py
+    - framework/primary-persona/tests/test_no_sealed_amendments.py
+    - framework/reversibility-primitive/tests/test_no_sealed_amendments.py
+    - framework/self-correction/tests/test_no_sealed_amendments.py
+    - framework/self-upgrade/tests/test_no_sealed_amendments.py
+    - framework/telegram-interface/tests/test_no_sealed_amendments.py
+    - framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    # Cross-component live-source narrative-prose rebrands per
+    # AC.RNM-1g.7. Single-line docstring/comment edits.
+    - framework/objective-tracker/src/loam/objective_tracker/filter.py
+    - framework/objective-tracker/src/loam/objective_tracker/runtime.py
+    - framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/tracker_seed.py
+    - framework/self-upgrade/manifests/_build_manifest.py
+    # Cross-tree consumer rebrands of pos_publish_framework_only.synth
+    # per AC.RNM-1g.8.
+    - framework/workspace-bootstrap/tests/conftest.py
+    - framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-rename-1g
+  body: |
+    # Amendment #82 — M1g Tier-1 #6 pos-amend → loam amend CLI rename + tools-tree namespace pivot
+
+    2026-04-29. Seventh and final sub-amendment of the M1.rename
+    multi-amendment series per locked series master plan-doc
+    `docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed
+    `ebe0a57`) and locked sub-plan-doc
+    `docs/rebuild/plans/oss-v0-1-0-publish-rename-1g.md`.
+
+    Closes the M1.rename programme.
+
+    Composes on M1a (sealed `143d465`, 2026-04-29 — docs/prose-only
+    brand rebrand), M1b (sealed `d97c8c1`, 2026-04-29 — env-vars +
+    per-host config dir + migration helper), M1c (sealed `1e99d0b`,
+    2026-04-29 — launchd label rebrand + plist filename cascade +
+    sibling migration helper), M1d (sealed `74ae5d3`, 2026-04-29 —
+    OTel pos.* → loam.* root rebrand), M1e (sealed `c806f57`, §14
+    backfill `820fd84`, 2026-04-29 — loam.* namespace pivot for 14
+    packaged components + cleanup), M1f (sealed `390e1ca`, §14
+    backfill `af2e740`, 2026-04-29 — Tier-2 graceful-degradation →
+    dormancy thematic rename) and on the OSS v0.1.0 publish programme.
+
+    Owner rulings closed at series-master commit time (2026-04-29):
+
+      - D-RNM.1 SPLIT: M1g is the seventh and final slice of the
+        multi-amendment series.
+      - D-RNM.2 per-component namespace-package: M1g extends the
+        loam.* namespace into the tools-tree for the 4 residual tools
+        (pos-publish-framework-only, orphan-plist-cleanup,
+        upgrade-merge-resolver, heavy-b-migrate) per M1e §11 finding #4.
+      - D-RNM.3 no compat window: hard-cutover; no pos-amend shim
+        binary; no transitional dual-binary registration; no
+        from pos_amend re-export module.
+      - Tier-1 #6 (loam-rename-decisions.md): pos-amend CLI →
+        loam amend — subcommand under a unified loam top-level CLI
+        (daily-driver brand concentrator; future subcommands like
+        loam scope new, loam status, loam plot create live under the
+        same umbrella).
+
+    Surface changes:
+
+    Surface A — pos-amend → loam amend CLI rename:
+
+      - Tool directory rename:
+          framework/tools/pos-amend/ → framework/tools/loam/
+        via git mv (preserving history). Inner package
+          framework/tools/loam/src/pos_amend/ →
+          framework/tools/loam/src/loam_cli/
+        via git mv.
+
+      - Subcommand restructure:
+          The existing pos-amend subcommand surface (validate, apply,
+          seal, template, new-plan) migrates to
+          loam_cli/amend/{cli.py, commands/{apply.py, seal.py,
+          validate.py, template.py, new_plan.py}, manifest.py,
+          baseline.py, paths.py, sidecar.py, seal_diff.py,
+          narrative.py, dry_run.py, template_engine.py,
+          tracker_registration.py, rename_detection.py}. New top-level
+          loam_cli/cli.py dispatcher uses argparse subparsers; `amend`
+          is the first registered subcommand at M1g time; namespace
+          reserved for future `loam scope`, `loam status`, `loam plot`
+          subcommands per loam-rename-decisions.md Tier-1 #6.
+
+      - pyproject restructure:
+          [project] name = "pos-amend" → name = "loam-cli"
+          [project.scripts]
+            pos-amend = "pos_amend.cli:main"
+            → loam = "loam_cli.cli:main"
+
+      - ~30 internal pos_amend → loam_cli.amend import rebrands across
+        loam_cli/amend/{cli.py, commands/*.py} + tests.
+
+      - 2 cross-tree pos_amend internal-API consumer rebrands:
+          framework/tools/heavy-b-migrate/src/heavy_b_migrate/verify.py
+          lines 76 + 81 (late imports — heavy-b-migrate was pos-amend's
+          SOLE Python-import consumer per plan §11 finding #1):
+            from pos_amend.manifest import LiftedFromEntry, Manifest, ObjectiveEntry
+            from pos_amend.tracker_registration import register_objectives, update_source_commits
+          →
+            from loam_cli.amend.manifest import LiftedFromEntry, Manifest, ObjectiveEntry
+            from loam_cli.amend.tracker_registration import register_objectives, update_source_commits
+
+      - HOL bash_guard.py rebrand (the dry-run binary invocation
+        surface; AC.BAG.4):
+          - Function _pos_amend_dry_run → _loam_amend_dry_run
+          - Helper _reason_pos_amend_dry_run → _reason_loam_amend_dry_run
+          - Binary path workspace_root / .venv / bin / pos-amend
+            → workspace_root / .venv / bin / loam
+          - Subprocess args [str(pos_amend), "apply", "--dry-run", str(manifest)]
+            → [str(loam), "amend", "apply", "--dry-run", str(manifest)]
+          - failure_class string "pos-amend-dry-run-failure"
+            → "loam-amend-dry-run-failure" (3 occurrences:
+            return-tuple + Decision.failure_class literal + Literal
+            type-hint)
+
+      - HOL agent_guard.py rebrand:
+          re.compile(r"\bpos-amend\b") → re.compile(r"\bloam amend\b")
+          in _LOAM_SURFACE_PATTERNS tuple.
+
+      - HOL test rebrand:
+          test_AC_BAG_4_pos_amend_dry_run.py
+          → test_AC_BAG_4_loam_amend_dry_run.py via git mv.
+          Inside: monkeypatch targets _pos_amend_dry_run →
+          _loam_amend_dry_run; assertion strings "pos-amend" →
+          "loam amend"; failure_class "pos-amend-dry-run-failure" →
+          "loam-amend-dry-run-failure".
+          test_AC_AG_1_wrong_wd_dispatch.py: prompt fixture
+          "Run pos-amend apply --dry-run on the manifest." →
+          "Run loam amend apply --dry-run on the manifest." +
+          test name + module docstring rebrand.
+
+      - 11 cross-component test_no_sealed_amendments.py allowlist edits:
+          - 8 hard allowlist-prefix rebrands "framework/tools/pos-amend/"
+            → "framework/tools/loam/" across:
+              cost-governance, dormancy, memory-system,
+              observability-aggregator, reversibility-primitive,
+              self-correction, self-upgrade, telegram-interface
+          - 3 narrative-comment live-fence rebrands describing the
+            LIVE fence behaviour (e.g. "shape check: pos-amend apply
+            advances the literal" → "shape check: loam amend apply
+            advances the literal" in observability-aggregator + self-
+            correction); narrative-comment historical-amendment-number
+            references (e.g. "Amendment #22 (pos-amend CLI + ...)"
+            in memory-system; "advanced to the #32 seal commit per
+            ``pos-amend apply``" in primary-persona) PRESERVED
+            verbatim per plan §10 D-build.M1g.4 historical-record
+            convention.
+
+      - ~10 framework live src docstring/comment rebrands:
+          - objective-tracker/src/loam/objective_tracker/filter.py:6
+          - objective-tracker/src/loam/objective_tracker/runtime.py:608
+          - workspace-bootstrap/src/loam/workspace_bootstrap/adapters/tracker_seed.py:306
+          - self-upgrade/manifests/_build_manifest.py:21
+          - heavy-b-migrate/src/heavy_b_migrate/{__init__.py:7,12, cli.py:94, amendment_acs.py:16, verify.py:4-20,56,62,69-76}
+            (verify.py also rebrands the parameter name pos_amend_repo_root
+            → loam_amend_repo_root per plan §10 D-build.M1g.5; pre-build
+            grep verified single callsite, no kwarg breakage)
+          - heavy-b-migrate/tests/test_ac_d_mig_4_continuous_registration.py
+          - heavy-b-migrate/README.md:67
+          - loam-mode/README.md:18 (path rebrand tools/pos-amend/ → tools/loam/)
+          - loam-mode/tests/{test_partition_manifest.py, test_F_S_seal_diff.py, test_selector_partition.py}
+            (fixture path-strings tools/pos-amend/ → tools/loam/)
+          - loam-mode/src/loam_mode/{__init__.py:1, cli.py:72} (M1a-straggler
+            "pos-v2 dev-mode" → "loam dev-mode" cleanup)
+
+    Surface B — Tools-tree namespace pivot for 4 residuals (per M1e §11
+    finding #4):
+
+      - pos-publish-framework-only:
+          framework/tools/pos-publish-framework-only/src/pos_publish_framework_only/
+          → framework/tools/pos-publish-framework-only/src/loam/publish_framework_only/
+          via git mv. pyproject [project] name = "pos-publish-framework-only"
+          → "loam-publish-framework-only". [project.scripts]
+            pos-publish-framework-only = "pos_publish_framework_only.cli:main"
+            → pos-publish-framework-only = "loam.publish_framework_only.cli:main"
+          (CLI binary name STAYS unchanged per dispatch conservatism).
+          Internal imports rebrand. 2 cross-tree consumers:
+            framework/workspace-bootstrap/tests/{conftest.py,
+            test_AC_SFR_4_pos_sync_composition.py}: from
+            pos_publish_framework_only.synth import ... → from
+            loam.publish_framework_only.synth import ...
+
+      - orphan-plist-cleanup:
+          framework/tools/orphan-plist-cleanup/src/orphan_plist_cleanup/
+          → framework/tools/orphan-plist-cleanup/src/loam/orphan_plist_cleanup/
+          via git mv. pyproject [project] name = "orphan-plist-cleanup"
+          → "loam-orphan-plist-cleanup". [project.scripts]
+            orphan-plist-cleanup = "orphan_plist_cleanup.cli:main"
+            → orphan-plist-cleanup = "loam.orphan_plist_cleanup.cli:main"
+          (CLI binary name STAYS unchanged). Internal imports rebrand.
+          No cross-tree consumers (verified at plan-authoring).
+
+      - upgrade-merge-resolver:
+          framework/tools/upgrade-merge-resolver/src/upgrade_merge_resolver/
+          → framework/tools/upgrade-merge-resolver/src/loam/upgrade_merge_resolver/
+          via git mv. pyproject [project] name = "upgrade-merge-resolver"
+          → "loam-upgrade-merge-resolver". (No CLI script — library-only.)
+          Internal imports rebrand. No cross-tree consumers.
+
+      - heavy-b-migrate:
+          framework/tools/heavy-b-migrate/src/heavy_b_migrate/
+          → framework/tools/heavy-b-migrate/src/loam/heavy_b_migrate/
+          via git mv. pyproject [project] name = "heavy-b-migrate"
+          → "loam-heavy-b-migrate". [project.scripts]
+            heavy-b-migrate = "heavy_b_migrate.cli:main"
+            → heavy-b-migrate = "loam.heavy_b_migrate.cli:main"
+          (CLI binary name STAYS unchanged). ~22 internal import
+          rebrands in src + tests. 1 cross-tree consumer:
+            framework/tools/loam-mode/src/loam_mode/session_start.py:293
+            from heavy_b_migrate.trigger import run_if_dev_intent
+            → from loam.heavy_b_migrate.trigger import run_if_dev_intent.
+
+    Out of scope (locked plan-doc §6, named explicitly):
+
+      - com.pos.orchestrator launchd-label stragglers in orchestrator
+        + self-upgrade — DEFERRED per M1e §11 finding #1 + M1f
+        deferred-list. The only remaining series-relevant rename
+        surface post-M1g; small follow-on M1c-corrective amendment OR
+        M9-scrub.
+      - pos-bootstrap / pos-new-workspace console-scripts in
+        framework/workspace-bootstrap/pyproject.toml — out of M1g
+        named scope per dispatch (the dispatch enumerates pos-amend
+        + 4 residual tools; pos-bootstrap/pos-new-workspace are NOT
+        named). FIDRAFT-tracked: ≈10-callsite cleanup amendment.
+      - CLI binary renames for the 4 residual tools
+        (pos-publish-framework-only, orphan-plist-cleanup,
+        heavy-b-migrate; upgrade-merge-resolver has no CLI) — STAY
+        unchanged per dispatch conservatism. FIDRAFT-tracked.
+      - Degradation* Python class symbol renames — M1f-deferred
+        FIDRAFT-tracked.
+      - docs/rebuild/spec/*.md historical narrative — preserved.
+      - STATE.md, BACKLOG.md, FUTURE_IDEAS.md, FUTURE_IDEAS_DRAFT.md
+        — historical-narrative-heavy live docs; series-wide deferred.
+      - Historical seal narratives at framework/<comp>/seals/SEAL_COMMIT.*
+        — preserved.
+      - Historical plan-docs at docs/rebuild/plans/*.md (other than this
+        plan-doc + manifest YAML) — preserved.
+      - Historical component-record docs at
+        docs/rebuild/components/<comp>/{research,research-plan,brief,
+        component}.md — preserved.
+      - docs/rebuild/spec/pos-v2-rebuild-proposal.md — preserved per
+        Idea 10.
+      - docs/rebuild/plans/two-modes-and-multi-workspace/*.md —
+        preserved.
+      - Frozen self-upgrade release manifest pos-v2-v0.2.0.yaml —
+        preserved.
+      - Repo directory rename ivers-corp-pos-v2 → loam — M9.
+      - Path strings /Users/lukeivers/ivers-corp-pos-v2/... — M9.
+      - Workspace-side <workspace>/.pos/ sentinel-dir constants —
+        series-wide deferred.
+
+    HC#4 byte-content sample status post-M1g: NO RETIRE-AND-
+    REBASELINE. Pre-build verification at plan-authoring time
+    confirms NONE of the M1e-rebaselined samples reside under
+    framework/tools/. The HC#4 invariant remains GREEN through M1g
+    without any sample-file changes.
+
+    H19 admission: HOL is the narrative anchor for the cross-cutting
+    bash_guard + agent_guard + 5 HOL test rebrands + 11 cross-component
+    allowlist edits. HOL `tests/test_d1_byte_content_match.py` PASSES
+    without retire-and-rebaseline (no sample-file paths under
+    framework/tools/).
+
+    Test surface (narrow per feedback_amendment_dispatch_speedups):
+
+      - AC.RNM-1g.1 — directory + package + subcommand restructure:
+        verified by `python -c "from loam_cli.amend.manifest import
+        Manifest"` + `git log --follow framework/tools/loam/src/loam_cli/
+        amend/cli.py` history-preservation.
+      - AC.RNM-1g.2 — unified loam CLI binary: verified by `loam --help`
+        + `loam amend --help` returning the migrated subcommand surface.
+      - AC.RNM-1g.3 — internal pos-amend imports: every Phase E + F
+        touched test file (pos-amend's own test suite under the rename).
+      - AC.RNM-1g.4 — HOL bash_guard rebrand: verified by
+        pytest framework/hands-off-lifecycle/tests/test_AC_BAG_4_loam_amend_dry_run.py.
+      - AC.RNM-1g.5 — HOL agent_guard rebrand: verified by
+        pytest framework/hands-off-lifecycle/tests/test_AC_AG_1_wrong_wd_dispatch.py.
+      - AC.RNM-1g.6 — component seal-test allowlist rebrand: verified
+        by per-component pytest test_no_sealed_amendments.py + post-
+        rename grep returning 0 for "framework/tools/pos-amend/".
+      - AC.RNM-1g.7 — doc/code prose: verified by post-rename grep
+        returning 0 in live (non-historical) surface.
+      - AC.RNM-1g.8 — tools-tree namespace pivot: verified by
+        pytest framework/tools/{heavy-b-migrate,pos-publish-framework-only,
+        orphan-plist-cleanup}/tests/ + cross-tree
+        pytest framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py
+        + pytest framework/tools/loam-mode/tests/.
+      - AC.RNM-1g.9 — editable installs: verified by
+        pip install -e ./framework/tools/{loam,pos-publish-framework-only,
+        orphan-plist-cleanup,upgrade-merge-resolver,heavy-b-migrate}
+        each → 0; loam --help succeeds.
+      - AC.RNM-1g.10 — fence-narrowing negative AC: verified by
+        git diff <baseline>..HEAD --stat.
+      - AC.RNM-1g.S — this seal commit.
+
+    ODD §2.5 reverse-direction audit clean: every change in this
+    amendment's diff is a directory git mv, an inner-package git mv,
+    a subcommand restructure, a new top-level dispatcher authoring,
+    a pyproject restructure, an import-callsite rebrand, a binary-
+    invocation rebrand, an allowlist-prefix rebrand, a live-source
+    docstring/comment rebrand, a tools-tree namespace pivot, an
+    editable-install refresh, or the plan-doc + manifest YAML
+    themselves. Each line traces back to a named AC under §4.
+
+    BASELINE af2e740 (M1f §14 SHA-register backfill commit). HOL is
+    the seal-test anchor; the structural fence is the tools-tree
+    (framework/tools/) plus 11 cross-component allowlist + 4 cross-
+    component live-source narrative-prose rebrands + 2 cross-tree
+    pos_publish_framework_only consumer rebrands under universal
+    admissions.
+
+    Composes on (consumers-only; no semantic edits):
+
+      - The OSS v0.1.0 publish programme master plan
+        (`oss-v0-1-0-publish.md`) — M1g row already in §5 per
+        series-master ladder.
+      - The M1.rename series master plan
+        (`oss-v0-1-0-publish-rename.md`) — M1g is the seventh and
+        final sub-amendment per the §2 ladder.
+      - `loam-rename-decisions.md` — Tier-1 #6 (the M1g target).
+      - `.scratch/claude-output/loam-rename-migration-plan.md`
+        §3.6 (mechanics).
+
+    Self-rename mechanism per plan §14 D-build.M1g.1: (populated by
+    builder during build — try (a), fallback (b) if pip install -e
+    fails mid-rename).
+
+    FIDRAFT items closed by this amendment: M1e §11 finding #4
+    (tools-tree namespace pivot for 4 residuals) — closed via
+    AC.RNM-1g.8.
+
+    FIDRAFT items surfaced by this amendment (per plan §11 finding #8):
+
+      - "pos-bootstrap / pos-new-workspace console-scripts in
+         workspace-bootstrap/pyproject.toml — small follow-on
+         amendment, ≈10 callsites for pyproject + invocation surfaces;
+         out of M1g named scope per dispatch's tools-tree-residuals
+         enumeration."
+      - "pos-publish-framework-only CLI binary rename to
+         loam-publish-framework-only — most awkward of the 4 residual-
+         tool CLI binaries; ≈5-callsite cleanup amendment; out of M1g
+         per dispatch conservatism."
+      - "heavy-b-migrate CLI binary rename to loam-heavy-b-migrate —
+         ≈3-callsite cleanup; out of M1g per dispatch conservatism."
+      - "M1c launchd-label stragglers in orchestrator + self-upgrade
+         (com.pos.orchestrator → com.loam.orchestrator) — small
+         corrective amendment, ≈20 callsites" (carried from M1e §11
+         finding #1 + M1f deferred-list).
+      - "Degradation* Python class symbol rename — separate semantic
+         amendment; ~20 callsites; out of M1f scope per Tier-2 silence
+         + ODD §2.5 conservatism" (carried from M1f §11 finding #4).
+
+    M1.rename series state post-M1g:
+      M1a sealed 143d465 — docs/prose-only.
+      M1b sealed d97c8c1 — env vars + per-host config dir.
+      M1c sealed 1e99d0b — launchd labels + plist filenames.
+      M1d sealed 74ae5d3 — OTel pos.* → loam.*.
+      M1e sealed c806f57 (§14 backfill 820fd84) — loam.* namespace pivot.
+      M1f sealed 390e1ca (§14 backfill af2e740) — graceful-degradation → dormancy.
+      M1g [this seal] — pos-amend → loam amend + tools-tree pivot.
+      ALL TIER-1 + TIER-2 RENAMES LANDED.

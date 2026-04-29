@@ -1,0 +1,201 @@
+schema_version: 1
+amendment:
+  number: 76
+  slug: oss-v0-1-0-publish-rename-1a
+  title: "M1a — docs/prose-only brand rebrand (pos-v2 / pOS v2 / pOS → loam) in user-facing prose surfaces; first sub-amendment of M1.rename multi-amendment series"
+
+# BASELINE: ebe0a57 — the master-plan-revision commit
+# (docs(plans): split M1 rename into multi-amendment series — D-RNM.1
+# ruling). M1a follows the established BASELINE-as-pre-amendment-tip
+# pattern: the BASELINE..HEAD diff is exactly the M1a feature commit
+# carrying docs-only edits.
+baseline: ebe0a570f741135cb18aeb3595211e5cb3b11359
+
+plan: docs/rebuild/plans/oss-v0-1-0-publish-rename-1a.md
+
+seal_description: "M1a docs/prose-only brand rebrand — pos-v2 / pOS v2 / pOS → loam in user-facing prose surfaces (CLAUDE.md / VALUE_PROPOSITION / CLAUDE_CAPABILITIES / duration-rubric / odd-methodology / odd-in-pos / five component READMEs)"
+
+# Five sealed components per locked plan §1 fence statement. M1a edits
+# only each component's README.md — no source, no tests, no other
+# component-internal files. Each component's README is admitted by the
+# existing framework/<comp>/ allowed-prefix.
+#
+# hands-off-lifecycle is included because its README contains brand-
+# prose occurrences and because HOL is the conventional narrative
+# anchor for amendment seal commits. HOL's H19 frozen-baseline byte-
+# content sample does NOT include any README (verified: the sample
+# pins src/ files and pyproject.toml; READMEs are excluded), so M1a
+# does NOT trigger H19 retire-and-rebaseline. H19 retirement happens
+# at a later sub-amendment per series master §1 / §10.
+components:
+  - name: objective-tracker
+    seal_test: framework/objective-tracker/tests/test_no_sealed_amendments.py
+    sidecar: framework/objective-tracker/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+  - name: scope-of-work
+    seal_test: framework/scope-of-work/tests/test_no_sealed_amendments.py
+    sidecar: framework/scope-of-work/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-sync
+    seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3. M1a additionally
+# edits docs/CLAUDE_CAPABILITIES.md, docs/duration-estimation-rubric.md,
+# and docs/rebuild/VALUE_PROPOSITION.md — these are listed under
+# universal_paths.files for the sub-amendment fence; if they are
+# already admitted via the canonical universal-paths list at apply
+# time, the duplication is harmless.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+    - docs/CLAUDE_CAPABILITIES.md
+    - docs/duration-estimation-rubric.md
+    - docs/rebuild/VALUE_PROPOSITION.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-rename-1a
+  body: |
+    # Amendment #76 — M1a docs/prose-only brand rebrand
+
+    2026-04-29. First sub-amendment of the M1.rename multi-amendment
+    series per locked series master plan-doc
+    `docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed
+    `ebe0a57`) and locked sub-plan-doc
+    `docs/rebuild/plans/oss-v0-1-0-publish-rename-1a.md`.
+
+    Composes on the OSS v0.1.0 publish programme (see
+    `docs/rebuild/plans/oss-v0-1-0-publish.md` §5 — the M1 row will
+    be re-priced and replaced with the M1a..M1g ladder by a follow-on
+    docs commit). M1a is the cheapest, safest first landing of the
+    rename: docs/prose only, no code touches, no env-vars, no paths,
+    no OTel, no launchd, no CLI rename, no namespace pivot.
+
+    Owner rulings closed at series-master commit time (2026-04-29):
+
+      - D-RNM.1 SPLIT: the rename is a multi-amendment series, not
+        one monolithic amendment. M1a is the first.
+      - D-RNM.2 per-component namespace-package: deferred to M1e
+        (this sub-amendment is docs-only, doesn't touch code).
+      - D-RNM.3 no compat window: hard-cutover at every sub-amendment
+        seal; M1a's docs-only scope makes the no-fallback rule
+        trivially satisfied (no env-var fallback module, no CLI shim,
+        no OTel dual-prefix read).
+
+    Surface changes (six docs-surfaces + five per-component READMEs):
+
+      - `CLAUDE.md` (root): every brand-prose occurrence
+        (`pos-v2`, `pOS v2`, bare `pOS`) renamed to `loam`.
+      - `docs/rebuild/VALUE_PROPOSITION.md`: every brand-prose
+        occurrence renamed to `loam`.
+      - `docs/CLAUDE_CAPABILITIES.md`: every brand-prose occurrence
+        renamed to `loam` (~102 occurrences total; largest single
+        file in M1a's surface).
+      - `docs/duration-estimation-rubric.md`: every brand-prose
+        occurrence renamed to `loam`.
+      - `docs/odd-methodology.md`: example-phrase + brand-narrative
+        prose rebranded; methodology-illustration phrasings updated
+        per builder's call.
+      - `docs/odd-in-pos.md`: content-prose rebrand only. The
+        filename change is M1e.
+      - `framework/objective-tracker/README.md`: prose rebrand only;
+        path strings under `/Users/lukeivers/ivers-corp-pos-v2/...`
+        preserved (M9-deferred).
+      - `framework/scope-of-work/README.md`: prose rebrand only.
+      - `framework/hands-off-lifecycle/README.md`: prose rebrand
+        only; CLI-binary-name references (e.g. `pos-amend`) preserved
+        (M1g-deferred).
+      - `framework/workspace-bootstrap/README.md`: prose rebrand
+        only; CLI-binary `pos-new-workspace` preserved (M1g-deferred);
+        path strings preserved (M9-deferred).
+      - `framework/workspace-sync/README.md`: prose rebrand only.
+
+    Test surface (no NEW source tests; M1a is docs-only):
+
+      - AC.RNM-1a.1 — root CLAUDE.md rebrand: verified by
+        grep-count post-edit.
+      - AC.RNM-1a.2 — VALUE_PROPOSITION rebrand: verified by
+        grep-count post-edit.
+      - AC.RNM-1a.3 — CLAUDE_CAPABILITIES rebrand: verified by
+        grep-count post-edit.
+      - AC.RNM-1a.4 — duration-estimation-rubric rebrand: verified
+        by grep-count post-edit.
+      - AC.RNM-1a.5 — odd-methodology + odd-in-pos rebrand: verified
+        by grep-count post-edit.
+      - AC.RNM-1a.6 — per-component README rebrand: verified by
+        grep-count post-edit + manual selective-diff review.
+      - AC.RNM-1a.7 — fence-narrowing negative AC: verified by
+        `git diff <baseline>..HEAD --stat` showing ONLY the named
+        docs surfaces.
+      - AC.RNM-1a.S — this seal commit.
+
+    H19 admission: not applicable. M1a touches only README files;
+    H19's frozen-baseline byte-content sample pins src/ files and
+    pyproject.toml, NOT READMEs (verified pre-build per locked plan
+    §11 finding #3). H19 retirement happens at a later sub-amendment
+    per series master §1.
+
+    Empirical post-rename verification (recorded in plan §14 at seal
+    time): grep-count for `\bpos-v2\b|\bpOS v2\b|\bpOS\b` is 0 across
+    all eleven surfaces.
+
+    ODD §2.5 reverse-direction audit clean: every change in this
+    amendment's diff is a brand-prose substitution traced back to a
+    named AC under §4. No silent branches; no defensive `if`s; no
+    code edits; no file renames; no file creates/deletes.
+
+    Out of scope (locked plan-doc §6, named explicitly):
+
+      - Code-side imports `from pos_<comp> import` — M1e.
+      - Env-vars `POS_V2_*` — M1b.
+      - Path constants `~/.pos/` — M1b.
+      - launchd labels `com.pos-v2.*` — M1c.
+      - OTel `pos.*` roots — M1d.
+      - `pos-amend` CLI rename → `loam amend` — M1g.
+      - `graceful-degradation` → `dormancy` rename — M1f.
+      - Filename changes (`docs/odd-in-pos.md`, spec/*.md) — M1e.
+      - Path strings `/Users/lukeivers/ivers-corp-pos-v2/...` — M9.
+      - CLI binary names in prose (`pos-new-workspace`,
+        `pos-publish-framework-only`) — M1g.
+      - `STATE.md`, `BACKLOG.md`, `FUTURE_IDEAS.md`,
+        `FUTURE_IDEAS_DRAFT.md` — historical-narrative-heavy live
+        docs; deferred to a later sub-amendment or M9 scrub.
+      - `docs/rebuild/plans/*.md` — historical method-record.
+
+    FIDRAFT items closed by this amendment: none. The M1.rename
+    series as a whole closes the brand-rebrand portion of AC.OSS.5.
+
+    BASELINE ebe0a57 (master-plan-revision commit). Five sealed
+    components touched (READMEs only): objective-tracker,
+    workspace-bootstrap, hands-off-lifecycle, scope-of-work,
+    workspace-sync.
+
+    Composes on (consumers-only; no semantic edits):
+
+      - The OSS v0.1.0 publish programme master plan
+        (`oss-v0-1-0-publish.md`) — M1's row is re-priced post-split
+        in a follow-on doc commit.
+      - The M1.rename series master plan
+        (`oss-v0-1-0-publish-rename.md`) — M1a is the first sub-
+        amendment per the §2 ladder.
+      - `loam-rename-decisions.md` — Tier-1 brand-prose authority.

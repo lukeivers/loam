@@ -421,22 +421,10 @@ GREEN. The fifteen sample files in `framework/hands-off-lifecycle/tests/test_d1_
 
 ### Commit SHAs
 
-(SHA-backfill via `pos-amend seal --plan-doc <abs-path>` post-seal)
-
-- **Series master plan-doc commit:** `ebe0a57` — `docs(plans): split M1 rename into multi-amendment series — D-RNM.1 ruling` (2026-04-29).
-- **M1a seal commit:** `143d4656f0c319bdc644f7a925b073e0ecaaff72` (`143d465`).
-- **M1b seal commit (BASELINE for M1c):** `d97c8c1`.
-- **M1c sub-plan + manifest commit:** TBD.
-- **M1c feature commit:** TBD.
-- **pos-amend apply commit:** TBD.
-- **Any corrective commits:** TBD.
-- **Seal commit:** TBD.
-- **§14 SHA-register backfill commit:** TBD.
-
-Diff window: `d97c8c1..<seal-commit>` (M1b-seal → M1c-seal).
-
----
-
+- Amendment commit: `431151da9c905f08aa525f0c88f65d6c7c64b3f4` —
+  `chore(rename-1c-apply): pos-amend apply for amendment #78 (M1c launchd label rebrand)`
+- Seal commit: `1e99d0bfd5f9af2c1e37accad093b598a147879d` —
+  `chore(seals): M1c launchd label rebrand — com.pos-v2.<slug>.<kind> → com.loam.<slug>.<kind> (version suffix dropped concurrently per loam-rename-decisions Tier-1 #4) + plist filename cascade (memory-system historical-reference plist renamed via git mv) + orphan-plist-cleanup NAMESPACED arm rebases to com.loam.<slug>.<kind> (pre-#6 ORPHAN arms preserved) + sibling per-host migration helper at framework/tools/loam-migrate-launchd-labels/ (one-shot bootout-of-old + rename-aside; idempotent) — hands-off-lifecycle+workspace-bootstrap+memory-system+primary-persona+orchestrator at 431151d`
 ## 15. References
 
 - **Series master:** `docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed `ebe0a57`).

@@ -533,23 +533,10 @@ N/A — hard cutover per series-master D-RNM.3.
 
 ### Commit SHAs
 
-- **Series master plan-doc commit:** `ebe0a57` — `docs(plans): split M1 rename into multi-amendment series — D-RNM.1 ruling` (2026-04-29).
-- **M1a seal commit:** `143d465` — `chore(seals): M1a docs/prose-only brand rebrand` (2026-04-29).
-- **M1b seal commit:** `d97c8c1` — `chore(seals): M1b env-vars + per-host config dir` (2026-04-29).
-- **M1c seal commit:** `1e99d0b` — `chore(seals): M1c launchd label rebrand` (2026-04-29).
-- **M1d seal commit:** `74ae5d3` — `chore(seals): M1d OTel root rebrand` (2026-04-29).
-- **M1e seal commit:** `c806f57` — `chore(seals): M1e loam.* namespace pivot` (2026-04-29).
-- **M1e §14 SHA-register backfill commit (BASELINE for M1f):** `820fd84` — `docs(plans): record amendment #80 commit SHAs in M1e §14 method-decision register` (2026-04-29).
-- **M1f sub-plan + manifest commit:** _populated post-commit_.
-- **M1f feature commit:** _populated post-commit_.
-- **M1f apply commit:** _populated post-commit_.
-- **M1f seal commit:** _populated post-commit_.
-- **§14 SHA-register backfill commit (if any):** _populated post-commit_.
-
-Diff window: `820fd84..<seal-commit>` (M1e-§14-backfill → M1f-seal).
-
----
-
+- Amendment commit: `8ab0c731161fe9e008b09232344a02a924bf8beb` —
+  `fix(rename-1f): rebrand HOL test_first_run.py T20 expected-components to loam-dormancy`
+- Seal commit: `390e1ca822366cbb89d2fc6b0dea61cf0824d0b7` —
+  `chore(seals): M1f Tier-2 graceful-degradation → dormancy thematic rename — directory framework/graceful-degradation/ → framework/dormancy/ via git mv (preserving history) + inner package loam.graceful_degradation → loam.dormancy via git mv + pyproject.toml [project] name rebrand (loam-graceful-degradation → loam-dormancy) + setuptools package-dir/packages rebrand + 61 import-callsite rebrands (from loam.graceful_degradation → from loam.dormancy across dormancy/tests/* + self-upgrade/{src/.../probes.py, tests/test_probes.py} + dormancy/tests/fakes.py) + OTel second-segment cascade loam.degradation.* → loam.dormancy.* (89 callsites — span/event/attribute names + tracer name in dormancy/src/.../observability.py + dormancy/tests/test_d9_observability.py + test_amendment_20_silent_excepts.py + test_d10_one_hour_outage.py + dormancy/docs/architecture.md + observability-aggregator schema-comment) + config-file path cascade ~/.loam/degradation.sqlite → ~/.loam/dormancy.sqlite (36 callsites) + ~/.loam/degradation-config.yaml → ~/.loam/dormancy-config.yaml (24 callsites) across dormancy/{src/.../{config.py,state.py,component.py docstring}, tests/{test_d8_state.py,test_d10_garbage_false_positive.py}, docs/architecture.md} + workspace-bootstrap/{src/.../adapters/{first_run_scaffold.py,telegram_interface.py}, tests/test_first_run_scaffold.py} + self-upgrade/src/.../{paths.py,snapshot.py} + new per-host migration helper at framework/tools/loam-migrate-dormancy-config/ (mirrors M1b loam-migrate-host-config four-case logic; per-file four-case for sqlite + yaml; SQLite WAL/SHM sibling-file handling) + workspace-bootstrap adapter rename adapters/graceful_degradation.py → adapters/dormancy.py via git mv + class GracefulDegradationContribution → DormancyContribution + contribution name='graceful_degradation' → name='dormancy' + pyproject.toml [project.entry-points."loam.bootstrap.contributions"] graceful_degradation row → dormancy row + dependency loam-graceful-degradation → loam-dormancy + workspace-bootstrap host.py self.graceful_degradation → self.dormancy + first_run_scaffold.py template strings rebrand + 4 workspace-bootstrap test fixtures string-literal rebrand + self-upgrade/src/loam/self_upgrade/probes.py 3 callsites (docstring + section comment + import) + self-upgrade/manifests/_build_manifest.py 1 callsite (component-name list 'graceful-degradation' → 'dormancy') + self-upgrade/tests/test_probes.py 1 callsite (import) + observability-aggregator schema/init component-list comment rebrand + framework/first-run-inventory.yaml entry rename + docs/rebuild/components/graceful-degradation/ → docs/rebuild/components/dormancy/ directory-shell git mv per series-master M1f row (inner content preserved verbatim per series convention historical-record + AC.RNM-1f.8 + plan-doc D-build.M1f.5 ruling). Hard cutover per series-master D-RNM.3 — no from loam.graceful_degradation fallback shim; no dual-namespace OTel emission; no dual entry-point group registration. AC prefix P STAYS unchanged. Degradation* Python class symbols (DegradationStore, DegradationConfig, DegradationMode, DegradationSignal, DegradationChannel, DegradationComponent) PRESERVED verbatim (out of M1f scope per ODD §2.5 conservatism + Tier-2 ruling silence on internal-symbol renames per plan §10 D-build.M1f.6). HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE (M1e-rebaselined samples reside in primary-persona / workspace-bootstrap / scope-of-work, not graceful-degradation; verified at plan-authoring per plan §11 finding #2). pos-amend CLI rename → loam amend DEFERRED to M1g per series-master ladder note 5. — hands-off-lifecycle+dormancy+workspace-bootstrap+self-upgrade+observability-aggregator at 8ab0c73`
 ## 15. References
 
 - **Series master:** `docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed `ebe0a57`).

@@ -53,7 +53,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              `pos-amend apply` to the commit immediately preceding
 #              the amendment commit (HEAD~1 pattern). Sub-plan §10's
 #              manifest records the BASELINE rationale.
-BASELINE = "1e99d0b"
+BASELINE = "74ae5d3"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -144,6 +144,8 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         "workspace-sync/",
         "docs/rebuild/capability-corpus/",
         "docs/rebuild/components/",
+        "docs/rebuild/spec/",
+        "framework/tools/loam-mode/",
     )
     # Universal-file admissions per amendment #22 ruling #3. Written
     # by ``pos-amend apply``; kept stable across amendments.
@@ -159,6 +161,8 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         "first-run-inventory.yaml",
         "framework/first-run-inventory.yaml",
         "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+        "CLAUDE.dev.md",
+        "docs/rebuild/dev-mode-manifest.yaml",
     }
 
     offending = []

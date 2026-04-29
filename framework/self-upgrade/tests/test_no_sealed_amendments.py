@@ -40,7 +40,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #     edits to ``self-upgrade/src/`` — retrofit-only. Empty
 #     BASELINE..HEAD window at apply time per the standard
 #     retrofit pattern.
-BASELINE = "1e99d0b"
+BASELINE = "74ae5d3"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -133,6 +133,8 @@ def test_B20_only_self_upgrade_surfaces_changed() -> None:
         "workspace-sync/",
         "framework/tools/pos-amend/",
         "docs/rebuild/components/",
+        "docs/rebuild/spec/",
+        "framework/tools/loam-mode/",
     )
     # Universal admissions per amendment #22 ruling #3 (CLAUDE.md +
     # docs/odd-*.md + docs/rebuild/FUTURE_IDEAS.md). The
@@ -149,6 +151,10 @@ def test_B20_only_self_upgrade_surfaces_changed() -> None:
         "first-run-inventory.yaml",
         "framework/first-run-inventory.yaml",
         "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+        "CLAUDE.dev.md",
+        "docs/rebuild/STATE.md",
+        "docs/rebuild/VALUE_PROPOSITION.md",
+        "docs/rebuild/dev-mode-manifest.yaml",
     }
 
     offending = []

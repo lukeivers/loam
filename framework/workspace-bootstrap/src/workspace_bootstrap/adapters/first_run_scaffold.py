@@ -9,9 +9,9 @@ user doing anything manual.
 
 First-run detection heuristic (per proposal §9 inference #8):
 
-    No ``~/.pos/`` directory AND no ``~/.pos/bootstrap.yaml`` file.
+    No ``~/.loam/`` directory AND no ``~/.loam/bootstrap.yaml`` file.
 
-If ``~/.pos/`` exists but ``bootstrap.yaml`` does not, the scaffold
+If ``~/.loam/`` exists but ``bootstrap.yaml`` does not, the scaffold
 halts with a ``partial-scaffold-detected`` diagnostic rather than
 overwriting anything. This is the H4 structural refusal.
 
@@ -228,7 +228,7 @@ CONFIRMATION_SENTENCE = (
     "configured at defaults (safety/always-ask, cost ceilings, "
     "reversibility, self-correction, memory, degradation), memory "
     "sidecar and orchestrator launched as user services, staging store "
-    "initialised. `~/.pos/` is your config dir — edit any file to "
+    "initialised. `~/.loam/` is your config dir — edit any file to "
     "adjust. Proceeding."
 )
 
@@ -237,9 +237,9 @@ CONFIRMATION_SENTENCE = (
 
 
 _BOOTSTRAP_YAML = """\
-# ~/.pos/bootstrap.yaml — thirteen-foundational-adapter bundle
+# ~/.loam/bootstrap.yaml — thirteen-foundational-adapter bundle
 # Auto-generated on first run. Edit freely; the scaffold only runs on
-# a fresh workspace (no ~/.pos/ directory present) and never overwrites.
+# a fresh workspace (no ~/.loam/ directory present) and never overwrites.
 
 contributions:
   - name: observability_aggregator
@@ -284,7 +284,7 @@ contributions:
 """
 
 _MEMORY_YAML = """\
-# ~/.pos/memory.yaml — sidecar connection + launch config
+# ~/.loam/memory.yaml — sidecar connection + launch config
 launch: true
 host: 127.0.0.1
 port: 8765
@@ -294,17 +294,17 @@ poll_interval_s: 0.5
 """
 
 _MEMORY_STAGING_YAML = """\
-# ~/.pos/memory-staging.yaml — degraded-mode staging store
+# ~/.loam/memory-staging.yaml — degraded-mode staging store
 soft_cap: 10000
 hard_cap: 50000
-db_path: ~/.pos/memory-staging.sqlite
+db_path: ~/.loam/memory-staging.sqlite
 drain_batch_size: 100
 probe_interval_s: 30
 latency_threshold_ms: 500
 """
 
 _SAFETY_YAML = """\
-# ~/.pos/safety/always_ask.yaml — framework-floor always-ask list.
+# ~/.loam/safety/always_ask.yaml — framework-floor always-ask list.
 # Add per-workspace entries here; the floor below is non-negotiable.
 always_ask:
   - external_payments
@@ -314,7 +314,7 @@ always_ask:
 """
 
 _COST_YAML = """\
-# ~/.pos/cost/ceilings.yaml — advisory starter ceilings.
+# ~/.loam/cost/ceilings.yaml — advisory starter ceilings.
 # Raise or lower to match your workspace budget.
 ceilings:
   daily_usd: 5.00
@@ -323,18 +323,18 @@ advisory: true
 """
 
 _REVERSIBILITY_YAML = """\
-# ~/.pos/reversibility.yaml — per-tool reversibility classes.
+# ~/.loam/reversibility.yaml — per-tool reversibility classes.
 # Empty starter; register per-adapter classes as you add tools.
 registrations: {}
 """
 
 _SELF_CORRECTION_YAML = """\
-# ~/.pos/self-correction.yaml — four-part protocol knobs.
+# ~/.loam/self-correction.yaml — four-part protocol knobs.
 enabled: true
 """
 
 _DEGRADATION_YAML = """\
-# ~/.pos/degradation-config.yaml — per-mode defaults.
+# ~/.loam/degradation-config.yaml — per-mode defaults.
 notification:
   default_tier: 2
   auth_broken_tier: 1
@@ -348,7 +348,7 @@ notification:
 # Credentials (bot token) live in ~/.claude/channels/telegram/.env per
 # proposal §5 #5 — never duplicated here.
 _TELEGRAM_YAML = """\
-# ~/.pos/telegram.yaml — per-workspace Telegram channel config.
+# ~/.loam/telegram.yaml — per-workspace Telegram channel config.
 # Most fields are optional. Leaving this whole file out is fine;
 # the adapter boots in degraded-alive mode and the setup
 # walkthrough runs on session two.
@@ -501,7 +501,7 @@ def run_first_run_scaffold(
     Parameters
     ----------
     pos_root:
-        The ``~/.pos/`` directory to write into. Tests pass a tmp_path.
+        The ``~/.loam/`` directory to write into. Tests pass a tmp_path.
     dry_run:
         If True, the check-then-write short-circuits and no side-effects
         happen. The return value reports what *would* have been done.
@@ -527,7 +527,7 @@ def run_first_run_scaffold(
         launchctl.
     partial_recovery:
         Added by the 2026-04-22 session-start-detachment amendment.
-        When False (legacy default), a partial ``~/.pos/`` state
+        When False (legacy default), a partial ``~/.loam/`` state
         (directory exists without ``bootstrap.yaml``) raises
         ``PartialScaffoldError`` — the original H4 structural refusal.
         When True, the scaffold repairs the partial state by writing any
@@ -964,7 +964,7 @@ OLLAMA_KEEP_ALIVE=24h
 
 
 _MEMORY_WORKER_YAML = """\
-# ~/.pos/memory-worker.yaml — amendment J / AC.J.4 retry-curve.
+# ~/.loam/memory-worker.yaml — amendment J / AC.J.4 retry-curve.
 # Workspace-tunable defaults for the long-running memory-write
 # worker (drains <workspace>/.pos/memory-write-queue/).
 
@@ -1011,7 +1011,7 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
     <key>ThrottleInterval</key><integer>10</integer>
     <key>StandardOutPath</key><string>{workspace}/framework/memory-system/data/graphiti-service.log</string>
     <key>StandardErrorPath</key><string>{workspace}/framework/memory-system/data/graphiti-service.err.log</string>
-    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>GRAPHITI_SERVICE_HOST</key><string>{memory_host}</string><key>GRAPHITI_SERVICE_PORT</key><string>{memory_port}</string><key>POS_V2_WORKSPACE_ROOT</key><string>{workspace}</string><key>PATH</key><string>{path}</string></dict>
+    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>GRAPHITI_SERVICE_HOST</key><string>{memory_host}</string><key>GRAPHITI_SERVICE_PORT</key><string>{memory_port}</string><key>LOAM_WORKSPACE_ROOT</key><string>{workspace}</string><key>PATH</key><string>{path}</string></dict>
 </dict>
 </plist>
 """,
@@ -1067,7 +1067,7 @@ _LAUNCHD_TEMPLATES: dict[str, str] = {
     <key>ThrottleInterval</key><integer>10</integer>
     <key>StandardOutPath</key><string>{workspace}/workspace/memory-write-worker.out.log</string>
     <key>StandardErrorPath</key><string>{workspace}/workspace/memory-write-worker.err.log</string>
-    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>POS_V2_WORKSPACE_ROOT</key><string>{workspace}</string><key>PATH</key><string>{path}</string></dict>
+    <key>EnvironmentVariables</key><dict><key>PYTHONUNBUFFERED</key><string>1</string><key>LOAM_WORKSPACE_ROOT</key><string>{workspace}</string><key>PATH</key><string>{path}</string></dict>
 </dict>
 </plist>
 """,
@@ -1399,7 +1399,7 @@ class FirstRunScaffoldContribution(BaseContribution):
 
     def contribute(self, host: Any) -> None:
         # pos_root is configurable at workspace level; the host's
-        # config_dir is the ~/.pos/ directory per proposal §7.
+        # config_dir is the ~/.loam/ directory per proposal §7.
         pos_root = Path(host.config_dir)
         result = run_first_run_scaffold(
             pos_root=pos_root,

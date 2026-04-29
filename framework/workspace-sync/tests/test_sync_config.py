@@ -13,7 +13,7 @@ Covers:
 
 The tests run with the operator's real ``$HOME`` patched via
 ``monkeypatch.setenv`` to a per-test ``tmp_path``, so no test
-touches the operator's actual ``~/.pos/``.
+touches the operator's actual ``~/.loam/``.
 """
 
 from __future__ import annotations
@@ -325,7 +325,7 @@ def test_cache_root_is_under_home(
     home = tmp_path / "home"
     home.mkdir()
     _patch_home(monkeypatch, home)
-    assert cache_root() == home / ".pos" / "canonical-cache"
+    assert cache_root() == home / ".loam" / "canonical-cache"
 
 
 def test_ensure_cache_clone_clones_when_absent(
@@ -356,7 +356,7 @@ def test_ensure_cache_clone_clones_when_absent(
         ref="HEAD",
     )
 
-    expected = home / ".pos" / "canonical-cache" / "github.com/owner/repo"
+    expected = home / ".loam" / "canonical-cache" / "github.com/owner/repo"
     assert cache_dir == expected
     # Two git invocations: clone + fetch.
     assert calls[0][:2] == ["git", "clone"]
@@ -374,7 +374,7 @@ def test_ensure_cache_clone_fetches_when_present(
     _patch_home(monkeypatch, home)
 
     # Pre-create the cache as if it had been cloned earlier.
-    expected = home / ".pos" / "canonical-cache" / "github.com/owner/repo"
+    expected = home / ".loam" / "canonical-cache" / "github.com/owner/repo"
     expected.mkdir(parents=True)
     (expected / ".git").mkdir()
 
@@ -407,7 +407,7 @@ def test_ensure_cache_clone_existing_non_git_dir_halts(
     home.mkdir()
     _patch_home(monkeypatch, home)
 
-    expected = home / ".pos" / "canonical-cache" / "github.com/owner/repo"
+    expected = home / ".loam" / "canonical-cache" / "github.com/owner/repo"
     expected.mkdir(parents=True)
     # NO .git/ marker — cache directory has been corrupted somehow.
 

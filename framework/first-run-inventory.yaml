@@ -79,5 +79,5 @@ services:
     kind: "orchestrator"
     health:
       kind: "unix_socket"
-      socket_path: "~/.pos/orchestrator.sock"
+      socket_path: "~/.loam/orchestrator.sock"
       timeout_s: 2.0

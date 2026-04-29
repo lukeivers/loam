@@ -5,7 +5,7 @@ re-registered on every cold start. Callbacks live in workspace
 Python code (a persona handler, a custom observer, a notification
 hook), so the orchestrator core cannot hard-code them.
 
-Convention: `~/.pos/bootstrap.py` (path configurable) is a workspace-
+Convention: `~/.loam/bootstrap.py` (path configurable) is a workspace-
 authored Python file that exposes a single function:
 
     def register(orchestrator) -> None:

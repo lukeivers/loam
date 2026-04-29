@@ -7,7 +7,7 @@ The canonical query surface — `QueryAPI`. Every other surface (NL path, CLI) c
 ```python
 from pos_observability_aggregator import AggregatorConfig, open_store, QueryAPI
 
-cfg = AggregatorConfig()           # defaults to ~/.pos/observability.duckdb
+cfg = AggregatorConfig()           # defaults to ~/.loam/observability.duckdb
 store = open_store(cfg)            # falls back to SQLite if duckdb unavailable
 api = QueryAPI(store)
 ```

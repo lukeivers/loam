@@ -166,7 +166,7 @@ def test_AC34_1_health_returns_200_after_subprocess_serve_loop_entry(
     ``_graphiti`` is populated before ``mcp.run_streamable_http_async()``
     enters its serve loop, and the GET returns 200 with the
     ``workspace_root`` field populated from
-    ``POS_V2_WORKSPACE_ROOT``.
+    ``LOAM_WORKSPACE_ROOT``.
     """
     port = _free_port()
     workspace_root = str(tmp_path)
@@ -174,7 +174,7 @@ def test_AC34_1_health_returns_200_after_subprocess_serve_loop_entry(
     env = os.environ.copy()
     env["GRAPHITI_SERVICE_HOST"] = "127.0.0.1"
     env["GRAPHITI_SERVICE_PORT"] = str(port)
-    env["POS_V2_WORKSPACE_ROOT"] = workspace_root
+    env["LOAM_WORKSPACE_ROOT"] = workspace_root
     # Ensure the subprocess does NOT inherit a stale Kuzu DB path
     # that could trigger a real graphiti init via factory; the
     # FakeGraphiti substitution removes the dependency, but we
@@ -297,12 +297,12 @@ def test_AC34_2_no_regression_on_AC24_and_AC29() -> None:
         service._graphiti = saved_graphiti
 
     # --- AC29.5 inline check: /health body carries workspace_root.
-    os.environ["POS_V2_WORKSPACE_ROOT"] = "/tmp/AC34_2_smoke"
+    os.environ["LOAM_WORKSPACE_ROOT"] = "/tmp/AC34_2_smoke"
     try:
         payload = asyncio.run(service._impl_health(fake))
         assert payload["workspace_root"] == "/tmp/AC34_2_smoke"
     finally:
-        os.environ.pop("POS_V2_WORKSPACE_ROOT", None)
+        os.environ.pop("LOAM_WORKSPACE_ROOT", None)
 
 
 # ---- AC34.3 ---------------------------------------------------------

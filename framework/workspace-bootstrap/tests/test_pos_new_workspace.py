@@ -270,7 +270,7 @@ def test_AC_D_4_1_url_form_routes_through_cache_clone(
 
     def _stub_ensure_cache_clone(url: str, ref: str = "HEAD") -> Path:
         # Mimic the production cache layout in our fake home.
-        cache_path = fake_home / ".pos" / "canonical-cache" / cc_mod.derive_repo_id(url)
+        cache_path = fake_home / ".loam" / "canonical-cache" / cc_mod.derive_repo_id(url)
         if not cache_path.exists():
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             subprocess.run(  # noqa: S603 — argv constructed

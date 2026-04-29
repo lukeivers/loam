@@ -1,7 +1,7 @@
 """Orchestrator — the long-lived asyncio process (D1 + D5 + D7 + D8).
 
 Composes:
-  - LocalStateStore          (~/.pos/orchestrator.sqlite)
+  - LocalStateStore          (~/.loam/orchestrator.sqlite)
   - IPCServer                (Unix-domain-socket JSON-RPC)
   - ScopeRuntime             (scope-of-work; Phase 1)
   - ObjectiveTracker         (objective-tracker; Phase 1)
@@ -12,7 +12,7 @@ Workspace bootstrap is loaded by the workspace-bootstrap framework's
 docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md
 (amendment #7). The orchestrator's own startup no longer has a
 fail-closed branch tied to a workspace Python file — the fail-closed
-point moved to missing ``~/.pos/bootstrap.yaml``, which the framework
+point moved to missing ``~/.loam/bootstrap.yaml``, which the framework
 refuses on with ``MissingConfigError`` (-32080).
 
 Runtime contract:

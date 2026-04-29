@@ -10,7 +10,7 @@ can re-activate the orchestrator without re-discovering them.
 - macOS or Linux user session
 - Python 3.13 venv at `pos-v2/.venv` with all four Phase 1 components
   installed editable + `pos_orchestrator` editable
-- `~/.pos/bootstrap.py` authored by the workspace (fail-closed if
+- `~/.loam/bootstrap.py` authored by the workspace (fail-closed if
   missing)
 
 ## Install (macOS — launchd user agent)
@@ -57,22 +57,22 @@ launchctl list | grep com.pos.orchestrator   # must return empty
 
 ## Logs
 
-- stdout: `~/.pos/logs/orchestrator.out`
-- stderr: `~/.pos/logs/orchestrator.err`
-- structured events: `~/.pos/orchestrator.sqlite` (query with
-  `sqlite3 ~/.pos/orchestrator.sqlite "select event_type, count(*)
+- stdout: `~/.loam/logs/orchestrator.out`
+- stderr: `~/.loam/logs/orchestrator.err`
+- structured events: `~/.loam/orchestrator.sqlite` (query with
+  `sqlite3 ~/.loam/orchestrator.sqlite "select event_type, count(*)
   from events group by event_type;"`)
 
 ## Troubleshooting
 
-- **Orchestrator refuses to start with exit 2**: `~/.pos/bootstrap.py`
+- **Orchestrator refuses to start with exit 2**: `~/.loam/bootstrap.py`
   is missing. Author it with a `register(orchestrator)` function.
 - **Exit 3**: bootstrap file exists but raised on import or inside
-  `register()`. Check `~/.pos/logs/orchestrator.err` for the
+  `register()`. Check `~/.loam/logs/orchestrator.err` for the
   traceback.
 - **`launchctl bootstrap` permission denied**: you are in the system
   domain, not `gui/<uid>`. The install script uses `gui/<uid>` by
   default.
 - **IPC socket already exists / stale**: the orchestrator removes
   orphaned socket files during `IPCServer.start`. If something else
-  is holding the path, check with `lsof ~/.pos/orchestrator.sock`.
+  is holding the path, check with `lsof ~/.loam/orchestrator.sock`.

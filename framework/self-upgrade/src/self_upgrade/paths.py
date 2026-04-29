@@ -1,22 +1,22 @@
 """Filesystem layout helpers.
 
-pOS places all framework state under ``~/.pos``:
+pOS places all framework state under ``~/.loam``:
 
-- ``~/.pos/framework/current``         — symlink to the live release
-- ``~/.pos/framework/releases/<tag>/`` — unpacked release tree
-- ``~/.pos/framework/staging/<tag>/``  — freshly unpacked, not yet live
-- ``~/.pos/framework/history/<tag>*``  — pre/post probe files + reports
-- ``~/.pos/framework/history/<tag>-pre/`` — pre-upgrade file-copy snaps
-- ``~/.pos/upgrade-config.yaml``       — `auto_update_mode` + tunables
+- ``~/.loam/framework/current``         — symlink to the live release
+- ``~/.loam/framework/releases/<tag>/`` — unpacked release tree
+- ``~/.loam/framework/staging/<tag>/``  — freshly unpacked, not yet live
+- ``~/.loam/framework/history/<tag>*``  — pre/post probe files + reports
+- ``~/.loam/framework/history/<tag>-pre/`` — pre-upgrade file-copy snaps
+- ``~/.loam/upgrade-config.yaml``       — `auto_update_mode` + tunables
 
 Substrate data files are **not** under ``framework/``:
 
-- ``~/.pos/memory/*.kuzu``              — memory system
-- ``~/.pos/scope_of_work.sqlite``       — scope-of-work
-- ``~/.pos/objective_tracker.sqlite``   — objective-tracker
-- ``~/.pos/orchestrator.sqlite``        — orchestrator local state
-- ``~/.pos/degradation.sqlite``         — graceful-degradation
-- ``~/.pos/observability.duckdb``       — observability aggregator
+- ``~/.loam/memory/*.kuzu``              — memory system
+- ``~/.loam/scope_of_work.sqlite``       — scope-of-work
+- ``~/.loam/objective_tracker.sqlite``   — objective-tracker
+- ``~/.loam/orchestrator.sqlite``        — orchestrator local state
+- ``~/.loam/degradation.sqlite``         — graceful-degradation
+- ``~/.loam/observability.duckdb``       — observability aggregator
 
 This module centralises resolution so tests can point the whole tree
 at a ``tmp_path`` by overriding ``POS_BASE_DIR``.
@@ -28,7 +28,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_BASE_DIR = "~/.pos"
+DEFAULT_BASE_DIR = "~/.loam"
 
 
 @dataclass(frozen=True)

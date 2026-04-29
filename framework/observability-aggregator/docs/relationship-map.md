@@ -53,7 +53,7 @@ A1 status "unchanged" is verified at every aggregator build by re-running each s
 
 Aggregator depends on:
 - The OTel Python SDK (`opentelemetry-api`, `opentelemetry-sdk`).
-- The orchestrator's `~/.pos/bootstrap.py` workspace-hook convention (so `install_for_workspace` has somewhere to be called from).
+- The orchestrator's `~/.loam/bootstrap.py` workspace-hook convention (so `install_for_workspace` has somewhere to be called from).
 - Memory-system's JSONL sink format (verified in `test_d2`'s format check; halt-and-signal if memory drifts).
 
 Aggregator does NOT depend on:

@@ -1,4 +1,4 @@
-"""Adapter — orchestrator's existing `~/.pos/bootstrap.py` escape hatch.
+"""Adapter — orchestrator's existing `~/.loam/bootstrap.py` escape hatch.
 
 Phase: after_orchestrator_ready (per Eve-inference #6 — the
 workspace-authored hook sees a fully-wired orchestrator at this
@@ -11,7 +11,7 @@ already ships with — on `BootstrapMissing`, this adapter re-raises
 that exception (wrapped by the framework as -32086).
 
 Config (`workspace_bootstrap_py.yaml` under host.config_dir):
-    bootstrap_path: str (default: `~/.pos/bootstrap.py`)
+    bootstrap_path: str (default: `~/.loam/bootstrap.py`)
     required: bool (default: False) — when False, a missing file is
         logged but does not fail-close. The default is False because
         most test workspaces do not ship a bootstrap.py; production
@@ -51,7 +51,7 @@ class WorkspaceBootstrapPyContribution(BaseContribution):
         if raw_path:
             bootstrap_path = Path(str(raw_path)).expanduser()
         else:
-            bootstrap_path = Path.home() / ".pos" / "bootstrap.py"
+            bootstrap_path = Path.home() / ".loam" / "bootstrap.py"
 
         required = bool(cfg.get("required", False))
         orch = host.require("orchestrator")

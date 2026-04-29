@@ -23,14 +23,14 @@ self_upgrade/
 ├── notification.py        # primary-persona one-on-one channel
 ├── observability.py       # OTel span emission (v1.1 R11)
 ├── config.py              # UpgradeConfig / auto_update_mode
-└── paths.py               # ~/.pos/* resolution
+└── paths.py               # ~/.loam/* resolution
 ```
 
 ## System diagram
 
 ```
        +---------------------+       +-----------------------+
-       |  pos upgrade <tag>  | <---- | ~/.pos/upgrade-config |
+       |  pos upgrade <tag>  | <---- | ~/.loam/upgrade-config |
        |   (external CLI)    |       | (auto_update_mode...) |
        +---------+-----------+       +-----------------------+
                  |
@@ -38,12 +38,12 @@ self_upgrade/
    +-------------+-------------+
    |  execute_upgrade()        |
    |  ───────────────────────  |
-   |  1. pre-snapshot (D3)     |---> ~/.pos/framework/history/<tag>-pre/
+   |  1. pre-snapshot (D3)     |---> ~/.loam/framework/history/<tag>-pre/
    |  2. pre-probe   (D4)      |---> pre-probe.json
    |  3. pause_activation      |---> orchestrator.pause_activation("upgrade:<tag>")
    |  4. drain (bounded)       |
    |  5. SIGTERM + pid wait    |---> orchestrator pid
-   |  6. symlink swap (atomic) |---> ~/.pos/framework/current → staging/<tag>
+   |  6. symlink swap (atomic) |---> ~/.loam/framework/current → staging/<tag>
    |  7. launchctl kickstart   |---> launchd user agent
    |  8. wait_for_boot         |
    |  9. post-probe + clauses  |
@@ -91,7 +91,7 @@ self_upgrade/
 
 ## Tunables
 
-Every timeout is configurable via `~/.pos/upgrade-config.yaml`:
+Every timeout is configurable via `~/.loam/upgrade-config.yaml`:
 
 ```yaml
 auto_update_mode: require_confirmation

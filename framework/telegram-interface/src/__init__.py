@@ -4,7 +4,7 @@ plugin. Exposes a `TelegramAdapter` that constructs a
 `kind=ChannelKind.personal_telegram` and an injected `send` callable
 routing through the plugin's `reply` tool (in-session) or the direct
 Bot API (out-of-session), with loud-escalation fallback to
-`~/.pos/attention.md` on outage.
+`~/.loam/attention.md` on outage.
 
 No sealed-component amendments. `ChannelKind.personal_telegram`
 already exists on the sealed enum; this package supplies the

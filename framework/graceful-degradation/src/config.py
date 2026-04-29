@@ -1,7 +1,7 @@
 """DegradationConfig — pydantic-backed, YAML-loadable configuration.
 
 Luke's baked-in decisions + research-recommended defaults live here.
-Workspaces override via `~/.pos/degradation-config.yaml`; any unset
+Workspaces override via `~/.loam/degradation-config.yaml`; any unset
 field inherits the framework default.
 
 Shape mirrors the research's `degradation.yaml` example. Malformed YAML
@@ -172,7 +172,7 @@ class NarrativeConfig(BaseModel):
 
 class StateConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    sqlite_path: str = "~/.pos/degradation.sqlite"
+    sqlite_path: str = "~/.loam/degradation.sqlite"
 
 
 # ---- top-level ---------------------------------------------------------
@@ -190,7 +190,7 @@ class DegradationConfig(BaseModel):
     - `claude-haiku-4-5` default narrative model
     - Automatic resume for transient modes; gated for auth-broken and
       >30-min dwells
-    - Own SQLite at `~/.pos/degradation.sqlite`
+    - Own SQLite at `~/.loam/degradation.sqlite`
     """
 
     model_config = ConfigDict(extra="forbid")

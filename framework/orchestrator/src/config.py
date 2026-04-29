@@ -1,15 +1,15 @@
 """OrchestratorConfig — user-home paths, intervals, thresholds.
 
 Defaults follow the brief:
-  - ~/.pos/                 — root configuration / state dir
-  - ~/.pos/orchestrator.sqlite
-  - ~/.pos/orchestrator.sock    (0600)
-  - ~/.pos/bootstrap.py         (optional; loaded by the
+  - ~/.loam/                 — root configuration / state dir
+  - ~/.loam/orchestrator.sqlite
+  - ~/.loam/orchestrator.sock    (0600)
+  - ~/.loam/bootstrap.py         (optional; loaded by the
                                   workspace-bootstrap framework's
                                   WorkspaceBootstrapPyContribution
                                   adapter, not by the orchestrator
                                   itself — amendment #7)
-  - ~/.pos/precompact.flag      (written by session's PreCompact hook)
+  - ~/.loam/precompact.flag      (written by session's PreCompact hook)
 
 Every path is configurable via OrchestratorConfig(...). YAML loader
 provided for convenience (`load_config(path)`).
@@ -26,7 +26,7 @@ from typing import Any
 
 import yaml
 
-_DEFAULT_ROOT = Path.home() / ".pos"
+_DEFAULT_ROOT = Path.home() / ".loam"
 
 
 @dataclass(frozen=True)

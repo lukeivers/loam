@@ -27,7 +27,7 @@ graceful-degradation┤  trace.get_tracer("pos.degradation")               │
                         │
                         ▼
                ┌──────────────────────┐
-               │  ~/.pos/spool.jsonl  │   (durability buffer)
+               │  ~/.loam/spool.jsonl  │   (durability buffer)
                │  (append-only)       │
                └──────────┬───────────┘
                           │
@@ -130,7 +130,7 @@ observability-aggregator/
 
 ## Process model
 
-The aggregator is library-shaped, not service-shaped. There is no daemon. The recommended deployment is to run it inside the orchestrator's asyncio process: the orchestrator's `~/.pos/bootstrap.py` calls `install_for_workspace(...)`, which installs the OTel TracerProvider and starts the ingest pipeline (spool drainer + memory tailers) as background threads. The aggregator's own writes are non-blocking; queries are synchronous on the calling thread.
+The aggregator is library-shaped, not service-shaped. There is no daemon. The recommended deployment is to run it inside the orchestrator's asyncio process: the orchestrator's `~/.loam/bootstrap.py` calls `install_for_workspace(...)`, which installs the OTel TracerProvider and starts the ingest pipeline (spool drainer + memory tailers) as background threads. The aggregator's own writes are non-blocking; queries are synchronous on the calling thread.
 
 Alternative deployments — peer process, lazy library — are described in the research document. The current build supports the in-orchestrator pattern; the others require thin glue but no architectural change.
 

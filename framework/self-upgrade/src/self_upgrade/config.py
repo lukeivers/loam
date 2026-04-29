@@ -1,4 +1,4 @@
-"""Workspace upgrade config — ``~/.pos/upgrade-config.yaml``.
+"""Workspace upgrade config — ``~/.loam/upgrade-config.yaml``.
 
 Schema (all keys optional; defaults below):
 

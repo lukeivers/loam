@@ -226,7 +226,7 @@ def build_merge_resolver() -> MergeResolver:
     Returns a :class:`MergeResolver` whose LLM client spawns
     ``claude -p`` per call. Budgets default to BB D-1 locks
     (5_000 / 100_000); future amendments may expose tunables via
-    ``~/.pos/upgrade-config.yaml``.
+    ``~/.loam/upgrade-config.yaml``.
     """
     client = _ClaudePrintResolverClient()
     return MergeResolver(client, ResolverBudget())

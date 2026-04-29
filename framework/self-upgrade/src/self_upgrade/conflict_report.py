@@ -3,7 +3,7 @@
 When the manifest-diff step discovers a local file whose sha disagrees
 with both the prior release sha AND the new release sha, the upgrade
 emits a YAML conflict report at
-``~/.pos/framework/history/<tag>-conflicts.yaml``. The report
+``~/.loam/framework/history/<tag>-conflicts.yaml``. The report
 enumerates every conflict with a ``resolution`` field the user must
 set.
 

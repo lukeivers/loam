@@ -4,7 +4,7 @@ This document traces a representative pOS session end-to-end through the aggrega
 
 ## Setup
 
-- Workspace bootstrap (`~/.pos/bootstrap.py`) calls `install_for_workspace(AggregatorConfig())` at orchestrator startup.
+- Workspace bootstrap (`~/.loam/bootstrap.py`) calls `install_for_workspace(AggregatorConfig())` at orchestrator startup.
 - The aggregator installs a global TracerProvider; `IngestionPipeline.start()` launches the spool drainer + three memory tailers as daemon threads.
 - A user opens a Claude desktop session and asks the primary persona to summarise their reading list.
 
@@ -69,7 +69,7 @@ Storage footprint: ~1-2 MB raw, well within DuckDB's columnar compression effici
 
 ## What ingestion looks like during aggregator downtime
 
-- Six OTel components: their spans accumulate in `~/.pos/spool.jsonl`. No data is lost; the BatchSpanProcessor still flushes to the exporter, which still writes to disk.
+- Six OTel components: their spans accumulate in `~/.loam/spool.jsonl`. No data is lost; the BatchSpanProcessor still flushes to the exporter, which still writes to disk.
 - Memory-system: writes to its JSONL files independently. The aggregator's tailers will pick up the accumulated lines on next start.
 - On aggregator restart, the spool drainer reads from its persisted byte-offset cursor and drains everything new; the JSONL tailers do the same.
 

@@ -11,13 +11,13 @@
 # in under 5 seconds — Claude Code's SessionStart hook is the wrong
 # container for the 3-8 minute cold-cache first-run flow, and prior
 # attempts to run the heavy lifting inside the hook were killed by the
-# hook's 120 s timeout, leaving ~/.pos/ and .venv/ partially populated
+# hook's 120 s timeout, leaving ~/.loam/ and .venv/ partially populated
 # and silent on the user's screen. Luke hit this himself on his
 # /tmp/pos3 clone; the four failure classes are documented in the
 # amendment commit message and this hook's fixtures.
 #
 # Responsibilities of THIS file:
-#   1. Read the state sentinel at ~/.pos/first-run.state.
+#   1. Read the state sentinel at ~/.loam/first-run.state.
 #   2. Decide: fresh-start, still-running, failed-respawn, already-done.
 #   3. Emit a plain-language additionalContext message naming the
 #      progress file and expected wait window.
@@ -43,7 +43,7 @@ set -u
 #
 # If the invoker stripped PATH we still need cat, printf, rm, etc.
 # Prepending rather than replacing preserves any caller-specified tools
-# (POS_V2_PYTHON escape hatch, e.g.).
+# (LOAM_PYTHON escape hatch, e.g.).
 PATH="${PATH:-}:/usr/bin:/bin"
 export PATH
 
@@ -68,9 +68,9 @@ fi
 HELPER="$POS_V2_ROOT/framework/hands-off-lifecycle/hooks/first_run_helper.py"
 DISPATCH="$POS_V2_ROOT/framework/hands-off-lifecycle/hooks/first_run_dispatch.py"
 
-# ~/.pos is the per-host config dir. Overridable for tests via the
-# POS_V2_POS_ROOT env var (same spelling the Python side respects).
-POS_ROOT="${POS_V2_POS_ROOT:-$HOME/.pos}"
+# ~/.loam is the per-host config dir. Overridable for tests via the
+# LOAM_DATA_DIR env var (same spelling the Python side respects).
+POS_ROOT="${LOAM_DATA_DIR:-$HOME/.loam}"
 
 # ---- Python 3.13 detection ---------------------------------------
 #
@@ -80,7 +80,7 @@ POS_ROOT="${POS_V2_POS_ROOT:-$HOME/.pos}"
 #
 # Detection order matches the pre-amendment script so the UX is
 # consistent across detached and inline modes:
-#   1. $POS_V2_PYTHON (CI / dev escape hatch)
+#   1. $LOAM_PYTHON (CI / dev escape hatch)
 #   2. python3.13 on PATH
 #   3. /opt/homebrew/bin/python3.13 (Homebrew ARM)
 #   4. /usr/local/bin/python3.13 (Homebrew Intel / some Linux)
@@ -114,8 +114,8 @@ _try_candidate() {
 DETECTED_PYTHON=""
 DETECTED_VERSION=""
 
-if [ -n "${POS_V2_PYTHON:-}" ]; then
-    _try_candidate "$POS_V2_PYTHON" || true
+if [ -n "${LOAM_PYTHON:-}" ]; then
+    _try_candidate "$LOAM_PYTHON" || true
 else
     if [ -z "$DETECTED_PYTHON" ]; then
         _try_candidate "python3.13" || true

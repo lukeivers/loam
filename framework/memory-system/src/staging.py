@@ -7,7 +7,7 @@ FIFO order on recovery (see ``drain.py``).
 
 Design per research §Q3:
 
-- One DB per workspace at ``~/.pos/memory-staging.sqlite``.
+- One DB per workspace at ``~/.loam/memory-staging.sqlite``.
 - ``INSERT`` on stage, ``DELETE`` on confirmed landing — idempotence is
   preserved through a *client-generated* UUID passed to the sidecar,
   not through server-side tracking.

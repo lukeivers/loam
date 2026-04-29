@@ -23,7 +23,7 @@ Phase sequencing:
 
   4. `after_orchestrator_ready` contributions run — self-correction
      subscribes, self-upgrade probes, the escape-hatch
-     `~/.pos/bootstrap.py` loader fires.
+     `~/.loam/bootstrap.py` loader fires.
 
 Shutdown reverses startup: registered shutdown hooks run in LIFO
 order; then the orchestrator's `_shutdown()` runs.
@@ -411,7 +411,7 @@ def cli_main(argv: Optional[list[str]] = None) -> int:
         "--manifest",
         default=None,
         help="Path to bootstrap.yaml (default: $POS_BOOTSTRAP_MANIFEST "
-        "or ~/.pos/bootstrap.yaml)",
+        "or ~/.loam/bootstrap.yaml)",
     )
     args = parser.parse_args(argv)
 
@@ -423,7 +423,7 @@ def cli_main(argv: Optional[list[str]] = None) -> int:
         if env:
             manifest_path = env
         else:
-            manifest_path = str(Path.home() / ".pos" / "bootstrap.yaml")
+            manifest_path = str(Path.home() / ".loam" / "bootstrap.yaml")
 
     try:
         manifest = load_manifest(manifest_path)

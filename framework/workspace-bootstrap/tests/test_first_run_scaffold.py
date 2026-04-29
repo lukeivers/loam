@@ -98,7 +98,7 @@ def test_H2_confirmation_emitted_once(tmp_path: Path) -> None:
         workspace_root=tmp_path / "pos-v2",
     )
     assert first.confirmation is not None
-    # Second run: ~/.pos/ + bootstrap.yaml already exist → no-op.
+    # Second run: ~/.loam/ + bootstrap.yaml already exist → no-op.
     second = run_first_run_scaffold(
         pos_root=pos_root,
         platform_override="macos",
@@ -159,7 +159,7 @@ def test_H5_confirmation_sentence_is_Q7_approved_wording() -> None:
         "components configured at defaults (safety/always-ask, cost "
         "ceilings, reversibility, self-correction, memory, "
         "degradation), memory sidecar and orchestrator launched as "
-        "user services, staging store initialised. `~/.pos/` is your "
+        "user services, staging store initialised. `~/.loam/` is your "
         "config dir — edit any file to adjust. Proceeding."
     )
     assert CONFIRMATION_SENTENCE == expected

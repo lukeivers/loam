@@ -14,7 +14,7 @@
 #       /path/to/workspace-a /path/to/workspace-b
 #
 # Pre-req: both workspaces have completed first-run; both have
-# ``~/.pos/memory.yaml`` with distinct ``port`` values; both plists
+# ``~/.loam/memory.yaml`` with distinct ``port`` values; both plists
 # are loaded under launchctl with workspace-namespaced labels per
 # amendment #6.
 #

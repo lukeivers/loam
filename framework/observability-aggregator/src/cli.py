@@ -60,7 +60,7 @@ def _dump(obj: Any, raw: bool) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser("pos-obs", description="pOS observability aggregator CLI")
-    p.add_argument("--db", help="Override DB path (default ~/.pos/observability.db)")
+    p.add_argument("--db", help="Override DB path (default ~/.loam/observability.db)")
     p.add_argument("--substrate", choices=["duckdb", "sqlite"], help="Storage substrate")
     p.add_argument("--raw", action="store_true", help="Single-line JSON output")
     sub = p.add_subparsers(dest="command", required=True)

@@ -13,7 +13,7 @@ where ``<canonical-source>`` is either:
 - An absolute POSIX path to a local git working tree
   (``/Users/.../ivers-corp-pos-v2``).
 - An ``http(s)://`` URL or a ``git@``-style SSH spec (cloned to
-  ``~/.pos/canonical-cache/<repo-id>/`` per β.1 cache-clone shape).
+  ``~/.loam/canonical-cache/<repo-id>/`` per β.1 cache-clone shape).
 
 Outcome (success path)::
 
@@ -22,7 +22,7 @@ Outcome (success path)::
       workspace/                # scaffolded by run_first_run_scaffold
         .pos/
           sync-config.yaml      # canonical_source recorded
-          legacy-user-config/   # user-config defaults (~/.pos/-shaped)
+          legacy-user-config/   # user-config defaults (~/.loam/-shaped)
         personas/<handle>/
         .mcp.json
         objective_tracker.sqlite
@@ -196,7 +196,7 @@ def _resolve_url_to_clone_source(url: str) -> str:
     """Resolve a URL-form canonical source to a local clone source.
 
     Composes on β.1's ``ensure_cache_clone`` to populate
-    ``~/.pos/canonical-cache/<repo-id>/`` and returns the cache path
+    ``~/.loam/canonical-cache/<repo-id>/`` and returns the cache path
     as a string. The caller passes this string to ``git clone``;
     the resulting ``<new-ws>/framework/.git/config`` carries the
     cache path as ``origin``. Subsequent ``pos-sync`` invocations
@@ -422,7 +422,7 @@ def bootstrap_new_workspace(
 
     1. Validate canonical-source kind (URL vs local path).
     2. Refuse-on-non-empty target (unless ``init_existing=True``).
-    3. URL form: populate cache clone in ``~/.pos/canonical-cache/``;
+    3. URL form: populate cache clone in ``~/.loam/canonical-cache/``;
        local form: use the path directly. Either way, end up with a
        ``clone_source`` string passable to ``git clone``.
     4. ``git clone <clone_source> <new_ws_path>/framework/``
@@ -432,7 +432,7 @@ def bootstrap_new_workspace(
     6. Invoke ``run_first_run_scaffold`` against ``workspace_root=
        <new_ws_path>`` with ``pos_root=<new_ws_path>/workspace/.pos/
        legacy-user-config/`` (workspace-scoped; never touches
-       operator's actual ``~/.pos/``).
+       operator's actual ``~/.loam/``).
 
     Returns a ``BootstrapResult`` carrying the structured outcome.
     Raises ``NewWorkspaceError`` (or a subclass) on any halt path.
@@ -537,7 +537,7 @@ def bootstrap_new_workspace(
     )
 
     # Step 6: scaffold workspace-state. pos_root scoped INSIDE the
-    # workspace (legacy-user-config) so the operator's actual ~/.pos/
+    # workspace (legacy-user-config) so the operator's actual ~/.loam/
     # is never touched by D.4.
     legacy_user_config_dir = (
         workspace_state_dir / ".pos" / "legacy-user-config"
@@ -622,7 +622,7 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Canonical pos-v2 source: an absolute POSIX path to a "
             "local git working tree, or an http(s)/git@ URL. URL form "
-            "clones to ~/.pos/canonical-cache/<repo-id>/ first; the "
+            "clones to ~/.loam/canonical-cache/<repo-id>/ first; the "
             "original URL is recorded in the new workspace's "
             "sync-config.yaml so subsequent pos-sync runs resolve it "
             "the same way."

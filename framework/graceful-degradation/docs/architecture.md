@@ -64,7 +64,7 @@ sealed component is amended.
  │  ┌──────────────────┐   ┌──────────────────────┐          │
  │  │ NarrativeRenderer │  │ DegradationStore     │          │
  │  │ (D6; Claude or    │  │ (D8 SQLite @         │          │
- │  │  template)        │  │  ~/.pos/            │          │
+ │  │  template)        │  │  ~/.loam/            │          │
  │  └──────────────────┘   │   degradation.sqlite)│          │
  │                         └──────────────────────┘          │
  │                                                           │
@@ -194,7 +194,7 @@ from graceful_degradation import (
 ### Core composition
 
 ```python
-cfg = load_config("~/.pos/degradation-config.yaml")  # or defaults
+cfg = load_config("~/.loam/degradation-config.yaml")  # or defaults
 comp = DegradationComponent.build(
     cfg=cfg,
     orchestrator=my_orchestrator,          # pause_activation/resume_activation
@@ -226,7 +226,7 @@ rt.subscribe_all(comp.on_scope_event)
 ### Config surface
 
 ```yaml
-# ~/.pos/degradation-config.yaml — workspace override
+# ~/.loam/degradation-config.yaml — workspace override
 modes:
   down:
     trip_threshold: {failures: 3, window_seconds: 60}
@@ -276,7 +276,7 @@ narrative:
   recovery_template: "[pOS] Claude upstream recovered. ..."
 
 state:
-  sqlite_path: ~/.pos/degradation.sqlite
+  sqlite_path: ~/.loam/degradation.sqlite
 ```
 
 ### Per-scope policy override

@@ -19,7 +19,7 @@ Plus three rollup tables (`daily_rollup`, `monthly_rollup`, `yearly_rollup`) pop
 
 There are two ingest paths. Both write to the same store; both honour v1.1 R10 retention classes at the boundary so payload data is dropped before it ever lands in DuckDB.
 
-**Path A — In-process OTel exporter via the orchestrator's `~/.pos/bootstrap.py` workspace hook.** The bootstrap calls `install_for_workspace(...)`, which installs a TracerProvider with a custom `AggregatorSpanExporter` that writes finished spans to a local JSONL spool file. Python OTel's `ProxyTracer` pattern means components can have already imported `trace.get_tracer(...)` at module-load time and the proxy still routes their spans through the provider that's installed when the first span actually opens. A separate spool-drainer thread reads the spool file and inserts rows into the store. The spool buffer survives aggregator restart — spans accumulated during downtime drain on next start.
+**Path A — In-process OTel exporter via the orchestrator's `~/.loam/bootstrap.py` workspace hook.** The bootstrap calls `install_for_workspace(...)`, which installs a TracerProvider with a custom `AggregatorSpanExporter` that writes finished spans to a local JSONL spool file. Python OTel's `ProxyTracer` pattern means components can have already imported `trace.get_tracer(...)` at module-load time and the proxy still routes their spans through the provider that's installed when the first span actually opens. A separate spool-drainer thread reads the spool file and inserts rows into the store. The spool buffer survives aggregator restart — spans accumulated during downtime drain on next start.
 
 **Path B — JSONL tailers for memory-system.** Memory writes `spans.jsonl`, `tokens.jsonl`, and `audit.jsonl` to its own observability sink directory. Three `JSONLTailer` instances watch those files, normalise each new record into the canonical Pydantic schema, and insert into the store. Each tailer persists a byte-offset cursor so a restart resumes where it left off; file truncation (memory-system data clear, log rotation) is detected and reset gracefully. Malformed lines are logged and skipped — never fatal.
 
@@ -66,7 +66,7 @@ Reading B (deterministic re-execution) is explicitly out of scope — it would r
 
 ## Self-observability and integration with primary persona
 
-The aggregator emits its own OTel spans for ingest batches, queries, NL translate/format calls, retention runs. These are filtered out at ingest by tracer-name prefix match. They're observable via the on-disk `~/.pos/logs/aggregator.out` debug log if needed, but not stored — preventing recursion.
+The aggregator emits its own OTel spans for ingest batches, queries, NL translate/format calls, retention runs. These are filtered out at ingest by tracer-name prefix match. They're observable via the on-disk `~/.loam/logs/aggregator.out` debug log if needed, but not stored — preventing recursion.
 
 When the primary persona answers "why did you do X at time T," it calls the aggregator's NL surface, receives a cited Pydantic answer, and adapts the prose into its voice — but the citations carry through. Anti-deskilling principle: the user always sees the underlying span IDs, never just the narrative.
 

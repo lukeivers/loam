@@ -9,7 +9,7 @@ process binds that port on service start.
 AC29.3 — two scaffold invocations with distinct per-workspace
 ``memory.yaml`` port values produce two plists carrying the two
 distinct port values. The port source is workspace-local (the
-``~/.pos/memory.yaml`` under the workspace-associated pos_root), not
+``~/.loam/memory.yaml`` under the workspace-associated pos_root), not
 a host-global constant.
 """
 
@@ -125,9 +125,9 @@ def test_AC29_2_scaffold_propagates_memory_yaml_port_to_plist(
         f"plist did not carry GRAPHITI_SERVICE_PORT=19876; "
         f"env_port={env_port!r} plist_text={plist_text!r}"
     )
-    # POS_V2_WORKSPACE_ROOT must also be present and point at this
+    # LOAM_WORKSPACE_ROOT must also be present and point at this
     # workspace — AC29.5's plist-side wiring.
-    assert f"<key>POS_V2_WORKSPACE_ROOT</key><string>{workspace}</string>" in plist_text
+    assert f"<key>LOAM_WORKSPACE_ROOT</key><string>{workspace}</string>" in plist_text
 
 
 # ---- AC29.3 ---------------------------------------------------------
@@ -139,7 +139,7 @@ def test_AC29_3_distinct_workspace_configs_produce_distinct_plist_ports(
     """Two workspaces with distinct ``memory.yaml`` port values
     produce plists with distinct port values. Mutating one
     workspace's config does not affect the other's scaffold output —
-    the port source is workspace-local (its own ``~/.pos/memory.yaml``),
+    the port source is workspace-local (its own ``~/.loam/memory.yaml``),
     not a host-global sentinel."""
     # Workspace A.
     ws_a = tmp_path / "alpha-ws"

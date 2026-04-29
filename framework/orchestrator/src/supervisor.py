@@ -4,7 +4,7 @@ Lives inside the orchestrator process per proposal §Q2 (B.1).
 Continuously probes the memory sidecar, maintains a state machine
 across ``normal → degraded → recovering → escalated``, coordinates
 the memory-drain worker on recovery, and opens / closes escalations
-per-class via ``~/.pos/supervisor-escalation.json``.
+per-class via ``~/.loam/supervisor-escalation.json``.
 
 Key design constraints:
 
@@ -160,7 +160,7 @@ NotificationFn = Callable[[EscalationClass, str, dict[str, Any]], Awaitable[None
 
 @dataclass(frozen=True)
 class SupervisorConfig:
-    """Loaded from ``~/.pos/memory.yaml`` + ``~/.pos/memory-staging.yaml``
+    """Loaded from ``~/.loam/memory.yaml`` + ``~/.loam/memory-staging.yaml``
     per H7. Defaults match research §Q2."""
 
     poll_interval_s: float = 30.0
@@ -169,8 +169,8 @@ class SupervisorConfig:
     recovery_success_threshold: int = 2  # probes to reach 'normal'
     escalation_retry_limit: int = 3  # unhealed retries → 'escalated'
     latency_threshold_ms: float = 500.0
-    escalation_state_path: str = "~/.pos/supervisor-escalation.json"
-    attention_path: str = "~/.pos/attention.md"
+    escalation_state_path: str = "~/.loam/supervisor-escalation.json"
+    attention_path: str = "~/.loam/attention.md"
     tier1_cap_override: bool = True  # Q5 ruling
 
 

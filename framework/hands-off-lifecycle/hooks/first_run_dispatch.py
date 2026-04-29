@@ -7,7 +7,7 @@ Added by the 2026-04-22 session-start-detachment amendment.
 ``first-run.sh`` does the minimum needed to find a Python 3.13
 interpreter and hand off to this script. ``first_run_dispatch.py``
 reads ``<workspace>/.pos/first-run.state`` (amendment #28: per-
-workspace, not ``~/.pos/first-run.state`` as in the original
+workspace, not ``~/.loam/first-run.state`` as in the original
 session-start-detachment amendment), decides which of the five
 cases we are in, and either spawns the detached worker
 (``first_run_helper.py`` in ``bootstrap`` / ``resume`` mode) or
@@ -197,7 +197,7 @@ def _spawn_detached_worker(
     # the caller's perceived latency rather than block-buffering until
     # the pipe fills. Added 2026-04-22 by the pyyaml-reachability
     # amendment (#5) — without this, any print() in the worker was
-    # block-buffered into ~/.pos/first-run.log and users tailing the
+    # block-buffered into ~/.loam/first-run.log and users tailing the
     # log saw long stretches of silence between phases. The direct
     # state-file writes the worker also does are unaffected; ``-u``
     # specifically rescues ``print()`` and any subprocess that writes
@@ -404,7 +404,7 @@ def main(argv: list[str] | None = None) -> int:
         description="pos-v2 first-run dispatch — SessionStart hook worker.",
     )
     parser.add_argument("--pos-v2-root", required=True)
-    parser.add_argument("--pos-root", default=str(Path.home() / ".pos"))
+    parser.add_argument("--pos-root", default=str(Path.home() / ".loam"))
     parser.add_argument("--helper", required=True)
     parser.add_argument("--python", required=True)
     parser.add_argument(

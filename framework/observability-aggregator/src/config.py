@@ -1,6 +1,6 @@
 """Aggregator configuration.
 
-One YAML section in `~/.pos/observability.yaml` or programmatic
+One YAML section in `~/.loam/observability.yaml` or programmatic
 config. Every retention knob, storage substrate choice, and ingest
 path lives here. Defaults are workspace-tunable per the brief.
 """
@@ -54,7 +54,7 @@ class IngestConfig:
 
 @dataclass
 class AggregatorConfig:
-    base_dir: str = "~/.pos"
+    base_dir: str = "~/.loam"
     substrate: Substrate = "duckdb"
     db_path: str | None = None  # default derived from base_dir
     retention: RetentionConfig = field(default_factory=RetentionConfig)
@@ -93,7 +93,7 @@ class AggregatorConfig:
         retention_d = d.get("retention", {}) or {}
         ingest_d = d.get("ingest", {}) or {}
         return cls(
-            base_dir=d.get("base_dir", "~/.pos"),
+            base_dir=d.get("base_dir", "~/.loam"),
             substrate=d.get("substrate", "duckdb"),
             db_path=d.get("db_path"),
             retention=RetentionConfig(**retention_d),

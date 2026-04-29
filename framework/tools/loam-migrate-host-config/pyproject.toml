@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-migrate-host-config"
+version = "0.1.0"
+description = "One-shot per-host migration helper relocating ~/.pos/ → ~/.loam/ on first invocation post-rename. Idempotent; halts on conflict (both dirs present)."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+loam-migrate-host-config = "loam_migrate_host_config.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

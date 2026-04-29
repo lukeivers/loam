@@ -578,7 +578,7 @@ def resolve_clause_h_inferred(
             # errors in the finally so callers see the clause-(h)
             # halt reason, not the persistence error. (Callers can
             # still spot the missing artefact at clean-pass time;
-            # in practice tmpdir + ~/.pos targets are writable.)
+            # in practice tmpdir + ~/.loam targets are writable.)
             pass
 
 

@@ -8,7 +8,7 @@ AC coverage in this file:
   AC1 — adapter class exists with correct metadata
   AC2 — _BOOTSTRAP_YAML lists telegram_interface as the 13th entry
   AC3 — framework composes telegram_interface end-to-end at default config
-  AC4 — first-run scaffold writes ~/.pos/telegram.yaml
+  AC4 — first-run scaffold writes ~/.loam/telegram.yaml
          (primary assertion lives in test_first_run_scaffold.py::H1;
          this file adds a standalone starter-shape assertion)
   AC5 — adapter publishes the Telegram channel on the host
@@ -148,7 +148,7 @@ def test_AC3_default_degraded_alive_composition_succeeds(
 
 
 def test_AC4_scaffold_writes_telegram_yaml_starter(tmp_path: Path) -> None:
-    """The scaffold writes ~/.pos/telegram.yaml with the approved
+    """The scaffold writes ~/.loam/telegram.yaml with the approved
     starter shape (proposal §5 #4 owner ruling)."""
     from workspace_bootstrap.adapters.first_run_scaffold import (
         _TELEGRAM_YAML,

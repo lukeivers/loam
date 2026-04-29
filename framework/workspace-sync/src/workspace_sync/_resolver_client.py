@@ -290,7 +290,7 @@ def build_merge_resolver(
     ``claude -p`` per call. Budgets default to BB D-1 locks
     (5_000 / 100_000); workspace-tunable via
     ``<workspace>/.pos/sync-config.yaml`` or
-    ``~/.pos/sync-config.yaml`` (β.1 wires the precedence chain
+    ``~/.loam/sync-config.yaml`` (β.1 wires the precedence chain
     via ``cli.py``; locked plan §11 D-2).
     """
     client = _ClaudePrintResolverClient()

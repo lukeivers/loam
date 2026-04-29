@@ -8,7 +8,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${POS_V2_REPO}/.venv/bin/python ${POS_V2_REPO}/orchestrator/scripts/pos_session_start.py",
+            "command": "${LOAM_REPO}/.venv/bin/python ${LOAM_REPO}/orchestrator/scripts/pos_session_start.py",
             "async": false,
             "timeout": 20
           }
@@ -19,7 +19,7 @@
 
   "statusLine": {
     "type": "command",
-    "command": "${POS_V2_REPO}/.venv/bin/python ${POS_V2_REPO}/hands-off-lifecycle/hooks/statusline.py",
+    "command": "${LOAM_REPO}/.venv/bin/python ${LOAM_REPO}/hands-off-lifecycle/hooks/statusline.py",
     "refreshInterval": 1
   }
 }

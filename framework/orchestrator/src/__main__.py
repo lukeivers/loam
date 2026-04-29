@@ -1,10 +1,10 @@
 """Run the orchestrator as a module: `python -m pos_orchestrator`.
 
 Usage:
-    python -m pos_orchestrator                    # defaults (~/.pos/)
+    python -m pos_orchestrator                    # defaults (~/.loam/)
     python -m pos_orchestrator --config cfg.yaml  # override paths
 
-Workspace bootstrap (``~/.pos/bootstrap.py``) is loaded by the
+Workspace bootstrap (``~/.loam/bootstrap.py``) is loaded by the
 workspace-bootstrap framework's ``WorkspaceBootstrapPyContribution``
 adapter — not by this entry point. See
 docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md

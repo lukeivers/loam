@@ -2,7 +2,7 @@
 workspace identity.
 
 The memory-system's ``_impl_health`` includes a ``workspace_root``
-field whose value is the process's ``POS_V2_WORKSPACE_ROOT`` env var.
+field whose value is the process's ``LOAM_WORKSPACE_ROOT`` env var.
 Hands-off-lifecycle's phase-4b probe uses this field to verify the
 responding sidecar belongs to the probing workspace (AC29.5 probe-
 side tests live under ``hands-off-lifecycle/tests/``).
@@ -39,11 +39,11 @@ def test_AC29_5_health_response_carries_workspace_root(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``_impl_health`` returns a dict whose ``workspace_root`` key
-    mirrors the process's ``POS_V2_WORKSPACE_ROOT`` env var. AC29.5
+    mirrors the process's ``LOAM_WORKSPACE_ROOT`` env var. AC29.5
     memory-system side — the identity field IS on the response body.
     Probe-side verification (mismatch-fails, match-succeeds) lives in
     ``hands-off-lifecycle/tests/test_AC29_health_workspace_probe.py``.
     """
-    monkeypatch.setenv("POS_V2_WORKSPACE_ROOT", "/tmp/alpha-workspace")
+    monkeypatch.setenv("LOAM_WORKSPACE_ROOT", "/tmp/alpha-workspace")
     payload: dict[str, Any] = asyncio.run(service._impl_health(_FakeGraphiti()))
     assert payload["workspace_root"] == "/tmp/alpha-workspace"

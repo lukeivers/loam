@@ -28,7 +28,7 @@ unchanged:
 
 ## Workspace contract
 
-`~/.pos/bootstrap.py` — workspace-authored file exposing:
+`~/.loam/bootstrap.py` — workspace-authored file exposing:
 
 ```python
 def register(orchestrator) -> None:

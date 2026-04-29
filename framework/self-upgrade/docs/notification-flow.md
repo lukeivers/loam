@@ -55,7 +55,7 @@ response to land.
 ```
 [Eve → Luke]
 "Upgrade pos-v2-v0.3.0 rejected and rolled back.
- Failing clauses: c. Report: ~/.pos/framework/history/<tag>-rolled-back.json"
+ Failing clauses: c. Report: ~/.loam/framework/history/<tag>-rolled-back.json"
 ```
 
 ### Rollback failed (Tier 1, manual recovery)
@@ -63,7 +63,7 @@ response to land.
 ```
 [Eve → Luke, Tier 1]
 "UPGRADE FAILED AND ROLLBACK FAILED. System in undefined state.
- Details: ~/.pos/framework/history/<tag>-rollback-failed.json.
+ Details: ~/.loam/framework/history/<tag>-rollback-failed.json.
  Manual recovery required."
 ```
 

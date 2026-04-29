@@ -213,7 +213,7 @@ def _probe_orchestrator(workspace_root: Path) -> str:
 
     candidates: list[Path] = [
         pos_subdir(workspace_root) / "orchestrator.sock",
-        Path.home() / ".pos" / "orchestrator.sock",
+        Path.home() / ".loam" / "orchestrator.sock",
     ]
     for candidate in candidates:
         if candidate.exists():

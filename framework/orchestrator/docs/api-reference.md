@@ -1,7 +1,7 @@
 # API Reference — IPC Surface
 
 Wire: newline-delimited JSON-RPC over a Unix-domain socket at
-`~/.pos/orchestrator.sock` (configurable via `OrchestratorConfig`).
+`~/.loam/orchestrator.sock` (configurable via `OrchestratorConfig`).
 
 Every method below is `{"id": <string>, "method": "<name>",
 "params": <object>}` in; `{"id": <same>, "result": <object>}` out

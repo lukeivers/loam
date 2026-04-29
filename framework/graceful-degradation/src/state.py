@@ -1,6 +1,6 @@
 """State preservation + restart reconciliation (D8).
 
-Own SQLite at ~/.pos/degradation.sqlite (configurable). Three tables
+Own SQLite at ~/.loam/degradation.sqlite (configurable). Three tables
 per the proposal:
 
     detection_events   — append-only signal log

@@ -39,7 +39,7 @@ pos rollback <tag> [--prior-tag <tag>]
 ## Invocation constraint
 
 The CLI refuses to run if `sys.executable` resolves inside
-`~/.pos/framework/current/`. This prevents the running orchestrator
+`~/.loam/framework/current/`. This prevents the running orchestrator
 from trying to replace the Python process that owns it. Invoke from a
 staging venv or from the workspace's own venv — never from the live
 pOS tree.
@@ -53,8 +53,8 @@ workspace wires live adapters via `--adapters-module <pkg.mod>`:
 # workspace-local: e.g. products/pos_harness/adapters.py
 def build_adapters():
     return MyAdapters(
-        pid_file=Path("~/.pos/orchestrator.pid").expanduser(),
-        ipc_socket=Path("~/.pos/orchestrator.sock").expanduser(),
+        pid_file=Path("~/.loam/orchestrator.pid").expanduser(),
+        ipc_socket=Path("~/.loam/orchestrator.sock").expanduser(),
         launchd_label="com.pos.orchestrator",
         ...
     )
@@ -66,7 +66,7 @@ The adapters must implement the ``LiveAdapters`` protocol (see
 ## Configuration
 
 ```yaml
-# ~/.pos/upgrade-config.yaml
+# ~/.loam/upgrade-config.yaml
 auto_update_mode: require_confirmation  # or notify_and_apply
 drain_timeout_seconds: 30
 sigterm_timeout_seconds: 30

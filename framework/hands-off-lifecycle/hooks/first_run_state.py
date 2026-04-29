@@ -8,7 +8,7 @@ SessionStart hook is the wrong container for multi-minute first-run.
 Claude Code's hook ceiling (120s default, but the real killer is the
 user's own patience) is shorter than a cold-cache pip install of
 graphiti-core + neo4j + kuzu + fastapi. When the hook times out the
-Python helper is SIGKILL'd mid-Phase-3, leaves ``~/.pos/`` partially
+Python helper is SIGKILL'd mid-Phase-3, leaves ``~/.loam/`` partially
 scaffolded and the venv partially populated, and the next session
 hits ``partial-scaffold-detected`` or duplicates the partial install.
 
@@ -22,16 +22,16 @@ used as the execution surface.
 
 Hook becomes a thin status-report-and-handoff. Heavy work detaches to
 a separate process in its own session group. Progress surfaces to
-``~/.pos/first-run.log`` (a file the user is told about in the hook's
+``~/.loam/first-run.log`` (a file the user is told about in the hook's
 plain-language output). The process's outcome is recorded in
-``~/.pos/first-run.state`` (JSON). The next session's hook reads the
+``~/.loam/first-run.state`` (JSON). The next session's hook reads the
 state, not the running process.
 
 ## Contract
 
 One state file per **workspace**: ``<workspace>/.pos/first-run.state``.
 Amendment #28 (2026-04-23) moved this from the host-global
-``~/.pos/first-run.state`` — that prior shape had no workspace
+``~/.loam/first-run.state`` — that prior shape had no workspace
 identity and, on a host with two pos-v2 workspaces, workspace A's
 completed state would short-circuit workspace B's first-run
 dispatch. Workspace identity is now enforced by path, with a
@@ -47,7 +47,7 @@ advances past the first write is treated as ``failed`` by the hook
 side after the grace window expires.
 
 The progress log (``first-run.log``) remains at the host-global
-``~/.pos/`` path — it is a tailable narrative surface, not a
+``~/.loam/`` path — it is a tailable narrative surface, not a
 state artefact; the silent-death-diagnosis path does not read it.
 
 Stdlib only. No third-party deps.
@@ -64,10 +64,10 @@ from pathlib import Path
 from typing import Any
 
 
-# Canonical file locations. ``~/.pos/`` is the per-host config dir;
+# Canonical file locations. ``~/.loam/`` is the per-host config dir;
 # tests override via ``pos_root`` parameters rather than env vars so
 # the production paths are not mockable at runtime.
-DEFAULT_POS_ROOT = Path.home() / ".pos"
+DEFAULT_POS_ROOT = Path.home() / ".loam"
 
 
 STATE_FILE = "first-run.state"
@@ -251,7 +251,7 @@ def append_log(
     *,
     generation: int = 1,
 ) -> None:
-    """Append a timestamped line to ``~/.pos/first-run.log``.
+    """Append a timestamped line to ``~/.loam/first-run.log``.
 
     The log is the user's live progress surface — the hook tells them
     to tail it while first-run runs. ``generation`` is embedded in the
@@ -338,7 +338,7 @@ def mark_failed_silently(
     state.remediation = (
         "first-run worker exited without writing a terminal state. "
         "The next claude session will automatically retry. "
-        "If this repeats, check ~/.pos/first-run.log for the last "
+        "If this repeats, check ~/.loam/first-run.log for the last "
         "recorded phase."
     )
     write_state(state, workspace_root)

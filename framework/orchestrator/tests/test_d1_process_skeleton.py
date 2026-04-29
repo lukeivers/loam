@@ -96,9 +96,9 @@ async def test_crash_during_startup_yields_non_zero(tmp_path, monkeypatch):
 # deleted the `test_missing_bootstrap_fails_closed` +
 # `test_erroring_bootstrap_fails_closed` tests. They pinned a contract
 # this amendment intentionally removes: the orchestrator's `_startup`
-# no longer loads `~/.pos/bootstrap.py` directly, so no exit-code-2/3
+# no longer loads `~/.loam/bootstrap.py` directly, so no exit-code-2/3
 # branch exists. The framework now refuses fail-closed on missing
-# `~/.pos/bootstrap.yaml` (code -32080) and the adapter refuses when
+# `~/.loam/bootstrap.yaml` (code -32080) and the adapter refuses when
 # `required: True` is set. Positive-space coverage lives in:
 #   * test_AC2_missing_bootstrap_py_is_not_a_fail_closed_condition (below)
 #   * workspace-bootstrap/tests/test_integration_foundational.py

@@ -88,7 +88,7 @@ def test_AC_J_1_re_run_does_not_clobber_user_edits(tmp_path: Path) -> None:
 
 def test_AC_J_1_advisory_under_workspace_pos_not_user_pos(tmp_path: Path) -> None:
     """The advisory file lives under ``<workspace>/.pos/`` (workspace-
-    local), NOT under ``~/.pos/``. Hard Constraint 12 + plan §11 D-1
+    local), NOT under ``~/.loam/``. Hard Constraint 12 + plan §11 D-1
     lock — workspaces own their advisory state."""
     workspace = tmp_path / "test-ws"
     workspace.mkdir()
@@ -107,6 +107,6 @@ def test_AC_J_1_advisory_under_workspace_pos_not_user_pos(tmp_path: Path) -> Non
     user_advisory = pos_root / PREWARM_ADVISORY_FILENAME
     assert workspace_advisory.exists()
     assert not user_advisory.exists(), (
-        f"advisory must live under <workspace>/.pos/, NOT ~/.pos/; "
+        f"advisory must live under <workspace>/.pos/, NOT ~/.loam/; "
         f"found {user_advisory}"
     )

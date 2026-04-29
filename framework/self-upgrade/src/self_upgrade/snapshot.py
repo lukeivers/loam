@@ -3,7 +3,7 @@
 Every sealed component's durable state is copied atomically into the
 pre-upgrade history directory before any framework file changes. If
 the upgrade fails (or the user invokes ``pos rollback``), the files
-under ``~/.pos/framework/history/<tag>-pre/`` are the source of truth.
+under ``~/.loam/framework/history/<tag>-pre/`` are the source of truth.
 
 Post-snapshot consistency check: each component's ``snapshot_probe()``
 (or equivalent upgrade-capture call) is run once *before* the file

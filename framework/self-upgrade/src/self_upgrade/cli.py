@@ -190,7 +190,7 @@ def cmd_upgrade(args: argparse.Namespace) -> int:
     # (`<workspace>/.pos/upgrade/<tag>/audit.yaml`) when invoked
     # via --canonical (clause-(h)-eligible mode); legacy
     # --staging-dir continues writing at the global
-    # `~/.pos/framework/history/<tag>-conflicts.yaml` per Hard
+    # `~/.loam/framework/history/<tag>-conflicts.yaml` per Hard
     # Constraint 5 backward-compat.
     if canonical_resolution is not None:
         conflicts_yaml = audit_yaml_path(live_root, manifest.release_tag)
@@ -408,7 +408,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--pos-base-dir",
         default=None,
-        help="Override ~/.pos base dir (testing).",
+        help="Override ~/.loam base dir (testing).",
     )
     sub = parser.add_subparsers(dest="command")
 

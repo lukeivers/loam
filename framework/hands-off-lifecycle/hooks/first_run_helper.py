@@ -674,7 +674,7 @@ _STATE_GENERATION: int = 1
 # Guard flag: only write state-file / log entries when main() has
 # explicitly enabled it. Without this guard, unit tests that exercise
 # _emit_diag() directly would scribble into the developer's real
-# ``~/.pos/`` directory on every test run — an unacceptable side
+# ``~/.loam/`` directory on every test run — an unacceptable side
 # effect. main() flips this on once; test fixtures use the state
 # module's API directly when they need to exercise the state path.
 _STATE_WRITES_ENABLED: bool = False
@@ -724,7 +724,7 @@ def _advance_state(
     to the rendered progress line (AC.SL.1).
 
     No-op when ``_STATE_WRITES_ENABLED`` is False (unit-test path) —
-    the caller never wants a stray ~/.pos/ write from a test run.
+    the caller never wants a stray ~/.loam/ write from a test run.
     """
     if not _STATE_WRITES_ENABLED:
         return
@@ -1359,7 +1359,7 @@ def _invoke_first_run_scaffold(
     ## Parameters
 
     Mirrors the adapter's own signature one-for-one so the call-site
-    change is minimal. ``pos_root`` defaults to ``Path.home() / ".pos"``
+    change is minimal. ``pos_root`` defaults to ``Path.home() / ".loam"``
     to match the adapter's own default for the production path, and
     can be overridden for tests.
     """
@@ -1374,7 +1374,7 @@ def _invoke_first_run_scaffold(
             f"scaffold-runner-venv-missing: {shared_venv_python} not on "
             "disk. Phase 3 did not complete; re-running next session."
         )
-    effective_pos_root = pos_root or (Path.home() / ".pos")
+    effective_pos_root = pos_root or (Path.home() / ".loam")
     cmd = [
         str(shared_venv_python),
         "-u",  # unbuffered — progress lines hit the worker's log promptly
@@ -1413,7 +1413,7 @@ def _invoke_first_run_scaffold(
         timeout=600,
     )
     # Mirror stdout to our own stdout for log visibility — the worker
-    # has its fds redirected to ~/.pos/first-run.log, so this lands
+    # has its fds redirected to ~/.loam/first-run.log, so this lands
     # there for the user to tail.
     if result.stdout:
         sys.stdout.write(result.stdout)
@@ -1479,7 +1479,7 @@ def _probe_http_with_identity(
 
     Amendment #29 (AC29.5): the memory-sidecar's /health response
     carries a ``workspace_root`` field (populated from the process's
-    ``POS_V2_WORKSPACE_ROOT`` env var, which the first-run scaffold
+    ``LOAM_WORKSPACE_ROOT`` env var, which the first-run scaffold
     injects via the launchd plist's ``EnvironmentVariables`` dict).
     The phase-4b probe verifies the responding sidecar's workspace
     identity equals the dispatching workspace's own root; mismatch
@@ -1768,7 +1768,7 @@ def _confirmation_sentence(
         "pos v2 first-run complete: Python 3.13 venv ready,",
         "twelve components installed, memory sidecar and orchestrator",
         f"launched as user services ({', '.join(service_labels)}),",
-        "~/.pos/ scaffolded.",
+        "~/.loam/ scaffolded.",
     ]
     if merge_result.prior_session_start_displaced and merge_result.backup_path:
         parts.append(
@@ -1778,7 +1778,7 @@ def _confirmation_sentence(
             " manually if needed."
         )
     parts.append(
-        "Edit ~/.pos/*.yaml to adjust any default. Proceeding."
+        "Edit ~/.loam/*.yaml to adjust any default. Proceeding."
     )
     return " ".join(parts)
 
@@ -2339,7 +2339,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         # dispatching workspace's own sidecar can satisfy phase-4b.
         # An orphan sidecar, or another workspace's sidecar reached
         # via port collision, carries a mismatched
-        # ``POS_V2_WORKSPACE_ROOT`` env and cannot complete the probe.
+        # ``LOAM_WORKSPACE_ROOT`` env and cannot complete the probe.
         expected_workspace_root=str(pos_v2_root),
     )
     if not healthy:
@@ -2348,7 +2348,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             f"service-health-timeout:{','.join(pending)}",
             f"services did not report healthy within budget: {pending}",
             "Next session will retry. Check service logs:\n"
-            "  ~/.pos/logs/ and ~/.pos/logs/*.err\n"
+            "  ~/.loam/logs/ and ~/.loam/logs/*.err\n"
             "Inspect the launchd status:\n"
             "  launchctl print gui/$(id -u)/<LABEL>",
         )
@@ -2468,7 +2468,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--pos-root",
         default=None,
-        help="Override ~/.pos/ for state/log files (test/override hook).",
+        help="Override ~/.loam/ for state/log files (test/override hook).",
     )
     parser.add_argument(
         "--generation",
@@ -2486,7 +2486,7 @@ def main(argv: list[str] | None = None) -> int:
     # Wire state-file location into module globals so _advance_state()
     # picks them up without threading the config through every helper.
     # The ENABLED flag flips on here so tests that import + call
-    # _emit_diag directly do not pollute ~/.pos/ or any workspace tree.
+    # _emit_diag directly do not pollute ~/.loam/ or any workspace tree.
     #
     # Amendment #28: state is per workspace
     # (``<workspace>/.pos/first-run.state``); the host-global
@@ -2524,14 +2524,14 @@ def main(argv: list[str] | None = None) -> int:
             f"hands-off-lifecycle-internal:uncaught-exception:{type(e).__name__}",
             repr(e),
             "An unexpected exception escaped the first-run worker.\n"
-            "Inspect ~/.pos/first-run.log for the last recorded phase,\n"
+            "Inspect ~/.loam/first-run.log for the last recorded phase,\n"
             "then reopen claude to retry. If this repeats, file an issue\n"
             "with the log contents.",
             user_what="first-run worker crashed unexpectedly.",
             user_remediation=(
                 "reopen claude to retry. the next session will pick up\n"
                 "where this left off; if the same failure repeats, this\n"
-                "is a bug — file an issue with ~/.pos/first-run.log."
+                "is a bug — file an issue with ~/.loam/first-run.log."
             ),
         )
         return 0

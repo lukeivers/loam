@@ -3,7 +3,7 @@
 When ``canonical_source:`` in sync-config.yaml is a URL (per
 ``sync_config.canonical_source_kind``), pos-sync clones the
 canonical working tree to a workspace-shared cache at
-``~/.pos/canonical-cache/<repo-id>/`` and runs ``git fetch
+``~/.loam/canonical-cache/<repo-id>/`` and runs ``git fetch
 --all --tags`` on every invocation (always-fetch policy per
 D-β.1 LOCKED).
 
@@ -74,8 +74,8 @@ def derive_repo_id(url: str) -> str:
 
 
 def cache_root() -> Path:
-    """Return ``~/.pos/canonical-cache/`` (the workspace-shared cache root)."""
-    return Path.home() / ".pos" / "canonical-cache"
+    """Return ``~/.loam/canonical-cache/`` (the workspace-shared cache root)."""
+    return Path.home() / ".loam" / "canonical-cache"
 
 
 def _git(args: list[str], *, cwd: Path | None = None) -> None:
@@ -102,7 +102,7 @@ def _git(args: list[str], *, cwd: Path | None = None) -> None:
 
 
 def ensure_cache_clone(url: str, ref: str = "HEAD") -> Path:
-    """Ensure ``~/.pos/canonical-cache/<repo-id>/`` exists + is up-to-date.
+    """Ensure ``~/.loam/canonical-cache/<repo-id>/`` exists + is up-to-date.
 
     Per D-β.1 LOCKED:
 

@@ -344,14 +344,14 @@ def test_D5_3_scaffold_plists_emit_exact_env_key_sets(
     orch_keys = set(orch_plist["EnvironmentVariables"].keys())
 
     # memory-graphiti: amendment #29 added GRAPHITI_SERVICE_HOST +
-    # GRAPHITI_SERVICE_PORT + POS_V2_WORKSPACE_ROOT (three workspace-
+    # GRAPHITI_SERVICE_PORT + LOAM_WORKSPACE_ROOT (three workspace-
     # identity / port-binding keys); this amendment adds PATH. With
     # the pre-existing PYTHONUNBUFFERED that is five keys, exactly.
     assert mg_keys == {
         "PYTHONUNBUFFERED",
         "GRAPHITI_SERVICE_HOST",
         "GRAPHITI_SERVICE_PORT",
-        "POS_V2_WORKSPACE_ROOT",
+        "LOAM_WORKSPACE_ROOT",
         "PATH",
     }, f"memory-graphiti plist key set drifted: {mg_keys!r}"
 

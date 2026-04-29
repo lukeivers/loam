@@ -50,7 +50,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              (#7) opened. Orchestrator no longer self-loads
 #              `bootstrap.py`; the workspace-bootstrap framework's
 #              `WorkspaceBootstrapPyContribution` adapter is the sole
-#              loader, and missing `~/.pos/bootstrap.yaml` is the new
+#              loader, and missing `~/.loam/bootstrap.yaml` is the new
 #              fail-closed trigger (MissingConfigError, -32080). Adapter
 #              + integration-test edits land on this side because the
 #              removed `OrchestratorConfig.require_bootstrap` field was
@@ -148,7 +148,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              tracker-seed responsibility: on a workspace whose
 #              tracker DB does not yet carry a value-prop root, the
 #              scaffold seeds the workspace's
-#              `~/.pos/objective_tracker.sqlite` with a value-prop
+#              `~/.loam/objective_tracker.sqlite` with a value-prop
 #              root + spec-tier descendants. On pos-v2 dev workspaces
 #              (`docs/rebuild/VALUE_PROPOSITION.md` present at the
 #              workspace root) the seed reads the canonical doc as

@@ -14,7 +14,7 @@ Workflow:
 
 1. ``detect_conflicts(manifest, live_root)`` → ConflictReport
 2. If the report has any PENDING resolutions, framework writes the
-   YAML to ``~/.pos/framework/history/<tag>-conflicts.yaml`` and
+   YAML to ``~/.loam/framework/history/<tag>-conflicts.yaml`` and
    halts.
 3. User edits the YAML to set each pending entry's resolution.
 4. User re-runs ``pos upgrade <tag>`` which reloads the YAML,

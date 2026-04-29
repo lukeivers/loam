@@ -87,7 +87,7 @@ def probe_memory(
 
 def probe_orchestrator(
     *,
-    socket_path: str | Path = Path.home() / ".pos" / "orchestrator.sock",
+    socket_path: str | Path = Path.home() / ".loam" / "orchestrator.sock",
     timeout_s: float = 2.0,
 ) -> tuple[bool, str | None]:
     path = Path(socket_path).expanduser()

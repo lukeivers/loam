@@ -3,7 +3,7 @@
 `bootstrap.yaml` format (v1):
 
     version: 1
-    config_dir: ~/.pos/config          # optional; default = workspace_root/config
+    config_dir: ~/.loam/config          # optional; default = workspace_root/config
     workspace_root: ~/.my-workspace    # optional; default = parent of manifest
     contributions:
       - observability_aggregator       # name → entry-point group lookup

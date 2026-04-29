@@ -14,7 +14,7 @@ The orchestrator is a single long-lived Python asyncio process.
 It is instantiated once per pOS installation and is started via
 `await Orchestrator(config).run()`. It hosts:
 
-  1. The local-state store (~/.pos/orchestrator.sqlite) for
+  1. The local-state store (~/.loam/orchestrator.sqlite) for
      process-lifecycle events and compaction flags.
   2. A Unix-domain-socket JSON-RPC server for peer sessions.
   3. The primary-persona layer's BackgroundWorkMonitor coroutine.

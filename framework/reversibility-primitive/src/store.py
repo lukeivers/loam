@@ -4,7 +4,7 @@ Two tables:
   - compensation_path_binding     — one row per scope_id, last-writer-wins
   - rollback_invocation           — FSM rows keyed by (scope_id, idempotency_key)
 
-Per proposal §3.1 `~/.pos/reversibility/reversibility.sqlite` is the
+Per proposal §3.1 `~/.loam/reversibility/reversibility.sqlite` is the
 default path; a PEP-style Path is injected so tests pass tmp_path.
 WAL + synchronous=FULL + foreign_keys=ON per pos-v2 standard (matches
 objective-tracker's store).

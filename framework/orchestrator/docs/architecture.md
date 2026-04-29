@@ -32,7 +32,7 @@ working set from those logs on every cold start.
 │             ▼                                                    │
 │  ┌──────────────────────┐      ┌──────────────────────┐          │
 │  │ IPC server           │─────▶│ LocalStateStore      │          │
-│  │ Unix-domain socket   │      │ ~/.pos/              │          │
+│  │ Unix-domain socket   │      │ ~/.loam/              │          │
 │  │ JSON-RPC             │      │   orchestrator.sqlite│          │
 │  └──────────┬───────────┘      │ (event-sourced)      │          │
 │             │                   └──────────────────────┘          │
@@ -41,7 +41,7 @@ working set from those logs on every cold start.
 │  graceful-degradation component — no policy here)                │
 └─────────────┼────────────────────────────────────────────────────┘
               │ JSON-RPC over Unix socket
-              │ (0600, ~/.pos/orchestrator.sock)
+              │ (0600, ~/.loam/orchestrator.sock)
               ▼
 ┌─────────────────────────────────────────┐
 │ interactive Claude session (peer)        │
@@ -132,7 +132,7 @@ Activation flow:
 
 ## Local SQLite
 
-Distinct from Phase 1 stores. Path: `~/.pos/orchestrator.sqlite`
+Distinct from Phase 1 stores. Path: `~/.loam/orchestrator.sqlite`
 (configurable). Event-sourced; the same pattern as Phase 1. Types:
 
 - `process_started` / `process_stopped` / `process_crashed`
@@ -150,7 +150,7 @@ replay into a fresh database unchanged. Test: `test_d6_local_state.py`.
 ## Workspace bootstrap — fail-closed
 
 Scope callback re-registration on restart relies on a workspace-
-supplied `~/.pos/bootstrap.py` exposing `def register(orchestrator)`.
+supplied `~/.loam/bootstrap.py` exposing `def register(orchestrator)`.
 Luke's ruling: missing or erroring bootstrap → orchestrator refuses
 to start (exit 2 for missing, 3 for error). Matches the primary-
 persona loader's fail-closed posture.

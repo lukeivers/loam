@@ -14,7 +14,7 @@ Test shape mirrors ``test_detachment.py``:
 - Fake helpers simulate worker behaviour without running the real
   first-run flow.
 
-The original ``~/.pos/first-run.state`` at amendment #28 moved to
+The original ``~/.loam/first-run.state`` at amendment #28 moved to
 ``<workspace>/.pos/first-run.state`` — structural routing by path;
 the ``workspace_root`` field in the state content is defence in
 depth against a state file being moved or copied by an admin.

@@ -8,7 +8,7 @@ callable routing through:
   green;
 - Direct Bot API when the caller is out-of-session (``mcp_client`` is
   None) and the probe is green;
-- Fallback (in-session stdout + ``~/.pos/attention.md``) with framing
+- Fallback (in-session stdout + ``~/.loam/attention.md``) with framing
   when the probe is red.
 
 Inbound ``<channel source="telegram" …>`` events are handled by

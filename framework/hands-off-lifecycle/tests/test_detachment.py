@@ -59,7 +59,7 @@ from first_run_state import (  # noqa: E402
 def test_AC6_scaffold_partial_recovery_writes_missing_and_keeps_existing(
     tmp_path: Path,
 ) -> None:
-    """AC6 — when ~/.pos/ exists but bootstrap.yaml is missing, partial_recovery=True
+    """AC6 — when ~/.loam/ exists but bootstrap.yaml is missing, partial_recovery=True
     writes the missing files on top of the existing dir without clobbering.
     """
     from workspace_bootstrap.adapters.first_run_scaffold import (
@@ -552,7 +552,7 @@ def test_AC2_worker_advances_state_at_phase_boundaries(tmp_path: Path) -> None:
 def test_advance_state_is_noop_without_explicit_enable(tmp_path: Path) -> None:
     """Guard: if a test (or any caller) invokes _emit_diag without
     main() wiring the module, we must not scribble into the real
-    ~/.pos/ directory. Enforced by _STATE_WRITES_ENABLED flag."""
+    ~/.loam/ directory. Enforced by _STATE_WRITES_ENABLED flag."""
     import importlib
     import first_run_helper
 
@@ -602,8 +602,8 @@ def test_hook_shell_dispatches_and_returns_fast(tmp_path: Path) -> None:
     pos_root = tmp_path / ".pos"
 
     env = os.environ.copy()
-    env["POS_V2_POS_ROOT"] = str(pos_root)
-    env["POS_V2_PYTHON"] = sys.executable
+    env["LOAM_DATA_DIR"] = str(pos_root)
+    env["LOAM_PYTHON"] = sys.executable
 
     start = time.monotonic()
     proc = subprocess.run(

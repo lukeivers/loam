@@ -4,7 +4,7 @@ Step-by-step-when-impossible. Six numbered steps, each with an
 expected-time estimate. The user-handleable steps are numbered;
 system-handleable steps are silent.
 
-Self-retire on success — ``~/.pos/telegram-setup-offered`` with
+Self-retire on success — ``~/.loam/telegram-setup-offered`` with
 ``status: done`` is the marker that short-circuits the "offer setup"
 code path. The ``should_offer`` gate reads this marker every time;
 when the marker exists with ``status: done`` or ``status: declined``
@@ -17,8 +17,8 @@ number; the next session resumes from the failed step rather than
 starting over.
 
 Eve's inference #5 (decline-marker filename pattern): kept as
-``~/.pos/telegram-setup-offered-declined``. Challenge note: could be
-folded into the single ``~/.pos/telegram-setup-offered`` marker with
+``~/.loam/telegram-setup-offered-declined``. Challenge note: could be
+folded into the single ``~/.loam/telegram-setup-offered`` marker with
 ``status: declined`` inside — and that's what this module does; the
 separate file is redundant. Collapsed to a single marker file.
 """
@@ -39,7 +39,7 @@ from .allowlist import AccessFile, AuthorityClass
 from .availability import plugin_installed, token_configured
 
 
-DEFAULT_MARKER_PATH = Path("~/.pos/telegram-setup-offered").expanduser()
+DEFAULT_MARKER_PATH = Path("~/.loam/telegram-setup-offered").expanduser()
 
 
 class SetupStatus(str, Enum):

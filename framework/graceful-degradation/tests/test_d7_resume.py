@@ -39,7 +39,7 @@ def _build_component(
 ):
     clock = clock or FakeClock()
     cfg = DegradationConfig()
-    # Point SQLite at tmp_path to avoid polluting ~/.pos.
+    # Point SQLite at tmp_path to avoid polluting ~/.loam.
     cfg = DegradationConfig.model_validate(
         {**cfg.model_dump(), "state": {"sqlite_path": str(tmp_path / "deg.sqlite")}}
     )

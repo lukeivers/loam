@@ -3,7 +3,7 @@
 Two paths share one store:
 
   Path A — In-process custom SpanExporter for the six OTel-emitting
-  components. A workspace `~/.pos/bootstrap.py` calls
+  components. A workspace `~/.loam/bootstrap.py` calls
   `register_otel_provider(...)` from this module, which installs a
   TracerProvider with a BatchSpanProcessor pointing at our
   AggregatorSpanExporter. Python OTel's late-binding ProxyTracer
@@ -611,7 +611,7 @@ def install_for_workspace(
     *,
     start_pipeline: bool = True,
 ) -> tuple[IngestionPipeline, TracerProvider]:
-    """Convenience helper for `~/.pos/bootstrap.py` to invoke.
+    """Convenience helper for `~/.loam/bootstrap.py` to invoke.
 
     Installs the OTel TracerProvider, opens the store, and starts
     the ingest pipeline. Returns both the pipeline (so the caller

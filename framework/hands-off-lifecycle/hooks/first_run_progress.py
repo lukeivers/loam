@@ -65,8 +65,8 @@ from typing import TextIO
 
 
 # Sentinel values for the env override.
-_ENV_DISABLE = "POS_V2_FIRST_RUN_NO_TTY"
-_ENV_FORCE_FILE = "POS_V2_FIRST_RUN_PROGRESS_FILE"
+_ENV_DISABLE = "LOAM_FIRST_RUN_NO_TTY"
+_ENV_FORCE_FILE = "LOAM_FIRST_RUN_PROGRESS_FILE"
 
 
 class UserProgress:
@@ -77,9 +77,9 @@ class UserProgress:
     ordered). Messages are always prefixed ``pos-v2:`` so the user
     knows the source in a busy terminal.
 
-    A caller may override the destination via ``POS_V2_FIRST_RUN_PROGRESS_FILE``
+    A caller may override the destination via ``LOAM_FIRST_RUN_PROGRESS_FILE``
     — used by the test suite to redirect the surface into a capture
-    file without mocking the entire class. Setting ``POS_V2_FIRST_RUN_NO_TTY=1``
+    file without mocking the entire class. Setting ``LOAM_FIRST_RUN_NO_TTY=1``
     disables output entirely (silent mode; useful for non-interactive
     CI where even stderr noise is undesirable).
     """
@@ -99,8 +99,8 @@ class UserProgress:
         """Resolve the user-facing surface once; cache the file handle.
 
         Priority order:
-          1. ``POS_V2_FIRST_RUN_PROGRESS_FILE`` env override (test hook).
-          2. ``POS_V2_FIRST_RUN_NO_TTY=1`` — silent, no writes.
+          1. ``LOAM_FIRST_RUN_PROGRESS_FILE`` env override (test hook).
+          2. ``LOAM_FIRST_RUN_NO_TTY=1`` — silent, no writes.
           3. ``/dev/tty`` — controlling terminal, bypasses stdout capture.
           4. ``sys.stderr`` — last-resort fallback.
 
@@ -257,7 +257,7 @@ def reset_progress_for_tests() -> None:
     """Drop the singleton — test-only escape hatch for re-resolution.
 
     Not part of the public API. Exposed so tests that mutate
-    ``POS_V2_FIRST_RUN_PROGRESS_FILE`` between cases get a fresh
+    ``LOAM_FIRST_RUN_PROGRESS_FILE`` between cases get a fresh
     target resolution.
     """
     global _singleton

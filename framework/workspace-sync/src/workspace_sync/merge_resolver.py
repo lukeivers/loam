@@ -8,7 +8,7 @@ audit log surfaces low-confidence-first for human review.
 
 Budgeting (BB D-1 locks):
   - per_conflict_token_budget: 5_000  (workspace-tunable via
-    ~/.pos/upgrade-config.yaml)
+    ~/.loam/upgrade-config.yaml)
   - cumulative_token_budget:  100_000  (workspace-tunable)
 
 Failure modes:

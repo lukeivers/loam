@@ -1,7 +1,7 @@
 """D8 — State preservation + restart reconciliation.
 
 Acceptance (brief):
-- DB exists at ~/.pos/degradation.sqlite (configurable) on first run.
+- DB exists at ~/.loam/degradation.sqlite (configurable) on first run.
 - Event log + FSM-state cache; cache rebuildable from events.
 - Simulated SIGKILL at various lifecycle moments produces correct
   reconciliation on restart; no orphan pauses, no lost notifications,
@@ -284,7 +284,7 @@ state:
     assert str(cfg.sqlite_path()) == "/tmp/pos-deg-test.sqlite"
 
 
-def test_default_sqlite_path_is_pos_dir() -> None:
+def test_default_sqlite_path_is_loam_dir() -> None:
     cfg = DegradationConfig()
-    assert ".pos" in str(cfg.sqlite_path())
+    assert ".loam" in str(cfg.sqlite_path())
     assert cfg.sqlite_path().name == "degradation.sqlite"

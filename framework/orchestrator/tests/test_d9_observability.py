@@ -125,7 +125,7 @@ async def test_orchestrator_emissions_cover_required_events(tmp_config):
 # orchestrator no longer emits a `bootstrap_refused` event from its
 # own startup — `bootstrap.py` is loaded by the workspace-bootstrap
 # framework's adapter, and the fail-closed point moved upstream to
-# missing `~/.pos/bootstrap.yaml` (framework's `MissingConfigError`,
+# missing `~/.loam/bootstrap.yaml` (framework's `MissingConfigError`,
 # code -32080). See
 # docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md.
 

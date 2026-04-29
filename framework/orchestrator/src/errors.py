@@ -49,12 +49,12 @@ class BindRefused(OrchestratorError):
 
 
 class BootstrapMissing(OrchestratorError):
-    """Workspace ~/.pos/bootstrap.py is missing. Fail-closed per
+    """Workspace ~/.loam/bootstrap.py is missing. Fail-closed per
     Luke's ruling in the brief."""
 
 
 class BootstrapError(OrchestratorError):
-    """Workspace ~/.pos/bootstrap.py raised on import or invocation."""
+    """Workspace ~/.loam/bootstrap.py raised on import or invocation."""
 
 
 class IPCError(OrchestratorError):

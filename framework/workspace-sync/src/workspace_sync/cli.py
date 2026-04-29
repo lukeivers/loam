@@ -30,7 +30,7 @@ Argparse:
   pos-sync [--canonical <path-or-url>]   optional; falls through to
                                          <workspace>/workspace/.pos/
                                          sync-config.yaml or
-                                         ~/.pos/sync-config.yaml.
+                                         ~/.loam/sync-config.yaml.
            [--ref <commit-or-branch>]    default: <remote>/HEAD
            [--workspace <path>]          default: cwd
            [--merge-resolver-module M]   factory; default
@@ -55,7 +55,7 @@ Canonical-source resolution (β.1, AC.β.1):
   Precedence (highest → lowest):
   1. ``--canonical <path-or-url>`` CLI flag.
   2. ``<workspace>/workspace/.pos/sync-config.yaml``'s ``canonical_source:``.
-  3. ``~/.pos/sync-config.yaml``'s ``canonical_source:``.
+  3. ``~/.loam/sync-config.yaml``'s ``canonical_source:``.
   4. Halt with structured error naming all three paths.
 """
 
@@ -819,7 +819,7 @@ def build_parser() -> argparse.ArgumentParser:
             "working tree, an http(s) URL, or a git@-style SSH spec. "
             "Optional: when absent, pos-sync reads canonical_source "
             "from <workspace>/workspace/.pos/sync-config.yaml or "
-            "~/.pos/sync-config.yaml."
+            "~/.loam/sync-config.yaml."
         ),
     )
     parser.add_argument(
@@ -917,7 +917,7 @@ def main(argv: list[str] | None = None) -> int:
             "no canonical source: pass --canonical <path-or-url>, OR "
             "set canonical_source: in <workspace>/workspace/.pos/"
             "sync-config.yaml, OR set canonical_source: in "
-            "~/.pos/sync-config.yaml"
+            "~/.loam/sync-config.yaml"
         )
         return 2  # unreachable
 

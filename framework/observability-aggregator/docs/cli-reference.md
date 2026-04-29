@@ -5,7 +5,7 @@ Thin wrapper over the structured Pydantic API. One subcommand per method, plus `
 ## Global options
 
 ```
---db PATH                Override DB path (default ~/.pos/observability.db)
+--db PATH                Override DB path (default ~/.loam/observability.db)
 --substrate {duckdb,sqlite}
 --raw                    Single-line JSON output
 ```

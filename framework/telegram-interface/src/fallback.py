@@ -1,4 +1,4 @@
-"""Fallback delivery — in-session stdout and ``~/.pos/attention.md``.
+"""Fallback delivery — in-session stdout and ``~/.loam/attention.md``.
 
 When Telegram is unavailable, a dropped message is forbidden (rule 8
 of the research plan constraints). This module implements the two
@@ -25,7 +25,7 @@ from typing import Awaitable, Callable
 from . import observability as obs
 
 
-DEFAULT_ATTENTION_PATH = Path("~/.pos/attention.md").expanduser()
+DEFAULT_ATTENTION_PATH = Path("~/.loam/attention.md").expanduser()
 
 
 def fallback_preamble(reason: str) -> str:

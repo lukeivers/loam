@@ -11,7 +11,7 @@ This component additionally ships two operator-facing console scripts:
 ### `pos-bootstrap`
 
 Runs the full bootstrap against the manifest at
-`$POS_BOOTSTRAP_MANIFEST` (or `~/.pos/bootstrap.yaml` by default).
+`$POS_BOOTSTRAP_MANIFEST` (or `~/.loam/bootstrap.yaml` by default).
 Resolves contributions, runs each phase, and — when the orchestrator
 contribution constructed an event loop — awaits it until SIGTERM /
 SIGINT.
@@ -30,7 +30,7 @@ pos-new-workspace <new-ws-path> --from <canonical-source>
 
 - `<canonical-source>` is either an absolute POSIX path to a local
   git working tree, or an `http(s)://` / `git@` URL (cloned to a
-  shared cache at `~/.pos/canonical-cache/<repo-id>/`).
+  shared cache at `~/.loam/canonical-cache/<repo-id>/`).
 - `<new-ws-path>` must be empty or non-existent. Pass
   `--init-existing` to re-scaffold an already-bootstrapped workspace
   (idempotent).
@@ -45,7 +45,7 @@ Post-bootstrap, the workspace has the D-shape:
   workspace/        # workspace-state (per D.2)
     .pos/
       sync-config.yaml          # canonical_source recorded
-      legacy-user-config/       # user-config defaults (~/.pos/-shaped)
+      legacy-user-config/       # user-config defaults (~/.loam/-shaped)
       ... (memory-worker, audit log, ...)
     personas/<handle>/          # primary persona scaffold
     .mcp.json                   # MCP server registration for Claude Code

@@ -1,6 +1,6 @@
 """CostConfig — ceiling + rolling-window configuration loaded from YAML.
 
-Loaded from `~/.pos/cost/ceilings.yaml` by default; a path is injected
+Loaded from `~/.loam/cost/ceilings.yaml` by default; a path is injected
 for tests. Refuses negative ceilings and `warning_fraction` outside
 `(0.0, 1.0)` at load time (C28 — structural defence-in-depth).
 
@@ -90,7 +90,7 @@ def default_config() -> CostConfig:
     before a user sets caps.
 
     Ceilings are `None` by default — cost governance is opt-in, not
-    opt-out. A workspace writes `~/.pos/cost/ceilings.yaml` to turn
+    opt-out. A workspace writes `~/.loam/cost/ceilings.yaml` to turn
     enforcement on.
     """
     return CostConfig(
@@ -115,14 +115,14 @@ def default_config() -> CostConfig:
 def load_config(path: str | Path | None = None) -> CostConfig:
     """Load cost config from YAML, or return the v1.0 default.
 
-    `path` defaults to `~/.pos/cost/ceilings.yaml`. If the file is
+    `path` defaults to `~/.loam/cost/ceilings.yaml`. If the file is
     absent, the default config is returned — cost governance is
     opt-in; a missing file is not an error.
 
     Pydantic refuses malformed configs at load time (C28).
     """
     if path is None:
-        path = Path.home() / ".pos" / "cost" / "ceilings.yaml"
+        path = Path.home() / ".loam" / "cost" / "ceilings.yaml"
     else:
         path = Path(path)
     if not path.exists():

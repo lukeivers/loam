@@ -1,6 +1,6 @@
 # Conflict report — `<tag>-conflicts.yaml` (D7)
 
-Emitted at `~/.pos/framework/history/<tag>-conflicts.yaml` when
+Emitted at `~/.loam/framework/history/<tag>-conflicts.yaml` when
 pre-install sha-diff finds any file whose local sha disagrees with
 both the prior-release sha and the new-release sha.
 
@@ -26,7 +26,7 @@ that silently drops a change.
 |-------|---------|
 | `pending` | User has not decided. Upgrade blocks until resolved. |
 | `auto-accept-local-matches-upstream` | Deterministic: local sha == new-release sha. Auto-set by `detect_conflicts`; user does not author this. |
-| `accept-upstream` | Overwrite the local edit with the new release's version. Local content preserved at `~/.pos/framework/overrides/<tag>/<path>` for audit. |
+| `accept-upstream` | Overwrite the local edit with the new release's version. Local content preserved at `~/.loam/framework/overrides/<tag>/<path>` for audit. |
 | `keep-local` | Preserve the local edit; record a workspace override at this path so future releases know to reapply. |
 | `three-way-merge` | User supplies a merged file (path in `resolved_content_path`). |
 | `abort` | Cancel the upgrade. No state change. |
@@ -43,7 +43,7 @@ conflicts:
     installed_sha256: d4e5f6...
     new_release_sha256: 789abc...
     change_kind: upstream_modified_and_local_modified
-    three_way_diff_path: ~/.pos/framework/history/<tag>-conflicts/memory_upgrade.diff
+    three_way_diff_path: ~/.loam/framework/history/<tag>-conflicts/memory_upgrade.diff
     resolution: pending
   - path: framework/orchestrator/src/orchestrator.py
     prior_release_sha256: aaa111...

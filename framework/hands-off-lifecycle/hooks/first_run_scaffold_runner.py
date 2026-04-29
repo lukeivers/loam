@@ -73,7 +73,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "--pos-root",
         required=True,
-        help="The ~/.pos/ directory the scaffold writes into.",
+        help="The ~/.loam/ directory the scaffold writes into.",
     )
     parser.add_argument(
         "--workspace-root",
@@ -113,7 +113,7 @@ def _emit_failure_payload(exc: BaseException) -> None:
     description for its own diagnostic emission. We keep the payload
     deliberately small — type name, str(exc), and any `.code` attribute
     carried by BootstrapError subclasses. A full traceback would bloat
-    the ~/.pos/first-run.log noise; the traceback is printed in plain
+    the ~/.loam/first-run.log noise; the traceback is printed in plain
     text after the JSON so a human reading the log still gets it.
     """
     code = getattr(exc, "code", None)

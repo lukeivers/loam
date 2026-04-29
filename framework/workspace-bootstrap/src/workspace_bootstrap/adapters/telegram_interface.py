@@ -14,14 +14,14 @@ edits; every symbol consumed is already exported by
 ``telegram-interface`` at ``cdfb3f3``.
 
 Fail-closed direction (proposal §2): degraded-alive at default. When
-``~/.pos/telegram.yaml`` is absent, or the bot token is not
+``~/.loam/telegram.yaml`` is absent, or the bot token is not
 configured, or the allowlist file is missing, the adapter STILL
 composes — ``is_active=False`` on the channel, ``send`` routes through
 the component's fallback. The adapter only raises
-``AdapterRaisedError`` when ``~/.pos/telegram.yaml`` contains
+``AdapterRaisedError`` when ``~/.loam/telegram.yaml`` contains
 ``required: true`` AND credentials are absent.
 
-Config (``~/.pos/telegram.yaml``, all fields optional):
+Config (``~/.loam/telegram.yaml``, all fields optional):
 
     required: bool        # default False; true → fail-close boot if creds absent
     env_path: str         # override ~/.claude/channels/telegram/.env location
@@ -31,7 +31,7 @@ Config (``~/.pos/telegram.yaml``, all fields optional):
 
 The credential source of truth remains
 ``~/.claude/channels/telegram/.env`` (per proposal §5 #5). The
-framework adapter does NOT relocate the token into ``~/.pos/``.
+framework adapter does NOT relocate the token into ``~/.loam/``.
 """
 
 from __future__ import annotations
@@ -102,7 +102,7 @@ class TelegramInterfaceContribution(BaseContribution):
                 "telegram_interface: required=true but TELEGRAM_BOT_TOKEN "
                 "is not configured (set in ~/.claude/channels/telegram/.env "
                 "or the TELEGRAM_BOT_TOKEN env var, or flip required=false "
-                "in ~/.pos/telegram.yaml)",
+                "in ~/.loam/telegram.yaml)",
                 data={
                     "code": IPC_TELEGRAM_TOKEN_INVALID,
                     "env_path": str(env_path) if env_path else None,
@@ -153,7 +153,7 @@ class TelegramInterfaceContribution(BaseContribution):
             raise AdapterRaisedError(
                 "telegram_interface: required=true but no owner identity "
                 "exists in the access allowlist; run the setup walkthrough "
-                "or flip required=false in ~/.pos/telegram.yaml",
+                "or flip required=false in ~/.loam/telegram.yaml",
                 data={
                     "code": IPC_TELEGRAM_SETUP_FAILED,
                     "access_path": str(access.path),

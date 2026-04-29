@@ -22,11 +22,11 @@ set -u  # don't set -e: we intentionally trigger failures and inspect
 
 if [[ -z "${POS_BASE_DIR:-}" ]]; then
     echo "ERROR: POS_BASE_DIR must be set to a throwaway directory."
-    echo "       Never run this against ~/.pos on the live system."
+    echo "       Never run this against ~/.loam on the live system."
     exit 2
 fi
 
-if [[ "$POS_BASE_DIR" == "$HOME/.pos" || "$POS_BASE_DIR" == *live* ]]; then
+if [[ "$POS_BASE_DIR" == "$HOME/.loam" || "$POS_BASE_DIR" == *live* ]]; then
     echo "ERROR: refusing to run against what looks like the live path."
     exit 2
 fi

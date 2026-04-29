@@ -68,7 +68,7 @@ def install(
 ) -> Path:
     python_path = python_path or Path(sys.executable)
     working_dir = working_dir or Path.cwd()
-    log_dir = Path.home() / ".pos" / "logs"
+    log_dir = Path.home() / ".loam" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     stdout_log = log_dir / "orchestrator.out"
     stderr_log = log_dir / "orchestrator.err"

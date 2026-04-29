@@ -6,7 +6,7 @@ component's emission surface without amending any of them:
   - Six OTel-emitting components (scope-of-work, primary-persona,
     objective-tracker, orchestrator, graceful-degradation, plus test
     infra) flow through a custom SpanProcessor + SpanExporter
-    registered via the orchestrator's `~/.pos/bootstrap.py` workspace
+    registered via the orchestrator's `~/.loam/bootstrap.py` workspace
     hook. Python OTel's late-binding ProxyTracer routes them
     automatically.
 
@@ -14,7 +14,7 @@ component's emission surface without amending any of them:
     (spans.jsonl, tokens.jsonl, audit.jsonl) flow through a tailer
     that translates them into the canonical schema.
 
-Storage: DuckDB primary at `~/.pos/observability.duckdb`; SQLite
+Storage: DuckDB primary at `~/.loam/observability.duckdb`; SQLite
 fallback mode selectable via config.
 
 Query surface: structured Pydantic API (canonical), NL path via

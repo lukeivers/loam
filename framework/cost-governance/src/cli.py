@@ -18,14 +18,14 @@ from .store import CostStore
 
 
 def _default_db_path() -> Path:
-    return Path.home() / ".pos" / "cost" / "cost.sqlite"
+    return Path.home() / ".loam" / "cost" / "cost.sqlite"
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pos cost")
     parser.add_argument(
         "--db", type=Path, default=_default_db_path(),
-        help="Path to the cost SQLite store (default: ~/.pos/cost/cost.sqlite)",
+        help="Path to the cost SQLite store (default: ~/.loam/cost/cost.sqlite)",
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 

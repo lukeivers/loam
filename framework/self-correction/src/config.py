@@ -38,7 +38,7 @@ class CorrectionConfig(BaseModel):
     aggregator_poll_interval_seconds: int = Field(default=30, ge=1)
 
     # store path
-    store_path: str = Field(default="~/.pos/correction/correction.sqlite")
+    store_path: str = Field(default="~/.loam/correction/correction.sqlite")
 
     # objective template (Eve-inference #5)
     objective_template: str = (

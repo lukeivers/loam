@@ -31,7 +31,7 @@ def _sample_report() -> ConflictReport:
                 installed_sha256="b" * 64,
                 new_release_sha256="c" * 64,
                 change_kind=ConflictChangeKind.UPSTREAM_MODIFIED_AND_LOCAL_MODIFIED,
-                three_way_diff_path="~/.pos/framework/history/<tag>-conflicts/memory_upgrade.diff",
+                three_way_diff_path="~/.loam/framework/history/<tag>-conflicts/memory_upgrade.diff",
                 resolution=Resolution.PENDING,
             ),
         ],

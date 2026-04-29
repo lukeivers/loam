@@ -1,14 +1,14 @@
 """Workspace + user sync-config schema and loader (β.1).
 
 Pydantic schema for ``<workspace>/.pos/sync-config.yaml`` and
-``~/.pos/sync-config.yaml``. Both files share one schema; the
+``~/.loam/sync-config.yaml``. Both files share one schema; the
 loader walks a precedence chain (workspace-local > ~/-rooted >
 defaults) and returns a single merged ``SyncConfig`` instance.
 
 Field ``canonical_source`` (NEW for amendment #58 / β.1) carries
 the URL or absolute local path the operator wants ``pos-sync``
 to pull canonical from when no ``--canonical`` flag is passed.
-URL form clones to ``~/.pos/canonical-cache/<repo-id>/`` per
+URL form clones to ``~/.loam/canonical-cache/<repo-id>/`` per
 ``canonical_cache.py``; absolute-path form is used directly.
 
 Fields ``cumulative_token_budget`` and ``per_conflict_token_budget``
@@ -39,7 +39,7 @@ class SyncConfig(BaseModel):
     """Operator-tunable sync-config schema (β.1).
 
     Both ``<workspace>/.pos/sync-config.yaml`` and
-    ``~/.pos/sync-config.yaml`` validate against this model.
+    ``~/.loam/sync-config.yaml`` validate against this model.
     Unknown fields raise (``extra="forbid"`` mirrors #56's
     ``sync_protected.py`` pattern).
 
@@ -88,8 +88,8 @@ def workspace_sync_config_path(workspace_root: Path) -> Path:
 
 
 def user_sync_config_path() -> Path:
-    """Return ``~/.pos/sync-config.yaml`` (user-rooted)."""
-    return Path.home() / ".pos" / "sync-config.yaml"
+    """Return ``~/.loam/sync-config.yaml`` (user-rooted)."""
+    return Path.home() / ".loam" / "sync-config.yaml"
 
 
 def _load_one(path: Path) -> SyncConfig | None:
@@ -139,7 +139,7 @@ def load_sync_config(workspace_root: Path) -> SyncConfig:
     Precedence (highest → lowest):
 
     1. ``<workspace_root>/.pos/sync-config.yaml`` (workspace-local).
-    2. ``~/.pos/sync-config.yaml`` (user-rooted).
+    2. ``~/.loam/sync-config.yaml`` (user-rooted).
     3. Schema defaults (all fields None).
 
     Field-by-field merge: a field set in the workspace-local file

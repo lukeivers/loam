@@ -433,7 +433,7 @@ def test_T4_rewritten_settings_preserves_user_keys_across_self_retire(
 # ---- T5, T6: Python version gate (shell behaviour) ------------------
 #
 # The shell script exits 0 and emits a stdout diagnostic on gate
-# failure. We exercise it by setting POS_V2_PYTHON to a path that
+# failure. We exercise it by setting LOAM_PYTHON to a path that
 # resolves to a too-old Python, and to a nonexistent path.
 
 
@@ -443,7 +443,7 @@ def _run_first_run_sh(
     script = workspace / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     full_env = dict(os.environ)
     # Remove inherited PYTHON env that would override our fixture.
-    for k in ("POS_V2_PYTHON", "CLAUDE_PROJECT_DIR"):
+    for k in ("LOAM_PYTHON", "CLAUDE_PROJECT_DIR"):
         full_env.pop(k, None)
     full_env.update(env)
     return subprocess.run(
@@ -468,7 +468,7 @@ def test_T5_version_too_low_emits_step_by_step_diagnostic(
     tmp_path: Path,
 ) -> None:
     """T5 — 3.12 only available → halt with step-by-step install instructions."""
-    # Construct a workspace where POS_V2_PYTHON points at a fake python
+    # Construct a workspace where LOAM_PYTHON points at a fake python
     # that reports 3.12 and no other candidate is reachable. We write a
     # shell wrapper that prints a 3.12 version.
     ws = tmp_path / "pos-v2"
@@ -511,7 +511,7 @@ def test_T5_version_too_low_emits_step_by_step_diagnostic(
     proc = _run_first_run_sh(
         workspace=ws,
         env={
-            "POS_V2_PYTHON": str(fake_python_312_src),
+            "LOAM_PYTHON": str(fake_python_312_src),
             # Strip PATH so no system python3.13 is reachable.
             "PATH": "/nonexistent",
         },
@@ -536,7 +536,7 @@ def test_T6_no_python_at_all_emits_step_by_step_diagnostic(
     proc = _run_first_run_sh(
         workspace=ws,
         env={
-            "POS_V2_PYTHON": "/nonexistent/python",
+            "LOAM_PYTHON": "/nonexistent/python",
             "PATH": "/nonexistent",
         },
     )

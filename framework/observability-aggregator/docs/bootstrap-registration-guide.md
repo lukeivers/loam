@@ -1,10 +1,10 @@
 # Bootstrap-Registration Guide
 
-The aggregator is wired into a pOS workspace via the orchestrator's `~/.pos/bootstrap.py` workspace-hook convention.
+The aggregator is wired into a pOS workspace via the orchestrator's `~/.loam/bootstrap.py` workspace-hook convention.
 
 ## Minimal bootstrap
 
-Create `~/.pos/bootstrap.py`:
+Create `~/.loam/bootstrap.py`:
 
 ```python
 from pos_observability_aggregator import AggregatorConfig
@@ -15,7 +15,7 @@ _pipeline = None
 
 def register(orchestrator):
     global _pipeline
-    cfg = AggregatorConfig()    # defaults to ~/.pos/observability.duckdb
+    cfg = AggregatorConfig()    # defaults to ~/.loam/observability.duckdb
     _pipeline, _provider = install_for_workspace(cfg, start_pipeline=True)
     # _pipeline.stop() on shutdown is optional — daemon threads exit
     # with the process.
@@ -28,9 +28,9 @@ The orchestrator calls `register(self)` once at startup. From that point on:
 
 ## What `install_for_workspace` does
 
-1. Creates `~/.pos/` if missing.
-2. Opens (or creates) `~/.pos/observability.duckdb` with the canonical schema.
-3. Installs a `TracerProvider` whose `BatchSpanProcessor` feeds the `AggregatorSpanExporter` (which writes to `~/.pos/spool.jsonl`).
+1. Creates `~/.loam/` if missing.
+2. Opens (or creates) `~/.loam/observability.duckdb` with the canonical schema.
+3. Installs a `TracerProvider` whose `BatchSpanProcessor` feeds the `AggregatorSpanExporter` (which writes to `~/.loam/spool.jsonl`).
 4. Starts the spool drainer and the three memory tailers as daemon threads.
 5. Returns `(pipeline, provider)` so the caller can stop them on shutdown if desired.
 
@@ -55,9 +55,9 @@ from pos_observability_aggregator import AggregatorConfig
 from pos_observability_aggregator.config import RetentionConfig, IngestConfig
 
 cfg = AggregatorConfig(
-    base_dir="~/.pos",
+    base_dir="~/.loam",
     substrate="duckdb",                       # or "sqlite"
-    db_path="~/.pos/observability.duckdb",    # optional override
+    db_path="~/.loam/observability.duckdb",    # optional override
     retention=RetentionConfig(
         full_fidelity_days=7,                 # 0-7d full
         daily_rollup_end_days=30,             # 7-30d daily + top-N raw
@@ -67,7 +67,7 @@ cfg = AggregatorConfig(
     ),
     ingest=IngestConfig(
         memory_sink_dir="./data/observability",
-        spool_path=None,                      # default ~/.pos/obs_spool.jsonl
+        spool_path=None,                      # default ~/.loam/obs_spool.jsonl
         batch_size=256,
         batch_interval_seconds=2.0,
         self_namespace_prefix="pos.aggregator",
@@ -78,15 +78,15 @@ cfg = AggregatorConfig(
 Or load from YAML:
 
 ```python
-cfg = AggregatorConfig.from_yaml("~/.pos/observability.yaml")
+cfg = AggregatorConfig.from_yaml("~/.loam/observability.yaml")
 ```
 
 YAML format:
 ```yaml
 observability:
-  base_dir: "~/.pos"
+  base_dir: "~/.loam"
   substrate: duckdb
-  db_path: "~/.pos/observability.duckdb"
+  db_path: "~/.loam/observability.duckdb"
   retention:
     full_fidelity_days: 7
     daily_rollup_end_days: 30

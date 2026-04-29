@@ -214,7 +214,7 @@ async def _impl_health(graphiti: Any) -> dict[str, Any]:
     Amendment #29 (AC29.5): the response carries a ``workspace_root``
     field so consumers (hands-off-lifecycle's phase-4b probe) can
     verify the responding sidecar belongs to the workspace they
-    dispatched from. Value comes from ``POS_V2_WORKSPACE_ROOT`` in
+    dispatched from. Value comes from ``LOAM_WORKSPACE_ROOT`` in
     the process env, which the workspace-bootstrap first-run scaffold
     injects via the launchd plist's ``EnvironmentVariables`` dict.
     Empty string is the explicit "workspace identity not configured"
@@ -225,7 +225,7 @@ async def _impl_health(graphiti: Any) -> dict[str, Any]:
         "llm_model": graphiti.llm_client.model,
         "embedder_dim": graphiti.embedder.config.embedding_dim,
         "db_path": os.environ.get("KUZU_DB_PATH", "./data/kuzu_db"),
-        "workspace_root": os.environ.get("POS_V2_WORKSPACE_ROOT", ""),
+        "workspace_root": os.environ.get("LOAM_WORKSPACE_ROOT", ""),
     }
 
 

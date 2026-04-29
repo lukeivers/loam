@@ -100,7 +100,7 @@ CORPUS: list[tuple[str, str, type[BaseModel] | None, int]] = [
     ),
     # 9. Instruction-following
     (
-        "Step 1: open ~/.pos/degradation-config.yaml.\n"
+        "Step 1: open ~/.loam/degradation-config.yaml.\n"
         "Step 2: set modes.garbage.judge_budget_per_hour to 10.\n"
         "Step 3: restart the orchestrator.",
         "instructions.generate",

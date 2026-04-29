@@ -12,17 +12,30 @@ from loam.publish_framework_only.synth import (
 )
 
 
+# Default manifest location relative to the canonical repo root.
+# Per AC.OSS-M2.5 + plan §10 D-build.M2.4: required parameter on
+# ``synthesise_framework_only``; CLI defaults the value from the
+# ``--repo`` argument so end-user CLI invocations don't change.
+DEFAULT_MANIFEST_REL = (
+    "framework/tools/pos-publish-framework-only/"
+    "publish-mode-manifest.yaml"
+)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pos-publish-framework-only",
         description=(
-            "Synthesise the `framework-only` branch on canonical pos-v2 "
-            "from a `pos-v2` commit. The synthesised branch's tree "
-            "promotes `framework/<entry>` to root + carries top-level "
-            "docs (CLAUDE.md, CLAUDE.dev.md, README.md, docs/). "
-            "Workspaces produced by `pos-new-workspace --from "
-            "<canonical>` clone this branch, eliminating the "
-            "`framework/framework/<comp>/` doubling failure class."
+            "Synthesise the `framework-only` branch on canonical "
+            "pos-v2 from a `pos-v2` commit. The synthesised branch's "
+            "tree promotes `framework/<entry>` to root + carries top-"
+            "level docs (CLAUDE.md, README.md, docs/, etc.) under the "
+            "publish-mode partition manifest at "
+            "framework/tools/pos-publish-framework-only/"
+            "publish-mode-manifest.yaml. Workspaces produced by "
+            "`pos-new-workspace --from <canonical>` clone this branch, "
+            "eliminating the `framework/framework/<comp>/` doubling "
+            "failure class."
         ),
     )
     parser.add_argument(
@@ -51,6 +64,19 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--manifest-path",
+        type=Path,
+        default=None,
+        help=(
+            "Path to the publish-mode partition manifest YAML "
+            "(default: <repo>/" + DEFAULT_MANIFEST_REL + "). "
+            "The manifest classifies every workspace path into "
+            "public_only / dev_and_public / dev_only / "
+            "excluded_from_publish; only public_only and "
+            "dev_and_public ship in the synthetic tree."
+        ),
+    )
+    parser.add_argument(
         "--quiet",
         action="store_true",
         help="Suppress the success summary line (errors still print).",
@@ -58,12 +84,23 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _resolve_manifest_path(
+    repo: Path, manifest_path: Path | None
+) -> Path:
+    """Default-resolve the manifest path against ``--repo``."""
+    if manifest_path is not None:
+        return manifest_path
+    return repo / DEFAULT_MANIFEST_REL
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    manifest_path = _resolve_manifest_path(args.repo, args.manifest_path)
     try:
         result = synthesise_framework_only(
             args.repo,
+            manifest_path=manifest_path,
             source=args.source,
             target_ref=args.target_ref,
         )

@@ -78,9 +78,12 @@ universal_paths:
     - docs/rebuild/plans/
     - framework/tools/
   files:
-    # Cross-tree consumer update (1 line) per AC.OSS-M2.5 +
-    # plan §11 finding #7.
+    # Cross-tree consumer updates (~5-line edits) per AC.OSS-M2.5 +
+    # plan §11 finding #7. Both files import / call
+    # synthesise_framework_only and need to pass the now-required
+    # manifest_path argument.
     - framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py
+    - framework/workspace-bootstrap/tests/conftest.py
 
 narrative:
   target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-partition

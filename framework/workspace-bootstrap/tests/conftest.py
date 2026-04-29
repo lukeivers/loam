@@ -56,6 +56,30 @@ def _git(args: list[str], *, cwd: Path) -> None:
         )
 
 
+# Per amendment #83 — M2 (publish-mode partition manifest +
+# synthesis tool extension): the synthesis tool now requires a
+# manifest path. The fixture canonical's manifest classifies its
+# known path set as dev_and_public (no dev_only / excluded behaviour
+# in the workspace-bootstrap fixture; the AC.SFR.4 test exercises
+# the synthesis composition, not the partition).
+_FIXTURE_MANIFEST_REL = (
+    "framework/tools/pos-publish-framework-only/"
+    "publish-mode-manifest.yaml"
+)
+_FIXTURE_MANIFEST_YAML = (
+    "schema_version: 1\n"
+    "audit_roots: [framework/, docs/, CLAUDE.md]\n"
+    "audit_excludes: []\n"
+    "public_only: []\n"
+    "dev_and_public:\n"
+    "  - glob: 'framework/**'\n"
+    "  - glob: 'docs/**'\n"
+    "  - path: CLAUDE.md\n"
+    "dev_only: []\n"
+    "excluded_from_publish: []\n"
+)
+
+
 def _make_fixture_canonical(
     root: Path,
     *,
@@ -78,6 +102,12 @@ def _make_fixture_canonical(
     fixture canonicals match the post-restructure shape consumed by
     ``pos-new-workspace``. Tests verifying the failure mode when
     ``framework-only`` is absent pass ``publish_framework_only=False``.
+
+    Per amendment #83 (M2 — publish-mode partition manifest +
+    synthesis tool extension): the fixture also writes a fixture
+    publish-mode-manifest.yaml at the canonical path so
+    ``synthesise_framework_only`` can read it. The fixture manifest
+    classifies the fixture's known path set as ``dev_and_public``.
     """
     if files is None:
         files = {
@@ -96,6 +126,12 @@ def _make_fixture_canonical(
     _git(["init", "--initial-branch=pos-v2"], cwd=root)
     _git(["config", "user.email", "fixture@local"], cwd=root)
     _git(["config", "user.name", "fixture"], cwd=root)
+    # Per amendment #83 — write a fixture publish-mode-manifest.yaml
+    # before the user's files, at the canonical path the synthesis
+    # tool defaults to.
+    manifest_target = root / _FIXTURE_MANIFEST_REL
+    manifest_target.parent.mkdir(parents=True, exist_ok=True)
+    manifest_target.write_text(_FIXTURE_MANIFEST_YAML)
     for rel, content in files.items():
         target = root / rel
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -108,10 +144,14 @@ def _make_fixture_canonical(
         # branch. The tool composes git plumbing (no working-tree
         # mutation), so the pos-v2 branch is unchanged post-call
         # (AC.SFR.5 binding: stranger-clones-canonical preserved).
+        # Per amendment #83, manifest_path is required.
         from loam.publish_framework_only.synth import (  # noqa: PLC0415
             synthesise_framework_only,
         )
-        synthesise_framework_only(root)
+        synthesise_framework_only(
+            root,
+            manifest_path=root / _FIXTURE_MANIFEST_REL,
+        )
 
     return root
 

@@ -15,6 +15,12 @@ branch, runs the synthesis, and asserts:
 
 HC#4 binding: byte-content match between source and synthesised tree
 contents.
+
+Per amendment #83 — M2 (publish-mode partition manifest + synthesis
+tool extension): every ``synthesise_framework_only`` call passes
+``manifest_path=fixture_manifest_path(canonical)`` (the fixture
+manifest written by ``make_fixture_canonical`` per the conftest.py
+fixture extension).
 """
 
 from __future__ import annotations
@@ -32,6 +38,7 @@ from loam.publish_framework_only.synth import (
 def test_AC_SFR_2_synthesis_creates_framework_only_branch(
     tmp_path: Path,
     make_fixture_canonical,
+    fixture_manifest_path,
     git_run,
 ) -> None:
     """The synthesis advances `framework-only` to a new commit whose
@@ -40,7 +47,10 @@ def test_AC_SFR_2_synthesis_creates_framework_only_branch(
     """
     canonical = make_fixture_canonical(tmp_path / "canonical")
 
-    result = synthesise_framework_only(canonical)
+    result = synthesise_framework_only(
+        canonical,
+        manifest_path=fixture_manifest_path(canonical),
+    )
 
     assert result.framework_only_sha
     assert result.target_ref == "refs/heads/framework-only"
@@ -79,12 +89,16 @@ def test_AC_SFR_2_synthesis_creates_framework_only_branch(
 def test_AC_SFR_2_HC4_byte_content_match(
     tmp_path: Path,
     make_fixture_canonical,
+    fixture_manifest_path,
     git_run,
 ) -> None:
     """HC#4 binding — every entry in the synthesised tree byte-equals
     its source on `pos-v2`."""
     canonical = make_fixture_canonical(tmp_path / "canonical")
-    synthesise_framework_only(canonical)
+    synthesise_framework_only(
+        canonical,
+        manifest_path=fixture_manifest_path(canonical),
+    )
 
     pairs = [
         ("framework/cost-governance/__init__.py",
@@ -114,6 +128,7 @@ def test_AC_SFR_2_HC4_byte_content_match(
 def test_AC_SFR_2_lockstep_advances_with_pos_v2(
     tmp_path: Path,
     make_fixture_canonical,
+    fixture_manifest_path,
     git_run,
 ) -> None:
     """After a follow-on `pos-v2` commit, re-synthesis advances
@@ -121,8 +136,9 @@ def test_AC_SFR_2_lockstep_advances_with_pos_v2(
     `framework-only` tip (lockstep ff-graph).
     """
     canonical = make_fixture_canonical(tmp_path / "canonical")
+    manifest = fixture_manifest_path(canonical)
 
-    first = synthesise_framework_only(canonical)
+    first = synthesise_framework_only(canonical, manifest_path=manifest)
 
     # Make a new commit on pos-v2.
     (canonical / "framework" / "cost-governance" / "added.py").write_text(
@@ -131,7 +147,7 @@ def test_AC_SFR_2_lockstep_advances_with_pos_v2(
     git_run(["add", "-A"], cwd=canonical)
     git_run(["commit", "-m", "second commit"], cwd=canonical)
 
-    second = synthesise_framework_only(canonical)
+    second = synthesise_framework_only(canonical, manifest_path=manifest)
     assert not second.no_op
     assert second.framework_only_sha != first.framework_only_sha
 
@@ -153,13 +169,15 @@ def test_AC_SFR_2_lockstep_advances_with_pos_v2(
 def test_AC_SFR_2_idempotent_re_run(
     tmp_path: Path,
     make_fixture_canonical,
+    fixture_manifest_path,
     git_run,
 ) -> None:
     """Re-running synthesis on the same `pos-v2` commit is a no-op."""
     canonical = make_fixture_canonical(tmp_path / "canonical")
+    manifest = fixture_manifest_path(canonical)
 
-    first = synthesise_framework_only(canonical)
-    second = synthesise_framework_only(canonical)
+    first = synthesise_framework_only(canonical, manifest_path=manifest)
+    second = synthesise_framework_only(canonical, manifest_path=manifest)
 
     assert second.no_op is True
     assert second.framework_only_sha == first.framework_only_sha
@@ -168,6 +186,7 @@ def test_AC_SFR_2_idempotent_re_run(
 def test_AC_SFR_5_pos_v2_branch_unchanged_post_synthesis(
     tmp_path: Path,
     make_fixture_canonical,
+    fixture_manifest_path,
     git_run,
 ) -> None:
     """AC.SFR.5 — synthesis MUST NOT touch the `pos-v2` branch.
@@ -183,7 +202,10 @@ def test_AC_SFR_5_pos_v2_branch_unchanged_post_synthesis(
         ["ls-tree", "-r", "--name-only", "pos-v2"], cwd=canonical
     )
 
-    synthesise_framework_only(canonical)
+    synthesise_framework_only(
+        canonical,
+        manifest_path=fixture_manifest_path(canonical),
+    )
 
     post_sha = git_run(["rev-parse", "pos-v2"], cwd=canonical)
     post_tree = git_run(
@@ -200,6 +222,7 @@ def test_AC_SFR_5_pos_v2_branch_unchanged_post_synthesis(
 def test_AC_SFR_5_stranger_clone_byte_identical_to_pos_v2(
     tmp_path: Path,
     make_fixture_canonical,
+    fixture_manifest_path,
     git_run,
 ) -> None:
     """AC.SFR.5 — `git clone <canonical>` (no --branch) is byte-
@@ -212,7 +235,10 @@ def test_AC_SFR_5_stranger_clone_byte_identical_to_pos_v2(
     the synthesis script.
     """
     canonical = make_fixture_canonical(tmp_path / "canonical")
-    synthesise_framework_only(canonical)
+    synthesise_framework_only(
+        canonical,
+        manifest_path=fixture_manifest_path(canonical),
+    )
 
     # `pos-v2` is the default branch in the fixture (per
     # `--initial-branch=pos-v2`). A no-flag clone fetches and checks
@@ -245,7 +271,15 @@ def test_synthesis_fails_when_framework_subdir_absent(
     tmp_path: Path,
     make_fixture_canonical,
 ) -> None:
-    """A source commit with no `framework/` subdir raises."""
+    """A source commit with no `framework/` subdir raises.
+
+    Uses ``manifest_yaml=""`` to suppress the fixture manifest (which
+    would otherwise live under ``framework/tools/pos-publish-framework-
+    only/`` and constitute a framework leaf). An external manifest
+    is written outside the canonical so the synthesis tool has a
+    valid manifest to load while the canonical's tree carries zero
+    ``framework/`` entries.
+    """
     canonical = make_fixture_canonical(
         tmp_path / "canonical",
         files={
@@ -253,7 +287,27 @@ def test_synthesis_fails_when_framework_subdir_absent(
             "README.md": "# README\n",
             "docs/foo.md": "# foo\n",
         },
+        manifest_yaml="",  # suppress the fixture manifest
+    )
+    # Author an external manifest that classifies the fixture's path
+    # set; placed OUTSIDE the canonical so it isn't walked as a tree
+    # leaf.
+    external_manifest = tmp_path / "external-manifest.yaml"
+    external_manifest.write_text(
+        "schema_version: 1\n"
+        "audit_roots: [CLAUDE.md, README.md, docs/]\n"
+        "audit_excludes: []\n"
+        "public_only: []\n"
+        "dev_and_public:\n"
+        "  - path: CLAUDE.md\n"
+        "  - path: README.md\n"
+        "  - glob: 'docs/**'\n"
+        "dev_only: []\n"
+        "excluded_from_publish: []\n"
     )
     with pytest.raises(SynthesisError) as excinfo:
-        synthesise_framework_only(canonical)
+        synthesise_framework_only(
+            canonical,
+            manifest_path=external_manifest,
+        )
     assert "no entries under framework/" in str(excinfo.value)

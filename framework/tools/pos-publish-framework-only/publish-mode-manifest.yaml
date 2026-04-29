@@ -1,0 +1,203 @@
+# Publish-mode partition manifest.
+#
+# Owner-authored partition data consumed by
+# ``loam.publish_framework_only.synth``. Every workspace path under
+# canonical pos-v2's tree classifies into exactly one of four
+# partition classes:
+#
+#   - ``public_only``           ships in the public synthesis output
+#                               and ONLY there (rare; reserved for
+#                               future public-vs-dev divergence).
+#   - ``dev_and_public``        ships in the public synthesis output
+#                               AND remains in the dev tree (most
+#                               runtime artefacts).
+#   - ``dev_only``              stays in the dev tree, NEVER ships
+#                               publicly (dev-discipline machinery —
+#                               loam amend, loam-mode, A1-A4 gates,
+#                               full ODD docs, plans/, components/,
+#                               internal seal narratives, etc.).
+#   - ``excluded_from_publish`` MUST NOT ship publicly under any
+#                               condition (host-specific paths,
+#                               secrets-adjacent, runtime state).
+#                               Different from dev_only semantically:
+#                               excluded means must-not-ship; dev_only
+#                               means ships only in dev mode.
+#
+# Schema (validated by ``loam.publish_framework_only.partition.load_manifest``):
+#
+#   schema_version:       integer (must equal 1).
+#   audit_roots:          list of top-level workspace-relative paths
+#                         the partition classifies. Anything outside
+#                         audit_roots that is also outside audit_excludes
+#                         is unclassified and triggers a SynthesisError.
+#   audit_excludes:       glob patterns excluded from any classification
+#                         consideration (transient state, vcs internals).
+#   public_only:          list of entries.
+#   dev_and_public:       list of entries.
+#   dev_only:             list of entries.
+#   excluded_from_publish: list of entries.
+#
+# Each entry is one of:
+#   - ``{path: <ws-relative-path>}``                  — exact path match.
+#   - ``{glob: <pattern>, exclude: [<patterns>]}``    — recursive glob
+#         (``**`` crosses path separators) with optional subtractive
+#         exclusion patterns.
+#
+# Classification precedence (first-match-wins, applied in this order):
+#
+#   1. excluded_from_publish   (safety class — checked first to
+#                                prevent accidental leak).
+#   2. dev_only                (dev-tools must not be promoted by
+#                                a broader dev_and_public glob).
+#   3. public_only             (rare; checked before dev_and_public).
+#   4. dev_and_public          (default ship class).
+#
+# AC.OSS-M2.4 — every leaf path under canonical HEAD's pos-v2 tree
+# (modulo audit_excludes) classifies into one of the four buckets.
+#
+# AC.OSS-M2.6 — hard cutover; no manifest-vs-hardcode dual mode.
+# The synth tool reads this manifest exclusively post-M2.
+
+schema_version: 1
+
+# Top-level paths the partition classifies. Anything outside
+# audit_roots is excluded (and synthesis errors if a git ls-tree
+# leaf path is encountered that is neither classified nor audit-
+# excluded).
+audit_roots:
+  - framework/
+  - docs/
+  - CLAUDE.md
+  - CLAUDE.dev.md
+  - README.md
+  # Forward-looking — authored at M5 (license + governance scaffold).
+  - LICENSE
+  - CONTRIBUTING.md
+  - CODE_OF_CONDUCT.md
+  - SECURITY.md
+  # Workspace-side state surfaces (defensive — gitignored, but the
+  # manifest declares classification intent for audit-completeness).
+  - personas/
+  - data/
+  - workspace/
+  - .pos/
+  - .scratch/
+  - .mcp.json
+  - .gitignore
+
+# Glob patterns excluded from any classification. Transient build
+# state, vcs internals, editable-install caches.
+audit_excludes:
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/.pytest_cache/**"
+  - "**/__pycache__/**"
+  - "**/*.egg-info/**"
+  - "**/.DS_Store"
+  - "**/*.pth"
+
+# Reserved for future public-vs-dev divergence at M11 dry-run review
+# (e.g. a public README.md that differs from canonical's dev-flavoured
+# README). Empty at M2.
+public_only: []
+
+# Ships in the public synthesis output AND remains in the dev tree.
+dev_and_public:
+  # Runtime framework components — the 16 sealed components per
+  # OSS-readiness audit §4.3 + master plan §3 AC.OSS.2 (every shipping
+  # component is wired and exercised by primary persona's normal
+  # operation).
+  - glob: "framework/cost-governance/**"
+  - glob: "framework/dormancy/**"
+  - glob: "framework/hands-off-lifecycle/**"
+  - glob: "framework/memory-system/**"
+  - glob: "framework/objective-tracker/**"
+  - glob: "framework/observability-aggregator/**"
+  - glob: "framework/orchestrator/**"
+  - glob: "framework/primary-persona/**"
+  - glob: "framework/reversibility-primitive/**"
+  - glob: "framework/safety-layer/**"
+  - glob: "framework/scope-of-work/**"
+  - glob: "framework/self-correction/**"
+  - glob: "framework/self-upgrade/**"
+  - glob: "framework/telegram-interface/**"
+  - glob: "framework/workspace-bootstrap/**"
+  - glob: "framework/workspace-sync/**"
+  # Workspace-bootstrap input (referenced by runtime).
+  - path: framework/first-run-inventory.yaml
+  # Top-level public files. README.md + CLAUDE.md exist today;
+  # LICENSE / CONTRIBUTING.md / CODE_OF_CONDUCT.md / SECURITY.md
+  # are forward-looking — authored at M8.
+  - path: README.md
+  - path: CLAUDE.md
+  - path: LICENSE
+  - path: CONTRIBUTING.md
+  - path: CODE_OF_CONDUCT.md
+  - path: SECURITY.md
+  # Public docs scaffold — forward-looking — authored at M7.
+  - path: docs/positioning.md
+  - path: docs/getting-started.md
+  - path: docs/architecture.md
+  - glob: "docs/components/**"
+  - glob: "docs/design/**"
+  # Existing live public-relevant docs.
+  - path: docs/CLAUDE_CAPABILITIES.md
+
+# Stays in the dev tree, NEVER ships publicly. Dev-discipline machinery.
+dev_only:
+  # Dev-tools — loam amend (the renamed pos-amend); the dev-mode
+  # auto-load selector; migration helpers; the publish tool itself
+  # (its OUTPUT ships, not the tool); architecture-B migration
+  # tooling; orphan plist cleanup; upgrade-merge resolver.
+  - glob: "framework/tools/loam/**"
+  - glob: "framework/tools/loam-mode/**"
+  - glob: "framework/tools/heavy-b-migrate/**"
+  - glob: "framework/tools/orphan-plist-cleanup/**"
+  - glob: "framework/tools/upgrade-merge-resolver/**"
+  - glob: "framework/tools/pos-publish-framework-only/**"
+  - glob: "framework/tools/loam-migrate-host-config/**"
+  - glob: "framework/tools/loam-migrate-launchd-labels/**"
+  - glob: "framework/tools/loam-migrate-dormancy-config/**"
+  # Internal docs tree — plans, components, FUTURE_IDEAS, STATE,
+  # BACKLOG, dev-mode-manifest, capability-corpus authoring shape,
+  # decay-retention-analysis, spec/. Per OSS-readiness audit §4.1
+  # + master plan §3 AC.OSS.3.
+  - glob: "docs/rebuild/**"
+  # Long-form ODD methodology — DEV-MODE-only per audit §4.1 D5.
+  # Condensed docs/design/odd.md (forward-looking — authored M7)
+  # is the public-facing ODD surface.
+  - path: docs/odd-methodology.md
+  - path: docs/odd-in-loam.md
+  # Duration-estimation rubric — DEV-MODE-only per audit §4.1.
+  - path: docs/duration-estimation-rubric.md
+  # Dev-mode-only top-level fragment (CLAUDE.dev.md is the dev-
+  # extension of CLAUDE.md per loam-mode B's load-time partition).
+  - path: CLAUDE.dev.md
+
+# MUST NOT ship publicly under any condition. Mostly defensive — these
+# paths are .gitignore'd so git ls-tree never sees them; the manifest
+# entry is belt-and-braces audit-completeness.
+excluded_from_publish:
+  # VCS / build / cache / editable-install state.
+  - glob: ".git/**"
+  - glob: ".scratch/**"
+  - glob: ".pos/**"
+  # Per-component / workspace runtime state.
+  - glob: "data/**"
+  - glob: "workspace/**"
+  # Untracked workspace-side persona content (see dev-mode-manifest's
+  # audit_excludes — same handling).
+  - glob: "personas/**"
+  # Per-workspace MCP registration.
+  - path: .mcp.json
+  - path: .gitignore
+  # Editable-install metadata + caches (also covered by audit_excludes
+  # globs, but declared here for audit-completeness should one ever
+  # appear at a non-excluded location).
+  - glob: "**/*.egg-info/**"
+  - glob: "**/__pycache__/**"
+  - glob: "**/.pytest_cache/**"
+  - glob: "**/.venv/**"
+  - glob: "**/*.pth"
+  - glob: "**/.DS_Store"
+  - glob: "**/.env"

@@ -134,7 +134,13 @@ def test_AC_SFR_4_pos_sync_fast_forwards_framework_only(
     _git(["commit", "-m", "advance pos-v2 for AC.SFR.4"], cwd=canonical)
 
     # Step 5: re-synthesise framework-only.
-    synth = synthesise_framework_only(canonical)
+    # Per amendment #83 — M2 — manifest_path is required. The fixture
+    # canonical's conftest writes the manifest at the canonical path.
+    synth = synthesise_framework_only(
+        canonical,
+        manifest_path=canonical
+        / "framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml",
+    )
     assert not synth.no_op
     advanced_fo_sha = synth.framework_only_sha
     assert advanced_fo_sha != initial_fo_sha

@@ -824,7 +824,7 @@ def test_T20_discover_components_finds_every_pyproject_under_root() -> None:
         "loam-reversibility-primitive",
         "loam-cost-governance",
         "loam-self-correction",
-        "loam-graceful-degradation",
+        "loam-dormancy",
         "loam-orchestrator",
         "loam-observability-aggregator",
         "loam-self-upgrade",

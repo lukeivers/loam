@@ -340,7 +340,14 @@ time is owner-time and NOT included.
 | ID | Sub-plan | Description | ACs | AI-time | Midpoint |
 |----|----------|-------------|-----|---------|----------|
 | **M0** | (this plan) | Owner approves v0.1.0 plan + sub-plan ladder. Authority captured in `docs/rebuild/plans/oss-launch-decisions.md`. | — | (owner time only) | — |
-| **M1.rename** | `oss-v0-1-0-publish-rename.md` | **Multi-component sealed amendment.** Tier-1 + Tier-2 rename per `loam-rename-decisions.md`. Brand strings, env vars, launchd labels, OTel roots, CLI rename, monolithic `loam.*` namespace, dormancy package. | AC.OSS.5 (rebrand); AC.OSS.3 (dev-only artefact rename consistency) | 30–60 min | 45 min |
+| **M1.rename (series)** | `oss-v0-1-0-publish-rename.md` | **Multi-amendment series** per owner ruling D-RNM.1 (2026-04-29). Tier-1 + Tier-2 rename per `loam-rename-decisions.md` split into seven independently-sealed sub-amendments M1a..M1g. The empirical surface (~91 import sites + ~597 OTel emit sites + ~1310 `pos-amend` doc/code refs across sixteen sealed components) was 5–10× the original rubric estimate; the split eliminates the wall-clock-blow-out failure class per ODD §5.1.1. Each row below is its own AC family (`AC.RNM-1a.*` .. `AC.RNM-1g.*`). | AC.OSS.5 (rebrand); AC.OSS.3 (dev-only artefact rename consistency) | (sum below) | (sum below) |
+| **M1a** | `oss-v0-1-0-publish-rename-1a.md` | **Docs/prose-only brand rebrand.** Live docs / READMEs / CLAUDE.md (root) / VALUE_PROPOSITION / odd-methodology / odd-in-pos / duration-rubric / CLAUDE_CAPABILITIES — `pos-v2` / `pOS v2` brand strings rewritten to `loam` in user-facing prose. ZERO code, env-vars, paths, CLI, OTel, launchd. **Sealed `143d465` 2026-04-29.** | AC.RNM-1a.1..6 + AC.RNM-1a.S | 30–45 min (actual ~60 min — surrounding-debt tax) | 35 min |
+| **M1b** | `oss-v0-1-0-publish-rename-1b.md` | **Per-host config dir + env-vars.** `~/.pos/` → `~/.loam/` (path constants in code + docs); `POS_V2_*` → `LOAM_*` (seven post-dedup names; `POS_V2_ROOT` + `POS_V2_REPO` collapse to `LOAM_REPO`; `POS_V2_POS_ROOT` de-doubles to `LOAM_DATA_DIR`). Hard cutover (no fallback module per D-RNM.3). One-shot per-host migration helper. Includes the precursor doc-only commit that creates this M1a..M1g table. | AC.RNM-1b.1..6 + AC.RNM-1b.S | 60–120 min | 90 min |
+| **M1c** | `oss-v0-1-0-publish-rename-1c.md` | **launchd labels.** `com.pos-v2.<slug>.*` → `com.loam.<slug>.*`. plist filenames cascade. hands-off-lifecycle's bootout-before-bootstrap flow issues bootouts for old labels once on first run after upgrade, then installs new labels. First sub-amendment that may cross HC#4. | AC.RNM-1c.1..S | 30–60 min | 45 min |
+| **M1d** | `oss-v0-1-0-publish-rename-1d.md` | **OTel `pos.*` → `loam.*` roots.** All 23 root namespaces (per migration plan §3.5; `pos.degradation` rebases to `loam.dormancy` deferred to M1f). Names below the second segment unchanged. Aggregator subscription registration updates. **No dual-prefix read window** (D-RNM.3 hard-cutover). Largest single-grep amendment of the series. | AC.RNM-1d.1..S | 45–90 min | 60 min |
+| **M1e** | `oss-v0-1-0-publish-rename-1e.md` | **Monolithic `loam.*` namespace pivot.** Per-component `framework/<comp>/src/loam/<comp>/` restructure (D-RNM.2 ruling). Every `from pos_<comp> import` callsite rewrites to `from loam.<comp> import`. pyproject.toml `name` fields update. Editable-install reconfig. Hard cutover. **HC#4 retire-and-rebaseline definitely lands here.** Owner-review gate recommended pre-dispatch given fence width. | AC.RNM-1e.1..S | 90–180 min | 135 min |
+| **M1f** | `oss-v0-1-0-publish-rename-1f.md` | **Tier-2: graceful-degradation → dormancy.** Directory + package + OTel `pos.degradation.*` → `loam.dormancy.*` + config files (`degradation.sqlite` → `dormancy.sqlite`, `degradation-config.yaml` → `dormancy-config.yaml`) + docs subdir + workspace-bootstrap adapter. AC prefix `P` stays. Per-host migration script for SQLite + YAML rename. Depends on M1e (the `loam.*` namespace must exist). | AC.RNM-1f.1..S | 30–60 min | 45 min |
+| **M1g** | `oss-v0-1-0-publish-rename-1g.md` | **`pos-amend` CLI → `loam amend` subcommand.** `framework/tools/pos-amend/` → `framework/tools/loam/`. Console-script entry-point `pos-amend` → `loam` with `amend` as a subcommand. All ~1310 doc/code refs to `pos-amend` rewrite. **No shim binary** per D-RNM.3. Last amendment built under the `pos-amend` CLI name; subsequent amendments use `loam amend`. | AC.RNM-1g.1..S | 30–60 min | 45 min |
 | **M2.partition** | `oss-v0-1-0-publish-partition.md` | **Single-component sealed amendment** (workspace-bootstrap or new tooling host). Author `publish-mode-manifest.yaml` + extend `pos-publish-framework-only` (post-rename: `loam-publish-framework-only`) to consume it; partition every workspace path into `public_only` / `dev_and_public` / `dev_only` / `excluded_from_publish`; default partition assigns the dev-discipline artefacts named in AC.OSS.3 to `dev_only`. | AC.OSS.3 | 25–45 min | 35 min |
 | **M3.wire-clis** | inline (trivial; bundle with M2 or its own) | **Multi-component sealed amendment** (5 components: safety-layer, cost-governance, self-correction, reversibility-primitive). Add `[project.scripts]` entries: `loam-kill`, `loam-cost`, `loam-correction`, `loam-reversibility`, `loam-rollback` (post-rename names). | AC.OSS.2 (D-3) | 10–20 min | 15 min |
 | **M4.wire-dispatch** | `oss-v0-1-0-publish-dispatch-with-scope.md` | **Multi-component sealed amendment** (primary-persona + hands-off-lifecycle). Wire `dispatch_with_scope` as the persona's actual Agent-dispatch path. PreToolUse hook on `Task` intercepts native Agent dispatches and routes through the four-gate wrapper. | AC.OSS.2 (D-1) | 25–45 min | 35 min |
@@ -355,10 +362,11 @@ time is owner-time and NOT included.
 
 **Total AI-time (sequential builds + parallel docs):**
 
-- **Critical path (sequential builds M1 → M2 → M3 → M4 → M5 → M6 → M9 → M11 → M12):** ~4.5–8 h AI wall-clock.
+- **M1.rename series sum (M1a..M1g, sequential):** roughly **5.5–10 h AI wall-clock** (M1a 35 min + M1b 90 min + M1c 45 min + M1d 60 min + M1e 135 min + M1f 45 min + M1g 45 min = 7.5 h midpoint). The post-split sum is higher than the pre-split monolithic estimate (45 min) because the original estimate was empirically 5–10× too low (per series-master §1); the split makes the actual cost visible as named slices rather than failing once at the monolithic seal step.
+- **Critical path (sequential builds M1.rename-series → M2 → M3 → M4 → M5 → M6 → M9 → M11 → M12):** ~9–14 h AI wall-clock (was 4.5–8 h pre-split).
 - **Parallel lanes:** M7 (docs, ~30–60 min) overlaps with M1–M6 builds; M8 (license/governance, ~10–20 min) overlaps with any build; M10 (bus-factor) is owner-time only, runs alongside everything.
 - **Owner gate-review time:** distinct, additive. Three gates: M8/license-governance review (5–15 min), M11/synthesis-dry-run review (~30 min/reviewer × 3–5 reviewers + owner ~30 min), M12/publish-and-tag review (5–15 min). Bus-factor-1 review circle (M10) is days–weeks calendar, not AI-time.
-- **Programme total:** **roughly 4–8 h AI wall-clock + multi-day owner gate-review + days-to-weeks M10 calendar lane**, multi-session.
+- **Programme total:** **roughly 9–14 h AI wall-clock + multi-day owner gate-review + days-to-weeks M10 calendar lane**, multi-session.
 
 ---
 
@@ -376,7 +384,8 @@ parallel.
 TIME →
                                                                   
 Lane A — sealed-component build chain (SERIAL):
-  M1.rename → M2.partition → M3.wire-clis → M4.wire-dispatch →
+  M1.rename-series (M1a → M1b → M1c → M1d → M1e → M1f → M1g) →
+  M2.partition → M3.wire-clis → M4.wire-dispatch →
   M5.wire-dormancy → M6.dev-sdlc-plugin → M9.scrub → M11.dry-run → M12.publish
                                                               [M8.lic]   [M11.gate] [M12.gate]
                                                               owner       owner      owner
@@ -807,7 +816,11 @@ records).
 
 ### M1.rename — OSS-build.M1.x
 
-(post-build)
+Now a multi-amendment series (M1a..M1g per series-master `oss-v0-1-0-publish-rename.md`). Each sub-amendment carries its own method-decision register inside its own sub-plan-doc:
+
+- M1a — `oss-v0-1-0-publish-rename-1a.md` §12 (sealed `143d465`).
+- M1b — `oss-v0-1-0-publish-rename-1b.md` §12 (in flight).
+- M1c–M1g — sub-plan-docs authored at each sub-amendment's dispatch time.
 
 ### M2.partition — OSS-build.M2.x
 
@@ -858,8 +871,17 @@ NOT here)
 
 (post-build per amendment)
 
-- M1.rename amendment commit: `<TBD>`
-- M1.rename seal commit: `<TBD>`
+- M1a feature commit: `2b2899b` (sealed)
+- M1a apply commit: `5dc1122` (sealed)
+- M1a corrective commit: `92098e1` (AC39_6 sentinel)
+- M1a sub-plan §11 update: `f3041a5`
+- M1a seal commit: `143d465`
+- M1a manifest correction: `aa9aa5a`
+- M1a §14 SHA-register backfill: `481c697`
+- M1b feature commit: `<TBD>`
+- M1b apply commit: `<TBD>`
+- M1b seal commit: `<TBD>`
+- M1c..M1g commits: `<TBD>` (sealed at each sub-amendment's dispatch)
 - M2.partition amendment commit: `<TBD>`
 - M2.partition seal commit: `<TBD>`
 - M3.wire-clis amendment commit: `<TBD>`

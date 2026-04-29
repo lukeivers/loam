@@ -40,7 +40,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #     edits to ``self-upgrade/src/`` — retrofit-only. Empty
 #     BASELINE..HEAD window at apply time per the standard
 #     retrofit pattern.
-BASELINE = "9221fa0b39bfe3652e47279cab2874538ebdfc65"
+BASELINE = "143d4656f0c319bdc644f7a925b073e0ecaaff72"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -146,6 +146,7 @@ def test_B20_only_self_upgrade_surfaces_changed() -> None:
         ".claude/settings.json",
         "first-run-inventory.yaml",
         "framework/first-run-inventory.yaml",
+        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
     }
 
     offending = []

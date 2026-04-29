@@ -458,7 +458,20 @@ Per the dispatch's halt-and-surface clause: surface any audit-recommendation con
 
 **Build-time findings (added post-build):**
 
-(To be populated post-build.)
+8. **(Tools-tree consumer-of-framework-package import rebrand — corrective commit `40c974a`.)** Plan §11 finding #4 enumerated tools-tree namespace-pivot residuals as out-of-scope FIDRAFT capture. However, 14 callsites in `framework/tools/{pos-amend, heavy-b-migrate, upgrade-merge-resolver}/` consume framework PACKAGES (`from objective_tracker import …`, `from self_upgrade.merge_resolver import …`); without rebrand to `loam.objective_tracker` etc., these tools fail at import-time. The pos-amend tool's own `pos_amend` package self-references stay verbatim per M1g deferral; only consumer-of-framework-package imports rebrand. Surfaced as a NEW commit (no `git commit --amend` per Git Safety Protocol) before pos-amend apply.
+
+9. **(Test-fixture surface beyond plan §11 enumeration.)** The plan §11 finding #3 listed 11-15 HC#4 sample-file path moves but didn't enumerate the wider test-fixture surface. Build-time additions:
+   - `from src.<module>` patterns (245 substitutions across scope-of-work, primary-persona, objective-tracker test conftests + tests). Each component's tests use `sys.path.insert(0, parent)` then `from src.runtime import …` shape; post-rename rebranded to `from loam.<comp>.<module> import …`.
+   - Quoted module-name string literals in `monkeypatch.setattr("pos_orchestrator.ipc.IPCClient", …)` (~10 callsites in primary-persona) + `caplog.at_level(logger="cost_governance.store", …)` (25 callsites in test_s4_teardown_observability across 7 components) + `module: workspace_bootstrap.adapters.X` template strings in workspace-bootstrap's bootstrap.yaml (13 entries) + `import safety_layer` callsite in safety-layer test.
+   - Hardcoded path patterns (`tmp_path / "src" / "agent_md.py"`) in primary-persona / workspace-bootstrap / scope-of-work test fixtures (≈10 callsites).
+   - The 13 sealed-component `test_no_sealed_amendments.py` allowed_files needed `docs/odd-in-pos.md` re-admitted alongside `docs/odd-in-loam.md` (the rename appears as both delete + add in the M1c→HEAD baseline diff window).
+   All updates trace back to the AC family (AC.RNM-1e.2 import rebrand or AC.RNM-1e.4 internal-decoration rename or AC.RNM-1e.5 filename rebrand). No surfaces touched outside the named fence per AC.RNM-1e.7.
+
+10. **(`CLASSIFICATION_POS_V2_DEV` constant rename + value preservation.)** The Tier-1 #6 ruling rebranded `_POS_V2_*` constants to `_LOAM_*`, including mid-identifier matches like `CLASSIFICATION_POS_V2_DEV` → `CLASSIFICATION_LOAM_DEV`. The constant's VALUE `"pos-v2-dev"` (the workspace classification literal) was PRESERVED verbatim — it persists in workspace tracker state files; changing it would be a workspace-side break. The constant-name vs value asymmetry is documented; the value rebrand to `"loam-dev"` is series-wide deferred to M9 scrub. AC.RNM-1e.4 outcome grep does not catch the literal value, so the asymmetry is plan-AC-compliant; surfaced for owner awareness.
+
+11. **(Post-seal dry-run halt on safety-layer.)** `pos-amend seal --plan-doc` halted at the post-seal dry-run-check stage with `[safety-layer] MISSING_ADMISSION` reporting every safety-layer file under `framework/safety-layer/`. Root cause: safety-layer's `tests/test_no_sealed_amendments.py` doesn't enforce a per-component path-fence (it only does behavior checks: monkeypatch detection + import banlist). The manifest's `extra_allowed_prefixes: []` for safety-layer doesn't admit anything explicitly. Per the no-amend CDC, the seal commit was LEFT IN PLACE; this §14 SHA-register backfill commit is the corrective surfacing. The safety-layer fence-test gap is a pre-existing structural weakness (it was admitted via H19 in M1d's manifest because M1d didn't list safety-layer as a component); for M1e we ADDED safety-layer to the components list because the namespace-pivot touched its src tree, but its test doesn't have the fence-allowlist infrastructure. **Recommendation surfaced to FIDRAFT:** "safety-layer + scope-of-work `test_no_sealed_amendments.py` files don't enforce per-component path-fences (behavior-only tests); pos-amend's apply --dry-run flags every diff path as MISSING_ADMISSION. Add a sealed-amendments path-fence test alongside, or move these components back to H19-cross-cutting admission via the HOL `test_cross_cutting.py`."
+
+12. **(HC#4 SHA bumps were 5, not 2.)** Plan §11 finding #3 anticipated 2 SHA bumps (workspace-bootstrap `__init__.py` + `discovery.py` for entry-point group rebrand). Actual count: 5 bumps — the planned 2 plus (a) `framework/primary-persona/src/loam/primary_persona/onboarding.py` for Phase C `from workspace_bootstrap.workspace_paths` → `from loam.workspace_bootstrap.workspace_paths` import rebrand, (b) `framework/primary-persona/src/loam/primary_persona/session_start_emitter.py` for Phase E `pos_v2_root` → `loam_root` + Phase C `-m primary_persona.cli` → `-m loam.primary_persona.cli` shell-command-string rebrand, (c) `framework/primary-persona/pyproject.toml` and (d) `framework/scope-of-work/pyproject.toml` for Phase B project-name + setuptools restructure. The 13 path-only updates went through unchanged-content per `git mv`. Plan-anticipated outcome shape correct; count widened by Phase C/E touches the plan didn't enumerate per-file.
 
 ---
 
@@ -507,23 +520,23 @@ POST-REBASELINE per §11 finding #3 — 11–15 sample-file path updates + 2 SHA
 
 ### D-build.M1e.1 — pyproject project name shape
 
-(To be populated post-build.)
+CHOSEN: hyphenated-prefix `name = "loam-<comp>"` (e.g. `name = "loam-cost-governance"`) per §10's recommendation. PEP 503 normalises `loam_cost_governance` to the same indexable name; the hyphenated form reads cleaner at `pip install` time and matches existing pyproject conventions across the framework. Applied to all 14 packaged components.
 
 ### D-build.M1e.2 — `git mv` mechanism for directory restructure
 
-(To be populated post-build.)
+CHOSEN: per-component tmp-then-merge for the 11 flat-src components (option (a) from §10), per-component direct rename for the 3 nested-src components. The flat-src shape `src/<files>` had to become `src/loam/<comp>/<files>`, requiring an intermediate to avoid the `src/loam` directory being captured by the inner rename. Single-pass git mv via `_src_tmp` intermediate worked cleanly; rename-detection threshold preserved blame at 95-100% similarity for all 200+ moved files.
 
 ### D-build.M1e.3 — One-shot installer script vs documented manual sequence
 
-(To be populated post-build.)
+CHOSEN: documented manual sequence (option from §10's NOT recommendation). The cascade ran cleanly via a single inline shell loop in dependency-bottom-up order; idempotency was confirmed at first run (every component's `pip install -e --no-deps` returned 0 first-try). The one-shot installer-script `framework/tools/loam-namespace-pivot-installer/` recommended in §10's D-build.M1e.3 was NOT built because the cascade succeeded without it; surfaced to FIDRAFT for future framework-restructure amendments where the surface is wider or the failure-recovery shape needs to be persistent.
 
 ### D-build.M1e.4 — Phase order — directory restructure + import rebrand
 
-(To be populated post-build.)
+CHOSEN: option (a) — all directory restructures first (Phase A), then all pyproject restructures (Phase B), then all import rebrands (Phase C), then editable-install cascade (Phase H). Cleaner separation for the seal-diff fence verification; the transient broken state during Phase A-C was accepted because the seal commit is the atomic boundary.
 
 ### D-build.M1e.5 — Spec content edit per-section allowlist
 
-(To be populated post-build.)
+CHOSEN: enumerate-on-demand. The two filename rebrands (`docs/odd-in-pos.md` → `docs/odd-in-loam.md`; `docs/rebuild/spec/pos-v2-objectives-spec.md` → `docs/rebuild/spec/loam-objectives-spec.md`) were `git mv` operations preserving content verbatim. The internal heading + cross-reference updates were minimal (the source files reference themselves via the new name; pre-existing prose inside the file kept its historical narrative). Per-section allowlist not needed in practice — the rename surface was content-preserving.
 
 ### Commit SHAs
 
@@ -532,11 +545,12 @@ POST-REBASELINE per §11 finding #3 — 11–15 sample-file path updates + 2 SHA
 - **M1b seal commit:** `d97c8c1` — `chore(seals): M1b env-vars + per-host config dir` (2026-04-29).
 - **M1c seal commit:** `1e99d0b` — `chore(seals): M1c launchd label rebrand` (2026-04-29).
 - **M1d seal commit (BASELINE for M1e):** `74ae5d3` — `chore(seals): M1d OTel root rebrand` (2026-04-29).
-- **M1e sub-plan + manifest commit:** TBD — `docs(plans): author M1e sub-plan + manifest — loam.* namespace pivot for 14 packaged components + cleanup (entry-point group rename + internal-decoration rename + spec-filename rebrand + legacy pos_v2.primary_persona tracer rebase)` (2026-04-29).
-- **M1e feature commit:** TBD.
-- **pos-amend apply commit:** TBD.
-- **Seal commit:** TBD.
-- **§14 SHA-register backfill commit:** TBD (auto-emitted by `pos-amend seal --plan-doc`).
+- **M1e sub-plan + manifest commit:** `54bd91a` — `docs(plans): author M1e sub-plan + manifest — loam.* namespace pivot for 14 packaged components + cleanup` (2026-04-29).
+- **M1e feature commit:** `042f856` — `feat(rename-1e): M1e loam.* namespace pivot for 14 packaged components + cleanup` (2026-04-29).
+- **M1e tools-tree consumer-imports corrective commit:** `40c974a` — `fix(rename-1e): rebrand framework-package imports in tools-tree consumers` (2026-04-29).
+- **pos-amend apply commit:** `54d8cf7` — `chore(rename-1e-apply): pos-amend apply for amendment #80 (M1e loam.* namespace pivot)` (2026-04-29).
+- **Seal commit:** `c806f57` — `chore(seals): M1e loam.* namespace pivot — 14 packaged components restructured to framework/<comp>/src/loam/<comp>/ via git mv …` (2026-04-29).
+- **§14 SHA-register backfill commit:** this commit (manual — `pos-amend seal --plan-doc` halted at the post-seal dry-run-check stage with `safety-layer` flagged due to its `test_no_sealed_amendments.py` not enforcing a per-component path-fence; per the no-amend CDC, the seal commit is left in place and this register is populated by a NEW commit).
 
 Diff window: `74ae5d3..<seal-commit>` (M1d-seal → M1e-seal).
 

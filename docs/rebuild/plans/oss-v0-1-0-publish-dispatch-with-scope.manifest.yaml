@@ -71,14 +71,16 @@ components:
     frozen_baseline: false
     extra_allowed_prefixes: []
   - name: hands-off-lifecycle
-    seal_test: framework/hands-off-lifecycle/tests/test_no_sealed_amendments.py
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
     sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
-    frozen_baseline: false
-    # hands-off-lifecycle's seal-test admits framework/hands-off-lifecycle/
-    # subtree directly via its allowed_prefixes binding (precedent in
-    # M3 manifest's safety-layer block for the no-allowed_prefixes
-    # case). M4's hands-off-lifecycle diff is contained to the
-    # standard subtree paths (hooks/, tests/, seals/), all admitted.
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    # M4 build-time correction: the original plan pointed at
+    # ``test_no_sealed_amendments.py`` (which doesn't exist for HOL —
+    # HOL's seal-test convention is the frozen-BASELINE
+    # ``test_cross_cutting.py`` per amendment #23 + M2 manifest
+    # precedent). Switched to the actual seal-test path. HOL's H19
+    # surface invariant covers framework/hands-off-lifecycle/
+    # diff acceptance; no extra_allowed_prefixes needed.
     extra_allowed_prefixes: []
 
 # Universal admissions per amendment #22 ruling #3.

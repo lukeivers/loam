@@ -354,7 +354,24 @@ Note: the **internal shell variable** `POS_V2_ROOT` in `first-run.sh` (set at li
 
 ### Commit SHAs
 
-(populated by `pos-amend seal --plan-doc` SHA-backfill below)
+`pos-amend seal --plan-doc` SHA-backfill follow-up commit halted on
+"plan-doc-missing-section-14" (the seal commit itself landed cleanly
+at `d97c8c1`; the §14-anchor restructure commit `9de1db7` followed
+post-seal so the SHAs below are populated by hand).
+
+- **Series master plan-doc commit:** `ebe0a57` — `docs(plans): split M1 rename into multi-amendment series — D-RNM.1 ruling` (2026-04-29).
+- **M1a seal commit (BASELINE):** `143d4656f0c319bdc644f7a925b073e0ecaaff72` (`143d465`).
+- **Programme plan §5 update commit (precursor doc-only):** `7be713b` — `docs(plans): replace M1.rename row with M1a..M1g ladder + re-price (precursor to M1b dispatch)` (2026-04-29).
+- **M1b sub-plan + manifest commit:** `b5c6324` — `docs(plans): author M1b sub-plan + manifest — env-vars + per-host config dir + migration helper` (2026-04-29).
+- **M1b feature commit:** `73b98f8` — `feat(rename-1b): env-vars POS_V2_* → LOAM_* + per-host config dir ~/.pos/ → ~/.loam/ + migration helper (amendment #77, AC.RNM-1b.1–AC.RNM-1b.S)` (2026-04-29).
+- **Manifest baseline-correction commit:** `a1cdf8f` — `chore(rename-1b-fix): correct manifest baseline SHA (M1a's actual seal commit)` (2026-04-29).
+- **pos-amend apply commit:** `ea8f83e` — `chore(rename-1b-apply): pos-amend apply for amendment #77 (M1b env-vars + per-host config dir)` (2026-04-29).
+- **Orchestrator fixture corrective commit (D.2 bit-rot fix):** `78f19c6` — `chore(rename-1b-fix): align orchestrator d8-compaction-integration fixture to post-D.2 personas path` (2026-04-29).
+- **Seal commit:** `d97c8c1` — `chore(seals): M1b env-vars + per-host config dir — POS_V2_* → LOAM_* (with POS_V2_ROOT+POS_V2_REPO dedup to LOAM_REPO; POS_V2_POS_ROOT de-doubled to LOAM_DATA_DIR) + ~/.pos/ → ~/.loam/ path-constants + one-shot per-host migration helper — cost-governance+graceful-degradation+hands-off-lifecycle+memory-system+observability-aggregator+orchestrator+primary-persona+self-correction+self-upgrade+telegram-interface+workspace-bootstrap at 78f19c6` (2026-04-29).
+- **§14 restructure + post-seal findings update commit:** `9de1db7` — `docs(plans): record M1b build-time findings + restructure §14 per pos-amend SHA-backfill convention` (2026-04-29).
+- **§14 SHA-register backfill commit (this commit):** TBD — `docs(plans): record amendment #77 commit SHAs in method-decision register` (2026-04-29).
+
+Diff window: `143d465..d97c8c1` (M1a-seal → M1b-seal).
 
 ---
 

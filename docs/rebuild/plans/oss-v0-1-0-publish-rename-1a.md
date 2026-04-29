@@ -307,11 +307,24 @@ This section is populated post-build per the `pos-amend seal --plan-doc <abs-pat
 
 ### Commit SHAs
 
-(populated by `pos-amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. ABSOLUTE path required to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The plan-doc commit + amendment feature commit + apply commit + seal commit each appear here on completion.)
+`pos-amend seal --plan-doc` auto-backfill did not run because the first seal invocation exited HALT (per finding #11) and the second invocation exited HALT at post-seal-dry-run (per finding #8); the seal commit landed but the SHA-backfill follow-up commit was not created. The SHAs below are manually populated.
+
+- **Series master plan-doc commit:** `ebe0a57` — `docs(plans): split M1 rename into multi-amendment series — D-RNM.1 ruling` (2026-04-29).
+- **M1a sub-plan + manifest commit:** `26cfd16` — `docs(plans): author M1a sub-plan + manifest — docs/prose-only brand rebrand` (2026-04-29).
+- **M1a feature commit:** `2b2899b` — `feat(rename-1a): docs/prose-only brand rebrand pos-v2/pOS v2/pOS → loam (amendment #76, AC.RNM-1a.1–AC.RNM-1a.S)` (2026-04-29).
+- **pos-amend apply + H/L pre-existing-debt corrective commit:** `5dc1122` — `chore(rename-1a-apply): pos-amend apply + H/L pre-existing-debt corrective for amendment #76` (2026-04-29).
+- **AC39_6 brand-keyed sentinel corrective commit:** `92098e1` — `chore(rename-1a-fix): align workspace-bootstrap AC39_6 sentinel to post-rename VP H1 (amendment #76)` (2026-04-29).
+- **Sub-plan §11 findings update commit:** `f3041a5` — `docs(plans): record M1a build-time findings #7–#11 in sub-plan §11` (2026-04-29).
+- **Seal commit:** `143d465` — `chore(seals): M1a docs/prose-only brand rebrand — … — objective-tracker+workspace-bootstrap+hands-off-lifecycle+scope-of-work+workspace-sync at f3041a5` (2026-04-29).
+- **Manifest scope-of-work-removal corrective commit (post-seal):** `aa9aa5a` — `docs(plans): correct M1a manifest — remove scope-of-work (no SEAL_COMMIT sidecar; H19 covers admission)` (2026-04-29).
+- **§14 SHA-register backfill commit (this commit):** TBD — `docs(plans): record amendment #76 commit SHAs in method-decision register` (2026-04-29).
+
+Diff window: `ebe0a57..f3041a5` (BASELINE → seal-target).
 
 ### Dependents cleared to dispatch
 
-(post-build — M1b dispatch cleared once M1a seals)
+- **M1b** (env-vars + `~/.pos/` per series master §2 ladder) cleared to dispatch. Dispatcher should author `docs/rebuild/plans/oss-v0-1-0-publish-rename-1b.md` per the series master's plan-shape convention.
+- **`oss-v0-1-0-publish.md` §5 M1 row re-pricing** flagged in series master §11 — next dispatcher's action item before M1b begins (or M1b's dispatch absorbs it as a precursor doc-only commit).
 
 ---
 

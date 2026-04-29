@@ -267,6 +267,28 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         # interim top-level prefix changes are admitted when H/L's
         # next SEAL_COMMIT advances past them).
         "data",
+        # Amendment #76 (M1a — docs/prose-only brand rebrand; first
+        # sub-amendment of the M1.rename multi-amendment series) is
+        # the first H/L amendment whose SEAL_COMMIT window crosses
+        # the public-docs scaffold commits `a28969e`
+        # (`docs(public): add CODE_OF_CONDUCT.md (Contributor
+        # Covenant 2.1)`) and `3c599c1`
+        # (`feat(public-docs): scaffold v0.1.0 public artefacts
+        # (LICENSE + CONTRIBUTING + SECURITY + README + positioning
+        # + condensed-ODD)`). Together these introduced four new
+        # top-level files: `LICENSE`, `CONTRIBUTING.md`,
+        # `CODE_OF_CONDUCT.md`, and `SECURITY.md`. M1a admits all
+        # four at H/L's first opportunity per ODD §10's per-
+        # invariant-BASELINE convention. M1a itself does not edit
+        # these files (its scope is docs/prose-only brand rebrand);
+        # the admissions here cover the surface-introduction
+        # invariant for files that already lived in the tree at
+        # M1a's dispatch but had not yet crossed an H/L SEAL_COMMIT
+        # window.
+        "LICENSE",
+        "CONTRIBUTING.md",
+        "CODE_OF_CONDUCT.md",
+        "SECURITY.md",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)
@@ -358,9 +380,18 @@ def test_H21_root_readme_present() -> None:
     assert readme.exists()
     text = readme.read_text()
     # The fresh content describes the current sealed-component state,
-    # not the prototyping-phase placeholder.
-    assert "pOS v2" in text
-    assert "Foundation" in text or "foundational" in text or "twelve" in text
+    # not the prototyping-phase placeholder. Post-amendment-#76 (M1a
+    # docs/prose-only brand rebrand of the M1.rename multi-amendment
+    # series; sealed `2b2899b` feature commit), the README brand-
+    # vocabulary lands on `loam`. The pre-public-docs-scaffold
+    # marker phrase ("pOS v2" + "Foundation"/"foundational"/"twelve"
+    # — pinned by amendment #67's pos-v2-era foundation-audit
+    # README) is replaced by the loam-shape marker phrases — the
+    # one-line pitch ("substrate") + the harness sentence
+    # ("Claude-attached harness") that anchor the post-public-docs
+    # README authored at commit `3c599c1`.
+    assert "loam" in text
+    assert "substrate" in text or "harness" in text or "primary persona" in text
 
 
 # ---- SEAL_COMMIT sidecars all present ------------------------------

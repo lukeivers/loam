@@ -167,7 +167,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              immediately before this amendment's code commit.
 #              Mirrors amendments #34 / #35 / #36 / #37 / #38
 #              BASELINE-as-HEAD~1 pattern.
-BASELINE = "39cfbb14f04c2119ec7994e3b18d1ff7546a680d"
+BASELINE = "ebe0a570f741135cb18aeb3595211e5cb3b11359"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -306,6 +306,9 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/rebuild/VALUE_PROPOSITION.md",
         ".claude/settings.json",
         "first-run-inventory.yaml",
+        "docs/CLAUDE_CAPABILITIES.md",
+        "docs/duration-estimation-rubric.md",
+        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
     }
 
     offending = []

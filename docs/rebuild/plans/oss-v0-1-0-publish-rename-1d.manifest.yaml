@@ -1,0 +1,380 @@
+schema_version: 1
+amendment:
+  number: 79
+  slug: oss-v0-1-0-publish-rename-1d
+  title: "M1d — OTel pos.* → loam.* root rebrand (25 roots + 7 tracer-component variants; first-segment-only substitution; second-and-below segments unchanged); fourth sub-amendment of M1.rename multi-amendment series"
+
+# BASELINE: 1e99d0b — M1c's seal commit
+# (chore(seals): M1c launchd label rebrand …
+# hands-off-lifecycle+workspace-bootstrap+memory-system+primary-persona
+# +orchestrator at 431151d).
+# M1d's BASELINE..HEAD diff is the M1d sub-plan + manifest commit + the
+# M1d feature commit + apply commit + any corrective commits + seal commit.
+baseline: 1e99d0b
+
+plan: docs/rebuild/plans/oss-v0-1-0-publish-rename-1d.md
+
+seal_description: "M1d OTel root rebrand — every span/event/attribute/tracer/logger/Resource literal with first segment `pos` rebases to `loam` across every framework callsite (25 documented roots + 7 tracer-component variants per locked plan §1 inventory) + observability-aggregator namespace defaults (config.self_namespace_prefix, ingest function-defaults x3, Resource service.name, schema.TRACER_TO_COMPONENT keys) + live component docs (framework/<comp>/docs/) + component proposals (docs/rebuild/components/<comp>/proposal.md) + docs/odd-in-pos.md worked examples + HC#4 in-band retire-and-rebaseline for framework/workspace-bootstrap/src/workspace_bootstrap/host.py (line 82 tracer-name rebrand triggers SHA bump per ODD §4 in-band methodology-aligned). Hard cutover per series-master D-RNM.3 — no dual-emit shim."
+
+# Thirteen sealed components per locked plan §1 fence statement. The
+# fence is wider than M1c's five and M1b's eleven — the OTel surface is
+# the largest single-grep amendment of the M1.rename series per the
+# series-master §2 ladder note. Empirical surface inventory at plan time
+# (§1 + §11 finding #1):
+#
+#   Thirteen sealed components carry OTel pos.* callsites:
+#     - cost-governance         — observability.py + tests
+#     - graceful-degradation    — detection.py + observability.py + 3 tests
+#     - objective-tracker       — observability.py + runtime.py + tests
+#     - observability-aggregator — config.py + ingest.py + nl_path.py +
+#                                  replay.py + api.py + schema.py +
+#                                  store.py + 9 test files (heaviest)
+#     - orchestrator            — supervisor.py + observability.py + tests
+#     - primary-persona         — observability.py + tests (~7 files)
+#     - reversibility-primitive — observability.py
+#     - self-correction         — observability.py + triggers.py + 3 tests
+#     - self-upgrade            — observability.py + rollback.py +
+#                                  clause_checks.py + upgrade.py
+#     - telegram-interface      — observability.py + 2 tests
+#     - workspace-bootstrap     — host.py (tracer name `pos.bootstrap`) +
+#                                  main.py + tests + docs/extension_protocol.md
+#                                  (NOT discovery.py — entry-point group
+#                                  pos.bootstrap.contributions is Python
+#                                  packaging, not OTel; M1e closes it)
+#     - workspace-sync          — observability.py + cli.py + tests
+#     - hands-off-lifecycle     — narrative anchor + H19 owner; HOL src
+#                                  contains zero pos.* OTel literals at
+#                                  plan-authoring time. HOL is in the fence
+#                                  for HC#4 in-band rebaseline (one SHA
+#                                  bump on workspace-bootstrap/host.py)
+#                                  and as the conventional narrative anchor
+#                                  for amendment seal commits.
+#
+#   Plus framework/scope-of-work/ + framework/safety-layer/ (touched in
+#   src/tests/docs but NOT entered as fence components — per M1a-locked
+#   precedent these have no SEAL_COMMIT sidecar; admission is via H19's
+#   cross-cutting allowed-set in HOL's test_cross_cutting.py).
+#
+#   Plus docs/odd-in-pos.md (universal admission), the
+#   docs/rebuild/components/<comp>/proposal.md files (universal
+#   docs/rebuild/ prefix), and the M1d plan-doc + manifest YAML
+#   (docs/rebuild/plans/).
+#
+# HC#4 byte-content sample status: ONE SHA BUMP EXPECTED for
+# framework/workspace-bootstrap/src/workspace_bootstrap/host.py (line
+# 82 carries `trace.get_tracer("pos.bootstrap")` — an OTel tracer-name
+# callsite that M1d rebrands to `"loam.bootstrap"`). The other 14 sample
+# files contain ZERO M1d-touched OTel callsites (verified pre-build per
+# locked plan §11 finding #3). ODD §4 in-band retire-and-rebaseline
+# applied per the dispatch's named methodology heads-up + M1c lesson #9.
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+  - name: cost-governance
+    seal_test: framework/cost-governance/tests/test_no_sealed_amendments.py
+    sidecar: framework/cost-governance/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: graceful-degradation
+    seal_test: framework/graceful-degradation/tests/test_no_sealed_amendments.py
+    sidecar: framework/graceful-degradation/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: objective-tracker
+    seal_test: framework/objective-tracker/tests/test_no_sealed_amendments.py
+    sidecar: framework/objective-tracker/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: observability-aggregator
+    seal_test: framework/observability-aggregator/tests/test_no_sealed_amendments.py
+    sidecar: framework/observability-aggregator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: orchestrator
+    seal_test: framework/orchestrator/tests/test_no_sealed_amendments.py
+    sidecar: framework/orchestrator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: reversibility-primitive
+    seal_test: framework/reversibility-primitive/tests/test_no_sealed_amendments.py
+    sidecar: framework/reversibility-primitive/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: self-correction
+    seal_test: framework/self-correction/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-correction/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: self-upgrade
+    seal_test: framework/self-upgrade/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-upgrade/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: telegram-interface
+    seal_test: framework/telegram-interface/tests/test_no_sealed_amendments.py
+    sidecar: framework/telegram-interface/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-sync
+    seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3 + the precedent
+# under which docs/rebuild/components/ is admitted (the dispatch's
+# scope explicitly names "component proposals"; the docs/rebuild/
+# universal prefix admits the proposal.md files).
+#
+# scope-of-work + safety-layer touched files admitted via H19 cross-
+# cutting allowed-set per the M1a-locked precedent (no SEAL_COMMIT
+# sidecars; their seal-discipline is HOL's test_cross_cutting.py).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+    - docs/rebuild/components/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-rename-1d
+  body: |
+    # Amendment #79 — M1d OTel pos.* → loam.* root rebrand
+
+    2026-04-29. Fourth sub-amendment of the M1.rename multi-amendment
+    series per locked series master plan-doc
+    `docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed
+    `ebe0a57`) and locked sub-plan-doc
+    `docs/rebuild/plans/oss-v0-1-0-publish-rename-1d.md`.
+
+    Composes on M1a (sealed `143d465`, 2026-04-29 — docs/prose-only
+    brand rebrand), M1b (sealed `d97c8c1`, 2026-04-29 — env-vars +
+    per-host config dir + migration helper), and M1c (sealed
+    `1e99d0b`, 2026-04-29 — launchd label rebrand + plist filename
+    cascade + sibling migration helper) and on the OSS v0.1.0 publish
+    programme.
+
+    Owner rulings closed at series-master commit time (2026-04-29):
+
+      - D-RNM.1 SPLIT: M1d is one slice of the multi-amendment series.
+      - D-RNM.2 per-component namespace-package: deferred to M1f
+        (M1d's scope is OTel root rebrand; namespace pivot is later).
+      - D-RNM.3 no compat window: hard-cutover; no dual-emit shim
+        publishing under both pos.* and loam.* concurrently; no
+        aggregator query-time fallback that reads both prefixes.
+
+    Surface changes (thirteen sealed components + scope-of-work +
+    safety-layer admitted via H19 + live component docs + component
+    proposals + docs/odd-in-pos.md):
+
+      - First-segment substitution `pos.` → `loam.` across:
+          * span names (start_as_current_span, name=, etc.)
+          * event names (add_event, etc.)
+          * tracer / logger / meter names
+            (trace.get_tracer, logging.getLogger, get_meter)
+          * attribute keys (set_attribute, attrs.get)
+          * Resource service.name attribute
+          * configuration namespace prefix defaults
+            (observability-aggregator's self_namespace_prefix)
+          * TRACER_TO_COMPONENT lookup-map keys
+            (observability-aggregator/src/schema.py)
+          * test assertions / fixtures / parametrize values
+
+      - 25 first-segment-`loam.` roots in the post-rename inventory:
+          loam.aggregator     loam.bootstrap      loam.call
+          loam.correction     loam.cost           loam.degradation
+          loam.hands_off_lifecycle  loam.http     loam.memory
+          loam.notification   loam.objective      loam.orchestrator
+          loam.other          loam.persona        loam.prompt
+          loam.retention      loam.reversibility  loam.safety
+          loam.scope          loam.scope_of_work  loam.session
+          loam.sync           loam.telegram       loam.test
+          loam.upgrade
+
+        Plus 7 tracer-component variants (package-name-mirroring
+        tracer names emitted via trace.get_tracer):
+          loam.cost_governance        loam.safety_layer
+          loam.self_correction        loam.telegram_interface
+          loam.reversibility_primitive   loam.primary_persona
+          loam.objective_tracker
+
+      - Migration plan §3.5 catalogue documented 23 roots; empirical
+        plan-time inventory found 25 in the live tree (the catalogue
+        + `pos.sync` (workspace-sync — added post-research) +
+        `pos.memory` (used by aggregator's memory-record mapper —
+        implicit in research's "memory's hand-rolled sinks" comment).
+        All 25 rebase per locked Tier-1 #5 ruling. Catalogue mismatch
+        is research-vs-build snapshot drift; non-blocking.
+
+      - Observability-aggregator namespace defaults rebrand:
+          framework/observability-aggregator/src/config.py:
+            self_namespace_prefix: str = "pos.aggregator"
+              → "loam.aggregator"
+          framework/observability-aggregator/src/ingest.py:
+            three function-default mirrors of self_namespace_prefix
+              → "loam.aggregator"
+            Resource.create({"service.name": "pos.aggregator"})
+              → {"service.name": "loam.aggregator"}
+          framework/observability-aggregator/src/schema.py:
+            TRACER_TO_COMPONENT keys "pos.<X>" → "loam.<X>"
+
+      - Aggregator namespace validation tautology:
+          The aggregator's two `tracer_name.startswith(self._self_prefix)`
+          callsites (ingest.py:155 + 477) read the configurable
+          self_namespace_prefix (default rebrands above). No hardcoded
+          pos. validator existed in production code; the default
+          update IS the contract update. Dispatch halt-trigger #7
+          structurally moot; AC.RNM-1d.4 is a tautology under
+          AC.RNM-1d.3.
+
+      - Live component docs + component proposals + odd-in-pos
+        rebrand:
+          framework/<comp>/docs/*.md files that name OTel roots in
+            architecture diagrams / relationship maps / api-references
+            / prose-explanations / nl-references.
+          docs/rebuild/components/<comp>/proposal.md files that name
+            OTel roots in design contracts.
+          docs/odd-in-pos.md lines ~100 (`pos.safety.scope_kill`)
+            and ~255 (`pos.cost.ceiling_warning`) worked-example
+            citations.
+
+      - HC#4 byte-content-match in-band retire-and-rebaseline:
+          framework/workspace-bootstrap/src/workspace_bootstrap/host.py
+          (line 82) carries `self.tracer = trace.get_tracer("pos.bootstrap")`
+          which M1d rebrands to `"loam.bootstrap"` per AC.RNM-1d.1.
+          The SHA pin in
+          framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py
+          for host.py updates to the post-M1d hash with a comment
+          naming M1d amendment #79 + the cause. Methodology-aligned
+          per ODD §4 in-band retire-and-rebaseline + M1c lesson #9.
+          The other 14 sample files contain ZERO M1d-touched OTel
+          callsites; HC#4 stays GREEN with the single SHA bump.
+
+    Out of scope (locked plan-doc §6, named explicitly):
+
+      - All work deferred to M1e..M1g + M9 (CLI rename, namespace
+        pivot, dormancy rename, dir rename, spec-file renames).
+      - Workspace-side <workspace>/.pos/ sentinel directory —
+        distinct surface; M1b discipline carried forward.
+      - Internal Python identifiers carrying POS_V2_ / pos_v2 /
+        pos-v2 decoration — namespace work; M1e.
+      - launchd labels — M1c (sealed `1e99d0b`).
+      - Per-host config dir + env-vars — M1b (sealed `d97c8c1`).
+      - pos-amend CLI rename → loam amend — M1e per dispatch §Scope.
+      - Code imports `from pos_<comp>` and package directory
+        restructure — M1e/M1f.
+      - graceful-degradation → dormancy second-segment rename
+        (M1d only does first-segment `pos.` → `loam.`; M1f
+        cascades `loam.degradation` → `loam.dormancy`).
+      - `pos.bootstrap.contributions` Python entry-point group name
+        in framework/workspace-bootstrap/ — Python packaging
+        identifier, NOT an OTel root. M1e closes it concurrently
+        with the namespace pivot.
+      - `pos_v2.primary_persona` legacy entry in
+        observability-aggregator/src/schema.py::TRACER_TO_COMPONENT
+        — pre-existing tech-debt entry (matches `pos_v2.*` not
+        `pos.*`); preserved per M1d's first-segment-`pos`-only
+        scope (§11 finding #2 records the recommendation for a
+        future cleanup amendment).
+      - Path strings /Users/lukeivers/ivers-corp-pos-v2/... — M9.
+      - Historical seal narratives — preserved.
+      - Historical plan-docs — preserved.
+      - Historical component-record docs (research.md,
+        research-plan.md, brief.md, component.md) — preserved.
+      - STATE.md, BACKLOG.md, FUTURE_IDEAS.md, FUTURE_IDEAS_DRAFT.md
+        — historical-narrative-heavy live docs; deferred.
+      - docs/rebuild/spec/pos-v2-*.md — M1e (filename + content).
+      - Memory-system records' bare `retention_class` field (no
+        namespace prefix) — not OTel-namespaced; stays.
+      - Aggregator's retention-DB rows already stored under pos.*
+        names — pre-public release; zero data-consumers; rows are
+        not modified — only emit-side and query-time-filter
+        literals change.
+
+    HC#4 byte-content sample status post-M1d: GREEN with one SHA
+    bump (host.py per dispatch-named in-band ODD §4 retire-and-
+    rebaseline). Other 14 sample files unchanged.
+
+    H19 admission: scope-of-work + safety-layer touched in src/tests
+    via the existing H19 cross-cutting allowed-set (no per-component
+    seal-diff fence; their seal-discipline is HOL's
+    test_cross_cutting.py per the M1a-locked precedent).
+
+    Pre-existing tech-debt observed and recorded in §11 finding #2
+    (non-blocking; preserved in M1d): `pos_v2.primary_persona` legacy
+    entry in TRACER_TO_COMPONENT lookup map. Origin: pre-amendment-#67
+    snapshot; live emission code emits under `pos.primary_persona`
+    (single-segment) per the canonical entry. The legacy entry would
+    only fire if some past code path emitted under `pos_v2.*`, which
+    framework/primary-persona/src/ does not. Recommendation for future
+    cleanup amendment: remove the dead lookup key. Recorded for FIDRAFT.
+
+    Test surface (narrow per feedback_amendment_dispatch_speedups):
+
+      - AC.RNM-1d.1 — first-segment OTel rebrand: verified by
+        post-edit grep + every Phase B touched test file
+        (heaviest-touched: observability-aggregator's 10 D-test files;
+        cost-governance, graceful-degradation, objective-tracker,
+        primary-persona, safety-layer, scope-of-work,
+        self-correction, self-upgrade, telegram-interface,
+        workspace-bootstrap, workspace-sync).
+      - AC.RNM-1d.2 — 25 + 7 root inventory: verified by
+        `grep -rEho '"loam\.[a-z_]+'` enumeration.
+      - AC.RNM-1d.3 — aggregator namespace defaults: verified by
+        observability-aggregator's full D-test suite.
+      - AC.RNM-1d.4 — aggregator validation tautology: verified by
+        test_d9_self_obs_and_privacy.py (the self-obs filter test).
+      - AC.RNM-1d.5 — live docs + proposals + odd-in-pos rebrand:
+        verified by post-rename grep (0 hits expected).
+      - AC.RNM-1d.6 — fence-narrowing negative AC: verified by
+        `git diff <baseline>..HEAD --stat` showing ONLY the named
+        surfaces.
+      - AC.RNM-1d.S — this seal commit.
+
+    ODD §2.5 reverse-direction audit clean: every change in this
+    amendment's diff is a first-segment-`pos.` → `loam.` rebrand
+    callsite, the aggregator namespace-default update, the live-docs
+    / proposals / odd-in-pos rebrand, the HC#4 SHA pin update for
+    host.py, or the plan-doc + manifest YAML themselves. Each line
+    traces back to a named AC under §4.
+
+    BASELINE 1e99d0b (M1c seal commit). Thirteen sealed components
+    touched: hands-off-lifecycle (HC#4 in-band rebaseline + narrative
+    anchor), cost-governance, graceful-degradation, objective-tracker,
+    observability-aggregator, orchestrator, primary-persona,
+    reversibility-primitive, self-correction, self-upgrade,
+    telegram-interface, workspace-bootstrap, workspace-sync.
+
+    Composes on (consumers-only; no semantic edits):
+
+      - The OSS v0.1.0 publish programme master plan
+        (`oss-v0-1-0-publish.md`) — M1d row already in place per
+        M1b's precursor commit `7be713b`.
+      - The M1.rename series master plan
+        (`oss-v0-1-0-publish-rename.md`) — M1d is the fourth
+        sub-amendment per the §2 ladder.
+      - `loam-rename-decisions.md` — Tier-1 item 5 (OTel root rebrand;
+        attribute-level names below the second segment unchanged).
+      - `.scratch/claude-output/loam-rename-migration-plan.md` §3.5
+        (OTel surface mechanics + breaking-change flag).
+
+    FIDRAFT items closed by this amendment: none. The M1.rename
+    series as a whole closes the brand-rebrand portion of AC.OSS.5;
+    M1d closes the OTel root slice.

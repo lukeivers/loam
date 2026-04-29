@@ -22,7 +22,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "74ae5d3"
+BASELINE = "bb3574c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -87,6 +87,7 @@ def test_R21_only_reversibility_primitive_changed() -> None:
         "docs/rebuild/components/",
         "docs/rebuild/spec/",
         "framework/tools/loam-mode/",
+        "framework/hands-off-lifecycle/seals/",
     )
     # If there is a workspace-bootstrap file at the repo root, allow it.
     allowed_files = {

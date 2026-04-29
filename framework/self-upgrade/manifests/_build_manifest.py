@@ -18,7 +18,7 @@ Framework-code scope: framework code = python sources under each
 sealed component's ``src/`` directory. Tests, docs, plans, scripts,
 seals/, templates/ are NOT installed by the upgrade swap and are
 therefore out-of-manifest. ``tools/`` is also out-of-scope (tools
-are workspace-side; merge-resolver-module + pos-amend live there).
+are workspace-side; merge-resolver-module + loam amend live there).
 """
 
 from __future__ import annotations

@@ -3,7 +3,7 @@
 Amendment #38 (objective-tracker schema widening) introduces this
 module alongside the `lifted_from` provenance field. The filter is
 the surface every Heavy-B downstream consumer composes against —
-pos-amend's `project` subcommand, primary-persona's tracker-context
+loam amend's `project` subcommand, primary-persona's tracker-context
 contributor, future audit-coverage tools.
 
 Field set is intentionally narrow: AC38.3 names exactly the keys

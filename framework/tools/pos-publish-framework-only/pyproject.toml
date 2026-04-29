@@ -3,13 +3,13 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos-publish-framework-only"
+name = "loam-publish-framework-only"
 version = "0.1.0"
-description = "Synthesise canonical's `framework-only` branch from `pos-v2`."
+description = "Synthesise canonical's `framework-only` branch from loam framework (post-M1g namespace pivot of pos-publish-framework-only per M1e §11 finding #4)."
 requires-python = ">=3.11"
 
 [project.scripts]
-pos-publish-framework-only = "pos_publish_framework_only.cli:main"
+pos-publish-framework-only = "loam.publish_framework_only.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

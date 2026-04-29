@@ -605,7 +605,7 @@ class ObjectiveTracker:
         """Return projections matching `filter` in deterministic order.
 
         Amendment #38: the surface every Heavy-B downstream consumer
-        composes against (pos-amend's `project` subcommand, primary-
+        composes against (loam amend's `project` subcommand, primary-
         persona's tracker-context contributor). An empty / `None`
         filter returns the full record set in `last_event_id` ASC
         order — the same ordering `list_states` already exposes, so

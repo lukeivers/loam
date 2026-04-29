@@ -133,7 +133,7 @@ def test_B20_only_self_upgrade_surfaces_changed() -> None:
         "tools/",
         "workspace-bootstrap/",
         "workspace-sync/",
-        "framework/tools/pos-amend/",
+        "framework/tools/loam/",
         "docs/rebuild/components/",
         "docs/rebuild/spec/",
         "framework/tools/loam-mode/",

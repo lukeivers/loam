@@ -200,7 +200,7 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
         "tools/",
         "workspace-bootstrap/",
         "workspace-sync/",
-        "framework/tools/pos-amend/",
+        "framework/tools/loam/",
     )
     # Amendment #22 (pos-amend CLI + universal-paths retrofit) brings
     # memory-system's seal-diff loop up to parity with the other sealed

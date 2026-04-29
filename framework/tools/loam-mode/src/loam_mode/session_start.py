@@ -290,7 +290,7 @@ def _invoke_lazy_projection(workspace_root: Path) -> None:
     of ``dev_intent`` + idempotent via ``lifted_from``.
     """
     try:
-        from heavy_b_migrate.trigger import run_if_dev_intent
+        from loam.heavy_b_migrate.trigger import run_if_dev_intent
     except ImportError:
         return
     try:

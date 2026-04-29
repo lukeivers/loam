@@ -16,7 +16,7 @@ ALL DEV-MODE-only (the rules are pos-v2-dev-specific):
 
   - **T1 / AC.AG.1** — wrong-WD dispatch. Detected via prompt
     mentions of pos-v2 surfaces (``docs/rebuild/``, ``framework/<comp>
-    /src/``, ``pos-amend``, "seal commit", canonical path string,
+    /src/``, ``loam amend``, "seal commit", canonical path string,
     ``amendment #N`` shapes) combined with a parent envelope ``cwd``
     that does NOT match the canonical pos-v2 path.
   - **T2 / AC.AG.2** — method-enumerated prompt. Detected via a
@@ -120,7 +120,7 @@ _LOAM_SURFACE_PATTERNS: tuple[re.Pattern, ...] = (
     re.compile(r"docs/rebuild/"),
     re.compile(r"framework/[\w-]+/src/"),
     re.compile(r"framework/[\w-]+/tests/"),
-    re.compile(r"\bpos-amend\b"),
+    re.compile(r"\bloam amend\b"),
     re.compile(r"\bseal commit\b"),
     re.compile(r"/Users/lukeivers/ivers-corp-pos-v2/"),
     re.compile(r"\bamendment\s+#\d+", re.IGNORECASE),

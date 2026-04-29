@@ -303,7 +303,7 @@ def extract_value_prop_record(text: str) -> ValuePropRecord:
 # Spec-tier descendants — one objective per spec phase. Each has
 # ``authored_by="user"`` and ``lifted_from.source_doc`` pointing at
 # the framework spec doc; ``source_ac`` carries the phase label so
-# downstream consumers (#40 contributor, pos-amend project) can
+# downstream consumers (#40 contributor, loam amend project) can
 # filter cleanly. The descendant prose is methodology-shaped (the
 # spec phases are universal framework invariants, not workspace
 # content); AC39.6 enforces that no workspace-specific value-prop

@@ -15,8 +15,8 @@ from pathlib import Path
 
 from loam.objective_tracker import ObjectiveFilter, ObjectiveTracker
 
-from heavy_b_migrate.component_acs import extract_and_seed
-from heavy_b_migrate.components import seed_phase_alpha
+from loam.heavy_b_migrate.component_acs import extract_and_seed
+from loam.heavy_b_migrate.components import seed_phase_alpha
 
 
 _PROPOSAL_WITH_THREE_ACS = """\

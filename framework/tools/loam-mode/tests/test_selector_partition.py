@@ -97,7 +97,7 @@ def test_AC_F2_selector_handles_glob_entries(tmp_path: Path) -> None:
     candidates = [
         "src/main.py",
         "src/sub/util.py",
-        "tools/pos-amend/cli.py",
+        "tools/loam/src/loam_cli/amend/cli.py",
     ]
     user = select_corpus(manifest, tmp_path, "user", candidate_paths=candidates)
     dev = select_corpus(manifest, tmp_path, "dev", candidate_paths=candidates)

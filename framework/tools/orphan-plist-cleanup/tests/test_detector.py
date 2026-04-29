@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from orphan_plist_cleanup.detector import (
+from loam.orphan_plist_cleanup.detector import (
     Classification,
     DetectedOrphan,
     classify_filename,

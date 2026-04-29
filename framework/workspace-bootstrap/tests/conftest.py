@@ -108,7 +108,7 @@ def _make_fixture_canonical(
         # branch. The tool composes git plumbing (no working-tree
         # mutation), so the pos-v2 branch is unchanged post-call
         # (AC.SFR.5 binding: stranger-clones-canonical preserved).
-        from pos_publish_framework_only.synth import (  # noqa: PLC0415
+        from loam.publish_framework_only.synth import (  # noqa: PLC0415
             synthesise_framework_only,
         )
         synthesise_framework_only(root)

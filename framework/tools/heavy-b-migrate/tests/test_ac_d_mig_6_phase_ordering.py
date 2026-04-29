@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from heavy_b_migrate.runner import (
+from loam.heavy_b_migrate.runner import (
     PhaseOrderingError,
     run_phases,
 )

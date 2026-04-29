@@ -17,8 +17,8 @@ from pathlib import Path
 
 from loam.objective_tracker import ObjectiveFilter, ObjectiveTracker
 
-from heavy_b_migrate.components import seed_phase_alpha
-from heavy_b_migrate.ids import component_objective_id
+from loam.heavy_b_migrate.components import seed_phase_alpha
+from loam.heavy_b_migrate.ids import component_objective_id
 
 
 def test_phase_alpha_seeds_one_record_per_component_with_proposal(

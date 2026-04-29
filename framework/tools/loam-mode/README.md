@@ -15,7 +15,7 @@ orphans / overlaps / cross-mode references.
 pip install -e tools/loam-mode/
 ```
 
-(Mirrors `tools/pos-amend/`'s install convention.)
+(Mirrors `tools/loam/`'s install convention.)
 
 ## CLI
 

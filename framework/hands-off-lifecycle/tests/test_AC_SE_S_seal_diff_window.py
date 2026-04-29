@@ -51,7 +51,7 @@ def _seal_commit_from_manifest_sibling() -> str | None:
 
     Originally this read the live SEAL_COMMIT sidecar — but that
     sidecar is shared across every hands-off-lifecycle amendment and
-    advances with each pos-amend seal. The test's intent is "A1's
+    advances with each loam amend seal. The test's intent is "A1's
     amendment window stayed clean" — a HISTORICAL fact about a single
     amendment, not a live property. Tighten the AC per ODD §4 / the
     loose-AC-text-fix convention by hardcoding A1's seal SHA. Pre-D.1
@@ -101,7 +101,7 @@ def test_AC_SE_S_no_path_outside_admitted_prefixes() -> None:
     admissions.
 
     Skips if the manifest or sidecar is not yet authored — this is
-    a build-time test that becomes load-bearing once ``pos-amend
+    a build-time test that becomes load-bearing once ``loam amend
     apply`` writes both. Pre-apply runs are no-ops (the test is
     informational until A1's window exists)."""
     baseline = _baseline_from_manifest()

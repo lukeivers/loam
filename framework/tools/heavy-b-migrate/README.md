@@ -64,7 +64,7 @@ One test file per AC (`test_ac_d_mig_<n>_<name>.py`).
   root + spec descendants).
 - **#40** — `primary-persona` tracker-context contributor (the
   consumer that surfaces migrated content).
-- **#16** — `pos-amend` tracker integration (manifest `objectives`
+- **#16** — `loam amend` tracker integration (manifest `objectives`
   block + apply registration + seal source_commit).
 - **Sub-plan A** — `dev_intent` field on PersonaContract.
 - **#45** — multi-contributor SessionStart (loam-mode contributes the

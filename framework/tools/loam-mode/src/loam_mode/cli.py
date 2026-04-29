@@ -69,7 +69,7 @@ def _cmd_session_start(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="loam-mode",
-        description="pos-v2 dev-mode auto-load partition CLI.",
+        description="loam dev-mode auto-load partition CLI.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

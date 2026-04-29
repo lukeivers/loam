@@ -16,7 +16,7 @@ from pathlib import Path
 
 from loam.objective_tracker import ObjectiveFilter, ObjectiveTracker
 
-from heavy_b_migrate.amendment_acs import extract_and_seed
+from loam.heavy_b_migrate.amendment_acs import extract_and_seed
 
 
 _WELL_STRUCTURED = """\

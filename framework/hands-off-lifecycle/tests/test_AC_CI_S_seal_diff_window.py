@@ -17,7 +17,7 @@ covers.
 The test reads the amendment's manifest's ``baseline:`` literal and
 the seal-diff sidecar at
 ``framework/hands-off-lifecycle/seals/SEAL_COMMIT.<slug>``; the
-sidecar is written/advanced by ``pos-amend seal``. Pre-apply / pre-
+sidecar is written/advanced by ``loam amend seal``. Pre-apply / pre-
 seal runs are no-ops (the sidecar / SHA do not yet exist).
 """
 
@@ -75,7 +75,7 @@ def _seal_commit_sha() -> str | None:
         return None
     text = SIDECAR_PATH.read_text(encoding="utf-8").strip()
     # The sidecar may contain commentary + the SHA on its own line.
-    # The pos-amend convention is the SHA on the first line; if the
+    # The loam amend convention is the SHA on the first line; if the
     # file is the narrative-then-SHA shape, we accept either.
     lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
     for ln in lines:
@@ -111,7 +111,7 @@ def test_AC_CI_S_no_path_outside_admitted_prefixes() -> None:
     admissions.
 
     Skips if the manifest or sidecar is not yet authored — this is
-    a build-time test that becomes load-bearing once ``pos-amend
+    a build-time test that becomes load-bearing once ``loam amend
     apply`` writes both. Pre-apply runs are no-ops (the test is
     informational until this amendment's window exists)."""
     baseline = _baseline_from_manifest()

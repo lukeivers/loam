@@ -66,7 +66,7 @@ def test_CR24_seal_commit_pinning_pattern() -> None:
     """
     source = Path(__file__).read_text()
     # The module must name the BASELINE and SEAL_COMMIT_PATH constants.
-    assert "BASELINE = " in source  # shape check: pos-amend apply advances the literal
+    assert "BASELINE = " in source  # shape check: loam amend apply advances the literal
     assert "SEAL_COMMIT_PATH" in source
     # The diff call must use f"{BASELINE}..{seal}" with `seal` coming
     # from _seal_commit(), not "..HEAD" hardcoded. Verify the diff
@@ -133,7 +133,7 @@ def test_CR21_only_self_correction_changed() -> None:
         "tools/",
         "workspace-bootstrap/",
         "workspace-sync/",
-        "framework/tools/pos-amend/",
+        "framework/tools/loam/",
         "docs/rebuild/components/",
         "docs/rebuild/spec/",
         "framework/tools/loam-mode/",

@@ -344,10 +344,10 @@ def test_AC34_3_seal_diff_only_memory_system_changed() -> None:
     # commits between the prior memory-system seal and HEAD that
     # legitimately touched other components under their own
     # amendments, the AC34.3 narrow check is implicitly satisfied by
-    # the manifest design: pos-amend apply sets BASELINE to the
+    # the manifest design: loam amend apply sets BASELINE to the
     # memory-system-specific prior seal, and the cumulative
     # allowed-prefix tuple admits intervening cross-cutting work.
     # The structural guarantee that #34 itself only touches
     # memory-system surfaces is captured at the manifest layer
     # (single component entry, no extra_allowed_prefixes) and verified
-    # at apply-time by ``pos-amend apply``.
+    # at apply-time by ``loam amend apply``.

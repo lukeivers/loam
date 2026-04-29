@@ -1,6 +1,6 @@
 """PreToolUse gate — refuses Bash commands that match one of the
 five A4 failure classes (B1 amend-in-subagent, B2 secret-commit, B3
-pos-amend-dry-run-failure, B4 wrong-tree-write, B5 blast-radius).
+loam-amend-dry-run-failure, B4 wrong-tree-write, B5 blast-radius).
 
 Added by structural-enforcement A4 (Bash/Agent-context guards). The
 gate fires on the Claude Code PreToolUse matcher ``Bash`` (every shell
@@ -31,10 +31,10 @@ returns ``"dev-mode"``):
     written by the dispatcher marks the agent-context window).
     Bypassable via ``POS_BASH_GUARD_ALLOW=1``.
   - **B3 / AC.BAG.4** — amendment-shape commit pattern when
-    ``pos-amend apply --dry-run <manifest>`` would fail. Detection:
+    ``loam amend apply --dry-run <manifest>`` would fail. Detection:
     commit message starting with ``feat(...)``, ``fix(...)``,
     ``chore(...)``, or ``seal(...)`` over a sealed-component slug.
-    Invokes pos-amend; on exit ≠ 0 deny. Bypassable via
+    Invokes loam amend; on exit ≠ 0 deny. Bypassable via
     ``POS_BASH_GUARD_ALLOW=1``.
   - **B4 / AC.BAG.5** — wrong-tree-write via ``cd <ws>/framework
     && <write>``. Detected via a ``cd <path>`` clause whose target
@@ -125,7 +125,7 @@ class Decision:
     ``decision`` is one of {"allow", "deny", "no-op"}.
     ``failure_class`` names the specific class on deny:
     {"secret-commit", "blast-radius", "amend-in-subagent",
-     "pos-amend-dry-run-failure", "wrong-tree-write", None}.
+     "loam-amend-dry-run-failure", "wrong-tree-write", None}.
     """
 
     __slots__ = (
@@ -195,7 +195,7 @@ def _is_amendment_shape_commit(command: str) -> bool:
 def _candidate_manifest_paths(
     workspace_root: Path, sentinel: Any
 ) -> list[Path]:
-    """Discover candidate manifest paths for the pos-amend dry-run.
+    """Discover candidate manifest paths for the loam amend dry-run.
 
     Method per ODD §7.4: when an active-scope sentinel is present and
     its ``plan_path`` resolves to a ``docs/rebuild/plans/<slug>.md``,
@@ -219,21 +219,23 @@ def _candidate_manifest_paths(
     return candidates
 
 
-def _pos_amend_dry_run(
+def _loam_amend_dry_run(
     workspace_root: Path, manifest: Path
 ) -> tuple[int, str]:
-    """Invoke ``pos-amend apply --dry-run <manifest>``.
+    """Invoke ``loam amend apply --dry-run <manifest>``.
 
     Returns ``(exit_code, combined_stdout_stderr)``. Resolves
-    pos-amend via the workspace's venv.
+    loam (the unified top-level CLI; ``loam amend`` is the post-M1g
+    rename of pre-M1g ``pos-amend``) via the workspace's venv.
     """
-    pos_amend = workspace_root / ".venv" / "bin" / "pos-amend"
-    if not pos_amend.is_file():
-        return (-1, "pos-amend not found at .venv/bin/pos-amend")
+    loam = workspace_root / ".venv" / "bin" / "loam"
+    if not loam.is_file():
+        return (-1, "loam not found at .venv/bin/loam")
     try:
         result = subprocess.run(
             [
-                str(pos_amend),
+                str(loam),
+                "amend",
                 "apply",
                 "--dry-run",
                 str(manifest),
@@ -244,7 +246,7 @@ def _pos_amend_dry_run(
             timeout=30,
         )
     except (subprocess.TimeoutExpired, OSError) as exc:
-        return (-1, f"pos-amend invocation failed: {exc!s}")
+        return (-1, f"loam amend invocation failed: {exc!s}")
     return (
         result.returncode,
         (result.stdout or "") + (result.stderr or ""),
@@ -431,23 +433,23 @@ def evaluate(
                 matched=target,
             )
 
-    # AC.BAG.4 — amendment-shape commit pattern + pos-amend dry-run.
+    # AC.BAG.4 — amendment-shape commit pattern + loam amend dry-run.
     if not override_active and _is_amendment_shape_commit(command):
         sentinel = _read_active_scope_sentinel_or_none(workspace_root)
         candidates = _candidate_manifest_paths(workspace_root, sentinel)
         for manifest in candidates:
-            exit_code, output = _pos_amend_dry_run(
+            exit_code, output = _loam_amend_dry_run(
                 workspace_root, manifest
             )
             if exit_code != 0 and exit_code != -1:
-                # Real dry-run failure (not a missing-pos-amend env).
-                reason = _reason_pos_amend_dry_run(
+                # Real dry-run failure (not a missing-loam env).
+                reason = _reason_loam_amend_dry_run(
                     command, manifest, exit_code, output
                 )
                 return Decision(
                     "deny",
                     reason=reason,
-                    failure_class="pos-amend-dry-run-failure",
+                    failure_class="loam-amend-dry-run-failure",
                     matched=str(manifest),
                 )
 
@@ -553,19 +555,19 @@ def _reason_wrong_tree_write(command: str, target: str) -> str:
     )
 
 
-def _reason_pos_amend_dry_run(
+def _reason_loam_amend_dry_run(
     command: str, manifest: Path, exit_code: int, output: str
 ) -> str:
     output_excerpt = (output or "").strip()
     if len(output_excerpt) > 1000:
         output_excerpt = output_excerpt[:1000] + " ... (truncated)"
     return (
-        f"AC.BAG.4 (pos-amend-dry-run-failure, DEV-MODE) — refused: "
+        f"AC.BAG.4 (loam-amend-dry-run-failure, DEV-MODE) — refused: "
         f"the command is an amendment-shape commit (`feat|fix|chore|"
-        f"seal(<slug>): ...`) but `pos-amend apply --dry-run "
+        f"seal(<slug>): ...`) but `loam amend apply --dry-run "
         f"{manifest}` exited {exit_code}. Output:\n{output_excerpt}\n"
         f"Repair directions: (a) fix the manifest's BASELINE / "
-        f"components / universal_paths; (b) run `pos-amend apply "
+        f"components / universal_paths; (b) run `loam amend apply "
         f"<manifest>` to advance BASELINE before the seal commit; "
         f"(c) `POS_BASH_GUARD_ALLOW=1` bypasses for operator-trusted "
         f"triage."

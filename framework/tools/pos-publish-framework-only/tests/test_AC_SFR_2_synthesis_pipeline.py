@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from pos_publish_framework_only.synth import (
+from loam.publish_framework_only.synth import (
     SynthesisError,
     synthesise_framework_only,
 )

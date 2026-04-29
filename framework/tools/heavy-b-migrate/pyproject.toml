@@ -3,13 +3,13 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "heavy-b-migrate"
+name = "loam-heavy-b-migrate"
 version = "0.1.0"
-description = "Heavy-B Phase α/β/γ data-migration extractors + lazy-projection trigger (dev-discipline)."
+description = "Heavy-B Phase α/β/γ data-migration extractors + lazy-projection trigger (dev-discipline; post-M1g namespace pivot per M1e §11 finding #4)."
 requires-python = ">=3.11"
 
 [project.scripts]
-heavy-b-migrate = "heavy_b_migrate.cli:main"
+heavy-b-migrate = "loam.heavy_b_migrate.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

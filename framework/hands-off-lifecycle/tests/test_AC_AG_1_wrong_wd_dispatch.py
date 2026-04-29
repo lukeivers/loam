@@ -2,9 +2,10 @@
 
 Per the locked plan-doc §4 AC.AG.1: given workspace-mode = ``dev-
 mode``, given a Task tool call whose ``tool_input.prompt`` mentions
-pos-v2 surfaces (the prompt contains at least one of:
+loam surfaces (the prompt contains at least one of:
 ``docs/rebuild/``, ``framework/<comp>/src/`` or
-``framework/<comp>/tests/`` patterns, the literal ``pos-amend``,
+``framework/<comp>/tests/`` patterns, the literal ``loam amend``
+(post-M1g rename of pre-M1g ``pos-amend``),
 the literal "seal commit", the literal canonical path
 ``/Users/lukeivers/ivers-corp-pos-v2/``, OR an amendment-shape
 pattern ``amendment #\\d+``), given the envelope's top-level ``cwd``
@@ -77,7 +78,7 @@ def test_AC_AG_1_amendment_mention_wrong_cwd_denies(
     assert decision.failure_class == "wrong-wd"
 
 
-def test_AC_AG_1_pos_amend_mention_wrong_cwd_denies(
+def test_AC_AG_1_loam_amend_mention_wrong_cwd_denies(
     tmp_path, monkeypatch
 ) -> None:
     _stub_modules(monkeypatch, mode="dev-mode")
@@ -87,7 +88,7 @@ def test_AC_AG_1_pos_amend_mention_wrong_cwd_denies(
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={
-            "prompt": "Run pos-amend apply --dry-run on the manifest.",
+            "prompt": "Run loam amend apply --dry-run on the manifest.",
         },
         envelope_cwd=str(tmp_path),
     )

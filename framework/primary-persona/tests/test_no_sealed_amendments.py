@@ -148,7 +148,7 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         "framework/tools/loam-mode/",
     )
     # Universal-file admissions per amendment #22 ruling #3. Written
-    # by ``pos-amend apply``; kept stable across amendments.
+    # by ``loam amend apply``; kept stable across amendments.
     allowed_files: set[str] = {
         "CLAUDE.md",
         "docs/odd-in-pos.md",

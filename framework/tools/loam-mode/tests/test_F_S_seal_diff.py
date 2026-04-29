@@ -17,7 +17,7 @@ run in any other state — pre-commit dry-runs, post-seal post-followup
 state, etc. AC.F.S is a structural assertion that fires on the
 amendment-commit window itself.
 
-Mirrors the dev-discipline pattern from ``tools/pos-amend/tests/`` —
+Mirrors the dev-discipline pattern from ``tools/loam/tests/`` —
 no BASELINE / SEAL_COMMIT (those exist inside sealed-component
 fences).
 """

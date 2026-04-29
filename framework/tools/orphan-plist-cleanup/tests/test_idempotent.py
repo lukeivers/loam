@@ -10,8 +10,8 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
-from orphan_plist_cleanup.cli import main
-from orphan_plist_cleanup.launchctl import BootoutResult
+from loam.orphan_plist_cleanup.cli import main
+from loam.orphan_plist_cleanup.launchctl import BootoutResult
 
 
 def _ok_bootout(label: str) -> BootoutResult:

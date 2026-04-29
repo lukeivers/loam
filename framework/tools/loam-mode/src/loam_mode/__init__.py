@@ -1,4 +1,4 @@
-"""loam-mode — pos-v2 dev-mode auto-load partition selector + audit.
+"""loam-mode — loam dev-mode auto-load partition selector + audit.
 
 Sub-plan F (two-modes-and-multi-workspace programme) — partition
 data + selector + audit. Sub-plan B (amendment #45 + dev-discipline

@@ -94,7 +94,7 @@ def test_AC_SFR_4_pos_sync_fast_forwards_framework_only(
          pre/post sync (HC#6 carry-forward).
     """
     pytest.importorskip("workspace_sync.cli")
-    from pos_publish_framework_only.synth import (  # noqa: PLC0415
+    from loam.publish_framework_only.synth import (  # noqa: PLC0415
         synthesise_framework_only,
     )
     from loam.workspace_sync.cli import main as sync_cli_main  # noqa: PLC0415

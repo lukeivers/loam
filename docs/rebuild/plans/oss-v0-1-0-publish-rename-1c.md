@@ -353,7 +353,13 @@ Per the dispatch's halt-and-surface clause: surface any audit-recommendation con
 5. **(FUTURE_IDEAS_DRAFT — pre-emptive.)** Plan-time observation: a recurring pattern across the M1.rename series is "selective grep-rename — change live-shape literals, keep historical/archaeological literals". The `loam-rename-helper` script idea (M1a §11.5 + M1b §11.5) is reinforced by M1c's orphan-plist-cleanup case (`com.pos-v2.<single>` orphan literals must STAY; `com.pos-v2.<slug>.<kind>` namespaced literals must rename). Captured here for the build agent to surface to FIDRAFT post-build (do NOT extend M1c scope to add it).
 6. **(No ODD §2.5 violation found in surrounding code/docs at plan-authoring time.)** The mechanical rename is the rename plus a sibling helper; no defensive `if`s without backing AC; no behaviour changes beyond the rename + helper. The five-component fence is wider than the series-master estimate (finding #1) but each component's rename-touched lines all trace back to AC.RNM-1c.1 / .2 / .3 / .4 / .5.
 7. **(No methodology breach in plan structure.)** ACs are outcome-shape, deterministic, behaviour-count-checked. AC.RNM-1c.6 (negative AC enforcing the launchd-surface fence) is the explicit ODD §2.5 reverse-direction protection. The wider fence is disclosed (finding #1) so the dispatcher sees the surface in the plan-doc commit before the feature commit.
-8. **(Pre-existing flaky test observation — non-blocking.) `framework/workspace-bootstrap/tests/test_D5_plist_path_emission.py::test_D5_1_memory_graphiti_scaffold_plist_reaches_health_200`** is a launchd-touching test recorded as flaky at amendment #67's seal (per M1a §11.11 recovery flow). M1c renames its `sandbox_label = f"com.pos-v2.{sandbox_token}.memory-graphiti"` to `com.loam.<...>`. The flakiness was/is environmental (depends on a real launchd service responding to health probe — a host-quality issue, not a label-shape issue). M1c's rename does not fix the flakiness; it just rebrands the label string. If the test fails at Phase I touched-test rerun, distinguish flakiness (acceptable; FIDRAFT-recorded) from a real rename-induced failure (halt per §8.11).
+8. **(Pre-existing flaky test observation — non-blocking.) `framework/workspace-bootstrap/tests/test_D5_plist_path_emission.py::test_D5_1_memory_graphiti_scaffold_plist_reaches_health_200`** is a launchd-touching test recorded as flaky at amendment #67's seal (per M1a §11.11 recovery flow). M1c renames its `sandbox_label = f"com.pos-v2.{sandbox_token}.memory-graphiti"` to `com.loam.<...>`. The flakiness was/is environmental (depends on a real launchd service responding to health probe — a host-quality issue, not a label-shape issue). M1c's rename does not fix the flakiness; it just rebrands the label string. **Build-time observation**: the test PASSED in the post-build touched-test rerun — the flakiness has been silent in the M1c build window. No FIDRAFT update needed.
+
+**Build-time finding 9 (halt-trigger #2 fired; resolved in-band per ODD §4 retire-and-rebaseline).** During the post-Phase-A touched-test sweep, `framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py::test_AC_D_1_5_byte_content_match_post_move[framework/primary-persona/src/cli.py-...]` failed: the post-rebrand SHA of `cli.py` no longer matched the pinned hash. Pre-build verification (finding #2) had asserted "ZERO plist references and ZERO launchd-label callsites in the fifteen sample files" by re-reading the sample list, but missed the cross-check: `cli.py`'s docstring at line ~147 contained `com.pos-v2.<slug>.memory-write-worker` (verbatim launchd-label literal in a docstring), which Phase A's mechanical rename touched. The dispatch's authority text named "HOL byte-content-match check" as a halt-and-surface trigger; the M1b §11 finding #2 verification was for `~/.pos/` and `POS_V2_*` callsites only, not for `com.pos-v2.*` launchd-label callsites — finding #2's transitive reuse was incomplete.
+
+**Resolution.** ODD §4 in-band retire-and-rebaseline applied per the dispatch's named methodology heads-up: the SHA pin in `test_d1_byte_content_match.py` for `cli.py` was updated to the post-rebrand hash with a comment naming M1c amendment #78 + the cause. Methodology-aligned: the docstring rebrand is named AC-named work (AC.RNM-1c.1), not a silent content edit. The other fourteen sample files in HC#4 contain ZERO `com.pos-v2.*` callsites (confirmed by post-resolution re-read); HC#4 stays GREEN with the single SHA bump.
+
+**Lesson for future renames in the M1.rename series.** Pre-build HC#4 verification must enumerate ALL renamed surfaces — not just the last sub-amendment's surfaces — and grep each HC#4 sample file for any of them. Forwarded to FIDRAFT-worthy convention update for the rename-helper idea (§11.5).
 
 ---
 
@@ -397,34 +403,48 @@ GREEN. The fifteen sample files in `framework/hands-off-lifecycle/tests/test_d1_
 
 ### D-build.M1c.1 — Migration helper path
 
-(post-build — record final placement: `framework/tools/loam-migrate-launchd-labels/` per recommendation in §10)
+**Sibling tool at `framework/tools/loam-migrate-launchd-labels/`** (option 1 from §10). Pattern follows the M1b `loam-migrate-host-config/` precedent: own `pyproject.toml`, own `src/loam_migrate_launchd_labels/` package (`__init__`, `__main__`, `cli`, `migrate`), own `tests/` with conftest + 15 tests, own `README.md`. Reasoning: clean separation from M1b's host-config helper (distinct surface — LaunchAgents/ vs ~/.pos/), easy to invoke independently, simplest test scaffold.
 
 ### D-build.M1c.2 — Orphan-plist-cleanup `Classification` enum rename
 
-(post-build — record whether `NAMESPACED_V2` renamed to `NAMESPACED` per §10 recommendation)
+**Renamed `NAMESPACED_V2` → `NAMESPACED`** (option 1 from §10) — drops the version suffix matching the brand-side decision in `loam-rename-decisions.md` Tier-1 #4. Also renamed `NOT_POS_V2` → `NOT_LOAM` for symmetry (the "not this tool's mission" classification). Enum string values updated in lockstep (`namespaced_v2` → `namespaced`; `not_pos_v2` → `not_loam`). The tool has no out-of-tree consumers per its README; no compat shim needed. ORPHAN_V2 / ORPHAN_V1 enum names + value strings preserved verbatim per D-build.M1c.4.
 
 ### D-build.M1c.3 — Migration helper exit-code convention
 
-(post-build — record exit-code semantics chosen for the new helper)
+**Exit 1 on PARTIAL_FAILURE; exit 0 on NOTHING_TO_MIGRATE or MIGRATED** (option 1 from §10). Mirrors orphan-plist-cleanup's `--apply` convention exactly. Failure detail emitted on stderr; processed-files summary on stdout. The CLI splits its formatted summary by line-prefix heuristic (lines starting with "FAILED" or "  " in failure mode → stderr). The MigrationOutcome enum carries three values (`NOTHING_TO_MIGRATE`, `MIGRATED`, `PARTIAL_FAILURE`); the `is_clean` predicate excludes only PARTIAL_FAILURE.
 
 ### D-build.M1c.4 — `Classification.ORPHAN_V2` / `ORPHAN_V1` enum value strings
 
-(post-build — record whether enum value strings preserved verbatim or renamed)
+**Kept verbatim** (option 1 from §10). The strings `"orphan_v2"` and `"orphan_v1"` identify pre-#6 historical shapes by their archaeological vintage, intrinsic to what the tool detects. The `pos-v2` literal in `ORPHAN_V2`'s docstring refers to "the pre-M1c shape" and is archaeological, not brand-keyed. ORPHAN_V2 + ORPHAN_V1 enum names + value strings + docstring references preserved verbatim.
 
 ### D-build.M1c.5 — Plist filename rename mechanism
 
-(post-build — record `git mv` was used to preserve blame)
+**`git mv`** used. Single command: `git mv framework/memory-system/launchd/com.pos-v2.memory-graphiti.plist framework/memory-system/launchd/com.loam.memory-graphiti.plist`. Git's rename-detection threshold (~50% similarity by default) preserves blame for the renamed file because only the Label key body changed (1 line of 45). Verified by `git log --follow framework/memory-system/launchd/com.loam.memory-graphiti.plist` post-seal returning the file's full pre-M1c history.
 
 ### D-build.M1c.6 — Pre-existing tech-debt resolution: `pos_session_start.py:126` v1-shape default
 
-(post-build — record the in-band rebrand of `orchestrator_label="com.pos.orchestrator"` → `orchestrator_label="com.loam.orchestrator"` per §11 finding #4)
+**Both defaults rebranded in-band per §11 finding #4.** `memory_label="com.pos-v2.memory-graphiti"` → `memory_label="com.loam.memory-graphiti"`; `orchestrator_label="com.pos.orchestrator"` → `orchestrator_label="com.loam.orchestrator"`. The `orchestrator_label` v1-shape (`com.pos.<single>`, NOT `com.pos-v2.*`) was a pre-amendment-#6 default that no live caller passes; the function's Phase 4a behaviour is structurally a no-op for orchestrator (warning unconsumed by `run_session_start`'s caller path). Rebrand preserves the function's API surface + symmetry with `memory_label` without behaviour change. Recorded as a FIDRAFT-worthy observation: "ask_service_manager_to_start's orchestrator path is structurally dead post-amendment-#6; future cleanup amendment could remove the per-label loop or make labels mandatory parameters."
+
+### D-build.M1c.7 — HC#4 byte-content sample retire-and-rebaseline (in-band per ODD §4)
+
+Build-time finding #9 surfaced an HC#4 byte-content breach: `framework/primary-persona/src/cli.py`'s docstring at line ~147 contained `com.pos-v2.<slug>.memory-write-worker` which Phase A's mechanical rename touched. Pre-build verification (M1b §11 finding #2 transitive reuse) had only checked for `~/.pos/` and `POS_V2_*` callsites, missing `com.pos-v2.*` launchd-label callsites in the HC#4 sample. ODD §4 in-band retire-and-rebaseline applied: the SHA pin in `test_d1_byte_content_match.py` for `cli.py` updated to the post-rebrand hash (`ed2398283ae6259baff172f4eb629f5a38041d8a14e45c8f8f3da3b08efdc5d2`) with a comment naming M1c amendment #78 + the cause. Methodology-aligned: the docstring rebrand is named AC-named work (AC.RNM-1c.1), not a silent content edit. Other fourteen sample files contain ZERO `com.pos-v2.*` callsites (re-verified post-resolution); HC#4 stays GREEN with the single SHA bump.
 
 ### Commit SHAs
 
-- Amendment commit: `431151da9c905f08aa525f0c88f65d6c7c64b3f4` —
-  `chore(rename-1c-apply): pos-amend apply for amendment #78 (M1c launchd label rebrand)`
-- Seal commit: `1e99d0bfd5f9af2c1e37accad093b598a147879d` —
-  `chore(seals): M1c launchd label rebrand — com.pos-v2.<slug>.<kind> → com.loam.<slug>.<kind> (version suffix dropped concurrently per loam-rename-decisions Tier-1 #4) + plist filename cascade (memory-system historical-reference plist renamed via git mv) + orphan-plist-cleanup NAMESPACED arm rebases to com.loam.<slug>.<kind> (pre-#6 ORPHAN arms preserved) + sibling per-host migration helper at framework/tools/loam-migrate-launchd-labels/ (one-shot bootout-of-old + rename-aside; idempotent) — hands-off-lifecycle+workspace-bootstrap+memory-system+primary-persona+orchestrator at 431151d`
+- **Series master plan-doc commit:** `ebe0a57` — `docs(plans): split M1 rename into multi-amendment series — D-RNM.1 ruling` (2026-04-29).
+- **M1a seal commit:** `143d465` — `chore(seals): M1a docs/prose-only brand rebrand` (2026-04-29).
+- **M1b seal commit (BASELINE for M1c):** `d97c8c1` — `chore(seals): M1b env-vars + per-host config dir` (2026-04-29).
+- **M1c sub-plan + manifest commit:** `9c5deaf` — `docs(plans): author M1c sub-plan + manifest — launchd labels com.pos-v2.<slug>.* → com.loam.<slug>.* + plist filename cascade + sibling migration helper` (2026-04-29).
+- **M1c feature commit:** `cd1d837` — `feat(rename-1c): launchd labels com.pos-v2.<slug>.<kind> → com.loam.<slug>.<kind> + plist filename cascade + sibling migration helper (amendment #78, AC.RNM-1c.1–AC.RNM-1c.S)` (2026-04-29).
+- **pos-amend apply commit:** `431151d` — `chore(rename-1c-apply): pos-amend apply for amendment #78 (M1c launchd label rebrand)` (2026-04-29).
+- **Seal commit:** `1e99d0b` — `chore(seals): M1c launchd label rebrand — com.pos-v2.<slug>.<kind> → com.loam.<slug>.<kind> (version suffix dropped concurrently per loam-rename-decisions Tier-1 #4) + plist filename cascade (memory-system historical-reference plist renamed via git mv) + orphan-plist-cleanup NAMESPACED arm rebases to com.loam.<slug>.<kind> (pre-#6 ORPHAN arms preserved) + sibling per-host migration helper at framework/tools/loam-migrate-launchd-labels/ (one-shot bootout-of-old + rename-aside; idempotent) — hands-off-lifecycle+workspace-bootstrap+memory-system+primary-persona+orchestrator at 431151d` (2026-04-29).
+- **§14 SHA-register backfill commit:** `59af565` — `docs(plans): record amendment #78 commit SHAs in method-decision register` (2026-04-29; auto-emitted by `pos-amend seal --plan-doc`).
+- **§11 build-time findings + §14 D-build sub-decision details follow-up commit (this commit):** TBD — `docs(plans): record M1c build-time findings (HC#4 retire-and-rebaseline) + D-build.M1c.* method-decision details` (2026-04-29).
+
+Diff window: `d97c8c1..1e99d0b` (M1b-seal → M1c-seal).
+
+---
+
 ## 15. References
 
 - **Series master:** `docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed `ebe0a57`).

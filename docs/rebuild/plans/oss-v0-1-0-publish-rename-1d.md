@@ -455,20 +455,10 @@ POST-REBASELINE (single SHA bump on `host.py`). The fourteen other sample files 
 
 ### Commit SHAs
 
-- **Series master plan-doc commit:** `ebe0a57` — `docs(plans): split M1 rename into multi-amendment series — D-RNM.1 ruling` (2026-04-29).
-- **M1a seal commit:** `143d465` — `chore(seals): M1a docs/prose-only brand rebrand` (2026-04-29).
-- **M1b seal commit:** `d97c8c1` — `chore(seals): M1b env-vars + per-host config dir` (2026-04-29).
-- **M1c seal commit (BASELINE for M1d):** `1e99d0b` — `chore(seals): M1c launchd label rebrand` (2026-04-29).
-- **M1d sub-plan + manifest commit:** TBD.
-- **M1d feature commit:** TBD.
-- **pos-amend apply commit:** TBD.
-- **Seal commit:** TBD.
-- **§14 SHA-register backfill commit:** TBD (auto-emitted by `pos-amend seal --plan-doc`).
-
-Diff window: `1e99d0b..<seal>` (M1c-seal → M1d-seal).
-
----
-
+- Amendment commit: `fb45384669428dd741cf208b5e1ea39aa90cf13f` —
+  `chore(rename-1d-apply): pos-amend apply for amendment #79 (M1d OTel pos.* → loam.* root rebrand)`
+- Seal commit: `74ae5d304928dbc70fc0e68c074be1b8617d6155` —
+  `chore(seals): M1d OTel root rebrand — every span/event/attribute/tracer/logger/Resource literal with first segment `pos` rebases to `loam` across every framework callsite (25 documented roots + 7 tracer-component variants per locked plan §1 inventory) + observability-aggregator namespace defaults (config.self_namespace_prefix, ingest function-defaults x3, Resource service.name, schema.TRACER_TO_COMPONENT keys) + live component docs (framework/<comp>/docs/) + component proposals (docs/rebuild/components/<comp>/proposal.md) + docs/odd-in-pos.md worked examples + HC#4 in-band retire-and-rebaseline for framework/workspace-bootstrap/src/workspace_bootstrap/host.py (line 82 tracer-name rebrand triggers SHA bump per ODD §4 in-band methodology-aligned). Hard cutover per series-master D-RNM.3 — no dual-emit shim. — hands-off-lifecycle+cost-governance+graceful-degradation+objective-tracker+observability-aggregator+orchestrator+primary-persona+reversibility-primitive+self-correction+self-upgrade+telegram-interface+workspace-bootstrap+workspace-sync at fb45384`
 ## 15. References
 
 - **Series master:** `docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed `ebe0a57`).

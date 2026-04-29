@@ -64,7 +64,14 @@ components:
     seal_test: framework/safety-layer/tests/test_no_sealed_amendments.py
     sidecar: framework/safety-layer/tests/SEAL_COMMIT
     frozen_baseline: false
-    extra_allowed_prefixes: []
+    # safety-layer's test_no_sealed_amendments.py has NO allowed_prefixes
+    # binding (it tests A15/A17/A18 module-shape invariants only — no
+    # diff-based admission mechanism). The other 3 components in this
+    # fence have allowed_prefixes that admit `framework/<own-name>/`
+    # directly. safety-layer admits its own subtree via this manifest
+    # entry. Plan §11 finding #7 (added at apply time).
+    extra_allowed_prefixes:
+      - framework/safety-layer/
   - name: cost-governance
     seal_test: framework/cost-governance/tests/test_no_sealed_amendments.py
     sidecar: framework/cost-governance/tests/SEAL_COMMIT

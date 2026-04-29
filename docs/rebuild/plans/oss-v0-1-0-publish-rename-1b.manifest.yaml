@@ -10,7 +10,7 @@ amendment:
 # at f3041a5). M1b's BASELINE..HEAD diff is the precursor doc-only
 # programme-plan §5 update + the M1b feature commit + apply commit +
 # any corrective commits + seal commit.
-baseline: 143d4655d4dc7d2ddae71ddabad22ec39b96a76e
+baseline: 143d4656f0c319bdc644f7a925b073e0ecaaff72
 
 plan: docs/rebuild/plans/oss-v0-1-0-publish-rename-1b.md
 

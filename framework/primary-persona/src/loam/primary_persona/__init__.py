@@ -81,7 +81,9 @@ from .dispatch_wrapper import (
     DispatchOutcome,
     DispatchRefusal,
     DispatchShape,
+    NewACSpec,
     dispatch_with_scope,
+    write_dispatcher_stub,
 )
 from .creation_triggers import CreationTrigger, CreationTriggerDetector, TriggerSignal
 from .authoring import (
@@ -142,6 +144,7 @@ __all__ = [
     "DispatchOutcome",
     "DispatchRefusal",
     "DispatchShape",
+    "NewACSpec",
     "LiveMCPMemoryClient",
     "StopEnvelope",
     "TurnContent",
@@ -163,4 +166,5 @@ __all__ = [
     "load_contract",
     "parse_stop_envelope",
     "retire_persona",
+    "write_dispatcher_stub",
 ]

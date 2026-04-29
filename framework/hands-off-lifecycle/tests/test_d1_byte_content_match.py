@@ -60,7 +60,14 @@ _SAMPLE_FILES = (
      # M1e — pure rename via git mv).
      "ed2398283ae6259baff172f4eb629f5a38041d8a14e45c8f8f3da3b08efdc5d2"),
     ("framework/primary-persona/src/loam/primary_persona/__init__.py",
-     "8301c65db74060d1cfb7f6ed4caf3bfbcd734d9b430700dffa862ac8ad6728c3"),
+     # M4 (amendment #85) SHA bump: re-export of NEW public function
+     # ``write_dispatcher_stub`` (and ``NewACSpec`` made public for
+     # caller convenience) added per plan §4 AC.OSS-M4.4 + AC.OSS-M4.7.
+     # ODD §4 in-band retire-and-rebaseline. Plan §11 finding #6
+     # predicted no HC#4 impact; the prediction was wrong but the
+     # amendment's intent is preserved (see §14 D-build.M4.* for the
+     # post-build surfacing of this finding).
+     "37e2893db93cebdc06490222aadd5d8326041d5de1c96ede03ac153a0cea007d"),
     ("framework/primary-persona/src/loam/primary_persona/onboarding.py",
      # M1e SHA bump: Phase C import rebrand
      # (`from workspace_bootstrap.workspace_paths` →

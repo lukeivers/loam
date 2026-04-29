@@ -159,6 +159,7 @@ _LOAM_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
     "tdd_guard.py",
     "bash_guard.py",
     "agent_guard.py",
+    "dispatch_setup_hook.py",
 )
 
 

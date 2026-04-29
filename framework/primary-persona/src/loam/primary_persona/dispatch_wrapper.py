@@ -1019,10 +1019,37 @@ async def dispatch_with_scope(
         await client.close()
 
 
+def write_dispatcher_stub(
+    workspace_root: Path,
+    spec: NewACSpec,
+    *,
+    scope_id: str,
+    plan_path: str,
+) -> dict[str, Any]:
+    """Public surface for the dispatcher-stub-authoring helper.
+
+    Wraps the existing private ``_write_stub_idempotent`` so the
+    PreToolUse hook (M4 / amendment #85) can author placeholder test
+    stubs without duplicating the byte-content shape (AC.DSA.2)
+    outside its canonical owner. Idempotent per AC.DSA.4 — re-call on
+    an existing sentinel-authored stub returns
+    ``{"outcome": "skipped-identical", ...}`` /
+    ``{"outcome": "skipped-agent-authored", ...}`` per the existing
+    semantics. Backs AC.OSS-M4.4 — the only addition to this module
+    in M4. The existing ``_write_stub_idempotent``,
+    ``_run_setup_phase``, ``dispatch_with_scope``, and every other
+    public/private surface stays untouched.
+    """
+    return _write_stub_idempotent(
+        workspace_root, spec, scope_id=scope_id, plan_path=plan_path
+    )
+
+
 __all__ = [
     "DispatchOutcome",
     "DispatchRefusal",
     "DispatchShape",
     "NewACSpec",
     "dispatch_with_scope",
+    "write_dispatcher_stub",
 ]

@@ -21,8 +21,8 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from src.context_composer import ComposedContextPayload
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.context_composer import ComposedContextPayload
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 
 def _seed(root: Path) -> None:
@@ -30,11 +30,11 @@ def _seed(root: Path) -> None:
     (root / "CLAUDE.md").write_text(
         "## Session-start discipline\n\n"
         "- `docs/odd-methodology.md`\n"
-        "- `docs/odd-in-pos.md`\n"
+        "- `docs/odd-in-loam.md`\n"
     )
     (root / "docs").mkdir()
     (root / "docs" / "odd-methodology.md").write_text("a")
-    (root / "docs" / "odd-in-pos.md").write_text("b")
+    (root / "docs" / "odd-in-loam.md").write_text("b")
 
 
 def test_D8_4_p95_wall_time_within_500ms_warm_cache(tmp_path: Path) -> None:

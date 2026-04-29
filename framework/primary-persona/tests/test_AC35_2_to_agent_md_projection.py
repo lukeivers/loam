@@ -22,8 +22,8 @@ from __future__ import annotations
 import yaml
 import pytest
 
-from src.agent_md import AgentMdProjectionError, to_agent_md
-from src.contract import PersonaContract
+from loam.primary_persona.agent_md import AgentMdProjectionError, to_agent_md
+from loam.primary_persona.contract import PersonaContract
 
 
 def _base_contract_dict() -> dict:
@@ -180,7 +180,7 @@ def test_AC35_2_whitespace_responsibilities_raises_projection_error():
     """Whitespace-only single_point_of_contact (built via
     model_construct bypass) raises AgentMdProjectionError when the
     description-deriver tries to render."""
-    from src.contract import Responsibilities
+    from loam.primary_persona.contract import Responsibilities
 
     base = PersonaContract.model_validate(_base_contract_dict())
     bad_responsibilities = Responsibilities.model_construct(

@@ -17,8 +17,8 @@ Plan: docs/rebuild/plans/amendment-35-primary-persona-renderer-and-onboarding.md
 
 from __future__ import annotations
 
-from src.agent_md import to_agent_md
-from src.contract import PersonaContract
+from loam.primary_persona.agent_md import to_agent_md
+from loam.primary_persona.contract import PersonaContract
 
 
 def _starter_contract() -> PersonaContract:

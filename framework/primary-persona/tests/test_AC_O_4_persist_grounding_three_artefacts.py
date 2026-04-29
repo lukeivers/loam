@@ -24,8 +24,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.contract import PersonaContract
-from src.onboarding import GroundingCapture, persist_grounding
+from loam.primary_persona.contract import PersonaContract
+from loam.primary_persona.onboarding import GroundingCapture, persist_grounding
 
 
 def _starter_contract_dict() -> dict:
@@ -131,7 +131,7 @@ def test_AC_O_4_second_call_regenerates_with_new_name(tmp_path: Path):
 
     # Refresh the loaded persona's contract reference (mirrors the
     # production path where the loader is re-invoked between calls).
-    from src.contract import load_contract
+    from loam.primary_persona.contract import load_contract
 
     persona.contract = load_contract(contract_path)
 

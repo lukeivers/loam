@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from self_upgrade.sync_protected import (
+from loam.self_upgrade.sync_protected import (
     FRAMEWORK_FLOOR,
     FileClass,
     SyncProtected,

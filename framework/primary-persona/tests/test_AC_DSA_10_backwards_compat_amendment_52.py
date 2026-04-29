@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona import (
+from loam.primary_persona import (
     DispatchOutcome,
     DispatchShape,
     dispatch_with_scope,
@@ -60,7 +60,7 @@ async def test_AC_DSA_10_call_without_new_acs_no_setup_phase(
     monkeypatch.setitem(sys.modules, "active_scope_sentinel", ass_mod)
 
     client = StubIPCClient()
-    import pos_orchestrator.ipc as _ipc_mod
+    import loam.orchestrator.ipc as _ipc_mod
 
     monkeypatch.setattr(
         _ipc_mod, "IPCClient", build_stub_ipc_client_factory(client)

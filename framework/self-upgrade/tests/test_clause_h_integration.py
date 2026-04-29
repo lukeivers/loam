@@ -7,25 +7,25 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
-from self_upgrade.clause_checks import (
+from loam.self_upgrade.clause_checks import (
     check_clause_h,
     resolve_clause_h_inferred,
     run_all_clauses,
 )
-from self_upgrade.conflict_report import (
+from loam.self_upgrade.conflict_report import (
     ConflictChangeKind,
     ConflictEntry,
     ConflictReport,
     Resolution,
 )
-from self_upgrade.merge_resolver import (
+from loam.self_upgrade.merge_resolver import (
     BudgetExhausted,
     MergeResolver,
     MergeVerdict,
     ResolverBudget,
     ResolverFailure,
 )
-from self_upgrade.sync_protected import (
+from loam.self_upgrade.sync_protected import (
     FRAMEWORK_FLOOR,
     FileClass,
     SyncProtected,
@@ -361,7 +361,7 @@ def test_run_all_clauses_includes_h() -> None:
     """``h`` is part of the bundle's contract."""
     # Use the existing integration shape — minimal stub to exercise
     # the bundle's contract. Real clause-h verifier exercised above.
-    from self_upgrade.manifest import Manifest
+    from loam.self_upgrade.manifest import Manifest
 
     m = Manifest(
         release_tag="pos-v2-v0.2.0",
@@ -369,7 +369,7 @@ def test_run_all_clauses_includes_h() -> None:
     )
     # Use shared fixture conventions: pass live_root that won't exist,
     # which causes other clauses to fail (acceptable — we only assert "h" is present).
-    from self_upgrade.paths import Paths
+    from loam.self_upgrade.paths import Paths
 
     paths = Paths.from_env(None)
     bundle = run_all_clauses(

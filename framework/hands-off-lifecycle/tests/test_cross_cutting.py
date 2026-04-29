@@ -44,7 +44,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 # new top-level surface; no amendment ever removes an entry. Per-
 # component contamination checks live in each sealed component's own
 # ``tests/test_no_sealed_amendments.py``; those continue to use
-# floating BASELINEs. See ``docs/odd-in-pos.md`` §10 for the
+# floating BASELINEs. See ``docs/odd-in-loam.md`` §10 for the
 # frozen-vs-floating BASELINE convention and for the per-invariant-
 # BASELINE pattern.
 #

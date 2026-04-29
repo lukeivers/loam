@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.onboarding import dev_intent_storage_path
+from loam.primary_persona.onboarding import dev_intent_storage_path
 
 
 def test_AC_A_5_resolver_returns_path(tmp_path: Path):

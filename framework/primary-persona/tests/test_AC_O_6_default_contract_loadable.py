@@ -23,8 +23,8 @@ from pathlib import Path
 
 import yaml
 
-from src.agent_md import to_agent_md
-from src.contract import PersonaContract, TierAction
+from loam.primary_persona.agent_md import to_agent_md
+from loam.primary_persona.contract import PersonaContract, TierAction
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent

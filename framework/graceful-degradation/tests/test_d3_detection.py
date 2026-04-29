@@ -16,15 +16,15 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from graceful_degradation import DegradationConfig, load_config
-from graceful_degradation.adapter import AdapterEvent
-from graceful_degradation.detection import (
+from loam.graceful_degradation import DegradationConfig, load_config
+from loam.graceful_degradation.adapter import AdapterEvent
+from loam.graceful_degradation.detection import (
     DegradationDetector,
     GarbageDetectionRequest,
     GarbagePipeline,
 )
-from graceful_degradation.errors import DegradationSignal
-from graceful_degradation.fsm import DegradationMode, FSMState, FSMTransition
+from loam.graceful_degradation.errors import DegradationSignal
+from loam.graceful_degradation.fsm import DegradationMode, FSMState, FSMTransition
 
 from .fakes import FakeClock
 

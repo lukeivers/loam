@@ -138,6 +138,7 @@ def test_CR21_only_self_correction_changed() -> None:
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         "docs/odd-methodology.md",
         "CLAUDE.md",

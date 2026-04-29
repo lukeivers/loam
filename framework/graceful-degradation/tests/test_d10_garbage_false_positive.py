@@ -22,7 +22,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
-from graceful_degradation.detection import (
+from loam.graceful_degradation.detection import (
     GarbageDetectionRequest,
     GarbagePipeline,
 )

@@ -17,7 +17,7 @@ The work is greenfield Python on `pos-v2`. It consumes sealed components — inc
 1. **This brief** — gives you the objective, constraints, and acceptance criteria in operational form.
 2. **`docs/rebuild/components/reversibility-primitive/proposal.md`** — the contract the owner has approved. Binding. Halt and signal rather than deviate.
 3. **`docs/rebuild/components/reversibility-primitive/research.md`** — design detail, prior art, sequence diagrams, storage schema. Reference only; the proposal is the contract.
-4. **`docs/rebuild/spec/pos-v2-objectives-spec.md`** — spec v1.0 + addenda.
+4. **`docs/rebuild/spec/loam-objectives-spec.md`** — spec v1.0 + addenda.
 5. **`docs/rebuild/STATE.md`** — governing rules for the rebuild.
 
 **Precedents to emulate** (both on `pos-v2`, both sealed):

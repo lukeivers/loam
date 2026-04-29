@@ -30,7 +30,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from graceful_degradation import (
+from loam.graceful_degradation import (
     ClaudeClient,
     DegradationComponent,
     DegradationConfig,
@@ -38,7 +38,7 @@ from graceful_degradation import (
     DegradationNotifier,
     FSMState,
 )
-from graceful_degradation import observability as gd_obs
+from loam.graceful_degradation import observability as gd_obs
 
 from .fakes import (
     FakeClock,
@@ -131,7 +131,7 @@ async def _run_one_hour_simulation(tmp_path, otel_exporter) -> SimulationResult:
 
     # ---- t=10 — first Down event ------------------------------------
     clock.advance(10.0)
-    from graceful_degradation.errors import ClaudeAPIError
+    from loam.graceful_degradation.errors import ClaudeAPIError
 
     for _ in range(3):
         try:

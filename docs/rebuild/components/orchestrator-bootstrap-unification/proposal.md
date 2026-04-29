@@ -151,8 +151,8 @@ Confirms the opt-in fail-closed path for production workspaces.
 ### AC7 — --no-bootstrap flag is removed
 
 Per owner ruling on flagged inference #1 (remove). After the amendment,
-invoking `python -m pos_orchestrator --no-bootstrap` exits with
-`argparse` error code 2, and `python -m pos_orchestrator --help` does
+invoking `python -m loam.orchestrator --no-bootstrap` exits with
+`argparse` error code 2, and `python -m loam.orchestrator --help` does
 not mention the flag. Tests that previously passed `--no-bootstrap`
 either drop it (if the underlying behaviour is now default-OK) or
 are removed (if they were validating the now-dead flag itself).

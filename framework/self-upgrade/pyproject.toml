@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos_self_upgrade"
+name = "loam-self-upgrade"
 version = "0.1.0"
 description = "pOS self-upgrade framework — coordinates every sealed component's upgrade-fidelity surfaces into a single atomic operation enforcing the seven-clause acceptance (a–g)"
 requires-python = ">=3.13"
@@ -23,10 +23,11 @@ test = [
 ]
 
 [project.scripts]
-pos = "self_upgrade.cli:main"
+pos = "loam.self_upgrade.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["loam*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import pytest
 
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
-from safety_layer import KillEngine
-from safety_layer.controller import IPC_SYSTEM_KILL_ACTIVE
+from loam.safety_layer import KillEngine
+from loam.safety_layer.controller import IPC_SYSTEM_KILL_ACTIVE
 
 
 @pytest.mark.asyncio

@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from scope_of_work import (
+from loam.scope_of_work import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
@@ -19,7 +19,7 @@ from scope_of_work import (
     SuccessCriterion,
 )
 
-from safety_layer import KillEngine, KillLevel
+from loam.safety_layer import KillEngine, KillLevel
 
 
 def _spec() -> ScopeSpec:
@@ -137,7 +137,7 @@ async def test_amendment_19_session_kill_pause_failure_is_surfaced(
     # Pause failure is recorded in the audit reason.
     assert "pause_failed:RuntimeError" in record.reason
     # Cancellation still ran — the scope is terminal.
-    from scope_of_work import ScopeState
+    from loam.scope_of_work import ScopeState
     assert scope_runtime.get("s-amend19").state == ScopeState.cancelled
     assert record.cancelled_scope_ids == ("s-amend19",)
     # Kill audit row is persisted with the suffixed reason.

@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona import DispatchRefusal, DispatchShape, dispatch_with_scope
-from primary_persona.dispatch_wrapper import NewACSpec
+from loam.primary_persona import DispatchRefusal, DispatchShape, dispatch_with_scope
+from loam.primary_persona.dispatch_wrapper import NewACSpec
 
 from ._helpers_a8 import (
     StubIPCClient,
@@ -91,7 +91,7 @@ async def test_AC_DSA_7_setup_calls_precede_activate_scope(
 
     client.call = _record_call  # type: ignore[method-assign]
 
-    import pos_orchestrator.ipc as _ipc_mod
+    import loam.orchestrator.ipc as _ipc_mod
 
     monkeypatch.setattr(
         _ipc_mod, "IPCClient", build_stub_ipc_client_factory(client)
@@ -124,7 +124,7 @@ async def test_AC_DSA_7_setup_artefacts_persist_on_gate_refusal(
     """When activate_scope_with_spec raises a cost-gate refusal, the
     sentinel + manifest registrations + stub already on disk persist
     (idempotent on retry)."""
-    from pos_orchestrator.ipc import ApplicationError
+    from loam.orchestrator.ipc import ApplicationError
 
     workspace = make_workspace(tmp_path, ambient_objective="obj")
     stub_workspace_dev_mode(monkeypatch)
@@ -139,7 +139,7 @@ async def test_AC_DSA_7_setup_artefacts_persist_on_gate_refusal(
         ApplicationError(-32060, "cost-gate refusal", None),
     )
 
-    import pos_orchestrator.ipc as _ipc_mod
+    import loam.orchestrator.ipc as _ipc_mod
 
     monkeypatch.setattr(
         _ipc_mod, "IPCClient", build_stub_ipc_client_factory(client)

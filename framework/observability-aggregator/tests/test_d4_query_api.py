@@ -4,14 +4,14 @@ from __future__ import annotations
 import time
 from datetime import datetime, timedelta, timezone
 
-from pos_observability_aggregator import open_store
-from pos_observability_aggregator.api import (
+from loam.observability_aggregator import open_store
+from loam.observability_aggregator.api import (
     EventFilter,
     QueryAPI,
     SpanFilter,
     TimeRange,
 )
-from pos_observability_aggregator.schema import (
+from loam.observability_aggregator.schema import (
     AuditRecord,
     EventRecord,
     SpanRecord,

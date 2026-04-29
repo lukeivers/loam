@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from workspace_sync.canonical import (
+from loam.workspace_sync.canonical import (
     CanonicalPullError,
     CanonicalResolution,
     resolve_canonical,

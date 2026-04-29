@@ -18,14 +18,14 @@ import asyncio
 
 import pytest
 
-from src.events import (
+from loam.scope_of_work.events import (
     BudgetDebited,
     ObserverAdded,
     ObserverRemoved,
     StateTransitioned,
     TriggerFired,
 )
-from src.spec import (
+from loam.scope_of_work.spec import (
     Budget,
     BudgetAxis,
     BudgetThreshold,

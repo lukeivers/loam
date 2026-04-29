@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona import DispatchShape
-from primary_persona.dispatch_wrapper import NewACSpec
+from loam.primary_persona import DispatchShape
+from loam.primary_persona.dispatch_wrapper import NewACSpec
 
 
 def test_AC_DSA_1_dispatch_shape_default_is_empty_new_acs() -> None:

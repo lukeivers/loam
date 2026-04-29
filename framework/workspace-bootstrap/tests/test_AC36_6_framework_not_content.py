@@ -15,7 +15,7 @@ Plan §4 AC36.6 outcomes:
   constants.
 
 Maps to v1.2 R16 framework-not-content
-(``docs/rebuild/spec/pos-v2-objectives-spec.md`` §348–356) →
+(``docs/rebuild/spec/loam-objectives-spec.md`` §348–356) →
 AC.PO.2 (toolkit purity).
 """
 
@@ -23,14 +23,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     DEFAULT_PERSONA_HANDLE,
     _resolve_persona_template_dir,
     run_first_run_scaffold,
 )
 
 _WB_SRC_ROOT = (
-    Path(__file__).resolve().parent.parent / "src" / "workspace_bootstrap"
+    Path(__file__).resolve().parent.parent / "src" / "loam" / "workspace_bootstrap"
 )
 
 

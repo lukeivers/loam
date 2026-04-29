@@ -5,14 +5,14 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from self_correction import (
+from loam.self_correction import (
     CauseDiagnosed,
     FailureClassIdentified,
     InstanceFixed,
     RecordType,
     StructuralRemedyApplied,
 )
-from self_correction.spec import RECORD_MODELS
+from loam.self_correction.spec import RECORD_MODELS
 
 
 def test_CR9_pydantic_frozen_and_extra_forbid() -> None:
@@ -57,15 +57,15 @@ def test_CR9_record_models_map_covers_all_four() -> None:
 
 def test_CR10_order_recorded_via_at_timestamp() -> None:
     # Records persisted any-order — the `at` timestamp preserves real order.
-    from self_correction import CorrectionStore, REQUIRED_RECORD_TYPES
+    from loam.self_correction import CorrectionStore, REQUIRED_RECORD_TYPES
 
     import tempfile, os, time
     tmp = tempfile.mkdtemp()
     try:
         store = CorrectionStore(os.path.join(tmp, "t.sqlite"))
         # Seed minimal episode via direct insert — skip trigger layer.
-        from self_correction import CorrectionEpisode, EpisodeState
-        from self_correction.spec import CorrectionTrigger, TriggerSource
+        from loam.self_correction import CorrectionEpisode, EpisodeState
+        from loam.self_correction.spec import CorrectionTrigger, TriggerSource
 
         store.insert_trigger(
             CorrectionTrigger(
@@ -106,7 +106,7 @@ def test_CR10_order_recorded_via_at_timestamp() -> None:
         ]
 
         # All four present → precheck passes.
-        from self_correction import CompletionPrecheck
+        from loam.self_correction import CompletionPrecheck
         # We need to wire correction_scope_id on the episode for the
         # precheck to find it; seed one.
         # (simpler: just check record_types_for directly)

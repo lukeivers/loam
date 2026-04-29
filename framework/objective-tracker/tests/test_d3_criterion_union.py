@@ -19,7 +19,7 @@ import pytest
 from pydantic import ValidationError
 from pyee.asyncio import AsyncIOEventEmitter
 
-from src.spec import (
+from loam.objective_tracker.spec import (
     ChildClosureCriterion,
     ExternalPredicateCriterion,
     ObjectiveSpec,

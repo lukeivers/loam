@@ -13,8 +13,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from primary_persona.dispatch_wrapper import NewACSpec
-from primary_persona.dispatch_wrapper import (
+from loam.primary_persona.dispatch_wrapper import NewACSpec
+from loam.primary_persona.dispatch_wrapper import (
     _diagnostic_log_path,
     _run_setup_phase,
 )

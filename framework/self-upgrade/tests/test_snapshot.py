@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from self_upgrade.paths import Paths
-from self_upgrade.snapshot import (
+from loam.self_upgrade.paths import Paths
+from loam.self_upgrade.snapshot import (
     capture_substrate_snapshots,
     restore_substrate_snapshots,
     substrate_components,

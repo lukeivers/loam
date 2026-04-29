@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import pytest
 
-from pos_orchestrator.ipc import ApplicationError
-from scope_of_work import ReversibilityClass
+from loam.orchestrator.ipc import ApplicationError
+from loam.scope_of_work import ReversibilityClass
 
-from safety_layer import (
+from loam.safety_layer import (
     AlwaysAskList,
     DEFAULT_DANGEROUS_OP_SUBSET,
     DEFAULT_FRAMEWORK_FLOOR,

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from graceful_degradation import (
+from loam.graceful_degradation import (
     ClaudeClient,
     DegradationComponent,
     DegradationConfig,
@@ -19,7 +19,7 @@ from graceful_degradation import (
     DegradationNotifier,
     FSMState,
 )
-from graceful_degradation.state import DegradationStore
+from loam.graceful_degradation.state import DegradationStore
 
 from .fakes import (
     FakeClock,
@@ -74,7 +74,7 @@ async def test_auto_resume_for_down_after_probe_succeeds(tmp_path) -> None:
     rt.add_scope(FakeScope("s1"))
 
     # Drive failures through the client — these feed the detector via on_event.
-    from graceful_degradation.errors import ClaudeAPIError
+    from loam.graceful_degradation.errors import ClaudeAPIError
 
     for _ in range(3):
         try:
@@ -97,8 +97,8 @@ async def test_auto_resume_for_down_after_probe_succeeds(tmp_path) -> None:
 
 
 async def test_auth_broken_no_auto_resume(tmp_path) -> None:
-    from graceful_degradation.adapter import AdapterEvent
-    from graceful_degradation.errors import DegradationSignal
+    from loam.graceful_degradation.adapter import AdapterEvent
+    from loam.graceful_degradation.errors import DegradationSignal
 
     comp, orch, rt, notifier, client, invoker, clock, sent = _build_component(
         tmp_path=tmp_path,
@@ -129,8 +129,8 @@ async def test_auth_broken_no_auto_resume(tmp_path) -> None:
 
 
 async def test_user_confirm_resume_on_auth_broken(tmp_path) -> None:
-    from graceful_degradation.adapter import AdapterEvent
-    from graceful_degradation.errors import DegradationSignal
+    from loam.graceful_degradation.adapter import AdapterEvent
+    from loam.graceful_degradation.errors import DegradationSignal
 
     # Script: after user_resume, probe succeeds.
     comp, orch, rt, notifier, client, invoker, clock, sent = _build_component(
@@ -170,7 +170,7 @@ async def test_long_dwell_gates_resume(tmp_path) -> None:
         ],
     )
     rt.add_scope(FakeScope("s1"))
-    from graceful_degradation.errors import ClaudeAPIError
+    from loam.graceful_degradation.errors import ClaudeAPIError
 
     for _ in range(3):
         try:

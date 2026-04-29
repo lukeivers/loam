@@ -102,8 +102,8 @@ def _direct_render(ws: Path, handle: str) -> str:
     try:
         # Late imports — these resolve only when the shared venv (or
         # the test's editable install) provides pydantic / pyyaml.
-        from primary_persona import PersonaLoader  # type: ignore
-        from primary_persona.agent_md import to_agent_md  # type: ignore
+        from loam.primary_persona import PersonaLoader  # type: ignore
+        from loam.primary_persona.agent_md import to_agent_md  # type: ignore
 
         loader = PersonaLoader(workspace_root=ws)
         loaded = loader.load_one(handle)

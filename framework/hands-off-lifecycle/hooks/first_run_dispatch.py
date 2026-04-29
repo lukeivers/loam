@@ -163,7 +163,7 @@ def _spawn_detached_worker(
     *,
     python: str,
     helper: Path,
-    pos_v2_root: Path,
+    loam_root: Path,
     pos_root: Path,
     generation: int,
     mode: str,
@@ -211,8 +211,8 @@ def _spawn_detached_worker(
         python,
         "-u",
         str(helper),
-        "--pos-v2-root",
-        str(pos_v2_root),
+        "--loam-root",
+        str(loam_root),
         "--mode",
         mode,
         "--pos-root",
@@ -264,10 +264,10 @@ def _write_fresh_state(
     return state
 
 
-def _state_belongs_to(state: FirstRunState, pos_v2_root: Path) -> bool:
+def _state_belongs_to(state: FirstRunState, loam_root: Path) -> bool:
     """Amendment #28 — defence in depth against cross-workspace reads.
 
-    A state file located under ``<pos_v2_root>/.pos/`` *should* always
+    A state file located under ``<loam_root>/.pos/`` *should* always
     belong to that workspace by construction of the path. Still: if
     the file's recorded ``workspace_root`` is non-empty and does not
     match, trust the content — the workspace may have been renamed,
@@ -283,7 +283,7 @@ def _state_belongs_to(state: FirstRunState, pos_v2_root: Path) -> bool:
     except (OSError, RuntimeError):
         return False
     try:
-        current = Path(pos_v2_root).resolve()
+        current = Path(loam_root).resolve()
     except (OSError, RuntimeError):
         return False
     return recorded == current
@@ -291,7 +291,7 @@ def _state_belongs_to(state: FirstRunState, pos_v2_root: Path) -> bool:
 
 def dispatch(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     pos_root: Path,
     helper: Path,
     python: str,
@@ -303,21 +303,21 @@ def dispatch(
     caller prints.
 
     Amendment #28: state is read from the workspace-local path
-    ``<pos_v2_root>/.pos/first-run.state``. A state whose recorded
-    ``workspace_root`` does not match the current ``pos_v2_root`` is
+    ``<loam_root>/.pos/first-run.state``. A state whose recorded
+    ``workspace_root`` does not match the current ``loam_root`` is
     treated as absent (fail-closed); the dispatcher never touches
     another workspace's state file.
     """
     log = log_path(pos_root)
-    settings_path = pos_v2_root / ".claude" / "settings.json"
+    settings_path = loam_root / ".claude" / "settings.json"
 
-    existing = read_state(pos_v2_root)
+    existing = read_state(loam_root)
     # Defence in depth — reject a state whose content names a
     # different workspace (or has no recorded workspace at all).
     # Path routing plus the ``_state_belongs_to`` check together
     # close AC11 (foreign-workspace state is fresh-spawn) and AC13
     # (corrupt state is fresh-spawn via read_state returning None).
-    if existing is not None and not _state_belongs_to(existing, pos_v2_root):
+    if existing is not None and not _state_belongs_to(existing, loam_root):
         existing = None
 
     # Case 2 — completed previously.
@@ -333,20 +333,20 @@ def dispatch(
     if existing is not None and is_stale_live_state(
         existing, stale_after_s=0.0
     ):
-        existing = mark_failed_silently(existing, pos_v2_root)
+        existing = mark_failed_silently(existing, loam_root)
         # Fall through to respawn, but remember we came from a silent
         # death so the user-facing text explains it.
         next_gen = int(existing.generation or 1) + 1
         pid = _spawn_detached_worker(
             python=python,
             helper=helper,
-            pos_v2_root=pos_v2_root,
+            loam_root=loam_root,
             pos_root=pos_root,
             generation=next_gen,
             mode="resume",
         )
         _write_fresh_state(
-            workspace_root=pos_v2_root, pid=pid, generation=next_gen
+            workspace_root=loam_root, pid=pid, generation=next_gen
         )
         return _msg_respawn_after_silent_death(existing, log)
 
@@ -364,13 +364,13 @@ def dispatch(
         pid = _spawn_detached_worker(
             python=python,
             helper=helper,
-            pos_v2_root=pos_v2_root,
+            loam_root=loam_root,
             pos_root=pos_root,
             generation=next_gen,
             mode="resume",
         )
         _write_fresh_state(
-            workspace_root=pos_v2_root, pid=pid, generation=next_gen
+            workspace_root=loam_root, pid=pid, generation=next_gen
         )
         # The user-facing message still names what broke — they need
         # that context even though we already kicked off a retry.
@@ -385,17 +385,17 @@ def dispatch(
     # all phases from 1 through 7) and spawn. If a .venv already
     # exists (partial from a pre-amendment run) the worker's
     # resume-or-verify path handles it.
-    venv_python = pos_v2_root / ".venv" / "bin" / "python"
+    venv_python = loam_root / ".venv" / "bin" / "python"
     mode = "resume" if venv_python.exists() else "bootstrap"
     pid = _spawn_detached_worker(
         python=python,
         helper=helper,
-        pos_v2_root=pos_v2_root,
+        loam_root=loam_root,
         pos_root=pos_root,
         generation=1,
         mode=mode,
     )
-    _write_fresh_state(workspace_root=pos_v2_root, pid=pid, generation=1)
+    _write_fresh_state(workspace_root=loam_root, pid=pid, generation=1)
     return _msg_fresh_start(log, helper_version="1")
 
 
@@ -403,7 +403,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="pos-v2 first-run dispatch — SessionStart hook worker.",
     )
-    parser.add_argument("--pos-v2-root", required=True)
+    parser.add_argument("--loam-root", required=True)
     parser.add_argument("--pos-root", default=str(Path.home() / ".loam"))
     parser.add_argument("--helper", required=True)
     parser.add_argument("--python", required=True)
@@ -414,7 +414,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    pos_v2_root = Path(args.pos_v2_root).resolve()
+    loam_root = Path(args.loam_root).resolve()
     pos_root = Path(args.pos_root).expanduser().resolve()
     helper = Path(args.helper).resolve()
 
@@ -432,7 +432,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         text = dispatch(
-            pos_v2_root=pos_v2_root,
+            loam_root=loam_root,
             pos_root=pos_root,
             helper=helper,
             python=args.python,

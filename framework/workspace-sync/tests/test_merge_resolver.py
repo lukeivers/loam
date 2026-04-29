@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel
 
-from workspace_sync.merge_resolver import (
+from loam.workspace_sync.merge_resolver import (
     BudgetExhausted,
     MergeResolver,
     MergeVerdict,

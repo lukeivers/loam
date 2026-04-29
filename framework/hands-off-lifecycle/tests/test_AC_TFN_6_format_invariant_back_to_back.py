@@ -53,7 +53,7 @@ def test_AC_TFN_6_sentinel_then_manifest_lex_ordered() -> None:
     """Mixed pair: active-scope sentinel emitter, then manifest
     emitter. Lex order matches call order."""
     from active_scope_sentinel import _now_iso as sentinel_now_iso
-    from objective_tracker.store import (
+    from loam.objective_tracker.store import (
         _now_iso_microsecond_z as manifest_now_iso,
     )
 
@@ -73,7 +73,7 @@ def test_AC_TFN_6_manifest_then_sentinel_lex_ordered() -> None:
     """Reverse pair: manifest first, then sentinel. Lex order
     matches call order."""
     from active_scope_sentinel import _now_iso as sentinel_now_iso
-    from objective_tracker.store import (
+    from loam.objective_tracker.store import (
         _now_iso_microsecond_z as manifest_now_iso,
     )
 

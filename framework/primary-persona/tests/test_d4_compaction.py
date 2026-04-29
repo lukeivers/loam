@@ -19,8 +19,8 @@ from pathlib import Path
 
 import pytest
 
-from scope_of_work.runtime import ScopeRuntime
-from scope_of_work.spec import (
+from loam.scope_of_work.runtime import ScopeRuntime
+from loam.scope_of_work.spec import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
@@ -28,7 +28,7 @@ from scope_of_work.spec import (
     SuccessCriterion,
 )
 
-from src.compaction import (
+from loam.primary_persona.compaction import (
     CompactionSurvivor,
     SURVIVAL_LIST,
     build_survival_payload,
@@ -37,7 +37,7 @@ from src.compaction import (
     mark_precompact,
     precompact_flag_present,
 )
-from src.loader import PersonaLoader
+from loam.primary_persona.loader import PersonaLoader
 
 from tests.conftest import VALID_CONTRACT_YAML, write_persona_dir
 

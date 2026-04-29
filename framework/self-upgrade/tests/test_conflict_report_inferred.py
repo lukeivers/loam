@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from self_upgrade.conflict_report import (
+from loam.self_upgrade.conflict_report import (
     INFERRED_RESOLUTIONS,
     ConflictChangeKind,
     ConflictEntry,

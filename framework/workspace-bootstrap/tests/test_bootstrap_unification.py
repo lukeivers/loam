@@ -24,8 +24,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from workspace_bootstrap import AdapterRaisedError, Bootstrapper, load_manifest
-from workspace_bootstrap.errors import MissingConfigError
+from loam.workspace_bootstrap import AdapterRaisedError, Bootstrapper, load_manifest
+from loam.workspace_bootstrap.errors import MissingConfigError
 
 
 def _short_socket_path() -> Path:

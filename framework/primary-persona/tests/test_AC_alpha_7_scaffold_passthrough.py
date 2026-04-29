@@ -24,7 +24,7 @@ import pytest
 
 
 workspace_bootstrap = pytest.importorskip(
-    "workspace_bootstrap.adapters.first_run_scaffold"
+    "loam.workspace_bootstrap.adapters.first_run_scaffold"
 )
 run_first_run_scaffold = workspace_bootstrap.run_first_run_scaffold
 DEFAULT_PERSONA_HANDLE = workspace_bootstrap.DEFAULT_PERSONA_HANDLE

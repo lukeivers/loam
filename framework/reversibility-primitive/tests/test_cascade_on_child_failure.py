@@ -7,12 +7,12 @@ from __future__ import annotations
 import asyncio
 import pytest
 
-from reversibility_primitive import (
+from loam.reversibility_primitive import (
     CompensationPathBinding,
     RollbackContext,
     RollbackResult,
 )
-from scope_of_work import ReversibilityClass
+from loam.scope_of_work import ReversibilityClass
 
 from .conftest import make_spec
 

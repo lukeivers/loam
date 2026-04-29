@@ -50,7 +50,7 @@ def test_AC_J_2_cli_stop_returns_fast_and_enqueues_one_record(
         }
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     started = time.monotonic()
     rc = cli_stop(workspace_root=tmp_path)
@@ -87,7 +87,7 @@ def test_AC_J_2_enqueue_does_not_open_mcp_transport(
     # Sentinel: any attempt to build a live client during cli_stop
     # raises; the test fails if the Stop hook touches the live-client
     # construction surface.
-    import src.mcp_memory_client as mmc
+    import loam.primary_persona.mcp_memory_client as mmc
 
     def _explode(_root: Any) -> Any:
         raise AssertionError(
@@ -100,7 +100,7 @@ def test_AC_J_2_enqueue_does_not_open_mcp_transport(
         {"session_id": "s1", "transcript_path": str(transcript)}
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     rc = cli_stop(workspace_root=tmp_path)
     assert rc == 0

@@ -19,10 +19,10 @@ from textwrap import dedent
 
 import pytest
 
-from objective_tracker import ObjectiveSpec, ProseCriterion, TimeBound
-from pos_orchestrator import Orchestrator
-from pos_orchestrator.ipc import IPCClient
-from primary_persona.loader import PersonaLoader
+from loam.objective_tracker import ObjectiveSpec, ProseCriterion, TimeBound
+from loam.orchestrator import Orchestrator
+from loam.orchestrator.ipc import IPCClient
+from loam.primary_persona.loader import PersonaLoader
 
 from .conftest import make_scope_spec
 
@@ -117,7 +117,7 @@ async def test_precompact_via_ipc_sets_flag(tmp_config):
 async def test_consume_compaction_returns_five_item_payload(
     tmp_config, loaded_persona
 ):
-    from primary_persona.compaction import SURVIVAL_LIST
+    from loam.primary_persona.compaction import SURVIVAL_LIST
 
     orch = Orchestrator(tmp_config)
     async with orch.running() as o:

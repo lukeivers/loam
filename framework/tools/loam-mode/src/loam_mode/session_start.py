@@ -215,7 +215,7 @@ def emit_session_start_context(
         return ""
 
 
-def build_loam_mode_inner_hook(pos_v2_root: Path) -> dict:
+def build_loam_mode_inner_hook(loam_root: Path) -> dict:
     """Return the inner-hook dict for the loam-mode SessionStart command.
 
     Composed by hands-off-lifecycle's ``build_first_run_stanza`` /
@@ -230,8 +230,8 @@ def build_loam_mode_inner_hook(pos_v2_root: Path) -> dict:
     sketch — loam-mode's emit is sub-second I/O; 5s caps a hung
     filesystem without dragging the SessionStart wall-clock.
     """
-    pos_v2_root = Path(pos_v2_root)
-    python = pos_v2_root / ".venv" / "bin" / "python"
+    loam_root = Path(loam_root)
+    python = loam_root / ".venv" / "bin" / "python"
     return {
         "type": "command",
         "command": f"{python} -m loam_mode.cli session-start",

@@ -6,9 +6,9 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pos_observability_aggregator import open_store
-from pos_observability_aggregator.api import QueryAPI, SpanFilter
-from pos_observability_aggregator.ingest import (
+from loam.observability_aggregator import open_store
+from loam.observability_aggregator.api import QueryAPI, SpanFilter
+from loam.observability_aggregator.ingest import (
     IngestionPipeline,
     JSONLTailer,
     memory_audit_to_canonical,

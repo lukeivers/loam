@@ -14,9 +14,9 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from src.projection import project, projection_to_state_row
-from src.runtime import ObjectiveTracker
-from src.spec import (
+from loam.objective_tracker.projection import project, projection_to_state_row
+from loam.objective_tracker.runtime import ObjectiveTracker
+from loam.objective_tracker.spec import (
     ObjectiveSpec,
     ObjectiveStatus,
     ProseCriterion,

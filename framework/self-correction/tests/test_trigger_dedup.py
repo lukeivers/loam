@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from self_correction import (
+from loam.self_correction import (
     SelfCorrectionController,
     build_trigger_from_user_report,
 )
-from self_correction.dedup import make_dedup_key, normalise_reason
+from loam.self_correction.dedup import make_dedup_key, normalise_reason
 
 
 def test_CR6_normalise_reason_lowers_and_collapses() -> None:

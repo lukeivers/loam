@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from src.runtime import ObjectiveTracker
+from loam.objective_tracker.runtime import ObjectiveTracker
 
 
 _FORMAT_GAMMA_RE = re.compile(
@@ -56,7 +56,7 @@ def test_AC_TFN_2_inserted_row_created_at_matches_format_gamma(
 def test_AC_TFN_2_local_helper_emits_format_gamma() -> None:
     """The store-local ``_now_iso_microsecond_z`` helper emits format γ
     directly (covers the source-of-truth side)."""
-    from src.store import _now_iso_microsecond_z
+    from loam.objective_tracker.store import _now_iso_microsecond_z
 
     ts = _now_iso_microsecond_z()
     assert _FORMAT_GAMMA_RE.match(ts), (

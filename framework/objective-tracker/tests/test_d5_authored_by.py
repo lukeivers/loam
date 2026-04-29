@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.errors import OrphanRootError
+from loam.objective_tracker.errors import OrphanRootError
 from tests.conftest import make_child_spec, make_user_root_spec
 
 

@@ -150,6 +150,7 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
     allowed_files: set[str] = {
         "CLAUDE.md",
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         "docs/rebuild/STATE.md",

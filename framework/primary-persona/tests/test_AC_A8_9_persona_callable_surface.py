@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-import primary_persona
-from primary_persona import DispatchOutcome, DispatchShape, dispatch_with_scope
+import loam.primary_persona as primary_persona
+from loam.primary_persona import DispatchOutcome, DispatchShape, dispatch_with_scope
 
 from ._helpers_a8 import (
     StubIPCClient,
@@ -44,7 +44,7 @@ async def test_AC_A8_9_persona_caller_no_ipc_plumbing_required(
     workspace = make_workspace(tmp_path)
     client = StubIPCClient()
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 

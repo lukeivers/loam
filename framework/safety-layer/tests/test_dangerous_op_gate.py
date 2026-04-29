@@ -15,10 +15,10 @@ from __future__ import annotations
 
 import pytest
 
-from pos_orchestrator.ipc import ApplicationError
-from scope_of_work import ReversibilityClass
+from loam.orchestrator.ipc import ApplicationError
+from loam.scope_of_work import ReversibilityClass
 
-from safety_layer.controller import (
+from loam.safety_layer.controller import (
     IPC_DANGEROUS_OP_GATE_BLOCKED,
     structural_hash,
 )
@@ -134,7 +134,7 @@ async def test_A11_four_option_render_in_notification(controller, active_channel
     await controller.check_gates(spec, scope_id="s-four")
     # But the blocked ask-gate message is present.
     # Verify four-option render was produced at some point via direct helper:
-    from safety_layer.notification import render_dangerous_op_text
+    from loam.safety_layer.notification import render_dangerous_op_text
     text = render_dangerous_op_text(
         scope_id="s-four",
         goal=spec.goal,

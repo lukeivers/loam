@@ -12,14 +12,14 @@ import time
 
 import pytest
 
-from scope_of_work import (
+from loam.scope_of_work import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
     SuccessCriterion,
 )
 
-from safety_layer import KillEngine
+from loam.safety_layer import KillEngine
 
 
 def _spec() -> ScopeSpec:

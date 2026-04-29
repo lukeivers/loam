@@ -91,6 +91,7 @@ def test_R21_only_reversibility_primitive_changed() -> None:
         "README.md",
         "CLAUDE.md",
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         ".claude/settings.json",

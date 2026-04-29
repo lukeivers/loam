@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from scope_of_work.events import StateTransitioned
-from scope_of_work.spec import ScopeState
+from loam.scope_of_work.events import StateTransitioned
+from loam.scope_of_work.spec import ScopeState
 
-from self_correction import (
+from loam.self_correction import (
     GATE_REFUSAL_REASON_PATTERN,
     TriggerSource,
     build_trigger_from_state_transitioned,

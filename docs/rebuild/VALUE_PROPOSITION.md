@@ -107,7 +107,7 @@ The harness's contribution is a specific set of capabilities the raw AI lacks. T
 
 The Claude-leverage principle in FUTURE_IDEAS.md asks: *what existing Claude capabilities does this feature lean on or extend?* The present document asks: *does this reduce translation burden for the user, and does it add to the persona's toolkit?* Both principles are research-time lenses; a feature research plan that does not answer both is an incomplete research plan.
 
-ODD (documented in odd-methodology.md and odd-in-pos.md) governs how the feature is authored mechanically once the research concludes the feature should exist. The three lenses — Claude leverage, harness + primary-persona value, ODD mechanics — are complementary, not redundant. A well-designed feature satisfies all three.
+ODD (documented in odd-methodology.md and odd-in-loam.md) governs how the feature is authored mechanically once the research concludes the feature should exist. The three lenses — Claude leverage, harness + primary-persona value, ODD mechanics — are complementary, not redundant. A well-designed feature satisfies all three.
 
 ---
 

@@ -210,6 +210,7 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
     # `pos-amend apply`.
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         "docs/odd-methodology.md",
         "CLAUDE.md",

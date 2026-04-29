@@ -3,7 +3,7 @@
 **Component:** Memory System. **Phase:** Research (no design, no code).
 **Authored by:** Research Agent. **Date:** 2026-04-17.
 **Input brief:** `docs/rebuild/components/memory-system/research-plan.md`
-**Spec scored against:** `docs/rebuild/spec/pos-v2-objectives-spec.md` v1.0 (LOCKED).
+**Spec scored against:** `docs/rebuild/spec/loam-objectives-spec.md` v1.0 (LOCKED).
 
 ---
 

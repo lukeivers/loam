@@ -99,7 +99,7 @@ PROMPT_LENGTH_THRESHOLD = 2500
 # dispatch's parent cwd. Hardcoded per the A2/A3 dispatch-template
 # defaults convention; a future maintainer changing the canonical path
 # updates this in lock-step with the rest of the codebase.
-CANONICAL_POS_V2_PATH = "/Users/lukeivers/ivers-corp-pos-v2"
+CANONICAL_LOAM_PATH = "/Users/lukeivers/ivers-corp-pos-v2"
 
 
 def _audit_log_path(workspace_root: Path) -> Path:
@@ -116,7 +116,7 @@ def _open_tracker(workspace_root: Path) -> Any | None:
 
 # Surface mentions of pos-v2 — when any of these appears in the
 # dispatch prompt, the dispatch is targeting pos-v2 dev surfaces.
-_POS_V2_SURFACE_PATTERNS: tuple[re.Pattern, ...] = (
+_LOAM_SURFACE_PATTERNS: tuple[re.Pattern, ...] = (
     re.compile(r"docs/rebuild/"),
     re.compile(r"framework/[\w-]+/src/"),
     re.compile(r"framework/[\w-]+/tests/"),
@@ -133,7 +133,7 @@ def _detect_pos_v2_surface_mentions(prompt: str) -> list[str]:
     Empty list when none match.
     """
     found: list[str] = []
-    for pat in _POS_V2_SURFACE_PATTERNS:
+    for pat in _LOAM_SURFACE_PATTERNS:
         m = pat.search(prompt)
         if m is not None:
             found.append(m.group(0))
@@ -149,7 +149,7 @@ def _is_canonical_cwd(cwd: str) -> bool:
         return False
     try:
         cwd_resolved = Path(cwd).resolve()
-        canonical_resolved = Path(CANONICAL_POS_V2_PATH).resolve()
+        canonical_resolved = Path(CANONICAL_LOAM_PATH).resolve()
     except (OSError, ValueError):
         return False
     return cwd_resolved == canonical_resolved
@@ -424,7 +424,7 @@ def _reason_wrong_wd(cwd: str, surface_mentions: list[str]) -> str:
         f"AC.AG.1 (wrong-WD dispatch, DEV-MODE) — refused: the "
         f"dispatch prompt mentions pos-v2 dev surfaces ({mentions_text}) "
         f"but the parent session's `cwd` is `{cwd}`, not the canonical "
-        f"pos-v2 path `{CANONICAL_POS_V2_PATH}`. Per "
+        f"pos-v2 path `{CANONICAL_LOAM_PATH}`. Per "
         f"`feedback_always_specify_wd_in_dispatches`, dispatches that "
         f"target pos-v2 surfaces from a non-canonical cwd produce "
         f"orphan commits in the wrong working tree. Repair "

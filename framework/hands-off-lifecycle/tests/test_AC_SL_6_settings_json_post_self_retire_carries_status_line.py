@@ -46,7 +46,7 @@ def test_AC_SL_6_self_retire_writes_status_line_entry(
     settings_path = fresh_workspace / ".claude" / "settings.json"
 
     _self_retire(
-        pos_v2_root=fresh_workspace,
+        loam_root=fresh_workspace,
         settings_path=settings_path,
     )
 

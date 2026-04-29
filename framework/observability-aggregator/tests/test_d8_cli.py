@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from pos_observability_aggregator import open_store
-from pos_observability_aggregator.cli import main as cli_main
-from pos_observability_aggregator.config import AggregatorConfig
-from pos_observability_aggregator.schema import (
+from loam.observability_aggregator import open_store
+from loam.observability_aggregator.cli import main as cli_main
+from loam.observability_aggregator.config import AggregatorConfig
+from loam.observability_aggregator.schema import (
     AuditRecord,
     SpanRecord,
     TokenRecord,

@@ -80,7 +80,7 @@ pos-new-workspace ~/my-ws --from /Users/lukeivers/ivers-corp-pos-v2 \
 - `src/workspace_bootstrap/new_workspace.py` — `pos-new-workspace` entry (D.4).
 - `src/workspace_bootstrap/adapters/` — the foundational-adapter bundle (13 contributions).
 - `src/workspace_bootstrap/workspace_paths.py` — single-source-of-truth path helpers (post-D.2).
-- `docs/extension_protocol.md` — published Phase 4+ extension protocol; plugin authors register via `pos.bootstrap.contributions` entry points.
+- `docs/extension_protocol.md` — published Phase 4+ extension protocol; plugin authors register via `loam.bootstrap.contributions` entry points.
 
 ## Related components
 

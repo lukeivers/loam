@@ -23,12 +23,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from objective_tracker import ObjectiveTracker
+from loam.objective_tracker import ObjectiveTracker
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     run_first_run_scaffold,
 )
-from workspace_bootstrap.adapters.tracker_seed import (
+from loam.workspace_bootstrap.adapters.tracker_seed import (
     FRAMEWORK_VALUE_PROP_RELPATH,
     ROOT_OBJECTIVE_ID,
     WORKSPACE_VALUE_PROP_RELPATH,
@@ -228,7 +228,7 @@ def test_AC39_5_re_run_after_value_prop_supplied_completes_seed(
     on the next direct ``seed_tracker`` invocation. Demonstrates the
     'workspace user supplies content' lifecycle isn't a one-shot."""
     import asyncio
-    from workspace_bootstrap.adapters.tracker_seed import (
+    from loam.workspace_bootstrap.adapters.tracker_seed import (
         load_value_prop_source,
         seed_tracker,
     )

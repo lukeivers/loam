@@ -20,14 +20,14 @@ from pathlib import Path
 
 import pytest
 
-from src.context_composer import ComposedContextPayload
-from src.memory_consumer import (
+from loam.primary_persona.context_composer import ComposedContextPayload
+from loam.primary_persona.memory_consumer import (
     TurnAggregator,
     WorkspaceSlugUnrepresentableError,
     register_memory_retrieval,
     resolve_workspace_slug,
 )
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 from _helpers_d7 import FakeMemoryClient, seed_baseline_workspace
 
@@ -90,7 +90,7 @@ def test_D7_4_slug_parity_with_canonical_workspace_bootstrap(
     skips with a diagnostic rather than silently passing.
     """
     try:
-        from workspace_bootstrap.adapters.first_run_scaffold import (  # type: ignore[import-not-found]
+        from loam.workspace_bootstrap.adapters.first_run_scaffold import (  # type: ignore[import-not-found]
             workspace_slug as canonical_workspace_slug,
         )
     except ImportError:

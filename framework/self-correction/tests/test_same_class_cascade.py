@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 
-from self_correction import (
+from loam.self_correction import (
     CorrectionConfig,
     CorrectionEpisode,
     CorrectionStore,
@@ -12,8 +12,8 @@ from self_correction import (
     SelfCorrectionController,
     build_trigger_from_user_report,
 )
-from self_correction.bounds import same_class_cascade_check
-from self_correction.spec import CorrectionTrigger, TriggerSource, iso_now
+from loam.self_correction.bounds import same_class_cascade_check
+from loam.self_correction.spec import CorrectionTrigger, TriggerSource, iso_now
 
 
 def _seed_same_class(

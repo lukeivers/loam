@@ -113,7 +113,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              `metadata.phase` off each Contribution class). The
 #              amendment edits the proposal doc (new §4.8 + cross-
 #              reference in §4.5 after B19), appends one paragraph to
-#              `docs/odd-in-pos.md` §6.1, and adds the B25 test.
+#              `docs/odd-in-loam.md` §6.1, and adds the B25 test.
 #              Multi-component amendment in lockstep with
 #              hands-off-lifecycle (BASELINE bump + narrative note).
 #              c94e146 is the pre-amendment tip — amendment #16's
@@ -246,7 +246,7 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
     #     doc gains a new §4.8 criterion (B25) + an optional cross-
     #     reference in §4.5 after B19. This is the first proposal-doc
     #     edit since the initial port at a11f081.
-    #   - `docs/odd-in-pos.md` — one-paragraph cross-reference appended
+    #   - `docs/odd-in-loam.md` — one-paragraph cross-reference appended
     #     to §6.1 (the "pattern B18 teaches" subsection) noting B25's
     #     existence as the framework-internal-phase carve-out. Admitted
     #     via the precise `allowed_files` entry rather than a `docs/`
@@ -300,6 +300,7 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
     allowed_files: set[str] = {
         "framework/first-run-inventory.yaml",
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "CLAUDE.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",

@@ -16,11 +16,11 @@ from typing import Any
 
 import pytest
 
-from self_upgrade.config import UpgradeConfig
-from self_upgrade.manifest import Manifest
-from self_upgrade.paths import Paths
-from self_upgrade.snapshot import capture_substrate_snapshots
-from self_upgrade.upgrade import UpgradeResult, execute_upgrade
+from loam.self_upgrade.config import UpgradeConfig
+from loam.self_upgrade.manifest import Manifest
+from loam.self_upgrade.paths import Paths
+from loam.self_upgrade.snapshot import capture_substrate_snapshots
+from loam.self_upgrade.upgrade import UpgradeResult, execute_upgrade
 
 
 # ---- fake adapter --------------------------------------------------

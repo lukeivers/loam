@@ -29,10 +29,10 @@ import pytest
 import yaml
 from pydantic import BaseModel
 
-from self_upgrade.canonical import resolve_canonical_to_staging
-from self_upgrade.cli import build_parser, main
-from self_upgrade.clause_checks import resolve_clause_h_inferred
-from self_upgrade.conflict_report import (
+from loam.self_upgrade.canonical import resolve_canonical_to_staging
+from loam.self_upgrade.cli import build_parser, main
+from loam.self_upgrade.clause_checks import resolve_clause_h_inferred
+from loam.self_upgrade.conflict_report import (
     ConflictChangeKind,
     ConflictEntry,
     ConflictReport,
@@ -40,14 +40,14 @@ from self_upgrade.conflict_report import (
     load_conflict_report,
     save_conflict_report,
 )
-from self_upgrade.manifest import Manifest, save_manifest
-from self_upgrade.merge_resolver import (
+from loam.self_upgrade.manifest import Manifest, save_manifest
+from loam.self_upgrade.merge_resolver import (
     MergeResolver,
     MergeVerdict,
     ResolverFailure,
 )
-from self_upgrade.paths import Paths
-from self_upgrade.sync_protected import (
+from loam.self_upgrade.paths import Paths
+from loam.self_upgrade.sync_protected import (
     FRAMEWORK_FLOOR,
     FileClass,
     SyncProtected,
@@ -715,7 +715,7 @@ def test_cli_canonical_seeds_default_sync_protected_on_first_run(
     in turn requires the staging-dir pre-existing (the CLI doesn't yet
     write the seed without a real run).
     """
-    from self_upgrade.cli import _load_or_seed_sync_protected
+    from loam.self_upgrade.cli import _load_or_seed_sync_protected
 
     workspace = tmp_path / "workspace"
     workspace.mkdir()
@@ -877,7 +877,7 @@ def test_halt_surface_state_yaml_not_implemented(tmp_path: Path) -> None:
         f"state.yaml not written at {state_path} after clause-(h) pass"
     )
 
-    from self_upgrade.state import StateRecord, UpgradeStatus
+    from loam.self_upgrade.state import StateRecord, UpgradeStatus
 
     raw = yaml.safe_load(state_path.read_text())
     record = StateRecord.model_validate(raw)
@@ -967,7 +967,7 @@ def test_cli_auto_discovers_prior_state_yaml_on_canonical_rerun(
     )
     save_conflict_report(seeded, audit_target)
 
-    from self_upgrade.state import (
+    from loam.self_upgrade.state import (
         StateRecord,
         UpgradeStatus,
         save_state,

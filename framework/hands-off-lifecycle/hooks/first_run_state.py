@@ -124,7 +124,7 @@ class FirstRunState:
     of the workspace this state belongs to. Defence-in-depth against
     a state file being moved out from under a workspace: the
     dispatcher refuses a state whose ``workspace_root`` does not
-    match the current ``pos_v2_root``, treating it as absent.
+    match the current ``loam_root``, treating it as absent.
 
     ``progress_pct`` (added amendment #49) is an additive 0-100
     integer the worker writes at every recognised ``_advance_state``

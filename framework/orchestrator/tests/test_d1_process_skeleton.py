@@ -13,7 +13,7 @@ import asyncio
 
 import pytest
 
-from pos_orchestrator import Orchestrator
+from loam.orchestrator import Orchestrator
 
 
 @pytest.mark.asyncio
@@ -67,8 +67,8 @@ async def test_sigterm_triggers_clean_flush(tmp_config):
 @pytest.mark.asyncio
 async def test_crash_during_startup_yields_non_zero(tmp_path, monkeypatch):
     """If _startup() raises an unexpected exception, exit code is non-zero."""
-    from pos_orchestrator import Orchestrator as Orch
-    from pos_orchestrator.config import OrchestratorConfig
+    from loam.orchestrator import Orchestrator as Orch
+    from loam.orchestrator.config import OrchestratorConfig
 
     from .conftest import _short_socket_path
 
@@ -110,7 +110,7 @@ async def test_crash_during_startup_yields_non_zero(tmp_path, monkeypatch):
 async def test_core_purity_assertion():
     """Brief: a build-time check fails if any persona directory appears
     in the orchestrator's paths."""
-    from pos_orchestrator.core_purity import assert_core_purity
+    from loam.orchestrator.core_purity import assert_core_purity
 
     # Runs at import; explicit call re-verifies.
     assert_core_purity()

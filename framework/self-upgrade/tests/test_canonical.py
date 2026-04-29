@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from self_upgrade.canonical import (
+from loam.self_upgrade.canonical import (
     CanonicalPullError,
     default_manifest_path,
     resolve_canonical_to_staging,
 )
-from self_upgrade.cli import build_parser
+from loam.self_upgrade.cli import build_parser
 
 
 def _make_canonical(root: Path, tag: str = "pos-v2-v0.2.0") -> Path:

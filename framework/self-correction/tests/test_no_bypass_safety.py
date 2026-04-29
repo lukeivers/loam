@@ -9,9 +9,9 @@ and mark the episode refused with a gate_refused reason.
 from __future__ import annotations
 
 import pytest
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
-from self_correction import (
+from loam.self_correction import (
     EpisodeState,
     SelfCorrectionController,
     build_trigger_from_user_report,

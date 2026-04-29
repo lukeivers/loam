@@ -7,9 +7,9 @@ rejects any channel declaring is_group=True as belt-and-braces.
 from __future__ import annotations
 
 import pytest
-from primary_persona.introduction import ChannelKind, OneOnOneChannel
+from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
 
-from self_correction import CorrectionChannel, CorrectionNotifier
+from loam.self_correction import CorrectionChannel, CorrectionNotifier
 
 
 def test_CR23_correction_channel_subclasses_one_on_one() -> None:
@@ -61,7 +61,7 @@ async def test_CR23_notifier_delivers_via_active_channel() -> None:
         is_active=True,
     )
     notifier = CorrectionNotifier(channels=[ch])
-    from self_correction.notification import CorrectionNotification
+    from loam.self_correction.notification import CorrectionNotification
 
     await notifier.send(
         CorrectionNotification(

@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from scope_of_work import (
+from loam.scope_of_work import (
     Budget,
     ReversibilityClass,
     ScopeRuntime,
@@ -15,7 +15,7 @@ from scope_of_work import (
     SuccessCriterion,
 )
 
-from safety_layer import (
+from loam.safety_layer import (
     AlwaysAskList,
     DEFAULT_DANGEROUS_OP_SUBSET,
     DEFAULT_FRAMEWORK_FLOOR,

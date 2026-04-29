@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-from src.creation_triggers import (
+from loam.primary_persona.creation_triggers import (
     CreationTrigger,
     CreationTriggerDetector,
     JudgmentResult,

@@ -7,7 +7,7 @@ from typing import ClassVar
 
 import pytest
 
-from workspace_bootstrap import (
+from loam.workspace_bootstrap import (
     BaseContribution,
     Bootstrapper,
     ContributionMetadata,
@@ -45,7 +45,7 @@ def test_B10_host_has_framework_singletons(tmp_path: Path, write_manifest_fn) ->
 async def test_B11_shutdown_reverses_startup(tmp_path: Path, write_manifest_fn) -> None:
     adapter = tmp_path / "adapter.py"
     adapter.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "RUN = []\n"
         "SHUT = []\n"
         "class A(BaseContribution):\n"
@@ -92,7 +92,7 @@ async def test_B11_partial_startup_failure_cancels_siblings(
     and earlier shutdown hooks still fire. No adapter is left orphaned."""
     adapter = tmp_path / "adapter.py"
     adapter.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "RUN = []\n"
         "SHUT = []\n"
         "class OK(BaseContribution):\n"
@@ -112,7 +112,7 @@ async def test_B11_partial_startup_failure_cancels_siblings(
             {"name": "bad", "path": "./adapter.py", "attr": "BAD"},
         ],
     )
-    from workspace_bootstrap import AdapterRaisedError
+    from loam.workspace_bootstrap import AdapterRaisedError
 
     bs = Bootstrapper(load_manifest(path))
     with pytest.raises(AdapterRaisedError) as excinfo:

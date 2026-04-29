@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from cost_governance import (
+from loam.cost_governance import (
     CostConfig,
     CostStore,
     Reservation,

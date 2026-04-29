@@ -59,6 +59,7 @@ _AMENDMENT_48_ALLOWED_PREFIXES: tuple[str, ...] = (
 _AMENDMENT_48_ALLOWED_FILES: frozenset[str] = frozenset({
     "CLAUDE.md",
     "docs/odd-in-pos.md",
+    "docs/odd-in-loam.md",
     "docs/odd-methodology.md",
     "docs/rebuild/FUTURE_IDEAS.md",
 })
@@ -111,6 +112,7 @@ _AMENDMENT_69_ALLOWED_PREFIXES: tuple[str, ...] = (
 )
 _AMENDMENT_69_ALLOWED_FILES: frozenset[str] = frozenset({
     "docs/odd-in-pos.md",
+    "docs/odd-in-loam.md",
 })
 
 

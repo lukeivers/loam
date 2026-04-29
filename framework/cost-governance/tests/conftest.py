@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from primary_persona.introduction import ChannelKind
-from scope_of_work import (
+from loam.primary_persona.introduction import ChannelKind
+from loam.scope_of_work import (
     Budget,
     ReversibilityClass,
     ScopeRuntime,
@@ -16,7 +16,7 @@ from scope_of_work import (
     SuccessCriterion,
 )
 
-from cost_governance import (
+from loam.cost_governance import (
     CostChannel,
     CostConfig,
     CostController,

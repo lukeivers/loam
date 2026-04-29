@@ -21,7 +21,7 @@ from pathlib import Path
 
 def _run_cli_stop(monkeypatch, capsys, stdin_text: str, workspace: Path) -> tuple[int, str, str]:
     monkeypatch.setattr("sys.stdin", io.StringIO(stdin_text))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     rc = cli_stop(workspace_root=workspace)
     captured = capsys.readouterr()
@@ -30,7 +30,7 @@ def _run_cli_stop(monkeypatch, capsys, stdin_text: str, workspace: Path) -> tupl
 
 def test_AC_M_4_subcommand_registered_in_cli(tmp_path: Path) -> None:
     """The persona CLI argparse parser exposes a ``stop`` subcommand."""
-    from src.cli import build_parser
+    from loam.primary_persona.cli import build_parser
 
     parser = build_parser()
     # Probe by parsing; argparse raises SystemExit on unknown.
@@ -94,7 +94,7 @@ def test_AC_M_4_internal_exception_exits_zero(
     """When ``handle_stop_envelope`` raises unexpectedly, ``cli_stop``
     catches and exits 0 (the diagnostic surface is the workspace-local
     log, not Claude Code's debug log)."""
-    import src.stop_emitter as se
+    import loam.primary_persona.stop_emitter as se
 
     def _explode(*a, **kw):
         raise RuntimeError("synthetic")
@@ -122,7 +122,7 @@ def test_AC_M_4_stdin_read_failure_exits_zero(
             raise OSError("synthetic stdin failure")
 
     monkeypatch.setattr("sys.stdin", _BadStdin())
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     rc = cli_stop(workspace_root=tmp_path)
     assert rc == 0

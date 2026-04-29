@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from pos_orchestrator import Orchestrator
-from pos_orchestrator.local_state import LocalStateStore
+from loam.orchestrator import Orchestrator
+from loam.orchestrator.local_state import LocalStateStore
 
 
 @pytest.mark.asyncio

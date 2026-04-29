@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from graceful_degradation import (
+from loam.graceful_degradation import (
     APIConnectionError,
     AuthenticationError,
     ClaudeClient,
@@ -22,7 +22,7 @@ from graceful_degradation import (
     RateLimitError,
     classify_exception,
 )
-from graceful_degradation.adapter import AdapterEvent
+from loam.graceful_degradation.adapter import AdapterEvent
 
 from .fakes import FakeClock, FakeInvoker
 
@@ -103,7 +103,7 @@ async def test_adapter_529_overloaded_distinct_from_5xx() -> None:
 
 
 async def test_adapter_400_bad_request_is_not_degradation_signal() -> None:
-    from graceful_degradation import BadRequestError
+    from loam.graceful_degradation import BadRequestError
 
     events: list[AdapterEvent] = []
     invoker = FakeInvoker([_make_sdk_exception("BadRequestError", status=400)])
@@ -145,7 +145,7 @@ async def test_adapter_preserves_injectable_llm_callable_shape() -> None:
     client = ClaudeClient(invoke=invoker)
 
     async def llm_shim(prompt_name: str, prompt: str):
-        from primary_persona.authoring import LLMResult
+        from loam.primary_persona.authoring import LLMResult
 
         out = await client.call(prompt_name=prompt_name, text=prompt)
         return LLMResult(text=out.text, prompt_name=prompt_name, model=out.model)

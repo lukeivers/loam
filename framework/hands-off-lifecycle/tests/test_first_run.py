@@ -235,7 +235,7 @@ def test_T16_T17_self_retire_removes_script_and_rewrites_stanza(
 
     # Self-retire.
     merge_result, _, removed = _self_retire(
-        pos_v2_root=fresh_workspace, settings_path=settings_path
+        loam_root=fresh_workspace, settings_path=settings_path
     )
     assert removed is True
     assert not first_run_path.exists(), "T16 — shell script deleted"
@@ -253,7 +253,7 @@ def test_T16_T17_self_retire_removes_script_and_rewrites_stanza(
 
     # Phase 7 verification passes.
     ok, problems = _verify_self_retire(
-        pos_v2_root=fresh_workspace, settings_path=settings_path
+        loam_root=fresh_workspace, settings_path=settings_path
     )
     assert ok is True, f"Phase 7 problems: {problems}"
 
@@ -281,7 +281,7 @@ def test_T18_self_retire_verification_detects_inconsistency(
     )
 
     ok, problems = _verify_self_retire(
-        pos_v2_root=fresh_workspace, settings_path=settings_path
+        loam_root=fresh_workspace, settings_path=settings_path
     )
     assert ok is False
     assert any("first-run.sh" in p for p in problems)
@@ -308,7 +308,7 @@ def test_T18b_self_retire_verification_detects_stale_stanza(
     )
 
     ok, problems = _verify_self_retire(
-        pos_v2_root=fresh_workspace, settings_path=settings_path
+        loam_root=fresh_workspace, settings_path=settings_path
     )
     assert ok is False
     assert any("pos_session_start.py" in p or "first-run.sh" in p for p in problems)
@@ -389,7 +389,7 @@ def test_T4_rewritten_settings_preserves_user_keys_across_self_retire(
     )
     first_run_path.write_text("#!/bin/sh\n")
 
-    _self_retire(pos_v2_root=fresh_workspace, settings_path=settings_path)
+    _self_retire(loam_root=fresh_workspace, settings_path=settings_path)
 
     data = json.loads(settings_path.read_text())
     assert data["env"] == {"MY_USER_VAR": "42"}
@@ -594,7 +594,7 @@ def test_T9b_dedicated_venv_creation_lands_at_declared_path(
         "rationale": "test",
     }
     venv_path, outcome = _install_dedicated_venv(
-        pos_v2_root=ws,
+        loam_root=ws,
         shared_python=Path(sys.executable),
         entry=entry,
     )
@@ -701,7 +701,7 @@ def test_AC7_workspace_slug_parity_with_workspace_bootstrap() -> None:
     Python interpreters (system vs shared-venv) is the documented
     trade-off; the parity test is how they stay in lock-step.
     """
-    from workspace_bootstrap.adapters.first_run_scaffold import (
+    from loam.workspace_bootstrap.adapters.first_run_scaffold import (
         workspace_slug as canonical_workspace_slug,
     )
     from first_run_helper import _workspace_slug
@@ -757,11 +757,11 @@ def test_T1_end_to_end_dry_flow_through_helper_modules(
         fresh_workspace / "framework" / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     )
     first_run_path.write_text("#!/bin/sh\n")
-    _self_retire(pos_v2_root=fresh_workspace, settings_path=settings_path)
+    _self_retire(loam_root=fresh_workspace, settings_path=settings_path)
 
     # 4. Phase 7 verification passes.
     ok, problems = _verify_self_retire(
-        pos_v2_root=fresh_workspace, settings_path=settings_path
+        loam_root=fresh_workspace, settings_path=settings_path
     )
     assert ok is True, f"Phase 7 problems: {problems}"
 
@@ -817,19 +817,19 @@ def test_T20_discover_components_finds_every_pyproject_under_root() -> None:
     comps = _discover_components(REPO_ROOT)
     names = {c["name"] for c in comps}
     expected = {
-        "scope_of_work",
-        "objective_tracker",
-        "primary_persona",
-        "pos_safety_layer",
-        "pos_reversibility_primitive",
-        "pos_cost_governance",
-        "pos_self_correction",
-        "graceful_degradation",
-        "pos_orchestrator",
-        "pos_observability_aggregator",
-        "pos_self_upgrade",
-        "pos_workspace_bootstrap",
-        "pos_telegram_interface",
+        "loam-scope-of-work",
+        "loam-objective-tracker",
+        "loam-primary-persona",
+        "loam-safety-layer",
+        "loam-reversibility-primitive",
+        "loam-cost-governance",
+        "loam-self-correction",
+        "loam-graceful-degradation",
+        "loam-orchestrator",
+        "loam-observability-aggregator",
+        "loam-self-upgrade",
+        "loam-workspace-bootstrap",
+        "loam-telegram-interface",
     }
     missing = expected - names
     assert not missing, f"discovery missed shipped components: {missing}"
@@ -993,7 +993,7 @@ def test_T20f_install_editable_is_idempotent(tmp_path: Path) -> None:
 
     # First run — both components should install.
     outcomes_1 = _install_editable_components(
-        pos_v2_root=ws, shared_venv_python=venv_python
+        loam_root=ws, shared_venv_python=venv_python
     )
     names_1 = [o.component for o in outcomes_1]
     # Topological order: alpha before beta.
@@ -1015,7 +1015,7 @@ def test_T20f_install_editable_is_idempotent(tmp_path: Path) -> None:
 
     # Second run — idempotent: every component short-circuits.
     outcomes_2 = _install_editable_components(
-        pos_v2_root=ws, shared_venv_python=venv_python
+        loam_root=ws, shared_venv_python=venv_python
     )
     assert [o.component for o in outcomes_2] == ["alpha_pkg", "beta_pkg"]
     for o in outcomes_2:
@@ -1056,7 +1056,7 @@ def test_T20g_install_editable_reports_failure_with_named_class(
     venv_python = venv_dir / "bin" / "python"
 
     outcomes = _install_editable_components(
-        pos_v2_root=ws, shared_venv_python=venv_python
+        loam_root=ws, shared_venv_python=venv_python
     )
     assert len(outcomes) == 1
     assert outcomes[0].component == "broken_pkg"
@@ -1085,13 +1085,13 @@ def test_T20h_phase_3e_installs_all_components_on_shipped_inventory() -> None:
     assert len(names_in_order) >= 14
     assert sorted(names_in_order) == sorted({c["name"] for c in comps})
     # Canonical first-tier anchors.
-    assert "scope_of_work" in names_in_order
-    assert "pos_orchestrator" in names_in_order
-    assert "pos_workspace_bootstrap" in names_in_order
-    # pos_workspace_bootstrap depends on almost everything — must be
+    assert "loam-scope-of-work" in names_in_order
+    assert "loam-orchestrator" in names_in_order
+    assert "loam-workspace-bootstrap" in names_in_order
+    # loam-workspace-bootstrap depends on almost everything — must be
     # installed after its siblings.
-    wb_idx = names_in_order.index("pos_workspace_bootstrap")
-    so_idx = names_in_order.index("scope_of_work")
-    orch_idx = names_in_order.index("pos_orchestrator")
+    wb_idx = names_in_order.index("loam-workspace-bootstrap")
+    so_idx = names_in_order.index("loam-scope-of-work")
+    orch_idx = names_in_order.index("loam-orchestrator")
     assert wb_idx > so_idx
     assert wb_idx > orch_idx

@@ -20,15 +20,15 @@ sys.path.insert(0, str(HOOKS_DIR))
 from first_run_settings import merge_stop  # noqa: E402
 
 
-def _persona_envelope(pos_v2_root: Path) -> dict:
+def _persona_envelope(loam_root: Path) -> dict:
     return {
         "matcher": "",
         "hooks": [
             {
                 "type": "command",
                 "command": (
-                    f"{pos_v2_root}/.venv/bin/python "
-                    "-m primary_persona.cli stop"
+                    f"{loam_root}/.venv/bin/python "
+                    "-m loam.primary_persona.cli stop"
                 ),
                 "async": False,
                 "timeout": 5,

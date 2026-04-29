@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "graceful_degradation"
+name = "loam-graceful-degradation"
 version = "0.1.0"
 description = "Graceful-degradation policy layer for pOS v2 — Claude-upstream failure detection, per-mode FSMs, policy dispatch, notification, resume."
 requires-python = ">=3.11"
@@ -13,14 +13,14 @@ dependencies = [
     "opentelemetry-api>=1.25",
     "opentelemetry-sdk>=1.25",
     "pyyaml>=6",
-    "scope_of_work",
-    "primary_persona",
-    "pos_orchestrator",
+    "loam-scope-of-work",
+    "loam-primary-persona",
+    "loam-orchestrator",
 ]
 
 [tool.setuptools]
-package-dir = {"graceful_degradation" = "src"}
-packages = ["graceful_degradation"]
+package-dir = {"loam.graceful_degradation" = "src/loam/graceful_degradation"}
+packages = ["loam.graceful_degradation"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -22,12 +22,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.context_composer import (
+from loam.primary_persona.context_composer import (
     ADDITIONAL_CONTEXT_CAP,
     ComposedContextPayload,
     CorpusGateState,
 )
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 
 def _seed_baseline_workspace(root: Path) -> None:
@@ -40,7 +40,7 @@ def _seed_baseline_workspace(root: Path) -> None:
         "## Session-start discipline\n\n"
         "Before acting, read:\n\n"
         "- `docs/odd-methodology.md`\n"
-        "- `docs/odd-in-pos.md`\n"
+        "- `docs/odd-in-loam.md`\n"
         "- `docs/rebuild/VALUE_PROPOSITION.md`\n"
         "- `docs/rebuild/STATE.md`\n"
         "- `docs/rebuild/FUTURE_IDEAS.md`\n"
@@ -48,7 +48,7 @@ def _seed_baseline_workspace(root: Path) -> None:
     )
     (root / "docs").mkdir()
     (root / "docs" / "odd-methodology.md").write_text("odd")
-    (root / "docs" / "odd-in-pos.md").write_text("in-pos")
+    (root / "docs" / "odd-in-loam.md").write_text("in-pos")
     (root / "docs" / "rebuild").mkdir()
     (root / "docs" / "rebuild" / "VALUE_PROPOSITION.md").write_text("vp")
     (root / "docs" / "rebuild" / "STATE.md").write_text("state")
@@ -79,7 +79,7 @@ def test_D8_1_corpus_paths_with_present_indicator(tmp_path: Path) -> None:
     paths = {p: present for p, present in payload.corpus_paths}
     assert "CLAUDE.md" in paths
     assert "docs/odd-methodology.md" in paths
-    assert "docs/odd-in-pos.md" in paths
+    assert "docs/odd-in-loam.md" in paths
     assert "docs/rebuild/VALUE_PROPOSITION.md" in paths
     assert "docs/rebuild/STATE.md" in paths
     assert "docs/rebuild/FUTURE_IDEAS.md" in paths

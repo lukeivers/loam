@@ -17,7 +17,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from src.contract import PersonaContract
+from loam.primary_persona.contract import PersonaContract
 
 
 def _base_contract_dict() -> dict:

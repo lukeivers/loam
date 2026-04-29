@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from self_upgrade.aggregator_probes import (
+from loam.self_upgrade.aggregator_probes import (
     PROBE_SET_VERSION,
     aggregator_probe_hash,
     run_aggregator_probes,

@@ -16,7 +16,7 @@ _COMPONENTS = ("alpha", "beta", "gamma")
 _UNIVERSAL_PREFIXES = ("docs/rebuild/plans/",)
 _UNIVERSAL_FILES = (
     "CLAUDE.md",
-    "docs/odd-in-pos.md",
+    "docs/odd-in-loam.md",
     "docs/odd-methodology.md",
     "docs/rebuild/FUTURE_IDEAS.md",
 )

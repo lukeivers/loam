@@ -33,8 +33,8 @@ from pathlib import Path
 
 import pytest
 
-from workspace_bootstrap.adapters import tracker_seed
-from workspace_bootstrap.new_workspace import bootstrap_new_workspace
+from loam.workspace_bootstrap.adapters import tracker_seed
+from loam.workspace_bootstrap.new_workspace import bootstrap_new_workspace
 
 
 def _stub_tracker_seed_runner(**_kwargs):
@@ -97,7 +97,7 @@ def test_AC_SFR_4_pos_sync_fast_forwards_framework_only(
     from pos_publish_framework_only.synth import (  # noqa: PLC0415
         synthesise_framework_only,
     )
-    from workspace_sync.cli import main as sync_cli_main  # noqa: PLC0415
+    from loam.workspace_sync.cli import main as sync_cli_main  # noqa: PLC0415
 
     canonical = make_fixture_canonical(tmp_path / "canonical")
     new_ws = tmp_path / "new-ws"

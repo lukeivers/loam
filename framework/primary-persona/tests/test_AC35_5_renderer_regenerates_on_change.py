@@ -12,8 +12,8 @@ Plan: docs/rebuild/plans/amendment-35-primary-persona-renderer-and-onboarding.md
 
 from __future__ import annotations
 
-from src.agent_md import to_agent_md
-from src.contract import PersonaContract
+from loam.primary_persona.agent_md import to_agent_md
+from loam.primary_persona.contract import PersonaContract
 
 
 def _base_contract_dict() -> dict:
@@ -59,7 +59,7 @@ def test_AC35_5_render_then_mutate_then_render_yields_inequality_on_changed_fiel
 def test_AC35_5_render_then_mutate_responsibilities_changes_description():
     """Mutating `responsibilities.single_point_of_contact` changes the
     frontmatter description."""
-    from src.contract import Responsibilities
+    from loam.primary_persona.contract import Responsibilities
 
     contract = PersonaContract.model_validate(_base_contract_dict())
     a = to_agent_md(contract)

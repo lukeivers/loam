@@ -20,9 +20,9 @@ from pathlib import Path
 
 import yaml
 
-from primary_persona.loader import PersonaLoader
+from loam.primary_persona.loader import PersonaLoader
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     DEFAULT_PERSONA_HANDLE,
     run_first_run_scaffold,
 )

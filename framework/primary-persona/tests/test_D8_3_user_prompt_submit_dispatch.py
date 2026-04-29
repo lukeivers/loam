@@ -20,12 +20,12 @@ from typing import Any
 
 import pytest
 
-from src.context_composer import (
+from loam.primary_persona.context_composer import (
     ComposedContextPayload,
     SessionPayloadMissingError,
     TriggerKind,
 )
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 
 def _seed(root: Path) -> None:

@@ -20,11 +20,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.context_composer import (
+from loam.primary_persona.context_composer import (
     ComposedContextPayload,
     CorpusGateState,
 )
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 
 def _seed_partial_workspace(root: Path, missing: set[str]) -> None:
@@ -37,7 +37,7 @@ def _seed_partial_workspace(root: Path, missing: set[str]) -> None:
         "## Session-start discipline\n\n"
         "Read:\n\n"
         "- `docs/odd-methodology.md`\n"
-        "- `docs/odd-in-pos.md`\n"
+        "- `docs/odd-in-loam.md`\n"
         "- `docs/rebuild/VALUE_PROPOSITION.md`\n"
         "- `docs/rebuild/STATE.md`\n"
         "- `docs/rebuild/FUTURE_IDEAS.md`\n"
@@ -47,7 +47,7 @@ def _seed_partial_workspace(root: Path, missing: set[str]) -> None:
     (root / "docs" / "rebuild").mkdir()
     all_paths = {
         "docs/odd-methodology.md",
-        "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/rebuild/VALUE_PROPOSITION.md",
         "docs/rebuild/STATE.md",
         "docs/rebuild/FUTURE_IDEAS.md",
@@ -84,17 +84,17 @@ def test_D8_2_missing_paths_named_in_diagnostic(tmp_path: Path) -> None:
     in a structured diagnostic block."""
     _seed_partial_workspace(
         tmp_path,
-        missing={"docs/rebuild/STATE.md", "docs/odd-in-pos.md"},
+        missing={"docs/rebuild/STATE.md", "docs/odd-in-loam.md"},
     )
     composer = ComposedContextPayload(session_builder=compose_session_fields)
     payload = composer.on_session_start(tmp_path)
 
     assert "docs/rebuild/STATE.md" in payload.missing_paths
-    assert "docs/odd-in-pos.md" in payload.missing_paths
+    assert "docs/odd-in-loam.md" in payload.missing_paths
     # The serialised additionalContext body surfaces the diagnostic
     # block so Claude can read the structured reason.
     assert "docs/rebuild/STATE.md" in payload.additional_context_text
-    assert "docs/odd-in-pos.md" in payload.additional_context_text
+    assert "docs/odd-in-loam.md" in payload.additional_context_text
 
 
 def test_D8_2_composer_does_not_raise_on_missing_corpus(tmp_path: Path) -> None:

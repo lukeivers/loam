@@ -20,7 +20,7 @@ def test_CR22_no_tracer_provider_construction() -> None:
 
 
 def test_CR22_tracer_name_is_pos_self_correction() -> None:
-    from self_correction import observability as obs
+    from loam.self_correction import observability as obs
 
     # The module-level tracer name must be "loam.self_correction" —
     # parallel to "loam.cost_governance" on cost-governance.
@@ -36,6 +36,8 @@ def test_CR22_span_names_use_pos_correction_prefix() -> None:
     src = (
         Path(__file__).resolve().parent.parent
         / "src"
+        / "loam"
+        / "self_correction"
         / "observability.py"
     ).read_text()
     # Every `start_as_current_span` call names a span with the

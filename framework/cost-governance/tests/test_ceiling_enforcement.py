@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 from pydantic import ValidationError
-from scope_of_work import Budget, ScopeSpec, SuccessCriterion
+from loam.scope_of_work import Budget, ScopeSpec, SuccessCriterion
 
-from cost_governance import (
+from loam.cost_governance import (
     CostLedger,
     CostStore,
     IPC_COST_ROLLING_CEILING_EXCEEDED,
@@ -87,7 +87,7 @@ def test_C5_rolling_daily_money_exceeded(store: CostStore) -> None:
     ledger = CostLedger(store=store, config=config)
     # Seed a reconciled reservation inside the day window so the
     # daily rollup has real material; rollups close reconciled-only.
-    from cost_governance import Reservation
+    from loam.cost_governance import Reservation
     now = 0
     r = Reservation(
         scope_id="past",
@@ -99,7 +99,7 @@ def test_C5_rolling_daily_money_exceeded(store: CostStore) -> None:
     )
     # Shortcut: put a rollup row in directly — simpler than waiting
     # on the rollup task here.
-    from cost_governance import RollingRollup, unix_now
+    from loam.cost_governance import RollingRollup, unix_now
     store.upsert_rolling_rollup(
         RollingRollup(
             window_kind="daily",
@@ -119,7 +119,7 @@ def test_C5_rolling_daily_money_exceeded(store: CostStore) -> None:
 def test_C6_rolling_hourly_money_exceeded(store: CostStore) -> None:
     config = build_config(daily_money=1_000_000, hourly_money=500)
     ledger = CostLedger(store=store, config=config)
-    from cost_governance import RollingRollup, unix_now
+    from loam.cost_governance import RollingRollup, unix_now
     store.upsert_rolling_rollup(
         RollingRollup(
             window_kind="hourly",

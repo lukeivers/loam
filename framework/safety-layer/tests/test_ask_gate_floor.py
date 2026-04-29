@@ -14,16 +14,16 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from pos_orchestrator.ipc import ApplicationError
-from scope_of_work import ReversibilityClass
+from loam.orchestrator.ipc import ApplicationError
+from loam.scope_of_work import ReversibilityClass
 
-from safety_layer import (
+from loam.safety_layer import (
     AlwaysAskList,
     DEFAULT_DANGEROUS_OP_SUBSET,
     DEFAULT_FRAMEWORK_FLOOR,
     FrameworkFloorCategory,
 )
-from safety_layer.controller import IPC_ASK_GATE_PENDING, structural_hash
+from loam.safety_layer.controller import IPC_ASK_GATE_PENDING, structural_hash
 
 from .conftest import make_spec
 

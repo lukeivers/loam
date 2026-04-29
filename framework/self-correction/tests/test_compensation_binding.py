@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from self_correction import (
+from loam.self_correction import (
     CorrectionEpisode,
     EpisodeState,
     RecordType,
     SelfCorrectionController,
     build_trigger_from_user_report,
 )
-from self_correction.spec import CorrectionTrigger, TriggerSource
+from loam.self_correction.spec import CorrectionTrigger, TriggerSource
 
 
 async def test_CR13_register_called_before_activate(

@@ -20,11 +20,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from primary_persona.contract import PersonaContract
-from primary_persona.onboarding import dev_intent_storage_path
+from loam.primary_persona.contract import PersonaContract
+from loam.primary_persona.onboarding import dev_intent_storage_path
 
-from workspace_bootstrap.adapters.tracker_seed import (
-    CLASSIFICATION_POS_V2_DEV,
+from loam.workspace_bootstrap.adapters.tracker_seed import (
+    CLASSIFICATION_LOAM_DEV,
     CLASSIFICATION_USER,
     FRAMEWORK_VALUE_PROP_RELPATH,
     classify_workspace,
@@ -99,7 +99,7 @@ def test_AC_E_4_classify_dev_with_no_value_prop_and_dev_intent_yes(
     _seed_contract(workspace, dev_intent="yes")
 
     assert not (workspace / FRAMEWORK_VALUE_PROP_RELPATH).exists()
-    assert classify_workspace(workspace) == CLASSIFICATION_POS_V2_DEV
+    assert classify_workspace(workspace) == CLASSIFICATION_LOAM_DEV
 
 
 def test_AC_E_4_value_prop_presence_irrelevant_to_classification(
@@ -109,8 +109,8 @@ def test_AC_E_4_value_prop_presence_irrelevant_to_classification(
     classification is determined solely by dev_intent. The test
     enumerates the four combinations and asserts."""
     cases = [
-        ("yes", True, CLASSIFICATION_POS_V2_DEV),
-        ("yes", False, CLASSIFICATION_POS_V2_DEV),
+        ("yes", True, CLASSIFICATION_LOAM_DEV),
+        ("yes", False, CLASSIFICATION_LOAM_DEV),
         ("no", True, CLASSIFICATION_USER),
         ("no", False, CLASSIFICATION_USER),
     ]

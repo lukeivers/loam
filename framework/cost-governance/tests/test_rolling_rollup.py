@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from cost_governance import (
+from loam.cost_governance import (
     CostStore,
     Reservation,
     RollingRollup,

@@ -17,19 +17,19 @@ from typing import Any
 
 import pytest
 
-from telegram_interface.adapter import (
+from loam.telegram_interface.adapter import (
     ChannelEvent,
     TelegramAdapter,
 )
-from telegram_interface.allowlist import AccessFile, AuthorityClass
-from telegram_interface.availability import (
+from loam.telegram_interface.allowlist import AccessFile, AuthorityClass
+from loam.telegram_interface.availability import (
     AvailabilityProbe,
     FailureClass,
     ProbeResult,
 )
-from telegram_interface.bot_api import BotApiClient, BotApiError
-from telegram_interface.fallback import fallback_preamble
-from telegram_interface.mcp_client import McpReplyClient
+from loam.telegram_interface.bot_api import BotApiClient, BotApiError
+from loam.telegram_interface.fallback import fallback_preamble
+from loam.telegram_interface.mcp_client import McpReplyClient
 
 
 # ---- helpers ---------------------------------------------------
@@ -74,11 +74,11 @@ async def _make_probe(available: bool, tool_connected: bool = True) -> Availabil
     # Bypass filesystem probe for this test by directly setting state.
     if available:
         probe._state = probe.state.__class__.available
-        from telegram_interface.availability import AvailabilityState, ProbeResult as PR
+        from loam.telegram_interface.availability import AvailabilityState, ProbeResult as PR
         probe._state = AvailabilityState.available
         probe._last_result = PR(available=True, latency_ms=10.0)
     else:
-        from telegram_interface.availability import AvailabilityState, ProbeResult as PR
+        from loam.telegram_interface.availability import AvailabilityState, ProbeResult as PR
         probe._state = AvailabilityState.unavailable
         probe._last_result = PR(
             available=False,
@@ -153,7 +153,7 @@ async def test_tg9_fallback_when_unavailable_with_framing(tmp_access_with_owner:
         in_session_send=in_sess,
     )
     # Patch fallback path.
-    import telegram_interface.fallback as fb
+    import loam.telegram_interface.fallback as fb
     original = fb.DEFAULT_ATTENTION_PATH
     fb.DEFAULT_ATTENTION_PATH = attention
     try:
@@ -211,7 +211,7 @@ async def test_tg11_recovery_resumes_normal_routing(tmp_access_with_owner: Acces
     """TG11 — on recovery from outage, the adapter resumes normal
     routing without restart. We simulate outage then recovery by
     flipping the probe state."""
-    from telegram_interface.availability import AvailabilityState, ProbeResult
+    from loam.telegram_interface.availability import AvailabilityState, ProbeResult
 
     probe = await _make_probe(available=False)
     fake = FakeMcp()

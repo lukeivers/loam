@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from workspace_bootstrap.workspace_paths import WorkspaceLayout
+from loam.workspace_bootstrap.workspace_paths import WorkspaceLayout
 
 
 def test_d2_layout_refuses_framework_basename(tmp_path: Path) -> None:
@@ -95,7 +95,7 @@ def test_d2_helpers_propagate_validation_error(tmp_path: Path) -> None:
     bad_root = tmp_path / "framework"
     bad_root.mkdir()
 
-    from workspace_bootstrap.workspace_paths import pos_subdir, personas_dir
+    from loam.workspace_bootstrap.workspace_paths import pos_subdir, personas_dir
 
     with pytest.raises(ValidationError):
         pos_subdir(bad_root)

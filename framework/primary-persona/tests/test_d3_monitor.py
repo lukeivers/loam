@@ -23,8 +23,8 @@ from pathlib import Path
 
 import pytest
 
-from scope_of_work.runtime import ScopeRuntime
-from scope_of_work.spec import (
+from loam.scope_of_work.runtime import ScopeRuntime
+from loam.scope_of_work.spec import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
@@ -32,7 +32,7 @@ from scope_of_work.spec import (
     SuccessCriterion,
 )
 
-from src.monitor import (
+from loam.primary_persona.monitor import (
     AwarenessBlock,
     AwarenessCategory,
     AwarenessRow,
@@ -133,9 +133,9 @@ async def test_stuck_scope_appears_in_stuck_category(runtime, monkeypatch):
     await runtime.start("s-stuck")
 
     # Simulate wall-clock elapsed past 2× expected.
-    import src.monitor as monitor_mod
-    import scope_of_work.triggers as sow_triggers
-    import scope_of_work.projection_view as sow_view
+    import loam.primary_persona.monitor as monitor_mod
+    import loam.scope_of_work.triggers as sow_triggers
+    import loam.scope_of_work.projection_view as sow_view
 
     future = datetime.now(timezone.utc) + timedelta(seconds=5)
 
@@ -163,8 +163,8 @@ async def test_stuck_reason_second_pass_populates_detail(runtime, monkeypatch):
     await runtime.start("s2")
 
     # Force stuck-detection to fire.
-    import scope_of_work.triggers as sow_triggers
-    import scope_of_work.projection_view as sow_view
+    import loam.scope_of_work.triggers as sow_triggers
+    import loam.scope_of_work.projection_view as sow_view
 
     future = datetime.now(timezone.utc) + timedelta(seconds=5)
 

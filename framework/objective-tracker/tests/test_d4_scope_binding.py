@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.errors import OrphanRootError, UnresolvedObjectiveError
-from src.spec import ObjectiveSpec, ProseCriterion, TimeBound
+from loam.objective_tracker.errors import OrphanRootError, UnresolvedObjectiveError
+from loam.objective_tracker.spec import ObjectiveSpec, ProseCriterion, TimeBound
 from tests.conftest import future_deadline, make_child_spec, make_user_root_spec
 
 
@@ -112,7 +112,10 @@ def test_scope_of_work_tree_untouched():
     from pathlib import Path
 
     # Post-D.1: scope-of-work moved under framework/.
-    scope_src = Path("/Users/lukeivers/ivers-corp-pos-v2/framework/scope-of-work/src")
+    # Post-M1e: namespace pivot to framework/<comp>/src/loam/<comp>/.
+    scope_src = Path(
+        "/Users/lukeivers/ivers-corp-pos-v2/framework/scope-of-work/src/loam/scope_of_work"
+    )
     expected = {
         "__init__.py", "adapter.py", "events.py", "observability.py",
         "policies.py", "projection.py", "projection_view.py",
@@ -152,7 +155,7 @@ async def test_dispatch_layer_integration_via_minimal_dispatcher(tracker):
     # Bring in scope-of-work's runtime from the sealed component.
     from pathlib import Path as _Path
 
-    from scope_of_work import (  # type: ignore
+    from loam.scope_of_work import (  # type: ignore
         Budget,
         ReversibilityClass,
         ScopeRuntime as _SOWRuntime,

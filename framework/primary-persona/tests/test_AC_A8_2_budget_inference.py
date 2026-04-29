@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona.dispatch_wrapper import (
+from loam.primary_persona.dispatch_wrapper import (
     _DURATION_RUBRIC,
     _infer_budget_from_duration,
 )

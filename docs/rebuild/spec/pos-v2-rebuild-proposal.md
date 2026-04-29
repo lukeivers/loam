@@ -37,7 +37,7 @@ This decision supersedes the Ruby default *for the new pOS only.* Prior pOS / th
     **Negative-case handling (the ODD principle that distinguishes it from BDD):** negative cases do not live as exception branches inside positive tests. When a negative case is identified, it is *re-extended back up the chain* as a new positive objective — a sibling, parent, or new tree — which is then decomposed and tested on its own terms. The negative concern becomes a positive objective the system must deliver.
 
 **Companion docs:**
-- New definition and acceptance criteria: `docs/rebuild/spec/pos-v2-objectives-spec.md`
+- New definition and acceptance criteria: `docs/rebuild/spec/loam-objectives-spec.md`
 
 ---
 

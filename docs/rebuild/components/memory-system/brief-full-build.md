@@ -6,7 +6,7 @@
 **Authored by:** the primary persona
 **Status:** DRAFT — awaiting owner's review before dispatch
 **Against:** `proposal.md` (approved 2026-04-18 09:23 CDT; refined by the prototyping-return addendum 2026-04-18 ~10:15 CDT)
-**Spec this brief honours:** objectives spec v1.0 + v1.1 addendum (`docs/rebuild/spec/pos-v2-objectives-spec.md`)
+**Spec this brief honours:** objectives spec v1.0 + v1.1 addendum (`docs/rebuild/spec/loam-objectives-spec.md`)
 **Predecessor artifact:** `brief.md` (prototyping brief, dispatch complete 2026-04-18 ~10:15 CDT)
 
 ---

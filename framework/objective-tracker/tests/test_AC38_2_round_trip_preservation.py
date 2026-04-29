@@ -22,8 +22,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from src.runtime import ObjectiveTracker
-from src.spec import (
+from loam.objective_tracker.runtime import ObjectiveTracker
+from loam.objective_tracker.spec import (
     ChildClosureCriterion,
     LiftedFrom,
     ObjectiveStatus,
@@ -208,7 +208,7 @@ async def test_AC38_2_widened_record_round_trips_via_event_replay(
     assert proj.lifted_from == lf
 
     # Force a re-projection from the event log (event-sourcing fidelity).
-    from src.projection import project, projection_to_state_row
+    from loam.objective_tracker.projection import project, projection_to_state_row
 
     events = tracker.store.events_for(proj.objective_id)
     rebuilt = project(proj.objective_id, events)

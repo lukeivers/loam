@@ -19,7 +19,7 @@ import io
 import json
 from pathlib import Path
 
-from src.session_start_emitter import (
+from loam.primary_persona.session_start_emitter import (
     cli_session_start,
     cli_user_prompt_submit,
     emit_session_start_context,
@@ -34,7 +34,7 @@ def _seed_partial_workspace(root: Path) -> None:
         "# test workspace\n\n"
         "## Session-start discipline\n\n"
         "- `docs/odd-methodology.md`\n"
-        "- `docs/odd-in-pos.md`\n"
+        "- `docs/odd-in-loam.md`\n"
         "\n---\n\n"
     )
 
@@ -67,7 +67,7 @@ def test_AC46_3_missing_paths_named_in_diagnostic(tmp_path: Path) -> None:
     assert "missing_corpus_paths" in text or "MISSING" in text
     # The two listed paths are missing; both should be named.
     assert "docs/odd-methodology.md" in text
-    assert "docs/odd-in-pos.md" in text
+    assert "docs/odd-in-loam.md" in text
 
 
 def test_AC46_3_missing_sentinel_when_no_corpus_present(

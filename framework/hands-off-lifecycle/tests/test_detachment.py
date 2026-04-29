@@ -62,7 +62,7 @@ def test_AC6_scaffold_partial_recovery_writes_missing_and_keeps_existing(
     """AC6 — when ~/.loam/ exists but bootstrap.yaml is missing, partial_recovery=True
     writes the missing files on top of the existing dir without clobbering.
     """
-    from workspace_bootstrap.adapters.first_run_scaffold import (
+    from loam.workspace_bootstrap.adapters.first_run_scaffold import (
         run_first_run_scaffold,
     )
 
@@ -98,7 +98,7 @@ def test_AC6_scaffold_default_still_raises_without_recovery_flag(
 ) -> None:
     """Backstop: partial_recovery defaults to False and the H4
     structural refusal is unchanged for every existing caller."""
-    from workspace_bootstrap.adapters.first_run_scaffold import (
+    from loam.workspace_bootstrap.adapters.first_run_scaffold import (
         PartialScaffoldError,
         run_first_run_scaffold,
     )
@@ -212,7 +212,7 @@ def test_mark_failed_silently_flips_state_and_persists(tmp_path: Path) -> None:
 
 def _run_dispatch(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     pos_root: Path,
     helper: Path = HOOKS_DIR / "first_run_helper.py",
     python: str = sys.executable,
@@ -233,8 +233,8 @@ def _run_dispatch(
         [
             python,
             str(dispatch),
-            "--pos-v2-root",
-            str(pos_v2_root),
+            "--loam-root",
+            str(loam_root),
             "--pos-root",
             str(pos_root),
             "--helper",
@@ -269,13 +269,13 @@ def _fake_helper(tmp_path: Path, behavior: str) -> Path:
             "from first_run_state import FirstRunState, write_state\n"
             "import argparse\n"
             "p = argparse.ArgumentParser()\n"
-            "p.add_argument('--pos-v2-root')\n"
+            "p.add_argument('--loam-root')\n"
             "p.add_argument('--mode')\n"
             "p.add_argument('--pos-root')\n"
             "p.add_argument('--generation', type=int, default=1)\n"
             "a, _ = p.parse_known_args()\n"
             # Amendment #28: state is keyed by workspace root.
-            "ws = Path(a.pos_v2_root)\n"
+            "ws = Path(a.loam_root)\n"
             "write_state(FirstRunState(status='running', pid=os.getpid(), generation=a.generation), ws)\n"
             "time.sleep(0.2)\n"
             "write_state(FirstRunState(status='completed', pid=os.getpid(), generation=a.generation), ws)\n"
@@ -289,13 +289,13 @@ def _fake_helper(tmp_path: Path, behavior: str) -> Path:
             + ")\n"
             "from first_run_state import FirstRunState, write_state\n"
             "p = argparse.ArgumentParser()\n"
-            "p.add_argument('--pos-v2-root')\n"
+            "p.add_argument('--loam-root')\n"
             "p.add_argument('--mode')\n"
             "p.add_argument('--pos-root')\n"
             "p.add_argument('--generation', type=int, default=1)\n"
             "a, _ = p.parse_known_args()\n"
             # Amendment #28: state is keyed by workspace root.
-            "ws = Path(a.pos_v2_root)\n"
+            "ws = Path(a.loam_root)\n"
             "write_state(FirstRunState(status='starting', pid=os.getpid(), generation=a.generation), ws)\n"
             # Suicide with SIGKILL-equivalent — emulates the exact hook-timeout
             # path where the worker is killed before it can transition.
@@ -310,13 +310,13 @@ def _fake_helper(tmp_path: Path, behavior: str) -> Path:
             + ")\n"
             "from first_run_state import FirstRunState, write_state\n"
             "p = argparse.ArgumentParser()\n"
-            "p.add_argument('--pos-v2-root')\n"
+            "p.add_argument('--loam-root')\n"
             "p.add_argument('--mode')\n"
             "p.add_argument('--pos-root')\n"
             "p.add_argument('--generation', type=int, default=1)\n"
             "a, _ = p.parse_known_args()\n"
             # Amendment #28: state is keyed by workspace root.
-            "ws = Path(a.pos_v2_root)\n"
+            "ws = Path(a.loam_root)\n"
             "write_state(FirstRunState(\n"
             "    status='failed', pid=os.getpid(), generation=a.generation,\n"
             "    phase='phase-3b-shared-deps', error_code=-32097,\n"
@@ -333,13 +333,13 @@ def _fake_helper(tmp_path: Path, behavior: str) -> Path:
             + ")\n"
             "from first_run_state import FirstRunState, write_state\n"
             "p = argparse.ArgumentParser()\n"
-            "p.add_argument('--pos-v2-root')\n"
+            "p.add_argument('--loam-root')\n"
             "p.add_argument('--mode')\n"
             "p.add_argument('--pos-root')\n"
             "p.add_argument('--generation', type=int, default=1)\n"
             "a, _ = p.parse_known_args()\n"
             # Amendment #28: state is keyed by workspace root.
-            "ws = Path(a.pos_v2_root)\n"
+            "ws = Path(a.loam_root)\n"
             "write_state(FirstRunState(status='running', pid=os.getpid(), generation=a.generation, phase='phase-3b-shared-deps'), ws)\n"
             "time.sleep(60)\n"
         )
@@ -364,7 +364,7 @@ def test_AC1_fresh_dispatch_completes_in_under_5_seconds_with_plain_language(
 
     start = time.monotonic()
     proc = _run_dispatch(
-        pos_v2_root=ws,
+        loam_root=ws,
         pos_root=pos_root,
         helper=helper,
     )
@@ -405,7 +405,7 @@ def test_AC3_completed_state_yields_short_circuit_message(
     )
     helper = _fake_helper(tmp_path, "emit_state")
     proc = _run_dispatch(
-        pos_v2_root=ws, pos_root=pos_root, helper=helper
+        loam_root=ws, pos_root=pos_root, helper=helper
     )
     assert proc.returncode == 0
     assert "completed" in proc.stdout.lower() or "ready" in proc.stdout.lower()
@@ -423,7 +423,7 @@ def test_AC4_silent_death_surfaces_crash_and_respawns(tmp_path: Path) -> None:
 
     # First spawn: fake helper writes "starting" then SIGKILLs itself.
     helper_die = _fake_helper(tmp_path, "die_silently")
-    _run_dispatch(pos_v2_root=ws, pos_root=pos_root, helper=helper_die)
+    _run_dispatch(loam_root=ws, pos_root=pos_root, helper=helper_die)
 
     # Amendment #28: state is workspace-local.
     # Wait for the spawned worker to die. Poll the state until pid is
@@ -452,7 +452,7 @@ def test_AC4_silent_death_surfaces_crash_and_respawns(tmp_path: Path) -> None:
     # Second dispatch: detects the dead pid, surfaces crash, respawns.
     helper_quick = _fake_helper(tmp_path, "emit_state")
     proc2 = _run_dispatch(
-        pos_v2_root=ws, pos_root=pos_root, helper=helper_quick
+        loam_root=ws, pos_root=pos_root, helper=helper_quick
     )
     assert proc2.returncode == 0
     # Plain-language surfacing in stdout.
@@ -495,7 +495,7 @@ def test_AC5_failed_state_surfaces_named_remediation(tmp_path: Path) -> None:
     # auto-retry on failed state.
     helper = _fake_helper(tmp_path, "emit_state")
     proc = _run_dispatch(
-        pos_v2_root=ws, pos_root=pos_root, helper=helper
+        loam_root=ws, pos_root=pos_root, helper=helper
     )
     assert proc.returncode == 0
     # The user-facing text names the failure and the remediation.
@@ -575,7 +575,7 @@ def test_hook_shell_dispatches_and_returns_fast(tmp_path: Path) -> None:
     returns in under 5 seconds on a fresh-workspace fixture."""
     # Post-D.1: framework code lives at <root>/framework/<comp>/...;
     # the first-run.sh script's relative resolution walks up three
-    # parents (..,/..,/..) to find POS_V2_ROOT.
+    # parents (..,/..,/..) to find LOAM_ROOT.
     ws = tmp_path / "pos-v2"
     hooks_dir = ws / "framework" / "hands-off-lifecycle" / "hooks"
     hooks_dir.mkdir(parents=True)
@@ -595,7 +595,7 @@ def test_hook_shell_dispatches_and_returns_fast(tmp_path: Path) -> None:
     )
     # Fake helper that writes a completed state immediately.
     helper = _fake_helper(tmp_path, "emit_state")
-    # The shell resolves HELPER relative to POS_V2_ROOT — so put the
+    # The shell resolves HELPER relative to LOAM_ROOT — so put the
     # fake helper in place.
     shutil.copy(helper, hooks_dir / "first_run_helper.py")
 

@@ -21,7 +21,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from primary_persona.dispatch_wrapper import (
+from loam.primary_persona.dispatch_wrapper import (
     _render_stub_body,
     _stub_path,
     _STUB_FUNCTION_TEMPLATE,

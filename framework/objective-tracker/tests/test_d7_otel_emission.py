@@ -18,7 +18,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from src.spec import ProseCriterion
+from loam.objective_tracker.spec import ProseCriterion
 from tests.conftest import make_child_spec, make_user_root_spec
 
 
@@ -137,7 +137,7 @@ async def test_evaluate_criterion_emits_span(tracker, otel_exporter):
 
 async def test_error_path_emits_error_outcome(tracker, otel_exporter):
     """Illegal transitions should emit a span with outcome=error."""
-    from src.errors import IllegalTransitionError
+    from loam.objective_tracker.errors import IllegalTransitionError
 
     proj = await tracker.create(make_user_root_spec())
     otel_exporter.clear()

@@ -3,7 +3,7 @@
 **Component:** Scope-of-Work Primitive
 
 **Status:** DRAFT — awaiting owner's review and approval before a handoff brief is drafted
-**Against:** objectives spec v1.0 + v1.1 addendum (`docs/rebuild/spec/pos-v2-objectives-spec.md`)
+**Against:** objectives spec v1.0 + v1.1 addendum (`docs/rebuild/spec/loam-objectives-spec.md`)
 **Informed by:** `research.md` (returned 2026-04-18 12:41 CDT, approved 13:13 CDT)
 **pyee dependency approved** 2026-04-18 13:13 CDT.
 

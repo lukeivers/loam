@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from self_upgrade.paths import Paths
+from loam.self_upgrade.paths import Paths
 
 
 def test_env_override(tmp_path: Path, monkeypatch) -> None:

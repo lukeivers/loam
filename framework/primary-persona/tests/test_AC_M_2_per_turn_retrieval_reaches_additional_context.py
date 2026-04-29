@@ -47,7 +47,7 @@ def test_AC_M_2_user_prompt_submit_emits_retrieval_block(
     # AC.M.2 measures the production-path factory: monkeypatch
     # _default_memory_client_factory so the CLI picks up the fake
     # without changing its production signature.
-    import src.session_start_emitter as sse
+    import loam.primary_persona.session_start_emitter as sse
 
     monkeypatch.setattr(
         sse, "_default_memory_client_factory", lambda root: fake
@@ -63,7 +63,7 @@ def test_AC_M_2_user_prompt_submit_emits_retrieval_block(
         }
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.session_start_emitter import cli_user_prompt_submit
+    from loam.primary_persona.session_start_emitter import cli_user_prompt_submit
 
     rc = cli_user_prompt_submit(workspace_root=tmp_path)
     assert rc == 0
@@ -72,7 +72,7 @@ def test_AC_M_2_user_prompt_submit_emits_retrieval_block(
     # The search call landed once with the workspace slug as the
     # group_id (AC-D7.4 / AC.M.2 wiring). The slug is the sanitised
     # workspace basename (lowercase, alphanumerics + dashes only).
-    from src.memory_consumer import resolve_workspace_slug
+    from loam.primary_persona.memory_consumer import resolve_workspace_slug
 
     assert len(fake.search_calls) == 1
     assert fake.search_calls[0].group_ids == [

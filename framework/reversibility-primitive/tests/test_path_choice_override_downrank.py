@@ -4,8 +4,8 @@ reversible than the best available."""
 
 from __future__ import annotations
 
-from reversibility_primitive import rank_alternatives
-from scope_of_work import ReversibilityClass
+from loam.reversibility_primitive import rank_alternatives
+from loam.scope_of_work import ReversibilityClass
 
 from .conftest import make_spec
 

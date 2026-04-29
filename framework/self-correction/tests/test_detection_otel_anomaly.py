@@ -16,13 +16,13 @@ from pathlib import Path
 
 import pytest
 
-from pos_observability_aggregator.api import QueryAPI
-from pos_observability_aggregator.config import AggregatorConfig
-from pos_observability_aggregator.schema import RetentionClass, SpanRecord
-from pos_observability_aggregator.store import Store
+from loam.observability_aggregator.api import QueryAPI
+from loam.observability_aggregator.config import AggregatorConfig
+from loam.observability_aggregator.schema import RetentionClass, SpanRecord
+from loam.observability_aggregator.store import Store
 
-from self_correction import OTelAnomalyPoller, TriggerSource
-from self_correction.triggers import build_trigger_from_span
+from loam.self_correction import OTelAnomalyPoller, TriggerSource
+from loam.self_correction.triggers import build_trigger_from_span
 
 
 def _make_span(

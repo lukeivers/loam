@@ -13,7 +13,7 @@ import logging
 
 import pytest
 
-from telegram_interface.availability import AvailabilityProbe
+from loam.telegram_interface.availability import AvailabilityProbe
 
 
 async def _raising_background():
@@ -30,7 +30,7 @@ async def _cancel_friendly_background():
 @pytest.mark.asyncio
 async def test_s4_stop_background_surfaces_broad_exception(caplog):
     async def _noop_getme():
-        from telegram_interface.availability import (
+        from loam.telegram_interface.availability import (
             FailureClass,
             ProbeResult,
         )
@@ -45,13 +45,13 @@ async def test_s4_stop_background_surfaces_broad_exception(caplog):
     await asyncio.sleep(0)
 
     with caplog.at_level(
-        logging.DEBUG, logger="telegram_interface.availability"
+        logging.DEBUG, logger="loam.telegram_interface.availability"
     ):
         await probe.stop_background()
 
     matching = [
         r for r in caplog.records
-        if r.name == "telegram_interface.availability"
+        if r.name == "loam.telegram_interface.availability"
         and r.message == "availability_stop_background_failed"
     ]
     assert len(matching) == 1
@@ -64,7 +64,7 @@ async def test_s4_stop_background_silent_on_cancelled_error(caplog):
     """CancelledError remains expected-flow per tightened CDC 2 — no
     logger emission on cancel."""
     async def _noop_getme():
-        from telegram_interface.availability import ProbeResult
+        from loam.telegram_interface.availability import ProbeResult
         return ProbeResult(available=True)
 
     probe = AvailabilityProbe(getme_probe=_noop_getme)
@@ -75,13 +75,13 @@ async def test_s4_stop_background_silent_on_cancelled_error(caplog):
     await asyncio.sleep(0)
 
     with caplog.at_level(
-        logging.DEBUG, logger="telegram_interface.availability"
+        logging.DEBUG, logger="loam.telegram_interface.availability"
     ):
         await probe.stop_background()
 
     matching = [
         r for r in caplog.records
-        if r.name == "telegram_interface.availability"
+        if r.name == "loam.telegram_interface.availability"
         and r.message == "availability_stop_background_failed"
     ]
     assert matching == [], (

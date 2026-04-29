@@ -31,8 +31,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from src import memory_write_queue as mwq
-from src import memory_write_worker as mww
+from loam.primary_persona import memory_write_queue as mwq
+from loam.primary_persona import memory_write_worker as mww
 
 
 class _RecordingClient:
@@ -106,7 +106,7 @@ def test_AC_J_8_stop_hook_diag_log_kind_values_preserved(
         {"session_id": "s1", "transcript_path": str(transcript)}
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     rc = cli_stop(workspace_root=tmp_path)
     assert rc == 0
@@ -134,11 +134,11 @@ def test_AC_J_8_existing_cli_memory_write_path_still_callable(
     ``_process_one_entry``; the legacy CLI surface is still callable
     and yields the same observable (one add_episode call per turn).
     """
-    from src.stop_emitter import cli_memory_write
+    from loam.primary_persona.stop_emitter import cli_memory_write
 
     # Patch the live-client builder to a recording fake.
     fake = _RecordingClient()
-    import src.mcp_memory_client as mmc
+    import loam.primary_persona.mcp_memory_client as mmc
 
     monkeypatch.setattr(
         mmc, "build_live_mcp_memory_client", lambda root: fake

@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
-from self_upgrade.merge_resolver import (
+from loam.self_upgrade.merge_resolver import (
     BudgetExhausted,
     LLMClient,
     MergeResolver,

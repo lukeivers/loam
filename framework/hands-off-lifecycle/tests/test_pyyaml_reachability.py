@@ -178,7 +178,7 @@ def test_P3_invoke_first_run_scaffold_happy_path(
 
     # Should not raise.
     first_run_helper._invoke_first_run_scaffold(
-        pos_v2_root=REPO_ROOT,
+        loam_root=REPO_ROOT,
         shared_venv_python=fake_python,
         service_bootstrap=False,
         pos_root=tmp_path / ".pos",
@@ -234,7 +234,7 @@ def test_P3_invoke_first_run_scaffold_failure_reraises_with_type_name(
 
     with pytest.raises(RuntimeError) as excinfo:
         first_run_helper._invoke_first_run_scaffold(
-            pos_v2_root=REPO_ROOT,
+            loam_root=REPO_ROOT,
             shared_venv_python=fake_python,
             service_bootstrap=False,
             pos_root=tmp_path / ".pos",
@@ -257,7 +257,7 @@ def test_P3_invoke_first_run_scaffold_handles_missing_venv_python(
 
     with pytest.raises(RuntimeError) as excinfo:
         first_run_helper._invoke_first_run_scaffold(
-            pos_v2_root=REPO_ROOT,
+            loam_root=REPO_ROOT,
             shared_venv_python=nonexistent,
             service_bootstrap=False,
             pos_root=tmp_path / ".pos",
@@ -295,7 +295,7 @@ def test_P4_dispatch_worker_spawn_uses_unbuffered(
     first_run_dispatch._spawn_detached_worker(
         python="/usr/bin/python3",
         helper=REPO_ROOT / "framework" / "hands-off-lifecycle" / "hooks" / "first_run_helper.py",
-        pos_v2_root=REPO_ROOT,
+        loam_root=REPO_ROOT,
         pos_root=pos_root,
         generation=1,
         mode="bootstrap",

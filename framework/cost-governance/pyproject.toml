@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos_cost_governance"
+name = "loam-cost-governance"
 version = "0.1.0"
 description = "Cost governance for pOS v2 — aggregate budget ceilings (money / tokens / time) with activation-gate wrap + sidecar ledger."
 requires-python = ">=3.11"
@@ -13,16 +13,16 @@ dependencies = [
     "opentelemetry-api>=1.25",
     "opentelemetry-sdk>=1.25",
     "pyyaml>=6",
-    "scope_of_work",
-    "primary_persona",
-    "pos_orchestrator",
-    "pos_safety_layer",
-    "pos_reversibility_primitive",
+    "loam-scope-of-work",
+    "loam-primary-persona",
+    "loam-orchestrator",
+    "loam-safety-layer",
+    "loam-reversibility-primitive",
 ]
 
 [tool.setuptools]
-package-dir = {"cost_governance" = "src"}
-packages = ["cost_governance"]
+package-dir = {"loam.cost_governance" = "src/loam/cost_governance"}
+packages = ["loam.cost_governance"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

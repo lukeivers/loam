@@ -98,7 +98,7 @@ async def _seed_minimal(db_path: Path) -> None:
                     time_bound=TimeBound(evergreen=True),
                     authored_by="user",
                     lifted_from=LiftedFrom(
-                        source_doc="docs/rebuild/spec/pos-v2-objectives-spec.md",
+                        source_doc="docs/rebuild/spec/loam-objectives-spec.md",
                         source_ac=ac_label,
                     ),
                 ),

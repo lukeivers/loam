@@ -1,6 +1,7 @@
 """R24: zero imports from current-gen Ruby pOS or other legacy
 surfaces. The primitive consumes only: stdlib, pydantic, pyee, OTel,
-PyYAML, scope_of_work, primary_persona, pos_orchestrator, safety_layer.
+PyYAML, loam.scope_of_work, loam.primary_persona, loam.orchestrator,
+loam.safety_layer.
 """
 
 from __future__ import annotations
@@ -35,17 +36,15 @@ ALLOWED_TOP_LEVEL_IMPORTS = {
     "pyee",
     "opentelemetry",
     "yaml",
-    # pOS siblings this primitive is allowed to consume
-    "reversibility_primitive",
-    "scope_of_work",
-    "primary_persona",
-    "pos_orchestrator",
-    "safety_layer",
+    # loam siblings this primitive is allowed to consume (post-M1e
+    # namespace pivot — the top-level root for every framework
+    # package is `loam`).
+    "loam",
 }
 
 
 def _iter_sources() -> list[pathlib.Path]:
-    import reversibility_primitive as rp
+    import loam.reversibility_primitive as rp
 
     pkg_dir = pathlib.Path(rp.__file__).parent
     return list(pkg_dir.rglob("*.py"))

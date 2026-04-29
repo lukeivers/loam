@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 
-from src.errors import ManifestRowError
-from src.runtime import ObjectiveTracker
+from loam.objective_tracker.errors import ManifestRowError
+from loam.objective_tracker.runtime import ObjectiveTracker
 
 
 @pytest.fixture

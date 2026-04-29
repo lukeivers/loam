@@ -22,7 +22,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from src.spec import (
+from loam.objective_tracker.spec import (
     LiftedFrom,
     ObjectiveSpec,
     ProseCriterion,

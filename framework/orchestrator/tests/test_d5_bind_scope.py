@@ -18,15 +18,15 @@ import asyncio
 
 import pytest
 
-from objective_tracker import (
+from loam.objective_tracker import (
     ObjectiveSpec,
     ObjectiveStatus,
     ProseCriterion,
     TimeBound,
 )
-from pos_orchestrator import BindRefused, Orchestrator, ScopeNotPending
-from pos_orchestrator.ipc import ApplicationError, IPCClient
-from scope_of_work.spec import ScopeState
+from loam.orchestrator import BindRefused, Orchestrator, ScopeNotPending
+from loam.orchestrator.ipc import ApplicationError, IPCClient
+from loam.scope_of_work.spec import ScopeState
 
 from .conftest import make_scope_spec
 
@@ -179,6 +179,6 @@ async def test_phase_1_tests_still_pass_reminder():
     import time."""
     # If any import had side effects on Phase 1 state, this would
     # fail — we're relying on the primitives being pure.
-    from objective_tracker import ObjectiveTracker  # noqa: F401
-    from primary_persona import BackgroundWorkMonitor  # noqa: F401
-    from scope_of_work import ScopeRuntime  # noqa: F401
+    from loam.objective_tracker import ObjectiveTracker  # noqa: F401
+    from loam.primary_persona import BackgroundWorkMonitor  # noqa: F401
+    from loam.scope_of_work import ScopeRuntime  # noqa: F401

@@ -24,7 +24,10 @@ import pytest
 
 
 _WB_SRC_ROOT = (
-    Path(__file__).resolve().parent.parent / "src" / "workspace_bootstrap"
+    Path(__file__).resolve().parent.parent
+    / "src"
+    / "loam"
+    / "workspace_bootstrap"
 )
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 _FRAMEWORK_VP_PATH = _REPO_ROOT / "docs" / "rebuild" / "VALUE_PROPOSITION.md"
@@ -82,7 +85,7 @@ def test_AC39_6_value_prop_sentinels_not_in_workspace_bootstrap_src() -> None:
 
 
 _FORBIDDEN_SPEC_SENTINELS = [
-    # Distinctive prose from pos-v2-objectives-spec.md sections that
+    # Distinctive prose from loam-objectives-spec.md sections that
     # the seed lifts from at first-run time. These must not appear in
     # workspace-bootstrap/src/.
     "alignment is re-checked at every scope boundary",
@@ -96,7 +99,7 @@ def test_AC39_6_spec_doc_sentinels_not_in_workspace_bootstrap_src() -> None:
     ``LiftedFrom.source_doc`` provenance pointer); its prose must
     not appear hard-coded in source either."""
     spec_doc_path = (
-        _REPO_ROOT / "docs" / "rebuild" / "spec" / "pos-v2-objectives-spec.md"
+        _REPO_ROOT / "docs" / "rebuild" / "spec" / "loam-objectives-spec.md"
     )
     if not spec_doc_path.exists():
         pytest.skip("spec doc absent in this checkout; sentinel scan moot")
@@ -149,7 +152,7 @@ def test_AC39_6_seed_module_reuses_objective_tracker_lift_from_field() -> None:
     content in source."""
     seed_module = _WB_SRC_ROOT / "adapters" / "tracker_seed.py"
     text = seed_module.read_text()
-    assert "from objective_tracker import" in text
+    assert "from loam.objective_tracker import" in text
     assert "LiftedFrom" in text, "seed must compose LiftedFrom from #38's API"
     assert "ObjectiveFilter" in text, (
         "seed must use ObjectiveFilter from #38's API for idempotency-by-query"

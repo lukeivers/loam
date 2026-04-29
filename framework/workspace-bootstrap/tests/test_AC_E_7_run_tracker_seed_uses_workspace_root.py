@@ -19,10 +19,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     run_first_run_scaffold,
 )
-from workspace_bootstrap.adapters.tracker_seed import (
+from loam.workspace_bootstrap.adapters.tracker_seed import (
     TRACKER_DB_FILENAME,
     TrackerSeedResult,
 )

@@ -15,15 +15,15 @@ from __future__ import annotations
 
 import pytest
 
-from telegram_interface.adapter import ChannelEvent, TelegramAdapter
-from telegram_interface.allowlist import AccessFile, AuthorityClass
-from telegram_interface.availability import (
+from loam.telegram_interface.adapter import ChannelEvent, TelegramAdapter
+from loam.telegram_interface.allowlist import AccessFile, AuthorityClass
+from loam.telegram_interface.availability import (
     AvailabilityProbe,
     AvailabilityState,
     FailureClass,
     ProbeResult,
 )
-from telegram_interface.confirmation import ConfirmationOutcome
+from loam.telegram_interface.confirmation import ConfirmationOutcome
 
 
 async def _ok() -> ProbeResult:

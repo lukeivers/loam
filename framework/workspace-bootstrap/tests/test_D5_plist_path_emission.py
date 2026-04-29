@@ -45,7 +45,7 @@ from urllib.request import Request, urlopen
 
 import pytest
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     run_first_run_scaffold,
     service_label,
 )

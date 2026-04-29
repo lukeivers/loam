@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from graceful_degradation import DegradationConfig, DegradationMode
-from graceful_degradation.policy import (
+from loam.graceful_degradation import DegradationConfig, DegradationMode
+from loam.graceful_degradation.policy import (
     Policy,
     PolicyDispatcher,
     build_defaults_from_config,

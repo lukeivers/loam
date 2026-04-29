@@ -109,7 +109,7 @@ from agent_file_authoring import (  # noqa: E402
 # the loam-mode emit.
 
 
-def _loam_mode_inner_hooks(pos_v2_root: Path) -> list[dict]:
+def _loam_mode_inner_hooks(loam_root: Path) -> list[dict]:
     """Return the extra inner-hook list for the SessionStart envelope.
 
     Imports are lazy; ImportError or any unexpected exception yields
@@ -120,7 +120,7 @@ def _loam_mode_inner_hooks(pos_v2_root: Path) -> list[dict]:
         # whose loam-mode install differs from the host's is resolved
         # correctly. The shared venv is at ``<root>/.venv``.
         venv_site = (
-            pos_v2_root / ".venv" / "lib"
+            loam_root / ".venv" / "lib"
         )
         if venv_site.is_dir():
             for site_dir in venv_site.iterdir():
@@ -130,7 +130,7 @@ def _loam_mode_inner_hooks(pos_v2_root: Path) -> list[dict]:
         from loam_mode.session_start import (  # type: ignore[import-not-found]
             build_loam_mode_inner_hook,
         )
-        return [build_loam_mode_inner_hook(pos_v2_root)]
+        return [build_loam_mode_inner_hook(loam_root)]
     except Exception:  # noqa: BLE001 — fail-soft per AC.45.5
         return []
 
@@ -150,7 +150,7 @@ def _loam_mode_inner_hooks(pos_v2_root: Path) -> list[dict]:
 # generalisation analogous to amendment #45's SessionStart registry.
 
 
-def _persona_inner_hooks(pos_v2_root: Path) -> list[dict]:
+def _persona_inner_hooks(loam_root: Path) -> list[dict]:
     """Return the persona's SessionStart inner-hook entry as a list.
 
     Lazy import + fail-soft per AC46.4. Mirrors ``_loam_mode_inner_hooks``
@@ -159,21 +159,21 @@ def _persona_inner_hooks(pos_v2_root: Path) -> list[dict]:
     persona inner hook (probe + loam-mode still compose).
     """
     try:
-        venv_site = pos_v2_root / ".venv" / "lib"
+        venv_site = loam_root / ".venv" / "lib"
         if venv_site.is_dir():
             for site_dir in venv_site.iterdir():
                 site_pkgs = site_dir / "site-packages"
                 if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
                     sys.path.insert(0, str(site_pkgs))
-        from primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
+        from loam.primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
             build_persona_session_start_inner_hook,
         )
-        return [build_persona_session_start_inner_hook(pos_v2_root)]
+        return [build_persona_session_start_inner_hook(loam_root)]
     except Exception:  # noqa: BLE001 — fail-soft per AC46.4
         return []
 
 
-def _corpus_load_inner_hooks(pos_v2_root: Path) -> list[dict]:
+def _corpus_load_inner_hooks(loam_root: Path) -> list[dict]:
     """Return the corpus-load sentinel SessionStart inner-hook entry.
 
     Structural-enforcement A1 substrate (AC.SE.4). The CLI lives at
@@ -183,9 +183,9 @@ def _corpus_load_inner_hooks(pos_v2_root: Path) -> list[dict]:
     resolvable. The CLI is fail-soft — every exception path returns
     exit 0 — so this helper is fire-and-forget at session-start.
     """
-    venv_python = pos_v2_root / ".venv" / "bin" / "python"
+    venv_python = loam_root / ".venv" / "bin" / "python"
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -204,7 +204,7 @@ def _corpus_load_inner_hooks(pos_v2_root: Path) -> list[dict]:
     ]
 
 
-def _corpus_inline_inner_hooks(pos_v2_root: Path) -> list[dict]:
+def _corpus_inline_inner_hooks(loam_root: Path) -> list[dict]:
     """Return the corpus-inlining SessionStart inner-hook entry.
 
     Amendment 73 (AC.CI.7). The CLI lives at
@@ -216,9 +216,9 @@ def _corpus_inline_inner_hooks(pos_v2_root: Path) -> list[dict]:
     soft — every exception path returns exit 0 — so this helper is
     fire-and-forget at session-start.
     """
-    venv_python = pos_v2_root / ".venv" / "bin" / "python"
+    venv_python = loam_root / ".venv" / "bin" / "python"
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -238,7 +238,7 @@ def _corpus_inline_inner_hooks(pos_v2_root: Path) -> list[dict]:
     ]
 
 
-def _extra_session_start_hooks(pos_v2_root: Path) -> list[dict]:
+def _extra_session_start_hooks(loam_root: Path) -> list[dict]:
     """Return the SessionStart envelope's ``extra_inner_hooks`` list.
 
     Order per amendment 73 plan §6 D-build.4 (locks D-CI.6.(a)):
@@ -262,14 +262,14 @@ def _extra_session_start_hooks(pos_v2_root: Path) -> list[dict]:
     is graceful (the envelope simply omits that hook).
     """
     return (
-        _corpus_load_inner_hooks(pos_v2_root)
-        + _corpus_inline_inner_hooks(pos_v2_root)
-        + _persona_inner_hooks(pos_v2_root)
-        + _loam_mode_inner_hooks(pos_v2_root)
+        _corpus_load_inner_hooks(loam_root)
+        + _corpus_inline_inner_hooks(loam_root)
+        + _persona_inner_hooks(loam_root)
+        + _loam_mode_inner_hooks(loam_root)
     )
 
 
-def _persona_user_prompt_submit_stanza(pos_v2_root: Path) -> dict | None:
+def _persona_user_prompt_submit_stanza(loam_root: Path) -> dict | None:
     """Return the persona's UserPromptSubmit envelope, or ``None`` when
     the persona's emitter is unavailable.
 
@@ -279,25 +279,25 @@ def _persona_user_prompt_submit_stanza(pos_v2_root: Path) -> dict | None:
     behaviour preserved).
     """
     try:
-        venv_site = pos_v2_root / ".venv" / "lib"
+        venv_site = loam_root / ".venv" / "lib"
         if venv_site.is_dir():
             for site_dir in venv_site.iterdir():
                 site_pkgs = site_dir / "site-packages"
                 if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
                     sys.path.insert(0, str(site_pkgs))
-        from primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
+        from loam.primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
             build_persona_user_prompt_submit_inner_hook,
         )
         return {
             "matcher": "",
-            "hooks": [build_persona_user_prompt_submit_inner_hook(pos_v2_root)],
+            "hooks": [build_persona_user_prompt_submit_inner_hook(loam_root)],
         }
     except Exception:  # noqa: BLE001 — fail-soft per AC46.4
         return None
 
 
 def _maybe_merge_user_prompt_submit(
-    *, pos_v2_root: Path, settings_path: Path
+    *, loam_root: Path, settings_path: Path
 ) -> None:
     """Invoke ``merge_user_prompt_submit`` when the persona's emitter
     is available; no-op otherwise.
@@ -307,7 +307,7 @@ def _maybe_merge_user_prompt_submit(
     Phase-4c / Phase-6 settings.json handling — those phases also
     tolerate transient I/O errors).
     """
-    stanza = _persona_user_prompt_submit_stanza(pos_v2_root)
+    stanza = _persona_user_prompt_submit_stanza(loam_root)
     if stanza is None:
         return
     try:
@@ -337,7 +337,7 @@ def _maybe_merge_user_prompt_submit(
 # (pre-amendment-#48 behaviour preserved).
 
 
-def _persona_stop_stanza(pos_v2_root: Path) -> dict | None:
+def _persona_stop_stanza(loam_root: Path) -> dict | None:
     """Return the persona's Stop envelope, or ``None`` when the
     persona's emitter is unavailable.
 
@@ -346,25 +346,25 @@ def _persona_stop_stanza(pos_v2_root: Path) -> dict | None:
     simply not registered — pre-amendment-#48 behaviour preserved).
     """
     try:
-        venv_site = pos_v2_root / ".venv" / "lib"
+        venv_site = loam_root / ".venv" / "lib"
         if venv_site.is_dir():
             for site_dir in venv_site.iterdir():
                 site_pkgs = site_dir / "site-packages"
                 if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
                     sys.path.insert(0, str(site_pkgs))
-        from primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
+        from loam.primary_persona.session_start_emitter import (  # type: ignore[import-not-found]
             build_persona_stop_inner_hook,
         )
         return {
             "matcher": "",
-            "hooks": [build_persona_stop_inner_hook(pos_v2_root)],
+            "hooks": [build_persona_stop_inner_hook(loam_root)],
         }
     except Exception:  # noqa: BLE001 — fail-soft per AC.M.4
         return None
 
 
 def _maybe_merge_stop(
-    *, pos_v2_root: Path, settings_path: Path
+    *, loam_root: Path, settings_path: Path
 ) -> None:
     """Invoke ``merge_stop`` when the persona's emitter is available;
     no-op otherwise.
@@ -375,7 +375,7 @@ def _maybe_merge_stop(
     Phase-4c / Phase-6 settings.json handling — those phases also
     tolerate transient I/O errors).
     """
-    stanza = _persona_stop_stanza(pos_v2_root)
+    stanza = _persona_stop_stanza(loam_root)
     if stanza is None:
         return
     try:
@@ -401,7 +401,7 @@ def _maybe_merge_stop(
 # already conveys the structured failure path.
 
 
-def _status_line_stanza(pos_v2_root: Path) -> dict[str, Any]:
+def _status_line_stanza(loam_root: Path) -> dict[str, Any]:
     """Return the canonical ``statusLine`` envelope for pos-v2.
 
     Per locked plan §6 D-build.1: the renderer is invoked under the
@@ -411,8 +411,8 @@ def _status_line_stanza(pos_v2_root: Path) -> dict[str, Any]:
     the workspace venv's Python for cold-start latency reduction —
     that's method, not AC, and lives on the supervisor side.
     """
-    pos_v2_root = Path(pos_v2_root)
-    script = pos_v2_root / "framework" / "hands-off-lifecycle" / "hooks" / "statusline.py"
+    loam_root = Path(loam_root)
+    script = loam_root / "framework" / "hands-off-lifecycle" / "hooks" / "statusline.py"
     return {
         "type": "command",
         "command": f"{sys.executable} {script}",
@@ -421,7 +421,7 @@ def _status_line_stanza(pos_v2_root: Path) -> dict[str, Any]:
 
 
 def _maybe_merge_status_line(
-    *, pos_v2_root: Path, settings_path: Path
+    *, loam_root: Path, settings_path: Path
 ) -> None:
     """Invoke ``merge_status_line`` fail-soft.
 
@@ -435,7 +435,7 @@ def _maybe_merge_status_line(
     try:
         merge_status_line(
             settings_path=settings_path,
-            new_entry=_status_line_stanza(pos_v2_root),
+            new_entry=_status_line_stanza(loam_root),
         )
     except Exception:  # noqa: BLE001 — fail-soft per locked plan §5
         return
@@ -455,7 +455,7 @@ def _maybe_merge_status_line(
 # regress first-run.
 
 
-def _objective_binding_gate_stanza(pos_v2_root: Path) -> dict[str, Any]:
+def _objective_binding_gate_stanza(loam_root: Path) -> dict[str, Any]:
     """Return the PreToolUse envelope for the objective-binding gate.
 
     Per locked plan §6 D-A2.1: matcher ``Edit|Write|MultiEdit`` (the
@@ -465,9 +465,9 @@ def _objective_binding_gate_stanza(pos_v2_root: Path) -> dict[str, Any]:
     resolved at registration time. The gate is stdlib-only at import
     so cold-start cost is the Python-startup envelope alone.
     """
-    pos_v2_root = Path(pos_v2_root)
+    loam_root = Path(loam_root)
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -486,7 +486,7 @@ def _objective_binding_gate_stanza(pos_v2_root: Path) -> dict[str, Any]:
     }
 
 
-def _tdd_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
+def _tdd_guard_stanza(loam_root: Path) -> dict[str, Any]:
     """Return the PreToolUse envelope for A3's TDD-guard.
 
     Per locked plan §6 D-A3.1: matcher ``Edit|Write|MultiEdit`` (same
@@ -494,9 +494,9 @@ def _tdd_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
     runs AFTER A2 in the hook chain; this stanza is appended second
     in the multi-contributor outer list.
     """
-    pos_v2_root = Path(pos_v2_root)
+    loam_root = Path(loam_root)
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -515,7 +515,7 @@ def _tdd_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
     }
 
 
-def _bash_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
+def _bash_guard_stanza(loam_root: Path) -> dict[str, Any]:
     """Return the PreToolUse envelope for A4's Bash-guard.
 
     Per locked plan §6 D-A4.1: matcher ``Bash`` (the matcher is
@@ -524,9 +524,9 @@ def _bash_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
     name). The gate is stdlib-only at import; cold-start cost is
     bounded by the Python-startup envelope.
     """
-    pos_v2_root = Path(pos_v2_root)
+    loam_root = Path(loam_root)
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -545,16 +545,16 @@ def _bash_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
     }
 
 
-def _agent_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
+def _agent_guard_stanza(loam_root: Path) -> dict[str, Any]:
     """Return the PreToolUse envelope for A4's Agent-guard.
 
     Per locked plan §6 D-A4.1: matcher ``Task`` (Claude Code's actual
     tool name for Agent dispatch). The gate is stdlib-only at import;
     cold-start cost is bounded by the Python-startup envelope.
     """
-    pos_v2_root = Path(pos_v2_root)
+    loam_root = Path(loam_root)
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -574,7 +574,7 @@ def _agent_guard_stanza(pos_v2_root: Path) -> dict[str, Any]:
 
 
 def _maybe_merge_pre_tool_use(
-    *, pos_v2_root: Path, settings_path: Path
+    *, loam_root: Path, settings_path: Path
 ) -> None:
     """Invoke ``merge_pre_tool_use`` fail-soft.
 
@@ -597,10 +597,10 @@ def _maybe_merge_pre_tool_use(
         merge_pre_tool_use(
             settings_path=settings_path,
             new_entries=[
-                _objective_binding_gate_stanza(pos_v2_root),
-                _tdd_guard_stanza(pos_v2_root),
-                _bash_guard_stanza(pos_v2_root),
-                _agent_guard_stanza(pos_v2_root),
+                _objective_binding_gate_stanza(loam_root),
+                _tdd_guard_stanza(loam_root),
+                _bash_guard_stanza(loam_root),
+                _agent_guard_stanza(loam_root),
             ],
         )
     except Exception:  # noqa: BLE001 — fail-soft per locked plan §5
@@ -893,7 +893,7 @@ def _run_pip_install(
 
 def _install_shared_components(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     shared_venv_python: Path,
     component_names: list[str],
 ) -> list[PipOutcome]:
@@ -905,12 +905,12 @@ def _install_shared_components(
     # will actually see run.
     installable = [
         name for name in component_names
-        if (pos_v2_root / "framework" / name / "requirements.txt").exists()
+        if (loam_root / "framework" / name / "requirements.txt").exists()
     ]
     total = len(installable)
     seq = 0
     for name in component_names:
-        comp_dir = pos_v2_root / "framework" / name
+        comp_dir = loam_root / "framework" / name
         req = comp_dir / "requirements.txt"
         if not req.exists():
             # Component has no requirements.txt; nothing to install here.
@@ -933,7 +933,7 @@ def _install_shared_components(
 
 def _install_dedicated_venv(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     shared_python: Path,
     entry: dict[str, Any],
 ) -> tuple[Path, PipOutcome]:
@@ -943,8 +943,8 @@ def _install_dedicated_venv(
     share the system 3.13 interpreter reference, which stdlib ``venv``
     follows via the --symlinks default).
     """
-    venv_path = pos_v2_root / entry["venv_path"]
-    req_path = pos_v2_root / entry["requirements"]
+    venv_path = loam_root / entry["venv_path"]
+    req_path = loam_root / entry["requirements"]
     component = entry["component"]
 
     if not (venv_path / "bin" / "python").exists():
@@ -1014,15 +1014,15 @@ _EDITABLE_DISCOVERY_EXCLUDES = frozenset(
 )
 
 
-def _discover_components(pos_v2_root: Path) -> list[dict[str, Any]]:
-    """Walk ``pos_v2_root/framework/`` for ``*/pyproject.toml`` and return component specs.
+def _discover_components(loam_root: Path) -> list[dict[str, Any]]:
+    """Walk ``loam_root/framework/`` for ``*/pyproject.toml`` and return component specs.
 
     Each returned mapping has:
       * ``dir``       — Path to the component directory (child of framework/)
       * ``name``      — the ``[project].name`` declared in pyproject
       * ``deps``      — raw ``[project].dependencies`` list (verbatim)
 
-    Only immediate children of ``pos_v2_root/framework/`` are considered
+    Only immediate children of ``loam_root/framework/`` are considered
     (post-D.1 directory restructure: framework code lives under
     ``framework/`` and workspace state lives outside it). Nested
     pyprojects (tests, fixtures) are ignored — first-run installs one
@@ -1035,7 +1035,7 @@ def _discover_components(pos_v2_root: Path) -> list[dict[str, Any]]:
     silently missed.
     """
     components: list[dict[str, Any]] = []
-    framework_root = pos_v2_root / "framework"
+    framework_root = loam_root / "framework"
     if not framework_root.is_dir():
         # Pre-D.1 layout fallback: framework code lived at the
         # workspace root. Returning an empty list here would silently
@@ -1265,7 +1265,7 @@ def _install_editable(
 
 def _install_editable_components(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     shared_venv_python: Path,
 ) -> list[PipOutcome]:
     """Discover components, topologically order them, and editable-install each.
@@ -1276,7 +1276,7 @@ def _install_editable_components(
     observable (and prevents rebuilding editable metadata pointlessly).
     """
     progress = get_progress()
-    components = _discover_components(pos_v2_root)
+    components = _discover_components(loam_root)
     ordered = _topological_order(components)
     outcomes: list[PipOutcome] = []
     total = len(ordered)
@@ -1312,7 +1312,7 @@ def _install_editable_components(
 
 def _invoke_first_run_scaffold(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     shared_venv_python: Path,
     service_manager_dir_override: Path | None = None,
     service_bootstrap: bool = True,
@@ -1382,7 +1382,7 @@ def _invoke_first_run_scaffold(
         "--pos-root",
         str(effective_pos_root),
         "--workspace-root",
-        str(pos_v2_root),
+        str(loam_root),
         "--service-bootstrap",
         "true" if service_bootstrap else "false",
         "--partial-recovery",
@@ -1602,7 +1602,7 @@ def _poll_services_healthy(
 
 def _self_retire(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     settings_path: Path,
     agent_handle: str | None = None,
 ) -> tuple[SettingsMergeResult, Path, bool]:
@@ -1618,8 +1618,8 @@ def _self_retire(
     backwards-compat with every pre-amendment-#37 caller.
     """
     supervisor_stanza = build_supervisor_stanza(
-        pos_v2_root,
-        extra_inner_hooks=_extra_session_start_hooks(pos_v2_root),
+        loam_root,
+        extra_inner_hooks=_extra_session_start_hooks(loam_root),
     )
     merge_result = merge_session_start(
         settings_path=settings_path,
@@ -1631,14 +1631,14 @@ def _self_retire(
     # AC46.4 — missing or broken primary-persona install degrades to
     # no-UserPromptSubmit-hook (pre-amendment-#46 behaviour).
     _maybe_merge_user_prompt_submit(
-        pos_v2_root=pos_v2_root, settings_path=settings_path
+        loam_root=loam_root, settings_path=settings_path
     )
     # Amendment #48: register the persona's Stop hook alongside the
     # supervisor SessionStart + UserPromptSubmit merges. Fail-soft per
     # AC.M.4 — missing or broken primary-persona install degrades to
     # no-Stop-hook (pre-amendment-#48 behaviour).
     _maybe_merge_stop(
-        pos_v2_root=pos_v2_root, settings_path=settings_path
+        loam_root=loam_root, settings_path=settings_path
     )
     # Amendment #49: register the renderer at top-level ``statusLine``
     # so Claude Code spawns it every ~1 s post-completion (the AC.SL.2
@@ -1646,17 +1646,17 @@ def _self_retire(
     # this workspace. Fail-soft — a settings.json I/O failure here
     # must not regress self-retire.
     _maybe_merge_status_line(
-        pos_v2_root=pos_v2_root, settings_path=settings_path
+        loam_root=loam_root, settings_path=settings_path
     )
     # Structural-enforcement A2: register the objective-binding gate
     # under ``hooks.PreToolUse`` so every Edit/Write/MultiEdit fires
     # the gate before the model can author text. Fail-soft per locked
     # plan §5 fail-closed direction.
     _maybe_merge_pre_tool_use(
-        pos_v2_root=pos_v2_root, settings_path=settings_path
+        loam_root=loam_root, settings_path=settings_path
     )
 
-    script_path = pos_v2_root / "framework" / "hands-off-lifecycle" / "hooks" / "first-run.sh"
+    script_path = loam_root / "framework" / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     removed = False
     if script_path.exists():
         try:
@@ -1671,12 +1671,12 @@ def _self_retire(
 
 def _verify_self_retire(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     settings_path: Path,
 ) -> tuple[bool, list[str]]:
     """Phase 7: confirm Phase 6 landed."""
     problems: list[str] = []
-    script_path = pos_v2_root / "framework" / "hands-off-lifecycle" / "hooks" / "first-run.sh"
+    script_path = loam_root / "framework" / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     if script_path.exists():
         problems.append(f"first-run.sh still exists at {script_path}")
 
@@ -1718,13 +1718,13 @@ def _verify_self_retire(
 # ---- state detection -------------------------------------------------
 
 
-def _is_already_retired(pos_v2_root: Path, settings_path: Path) -> bool:
+def _is_already_retired(loam_root: Path, settings_path: Path) -> bool:
     """Truthy when first-run has already completed self-retire.
 
     Signature: ``first-run.sh`` gone AND settings.json SessionStart
     stanza points at the supervisor.
     """
-    script_path = pos_v2_root / "framework" / "hands-off-lifecycle" / "hooks" / "first-run.sh"
+    script_path = loam_root / "framework" / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     if script_path.exists():
         return False
     if not settings_path.exists():
@@ -1786,8 +1786,8 @@ def _confirmation_sentence(
 # ---- top-level orchestration ----------------------------------------
 
 
-def _ensure_shared_venv(pos_v2_root: Path) -> Path:
-    """Create ``pos_v2_root/.venv`` with the currently-running Python.
+def _ensure_shared_venv(loam_root: Path) -> Path:
+    """Create ``loam_root/.venv`` with the currently-running Python.
 
     Added by the 2026-04-22 session-start-detachment amendment. Prior
     to this amendment, venv creation happened inline in ``first-run.sh``
@@ -1805,7 +1805,7 @@ def _ensure_shared_venv(pos_v2_root: Path) -> Path:
     The venv should inherit from the same interpreter for
     cross-platform consistency.
     """
-    venv_dir = pos_v2_root / ".venv"
+    venv_dir = loam_root / ".venv"
     venv_python = venv_dir / "bin" / "python"
     if venv_python.exists():
         return venv_python
@@ -1839,7 +1839,7 @@ def _ensure_shared_venv(pos_v2_root: Path) -> Path:
     return venv_python
 
 
-def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
+def _run_bootstrap(*, loam_root: Path, inventory_path: Path) -> int:
     """Phases 2..7 in order. Returns a process exit code (always 0).
 
     Phase 2 (venv creation) was previously handled inline in
@@ -1856,14 +1856,14 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
 
     # ---- Phase 2: shared venv --------------------------------------
     try:
-        _ensure_shared_venv(pos_v2_root)
+        _ensure_shared_venv(loam_root)
     except RuntimeError as e:
         _emit_diag(
             ERR_HANDS_OFF_INTERNAL,
             f"hands-off-lifecycle-internal:{e}",
             str(e),
             "Venv creation failed. Check disk space and permissions on\n"
-            f"{pos_v2_root}, then reopen claude to retry.",
+            f"{loam_root}, then reopen claude to retry.",
             user_what="could not create the shared Python virtual environment.",
             user_remediation=(
                 "check disk space and permissions on your pos-v2 directory, "
@@ -1897,7 +1897,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # before anything downstream consumes them. Invalid slug = refuse
     # structurally rather than probe unnamespaced labels.
     try:
-        slug = _workspace_slug(pos_v2_root)
+        slug = _workspace_slug(loam_root)
     except ValueError as e:
         _emit_diag(
             ERR_HANDS_OFF_INTERNAL,
@@ -1931,7 +1931,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         return 0
 
     shared = inventory["shared_venv"]
-    shared_venv_path = pos_v2_root / shared["path"]
+    shared_venv_path = loam_root / shared["path"]
     shared_python = shared_venv_path / "bin" / "python"
 
     # ---- Phase 3b: shared-venv pip installs -----------------------
@@ -1948,7 +1948,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     )
     print("pos v2 first-run: installing shared-venv components...")
     shared_outcomes = _install_shared_components(
-        pos_v2_root=pos_v2_root,
+        loam_root=loam_root,
         shared_venv_python=shared_python,
         component_names=list(shared["components"]),
     )
@@ -1989,7 +1989,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     print("pos v2 first-run: installing component packages (editable)...")
     try:
         editable_outcomes = _install_editable_components(
-            pos_v2_root=pos_v2_root,
+            loam_root=loam_root,
             shared_venv_python=shared_python,
         )
     except RuntimeError as e:
@@ -2038,7 +2038,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     for entry in inventory.get("dedicated_venvs", []):
         print(f"pos v2 first-run: installing dedicated-venv component {entry['component']}...")
         _, outcome = _install_dedicated_venv(
-            pos_v2_root=pos_v2_root,
+            loam_root=loam_root,
             shared_python=shared_python,
             entry=entry,
         )
@@ -2058,10 +2058,10 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # ---- Phase 3d: settings.json authorship -----------------------
     # While first-run is still live, keep the stanza pointing at
     # first-run.sh. Phase 6 rewrites this to the supervisor path.
-    settings_path = pos_v2_root / ".claude" / "settings.json"
+    settings_path = loam_root / ".claude" / "settings.json"
     first_run_stanza = build_first_run_stanza(
-        pos_v2_root,
-        extra_inner_hooks=_extra_session_start_hooks(pos_v2_root),
+        loam_root,
+        extra_inner_hooks=_extra_session_start_hooks(loam_root),
     )
     merge_result = merge_session_start(
         settings_path=settings_path,
@@ -2071,27 +2071,27 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # Phase 3d so the workspace's first user-prompt after first-run
     # gets memory retrieval. Fail-soft per AC46.4.
     _maybe_merge_user_prompt_submit(
-        pos_v2_root=pos_v2_root, settings_path=settings_path
+        loam_root=loam_root, settings_path=settings_path
     )
     # Amendment #48: register the persona's Stop hook at Phase 3d so
     # every turn-close after first-run drives the per-turn aggregated
     # episode write. Fail-soft per AC.M.4.
     _maybe_merge_stop(
-        pos_v2_root=pos_v2_root, settings_path=settings_path
+        loam_root=loam_root, settings_path=settings_path
     )
     # Amendment #49: register the renderer at top-level ``statusLine``
     # at Phase 3d so the live first-run progress is visible in the
     # current session's terminal — not just on subsequent sessions
     # post-self-retire. Fail-soft per locked plan §5.
     _maybe_merge_status_line(
-        pos_v2_root=pos_v2_root, settings_path=settings_path
+        loam_root=loam_root, settings_path=settings_path
     )
     # Structural-enforcement A2: register the objective-binding gate
     # at Phase 3d so the gate is live for the current session's first
     # PreToolUse fire (not just subsequent sessions post-self-retire).
     # Fail-soft per locked plan §5.
     _maybe_merge_pre_tool_use(
-        pos_v2_root=pos_v2_root, settings_path=settings_path
+        loam_root=loam_root, settings_path=settings_path
     )
 
     # ---- Phase 4a: plist / unit substitution + service bootstrap --
@@ -2113,7 +2113,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     print("pos v2 first-run: substituting service-manager files and bootstrapping services...")
     try:
         _invoke_first_run_scaffold(
-            pos_v2_root=pos_v2_root,
+            loam_root=loam_root,
             shared_venv_python=shared_python,
             service_bootstrap=True,
         )
@@ -2173,7 +2173,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
                 "-u",
                 str(agent_runner),
                 "--workspace-root",
-                str(pos_v2_root),
+                str(loam_root),
             ],
             check=False,
             capture_output=True,
@@ -2198,7 +2198,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
                 body = envelope.get("body")
                 if isinstance(handle, str) and handle and isinstance(body, str):
                     write_result = write_agent_file(
-                        workspace_root=pos_v2_root,
+                        workspace_root=loam_root,
                         handle=handle,
                         body=body,
                     )
@@ -2281,8 +2281,8 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             merge_result = merge_session_start(
                 settings_path=settings_path,
                 new_entry=build_first_run_stanza(
-                    pos_v2_root,
-                    extra_inner_hooks=_extra_session_start_hooks(pos_v2_root),
+                    loam_root,
+                    extra_inner_hooks=_extra_session_start_hooks(loam_root),
                 ),
                 agent_handle=agent_handle,
             )
@@ -2290,24 +2290,24 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
             # alongside the Phase 4c re-merge. Idempotent — the
             # merge writes the same envelope shape every time.
             _maybe_merge_user_prompt_submit(
-                pos_v2_root=pos_v2_root, settings_path=settings_path
+                loam_root=loam_root, settings_path=settings_path
             )
             # Amendment #48: re-merge the Stop hook alongside the
             # Phase 4c re-merge. Idempotent.
             _maybe_merge_stop(
-                pos_v2_root=pos_v2_root, settings_path=settings_path
+                loam_root=loam_root, settings_path=settings_path
             )
             # Amendment #49: re-merge the statusLine entry alongside
             # the Phase 4c re-merge. Idempotent — same envelope
             # shape every time.
             _maybe_merge_status_line(
-                pos_v2_root=pos_v2_root, settings_path=settings_path
+                loam_root=loam_root, settings_path=settings_path
             )
             # Structural-enforcement A2: re-merge the objective-binding
             # gate alongside the Phase 4c re-merge. Idempotent — same
             # envelope shape every time.
             _maybe_merge_pre_tool_use(
-                pos_v2_root=pos_v2_root, settings_path=settings_path
+                loam_root=loam_root, settings_path=settings_path
             )
         except OSError as e:
             # Settings.json unwriteable — surface a diagnostic. The
@@ -2340,7 +2340,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
         # An orphan sidecar, or another workspace's sidecar reached
         # via port collision, carries a mismatched
         # ``LOAM_WORKSPACE_ROOT`` env and cannot complete the probe.
-        expected_workspace_root=str(pos_v2_root),
+        expected_workspace_root=str(loam_root),
     )
     if not healthy:
         _emit_diag(
@@ -2379,7 +2379,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # is None and the retire merge leaves the field untouched —
     # whatever Phase 3d / Phase 4c last wrote remains.
     retire_merge, script_path, removed = _self_retire(
-        pos_v2_root=pos_v2_root,
+        loam_root=loam_root,
         settings_path=settings_path,
         agent_handle=agent_handle,
     )
@@ -2397,7 +2397,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
 
     # ---- Phase 7: final-state verification ------------------------
     ok, problems = _verify_self_retire(
-        pos_v2_root=pos_v2_root,
+        loam_root=loam_root,
         settings_path=settings_path,
     )
     if not ok:
@@ -2422,7 +2422,7 @@ def _run_bootstrap(*, pos_v2_root: Path, inventory_path: Path) -> int:
     return 0
 
 
-def _run_resume(*, pos_v2_root: Path, inventory_path: Path) -> int:
+def _run_resume(*, loam_root: Path, inventory_path: Path) -> int:
     """Resume or verify-already-complete path.
 
     Called by first-run.sh when the shared venv already exists. Three
@@ -2434,8 +2434,8 @@ def _run_resume(*, pos_v2_root: Path, inventory_path: Path) -> int:
       * full completion → emit a short 'already-complete' marker and
         schedule self-retire (same as bootstrap's Phase 6..7).
     """
-    settings_path = pos_v2_root / ".claude" / "settings.json"
-    if _is_already_retired(pos_v2_root, settings_path):
+    settings_path = loam_root / ".claude" / "settings.json"
+    if _is_already_retired(loam_root, settings_path):
         # Defensive silence — we should not be running.
         return 0
     # The venv exists but the stanza still points at first-run.sh. This
@@ -2443,14 +2443,14 @@ def _run_resume(*, pos_v2_root: Path, inventory_path: Path) -> int:
     # Re-invoke the full bootstrap; Phase 3 pip installs are idempotent,
     # Phase 4 service bootstrap is idempotent, Phase 6 is the point of
     # the re-run.
-    return _run_bootstrap(pos_v2_root=pos_v2_root, inventory_path=inventory_path)
+    return _run_bootstrap(loam_root=loam_root, inventory_path=inventory_path)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="pos-v2 first-run helper (Phase 3 onward).",
     )
-    parser.add_argument("--pos-v2-root", required=True)
+    parser.add_argument("--loam-root", required=True)
     parser.add_argument(
         "--mode",
         choices=("bootstrap", "resume"),
@@ -2478,9 +2478,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    pos_v2_root = Path(args.pos_v2_root).resolve()
+    loam_root = Path(args.loam_root).resolve()
     inventory_path = Path(
-        args.inventory or (pos_v2_root / "first-run-inventory.yaml")
+        args.inventory or (loam_root / "first-run-inventory.yaml")
     ).resolve()
 
     # Wire state-file location into module globals so _advance_state()
@@ -2495,15 +2495,15 @@ def main(argv: list[str] | None = None) -> int:
     global _STATE_GENERATION, _STATE_WRITES_ENABLED
     if args.pos_root:
         _STATE_POS_ROOT = Path(args.pos_root).expanduser().resolve()
-    _STATE_WORKSPACE_ROOT = pos_v2_root
+    _STATE_WORKSPACE_ROOT = loam_root
     _STATE_GENERATION = int(args.generation)
     _STATE_WRITES_ENABLED = True
 
-    if not pos_v2_root.is_dir():
+    if not loam_root.is_dir():
         _emit_diag(
             ERR_HANDS_OFF_INTERNAL,
             "hands-off-lifecycle-internal:pos-v2-root-not-a-directory",
-            str(pos_v2_root),
+            str(loam_root),
             "First-run was invoked with a non-existent workspace root.\n"
             "This is a bug; file an issue.",
         )
@@ -2512,9 +2512,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.mode == "bootstrap":
             return _run_bootstrap(
-                pos_v2_root=pos_v2_root, inventory_path=inventory_path
+                loam_root=loam_root, inventory_path=inventory_path
             )
-        return _run_resume(pos_v2_root=pos_v2_root, inventory_path=inventory_path)
+        return _run_resume(loam_root=loam_root, inventory_path=inventory_path)
     except Exception as e:
         # Belt-and-suspenders: any uncaught exception inside the
         # worker must land a "failed" state so the next SessionStart

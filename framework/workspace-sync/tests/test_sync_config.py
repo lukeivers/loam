@@ -24,13 +24,13 @@ from typing import Any
 
 import pytest
 
-from workspace_sync.canonical_cache import (
+from loam.workspace_sync.canonical_cache import (
     CanonicalCacheError,
     cache_root,
     derive_repo_id,
     ensure_cache_clone,
 )
-from workspace_sync.sync_config import (
+from loam.workspace_sync.sync_config import (
     SyncConfig,
     canonical_source_kind,
     load_sync_config,

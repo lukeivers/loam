@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from telegram_interface.availability import (
+from loam.telegram_interface.availability import (
     AGGRESSIVE_PROBE_DURATION_S,
     AGGRESSIVE_PROBE_INTERVAL_S,
     PROBE_INTERVAL_S,

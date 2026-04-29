@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from graceful_degradation import (
+from loam.graceful_degradation import (
     ClaudeClient,
     DegradationComponent,
     DegradationConfig,
@@ -23,7 +23,7 @@ from graceful_degradation import (
     DegradationNotifier,
     FSMState,
 )
-from graceful_degradation.state import (
+from loam.graceful_degradation.state import (
     DegradationStore,
     FSMStateRow,
     reconcile,
@@ -156,7 +156,7 @@ def test_v11_r1_semantic_round_trip_snapshot_stable(tmp_path: Path) -> None:
 
 
 def test_reconcile_case1_orch_paused_deg_open() -> None:
-    from graceful_degradation.state import EpisodeRow
+    from loam.graceful_degradation.state import EpisodeRow
 
     ep = EpisodeRow(
         episode_id="e",
@@ -183,7 +183,7 @@ def test_reconcile_case2_orch_paused_deg_closed() -> None:
 
 
 def test_reconcile_case3_orch_not_paused_deg_open() -> None:
-    from graceful_degradation.state import EpisodeRow
+    from loam.graceful_degradation.state import EpisodeRow
 
     ep = EpisodeRow(
         episode_id="e",
@@ -260,7 +260,7 @@ async def test_fsm_state_persisted_after_transition(tmp_path) -> None:
         ],
     )
     rt.add_scope(FakeScope("s1"))
-    from graceful_degradation.errors import ClaudeAPIError
+    from loam.graceful_degradation.errors import ClaudeAPIError
 
     for _ in range(3):
         try:
@@ -279,7 +279,7 @@ def test_config_sqlite_path_is_tunable() -> None:
 state:
   sqlite_path: /tmp/pos-deg-test.sqlite
 """
-    from graceful_degradation import load_config
+    from loam.graceful_degradation import load_config
     cfg = load_config(text=text)
     assert str(cfg.sqlite_path()) == "/tmp/pos-deg-test.sqlite"
 

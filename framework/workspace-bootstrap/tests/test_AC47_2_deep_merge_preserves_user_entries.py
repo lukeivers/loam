@@ -15,10 +15,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     run_first_run_scaffold,
 )
-from workspace_bootstrap.adapters.mcp_json_writer import (
+from loam.workspace_bootstrap.adapters.mcp_json_writer import (
     MCP_JSON_FILENAME,
     MEMORY_GRAPHITI_SERVER_NAME,
     write_mcp_json,
@@ -26,7 +26,7 @@ from workspace_bootstrap.adapters.mcp_json_writer import (
 
 
 def _stub_tracker_seed_runner(**kwargs):
-    from workspace_bootstrap.adapters import tracker_seed
+    from loam.workspace_bootstrap.adapters import tracker_seed
 
     return tracker_seed.TrackerSeedResult(
         seeded=False,

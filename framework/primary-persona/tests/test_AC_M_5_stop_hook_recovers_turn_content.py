@@ -57,7 +57,7 @@ def test_AC_M_5_recovers_user_and_assistant_from_nested_message_shape(
     def _capture_spawn(**kw):
         captured.update(kw)
 
-    import src.stop_emitter as se
+    import loam.primary_persona.stop_emitter as se
 
     monkeypatch.setattr(se, "_spawn_memory_write", _capture_spawn)
     envelope = json.dumps(
@@ -68,7 +68,7 @@ def test_AC_M_5_recovers_user_and_assistant_from_nested_message_shape(
         }
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     rc = cli_stop(workspace_root=tmp_path)
     assert rc == 0
@@ -91,7 +91,7 @@ def test_AC_M_5_recovers_user_and_assistant_from_flat_role_shape(
         ],
     )
     captured: dict = {}
-    import src.stop_emitter as se
+    import loam.primary_persona.stop_emitter as se
 
     monkeypatch.setattr(
         se, "_spawn_memory_write", lambda **kw: captured.update(kw)
@@ -100,7 +100,7 @@ def test_AC_M_5_recovers_user_and_assistant_from_flat_role_shape(
         {"session_id": "s-flat", "transcript_path": str(transcript)}
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     cli_stop(workspace_root=tmp_path)
     assert captured["user_message"] == "hi"
@@ -123,7 +123,7 @@ def test_AC_M_5_recovers_most_recent_pair_when_transcript_carries_history(
         ],
     )
     captured: dict = {}
-    import src.stop_emitter as se
+    import loam.primary_persona.stop_emitter as se
 
     monkeypatch.setattr(
         se, "_spawn_memory_write", lambda **kw: captured.update(kw)
@@ -132,7 +132,7 @@ def test_AC_M_5_recovers_most_recent_pair_when_transcript_carries_history(
         {"session_id": "s-hist", "transcript_path": str(transcript)}
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     cli_stop(workspace_root=tmp_path)
     assert captured["user_message"] == "fresh user"
@@ -144,7 +144,7 @@ def test_AC_M_5_turn_id_is_stable_across_calls_for_same_user_message(
 ) -> None:
     """``derive_turn_id`` is pure: same (session_id, user_message)
     yields the same id. AC.M.8's dedupe leans on this."""
-    from src.stop_emitter import derive_turn_id
+    from loam.primary_persona.stop_emitter import derive_turn_id
 
     a = derive_turn_id(session_id="s1", user_message="hello")
     b = derive_turn_id(session_id="s1", user_message="hello")

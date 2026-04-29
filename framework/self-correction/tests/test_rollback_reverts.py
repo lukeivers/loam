@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import inspect
 
-from self_correction import SelfCorrectionController
+from loam.self_correction import SelfCorrectionController
 
 
 async def test_CR20_compensation_handler_is_async_and_accepts_scope_id(

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from scope_of_work import Budget, ReversibilityClass
+from loam.scope_of_work import Budget, ReversibilityClass
 
-from self_correction import (
+from loam.self_correction import (
     CorrectionConfig,
     IrreversibleCorrectionSpecError,
     build_correction_spec,

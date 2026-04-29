@@ -23,10 +23,10 @@ from unittest import mock
 
 import pytest
 
-from workspace_sync._resolver_client import (
+from loam.workspace_sync._resolver_client import (
     _ClaudePrintResolverClient,
 )
-from workspace_sync.merge_resolver import ResolverFailure
+from loam.workspace_sync.merge_resolver import ResolverFailure
 
 
 def _fake_claude_binary(tmp_path: Path) -> str:
@@ -58,9 +58,9 @@ def test_argv_carries_strict_mcp_config_flags(tmp_path: Path) -> None:
         completed.stderr = b""
         return completed
 
-    from workspace_sync.merge_resolver import MergeVerdict
+    from loam.workspace_sync.merge_resolver import MergeVerdict
 
-    with mock.patch("workspace_sync._resolver_client.subprocess.run", side_effect=_fake_run):
+    with mock.patch("loam.workspace_sync._resolver_client.subprocess.run", side_effect=_fake_run):
         client.invoke("hello", MergeVerdict)
 
     argv = captured["argv"]

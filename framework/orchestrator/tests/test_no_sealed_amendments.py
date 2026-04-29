@@ -67,7 +67,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              canonical artifact set going forward per ODD §2.5 +
 #              `scope-only-dispatch` / `research-before-plan` CDCs is
 #              proposal + plan + shipped code + seal) and edits
-#              docs/odd-in-pos.md §7.4 to name briefs as dispatch-time
+#              docs/odd-in-loam.md §7.4 to name briefs as dispatch-time
 #              artifacts rather than committed canonical ones. Multi-
 #              component amendment with six other brief-owning sealed
 #              components + hands-off-lifecycle. e8f704c is the pre-
@@ -165,7 +165,7 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
     #     aggregator/` — the three sibling brief-owning sealed
     #     components whose seal-diff tests + SEAL_COMMIT sidecars are
     #     updated in lockstep.
-    #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite (brief =
+    #   - `docs/odd-in-loam.md` (allowed_files) — §7.4 rewrite (brief =
     #     dispatch-time, not committed canonical artifact).
     # Amendment #19 (S1 silent-except bundle):
     #   - `safety-layer/` — the amendment's primary surface (sites 1–6:
@@ -229,6 +229,7 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
     allowed_files: set[str] = {
         "framework/first-run-inventory.yaml",
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "CLAUDE.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",

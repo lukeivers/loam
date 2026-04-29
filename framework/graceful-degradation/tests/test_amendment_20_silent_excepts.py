@@ -19,16 +19,16 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from graceful_degradation import (
+from loam.graceful_degradation import (
     ClaudeClient,
     DegradationComponent,
     DegradationConfig,
     DegradationMode,
     DegradationNotifier,
 )
-from graceful_degradation import observability as gd_obs
-from graceful_degradation.component import ActiveEpisode
-from graceful_degradation.policy import Policy
+from loam.graceful_degradation import observability as gd_obs
+from loam.graceful_degradation.component import ActiveEpisode
+from loam.graceful_degradation.policy import Policy
 
 from .fakes import (
     FakeClock,
@@ -153,7 +153,7 @@ async def test_S2_site7_reconcile_on_startup_surfaces_invalid_stored_enum_values
     assert real_row is not None
 
     # Build a lookalike row with a bogus mode value.
-    from graceful_degradation.state import EpisodeRow
+    from loam.graceful_degradation.state import EpisodeRow
 
     drifted = EpisodeRow(
         episode_id=real_row.episode_id,
@@ -171,7 +171,7 @@ async def test_S2_site7_reconcile_on_startup_surfaces_invalid_stored_enum_values
     )
 
     # Build a custom reconcile plan directly hitting the case-1 branch.
-    from graceful_degradation.state import ReconciliationPlan
+    from loam.graceful_degradation.state import ReconciliationPlan
 
     orch.paused = True
     # Patch unresolved_episodes to return the drifted row so reconcile()

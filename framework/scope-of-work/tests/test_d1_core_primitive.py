@@ -15,9 +15,9 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from src.events import ScopeCreated, StateTransitioned
-from src.projection import project, projection_to_state_row
-from src.spec import (
+from loam.scope_of_work.events import ScopeCreated, StateTransitioned
+from loam.scope_of_work.projection import project, projection_to_state_row
+from loam.scope_of_work.spec import (
     Budget,
     Observer,
     ReversibilityClass,

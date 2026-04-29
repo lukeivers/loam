@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from workspace_bootstrap import (
+from loam.workspace_bootstrap import (
     IPC_BOOTSTRAP_MISSING_CONFIG,
     MissingConfigError,
     load_manifest,

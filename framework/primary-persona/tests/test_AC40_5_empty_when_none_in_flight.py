@@ -28,9 +28,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.context_composer import ComposedContextPayload
-from src.session_start_gate import compose_session_fields
-from src.tracker_context import (
+from loam.primary_persona.context_composer import ComposedContextPayload
+from loam.primary_persona.session_start_gate import compose_session_fields
+from loam.primary_persona.tracker_context import (
     DEFAULT_VALUE_PROP_ROOT_ID,
     register_tracker_context,
 )

@@ -82,8 +82,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         # Late imports so argparse failures report cleanly without
         # requiring the adapter's runtime deps to resolve.
-        from primary_persona import PersonaLoader  # type: ignore
-        from primary_persona.agent_md import to_agent_md  # type: ignore
+        from loam.primary_persona import PersonaLoader  # type: ignore
+        from loam.primary_persona.agent_md import to_agent_md  # type: ignore
     except Exception as e:  # pragma: no cover — environment-dependent
         sys.stderr.write(
             "agent_file_runner: could not import primary_persona.\n"

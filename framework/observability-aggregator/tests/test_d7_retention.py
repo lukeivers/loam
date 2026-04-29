@@ -4,10 +4,10 @@ from __future__ import annotations
 import time
 from datetime import datetime, timedelta, timezone
 
-from pos_observability_aggregator.api import QueryAPI, SpanFilter
-from pos_observability_aggregator.config import RetentionConfig
-from pos_observability_aggregator.retention import RetentionJob
-from pos_observability_aggregator.schema import RetentionClass, SpanRecord
+from loam.observability_aggregator.api import QueryAPI, SpanFilter
+from loam.observability_aggregator.config import RetentionConfig
+from loam.observability_aggregator.retention import RetentionJob
+from loam.observability_aggregator.schema import RetentionClass, SpanRecord
 
 
 def _span_at(ts: datetime, span_id: str, name: str = "op", duration_ns: int = 1_000_000, status="OK", attrs=None):
@@ -45,7 +45,7 @@ def test_daily_rollup_in_7_to_30_day_window(store, tmp_config):
 
 def test_top_n_raw_spans_kept_in_daily_window(tmp_path, tmp_config):
     """Top-N longest spans within the daily-rollup window are kept raw."""
-    from pos_observability_aggregator import open_store
+    from loam.observability_aggregator import open_store
     cfg = tmp_config
     cfg.retention = RetentionConfig(top_n_raw_per_day=2)
     store = open_store(cfg)

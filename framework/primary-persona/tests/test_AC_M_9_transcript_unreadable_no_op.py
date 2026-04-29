@@ -28,7 +28,7 @@ def _fire_stop(monkeypatch, transcript_path: str, workspace: Path) -> tuple[int,
         {"session_id": "s1", "transcript_path": transcript_path}
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     rc = cli_stop(workspace_root=workspace)
     return rc, spawn_calls

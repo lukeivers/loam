@@ -18,10 +18,10 @@ import time
 
 import pytest
 
-from pos_orchestrator import Orchestrator
-from pos_orchestrator.ipc import IPCClient
-from scope_of_work import ScopeRuntime, ScopeSpec
-from scope_of_work.spec import Budget, ReversibilityClass
+from loam.orchestrator import Orchestrator
+from loam.orchestrator.ipc import IPCClient
+from loam.scope_of_work import ScopeRuntime, ScopeSpec
+from loam.scope_of_work.spec import Budget, ReversibilityClass
 
 
 def _make_spec(goal: str, *, owner: str = "rune") -> ScopeSpec:
@@ -139,7 +139,7 @@ async def test_awareness_p95_under_100ms(tmp_config):
 async def test_awareness_cache_fallback_on_timeout(tmp_config, monkeypatch):
     """When the live pull exceeds the 100ms ceiling, fall back to the
     cached block with stale=True."""
-    from pos_orchestrator.config import with_overrides
+    from loam.orchestrator.config import with_overrides
 
     cfg = with_overrides(tmp_config, awareness_pull_timeout_ms=1)  # 1ms: guaranteed miss
 
@@ -183,7 +183,7 @@ async def test_awareness_cache_refresh_on_success(tmp_config):
 
 @pytest.mark.asyncio
 async def test_awareness_empty_block_when_no_cache_and_timeout(tmp_config, monkeypatch):
-    from pos_orchestrator.config import with_overrides
+    from loam.orchestrator.config import with_overrides
 
     cfg = with_overrides(tmp_config, awareness_pull_timeout_ms=1)
     orch = Orchestrator(cfg)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from reversibility_primitive import (
+from loam.reversibility_primitive import (
     CompensationPathBinding,
     ReversibilityStore,
 )
@@ -61,10 +61,10 @@ def test_R3_cli_path_reaches_same_ipc_method(
     the IPC wiring surface — the CLI is a thin forwarder around the
     same method name.
     """
-    from pos_orchestrator.ipc import IPCServer
+    from loam.orchestrator.ipc import IPCServer
 
     server = IPCServer(tmp_path / "sock")
-    from reversibility_primitive import register_reversibility_ipc
+    from loam.reversibility_primitive import register_reversibility_ipc
 
     register_reversibility_ipc(
         server=server,

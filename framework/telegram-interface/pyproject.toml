@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos_telegram_interface"
+name = "loam-telegram-interface"
 version = "0.1.0"
 description = "Telegram channel adapter for pOS v2 — consumes the Claude MCP Telegram plugin via adapter-pattern injection into OneOnOneChannel; supports multi-identity allowlist, availability probe, direct Bot API fallback, and session-two setup walkthrough. Zero sealed-component amendments."
 requires-python = ">=3.11"
@@ -11,12 +11,12 @@ dependencies = [
     "pydantic>=2",
     "opentelemetry-api>=1.25",
     "pyyaml>=6",
-    "primary_persona",
+    "loam-primary-persona",
 ]
 
 [tool.setuptools]
-package-dir = {"telegram_interface" = "src"}
-packages = ["telegram_interface"]
+package-dir = {"loam.telegram_interface" = "src/loam/telegram_interface"}
+packages = ["loam.telegram_interface"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

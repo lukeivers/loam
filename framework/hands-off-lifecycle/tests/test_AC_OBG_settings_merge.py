@@ -30,9 +30,9 @@ sys.path.insert(0, str(HOOKS_DIR))
 from first_run_settings import merge_pre_tool_use  # noqa: E402
 
 
-def _gate_envelope(pos_v2_root: Path) -> dict:
+def _gate_envelope(loam_root: Path) -> dict:
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -171,7 +171,7 @@ def test_pre_tool_use_merge_preserves_orthogonal_stanzas(
                             "hooks": [
                                 {
                                     "type": "command",
-                                    "command": "X -m primary_persona Y",
+                                    "command": "X -m loam.primary_persona Y",
                                     "async": False,
                                     "timeout": 5,
                                 }

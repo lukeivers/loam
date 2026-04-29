@@ -15,8 +15,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from primary_persona.dispatch_wrapper import NewACSpec
-from primary_persona.dispatch_wrapper import (
+from loam.primary_persona.dispatch_wrapper import NewACSpec
+from loam.primary_persona.dispatch_wrapper import (
     _is_dispatcher_authored_stub,
     _render_stub_body,
     _write_stub_idempotent,

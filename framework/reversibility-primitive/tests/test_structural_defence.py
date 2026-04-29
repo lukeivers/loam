@@ -12,8 +12,8 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from reversibility_primitive import CompensationPathBinding, get_spec_hash
-from safety_layer.events import structural_hash
+from loam.reversibility_primitive import CompensationPathBinding, get_spec_hash
+from loam.safety_layer.events import structural_hash
 
 
 def test_R25_budget_seconds_zero_refused() -> None:
@@ -47,7 +47,7 @@ def test_R26_hash_module_imported_not_duplicated() -> None:
     """Scan the primitive source — no hashlib.sha256(spec...) re-
     implementation, only the import."""
     import pathlib
-    import reversibility_primitive as rp
+    import loam.reversibility_primitive as rp
 
     pkg_dir = pathlib.Path(rp.__file__).parent
     for py in pkg_dir.rglob("*.py"):
@@ -55,6 +55,6 @@ def test_R26_hash_module_imported_not_duplicated() -> None:
         # The only allowed reference to structural_hash is an import.
         if "structural_hash" in txt:
             assert (
-                "from safety_layer.events import structural_hash" in txt
-                or "from safety_layer.events import" in txt
-            ), f"structural_hash used without importing from safety_layer in {py}"
+                "from loam.safety_layer.events import structural_hash" in txt
+                or "from loam.safety_layer.events import" in txt
+            ), f"structural_hash used without importing from loam.safety_layer in {py}"

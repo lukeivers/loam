@@ -25,10 +25,10 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from src.events import StateTransitioned
-from src.projection import ScopeProjectionData, apply_event
-from src.spec import ScopeState
-from src.triggers import active_seconds_elapsed
+from loam.scope_of_work.events import StateTransitioned
+from loam.scope_of_work.projection import ScopeProjectionData, apply_event
+from loam.scope_of_work.spec import ScopeState
+from loam.scope_of_work.triggers import active_seconds_elapsed
 
 
 @pytest.fixture(scope="module")

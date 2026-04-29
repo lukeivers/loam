@@ -16,7 +16,7 @@ def test_only_example_changed():
         "example/",
         "data/",
     )
-    allowed_files = {"docs/odd-in-pos.md"}
+    allowed_files = {"docs/odd-in-loam.md"}
     assert True
 '''
 
@@ -54,7 +54,7 @@ def test_T7_widen_allowed_files_set(tmp_path: Path) -> None:
     )
     assert changed is True
     assert added == ["CLAUDE.md"]
-    assert set(new) == {"docs/odd-in-pos.md", "CLAUDE.md"}
+    assert set(new) == {"docs/odd-in-loam.md", "CLAUDE.md"}
 
 
 def test_T7_widen_handles_empty_set(tmp_path: Path) -> None:
@@ -97,7 +97,7 @@ def test_read_entries_from_tuple(tmp_path: Path) -> None:
     p = tmp_path / "t.py"
     p.write_text(_TUPLE_FILE, encoding="utf-8")
     assert read_entries(p, "allowed_prefixes") == ["example/", "data/"]
-    assert read_entries(p, "allowed_files") == ["docs/odd-in-pos.md"]
+    assert read_entries(p, "allowed_files") == ["docs/odd-in-loam.md"]
 
 
 def test_read_entries_from_empty_set(tmp_path: Path) -> None:

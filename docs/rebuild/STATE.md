@@ -8,7 +8,7 @@ This directory tracks the parallel rebuild of pOS against the new objectives spe
 
 ## Governing documents
 
-- **Objectives spec** (authoritative — the contract being built against): `docs/rebuild/spec/pos-v2-objectives-spec.md`
+- **Objectives spec** (authoritative — the contract being built against): `docs/rebuild/spec/loam-objectives-spec.md`
 - **Rebuild proposal** (approach, phases, principles): `docs/rebuild/spec/pos-v2-rebuild-proposal.md`
 
 ---

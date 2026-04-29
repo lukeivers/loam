@@ -34,7 +34,7 @@ _CANONICAL = _HERE.parent.parent
 # Insert self-upgrade src so we can import manifest helpers.
 sys.path.insert(0, str(_CANONICAL / "self-upgrade" / "src"))
 
-from self_upgrade.manifest import (  # noqa: E402
+from loam.self_upgrade.manifest import (  # noqa: E402
     ChangeKind,
     FileEntry,
     Manifest,

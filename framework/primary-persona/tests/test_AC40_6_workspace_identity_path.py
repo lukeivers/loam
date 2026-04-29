@@ -18,9 +18,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.context_composer import ComposedContextPayload
-from src.session_start_gate import compose_session_fields
-from src.tracker_context import (
+from loam.primary_persona.context_composer import ComposedContextPayload
+from loam.primary_persona.session_start_gate import compose_session_fields
+from loam.primary_persona.tracker_context import (
     TRACKER_DB_FILENAME,
     register_tracker_context,
     tracker_db_path_for,
@@ -65,7 +65,7 @@ def test_AC40_6_two_parallel_workspaces_each_see_own_tree(tmp_path: Path) -> Non
     """
     from _helpers_d40 import FakeTrackerClient, make_projection
     from _helpers_d7 import seed_baseline_workspace
-    from src.tracker_context import DEFAULT_VALUE_PROP_ROOT_ID
+    from loam.primary_persona.tracker_context import DEFAULT_VALUE_PROP_ROOT_ID
 
     ws_a = tmp_path / "ws-a"
     ws_b = tmp_path / "ws-b"
@@ -164,17 +164,17 @@ def test_AC40_6_default_factory_uses_resolved_path(tmp_path: Path) -> None:
     fake_module.ObjectiveTracker = FakeTracker  # type: ignore[attr-defined]
 
     # Save the prior module so test cleanup can restore it.
-    prior = sys.modules.get("objective_tracker")
-    sys.modules["objective_tracker"] = fake_module
+    prior = sys.modules.get("loam.objective_tracker")
+    sys.modules["loam.objective_tracker"] = fake_module
 
     try:
         register_tracker_context(composer, workspace_root=workspace_root)
         composer.on_session_start(workspace_root)
     finally:
         if prior is not None:
-            sys.modules["objective_tracker"] = prior
+            sys.modules["loam.objective_tracker"] = prior
         else:
-            sys.modules.pop("objective_tracker", None)
+            sys.modules.pop("loam.objective_tracker", None)
 
     assert captured_paths, (
         "AC40.6 — default factory must invoke the tracker constructor at least once"

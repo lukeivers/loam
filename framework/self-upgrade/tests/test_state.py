@@ -15,7 +15,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from self_upgrade.state import (
+from loam.self_upgrade.state import (
     StateRecord,
     UpgradeStatus,
     audit_yaml_path,

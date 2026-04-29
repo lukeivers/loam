@@ -51,7 +51,7 @@ export PATH
 # Code at hook fire time; fall back to script-relative resolution when
 # the hook is invoked outside Claude Code (test harness, manual run).
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "$CLAUDE_PROJECT_DIR" ]; then
-    POS_V2_ROOT="$CLAUDE_PROJECT_DIR"
+    LOAM_ROOT="$CLAUDE_PROJECT_DIR"
 else
     SCRIPT_DIR=$(cd "$(dirname "$0")" 2>/dev/null && pwd -P) || {
         printf 'pos v2 first-run: cannot resolve script directory.\n'
@@ -59,14 +59,14 @@ else
     }
     # Post-D.1: this script lives at framework/hands-off-lifecycle/hooks/;
     # workspace root is three levels up.
-    POS_V2_ROOT=$(cd "$SCRIPT_DIR/../../.." 2>/dev/null && pwd -P) || {
+    LOAM_ROOT=$(cd "$SCRIPT_DIR/../../.." 2>/dev/null && pwd -P) || {
         printf 'pos v2 first-run: cannot resolve workspace root.\n'
         exit 0
     }
 fi
 
-HELPER="$POS_V2_ROOT/framework/hands-off-lifecycle/hooks/first_run_helper.py"
-DISPATCH="$POS_V2_ROOT/framework/hands-off-lifecycle/hooks/first_run_dispatch.py"
+HELPER="$LOAM_ROOT/framework/hands-off-lifecycle/hooks/first_run_helper.py"
+DISPATCH="$LOAM_ROOT/framework/hands-off-lifecycle/hooks/first_run_dispatch.py"
 
 # ~/.loam is the per-host config dir. Overridable for tests via the
 # LOAM_DATA_DIR env var (same spelling the Python side respects).
@@ -164,7 +164,7 @@ fi
 # start_new_session so the worker survives the hook process's exit.
 
 exec "$DETECTED_PYTHON" "$DISPATCH" \
-    --pos-v2-root "$POS_V2_ROOT" \
+    --loam-root "$LOAM_ROOT" \
     --pos-root "$POS_ROOT" \
     --helper "$HELPER" \
     --python "$DETECTED_PYTHON" \

@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.filter import ObjectiveFilter
-from src.spec import LiftedFrom
+from loam.objective_tracker.filter import ObjectiveFilter
+from loam.objective_tracker.spec import LiftedFrom
 from tests.conftest import make_user_root_spec
 
 

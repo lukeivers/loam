@@ -2,7 +2,7 @@
 
 **Component:** Scope-of-Work Primitive. **Status:** RESEARCH COMPLETE — no halt signals raised.
 **Authored by:** general-purpose Agent dispatched per the research plan. **Date:** 2026-04-18.
-**Against:** objectives spec v1.0 + v1.1 addendum (see `docs/rebuild/spec/pos-v2-objectives-spec.md`).
+**Against:** objectives spec v1.0 + v1.1 addendum (see `docs/rebuild/spec/loam-objectives-spec.md`).
 **Constraints honoured:** Python-native; Max-first (no LLM inference inside the primitive); zero carryover from current pOS; no code, no proposal, no brief; ODD-compatible (every recommendation traces to a spec objective).
 
 ---

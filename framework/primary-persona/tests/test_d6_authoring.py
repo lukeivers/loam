@@ -19,24 +19,24 @@ from typing import Any
 
 import pytest
 
-from scope_of_work.runtime import ScopeRuntime
-from scope_of_work.spec import (
+from loam.scope_of_work.runtime import ScopeRuntime
+from loam.scope_of_work.spec import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
     SuccessCriterion,
 )
 
-from src.authoring import (
+from loam.primary_persona.authoring import (
     AuthoringOutcome,
     AuthoringPipeline,
     AuthoringResult,
     LLMResult,
     SelfReviewDimension,
 )
-from src.contract import load_contract
-from src.creation_triggers import TriggerSignal
-from src.loader import PersonaLoader
+from loam.primary_persona.contract import load_contract
+from loam.primary_persona.creation_triggers import TriggerSignal
+from loam.primary_persona.loader import PersonaLoader
 
 from tests.conftest import VALID_CONTRACT_YAML, write_persona_dir
 

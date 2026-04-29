@@ -9,12 +9,12 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona import (
+from loam.primary_persona import (
     DispatchRefusal,
     DispatchShape,
     dispatch_with_scope,
 )
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
 from ._helpers_a8 import (
     StubIPCClient,
@@ -33,7 +33,7 @@ async def test_AC_A8_7_refusal_returned_not_raised(monkeypatch, tmp_path):
         ApplicationError(-32061, "rolling 24h ceiling exhausted"),
     )
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
     shape = DispatchShape(
@@ -66,7 +66,7 @@ async def test_AC_A8_7_unanticipated_error_bubbles(monkeypatch, tmp_path):
         ApplicationError(-32603, "internal server error"),
     )
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
     shape = DispatchShape(

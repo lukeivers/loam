@@ -49,7 +49,7 @@ def test_B21_bootstrap_spans_land_in_aggregator(tmp_path: Path) -> None:
     script = textwrap.dedent(
         f"""
         import asyncio
-        from workspace_bootstrap import Bootstrapper, load_manifest
+        from loam.workspace_bootstrap import Bootstrapper, load_manifest
 
         async def main():
             bs = Bootstrapper(load_manifest({str(manifest_path)!r}))

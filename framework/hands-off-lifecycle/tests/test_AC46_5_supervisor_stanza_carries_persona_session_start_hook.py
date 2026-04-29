@@ -19,23 +19,23 @@ sys.path.insert(0, str(HOOKS_DIR))
 from first_run_settings import build_supervisor_stanza  # noqa: E402
 
 
-def _persona_inner_hook_stub(pos_v2_root: Path) -> dict:
+def _persona_inner_hook_stub(loam_root: Path) -> dict:
     return {
         "type": "command",
         "command": (
-            f"{pos_v2_root}/.venv/bin/python "
-            "-m primary_persona.cli session-start"
+            f"{loam_root}/.venv/bin/python "
+            "-m loam.primary_persona.cli session-start"
         ),
         "async": False,
         "timeout": 5,
     }
 
 
-def _loam_mode_inner_hook_stub(pos_v2_root: Path) -> dict:
+def _loam_mode_inner_hook_stub(loam_root: Path) -> dict:
     return {
         "type": "command",
         "command": (
-            f"{pos_v2_root}/.venv/bin/python -m loam_mode.cli session-start"
+            f"{loam_root}/.venv/bin/python -m loam_mode.cli session-start"
         ),
         "async": False,
         "timeout": 5,

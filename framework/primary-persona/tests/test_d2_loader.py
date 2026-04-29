@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from src.loader import (
+from loam.primary_persona.loader import (
     LoadedPersona,
     PersonaDirectoryNotFoundError,
     PersonaInCoreError,
@@ -213,7 +213,7 @@ def test_core_check_passes_for_template_dir(workspace_with_primary: Path):
 
 def test_core_check_fails_on_smuggled_persona(tmp_path: Path, monkeypatch):
     # Simulate a forbidden persona dir inside the framework tree.
-    import src.loader as loader_mod
+    import loam.primary_persona.loader as loader_mod
 
     fake_core = tmp_path / "primary-persona" / "src" / "_smuggled"
     fake_core.mkdir(parents=True)

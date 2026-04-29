@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 
-from safety_layer import SafetyStore
+from loam.safety_layer import SafetyStore
 
 
 class _RaisingConn:
@@ -20,12 +20,12 @@ def test_s4_safety_store_close_surfaces_exception(tmp_path, caplog):
     store = SafetyStore(tmp_path / "safety.sqlite")
     store._conn = _RaisingConn()  # type: ignore[assignment]
 
-    with caplog.at_level(logging.DEBUG, logger="safety_layer.store"):
+    with caplog.at_level(logging.DEBUG, logger="loam.safety_layer.store"):
         store.close()
 
     matching = [
         r for r in caplog.records
-        if r.name == "safety_layer.store"
+        if r.name == "loam.safety_layer.store"
         and r.message == "safety_store_close_failed"
     ]
     assert len(matching) == 1

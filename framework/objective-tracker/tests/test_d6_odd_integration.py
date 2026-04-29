@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.errors import MissingRationaleError
-from src.spec import (
+from loam.objective_tracker.errors import MissingRationaleError
+from loam.objective_tracker.spec import (
     ExternalPredicateCriterion,
     ObjectiveStatus,
     ProseCriterion,
@@ -210,8 +210,8 @@ async def test_representative_odd_cycle_end_to_end(tracker):
     )
 
     # 5. Author a new objective that will catch the negative case.
-    from src.spec import ObjectiveSpec as _ObjectiveSpec
-    from src.spec import TimeBound as _TimeBound
+    from loam.objective_tracker.spec import ObjectiveSpec as _ObjectiveSpec
+    from loam.objective_tracker.spec import TimeBound as _TimeBound
     from tests.conftest import future_deadline
 
     new_child_spec = _ObjectiveSpec(

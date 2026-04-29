@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.agent_md import to_agent_md
-from src.contract import PersonaContract
+from loam.primary_persona.agent_md import to_agent_md
+from loam.primary_persona.contract import PersonaContract
 
 
 # Unique sentinels — chosen to be lexically distinguishable from any
@@ -93,7 +93,7 @@ def test_AC35_6_existing_framework_tree_scan_still_passes():
     """The existing PersonaInCoreError surface (D2) continues to
     enforce — the only persona directory in pOS-core is the template
     with reserved handle `example-persona`."""
-    from src.loader import PersonaLoader
+    from loam.primary_persona.loader import PersonaLoader
 
     # Construct against a sibling tmpfs workspace; the
     # `enforce_no_personas_in_core=True` default triggers the framework
@@ -114,7 +114,10 @@ def test_AC35_6_renderer_source_does_not_carry_persona_prose_constants():
     framework-level template scaffolding (anchor headers, sentence
     skeleton) speaks *about* the contract, not in any persona's voice.
     """
-    src_path = Path(__file__).resolve().parent.parent / "src" / "agent_md.py"
+    src_path = (
+        Path(__file__).resolve().parent.parent
+        / "src" / "loam" / "primary_persona" / "agent_md.py"
+    )
     text = src_path.read_text(encoding="utf-8")
     # Sentinels: the framework scaffolding explicitly speaks
     # *about* the persona ("I am <given_name>" with a placeholder)

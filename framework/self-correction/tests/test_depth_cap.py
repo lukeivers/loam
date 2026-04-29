@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from self_correction import (
+from loam.self_correction import (
     CorrectionConfig,
     CorrectionEpisode,
     CorrectionStore,
@@ -10,8 +10,8 @@ from self_correction import (
     SelfCorrectionController,
     build_trigger_from_user_report,
 )
-from self_correction.bounds import compute_depth, depth_cap_check
-from self_correction.spec import CorrectionTrigger, TriggerSource
+from loam.self_correction.bounds import compute_depth, depth_cap_check
+from loam.self_correction.spec import CorrectionTrigger, TriggerSource
 
 
 def _seed_chain(store: CorrectionStore, length: int) -> str:

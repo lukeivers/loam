@@ -25,7 +25,7 @@ from pathlib import Path
 
 import yaml
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     DEFAULT_PERSONA_HANDLE,
     _install_persona_directory,
     run_first_run_scaffold,

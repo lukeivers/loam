@@ -21,14 +21,14 @@ import json
 
 import pytest
 
-from src.events import (
+from loam.scope_of_work.events import (
     BudgetDebited,
     BudgetExtended,
     BudgetRefunded,
     ExtensionRejected,
     ExtensionRequested,
 )
-from src.spec import (
+from loam.scope_of_work.spec import (
     Budget,
     BudgetAxis,
     BudgetExhaustionPolicy,

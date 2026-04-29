@@ -19,9 +19,9 @@ from pathlib import Path
 
 import pytest
 
-from primary_persona.introduction import ChannelKind
+from loam.primary_persona.introduction import ChannelKind
 
-from safety_layer import SafetyChannel, SafetyNotifier
+from loam.safety_layer import SafetyChannel, SafetyNotifier
 
 
 SAFETY_SRC = Path(__file__).parent.parent / "src"
@@ -95,7 +95,7 @@ def test_A17_notifier_rejects_group_channel_in_channels_list():
     # defence, build a channel that we then force to claim is_group via
     # a dataclasses.replace-like trick. Since SafetyChannel is frozen,
     # we build a fake mapping on a plain OneOnOneChannel.
-    from primary_persona.introduction import OneOnOneChannel
+    from loam.primary_persona.introduction import OneOnOneChannel
 
     async def _send(t: str) -> None:
         return None
@@ -116,11 +116,11 @@ def test_A15_sealed_modules_unmodified_after_import():
     """After importing safety_layer, the public signatures of sealed
     modules remain unchanged — spot-check representative methods.
     """
-    import safety_layer  # noqa: F401
+    import loam.safety_layer  # noqa: F401
 
-    import scope_of_work.runtime as sor_rt
-    from pos_orchestrator.orchestrator import Orchestrator
-    from pos_orchestrator.ipc import IPCServer
+    import loam.scope_of_work.runtime as sor_rt
+    from loam.orchestrator.orchestrator import Orchestrator
+    from loam.orchestrator.ipc import IPCServer
 
     # ScopeRuntime.cancel still has its original signature.
     sig = inspect.signature(sor_rt.ScopeRuntime.cancel)

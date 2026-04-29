@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from self_upgrade.conflict_detection import detect_conflicts
-from self_upgrade.conflict_report import (
+from loam.self_upgrade.conflict_detection import detect_conflicts
+from loam.self_upgrade.conflict_report import (
     ConflictChangeKind,
     Resolution,
 )
-from self_upgrade.manifest import Manifest
+from loam.self_upgrade.manifest import Manifest
 
 
 def _sha(b: bytes) -> str:

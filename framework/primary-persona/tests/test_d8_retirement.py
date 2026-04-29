@@ -18,8 +18,8 @@ from pathlib import Path
 
 import pytest
 
-from src.loader import PersonaLoader, PersonaValidationError
-from src.retirement import (
+from loam.primary_persona.loader import PersonaLoader, PersonaValidationError
+from loam.primary_persona.retirement import (
     RetirementReason,
     RetirementRecord,
     retire_persona,

@@ -23,9 +23,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from src.context_composer import ComposedContextPayload, TriggerKind
-from src.session_start_gate import compose_session_fields
-from src.tracker_context import register_tracker_context
+from loam.primary_persona.context_composer import ComposedContextPayload, TriggerKind
+from loam.primary_persona.session_start_gate import compose_session_fields
+from loam.primary_persona.tracker_context import register_tracker_context
 
 from _helpers_d40 import FakeTrackerClient
 from _helpers_d7 import seed_baseline_workspace

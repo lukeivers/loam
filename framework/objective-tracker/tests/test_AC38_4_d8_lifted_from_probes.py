@@ -18,9 +18,9 @@ Outcome (paraphrased from the AC):
 
 from __future__ import annotations
 
-from src.runtime import ObjectiveTracker
-from src.spec import LiftedFrom
-from src.upgrade import (
+from loam.objective_tracker.runtime import ObjectiveTracker
+from loam.objective_tracker.spec import LiftedFrom
+from loam.objective_tracker.upgrade import (
     assert_no_drift,
     capture_pre_upgrade,
     captured_from_json,

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona.introduction import ChannelKind
+from loam.primary_persona.introduction import ChannelKind
 
-from cost_governance import CostChannel, CostNotifier
+from loam.cost_governance import CostChannel, CostNotifier
 
 
 def test_C25_cost_channel_refuses_is_group_true() -> None:

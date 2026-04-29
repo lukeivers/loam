@@ -45,7 +45,7 @@ def _write_orchestrator_yaml(workspace: Path) -> None:
     }
     (workspace / "config" / "orchestrator.yaml").write_text(yaml.safe_dump(cfg))
 
-from workspace_bootstrap import (
+from loam.workspace_bootstrap import (
     BaseContribution,
     Bootstrapper,
     ContributionMetadata,
@@ -155,7 +155,7 @@ async def test_B12_dispatch_chain_order(tmp_path: Path) -> None:
     handler is NOT the orchestrator's original — meaning the wraps
     composed on top.
     """
-    from pos_orchestrator.ipc import IPCServer
+    from loam.orchestrator.ipc import IPCServer
 
     manifest_path = _write_workspace(tmp_path)
     bs = Bootstrapper(load_manifest(manifest_path))
@@ -196,7 +196,7 @@ async def test_B14_memory_sidecar_timeout_fails_with_32086(tmp_path: Path) -> No
     has no listener. The adapter should fail-closed within its
     configured timeout and raise AdapterRaisedError (-32086).
     """
-    from workspace_bootstrap import AdapterRaisedError, IPC_BOOTSTRAP_ADAPTER_RAISED
+    from loam.workspace_bootstrap import AdapterRaisedError, IPC_BOOTSTRAP_ADAPTER_RAISED
 
     (tmp_path / "config").mkdir()
     # Point at a port that should be closed (high, random); short timeout.
@@ -294,7 +294,7 @@ async def test_B15_self_upgrade_cli_probe_success(tmp_path: Path) -> None:
     default (pos --help) and `required: False`, the adapter no-ops
     if `pos` is missing. A failing probe with required=True raises
     -32086. We test both sides."""
-    from workspace_bootstrap import AdapterRaisedError
+    from loam.workspace_bootstrap import AdapterRaisedError
 
     (tmp_path / "config").mkdir()
     # A probe that always succeeds (`true` exits 0 on POSIX).
@@ -320,7 +320,7 @@ async def test_B15_self_upgrade_cli_probe_success(tmp_path: Path) -> None:
 @pytest.mark.asyncio
 async def test_B15_self_upgrade_cli_probe_failure(tmp_path: Path) -> None:
     """B15 negative case."""
-    from workspace_bootstrap import (
+    from loam.workspace_bootstrap import (
         AdapterRaisedError,
         IPC_BOOTSTRAP_ADAPTER_RAISED,
     )
@@ -447,7 +447,7 @@ async def test_B17_workspace_bootstrap_py_missing_non_required(tmp_path: Path) -
 @pytest.mark.asyncio
 async def test_B17_workspace_bootstrap_py_missing_required_fails(tmp_path: Path) -> None:
     """B17: missing bootstrap.py with required=True raises -32086."""
-    from workspace_bootstrap import AdapterRaisedError
+    from loam.workspace_bootstrap import AdapterRaisedError
 
     _write_orchestrator_yaml(tmp_path)
     (tmp_path / "config" / "memory.yaml").write_text(

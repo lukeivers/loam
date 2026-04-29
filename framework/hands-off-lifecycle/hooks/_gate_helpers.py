@@ -104,7 +104,7 @@ _CARVE_OUT_FILES: frozenset[str] = frozenset(
         ".gitignore",
         "framework/.gitignore",
         "docs/odd-methodology.md",
-        "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
     }
@@ -215,8 +215,8 @@ def open_tracker_or_none(workspace_root: Path) -> Any | None:
                 site_pkgs = site_dir / "site-packages"
                 if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
                     sys.path.insert(0, str(site_pkgs))
-        from objective_tracker import ObjectiveTracker  # type: ignore[import-not-found]
-        from workspace_bootstrap.workspace_paths import (  # type: ignore[import-not-found]
+        from loam.objective_tracker import ObjectiveTracker  # type: ignore[import-not-found]
+        from loam.workspace_bootstrap.workspace_paths import (  # type: ignore[import-not-found]
             tracker_db_path,
         )
 

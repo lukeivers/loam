@@ -25,9 +25,9 @@ sys.path.insert(0, str(HOOKS_DIR))
 from first_run_settings import merge_pre_tool_use  # noqa: E402
 
 
-def _a2_stanza(pos_v2_root: Path) -> dict:
+def _a2_stanza(loam_root: Path) -> dict:
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -46,9 +46,9 @@ def _a2_stanza(pos_v2_root: Path) -> dict:
     }
 
 
-def _a3_stanza(pos_v2_root: Path) -> dict:
+def _a3_stanza(loam_root: Path) -> dict:
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -67,9 +67,9 @@ def _a3_stanza(pos_v2_root: Path) -> dict:
     }
 
 
-def _a4_bash_stanza(pos_v2_root: Path) -> dict:
+def _a4_bash_stanza(loam_root: Path) -> dict:
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -88,9 +88,9 @@ def _a4_bash_stanza(pos_v2_root: Path) -> dict:
     }
 
 
-def _a4_task_stanza(pos_v2_root: Path) -> dict:
+def _a4_task_stanza(loam_root: Path) -> dict:
     script = (
-        pos_v2_root
+        loam_root
         / "framework"
         / "hands-off-lifecycle"
         / "hooks"
@@ -302,12 +302,12 @@ def test_AC_A4_settings_merge_marker_tuple_includes_a4(
     """The pos-v2-owned marker tuple includes the A4 hook script
     paths (regression: re-merge admits the A4 stanzas as pos-v2-
     owned without backup)."""
-    from first_run_settings import _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS
+    from first_run_settings import _LOAM_PRE_TOOL_USE_COMMAND_MARKERS
 
-    assert "objective_binding_gate.py" in _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS
-    assert "tdd_guard.py" in _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS
-    assert "bash_guard.py" in _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS
-    assert "agent_guard.py" in _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS
+    assert "objective_binding_gate.py" in _LOAM_PRE_TOOL_USE_COMMAND_MARKERS
+    assert "tdd_guard.py" in _LOAM_PRE_TOOL_USE_COMMAND_MARKERS
+    assert "bash_guard.py" in _LOAM_PRE_TOOL_USE_COMMAND_MARKERS
+    assert "agent_guard.py" in _LOAM_PRE_TOOL_USE_COMMAND_MARKERS
 
 
 def test_AC_A4_helper_stanza_builders_present(tmp_path: Path) -> None:

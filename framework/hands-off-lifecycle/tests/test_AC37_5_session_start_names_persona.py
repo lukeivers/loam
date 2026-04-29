@@ -128,7 +128,7 @@ def test_AC37_5_handle_and_given_name_present_on_disk(
     if str(src_path) not in sys.path:
         sys.path.insert(0, str(src_path))
     try:
-        from primary_persona import PersonaLoader  # type: ignore
+        from loam.primary_persona import PersonaLoader  # type: ignore
 
         loaded = PersonaLoader(workspace_root=workspace_with_persona).primary()
         given_name = loaded.contract.given_name
@@ -160,13 +160,13 @@ def test_AC37_5_session_start_gate_payload_carries_given_name(
     if str(src_path) not in sys.path:
         sys.path.insert(0, str(src_path))
     try:
-        from primary_persona import (  # type: ignore
+        from loam.primary_persona import (  # type: ignore
             ComposedContextPayload,
             PersonaLoader,
             TriggerKind,
             compose_session_fields,
         )
-        from primary_persona.onboarding import (  # type: ignore
+        from loam.primary_persona.onboarding import (  # type: ignore
             STARTER_PENDING_MARKER,
             build_starter_pending_contributor,
         )

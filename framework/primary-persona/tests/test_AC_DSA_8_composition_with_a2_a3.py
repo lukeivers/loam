@@ -20,8 +20,8 @@ import types
 from datetime import datetime, timezone
 from pathlib import Path
 
-from primary_persona.dispatch_wrapper import NewACSpec
-from primary_persona.dispatch_wrapper import (
+from loam.primary_persona.dispatch_wrapper import NewACSpec
+from loam.primary_persona.dispatch_wrapper import (
     _write_stub_idempotent,
 )
 

@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona.introduction import ChannelKind, OneOnOneChannel
+from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
 
-from reversibility_primitive import RollbackNotifier
+from loam.reversibility_primitive import RollbackNotifier
 
 
 def test_R23_group_channel_rejected_at_oneononechannel() -> None:

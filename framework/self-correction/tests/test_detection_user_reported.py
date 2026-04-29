@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
-from self_correction import (
+from loam.self_correction import (
     SelfCorrectionController,
     TriggerSource,
     build_trigger_from_user_report,
@@ -42,7 +42,7 @@ def test_CR5_caller_authorization_refuses_non_primary(
 
 
 def test_CR5_empty_allowlist_is_fail_closed(tmp_path) -> None:
-    from self_correction import CorrectionConfig, CorrectionStore
+    from loam.self_correction import CorrectionConfig, CorrectionStore
     controller = SelfCorrectionController(
         store=CorrectionStore(tmp_path / "fail_closed.sqlite"),
         config=CorrectionConfig(),

@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "primary_persona"
+name = "loam-primary-persona"
 version = "0.1.0"
 description = "Primary-persona layer for pOS v2 — loader, background-work monitor, and autonomous authoring framework."
 requires-python = ">=3.11"
@@ -22,9 +22,9 @@ dependencies = [
     # with memory-system's pin.
     "mcp==1.27.0",
     # In-workspace dependency on scope-of-work (D0 amendment required).
-    "scope_of_work",
+    "loam-scope-of-work",
 ]
 
 [tool.setuptools]
-package-dir = {"primary_persona" = "src"}
-packages = ["primary_persona"]
+package-dir = {"loam.primary_persona" = "src/loam/primary_persona"}
+packages = ["loam.primary_persona"]

@@ -26,9 +26,9 @@ import pytest
 # `--merge-resolver-module`. Import the module here so canned-verdict
 # config + invocation-log access is available to tests.
 import _stub_resolver
-from workspace_sync.cli import main as cli_main
-from workspace_sync.merge_resolver import MergeVerdict
-from workspace_sync.state import SyncOutcome, load_state
+from loam.workspace_sync.cli import main as cli_main
+from loam.workspace_sync.merge_resolver import MergeVerdict
+from loam.workspace_sync.state import SyncOutcome, load_state
 
 
 def _git(args: list[str], *, cwd: Path) -> str:
@@ -445,7 +445,7 @@ def test_AC_D_3_6_retired_modules_absent():
     src = (
         Path(__file__).resolve().parent.parent
         / "src"
-        / "workspace_sync"
+        / "loam" / "workspace_sync"
     )
     retired = [
         "ancestor_detection.py",
@@ -468,7 +468,7 @@ def test_AC_D_3_6_retained_modules_present():
     src = (
         Path(__file__).resolve().parent.parent
         / "src"
-        / "workspace_sync"
+        / "loam" / "workspace_sync"
     )
     retained = [
         "__init__.py",
@@ -493,7 +493,7 @@ def test_AC_D_3_6_cli_does_not_import_retired_modules():
     cli_path = (
         Path(__file__).resolve().parent.parent
         / "src"
-        / "workspace_sync"
+        / "loam" / "workspace_sync"
         / "cli.py"
     )
     text = cli_path.read_text()
@@ -522,7 +522,7 @@ def test_AC_D_3_6_cli_does_not_import_retired_modules():
 
 def test_workspace_root_derivation_post_D(tmp_path: Path):
     """derive_workspace_root accepts framework/.git/ marker (post-D)."""
-    from workspace_sync.cli import derive_workspace_root
+    from loam.workspace_sync.cli import derive_workspace_root
 
     ws = tmp_path / "ws"
     (ws / "framework" / ".git").mkdir(parents=True)
@@ -533,7 +533,7 @@ def test_workspace_root_derivation_post_D(tmp_path: Path):
 def test_workspace_root_derivation_post_D2(tmp_path: Path):
     """derive_workspace_root accepts workspace/.pos/sync-protected.yaml
     marker (post-D.2)."""
-    from workspace_sync.cli import derive_workspace_root
+    from loam.workspace_sync.cli import derive_workspace_root
 
     ws = tmp_path / "ws"
     sp = ws / "workspace" / ".pos" / "sync-protected.yaml"
@@ -546,7 +546,7 @@ def test_workspace_root_derivation_post_D2(tmp_path: Path):
 def test_workspace_root_derivation_pre_D2_back_compat(tmp_path: Path):
     """derive_workspace_root accepts .pos/sync-protected.yaml marker
     (pre-D.2 back-compat)."""
-    from workspace_sync.cli import derive_workspace_root
+    from loam.workspace_sync.cli import derive_workspace_root
 
     ws = tmp_path / "ws"
     sp = ws / ".pos" / "sync-protected.yaml"
@@ -559,7 +559,7 @@ def test_workspace_root_derivation_pre_D2_back_compat(tmp_path: Path):
 def test_workspace_root_derivation_no_marker_fails(tmp_path: Path):
     """derive_workspace_root halts with structured error when no marker
     is present."""
-    from workspace_sync.cli import (
+    from loam.workspace_sync.cli import (
         WorkspaceRootError,
         derive_workspace_root,
     )

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from self_upgrade.manifest import (
+from loam.self_upgrade.manifest import (
     BreakingChange,
     ChangeKind,
     ComponentSchema,

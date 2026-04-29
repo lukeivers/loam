@@ -10,7 +10,7 @@ import sys
 def test_R22_no_tracerprovider_constructed() -> None:
     """Grep the source — no TracerProvider/TracerProvider() instantiation
     inside the primitive."""
-    import reversibility_primitive as rp
+    import loam.reversibility_primitive as rp
 
     # Scan every source file listed under the package.
     import pathlib
@@ -31,7 +31,7 @@ def test_R22_no_tracerprovider_constructed() -> None:
 def test_R22_uses_get_tracer() -> None:
     """Sanity — the emitter uses opentelemetry.trace.get_tracer, which
     reads whatever provider the observability-aggregator installs."""
-    from reversibility_primitive import observability as obs
+    from loam.reversibility_primitive import observability as obs
 
     import inspect
 

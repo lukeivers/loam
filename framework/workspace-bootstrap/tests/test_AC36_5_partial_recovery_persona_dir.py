@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     DEFAULT_PERSONA_HANDLE,
     PartialScaffoldError,
     _install_persona_directory,

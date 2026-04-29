@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from objective_tracker import (
+from loam.objective_tracker import (
     LiftedFrom,
     ObjectiveSpec,
     ObjectiveTracker,
@@ -28,7 +28,7 @@ from objective_tracker import (
     TimeBound,
 )
 
-from workspace_bootstrap.adapters.tracker_seed import (
+from loam.workspace_bootstrap.adapters.tracker_seed import (
     FRAMEWORK_VALUE_PROP_RELPATH,
     ROOT_OBJECTIVE_ID,
     SPEC_DOC_RELPATH,
@@ -66,8 +66,8 @@ def _build_workspace(tmp_path: Path) -> tuple[Path, Path]:
 def _seed_dev_intent_contract(workspace: Path) -> None:
     """Pre-create a persona contract carrying ``dev_intent: yes`` so
     sub-plan E's ``classify_workspace`` reads "pos-v2-dev"."""
-    from primary_persona.contract import PersonaContract
-    from primary_persona.onboarding import dev_intent_storage_path
+    from loam.primary_persona.contract import PersonaContract
+    from loam.primary_persona.onboarding import dev_intent_storage_path
 
     personas_dir = dev_intent_storage_path(workspace)
     persona_dir = personas_dir / "primary"

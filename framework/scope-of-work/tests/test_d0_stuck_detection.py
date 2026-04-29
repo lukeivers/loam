@@ -20,16 +20,16 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.events import ScopeCreated
-from src.projection import project
-from src.spec import (
+from loam.scope_of_work.events import ScopeCreated
+from loam.scope_of_work.projection import project
+from loam.scope_of_work.spec import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
     ScopeState,
     SuccessCriterion,
 )
-from src.triggers import is_stuck, seconds_since_first_activation
+from loam.scope_of_work.triggers import is_stuck, seconds_since_first_activation
 from tests.conftest import make_spec
 
 
@@ -189,8 +189,8 @@ async def test_list_stuck_filter_identifies_stuck_scope(runtime, monkeypatch):
 
     # Advance wall-clock: patch `datetime.now` in the is_stuck /
     # elapsed helpers to simulate the scope exceeding 2× expected.
-    import src.triggers as triggers_mod
-    import src.projection_view as projection_view_mod
+    import loam.scope_of_work.triggers as triggers_mod
+    import loam.scope_of_work.projection_view as projection_view_mod
 
     real_now = datetime.now(timezone.utc)
     fake_now = real_now + timedelta(seconds=5)

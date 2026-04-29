@@ -47,7 +47,7 @@ def test_AC_AG_2_long_prompt_denies(tmp_path, monkeypatch) -> None:
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": long_prompt},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision == "deny"
     assert decision.failure_class == "method-enumerated-prompt"
@@ -65,7 +65,7 @@ def test_AC_AG_2_at_threshold_admitted(tmp_path, monkeypatch) -> None:
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": "a" * 2500},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision in ("allow", "no-op")
 
@@ -78,7 +78,7 @@ def test_AC_AG_2_short_prompt_admitted(tmp_path, monkeypatch) -> None:
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": "Find the bug in this file."},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision in ("allow", "no-op")
 
@@ -106,7 +106,7 @@ def test_AC_AG_2_reason_names_repair_direction(
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": "x" * 3000},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision == "deny"
     # Repair direction names plan-doc / extraction.

@@ -5,15 +5,15 @@ Ruling #2 locks the specific code and reason."""
 from __future__ import annotations
 
 import pytest
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
-from reversibility_primitive import (
+from loam.reversibility_primitive import (
     CompensationPathBinding,
     IPC_REVERSIBILITY_NOT_ACTIVATED,
     RollbackContext,
     RollbackResult,
 )
-from scope_of_work import ReversibilityClass
+from loam.scope_of_work import ReversibilityClass
 
 from .conftest import make_spec
 

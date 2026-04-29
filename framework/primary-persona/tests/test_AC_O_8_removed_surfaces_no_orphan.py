@@ -52,7 +52,7 @@ def test_AC_O_8_removed_names_not_importable_from_onboarding_module():
     """Each removed symbol is not an attribute on
     ``primary_persona.onboarding`` (resolved via the local ``src``
     package alias used by the test layer)."""
-    onboarding = importlib.import_module("src.onboarding")
+    onboarding = importlib.import_module("loam.primary_persona.onboarding")
     for name in REMOVED_NAMES:
         assert not hasattr(onboarding, name), (
             f"removed symbol {name!r} still on onboarding module"

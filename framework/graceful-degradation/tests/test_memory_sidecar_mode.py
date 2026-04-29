@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import pytest
 
-from src.config import DegradationConfig
-from src.detection import DegradationDetector
-from src.errors import DegradationSignal
-from src.fsm import DegradationMode, FSMState
+from loam.graceful_degradation.config import DegradationConfig
+from loam.graceful_degradation.detection import DegradationDetector
+from loam.graceful_degradation.errors import DegradationSignal
+from loam.graceful_degradation.fsm import DegradationMode, FSMState
 
 
 @pytest.mark.asyncio
@@ -72,7 +72,7 @@ async def test_adapter_path_untouched_by_memory_sidecar_amendment() -> None:
     `down` mode; it MUST NOT trip the new memory_sidecar mode (whose
     accepted_signals are memory_sidecar_down only).
     """
-    from src.adapter import AdapterEvent
+    from loam.graceful_degradation.adapter import AdapterEvent
 
     cfg = DegradationConfig()
     det = DegradationDetector.from_config(cfg)

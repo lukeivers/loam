@@ -16,21 +16,21 @@ from __future__ import annotations
 
 import pytest
 
-from graceful_degradation import (
+from loam.graceful_degradation import (
     DegradationConfig,
     DegradationMode,
     DegradationNotification,
     DegradationNotifier,
     NotificationTier,
 )
-from graceful_degradation.notification import (
+from loam.graceful_degradation.notification import (
     DegradationChannel,
     NarrativeRenderer,
     ThresholdEvaluator,
     ThresholdTrigger,
     tier_for_mode,
 )
-from primary_persona.introduction import ChannelKind, OneOnOneChannel
+from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
 
 from .fakes import make_capture_channel
 

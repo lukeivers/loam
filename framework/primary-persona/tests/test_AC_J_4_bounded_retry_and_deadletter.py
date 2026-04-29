@@ -20,8 +20,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from src import memory_write_queue as mwq
-from src import memory_write_worker as mww
+from loam.primary_persona import memory_write_queue as mwq
+from loam.primary_persona import memory_write_worker as mww
 
 
 class _AlwaysFails:

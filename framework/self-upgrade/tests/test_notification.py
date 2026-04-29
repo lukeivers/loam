@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from self_upgrade.notification import (
+from loam.self_upgrade.notification import (
     ConfirmationDecision,
     InMemoryChannel,
     notify_accepted,

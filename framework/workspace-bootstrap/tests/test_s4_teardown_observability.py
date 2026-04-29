@@ -21,7 +21,7 @@ from typing import Any
 
 import pytest
 
-from workspace_bootstrap.host import BootstrapHost
+from loam.workspace_bootstrap.host import BootstrapHost
 
 
 def _make_host(tmp_path: Path) -> BootstrapHost:
@@ -55,10 +55,10 @@ class _RaisingConn:
 def test_s4_aggregator_adapter_processor_shutdown_surfaces(tmp_path, caplog):
     """observability_aggregator adapter's _shutdown emits when
     processor.shutdown() raises. Exporter.shutdown still runs."""
-    from workspace_bootstrap.adapters.observability_aggregator import (
+    from loam.workspace_bootstrap.adapters.observability_aggregator import (
         ObservabilityAggregatorContribution,
     )
-    import workspace_bootstrap.adapters.observability_aggregator as adapter_mod
+    import loam.workspace_bootstrap.adapters.observability_aggregator as adapter_mod
 
     host = _make_host(tmp_path)
 
@@ -78,7 +78,7 @@ def test_s4_aggregator_adapter_processor_shutdown_surfaces(tmp_path, caplog):
 
     # register_otel_provider is imported lazily inside contribute;
     # monkey-patch on the source module.
-    from pos_observability_aggregator import ingest as ingest_mod
+    from loam.observability_aggregator import ingest as ingest_mod
 
     monkeypatched = ingest_mod.register_otel_provider
     ingest_mod.register_otel_provider = _fake_register  # type: ignore[assignment]
@@ -90,13 +90,13 @@ def test_s4_aggregator_adapter_processor_shutdown_surfaces(tmp_path, caplog):
     hook = _find_hook(host, "observability_aggregator")
     with caplog.at_level(
         logging.DEBUG,
-        logger="workspace_bootstrap.adapters.observability_aggregator",
+        logger="loam.workspace_bootstrap.adapters.observability_aggregator",
     ):
         hook()
 
     matching = [
         r for r in caplog.records
-        if r.name == "workspace_bootstrap.adapters.observability_aggregator"
+        if r.name == "loam.workspace_bootstrap.adapters.observability_aggregator"
         and r.message == "aggregator_processor_shutdown_failed"
     ]
     assert len(matching) == 1
@@ -104,7 +104,7 @@ def test_s4_aggregator_adapter_processor_shutdown_surfaces(tmp_path, caplog):
 
 
 def test_s4_aggregator_adapter_exporter_shutdown_surfaces(tmp_path, caplog):
-    from workspace_bootstrap.adapters.observability_aggregator import (
+    from loam.workspace_bootstrap.adapters.observability_aggregator import (
         ObservabilityAggregatorContribution,
     )
 
@@ -121,7 +121,7 @@ def test_s4_aggregator_adapter_exporter_shutdown_surfaces(tmp_path, caplog):
     def _fake_register(spool_path, resource_attrs=None):
         return (object(), _OkProcessor(), _RaisingExporter())
 
-    from pos_observability_aggregator import ingest as ingest_mod
+    from loam.observability_aggregator import ingest as ingest_mod
 
     orig = ingest_mod.register_otel_provider
     ingest_mod.register_otel_provider = _fake_register  # type: ignore[assignment]
@@ -133,13 +133,13 @@ def test_s4_aggregator_adapter_exporter_shutdown_surfaces(tmp_path, caplog):
     hook = _find_hook(host, "observability_aggregator")
     with caplog.at_level(
         logging.DEBUG,
-        logger="workspace_bootstrap.adapters.observability_aggregator",
+        logger="loam.workspace_bootstrap.adapters.observability_aggregator",
     ):
         hook()
 
     matching = [
         r for r in caplog.records
-        if r.name == "workspace_bootstrap.adapters.observability_aggregator"
+        if r.name == "loam.workspace_bootstrap.adapters.observability_aggregator"
         and r.message == "aggregator_exporter_shutdown_failed"
     ]
     assert len(matching) == 1
@@ -151,7 +151,7 @@ def test_s4_aggregator_adapter_exporter_shutdown_surfaces(tmp_path, caplog):
 def test_s4_memory_system_adapter_terminate_surfaces(tmp_path, caplog):
     """memory_system adapter's _shutdown emits when proc.terminate
     raises; then falls back to kill() (kill success = only one emission)."""
-    from workspace_bootstrap.adapters.memory_system import (
+    from loam.workspace_bootstrap.adapters.memory_system import (
         MemorySystemContribution,
     )
 
@@ -187,7 +187,7 @@ def test_s4_memory_system_adapter_terminate_surfaces(tmp_path, caplog):
         def __exit__(self, *args):
             return False
 
-    import workspace_bootstrap.adapters.memory_system as adapter_mod
+    import loam.workspace_bootstrap.adapters.memory_system as adapter_mod
 
     orig_popen = subprocess.Popen
     orig_urlopen = adapter_mod.urllib.request.urlopen
@@ -208,13 +208,13 @@ def test_s4_memory_system_adapter_terminate_surfaces(tmp_path, caplog):
 
     hook = _find_hook(host, "memory_system")
     with caplog.at_level(
-        logging.DEBUG, logger="workspace_bootstrap.adapters.memory_system"
+        logging.DEBUG, logger="loam.workspace_bootstrap.adapters.memory_system"
     ):
         hook()
 
     matching = [
         r for r in caplog.records
-        if r.name == "workspace_bootstrap.adapters.memory_system"
+        if r.name == "loam.workspace_bootstrap.adapters.memory_system"
         and r.message == "memory_system_adapter_terminate_failed"
     ]
     assert len(matching) == 1
@@ -229,7 +229,7 @@ def test_s4_memory_system_adapter_terminate_surfaces(tmp_path, caplog):
 
 def test_s4_memory_system_adapter_kill_also_surfaces(tmp_path, caplog):
     """When both terminate AND kill raise, BOTH emissions fire."""
-    from workspace_bootstrap.adapters.memory_system import (
+    from loam.workspace_bootstrap.adapters.memory_system import (
         MemorySystemContribution,
     )
 
@@ -260,7 +260,7 @@ def test_s4_memory_system_adapter_kill_also_surfaces(tmp_path, caplog):
         def __exit__(self, *args):
             return False
 
-    import workspace_bootstrap.adapters.memory_system as adapter_mod
+    import loam.workspace_bootstrap.adapters.memory_system as adapter_mod
 
     orig_popen = subprocess.Popen
     orig_urlopen = adapter_mod.urllib.request.urlopen
@@ -277,7 +277,7 @@ def test_s4_memory_system_adapter_kill_also_surfaces(tmp_path, caplog):
 
     hook = _find_hook(host, "memory_system")
     with caplog.at_level(
-        logging.DEBUG, logger="workspace_bootstrap.adapters.memory_system"
+        logging.DEBUG, logger="loam.workspace_bootstrap.adapters.memory_system"
     ):
         hook()
 
@@ -295,25 +295,25 @@ def test_s4_memory_system_adapter_kill_also_surfaces(tmp_path, caplog):
         (
             "safety_layer",
             "safety_layer",
-            "workspace_bootstrap.adapters.safety_layer",
+            "loam.workspace_bootstrap.adapters.safety_layer",
             "safety_layer_adapter_shutdown_failed",
         ),
         (
             "cost_governance",
             "cost_governance",
-            "workspace_bootstrap.adapters.cost_governance",
+            "loam.workspace_bootstrap.adapters.cost_governance",
             "cost_governance_adapter_shutdown_failed",
         ),
         (
             "self_correction",
             "self_correction",
-            "workspace_bootstrap.adapters.self_correction",
+            "loam.workspace_bootstrap.adapters.self_correction",
             "self_correction_adapter_shutdown_failed",
         ),
         (
             "reversibility_primitive",
             "reversibility_primitive",
-            "workspace_bootstrap.adapters.reversibility_primitive",
+            "loam.workspace_bootstrap.adapters.reversibility_primitive",
             "reversibility_primitive_adapter_shutdown_failed",
         ),
     ],
@@ -331,7 +331,7 @@ def test_s4_store_close_adapter_shutdown_surfaces(
     import importlib
 
     adapter_mod = importlib.import_module(
-        f"workspace_bootstrap.adapters.{adapter_name}"
+        f"loam.workspace_bootstrap.adapters.{adapter_name}"
     )
     logger = logging.getLogger(logger_name)
 
@@ -375,11 +375,11 @@ def test_s4_all_adapter_modules_expose_module_logger():
         "reversibility_primitive",
     ):
         mod = importlib.import_module(
-            f"workspace_bootstrap.adapters.{name}"
+            f"loam.workspace_bootstrap.adapters.{name}"
         )
         assert hasattr(mod, "_LOGGER"), f"{name} missing _LOGGER"
         assert mod._LOGGER.name == (
-            f"workspace_bootstrap.adapters.{name}"
+            f"loam.workspace_bootstrap.adapters.{name}"
         ), f"{name} logger name mismatch: {mod._LOGGER.name}"
 
 
@@ -389,7 +389,7 @@ def test_s4_primary_persona_adapter_logger_emits():
     _LOGGER directly, mirroring the closure's emission call."""
     import asyncio
 
-    import workspace_bootstrap.adapters.primary_persona as adapter_mod
+    import loam.workspace_bootstrap.adapters.primary_persona as adapter_mod
 
     async def _simulate():
         try:
@@ -401,7 +401,7 @@ def test_s4_primary_persona_adapter_logger_emits():
             )
 
     import logging as _logging
-    handler_name = "workspace_bootstrap.adapters.primary_persona"
+    handler_name = "loam.workspace_bootstrap.adapters.primary_persona"
     records: list[_logging.LogRecord] = []
 
     class _H(_logging.Handler):

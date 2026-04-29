@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from self_upgrade.paths import Paths
-from self_upgrade.rollback import RollbackFailed, rollback
-from self_upgrade.snapshot import capture_substrate_snapshots
+from loam.self_upgrade.paths import Paths
+from loam.self_upgrade.rollback import RollbackFailed, rollback
+from loam.self_upgrade.snapshot import capture_substrate_snapshots
 
 
 def _seed_substrate(p: Paths) -> None:
@@ -170,7 +170,7 @@ def test_rollback_round_trip_matches_pre_upgrade(ready_paths: Paths) -> None:
     round-trips the pre-upgrade probe results.
 
     We use the substrate-hash probe (cheap, deterministic)."""
-    from self_upgrade.probes import post_upgrade_probe_hashes
+    from loam.self_upgrade.probes import post_upgrade_probe_hashes
 
     pre = post_upgrade_probe_hashes(ready_paths)
 

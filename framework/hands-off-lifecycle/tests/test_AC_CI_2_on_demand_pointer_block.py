@@ -45,7 +45,7 @@ def _make_dev_mode_workspace(
         (docs_dir / "odd-methodology.md").write_text(
             "# odd-methodology\n", encoding="utf-8"
         )
-        (docs_dir / "odd-in-pos.md").write_text(
+        (docs_dir / "odd-in-loam.md").write_text(
             "# odd-in-pos\n", encoding="utf-8"
         )
         (rebuild_dir / "FUTURE_IDEAS.md").write_text(
@@ -79,7 +79,7 @@ def test_AC_CI_2_emits_on_demand_pointer_block(tmp_path: Path) -> None:
     assert rc == 0
     assert "=== pos-v2 on-demand corpus" in stdout
     assert "- docs/odd-methodology.md" in stdout
-    assert "- docs/odd-in-pos.md" in stdout
+    assert "- docs/odd-in-loam.md" in stdout
     assert "- docs/rebuild/FUTURE_IDEAS.md" in stdout
 
 
@@ -100,7 +100,7 @@ def test_AC_CI_2_omits_missing_on_demand_files(tmp_path: Path) -> None:
     assert "- docs/odd-methodology.md" not in block
     assert "[missing]" not in block.split("=== pos-v2 on-demand corpus")[1]
     # Other on-demand files still listed.
-    assert "- docs/odd-in-pos.md" in block
+    assert "- docs/odd-in-loam.md" in block
     assert "- docs/rebuild/FUTURE_IDEAS.md" in block
 
 

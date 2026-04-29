@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from self_upgrade.orchestrator_control import (
+from loam.self_upgrade.orchestrator_control import (
     OrchestratorControlError,
     atomic_symlink_swap,
     read_orchestrator_pid,

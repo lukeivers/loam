@@ -30,8 +30,8 @@ import json
 import sys
 from pathlib import Path
 
-from src.context_composer import ADDITIONAL_CONTEXT_CAP
-from src.session_start_emitter import (
+from loam.primary_persona.context_composer import ADDITIONAL_CONTEXT_CAP
+from loam.primary_persona.session_start_emitter import (
     cli_session_start,
     emit_session_start_context,
 )
@@ -45,7 +45,7 @@ def _seed_workspace(root: Path, *, with_starter_persona: bool = True) -> None:
         "## Session-start discipline\n\n"
         "Before acting, read:\n\n"
         "- `docs/odd-methodology.md`\n"
-        "- `docs/odd-in-pos.md`\n"
+        "- `docs/odd-in-loam.md`\n"
         "- `docs/rebuild/VALUE_PROPOSITION.md`\n"
         "- `docs/rebuild/STATE.md`\n"
         "- `docs/rebuild/FUTURE_IDEAS.md`\n"
@@ -53,7 +53,7 @@ def _seed_workspace(root: Path, *, with_starter_persona: bool = True) -> None:
     )
     (root / "docs").mkdir()
     (root / "docs" / "odd-methodology.md").write_text("odd")
-    (root / "docs" / "odd-in-pos.md").write_text("in-pos")
+    (root / "docs" / "odd-in-loam.md").write_text("in-pos")
     (root / "docs" / "rebuild").mkdir()
     (root / "docs" / "rebuild" / "VALUE_PROPOSITION.md").write_text("vp")
     (root / "docs" / "rebuild" / "STATE.md").write_text("state")
@@ -111,7 +111,7 @@ def test_AC46_1_payload_carries_corpus_paths(tmp_path: Path) -> None:
     text = emit_session_start_context(tmp_path)
     assert "CLAUDE.md" in text
     assert "docs/odd-methodology.md" in text
-    assert "docs/odd-in-pos.md" in text
+    assert "docs/odd-in-loam.md" in text
     assert "corpus_gate_state" in text
 
 

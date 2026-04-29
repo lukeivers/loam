@@ -9,9 +9,9 @@ verbatim (or in derived shape).
 
 from __future__ import annotations
 
-from primary_persona import DispatchShape
-from primary_persona.dispatch_wrapper import _build_scope_spec
-from scope_of_work import (
+from loam.primary_persona import DispatchShape
+from loam.primary_persona.dispatch_wrapper import _build_scope_spec
+from loam.scope_of_work import (
     Budget,
     ReversibilityClass,
     ScopeSpec,

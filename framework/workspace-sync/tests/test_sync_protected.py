@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from workspace_sync.sync_protected import (
+from loam.workspace_sync.sync_protected import (
     FRAMEWORK_FLOOR,
     FileClass,
     SyncProtected,

@@ -10,8 +10,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.runtime import ObjectiveTracker  # noqa: E402
-from src.spec import (  # noqa: E402
+from loam.objective_tracker.runtime import ObjectiveTracker  # noqa: E402
+from loam.objective_tracker.spec import (  # noqa: E402
     ObjectiveSpec,
     ParentClosePolicy,
     ProseCriterion,

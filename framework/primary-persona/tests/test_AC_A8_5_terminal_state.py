@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona import (
+from loam.primary_persona import (
     DispatchOutcome,
     DispatchShape,
     dispatch_with_scope,
@@ -30,7 +30,7 @@ async def test_AC_A8_5_completed_on_agent_success(monkeypatch, tmp_path):
     workspace = make_workspace(tmp_path)
     client = StubIPCClient()
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 
@@ -58,7 +58,7 @@ async def test_AC_A8_5_failed_when_agent_raises(monkeypatch, tmp_path):
     workspace = make_workspace(tmp_path)
     client = StubIPCClient()
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 

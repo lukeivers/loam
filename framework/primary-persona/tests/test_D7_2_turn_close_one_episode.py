@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from src.memory_consumer import TurnAggregator, resolve_workspace_slug
+from loam.primary_persona.memory_consumer import TurnAggregator, resolve_workspace_slug
 
 from _helpers_d7 import FakeMemoryClient
 

@@ -41,7 +41,7 @@ The research's prototyping priorities (§5 item 6, §9 retrieval test-set) propo
 **Implication for adaptation scope (§5 item 6 — "Retrieval test set"):** the item is not owner-curation from the owner's history; it is synthetic-data generation with owner-curated ground-truth labels. Complexity estimate shifts upward: generating synthetic Q/A pairs that test the retrieval features meaningfully (multi-hop, context-aware, temporal) requires deliberate design, not mining. This becomes the #1 prototyping-phase design task.
 
 ---
-**Spec scored against:** `docs/rebuild/spec/pos-v2-objectives-spec.md` v1.0 (LOCKED), *Knowledge — accrual and retrieval* section plus self-upgrade clause U1.
+**Spec scored against:** `docs/rebuild/spec/loam-objectives-spec.md` v1.0 (LOCKED), *Knowledge — accrual and retrieval* section plus self-upgrade clause U1.
 
 ---
 

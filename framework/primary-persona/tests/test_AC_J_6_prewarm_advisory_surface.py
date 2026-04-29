@@ -19,8 +19,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from src import memory_prewarm
-from src import memory_write_queue as mwq
+from loam.primary_persona import memory_prewarm
+from loam.primary_persona import memory_write_queue as mwq
 
 
 def _write_advisory(workspace_root: Path, value: str = "24h") -> None:

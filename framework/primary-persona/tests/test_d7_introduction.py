@@ -21,16 +21,16 @@ from typing import Any
 
 import pytest
 
-from src.authoring import AuthoringOutcome, AuthoringPipeline, LLMResult
-from src.contract import PersonaContract, load_contract
-from src.creation_triggers import TriggerSignal
-from src.introduction import (
+from loam.primary_persona.authoring import AuthoringOutcome, AuthoringPipeline, LLMResult
+from loam.primary_persona.contract import PersonaContract, load_contract
+from loam.primary_persona.creation_triggers import TriggerSignal
+from loam.primary_persona.introduction import (
     ChannelKind,
     IntroductionDispatcher,
     IntroductionOutcome,
     OneOnOneChannel,
 )
-from src.loader import LoadedPersona, PersonaLoader
+from loam.primary_persona.loader import LoadedPersona, PersonaLoader
 
 from tests.conftest import VALID_CONTRACT_YAML, write_persona_dir
 
@@ -295,8 +295,8 @@ async def test_authored_persona_is_not_addressable_until_acknowledged(
 ):
     """Integration: authoring pipeline persists a pending persona;
     the introduction protocol guards it until acknowledged."""
-    from scope_of_work.runtime import ScopeRuntime
-    from scope_of_work.spec import Budget, ScopeSpec, SuccessCriterion, ReversibilityClass
+    from loam.scope_of_work.runtime import ScopeRuntime
+    from loam.scope_of_work.spec import Budget, ScopeSpec, SuccessCriterion, ReversibilityClass
     import json as _json
 
     rt = ScopeRuntime(db_path=tmp_path / "scope.db")

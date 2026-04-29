@@ -21,21 +21,21 @@ from pathlib import Path
 
 import pytest
 
-from scope_of_work.runtime import ScopeRuntime
-from scope_of_work.spec import (
+from loam.scope_of_work.runtime import ScopeRuntime
+from loam.scope_of_work.spec import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
     SuccessCriterion,
 )
 
-from src.authoring import AuthoringPipeline, LLMResult
-from src.creation_triggers import TriggerSignal
-from src.introduction import ChannelKind, IntroductionDispatcher, OneOnOneChannel
-from src.loader import LoadedPersona, PersonaLoader
-from src.monitor import BackgroundWorkMonitor
-from src.retirement import RetirementReason, retire_persona
-from src.contract import load_contract
+from loam.primary_persona.authoring import AuthoringPipeline, LLMResult
+from loam.primary_persona.creation_triggers import TriggerSignal
+from loam.primary_persona.introduction import ChannelKind, IntroductionDispatcher, OneOnOneChannel
+from loam.primary_persona.loader import LoadedPersona, PersonaLoader
+from loam.primary_persona.monitor import BackgroundWorkMonitor
+from loam.primary_persona.retirement import RetirementReason, retire_persona
+from loam.primary_persona.contract import load_contract
 
 from tests.conftest import VALID_CONTRACT_YAML, write_persona_dir
 
@@ -60,7 +60,7 @@ def test_loader_emits_span(
 def test_loader_failure_span_records_missing_dir(
     tmp_path: Path, span_exporter_clean
 ):
-    from src.loader import PersonaDirectoryNotFoundError
+    from loam.primary_persona.loader import PersonaDirectoryNotFoundError
 
     loader = PersonaLoader(tmp_path, enforce_no_personas_in_core=False)
     with pytest.raises(PersonaDirectoryNotFoundError):

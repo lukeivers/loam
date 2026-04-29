@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         # Import late so that argument-parsing errors report cleanly
         # without requiring the adapter's dependencies to resolve.
-        from workspace_bootstrap.adapters.first_run_scaffold import (  # type: ignore
+        from loam.workspace_bootstrap.adapters.first_run_scaffold import (  # type: ignore
             run_first_run_scaffold,
         )
     except Exception as e:  # pragma: no cover — environment-dependent

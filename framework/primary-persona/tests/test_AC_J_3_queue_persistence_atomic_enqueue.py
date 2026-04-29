@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src import memory_write_queue as mwq
+from loam.primary_persona import memory_write_queue as mwq
 
 
 def test_AC_J_3_enqueue_is_atomic_no_tmp_left_behind(tmp_path: Path) -> None:

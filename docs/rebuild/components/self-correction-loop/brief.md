@@ -18,7 +18,7 @@ The work is greenfield Python on `pos-v2`. It consumes every sealed component �
 1. **This brief** — operational form of the objective, constraints, acceptance criteria.
 2. **`docs/rebuild/components/self-correction-loop/proposal.md`** — the contract approved. Binding. Halt and signal rather than deviate.
 3. **`docs/rebuild/components/self-correction-loop/research.md`** — design detail, prior-art survey, sequence diagrams, SQL schema, Pydantic shapes. Reference only; the proposal is the contract.
-4. **`docs/rebuild/spec/pos-v2-objectives-spec.md`** — spec v1.0 + v1.1 + v1.2 addenda.
+4. **`docs/rebuild/spec/loam-objectives-spec.md`** — spec v1.0 + v1.1 + v1.2 addenda.
 5. **`docs/rebuild/STATE.md`** — governing rules for the rebuild.
 6. **`prior-pOS .claude/rules/prime.md`** — the four-part correction protocol lives here as prose. This component structurally enforces it.
 

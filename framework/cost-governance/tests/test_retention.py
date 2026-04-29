@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from cost_governance import (
+from loam.cost_governance import (
     CostStore,
     Reservation,
     RollingRollup,

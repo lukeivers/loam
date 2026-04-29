@@ -35,12 +35,12 @@ def test_AC_M_10_add_episode_raises_writes_error_diag_returns_zero(
     and exits 0."""
     fake = FakeMemoryClient()
     fake.add_episode_raises = ConnectionRefusedError("memory unreachable")
-    import src.mcp_memory_client as mmc
+    import loam.primary_persona.mcp_memory_client as mmc
 
     monkeypatch.setattr(
         mmc, "build_live_mcp_memory_client", lambda root: fake
     )
-    from src.stop_emitter import cli_memory_write
+    from loam.primary_persona.stop_emitter import cli_memory_write
 
     rc = cli_memory_write(
         workspace_root=tmp_path,
@@ -62,12 +62,12 @@ def test_AC_M_10_no_live_client_logs_skip_returns_zero(
 ) -> None:
     """When the live client builder returns None, the child logs
     ``write-skip`` reason ``no-live-client`` and exits 0."""
-    import src.mcp_memory_client as mmc
+    import loam.primary_persona.mcp_memory_client as mmc
 
     monkeypatch.setattr(
         mmc, "build_live_mcp_memory_client", lambda root: None
     )
-    from src.stop_emitter import cli_memory_write
+    from loam.primary_persona.stop_emitter import cli_memory_write
 
     rc = cli_memory_write(
         workspace_root=tmp_path,
@@ -90,12 +90,12 @@ def test_AC_M_10_successful_write_logs_write_ok(
     """Happy path also lands a structured diagnostic — the operator
     can verify writes are happening by tailing the log."""
     fake = FakeMemoryClient()
-    import src.mcp_memory_client as mmc
+    import loam.primary_persona.mcp_memory_client as mmc
 
     monkeypatch.setattr(
         mmc, "build_live_mcp_memory_client", lambda root: fake
     )
-    from src.stop_emitter import cli_memory_write
+    from loam.primary_persona.stop_emitter import cli_memory_write
 
     rc = cli_memory_write(
         workspace_root=tmp_path,

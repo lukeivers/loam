@@ -81,7 +81,7 @@ def test_AC_M_7_cli_stop_returns_under_200ms_and_enqueues(
         }
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     started = time.monotonic()
     rc = cli_stop(workspace_root=tmp_path)
@@ -130,7 +130,7 @@ def test_AC_M_7_skipped_paths_do_not_enqueue(
         {"session_id": "s", "transcript_path": str(transcript)}
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     rc = cli_stop(workspace_root=tmp_path)
     assert rc == 0

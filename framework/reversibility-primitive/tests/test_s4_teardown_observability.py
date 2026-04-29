@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 
-from reversibility_primitive import ReversibilityStore
+from loam.reversibility_primitive import ReversibilityStore
 
 
 class _RaisingConn:
@@ -21,13 +21,13 @@ def test_s4_reversibility_store_close_surfaces_exception(tmp_path, caplog):
     store._conn = _RaisingConn()  # type: ignore[assignment]
 
     with caplog.at_level(
-        logging.DEBUG, logger="reversibility_primitive.store"
+        logging.DEBUG, logger="loam.reversibility_primitive.store"
     ):
         store.close()
 
     matching = [
         r for r in caplog.records
-        if r.name == "reversibility_primitive.store"
+        if r.name == "loam.reversibility_primitive.store"
         and r.message == "reversibility_store_close_failed"
     ]
     assert len(matching) == 1

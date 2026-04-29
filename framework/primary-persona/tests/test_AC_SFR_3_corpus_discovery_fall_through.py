@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.session_start_gate import (
+from loam.primary_persona.session_start_gate import (
     _resolve_corpus_path,
     compose_session_fields,
     discover_baseline_corpus,
@@ -212,7 +212,7 @@ def test_compose_session_fields_end_to_end_with_framework_fall_through(
 
     fields = compose_session_fields(workspace_root)
     # corpus_gate_state is loaded when every probed path is present.
-    from src.context_composer import CorpusGateState
+    from loam.primary_persona.context_composer import CorpusGateState
 
     assert fields["corpus_gate_state"] == CorpusGateState.loaded
     assert fields["missing_paths"] == ()

@@ -90,7 +90,7 @@ def make_workspace(tmp_path: Path):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(content)
         if seed_envelope:
-            from workspace_sync.sync_protected import write_default_if_absent
+            from loam.workspace_sync.sync_protected import write_default_if_absent
             (root / "workspace" / ".pos").mkdir(parents=True, exist_ok=True)
             write_default_if_absent(root)
         return root

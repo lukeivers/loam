@@ -23,11 +23,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from primary_persona.tracker_context import (
+from loam.primary_persona.tracker_context import (
     tracker_db_path_for as persona_tracker_db_path_for,
 )
 
-from workspace_bootstrap.adapters.tracker_seed import (
+from loam.workspace_bootstrap.adapters.tracker_seed import (
     TRACKER_DB_FILENAME,
     tracker_db_path_for,
 )

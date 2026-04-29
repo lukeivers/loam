@@ -29,7 +29,7 @@ How to add a new contribution to a pOS workspace without modifying
 2. **One entry-point declaration in your `pyproject.toml`.**
 
    ```toml
-   [project.entry-points."pos.bootstrap.contributions"]
+   [project.entry-points."loam.bootstrap.contributions"]
    my_component = "my_package.bootstrap_adapter:MyContribution"
    ```
 
@@ -91,7 +91,7 @@ Three entry forms are accepted per `contributions:` list item:
 
 ```yaml
 contributions:
-  # Bare string — resolved via `pos.bootstrap.contributions` entry point.
+  # Bare string — resolved via `loam.bootstrap.contributions` entry point.
   - observability_aggregator
 
   # Dict with `module` + `attr` — direct dotted import.

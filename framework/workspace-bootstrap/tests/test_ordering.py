@@ -7,7 +7,7 @@ from typing import ClassVar
 
 import pytest
 
-from workspace_bootstrap import (
+from loam.workspace_bootstrap import (
     BaseContribution,
     Bootstrapper,
     ContributionMetadata,
@@ -128,7 +128,7 @@ def test_B8_bootstrapper_unknown_reference_raises_32085(
 ) -> None:
     adapter = tmp_path / "adapter.py"
     adapter.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "class A(BaseContribution):\n"
         "    metadata = ContributionMetadata(\n"
         "        name='a', phase=Phase.before_orchestrator_start, after=('ghost',)\n"
@@ -151,7 +151,7 @@ def test_B8_bootstrapper_unknown_reference_raises_32085(
 def test_B4_name_collision_raises_32083(tmp_path: Path, write_manifest_fn) -> None:
     adapter = tmp_path / "adapter.py"
     adapter.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "class A(BaseContribution):\n"
         "    metadata = ContributionMetadata(name='dup', phase=Phase.before_orchestrator_start)\n"
         "    def contribute(self, host): pass\n"
@@ -180,7 +180,7 @@ def test_B9_phase_ordering_preserved(tmp_path: Path, write_manifest_fn) -> None:
     """A later-phase item NEVER runs before an earlier-phase item."""
     adapter = tmp_path / "adapter.py"
     adapter.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "RUN_LOG = []\n"
         "class EarlyA(BaseContribution):\n"
         "    metadata = ContributionMetadata(name='early_a', phase=Phase.before_orchestrator_start)\n"
@@ -208,7 +208,7 @@ def test_B9_phase_ordering_preserved(tmp_path: Path, write_manifest_fn) -> None:
     # Verify ordering by phase. Use phase-name indexing so adding new
     # phases (e.g. first_run_scaffold) doesn't invalidate the assertion
     # about these three specific phases.
-    from workspace_bootstrap import Phase
+    from loam.workspace_bootstrap import Phase
 
     ordered = bs._ordered_by_phase
     assert ordered[Phase.before_orchestrator_start][0].name == "early_a"
@@ -222,7 +222,7 @@ def test_B9_after_ref_pointing_at_later_phase_refused(
     """A before-phase adapter declaring after=(wrap_item,) is illegal."""
     adapter = tmp_path / "adapter.py"
     adapter.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "class E(BaseContribution):\n"
         "    metadata = ContributionMetadata(\n"
         "        name='early', phase=Phase.before_orchestrator_start,\n"

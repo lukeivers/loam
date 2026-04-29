@@ -22,19 +22,19 @@ from __future__ import annotations
 
 import pytest
 
-from objective_tracker import (
+from loam.objective_tracker import (
     ObjectiveSpec,
     ProseCriterion,
     TimeBound,
 )
-from pos_orchestrator import BindRefused, Orchestrator
-from pos_orchestrator.ipc import ApplicationError, IPCClient
-from scope_of_work import ScopeSpec
-from scope_of_work.events import (
+from loam.orchestrator import BindRefused, Orchestrator
+from loam.orchestrator.ipc import ApplicationError, IPCClient
+from loam.scope_of_work import ScopeSpec
+from loam.scope_of_work.events import (
     BudgetDebited,
     ScopeCreated,
 )
-from scope_of_work.spec import ScopeState
+from loam.scope_of_work.spec import ScopeState
 
 from .conftest import make_scope_spec
 

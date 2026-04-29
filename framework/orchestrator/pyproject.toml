@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos_orchestrator"
+name = "loam-orchestrator"
 version = "0.1.0"
 description = "Session-resilient orchestrator for pOS v2 — asyncio process host, Unix-socket JSON-RPC, bind_scope dispatch layer, compaction-survival integration."
 requires-python = ">=3.11"
@@ -13,14 +13,14 @@ dependencies = [
     "opentelemetry-api>=1.25",
     "opentelemetry-sdk>=1.25",
     "pyyaml>=6",
-    "scope_of_work",
-    "objective_tracker",
-    "primary_persona",
+    "loam-scope-of-work",
+    "loam-objective-tracker",
+    "loam-primary-persona",
 ]
 
 [tool.setuptools]
-package-dir = {"pos_orchestrator" = "src"}
-packages = ["pos_orchestrator"]
+package-dir = {"loam.orchestrator" = "src/loam/orchestrator"}
+packages = ["loam.orchestrator"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

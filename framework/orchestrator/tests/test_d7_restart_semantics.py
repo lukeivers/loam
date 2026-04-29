@@ -25,10 +25,10 @@ from __future__ import annotations
 
 import pytest
 
-from objective_tracker import ObjectiveSpec, ProseCriterion, TimeBound
-from pos_orchestrator import Orchestrator
-from pos_orchestrator.ipc import ApplicationError, IPCClient
-from scope_of_work.spec import ScopeState
+from loam.objective_tracker import ObjectiveSpec, ProseCriterion, TimeBound
+from loam.orchestrator import Orchestrator
+from loam.orchestrator.ipc import ApplicationError, IPCClient
+from loam.scope_of_work.spec import ScopeState
 
 from .conftest import make_scope_spec
 

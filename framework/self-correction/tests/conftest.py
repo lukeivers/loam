@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from primary_persona.introduction import ChannelKind
-from scope_of_work import ScopeRuntime
+from loam.primary_persona.introduction import ChannelKind
+from loam.scope_of_work import ScopeRuntime
 
-from self_correction import (
+from loam.self_correction import (
     CorrectionChannel,
     CorrectionConfig,
     CorrectionNotifier,

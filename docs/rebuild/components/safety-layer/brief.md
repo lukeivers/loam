@@ -17,7 +17,7 @@ The work is greenfield Python on `pos-v2`. It consumes sealed components — it 
 1. **This brief** — gives you the objective, constraints, and acceptance criteria in operational form.
 2. **`docs/rebuild/components/safety-layer/proposal.md`** — the contract the owner has approved. Binding. Halt and signal rather than deviate.
 3. **`docs/rebuild/components/safety-layer/research.md`** — design detail, integration patterns, structural-enforcement rationale, sequence diagrams. Reference only; the proposal is the contract.
-4. **`docs/rebuild/spec/pos-v2-objectives-spec.md`** — spec v1.0 + v1.1 + v1.2 addenda. The safety objective is in v1.0 Foundational layer.
+4. **`docs/rebuild/spec/loam-objectives-spec.md`** — spec v1.0 + v1.1 + v1.2 addenda. The safety objective is in v1.0 Foundational layer.
 5. **`docs/rebuild/STATE.md`** — governing rules for this rebuild. Rules 1, 2, 3 are the ones you will feel most — five-gate chain, no deviation, ODD methodology.
 
 ## 3. The objective (single sentence)

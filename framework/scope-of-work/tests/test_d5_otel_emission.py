@@ -24,8 +24,8 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from src.runtime import ScopeRuntime
-from src.spec import (
+from loam.scope_of_work.runtime import ScopeRuntime
+from loam.scope_of_work.spec import (
     Budget,
     BudgetAxis,
     BudgetThreshold,

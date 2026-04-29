@@ -5,7 +5,7 @@ amendment contains only edits under
 ``framework/hands-off-lifecycle/{hooks,tests,seals}/`` plus the
 universal-paths admissions
 (``docs/rebuild/plans/``, ``CLAUDE.md``, ``docs/odd-methodology.md``,
-``docs/odd-in-pos.md``, ``docs/rebuild/FUTURE_IDEAS.md``,
+``docs/odd-in-loam.md``, ``docs/rebuild/FUTURE_IDEAS.md``,
 ``docs/rebuild/FUTURE_IDEAS_DRAFT.md``).
 
 Pinned per ODD §10.3 per-invariant BASELINE convention: this test
@@ -53,7 +53,7 @@ _ALLOWED_PREFIXES: tuple[str, ...] = (
 _ALLOWED_FILES: frozenset[str] = frozenset(
     {
         "CLAUDE.md",
-        "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         "docs/rebuild/FUTURE_IDEAS_DRAFT.md",

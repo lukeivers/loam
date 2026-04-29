@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from self_upgrade.paths import Paths
-from self_upgrade.probes import (
+from loam.self_upgrade.paths import Paths
+from loam.self_upgrade.probes import (
     ProbeBundle,
     collect_pre_probe,
     post_upgrade_probe_hashes,
@@ -36,19 +36,19 @@ def seeded_base(tmp_path: Path, monkeypatch) -> Paths:
     p = Paths.from_env()
 
     # scope-of-work: let EventStore create its schema
-    from scope_of_work.store import EventStore as SowStore
+    from loam.scope_of_work.store import EventStore as SowStore
     SowStore(str(p.scope_of_work_db))
 
     # objective-tracker
-    from objective_tracker.store import EventStore as ObjStore
+    from loam.objective_tracker.store import EventStore as ObjStore
     ObjStore(str(p.objective_tracker_db))
 
     # orchestrator
-    from pos_orchestrator.local_state import LocalStateStore
+    from loam.orchestrator.local_state import LocalStateStore
     LocalStateStore(str(p.orchestrator_db))
 
     # degradation
-    from graceful_degradation.state import DegradationStore
+    from loam.graceful_degradation.state import DegradationStore
     DegradationStore(str(p.degradation_db))
 
     # aggregator: small sqlite with schema

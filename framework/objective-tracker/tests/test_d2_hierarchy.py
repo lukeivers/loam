@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.errors import DAGRejected, OrphanRootError, UnresolvedObjectiveError
-from src.spec import ObjectiveSpec, ProseCriterion, TimeBound
+from loam.objective_tracker.errors import DAGRejected, OrphanRootError, UnresolvedObjectiveError
+from loam.objective_tracker.spec import ObjectiveSpec, ProseCriterion, TimeBound
 from tests.conftest import make_child_spec, make_user_root_spec
 
 

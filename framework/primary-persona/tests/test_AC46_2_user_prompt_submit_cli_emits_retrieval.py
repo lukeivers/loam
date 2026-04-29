@@ -22,7 +22,7 @@ import json
 import sys
 from pathlib import Path
 
-from src.session_start_emitter import (
+from loam.primary_persona.session_start_emitter import (
     cli_user_prompt_submit,
     emit_user_prompt_submit_context,
 )
@@ -107,7 +107,7 @@ def test_AC46_2_cli_reads_prompt_from_stdin_json(
     }
     # Patch the default factory so the CLI picks up the fake client
     # without mutating its signature.
-    import src.session_start_emitter as sse
+    import loam.primary_persona.session_start_emitter as sse
 
     monkeypatch.setattr(
         sse, "_default_memory_client_factory", lambda root: fake

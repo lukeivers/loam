@@ -55,7 +55,7 @@ def _fresh_workspace(root: Path, name: str) -> Path:
 
 def _run_dispatch(
     *,
-    pos_v2_root: Path,
+    loam_root: Path,
     pos_root: Path,
     helper: Path,
     python: str = sys.executable,
@@ -65,8 +65,8 @@ def _run_dispatch(
         [
             python,
             str(dispatch),
-            "--pos-v2-root",
-            str(pos_v2_root),
+            "--loam-root",
+            str(loam_root),
             "--pos-root",
             str(pos_root),
             "--helper",
@@ -97,7 +97,7 @@ def _noop_helper(tmp_path: Path) -> Path:
 
 
 def _recording_helper(tmp_path: Path, log_name: str = "helper_spawn.log") -> Path:
-    """A fake worker that records its ``--pos-v2-root`` argument to a file.
+    """A fake worker that records its ``--loam-root`` argument to a file.
 
     AC10 asserts the dispatcher spawned the worker with the correct
     workspace; reading the recorded argv is the deterministic way to
@@ -109,14 +109,14 @@ def _recording_helper(tmp_path: Path, log_name: str = "helper_spawn.log") -> Pat
         "import sys, argparse\n"
         "from pathlib import Path\n"
         "p = argparse.ArgumentParser()\n"
-        "p.add_argument('--pos-v2-root')\n"
+        "p.add_argument('--loam-root')\n"
         "p.add_argument('--mode')\n"
         "p.add_argument('--pos-root')\n"
         "p.add_argument('--generation', type=int, default=1)\n"
         "a, _ = p.parse_known_args()\n"
         f"log = Path({str(log)!r})\n"
         "with log.open('a') as fh:\n"
-        "    fh.write(a.pos_v2_root + '\\n')\n"
+        "    fh.write(a.loam_root + '\\n')\n"
     )
     helper.chmod(0o755)
     return helper
@@ -143,7 +143,7 @@ def test_AC10_dispatch_for_second_workspace_spawns_worker_not_completed(
     Workspace A (``alpha``) has completed first-run; workspace B
     (``beta``) shares the same host pos-root. A fresh dispatch for B
     does NOT emit ``_msg_completed()``; it spawns a worker whose
-    ``--pos-v2-root`` argument is B.
+    ``--loam-root`` argument is B.
     """
     alpha = _fresh_workspace(tmp_path, "alpha")
     beta = _fresh_workspace(tmp_path, "beta")
@@ -161,7 +161,7 @@ def test_AC10_dispatch_for_second_workspace_spawns_worker_not_completed(
     # Dispatch for beta with a recording helper.
     helper = _recording_helper(tmp_path)
     log = tmp_path / "helper_spawn.log"
-    proc = _run_dispatch(pos_v2_root=beta, pos_root=pos_root, helper=helper)
+    proc = _run_dispatch(loam_root=beta, pos_root=pos_root, helper=helper)
 
     assert proc.returncode == 0
     # Return text is the fresh-start message for beta.
@@ -170,7 +170,7 @@ def test_AC10_dispatch_for_second_workspace_spawns_worker_not_completed(
         f"{proc.stdout[:200]!r}"
     )
     # The worker recorded that it was invoked with beta as its
-    # --pos-v2-root, not alpha.
+    # --loam-root, not alpha.
     assert _wait_for_file(log), (
         "recording helper never wrote its spawn log — worker was not "
         "spawned for beta"
@@ -178,7 +178,7 @@ def test_AC10_dispatch_for_second_workspace_spawns_worker_not_completed(
     recorded = log.read_text().strip().splitlines()
     assert recorded, "recording helper log is empty"
     assert recorded[-1] == str(beta), (
-        f"dispatcher spawned worker with the wrong --pos-v2-root: "
+        f"dispatcher spawned worker with the wrong --loam-root: "
         f"expected {beta!s}, got {recorded[-1]!r}"
     )
 
@@ -227,7 +227,7 @@ def test_AC11_foreign_workspace_state_is_treated_as_absent(
 
     helper = _recording_helper(tmp_path)
     log = tmp_path / "helper_spawn.log"
-    proc = _run_dispatch(pos_v2_root=beta, pos_root=pos_root, helper=helper)
+    proc = _run_dispatch(loam_root=beta, pos_root=pos_root, helper=helper)
 
     assert proc.returncode == 0
     assert proc.stdout.startswith("Your pos-v2 workspace is installing."), (
@@ -264,7 +264,7 @@ def test_AC12_self_workspace_completed_state_short_circuits(
 
     helper = _recording_helper(tmp_path)
     log = tmp_path / "helper_spawn.log"
-    proc = _run_dispatch(pos_v2_root=alpha, pos_root=pos_root, helper=helper)
+    proc = _run_dispatch(loam_root=alpha, pos_root=pos_root, helper=helper)
 
     assert proc.returncode == 0
     # The completion message names "completed" or "ready".
@@ -303,7 +303,7 @@ def test_AC13_corrupt_state_falls_through_to_fresh_spawn(
 
     helper = _recording_helper(tmp_path)
     log = tmp_path / "helper_spawn.log"
-    proc = _run_dispatch(pos_v2_root=alpha, pos_root=pos_root, helper=helper)
+    proc = _run_dispatch(loam_root=alpha, pos_root=pos_root, helper=helper)
 
     assert proc.returncode == 0
     assert proc.stdout.startswith("Your pos-v2 workspace is installing."), (
@@ -350,7 +350,7 @@ def test_AC14_silent_death_detection_does_not_cross_workspaces(
 
     helper = _recording_helper(tmp_path)
     log = tmp_path / "helper_spawn.log"
-    proc = _run_dispatch(pos_v2_root=beta, pos_root=pos_root, helper=helper)
+    proc = _run_dispatch(loam_root=beta, pos_root=pos_root, helper=helper)
 
     assert proc.returncode == 0
     # Beta's dispatch went fresh-spawn.

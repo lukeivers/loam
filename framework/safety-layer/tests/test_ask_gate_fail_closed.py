@@ -9,14 +9,14 @@ from __future__ import annotations
 
 import pytest
 
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
-from safety_layer import (
+from loam.safety_layer import (
     SafetyConfig,
     SafetyController,
     SafetyNotifier,
 )
-from safety_layer.controller import (
+from loam.safety_layer.controller import (
     IPC_SAFETY_CHANNEL_UNAVAILABLE,
 )
 

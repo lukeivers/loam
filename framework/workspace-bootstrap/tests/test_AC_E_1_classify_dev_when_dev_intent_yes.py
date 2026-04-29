@@ -14,11 +14,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from primary_persona.contract import PersonaContract
-from primary_persona.onboarding import dev_intent_storage_path
+from loam.primary_persona.contract import PersonaContract
+from loam.primary_persona.onboarding import dev_intent_storage_path
 
-from workspace_bootstrap.adapters.tracker_seed import (
-    CLASSIFICATION_POS_V2_DEV,
+from loam.workspace_bootstrap.adapters.tracker_seed import (
+    CLASSIFICATION_LOAM_DEV,
     classify_workspace,
 )
 
@@ -64,7 +64,7 @@ def test_AC_E_1_classify_dev_when_dev_intent_yes(tmp_path: Path) -> None:
     workspace.mkdir()
     _seed_contract(workspace, dev_intent="yes")
 
-    assert classify_workspace(workspace) == CLASSIFICATION_POS_V2_DEV
+    assert classify_workspace(workspace) == CLASSIFICATION_LOAM_DEV
 
 
 def test_AC_E_1_classify_dev_when_dev_intent_yes_returns_string(

@@ -15,9 +15,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.context_composer import ComposedContextPayload
-from src.memory_consumer import register_memory_retrieval, resolve_workspace_slug
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.context_composer import ComposedContextPayload
+from loam.primary_persona.memory_consumer import register_memory_retrieval, resolve_workspace_slug
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 from _helpers_d7 import FakeMemoryClient, seed_baseline_workspace
 

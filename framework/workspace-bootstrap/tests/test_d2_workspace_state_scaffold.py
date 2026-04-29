@@ -29,13 +29,13 @@ from pathlib import Path
 
 import pytest
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     PREWARM_ADVISORY_FILENAME,
     WORKER_CONFIG_FILENAME,
     run_first_run_scaffold,
     service_label,
 )
-from workspace_bootstrap.workspace_paths import (
+from loam.workspace_bootstrap.workspace_paths import (
     POS_SUBDIR,
     WORKSPACE_STATE_SUBDIR,
 )

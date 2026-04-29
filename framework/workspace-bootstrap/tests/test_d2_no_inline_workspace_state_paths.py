@@ -71,7 +71,7 @@ BANNED_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 ALLOW_LIST_RELATIVE = frozenset(
     {
         # The helper itself defines the canonical patterns.
-        "framework/workspace-bootstrap/src/workspace_bootstrap/workspace_paths.py",
+        "framework/workspace-bootstrap/src/loam/workspace_bootstrap/workspace_paths.py",
         # The seed function delegates to workspace_paths but documents
         # the path it returns; the docstring contains the prose form.
         # The substantive code is the helper invocation. Allow-listed

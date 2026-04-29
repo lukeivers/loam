@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     PREWARM_ADVISORY_FILENAME,
     WORKSPACE_POS_DIR,
     run_first_run_scaffold,

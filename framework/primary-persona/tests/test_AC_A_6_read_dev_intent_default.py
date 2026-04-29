@@ -26,8 +26,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.contract import PersonaContract
-from src.onboarding import (
+from loam.primary_persona.contract import PersonaContract
+from loam.primary_persona.onboarding import (
     GroundingCapture,
     dev_intent_storage_path,
     persist_grounding,

@@ -24,7 +24,7 @@ from typing import Any
 
 import pytest
 
-from pos_orchestrator.supervisor import (
+from loam.orchestrator.supervisor import (
     ERR_MEMORY_UNREACHABLE,
     EscalationClass,
     EscalationRecord,

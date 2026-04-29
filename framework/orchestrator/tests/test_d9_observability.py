@@ -28,14 +28,14 @@ from pathlib import Path
 
 import pytest
 
-from objective_tracker import ObjectiveSpec, ProseCriterion, TimeBound
+from loam.objective_tracker import ObjectiveSpec, ProseCriterion, TimeBound
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
-from pos_orchestrator import Orchestrator
+from loam.orchestrator import Orchestrator
 
 from .conftest import make_scope_spec
 
@@ -44,7 +44,7 @@ def test_noop_tracer_accepts_emission(tmp_path):
     """A1 correction: emission succeeds with no consumer present.
     Importing the orchestrator and calling emission helpers on the
     default (noop) tracer must not raise."""
-    from pos_orchestrator import observability as obs
+    from loam.orchestrator import observability as obs
 
     with obs.operation_span("x", **{"a": 1}) as span:
         obs.emit_event(span, "e", {"k": "v"})
@@ -71,7 +71,7 @@ async def test_orchestrator_emissions_cover_required_events(tmp_config):
 
         # scope_activated + bind_refused paths
         assert o.objective_tracker is not None
-        from objective_tracker.errors import UnresolvedObjectiveError  # noqa: F401
+        from loam.objective_tracker.errors import UnresolvedObjectiveError  # noqa: F401
 
         spec = ObjectiveSpec(
             goal="root",
@@ -88,7 +88,7 @@ async def test_orchestrator_emissions_cover_required_events(tmp_config):
 
         # Bind_refused path.
         other = await o.scope_runtime.create(make_scope_spec("refused"))
-        from pos_orchestrator import BindRefused
+        from loam.orchestrator import BindRefused
 
         with pytest.raises(BindRefused):
             await o.activate_scope(other.scope_id, "obj-not-found")
@@ -143,7 +143,7 @@ def test_span_processor_receives_spans_when_installed(tmp_path):
     test skips the content check.
     """
     # Regardless of provider type, operation_span must execute.
-    from pos_orchestrator import observability as obs
+    from loam.orchestrator import observability as obs
 
     with obs.operation_span("loam.orchestrator.sanity", **{"k": "v"}) as span:
         obs.emit_event(span, "sanity_event", {"a": 1})

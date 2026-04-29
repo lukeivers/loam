@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import pytest
 
-from graceful_degradation import ClaudeClient, DegradationConfig, DegradationMode
-from graceful_degradation.config import load_config
-from graceful_degradation.notification import NarrativeRenderer
+from loam.graceful_degradation import ClaudeClient, DegradationConfig, DegradationMode
+from loam.graceful_degradation.config import load_config
+from loam.graceful_degradation.notification import NarrativeRenderer
 
 from .fakes import FakeInvoker
 

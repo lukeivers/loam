@@ -125,7 +125,7 @@ workspace/personas/eve/
 
 ### 2.2 Content vs contract split
 
-**Recommendation.** pOS validates only `contract.yaml`. The Markdown files are read-only-from-pOS's-perspective: pOS records the SHA-256 of `prompt.md` at load time and refuses to rebind a persona mid-session if the hash changes (use the file watcher + an explicit `reload-persona` command). This is the framework-vs-content separation the [no-personas-in-pOS-core decision](docs/rebuild/spec/pos-v2-objectives-spec.md) requires.
+**Recommendation.** pOS validates only `contract.yaml`. The Markdown files are read-only-from-pOS's-perspective: pOS records the SHA-256 of `prompt.md` at load time and refuses to rebind a persona mid-session if the hash changes (use the file watcher + an explicit `reload-persona` command). This is the framework-vs-content separation the [no-personas-in-pOS-core decision](docs/rebuild/spec/loam-objectives-spec.md) requires.
 
 ### 2.3 Contract versioning
 
@@ -280,13 +280,13 @@ def should_escalate(action, persona_contract) -> EscalationDecision:
     if policy == "not_applicable": return EscalationDecision.policy_error
 ```
 
-This is determinism-tier Layer 1 (hook-level enforceability per [v1.0 spec](docs/rebuild/spec/pos-v2-objectives-spec.md)). For genuinely ambiguous classifications — actions that don't cleanly map to a tier — the runtime falls back to a Layer-3 LLM judgment using the persona's own voice (Claude via Max), with the result audit-logged.
+This is determinism-tier Layer 1 (hook-level enforceability per [v1.0 spec](docs/rebuild/spec/loam-objectives-spec.md)). For genuinely ambiguous classifications — actions that don't cleanly map to a tier — the runtime falls back to a Layer-3 LLM judgment using the persona's own voice (Claude via Max), with the result audit-logged.
 
 ### 2.17 Escalation communication channel
 
 **Recommendation: emit an OTel-annotated `escalation` event on the active scope; rely on a downstream channel-router to route to the user.**
 
-The persona doesn't own the user-message channel. Per [v1.1 R13](docs/rebuild/spec/pos-v2-objectives-spec.md) (channel-agnostic interaction), the channel layer is a separate component that subscribes to escalation events. The persona layer's job is to emit; the channel router's job is to deliver.
+The persona doesn't own the user-message channel. Per [v1.1 R13](docs/rebuild/spec/loam-objectives-spec.md) (channel-agnostic interaction), the channel layer is a separate component that subscribes to escalation events. The persona layer's job is to emit; the channel router's job is to deliver.
 
 This honours A1 (no assumed downstream consumer) — escalations are emitted via the scope-of-work event stream; if no channel router exists, they accumulate as unread escalations visible in the awareness block on the next interactive turn. The system degrades gracefully: missing the channel router doesn't break the persona; it just makes escalations land in the next session instead of in real time.
 
@@ -322,7 +322,7 @@ Exception: the loader injects a *pointer* to memory ("you have access to the mem
 
 If the monitor coroutine crashes, the awareness-block injection becomes a fixed string: `[BACKGROUND WORK — monitor unavailable; check scope-of-work runtime directly via tool calls]`. The persona keeps running. The crash is logged via OTel and surfaces as a Tier 1 notification. The persona retains drill-down ability via the scope-of-work query tools.
 
-This honours rule 13 of [prime-rules.md](prior-pOS rules at prior-pOS .claude/rules/prime-rules.md) — autonomous-action transparency — and the [graceful degradation](docs/rebuild/spec/pos-v2-objectives-spec.md) objective.
+This honours rule 13 of [prime-rules.md](prior-pOS rules at prior-pOS .claude/rules/prime-rules.md) — autonomous-action transparency — and the [graceful degradation](docs/rebuild/spec/loam-objectives-spec.md) objective.
 
 ### 2.21 Emission surface
 
@@ -480,7 +480,7 @@ Sequence:
 
 1. Authoring scope completes successfully (passes quality checks).
 2. Primary persona authors an introduction message containing: new persona's handle, given_name, declared domain (from prompt.md), the trigger signal that motivated authoring, what kinds of work will route to them, and an explicit "say `no, retire that persona` to remove them" override.
-3. The introduction message is dispatched through the channel layer (terminal, Telegram, etc. — channel-agnostic per [v1.1 R13](docs/rebuild/spec/pos-v2-objectives-spec.md)).
+3. The introduction message is dispatched through the channel layer (terminal, Telegram, etc. — channel-agnostic per [v1.1 R13](docs/rebuild/spec/loam-objectives-spec.md)).
 4. The new persona file is written to disk but `contract.yaml` carries `pending_introduction: true`.
 5. On the next user message, if the user has not retired the persona, the loader removes the `pending_introduction` flag and registers the persona as addressable.
 6. If the user retires the persona, the file is moved to `workspace/personas/_retired/<handle>-<timestamp>/` (audit-preserved, not deleted).
@@ -499,7 +499,7 @@ Already covered in §2.35 step 6. Override is detected by simple pattern match (
 
 ### 2.38 Channel awareness for introduction
 
-Per [v1.1 R13](docs/rebuild/spec/pos-v2-objectives-spec.md), introduction goes to the channel the user is currently active on (terminal session, Telegram thread, etc.). The primary persona is reachable through whichever channel the user is using; the introduction follows the same rule. If no user is active, the introduction queues and lands at the start of the next interactive session.
+Per [v1.1 R13](docs/rebuild/spec/loam-objectives-spec.md), introduction goes to the channel the user is currently active on (terminal session, Telegram thread, etc.). The primary persona is reachable through whichever channel the user is using; the introduction follows the same rule. If no user is active, the introduction queues and lands at the start of the next interactive session.
 
 ---
 

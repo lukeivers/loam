@@ -18,8 +18,8 @@ import sys
 import types
 from pathlib import Path
 
-from primary_persona.dispatch_wrapper import NewACSpec
-from primary_persona.dispatch_wrapper import (
+from loam.primary_persona.dispatch_wrapper import NewACSpec
+from loam.primary_persona.dispatch_wrapper import (
     _run_setup_phase,
     _diagnostic_log_path,
 )
@@ -142,7 +142,7 @@ def test_AC_DSA_5_tracker_unavailable_logs_and_proceeds(
     disable_iso_second_wait(monkeypatch)
     install_stub_active_scope_sentinel(monkeypatch)
 
-    from primary_persona import dispatch_wrapper
+    from loam.primary_persona import dispatch_wrapper
 
     monkeypatch.setattr(dispatch_wrapper, "_open_tracker", lambda _ws: None)
 

@@ -16,8 +16,8 @@ import asyncio
 
 import pytest
 
-from src.events import ChildLinked, ParentCloseRequested
-from src.spec import (
+from loam.scope_of_work.events import ChildLinked, ParentCloseRequested
+from loam.scope_of_work.spec import (
     Budget,
     ParentClosePolicy,
     ScopeState,

@@ -12,7 +12,7 @@ import logging
 
 import pytest
 
-from cost_governance import CostStore
+from loam.cost_governance import CostStore
 
 
 def _raising_close():
@@ -32,7 +32,7 @@ def test_s4_cost_store_close_surfaces_exception(tmp_path, caplog):
     # Replace the inner connection with a stub whose close raises.
     store._conn = _RaisingConn()  # type: ignore[assignment]
 
-    with caplog.at_level(logging.DEBUG, logger="cost_governance.store"):
+    with caplog.at_level(logging.DEBUG, logger="loam.cost_governance.store"):
         # Must not raise.
         store.close()
 
@@ -40,7 +40,7 @@ def test_s4_cost_store_close_surfaces_exception(tmp_path, caplog):
     # exc_info attached.
     matching = [
         r for r in caplog.records
-        if r.name == "cost_governance.store"
+        if r.name == "loam.cost_governance.store"
         and r.message == "cost_store_close_failed"
     ]
     assert len(matching) == 1, (

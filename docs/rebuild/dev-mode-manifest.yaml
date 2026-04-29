@@ -115,7 +115,7 @@ dev_only:
   - path: CLAUDE.dev.md
   # ODD methodology + worked examples (locked ruling 5).
   - path: docs/odd-methodology.md
-  - path: docs/odd-in-pos.md
+  - path: docs/odd-in-loam.md
   # Dev/SDLC tracker docs.
   - path: docs/rebuild/STATE.md
   - path: docs/rebuild/BACKLOG.md

@@ -3,7 +3,7 @@
 **Component:** Memory System
 
 **Status:** DRAFT — awaiting owner's review and approval before the handoff brief is drafted
-**Against:** objectives spec v1.0 + v1.1 addendum (both in `docs/rebuild/spec/pos-v2-objectives-spec.md`)
+**Against:** objectives spec v1.0 + v1.1 addendum (both in `docs/rebuild/spec/loam-objectives-spec.md`)
 **Informed by:** research v1 (`research.md`), research v2 (`research-v2.md`), and the owner's annotations A1–A4
 
 ---

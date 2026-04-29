@@ -1,8 +1,8 @@
 """Install the orchestrator as a launchd user agent (macOS).
 
 Usage:
-    python -m pos_orchestrator.scripts.install_launchd
-    python -m pos_orchestrator.scripts.install_launchd --uninstall
+    python -m loam.orchestrator.scripts.install_launchd
+    python -m loam.orchestrator.scripts.install_launchd --uninstall
 
 Per Luke's brief-ruling for the build dispatch: launchd install is
 authorised for D2 measurement only and must be uninstalled at end of

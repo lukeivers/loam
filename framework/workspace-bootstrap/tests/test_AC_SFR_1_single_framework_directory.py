@@ -32,8 +32,8 @@ from pathlib import Path
 
 import pytest
 
-from workspace_bootstrap.adapters import tracker_seed
-from workspace_bootstrap.new_workspace import (
+from loam.workspace_bootstrap.adapters import tracker_seed
+from loam.workspace_bootstrap.new_workspace import (
     CloneFailedError,
     bootstrap_new_workspace,
 )

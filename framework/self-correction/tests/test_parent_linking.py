@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from self_correction import (
+from loam.self_correction import (
     CorrectionEpisode,
     CorrectionStore,
     EpisodeState,
     SelfCorrectionController,
     build_trigger_from_user_report,
 )
-from self_correction.spec import CorrectionTrigger, TriggerSource
+from loam.self_correction.spec import CorrectionTrigger, TriggerSource
 
 
 async def test_CR17_parent_correction_id_persists_on_episode(

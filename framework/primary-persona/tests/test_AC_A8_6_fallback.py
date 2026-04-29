@@ -14,7 +14,7 @@ import json
 
 import pytest
 
-from primary_persona import (
+from loam.primary_persona import (
     DispatchOutcome,
     DispatchShape,
     dispatch_with_scope,
@@ -85,7 +85,7 @@ async def test_AC_A8_6_connect_failure_takes_fallback(monkeypatch, tmp_path):
     client = StubIPCClient()
     client.set_connect_exception(ConnectionRefusedError("nope"))
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
     shape = DispatchShape(

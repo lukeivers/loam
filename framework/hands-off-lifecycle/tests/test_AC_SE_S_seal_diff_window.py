@@ -4,7 +4,7 @@ Per the locked plan-doc §4 AC.SE.S: the seal-diff window for the A1
 amendment contains only edits under ``hands-off-lifecycle/``,
 ``objective-tracker/``, and the universal-paths admissions
 (``docs/rebuild/plans/``, ``CLAUDE.md``, ``docs/odd-methodology.md``,
-``docs/odd-in-pos.md``, ``docs/rebuild/FUTURE_IDEAS.md``,
+``docs/odd-in-loam.md``, ``docs/rebuild/FUTURE_IDEAS.md``,
 ``.gitignore``).
 
 Pinned per ODD §10.3 per-invariant BASELINE convention: this test
@@ -38,7 +38,7 @@ _ALLOWED_PREFIXES: tuple[str, ...] = (
 _ALLOWED_FILES: frozenset[str] = frozenset(
     {
         "CLAUDE.md",
-        "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         ".gitignore",

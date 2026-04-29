@@ -29,7 +29,7 @@ import yaml
 # test is skipped — this AC depends on cross-component installation
 # which is the canonical dev shape.
 workspace_bootstrap = pytest.importorskip(
-    "workspace_bootstrap.adapters.first_run_scaffold"
+    "loam.workspace_bootstrap.adapters.first_run_scaffold"
 )
 run_first_run_scaffold = workspace_bootstrap.run_first_run_scaffold
 DEFAULT_PERSONA_HANDLE = workspace_bootstrap.DEFAULT_PERSONA_HANDLE
@@ -116,7 +116,7 @@ def test_AC_O_7_loaded_workspace_persona_is_loadable(tmp_path: Path):
     """The materialised workspace persona loads through the
     PersonaLoader without error (the contract validates, the
     prompt.md is present)."""
-    from src.loader import PersonaLoader
+    from loam.primary_persona.loader import PersonaLoader
 
     _, workspace = _run_scaffold(tmp_path)
     loader = PersonaLoader(workspace, enforce_no_personas_in_core=False)

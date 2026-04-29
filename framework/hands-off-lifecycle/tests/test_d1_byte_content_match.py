@@ -43,77 +43,70 @@ _SAMPLE_FILES = (
     # primary-persona — leaf component (no dependents in framework graph
     # for these files specifically; D-mig plan §4 names primary-persona
     # as mid-graph but the named files are pure module bodies).
-    ("framework/primary-persona/src/cli.py",
-     # M1c (amendment #78, sub-plan oss-v0-1-0-publish-rename-1c.md):
-     # SHA updated post-M1c launchd-label rebrand. The cli.py docstring
-     # at line ~147 referencing the memory-write-worker launchd label
-     # rebranded its reverse-DNS prefix to `com.loam.` (the version
-     # suffix was dropped concurrently per loam-rename-decisions Tier-1
-     # #4). ODD §4 in-band retire-and-rebaseline applied per M1c
-     # sub-plan §11 finding #9 (HC#4 byte-content breach surfaced at
-     # touched-test rerun; the docstring rebrand is the AC-named work).
+    #
+    # M1e (amendment #80, sub-plan oss-v0-1-0-publish-rename-1e.md):
+    # path entries updated for the per-component framework/<comp>/src/
+    # loam/<comp>/ namespace pivot per D-RNM.2 ruling. Where the file's
+    # content was preserved by `git mv` (content-preserving rename),
+    # the original SHA-256 is preserved verbatim. Where content was
+    # also touched by Phase C import rebrand (`from <pkg>` →
+    # `from loam.<pkg>`) or Phase D entry-point group rebrand
+    # (`pos.bootstrap.contributions` → `loam.bootstrap.contributions`)
+    # or pyproject restructure, SHAs are bumped. ODD §4 in-band
+    # retire-and-rebaseline applied per M1e sub-plan §5 hard-constraint
+    # + §11 finding #3 + dispatch's named carve-out.
+    ("framework/primary-persona/src/loam/primary_persona/cli.py",
+     # M1c launchd-label rebrand SHA preserved (content unchanged by
+     # M1e — pure rename via git mv).
      "ed2398283ae6259baff172f4eb629f5a38041d8a14e45c8f8f3da3b08efdc5d2"),
-    ("framework/primary-persona/src/__init__.py",
+    ("framework/primary-persona/src/loam/primary_persona/__init__.py",
      "8301c65db74060d1cfb7f6ed4caf3bfbcd734d9b430700dffa862ac8ad6728c3"),
-    ("framework/primary-persona/src/onboarding.py",
-     # D-migration D.2 (amendment #63): SHA updated post-D.2 because
-     # onboarding.py is one of the readers cut over to the
-     # workspace-paths helper (per the locked wider-fence ruling).
-     # The D.1 byte-content guarantee was for the rename window only;
-     # subsequent amendment edits are tracked here as the canonical
-     # post-edit hash.
-     "e077c38790e2a41780a72e63fcf2e07691ee8c019f62897b6c77cabcfadd52c4"),
-    ("framework/primary-persona/src/session_start_emitter.py",
-     "772d3d77c9da675d70fedf4f887dfed15da7cc8abd1e2d7dd013b9a456f97099"),
+    ("framework/primary-persona/src/loam/primary_persona/onboarding.py",
+     # M1e SHA bump: Phase C import rebrand
+     # (`from workspace_bootstrap.workspace_paths` →
+     # `from loam.workspace_bootstrap.workspace_paths`).
+     "965534c9eb02c7e8ba7ae6a78fe4e830c682f44b3e0556950841c5e016ffed52"),
+    ("framework/primary-persona/src/loam/primary_persona/session_start_emitter.py",
+     # M1e SHA bump: Phase E internal-decoration rebrand (legacy
+     # `loam_root` predecessor identifier callsites) plus Phase C `-m`
+     # shell-command shape rebrand for primary_persona.cli emission
+     # helper.
+     "f97595479e5e45e4a461541fb662d5cff0ac87537797bc93b69f312d47fd4b10"),
     ("framework/primary-persona/pyproject.toml",
-     "8780af2e075e36d07b57a8090c4ba462cab2c893b9df1ac8ab77e357fa3772c4"),
-    # workspace-bootstrap — high-fan-in component. Excluded files:
-    # adapters/first_run_scaffold.py (plist edits in D.1).
-    ("framework/workspace-bootstrap/src/workspace_bootstrap/__init__.py",
-     "4da91df872ab2b41c95d2a5cd1a8341fabe310c59efd506ebd43c3e6c12f4bfc"),
-    ("framework/workspace-bootstrap/src/workspace_bootstrap/spec.py",
+     # M1e SHA bump: Phase B pyproject restructure
+     # (project name `primary_persona` → `loam-primary-persona`,
+     # package-dir entry, dependencies list rewrite).
+     "0181ab99319a19bd70f262d030d60f0fe74ab325d833706ba33c1bc656cb1ca2"),
+    # workspace-bootstrap — high-fan-in component.
+    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
+     # M1e SHA bump: Phase D entry-point group rebrand in docstring
+     # (`pos.bootstrap.contributions` → `loam.bootstrap.contributions`).
+     "5624b151efc0d324d735eb767dd2f44b15c0cc031a44f81842461bf06aeae170"),
+    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/spec.py",
      "d3ce250ccc76974da7301cff2b1342a24b97c20f19287a109fed2cd7162fa5c8"),
-    ("framework/workspace-bootstrap/src/workspace_bootstrap/host.py",
-     # M1d (amendment #79, sub-plan oss-v0-1-0-publish-rename-1d.md):
-     # SHA updated post-M1d OTel root rebrand. host.py line 82 carried
-     # `self.tracer = trace.get_tracer("pos.bootstrap")`; M1d rebrands
-     # the OTel tracer-name root `pos.` → `loam.` per
-     # loam-rename-decisions Tier-1 #5 (every span/event/tracer literal
-     # with first segment `pos` rebases to `loam`; second-and-below
-     # segments unchanged). ODD §4 in-band retire-and-rebaseline applied
-     # per M1d sub-plan §11 finding #3 (HC#4 byte-content sample
-     # enumeration confirmed exactly one M1d-touched file in the
-     # fifteen-file sample; the rebrand IS the AC-named work
-     # AC.RNM-1d.1).
+    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/host.py",
+     # M1d OTel rebrand SHA preserved (content unchanged by M1e —
+     # pure rename via git mv).
      "3ae99ddd80c0a7c39154491388b322aa504bb0d1220ed5734b77e75e8775b8ba"),
-    # framework/workspace-bootstrap/pyproject.toml WAS in this list at
-    # D.1 seal time. D-migration D.4 (amendment #65, sealed at
-    # `8acdff5`) legitimately edited the file to add the
-    # `pos-new-workspace` entry-point. The byte-match invariant for
-    # this specific file no longer holds because D.4's intentional
-    # content edit lands inside the post-D.1 window — the file is no
-    # longer a pure-rename target. Replaced at amendment #67 (single-
-    # framework-restructure) with errors.py — a leaf module untouched
-    # since D.1 — to keep the workspace-bootstrap sample at ≥5 files
-    # per AC.D.1.5. The remaining sample files still serve the HC#4
-    # binding for D.1's git-mv discipline (no silent content-edit
-    # during the rename).
-    ("framework/workspace-bootstrap/src/workspace_bootstrap/errors.py",
+    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/errors.py",
      "e1aa52137a62d551501e6da23071e414a6b0ed40236517a826ae98531434cbaf"),
-    ("framework/workspace-bootstrap/src/workspace_bootstrap/discovery.py",
-     "b58ed5e31591c2f4bec3b0dbad3c60d22c23acfa0da8af12e967ecbbc4c43062"),
+    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/discovery.py",
+     # M1e SHA bump: Phase D `_ENTRYPOINT_GROUP` value rebrand.
+     "cc07afbd9f21c2c19775c1973099888c061dd32b96c5b62d97a456e08c067ead"),
     # scope-of-work — leaf component (no test_no_sealed sidecar; the
     # leaf shape is the cleanest regression target for HC#4).
-    ("framework/scope-of-work/src/spec.py",
+    ("framework/scope-of-work/src/loam/scope_of_work/spec.py",
      "4abc338b7b1a4041fbc0afe73ad0e19d8a6cf4a166010493129b4e04d01fd667"),
-    ("framework/scope-of-work/src/events.py",
+    ("framework/scope-of-work/src/loam/scope_of_work/events.py",
      "e39dccf0f8dfe81cc977bbe66518c1d3d786a7b85989428d52a78d51f2c4ef7b"),
-    ("framework/scope-of-work/src/projection.py",
+    ("framework/scope-of-work/src/loam/scope_of_work/projection.py",
      "eee352633bc498c80f613b247d769bcb193d008a48b249b1245719405fd70375"),
-    ("framework/scope-of-work/src/triggers.py",
+    ("framework/scope-of-work/src/loam/scope_of_work/triggers.py",
      "ea9060d65e3d6946ba0b3ea77ad9a58a9026fefc62954d92cdff1f7c300d525e"),
     ("framework/scope-of-work/pyproject.toml",
-     "7cb1a03ce82bb87ac5c560568348ba8d39198866dacd57f15cfb81e052e0ab7a"),
+     # M1e SHA bump: Phase B pyproject restructure
+     # (project name `scope_of_work` → `loam-scope-of-work`).
+     "1f97cf7a380d1876b416b8a88f06264398296ae176c797ccb0695d8bc6f481cc"),
 )
 
 

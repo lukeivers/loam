@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 
 
-SRC_DIR = Path(__file__).resolve().parent.parent / "src"
+SRC_DIR = Path(__file__).resolve().parent.parent / "src" / "loam" / "primary_persona"
 
 
 # Unique-prose markers from the canonical VALUE_PROPOSITION.md. If

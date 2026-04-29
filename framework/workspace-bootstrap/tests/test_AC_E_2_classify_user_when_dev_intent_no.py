@@ -14,10 +14,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from primary_persona.contract import PersonaContract
-from primary_persona.onboarding import dev_intent_storage_path
+from loam.primary_persona.contract import PersonaContract
+from loam.primary_persona.onboarding import dev_intent_storage_path
 
-from workspace_bootstrap.adapters.tracker_seed import (
+from loam.workspace_bootstrap.adapters.tracker_seed import (
     CLASSIFICATION_USER,
     classify_workspace,
 )

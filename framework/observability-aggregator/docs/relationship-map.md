@@ -41,7 +41,7 @@ primary-persona     pos obs CLI            future UI / consumers
 | Component               | Emission                              | A1 status |
 |-------------------------|---------------------------------------|-----------|
 | scope-of-work           | OTel via `loam.scope_of_work`          | unchanged |
-| primary-persona         | OTel via `pos_v2.primary_persona`     | unchanged |
+| primary-persona         | OTel via `loam.primary_persona`        | unchanged |
 | objective-tracker       | OTel via `loam.objective_tracker`      | unchanged |
 | orchestrator            | OTel via `loam.orchestrator`           | unchanged |
 | graceful-degradation    | OTel via `loam.degradation`            | unchanged |

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from safety_layer import KillEngine
+from loam.safety_layer import KillEngine
 
 
 @pytest.mark.asyncio

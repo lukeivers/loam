@@ -42,7 +42,7 @@ _ALLOWED_PREFIXES: tuple[str, ...] = (
     "docs/rebuild/plans/",
     # Universal admissions per amendment #22 ruling #3.
     "CLAUDE.md",
-    "docs/odd-in-pos.md",
+    "docs/odd-in-loam.md",
     "docs/odd-methodology.md",
     "docs/rebuild/FUTURE_IDEAS.md",
 )
@@ -60,7 +60,7 @@ _ALLOWED_PREFIXES: tuple[str, ...] = (
 #
 # Per ODD §2.5 the AC's intent maps to a constant range. The fix
 # matches the per-invariant-BASELINE pattern documented in
-# ``docs/odd-in-pos.md`` §10 (extended here to cover the upper bound
+# ``docs/odd-in-loam.md`` §10 (extended here to cover the upper bound
 # of an amendment-specific window).
 _AMENDMENT_45_SEAL_COMMIT = "0702d25ee97927aa6035e6dcff0a7490ec5cb5fd"
 

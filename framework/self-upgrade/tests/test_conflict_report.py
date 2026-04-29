@@ -8,7 +8,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from self_upgrade.conflict_report import (
+from loam.self_upgrade.conflict_report import (
     ConflictChangeKind,
     ConflictEntry,
     ConflictReport,

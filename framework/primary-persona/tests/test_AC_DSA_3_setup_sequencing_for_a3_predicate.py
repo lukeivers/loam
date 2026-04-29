@@ -23,7 +23,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from primary_persona.dispatch_wrapper import NewACSpec, _run_setup_phase
+from loam.primary_persona.dispatch_wrapper import NewACSpec, _run_setup_phase
 
 from ._helpers_a8 import make_workspace
 from ._helpers_dsa import (
@@ -56,7 +56,7 @@ def test_AC_DSA_3_manifest_created_at_lex_gt_sentinel(tmp_path) -> None:
     sentinel_ts = _sentinel_now_iso()
     # No wait. Both sides emit format γ; microsecond resolution makes
     # back-to-back lex-compare correct.
-    from objective_tracker.store import _now_iso_microsecond_z as _manifest_now_iso
+    from loam.objective_tracker.store import _now_iso_microsecond_z as _manifest_now_iso
 
     manifest_ts = _manifest_now_iso()
     # The exact predicate A3 uses.

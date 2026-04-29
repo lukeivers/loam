@@ -148,8 +148,8 @@ class FakeInvoker:
 
 
 def make_capture_channel(name: str = "test-terminal", *, is_active: bool = True):
-    from primary_persona.introduction import ChannelKind
-    from graceful_degradation.notification import DegradationChannel
+    from loam.primary_persona.introduction import ChannelKind
+    from loam.graceful_degradation.notification import DegradationChannel
 
     sent: list[str] = []
 

@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import logging
 
-from pos_observability_aggregator import AggregatorConfig, open_store
-from pos_observability_aggregator.config import IngestConfig, RetentionConfig
+from loam.observability_aggregator import AggregatorConfig, open_store
+from loam.observability_aggregator.config import IngestConfig, RetentionConfig
 
 
 class _RaisingConn:

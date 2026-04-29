@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from safety_layer import AskListEntry, parse_duration_spec
+from loam.safety_layer import AskListEntry, parse_duration_spec
 
 
 @pytest.mark.parametrize("bad", ["5m", "14m", "0h", "0d", "7", "foo", "", " "])

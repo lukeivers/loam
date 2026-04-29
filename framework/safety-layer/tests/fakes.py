@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from primary_persona.introduction import ChannelKind
+from loam.primary_persona.introduction import ChannelKind
 
-from safety_layer.notification import SafetyChannel
+from loam.safety_layer.notification import SafetyChannel
 
 
 def make_fake_channel(*, name: str = "test-telegram", active: bool = True):

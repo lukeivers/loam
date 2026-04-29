@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     DEFAULT_PERSONA_HANDLE,
     PersonaHandleRejectedError,
     RESERVED_PERSONA_HANDLES,

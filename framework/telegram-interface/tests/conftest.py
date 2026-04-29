@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from telegram_interface.allowlist import AccessFile, AuthorityClass
+from loam.telegram_interface.allowlist import AccessFile, AuthorityClass
 
 
 @pytest.fixture

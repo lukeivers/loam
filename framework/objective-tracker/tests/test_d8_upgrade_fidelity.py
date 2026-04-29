@@ -16,14 +16,14 @@ from pathlib import Path
 
 import pytest
 
-from src.runtime import ObjectiveTracker
-from src.spec import (
+from loam.objective_tracker.runtime import ObjectiveTracker
+from loam.objective_tracker.spec import (
     ChildClosureCriterion,
     ExternalPredicateCriterion,
     ObjectiveStatus,
     ProseCriterion,
 )
-from src.upgrade import (
+from loam.objective_tracker.upgrade import (
     assert_no_drift,
     capture_pre_upgrade,
     captured_from_json,
@@ -163,7 +163,7 @@ async def test_snapshot_round_trip_restores_state(tmp_path):
 
 async def test_replay_from_empty_probe_set_is_no_op(tmp_path):
     """An empty probe set should report zero drift against any store."""
-    from src.upgrade import CapturedProbeSet
+    from loam.objective_tracker.upgrade import CapturedProbeSet
 
     db = tmp_path / "obj.db"
     rt = ObjectiveTracker(db_path=db)

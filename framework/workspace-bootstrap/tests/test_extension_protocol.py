@@ -18,7 +18,7 @@ from typing import Any
 import pytest
 import yaml
 
-from workspace_bootstrap import (
+from loam.workspace_bootstrap import (
     Bootstrapper,
     ContributionMetadata,
     IPC_BOOTSTRAP_ORDERING_CYCLE,
@@ -43,7 +43,7 @@ async def test_B18_synthetic_phase4_contribution_enables_with_one_manifest_line(
     # protocol end-to-end on contribution discovery + ordering + run.
     contribution_file = tmp_path / "synthetic_b18_adapter.py"
     contribution_file.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "OBSERVED = []\n"
         "class OnboardingContribution(BaseContribution):\n"
         "    metadata = ContributionMetadata(\n"
@@ -92,7 +92,7 @@ async def test_B18_synthetic_contribution_orders_against_foundational(
     runs after self_correction, without bootstrap source changes."""
     contribution_file = tmp_path / "synthetic_b18_adapter.py"
     contribution_file.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "RECORD = []\n"
         "class OnboardingContribution(BaseContribution):\n"
         "    metadata = ContributionMetadata(\n"
@@ -173,7 +173,7 @@ async def test_B19_cyclic_synthetic_contribution_raises_32084(tmp_path: Path) ->
     OrderingCycleError (-32084)."""
     contribution_file = tmp_path / "synthetic_b18_adapter.py"
     contribution_file.write_text(
-        "from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
+        "from loam.workspace_bootstrap import BaseContribution, ContributionMetadata, Phase\n"
         "class A(BaseContribution):\n"
         "    metadata = ContributionMetadata(\n"
         "        name='a', phase=Phase.after_orchestrator_ready,\n"
@@ -271,9 +271,9 @@ def test_B25_framework_internal_phases_match_bootstrap_source_adapters() -> None
     import importlib
     import pkgutil
 
-    from workspace_bootstrap import Phase
-    from workspace_bootstrap import adapters as adapters_pkg
-    from workspace_bootstrap.spec import BaseContribution, ContributionMetadata
+    from loam.workspace_bootstrap import Phase
+    from loam.workspace_bootstrap import adapters as adapters_pkg
+    from loam.workspace_bootstrap.spec import BaseContribution, ContributionMetadata
 
     phases_declared_by_adapters: set[Phase] = set()
     per_adapter_phase: dict[str, Phase] = {}

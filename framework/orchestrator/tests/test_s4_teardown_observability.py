@@ -46,7 +46,7 @@ class _RecordingSpan:
 def test_s4_supervisor_stop_logger_on_broad_exception(caplog):
     """MemorySupervisor.stop — the await-probe-task RuntimeError path
     emits a DEBUG log record; CancelledError remains silent."""
-    from pos_orchestrator.supervisor import (
+    from loam.orchestrator.supervisor import (
         MemorySupervisor,
         SupervisorConfig,
     )
@@ -69,7 +69,7 @@ def test_s4_supervisor_stop_logger_on_broad_exception(caplog):
         sup._probe_task = task
         sup._stop.set()
         with caplog.at_level(
-            logging.DEBUG, logger="pos_orchestrator.supervisor"
+            logging.DEBUG, logger="loam.orchestrator.supervisor"
         ):
             await sup.stop()
 
@@ -77,7 +77,7 @@ def test_s4_supervisor_stop_logger_on_broad_exception(caplog):
 
     matching = [
         r for r in caplog.records
-        if r.name == "pos_orchestrator.supervisor"
+        if r.name == "loam.orchestrator.supervisor"
         and r.message == "supervisor_stop_probe_task_failed"
     ]
     assert len(matching) == 1
@@ -86,7 +86,7 @@ def test_s4_supervisor_stop_logger_on_broad_exception(caplog):
 
 def test_s4_ipc_client_close_logger_on_broad_exception(caplog):
     """IPCClient.close — writer.close() raises; logger emits DEBUG."""
-    from pos_orchestrator.ipc import IPCClient
+    from loam.orchestrator.ipc import IPCClient
 
     client = IPCClient(tmp_path=None) if False else IPCClient.__new__(IPCClient)
     # Manually seed the fields we need.
@@ -105,14 +105,14 @@ def test_s4_ipc_client_close_logger_on_broad_exception(caplog):
     client._writer = _W()  # type: ignore[assignment]
 
     async def _run():
-        with caplog.at_level(logging.DEBUG, logger="pos_orchestrator.ipc"):
+        with caplog.at_level(logging.DEBUG, logger="loam.orchestrator.ipc"):
             await client.close()
 
     asyncio.run(_run())
 
     matching = [
         r for r in caplog.records
-        if r.name == "pos_orchestrator.ipc"
+        if r.name == "loam.orchestrator.ipc"
         and r.message == "ipc_client_close_writer_failed"
     ]
     assert len(matching) == 1
@@ -121,7 +121,7 @@ def test_s4_ipc_client_close_logger_on_broad_exception(caplog):
 def test_s4_ipc_server_stop_writer_logger_on_broad_exception(caplog):
     """IPCServer.stop — per-client writer.close() raises; logger emits
     DEBUG for each failing writer."""
-    from pos_orchestrator.ipc import IPCServer
+    from loam.orchestrator.ipc import IPCServer
 
     server = IPCServer.__new__(IPCServer)
     server._server = None
@@ -136,14 +136,14 @@ def test_s4_ipc_server_stop_writer_logger_on_broad_exception(caplog):
     server._clients = {_W()}  # type: ignore[assignment]
 
     async def _run():
-        with caplog.at_level(logging.DEBUG, logger="pos_orchestrator.ipc"):
+        with caplog.at_level(logging.DEBUG, logger="loam.orchestrator.ipc"):
             await server.stop()
 
     asyncio.run(_run())
 
     matching = [
         r for r in caplog.records
-        if r.name == "pos_orchestrator.ipc"
+        if r.name == "loam.orchestrator.ipc"
         and r.message == "ipc_server_stop_writer_close_failed"
     ]
     assert len(matching) == 1
@@ -152,7 +152,7 @@ def test_s4_ipc_server_stop_writer_logger_on_broad_exception(caplog):
 def test_s4_orchestrator_close_local_state_logger(tmp_config, caplog):
     """Orchestrator.close — local_state.close() raises; logger emits
     DEBUG."""
-    from pos_orchestrator import Orchestrator
+    from loam.orchestrator import Orchestrator
 
     orch = Orchestrator(tmp_config)
 
@@ -163,13 +163,13 @@ def test_s4_orchestrator_close_local_state_logger(tmp_config, caplog):
     orch.local_state = _RaisingLocalState()  # type: ignore[assignment]
 
     with caplog.at_level(
-        logging.DEBUG, logger="pos_orchestrator.orchestrator"
+        logging.DEBUG, logger="loam.orchestrator.orchestrator"
     ):
         orch.close()
 
     matching = [
         r for r in caplog.records
-        if r.name == "pos_orchestrator.orchestrator"
+        if r.name == "loam.orchestrator.orchestrator"
         and r.message == "orchestrator_close_local_state_failed"
     ]
     assert len(matching) == 1
@@ -213,7 +213,7 @@ def test_s4_shutdown_site_emits_span_event(
 ):
     """Each of the five _shutdown broad-catch sites emits a named event
     on ``self._process_span`` when the guarded call raises."""
-    from pos_orchestrator import Orchestrator
+    from loam.orchestrator import Orchestrator
 
     orch = Orchestrator(tmp_config)
     recording_span = _RecordingSpan()

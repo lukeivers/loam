@@ -64,7 +64,7 @@ def _fire_stop(
         }
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.stop_emitter import cli_stop
+    from loam.primary_persona.stop_emitter import cli_stop
 
     return cli_stop(workspace_root=workspace)
 

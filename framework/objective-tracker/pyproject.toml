@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "objective_tracker"
+name = "loam-objective-tracker"
 version = "0.1.0"
 description = "Objective tracker primitive for pOS v2 — forest-of-trees with event-sourced persistence, sidecar scope binding, and ODD integration."
 requires-python = ">=3.11"
@@ -15,5 +15,5 @@ dependencies = [
 ]
 
 [tool.setuptools]
-package-dir = {"objective_tracker" = "src"}
-packages = ["objective_tracker"]
+package-dir = {"loam.objective_tracker" = "src/loam/objective_tracker"}
+packages = ["loam.objective_tracker"]

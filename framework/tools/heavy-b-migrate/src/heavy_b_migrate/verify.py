@@ -232,7 +232,7 @@ async def _seed_minimal_ancestry(repo_root: Path) -> None:
                 authored_by="user",
                 lifted_from=LiftedFrom(
                     source_doc=(
-                        "docs/rebuild/spec/pos-v2-objectives-spec.md"
+                        "docs/rebuild/spec/loam-objectives-spec.md"
                     ),
                     source_ac="v1.0",
                 ),

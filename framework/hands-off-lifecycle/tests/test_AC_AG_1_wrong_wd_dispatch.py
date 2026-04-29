@@ -109,7 +109,7 @@ def test_AC_AG_1_pos_v2_surface_canonical_cwd_admitted(
         tool_input={
             "prompt": "Update docs/rebuild/plans/foo.md.",
         },
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     # Allowed because cwd matches canonical.
     assert decision.decision in ("allow", "no-op")

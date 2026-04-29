@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from self_upgrade.clause_checks import (
+from loam.self_upgrade.clause_checks import (
     ClauseResult,
     check_clause_a,
     check_clause_b,
@@ -19,8 +19,8 @@ from self_upgrade.clause_checks import (
     check_clause_g,
     run_all_clauses,
 )
-from self_upgrade.manifest import Manifest
-from self_upgrade.paths import Paths
+from loam.self_upgrade.manifest import Manifest
+from loam.self_upgrade.paths import Paths
 
 
 # ---- clause (a) -----------------------------------------------------

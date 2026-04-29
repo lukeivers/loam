@@ -8,10 +8,10 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from primary_persona.introduction import ChannelKind
-from scope_of_work.events import BudgetDebited
+from loam.primary_persona.introduction import ChannelKind
+from loam.scope_of_work.events import BudgetDebited
 
-from cost_governance import (
+from loam.cost_governance import (
     CostChannel,
     CostConfig,
     CostLedger,
@@ -94,7 +94,7 @@ def test_C14_warning_emits_before_reservation_row_written(tmp_path: Path) -> Non
     attribute; the test observes the relative order in which the two
     public call-sites are exercised.
 
-    Per odd-in-pos.md §5.2: "The emission precedes the ledger write.
+    Per odd-in-loam.md §5.2: "The emission precedes the ledger write.
     A test has to check both 'the warning was emitted' and 'the
     warning happened before the row appeared in `reservations`' —
     a sequencing assertion."

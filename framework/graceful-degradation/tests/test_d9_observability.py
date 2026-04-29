@@ -17,7 +17,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from graceful_degradation import (
+from loam.graceful_degradation import (
     ClaudeClient,
     DegradationComponent,
     DegradationConfig,
@@ -25,7 +25,7 @@ from graceful_degradation import (
     DegradationNotifier,
     FSMState,
 )
-from graceful_degradation import observability as gd_obs
+from loam.graceful_degradation import observability as gd_obs
 
 from .fakes import (
     FakeClock,
@@ -119,7 +119,7 @@ async def test_fsm_transition_emits_span(tmp_path, setup_otel_exporter) -> None:
             ConnectionError("x"),
         ],
     )
-    from graceful_degradation.errors import ClaudeAPIError
+    from loam.graceful_degradation.errors import ClaudeAPIError
 
     for _ in range(3):
         try:
@@ -148,7 +148,7 @@ async def test_episode_started_span_emitted(tmp_path, setup_otel_exporter) -> No
         ],
     )
     rt.add_scope(FakeScope("s1"))
-    from graceful_degradation.errors import ClaudeAPIError
+    from loam.graceful_degradation.errors import ClaudeAPIError
 
     for _ in range(3):
         try:
@@ -164,8 +164,8 @@ async def test_episode_started_span_emitted(tmp_path, setup_otel_exporter) -> No
 
 
 async def test_notification_span_emitted(tmp_path, setup_otel_exporter) -> None:
-    from graceful_degradation.adapter import AdapterEvent
-    from graceful_degradation.errors import DegradationSignal
+    from loam.graceful_degradation.adapter import AdapterEvent
+    from loam.graceful_degradation.errors import DegradationSignal
 
     comp, orch, rt, client, clock = _build_component(tmp_path)
     # auth_broken forces notification immediately.
@@ -194,8 +194,8 @@ async def test_emission_succeeds_with_no_consumer_a1_safe() -> None:
     # No consumer fixture — use the default global tracer which is
     # noop by default if no TracerProvider is installed.
     from opentelemetry import trace
-    from graceful_degradation.adapter import AdapterEvent
-    from graceful_degradation.errors import DegradationSignal
+    from loam.graceful_degradation.adapter import AdapterEvent
+    from loam.graceful_degradation.errors import DegradationSignal
 
     # These calls must not raise even with the noop tracer.
     gd_obs.fsm_transition("down", "closed", "open", "trip:connection_error")
@@ -235,7 +235,7 @@ async def test_probe_span_emitted_on_half_open(tmp_path, setup_otel_exporter) ->
             "OK",  # probe
         ],
     )
-    from graceful_degradation.errors import ClaudeAPIError
+    from loam.graceful_degradation.errors import ClaudeAPIError
 
     for _ in range(3):
         try:

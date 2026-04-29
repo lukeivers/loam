@@ -6,7 +6,7 @@
 **Authored by:** the primary persona
 **Status:** DRAFT — awaiting owner's review before dispatch
 **Approved proposal this brief delivers against:** `components/memory-system/proposal.md` (approved 2026-04-18 09:23 CDT)
-**Spec this brief honours:** objectives spec v1.0 + v1.1 addendum (`docs/rebuild/spec/pos-v2-objectives-spec.md`)
+**Spec this brief honours:** objectives spec v1.0 + v1.1 addendum (`docs/rebuild/spec/loam-objectives-spec.md`)
 
 ---
 

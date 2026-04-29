@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.spec import ObjectiveStatus, ParentClosePolicy
+from loam.objective_tracker.spec import ObjectiveStatus, ParentClosePolicy
 from tests.conftest import make_child_spec, make_user_root_spec
 
 
@@ -74,7 +74,7 @@ async def test_parent_abandon_policy_cascades(tracker):
 
 async def test_parent_notify_mark_abandoned_requires_rationale(tracker):
     """mark_abandoned always requires rationale — not just re_open."""
-    from src.errors import MissingRationaleError
+    from loam.objective_tracker.errors import MissingRationaleError
 
     proj = await tracker.create(make_user_root_spec())
     with pytest.raises(MissingRationaleError):

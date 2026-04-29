@@ -16,20 +16,20 @@ from typing import Any
 
 import pytest
 
-from telegram_interface import (
+from loam.telegram_interface import (
     IPC_TELEGRAM_BLOCKED_BY_USER,
     IPC_TELEGRAM_RATE_LIMITED,
     IPC_TELEGRAM_TOKEN_INVALID,
 )
-from telegram_interface.adapter import TelegramAdapter
-from telegram_interface.allowlist import AccessFile
-from telegram_interface.availability import (
+from loam.telegram_interface.adapter import TelegramAdapter
+from loam.telegram_interface.allowlist import AccessFile
+from loam.telegram_interface.availability import (
     AvailabilityProbe,
     AvailabilityState,
     FailureClass,
     ProbeResult,
 )
-from telegram_interface.bot_api import BotApiClient, BotApiError
+from loam.telegram_interface.bot_api import BotApiClient, BotApiError
 
 
 async def _ok() -> ProbeResult:
@@ -73,7 +73,7 @@ async def test_tg20_401_flips_probe_and_routes_to_fallback(
         in_session.append(t)
 
     attn = tmp_path / "attention.md"
-    import telegram_interface.fallback as fb
+    import loam.telegram_interface.fallback as fb
     fb.DEFAULT_ATTENTION_PATH = attn
 
     adapter = TelegramAdapter(
@@ -117,7 +117,7 @@ async def test_tg21_429_flagged_as_rate_limited(
         in_session_send=lambda t: _noop(),
     )
     attn = tmp_path / "attention.md"
-    import telegram_interface.fallback as fb
+    import loam.telegram_interface.fallback as fb
     fb.DEFAULT_ATTENTION_PATH = attn
 
     await adapter._default_send("rate-limited content")
@@ -148,7 +148,7 @@ async def test_tg22_403_marks_identity_blocked(
     bot = BotApiClient(transport=_err_transport(err))
 
     attn = tmp_path / "attention.md"
-    import telegram_interface.fallback as fb
+    import loam.telegram_interface.fallback as fb
     fb.DEFAULT_ATTENTION_PATH = attn
 
     adapter = TelegramAdapter(

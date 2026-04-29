@@ -8,7 +8,7 @@
                     │                                                    │
    scope-of-work ───┤  trace.get_tracer("loam.scope_of_work")             │
                     │   │                                                │
- primary-persona ───┤  trace.get_tracer("pos_v2.primary_persona")        │
+ primary-persona ───┤  trace.get_tracer("loam.primary_persona")          │
                     │   │   (ProxyTracer; late-binding)                  │
 objective-tracker ──┤  trace.get_tracer("loam.objective_tracker")         │
                     │   │                                                │

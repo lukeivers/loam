@@ -28,8 +28,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from src.contract import PersonaContract
-from src.onboarding import GroundingCapture, persist_grounding
+from loam.primary_persona.contract import PersonaContract
+from loam.primary_persona.onboarding import GroundingCapture, persist_grounding
 
 
 def _starter_contract_dict() -> dict:

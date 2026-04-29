@@ -6,7 +6,7 @@
 ``framework/primary-persona/pyproject.toml`` (if dependency add
 needed; expected: no add — pytest is already a test dep), and the
 universal-paths admissions (``docs/rebuild/plans/``, ``CLAUDE.md``,
-``docs/odd-in-pos.md``, ``docs/odd-methodology.md``,
+``docs/odd-in-loam.md``, ``docs/odd-methodology.md``,
 ``docs/rebuild/FUTURE_IDEAS.md``, ``docs/rebuild/FUTURE_IDEAS_DRAFT.md``).
 Anything outside this set is a halt condition.
 
@@ -34,7 +34,7 @@ def test_AC_DSA_S_amendment_74_paths_are_under_primary_persona() -> None:
     primary-persona fence. (Static check on the build agent's
     authored set.)"""
     pp_root = Path(__file__).parent.parent  # framework/primary-persona
-    src = pp_root / "src" / "dispatch_wrapper.py"
+    src = pp_root / "src" / "loam" / "primary_persona" / "dispatch_wrapper.py"
     assert src.exists()
     # Per-AC test files exist.
     for ac_norm in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "S"]:

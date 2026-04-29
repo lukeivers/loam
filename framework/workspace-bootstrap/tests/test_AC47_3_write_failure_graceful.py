@@ -17,17 +17,17 @@ from pathlib import Path
 
 import pytest
 
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     run_first_run_scaffold,
 )
-from workspace_bootstrap.adapters.mcp_json_writer import (
+from loam.workspace_bootstrap.adapters.mcp_json_writer import (
     MCP_JSON_FILENAME,
     write_mcp_json,
 )
 
 
 def _stub_tracker_seed_runner(**kwargs):
-    from workspace_bootstrap.adapters import tracker_seed
+    from loam.workspace_bootstrap.adapters import tracker_seed
 
     return tracker_seed.TrackerSeedResult(
         seeded=False,
@@ -106,7 +106,7 @@ def test_AC47_3_permission_denied_is_graceful(
 
     # Patch os.replace inside mcp_json_writer to simulate
     # permission-denied during the atomic-rename step.
-    from workspace_bootstrap.adapters import mcp_json_writer as mjw
+    from loam.workspace_bootstrap.adapters import mcp_json_writer as mjw
 
     def fake_replace(*args, **kwargs):
         raise PermissionError(13, "Permission denied", str(args[1]))

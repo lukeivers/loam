@@ -51,7 +51,7 @@ def test_AC_AG_3_amendment_number_sealed_denies(
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": "Build amendment #51 substrate."},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision == "deny"
     assert decision.failure_class == "stale-dispatch"
@@ -89,7 +89,7 @@ def test_AC_AG_3_ac_id_in_manifest_denies(
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": "Re-register AC.OBG.1 for the gate."},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision == "deny"
     assert decision.failure_class == "stale-dispatch"
@@ -116,7 +116,7 @@ def test_AC_AG_3_unsealed_amendment_admitted(
         tool_input={
             "prompt": "Build amendment #999 (un-shipped scope)."
         },
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision in ("allow", "no-op")
 
@@ -131,7 +131,7 @@ def test_AC_AG_3_no_amendment_or_ac_mentions_admitted(
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": "Search for occurrences of 'foo'."},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision in ("allow", "no-op")
 
@@ -155,7 +155,7 @@ def test_AC_AG_3_fail_closed_to_permissive_when_tracker_none(
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": "Author AC.SOMETHING.NEW for foo."},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision in ("allow", "no-op")
 

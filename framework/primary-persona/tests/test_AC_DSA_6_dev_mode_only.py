@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from primary_persona import DispatchShape, dispatch_with_scope
-from primary_persona.dispatch_wrapper import NewACSpec
-from primary_persona.dispatch_wrapper import _read_workspace_mode
+from loam.primary_persona import DispatchShape, dispatch_with_scope
+from loam.primary_persona.dispatch_wrapper import NewACSpec
+from loam.primary_persona.dispatch_wrapper import _read_workspace_mode
 
 from ._helpers_a8 import (
     StubIPCClient,
@@ -48,7 +48,7 @@ async def test_AC_DSA_6_normal_use_skips_setup_phase(
     install_stub_tracker(monkeypatch, tracker)
 
     client = StubIPCClient()
-    import pos_orchestrator.ipc as _ipc_mod
+    import loam.orchestrator.ipc as _ipc_mod
 
     monkeypatch.setattr(
         _ipc_mod, "IPCClient", build_stub_ipc_client_factory(client)
@@ -90,7 +90,7 @@ async def test_AC_DSA_6_dev_mode_fires_setup_phase(
     install_stub_tracker(monkeypatch, tracker)
 
     client = StubIPCClient()
-    import pos_orchestrator.ipc as _ipc_mod
+    import loam.orchestrator.ipc as _ipc_mod
 
     monkeypatch.setattr(
         _ipc_mod, "IPCClient", build_stub_ipc_client_factory(client)

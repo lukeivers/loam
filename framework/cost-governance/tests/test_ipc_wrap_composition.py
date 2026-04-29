@@ -22,25 +22,25 @@ from typing import Any
 
 import pytest
 
-from pos_orchestrator.ipc import ApplicationError, IPCServer
-from primary_persona.introduction import ChannelKind
-from scope_of_work import Budget, ReversibilityClass, ScopeRuntime, ScopeSpec, SuccessCriterion
+from loam.orchestrator.ipc import ApplicationError, IPCServer
+from loam.primary_persona.introduction import ChannelKind
+from loam.scope_of_work import Budget, ReversibilityClass, ScopeRuntime, ScopeSpec, SuccessCriterion
 
-from cost_governance import (
+from loam.cost_governance import (
     CostLedger,
     CostStore,
     IPC_COST_SESSION_CEILING_EXCEEDED,
     register_cost_governance_ipc,
 )
-from reversibility_primitive import (
+from loam.reversibility_primitive import (
     IPC_REVERSIBILITY_MISSING_COMPENSATION,
     ReversibilityController,
     ReversibilityStore,
     RollbackNotifier,
     register_reversibility_ipc,
 )
-from reversibility_primitive.notification import ReversibilityChannel
-from safety_layer import (
+from loam.reversibility_primitive.notification import ReversibilityChannel
+from loam.safety_layer import (
     AlwaysAskList,
     DEFAULT_DANGEROUS_OP_SUBSET,
     DEFAULT_FRAMEWORK_FLOOR,
@@ -49,8 +49,8 @@ from safety_layer import (
     SafetyNotifier,
     SafetyStore,
 )
-from safety_layer.ipc_wiring import register_safety_ipc
-from safety_layer.notification import SafetyChannel
+from loam.safety_layer.ipc_wiring import register_safety_ipc
+from loam.safety_layer.notification import SafetyChannel
 
 from .conftest import build_config, make_spec
 

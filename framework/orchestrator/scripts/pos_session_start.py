@@ -260,7 +260,7 @@ def run_session_start(
 # bearing.
 
 
-def _maybe_install_status_line(pos_v2_root: Path) -> None:
+def _maybe_install_status_line(loam_root: Path) -> None:
     """Existing-workspace retrofit for the top-level ``statusLine`` entry.
 
     Mirrors the ``_maybe_merge_status_line`` shape used by the worker
@@ -273,7 +273,7 @@ def _maybe_install_status_line(pos_v2_root: Path) -> None:
     Per locked plan §5 fail-closed direction.
     """
     try:
-        hooks_dir = pos_v2_root / "framework" / "hands-off-lifecycle" / "hooks"
+        hooks_dir = loam_root / "framework" / "hands-off-lifecycle" / "hooks"
         if not hooks_dir.is_dir():
             return
         if str(hooks_dir) not in sys.path:
@@ -282,7 +282,7 @@ def _maybe_install_status_line(pos_v2_root: Path) -> None:
         # whose hooks directory is in an unexpected shape.
         from first_run_settings import merge_status_line  # type: ignore[import-not-found]
 
-        settings_path = pos_v2_root / ".claude" / "settings.json"
+        settings_path = loam_root / ".claude" / "settings.json"
         script = hooks_dir / "statusline.py"
         new_entry: dict[str, Any] = {
             "type": "command",
@@ -305,8 +305,8 @@ def main(argv: list[str] | None = None) -> int:
     # entry for workspaces already past first-run. Fail-soft so a
     # transient settings.json I/O error never blocks the supervisor.
     # Post-D.1: file lives at framework/orchestrator/scripts/...; parents[3] is the workspace root.
-    pos_v2_root = Path(__file__).resolve().parents[3]
-    _maybe_install_status_line(pos_v2_root)
+    loam_root = Path(__file__).resolve().parents[3]
+    _maybe_install_status_line(loam_root)
     return int(result["exit_code"])
 
 

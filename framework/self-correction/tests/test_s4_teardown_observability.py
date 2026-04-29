@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 
-from self_correction import CorrectionStore
+from loam.self_correction import CorrectionStore
 
 
 class _RaisingConn:
@@ -21,12 +21,12 @@ def test_s4_correction_store_close_surfaces_exception(tmp_path, caplog):
     store = CorrectionStore(store_path)
     store._conn = _RaisingConn()  # type: ignore[assignment]
 
-    with caplog.at_level(logging.DEBUG, logger="self_correction.store"):
+    with caplog.at_level(logging.DEBUG, logger="loam.self_correction.store"):
         store.close()
 
     matching = [
         r for r in caplog.records
-        if r.name == "self_correction.store"
+        if r.name == "loam.self_correction.store"
         and r.message == "self_correction_store_close_failed"
     ]
     assert len(matching) == 1

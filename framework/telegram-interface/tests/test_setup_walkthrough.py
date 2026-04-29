@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from telegram_interface.allowlist import AccessFile, AuthorityClass
-from telegram_interface.setup_walkthrough import (
+from loam.telegram_interface.allowlist import AccessFile, AuthorityClass
+from loam.telegram_interface.setup_walkthrough import (
     OPENING_OFFER,
     STEP1,
     STEP2,
@@ -121,7 +121,7 @@ async def test_tg3_success_writes_done_marker_and_self_retires(tmp_access: Acces
     await w.offer()
 
     # Pretend the plugin was installed between step1 and confirm.
-    import telegram_interface.setup_walkthrough as sw
+    import loam.telegram_interface.setup_walkthrough as sw
     orig = sw.plugin_installed
     sw.plugin_installed = lambda cache_dir=None: True
     try:

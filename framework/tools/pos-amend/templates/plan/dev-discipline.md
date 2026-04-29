@@ -25,7 +25,7 @@ optional:
   WORKING_DIRECTORY: "/Users/lukeivers/ivers-corp-pos-v2/"
   REFERENCES: |
     - CLAUDE.md (project + global)
-    - `docs/odd-methodology.md`, `docs/odd-in-pos.md`
+    - `docs/odd-methodology.md`, `docs/odd-in-loam.md`
     - `docs/rebuild/VALUE_PROPOSITION.md`, `docs/rebuild/STATE.md`, `docs/rebuild/FUTURE_IDEAS.md`
 ---
 # {{TITLE}} — plan

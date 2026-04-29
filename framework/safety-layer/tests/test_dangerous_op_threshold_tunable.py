@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from safety_layer import (
+from loam.safety_layer import (
     DEFAULT_MONEY_THRESHOLD_CENTS,
     MONEY_THRESHOLD_FLOOR_CENTS,
     SafetyConfig,

@@ -20,9 +20,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from pos_orchestrator.ipc import ApplicationError, IPCServer
+from loam.orchestrator.ipc import ApplicationError, IPCServer
 
-from reversibility_primitive import (
+from loam.reversibility_primitive import (
     CompensationPathBinding,
     IPC_REVERSIBILITY_MISSING_COMPENSATION,
     ReversibilityController,
@@ -30,7 +30,7 @@ from reversibility_primitive import (
     RollbackNotifier,
     register_reversibility_ipc,
 )
-from safety_layer import (
+from loam.safety_layer import (
     AlwaysAskList,
     DEFAULT_DANGEROUS_OP_SUBSET,
     DEFAULT_FRAMEWORK_FLOOR,
@@ -39,8 +39,8 @@ from safety_layer import (
     SafetyNotifier,
     SafetyStore,
 )
-from safety_layer.ipc_wiring import register_safety_ipc
-from scope_of_work import (
+from loam.safety_layer.ipc_wiring import register_safety_ipc
+from loam.scope_of_work import (
     Budget,
     ReversibilityClass,
     ScopeRuntime,
@@ -104,8 +104,8 @@ async def test_reversibility_wrap_runs_before_safety(tmp_path: Path) -> None:
         def request_stop(self) -> None:
             pass
 
-    from safety_layer.notification import SafetyChannel
-    from primary_persona.introduction import ChannelKind
+    from loam.safety_layer.notification import SafetyChannel
+    from loam.primary_persona.introduction import ChannelKind
 
     received: list[str] = []
 
@@ -189,8 +189,8 @@ async def test_both_pass_forwards_to_orig(tmp_path: Path) -> None:
     )
 
     # Safety with default ask_list — no hits on a plain spec.
-    from primary_persona.introduction import ChannelKind
-    from safety_layer.notification import SafetyChannel
+    from loam.primary_persona.introduction import ChannelKind
+    from loam.safety_layer.notification import SafetyChannel
 
     received: list[str] = []
 

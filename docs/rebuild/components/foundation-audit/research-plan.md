@@ -16,7 +16,7 @@ The research does not fix anything. It audits. No code is authored; no commits a
 ## Starting position
 
 - **Twelve sealed components on `pos-v2`** at commit `aab5800`: memory-system, scope-of-work, primary-persona, objective-tracker, orchestrator, graceful-degradation, observability-aggregator, self-upgrade, safety-layer, reversibility-primitive, cost-governance, self-correction, workspace-bootstrap. 794 tests green across all.
-- **Initial objectives spec** at `docs/rebuild/spec/pos-v2-objectives-spec.md` — v1.0 Foundational layer + v1.1 R1–R13 memory addendum + v1.2 R14–R16 primary-persona addendum.
+- **Initial objectives spec** at `docs/rebuild/spec/loam-objectives-spec.md` — v1.0 Foundational layer + v1.1 R1–R13 memory addendum + v1.2 R14–R16 primary-persona addendum.
 - **Per-component artifacts** at `docs/rebuild/components/<name>/`: each carries research-plan.md, research.md, proposal.md, brief.md, component.md (lifecycle history). Every component's acceptance criteria are enumerated in the proposal.
 - **Accumulated BACKLOG** at `docs/rebuild/BACKLOG.md`: follow-ons deferred during builds. Each entry has a trigger condition.
 - **Governing STATE** at `docs/rebuild/STATE.md`: component state machine, governing rules, current phase posture.

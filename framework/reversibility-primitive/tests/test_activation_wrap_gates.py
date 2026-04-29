@@ -6,15 +6,15 @@ class × binding-presence × safety-approval grid.
 from __future__ import annotations
 
 import pytest
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
-from reversibility_primitive import (
+from loam.reversibility_primitive import (
     ActivationGate,
     CompensationPathBinding,
     IPC_REVERSIBILITY_MISSING_COMPENSATION,
     ReversibilityStore,
 )
-from scope_of_work import ReversibilityClass
+from loam.scope_of_work import ReversibilityClass
 
 from .conftest import make_spec
 

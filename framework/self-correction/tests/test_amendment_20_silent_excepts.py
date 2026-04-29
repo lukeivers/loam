@@ -22,12 +22,12 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from self_correction import observability as sc_obs
-from self_correction.triggers import (
+from loam.self_correction import observability as sc_obs
+from loam.self_correction.triggers import (
     OTelAnomalyPoller,
     build_trigger_from_span,
 )
-from self_correction.completion_check import CompletionPrecheck
+from loam.self_correction.completion_check import CompletionPrecheck
 
 
 @pytest.fixture
@@ -151,7 +151,7 @@ def test_S2_site3_audit_subscription_drops_notify_with_no_loop_observably(
 ) -> None:
     """Site 3 — audit handler invoked from sync context (no running loop)
     emits audit_notify_no_loop instead of silently passing."""
-    from scope_of_work import ScopeState
+    from loam.scope_of_work import ScopeState
 
     store = _FakeStore(
         episode_id="ep-123",

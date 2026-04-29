@@ -30,8 +30,8 @@ from typing import Any
 
 import pytest
 
-from src.adapter import RealScopeSourceAdapter
-from src.runtime import ScopeRuntime
+from loam.scope_of_work.adapter import RealScopeSourceAdapter
+from loam.scope_of_work.runtime import ScopeRuntime
 from tests.conftest import make_spec
 
 

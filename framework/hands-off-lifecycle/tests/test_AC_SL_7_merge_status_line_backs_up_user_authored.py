@@ -21,12 +21,12 @@ sys.path.insert(0, str(HOOKS_DIR))
 from first_run_settings import merge_status_line  # noqa: E402
 
 
-def _pos_v2_envelope(pos_v2_root: Path) -> dict:
+def _pos_v2_envelope(loam_root: Path) -> dict:
     return {
         "type": "command",
         "command": (
-            f"{pos_v2_root}/.venv/bin/python "
-            f"{pos_v2_root}/hands-off-lifecycle/hooks/statusline.py"
+            f"{loam_root}/.venv/bin/python "
+            f"{loam_root}/hands-off-lifecycle/hooks/statusline.py"
         ),
         "refreshInterval": 1,
     }

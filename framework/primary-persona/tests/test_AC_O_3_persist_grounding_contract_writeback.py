@@ -19,8 +19,8 @@ from pathlib import Path
 
 import pytest
 
-from src.contract import PersonaContract, load_contract
-from src.onboarding import (
+from loam.primary_persona.contract import PersonaContract, load_contract
+from loam.primary_persona.onboarding import (
     GroundingCapture,
     OnboardingGroundingError,
     persist_grounding,

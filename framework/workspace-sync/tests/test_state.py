@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from workspace_sync.state import (
+from loam.workspace_sync.state import (
     SyncOutcome,
     SyncState,
     load_state,

@@ -107,7 +107,7 @@ def test_only_graceful_degradation_changed() -> None:
     #     `orchestrator/` — the three sibling brief-owning sealed
     #     components whose seal-diff tests + SEAL_COMMIT sidecars are
     #     updated in lockstep.
-    #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite (brief =
+    #   - `docs/odd-in-loam.md` (allowed_files) — §7.4 rewrite (brief =
     #     dispatch-time, not committed canonical artifact).
     # Amendment #20 (S2 silent-except bundle) additions:
     #   - `self-correction/` — partner component (sites 1-5 fixes).
@@ -164,6 +164,7 @@ def test_only_graceful_degradation_changed() -> None:
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "CLAUDE.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",

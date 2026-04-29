@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import pytest
 
-from graceful_degradation import DegradationConfig, DegradationMode, FSMState
-from graceful_degradation.errors import DegradationSignal
-from graceful_degradation.fsm import (
+from loam.graceful_degradation import DegradationConfig, DegradationMode, FSMState
+from loam.graceful_degradation.errors import DegradationSignal
+from loam.graceful_degradation.fsm import (
     GarbageFSM,
     LatencyFSM,
     WindowedFailureFSM,

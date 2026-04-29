@@ -27,7 +27,7 @@ if str(HOOKS_DIR) not in sys.path:
 def test_AC_TFN_4_wait_helper_is_removed_from_dispatch_wrapper() -> None:
     """Importing ``_wait_until_next_iso_second`` from the dispatch
     wrapper raises ``ImportError`` — the helper is gone."""
-    from primary_persona import dispatch_wrapper
+    from loam.primary_persona import dispatch_wrapper
 
     assert not hasattr(dispatch_wrapper, "_wait_until_next_iso_second"), (
         "_wait_until_next_iso_second still present on dispatch_wrapper "
@@ -43,7 +43,7 @@ def test_AC_TFN_4_back_to_back_emitters_lex_compare_correctly() -> None:
     capture's empirical). Post-fix it is 0/1000.
     """
     from active_scope_sentinel import _now_iso as sentinel_now_iso
-    from objective_tracker.store import (
+    from loam.objective_tracker.store import (
         _now_iso_microsecond_z as manifest_now_iso,
     )
 

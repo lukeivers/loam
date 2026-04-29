@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from self_correction import (
+from loam.self_correction import (
     TriggerSource,
     build_trigger_from_review_verdict,
 )

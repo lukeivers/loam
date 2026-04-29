@@ -20,8 +20,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from workspace_bootstrap.adapters.tracker_seed import (
-    CLASSIFICATION_POS_V2_DEV,
+from loam.workspace_bootstrap.adapters.tracker_seed import (
+    CLASSIFICATION_LOAM_DEV,
     CLASSIFICATION_USER,
     FRAMEWORK_VALUE_PROP_RELPATH,
     WORKSPACE_VALUE_PROP_RELPATH,
@@ -42,7 +42,7 @@ def test_AC_E_5_loader_reads_framework_path_on_dev_classification(
 
     src = load_value_prop_source(
         workspace_root=workspace,
-        classification=CLASSIFICATION_POS_V2_DEV,
+        classification=CLASSIFICATION_LOAM_DEV,
     )
     assert src.available is True
     assert src.source_doc == FRAMEWORK_VALUE_PROP_RELPATH

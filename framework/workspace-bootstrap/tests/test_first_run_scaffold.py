@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from workspace_bootstrap import PHASE_ORDER, Phase
-from workspace_bootstrap.adapters.first_run_scaffold import (
+from loam.workspace_bootstrap import PHASE_ORDER, Phase
+from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     CONFIRMATION_SENTENCE,
     ERR_PARTIAL_SCAFFOLD,
     ERR_PLATFORM_UNSUPPORTED,
@@ -312,7 +312,7 @@ def test_AC4_bootout_precedes_bootstrap_on_macos(
     """AC4 — ServiceManagerRunner.bootstrap issues launchctl bootout
     before launchctl bootstrap. Call order is load-bearing: bootstrap
     alone is a no-op when the label is already loaded."""
-    import workspace_bootstrap.adapters.first_run_scaffold as fr
+    import loam.workspace_bootstrap.adapters.first_run_scaffold as fr
 
     fake = _RecordingSubprocessRunner()
     monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())
@@ -337,7 +337,7 @@ def test_AC4_bootout_benign_when_service_not_loaded(
 ) -> None:
     """AC4 — when launchctl bootout reports the label isn't loaded
     (the fresh-host case), the bootstrap call still proceeds."""
-    import workspace_bootstrap.adapters.first_run_scaffold as fr
+    import loam.workspace_bootstrap.adapters.first_run_scaffold as fr
 
     fake = _RecordingSubprocessRunner(
         bootout_returncode=3,
@@ -361,7 +361,7 @@ def test_AC4_bootout_hard_failure_raises_before_bootstrap(
     """AC4 halt trigger — a non-'not loaded' bootout failure raises
     ServiceManagerBootoutError rather than pushing through to
     bootstrap with an ambiguous service-manager state."""
-    import workspace_bootstrap.adapters.first_run_scaffold as fr
+    import loam.workspace_bootstrap.adapters.first_run_scaffold as fr
 
     fake = _RecordingSubprocessRunner(
         bootout_returncode=1,
@@ -387,7 +387,7 @@ def test_AC4_idempotent_bootstrap_is_a_noop(
     """AC4 idempotency — calling bootstrap twice in a row issues two
     bootout-then-bootstrap sequences; final state is identical to one
     call from the caller's perspective (no exception, no mutation)."""
-    import workspace_bootstrap.adapters.first_run_scaffold as fr
+    import loam.workspace_bootstrap.adapters.first_run_scaffold as fr
 
     fake = _RecordingSubprocessRunner()
     monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())
@@ -409,7 +409,7 @@ def test_AC5_stale_label_clears_on_rebootstrap(
     same label first, so launchd drops the stale cached config before
     loading the new plist. This is the structural fix for the pos3
     regression (2026-04-22)."""
-    import workspace_bootstrap.adapters.first_run_scaffold as fr
+    import loam.workspace_bootstrap.adapters.first_run_scaffold as fr
 
     fake = _RecordingSubprocessRunner()
     monkeypatch.setattr(fr, "subprocess", type("M", (), {"run": fake})())

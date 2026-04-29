@@ -799,7 +799,7 @@ Description=pOS Orchestrator
 After=default.target
 
 [Service]
-ExecStart=%h/.pos/venv/bin/python -m pos_orchestrator start --config %h/.pos/config.yaml
+ExecStart=%h/.pos/venv/bin/python -m loam.orchestrator start --config %h/.pos/config.yaml
 Restart=always
 RestartSec=30
 StandardOutput=append:%h/.pos/log/orchestrator.out.log

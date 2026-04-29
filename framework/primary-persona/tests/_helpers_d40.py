@@ -130,7 +130,7 @@ def seed_value_prop_tree(db_path: Path) -> dict[str, Any]:
     Raises if objective_tracker is not importable. Tests that need a
     pure-Protocol shape should use ``FakeTrackerClient`` instead.
     """
-    from objective_tracker import (
+    from loam.objective_tracker import (
         LiftedFrom,
         ObjectiveSpec,
         ObjectiveTracker,
@@ -180,7 +180,7 @@ def seed_value_prop_tree(db_path: Path) -> dict[str, Any]:
             time_bound=TimeBound(evergreen=True, review_cadence="amendment-driven"),
             authored_by="user",
             lifted_from=LiftedFrom(
-                source_doc="docs/rebuild/spec/pos-v2-objectives-spec.md",
+                source_doc="docs/rebuild/spec/loam-objectives-spec.md",
                 source_ac="v1.0",
             ),
         )
@@ -200,7 +200,7 @@ def seed_value_prop_tree(db_path: Path) -> dict[str, Any]:
 def start_objective(db_path: Path, objective_id: str) -> None:
     """Helper: open a tracker at ``db_path`` and transition
     ``objective_id`` from ``proposed`` to ``active`` (i.e. start it)."""
-    from objective_tracker import ObjectiveTracker
+    from loam.objective_tracker import ObjectiveTracker
 
     tracker = ObjectiveTracker(db_path)
     try:

@@ -30,8 +30,8 @@ def test_AC_M_6_cli_memory_write_drives_one_add_episode(
     """``cli_memory_write`` calls ``add_episode`` exactly once,
     body contains both halves, group_id is the workspace slug."""
     fake = FakeMemoryClient()
-    import src.mcp_memory_client as mmc
-    import src.stop_emitter as se
+    import loam.primary_persona.mcp_memory_client as mmc
+    import loam.primary_persona.stop_emitter as se
 
     monkeypatch.setattr(
         mmc, "build_live_mcp_memory_client", lambda root: fake
@@ -56,7 +56,7 @@ def test_AC_M_6_cli_memory_write_drives_one_add_episode(
     assert "exactly one episode per turn." in call.body
     # AC.M.6 + AC-D7.4: group_id is the workspace slug (sanitised
     # workspace basename).
-    from src.memory_consumer import resolve_workspace_slug
+    from loam.primary_persona.memory_consumer import resolve_workspace_slug
 
     assert call.group_id == resolve_workspace_slug(tmp_path)
     # Episode name encodes the turn id (matches TurnAggregator
@@ -73,12 +73,12 @@ def test_AC_M_6_no_live_client_means_no_write_but_still_exit_zero(
     ready), cli_memory_write logs and exits 0 without invoking
     add_episode."""
     fake = FakeMemoryClient()
-    import src.mcp_memory_client as mmc
+    import loam.primary_persona.mcp_memory_client as mmc
 
     monkeypatch.setattr(
         mmc, "build_live_mcp_memory_client", lambda root: None
     )
-    from src.stop_emitter import cli_memory_write
+    from loam.primary_persona.stop_emitter import cli_memory_write
 
     rc = cli_memory_write(
         workspace_root=tmp_path,

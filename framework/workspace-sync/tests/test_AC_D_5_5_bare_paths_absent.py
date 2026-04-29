@@ -130,8 +130,8 @@ def test_AC_D_5_5_2_framework_workspace_sync_present() -> None:
     # tests, seals, top-level metadata).
     expected = (
         framework_ws_sync / "pyproject.toml",
-        framework_ws_sync / "src" / "workspace_sync" / "cli.py",
-        framework_ws_sync / "src" / "workspace_sync" / "canonical.py",
+        framework_ws_sync / "src" / "loam" / "workspace_sync" / "cli.py",
+        framework_ws_sync / "src" / "loam" / "workspace_sync" / "canonical.py",
         framework_ws_sync / "tests" / "test_no_sealed_amendments.py",
         framework_ws_sync / "tests" / "SEAL_COMMIT",
     )

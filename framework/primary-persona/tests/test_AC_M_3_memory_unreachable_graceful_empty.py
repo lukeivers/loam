@@ -41,7 +41,7 @@ def test_AC_M_3_no_mcp_json_means_no_retrieval_and_exit_zero(
         }
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.session_start_emitter import cli_user_prompt_submit
+    from loam.primary_persona.session_start_emitter import cli_user_prompt_submit
 
     rc = cli_user_prompt_submit(workspace_root=tmp_path)
     assert rc == 0
@@ -58,7 +58,7 @@ def test_AC_M_3_search_raises_connection_refused_then_exit_zero(
     seed_baseline_workspace(tmp_path)
     fake = FakeMemoryClient()
     fake.search_raises = ConnectionRefusedError("memory unreachable")
-    import src.session_start_emitter as sse
+    import loam.primary_persona.session_start_emitter as sse
 
     monkeypatch.setattr(
         sse, "_default_memory_client_factory", lambda root: fake
@@ -71,7 +71,7 @@ def test_AC_M_3_search_raises_connection_refused_then_exit_zero(
         }
     )
     monkeypatch.setattr("sys.stdin", io.StringIO(envelope))
-    from src.session_start_emitter import cli_user_prompt_submit
+    from loam.primary_persona.session_start_emitter import cli_user_prompt_submit
 
     rc = cli_user_prompt_submit(workspace_root=tmp_path)
     assert rc == 0

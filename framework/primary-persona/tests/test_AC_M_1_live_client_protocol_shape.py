@@ -138,7 +138,7 @@ def test_AC_M_1_factory_returns_non_none_for_well_formed_mcp_json(
 ) -> None:
     """When ``.mcp.json`` is present and well-formed, the factory
     returns a non-None client object."""
-    from src.mcp_memory_client import build_live_mcp_memory_client
+    from loam.primary_persona.mcp_memory_client import build_live_mcp_memory_client
 
     _seed_mcp_json(tmp_path, fake_memory_graphiti)
     client = build_live_mcp_memory_client(tmp_path)
@@ -149,7 +149,7 @@ def test_AC_M_1_factory_returns_none_when_mcp_json_missing(
     tmp_path: Path,
 ) -> None:
     """AC.M.3 graceful-empty: no .mcp.json → factory returns None."""
-    from src.mcp_memory_client import build_live_mcp_memory_client
+    from loam.primary_persona.mcp_memory_client import build_live_mcp_memory_client
 
     client = build_live_mcp_memory_client(tmp_path)
     assert client is None
@@ -159,7 +159,7 @@ def test_AC_M_1_factory_returns_none_when_mcp_json_malformed(
     tmp_path: Path,
 ) -> None:
     """AC.M.3 graceful-empty: malformed JSON → factory returns None."""
-    from src.mcp_memory_client import build_live_mcp_memory_client
+    from loam.primary_persona.mcp_memory_client import build_live_mcp_memory_client
 
     (tmp_path / ".mcp.json").write_text("not json", encoding="utf-8")
     client = build_live_mcp_memory_client(tmp_path)
@@ -170,7 +170,7 @@ def test_AC_M_1_factory_returns_none_when_entry_missing(
     tmp_path: Path,
 ) -> None:
     """AC.M.3 graceful-empty: no memory-graphiti entry → None."""
-    from src.mcp_memory_client import build_live_mcp_memory_client
+    from loam.primary_persona.mcp_memory_client import build_live_mcp_memory_client
 
     (tmp_path / ".mcp.json").write_text(
         json.dumps({"mcpServers": {"other": {"type": "http", "url": "x"}}}),
@@ -185,7 +185,7 @@ def test_AC_M_1_search_returns_documented_shape(
 ) -> None:
     """AC.M.1 outcome: ``await client.search(...)`` against the
     live service returns ``{"query": str, "results": list}``."""
-    from src.mcp_memory_client import build_live_mcp_memory_client
+    from loam.primary_persona.mcp_memory_client import build_live_mcp_memory_client
 
     _seed_mcp_json(tmp_path, fake_memory_graphiti)
     client = build_live_mcp_memory_client(tmp_path)
@@ -210,7 +210,7 @@ def test_AC_M_1_add_episode_returns_documented_shape(
 ) -> None:
     """AC.M.1 outcome: ``await client.add_episode(...)`` returns
     ``{"episode_uuid", "nodes_extracted", "edges_extracted"}``."""
-    from src.mcp_memory_client import build_live_mcp_memory_client
+    from loam.primary_persona.mcp_memory_client import build_live_mcp_memory_client
 
     _seed_mcp_json(tmp_path, fake_memory_graphiti)
     client = build_live_mcp_memory_client(tmp_path)

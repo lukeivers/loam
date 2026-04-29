@@ -18,8 +18,8 @@ import time
 
 import pytest
 
-from pos_orchestrator import Orchestrator
-from pos_orchestrator.ipc import IPCClient
+from loam.orchestrator import Orchestrator
+from loam.orchestrator.ipc import IPCClient
 
 
 @pytest.mark.asyncio
@@ -104,7 +104,7 @@ async def test_orphan_socket_removed_on_startup(tmp_config):
 
 @pytest.mark.asyncio
 async def test_method_not_found_returns_structured_error(tmp_config):
-    from pos_orchestrator.ipc import ApplicationError
+    from loam.orchestrator.ipc import ApplicationError
 
     orch = Orchestrator(tmp_config)
     async with orch.running():

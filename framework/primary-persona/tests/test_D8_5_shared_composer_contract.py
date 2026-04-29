@@ -20,7 +20,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from src.context_composer import (
+from loam.primary_persona.context_composer import (
     ADDITIONAL_CONTEXT_CAP,
     AdditionalContextCapExceededError,
     ComposedContextPayload,
@@ -28,7 +28,7 @@ from src.context_composer import (
     TriggerKind,
     TurnPayload,
 )
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 
 def _seed(root: Path) -> None:

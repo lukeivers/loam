@@ -32,7 +32,7 @@ BASELINE history:
     build-time; the canonical artifact set going forward is proposal
     + plan + shipped code + seal per ODD §2.5 and the `scope-only-
     dispatch` / `research-before-plan` CDCs) and edits
-    docs/odd-in-pos.md §7.4 to name briefs as dispatch-time artifacts
+    docs/odd-in-loam.md §7.4 to name briefs as dispatch-time artifacts
     rather than committed canonical ones. Multi-component amendment
     with six other brief-owning sealed components + hands-off-
     lifecycle. e8f704c is the pre-amendment tip (the
@@ -103,7 +103,7 @@ def test_C23_only_cost_governance_changed() -> None:
     #     `orchestrator/` — the three other brief-owning sealed
     #     components whose seal-diff tests + SEAL_COMMIT sidecars are
     #     updated in lockstep (multi-component partners).
-    #   - `docs/odd-in-pos.md` (allowed_files) — §7.4 rewrite naming
+    #   - `docs/odd-in-loam.md` (allowed_files) — §7.4 rewrite naming
     #     briefs as dispatch-time, not canonical.
     allowed_prefixes = (
         "framework/cost-governance/",
@@ -155,6 +155,7 @@ def test_C23_only_cost_governance_changed() -> None:
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "CLAUDE.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",

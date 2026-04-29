@@ -8,9 +8,9 @@ import pytest
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 
-from pos_observability_aggregator import open_store
-from pos_observability_aggregator.api import QueryAPI, SpanFilter
-from pos_observability_aggregator.ingest import (
+from loam.observability_aggregator import open_store
+from loam.observability_aggregator.api import QueryAPI, SpanFilter
+from loam.observability_aggregator.ingest import (
     AggregatorSpanExporter,
     IngestionPipeline,
     SpoolDrainer,
@@ -44,7 +44,7 @@ def test_six_components_emit_into_spool(tmp_config, fresh_otel_provider):
         # here we exercise the same surface.
         for tracer_name in (
             "loam.scope_of_work",
-            "pos_v2.primary_persona",
+            "loam.primary_persona",
             "loam.objective_tracker",
             "loam.orchestrator",
             "loam.degradation",
@@ -61,7 +61,7 @@ def test_six_components_emit_into_spool(tmp_config, fresh_otel_provider):
     assert len(lines) >= 5
     names = {json.loads(l)["name"] for l in lines}
     assert "loam.scope_of_work.demo_op" in names
-    assert "pos_v2.primary_persona.demo_op" in names
+    assert "loam.primary_persona.demo_op" in names
 
 
 def test_self_namespace_filtered_at_exporter(tmp_config, fresh_otel_provider):

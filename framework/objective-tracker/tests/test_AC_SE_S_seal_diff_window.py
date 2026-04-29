@@ -34,7 +34,7 @@ _ALLOWED_PREFIXES: tuple[str, ...] = (
 _ALLOWED_FILES: frozenset[str] = frozenset(
     {
         "CLAUDE.md",
-        "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         ".gitignore",

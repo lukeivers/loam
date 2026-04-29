@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos_reversibility_primitive"
+name = "loam-reversibility-primitive"
 version = "0.1.0"
 description = "Reversibility primitive for pOS v2 — compensation-path binding, rollback runtime, path-choice telemetry."
 requires-python = ">=3.11"
@@ -13,15 +13,15 @@ dependencies = [
     "opentelemetry-api>=1.25",
     "opentelemetry-sdk>=1.25",
     "pyyaml>=6",
-    "scope_of_work",
-    "primary_persona",
-    "pos_orchestrator",
-    "pos_safety_layer",
+    "loam-scope-of-work",
+    "loam-primary-persona",
+    "loam-orchestrator",
+    "loam-safety-layer",
 ]
 
 [tool.setuptools]
-package-dir = {"reversibility_primitive" = "src"}
-packages = ["reversibility_primitive"]
+package-dir = {"loam.reversibility_primitive" = "src/loam/reversibility_primitive"}
+packages = ["loam.reversibility_primitive"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

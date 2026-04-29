@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos_self_correction"
+name = "loam-self-correction"
 version = "0.1.0"
 description = "Self-correction loop for pOS v2 — four-part protocol structurally enforced; consumer of safety + reversibility + cost gates."
 requires-python = ">=3.11"
@@ -13,18 +13,18 @@ dependencies = [
     "opentelemetry-api>=1.25",
     "opentelemetry-sdk>=1.25",
     "pyyaml>=6",
-    "scope_of_work",
-    "primary_persona",
-    "pos_orchestrator",
-    "pos_safety_layer",
-    "pos_reversibility_primitive",
-    "pos_cost_governance",
-    "pos_observability_aggregator",
+    "loam-scope-of-work",
+    "loam-primary-persona",
+    "loam-orchestrator",
+    "loam-safety-layer",
+    "loam-reversibility-primitive",
+    "loam-cost-governance",
+    "loam-observability-aggregator",
 ]
 
 [tool.setuptools]
-package-dir = {"self_correction" = "src"}
-packages = ["self_correction"]
+package-dir = {"loam.self_correction" = "src/loam/self_correction"}
+packages = ["loam.self_correction"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

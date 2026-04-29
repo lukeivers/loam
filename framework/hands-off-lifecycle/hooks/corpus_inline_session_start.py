@@ -49,7 +49,7 @@ requires methodology / pos-v2-specific ODD / strategic-future
 context:
 
   - ``docs/odd-methodology.md``
-  - ``docs/odd-in-pos.md``
+  - ``docs/odd-in-loam.md``
   - ``docs/rebuild/FUTURE_IDEAS.md``
 
 Section-anchor extraction (research §5.4 hybrid) is an explicit
@@ -77,7 +77,7 @@ Format:
 
     === pos-v2 on-demand corpus (read via Read tool when relevant) ===
     - docs/odd-methodology.md
-    - docs/odd-in-pos.md
+    - docs/odd-in-loam.md
     - docs/rebuild/FUTURE_IDEAS.md
 
 Missing always-load files emit a structured ``[missing]`` marker
@@ -134,7 +134,7 @@ _ALWAYS_LOAD: tuple[str, ...] = (
 
 _ON_DEMAND: tuple[str, ...] = (
     "docs/odd-methodology.md",
-    "docs/odd-in-pos.md",
+    "docs/odd-in-loam.md",
     "docs/rebuild/FUTURE_IDEAS.md",
 )
 

@@ -18,7 +18,7 @@ Baseline for the build is commit `ac48a7b` (a reversibility-primitive docstring 
 1. **This brief** — operational objective, constraints, acceptance criteria.
 2. **`docs/rebuild/components/workspace-bootstrap/proposal.md`** — the contract approved. Binding. Halt and signal rather than deviate.
 3. **`docs/rebuild/components/workspace-bootstrap/research.md`** — design detail, prior-art survey, sequence shapes. Reference only; the proposal is the contract.
-4. **`docs/rebuild/spec/pos-v2-objectives-spec.md`** — spec v1.0 + v1.1 + v1.2 addenda.
+4. **`docs/rebuild/spec/loam-objectives-spec.md`** — spec v1.0 + v1.1 + v1.2 addenda.
 5. **`docs/rebuild/STATE.md`** — governing rules for the rebuild.
 
 **Precedents to emulate** (all sealed on `pos-v2`):

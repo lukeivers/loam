@@ -137,6 +137,7 @@ def test_tg23_only_telegram_interface_changed() -> None:
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         "docs/odd-methodology.md",
         "CLAUDE.md",

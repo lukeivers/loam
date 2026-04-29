@@ -11,7 +11,7 @@ This document traces a representative pOS session end-to-end through the aggrega
 ## What the components emit
 
 1. **Primary persona** opens its monitor turn:
-   - tracer `pos_v2.primary_persona`
+   - tracer `loam.primary_persona`
    - span `loam.persona.monitor.tick` with `loam.session.id="sess_2026-04-19-12:30"`
    - on dispatch: span `loam.persona.dispatch.scope_invoke`
 

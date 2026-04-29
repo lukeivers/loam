@@ -13,14 +13,14 @@ from dataclasses import dataclass
 
 import pytest
 
-from telegram_interface.adapter import ChannelEvent, TelegramAdapter
-from telegram_interface.allowlist import AccessFile, AuthorityClass, Identity
-from telegram_interface.availability import (
+from loam.telegram_interface.adapter import ChannelEvent, TelegramAdapter
+from loam.telegram_interface.allowlist import AccessFile, AuthorityClass, Identity
+from loam.telegram_interface.availability import (
     AvailabilityProbe,
     AvailabilityState,
     ProbeResult,
 )
-from telegram_interface.confirmation import (
+from loam.telegram_interface.confirmation import (
     DEFAULT_CONFIRMATION_TIMEOUT_S,
     ConfirmationGate,
     ConfirmationOutcome,
@@ -53,7 +53,7 @@ async def test_tg18_tier_ab_confirmation_requires_yes_from_telegram(
             sent.append(args["text"])
             return {}
 
-    from telegram_interface.mcp_client import McpReplyClient
+    from loam.telegram_interface.mcp_client import McpReplyClient
 
     fake = FakeMcp()
     mcp = McpReplyClient(invoke_tool=fake.invoke)
@@ -114,7 +114,7 @@ async def test_tg19_confirmation_timeout_refuses_and_notifies_owner(
             sent.append(args["text"])
             return {}
 
-    from telegram_interface.mcp_client import McpReplyClient
+    from loam.telegram_interface.mcp_client import McpReplyClient
 
     fake = FakeMcp()
     mcp = McpReplyClient(invoke_tool=fake.invoke)

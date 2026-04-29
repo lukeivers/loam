@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from primary_persona import (
+from loam.primary_persona import (
     DispatchOutcome,
     DispatchShape,
     dispatch_with_scope,
@@ -31,7 +31,7 @@ async def test_AC_A8_4_record_dispatch_close_carries_agent_tokens(
     workspace = make_workspace(tmp_path)
     client = StubIPCClient()
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 
@@ -63,7 +63,7 @@ async def test_AC_A8_4_zero_tokens_when_agent_omits(monkeypatch, tmp_path):
     workspace = make_workspace(tmp_path)
     client = StubIPCClient()
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 

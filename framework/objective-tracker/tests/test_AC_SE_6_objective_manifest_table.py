@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from src.runtime import ObjectiveTracker
+from loam.objective_tracker.runtime import ObjectiveTracker
 
 
 @pytest.fixture

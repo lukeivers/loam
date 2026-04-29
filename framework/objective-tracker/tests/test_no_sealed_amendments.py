@@ -131,6 +131,7 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
     allowed_files: set[str] = {
         "CLAUDE.md",
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         ".gitignore",

@@ -16,9 +16,9 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from pos_observability_aggregator import nl_path as nl_path_mod
-from pos_observability_aggregator.api import QueryAPI
-from pos_observability_aggregator.nl_path import NLPath, rule_based_translate
+from loam.observability_aggregator import nl_path as nl_path_mod
+from loam.observability_aggregator.api import QueryAPI
+from loam.observability_aggregator.nl_path import NLPath, rule_based_translate
 
 
 @pytest.fixture

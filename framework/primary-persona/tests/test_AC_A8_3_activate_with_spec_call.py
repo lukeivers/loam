@@ -11,13 +11,13 @@ from pathlib import Path
 
 import pytest
 
-from primary_persona import (
+from loam.primary_persona import (
     DispatchOutcome,
     DispatchRefusal,
     DispatchShape,
     dispatch_with_scope,
 )
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
 from ._helpers_a8 import (
     StubIPCClient,
@@ -34,7 +34,7 @@ async def test_AC_A8_3_calls_activate_scope_with_spec_on_approval(
     workspace = make_workspace(tmp_path)
     client = StubIPCClient()
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 
@@ -68,7 +68,7 @@ async def test_AC_A8_3_does_not_call_agent_on_cost_refusal(
         ApplicationError(-32060, "session ceiling exceeded"),
     )
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 
@@ -107,7 +107,7 @@ async def test_AC_A8_3_safety_refusal_classified_correctly(
         ApplicationError(-32070, "kill switch active"),
     )
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 
@@ -137,7 +137,7 @@ async def test_AC_A8_3_reversibility_refusal_classified_correctly(
         ApplicationError(-32082, "irreversible without approval"),
     )
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 
@@ -168,7 +168,7 @@ async def test_AC_A8_3_orchestrator_bind_refused_classified_correctly(
         ApplicationError(409, "bind refused"),
     )
     monkeypatch.setattr(
-        "pos_orchestrator.ipc.IPCClient",
+        "loam.orchestrator.ipc.IPCClient",
         build_stub_ipc_client_factory(client),
     )
 

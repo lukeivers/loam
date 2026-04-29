@@ -1,8 +1,8 @@
 """C26: zero imports from current-gen Ruby pOS or other legacy surfaces.
 
 The primitive consumes only: stdlib, pydantic, pyee, OTel, PyYAML,
-scope_of_work, primary_persona, pos_orchestrator, safety_layer,
-reversibility_primitive.
+loam.scope_of_work, loam.primary_persona, loam.orchestrator,
+loam.safety_layer, loam.reversibility_primitive.
 """
 
 from __future__ import annotations
@@ -38,18 +38,15 @@ ALLOWED_TOP_LEVEL_IMPORTS = {
     "pyee",
     "opentelemetry",
     "yaml",
-    # pOS siblings this primitive is allowed to consume
-    "cost_governance",
-    "scope_of_work",
-    "primary_persona",
-    "pos_orchestrator",
-    "safety_layer",
-    "reversibility_primitive",
+    # loam siblings this primitive is allowed to consume (post-M1e
+    # namespace pivot — the top-level root for every framework
+    # package is `loam`).
+    "loam",
 }
 
 
 def _iter_sources() -> list[pathlib.Path]:
-    import cost_governance as cg
+    import loam.cost_governance as cg
 
     pkg_dir = pathlib.Path(cg.__file__).parent
     return list(pkg_dir.rglob("*.py"))

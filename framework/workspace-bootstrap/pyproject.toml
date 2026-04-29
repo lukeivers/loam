@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos_workspace_bootstrap"
+name = "loam-workspace-bootstrap"
 version = "0.1.0"
 description = "pOS v2 workspace bootstrap — two-layer framework composing the ten foundational components into a running orchestrator + three-gate chain, plus the published Phase 4+ extension protocol."
 requires-python = ">=3.13"
@@ -14,18 +14,18 @@ dependencies = [
     "opentelemetry-sdk>=1.25",
     "PyYAML>=6",
     "duckdb>=0.10",
-    "pos_orchestrator",
-    "pos_observability_aggregator",
-    "pos_safety_layer",
-    "pos_reversibility_primitive",
-    "pos_cost_governance",
-    "pos_self_correction",
-    "pos_self_upgrade",
-    "scope_of_work",
-    "objective_tracker",
-    "primary_persona",
-    "graceful_degradation",
-    "pos_telegram_interface",
+    "loam-orchestrator",
+    "loam-observability-aggregator",
+    "loam-safety-layer",
+    "loam-reversibility-primitive",
+    "loam-cost-governance",
+    "loam-self-correction",
+    "loam-self-upgrade",
+    "loam-scope-of-work",
+    "loam-objective-tracker",
+    "loam-primary-persona",
+    "loam-graceful-degradation",
+    "loam-telegram-interface",
 ]
 
 [project.optional-dependencies]
@@ -34,34 +34,35 @@ test = [
     "pytest-asyncio>=0.23",
 ]
 
-[project.entry-points."pos.bootstrap.contributions"]
+[project.entry-points."loam.bootstrap.contributions"]
 # Foundational-adapter bundle — thirteen contributions. Phase 4+
-# components ship their own `pos.bootstrap.contributions` entry-points
+# components ship their own `loam.bootstrap.contributions` entry-points
 # in their own packages; bootstrap's code does not need to change.
-observability_aggregator = "workspace_bootstrap.adapters.observability_aggregator:ObservabilityAggregatorContribution"
-scope_of_work = "workspace_bootstrap.adapters.scope_of_work:ScopeOfWorkContribution"
-objective_tracker = "workspace_bootstrap.adapters.objective_tracker:ObjectiveTrackerContribution"
-primary_persona = "workspace_bootstrap.adapters.primary_persona:PrimaryPersonaContribution"
-graceful_degradation = "workspace_bootstrap.adapters.graceful_degradation:GracefulDegradationContribution"
-memory_system = "workspace_bootstrap.adapters.memory_system:MemorySystemContribution"
-reversibility_primitive = "workspace_bootstrap.adapters.reversibility_primitive:ReversibilityPrimitiveContribution"
-safety_layer = "workspace_bootstrap.adapters.safety_layer:SafetyLayerContribution"
-cost_governance = "workspace_bootstrap.adapters.cost_governance:CostGovernanceContribution"
-self_correction = "workspace_bootstrap.adapters.self_correction:SelfCorrectionContribution"
-self_upgrade = "workspace_bootstrap.adapters.self_upgrade:SelfUpgradeContribution"
-workspace_bootstrap_py = "workspace_bootstrap.adapters.workspace_bootstrap_py:WorkspaceBootstrapPyContribution"
-telegram_interface = "workspace_bootstrap.adapters.telegram_interface:TelegramInterfaceContribution"
+observability_aggregator = "loam.workspace_bootstrap.adapters.observability_aggregator:ObservabilityAggregatorContribution"
+scope_of_work = "loam.workspace_bootstrap.adapters.scope_of_work:ScopeOfWorkContribution"
+objective_tracker = "loam.workspace_bootstrap.adapters.objective_tracker:ObjectiveTrackerContribution"
+primary_persona = "loam.workspace_bootstrap.adapters.primary_persona:PrimaryPersonaContribution"
+graceful_degradation = "loam.workspace_bootstrap.adapters.graceful_degradation:GracefulDegradationContribution"
+memory_system = "loam.workspace_bootstrap.adapters.memory_system:MemorySystemContribution"
+reversibility_primitive = "loam.workspace_bootstrap.adapters.reversibility_primitive:ReversibilityPrimitiveContribution"
+safety_layer = "loam.workspace_bootstrap.adapters.safety_layer:SafetyLayerContribution"
+cost_governance = "loam.workspace_bootstrap.adapters.cost_governance:CostGovernanceContribution"
+self_correction = "loam.workspace_bootstrap.adapters.self_correction:SelfCorrectionContribution"
+self_upgrade = "loam.workspace_bootstrap.adapters.self_upgrade:SelfUpgradeContribution"
+workspace_bootstrap_py = "loam.workspace_bootstrap.adapters.workspace_bootstrap_py:WorkspaceBootstrapPyContribution"
+telegram_interface = "loam.workspace_bootstrap.adapters.telegram_interface:TelegramInterfaceContribution"
 
 [project.scripts]
-pos-bootstrap = "workspace_bootstrap.main:cli_main"
+pos-bootstrap = "loam.workspace_bootstrap.main:cli_main"
 # D-migration D.4 (amendment #65): fresh-workspace bootstrap primitive
 # (β.2 absorption). Composes on the existing run_first_run_scaffold
 # API + git clone; lives next to pos-bootstrap so the import boundary
 # is tight (one component owns the scaffold + the bootstrap CLI).
-pos-new-workspace = "workspace_bootstrap.new_workspace:cli_main"
+pos-new-workspace = "loam.workspace_bootstrap.new_workspace:cli_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["loam*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

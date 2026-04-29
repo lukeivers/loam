@@ -120,7 +120,7 @@ def install_stub_tracker(monkeypatch, tracker: RecordingTracker) -> None:
     style module-level shims (see also A2 tests). It avoids having to
     set up a real SQLite DB for the setup-phase tests.
     """
-    from primary_persona import dispatch_wrapper
+    from loam.primary_persona import dispatch_wrapper
 
     monkeypatch.setattr(
         dispatch_wrapper, "_open_tracker", lambda _ws: tracker

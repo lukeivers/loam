@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections import deque
 from typing import Any
 
-from workspace_sync.merge_resolver import (
+from loam.workspace_sync.merge_resolver import (
     MergeResolver,
     MergeVerdict,
     ResolverBudget,

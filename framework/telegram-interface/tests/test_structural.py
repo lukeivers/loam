@@ -18,9 +18,9 @@ import inspect
 
 import pytest
 
-from primary_persona.introduction import ChannelKind, OneOnOneChannel
+from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
 
-from telegram_interface import (
+from loam.telegram_interface import (
     IPC_TELEGRAM_ALLOWLIST_REJECTED,
     IPC_TELEGRAM_BLOCKED_BY_USER,
     IPC_TELEGRAM_CONFIRMATION_REFUSED,
@@ -32,7 +32,7 @@ from telegram_interface import (
     IPC_TELEGRAM_TOKEN_INVALID,
     IPC_TELEGRAM_UNAVAILABLE,
 )
-from telegram_interface import observability as obs
+from loam.telegram_interface import observability as obs
 
 
 def test_error_codes_in_reserved_range() -> None:

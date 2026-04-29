@@ -78,7 +78,7 @@ def _iter_commands(stanza_entries: list[Any]) -> list[str]:
 # considered shipped by pos-v2 and does NOT trigger the user-stanza
 # backup path. The set grows when a future amendment registers a
 # new SessionStart contributor under hands-off-lifecycle's wiring.
-_POS_V2_COMMAND_MARKERS: tuple[str, ...] = (
+_LOAM_COMMAND_MARKERS: tuple[str, ...] = (
     "first-run.sh",
     "pos_session_start.py",
     # Amendment #45 (sub-plan B): loam-mode SessionStart emitter
@@ -96,7 +96,7 @@ _POS_V2_COMMAND_MARKERS: tuple[str, ...] = (
     # back up the persona inner hook as user-authored.
     "primary_persona.cli session-start",
     "primary_persona.cli session_start",
-    "-m primary_persona",
+    "-m loam.primary_persona",
     # Structural-enforcement A1 substrate (AC.SE.4): the corpus-load
     # sentinel SessionStart inner hook composes onto the multi-
     # contributor envelope alongside loam-mode and primary-persona.
@@ -118,10 +118,10 @@ _POS_V2_COMMAND_MARKERS: tuple[str, ...] = (
 # When a future amendment introduces additional UserPromptSubmit
 # contributors, generalise this set + the merge function the same way
 # amendment #45 generalised the SessionStart counterparts.
-_POS_V2_USER_PROMPT_SUBMIT_COMMAND_MARKERS: tuple[str, ...] = (
+_LOAM_USER_PROMPT_SUBMIT_COMMAND_MARKERS: tuple[str, ...] = (
     "primary_persona.cli user-prompt-submit",
     "primary_persona.cli user_prompt_submit",
-    "-m primary_persona",
+    "-m loam.primary_persona",
 )
 
 
@@ -131,16 +131,16 @@ _POS_V2_USER_PROMPT_SUBMIT_COMMAND_MARKERS: tuple[str, ...] = (
 # #45's SessionStart registry). When a future amendment introduces
 # additional Stop contributors, generalise this set + ``merge_stop``
 # the same way.
-_POS_V2_STOP_COMMAND_MARKERS: tuple[str, ...] = (
+_LOAM_STOP_COMMAND_MARKERS: tuple[str, ...] = (
     "primary_persona.cli stop",
-    "-m primary_persona",
+    "-m loam.primary_persona",
 )
 
 
 # Set of substrings that mark a top-level ``statusLine`` value as
 # pos-v2-owned. The renderer script's path is the canonical marker.
 # Per amendment #49 plan §6 D-build.3.
-_POS_V2_STATUS_LINE_COMMAND_MARKERS: tuple[str, ...] = (
+_LOAM_STATUS_LINE_COMMAND_MARKERS: tuple[str, ...] = (
     "hands-off-lifecycle/hooks/statusline.py",
 )
 
@@ -154,7 +154,7 @@ _POS_V2_STATUS_LINE_COMMAND_MARKERS: tuple[str, ...] = (
 # fires only the inner hooks whose matcher value matches the tool
 # name, so cross-matcher non-interference is a Claude Code primitive,
 # not a property of this merge function.
-_POS_V2_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
+_LOAM_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
     "objective_binding_gate.py",
     "tdd_guard.py",
     "bash_guard.py",
@@ -184,7 +184,7 @@ def _is_pos_v2_owned(stanza_entries: list[Any]) -> bool:
     if not commands:
         return False
     for cmd in commands:
-        if not any(marker in cmd for marker in _POS_V2_COMMAND_MARKERS):
+        if not any(marker in cmd for marker in _LOAM_COMMAND_MARKERS):
             return False
     return True
 
@@ -208,7 +208,7 @@ def _compose_inner_hooks(
 
 
 def build_first_run_stanza(
-    pos_v2_root: Path,
+    loam_root: Path,
     *,
     extra_inner_hooks: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -226,7 +226,7 @@ def build_first_run_stanza(
     hooks are appended after the first-run shim entry; Claude Code's
     SessionStart fan-out invokes them all in order.
     """
-    script = Path(pos_v2_root) / "hands-off-lifecycle" / "hooks" / "first-run.sh"
+    script = Path(loam_root) / "hands-off-lifecycle" / "hooks" / "first-run.sh"
     # timeout is in seconds per Claude Code hook docs. 60s is a generous
     # cap for the thin shim — the 2026-04-22 detachment amendment made
     # first-run.sh return in under a second by spawning a detached
@@ -246,7 +246,7 @@ def build_first_run_stanza(
 
 
 def build_supervisor_stanza(
-    pos_v2_root: Path,
+    loam_root: Path,
     *,
     extra_inner_hooks: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -265,9 +265,9 @@ def build_supervisor_stanza(
     compat); non-empty appends contributors after the supervisor
     entry.
     """
-    pos_v2_root = Path(pos_v2_root)
-    python = pos_v2_root / ".venv" / "bin" / "python"
-    script = pos_v2_root / "framework" / "orchestrator" / "scripts" / "pos_session_start.py"
+    loam_root = Path(loam_root)
+    python = loam_root / ".venv" / "bin" / "python"
+    script = loam_root / "framework" / "orchestrator" / "scripts" / "pos_session_start.py"
     # timeout is in seconds per Claude Code hook docs. The supervisor
     # itself finishes well under 5s; 20s is a generous cap. Pre-
     # amendment callers had 20000 here — ambiguous units — which the
@@ -413,7 +413,7 @@ def _is_pos_v2_owned_user_prompt_submit(stanza_entries: list[Any]) -> bool:
     for cmd in commands:
         if not any(
             marker in cmd
-            for marker in _POS_V2_USER_PROMPT_SUBMIT_COMMAND_MARKERS
+            for marker in _LOAM_USER_PROMPT_SUBMIT_COMMAND_MARKERS
         ):
             return False
     return True
@@ -516,7 +516,7 @@ def _is_pos_v2_owned_stop(stanza_entries: list[Any]) -> bool:
     for cmd in commands:
         if not any(
             marker in cmd
-            for marker in _POS_V2_STOP_COMMAND_MARKERS
+            for marker in _LOAM_STOP_COMMAND_MARKERS
         ):
             return False
     return True
@@ -618,7 +618,7 @@ def _is_pos_v2_owned_pre_tool_use(stanza_entries: list[Any]) -> bool:
     for cmd in commands:
         if not any(
             marker in cmd
-            for marker in _POS_V2_PRE_TOOL_USE_COMMAND_MARKERS
+            for marker in _LOAM_PRE_TOOL_USE_COMMAND_MARKERS
         ):
             return False
     return True
@@ -740,7 +740,7 @@ def _is_pos_v2_owned_status_line(entry: Any) -> bool:
     if not isinstance(cmd, str):
         return False
     return any(
-        marker in cmd for marker in _POS_V2_STATUS_LINE_COMMAND_MARKERS
+        marker in cmd for marker in _LOAM_STATUS_LINE_COMMAND_MARKERS
     )
 
 

@@ -125,6 +125,7 @@ def test_B20_only_workspace_sync_surfaces_changed() -> None:
     allowed_files: set[str] = {
         "CLAUDE.md",
         "docs/odd-in-pos.md",
+        "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         ".claude/settings.json",

@@ -13,17 +13,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from src.context_composer import (
+from loam.primary_persona.context_composer import (
     ADDITIONAL_CONTEXT_CAP,
     ComposedContextPayload,
     TriggerKind,
 )
-from src.memory_consumer import (
+from loam.primary_persona.memory_consumer import (
     MEMORY_RETRIEVAL_CHAR_CAP,
     register_memory_retrieval,
     resolve_workspace_slug,
 )
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 from _helpers_d7 import FakeMemoryClient, seed_baseline_workspace
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 import time
 from datetime import datetime, timezone
 
-from pos_observability_aggregator.api import QueryAPI
-from pos_observability_aggregator.schema import (
+from loam.observability_aggregator.api import QueryAPI
+from loam.observability_aggregator.schema import (
     AuditRecord,
     EventRecord,
     SpanRecord,

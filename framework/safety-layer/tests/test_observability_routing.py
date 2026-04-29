@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from safety_layer import observability as safety_obs
+from loam.safety_layer import observability as safety_obs
 
 
 SAFETY_SRC = Path(safety_obs.__file__).parent

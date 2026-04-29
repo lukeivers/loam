@@ -7,10 +7,10 @@ from typing import Any
 
 import pytest
 
-from pos_orchestrator.ipc import ApplicationError, IPCServer
-from scope_of_work import ScopeSpec
+from loam.orchestrator.ipc import ApplicationError, IPCServer
+from loam.scope_of_work import ScopeSpec
 
-from cost_governance import (
+from loam.cost_governance import (
     CostLedger,
     CostStore,
     register_cost_governance_ipc,

@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from self_correction import (
+from loam.self_correction import (
     CorrectionNotifier,
     SelfCorrectionController,
     build_trigger_from_user_report,

@@ -69,7 +69,7 @@ def test_AC_AG_4_dev_mode_non_matching_prompt_admitted(
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={"prompt": prompt},
-        envelope_cwd=agent_guard.CANONICAL_POS_V2_PATH,
+        envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
     assert decision.decision != "deny"
 

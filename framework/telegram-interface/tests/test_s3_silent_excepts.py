@@ -24,7 +24,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from telegram_interface.allowlist import AccessFile, AuthorityClass
+from loam.telegram_interface.allowlist import AccessFile, AuthorityClass
 
 
 @pytest.fixture(scope="module")

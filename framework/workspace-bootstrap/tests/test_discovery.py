@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from workspace_bootstrap import (
+from loam.workspace_bootstrap import (
     ContributionNotFoundError,
     IPC_BOOTSTRAP_CONTRIBUTION_NOT_FOUND,
     load_manifest,

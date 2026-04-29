@@ -17,7 +17,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from src.contract import (
+from loam.primary_persona.contract import (
     AuthorityBoundary,
     ContractFileError,
     EscalationTaxonomy,

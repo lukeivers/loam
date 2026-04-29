@@ -7,11 +7,11 @@ from typing import Any
 
 import pytest
 
-from scope_of_work import ScopeRuntime
-from scope_of_work.events import BudgetDebited, BudgetRefunded, StateTransitioned
-from scope_of_work.spec import ScopeState
+from loam.scope_of_work import ScopeRuntime
+from loam.scope_of_work.events import BudgetDebited, BudgetRefunded, StateTransitioned
+from loam.scope_of_work.spec import ScopeState
 
-from cost_governance import CostLedger, CostStore
+from loam.cost_governance import CostLedger, CostStore
 
 from .conftest import build_config, make_spec
 
@@ -134,7 +134,7 @@ def test_C13_cancel_pre_debit_releases_slack(store: CostStore) -> None:
 
     # Second scope would fail because s1 reserves 600 + 500 > 1000.
     spec2 = make_spec(money_cents=500)
-    from pos_orchestrator.ipc import ApplicationError
+    from loam.orchestrator.ipc import ApplicationError
     with pytest.raises(ApplicationError):
         ledger.reserve_or_refuse(spec2, scope_id="s2")
 

@@ -80,7 +80,7 @@ Question-asking discipline (companion rule):
 
 - Before asking the owner any question, evaluate it against the
   design corpus: objectives spec v1.0+v1.1+v1.2, odd-methodology.md,
-  odd-in-pos.md, VALUE_PROPOSITION.md, STATE.md, FUTURE_IDEAS.md.
+  odd-in-loam.md, VALUE_PROPOSITION.md, STATE.md, FUTURE_IDEAS.md.
 - Only surface questions that are NOT answered by those sources.
 - Do not present "options to rule on" when the methodology already
   rules — method-level choices are the builder's call per ODD.
@@ -399,7 +399,7 @@ This belongs in FUTURE_IDEAS rather than a near-term component cycle because bot
 
 Captured 2026-04-22.
 
-Every pos-v2 session so far has rediscovered the same design corpus — `odd-methodology.md`, `odd-in-pos.md`, `FUTURE_IDEAS.md`, the proposal and seal notes for whatever component the current work touches — before it can plan or build correctly. The rediscovery cost is paid session after session because loading the relevant context is a social convention, not a mechanical precondition: the author remembers (or fails to remember) to read the design docs before dispatching work. When the author forgets, the work proceeds on incomplete context and the discrepancy surfaces in review, amendment, or audit instead of in the plan. A structural context-load gate removes the social layer: relevant design docs are *required* to be loaded before coding or planning begins, and the gate refuses to advance until they are.
+Every pos-v2 session so far has rediscovered the same design corpus — `odd-methodology.md`, `odd-in-loam.md`, `FUTURE_IDEAS.md`, the proposal and seal notes for whatever component the current work touches — before it can plan or build correctly. The rediscovery cost is paid session after session because loading the relevant context is a social convention, not a mechanical precondition: the author remembers (or fails to remember) to read the design docs before dispatching work. When the author forgets, the work proceeds on incomplete context and the discrepancy surfaces in review, amendment, or audit instead of in the plan. A structural context-load gate removes the social layer: relevant design docs are *required* to be loaded before coding or planning begins, and the gate refuses to advance until they are.
 
 The idea composes naturally with the plan-before-code CDC and the scope-only-dispatch CDC already codified in this file. Plan-before-code says a written plan must exist before any source edit; scope-only dispatch says a dispatch carries only scope. The context-load gate is the upstream companion — it says the primary persona (or the orchestrator layer it runs inside) cannot author the plan, or the scope, or dispatch the builder, until the design context that informs those artefacts has been loaded into the session. The gate is mechanical in the same sense ODD's acceptance-criterion validator is mechanical: not "the author should check this," but "the author cannot proceed until this passes."
 
@@ -437,7 +437,7 @@ pOS v2 is being renamed to **`loam`** — substrate-not-plant metaphor
 that matches the project's actual identity: the enriched medium the
 user cultivates their Claude agent in (user-intent = seed,
 Claude = genetic machinery, grown agent = plant). The seed framing
-already canonical at `docs/rebuild/spec/pos-v2-objectives-spec.md:73`
+already canonical at `docs/rebuild/spec/loam-objectives-spec.md:73`
 is preserved — `loam` names the substrate; the seed / cultivar /
 growth metaphor in existing narrative is unchanged.
 

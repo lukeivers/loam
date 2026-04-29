@@ -9,9 +9,9 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
-from self_correction import (
+from loam.self_correction import (
     CompletionPrecheck,
     CorrectionEpisode,
     CorrectionStore,
@@ -25,7 +25,7 @@ from self_correction import (
 
 
 def _seed_episode(store: CorrectionStore, *, scope_id: str) -> str:
-    from self_correction.spec import CorrectionTrigger, TriggerSource
+    from loam.self_correction.spec import CorrectionTrigger, TriggerSource
 
     trig = CorrectionTrigger(
         trigger_id="trig-seed",

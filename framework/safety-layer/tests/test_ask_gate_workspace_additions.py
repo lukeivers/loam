@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import pytest
 
-from pos_orchestrator.ipc import ApplicationError
+from loam.orchestrator.ipc import ApplicationError
 
-from safety_layer import (
+from loam.safety_layer import (
     AlwaysAskList,
     AskListEntry,
     DEFAULT_DANGEROUS_OP_SUBSET,
@@ -21,7 +21,7 @@ from safety_layer import (
     SafetyController,
     SafetyNotifier,
 )
-from safety_layer.controller import IPC_ASK_GATE_PENDING
+from loam.safety_layer.controller import IPC_ASK_GATE_PENDING
 
 from .conftest import make_spec
 from .fakes import FakeOrchestrator, make_fake_channel

@@ -40,10 +40,10 @@ import yaml
 
 
 def test_AC1_adapter_metadata_matches_proposal() -> None:
-    from workspace_bootstrap.adapters.telegram_interface import (
+    from loam.workspace_bootstrap.adapters.telegram_interface import (
         TelegramInterfaceContribution,
     )
-    from workspace_bootstrap.spec import Phase
+    from loam.workspace_bootstrap.spec import Phase
 
     md = TelegramInterfaceContribution.metadata
     assert md.name == "telegram_interface"
@@ -56,7 +56,7 @@ def test_AC1_adapter_metadata_matches_proposal() -> None:
 
 
 def test_AC2_bootstrap_yaml_lists_thirteen_contributions() -> None:
-    from workspace_bootstrap.adapters.first_run_scaffold import (
+    from loam.workspace_bootstrap.adapters.first_run_scaffold import (
         _BOOTSTRAP_YAML,
     )
 
@@ -65,7 +65,7 @@ def test_AC2_bootstrap_yaml_lists_thirteen_contributions() -> None:
     assert len(contribs) == 13
     assert contribs[-1]["name"] == "telegram_interface"
     assert contribs[-1]["module"] == (
-        "workspace_bootstrap.adapters.telegram_interface"
+        "loam.workspace_bootstrap.adapters.telegram_interface"
     )
     assert contribs[-1]["class"] == "TelegramInterfaceContribution"
     # Header comment updated to reflect the new count.
@@ -85,7 +85,7 @@ def _bare_host(tmp_path: Path) -> Any:
     touched — so this bare host is sufficient to exercise AC3, AC5,
     AC6.
     """
-    from workspace_bootstrap.host import BootstrapHost
+    from loam.workspace_bootstrap.host import BootstrapHost
 
     workspace = tmp_path / "pos-v2"
     workspace.mkdir()
@@ -114,9 +114,9 @@ def test_AC3_default_degraded_alive_composition_succeeds(
 ) -> None:
     """Default config: no telegram.yaml, no env var, no access.json.
     The adapter must compose; the channel exists; is_active=False."""
-    from primary_persona.introduction import ChannelKind, OneOnOneChannel
-    from telegram_interface.adapter import TelegramAdapter
-    from workspace_bootstrap.adapters.telegram_interface import (
+    from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
+    from loam.telegram_interface.adapter import TelegramAdapter
+    from loam.workspace_bootstrap.adapters.telegram_interface import (
         TelegramInterfaceContribution,
     )
 
@@ -150,7 +150,7 @@ def test_AC3_default_degraded_alive_composition_succeeds(
 def test_AC4_scaffold_writes_telegram_yaml_starter(tmp_path: Path) -> None:
     """The scaffold writes ~/.loam/telegram.yaml with the approved
     starter shape (proposal §5 #4 owner ruling)."""
-    from workspace_bootstrap.adapters.first_run_scaffold import (
+    from loam.workspace_bootstrap.adapters.first_run_scaffold import (
         _TELEGRAM_YAML,
         run_first_run_scaffold,
     )
@@ -184,7 +184,7 @@ def test_AC5_channel_published_on_host_and_fallback_routes(
     attention file."""
     import asyncio
 
-    from workspace_bootstrap.adapters.telegram_interface import (
+    from loam.workspace_bootstrap.adapters.telegram_interface import (
         TelegramInterfaceContribution,
     )
 
@@ -204,7 +204,7 @@ def test_AC5_channel_published_on_host_and_fallback_routes(
     # Redirect the attention-md fallback to a tmp path. The fallback
     # module reads DEFAULT_ATTENTION_PATH at call-time, so monkeypatch
     # it via the module-level attribute for the duration of the send.
-    import telegram_interface.fallback as fb
+    import loam.telegram_interface.fallback as fb
 
     attention_path = tmp_path / "attention.md"
     original = fb.DEFAULT_ATTENTION_PATH
@@ -230,15 +230,15 @@ def test_AC6_required_true_missing_creds_raises_adapter_error(
     contribution raises AdapterRaisedError — which the framework wraps
     as -32086 with the telegram-interface error code in the data
     payload. Proposal §2 fail-closed direction."""
-    from telegram_interface import (
+    from loam.telegram_interface import (
         IPC_TELEGRAM_SETUP_FAILED,
         IPC_TELEGRAM_TOKEN_INVALID,
     )
-    from workspace_bootstrap.errors import (
+    from loam.workspace_bootstrap.errors import (
         AdapterRaisedError,
         IPC_BOOTSTRAP_ADAPTER_RAISED,
     )
-    from workspace_bootstrap.adapters.telegram_interface import (
+    from loam.workspace_bootstrap.adapters.telegram_interface import (
         TelegramInterfaceContribution,
     )
 
@@ -285,7 +285,7 @@ def test_AC8_ordering_places_telegram_after_primary_persona_and_safety_layer(
     synthetic stubs for primary_persona + safety_layer, and asserts
     the ordering engine's output.
     """
-    from workspace_bootstrap import (
+    from loam.workspace_bootstrap import (
         Bootstrapper,
         ContributionRef,
         Manifest,
@@ -314,7 +314,7 @@ def test_AC8_ordering_places_telegram_after_primary_persona_and_safety_layer(
             ),
             ContributionRef(
                 kind="module",
-                module="workspace_bootstrap.adapters.telegram_interface",
+                module="loam.workspace_bootstrap.adapters.telegram_interface",
                 module_attr="TelegramInterfaceContribution",
                 display_name="telegram_interface",
             ),
@@ -337,7 +337,7 @@ def test_AC8_ordering_places_telegram_after_primary_persona_and_safety_layer(
     import types
 
     mod = types.ModuleType("tests.telegram_stubs")
-    from workspace_bootstrap.spec import (
+    from loam.workspace_bootstrap.spec import (
         BaseContribution,
         ContributionMetadata,
     )

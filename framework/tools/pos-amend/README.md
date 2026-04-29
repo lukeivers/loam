@@ -148,7 +148,7 @@ with every pre-amendment-#23 manifest.
 
 Use this when the test file's BASELINE has been frozen at a point-in-
 time (e.g. hands-off-lifecycle's H19 check pinned at project-start per
-amendment #23). See `docs/odd-in-pos.md` §10 for the convention.
+amendment #23). See `docs/odd-in-loam.md` §10 for the convention.
 
 ### Schema-version compatibility
 

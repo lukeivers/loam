@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from workspace_bootstrap import (
+from loam.workspace_bootstrap import (
     Bootstrapper,
     ContributionMetadata,
     IPC_BOOTSTRAP_METADATA_INVALID,

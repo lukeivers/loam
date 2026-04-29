@@ -22,8 +22,8 @@ identity) is exercised by the unchanged ``test_AC45_*`` tests under
 
 from __future__ import annotations
 
-from src.context_composer import ComposedContextPayload, TriggerKind
-from src.session_start_gate import compose_session_fields
+from loam.primary_persona.context_composer import ComposedContextPayload, TriggerKind
+from loam.primary_persona.session_start_gate import compose_session_fields
 
 
 def test_AC46_6_composer_register_unchanged_for_unrelated_contributors() -> None:
@@ -49,7 +49,7 @@ def test_AC46_6_session_start_emit_works_without_persona() -> None:
     from pathlib import Path
     import tempfile
 
-    from src.session_start_emitter import emit_session_start_context
+    from loam.primary_persona.session_start_emitter import emit_session_start_context
 
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)

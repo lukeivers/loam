@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pos_workspace_sync"
+name = "loam-workspace-sync"
 version = "0.1.0"
 description = "pOS v2 workspace-sync — canonical-to-workspace git-shaped sync (Architecture B) with three-class workspace-data envelope and LLM-mediated semantic-merge gate. Companion to self-upgrade (Architecture A canonical-only)."
 requires-python = ">=3.13"
@@ -24,14 +24,15 @@ test = [
 # Hyphenated short-form (per pos-v2 convention: `pos-X = pkg.cli:main`).
 # Operator types `pos-sync --canonical <path>`; `pos-workspace-sync` is
 # the unambiguous alias the plan §11 D-1 LOCKED ruling describes.
-pos-sync = "workspace_sync.cli:main"
-pos-workspace-sync = "workspace_sync.cli:main"
+pos-sync = "loam.workspace_sync.cli:main"
+pos-workspace-sync = "loam.workspace_sync.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["loam*"]
 
 [tool.setuptools.package-data]
-workspace_sync = ["templates/*.yaml"]
+"loam.workspace_sync" = ["templates/*.yaml"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

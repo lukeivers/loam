@@ -8,21 +8,21 @@ from pathlib import Path
 
 from opentelemetry import trace
 
-from pos_observability_aggregator import open_store
-from pos_observability_aggregator.api import QueryAPI, SpanFilter
-from pos_observability_aggregator.ingest import (
+from loam.observability_aggregator import open_store
+from loam.observability_aggregator.api import QueryAPI, SpanFilter
+from loam.observability_aggregator.ingest import (
     SpoolDrainer,
     register_otel_provider,
     IngestionPipeline,
     memory_span_to_canonical,
 )
-from pos_observability_aggregator.nl_corpus import (
+from loam.observability_aggregator.nl_corpus import (
     CORPUS,
     evaluate_corpus,
     matches_ground_truth,
 )
-from pos_observability_aggregator.nl_path import NLPath, rule_based_translate
-from pos_observability_aggregator.schema import RetentionClass
+from loam.observability_aggregator.nl_path import NLPath, rule_based_translate
+from loam.observability_aggregator.schema import RetentionClass
 
 
 def _write_memory_span(path: Path, name: str, *, retention_class=None, payload=None):
@@ -137,7 +137,7 @@ def test_nl_format_correctness_cited_output(tmp_config):
     store = open_store(tmp_config)
     try:
         # Insert one span to ensure rows exist for at least one query.
-        from pos_observability_aggregator.schema import SpanRecord
+        from loam.observability_aggregator.schema import SpanRecord
         now_ns = int(time.time() * 1e9)
         store.insert_span(SpanRecord(
             trace_id="t" * 32, span_id="z" * 16, name="probe",

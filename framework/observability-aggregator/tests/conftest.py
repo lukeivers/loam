@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from opentelemetry import trace
 
-from pos_observability_aggregator import AggregatorConfig, open_store
-from pos_observability_aggregator.config import IngestConfig, RetentionConfig
+from loam.observability_aggregator import AggregatorConfig, open_store
+from loam.observability_aggregator.config import IngestConfig, RetentionConfig
 
 
 @pytest.fixture

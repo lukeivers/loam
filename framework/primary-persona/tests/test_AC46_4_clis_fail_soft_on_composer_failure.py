@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-from src.session_start_emitter import (
+from loam.primary_persona.session_start_emitter import (
     cli_session_start,
     cli_user_prompt_submit,
     emit_session_start_context,
@@ -85,7 +85,7 @@ def test_AC46_4_session_start_cli_no_traceback_on_session_builder_raise(
     """When the session-builder itself raises, the emit returns empty
     and the CLI prints nothing (no traceback)."""
     # Patch compose_session_fields to raise.
-    import src.session_start_emitter as sse
+    import loam.primary_persona.session_start_emitter as sse
 
     def boom(workspace_root: Path):
         raise RuntimeError("synthetic session-builder failure")
@@ -106,7 +106,7 @@ def test_AC46_4_user_prompt_submit_cli_no_traceback_on_failure(
 ) -> None:
     """When emit_user_prompt_submit_context's underlying surface
     raises, the CLI prints nothing and exits 0 — no traceback."""
-    import src.session_start_emitter as sse
+    import loam.primary_persona.session_start_emitter as sse
 
     def boom(workspace_root: Path):
         raise RuntimeError("synthetic failure")

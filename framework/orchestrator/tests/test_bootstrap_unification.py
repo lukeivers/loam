@@ -33,8 +33,8 @@ from pathlib import Path
 
 import pytest
 
-from pos_orchestrator import Orchestrator
-from pos_orchestrator.config import OrchestratorConfig
+from loam.orchestrator import Orchestrator
+from loam.orchestrator.config import OrchestratorConfig
 
 from .conftest import _short_socket_path
 
@@ -87,7 +87,7 @@ async def test_AC2_missing_bootstrap_py_is_not_a_fail_closed_condition(
 
 
 def test_AC7_no_bootstrap_flag_is_removed() -> None:
-    """``python -m pos_orchestrator --no-bootstrap`` must exit with
+    """``python -m loam.orchestrator --no-bootstrap`` must exit with
     argparse's unknown-option error code (2), and ``--help`` output
     must not mention the flag.
 
@@ -97,7 +97,7 @@ def test_AC7_no_bootstrap_flag_is_removed() -> None:
     """
     # Reject unknown flag (argparse exits with code 2).
     proc = subprocess.run(
-        [sys.executable, "-m", "pos_orchestrator", "--no-bootstrap"],
+        [sys.executable, "-m", "loam.orchestrator", "--no-bootstrap"],
         capture_output=True,
         text=True,
         timeout=10,
@@ -112,7 +112,7 @@ def test_AC7_no_bootstrap_flag_is_removed() -> None:
 
     # --help must not mention the flag.
     helpout = subprocess.run(
-        [sys.executable, "-m", "pos_orchestrator", "--help"],
+        [sys.executable, "-m", "loam.orchestrator", "--help"],
         capture_output=True,
         text=True,
         timeout=10,
@@ -136,7 +136,7 @@ def test_AC8_first_run_scaffold_does_not_write_bootstrap_py(
     the invariant so future edits to ``first_run_scaffold.py`` that
     regress into templating a Python stub fail loudly.
     """
-    from workspace_bootstrap.adapters.first_run_scaffold import (
+    from loam.workspace_bootstrap.adapters.first_run_scaffold import (
         run_first_run_scaffold,
     )
 

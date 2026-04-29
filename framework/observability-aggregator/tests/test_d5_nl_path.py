@@ -7,20 +7,20 @@ from pathlib import Path
 
 from opentelemetry import trace
 
-from pos_observability_aggregator import open_store
-from pos_observability_aggregator.api import QueryAPI
-from pos_observability_aggregator.ingest import register_otel_provider, SpoolDrainer
-from pos_observability_aggregator.nl_corpus import (
+from loam.observability_aggregator import open_store
+from loam.observability_aggregator.api import QueryAPI
+from loam.observability_aggregator.ingest import register_otel_provider, SpoolDrainer
+from loam.observability_aggregator.nl_corpus import (
     CORPUS,
     evaluate_corpus,
     matches_ground_truth,
 )
-from pos_observability_aggregator.nl_path import (
+from loam.observability_aggregator.nl_path import (
     NLPath,
     rule_based_translate,
     format_cited_answer,
 )
-from pos_observability_aggregator.schema import SpanRecord
+from loam.observability_aggregator.schema import SpanRecord
 
 
 def test_translate_corpus_meets_80_percent_accuracy():
@@ -118,7 +118,7 @@ def test_self_observation_no_infinite_loop(tmp_config, fresh_otel_provider):
             drainer = SpoolDrainer(store, spool)
             drainer.drain_once()
             # Confirm: no aggregator spans in the store.
-            from pos_observability_aggregator.api import SpanFilter
+            from loam.observability_aggregator.api import SpanFilter
             agg_spans = api.find_spans(SpanFilter(components=["aggregator"]), limit=100)
             assert agg_spans == []
         finally:

@@ -26,8 +26,8 @@ from typing import Any
 
 import pytest
 
-from workspace_bootstrap.adapters import tracker_seed
-from workspace_bootstrap.new_workspace import (
+from loam.workspace_bootstrap.adapters import tracker_seed
+from loam.workspace_bootstrap.new_workspace import (
     BootstrapResult,
     CanonicalSourceInvalidError,
     CloneFailedError,
@@ -37,7 +37,7 @@ from workspace_bootstrap.new_workspace import (
     build_parser,
     cli_main,
 )
-from workspace_bootstrap.workspace_paths import (
+from loam.workspace_bootstrap.workspace_paths import (
     POS_SUBDIR,
     WORKSPACE_STATE_SUBDIR,
 )
@@ -264,7 +264,7 @@ def test_AC_D_4_1_url_form_routes_through_cache_clone(
 
     # Patch ensure_cache_clone to just clone canonical to a deterministic
     # cache path in fake_home (avoiding real network I/O for the URL).
-    from workspace_sync import canonical_cache as cc_mod
+    from loam.workspace_sync import canonical_cache as cc_mod
 
     real_ensure = cc_mod.ensure_cache_clone
 

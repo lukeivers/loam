@@ -1406,18 +1406,10 @@ any deviation.)
 
 ### Commit SHAs
 
-(Populated post-build by `loam amend seal --plan-doc` SHA
-backfill.)
-
-- M2 plan + manifest commit: `<TBD>`
-- M2 feature commit: `<TBD>`
-- M2 apply commit: `<TBD>`
-- M2 corrective commit(s) (if any): `<TBD>`
-- M2 seal commit: `<TBD>`
-- M2 §14 SHA-register backfill: `<TBD>`
-
----
-
+- Amendment commit: `41892e59f532aab94a54442c71ef8c1bdef2fe99` —
+  `chore(partition-apply): loam amend apply for amendment #83 (M2 publish-mode partition manifest + synthesis tool extension)`
+- Seal commit: `4cda805f138c878b8544cc31568b32ace6e9ac0e` —
+  `chore(seals): M2 publish-mode partition manifest + synthesis tool extension — author publish-mode-manifest.yaml at framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml partitioning every workspace path into public_only / dev_and_public / dev_only / excluded_from_publish (four partition classes; default partition COMPLETE for canonical HEAD with first-match-wins precedence excluded_from_publish > dev_only > public_only > dev_and_public per plan §10 D-build.M2.3) + new partition.py module under framework/tools/pos-publish-framework-only/src/loam/publish_framework_only/ (PartitionClass StrEnum + PartitionManifest dataclass + ManifestEntry dataclass + load_manifest + classify_path + is_publishable + glob-match semantics mirroring loam_mode.manifest._glob_match) + extend synth.py to consume the manifest (new manifest_path: Path required parameter on synthesise_framework_only; per-leaf classification via git ls-tree -r; SynthesisError on partition incomplete; hardcoded FRAMEWORK_PREFIX + TOP_LEVEL_DOCS constants RETIRE per hard cutover D-RNM.3-equivalent + plan §10 D-build.M2.5) + extend cli.py with --manifest-path flag (default <args.repo>/framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml) + extend tests/conftest.py make_fixture_canonical to write a fixture manifest into the fixture canonical at the same canonical path so existing AC.SFR.2 tests continue passing without test-side change + 4 new test files (test_AC_OSS_3_partition_manifest_load.py schema-shape coverage + test_AC_OSS_3_partition_classifier.py classification correctness + first-match-wins precedence + test_AC_OSS_3_synthesis_drops_dev_only.py fixture canonical with mixed framework/cost-governance/ + framework/tools/loam/ classification + test_AC_OSS_3_default_partition_complete.py canonical-HEAD ls-tree completeness check) + 1-line cross-tree consumer update in framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py:97 passing fixture manifest_path. Hard cutover per plan §5 + master plan §6 — no transitional manifest-vs-hardcode dual mode. AC.OSS.3 (no dev-discipline machinery in public synthesis output) — M2 lands the manifest-driven mechanism; verification of AC.OSS.3 against canonical HEAD is M11's job. M2 gates M9 (scrub) + M11 (dry-run) per master plan §6 sequencing rule #2. Sealed-component fence: HOL no-op narrative anchor (per plan §11 finding #5 + D-build.M2.8 — loam amend manifest.py:358 requires components non-empty; HOL is the conventional meta-anchor for tools-tree amendments per M1c..M1g precedent; HOL diff is sidecar bump + new SEAL_COMMIT narrative file only) + structural fence framework/tools/pos-publish-framework-only/ (the structural surface). HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE (no HC#4 sample paths under framework/tools/pos-publish-framework-only/; verified at plan-authoring per plan §13 HC#4 status). — hands-off-lifecycle at 41892e5`
 ## 15. References
 
 - **Programme master plan:** `docs/rebuild/plans/oss-v0-1-0-publish.md`

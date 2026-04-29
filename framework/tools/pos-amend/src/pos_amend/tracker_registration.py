@@ -41,7 +41,7 @@ from typing import Any
 # (transitive via workspace_bootstrap). The import lives at module top
 # so an `objective_tracker` import failure surfaces as a structured
 # tracker-unavailable diagnostic at apply time (AC.D-pa.5 path).
-from objective_tracker import (
+from loam.objective_tracker import (
     ChildClosureCriterion,
     ExternalPredicateCriterion,
     LiftedFrom,
@@ -52,7 +52,7 @@ from objective_tracker import (
     ScopeSuccessCriterion,
     TimeBound,
 )
-from objective_tracker.spec import Criterion
+from loam.objective_tracker.spec import Criterion
 
 from pos_amend.manifest import LiftedFromEntry, Manifest, ObjectiveEntry
 

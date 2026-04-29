@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from objective_tracker import ObjectiveFilter, ObjectiveTracker
+from loam.objective_tracker import ObjectiveFilter, ObjectiveTracker
 
 from heavy_b_migrate.components import seed_phase_alpha
 from heavy_b_migrate.ids import component_objective_id

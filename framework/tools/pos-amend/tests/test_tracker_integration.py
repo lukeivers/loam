@@ -26,7 +26,7 @@ from pathlib import Path
 
 import pytest
 
-from objective_tracker import (
+from loam.objective_tracker import (
     ObjectiveFilter,
     ObjectiveTracker,
 )
@@ -110,7 +110,7 @@ def _seed_tracker_with_value_prop_root(repo: Path) -> Path:
     tracker DB is workspace-local state, not source). Tests query it
     in-place at the standard path.
     """
-    from objective_tracker import (
+    from loam.objective_tracker import (
         LiftedFrom,
         ObjectiveSpec,
         ProseCriterion,

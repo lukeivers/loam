@@ -31,7 +31,7 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
-from self_upgrade.merge_resolver import (
+from loam.self_upgrade.merge_resolver import (
     MergeResolver,
     ResolverBudget,
     ResolverFailure,

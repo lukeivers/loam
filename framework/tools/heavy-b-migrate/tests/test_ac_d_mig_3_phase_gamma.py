@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from objective_tracker import ObjectiveFilter, ObjectiveTracker
+from loam.objective_tracker import ObjectiveFilter, ObjectiveTracker
 
 from heavy_b_migrate.amendment_acs import extract_and_seed
 

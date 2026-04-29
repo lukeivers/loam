@@ -30,7 +30,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from objective_tracker import (
+from loam.objective_tracker import (
     LiftedFrom,
     ObjectiveFilter,
     ObjectiveSpec,

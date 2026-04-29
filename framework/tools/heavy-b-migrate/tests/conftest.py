@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from objective_tracker import (
+from loam.objective_tracker import (
     LiftedFrom,
     ObjectiveSpec,
     ObjectiveTracker,

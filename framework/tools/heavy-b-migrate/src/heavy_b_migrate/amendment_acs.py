@@ -29,7 +29,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from objective_tracker import (
+from loam.objective_tracker import (
     LiftedFrom,
     ObjectiveFilter,
     ObjectiveSpec,

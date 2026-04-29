@@ -65,7 +65,11 @@ _VALID_YAML = dedent(
 
 
 def _write_persona(workspace: Path, handle: str = "eve") -> None:
-    personas_dir = workspace / "personas" / handle
+    # D-migration D.2 (amendment #63): personas live under
+    # <workspace>/workspace/personas/, not <workspace>/personas/.
+    # The fixture pre-D.2 wrote to the latter; this is the post-D.2
+    # path matching primary_persona.loader.personas_dir() resolution.
+    personas_dir = workspace / "workspace" / "personas" / handle
     personas_dir.mkdir(parents=True, exist_ok=True)
     yaml = _VALID_YAML
     if handle != "eve":

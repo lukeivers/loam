@@ -47,7 +47,7 @@ def test_six_components_emit_into_spool(tmp_config, fresh_otel_provider):
             "loam.primary_persona",
             "loam.objective_tracker",
             "loam.orchestrator",
-            "loam.degradation",
+            "loam.dormancy",
         ):
             tracer = trace.get_tracer(tracer_name)
             with tracer.start_as_current_span(f"{tracer_name}.demo_op") as span:

@@ -26,7 +26,7 @@ Config (``~/.loam/telegram.yaml``, all fields optional):
     required: bool        # default False; true → fail-close boot if creds absent
     env_path: str         # override ~/.claude/channels/telegram/.env location
     access_path: str      # override ~/.claude/channels/telegram/access.json
-    default_tier: int     # degradation-config default
+    default_tier: int     # dormancy-config default
     probe_interval_s: int # availability-probe cadence override (unused by default
 
 The credential source of truth remains

@@ -24,7 +24,7 @@ dependencies = [
     "loam-scope-of-work",
     "loam-objective-tracker",
     "loam-primary-persona",
-    "loam-graceful-degradation",
+    "loam-dormancy",
     "loam-telegram-interface",
 ]
 
@@ -42,7 +42,7 @@ observability_aggregator = "loam.workspace_bootstrap.adapters.observability_aggr
 scope_of_work = "loam.workspace_bootstrap.adapters.scope_of_work:ScopeOfWorkContribution"
 objective_tracker = "loam.workspace_bootstrap.adapters.objective_tracker:ObjectiveTrackerContribution"
 primary_persona = "loam.workspace_bootstrap.adapters.primary_persona:PrimaryPersonaContribution"
-graceful_degradation = "loam.workspace_bootstrap.adapters.graceful_degradation:GracefulDegradationContribution"
+dormancy = "loam.workspace_bootstrap.adapters.dormancy:DormancyContribution"
 memory_system = "loam.workspace_bootstrap.adapters.memory_system:MemorySystemContribution"
 reversibility_primitive = "loam.workspace_bootstrap.adapters.reversibility_primitive:ReversibilityPrimitiveContribution"
 safety_layer = "loam.workspace_bootstrap.adapters.safety_layer:SafetyLayerContribution"

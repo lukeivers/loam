@@ -59,7 +59,7 @@ If `llm_translate` raises or returns a non-`NLTranslation`, NLPath falls back to
 - Audit intent — words like "supersede", "supersession", "retention class", "audit", "decision".
 - Replay intent — phrases like "replay session", "replay scope", "replay objective".
 - Span query intent — default; uses `name_pattern` heuristics for verbs (ingest, rollup, bind, narrate).
-- Component synonyms — "scope", "persona", "objective", "orchestrator", "memory", "graceful degradation", "outage".
+- Component synonyms — "scope", "persona", "objective", "orchestrator", "memory", "dormancy", "graceful degradation", "outage".
 - Time windows — "last 7 days", "in the past hour", "today", "yesterday", "the last week".
 - Scope/objective/session/trace IDs by pattern matching.
 

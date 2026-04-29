@@ -50,7 +50,7 @@ _CORE_CONTRIBUTIONS = [
     "scope_of_work",
     "objective_tracker",
     "primary_persona",
-    "graceful_degradation",
+    "dormancy",
     "cost_governance",
     "reversibility_primitive",
     "safety_layer",

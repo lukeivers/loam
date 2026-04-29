@@ -23,7 +23,7 @@ Attributes fall into three groups:
      - `scope_runtime` (ScopeRuntime) — from `orchestrator.scope_runtime`.
      - `objective_tracker` (ObjectiveTracker).
      - `monitor` (BackgroundWorkMonitor).
-     - `graceful_degradation` (DegradationComponent | None).
+     - `dormancy` (DegradationComponent | None).
 
   3. Per-adapter outputs (populated as contributions run; used by
      downstream contributions that declare `after=`):
@@ -96,7 +96,7 @@ class BootstrapHost:
         self.scope_runtime: Any = None
         self.objective_tracker: Any = None
         self.monitor: Any = None
-        self.graceful_degradation: Any = None
+        self.dormancy: Any = None
         self.observability_provider: Any = None
         self.loaded_persona: Any = None
         self.reversibility_controller: Any = None

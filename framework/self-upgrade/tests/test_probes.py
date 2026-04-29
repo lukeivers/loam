@@ -48,7 +48,7 @@ def seeded_base(tmp_path: Path, monkeypatch) -> Paths:
     LocalStateStore(str(p.orchestrator_db))
 
     # degradation
-    from loam.graceful_degradation.state import DegradationStore
+    from loam.dormancy.state import DegradationStore
     DegradationStore(str(p.degradation_db))
 
     # aggregator: small sqlite with schema

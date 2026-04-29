@@ -107,6 +107,12 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
     allowed = {
         "memory-system",
         "orchestrator",
+        "dormancy",
+        # graceful-degradation admitted within the M1f rename diff
+        # window; the directory was git mv'd to dormancy/ and the
+        # pre-rename path-prefix appears in the BASELINE..HEAD
+        # window. Will phase out after the next non-rename amendment
+        # advances the H19 BASELINE past M1f.
         "graceful-degradation",
         "workspace-bootstrap",
         "hands-off-lifecycle",
@@ -358,7 +364,7 @@ def test_H19_frozen_baseline_is_project_start() -> None:
     [
         ("workspace-bootstrap", 60),  # 57 baseline + 9 new
         ("orchestrator", 70),  # 56 baseline + 17 new
-        ("graceful-degradation", 95),  # 93 baseline + 6 new
+        ("dormancy", 95),  # 93 baseline + 6 new (formerly graceful-degradation; renamed in M1f)
         ("memory-system", 40),  # 26 baseline + 17 new (excl. graphiti)
     ],
 )
@@ -401,7 +407,7 @@ def test_all_four_amended_components_have_seal_commit_sidecars() -> None:
     for component in (
         "memory-system",
         "orchestrator",
-        "graceful-degradation",
+        "dormancy",
         "workspace-bootstrap",
     ):
         # Post-D.1: components live under framework/<comp>/.

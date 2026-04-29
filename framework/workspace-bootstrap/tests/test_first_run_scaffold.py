@@ -69,7 +69,7 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
         "cost/ceilings.yaml",
         "reversibility.yaml",
         "self-correction.yaml",
-        "degradation-config.yaml",
+        "dormancy-config.yaml",
         "telegram.yaml",
     ):
         assert (pos_root / rel).exists(), f"missing {rel}"

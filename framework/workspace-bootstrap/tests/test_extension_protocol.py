@@ -136,7 +136,7 @@ async def test_B18_synthetic_contribution_orders_against_foundational(
         "scope_of_work",
         "objective_tracker",
         "primary_persona",
-        "graceful_degradation",
+        "dormancy",
         "cost_governance",
         "reversibility_primitive",
         "safety_layer",

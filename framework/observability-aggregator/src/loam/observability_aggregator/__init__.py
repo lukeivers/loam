@@ -4,7 +4,7 @@ Single-user local-first trace store. Subscribes to every sealed
 component's emission surface without amending any of them:
 
   - Six OTel-emitting components (scope-of-work, primary-persona,
-    objective-tracker, orchestrator, graceful-degradation, plus test
+    objective-tracker, orchestrator, dormancy, plus test
     infra) flow through a custom SpanProcessor + SpanExporter
     registered via the orchestrator's `~/.loam/bootstrap.py` workspace
     hook. Python OTel's late-binding ProxyTracer routes them

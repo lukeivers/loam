@@ -7,7 +7,7 @@
 │                      Sealed pOS components                       │
 │                                                                  │
 │  scope-of-work       primary-persona      objective-tracker      │
-│  orchestrator        graceful-degradation                        │
+│  orchestrator        dormancy                                    │
 │       │                 │                       │                │
 │       │                 │                       │                │
 │       └─── OTel API ────┴───────────────────────┘                │
@@ -44,10 +44,10 @@ primary-persona     pos obs CLI            future UI / consumers
 | primary-persona         | OTel via `loam.primary_persona`        | unchanged |
 | objective-tracker       | OTel via `loam.objective_tracker`      | unchanged |
 | orchestrator            | OTel via `loam.orchestrator`           | unchanged |
-| graceful-degradation    | OTel via `loam.degradation`            | unchanged |
+| dormancy                | OTel via `loam.dormancy`            | unchanged |
 | memory-system           | JSONL: spans/tokens/audit             | unchanged |
 
-A1 status "unchanged" is verified at every aggregator build by re-running each sealed component's full test suite. Baseline counts: scope-of-work 77 + 1 skipped, primary-persona 101, objective-tracker 86, orchestrator 56, graceful-degradation 93, memory-system 30 (in its own venv). Aggregator changes that drop any of these counts by even one are a halt-and-signal event.
+A1 status "unchanged" is verified at every aggregator build by re-running each sealed component's full test suite. Baseline counts: scope-of-work 77 + 1 skipped, primary-persona 101, objective-tracker 86, orchestrator 56, dormancy 93, memory-system 30 (in its own venv). Aggregator changes that drop any of these counts by even one are a halt-and-signal event.
 
 ## Hard dependencies
 

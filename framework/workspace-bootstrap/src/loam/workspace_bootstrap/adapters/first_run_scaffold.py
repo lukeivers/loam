@@ -269,9 +269,9 @@ contributions:
   - name: primary_persona
     module: loam.workspace_bootstrap.adapters.primary_persona
     class: PrimaryPersonaContribution
-  - name: graceful_degradation
-    module: loam.workspace_bootstrap.adapters.graceful_degradation
-    class: GracefulDegradationContribution
+  - name: dormancy
+    module: loam.workspace_bootstrap.adapters.dormancy
+    class: DormancyContribution
   - name: self_upgrade
     module: loam.workspace_bootstrap.adapters.self_upgrade
     class: SelfUpgradeContribution
@@ -333,8 +333,8 @@ _SELF_CORRECTION_YAML = """\
 enabled: true
 """
 
-_DEGRADATION_YAML = """\
-# ~/.loam/degradation-config.yaml — per-mode defaults.
+_DORMANCY_YAML = """\
+# ~/.loam/dormancy-config.yaml — per-mode defaults.
 notification:
   default_tier: 2
   auth_broken_tier: 1
@@ -355,7 +355,7 @@ _TELEGRAM_YAML = """\
 required: false                       # set true to fail-close boot if creds absent
 env_path: ~/.claude/channels/telegram/.env
 access_path: ~/.claude/channels/telegram/access.json
-default_tier: 2                       # degradation-config default
+default_tier: 2                       # dormancy-config default
 probe_interval_s: 60                  # overrides telegram-interface default
 """
 
@@ -368,7 +368,7 @@ _SCAFFOLD_FILES: dict[str, str] = {
     "cost/ceilings.yaml": _COST_YAML,
     "reversibility.yaml": _REVERSIBILITY_YAML,
     "self-correction.yaml": _SELF_CORRECTION_YAML,
-    "degradation-config.yaml": _DEGRADATION_YAML,
+    "dormancy-config.yaml": _DORMANCY_YAML,
     "telegram.yaml": _TELEGRAM_YAML,
 }
 

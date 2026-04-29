@@ -18,7 +18,7 @@ Components and the files they own:
 | scope-of-work       | ``scope_of_work.sqlite`` + WAL sib |
 | objective-tracker   | ``objective_tracker.sqlite`` + WAL |
 | orchestrator        | ``orchestrator.sqlite`` + WAL      |
-| graceful-degradation| ``degradation.sqlite`` + WAL       |
+| graceful-degradation| ``dormancy.sqlite`` + WAL       |
 | observability-aggr  | ``observability.duckdb``           |
 +---------------------+------------------------------------+
 

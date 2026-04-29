@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-migrate-dormancy-config"
+version = "0.1.0"
+description = "One-shot per-host migration helper relocating ~/.loam/degradation.sqlite → ~/.loam/dormancy.sqlite and ~/.loam/degradation-config.yaml → ~/.loam/dormancy-config.yaml after the M1f graceful-degradation → dormancy rename. Idempotent; per-file four-case logic; SQLite WAL/SHM sibling-file handling; halts on conflict (both file pair members present)."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+loam-migrate-dormancy-config = "loam_migrate_dormancy_config.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

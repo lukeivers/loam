@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-dormancy"
+version = "0.1.0"
+description = "Dormancy policy layer for loam — Claude-upstream failure detection, per-mode FSMs, policy dispatch, notification, resume."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2",
+    "pyee>=11",
+    "opentelemetry-api>=1.25",
+    "opentelemetry-sdk>=1.25",
+    "pyyaml>=6",
+    "loam-scope-of-work",
+    "loam-primary-persona",
+    "loam-orchestrator",
+]
+
+[tool.setuptools]
+package-dir = {"loam.dormancy" = "src/loam/dormancy"}
+packages = ["loam.dormancy"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -15,7 +15,7 @@ Substrate data files are **not** under ``framework/``:
 - ``~/.loam/scope_of_work.sqlite``       — scope-of-work
 - ``~/.loam/objective_tracker.sqlite``   — objective-tracker
 - ``~/.loam/orchestrator.sqlite``        — orchestrator local state
-- ``~/.loam/degradation.sqlite``         — graceful-degradation
+- ``~/.loam/dormancy.sqlite``         — graceful-degradation
 - ``~/.loam/observability.duckdb``       — observability aggregator
 
 This module centralises resolution so tests can point the whole tree
@@ -83,7 +83,7 @@ class Paths:
 
     @property
     def degradation_db(self) -> Path:
-        return self.base / "degradation.sqlite"
+        return self.base / "dormancy.sqlite"
 
     @property
     def aggregator_db(self) -> Path:

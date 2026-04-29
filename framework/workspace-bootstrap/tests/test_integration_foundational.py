@@ -81,7 +81,7 @@ def _write_workspace(tmp_path: Path, include_memory: bool = False) -> Path:
         "scope_of_work",
         "objective_tracker",
         "primary_persona",
-        "graceful_degradation",
+        "dormancy",
     ]
     if include_memory:
         contributions.append("memory_system")
@@ -361,7 +361,7 @@ async def test_B16_orchestrator_constructed_four_on_host(tmp_path: Path) -> None
         names_completed = [rc.name for rc in bs._completed_contributions]
         assert "scope_of_work" in names_completed
         assert "objective_tracker" in names_completed
-        assert "graceful_degradation" in names_completed
+        assert "dormancy" in names_completed
     finally:
         await bs.shutdown()
 
@@ -395,7 +395,7 @@ async def test_B17_workspace_bootstrap_py_fires_register(tmp_path: Path) -> None
         "scope_of_work",
         "objective_tracker",
         "primary_persona",
-        "graceful_degradation",
+        "dormancy",
         "cost_governance",
         "reversibility_primitive",
         "safety_layer",
@@ -469,7 +469,7 @@ async def test_B17_workspace_bootstrap_py_missing_required_fails(tmp_path: Path)
         "scope_of_work",
         "objective_tracker",
         "primary_persona",
-        "graceful_degradation",
+        "dormancy",
         "cost_governance",
         "reversibility_primitive",
         "safety_layer",

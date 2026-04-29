@@ -151,7 +151,7 @@ TRACER_TO_COMPONENT = {
     "loam.primary_persona": "primary_persona",
     "loam.objective_tracker": "objective_tracker",
     "loam.orchestrator": "orchestrator",
-    "loam.degradation": "degradation",
+    "loam.dormancy": "dormancy",
     "loam.aggregator": "aggregator",
     "loam.memory": "memory_system",
 }

@@ -14,7 +14,7 @@ objective-tracker ──┤  trace.get_tracer("loam.objective_tracker")         
                     │   │                                                │
    orchestrator ────┤  trace.get_tracer("loam.orchestrator")              │
                     │   │                                                │
-graceful-degradation┤  trace.get_tracer("loam.degradation")               │
+dormancy ───────────┤  trace.get_tracer("loam.dormancy")               │
                     │   │                                                │
                     │   ▼                                                │
                     │   global TracerProvider (installed by aggregator)  │

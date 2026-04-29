@@ -1,45 +1,47 @@
-"""Seal-enforcement retrofit for observability-aggregator.
+"""Seal-enforcement retrofit for graceful-degradation.
 
-The 2026-04-22 ODD audit surfaced that observability-aggregator was the
-only Phase-2+ sealed component with neither a SEAL_COMMIT sidecar nor a
-seal-enforcement test — the sealing ritual at 2026-04-19 11:24 missed
-both artifacts. This file (plus the new tests/SEAL_COMMIT sidecar)
-closes that gap.
+The 2026-04-22 ODD audit surfaced that `graceful-degradation/tests/
+SEAL_COMMIT` existed (holding `dab49dd`, the Amendment-3 landing SHA)
+but no test consumed it — the "no sealed-component amendments"
+constraint was advisory-only. This file closes that gap.
 
 Pattern mirrors the cost-governance / reversibility-primitive /
-self-correction retrofits. The sidecar at tests/SEAL_COMMIT carries the
-exact seal SHA; if absent or placeholder, _seal_commit() falls back to
-HEAD so mid-build diffs still exercise the test.
+self-correction retrofits introduced after commit `f94d602` pinned the
+seal-test diff away from HEAD. The sidecar at tests/SEAL_COMMIT carries
+the exact seal SHA; if absent or placeholder, _seal_commit() falls back
+to HEAD so mid-build diffs still exercise the test.
 
 BASELINE history:
-  - a0906c1 (observability-aggregator D9 docs — the final build
-    commit, tipped immediately before the 11:24 seal per STATE.md).
-  - Advanced to e8f704c when the delete-method-in-brief-dispatch-
-    docs amendment (#18) opened. The amendment deletes observability-
-    aggregator's historical `docs/rebuild/components/observability-
-    aggregator/brief.md` dispatch doc (per ODD §2.5 + `scope-only-
+  - dab49dd (Amendment-3 landing — the initial seal surface at retrofit).
+  - Advanced to e8f704c when the delete-method-in-brief-dispatch-docs
+    amendment (#18) opened. The amendment deletes graceful-
+    degradation's historical `docs/rebuild/components/graceful-
+    degradation/brief.md` dispatch doc (per ODD §2.5 + `scope-only-
     dispatch` / `research-before-plan` CDCs; briefs are dispatch-time
     artifacts, not committed canonical ones) and edits docs/odd-in-
-    loam.md §7.4 accordingly. Multi-component amendment with six other
+    pos.md §7.4 accordingly. Multi-component amendment with six other
     brief-owning sealed components + hands-off-lifecycle. e8f704c is
     the pre-amendment tip (the `docs(future-ideas)` commit codifying
     the three new CDCs immediately before this amendment's code
     commit).
   - Advanced to 24d54cb when the S2 silent-except bundle amendment
-    (#20) opened. The 2026-04-22 audit + classifier surfaced two
-    `except Exception: pass` silent branches with AC:none in
-    observability-aggregator/src/nl_path.py (site 9: translate LLM
-    fall-through; site 10: answer LLM fall-through). Per ODD §8 rule 8
-    + audit-triage-by-severity CDC (bucket d), each catch gains a span
-    event (`llm_translate_failed` / `llm_format_failed`) on the already-
-    open loam.aggregator.nl_translate / loam.aggregator.nl_format span;
-    fall-through to rule-based translate/format is preserved. Multi-
-    component amendment (self-correction + graceful-degradation +
-    observability-aggregator + hands-off-lifecycle). The allowed
-    prefixes below admit the partner components
-    (`self-correction/`, `graceful-degradation/` already present) +
-    `docs/rebuild/plans/` (research + plan paper-trail per plan-before-
-    code CDC). 24d54cb is the pre-amendment tip.
+    (#20) opened. The 2026-04-22 audit + classifier surfaced three
+    `except ...: pass | continue` silent branches with AC:none in
+    graceful-degradation/ (site 6: component.py:443 scope lookup in
+    _any_paused_scope_user_relevant; site 7: component.py:513 ValueError
+    in reconcile_on_startup; site 8: observability.py:144 paused-scope-
+    ids attribute set). Per ODD §8 rule 8 + audit-triage-by-severity
+    CDC (bucket d — outright violations), each catch is replaced with
+    an observable-surface fix (emitter or span event). Shutdown-catch
+    CDC does NOT apply (none are teardown methods). Multi-component
+    amendment (self-correction + graceful-degradation + observability-
+    aggregator + hands-off-lifecycle). The new allowed prefixes below
+    admit the partner components (`self-correction/`,
+    `observability-aggregator/`) + `docs/rebuild/plans/` (research +
+    plan paper-trail per plan-before-code CDC). 24d54cb is the pre-
+    amendment tip — the `docs(future-ideas)` commit codifying the
+    amendment-dispatch-speedups + 529-recovery CDCs immediately before
+    amendment #20's code commit.
 
 SEAL_COMMIT: populated at seal time per the existing amendment ritual.
 """
@@ -51,7 +53,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "74ae5d3"
+BASELINE = "9ad1c79"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -71,7 +73,9 @@ def test_seal_commit_pinning_pattern() -> None:
     the SHA.
     """
     source = Path(__file__).read_text()
-    assert "BASELINE = " in source  # shape check: pos-amend apply advances the literal
+    # Shape check: BASELINE is declared as a module-top constant
+    # (advanced by ``pos-amend apply``, not hardcoded to a fixed SHA).
+    assert "BASELINE = " in source
     assert "SEAL_COMMIT_PATH" in source
     # Diff call must route through _seal_commit(), not hardcoded HEAD.
     assert "{BASELINE}..{seal}" in source, (
@@ -79,7 +83,7 @@ def test_seal_commit_pinning_pattern() -> None:
     )
 
 
-def test_only_observability_aggregator_changed() -> None:
+def test_only_dormancy_changed() -> None:
     """No sealed-component surface moved between BASELINE and seal."""
     seal = _seal_commit()
     out = subprocess.check_output(
@@ -91,40 +95,43 @@ def test_only_observability_aggregator_changed() -> None:
 
     # `data/` is runtime test-output (observability spans.jsonl etc.),
     # not source. It is not a sealed-component amendment — treat as
-    # generated artifact alongside `observability-aggregator/`.
+    # generated artifact alongside `graceful-degradation/`.
     # Amendment #18 (delete-method-in-brief-dispatch-docs) is a multi-
     # component amendment across seven brief-owning sealed components
     # plus hands-off-lifecycle. Adds:
-    #   - `docs/rebuild/components/observability-aggregator/` and the
-    #     six sibling component doc dirs — the seven deleted briefs.
+    #   - `docs/rebuild/components/graceful-degradation/` and the six
+    #     sibling component doc dirs — the seven deleted briefs.
     #   - `docs/rebuild/plans/` — plan-before-code paper trail.
     #   - `hands-off-lifecycle/` — cross-cutting seal counterpart.
-    #   - `cost-governance/`, `graceful-degradation/`, `orchestrator/`
-    #     — the three sibling brief-owning sealed components whose
-    #     seal-diff tests + SEAL_COMMIT sidecars are updated in
-    #     lockstep.
-    #   - `docs/odd-in-loam.md` (allowed_files) — §7.4 rewrite.
+    #   - `cost-governance/`, `observability-aggregator/`,
+    #     `orchestrator/` — the three sibling brief-owning sealed
+    #     components whose seal-diff tests + SEAL_COMMIT sidecars are
+    #     updated in lockstep.
+    #   - `docs/odd-in-loam.md` (allowed_files) — §7.4 rewrite (brief =
+    #     dispatch-time, not committed canonical artifact).
     # Amendment #20 (S2 silent-except bundle) additions:
     #   - `self-correction/` — partner component (sites 1-5 fixes).
-    #   - `graceful-degradation/` already present (sites 6-8).
-    #   - `docs/rebuild/plans/` already present (research + plan docs).
+    #   - `observability-aggregator/` already present (sites 9-10).
+    #   - `docs/rebuild/plans/` already present (research + plan docs
+    #     per plan-before-code + research-before-plan CDCs).
     allowed_prefixes = (
-        "framework/observability-aggregator/",
-        "observability-aggregator/",
+        "framework/dormancy/",
+        "framework/graceful-degradation/",
+        "dormancy/",
+        "graceful-degradation/",
         "data/",
-        "docs/rebuild/components/observability-aggregator/",
-        "docs/rebuild/components/primary-persona-loader/",
-        "docs/rebuild/components/session-resilient-orchestrator/",
         "docs/rebuild/components/dormancy/",
         "docs/rebuild/components/graceful-degradation/",
+        "docs/rebuild/components/primary-persona-loader/",
+        "docs/rebuild/components/session-resilient-orchestrator/",
+        "docs/rebuild/components/observability-aggregator/",
         "docs/rebuild/components/cost-governance/",
         "docs/rebuild/components/scope-of-work/",
         "docs/rebuild/components/objective-tracker/",
         "docs/rebuild/plans/",
         "framework/hands-off-lifecycle/",
         "framework/cost-governance/",
-        "framework/dormancy/",
-        "framework/graceful-degradation/",
+        "framework/observability-aggregator/",
         "framework/orchestrator/",
         "framework/self-correction/",
         "framework/memory-system/",
@@ -132,19 +139,18 @@ def test_only_observability_aggregator_changed() -> None:
         "framework/telegram-interface/",
         "framework/tools/",
         "framework/workspace-bootstrap/",
-        "framework/safety-layer/",
         "cost-governance/",
         "framework/hands-off-lifecycle/canonical-dev/",
         "framework/objective-tracker/",
         "framework/primary-persona/",
+        "framework/safety-layer/",
         "framework/scope-of-work/",
         "framework/self-upgrade/",
         "framework/workspace-sync/",
-        "dormancy/",
-        "graceful-degradation/",
         "hands-off-lifecycle/",
         "memory-system/",
         "objective-tracker/",
+        "observability-aggregator/",
         "orchestrator/",
         "primary-persona/",
         "reversibility-primitive/",

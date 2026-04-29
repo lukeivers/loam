@@ -18,7 +18,7 @@ Component surfaces consumed (all unchanged — no seal amendment):
 - scope-of-work: ``scope_of_work.upgrade.capture_pre_upgrade(store)``
 - objective-tracker: ``objective_tracker.upgrade.capture_pre_upgrade``
 - orchestrator: ``orchestrator.local_state.LocalStateStore.snapshot_probe()``
-- graceful-degradation: ``degradation.state.DegradationStore.snapshot_probe()``
+- dormancy: ``dormancy.state.DegradationStore.snapshot_probe()``
 - primary-persona: ``primary_persona.compaction.build_survival_payload``
   — requires a loaded persona + runtime, so the pre-probe records only
   "loader importable" and we run the full payload check post-upgrade.
@@ -215,7 +215,7 @@ def _probe_orchestrator(paths: Paths) -> ProbeRecord:
         )
 
 
-# ---- graceful-degradation ------------------------------------------
+# ---- dormancy ------------------------------------------
 
 
 def _probe_degradation(paths: Paths) -> ProbeRecord:
@@ -227,7 +227,7 @@ def _probe_degradation(paths: Paths) -> ProbeRecord:
             detail=f"degradation db not present at {db}",
         )
     try:
-        from loam.graceful_degradation.state import DegradationStore  # type: ignore
+        from loam.dormancy.state import DegradationStore  # type: ignore
     except Exception as exc:
         return ProbeRecord(
             component="degradation",

@@ -50,7 +50,7 @@ shared_venv:
     - "reversibility-primitive"
     - "cost-governance"
     - "self-correction"
-    - "graceful-degradation"
+    - "dormancy"
     - "orchestrator"
     - "observability-aggregator"
     - "self-upgrade"

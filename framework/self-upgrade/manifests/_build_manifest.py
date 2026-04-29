@@ -45,7 +45,7 @@ from loam.self_upgrade.manifest import (  # noqa: E402
 
 SEALED_COMPONENTS = (
     "cost-governance",
-    "graceful-degradation",
+    "dormancy",
     "hands-off-lifecycle",
     "memory-system",
     "objective-tracker",

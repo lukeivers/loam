@@ -85,9 +85,10 @@ _SAMPLE_FILES = (
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/spec.py",
      "d3ce250ccc76974da7301cff2b1342a24b97c20f19287a109fed2cd7162fa5c8"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/host.py",
-     # M1d OTel rebrand SHA preserved (content unchanged by M1e —
-     # pure rename via git mv).
-     "3ae99ddd80c0a7c39154491388b322aa504bb0d1220ed5734b77e75e8775b8ba"),
+     # M1f SHA bump: workspace-bootstrap host.py field rename
+     # (self.graceful_degradation → self.dormancy + docstring entry)
+     # per AC.RNM-1f.6. ODD §4 in-band retire-and-rebaseline.
+     "8e8d1548f71b206726a83f63ae355a685047c02f2a647ad15b7a9bf734b01c5b"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/errors.py",
      "e1aa52137a62d551501e6da23071e414a6b0ed40236517a826ae98531434cbaf"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/discovery.py",

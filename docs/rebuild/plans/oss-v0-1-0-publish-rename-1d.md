@@ -402,6 +402,20 @@ Per the dispatch's halt-and-surface clause: surface any audit-recommendation con
 
 7. **(No methodology breach in plan structure.)** ACs are outcome-shape, deterministic, behaviour-count-checked. AC.RNM-1d.6 (negative AC enforcing the OTel-surface fence) is the explicit ODD §2.5 reverse-direction protection. The wider-than-prior-amendments fence is disclosed (finding #1 + the §1 thirteen-component fence statement) so the dispatcher sees the surface in the plan-doc commit before the feature commit.
 
+**Build-time findings (added post-build):**
+
+8. **(CORRECTION to plan-time finding #2.) `pos_v2.primary_persona` is NOT a dead lookup-key — it is the LIVE emit-side tracer name for primary-persona.** Confirmed at build time by inspection: `framework/primary-persona/src/observability.py:30` returns `trace.get_tracer("pos_v2.primary_persona")`. The aggregator's `TRACER_TO_COMPONENT` carries BOTH `pos_v2.primary_persona` (the actual emit-side shape primary-persona uses) and `pos.primary_persona` (a forward-compat entry for the canonical convention used by other components). The `pos_v2.*` first-segment is namespace-decoration scope (M1e, per dispatch §Scope out-of-scope: "Internal Python identifiers carrying `POS_V2_` decoration → M1e (namespace-shape)"). M1d's first-segment-`pos.`-only regex `(?<![a-zA-Z0-9_.-])pos\.[a-z]` correctly does NOT match `pos_v2.`. Tests, aggregator docs (relationship-map.md, architecture.md, data-flow.md), and the `pos_v2.primary_persona` lookup-map entry are preserved by M1d. **Recommendation for M1e:** rebase primary-persona's emit-side `pos_v2.primary_persona` to `loam.primary_persona` concurrently with the namespace pivot; remove the dead `pos.primary_persona` forward-compat entry from `TRACER_TO_COMPONENT`.
+
+9. **(Variable-name false-positive caught at touched-test rerun; surgical revert applied.) Phase A's regex over-matched 7 callsites where `pos` is a Python variable name (a Path object) rather than an OTel root literal.** The pattern `pos.mkdir(parents=True)` (Python attribute access on a `Path` variable named `pos`) was rebranded to `loam.mkdir(...)` — a `NameError` at test runtime. Files affected: `framework/hands-off-lifecycle/tests/test_AC_SE_3_active_scope_sentinel_read.py` (4 callsites; lines 61, 70, 82, 97), `framework/primary-persona/tests/test_D8_4_cold_start_budget.py` (1; line 83), `framework/primary-persona/tests/test_AC46_1_session_start_cli_emits_structured_payload.py` (1; line 66), `framework/primary-persona/tests/test_D8_1_session_start_emission.py` (1; line 64). All 7 reverted from `loam.mkdir(...)` to `pos.mkdir(...)`. Test sweep clean post-revert. **Lesson:** the regex `(?<![A-Za-z0-9_.-])pos\.[a-z]` is necessary but not sufficient — it doesn't distinguish a literal-string-prefix (`"pos.X"`) from an unquoted Python attribute access (`pos.X(...)`). Future rename-helper convention: for code-shape targets, restrict the regex to inside string-literal contexts (quoted strings, backtick-quoted prose), or use a per-callsite manual review for the Phase A surface. Forwarded to FIDRAFT.
+
+10. **(Filename-split-across-line-break false-positive caught at QA.) `framework/graceful-degradation/tests/test_no_sealed_amendments.py` lines 21–22 carry the filename `docs/odd-in-pos.md` split across a line break: line 21 ends `docs/odd-in-`; line 22 begins `pos.md §7.4 ...`.** Phase A's regex matched the start-of-line `pos.md` and rebranded it to `loam.md` — a filename-typo. The actual file is `docs/odd-in-pos.md` (not `docs/odd-in-loam.md`). Filename change is M1e (per locked plan §6 + M1a's deferral). Reverted: `loam.md` → `pos.md` at line 22 of the file. **Lesson:** filename references in prose can split across line breaks; the rename-helper should detect line-break-split filenames as a class. Forwarded to FIDRAFT.
+
+11. **(Doc-prose attribute-access case caught at QA; in-band fix applied.) `framework/observability-aggregator/docs/data-flow.md:30` carried `attributes.pos.retention.class="normal"` — Phase A's regex skipped it because of the leading `.` (Python attribute-access syntax appears in the doc prose).** This IS an OTel-attribute-key reference (`pos.retention.class` IS the attribute key name); the doc prose is documenting the JSONL row shape for the aggregator's spans output. Manual fix applied: `attributes.pos.retention.class` → `attributes.loam.retention.class`. **Lesson:** the lookbehind `(?<![A-Za-z0-9_.-])` correctly handles Python attribute-access cases (variable.method) but incorrectly skips doc-prose cases where `.` is descriptive syntax. Future rename-helper convention: per-file-class regex profiles (one for code, one for prose).
+
+12. **(Out-of-original-scope fix applied to `docs/odd-methodology.md`.) Plan §1 in-scope was named explicitly as `docs/odd-in-pos.md` (per dispatch §Scope), but `docs/odd-methodology.md:214` carries `pos.safety.scope_kill` in a worked example — the same context as odd-in-pos's worked examples.** Per dispatch §Scope's "etc." trailing the explicit list, included odd-methodology under builder discretion. Manual fix applied: `pos.safety.scope_kill` → `loam.safety.scope_kill`. Single line change; no other `pos.<root>` callsites in `docs/odd-methodology.md`.
+
+13. **(Cross-mode debt observation — surface for follow-on.) `framework/self-upgrade/docs/{architecture.md, sequences.md, cli-reference.md}` carry `com.pos.orchestrator` references that should have been rebranded to `com.loam.orchestrator` in M1c (launchd-label rebrand).** These were NOT touched by M1c — M1c's fence was launchd-label callsites in code/scripts/tests; the self-upgrade component's docs were not in M1c's surface inventory. Identified at M1d build time but **OUT OF SCOPE for M1d** (M1d is OTel-only; `com.pos.orchestrator` is a launchd-label string literal, M1c surface). **Recommendation for follow-on:** a small M9-scrub-class corrective amendment OR add to M1e's surface (M1e's namespace pivot is wide enough to absorb a stragglers sweep). Forwarded to FIDRAFT for "M1c launchd-label-rebrand stragglers in framework/self-upgrade/docs/".
+
 ---
 
 ## 12. Method-decision register (placeholder)
@@ -443,15 +457,32 @@ POST-REBASELINE (single SHA bump on `host.py`). The fourteen other sample files 
 
 ### D-build.M1d.1 — sed-vs-Edit per file
 
-(Populated post-build with the actual mix per file.)
+**Single Python script applied across all in-scope files** (option: builder-discretion within AC.RNM-1d.1). The script applies a single regex `(?<![A-Za-z0-9_.-])pos\.([a-z])` → `loam.\1` to every framework + docs/odd-in-pos.md + docs/rebuild/components/<comp>/proposal.md file, with two named preservations:
+1. `pos.bootstrap.contributions` masked-and-restored via SENTINEL (Python entry-point group, NOT OTel).
+2. `pos_v2.X` (different prefix; auto-skipped by `pos\.` regex) — covers the legacy `pos_v2.primary_persona` emit-side tracer name.
+
+The regex applied to 303 candidate files; modified 150 files with 1123 replacements. Build-time findings #9, #10, #11 surfaced THREE classes of edge cases the regex didn't cleanly handle:
+- Variable-name false-positive (`pos = Path(...); pos.mkdir(...)`) — caught at touched-test rerun; surgically reverted in 7 callsites across 4 test files.
+- Filename-split-line false-positive (`docs/odd-in-` end-of-line + `pos.md` start-of-next-line) — caught at QA; reverted in 1 callsite.
+- Doc-prose attribute-access skip (`attributes.pos.retention.class` — the `.` lookbehind correctly skipped Python attribute-access cases but incorrectly skipped this doc-prose case) — caught at QA; manual fix in 1 callsite.
+
+Post-corrections, the rebrand is clean. **Recommendation for the rename-helper tool:** distinguish code-shape regex profile (lookbehind for `.` is correct) from prose-shape regex profile (lookbehind for `.` is too aggressive). Recorded for FIDRAFT.
 
 ### D-build.M1d.2 — order of Phase A vs Phase B
 
-(Populated post-build with the actual order applied.)
+**Phases A + B + C applied in a single pass** (option: builder-discretion within AC.RNM-1d.1). The single Python script processed framework src + tests + live docs + component proposals + odd-in-pos + odd-methodology in one batch. Touched-test rerun verified post-rebrand state across 14 component test suites (all green; one initial failure was the over-eager rebrand in finding #9, fixed before commit).
 
 ### D-build.M1d.3 — HC#4 SHA pin update timing
 
-(Populated post-build with the actual SHA + commit position.)
+**Phase D (HC#4 SHA bump) applied in a separate Edit after Phase A's batch rebrand** (option from §10). The new SHA for `framework/workspace-bootstrap/src/workspace_bootstrap/host.py` post-rebrand is `3ae99ddd80c0a7c39154491388b322aa504bb0d1220ed5734b77e75e8775b8ba`. The pin update was committed in the same feature commit as the rebrand (Phase E), per M1c lesson #9 / D-build.M1c.7 convention. The SHA bump comment names M1d amendment #79 + the AC-named work (AC.RNM-1d.1) + the cause (`pos.bootstrap` tracer-name rebrand at host.py:82).
+
+### D-build.M1d.4 — Pre-existing tech-debt observation REVISED
+
+Plan-time §11 finding #2 incorrectly characterised `pos_v2.primary_persona` as a "dead lookup key." Build-time finding #8 (above) corrects this: it is the LIVE emit-side tracer name for primary-persona; the aggregator's `TRACER_TO_COMPONENT` correctly carries the legacy entry. M1e (namespace pivot) rebases the legacy emit-side tracer to `loam.primary_persona`. The original §11 finding #2 text is preserved as historical record but is corrected by build-time finding #8.
+
+### D-build.M1d.5 — Cross-mode debt observed (M1c stragglers)
+
+Build-time finding #13 surfaces a cross-mode-debt observation: `framework/self-upgrade/docs/{architecture.md, sequences.md, cli-reference.md}` carry `com.pos.orchestrator` references that M1c (launchd-label rebrand) should have caught but did not. Out of scope for M1d (M1d is OTel-only; `com.pos.X` is a launchd-label literal, M1c surface). Surfaced for follow-on.
 
 ### Commit SHAs
 

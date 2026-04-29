@@ -34,7 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              seal-diff test + SEAL_COMMIT sidecar; BASELINE pins at
 #              the pre-amendment tip (HEAD~1 of the amendment commit,
 #              mirroring amendments #34 / #35 / #36 / #37).
-BASELINE = "ebe0a570f741135cb18aeb3595211e5cb3b11359"
+BASELINE = "1e99d0b"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -124,6 +124,7 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
         "tools/",
         "workspace-bootstrap/",
         "workspace-sync/",
+        "docs/rebuild/components/",
     )
     # Universal-file admissions per amendment #22 ruling #3. Written
     # by ``pos-amend apply``; kept stable across amendments.

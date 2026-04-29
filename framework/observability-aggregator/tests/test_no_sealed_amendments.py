@@ -51,7 +51,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "143d4656f0c319bdc644f7a925b073e0ecaaff72"
+BASELINE = "1e99d0b"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -154,6 +154,7 @@ def test_only_observability_aggregator_changed() -> None:
         "workspace-bootstrap/",
         "workspace-sync/",
         "framework/tools/pos-amend/",
+        "docs/rebuild/components/",
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",

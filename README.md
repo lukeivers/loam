@@ -1,70 +1,138 @@
-# pOS v2 — personal OS, Claude-native
+# loam
 
-pos-v2 is a Claude-only personal operating system: a long-running
-background process (the orchestrator) plus a semantic memory store,
-a three-gate safety chain, a primary persona that translates your
-natural-language intent into AI-effective execution, and a supervisor
-that keeps the whole system healthy without you doing anything
-beyond opening a Claude Code session.
+**Cultivate a Claude agent in a substrate that remembers, schedules,
+governs, and gets out of your way.**
+
+loam is a Claude-attached harness: a long-running primary persona that
+translates your natural-language intent into AI-effective execution,
+backed by persistent memory, structural safety gates, cost governance,
+and autonomous background work. You open a Claude Code session; the
+primary persona greets you with what needs attention; you describe
+what you want; the persona picks the execution path. You never pick
+the mechanism.
+
+> **One-line pitch:** loam is the substrate you cultivate a Claude
+> agent in — single trusted persona, persistent memory, structural
+> safety, autonomous continuity. Raw Claude plus the toolkit it
+> deserves.
+
+## Why
+
+Raw Claude is powerful and frustrating in equal measure. Every useful
+action requires the user to translate intent into the right prompt,
+remember the right tool, manage the context window, and re-explain
+themselves every session. loam absorbs that translation burden into
+the primary persona; the user expresses intent, the persona handles
+execution.
+
+The full positioning lives at [`docs/positioning.md`](docs/positioning.md).
+
+## Quickstart
+
+```bash
+# 1. Clone loam into a fresh workspace's framework directory.
+mkdir my-loam-workspace && cd my-loam-workspace
+git clone https://github.com/lukeivers/loam framework/
+
+# 2. Initialise the workspace.
+loam init .
+
+# 3. Open Claude Code in this directory.
+claude
+```
+
+Your first run scaffolds `~/.loam/`, brings up the memory sidecar and
+orchestrator, and drops you into a primary-persona greeting. Normal
+runs surface what needs attention without you opening a terminal.
+
+> **Note on the CLI name during the v0.1.0 release sequence.** The
+> binary is currently shipped as `pos` (legacy build name); the
+> release sequence renames it to `loam` before public flip. Throughout
+> this README the CLI is referred to as `loam`; if you build from
+> the canonical source tree before the rename amendment lands, the
+> commands above use `pos` instead. After v0.1.0 publishes the rename
+> is complete and the CLI is `loam`.
+
+## What ships in v0.1.0
+
+Eight runtime components plus the Dev/SDLC plugin and the dormancy
+component (renamed from graceful-degradation in this release).
+
+| Component | Role |
+|-----------|------|
+| `memory-system` | Semantic memory sidecar (FastAPI + Graphiti + Kuzu). |
+| `primary-persona` | Loader, monitor, autonomous-authoring contract. |
+| `workspace-bootstrap` | Composition engine; first-run scaffolding; plugin extension protocol. |
+| `hands-off-lifecycle` | SessionStart hook, supervisor, drain/recovery. |
+| `safety-layer` | Three-gate refusal chain + structural floor. |
+| `reversibility-primitive` | Compensation-ledger + irreversibility classification. |
+| `cost-governance` | Token / time / money ceilings + drift detection. |
+| `observability-aggregator` | OTel-shaped span + log routing. |
+| `dormancy` | Pause / resume / fail-loud policy under outage. |
+| `dev-sdlc` plugin | ODD-by-default for new projects under loam. |
+
+The full architecture map lives at
+[`docs/architecture.md`](docs/architecture.md); per-component
+references live under [`docs/components/`](docs/components/).
+
+## Design lenses
+
+Three principles every feature passes:
+
+1. **Claude-leverage-first.** Every feature actively considers what
+   Claude Code / Claude SDK / Claude capabilities (slash commands,
+   hooks, skills, MCP, plugins, background tasks) can be leveraged.
+   If a Claude-native primitive already covers part of the surface,
+   loam composes on top rather than re-implementing.
+2. **Harness + primary-persona value.** Every feature must reduce
+   translation burden for the user (primary-persona test) and add to
+   the toolkit the primary persona can invoke (harness test). A
+   feature that fails the harness test is almost always wrong.
+3. **Objective-Driven Design.** Work is defined by its observable
+   outcome, not by a sequence of steps. Method is the builder's call
+   inside the constraint envelope. See
+   [`docs/design/odd.md`](docs/design/odd.md).
 
 ## Status
 
-Foundation-complete: twelve sealed components plus the
-hands-off-lifecycle amendments. The full component status table lives
-in the dev-mode tracker docs (DEV MODE only).
+loam v0.1.0 is the first public release. It is intentionally narrow:
+infrastructure components, one demonstration plugin (Dev/SDLC), and
+enough scaffolding for a stranger to clone, run, and reach a useful
+session without reading source.
 
-## What running a session looks like
+The maintainer is one person on a personal GitHub account
+(`lukeivers/loam`). Bus factor is honestly one. If loam helps you,
+the most useful contribution is a small, well-scoped issue or PR;
+review-circle expansion is the project's biggest non-technical need.
 
-1. Open a Claude Code session in this workspace.
-2. First run: a single sentence reports what was scaffolded. Proceed.
-3. Normal runs: your primary persona greets you with what needs
-   attention — no "open the terminal and start the sidecar."
-4. Close the session. Background work continues. The supervisor
-   keeps services healthy; the loud-escalation channel tells you
-   when something needs founder attention.
+## Documentation
 
-## Layout
+- [`docs/positioning.md`](docs/positioning.md) — the full pitch:
+  what loam is, who it's for, what it explicitly is not.
+- [`docs/architecture.md`](docs/architecture.md) — component map +
+  how the pieces compose. *(authored alongside this README in the
+  v0.1.0 docs lane.)*
+- [`docs/getting-started.md`](docs/getting-started.md) — clone to
+  first session, step by step. *(authored alongside this README in
+  the v0.1.0 docs lane.)*
+- [`docs/design/odd.md`](docs/design/odd.md) — Objective-Driven
+  Design: the methodology loam practices natively and the Dev/SDLC
+  plugin defaults new projects to.
+- [`docs/components/`](docs/components/) — one short reference per
+  shipping component.
 
-```
-docs/rebuild/         — research, proposals, briefs per sealed component
-memory-system/        — semantic memory sidecar (FastAPI + Graphiti + Kuzu)
-orchestrator/         — long-lived asyncio process, Unix-socket JSON-RPC
-workspace-bootstrap/  — composition engine; twelve-adapter bundle
-safety-layer/
-reversibility-primitive/
-cost-governance/
-self-correction/      — the three-gate chain + self-correction loop
-graceful-degradation/
-objective-tracker/
-scope-of-work/
-primary-persona/      — runtime policy + primitives
-observability-aggregator/
-self-upgrade/         — infrastructure
-hands-off-lifecycle/  — Amendment bundle: supervisor, staging/drain,
-                        first-run scaffold, Claude Code SessionStart hook
-```
+## Contributing
 
-## Hands-off lifecycle
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for workflow, acceptance-
+criterion expectations, ODD principle reference, and sign-off model.
 
-Opening a Claude Code session in a fresh workspace scaffolds
-`~/.pos/`, installs the memory-sidecar and orchestrator service
-files, asks the service manager to bring them up, and emits one
-confirmation sentence. Nothing else. Ongoing lifecycle concerns
-(sidecar health, drain on recovery, config drift) are the
-supervisor's problem, not yours — self-heal silently when possible,
-escalate loudly via your primary-persona channel when not. Degraded
-mode that silently stays degraded is a bug, not a satisfaction.
+## Security
 
-See `hands-off-lifecycle/README.md` for the amendment bundle's
-full layout.
+See [`SECURITY.md`](SECURITY.md) for vulnerability-reporting workflow
+and disclosure timeline.
 
-## Implementation
+## License
 
-Python 3.13. Language/test/file conventions live in the DEV MODE
-tracker docs.
-
-## License and contributions
-
-Personal-use software in heavy development. Not currently accepting
-external contributions; rebuild rules live in the DEV MODE tracker
-docs.
+loam is licensed under the Apache License, Version 2.0. See
+[`LICENSE`](LICENSE) for the full text. Copyright 2026 Luke Ivers and
+contributors.

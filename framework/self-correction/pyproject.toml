@@ -22,6 +22,9 @@ dependencies = [
     "loam-observability-aggregator",
 ]
 
+[project.scripts]
+loam-correction = "loam.self_correction.cli:main"
+
 [tool.setuptools]
 package-dir = {"loam.self_correction" = "src/loam/self_correction"}
 packages = ["loam.self_correction"]

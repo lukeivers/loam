@@ -18,6 +18,9 @@ dependencies = [
     "loam-orchestrator",
 ]
 
+[project.scripts]
+loam-kill = "loam.safety_layer.cli:main"
+
 [tool.setuptools]
 package-dir = {"loam.safety_layer" = "src/loam/safety_layer"}
 packages = ["loam.safety_layer"]

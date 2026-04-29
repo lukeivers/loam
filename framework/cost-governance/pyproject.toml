@@ -20,6 +20,9 @@ dependencies = [
     "loam-reversibility-primitive",
 ]
 
+[project.scripts]
+loam-cost = "loam.cost_governance.cli:main"
+
 [tool.setuptools]
 package-dir = {"loam.cost_governance" = "src/loam/cost_governance"}
 packages = ["loam.cost_governance"]

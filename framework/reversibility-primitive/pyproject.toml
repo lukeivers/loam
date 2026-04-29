@@ -19,6 +19,10 @@ dependencies = [
     "loam-safety-layer",
 ]
 
+[project.scripts]
+loam-reversibility = "loam.reversibility_primitive.cli:main_reversibility"
+loam-rollback = "loam.reversibility_primitive.cli:main_rollback"
+
 [tool.setuptools]
 package-dir = {"loam.reversibility_primitive" = "src/loam/reversibility_primitive"}
 packages = ["loam.reversibility_primitive"]

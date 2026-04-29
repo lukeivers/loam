@@ -1,0 +1,311 @@
+# Amendment #81 — M1f Tier-2 graceful-degradation → dormancy
+
+2026-04-29. Sixth sub-amendment of the M1.rename multi-amendment
+series per locked series master plan-doc
+`docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed
+`ebe0a57`) and locked sub-plan-doc
+`docs/rebuild/plans/oss-v0-1-0-publish-rename-1f.md`.
+
+Composes on M1a (sealed `143d465`, 2026-04-29 — docs/prose-only
+brand rebrand), M1b (sealed `d97c8c1`, 2026-04-29 — env-vars +
+per-host config dir + migration helper), M1c (sealed `1e99d0b`,
+2026-04-29 — launchd label rebrand + plist filename cascade +
+sibling migration helper), M1d (sealed `74ae5d3`, 2026-04-29 —
+OTel pos.* → loam.* root rebrand), M1e (sealed `c806f57`, §14
+backfill `820fd84`, 2026-04-29 — loam.* namespace pivot for 14
+packaged components + cleanup) and on the OSS v0.1.0 publish
+programme.
+
+Owner rulings closed at series-master commit time (2026-04-29):
+
+  - D-RNM.1 SPLIT: M1f is the sixth slice of the multi-amendment
+    series.
+  - D-RNM.2 per-component namespace-package: M1e landed the
+    per-component framework/<comp>/src/loam/<comp>/ restructure;
+    M1f cascades that shape's inner package-name from
+    graceful_degradation to dormancy.
+  - D-RNM.3 no compat window: hard-cutover; no
+    from loam.graceful_degradation fallback shim; no
+    dual-namespace OTel emission; no dual entry-point group
+    registration.
+  - Tier-2 (loam-rename-decisions.md): graceful-degradation →
+    dormancy. Directory + package + OTel second-segment +
+    config-files cascade. AC prefix P STAYS (P = Policy;
+    unchanged).
+
+Surface changes (1 packaged sealed component renamed plus 2
+cross-component consumers + observability-aggregator
+schema-comment + first-run-inventory entry + new migration
+helper + docs subdir rename per series-master M1f row):
+
+  - Directory rename:
+      framework/graceful-degradation/ → framework/dormancy/
+    via git mv (preserving history). Inner package
+      framework/dormancy/src/loam/graceful_degradation/ →
+      framework/dormancy/src/loam/dormancy/
+    via git mv.
+
+  - 61 from loam.graceful_degradation import callsite rebrands:
+      from loam.graceful_degradation       → from loam.dormancy
+      from loam.graceful_degradation.<sub> → from loam.dormancy.<sub>
+    across dormancy/tests/* (13 test files) + dormancy/tests/fakes.py
+    + self-upgrade/{src/.../probes.py, tests/test_probes.py}.
+
+    Plus 1 pyproject.toml dependency rebrand:
+      "loam-graceful-degradation" → "loam-dormancy"
+    in framework/workspace-bootstrap/pyproject.toml (the SOLE
+    inter-component dependent of loam-graceful-degradation per
+    plan §11 finding #1).
+
+  - OTel second-segment cascade:
+      loam.degradation.*  → loam.dormancy.*
+    for span / event / attribute names + tracer name across
+    dormancy/src/loam/dormancy/observability.py +
+    dormancy/tests/test_d9_observability.py +
+    dormancy/tests/test_amendment_20_silent_excepts.py +
+    dormancy/tests/test_d10_one_hour_outage.py +
+    dormancy/docs/architecture.md +
+    observability-aggregator schema-comment.
+
+    Per Tier-2 ruling: M1d landed first-segment pos.* → loam.*
+    and held the second-segment surface as loam.degradation.*
+    (interim shape) explicitly deferring degradation → dormancy
+    to M1f. M1f closes that.
+
+  - Config-file path cascade:
+      ~/.loam/degradation.sqlite       → ~/.loam/dormancy.sqlite
+      ~/.loam/degradation-config.yaml  → ~/.loam/dormancy-config.yaml
+    across:
+      - dormancy/src/loam/dormancy/config.py (default sqlite_path
+        string + yaml-config-path docstring)
+      - dormancy/src/loam/dormancy/state.py (module docstring)
+      - dormancy/tests/test_d8_state.py (sqlite-name assertion)
+      - dormancy/tests/test_d10_garbage_false_positive.py
+        (narrative path string)
+      - dormancy/docs/architecture.md (diagram + worked-example
+        YAML sample + sqlite_path doc)
+      - workspace-bootstrap/src/.../adapters/first_run_scaffold.py
+        (template-string set; _DEGRADATION_YAML →
+        _DORMANCY_YAML constant rename)
+      - workspace-bootstrap/src/.../adapters/telegram_interface.py
+        (comment line)
+      - workspace-bootstrap/tests/test_first_run_scaffold.py
+        (string-list literal)
+      - self-upgrade/src/loam/self_upgrade/paths.py (docstring +
+        returned-path constant)
+      - self-upgrade/src/loam/self_upgrade/snapshot.py
+        (table-row docstring entry).
+
+  - New per-host migration helper at
+    framework/tools/loam-migrate-dormancy-config/ (mirrors M1b
+    loam-migrate-host-config four-case shape):
+      - pyproject.toml + README.md + src/loam_migrate_dormancy_config/
+        {__init__.py, __main__.py, cli.py, migrate.py} +
+        tests/test_migrate.py
+      - Per-file four-case logic (sqlite + yaml independently):
+        OLD_EXISTS_NEW_ABSENT → rename;
+        NEW_EXISTS_OLD_ABSENT → no-op (already migrated);
+        NEITHER → no-op (fresh machine);
+        BOTH → conflict (halt without modification).
+      - SQLite WAL/SHM sibling-file handling: when
+        degradation.sqlite renames, also rename
+        degradation.sqlite-wal + degradation.sqlite-shm if
+        present; missing siblings tolerated.
+      - Idempotent: case-1 followed by re-run hits case 2.
+
+  - Workspace-bootstrap adapter rename:
+      adapters/graceful_degradation.py → adapters/dormancy.py
+    via git mv. Inside the file:
+      class GracefulDegradationContribution → DormancyContribution
+      name="graceful_degradation"          → name="dormancy"
+
+    pyproject.toml [project.entry-points."loam.bootstrap.contributions"]:
+      graceful_degradation = "loam.workspace_bootstrap.adapters.
+                              graceful_degradation:GracefulDegradation
+                              Contribution"
+      → dormancy = "loam.workspace_bootstrap.adapters.dormancy:
+                    DormancyContribution"
+
+    host.py:
+      self.graceful_degradation: Any = None
+      → self.dormancy: Any = None
+    (plus docstring entry).
+
+    first_run_scaffold.py template strings:
+      name: graceful_degradation
+      module: loam.workspace_bootstrap.adapters.graceful_degradation
+      → name: dormancy
+        module: loam.workspace_bootstrap.adapters.dormancy
+
+    telegram_interface.py comment line rebrand.
+
+    Test fixtures (4 files: test_first_run_scaffold.py,
+    test_integration_foundational.py, test_extension_protocol.py,
+    test_bootstrap_unification.py): "graceful_degradation"
+    string-literal references rebase to "dormancy".
+
+  - Self-upgrade consumer rebrand:
+      probes.py:
+        - module docstring graceful-degradation reference
+        - section comment "# ---- graceful-degradation ----"
+        - from loam.graceful_degradation.state import
+          DegradationStore (note: class name DegradationStore
+          PRESERVED per plan §10 D-build.M1f.6 ruling — symbol
+          rename out of M1f scope)
+        → from loam.dormancy.state import DegradationStore
+      _build_manifest.py:
+        - "graceful-degradation" string in component-name list
+        → "dormancy"
+      tests/test_probes.py:
+        - from loam.graceful_degradation.state
+        → from loam.dormancy.state
+
+  - Observability-aggregator schema-comment rebrand (1 line each
+    in __init__.py + schema.py if present at build time;
+    component-list comment rebrand graceful-degradation →
+    dormancy).
+
+  - first-run-inventory.yaml component-name rebrand:
+      - "graceful-degradation" → - "dormancy"
+    (1-line edit).
+
+  - Component docs subdir rename per series-master M1f row:
+      docs/rebuild/components/graceful-degradation/ →
+      docs/rebuild/components/dormancy/
+    via git mv (directory-shell only; inner content preserved
+    verbatim per AC.RNM-1f.8 + plan-doc D-build.M1f.5 ruling).
+    DEVIATES from series convention (component-record docs are
+    preserved historical records) per the series-master M1f-row
+    directive that names this rename in scope for M1f.
+
+Out of scope (locked plan-doc §6, named explicitly):
+
+  - pos-amend CLI rename → loam amend — DEFERRED to M1g per
+    series-master ladder note 5.
+  - Tools-tree namespace pivot for non-loam-prefixed tools — out
+    of scope; absorbed by M1g (pos-amend) or follow-on per
+    FIDRAFT.
+  - com.pos.orchestrator launchd-label stragglers in orchestrator
+    + self-upgrade — DEFERRED per M1e §11 finding #1.
+  - Degradation* Python class symbol renames (DegradationStore,
+    DegradationConfig, DegradationMode, DegradationSignal,
+    DegradationChannel, DegradationComponent) — out of M1f scope
+    per plan §10 D-build.M1f.6 (Tier-2 ruling silence on
+    internal-symbol renames + ODD §2.5 conservatism). FIDRAFT-
+    tracked. The workspace-bootstrap adapter class
+    GracefulDegradationContribution IS rebranded to
+    DormancyContribution because it's workspace-bootstrap's
+    surface, not dormancy's public API.
+  - docs/rebuild/spec/*.md historical narrative — preserved.
+  - STATE.md, BACKLOG.md, FUTURE_IDEAS.md, FUTURE_IDEAS_DRAFT.md
+    — historical-narrative-heavy live docs; series-wide
+    deferred.
+  - Historical seal narratives — preserved (the file
+    framework/dormancy/seals/SEAL_COMMIT.* moves with the
+    directory rename via git mv but its content stays verbatim).
+  - Historical plan-docs — preserved.
+  - Historical component-record docs at
+    docs/rebuild/components/{hands-off-lifecycle,foundation-audit,
+    self-upgrade-framework,...}/* — preserved (their
+    graceful-degradation references describe pre-M1f events).
+  - Historical content INSIDE the renamed
+    docs/rebuild/components/dormancy/ directory — content
+    preserved verbatim under the rename per AC.RNM-1f.8.
+  - docs/rebuild/plans/two-modes-and-multi-workspace/*.md —
+    preserved.
+  - Frozen self-upgrade release manifest pos-v2-v0.2.0.yaml —
+    preserved (release tag pos-v2-v0.2.0; pre-namespace-pivot
+    snapshot; pinned commit_sha dde03a7).
+  - Repo directory rename ivers-corp-pos-v2 → loam — M9.
+  - Path strings /Users/lukeivers/ivers-corp-pos-v2/... — M9.
+  - Workspace-side <workspace>/.pos/ sentinel-dir constants —
+    series-wide deferred.
+
+HC#4 byte-content sample status post-M1f: NO RETIRE-AND-
+REBASELINE. Pre-build verification at plan-authoring time
+confirms NONE of the M1e-rebaselined samples reside under
+framework/graceful-degradation/. The HC#4 invariant remains
+GREEN through M1f without any sample-file changes.
+
+H19 admission: the dormancy seal-test allowlist updates the
+path-self-references (framework/graceful-degradation/ →
+framework/dormancy/, docs/rebuild/components/graceful-degradation/
+→ docs/rebuild/components/dormancy/) per plan §11 finding #7.
+Module docstring historical narrative preserved verbatim
+(describes pre-M1f events).
+
+Test surface (narrow per feedback_amendment_dispatch_speedups):
+
+  - AC.RNM-1f.1 — directory + package rename: verified by
+    `python -c "from loam.dormancy import *"` + `git log --follow`
+    history-preservation.
+  - AC.RNM-1f.2 — import rebrand: every Phase E touched test file.
+  - AC.RNM-1f.3 — OTel cascade: verified by
+    pytest framework/dormancy/tests/test_d9_observability.py +
+    post-rename grep returning 0.
+  - AC.RNM-1f.4 — config-file path cascade: verified by
+    pytest framework/dormancy/tests/test_d8_state.py +
+    post-rename grep returning 0.
+  - AC.RNM-1f.5 — migration helper: verified by
+    pytest framework/tools/loam-migrate-dormancy-config/tests/.
+  - AC.RNM-1f.6 — workspace-bootstrap adapter rename: verified
+    by importlib.metadata.entry_points(group="loam.bootstrap.
+    contributions") returning a list containing "dormancy".
+  - AC.RNM-1f.7 — self-upgrade consumer rebrand: verified by
+    pytest framework/self-upgrade/tests/test_probes.py.
+  - AC.RNM-1f.8 — component docs subdir rename: verified by
+    ls + git log --follow.
+  - AC.RNM-1f.9 — first-run-inventory rebrand: verified by
+    grep returning 0.
+  - AC.RNM-1f.10 — fence-narrowing negative AC: verified by
+    git diff <baseline>..HEAD --stat.
+  - AC.RNM-1f.S — this seal commit.
+
+ODD §2.5 reverse-direction audit clean: every change in this
+amendment's diff is a directory git mv, an inner-package git mv,
+an adapter file git mv, a docs subdir git mv, an import callsite
+rebrand, an OTel-second-segment substitution, a config-file path
+rebrand, a workspace-bootstrap adapter rename + entry-point row
+update, a self-upgrade consumer rebrand, a first-run-inventory
+entry rename, a new migration-helper authoring, or the plan-doc
++ manifest YAML themselves. Each line traces back to a named AC
+under §4.
+
+BASELINE 820fd84 (M1e §14 SHA-register backfill commit). Three
+sealed components touched: dormancy (renamed from
+graceful-degradation), workspace-bootstrap, self-upgrade. Plus
+observability-aggregator (1-line schema-comment rebrand) and
+hands-off-lifecycle (narrative anchor; HC#4 invariant remains
+GREEN — no rebaseline).
+
+Composes on (consumers-only; no semantic edits):
+
+  - The OSS v0.1.0 publish programme master plan
+    (`oss-v0-1-0-publish.md`) — M1f row already in §5 per
+    series-master ladder.
+  - The M1.rename series master plan
+    (`oss-v0-1-0-publish-rename.md`) — M1f is the sixth
+    sub-amendment per the §2 ladder.
+  - `loam-rename-decisions.md` — Tier-2 (the M1f target).
+  - `.scratch/claude-output/loam-rename-migration-plan.md`
+    §4.1 (mechanics).
+
+FIDRAFT items closed by this amendment: M1d's deferred
+second-segment cascade (loam.degradation.* → loam.dormancy.*)
+— closed via AC.RNM-1f.3.
+
+FIDRAFT items surfaced by this amendment (per plan §11 finding #8):
+
+  - "Degradation* Python class symbol rename — separate semantic
+     amendment; ~20 callsites; out of M1f scope per Tier-2 silence
+     + ODD §2.5 conservatism."
+  - "Migration-helper convention: per-file vs per-directory four-
+     case logic; SQLite WAL/SHM sibling-file handling pattern
+     reusable for future component-data renames."
+  - "M1c launchd-label stragglers in orchestrator + self-upgrade
+     (com.pos.orchestrator → com.loam.orchestrator) — small
+     corrective amendment, ≈20 callsites" (carried from M1e §11
+     finding #1).
+  - "Tools-tree namespace pivot for non-loam-prefixed tools — out
+     of M1f scope; absorbed by M1g or follow-on" (carried from
+     M1e §11 finding #4).

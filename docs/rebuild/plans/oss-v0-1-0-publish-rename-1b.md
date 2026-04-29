@@ -294,58 +294,71 @@ Per the dispatch's halt-and-surface clause: surface any audit-recommendation con
 
 ---
 
-## 12. Method-decision register (post-build)
+## 12. Method-decision register (placeholder)
 
-This section is populated post-build per the `pos-amend seal --plan-doc <abs-path>` convention.
-
-### D-build.M1b.1 — Migration helper path
-
-(post-build — record which of the three options was chosen and why.)
-
-### D-build.M1b.2 — Migration helper invocation timing
-
-(post-build — record the chosen invocation pattern.)
-
-### D-build.M1b.3 — Component-internal docs sweep boundary
-
-(post-build — record which component-internal docs were touched.)
-
-### D-build.M1b.4 — POS_V2_ROOT + POS_V2_REPO dedup mechanics
-
-(post-build — record any per-callsite ambiguity encountered during the dedup.)
-
-### Test breakdown
-
-(post-build — per AC test files)
-
-### Backwards-compat verification
-
-(N/A — hard cutover per series-master D-RNM.3.)
-
-### HC#4 byte-content sample status
-
-(post-build — confirm none of the fifteen sample files were touched; HC#4 green without retirement.)
-
-### Commit SHAs
-
-(populated by `pos-amend seal --plan-doc` SHA-backfill)
-
-- **Programme master plan §5 update commit (precursor doc-only):** TBD
-- **M1b sub-plan + manifest commit:** TBD
-- **M1b feature commit:** TBD
-- **pos-amend apply commit:** TBD
-- **Seal commit:** TBD
-- **Any corrective commits:** TBD
-
-Diff window: `143d465..<seal>` (M1a-seal → M1b-seal-target).
-
-### Dependents cleared to dispatch
-
-(post-build — name M1c readiness + any FIDRAFT items closed by M1b)
+The method-decision content for M1b lives in §14 below per the
+`pos-amend seal --plan-doc` convention (which expects §14 as the
+SHA-backfill anchor). Content moved to §14 to avoid duplication.
 
 ---
 
-## 13. References
+## 13. Test breakdown (post-build)
+
+Per AC, the touched test files plus the migration helper's own tests.
+- AC.RNM-1b.1: HOL `test_first_run.py`, `test_detachment.py`; memory-system `test_AC29_health_workspace_identity.py`, `test_AC34_eager_health_after_startup.py`; workspace-bootstrap `test_AC29_scaffold_memory_port.py`, `test_D5_plist_path_emission.py`, `test_AC_E_*.py`.
+- AC.RNM-1b.2: each component's per-host-touched test files (e.g. graceful-degradation `test_d8_state.py`, `test_d10_garbage_false_positive.py`, `test_d7_resume.py`; workspace-sync `test_sync_config.py`).
+- AC.RNM-1b.3 + AC.RNM-1b.5: migration helper `test_migrate.py` + `test_cli.py` (11 tests, all pass).
+- AC.RNM-1b.S: each sealed component's `test_no_sealed_amendments.py` + HOL `test_cross_cutting.py` (HC#4 sample remains green; H19 retirement NOT triggered).
+
+### Backwards-compat verification
+
+N/A — hard cutover per series-master D-RNM.3.
+
+### HC#4 byte-content sample status
+
+GREEN. The fifteen sample files in `framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py` were not touched by M1b's rename (verified pre-build per §11 finding #2; verified post-build by 16 passing tests in HOL's full suite). HC#4 retains its frozen-baseline; H19 retirement does NOT happen at M1b.
+
+### Dependents cleared to dispatch
+
+- **M1c** (launchd labels `com.pos-v2.<slug>.*` → `com.loam.<slug>.*`) cleared to dispatch. Dispatcher should author `docs/rebuild/plans/oss-v0-1-0-publish-rename-1c.md`. Pre-build verification: confirm whether HOL's H19 byte-content sample includes any plist file (expected: yes — M1c may trigger H19 retire-and-rebaseline per series-master §1).
+- M1c..M1g remain serial in the shared tree per `feedback_serialize_amendment_builds`.
+
+---
+
+## 14. Method-decision register (post-build)
+
+### D-build.M1b.1 — Migration helper path
+
+**Standalone tool** at `framework/tools/loam-migrate-host-config/` (option 1 from §10). Pattern follows the existing `framework/tools/<name>/` layout (orphan-plist-cleanup precedent). Reasoning: clean separation from workspace-bootstrap first-run; ease of re-running outside first-run; simplest test scaffold (own pytest config, own conftest, no fixture dependency on workspace-bootstrap's heavy fixtures).
+
+### D-build.M1b.2 — Migration helper invocation timing
+
+**Explicit invocation; no auto-run** (option 2 from §10). The migration is per-host, not per-workspace. Auto-running it from per-workspace first-run would fire it multiple times across multiple workspaces on the same machine, with the second-onwards firings hitting case 2 (no-op) or case 4 (halt). The structural-over-advisory principle says: name the surface the user uses; don't hide the migration inside an unrelated lifecycle event. The helper's README names invocation explicitly; framework code reading `~/.loam/` finds the dir absent on a fresh-clone post-rename and (per existing fail-closed behaviour for missing config dirs) raises a clear "config dir not present" error that names the helper as the remediation.
+
+### D-build.M1b.3 — Component-internal docs sweep boundary
+
+Updated **only where component-internal docs carry load-bearing path-constants** (per §10 recommendation). Five components touched at the docs surface:
+- `framework/graceful-degradation/docs/architecture.md` (config + sqlite path examples).
+- `framework/observability-aggregator/docs/{api-reference,architecture,bootstrap-registration-guide,cli-reference,data-flow,prose-explanation,relationship-map}.md` (base_dir + db_path examples; bootstrap.py wiring docs).
+- `framework/orchestrator/docs/{api-reference,architecture,operations,relationships}.md` (sqlite + sock paths; logs dir; bootstrap.py path; observability sql examples).
+- `framework/self-upgrade/docs/{architecture,cli-reference,conflict-report-reference,notification-flow}.md` (paths.py-derived locations; conflict report example paths).
+- `framework/workspace-bootstrap/README.md` (manifest default path; canonical-cache path; legacy-user-config docstring).
+
+Skipped: docs that mention `~/.pos/` only as historical/incidental prose (none surfaced in the sweep). The graceful-degradation README + the per-component READMEs M1a touched were either already brand-shaped or did not contain per-host path-constants.
+
+### D-build.M1b.4 — POS_V2_ROOT + POS_V2_REPO dedup mechanics
+
+The dedup collapsed two pre-rename names (`POS_V2_ROOT`: HOL shell-script env-read at `first-run.sh:117`, `first-run.sh:73`'s sibling test in `test_detachment.py:578,598`; `POS_V2_REPO`: `settings.json.fragment` `${POS_V2_REPO}` substitutions × 4 callsites) to a single `LOAM_REPO` post-rename. No per-callsite ambiguity surfaced — the two names were textually distinct so global Edit-with-`replace_all` per file landed cleanly. Verified by grep-count returning 0 for both pre-rename names post-build.
+
+Note: the **internal shell variable** `POS_V2_ROOT` in `first-run.sh` (set at lines 54, 62; referenced at 68, 69, 167) is NOT the env-var read site — it's a script-internal identifier holding the workspace root (set by `CLAUDE_PROJECT_DIR` or script-relative resolution, then passed via `--pos-v2-root` flag). It stays unchanged in M1b per AC.RNM-1b.6's exclusion of internal-prefix decorations; it renames in M1e.
+
+### Commit SHAs
+
+(populated by `pos-amend seal --plan-doc` SHA-backfill below)
+
+---
+
+## 15. References
 
 - **Series master:** `docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed `ebe0a57`).
 - **Prior sub-amendment:** `docs/rebuild/plans/oss-v0-1-0-publish-rename-1a.md` (sealed `143d465`).

@@ -32,12 +32,20 @@ _FRAMEWORK_VP_PATH = _REPO_ROOT / "docs" / "rebuild" / "VALUE_PROPOSITION.md"
 
 # Distinctive sentences from VALUE_PROPOSITION.md — pulled from the
 # canonical doc. Each sentence is workspace-content (specific to
-# Luke's pOS framing); none of these may appear hard-coded in
+# Luke's loam framing); none of these may appear hard-coded in
 # workspace-bootstrap source.
+#
+# Amendment #76 (M1a — docs/prose-only brand rebrand) updated the H1
+# marker from "pOS v2 — Value Proposition…" to "loam — Value
+# Proposition…" alongside the broader pos-v2/pOS v2/pOS → loam
+# rebrand. The brand-string update is brand-keyed; the other
+# sentinels (which carry no brand vocabulary) are unchanged and
+# still pin distinctive VP prose. Test intent ("VP prose not hard-
+# coded in workspace-bootstrap source") preserved.
 _FORBIDDEN_VP_SENTINELS = [
     # The H1 itself — workspace-content if hard-coded.
-    "pOS v2 — Value Proposition of the Harness and the Primary Persona",
-    # Distinct opening of "The problem pOS is closing".
+    "loam — Value Proposition of the Harness and the Primary Persona",
+    # Distinct opening of "The problem loam is closing".
     "AI has a usability problem",
     # The 12-hour example's distinctive framing.
     "The 12-hour example",

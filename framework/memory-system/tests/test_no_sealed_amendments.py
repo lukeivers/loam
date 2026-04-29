@@ -101,7 +101,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              research and dropped. 3b128c3 is the pre-amendment tip
 #              — the pyyaml-reachability seal commit immediately
 #              before amendment #21's code commit.
-BASELINE = "143d4656f0c319bdc644f7a925b073e0ecaaff72"
+BASELINE = "d97c8c1"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

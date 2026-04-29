@@ -1,0 +1,180 @@
+# Amendment #86 — M5 wire dormancy constructor + bind orchestrator pause/resume + connect MemorySupervisor outage events
+
+2026-04-29. Multi-component sealed amendment for the OSS v0.1.0
+publish programme. M5 per locked programme master plan-doc
+`docs/rebuild/plans/oss-v0-1-0-publish.md` §5 M5 row + §6
+sequencing rule #3 + §3 AC.OSS.2 (D-2 — `DormancyContribution`
+declaration-only; orchestrator pause/resume hooks declared but
+unbound; `MemorySupervisor` defined but not constructed in
+production). Sub-plan-doc:
+`docs/rebuild/plans/oss-v0-1-0-publish-dormancy-constructor.md`.
+
+Composes on the M1.rename multi-amendment series (sealed
+M1a..M1g 2026-04-29; M1g seal `f6c22fd`; §14 backfill `d5b8dcd`),
+on M2.partition (sealed `4cda805` 2026-04-29; §14 backfill
+`bb3574c`), on M3.wire-clis (sealed `95f1ab2` 2026-04-29; §14
+backfill `6751b94`), and on M4.wire-dispatch (sealed `1719e14`
+2026-04-29; §14 backfill `bf56763`).
+
+M5 closes the AC.OSS.2 D-2 gap surfaced by the feature-usage
+audit (`.scratch/claude-output/feature-usage-audit.md` §D-2 line
+402): `DegradationComponent.build(...)` was invoked exclusively
+by tests (no production caller); the bootstrap adapter
+(`framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/dormancy.py`)
+was declaration-only with `contribute()` returning `None`;
+orchestrator's `pause_activation` / `resume_activation` hooks
+(declared at amendment #6) were referenced by dormancy's
+`PolicyDispatcher` but the dispatcher was never constructed in
+production (because the component wasn't); `MemorySupervisor`
+(defined at amendment #3 of hands-off-lifecycle) had zero
+production callers despite a supervisor-signal input surface
+(`record_supervisor_signal(memory_sidecar_down |
+memory_sidecar_recovered)`) being authored on the dormancy
+detector specifically to consume its events.
+
+M5 promotes the dormancy adapter from declaration-only to a real
+async `contribute(host)` body that:
+
+  1. Loads dormancy config via
+     `loam.dormancy.config.load_config(host.config_dir /
+     'dormancy-config.yaml')` (returns defaults when absent).
+  2. Constructs `DegradationNotifier` from the (potentially
+     empty) host.channel_registry. Per the existing notifier's
+     queue-on-no-active-channel behaviour (notification.py
+     line 119), an empty channel list is acceptable —
+     notifications queue in-memory until the
+     `telegram_interface` adapter registers a channel later in
+     the `after_orchestrator_ready` phase.
+  3. Calls `DegradationComponent.build(cfg=cfg,
+     orchestrator=host.orchestrator,
+     scope_runtime=host.scope_runtime, notifier=notifier)` and
+     assigns to `host.dormancy`.
+  4. Subscribes `comp.on_scope_event` to
+     `host.scope_runtime.subscribe_all` per
+     `framework/dormancy/docs/architecture.md` §"Core
+     composition" — closes the Claude-API memory-system
+     detection blind spot.
+  5. Awaits `comp.reconcile_on_startup(orchestrator_paused=
+     host.orchestrator.is_paused)` for restart edge cases.
+  6. WHEN `host.memory_sidecar_url is not None`: constructs
+     `MemorySupervisor` with a stdlib-urlopen-based probe
+     function (mirrors the existing `memory_system` adapter's
+     probe pattern; zero new third-party deps) plus an
+     `on_transition` bridge that maps SupervisorTransition
+     events to dormancy detector signals.
+  7. Awaits `supervisor.start()` to register the background
+     probe task per the supervisor's existing `start()` contract.
+  8. Registers shutdown hook 'memory_supervisor' that awaits
+     `supervisor.stop()` at process teardown.
+
+Critical architectural finding (recorded at plan-authoring
+time): MemorySupervisor exposes an asymmetric callback surface —
+`on_recovering` (no-arg async, fires on first-good-probe after
+bad), `on_normal` (no-arg async, fires on recovery-confirmed),
+and `on_transition(SupervisorTransition)` (fires on every state
+edge). There is NO explicit `on_degraded` callback. To detect
+"memory down" using only `on_recovering` + `on_normal` is
+impossible (those fire only on the recovery side). Resolution:
+the bridge subscribes via `on_transition` and filters by
+`t.to_state` to capture every relevant edge with one
+subscription:
+
+  to_state == degraded   → record_supervisor_signal(memory_sidecar_down)
+  to_state == escalated  → record_supervisor_signal(memory_sidecar_down)  (idempotent)
+  to_state == recovering → no-op  (intermediate state)
+  to_state == normal     → record_supervisor_signal(memory_sidecar_recovered)
+
+Per plan §11 finding #2 + §10 D-build.M5.4.
+
+The pause/resume hook BINDING is already wired in
+`framework/dormancy/src/loam/dormancy/policy.py` — the
+PolicyDispatcher's `apply` method calls
+`orchestrator.pause_activation(reason)` (line 166); the
+`release` method calls `orchestrator.resume_activation()` (line
+245). Today's gap was that the dispatcher was never CONSTRUCTED
+in production (because the component wasn't); M5's adapter
+promotion lights up the existing wiring. No source change to
+dormancy/ or orchestrator/ — only the adapter promotion in
+workspace-bootstrap/.
+
+Adapter metadata: phase=`before_orchestrator_start`,
+after=`('primary_persona',)`. The `primary_persona` adapter
+populates `host.orchestrator` + `host.scope_runtime` within
+`before_orchestrator_start` phase; topo-sort honours `after=`
+declarations per workspace-bootstrap's discovery contract.
+
+Sidecar-absent short-circuit (per plan §10 D-build.M5.6 +
+AC.OSS-M5.6): when `host.memory_sidecar_url is None` (the
+`memory_system` adapter's `launch: False` config skipped the
+sidecar, common for test/no-graphiti workspaces), the supervisor
+is NOT constructed; `host.memory_supervisor = None`; no
+shutdown hook registered. The `DegradationComponent` is still
+constructed — the Claude-API detection path stays active. This
+keeps test workspaces booting cleanly without false-positive
+supervisor probes against an absent sidecar.
+
+Tests: 7 new test files in
+`framework/workspace-bootstrap/tests/` — each is a stdlib-only
+unit/integration test against a synthesised BootstrapHost. No
+full-suite rerun pre-seal per dispatch constraint
+`feedback_amendment_dispatch_speedups`. Test scope deliberately
+narrow per dispatch — registration + bridge translation +
+end-to-end synthetic-probe flow asserted at function-boundary
+level.
+
+Sealed-component fence: 3 components — workspace-bootstrap +
+dormancy + orchestrator (per plan §10 D-build.M5.8).
+workspace-bootstrap carries the diff (adapter body rewrite +
+7 tests + seal narrative + sidecar bump). dormancy +
+orchestrator bump sidecars only (no source change; existing
+public APIs consumed). The 3-component fence keeps all
+consumed surfaces under explicit baseline-advance rule —
+sealing only the consumer (workspace-bootstrap) would allow
+the producer (dormancy / orchestrator) seal-diff drift.
+
+HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE.
+Pre-build verification at plan-authoring time confirms no HC#4
+sample paths under any of the three touched components are
+impacted by the M5 diff. The HC#4 invariant is expected to
+remain GREEN through M5.
+
+AC family: AC.OSS-M5.1..M5.7 + AC.OSS-M5.S (sealed-component
+fence). Each AC maps to a unique change in the diff per
+ODD §2.5 (no behaviour without a named AC).
+
+Cross-tree consumer impact: NONE for dormancy/ or orchestrator/
+existing callers (their internal logic + public APIs remain
+byte-identical). Other workspace-bootstrap adapters unaffected
+— the dormancy adapter's `after=("primary_persona",)`
+declaration is additive; no other adapter declares an `after=`
+clause that would conflict.
+
+Pre-existing test pass-through verification (per plan §15):
+  - dormancy/ existing tests pass byte-identically (no source
+    change).
+  - orchestrator/ existing tests pass byte-identically (no
+    source change).
+  - workspace-bootstrap/ existing adapter tests pass — the
+    dormancy adapter's promotion is additive to the contribution
+    list semantics; no other adapter's behaviour changes.
+
+Dependents cleared post-M5:
+  - M6 (dev-sdlc-plugin) — M5 is its critical-path predecessor
+    per master plan §6; M6 cleared.
+  - M7, M8, M9 — not gated on M5.
+
+M5 is the third + final of the three independent-but-serial
+wire-or-strip amendments (M3 wire-clis sealed at `95f1ab2`,
+M4 wire-dispatch sealed at `1719e14`, M5 wire-dormancy this
+amendment) per master plan §5 M3/M4/M5 rows + §6 sequencing
+rule #3.
+
+Precursor chore: a one-line `.gitignore` edit (add `personas/`)
+landed at commit `6e56c8e` BEFORE M5's plan-doc commits per
+dispatch authority. The precursor eliminated a recurring
+untracked-tree-blocks-seal halt that had fired at M1c, M2, M3,
+and M4 (four times); same friction class as the `workspace/`
+gitignore fix at commit `b8caf7f`. The precursor is NOT part
+of M5's amendment fence — M5's BASELINE points at `6e56c8e`
+(post-precursor) so the precursor commit is excluded from
+M5's BASELINE..HEAD diff window cleanly.

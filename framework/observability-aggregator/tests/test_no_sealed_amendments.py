@@ -51,7 +51,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "74ae5d3"
+BASELINE = "820fd84"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -160,6 +160,7 @@ def test_only_observability_aggregator_changed() -> None:
         "docs/rebuild/components/",
         "docs/rebuild/spec/",
         "framework/tools/loam-mode/",
+        "framework/tools/loam-migrate-dormancy-config/",
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",

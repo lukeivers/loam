@@ -1,0 +1,253 @@
+# Amendment #80 — M1e loam.* namespace pivot + cleanup
+
+2026-04-29. Fifth sub-amendment of the M1.rename multi-amendment
+series per locked series master plan-doc
+`docs/rebuild/plans/oss-v0-1-0-publish-rename.md` (committed
+`ebe0a57`) and locked sub-plan-doc
+`docs/rebuild/plans/oss-v0-1-0-publish-rename-1e.md`.
+
+Composes on M1a (sealed `143d465`, 2026-04-29 — docs/prose-only
+brand rebrand), M1b (sealed `d97c8c1`, 2026-04-29 — env-vars +
+per-host config dir + migration helper), M1c (sealed `1e99d0b`,
+2026-04-29 — launchd label rebrand + plist filename cascade +
+sibling migration helper), M1d (sealed `74ae5d3`, 2026-04-29 —
+OTel pos.* → loam.* root rebrand) and on the OSS v0.1.0 publish
+programme.
+
+Owner rulings closed at series-master commit time (2026-04-29):
+
+  - D-RNM.1 SPLIT: M1e is the fifth slice of the multi-amendment
+    series.
+  - D-RNM.2 per-component namespace-package: M1e is the slice
+    that LANDS the per-component framework/<comp>/src/loam/<comp>/
+    restructure per the locked ruling.
+  - D-RNM.3 no compat window: hard-cutover; no from pos_<comp>
+    fallback shim; no dual entry-point group registration.
+
+Dispatcher rulings closed at dispatch time (2026-04-29):
+
+  - SCOPE — Resolution 1: M1e = namespace pivot (items 2–4) +
+    small cleanup (items 5–8). pos-amend CLI rename → loam amend
+    DEFERRED to M1g (keeps the rename-the-tool-while-using-it
+    boundary clean). Within M1e, pos-amend invoked under its
+    current name for apply.
+  - POS-AMEND-SELF-RENAME-MECHANICS deferred to M1g per ruling 1.
+  - SPEC FILENAME: docs/rebuild/spec/loam-objectives-spec.md
+    → loam-objectives-spec.md (current contract; renames per
+    Idea 10). docs/rebuild/spec/pos-v2-rebuild-proposal.md
+    PRESERVED filename (historical record; explicit
+    "APPROVED 2026-04-17" gap-analysis approval record per
+    Idea 10's no-retroactive-rewrites clause).
+
+Surface changes (14 packaged sealed components + HOL narrative-
+anchor + scope-of-work + safety-layer admitted via H19 + spec
+filename rebrands + cross-reference cascade):
+
+  - Per-component package directory restructure (D-RNM.2 ruling):
+      framework/<comp>/src/<old-pkg>/         → framework/<comp>/src/loam/<comp>/
+    for the 14 packaged components, via git mv (preserving
+    history). The 11 flat-src components (cost-governance,
+    graceful-degradation, objective-tracker, observability-
+    aggregator, orchestrator, primary-persona, reversibility-
+    primitive, safety-layer, scope-of-work, self-correction,
+    telegram-interface) and the 3 nested-src components
+    (self-upgrade, workspace-bootstrap, workspace-sync) converge
+    at the same target shape src/loam/<comp>/.
+
+      framework/<comp>/src/loam/ carries NO __init__.py per
+      PEP 420 implicit namespace package convention; each
+      component's own dir src/loam/<comp>/ carries __init__.py
+      per existing convention.
+
+  - 522 import-callsite rebrands across the 14 components:
+      from pos_<comp> import → from loam.<comp> import     (6 pos_-prefixed packages)
+      from <comp> import     → from loam.<comp> import     (8 bare-name packages)
+      import <comp>          → import loam.<comp>           (2 callsites)
+
+    Plus 22 inter-component pyproject.toml dependencies = [...]
+    list rewrites (mostly in workspace-bootstrap which depends
+    on 13 framework components).
+
+  - Python entry-point group rename:
+      pos.bootstrap.contributions → loam.bootstrap.contributions
+    across workspace-bootstrap pyproject.toml +
+    src/loam/workspace_bootstrap/discovery.py (_ENTRYPOINT_GROUP)
+    + __init__.py docstring + manifest.py docstring +
+    docs/extension_protocol.md + README.md.
+
+    Post-rename:
+      python -c "import importlib.metadata; print(list(importlib.metadata.entry_points(group='loam.bootstrap.contributions')))"
+    returns the 13 bootstrap adapters.
+
+  - Internal namespace decorations rebrand per Tier-1 #6:
+      _LOAM_*                  → _LOAM_*
+      CANONICAL_LOAM_PATH      → CANONICAL_LOAM_PATH
+      loam_root (parameter)    → loam_root
+      --loam-root (shell flag) → --loam-root
+      LOAM_ROOT (script-internal var in first-run.sh) → LOAM_ROOT
+
+    ~413 callsites across HOL hooks + tests, loam-mode adapter,
+    primary-persona / workspace-bootstrap test fixtures.
+
+  - Spec filename rebrands per dispatcher ruling 3 + Idea 10:
+      docs/odd-in-loam.md → docs/odd-in-loam.md
+      docs/rebuild/spec/loam-objectives-spec.md →
+        docs/rebuild/spec/loam-objectives-spec.md
+      docs/rebuild/spec/pos-v2-rebuild-proposal.md PRESERVED
+        filename (historical record per Idea 10 no-retroactive-
+        rewrites).
+
+    19 odd-in-loam.md cross-references + ~5 pos-v2-objectives-
+    spec.md cross-references update concurrently. pos-v2-rebuild-
+    proposal.md cross-references stay verbatim.
+
+  - Legacy emit-side tracer rebase per M1d build-time finding #8:
+      framework/primary-persona/src/loam/primary_persona/observability.py
+        trace.get_tracer("pos_v2.primary_persona") → "loam.primary_persona"
+      framework/observability-aggregator/src/loam/observability_aggregator/schema.py
+        TRACER_TO_COMPONENT: legacy entry "pos_v2.primary_persona"
+        REMOVED (canonical "loam.primary_persona" entry already
+        exists post-M1d per AC.RNM-1d.3).
+      framework/observability-aggregator/tests/test_d1_otel_ingestion.py
+        2 callsites referencing literal "pos_v2.primary_persona"
+        rebased to "loam.primary_persona".
+      framework/observability-aggregator/docs/{data-flow.md,
+        relationship-map.md, architecture.md}: 3 prose callsites
+        rebrand.
+
+    Closes the only remaining live emission of the legacy pos_v2.*
+    first-segment in the framework — with M1d's pos.* → loam.* and
+    M1e's pos_v2.* → loam.* both landed, the framework has a
+    single OTel namespace root.
+
+  - HC#4 byte-content-match in-band retire-and-rebaseline:
+      11–15 sample-file path entries in
+      framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py
+      updated for the namespace-pivot path moves
+      (framework/<comp>/src/<old-pkg>/<file>.py →
+       framework/<comp>/src/loam/<comp>/<file>.py).
+      2 SHA bumps (workspace-bootstrap __init__.py + discovery.py)
+      for files with content edits (entry-point group rebrand).
+      Other affected samples are path-only updates (content-
+      preserving git mv).
+      ODD §4 in-band retire-and-rebaseline applied per the
+      dispatch's named methodology heads-up + M1c lesson #9 /
+      M1d D-build.M1d.3 convention. The byte-content-match
+      invariant for the namespace-pivoted files RETIRES here;
+      new pins land at the post-M1e baseline.
+
+Out of scope (locked plan-doc §6, named explicitly):
+
+  - pos-amend CLI rename → loam amend — DEFERRED to M1g per
+    dispatcher ruling 1.
+  - graceful-degradation → dormancy Tier-2 component rename —
+    M1f per series-master §2 ladder.
+  - com.pos.orchestrator launchd-label stragglers in orchestrator
+    + self-upgrade (≈20 callsites; item 8 from dispatch §Objective)
+    — DEFERRED per dispatch §Halt-trigger #8 + plan §11 finding #1
+    (surface exceeds M1e's natural namespace-pivot fence).
+    Recommended landing path: small follow-on M1c-corrective
+    amendment OR M9-scrub.
+  - HOL + memory-system namespace pivots — out of scope per
+    dispatcher §Structural-note (no pyproject.toml).
+  - Tools-tree namespace pivot (framework/tools/<tool>/src/<tool_pkg>/...
+    for non-loam-prefixed tools: pos-publish-framework-only,
+    orphan-plist-cleanup, upgrade-merge-resolver, heavy-b-migrate,
+    pos-amend) — out of scope; absorbed by M1g (pos-amend) or
+    follow-on per FIDRAFT.
+  - Repo directory rename ivers-corp-pos-v2 → loam — M9.
+  - Path strings /Users/lukeivers/ivers-corp-pos-v2/... — M9.
+  - Workspace-side <workspace>/.pos/ sentinel-dir constants —
+    series-wide deferred.
+  - STATE.md, BACKLOG.md, FUTURE_IDEAS.md, FUTURE_IDEAS_DRAFT.md
+    — historical-narrative-heavy live docs; series-wide deferred.
+  - Historical seal narratives — preserved.
+  - Historical plan-docs — preserved.
+  - Historical component-record docs (research.md, research-plan.md,
+    brief.md, component.md) — preserved.
+  - docs/rebuild/spec/pos-v2-rebuild-proposal.md — PRESERVED
+    (historical-record per Idea 10 no-retroactive-rewrites +
+    dispatcher ruling 3).
+
+HC#4 byte-content sample status post-M1e: REBASELINED. The
+11–15 affected sample-file entries (path moves under namespace
+pivot) have updated path keys; 2 entries (workspace-bootstrap
+__init__.py + discovery.py) have updated SHAs reflecting
+entry-point group content edits. Test stays GREEN with the
+in-band rebaseline.
+
+H19 admission: scope-of-work + safety-layer touched in src/tests
+via the existing H19 cross-cutting allowed-set (no per-component
+seal-diff fence; their seal-discipline is HOL's
+test_cross_cutting.py per the M1a-locked precedent).
+
+Test surface (narrow per feedback_amendment_dispatch_speedups):
+
+  - AC.RNM-1e.1 — directory restructure: verified by
+    `python -c "from loam.<comp> import *"` for each of the
+    14 components + `git log --follow` history-preservation.
+  - AC.RNM-1e.2 — import rebrand: every Phase C touched test
+    file (heaviest-touched: scope-of-work, workspace-bootstrap,
+    primary-persona, self-upgrade tests).
+  - AC.RNM-1e.3 — entry-point group rename: verified by
+    importlib.metadata.entry_points(group="loam.bootstrap.contributions")
+    returning 13 bootstrap adapters.
+  - AC.RNM-1e.4 — internal-decoration rename: verified by
+    HOL test sweep + post-rename grep (0 matches).
+  - AC.RNM-1e.5 — filename rebrand: verified by `ls` checks +
+    post-rename grep on cross-references.
+  - AC.RNM-1e.6 — legacy pos_v2.primary_persona tracer rebase:
+    verified by observability-aggregator test_d1_otel_ingestion.py.
+  - AC.RNM-1e.7 — fence-narrowing negative AC: verified by
+    `git diff <baseline>..HEAD --stat`.
+  - AC.RNM-1e.S — this seal commit.
+
+ODD §2.5 reverse-direction audit clean: every change in this
+amendment's diff is a directory `git mv` (item 2), import
+callsite rebrand (item 3), entry-point group rename (item 4),
+internal-decoration rename (item 5), spec filename rebrand
+(item 6), legacy tracer rebrand (item 7), pyproject restructure,
+cross-reference update, HC#4 path/SHA pin update, or the plan-doc
++ manifest YAML themselves. Each line traces back to a named AC
+under §4.
+
+BASELINE 74ae5d3 (M1d seal commit). Fourteen sealed components
+touched: hands-off-lifecycle (HC#4 in-band rebaseline + internal-
+decoration touched-files + narrative anchor), cost-governance,
+graceful-degradation, objective-tracker, observability-aggregator,
+orchestrator, primary-persona, reversibility-primitive, safety-
+layer, scope-of-work, self-correction, self-upgrade, telegram-
+interface, workspace-bootstrap, workspace-sync.
+
+Composes on (consumers-only; no semantic edits):
+
+  - The OSS v0.1.0 publish programme master plan
+    (`oss-v0-1-0-publish.md`) — M1e row already in §5 per
+    M1b's precursor commit `7be713b`.
+  - The M1.rename series master plan
+    (`oss-v0-1-0-publish-rename.md`) — M1e is the fifth
+    sub-amendment per the §2 ladder.
+  - `loam-rename-decisions.md` — Tier-1 items 2–7
+    (namespace pivot scope).
+  - `.scratch/claude-output/loam-rename-migration-plan.md`
+    (mechanics + dependency ordering).
+  - M1d build-time finding #8 (legacy emit-side tracer
+    pos_v2.primary_persona).
+
+FIDRAFT items closed by this amendment: M1d build-time finding
+#8 (legacy pos_v2.primary_persona) — closed via AC.RNM-1e.6.
+
+FIDRAFT items surfaced by this amendment (per plan §11 finding #7):
+
+  - "framework/tools/ namespace-pivot residuals — pos-publish-
+     framework-only, orphan-plist-cleanup, upgrade-merge-resolver,
+     heavy-b-migrate."
+  - "M1c launchd-label stragglers in orchestrator + self-upgrade
+     (com.pos.orchestrator → com.loam.orchestrator) — small
+     corrective amendment, ≈20 callsites."
+  - "Loam namespace-pivot installer script —
+     framework/tools/loam-namespace-pivot-installer/ — refresh
+     editable installs in dependency-bottom-up order; idempotent."
+  - "Rename-helper convention: code-shape regex profile vs prose-
+     shape regex profile; bare-import-vs-variable-name distinguisher
+     (per M1d finding #9 + M1e Phase C risk)."

@@ -1,6 +1,6 @@
 # workspace-bootstrap
 
-The composition framework for pOS v2. Reads the workspace's
+The composition framework for loam. Reads the workspace's
 `bootstrap.yaml`, orders contributions by phase, constructs the host,
 runs each contribution, and coordinates shutdown.
 
@@ -21,7 +21,7 @@ session-start hook chain.
 
 ### `pos-new-workspace` (D-migration D.4, amendment #65)
 
-Bootstraps a fresh pOS v2 workspace at the D-shape from a canonical
+Bootstraps a fresh loam workspace at the D-shape from a canonical
 source.
 
 ```

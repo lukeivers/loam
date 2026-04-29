@@ -1,7 +1,7 @@
-# Duration estimation rubric for AI-driven pos-v2 tasks
+# Duration estimation rubric for AI-driven loam tasks
 
 **Purpose.** Help Claude agents (and any AI-driven builder) predict
-wall-clock time for work on pos-v2 — doc edits, amendment builds, new
+wall-clock time for work on loam — doc edits, amendment builds, new
 components, investigations. This rubric replaces uncalibrated
 human-developer intuition, which tends to run 10-50x too long for
 AI-driven work.

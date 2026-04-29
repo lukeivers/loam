@@ -1,6 +1,6 @@
 # scope-of-work
 
-Foundational Python primitive for pOS v2. Event-sourced finite state
+Foundational Python primitive for loam. Event-sourced finite state
 machine over SQLite WAL with three-axis budgeting (time / tokens /
 money), declarative escalation triggers, OpenTelemetry emission,
 parent-child cascade, and an upgrade-fidelity test harness.
@@ -37,7 +37,7 @@ asyncio.run(main())
 
 ## Documentation
 
-`docs/` ships alongside the code per pOS v1.1 R4. Start at
+`docs/` ships alongside the code per loam v1.1 R4. Start at
 `docs/README.md` for the reading order.
 
 ## Tests

@@ -1,6 +1,6 @@
 # Objective Tracker
 
-Phase 1 primitive for pOS v2. Event-sourced objective tracker with
+Phase 1 primitive for loam. Event-sourced objective tracker with
 sidecar scope-to-objective binding, ODD integration surface, and OTel
 observability emission.
 

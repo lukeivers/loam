@@ -1,16 +1,16 @@
-# pOS v2 — Value Proposition of the Harness and the Primary Persona
+# loam — Value Proposition of the Harness and the Primary Persona
 
-Captured 2026-04-21 as a durable design principle for pOS v2. Every future feature should be evaluable against the two tests this document defines. A feature that fails either test needs redesign or is a candidate for removal.
+Captured 2026-04-21 as a durable design principle for loam. Every future feature should be evaluable against the two tests this document defines. A feature that fails either test needs redesign or is a candidate for removal.
 
 This document is intended to be read both by humans designing features and by the primary persona itself during research authoring.
 
 ---
 
-## The problem pOS is closing
+## The problem loam is closing
 
 AI has a usability problem. A normal user does not think like an AI, and does not understand — often cannot understand without training they have no reason to invest in — how AI thinks differently from them. An AI's capabilities are therefore not accessible in proportion to its raw power; they are accessible in proportion to how much the user already knows about how to use AI.
 
-That gap, between what the AI can do and what the user can get it to do, is the problem pOS is designed to close.
+That gap, between what the AI can do and what the user can get it to do, is the problem loam is designed to close.
 
 ---
 
@@ -27,9 +27,9 @@ The primary persona is a consistent, single interface. It is the one entity the 
 
 The translation is not only about what the user *says*; it extends to what the user is entitled to ignore. Token management is one of those things. A user — even a technically-competent one — should not need to understand context windows, token costs, or how an AI's ongoing operation consumes tokens to have the system work well on their behalf. The primary persona translates the user's intent into the most token-efficient execution path; the harness enforces the cost discipline underneath. If the user is thinking about tokens, the translation layer has failed.
 
-This applies not only to the primary persona's own operation but to artifacts the harness *builds* on the user's behalf. An app, script, or service produced by pOS and run for the user must not quietly inherit pOS's context or bleed tokens into ongoing execution that does not need them. Deterministic and self-contained is the default; LLM calls in the running artifact are scoped narrowly and only where they genuinely cannot be replaced by deterministic code. The harness-as-builder owes the user the same token discipline the harness-as-runtime owes them.
+This applies not only to the primary persona's own operation but to artifacts the harness *builds* on the user's behalf. An app, script, or service produced by loam and run for the user must not quietly inherit loam's context or bleed tokens into ongoing execution that does not need them. Deterministic and self-contained is the default; LLM calls in the running artifact are scoped narrowly and only where they genuinely cannot be replaced by deterministic code. The harness-as-builder owes the user the same token discipline the harness-as-runtime owes them.
 
-*Observation motivating this framing:* a technical user of an earlier pOS release found that pulling one of their apps out of their pOS workspace into its own workspace saved roughly 25,000 tokens per run of its ingestion system. The context was leaking because the harness was not treating the built artifact's context hygiene as its own responsibility. That leak is a failure of the translation layer.
+*Observation motivating this framing:* a technical user of an earlier loam release found that pulling one of their apps out of their loam workspace into its own workspace saved roughly 25,000 tokens per run of its ingestion system. The context was leaking because the harness was not treating the built artifact's context hygiene as its own responsibility. That leak is a failure of the translation layer.
 
 ---
 
@@ -71,7 +71,7 @@ A feature that only enables a user action the primary persona cannot itself invo
 
 A feature that fails the primary-persona test may still be right occasionally — some work genuinely requires the user to make the execution choice. But the bar is high, and the feature should explain specifically why the translation burden belongs with the user in this particular case rather than the persona.
 
-A feature that fails the harness test is almost always wrong. If a capability cannot be invoked by the primary persona, it is a capability outside the harness — either move it in or question whether it belongs in pOS at all.
+A feature that fails the harness test is almost always wrong. If a capability cannot be invoked by the primary persona, it is a capability outside the harness — either move it in or question whether it belongs in loam at all.
 
 ---
 
@@ -111,4 +111,4 @@ ODD (documented in odd-methodology.md and odd-in-pos.md) governs how the feature
 
 ---
 
-*Document maintained alongside STATE.md, BACKLOG.md, and FUTURE_IDEAS.md as durable design-principle state for the pOS v2 rebuild.*
+*Document maintained alongside STATE.md, BACKLOG.md, and FUTURE_IDEAS.md as durable design-principle state for the loam rebuild.*

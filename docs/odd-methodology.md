@@ -1,11 +1,11 @@
 # Objective-Driven Design (ODD) — Operational Specification
 
-**Audience:** AI assistants authoring, reviewing, or executing work inside a pOS
+**Audience:** AI assistants authoring, reviewing, or executing work inside a loam
 workspace — primary personas, specialist personas, and background agents. This
 document is the canonical reference for what "doing ODD properly" requires at
 the mechanical level. It is not persuasive (see the companion doc for why ODD
-is chosen) and not illustrative of pOS specifically (see the implementation
-doc for pOS examples). It is the specification you consult when structuring
+is chosen) and not illustrative of loam specifically (see the implementation
+doc for loam examples). It is the specification you consult when structuring
 work.
 
 **Status:** normative. When this document and a persona's own instincts
@@ -138,7 +138,7 @@ is visible at review time inside the diff.
 
 Anti-patterns:
 
-- A platform branch for an OS no objective names. ("pos-v2 supports
+- A platform branch for an OS no objective names. ("loam supports
   Linux" is not a stated objective — yet Linux branches exist in
   service-manager code, test fixtures, and installer helpers. Added
   incidentally because "POSIX-ish shells make it easy," not because a
@@ -234,7 +234,7 @@ written after the objective rather than as the mechanical completion of it.
 
 Performance, latency, cost, and concurrency constraints are part of the
 acceptance criterion, not a separate concern. "Within 500ms p95" is part of
-A1 above because a kill that works in 60s is not the objective pOS wants.
+A1 above because a kill that works in 60s is not the objective loam wants.
 
 ### 3.5 Negative criteria are criteria too
 
@@ -272,7 +272,7 @@ criterion and extend the objective list.
 
 ### 4.2 Canonical example — safety-layer's A20
 
-The safety-layer component's proposal in pOS declared A1–A19. During build,
+The safety-layer component's proposal in loam declared A1–A19. During build,
 the builder noticed that the proposal §5 contained the sentence *"Safety
 always wins on collision with graceful-degradation"* as a constraint — but
 nothing in A1–A19 tested that collision.
@@ -435,9 +435,9 @@ structural.
 
 ### 5.2 The clause-(g) pattern
 
-The canonical ODD-as-code pattern in pOS is the clause-(g) structural check
+The canonical ODD-as-code pattern in loam is the clause-(g) structural check
 from the self-upgrade framework. Clause (g) of the self-upgrade spec is
-"every pOS change included in the upgrade is actually installed — none are
+"every loam change included in the upgrade is actually installed — none are
 silently skipped." The objective is one sentence; the enforcement is this:
 
 1. The upgrade unit (release tag) ships with a manifest listing every file
@@ -465,7 +465,7 @@ human's or LLM's memory.
 ### 5.3 Pydantic + model_validators is the reach-for default
 
 When a refusal must be structural, Pydantic schemas with `@model_validator`
-decorators are the reach-for default in pOS. They:
+decorators are the reach-for default in loam. They:
 
 - fail at construction, not at use — invalid state is unrepresentable once
   the validator passes,
@@ -566,7 +566,7 @@ primary persona to a specialist, every background dispatch, every user
 request assigned to an AI agent.
 
 The objective is the contract that crosses the delegation boundary. The
-method is the builder's internal concern. This matches how personas in pOS
+method is the builder's internal concern. This matches how personas in loam
 actually work.
 
 ---
@@ -783,11 +783,11 @@ next time.
 
 ## 10. Where this fits
 
-ODD is the framework pOS uses for structuring all delegated work — from
+ODD is the framework loam uses for structuring all delegated work — from
 primary-persona-to-specialist dispatches, through component builds in the
-pOS-v2 rebuild, through user-facing scope-of-work objectives created at a
+loam rebuild, through user-facing scope-of-work objectives created at a
 terminal. It is the operational methodology; the philosophical case is in
-the companion document, and worked pOS examples are in the implementation
+the companion document, and worked loam examples are in the implementation
 document.
 
 When the three documents disagree, this one governs the mechanics. The

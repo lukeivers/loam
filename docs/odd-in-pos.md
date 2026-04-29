@@ -1,25 +1,25 @@
-# Objective-Driven Design in pOS — Implementation Companion
+# Objective-Driven Design in loam — Implementation Companion
 
-**Audience:** human developers using pOS or contributing components to it
+**Audience:** human developers using loam or contributing components to it
 who have read (or are about to read) `odd-methodology.md` and want to see
 how the framework actually practices what that document specifies.
 
 **Status:** illustrative, not normative. When this document and
 `odd-methodology.md` disagree, the methodology doc governs. This
 document's job is to show the methodology in action, using sealed
-components of pOS-v2 as worked examples.
+components of loam as worked examples.
 
 ---
 
 ## 1. Orientation
 
-Objective-Driven Design (ODD) is the methodology pOS uses to structure
+Objective-Driven Design (ODD) is the methodology loam uses to structure
 every unit of delegated work. An objective names what must be true when the
 work is done; constraints bound the method; acceptance criteria are
 deterministic checks that verify the objective. The builder chooses the
 method. For the full specification, see `odd-methodology.md`.
 
-pOS uses ODD because every unit of work in the framework is a delegation:
+loam uses ODD because every unit of work in the framework is a delegation:
 primary-persona to specialist, specialist to background agent, human to
 agent, proposal to build. In each case the author of the work and the
 author of the method are different entities. The objective is the contract
@@ -28,7 +28,7 @@ the objective — library choice, file layout, algorithm — is the builder's
 internal concern and not the delegator's business.
 
 This document shows how that contract is authored and enforced in practice
-by walking through four of the thirteen sealed components of pOS-v2:
+by walking through four of the thirteen sealed components of loam:
 
 - **safety-layer A1–A20** — the canonical re-extension example.
 - **self-upgrade clause (g)** — the canonical structural-enforcement example.
@@ -37,14 +37,14 @@ by walking through four of the thirteen sealed components of pOS-v2:
   extension protocol itself.
 
 Then: how to add an ODD-compliant component, how to review ODD work, and
-the mistakes pOS's own rebuild actually made (which are probably the
+the mistakes loam's own rebuild actually made (which are probably the
 mistakes you will also make, given the chance).
 
 ---
 
-## 2. The pOS five-gate chain is ODD-shaped
+## 2. The loam five-gate chain is ODD-shaped
 
-Every sealed component in pOS-v2 passed through the same five gates:
+Every sealed component in loam passed through the same five gates:
 
 ```
 research-plan  →  research  →  proposal  →  brief  →  build
@@ -69,7 +69,7 @@ contract as a defect during review.
 
 The seal ritual at the end of the build tests the objectives
 deterministically. If `test_A7_*.py` fails, A7 was not delivered regardless
-of what the commit message claims. This is why acceptance criteria in pOS
+of what the commit message claims. This is why acceptance criteria in loam
 proposals are authored as individual test-shaped statements — they map
 1:1 to test functions and cannot hide behind prose.
 
@@ -158,7 +158,7 @@ yes.
 
 Clause (g) of the self-upgrade spec is one sentence:
 
-> Every pOS change included in the upgrade is actually installed — none
+> Every loam change included in the upgrade is actually installed — none
 > are silently skipped.
 
 This is the canonical case where ODD's structural-over-advisory preference
@@ -368,7 +368,7 @@ registration; B25 covers the framework-internal phase surface.
 
 ---
 
-## 7. Adding an ODD-compliant component to pOS
+## 7. Adding an ODD-compliant component to loam
 
 If you are contributing a new component — a Phase 4+ extension or a
 foundational amendment (rare, gated) — the rhythm is the five-gate chain
@@ -481,7 +481,7 @@ Before the work leaves Eve, walk the acceptance criteria with these checks:
 - **Method-in-acceptance.** Scan every criterion for verbs that describe
   how rather than what. "Uses pytest." "Implements visitor pattern." "Via
   Pydantic validator." Every hit is a violation. Rewrite as outcome.
-  (This is the single most common ODD defect in pOS's own history — see §9.)
+  (This is the single most common ODD defect in loam's own history — see §9.)
 - **Behaviour-count mismatch.** Count the declared behaviours in each
   objective (words "and," "also," bulleted lists). Count the acceptance
   criteria. If criteria < behaviours, the objective is under-tested.
@@ -534,7 +534,7 @@ For a sealed component, the audit trail consists of:
 6. The foundation-audit entry rating the component GREEN / YELLOW / RED
    against enumerated acceptance criteria.
 
-The foundation-audit for pOS-v2's first thirteen components landed at
+The foundation-audit for loam's first thirteen components landed at
 `93.6% : 6% : 0.5%` (GREEN : YELLOW : RED). The methodology does not
 guarantee GREEN dominance — the audit discipline does. But the
 methodology makes the discipline possible: when criteria are test-shaped
@@ -543,7 +543,7 @@ every line of code.
 
 ---
 
-## 9. Common mistakes observed during pOS's rebuild
+## 9. Common mistakes observed during loam's rebuild
 
 These are failures Luke caught (or the foundation audit flagged as YELLOW)
 during the thirteen-component build. If you are authoring proposals or
@@ -657,11 +657,11 @@ the test covered.
 ### 9.7 Code for cases no objective names
 
 (`odd-methodology.md` §2.5 is the governing rule; this subsection
-documents the first pOS-v2 incident that surfaced the need to state it
+documents the first loam incident that surfaced the need to state it
 explicitly.)
 
 During the 2026-04-22 build session an unrelated review surfaced that
-pos-v2 shipped Linux/systemd/systemctl code paths across twelve Python
+loam shipped Linux/systemd/systemctl code paths across twelve Python
 files — service-manager templates, platform-branched installers,
 rollback helpers. No objective in spec v1.0, v1.1, or v1.2 names Linux
 as a supported platform. The code was added incidentally because
@@ -714,7 +714,7 @@ only what the amendment added to whatever came before.
 ### 9.8 Byte-content verification on state-mutating amendments
 
 (`odd-methodology.md` §8.2.14 is the governing rule; this subsection
-documents the first pos-v2 incident that surfaced the need to state
+documents the first loam incident that surfaced the need to state
 it explicitly.)
 
 Workspace-sync amendment #57 (Bundle α — resolver cost overhaul)
@@ -824,7 +824,7 @@ hotfix without review is the failure mode.
 ## 10. Frozen-vs-floating BASELINE convention (per-invariant BASELINE)
 
 Seal-diff tests pin a `BASELINE` SHA that scopes the window a test
-diffs against. Historically every `BASELINE` in pos-v2 *floated* — it
+diffs against. Historically every `BASELINE` in loam *floated* — it
 advanced to the pre-amendment tip on every amendment, so the test's
 diff window was "what changed across the current amendment." That
 pattern works for per-component contamination checks but causes two
@@ -1045,7 +1045,7 @@ parallel post-amendment #23; Class C — structurally serial).
 ## 12. Closing
 
 ODD is not a new idea — outcome-based delegation is older than software.
-What pOS contributes is concrete operational discipline: the five-gate
+What loam contributes is concrete operational discipline: the five-gate
 chain, the criterion-to-test 1:1 mapping, the re-extension rule, the
 structural-over-advisory preference, the seal audit. Each piece is
 small. Together they produce a codebase where every behaviour has a

@@ -1,6 +1,6 @@
 # workspace-sync
 
-**Role.** Pull canonical changes into a downstream pos-v2 workspace
+**Role.** Pull canonical changes into a downstream loam workspace
 clone (e.g. pos3) under Architecture B (per-workspace embedded
 framework, locked 2026-04-26). Companion to `self-upgrade/` which is
 the canonical-only A-mode mechanism.

@@ -1,16 +1,16 @@
-# Claude capability map for pOS v2
+# Claude capability map for loam
 
 - **Snapshot date:** 2026-04-23
 - **Version:** 0.1 (skeleton — being filled incrementally)
 - **Stewarded by:** primary persona; future refresh automation per the dev-mode FUTURE_IDEAS catalogue Idea 1 Step 4
 - **Refresh cadence (target):** daily, budget-permitting, once Step 4 lands
-- **Scope:** the Claude-attached capability surface available to pOS v2 feature research — Claude Code CLI, Claude Agent SDK, Anthropic API, MCP, plugins, skills, subagents, background tasks, session persistence
+- **Scope:** the Claude-attached capability surface available to loam feature research — Claude Code CLI, Claude Agent SDK, Anthropic API, MCP, plugins, skills, subagents, background tasks, session persistence
 
 ## Purpose
 
-This map is the reference an AI agent (or a human author) consults during feature research for pOS v2 to answer Lens 1 — *"what Claude capability does this lean on or extend?"* — without having to re-discover the surface. The file is not a tutorial and not an API reference; it is a curated map that names each capability, says how it composes with pOS v2's existing sealed components, flags the known pitfalls, and points at the end-user configuration surface.
+This map is the reference an AI agent (or a human author) consults during feature research for loam to answer Lens 1 — *"what Claude capability does this lean on or extend?"* — without having to re-discover the surface. The file is not a tutorial and not an API reference; it is a curated map that names each capability, says how it composes with loam's existing sealed components, flags the known pitfalls, and points at the end-user configuration surface.
 
-How to use it: open this file at the start of any feature research. For each capability that might plausibly back the feature, read the four subsections (one-line description, pos-v2 composition, pitfalls, end-user configuration). If none of the capabilities fit, that is itself a finding — write it up in the research plan so the Lens 1 gate (once enforcement lands in Idea 1 Step 3) can record the negative answer.
+How to use it: open this file at the start of any feature research. For each capability that might plausibly back the feature, read the four subsections (one-line description, loam composition, pitfalls, end-user configuration). If none of the capabilities fit, that is itself a finding — write it up in the research plan so the Lens 1 gate (once enforcement lands in Idea 1 Step 3) can record the negative answer.
 
 The map is deliberately a **2026-04-23 snapshot**. Claude's surface drifts weekly. Sections flagged *Volatile* are particularly likely to be stale by the time you read them; the refresh automation in Idea 1 Step 4 will keep the snapshot current once it ships. Until then, cross-check anything load-bearing against the cited source URL before you build on it.
 
@@ -19,7 +19,7 @@ The map is deliberately a **2026-04-23 snapshot**. Claude's surface drifts weekl
 Every capability entry has four parts:
 
 1. **What it does** — one line.
-2. **How it composes with pos-v2** — which sealed components already use it or could latently compose with it. Citations are to per-component narratives (DEV MODE only) where relevant.
+2. **How it composes with loam** — which sealed components already use it or could latently compose with it. Citations are to per-component narratives (DEV MODE only) where relevant.
 3. **Pitfalls** — known footguns, version skew risks, rate limits, silent-failure modes.
 4. **End-user configuration surface** — where a user turns the capability on, off, or tunes it. Typically a file path, a CLI flag, an env var, or a settings key.
 
@@ -44,14 +44,14 @@ Where sources are thin, the entry ends with `_Unclear from available sources as 
 
 ## 1. Claude Code CLI
 
-Claude Code is the terminal-first harness the primary persona runs inside. Every pos-v2 session is ultimately a Claude Code process; the capabilities below define what the harness exposes to the persona and to the workspace configuration.
+Claude Code is the terminal-first harness the primary persona runs inside. Every loam session is ultimately a Claude Code process; the capabilities below define what the harness exposes to the persona and to the workspace configuration.
 
 ### 1.1 Slash commands (merged into Skills as of late-2025)
 
 **What it does.** `/name` invokes either a bundled command (e.g. `/help`, `/compact`, `/status`) or a user-authored skill. Custom commands under `.claude/commands/<name>.md` still work but the documented canonical form is a Skill directory at `.claude/skills/<name>/SKILL.md`. Skills can accept positional arguments (`$ARGUMENTS`, `$0`, `$1`, or named `arguments` list in frontmatter) and support string substitution for `${CLAUDE_SESSION_ID}` and `${CLAUDE_SKILL_DIR}`.
 
-**Composes with pos-v2.**
-- `telegram-interface` already ships user-facing slash skills (`/telegram:configure`, `/telegram:access`) — the Skill pattern is proven inside pos-v2 already.
+**Composes with loam.**
+- `telegram-interface` already ships user-facing slash skills (`/telegram:configure`, `/telegram:access`) — the Skill pattern is proven inside loam already.
 - The dev-mode pos-amend CLI is a tool today; a future Skill wrapper (`.claude/skills/pos-amend/SKILL.md`) would let the primary persona trigger amendment-cycle bookkeeping through the same `/` dispatch surface as everything else. Latent composition.
 - The dev-mode FUTURE_IDEAS catalogue's Idea 8 (structural context-load gate) can likely be authored as a Skill invoked at session-start or a Skill called by a SessionStart hook, depending on where the gate lives.
 
@@ -86,9 +86,9 @@ Claude Code is the terminal-first harness the primary persona runs inside. Every
 
 Handler types: `command` (shell, default 600s timeout), `http`, `mcp_tool`, `prompt` (model call), `agent` (subagent). Matcher syntax supports exact names, `|`-separated alternatives, regex (any non-alphanumeric char). Exit code 0 = allow; stdout parsed as JSON for structured control. Exit code 2 = block with stderr surfaced. `WorktreeCreate` treats any non-zero exit as failure.
 
-**Composes with pos-v2.**
-- `hands-off-lifecycle` owns the SessionStart hook wired in `.claude/settings.json` today — `first-run.sh` is the thin shim, detached worker handles venv/install/scaffold. The pattern (thin shim, detached worker, re-entry on subsequent boots) is the reference implementation for any future pos-v2 SessionStart hook.
-- `safety-layer` and `reversibility-primitive` are natural consumers of `PreToolUse` hooks — pos-v2's current approach is AC-shaped refusal, but `PreToolUse` with `permissionDecision: "deny"` is the structural-enforcement equivalent.
+**Composes with loam.**
+- `hands-off-lifecycle` owns the SessionStart hook wired in `.claude/settings.json` today — `first-run.sh` is the thin shim, detached worker handles venv/install/scaffold. The pattern (thin shim, detached worker, re-entry on subsequent boots) is the reference implementation for any future loam SessionStart hook.
+- `safety-layer` and `reversibility-primitive` are natural consumers of `PreToolUse` hooks — loam's current approach is AC-shaped refusal, but `PreToolUse` with `permissionDecision: "deny"` is the structural-enforcement equivalent.
 - `observability-aggregator` composes with `PostToolUse` / `SessionEnd` / `Stop` for passive event capture without intrusive instrumentation.
 - `cost-governance` can attach to `PreToolUse` (check budget before expensive tool), `PostToolUse` (record spend), and `PreCompact` (assess compaction cost).
 - `self-correction-loop` composes with `PostToolUseFailure` (capture failure + retry context) and `Stop` with `decision: "block"` (force continuation if correction incomplete).
@@ -97,7 +97,7 @@ Handler types: `command` (shell, default 600s timeout), `http`, `mcp_tool`, `pro
 
 **Pitfalls.**
 - Default command-hook timeout is 600s, not infinite — long-running worker spawn must detach (as `first-run.sh` does via `first_run_dispatch.py`), not block the hook.
-- `async: true` returns immediately but the hook lifetime ends, so async hooks cannot inject `additionalContext` synchronously. pos-v2's current SessionStart uses `async: false` deliberately — see the comment in `.claude/settings.json` line 2.
+- `async: true` returns immediately but the hook lifetime ends, so async hooks cannot inject `additionalContext` synchronously. loam's current SessionStart uses `async: false` deliberately — see the comment in `.claude/settings.json` line 2.
 - Hooks declared in `settings.local.json` are gitignored — they do not ship with the repo. Project-shared hooks must live in `.claude/settings.json`.
 - `disableAllHooks: true` in managed settings silently kills every hook in the workspace; debug via `/hooks` to see what's active.
 - MCP tool matchers use `mcp__<server>__<tool>` pattern — regex matchers must account for the double-underscore separator.
@@ -112,8 +112,8 @@ Handler types: `command` (shell, default 600s timeout), `http`, `mcp_tool`, `pro
 
 **What it does.** JSON configuration file governing permissions, env, model, hooks, plugins, sandbox, and 50+ other keys. Hierarchical precedence: Managed > CLI flags > `settings.local.json` (project-local) > `settings.json` (project-shared) > `~/.claude/settings.json` (user). **Array-valued settings** (permissions.allow, deny, etc.) concatenate and deduplicate across scopes rather than replacing — managed baselines compose with project additions compose with user additions.
 
-**Composes with pos-v2.**
-- Current pos-v2 `.claude/settings.json` only wires the SessionStart hook; everything else (permissions, plugins, sandbox) is unspecified and therefore defaults. Any future `workspace-bootstrap` amendment that wants to ship permission defaults adds them here.
+**Composes with loam.**
+- Current loam `.claude/settings.json` only wires the SessionStart hook; everything else (permissions, plugins, sandbox) is unspecified and therefore defaults. Any future `workspace-bootstrap` amendment that wants to ship permission defaults adds them here.
 - `cost-governance` could consume `env.CLAUDE_CODE_ENABLE_TELEMETRY` + `OTEL_*` keys to surface metered spend through standard OpenTelemetry exporters without custom plumbing.
 - `safety-layer` structural refusals map onto `permissions.deny` rules — any tool/path combination the safety layer refuses can be duplicated as a `deny` rule so Claude never even proposes it.
 
@@ -122,7 +122,7 @@ Handler types: `command` (shell, default 600s timeout), `http`, `mcp_tool`, `pro
 - The array-merge rule applies to top-level permission arrays but not to every key — check the docs per field before assuming merge semantics.
 - `apiKeyHelper`, `awsCredentialExport`, `otelHeadersHelper` shell out on each request; a slow helper bottlenecks every tool call.
 - `allowManagedHooksOnly: true` in managed settings silently ignores project and user hooks — debugging "why isn't my hook firing" starts with `/status`.
-- `.claude/settings.local.json` is gitignored by default; new contributors to a pos-v2 clone don't get its hooks automatically. The current pos-v2 SessionStart hook is deliberately in the shared `settings.json` so every clone gets it.
+- `.claude/settings.local.json` is gitignored by default; new contributors to a loam clone don't get its hooks automatically. The current loam SessionStart hook is deliberately in the shared `settings.json` so every clone gets it.
 
 **End-user configuration surface.**
 - Files: `~/.claude/settings.json`, `<repo>/.claude/settings.json`, `<repo>/.claude/settings.local.json`, platform-specific managed paths.
@@ -133,16 +133,16 @@ Handler types: `command` (shell, default 600s timeout), `http`, `mcp_tool`, `pro
 
 **What it does.** The `claude` binary accepts both interactive (no `-p`) and headless (`-p` / `--print`) modes. Headless mode runs one turn, streams output per `--output-format` (`text`, `json`, `stream-json`), and exits — it is the primitive the Agent SDK and most scripted harnesses build on. Session IDs (UUIDs) can be passed with `--session-id` to correlate multiple invocations. `--resume <id|name>` or `-c` (continue most recent) resumes stored sessions. `--fork-session` creates a new ID from a resumed session so both diverge.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `session-resilient-orchestrator` and `hands-off-lifecycle` both spawn Claude Code processes; they rely on `-p`, `--output-format stream-json`, and explicit session IDs to correlate logs across restarts. `--include-hook-events` is the flag that surfaces hook firings into the output stream — essential for the orchestrator's background-work-awareness contract (STATE.md rule 7).
 - `memory-system` uses `ClaudePrintLLMClient` (amendment #8) which is exactly `claude -p` invoked as a subprocess for entity extraction. The fallback routing, error handling, and cost governance all compose with the CLI's behaviour, not a raw API.
 - `--max-budget-usd` is a first-class cost ceiling that `cost-governance` could compose with rather than re-implementing wall-clock spend tracking.
 - `--bare` mode skips skill/hook/plugin/MCP discovery for faster scripted calls — relevant for `pos-amend` and other CLI tools where a quick model call shouldn't drag in the whole harness.
-- `--json-schema` enforces structured output — relevant for any pos-v2 component that needs a validated JSON response from Claude (objective-tracker, foundation-audit, self-correction-loop all have shapes that would benefit).
+- `--json-schema` enforces structured output — relevant for any loam component that needs a validated JSON response from Claude (objective-tracker, foundation-audit, self-correction-loop all have shapes that would benefit).
 
 **Pitfalls.**
 - `claude -p` with `--no-session-persistence` means the session is not saved — use carefully; you cannot debug a failed session after the fact.
-- `--dangerously-skip-permissions` is equivalent to `--permission-mode bypassPermissions` and skips every user-confirmation prompt. Any pos-v2 script using it must assert its own safety invariants first.
+- `--dangerously-skip-permissions` is equivalent to `--permission-mode bypassPermissions` and skips every user-confirmation prompt. Any loam script using it must assert its own safety invariants first.
 - Flags absent from `claude --help` may still exist (the CLI reference is the ground truth, not `--help`).
 - `--max-turns` only applies in print mode and exits with error when exceeded — interactive sessions have no turn cap.
 - `--exclude-dynamic-system-prompt-sections` improves prompt-cache reuse across machines/users but only takes effect with the default system prompt; ignored when `--system-prompt` overrides.
@@ -159,7 +159,7 @@ Handler types: `command` (shell, default 600s timeout), `http`, `mcp_tool`, `pro
 
 **What it does.** Every Claude Code session has a UUID session ID. Interactive sessions auto-persist to disk (honouring `cleanupPeriodDays`, default 30). Sessions can be named (`-n` / `/rename`), resumed (`-r <id|name>`), continued (`-c`), forked (`--fork-session`). Session context is scoped to the working directory plus any directories added via `--add-dir` or `/add-dir`. Transcripts live as `.jsonl` files; hook events receive `transcript_path` for offline analysis.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `session-resilient-orchestrator`'s entire premise — that work survives session boundaries — depends on predictable session IDs and resumption semantics. Passing explicit `--session-id` to spawned Claude processes lets the orchestrator correlate logs, outputs, and recovery across orchestrator restarts.
 - `observability-aggregator` consumes the transcript `.jsonl` files for after-the-fact session analysis; the transcript_path field exposed in every hook is the reliable way to find them.
 - `primary-persona-loader` + `memory-system` together give the persona the illusion of continuity across sessions — session persistence is one leg, memory the other.
@@ -167,7 +167,7 @@ Handler types: `command` (shell, default 600s timeout), `http`, `mcp_tool`, `pro
 **Pitfalls.**
 - `--no-session-persistence` (print mode only) skips disk write; there is no way to resume such a session.
 - `cleanupPeriodDays` deletes old sessions silently — long-term audit logs need to be harvested to durable storage (observability-aggregator is the right home).
-- `--add-dir` grants file access but does not load most `.claude/` configuration from the added dir — skills are an exception (loaded), subagents and commands are not. Latent footgun for pos-v2 plugin authors.
+- `--add-dir` grants file access but does not load most `.claude/` configuration from the added dir — skills are an exception (loaded), subagents and commands are not. Latent footgun for loam plugin authors.
 - `--from-pr <N>` auto-links sessions to GitHub PRs when created via `gh pr create`; useful for traceability but also leaks session data into PR tooling — confirm the team's policy.
 
 **End-user configuration surface.**
@@ -197,8 +197,8 @@ async for message in query(
 
 Message types: `SystemMessage` (session-init with `session_id`), `AssistantMessage`, `UserMessage`, `ToolUseMessage`, `ToolResultMessage`, `ResultMessage` (final, with `.result` on it). Streaming is per-message, not per-token — use `--include-partial-messages` equivalent SDK options for token-level streaming.
 
-**Composes with pos-v2.**
-- Every pos-v2 component that needs to call Claude programmatically — `memory-system`'s `ClaudePrintLLMClient`, background workers, orchestrator-dispatched scopes — is a candidate for migrating from subprocess `claude -p` to the Agent SDK. The SDK path is higher-throughput (no process spawn per query), gives first-class hook callbacks instead of stdout parsing, and supports typed message objects instead of JSON parsing.
+**Composes with loam.**
+- Every loam component that needs to call Claude programmatically — `memory-system`'s `ClaudePrintLLMClient`, background workers, orchestrator-dispatched scopes — is a candidate for migrating from subprocess `claude -p` to the Agent SDK. The SDK path is higher-throughput (no process spawn per query), gives first-class hook callbacks instead of stdout parsing, and supports typed message objects instead of JSON parsing.
 - `session-resilient-orchestrator` can call `query()` with an explicit `resume=<session_id>` option to reattach to durable sessions across orchestrator restarts. The SystemMessage init payload includes the new session ID which must be captured and persisted to survive crashes.
 - `self-correction-loop` maps onto the SDK's hook callback shape naturally — a `PostToolUse` callback in the SDK is a regular Python/TS function, easier to author than a shell-command hook declared in settings.json.
 
@@ -206,7 +206,7 @@ Message types: `SystemMessage` (session-init with `session_id`), `AssistantMessa
 - The TypeScript SDK bundles a platform-specific Claude Code binary as an optional dep; the Python SDK does not bundle — it shells out to `claude` on PATH. Python deployments must install Claude Code separately.
 - Opus 4.7 (`claude-opus-4-7`) requires SDK ≥ v0.2.111; older pinned versions error with `thinking.type.enabled`.
 - Third-party providers (Bedrock, Vertex, Azure Foundry) work via env vars (`CLAUDE_CODE_USE_BEDROCK=1`, etc.) and credential files — the SDK does not accept provider SDKs directly. Non-Anthropic hosting means non-Anthropic rate limits and pricing.
-- Anthropic does not permit third parties to offer claude.ai-subscription-backed API access to their customers. SDK-built products must use API keys (or Bedrock/Vertex/Azure). This affects pos-v2 only if the eventual open-source launch (Idea 12) ever offers a managed tier.
+- Anthropic does not permit third parties to offer claude.ai-subscription-backed API access to their customers. SDK-built products must use API keys (or Bedrock/Vertex/Azure). This affects loam only if the eventual open-source launch (Idea 12) ever offers a managed tier.
 
 **End-user configuration surface.**
 - Auth: `ANTHROPIC_API_KEY` env var, or provider equivalents.
@@ -215,9 +215,9 @@ Message types: `SystemMessage` (session-init with `session_id`), `AssistantMessa
 
 ### 2.2 Built-in tools available via SDK
 
-Read, Write, Edit, Bash, **Monitor** (watch a background script and react to each output line as an event — directly relevant to pos-v2 orchestrator patterns), Glob, Grep, WebSearch, WebFetch, AskUserQuestion. Plus MCP tools wired via `mcp_servers` and the `Agent` tool for subagent dispatch.
+Read, Write, Edit, Bash, **Monitor** (watch a background script and react to each output line as an event — directly relevant to loam orchestrator patterns), Glob, Grep, WebSearch, WebFetch, AskUserQuestion. Plus MCP tools wired via `mcp_servers` and the `Agent` tool for subagent dispatch.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - The `Monitor` tool is the first-class primitive for STATE.md rule 7 (background-work awareness). `observability-aggregator` today parses process stdout; `Monitor` converts each stdout line into an in-context event, eliminating the parsing layer and letting the persona react per-line without polling.
 - `AskUserQuestion` is the structural way to elicit a ruling from the user with bounded multiple choice — compose with ODD's "any unresolved ambiguity halts" pattern. Beats free-form question-asking, which the persona is empirically bad at bounding.
 
@@ -229,7 +229,7 @@ Read, Write, Edit, Bash, **Monitor** (watch a background script and react to eac
 
 Same hook event types as Claude Code CLI (§1.2) but declared as **callback functions** in-process instead of shell commands. `HookMatcher(matcher="Edit|Write", hooks=[callback])`. Available events documented as `PreToolUse`, `PostToolUse`, `Stop`, `SessionStart`, `SessionEnd`, `UserPromptSubmit`, and more.
 
-**Composes with pos-v2.** Hooks authored in-process are easier to unit-test than shell hooks, easier to share state with the calling program, and easier to package into a Python/TS library. For future pos-v2 primitives that want to enforce a rule (safety-layer's refusal, cost-governance's spend check), an SDK hook callback may be a better home than a command hook in settings.json — especially inside the Python backend of `session-resilient-orchestrator`.
+**Composes with loam.** Hooks authored in-process are easier to unit-test than shell hooks, easier to share state with the calling program, and easier to package into a Python/TS library. For future loam primitives that want to enforce a rule (safety-layer's refusal, cost-governance's spend check), an SDK hook callback may be a better home than a command hook in settings.json — especially inside the Python backend of `session-resilient-orchestrator`.
 
 **Pitfalls.**
 - Hook callbacks run in the same process as the SDK caller; an infinite loop or blocking I/O in a hook halts the whole agent turn.
@@ -245,7 +245,7 @@ Same hook event types as Claude Code CLI (§1.2) but declared as **callback func
 
 ### 2.6 Sessions via SDK
 
-First query emits a SystemMessage with `session_id`; subsequent queries pass `resume=<session_id>` to continue the same session. `--fork-session`-equivalent options available programmatically. pos-v2's `session-resilient-orchestrator` already relies on this pattern at the CLI level; migrating to SDK would let the orchestrator capture the session ID from the SystemMessage object directly instead of parsing init logs.
+First query emits a SystemMessage with `session_id`; subsequent queries pass `resume=<session_id>` to continue the same session. `--fork-session`-equivalent options available programmatically. loam's `session-resilient-orchestrator` already relies on this pattern at the CLI level; migrating to SDK would let the orchestrator capture the session ID from the SystemMessage object directly instead of parsing init logs.
 
 ### 2.7 Agent SDK vs Claude Client SDK (Anthropic SDK) vs Claude Code CLI
 
@@ -259,7 +259,7 @@ First query emits a SystemMessage with `session_id`; subsequent queries pass `re
 
 The Client SDK (`anthropic` / `@anthropic-ai/sdk`) is a thinner layer that directly wraps the Messages API — it does not ship the tool loop, the permission model, or skills/commands/hooks. Use it when you want raw model access or are building a different kind of agent (not Claude-Code-shaped). Use the Agent SDK when you want Claude-Code capabilities programmatically.
 
-**Composes with pos-v2.** pos-v2 today uses `claude -p` as subprocess (memory-system's `ClaudePrintLLMClient`). The Agent SDK is a natural migration target for any caller that benefits from typed messages, in-process hook callbacks, or programmatic subagent control. The Client SDK is a better fit when pos-v2 needs model calls without the harness — e.g. small-scope entity extraction where the tool loop is overkill.
+**Composes with loam.** loam today uses `claude -p` as subprocess (memory-system's `ClaudePrintLLMClient`). The Agent SDK is a natural migration target for any caller that benefits from typed messages, in-process hook callbacks, or programmatic subagent control. The Client SDK is a better fit when loam needs model calls without the harness — e.g. small-scope entity extraction where the tool loop is overkill.
 
 _Sources (2.x): `https://code.claude.com/docs/en/agent-sdk/overview` — fetched 2026-04-23._
 
@@ -267,7 +267,7 @@ _Sources (2.x): `https://code.claude.com/docs/en/agent-sdk/overview` — fetched
 
 ## 3. Anthropic API (Messages + adjacent)
 
-The layer Claude Code and the Agent SDK compose on top of. pos-v2 rarely touches the raw API directly today (memory-system uses Claude-via-Max through `claude -p`), but several pos-v2 primitives are cleaner when authored against the API directly.
+The layer Claude Code and the Agent SDK compose on top of. loam rarely touches the raw API directly today (memory-system uses Claude-via-Max through `claude -p`), but several loam primitives are cleaner when authored against the API directly.
 
 ### 3.1 Messages API (`POST /v1/messages`)
 
@@ -277,7 +277,7 @@ Message content can be a plain string or an array of blocks. Block types: `text`
 
 Tool loop is caller's responsibility: if `stop_reason == "tool_use"`, execute each tool_use block, append a `tool_result` user message, call `/v1/messages` again. Repeat until `end_turn`.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `memory-system`'s extraction path could migrate from `claude -p` subprocess to direct Messages API for lower latency and finer-grained error recovery. Amendment #8's `ClaudePrintLLMClient` abstraction is the composition seam — add a sibling `ClaudeAPIClient` that the subscription-vs-API routing decision feeds.
 - `self-correction-loop` benefits from direct API access when the loop needs to inspect `stop_reason` and `usage` for pacing decisions (e.g. back off when output_tokens is spiking).
 - `objective-tracker` and `foundation-audit` both benefit from structured-output features — the `output_config` JSON schema param forces validated JSON without the full Claude Code tool loop.
@@ -297,7 +297,7 @@ Tool loop is caller's responsibility: if `stop_reason == "tool_use"`, execute ea
 
 Tool definitions are passed in `tools[]`; each is `{name, description, input_schema (JSON Schema)}`. Model emits `tool_use` blocks; caller runs the tool, returns `tool_result` block; loop until `end_turn`. Tool choice modes: `{"type": "auto"}`, `{"type": "any"}`, `{"type": "none"}`, `{"type": "tool", "name": "..."}` — but `any` and named choice are incompatible with extended thinking.
 
-**Composes with pos-v2.** The Agent SDK wraps this loop, so most pos-v2 code that needs tool use goes through the SDK (§2) rather than touching tool use directly. Raw API tool use is preferable when the toolset is custom or small and the pos-v2 Python process wants full control over the loop — e.g. a scope that needs exactly two tools and no filesystem access.
+**Composes with loam.** The Agent SDK wraps this loop, so most loam code that needs tool use goes through the SDK (§2) rather than touching tool use directly. Raw API tool use is preferable when the toolset is custom or small and the loam Python process wants full control over the loop — e.g. a scope that needs exactly two tools and no filesystem access.
 
 ### 3.3 Extended thinking
 
@@ -310,7 +310,7 @@ Tool definitions are passed in `tools[]`; each is `{name, description, input_sch
 | Sonnet 4.6 | Manual + interleaved (deprecated) |
 | Sonnet 3.7 | Full manual |
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `self-correction-loop` and `foundation-audit` are reasoning-heavy scopes that benefit from extended thinking / adaptive thinking. The `effort: "high"` or `"xhigh"` knob on Opus 4.7 replaces the old manual budget without re-tuning.
 - `primary-persona-loader` + ODD-authoring interactions benefit from adaptive thinking during plan drafting (the persona needs to consider constraints + acceptance fully).
 
@@ -331,8 +331,8 @@ Tool definitions are passed in `tools[]`; each is `{name, description, input_sch
 
 **Minimum prompt length:** 4096 tokens (Opus 4.5/4.6/4.7, Haiku 4.5), 2048 tokens (Sonnet 4.6, Haiku 3.5), 1024 tokens (older). Below minimum, cache fields return 0 silently.
 
-**Composes with pos-v2.**
-- `memory-system`, `self-correction-loop`, and any pos-v2 component running repeated Claude calls with large stable prefixes (system prompts, tool definitions, canonical docs) should mark them `cache_control` — 90% cost reduction on hits.
+**Composes with loam.**
+- `memory-system`, `self-correction-loop`, and any loam component running repeated Claude calls with large stable prefixes (system prompts, tool definitions, canonical docs) should mark them `cache_control` — 90% cost reduction on hits.
 - `cost-governance` can surface cache hit/miss ratio via the usage fields (`cache_read_input_tokens` / `cache_creation_input_tokens`) as a first-class metric. Amendment-level regressions that silently drop cache hits would show up immediately.
 - ODD methodology docs + CLAUDE.md itself become a natural cache breakpoint when the primary persona is invoked — same content every turn.
 
@@ -348,7 +348,7 @@ Tool definitions are passed in `tools[]`; each is `{name, description, input_sch
 
 **What it does.** Asynchronous bulk request processing. **50% cost reduction** vs real-time, most batches finish in <1 hour. Poll status, retrieve all results at once. Up to tens of thousands of requests per batch.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `memory-system`'s bulk entity extraction over historical transcripts is a natural batch fit — no latency SLA, 50% cheaper.
 - `foundation-audit` running against every component's artefact set is another batch candidate when the audit is not interactive.
 - Scheduled daily refreshes (Idea 1 Step 4 — this file's refresh job) fit the batch pattern: no user waiting, cheaper.
@@ -364,7 +364,7 @@ Tool definitions are passed in `tools[]`; each is `{name, description, input_sch
 
 **What it does.** When documents are passed in user content with `citations: {enabled: true}`, Claude returns responses with auto-attributed `citation` sub-blocks pointing at source document spans. Supported document types: PDF (via Files API), plain text, custom JSON chunks.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - Any future research-shaped plugin (legal, knowledge-management, long-form editorial per Idea 3) benefits — auto-citations turn Claude outputs into verifiable artefacts without post-hoc retrieval.
 - `memory-system` interplay: citations source documents from the request, not from memory. For memory-backed citations, the retrieval layer must surface source-citation-ready chunks.
 
@@ -376,13 +376,13 @@ _Volatile — likely to drift within weeks._
 
 Upload files once, reference by ID across many requests. Supports PDFs, images, large text documents. Composes with citations (upload document → reference by file_id → get citations back). Not all providers (Bedrock/Vertex) mirror the Files API.
 
-_Unclear from available sources as of 2026-04-23 whether pos-v2's current usage patterns need Files API; flagged for Idea 1 Step 4 refresh._
+_Unclear from available sources as of 2026-04-23 whether loam's current usage patterns need Files API; flagged for Idea 1 Step 4 refresh._
 
 ### 3.8 Memory API
 
-Anthropic's server-side memory tool (distinct from `memory-system` the pos-v2 component) — a model-managed key/value store that the API can read and write across conversations. Offered as a client-tool type in some configurations.
+Anthropic's server-side memory tool (distinct from `memory-system` the loam component) — a model-managed key/value store that the API can read and write across conversations. Offered as a client-tool type in some configurations.
 
-**Composes with pos-v2.** Potential shortcut for simple workspace memory needs, but pos-v2's `memory-system` is substantially richer (graphiti-based knowledge graph, entity+relationship extraction, deep personalisation per Idea 4). The Anthropic Memory API is a thin alternative; the pos-v2 memory-system is the durable answer for this workspace.
+**Composes with loam.** Potential shortcut for simple workspace memory needs, but loam's `memory-system` is substantially richer (graphiti-based knowledge graph, entity+relationship extraction, deep personalisation per Idea 4). The Anthropic Memory API is a thin alternative; the loam memory-system is the durable answer for this workspace.
 
 _Unclear from available sources as of 2026-04-23; flagged for Idea 1 Step 4 refresh._
 
@@ -392,7 +392,7 @@ _Sources (3.x): `https://platform.claude.com/docs/en/api/messages`, `https://pla
 
 ## 4. Model Context Protocol (MCP)
 
-MCP is the open-source standard for connecting AI applications (clients like Claude Code, ChatGPT, Cursor, VS Code Copilot) to external systems (servers exposing tools, resources, prompts). From pos-v2's perspective: MCP is the external-integration surface that most plugins will lean on (per FUTURE_IDEAS.md Idea 3 introspection).
+MCP is the open-source standard for connecting AI applications (clients like Claude Code, ChatGPT, Cursor, VS Code Copilot) to external systems (servers exposing tools, resources, prompts). From loam's perspective: MCP is the external-integration surface that most plugins will lean on (per FUTURE_IDEAS.md Idea 3 introspection).
 
 ### 4.1 What MCP exposes
 
@@ -411,11 +411,11 @@ MCP is the open-source standard for connecting AI applications (clients like Cla
 - Automatic reconnect (HTTP/SSE only) — exponential backoff, 5 attempts, starts at 1s. Stdio servers never auto-reconnect (they're local processes).
 - **Channels** — MCP servers can push messages into the session so Claude reacts to external events (Telegram messages, CI results, Discord chats, webhooks). Enable with `--channels plugin:<name>@<marketplace>` at startup. Server declares `claude/channel` capability.
 
-### 4.2 Composes with pos-v2
+### 4.2 Composes with loam
 
-- **`telegram-interface`** is already wired as an MCP server that ships via the pos-v2 `plugin:telegram:telegram` namespace; its tools (`reply`, `edit_message`, `react`, `download_attachment`) appear to the primary persona as MCP tools. The channel capability is what lets a Telegram message arriving while pos-v2 is idle wake the session. This is the reference MCP composition inside pos-v2.
+- **`telegram-interface`** is already wired as an MCP server that ships via the loam `plugin:telegram:telegram` namespace; its tools (`reply`, `edit_message`, `react`, `download_attachment`) appear to the primary persona as MCP tools. The channel capability is what lets a Telegram message arriving while loam is idle wake the session. This is the reference MCP composition inside loam.
 - **Any of the Idea 3 plugins** (communications, knowledge-management, project-management overlay, finance, creative, health, trading, legal) will almost certainly consume MCP. Gmail and Google Calendar already ship as MCP servers (`claude_ai_Gmail`, `claude_ai_Google_Calendar`) — the communications plugin is a workflow layer over them, not a reimplementation.
-- **`memory-system`** could expose itself as an MCP server so non-Claude-Code clients (the eventual open-source distribution per Idea 12) can consume pos-v2 memory.
+- **`memory-system`** could expose itself as an MCP server so non-Claude-Code clients (the eventual open-source distribution per Idea 12) can consume loam memory.
 - **`safety-layer` + `reversibility-primitive`** compose with MCP via `PreToolUse` hook matchers on `mcp__<server>__.*` patterns — the safety gate can rule per-server or per-tool without the server having to cooperate.
 - **`cost-governance`** consumes `MAX_MCP_OUTPUT_TOKENS` as a first-class ceiling. Default is 10000 (with a warning); large-context MCP tools (file-search, database queries) may need raising explicitly.
 
@@ -445,7 +445,7 @@ claude mcp reset-project-choices                                 # reset auth pr
 
 - **Project-scoped servers from `.mcp.json` prompt for approval** on every fresh clone — security-intentional, but surfaces as "why isn't the server loading?" Reset with `claude mcp reset-project-choices`.
 - **Stdio servers do not auto-reconnect.** If the subprocess crashes, you must remove and re-add (or just restart Claude Code). Remote servers auto-reconnect up to 5 times.
-- **Prompt injection risk** is the largest MCP pitfall: any MCP server that pulls external content (Slack, email, web fetch, issue trackers) is a potential injection vector. The safety warning in the Claude Code MCP docs is explicit — Anthropic has not verified third-party servers. pos-v2's `safety-layer` is the structural mitigation; it must be considered whenever a new MCP server is added.
+- **Prompt injection risk** is the largest MCP pitfall: any MCP server that pulls external content (Slack, email, web fetch, issue trackers) is a potential injection vector. The safety warning in the Claude Code MCP docs is explicit — Anthropic has not verified third-party servers. loam's `safety-layer` is the structural mitigation; it must be considered whenever a new MCP server is added.
 - **`MAX_MCP_OUTPUT_TOKENS` default is 10000.** MCP tools returning more (e.g. database queries, large file reads) trigger a truncation warning. Set via env var.
 - **Windows + npx stdio** requires `cmd /c` wrapper or "Connection closed" errors hit silently.
 - **Scope confusion:** "local" MCP scope (in `~/.claude.json`) is different from "local settings" (`.claude/settings.local.json`). Two different files, two different concepts, both called "local."
@@ -456,7 +456,7 @@ claude mcp reset-project-choices                                 # reset auth pr
 
 Server SDKs exist for TypeScript, Python, Go, Rust, Java, C#, Swift, Kotlin (see `modelcontextprotocol.io`). Minimum shape: implement `list_tools`, `call_tool` for each tool; optionally `list_resources`, `read_resource`, `list_prompts`, `get_prompt`. Transport is a CLI choice — the SDK handles protocol framing.
 
-pos-v2-local MCP servers (e.g. a future `pos-memory-mcp` exposing memory-system as a tool) should be stdio-transport + project scope + plugin-bundled — that composition gives zero-config activation for every clone and no network exposure.
+loam-local MCP servers (e.g. a future `pos-memory-mcp` exposing memory-system as a tool) should be stdio-transport + project scope + plugin-bundled — that composition gives zero-config activation for every clone and no network exposure.
 
 ### 4.6 End-user configuration surface
 
@@ -473,7 +473,7 @@ _Sources (4.x): `https://code.claude.com/docs/en/mcp`, `https://modelcontextprot
 
 ## 5. Plugin system
 
-Plugins are self-contained directories of components (skills, commands, agents, hooks, MCP servers, LSP servers, background monitors, binaries, default settings) that extend Claude Code with namespaced functionality. They are the distribution unit for the pos-v2 Idea 3 plugin suite.
+Plugins are self-contained directories of components (skills, commands, agents, hooks, MCP servers, LSP servers, background monitors, binaries, default settings) that extend Claude Code with namespaced functionality. They are the distribution unit for the loam Idea 3 plugin suite.
 
 ### 5.1 Plugin structure
 
@@ -508,7 +508,7 @@ Every plugin has a manifest at `.claude-plugin/plugin.json`:
 
 ### 5.2 Plugin namespacing
 
-Plugin skills / commands / MCP tools are namespaced as `<plugin-name>:<component>` — pos-v2's `telegram-interface` ships tools like `mcp__plugin_telegram_telegram__reply` and skills like `/telegram:configure`, `/telegram:access`. Namespacing prevents conflicts when multiple plugins are installed and is the mechanism by which the plugin marketplace can safely host arbitrary user content.
+Plugin skills / commands / MCP tools are namespaced as `<plugin-name>:<component>` — loam's `telegram-interface` ships tools like `mcp__plugin_telegram_telegram__reply` and skills like `/telegram:configure`, `/telegram:access`. Namespacing prevents conflicts when multiple plugins are installed and is the mechanism by which the plugin marketplace can safely host arbitrary user content.
 
 Plugin skills **cannot conflict** with project/user/enterprise skills because of namespacing. Project-scoped skills (in `.claude/skills/`) are unnamespaced (`/hello`); plugin skills are always namespaced (`/my-plugin:hello`).
 
@@ -534,14 +534,14 @@ Plugin marketplaces are the distribution layer. A marketplace is a git repo or H
 
 The official Anthropic marketplace accepts submissions via `claude.ai/settings/plugins/submit` or `platform.claude.com/plugins/submit`.
 
-### 5.4 Composes with pos-v2
+### 5.4 Composes with loam
 
-- **`telegram-interface` is already a plugin** (`plugin:telegram:telegram` namespace visible in the MCP tool names). The telegram-interface + telegram-interface-framework-integration work is the reference implementation for how pos-v2 ships a plugin.
-- **`workspace-bootstrap`** and **`hands-off-lifecycle`** together form the native foundational layer that every pos-v2 plugin is supposed to compose on. Idea 3 names these plugins as must-have-at-launch candidates, with dev/SDLC plugin as the first.
-- **Plugin monitors (`monitors/monitors.json`)** are exactly the shape STATE.md rule 7 background-work-awareness demands — a tail command becomes in-context notifications without pos-v2 reinventing the surface. `observability-aggregator` and `session-resilient-orchestrator` could emit to monitor-shaped outputs that a pos-v2 plugin picks up.
-- **Plugin `bin/` directory** is the distribution mechanism for pos-v2 CLI tools — the dev-mode pos-amend CLI currently ships via the repo root; a future "pos-v2 dev/SDLC plugin" (Idea 3) could ship pos-amend as `bin/pos-amend` and get automatic PATH inclusion.
+- **`telegram-interface` is already a plugin** (`plugin:telegram:telegram` namespace visible in the MCP tool names). The telegram-interface + telegram-interface-framework-integration work is the reference implementation for how loam ships a plugin.
+- **`workspace-bootstrap`** and **`hands-off-lifecycle`** together form the native foundational layer that every loam plugin is supposed to compose on. Idea 3 names these plugins as must-have-at-launch candidates, with dev/SDLC plugin as the first.
+- **Plugin monitors (`monitors/monitors.json`)** are exactly the shape STATE.md rule 7 background-work-awareness demands — a tail command becomes in-context notifications without loam reinventing the surface. `observability-aggregator` and `session-resilient-orchestrator` could emit to monitor-shaped outputs that a loam plugin picks up.
+- **Plugin `bin/` directory** is the distribution mechanism for loam CLI tools — the dev-mode pos-amend CLI currently ships via the repo root; a future "loam dev/SDLC plugin" (Idea 3) could ship pos-amend as `bin/pos-amend` and get automatic PATH inclusion.
 - **Plugin `settings.json` with `agent`** is the mechanism for shipping an entire custom primary persona as a plugin — a "code-reviewer persona" or "research-assistant persona" plugin becomes a one-toggle override of the default agent.
-- **Workspace-specific pos-v2 compositions** (e.g. a workspace that wants a canned `/pos:context-load` skill for Idea 8's gate) become plugins once they stabilise; before then they live unnamespaced in `.claude/skills/`.
+- **Workspace-specific loam compositions** (e.g. a workspace that wants a canned `/pos:context-load` skill for Idea 8's gate) become plugins once they stabilise; before then they live unnamespaced in `.claude/skills/`.
 
 ### 5.5 Lifecycle
 
@@ -581,20 +581,20 @@ _Sources (5.x): `https://code.claude.com/docs/en/plugins`, `https://code.claude.
 
 ## 6. Skills
 
-Skills are the primary authoring surface for user-facing pos-v2 functionality that feels like a slash command. Since the slash-commands-merged-into-skills change, skills subsume most of what custom commands used to do and add directory-supporting-files, invocation control, subagent-forking, and dynamic context injection. The broad slash-command mechanics are in §1.1; this section collects the Skills-specific design patterns relevant to pos-v2.
+Skills are the primary authoring surface for user-facing loam functionality that feels like a slash command. Since the slash-commands-merged-into-skills change, skills subsume most of what custom commands used to do and add directory-supporting-files, invocation control, subagent-forking, and dynamic context injection. The broad slash-command mechanics are in §1.1; this section collects the Skills-specific design patterns relevant to loam.
 
-### 6.1 Skill invocation modes (from pos-v2's perspective)
+### 6.1 Skill invocation modes (from loam's perspective)
 
-| Invocation shape | pos-v2 analogue |
+| Invocation shape | loam analogue |
 |------------------|------------------|
 | User types `/skill-name` explicitly | The deterministic, user-controlled dispatch. Safe default for side-effecting skills. |
 | Claude auto-invokes when description matches | Useful for reference-shaped skills (conventions, style guides, internal API docs) and read-only research skills. |
-| `disable-model-invocation: true` | Required for any skill with side effects — deploy, commit, amend, send email. Mirrors pos-v2's safety-layer posture. |
+| `disable-model-invocation: true` | Required for any skill with side effects — deploy, commit, amend, send email. Mirrors loam's safety-layer posture. |
 | `user-invocable: false` | Background knowledge the persona needs but the user would never invoke directly. E.g. a "how ODD is structured" skill that Claude loads when relevant but the user never types `/`. |
 
 ### 6.2 Skill composition patterns
 
-**Reference-style skills.** Static conventions / style guides / domain knowledge. Short, always-loadable. Example: a `pos-v2-odd-conventions` skill that carries the ODD methodology primer — loadable any time Claude sees an ODD-shaped task. Composes naturally with FUTURE_IDEAS.md Idea 6 (ODD as default framing) — the persona pulls the skill when it needs to think about an objective but doesn't have the full methodology in context.
+**Reference-style skills.** Static conventions / style guides / domain knowledge. Short, always-loadable. Example: a `loam-odd-conventions` skill that carries the ODD methodology primer — loadable any time Claude sees an ODD-shaped task. Composes naturally with FUTURE_IDEAS.md Idea 6 (ODD as default framing) — the persona pulls the skill when it needs to think about an objective but doesn't have the full methodology in context.
 
 **Task-style skills.** Explicit procedure with side effects. Usually `disable-model-invocation: true`. Example: `/pos-amend:apply` that wraps the `pos-amend` CLI. Runs when the user types it, never auto-loads.
 
@@ -610,11 +610,11 @@ Skills are the primary authoring surface for user-facing pos-v2 functionality th
 - **Consequence:** write skill bodies as standing instructions for the whole task, not as one-off steps.
 - If a skill seems to "stop working," the content is usually still present — Claude is choosing other approaches. Strengthen description/instructions or move enforcement to hooks.
 
-### 6.4 Composes with pos-v2
+### 6.4 Composes with loam
 
-- **Bundled skills in Claude Code** (`/simplify`, `/debug`, `/loop`, `/claude-api`, `/batch`, `/review`, `/security-review`, `/init`, `/schedule`, `/keybindings-help`, `/update-config`, `/fewer-permission-prompts`) are immediately available to any pos-v2 session with no authoring cost. FUTURE_IDEAS.md Idea 1 Step 1 noted `/loop` specifically as composing with scope-of-work activation cycles; `/schedule` is the natural composition for the Step 4 refresh job that updates this file.
-- **pos-v2's telegram plugin** ships `/telegram:configure` and `/telegram:access` skills — reference pattern for any future pos-v2 plugin's user-facing surface.
-- **A `.claude/skills/pos-context-load/SKILL.md`** is a plausible implementation of Idea 8 (structural context-load gate) at the skill layer — the persona invokes it before planning, the skill enumerates the design docs that must be loaded, the skill body fails if any are missing. Mechanical enforcement without inventing new pos-v2 machinery.
+- **Bundled skills in Claude Code** (`/simplify`, `/debug`, `/loop`, `/claude-api`, `/batch`, `/review`, `/security-review`, `/init`, `/schedule`, `/keybindings-help`, `/update-config`, `/fewer-permission-prompts`) are immediately available to any loam session with no authoring cost. FUTURE_IDEAS.md Idea 1 Step 1 noted `/loop` specifically as composing with scope-of-work activation cycles; `/schedule` is the natural composition for the Step 4 refresh job that updates this file.
+- **loam's telegram plugin** ships `/telegram:configure` and `/telegram:access` skills — reference pattern for any future loam plugin's user-facing surface.
+- **A `.claude/skills/pos-context-load/SKILL.md`** is a plausible implementation of Idea 8 (structural context-load gate) at the skill layer — the persona invokes it before planning, the skill enumerates the design docs that must be loaded, the skill body fails if any are missing. Mechanical enforcement without inventing new loam machinery.
 - **Reference-style skills for each sealed component** could surface the component's seal notes + amendment history the moment the persona touches that component — latent composition with the "component-scoped work reads that component's artefacts" session-start discipline (CLAUDE.md).
 - **`$ARGUMENTS` + `paths` glob trigger** lets a skill auto-activate only for specific file patterns, reducing false-positive auto-loads for skills that only matter inside one component's tree.
 
@@ -641,7 +641,7 @@ _Sources (6.x): same as §1.1 — `https://code.claude.com/docs/en/slash-command
 
 ## 7. Agent tool and subagents
 
-The Agent tool (renamed from Task tool in Claude Code 2.1.63; `Task(...)` still works as alias) is Claude Code's dispatch primitive for delegating work to a subagent. A subagent runs in its own context window with a custom system prompt, tool restrictions, permissions, optional MCP servers, optional hooks, optional preloaded skills, optional persistent memory, and optional worktree isolation. This is the mechanism pos-v2 leans on most heavily during the rebuild — every component's build was dispatched through an Agent invocation.
+The Agent tool (renamed from Task tool in Claude Code 2.1.63; `Task(...)` still works as alias) is Claude Code's dispatch primitive for delegating work to a subagent. A subagent runs in its own context window with a custom system prompt, tool restrictions, permissions, optional MCP servers, optional hooks, optional preloaded skills, optional persistent memory, and optional worktree isolation. This is the mechanism loam leans on most heavily during the rebuild — every component's build was dispatched through an Agent invocation.
 
 ### 7.1 Built-in subagent types
 
@@ -693,19 +693,19 @@ Same precedence pattern as other Claude Code components:
 - **`isolation: worktree`.** Subagent gets a temporary git worktree; cleaned up automatically if subagent makes no changes. Enables safe parallel-work patterns.
 - **`context: fork` via skill.** Alternative entrypoint — a skill with `context: fork` runs its body as the task in a fresh subagent of the named `agent` type. Inverse of `skills:` preloading (skill → agent vs agent ← skills).
 
-### 7.5 Composes with pos-v2
+### 7.5 Composes with loam
 
-- **Every component seal in pos-v2 was dispatched through the Agent tool.** The handoff-brief-then-dispatch pattern documented in STATE.md rule 1 is literally Agent(general-purpose) invocations with scoped briefs. Custom subagents would formalise this — e.g. a `.claude/agents/pos-v2-component-builder.md` that ships with the right defaults (permissionMode, skills preload for ODD methodology, persistent memory scoped to the component tree).
+- **Every component seal in loam was dispatched through the Agent tool.** The handoff-brief-then-dispatch pattern documented in STATE.md rule 1 is literally Agent(general-purpose) invocations with scoped briefs. Custom subagents would formalise this — e.g. a `.claude/agents/loam-component-builder.md` that ships with the right defaults (permissionMode, skills preload for ODD methodology, persistent memory scoped to the component tree).
 - **`Explore` is the right default for research-plan authoring** — read-only scope matches the "read before editing" session-start discipline in CLAUDE.md.
-- **`Plan` subagent** is invoked during plan mode; pos-v2's plan-before-code CDC (see MEMORY.md) is the workflow layer above this — Plan handles the research, the output lands at the dev-mode plans directory (DEV MODE only).
-- **Persistent `memory: project`** on a pos-v2-specific agent would accumulate architectural insights across component builds, compose with `memory-system` at the workspace layer but scoped per-agent. Candidate for the future Dev/SDLC plugin (Idea 3).
-- **`Agent(worker, researcher)` restriction** in an agent with its own `tools` list implements "this orchestrator can dispatch only these two subagents" — structural enforcement matching pos-v2's safety posture.
-- **Subagent hooks** (`hooks:` in frontmatter) are the pattern for the "agent dispatches carry scope only" discipline (feedback_agent_prompts_scope_only in MEMORY.md). A future `pos-v2-builder` subagent could have a `PreToolUse` hook that refuses method-prescribing prompts — structural mechanisation of the current social convention.
+- **`Plan` subagent** is invoked during plan mode; loam's plan-before-code CDC (see MEMORY.md) is the workflow layer above this — Plan handles the research, the output lands at the dev-mode plans directory (DEV MODE only).
+- **Persistent `memory: project`** on a loam-specific agent would accumulate architectural insights across component builds, compose with `memory-system` at the workspace layer but scoped per-agent. Candidate for the future Dev/SDLC plugin (Idea 3).
+- **`Agent(worker, researcher)` restriction** in an agent with its own `tools` list implements "this orchestrator can dispatch only these two subagents" — structural enforcement matching loam's safety posture.
+- **Subagent hooks** (`hooks:` in frontmatter) are the pattern for the "agent dispatches carry scope only" discipline (feedback_agent_prompts_scope_only in MEMORY.md). A future `loam-builder` subagent could have a `PreToolUse` hook that refuses method-prescribing prompts — structural mechanisation of the current social convention.
 - **`background: true`** composes with STATE.md rule 7 — long-running research agents run in background, the primary persona remains interactive and polls / monitors.
 
 ### 7.6 Agent teams (distinct from subagents)
 
-Agent teams are multiple agents in parallel across separate sessions that can communicate. Subagents are single-session delegation. Agent teams are the right primitive for "I want three researchers investigating three topics simultaneously"; subagents are the right primitive for "run one focused scope and return a summary." Agent teams surface teammate-idle and teammate-display configuration. Beyond scope for most pos-v2 work today; relevant if Idea 3's plugin suite grows parallel-research patterns.
+Agent teams are multiple agents in parallel across separate sessions that can communicate. Subagents are single-session delegation. Agent teams are the right primitive for "I want three researchers investigating three topics simultaneously"; subagents are the right primitive for "run one focused scope and return a summary." Agent teams surface teammate-idle and teammate-display configuration. Beyond scope for most loam work today; relevant if Idea 3's plugin suite grows parallel-research patterns.
 
 ### 7.7 Pitfalls
 
@@ -732,13 +732,13 @@ _Sources (7.x): `https://code.claude.com/docs/en/sub-agents` — fetched 2026-04
 
 ## 8. Background-task primitives
 
-pOS v2 treats "the primary persona never loses track of background work" as a foundational rule (STATE.md rule 7). Claude Code ships several primitives that compose with that rule without pos-v2 re-inventing them.
+loam treats "the primary persona never loses track of background work" as a foundational rule (STATE.md rule 7). Claude Code ships several primitives that compose with that rule without loam re-inventing them.
 
 ### 8.1 Bash `run_in_background: true`
 
 **What it does.** The Bash tool accepts `run_in_background: true` for commands the agent does not want to block on. Output is captured; the session remains interactive. `/tasks` (alias `/bashes`) lists and manages active background bashes. Background commands have their own task lifecycle events (`TaskCreated`, `TaskCompleted`).
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `session-resilient-orchestrator` already spawns long-running Python workers outside Claude Code entirely. Where work is short enough to stay inside Claude Code (e.g. a test suite, a scan, a compile), `run_in_background` is the right primitive — avoids blocking the persona while work completes.
 - `hands-off-lifecycle`'s first-run shim detaches to a separate process; `run_in_background` is the in-Claude-Code equivalent when detach-from-Claude isn't required.
 
@@ -748,7 +748,7 @@ pOS v2 treats "the primary persona never loses track of background work" as a fo
 
 **What it does.** Watch a background script and react to each stdout line as an event. Agent SDK ships `Monitor` as a built-in tool (§2.2). The monitor pattern: start a process (`tail -F`, a websocket reader, a long-poll), each line delivered as a notification Claude can respond to.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - **This is the primary tool for STATE.md rule 7 (background-work awareness).** Today `observability-aggregator` consumes process stdout via its own polling loop; `Monitor` converts each line into an in-session event with no polling. The primary persona becomes event-driven rather than poll-driven for background work.
 - Plugin `monitors/monitors.json` (§5.1) is the plugin-level packaging of the same primitive — a plugin can declare "watch this log" and every plugin user gets it wired automatically.
 - `self-correction-loop` consumes failure events from background processes the moment they arrive.
@@ -759,8 +759,8 @@ pOS v2 treats "the primary persona never loses track of background work" as a fo
 
 **What it does.** `/loop [interval] [prompt]` re-runs a prompt repeatedly inside the current session. With interval: fixed cadence (e.g. `/loop 5m check if deploy finished`). Without interval: Claude self-paces. Without prompt: uses `.claude/loop.md` if present, else an autonomous maintenance check. Alias: `/proactive`.
 
-**Composes with pos-v2.**
-- FUTURE_IDEAS.md Idea 1 Step 1 named `/loop` specifically: "composes with scope-of-work activation cycles." A scope that wants periodic check-in (is the memory-system entity-extraction backlog draining? are any background workers stuck?) becomes `/loop <interval> <check>` instead of reimplementing the cadence in pos-v2 Python.
+**Composes with loam.**
+- FUTURE_IDEAS.md Idea 1 Step 1 named `/loop` specifically: "composes with scope-of-work activation cycles." A scope that wants periodic check-in (is the memory-system entity-extraction backlog draining? are any background workers stuck?) becomes `/loop <interval> <check>` instead of reimplementing the cadence in loam Python.
 - Persistent daily refresh of `CLAUDE_CAPABILITIES.md` (Idea 1 Step 4) could be authored as `.claude/loop.md` — the primary persona re-checks and amends this file when the loop fires. Alternative to `/schedule` (below) for session-local use.
 
 **Pitfalls.** Loop runs inside a live session — consumes context and bills each iteration. For long-horizon recurring work (daily, cross-session), `/schedule` is the right primitive; `/loop` is for same-session cadence.
@@ -769,9 +769,9 @@ pOS v2 treats "the primary persona never loses track of background work" as a fo
 
 **What it does.** `/schedule [description]` creates, updates, lists, or runs **routines** — scheduled Claude Code runs on cron or one-time at a specific time. Routines run as remote agents; web sessions pulled back with `/teleport`. Alias: `/routines`.
 
-**Composes with pos-v2.**
-- **Idea 1 Step 4 (capability-map refresh automation) maps directly onto `/schedule`** — a daily routine that re-fetches Claude docs and amends this file. Replaces building cron infra from scratch in pos-v2.
-- Any pos-v2 scope with a "check every N hours" cadence (scheduled backlog drains, digest generation, alert summarisation) is a routine candidate.
+**Composes with loam.**
+- **Idea 1 Step 4 (capability-map refresh automation) maps directly onto `/schedule`** — a daily routine that re-fetches Claude docs and amends this file. Replaces building cron infra from scratch in loam.
+- Any loam scope with a "check every N hours" cadence (scheduled backlog drains, digest generation, alert summarisation) is a routine candidate.
 - Composes with `cost-governance` — routines respect session-level cost ceilings; if a refresh would push spend over the cap, it defers (per Idea 1 Step 4's explicit design).
 
 **Pitfalls.**
@@ -783,7 +783,7 @@ pOS v2 treats "the primary persona never loses track of background work" as a fo
 
 **What it does.** `TaskCreated` and `TaskCompleted` hook events fire around background task creation / completion (§1.2). The deferred `TaskStop` tool (surfaced to this doc-authoring session) lets an agent stop an active background task. `PreToolUse` on `TaskCreate` can block creation (exit 2 rolls back); `PostToolUse`-equivalent on `TaskCompleted` with `decision: "block"` can prevent completion.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `safety-layer` + `reversibility-primitive` can attach `PreToolUse` matchers on `TaskCreate` — a background task that would violate a safety invariant is refused at creation, not after it has run.
 - `cost-governance` attaches on `TaskCompleted` to record the spend of each background task.
 - `self-correction-loop` consumes `TaskCompleted` to detect completed-but-failed background scopes and trigger the correction arc.
@@ -814,7 +814,7 @@ _Sources (8.x): `https://code.claude.com/docs/en/commands`, `https://code.claude
 
 ## 9. Session persistence
 
-Session persistence is the substrate everything else composes on: without it, pOS v2's background-work awareness, session-resilient orchestration, and cross-session memory have nothing to attach to. §1.5 covers the CLI-level mechanics; this section collects the pos-v2-relevant details with additional features (checkpointing, rewinding, recap, remote-control, web-session teleport) that constitute the full persistence surface.
+Session persistence is the substrate everything else composes on: without it, loam's background-work awareness, session-resilient orchestration, and cross-session memory have nothing to attach to. §1.5 covers the CLI-level mechanics; this section collects the loam-relevant details with additional features (checkpointing, rewinding, recap, remote-control, web-session teleport) that constitute the full persistence surface.
 
 ### 9.1 On-disk session artefacts
 
@@ -824,9 +824,9 @@ Session persistence is the substrate everything else composes on: without it, pO
 - `--no-session-persistence` (print mode only) skips disk write entirely — useful for scripted calls that shouldn't leave a trail.
 - Sessions may be **named** (`-n <name>`, `/rename`, `--remote-control-session-name-prefix`) for human-friendly resumption.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `observability-aggregator` harvests the transcript_path artefacts for cross-session analysis.
-- Long-term audit retention beyond `cleanupPeriodDays` needs explicit harvesting to a durable store — pos-v2 should capture transcripts that back amendments into the observability store before cleanup fires.
+- Long-term audit retention beyond `cleanupPeriodDays` needs explicit harvesting to a durable store — loam should capture transcripts that back amendments into the observability store before cleanup fires.
 - `session-resilient-orchestrator` correlates orchestrator-spawned sessions with their transcripts via explicit `--session-id` UUIDs.
 
 ### 9.2 Resume / continue / fork
@@ -836,13 +836,13 @@ Session persistence is the substrate everything else composes on: without it, pO
 - `claude --fork-session --resume <id>` — create new session ID from resumed session; both diverge.
 - `claude --from-pr <N>` — resume sessions linked to a GitHub PR (auto-linked at `gh pr create`).
 
-**Composes with pos-v2.** Amendment-cycle bookkeeping (the dev-mode pos-amend CLI) could attach to session IDs so every amendment-commit has a traceable session-of-record; `--from-pr` is the GitHub-integrated version if amendments flow through PRs.
+**Composes with loam.** Amendment-cycle bookkeeping (the dev-mode pos-amend CLI) could attach to session IDs so every amendment-commit has a traceable session-of-record; `--from-pr` is the GitHub-integrated version if amendments flow through PRs.
 
 ### 9.3 Checkpointing and rewinding
 
 `/rewind` (alias `/checkpoint`, `/undo`) rewinds the conversation and/or code to a previous point, or summarises from a selected message.
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `reversibility-primitive` composes naturally with `/rewind` — the primitive provides structural undo for actions; `/rewind` provides conversational undo for Claude Code's own state. Together they bracket "the system can go back" across the two relevant layers.
 - `self-correction-loop` could trigger a rewind when a scope failed in a way that compromises subsequent turns — clean restart to a known-good state.
 
@@ -855,9 +855,9 @@ Session persistence is the substrate everything else composes on: without it, pO
 - **Auto-compaction** — triggers when context fills. Skills carry forward per §6.3.
 - **`PreCompact` / `PostCompact` hooks** — structural gates around compaction (§1.2).
 
-**Composes with pos-v2.**
+**Composes with loam.**
 - `cost-governance` can attach to `PreCompact` to record spend-so-far before context is summarised and the usage accounting resets.
-- Long-running pos-v2 sessions with heavy context (the component rebuild is this shape) should set explicit compact points via `/compact` with focus instructions to preserve the bits that matter to the current component's build.
+- Long-running loam sessions with heavy context (the component rebuild is this shape) should set explicit compact points via `/compact` with focus instructions to preserve the bits that matter to the current component's build.
 
 ### 9.5 Recap and insights
 
@@ -865,7 +865,7 @@ Session persistence is the substrate everything else composes on: without it, pO
 - `/insights` — report across recent sessions: project areas, interaction patterns, friction points.
 - `/team-onboarding` — generate a teammate-onboarding guide from 30-day session history.
 
-**Composes with pos-v2.** These surface ambient session data that pos-v2 primitives (primary-persona, memory-system, observability) can consume without per-session instrumentation. `/insights` is a cheap substitute for bespoke analysis during the early pos-v2 evaluation-workspace phase.
+**Composes with loam.** These surface ambient session data that loam primitives (primary-persona, memory-system, observability) can consume without per-session instrumentation. `/insights` is a cheap substitute for bespoke analysis during the early loam evaluation-workspace phase.
 
 ### 9.6 Remote control and web sessions
 
@@ -874,9 +874,9 @@ Session persistence is the substrate everything else composes on: without it, pO
 - `claude --teleport` / `/teleport` (alias `/tp`) — pull a web session into the local terminal.
 - `claude --from-pr <N>` — resume via PR linkage.
 
-**Composes with pos-v2.**
-- Mobile-equivalent interaction for pOS v2 users who don't live in a terminal. Telegram channel (Idea 3's communications-plugin-ish shape) is the other mobile interface; web sessions are complementary.
-- **Not a safe surface for autonomous pos-v2 dispatch** — remote-control exposes the session to an external client; the `safety-layer` and `cost-governance` invariants must still hold. Managed settings should gate whether remote control is available in a given workspace.
+**Composes with loam.**
+- Mobile-equivalent interaction for loam users who don't live in a terminal. Telegram channel (Idea 3's communications-plugin-ish shape) is the other mobile interface; web sessions are complementary.
+- **Not a safe surface for autonomous loam dispatch** — remote-control exposes the session to an external client; the `safety-layer` and `cost-governance` invariants must still hold. Managed settings should gate whether remote control is available in a given workspace.
 
 ### 9.7 Pitfalls
 
@@ -904,7 +904,7 @@ Observations that span multiple capability areas and are useful when shaping fea
 
 ### 10.1 Where enforcement lives by feature shape
 
-When a pos-v2 feature needs to *enforce* a rule rather than *suggest* it, the right enforcement layer depends on the rule's shape:
+When a loam feature needs to *enforce* a rule rather than *suggest* it, the right enforcement layer depends on the rule's shape:
 
 | Rule shape | Right enforcement layer |
 |------------|-------------------------|
@@ -916,7 +916,7 @@ When a pos-v2 feature needs to *enforce* a rule rather than *suggest* it, the ri
 | "This plugin must ship with this baseline config" | Plugin `settings.json` + hooks + agents directory |
 | "Context X must be loaded before planning" | `UserPromptSubmit` hook + context-injection skill |
 
-pos-v2 should prefer structural enforcement over prompt-level nag — matches the ODD preference for structural refusal (odd-methodology.md) and CLAUDE.md's Lens 1 ("compose on top of a Claude-native primitive rather than re-implement").
+loam should prefer structural enforcement over prompt-level nag — matches the ODD preference for structural refusal (odd-methodology.md) and CLAUDE.md's Lens 1 ("compose on top of a Claude-native primitive rather than re-implement").
 
 ### 10.2 Cost-governance composition map
 
@@ -954,18 +954,18 @@ The rule says the primary persona must never lose track of dispatched background
 - `/schedule` for cross-session routines.
 - Subagent `background: true` for always-detached agents.
 
-The composition is deep — pos-v2's background-work-awareness component design should enumerate which of these are used and why, rather than building a parallel awareness surface.
+The composition is deep — loam's background-work-awareness component design should enumerate which of these are used and why, rather than building a parallel awareness surface.
 
 ### 10.5 Feature-research checklist (Lens 1)
 
-For every pos-v2 feature proposal, the Lens 1 gate asks "what Claude capability does this lean on or extend?" Before answering "nothing," check:
+For every loam feature proposal, the Lens 1 gate asks "what Claude capability does this lean on or extend?" Before answering "nothing," check:
 
 1. Is there a **bundled skill** that does part of this? (`/simplify`, `/debug`, `/loop`, `/claude-api`, `/batch`, `/review`, `/security-review`, `/init`, `/schedule`, `/keybindings-help`, `/update-config`, `/fewer-permission-prompts`.)
 2. Is there a **hook event** that fires at the right moment? (Full list in §1.2.)
 3. Is there an **MCP server** on the registry that exposes the capability?
 4. Is there a **bundled subagent type** (Explore, Plan, general-purpose, Bash) that fits?
 5. Is there a **setting or env var** that already configures the behaviour?
-6. Is this a **skill, plugin, or subagent authoring** problem rather than a new pos-v2 component?
+6. Is this a **skill, plugin, or subagent authoring** problem rather than a new loam component?
 7. Would a **one-line `/loop` or `/schedule`** replace the cadence primitive?
 
 If one of these says yes, the feature's shape probably composes rather than re-implements. This is the mechanical form of Lens 1 enforcement that FUTURE_IDEAS.md Idea 1 Step 3 will formalise.
@@ -980,7 +980,7 @@ Out of scope for this snapshot:
 - Third-party provider quirks (Bedrock, Vertex, Azure Foundry) beyond the fact that they exist.
 - Non-Claude MCP clients (ChatGPT, Cursor, VS Code Copilot, Zed, etc.).
 
-These are relevant if pos-v2 ever extends past Claude-attached workflows (CLAUDE.md Lens 1 says it will not by design) or if a future plugin consumes a non-mapped surface. Flag for Idea 1 Step 4 refresh if the scope expands.
+These are relevant if loam ever extends past Claude-attached workflows (CLAUDE.md Lens 1 says it will not by design) or if a future plugin consumes a non-mapped surface. Flag for Idea 1 Step 4 refresh if the scope expands.
 
 ### 10.7 Volatility warning
 

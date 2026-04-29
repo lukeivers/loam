@@ -1,7 +1,7 @@
 # hands-off-lifecycle
 
 Composite component: installs the four amendments that together produce
-a running healthy pOS v2 on its own when a user opens a Claude Code
+a running healthy loam on its own when a user opens a Claude Code
 session in a fresh workspace.
 
 This component contributes no new Python package of its own — its
@@ -67,7 +67,7 @@ process inheriting Claude Code's FDs — it delegates to
 
 `hooks/settings.json.fragment` describes the exact supervisor-path
 hook stanza — its command string is what the ongoing-operation hook
-looks like. In practice, a pos-v2 workspace ships `.claude/settings.json`
+looks like. In practice, a loam workspace ships `.claude/settings.json`
 already authored at the repo root, pointing at
 `hands-off-lifecycle/hooks/first-run.sh`. That shell script creates
 the shared venv on a fresh clone, installs per-component dependencies,

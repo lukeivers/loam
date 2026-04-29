@@ -1,14 +1,14 @@
-# pOS v2 — CLAUDE.md
+# loam — CLAUDE.md
 
-pOS v2 is a general-purpose harness for Claude-attached workflows. It
+loam is a general-purpose harness for Claude-attached workflows. It
 is explicitly *not* targeted at development as a primary use case —
 dev-specific machinery (the methodology, conventions, and tooling that
-govern how *we* build pOS v2 itself) lives behind a dev-mode auto-load
+govern how *we* build loam itself) lives behind a dev-mode auto-load
 partition. DEV MODE workspaces additionally auto-load a dev-extension
 fragment of these instructions; NORMAL USE workspaces never see it.
 
 This file carries the always-on design lenses + output conventions
-that shape every feature, proposal, and decision inside the pOS v2
+that shape every feature, proposal, and decision inside the loam
 codebase.
 
 ---
@@ -21,8 +21,8 @@ proposal that does not answer all three is incomplete.
 
 ### Lens 1 — Claude-leverage-first
 
-> **pOS v2 is exclusively attached to Claude.** Every feature built
-> on pOS v2 must actively consider what Claude Code / Claude SDK /
+> **loam is exclusively attached to Claude.** Every feature built
+> on loam must actively consider what Claude Code / Claude SDK /
 > Claude capabilities (slash commands, hook events, MCP, skills,
 > plugins, background tasks, session primitives) can be leveraged to
 > simplify, extend, or improve the feature — including capabilities
@@ -31,8 +31,8 @@ proposal that does not answer all three is incomplete.
 > the design should compose on top of it rather than re-implement.
 
 *Example:* Claude's skill ecosystem may already expose a legal-research
-skill a user does not have enabled. A hypothetical legal plugin for pOS
-v2 that composes with that skill is a different (and likely better)
+skill a user does not have enabled. A hypothetical legal plugin for
+loam that composes with that skill is a different (and likely better)
 shape than one that re-implements legal-research primitives inside the
 plugin.
 
@@ -61,7 +61,7 @@ the harness test is almost always wrong.
 
 ### Lens 3 — ODD authoring
 
-> **Work in pOS v2 is defined by its observable outcome, not by a
+> **Work in loam is defined by its observable outcome, not by a
 > sequence of steps.** Objective + constraints + acceptance criteria;
 > method is the builder's call. ODD applies after the Lens 1 and Lens
 > 2 research questions have been answered; it shapes the mechanical

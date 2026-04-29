@@ -15,7 +15,7 @@ plan: docs/rebuild/plans/oss-v0-1-0-publish-rename-1a.md
 
 seal_description: "M1a docs/prose-only brand rebrand — pos-v2 / pOS v2 / pOS → loam in user-facing prose surfaces (CLAUDE.md / VALUE_PROPOSITION / CLAUDE_CAPABILITIES / duration-rubric / odd-methodology / odd-in-pos / five component READMEs)"
 
-# Five sealed components per locked plan §1 fence statement. M1a edits
+# Four sealed components per locked plan §1 fence statement. M1a edits
 # only each component's README.md — no source, no tests, no other
 # component-internal files. Each component's README is admitted by the
 # existing framework/<comp>/ allowed-prefix.
@@ -27,6 +27,20 @@ seal_description: "M1a docs/prose-only brand rebrand — pos-v2 / pOS v2 / pOS �
 # pins src/ files and pyproject.toml; READMEs are excluded), so M1a
 # does NOT trigger H19 retire-and-rebaseline. H19 retirement happens
 # at a later sub-amendment per series master §1 / §10.
+#
+# scope-of-work is NOT in the components list — per d-migration-1's
+# locked precedent (`scope-of-work + safety-layer (no SEAL_COMMIT
+# sidecar pre-D.1) are moved by git mv but not entered here — their
+# seal-discipline is handled by hands-off-lifecycle's H19 cross-
+# cutting test`), scope-of-work has no own SEAL_COMMIT sidecar; H19
+# covers its admission via the `framework` + `scope-of-work` entries
+# in the H19 allowed set. M1a's diff against
+# `framework/scope-of-work/README.md` is admitted by H19, not by a
+# per-component seal-diff fence. Build-time finding #8 in §11
+# documents this; the manifest was originally authored with scope-
+# of-work as a sealed component (mistakenly), pos-amend's apply
+# correctly skipped it (`skip scope-of-work: seal-test missing`),
+# and the corrective removed the entry post-seal.
 components:
   - name: objective-tracker
     seal_test: framework/objective-tracker/tests/test_no_sealed_amendments.py
@@ -42,11 +56,6 @@ components:
     seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
     sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
     frozen_baseline: true   # H19 pinned at project-start per amendment #23
-    extra_allowed_prefixes: []
-  - name: scope-of-work
-    seal_test: framework/scope-of-work/tests/test_no_sealed_amendments.py
-    sidecar: framework/scope-of-work/tests/SEAL_COMMIT
-    frozen_baseline: false
     extra_allowed_prefixes: []
   - name: workspace-sync
     seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py

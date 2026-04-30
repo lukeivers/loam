@@ -1,0 +1,182 @@
+# Amendment #88 — M6b.0 Dev/SDLC plugin Surface B extraction (excluding loam amend MOVE)
+
+2026-04-29. Multi-component sealed amendment for the OSS v0.1.0
+publish programme. Second sub-amendment in the M6 sub-amendment
+series per master plan §6.5.4 D-Q.M6.6 ship-shape ruling. M6a
+sealed independently at `acd70ff` (Dev/SDLC plugin baseline,
+Surface A); M6b is the Surface B extraction. M6b's first dispatch
+halted at plan time and surfaced four findings (F1-F4) that the
+dispatcher ruled on; M6b.0 is the post-ruling build executing
+everything except Item 7 (loam amend MOVE), which is deferred to
+a separate M6b.1 sub-amendment.
+
+Sub-plan-doc:
+`docs/rebuild/plans/oss-v0-1-0-publish-dev-sdlc-plugin-m6b0.md`.
+Master plan-doc with full §6.5 disposition table:
+`docs/rebuild/plans/oss-v0-1-0-publish-dev-sdlc-plugin.md`.
+M6b plan-time halt-and-surface report (context for the four
+rulings): `workspace/.scratch/claude-output/m6b-halt-surface.md`.
+
+Composes on M1.rename (M1a..M1g sealed; M1g `f6c22fd`),
+M2.partition (`4cda805`), M3.wire-clis (`95f1ab2`),
+M4.wire-dispatch (`1719e14`), M5.wire-dormancy (`e32d4d8`),
+M6a (`acd70ff`).
+
+M6b.0 OPERATIONALISES Idea 13's two-modes design by making the
+plugin BECOME the dev-mode package. Post-extraction, a workspace
+that opts into the Dev/SDLC plugin gets dev-mode artefacts; a
+workspace that doesn't gets NORMAL USE only. The plugin is now
+self-contained as the dev-mode delivery shape.
+
+F1+F2+F3+F4 owner rulings (ratified by dispatcher 2026-04-29):
+
+  F1. `agent_file_authoring.py` + `agent_file_runner.py` STAY
+      at `framework/hands-off-lifecycle/hooks/`. Both are
+      runtime infrastructure imported unconditionally by
+      `first_run_helper.py` for ALL workspaces (not dev-mode-
+      only). Master plan §6.5.2 row 6's MOVE list corrected:
+      drop these two files from the list.
+
+  F2. Option D hybrid for A1-A4 settings.json registration.
+      The five gate-hook SOURCE files (`objective_binding_gate.py`
+      + `tdd_guard.py` + `bash_guard.py` + `agent_guard.py` +
+      `dispatch_setup_hook.py`) MOVE to `plugins/dev-sdlc/hooks/`.
+      Writer logic at `first_run_helper.py` STAYS; gains a
+      `_resolve_gate_script(loam_root, name)` helper that
+      probes for plugin-side path first
+      (`<loam_root>/plugins/dev-sdlc/hooks/<gate>.py`); falls
+      back to canonical-side
+      (`<loam_root>/framework/hands-off-lifecycle/hooks/<gate>.py`)
+      if plugin tree absent. Mirror of amendment #67's
+      `_resolve_corpus_path` probe-and-prefer pattern. ~30 LOC
+      for the helper + 5 stanza-builder edits.
+
+  F3. `loam amend` shadow-then-flip mechanic deferred to M6b.1.
+      `framework/tools/loam/` source UNTOUCHED in M6b.0 (its
+      `templates/` subdirectory excepted — those MOVE per Item
+      4). M6b.0 uses canonical-side `loam amend` for its own
+      apply + seal.
+
+  F4. M6b SPLITS into M6b.0 + M6b.1. M6b.0 ships everything
+      except Item 7. M6b.1 (loam amend MOVE alone with shadow-
+      then-flip per master plan D-build.M6.15) requires
+      separate dispatcher approval to dispatch.
+
+Surface B migrations executed in M6b.0:
+
+  Item 1. Dev CDCs from FUTURE_IDEAS.md lines 13-197 (10 CDC
+          sections under "Core Development Conventions —
+          temporary parking") MOVED to
+          `plugins/dev-sdlc/docs/cdcs/<name>.md` (one file per
+          CDC). FUTURE_IDEAS.md temporary-parking section
+          reduced to one-line redirect to the plugin's home.
+
+  Item 2. Long-form ODD methodology docs `docs/odd-methodology.md`
+          (794 LOC) + `docs/odd-in-loam.md` (1058 LOC) MOVED to
+          `plugins/dev-sdlc/docs/`. The condensed
+          `docs/design/odd.md` (259 LOC public surface) STAYS
+          per existing M2 placement.
+
+  Item 4. Dispatch + plan templates from
+          `framework/tools/loam/templates/dispatch/` +
+          `framework/tools/loam/templates/plan/` MOVED to
+          `plugins/dev-sdlc/templates/dispatch/` +
+          `plugins/dev-sdlc/templates/plan/`. The unified loam
+          CLI's `template_engine.discover_templates` resolver
+          gains a probe-and-prefer for plugin-side template
+          paths with canonical fallback (mirrors F2 mechanism;
+          loam amend stays at canonical in M6b.0).
+
+  Item 5. `framework/tools/loam-mode/` package MOVED to
+          `plugins/dev-sdlc/tools/loam-mode/` (whole tree:
+          `pyproject.toml`, `src/loam_mode/`, `tests/`,
+          `README.md`). `_DEFAULT_MANIFEST_REL` updated to
+          plugin-relative path. Editable install refreshed:
+          `pip uninstall loam-mode -y && pip install -e
+          plugins/dev-sdlc/tools/loam-mode/`.
+
+  Item 6. A2/A3/A4/M4 gate-hook SOURCE files MOVED from
+          `framework/hands-off-lifecycle/hooks/` to
+          `plugins/dev-sdlc/hooks/` per F2 ruling. Five files:
+          `objective_binding_gate.py`, `tdd_guard.py`,
+          `bash_guard.py`, `agent_guard.py`,
+          `dispatch_setup_hook.py`. Writer logic at
+          `first_run_helper.py` retains its place; the five
+          `_*_stanza()` builders gain `_resolve_gate_script()`
+          probe-and-prefer.
+
+  Item 9. Duration-estimation rubric
+          `docs/duration-estimation-rubric.md` MOVED to
+          `plugins/dev-sdlc/docs/duration-estimation-rubric.md`.
+
+  Item 17. `docs/rebuild/dev-mode-manifest.yaml` MOVED to
+           `plugins/dev-sdlc/dev-mode-manifest.yaml` (alongside
+           loam-mode's new home). loam-mode's
+           `_DEFAULT_MANIFEST_REL` updated to plugin-relative.
+
+  Items 3, 10, 11, 12, 13, 16. Six NEW convention codification
+          documents authored at
+          `plugins/dev-sdlc/docs/conventions/`: `plan-docs.md`
+          (Item 3), `fidraft-pattern.md` (Item 10),
+          `sealed-component-invariants.md` (Item 11),
+          `commit-ladder.md` (Item 12), `five-gate-chain.md` +
+          `amendment-cycle.md` (Item 13). Each is concise
+          100-300 LOC codification per master plan
+          D-build.M6.11. Seal-test template authored at
+          `plugins/dev-sdlc/templates/component/test_no_sealed_amendments.py.template`
+          (Item 16).
+
+M2 partition manifest reshape (per master plan D-build.M6.14):
+  - `plugins/dev-sdlc/**` RECLASSIFIES from `dev_and_public`
+    (M6a) to `dev_only`. Plugin's contents are now dev-discipline
+    machinery; no longer ships in public synthesis.
+  - `framework/tools/loam-mode/**` REMOVED from `dev_only`
+    (path no longer exists post-MOVE).
+  - `docs/odd-methodology.md`, `docs/odd-in-loam.md`,
+    `docs/duration-estimation-rubric.md` REMOVED from `dev_only`
+    (paths MOVED into the plugin tree, covered by
+    `plugins/dev-sdlc/**` glob).
+
+Sealed-component fence: 6 components — `plugins/dev-sdlc/`
+(receives all MOVE destinations + new convention authoring +
+new docs/cdcs/ + new hooks/ + new tools/loam-mode/ + new
+templates/ + new dev-mode-manifest.yaml) + `framework/hands-off-
+lifecycle/` (5 gate-hook source files DELETED;
+first_run_helper.py edited for probe-and-prefer) +
+`framework/tools/loam-mode/` (DELETED — package MOVED;
+component effectively retires) + `framework/tools/loam/`
+(templates/ subdirectory DELETED; template_engine.py edited for
+probe-and-prefer; UNTOUCHED otherwise) +
+`framework/tools/pos-publish-framework-only/` (partition-manifest
+YAML reshape) + `docs/rebuild/` (FUTURE_IDEAS.md temporary-
+parking section reduced to one-line redirect; dev-mode-
+manifest.yaml DELETED). Plus root `docs/` (3 file DELETEs:
+`odd-methodology.md`, `odd-in-loam.md`,
+`duration-estimation-rubric.md`).
+
+HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE.
+File MOVEs are git-rename-tracked; byte-content of moved files
+unchanged. The probe-and-prefer edits in `first_run_helper.py`
++ `template_engine.py` are additive Python (no sample paths in
+these files). The partition-manifest YAML edits are
+additive/subtractive YAML (no sample paths in YAML). The HC#4
+invariant remains GREEN through M6b.0.
+
+AC family: AC.OSS-M6b0.1..M6b0.9 + AC.OSS-M6b0.S(b0). Each AC
+maps to a unique change in the diff per ODD §2.5 (no behaviour
+without a named AC). All ACs ladder up to AC.OSS.6
+(programme-level) → AC.PO.1 + AC.PO.2 (prime objective in
+`docs/rebuild/VALUE_PROPOSITION.md`).
+
+Out of scope:
+  - M6b.1: Item 7 — `loam amend` MOVE (shadow-then-flip per
+    master plan D-build.M6.15). `framework/tools/loam/`
+    UNTOUCHED in M6b.0. M6b.1 dispatch requires separate
+    dispatcher approval.
+  - M6c: trailing dead-link / cross-reference cleanup.
+  - v0.1.1+: objective-extraction skill.
+
+Dependents cleared post-M6b.0:
+  - M6b.1 ready to dispatch (loam amend MOVE alone).
+  - M7.docs-lane remains parallel-safe.
+  - M9.scrub remains gated on full M6 completion (M6b.1 + M6c).

@@ -24,9 +24,18 @@
 
 ## 1. Summary / TLDR
 
-**M6 ships the Dev/SDLC plugin at `plugins/dev-sdlc/` — a NEW component-shaped artefact at a NEW top-level tree, establishing the plugin-tree pattern v0.2+ plugins inherit.** The plugin composes against workspace-bootstrap's existing contribution-protocol (entry-point group `loam.bootstrap.contributions`) — zero bootstrap-side source change. It defaults new projects to ODD-shaped research/spec/plan/build/review/verify stages with structural gate enforcement; provides an opt-out (`--methodology=tdd|bdd|adhoc`) that preserves an internal ODD mirror; surfaces five operator verbs (`loam project new|status|advance|list|gate`) registered as subcommands of the unified `loam` CLI.
+**M6 has TWO load-bearing surfaces.** Per owner directive 2026-04-29 (after the initial plan-doc landed at `454bbd4`), the Dev/SDLC plugin is BOTH:
 
-**Per master plan §5 M6 row predicted 90-180 min (midpoint 135) for the full new-component build cycle — this dispatch is the research + plan slice (predicted 20-40 min); next dispatch builds the plugin to seal.**
+  - **Surface A — user-facing plugin capabilities** (Idea 3 features): the 5-stage workflow + methodology opt-out + `loam project ...` CLI + persona-invocable Python API + `/start-project` skill + scope/tracker integration + workspace-local SQLite. Authored at v0.1.0; ACs AC.OSS-M6.1..M6.9.
+  - **Surface B — the home of dev-mode** (per Idea 13 two-modes design): the plugin BECOMES the package that delivers DEV MODE itself. Every dev-machinery artefact currently scattered across canonical loam (dev CDCs, ODD methodology long-form docs, plan-doc/manifest conventions, dispatch templates, loam-mode, hands-off-lifecycle A1-A4 gates, loam amend, pos-publish-framework-only, duration-estimation rubric, FIDRAFT, HC#4 + seal-ritual + five-gate-chain + amendment-cycle conventions) extracts into `plugins/dev-sdlc/` per per-item disposition (MOVE / STAY / PARTITION) in §6.5. ACs AC.OSS-M6.10..M6.16.
+
+**Surface A** establishes that loam's harness extension protocol works for new content. **Surface B** establishes that dev mode is itself a plugin — a user installs Dev/SDLC to get dev mode; a user without it gets NORMAL USE. The two surfaces are inseparable in a v0.1.0 ship: the user-facing capabilities are MEANINGLESS without the dev-machinery they shape (the dev/sdlc plugin's "ODD-by-default" default reduces to vapourware if `docs/odd-methodology.md` doesn't ship with it; its dispatch templates reduce to dead links if `framework/tools/loam/templates/dispatch/` doesn't ship with it).
+
+**Per master plan §5 M6 row predicted 90-180 min (midpoint 135) for the full new-component build cycle.** Per the extraction expansion this dispatch authors, M6's actual ship-shape is **a sub-amendment series M6a → M6b → M6c** (mirror M1.rename's M1a..M1g pattern), totalling **~270-450 min midpoint 360** wall-clock, decomposed in §6.5. **This dispatch is the research + plan + extraction-expansion slice** (predicted 20-40 min for the original Surface A; +30-45 min for the Surface B expansion = 50-85 min total). Next dispatch builds the M6a baseline plugin to seal; subsequent dispatches build M6b (extraction migrations) and M6c (deferred-content cleanups).
+
+### Plugin tree placement (new top-level)
+
+`plugins/dev-sdlc/` lands at v0.1.0 — establishes the plugin-tree pattern v0.2+ plugins inherit (per D-Q.M6.1 recommendation). The plugin composes against workspace-bootstrap's existing contribution-protocol (entry-point group `loam.bootstrap.contributions`) — zero bootstrap-side source change.
 
 ### v0.1.0 capability set (numbered list of concrete features)
 
@@ -52,20 +61,29 @@
 
 ### Plan ACs (count + family + ladder-up)
 
-**Nine ACs in family AC.OSS-M6.\* + sealed-component fence AC.OSS-M6.S.** All ladder up to AC.OSS.6 (programme-level) → AC.PO.1 + AC.PO.2 (prime objective). See §4 for AC text + verification path; §6 for ladder-up table.
+**Sixteen ACs in family AC.OSS-M6.\* + sealed-component fence AC.OSS-M6.S.** AC.OSS-M6.1..M6.9 cover Surface A (user-facing capabilities); AC.OSS-M6.10..M6.16 cover Surface B (dev-machinery extraction). All ladder up to AC.OSS.6 (programme-level) → AC.PO.1 + AC.PO.2 (prime objective). See §4 for AC text + verification path; §6 for ladder-up table; §6.5 for extraction-shape per-inventory-item disposition.
 
 ### Owner-gate items (numbered)
 
-Four owner-gate items (per `feedback_summarize_and_surface_decisions`):
+**Surface A** (user-facing capabilities — original four; per `feedback_summarize_and_surface_decisions`):
 
 - **D-Q.M6.1** — Plugin tree placement: `plugins/dev-sdlc/` (RECOMMEND) vs `framework/dev-sdlc/`.
 - **D-Q.M6.2** — Objective-extraction skill at v0.1.0: defer entirely (RECOMMEND) vs ship a skill stub vs ship complete.
 - **D-Q.M6.3** — Per-project CLI verb naming: `loam project ...` (RECOMMEND) vs `loam dev ...` vs `loam new ...`.
 - **D-Q.M6.4** — `/start-project` skill ship-at-v0.1.0: ship (RECOMMEND) vs defer.
 
-Plus one method-shape decision the plan resolves but documents for transparency:
+**Surface B** (extraction shape — added 2026-04-29 owner-directive expansion):
+
+- **D-Q.M6.6** — Ship shape: single multi-component amendment vs sub-amendment series M6a → M6b → M6c (RECOMMEND series; mirror M1.rename precedent).
+- **D-Q.M6.7** — Hands-off-lifecycle A1-A4 gates disposition: PARTITION (the four gate hooks + `_gate_helpers.py` MOVE into the plugin under `plugins/dev-sdlc/hooks/`; the `settings.json.fragment` SessionStart stanza for the runtime first-run/statusline STAYS in `framework/hands-off-lifecycle/` because it's runtime-load-bearing) (RECOMMEND PARTITION) vs MOVE-WHOLE vs STAY-WHOLE.
+- **D-Q.M6.8** — `framework/tools/loam/` (loam amend) disposition: PARTITION (MOVE the dispatch + plan templates + amend bookkeeping logic into the plugin; STAY the unified-CLI wrapper + the `amend` subcommand surface that publishes-mode users may still need to inspect prior to v0.2's full removal) vs MOVE-WHOLE (RECOMMEND MOVE-WHOLE — `loam amend` is dev-discipline machinery; users without dev-mode have no reason to invoke it; partition risk on M2 cutover acceptable per §11 finding #11) vs STAY-WHOLE.
+- **D-Q.M6.9** — Methodology + convention docs (`docs/odd-methodology.md`, `docs/odd-in-loam.md`, `docs/duration-estimation-rubric.md`, dev CDCs from FUTURE_IDEAS.md lines 13-198): MOVE into `plugins/dev-sdlc/docs/` vs symlink-shim (RECOMMEND MOVE; the plugin becomes the canonical home; the public `docs/design/odd.md` short-form stays in `framework/`-relative `docs/design/` per the existing M2 partition `dev_and_public` placement).
+
+Plus method-shape decisions the plan resolves but documents for transparency:
 
 - **D-Q.M6.5** — `loam project` subcommand discovery mechanism: entry-point group `loam.cli.subcommands` (RECOMMEND; plan-doc §10 D-build.M6.5) vs hardcoded subcommand list patched via host registry vs separate `loam-project` console-script binary.
+
+(D-build.M6.10..M6.16 are Surface-B-side method decisions enumerated in §10.)
 
 ### Halt-and-surface findings encountered at plan-authoring time
 
@@ -211,13 +229,15 @@ Each function is import-stable (no `_internal_*` shapes). Pydantic models for `P
 
 **Test:** `plugins/dev-sdlc/tests/test_AC_OSS_M6_7_python_api_surface_stable.py` (new).
 
-### AC.OSS-M6.8 — M2 partition manifest classifies `plugins/dev-sdlc/` as `dev_and_public`
+### AC.OSS-M6.8 — M2 partition manifest classifies `plugins/dev-sdlc/` (M6a baseline shape: `dev_and_public`; reclassified at M6b per AC.OSS-M6.13 + D-build.M6.14)
 
-`framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml` extends:
+`framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml` extends at M6a:
   - `audit_roots:` adds `plugins/`.
   - `dev_and_public:` adds `- glob: "plugins/dev-sdlc/**"`.
 
-The synthesis tool's classification check (post-M2 contract) classifies every file under `plugins/dev-sdlc/` as `dev_and_public`; synthesis includes the plugin in the public artefact.
+The synthesis tool's classification check (post-M2 contract) classifies every file under `plugins/dev-sdlc/` as `dev_and_public`; synthesis includes the plugin in the public artefact AT M6a (Surface A baseline — the plugin contains only user-facing capabilities at this point).
+
+**Surface B reclassification at M6b** (per AC.OSS-M6.13 + D-build.M6.14): once the dev-machinery extraction completes, `plugins/dev-sdlc/**` reclassifies from `dev_and_public` to `dev_only` — the plugin THEN contains dev-discipline machinery extracted from the M2 manifest's pre-M6b `dev_only` block. The reclassification is one of M6b's load-bearing diff actions.
 
 **Verification:** a unit test invokes the partition manifest's `partition_complete(...)` against a synthetic workspace state including `plugins/dev-sdlc/` files; asserts (a) every file classifies, (b) every file lands in `dev_and_public`. Plus an integration test running `synth.py` against canonical HEAD; asserts the synthetic tree contains `plugins/dev-sdlc/`.
 
@@ -233,18 +253,89 @@ If owner rules SHIP at D-Q.M6.4: `plugins/dev-sdlc/skills/start-project.md` exis
 
 **Test:** `plugins/dev-sdlc/tests/test_AC_OSS_M6_9_start_project_skill_shipped.py` (new — conditional on D-Q.M6.4).
 
+### AC.OSS-M6.10 — Dev CDCs MOVE from FUTURE_IDEAS.md into plugin docs (Surface B)
+
+The 10 dev CDCs currently parked at `docs/rebuild/FUTURE_IDEAS.md` lines 13-198 (step-by-step-when-system-cannot-act, plan-before-code, run-all-execution-through-background-agents, scope-only-dispatch, setup-scripts-self-retire, research-before-plan, shutdown-broad-catch, audit-finding-triage, amendment-dispatch-test-scope, 529-overload-recovery) MOVE to `plugins/dev-sdlc/docs/cdcs/<name>.md` (one file per CDC). FUTURE_IDEAS.md retains a redirect placeholder ("These CDCs lived here until the Dev/SDLC plugin landed; they now live at `plugins/dev-sdlc/docs/cdcs/`").
+
+**Verification:** unit test asserts (a) every CDC's body text is preserved byte-identically in the new location (HC#4 byte-content invariant on the moved content), (b) FUTURE_IDEAS.md no longer carries the CDC bodies, (c) FUTURE_IDEAS.md carries a redirect placeholder. **Test:** `plugins/dev-sdlc/tests/test_AC_OSS_M6_10_cdcs_moved_to_plugin.py` (new — M6b).
+
+### AC.OSS-M6.11 — Long-form ODD methodology MOVE to plugin docs (Surface B)
+
+`docs/odd-methodology.md` (794 LOC) and `docs/odd-in-loam.md` (1058 LOC) MOVE to `plugins/dev-sdlc/docs/odd-methodology.md` and `plugins/dev-sdlc/docs/odd-in-loam.md`. The condensed `docs/design/odd.md` (259 LOC public surface) STAYS.
+
+**Verification:** unit test asserts (a) the moved files exist at the new location with byte-identical content, (b) the original locations no longer carry the long-form content, (c) `docs/design/odd.md` is unchanged byte-identically (HC#4 invariant on the public-facing condensed form). **Test:** `plugins/dev-sdlc/tests/test_AC_OSS_M6_11_odd_methodology_moved.py` (new — M6b).
+
+### AC.OSS-M6.12 — `loam-mode` MOVE to plugin; dev-mode delivered via plugin (Surface B)
+
+`framework/tools/loam-mode/` MOVES whole-package to `plugins/dev-sdlc/loam-mode/`. The package's entry-point + console-script registrations update to reflect the new location. `docs/rebuild/dev-mode-manifest.yaml` MOVES to `plugins/dev-sdlc/dev-mode-manifest.yaml`. The selector's path-resolution updates to read the manifest from the plugin-relative path (with workspace-relative fall-through per Idea 26 to support pre-extraction state during M6b's commit window).
+
+**Verification:** integration test asserts (a) `loam-mode audit` runs from the new location, (b) `loam-mode select_corpus(mode=dev)` returns the dev-mode corpus paths correctly, (c) a workspace whose `bootstrap.yaml` does NOT enable `dev_sdlc` does NOT auto-load any dev-mode artefacts at SessionStart (NORMAL USE behaviour preserved). **Test:** `plugins/dev-sdlc/tests/test_AC_OSS_M6_12_loam_mode_moved_to_plugin.py` (new — M6b).
+
+### AC.OSS-M6.13 — M2 partition manifest `dev_only` block retires (Surface B)
+
+Post-M6b, `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`'s `dev_only:` list is empty (or removed entirely; the schema admits both shapes). What previously lived in `dev_only` either:
+  - Lives inside `plugins/dev-sdlc/**` (which classifies via the `plugins/dev-sdlc/**` glob added in AC.OSS-M6.8 — but per the extraction, the plugin itself contains DEV-DISCIPLINE machinery, so the glob's classification at M6b shifts from `dev_and_public` to either `dev_only` (the plugin doesn't ship publicly at all) or to a NEW partition class `plugin_publishable` reflecting "the plugin's BASE ships publicly, but its dev-discipline subtree at `plugins/dev-sdlc/docs/cdcs/`, `plugins/dev-sdlc/docs/odd-methodology.md`, `plugins/dev-sdlc/loam-amend/` STAYS dev-only" — the partition shape decision is D-build.M6.13 below in §10).
+  - Has STAYed under one of the inventory items 8, 14, 15, or under the audit-tools category (e.g. `framework/tools/heavy-b-migrate/**`) which retains its `dev_only` classification — in which case `dev_only` does NOT fully retire and AC.OSS-M6.13's verification is "the `dev_only` list contains ONLY items 8, 14, 15 + migration tools per the recorded post-extraction shape" rather than "is empty." The plan recommends the second form (D-build.M6.13: keep `dev_only` for migration tools + audit tools; retire it only for content that moved to the plugin).
+
+**Verification:** unit test asserts the post-M6b `dev_only` list matches the recorded post-extraction shape (per D-build.M6.13). The synthesis-tool's classification check passes against canonical HEAD post-M6b. **Test:** `framework/tools/pos-publish-framework-only/tests/test_AC_OSS_M6_13_dev_only_block_post_extraction.py` (new — M6b).
+
+### AC.OSS-M6.14 — Hands-off-lifecycle A1-A4 gate hooks PARTITION + MOVE to plugin (Surface B)
+
+The A1-A4 gate hooks (per Item 6 disposition: `objective_binding_gate.py`, `tdd_guard.py`, `agent_guard.py`, `bash_guard.py`, `dispatch_setup_hook.py`, `_gate_helpers.py`, `active_scope_sentinel.py`, `agent_file_authoring.py`, `agent_file_runner.py`, `corpus_inline_session_start.py`, `corpus_load_sentinel.py`, `corpus_load_session_start.py`) MOVE from `framework/hands-off-lifecycle/hooks/` to `plugins/dev-sdlc/hooks/`. Their `settings.json.fragment` PreToolUse stanza MOVES with them. The plugin's contribution registers these hooks via Claude Code's `settings.json` extension surface at `contribute(host)` time — only when the plugin is enabled (i.e. only in DEV MODE workspaces). Hands-off-lifecycle's runtime hooks (`first-run.sh`, `first_run_*.py`, `statusline.py`, `pos_session_start.py`) STAY at `framework/hands-off-lifecycle/hooks/`.
+
+**Verification:** unit tests assert (a) the A1-A4 gate hooks exist at the new location with byte-identical content, (b) the existing A1-A4 tests at `framework/hands-off-lifecycle/tests/test_AC_AG_*.py` MOVE alongside the source (the seal-test fence moves with the hooks), (c) a NORMAL USE workspace's session loads without the gates active, (d) a DEV MODE workspace's session loads with the gates active per the original A1-A4 contract. **Test:** `plugins/dev-sdlc/tests/test_AC_OSS_M6_14_a1_a4_gates_partition_to_plugin.py` (new — M6b) + the moved A1-A4 tests.
+
+### AC.OSS-M6.15 — `loam amend` MOVE to plugin; unified-CLI wrapper STAYS (Surface B)
+
+`framework/tools/loam/src/loam_cli/amend/` (the entire `amend` submodule + its `commands/`, `template_engine.py`, `seal_diff.py`, `narrative.py`, `manifest.py`, `baseline.py`, `dry_run.py`, `paths.py`, `rename_detection.py`, `sidecar.py`, `tracker_registration.py`) MOVES to `plugins/dev-sdlc/loam-amend/src/loam_amend/`. A NEW console-script entry-point `loam-amend` is registered IN THE MIGRATED PACKAGE. The unified `loam` CLI at `framework/tools/loam/` STAYS as a thin dispatcher: `loam amend ...` invocations resolve via the unified `loam.cli.subcommands` entry-point group introduced at M6a (per AC.OSS-M6.6); the plugin's `pyproject.toml` ships `[project.entry-points."loam.cli.subcommands"]` with `amend = "loam_amend.cli:build_amend_subcommand"` AND `project = "loam.plugins.dev_sdlc.cli:build_project_subcommand"`. **CRITICAL DEPENDENCY** (per §11 finding #11 + §9 halt-trigger #11): the M6b extraction must stage the migration so the canonical tree retains an INSTALLED `loam amend` console-script throughout the M6b commit window — the build process itself uses `loam amend` for amendment seal.
+
+**Verification:** unit tests assert (a) `loam amend` subcommand resolves via the plugin's entry-point post-extraction, (b) the existing `framework/tools/loam/tests/test_*.py` tests MOVE alongside the source (the seal-test fence moves with the package), (c) `loam amend --help` exits 0 in a workspace where the plugin is enabled, (d) `loam amend --help` returns an "amend subcommand not available — install plugins/dev-sdlc/" message in a workspace where the plugin is NOT enabled. **Test:** `plugins/dev-sdlc/tests/test_AC_OSS_M6_15_loam_amend_moved_to_plugin.py` (new — M6b) + the moved `loam_cli.amend.*` tests.
+
+### AC.OSS-M6.16 — Dev-discipline convention docs authored under plugin (Surface B)
+
+NEW convention codification documents authored at `plugins/dev-sdlc/docs/conventions/`:
+  - `plan-docs.md` — plan-doc / sub-plan / manifest YAML conventions (per Item 3 + Item 16 disposition).
+  - `fidraft-pattern.md` — FIDRAFT no-overhead capture pattern + DRAFT file lifecycle conventions (per Item 10).
+  - `sealed-component-invariants.md` — HC#4 byte-content invariant + per-invariant frozen baselines + ODD §4 retire-and-rebaseline conventions (per Item 11).
+  - `commit-ladder.md` — Seal ritual + commit-ladder convention (per Item 12).
+  - `five-gate-chain.md` — Five-gate chain (research-plan → research → proposal → brief → build → seal) (per Item 13).
+  - `amendment-cycle.md` — Amendment-cycle conventions (per Item 13).
+
+Plus a NEW `plugins/dev-sdlc/templates/component/test_no_sealed_amendments.py.template` (per Item 16). Each convention doc is 100-300 LOC (concise codification of currently-precedent-driven shape; not exhaustive prose). Plus updates to `docs/rebuild/STATE.md`, `docs/odd-in-loam.md` (post-MOVE, the in-plugin copy), and the master plan to point at the new convention-doc home.
+
+**Verification:** unit tests assert (a) each convention file exists with at least the recorded section structure (objective + summary + "applied immediately to..." footer), (b) cross-references from canonical-tree docs (post-MOVE) point at the plugin-relative paths. **Test:** `plugins/dev-sdlc/tests/test_AC_OSS_M6_16_convention_docs_authored.py` (new — M6b).
+
 ### AC.OSS-M6.S — Sealed-component fence
 
-Three components (or four if D-Q.M6.1 lands `framework/dev-sdlc/`) in the M6 fence:
+**Three sub-amendments — three sealed-component fences** per the M6a/M6b/M6c series (D-Q.M6.6 RECOMMEND series).
+
+**AC.OSS-M6.S(a) — M6a fence (Surface A baseline plugin).** Three components (or four if D-Q.M6.1 lands `framework/dev-sdlc/`) in the M6a fence:
 
   - **`plugins/dev-sdlc/`** (NEW component) — carries the plugin source + tests + per-component `tests/SEAL_COMMIT` sidecar + per-component `tests/test_no_sealed_amendments.py` seal-test (authored at M6 alongside the source).
   - **`framework/tools/loam/`** — extends `loam_cli.cli.main` to discover `project` subcommand via the new entry-point group (one source-file edit + one new test).
   - **`framework/tools/pos-publish-framework-only/`** — extends the partition manifest YAML + minor classifier test update (one YAML edit + one new test).
   - **(possible 4th)** — if D-Q.M6.5 rules entry-point-group form for subcommand discovery (RECOMMEND), `framework/tools/loam/` source change is the only diff; if it rules host-registry form, `framework/workspace-bootstrap/` MAY enter the fence (additional `host.loam_cli_registry` attribute). Plan recommends entry-point-group form to keep workspace-bootstrap OUT of the fence.
 
-Per-component seal-tests advance their `SEAL_COMMIT` sidecars at seal time. The seal-diff fence is enforced via `tests/test_no_sealed_amendments.py` in each component. **`plugins/dev-sdlc/`'s seal-test is authored AT M6** (NEW component — first seal). The pattern follows existing components (`framework/dormancy/tests/test_no_sealed_amendments.py` is the template).
+Per-component seal-tests advance their `SEAL_COMMIT` sidecars at seal time. The seal-diff fence is enforced via `tests/test_no_sealed_amendments.py` in each component. **`plugins/dev-sdlc/`'s seal-test is authored AT M6a** (NEW component — first seal). The pattern follows existing components (`framework/dormancy/tests/test_no_sealed_amendments.py` is the template).
 
-**Verification:** seal-diff tests pass post-build for all fenced components. The new seal-test in `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` is authored to admit M6's diff (`plugins/dev-sdlc/`-relative paths) and reject anything outside the plugin's subtree.
+**M6a verification:** seal-diff tests pass post-build for all fenced components. The new seal-test in `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` is authored to admit M6a's diff (`plugins/dev-sdlc/`-relative paths) and reject anything outside the plugin's subtree.
+
+**AC.OSS-M6.S(b) — M6b fence (Surface B extraction migrations).** Five-to-seven components in the M6b fence (depending on how loam-mode + plan-tree are classified):
+
+  - **`plugins/dev-sdlc/`** — destination of MOVE-class items (5, 7, 9, 17) + PARTITION-class items (1, 2, 3, 6, 10, 11, 12, 13, 16). Seal-test admits both `plugins/dev-sdlc/`-relative and the per-PARTITION-item canonical-side residue (e.g. updated FUTURE_IDEAS.md placeholder, updated STATE.md cross-references).
+  - **`framework/hands-off-lifecycle/`** — source side of Item 6 PARTITION. Seal-test admits the file deletions for the moved hooks + the unchanged runtime hooks.
+  - **`framework/tools/loam/`** — source side of Item 7 (loam amend) MOVE. Seal-test admits the file deletions for the moved `amend/` submodule + the unchanged unified-CLI wrapper.
+  - **`framework/tools/loam-mode/`** — source side of Item 5 MOVE. Seal-test admits the file deletions for the whole package (or admits empty post-deletion).
+  - **`framework/tools/pos-publish-framework-only/`** — partition manifest extension per Item 13. Seal-test admits the YAML edit + new test.
+  - **(plan-tree pseudo-component)** — `docs/rebuild/`-relative changes to FUTURE_IDEAS.md, STATE.md, master plan cross-references, and the moved long-form ODD docs (Items 1, 2, 11, 12, 13). The plan-tree is NOT a sealed component today; M6b's diff under `docs/rebuild/` is admitted via the M6b manifest's `universal_paths.prefixes` extension to include `docs/odd-methodology.md` + `docs/odd-in-loam.md` + `docs/duration-estimation-rubric.md` (which are file-level, not subtree).
+
+**M6b verification:** seal-diff tests pass post-build for all fenced components. The MOVE operations are verifiable via `git log --follow` on the moved files; the PARTITION operations are verifiable via paired tests (one asserting destination existence, one asserting source absence).
+
+**HC#4 byte-content invariant** under M6b: every MOVE-class item's content must be byte-identical at the destination (verified by the per-AC tests). The `git mv` mechanic preserves bytes unmodified; the only AC byte-divergence is in the cross-reference UPDATES (e.g. STATE.md's reference to `docs/odd-methodology.md` becomes `plugins/dev-sdlc/docs/odd-methodology.md`) — these are intentional and recorded in the M6b method-decision register.
+
+**AC.OSS-M6.S(c) — M6c fence (cleanups).** One-to-three components in the M6c fence (the actual surface determined by what M6b leaves trailing). Likely candidates: `docs/rebuild/` plan-tree, `framework/tools/pos-publish-framework-only/` (final partition shape), `plugins/dev-sdlc/` (any documentation polish discovered during M6b that wasn't worth widening M6b's fence).
+
+**M6c verification:** seal-diff tests pass post-build. Final assertion: post-M6c, `loam-mode audit --workspace .` exits 0 against the canonical tree (the audit confirms no orphan dev-mode artefacts, no overlap, no cross-mode references — i.e. the extraction is internally consistent).
 
 ---
 
@@ -281,6 +372,85 @@ Per ODD §2.5 + dispatch authority + Idea 3's deferral text:
 | AC.OSS-M6.9 (/start-project skill shipped — D-Q.M6.4) | AC.OSS.6 (Claude-leverage surface) | AC.PO.1 (translation-burden — skill is intent-routing for user) |
 
 All ladder up to AC.PO.1 + AC.PO.2 (prime objective ACs in `docs/rebuild/VALUE_PROPOSITION.md`). Per `feedback_value_proposition_as_prime_objective`, this is the required reverse-trace.
+
+(Surface B's AC.OSS-M6.10..M6.16 ladder-up rows are appended in §6.5's per-AC table.)
+
+---
+
+## 6.5 Extraction shape — Surface B (dev-machinery into the plugin)
+
+### 6.5.1 Owner directive (verbatim, 2026-04-29)
+
+> "specifically review all the things in our current pos3, as well as canonical loam, and on top of what is in future ideas already, extract all of the dev-related things into the dev/sdlc plugin."
+
+The plugin is to BECOME the home of the dev-mode content per Idea 13's two-modes design — not just a tool users run on their projects, but the package that delivers DEV MODE itself. A user who installs the Dev/SDLC plugin gets dev mode; a user who doesn't gets NORMAL USE.
+
+### 6.5.2 Per-inventory-item disposition table
+
+Inventory cross-checked against the M2 partition manifest's `dev_only` block (`framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml` lines 147-175). The dispatch's preliminary inventory (14 items) is the seed; the table below verifies each + adds three items the agent identified during inventory walk.
+
+| # | Item | Current location | Disposition | Rationale | M6 phase |
+|---|---|---|---|---|---|
+| 1 | Dev CDCs (10 items at FUTURE_IDEAS.md lines 13-198) | `docs/rebuild/FUTURE_IDEAS.md` lines 13-198 | **PARTITION** — MOVE the CDC bodies to `plugins/dev-sdlc/docs/cdcs/<name>.md` (one file per CDC; mirrors the file-per-feedback pattern in `~/.claude/projects/.../memory/`); STAY the FUTURE_IDEAS.md "temporary parking" placeholder pointing at the new home (one-line redirect). The CDCs are dev-discipline material; FUTURE_IDEAS.md text already says "until the Dev/SDLC plugin (Idea 3 below) exists, this file is their temporary home. When the plugin lands, they migrate there." This MOVE executes that promise. | The CDCs are referenced by every dev-mode dispatch + `docs/odd-in-loam.md`; relocating them under the plugin makes the plugin self-contained as the dev-mode package. | M6b |
+| 2 | ODD methodology long-form: `docs/odd-methodology.md` (794 LOC) + `docs/odd-in-loam.md` (1058 LOC) | `docs/odd-methodology.md`, `docs/odd-in-loam.md` | **MOVE** to `plugins/dev-sdlc/docs/odd-methodology.md` + `plugins/dev-sdlc/docs/odd-in-loam.md`. The condensed `docs/design/odd.md` (259 LOC public surface) STAYS in `framework/`-relative location per existing M2 `dev_and_public` placement. | The long-form ODD is dev-mode-only; the M2 partition manifest already classifies them `dev_only`; relocating them under the plugin makes the plugin the canonical dev-mode home. The short-form `docs/design/odd.md` is the public surface; it stays where it is. | M6b |
+| 3 | Plan-doc / sub-plan / manifest YAML conventions | Currently expressed by precedent in `docs/rebuild/plans/` + by the dispatch template at `framework/tools/loam/templates/plan/dev-discipline.md` | **STAY** the actual plans (they're the project-level dev artefacts of canonical loam itself); **MOVE** the convention DOCS (the structural template + the schema + the methodology of authoring a plan-doc) into `plugins/dev-sdlc/docs/conventions/plan-docs.md` (NEW authored file, 200-300 LOC, codifying the precedent). | The historical plan-docs ARE canonical loam's dev work-history; they don't belong inside the plugin. The CONVENTIONS for authoring future plan-docs DO belong inside the plugin (it's what the plugin teaches). | M6b |
+| 4 | Dispatch templates (`sealed-component-build.md`, `dev-discipline.md`) | `framework/tools/loam/templates/dispatch/` + `templates/plan/` | **MOVE** to `plugins/dev-sdlc/templates/dispatch/` + `plugins/dev-sdlc/templates/plan/`. The unified `loam` CLI's template-engine (`framework/tools/loam/src/loam_cli/amend/template_engine.py`) reads templates by package-relative path; the move requires updating the resolver to read from the plugin's package data. | These are dev-discipline shaped artefacts that drive sealed-component-build dispatches. They don't run in NORMAL USE. | M6b |
+| 5 | `loam-mode` (dev-mode auto-load mechanism) | `framework/tools/loam-mode/` | **MOVE** to `plugins/dev-sdlc/loam-mode/` (preserve the package layout: `pyproject.toml`, `src/loam_mode/`, `tests/`, `README.md`). Update entry-point group registrations + console-script registrations. The dev-mode-manifest at `docs/rebuild/dev-mode-manifest.yaml` MOVES to `plugins/dev-sdlc/dev-mode-manifest.yaml`. | `loam-mode` is the package that delivers dev mode itself — its job is "load dev artefacts at SessionStart for DEV MODE workspaces." When dev-mode-as-a-plugin lands, `loam-mode` IS the plugin's mode-routing module. Moving it into the plugin makes the plugin the single deliverable for dev mode. | M6b |
+| 6 | Hands-off-lifecycle A1-A4 structural-enforcement gate hooks (`objective_binding_gate`, `tdd_guard`, `agent_guard`, `bash_guard`, `dispatch_setup_hook`, `_gate_helpers`, `active_scope_sentinel`, `corpus_inline_session_start`, `corpus_load_*`) | `framework/hands-off-lifecycle/hooks/` | **PARTITION.** The A1-A4 GATE hooks (`objective_binding_gate.py`, `tdd_guard.py`, `agent_guard.py`, `bash_guard.py`, `dispatch_setup_hook.py`, `_gate_helpers.py`, `active_scope_sentinel.py`, plus the corpus-inline + corpus-load helpers and the `agent_file_authoring.py` / `agent_file_runner.py` + the `__init__.py` / settings fragment they rely on) MOVE to `plugins/dev-sdlc/hooks/`. The runtime SessionStart helper hooks (`first-run.sh`, `first_run_*.py`, `statusline.py`, `pos_session_start.py`, `__init__.py`) STAY in `framework/hands-off-lifecycle/hooks/` — they are runtime first-run-and-statusline machinery, NOT dev-mode-only enforcement; they ship publicly. (Per docstring inspection: `objective_binding_gate.py` "NORMAL USE workspaces no-op the gate at the mode-bit short circuit (D-A2.5 / programme D4 lock — A2 is ODD-discipline, DEV-MODE-only)" — these hooks are purpose-built dev-mode-only enforcement.) | The gates are dev-mode-only by docstring contract; their SessionStart-fragment hook-config registration MOVES with them under the plugin; the plugin's contribution registers the hooks via Claude Code's `settings.json` extension surface (per Lens 1: leverage Claude's PreToolUse hook protocol). The `framework/hands-off-lifecycle/` component proper STAYS; it just becomes thinner (its gate-enforcement substrate moves to the plugin; its first-run-supervisor + statusline + `MemorySupervisor` wiring remain). | M6b |
+| 7 | `loam amend` bookkeeping CLI (the renamed pos-amend) | `framework/tools/loam/` | **MOVE** entire package to `plugins/dev-sdlc/loam-amend/`. Rename the console-script entry-point from `loam` to `loam-amend` IN THE MIGRATED PACKAGE; THE UNIFIED `loam` CLI WRAPPER STAYS at `framework/tools/loam/` as a thin dispatcher (no-op when the plugin isn't installed; delegates to the plugin's subcommand-discovery surface when it is). Per §10 D-Q.M6.8 RECOMMEND MOVE-WHOLE; the unified-CLI shim is small enough to author fresh in canonical (no second-pass rename). | `loam amend` IS the dev-discipline bookkeeping mechanism; users without dev-mode have no reason to invoke it. The unified-CLI wrapper STAYS so that `loam project ...` (M6 user-facing surface) remains a stable verb tree even when `amend` is plugin-supplied. CRITICAL DEPENDENCY (per §11 finding #11): the build process itself uses `loam amend` for amendment seal; the M6b extraction must be staged so the canonical tree retains an INSTALLED copy of `loam amend` while the migration is in flight. | M6b |
+| 8 | `pos-publish-framework-only` synthesis tool | `framework/tools/pos-publish-framework-only/` | **STAY** at canonical location. The synthesis tool's job is to PRODUCE the public artefact; it operates against canonical's tree. It cannot live inside `plugins/dev-sdlc/` because the plugin is itself one of the artefacts the tool's manifest classifies. **Disposition:** STAY. The tool's `publish-mode-manifest.yaml` is what gets EXTENDED (per AC.OSS-M6.8 already + new AC.OSS-M6.13 — partition manifest's `dev_only` is RETIRED in M6b post-extraction because most `dev_only` content has moved into the plugin's `plugins/dev-sdlc/**` glob; what remains is small enough to inline into `dev_and_public` exclusion subtractive globs). | Synthesis-tool-cannot-live-inside-its-own-output-classification — circular dependency. | STAY |
+| 9 | Duration-estimation rubric | Currently in `~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_duration_estimation_rubric.md` (host-global per-user) PLUS canonical copy at `docs/duration-estimation-rubric.md` (M2-classified `dev_only`) | **MOVE** the canonical copy to `plugins/dev-sdlc/docs/duration-estimation-rubric.md`. The host-global per-user copy STAYS at `~/.claude/...` (it's the user's own per-project memory; not in the canonical tree's authority). | Same logic as ODD methodology — long-form dev-mode-only convention belongs in the plugin. | M6b |
+| 10 | FIDRAFT no-overhead capture pattern + DRAFT file lifecycle | `docs/rebuild/FUTURE_IDEAS_DRAFT.md` (workspace-side draft) + the convention text at top of FUTURE_IDEAS.md + Idea 27 graduation pattern | **PARTITION.** MOVE the FIDRAFT lifecycle CONVENTIONS (the "no-overhead capture, daily rigor reviews, agents-surface-to-chat" rules from FUTURE_IDEAS_DRAFT.md lines 1-15) to `plugins/dev-sdlc/docs/conventions/fidraft-pattern.md` (NEW authored file). STAY the actual `FUTURE_IDEAS_DRAFT.md` file — it's canonical loam's project-level capture surface; analogous to Item 3's "actual plans STAY". | Same partition logic as Item 3: the pattern is what the plugin teaches; the actual FIDRAFT file is canonical loam's working draft. | M6b |
+| 11 | HC#4 byte-content invariant + per-invariant frozen baselines + ODD §4 retire-and-rebaseline conventions | Currently expressed in `docs/odd-in-loam.md` §10 + amendment narratives + `framework/tools/loam/`'s seal-diff-test machinery | **PARTITION.** The CONVENTIONS (HC#4 definition, frozen-baseline rules, retire-and-rebaseline mechanics) MOVE to `plugins/dev-sdlc/docs/conventions/sealed-component-invariants.md` (NEW authored file, condensed from `docs/odd-in-loam.md` §10). The IMPLEMENTATION (the `loam_cli.amend.seal_diff` module + per-component `tests/test_no_sealed_amendments.py`) MOVES with `loam amend` per Item 7. The PER-COMPONENT baseline data (`tests/SEAL_COMMIT` sidecars + `seals/SEAL_COMMIT.<slug>` narratives) STAYS in each sealed component (component-local data; not cross-cutting). | Convention-text moves; per-component data stays; engine moves with `loam amend`. | M6b |
+| 12 | Seal ritual + commit ladder convention (`chore(seals):`, `docs(plans):`, etc.) | Precedent-driven; partially codified in `framework/tools/loam/templates/dispatch/sealed-component-build.md` | **MOVE** the convention codification to `plugins/dev-sdlc/docs/conventions/commit-ladder.md` (NEW authored file, condensed from precedent + dispatch-template excerpts). Same M2 dev-only character. | Same logic as Item 11. | M6b |
+| 13 | Five-gate chain (research-plan → research → proposal → brief → build → seal) + amendment-cycle conventions | Currently expressed in `docs/odd-in-loam.md` + `docs/rebuild/STATE.md` §"Governing rules" rule #1 + master plan §6 sequencing | **MOVE** the convention codification to `plugins/dev-sdlc/docs/conventions/five-gate-chain.md` + `plugins/dev-sdlc/docs/conventions/amendment-cycle.md` (NEW authored files; condensed from the existing locations, which retain their references — `docs/rebuild/STATE.md` already classifies `dev_only`). | Same logic as Items 1, 11, 12. | M6b |
+| 14 | `framework/tools/heavy-b-migrate/`, `framework/tools/orphan-plist-cleanup/`, `framework/tools/upgrade-merge-resolver/`, `framework/tools/loam-migrate-host-config/`, `framework/tools/loam-migrate-launchd-labels/`, `framework/tools/loam-migrate-dormancy-config/` | `framework/tools/<each>/` | **STAY** at canonical location. These are MIGRATION tools — one-shot scripts run during canonical-loam architecture migrations (not dev-discipline machinery used by every dev-mode session). The M2 partition manifest already classifies them `dev_only`; that classification stays correct. They MAY land in the plugin at v0.2 if the dev-mode user audience grows to need them; at v0.1.0 they're noise inside the plugin. | Out-of-scope per §5 v0.1.0 deferrals (Item 14 = "anything else dev-related the agent identifies during inventory that isn't already on this list" — agent finding: these are migration tools, not dev-discipline machinery). | STAY |
+| 15 | (NEW — agent-identified) `CLAUDE.dev.md` (top-level dev-extension fragment) | `CLAUDE.dev.md` (workspace root) | **STAY** at workspace root. `CLAUDE.dev.md` is the top-level dev-extension fragment that loam-mode loads at SessionStart for DEV MODE workspaces (per `loam-mode B`'s load-time partition; M2 manifest classifies `dev_only`). It's a workspace-root entry point — it cannot live inside `plugins/dev-sdlc/` because Claude Code's loader reads workspace-relative paths at session start, not plugin-relative. | Workspace-root entry-point cannot live inside a plugin subtree. | STAY |
+| 16 | (NEW — agent-identified) Sealed-component fence pattern itself + `tests/test_no_sealed_amendments.py` template | Embedded in every sealed component | **STAY** in each component (per-component data); the TEMPLATE for authoring new components' seal-tests MOVES to `plugins/dev-sdlc/templates/component/test_no_sealed_amendments.py.template` (NEW). | Same partition logic: per-component data stays where it is; template/authoring-shape goes into the plugin. | M6b |
+| 17 | (NEW — agent-identified) `docs/rebuild/dev-mode-manifest.yaml` (the loam-mode dev-mode partition data) | `docs/rebuild/dev-mode-manifest.yaml` | **MOVE** to `plugins/dev-sdlc/dev-mode-manifest.yaml` (alongside Item 5's `loam-mode` source). The selector reads workspace-relative paths; the move requires updating the selector's path-lookup to either workspace-relative-or-plugin-relative fall-through (Idea 26 reader-fall-through), or to plugin-relative once the plugin owns the dev-mode-manifest. | The dev-mode partition is what `loam-mode` consumes; co-locating it with the package makes the plugin self-contained. | M6b |
+
+### 6.5.3 Overall extraction strategy
+
+**Extraction principle:** the plugin BECOMES the dev-mode package. After M6, a user who installs `plugins/dev-sdlc/` gets dev mode; a user who doesn't gets NORMAL USE. The M2 partition manifest's `dev_only` block (currently lines 147-175 of `publish-mode-manifest.yaml`) RETIRES post-M6 — most of its content has moved INTO `plugins/dev-sdlc/**`; what remains is so small (`framework/tools/<migration-tools>/`, `CLAUDE.dev.md`, `docs/rebuild/**` historical content) that it can be expressed as exclusion subtractive globs inside `dev_and_public` rather than as a separate `dev_only` class. **This is a programme-level dependency** flagged at §9 halt-trigger #11 + §11 finding #11.
+
+**Three migration mechanics** apply across the inventory:
+
+  - **`git mv` for whole-package moves.** Items 5 (`loam-mode`), 7 (`loam amend` package body), 9 (duration-estimation rubric file), 17 (dev-mode-manifest). `git mv` preserves history; the resulting commit is a rename + import-path update.
+  - **Re-author for convention codifications.** Items 1, 3, 10, 11, 12, 13, 16. The conventions are CURRENTLY expressed by precedent + scattered prose; M6b authors fresh codification documents inside the plugin. The originating precedent locations are updated to point at the new home.
+  - **Surgical PARTITION (file-by-file `git mv`) for shared components.** Item 6 (hands-off-lifecycle hooks). The component splits along the dev-mode-enforcement vs runtime-first-run line; each file moves individually based on its purpose.
+
+**Dispositions summary:** of 17 inventory items, 9 are MOVE/MOVE-WHOLE, 5 are PARTITION, 3 are STAY. The 9 MOVE items are M6b's largest sub-amendment surface; the 5 PARTITION items are M6b's most delicate (require per-file analysis); the 3 STAY items are no-ops with documentation updates.
+
+### 6.5.4 Ship-shape: sub-amendment series M6a → M6b → M6c (D-Q.M6.6 ruling)
+
+**The extraction is too large for one amendment.** Following the M1.rename precedent (M1a..M1g sealed sequentially over 2026-04-29) — the M1 cycle's per-amendment tests verified renames component-by-component, with each amendment touching one mechanical concern at a time. M6's extraction has the same shape: many mechanical concerns, each independently testable, each carrying a fence-isolation risk if bundled with others.
+
+**Recommended ship shape:**
+
+  - **M6a — baseline plugin** (~90-180 min, mirror master plan §5 M6 row's original estimate). Authors `plugins/dev-sdlc/` with the user-facing v0.1.0 capability set ONLY (Surface A: AC.OSS-M6.1..M6.9 per the original plan-doc). Does NOT extract any dev machinery. Lands the plugin as a working v0.1.0-pattern-establishing artefact. **Sealed independently.** ACs: AC.OSS-M6.1..M6.9 + AC.OSS-M6.S(a) (sealed-component fence: 3 components — `plugins/dev-sdlc/`, `framework/tools/loam/`, `framework/tools/pos-publish-framework-only/`).
+  - **M6b — extraction migrations** (~150-240 min). Per-inventory-item `git mv` + import-path updates + plugin-doc authoring + the M2 partition-manifest collapse + `loam-mode` location migration + hands-off-lifecycle hook PARTITION. **Sealed independently.** ACs: AC.OSS-M6.10..M6.16 + AC.OSS-M6.S(b) (sealed-component fence: ~5-7 components — `plugins/dev-sdlc/`, `framework/hands-off-lifecycle/`, `framework/tools/loam/`, `framework/tools/pos-publish-framework-only/`, `docs/rebuild/`-as-plan-tree, plus `framework/tools/loam-mode/` if classified as a sealed component, plus the `docs/odd-*.md` move treated as a documentation-tree move).
+  - **M6c — cleanups** (~30-60 min). Post-extraction trailing edges: dead-link cleanup in surrounding docs, cross-reference updates in `docs/rebuild/STATE.md` + master plan + remaining FUTURE_IDEAS references, retirement of any `dev_only` block in the partition manifest if M6b didn't complete it. **Sealed independently.** ACs: AC.OSS-M6.S(c) (single sealed-component fence covering whatever components the trailing-edge work touches).
+
+**Total wall-clock: ~270-480 min midpoint 360.** Compared to a single-amendment ship (which would be 270-450 min by the same arithmetic but with much higher fence-collision risk + harder rollback + harder review-pass), the series shape costs effectively zero overhead for substantially better safety.
+
+**Inter-amendment dependencies:**
+
+  - M6b CANNOT start until M6a is sealed (M6b's git-mv operations require the plugin tree to exist as a destination).
+  - M6c CANNOT start until M6b is sealed (M6c's cleanups respond to whatever trailing edges M6b leaves).
+  - M9.scrub (per master plan §6) is gated on M6's full completion (all three sub-amendments) — scrub captures the final public surface; until M6b retires `dev_only` block content, the partition is in flight.
+  - M7.docs-lane remains parallel-safe with all three sub-amendments per master plan §6 sequencing rule #4 — M7's content authoring is `framework/`-relative; M6's extraction is `plugins/`-relative + `dev_only`-block-relative; no overlap.
+
+### 6.5.5 Per-AC ladder-up table (Surface B)
+
+| AC | Master plan AC ladder | Prime objective |
+|---|---|---|
+| AC.OSS-M6.10 (CDCs MOVE to plugin docs) | AC.OSS.6 (Dev/SDLC plugin ships) + AC.OSS.3 (no dev-discipline machinery in public — by extracting the dev CDCs into the plugin, the main FUTURE_IDEAS.md becomes lighter and dev-machinery is structurally separated) | AC.PO.2 (toolkit-primitive — plugin self-contains the dev-discipline corpus) |
+| AC.OSS-M6.11 (long-form ODD methodology MOVE to plugin docs) | AC.OSS.3 + AC.OSS.6 | AC.PO.2 (the methodology IS the toolkit-primitive that the plugin teaches) |
+| AC.OSS-M6.12 (loam-mode MOVE to plugin) | AC.OSS.6 (Dev/SDLC plugin DELIVERS dev mode) | AC.PO.2 (dev mode is plugin-supplied; NORMAL USE is the harness baseline) |
+| AC.OSS-M6.13 (M2 partition manifest `dev_only` block retires; what remains expressed as `dev_and_public` exclusions) | AC.OSS.3 (no dev-discipline in public) — once dev-discipline lives in the plugin, the partition simplifies | AC.PO.2 (cleaner partition surface) |
+| AC.OSS-M6.14 (hands-off-lifecycle A1-A4 gate hooks PARTITION + MOVE to plugin) | AC.OSS.6 (gates are dev-mode-only; they live with the plugin) | AC.PO.2 (gate hooks are plugin-delivered structural enforcement) |
+| AC.OSS-M6.15 (loam amend MOVE to plugin; unified-CLI wrapper STAYS) | AC.OSS.6 (loam amend is dev-discipline machinery) | AC.PO.2 (amend is plugin-delivered) |
+| AC.OSS-M6.16 (convention docs — five-gate chain, amendment cycle, sealed-component invariants, FIDRAFT pattern, plan-doc/manifest conventions, commit ladder, seal-test template — authored under plugin) | AC.OSS.6 + AC.OSS.3 | AC.PO.2 (the plugin teaches the conventions) |
 
 ---
 
@@ -327,7 +497,15 @@ Per dispatch + `feedback_subagent_odd_violation_halt`:
 7. **HC#4 byte-content invariant breach.** Per Finding #6. The plugin is NEW; no HC#4 sample paths under it; the HC#4 invariant should remain GREEN through M6. If builder finds an HC#4 retire-and-rebaseline is required (e.g. partition-manifest change impacts a sample path the plan-author didn't see), halt; do NOT silently rebaseline.
 8. **ODD §2.5 violations in plugin source.** Per `feedback_subagent_odd_violation_halt` — every code path in M6's diff must ladder up to a named AC under AC.OSS-M6.\*. If builder finds a defensive branch without backing AC, halt.
 9. **Frozen-baseline / per-invariant-BASELINE concerns.** If any of the 3 (or 4) fenced components' seal-test BASELINEs are pinned (`frozen_baseline: true`) and M6 requires advancing them, halt and surface; the BASELINE advance must be explicit. **Verified at plan-authoring:** none of the components in M6's fence have frozen baselines today; recommend `frozen_baseline: false` per existing precedent.
-10. **Wall-time exceeds projected estimate by >50%.** Per master plan §8 halt-trigger #8. Build slice predicted 90-180 min midpoint 135; halt at ~270 min if not converging. Surface current state; owner triages whether to continue, split, or pause.
+10. **Wall-time exceeds projected estimate by >50%.** Per master plan §8 halt-trigger #8. Build slice predicted 90-180 min midpoint 135 for M6a + 150-240 min for M6b + 30-60 min for M6c; halt at ~360 min for M6a, ~360 min for M6b, ~90 min for M6c if not converging. Surface current state; owner triages whether to continue, split, or pause.
+
+11. **Surface B extraction encounters self-bootstrap blocker.** Per Finding #11 + §10 D-Q.M6.8 + §10 D-build.M6.15. If at M6b build-time the shadow-then-flip mechanic encounters an unforeseen blocker (e.g. `loam amend` plugin-side cannot resolve subcommand discovery while canonical-side is still present), halt and surface — owner ruling required.
+
+12. **Surface B extraction reveals an item with ambiguous disposition not anticipated by §6.5.2.** If during M6b an inventory item turns out to require a different MOVE/STAY/PARTITION classification than the table records (e.g. a hidden cross-component dependency surfaces), halt and surface — do NOT silently re-classify.
+
+13. **Two-modes design contradiction.** Per Finding #13: Idea 13 + the extraction directive are compatible. If at build time a contradiction surfaces (e.g. an artefact NORMAL USE depends on that the extraction would move into the plugin), halt and surface specific contradiction.
+
+14. **Programme-level partition manifest dependency**. Per Finding #12: M2's partition manifest is mutated by M6b. If the mutation breaks any M2 invariant (audit-completeness, classification-uniqueness), halt and surface — the M2 contract is plan-doc authority for canonical loam's public-surface synthesis.
 
 ---
 
@@ -377,6 +555,49 @@ Per dispatch + `feedback_subagent_odd_violation_halt`:
 
 **Recommendation:** **Option A — ship the skill.** The cost is modest; the leverage (first-click intent routing for the developer audience landing on HN/GitHub) is high. Per Lens 1 (Claude-leverage-first): skills are the right Claude primitive for user-facing intent surfaces.
 
+#### D-Q.M6.6 — Ship shape: single amendment vs sub-amendment series
+
+**Question.** M6 ships as ONE multi-component amendment vs as a sub-amendment series M6a → M6b → M6c (mirror M1.rename's M1a..M1g pattern).
+
+**Options + cost/risk:**
+- **A. Sub-amendment series** (RECOMMEND per §6.5.4): three independently-sealable amendments. **Cost:** ~270-480 min midpoint 360 (versus 270-450 for single). **Risk:** lower fence-collision risk, lower review cognitive load, easier rollback per sub-amendment, mirror established M1.rename precedent. CRITICAL ADVANTAGE: M6a delivers the user-facing capability set (Surface A) sealed independently — if M6b's extraction encounters an unexpected blocker, M6a remains shipped + the publish gate is preserved.
+- **B. Single multi-component amendment**: one amendment touches all 17 inventory items. **Cost:** smaller seal overhead (one seal commit instead of three). **Risk:** large diff window; high fence-collision; rollback = revert the whole amendment + re-author; reviewer cognitive load. CRITICAL DISADVANTAGE: extraction depends on `loam amend` itself (per §11 finding #11) — a single amendment that moves `loam amend` mid-build is the same "rename-the-tool-while-using-it" complication M1g handled by sub-amendment splitting. Single-amendment shape forces M1g's lesson to be re-learned.
+
+**Recommendation:** **Option A — sub-amendment series.** Mirrors the M1.rename precedent that already proved this shape works for cross-cutting structural change. The marginal extra wall-clock (~30-60 min) is bought as risk reduction.
+
+#### D-Q.M6.7 — Hands-off-lifecycle A1-A4 gates disposition
+
+**Question.** PARTITION (gates MOVE; runtime hooks STAY) vs MOVE-WHOLE (entire `framework/hands-off-lifecycle/` MOVES) vs STAY-WHOLE.
+
+**Options + cost/risk:**
+- **A. PARTITION** (RECOMMEND): the A1-A4 gates + corpus helpers MOVE to `plugins/dev-sdlc/hooks/`; the first-run + statusline + memory-supervisor wiring STAYS. **Cost:** per-file `git mv` analysis. **Risk:** mid-component seam; the seal-test fence for `framework/hands-off-lifecycle/` must be widened during M6b to admit the file-deletion side. Per docstring inspection, the dev-mode-vs-runtime split is clean (gates self-identify as DEV-MODE-only via mode-bit short-circuit).
+- **B. MOVE-WHOLE**: entire component moves. **Cost:** less per-file analysis. **Risk:** runtime first-run + statusline + memory-supervisor wiring lives only in DEV MODE workspaces post-move. NORMAL USE workspaces lose first-run, statusline, and the memory-supervisor (the M5-wired component). UNACCEPTABLE — these are runtime, not dev-discipline.
+- **C. STAY-WHOLE**: gates remain at `framework/hands-off-lifecycle/hooks/`. **Cost:** no movement. **Risk:** the gates' M2 partition classification (`dev_and_public` per the existing manifest line 112) means they ship publicly even though they're dev-mode-only enforcement. Doesn't resolve the original directive. The current state of "dev_and_public" + "no-op in NORMAL USE via mode-bit" is functionally fine but contradicts the directive's "extract all dev-related things into the dev/sdlc plugin."
+
+**Recommendation:** **Option A — PARTITION.** Honest about the dev-mode-vs-runtime distinction within the component; preserves NORMAL USE behaviour intact; honours the directive.
+
+#### D-Q.M6.8 — `loam amend` disposition
+
+**Question.** PARTITION (some logic MOVES, the wrapper STAYS), MOVE-WHOLE (the entire `framework/tools/loam/` package MOVES), or STAY-WHOLE (no change).
+
+**Options + cost/risk:**
+- **A. MOVE-WHOLE** (RECOMMEND per §6.5.2 Item 7): `framework/tools/loam/src/loam_cli/amend/` MOVES to `plugins/dev-sdlc/loam-amend/src/loam_amend/`; the unified `loam` CLI wrapper STAYS at `framework/tools/loam/` as a thin dispatcher (it owns the `loam.cli.subcommands` entry-point group resolution introduced at M6a). **Cost:** mid-package surgical extraction + console-script-rename. **Risk:** the build process itself uses `loam amend` for amendment seal — staging is critical (per §11 finding #11). RECOMMENDED MITIGATION: M6b authors the migration in a SHADOW form first (the new package exists at `plugins/dev-sdlc/loam-amend/` with content COPIED, not moved; `loam amend` console-script remains pointed at the canonical-side package); the seal commit FLIPS the entry-point to the plugin's package + DELETES the canonical-side; the seal commit is itself sealed via the SHADOW (plugin-side) `loam amend` invocation, not the canonical-side. This is the same shadow-then-flip pattern M1g used for the `loam amend` rename.
+- **B. PARTITION**: separate the bookkeeping logic (templates, seal-diff machinery) into the plugin while keeping a leaner `loam amend` in canonical. **Cost:** higher per-file analysis. **Risk:** unclear what the right partition line is; both halves remain mid-cohesive.
+- **C. STAY-WHOLE**: `framework/tools/loam/` stays put. **Cost:** zero movement. **Risk:** doesn't honour the directive — `loam amend` IS dev-discipline machinery; users without dev-mode have no reason to invoke it.
+
+**Recommendation:** **Option A — MOVE-WHOLE.** The shadow-then-flip mitigation per M1g precedent is already a known pattern; the cost is bounded; the post-extraction shape is clean.
+
+#### D-Q.M6.9 — Methodology + convention docs disposition
+
+**Question.** MOVE the long-form ODD methodology + duration-estimation rubric + dev CDCs into `plugins/dev-sdlc/docs/` vs symlink-shim (file STAYS at canonical, plugin contains a symlink).
+
+**Options + cost/risk:**
+- **A. MOVE** (RECOMMEND per §6.5.2 Items 1, 2, 9): canonical files MOVE; cross-references (in STATE.md, master plan, etc.) update to point at plugin-relative paths. **Cost:** cross-reference grep + update in M6b. **Risk:** post-extraction, a user without the plugin installed cannot read these docs from a canonical clone (they're inside the plugin's tree). Acceptable per the extraction principle ("dev-mode-only artefacts live in the plugin"); the public `docs/design/odd.md` short-form remains accessible to all readers.
+- **B. Symlink-shim**: canonical retains the file; plugin contains a symlink that points back. **Cost:** symlinks across packages don't survive PyPI install (when the plugin is shipped via `pip install loam-plugin-dev-sdlc`, the symlink target outside the plugin tree breaks). **Risk:** unworkable across distribution mechanisms.
+- **C. Symlink reverse**: canonical retains a symlink; plugin holds the file. **Cost:** breaks from canonical-only views (a user who clones canonical sees a symlink to a file the canonical tree doesn't contain). **Risk:** confusing, unworkable.
+
+**Recommendation:** **Option A — MOVE.** Symlinks don't survive PyPI distribution; canonical-clone-without-plugin is the same situation as canonical-clone-without-dev-mode (the plugin IS dev mode); user can `pip install` the plugin to read the long-form docs.
+
 ### Method-shape decision the plan resolves (recorded for transparency)
 
 #### D-build.M6.5 — `loam project` subcommand discovery mechanism
@@ -395,6 +616,36 @@ project = "loam.plugins.dev_sdlc.cli:build_project_subcommand"
 **Alternative considered + rejected:**
 - Host-registry form: workspace-bootstrap exposes `host.loam_cli_registry`; plugin registers its subcommand at `contribute()` time; `loam_cli.cli.main` reads `host.loam_cli_registry`. **Rejected:** widens the workspace-bootstrap fence + couples CLI surface to bootstrap lifecycle (CLI works without bootstrap running; e.g. `loam project --help`).
 - Separate console-script binary (`loam-project`): ship as its own `[project.scripts]`. **Rejected:** breaks the unified-CLI narrative (per M1g rebrand); user gets multiple binaries instead of one verb tree.
+
+### Surface-B method-shape decisions (recorded for transparency)
+
+#### D-build.M6.10 — `git mv` mechanic vs copy-and-delete for MOVE-class items
+
+**Decision:** `git mv` for whole-file/whole-package moves (Items 5, 7-as-package-body, 9, 17, M6b's hooks PARTITION). `git mv` preserves history; `git log --follow` traces the file's lineage post-move. Copy-and-delete loses history. **Why this shape:** standard Git rename detection. Builder's call to use `git mv` and verify `git log --follow` returns expected history at each PR.
+
+#### D-build.M6.11 — Convention-doc authoring scope at v0.1.0
+
+**Decision:** convention codification documents (per Item 16 / AC.OSS-M6.16) are **concise codifications, NOT exhaustive prose.** Each convention doc is 100-300 LOC, structured as: objective + summary + named conventions/rules + cross-references + applied-immediately footer. **Why this shape:** the conventions are currently expressed by precedent + scattered prose in `docs/odd-in-loam.md`. M6b's job is to name + locate them, not to author exhaustive new content. The exhaustive content lives in `docs/odd-in-loam.md` (which itself MOVES to `plugins/dev-sdlc/docs/odd-in-loam.md` per Item 2). Builder's call on exact section structure per convention.
+
+#### D-build.M6.12 — Plugin-shipped hooks registration mechanism (Surface B integration with Claude Code's `settings.json`)
+
+**Decision:** the plugin's `contribute(host)` body writes a `settings.json` extension fragment to `<workspace>/.claude/settings.json` at startup, registering the A1-A4 PreToolUse hooks. Claude Code's settings-merge mechanism handles it. **Why this shape:** symmetric with `framework/hands-off-lifecycle/hooks/settings.json.fragment`'s existing pattern (the runtime first-run hook is registered the same way). The plugin extends the pattern from "ship-time fragment" to "runtime contribution-time merge." Builder's call on whether the merge is idempotent + reversible (i.e. uninstalling the plugin removes the fragment) — recommendation: idempotent + reversible.
+
+#### D-build.M6.13 — Final shape of `dev_only` block post-extraction
+
+**Decision:** post-M6b, `dev_only:` retains entries for migration tools (`framework/tools/heavy-b-migrate/**`, `orphan-plist-cleanup/**`, `upgrade-merge-resolver/**`, `loam-migrate-*/**`) + `framework/tools/pos-publish-framework-only/**` (the synth tool stays per Item 8) + `CLAUDE.dev.md` (Item 15) + `docs/rebuild/**` historical content. `dev_only` does NOT fully retire; it shrinks to the items that genuinely STAYed in canonical. **Why this shape:** AC.OSS-M6.13's verification framing ("the post-M6b `dev_only` list matches the recorded post-extraction shape") accepts a non-empty `dev_only` — that's the empirical reality. The dispatch's halt-trigger #5 is satisfied: the partition manifest ITSELF doesn't retire, but the `dev_only` block CONTRACTS to a known small surface.
+
+#### D-build.M6.14 — Plugin's own M2 partition classification
+
+**Decision:** `plugins/dev-sdlc/**` classifies as `dev_only` post-M6b (NOT `dev_and_public` as originally stated in AC.OSS-M6.8). **Why this shape:** the plugin contains dev-discipline machinery (extracted from `dev_only` items 1-3, 5-7, 9-13, 16-17 above). It SHOULD NOT ship publicly under the existing partition mechanism. **CRITICAL CONSEQUENCE:** the original AC.OSS-M6.8 (Surface A) said `plugins/dev-sdlc/**` is `dev_and_public` — POST-M6b that classification CHANGES to `dev_only`. The change is captured in AC.OSS-M6.13's "post-extraction shape" verification. **Owner-rulable alternative** if rejected: introduce a NEW partition class `plugin_publishable` for "the plugin's BASE ships publicly when the user installs it via `pip install loam-plugin-dev-sdlc`, but the `pos-publish-framework-only` tool's PUBLIC SYNTHESIS does NOT include the plugin tree" — this is the cleaner separation but adds a new partition class. Recommendation: simpler `dev_only` reclassification at M6b; revisit `plugin_publishable` if a v0.2 plugin needs the distinction.
+
+#### D-build.M6.15 — Shadow-then-flip migration shape for `loam amend`
+
+**Decision:** per D-Q.M6.8 Option A's mitigation. M6b authors the migration in TWO commits inside the M6b sub-amendment: (a) SHADOW commit that creates `plugins/dev-sdlc/loam-amend/` as a COPY of the canonical-side package (no DELETE; both packages exist; the plugin's entry-point points at the canonical-side package via a re-export shim); (b) FLIP commit that updates the entry-point to point at the plugin's package + DELETES the canonical-side `framework/tools/loam/src/loam_cli/amend/` subtree. The seal commit follows (b) and is itself sealed via the plugin's `loam amend` invocation. **Why this shape:** mirrors M1g's pattern; the shadow window allows the build process to seal SHADOW's commits using the canonical-side `loam amend`, then flip atomically.
+
+#### D-build.M6.16 — Post-MOVE cross-reference update mechanic
+
+**Decision:** automated grep+sed under `docs/rebuild/**` + `framework/**` + canonical-side dispatch templates for references to the moved files. Updates land in the same M6b commit as the corresponding MOVE per Item. **Why this shape:** the references are textually grep-able (file path strings); the update is mechanical; bundling the references with the MOVE keeps each commit semantically coherent. Builder authors a small helper at M6b time if the manual count is impractical.
 
 ### Method-shape decisions deferred to builder
 
@@ -468,6 +719,30 @@ What's intentionally not specified:
 ### Finding #10 — No surrounding-code ODD violations encountered
 
 **Surface:** code surveyed during plan authoring: workspace-bootstrap discovery, dormancy adapter, scope-of-work runtime, objective-tracker runtime, loam_cli.cli, partition manifest. All have outcome-shape ACs in their proposal/seal artefacts. **No violations found.** Recorded for §14.
+
+### Finding #11 — `loam amend` self-bootstrap during M6b extraction (rename-the-tool-while-using-it)
+
+**Surface:** the build process itself uses `framework/tools/loam/`'s `loam amend` console-script for amendment seal (advancing SEAL_COMMIT sidecars, maintaining the manifest's `BASELINE` literal, validating the manifest's seal-diff `allowed_prefixes`, etc.). M6b's Item 7 disposition MOVES `loam amend` to `plugins/dev-sdlc/loam-amend/`. If M6b's own seal commit is to be sealed via `loam amend`, M6b must stage the migration so an INSTALLED `loam amend` console-script exists at the seal-commit time.
+
+**Resolution:** D-build.M6.15 — shadow-then-flip migration shape (mirror M1g's pattern). M6b's commit ladder: (a) SHADOW commit (plugin-side copy exists, canonical-side intact) → (b) FLIP commit (entry-point points at plugin; canonical-side deleted) → (c) SEAL commit (sealed via plugin-side `loam amend`). The seal-commit-using-shadow approach was M1g's solution. **Halt-and-surface authority:** if at M6b build-time the shadow-then-flip mechanic encounters an unforeseen blocker (e.g. the plugin-side `loam amend` cannot resolve its own subcommand discovery while canonical-side is still present), halt and surface — owner ruling required on whether to (i) extract `loam amend` mid-M6b or (ii) defer Item 7's MOVE to a separate M6b' sub-amendment.
+
+### Finding #12 — Programme-level dependency: M2 partition manifest's `dev_only` block content moves into the plugin
+
+**Surface:** the M2 partition manifest's `dev_only:` list (lines 147-175) currently classifies dev-machinery artefacts that the M6 extraction directive moves INTO the plugin. Pre-M6, `dev_only` is the partition's "dev-discipline machinery, ships only in dev mode" class; post-M6b, most of that content lives at `plugins/dev-sdlc/**` and the partition's classification of `plugins/dev-sdlc/**` itself becomes the load-bearing classifier (per D-build.M6.14 — `plugins/dev-sdlc/**` reclassifies from `dev_and_public` to `dev_only`). The partition's `dev_only` block CONTRACTS but doesn't fully retire (per D-build.M6.13 — migration tools + synth tool + CLAUDE.dev.md + historical `docs/rebuild/**` remain dev_only).
+
+**Resolution:** AC.OSS-M6.13 captures the partition reshape; D-build.M6.13 + D-build.M6.14 record the per-glob classification reshape. **Programme-level dependency** (per dispatch halt-trigger #5): M2's partition manifest is itself MUTATED by M6b. Master plan §6 sequencing rule already names M9.scrub as gated on M6 — M9 captures the FINAL public surface; without M6b's partition contraction, M9 cannot finalise.
+
+### Finding #13 — Idea 13 two-modes design vs extraction directive: COMPATIBLE
+
+**Surface:** Idea 13 (`docs/rebuild/FUTURE_IDEAS.md` lines 560-579) names what auto-loads in DEV MODE: "`pos-amend`, plan docs, manifest YAMLs, BASELINE conventions, SEAL_COMMITs, sealed-component conventions, dispatch-template, spec docs, component proposals + seal narratives, ODD methodology, dev CDCs from FUTURE_IDEAS.md." — and what stays loaded in NORMAL USE: "the runtime harness ... `VALUE_PROPOSITION.md` ... basic settings, plus end-user-facing docs/help."
+
+**Resolution:** the dispatch directive (extract dev-related things into the dev/sdlc plugin) IS the operationalisation of Idea 13's two-modes design — DEV MODE's auto-load list IS the inventory the directive enumerates. M6b's extraction makes the plugin BECOME the package that delivers Idea 13's DEV MODE; `loam-mode`'s selector reads the plugin-relative `dev-mode-manifest.yaml` post-M6b (per AC.OSS-M6.12). **No contradiction; no halt.** Recorded for §14 method-decision register as the design-level confirmation.
+
+### Finding #14 — Hands-off-lifecycle hooks self-identify as dev-mode-only via docstring
+
+**Surface:** `framework/hands-off-lifecycle/hooks/objective_binding_gate.py` line 18-19: "NORMAL USE workspaces no-op the gate at the mode-bit short circuit (D-A2.5 / programme D4 lock — A2 is ODD-discipline, DEV-MODE-only)." Same pattern in `tdd_guard.py`, `agent_guard.py` ("ALL DEV-MODE-only (the rules are pos-v2-dev-specific)"), `bash_guard.py`. The runtime hooks (`first-run.sh`, `pos_session_start.py`, `statusline.py`) do NOT carry this dev-mode-only self-identification — they're runtime first-run + statusline machinery active in NORMAL USE.
+
+**Resolution:** the docstring split confirms the PARTITION line for Item 6 (D-Q.M6.7 Option A). The five gate hooks + their helpers MOVE into the plugin; the runtime hooks STAY. **No halt.** Recorded for §14 — the docstring-driven partition is itself a reverse-extraction signal that the existing components are honestly self-identifying their dev-discipline boundary.
 
 ---
 
@@ -566,12 +841,72 @@ NO RETIRE-AND-REBASELINE per §10 D-build.M6.6 + Finding #4.
 
 (Populated at build time + conditional. Recommendation: leverage Idea 26's reader-fall-through; verify at build time; halt + drop AC.OSS-M6.9 if additive `_resolve_corpus_path` change required.)
 
+### Surface B owner-rulable items (added 2026-04-29 owner-directive expansion)
+
+#### D-Q.M6.6 — Ship shape: single amendment vs sub-amendment series
+
+(Populated at owner-ruling time. Recommendation per §10: sub-amendment series M6a → M6b → M6c.)
+
+#### D-Q.M6.7 — Hands-off-lifecycle A1-A4 gates disposition
+
+(Populated at owner-ruling time. Recommendation per §10: PARTITION — gates MOVE; runtime hooks STAY.)
+
+#### D-Q.M6.8 — `loam amend` disposition
+
+(Populated at owner-ruling time. Recommendation per §10: MOVE-WHOLE with shadow-then-flip migration mitigation per D-build.M6.15.)
+
+#### D-Q.M6.9 — Methodology + convention docs disposition
+
+(Populated at owner-ruling time. Recommendation per §10: MOVE the long-form ODD methodology + duration-estimation rubric + dev CDCs to `plugins/dev-sdlc/docs/`.)
+
+### Surface B method-shape decisions (recorded for transparency)
+
+#### D-build.M6.10 — `git mv` mechanic vs copy-and-delete
+
+(Populated at M6b build time. Recommendation per §10: `git mv` for MOVE-class items; `git log --follow` verifies history.)
+
+#### D-build.M6.11 — Convention-doc authoring scope at v0.1.0
+
+(Populated at M6b build time. Recommendation per §10: concise codification — 100-300 LOC per convention; not exhaustive prose.)
+
+#### D-build.M6.12 — Plugin-shipped hooks registration mechanism
+
+(Populated at M6b build time. Recommendation per §10: `contribute(host)` writes a settings.json fragment; idempotent + reversible.)
+
+#### D-build.M6.13 — Final shape of `dev_only` block post-extraction
+
+(Populated at M6b build time. Recommendation per §10: `dev_only` retains migration tools + synth tool + CLAUDE.dev.md + historical `docs/rebuild/**`; contracts but doesn't fully retire.)
+
+#### D-build.M6.14 — Plugin's own M2 partition classification
+
+(Populated at M6b build time. Recommendation per §10: `plugins/dev-sdlc/**` reclassifies to `dev_only` post-M6b.)
+
+#### D-build.M6.15 — Shadow-then-flip migration shape for `loam amend`
+
+(Populated at M6b build time. Recommendation per §10: SHADOW commit + FLIP commit + SEAL commit; mirror M1g's pattern.)
+
+#### D-build.M6.16 — Post-MOVE cross-reference update mechanic
+
+(Populated at M6b build time. Recommendation per §10: automated grep+sed bundled with each MOVE commit.)
+
 ### Commit SHAs
 
-- Plan-doc + manifest commit: `<TBD>` (this dispatch).
-- Build feature commit: `<TBD>` (next dispatch).
-- Apply commit: `<TBD>` (next dispatch).
-- Seal commit: `<TBD>` (next dispatch).
+- Plan-doc + manifest commit (Surface A original): `454bbd4` (2026-04-29).
+- Plan-doc Surface B expansion commit: `<TBD>` (this dispatch — extraction-shape addition + M6a/M6b/M6c series declaration).
+- M6a (Surface A baseline plugin):
+  - Build feature commit: `<TBD>` (next dispatch).
+  - Apply commit: `<TBD>` (next dispatch).
+  - Seal commit: `<TBD>` (next dispatch).
+- M6b (Surface B extraction migrations) — its own manifest authored at M6b dispatch time:
+  - Manifest + plan-update commit: `<TBD>`.
+  - Build feature commits (multiple — per inventory item): `<TBD>`.
+  - Apply commit: `<TBD>`.
+  - Seal commit: `<TBD>`.
+- M6c (cleanups) — its own manifest authored at M6c dispatch time:
+  - Manifest + plan-update commit: `<TBD>`.
+  - Build feature commit(s): `<TBD>`.
+  - Apply commit: `<TBD>`.
+  - Seal commit: `<TBD>`.
 
 ---
 
@@ -589,9 +924,9 @@ To be filled by builder post-build.
 
 ## 16. Halt-and-surface findings encountered during plan authoring
 
-Per the dispatch's halt-and-surface clause:
+Per the dispatch's halt-and-surface clause (extended for Surface B expansion 2026-04-29):
 
-1. **Findings #1–#10 in §11** above. None block dispatch; each maps to a §10 design decision or §9 halt condition. Recorded for builder awareness + §14 method-decision register.
+1. **Findings #1–#14 in §11** above. None block dispatch; each maps to a §10 design decision or §9 halt condition. Recorded for builder awareness + §14 method-decision register.
 2. **No audit/invariant conflict found.** Idea 3's enumerated capabilities (post-deferral) compose cleanly with sealed-component invariants. The plugin is NEW; no existing seal-diff fence is broken; the partition-manifest extension is additive.
 3. **No methodology breach found.** Every AC is outcome-shape; method-shape is the builder's call. The plugin's stage-gate enforcement is itself ODD-shaped — methodology recursion is intentional (the plugin practices what it proposes).
 4. **No surrounding-code ODD violations found.** Per Finding #10. Surveyed code areas (workspace-bootstrap, scope-of-work, objective-tracker, loam_cli, partition manifest) all carry outcome-shape ACs.
@@ -600,8 +935,12 @@ Per the dispatch's halt-and-surface clause:
 7. **`plugins/` partition-manifest gap.** Per Finding #1: closed by AC.OSS-M6.8.
 8. **`loam_cli` subcommand-discovery gap.** Per Finding #2: closed by D-build.M6.5 + AC.OSS-M6.6.
 9. **Skill-loader plugin-relative-path support.** Per Finding #3 + §8 risk #7: verify at build time; D-Q.M6.4 deferral path catches the failure mode.
+10. **`loam amend` self-bootstrap during M6b.** Per Finding #11 + §9 halt-trigger #11. Closed-by-design via D-build.M6.15 shadow-then-flip; halt at build time only if the shadow mechanic encounters an unforeseen blocker.
+11. **M2 partition manifest mutation by M6b.** Per Finding #12 + §9 halt-trigger #14. Closed-by-design via D-build.M6.13 + D-build.M6.14; the `dev_only` block contracts but doesn't retire.
+12. **Idea 13 two-modes vs extraction directive.** Per Finding #13. COMPATIBLE — extraction operationalises Idea 13.
+13. **Hands-off-lifecycle dev-mode-vs-runtime split.** Per Finding #14. Confirmed by docstring inspection; PARTITION line is clean.
 
-**Halt summary.** None. Plan is authorised to proceed pending owner sign-off on D-Q.M6.\* + dispatcher review.
+**Halt summary.** None. Plan is authorised to proceed pending owner sign-off on D-Q.M6.1..M6.9 + dispatcher review. Surface A (M6a) is buildable on owner approval of D-Q.M6.1..M6.5; Surface B (M6b/M6c) gates additionally on D-Q.M6.6..M6.9.
 
 ---
 

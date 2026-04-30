@@ -99,6 +99,10 @@ def test_tg23_only_telegram_interface_changed() -> None:
         "docs/rebuild/components/telegram-interface/",
         "docs/rebuild/components/telegram-interface-framework-integration/",
         "docs/rebuild/plans/",
+        # M6a — first plugin lands at plugins/dev-sdlc/. Admitted as
+        # cross-component partner so the seal-diff sweep passes when
+        # the plugin's diff is in flight.
+        "plugins/dev-sdlc/",
         "framework/workspace-bootstrap/",
         "framework/hands-off-lifecycle/",
         "framework/scope-of-work/",

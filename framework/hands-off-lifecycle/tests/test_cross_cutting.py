@@ -295,6 +295,12 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         "CONTRIBUTING.md",
         "CODE_OF_CONDUCT.md",
         "SECURITY.md",
+        # M6a — first plugin tree lands at plugins/dev-sdlc/. The
+        # cross-cutting first-prefix admission is `plugins` (the
+        # top-level new directory). Per plan §11 finding #7 — first
+        # external contributor to the workspace-bootstrap entry-point
+        # group establishes the `plugins/<name>/` pattern at v0.1.0.
+        "plugins",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

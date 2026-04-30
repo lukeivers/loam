@@ -67,6 +67,13 @@ schema_version: 1
 audit_roots:
   - framework/
   - docs/
+  # Plugins tree — added at M6a per plan §4 AC.OSS-M6.8 + plan §11
+  # finding #1. The first plugin (`plugins/dev-sdlc/`) lands at M6a;
+  # v0.2+ plugins inherit `plugins/<name>/`. M6a baseline shape:
+  # `dev_and_public` (the user-facing capabilities ship publicly);
+  # M6b reclassifies to `dev_only` post-extraction per AC.OSS-M6.13
+  # + D-build.M6.14.
+  - plugins/
   - CLAUDE.md
   - CLAUDE.dev.md
   - README.md
@@ -142,6 +149,12 @@ dev_and_public:
   - glob: "docs/design/**"
   # Existing live public-relevant docs.
   - path: docs/CLAUDE_CAPABILITIES.md
+  # First plugin — Dev/SDLC. M6a baseline classification: ships
+  # publicly so users can compose against the harness extension
+  # protocol (per plan §4 AC.OSS-M6.8). M6b reclassifies to
+  # `dev_only` post dev-machinery extraction per AC.OSS-M6.13 +
+  # D-build.M6.14.
+  - glob: "plugins/dev-sdlc/**"
 
 # Stays in the dev tree, NEVER ships publicly. Dev-discipline machinery.
 dev_only:

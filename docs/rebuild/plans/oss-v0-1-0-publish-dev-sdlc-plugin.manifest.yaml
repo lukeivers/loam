@@ -100,21 +100,31 @@ components:
     seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
     sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
     frozen_baseline: false
-    # NEW component — first seal at M6. The seal-test is itself NEW
-    # (authored at M6 alongside the source per plan §4 AC.OSS-M6.S).
-    # allowed_prefixes admits only the plugin's own subtree; the seal
-    # narrative file lives at plugins/dev-sdlc/seals/SEAL_COMMIT.<slug>.
+    # NEW component — first seal at M6a. The seal-test is itself NEW
+    # (authored at M6a alongside the source per plan §4 AC.OSS-M6.S).
+    # allowed_prefixes admits the plugin's own subtree + the M6a
+    # cross-component partners (loam-cli + pos-publish-framework-only)
+    # + the universal docs/rebuild/plans/ admission. Per the apply
+    # widening pass, partner_prefixes for the listed components are
+    # added automatically; the explicit prefixes below cover paths
+    # NOT derivable from partner-prefix expansion.
     extra_allowed_prefixes:
       - plugins/dev-sdlc/
-  - name: loam-cli
-    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
-    sidecar: framework/tools/loam/tests/SEAL_COMMIT
-    frozen_baseline: false
-    extra_allowed_prefixes: []
-  - name: pos-publish-framework-only
-    seal_test: framework/tools/pos-publish-framework-only/tests/test_no_sealed_amendments.py
-    sidecar: framework/tools/pos-publish-framework-only/tests/SEAL_COMMIT
-    frozen_baseline: false
+      - framework/tools/loam/
+      - framework/tools/pos-publish-framework-only/
+  # Anchor component per the M2/M3 tools-tree convention: the
+  # cross-cutting hands-off-lifecycle seal-test acts as the meta-
+  # anchor for amendments whose load-bearing diff is in the tools
+  # tree (which is structurally fenced but does NOT carry its own
+  # diff-based seal-test). Per plan §10 D-build.M6.5 + M2 precedent
+  # (D-build.M2.8). M6a's diff under framework/tools/loam/ +
+  # framework/tools/pos-publish-framework-only/ is admitted via
+  # HOL's existing `framework/tools/` first-prefix admission +
+  # the new `plugins` first-prefix added at M6a.
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
     extra_allowed_prefixes: []
 
 # Universal admissions per amendment #22 ruling #3.

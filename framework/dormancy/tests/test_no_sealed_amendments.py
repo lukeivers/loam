@@ -129,6 +129,10 @@ def test_only_dormancy_changed() -> None:
         "docs/rebuild/components/scope-of-work/",
         "docs/rebuild/components/objective-tracker/",
         "docs/rebuild/plans/",
+        # M6a — first plugin lands at plugins/dev-sdlc/. Admitted as
+        # cross-component partner so the seal-diff sweep passes when
+        # the plugin's diff is in flight.
+        "plugins/dev-sdlc/",
         "framework/hands-off-lifecycle/",
         "framework/cost-governance/",
         "framework/observability-aggregator/",

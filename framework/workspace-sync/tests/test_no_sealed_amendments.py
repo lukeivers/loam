@@ -85,6 +85,10 @@ def test_B20_only_workspace_sync_surfaces_changed() -> None:
         "framework/workspace-sync/",
         "workspace-sync/",
         "docs/rebuild/plans/",
+        # M6a — first plugin lands at plugins/dev-sdlc/. Admitted as
+        # cross-component partner so the seal-diff sweep passes when
+        # the plugin's diff is in flight.
+        "plugins/dev-sdlc/",
         "cost-governance/",
         "framework/cost-governance/",
         "framework/graceful-degradation/",

@@ -51,6 +51,10 @@ def test_R21_only_reversibility_primitive_changed() -> None:
         "reversibility-primitive/",
         "framework/cost-governance/",
         "docs/rebuild/plans/",
+        # M6a — first plugin lands at plugins/dev-sdlc/. Admitted as
+        # cross-component partner so the seal-diff sweep passes when
+        # the plugin's diff is in flight.
+        "plugins/dev-sdlc/",
         "framework/graceful-degradation/",
         "framework/hands-off-lifecycle/",
         "framework/memory-system/",

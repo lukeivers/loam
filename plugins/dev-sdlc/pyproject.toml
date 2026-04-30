@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-plugin-dev-sdlc"
+version = "0.1.0"
+description = "Dev/SDLC plugin for loam — methodology-shaped 5-stage workflow (research → spec → plan → build → review/verify) with structural gate enforcement, scope-of-work + objective-tracker integration, methodology opt-out preserving an internal ODD mirror, and the loam project ... CLI subcommand surface. First plugin under loam's contribution-based extension protocol; pattern-establishing for v0.2+ plugins."
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2",
+    "PyYAML>=6",
+    "opentelemetry-api>=1.25",
+    "loam-scope-of-work",
+    "loam-objective-tracker",
+    "loam-workspace-bootstrap",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+# AC.OSS-M6.1 — workspace-bootstrap discovers the plugin via this
+# entry-point. The plugin is the FIRST EXTERNAL contributor to the
+# `loam.bootstrap.contributions` group from outside the bootstrap
+# package itself (per plan §11 finding #7).
+[project.entry-points."loam.bootstrap.contributions"]
+dev_sdlc = "loam.plugins.dev_sdlc.contribution:DevSdlcContribution"
+
+# AC.OSS-M6.6 — `loam project ...` registered as subcommand of the
+# unified loam CLI via NEW entry-point group `loam.cli.subcommands`
+# (introduced at M6a per plan §10 D-build.M6.5; symmetric to
+# bootstrap's contribution-discovery pattern).
+[project.entry-points."loam.cli.subcommands"]
+project = "loam.plugins.dev_sdlc.cli:build_project_subcommand"
+
+[tool.setuptools]
+package-dir = {"loam.plugins.dev_sdlc" = "src/loam/plugins/dev_sdlc"}
+packages = ["loam.plugins.dev_sdlc"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"loam.plugins.dev_sdlc" = ["templates/*.md"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

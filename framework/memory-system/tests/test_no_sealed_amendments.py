@@ -163,6 +163,10 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
         # (docs/rebuild/plans/linux-removal-amendment.md committed with
         # that amendment's code commit).
         "docs/rebuild/plans/",
+        # M6a — first plugin lands at plugins/dev-sdlc/. Admitted as
+        # cross-component partner so the seal-diff sweep passes when
+        # the plugin's diff is in flight.
+        "plugins/dev-sdlc/",
         "data/",
         # Amendment #21 (S3 silent-except bundle) additions — the
         # other two source-editing partners in this multi-component

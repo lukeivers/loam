@@ -91,6 +91,10 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
         # plan-before-code CDC paper trail: this amendment's plan +
         # research + manifest live under docs/rebuild/plans/.
         "docs/rebuild/plans/",
+        # M6a — first plugin lands at plugins/dev-sdlc/. Admitted as
+        # cross-component partner so the seal-diff sweep passes when
+        # the plugin's diff is in flight.
+        "plugins/dev-sdlc/",
         "framework/hands-off-lifecycle/",
         "cost-governance/",
         "framework/cost-governance/",

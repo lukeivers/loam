@@ -265,6 +265,10 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/rebuild/components/telegram-interface-framework-integration/",
         "docs/rebuild/components/workspace-bootstrap/",
         "docs/rebuild/plans/",
+        # M6a — first plugin lands at plugins/dev-sdlc/. Admitted as
+        # cross-component partner so the seal-diff sweep passes when
+        # the plugin's diff is in flight.
+        "plugins/dev-sdlc/",
         "framework/cost-governance/",
         "framework/dormancy/",
         "framework/graceful-degradation/",

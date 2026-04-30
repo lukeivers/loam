@@ -1,0 +1,179 @@
+
+
+# Amendment #87 — M6 Dev/SDLC plugin (first plugin; pattern-establishing)
+
+2026-04-29. Multi-component sealed amendment for the OSS v0.1.0
+publish programme. M6 per locked programme master plan-doc
+`docs/rebuild/plans/oss-v0-1-0-publish.md` §5 M6 row + §6
+sequencing rule #4 + §3 AC.OSS.6 (per R2 ruling: Dev/SDLC plugin
+only at v1; the plugin makes the harness pattern visible to the
+developer audience and demonstrates plugin-extension to the
+workspace-bootstrap surface). Sub-plan-doc:
+`docs/rebuild/plans/oss-v0-1-0-publish-dev-sdlc-plugin.md`. Research
+findings companion: `docs/rebuild/plans/research/dev-sdlc-plugin-research.md`.
+
+Composes on the M1.rename multi-amendment series (sealed
+M1a..M1g 2026-04-29; M1g seal `f6c22fd`; §14 backfill `d5b8dcd`),
+on M2.partition (sealed `4cda805` 2026-04-29; §14 backfill
+`bb3574c`), on M3.wire-clis (sealed `95f1ab2` 2026-04-29; §14
+backfill `6751b94`), on M4.wire-dispatch (sealed `1719e14`
+2026-04-29; §14 backfill `bf56763`), and on M5.wire-dormancy
+(sealed `e32d4d8` 2026-04-29; §14 backfill `2770cc9`).
+
+M6 ships the FIRST PLUGIN under loam's contribution-based
+extension protocol, lifting the protocol from
+"demonstrated-internally-only" (workspace-bootstrap is the only
+package shipping `loam.bootstrap.contributions` entry-points
+pre-M6) to "proven-end-to-end-from-outside-bootstrap-tree" (M6's
+`plugins/dev-sdlc/` is the first external contributor). v0.2+
+plugins inherit the pattern.
+
+Plugin capability set at v0.1.0:
+
+  1. ODD-shaped 5-stage workflow (research → spec → plan → build
+     → review/verify) with per-stage artefact templates under
+     `<project>/<stage>/<slug>.md` and structural gate enforcement
+     (objective + AC presence required before stage advance).
+  2. Stage-bound scope-of-work + objective-tracker integration —
+     each stage advance creates a child scope under the project
+     + a per-stage objective with ACs.
+  3. Methodology opt-out via `--methodology=tdd|bdd|adhoc` flag
+     preserving an internal ODD mirror at
+     `<project>/.dev-sdlc-odd-mirror.yaml` (per Idea 3's "opt-out
+     and imported projects keep an internal ODD representation").
+  4. `loam project ...` CLI subcommand surface — five operator
+     verbs (`new`, `status`, `advance`, `list`, `gate`) registered
+     as subcommands of the unified `loam` CLI.
+  5. Persona-invocable Python API at `loam.plugins.dev_sdlc.api`
+     exposing `start_project`, `advance_stage`, `project_status`,
+     `list_projects`, `gate_check`.
+  6. Workspace-bootstrap contribution + manifest opt-in —
+     `DevSdlcContribution` registered under
+     `loam.bootstrap.contributions` entry-point group; workspace's
+     `bootstrap.yaml` opts in via the `dev_sdlc` name string.
+  7. `/start-project` Claude skill at
+     `plugins/dev-sdlc/skills/start-project.md` (D-Q.M6.4 ship per
+     owner ruling; conditional AC.OSS-M6.9).
+  8. Per-project state in workspace-local SQLite at
+     `<workspace>/.loam/dev-sdlc.sqlite` (single source of truth);
+     `<project>/.dev-sdlc.yaml` is a derived human-readable mirror.
+
+Critical structural finding (recorded at plan-authoring time):
+M6 is the FIRST EXTERNAL contributor to workspace-bootstrap's
+`loam.bootstrap.contributions` entry-point group. Pre-M6, the
+only package shipping entries under that group was
+`loam-workspace-bootstrap` itself (per
+`framework/workspace-bootstrap/pyproject.toml` lines 37-53). M6
+establishes the cross-package pattern; v0.2+ plugins inherit the
+cheaper landing.
+
+Subcommand-discovery mechanism (NEW at M6): the unified `loam`
+CLI gains a `loam.cli.subcommands` entry-point group, symmetric
+to bootstrap's pattern. Plugin's `pyproject.toml` ships
+`[project.entry-points."loam.cli.subcommands"]` with `project =
+"loam.plugins.dev_sdlc.cli:build_project_subcommand"`.
+`loam_cli.cli.main` iterates the entry-points at startup +
+invokes each `build_*` callable to register the subcommand
+parser. Identical pattern to `framework/workspace-bootstrap/src/loam/workspace_bootstrap/discovery.py:_resolve_entrypoint`.
+
+Plugin contribution metadata: `phase=after_orchestrator_ready`,
+`after=('primary_persona','objective_tracker','scope_of_work')` —
+plugin reads these host surfaces at construction time. Plugin is
+non-load-bearing for orchestrator startup; it registers with
+persona's command surface after orchestrator is ready.
+
+Plugin tree placement at `plugins/dev-sdlc/` per master plan
+§13 D-Q.OSS.5 + plan §10 D-Q.M6.1: establishes the plugin-tree
+pattern at v0.1.0; v0.2+ plugins land at `plugins/<name>/` with
+cheaper structural cost. Alternative `framework/dev-sdlc/`
+rejected — conflates "core harness components" with "optional
+plugin extensions" + forces plugin #2 to make the plugin-tree
+decision under publishing pressure.
+
+Partition manifest extension (M2 contract): M6 extends
+`framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`
+`audit_roots:` to add `plugins/` + `dev_and_public:` to add
+`glob: "plugins/dev-sdlc/**"`. Synthesis includes the plugin in
+the public artefact per AC.OSS-M6.8.
+
+Deferred to v0.1.1+ per plan §5 + §10 D-Q.M6.2:
+
+  - Objective-extraction skill for existing repos (Idea 3
+    sub-feature; the slice/swarm/aggregate engine is multi-week;
+    bundling doubles M6 scope and pushes publish gate).
+  - Workflow-state-machine engine reimplementation (use
+    scope-of-work's existing FSM).
+  - External issue-tracker integration (Linear, Jira, GitHub
+    Issues).
+  - Multi-project orchestration (cross-project workflows,
+    project-of-projects).
+  - Contradiction detection (LLM-as-verifier across stages;
+    needs Idea 20 baked in).
+  - Roadmap tooling.
+  - Project archive / completion lifecycle.
+  - Per-project Claude PreToolUse / Stop hooks.
+  - MCP server exposing project state.
+  - Plugin uninstall / rollback shape.
+  - Existing-repo retrofit flow (composes with deferred
+    objective-extraction skill).
+
+Sealed-component fence: 3 components — `plugins/dev-sdlc/`
+(NEW component; carries source + tests + first SEAL_COMMIT
+sidecar + first `tests/test_no_sealed_amendments.py` seal-test
+authored at M6) + `framework/tools/loam/` (subcommand-discovery
+extension: ~30-50 LOC in `loam_cli.cli.py` + 1 new test) +
+`framework/tools/pos-publish-framework-only/` (M2 partition
+manifest extension: 2-line YAML edit + 1 new test). Per plan
+§10 D-build.M6.5 — entry-point-group form for subcommand
+discovery keeps `framework/workspace-bootstrap/` OUT of M6's
+fence.
+
+HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE.
+Pre-build verification at plan-authoring time confirms no HC#4
+sample paths under any of the three touched components are
+impacted by the M6 diff (`plugins/dev-sdlc/` is NEW with no
+pre-existing samples; `framework/tools/loam/` extension is
+additive Python; `framework/tools/pos-publish-framework-only/`
+extension is additive YAML). The HC#4 invariant is expected to
+remain GREEN through M6.
+
+AC family: AC.OSS-M6.1..M6.9 + AC.OSS-M6.S (sealed-component
+fence). Each AC maps to a unique change in the diff per
+ODD §2.5 (no behaviour without a named AC). All ACs ladder up
+to AC.OSS.6 (programme-level) → AC.PO.1 + AC.PO.2 (prime
+objective in `docs/rebuild/VALUE_PROPOSITION.md`) per plan §6
+ladder-up table.
+
+Cross-tree consumer impact: NONE for `framework/scope-of-work/`,
+`framework/objective-tracker/`, `framework/workspace-bootstrap/`,
+`framework/primary-persona/`, `framework/memory-system/` —
+their internal logic + public APIs remain byte-identical. M6
+consumes existing public surfaces only.
+
+Pre-existing test pass-through verification (per plan §15):
+  - scope-of-work, objective-tracker, workspace-bootstrap,
+    primary-persona, memory-system existing tests pass
+    byte-identically (no source change).
+  - `loam_cli`'s existing `amend` subcommand path preserved
+    untouched; entry-point-discovery is additive (no `amend`
+    regression).
+  - partition-manifest tests pass post-YAML edit; YAML extension
+    is additive (no existing classification changes).
+
+Dependents cleared post-M6:
+  - M7.docs-lane — parallel-safe with M6 per master plan §6
+    sequencing rule #4; both run alongside.
+  - M8.license-governance — parallel-safe with M6.
+  - M9.scrub — gated on M6 (scrub captures the final public
+    surface; M6 ships the last new component).
+  - M10.bus-factor — calendar-parallel; not gated on M6.
+  - M11.dry-run — gated on M9 (and therefore M6).
+  - M12.publish — gated on M11.
+
+M6 is the largest single amendment of the OSS v0.1.0 publish
+programme (full new-component cycle: research → research-doc →
+plan-doc → build → seal). Its existence proves the harness's
+extension protocol works end-to-end without amending bootstrap-
+side surfaces. v0.1.0 ships the methodology-shaped workflow;
+v0.1.1+ extends with the existing-repo on-ramp (objective-
+extraction skill) + per-plugin depth.

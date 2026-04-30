@@ -891,25 +891,10 @@ NO RETIRE-AND-REBASELINE per §10 D-build.M6.6 + Finding #4.
 
 ### Commit SHAs
 
-- Plan-doc + manifest commit (Surface A original): `454bbd4` (2026-04-29).
-- Plan-doc Surface B expansion commit: `<TBD>` (this dispatch — extraction-shape addition + M6a/M6b/M6c series declaration).
-- M6a (Surface A baseline plugin):
-  - Build feature commit: `<TBD>` (next dispatch).
-  - Apply commit: `<TBD>` (next dispatch).
-  - Seal commit: `<TBD>` (next dispatch).
-- M6b (Surface B extraction migrations) — its own manifest authored at M6b dispatch time:
-  - Manifest + plan-update commit: `<TBD>`.
-  - Build feature commits (multiple — per inventory item): `<TBD>`.
-  - Apply commit: `<TBD>`.
-  - Seal commit: `<TBD>`.
-- M6c (cleanups) — its own manifest authored at M6c dispatch time:
-  - Manifest + plan-update commit: `<TBD>`.
-  - Build feature commit(s): `<TBD>`.
-  - Apply commit: `<TBD>`.
-  - Seal commit: `<TBD>`.
-
----
-
+- Amendment commit: `5a33e2eb5f5c2fb26ba02cdf55168c7007f46998` —
+  `chore(dev-sdlc-apply): loam amend apply for amendment #87 (M6a Dev/SDLC plugin baseline)`
+- Seal commit: `acd70ff791f4bb2a2a11f01f4607d35967c92a5e` —
+  `chore(seals): M6a Dev/SDLC plugin BASELINE (Surface A: user-facing capabilities; ship-shape per plan §6.5.4 D-Q.M6.6 sub-amendment series — M6a baseline + M6b extraction + M6c cleanups; M6a sealed independently before M6b begins) — NEW component at plugins/dev-sdlc/ ships first plugin per master plan R2 (Dev/SDLC only at v1) — composes against workspace-bootstrap's existing contribution-protocol (entry-point group loam.bootstrap.contributions; zero bootstrap-side source change) + defaults new projects to ODD-shaped 5-stage workflow (research → spec → plan → build → review/verify) with structural gate enforcement (objective + AC presence required before stage advance) + provides --methodology=tdd|bdd|adhoc opt-out preserving internal ODD mirror at <project>/.dev-sdlc-odd-mirror.yaml + surfaces 5 operator verbs (loam project new|status|advance|list|gate) registered as unified-loam-CLI subcommands via NEW entry-point group loam.cli.subcommands (symmetric to bootstrap's pattern per plan §10 D-build.M6.5; rejected alternatives: host-registry form widens workspace-bootstrap fence + couples CLI to bootstrap lifecycle; separate console-script binary breaks unified-CLI narrative) + ships /start-project Claude skill at plugins/dev-sdlc/skills/start-project.md (D-Q.M6.4 ship per owner ruling; leverages Idea 26 reader-fall-through composition for plugin-relative skill discovery) + stage-bound scope-of-work + objective-tracker integration (plugin creates project parent scope + stage child scopes; per-stage objectives in tracker forest; OTel emit on stage_advance) + per-project state at workspace-local SQLite <workspace>/.loam/dev-sdlc.sqlite (single source of truth; <project>/.dev-sdlc.yaml derived human-readable mirror). 9 ACs in family AC.OSS-M6.* + AC.OSS-M6.S (sealed-component fence); each ladders to AC.OSS.6 → AC.PO.1+AC.PO.2 (prime objective). 9-10 new test files (one per AC + standard seal-fence test). Plugin's own pyproject.toml ships entry-point declaration `dev_sdlc = "loam.plugins.dev_sdlc.contribution:DevSdlcContribution"` under group loam.bootstrap.contributions (FIRST EXTERNAL contributor to the entry-point group from outside the bootstrap package per plan §11 finding #7). Plugin contribution metadata: phase=after_orchestrator_ready, after=('primary_persona','objective_tracker','scope_of_work') — plugin reads these surfaces at construction. Sealed-component fence: 3 components — plugins/dev-sdlc/ (NEW component carrying plugin source + tests + first SEAL_COMMIT sidecar + first tests/test_no_sealed_amendments.py seal-test authored at M6) + framework/tools/loam/ (subcommand-discovery extension: ~30-50 LOC in loam_cli.cli + 1 new test asserting entry-point-group resolution) + framework/tools/pos-publish-framework-only/ (M2 partition manifest extends audit_roots: + plugins/ + dev_and_public: + glob: "plugins/dev-sdlc/**" + 1 new partition-classification test). HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE (plugin is NEW component — no pre-existing HC#4 sample paths under plugins/dev-sdlc/; framework/tools/loam/ extension is additive Python; framework/tools/pos-publish-framework-only/ extension is additive YAML — no sample paths impacted; verified at plan-authoring per plan §11 finding #4). Critical structural finding (§11): M6 is the FIRST EXTERNAL contributor to workspace-bootstrap's entry-point group — no plugin-tree precedent exists today; M6 establishes both the plugins/<name>/ directory pattern AND the loam.cli.subcommands entry-point group; v0.2+ plugins inherit cheaper landing per master plan D-Q.OSS.5 + plan §10 D-Q.M6.1. Deferred to v0.1.1+ per plan §1 + §5: objective-extraction skill for existing repos (Idea 3 sub-feature; multi-week build) + workflow-state-machine engine reimplementation (use scope-of-work's existing FSM) + external issue-tracker integration + multi-project orchestration + contradiction detection + roadmap tooling + project archive lifecycle + per-project Claude PreToolUse/Stop hooks + MCP server exposing project state + plugin uninstall/rollback shape + existing-repo retrofit flow. v0.1.0 ships the WORKFLOW SHAPE; v0.2+ extends with depth. — dev-sdlc+hands-off-lifecycle at 5a33e2e`
 ## 15. Backwards-compat verification (post-build)
 
 To be filled by builder post-build.

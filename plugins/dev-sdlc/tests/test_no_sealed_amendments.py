@@ -106,6 +106,8 @@ def test_only_dev_sdlc_changed() -> None:
         "framework/telegram-interface/",
         "framework/workspace-bootstrap/",
         "framework/workspace-sync/",
+        "docs/rebuild/plans/research/",
+        "hands-off-lifecycle/",
     )
     allowed_files: set[str] = set()
 

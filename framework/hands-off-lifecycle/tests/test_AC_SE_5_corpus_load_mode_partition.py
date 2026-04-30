@@ -34,13 +34,37 @@ def _seed_minimal_workspace(workspace_root: Path) -> None:
     to make the dev-mode-manifest resolvable + the always-loaded /
     dev-only files exist, so AC.SE.5 can verify the mode-aware
     required set."""
-    # Real manifest copied verbatim — one file.
-    src_manifest = REPO_ROOT / "docs" / "rebuild" / "dev-mode-manifest.yaml"
+    # Real manifest copied verbatim — one file. Post-M6b.0 the
+    # manifest lives at plugins/dev-sdlc/dev-mode-manifest.yaml; the
+    # in-test mirror writes to BOTH possible locations so the
+    # corpus-load partition mechanism resolves regardless of which
+    # path the loam-mode probe-and-prefer logic prefers in the
+    # synthetic workspace.
+    src_manifest = (
+        REPO_ROOT
+        / "plugins"
+        / "dev-sdlc"
+        / "dev-mode-manifest.yaml"
+    )
     target_manifest = (
-        workspace_root / "docs" / "rebuild" / "dev-mode-manifest.yaml"
+        workspace_root
+        / "plugins"
+        / "dev-sdlc"
+        / "dev-mode-manifest.yaml"
     )
     target_manifest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src_manifest, target_manifest)
+    # Also seed the legacy docs/rebuild/ location for tests that may
+    # still reference it through downstream code that hasn't yet
+    # been updated; both paths resolve to the same byte-content.
+    legacy_target = (
+        workspace_root
+        / "docs"
+        / "rebuild"
+        / "dev-mode-manifest.yaml"
+    )
+    legacy_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src_manifest, legacy_target)
 
     # Stub each top-level always-loaded surface with a sentinel file
     # so existence checks resolve. CLAUDE.md + CLAUDE.dev.md +

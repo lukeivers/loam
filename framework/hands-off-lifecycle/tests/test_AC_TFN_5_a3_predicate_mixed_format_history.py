@@ -33,8 +33,14 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 HOOKS_DIR = REPO_ROOT / "framework" / "hands-off-lifecycle" / "hooks"
+# Post-M6b.0: gate-hook source files MOVED to plugins/dev-sdlc/hooks/.
+# Add plugin's hooks dir to sys.path so test imports resolve to the
+# moved gate modules. _gate_helpers.py STAYS at canonical HOOKS_DIR.
+PLUGIN_HOOKS_DIR = REPO_ROOT / "plugins" / "dev-sdlc" / "hooks"
 if str(HOOKS_DIR) not in sys.path:
     sys.path.insert(0, str(HOOKS_DIR))
+if PLUGIN_HOOKS_DIR.exists() and str(PLUGIN_HOOKS_DIR) not in sys.path:
+    sys.path.insert(0, str(PLUGIN_HOOKS_DIR))
 
 
 from active_scope_sentinel import ActiveScopeSentinel, ScopeBinding  # noqa: E402

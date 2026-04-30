@@ -22,7 +22,14 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 HOOKS_DIR = REPO_ROOT / "framework" / "hands-off-lifecycle" / "hooks"
+# Post-M6b.0: gate-hook source files MOVED to plugins/dev-sdlc/hooks/.
+# Add plugin's hooks dir to sys.path so the test imports resolve to
+# the moved gate modules. _gate_helpers.py STAYS at canonical
+# (HOOKS_DIR above) and remains importable.
+PLUGIN_HOOKS_DIR = REPO_ROOT / "plugins" / "dev-sdlc" / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
+if PLUGIN_HOOKS_DIR.exists():
+    sys.path.insert(0, str(PLUGIN_HOOKS_DIR))
 
 
 def _stub_modules(monkeypatch, *, mode: str):

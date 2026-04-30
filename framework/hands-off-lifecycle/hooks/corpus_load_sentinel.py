@@ -167,17 +167,19 @@ def compute_corpus_paths_required(
 
     AC.SE.5: NORMAL USE workspaces get ``always_loaded`` only; DEV
     MODE workspaces get ``always_loaded ∪ dev_only``. The set is
-    drawn from the dev-mode-manifest at
-    ``docs/rebuild/dev-mode-manifest.yaml`` via ``loam_mode``'s
-    existing ``select_corpus`` surface (consumer-only).
+    drawn from the dev-mode-manifest via ``loam_mode``'s existing
+    ``select_corpus`` surface (consumer-only).
 
-    Single-framework restructure (amendment #67, AC.SFR.3): when
-    ``<workspace>/docs/rebuild/dev-mode-manifest.yaml`` is absent,
-    falls through to
-    ``<workspace>/framework/docs/rebuild/dev-mode-manifest.yaml`` (the
-    framework-only branch's root copy). When the framework copy is
-    the source, ``select_corpus`` is called against the framework
-    root so the returned corpus paths resolve correctly.
+    Manifest location probe (in order):
+      1. ``<workspace>/plugins/dev-sdlc/dev-mode-manifest.yaml`` —
+         post-M6b.0 location (the manifest MOVED into the Dev/SDLC
+         plugin tree per AC.OSS-M6b0.5).
+      2. ``<workspace>/docs/rebuild/dev-mode-manifest.yaml`` — pre-
+         M6b.0 location; preserved as fallback for workspaces that
+         predate the migration.
+      3. ``<workspace>/framework/docs/rebuild/dev-mode-manifest.yaml`` —
+         framework-only restructure fallback (amendment #67,
+         AC.SFR.3).
 
     Fail-soft: if the manifest is missing or malformed, returns the
     empty list (the hook still writes a sentinel; ``state`` field
@@ -189,21 +191,34 @@ def compute_corpus_paths_required(
     except Exception:  # noqa: BLE001 — fail-soft on missing dep
         return []
     workspace_root = Path(workspace_root)
-    manifest_path = (
+    plugin_manifest = (
+        workspace_root
+        / "plugins"
+        / "dev-sdlc"
+        / "dev-mode-manifest.yaml"
+    )
+    legacy_manifest = (
         workspace_root / "docs" / "rebuild" / "dev-mode-manifest.yaml"
     )
-    selector_root = workspace_root
-    if not manifest_path.exists():
-        framework_manifest = (
-            workspace_root
-            / "framework"
-            / "docs"
-            / "rebuild"
-            / "dev-mode-manifest.yaml"
-        )
-        if framework_manifest.exists():
-            manifest_path = framework_manifest
-            selector_root = workspace_root / "framework"
+    framework_manifest = (
+        workspace_root
+        / "framework"
+        / "docs"
+        / "rebuild"
+        / "dev-mode-manifest.yaml"
+    )
+    if plugin_manifest.exists():
+        manifest_path = plugin_manifest
+        selector_root = workspace_root
+    elif legacy_manifest.exists():
+        manifest_path = legacy_manifest
+        selector_root = workspace_root
+    elif framework_manifest.exists():
+        manifest_path = framework_manifest
+        selector_root = workspace_root / "framework"
+    else:
+        manifest_path = plugin_manifest
+        selector_root = workspace_root
     try:
         manifest = load_manifest(manifest_path)
     except Exception:  # noqa: BLE001 — fail-soft on missing/malformed

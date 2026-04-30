@@ -126,15 +126,22 @@ def test_default_partition_classifies_dev_tools_dev_only() -> None:
     from loam.publish_framework_only.partition import PartitionClass
 
     manifest = load_manifest(CANONICAL_MANIFEST)
+    # Sample dev-only paths. Post-M6b.0:
+    #  - loam-mode MOVED into the plugin (now at
+    #    plugins/dev-sdlc/tools/loam-mode/, covered by the
+    #    plugins/dev-sdlc/** glob).
+    #  - long-form ODD docs MOVED into the plugin.
+    #  - dev-mode-manifest.yaml MOVED into the plugin.
     sample_dev_only_paths = [
         "framework/tools/loam/pyproject.toml",
-        "framework/tools/loam-mode/pyproject.toml",
         "framework/tools/heavy-b-migrate/pyproject.toml",
         "framework/tools/orphan-plist-cleanup/pyproject.toml",
         "framework/tools/pos-publish-framework-only/pyproject.toml",
         "docs/rebuild/STATE.md",
-        "docs/odd-methodology.md",
-        "docs/odd-in-loam.md",
+        "plugins/dev-sdlc/docs/odd-methodology.md",
+        "plugins/dev-sdlc/docs/odd-in-loam.md",
+        "plugins/dev-sdlc/tools/loam-mode/pyproject.toml",
+        "plugins/dev-sdlc/dev-mode-manifest.yaml",
         "CLAUDE.dev.md",
     ]
     for p in sample_dev_only_paths:

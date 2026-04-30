@@ -149,21 +149,23 @@ dev_and_public:
   - glob: "docs/design/**"
   # Existing live public-relevant docs.
   - path: docs/CLAUDE_CAPABILITIES.md
-  # First plugin — Dev/SDLC. M6a baseline classification: ships
-  # publicly so users can compose against the harness extension
-  # protocol (per plan §4 AC.OSS-M6.8). M6b reclassifies to
-  # `dev_only` post dev-machinery extraction per AC.OSS-M6.13 +
-  # D-build.M6.14.
-  - glob: "plugins/dev-sdlc/**"
+  # Pre-M6b.0 the Dev/SDLC plugin classified `dev_and_public` per
+  # M6a baseline (master plan §4 AC.OSS-M6.8). M6b.0 RECLASSIFIED it
+  # to `dev_only` per AC.OSS-M6b0.9 + master plan D-build.M6.14
+  # (the plugin now contains the dev-discipline corpus — CDCs, long-
+  # form ODD docs, conventions, gate hooks, loam-mode tooling, dev-
+  # mode-manifest). See `dev_only:` block below for the new entry.
 
 # Stays in the dev tree, NEVER ships publicly. Dev-discipline machinery.
 dev_only:
-  # Dev-tools — loam amend (the renamed pos-amend); the dev-mode
-  # auto-load selector; migration helpers; the publish tool itself
-  # (its OUTPUT ships, not the tool); architecture-B migration
-  # tooling; orphan plist cleanup; upgrade-merge resolver.
+  # Dev-tools — loam amend (the renamed pos-amend); migration
+  # helpers; the publish tool itself (its OUTPUT ships, not the
+  # tool); architecture-B migration tooling; orphan plist cleanup;
+  # upgrade-merge resolver. Post-M6b.0: framework/tools/loam-mode/
+  # MOVED into the Dev/SDLC plugin tree (covered by
+  # `plugins/dev-sdlc/**` glob below); the path no longer exists at
+  # the canonical location.
   - glob: "framework/tools/loam/**"
-  - glob: "framework/tools/loam-mode/**"
   - glob: "framework/tools/heavy-b-migrate/**"
   - glob: "framework/tools/orphan-plist-cleanup/**"
   - glob: "framework/tools/upgrade-merge-resolver/**"
@@ -172,20 +174,30 @@ dev_only:
   - glob: "framework/tools/loam-migrate-launchd-labels/**"
   - glob: "framework/tools/loam-migrate-dormancy-config/**"
   # Internal docs tree — plans, components, FUTURE_IDEAS, STATE,
-  # BACKLOG, dev-mode-manifest, capability-corpus authoring shape,
-  # decay-retention-analysis, spec/. Per OSS-readiness audit §4.1
-  # + master plan §3 AC.OSS.3.
+  # BACKLOG, capability-corpus authoring shape, decay-retention-
+  # analysis, spec/. Per OSS-readiness audit §4.1 + master plan §3
+  # AC.OSS.3. Post-M6b.0: docs/rebuild/dev-mode-manifest.yaml MOVED
+  # to plugins/dev-sdlc/dev-mode-manifest.yaml (covered by the
+  # `plugins/dev-sdlc/**` glob below).
   - glob: "docs/rebuild/**"
-  # Long-form ODD methodology — DEV-MODE-only per audit §4.1 D5.
-  # Condensed docs/design/odd.md (forward-looking — authored M7)
-  # is the public-facing ODD surface.
-  - path: docs/odd-methodology.md
-  - path: docs/odd-in-loam.md
-  # Duration-estimation rubric — DEV-MODE-only per audit §4.1.
-  - path: docs/duration-estimation-rubric.md
   # Dev-mode-only top-level fragment (CLAUDE.dev.md is the dev-
   # extension of CLAUDE.md per loam-mode B's load-time partition).
   - path: CLAUDE.dev.md
+  # Dev/SDLC plugin — RECLASSIFIED to `dev_only` post-M6b.0 per
+  # AC.OSS-M6b0.9 + master plan D-build.M6.14. The plugin now
+  # contains: dev CDCs at plugins/dev-sdlc/docs/cdcs/, long-form
+  # ODD docs at plugins/dev-sdlc/docs/{odd-methodology,odd-in-loam,
+  # duration-estimation-rubric}.md, convention codifications at
+  # plugins/dev-sdlc/docs/conventions/, gate hook source files at
+  # plugins/dev-sdlc/hooks/, loam-mode tooling at plugins/dev-sdlc/
+  # tools/loam-mode/, dispatch + plan templates at plugins/dev-sdlc/
+  # templates/, and the dev-mode-manifest at plugins/dev-sdlc/dev-
+  # mode-manifest.yaml. The plugin's user-facing capabilities (api,
+  # cli, contribution, stages, store, observability, errors, skills/
+  # start-project.md) are also dev-discipline machinery — they ship
+  # under the plugin's `pip install` path, not under the public
+  # synthesis surface.
+  - glob: "plugins/dev-sdlc/**"
 
 # MUST NOT ship publicly under any condition. Mostly defensive — these
 # paths are .gitignore'd so git ls-tree never sees them; the manifest

@@ -24,7 +24,7 @@ from loam_mode.manifest import (
 
 
 def test_AC_F1_partition_disjoint(real_manifest_path: Path, repo_root: Path) -> None:
-    """The shipped ``docs/rebuild/dev-mode-manifest.yaml`` resolves
+    """The shipped ``plugins/dev-sdlc/dev-mode-manifest.yaml`` resolves
     to disjoint always-loaded and dev-only sets across the actual
     workspace tree."""
     manifest = load_manifest(real_manifest_path)

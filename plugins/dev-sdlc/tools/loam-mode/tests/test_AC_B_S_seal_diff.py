@@ -14,15 +14,18 @@ from __future__ import annotations
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+# Post-M6b.0: this test file is at
+# plugins/dev-sdlc/tools/loam-mode/tests/test_AC_B_S_seal_diff.py.
+# parents[0]=tests/, parents[1]=loam-mode/, parents[2]=tools/,
+# parents[3]=dev-sdlc/, parents[4]=plugins/, parents[5]=<workspace>.
+LOAM_MODE_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 
 
 def test_AC_B_S_session_start_module_present() -> None:
     """B's emitter module exists at the agreed path."""
     p = (
-        REPO_ROOT
-        / "tools"
-        / "loam-mode"
+        LOAM_MODE_ROOT
         / "src"
         / "loam_mode"
         / "session_start.py"
@@ -40,9 +43,7 @@ def test_AC_B_S_no_sealed_component_imports_in_emitter() -> None:
     composition AROUND sealed code, not coupling INTO it.
     """
     p = (
-        REPO_ROOT
-        / "tools"
-        / "loam-mode"
+        LOAM_MODE_ROOT
         / "src"
         / "loam_mode"
         / "session_start.py"

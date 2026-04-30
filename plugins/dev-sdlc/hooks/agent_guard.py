@@ -78,6 +78,24 @@ _HOOKS_DIR = Path(__file__).resolve().parent
 if str(_HOOKS_DIR) not in sys.path:
     sys.path.insert(0, str(_HOOKS_DIR))
 
+# Post-M6b.0 (F2 ruling — gate hook source MOVED from
+# framework/hands-off-lifecycle/hooks/ to plugins/dev-sdlc/hooks/):
+# _gate_helpers.py STAYS at the canonical hooks/ dir (used by gate
+# hooks AND by other infrastructure). Add the canonical hooks dir
+# to sys.path so _gate_helpers resolves regardless of which hooks/
+# tree this script is invoked from.
+_CANONICAL_HOOKS_DIR = (
+    Path(__file__).resolve().parents[3]
+    / "framework"
+    / "hands-off-lifecycle"
+    / "hooks"
+)
+if (
+    _CANONICAL_HOOKS_DIR.exists()
+    and str(_CANONICAL_HOOKS_DIR) not in sys.path
+):
+    sys.path.insert(0, str(_CANONICAL_HOOKS_DIR))
+
 
 import _gate_helpers as _helpers  # noqa: E402
 

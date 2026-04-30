@@ -112,6 +112,16 @@ def test_canonical_manifest_classifies_plugin_files() -> None:
             continue
         cls = classify_path(manifest, rel)
         assert cls is not None, f"{rel} unclassified"
-        assert cls == PartitionClass.DEV_AND_PUBLIC, (
-            f"{rel}: expected dev_and_public at M6a baseline; got {cls}"
+        # Pre-M6b.0 (M6a baseline): plugin paths classified
+        # `dev_and_public` per AC.OSS-M6.8 (the plugin's user-facing
+        # capabilities ship publicly so users could compose against
+        # the harness extension protocol).
+        # Post-M6b.0: plugin paths RECLASSIFY to `dev_only` per
+        # AC.OSS-M6b0.9 + master plan D-build.M6.14 — the plugin now
+        # contains the dev-discipline corpus (CDCs, long-form ODD
+        # docs, conventions, gate hooks, loam-mode tooling) and is
+        # itself dev-discipline machinery.
+        assert cls == PartitionClass.DEV_ONLY, (
+            f"{rel}: expected dev_only post-M6b.0 (plugin reclassified "
+            f"from dev_and_public per AC.OSS-M6b0.9 + D-build.M6.14); got {cls}"
         )

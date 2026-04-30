@@ -3,7 +3,7 @@
 F is dev-discipline (sub-plan F's §2). The amendment lives at:
 
   - ``tools/loam-mode/`` (new tool — F's primary surface)
-  - ``docs/rebuild/dev-mode-manifest.yaml`` (the partition data)
+  - ``plugins/dev-sdlc/dev-mode-manifest.yaml`` (the partition data)
   - ``docs/rebuild/plans/two-modes-and-multi-workspace/F-auto-load-partition.md``
     (this plan's §14 method-decision register)
   - ``CLAUDE.md`` + ``CLAUDE.dev.md`` + ``README.md`` +
@@ -30,13 +30,21 @@ from pathlib import Path
 import pytest
 
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
+# Post-M6b.0: tests at plugins/dev-sdlc/tools/loam-mode/tests/
+# (parents[5] = workspace).
+REPO_ROOT = Path(__file__).resolve().parents[5]
 
 
-# Paths F's amendment is permitted to touch.
+# Paths F's amendment is permitted to touch. The historical F
+# amendment landed before loam-mode moved into the plugin, so the
+# legacy prefix is preserved as a name; the post-M6b.0 location is
+# also admitted so the test's diff window is consistent if F's
+# amendment commit is ever re-tested in the future.
 ALLOWED_PREFIXES = (
     "tools/loam-mode/",
-    "docs/rebuild/dev-mode-manifest.yaml",
+    "framework/tools/loam-mode/",
+    "plugins/dev-sdlc/tools/loam-mode/",
+    "plugins/dev-sdlc/dev-mode-manifest.yaml",
     "docs/rebuild/plans/two-modes-and-multi-workspace/F-auto-load-partition",
     "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
 )
@@ -45,7 +53,8 @@ ALLOWED_FILES = {
     "CLAUDE.dev.md",
     "README.md",
     "docs/CLAUDE_CAPABILITIES.md",
-    "docs/duration-estimation-rubric.md",
+    # Post-M6b.0: duration-estimation-rubric MOVED into the plugin.
+    "plugins/dev-sdlc/docs/duration-estimation-rubric.md",
 }
 
 
@@ -111,6 +120,12 @@ def test_AC_F_S_allowed_surfaces_register_is_complete() -> None:
         if "F-auto-load-partition" in prefix:
             continue
         if "FUTURE_IDEAS_DRAFT" in prefix:
+            continue
+        # Pre-M6b.0 historical locations preserved as names so this
+        # register matches F's amendment commit if ever re-tested.
+        # The post-M6b.0 prefix `plugins/dev-sdlc/tools/loam-mode/`
+        # (also in the register) covers today's actual location.
+        if prefix in ("tools/loam-mode/", "framework/tools/loam-mode/"):
             continue
         if candidate.with_suffix(".md").exists():
             continue

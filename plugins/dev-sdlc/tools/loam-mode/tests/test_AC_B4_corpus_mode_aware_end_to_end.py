@@ -71,9 +71,12 @@ def test_AC_B4_select_corpus_user_mode_excludes_claude_dev_md(
     F's ``dev_only`` partition; in user mode F's ``select_corpus``
     excludes it AND B's ``emit_session_start_context`` returns empty.
     """
-    repo_root = Path(__file__).resolve().parents[4]
+    # Post-M6b.0: tests live at plugins/dev-sdlc/tools/loam-mode/tests/
+    # (parents[5] = workspace). dev-mode-manifest.yaml MOVED to
+    # plugins/dev-sdlc/dev-mode-manifest.yaml.
+    repo_root = Path(__file__).resolve().parents[5]
     manifest = load_manifest(
-        repo_root / "docs" / "rebuild" / "dev-mode-manifest.yaml"
+        repo_root / "plugins" / "dev-sdlc" / "dev-mode-manifest.yaml"
     )
     user_paths = select_corpus(manifest, repo_root, "user")
     dev_paths = select_corpus(manifest, repo_root, "dev")
@@ -87,9 +90,12 @@ def test_AC_B4_select_corpus_dev_mode_includes_dev_only(
 ) -> None:
     """Sanity check on F's data: dev mode is a strict superset of
     user mode."""
-    repo_root = Path(__file__).resolve().parents[4]
+    # Post-M6b.0: tests live at plugins/dev-sdlc/tools/loam-mode/tests/
+    # (parents[5] = workspace). dev-mode-manifest.yaml MOVED to
+    # plugins/dev-sdlc/dev-mode-manifest.yaml.
+    repo_root = Path(__file__).resolve().parents[5]
     manifest = load_manifest(
-        repo_root / "docs" / "rebuild" / "dev-mode-manifest.yaml"
+        repo_root / "plugins" / "dev-sdlc" / "dev-mode-manifest.yaml"
     )
     user_paths = set(select_corpus(manifest, repo_root, "user"))
     dev_paths = set(select_corpus(manifest, repo_root, "dev"))

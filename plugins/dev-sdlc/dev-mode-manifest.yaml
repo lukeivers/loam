@@ -1,7 +1,8 @@
 # pos-v2 dev-mode auto-load partition (sub-plan F).
 #
 # Owner-authored partition data consumed by the loam-mode selector
-# (see ``tools/loam-mode/``). Sub-plan B mechanises the routing:
+# (see ``plugins/dev-sdlc/tools/loam-mode/``; post-M6b.0 location).
+# Sub-plan B mechanises the routing:
 # NORMAL USE sessions auto-load only ``always_loaded``; DEV MODE
 # sessions auto-load ``always_loaded ∪ dev_only``. Locked rulings
 # 4–6 (master plan §D-MASTER.2 + §F) are the source of truth; this
@@ -129,8 +130,13 @@ dev_only:
   # Spec docs.
   - glob: "docs/rebuild/spec/**"
   # The partition manifest itself (read by loam-mode; dev infrastructure).
-  - path: docs/rebuild/dev-mode-manifest.yaml
+  # Post-M6b.0: relocated under the dev-sdlc plugin tree.
+  - path: plugins/dev-sdlc/dev-mode-manifest.yaml
   # Dev tooling.
   - glob: "tools/pos-amend/**"
   - glob: "tools/orphan-plist-cleanup/**"
-  - glob: "tools/loam-mode/**"  # this F-built tool itself
+  # Post-M6b.0: loam-mode lives at plugins/dev-sdlc/tools/loam-mode/
+  # (was framework/tools/loam-mode/). Plugin's docs/cdcs/ + docs/conventions/
+  # also load in DEV MODE alongside the long-form ODD docs that moved
+  # into the plugin.
+  - glob: "plugins/dev-sdlc/tools/loam-mode/**"

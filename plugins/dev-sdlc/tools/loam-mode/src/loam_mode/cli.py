@@ -23,7 +23,7 @@ from loam_mode.selector import select_corpus
 from loam_mode.session_start import cli_session_start
 
 
-_DEFAULT_MANIFEST_REL = "docs/rebuild/dev-mode-manifest.yaml"
+_DEFAULT_MANIFEST_REL = "plugins/dev-sdlc/dev-mode-manifest.yaml"
 
 
 def _resolve_workspace(

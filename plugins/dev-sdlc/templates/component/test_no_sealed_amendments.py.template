@@ -1,0 +1,93 @@
+"""Seal-fence test for the {COMPONENT_NAME} component.
+
+Standard seal-test pattern (mirror
+`framework/dormancy/tests/test_no_sealed_amendments.py`): asserts no
+diff between BASELINE and the sealed commit modifies sealed-component
+surfaces outside this component's allowed prefix list.
+
+BASELINE history:
+  - `{BASELINE_SHA}` ({BASELINE_DESCRIPTION}): the seal-diff window starts here.
+    The amendment manifest's BASELINE points here; the seal test's
+    diff window is `BASELINE..seal_commit` per the cross-component
+    sweep convention.
+
+SEAL_COMMIT: populated at seal time by `loam amend seal` per the
+amendment ritual.
+
+Template variables (filled in at component-creation time):
+  - {COMPONENT_NAME} — human-readable component name.
+  - {COMPONENT_PREFIX} — workspace-relative prefix the component admits
+    (e.g. `framework/dormancy/`, `plugins/dev-sdlc/`).
+  - {BASELINE_SHA} — the SHA the seal-diff window starts at.
+  - {BASELINE_DESCRIPTION} — short narrative describing the BASELINE
+    commit (e.g. "M5 §14 SHA-register backfill").
+  - {PARTNER_PREFIXES} — list of cross-cutting prefixes admitted at
+    component creation per the M1g cross-component widening pattern
+    (typically the predecessors' subtrees + universal admissions like
+    `docs/rebuild/plans/`).
+"""
+
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent  # adjust depth per component layout
+BASELINE = "{BASELINE_SHA}"
+
+SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
+
+
+def _seal_commit() -> str:
+    """Resolve SEAL_COMMIT from sidecar file, else HEAD."""
+    if SEAL_COMMIT_PATH.exists():
+        txt = SEAL_COMMIT_PATH.read_text().strip()
+        if txt and txt != "HEAD":
+            return txt
+    return "HEAD"
+
+
+def test_seal_commit_pinning_pattern() -> None:
+    """The test file exposes BASELINE + SEAL_COMMIT_PATH and does not
+    diff against ..HEAD literally. Post-seal, tests/SEAL_COMMIT
+    contains the SHA."""
+    source = Path(__file__).read_text()
+    assert "BASELINE = " in source
+    assert "SEAL_COMMIT_PATH" in source
+    assert "{BASELINE}..{seal}" in source, (
+        "the diff call must route through _seal_commit()"
+    )
+
+
+def test_only_{COMPONENT_NAME_SNAKE}_changed() -> None:
+    """No sealed-component surface moved between BASELINE and seal
+    outside the component's subtree + admitted partners."""
+    seal = _seal_commit()
+    out = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{BASELINE}..{seal}"],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+    changed = [ln for ln in out.splitlines() if ln.strip()]
+
+    allowed_prefixes = (
+        "{COMPONENT_PREFIX}",
+        # PARTNER_PREFIXES rendered from the manifest's
+        # extra_allowed_prefixes + universal_paths.prefixes at
+        # component-creation time.
+        # {PARTNER_PREFIXES}
+    )
+    allowed_files: set[str] = set()
+
+    offending = []
+    for path in changed:
+        if any(path.startswith(p) for p in allowed_prefixes):
+            continue
+        if path in allowed_files:
+            continue
+        offending.append(path)
+    assert offending == [], (
+        f"Sealed-component paths modified: {offending}. "
+        "Halt-signal condition."
+    )

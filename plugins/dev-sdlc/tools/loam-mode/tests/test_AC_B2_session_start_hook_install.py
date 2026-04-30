@@ -53,8 +53,11 @@ def test_AC_B2_inner_hook_composable_into_first_run_stanza(tmp_path: Path) -> No
     'installs' the selector."""
     import sys
 
-    REPO_ROOT = Path(__file__).resolve().parents[3]
-    HOOKS_DIR = REPO_ROOT / "hands-off-lifecycle" / "hooks"
+    # Post-M6b.0: this test file is at
+    # plugins/dev-sdlc/tools/loam-mode/tests/<name>.py (parents[5] = workspace).
+    # Pre-M6b.0 it was at framework/tools/loam-mode/tests/ (parents[4] = workspace).
+    WORKSPACE_ROOT = Path(__file__).resolve().parents[5]
+    HOOKS_DIR = WORKSPACE_ROOT / "framework" / "hands-off-lifecycle" / "hooks"
     sys.path.insert(0, str(HOOKS_DIR))
     from first_run_settings import build_first_run_stanza  # noqa: E402
 
@@ -71,8 +74,11 @@ def test_AC_B2_inner_hook_composable_into_supervisor_stanza(tmp_path: Path) -> N
     post-first-run runs loam-mode session-start."""
     import sys
 
-    REPO_ROOT = Path(__file__).resolve().parents[3]
-    HOOKS_DIR = REPO_ROOT / "hands-off-lifecycle" / "hooks"
+    # Post-M6b.0: this test file is at
+    # plugins/dev-sdlc/tools/loam-mode/tests/<name>.py (parents[5] = workspace).
+    # Pre-M6b.0 it was at framework/tools/loam-mode/tests/ (parents[4] = workspace).
+    WORKSPACE_ROOT = Path(__file__).resolve().parents[5]
+    HOOKS_DIR = WORKSPACE_ROOT / "framework" / "hands-off-lifecycle" / "hooks"
     sys.path.insert(0, str(HOOKS_DIR))
     from first_run_settings import build_supervisor_stanza  # noqa: E402
 

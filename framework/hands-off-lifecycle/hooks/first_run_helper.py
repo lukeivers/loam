@@ -444,15 +444,46 @@ def _maybe_merge_status_line(
 # ---- structural-enforcement A2 — PreToolUse objective-binding gate --
 #
 # The objective-binding gate is registered as a single inner hook
-# under ``hooks.PreToolUse`` via ``merge_pre_tool_use``. Single-
-# contributor for now (A3 TDD-guard / A4 Bash/Agent-context guards
-# will compose alongside via the same merge function once they ship,
-# generalised the same way amendment #45 generalised the SessionStart
-# counterparts). Matchers ``Edit|Write|MultiEdit`` per locked plan
-# D-A2.1. The gate is co-located with the rest of hands-off-lifecycle's
-# hooks; no lazy-import probe is needed. Fail-soft mirrors the locked
-# plan §5 fail-closed direction: a transient I/O error must not
-# regress first-run.
+# under ``hooks.PreToolUse`` via ``merge_pre_tool_use``. Multi-
+# contributor as of amendment #85 (M4): A2 + A3 + A4 + M4 share the
+# outer-list registration at first-run via _maybe_merge_pre_tool_use.
+# Matchers per locked plan D-A2.1 / D-A3.1 / D-A4.1 / M4 plan §4.
+#
+# Post-M6b.0 (F2 ruling — Option D hybrid per master plan
+# D-build.M6.14 ruling 2026-04-29): the gate-hook SOURCE files MOVED
+# from framework/hands-off-lifecycle/hooks/ to
+# plugins/dev-sdlc/hooks/. The writer logic at first_run_helper.py
+# STAYS; each stanza-builder uses _resolve_gate_script() to probe
+# for the plugin-side path first, falling back to the canonical-side
+# path if the plugin tree is not present (mirror of amendment #67's
+# _resolve_corpus_path probe-and-prefer pattern). Fail-soft mirrors
+# the locked plan §5 fail-closed direction: a transient I/O error
+# must not regress first-run.
+
+
+def _resolve_gate_script(loam_root: Path, name: str) -> Path:
+    """Resolve a structural-enforcement gate-hook script path.
+
+    Per M6b.0 F2 ruling (Option D hybrid): the A2/A3/A4/M4 gate
+    SOURCE files live at ``plugins/dev-sdlc/hooks/<name>.py`` post-
+    extraction. If the Dev/SDLC plugin is installed (its hook
+    directory exists in the workspace tree), prefer the plugin-side
+    path; otherwise fall back to the canonical-side path at
+    ``framework/hands-off-lifecycle/hooks/<name>.py``.
+
+    Mirror of amendment #67's ``_resolve_corpus_path`` probe-and-
+    prefer pattern. The probe is cheap (single ``Path.exists``
+    call); first-run wall-time impact is negligible.
+    """
+    loam_root = Path(loam_root)
+    plugin_path = (
+        loam_root / "plugins" / "dev-sdlc" / "hooks" / name
+    )
+    if plugin_path.exists():
+        return plugin_path
+    return (
+        loam_root / "framework" / "hands-off-lifecycle" / "hooks" / name
+    )
 
 
 def _objective_binding_gate_stanza(loam_root: Path) -> dict[str, Any]:
@@ -465,14 +496,7 @@ def _objective_binding_gate_stanza(loam_root: Path) -> dict[str, Any]:
     resolved at registration time. The gate is stdlib-only at import
     so cold-start cost is the Python-startup envelope alone.
     """
-    loam_root = Path(loam_root)
-    script = (
-        loam_root
-        / "framework"
-        / "hands-off-lifecycle"
-        / "hooks"
-        / "objective_binding_gate.py"
-    )
+    script = _resolve_gate_script(loam_root, "objective_binding_gate.py")
     return {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
@@ -494,14 +518,7 @@ def _tdd_guard_stanza(loam_root: Path) -> dict[str, Any]:
     runs AFTER A2 in the hook chain; this stanza is appended second
     in the multi-contributor outer list.
     """
-    loam_root = Path(loam_root)
-    script = (
-        loam_root
-        / "framework"
-        / "hands-off-lifecycle"
-        / "hooks"
-        / "tdd_guard.py"
-    )
+    script = _resolve_gate_script(loam_root, "tdd_guard.py")
     return {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
@@ -524,14 +541,7 @@ def _bash_guard_stanza(loam_root: Path) -> dict[str, Any]:
     name). The gate is stdlib-only at import; cold-start cost is
     bounded by the Python-startup envelope.
     """
-    loam_root = Path(loam_root)
-    script = (
-        loam_root
-        / "framework"
-        / "hands-off-lifecycle"
-        / "hooks"
-        / "bash_guard.py"
-    )
+    script = _resolve_gate_script(loam_root, "bash_guard.py")
     return {
         "matcher": "Bash",
         "hooks": [
@@ -552,14 +562,7 @@ def _agent_guard_stanza(loam_root: Path) -> dict[str, Any]:
     tool name for Agent dispatch). The gate is stdlib-only at import;
     cold-start cost is bounded by the Python-startup envelope.
     """
-    loam_root = Path(loam_root)
-    script = (
-        loam_root
-        / "framework"
-        / "hands-off-lifecycle"
-        / "hooks"
-        / "agent_guard.py"
-    )
+    script = _resolve_gate_script(loam_root, "agent_guard.py")
     return {
         "matcher": "Task",
         "hooks": [
@@ -582,14 +585,7 @@ def _dispatch_setup_hook_stanza(loam_root: Path) -> dict[str, Any]:
     A4 runs first as the refusal gate; M4 runs second as the
     structural-enforcement disk-side gate.
     """
-    loam_root = Path(loam_root)
-    script = (
-        loam_root
-        / "framework"
-        / "hands-off-lifecycle"
-        / "hooks"
-        / "dispatch_setup_hook.py"
-    )
+    script = _resolve_gate_script(loam_root, "dispatch_setup_hook.py")
     return {
         "matcher": "Task",
         "hooks": [

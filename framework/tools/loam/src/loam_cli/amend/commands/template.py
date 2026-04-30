@@ -38,17 +38,46 @@ from loam_cli.amend.template_engine import (
 )
 
 
-# Default templates root, relative to this package's source tree. The
-# path resolves to ``<repo>/tools/loam/templates/`` when loam amend
-# is installed in-place from the workspace via ``pip install -e``.
-# Path arithmetic post-M1g: this file is at
+# Default templates root, relative to this package's source tree.
+# Path arithmetic: this file is at
 #   framework/tools/loam/src/loam_cli/amend/commands/template.py
-# parents[0]=commands/, [1]=amend/, [2]=loam_cli/, [3]=src/, [4]=loam/.
-# The templates/ directory sits at the tool-dir root (parents[4]).
-# Pre-M1g (pos-amend layout), the file was one level shallower
-# (pos_amend/commands/...) so parents[3] was the tool root.
+# parents[0]=commands/, [1]=amend/, [2]=loam_cli/, [3]=src/,
+# [4]=loam/, [5]=tools/, [6]=framework/, [7]=<workspace>.
+#
+# Post-M6b.0 (D-build.M6b0.3 / F2 mechanism mirror): the dispatch +
+# plan templates MOVED from framework/tools/loam/templates/ to
+# plugins/dev-sdlc/templates/. The unified loam CLI's resolver now
+# probes for plugin-side templates first, falling back to the
+# canonical-side templates directory if the plugin tree is not
+# present. Mirror of amendment #67's ``_resolve_corpus_path``
+# probe-and-prefer pattern. ``DEFAULT_TEMPLATES_ROOT`` resolves
+# (per workspace) to whichever exists; tests asserting against the
+# default path now hit the plugin-side location post-M6b.0.
 _PKG_ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_TEMPLATES_ROOT = _PKG_ROOT / "templates"
+_WORKSPACE_ROOT = Path(__file__).resolve().parents[7]
+_PLUGIN_TEMPLATES_ROOT = (
+    _WORKSPACE_ROOT
+    / "plugins"
+    / "dev-sdlc"
+    / "templates"
+)
+_CANONICAL_TEMPLATES_ROOT = _PKG_ROOT / "templates"
+
+
+def _resolve_default_templates_root() -> Path:
+    """Probe-and-prefer for the default templates root.
+
+    Prefer the Dev/SDLC plugin's templates tree; fall back to the
+    canonical-side templates directory if the plugin tree is not
+    present. Defensive only — ``_PLUGIN_TEMPLATES_ROOT`` is the
+    expected location post-M6b.0.
+    """
+    if _PLUGIN_TEMPLATES_ROOT.exists():
+        return _PLUGIN_TEMPLATES_ROOT
+    return _CANONICAL_TEMPLATES_ROOT
+
+
+DEFAULT_TEMPLATES_ROOT = _resolve_default_templates_root()
 
 
 def _emit_diagnostic(exc: TemplateError) -> None:

@@ -3,7 +3,7 @@
 Sub-plan F (two-modes-and-multi-workspace programme) data layer:
 declares + audits the dev-mode auto-load partition.
 
-The partition lives at `docs/rebuild/dev-mode-manifest.yaml` (workspace-
+The partition lives at `plugins/dev-sdlc/dev-mode-manifest.yaml` (workspace-
 relative). `loam-mode` parses it, exposes a `select_corpus(mode)`
 selector for sub-plan B's mechanism to consume, and ships a
 `loam-mode audit` CLI that walks the workspace tree and reports
@@ -35,7 +35,7 @@ from pathlib import Path
 from loam_mode.manifest import load_manifest
 from loam_mode.selector import select_corpus
 
-m = load_manifest(Path("docs/rebuild/dev-mode-manifest.yaml"),
+m = load_manifest(Path("plugins/dev-sdlc/dev-mode-manifest.yaml"),
                   workspace_root=Path("."))
 paths = select_corpus(m, workspace_root=Path("."), mode="user")
 # paths is a sorted list[str] of workspace-relative paths to auto-load.

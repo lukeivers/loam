@@ -1,6 +1,6 @@
 """Partition manifest loader + entry expansion.
 
-The manifest YAML at ``docs/rebuild/dev-mode-manifest.yaml`` declares
+The manifest YAML at ``plugins/dev-sdlc/dev-mode-manifest.yaml`` declares
 two disjoint sets (``always_loaded`` and ``dev_only``) plus the
 audit roots and exclusion patterns. This module loads the YAML,
 validates the structural shape, expands glob+exclude entries against

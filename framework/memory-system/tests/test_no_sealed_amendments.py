@@ -101,7 +101,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              research and dropped. 3b128c3 is the pre-amendment tip
 #              — the pyyaml-reachability seal commit immediately
 #              before amendment #21's code commit.
-BASELINE = "d97c8c1"
+BASELINE = "14609d8"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -205,6 +205,9 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
         "workspace-bootstrap/",
         "workspace-sync/",
         "framework/tools/loam/",
+        "dormancy/",
+        "framework/dormancy/",
+        "framework/hands-off-lifecycle/seals/",
     )
     # Amendment #22 (pos-amend CLI + universal-paths retrofit) brings
     # memory-system's seal-diff loop up to parity with the other sealed

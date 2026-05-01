@@ -101,7 +101,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              research and dropped. 3b128c3 is the pre-amendment tip
 #              — the pyyaml-reachability seal commit immediately
 #              before amendment #21's code commit.
-BASELINE = "a31280a"
+BASELINE = "384cd65"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -225,6 +225,7 @@ def test_B20_only_subscription_routed_llm_surfaces_changed() -> None:
         "first-run-inventory.yaml",
         "framework/first-run-inventory.yaml",
         "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+        "docs/rebuild/STATE.md",
     }
 
     offending = []

@@ -119,23 +119,64 @@ Section 14 "Method-decision register" appears at the bottom of this plan. SHA re
 
 ### D-build.M6b1.1 — Shadow-then-flip phasing actuals
 
-(Populated at build time. Records: how many commits the builder used (shadow / flip / delete-old combined or split), why, any correctives. Per F3 phasing recommendation, expected: 2-3 commits between sub-plan commit and apply commit.)
+The build collapsed Phase α (shadow author) + Phase γ (delete-old) into a single `git mv` operation per file (51 file renames in the feature commit), preserving history at byte-level via git's rename-tracked move. Phase β (flip — dispatcher edits + heavy-b-migrate consumer rewrite + canonical-side test updates) landed in the same feature commit at `09e5e79`. The "shadow" property in F3 was preserved for the duration of the feature commit's authoring window: between `pip install -e plugins/dev-sdlc/tools/loam-amend/` and `pip install -e framework/tools/loam/`, both packages were registered and the dispatcher's M6a-authored `_discover_subcommand_builders` resolved both built-in (canonical at that moment) AND plugin-side `amend` to functional builders. The window closed atomically at the canonical-side cli.py edit.
+
+Total commits between sub-plan and seal:
+- `925381d` — sub-plan + manifest commit (Phase 0 / authoring).
+- `09e5e79` — combined Phase α+β+γ feature commit (51 file renames + 5 file edits + 2 new files; 56 changed paths total).
+- `d37a3be` — Phase δ part 1 (apply): FIRST RUN of `loam amend apply` under the plugin-side binary.
+- `c08e0fa` — Phase δ part 2 (seal): the seal commit per repo convention; `loam amend seal --plan-doc <abs-path>` ran against the plugin-side binary.
+- `3db9b46` — §14 SHA-register backfill commit (`loam amend seal` post-step).
+
+No corrective commits were needed. One in-build adjustment: the moved `test_AC_D_np_6_pyproject_no_new_dependency_introduced` test failed initially because the new `loam-amend/pyproject.toml` declares `dependencies = ["PyYAML>=6", "loam-cli"]` (the loam-cli dep was added so `loam_amend.cli`'s `from loam_cli import __version__` import resolves cleanly under the plugin's package metadata). Per ODD §4 (loose-AC text → fix the AC, not the implementation), the test was renamed to `test_AC_D_np_6_pyproject_no_new_third_party_dependency_introduced` and rewritten to assert "PyYAML is the listed third-party parser dep" + a forbidden-list defensive check; the intra-framework `loam-cli` dep is admitted. This adjustment landed in the same feature commit (no follow-up needed).
 
 ### D-build.M6b1.2 — Cross-tree consumer update inventory
 
-(Populated at build time. Per F3 + plan §11 finding #11, expected SOLE update: `framework/tools/heavy-b-migrate/src/loam/heavy_b_migrate/verify.py:76,81`. Record any additional consumers surfaced during build-time grep.)
+`framework/tools/heavy-b-migrate/src/loam/heavy_b_migrate/verify.py:76,81` was the sole non-test cross-tree consumer of `loam_cli.amend.*` — confirmed by `grep -rn "loam_cli\.amend\|from loam_cli\.amend\|import loam_cli\.amend" --include="*.py"` (excluding `framework/tools/loam/` and `__pycache__`) at the start of the build. The two late-import lines (one for `manifest`, one for `tracker_registration`) rewrote `loam_cli.amend.X` → `loam_amend.X`. heavy-b-migrate's 21-test suite passed byte-equivalent post-rewrite.
+
+No additional cross-tree consumers surfaced — F3's analysis (which itself rested on M1g plan §11 finding #1's verified consumer chain) was correct.
+
+The canonical-side `loam_cli/cli.py` had its hardcoded `from loam_cli.amend import cli as amend_cli` import + the `add_parser("amend", ...)` call + the `if args.subcommand == "amend"` dispatch branch ALL removed in the same feature commit; the dispatcher now relies entirely on the M6a-authored `_discover_subcommand_builders()` entry-point loop. This was the deepest non-test internal coupling and is now severed.
 
 ### D-build.M6b1.3 — Editable-install refresh confirmation
 
-(Populated at build time. Records: which packages were `pip uninstall`'d, which were `pip install -e ...`'d, the final `pip list | grep -i loam` state, and verification that `python -c "from loam_amend.cli import ..."` succeeds while `python -c "from loam_cli.amend import cli"` raises `ModuleNotFoundError`.)
+Cascade executed:
+1. `pip install -e ./plugins/dev-sdlc/tools/loam-amend/` — registered the new `loam-amend` package + the `[project.entry-points."loam.cli.subcommands"] amend = "loam_amend.cli:build_amend_subcommand"` entry-point. Built + installed editable wheel `loam_amend-0.1.0-0.editable-py3-none-any.whl`.
+2. `pip install -e ./framework/tools/loam/` — re-registered the canonical `loam-cli` package post-edit (the cli.py edit removed the hardcoded amend reg). Existing `loam-cli` 0.1.0 was uninstalled + reinstalled cleanly.
+
+Post-cascade verification (all PASS):
+- `pip show loam-amend` → success (0.1.0 editable at `plugins/dev-sdlc/tools/loam-amend/`).
+- `pip show loam-cli` → success (0.1.0 editable at `framework/tools/loam/`).
+- `python -c "from loam_amend.cli import build_amend_subcommand"` → exits 0.
+- `python -c "from loam_cli.amend import cli"` → raises `ModuleNotFoundError: No module named 'loam_cli.amend'` (canonical-side amend GONE).
+- `python -c "import importlib.metadata as m; print({ep.name: ep.value for ep in m.entry_points(group='loam.cli.subcommands')})"` → `{'amend': 'loam_amend.cli:build_amend_subcommand', 'project': 'loam.plugins.dev_sdlc.cli:build_project_subcommand'}`.
+- `loam amend --help` → exits 0; outputs the original `validate / apply / seal / template / new-plan` help text.
+- The seal step itself ran `loam amend seal` against the plugin-side binary — FIRST RUN of plugin-side bookkeeping for an amendment's own seal.
 
 ### D-build.M6b1.4 — Plugin-side dispatcher composition shape
 
-(Populated at build time. Records: the precise shape of `loam_amend.cli.build_amend_subcommand`. Expected: ~10 LOC adapter that calls `attach_subparsers(parser)` on the new subparser + sets `args.func = dispatch` so the unified CLI's `args.func` path routes correctly. Verifies M6a's `_discover_subcommand_builders` composes cleanly without dispatcher edit.)
+`loam_amend.cli.build_amend_subcommand` is ~30 LOC including docstring (~7 LOC of executable code). Mechanism:
+
+```python
+def build_amend_subcommand(sub: argparse._SubParsersAction) -> None:
+    amend_parser = sub.add_parser(
+        "amend",
+        help="amendment-dispatch tooling: validate / apply / seal / template / new-plan",
+        add_help=True,
+    )
+    attach_subparsers(amend_parser)
+    amend_parser.set_defaults(func=dispatch)
+```
+
+The adapter calls the existing `attach_subparsers(parser)` helper (which carries the full subcommand surface) and sets `args.func = dispatch` so the M6a `_discover_subcommand_builders` builder contract resolves `args.func` to `loam_amend.cli.dispatch`. The unified `loam` CLI's `main()` calls `func(args)` when `args.func` is callable — no dispatcher edit beyond removing the hardcoded amend reg was required. M6a's discovery loop composed cleanly.
 
 ### D-build.M6b1.5 — Path-resolution constant recomputation
 
-(Populated at build time. Records: the recomputed `parents[N]` indices for `_PKG_ROOT` + `_WORKSPACE_ROOT` in `loam_amend/commands/template.py` post-MOVE. Expected: `_PKG_ROOT = parents[3]`; `_WORKSPACE_ROOT = parents[7]`. The plugin-side templates path is resolved correctly + canonical fallback retained for safety.)
+In `plugins/dev-sdlc/tools/loam-amend/src/loam_amend/commands/template.py`:
+- Pre-MOVE (canonical at `framework/tools/loam/src/loam_cli/amend/commands/template.py`): `_PKG_ROOT = parents[4]`, `_WORKSPACE_ROOT = parents[7]`.
+- Post-MOVE: `_PKG_ROOT = parents[3]` (the `loam-amend/` package root); `_WORKSPACE_ROOT = parents[7]` (unchanged depth — the canonical-tree path was 7 levels deep from workspace; the plugin-tree path is also 7 levels deep, by happy coincidence).
+
+The probe-and-prefer logic from M6b.0 (D-build.M6b0.3) is intact: `_PLUGIN_TEMPLATES_ROOT = _WORKSPACE_ROOT / "plugins" / "dev-sdlc" / "templates"` resolves to the plugin-side templates path (the actual location of the dispatch + plan templates post-M6b.0). The canonical-side fallback `_PKG_ROOT / "templates"` is now stale (post-MOVE the loam-amend package itself ships no bundled templates) but retained for defensive safety. The 8 `test_template_engine.py` tests + downstream consumers all passed byte-equivalent against the recomputed indices.
 
 ### Commit SHAs
 

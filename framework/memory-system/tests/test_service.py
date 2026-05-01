@@ -151,9 +151,23 @@ def test_AC24_1_lifespan_constructs_and_closes_graphiti(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The lifespan context constructs Graphiti exactly once, calls
-    ``build_indices_and_constraints()``, yields, and calls ``close()``
-    exactly once on exit.
+    ``build_indices_and_constraints()`` (via ``prepare_graphiti``),
+    yields, and calls ``close()`` exactly once on exit.
+
+    Memory-sidecar-recovery (AC.MS-FIX.4 in-band ODD §4 retire):
+    the post-exit ``_graphiti is None`` assertion was over-specification
+    beyond AC24.1's actual spec text. The fix that motivates this
+    edit (drop the ``_graphiti = None`` line from the lifespan's
+    ``finally`` block) addresses a per-session driver-leak that
+    accumulated kuzu mmap reservations until macOS VA fragmentation
+    failed mmap. Post-fix, the module global stays populated across
+    lifespan exits — close runs, but the handle survives. Subsequent
+    startups (i.e. process re-launches) still see a clean ``None``
+    because the module is freshly imported.
     """
+    # Avoid fake's prepare_graphiti dependency by stubbing it; AC24.1's
+    # contract is about the lifespan's construct/yield/close shape, not
+    # about prepare_graphiti's downstream side-effects.
     construct_calls = 0
     fake = FakeGraphiti()
 
@@ -162,9 +176,15 @@ def test_AC24_1_lifespan_constructs_and_closes_graphiti(
         construct_calls += 1
         return fake
 
+    async def fake_prepare(g: Any) -> None:
+        # Keep AC24.1's "build_calls == 1" expectation by exercising
+        # build_indices_and_constraints inside the substituted prepare.
+        await g.build_indices_and_constraints()
+
     # Also stub load_env so the test doesn't need an .env file.
     monkeypatch.setattr(service, "make_graphiti", fake_make_graphiti)
     monkeypatch.setattr(service, "load_env", lambda: None)
+    monkeypatch.setattr(service, "prepare_graphiti", fake_prepare)
     monkeypatch.setattr(service, "_graphiti", None)
 
     async def exercise() -> None:
@@ -178,9 +198,10 @@ def test_AC24_1_lifespan_constructs_and_closes_graphiti(
     asyncio.run(exercise())
     assert construct_calls == 1
     assert fake.close_calls == 1
-    # Module global cleared on exit so subsequent startups don't see
-    # stale state.
-    assert service._graphiti is None
+    # Module global stays populated across lifespan exits (driver lives
+    # for process lifetime; close fires but handle survives — fix #1
+    # of memory-sidecar-recovery).
+    assert service._graphiti is fake
 
 
 # ---- AC24.2 ---------------------------------------------------------

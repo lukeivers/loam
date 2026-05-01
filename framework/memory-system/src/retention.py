@@ -129,6 +129,19 @@ ENSURE_RETENTION_COLUMN_CQL = (
 )
 
 
+# Memory-sidecar-recovery (AC.MS-FIX.2): graphiti-core 0.28.x's static
+# schema for `RelatesToNode_` declares `reference_time TIMESTAMP`, but
+# Kuzu's `CREATE NODE TABLE IF NOT EXISTS` is a no-op when the table
+# already exists — older on-disk DBs created before graphiti-core added
+# `reference_time` to its schema lack the column, and `add_episode`
+# fails with "Binder exception: Cannot find property reference_time
+# for e." Idempotent ALTER on each boot retro-adds the column.
+ENSURE_REFERENCE_TIME_COLUMN_CQL = (
+    "ALTER TABLE RelatesToNode_ ADD IF NOT EXISTS "
+    "reference_time TIMESTAMP"
+)
+
+
 async def ensure_retention_column(driver: Any) -> None:
     """Idempotently add the `retention_class` column to the Episodic
     table. Kuzu 0.11+ supports `ALTER TABLE ADD IF NOT EXISTS`; graphiti
@@ -140,6 +153,29 @@ async def ensure_retention_column(driver: Any) -> None:
         # If the column already exists on an older Kuzu that doesn't
         # support IF NOT EXISTS, the error message contains "already
         # exists" — treat that as success.
+        if "already exists" in str(exc):
+            return
+        raise
+
+
+async def ensure_reference_time_column(driver: Any) -> None:
+    """Idempotently add the `reference_time` column to the
+    `RelatesToNode_` table. Kuzu 0.11+ supports
+    `ALTER TABLE ADD IF NOT EXISTS`. graphiti-core 0.28.x declares the
+    column in its static schema, but `CREATE NODE TABLE IF NOT EXISTS`
+    is a no-op when the table already exists. On-disk DBs created
+    against an older graphiti-core lack the column and fail
+    `add_episode` with a Binder exception. This helper retro-adds the
+    column at memory-system init.
+
+    Memory-sidecar-recovery (AC.MS-FIX.2): closes the schema-mismatch
+    defect surfaced by the diagnostic agent 2026-04-29.
+    """
+    try:
+        await driver.execute_query(ENSURE_REFERENCE_TIME_COLUMN_CQL)
+    except Exception as exc:
+        # Same fall-through as ensure_retention_column: older Kuzus
+        # without IF NOT EXISTS surface "already exists" on a re-run.
         if "already exists" in str(exc):
             return
         raise

@@ -88,15 +88,24 @@ _SUBPROCESS_SCRIPT = textwrap.dedent(
     class _FakeGraphiti:
         llm_client = _FakeLLM()
         embedder = _FakeEmbedder()
+        driver = None  # prepare_graphiti reads this; substituted away below
         async def build_indices_and_constraints(self): return None
         async def close(self): return None
 
     async def _fake_make(): return _FakeGraphiti()
 
+    async def _fake_prepare(g): return None  # noqa: ARG001 — schema-migration substitute
+
     factory.make_graphiti = _fake_make
     factory.load_env = lambda path=None: None
     service.make_graphiti = _fake_make
     service.load_env = lambda path=None: None
+    # Memory-sidecar-recovery (AC.MS-FIX.3): _ensure_graphiti now
+    # routes through prepare_graphiti. Substitute the prepare hook
+    # in the subprocess so the FakeGraphiti seam works without
+    # needing a real kuzu driver attribute.
+    service.prepare_graphiti = _fake_prepare
+    factory.prepare_graphiti = _fake_prepare
 
     # Announce spawn so the parent has a marker before service.run()
     # blocks on the asyncio event loop. The serve loop entry happens
@@ -272,11 +281,21 @@ def test_AC34_2_no_regression_on_AC24_and_AC29() -> None:
         construct_calls += 1
         return fake
 
+    async def fake_prepare(g: Any) -> None:
+        # Memory-sidecar-recovery (AC.MS-FIX.3): _ensure_graphiti now
+        # routes through prepare_graphiti rather than calling
+        # build_indices_and_constraints directly. Substitute the
+        # prepare hook so this test stays focused on AC34.2's
+        # lifespan-construct/yield/close shape.
+        await g.build_indices_and_constraints()
+
     saved_make = service.make_graphiti
     saved_load_env = service.load_env
+    saved_prepare = service.prepare_graphiti
     saved_graphiti = service._graphiti
     service.make_graphiti = fake_make  # type: ignore[assignment]
     service.load_env = lambda: None  # type: ignore[assignment]
+    service.prepare_graphiti = fake_prepare  # type: ignore[assignment]
     service._graphiti = None
     try:
 
@@ -290,10 +309,19 @@ def test_AC34_2_no_regression_on_AC24_and_AC29() -> None:
         asyncio.run(exercise_lifespan())
         assert construct_calls == 1
         assert fake.close_calls == 1
-        assert service._graphiti is None
+        # Memory-sidecar-recovery (AC.MS-FIX.4 in-band ODD §4 retire):
+        # post-fix, the module global stays populated across lifespan
+        # exits. Driver lives for process lifetime; close runs but
+        # the handle survives. The pre-fix "is None" assertion was
+        # over-specification beyond AC24.1's actual spec text and
+        # codified the structural defect that caused per-session
+        # driver leaks accumulating kuzu mmap reservations until
+        # macOS VA fragmentation failed mmap.
+        assert service._graphiti is fake
     finally:
         service.make_graphiti = saved_make  # type: ignore[assignment]
         service.load_env = saved_load_env  # type: ignore[assignment]
+        service.prepare_graphiti = saved_prepare  # type: ignore[assignment]
         service._graphiti = saved_graphiti
 
     # --- AC29.5 inline check: /health body carries workspace_root.

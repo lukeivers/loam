@@ -267,11 +267,25 @@ async def prepare_graphiti(graphiti: Graphiti) -> None:
 
     - build_indices_and_constraints (FTS, range, vector indices)
     - ALTER TABLE Episodic ADD retention_class (D10)
+    - ALTER TABLE RelatesToNode_ ADD reference_time (memory-sidecar-
+      recovery / AC.MS-FIX.2)
 
     Call this once after make_graphiti() for each session where
     MemoryAPI is going to ingest. Safe to call multiple times.
+
+    Memory-sidecar-recovery (AC.MS-FIX.3): the sidecar's startup path
+    (``service._ensure_graphiti``) now calls this function rather than
+    ``graphiti.build_indices_and_constraints()`` directly, so both
+    schema migrations fire on every cold-start. Closes the
+    schema-mismatch defect for `add_episode` AND a latent hole where
+    the sidecar's startup never added the D10 retention_class column
+    unless MemoryAPI ingest paths exercised it.
     """
-    from .retention import ensure_retention_column
+    from .retention import (
+        ensure_reference_time_column,
+        ensure_retention_column,
+    )
 
     await graphiti.build_indices_and_constraints()
     await ensure_retention_column(graphiti.driver)
+    await ensure_reference_time_column(graphiti.driver)

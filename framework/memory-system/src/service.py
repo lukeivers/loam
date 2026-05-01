@@ -38,7 +38,7 @@ from typing import Any
 from graphiti_core.nodes import EpisodeType
 from mcp.server.fastmcp import FastMCP
 
-from .factory import load_env, make_graphiti
+from .factory import load_env, make_graphiti, prepare_graphiti
 
 
 # Module-level handle to the Graphiti instance, populated by the
@@ -82,13 +82,26 @@ async def _ensure_graphiti() -> Any:
     ``if _graphiti is not None: return`` guard makes per-session enters
     no-ops on the construct side, while the lifespan's
     yield/finally close-on-exit half preserves verbatim.
+
+    Memory-sidecar-recovery (AC.MS-FIX.3): routes through
+    ``prepare_graphiti()`` rather than calling
+    ``build_indices_and_constraints()`` directly. ``prepare_graphiti``
+    runs the indices build AND the schema migrations
+    (``ensure_retention_column`` for D10's retention_class column +
+    ``ensure_reference_time_column`` for graphiti-core 0.28.x's
+    RelatesToNode_.reference_time column). This closes the
+    schema-mismatch defect that surfaced on 2026-04-29 (add_episode
+    failing with Binder exception "Cannot find property reference_time
+    for e.") and additionally closes a latent hole where the sidecar's
+    startup never added the D10 retention_class column unless
+    MemoryAPI ingest paths exercised it.
     """
     global _graphiti
     if _graphiti is not None:
         return _graphiti
     load_env()
     _graphiti = await make_graphiti()
-    await _graphiti.build_indices_and_constraints()
+    await prepare_graphiti(_graphiti)
     return _graphiti
 
 
@@ -102,17 +115,32 @@ async def lifespan(server: FastMCP):
     AC24.1's direct test invocation), ``_ensure_graphiti()`` does the
     first-time construction. Either way the body's contract is
     "``_graphiti`` is populated on yield, closed on exit."
+
+    Memory-sidecar-recovery (AC.MS-FIX.1): the ``finally`` block no
+    longer sets ``_graphiti = None``. FastMCP routes the user lifespan
+    to ``MCPServer.run``, which is invoked PER MCP session by
+    ``StreamableHTTPSessionManager`` — not once at process start. The
+    pre-fix ``finally`` block nulled ``_graphiti`` on every session
+    close, defeating ``_ensure_graphiti()``'s idempotency guard. Each
+    new session rebuilt the Graphiti driver, opening another
+    ``kuzu.Database`` against the same on-disk file. Kuzu's 8 TiB
+    virtual mmap reservation accumulated per session; macOS VA
+    fragmentation eventually failed mmap; the sidecar entered a
+    permanent stuck state returning 503 forever (diagnostic agent
+    report 2026-04-29).
+
+    Post-fix: the driver lives for the process lifetime. ``close()``
+    still runs at session exit (its inner side-effects, if any, fire
+    every time), but the module-level handle stays populated. Actual
+    process shutdown (uvicorn lifespan, not session lifespan) tears
+    down the process and releases the kuzu mmap region with it.
     """
-    global _graphiti
     await _ensure_graphiti()
     try:
         yield {"graphiti": _graphiti}
     finally:
         if _graphiti is not None:
-            try:
-                await _graphiti.close()
-            finally:
-                _graphiti = None
+            await _graphiti.close()
 
 
 def _build_mcp() -> FastMCP:

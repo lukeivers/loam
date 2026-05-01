@@ -57,6 +57,55 @@ class FakeEdge:
 
 
 @dataclass
+class FakeEntityNode:
+    """Stand-in for graphiti's ``EntityNode`` (search_ result-set arm).
+
+    fastmcp-group-ids-filter-fix (amendment #96): added so the
+    ``FakeSearchResults`` returned by ``FakeGraphiti.search_`` can
+    populate the ``nodes`` arm. Fields cover the subset
+    ``_impl_search`` projects.
+    """
+
+    uuid: str = "node-uuid"
+    name: str = "node-name"
+    summary: str = "node-summary"
+    group_id: str = "test-group"
+
+
+@dataclass
+class FakeEpisodicNode:
+    """Stand-in for graphiti's ``EpisodicNode`` (search_ result-set arm).
+
+    fastmcp-group-ids-filter-fix (amendment #96): added so the
+    ``FakeSearchResults`` returned by ``FakeGraphiti.search_`` can
+    populate the ``episodes`` arm.
+    """
+
+    uuid: str = "episodic-uuid"
+    name: str = "episodic-name"
+    content: str = "episodic-content"
+    group_id: str = "test-group"
+    valid_at: datetime | None = None
+
+
+@dataclass
+class FakeSearchResults:
+    """Stand-in for graphiti's ``SearchResults`` Pydantic model.
+
+    fastmcp-group-ids-filter-fix (amendment #96): the new
+    ``_impl_search`` calls ``graphiti.search_(...)`` which returns
+    a ``SearchResults`` with ``edges`` / ``nodes`` / ``episodes`` /
+    ``communities`` lists. This dataclass satisfies the field-access
+    surface ``_impl_search`` actually touches.
+    """
+
+    edges: list[FakeEdge] = field(default_factory=lambda: [FakeEdge()])
+    nodes: list[FakeEntityNode] = field(default_factory=list)
+    episodes: list[FakeEpisodicNode] = field(default_factory=list)
+    communities: list[Any] = field(default_factory=list)
+
+
+@dataclass
 class FakeAddResult:
     episode: FakeEpisode = field(default_factory=FakeEpisode)
     nodes: list[FakeNode] = field(default_factory=lambda: [FakeNode(), FakeNode()])
@@ -103,8 +152,13 @@ class FakeGraphiti:
     """Test stand-in for graphiti_core.Graphiti.
 
     Implements the subset of the Graphiti surface the MCP tools touch:
-    ``add_episode``, ``search``, ``build_indices_and_constraints``,
+    ``add_episode``, ``search_``, ``build_indices_and_constraints``,
     ``close``, plus the ``llm_client`` and ``embedder`` attributes.
+
+    fastmcp-group-ids-filter-fix (amendment #96): replaced ``search``
+    (edges-only) with ``search_`` (combined ``SearchResults``).
+    ``next_search_results`` lets a test override the canned response
+    for the next ``search_`` call without rebuilding the fixture.
     """
 
     def __init__(self) -> None:
@@ -114,6 +168,9 @@ class FakeGraphiti:
         self.searched: list[dict[str, Any]] = []
         self.build_calls: int = 0
         self.close_calls: int = 0
+        # Pre-canned response for the next ``search_`` call. ``None``
+        # means "use the default" (a single edge, empty nodes/episodes).
+        self.next_search_results: FakeSearchResults | None = None
 
     async def build_indices_and_constraints(self) -> None:
         self.build_calls += 1
@@ -125,9 +182,13 @@ class FakeGraphiti:
         self.added.append(kwargs)
         return FakeAddResult()
 
-    async def search(self, **kwargs: Any) -> list[FakeEdge]:
+    async def search_(self, **kwargs: Any) -> FakeSearchResults:
         self.searched.append(kwargs)
-        return [FakeEdge()]
+        if self.next_search_results is not None:
+            res = self.next_search_results
+            self.next_search_results = None
+            return res
+        return FakeSearchResults()
 
 
 @pytest.fixture
@@ -269,8 +330,16 @@ def test_AC24_2_add_episode_naive_reference_time_normalised_to_utc(
 def test_AC24_3_search_dispatches_to_graphiti(
     fake_graphiti: FakeGraphiti,
 ) -> None:
-    """The ``search`` tool dispatches to ``Graphiti.search`` and
-    returns the expected shape."""
+    """The ``search`` tool dispatches to ``Graphiti.search_`` and
+    returns the documented shape.
+
+    fastmcp-group-ids-filter-fix (amendment #96): updated to assert
+    against the new tri-key return-shape (``results`` + ``nodes`` +
+    ``episodes``) and the ``search_`` (trailing-underscore) dispatch
+    target. See ``test_AC_FGF_1_search_returns_tri_key_shape`` for
+    the explicit shape AC; this test continues to cover dispatch
+    correctness end-to-end (parameter routing).
+    """
 
     async def go() -> dict[str, Any]:
         return await service._impl_search(
@@ -293,13 +362,17 @@ def test_AC24_3_search_dispatches_to_graphiti(
     assert item["fact"] == "a related_to b"
     assert item["edge_uuid"] == "edge-uuid"
 
-    # Dispatch correctness
+    # Dispatch correctness — note the call is now to ``search_`` (which
+    # accepts ``config=`` rather than ``num_results=``); the FakeGraphiti
+    # captures the kwargs as-passed.
     assert len(fake_graphiti.searched) == 1
     call = fake_graphiti.searched[0]
     assert call["query"] == "what is x"
     assert call["group_ids"] == ["g1", "g2"]
-    assert call["num_results"] == 5
     assert call["center_node_uuid"] == "center"
+    # ``num_results`` is encoded into the SearchConfig.limit by
+    # ``_impl_search`` — verify the cloned config carries the value.
+    assert call["config"].limit == 5
 
 
 # ---- AC24.4 ---------------------------------------------------------
@@ -435,3 +508,205 @@ def test_AC24_1_through_5_tools_registered_on_mcp_instance() -> None:
 
     names = asyncio.run(go())
     assert names == ["add_episode", "health", "search", "token_usage"]
+
+
+# ---- AC.FGF.1 -------------------------------------------------------
+#
+# fastmcp-group-ids-filter-fix (amendment #96) — the search MCP tool
+# returns a tri-key shape (results / nodes / episodes) so episodes
+# whose body is too sparse for graphiti's LLM-extractor to derive
+# any RelatesToNode_ are still retrievable on group_id-filtered
+# search. See plan §4 AC.FGF.1.
+
+
+def test_AC_FGF_1_search_returns_tri_key_shape(
+    fake_graphiti: FakeGraphiti,
+) -> None:
+    """``_impl_search`` returns ``{"query", "results", "nodes",
+    "episodes"}`` — the strict-superset shape established by
+    fastmcp-group-ids-filter-fix.
+
+    The pre-fix shape was ``{"query", "results"}`` (results = edges
+    only). Persona's ``_render_retrieval`` reads ``results`` (kept as
+    edges) and falls through to ``episodes`` when results is empty —
+    see ``test_AC_FGF_3_render_retrieval_falls_through_to_episodes``
+    in the persona tree.
+    """
+    fake_graphiti.next_search_results = FakeSearchResults(
+        edges=[FakeEdge()],
+        nodes=[
+            FakeEntityNode(uuid="node-A", name="N-A", group_id="test-group")
+        ],
+        episodes=[
+            FakeEpisodicNode(
+                uuid="ep-A",
+                name="ep-name",
+                content="ep-content",
+                group_id="test-group",
+            )
+        ],
+    )
+
+    async def go() -> dict[str, Any]:
+        return await service._impl_search(
+            fake_graphiti,
+            query="anything",
+            group_ids=["test-group"],
+            num_results=10,
+            center_node_uuid=None,
+        )
+
+    out = asyncio.run(go())
+
+    assert set(out.keys()) == {"query", "results", "nodes", "episodes"}
+    assert out["query"] == "anything"
+
+    # results — edges (back-compat with pre-FGF persona contributor).
+    assert isinstance(out["results"], list) and len(out["results"]) == 1
+    edge_item = out["results"][0]
+    assert set(edge_item.keys()) == {
+        "fact", "edge_uuid", "valid_at", "invalid_at",
+        "source_node_uuid", "target_node_uuid",
+    }
+
+    # nodes — Entity records.
+    assert isinstance(out["nodes"], list) and len(out["nodes"]) == 1
+    node_item = out["nodes"][0]
+    assert set(node_item.keys()) == {"node_uuid", "name", "summary", "group_id"}
+    assert node_item["node_uuid"] == "node-A"
+    assert node_item["group_id"] == "test-group"
+
+    # episodes — Episodic records.
+    assert isinstance(out["episodes"], list) and len(out["episodes"]) == 1
+    ep_item = out["episodes"][0]
+    assert set(ep_item.keys()) == {
+        "episode_uuid", "name", "content", "group_id", "valid_at",
+    }
+    assert ep_item["episode_uuid"] == "ep-A"
+    assert ep_item["content"] == "ep-content"
+    assert ep_item["group_id"] == "test-group"
+
+
+def test_AC_FGF_1_search_empty_arms_render_as_empty_lists(
+    fake_graphiti: FakeGraphiti,
+) -> None:
+    """When graphiti returns empty arms (no nodes / no episodes /
+    no edges), the wrapper still emits the tri-key shape with
+    empty lists rather than dropping keys. The persona contributor
+    relies on key-presence to decide whether the boundary call
+    succeeded; missing keys would conflate "empty result" with
+    "wrong shape" (failed contract)."""
+    fake_graphiti.next_search_results = FakeSearchResults(
+        edges=[], nodes=[], episodes=[],
+    )
+
+    async def go() -> dict[str, Any]:
+        return await service._impl_search(
+            fake_graphiti,
+            query="nothing-matches",
+            group_ids=["any"],
+            num_results=10,
+            center_node_uuid=None,
+        )
+
+    out = asyncio.run(go())
+
+    assert set(out.keys()) == {"query", "results", "nodes", "episodes"}
+    assert out["results"] == []
+    assert out["nodes"] == []
+    assert out["episodes"] == []
+
+
+# ---- AC.FGF.2 -------------------------------------------------------
+#
+# Defensive: verify the wrapper itself doesn't accidentally drop or
+# transform the group_ids parameter on its way to ``graphiti.search_``.
+# The Cypher-WHERE filter inside graphiti-core's Kuzu driver is the
+# load-bearing surface; this test guards the wrapper against
+# regressions where (e.g.) a caller passes group_ids and the wrapper
+# silently coerces None or strips the parameter.
+
+
+def test_AC_FGF_2_search_passes_group_ids_unchanged_to_graphiti(
+    fake_graphiti: FakeGraphiti,
+) -> None:
+    """The wrapper passes ``group_ids`` verbatim to
+    ``graphiti.search_``. graphiti-core handles the actual filtering
+    via Cypher; the wrapper's job is to not mangle it."""
+
+    async def go() -> dict[str, Any]:
+        return await service._impl_search(
+            fake_graphiti,
+            query="q",
+            group_ids=["pos3", "alt-workspace"],
+            num_results=3,
+            center_node_uuid=None,
+        )
+
+    asyncio.run(go())
+
+    assert len(fake_graphiti.searched) == 1
+    call = fake_graphiti.searched[0]
+    assert call["group_ids"] == ["pos3", "alt-workspace"]
+
+
+def test_AC_FGF_2_search_passes_none_group_ids_unchanged(
+    fake_graphiti: FakeGraphiti,
+) -> None:
+    """``group_ids=None`` reaches graphiti unchanged; no upgrade to
+    ``[]`` (which graphiti's ``handle_multiple_group_ids`` decorator
+    treats specially) and no upgrade to a default value."""
+
+    async def go() -> dict[str, Any]:
+        return await service._impl_search(
+            fake_graphiti,
+            query="q",
+            group_ids=None,
+            num_results=3,
+            center_node_uuid=None,
+        )
+
+    asyncio.run(go())
+
+    assert len(fake_graphiti.searched) == 1
+    assert fake_graphiti.searched[0]["group_ids"] is None
+
+
+def test_AC_FGF_2_num_results_translates_to_search_config_limit(
+    fake_graphiti: FakeGraphiti,
+) -> None:
+    """``num_results`` is applied to the cloned ``SearchConfig.limit``
+    so graphiti returns the requested cardinality. The recipe is a
+    module-singleton; we clone it before mutation so per-call
+    ``limit`` doesn't leak across invocations."""
+    # First call: limit=7
+    async def go1() -> None:
+        await service._impl_search(
+            fake_graphiti,
+            query="q1",
+            group_ids=None,
+            num_results=7,
+            center_node_uuid=None,
+        )
+
+    asyncio.run(go1())
+    assert fake_graphiti.searched[0]["config"].limit == 7
+
+    # Second call: limit=11. The first call's mutation of its own
+    # cloned config must not leak into the second call.
+    async def go2() -> None:
+        await service._impl_search(
+            fake_graphiti,
+            query="q2",
+            group_ids=None,
+            num_results=11,
+            center_node_uuid=None,
+        )
+
+    asyncio.run(go2())
+    assert fake_graphiti.searched[1]["config"].limit == 11
+    # Per-call clones are independent objects.
+    assert (
+        fake_graphiti.searched[0]["config"]
+        is not fake_graphiti.searched[1]["config"]
+    )

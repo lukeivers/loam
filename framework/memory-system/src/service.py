@@ -36,6 +36,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 from graphiti_core.nodes import EpisodeType
+from graphiti_core.search.search_config_recipes import (
+    COMBINED_HYBRID_SEARCH_RRF,
+)
 from mcp.server.fastmcp import FastMCP
 
 from .factory import load_env, make_graphiti, prepare_graphiti
@@ -215,14 +218,55 @@ async def _impl_search(
     num_results: int = 10,
     center_node_uuid: str | None = None,
 ) -> dict[str, Any]:
-    """``search`` tool implementation."""
-    edges = await graphiti.search(
+    """``search`` tool implementation.
+
+    fastmcp-group-ids-filter-fix (amendment #96): switched from
+    ``graphiti.search()`` (edges-only) to
+    ``graphiti.search_(COMBINED_HYBRID_SEARCH_RRF)``. ``graphiti.search``
+    returns only ``EntityEdge`` objects; episodes whose body is too
+    sparse for graphiti's LLM extractor to derive any
+    ``RelatesToNode_`` edges are stored as ``Episodic`` (+ optionally
+    ``Entity``) but **invisible** to edge-search regardless of
+    ``group_id``. Empirical floor in pos3's pre-fix kuzu_db: the
+    ``test-episode-mpf-verify`` episode (group_id=pos3) carried 1
+    Entity and 0 edges; the ``diagnostic-test-2026-04-29`` episode
+    (group_id=pos-v2_default) carried 7 Entities and 0 edges. Both
+    unreachable on edge-search even with ``group_ids=None``.
+
+    The fix surfaces the **combined** result-set (edges + nodes +
+    episodes + communities) so a write under ``group_id=X`` is
+    retrievable on ``search(..., group_ids=[X])`` even when graphiti
+    extracted no edges. ``COMBINED_HYBRID_SEARCH_RRF`` configures
+    bm25 + cosine-similarity over the four arms with RRF reranking;
+    all four arms apply the same ``e.group_id IN $group_ids``
+    Cypher-WHERE filter (verified in
+    ``graphiti_core.driver.kuzu.operations.search_ops``). RRF
+    reranking is dependency-light (no extra LLM call) — the
+    ``_CROSS_ENCODER`` variant would require an additional LLM
+    client wired into graphiti's clients tuple.
+
+    Return shape grows from
+    ``{"query", "results"}`` to
+    ``{"query", "results", "nodes", "episodes"}``. Strict superset:
+    pre-fix consumers reading ``out["query"]`` / ``out["results"]``
+    see no change. ``results`` continues to carry edges (back-compat
+    with persona's contributor); ``nodes`` and ``episodes`` are new
+    keys.
+    """
+    # Clone the recipe so per-call ``limit`` mutation doesn't leak
+    # across calls (the imported ``COMBINED_HYBRID_SEARCH_RRF`` is a
+    # module-singleton). Pydantic's ``.model_copy(deep=True)`` covers
+    # the nested config arms (edge_config / node_config / episode_config
+    # / community_config) so per-arm limit-setting is also call-local.
+    search_config = COMBINED_HYBRID_SEARCH_RRF.model_copy(deep=True)
+    search_config.limit = num_results
+    search_results = await graphiti.search_(
         query=query,
-        center_node_uuid=center_node_uuid,
+        config=search_config,
         group_ids=group_ids,
-        num_results=num_results,
+        center_node_uuid=center_node_uuid,
     )
-    items = [
+    edges_out = [
         {
             "fact": edge.fact,
             "edge_uuid": edge.uuid,
@@ -231,9 +275,35 @@ async def _impl_search(
             "source_node_uuid": edge.source_node_uuid,
             "target_node_uuid": edge.target_node_uuid,
         }
-        for edge in edges
+        for edge in search_results.edges
     ]
-    return {"query": query, "results": items}
+    nodes_out = [
+        {
+            "node_uuid": node.uuid,
+            "name": node.name,
+            "summary": getattr(node, "summary", "") or "",
+            "group_id": node.group_id,
+        }
+        for node in search_results.nodes
+    ]
+    episodes_out = [
+        {
+            "episode_uuid": episode.uuid,
+            "name": episode.name,
+            "content": episode.content,
+            "group_id": episode.group_id,
+            "valid_at": (
+                episode.valid_at.isoformat() if episode.valid_at else None
+            ),
+        }
+        for episode in search_results.episodes
+    ]
+    return {
+        "query": query,
+        "results": edges_out,
+        "nodes": nodes_out,
+        "episodes": episodes_out,
+    }
 
 
 async def _impl_health(graphiti: Any) -> dict[str, Any]:

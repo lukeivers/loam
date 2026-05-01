@@ -27,7 +27,15 @@ from loam.primary_persona.dispatch_wrapper import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-HOOKS_DIR = REPO_ROOT / "framework" / "hands-off-lifecycle" / "hooks"
+# Post-M6 partition realignment (amendment #94): the structural-
+# enforcement gates (objective_binding_gate, tdd_guard) moved from
+# framework/hands-off-lifecycle/hooks/ to plugins/dev-sdlc/hooks/.
+# This test's import surface follows. Pre-M6 path retained as
+# defence-in-depth fallback for a workspace whose partition
+# realignment hasn't propagated.
+_HOOKS_DIR_NEW = REPO_ROOT / "plugins" / "dev-sdlc" / "hooks"
+_HOOKS_DIR_OLD = REPO_ROOT / "framework" / "hands-off-lifecycle" / "hooks"
+HOOKS_DIR = _HOOKS_DIR_NEW if _HOOKS_DIR_NEW.is_dir() else _HOOKS_DIR_OLD
 
 
 def _import_gates_with_workspace_mode(monkeypatch, *, mode: str):

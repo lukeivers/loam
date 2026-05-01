@@ -1,0 +1,248 @@
+# Amendment #91 — M9 synth-time path substitution + in-place fixture refactor
+
+2026-04-29. Multi-component sealed amendment for the OSS v0.1.0
+publish programme. M9 per locked programme master plan-doc
+`docs/rebuild/plans/oss-v0-1-0-publish.md` §5 M9 row + §6
+sequencing rule #7 + §3 AC.OSS.5 (residuals) + §13 D-Q.OSS.6
+(substitution-table ruling: "Luke Ivers" → "Alice Anderson",
+project-name → "Acme Corp", path → `<workspace>/loam/`).
+Sub-plan-doc: `docs/rebuild/plans/oss-v0-1-0-publish-scrub.md`.
+
+Composes on M1.rename (M1g `f6c22fd`), M2.partition (`4cda805`),
+M3.wire-clis (`95f1ab2`), M4.wire-dispatch (`1719e14`),
+M5.wire-dormancy (`e32d4d8`), M6a (`acd70ff`), M6b.0 (`3a7c8d7`),
+M6b.1 (`c08e0fa`), M6c (`a4c3ec3`).
+
+M9 is the GATE before M11 (synthesis dry-run) per master plan §6
+sequencing rule #7. M9 lands two surfaces:
+
+Surface A — synth-time substitution mechanism in
+`loam.publish_framework_only.synth`. The synthesis tool today
+walks the source commit's tree via `git ls-tree -r`, classifies
+each leaf via the partition manifest (M2), and re-uses the
+*original* blob SHAs in the synthetic tree. M9 introduces a
+substitution pass that, for every shipping leaf whose blob
+content contains a known personal-info token, reads the blob,
+applies a textual `s/X/Y/g` substitution from a fixed table,
+hashes the rewritten content via `git hash-object -w`, and uses
+the new blob SHA in the synthetic tree.
+
+The substitution table is owner-locked at master plan §13
+D-Q.OSS.6:
+
+  `/Users/lukeivers/ivers-corp-pos-v2/`  →  `<workspace>/loam/`
+  `/Users/lukeivers/ivers-corp-pos-v2`   →  `<workspace>/loam`
+  `lukeivers/pos-v2`                     →  `lukeivers/loam`
+  `Luke Ivers`                           →  `Alice Anderson`
+
+Determinism + idempotence preserved per audit §6 risk #3: the
+rewrite is a fixed-table textual substitution; re-running on a
+synthesised tree produces an identical tree-SHA (the second pass
+finds nothing to substitute because no replacement is itself a
+substitution source). Binary-blob safety via UTF-8 decode
+try/except — `UnicodeDecodeError` preserves the source bytes
+verbatim with `binary=True` per AC.OSS-M9.4.
+
+Surface A files:
+
+  - NEW module
+    `framework/tools/pos-publish-framework-only/src/loam/publish_framework_only/substitution.py`
+    — `apply_substitutions(blob_content, table) -> SubstitutionResult(content, changed, binary)`
+    + `SUBSTITUTION_TABLE` (locked to 4 entries per master plan
+    §13 D-Q.OSS.6).
+  - EXTENDED
+    `framework/tools/pos-publish-framework-only/src/loam/publish_framework_only/synth.py`
+    — module docstring extended with M9 substitution-pass
+    section; new helpers `_cat_blob` (git cat-file blob) +
+    `_hash_object_w` (git hash-object -w --stdin); substitution
+    wired into `_build_synthetic_tree` AFTER `is_publishable`
+    check + BEFORE `_LeafEntry` construction; for each shipping
+    blob the pass reads content, applies substitutions, IFF
+    changed writes a new blob and uses the new SHA — binary
+    blobs + non-blob entries (submodules) preserve source SHA
+    verbatim.
+  - 4 NEW tests under
+    `framework/tools/pos-publish-framework-only/tests/`:
+
+      `test_AC_OSS_M9_substitution_after_partition.py` —
+      mixed dev_only + dev_and_public canonical with same
+      substitution token; asserts (a) dev_only absent from
+      synthetic tree, (b) dev_and_public synthetic SHA != source,
+      (c) rewritten content carries replacement tokens. Plus
+      negative test: no-token blob preserves source SHA.
+
+      `test_AC_OSS_M9_substitution_idempotent.py` — two-pass
+      synthesis on multi-token canonical; second pass MUST
+      no-op via the existing-tree-matches branch in
+      `synthesise_framework_only`; identical
+      `framework_only_sha`.
+
+      `test_AC_OSS_M9_substitution_binary_safe.py` — unit:
+      `apply_substitutions` on PNG bytes returns binary=True,
+      changed=False, content unchanged. Integration: docs/
+      assets/logo.png in dev_and_public; synthetic-tree blob
+      SHA == source blob SHA exactly.
+
+      `test_AC_OSS_M9_substitution_smoke.py` — 5-file fixture
+      canonical spans source / README / test / docs;
+      synthesises; greps every blob in the synthetic tree for
+      the four source tokens; asserts zero residuals AND
+      positive sanity (at least one blob carries replacement
+      tokens). Plus AC.OSS-M9.1 unit assertion that
+      `SUBSTITUTION_TABLE` has exactly 4 entries.
+
+Surface B — in-place fixture refactor across 12 shipping-surface
+files where personal-info markers exist in non-load-bearing prose
+/ docs / READMEs / fixture content. The refactor lands directly
+on canonical (not synth-time) so the fixtures read correctly to
+dev-tree readers and the synthesis pass becomes belt-and-braces
+for any straggler tokens added in future amendments.
+
+Surface B files:
+
+  - `framework/dormancy/tests/test_d10_garbage_false_positive.py`
+    memory-extraction example fixture: `"Luke Ivers"` →
+    `"Alice Anderson"`; `"pOS"` (project entry) →
+    `"Acme Corp"` (cosmetic; per master plan §13 D-Q.OSS.6
+    project-name ruling).
+  - `framework/objective-tracker/{README.md, docs/overview.md}` +
+    `framework/orchestrator/docs/{operations.md, measurement-launchd.md}` +
+    `framework/dormancy/docs/architecture.md` +
+    `framework/memory-system/launchd/README.md` +
+    `framework/workspace-bootstrap/README.md` —
+    shell-example commands `/Users/lukeivers/ivers-corp-pos-v2`
+    → `<workspace>/loam` (per master plan §13 D-Q.OSS.6
+    substitution form). Examples now read as workspace-templated
+    rather than canonical-host-bound.
+  - `framework/workspace-bootstrap/README.md` +
+    `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py`
+    line 602 +
+    `framework/workspace-bootstrap/tests/test_pos_new_workspace.py`
+    line 256 — URL refs
+    `https://github.com/lukeivers/pos-v2` →
+    `https://github.com/lukeivers/loam` + test fixture URL
+    `https://test-host/lukeivers/pos-v2-fixture` →
+    `https://test-host/lukeivers/loam-fixture` (the test
+    asserts URL parsing semantics, not the literal owner-name).
+  - `framework/workspace-sync/src/loam/workspace_sync/canonical_cache.py`
+    `derive_repo_id()` docstring examples (lines 35–40): all 4
+    URL forms rebased `lukeivers/pos-v2` → `lukeivers/loam`.
+    The path-parsing regex itself is generic; only docstring
+    examples carry the brand.
+
+Out of scope (locked plan §6 + halt-and-surface §7):
+
+  - 3 LOAD-BEARING test files
+    (`test_AC_AG_1_wrong_wd_dispatch.py`,
+    `test_AC_BAG_5_wrong_tree_write.py`,
+    `test_d4_scope_binding.py`) carry
+    `/Users/lukeivers/ivers-corp-pos-v2` literals as part of
+    their gate-detection pattern assertions. These STAY
+    canonical; the substitution pass rewrites them at synth time
+    per AC.OSS-M9.2 — the public artefact carries
+    `<workspace>/loam`; canonical tests continue to assert the
+    canonical-host literal so dev-mode gates keep working.
+  - The plist
+    (`framework/memory-system/launchd/com.loam.memory-graphiti.plist`)
+    is NOT touched in M9; per audit §AC.M3.3 it's
+    workspace-bootstrap-rendered at install time via template
+    substitution. The substitution pass handles its source-
+    content paths at synth time regardless.
+  - **Partition-completeness gap** surfaced (HSF#1 in plan §7):
+    gate-source files (`plugins/dev-sdlc/hooks/{agent_guard,
+    bash_guard, ...}.py`) are dev_only post-M6b.0/M6c (live in
+    the plugin tree, classified `dev_only` via the
+    `plugins/dev-sdlc/**` glob), but their test files
+    (`framework/hands-off-lifecycle/tests/test_AC_AG_*`,
+    `test_AC_BAG_*`) classify `dev_and_public` via the
+    `framework/hands-off-lifecycle/**` glob. Test files
+    `sys.path`-probe into `plugins/dev-sdlc/hooks/` which is
+    dropped in synthesis, so test imports fail in any synthetic-
+    tree pytest run. Resolution proposed for next-amendment
+    register (NOT in M9): a follow-on partition-classification
+    amendment reclassifies the gate-test files to `dev_only` (or
+    extracts them to the plugin tree). M9's substitution pass
+    handles the canonical-path literals at synth time per
+    AC.OSS-M9.2 + AC.OSS-M9.6 regardless.
+
+Sealed-component fence: 7 components —
+
+  `framework/tools/pos-publish-framework-only/` (admitted via
+  `universal_paths.prefixes` since the synthesis tool has no
+  per-component `test_no_sealed_amendments.py` sidecar; the
+  structural surface is the new substitution.py + 4 new tests
+  + synth.py extension).
+
+  `framework/dormancy/` (test_d10 fixture rename + docs/
+  architecture.md path rename).
+
+  `framework/objective-tracker/` (README + docs/overview path
+  renames).
+
+  `framework/orchestrator/` (docs/operations + docs/measurement-
+  launchd path renames).
+
+  `framework/memory-system/` (launchd/README path rename).
+
+  `framework/workspace-bootstrap/` (README + new_workspace.py
+  line 602 + tests/test_pos_new_workspace.py line 256).
+
+  `framework/workspace-sync/` (canonical_cache.py derive_repo_id
+  docstring).
+
+HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE. M9
+edits are content-rewrites at known locations (no file moves);
+synthesis-tool edits are additive (new module + new tests +
+helper-pair in synth.py + import line + docstring update);
+none touch HC#4 sample paths in any per-component fence config.
+The HC#4 invariant remains GREEN through M9.
+
+Touched-component pytest results pre-seal:
+
+  pos-publish-framework-only: 49 passed (40 pre-existing + 9 new
+    M9: 2 in substitution_after_partition.py + 1 in
+    substitution_idempotent.py + 2 in substitution_binary_safe.py
+    + 4 in substitution_smoke.py).
+  dormancy: 104 passed.
+  objective-tracker: 148 passed.
+  workspace-bootstrap: 252 passed + 1 skipped.
+  workspace-sync: 80 passed + 1 PRE-EXISTING FAIL
+    (`test_AC_D_5_5_1_framework_tools_present` asserts pre-M1g/
+    pre-M6b.0 paths `framework/tools/pos-amend/` +
+    `framework/tools/loam-mode/` exist; both moved by M1g + M6b.0
+    respectively. Verified pre-existing via stash-check before
+    feature staging. Surfaced for next-amendment register; NOT
+    an M9 regression).
+
+AC family: AC.OSS-M9.1..M9.7 + AC.OSS-M9.S. Each AC ladders up
+to AC.OSS.5 (residuals) → AC.PO.1 + AC.PO.2 (prime objective per
+`docs/rebuild/VALUE_PROPOSITION.md`).
+
+Cross-tree consumer impact: NONE. The synthesis-tool extension
+is additive; existing callers (workspace-bootstrap test +
+workspace-bootstrap conftest + the CLI entry-point) pass
+`manifest_path` through unchanged; the substitution pass runs
+inside `_build_synthetic_tree` transparently to callers.
+
+Dependents cleared post-M9:
+  - **M11 (synthesis dry-run) is now UNBLOCKED.** The
+    substitution pass produces clean synthesis output per
+    AC.OSS-M9.6 smoke test; M11 runs the full synthesis on
+    canonical HEAD + private-staging review.
+  - The M9 scrub is the LAST gate before M11.
+
+Next milestone candidates per master plan §3 out-of-scope:
+
+  - **M11.dry-run** — synthesis dry-run + private-staging review
+    (now unblocked post-M9; recommended next).
+  - **Memory-system code fix** (task #18) — operationalises the
+    graceful-fallthrough-with-detection CDC authored at M6c
+    against the originally-motivating incident.
+  - **M1c-corrective** (task #16) — M1.rename trailing-edge
+    programme; can run parallel to M11.
+  - **Partition-completeness fix** for the HSF#1 gate-test gap
+    surfaced at M9 plan-time — reclassifies
+    `framework/hands-off-lifecycle/tests/test_AC_AG_*` +
+    `test_AC_BAG_*` to dev_only (or extracts them to
+    plugins/dev-sdlc/). Small follow-on amendment; can run
+    alongside M11 prep.

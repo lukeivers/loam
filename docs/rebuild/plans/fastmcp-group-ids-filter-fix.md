@@ -291,17 +291,18 @@ Filled at seal. SHAs land here.
 
 | ID | Decision | Outcome / SHA |
 |---|---|---|
-| D1.a | Use `graphiti.search_()` not `search()`. | TBD |
-| D1.b | Use `COMBINED_HYBRID_SEARCH_RRF` not `_CROSS_ENCODER`. | TBD |
-| D2 | `_render_retrieval` falls through to episodes only when edges empty. | TBD |
-| D3 | 4 unit ACs + 1 manual round-trip AC. | TBD |
-| D4 | Dispatch claim "filter is broken" closed: filter works; visibility gap is in tool contract. | TBD |
-| Plan SHA | | TBD |
-| Feature SHA (memory-system) | | TBD |
-| Feature SHA (primary-persona) | | TBD |
-| Apply SHA | | TBD |
-| Seal SHA | | TBD |
-| AC.FGF.5 round-trip | live add_episode + search round-trip output | TBD |
+| D1.a | Use `graphiti.search_()` not `search()`. | applied at `8e33ee1` (memory-system feature) — `_impl_search` calls `graphiti.search_(query=..., config=cloned_recipe, group_ids=..., center_node_uuid=...)` instead of `graphiti.search(query=..., center_node_uuid=..., group_ids=..., num_results=...)`. |
+| D1.b | Use `COMBINED_HYBRID_SEARCH_RRF` not `_CROSS_ENCODER`. | applied at `8e33ee1`. The recipe is imported as a module-level singleton; `_impl_search` clones via `model_copy(deep=True)` per call before mutating `.limit`. |
+| D2 | `_render_retrieval` falls through to episodes only when edges empty. | applied at `646e2c7` (primary-persona feature). Three-branch precedence: edges-non-empty → render facts; else episodes-non-empty → render `[episode]` lines; else AC.MPF.2 empty-state diagnostic. |
+| D3 | 4 unit ACs + 1 manual round-trip AC. | 14 service tests + 8 persona rendering tests green; AC.FGF.5 round-trip recorded below. |
+| D4 | Dispatch claim "filter is broken" closed: filter works; visibility gap is in tool contract. | confirmed by §2.1 reproduction + §2.2 kuzu_db inspection during investigation phase. Plan §1 + HSF#4 carry the framing-correction. |
+| Plan SHA | | `ac650eb` |
+| Feature SHA (memory-system) | | `8e33ee1` |
+| Feature SHA (primary-persona) | | `646e2c7` |
+| Apply SHA | | `a5469f2` |
+| Seal SHA | | `25ae41b` |
+| §14 backfill SHA | | `7bdf7fc` |
+| AC.FGF.5 round-trip | live add_episode + search round-trip output | sidecar restarted via `launchctl kickstart -k gui/$UID/com.pos-v2.pos3.memory-graphiti`; probe via `mcp.client.streamable_http`: write episode `name=fgf-roundtrip-sparse, group_id=fgf-roundtrip-probe, body="AC.FGF.5 verification round-trip with marker bluefin-7621."` returned `episode_uuid=17a9e607-…, nodes_extracted=2, edges_extracted=1`. Search `query="bluefin", group_ids=["fgf-roundtrip-probe"]` returned `results(edges)=1, nodes=2, episodes=1` with the matching episode in the `episodes` list. Cross-group sanity: `group_ids=["other-group"]` returned 0 / 0 / 0. **PASSED.** |
 
 ---
 
@@ -313,13 +314,13 @@ Filled at seal. SHAs land here.
   `chore(seals): fastmcp-group-ids-filter-fix — memory-system+primary-persona at a5469f2`
 ## 15. Post-build verification checklist
 
-- [ ] All AC.FGF.1..5 tests green.
-- [ ] `test_AC24_3_search_dispatches_to_graphiti` updated and green.
-- [ ] memory-system + primary-persona test sweeps green.
-- [ ] `loam amend apply --dry-run` clean post-seal.
-- [ ] Sidecar restarts cleanly (`launchctl kickstart -k gui/$UID/<plist>` or manual SIGTERM + relaunch).
-- [ ] Live HTTP round-trip recorded in §14 AC.FGF.5 row.
-- [ ] Working tree clean.
+- [x] All AC.FGF.1..5 tests green.
+- [x] `test_AC24_3_search_dispatches_to_graphiti` updated and green.
+- [x] memory-system (100 + 1 skip) + primary-persona (507) test sweeps green.
+- [x] `loam amend apply --dry-run` clean post-seal.
+- [x] Sidecar restarts cleanly (`launchctl kickstart -k gui/$UID/com.pos-v2.pos3.memory-graphiti` — health 200 within ~6s).
+- [x] Live HTTP round-trip recorded in §14 AC.FGF.5 row.
+- [x] Working tree clean.
 
 ---
 

@@ -327,11 +327,7 @@ Anticipated decision topics (named at plan-time so the register is forward-disco
 
 ### Commit SHAs
 
-To be filled by the builder post-build:
-
-- Sub-plan commit: `<sha>`.
-- Feature commit(s): `<sha>` (and any additional).
-- Manifest commit: `<sha>` (if authored separately).
-- Apply commit: `<sha>` (`loam amend apply`).
-- Corrective commit(s): `<sha>` (if any).
-- Seal commit: `<sha>` (`loam amend seal --scoped-sweep`).
+- Amendment commit: `54794d7b08080f4e87315a81eadcadf292eb4bb9` —
+  `chore(loam-amend-apply): loam amend apply for post-M6 partition realignment (amendment #94)`
+- Seal commit: `e2828ba28e5beb4180e9acc8f97b01dcfa23f169` —
+  `chore(seals): post-m6-partition-realignment — hands-off-lifecycle+dev-sdlc at 54794d7`

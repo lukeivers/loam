@@ -110,7 +110,19 @@ class MemoryClient(Protocol):
         group_ids: list[str] | None,
         num_results: int,
         center_node_uuid: str | None,
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any]:
+        """Issue ``search`` against memory-system.
+
+        Post-fastmcp-group-ids-filter-fix (amendment #96): the
+        documented return shape is
+        ``{"query", "results", "nodes", "episodes"}`` — strict
+        superset of the pre-#96 ``{"query", "results"}`` shape.
+        ``results`` continues to carry edges (facts). ``nodes``
+        and ``episodes`` are new keys; consumers that read
+        ``out["query"]`` / ``out["results"]`` only see no
+        behavioural change.
+        """
+        ...
 
 
 # ---- workspace-slug primitive ---------------------------------------
@@ -385,35 +397,88 @@ def _run_async(coro: Awaitable[Any]) -> Any:
 def _render_retrieval(result: dict[str, Any], *, cap: int) -> str:
     """Plain-text rendering of memory-system's search response.
 
-    Expected shape (amendment #24 ``_impl_search``):
-        {"query": str, "results": [{"fact": str, ...}, ...]}
+    Expected shape (post-fastmcp-group-ids-filter-fix /
+    amendment #96 ``_impl_search``):
+        {"query": str,
+         "results":  [{"fact": str, ...}, ...],   # edges (facts)
+         "nodes":    [{"node_uuid", "name", "summary", "group_id"}, ...],
+         "episodes": [{"episode_uuid", "name", "content",
+                       "group_id", "valid_at"}, ...]}
 
-    We render each result's ``fact`` field (the human-readable edge
-    summary graphiti returns) as a dashed list, truncated at ``cap``
-    characters to keep the contributor's share of the turn envelope
-    bounded.
+    Pre-amendment-#96 shape was ``{"query", "results"}`` (results =
+    edges). The persona consumer is back-compat by construction —
+    when the boundary returns the old shape, ``nodes`` and
+    ``episodes`` default to ``[]`` and the rendering is identical.
 
-    AC.MPF.2 / M6c (amendment #95): when ``results`` is empty,
-    return a structured diagnostic header instead of ``""`` so the
-    empty-state is observable in the UPS hook stdout. Pre-amendment-
-    #95 the empty-results path returned ``""``, which the composer
-    rendered as ``[memory-retrieval]\\n    \\n`` (whitespace-only
-    block) — indistinguishable from "search exception" or
-    "group_id mismatch" without log inspection.
+    Rendering strategy (amendment #96 D2):
+
+    1. If ``results`` (edges) is non-empty: render each edge's
+       ``fact`` field as a dashed list — same shape as pre-#96.
+       Edges are graphiti's reranked, fact-summarised relations and
+       are the highest-signal retrieval surface.
+    2. Else if ``episodes`` is non-empty: render each episode's
+       name + content preview as ``[episode] {name}: {preview}``.
+       This is the fall-through that fixes the
+       fastmcp-group-ids-filter-fix observable: write under
+       ``group_id=X`` with a body too sparse for graphiti's LLM-
+       extractor to derive edges, search with ``group_ids=[X]`` —
+       the episode is now retrievable via this branch.
+    3. Else (both empty): preserve AC.MPF.2's empty-state diagnostic
+       (``[memory-retrieval]\\n  (no results for this query)``).
+
+    ``nodes`` is currently omitted from the rendering — entities
+    without their relating edges or episodes are typically lower
+    signal-density than episodes, and surfacing them risks bloating
+    the contributor envelope without proportional retrieval value.
+    Captured as a future-improvement (FUTURE_IDEAS_DRAFT) — not a
+    fix-blocker. The MCP tool still returns ``nodes`` so other
+    consumers (e.g. an explicit graph-explorer) can use it.
+
+    The ``cap`` truncation is line-boundary aware: we never emit a
+    half-line. When the cap forces truncation mid-list, the
+    remaining items are dropped (no ellipsis marker needed; the
+    line-count is the only signal of completeness).
     """
-    results = result.get("results") or []
-    if not isinstance(results, list) or not results:
+    edges = result.get("results") or []
+    episodes = result.get("episodes") or []
+
+    if isinstance(edges, list) and edges:
+        lines: list[str] = ["[memory-retrieval]"]
+        for item in edges:
+            if not isinstance(item, dict):
+                continue
+            fact = item.get("fact")
+            if isinstance(fact, str) and fact.strip():
+                lines.append(f"- {fact.strip()}")
+    elif isinstance(episodes, list) and episodes:
+        lines = ["[memory-retrieval]"]
+        for item in episodes:
+            if not isinstance(item, dict):
+                continue
+            name = item.get("name")
+            content = item.get("content")
+            if not isinstance(name, str) or not name.strip():
+                continue
+            if not isinstance(content, str):
+                content = ""
+            content_preview = content.strip().replace("\n", " ")
+            # Per-episode line cap: keep the preview compact so a
+            # single dense episode doesn't exhaust the contributor
+            # cap. The line-level cap below still applies.
+            if len(content_preview) > 200:
+                content_preview = content_preview[:200].rstrip() + "…"
+            if content_preview:
+                lines.append(
+                    f"- [episode] {name.strip()}: {content_preview}"
+                )
+            else:
+                lines.append(f"- [episode] {name.strip()}")
+    else:
         return "[memory-retrieval]\n  (no results for this query)"
-    lines: list[str] = ["[memory-retrieval]"]
-    for item in results:
-        if not isinstance(item, dict):
-            continue
-        fact = item.get("fact")
-        if isinstance(fact, str) and fact.strip():
-            lines.append(f"- {fact.strip()}")
+
     text = "\n".join(lines)
     if len(text) > cap:
-        # Hard-trim on a line boundary so we don't half-emit a fact.
+        # Hard-trim on a line boundary so we don't half-emit an entry.
         out: list[str] = []
         total = 0
         for ln in lines:

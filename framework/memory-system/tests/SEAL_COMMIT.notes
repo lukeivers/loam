@@ -361,3 +361,102 @@ Out of scope (per plan §8):
 BASELINE `a31280a` (current HEAD post-M9 §14 SHA backfill).
 memory-system's SEAL_COMMIT sidecar lands at the seal SHA via
 `loam amend seal`.
+
+# FastMCP group_ids filter fix — search surfaces episodes + nodes via search_(COMBINED_HYBRID_SEARCH_RRF)
+
+2026-04-29. FINAL pre-publish blocker per dispatcher directive
+2026-05-01.
+
+Dispatch framed the symptom as "FastMCP group_ids filter broken":
+`search(group_ids=["pos3"]) → 0` while `group_ids=None → 4+`.
+Empirical reproduction (raw mcp.client + add_episode probe) showed
+the filter works correctly for every fresh edge-producing write.
+Direct kuzu_db inspection (sidecar-running-copy via
+/tmp/kuzu_db_inspect2 + WAL) confirmed: edges carry the same
+group_id as their source Episodic; graphiti-core's Kuzu search
+ops apply `e.group_id IN $group_ids` correctly.
+
+The actual defect: `_impl_search` calls `graphiti.search()` which
+returns ONLY EntityEdge objects. Episodes whose body is too sparse
+for graphiti's LLM-extractor to derive RelatesToNode_ are stored
+as Episodic + maybe Entity nodes, but no edges — invisible to
+edge-search regardless of group_id. Empirical floor: `pos3`'s
+`test-episode-mpf-verify` (1 entity, 0 edges) and
+`pos-v2_default`'s `diagnostic-test-2026-04-29` (7 entities, 0
+edges) both unreachable on edge-search even with group_ids=None.
+
+Root cause class (δ) — not a filter bug. The `search` MCP tool's
+contract is too narrow.
+
+Fix: switch `_impl_search` from `graphiti.search()` (edges-only)
+to `graphiti.search_(COMBINED_HYBRID_SEARCH_RRF)` (edges + nodes
++ episodes + communities). The MCP tool's structured-content dict
+grows from {query, results=edges} to {query, results=edges,
+nodes, episodes}. Strict superset — back-compat preserved.
+Persona's `_render_retrieval` falls through to episodes when
+edges-list is empty; renders edges (facts) when both populated
+(M9 substitution-pass invariant).
+
+Structural remedy:
+
+  - `framework/memory-system/src/service.py` — `_impl_search`
+    switches to `graphiti.search_(COMBINED_HYBRID_SEARCH_RRF)`;
+    return dict gains `nodes` and `episodes` keys.
+  - `framework/memory-system/tests/test_service.py` —
+    `FakeGraphiti.search_` replaces `search`; AC24.3 updated;
+    new AC.FGF.1 (tri-key shape), AC.FGF.2 (group_ids honoured
+    on nodes/episodes arms).
+  - `framework/primary-persona/src/loam/primary_persona/
+    memory_consumer.py` — `_render_retrieval` consumes the new
+    `episodes` key when `results` is empty; prefers edges
+    otherwise.
+  - `framework/primary-persona/tests/
+    test_AC_FGF_3_render_retrieval_falls_through_to_episodes.py`
+    — fall-through behaviour.
+  - `framework/primary-persona/tests/
+    test_AC_FGF_4_render_retrieval_prefers_edges.py` —
+    edges-preferred when both present.
+
+AC surface (AC.FGF.1..FGF.5 + AC.FGF.S):
+
+  - AC.FGF.1: `_impl_search` returns tri-key shape.
+  - AC.FGF.2: group_ids filter honoured for nodes + episodes.
+  - AC.FGF.3: `_render_retrieval` falls through to episodes
+    when edges-list empty.
+  - AC.FGF.4: `_render_retrieval` prefers edges when both
+    present.
+  - AC.FGF.5: live HTTP round-trip — write sparse-body
+    episode under group_id=X, search with group_ids=[X],
+    episode is in the `episodes` list (manual, recorded in
+    §14).
+  - AC.FGF.S: seal-diff invariant — only paths under
+    memory-system/, primary-persona/, or universal-paths.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - D1.a — Use `graphiti.search_()` (combined arms) not
+    `graphiti.search()` (edges-only). The only fix that
+    satisfies AC.FGF.5.
+  - D1.b — Use `COMBINED_HYBRID_SEARCH_RRF` not
+    `_CROSS_ENCODER`. Cross-encoder needs LLM-call-per-rerank
+    and requires extra LLM client wiring; RRF is dependency-
+    light and matches back-compat.
+  - D2 — Persona's `_render_retrieval` falls through to
+    episodes only when `results` is empty; prefers edges
+    otherwise.
+
+Out of scope:
+
+  - Cross-encoder reranking (D5.1) — deferred.
+  - Community arm population (D5.2) — graphiti's
+    build_communities not invoked yet; communities-list will
+    be empty; harmless.
+  - Episode FTS index migration (D5.3) — relying on
+    graphiti's prepare_graphiti to maintain.
+  - Persona's MemoryClient Protocol shape change beyond
+    docstring — Protocol stub-bodies don't enforce keys.
+
+BASELINE `384cd65` (current HEAD post-amendment-#95 §14 SHA
+backfill). memory-system's SEAL_COMMIT sidecar lands at the
+seal SHA via `loam amend seal`. primary-persona's SEAL_COMMIT
+sidecar advances correspondingly.

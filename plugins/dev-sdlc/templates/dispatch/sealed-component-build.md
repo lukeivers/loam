@@ -37,7 +37,7 @@ Read it fully before any code lands. ACs ({{AC_PREFIX}}) are outcome-shaped; met
 # Session-start corpus
 
 - `CLAUDE.md` — three lenses, operational cautions
-- `docs/odd-methodology.md` — §2.5, §3, §4
+- `plugins/dev-sdlc/docs/odd-methodology.md` — §2.5, §3, §4
 - `docs/rebuild/VALUE_PROPOSITION.md` — prime objective
 - `docs/rebuild/FUTURE_IDEAS.md` — three lenses + dev CDCs
 - `docs/rebuild/STATE.md`

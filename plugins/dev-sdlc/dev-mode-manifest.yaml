@@ -114,9 +114,10 @@ dev_only:
   # amendment as the relocation target for CLAUDE.md's pre-scrub
   # dev-heavy sections; B mechanises auto-loading via SessionStart.
   - path: CLAUDE.dev.md
-  # ODD methodology + worked examples (locked ruling 5).
-  - path: docs/odd-methodology.md
-  - path: docs/odd-in-loam.md
+  # ODD methodology + worked examples (locked ruling 5). Post-M6b.0:
+  # MOVED into the Dev/SDLC plugin tree.
+  - path: plugins/dev-sdlc/docs/odd-methodology.md
+  - path: plugins/dev-sdlc/docs/odd-in-loam.md
   # Dev/SDLC tracker docs.
   - path: docs/rebuild/STATE.md
   - path: docs/rebuild/BACKLOG.md

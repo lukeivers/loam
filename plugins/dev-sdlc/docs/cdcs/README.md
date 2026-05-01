@@ -6,8 +6,10 @@
 > this file is their temporary home; when the plugin lands, they migrate
 > there." The plugin landed at M6a; M6b.0 executed the migration.
 
-Each file in this directory is a single CDC. The order below preserves the
-authoring chronology in `FUTURE_IDEAS.md` for traceability.
+Each file in this directory is a single CDC. Rows 1-10 preserve the
+authoring chronology in `FUTURE_IDEAS.md` for traceability; row 11
+was authored at M6c (2026-04-29) per dispatcher directive following
+the memory-sidecar incident captured in `FUTURE_IDEAS_DRAFT.md`.
 
 | # | File | Title |
 |---|------|-------|
@@ -21,3 +23,4 @@ authoring chronology in `FUTURE_IDEAS.md` for traceability.
 | 8 | `audit-finding-triage.md` | Audit-finding triage by severity |
 | 9 | `amendment-dispatch-test-scope.md` | Amendment-dispatch test & context scope |
 | 10 | `529-overload-recovery.md` | 529 overload recovery |
+| 11 | `graceful-fallthrough-with-detection.md` | Graceful fallthrough must include detection + surface |

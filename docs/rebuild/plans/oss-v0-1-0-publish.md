@@ -205,13 +205,14 @@ The public artefact contains no:
 - `docs/rebuild/` tree (plans, components, capability-corpus
   authoring shape, FUTURE_IDEAS, BACKLOG, STATE, dev-mode
   manifest, decay-retention analysis, spec/)
-- `framework/tools/loam-mode/`, `framework/tools/heavy-b-migrate/`,
+- `plugins/dev-sdlc/tools/loam-mode/`, `framework/tools/heavy-b-migrate/`,
   `framework/tools/upgrade-merge-resolver/`,
   `framework/tools/orphan-plist-cleanup/`,
   `framework/tools/pos-publish-framework-only/`
 - `CLAUDE.dev.md` fragment
-- `docs/odd-methodology.md` (long form), `docs/odd-in-pos.md`
-  (long form), `docs/duration-estimation-rubric.md`
+- `plugins/dev-sdlc/docs/odd-methodology.md` (long form),
+  `plugins/dev-sdlc/docs/odd-in-loam.md` (long form),
+  `plugins/dev-sdlc/docs/duration-estimation-rubric.md`
 
 The condensed `docs/design/odd.md` (~200 lines) is shipped as the
 public methodology surface; the long forms remain DEV-MODE-only.
@@ -318,7 +319,7 @@ v0.1.x patches; v0.2 begins a new master-plan cycle.
 - Workspace-tooling adoption (uv workspaces / hatch
   workspaces) — out of scope per d-migration §7.
 - Org-level repo migration (R3's "if traction warrants" path).
-- Long-form `docs/odd-methodology.md` shipping as a public
+- Long-form `plugins/dev-sdlc/docs/odd-methodology.md` shipping as a public
   differentiator (audit D5; deferred — short form ships).
 
 ---
@@ -579,7 +580,7 @@ Per ODD §2.5 and the locked plan:
   v0.2 and beyond.
 - **Idea 10 Phase 4–5 work.** Plugin pre-naming and `plot` user-
   facing CLI alias for scope-of-work — deferred to v0.2.
-- **Long-form ODD methodology + odd-in-pos as public docs.**
+- **Long-form ODD methodology + odd-in-loam as public docs.**
   Audit D5: condensed `docs/design/odd.md` ships; long forms
   remain DEV-MODE-only.
 - **History rewrite of canonical pos-v2.** Audit §1.1: no secret-

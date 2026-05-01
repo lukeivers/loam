@@ -2,7 +2,7 @@
 
 > **A sealed component carries a stable diff window: changes outside the window violate the seal. Per-invariant baselines pin specific properties (file lists, byte content, frozen-baseline flags) at SEAL_COMMIT time; the seal-test asserts the invariant holds against the BASELINE..SEAL_COMMIT range. Retire-and-rebaseline (ODD §4) is the in-band mechanism for advancing a baseline within an amendment that touches the underlying invariant.**
 
-This document is the concise codification of the sealed-component invariant conventions. The exhaustive narrative — including HC#1..HC#5 history, per-invariant rationale, and the cross-component widening protocol — lives in `../odd-in-loam.md` §10. The implementation lives in `framework/tools/loam/src/loam_cli/amend/` (the seal-diff machinery + per-component `tests/test_no_sealed_amendments.py`).
+This document is the concise codification of the sealed-component invariant conventions. The exhaustive narrative — including HC#1..HC#5 history, per-invariant rationale, and the cross-component widening protocol — lives in `../odd-in-loam.md` §10. The implementation lives in `plugins/dev-sdlc/tools/loam-amend/src/loam_amend/` (the seal-diff machinery + per-component `tests/test_no_sealed_amendments.py`).
 
 ## 1. HC#4 — byte-content sample paths invariant
 
@@ -38,7 +38,7 @@ Per-component `extra_allowed_prefixes` in the manifest enumerate the cross-cutti
 ## 5. Cross-references
 
 - Long-form invariant history: `../odd-in-loam.md` §10.
-- Implementation: `framework/tools/loam/src/loam_cli/amend/seal_diff.py` + per-component `tests/test_no_sealed_amendments.py`.
+- Implementation: `plugins/dev-sdlc/tools/loam-amend/src/loam_amend/seal_diff.py` + per-component `tests/test_no_sealed_amendments.py`.
 - Per-component baseline data: `<component>/tests/SEAL_COMMIT` sidecar + `<component>/seals/SEAL_COMMIT.<slug>` narrative files (STAYS at the per-component subtree; not migrated by M6b.0).
 - Cross-component widening protocol: amendment #22's universal-paths admission + `feedback_serialize_amendment_builds`.
 

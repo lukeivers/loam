@@ -16,8 +16,8 @@ The partition that drives the user-vs-dev split is declared in
 Before acting on any non-trivial pos-v2 work — planning, proposing,
 editing code, dispatching agents, ruling on designs — read:
 
-- `docs/odd-methodology.md` (normative; this governs)
-- `docs/odd-in-loam.md` (worked examples)
+- `plugins/dev-sdlc/docs/odd-methodology.md` (normative; this governs)
+- `plugins/dev-sdlc/docs/odd-in-loam.md` (worked examples)
 - `docs/rebuild/VALUE_PROPOSITION.md`
 - `docs/rebuild/STATE.md`
 - `docs/duration-estimation-rubric.md` (AI-build wall-time estimation rubric)
@@ -52,8 +52,8 @@ require the read. If in doubt, read.
 
 ## Where dev-mode guidance lives
 
-- `docs/odd-methodology.md` — the ODD methodology itself.
-- `docs/odd-in-loam.md` — ODD applied to pOS v2 specifically, including
+- `plugins/dev-sdlc/docs/odd-methodology.md` — the ODD methodology itself.
+- `plugins/dev-sdlc/docs/odd-in-loam.md` — ODD applied to pOS v2 specifically, including
   worked examples.
 - `docs/rebuild/FUTURE_IDEAS.md` — future ideas (including the Dev/SDLC
   plugin at Idea 3) and the currently-parked dev CDCs. The CDCs are

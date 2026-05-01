@@ -2,7 +2,7 @@
 
 > **An amendment's commit history follows a stable ladder: plan + manifest commit → feature commit(s) → corrective commits (if any) → `loam amend apply` commit → seal commit. Each rung carries a stable commit-message prefix; the seal commit is sealed via `loam amend seal` which writes the SEAL_COMMIT sidecars + narrative + applies a deterministic finalisation.**
 
-This document is the concise codification of the commit-ladder + seal-ritual conventions. The exhaustive narrative of why this shape exists lives in `../odd-in-loam.md`; the implementation lives in `framework/tools/loam/src/loam_cli/amend/` (the seal-diff + apply + seal commands).
+This document is the concise codification of the commit-ladder + seal-ritual conventions. The exhaustive narrative of why this shape exists lives in `../odd-in-loam.md`; the implementation lives in `plugins/dev-sdlc/tools/loam-amend/src/loam_amend/` (the seal-diff + apply + seal commands).
 
 ## 1. The commit ladder
 
@@ -46,7 +46,7 @@ The seal commit is deterministic given the manifest + the touched component list
 
 ## 4. Cross-references
 
-- Implementation: `framework/tools/loam/src/loam_cli/amend/seal.py` + `apply.py`.
+- Implementation: `plugins/dev-sdlc/tools/loam-amend/src/loam_amend/commands/seal.py` + `commands/apply.py`.
 - README: `framework/tools/loam/README.md`.
 - Per-component seal narrative target: `<component>/seals/SEAL_COMMIT.<slug>`.
 - CDC: `../cdcs/amendment-dispatch-test-scope.md` (touched-component-only test scoping rule).

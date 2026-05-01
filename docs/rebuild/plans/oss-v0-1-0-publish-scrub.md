@@ -288,13 +288,97 @@ Anticipated decision topics (named at plan-time so the register is forward-disco
 
 ### Commit SHAs
 
-(post-build; mirror M6c shape)
+- M9 sub-plan commit: `0364ec9` (this plan-doc).
+- M9 feature commit: `3ae817c` (substitution module + 4 tests +
+  synth.py extension + 12-file in-place fixture refactor).
+- M9 manifest commit: `d43cc28` (amendment #91 manifest authoring).
+- M9 apply commit: `3e6ac88` (`loam amend apply` — sidecars bumped to
+  BASELINE 14609d8 + allowed_prefixes extended).
+- M9 corrective commit: `aa647c4` (workspace-sync test_AC_D_5_5_1
+  tightened to reflect post-M1g + M6b.0 + M6b.1 surface — pre-existing
+  stale assertion surfaced as HSF#1 in §7 + resolved in-band; doc-
+  only test-text update; no behaviour change).
+- M9 seal commit: `2161cb1` (`loam amend seal --scoped-sweep`; 7-
+  component fence + HOL narrative anchor; touched-component sweep all
+  green; cross-component sweep scoped to manifest-listed components
+  per `--scoped-sweep`).
 
-- M9 feature commit: `<TBD>`
-- M9 apply commit: `<TBD>`
-- M9 seal commit: `<TBD>`
-- M9 corrective commits (if any): `<TBD>`
+### Method-decision register narratives
 
----
+**D-build.M9.1 — Substitution module placement: new sibling module.**
+Authored `loam.publish_framework_only.substitution` as a new sibling
+of `synth.py` rather than inlining helpers in `synth.py`. Rationale:
+(a) clean public surface — `apply_substitutions` + `SubstitutionResult`
++ `SUBSTITUTION_TABLE` are testable in isolation without spinning up
+a fixture canonical; the unit tests in `test_AC_OSS_M9_substitution_binary_safe.py`
+exercise the substitution function directly on PNG bytes without git
+plumbing. (b) Single-responsibility split — `synth.py` owns git
+plumbing + tree assembly; `substitution.py` owns the textual rewrite.
+(c) Future-extensibility — additional substitution-rules / additional
+table entries land in `substitution.py` without `synth.py` churn.
 
-*End of plan.*
+**D-build.M9.2 — Table representation: tuple-of-tuples.**
+`SUBSTITUTION_TABLE: tuple[tuple[str, str], ...]` chosen over
+dict-of-strings or frozen dataclass. Rationale: (a) tuple ordering is
+stable across Python versions (dict ordering is too in 3.7+, but
+frozen tuple is the explicit "ordered + immutable" shape). (b)
+ordering matters: the no-trailing-slash `/Users/lukeivers/ivers-corp-pos-v2`
+substitution would also match inside paths that DO carry the trailing
+slash; tuple iteration order ensures the trailing-slash entry applies
+first (defensive — both produce the same result, but explicit
+ordering documents intent). (c) Equality semantics for testing — the
+unit test asserts `len(SUBSTITUTION_TABLE) == 4` + membership of the
+4 source tokens; tuple-of-tuples makes this trivial.
+
+**D-build.M9.3 — `git hash-object` invocation: per-blob subprocess.**
+Each rewritten blob calls `subprocess.run(["git", "hash-object", "-w",
+"--stdin"], input=content)` — a separate subprocess per shipping blob
+that needed substitution. Rationale: (a) simplicity — the existing
+`_git` helper in `synth.py` was modeled on per-call subprocess; the
+new `_hash_object_w` helper extends that pattern. (b) Most shipping
+blobs do NOT need substitution (only ~17 shipping-surface files in
+the entire pos-v2 tree carry the four tokens — verified at plan-
+time); the per-blob subprocess cost is negligible at v0.1.0 surface
+size. (c) Profiling-driven optimisation can land later if M11 dry-run
+shows the substitution pass dominates synthesis wall-clock.
+
+**D-build.M9.4 — Binary detection: try-UTF-8-decode.**
+`apply_substitutions` attempts `blob_content.decode("utf-8")` and
+catches `UnicodeDecodeError` to flag binary blobs (returns
+`SubstitutionResult(content=blob_content, changed=False, binary=True)`).
+Rationale: (a) more general than magic-byte sniffing — catches binary
+PNG / JPG / WAV / unknown-format bytes without enumerating known
+binary types. (b) UTF-8 is the dominant text encoding in pos-v2's
+tree (Python source, Markdown, YAML); the false-positive rate is
+zero for tracked text content. (c) The integration test
+(`test_AC_OSS_M9_substitution_binary_safe.py::test_AC_OSS_M9_4_synth_preserves_binary_blob_sha`)
+verifies a real PNG blob preserves its source SHA in the synthetic
+tree.
+
+**D-build.M9.5 — Smoke-test fixture scope: 5 files spanning 4 surface
+shapes.** The smoke test
+(`test_AC_OSS_M9_substitution_smoke.py::test_AC_OSS_M9_6_smoke_synthesis_carries_zero_substitution_residuals`)
+builds a fixture canonical with 5 token-bearing files (1 Python
+source, 1 README with shell-example, 1 test fixture, 1 CLAUDE.md, 1
+README) + 1 docs/positioning.md without tokens. Rationale: (a) fast
+test runtime — the fixture canonical is small enough that `git init
+--initial-branch=pos-v2 + git add + git commit + synthesise + ls-tree
++ cat-file blob × N` runs in <1s. (b) covers the 4 substitution-token
+families: absolute path with trailing slash, absolute path without
+trailing slash, GitHub URL, person-name. (c) positive sanity — the
+test asserts AT LEAST one synthesised blob carries replacement tokens
+(catches the failure mode where the substitution pass is wired but
+silently no-ops).
+
+**D-build.M9.6 — In-place rename mechanic: targeted Edit calls per
+file.** Surface B's 12-file in-place refactor used per-file `Edit`
+tool calls with `replace_all=true` on context-stable token forms,
+rather than a scripted `sed -i` pass. Rationale: (a) per-file context
+inspection — `framework/workspace-bootstrap/README.md` carries 3
+distinct path-references (a local-canonical example, a URL example, a
+re-scaffold example); each needed independent verification that the
+substitution made sense in context. (b) `replace_all=true` was safe
+on docs/README files where the source token was unambiguous; case-by-
+case decision per file. (c) the substitution pass at synth time is
+the belt-and-braces — if any in-place rename was missed at M9, the
+synth-time pass catches it in the public artefact.

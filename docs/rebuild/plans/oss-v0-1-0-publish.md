@@ -853,7 +853,26 @@ Now a multi-amendment series (M1a..M1g per series-master `oss-v0-1-0-publish-ren
 
 ### M9.scrub — OSS-build.M9.x
 
-(post-build)
+Sealed `2161cb1` 2026-04-29 (amendment #91). Builder:
+sub-plan-doc + manifest + feature + apply + corrective +
+seal commit ladder per M9 sub-plan §14. Substitution pass
+landed in `loam.publish_framework_only.synth` consuming the
+M9-locked 4-entry SUBSTITUTION_TABLE per master plan §13
+D-Q.OSS.6 ruling. 12-file in-place fixture refactor across 7
+components. AI-time actual ~30 min (within calibrated 10–25 min
+band; +5 min over upper bound due to env-test flake on
+test_D5_1_memory_graphiti during scoped sweep [resolved by
+isolation rerun] + corrective commit for HSF#1 stale workspace-
+sync test text). Method-decision register narratives in the
+sub-plan §14 (D-build.M9.1..M9.6).
+
+Halt-and-surface findings folded into the next-amendment
+register: HSF#1 (gate-test partition-completeness gap; resolved
+in-band as a doc-only test fix at corrective commit aa647c4 +
+captured for follow-on plugin-hooks-test extraction amendment) +
+HSF#2 (plist source paths; verified workspace-bootstrap renderer
+contract at plan-time) + HSF#5 (pOS fixture rename; in-scope at
+AC.OSS-M9.5).
 
 ### M10.bus-factor — OSS-build.M10.x
 
@@ -895,8 +914,13 @@ NOT here)
 - M6.dev-sdlc-plugin seal commit: `<TBD>`
 - M7.docs-lane commits (multiple, per docs file): `<TBD>`
 - M8.license-governance commit: `<TBD>`
-- M9.scrub amendment commit: `<TBD>`
-- M9.scrub seal commit: `<TBD>`
+- M9.scrub sub-plan commit: `0364ec9`
+- M9.scrub feature commit: `3ae817c`
+- M9.scrub manifest commit: `d43cc28`
+- M9.scrub apply commit: `3e6ac88`
+- M9.scrub corrective commit: `aa647c4` (workspace-sync test_AC_D_5_5_1
+  tightened post-M1g + M6b.0 + M6b.1)
+- M9.scrub seal commit: `2161cb1`
 - M11.dry-run synthesis commit + staging push: `<TBD>`
 - M12.publish — squashed initial commit on `lukeivers/loam:main`:
   `<TBD>`

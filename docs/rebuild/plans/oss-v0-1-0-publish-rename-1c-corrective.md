@@ -317,36 +317,49 @@ Calibration row appended to `~/.claude/projects/-Users-lukeivers-pos3/memory/fee
 
 ### D-build.RNM-1c-fix.0 — AI-time actuals
 
-(Populated post-build.)
+**Predicted (calibrated):** 25-40 min. **Actual:** ~50 min wall-clock from plan-authoring-start to seal-commit, including operational launchctl reload step and FIDRAFT capture. Slightly over the calibrated upper bound, primarily due to (a) deeper-than-expected pre-build empirical-surface verification (the dispatch's "~20 callsites" estimate required disambiguating archaeological-detector surfaces — 41 raw refs vs 26 actual rebrand candidates vs 15 load-bearing detector strings) and (b) HSF capture authoring (3 substantive FIDRAFT entries averaging ~250 words each). Pure mechanical edit-time was within prediction. Calibration row: see §14 D-build appendix entry; useful next-time signal is that "small follow-on amendment" predictions should add 10-15 min for halt-trigger triage when the audit's surface estimate is bracketed-not-precise.
 
 ### D-build.RNM-1c-fix.1 — Plist template filename rename actuals
 
-(Populated post-build: did `git mv` preserve history clean? Any tooling that hard-coded the old filename outside the named 2 source files?)
+`git mv framework/orchestrator/ops/launchd/com.pos.orchestrator.plist.tmpl → com.loam.orchestrator.plist.tmpl` preserved history cleanly (`R framework/...` rename status; 96% similarity). Two source files needed the path-string update (install_launchd.py:42 + test_d2_launchd.py:30) — pre-identified at plan time, no surprises. Brand-comment inside the template body (`${LABEL} — service label (com.pos.orchestrator)` → `(com.loam.orchestrator)`) caught by post-edit grep verification; not pre-listed in the plan but a natural extension.
 
 ### D-build.RNM-1c-fix.2 — LIVE config default rename actuals
 
-(Populated post-build: did the rename trip any existing test that asserted on the old default?)
+The rename of `launchd_label: str = "com.pos.orchestrator"` → `"com.loam.orchestrator"` at config.py:39 tripped no existing test. `framework/self-upgrade/tests/` 194 passed post-edit. Verified by grep at plan-time that no test asserted on the old default value. Halt-trigger #2 cleared as predicted.
 
 ### D-build.RNM-1c-fix.3 — dev-mode-manifest.yaml edit actuals
 
-(Populated post-build: confirmed the post-edit entries map to existing directories; loam-mode tests pass.)
+Post-edit `loam-mode` 59 passed + 1 skipped. The 2 replacement glob paths (`plugins/dev-sdlc/tools/loam-amend/**` + `framework/tools/orphan-plist-cleanup/**`) verified to exist on disk. Comment header added explaining the M1g rename + M6b.1 MOVE provenance for future readers. Halt-trigger #3 partially fired (broader manifest staleness surfaced — see §16 HSF#1) but the named-lines fence held and the dispatch's surface closed cleanly.
 
 ### D-build.RNM-1c-fix.4 — Operational restart actuals
 
-(Populated post-build: bootout output; install output; new PID; verify-empty results; any FIDRAFT-worthy surface findings observed during the operational step.)
+Sequence executed:
+- `launchctl bootout gui/501/com.pos.orchestrator` → exit 0 (bootout complete after ~2s).
+- `rm ~/Library/LaunchAgents/com.pos.orchestrator.plist` → success.
+- Verify: `launchctl list | grep com.pos.orchestrator` → empty.
+- `python framework/orchestrator/scripts/install_launchd.py --python "$(pwd)/.venv/bin/python" --working-dir "$(pwd)" --throttle-secs 30` → "installed plist at /Users/lukeivers/Library/LaunchAgents/com.loam.orchestrator.plist".
+- Post-install: `launchctl list | grep com.loam.orchestrator` → registered with `runs=1`, `last exit code=1`, `state = spawn scheduled` (throttle gate).
+- Plist files on disk: `com.pos.orchestrator.plist` absent, `com.loam.orchestrator.plist` present.
+
+**Halt-trigger #5 partial fire:** the launchd registration succeeded (AC.RNM-1c-fix.5 first 4 conditions met) but the orchestrator process exits 1 immediately because `framework/orchestrator/` is not pip-installed editable in the canonical venv (`No module named pos_orchestrator` in stderr). Throttle-retry-locked at 30s minimum gap (no resource burn). This is a pre-existing provisioning gap unrelated to this amendment — see HSF#3 in §16 + corresponding FIDRAFT entry. Decision per critical-thinking-on-deviations: keep the new label registered (correct post-rename source-truth-matches-runtime state); document the provisioning gap separately. AC.RNM-1c-fix.5 considered closed for label-rebrand purposes; full process-running verification deferred to the provisioning fix amendment.
 
 ### D-build.RNM-1c-fix.5 — FIDRAFT capture from halt-and-surface triggers
 
-(Populated post-build: graceful-fallthrough silent-swallow patterns in surrounding orchestrator code per HT-7; broader dev-mode-manifest staleness per HT-3 / §2.3; appended to FUTURE_IDEAS_DRAFT.md per discipline.)
+Three FIDRAFT entries appended to `docs/rebuild/FUTURE_IDEAS_DRAFT.md`:
+
+1. **Broader dev-mode-manifest.yaml staleness** (HSF#1 / HT-3 partial fire) — `roots:` + `always_loaded:` blocks reference 15 top-level component dirs that MOVED under `framework/` post-M6b.0; `loam-mode` resolver tolerates via missing-path empty-set rule. Suggested shape: separate `dev-mode-manifest-realignment` amendment with a partition-design decision (per-component-glob vs bulk `framework/**` vs revisit entirely).
+
+2. **Surrounding orchestrator silent-swallow patterns** (HSF#2 / HT-7) — 4 `except Exception: pass` at supervisor.py:539, 556, 563, 570 + adjacent `asyncio.TimeoutError: pass` (line 295) + `ValueError: pass` (line 555). M6c graceful-fallthrough CDC violations. Adds to memory-sidecar-recovery's 3 sites for cumulative 7+ across components — confirms the parent CDC entry's "expect similar density across 20+ components" hypothesis. Suggested shape: single audit-pass amendment running structural grep across all components.
+
+3. **Orchestrator runtime-provisioning gap** (HSF#3 / HT-5 partial fire) — `pos_orchestrator` not installed editable in canonical pos-v2 venv; orchestrator launchd job throttle-retry-locked exit 1. Pre-existing — surfaced by but not introduced by M1c-corrective. Suggested shape: add `framework/orchestrator/` to canonical venv's editable-install list, OR document the canonical-tree-as-source-truth-only intent and require workspace-bootstrap-provisioned working-dir for live orchestrator.
 
 ### Commit SHAs
 
-(Populated by SHA backfill commit.)
-
-- Plan + manifest commit: TBD
-- Feature commit: TBD
-- Apply commit: TBD
-- Seal commit: TBD
+- BASELINE: `6f272ce` — `docs(plans): record amendment #92 commit SHAs in method-decision register`
+- Plan + manifest commit: `23fef4c` — `docs(plans): M1c-corrective sub-plan + manifest (rename trailing-edge bookkeeping)`
+- Feature commit: `71d14f2` — `feat: M1c-corrective — com.loam.orchestrator rebrand + dev-mode-manifest path refresh`
+- Apply commit: `e809193` — `chore(loam-amend-apply): loam amend apply for M1c-corrective`
+- Seal commit: `603e953` — `chore(seals): oss-v0-1-0-publish-rename-1c-corrective — orchestrator+self-upgrade+dev-sdlc at e809193`
 
 ---
 

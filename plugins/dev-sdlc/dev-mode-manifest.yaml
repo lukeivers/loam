@@ -38,30 +38,38 @@ roots:
   # 4: "every Phase 1–4 sealed component's source surface" is always-
   # loaded. The component dir is the unit; sub-trees inside (src/,
   # tests/, docs/, seals/, scripts/, etc.) ride with the component.
-  - cost-governance/
-  - graceful-degradation/
-  - hands-off-lifecycle/
-  - memory-system/
-  - objective-tracker/
-  - observability-aggregator/
-  - orchestrator/
-  - primary-persona/
-  - reversibility-primitive/
-  - safety-layer/
-  - scope-of-work/
-  - self-correction/
-  - self-upgrade/
-  - telegram-interface/
-  - workspace-bootstrap/
-  # Top-level non-component surfaces.
+  # Post-M6b.0 realignment (AC.PMR.3): 14 component refs rebased to
+  # framework/<comp>/; graceful-degradation/ RENAMED to dormancy/
+  # (the component was renamed pre-M6b.0); workspace-sync ADDED (a
+  # missing component admission — workspace-sync was never in the
+  # original sub-plan F authoring's 15-component list).
+  - framework/cost-governance/
+  - framework/dormancy/
+  - framework/hands-off-lifecycle/
+  - framework/memory-system/
+  - framework/objective-tracker/
+  - framework/observability-aggregator/
+  - framework/orchestrator/
+  - framework/primary-persona/
+  - framework/reversibility-primitive/
+  - framework/safety-layer/
+  - framework/scope-of-work/
+  - framework/self-correction/
+  - framework/self-upgrade/
+  - framework/telegram-interface/
+  - framework/workspace-bootstrap/
+  - framework/workspace-sync/
+  # Top-level non-component surfaces. tools/ MOVED to framework/tools/
+  # post-M6b.0; data/ STAYS top-level (workspace runtime telemetry,
+  # not a component source surface).
   - docs/
-  - tools/
+  - framework/tools/
   - data/
-  # Root files.
+  # Root files. first-run-inventory.yaml MOVED to framework/ post-M6b.0.
   - CLAUDE.md
   - CLAUDE.dev.md
   - README.md
-  - first-run-inventory.yaml
+  - framework/first-run-inventory.yaml
 
 # Excluded from audit walk regardless of root membership.
 audit_excludes:
@@ -79,34 +87,43 @@ always_loaded:
   # Runtime harness — every Phase 1–4 sealed component's source
   # surface (locked ruling 4). "Loaded" here means partition-
   # membership, not Python-import; B's mechanism uses the partition
-  # to gate context, not interpreter imports.
-  - glob: "cost-governance/**"
-  - glob: "graceful-degradation/**"
-  - glob: "hands-off-lifecycle/**"
-  - glob: "memory-system/**"
-  - glob: "objective-tracker/**"
-  - glob: "observability-aggregator/**"
-  - glob: "orchestrator/**"
-  - glob: "primary-persona/**"
-  - glob: "reversibility-primitive/**"
-  - glob: "safety-layer/**"
-  - glob: "scope-of-work/**"
-  - glob: "self-correction/**"
-  - glob: "self-upgrade/**"
-  - glob: "telegram-interface/**"
-  - glob: "workspace-bootstrap/**"
+  # to gate context, not interpreter imports. Post-M6b.0 realignment
+  # (AC.PMR.4): mirrors the roots: block — 14 component globs rebased
+  # to framework/<comp>/**; graceful-degradation/ RENAMED to dormancy/;
+  # workspace-sync ADDED.
+  - glob: "framework/cost-governance/**"
+  - glob: "framework/dormancy/**"
+  - glob: "framework/hands-off-lifecycle/**"
+  - glob: "framework/memory-system/**"
+  - glob: "framework/objective-tracker/**"
+  - glob: "framework/observability-aggregator/**"
+  - glob: "framework/orchestrator/**"
+  - glob: "framework/primary-persona/**"
+  - glob: "framework/reversibility-primitive/**"
+  - glob: "framework/safety-layer/**"
+  - glob: "framework/scope-of-work/**"
+  - glob: "framework/self-correction/**"
+  - glob: "framework/self-upgrade/**"
+  - glob: "framework/telegram-interface/**"
+  - glob: "framework/workspace-bootstrap/**"
+  - glob: "framework/workspace-sync/**"
   # Tracker-root-load-bearing per amendment #39 + sub-plan E.
   - path: docs/rebuild/VALUE_PROPOSITION.md
-  # End-user-facing harness docs.
+  # End-user-facing harness docs. CLAUDE_CAPABILITIES STAYS top-level
+  # (public-surface harness orientation); duration-estimation-rubric
+  # MOVED to plugins/dev-sdlc/docs/ post-M6b.0 (dev-discipline doc per
+  # AC.OSS-M6b0.5).
   - path: docs/CLAUDE_CAPABILITIES.md
-  - path: docs/duration-estimation-rubric.md
+  - path: plugins/dev-sdlc/docs/duration-estimation-rubric.md
   # Always-load CLAUDE.md (the thin shell post-scrub — see AC.F3).
   - path: CLAUDE.md
   # Top-level repo orientation.
   - path: README.md
   # First-run inventory drives workspace-bootstrap's first-run.
-  - path: first-run-inventory.yaml
+  # Post-M6b.0: MOVED to framework/first-run-inventory.yaml.
+  - path: framework/first-run-inventory.yaml
   # Observability data dir is runtime telemetry, not dev surface.
+  # STAYS top-level (workspace-side runtime path).
   - glob: "data/**"
 
 dev_only:

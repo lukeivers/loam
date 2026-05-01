@@ -173,6 +173,22 @@ dev_only:
   - glob: "framework/tools/loam-migrate-host-config/**"
   - glob: "framework/tools/loam-migrate-launchd-labels/**"
   - glob: "framework/tools/loam-migrate-dormancy-config/**"
+  # Hands-off-lifecycle gate-test files — RECLASSIFIED dev_only by
+  # the post-M6 partition realignment amendment (AC.PMR.1; M9 plan
+  # §7 finding #1 surfaced this gap). The 12 test files at
+  # framework/hands-off-lifecycle/tests/test_AC_AG_*.py (5 files) +
+  # test_AC_BAG_*.py (7 files) sys.path-probe into plugins/dev-sdlc/
+  # hooks/ to import the moved gate modules under test (post-M6b.0
+  # gate-hook source files MOVED to the plugin tree). In the
+  # synthesised public artefact the plugin tree is dropped, so
+  # these test imports fail at import-time. Per partition-precedence
+  # rule #2 (dev_only checked before dev_and_public), these explicit
+  # globs win over the broad `framework/hands-off-lifecycle/**`
+  # admission in the dev_and_public block above. Non-gate test files
+  # in the same directory (e.g. corpus_load_sentinel tests) continue
+  # to classify dev_and_public via the broad glob.
+  - glob: "framework/hands-off-lifecycle/tests/test_AC_AG_*.py"
+  - glob: "framework/hands-off-lifecycle/tests/test_AC_BAG_*.py"
   # Internal docs tree — plans, components, FUTURE_IDEAS, STATE,
   # BACKLOG, capability-corpus authoring shape, decay-retention-
   # analysis, spec/. Per OSS-readiness audit §4.1 + master plan §3

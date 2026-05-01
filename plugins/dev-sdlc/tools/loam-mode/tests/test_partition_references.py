@@ -30,17 +30,57 @@ from loam_mode.audit import (
 from loam_mode.manifest import load_manifest
 
 
-# Known cross-mode references that F is not authorised to scrub.
-# Each entry: (source_path, target_path). Treat as a closed allowlist
-# — any new entry surfacing here is a regression to be fixed, not an
-# allowlist expansion.
+# Known cross-mode references that this amendment is not authorised
+# to scrub. Each entry: (source_path, target_path). Treat as a closed
+# allowlist — any new entry surfacing here is a regression to be
+# fixed, not an allowlist expansion.
+#
 # Post-D.1 (amendment #61): the prior known-debt entry
 # (memory-system/launchd/README.md → docs/rebuild/components/...)
-# became stale because memory-system moved under framework/. The
-# allowlist must shrink monotonically per the test's invariant; the
-# new path's manifest classification is captured by the
-# `framework/**` rule, no longer requiring an explicit debt entry.
-KNOWN_CROSS_MODE_DEBT: set[tuple[str, str]] = set()
+# became stale because memory-system moved under framework/.
+#
+# Post-M6 partition realignment (amendment #94 / AC.PMR.4 / HSF#3):
+# the realignment rebased the manifest's `roots:` + `always_loaded:`
+# from pre-M6b.0 top-level component refs to `framework/<comp>/`
+# post-M6b.0 paths AND added the missing `framework/workspace-sync/`
+# admission. Pre-realignment the stale top-level globs matched zero
+# files, so AC.F3's always-loaded artefact set was empty and these
+# pre-existing prose cross-mode refs were masked. Post-realignment
+# the globs match the actual component sources and the pre-existing
+# refs surface. Each entry below is a sealed-component README /
+# template carrying a dev-only-path reference that this amendment is
+# NOT authorised to scrub (the AC.PMR.S fence sits at hands-off-
+# lifecycle + dev-sdlc + pos-publish-framework-only; opening the
+# workspace-sync / memory-system / primary-persona fences would be
+# a sealed-amendment in disguise per dispatch §6 out-of-scope
+# "Anything not on the three surfaces above"). Captured to FIDRAFT:
+# a follow-on amendment that opens each affected fence (e.g. a
+# workspace-sync README cleanup, a memory-system launchd cleanup, a
+# primary-persona prompt-template scrub) is the right home for each
+# of these scrubs. The allowlist must shrink to empty when those
+# amendments land.
+KNOWN_CROSS_MODE_DEBT: set[tuple[str, str]] = {
+    (
+        "framework/memory-system/launchd/README.md",
+        "docs/rebuild/components/true-first-run/research.md",
+    ),
+    (
+        "framework/primary-persona/templates/persona-template/prompt.md",
+        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+    ),
+    (
+        "framework/workspace-sync/README.md",
+        "docs/rebuild/plans/workspace-sync.builder-plan.md",
+    ),
+    (
+        "framework/workspace-sync/README.md",
+        "docs/rebuild/plans/workspace-sync.manifest.yaml",
+    ),
+    (
+        "framework/workspace-sync/README.md",
+        "docs/rebuild/plans/workspace-sync.md",
+    ),
+}
 
 
 def test_AC_F3_always_loaded_no_dev_refs(

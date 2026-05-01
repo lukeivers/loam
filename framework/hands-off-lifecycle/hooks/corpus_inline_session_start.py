@@ -48,8 +48,8 @@ block; persona reads on-demand via the Read tool when a turn
 requires methodology / pos-v2-specific ODD / strategic-future
 context:
 
-  - ``docs/odd-methodology.md``
-  - ``docs/odd-in-loam.md``
+  - ``plugins/dev-sdlc/docs/odd-methodology.md`` (post-M6b.0)
+  - ``plugins/dev-sdlc/docs/odd-in-loam.md`` (post-M6b.0)
   - ``docs/rebuild/FUTURE_IDEAS.md``
 
 Section-anchor extraction (research §5.4 hybrid) is an explicit
@@ -76,8 +76,8 @@ Format:
     <content>
 
     === pos-v2 on-demand corpus (read via Read tool when relevant) ===
-    - docs/odd-methodology.md
-    - docs/odd-in-loam.md
+    - plugins/dev-sdlc/docs/odd-methodology.md
+    - plugins/dev-sdlc/docs/odd-in-loam.md
     - docs/rebuild/FUTURE_IDEAS.md
 
 Missing always-load files emit a structured ``[missing]`` marker
@@ -133,8 +133,16 @@ _ALWAYS_LOAD: tuple[str, ...] = (
 )
 
 _ON_DEMAND: tuple[str, ...] = (
-    "docs/odd-methodology.md",
-    "docs/odd-in-loam.md",
+    # Post-M6b.0: long-form ODD docs MOVED into the Dev/SDLC plugin
+    # tree per AC.OSS-M6b0.5 — pre-M6b.0 paths were docs/odd-
+    # methodology.md + docs/odd-in-loam.md; post-realignment
+    # (AC.PMR.2) the on-demand pointer block points at the plugin-
+    # relative locations. The hook's mode-partition early-return
+    # (mode != "dev-mode" no-op) is the graceful-skip mechanism for
+    # NORMAL-USE workspaces where the plugin tree is dropped; no
+    # additional graceful-skip wiring needed.
+    "plugins/dev-sdlc/docs/odd-methodology.md",
+    "plugins/dev-sdlc/docs/odd-in-loam.md",
     "docs/rebuild/FUTURE_IDEAS.md",
 )
 

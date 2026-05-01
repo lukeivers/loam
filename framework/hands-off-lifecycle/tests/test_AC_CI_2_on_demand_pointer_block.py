@@ -41,12 +41,16 @@ def _make_dev_mode_workspace(
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# V\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# S\n", encoding="utf-8")
     if with_on_demand:
-        docs_dir = tmp_path / "docs"
-        (docs_dir / "odd-methodology.md").write_text(
+        # Post-M6b.0 + AC.PMR.2: ODD docs MOVED to plugins/dev-sdlc/
+        # docs/. The hook's _ON_DEMAND tuple now points at the plugin-
+        # relative locations.
+        plugin_docs_dir = tmp_path / "plugins" / "dev-sdlc" / "docs"
+        plugin_docs_dir.mkdir(parents=True, exist_ok=True)
+        (plugin_docs_dir / "odd-methodology.md").write_text(
             "# odd-methodology\n", encoding="utf-8"
         )
-        (docs_dir / "odd-in-loam.md").write_text(
-            "# odd-in-pos\n", encoding="utf-8"
+        (plugin_docs_dir / "odd-in-loam.md").write_text(
+            "# odd-in-loam\n", encoding="utf-8"
         )
         (rebuild_dir / "FUTURE_IDEAS.md").write_text(
             "# FUTURE_IDEAS\n", encoding="utf-8"
@@ -78,8 +82,8 @@ def test_AC_CI_2_emits_on_demand_pointer_block(tmp_path: Path) -> None:
     stdout, rc = _run_hook(workspace)
     assert rc == 0
     assert "=== pos-v2 on-demand corpus" in stdout
-    assert "- docs/odd-methodology.md" in stdout
-    assert "- docs/odd-in-loam.md" in stdout
+    assert "- plugins/dev-sdlc/docs/odd-methodology.md" in stdout
+    assert "- plugins/dev-sdlc/docs/odd-in-loam.md" in stdout
     assert "- docs/rebuild/FUTURE_IDEAS.md" in stdout
 
 
@@ -88,19 +92,21 @@ def test_AC_CI_2_omits_missing_on_demand_files(tmp_path: Path) -> None:
     marker (that's the always-load tier's contract); they are
     silently omitted from the pointer block."""
     workspace = _make_dev_mode_workspace(tmp_path, with_on_demand=True)
-    # Remove odd-methodology.md
-    (workspace / "docs" / "odd-methodology.md").unlink()
+    # Remove odd-methodology.md (post-M6b.0 plugin-relative path).
+    (
+        workspace / "plugins" / "dev-sdlc" / "docs" / "odd-methodology.md"
+    ).unlink()
     stdout, rc = _run_hook(workspace)
     assert rc == 0
     # The pointer block exists.
     block_idx = stdout.index("=== pos-v2 on-demand corpus")
     block = stdout[block_idx:]
-    # odd-methodology.md is omitted — no `- docs/odd-methodology.md`
-    # line and NO `[missing]` marker for it.
-    assert "- docs/odd-methodology.md" not in block
+    # odd-methodology.md is omitted — no `- plugins/dev-sdlc/docs/odd-
+    # methodology.md` line and NO `[missing]` marker for it.
+    assert "- plugins/dev-sdlc/docs/odd-methodology.md" not in block
     assert "[missing]" not in block.split("=== pos-v2 on-demand corpus")[1]
     # Other on-demand files still listed.
-    assert "- docs/odd-in-loam.md" in block
+    assert "- plugins/dev-sdlc/docs/odd-in-loam.md" in block
     assert "- docs/rebuild/FUTURE_IDEAS.md" in block
 
 

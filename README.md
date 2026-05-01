@@ -55,13 +55,12 @@ runs surface what needs attention without you opening a terminal.
 
 ## What ships in v0.1.0
 
-Eight runtime components plus the Dev/SDLC plugin and the dormancy
-component (renamed from graceful-degradation in this release).
+Fifteen runtime components plus the Dev/SDLC plugin. Highlights:
 
 | Component | Role |
 |-----------|------|
-| `memory-system` | Semantic memory sidecar (FastAPI + Graphiti + Kuzu). |
-| `primary-persona` | Loader, monitor, autonomous-authoring contract. |
+| `primary-persona` | The single voice you talk to; loader, monitor, autonomous-authoring contract. |
+| `memory` | File-based session-bridging memory the persona reads at SessionStart and writes at Stop. |
 | `workspace-bootstrap` | Composition engine; first-run scaffolding; plugin extension protocol. |
 | `hands-off-lifecycle` | SessionStart hook, supervisor, drain/recovery. |
 | `safety-layer` | Three-gate refusal chain + structural floor. |
@@ -73,7 +72,8 @@ component (renamed from graceful-degradation in this release).
 
 The full architecture map lives at
 [`docs/architecture.md`](docs/architecture.md); per-component
-references live under [`docs/components/`](docs/components/).
+references for all fifteen live under
+[`docs/components/`](docs/components/).
 
 ## Design lenses
 

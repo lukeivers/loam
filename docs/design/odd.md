@@ -122,6 +122,39 @@ underspecified. Tighten the objective until method is obvious.
 
 ---
 
+## Plan before code
+
+Once the objective + constraints + acceptance criteria are
+written, the next step for any non-trivial build is to **write a
+plan document before touching source.** A plan in loam is a short
+markdown file naming the build's outcome, its scope boundaries,
+the named decisions the builder will make method-shape, and the
+halt-and-surface conditions that will cause the builder to stop
+and ask. The plan is not a method prescription; it is the
+builder's working confrontation with the objective at full
+dimension before the diff exists. Skipping the plan means
+discovering the objective mid-build — the failure mode the
+methodology is designed to prevent.
+
+---
+
+## Halt and surface
+
+When a builder hits a condition where continuing would extend an
+ODD violation, exceed the named scope, or breach a constraint,
+the sanctioned action is **halt and surface** — stop, name the
+condition, return to the delegator for ruling. "Almost done" is
+never a reason to continue past a halt condition.
+
+Every brief should name halt-and-surface conditions explicitly.
+When a builder discovers a condition the brief did not anticipate
+but that has the same shape, the rule applies anyway. Halt-and-
+surface is what makes scope discipline operational; without it, a
+builder treats discovered work as in-scope and the objective
+drifts.
+
+---
+
 ## The two rules that catch most violations
 
 **Rule 1 — No method in acceptance.** ACs that say "the test will use
@@ -215,33 +248,21 @@ sought.
 
 ## Quick reference
 
-**Authoring a scope:**
-1. State outcome as "X must be true."
-2. Bound method with budget, reversibility, dependencies, authority,
-   fail-closed direction.
-3. Write one deterministic AC per declared behaviour.
-4. Do not prescribe method in the objective or acceptance.
-5. Include a halt trigger.
+**Authoring:** outcome as "X must be true"; budget +
+reversibility + dependencies + authority + fail-closed direction;
+one deterministic AC per declared behaviour; halt trigger named.
 
-**Discovering a gap during build:**
-1. Do not bury in an exception branch.
-2. Promote to a new AC.
-3. Author a test against it.
-4. Name the rationale in the commit message.
-5. If the gap exceeds scope, halt and signal.
+**Building:** plan before code; gap during build → new AC + test
++ rationale in the commit, or halt-and-signal if the gap exceeds
+scope.
 
-**Reviewing a brief:**
-1. Scan for method-in-acceptance.
-2. Count behaviours vs criteria.
-3. Check for missing halt trigger, budget, authority bound.
-4. Check for advisory-where-structural-would-work.
+**Reviewing a brief:** scan for method-in-acceptance; count
+behaviours vs criteria; check for missing halt trigger / budget
+/ authority bound; check for advisory-where-structural-would-work.
 
-**Reviewing built work:**
-1. Check every AC has a test.
-2. Check for silent exception branches.
-3. Check for code/branches/tests with no backing AC (the reverse
-   direction of the behaviour-count check).
-4. Check tests assert outcome, not method.
+**Reviewing built work:** every AC has a test; no silent exception
+branches; every code path / branch / test / dependency in the
+diff maps to a backing AC; tests assert outcome, not method.
 
 ---
 

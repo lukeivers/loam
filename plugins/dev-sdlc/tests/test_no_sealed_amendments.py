@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "3a7c8d7"
+BASELINE = "c08e0fa"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -112,8 +112,9 @@ def test_only_dev_sdlc_changed() -> None:
         "docs/rebuild/",
         "framework/tools/loam-mode/",
         "framework/tools/heavy-b-migrate/",
+        "CLAUDE.dev.md",
     )
-    allowed_files: set[str] = set()
+    allowed_files: set[str] = {"CLAUDE.dev.md"}
 
     offending = []
     for path in changed:

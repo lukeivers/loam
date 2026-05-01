@@ -431,10 +431,10 @@ Calibration row appended to `~/.claude/projects/-Users-lukeivers-pos3/memory/fee
 
 ### Commit SHAs
 
-(Populated by `loam amend seal --plan-doc` SHA-backfill commit.)
-
----
-
+- Amendment commit: `7e7f958b6274cc48c5813479d04346fe00a573c4` —
+  `fix(primary-persona): test_AC_DSA_8 HOOKS_DIR follow post-M6 partition realignment`
+- Seal commit: `67968b7e8b09b470bb5af72946fa4fee9c294fa1` —
+  `chore(seals): memory-pipeline-fix — primary-persona+orchestrator at 7e7f958`
 ## 15. Post-build verification checklist
 
 - [ ] `pytest framework/primary-persona/tests/` passes (touched-component scope; new AC.MPF.2..MPF.5 tests).

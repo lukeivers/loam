@@ -69,24 +69,56 @@ def test_AC_D_5_5_1_bare_tools_absent() -> None:
 
 def test_AC_D_5_5_1_framework_tools_present() -> None:
     """`framework/tools/` exists and contains the canonical tools-
-    package source post-D.5.5 (HC#4 counterpart preservation)."""
+    package source post-D.5.5 (HC#4 counterpart preservation).
+
+    Post-M1g (2026-04-29): the `pos-amend` CLI was renamed and MOVED
+    to `framework/tools/loam/` (with `loam amend` as a subcommand) per
+    Idea 10 Tier-1 rebrand.
+
+    Post-M6b.1 (2026-04-29): the `loam amend` package was MOVED to
+    `plugins/dev-sdlc/tools/loam-amend/` (extraction into the Dev/SDLC
+    plugin); the `loam` console-script + dispatcher STAY at
+    `framework/tools/loam/`.
+
+    Post-M6b.0 (2026-04-29): `framework/tools/loam-mode/` was MOVED to
+    `plugins/dev-sdlc/tools/loam-mode/` (Dev/SDLC plugin extraction).
+
+    Post-M9 (2026-04-29; this commit): the assertion below tightens to
+    reflect the actual post-rename / post-extraction surface — the
+    structural intent (tools-tree exists with representative
+    canonical-survivor files) is preserved while the per-rename / per-
+    move expected paths are updated. Per the loose-AC-fix-AC-not-
+    implementation rule: the AC's intent is "tools-tree exists with
+    canonical survivors"; only the named paths needed updating.
+    """
     framework_tools = REPO_ROOT / "framework" / "tools"
     assert framework_tools.is_dir(), (
         f"framework/tools/ must exist post-D.5.5: {framework_tools}"
     )
-    # Sample-check 5 known files survive (representative across the 5
-    # tools packages — heavy-b-migrate, loam-mode, orphan-plist-cleanup,
-    # pos-amend, upgrade-merge-resolver).
+    # Sample-check representative survivors. Post-M1g + M6b.0 + M6b.1:
+    #   - framework/tools/loam/                   — unified CLI (post-M1g rename of pos-amend);
+    #                                               loam amend MOVED to plugin at M6b.1
+    #                                               (subcommand re-registers via entry-point).
+    #   - framework/tools/heavy-b-migrate/        — Architecture-B migration tooling (still here).
+    #   - framework/tools/orphan-plist-cleanup/   — DEV-mode launchd cleanup (still here).
+    #   - framework/tools/upgrade-merge-resolver/ — self-upgrade internals (still here).
+    #   - framework/tools/pos-publish-framework-only/ — synthesis tool
+    #                                               (M2 partition; M9 substitution-pass extension).
     expected = (
-        framework_tools / "pos-amend" / "pyproject.toml",
-        framework_tools / "loam-mode" / "src" / "loam_mode" / "cli.py",
+        framework_tools / "loam" / "pyproject.toml",
+        framework_tools / "loam" / "src" / "loam_cli" / "cli.py",
         framework_tools / "heavy-b-migrate" / "README.md",
         framework_tools / "orphan-plist-cleanup" / "pyproject.toml",
         framework_tools / "upgrade-merge-resolver" / "pyproject.toml",
+        framework_tools
+        / "pos-publish-framework-only"
+        / "pyproject.toml",
     )
     missing = [p for p in expected if not p.is_file()]
     assert not missing, (
-        f"framework/tools/ counterpart files missing post-D.5.5: "
+        f"framework/tools/ counterpart files missing post-D.5.5 "
+        f"(updated post-M1g + M6b.0 + M6b.1 + M9 to reflect actual "
+        f"post-rename surface): "
         f"{[str(p.relative_to(REPO_ROOT)) for p in missing]}"
     )
 

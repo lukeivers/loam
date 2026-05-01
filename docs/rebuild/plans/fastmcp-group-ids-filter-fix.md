@@ -305,6 +305,12 @@ Filled at seal. SHAs land here.
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `a5469f2e8e24d533261b3aaa71deb31839cc3e3f` —
+  `chore(loam-amend-apply): loam amend apply for fastmcp-group-ids-filter-fix`
+- Seal commit: `25ae41bb6e093e5a24ab6f897695fa74105edd0b` —
+  `chore(seals): fastmcp-group-ids-filter-fix — memory-system+primary-persona at a5469f2`
 ## 15. Post-build verification checklist
 
 - [ ] All AC.FGF.1..5 tests green.

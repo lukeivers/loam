@@ -91,16 +91,14 @@ Public disclosure includes:
 
 The following are in-scope for security reports:
 
-- **Runtime components** shipped in `framework/` — memory-system,
-  primary-persona, safety-layer, reversibility-primitive,
-  cost-governance, observability-aggregator, workspace-bootstrap,
-  hands-off-lifecycle, dormancy.
+- **Runtime components** shipped in `framework/` — every component
+  listed in [`docs/components/index.md`](docs/components/index.md).
 - **The Dev/SDLC plugin** shipped at v0.1.0.
-- **The CLI binary** (`loam` post-rename, `pos` pre-rename).
+- **The `loam` CLI binary** and its subcommands.
 - **Workspace-bootstrap's first-run scaffolding** — anything the
   bootstrap touches on a fresh machine.
-- **Memory-sidecar HTTP surface** — the FastAPI endpoints and the
-  Graphiti / Kuzu interaction layer.
+- **The memory primitive** — file read/write paths the persona uses
+  at SessionStart and Stop.
 
 ## Out-of-scope
 

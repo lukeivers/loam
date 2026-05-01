@@ -1,0 +1,155 @@
+schema_version: 1
+amendment:
+  number: 92
+  slug: memory-sidecar-recovery
+  title: "memory-sidecar recovery — lifespan-leak fix + reference_time schema migration"
+
+# BASELINE: a31280a — current HEAD (post-M9 §14 SHA backfill).
+# Single-component amendment — all edits land in framework/memory-system/.
+# Mirrors amendment #34's pattern: BASELINE is HEAD~1 of the amendment
+# commit, not the prior memory-system seal commit. This keeps the
+# BASELINE..HEAD diff narrow to just this amendment's surface.
+baseline: a31280a
+
+plan: docs/rebuild/plans/memory-sidecar-recovery.md
+
+# Single-component amendment per plan §3 D6 ruling: memory-system only.
+# No surface change to hands-off-lifecycle, workspace-bootstrap, or any
+# other sealed component. memory-system is not a frozen-baseline
+# component (per amendment #25 manifest precedent).
+components:
+  - name: memory-system
+    seal_test: framework/memory-system/tests/test_no_sealed_amendments.py
+    sidecar: framework/memory-system/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/memory-system/tests/SEAL_COMMIT.notes
+  body: |
+    # Memory-sidecar recovery — lifespan-leak fix + reference_time schema migration
+
+    2026-04-29. Closes the two coupled defects the diagnostic agent
+    surfaced 2026-04-29 (`.scratch/claude-output/memory-sidecar-
+    diagnostic.md`):
+
+    1. **Lifespan-leak.** `service.lifespan()`'s `finally` block at
+       service.py:115 set `_graphiti = None` on every session close.
+       FastMCP routes the user lifespan to `MCPServer.run`, which is
+       invoked PER MCP session by `StreamableHTTPSessionManager`. Each
+       session close therefore nulled `_graphiti`, defeating
+       `_ensure_graphiti()`'s idempotency guard. The next session
+       rebuilt the Graphiti driver, opening another `kuzu.Database`
+       against the same on-disk file. Kuzu's 8 TiB virtual mmap
+       reservation accumulated per session; mmap eventually failed on
+       macOS VA fragmentation; the sidecar entered a permanent stuck
+       state returning 503 forever. Fix: drop the `_graphiti = None`
+       line. Driver lives for process lifetime; `close()` runs only
+       at actual process shutdown via the lifespan's outer try/finally
+       (still preserved).
+
+    2. **Schema-migration.** `add_episode` failed with `Binder
+       exception: Cannot find property reference_time for e.` The
+       on-disk `kuzu_db` (created against an older graphiti-core)
+       lacked `reference_time TIMESTAMP` on `RelatesToNode_`. Current
+       graphiti-core 0.28.x writes that column; `CREATE NODE TABLE IF
+       NOT EXISTS` is a no-op when the table exists, so the column
+       never got retro-added. Fix: idempotent `ALTER TABLE ADD IF NOT
+       EXISTS reference_time TIMESTAMP` on each boot, alongside the
+       existing D10 `retention_class` migration. Kuzu 0.11+ supports
+       the IF NOT EXISTS form (verified empirically at plan time).
+
+    The fixes interact: any rebuild-from-`episodes.json` path would
+    tear down + reinitialize the driver, re-triggering fix #1's leak.
+    So ALTER TABLE (not rebuild) is the right shape for #2; #1 lands
+    first conceptually.
+
+    Structural remedy:
+
+      - `framework/memory-system/src/service.py:115` — drop
+        `_graphiti = None` from the lifespan's `finally` block.
+      - `framework/memory-system/src/service.py:91` — replace
+        `await _graphiti.build_indices_and_constraints()` with
+        `await prepare_graphiti(_graphiti)`. This routes the
+        sidecar's startup path through both schema migrations
+        (reference_time + retention_class). Closes the latent hole
+        where the sidecar's startup never added the D10
+        retention_class column unless `MemoryAPI` ingest paths
+        exercised it (HSF#1 in plan §16).
+      - `framework/memory-system/src/retention.py` — extend with
+        `ENSURE_REFERENCE_TIME_COLUMN_CQL` constant +
+        `ensure_reference_time_column(driver)` async helper. Same
+        shape as the existing `ensure_retention_column`.
+      - `framework/memory-system/src/factory.py::prepare_graphiti` —
+        call the new helper after the existing
+        `ensure_retention_column` call.
+
+    Sealed-test in-band retire (ODD §4 per `feedback_loose_AC_text_
+    fix_AC_not_implementation`):
+
+      - `tests/test_service.py:183` — `assert service._graphiti is
+        None` retires to `assert service._graphiti is fake`. AC24.1's
+        actual spec text is "constructs Graphiti exactly once, calls
+        build_indices_and_constraints, yields, and calls close
+        exactly once on exit"; the "module global cleared on exit"
+        assertion was over-specification beyond the AC.
+      - `tests/test_AC34_eager_health_after_startup.py:293` — same
+        edit. AC34.2's pointer-to-evidence inline check inherited the
+        loose assertion from AC24.1.
+
+    AC surface (AC.MS-FIX.1..MS-FIX.5 + AC.MS-FIX.S):
+
+      - AC.MS-FIX.1: lifespan no longer nulls `_graphiti` on session
+        close. Mock-test using FakeGraphiti.
+      - AC.MS-FIX.2: `ensure_reference_time_column` is idempotent.
+        In-process kuzu unit test.
+      - AC.MS-FIX.3: `_ensure_graphiti` calls `prepare_graphiti`.
+        Source-grep + mock-test exercise.
+      - AC.MS-FIX.4: sealed-test text update at the two named lines.
+      - AC.MS-FIX.5: operational verification — health 200,
+        add_episode works, search works post-launchctl-kickstart.
+      - AC.MS-FIX.S: seal-diff invariant — only paths under
+        `framework/memory-system/` or universal-paths.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - Test shape (D4): in-process mock test over subprocess. The
+        existing AC34.1 subprocess test covers the production entry
+        point structurally; a second subprocess test gains no
+        marginal coverage.
+      - Schema-migration call site (D2): co-locate with existing D10
+        retention-class migration in `retention.py`. Sibling helper
+        + sibling call from `prepare_graphiti`.
+      - Schema-migration call point (D3): inject into
+        `_ensure_graphiti` (one-line replacement of the existing
+        `build_indices_and_constraints` call). Closes the latent
+        retention-class hole as a side effect.
+
+    Out of scope (per plan §8):
+
+      - Per-session lifespan model (FIDRAFT-tracked structural
+        concern; deferred to v0.1.1+).
+      - Log rotation for `graphiti-service.err.log` (FIDRAFT-tracked).
+      - launchd label `com.pos-v2.*` → `com.loam.*` rename
+        (M1c-corrective task #16; separate amendment).
+      - `KuzuDriver.close()` unmap verification (FIDRAFT-tracked).
+      - retention.py rename to schema_migrations.py (sealed-component
+        rename, no immediate value).
+      - M6c's graceful-fallthrough-with-detection CDC retroactive
+        operationalisation across memory-system (FIDRAFT-tracked per
+        dispatch trigger #5).
+
+    BASELINE `a31280a` (current HEAD post-M9 §14 SHA backfill).
+    memory-system's SEAL_COMMIT sidecar lands at the seal SHA via
+    `loam amend seal`.

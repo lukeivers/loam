@@ -1,0 +1,157 @@
+schema_version: 1
+amendment:
+  number: 93
+  slug: oss-v0-1-0-publish-rename-1c-corrective
+  title: "M1c-corrective — com.pos.orchestrator → com.loam.orchestrator + dev-mode-manifest path refresh"
+
+# BASELINE: 6f272ce — current HEAD (post-#92 §14 SHA backfill).
+# Multi-component amendment (3 sealed components) — orchestrator +
+# self-upgrade + dev-sdlc plugin. Closes the M1.rename programme's
+# trailing residual surfaces per dispatcher directive 2026-04-29.
+baseline: 6f272ce
+
+plan: docs/rebuild/plans/oss-v0-1-0-publish-rename-1c-corrective.md
+
+components:
+  - name: orchestrator
+    seal_test: framework/orchestrator/tests/test_no_sealed_amendments.py
+    sidecar: framework/orchestrator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: self-upgrade
+    seal_test: framework/self-upgrade/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-upgrade/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/orchestrator/tests/SEAL_COMMIT.notes
+  body: |
+    # M1c-corrective — com.pos.orchestrator → com.loam.orchestrator + dev-mode-manifest path refresh
+
+    2026-04-29. Closes the two coherent residual surfaces the M1.rename
+    programme + M9 cleanup pass left behind:
+
+    1. **`com.pos.orchestrator` launchd label rebrand → `com.loam.orchestrator`.**
+       Per `loam-rename-decisions.md` Tier-1 item 4 + the version-suffix-
+       drop ruling. The orchestrator's user-agent label was the v1-era
+       single-segment shape — never namespaced because it was authored
+       pre-#6 and lived under the pre-rename brand. M1c's workspace-
+       slug-namespacing rebrand never touched it. 26 source-tree refs
+       across 8 files (orchestrator + self-upgrade) rebrand. Includes
+       the LIVE config default in `self_upgrade/config.py:39` + the
+       plist template filename rename + the 5-arg `test_d2_launchd.py`
+       update + 11 docs-narrative refs.
+
+       Archaeological-detector test data in
+       `framework/tools/orphan-plist-cleanup/**` and
+       `framework/tools/loam-migrate-launchd-labels/tests/test_migrate.py`
+       stays AS-IS — the `com.pos.orchestrator` literal there is
+       LOAD-BEARING for the tools' mission of detecting pre-pos-v2
+       archaeological orphans on hosts. The cleanup tool's
+       `Classification.ORPHAN_V1` enum explicitly identifies "v1-era
+       shape (e.g. `com.pos.orchestrator`)" as a remediation target.
+
+    2. **dev-mode-manifest.yaml stale path refs.** M6c HSF#1 named
+       lines 136-137 (now 137-138 post-M6c narrative-edit shift); both
+       `glob:` entries reference pre-M1g + pre-M6b.0/M6b.1 paths.
+       Update to post-rename + post-MOVE shapes:
+         - `tools/pos-amend/**` → `plugins/dev-sdlc/tools/loam-amend/**`
+         - `tools/orphan-plist-cleanup/**` → `framework/tools/orphan-plist-cleanup/**`
+
+    Operational restart: the running `com.pos.orchestrator` user-agent
+    job (PID 57302 at plan-time) gets bootout + reinstall under the
+    new label so the live runtime state matches the source tree.
+
+    Structural remedy:
+
+      - `framework/orchestrator/ops/launchd/com.pos.orchestrator.plist.tmpl`
+        → MOVE to `com.loam.orchestrator.plist.tmpl` (filename rename;
+        content unchanged — the template substitutes ${LABEL} at install
+        time, brand-agnostic).
+      - `framework/orchestrator/scripts/install_launchd.py` —
+        LABEL constant + tmpl path + docstring (3 refs).
+      - `framework/orchestrator/tests/test_d2_launchd.py` — tmpl path +
+        4 LABEL test args + 1 assertion (5 refs).
+      - `framework/orchestrator/docs/operations.md` — 3 grep examples.
+      - `framework/orchestrator/docs/measurement-launchd.md` — 8 refs.
+      - `framework/self-upgrade/src/loam/self_upgrade/config.py` —
+        docstring example + LIVE default field value (2 refs).
+      - `framework/self-upgrade/src/loam/self_upgrade/orchestrator_control.py` —
+        1 docstring example.
+      - `framework/self-upgrade/docs/architecture.md` — 1 yaml example.
+      - `framework/self-upgrade/docs/cli-reference.md` — 1 python +
+        1 yaml example.
+      - `framework/self-upgrade/docs/sequences.md` — 1 sequence-diagram
+        launchctl invocation.
+      - `plugins/dev-sdlc/dev-mode-manifest.yaml` — 2 `glob:` lines
+        (137-138).
+
+    AC surface (AC.RNM-1c-fix.1..RNM-1c-fix.5 + AC.RNM-1c-fix.S):
+
+      - AC.RNM-1c-fix.1: all non-historical, non-archaeological-detector
+        refs to `com.pos.orchestrator` rebranded to `com.loam.orchestrator`.
+      - AC.RNM-1c-fix.2: LIVE config default rebranded.
+      - AC.RNM-1c-fix.3: dev-mode-manifest.yaml lines 137-138 reference
+        post-M1g + post-M6b.1 paths; both directories exist on disk.
+      - AC.RNM-1c-fix.4: orchestrator + self-upgrade + loam-mode tests
+        pass.
+      - AC.RNM-1c-fix.5: operational launchctl reload — old label gone,
+        new label running, plist files swapped on disk.
+      - AC.RNM-1c-fix.S: seal-diff invariant — only paths under the 3
+        sealed components or universal-paths.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - Plist template filename rename (D1): `git mv` to preserve
+        history. Renaming the LABEL constant alone would leave a stale
+        `com.pos.orchestrator.plist.tmpl` filename matching post-rename
+        greppability assertions.
+      - Operational reload mechanism (D3): bootout-old + reinstall-new
+        via the post-rename `install_launchd.py`. Lossless — orchestrator
+        in-process state is rebuilt from `~/.loam/bootstrap.py` on each
+        start.
+      - Test scope (D5): narrow to the 3 touched components. Per
+        `feedback_amendment_dispatch_speedups`.
+
+    Out of scope (per plan §8):
+
+      - Commit messages / seal narratives mentioning
+        `com.pos.orchestrator` (preserve historical record per Idea 10).
+      - Pre-rename plan-doc references in `docs/rebuild/plans/`.
+      - `pos-v2-rebuild-proposal.md`.
+      - Archaeological-detector test data in
+        `framework/tools/orphan-plist-cleanup/**` and
+        `framework/tools/loam-migrate-launchd-labels/tests/test_migrate.py`
+        (load-bearing).
+      - Broader dev-mode-manifest.yaml staleness — `roots:` (lines
+        41-64) + `always_loaded:` (lines 78-110) reference top-level
+        dirs that MOVED under `framework/` post-M6b.0; HSF#1 in plan
+        §16 deferred to a separate `dev-mode-manifest-realignment`
+        amendment.
+      - Other `com.pos-v2.*` host-launchd labels (M1c migration helper
+        territory, not this amendment).
+      - M6c graceful-fallthrough-with-detection CDC retroactive
+        operationalisation across orchestrator (FIDRAFT-tracked).
+
+    BASELINE `6f272ce` (current HEAD post-#92 SHA backfill).
+    Each component's SEAL_COMMIT sidecar lands at the seal SHA via
+    `loam amend seal`.

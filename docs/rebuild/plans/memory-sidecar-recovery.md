@@ -238,16 +238,10 @@ Calibration row appended to `~/.claude/projects/-Users-lukeivers-pos3/memory/fee
 
 ### Commit SHAs
 
-(Populated by `loam amend seal --plan-doc` SHA-backfill at seal time.)
-
-- Sub-plan + manifest commit: TBD
-- Feature commit: TBD
-- Apply commit: TBD
-- Seal commit: TBD
-- §14 SHA backfill commit: TBD
-
----
-
+- Amendment commit: `f711adddab9b8ee8af6e424d86911b70701fb6a5` —
+  `chore(loam-amend-apply): loam amend apply for memory-sidecar-recovery`
+- Seal commit: `8ee241b3b7c80e5955d2a303d0713cfda6ecf0ea` —
+  `chore(seals): memory-sidecar-recovery — memory-system at f711add`
 ## 15. Post-build verification checklist
 
 - [ ] `pytest framework/memory-system/tests/` passes (touched-component scope).

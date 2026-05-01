@@ -27,8 +27,8 @@ python orchestrator/scripts/install_launchd.py \
 Verifies:
 
 ```bash
-launchctl list | grep com.pos.orchestrator
-# Expected: <pid>  0  com.pos.orchestrator
+launchctl list | grep com.loam.orchestrator
+# Expected: <pid>  0  com.loam.orchestrator
 ```
 
 ## Measurement (D2 addendum)
@@ -52,7 +52,7 @@ crash cycle + uninstall verify).
 
 ```bash
 python orchestrator/scripts/install_launchd.py --uninstall
-launchctl list | grep com.pos.orchestrator   # must return empty
+launchctl list | grep com.loam.orchestrator   # must return empty
 ```
 
 ## Logs

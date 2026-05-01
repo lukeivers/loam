@@ -11,7 +11,7 @@ half; the uninstall half is a separate invocation.
 
 The script:
   - renders the plist template with absolute paths
-  - writes to ~/Library/LaunchAgents/com.pos.orchestrator.plist
+  - writes to ~/Library/LaunchAgents/com.loam.orchestrator.plist
   - bootstraps into launchd (`launchctl bootstrap gui/<uid>`)
 
 It does NOT call kickstart; launchd auto-starts the job at load
@@ -28,7 +28,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-LABEL = "com.pos.orchestrator"
+LABEL = "com.loam.orchestrator"
 
 
 def _render_plist(
@@ -39,7 +39,7 @@ def _render_plist(
     stderr_log: Path,
     throttle_secs: int,
 ) -> str:
-    tmpl_path = Path(__file__).resolve().parent.parent / "ops" / "launchd" / "com.pos.orchestrator.plist.tmpl"
+    tmpl_path = Path(__file__).resolve().parent.parent / "ops" / "launchd" / "com.loam.orchestrator.plist.tmpl"
     tmpl = tmpl_path.read_text()
     return string.Template(tmpl).substitute(
         LABEL=LABEL,

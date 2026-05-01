@@ -55,7 +55,7 @@ def build_adapters():
     return MyAdapters(
         pid_file=Path("~/.loam/orchestrator.pid").expanduser(),
         ipc_socket=Path("~/.loam/orchestrator.sock").expanduser(),
-        launchd_label="com.pos.orchestrator",
+        launchd_label="com.loam.orchestrator",
         ...
     )
 ```
@@ -73,5 +73,5 @@ sigterm_timeout_seconds: 30
 orchestrator_boot_timeout_seconds: 60
 cancel_window_seconds: 60               # notify_and_apply only
 confirmation_timeout_hours: 24          # require_confirmation only
-launchd_label: com.pos.orchestrator
+launchd_label: com.loam.orchestrator
 ```

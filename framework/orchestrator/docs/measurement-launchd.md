@@ -4,13 +4,13 @@ Measurements captured on the reference machine (macOS, Apple M-series,
 Python 3.13.12) per the D10 bundled-documentation requirement and
 D2 acceptance. Per Luke's dispatch ruling, the launchd agent was
 installed for the measurement and uninstalled at end of build; the
-`launchctl list | grep com.pos.orchestrator` check returned empty at
+`launchctl list | grep com.loam.orchestrator` check returned empty at
 the end of the run (see "Uninstall verification" below).
 
 ## Setup
 
-- Plist: `ops/launchd/com.pos.orchestrator.plist.tmpl`
-- Label: `com.pos.orchestrator`
+- Plist: `ops/launchd/com.loam.orchestrator.plist.tmpl`
+- Label: `com.loam.orchestrator`
 - Domain: `gui/501` (user agent)
 - Throttle: `ThrottleInterval = 30` seconds
 - `RunAtLoad = true`, `KeepAlive = true`
@@ -18,7 +18,7 @@ the end of the run (see "Uninstall verification" below).
 - Raw report: `docs/measurement-launchd.json`
 
 The harness asks `launchctl` to deliver the signal
-(`launchctl kill SIGNAME gui/<uid>/com.pos.orchestrator`). Direct
+(`launchctl kill SIGNAME gui/<uid>/com.loam.orchestrator`). Direct
 `os.kill` returns EPERM against a launchd-managed PID because the
 job is owned by launchd, not the invoking user session. Using
 launchctl itself is the portable idiom.
@@ -68,14 +68,14 @@ orchestrator. It gets 30 s to clear.
 ## Uninstall verification
 
 After measurement, the harness ran `launchctl bootout
-gui/501/com.pos.orchestrator` and removed
-`~/Library/LaunchAgents/com.pos.orchestrator.plist`. Post-cleanup:
+gui/501/com.loam.orchestrator` and removed
+`~/Library/LaunchAgents/com.loam.orchestrator.plist`. Post-cleanup:
 
 ```bash
-$ launchctl list | grep com.pos.orchestrator
+$ launchctl list | grep com.loam.orchestrator
 (empty)
 
-$ ls ~/Library/LaunchAgents/com.pos.orchestrator.plist
+$ ls ~/Library/LaunchAgents/com.loam.orchestrator.plist
 ls: ... No such file or directory
 ```
 

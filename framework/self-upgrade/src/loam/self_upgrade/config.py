@@ -10,7 +10,7 @@ Schema (all keys optional; defaults below):
     orchestrator_boot_timeout_seconds: 60
     cancel_window_seconds: 60                # notify_and_apply only
     confirmation_timeout_hours: 24           # require_confirmation only
-    launchd_label: com.pos.orchestrator
+    launchd_label: com.loam.orchestrator
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ class UpgradeConfig(BaseModel):
     orchestrator_boot_timeout_seconds: float = 60.0
     cancel_window_seconds: float = 60.0
     confirmation_timeout_hours: float = 24.0
-    launchd_label: str = "com.pos.orchestrator"
+    launchd_label: str = "com.loam.orchestrator"
 
     @classmethod
     def load_or_default(cls, path: str | Path) -> "UpgradeConfig":

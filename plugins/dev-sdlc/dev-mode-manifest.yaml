@@ -134,8 +134,11 @@ dev_only:
   # Post-M6b.0: relocated under the dev-sdlc plugin tree.
   - path: plugins/dev-sdlc/dev-mode-manifest.yaml
   # Dev tooling.
-  - glob: "tools/pos-amend/**"
-  - glob: "tools/orphan-plist-cleanup/**"
+  # Post-M1g rename + post-M6b.1 MOVE: pos-amend → loam-amend, relocated
+  # under the dev-sdlc plugin tree. Post-M6b.0 framework/-split MOVE for
+  # orphan-plist-cleanup: now lives under framework/tools/.
+  - glob: "plugins/dev-sdlc/tools/loam-amend/**"
+  - glob: "framework/tools/orphan-plist-cleanup/**"
   # Post-M6b.0: loam-mode lives at plugins/dev-sdlc/tools/loam-mode/
   # (was framework/tools/loam-mode/). Plugin's docs/cdcs/ + docs/conventions/
   # also load in DEV MODE alongside the long-form ODD docs that moved

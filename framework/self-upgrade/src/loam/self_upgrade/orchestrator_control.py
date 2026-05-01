@@ -201,7 +201,7 @@ class RestartResult:
 def launchctl_kickstart(label: str, *, user: bool = True) -> RestartResult:
     """Invoke ``launchctl kickstart`` to start the orchestrator.
 
-    ``label`` is the com.pos.orchestrator (or similar) launchd target.
+    ``label`` is the com.loam.orchestrator (or similar) launchd target.
     Uses the user-domain (``gui/$UID``) by default. The command is
     ``launchctl kickstart -k gui/$UID/<label>`` which force-restarts if
     running, starts if not.

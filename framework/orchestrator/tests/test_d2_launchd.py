@@ -27,7 +27,7 @@ import pytest
 
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_LAUNCHD_TMPL = _REPO_ROOT / "ops" / "launchd" / "com.pos.orchestrator.plist.tmpl"
+_LAUNCHD_TMPL = _REPO_ROOT / "ops" / "launchd" / "com.loam.orchestrator.plist.tmpl"
 
 
 def _render_launchd(**vars: object) -> str:
@@ -36,7 +36,7 @@ def _render_launchd(**vars: object) -> str:
 
 def test_launchd_plist_renders_to_valid_plist():
     rendered = _render_launchd(
-        LABEL="com.pos.orchestrator",
+        LABEL="com.loam.orchestrator",
         PYTHON="/usr/bin/python3",
         WORKING_DIR="/tmp",
         STDOUT_LOG="/tmp/out",
@@ -44,7 +44,7 @@ def test_launchd_plist_renders_to_valid_plist():
         THROTTLE_SECS=30,
     )
     data = plistlib.loads(rendered.encode("utf-8"))
-    assert data["Label"] == "com.pos.orchestrator"
+    assert data["Label"] == "com.loam.orchestrator"
     assert data["KeepAlive"] is True
     assert data["RunAtLoad"] is True
     assert data["ThrottleInterval"] == 30
@@ -55,7 +55,7 @@ def test_launchd_plist_renders_to_valid_plist():
 def test_launchd_throttle_interval_locked_at_30s():
     """Luke's decision: 30 seconds. Any deviation is a policy change."""
     rendered = _render_launchd(
-        LABEL="com.pos.orchestrator",
+        LABEL="com.loam.orchestrator",
         PYTHON="/usr/bin/python3",
         WORKING_DIR="/tmp",
         STDOUT_LOG="/tmp/out",
@@ -69,7 +69,7 @@ def test_launchd_throttle_interval_locked_at_30s():
 @pytest.mark.skipif(sys.platform != "darwin", reason="plutil is macOS-only")
 def test_launchd_plist_passes_plutil_validation(tmp_path):
     rendered = _render_launchd(
-        LABEL="com.pos.orchestrator",
+        LABEL="com.loam.orchestrator",
         PYTHON="/usr/bin/python3",
         WORKING_DIR="/tmp",
         STDOUT_LOG="/tmp/out",

@@ -100,5 +100,5 @@ sigterm_timeout_seconds: 30
 orchestrator_boot_timeout_seconds: 60
 cancel_window_seconds: 60
 confirmation_timeout_hours: 24
-launchd_label: com.pos.orchestrator
+launchd_label: com.loam.orchestrator
 ```

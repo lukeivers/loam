@@ -33,7 +33,7 @@ User       CLI           Orchestrator    Substrates    Persona Channel
  |          |-- os.replace(current → staging/<tag>)         |
  |          |   (atomic symlink swap)                       |
  |          |                                               |
- |          |-- launchctl kickstart gui/$UID/com.pos.orchestrator
+ |          |-- launchctl kickstart gui/$UID/com.loam.orchestrator
  |          |                                               |
  |          |-- wait_for_boot (is_orchestrator_up polling)  |
  |          |<------- orchestrator booted -------           |

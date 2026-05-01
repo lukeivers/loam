@@ -1,0 +1,123 @@
+# Amendment #89 — M6b.1 Dev/SDLC plugin loam amend MOVE alone with shadow-then-flip
+
+2026-04-29. Multi-component sealed amendment for the OSS v0.1.0
+publish programme. Third sub-amendment in the M6 sub-amendment
+series per master plan §6.5.4 D-Q.M6.6 ship-shape ruling. M6a
+sealed at `acd70ff` (Surface A baseline plugin); M6b.0 sealed at
+`3a7c8d7` (Surface B extraction excluding loam amend MOVE);
+M6b.1 ships Item 7 from master plan §6.5.2 — the loam amend
+package MOVE alone with shadow-then-flip phasing per master plan
+AC.OSS-M6.15 + §10 D-build.M6.15 + halt-surface F3 phasing.
+
+Sub-plan-doc:
+`docs/rebuild/plans/oss-v0-1-0-publish-dev-sdlc-plugin-m6b1.md`.
+Master plan-doc: `docs/rebuild/plans/oss-v0-1-0-publish-dev-sdlc-plugin.md`.
+M6b plan-time halt-and-surface report (F3 cascading-effects
+analysis specific to loam amend):
+`workspace/.scratch/claude-output/m6b-halt-surface.md`.
+
+Composes on M1.rename (M1a..M1g sealed; M1g `f6c22fd`),
+M2.partition (`4cda805`), M3.wire-clis (`95f1ab2`),
+M4.wire-dispatch (`1719e14`), M5.wire-dormancy (`e32d4d8`),
+M6a (`acd70ff`), M6b.0 (`3a7c8d7`).
+
+M6b.1 OPERATIONALISES master plan AC.OSS-M6.15 — the loam amend
+package + tests are now resident in the Dev/SDLC plugin; the
+unified `loam` CLI dispatcher at framework/tools/loam/ STAYS in
+canonical (it's the public binary entry point); the dispatcher's
+M6a-authored `loam.cli.subcommands` entry-point group resolves
+`loam amend` to the plugin-side `loam_amend.cli:build_amend_subcommand`
+builder. The first run of `loam amend apply` + `loam amend seal`
+against the plugin-side binary is M6b.1's own bookkeeping —
+the move is self-bootstrapping post-flip.
+
+F3 phasing realised:
+
+  Phase α (Shadow). New `plugins/dev-sdlc/tools/loam-amend/`
+  package authored as a copy of the canonical-side
+  `framework/tools/loam/src/loam_cli/amend/`. Inner package named
+  `loam_amend/` (NOT `loam_cli/amend/`). pyproject.toml authored
+  with the `loam.cli.subcommands` entry-point declaration. NEW
+  adapter `loam_amend.cli.build_amend_subcommand` (~10 LOC).
+  Path-resolution constants in `loam_amend/commands/template.py`
+  recomputed: `_PKG_ROOT = parents[3]`; `_WORKSPACE_ROOT =
+  parents[7]`. Probe-and-prefer logic from M6b.0 retained. Both
+  packages bootable simultaneously.
+
+  Phase β (Flip). Edit `framework/tools/loam/src/loam_cli/cli.py`
+  to remove the hardcoded `from loam_cli.amend import cli as
+  amend_cli` import + the hardcoded `amend` subparser
+  registration in `_build_parser()` + the `if args.subcommand ==
+  "amend"` branch in `main()`. The `amend` subcommand resolves
+  entirely through `_discover_subcommand_builders()`. Edit
+  `framework/tools/heavy-b-migrate/src/loam/heavy_b_migrate/verify.py`
+  lines 76 + 81 late imports `loam_cli.amend.*` → `loam_amend.*`
+  (sole non-test cross-tree consumer per master plan §11 finding
+  #11 + halt-surface F3; verified by repeat grep at build start).
+  Re-`pip install -e framework/tools/loam` post-edit.
+
+  Phase γ (Delete-old). Per builder's call this combines with
+  Phase α via `git mv` (which performs shadow-author +
+  canonical-delete in a single rename-tracked operation). Result:
+  `framework/tools/loam/src/loam_cli/amend/` GONE;
+  `framework/tools/loam/tests/` MOVED to
+  `plugins/dev-sdlc/tools/loam-amend/tests/` with import
+  rewrites.
+
+  Phase δ (Apply + Seal). `loam amend apply` for M6b.1 runs
+  under the plugin-side binary — FIRST RUN under plugin-side
+  bookkeeping; updates objective-tracker + applies any
+  apply-step renames declared in the manifest. `loam amend seal
+  --plan-doc <abs-path>` runs against the plugin-side binary;
+  records SHA in §14 register.
+
+Cross-tree consumer verification at build start: `grep -rn
+"loam_cli.amend"` confirmed F3's analysis — only heavy-b-migrate
+verify.py:76,81 surfaces (the only Python-import consumer; per
+M1g's plan §11 finding #1 verified pos-amend's sole consumer
+chain across the rename — same chain post-MOVE; surface
+unchanged through M6b.1). No surprises.
+
+Sealed-component fence: 3 components —
+
+  `plugins/dev-sdlc/` — receives the new `tools/loam-amend/`
+  subtree (NEW package source + tests + pyproject.toml + cli
+  adapter + README.md). Plus the seal-test allowed-prefixes
+  already covers this from M6a.
+
+  `framework/tools/loam/` — `src/loam_cli/amend/` subtree
+  DELETED (MOVED via git mv); `tests/` subtree DELETED (MOVED
+  via git mv); `src/loam_cli/cli.py` edited to remove hardcoded
+  amend reg + dispatch branch (~10 LOC delta). Dispatcher
+  module (`cli.py` + `__init__.py` + `__main__.py`) STAYS;
+  pyproject project name + console-script unchanged.
+
+  `framework/tools/heavy-b-migrate/` —
+  `src/loam/heavy_b_migrate/verify.py` 2-line import rewrite.
+
+HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE.
+File MOVEs are git-rename-tracked + byte-content of moved files
+unchanged (git mv preserves bytes). The cli.py edit removes
+~10 LOC of hardcoded amend reg + the dispatch branch
+(additive-deletion only); test import rewrites are textual
+substitutions per file (`loam_cli.amend` → `loam_amend`); none
+of these are sample paths in HC#4's seal-fence config. The
+HC#4 invariant remains GREEN through M6b.1.
+
+AC family: AC.OSS-M6b1.1..M6b1.7 + AC.OSS-M6b1.S(b1). Each
+AC maps to a unique change in the diff per ODD §2.5 (no
+behaviour without a named AC). All ACs ladder up to master
+plan AC.OSS-M6.15 → AC.OSS.6 (programme-level) → AC.PO.1 +
+AC.PO.2 (prime objective in `docs/rebuild/VALUE_PROPOSITION.md`).
+
+Out of scope:
+  - M6c: trailing dead-link / cross-reference cleanup; final
+    M6 sub-amendment.
+  - v0.1.1+: objective-extraction skill.
+
+Dependents cleared post-M6b.1:
+  - The M1.rename programme + the M6 series rename portion
+    are COMPLETE.
+  - M6c is the final M6 sub-amendment (trailing cleanups).
+  - M7.docs-lane remains parallel-safe.
+  - M9.scrub remains gated on M6c completion.

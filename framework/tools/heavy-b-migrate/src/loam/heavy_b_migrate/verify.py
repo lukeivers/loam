@@ -72,13 +72,18 @@ def verify_continuous_registration(
     AC's substantive contract is checked.
     """
     # Late imports — keep heavy-b-migrate's install graph clean even
-    # if loam amend isn't on path at import time.
-    from loam_cli.amend.manifest import (  # type: ignore
+    # if loam amend isn't on path at import time. Post-M6b.1
+    # (master plan AC.OSS-M6.15 + §10 D-build.M6.15), the loam amend
+    # package moved from ``loam_cli.amend`` to ``loam_amend`` (under
+    # ``plugins/dev-sdlc/tools/loam-amend/``); the imports below
+    # reflect the new path. heavy-b-migrate is the sole non-test
+    # cross-tree consumer of loam amend's internal API.
+    from loam_amend.manifest import (  # type: ignore
         LiftedFromEntry,
         Manifest,
         ObjectiveEntry,
     )
-    from loam_cli.amend.tracker_registration import (  # type: ignore
+    from loam_amend.tracker_registration import (  # type: ignore
         register_objectives,
         update_source_commits,
     )

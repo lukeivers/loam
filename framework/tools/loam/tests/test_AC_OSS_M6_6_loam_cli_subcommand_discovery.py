@@ -24,19 +24,25 @@ import loam_cli.cli as cli_mod
 
 def test_discover_subcommand_builders_returns_list() -> None:
     """Discovery returns a list — empty when no plugin is installed
-    contributing to the group, populated once dev-sdlc is editable-
-    installed."""
+    contributing to the group, populated once dev-sdlc + loam-amend
+    are editable-installed."""
     builders = cli_mod._discover_subcommand_builders()
     assert isinstance(builders, list)
-    # When the plugin is editable-installed (its pyproject.toml ships
-    # the entry-point), `project` MUST appear. The dispatch's
-    # build-step installs the plugin via `pip install -e plugins/dev-sdlc/`
-    # so this assertion holds at seal-time.
+    # When dev-sdlc + loam-amend are editable-installed (M6a's
+    # plugin pyproject.toml ships ``project``; M6b.1's loam-amend
+    # pyproject.toml ships ``amend`` — both under the same entry-point
+    # group), BOTH names MUST appear. The dispatch's build-step
+    # installs both packages so this assertion holds at seal-time.
     names = {n for n, _ in builders}
     assert "project" in names, (
         "expected 'project' entry-point under "
-        "'loam.cli.subcommands' group; ensure the plugin is "
-        "editable-installed"
+        "'loam.cli.subcommands' group; ensure plugins/dev-sdlc/ "
+        "is editable-installed"
+    )
+    assert "amend" in names, (
+        "expected 'amend' entry-point under "
+        "'loam.cli.subcommands' group post-M6b.1; ensure "
+        "plugins/dev-sdlc/tools/loam-amend/ is editable-installed"
     )
 
 
@@ -86,11 +92,30 @@ def test_main_dispatches_via_func_attribute(
     assert captured[0].value == "hello"
 
 
-def test_main_amend_path_preserved_after_extension(
-    monkeypatch,
-) -> None:
-    """The pre-existing `loam amend` path remains intact — entry-point
-    discovery is additive."""
+def test_main_amend_resolves_via_entry_point_post_M6b1() -> None:
+    """The ``loam amend`` path resolves entirely through the
+    ``loam.cli.subcommands`` entry-point group post-M6b.1 (master plan
+    AC.OSS-M6.15 + §10 D-build.M6.15). With both packages editable-
+    installed, ``amend`` appears in the parser's subparser choices."""
+    parser = cli_mod._build_parser()
+    sp_action = next(
+        a
+        for a in parser._actions
+        if isinstance(a, argparse._SubParsersAction)
+    )
+    assert "amend" in sp_action.choices, (
+        "post-M6b.1 the 'amend' subcommand resolves via the "
+        "loam.cli.subcommands entry-point group; ensure "
+        "plugins/dev-sdlc/tools/loam-amend/ is editable-installed"
+    )
+
+
+def test_main_amend_absent_when_discovery_empty(monkeypatch) -> None:
+    """Post-M6b.1 the dispatcher no longer hardcodes ``amend`` —
+    monkeypatching discovery to return ``[]`` means ``amend`` is
+    absent from the parser. (Pre-M6b.1 ``amend`` was hardcoded and
+    survived empty discovery.) This test confirms the canonical-side
+    hardcoded amend reg has been REMOVED per AC.OSS-M6b1.4."""
     monkeypatch.setattr(
         cli_mod, "_discover_subcommand_builders", lambda: []
     )
@@ -100,7 +125,10 @@ def test_main_amend_path_preserved_after_extension(
         for a in parser._actions
         if isinstance(a, argparse._SubParsersAction)
     )
-    assert "amend" in sp_action.choices
+    assert "amend" not in sp_action.choices, (
+        "post-M6b.1 'amend' must resolve only via entry-point "
+        "discovery; the dispatcher must NOT hardcode 'amend'"
+    )
 
 
 def test_discover_handles_load_failure_gracefully(

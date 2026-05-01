@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-amend"
+version = "0.1.0"
+description = "loam amend — amendment-dispatch tooling subcommand for the unified loam CLI. MOVED from framework/tools/loam/src/loam_cli/amend/ to plugins/dev-sdlc/tools/loam-amend/ at M6b.1 per master plan AC.OSS-M6.15 + §10 D-build.M6.15 (shadow-then-flip)."
+requires-python = ">=3.11"
+dependencies = ["PyYAML>=6", "loam-cli"]
+
+# AC.OSS-M6b1.3 / AC.OSS-M6.15 — the unified loam CLI dispatcher's
+# `loam.cli.subcommands` entry-point group (M6a-authored) resolves
+# `loam amend` to this builder. Replaces the canonical-side hardcoded
+# `from loam_cli.amend import cli as amend_cli` import that lived in
+# framework/tools/loam/src/loam_cli/cli.py pre-M6b.1.
+[project.entry-points."loam.cli.subcommands"]
+amend = "loam_amend.cli:build_amend_subcommand"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

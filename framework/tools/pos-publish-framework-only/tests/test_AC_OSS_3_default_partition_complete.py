@@ -104,10 +104,16 @@ def test_default_partition_classifies_runtime_components_dev_and_public() -> Non
     from loam.publish_framework_only.partition import PartitionClass
 
     manifest = load_manifest(CANONICAL_MANIFEST)
+    # Post-M-FBM (memory-substrate pivot, 2026-05-01) per AC.MFBM.3:
+    # ``framework/memory-system/**`` reclassifies to ``dev_only``
+    # (file-based memory at framework/primary-persona/src/loam/
+    # primary_persona/file_memory.py is the v0.1.0 default substrate;
+    # graphiti retires to a post-v0.1.0 plugin via M-GMP). Removed
+    # from this spot-check; covered by
+    # test_default_partition_classifies_dev_tools_dev_only below.
     sample_runtime_paths = [
         "framework/cost-governance/src/loam/cost_governance/__init__.py",
         "framework/dormancy/src/loam/dormancy/__init__.py",
-        "framework/memory-system/src/loam/memory_system/__init__.py",
         "framework/primary-persona/src/loam/primary_persona/__init__.py",
         "framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
     ]
@@ -132,9 +138,14 @@ def test_default_partition_classifies_dev_tools_dev_only() -> None:
     #    plugins/dev-sdlc/** glob).
     #  - long-form ODD docs MOVED into the plugin.
     #  - dev-mode-manifest.yaml MOVED into the plugin.
+    # Post-M-FBM (memory-substrate pivot, 2026-05-01) per AC.MFBM.3:
+    # ``framework/memory-system/**`` is now dev_only. The kuzu_db
+    # inspection tool (D-Q.MFBM.6) ships dev_only.
     sample_dev_only_paths = [
+        "framework/memory-system/src/loam/memory_system/__init__.py",
         "framework/tools/loam/pyproject.toml",
         "framework/tools/heavy-b-migrate/pyproject.toml",
+        "framework/tools/loam-memory-inspect/pyproject.toml",
         "framework/tools/orphan-plist-cleanup/pyproject.toml",
         "framework/tools/pos-publish-framework-only/pyproject.toml",
         "docs/rebuild/STATE.md",

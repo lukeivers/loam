@@ -25,14 +25,23 @@ from pathlib import Path
 from _helpers_d7 import FakeMemoryClient, seed_baseline_workspace
 
 
-def test_AC_M_3_no_mcp_json_means_no_retrieval_and_exit_zero(
+def test_AC_M_3_no_mcp_json_means_empty_retrieval_block_and_exit_zero(
     tmp_path: Path, monkeypatch, capsys
 ) -> None:
-    """No ``.mcp.json`` in the workspace → factory returns None →
-    contributor not registered → CLI emits no retrieval block, exits 0."""
+    """No ``.mcp.json`` in the workspace → no MCP client constructed →
+    file-based contributor (M-FBM default) is registered → CLI emits
+    the empty-state retrieval block, exits 0.
+
+    Post-M-FBM (memory-substrate pivot, 2026-05-01) the file-based
+    contributor IS the production default. AC.M.3's graceful-empty
+    contract is satisfied by ``[memory-retrieval]\\n  (no results
+    for this query)`` — structurally graceful, no exception bubbles,
+    hook fan-out unblocked. The "no retrieval block at all" reading
+    of AC.M.3 was pre-M-FBM specific to the MCP-only substrate; the
+    post-M-FBM AC.M.3 surface always carries the block (file-based
+    is always-ready).
+    """
     seed_baseline_workspace(tmp_path)
-    # No .mcp.json written. The default factory delegates to the
-    # live client builder which returns None for missing substrate.
     envelope = json.dumps(
         {
             "session_id": "abc",
@@ -46,8 +55,9 @@ def test_AC_M_3_no_mcp_json_means_no_retrieval_and_exit_zero(
     rc = cli_user_prompt_submit(workspace_root=tmp_path)
     assert rc == 0
     out = capsys.readouterr().out
-    # AC.M.3 graceful-empty: no retrieval block.
-    assert "[memory-retrieval]" not in out
+    # Post-M-FBM: block IS present, body is the empty-state diagnostic.
+    assert "[memory-retrieval]" in out
+    assert "(no results for this query)" in out
 
 
 def test_AC_M_3_search_raises_connection_refused_then_exit_zero(

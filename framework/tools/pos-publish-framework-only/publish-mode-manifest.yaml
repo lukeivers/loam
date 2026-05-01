@@ -117,7 +117,16 @@ dev_and_public:
   - glob: "framework/cost-governance/**"
   - glob: "framework/dormancy/**"
   - glob: "framework/hands-off-lifecycle/**"
-  - glob: "framework/memory-system/**"
+  # framework/memory-system/** RECLASSIFIED to `dev_only` post-M-FBM
+  # (memory-substrate pivot, 2026-05-01) per AC.MFBM.3 + plan
+  # `oss-v0-1-0-publish-memory-pivot.md`. The file-based memory
+  # primitive in `framework/primary-persona/src/loam/primary_persona/
+  # file_memory.py` is the v0.1.0 default substrate; graphiti retires
+  # to a post-v0.1.0 plugin (M-GMP, v0.1.x lane). The memory-system
+  # source stays in the canonical dev tree (and runs in dev mode);
+  # ONLY the partition class changes here. M-GMP relocates the source
+  # to plugins/graphiti-memory/ at the right time. See `dev_only:`
+  # block below for the new entry.
   - glob: "framework/objective-tracker/**"
   - glob: "framework/observability-aggregator/**"
   - glob: "framework/orchestrator/**"
@@ -165,6 +174,18 @@ dev_only:
   # MOVED into the Dev/SDLC plugin tree (covered by
   # `plugins/dev-sdlc/**` glob below); the path no longer exists at
   # the canonical location.
+  # M-FBM (2026-05-01): memory-system source RECLASSIFIED dev_only.
+  # File-based memory at framework/primary-persona/src/loam/
+  # primary_persona/file_memory.py is the v0.1.0 default substrate;
+  # graphiti retires to post-v0.1.0 plugin (M-GMP). Per partition-
+  # precedence rule #2 (dev_only checked before dev_and_public), this
+  # explicit glob wins. memory-system continues running in canonical
+  # dev mode; only synthesis output drops it.
+  - glob: "framework/memory-system/**"
+  # M-FBM (2026-05-01): kuzu_db inspection one-shot tool. Dev-only;
+  # surfaces episode count + size + group_id distribution for owner
+  # to verify the discard decision per D-Q.MFBM.6.
+  - glob: "framework/tools/loam-memory-inspect/**"
   - glob: "framework/tools/loam/**"
   - glob: "framework/tools/heavy-b-migrate/**"
   - glob: "framework/tools/orphan-plist-cleanup/**"

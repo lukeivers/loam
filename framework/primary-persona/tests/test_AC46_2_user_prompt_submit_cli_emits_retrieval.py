@@ -53,20 +53,32 @@ def test_AC46_2_emit_returns_text_when_memory_client_returns_results(
     assert "memory-retrieval" in text or "Luke is rebuilding" in text
 
 
-def test_AC46_2_emit_returns_no_retrieval_block_when_memory_unwired(
+def test_AC46_2_emit_returns_empty_retrieval_block_when_memory_dir_empty(
     tmp_path: Path,
 ) -> None:
-    """When no memory client factory is supplied (production path
-    pre-#47), the contributor is not registered; the turn payload's
-    contributor_outputs section does NOT carry a memory-retrieval
-    entry. Per AC46.2 graceful-empty."""
+    """Post-M-FBM (memory-substrate pivot, 2026-05-01): when the
+    workspace's file-based memory dir has no episodes, the
+    contributor IS registered (file-based store ships in every
+    workspace) and emits the empty-state ``(no results for this
+    query)`` block per AC.MPF.2.
+
+    Pre-M-FBM, this test asserted the contributor was not registered
+    (no MCP client at production-default); post-M-FBM the file-based
+    contributor is the production default. AC46.2's graceful-empty
+    contract is satisfied by the empty-state-rendered block —
+    structurally graceful, fail-closed-on-error, no exception
+    bubbles. The AC46.2 textual reading is updated to match the
+    M-FBM surface; the underlying invariant (no exception, no
+    blocked turn) is unchanged.
+    """
     seed_baseline_workspace(tmp_path)
     text = emit_user_prompt_submit_context(
         tmp_path, "any prompt"
     )
-    # When the contributor is not registered, the contributor_outputs
-    # section never lists "[memory-retrieval]".
-    assert "[memory-retrieval]" not in text
+    # The block IS present (file-based contributor is the production
+    # default post-M-FBM) and shows the empty-state diagnostic.
+    assert "[memory-retrieval]" in text
+    assert "(no results for this query)" in text
 
 
 def test_AC46_2_emit_no_fact_when_memory_client_raises(

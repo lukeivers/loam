@@ -490,17 +490,27 @@ def cli_memory_write(
 ) -> int:
     """Drive one ``add_episode`` write synchronously.
 
-    AC.M.6: when the live MCP client constructs successfully, this
-    function performs exactly one ``add_episode`` call against the
-    memory-graphiti service. The episode body contains both the user
-    message and the assistant reply; ``group_id`` equals the
-    workspace slug.
+    AC.M.6 (preserved): when the legacy live MCP client constructs
+    successfully, this function performs exactly one ``add_episode``
+    call against the memory-graphiti service. The episode body
+    contains both the user message and the assistant reply;
+    ``group_id`` equals the workspace slug.
 
-    AC.M.10: every failure path — live client unavailable, MCP
-    transport failure, exception inside ``add_episode`` — is caught,
-    logged to ``<workspace>/.pos/memory-writes.log`` as a structured
-    diagnostic, and the function returns 0. The detached subprocess
-    exits cleanly.
+    AC.M.10 (preserved): every failure path — live client unavailable,
+    MCP transport failure, exception inside ``add_episode`` — is
+    caught, logged to ``<workspace>/.pos/memory-writes.log`` as a
+    structured diagnostic, and the function returns 0.
+
+    **M-FBM (memory-substrate pivot, 2026-05-01).** The production
+    runtime path no longer reaches ``cli_memory_write``: the
+    long-running worker (``memory_write_worker.run_worker_loop``)
+    drives the queue drain and uses :class:`FileBackedMemoryClient`
+    by default per AC.MFBM.5. ``cli_memory_write`` is preserved as
+    the legacy test-callable surface (AC.J.8 backwards-compat); it
+    still constructs the live MCP client when invoked, so tests that
+    monkeypatch ``mcp_memory_client.build_live_mcp_memory_client``
+    continue to bind to the same call site. M-GMP relocates the
+    legacy MCP path under the graphiti plugin.
 
     The detached child carries no real-time pressure (the Stop
     subprocess has long since returned). We drive the async write

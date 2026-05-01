@@ -295,8 +295,14 @@ def drain_once(
     """
     config = config if config is not None else mwq.load_worker_config(workspace_root)
     if client_factory is None:
-        from .mcp_memory_client import build_live_mcp_memory_client  # noqa: WPS433
-        client_factory = build_live_mcp_memory_client
+        # M-FBM (memory-substrate pivot, 2026-05-01) — AC.MFBM.5: the
+        # default substrate is the file-based store; MCP retires from
+        # the runtime path. Tests that need MCP semantics pass an
+        # explicit ``client_factory=build_live_mcp_memory_client``;
+        # M-GMP (post-v0.1.0) reintroduces the MCP factory inside the
+        # graphiti plugin.
+        from .file_memory import build_file_backed_memory_client  # noqa: WPS433
+        client_factory = build_file_backed_memory_client
     if workspace_slug is None:
         from .memory_consumer import resolve_workspace_slug  # noqa: WPS433
         workspace_slug = resolve_workspace_slug(workspace_root)

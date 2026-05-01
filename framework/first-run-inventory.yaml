@@ -56,25 +56,26 @@ shared_venv:
     - "self-upgrade"
     - "workspace-bootstrap"
 
+# M-FBM (memory-substrate pivot, 2026-05-01) — AC.MFBM.7:
+# memory-system retires from first-run-inventory at v0.1.0. The
+# graphiti-service launchd plist + dedicated venv + Kuzu/Ollama
+# provisioning drop. The file-based memory primitive in
+# framework/primary-persona/src/loam/primary_persona/file_memory.py
+# is the v0.1.0 default substrate; the workspace-bootstrap adapter
+# creates <workspace>/workspace/.loam/memory/ as a no-op mkdir at
+# first-run when needed (FileMemoryStore lazy-creates on first
+# write). Graphiti retires to a post-v0.1.0 plugin (M-GMP).
+# `dedicated_venvs` previously carried the memory-system entry; with
+# memory-system retired from runtime the section's only entry is
+# gone. The block-form empty-list shape is preserved (parser
+# convention; equivalent to the field being absent, but explicit).
 dedicated_venvs:
-  - component: "memory-system"
-    venv_path: "framework/memory-system/.venv"
-    requirements: "framework/memory-system/requirements.txt"
-    rationale: "Graphiti and Kuzu are heavy and segregated from the core workspace venv."
 
 services:
   # Labels are templated per workspace slug (amendment #6 —
   # namespaced-labels-and-bootout). The ``{slug}`` placeholder is
   # resolved at load time by the first-run helper so two pos-v2
   # workspaces on the same host do not collide on service identities.
-  - label: "com.loam.{slug}.memory-graphiti"
-    kind: "memory"
-    health:
-      kind: "http"
-      host: "127.0.0.1"
-      port: 8765
-      path: "/health"
-      timeout_s: 2.0
   - label: "com.loam.{slug}.orchestrator"
     kind: "orchestrator"
     health:

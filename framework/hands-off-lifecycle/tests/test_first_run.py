@@ -564,6 +564,16 @@ def test_T7_T8_T9_inventory_declares_shared_and_dedicated_venvs() -> None:
     the shared .venv). Here we verify the inventory drives the
     distinction correctly: shared_venv.components all route to the
     shared venv; dedicated_venvs route to their own paths.
+
+    **Post-M-FBM (memory-substrate pivot, 2026-05-01).** Per
+    AC.MFBM.7 the memory-system dedicated venv is retired from the
+    first-run-inventory at v0.1.0; the file-based memory primitive
+    in ``framework/primary-persona/src/loam/primary_persona/
+    file_memory.py`` is the v0.1.0 default substrate. The
+    ``dedicated_venvs`` field is now empty (the parser's stdlib
+    YAML subset emits ``{}`` when the field has no list items;
+    structurally equivalent to "no dedicated venvs"). Graphiti
+    retires to the post-v0.1.0 plugin via M-GMP.
     """
     data = load_inventory(REPO_ROOT / "framework" / "first-run-inventory.yaml")
     validate_inventory(data)
@@ -572,15 +582,20 @@ def test_T7_T8_T9_inventory_declares_shared_and_dedicated_venvs() -> None:
     assert "orchestrator" in data["shared_venv"]["components"]
     assert "scope-of-work" in data["shared_venv"]["components"]
     assert "workspace-bootstrap" in data["shared_venv"]["components"]
-    # memory-system is NOT in shared_venv; it has a dedicated venv.
+    # memory-system is NO LONGER in shared_venv (post-M-FBM, source
+    # is dev_only); also was never in shared_venv pre-M-FBM (it had
+    # a dedicated venv). Assertion holds in both pre-M-FBM and post-
+    # M-FBM regimes.
     assert "memory-system" not in data["shared_venv"]["components"]
 
+    # Post-M-FBM: dedicated_venvs is empty — the only entry was
+    # memory-system, which retired per AC.MFBM.7.
     dedicated = data["dedicated_venvs"]
-    assert len(dedicated) == 1
-    assert dedicated[0]["component"] == "memory-system"
-    # Post-D.1: paths in the inventory carry the framework/ prefix.
-    assert dedicated[0]["venv_path"] == "framework/memory-system/.venv"
-    assert dedicated[0]["requirements"] == "framework/memory-system/requirements.txt"
+    # The parser returns ``{}`` for an empty top-level field with no
+    # list items; structurally equivalent to "no dedicated venvs".
+    # ``len(dedicated)`` resolves to 0 for both ``[]`` and ``{}`` so
+    # the assertion holds whichever shape lands.
+    assert len(dedicated) == 0
 
 
 def test_T9b_dedicated_venv_creation_lands_at_declared_path(
@@ -637,17 +652,27 @@ def test_T10_pip_install_failure_surfaces_diagnostic(
 # ---- T14, T15: plist + service bootstrap ----------------------------
 
 
-def test_T14_inventory_declares_both_services() -> None:
-    """T14 — services list has both orchestrator and memory sidecar.
+def test_T14_inventory_declares_orchestrator_service() -> None:
+    """T14 — services list declares the orchestrator service.
 
     Amendment #6: labels are ``{slug}``-templated so the inventory is
     workspace-agnostic. The assertion checks the template form — the
     first-run helper resolves ``{slug}`` at load time.
+
+    **Post-M-FBM (memory-substrate pivot, 2026-05-01).** Per
+    AC.MFBM.7 the ``com.loam.{slug}.memory-graphiti`` service entry
+    is retired from the first-run-inventory at v0.1.0; the file-
+    based memory primitive ships under
+    ``framework/primary-persona/src/loam/primary_persona/file_memory.py``
+    with no out-of-process dependency. The orchestrator service
+    remains. M-GMP (post-v0.1.0 plugin) reintroduces the graphiti
+    service under plugin-scoped registration.
     """
     data = load_inventory(REPO_ROOT / "framework" / "first-run-inventory.yaml")
     labels = [svc["label"] for svc in data["services"]]
-    assert "com.loam.{slug}.memory-graphiti" in labels
     assert "com.loam.{slug}.orchestrator" in labels
+    # memory-graphiti retires at v0.1.0 per AC.MFBM.7.
+    assert "com.loam.{slug}.memory-graphiti" not in labels
 
 
 def test_T15_service_health_timeout_surfaces_diagnostic(
@@ -695,8 +720,10 @@ def test_AC7_health_poll_resolves_labels_against_workspace_slug(
 
     resolved = resolve_service_labels(data, slug)
     resolved_labels = [svc["label"] for svc in resolved["services"]]
-    assert "com.loam.fixture-x.memory-graphiti" in resolved_labels
+    # Post-M-FBM: memory-graphiti label is retired from the inventory
+    # per AC.MFBM.7; only orchestrator survives at v0.1.0.
     assert "com.loam.fixture-x.orchestrator" in resolved_labels
+    assert "com.loam.fixture-x.memory-graphiti" not in resolved_labels
     # Original inventory must NOT be mutated (resolve returns a new dict).
     assert "{slug}" in data["services"][0]["label"]
 

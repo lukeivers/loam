@@ -67,7 +67,17 @@ _SAMPLE_FILES = (
      # predicted no HC#4 impact; the prediction was wrong but the
      # amendment's intent is preserved (see §14 D-build.M4.* for the
      # post-build surfacing of this finding).
-     "37e2893db93cebdc06490222aadd5d8326041d5de1c96ede03ac153a0cea007d"),
+     # M-FBM (memory-substrate pivot, 2026-05-01) SHA bump: re-exports
+     # of the file-based memory primitives (``FileMemoryStore``,
+     # ``FileMemoryRetrievalConfig``, ``MemoryProvider``,
+     # ``build_file_memory_retrieval_contributor``,
+     # ``memory_dir_for_workspace``,
+     # ``register_file_memory_retrieval``) added; MCP-backed
+     # ``LiveMCPMemoryClient`` + ``build_live_mcp_memory_client``
+     # re-exports retired from package surface per AC.MFBM.5. ODD
+     # §4 in-band retire-and-rebaseline per `feedback_loose_AC_text_
+     # fix_AC_not_implementation`.
+     "f361f02772387968dd6369c6b69ee79888541d059095246b18a8ebd72892536c"),
     ("framework/primary-persona/src/loam/primary_persona/onboarding.py",
      # M1e SHA bump: Phase C import rebrand
      # (`from workspace_bootstrap.workspace_paths` →
@@ -86,7 +96,14 @@ _SAMPLE_FILES = (
      # text_fix_AC_not_implementation` — implementation matches
      # AC.MPF.3 intent; the byte-content sample SHA updates to
      # reflect the new contract.
-     "352eed0f772096615e628901b96b03188cbda6c4dab1ea7cb11f13ca422b0a71"),
+     # M-FBM (memory-substrate pivot, 2026-05-01) SHA bump:
+     # ``_default_memory_client_factory`` retires the
+     # ``mcp_memory_client.build_live_mcp_memory_client`` import +
+     # the file-based contributor registers in
+     # ``build_session_composer`` when the factory returns ``None``
+     # (production path). Per AC.MFBM.5: zero MCP instantiation in
+     # the runtime retrieval path.
+     "6110d5da56baa37cc5ade769c6efa9e0a5fde1d9ea6a88ce6908bf2696b2c471"),
     ("framework/primary-persona/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,

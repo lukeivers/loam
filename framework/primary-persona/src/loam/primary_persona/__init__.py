@@ -73,9 +73,18 @@ from .stop_emitter import (
     handle_stop_envelope,
     parse_stop_envelope,
 )
-from .mcp_memory_client import (
-    LiveMCPMemoryClient,
-    build_live_mcp_memory_client,
+# M-FBM (2026-05-01): MCP-backed memory client retired from runtime
+# path per AC.MFBM.5. The ``mcp_memory_client`` module stays on disk
+# (not removed) so M-GMP can relocate it to the graphiti plugin
+# without history loss. Re-exports retired from the package surface
+# so importers cannot accidentally bind against the MCP path.
+from .file_memory import (
+    FileMemoryRetrievalConfig,
+    FileMemoryStore,
+    MemoryProvider,
+    build_file_memory_retrieval_contributor,
+    memory_dir_for_workspace,
+    register_file_memory_retrieval,
 )
 from .dispatch_wrapper import (
     DispatchOutcome,
@@ -144,11 +153,13 @@ __all__ = [
     "DispatchOutcome",
     "DispatchRefusal",
     "DispatchShape",
+    "FileMemoryRetrievalConfig",
+    "FileMemoryStore",
+    "MemoryProvider",
     "NewACSpec",
-    "LiveMCPMemoryClient",
     "StopEnvelope",
     "TurnContent",
-    "build_live_mcp_memory_client",
+    "build_file_memory_retrieval_contributor",
     "build_persona_session_start_inner_hook",
     "build_persona_stop_inner_hook",
     "build_persona_user_prompt_submit_inner_hook",
@@ -164,7 +175,9 @@ __all__ = [
     "emit_user_prompt_submit_context",
     "handle_stop_envelope",
     "load_contract",
+    "memory_dir_for_workspace",
     "parse_stop_envelope",
+    "register_file_memory_retrieval",
     "retire_persona",
     "write_dispatcher_stub",
 ]

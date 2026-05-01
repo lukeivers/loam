@@ -78,7 +78,15 @@ _SAMPLE_FILES = (
      # `loam_root` predecessor identifier callsites) plus Phase C `-m`
      # shell-command shape rebrand for primary_persona.cli emission
      # helper.
-     "f97595479e5e45e4a461541fb662d5cff0ac87537797bc93b69f312d47fd4b10"),
+     # MPF (amendment #95) SHA bump: AC.MPF.3 propagates
+     # ``workspace_root`` through ``register_memory_retrieval`` so
+     # boundary exceptions surface to ``<workspace>/.pos/memory-
+     # reads.log``. Two-line edit at the call site (kwarg added).
+     # ODD §4 in-band retire-and-rebaseline per `feedback_loose_AC_
+     # text_fix_AC_not_implementation` — implementation matches
+     # AC.MPF.3 intent; the byte-content sample SHA updates to
+     # reflect the new contract.
+     "352eed0f772096615e628901b96b03188cbda6c4dab1ea7cb11f13ca422b0a71"),
     ("framework/primary-persona/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,

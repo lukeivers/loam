@@ -538,10 +538,22 @@ def _serialise_turn(
         lines.append("missing_corpus_paths (diagnostic):")
         for p in missing_paths:
             lines.append(f"  - {p}")
+    # AC.MPF.4 (amendment #95): skip contributors whose text is
+    # empty (or whitespace-only) so the UPS hook attachment doesn't
+    # carry whitespace-padded contributor headers. Symmetric with
+    # the ``if missing_paths:`` and ``if resolved_component:``
+    # guards above. The ``contributor_outputs:`` header itself is
+    # also skipped when no contributor produced text — pre-amendment
+    # this rendered an empty header followed by indent-only lines.
     if contributor_outputs:
-        lines.append("contributor_outputs:")
+        rendered_any = False
         for name, text in contributor_outputs:
+            if not text.strip():
+                continue
+            if not rendered_any:
+                lines.append("contributor_outputs:")
+                rendered_any = True
             lines.append(f"  [{name}]")
-            for ln in text.splitlines() or [""]:
+            for ln in text.splitlines():
                 lines.append(f"    {ln}")
     return "\n".join(lines)

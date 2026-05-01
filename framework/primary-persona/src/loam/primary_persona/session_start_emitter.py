@@ -170,6 +170,10 @@ def build_session_composer(
                 composer,
                 memory_client=client,
                 workspace_slug=slug,
+                # Amendment #95 / AC.MPF.3: thread workspace_root
+                # through so boundary exceptions surface to
+                # <workspace>/.pos/memory-reads.log.
+                workspace_root=workspace_root,
             )
         except Exception:  # noqa: BLE001 — AC46.2 graceful empty
             # Slug resolution or registration failed; no memory

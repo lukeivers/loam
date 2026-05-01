@@ -31,11 +31,24 @@ concurrently with the interactive turn and terminates whenever
 extraction). Failed writes surface as OTel warnings via the persona
 layer's existing D9 observability surface; a subsequent awareness-
 block category could pick them up in future work.
+
+**Group-ID convention (amendment #95 / AC.MPF.5).** The persona's
+write path uses ``group_id=workspace_slug``; the read path queries
+with ``group_ids=[workspace_slug]``. The two paths agree by
+construction. Verification-write paths that bypass the persona
+(e.g. memory-system internal ingest under ``default_scope_id``,
+test harnesses) write under DIFFERENT group_ids and are NOT
+retrievable via the persona's read path. If a future agent /
+harness wants persona-retrievable data, it must write under the
+persona's slug convention. Per-source isolation is the current
+convention; a "shared workspace group_id" surface is deferred to
+FUTURE_IDEAS_DRAFT (HSF#4 in plan §16).
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 import time
 from dataclasses import dataclass, field
@@ -44,6 +57,15 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Protocol
 
 from .context_composer import TriggerKind
+
+
+# Diagnostic log filename (sibling to write-side ``memory-writes.log``)
+# used by ``_append_diag`` to surface read-side boundary errors per
+# AC.MPF.3 / M6c graceful-fallthrough-with-detection CDC. The log lives
+# at ``<workspace_root>/.pos/<MEMORY_READS_LOG_NAME>``; the directory
+# is created by ``workspace-bootstrap`` and SHOULD exist by the time
+# the contributor fires. ``_append_diag`` is fail-soft if it doesn't.
+MEMORY_READS_LOG_NAME = "memory-reads.log"
 
 
 # ---- exceptions -----------------------------------------------------
@@ -226,6 +248,8 @@ class MemoryRetrievalConfig:
 
 def build_memory_retrieval_contributor(
     config: MemoryRetrievalConfig,
+    *,
+    workspace_root: Path | str | None = None,
 ) -> Callable[[dict[str, Any]], str]:
     """Return the callable registered on
     ``ComposedContextPayload.register(name="memory-retrieval",
@@ -238,7 +262,21 @@ def build_memory_retrieval_contributor(
     character cap (AC-D7.6). On any exception raised by the memory
     boundary, returns an empty string — fail-closed per plan §3
     constraint 8 / AC-D7.7.
+
+    Per AC.MPF.3 (amendment #95), boundary exceptions are now
+    additionally surfaced to ``<workspace>/.pos/memory-reads.log``
+    via ``_append_diag`` so an operator inspecting read-side
+    observability can distinguish "no relevant results" from
+    "memory boundary failed" from "group_id mismatch". The
+    contributor still returns ``""`` on exception (fail-closed
+    contract preserved). When ``workspace_root`` is None, the
+    diagnostic log is skipped (degrades gracefully — used by tests
+    that don't provide a workspace path).
     """
+
+    ws_root_resolved: Path | None = (
+        Path(workspace_root) if workspace_root is not None else None
+    )
 
     def contributor(context: dict[str, Any]) -> str:
         prompt = str(context.get("prompt", ""))
@@ -253,15 +291,68 @@ def build_memory_retrieval_contributor(
                     center_node_uuid=None,
                 )
             )
-        except Exception:
+        except Exception as exc:
             # Fail-closed per AC-D7.7 — any boundary error, regardless
             # of cause (connection refused, HTTP 5xx, timeout, garbage
             # response, etc.), yields an empty retrieval block and the
             # turn proceeds.
+            #
+            # AC.MPF.3 / M6c: surface the exception to memory-reads.log
+            # before swallowing it, so the read-side fallthrough is
+            # detectable from outside the hook channel.
+            if ws_root_resolved is not None:
+                _append_diag(
+                    workspace_root=ws_root_resolved,
+                    exception=exc,
+                    workspace_slug=config.workspace_slug,
+                    query=prompt,
+                )
             return ""
         return _render_retrieval(result, cap=config.char_cap)
 
     return contributor
+
+
+def _append_diag(
+    *,
+    workspace_root: Path,
+    exception: BaseException,
+    workspace_slug: str,
+    query: str,
+) -> None:
+    """Append one NDJSON line to ``<workspace>/.pos/memory-reads.log``.
+
+    Mirror of the write-side ``memory-writes.log`` diagnostic surface.
+    Fail-soft: any OSError on directory or file open swallows
+    silently — the read-side fail-closed envelope is the load-bearing
+    contract; this log is best-effort observability only (AC.MPF.3).
+
+    NDJSON line shape:
+        {"timestamp": "<ISO-8601-utc>",
+         "exception_type": "<ClassName>",
+         "exception_message": "<str(exc)>",
+         "workspace_slug": "<slug>",
+         "query_preview": "<first 80 chars of query>"}
+    """
+    try:
+        diag_dir = Path(workspace_root) / ".pos"
+        diag_dir.mkdir(parents=True, exist_ok=True)
+        log_path = diag_dir / MEMORY_READS_LOG_NAME
+        line = json.dumps(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "exception_type": type(exception).__name__,
+                "exception_message": str(exception),
+                "workspace_slug": workspace_slug,
+                "query_preview": query[:80],
+            },
+            ensure_ascii=False,
+        )
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
+    except OSError:
+        # Best-effort observability; never propagate.
+        return
 
 
 def _run_async(coro: Awaitable[Any]) -> Any:
@@ -301,10 +392,18 @@ def _render_retrieval(result: dict[str, Any], *, cap: int) -> str:
     summary graphiti returns) as a dashed list, truncated at ``cap``
     characters to keep the contributor's share of the turn envelope
     bounded.
+
+    AC.MPF.2 / M6c (amendment #95): when ``results`` is empty,
+    return a structured diagnostic header instead of ``""`` so the
+    empty-state is observable in the UPS hook stdout. Pre-amendment-
+    #95 the empty-results path returned ``""``, which the composer
+    rendered as ``[memory-retrieval]\\n    \\n`` (whitespace-only
+    block) — indistinguishable from "search exception" or
+    "group_id mismatch" without log inspection.
     """
     results = result.get("results") or []
     if not isinstance(results, list) or not results:
-        return ""
+        return "[memory-retrieval]\n  (no results for this query)"
     lines: list[str] = ["[memory-retrieval]"]
     for item in results:
         if not isinstance(item, dict):
@@ -337,6 +436,7 @@ def register_memory_retrieval(
     num_results: int = 5,
     char_cap: int = MEMORY_RETRIEVAL_CHAR_CAP,
     name: str = "memory-retrieval",
+    workspace_root: Path | str | None = None,
 ) -> Callable[[dict[str, Any]], str]:
     """Register the memory-retrieval contributor against a
     ``ComposedContextPayload`` instance. Convenience wrapper around
@@ -344,6 +444,11 @@ def register_memory_retrieval(
     capture the contributor callable themselves.
 
     Returns the registered callable so tests can inspect / re-invoke.
+
+    ``workspace_root`` (AC.MPF.3, amendment #95) is forwarded to
+    ``build_memory_retrieval_contributor`` so boundary exceptions
+    surface to ``<workspace>/.pos/memory-reads.log``. When None,
+    the diagnostic log is skipped.
     """
     config = MemoryRetrievalConfig(
         memory_client=memory_client,
@@ -351,6 +456,9 @@ def register_memory_retrieval(
         num_results=num_results,
         char_cap=char_cap,
     )
-    fn = build_memory_retrieval_contributor(config)
+    fn = build_memory_retrieval_contributor(
+        config,
+        workspace_root=workspace_root,
+    )
     composer.register(name=name, trigger_kind=TriggerKind.turn, fn=fn)
     return fn

@@ -297,6 +297,68 @@ def _maybe_install_status_line(loam_root: Path) -> None:
         return
 
 
+# ---- amendment #95 — existing-workspace Stop-hook re-seat retrofit ---
+#
+# Per locked plan `docs/rebuild/plans/memory-pipeline-fix.md` §3 D1+D2
+# + AC.MPF.1: workspaces whose first-run completed before
+# ``_maybe_merge_stop`` was effective (or whose first-run hit the
+# lazy-import fail-soft branch on that day) carry a settings.json that
+# lacks ``hooks.Stop`` permanently. Pos3 was empirically in this state
+# at 2026-04-29 (0 Stop firings vs 68 UPS firings in active session
+# jsonl). The supervisor's settings-touch path now invokes
+# ``_maybe_merge_stop`` so a workspace already past first-run picks
+# up the Stop stanza on its next session-start (AC.MPF.1).
+#
+# Fail-soft: any failure here MUST NOT block the supervisor's main
+# path — the retrofit is additive (matching the ``_maybe_install_
+# status_line`` precedent at amendment #49 D5). The merge is
+# idempotent over pos-v2-owned stanzas per
+# ``framework/hands-off-lifecycle/tests/
+# test_AC_M_11_merge_stop_re_merge_pos_v2_owned.py``.
+
+
+def _maybe_reseat_stop_hook(loam_root: Path) -> None:
+    """Existing-workspace retrofit for ``hooks.Stop``.
+
+    Mirrors the ``_maybe_install_status_line`` shape (amendment #49
+    D5): supervisor-path retrofit so workspaces past first-run gain
+    ``hooks.Stop`` on next session-start without re-bootstrapping.
+    Lazy-imports ``_maybe_merge_stop`` from ``first_run_helper``; any
+    exception is swallowed so the supervisor's main path is never
+    blocked.
+
+    The merge is idempotent over pos-v2-owned stanzas
+    (``test_AC_M_11_merge_stop_re_merge_pos_v2_owned.py``); user-
+    authored Stop stanzas are NOT touched per ``merge_stop``'s
+    prior-stanza-displacement logic.
+
+    Per locked plan §6 HT-7: this is the structural fix; pos3
+    specifically picks up ``hooks.Stop`` on its next Claude session-
+    start (which fires ``pos_session_start.py``, which now re-seats
+    Stop).
+    """
+    try:
+        hooks_dir = loam_root / "framework" / "hands-off-lifecycle" / "hooks"
+        if not hooks_dir.is_dir():
+            return
+        if str(hooks_dir) not in sys.path:
+            sys.path.insert(0, str(hooks_dir))
+        # Lazy import — the supervisor must not crash on a workspace
+        # whose hooks directory is in an unexpected shape. The helper
+        # is private (underscore-prefixed) but importable; we depend
+        # on its existing fail-soft envelope (lazy import of the
+        # persona emitter + try/except around merge_stop write).
+        from first_run_helper import _maybe_merge_stop  # type: ignore[import-not-found]
+
+        settings_path = loam_root / ".claude" / "settings.json"
+        _maybe_merge_stop(
+            loam_root=loam_root,
+            settings_path=settings_path,
+        )
+    except Exception:  # noqa: BLE001 — fail-soft per locked plan §5
+        return
+
+
 def main(argv: list[str] | None = None) -> int:
     result = run_session_start()
     # Stdout becomes additionalContext per Claude Code convention.
@@ -307,6 +369,11 @@ def main(argv: list[str] | None = None) -> int:
     # Post-D.1: file lives at framework/orchestrator/scripts/...; parents[3] is the workspace root.
     loam_root = Path(__file__).resolve().parents[3]
     _maybe_install_status_line(loam_root)
+    # Amendment #95 (memory-pipeline-fix AC.MPF.1): retrofit
+    # ``hooks.Stop`` for workspaces past first-run that lack it (e.g.
+    # pos3 pre-2026-04-29). Idempotent on subsequent session-starts.
+    # Fail-soft per locked plan §5.
+    _maybe_reseat_stop_hook(loam_root)
     return int(result["exit_code"])
 
 

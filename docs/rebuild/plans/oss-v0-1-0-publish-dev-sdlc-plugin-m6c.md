@@ -1,0 +1,175 @@
+# OSS v0.1.0 publish — Dev/SDLC plugin M6c (trailing cleanups + graceful-fallthrough CDC)
+
+**Status:** sub-plan for M6c; FINAL sub-amendment in the M6 series.
+**Predecessors:** M6a sealed at `acd70ff` (Surface A baseline plugin); M6b.0 sealed at `3a7c8d7` (Surface B extraction excluding loam amend); M6b.1 sealed at `c08e0fa` (loam amend MOVE alone with shadow-then-flip).
+**Successor:** none — M6c closes the M6 series.
+**Master plan:** `docs/rebuild/plans/oss-v0-1-0-publish-dev-sdlc-plugin.md` (§6.5.4 M6c slot in the ladder; AC.OSS-M6.S(c) — single sealed-component fence covering whatever components the trailing-edge work touches).
+**Programme master plan:** `docs/rebuild/plans/oss-v0-1-0-publish.md`.
+
+---
+
+## 1. Objective
+
+Close the M6 sub-amendment series with two coherent surfaces:
+
+1. **Surface 1 — Trailing dead-link / cross-reference cleanup.** Audit-and-update the LIVE consumer-facing surfaces (CLAUDE.dev.md, plugin docs/conventions/templates, plugin's dev-mode-manifest, framework/tools/loam/README, master plan-doc) that still name pre-MOVE paths post-M6a/M6b.0/M6b.1. Historical narrative (commit messages, seal narratives, pre-M6 plan-doc bodies, post-M6b convention narratives that describe "Pre-M6b.0 the cycle lived at...") STAYS — preserves historical record per Idea 10's "no retroactive rewrites" rule.
+
+2. **Surface 2 — Author the graceful-fallthrough-with-detection CDC** at `plugins/dev-sdlc/docs/cdcs/graceful-fallthrough-with-detection.md` per the dispatcher's directive 2026-04-29 (captured in `docs/rebuild/FUTURE_IDEAS_DRAFT.md` post-memory-sidecar incident). The CDC names "graceful fallthrough must include detection + surface, not silent swallow" and connects ODD §2.5 (silent-except branches are non-objective by construction). It additionally surfaces structural-enforcement candidates (periodic-health-monitor, UPS hook contributor surfacing degraded-state, auto-recovery primitives, audit-pass) for post-v0.1.0 implementation. The CDC matches the prose style of the existing 10 dev CDCs (now resident at `plugins/dev-sdlc/docs/cdcs/` post-M6b.0).
+
+## 2. Owner rulings (carried forward)
+
+The four M6b plan-time findings (F1-F4) were ratified by the dispatcher 2026-04-29 + executed across M6b.0 + M6b.1. M6c carries no NEW findings to surface at plan-authoring time — the cross-reference audit produced four halt-and-surface notes (HSF#1..HSF#4 in §16 below) that are dispatch-named scope discriminators, not new design questions. M6c proceeds.
+
+## 3. M6c scope — explicit in-scope vs out-of-scope
+
+### In-scope (M6c)
+
+**Surface 1 — Cross-reference cleanup (8 live consumer files):**
+
+The pre-MOVE → post-MOVE substitutions M6c executes are:
+
+- `framework/tools/loam/src/loam_cli/amend/` → `plugins/dev-sdlc/tools/loam-amend/src/loam_amend/` (per M6b.1 MOVE).
+- `framework/tools/loam-mode/` → `plugins/dev-sdlc/tools/loam-mode/` (per M6b.0 MOVE).
+- `docs/odd-methodology.md` → `plugins/dev-sdlc/docs/odd-methodology.md` (per M6b.0 MOVE).
+- `docs/odd-in-loam.md` → `plugins/dev-sdlc/docs/odd-in-loam.md` (per M6b.0 MOVE).
+
+Files audited + EDITED:
+
+1. `CLAUDE.dev.md` — 4 refs to ODD docs (lines 19, 20, 55, 56).
+2. `framework/tools/loam/README.md` — 1 ref to `docs/odd-in-loam.md` (line 151).
+3. `plugins/dev-sdlc/dev-mode-manifest.yaml` — 2 refs in `dev_only:` block (lines 118-119; the manifest currently auto-loads ODD docs at the canonical pre-MOVE paths). Edit: paths point at the plugin-relative post-MOVE locations.
+4. `plugins/dev-sdlc/docs/cdcs/scope-only-dispatch.md` — 1 ref to `docs/odd-methodology.md` (line 5).
+5. `plugins/dev-sdlc/docs/conventions/sealed-component-invariants.md` — 2 refs to `framework/tools/loam/src/loam_cli/amend/` (lines 5, 41 — naming the implementation location of the seal-diff machinery).
+6. `plugins/dev-sdlc/docs/conventions/commit-ladder.md` — 2 refs to `framework/tools/loam/src/loam_cli/amend/` (lines 5, 49 — naming the implementation location of the seal/apply commands).
+7. `plugins/dev-sdlc/templates/plan/dev-discipline.md` — 1 ref to ODD docs (line 28).
+8. `plugins/dev-sdlc/templates/dispatch/sealed-component-build.md` — 1 ref to `docs/odd-methodology.md` (line 40).
+9. `docs/rebuild/plans/oss-v0-1-0-publish.md` — 2 refs (line 208 referencing `framework/tools/loam-mode/` in AC.OSS.3 dev-tools list; line 213 referencing `docs/odd-methodology.md` + `docs/odd-in-pos.md` in the dev-only artefacts list; line 321 referencing `docs/odd-methodology.md` in §5 deferred-list). The line 213 "odd-in-pos.md" is a separate pre-existing typo (should be `odd-in-loam.md`) — fix in same edit since we're already touching the line.
+
+Files audited + PRESERVED as historical narrative:
+
+- `plugins/dev-sdlc/docs/conventions/amendment-cycle.md:56` — "Pre-M6b.0 the cycle lived in precedent + dispatch templates + `docs/odd-in-loam.md`". This IS historical narrative.
+- `plugins/dev-sdlc/docs/conventions/five-gate-chain.md:38` — "Pre-M6b.0 the convention lived in `docs/odd-methodology.md` + `docs/odd-in-loam.md`". Historical narrative.
+- `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml:164` — "Post-M6b.0: framework/tools/loam-mode/ MOVED..." historical narrative inside YAML comment.
+- `plugins/dev-sdlc/docs/cdcs/README.md:4` — "Pre-M6b.0 they lived in docs/rebuild/FUTURE_IDEAS.md's temporary parking section". Historical narrative.
+- `docs/rebuild/FUTURE_IDEAS.md` post-M6b.0 redirect line — already correctly worded ("moved to plugins/dev-sdlc/docs/cdcs/").
+- `docs/rebuild/FUTURE_IDEAS_DRAFT.md:75` — captured-2026-04-28 task entry naming `framework/tools/loam-mode/` at point-of-occurrence. Historical capture; preserve.
+- All `docs/rebuild/plans/*.md` and `docs/rebuild/components/*` plan-doc bodies — historical plan documents describing builds that completed BEFORE the M6 MOVEs. ~165 plan files reference pre-MOVE paths in their bodies; per Idea 10 they STAY untouched. M6c only edits the master oss-v0-1-0-publish.md plan-doc which is in-flight.
+
+**Surface 2 — New CDC at `plugins/dev-sdlc/docs/cdcs/graceful-fallthrough-with-detection.md`:**
+
+- Authored matching the prose style of existing CDCs (read 1-2 references for shape: `shutdown-path-broad-catch.md`, `plan-before-code.md`).
+- Sections: title-as-tightened-rule blockquote + Rationale + How to apply + Connection to ODD §2.5 + Structural-enforcement candidates (post-v0.1.0) + Applied-immediately footer.
+- ~30-60 LOC concise codification.
+- Cross-link from `plugins/dev-sdlc/docs/cdcs/README.md` index — append row 11.
+
+**Surface 1 polish — partition-manifest M2 final review:**
+
+Verified: every path the M6 series introduced (`plugins/dev-sdlc/tools/loam-amend/**`, `plugins/dev-sdlc/tools/loam-mode/**`, `plugins/dev-sdlc/hooks/**`, `plugins/dev-sdlc/templates/**`, `plugins/dev-sdlc/docs/{cdcs,conventions}/**`, `plugins/dev-sdlc/dev-mode-manifest.yaml`, `plugins/dev-sdlc/docs/{odd-methodology,odd-in-loam,duration-estimation-rubric}.md`) is covered by the M6b.0-extended `plugins/dev-sdlc/**` glob entry in the publish-mode-manifest's `dev_only:` block. **No partition-manifest edit needed** in M6c.
+
+### Out-of-scope (deferred per dispatch + halt-surface findings)
+
+- **Memory-system code fixes** (the original observation that motivated the graceful-fallthrough CDC). Queued as separate post-M6c amendment per task #18.
+- **M1c-corrective com.pos.orchestrator launchd-label stragglers + dev-mode-manifest stale `tools/pos-amend/**` entry.** Queued as task #16; pre-M6 stale paths whose retire belongs to the M1.rename trailing-edge programme, NOT the M6 series.
+- **M9 scrub** (final public-surface scrub; gated on full M6 completion + queued post-M6c).
+- **v0.1.1+ items** (objective-extraction skill, etc.).
+- **Structural enforcement of the new CDC** (periodic-health-monitor scope-of-work entries, UPS hook contributor for degraded-state, auto-recovery primitives, audit-pass for existing silent-swallow patterns) — surfaced AS candidates inside the CDC itself; structural fix is post-v0.1.0 per FIDRAFT capture.
+
+## 4. Acceptance criteria
+
+AC family **AC.OSS-M6c.\*** (continues the AC.OSS-M6\* numbering convention; ladders to master plan AC.OSS-M6.S(c)).
+
+| AC ID | Outcome | Verification |
+|---|---|---|
+| AC.OSS-M6c.1 | All 8 live consumer files (CLAUDE.dev.md, framework/tools/loam/README.md, plugins/dev-sdlc/dev-mode-manifest.yaml, plugins/dev-sdlc/docs/cdcs/scope-only-dispatch.md, plugins/dev-sdlc/docs/conventions/{sealed-component-invariants.md, commit-ladder.md}, plugins/dev-sdlc/templates/{plan/dev-discipline.md, dispatch/sealed-component-build.md}) updated to reference post-MOVE paths. Each pre-MOVE → post-MOVE substitution applied per §3. | `grep -nE "framework/tools/loam/src/loam_cli/amend\|framework/tools/loam-mode/\|docs/odd-methodology\.md\|docs/odd-in-loam\.md"` against each file returns zero hits (excluding historical-narrative-preserved lines named in §3). |
+| AC.OSS-M6c.2 | Master plan `docs/rebuild/plans/oss-v0-1-0-publish.md` AC.OSS.3 dev-only artefacts list (lines 208-213) and §5 deferred-list (line 321) updated to reference post-MOVE paths; the `docs/odd-in-pos.md` typo on line 213 is corrected to `docs/odd-in-loam.md` (now `plugins/dev-sdlc/docs/odd-in-loam.md`). | Source-grep: zero hits for `framework/tools/loam-mode/` in oss-v0-1-0-publish.md; zero hits for `docs/odd-in-pos.md`; the post-MOVE plugin paths present. |
+| AC.OSS-M6c.3 | New CDC authored at `plugins/dev-sdlc/docs/cdcs/graceful-fallthrough-with-detection.md` per dispatcher directive. Prose style matches existing dev CDCs (title-as-rule blockquote + Rationale + How-to-apply + ODD §2.5 connection + Structural-enforcement candidates + Applied-immediately footer). Length 30-60 LOC. | File exists; matches the section structure; LOC count ∈ [30, 60]. |
+| AC.OSS-M6c.4 | `plugins/dev-sdlc/docs/cdcs/README.md` index extended to include row 11 for `graceful-fallthrough-with-detection.md`. The README's "10 CDCs" narrative copy retired or updated to reflect 11. | README contains the 11-row table referencing the new file; count of `.md` files in `plugins/dev-sdlc/docs/cdcs/` (excluding README.md) equals 11. |
+| AC.OSS-M6c.5 | Historical-narrative surfaces preserved per Idea 10 (no retroactive rewrites): `plugins/dev-sdlc/docs/conventions/{amendment-cycle, five-gate-chain}.md` "Pre-M6b.0..." narratives untouched; `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml:164` comment untouched; FUTURE_IDEAS_DRAFT.md line 75 untouched; all `docs/rebuild/plans/*.md` historical plan-doc bodies (excluding the in-flight master `oss-v0-1-0-publish.md` covered by AC.OSS-M6c.2) untouched. | Diff inspection: M6c feature commit's `git show --stat` shows zero modifications to the named historical-narrative files. |
+| AC.OSS-M6c.S(c) | Seal-diff fence narrowed to M6c surfaces: `plugins/dev-sdlc/` (CDC authoring + README index update + 5 in-plugin cross-reference edits) + canonical-tree light-touch cross-reference edits at `CLAUDE.dev.md` + `framework/tools/loam/README.md` + the master `docs/rebuild/plans/oss-v0-1-0-publish.md`. All cross-component widening admissions verified. | `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` passes against new BASELINE (`c08e0fa` — M6b.1 seal). |
+
+All ACs ladder up to master plan AC.OSS-M6.S(c) → AC.OSS.6 → AC.PO.1 + AC.PO.2 (prime objective per `docs/rebuild/VALUE_PROPOSITION.md`).
+
+## 5. Sealed-component fence
+
+**Components touched (3):**
+
+1. `plugins/dev-sdlc/` — receives the new CDC + the README index update + 5 in-plugin cross-reference edits (in `docs/cdcs/scope-only-dispatch.md`, `docs/conventions/{sealed-component-invariants, commit-ladder}.md`, `templates/{plan/dev-discipline, dispatch/sealed-component-build}.md`) + 1 manifest edit (`dev-mode-manifest.yaml` lines 118-119).
+2. `framework/tools/loam/` — `README.md` 1-line cross-reference edit (line 151 `docs/odd-in-loam.md` → `plugins/dev-sdlc/docs/odd-in-loam.md`).
+3. (canonical-tree light-touch — not a sealed component itself) `CLAUDE.dev.md` (4 line edits) + `docs/rebuild/plans/oss-v0-1-0-publish.md` (3 line edits — AC.OSS.3 list + §5 deferred-list + odd-in-pos typo).
+
+**Universal admissions (per amendment #22 ruling #3):**
+- `docs/rebuild/plans/` — for this sub-plan + manifest.
+- `docs/rebuild/plans/research/` — for any companion research material (no research artefact authored at M6c).
+
+**Cross-component widening:** the dev-sdlc seal-test's `allowed_prefixes` already includes `framework/tools/loam/` (M6a baseline) and the universal `docs/rebuild/plans/` admission covers the master plan-doc edit. The CLAUDE.dev.md edit is a top-level repo-root file admitted via the existing top-level CLAUDE.md admission pattern (verify pre-build).
+
+## 6. Halt triggers
+
+- HT-1: a cross-reference's update would break a sealed-component invariant (frozen-baseline / byte-content / etc.) — surface specific case for ODD §4 in-band retire if appropriate.
+- HT-2: the new CDC's prose conflicts with existing dev CDC conventions discovered while authoring — surface specific concern.
+- HT-3: ODD §2.5 violations encountered in surrounding code/docs while editing the cross-reference surfaces — surface for separate amendment.
+- HT-4: cross-reference audit surface turns out wider than the §3 8-file count expected (e.g. >50 places) — surface for re-scope (split into M6c.0 + M6c.1).
+- HT-5: final partition-manifest polish reveals a path the M6 series introduced that doesn't map cleanly into public_only / dev_and_public / dev_only / excluded_from_publish — surface for ruling.
+- HT-6: HC#4 byte-content invariant breach beyond ODD §4 in-band — escalate.
+- HT-7: wall-clock approaches 90 min (per master plan §6.5.4 estimate) — surface for continuation rather than stalling silently.
+- HT-8: in-flight tests fail unexpectedly post-edit — surface specific failure.
+- HT-9: cross-reference is empirically already at the right post-MOVE path (skip silently — no edit needed; the §3 audit already accounted for these).
+
+## 7. Ship shape (commit ladder)
+
+1. **Sub-plan + manifest commit.** This file + `oss-v0-1-0-publish-dev-sdlc-plugin-m6c.manifest.yaml`.
+2. **Feature commit.** Two coherent surfaces in one commit (cross-reference cleanup + new CDC + index update). The diff is small (~8 file edits + 1 new file + 1 index update) and the surfaces are coherent (both close M6 series gaps); no need to split.
+3. **Apply commit.** `loam amend apply --plan-doc <abs-path>` runs against the **plugin-side** `loam-amend` package (post-M6b.1 the plugin-side binary IS the operational binary). Updates objective-tracker + applies any apply-step renames declared in the manifest (none expected for M6c).
+4. **Seal commit.** `loam amend seal --plan-doc <abs-path>` runs against the plugin-side binary. Records SHA in §14 register; seal-test passes against new BASELINE.
+
+The manifest's BASELINE points at `c08e0fa` (M6b.1 seal). The seal-test computes `BASELINE..HEAD` diff window per the convention.
+
+No corrective commits expected (no `git commit --amend` per `feedback_no_amend_in_agent_dispatches`).
+
+## 8. Method-decision register heading FROM AUTHORING
+
+Section 14 "Method-decision register" appears at the bottom of this plan. SHA register populated by `loam amend seal --plan-doc` SHA-backfill at seal time; method-decision narratives populated by builder during build.
+
+---
+
+## 14. Method-decision register (post-build)
+
+(SHA register populated by `loam amend seal --plan-doc` SHA-backfill; method-decision narratives populated by builder during build.)
+
+### D-build.M6c.1 — Cross-reference audit surface actuals
+
+(Populated at build time. The pre-build audit projected 8 live consumer files + 3 master-plan-line edits; record actual count + per-file edit counts + any halt-and-surface escapes encountered during execution.)
+
+### D-build.M6c.2 — Historical-narrative preservation actuals
+
+(Populated at build time. Record the surfaces consciously NOT edited per Idea 10 + dispatch's "historical narrative STAYS" rule, and any audit-time discoveries of additional historical-narrative surfaces beyond the §3 list.)
+
+### D-build.M6c.3 — New CDC authoring shape
+
+(Populated at build time. Record actual LOC count, section structure used, prose-style anchor points referenced from existing CDCs, and any edits to the existing CDC corpus beyond the README.md index update.)
+
+### D-build.M6c.4 — Partition-manifest final review
+
+(Populated at build time. Confirm no partition-manifest edit was needed; record the verification reasoning that the `plugins/dev-sdlc/**` glob fully covers M6-series-introduced paths.)
+
+### Commit SHAs
+
+(Populated by `loam amend seal --plan-doc` SHA-backfill at seal time.)
+
+## 15. Backwards-compat verification (post-build)
+
+- Cross-reference edits are textual substitutions only (path strings inside markdown / YAML comments); no behavioural change to any runtime code path.
+- The new CDC is a documentation file with no runtime consumer at v0.1.0 (its structural-enforcement candidates are post-v0.1.0).
+- HC#4 byte-content invariant: NO RETIRE-AND-REBASELINE — M6c does not touch any HC#4 sample-path file (verified by checking the seal-fence config; M6c's edits land in markdown/YAML files, none of which are sample paths).
+- M6b.1's seal-test BASELINE advances from `c08e0fa` (M6b.1 seal) to M6c's new SEAL_COMMIT.
+
+## 16. Halt-and-surface findings encountered during plan authoring
+
+Four discoveries at audit-time (informational, not blocking — all named in §3 or §3 out-of-scope):
+
+- **HSF#1.** `plugins/dev-sdlc/dev-mode-manifest.yaml` lines 136-137 reference `tools/pos-amend/**` and `tools/orphan-plist-cleanup/**` — pre-M6 stale paths. The M1.rename programme moved `tools/` → `framework/tools/` AND `pos-amend` → `loam amend`; neither is captured in this manifest's `dev_only:` block. NOT M6c scope (queued M1c-corrective task #16). Surfaced for owner awareness.
+- **HSF#2.** `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml:164` contains a YAML-comment narrative referencing `framework/tools/loam-mode/` ("Post-M6b.0: framework/tools/loam-mode/ MOVED..."). Historical narrative inside an explanatory comment; PRESERVE per Idea 10.
+- **HSF#3.** `plugins/dev-sdlc/docs/conventions/{amendment-cycle.md, five-gate-chain.md}` contain "Pre-M6b.0 lived at `docs/odd-in-loam.md`" historical-narrative-style prose inside the live convention codifications. Per dispatch's "historical narrative STAYS" rule, PRESERVE.
+- **HSF#4.** `docs/rebuild/FUTURE_IDEAS_DRAFT.md:75` captures a stale task ("loam-mode F-register references pre-D.1 path tools/loam-mode/") with a pre-M1.rename path at point-of-occurrence. Historical capture; PRESERVE.
+
+Plan is authorised to proceed. Audit surface is well within the dispatch's ≤50 places re-scope threshold (HT-4); no split into M6c.0 + M6c.1 needed.

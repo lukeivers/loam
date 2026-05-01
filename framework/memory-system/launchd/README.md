@@ -6,7 +6,7 @@ the instructions from older revisions of this README.**
 ## Do not manually install the plist in this directory
 
 The file `com.loam.memory-graphiti.plist` in this directory contains
-**hardcoded absolute paths** (`/Users/lukeivers/ivers-corp-pos-v2/...`)
+**hardcoded absolute paths** (`<workspace>/loam/...`)
 and ships as a historical artifact from before the hands-off-lifecycle
 work moved plist generation into the first-run scaffold. It is NOT the
 plist used at runtime. Do NOT `cp` it into `~/Library/LaunchAgents/`

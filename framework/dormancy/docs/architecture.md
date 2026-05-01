@@ -1,7 +1,7 @@
 # Dormancy — Architecture
 
 **Component:** `dormancy` (loam Phase 2; formerly graceful-degradation pre-M1f rename).
-**Ships on `pos-v2` branch at `/Users/lukeivers/ivers-corp-pos-v2/framework/dormancy/`.**
+**Ships on `pos-v2` branch at `<workspace>/loam/framework/dormancy/`.**
 **Authored against:** `../../docs/rebuild/components/dormancy/{brief,proposal,research}.md`.
 
 ---

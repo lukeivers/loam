@@ -599,7 +599,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Examples:\n"
             "  pos-new-workspace ~/my-ws --from /Users/.../pos-v2\n"
             "  pos-new-workspace ~/my-ws --from "
-            "https://github.com/lukeivers/pos-v2\n"
+            "https://github.com/lukeivers/loam\n"
             "  pos-new-workspace ~/existing-ws --from /Users/.../pos-v2 "
             "--init-existing\n"
         ),

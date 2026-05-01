@@ -1,7 +1,7 @@
 # Objective Tracker — Overview
 
 **Component:** Objective Tracker (pOS v2 Phase 1)
-**Status:** D1–D9 complete; sealed primitive under `/Users/lukeivers/ivers-corp-pos-v2/objective-tracker/`.
+**Status:** D1–D9 complete; sealed primitive under `<workspace>/loam/objective-tracker/`.
 **Depends on:** nothing. It is a foundational primitive — other components consume it.
 
 ---

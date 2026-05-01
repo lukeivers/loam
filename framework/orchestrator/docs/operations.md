@@ -16,7 +16,7 @@ can re-activate the orchestrator without re-discovering them.
 ## Install (macOS — launchd user agent)
 
 ```bash
-cd /Users/lukeivers/ivers-corp-pos-v2
+cd <workspace>/loam
 source .venv/bin/activate
 python orchestrator/scripts/install_launchd.py \
     --python "$(pwd)/.venv/bin/python" \

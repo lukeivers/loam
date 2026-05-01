@@ -64,13 +64,13 @@ Examples:
 
 ```bash
 # Local canonical (typical dev setup):
-pos-new-workspace ~/my-ws --from /Users/lukeivers/ivers-corp-pos-v2
+pos-new-workspace ~/my-ws --from <workspace>/loam
 
 # URL canonical (typical user setup):
-pos-new-workspace ~/my-ws --from https://github.com/lukeivers/pos-v2
+pos-new-workspace ~/my-ws --from https://github.com/lukeivers/loam
 
 # Re-scaffold an already-bootstrapped workspace (idempotent):
-pos-new-workspace ~/my-ws --from /Users/lukeivers/ivers-corp-pos-v2 \
+pos-new-workspace ~/my-ws --from <workspace>/loam \
   --init-existing
 ```
 

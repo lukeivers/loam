@@ -53,7 +53,7 @@ objective-tracker/
 ## Running tests
 
 ```bash
-cd /Users/lukeivers/ivers-corp-pos-v2/objective-tracker
+cd <workspace>/loam/objective-tracker
 source .venv/bin/activate
 python -m pytest -q
 ```
@@ -61,7 +61,7 @@ python -m pytest -q
 To also confirm scope-of-work remains green:
 
 ```bash
-cd /Users/lukeivers/ivers-corp-pos-v2/scope-of-work
+cd <workspace>/loam/scope-of-work
 source .venv/bin/activate
 python -m pytest -q    # 77 passed, 1 skipped
 ```

@@ -36,6 +36,17 @@ tree; ``PUBLIC_ONLY`` and ``DEV_AND_PUBLIC`` ship.
 non-audit-excluded leaf that doesn't classify into any of the four
 classes raises ``SynthesisError`` — the manifest must cover every
 shipping path (AC.OSS-M2.4).
+
+Substitution pass (M9). After the partition filter, every shipping
+leaf's blob content is read, the M9-locked substitution table is
+applied (canonical-host paths → ``<workspace>/loam/...``,
+``lukeivers/pos-v2`` → ``lukeivers/loam``, ``Luke Ivers`` →
+``Alice Anderson``), and IFF a token was replaced the rewritten
+content is written as a new blob via ``git hash-object -w``; the new
+SHA replaces the source SHA in the synthetic tree. Binary blobs
+preserve the source SHA verbatim. Determinism + idempotence per
+AC.OSS-M9.3 / AC.OSS-M9.4 — see
+``loam.publish_framework_only.substitution`` for the table + helper.
 """
 
 from __future__ import annotations
@@ -54,6 +65,10 @@ from loam.publish_framework_only.partition import (
     is_audit_excluded,
     is_publishable,
     load_manifest,
+)
+from loam.publish_framework_only.substitution import (
+    SUBSTITUTION_TABLE,
+    apply_substitutions,
 )
 
 
@@ -197,6 +212,55 @@ def _ls_tree_recursive(
     return leaves
 
 
+def _cat_blob(repo: Path, blob_sha: str) -> bytes:
+    """Return the raw bytes of ``blob_sha`` via ``git cat-file blob``.
+
+    Used by the M9 substitution pass: shipping leaves have their blob
+    bytes read, the substitution table is applied, and IFF a token was
+    replaced a new blob is written via ``_hash_object_w`` and the new
+    SHA replaces the source SHA in the synthetic tree.
+    """
+    completed = subprocess.run(  # noqa: S603 — argv constructed
+        ["git", "cat-file", "blob", blob_sha],
+        cwd=str(repo),
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise SynthesisError(
+            f"git cat-file blob {blob_sha} (cwd={repo}) "
+            f"failed (exit {completed.returncode}): "
+            f"{(completed.stderr or b'').decode('utf-8', 'replace').strip()!r}"
+        )
+    return completed.stdout
+
+
+def _hash_object_w(repo: Path, content: bytes) -> str:
+    """Write ``content`` as a new blob via ``git hash-object -w --stdin``.
+
+    Returns the new blob SHA. Used by the M9 substitution pass (per
+    AC.OSS-M9.2): a rewritten blob is hashed and the new SHA replaces
+    the source SHA in the synthetic tree's index.
+    """
+    completed = subprocess.run(  # noqa: S603
+        ["git", "hash-object", "-w", "--stdin"],
+        cwd=str(repo),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        input=content,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise SynthesisError(
+            f"git hash-object -w --stdin (cwd={repo}) "
+            f"failed (exit {completed.returncode}): "
+            f"{(completed.stderr or b'').decode('utf-8', 'replace').strip()!r}"
+        )
+    return completed.stdout.decode("ascii").rstrip("\n")
+
+
 def _build_synthetic_tree(
     repo: Path,
     source_sha: str,
@@ -246,11 +310,28 @@ def _build_synthetic_tree(
             continue
         else:
             synthetic_path = source_path
+
+        # M9 substitution pass (AC.OSS-M9.2). Applied AFTER the
+        # partition filter (this loop reaches here only for shipping
+        # leaves) and BEFORE _LeafEntry construction. For blob leaves,
+        # read the blob content, apply the substitution table, and
+        # IFF the substitution changed the content, write a new blob
+        # and use the new SHA. Binary blobs (UnicodeDecodeError) and
+        # non-blob entries (submodules etc.) preserve the source SHA.
+        leaf_sha = sha
+        if object_type == "blob":
+            blob_content = _cat_blob(repo, sha)
+            sub_result = apply_substitutions(
+                blob_content, SUBSTITUTION_TABLE
+            )
+            if sub_result.changed:
+                leaf_sha = _hash_object_w(repo, sub_result.content)
+
         publishable.append(
             _LeafEntry(
                 mode=mode,
                 object_type=object_type,
-                sha=sha,
+                sha=leaf_sha,
                 source_path=source_path,
                 synthetic_path=synthetic_path,
             )

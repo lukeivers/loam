@@ -32,12 +32,12 @@ class CanonicalCacheError(Exception):
 def derive_repo_id(url: str) -> str:
     """Sanitise a URL into a ``host/owner/repo`` slug.
 
-    Examples (all return ``github.com/lukeivers/pos-v2``):
+    Examples (all return ``github.com/lukeivers/loam``):
 
-    - ``https://github.com/lukeivers/pos-v2``
-    - ``https://github.com/lukeivers/pos-v2.git``
-    - ``git@github.com:lukeivers/pos-v2.git``
-    - ``http://github.com/lukeivers/pos-v2``
+    - ``https://github.com/lukeivers/loam``
+    - ``https://github.com/lukeivers/loam.git``
+    - ``git@github.com:lukeivers/loam.git``
+    - ``http://github.com/lukeivers/loam``
 
     Algorithm:
 

@@ -34,8 +34,8 @@ from loam.dormancy.detection import (
 CORPUS: list[tuple[str, str, type[BaseModel] | None, int]] = [
     # 1. Memory-extraction style: a plausible extracted-entity JSON.
     (
-        '{"entities": [{"name": "Luke Ivers", "kind": "person"}, '
-        '{"name": "pOS", "kind": "project"}]}',
+        '{"entities": [{"name": "Alice Anderson", "kind": "person"}, '
+        '{"name": "Acme Corp", "kind": "project"}]}',
         "memory.extract_entities",
         None,
         1,

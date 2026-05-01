@@ -85,7 +85,7 @@ This satisfies the dispatch's explicit end-of-build assertion:
 ## Reproducing
 
 ```bash
-cd /Users/lukeivers/ivers-corp-pos-v2
+cd <workspace>/loam
 source .venv/bin/activate
 python orchestrator/scripts/measure_launchd.py \
     --python "$(pwd)/.venv/bin/python" \

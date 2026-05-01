@@ -15,9 +15,11 @@ plan: docs/rebuild/plans/post-m6-partition-realignment.md
 
 components:
   - name: hands-off-lifecycle
-    seal_test: framework/hands-off-lifecycle/tests/test_no_sealed_amendments.py
+    # H19 frozen-baseline pinned at project-start per amendment #23.
+    # Mirrors corpus-inlining-session-start-hook.manifest.yaml (#73).
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
     sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
-    frozen_baseline: false
+    frozen_baseline: true
     extra_allowed_prefixes: []
 
   - name: dev-sdlc

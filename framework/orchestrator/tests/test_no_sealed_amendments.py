@@ -95,7 +95,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              SEAL_COMMIT + cross-cutting allowed-set bump). f1ff28b
 #              is the pre-amendment tip — the amendment-#18 seal
 #              commit immediately before amendment #19's code commit.
-BASELINE = "6f272ce"
+BASELINE = "e3e3e17"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

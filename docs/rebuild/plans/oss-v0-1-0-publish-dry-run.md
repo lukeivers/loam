@@ -408,15 +408,10 @@ Filled by each phase's builder post-build per existing precedent (M9 §14 D-buil
 
 ### M11a — OSS-build.M11a.x — (post-build)
 
-- D-build.M11a.1: Synthesis invocation shape (CLI vs Python module direct call).
-- D-build.M11a.2: AC.OSS.3 grep mechanism (per-leaf cat-file + grep -F vs ripgrep against worktree-checkout of framework-only).
-- D-build.M11a.3: AC.OSS.5 substitution-source-side grep (same mechanism as D-build.M11a.2, or different?).
-- D-build.M11a.4: AC.OSS.2 wired-component sweep mechanism (re-run feature-usage audit's grep+import-graph script vs new ast-walk against synthetic tree).
-- D-build.M11a.5: Stranger-clone smoke depth (per D-Q.M11.3 ruling).
-- D-build.M11a.6: Staging push mechanism (per D-Q.M11.1 ruling; if scoped to M11a).
-- D-build.M11a.7: Sweep report shape (single markdown file vs per-AC sub-files + index).
-- D-build.M11a.8: Sweep order (per §6 sequencing inside M11a).
-- D-build.M11a.9: A1-A4 false-positive carve-out shape (per D-Q.M11.5 mitigation).
+**M11a dispatch 1 of N — HALTED at synthesis step (2026-05-01).** Per plan §9.9 (synthesis tool errors during pipeline run); single finding F-M11a.1 (partition manifest does not classify `docs/plugins/dev-sdlc.md`, added by M7 commit `2fefd8b`). Foldback to M2-corrective (partition manifest extension) required before M11a re-dispatches. Full halt narrative + RCA + foldback recommendation: `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md`. Source-commit at halt: `47cbea7`. Framework-only branch SHA: N/A (synthesis errored; branch not advanced).
+
+- D-build.M11a.1 (dispatch 1): Synthesis invocation shape — Python module via console-script entry point `pos-publish-framework-only` from a fresh `python3.13 -m venv` at `/tmp/m11a-venv` with `pyyaml` + editable-install of `loam-publish-framework-only`. Rationale: project requires Python ≥3.11 + yaml; system Python defaults required workarounds.
+- D-build.M11a.2..9: NOT REACHED in dispatch 1 (synthesis errored before sweeps could run). Carried forward to M11a re-dispatch.
 - D-build.M11a.10..N: builder-discovered method decisions.
 
 ### M11b — OSS-build.M11b.x — (post-build, post-M10)
@@ -428,14 +423,16 @@ Filled by each phase's builder post-build per existing precedent (M9 §14 D-buil
 
 ### Commit SHAs
 
-- M11a plan-doc commit: `<TBD>` (this plan).
+- M11a plan-doc commit (this plan, original authoring): `47cbea7` (post-M10-bypass-edits inclusive).
 - Master-plan §6 rule-update doc-only commit: `<TBD>` (next dispatch).
-- M11a sweep-execution commit (if any tracked artefacts beyond this plan-doc + .scratch/ report): `<TBD>` — likely doc-only (no source edits).
-- M11a `.scratch/` sweep report (NOT committed to git per .scratch/ gitignore): `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md`.
-- M11a synthetic `framework-only` branch HEAD SHA (recorded in §14 + sweep report): `<TBD>`.
-- M11a staging-push commit on `lukeivers/loam-staging:main` (if AC.M11a.7 scoped to M11a per D-Q.M11.1): `<TBD>`.
-- M11a seal commit: `<TBD>`.
-- M11b owner-ruling entry at `oss-launch-decisions.md`: `<TBD>` (post-M10-closing).
+- **M11a dispatch-1 halt-pointer commit (this update; doc-only; appends §14 D-build.M11a.1 + halt narrative pointer):** `<TBD>` (filled at commit-time).
+- M11a sweep-execution commit (if any tracked artefacts beyond this plan-doc + .scratch/ report): N/A in dispatch 1 (halted; re-dispatch will fill).
+- M11a `.scratch/` sweep report (NOT committed to git per .scratch/ gitignore): `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md` (dispatch 1; HALT report).
+- M11a synthetic `framework-only` branch HEAD SHA (recorded in §14 + sweep report): N/A in dispatch 1 (synthesis errored; re-dispatch will fill).
+- M11a staging-push commit on `lukeivers/loam-staging:main` (if AC.M11a.7 scoped to M11a per D-Q.M11.1): N/A in dispatch 1 (re-dispatch will fill).
+- M11a seal commit: N/A in dispatch 1 (no seal — halted).
+- **Foldback amendment(s) for F-M11a.1 (partition manifest extension for `docs/plugins/**`):** `<TBD>` — to be authored as separate dispatch per D-Q.M11.4 (no auto-foldback at M11a).
+- M11b owner-ruling entry at `oss-launch-decisions.md`: `<TBD>` (post-foldback + post-M11a re-dispatch GO).
 - M11b foldback amendment commits (if any): `<TBD>`.
 - M11.S programme-seal entry in master plan §14: `<TBD>` (post-M11b-GO).
 

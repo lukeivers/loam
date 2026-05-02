@@ -66,8 +66,8 @@ loam is explicitly **not**:
 - a no-code agent builder. loam is for users comfortable with a CLI
   and willing to keep one Claude Code session open at a time.
 - a cloud platform. loam runs locally; your workspace, your machine,
-  your data. The memory sidecar, the orchestrator, and the primary
-  persona all live on your hardware.
+  your data. Memory state, the orchestrator, and the primary persona
+  all live on your hardware as files and processes you control.
 - a ChatGPT replacement. If your bar is "I want to ask one question
   and get one answer," raw Claude already does that fine. loam earns
   its keep when the work spans sessions, requires governance, or

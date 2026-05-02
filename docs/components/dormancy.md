@@ -33,7 +33,9 @@ workspace by `workspace-bootstrap`; its policies are configured
 through the workspace's settings (the per-mode FSM declarations
 live in dormancy's own component data). Outage detection is
 driven by signals from `orchestrator` (process-host upstream
-checks) and `memory-system` (sidecar health) where applicable.
+checks) where applicable. Future memory-substrate plugins (post-
+v0.1.0) compose against the same dormancy contract by surfacing
+their own health probes.
 
 The per-host migration helper (used at upgrade time) is the
 only operator-facing surface most users encounter:

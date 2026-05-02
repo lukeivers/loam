@@ -37,7 +37,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at lukeivers@gmail.com. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement via private GitHub message to the maintainer ([@lukeivers](https://github.com/lukeivers)) or by opening a minimal placeholder issue titled "conduct: please contact me privately" (no details in the public issue) and waiting for the maintainer to reach out with a private channel. All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 

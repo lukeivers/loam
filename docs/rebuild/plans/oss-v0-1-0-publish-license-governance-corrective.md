@@ -159,4 +159,7 @@ Findings encountered during build land in §14 method-decision register.
 
 ### Commit SHAs
 
-(populated post-build)
+- Amendment commit: `9159ffd291f91a51254bcac06f6fe17a5ac55988` —
+  `chore(loam-amend-apply): loam amend apply for M8-corrective`
+- Seal commit: `527109139519b8c8c18ecb19b314977754b12cda` —
+  `chore(seals): oss-v0-1-0-publish-license-governance-corrective — hands-off-lifecycle at 9159ffd`

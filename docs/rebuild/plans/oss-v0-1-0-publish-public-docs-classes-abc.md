@@ -402,37 +402,41 @@ Per `feedback_duration_estimation_rubric` — categories + formula + calibration
 
 Filled by each phase's builder post-build per existing precedent (M9 §14, M-FBM §14, M7-partition-fix §14).
 
-### C1 — OSS-build.ABC-C1.x — (post-build)
+### C1 — OSS-build.ABC-C1.x — sealed 2026-05-02
 
-- **D-build.ABC-C1.0:** AI-time actuals (predicted vs actual).
-- **D-build.ABC-C1.1:** Glob shape locked per D-Q.ABC.2 ruling.
-- **D-build.ABC-C1.2:** YAML edit mechanism (single-line additions vs structured sub-block).
-- **D-build.ABC-C1.3:** Synthesis smoke check post-edit (which CLI invocation, which expected outcome).
-- **D-build.ABC-C1.4:** HOL anchor pattern application (per M7-partition-fix HSF#2 precedent).
-- **D-build.ABC-C1.5..N:** builder-discovered method decisions.
+- **D-build.ABC-C1.0** AI-time actuals: predicted 20-35 min midpoint 28; actual ~25 min wall-clock — within band, tracks M7-partition-fix precedent (~32 min).
+- **D-build.ABC-C1.1** Glob shape locked per D-Q.ABC.2 = (a): framework-wide `**/seals/**` (catches future v0.x components without manifest amendment).
+- **D-build.ABC-C1.2** YAML edit mechanism: 3 single-line `- glob:` entries appended to existing `dev_only:` block under the `test_AC_AG_*` / `test_AC_BAG_*` HOL gate-test admissions, with provenance comments citing this plan-doc + locked decisions. Targeted exact patterns for Class B (D-Q.ABC.3 = a) over broader patterns to avoid false-positive exclusion of legitimate public tests.
+- **D-build.ABC-C1.3** Synthesis smoke check: `python -m loam.publish_framework_only.cli` advanced `refs/heads/framework-only` → `cbebfd3` (source `cb029a0`); per-glob `git ls-tree -r refs/heads/framework-only | grep <glob>` verified zero residuals across all three globs. AC.ABC-A.1 + AC.ABC-B.1 + AC.ABC-B.2 PASS empirically.
+- **D-build.ABC-C1.4** HOL anchor pattern applied per M2 + M7-partition-fix HSF#2 precedent (`pos-publish-framework-only` has no `test_no_sealed_amendments.py`; HOL anchors via `universal_paths.prefixes`). Initial manifest-validate + apply --dry-run pattern verified clean before commit.
+- **D-build.ABC-C1.5** Touched-component test count: zero pytest required for C1 (pure manifest YAML + HOL no-op anchor; no behaviour code edits). `loam amend seal --scoped-sweep` ran the standard cross-component sweep clean.
 
-### C2 — OSS-build.ABC-C2.x — (post-build)
+### C2 — OSS-build.ABC-C2.x — HALTED at HT-C2.4 + HT-C2.2 — 2026-05-02
 
-- **D-build.ABC-C2.0:** AI-time actuals (predicted vs actual; per D-Q.ABC.1 ruling).
-- **D-build.ABC-C2.1:** Dominant strategy locked per D-Q.ABC.1 ruling.
-- **D-build.ABC-C2.2:** Per-file shape register (REWRITE vs SUBSTITUTE per file, with any owner-overrides from D-Q.ABC.5).
-- **D-build.ABC-C2.3:** M9 SUBSTITUTION_TABLE extension shape per D-Q.ABC.4 (entries added; ordering decisions).
-- **D-build.ABC-C2.4:** Multi-component seal-fence assembly (which components touched; per-component test-coverage decisions).
-- **D-build.ABC-C2.5:** Touched-component pytest pass per `feedback_amendment_dispatch_speedups` (narrow scope vs full rerun).
-- **D-build.ABC-C2.6..N:** builder-discovered method decisions.
+C2 dispatch HALTED during build investigation. Halt-and-surface report at `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-classes-abc-c2-halt.md`.
+
+- **D-build.ABC-C2.HALT** Root cause: plan §5.4's Class C enumeration of 26 files is partial — restricted to "production source/doc files only" — but AC.M11a.2's verification is a literal-match grep across the full synthetic tree, including 109 test files containing dev-only literals as assertion strings, fixture content, comments, and docstrings. Closing the 26 named files would still leave M11a-3 in halt-fail.
+- **D-build.ABC-C2.HSF#1** HT-C2.4 fired (>30 Class C files). Empirical post-C1 sweep: `docs/rebuild` literal in 130 files (109 tests + 21 production); `loam-mode` in 20; `odd-methodology` in 26; etc.
+- **D-build.ABC-C2.HSF#2** HT-C2.2 fired on file 18 (`session_start_gate.py` lines 153-180). Function-body literal `docs/rebuild/plans/` is runtime-load-bearing in dev mode + asserted by 2 tests. Plan §5.4's per-file shape (RW) cannot apply without breaking behaviour. Resolution requires SUBSTITUTION_TABLE 4th entry or per-test fixture-update.
+- **D-build.ABC-C2.HSF#3** D-Q.ABC.4's 3-entry SUBSTITUTION_TABLE undersized — does not cover the `docs/rebuild/*` paths surfaced as load-bearing constants (STATE.md, FUTURE_IDEAS.md, FUTURE_IDEAS_DRAFT.md, plans/, components/, plugins/dev-sdlc/docs/odd-{methodology,in-loam}.md). ~5-7 additional entries likely needed for a clean C2 close.
+- **D-build.ABC-C2.HSF#4** Plan §10 risk #2 mitigation review: the "+4 file buffer" was inadequate for the actual scope-shape mismatch (109-file overage). Future plans should distinguish "surface drift" (extra files of same shape) from "scope-shape mismatch" (different classification axis).
+- **D-build.ABC-C2.NEXT** Recommended forward path (for owner ruling): **Option A then B in series.**
+  - **Option A — C2-bis** (mechanical): single-line manifest edit adding `**/tests/**` to `dev_only:`. ~20-30 min wall-clock per M7-partition-fix precedent. Closes the 109 test-file residuals at one stroke. (Industry-convention shape — most v1.0 OSS releases don't ship internal test suites in source tarballs.)
+  - **Option B — C2-prime** (re-shaped Class C remediation): re-plan against the smaller accurate population (21 production files); owner rules on (i) per-file overrides (file 1, 5, 6 may need SUB; file 18 needs SUB for load-bearing function-body), (ii) SUBSTITUTION_TABLE scope expansion (~5-7 additional entries), (iii) re-dispatch.
+  - **Cumulative cost:** ~140-260 min midpoint ~200 min for C2-bis + C2-prime + M11a-3 vs the original 70-130 min C2 estimate. Original estimate didn't account for test-file scope.
 
 ### Commit SHAs
 
-- **C1 plan-doc commit:** `<TBD>`
-- **C1 amendment manifest + manifest YAML commit:** `<TBD>`
-- **C1 `loam amend apply` commit:** `<TBD>`
-- **C1 seal commit:** `<TBD>`
-- **C2 plan-doc update commit (if separate):** `<TBD>`
-- **C2 feature commits (per-component or single):** `<TBD>`
-- **C2 `loam amend apply` commit:** `<TBD>`
-- **C2 seal commit:** `<TBD>`
-- **M11a-3 sweep-execution + report commit (if any):** `<TBD>` (per M11a precedent: doc-only § 14 register update on canonical pos-v2; sweep report itself in `.scratch/`).
-- **M11a-3 §14 register update commit (on M11 plan-doc):** `<TBD>`.
+- **C1 plan-doc commit:** `21bf1c0` — `docs(plans): C1+C2 combined-remediation sub-plan`
+- **C1 feature commit (manifest YAML):** `cb029a0` — `feat(public): C1 partition manifest — Classes A+B reclassified dev_only`
+- **C1 amendment manifest commit:** `b260c9f` — `docs(plans): C1 amendment manifest — Classes A+B partition reclassification`
+- **C1 `loam amend apply` commit:** `bb00f29` — `chore(loam-amend-apply): loam amend apply for C1 Class A+B partition reclassification`
+- **C1 seal commit:** `e2cbeec` — `chore(seals): oss-v0-1-0-publish-public-docs-classes-abc-c1 — hands-off-lifecycle at bb00f29`
+- **C2 plan-doc update commit (this §14 backfill):** `<TBD>` — to be assigned at commit-time.
+- **C2 feature commits:** **DEFERRED — HALT** (see D-build.ABC-C2.HALT above).
+- **C2 `loam amend apply` commit:** **DEFERRED — HALT.**
+- **C2 seal commit:** **DEFERRED — HALT.**
+- **M11a-3 re-dispatch:** **DEFERRED — pending C2-bis + C2-prime resolution per HSF#1.**
 
 ---
 

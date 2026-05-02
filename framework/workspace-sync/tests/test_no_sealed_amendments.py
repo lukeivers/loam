@@ -44,7 +44,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "14609d8"
+BASELINE = "79b445e"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -142,6 +142,7 @@ def test_B20_only_workspace_sync_surfaces_changed() -> None:
         "dormancy/",
         "framework/dormancy/",
         "framework/hands-off-lifecycle/seals/",
+        "framework/tools/pos-publish-framework-only/",
     )
     # Universal admissions per amendment #22 ruling #3 (CLAUDE.md +
     # docs/odd-*.md + docs/rebuild/FUTURE_IDEAS.md).

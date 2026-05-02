@@ -67,7 +67,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "14609d8"
+BASELINE = "79b445e"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -186,6 +186,7 @@ def test_only_dormancy_changed() -> None:
         "framework/tools/loam-mode/",
         "framework/tools/loam-migrate-dormancy-config/",
         "framework/hands-off-lifecycle/seals/",
+        "framework/tools/pos-publish-framework-only/",
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",
@@ -201,6 +202,7 @@ def test_only_dormancy_changed() -> None:
         "docs/rebuild/STATE.md",
         "docs/rebuild/VALUE_PROPOSITION.md",
         "docs/rebuild/dev-mode-manifest.yaml",
+        "docs/CLAUDE_CAPABILITIES.md",
     }
 
     offending = []

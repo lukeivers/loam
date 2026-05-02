@@ -44,8 +44,9 @@ loam init .
 claude
 ```
 
-Your first run scaffolds `~/.loam/`, brings up the memory sidecar and
-orchestrator, and drops you into a primary-persona greeting. Normal
+Your first run scaffolds `~/.loam/`, starts the orchestrator, primes
+the file-based memory at `<workspace>/.loam/memory/`, and drops you
+into a primary-persona greeting. Normal
 runs surface what needs attention without you opening a terminal.
 
 > **Note on the CLI name during the v0.1.0 release sequence.** The

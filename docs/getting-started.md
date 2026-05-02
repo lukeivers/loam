@@ -29,8 +29,8 @@ Before you start, confirm:
    manager you prefer (system Python, `uv`, `pyenv`, Homebrew); loam
    does not pin one.
 4. **Git.** A reasonably recent `git` (2.30+ is fine).
-5. **Roughly 500 MB of disk** for the loam framework and its memory
-   sidecar's local data.
+5. **Roughly 500 MB of disk** for the loam framework and the per-host
+   config it scaffolds at `~/.loam/`.
 
 You do **not** need: a cloud account, an API key beyond what Claude
 Code already manages, a database server, or admin/root privileges

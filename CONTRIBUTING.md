@@ -54,7 +54,7 @@ write the four points down in the PR description.
 ## How to shape a pull request
 
 1. **Branch from `main`.** Name the branch something descriptive:
-   `fix/memory-sidecar-restart-race`, `feat/dev-sdlc-template-set`.
+   `fix/memory-write-queue-race`, `feat/dev-sdlc-template-set`.
 2. **Keep PRs scoped.** One objective per PR, ideally. If your
    change has two distinct outcomes, two PRs review faster than one.
 3. **Tests are part of the change.** Every new behaviour needs a

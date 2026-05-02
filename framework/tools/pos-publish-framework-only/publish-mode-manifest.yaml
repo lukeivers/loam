@@ -239,6 +239,20 @@ dev_only:
   # tests).
   - glob: "**/tests/test_no_sealed_amendments.py"
   - glob: "**/tests/test_AC_*_seal_diff_*.py"
+  # Class C-bis — test-fence (industry-convention shape). The test
+  # suite under any component's `tests/` directory is dev-discipline
+  # machinery: tests verify dev-mode behaviour by literal-asserting
+  # dev-only paths (e.g. `docs/rebuild/plans/`, `pos-amend`, `loam-
+  # mode`), carry fixture content + assertion strings + comments
+  # rich in internal vocabulary, and run during CI but never at
+  # user-runtime. No public-shipping artefact under any modern
+  # Python package's `tests/` directory in v1.0 OSS releases (cpython,
+  # numpy, requests precedent). Authored at the C2-bis amendment per
+  # `docs/rebuild/plans/oss-v0-1-0-publish-public-docs-classes-abc-
+  # bis.md` (foldback for C2 halt at HT-C2.4 — 109-file test-residual
+  # scope mismatch). Subsumes the two C1-locked exact globs above
+  # (kept in place as audit-trail for D-Q.ABC.3 = a precision ruling).
+  - glob: "**/tests/**"
   # Internal docs tree — plans, components, FUTURE_IDEAS, STATE,
   # BACKLOG, capability-corpus authoring shape, decay-retention-
   # analysis, spec/. Per OSS-readiness audit §4.1 + master plan §3

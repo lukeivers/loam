@@ -449,7 +449,7 @@ Filled by each phase's builder post-build per existing precedent (M9 §14 D-buil
 - M11a synthetic `framework-only` branch HEAD SHA: dispatch 1 N/A (synthesis errored); dispatch 2: `947ebe2` (synthesis succeeded; branch advanced from source `78417c5`); **dispatch 3: `c4f24bf`** (canonical source `710ea4d`; synthesis no-op-on-current — branch already at `c4f24bf` from C2-prime smoke check).
 - **M11a dispatch-3 staging push:** repo `lukeivers/loam-staging` created (private); `main` at `c4f24bf`; URL https://github.com/lukeivers/loam-staging. Per D-Q.M11.2: persists for v0.x reuse.
 - **M11a dispatch-2 halt-pointer commit (doc-only; appended §14 D-build.M11a.2..8 + halt narrative pointer for dispatch 2):** `<TBD-D2>` (was filled by dispatch-2 wrap-up; review prior recovery-cycle commits if needed).
-- **M11a dispatch-3 GO-pointer commit (this update; doc-only; appends §14 D-build.M11a.9..10 + dispatch-3 GO narrative):** `<TBD-D3>` (filled at commit-time).
+- **M11a dispatch-3 GO-pointer commit (this update; doc-only; appends §14 D-build.M11a.9..10 + dispatch-3 GO narrative):** `3c8e228`.
 - M11a seal commit: N/A in dispatch 1 + dispatch 2 + dispatch 3 (M11a does not seal a sealed-component amendment per AC.M11a.S; doc-only commit pair is the M11a wrap).
 - M11b owner-ruling entry at `oss-launch-decisions.md`: `<TBD>` (post-M11b owner browse + ruling).
 - M11b foldback amendment commits (if any): `<TBD>` (none expected — M11a closed GO).

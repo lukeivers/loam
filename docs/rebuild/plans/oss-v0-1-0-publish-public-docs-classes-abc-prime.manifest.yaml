@@ -93,6 +93,15 @@ universal_paths:
   prefixes:
     - docs/rebuild/plans/
     - framework/tools/pos-publish-framework-only/
+    # safety-layer's seal_test (test_no_sealed_amendments.py) has no
+    # allowed_prefixes / allowed_files / allowed binding — it's a
+    # purely structural integration test. Admit safety-layer's whole
+    # tree via universal-paths so the seal-cycle's SEAL_COMMIT
+    # sidecar bump is admitted on safety-layer side. (The H19
+    # cross-cutting test in HOL already admits "safety-layer" as a
+    # top-level prefix; this universal-path entry is the loam-amend-
+    # dry-run-side mirror.)
+    - framework/safety-layer/
   files:
     - CLAUDE.md
     - docs/CLAUDE_CAPABILITIES.md

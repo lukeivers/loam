@@ -424,6 +424,12 @@ Filled by each phase's builder post-build per existing precedent (M9 §14 D-buil
 - D-build.M11a.8 (dispatch 2): report authoring — overwrites dispatch-1 halt narrative with full dispatch-2 results at canonical `.scratch/` path.
 - D-build.M11a.9..N: builder-discovered method decisions (re-dispatch + future dispatches).
 
+**M11a dispatch 3 of N — CLOSED GO (2026-05-01, post-recovery).** All 8 ACs PASS. Source-commit `710ea4d`; framework-only branch at `c4f24bf` (synthesis was a no-op idempotent re-run on already-current branch — dispatch 2 had advanced framework-only to `947ebe2`, but the recovery cycle (#100/#101/#102) re-synthesised against the corrected manifest+SUBSTITUTION_TABLE; the branch was already at `c4f24bf` from the C2-prime build smoke-check). Eight named AC.OSS.3 literals scan to ZERO files in synthetic tree (`pos-amend`, `loam-amend`, `loam-mode`, `docs/rebuild/`, `odd-methodology`, `odd-in-loam`, `duration-estimation-rubric`, `pos-publish-framework-only`). Four AC.OSS.5 source-side tokens scan to zero. Six AC.MFBM.3 deps scan to zero across 14 pyproject.toml files. Wired-component sweep: every shipping component has ≥1 production caller (tests/ stripped from synthesis surface per amendment #101). Stranger-clone smoke succeeded (clone + pip install -e + `import loam.primary_persona` + `import loam.scope_of_work` all green). Staging push: `lukeivers/loam-staging` created private; `main` at `c4f24bf`; byte-identical to local synthetic. Full sweep narrative: `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md`. **Hand-off to M11b READY.**
+
+- D-build.M11a.9 (dispatch 3): Synthesis re-run — confirmed idempotent on unchanged canonical (`710ea4d` → `c4f24bf` no-op exit 0). When dispatch-2-era framework-only SHA is upstaged by recovery-cycle re-synthesis at amendment build time, M11a-3 sees the post-recovery branch as already-current; CLI no-op guard short-circuits.
+- D-build.M11a.10 (dispatch 3): AC.M11a.7 staging push mechanism — `gh repo create lukeivers/loam-staging --private` (single call) + `git push https://github.com/lukeivers/loam-staging.git framework-only:main` (single call); verification via `git ls-remote` (remote main SHA matches local `framework-only` SHA) + `gh api repos/...` (200 OK; private:true; default_branch:main).
+- D-build.M11a.11..N: builder-discovered method decisions (M11b dispatch + future re-runs).
+
 ### M11b — OSS-build.M11b.x — (post-build, post-M10)
 
 - D-build.M11b.1: Owner-browse mechanism (clone staging vs use local synthetic).
@@ -438,15 +444,15 @@ Filled by each phase's builder post-build per existing precedent (M9 §14 D-buil
 - **M11a dispatch-1 halt-pointer commit (doc-only; appends §14 D-build.M11a.1 + halt narrative pointer):** `b1dc662`.
 - **M11a foldback amendment #98 (M7-partition-fix; partition manifest extension for `docs/plugins/**`):** sealed `d983f94`.
 - **M8-corrective amendment #99 (HC#4 byte-content rebaseline post-Apache-header insertion):** sealed `5271091`.
-- M11a sweep-execution commit (if any tracked artefacts beyond this plan-doc + .scratch/ report): N/A in dispatch 1 + dispatch 2 (both halted; future re-dispatch may fill).
-- M11a `.scratch/` sweep report (NOT committed to git per .scratch/ gitignore): `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md` (dispatch 2 overwrites dispatch 1; both narrate HALT).
-- M11a synthetic `framework-only` branch HEAD SHA: dispatch 1 N/A (synthesis errored); **dispatch 2: `947ebe2`** (synthesis succeeded; branch advanced from source `78417c5`).
-- M11a staging-push commit on `lukeivers/loam-staging:main` (if AC.M11a.7 scoped to M11a per D-Q.M11.1): N/A in dispatch 1 + dispatch 2 (deferred; future re-dispatch will fill).
-- **M11a dispatch-2 halt-pointer commit (this update; doc-only; appends §14 D-build.M11a.2..8 + halt narrative pointer for dispatch 2):** `<TBD>` (filled at commit-time).
-- M11a seal commit: N/A in dispatch 1 + dispatch 2 (no seal — halted at AC.M11a.2 in dispatch 2).
-- **Foldback amendment(s) for AC.M11a.2 dispatch-2 halt (Class A/B/C per sweep report §3.2):** `<TBD>` — to be authored as separate dispatch(es) per D-Q.M11.4 (no auto-foldback at M11a). Likely shape: M2-corrective (reclassify `<comp>/seals/**` + `**/tests/test_no_sealed_amendments.py` + `**/tests/test_AC_*_seal_diff_*.py` as `dev_only`) + multi-component-corrective (rewrite-or-substitute production source/doc references to dev-only paths).
-- M11b owner-ruling entry at `oss-launch-decisions.md`: `<TBD>` (post-foldback + post-M11a re-dispatch GO).
-- M11b foldback amendment commits (if any): `<TBD>`.
+- M11a sweep-execution commit (if any tracked artefacts beyond this plan-doc + .scratch/ report): N/A in dispatch 1 + dispatch 2 + dispatch 3 (M11a is read-only against canonical; staging push is to remote, not canonical-tracked).
+- M11a `.scratch/` sweep report (NOT committed to git per .scratch/ gitignore): `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md` (dispatch 3 overwrites dispatch 1 + dispatch 2; dispatch 3 narrates GO).
+- M11a synthetic `framework-only` branch HEAD SHA: dispatch 1 N/A (synthesis errored); dispatch 2: `947ebe2` (synthesis succeeded; branch advanced from source `78417c5`); **dispatch 3: `c4f24bf`** (canonical source `710ea4d`; synthesis no-op-on-current — branch already at `c4f24bf` from C2-prime smoke check).
+- **M11a dispatch-3 staging push:** repo `lukeivers/loam-staging` created (private); `main` at `c4f24bf`; URL https://github.com/lukeivers/loam-staging. Per D-Q.M11.2: persists for v0.x reuse.
+- **M11a dispatch-2 halt-pointer commit (doc-only; appended §14 D-build.M11a.2..8 + halt narrative pointer for dispatch 2):** `<TBD-D2>` (was filled by dispatch-2 wrap-up; review prior recovery-cycle commits if needed).
+- **M11a dispatch-3 GO-pointer commit (this update; doc-only; appends §14 D-build.M11a.9..10 + dispatch-3 GO narrative):** `<TBD-D3>` (filled at commit-time).
+- M11a seal commit: N/A in dispatch 1 + dispatch 2 + dispatch 3 (M11a does not seal a sealed-component amendment per AC.M11a.S; doc-only commit pair is the M11a wrap).
+- M11b owner-ruling entry at `oss-launch-decisions.md`: `<TBD>` (post-M11b owner browse + ruling).
+- M11b foldback amendment commits (if any): `<TBD>` (none expected — M11a closed GO).
 - M11.S programme-seal entry in master plan §14: `<TBD>` (post-M11b-GO).
 
 ---

@@ -156,6 +156,13 @@ dev_and_public:
   - path: docs/architecture.md
   - glob: "docs/components/**"
   - glob: "docs/design/**"
+  # Public plugin-reference category — added at M7-partition-fix per
+  # AC.M7-fix.1 (foldback for M11a halt F-M11a.1). M7 commit `2fefd8b`
+  # added `docs/plugins/dev-sdlc.md` per M7 D-Q.M7.6 = (c) "separate
+  # `docs/plugins/<name>.md` category"; the M2 manifest predates M7
+  # and never admitted the new directory. Future v0.x plugin
+  # references inherit this glob's `dev_and_public` class.
+  - glob: "docs/plugins/**"
   # Existing live public-relevant docs.
   - path: docs/CLAUDE_CAPABILITIES.md
   # Pre-M6b.0 the Dev/SDLC plugin classified `dev_and_public` per

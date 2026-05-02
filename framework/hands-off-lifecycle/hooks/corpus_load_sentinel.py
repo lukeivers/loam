@@ -43,7 +43,7 @@ One sentinel file per (workspace, session_id) pair:
   - ``created_at`` (ISO-8601 UTC).
 
 The hook completes within the SessionStart inner-hook budget (5s
-matches loam-mode's #45 envelope) and exits 0 on every path
+matches the dev-mode session-start emitter's #45 envelope) and exits 0 on every path
 (fail-soft per the SessionStart contract).
 
 ## Workspace-mode partition (AC.SE.5)
@@ -56,8 +56,8 @@ The required-corpus set is mode-aware: NORMAL USE workspaces get
 ``loam_mode``). The mode-bit string contract per AC.SE.1 is
 ``"dev-mode" | "normal-use"``.
 
-Stdlib-plus-loam-mode (loam_mode is dev-discipline; A1 consumes,
-does not amend).
+Stdlib-plus-dev-mode-emitter (the ``loam_mode`` Python package is
+dev-discipline; A1 consumes, does not amend).
 """
 
 from __future__ import annotations
@@ -186,14 +186,13 @@ def compute_corpus_paths_required(
 
     Manifest location probe (in order):
       1. ``<workspace>/plugins/dev-sdlc/dev-mode-manifest.yaml`` —
-         post-M6b.0 location (the manifest MOVED into the Dev/SDLC
-         plugin tree per AC.OSS-M6b0.5).
-      2. ``<workspace>/docs/rebuild/dev-mode-manifest.yaml`` — pre-
-         M6b.0 location; preserved as fallback for workspaces that
-         predate the migration.
-      3. ``<workspace>/framework/docs/rebuild/dev-mode-manifest.yaml`` —
-         framework-only restructure fallback (amendment #67,
-         AC.SFR.3).
+         post-M6b.0 canonical location (the manifest MOVED into the
+         Dev/SDLC plugin tree per AC.OSS-M6b0.5).
+      2. workspace-root legacy location — preserved as fallback for
+         workspaces that predate M6b.0.
+      3. workspace-root ``framework/`` fallback (single-framework
+         restructure, amendment #67 / AC.SFR.3) for framework-only-
+         shaped workspaces.
 
     Fail-soft: if the manifest is missing or malformed, returns the
     empty list (the hook still writes a sentinel; ``state`` field

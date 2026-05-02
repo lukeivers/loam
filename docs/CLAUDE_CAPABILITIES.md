@@ -52,7 +52,7 @@ Claude Code is the terminal-first harness the primary persona runs inside. Every
 
 **Composes with loam.**
 - `telegram-interface` already ships user-facing slash skills (`/telegram:configure`, `/telegram:access`) — the Skill pattern is proven inside loam already.
-- The dev-mode pos-amend CLI is a tool today; a future Skill wrapper (`.claude/skills/pos-amend/SKILL.md`) would let the primary persona trigger amendment-cycle bookkeeping through the same `/` dispatch surface as everything else. Latent composition.
+- The dev-mode amendment-cycle CLI is a tool today; a future Skill wrapper would let the primary persona trigger amendment-cycle bookkeeping through the same `/` dispatch surface as everything else. Latent composition.
 - The dev-mode FUTURE_IDEAS catalogue's Idea 8 (structural context-load gate) can likely be authored as a Skill invoked at session-start or a Skill called by a SessionStart hook, depending on where the gate lives.
 
 **Pitfalls.**
@@ -137,7 +137,7 @@ Handler types: `command` (shell, default 600s timeout), `http`, `mcp_tool`, `pro
 - `session-resilient-orchestrator` and `hands-off-lifecycle` both spawn Claude Code processes; they rely on `-p`, `--output-format stream-json`, and explicit session IDs to correlate logs across restarts. `--include-hook-events` is the flag that surfaces hook firings into the output stream — essential for the orchestrator's background-work-awareness contract (STATE.md rule 7).
 - `memory-system` uses `ClaudePrintLLMClient` (amendment #8) which is exactly `claude -p` invoked as a subprocess for entity extraction. The fallback routing, error handling, and cost governance all compose with the CLI's behaviour, not a raw API.
 - `--max-budget-usd` is a first-class cost ceiling that `cost-governance` could compose with rather than re-implementing wall-clock spend tracking.
-- `--bare` mode skips skill/hook/plugin/MCP discovery for faster scripted calls — relevant for `pos-amend` and other CLI tools where a quick model call shouldn't drag in the whole harness.
+- `--bare` mode skips skill/hook/plugin/MCP discovery for faster scripted calls — relevant for the amendment-cycle CLI and other CLI tools where a quick model call shouldn't drag in the whole harness.
 - `--json-schema` enforces structured output — relevant for any loam component that needs a validated JSON response from Claude (objective-tracker, foundation-audit, self-correction-loop all have shapes that would benefit).
 
 **Pitfalls.**
@@ -539,7 +539,7 @@ The official Anthropic marketplace accepts submissions via `claude.ai/settings/p
 - **`telegram-interface` is already a plugin** (`plugin:telegram:telegram` namespace visible in the MCP tool names). The telegram-interface + telegram-interface-framework-integration work is the reference implementation for how loam ships a plugin.
 - **`workspace-bootstrap`** and **`hands-off-lifecycle`** together form the native foundational layer that every loam plugin is supposed to compose on. Idea 3 names these plugins as must-have-at-launch candidates, with dev/SDLC plugin as the first.
 - **Plugin monitors (`monitors/monitors.json`)** are exactly the shape STATE.md rule 7 background-work-awareness demands — a tail command becomes in-context notifications without loam reinventing the surface. `observability-aggregator` and `session-resilient-orchestrator` could emit to monitor-shaped outputs that a loam plugin picks up.
-- **Plugin `bin/` directory** is the distribution mechanism for loam CLI tools — the dev-mode pos-amend CLI currently ships via the repo root; a future "loam dev/SDLC plugin" (Idea 3) could ship pos-amend as `bin/pos-amend` and get automatic PATH inclusion.
+- **Plugin `bin/` directory** is the distribution mechanism for loam CLI tools — the dev-mode amendment-cycle CLI currently ships via the repo root; a future "loam dev/SDLC plugin" (Idea 3) could ship the amendment-cycle CLI under `bin/` and get automatic PATH inclusion.
 - **Plugin `settings.json` with `agent`** is the mechanism for shipping an entire custom primary persona as a plugin — a "code-reviewer persona" or "research-assistant persona" plugin becomes a one-toggle override of the default agent.
 - **Workspace-specific loam compositions** (e.g. a workspace that wants a canned `/pos:context-load` skill for Idea 8's gate) become plugins once they stabilise; before then they live unnamespaced in `.claude/skills/`.
 
@@ -596,7 +596,7 @@ Skills are the primary authoring surface for user-facing loam functionality that
 
 **Reference-style skills.** Static conventions / style guides / domain knowledge. Short, always-loadable. Example: a `loam-odd-conventions` skill that carries the ODD methodology primer — loadable any time Claude sees an ODD-shaped task. Composes naturally with FUTURE_IDEAS.md Idea 6 (ODD as default framing) — the persona pulls the skill when it needs to think about an objective but doesn't have the full methodology in context.
 
-**Task-style skills.** Explicit procedure with side effects. Usually `disable-model-invocation: true`. Example: `/pos-amend:apply` that wraps the `pos-amend` CLI. Runs when the user types it, never auto-loads.
+**Task-style skills.** Explicit procedure with side effects. Usually `disable-model-invocation: true`. Example: `/amend:apply` that wraps the dev-mode amendment-cycle CLI. Runs when the user types it, never auto-loads.
 
 **Forked-context skills (`context: fork`).** Run in an isolated subagent with its own context; receive the skill body as the task prompt. Good for research-shaped work that shouldn't contaminate the main conversation. Example: a `deep-research` skill forked into the `Explore` agent that scans a topic and returns a summary. Maps to the Agent-tool dispatch pattern but with a skill manifest as the entrypoint.
 
@@ -836,7 +836,7 @@ Session persistence is the substrate everything else composes on: without it, lo
 - `claude --fork-session --resume <id>` — create new session ID from resumed session; both diverge.
 - `claude --from-pr <N>` — resume sessions linked to a GitHub PR (auto-linked at `gh pr create`).
 
-**Composes with loam.** Amendment-cycle bookkeeping (the dev-mode pos-amend CLI) could attach to session IDs so every amendment-commit has a traceable session-of-record; `--from-pr` is the GitHub-integrated version if amendments flow through PRs.
+**Composes with loam.** Amendment-cycle bookkeeping (the dev-mode amendment-cycle CLI) could attach to session IDs so every amendment-commit has a traceable session-of-record; `--from-pr` is the GitHub-integrated version if amendments flow through PRs.
 
 ### 9.3 Checkpointing and rewinding
 
@@ -916,7 +916,7 @@ When a loam feature needs to *enforce* a rule rather than *suggest* it, the righ
 | "This plugin must ship with this baseline config" | Plugin `settings.json` + hooks + agents directory |
 | "Context X must be loaded before planning" | `UserPromptSubmit` hook + context-injection skill |
 
-loam should prefer structural enforcement over prompt-level nag — matches the ODD preference for structural refusal (odd-methodology.md) and CLAUDE.md's Lens 1 ("compose on top of a Claude-native primitive rather than re-implement").
+loam should prefer structural enforcement over prompt-level nag — matches the ODD preference for structural refusal (`docs/design/odd.md`) and CLAUDE.md's Lens 1 ("compose on top of a Claude-native primitive rather than re-implement").
 
 ### 10.2 Cost-governance composition map
 

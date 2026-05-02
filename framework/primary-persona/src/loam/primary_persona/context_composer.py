@@ -157,8 +157,9 @@ class SessionPayload(BaseModel):
     amendments_in_flight: tuple[str, ...] = Field(
         default=(),
         description=(
-            "Paths to in-flight amendment-*.md files under "
-            "docs/rebuild/plans/. Empty tuple when none are in flight."
+            "Paths to in-flight amendment-*.md files in the "
+            "workspace's plan directory. Empty tuple when none are "
+            "in flight."
         ),
     )
     service_state: dict[str, str] = Field(

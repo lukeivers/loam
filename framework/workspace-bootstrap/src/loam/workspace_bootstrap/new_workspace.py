@@ -352,8 +352,7 @@ def _clone_canonical(
             f"{target_framework_dir!s} failed (exit "
             f"{checkout_completed.returncode}): "
             f"{(checkout_completed.stderr or '').strip()!r}. "
-            f"Hint: canonical must publish a {branch!r} branch "
-            f"(synthesise with `pos-publish-framework-only`)."
+            f"Hint: canonical must publish a {branch!r} branch."
         )
 
 

@@ -36,8 +36,7 @@ Error codes (IPC):
     -32042 system_kill_active
     -32043 safety_gate_channel_unavailable
 
-See docs/architecture.md for the full design and
-../../docs/rebuild/components/safety-layer/ for the governing documents.
+See docs/architecture.md for the full design.
 """
 
 from __future__ import annotations

@@ -338,8 +338,9 @@ def build_persona_session_start_inner_hook(loam_root: Path) -> dict:
     Used by ``hands-off-lifecycle/hooks/first_run_helper.py``'s
     ``_persona_inner_hooks`` (AC46.5). Composed via amendment #45's
     ``extra_inner_hooks`` parameter on ``build_first_run_stanza`` /
-    ``build_supervisor_stanza``. Timeout 5s matches loam-mode's
-    precedent (D-build.7) — the session-start work is bounded by
+    ``build_supervisor_stanza``. Timeout 5s matches the dev-mode
+    session-start emit timeout precedent (D-build.7) — the
+    session-start work is bounded by
     service probes (~250ms each), filesystem reads, and a single
     SQLite query.
     """
@@ -365,8 +366,9 @@ def build_persona_stop_inner_hook(loam_root: Path) -> dict:
 
     Timeout 5s per D6 — the hook detaches the actual ``add_episode``
     write to a background subprocess and returns in milliseconds;
-    5s is the precedent from loam-mode + persona session-start +
-    user-prompt-submit and is generous for the work the Stop hook
+    5s is the precedent from the dev-mode session-start emit +
+    persona session-start + user-prompt-submit timeouts and is
+    generous for the work the Stop hook
     itself performs (transcript walk + per-turn-id read/write +
     Popen).
     """

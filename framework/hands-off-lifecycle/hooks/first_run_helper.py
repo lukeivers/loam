@@ -110,17 +110,17 @@ from agent_file_authoring import (  # noqa: E402
 
 # ---- amendment #45 — multi-contributor SessionStart composition ------
 #
-# The workspace's loam-mode session-start command is registered as a
+# The workspace's dev-mode-session-start session-start command is registered as a
 # second inner hook on the SessionStart envelope (per amendment #45's
 # generalisation of ``build_first_run_stanza`` /
 # ``build_supervisor_stanza``). The import of
 # ``loam_mode.session_start.build_loam_mode_inner_hook`` is wrapped so
-# a missing or broken loam-mode install degrades gracefully to the
+# a missing or broken dev-mode-session-start install degrades gracefully to the
 # pre-amendment-#45 single-inner-hook shape (AC.45.5 backwards-compat
 # in the degraded path). When the import succeeds the inner hook is
 # composed into the stanza; when it fails the helper logs nothing and
 # proceeds — Claude Code's SessionStart fan-out simply does not get
-# the loam-mode emit.
+# the dev-mode-session-start emit.
 
 
 def _loam_mode_inner_hooks(loam_root: Path) -> list[dict]:
@@ -131,7 +131,7 @@ def _loam_mode_inner_hooks(loam_root: Path) -> list[dict]:
     """
     try:
         # Prefer the workspace venv's site-packages so a workspace
-        # whose loam-mode install differs from the host's is resolved
+        # whose dev-mode-session-start install differs from the host's is resolved
         # correctly. The shared venv is at ``<root>/.venv``.
         venv_site = (
             loam_root / ".venv" / "lib"
@@ -152,11 +152,11 @@ def _loam_mode_inner_hooks(loam_root: Path) -> list[dict]:
 # ---- amendment #46 — primary-persona session-start + UserPromptSubmit --
 #
 # The persona's session-start emitter is registered as an inner hook on
-# the SessionStart envelope alongside loam-mode (AC46.5). Ordering per
+# the SessionStart envelope alongside dev-mode-session-start (AC46.5). Ordering per
 # umbrella plan §6 D5: probe (first-run.sh / pos_session_start.py) →
-# persona emit → loam-mode emit. Both helpers are independently fail-
+# persona emit → dev-mode-session-start emit. Both helpers are independently fail-
 # soft; a missing primary-persona install degrades only the persona
-# inner hook (loam-mode still composes).
+# inner hook (dev-mode-session-start still composes).
 #
 # The persona's user-prompt-submit emitter lands as a single inner hook
 # under hooks.UserPromptSubmit via merge_user_prompt_submit (AC46.5).
@@ -170,7 +170,7 @@ def _persona_inner_hooks(loam_root: Path) -> list[dict]:
     Lazy import + fail-soft per AC46.4. Mirrors ``_loam_mode_inner_hooks``
     shape: missing or broken primary-persona install yields an empty
     list and the SessionStart envelope falls back to omitting only the
-    persona inner hook (probe + loam-mode still compose).
+    persona inner hook (probe + dev-mode-session-start still compose).
     """
     try:
         venv_site = loam_root / ".venv" / "lib"
@@ -210,7 +210,7 @@ def _corpus_load_inner_hooks(loam_root: Path) -> list[dict]:
             "type": "command",
             "command": f"{venv_python} {script}",
             "async": False,
-            # 5s matches loam-mode + persona inner-hook timeouts (the
+            # 5s matches dev-mode-session-start + persona inner-hook timeouts (the
             # established A1 substrate budget per plan-doc §5
             # constraint 3).
             "timeout": 5,
@@ -243,7 +243,7 @@ def _corpus_inline_inner_hooks(loam_root: Path) -> list[dict]:
             "type": "command",
             "command": f"{venv_python} {script}",
             "async": False,
-            # 5s matches A1 corpus-load + loam-mode + persona inner-
+            # 5s matches A1 corpus-load + dev-mode-session-start + persona inner-
             # hook timeouts (the established session-start envelope
             # budget; research §3.2 + §8.4 confirm <20ms expected for
             # the lean always-load tier on local SSD).
@@ -256,13 +256,13 @@ def _extra_session_start_hooks(loam_root: Path) -> list[dict]:
     """Return the SessionStart envelope's ``extra_inner_hooks`` list.
 
     Order per amendment 73 plan §6 D-build.4 (locks D-CI.6.(a)):
-    corpus-load (A1) → corpus-inline (NEW) → persona → loam-mode.
+    corpus-load (A1) → corpus-inline (NEW) → persona → dev-mode-session-start.
     The base inner hook (first-run.sh in `build_first_run_stanza`;
     supervisor in `build_supervisor_stanza`) composes BEFORE these
     via the stanza builder; the final order at Claude Code's hook
     fan-out is:
 
-        probe (base) → corpus-load → corpus-inline → persona → loam-mode
+        probe (base) → corpus-load → corpus-inline → persona → dev-mode-session-start
 
     Rationale: A1's sentinel writer fires FIRST (writing the empty-
     `corpus_paths_loaded` baseline); corpus-inline fires SECOND
@@ -270,7 +270,7 @@ def _extra_session_start_hooks(loam_root: Path) -> list[dict]:
     `corpus_paths_loaded` with the inlined paths); persona fires
     THIRD (its dossier reads A1's sentinel post-inline, so a future
     micro-amendment can grow a `corpus_inlined: true` marker without
-    re-ordering); loam-mode keeps its slot at the tail.
+    re-ordering); dev-mode-session-start keeps its slot at the tail.
 
     Each contributor independently fail-soft; one returning ``[]``
     is graceful (the envelope simply omits that hook).

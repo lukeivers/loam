@@ -47,8 +47,14 @@ HOOK_SCRIPT = HOOKS_DIR / "corpus_inline_session_start.py"
 
 
 def test_AC_PMR_2_on_demand_constant_points_at_plugin_paths() -> None:
-    """The `_ON_DEMAND` tuple's first two entries are the post-M6b.0
-    plugin-relative paths."""
+    """The `_ON_DEMAND` tuple carries the post-M6b.0 plugin-relative
+    ODD-doc paths. C2-prime amendment §11 D-Q.ABC-prime.2 STRIPPED
+    the prior third entry (``docs/rebuild/FUTURE_IDEAS.md``) — the
+    AC.PMR.2 intent ("on-demand pointer block lists plugin paths")
+    is preserved; only the FUTURE_IDEAS pointer was retired (no
+    public counterpart). ODD §4 in-band rebaseline per
+    `feedback_loose_AC_text_fix_AC_not_implementation`.
+    """
     sys.path.insert(0, str(HOOKS_DIR))
     try:
         import corpus_inline_session_start as mod  # type: ignore[import-not-found]
@@ -57,12 +63,10 @@ def test_AC_PMR_2_on_demand_constant_points_at_plugin_paths() -> None:
             sys.path.remove(str(HOOKS_DIR))
         except ValueError:
             pass
-    assert mod._ON_DEMAND[:2] == (
+    assert mod._ON_DEMAND == (
         "plugins/dev-sdlc/docs/odd-methodology.md",
         "plugins/dev-sdlc/docs/odd-in-loam.md",
     )
-    # Third entry unchanged.
-    assert mod._ON_DEMAND[2] == "docs/rebuild/FUTURE_IDEAS.md"
 
 
 def _make_dev_mode_workspace_with_plugin_docs(tmp_path: Path) -> Path:
@@ -120,7 +124,10 @@ def test_AC_PMR_2_e2e_on_demand_block_lists_plugin_paths(
     block = stdout[block_idx:]
     assert "- plugins/dev-sdlc/docs/odd-methodology.md" in block
     assert "- plugins/dev-sdlc/docs/odd-in-loam.md" in block
-    assert "- docs/rebuild/FUTURE_IDEAS.md" in block
+    # FUTURE_IDEAS.md pointer STRIPPED at C2-prime per §11 D-Q.ABC-
+    # prime.2 — no public counterpart, so the on-demand block no
+    # longer references it. AC.PMR.2 intent preserved.
+    assert "- docs/rebuild/FUTURE_IDEAS.md" not in block
     # Pre-realignment paths must NOT appear (they would mislead the
     # reader if both shapes were emitted).
     assert "- docs/odd-methodology.md\n" not in block

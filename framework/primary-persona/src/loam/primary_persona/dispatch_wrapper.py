@@ -28,7 +28,7 @@ wrapper:
 
   1. Builds a :class:`scope_of_work.ScopeSpec` from the shape
      (AC.A8.1).
-  2. Infers the budget from the duration-estimation rubric
+  2. Infers the budget from the inline budget-inference rubric
      (D4 — AC.A8.2).
   3. Opens an :class:`pos_orchestrator.ipc.IPCClient` against the
      workspace's orchestrator socket (D9 — AC.A8.3 / AC.A8.6).
@@ -89,12 +89,12 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal
 
 
-# ---- inline duration-estimation rubric (D4) -------------------------
+# ---- inline budget-inference rubric (D4) ----------------------------
 #
-# The six-row table from memory bullet
-# `feedback_duration_estimation_rubric` §"Step 1 — Categorize by task
-# shape". Each row: time_seconds_min/max + tokens_min/max bounds. The
-# wrapper picks the row's tokens_max as the conservative reservation
+# The six-row table is a budget-inference rubric the persona consults
+# at dispatch-shape time. Each row: time_seconds_min/max +
+# tokens_min/max bounds. The wrapper picks the row's tokens_max as
+# the conservative reservation
 # (cost-governance refuses the dispatch if a smaller cap would not
 # fit; over-reservation does not refuse). AC.A8.2 measures the
 # returned Budget falls within the rubric's documented bounds.

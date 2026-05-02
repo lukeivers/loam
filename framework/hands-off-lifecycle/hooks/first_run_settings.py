@@ -95,17 +95,17 @@ def _iter_commands(stanza_entries: list[Any]) -> list[str]:
 _LOAM_COMMAND_MARKERS: tuple[str, ...] = (
     "first-run.sh",
     "pos_session_start.py",
-    # Amendment #45 (sub-plan B): loam-mode SessionStart emitter
+    # Amendment #45 (sub-plan B): dev-mode-session-start SessionStart emitter
     # composed onto the shipped stanza by ``build_*_stanza`` when the
     # caller passes ``extra_inner_hooks``. Recognised here so a
     # re-run of merge_session_start over a stanza we wrote does not
-    # treat the loam-mode inner hook as "user-authored".
+    # treat the dev-mode-session-start inner hook as "user-authored".
     "loam_mode.cli session-start",
     "loam_mode.cli session_start",
     "-m loam_mode",
     # Amendment #46: primary-persona session-start emitter composed
-    # onto the SessionStart envelope alongside loam-mode (probe →
-    # persona → loam-mode ordering per umbrella plan §6 D5).
+    # onto the SessionStart envelope alongside dev-mode-session-start (probe →
+    # persona → dev-mode-session-start ordering per umbrella plan §6 D5).
     # Recognised here so re-merge over a stanza we wrote does not
     # back up the persona inner hook as user-authored.
     "primary_persona.cli session-start",
@@ -113,13 +113,13 @@ _LOAM_COMMAND_MARKERS: tuple[str, ...] = (
     "-m loam.primary_persona",
     # Structural-enforcement A1 substrate (AC.SE.4): the corpus-load
     # sentinel SessionStart inner hook composes onto the multi-
-    # contributor envelope alongside loam-mode and primary-persona.
+    # contributor envelope alongside dev-mode-session-start and primary-persona.
     # Path substring is the canonical marker (the script lives at
     # hands-off-lifecycle/hooks/corpus_load_session_start.py).
     "corpus_load_session_start.py",
     # Amendment 73 (AC.CI.7): the corpus-inlining SessionStart inner
     # hook composes onto the multi-contributor envelope alongside the
-    # A1 corpus-load sentinel + loam-mode + primary-persona. Path
+    # A1 corpus-load sentinel + dev-mode-session-start + primary-persona. Path
     # substring is the canonical marker (the script lives at
     # hands-off-lifecycle/hooks/corpus_inline_session_start.py).
     "corpus_inline_session_start.py",
@@ -191,7 +191,7 @@ def _is_pos_v2_owned(stanza_entries: list[Any]) -> bool:
     supervisor command. The predicate now treats a stanza as pos-v2-
     owned iff every inner-hook command matches one of the recognised
     pos-v2 command markers (``first-run.sh``, ``pos_session_start.py``,
-    or the loam-mode session-start command). A wholly user-authored
+    or the dev-mode-session-start session-start command). A wholly user-authored
     stanza or one that mixes user-authored and pos-v2 inner hooks is
     still treated as displaceable — backup behaviour is preserved.
     """
@@ -318,7 +318,7 @@ def merge_session_start(
     Behaviour on the SessionStart stanza itself:
       * no prior stanza: write ``[new_entry]``.
       * prior stanza is pos-v2's own (command points at first-run.sh,
-        pos_session_start.py, or loam-mode session-start — see the
+        pos_session_start.py, or dev-mode-session-start session-start — see the
         amendment #45 multi-contributor extension to ``_is_pos_v2_owned``):
         replace with ``[new_entry]``, no backup.
       * prior stanza is user-authored: write the whole prior settings.json

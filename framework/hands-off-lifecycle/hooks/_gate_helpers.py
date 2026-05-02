@@ -117,10 +117,17 @@ _CARVE_OUT_FILES: frozenset[str] = frozenset(
         "framework/CLAUDE.dev.md",
         ".gitignore",
         "framework/.gitignore",
+        # Long-form ODD docs — exact-file admission so the gate
+        # remains permissive on the discipline corpus regardless
+        # of the parent prefix carve-out membership.
         "docs/odd-methodology.md",
         "docs/odd-in-loam.md",
-        "docs/rebuild/FUTURE_IDEAS.md",
-        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+        # FUTURE_IDEAS{,_DRAFT}.md exact-admission entries STRIPPED
+        # per C2-prime amendment §11 D-Q.ABC-prime.2: those files
+        # have no public counterpart so substitution is not
+        # available; the parent ``docs/`` prefix carve-out (in
+        # ``_CARVE_OUT_PREFIXES``) admits them in dev-mode use,
+        # so removing the exact-file entries is fail-soft.
     }
 )
 

@@ -134,7 +134,13 @@ _SAMPLE_FILES = (
      # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
      # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
      # retire-and-rebaseline.
-     "bf59e2b7990b283143e5746373ab8ad3ef30341c3b8f44f1bc5605749bfac80d"),
+     # C2-prime (2026-05-02) SHA bump: ``loam-mode`` cosmetic-
+     # prose references in two docstring locations rewritten to
+     # "dev-mode session-start emit timeout" / "dev-mode session-
+     # start emit + persona session-start + user-prompt-submit
+     # timeouts" per C2-prime amendment §5.4 file 17 (RW shape;
+     # AC.OSS.3 banned-literal removal). ODD §4 in-band rebaseline.
+     "2bda61f0133048c04c14967b2e0cf51059d956da368a3010dec5411c869afe9e"),
     ("framework/primary-persona/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,

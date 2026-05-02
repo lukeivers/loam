@@ -41,7 +41,16 @@ from dataclasses import dataclass
 # explicitly via tuple-of-tuples so the iteration order is stable
 # across Python versions.
 #
-# Per master plan §13 D-Q.OSS.6 (locked): four entries.
+# Entries 1-4 (M9-locked): master plan §13 D-Q.OSS.6.
+# Entries 5-7 (D-Q.ABC.4): C2-prime amendment (sub-plan
+# `oss-v0-1-0-publish-public-docs-classes-abc-prime.md` §11
+# D-Q.ABC.4 carry-forward). Internal authority/spec docs → public
+# counterparts.
+# Entries 8-12 (D-Q.ABC-prime.2): C2-prime amendment §11 D-Q.ABC-
+# prime.2 (5 entries; collapse plugin-relative ODD refs + plan/state
+# refs to public counterparts). Order-sensitive: trailing-slash
+# entry 12 (``docs/rebuild/plans/`` → ``docs/components/``) precedes
+# any future no-slash partner.
 SUBSTITUTION_TABLE: tuple[tuple[str, str], ...] = (
     (
         "/Users/lukeivers/ivers-corp-pos-v2/",
@@ -58,6 +67,66 @@ SUBSTITUTION_TABLE: tuple[tuple[str, str], ...] = (
     (
         "Luke Ivers",
         "Alice Anderson",
+    ),
+    # Entry 5 (D-Q.ABC.4) — internal value-prop authority doc → public
+    # positioning doc. Used by files 1, 5, 18, 24, 25 (CLAUDE.md +
+    # corpus_inline_session_start + session_start_gate + first_run_
+    # scaffold + tracker_seed) per C2-prime §5.4.
+    (
+        "docs/rebuild/VALUE_PROPOSITION.md",
+        "docs/positioning.md",
+    ),
+    # Entry 6 (D-Q.ABC.4) — internal spec doc → public architecture
+    # doc (closest public analogue). Used by file 25 (tracker_seed.py
+    # SPEC_DOC_RELPATH constant) per C2-prime §5.4.
+    (
+        "docs/rebuild/spec/loam-objectives-spec.md",
+        "docs/architecture.md",
+    ),
+    # Entry 7 (D-Q.ABC.4) — root-level ODD methodology ref → public
+    # ODD doc. Used by files 4, 5, 18, 24 (gate-helpers + corpus_
+    # inline + session_start_gate + first_run_scaffold).
+    (
+        "docs/odd-methodology.md",
+        "docs/design/odd.md",
+    ),
+    # Entry 8 (D-Q.ABC-prime.2) — root-level ODD-in-loam ref → public
+    # ODD doc. Mirrors entry 7. Used by files 4, 5, 18.
+    (
+        "docs/odd-in-loam.md",
+        "docs/design/odd.md",
+    ),
+    # Entry 9 (D-Q.ABC-prime.2) — plugin-relative ODD methodology ref
+    # → public ODD doc. Used by file 5 (corpus_inline_session_start).
+    (
+        "plugins/dev-sdlc/docs/odd-methodology.md",
+        "docs/design/odd.md",
+    ),
+    # Entry 10 (D-Q.ABC-prime.2) — plugin-relative ODD-in-loam ref
+    # → public ODD doc. Used by file 5.
+    (
+        "plugins/dev-sdlc/docs/odd-in-loam.md",
+        "docs/design/odd.md",
+    ),
+    # Entry 11 (D-Q.ABC-prime.2) — internal STATE.md ref → public
+    # getting-started doc. Used by files 5, 18.
+    (
+        "docs/rebuild/STATE.md",
+        "docs/getting-started.md",
+    ),
+    # Entry 12 (D-Q.ABC-prime.2) — internal plans/ trailing-slash
+    # path → public components/ doc-tree. Used by file 18 docstring
+    # prose (the path-construction logic in
+    # ``enumerate_amendments_in_flight`` uses individual ``Path /
+    # "docs" / "rebuild" / "plans"`` segments which are NOT touched
+    # by the textual SUB; the function returns ``[]`` in synth
+    # workspaces because no ``docs/rebuild/plans/`` directory
+    # exists publicly — that's the correct first-run-stranger
+    # behaviour). Trailing-slash entry; precedes any future no-
+    # slash partner.
+    (
+        "docs/rebuild/plans/",
+        "docs/components/",
     ),
 )
 

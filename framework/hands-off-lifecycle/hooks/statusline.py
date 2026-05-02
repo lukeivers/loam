@@ -26,8 +26,7 @@ dispatches by ``state.status``, and prints one plain-English progress
 line. Stdlib-only by design — pre-venv first runs invoke this script
 under the system Python before ``<workspace>/.venv/`` exists.
 
-Per locked plan ``docs/rebuild/plans/bootstrap-progress-statusline.md``
-§10 D1-D6 (LOCKED 2026-04-26):
+Per locked design (D1-D6, captured 2026-04-26):
 
   - D1: ``progress_pct`` is read from ``FirstRunState`` (additive
     field landed in this amendment).

@@ -78,13 +78,13 @@ fragment) and deleting itself from the filesystem. The fragment is
 therefore the post-self-retire target shape, not a hand-merge
 recipe for users.
 
-See `../docs/rebuild/components/true-first-run/` for the
-true-first-run build brief. See `../docs/rebuild/FUTURE_IDEAS.md` for
-the "setup scripts self-retire on success" Core Development Convention
-the lifecycle follows.
+See `docs/components/hands-off-lifecycle.md` for the component-level
+design notes. The lifecycle follows the "setup scripts self-retire
+on success" convention.
 
 ## Ownership
 
-Eve owns the brief and the proposal; build agents land the
-amendments. See `../docs/rebuild/components/hands-off-lifecycle/`
-for research, proposal, brief, and outputs.
+Component-level design owners maintain the brief and the proposal;
+build agents land the amendments. See
+`docs/components/hands-off-lifecycle.md` for research, proposal,
+brief, and outputs.

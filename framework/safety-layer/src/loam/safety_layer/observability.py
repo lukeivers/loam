@@ -138,8 +138,7 @@ def notification_dispatched(
 
 
 # ---- amendment #19: silent-except surface emitters -------------------
-# Per the 2026-04-22 audit + classifier (amendment #19 research doc at
-# docs/rebuild/plans/research/amendment-19-s1-silent-excepts-research.md),
+# Per the 2026-04-22 audit + classifier (amendment #19),
 # four silent-except sites inside the safety layer are replaced with
 # observable-surface emitters. The reason-suffix / failed-id fields
 # carry the structured signal; these spans carry the OTel signal. All

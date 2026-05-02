@@ -57,21 +57,19 @@ manifest tightening is an explicit out-of-scope follow-on per plan
 
 ## On-demand tier (D-build.5; D-CI.2.(a) path-pointer only)
 
-Static set of three workspace-relative paths emitted as a pointer
-block; persona reads on-demand via the Read tool when a turn
-requires methodology / pos-v2-specific ODD / strategic-future
-context:
+Static set of workspace-relative paths emitted as a pointer block;
+persona reads on-demand via the Read tool when a turn requires
+methodology / pos-v2-specific ODD context:
 
   - ``plugins/dev-sdlc/docs/odd-methodology.md`` (post-M6b.0)
   - ``plugins/dev-sdlc/docs/odd-in-loam.md`` (post-M6b.0)
-  - ``docs/rebuild/FUTURE_IDEAS.md``
 
 Section-anchor extraction (research §5.4 hybrid) is an explicit
 out-of-scope follow-on per plan §7.
 
 ## Output shape (D-build.6)
 
-Raw text on stdout (matches loam-mode + persona emitter precedent —
+Raw text on stdout (matches dev-mode session-start emitter + persona emitter precedent —
 both write to stdout; Claude Code captures stdout as
 ``additionalContext`` automatically). No ``hookSpecificOutput`` JSON
 envelope authored by this hook.
@@ -92,7 +90,6 @@ Format:
     === pos-v2 on-demand corpus (read via Read tool when relevant) ===
     - plugins/dev-sdlc/docs/odd-methodology.md
     - plugins/dev-sdlc/docs/odd-in-loam.md
-    - docs/rebuild/FUTURE_IDEAS.md
 
 Missing always-load files emit a structured ``[missing]`` marker
 slot (AC.CI.1); missing on-demand files are silently omitted from
@@ -148,16 +145,24 @@ _ALWAYS_LOAD: tuple[str, ...] = (
 
 _ON_DEMAND: tuple[str, ...] = (
     # Post-M6b.0: long-form ODD docs MOVED into the Dev/SDLC plugin
-    # tree per AC.OSS-M6b0.5 — pre-M6b.0 paths were docs/odd-
-    # methodology.md + docs/odd-in-loam.md; post-realignment
-    # (AC.PMR.2) the on-demand pointer block points at the plugin-
-    # relative locations. The hook's mode-partition early-return
-    # (mode != "dev-mode" no-op) is the graceful-skip mechanism for
-    # NORMAL-USE workspaces where the plugin tree is dropped; no
-    # additional graceful-skip wiring needed.
+    # tree per AC.OSS-M6b0.5 — pre-M6b.0 paths were the root-level
+    # ODD docs; post-realignment (AC.PMR.2) the on-demand pointer
+    # block points at the plugin-relative locations. The hook's
+    # mode-partition early-return (mode != "dev-mode" no-op) is the
+    # graceful-skip mechanism for NORMAL-USE workspaces where the
+    # plugin tree is dropped; no additional graceful-skip wiring
+    # needed.
+    #
+    # FUTURE_IDEAS.md pointer STRIPPED per C2-prime amendment §11
+    # D-Q.ABC-prime.2: dev-only file with no public counterpart,
+    # so substitution is not available. The on-demand block
+    # silently omits missing entries (per AC.CI.2 contract), so
+    # removing the entry is fail-soft — strangers still see the
+    # ODD pointers; pos-v2 dev workspaces still see ODD pointers
+    # (the FUTURE_IDEAS doc remains directly readable in dev mode
+    # via Read).
     "plugins/dev-sdlc/docs/odd-methodology.md",
     "plugins/dev-sdlc/docs/odd-in-loam.md",
-    "docs/rebuild/FUTURE_IDEAS.md",
 )
 
 
@@ -303,7 +308,7 @@ def _render_on_demand_block(workspace_root: Path) -> str:
 
 def _emit(text: str) -> None:
     """Write the rendered text to stdout (Claude Code captures stdout
-    as ``additionalContext`` per the established loam-mode + persona
+    as ``additionalContext`` per the established dev-mode session-start emitter + persona
     emitter convention)."""
     if not text:
         return

@@ -26,13 +26,37 @@ from loam.publish_framework_only.synth import synthesise_framework_only
 
 
 def test_AC_OSS_M9_1_substitution_table_locked_to_four_entries() -> None:
-    """Master plan §13 D-Q.OSS.6 locks the table to four entries."""
-    assert len(SUBSTITUTION_TABLE) == 4
+    """Master plan §13 D-Q.OSS.6 locks the M9 base to four entries; the
+    C2-prime amendment (§11 D-Q.ABC.4 + D-Q.ABC-prime.2) extends the
+    table by 8 additional entries (3 + 5) to cover Class C production-
+    file references — base 4 + 8 = 12 total. ODD §4 in-band rebaseline
+    per `feedback_loose_AC_text_fix_AC_not_implementation` analog: the
+    AC.OSS-M9.1 intent ("fixed-table-only — no host-specific data
+    outside the table") is preserved; only the locked size grew.
+    """
+    assert len(SUBSTITUTION_TABLE) == 12
     sources = {src for src, _ in SUBSTITUTION_TABLE}
+    # Base M9 entries (locked).
     assert "/Users/lukeivers/ivers-corp-pos-v2/" in sources
     assert "/Users/lukeivers/ivers-corp-pos-v2" in sources
     assert "lukeivers/pos-v2" in sources
     assert "Luke Ivers" in sources
+    # C2-prime D-Q.ABC.4 entries (entries 5-7).
+    assert "docs/rebuild/VALUE_PROPOSITION.md" in sources
+    assert "docs/rebuild/spec/loam-objectives-spec.md" in sources
+    assert "docs/odd-methodology.md" in sources
+    # C2-prime D-Q.ABC-prime.2 entries (entries 8-12).
+    assert "docs/odd-in-loam.md" in sources
+    assert "plugins/dev-sdlc/docs/odd-methodology.md" in sources
+    assert "plugins/dev-sdlc/docs/odd-in-loam.md" in sources
+    assert "docs/rebuild/STATE.md" in sources
+    assert "docs/rebuild/plans/" in sources
+    # Idempotence (AC.OSS-M9.3): no replacement appears as a source.
+    replacements = {repl for _, repl in SUBSTITUTION_TABLE}
+    assert sources.isdisjoint(replacements), (
+        f"AC.OSS-M9.3 idempotence violation: replacement appears as "
+        f"source: {sources & replacements!r}"
+    )
 
 
 def test_AC_OSS_M9_6_smoke_synthesis_carries_zero_substitution_residuals(

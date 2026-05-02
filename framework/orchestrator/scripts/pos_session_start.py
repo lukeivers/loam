@@ -264,8 +264,8 @@ def run_session_start(
 
 # ---- amendment #49 — existing-workspace statusLine retrofit ---------
 #
-# Per locked plan `docs/rebuild/plans/bootstrap-progress-statusline.md`
-# §6 D-build.5 + decision D5 (LOCKED 2026-04-26): the supervisor's
+# Per locked design (D-build.5 + decision D5, captured 2026-04-26):
+# the supervisor's
 # settings-touch path calls `merge_status_line` so a workspace whose
 # first-run already completed before amendment #49 landed picks up
 # the top-level `statusLine` entry on its next supervisor session-
@@ -313,8 +313,7 @@ def _maybe_install_status_line(loam_root: Path) -> None:
 
 # ---- amendment #95 — existing-workspace Stop-hook re-seat retrofit ---
 #
-# Per locked plan `docs/rebuild/plans/memory-pipeline-fix.md` §3 D1+D2
-# + AC.MPF.1: workspaces whose first-run completed before
+# Per AC.MPF.1: workspaces whose first-run completed before
 # ``_maybe_merge_stop`` was effective (or whose first-run hit the
 # lazy-import fail-soft branch on that day) carry a settings.json that
 # lacks ``hooks.Stop`` permanently. Pos3 was empirically in this state

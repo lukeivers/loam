@@ -22,8 +22,7 @@ Composes:
   - BackgroundWorkMonitor    (primary-persona; Phase 1)
 
 Workspace bootstrap is loaded by the workspace-bootstrap framework's
-``WorkspaceBootstrapPyContribution`` adapter, NOT by _startup. See
-docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md
+``WorkspaceBootstrapPyContribution`` adapter, NOT by _startup
 (amendment #7). The orchestrator's own startup no longer has a
 fail-closed branch tied to a workspace Python file — the fail-closed
 point moved to missing ``~/.loam/bootstrap.yaml``, which the framework
@@ -207,8 +206,7 @@ class Orchestrator:
         # Workspace bootstrap is run by
         # workspace_bootstrap.adapters.workspace_bootstrap_py as a
         # late-phase contribution (amendment #7). The orchestrator no
-        # longer self-loads bootstrap.py — see
-        # docs/rebuild/components/orchestrator-bootstrap-unification.
+        # longer self-loads bootstrap.py.
 
         # Heartbeat task
         self._heartbeat_task = asyncio.create_task(

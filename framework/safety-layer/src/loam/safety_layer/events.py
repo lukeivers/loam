@@ -75,7 +75,7 @@ class KillEventRecord(BaseModel):
     distinguish "nothing to cancel" from "per-scope cancel raised" on
     system-kill; the field defaults to ``()`` so existing callers are
     unaffected (backwards-compatible additive extension; no shape
-    change). See ``docs/rebuild/plans/amendment-19-s1-silent-excepts.md``.
+    change).
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)

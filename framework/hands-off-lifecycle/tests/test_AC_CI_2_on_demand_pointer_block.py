@@ -91,14 +91,22 @@ def _run_hook(workspace: Path) -> tuple[str, int]:
 
 def test_AC_CI_2_emits_on_demand_pointer_block(tmp_path: Path) -> None:
     """All on-demand files present → pointer block lists each file
-    on its own line, prefixed with ``- ``."""
+    on its own line, prefixed with ``- ``.
+
+    C2-prime amendment §11 D-Q.ABC-prime.2 STRIPPED the prior
+    third pointer entry (``docs/rebuild/FUTURE_IDEAS.md``) — no
+    public counterpart available. AC.CI.2 intent ("on-demand
+    pointer block emitted") is preserved; only the pointer set
+    shrank. ODD §4 in-band rebaseline.
+    """
     workspace = _make_dev_mode_workspace(tmp_path, with_on_demand=True)
     stdout, rc = _run_hook(workspace)
     assert rc == 0
     assert "=== pos-v2 on-demand corpus" in stdout
     assert "- plugins/dev-sdlc/docs/odd-methodology.md" in stdout
     assert "- plugins/dev-sdlc/docs/odd-in-loam.md" in stdout
-    assert "- docs/rebuild/FUTURE_IDEAS.md" in stdout
+    # FUTURE_IDEAS.md pointer STRIPPED at C2-prime.
+    assert "- docs/rebuild/FUTURE_IDEAS.md" not in stdout
 
 
 def test_AC_CI_2_omits_missing_on_demand_files(tmp_path: Path) -> None:
@@ -121,7 +129,8 @@ def test_AC_CI_2_omits_missing_on_demand_files(tmp_path: Path) -> None:
     assert "[missing]" not in block.split("=== pos-v2 on-demand corpus")[1]
     # Other on-demand files still listed.
     assert "- plugins/dev-sdlc/docs/odd-in-loam.md" in block
-    assert "- docs/rebuild/FUTURE_IDEAS.md" in block
+    # FUTURE_IDEAS.md pointer STRIPPED at C2-prime.
+    assert "- docs/rebuild/FUTURE_IDEAS.md" not in block
 
 
 def test_AC_CI_2_pointer_entries_are_workspace_relative_paths(

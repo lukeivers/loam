@@ -106,20 +106,21 @@ def test_AC_alpha_1_leverage_rule_names_both_halves():
     )
 
 
-def test_AC_alpha_1_capability_index_has_at_least_eight_corpus_path_entries():
-    """The capability index carries ≥ 8 one-line entries pointing at
-    corpus-doc paths under ``docs/rebuild/capability-corpus/``."""
+def test_AC_alpha_1_capability_index_section_present():
+    """The ``### Capability index`` section heading exists in the
+    template. C2-prime (sub-plan
+    `oss-v0-1-0-publish-public-docs-classes-abc-prime.md` §5.4
+    file 19, predecessor §11 D-Q.ABC.5(b) DROP locked) retired the
+    inline 8-entry path table — the persona's "fetch on demand,
+    not at session-start" doctrine (named in the leverage rule
+    body) supersedes the inline index. AC.α.1 intent ("the
+    persona has a leverage spine + on-demand fetch convention")
+    is preserved; only the inline path-table was retired. ODD §4
+    in-band rebaseline.
+    """
     body = _body()
-    index_idx = body.index("### Capability index")
-    next_idx = body.find("\n## ", index_idx + 5)
-    assert next_idx > 0
-    index_section = body[index_idx:next_idx]
-    # Match path entries to corpus docs (any class).
-    pattern = re.compile(r"docs/rebuild/capability-corpus/\S+\.md")
-    matches = pattern.findall(index_section)
-    assert len(matches) >= 8, (
-        f"capability index must carry ≥ 8 corpus-doc path entries; "
-        f"found {len(matches)}: {matches}"
+    assert "### Capability index" in body, (
+        "Capability index section heading missing from template"
     )
 
 
@@ -180,6 +181,13 @@ def test_AC_alpha_1_lean_on_the_corpus_names_read_tool_and_corpus_path():
     assert "read tool" in rule_section, (
         "Lean on the corpus rule must name the Read tool"
     )
-    assert "docs/rebuild/capability-corpus/" in rule_section, (
-        "Lean on the corpus rule must name the capability-corpus path"
+    # C2-prime: the inline ``docs/rebuild/capability-corpus/`` path
+    # was retired in favour of generic "workspace's capability
+    # corpus" prose (predecessor §11 D-Q.ABC.5(b) DROP locked +
+    # current plan §5.4 file 19). AC.α.1 intent ("on-demand fetch
+    # convention named") preserved; the rule names the convention
+    # via the workspace-defined capability-corpus.
+    assert "capability-corpus" in rule_section or "capability corpus" in rule_section, (
+        "Lean on the corpus rule must name the capability corpus "
+        "(the on-demand fetch surface the persona reads against)"
     )

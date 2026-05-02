@@ -34,16 +34,13 @@ workspace is classified by `<workspace>/.pos/sync-protected.yaml`:
 - `<workspace>/.pos/sync/state.yaml` — convergent-idempotency
   record; re-runs no-op when the same ref is already applied.
 
-**Salvage attribution.** Per `docs/rebuild/plans/workspace-sync.md`
-§9.1, ~70% of workspace-sync's primitives lift from
-`self-upgrade/src/self_upgrade/` (clause-(h) salvage). All lifts are
-by file-copy (Hard Constraint #1: NO edits to `self-upgrade/`).
-Vendoring under `workspace_sync._resolver_client` mirrors
-`tools/upgrade-merge-resolver/` for the `claude -p` subprocess wrap
-without runtime dependency on self-upgrade.
+**Salvage attribution.** ~70% of workspace-sync's primitives lift
+from `self-upgrade/src/self_upgrade/` (clause-(h) salvage). All
+lifts are by file-copy (Hard Constraint #1: NO edits to
+`self-upgrade/`). Vendoring under `workspace_sync._resolver_client`
+mirrors `tools/upgrade-merge-resolver/` for the `claude -p`
+subprocess wrap without runtime dependency on self-upgrade.
 
 **See also.**
 
-- Plan: `docs/rebuild/plans/workspace-sync.md`
-- Builder-plan: `docs/rebuild/plans/workspace-sync.builder-plan.md`
-- Manifest: `docs/rebuild/plans/workspace-sync.manifest.yaml`
+- Component-level design notes: `docs/components/workspace-sync.md`

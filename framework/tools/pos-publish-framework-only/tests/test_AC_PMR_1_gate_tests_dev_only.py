@@ -72,18 +72,27 @@ def test_AC_PMR_1_gate_test_classifies_dev_only(path: str) -> None:
     )
 
 
-def test_AC_PMR_1_non_gate_test_classifies_dev_and_public() -> None:
-    """Negative-control: a non-gate test file in the same dir
-    continues to classify `dev_and_public` via the broad
-    `framework/hands-off-lifecycle/**` glob."""
+def test_AC_PMR_1_non_gate_test_classifies_dev_only_post_C2_bis() -> None:
+    """Negative-control: post-C2-bis (sealed `990e95c`), all
+    ``**/tests/**`` paths classify ``dev_only`` via the broader
+    test-fence reclassification (``oss-v0-1-0-publish-public-docs-
+    classes-abc-bis.md``). The AC.PMR.1 intent ("gate-test files
+    are dev_only") still holds; the test-fence broadens the rule to
+    ALL test files. Negative-control adjusts: a non-gate test file
+    still classifies dev_only — same outcome class, broader rule.
+    ODD §4 in-band rebaseline per
+    `feedback_loose_AC_text_fix_AC_not_implementation`.
+    """
     manifest = _load_canonical_manifest()
-    # corpus_load_sentinel tests do NOT match the AG/BAG patterns.
+    # corpus_load_sentinel tests do NOT match the AG/BAG patterns,
+    # but DO match the C2-bis ``**/tests/**`` test-fence glob.
     candidate = (
         "framework/hands-off-lifecycle/tests/test_corpus_load_sentinel.py"
     )
     cls = classify_path(manifest, candidate)
-    assert cls == PartitionClass.DEV_AND_PUBLIC, (
-        f"{candidate} expected DEV_AND_PUBLIC (broad glob); got {cls}"
+    assert cls == PartitionClass.DEV_ONLY, (
+        f"{candidate} expected DEV_ONLY (post-C2-bis test-fence); "
+        f"got {cls}"
     )
 
 

@@ -72,7 +72,15 @@ _SAMPLE_FILES = (
     ("framework/primary-persona/src/loam/primary_persona/cli.py",
      # M1c launchd-label rebrand SHA preserved (content unchanged by
      # M1e — pure rename via git mv).
-     "ed2398283ae6259baff172f4eb629f5a38041d8a14e45c8f8f3da3b08efdc5d2"),
+     # M8-corrective (2026-05-01) SHA bump: M8 commit `6bef03b`
+     # ("feat(public): M8 license-governance — Apache headers on
+     # runtime .py + SECURITY.md tightening") inserted a 14-line
+     # Apache-2.0 license header at the top of this file per AC.OSS.4.
+     # ODD §4 in-band retire-and-rebaseline per
+     # `feedback_loose_AC_text_fix_AC_not_implementation` analog —
+     # implementation matches AC.OSS.4 intent; the byte-content sample
+     # SHA updates to reflect the legitimate header addition.
+     "5817efd950a3d7c24f6ec6e3e5e5f01759f12f7fdf92898226ee3ce6806515cb"),
     ("framework/primary-persona/src/loam/primary_persona/__init__.py",
      # M4 (amendment #85) SHA bump: re-export of NEW public function
      # ``write_dispatcher_stub`` (and ``NewACSpec`` made public for
@@ -91,12 +99,18 @@ _SAMPLE_FILES = (
      # re-exports retired from package surface per AC.MFBM.5. ODD
      # §4 in-band retire-and-rebaseline per `feedback_loose_AC_text_
      # fix_AC_not_implementation`.
-     "f361f02772387968dd6369c6b69ee79888541d059095246b18a8ebd72892536c"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "f3119c49c2b0037081448cc7d72f7752b863a08710142987387a3e013f21cb39"),
     ("framework/primary-persona/src/loam/primary_persona/onboarding.py",
      # M1e SHA bump: Phase C import rebrand
      # (`from workspace_bootstrap.workspace_paths` →
      # `from loam.workspace_bootstrap.workspace_paths`).
-     "965534c9eb02c7e8ba7ae6a78fe4e830c682f44b3e0556950841c5e016ffed52"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "996a439815e867000f5600b70f1e9735e91899cc2a9c0f20a4d5f8e3374e7ac9"),
     ("framework/primary-persona/src/loam/primary_persona/session_start_emitter.py",
      # M1e SHA bump: Phase E internal-decoration rebrand (legacy
      # `loam_root` predecessor identifier callsites) plus Phase C `-m`
@@ -117,7 +131,10 @@ _SAMPLE_FILES = (
      # ``build_session_composer`` when the factory returns ``None``
      # (production path). Per AC.MFBM.5: zero MCP instantiation in
      # the runtime retrieval path.
-     "6110d5da56baa37cc5ade769c6efa9e0a5fde1d9ea6a88ce6908bf2696b2c471"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "bf59e2b7990b283143e5746373ab8ad3ef30341c3b8f44f1bc5605749bfac80d"),
     ("framework/primary-persona/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,
@@ -127,29 +144,56 @@ _SAMPLE_FILES = (
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
      # (`pos.bootstrap.contributions` → `loam.bootstrap.contributions`).
-     "5624b151efc0d324d735eb767dd2f44b15c0cc031a44f81842461bf06aeae170"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "435335e4b69818ebcaa03292d5eb4d57fd44b535abb40a02c95cf58e3b6f24dd"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/spec.py",
-     "d3ce250ccc76974da7301cff2b1342a24b97c20f19287a109fed2cd7162fa5c8"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "8d7f1aa04bc8ca8ab6f4b1aa96722f99e3144d53ce22453854f21aff862ebae5"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/host.py",
      # M1f SHA bump: workspace-bootstrap host.py field rename
      # (self.graceful_degradation → self.dormancy + docstring entry)
      # per AC.RNM-1f.6. ODD §4 in-band retire-and-rebaseline.
-     "8e8d1548f71b206726a83f63ae355a685047c02f2a647ad15b7a9bf734b01c5b"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "04b01405e218a518e18c873de25e448851404c864078aac16c64e26cccb899fa"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/errors.py",
-     "e1aa52137a62d551501e6da23071e414a6b0ed40236517a826ae98531434cbaf"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "85215ebbc0eb622f44630694430fc76239f9e53f513ac04c75ac3f99f76c2ffc"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/discovery.py",
      # M1e SHA bump: Phase D `_ENTRYPOINT_GROUP` value rebrand.
-     "cc07afbd9f21c2c19775c1973099888c061dd32b96c5b62d97a456e08c067ead"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "813d646ae7b49df5806999ea46a8e9383b12af11fd0182a251a70f9de1f5942d"),
     # scope-of-work — leaf component (no test_no_sealed sidecar; the
     # leaf shape is the cleanest regression target for HC#4).
     ("framework/scope-of-work/src/loam/scope_of_work/spec.py",
-     "4abc338b7b1a4041fbc0afe73ad0e19d8a6cf4a166010493129b4e04d01fd667"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "209d7390db93c5d36ad68e6cbe9470cf3e21ed7fbacfeac5089eff627e7bff43"),
     ("framework/scope-of-work/src/loam/scope_of_work/events.py",
-     "e39dccf0f8dfe81cc977bbe66518c1d3d786a7b85989428d52a78d51f2c4ef7b"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "c029a95070b1df5389f25a323e76145630bb2698e3b22fe3ea6b5a8f7262442e"),
     ("framework/scope-of-work/src/loam/scope_of_work/projection.py",
-     "eee352633bc498c80f613b247d769bcb193d008a48b249b1245719405fd70375"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "ff212437fa1b168b998f13212f7a8d4f351c497acbdf0cb8c9f0d4fbe2b1532b"),
     ("framework/scope-of-work/src/loam/scope_of_work/triggers.py",
-     "ea9060d65e3d6946ba0b3ea77ad9a58a9026fefc62954d92cdff1f7c300d525e"),
+     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
+     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
+     # retire-and-rebaseline.
+     "9ce28c3207f7873102e7e0f7c0bc49dce3adbeb5f05c399b9be041bd3d4995c1"),
     ("framework/scope-of-work/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `scope_of_work` → `loam-scope-of-work`).

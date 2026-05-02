@@ -383,25 +383,104 @@ vs original C2 estimate of 70-130 min (midpoint 100 min). The total is ~2× orig
 
 ---
 
-## 14. Method-decision register skeleton (post-build)
+## 14. Method-decision register (post-build)
 
 Filled by the C2-prime builder post-build per existing precedent (M9 §14, M-FBM §14, M7-partition-fix §14, C1 §14, C2-bis §14).
 
-### D-build.ABC-Cprime.x — per-file edits
+### D-build.ABC-Cprime.1 — per-file edits + M9 SUBSTITUTION_TABLE +8
 
-`<TBD>` — per-file edits + M9 TABLE extension; verification via per-component pytest pre-seal + post-fix synthesis smoke check.
+Multi-component fence touched 7 framework components + the
+pos-publish-framework-only TABLE extension (admitted via universal-
+paths). Per-file shape per §5.4: 21 RW (cosmetic prose / docstrings /
+comments), 6 SUB/MIXED (load-bearing constants kept; SUBSTITUTION_TABLE
+rewrites at synth time). Verification: per-component pytest passes
+(dormancy 104, hands-off-lifecycle 470, orchestrator 102, primary-
+persona 521, safety-layer 72, workspace-bootstrap 252+1 skip,
+workspace-sync 81, pos-publish-framework-only 63 — total 1665 tests
++1 skip). Synthesis smoke: post-fix `pos-publish-framework-only`
+synthesis advances `refs/heads/framework-only` to deterministic SHA;
+AC.OSS.3 banned-literal `git grep -F -l` returns ZERO across all 8
+literals (`pos-amend`, `loam-amend`, `loam-mode`, `docs/rebuild/`,
+`odd-methodology`, `odd-in-loam`, `duration-estimation-rubric`,
+`framework/tools/pos-publish-framework-only/`). M9 idempotence
+verified: re-running synthesis on already-synthesised tree yields
+identical framework-only SHA `88c883de3f397dfd03053b8b304f52207fa1c08a`.
+
+### D-build.ABC-Cprime.2 — HC#4 byte-content rebaseline
+
+One sample file rebaselined (`framework/primary-persona/src/loam/
+primary_persona/session_start_emitter.py` — cosmetic-prose RW for
+two `loam-mode` references in docstrings). New SHA-256 in
+`test_d1_byte_content_match.py`; M8-corrective + C2-prime stacked
+provenance comment in-band.
+
+### D-build.ABC-Cprime.3 — HSF#1 in-band M8-license-header rebaseline
+
+Pre-existing failures in `test_AC35_6_framework_not_content.py` +
+`test_AC40_7_framework_not_content.py` surfaced during seal step
+(M8-corrective `6bef03b` injected Apache-2.0 license header
+carrying ``Luke Ivers`` as copyright owner; the substring tripped
+the persona-prose-constant ``"Luke"`` negative check). NOT
+introduced by C2-prime (verified via stash+baseline pytest run).
+C2-prime absorbed the rebaseline in-band per
+`feedback_loose_AC_text_fix_AC_not_implementation` ODD §4 — added a
+private `_strip_apache_header` helper to drop the license header
+before applying the substring scope. AC.35.6 + AC.40.7 intent
+preserved; seal completed.
+
+### D-build.ABC-Cprime.4 — HSF#2 corpus_load_sentinel.py manifest fallback restoration
+
+Initial RW removed `legacy_manifest` + `framework_manifest` per plan
+§5.4 file 6's wording; per-component pytest immediately surfaced 3
+AC.SFR.3 test failures (`test_compute_corpus_paths_required_falls_
+through_to_framework` + 2 siblings binding the framework-fallback
+contract). Plan-author wording was wrong about "the only viable
+location is plugins/" — `framework/docs/rebuild/dev-mode-manifest.
+yaml` IS load-bearing for AC.SFR.3 (single-framework restructure,
+amendment #67). Resolved by restoring the 3-path probe; AC.OSS.3
+grep clears anyway because path-segment construction (`"docs" /
+"rebuild" / "dev-mode-manifest.yaml"`) carries no textual
+`docs/rebuild/` literal.
+
+### D-build.ABC-Cprime.5 — HSF#3 STRIP-comment corrective
+
+Initial feature commit's STRIP-explanation comment carried the very
+``docs/rebuild/FUTURE_IDEAS.md`` literal it was documenting; synth-
+tree grep on `docs/rebuild/` surfaced 1 residual at session_start_
+gate.py line 58. Resolved with a NEW corrective commit (no `--amend`
+per `feedback_no_amend_in_agent_dispatches`) rephrasing the comment
+to "FUTURE_IDEAS-style draft-capture surface".
+
+### D-build.ABC-Cprime.6 — HSF#4 safety-layer SEAL_COMMIT admission
+
+Post-seal `loam amend apply --dry-run` flagged MISSING_ADMISSION on
+`framework/safety-layer/tests/SEAL_COMMIT`. Root cause: safety-
+layer's `test_no_sealed_amendments.py` is purely structural (no
+`allowed_prefixes` / `allowed_files` / `allowed` binding to
+admit per-amendment changes). Resolved with a NEW corrective commit
+extending `universal_paths.prefixes` with `framework/safety-layer/`.
+Post-fix dry-run shows informational WOULD_WIDEN only; no MISSING.
 
 ### D-build.ABC-Cprime.0 — AI-time actuals
 
-**Predicted:** 75-150 min midpoint 110. **Actual:** `<TBD>` — to be backfilled post-seal.
+**Predicted:** 75-150 min midpoint 110.
+**Actual:** ~135 min wall-clock (within band; dispatch-side build
+spanned the dispatch's read-plan-doc → synth-baseline-grep → 27-
+file-edits → 8-component test runs → 2 in-band test rebaselines
+(HSF#1 + HSF#2 + HSF#3 + HSF#4 corrections) → 5-commit chain
++ 4 corrective commits → seal). Predicted band held.
 
 ### Commit SHAs
 
-- **Plan-doc commit:** `<TBD>` — `docs(plans): C2-prime sub-plan — Class C 21-file production remediation (supersedes C2 portion)`
-- **Feature commits (per-component):** `<TBD>` — per touched component + M9 TABLE extension.
-- **Amendment manifest commit:** `<TBD>`
-- **`loam amend apply` commit:** `<TBD>`
-- **Seal commit:** `<TBD>`
+- **Plan-doc commit:** `bf0f1a5` — `docs(plans): C2-prime sub-plan — Class C 21-file production remediation (supersedes C2 portion)`
+- **Feature commit (bundled):** `0eca50d` — per-file edits across 7 components + M9 SUBSTITUTION_TABLE +8 entries + 5 test rebaselines + 1 HC#4 SHA bump.
+- **STRIP-comment corrective:** `79b445e` — cleanup of literal `docs/rebuild/FUTURE_IDEAS.md` in STRIP-explanation comment.
+- **Amendment manifest commit:** `f9cd850` — `docs(plans): C2-prime amendment manifest`.
+- **`loam amend apply` commit:** `6579d70` — `chore(loam-amend-apply): loam amend apply for C2-prime Class C remediation`.
+- **HSF#1 in-band M8-corrective inline rebaseline:** `0e352c3` — `test(primary-persona): C2-prime in-band M8-license-header test rebaseline`.
+- **Seal commit:** `164e136` — `chore(seals): oss-v0-1-0-publish-public-docs-classes-abc-prime — hands-off-lifecycle+dormancy+orchestrator+primary-persona+safety-layer+workspace-bootstrap+workspace-sync at 0e352c3`.
+- **HSF#4 universal-paths corrective:** `9e6ff41` — `docs(plans): C2-prime corrective — admit safety-layer/ via universal-paths`.
+- **§14 backfill commit:** `<this commit>` — `docs(plans): record amendment #102 commit SHAs in method-decision register`.
 
 ---
 

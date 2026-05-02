@@ -66,7 +66,24 @@ git clone https://github.com/lukeivers/loam framework
 You should see `framework/` populated with the loam component tree
 (`framework/primary-persona/`, `framework/safety-layer/`, and so on).
 
-### 3. Initialise the workspace
+### 3. Install the loam CLI
+
+The loam CLI is shipped inside the cloned framework tree. At v0.1.0
+the only install path is editable-install via `pip` (a global
+`pipx`-style install will land in a later v0.1.x — see the [`pos-new-
+workspace`](../docs/components/) component reference). One command:
+
+```bash
+pip install -e framework/tools/loam
+```
+
+This places the `loam` binary on your Python's `bin/` directory. If
+`loam` is not on your PATH after the install, your Python's `bin/`
+is not on PATH; either add it (`export PATH="$(python3 -m site
+--user-base)/bin:$PATH"`) or use the absolute path the editable
+install reported.
+
+### 4. Initialise the workspace
 
 The `loam init` verb scaffolds the per-host config under `~/.loam/`,
 installs the per-component runtimes, brings up the memory primitive,
@@ -81,15 +98,7 @@ packages and warming the memory primitive accounts for most of it.
 Subsequent `loam init` calls in other workspaces reuse the per-host
 state and finish in seconds.
 
-If `loam` is not on your PATH, install the framework's CLI in
-editable mode first:
-
-```bash
-pip install -e framework/tools/loam
-loam init .
-```
-
-### 4. Open Claude Code in the workspace
+### 5. Open Claude Code in the workspace
 
 ```bash
 claude

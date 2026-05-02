@@ -34,10 +34,13 @@ The full positioning lives at [`docs/positioning.md`](docs/positioning.md).
 mkdir my-loam-workspace && cd my-loam-workspace
 git clone https://github.com/lukeivers/loam framework/
 
-# 2. Initialise the workspace.
+# 2. Install the loam CLI from the cloned tree.
+pip install -e framework/tools/loam
+
+# 3. Initialise the workspace.
 loam init .
 
-# 3. Open Claude Code in this directory.
+# 4. Open Claude Code in this directory.
 claude
 ```
 

@@ -1,0 +1,112 @@
+schema_version: 1
+amendment:
+  number: 99
+  slug: oss-v0-1-0-publish-license-governance-corrective
+  title: "M8-corrective — HC#4 byte-content rebaseline for 13 .py samples post-Apache-header insertion"
+
+# BASELINE: 403bccd — feature commit (post-rebaseline). Plan-doc
+# `0bba19b` lands first; this manifest authors as commit #3 in the
+# Phase-A chain.
+#
+# Single sealed-component fence: framework/hands-off-lifecycle/. HOL
+# is its own anchor here — the byte-content invariant IS HOL's; this
+# is NOT the no-op-narrative-anchor pattern (M2 + post-m6-partition-
+# realignment + M7-partition-fix shape). The structural surface is
+# HOL's own test file.
+#
+# H19 frozen-baseline pinned per amendment #23 — preserved
+# unchanged by this manifest (frozen_baseline: true).
+baseline: 403bccd
+
+plan: docs/rebuild/plans/oss-v0-1-0-publish-license-governance-corrective.md
+
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/tests/SEAL_COMMIT.notes
+  body: |
+    # M8-corrective — HC#4 byte-content rebaseline post-Apache-header insertion
+
+    2026-05-01. Foldback for M7-partition-fix HT-4 halt (HSF#1):
+    M8 commit `6bef03b` ("feat(public): M8 license-governance —
+    Apache headers on runtime .py + SECURITY.md tightening") inserted
+    a 14-line Apache-2.0 license header at the top of every runtime
+    .py file across 15 dev_and_public framework components per
+    AC.OSS.4, but did NOT perform the corresponding HC#4 retire-and-
+    rebaseline of the captured SHAs in HOL's
+    `test_d1_byte_content_match.py`. 13 of the test's 15 sample
+    files (all .py samples; the 2 pyproject.toml samples were
+    unchanged) diverged.
+
+    Locked decision (dispatcher directive 2026-05-01; Path A clean-
+    closure recommended by M7-partition-fix dispatch agent + locked
+    by main session per autonomy directive): recompute the 13 SHAs
+    on current HEAD, update the constants in
+    `framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py`,
+    and add inline ODD §4 in-band retire-and-rebaseline comments
+    naming M8 (`6bef03b`) + AC.OSS.4 as the legitimate rebaseline
+    source.
+
+    Per `feedback_loose_AC_text_fix_AC_not_implementation` analog:
+    when implementation matches AC intent (Apache-header insertion
+    was the AC.OSS.4 directive) and the test's pinned bytes diverge
+    for a legitimate reason, rebaseline the test, not re-author the
+    impl. Same in-band rebaseline pattern as M-FBM applied for
+    primary-persona/__init__.py + session_start_emitter.py.
+
+    Structural remedy (single file edit):
+
+      - `framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py`
+        — 13 SHA-256 constant updates + 13 inline narrative comments
+        naming M8 + AC.OSS.4.
+
+    AC surface (AC.M8-corrective.1 + AC.M8-corrective.2 + AC.M8-corrective.S):
+
+      - AC.M8-corrective.1: SHA-256 constants for the 13 .py samples
+        match current bytes post-M8.
+      - AC.M8-corrective.2: HOL's `test_d1_byte_content_match.py`
+        passes 16/16 (13 rebaselined .py + 2 unchanged pyproject.toml
+        + structural ≥15-samples check).
+      - AC.M8-corrective.S: seal-diff invariant — only paths under
+        `framework/hands-off-lifecycle/` + universal-paths.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - SHA recomputation tool (D1): Python `hashlib.sha256` against
+        each file at current HEAD. Equivalent to `sha256sum`.
+      - Comment style (D2): each rebaselined entry gains a
+        per-constant inline comment naming M8 + the rebaseline
+        reason (mirrors the M-FBM precedent shape on the same file).
+      - Test scope (D3): narrow to HOL's `test_d1_byte_content_match.py`
+        for pre-seal verification per `feedback_amendment_dispatch_speedups`.
+        Cross-component seal-diff sweep at seal-time is sufficient.
+
+    Out of scope (per plan §8):
+
+      - Re-running the M8 Apache-header script (M8 already executed
+        it across 700 files; bytes are correct).
+      - Re-baselining the 2 pyproject.toml samples (their bytes
+        unchanged by M8; SHAs still match).
+      - Edits to other HOL test files (only test_d1_byte_content_match.py
+        is affected).
+      - Touching M8's commit `6bef03b` (stays in audit trail; this
+        corrective is an additive followup).
+
+    BASELINE `403bccd` (feature commit). HOL's SEAL_COMMIT sidecar
+    lands at the seal SHA via `loam amend seal`.

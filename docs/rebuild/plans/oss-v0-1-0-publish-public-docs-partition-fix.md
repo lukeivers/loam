@@ -166,16 +166,10 @@ Initial amendment manifest at `3d4e5d7` declared `pos-publish-framework-only` as
 
 ### Commit SHAs
 
-- BASELINE: `b1dc662` — `docs(plans): M11a dispatch-1 halt — partition manifest gap surfaced`
-- Plan-doc commit: `c86489d` — `docs(plans): M7-partition-fix sub-plan (docs/plugins/** partition manifest extension)`
-- Feature commit: `c9d9370` — `feat: M7-partition-fix — admit docs/plugins/** in partition manifest dev_and_public`
-- Manifest commit: `3d4e5d7` — `docs(plans): M7-partition-fix amendment manifest`
-- Manifest-correction commit: `83fb3cd` — `docs(plans): M7-partition-fix manifest correction — HOL no-op anchor + universal_paths admission`
-- Apply commit: `4291971` — `chore(loam-amend-apply): loam amend apply for M7-partition-fix`
-- Seal commit: BLOCKED by HT-4 (M8 missed HC#4 retire); halt narrative + recommendation in `<workspace>/.scratch/claude-output/m7-partition-fix-halt-ht4-surface.md`.
-
----
-
+- Amendment commit: `1b315334e51dfa6b95985aa8f5937b2aa9cb8d75` —
+  `docs(plans): record amendment #99 commit SHAs in method-decision register`
+- Seal commit: `d983f94af5cb8b8a7a1a400442333acf18f29dc8` —
+  `chore(seals): oss-v0-1-0-publish-public-docs-partition-fix — hands-off-lifecycle at 1b31533`
 ## 16. Halt-and-surface findings
 
 **HSF#1 — HT-4 fire — M8 missed HC#4 retire-and-rebaseline.** M8 commit `6bef03b` added Apache-2.0 license headers to runtime `.py` files in primary-persona, workspace-bootstrap, scope-of-work. Bytes changed; HC#4 captured SHAs in `framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py` did not. 13 test cases fail on pre-existing state (`b1dc662`). M8 should have performed ODD §4 in-band retire-and-rebaseline (the same pattern M-FBM applied for primary-persona/__init__.py). Recommended foldback: M8-corrective amendment (10-20 min wall-clock, small narrow scope). Surfaced to FUTURE_IDEAS_DRAFT.md capture is dispatcher's call.

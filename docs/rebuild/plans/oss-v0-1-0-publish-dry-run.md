@@ -408,11 +408,21 @@ Filled by each phase's builder post-build per existing precedent (M9 §14 D-buil
 
 ### M11a — OSS-build.M11a.x — (post-build)
 
-**M11a dispatch 1 of N — HALTED at synthesis step (2026-05-01).** Per plan §9.9 (synthesis tool errors during pipeline run); single finding F-M11a.1 (partition manifest does not classify `docs/plugins/dev-sdlc.md`, added by M7 commit `2fefd8b`). Foldback to M2-corrective (partition manifest extension) required before M11a re-dispatches. Full halt narrative + RCA + foldback recommendation: `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md`. Source-commit at halt: `47cbea7`. Framework-only branch SHA: N/A (synthesis errored; branch not advanced).
+**M11a dispatch 1 of N — HALTED at synthesis step (2026-05-01).** Per plan §9.9 (synthesis tool errors during pipeline run); single finding F-M11a.1 (partition manifest does not classify `docs/plugins/dev-sdlc.md`, added by M7 commit `2fefd8b`). Foldback to M2-corrective (partition manifest extension) required before M11a re-dispatches. Full halt narrative + RCA + foldback recommendation: `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md` (overwritten by dispatch 2). Source-commit at halt: `47cbea7`. Framework-only branch SHA: N/A (synthesis errored; branch not advanced). Foldback amendment #98 (M7-partition-fix) sealed `d983f94`; M8-corrective amendment #99 sealed `5271091` (separate halt detected by amendment #98 build).
 
 - D-build.M11a.1 (dispatch 1): Synthesis invocation shape — Python module via console-script entry point `pos-publish-framework-only` from a fresh `python3.13 -m venv` at `/tmp/m11a-venv` with `pyyaml` + editable-install of `loam-publish-framework-only`. Rationale: project requires Python ≥3.11 + yaml; system Python defaults required workarounds.
 - D-build.M11a.2..9: NOT REACHED in dispatch 1 (synthesis errored before sweeps could run). Carried forward to M11a re-dispatch.
-- D-build.M11a.10..N: builder-discovered method decisions.
+
+**M11a dispatch 2 of N — HALTED at AC.M11a.2 (AC.OSS.3 literal-match grep) (2026-05-01, post-recovery).** Per plan §9.1 (AC.OSS.3 grep finds residual literal). Source-commit `78417c5`; framework-only branch advanced to `947ebe2`. AC.M11a.1 / .3 / .4 / .5 / .6 PASS; AC.M11a.2 FAIL with three named root-cause classes (Class A: seals ship publicly under `<comp>/seals/**` carrying dev-historical narrative; Class B: dev-only meta-tests like `tests/test_no_sealed_amendments.py` and `tests/test_AC_*_seal_diff_*.py` ship publicly; Class C: production source/docs in 21+ files reference dev-only paths `docs/rebuild/`, `plugins/dev-sdlc/docs/odd-methodology.md`, etc., which do not exist in synthetic tree). AC.M11a.7 staging push DEFERRED (D-Q.M11.4 halt-before-push). Full halt narrative + per-class root-cause + foldback recommendations: `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md`.
+
+- D-build.M11a.2 (dispatch 2): AC.M11a.2 grep mechanism — `git grep -F -l <literal> framework-only` + `awk` bucketing by top-level component; distinguishes seals/tests from production source via path filter.
+- D-build.M11a.3 (dispatch 2): AC.M11a.3 grep mechanism — `git grep -F -c` per source-side token; zero hits across all 4 SUBSTITUTION_TABLE source-side entries.
+- D-build.M11a.4 (dispatch 2): AC.M11a.4 wired-component sweep mechanism — per-component module-name regex (`loam.<snake_case>`) + production-vs-test path partitioning (`*.py ':!*/tests/*'` vs `'*/tests/*.py'`); every shipping component has ≥1 production caller.
+- D-build.M11a.5 (dispatch 2): AC.M11a.5 deps sweep mechanism — `git ls-tree` enumerated 14 pyproject.toml files; per-file `git show <path> | grep -ic <token>` summed; zero hits across graphiti/kuzu/ollama/sentence-transformers/fastmcp/BGE.
+- D-build.M11a.6 (dispatch 2): stranger-clone smoke — local-bare clone + unbare clone + fresh venv + `pip install -e ./scope-of-work -e ./primary-persona` + `import loam.primary_persona`; lightweight depth per D-Q.M11.3; PASS with caveat (stranger needs to know to install in-workspace siblings together).
+- D-build.M11a.7 (dispatch 2): AC.M11a.7 staging push — DEFERRED per AC.M11a.2 halt; `lukeivers/loam-staging` not created; no GitHub state written.
+- D-build.M11a.8 (dispatch 2): report authoring — overwrites dispatch-1 halt narrative with full dispatch-2 results at canonical `.scratch/` path.
+- D-build.M11a.9..N: builder-discovered method decisions (re-dispatch + future dispatches).
 
 ### M11b — OSS-build.M11b.x — (post-build, post-M10)
 
@@ -425,13 +435,16 @@ Filled by each phase's builder post-build per existing precedent (M9 §14 D-buil
 
 - M11a plan-doc commit (this plan, original authoring): `47cbea7` (post-M10-bypass-edits inclusive).
 - Master-plan §6 rule-update doc-only commit: `<TBD>` (next dispatch).
-- **M11a dispatch-1 halt-pointer commit (this update; doc-only; appends §14 D-build.M11a.1 + halt narrative pointer):** `<TBD>` (filled at commit-time).
-- M11a sweep-execution commit (if any tracked artefacts beyond this plan-doc + .scratch/ report): N/A in dispatch 1 (halted; re-dispatch will fill).
-- M11a `.scratch/` sweep report (NOT committed to git per .scratch/ gitignore): `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md` (dispatch 1; HALT report).
-- M11a synthetic `framework-only` branch HEAD SHA (recorded in §14 + sweep report): N/A in dispatch 1 (synthesis errored; re-dispatch will fill).
-- M11a staging-push commit on `lukeivers/loam-staging:main` (if AC.M11a.7 scoped to M11a per D-Q.M11.1): N/A in dispatch 1 (re-dispatch will fill).
-- M11a seal commit: N/A in dispatch 1 (no seal — halted).
-- **Foldback amendment(s) for F-M11a.1 (partition manifest extension for `docs/plugins/**`):** `<TBD>` — to be authored as separate dispatch per D-Q.M11.4 (no auto-foldback at M11a).
+- **M11a dispatch-1 halt-pointer commit (doc-only; appends §14 D-build.M11a.1 + halt narrative pointer):** `b1dc662`.
+- **M11a foldback amendment #98 (M7-partition-fix; partition manifest extension for `docs/plugins/**`):** sealed `d983f94`.
+- **M8-corrective amendment #99 (HC#4 byte-content rebaseline post-Apache-header insertion):** sealed `5271091`.
+- M11a sweep-execution commit (if any tracked artefacts beyond this plan-doc + .scratch/ report): N/A in dispatch 1 + dispatch 2 (both halted; future re-dispatch may fill).
+- M11a `.scratch/` sweep report (NOT committed to git per .scratch/ gitignore): `<workspace>/.scratch/claude-output/oss-v0-1-0-publish-m11a-sweep-report.md` (dispatch 2 overwrites dispatch 1; both narrate HALT).
+- M11a synthetic `framework-only` branch HEAD SHA: dispatch 1 N/A (synthesis errored); **dispatch 2: `947ebe2`** (synthesis succeeded; branch advanced from source `78417c5`).
+- M11a staging-push commit on `lukeivers/loam-staging:main` (if AC.M11a.7 scoped to M11a per D-Q.M11.1): N/A in dispatch 1 + dispatch 2 (deferred; future re-dispatch will fill).
+- **M11a dispatch-2 halt-pointer commit (this update; doc-only; appends §14 D-build.M11a.2..8 + halt narrative pointer for dispatch 2):** `<TBD>` (filled at commit-time).
+- M11a seal commit: N/A in dispatch 1 + dispatch 2 (no seal — halted at AC.M11a.2 in dispatch 2).
+- **Foldback amendment(s) for AC.M11a.2 dispatch-2 halt (Class A/B/C per sweep report §3.2):** `<TBD>` — to be authored as separate dispatch(es) per D-Q.M11.4 (no auto-foldback at M11a). Likely shape: M2-corrective (reclassify `<comp>/seals/**` + `**/tests/test_no_sealed_amendments.py` + `**/tests/test_AC_*_seal_diff_*.py` as `dev_only`) + multi-component-corrective (rewrite-or-substitute production source/doc references to dev-only paths).
 - M11b owner-ruling entry at `oss-launch-decisions.md`: `<TBD>` (post-foldback + post-M11a re-dispatch GO).
 - M11b foldback amendment commits (if any): `<TBD>`.
 - M11.S programme-seal entry in master plan §14: `<TBD>` (post-M11b-GO).

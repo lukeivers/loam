@@ -55,11 +55,12 @@ _FALLBACK_BASELINE_PATHS: tuple[str, ...] = (
     "docs/odd-in-loam.md",
     "docs/rebuild/VALUE_PROPOSITION.md",
     "docs/rebuild/STATE.md",
-    # ``docs/rebuild/FUTURE_IDEAS.md`` STRIPPED at C2-prime per §11
-    # D-Q.ABC-prime.2: dev-only file with no public counterpart.
-    # The fallback tuple is fail-soft (the dynamic CLAUDE.md parse
-    # is the authoritative path); shrinking the tuple by one entry
-    # preserves canonical-mode behaviour for stranger workspaces.
+    # FUTURE_IDEAS-style draft-capture surface STRIPPED at C2-prime
+    # per §11 D-Q.ABC-prime.2: dev-only file with no public
+    # counterpart. The fallback tuple is fail-soft (the dynamic
+    # CLAUDE.md parse is the authoritative path); shrinking the
+    # tuple by one entry preserves canonical-mode behaviour for
+    # stranger workspaces.
 )
 
 

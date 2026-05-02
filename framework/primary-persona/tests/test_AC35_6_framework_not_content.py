@@ -133,6 +133,16 @@ def test_AC35_6_renderer_source_does_not_carry_persona_prose_constants():
         / "src" / "loam" / "primary_persona" / "agent_md.py"
     )
     text = src_path.read_text(encoding="utf-8")
+    # Strip the Apache-2.0 license header (M8-corrective `6bef03b`
+    # injected ``Luke Ivers`` as copyright owner; that's build-
+    # metadata, not workspace-supplied persona content). The
+    # AC.35.6 framework-not-content invariant is about persona
+    # prose constants, not about the license header. Per
+    # `feedback_loose_AC_text_fix_AC_not_implementation`: ODD §4
+    # in-band rebaseline at C2-prime — the AC intent is preserved;
+    # only the substring scope is tightened to exclude the
+    # license header.
+    text = _strip_apache_header(text)
     # Sentinels: the framework scaffolding explicitly speaks
     # *about* the persona ("I am <given_name>" with a placeholder)
     # rather than *as* the persona. Verify no hardcoded given_name
@@ -149,3 +159,16 @@ def test_AC35_6_renderer_source_does_not_carry_persona_prose_constants():
             "framework-not-content invariant requires the renderer to "
             "compose from the contract, not from hardcoded persona prose"
         )
+
+
+def _strip_apache_header(text: str) -> str:
+    """Drop the leading Apache-2.0 license header (M8-corrective
+    `6bef03b` injected). The header is a 14-line block ending at
+    ``# limitations under the License.``; everything after that
+    line is the source proper.
+    """
+    sentinel = "# limitations under the License."
+    idx = text.find(sentinel)
+    if idx < 0:
+        return text
+    return text[idx + len(sentinel):]

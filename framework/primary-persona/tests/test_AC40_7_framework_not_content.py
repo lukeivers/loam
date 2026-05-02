@@ -107,10 +107,17 @@ def test_AC40_7_tracker_context_source_composes_at_runtime() -> None:
     does NOT carry any concrete value-prop content as a constant."""
     src_path = SRC_DIR / "tracker_context.py"
     text = src_path.read_text(encoding="utf-8")
-    # Composition signals.
+    # Composition signals (verified against full source).
     assert "query_projection_view" in text
     assert "trace_to_root" in text
     assert ".goal" in text or "goal" in text
+    # Strip the Apache-2.0 license header (M8-corrective `6bef03b`
+    # injected ``Luke Ivers`` as copyright owner; that's build-
+    # metadata, not workspace-supplied content). AC.40.7 is about
+    # value-prop content leak, not about the license header. Per
+    # `feedback_loose_AC_text_fix_AC_not_implementation`: ODD §4
+    # in-band rebaseline at C2-prime.
+    text_for_content_check = _strip_apache_header(text)
     # Negative: no concrete-content constants. The renderer composes
     # from projection fields at runtime; no hard-coded goal-text
     # constant is permitted.
@@ -121,7 +128,20 @@ def test_AC40_7_tracker_context_source_composes_at_runtime() -> None:
         "personal-life operations",
     )
     for token in forbidden_substrings:
-        assert token.lower() not in text.lower(), (
+        assert token.lower() not in text_for_content_check.lower(), (
             f"AC40.7 — tracker_context.py contains content-shaped token "
             f"{token!r}; source must compose from runtime data"
         )
+
+
+def _strip_apache_header(text: str) -> str:
+    """Drop the leading Apache-2.0 license header (M8-corrective
+    `6bef03b` injected). The header is a 14-line block ending at
+    ``# limitations under the License.``; everything after that
+    line is the source proper.
+    """
+    sentinel = "# limitations under the License."
+    idx = text.find(sentinel)
+    if idx < 0:
+        return text
+    return text[idx + len(sentinel):]

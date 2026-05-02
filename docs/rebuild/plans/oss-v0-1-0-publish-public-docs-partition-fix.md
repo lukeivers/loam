@@ -60,7 +60,7 @@ AC family **AC.M7-fix.\*** (collision-safe — neither M7 nor M2 uses this prefi
 |---|---|---|
 | AC.M7-fix.1 | Partition manifest's `dev_and_public:` block contains `- glob: "docs/plugins/**"` alongside the existing `docs/components/**` glob entry. | `grep -F 'docs/plugins/**' framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml` returns the new line under `dev_and_public:`. |
 | AC.M7-fix.2 | Synthesis tool runs cleanly against post-fix HEAD (no `SynthesisError`, no `partition incomplete` error); `docs/plugins/dev-sdlc.md` appears in the synthesised tree (i.e. classification works in practice). | Smoke check: `.venv/bin/python -m loam.publish_framework_only.cli --repo /Users/lukeivers/ivers-corp-pos-v2 --source HEAD` exits 0; post-synth `git ls-tree -r refs/heads/framework-only -- docs/plugins/dev-sdlc.md` returns the blob. |
-| AC.M7-fix.S | Sealed-component fence held: `git diff --name-only BASELINE..SEAL_COMMIT` produces only paths under `framework/tools/pos-publish-framework-only/` or universal-paths (plan-doc, manifest YAML). | `framework/tools/pos-publish-framework-only/tests/test_no_sealed_amendments.py` passes against new BASELINE `b1dc662`. |
+| AC.M7-fix.S | Sealed-component fence held: `git diff --name-only BASELINE..SEAL_COMMIT` produces only paths under `framework/tools/pos-publish-framework-only/` (structural fence; admitted via `universal_paths.prefixes`) + `framework/hands-off-lifecycle/tests/SEAL_COMMIT*` (HOL no-op narrative anchor per M2 + post-m6-partition-realignment precedent — `pos-publish-framework-only` has no `test_no_sealed_amendments.py` so HOL anchors the sealed-component cycle) + universal-paths. | HOL's `test_cross_cutting.py` passes against new BASELINE `b1dc662`; HOL's `frozen_baseline: true` (H19 pin per amendment #23) verified unchanged. |
 
 ---
 
@@ -78,7 +78,7 @@ Lands BEFORE M11a re-dispatch. Post-fix HEAD becomes the M11a-2 source-commit ta
 
 ## 7. Hard constraints
 
-- Single-component fence: `framework/tools/pos-publish-framework-only/`. No other framework components edited.
+- Single structural fence: `framework/tools/pos-publish-framework-only/` (admitted via `universal_paths.prefixes` per M2 + post-m6-partition-realignment precedent). HOL anchors the sealed-component cycle as no-op narrative anchor only (sidecar bump + SEAL_COMMIT.notes file; NO behaviour edits to HOL). No other framework components edited.
 - No new external runtime deps.
 - No `git commit --amend` per `feedback_no_amend_in_agent_dispatches`.
 - `loam amend apply` invoked BEFORE seal commit per `feedback_dispatch_explicit_pos_amend_apply`.

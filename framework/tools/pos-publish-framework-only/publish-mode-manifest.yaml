@@ -217,6 +217,28 @@ dev_only:
   # to classify dev_and_public via the broad glob.
   - glob: "framework/hands-off-lifecycle/tests/test_AC_AG_*.py"
   - glob: "framework/hands-off-lifecycle/tests/test_AC_BAG_*.py"
+  # Class A — per-component seal-narrative directories. The `seals/`
+  # convention carries SEAL_COMMIT files + sealed-amendment narratives
+  # rich in dev-historical references (pos-amend, loam-mode,
+  # docs/rebuild/, etc.). Per partition-precedence rule #2 (dev_only
+  # checked before dev_and_public), this glob wins over the broad
+  # `framework/<comp>/**` admissions for each component carrying a
+  # `seals/` subtree. Authored at the C1 amendment (M11a dispatch-2
+  # AC.M11a.2 foldback) per `docs/rebuild/plans/oss-v0-1-0-publish-
+  # public-docs-classes-abc.md` D-Q.ABC.2 = (a) framework-wide glob.
+  # Future v0.x components inherit the same classification.
+  - glob: "**/seals/**"
+  # Class B — dev-discipline meta-tests. `test_no_sealed_amendments.py`
+  # verifies the amendment-cycle invariant (no commits land on a
+  # sealed-component fence outside an active amendment); the
+  # `test_AC_*_seal_diff_*.py` family asserts seal-diff window
+  # invariants. Both are dev-mode-only meta-tests; they reference
+  # internal cycle vocabulary (pos-amend etc.) that has no public
+  # meaning. Authored at the C1 amendment per D-Q.ABC.3 = (a) targeted
+  # exact globs (broader patterns risk excluding legitimate public
+  # tests).
+  - glob: "**/tests/test_no_sealed_amendments.py"
+  - glob: "**/tests/test_AC_*_seal_diff_*.py"
   # Internal docs tree — plans, components, FUTURE_IDEAS, STATE,
   # BACKLOG, capability-corpus authoring shape, decay-retention-
   # analysis, spec/. Per OSS-readiness audit §4.1 + master plan §3

@@ -196,3 +196,77 @@ Out of scope (per plan §8):
 
 BASELINE `403bccd` (feature commit). HOL's SEAL_COMMIT sidecar
 lands at the seal SHA via `loam amend seal`.
+
+# M7-partition-fix — add docs/plugins/** glob to partition manifest
+
+2026-05-01. Foldback for M11a dispatch-1 halt F-M11a.1 (synthesis
+tool errors with `partition incomplete: 1 unclassified path(s);
+samples: ['docs/plugins/dev-sdlc.md']`).
+
+M7 commit `2fefd8b` ("docs(public): M7 plugins category — Dev/SDLC
+plugin reference") added `docs/plugins/dev-sdlc.md` per M7 plan-doc
+D-Q.M7.6 = (c) "separate `docs/plugins/<name>.md` category". M2's
+partition manifest at
+`framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`
+was authored before M7 and never extended to admit the new
+directory. M11a dispatch-1 fired §9.9 (synthesis tool errors on
+partition incomplete) when run against `47cbea7`.
+
+Locked decision (dispatcher directive 2026-05-01; no ambiguity):
+add `- glob: "docs/plugins/**"` to the `dev_and_public:` block,
+alongside the existing `docs/components/**` glob entry (around
+line 157). Pre-flight verified `docs/plugins/dev-sdlc.md` carries
+ZERO AC.OSS.3 residuals (pos-amend / loam-amend / A1-A4 /
+loam-mode / docs/rebuild / pos-publish-framework-only /
+odd-methodology / odd-in-loam / duration-estimation-rubric) and
+ZERO AC.OSS.5 source-side residuals — public-plugin-reference is
+clean for ship.
+
+HOL is no-op narrative anchor only (per M2 + post-m6-partition-
+realignment precedent) — sidecar bump + this notes file only;
+no behaviour edits to HOL.
+
+Structural remedy:
+
+  - `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`
+    — add one glob entry under `dev_and_public:` (the new
+    `docs/plugins/**` line + 6-line provenance comment).
+
+AC surface (AC.M7-fix.1 + AC.M7-fix.2 + AC.M7-fix.S):
+
+  - AC.M7-fix.1: partition manifest's `dev_and_public:` block
+    contains `- glob: "docs/plugins/**"` alongside the existing
+    `docs/components/**` glob.
+  - AC.M7-fix.2: synthesis tool runs cleanly against post-fix HEAD
+    (no `SynthesisError`, no `partition incomplete` error);
+    `docs/plugins/dev-sdlc.md` appears in the synthesised tree.
+  - AC.M7-fix.S: seal-diff invariant — only paths under
+    `framework/tools/pos-publish-framework-only/` (structural) +
+    `framework/hands-off-lifecycle/tests/SEAL_COMMIT*` (anchor) +
+    universal-paths.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - Single-line glob entry under `dev_and_public:` (D1 locked by
+    dispatcher; alternative shapes — per-plugin path entry, broader
+    `docs/**` glob — rejected by directive).
+  - HOL no-op anchor (D2 — convention per M2 precedent; tools-tree
+    amendments need a sealed-component anchor since pos-publish-
+    framework-only carries no test_no_sealed_amendments.py).
+  - Synthesis smoke check post-fix (sanity test, not part of
+    M11a's full sweep — that's M11a-2's job on re-dispatch).
+
+Out of scope (per plan §8):
+
+  - The full M11a sweep (AC.M11a.1..6) — re-dispatches against
+    post-fix HEAD per D-Q.M11.4.
+  - Other partition gaps that may surface during M11a-2 — separate
+    corrective amendments.
+  - Retroactive M7 plan-doc edits (M7 D-Q.M7.6 ruling was correct;
+    omission was at M2-manifest-extension-time).
+  - `docs/plugins/<future-plugin>.md` entries (the glob admits
+    future additions under the same pattern).
+
+BASELINE `b1dc662` (current HEAD; post-M11a-halt §14 commit). The
+HOL anchor's SEAL_COMMIT sidecar lands at the seal SHA via
+`loam amend seal`.

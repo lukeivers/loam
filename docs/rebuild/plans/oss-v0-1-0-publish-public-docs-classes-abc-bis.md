@@ -233,12 +233,7 @@ Filled by the builder post-build per existing precedent (M7-partition-fix §14, 
 
 ### Commit SHAs
 
-- **Plan-doc commit:** `<TBD>` — `docs(plans): C2-bis sub-plan — test-fence partition extension`
-- **Feature commit (manifest YAML):** `<TBD>` — `feat(public): C2-bis partition manifest — **/tests/** reclassified dev_only`
-- **Amendment manifest commit:** `<TBD>` — `docs(plans): C2-bis amendment manifest — test-fence partition extension`
-- **`loam amend apply` commit:** `<TBD>` — `chore(loam-amend-apply): loam amend apply for C2-bis test-glob reclassification`
-- **Seal commit:** `<TBD>` — `chore(seals): oss-v0-1-0-publish-public-docs-classes-abc-bis — pos-publish-framework-only at <apply-sha>`
-
----
-
-*End of plan.*
+- Amendment commit: `9bfd9cb088a6e74f8fd1c37e04d72d2c2ecdb8d5` —
+  `chore(loam-amend-apply): loam amend apply for C2-bis test-glob reclassification`
+- Seal commit: `990e95cc905f0f38d2993c67579d5bbc4c606279` —
+  `chore(seals): oss-v0-1-0-publish-public-docs-classes-abc-bis — hands-off-lifecycle at 9bfd9cb`

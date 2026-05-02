@@ -148,20 +148,36 @@ Findings encountered during build land in §14 method-decision register.
 
 ## 14. Method-decision register (post-build)
 
-(SHA register populated by `loam amend seal --plan-doc` SHA-backfill; method-decision narratives populated by builder during build.)
-
 ### D-build.M7-fix.0 — AI-time actuals
 
-(populated post-build)
+**Predicted:** 20-40 min midpoint 30. **Actual at halt:** ~32 min from dispatch receipt to halt-surface authoring (in-bracket). HT-4 fire blocks seal commit; full close requires M8-corrective HC#4 retire-and-rebaseline first (estimated +15-25 min). Calibration takeaway: small-scope corrective predictions should add 10-15 min for halt-trigger triage when the touched component's seal-test runs cross-component byte-content invariants.
 
 ### D-build.M7-fix.1 — Manifest edit + synthesis smoke check actuals
 
-(populated post-build)
+Manifest edit (single glob entry under `dev_and_public:` alongside `docs/components/**`/`docs/design/**`) landed cleanly in commit `c9d9370`. Post-edit synthesis smoke check (`.venv/bin/python -m loam.publish_framework_only.cli --repo /Users/lukeivers/ivers-corp-pos-v2 --source HEAD`) advanced `refs/heads/framework-only` → `1b2660d`; `git ls-tree -r refs/heads/framework-only -- docs/plugins/` returns the `dev-sdlc.md` blob. AC.M7-fix.1 + AC.M7-fix.2 PASS empirically. Touched-component test count: 63/63 pos-publish-framework-only tests pass.
+
+### D-build.M7-fix.2 — Manifest correction (HSF#2)
+
+Initial amendment manifest at `3d4e5d7` declared `pos-publish-framework-only` as a sealed component, but `loam amend apply --dry-run` returned "skipped: seal-test file missing" — the tool has no `test_no_sealed_amendments.py`. Per M2 + post-m6-partition-realignment precedent, tools-tree amendments use HOL as no-op narrative anchor and admit the tool via `universal_paths.prefixes`. NEW corrective commit `83fb3cd` revised manifest + plan-doc per `feedback_no_amend_in_agent_dispatches`. Initial commit stays in audit trail.
+
+### D-build.M7-fix.3 — Seal blocked by HT-4 (M8 missed HC#4 retire)
+
+`loam amend seal` step (d) (touched-component pytest) failed: 13 cases in `framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py::test_AC_D_1_5_byte_content_match_post_move`. Verified pre-existing on `b1dc662` (the dispatch's pre-fix HEAD). Root cause: M8 commit `6bef03b` ("feat(public): M8 license-governance — Apache headers on runtime .py + SECURITY.md tightening") inserted Apache-2.0 license headers into runtime `.py` files in primary-persona, workspace-bootstrap, scope-of-work; M8 did not perform ODD §4 in-band HC#4 retire-and-rebaseline. Surfaced to dispatcher in `<workspace>/.scratch/claude-output/m7-partition-fix-halt-ht4-surface.md` with M8-corrective recommendation (smallest scope). HOL `SEAL_COMMIT` already advanced to `b1dc662` by `loam amend apply` at `4291971`; seal commit re-attempts cleanly once M8-corrective seals.
 
 ### Commit SHAs
 
 - BASELINE: `b1dc662` — `docs(plans): M11a dispatch-1 halt — partition manifest gap surfaced`
-- Plan + manifest commit: `<TBD>`
-- Feature commit: `<TBD>`
-- Apply commit: `<TBD>`
-- Seal commit: `<TBD>`
+- Plan-doc commit: `c86489d` — `docs(plans): M7-partition-fix sub-plan (docs/plugins/** partition manifest extension)`
+- Feature commit: `c9d9370` — `feat: M7-partition-fix — admit docs/plugins/** in partition manifest dev_and_public`
+- Manifest commit: `3d4e5d7` — `docs(plans): M7-partition-fix amendment manifest`
+- Manifest-correction commit: `83fb3cd` — `docs(plans): M7-partition-fix manifest correction — HOL no-op anchor + universal_paths admission`
+- Apply commit: `4291971` — `chore(loam-amend-apply): loam amend apply for M7-partition-fix`
+- Seal commit: BLOCKED by HT-4 (M8 missed HC#4 retire); halt narrative + recommendation in `<workspace>/.scratch/claude-output/m7-partition-fix-halt-ht4-surface.md`.
+
+---
+
+## 16. Halt-and-surface findings
+
+**HSF#1 — HT-4 fire — M8 missed HC#4 retire-and-rebaseline.** M8 commit `6bef03b` added Apache-2.0 license headers to runtime `.py` files in primary-persona, workspace-bootstrap, scope-of-work. Bytes changed; HC#4 captured SHAs in `framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py` did not. 13 test cases fail on pre-existing state (`b1dc662`). M8 should have performed ODD §4 in-band retire-and-rebaseline (the same pattern M-FBM applied for primary-persona/__init__.py). Recommended foldback: M8-corrective amendment (10-20 min wall-clock, small narrow scope). Surfaced to FUTURE_IDEAS_DRAFT.md capture is dispatcher's call.
+
+**HSF#2 — pos-publish-framework-only has no seal-test infrastructure (resolved during build).** Dispatch said "Single-component fence: `framework/tools/pos-publish-framework-only/`" but the tool has no `test_no_sealed_amendments.py`. Per M2 + post-m6-partition-realignment precedent, tools-tree amendments anchor on HOL as no-op narrative anchor and admit the tool via `universal_paths.prefixes`. Resolved at commit `83fb3cd`. Surfaced for dispatcher awareness so future tools-tree corrective dispatches don't repeat the assumption.

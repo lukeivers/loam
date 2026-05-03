@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-init"
+version = "0.1.0"
+description = "loam init subcommand — registers `loam init <path> --from <canonical>` as a loam.cli.subcommands entry-point. Wraps the existing workspace-bootstrap fresh-workspace primitive so the documented onboarding verb works end-to-end."
+requires-python = ">=3.11"
+dependencies = [
+    "loam-workspace-bootstrap",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+# AC.FBE.1.2 — loam init registers as a subcommand of the unified loam
+# CLI via the `loam.cli.subcommands` entry-point group (introduced at
+# M6a; symmetric to bootstrap's `loam.bootstrap.contributions` discovery
+# pattern; second registrant alongside dev-sdlc's `loam project`).
+[project.entry-points."loam.cli.subcommands"]
+init = "loam.loam_init.cli:build_init_subcommand"
+
+[tool.setuptools]
+package-dir = {"loam.loam_init" = "src/loam/loam_init"}
+packages = ["loam.loam_init"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

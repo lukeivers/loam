@@ -145,7 +145,12 @@ _SAMPLE_FILES = (
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,
      # package-dir entry, dependencies list rewrite).
-     "0181ab99319a19bd70f262d030d60f0fe74ab325d833706ba33c1bc656cb1ca2"),
+     # FBE.5 SHA bump (description scrub) + FBE.8 SHA bump
+     # (mcp pin annotation comment scrub — drops dev-vocabulary
+     # leakage per HIGH-FBE6.1; pin-rationale prose preserved).
+     # ODD §4 in-band retire-and-rebaseline per
+     # `feedback_loose_AC_text_fix_AC_not_implementation`.
+     "9b64f101bc0d9d6675fef9da4f567ec3bc9c00e5bf0836262b15c657f1122336"),
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -203,7 +208,11 @@ _SAMPLE_FILES = (
     ("framework/scope-of-work/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `scope_of_work` → `loam-scope-of-work`).
-     "1f97cf7a380d1876b416b8a88f06264398296ae176c797ccb0695d8bc6f481cc"),
+     # FBE.5 SHA bump (description scrub at `8032348`) — landed in
+     # FBE.5's source delta but the byte-content sample was not
+     # retired-and-rebaselined at FBE.5 seal; FBE.8 closes the gap.
+     # ODD §4 in-band retire-and-rebaseline.
+     "f847bf944381f8efadb873cd1199782a4cb5b2450afd7be081445064b41f0305"),
 )
 
 

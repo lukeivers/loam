@@ -1,0 +1,72 @@
+# FBE.8 — close FBE.6 reviewer BLOCKERs + HIGH cosmetics + FBE.6 seal-debt
+
+2026-05-03. v0.1.0 reviewer foldback closes the four buckets surfaced
+by FBE.6 (per FBE.6 status `<workspace>/.scratch/claude-output/fbe6-status-2026-05-03.md`
++ FBE.6 sweep report `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6-sweep-report.md`):
+
+- **Bucket 1 (BLOCKER-FBE6.1)** — `README.md` + `docs/getting-started.md`
+  redirected from the broken `pip install -e framework/tools/loam` flow
+  to `pip install -r install-from-source.txt` (the FBE.4-ratified
+  install entry point at canonical root). Stranger-clone install now
+  actually works end-to-end.
+- **Bucket 2 (BLOCKER-FBE6.2)** — `framework/tools/loam/README.md` +
+  `src/loam_cli/__init__.py` + `src/loam_cli/cli.py` scrubbed of
+  `pos-amend` / `Amendment #N` / `M1g` / `loam-rename-decisions.md` /
+  `docs/rebuild/` / `plugins/dev-sdlc/tools/` references. Path A
+  surgical scrub per sub-plan §2 Surface #2 — preserves the
+  substantive amend-subcommand reference value.
+- **Bucket 3 (HIGH-FBE6.1 + HIGH-FBE6.2)** —
+  `framework/primary-persona/pyproject.toml` mcp pin annotation
+  comment block scrubbed of `Amendment #N` / `memory-graphiti` /
+  `memory-system/.venv` references; pin-rationale prose preserved.
+  `framework/primary-persona/src/loam/primary_persona/session_start_gate.py`
+  `_FALLBACK_BASELINE_PATHS` comment block + `enumerate_amendments_in_flight`
+  docstring scrubbed of `docs/rebuild/` literal references.
+  Behaviour preserved verbatim.
+- **Bucket 4 (Surface FBE.6 #6 — pre-existing FBE.4/FBE.5 seal-debt)** —
+  `framework/hands-off-lifecycle/tests/test_cross_cutting.py` H19 admit
+  list extended with `install-from-source.txt` (FBE.4 added the file
+  but never updated H19's admit set; verified pre-existing on FBE.5b
+  seal `48bb7e2`). `framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py`
+  HC#4 byte-content samples for `framework/primary-persona/pyproject.toml`
+  + `framework/scope-of-work/pyproject.toml` retired-and-rebaselined
+  (FBE.5's description-scrub edits + FBE.8's Bucket-3 comment-scrub
+  edit captured). Both gaps blocked FBE.6's seal commit; FBE.8's seal
+  closes them.
+
+Negative AC.FBE.8.8: scope-discipline preserved. No behaviour code
+edits. No broader README rewrites. No test refactors beyond the 1
+H19 admit-list addition + 2 byte-content sample SHA updates.
+
+Sealed-component fence (3 components): `framework/tools/loam/`,
+`framework/primary-persona/`, `framework/hands-off-lifecycle/`.
+Universal-paths admissions for `README.md`, `docs/getting-started.md`,
+`docs/rebuild/plans/`. HOL `frozen_baseline: true` per amendment #23
++ FBE.6 manifest precedent.
+
+AC surface (per sub-plan §4):
+
+- AC.FBE.8.1 — README + getting-started.md install flow now uses
+  `pip install -r install-from-source.txt`; the broken
+  `pip install -e framework/tools/loam` literal is gone.
+- AC.FBE.8.2 — `framework/tools/loam/README.md` zero hits on the
+  named banned literals (`pos-amend`, `Amendment #N`, `M1g`, etc.).
+- AC.FBE.8.3 — `framework/tools/loam/src/loam_cli/{__init__.py, cli.py}`
+  zero hits on the named banned literals.
+- AC.FBE.8.4 — `framework/primary-persona/pyproject.toml` comment
+  block scrubbed; `description` field unchanged from FBE.5 state;
+  `dependencies` shape unchanged.
+- AC.FBE.8.5 — `framework/primary-persona/src/loam/primary_persona/session_start_gate.py`
+  comment + docstring scrubbed; behaviour preserved.
+- AC.FBE.8.6 — H19 admit list includes `install-from-source.txt`;
+  HC#4 samples updated; HOL test files pass 26/26.
+- AC.FBE.8.7 — extended smoke verifies the documented install flow
+  works end-to-end (transcript in
+  `<workspace>/.scratch/claude-output/fbe8-status-2026-05-03.md`).
+- AC.FBE.8.8 — scope-discipline diff matches the named buckets only.
+- AC.FBE.8.S — fence diff matches the 3-component fence + universal
+  admissions.
+
+Closes the FBE.6 FOLDBACK; M12 publish-flip is GATED behind FBE.6b
+re-running the sweep + smoke + reviewer cycle against the post-FBE.8
+canonical HEAD.

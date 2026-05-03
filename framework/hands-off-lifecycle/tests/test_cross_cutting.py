@@ -309,6 +309,15 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         "CONTRIBUTING.md",
         "CODE_OF_CONDUCT.md",
         "SECURITY.md",
+        # FBE.4 (sealed at `99c03a6`) — install-from-source.txt
+        # admitted at H/L's first opportunity per ODD §10's
+        # per-invariant-BASELINE convention. The file lives at
+        # canonical root and was added by FBE.4's source delta
+        # `cfc9ed4`; it carries the ordered `-e ./<path>` lines pip
+        # walks for the v0.1.0 install-from-source path. Not in
+        # H19's admit list pre-FBE.8 caused FBE.6's seal pipeline
+        # to fail; FBE.8 closes the gap.
+        "install-from-source.txt",
         # M6a — first plugin tree lands at plugins/dev-sdlc/. The
         # cross-cutting first-prefix admission is `plugins` (the
         # top-level new directory). Per plan §11 finding #7 — first

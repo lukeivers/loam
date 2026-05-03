@@ -10,11 +10,11 @@ Plugin-supplied subcommand discovery uses the entry-point group
 entry-point resolves to a callable
 ``build_<verb>_subcommand(sub: argparse._SubParsersAction) -> None``;
 ``main`` invokes each builder so plugins (e.g. dev-sdlc) can extend
-the verb tree without amending this module.
+the verb tree without changing this module.
 
-The ``loam amend`` subcommand is itself shipped by the dev-sdlc
-plugin at ``plugins/dev-sdlc/tools/loam-amend/`` and resolves through
-the entry-point-group discovery loop (the plugin's pyproject ships
+The ``loam amend`` subcommand is provided by the dev-sdlc plugin and
+resolves through the entry-point-group discovery loop (the plugin's
+pyproject ships
 ``[project.entry-points."loam.cli.subcommands"] amend =
 "loam_amend.cli:build_amend_subcommand"``). The dispatcher itself
 stays canonical (it remains the public binary entry point for the
@@ -53,9 +53,9 @@ def _discover_subcommand_builders() -> (
 
     Failure modes (entry-point load failure / not-callable result)
     are logged at WARNING and the offending entry-point is skipped —
-    the unified CLI continues to serve built-in subcommands. Per
-    plan §11 finding #2's mitigation: discovery failures must not
-    break ``loam --version`` or ``loam amend ...``.
+    the unified CLI continues to serve built-in subcommands.
+    Discovery failures must not break ``loam --version`` or
+    ``loam amend ...``.
     """
     out: list[
         tuple[str, Callable[[argparse._SubParsersAction], None]]

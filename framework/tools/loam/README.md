@@ -1,26 +1,28 @@
-# loam (amend subcommand)
+# loam — unified CLI for the loam framework
 
-Amendment-dispatch tooling for pos-v2. Mechanises the bookkeeping side of
-the sealed-component amendment cycle: `BASELINE` literal advances, seal-
-diff `allowed_prefixes` / `allowed_files` widening, `tests/SEAL_COMMIT`
-sidecar bumps, and narrative-sidecar appends. Humans still author the
-plan, the code, and the commit messages.
+The `loam` console-script is the framework's daily-driver shell
+surface. Subcommands plug in via the `loam.cli.subcommands`
+entry-point group; the dev-sdlc plugin contributes the `loam amend`
+subcommand documented below, which mechanises the bookkeeping side
+of the sealed-component amendment cycle: `BASELINE` literal advances,
+seal-diff `allowed_prefixes` / `allowed_files` widening,
+`tests/SEAL_COMMIT` sidecar bumps, and narrative-sidecar appends.
+Humans still author the plan, the code, and the commit messages.
 
-See `docs/rebuild/plans/amendment-22-pos-amend-cli.md` for the
-authoring plan and `/tmp/claude-output/pos-v2-ritual-streamlining-
-research.md` for the research doc that justified the tool.
+For installing loam from a fresh clone, see
+[`docs/install-from-source.md`](../../../docs/install-from-source.md).
 
 ## Run
 
-`loam` (with the amend subcommand) is invoked inside a pos-v2 workspace whose first-run has
+`loam amend` is invoked inside a loam workspace whose first-run has
 completed. First-run already created the workspace's shared venv at
 `<workspace>/.venv/`, installed Python 3.13 + `PyYAML`, and installed
-`loam amend` itself as a console script at `.venv/bin/loam`. **You
-do not need to install anything to use the tool.**
+the `loam` console script at `.venv/bin/loam`. **You do not need to
+install anything separate to use the tool.**
 
 **Prerequisites:** macOS, plus a populated `.venv/` at the workspace
-root (i.e. pos-v2 first-run has run on this checkout). To confirm,
-from the pos-v2 workspace root:
+root (i.e. loam first-run has run on this checkout). To confirm,
+from the loam workspace root:
 
 ```
 .venv/bin/python --version
@@ -34,7 +36,7 @@ time, instant on a warm checkout).
 
 ### Primary invocation
 
-From the pos-v2 workspace root, run `loam amend` directly out of the
+From the loam workspace root, run `loam amend` directly out of the
 workspace venv. Estimated wall-clock: under one second per call.
 
 ```
@@ -44,8 +46,8 @@ workspace venv. Estimated wall-clock: under one second per call.
 Use the same prefix for every subcommand, e.g.:
 
 ```
-.venv/bin/loam validate docs/rebuild/plans/amendment-N-<slug>.manifest.yaml
-.venv/bin/loam apply --dry-run docs/rebuild/plans/amendment-N-<slug>.manifest.yaml
+.venv/bin/loam amend validate <plan-dir>/<slug>.manifest.yaml
+.venv/bin/loam amend apply --dry-run <plan-dir>/<slug>.manifest.yaml
 ```
 
 If you would rather type bare `loam amend`, activate the venv first
@@ -74,12 +76,12 @@ paths exist. Pick one.
    root:
 
    ```
-   .venv/bin/pip install -e tools/loam/
+   .venv/bin/pip install -e framework/tools/loam/
    .venv/bin/loam --help
    ```
 
-   Do not run a bare `pip install -e tools/loam/` — on most
-   macOS shells the default `pip` resolves to a Python below 3.11
+   Do not run a bare `pip install -e framework/tools/loam/` — on most
+   macOS shells the default `pip` resolves to a Python below 3.13
    and the install fails with `Package 'loam-cli' requires a
    different Python` (or, on stock-macOS shells, a setuptools-shape
    error). Always name the workspace venv's `pip` explicitly.
@@ -112,11 +114,11 @@ restore the pre-extension non-committing behaviour, pass
 ```yaml
 schema_version: 1
 amendment:
-  number: 22
-  slug: pos-amend-cli
-  title: "pos-amend CLI + universal-paths retrofit"
+  number: 42
+  slug: example-amendment
+  title: "Example amendment — universal-paths retrofit"
 baseline: 9559ca7
-plan: docs/rebuild/plans/amendment-22-pos-amend-cli.md
+plan: <plan-dir>/<slug>.md
 components:
   - name: cost-governance
     seal_test: cost-governance/tests/test_no_sealed_amendments.py
@@ -134,21 +136,21 @@ universal_paths:
 narrative:
   target: hands-off-lifecycle/seals/SEAL_COMMIT.true-first-run
   body: |
-    # Amendment #22 — pos-amend CLI + universal-paths retrofit
+    # Example amendment — universal-paths retrofit
     ...
 ```
 
-### `frozen_baseline` (per-component, optional; introduced amendment #23)
+### `frozen_baseline` (per-component, optional)
 
 Setting `frozen_baseline: true` on a component instructs `apply` to skip
 the module-top `BASELINE = "<sha>"` literal bump for that component.
 The sidecar still advances, tuple widenings still apply, and the seal
 cycle is otherwise unchanged. Default is `false` — backward-compatible
-with every pre-amendment-#23 manifest.
+with every existing manifest.
 
 Use this when the test file's BASELINE has been frozen at a point-in-
-time (e.g. hands-off-lifecycle's H19 check pinned at project-start per
-amendment #23). See `plugins/dev-sdlc/docs/odd-in-loam.md` §10 for the convention.
+time (e.g. hands-off-lifecycle's H19 check pinned at project-start).
+See the dev-sdlc plugin's ODD-in-loam documentation for the convention.
 
 ### Schema-version compatibility
 
@@ -167,11 +169,11 @@ tracker DB at `apply` time and update each record's
 ```yaml
 schema_version: 2
 amendment:
-  number: 41
+  number: 42
   slug: example
   title: "..."
 baseline: abcdef0
-plan: docs/rebuild/plans/amendment-41-example.md
+plan: <plan-dir>/<slug>.md
 components:
   - name: example-component
     seal_test: example-component/tests/test_no_sealed_amendments.py
@@ -181,18 +183,18 @@ objectives:
     parent_id: "value-prop-root"   # OR `parent_root: true`, exactly one
     acceptance_criteria:
       - kind: prose
-        criterion_id: AC41.1
+        criterion_id: AC42.1
         prose: "Caller path A produces outcome B."
       - kind: prose
-        criterion_id: AC41.2
+        criterion_id: AC42.2
         prose: "..."
     time_bound:
       evergreen: true               # OR `deadline: "2026-12-31T00:00:00Z"`
       review_cadence: "amendment-driven"   # only with evergreen=true
     authored_by: "user"             # any string; persona handles permitted
     lifted_from:
-      source_doc: "docs/rebuild/plans/amendment-41-example.md"
-      source_ac: "AC41.1"
+      source_doc: "<plan-dir>/<slug>.md"
+      source_ac: "AC42.1"
       # source_commit is reserved — `loam amend seal` writes it.
 ```
 
@@ -234,13 +236,12 @@ behaviour (no tracker interaction).
 Manifest authors MUST NOT set `lifted_from.source_commit` — the seal
 step writes it. Setting it in the manifest YAML rejects at parse
 time. Backwards-compat for v1 manifests is total: every existing
-manifest under `docs/rebuild/plans/amendment-*.manifest.yaml` parses
-and applies unchanged.
+v1 manifest parses and applies unchanged.
 
 ## Usage example — normal amendment
 
-1. Author the plan at `docs/rebuild/plans/amendment-N-<slug>.md`.
-2. Author the manifest at `docs/rebuild/plans/amendment-N-<slug>.manifest.yaml`.
+1. Author the plan at the workspace's plan directory, e.g. `<plan-dir>/<slug>.md`.
+2. Author the manifest alongside the plan as `<slug>.manifest.yaml`.
 3. Make the source edits for the amendment.
 4. `loam amend apply <manifest>` — bumps every listed component's
    `BASELINE` to the manifest baseline, widens `allowed_prefixes` /
@@ -256,16 +257,15 @@ and applies unchanged.
    and (with `--plan-doc`) backfills the plan-doc §14 SHA subsection +
    `docs(plans):` follow-up commit.
 
-The dry-run in step 5 replaces the reactive corrective-commit pattern
-(see amendment #18's `8bdf194`). The single-invocation finalisation in
-step 7 replaces the five hand-run commands the build agent ran before
-the `loam amend seal` extension landed.
+The dry-run in step 5 lets you catch missing-admission failures before
+committing, replacing the reactive corrective-commit pattern. The
+single-invocation finalisation in step 7 collapses what was historically
+a five-command sequence run by hand.
 
 ### `loam amend seal` finalisation behaviour
 
 By default `loam amend seal` performs the following sequence in one
-invocation (per `docs/rebuild/plans/pos-amend-seal-automation-extension.md`
-ACs D-sa.1 – D-sa.7):
+invocation:
 
 1. Refuses to proceed if the working tree carries unrelated dirty
    paths (anything outside the sidecars + narrative target).
@@ -289,7 +289,7 @@ ACs D-sa.1 – D-sa.7):
 9. (Optional, when `--plan-doc <path>` is supplied) appends a
    deterministic `### Commit SHAs` subsection under the plan doc's
    `## 14.` heading, then creates a follow-up commit with the
-   subject `docs(plans): record amendment #N commit SHAs in
+   subject `docs(plans): record amendment commit SHAs in
    method-decision register`.
 
 #### Failure-mode (recoverable checkpoint)
@@ -298,16 +298,15 @@ A failing component pytest, a failing sweep target, or a failing
 `git add`/`git commit` halts before the seal commit is created and
 leaves the sidecar + narrative changes uncommitted. A non-zero
 post-seal `apply --dry-run` leaves the seal commit **in place** (per
-the no-amend CDC); the operator inspects the diagnostic and authors a
-corrective commit. Per-AC details and the failure-class taxonomy live
-in `docs/rebuild/plans/pos-amend-seal-automation-extension.md`.
+the no-amend convention); the operator inspects the diagnostic and
+authors a corrective commit.
 
 #### Optional manifest field — `seal_description`
 
 ```yaml
 schema_version: 1
 amendment:
-  number: 41
+  number: 42
   slug: example-slug
   title: "..."
 seal_description: "tracker-context contributor"
@@ -342,8 +341,8 @@ no-ops the source-commit rewrite when the SHA already matches.
 
 Renders authored-artefact boilerplate (dispatch prompts, plan-doc
 skeletons, future families) from per-template markdown files with
-`{{KEY}}` placeholders. Drives the dispatch + plan-doc speedups
-described in `docs/rebuild/plans/dispatch-prompt-template-extension.md`.
+`{{KEY}}` placeholders. Drives dispatch-prompt and plan-doc
+scaffolding so authors edit content rather than structure.
 
 ### Modes
 
@@ -360,7 +359,7 @@ inject an alternate root via this flag; normal use does not.
 ### Authoring a template
 
 A template is a UTF-8 markdown file at
-`tools/loam/templates/<family>/<id>.md` carrying a YAML
+`framework/tools/loam/templates/<family>/<id>.md` carrying a YAML
 frontmatter block with the variables contract:
 
 ```markdown
@@ -392,19 +391,19 @@ Variables come from `--var KEY=VALUE` flags (repeatable) or a YAML
 
 ```bash
 # Inline flags:
-.venv/bin/loam template render dispatch/sealed-component-build \
+.venv/bin/loam amend template render dispatch/sealed-component-build \
   --var COMPONENT=alpha --var AMENDMENT_NUMBER=42 \
-  --var AC_PREFIX=AC.A.x --var PLAN_PATH=docs/rebuild/plans/amendment-42.md \
+  --var AC_PREFIX=AC.A.x --var PLAN_PATH=<plan-dir>/<slug>.md \
   --var OBJECTIVE='...' --var SCOPE_FENCE='...'
 
 # YAML vars-file (preferred for templates with many variables):
-.venv/bin/loam template render dispatch/sealed-component-build \
+.venv/bin/loam amend template render dispatch/sealed-component-build \
   --vars-file /tmp/dispatch-vars.yaml
 
 # Render to file (refuses overwrite without --force):
-.venv/bin/loam template render plan/dev-discipline \
+.venv/bin/loam amend template render plan/dev-discipline \
   --vars-file /tmp/plan-vars.yaml \
-  --out docs/rebuild/plans/new-plan.md
+  --out <plan-dir>/new-plan.md
 ```
 
 Default output is stdout. `--out <path>` writes to the named path,
@@ -445,8 +444,7 @@ before any output reaches stdout or the `--out` target.
 Sugar over `loam amend template render plan/dev-discipline`: scaffolds
 a YAML vars-file pre-stubbed against the plan-doc skeleton's 16 required
 variables (and 6 optional variables) so a plan author edits content,
-not structure. Per `docs/rebuild/plans/pos-amend-new-plan-orchestration.md`
-ACs D-np.1 – D-np.7.
+not structure.
 
 ```
 loam amend new-plan <slug>
@@ -458,21 +456,21 @@ loam amend new-plan <slug>
   [--force]
 ```
 
-Default behaviour (no `--render`): writes the vars-file to
-`<repo>/docs/rebuild/plans/<slug>.vars.yaml` only. The plan author
-then edits the vars-file and renders via:
+Default behaviour (no `--render`): writes the vars-file to the
+workspace's plan directory as `<slug>.vars.yaml` only. The plan
+author then edits the vars-file and renders via:
 
 ```bash
-.venv/bin/loam template render plan/dev-discipline \
-  --vars-file docs/rebuild/plans/<slug>.vars.yaml \
-  --out docs/rebuild/plans/<slug>.md \
+.venv/bin/loam amend template render plan/dev-discipline \
+  --vars-file <plan-dir>/<slug>.vars.yaml \
+  --out <plan-dir>/<slug>.md \
   --force
 ```
 
 With `--render`, both files are produced in one invocation:
 
 ```bash
-.venv/bin/loam new-plan my-new-feature \
+.venv/bin/loam amend new-plan my-new-feature \
   --title "My new feature" \
   --ac-prefix AC.MNF.x \
   --render
@@ -498,14 +496,14 @@ diagnostic to stderr; exit codes follow the standard loam amend taxonomy
 
 ## Tests
 
-From the pos-v2 workspace root, using the workspace venv:
+From the loam workspace root, using the workspace venv:
 
 ```
-.venv/bin/python -m pytest tools/loam/tests/ -q
+.venv/bin/python -m pytest framework/tools/loam/tests/ -q
 ```
 
 The integration test (`test_integration_universal_paths`) runs the
 universal-paths retrofit manifest against a copy of the tree and checks
-that every component's tuple widens as expected. Per the amendment-
-dispatch-speedups CDC, other components' seal-diff tests are run as
-part of the amendment's broader test scope, not here.
+that every component's tuple widens as expected. Other components'
+seal-diff tests run as part of the amendment's broader test scope,
+not here.

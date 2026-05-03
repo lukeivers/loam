@@ -54,7 +54,7 @@ After the install completes, the `loam` console-script is on your
 PATH (assuming the venv is active). Continue with the README:
 
 ```bash
-loam init .
+loam init ~/loam-workspace
 ```
 
 ---

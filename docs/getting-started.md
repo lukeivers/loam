@@ -57,8 +57,9 @@ cd loam
 You should see the cloned `loam/` directory populated with the loam
 component tree (`framework/primary-persona/`, `framework/safety-layer/`,
 and so on); `cd loam` puts you at the framework root for the next
-step. The cloned `loam/` directory is also your workspace root —
-`loam init` (step 3) treats it as such.
+step. Your eventual workspace lives elsewhere (step 3 creates it at a
+path you choose); the cloned `loam/` is the canonical-source
+framework that `loam init` clones from.
 
 ### 2. Install loam
 
@@ -82,24 +83,28 @@ invoke `.venv/bin/loam` directly.
 For the prose guide, troubleshooting, and per-component fallback
 order, see [`install-from-source.md`](install-from-source.md).
 
-### 3. Initialise the workspace
+### 3. Bootstrap a fresh workspace
 
 The `loam init` verb scaffolds the per-host config under `~/.loam/`,
-installs the per-component runtimes, brings up the memory primitive,
-and writes the workspace-level Claude Code settings the harness needs.
+clones the framework into the new workspace's `framework/`, scaffolds
+the workspace state, and writes the workspace-level Claude Code
+settings the harness needs. Pass an out-of-tree path for the new
+workspace; `--from` defaults to the current working directory (the
+cloned `loam/` tree) when omitted, so no second flag is needed.
 
 ```bash
-loam init .
+loam init ~/loam-workspace
 ```
 
 Expect the first run to take 1–3 minutes — installing component
 packages and warming the memory primitive accounts for most of it.
-Subsequent `loam init` calls in other workspaces reuse the per-host
-state and finish in seconds.
+Subsequent `loam init` calls reuse the per-host state and finish in
+seconds.
 
 ### 4. Open Claude Code in the workspace
 
 ```bash
+cd ~/loam-workspace
 claude
 ```
 
@@ -177,8 +182,8 @@ invoke `.venv/bin/loam` directly.
 
 **`claude` does not see the SessionStart hook.** Check that
 `.claude/settings.json` exists at the workspace root after `loam
-init`. If not, re-run `loam init .`; the workspace-bootstrap
-component writes it idempotently.
+init`. If not, re-run `loam init ~/loam-workspace`; the
+workspace-bootstrap component writes it idempotently.
 
 **Memory primitive errors on first session.** The file-based memory
 substrate writes under `framework/primary-persona/`'s data area;

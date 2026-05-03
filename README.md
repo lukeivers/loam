@@ -39,10 +39,11 @@ python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -r install-from-source.txt
 
-# 3. Initialise the workspace.
-loam init .
+# 3. Bootstrap a fresh workspace from this clone.
+loam init ~/loam-workspace
 
-# 4. Open Claude Code in this directory.
+# 4. Open Claude Code in the new workspace.
+cd ~/loam-workspace
 claude
 ```
 

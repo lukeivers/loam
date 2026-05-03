@@ -46,24 +46,11 @@ from .context_composer import CorpusGateState
 
 
 # Fallback baseline paths used when CLAUDE.md is absent or its
-# session-start-discipline section is unparseable. Matches the
-# session-start-discipline section of the current CLAUDE.md. Present
-# as a defence-in-depth only; the dynamic parse is the authoritative
-# path (research §9 flag #5).
+# session-start-discipline section is unparseable. Defence-in-depth
+# only; the dynamic CLAUDE.md parse is the authoritative path. Only
+# paths shipped in every public workspace are listed here — the
+# condensed ODD doc is the canonical floor.
 _FALLBACK_BASELINE_PATHS: tuple[str, ...] = (
-    # v0.1.0 ship-correct fallback: only paths that exist in BOTH
-    # canonical (dev) and the synthesised public framework-only tree.
-    # The four prior entries (docs/odd-methodology.md,
-    # docs/odd-in-loam.md, docs/rebuild/VALUE_PROPOSITION.md,
-    # docs/rebuild/STATE.md) were dev-only — they shipped no-where
-    # in public synthesis (long-form ODD = DEV_ONLY per AC.OSS.3;
-    # docs/rebuild/** = excluded entirely). Their presence in the
-    # fallback caused permanent corpus_gate_state: partial in any
-    # stranger workspace where the dynamic CLAUDE.md parse failed.
-    # Replaced with the condensed public ODD doc, which ships under
-    # public_only/dev_and_public per the publish-mode manifest.
-    # Dynamic CLAUDE.md parse remains the authoritative path; this
-    # tuple fires only as last-resort defence-in-depth.
     "docs/design/odd.md",
 )
 
@@ -160,17 +147,15 @@ def discover_baseline_corpus(workspace_root: Path) -> list[str]:
 
 
 def enumerate_amendments_in_flight(workspace_root: Path) -> list[str]:
-    """Return sorted amendment-*.md paths under
-    ``docs/rebuild/plans/``. Empty list when the directory is absent
-    or holds no matching files.
+    """Return sorted ``amendment-*.md`` paths under the workspace's
+    plan directory. Empty list when the directory is absent or holds
+    no matching files.
 
-    Single-framework restructure (amendment #67, AC.SFR.3): when
-    ``<workspace>/docs/rebuild/plans/`` is absent, falls through to
-    ``<workspace>/framework/docs/rebuild/plans/`` (the framework-only
-    branch's root copy of plans/). The returned paths remain
-    workspace-relative; when the framework path is the source, the
-    returned strings carry the ``framework/`` prefix so the caller
-    can read them at the right location.
+    Probes the workspace-root plan directory first; falls through to
+    the framework-clone copy when the workspace-root copy is absent.
+    The returned paths remain workspace-relative; when the framework
+    copy is the source, the returned strings carry the ``framework/``
+    prefix so the caller can read them at the right location.
     """
     plans_dir = workspace_root / "docs" / "rebuild" / "plans"
     base_root = workspace_root

@@ -13,15 +13,11 @@ dependencies = [
     "opentelemetry-api>=1.25",
     "opentelemetry-sdk>=1.25",
     "pyyaml>=6",
-    # Amendment #48 (memory-system live client + Stop-hook turn-close
-    # write). Persona consumes the same streamable-HTTP MCP client
-    # Claude Code uses to talk to the workspace's memory-graphiti
-    # service (registered in `<workspace>/.mcp.json` by amendment #47).
-    # Pinned to the exact version present in `memory-system/.venv`
-    # (D5: floating bound risks protocol drift). Update in lockstep
-    # with memory-system's pin.
+    # Streamable-HTTP MCP client; pinned to match the host MCP
+    # service's pin to avoid protocol drift. Update in lockstep
+    # with that service.
     "mcp==1.27.0",
-    # In-workspace dependency on scope-of-work (D0 amendment required).
+    # In-workspace dependency on scope-of-work.
     "loam-scope-of-work",
 ]
 

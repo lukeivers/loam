@@ -497,9 +497,15 @@ The plan should be re-opened if any of these occur:
 - Verification: 14/14 component tests pass; 3/3 partition tests pass; `loam init --help` works through the unified CLI dispatcher; cross-component seal-diff sweep at seal-time green (16 components).
 
 ### FBE.2 — Partition admit `framework/tools/loam/**`
-- Plan-doc / manifest: `<TBD>` (sub-plan-docs authored at dispatch time).
-- Apply commit: `<TBD>`.
-- Seal commit: `<TBD>`.
+- Plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2.md` (authored at `8f0e778` by FBE.2 build agent before code per `feedback_plan_before_code`).
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2.manifest.yaml` (amendment #104, committed at `cb4d61f`).
+- Source commit (loam-cli sidecar shape: SEAL_COMMIT + test_no_sealed_amendments.py): `0f75364`.
+- Partition admission commit (manifest YAML reclassification + 2 test fixture spot-check edits): `80d52ab`.
+- Apply commit: `af47c45`.
+- Seal commit: `8d2b770`.
+- ACs satisfied: AC.FBE.2.{1,2,3,4,5,6,7,S} (8/8).
+- Verification: 70/70 partition tests pass; 1/1 loam-cli fence test passes; AC.FBE.2.4 verified via direct `synthesise_framework_only` invocation against post-FBE.2 HEAD — synth tree-SHA `da4e2b9` carries all 5 expected `tools/loam/` leaves (`pyproject.toml`, `README.md`, `src/loam_cli/{__init__.py, __main__.py, cli.py}`); `tests/` correctly drops via `**/tests/**` precedence.
+- Halt-and-surface from build (recorded for the dispatcher): synth pipeline strips `framework/` prefix on shipping paths (lines 302-312 of `synth.py`) — Risk #7 verified BENIGN for FBE.2 (mirrors FBE.1's `loam-init/` synth shape; Decision D out of scope here; documented as expected behaviour in sub-plan §2 Surface #1). Pre-existing dirty `docs/rebuild/FUTURE_IDEAS_DRAFT.md` (unrelated main-session edit) was stash-then-pop'd to unblock `loam amend seal` (it requires a clean tree); no FBE.2 substance affected. Seal command's optional §14 backfill failed because parent plan-doc carries the method-decision register at §8 (not §14); this §8 backfill is the manual replacement.
 
 ### FBE.3 — Partition split-admit `plugins/dev-sdlc/**`
 - Plan-doc / manifest: `<TBD>`.

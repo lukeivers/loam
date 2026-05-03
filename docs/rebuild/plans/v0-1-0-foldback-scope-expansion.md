@@ -612,9 +612,44 @@ The source-side `bootstrap_new_workspace` contract is UNCHANGED.
 - Halt-and-surface from build (recorded for the dispatcher): **No new surfaces.** The 4 failing tests' contract inversion was verified empirically; the doc edits stayed within the locked Quickstart + §1+§2 scope; the partner-prefix gap did NOT recur (single-component canonical-shape fence). Post-FBE.2c, dispatcher re-runs `loam amend seal` against FBE.5b's manifest (apply commit `ea6fad1` already in place pre-FBE.2c) — at that point the 4 fixture tests pass and FBE.5b's seal can complete.
 
 ### FBE.6 — Sweep + extended smoke + reviewer re-run
+
+**Outcome: FOLDBACK to FBE.8.** FBE.6 dispatched 2026-05-03 closed the
+sweep + smoke + staging-push lanes cleanly but the reviewer probe
+(in-band stranger-perspective + Ruthless Feedback against the
+`https://github.com/lukeivers/loam-staging.git` `main` post-push)
+surfaced 2 NEW BLOCKERs: BLOCKER-FBE6.1 (README/getting-started.md
+describe `pip install -e framework/tools/loam` + `loam init .` flow
+which FAILS at step 3 — `loam-init` is a separate package not pulled
+in by the README's literal install; stranger gets `loam: error:
+argument subcommand: invalid choice: 'init'`); BLOCKER-FBE6.2
+(`framework/tools/loam/README.md` admitted by FBE.2 to ship is heavy
+dev-vocabulary contaminated, never scrubbed by FBE.5). Plus 2 HIGH
+findings (HIGH-FBE6.1 primary-persona/pyproject.toml comment leak;
+HIGH-FBE6.2 session_start_gate.py docs/rebuild/ reference). Per
+AC.FBE.6.7 negative AC + halt-trigger #1, FBE.6 closes WITHOUT
+silently fixing in-band. M12 publish-flip is GATED behind FBE.8.
+
+The `loam amend seal` step ALSO halted on 3 pre-existing test
+failures (Surface FBE.6 #6 — H19 diff scope rejects FBE.4's
+install-from-source.txt not being in admit list + HC#4 byte-content
+samples for 2 pyprojects edited by FBE.5 not retired-and-rebaselined;
+both verified pre-existing on FBE.5b seal commit `48bb7e2`). FBE.8
+must close both the source-side debt AND the reviewer BLOCKERs;
+FBE.6's seal commit is deferred to FBE.6b post-FBE.8.
+
+- Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6.md` (authored at `6310769` by FBE.6 build agent before code per `feedback_plan_before_code`).
+- Seal narrative: `framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6` (committed at `2dff17d`).
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6.manifest.yaml` (amendment #112, committed at `2a574ac`).
+- Apply commit: `364c37d`.
+- Seal commit: **`<HALTED — pending FBE.8>`** (pre-existing FBE.4 H19 admit-list gap + FBE.5 HC#4 retire-and-rebaseline gap blocked the seal; both FBE.4-/FBE.5-attributable, not FBE.6-introduced; verified pre-existing on FBE.5b seal `48bb7e2`).
 - Sweep report: `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6-sweep-report.md`.
-- HOL narrative: `framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6`.
-- Seal commit: `<TBD>`.
+- Status file: `<workspace>/.scratch/claude-output/fbe6-status-2026-05-03.md`.
+- Synth result: source `6310769` → framework-only `4d105f6` (advance from M11a-3-era `da4e2b9`). Synth exit code 0.
+- Staging push: `https://github.com/lukeivers/loam-staging.git` `main` = `4d105f6` (force-pushed; remote SHA verified).
+- Reviewer verdict: **FOLDBACK to FBE.8** (2 NEW BLOCKERs + 2 HIGH).
+- ACs satisfied: AC.FBE.6.{1,3,4,6,7} PASS; AC.FBE.6.2 REGRESSED (4 hits — `pos-amend` 2 files, `loam-amend` 1 file, `docs/rebuild/` 1 file, `graphiti` 1 pyproject comment); AC.FBE.6.5 FOLDBACK; AC.FBE.6.S PARTIAL (apply landed; seal halted).
+- Verification: extended smoke ran end-to-end against fresh stranger clone via `pip install -r install-from-source.txt` — 17 packages installed, `loam --version`=`loam 0.1.0`, `loam init` produces runnable workspace shape (`framework/`, `workspace/personas/primary/`, `.claude/settings.json={}`, `~/.loam/{dormancy.sqlite, logs/}`).
+- Halt-and-surface from build (recorded for the dispatcher): **Surface FBE.6 #1-#6** documented in full in `<workspace>/.scratch/claude-output/fbe6-status-2026-05-03.md`. The actionable summary: FBE.8 needs to close BLOCKER-FBE6.1 (README/getting-started.md → `install-from-source.txt`) + BLOCKER-FBE6.2 (loam-cli README + docstrings scrub) + Surface FBE.6 #6 (H19 admit + HC#4 retire-and-rebaseline). Then FBE.6b re-runs the close-cycle with all FBE.8 fixes in place; M12 dispatches on GO.
 
 ### FBE.7 — Drop graphiti from v0.1.0 first-run shape (M-FBM is the v0.1.0 floor)
 
@@ -640,4 +675,4 @@ implementing plugin against the existing surface.
 
 ---
 
-*End of foldback plan-doc. FBE.2c sealed 2026-05-03 at `1d6ff13` (closes the doc-and-test-shape side of Decision D — README + getting-started.md drop the `framework/` arg from `git clone`; 4 workspace-bootstrap fixture tests updated to assert the post-FBE.2b doubled-component contract). Remaining sequence: re-seal FBE.5b (apply commit `ea6fad1` already in place; FBE.2c unblocked the seal) → FBE.6 sweep + extended smoke + reviewer re-run → M12 publish-flip.*
+*End of foldback plan-doc. FBE.6 dispatched 2026-05-03 (sub-plan `6310769`, narrative `2dff17d`, manifest `2a574ac`, apply `364c37d`); seal HALTED on pre-existing FBE.4 H19 + FBE.5 HC#4 debt; reviewer probe surfaced 2 NEW BLOCKERs (BLOCKER-FBE6.1 + BLOCKER-FBE6.2) + 2 HIGH; verdict FOLDBACK to FBE.8. Remaining sequence: FBE.8 (closes Surface FBE.6 #1-#4 + Surface FBE.6 #6 source-side debt) → FBE.6b (re-runs sweep + smoke + reviewer + completes seal commit) → M12 publish-flip on GO.*

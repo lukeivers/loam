@@ -1,0 +1,157 @@
+# FBE.6b — Re-run FBE.6 close-cycle against post-FBE.8 canonical HEAD
+
+2026-05-03. v0.1.0 publish foldback close-cycle re-verification step.
+Per parent plan `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`
+§4 FBE.6, this amendment re-synthesises canonical HEAD post-FBE.8,
+re-runs the M11a-3 sweep AC checks (verifying FBE.8's source-side
+closures landed cleanly), runs the EXTENDED smoke that exercises
+the documented install path end-to-end, pushes the synth to staging,
+and re-dispatches a stranger-perspective reviewer against the freshly-
+pushed staging tree. Sealed-component fence: hands-off-lifecycle only
+(HOL no-op narrative anchor pattern; `frozen_baseline: true` per
+amendment #23 + FBE.6 + FBE.8 manifest precedent).
+
+Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6b.md`.
+Sweep report: `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6b-sweep-report.md`.
+Status file: `<workspace>/.scratch/claude-output/fbe6b-status-2026-05-03.md`.
+Original reviewer dossier: `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+
+Composes on FBE.{1,2,2b,2c,3,4,5,5b,7,8} all sealed (`21b9480`,
+`8d2b770`, `47ccb3a`, `1d6ff13`, `becf183`, `99c03a6`, `bc56f0d`,
+`48bb7e2`, `a102bde`, `cc66b08`); FBE.6 apply at `364c37d` (apply-only;
+seal halted on pre-existing FBE.4+FBE.5 debt that FBE.8 closed).
+BASELINE for FBE.6b is `f0f9253` (the FBE.8 §8 register backfill
+commit); the FBE.6b sub-plan-doc commit `a67bfbb` is the source
+canonical HEAD that synth ran against.
+
+## Outcome — FOLDBACK (NEW BLOCKER + NEW HIGH)
+
+The FBE.6b dispatch executed cleanly through synth (AC.FBE.6b.1 PASS;
+new framework-only SHA `8f57bde`), sweeps (AC.FBE.6b.2 PASS — all
+four FBE.6 regressions closed by FBE.8: `pos-amend` / `loam-amend` /
+`docs/rebuild/` / `graphiti` pyproject all back to zero), extended
+smoke (AC.FBE.6b.3 PASS end-to-end via dispatcher's `pip install -r
+install-from-source.txt` + `loam init <ws> --from <repo>`), staging
+push (AC.FBE.6b.4 PASS; remote at `8f57bde`), and reviewer agent
+(AC.FBE.6b.5 surfaces NEW BLOCKER-FBE6b.1 + NEW HIGH-FBE6b.1).
+
+Per AC.FBE.6b.7's negative-AC clause and the parent plan's halt-
+trigger #1 ("Reviewer agent surfaces a new BLOCKER → halt; re-open
+foldback"), FBE.6b closes WITHOUT silently fixing the new blocker
+in-band. **Foldback re-opens at FBE.9** to close the new blocker
+before M12 publish-flip can dispatch.
+
+## What FBE.6b verified (positive findings — FBE.8 closures verified clean)
+
+- **All 8 banned literals at zero hits** in synth `8f57bde`.
+  FBE.8 Bucket 2 (loam-cli scrub) + Bucket 3 (primary-persona
+  session_start_gate.py + pyproject mcp-pin annotation) closed
+  the 4 FBE.6 regressions (`pos-amend`, `loam-amend`, `docs/rebuild/`,
+  `graphiti` pyproject comment).
+- **All 4 substitution tokens at zero**, **all 6 MFBM deps at zero**
+  across 17 pyprojects (FBE.6 graphiti regression closed by FBE.8
+  Bucket 3).
+- **All 15 wired components ≥1 production caller** in synth.
+- **Zero `tests/` files in synth.**
+- **EXTENDED smoke PASSES end-to-end** — clone, venv, `pip install -r
+  install-from-source.txt`, `loam --version`=`loam 0.1.0`, `loam init
+  <ws> --from <repo>` produces runnable workspace shape (framework/,
+  workspace/personas/primary/, .claude/settings.json={}; ~/.loam/
+  scaffolded with dormancy.sqlite + logs/).
+- **BLOCKER-FBE6.1 closed** (install-flow doc): README + getting-
+  started.md both describe the working `pip install -r install-from-
+  source.txt` flow. Stranger followed the literal commands; install
+  succeeded.
+- **BLOCKER-FBE6.2 closed** (loam-cli README + cli.py + __init__.py
+  scrub): `framework/tools/loam/` reads as a public-facing surface
+  (no `pos-amend` / `loam-amend` / `Amendment #` / `M1g` leaks; the
+  `loam amend` framing is intentional and accurate).
+- **HIGH-FBE6.1 + HIGH-FBE6.2 closed** (primary-persona scrubs): zero
+  hits on `Amendment #N` / `memory-graphiti` literals in pyproject;
+  zero hits on `docs/rebuild/` literal in session_start_gate.py.
+- **Surface FBE.6 #6 closed** (FBE.4 H19 admit + FBE.5 HC#4 retire-
+  and-rebaseline): seal pipeline ran clean (no H19/HC#4 test failures
+  blocking the seal).
+- **Staging push** to `https://github.com/lukeivers/loam-staging.git`
+  succeeded via `--force` (the prior remote SHA `4d105f6` was FBE.6's
+  push; `--force-with-lease` rejected stale info per FBE.6 Surface #5
+  precedent — recurrence expected; recorded as Surface FBE.6b #1).
+
+## What FBE.6b surfaced (foldback-reopening findings)
+
+### BLOCKER-FBE6b.1 — README + getting-started.md `loam init .` does not match CLI's required `--from` flag
+
+The README's literal install (`pip install -r install-from-source.txt`
+followed by `loam init .`) FAILS at step 3 because `loam init` requires
+`--from CANONICAL_SOURCE` (an absolute POSIX path or http(s)/git@ URL)
+but the README provides no `--from` flag. A stranger following the
+README literally gets `loam init: error: the following arguments are
+required: --from` (exit code 2).
+
+The CLI source confirms `--from` is required: `framework/loam-init/
+src/loam/loam_init/cli.py:186-187` (`required=True`). The CLI's
+help text shows `--from CANONICAL_SOURCE` is required.
+
+The CLI works correctly when `--from` is provided (the FBE.6b smoke
+verifies this with `loam init <ws> --from <repo>`). The bug is in
+the README + getting-started.md not specifying `--from`.
+
+This is the same SHAPE of bug FBE.6's BLOCKER-FBE6.1 was: docs
+describe a flow that does not match what the CLI accepts. FBE.8
+fixed the install flow but did not fix the `loam init .` invocation
+— both docs still say `loam init .` (zero `--from`).
+
+ODD §2.5 framing: the README's documented contract (install →
+`loam init .` works) is not satisfied by the actual code path the
+README describes.
+
+Fix shape: either doc-only (FBE.9 Path A: update README + getting-
+started.md to use `loam init . --from .` or similar), OR CLI-side
+(FBE.9 Path B: make `--from` optional and default to pwd if it's a
+git tree). Path B recommended (single-fence amendment at loam-init;
+shrinks doc/CLI surface mismatch).
+
+### HIGH-FBE6b.1 — Pervasive `Amendment #N` source-comment references
+
+A stranger reading source code post-install sees pervasive references
+to internal amendment numbers (339 occurrences across 95 files in
+synth). Concrete examples: `Amendment #20 — Site 6...`, `Amendment
+#26 — teardown CDC 2...`, `Amendment #28 — defence in depth...`,
+`amendment #67 (AC.SFR.3)...`. NOT in the AC.M11a.2 banned list
+(which specifies `pos-amend`, `loam-amend`, `loam-mode`, `docs/
+rebuild/`, `odd-methodology`, `odd-in-loam`, `duration-estimation-
+rubric`, `pos-publish-framework-only`); same shape as the original
+loam-user-review LOW-3 finding ("dev-vocabulary leakage in pyproject
+descriptions") but at much larger scale and across source code
+rather than packaging metadata.
+
+Severity HIGH not BLOCKER: not first-run-visible (strangers don't
+typically read installed-package source code as part of first-run);
+install + first-`claude`-session UX doesn't expose this surface.
+But anyone debugging an issue and tracing through code will see
+internal amendment numbers throughout.
+
+Fix shape: defer to v0.1.x dedicated source-comment scrub amendment.
+Document as known issue at v0.1.0 GO (release notes "known
+limitations" section). Builder's call whether to combine into FBE.9
+alongside BLOCKER-FBE6b.1 or defer.
+
+## Path forward
+
+M12 publish-flip is GATED behind FBE.9 closure of BLOCKER-FBE6b.1
++ a FBE.6c re-verification cycle (mirrors FBE.6b's pattern post-
+FBE.9 source-side fix). Estimated FBE.9 wall-clock: 15–30 min
+(single-fence loam-init CLI edit if Path B; doc-only if Path A).
+
+Once FBE.9 seals + FBE.6c re-verifies, M12 dispatches.
+
+This narrative seal anchor records the FBE.6b close-cycle outcome:
+re-synth + sweeps + smoke + reviewer ran, four artefacts produced
+(sub-plan, sweep report, this seal narrative, status file), foldback
+re-opens at FBE.9 with the named BLOCKER + HIGH + recommended fix
+shapes. No source-side changes were made during FBE.6b (AC.FBE.6b.7
+negative-AC held).
+
+---
+
+End of FBE.6b narrative seal. Reference verdict: FOLDBACK to FBE.9.

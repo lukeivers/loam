@@ -1,0 +1,167 @@
+# FBE.11 — Close BLOCKER-FBE6c.1 (publish-side dual-ref push)
+
+2026-05-03. v0.1.0 publish foldback close-cycle — closes the new
+BLOCKER-FBE6c.1 surfaced by FBE.6c's stranger-perspective reviewer
+probe. Per parent plan `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`
+§4 FBE.6 + §8 FBE.6c row, this amendment updates the documented
+operator push command from a single-ref push (`framework-only:main`)
+to a **dual-ref push** (`framework-only:main` + `framework-only:framework-only`),
+following the dispatcher's locked Path B. Sealed-component fence:
+hands-off-lifecycle only (HOL no-op narrative anchor pattern;
+`frozen_baseline: true` per amendment #23 + FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c
+manifest precedent).
+
+Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe11.md`.
+Status file: `<workspace>/.scratch/claude-output/fbe11-status-2026-05-03.md`.
+FBE.6c sweep report (where BLOCKER-FBE6c.1 was surfaced): `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6c-sweep-report.md`.
+FBE.6c status: `<workspace>/.scratch/claude-output/fbe6c-status-2026-05-03.md`.
+Original reviewer dossier: `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+
+Composes on FBE.{1,2,2b,2c,3,4,5,5b,7,8,6b,9,10,6c} all sealed
+(`21b9480`, `8d2b770`, `47ccb3a`, `1d6ff13`, `becf183`, `99c03a6`,
+`bc56f0d`, `48bb7e2`, `a102bde`, `cc66b08`, `08589ce`, `308d7b4`,
+`428deeb`, `6fd3812`); FBE.6 apply at `364c37d` (apply-only; seal
+intentionally pending — FBE.6 stays the FOLDBACK record). BASELINE
+for FBE.11 is `03ef8da` (the FBE.6c §8 register backfill commit; the
+canonical pos-v2 HEAD at FBE.11 dispatch-time).
+
+## Outcome — CLOSED
+
+FBE.11 closes BLOCKER-FBE6c.1 with a doc-only operator-instruction
+update at the live publish-mechanic surfaces. The publish path is
+operator-manual (the synthesis tool at `framework/tools/pos-publish-framework-only/`
+advances only the local `framework-only` branch — the push to staging
+or public is a manual operator command). Therefore the fix is the
+operator-instruction doc update at:
+
+- `docs/rebuild/plans/oss-v0-1-0-publish-dry-run.md` AC.M11a.7 (the
+  canonical operator instruction for the M11/M12 staging push;
+  body rewritten to describe the dual-ref push contract + `framework-only`
+  ref rationale).
+- `docs/rebuild/plans/oss-v0-1-0-publish-dry-run.md` line 32 (M11a
+  summary updated to dual-ref push wording).
+- `docs/rebuild/plans/oss-v0-1-0-publish-dry-run.md` line ~431
+  (D-build.M11a.10 historical record annotated with the post-FBE.11
+  supersede note; original as-dispatched record preserved).
+- `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` §4 AC.FBE.6.4
+  row (the forward-AC text future FBE.6d inherits; updated to
+  dual-ref push command + verification mechanics).
+
+The FBE.6/FBE.6b/FBE.6c sealed sub-plan-docs are NOT retroactively
+edited — they are sealed-amendment historical records describing the
+dispatch as it actually happened with the old single-ref push command.
+The fix lands on the LIVE forward-AC surface (parent plan §4
+AC.FBE.6.4 + dry-run plan AC.M11a.7) so the next dispatch (FBE.6d)
+inherits the new push command via these surfaces.
+
+## Smoke verification (AC.FBE.11.4)
+
+Local-tmp-ref dual-ref push smoke executed pre-doc-edit:
+
+```
+$ TMP=/tmp/loam-staging-fbe11-smoke.git
+$ STRANGER=/tmp/loam-stranger-fbe11
+$ rm -rf "$TMP" "$STRANGER"
+$ git init --bare "$TMP"
+Initialized empty Git repository in /private/tmp/loam-staging-fbe11-smoke.git/
+
+$ git -C /Users/lukeivers/ivers-corp-pos-v2 push "$TMP" \
+    framework-only:main framework-only:framework-only --force
+To /tmp/loam-staging-fbe11-smoke.git
+ * [new branch]      framework-only -> main
+ * [new branch]      framework-only -> framework-only
+--- push exit 0
+
+$ git ls-remote "$TMP"
+19422edd50fa941ecd4a43ac16500c20166ec8c4	refs/heads/framework-only
+19422edd50fa941ecd4a43ac16500c20166ec8c4	refs/heads/main
+
+$ git -C /Users/lukeivers/ivers-corp-pos-v2 rev-parse framework-only
+19422edd50fa941ecd4a43ac16500c20166ec8c4   # matches both remote refs
+
+$ git clone "$TMP" "$STRANGER"
+Cloning into '/tmp/loam-stranger-fbe11'...
+done.
+
+$ git -C "$STRANGER" for-each-ref --format='%(refname) %(objectname:short)'
+refs/remotes/origin/framework-only 19422ed
+refs/remotes/origin/main 19422ed
+```
+
+Both refs land at the same SHA. The stranger clone has
+`refs/remotes/origin/framework-only` available — exactly the ref the
+bootstrap's `_clone_canonical` step needs to materialise the local
+`framework-only` branch via `git checkout -B framework-only origin/framework-only`.
+This dispositively proves that with the documented dual-ref push,
+stranger clones get the bootstrap-required ref and `loam init <ws>`
+will succeed instead of failing with `fatal: 'origin/framework-only'
+is not a commit`. (Smoke tmp dirs cleaned post-verification.)
+
+No GitHub state was written by FBE.11. Per dispatcher's brief, the
+actual push to staging or public is M12's job; FBE.11 just lands the
+FIX in canonical and verifies via local-tmp-ref smoke.
+
+## ACs satisfied
+
+All 7 ACs PASS:
+
+- **AC.FBE.11.1** — `oss-v0-1-0-publish-dry-run.md` AC.M11a.7 §body
+  rewritten to instruct the dual-ref push + verify both refs via
+  `git ls-remote`.
+- **AC.FBE.11.2** — `oss-v0-1-0-publish-dry-run.md` line 32 (M11a
+  summary) + line ~431 (D-build.M11a.10 historical record annotated
+  with post-FBE.11 supersede note).
+- **AC.FBE.11.3** — `v0-1-0-foldback-scope-expansion.md` §4
+  AC.FBE.6.4 row (line 366) updated to dual-ref push command;
+  future FBE.6d inherits the shape verbatim.
+- **AC.FBE.11.4** — Local-tmp-ref smoke PASS (transcript above);
+  both refs land at the same SHA; stranger clone has
+  `refs/remotes/origin/framework-only`.
+- **AC.FBE.11.5** — Status file authored at
+  `<workspace>/.scratch/claude-output/fbe11-status-2026-05-03.md`.
+- **AC.FBE.11.6** — Negative AC PASS: `git diff 03ef8da..SEAL_COMMIT
+  --name-only` produces only paths under (a) `docs/rebuild/plans/`
+  (sub-plan + manifest + parent §8 backfill + AC.FBE.6.4 row update
+  + dry-run plan-doc updates), (b) `framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe11`
+  (NEW narrative file), (c) `framework/hands-off-lifecycle/tests/SEAL_COMMIT`
+  (apply step's frozen-baseline-aware sidecar bump). No edits under
+  `framework/<comp>/src/` or `framework/<comp>/tests/`.
+- **AC.FBE.11.S** — Sealed-component fence: hands-off-lifecycle only;
+  `frozen_baseline: true`; HOL no-op narrative anchor pattern; seal
+  ran clean.
+
+## Sealed-component fence
+
+HOL only (`frozen_baseline: true`). FBE.11 contributes only the seal
+narrative file at `framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe11`
++ a HOL sidecar bump driven by `loam amend apply`. No source-side
+delta; no test-side delta; no other component touched.
+
+## Path forward
+
+- **FBE.6d (next dispatch).** Re-run FBE.6c's pattern (re-synth +
+  sweeps + smoke + reviewer + seal narrative) against post-FBE.11
+  staging — but now exercising the dual-ref push so the reviewer
+  probe's stranger clone gets `origin/framework-only` and the
+  install path completes end-to-end via the README's literal commands.
+  Estimated 25–40 min wall-clock per FBE.6c precedent.
+- **M12 publish-flip.** GATED behind FBE.6d GO. The full stranger-flow
+  `git clone <public-URL>` + install + `loam init` UX must work
+  end-to-end via README's literal commands.
+- **HIGH-FBE6b.1 (339 `Amendment #N` source-comment references).**
+  Stays deferred per FBE.6b/FBE.9/FBE.10/FBE.6c agent recommendation;
+  document as known limitation in v0.1.0 release notes.
+- **FBE.6 pending seal.** Still apply-only at `364c37d`. Continues
+  to be the FOLDBACK record per FBE.6b/FBE.9/FBE.10/FBE.6c
+  path-forward; FBE.{6c,11,6d} continue the close-cycle.
+- **Regression test for dual-ref push behaviour** (e.g.,
+  `test_AC_FBE_11_X_stranger_clone_from_dual_ref_published_remote.py`
+  in workspace-bootstrap) — explicitly deferred to v0.1.x per
+  dispatcher's brief.
+
+---
+
+*End of FBE.11 narrative. BASELINE `03ef8da`. Foldback closes
+BLOCKER-FBE6c.1 via doc-only operator-instruction update + local-tmp-ref
+smoke verification. M12 publish-flip remains GATED behind a FBE.6d
+re-verification cycle that exercises the dual-ref push path.*

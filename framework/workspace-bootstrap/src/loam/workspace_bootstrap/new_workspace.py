@@ -183,6 +183,56 @@ def _canonical_source_kind(source: str) -> str:
 FRAMEWORK_ONLY_BRANCH = "framework-only"
 
 
+def _materialise_framework_only_branch(path: Path) -> None:
+    """Materialise ``framework-only`` as a local branch on ``path``.
+
+    Re-points ``refs/heads/framework-only`` at ``refs/remotes/origin/
+    framework-only`` so a subsequent ``git clone <path>`` propagates
+    the synthetic branch as a LOCAL ref (``git clone`` only propagates
+    LOCAL refs from the source).
+
+    Two call sites:
+
+    1. ``_resolve_url_to_clone_source`` — runs against the
+       ``~/.loam/canonical-cache/<repo-id>/`` clone produced by
+       ``ensure_cache_clone``. The cache's ``git clone <url>`` makes
+       ``framework-only`` available only as
+       ``refs/remotes/origin/framework-only``; this materialisation
+       step lets the downstream ``_clone_canonical`` checkout step
+       find it as a local ref on the cache.
+    2. ``bootstrap_new_workspace``'s local-path branch — runs against
+       a stranger's ``git clone <canonical-url>`` of canonical when
+       ``--from`` resolves to that local clone (the typical post-FBE.9
+       cwd-default-when-git-tree pattern). Same root cause: the
+       stranger's clone has ``framework-only`` only as
+       ``refs/remotes/origin/framework-only``; without this step, the
+       downstream ``_clone_canonical`` checkout fails with
+       ``fatal: 'origin/framework-only' is not a commit``. Closes
+       BLOCKER-FBE9.1 (FBE.10).
+
+    Fail-soft: a non-zero exit (e.g. the remote-tracking ref is
+    absent because canonical does not yet publish ``framework-only``)
+    is non-fatal here; the downstream ``_clone_canonical`` checkout
+    step will diagnose the absence with a structured
+    ``CloneFailedError`` naming ``framework-only``.
+    """
+    subprocess.run(  # noqa: S603 — argv constructed
+        [
+            "git",
+            "-C",
+            str(path),
+            "update-ref",
+            f"refs/heads/{FRAMEWORK_ONLY_BRANCH}",
+            f"refs/remotes/origin/{FRAMEWORK_ONLY_BRANCH}",
+        ],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        text=True,
+    )
+
+
 def _target_is_empty(path: Path) -> bool:
     """Return True if ``path`` is a viable bootstrap target.
 
@@ -251,32 +301,12 @@ def _resolve_url_to_clone_source(url: str) -> str:
     # the default branch as a local branch (``refs/heads/pos-v2``).
     # Subsequent ``git clone <cache-path>`` in ``_clone_canonical``
     # only propagates LOCAL branches, so ``framework-only`` would be
-    # missing in the workspace's clone.
-    #
-    # Materialise ``framework-only`` as a local branch on the cache by
-    # re-pointing ``refs/heads/framework-only`` at the remote-tracking
-    # ref. Fail-soft: if the remote-tracking ref is absent (e.g. the
-    # canonical does not yet publish ``framework-only``), the
-    # downstream ``_clone_canonical`` checkout step surfaces the
-    # absence with a structured CloneFailedError naming
-    # ``framework-only``.
-    completed = subprocess.run(  # noqa: S603
-        [
-            "git",
-            "-C",
-            str(cache_path),
-            "update-ref",
-            f"refs/heads/{FRAMEWORK_ONLY_BRANCH}",
-            f"refs/remotes/origin/{FRAMEWORK_ONLY_BRANCH}",
-        ],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-        text=True,
-    )
-    # Non-zero exit (e.g. remote-tracking ref absent) is non-fatal
-    # here; the downstream checkout step will diagnose precisely.
+    # missing in the workspace's clone. Materialise it as a local
+    # branch on the cache via the shared helper (FBE.10 extracted the
+    # block; the local-path branch in ``bootstrap_new_workspace`` runs
+    # the same step against the stranger-clone source path to close
+    # BLOCKER-FBE9.1).
+    _materialise_framework_only_branch(cache_path)
     return str(cache_path)
 
 
@@ -569,6 +599,19 @@ def bootstrap_new_workspace(
         if kind == "url":
             clone_source = _resolve_url_to_clone_source(canonical_source)
         else:
+            # FBE.10 (closes BLOCKER-FBE9.1): mirror the URL-form
+            # materialisation step at the local-path branch. When
+            # ``local_path`` is a stranger's ``git clone <canonical-url>``
+            # of canonical (the typical post-FBE.9 cwd-default-when-
+            # git-tree pattern: stranger clones loam, cd's in, runs
+            # ``loam init <ws>`` with no ``--from``), ``framework-only``
+            # is present only as ``refs/remotes/origin/framework-only``
+            # on ``local_path`` because ``git clone`` propagates only
+            # LOCAL refs from the source. Materialise it as a local
+            # branch so the downstream ``_clone_canonical`` checkout
+            # step finds it. Fail-soft (non-zero exit ignored — the
+            # downstream checkout step diagnoses absence precisely).
+            _materialise_framework_only_branch(local_path)
             clone_source = str(local_path)
         try:
             _clone_canonical(clone_source, framework_dir)

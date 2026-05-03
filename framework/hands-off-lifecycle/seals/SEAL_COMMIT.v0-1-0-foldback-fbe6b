@@ -155,3 +155,22 @@ negative-AC held).
 ---
 
 End of FBE.6b narrative seal. Reference verdict: FOLDBACK to FBE.9.
+
+# FBE.6b narrative-only seal (re-run of FBE.6 close-cycle)
+
+See the full narrative at the target file (already authored
+pre-apply per AC.FBE.6b.6 + AC.FBE.6b.S) for FBE.6b outcome,
+sweep results (all PASS — no regressions), smoke results
+(PASS end-to-end), reviewer verdict (FOLDBACK to FBE.9 with
+NEW BLOCKER-FBE6b.1 + NEW HIGH-FBE6b.1), and path forward.
+
+Sub-plan-doc:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6b.md`.
+Sweep report:
+`<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6b-sweep-report.md`.
+Status file:
+`<workspace>/.scratch/claude-output/fbe6b-status-2026-05-03.md`.
+
+BASELINE a67bfbb (the FBE.6b sub-plan-doc commit; FBE.6b's source
+canonical HEAD at synth-run-time). No source-side delta per
+AC.FBE.6b.7 negative AC.

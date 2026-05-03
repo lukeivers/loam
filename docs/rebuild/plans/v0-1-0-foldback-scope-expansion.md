@@ -708,6 +708,49 @@ FBE.9 closure of BLOCKER-FBE6b.1 + a FBE.6c re-verification cycle.
 - Verification: synth `a67bfbb → 8f57bde` (advance from FBE.6's `4d105f6`); 8/8 banned-literal grep zero hits; 4/4 substitution-token zero hits; 15/15 wired-component ≥1 caller; 6/6 MFBM-dep zero hits across 17 pyprojects; zero `tests/` files in synth; extended smoke PASS end-to-end (clone + venv + `pip install -r install-from-source.txt` + `loam --version`=`loam 0.1.0` + `loam init <ws> --from <repo>` produces runnable workspace shape with .claude/settings.json={} + ~/.loam/{dormancy.sqlite,logs/}); staging push to lukeivers/loam-staging:main = `8f57bde` (force-push after `--force-with-lease` rejected per FBE.6 Surface #5 precedent); seal pipeline ran clean (FBE.4 H19 admit + FBE.5 HC#4 retire-and-rebaseline closed by FBE.8 — no test failures blocking the seal).
 - Halt-and-surface from build (recorded for the dispatcher): **NEW BLOCKER-FBE6b.1 (README + getting-started.md `loam init .` does not match CLI's required `--from` flag)** — fix shape recommendations: Path A (doc-only update to `loam init . --from .`); Path B (CLI-side make `--from` optional, default to pwd if it's a git tree); Path C (combine). Recommendation: Path B (single-fence loam-init amendment). **NEW HIGH-FBE6b.1 (pervasive `Amendment #N` source-comment references)** — recommended defer to v0.1.x dedicated source-comment scrub amendment; document as known issue at v0.1.0 GO. **Surface FBE.6b #1 — `--force-with-lease` cache stale (recurrence; expected)** — same pattern as FBE.6 Surface #5; future FBE dispatches use plain `--force` directly. **Surface FBE.6b #2 — Reviewer dispatched in-band (recurrence; expected)** — Task tool not exposed in this environment; reviewer probe done in-band via fresh-clone walk-through.
 
+### FBE.9 — Close BLOCKER-FBE6b.1 + comprehensive doc-vs-CLI conformance sweep
+
+Inserted post-FBE.6b per the dispatcher's FOLDBACK ruling. Strategic
+intent: break the doc-vs-CLI ping-pong cycle (FBE.6 → FBE.8 → FBE.6b
+each surfaced ONE mismatch + the remediation closed only that named
+one). FBE.9 closes BLOCKER-FBE6b.1 AND audits every other documented
+public CLI command in a single pass so we don't catch the next
+mismatch in FBE.6c → FBE.10. Two buckets:
+
+- **Bucket 1 (BLOCKER-FBE6b.1 — CLI side, Path B per FBE.6b sweep
+  report §4 recommendation)** —
+  `framework/loam-init/src/loam/loam_init/cli.py` makes `--from`
+  optional. When omitted, the resolver defaults to the current working
+  directory if it is a git tree (the typical pattern when `loam init`
+  runs from inside a cloned loam tree); otherwise raises
+  `CanonicalSourceInvalidError` with an actionable message naming
+  `--from` and the cwd-not-a-git-tree reason (exit 2). 5 test files
+  updated; loam-init component README Usage block bracket.
+- **Bucket 2 (comprehensive doc-vs-CLI conformance sweep)** — every
+  documented public CLI command in `README.md`, `docs/getting-started.md`,
+  `docs/install-from-source.md`, `framework/loam-init/README.md`
+  enumerated and verified against the actual CLI behaviour (~26
+  commands audited). 5 doc fixes applied (4 distinct
+  `loam init .` → `loam init ~/loam-workspace` substitutions across
+  the 3 public docs + 1 component-README `--from` syntax bracket).
+  Adjacent prose updated for the new out-of-tree workspace shape.
+
+Two sealed-component fence: `framework/loam-init/` (Bucket 1) +
+`framework/hands-off-lifecycle/` (HOL `frozen_baseline: true`
+narrative-only contribution per FBE.6/FBE.6b/FBE.8 precedent).
+Universal admissions for README + getting-started.md + install-from-source.md.
+
+- Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe9.md` (authored at `2d75fa1` by FBE.9 build agent before code per `feedback_plan_before_code`).
+- Bucket 1 source + tests + component README commit (loam-init cli.py + 2 test files + README): `4754a22`.
+- Bucket 2 public-doc edit commit (README + getting-started.md + install-from-source.md): `6e13e71`.
+- HOL seal narrative anchor commit: `5c94fe3`.
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe9.manifest.yaml` (amendment #115, committed at `087ec1f`; 2-fence: loam-init + HOL frozen-baseline narrative).
+- Apply commit: `77029ec` (manually committed per FBE.6b Surface #5 precedent — `loam amend apply` modified sidecars + BASELINE literal + HOL test_cross_cutting allowed-set but did NOT auto-commit).
+- Seal commit: `308d7b4`.
+- ACs satisfied: AC.FBE.9.{1,2,3,4,6,S} PASS (6/7); AC.FBE.9.5 PARTIAL (in-band smoke verified the cwd-default + helpful-error contracts but NEW BLOCKER-FBE9.1 surfaced — see Halt-and-surface below).
+- Verification: 16/16 loam-init tests pass post-edit; 10/10 HOL test_cross_cutting tests pass; `loam init --help` shows `[--from CANONICAL_SOURCE]` (optional bracket); cwd-default smoke against canonical pos-v2 succeeds (workspace shape correct); helpful-error smoke against non-git-tree cwd returns exit 2 with the actionable message; explicit `--from <canonical-pos-v2>` smoke unchanged (no-regression). Audit table populated in sub-plan §6.4 — 26 commands across 4 docs; 5 fixes applied.
+- Halt-and-surface from build (recorded for the dispatcher): **NEW BLOCKER-FBE9.1 (bootstrap_new_workspace local-path clones don't materialise `framework-only` as a local branch from `remotes/origin/framework-only`).** Surfaced by the FBE.9 stranger-flow smoke: clone canonical → cd in → `loam init <ws>` (FBE.9's auto-from-cwd resolves to the cloned tree) → bootstrap clones the cloned tree → only LOCAL branches propagate → workspace's framework subdir has no `framework-only` ref → `git checkout -B framework-only origin/framework-only` fails. Pre-existing in `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py` (lines ~570-572 take the local-path branch directly to `_clone_canonical` without the materialisation step that `_resolve_url_to_clone_source` does for URL-form). Pre-FBE.9 hidden because users were forced to pass explicit `--from <canonical-pos-v2>` (which had local `framework-only`); FBE.9's auto-default makes the failure the default for cloned-loam strangers. Fix shape: 1-component fence amendment (workspace-bootstrap) — apply the `_resolve_url_to_clone_source` materialisation step at the local-path branch in `bootstrap_new_workspace`. ~10-20 LOC. Recommendation: FBE.10 closes BLOCKER-FBE9.1 with a workspace-bootstrap source-side fix; FBE.6c then re-runs sweep + smoke + reviewer. **Surface #5 — `loam amend apply` did not auto-commit (recurrence; FBE.6b precedent)** — pattern matches FBE.6b Surface #5; manually committed via `chore(amend): FBE.9 apply` per the same pattern. **Surface #6 — clean-tree workaround for `loam amend seal` (recurrence; expected)** — pre-existing untracked + dirty paths stashed, popped clean post-seal.
+
 ### FBE.7 — Drop graphiti from v0.1.0 first-run shape (M-FBM is the v0.1.0 floor)
 
 Added post-FBE.2 per Luke's 2026-05-03 16:53 + 16:55 UTC ruling: graphiti
@@ -732,4 +775,4 @@ implementing plugin against the existing surface.
 
 ---
 
-*End of foldback plan-doc. FBE.8 dispatched + sealed 2026-05-03 (sub-plan `4467637`, Bucket 2 source `fda303b`, Bucket 3 source `65abb86`, Bucket 4 H19+HC#4+narrative `81c23ce`, Bucket 1 docs `f14a5a4`, manifest `db4c36b`, apply `8bec8f2`, seal `cc66b08`). FBE.8 closes the 4 reviewer + seal-debt buckets cleanly; install flow now describes the working `pip install -r install-from-source.txt` path. Remaining sequence: FBE.6b (re-synth + sweep + smoke + reviewer against post-FBE.8 canonical HEAD; completes the seal cycle FBE.6 left open) → M12 publish-flip on GO.*
+*End of foldback plan-doc. FBE.9 dispatched + sealed 2026-05-03 (sub-plan `2d75fa1`, Bucket 1 source `4754a22`, Bucket 2 docs `6e13e71`, narrative anchor `5c94fe3`, manifest `087ec1f`, apply `77029ec`, seal `308d7b4`). FBE.9 closes BLOCKER-FBE6b.1 (CLI side `--from` becomes optional + cwd-default-when-git-tree; doc side `loam init .` → `loam init ~/loam-workspace` across 3 public docs) AND audits 26 documented public CLI commands (5 fixes applied). NEW BLOCKER-FBE9.1 surfaced during smoke: bootstrap_new_workspace local-path clones don't materialise `framework-only` as a local branch from `remotes/origin/framework-only` — pre-existing in workspace-bootstrap; pre-FBE.9 hidden because users had to pass explicit `--from <canonical-pos-v2>` (which had local `framework-only`); FBE.9's auto-default makes the failure the default for cloned-loam strangers. Remaining sequence: FBE.10 (workspace-bootstrap source-side fix for BLOCKER-FBE9.1; ~10-20 LOC; 1-component fence) → FBE.6c (re-synth + sweep + smoke + reviewer against post-FBE.10 canonical HEAD) → M12 publish-flip on GO.*

@@ -1,0 +1,162 @@
+schema_version: 1
+amendment:
+  number: 103
+  slug: v0-1-0-foldback-scope-expansion-fbe1
+  title: "FBE.1 — `loam init` subcommand wraps bootstrap_new_workspace (NEW component framework/loam-init/)"
+
+# BASELINE: 608ecea — partition admission commit (the pre-apply tip
+# after the loam-init source + tests + partition admission landed).
+# Plan-doc commit `b111340` lands first; source commit `2c6b488`
+# lands second; partition admission `608ecea` lands third; this
+# manifest is commit #4 in the FBE.1 chain. The apply step bumps
+# loam-init/tests/test_no_sealed_amendments.py BASELINE literal
+# from `b111340` (its current value, set at source-commit time as
+# the pre-amendment tip) to this manifest's `608ecea`. Sidecar
+# advances to `608ecea` at apply, then to the seal commit at seal.
+#
+# Single sealed-component fence: `framework/loam-init/` (NEW
+# component; carries its own tests/test_no_sealed_amendments.py
+# invariant as the structural anchor — same pattern as every other
+# sealed component, established post-amendment-#22).
+#
+# The partition-manifest single-line edit at
+# `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`
+# rides via universal_paths.prefixes admission — exactly the same
+# pattern M7-partition-fix (amendment #98) used for the
+# `docs/plugins/**` glob admission. The fence stays at
+# `framework/loam-init/` only.
+baseline: 608ecea
+
+plan: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe1.md
+
+components:
+  - name: loam-init
+    seal_test: framework/loam-init/tests/test_no_sealed_amendments.py
+    sidecar: framework/loam-init/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `framework/tools/pos-publish-framework-only/` admits the single-line
+# partition-manifest edit (the structural surface for the new
+# component's classification). Mirrors M7-partition-fix amendment #98.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+    - framework/tools/pos-publish-framework-only/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/loam-init/tests/SEAL_COMMIT.notes
+  body: |
+    # FBE.1 — `loam init` subcommand wraps bootstrap_new_workspace
+
+    2026-05-03. v0.1.0 reviewer foldback closes BLOCKER 1
+    (the documented `loam init` verb has no implementation in
+    canonical pre-FBE.1). Reviewer dossier:
+    `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+    Parent plan: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`
+    §4 FBE.1. Sub-plan:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe1.md`.
+
+    NEW component `framework/loam-init/` exposes `loam init <path>
+    --from <canonical>` as a registered `loam.cli.subcommands`
+    entry-point. The builder wraps the existing
+    `loam.workspace_bootstrap.new_workspace.bootstrap_new_workspace`
+    function. Composition only: zero edits to `loam_cli/cli.py`
+    (entry-point discovery is the contract per AC.FBE.1.6) + zero
+    edits to `bootstrap_new_workspace`'s signature or behaviour.
+
+    Decision A from the parent plan locked: A1 (wrap) — NEW component
+    `loam-init` rather than rename `pos-new-workspace` (A2) or
+    cheap-ship-rewrite-docs (A3, explicitly rejected). Additive
+    pattern matches M6a's plugin-discovery precedent (the dev-sdlc
+    plugin's `loam project` registration is the symmetric example).
+
+    Structural delta (within fence + universal admissions):
+
+      - `framework/loam-init/` — NEW component (8 source/test files +
+        SEAL_COMMIT sidecar + README + pyproject.toml).
+      - `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`
+        — single 1-line glob entry under `dev_and_public:`
+        (`framework/loam-init/**`) + 6-line provenance comment naming
+        FBE.1 + the foldback plan-doc. Required for the audit-
+        completeness test to pass post-source-commit; admitted via
+        `universal_paths.prefixes` (same pattern as M7-partition-fix
+        #98). Out-of-fence by classification but required for the
+        new component to physically exist in canonical without
+        breaking partition completeness.
+
+    AC surface (per sub-plan §4):
+
+      - AC.FBE.1.1 — NEW directory framework/loam-init/ with the
+        documented file shape.
+      - AC.FBE.1.2 — pyproject declares
+        `init = loam.loam_init.cli:build_init_subcommand` under
+        `loam.cli.subcommands`.
+      - AC.FBE.1.3 — builder registers an argparse parser whose
+        action invokes `bootstrap_new_workspace` with the parsed
+        kwargs. **Tightened from parent plan loose AC text per
+        sub-plan §2 Surface #4 (per `feedback_loose_AC_text_fix_AC_
+        not_implementation`):** auto-detect-from-framework-remote
+        dropped from FBE.1; only explicit `--from` supported. Defer
+        the auto-detect variant to a future amendment if/when needed.
+      - AC.FBE.1.4 — entry-point registered + resolves to a callable
+        post-`pip install -e framework/loam-init/`.
+      - AC.FBE.1.5 — exit-code mapping mirrors `cli_main`'s shape
+        (0/1/2/3/4/5 for success/target-not-empty/invalid-source/
+        clone-fail/scaffold-fail/other-NewWorkspaceError).
+      - AC.FBE.1.6 — negative AC: zero edits to `loam_cli/cli.py` or
+        `bootstrap_new_workspace`.
+      - AC.FBE.1.7 — bare-name dep on `loam-workspace-bootstrap`
+        (FBE.4 will rewrite to a path-spec; bare-name shape is
+        intentional at FBE.1 to keep the ordering hazard explicit
+        per parent plan §4 FBE.4 halt-trigger #3).
+      - AC.FBE.1.8 — partition manifest admits
+        `glob: "framework/loam-init/**"` under `dev_and_public:`.
+        Audit-completeness test passes for canonical pos-v2 HEAD.
+      - AC.FBE.1.S — sealed-component fence: `git diff
+        BASELINE..SEAL_COMMIT --name-only` produces only paths under
+        `framework/loam-init/` + `framework/tools/pos-publish-
+        framework-only/publish-mode-manifest.yaml` + plan-docs +
+        universal admissions. Verified by
+        `framework/loam-init/tests/test_no_sealed_amendments.py`.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - Lazy import of `workspace_bootstrap.new_workspace` inside
+        `_cmd_init` rather than at module top, so entry-point
+        discovery doesn't fail-load if workspace-bootstrap isn't
+        installed; surfaces a clear actionable error at invocation.
+      - Persona-handle default literal `"primary"` inlined rather
+        than imported from `DEFAULT_PERSONA_HANDLE` (same reason).
+      - Exit code 6 reserved for the lazy-import failure path
+        (workspace-bootstrap not installed); 0–5 mirror cli_main.
+      - Test scope per `feedback_amendment_dispatch_speedups`:
+        component-scoped (framework/loam-init/tests/) +
+        partition-affected (framework/tools/pos-publish-framework-
+        only/tests/test_AC_OSS_3_default_partition_complete.py).
+        14/14 component tests + 3/3 partition tests verified
+        passing pre-apply.
+
+    Out of scope (per sub-plan §8):
+
+      - Auto-detect of `--from` from a cloned framework/'s git remote
+        (deferred per ODD §2.5 + sub-plan §2 Surface #4).
+      - Path-spec rewrite of `loam-workspace-bootstrap` dep (FBE.4).
+      - Description-field scrub (FBE.5; loam-init's description is
+        clean at FBE.1; FBE.5 sweep verifies).
+      - End-to-end smoke (`loam init` against real canonical with
+        venv) — FBE.6 owns it; FBE.1 unit-tests stub the bootstrap.
+      - Edits to `loam_cli/cli.py` (AC.FBE.1.6 forbids).
+      - Edits to `bootstrap_new_workspace` (AC.FBE.1.6 forbids).
+      - Cross-platform Linux smoke (parent plan §6 Risk 5).
+
+    BASELINE `608ecea` (pre-apply tip; the partition-admission
+    commit). The loam-init anchor's SEAL_COMMIT sidecar lands at
+    the seal SHA via `loam amend seal`.

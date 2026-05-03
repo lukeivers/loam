@@ -508,9 +508,14 @@ The plan should be re-opened if any of these occur:
 - Halt-and-surface from build (recorded for the dispatcher): synth pipeline strips `framework/` prefix on shipping paths (lines 302-312 of `synth.py`) — Risk #7 verified BENIGN for FBE.2 (mirrors FBE.1's `loam-init/` synth shape; Decision D out of scope here; documented as expected behaviour in sub-plan §2 Surface #1). Pre-existing dirty `docs/rebuild/FUTURE_IDEAS_DRAFT.md` (unrelated main-session edit) was stash-then-pop'd to unblock `loam amend seal` (it requires a clean tree); no FBE.2 substance affected. Seal command's optional §14 backfill failed because parent plan-doc carries the method-decision register at §8 (not §14); this §8 backfill is the manual replacement.
 
 ### FBE.3 — Partition split-admit `plugins/dev-sdlc/**`
-- Plan-doc / manifest: `<TBD>`.
-- Apply commit: `<TBD>`.
-- Seal commit: `<TBD>`.
+- Plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe3.md` (authored at `4ced26c` by FBE.3 build agent before code per `feedback_plan_before_code`).
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe3.manifest.yaml` (amendment #106, committed at `a2713ff`).
+- Partition admission commit (manifest YAML 2-section edit + 2 test fixture spot-check edits): `9cdcc92`.
+- Apply commit: `66935e0`.
+- Seal commit: `becf183`.
+- ACs satisfied: AC.FBE.3.{1,2,3,4,5,6,7,8,9,S} (10/10).
+- Verification: 21/21 touched tests pass (2 dev-sdlc fence + 3 default-partition-complete + 3 M6_8 plugin-classification + 13 partition-classifier); pip install --dry-run -e plugins/dev-sdlc resolves cleanly ("Would install loam-plugin-dev-sdlc-0.1.0"); direct synth invocation produces 16 plugin leaves in synth tree (1 pyproject + 1 README + 1 skill + 8 src/.../*.py + 5 src/.../templates/odd-*.md), zero forbidden subtree leakage.
+- Halt-and-surface from build (recorded for the dispatcher): **Surface #1 (skills/ admitted dev_and_public at build-time).** Parent plan §3 Decision B.2 enumeration was non-exhaustive — `plugins/dev-sdlc/skills/` was not listed in either `dev_and_public` or `dev_only`. The audit-completeness test failed with `'plugins/dev-sdlc/skills/start-project.md'` unclassified; resolved by admitting `glob: "plugins/dev-sdlc/skills/**"` to `dev_and_public:` (skills/start-project.md is explicitly the user-facing first-click intent-routing surface per its own front-matter — "first-click intent routing for the Dev/SDLC plugin"). Reversible if the dispatcher rules differently. Documented inline in the manifest provenance comment + the partition-admission commit message.
 
 ### FBE.4 — Inter-component pip deps as path-specs
 - Plan-doc / manifest: `<TBD>`.
@@ -551,4 +556,4 @@ implementing plugin against the existing surface.
 
 ---
 
-*End of foldback plan-doc. FBE.7 sealed 2026-05-03 (post-Luke-ruling pivot to M-FBM floor at v0.1.0). Sequence post-FBE.7: FBE.3 → FBE.4 → FBE.5 → FBE.2b (synth path-layout fix, newly added) → FBE.6.*
+*End of foldback plan-doc. FBE.3 sealed 2026-05-03 (closes BLOCKER 2 plugin-half — split-admit plugins/dev-sdlc/** so user-facing src ships while dev-discipline stays). Sequence post-FBE.3: FBE.4 → FBE.5 → FBE.2b (synth path-layout fix, newly added) → FBE.6.*

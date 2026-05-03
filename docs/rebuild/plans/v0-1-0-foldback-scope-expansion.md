@@ -850,6 +850,43 @@ FBE.11 closure of BLOCKER-FBE6c.1 + a FBE.6d re-verification cycle.
 - Verification: synth `48ba955 → 19422ed` (advance from FBE.6b's `8f57bde`); 8/8 banned-literal grep zero hits; 4/4 substitution-token zero hits; 15/15 wired-component ≥1 caller; 6/6 MFBM-dep zero hits across 17 pyprojects; zero `tests/` files in synth; extended smoke PASS end-to-end (clone with `--branch framework-only --single-branch /Users/lukeivers/ivers-corp-pos-v2` + venv + `pip install -r install-from-source.txt` + `loam --version`=`loam 0.1.0` + `loam init <ws>` NO `--from` produces runnable workspace shape with `.claude/settings.json={}` + `~/.loam/{dormancy.sqlite,logs/}`); staging push to lukeivers/loam-staging:main = `19422ed` (plain `--force`, skipped `--force-with-lease` per accumulated FBE.6/FBE.6b precedent — succeeded first try); seal pipeline ran clean.
 - Halt-and-surface from build (recorded for the dispatcher): **NEW BLOCKER-FBE6c.1 (staging publish of `framework-only:main` deprives stranger clones of the `origin/framework-only` ref the bootstrap requires)** — fix shape recommendations: Path A (publish-side: push `framework-only:framework-only` instead of `framework-only:main`; set staging default branch to `framework-only`); Path B (publish-side dual-ref: push BOTH `framework-only:main` AND `framework-only:framework-only`); Path C (CLI-side: make `_clone_canonical` fall through to default branch when `framework-only` absent — NOT recommended, weakens invariant); Path D (synth tool-default: change `pos-publish-framework-only` push default). Recommendation: Path A or Path B (publish-side; 10–20 min wall-clock single-fence M12-or-publish-step amendment). **Surface FBE.6c #2 — `pos-publish-framework-only` pyproject missing `pyyaml` runtime dep** — building a fresh venv with `pip install -e framework/tools/pos-publish-framework-only` raises `ModuleNotFoundError: No module named 'yaml'` because `pyyaml` is imported by `partition.py` but not declared in the tool's `pyproject.toml` `dependencies`; workaround: `pip install pyyaml` after editable install; FUTURE_IDEAS_DRAFT candidate. **Surface FBE.6c #3 — `--force-with-lease` skipped per accumulated precedent (no recurrence; expected behaviour now baked in).** **Surface FBE.6c #4 — Reviewer dispatched in-band (recurrence; expected — Task tool not exposed in this environment).** **Surface FBE.6c #5 — `loam amend apply` did not auto-commit (4th consecutive recurrence; FBE.6b + FBE.9 + FBE.10 precedent).** Manually committed via `chore(amend): FBE.6c apply`. Pattern STRONG (4 in a row); high-confidence regression in loam-amend tooling for the multi-component-with-frozen-baseline case (or HOL-only-narrative case as FBE.6c demonstrates). **Surface FBE.6c #6 — clean-tree workaround for `loam amend seal` (recurrence; expected).** Pre-existing untracked + dirty paths stashed pre-seal, popped clean post-seal.
 
+### FBE.11 — Close BLOCKER-FBE6c.1 (publish-side dual-ref push)
+
+**Outcome: CLOSED.** FBE.11 dispatched 2026-05-03 closes BLOCKER-FBE6c.1
+via dispatcher's locked Path B (dual-ref push). The publish path is
+operator-manual: the synthesis tool at
+`framework/tools/pos-publish-framework-only/` advances only the local
+`framework-only` branch; the push to staging or public is operator-typed.
+Therefore the fix is doc-only at the live operator-instruction surfaces:
+`docs/rebuild/plans/oss-v0-1-0-publish-dry-run.md` AC.M11a.7 §body
+rewritten to instruct `git push <staging-url> framework-only:main framework-only:framework-only --force`
+(single invocation; both refspecs in one command); line 32 (M11a summary)
++ line ~431 (D-build.M11a.10 historical record) annotated with the
+dual-ref shape; `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`
+§4 AC.FBE.6.4 row updated so future FBE.6d inherits the new push command
+verbatim. The FBE.6/FBE.6b/FBE.6c sealed sub-plan-docs are NOT
+retroactively edited (they are sealed-amendment historical records). The
+local-tmp-ref smoke verified pre-doc-edit: dual-ref push to
+`/tmp/loam-staging-fbe11-smoke.git` (fresh local bare) lands BOTH
+`refs/heads/main` AND `refs/heads/framework-only` at the same SHA
+(canonical's framework-only tip `19422ed`); subsequent `git clone` of the
+bare into a stranger path produces `refs/remotes/origin/framework-only` —
+exactly the bootstrap-required ref the FBE.6c reviewer probe could not
+find against the actual staging URL. No GitHub state was written by
+FBE.11; per dispatcher's brief, the actual push to staging or public is
+M12's job. M12 publish-flip remains GATED behind a FBE.6d re-verification
+cycle that exercises the dual-ref push path against actual staging.
+
+- Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe11.md` (authored at `6cc6b52` by FBE.11 build agent before code per `feedback_plan_before_code`).
+- Operator-instruction doc edits commit: `1ae295d`.
+- Seal narrative commit: `c55358d`.
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe11.manifest.yaml` (amendment #118, committed at `2a34e91`).
+- Apply commit: `47ad43d` (manually committed per FBE.6b/FBE.9/FBE.10/FBE.6c precedent — `loam amend apply` did NOT auto-commit; **5th** consecutive recurrence).
+- Seal commit: `771e649`.
+- ACs satisfied: AC.FBE.11.{1,2,3,4,5,6,S} all PASS (7/7).
+- Verification: doc edits land at the named lines (`git grep "framework-only:framework-only" docs/rebuild/plans/oss-v0-1-0-publish-dry-run.md docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` returns hits at line 32 / line 175 / line 431 / line 366); local-tmp-ref smoke PASS (transcript in seal narrative); negative AC.FBE.11.6 PASS via FBE.11-attributable-only diff scope (interleaved unrelated commit `0a0767e` "two-copies-of-loam-source hedge" landed by Luke between plan + doc-edit commits and is NOT part of FBE.11's scope); seal pipeline ran clean.
+- Halt-and-surface from build (recorded for the dispatcher): **Surface FBE.11 #1 — `loam amend apply` no-auto-commit pattern recurs 5th consecutive time.** Pattern is now extremely strong; high-confidence regression in loam-amend tooling for the HOL-only-narrative-anchor case. Manually committed via `chore(amend): FBE.11 apply`. **Surface FBE.11 #2 — clean-tree workaround for `loam amend seal` (recurrence; expected).** Pre-existing untracked + dirty paths stashed pre-seal, popped clean post-seal. **Surface FBE.11 #3 — interleaved unrelated commit (`0a0767e` two-copies-of-loam-source hedge) landed by Luke between FBE.11's sub-plan commit and doc-edit commit.** Not part of FBE.11's scope; visible in `git diff 03ef8da..771e649 --name-only` but accounted-for via FBE.11-attributable-only scope verification (commits `6cc6b52`, `1ae295d`, `c55358d`, `2a34e91`, `47ad43d`, `771e649` are FBE.11's; `0a0767e` is independent). No corrective needed — Luke's commit is doc-only at README + getting-started + FUTURE_IDEAS_DRAFT, all under universal-paths admissions. Status file at `<workspace>/.scratch/claude-output/fbe11-status-2026-05-03.md`.
+
 ---
 
-*End of foldback plan-doc. FBE.6c dispatched + sealed 2026-05-03 (sub-plan `48ba955`, narrative anchor `6e977f1`, manifest `c9c723f`, apply `740d307`, seal `6fd3812`). FBE.6c FOLDBACK — NEW BLOCKER-FBE6c.1 surfaced (publish-side branch-name divergence: `framework-only:main` push deprives stranger clones of the `origin/framework-only` ref). M12 publish-flip is GATED behind FBE.11 closure of BLOCKER-FBE6c.1 + a FBE.6d re-verification cycle. Recommended fix: Path A (publish `framework-only:framework-only` + set staging default branch to `framework-only`).*
+*End of foldback plan-doc. FBE.11 dispatched + sealed 2026-05-03 (sub-plan `6cc6b52`, doc edits `1ae295d`, narrative anchor `c55358d`, manifest `2a34e91`, apply `47ad43d`, seal `771e649`). FBE.11 CLOSED — BLOCKER-FBE6c.1 closed via dispatcher's locked Path B (publish-side dual-ref push). M12 publish-flip remains GATED behind FBE.6d re-verification cycle that exercises the dual-ref push path against actual staging.*

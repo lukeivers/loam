@@ -252,3 +252,140 @@ lands at the seal SHA via `loam amend seal`. The dev-sdlc and
 loam-init anchors' SEAL_COMMIT sidecars land at the same seal
 SHA (single seal commit covers all three components per the
 fence-three-no-edit shape).
+
+# FBE.5 — description scrub + LOW-fix sweep + ~/.loam verify (fence-fifteen)
+
+2026-05-03. v0.1.0 reviewer foldback closes HIGH 4 + LOW 1 +
+LOW 3 + AC.FBE.5.6 verification. Reviewer dossier:
+`<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+Parent plan:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` §4 FBE.5
++ §2.{5,7,8} (HIGH 2 + HIGH 4 + LOW 1 + LOW 3 surfaces).
+Sub-plan:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe5.md`.
+
+Scope (per sub-plan §4 + §6):
+  - 15 component pyproject `description` field scrubs
+    (vocabulary substitution + parenthetical drops; per
+    AC.FBE.5.{1,2}). Single-line edit per pyproject;
+    behaviour preserved.
+  - `framework/tools/loam/src/loam_cli/cli.py` module docstring
+    + in-function comments scrub (per AC.FBE.5.3). Behaviour
+    preserved.
+  - `README.md` "before public flip" block removal (per
+    AC.FBE.5.4). The rename has landed; surrounding prose
+    already uses `loam`.
+  - `docs/getting-started.md` double-step-5 fix + minimal
+    coherence updates (header + intro sentence; per
+    AC.FBE.5.5).
+  - `loam init` end-to-end smoke (per AC.FBE.5.6 — rewritten
+    to align with verified `bootstrap_new_workspace` contract;
+    local-path form does not write to `~/.loam/`, only URL form
+    writes `~/.loam/canonical-cache/<repo-id>/`). Pre-seal
+    smoke verified `loam init /tmp/test-fbe5-ws --from
+    /Users/lukeivers/ivers-corp-pos-v2/` exits 0.
+
+Negative AC.FBE.5.7: zero behaviour changes.
+
+Surface #7 (recorded for FBE.6 reviewer + FIDRAFT candidate):
+`loam init` prints "  .claude/    ← scaffolded" but no code
+creates `<workspace>/.claude/` (verified at
+`framework/loam-init/src/loam/loam_init/cli.py:128` +
+`framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py:508`
+— `claude_dir` declared but never `mkdir`-ed; FBE.7 retired
+the `mcp_json_writer` invocation which may have been the
+historical creator). Out of FBE.5 scope per ODD §2.5
+(AC.FBE.5.6 verification scope is `~/.loam/`, not
+`<workspace>/.claude/`).
+
+Structural delta (within fence + universal admissions):
+
+  - 15 sealed-component sidecars (`<comp>/tests/SEAL_COMMIT`)
+    bump to FBE.5 seal SHA via `loam amend seal`. Each
+    component's `tests/test_no_sealed_amendments.py` BASELINE
+    literal bumps via `loam amend apply`.
+  - Single narrative file at
+    `framework/workspace-bootstrap/tests/SEAL_COMMIT.notes`
+    carries this body (multi-fence narrative target per FBE.4
+    precedent).
+  - 15 component `pyproject.toml` files: single `description`
+    field edit each (verified post-edit via grep).
+  - `framework/tools/loam/src/loam_cli/cli.py`: module
+    docstring (lines 1-33 pre-edit) + in-function comments
+    (lines 118-124 + 141-143 pre-edit) scrubbed of amendment-
+    number references.
+  - `README.md`: 7-line block removed (the "before public
+    flip" note); surrounding prose preserved.
+  - `docs/getting-started.md`: 3 edits (header line 41 +
+    intro sentence line 43 + step-5-to-6 renumber line 113).
+
+AC surface (per sub-plan §4):
+
+  - AC.FBE.5.1 — 15 in-scope `description` fields no longer
+    contain `pOS v2` / `Phase 4` / `amendment #N` / `M-series`
+    / `M1g` / `M6a` / `M6b.1` / `M-FBM` vocabulary.
+  - AC.FBE.5.2 — vocabulary substitutions per the AC table:
+    `pOS v2` → `loam`; `Phase 4+ extension protocol` (and
+    synonym) → `the plugin contribution protocol`;
+    `(post-M1g namespace pivot per M1e §11 finding #4)` →
+    dropped; `M-series` references dropped.
+  - AC.FBE.5.3 — `cli.py` module docstring + in-function
+    comments scrubbed of amendment-number references.
+  - AC.FBE.5.4 — README "before public flip" block removed.
+  - AC.FBE.5.5 — getting-started.md three-edit coherence fix
+    produces six consecutive `### N.` subheadings (1-6) +
+    consistent `Six-step bootstrap` header + intro.
+  - AC.FBE.5.6 (rewritten — contract-aligned) — `loam init`
+    smoke exits 0; `~/.loam/` contract intact for local-path
+    form (no writes); URL-form `~/.loam/canonical-cache/`
+    contract verified by code-read of `new_workspace.py:638-642`.
+  - AC.FBE.5.7 — zero behaviour changes; only doc-shape +
+    docstring/comment edits land.
+  - AC.FBE.5.S — fence-fifteen: every fence component's
+    diff is sidecar bump + BASELINE bump + `description` edit
+    (and for `framework/tools/loam` also the cli.py
+    docstring/comments scrub). README + getting-started ride
+    via universal_paths.files; plan-doc + manifest YAML +
+    parent §8 backfill ride via universal prefix.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - `framework/workspace-bootstrap/`'s description: dropped
+    the "ten foundational components" count phrase (v0.1.0
+    ships fifteen — keeping the count would make a false
+    statement after the FBE foldback added components like
+    `loam-init`); replaced with "the foundational components".
+  - `framework/telegram-interface/`'s description: dropped
+    the trailing "Zero sealed-component amendments." sentence
+    (internal-vocabulary leakage about how it was built —
+    not user-facing meaning).
+  - `framework/workspace-sync/`'s description: dropped the
+    "Architecture A/B" parentheticals (internal architectural-
+    letter shorthand; user-facing meaning is "git-shaped sync"
+    without the letter shorthand).
+  - `framework/observability-aggregator/`'s description: kept
+    "v1.1 R10 retention-class" reference (forward-looking spec
+    class name, not amendment-number leakage); dropped the
+    "(Reading A)" parenthetical (internal architectural-letter
+    shorthand).
+  - `cli.py` docstring: replaced "At M1g sealing time the only
+    registered subcommand was..." preamble with "The namespace
+    is reserved for..." present-tense statement. Behaviour
+    clauses preserved verbatim.
+
+Out of scope (per sub-plan §9):
+
+  - Dev-only tool `description` scrubs (Surface #1 — 9 dev-only
+    tools with similar leakage; FUTURE_IDEAS_DRAFT candidate).
+  - `<workspace>/.claude/` not-created bug (Surface #7 — out of
+    FBE.5 scope; FBE.6 reviewer + FIDRAFT candidate).
+  - README rewrites beyond named "before public flip" block
+    (HT-3).
+  - getting-started.md edits beyond the named LOW 1 fix +
+    minimal coherence (HT-3 / Surface #5).
+  - Behaviour code edits anywhere (AC.FBE.5.7 negative AC).
+
+BASELINE 8032348 (pre-apply tip; the FBE.5 source-side delta
+commit). The 15 fence-component sidecars all advance to the
+same seal SHA at `loam amend seal` (single seal commit covers
+all 15 components per the fence-fifteen-with-edit shape).

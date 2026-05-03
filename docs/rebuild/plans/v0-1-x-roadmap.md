@@ -1,0 +1,278 @@
+# loam v0.1.x roadmap — five releases
+
+**Status:** plan-doc (pre-build, plan-before-code). Authored 2026-05-03 by roadmap-author dispatch.
+**Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/`.
+**Programme predecessor:** v0.1.0 just shipped (private at `lukeivers/loam`; public flip pending owner). M11a sweep PASSed; FBE.1–FBE.11 + FBE.6{b,c,d} foldback ladder closed.
+**Roadmap horizon:** five releases (v0.1.1 → v0.1.5). v0.2.0 and beyond are out of scope for this doc; deferred items listed in §3.
+**Bundling logic:** highest leverage for real users + iteration coherence. NOT optimised for impressing any particular audience. Each release is small enough to ship reliably, large enough to be worth a release-note.
+
+---
+
+## §1. Top-line summary
+
+Five releases. Total AI-time across all of them: **~12–22 h** (midpoint ~17 h). Total owner gate-review time: **~2–3 h** distributed across ~10 review touchpoints.
+
+Cadence is hours-to-days between releases — iterate-in-public friendly, not a months-long programme. Each release ships a coherent bundle: v0.1.1 says what loam is; v0.1.2 fixes what v0.1.0 strangers will trip over; v0.1.3 makes memory pluggable; v0.1.4 makes loam compositional with raw Claude Code; v0.1.5 surfaces who-is-doing-what across the harness.
+
+The story across the cadence: **v0.1.0 shipped a coherent thing; v0.1.x makes it explainable, durable, and composable.** It is not a feature-parity push. It is the first iterate-in-public arc — each release closes friction observed during the prior, and adds one small surface (memory, skills, personas) that the harness needs to stay honest about its own primitives.
+
+| Release | One-line theme | AI-time band | Owner-time |
+|---|---|---|---|
+| v0.1.1 | Articulate the scaffolding choice plainly | 45–90 min | 5–10 min |
+| v0.1.2 | Fix what v0.1.0 strangers will hit | 2–4 h | 30–45 min |
+| v0.1.3 | loam composes with raw Claude Code | 4–7 h | 30–45 min |
+| v0.1.4 | The harness gets self-aware about roles | 3–5 h | 25–35 min |
+| v0.1.5 | Memory becomes pluggable | 3–5 h | 20–30 min |
+| **Total** | | **~12–22 h** | **~2–3 h** |
+
+**Reorder applied 2026-05-03 (post-v0.1.1 ship) per owner directive:** memory-pluggable moved to last; the two releases formerly behind it (loam-composes + harness-self-aware) shift forward. Each release's bundle content is unchanged; only the ordering moves. Sequencing diagram in §4 reflects the new order.
+
+Owner-decision bottlenecks are listed in §5; most are minor and default to a recommendation.
+
+---
+
+## §2. Per-release detail
+
+### v0.1.1 — "Articulate the scaffolding choice plainly"
+
+**What this release is about.** v0.1.0's published surface describes *what* loam ships but not *why* loam is shaped the way it is. The choice that most needs articulation is the scaffolding-heavy posture: 15 components, ODD methodology, plan-docs, sealed amendments, dispatch templates. A reader who installs v0.1.0 and skims the docs reasonably asks "why this much structure?" The honest answer is design-shaped, not pitch-shaped — there's a real reason loam looks this way that has nothing to do with positioning. v0.1.1 writes that reason down. One file. No code changes.
+
+**Bundle:**
+
+1. **Design note: `docs/design/why-loam-scaffolds.md`** — articulates the scaffolding choice on its own merits. Provenance: dispatcher-locked content (the parallel agent authoring this note now). This is the single shipping artefact of v0.1.1.
+
+**AI-time band:** 45–90 min (medium docs create, careful framing — done by parallel agent, not this roadmap's responsibility).
+
+**Dependencies:** None (v0.1.0 ship is independent gate; this note is doc-only).
+
+**Gate (closes the release):** owner reads the design note, confirms it sounds like the genuine answer (not a pitch), tags `v0.1.1`, release notes link to the note.
+
+---
+
+### v0.1.2 — "Fix what v0.1.0 strangers will hit"
+
+**What this release is about.** v0.1.0 shipped clean enough to install, but the canonical pos-v2 corpus has a backlog of small known-friction items that any stranger using loam in anger will hit within their first week. None individually warrant a release; together they're a coherent "we noticed everything you'd run into and fixed it" bundle. The orchestrator is the load-bearing item — fixing the launchd plist module-name typo unblocks three sealed amendments (#38/#39/#40 sit on a working orchestrator), and the cost asymmetry (5–10 min fix vs hours of cascade-rework if ripped out) is the decision Luke pre-recorded. The rest are ergonomic — corpus-gate paths, session-start memory probe, the gh-create→push race documentation, the two-copies-of-loam friction explanation, the ack-first persona behaviour, and the three loam-amend tooling improvements that every recent FBE.x agent worked around.
+
+**Bundle:**
+
+1. **V11.A — orchestrator fix.** Edit launchd plist `pos_orchestrator` → `loam.orchestrator`; kill orphan PID 27100; `launchctl kickstart`; add `framework/orchestrator/` to canonical venv editable install list. Provenance: FIDRAFT entry "Orchestrator runtime-provisioning gap — `pos_orchestrator` not installed editable" (2026-04-29).
+2. **V11.E — three v0.1.0 follow-on hazards.** (a) Corpus gate `_FALLBACK_BASELINE_PATHS` references dev-only paths (`docs/odd-methodology.md` + `docs/odd-in-loam.md`) — update to public-mode-appropriate paths so sessions stop showing `corpus_gate_state: partial`. (b) `pos_session_start.py` graphiti probe — graceful-skip when `memory-graphiti` is absent (M-FBM workspaces don't run a service). (c) Plist template fix in `framework/orchestrator/ops/launchd/com.loam.orchestrator.plist.tmpl` if not already shipped in v0.1.0 hot. Provenance: multi-release-roadmap §3.1 hazards 2/3/4 (Decisions 2/3/4).
+3. **gh-create→push race documentation.** M12 publish-flip operator-instruction docs (oss-v0-1-0-publish-dry-run.md M11a.7 + foldback parent §4 AC.FBE.6.4) gain a 2-3s sleep-or-retry note. Provenance: FIDRAFT entry "`gh repo create` → `git push` race window" (2026-05-03).
+4. **Two-copies-of-loam-source friction — docs-explain hedge (option e).** README + getting-started.md gain a short paragraph: "the install clone is disposable; the workspace's framework copy is what actually runs your sessions." This is the option-e hedge; the real fix (option d, PyPI publish) is deferred to v0.2. Provenance: FIDRAFT entry "Two-copies-of-loam-source v0.1.0 stranger-friction" (2026-05-03).
+5. **Acknowledge-first persona contract amendment.** Add to primary-persona contract/prompt: "On user input requiring non-trivial work (≥3 tool calls expected, ≥1 background dispatch, decision/judgment vs pure execution, file authoring vs reading, multi-paragraph/multi-question message): the FIRST output is a short ack ('got it — doing X')." Trivial back-and-forth skips the ack. Provenance: FIDRAFT entry "Acknowledge-first on complex requests" (2026-05-03).
+6. **loam-amend ergonomic improvements sweep.** Three captured tool ergonomics: (a) `loam amend apply` auto-commits the apply step (or its output explicitly notes "manually commit via …"); (b) `loam amend seal --allow-untracked-globs <pattern>` flag so dirty-FIDRAFT doesn't force stash-then-pop on every seal; (c) `loam amend apply` partner-prefix derives from manifest's `seal_test` path, not from `name` field, so `plugins/<name>/`-located components work alongside `framework/<name>/`. Provenance: FIDRAFT entries "`loam amend apply` does not commit the apply step BY DESIGN" + "`loam amend seal` requires clean working tree" + "`loam amend apply` partner-prefix derivation bug" (all 2026-05-03).
+
+**AI-time band:** 2–4 h total. Per-item: V11.A (~10 min), V11.E (~30 min), race docs (~5 min), two-copies hedge (~10 min), ack-first amendment (~30–60 min, sealed-component touch on primary-persona), loam-amend ergonomics (~60–90 min for three sub-amendments).
+
+**Dependencies:** v0.1.1 ships first (sequencing only — no technical dep). Items within v0.1.2 mostly parallelise; ack-first persona amendment serialises against any other primary-persona-touching work; loam-amend sweep serialises against itself.
+
+**Gate (closes the release):** orchestrator running healthy on Luke's host; corpus-gate output clean for a public-mode session; ack-first behaviour observable in the next live session; three loam-amend ergonomic items each verified in a small smoke amendment cycle. Tag `v0.1.2`.
+
+---
+
+### v0.1.3 — "Memory becomes pluggable"
+
+**What this release is about.** M-FBM (file-based memory) shipped at v0.1.0 with a `MemoryProvider` Protocol stub already authored as the seam for future providers. v0.1.3 widens that Protocol surface and ships the first two non-file-based providers: an Anthropic Memory tool adapter (Lens 1 at its purest — Anthropic's beta `memory_20250818` tool plugged in as a provider), and progressive-disclosure retrieval (L1/L2/L3 — preview-then-expand) that reduces context burn on UPS-hook retrieval. Three small amendments share one Protocol surface, so they ship as one release. Memory-as-pluggable is the load-bearing claim that makes M-GMP (graphiti as plugin, deferred to v0.2) a clean addition rather than a re-architecture.
+
+**Bundle:**
+
+1. **D-3 — widen `MemoryProvider` Protocol surface.** Add `expand(hash)` (D-1 needs it), `content_hash(text)` SHOULD-method (memweave + claude-mem worker pattern), `import_from(adapter_type, source)` (optional; future export/import like Letta `.af`). Doc-only Protocol-docstring widening + method signatures. Prerequisite for D-1 and D-2. Provenance: FIDRAFT entry "File-based memory systems survey — three concrete amendments worth filing" item D-3 (2026-05-01).
+2. **D-1 — L1/L2/L3 progressive disclosure for UPS-hook retrieval contributor.** Return ranked list of `{chunk_hash, 200-char preview}` first; persona's `/memory:search` skill or follow-on tool call requests `expand(hash)` for full content; raw transcripts on deep-call. Saves context budget; preview enough for relevance gating, expand only on need. Provenance: same FIDRAFT entry, item D-1.
+3. **D-2 — Anthropic Memory tool compatibility adapter.** Adapter maps Memory tool's `view / create / str_replace / insert / delete / rename` command surface against `<workspace>/.loam/memory/`. Lets a Claude API agent (not just Claude Code) point at a loam workspace as its memory directory. Ships as `plugins/memory-tool-adapter/`. Provenance: same FIDRAFT entry, item D-2.
+
+**AI-time band:** 3–5 h total. Per-item: D-3 (~30–45 min, doc-only Protocol widening), D-1 (~45–90 min, contributor return-shape change + skill commands), D-2 (~90–180 min, adapter implementation as new plugin scaffold).
+
+**Dependencies:** v0.1.2 ships first (sequencing). D-3 is internal prerequisite for D-1 and D-2; D-1 and D-2 parallelise after D-3 lands.
+
+**Gate (closes the release):** `MemoryProvider` Protocol surface tests pass for two providers (file-based + Anthropic-tool-adapter); progressive-disclosure verified live on a UPS retrieval; Anthropic-tool-adapter smoke-tested via a minimal Claude API call against a workspace memory directory. Tag `v0.1.3`. Release notes name "memory backends are now pluggable" as the headline.
+
+---
+
+### v0.1.4 — "loam composes with raw Claude Code"
+
+**What this release is about.** Lens 1 (Claude-leverage-first) is the always-on lens that asks "what Claude capability does this lean on or extend?" v0.1.0 ships zero SKILL.md packages — the harness's "translation layer" function is implicit in the persona prompt, not exposed as discoverable skills that compose with raw Claude Code. v0.1.4 fixes this: 3–5 SKILL.md packages capture loam's load-bearing translation patterns, AND ships the ODD-reverse-engineering skill (which is itself a skill — shape-coherent with the package set) AND the first of three planned design-notes (`primary-persona-shape.md`). Coherent bundle: each item is "loam's value made discoverable to people who haven't installed loam." Strangers running raw Claude Code can `pip install loam-skills` and benefit from loam's patterns without committing to the full harness.
+
+**Bundle:**
+
+1. **3–5 SKILL.md packages — `framework/skills/` (or `plugins/loam-skills/`).** Suggested set (final list deferred to plan-author): `memory-recall` (composes with v0.1.3's progressive-disclosure surface), `scope-decompose` (codifies the F3 swarming stopping criterion), `dispatch-with-gates` (codifies scope-only dispatch + halt-and-surface), `onboarding-conversation` (codifies the primary-persona greeting/context-restoration shape), `session-handoff` (codifies the durable-capture rule). Each is a small folder with `SKILL.md` (frontmatter: name + description) + 1–3 reference scripts. Provenance: FIDRAFT entry "Anthropic-perspective recommendation ladder (R.1-R.6)" item R.4 (2026-05-03) + Lens 1 from `framework/CLAUDE.md`.
+2. **V11.C — ODD-reverse-engineering skill.** Per ODD-RE research §7: thin skill in `plugins/dev-sdlc/skills/`, heavy lifting in new `framework/odd-extractor/` component. Slice-and-swarm (Cartographer ~500K-token shards) + four-stage workflow (init/analyze/generate/verify). Eight owner decisions land at plan-author dispatch (D-Q.RE.1..8 from research doc; Decisions 5–9 in §5 below carry recommendations). Provenance: FIDRAFT entry "ODD-reverse-engineering skill — research-complete" (2026-05-03) + research doc at `workspace/.scratch/claude-output/odd-reverse-engineering-skill-research.md`.
+3. **R.5 design note (1 of 3): `docs/design/primary-persona-shape.md`.** Why a single named persistent identity is a different shape than a multi-agent system or a plain Claude Code session. Composes with v0.1.1's scaffolding-choice note as the second piece of the design-notes voice. Provenance: FIDRAFT entry "Anthropic-perspective recommendation ladder" item R.5 part 1 (2026-05-03).
+
+**AI-time band:** 4–7 h total. Per-item: SKILL packages (~2–4 h for 5 skills + registration + verification), ODD-RE skill (~plan 30–45 min + build cycle 1 90–180 min + build cycle 2 30–60 min ≈ 2.5–4.5 h; some parallelism with skill-packages possible), R.5 design note (~45–90 min).
+
+**Dependencies:** v0.1.3 ships first (sequencing). SKILL packages and design-note parallelise. ODD-RE skill plan-author dispatch needs Decisions 5–9 (recommendations carry; defaults adoptable autonomously per §5).
+
+**Gate (closes the release):** at least 3 SKILL.md packages installable and visible to raw Claude Code; ODD-RE skill produces a coverage map on at least one external repo; design note reads as builder-explaining-decision (not project-prose). Tag `v0.1.4`.
+
+---
+
+### v0.1.5 — "The harness gets self-aware about roles"
+
+**What this release is about.** Three threads converge here that all touch "who's doing what." First, subagent personas — `.claude/agents/<name>.md` files that prime dispatched background agents with methodology fluency, so dispatches stay scope-only per `feedback_agent_prompts_scope_only`. Currently every dispatch re-derives fluency in-prompt; the persona files amortise that across years of dispatches. Second, the orchestrator-fix from v0.1.2 unblocks three sealed amendments (#38/#39/#40 — objective-tracker schema widening + workspace-bootstrap tracker seed + primary-persona tracker-context contributor) that surface tracker-context into the persona's session-start so the persona knows what background work is in flight. Third, the remaining two R.5 design notes (`file-based-memory-rationale.md` + `odd-for-delegation.md`) close the design-notes voice so a reader can find Luke's reasoning across the load-bearing decisions. Coherent bundle: roles get named (subagents), in-flight work gets surfaced (tracker-context contributor), and design reasoning gets articulated (design notes).
+
+**Bundle:**
+
+1. **V2.B — subagent personas (5 named).** Author 5 `.claude/agents/<name>.md`: `loam-builder` (sealed-component-cycle builder; ODD-fluent; commit-ladder + `loam amend apply` + seal-ritual baked in), `loam-plan-author` (research-grade plan authoring; surfaces named decisions with recommendations; outcome-shape ACs), `loam-researcher` (Lens-1/2/3 research; web-research + codebase-grep; tools restricted to read-only; reports artefact-on-disk + chat-summary), `loam-reviewer` (gate-review for sealed amendments; ODD §2.5 verification; halt-and-surface fluent), `loam-documenter` (public-docs / README / positioning authoring; non-jargon voice; ODD methodology-aware). Provenance: FIDRAFT entry "Subagent-persona priming for dispatched background agents" (2026-05-01).
+2. **V11.B — three orchestrator-dependent amendments.** #38 (objective_tracker schema widening), #39 (workspace-bootstrap tracker seed), #40 (primary-persona tracker-context contributor). All three were sealed against the spec but paused on a working orchestrator; v0.1.2's V11.A unblocks them. Lands the empty `[tracker-context]` session-start contributor that's been a placeholder since the foundation audit. Provenance: STATE.md component table "amendment cycle" row + multi-release-roadmap §3.2 V11.B.
+3. **R.5 design notes (2 of 3 + 3 of 3): `docs/design/file-based-memory-rationale.md` + `docs/design/odd-for-delegation.md`.** First composes with Anthropic's published "filesystem as memory" prescription (peer-engineer voice, shared instinct). Second defends ODD specifically as the methodology shape that maps to delegation contracts; composes with v0.1.1's scaffolding-choice note. Provenance: FIDRAFT entry "Anthropic-perspective recommendation ladder" item R.5 parts 2 & 3 (2026-05-03).
+
+**AI-time band:** 3–5 h total. Per-item: subagent personas (~60–120 min for 5 files), V11.B (~60–120 min for three sealed amendments — each is small; some can parallelise as plan-author dispatches), 2 design notes (~90–180 min for two careful authored docs).
+
+**Dependencies:** v0.1.4 ships first (sequencing). V11.B requires V11.A from v0.1.2 (orchestrator working). Subagent personas and design notes parallelise. V11.B sub-amendments serialise against each other on the primary-persona/objective-tracker fence but parallel-safe at the plan-author stage.
+
+**Gate (closes the release):** five subagent personas registered and dispatchable; orchestrator surfaces tracker-context in the next live session-start; both design notes read as builder-voice. Tag `v0.1.5`.
+
+---
+
+## §3. What's NOT in v0.1.x — deferred items
+
+These items are real but don't fit the v0.1.x shape (each is too large, requires earlier-release foundations to land first, or carries v0.2-class release ceremony). Listed with brief rationale.
+
+- **M-GMP — graphiti as the first plugin-shaped MemoryProvider** (FUTURE_IDEAS provenance: oss-v0-1-0-publish.md §5 V2.A; multi-release-roadmap §3.3). Substantial new component (relocation + adapter rewire + partition reclassification). Plays best after the Protocol has been exercised across 2 providers (file-based + Anthropic-tool-adapter from v0.1.3) so the surface is stable. **Sequenced for v0.2.0.**
+- **V2.C — swarm-runtime primitive** (FIDRAFT provenance: "Swarms 'apply-now' patterns triplet" 2026-05-03; multi-release-roadmap §3.3). Large new component (4–8 h AI critical path). PlannerWorkerSwarm + `CycleVerdict` + drift fresh-start + `EVAL_DIMENSIONS` named-axis judging. F3 principle is currently text-corpus-only; runtime-enforce is the right v0.2 move once the principle has accumulated more usage data. **Sequenced for v0.2.0.**
+- **PyPI publish gate** (FIDRAFT provenance: "v0.2 PyPI publish gate" 2026-05-03). Account claims, namespace registration, signing/sigstore, README badges, package metadata polish, classifiers, project URLs, CHANGELOG conventions. Real release ceremony. Closes the two-copies-of-loam friction at its root (vs v0.1.2's docs-explain hedge). **Sequenced for v0.2.0.**
+- **ODD-conformance sweep across all sealed components** (FIDRAFT provenance: "ODD-conformance sweep across all sealed components" 2026-05-03). Audit phase 4–12 h + per-component fix amendments. Decomposes via Lens 5 swarming into 15 per-component sub-audits. Benefits from one shipped release behind it (production usage surfaces additional violation patterns). **Sequenced post-v0.1.5; likely v0.2.x.**
+- **Foundation-revision FR.1/FR.2/FR.3** — principles spec + ODD methodology re-author + ODD-in-loam bridge re-author (FIDRAFT provenance: "Principles distribution shape" 2026-05-03 + FUTURE_IDEAS Idea 1 surfaces). Bigger than v0.1.x; substantive document re-authoring with cross-cutting impact on multiple sealed components. **Sequenced for v0.2.x.**
+- **Channel-violation hook hardening** (FIDRAFT provenance: "Telegram-only channel + pause-on-outage as structural-enforcement amendment" 2026-04-29). PreToolUse hook on Agent + Bash + dispatch-shaped tools; depends on Idea 25 (workspace-level `primary_channel` config slot) graduation. **Sequenced for v0.2.x after Idea 25 graduates.**
+- **Silent-swallow audit pass** (FIDRAFT provenance: "Graceful fallthrough must include detection + surface" 2026-05-01 + 7+ concrete sites captured across memory-system + orchestrator). Composes with the ODD-conformance sweep. Single audit-pass amendment surfaces all `try/except/pass` patterns; per-component remediation amendments follow. **Sequenced post-v0.1.5; likely batched with the ODD-conformance sweep.**
+- **HeavySwarm 4-role pattern + LLMCouncil + SequentialWorkflow drift_detection + MessageTransforms middle-out compression + per-run autosave directory layout** (FIDRAFT provenance: each captured 2026-05-02 by swarms research agent). All compose with the swarm-runtime primitive (V2.C). **Sequenced post-V2.C; v0.2.x.**
+- **Dev-mode-manifest realignment** (FIDRAFT provenance: "dev-mode-manifest.yaml broader staleness" 2026-04-29). Partition-design decision required (granular per-component vs bulk `framework/**` admission). Not blocking but real. **Sequenced post-v0.1.5; v0.2.x.**
+- **Bootstrap idempotency gap — per-hook-reseater pattern generalisation** (FIDRAFT provenance: "Bootstrap idempotency gap" 2026-05-01). Per-hook reseater is sufficient until 3rd hook needs reseating. **Sequenced for whenever the 3rd reseater is needed.**
+- **Plist-template reconciliation** (FIDRAFT provenance: "Plist-template divergence between `first_run_scaffold` and pos3's existing layout" 2026-05-01). Cosmetic; nothing breaks. **Sequenced for whenever a stranger reports it.**
+- **Read-side success logging gap — `memory-reads.log` success records** (FIDRAFT provenance: "Read-side success logging gap" 2026-05-01). Composes with observability-aggregator. **Sequenced after one round of incident response in real use.**
+- **Anthropic recommendation ladder R.6 (real session-transcript demo) + R.7 (public-presence work)** (FIDRAFT provenance: "Anthropic-perspective recommendation ladder" 2026-05-03). R.6 is a demo artefact (transcript + screenshots); R.7 is mostly Luke-time, not AI-time (HN post, blog post, Discord engagement). Outside loam-as-artefact. **Tracked separately as ongoing iteration, not a release.**
+- **Opus 4.7 tokenizer-inflation calibration sweep** (FIDRAFT provenance: "Opus 4.7 tokenizer-inflation calibration sweep" 2026-04-30). Cost-governance budget verify-or-recalibrate + explicit cache-hint mechanism + agentic-cost-instrumentation pass. Calibration work, not architecture. **Sequenced when first cost-anomaly observed in real use.**
+- **Cross-component substrate helpers extraction + dead-import audit + format-string drift static check + various pos-amend regex tightenings + AC anchor regex tightening + audit-log rotation + test-deletion gate + framework byte-content pin retirement** (multiple FIDRAFT entries 2026-04-28 from amendment #67/#71/#74/#75 build agents). All small dev-tooling cleanup items. Each individually too small to release-shape. **Sequenced as opportunistic batches in any v0.1.x release with bandwidth, OR rolled into a "dev-tooling cleanup sweep" at v0.2.x.**
+- **Pre-existing cross-mode prose refs — 3 component-scoped scrub amendments** (FIDRAFT provenance: "Pre-existing cross-mode prose refs in 3 sealed-component artefacts" 2026-04-29). Three small scrub amendments (workspace-sync README, memory-system launchd README, primary-persona prompt-template). Allowlist invariant must shrink to empty. **Sequenced when any of those three components needs another amendment for unrelated reasons; opportunistic.**
+
+---
+
+## §4. Sequencing diagram
+
+```
+v0.1.0 (shipped)
+  │
+  ▼
+v0.1.1 ── design note (why-loam-scaffolds) ✓ SHIPPED
+  │
+  ▼
+v0.1.2 ── orchestrator fix ────────────┐
+  │       v0.1.0 hot follow-ons       │
+  │       gh-create→push race docs    │
+  │       two-copies docs-explain     │
+  │       ack-first persona contract  │
+  │       loam-amend ergonomics ×3    │
+  ▼                                    │
+v0.1.3 ── 3-5 SKILL.md packages        │
+  │       ODD-RE skill (V11.C)         │
+  │       design note: primary-persona │
+  ▼                                    │
+v0.1.4 ── 5 subagent personas          │
+  │       V11.B (#38/#39/#40) ◄────────┘  (orchestrator from v0.1.2)
+  │       design notes (file-mem + odd-delegation)
+  ▼
+v0.1.5 ── D-3 Protocol widen
+          ↓
+          D-1 progressive disclosure
+          D-2 Anthropic-tool adapter
+
+v0.2.0 (out of scope)
+  ├── M-GMP (graphiti as first plugin MemoryProvider) — needs v0.1.5 Protocol stable
+  ├── V2.C swarm-runtime
+  ├── PyPI publish gate
+  └── ODD-conformance sweep + Foundation revisions + everything in §3
+```
+
+Internal-to-release dependencies:
+- v0.1.4: V11.B requires V11.A from v0.1.2.
+- v0.1.5: D-3 → {D-1, D-2}.
+- All other items within a release are parallel-safe at the plan-author stage; build-time serialisation per `feedback_serialize_amendment_builds` (no two amendment builds in the same working tree at once).
+
+---
+
+## §5. Open owner-decisions
+
+Most decisions land at recommendation; surfaced here so they're explicit and in one place.
+
+### Decision A — v0.1.2 cadence vs hotfix-and-batch?
+**Question:** ship V11.A (orchestrator fix) immediately as v0.1.1.1 hotfix, then batch the rest as v0.1.2? Or batch all of v0.1.2 into a single release?
+**Recommendation:** **batch into v0.1.2.** Lower release-overhead; orchestrator fix doesn't have user-visible urgency for v0.1.0 strangers (they don't have an orchestrator instance in their workspace yet — orchestrator is dev-mode machinery). Versioning discipline is for users; users don't care about the orchestrator until it shows up in their workspace.
+**Mirrors:** multi-release-roadmap §5 Decision 15 (same recommendation, same rationale).
+
+### Decision B — ack-first amendment shape: hard rule vs heuristic?
+**Question:** ack-first amendment lands as a hard rule in primary-persona contract ("first output is ALWAYS an ack on complex requests"), or a heuristic with persona judgment?
+**Recommendation:** **hard rule with explicit triggers** (the five triggers in the FIDRAFT entry: ≥3 tool calls, ≥1 background dispatch, decision/judgment vs execution, file authoring vs reading, multi-paragraph/multi-question). Mirrors the F3 model-rationale absence-as-violation pattern: discipline encoded as observable habit, not as structural enforcement (no hook). Trivial back-and-forth skips per the heuristic.
+**Why surfaced:** the FIDRAFT entry leaves the rule-vs-heuristic question open; shipping requires choosing.
+
+### Decision C — D-2 Anthropic Memory tool adapter: ship as plugin or as framework component?
+**Question:** D-2 ships as `plugins/memory-tool-adapter/` (per FIDRAFT recommendation) or as `framework/memory-tool-adapter/`?
+**Recommendation:** **plugin.** Lens-1 leverage is purest when adapter is a plugin (composes onto loam-the-harness without entanglement). Plugin shape also makes it independently versionable so an Anthropic Memory tool API change doesn't bump loam's framework version.
+**Mirrors:** FIDRAFT entry recommendation.
+
+### Decision D — SKILL.md packages: how many, which set?
+**Question:** 3, 4, or 5 skills in v0.1.4? Final naming/scope?
+**Recommendation:** **5, per the suggested set above** (`memory-recall`, `scope-decompose`, `dispatch-with-gates`, `onboarding-conversation`, `session-handoff`). Each one captures a distinct loam translation pattern and each is independently usable from raw Claude Code. Ship 3 if AI-time band overruns; defer the other 2 to v0.1.5 or v0.2.x.
+**Why surfaced:** R.4 in the Anthropic-bar recommendation says "3–5"; final count is judgment.
+
+### Decision E — ODD-RE skill, eight D-Q.RE.* sub-decisions
+**Recommendations adopted from multi-release-roadmap §5 Decisions 5–12** (HYBRID placement, language-agnostic skeleton, markdown+YAML output, explicit token-budget knob, ODD §2.5-violation-surface for coverage gaps; sub-decisions 6–8 defer to V11.C plan-author per ODD authoring discipline).
+**Owner-call only if you want to override a recommendation.** Default: accept all five recommendations and let plan-author handle the inside-the-fence sub-decisions.
+
+### Decision F — Subagent persona scope at v0.1.5: all 5 or start narrower?
+**Question:** ship all 5 named personas at v0.1.5 or start with 1–2 (e.g., loam-builder + loam-plan-author) and grow?
+**Recommendation:** **ship all 5.** Each one obviates a recurring "re-derive methodology fluency in dispatch prompt" pattern; the work to author all 5 is amortised across years of dispatches. Scope-only dispatch discipline is currently broken for the methodology fluency the personas would absorb; partial coverage means the discipline stays partial.
+**Mirrors:** multi-release-roadmap §5 Decision 14 (same recommendation).
+
+### Decision G — design notes: shipped under `docs/design/` or `docs/design-notes/`?
+**Question:** v0.1.1's locked content uses `docs/design/why-loam-scaffolds.md` (per dispatch). The Anthropic-bar recommendation R.5 used `docs/design-notes/` in its naming. Which path?
+**Recommendation:** **`docs/design/`** — matches v0.1.1's locked path. Use `design/` consistently across v0.1.1, v0.1.4, v0.1.5 design notes.
+**Why surfaced:** terminology alignment across releases; minor but worth pinning.
+
+### Decision H — v0.1.x versioning: do design-note-only releases bump minor (v0.1.1) or patch?
+**Question:** v0.1.1 is doc-only (one design note). Bumps to 0.1.1, not 0.1.0.1. Is that the convention going forward (any user-facing change → version bump) or do we want a different cadence?
+**Recommendation:** **every release bumps `0.1.N`** — keeps the cadence visible, avoids the "is 0.1.0.3 a release or a hotfix?" question. Five releases at 0.1.1 → 0.1.5 in close succession is the iterate-in-public story.
+**Why surfaced:** versioning convention worth one explicit ruling.
+
+---
+
+## §6. What this roadmap is NOT optimised for
+
+Surfaced explicitly so future sessions don't drift the bundling logic toward a different objective.
+
+- **Not optimised for impressing any particular audience.** v0.1.1's design note is doc-shaped because the scaffolding choice deserves articulation, not because it's pitch material. R.4 SKILL.md packages and R.5 design notes from the Anthropic-bar recommendation are included where they serve real users (Lens 1 leverage, builder-voice for any reader); they're not the load-bearing reason for the bundle they're in.
+- **Not optimised for breadth.** Five releases is an honest scope; FIDRAFT has ~50+ entries and FUTURE_IDEAS has 26 numbered ideas. Many are deferred to v0.2 or beyond per §3. A kitchen-sink release would be the wrong shape.
+- **Not optimised for parallelism.** Each release is small enough to ship serially within hours-to-days. The dispatch agents within a release can parallelise where the working-tree fence allows; releases themselves serialise.
+- **Not optimised for foundation-perfecting.** Foundation revisions (FR.1/FR.2/FR.3), ODD-conformance sweep, silent-swallow audit pass — all deferred to v0.2.x. v0.1.x is iterate-in-public; foundation perfecting is a v0.2 cycle once iteration data is in.
+
+---
+
+## §7. Provenance trail
+
+Every item in §2 carries a FIDRAFT entry name or FUTURE_IDEAS Idea number inline. Cross-cuts:
+
+- **`docs/rebuild/FUTURE_IDEAS_DRAFT.md`** — primary source for v0.1.2/v0.1.3/v0.1.4/v0.1.5 items; cited inline.
+- **`docs/rebuild/FUTURE_IDEAS.md`** — Idea 25 (workspace-level default-channel) referenced in §3 for channel-hook hardening sequencing.
+- **`docs/rebuild/STATE.md`** — sealed-amendment count + #38/#39/#40 status + amendment-cycle context for V11.B.
+- **`docs/rebuild/plans/oss-v0-1-0-publish.md`** — master plan for v0.1.0; multi-release-roadmap §3.3 V2.A names M-GMP shape.
+- **`docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`** — foldback ladder (FBE.1–11 + FBE.6{b,c,d}) that closed v0.1.0; method-decision register at §8 for what landed.
+- **`workspace/.scratch/claude-output/loam-anthropic-bar-recommendation-2026-05-03.md`** — R.1–R.6 recommendations (R.4 = SKILL packages → v0.1.4; R.5 design notes split across v0.1.4 + v0.1.5; R.3 essence absorbed into v0.1.1's locked content; R.6 + R.7 deferred per §3).
+- **`workspace/.scratch/claude-output/multi-release-roadmap-2026-05-03.md`** — pre-foldback roadmap whose V11.A/V11.B/V11.C/V11.D/V11.E item-IDs are reused in this roadmap for continuity (V11.A → v0.1.2, V11.B → v0.1.5, V11.C → v0.1.4, V11.D → v0.1.3, V11.E → v0.1.2).
+- **`workspace/.scratch/claude-output/odd-reverse-engineering-skill-research.md`** — 907-line research artefact for V11.C; eight D-Q.RE.* sub-decisions referenced in §5 Decision E.
+
+---
+
+## §8. Method-decision register (post-build, populated as releases close)
+
+Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `feedback_loose_AC_text_fix_AC_not_implementation` and the post-amendment verification discipline.
+
+| Release | Status | Tag SHA | Notes |
+|---|---|---|---|
+| v0.1.1 | (in flight; locked content authored in parallel) | — | — |
+| v0.1.2 | (planned) | — | — |
+| v0.1.3 | (planned) | — | — |
+| v0.1.4 | (planned) | — | — |
+| v0.1.5 | (planned) | — | — |
+
+---
+
+*End of v0.1.x roadmap. Five releases. ~12–22 h AI total. Iterate-in-public cadence.*

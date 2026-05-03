@@ -363,7 +363,7 @@ Each amendment follows the loam amendment pattern (sealed-component fence + mani
   ls ~/.loam/                                       # scaffolded
   ```
   Every step succeeds; final `loam init` produces a runnable workspace.
-- **AC.FBE.6.4** — Push synth to staging (`git push staging framework-only:main`); confirm remote SHA matches.
+- **AC.FBE.6.4** — Push synth to staging via dual-ref push (per FBE.11; closes BLOCKER-FBE6c.1): `git push <staging-url> framework-only:main framework-only:framework-only --force` (single invocation; both refspecs in one command); confirm BOTH `refs/heads/main` AND `refs/heads/framework-only` land at the same SHA via `git ls-remote`. The dual-ref shape ensures stranger clones get `refs/remotes/origin/framework-only` (the bootstrap-required ref) while preserving `main` as the friendly browse default. Future FBE.6d (re-verification) inherits this shape verbatim.
 - **AC.FBE.6.5** — Re-dispatch the stranger-perspective reviewer agent (new instance, no prior context) against the new staging tree. Reviewer's verdict = GO or surfaces a NEW BLOCKER not covered by FBE.1..5.
 - **AC.FBE.6.6** — Sweep report authored at `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6-sweep-report.md`.
 - **AC.FBE.6.7** — Negative AC: zero source/doc edits during FBE.6; if the reviewer surfaces a new BLOCKER, foldback re-opens (do NOT silently fix in FBE.6).

@@ -517,10 +517,36 @@ The plan should be re-opened if any of these occur:
 - Verification: 21/21 touched tests pass (2 dev-sdlc fence + 3 default-partition-complete + 3 M6_8 plugin-classification + 13 partition-classifier); pip install --dry-run -e plugins/dev-sdlc resolves cleanly ("Would install loam-plugin-dev-sdlc-0.1.0"); direct synth invocation produces 16 plugin leaves in synth tree (1 pyproject + 1 README + 1 skill + 8 src/.../*.py + 5 src/.../templates/odd-*.md), zero forbidden subtree leakage.
 - Halt-and-surface from build (recorded for the dispatcher): **Surface #1 (skills/ admitted dev_and_public at build-time).** Parent plan §3 Decision B.2 enumeration was non-exhaustive — `plugins/dev-sdlc/skills/` was not listed in either `dev_and_public` or `dev_only`. The audit-completeness test failed with `'plugins/dev-sdlc/skills/start-project.md'` unclassified; resolved by admitting `glob: "plugins/dev-sdlc/skills/**"` to `dev_and_public:` (skills/start-project.md is explicitly the user-facing first-click intent-routing surface per its own front-matter — "first-click intent routing for the Dev/SDLC plugin"). Reversible if the dispatcher rules differently. Documented inline in the manifest provenance comment + the partition-admission commit message.
 
-### FBE.4 — Inter-component pip deps as path-specs
-- Plan-doc / manifest: `<TBD>`.
-- Apply commit: `<TBD>`.
-- Seal commit: `<TBD>`.
+### FBE.4 — In-tree resolution via `install-from-source.{txt,md}` (Path B + fence-three-no-edit)
+
+**Re-shaped post-empirical-halt.** The parent plan's Decision C2
+(rewrite 16 inter-component bare-name deps as `<name> @ file://${PROJECT_ROOT}/<comp>`
+path-specs) is non-functional on pip 26.0.1 — empirically verified
+in the prior FBE.4 dispatch's halt-and-surface
+(`<workspace>/.scratch/claude-output/fbe4-status-2026-05-03.md`
+Probes 1–7: `${PROJECT_ROOT}` substitution narrowed in pip 26.0;
+`file:../<rel>` resolves relative to CWD not pyproject; absolute
+`file:///abs/...` not portable; `[tool.uv.sources]` ignored by pip).
+The dispatcher ruled **Path B + fence-three-no-edit**: bare-name
+deps STAY in pyprojects (byte-identical to BASELINE); a NEW top-
+level file `install-from-source.txt` carries ordered `-e ./<path>`
+lines that pip walks so each editable install registers its name
+before later components reach for it; a NEW `docs/install-from-source.md`
+covers the install path in prose; three sealed-component sidecars
+(workspace-bootstrap + dev-sdlc + loam-init) bump to record the
+architectural ratification ("FBE.4 ratified bare-name inter-
+component deps as the v0.1.0 shape; in-tree resolution lives in
+install-from-source.{txt,md}") without touching pyproject content.
+
+- Plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe4.md` (authored at `14c9673` by FBE.4 build agent before code per `feedback_plan_before_code`).
+- Source-side delta commit (NEW install-from-source.txt + NEW docs/install-from-source.md + 2-line partition-manifest admission edit at `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`): `cfc9ed4`.
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe4.manifest.yaml` (amendment #107, committed at `afb8a6c`).
+- Apply commit: `9c51fd1`.
+- Corrective commit (admit `plugins/dev-sdlc/` in loam-init's fence-test allowed_prefixes — apply tool's partner-prefix derivation assumes `framework/<name>/` shape and missed dev-sdlc's `plugins/<name>/` path): `0c4d9a0`.
+- Seal commit: `99c03a6`.
+- ACs satisfied: AC.FBE.4.{1,2,3,4,6,7,8,S} (8/8 — sub-plan tightened AC.FBE.4.{1,2,3} per the empirical Surface #1 anchor; DROPPED AC.FBE.4.5 per same; KEPT/EXPANDED AC.FBE.4.{4,6,7}; ADDED AC.FBE.4.8 for the partition-manifest admission; REVISED AC.FBE.4.S to fence-three-no-edit shape).
+- Verification: smoke (AC.FBE.4.4) `pip install --dry-run -r install-from-source.txt` in fresh Python 3.13.12 venv exits 0; reports "Would install" all 17 `loam-*` packages plus PyPI deps (no PyPI 404s on inter-component bare-name deps); partition tests 63/63 pass; loam-init tests 14/14 pass; workspace-bootstrap fence test 2/2 pass; dev-sdlc fence test 2/2 pass; both new files classify DEV_AND_PUBLIC via direct `classify_path` invocation; pyproject byte-identicity for all three fence-three components verified via `git diff d645ed5..99c03a6 -- <pyproject>` empty.
+- Halt-and-surface from build (recorded for the dispatcher): **Surface #5 (apply-tool partner-prefix gap).** `loam amend apply` derives partner_prefixes assuming `framework/<name>/` + bare-`<name>/` for every manifest-listed component. For `dev-sdlc` (which lives at `plugins/dev-sdlc/`), the tool admitted `dev-sdlc/` and `framework/dev-sdlc/` (both wrong shapes), and missed `plugins/dev-sdlc/`. The `loam-init` fence test had to be hand-edited to admit `plugins/dev-sdlc/` (corrective commit `0c4d9a0`); the redundant `dev-sdlc/` + `framework/dev-sdlc/` entries are preserved as witness of the apply-tool's derivation gap. Other two fence components already had `plugins/dev-sdlc/` admitted via M6a baseline. Latent issue — surfaces only when a fence-three includes both a `framework/`-located + a `plugins/`-located component; reasonable post-FBE.4 follow-up is a `loam amend apply` enhancement to derive prefix from each component's manifest-stated path (currently the apply tool only knows the component's `name`, not its path-prefix). FUTURE_IDEAS_DRAFT entry candidate.
 
 ### FBE.5 — Description scrub + LOW-fix sweep
 - Plan-doc / manifest: `<TBD>`.

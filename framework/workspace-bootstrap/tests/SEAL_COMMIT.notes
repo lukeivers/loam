@@ -560,3 +560,137 @@ the dispatcher re-runs `loam amend seal` against FBE.5b's
 manifest (apply commit `ea6fad1` already in place pre-FBE.2c) —
 at that point the 4 failing tests pass and FBE.5b's seal can
 complete.
+
+# FBE.5b — make <workspace>/.claude/ actually scaffold
+
+2026-05-03. v0.1.0 reviewer foldback closes FBE.5 Surface #7:
+`loam init`'s CLI success-summary printed
+"  .claude/    ← scaffolded (Claude Code expects this here)" but
+no code path created `<workspace>/.claude/` on disk. The lie
+lived in `bootstrap_new_workspace` (claude_dir computed at
+new_workspace.py:508 pre-FBE.5b, returned in BootstrapResult,
+but never `mkdir`-ed). Real v0.1.0 BLOCKER: FBE.6's planned
+extended smoke (parent plan §4 FBE.6.3 step-list) explicitly
+checks `ls /tmp/loam-fbe6-test-ws/{framework,workspace,.claude}`
+— pre-FBE.5b this would fail.
+
+Reviewer dossier:
+`<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+Parent plan:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` (FBE.5b
+named in closing line; §8 register backfilled at completion).
+Sub-plan:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe5b.md`.
+FBE.5 status (Surface #7 origin):
+`<workspace>/.scratch/claude-output/fbe5-status-2026-05-03.md`.
+
+Dispatcher (Luke, owner) ruled MINIMAL scope: `mkdir
+<workspace>/.claude/` + write a minimal `settings.json` (empty
+object — no project-level overrides; defer to user-level
+settings + Claude Code defaults). Explicitly NOT hooks pointing
+at framework code, `.claude/agents/` subdir, persona seeds, or
+any settings.json key beyond bare `{}`. Those land in v0.1.x
+amendments per AC.FBE.5b.5 negative AC.
+
+Single-fence amendment (workspace-bootstrap). Fix lives in
+`bootstrap_new_workspace` per ODD §2.5 — the place where the
+lie currently lives, not a NEW codepath in loam-init.
+
+Structural delta (within fence + universal admissions):
+
+  - `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py`
+    — NEW `_scaffold_claude_dir(claude_dir)` helper mirroring
+    `_write_workspace_gitignore`'s "scaffold if absent" pattern
+    (mkdir if absent + write settings.json={}+\\n if absent +
+    chmod 0o644). Single new call site in
+    `bootstrap_new_workspace` after the run_first_run_scaffold
+    block, before the BootstrapResult return. NEW
+    `_CLAUDE_SETTINGS_JSON_TEMPLATE = "{}\\n"` constant.
+  - `framework/workspace-bootstrap/tests/test_pos_new_workspace.py`
+    — `import json` added. `test_AC_D_4_1_local_canonical_creates_working_workspace`
+    tightened (lines 192-197 pre-FBE.5b): stale comment removed,
+    positive `is_dir()` + `settings.json.exists()` + JSON parses
+    to `{}` + mode 0o644 assertions added. NEW test
+    `test_AC_FBE_5b_3_init_existing_preserves_claude_settings`
+    covers AC.FBE.5b.3 idempotency contract.
+  - `framework/workspace-bootstrap/tests/SEAL_COMMIT` advances to
+    FBE.5b seal SHA via `loam amend seal`.
+  - `framework/workspace-bootstrap/tests/test_no_sealed_amendments.py`
+    BASELINE literal bumps via `loam amend apply`.
+  - `framework/workspace-bootstrap/tests/SEAL_COMMIT.notes` —
+    this body (single-fence narrative).
+
+AC surface (per sub-plan §4):
+
+  - AC.FBE.5b.1 — `<new-ws>/.claude/` exists as a directory
+    post-bootstrap.
+  - AC.FBE.5b.2 — `<new-ws>/.claude/settings.json` exists,
+    parses to `{}`, mode 0o644.
+  - AC.FBE.5b.3 — Idempotency: `--init-existing` on a workspace
+    whose operator has customised `.claude/settings.json`
+    preserves the customisation.
+  - AC.FBE.5b.4 — Smoke: `loam init /tmp/test-fbe5b-ws --from
+    /Users/lukeivers/ivers-corp-pos-v2/` exits 0 + produces
+    `/tmp/test-fbe5b-ws/.claude/settings.json`.
+  - AC.FBE.5b.5 — Negative AC: no scope expansion (no hooks,
+    no agents/, no persona seed, no settings.json keys beyond
+    `{}`).
+  - AC.FBE.5b.6 — CLI summary at loam-init/cli.py:128 +
+    new_workspace.py:724 ("  .claude/    ← scaffolded (Claude
+    Code expects this here)") becomes truthful at runtime;
+    zero CLI prose edits needed.
+  - AC.FBE.5b.S — Sealed-component fence: SINGLE component
+    `framework/workspace-bootstrap/`.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - Helper named `_scaffold_claude_dir` (mirrors
+    `_write_workspace_gitignore`'s naming + return-bool
+    signature).
+  - Constant `_CLAUDE_SETTINGS_JSON_TEMPLATE = "{}\\n"`
+    (trailing newline matches conventional JSON-on-disk shape).
+  - Call site placed AFTER `run_first_run_scaffold` (so workspace
+    state is fully populated before .claude/ scaffolds) and
+    BEFORE `return BootstrapResult(...)` (every successful
+    bootstrap path exercises it).
+  - Idempotency check per file (not just per directory): even
+    if the directory exists from a partial earlier run, the
+    helper checks `settings.json.exists()` separately so
+    partial-recovery is correct.
+  - The CLI summary message at loam-init/cli.py:128 +
+    new_workspace.py:724 is left UNTOUCHED — the prose was
+    correct in intent; the runtime was the lie. Editing it
+    would expand scope into loam-init component (out of fence).
+
+Smoke verification (AC.FBE.5b.4) — pre-build verified:
+`loam init /tmp/pre-build-fbe5b-smoke --from
+/Users/lukeivers/ivers-corp-pos-v2/` (against editable-installed
+venv) exits 0; `/tmp/pre-build-fbe5b-smoke/.claude/settings.json`
+contains `{}`; `/tmp/pre-build-fbe5b-smoke/framework/` cloned
+cleanly. Post-seal smoke documented in FBE.5b status file.
+
+Out of scope (per sub-plan §9):
+
+  - Hooks (PreToolUse, UserPromptSubmit, Stop, etc.) — v0.1.x.
+  - `.claude/agents/` subdirectory + agent definitions — v0.1.x.
+  - `.claude/personas/` / `.claude/skills/` / `.claude/commands/`
+    subdirectories — v0.1.x.
+  - Any settings.json key beyond `{}` (no `agent`,
+    `permissions`, `enabledMcpjsonServers`, etc.).
+  - Edits to the loam-init CLI summary prose (correct in intent;
+    runtime was the lie).
+  - Edits to `framework/loam-init/src/` source (fix lives in
+    workspace-bootstrap, the actual scaffold owner per fence
+    discipline).
+  - Pre-existing test failures in
+    `test_AC_D_4_1_local_canonical_creates_working_workspace` /
+    `test_AC_D_4_1_url_form_routes_through_cache_clone` /
+    `test_AC_SFR_1_single_level_framework_directory` /
+    `test_AC_SFR_5_framework_only_reachable_via_explicit_branch`
+    — verified failing pre-FBE.5b on baseline 15fe647 by `git
+    stash` + run; HT-8 surface (recorded for the dispatcher in
+    the FBE.5b status file) but not silently fixed in-band.
+
+BASELINE 49604a9 (pre-apply tip; the FBE.5b source-side delta
+commit). The workspace-bootstrap anchor's SEAL_COMMIT sidecar
+lands at the seal SHA via `loam amend seal`.

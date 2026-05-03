@@ -487,10 +487,14 @@ The plan should be re-opened if any of these occur:
 (Populated as each FBE.x amendment seals + the master plan §14 backfill commit.)
 
 ### FBE.1 — `loam init` subcommand
-- Plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe1.md` (authored by FBE.1 build agent before code per `feedback_plan_before_code`).
-- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe1.manifest.yaml`.
-- Apply commit: `<TBD>`.
-- Seal commit: `<TBD>`.
+- Plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe1.md` (authored at `b111340` by FBE.1 build agent before code per `feedback_plan_before_code`).
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe1.manifest.yaml` (amendment #103, committed at `2ce6ae2`).
+- Source commit (loam-init NEW component + tests): `2c6b488`.
+- Partition admission commit (`framework/loam-init/**` → `dev_and_public`): `608ecea`.
+- Apply commit: `6d5a3f1`.
+- Seal commit: `21b9480`.
+- ACs satisfied: AC.FBE.1.{1,2,3,4,5,6,7,8,S} (9/9 — sub-plan tightened AC.FBE.1.3 to drop loose auto-detect language; added AC.FBE.1.7 for bare-name dep + AC.FBE.1.8 for partition admission per §2 Surface #1).
+- Verification: 14/14 component tests pass; 3/3 partition tests pass; `loam init --help` works through the unified CLI dispatcher; cross-component seal-diff sweep at seal-time green (16 components).
 
 ### FBE.2 — Partition admit `framework/tools/loam/**`
 - Plan-doc / manifest: `<TBD>` (sub-plan-docs authored at dispatch time).

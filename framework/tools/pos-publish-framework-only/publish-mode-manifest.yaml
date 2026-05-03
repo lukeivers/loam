@@ -124,6 +124,21 @@ dev_and_public:
   # loam.cli.subcommands entry-point; user-facing onboarding verb;
   # ships with the public synth.
   - glob: "framework/loam-init/**"
+  # framework/tools/loam/** RECLASSIFIED from `dev_only` to
+  # `dev_and_public` at FBE.2 (v0.1.0 reviewer foldback;
+  # plan-doc: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2.md;
+  # parent: docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md §4
+  # FBE.2). The unified `loam` CLI dispatcher (the binary itself —
+  # entry-point group `loam.cli.subcommands` discovery host) is the
+  # primary user-facing executable; pre-FBE.2 it was lumped with
+  # publish/migration tooling under `dev_only` (M2 manifest) which
+  # left the synth tree shipping zero CLI. Reclassification ships
+  # the binary; non-loam tools (heavy-b-migrate, orphan-plist-cleanup,
+  # upgrade-merge-resolver, pos-publish-framework-only, loam-migrate-*,
+  # loam-memory-inspect) STAY `dev_only` per parent §4 FBE.2.3.
+  # Per `**/tests/**` precedence rule, `framework/tools/loam/tests/`
+  # continues to ride `dev_only` (industry convention; not user-runtime).
+  - glob: "framework/tools/loam/**"
   # framework/memory-system/** RECLASSIFIED to `dev_only` post-M-FBM
   # (memory-substrate pivot, 2026-05-01) per AC.MFBM.3 + plan
   # `oss-v0-1-0-publish-memory-pivot.md`. The file-based memory
@@ -200,7 +215,16 @@ dev_only:
   # surfaces episode count + size + group_id distribution for owner
   # to verify the discard decision per D-Q.MFBM.6.
   - glob: "framework/tools/loam-memory-inspect/**"
-  - glob: "framework/tools/loam/**"
+  # framework/tools/loam/** RECLASSIFIED to `dev_and_public` at FBE.2
+  # (v0.1.0 reviewer foldback; plan-doc: docs/rebuild/plans/
+  # v0-1-0-foldback-scope-expansion-fbe2.md; parent: docs/rebuild/
+  # plans/v0-1-0-foldback-scope-expansion.md §4 FBE.2). See the
+  # `dev_and_public:` block above for the new entry. The CLI binary
+  # is intrinsically user-facing; the M2 manifest's lumping of it
+  # alongside publish/migration tooling was wrong. Tools that REMAIN
+  # dev_only (pos-publish-framework-only, heavy-b-migrate, orphan-
+  # plist-cleanup, upgrade-merge-resolver, loam-migrate-*,
+  # loam-memory-inspect) stay listed below.
   - glob: "framework/tools/heavy-b-migrate/**"
   - glob: "framework/tools/orphan-plist-cleanup/**"
   - glob: "framework/tools/upgrade-merge-resolver/**"

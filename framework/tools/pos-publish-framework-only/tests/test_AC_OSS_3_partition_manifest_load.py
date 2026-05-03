@@ -228,9 +228,14 @@ def test_canonical_manifest_loads(tmp_path: Path) -> None:
         e.glob and "cost-governance" in e.glob
         for e in manifest.dev_and_public
     )
-    # Must classify dev-discipline tools as dev_only.
+    # Must classify dev-discipline tools as dev_only. Per FBE.2
+    # (v0.1.0 reviewer foldback) `framework/tools/loam/**` reclassified
+    # to dev_and_public; this assertion now uses the manifest-owner
+    # itself (pos-publish-framework-only) which stays dev_only — the
+    # tool that emits the public synth tree is the canonical example
+    # of "dev-discipline tooling that stays internal."
     assert any(
-        e.glob and "tools/loam/" in e.glob
+        e.glob and "tools/pos-publish-framework-only/" in e.glob
         for e in manifest.dev_only
     )
     # Must classify .git/ as excluded_from_publish.

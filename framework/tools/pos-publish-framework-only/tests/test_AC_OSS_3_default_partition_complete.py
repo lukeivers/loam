@@ -116,6 +116,11 @@ def test_default_partition_classifies_runtime_components_dev_and_public() -> Non
         "framework/dormancy/src/loam/dormancy/__init__.py",
         "framework/primary-persona/src/loam/primary_persona/__init__.py",
         "framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
+        # framework/tools/loam/pyproject.toml RECLASSIFIED dev_and_public
+        # at FBE.2 (v0.1.0 reviewer foldback; parent plan §4 FBE.2). The
+        # unified loam CLI binary is the primary user-facing executable;
+        # M2 lumping it with publish/migration tooling was wrong.
+        "framework/tools/loam/pyproject.toml",
     ]
     for p in sample_runtime_paths:
         klass = classify_path(manifest, p)
@@ -143,7 +148,9 @@ def test_default_partition_classifies_dev_tools_dev_only() -> None:
     # inspection tool (D-Q.MFBM.6) ships dev_only.
     sample_dev_only_paths = [
         "framework/memory-system/src/loam/memory_system/__init__.py",
-        "framework/tools/loam/pyproject.toml",
+        # framework/tools/loam/pyproject.toml MOVED to
+        # sample_runtime_paths above at FBE.2 (reclassification dev_only
+        # → dev_and_public).
         "framework/tools/heavy-b-migrate/pyproject.toml",
         "framework/tools/loam-memory-inspect/pyproject.toml",
         "framework/tools/orphan-plist-cleanup/pyproject.toml",

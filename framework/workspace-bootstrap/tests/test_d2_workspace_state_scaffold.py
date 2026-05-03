@@ -114,6 +114,15 @@ def test_AC_D_2_1_personas_dir_lands_under_workspace_state(
     )
 
 
+@pytest.mark.skip(
+    reason=(
+        "FBE.7 (v0.1.0 foldback): scaffold doesn't write .mcp.json at "
+        "v0.1.0 (memory-graphiti retired from _SERVICE_KINDS); the path "
+        "shape is preserved by mcp_json_writer's pure functions and "
+        "M-GMP restores the scaffold-side write post-v0.1.0. See "
+        "docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
+    )
+)
 def test_AC_D_2_1_mcp_json_lands_under_workspace_state(tmp_path: Path) -> None:
     """``.mcp.json`` lives under ``<ws>/workspace/.mcp.json``."""
     workspace, _pos_root, _agents = _scaffold(tmp_path)
@@ -308,6 +317,15 @@ def test_HC4_persona_contract_byte_content_match(tmp_path: Path) -> None:
     assert "is_starter: true" in text
 
 
+@pytest.mark.skip(
+    reason=(
+        "FBE.7 (v0.1.0 foldback): scaffold doesn't write .mcp.json at "
+        "v0.1.0 (memory-graphiti retired from _SERVICE_KINDS); the byte "
+        "content shape is preserved by mcp_json_writer's pure functions "
+        "and M-GMP restores the scaffold-side write post-v0.1.0. See "
+        "docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
+    )
+)
 def test_HC4_mcp_json_byte_content_match(tmp_path: Path) -> None:
     """HC#4: ``.mcp.json`` carries a memory-graphiti server registration
     at the post-D.2 location.

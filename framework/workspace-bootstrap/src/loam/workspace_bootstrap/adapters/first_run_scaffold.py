@@ -217,18 +217,30 @@ def resolve_persona_handle(raw_input: str | None) -> str:
 #
 # Amendment J (AC.J.5): ``memory-write-worker`` is the long-running
 # drain process for the disk-backed memory-write queue. It composes
-# on the same launchd-supervised pattern as ``memory-graphiti`` and
-# ``orchestrator`` — workspace-bootstrap provisions the plist; launchd
-# owns lifecycle (KeepAlive=true; RunAtLoad=true; ThrottleInterval).
+# on the same launchd-supervised pattern as ``orchestrator`` —
+# workspace-bootstrap provisions the plist; launchd owns lifecycle
+# (KeepAlive=true; RunAtLoad=true; ThrottleInterval).
+#
+# FBE.7 (v0.1.0 foldback) per Luke's 2026-05-03 ruling: ``memory-graphiti``
+# is REMOVED from the auto-launched set. The M-FBM file-based memory
+# substrate (``primary_persona.file_memory.FileMemoryStore``) is the
+# v0.1.0 floor; graphiti returns post-v0.1.0 via the M-GMP plugin path.
+# The ``_LAUNCHD_TEMPLATES["memory-graphiti"]`` template entry below is
+# retained so M-GMP's re-admission is a one-line change here. See
+# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
 _SERVICE_KINDS: tuple[str, ...] = (
-    "memory-graphiti",
     "orchestrator",
     "memory-write-worker",
 )
 
 
 def service_label(kind: str, slug: str) -> str:
-    """Compose the reverse-DNS launchd label for a kind + workspace slug."""
+    """Compose the reverse-DNS launchd label for a kind + workspace slug.
+
+    FBE.7: ``"memory-graphiti"`` is no longer in ``_SERVICE_KINDS`` at
+    v0.1.0 (the M-FBM floor); calls with that kind raise
+    ``ValueError`` until M-GMP re-admits it.
+    """
     if kind not in _SERVICE_KINDS:
         raise ValueError(f"unknown service kind: {kind!r}")
     return f"com.loam.{slug}.{kind}"
@@ -694,20 +706,22 @@ def run_first_run_scaffold(
         template_override=persona_template_override,
     )
 
-    # Amendment #47: write the workspace-local ``.mcp.json`` so
-    # Claude Code discovers the per-workspace memory-graphiti
-    # FastMCP service at session-load and binds its tools as
-    # ``mcp__memory-graphiti__<tool>``. The ``(host, port)`` pair
-    # already resolved above for the launchd plist (line ~624) is
-    # the source of truth — the same per-workspace
-    # ``memory.yaml`` value flows into both the launchd
-    # EnvironmentVariables (#29) and the MCP-server URL (#47).
-    # Fail-soft: write failures surface a structured outcome on
-    # ``ScaffoldResult`` and the scaffold completes (AC47.3).
-    mcp_json_result = _run_mcp_json_writer(
-        workspace_root=Path(ws),
-        memory_host=memory_host,
-        memory_port=memory_port,
+    # FBE.7 (v0.1.0 foldback): the workspace-local ``.mcp.json``
+    # registration of ``memory-graphiti`` is RETIRED at v0.1.0 per
+    # Luke's 2026-05-03 ruling. The M-FBM file-based memory substrate
+    # is the v0.1.0 floor; the persona's session-start retrieval path
+    # already binds ``primary_persona.file_memory.FileMemoryStore``
+    # directly (no MCP roundtrip). The ``mcp_json_writer`` module is
+    # preserved on disk (its pure-function builders are imported by
+    # AC47.x tests + will be re-wired by the M-GMP plugin post-v0.1.0)
+    # but is NOT invoked from the v0.1.0 production scaffold path.
+    # See ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+    from . import mcp_json_writer as _mcp_json_writer  # noqa: WPS433
+
+    mcp_json_result = _mcp_json_writer.MCPJsonWriteResult(
+        wrote=False,
+        reason="skipped_v0_1_0_no_graphiti",
+        path=None,
     )
 
     # Amendment J (AC.J.1 / AC.J.4): write the workspace-local
@@ -1150,7 +1164,15 @@ def _install_service_manager_files(
     dest_dir = override_dir or (Path.home() / "Library" / "LaunchAgents")
     dest_dir.mkdir(parents=True, exist_ok=True)
     out: list[tuple[str, Path]] = []
-    for kind, tmpl in _LAUNCHD_TEMPLATES.items():
+    # FBE.7: iterate over ``_SERVICE_KINDS`` (the auto-launched set) not
+    # ``_LAUNCHD_TEMPLATES`` (which retains the ``memory-graphiti``
+    # entry as a dormant template for M-GMP re-admission post-v0.1.0).
+    # This is the seam that makes the kind-removal at line ~227 take
+    # effect — without iterating over ``_SERVICE_KINDS`` here, the
+    # graphiti plist would still get written despite the kind being
+    # absent from the auto-launched set.
+    for kind in _SERVICE_KINDS:
+        tmpl = _LAUNCHD_TEMPLATES[kind]
         label = service_label(kind, slug)
         path = dest_dir / f"{label}.plist"
         path.write_text(

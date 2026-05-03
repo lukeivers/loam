@@ -144,17 +144,28 @@ def test_AC47_3_permission_denied_is_graceful(
 def test_AC47_3_scaffold_completes_when_writer_skips(
     tmp_path: Path,
 ) -> None:
-    """When the writer skips (malformed pre-existing file),
-    the scaffold completes (``ran=True``) and the structured
-    outcome propagates to ``ScaffoldResult.mcp_json_reason``.
-    The scaffold does not raise; SessionStart proceeds."""
+    """When the scaffold runs (FBE.7: with no .mcp.json writer
+    invocation at v0.1.0), it completes (``ran=True``) and the
+    structured outcome propagates to ``ScaffoldResult.mcp_json_reason``
+    as the FBE.7-introduced ``skipped_v0_1_0_no_graphiti`` literal.
+    Any pre-existing user ``.mcp.json`` is preserved verbatim because
+    the writer is never invoked.
+
+    FBE.7 (v0.1.0 foldback) per Luke's 2026-05-03 ruling: the scaffold
+    no longer invokes ``mcp_json_writer.write_mcp_json`` at v0.1.0
+    because ``memory-graphiti`` is no longer in ``_SERVICE_KINDS``.
+    The pure-function malformed/permission tests above continue to
+    exercise the writer's fail-soft contract directly. M-GMP restores
+    the scaffold-side invocation post-v0.1.0. See
+    ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+    """
     workspace = tmp_path / "alpha-ws"
     workspace.mkdir()
     pos_root = tmp_path / "pos-alpha"
     agents = tmp_path / "LaunchAgents-alpha"
 
-    # Pre-write a malformed .mcp.json the scaffold's writer must
-    # leave alone.
+    # Pre-write a malformed .mcp.json the FBE.7-skipped writer must
+    # leave alone (since it's not invoked at all).
     target = workspace / "workspace" / MCP_JSON_FILENAME
     target.parent.mkdir(parents=True, exist_ok=True)
     bad_text = "not valid json"
@@ -171,6 +182,9 @@ def test_AC47_3_scaffold_completes_when_writer_skips(
 
     assert result.ran is True
     assert result.mcp_json_wrote is False
-    assert result.mcp_json_reason == "skipped_malformed_existing"
-    # User's malformed file is preserved.
+    # FBE.7: the scaffold's neutral-default reason; the writer was
+    # never invoked, so no malformed-existing branch fires.
+    assert result.mcp_json_reason == "skipped_v0_1_0_no_graphiti"
+    assert result.mcp_json_path is None
+    # User's malformed file is preserved verbatim (writer not invoked).
     assert target.read_text() == bad_text

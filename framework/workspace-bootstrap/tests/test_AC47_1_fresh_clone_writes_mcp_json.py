@@ -31,6 +31,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     run_first_run_scaffold,
 )
@@ -38,6 +40,21 @@ from loam.workspace_bootstrap.adapters.mcp_json_writer import (
     MCP_JSON_FILENAME,
     MEMORY_GRAPHITI_SERVER_NAME,
     STREAMABLE_HTTP_PATH,
+)
+
+
+# FBE.7 (v0.1.0 foldback): the scaffold no longer writes ``.mcp.json``
+# at v0.1.0 because ``memory-graphiti`` is no longer in
+# ``_SERVICE_KINDS`` per Luke's 2026-05-03 ruling. The pure-function
+# builders inside ``mcp_json_writer.py`` are still used by AC47.2's
+# pure-function variants and will be re-wired by M-GMP post-v0.1.0.
+# The scaffold-integration variants below are skipped at v0.1.0. See
+# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+pytestmark = pytest.mark.skip(
+    reason=(
+        "FBE.7 (v0.1.0 foldback): scaffold doesn't write .mcp.json at "
+        "v0.1.0; M-GMP restores the writer's invocation post-v0.1.0."
+    )
 )
 
 

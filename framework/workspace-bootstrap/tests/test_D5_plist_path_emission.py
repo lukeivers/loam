@@ -65,6 +65,26 @@ from loam.workspace_bootstrap.adapters.first_run_scaffold import (
 )
 
 
+# FBE.7 (v0.1.0 foldback): D5.1 / D5.2 / D5.3 all assume the
+# memory-graphiti plist is emitted by the scaffold. Per Luke's
+# 2026-05-03 ruling, ``memory-graphiti`` is no longer in
+# ``_SERVICE_KINDS`` at v0.1.0; the scaffold helper here would call
+# ``service_label("memory-graphiti", ...)`` and raise ``ValueError``.
+# The orchestrator-side PATH-emission contract (D5.2) and the
+# orchestrator key-set guard (D5.3 orchestrator half) are still
+# verified by ``test_first_run_scaffold.py`` indirectly. The graphiti
+# halves of D5.1 / D5.2 / D5.3 are skipped at v0.1.0; M-GMP restores
+# them post-v0.1.0. See
+# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+pytestmark = pytest.mark.skip(
+    reason=(
+        "FBE.7 (v0.1.0 foldback): memory-graphiti plist not emitted at "
+        "v0.1.0 (memory-graphiti retired from _SERVICE_KINDS); M-GMP "
+        "restores the graphiti plist + this test post-v0.1.0."
+    )
+)
+
+
 # Repo root — for the D5.1 service-spawn the canonical tree's
 # `memory-system/.venv/bin/python` must exist on this host.
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent

@@ -214,9 +214,16 @@ def test_AC_D_4_1_local_canonical_creates_working_workspace(
         f"AC.D.4.1: persona scaffold missing at {persona_contract}"
     )
 
-    # AC.D.4.1: .mcp.json scaffolded.
+    # FBE.7 (v0.1.0 foldback): .mcp.json is no longer scaffolded at
+    # v0.1.0 (memory-graphiti retired from _SERVICE_KINDS per Luke's
+    # 2026-05-03 ruling). The path is reserved for M-GMP's post-v0.1.0
+    # re-admission. See
+    # docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md.
     mcp_json = workspace_state / ".mcp.json"
-    assert mcp_json.exists()
+    assert not mcp_json.exists(), (
+        "FBE.7: .mcp.json should NOT be scaffolded at v0.1.0; "
+        f"unexpected file at {mcp_json}"
+    )
 
 
 # ---- AC.D.4.1 — refusal-on-non-empty target -------------------------
@@ -439,12 +446,17 @@ def test_AC_D_4_1_HC6_workspace_state_inside_workspace_subdir(
             f"{new_ws / name}"
         )
 
-    # The scaffold creates these inside workspace/ (.pos + personas +
-    # .mcp.json are guaranteed; objective_tracker.sqlite depends on
-    # tracker_seed which we stubbed out).
+    # The scaffold creates these inside workspace/ (.pos + personas
+    # are guaranteed; .mcp.json was guaranteed pre-FBE.7 but post-FBE.7
+    # is NOT written at v0.1.0 since memory-graphiti is retired from
+    # _SERVICE_KINDS; objective_tracker.sqlite depends on tracker_seed
+    # which we stubbed out).
     assert (new_ws / "workspace" / ".pos").is_dir()
     assert (new_ws / "workspace" / "personas").is_dir()
-    assert (new_ws / "workspace" / ".mcp.json").exists()
+    # FBE.7: .mcp.json is intentionally NOT scaffolded at v0.1.0; M-GMP
+    # restores the writer's invocation post-v0.1.0. See
+    # docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md.
+    assert not (new_ws / "workspace" / ".mcp.json").exists()
 
     # framework/ must not contain workspace-state files.
     framework = new_ws / "framework"

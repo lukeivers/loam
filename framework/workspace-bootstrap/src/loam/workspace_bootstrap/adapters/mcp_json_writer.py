@@ -107,13 +107,20 @@ class MCPJsonWriteResult:
       preserve user content.
     - ``"skipped_io_error"`` — IO/permissions error during write;
       scaffold continues, session degrades.
+    - ``"skipped_v0_1_0_no_graphiti"`` — FBE.7 (v0.1.0 foldback):
+      the scaffold doesn't invoke the writer at v0.1.0 because the
+      M-FBM file-based memory substrate replaced the graphiti runtime
+      path. ``path`` is ``None`` for this reason; M-GMP restores the
+      writer post-v0.1.0.
 
-    ``path`` is the absolute path to the target ``.mcp.json``.
+    ``path`` is the absolute path to the target ``.mcp.json`` — or
+    ``None`` when the writer was not invoked (FBE.7
+    ``skipped_v0_1_0_no_graphiti``).
     """
 
     wrote: bool
     reason: str
-    path: Path
+    path: Path | None
 
 
 # ---- AC47.1 pure-function builders -----------------------------------

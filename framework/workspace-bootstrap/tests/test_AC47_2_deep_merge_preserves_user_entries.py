@@ -29,6 +29,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     run_first_run_scaffold,
 )
@@ -52,6 +54,16 @@ def _stub_tracker_seed_runner(**kwargs):
     )
 
 
+@pytest.mark.skip(
+    reason=(
+        "FBE.7 (v0.1.0 foldback): scaffold doesn't write .mcp.json at "
+        "v0.1.0 (memory-graphiti retired from _SERVICE_KINDS); the "
+        "deep-merge contract is exercised by the pure-function tests "
+        "below (write_mcp_json direct invocation). M-GMP restores the "
+        "scaffold-integration variant post-v0.1.0. See "
+        "docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
+    )
+)
 def test_AC47_2_deep_merge_preserves_user_entries(
     tmp_path: Path,
 ) -> None:

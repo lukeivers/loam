@@ -31,9 +31,26 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     run_first_run_scaffold,
     service_label,
+)
+
+
+# FBE.7 (v0.1.0 foldback): the entire AC29 contract is moot at v0.1.0
+# because ``memory-graphiti`` is no longer in ``_SERVICE_KINDS`` per
+# Luke's 2026-05-03 ruling. No graphiti plist is written by the
+# scaffold; ``service_label("memory-graphiti", ...)`` raises
+# ``ValueError``. The module-level skip below preserves the AC contract
+# for M-GMP's post-v0.1.0 re-admission. See
+# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+pytestmark = pytest.mark.skip(
+    reason=(
+        "FBE.7 (v0.1.0 foldback): memory-graphiti not in _SERVICE_KINDS "
+        "at v0.1.0; M-GMP restores the graphiti plist post-v0.1.0."
+    )
 )
 
 

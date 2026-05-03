@@ -93,8 +93,11 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
     # accordingly.
     plists = list(service_dir.glob("*.plist"))
     labels = {p.stem for p in plists}
+    # FBE.7 (v0.1.0 foldback): ``memory-graphiti`` is no longer in
+    # ``_SERVICE_KINDS`` per Luke's 2026-05-03 ruling — M-FBM is the
+    # v0.1.0 floor; M-GMP restores the graphiti plist post-v0.1.0. See
+    # ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
     assert labels == {
-        "com.loam.pos-v2.memory-graphiti",
         "com.loam.pos-v2.orchestrator",
         "com.loam.pos-v2.memory-write-worker",
     }
@@ -242,11 +245,19 @@ def test_AC1_workspace_slug_deterministic_across_inputs() -> None:
 
 
 def test_AC1_service_label_composed_from_kind_and_slug() -> None:
-    """AC1 adjunct — label-composition is pure and reverse-DNS shaped."""
+    """AC1 adjunct — label-composition is pure and reverse-DNS shaped.
+
+    FBE.7 (v0.1.0 foldback): ``memory-graphiti`` is no longer in
+    ``_SERVICE_KINDS`` at v0.1.0 (M-FBM is the floor); ``service_label``
+    raises ``ValueError`` for it. M-GMP re-admits post-v0.1.0. See
+    ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+    """
     assert service_label("orchestrator", "pos3") == "com.loam.pos3.orchestrator"
-    assert service_label("memory-graphiti", "alpha") == (
-        "com.loam.alpha.memory-graphiti"
+    assert service_label("memory-write-worker", "alpha") == (
+        "com.loam.alpha.memory-write-worker"
     )
+    with pytest.raises(ValueError, match="unknown service kind"):
+        service_label("memory-graphiti", "alpha")
 
 
 def test_AC8_unrepresentable_slug_refuses_structurally(

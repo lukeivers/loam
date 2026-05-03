@@ -1,0 +1,85 @@
+schema_version: 1
+amendment:
+  number: 116
+  slug: v0-1-0-foldback-scope-expansion-fbe10
+  title: "FBE.10 — close BLOCKER-FBE9.1 (workspace-bootstrap local-path clones must materialise framework-only)"
+
+# BASELINE: 579188b — the HOL seal narrative anchor commit (pre-apply
+# tip after the source + new test commit + the narrative anchor commit).
+#
+# Commit ladder pre-apply:
+#   e112f17 — FBE.10 sub-plan-doc (NEW commit)
+#   3fefbb9 — feat(workspace-bootstrap): FBE.10 — materialise framework-only
+#             at local-path branch (closes BLOCKER-FBE9.1) — helper
+#             extraction + new test
+#   579188b — feat(hands-off-lifecycle): FBE.10 seal narrative anchor
+#   <this manifest commit lands next>
+#   <loam amend apply lands as the next commit>
+#   <potentially corrective hand-admit lands per FBE.4/FBE.5 precedent>
+#   <loam amend seal lands as the seal commit>
+#   <parent §8 register backfill lands last>
+#
+# Two sealed components in fence:
+#   - framework/workspace-bootstrap/ (helper extraction +
+#     bootstrap_new_workspace local-path branch fix + new test
+#     test_AC_FBE_10_1_local_path_clone_of_canonical.py).
+#   - framework/hands-off-lifecycle/ (HOL no-op narrative anchor pattern
+#     per FBE.6/FBE.6b/FBE.8/FBE.9 precedent; HOL `frozen_baseline: true`
+#     per amendment #23 + prior FBE manifest precedent).
+#
+# Plan-doc + manifest YAML + parent §8 backfill ride via
+# universal_paths.prefixes for docs/rebuild/plans/. HOL seal narrative
+# anchor rides via universal_paths.prefixes for
+# framework/hands-off-lifecycle/seals/.
+#
+# Per FBE.4/FBE.5/FBE.5b/FBE.6/FBE.6b/FBE.9 partner-prefix gap precedent:
+# workspace-bootstrap lives at framework/workspace-bootstrap/ (canonical
+# shape) — apply tool should derive cleanly. If a corrective is needed
+# at apply, mirror FBE.4's recipe (`0c4d9a0`).
+baseline: "579188b"
+
+plan: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe10.md
+
+seal_description: "FBE.10 closes BLOCKER-FBE9.1 (bootstrap_new_workspace's local-path branch did not materialise framework-only as a local branch; pre-existing in workspace-bootstrap source; surfaced by FBE.9 stranger-flow smoke when FBE.9's auto-default-to-cwd made the typical --from source the stranger's git clone of canonical, which has framework-only only as a remote-tracking ref). Single-component workspace-bootstrap fix: extract `_materialise_framework_only_branch(path: Path) -> None` helper (preserves the existing fail-soft semantics: non-zero exit ignored, downstream checkout diagnoses absence precisely); call it from BOTH `_resolve_url_to_clone_source` (replacing the existing inline block) AND from `bootstrap_new_workspace`'s local-path branch (after local_path validation, before passing to _clone_canonical). NEW test test_AC_FBE_10_1_local_path_clone_of_canonical.py reproduces the exact BLOCKER-FBE9.1 case (build fixture canonical → clone into stranger-clone path → bootstrap against stranger-clone) and asserts the post-fix bootstrap succeeds with the workspace's framework subdir checked out on framework-only. URL-form behaviour preserved byte-identically. End-to-end smoke (the FBE.9 BLOCKER-FBE9.1 reproduction flow) passes against post-FBE.10 canonical HEAD. M12 publish-flip remains GATED behind FBE.6c re-running synth + sweep + smoke + reviewer cycle against post-FBE.10 canonical HEAD."
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true  # H19's BASELINE pinned at project-start; FBE.10 contributes only the seal narrative
+    extra_allowed_prefixes: []
+
+# Universal admissions — plan-doc + manifest YAML + parent §8 backfill
+# (docs/rebuild/plans/ universal prefix) + HOL seal narrative anchor
+# (framework/hands-off-lifecycle/seals/ universal prefix).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+    - framework/hands-off-lifecycle/seals/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe10
+  body: |
+    # FBE.10 seal — apply ladder
+
+    Apply ladder (per `loam amend apply` + `loam amend seal`):
+    BASELINE `579188b` → seal `<seal-sha>`. Two fence components:
+    workspace-bootstrap advances its `tests/SEAL_COMMIT` sidecar +
+    BASELINE literal bumps; HOL advances its sidecar (frozen-baseline
+    pinned project-start; narrative-only contribution). Cross-component
+    sweep validates fence discipline post-seal.
+
+    See the full narrative at the target file (already authored
+    pre-apply per AC.FBE.10.S) for FBE.10 outcome, sub-plan reference,
+    status file, and BLOCKER-FBE9.1 closure detail.

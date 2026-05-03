@@ -1,0 +1,224 @@
+schema_version: 1
+amendment:
+  number: 107
+  slug: v0-1-0-foldback-scope-expansion-fbe4
+  title: "FBE.4 — Path B in-tree resolution via install-from-source.{txt,md} (fence-three-no-edit)"
+
+# BASELINE: cfc9ed4 — the FBE.4 source-side delta commit (the
+# pre-apply tip after install-from-source.txt + docs/install-from-
+# source.md + the partition manifest admission landed).
+#
+# Commit ladder pre-apply:
+#   14c9673 — FBE.4 sub-plan-doc (NEW commit)
+#   cfc9ed4 — install-from-source.txt + docs/install-from-source.md
+#             + partition manifest 2-line admission
+#   <this manifest commit lands next>
+#   <loam amend apply lands as #4>
+#   <loam amend seal lands as #5>
+#
+# Three sealed components in fence — fence-three-no-edit:
+#   - framework/workspace-bootstrap/ (existing seal anchor at
+#     framework/workspace-bootstrap/tests/SEAL_COMMIT; bumps via
+#     loam amend apply + loam amend seal). Pyproject byte-identical
+#     to BASELINE (12 inter-component bare-name deps preserved).
+#   - plugins/dev-sdlc/ (existing seal anchor at
+#     plugins/dev-sdlc/tests/SEAL_COMMIT). Pyproject byte-identical
+#     to BASELINE (3 inter-component bare-name deps preserved).
+#   - framework/loam-init/ (existing seal anchor at
+#     framework/loam-init/tests/SEAL_COMMIT, established at FBE.1).
+#     Pyproject byte-identical to BASELINE (1 inter-component bare-
+#     name dep preserved).
+#
+# The dispatcher ruled fence-three-no-edit explicitly: zero source
+# edits to those components' pyprojects (deps stay bare-name). The
+# three sidecar bumps record the architectural ratification: "FBE.4
+# ratified bare-name inter-component deps as the v0.1.0 shape; in-
+# tree resolution lives in install-from-source.{txt,md}." Mirrors
+# FBE.6's seal-without-source-edit pattern but applied with three-
+# sidecar fence to record a substantive amendment-trail decision
+# rather than a null-delta sweep.
+#
+# install-from-source.txt + docs/install-from-source.md ride via
+# universal_paths.files admission (NEW files at top-level + docs/).
+# The partition-manifest admission edit at framework/tools/pos-
+# publish-framework-only/publish-mode-manifest.yaml rides via
+# universal_paths.prefixes admission for that component (mirrors
+# FBE.{2,3} pattern).
+baseline: cfc9ed4
+
+plan: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe4.md
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: loam-init
+    seal_test: framework/loam-init/tests/test_no_sealed_amendments.py
+    sidecar: framework/loam-init/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `framework/tools/pos-publish-framework-only/` admits the partition-
+# manifest 2-line admission edit (mirrors FBE.{1,2,3} pattern).
+# Top-level install-from-source.txt + docs/install-from-source.md
+# admitted as explicit files (NEW files outside any pre-existing
+# universal admission).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+    - framework/tools/pos-publish-framework-only/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+    - install-from-source.txt
+    - docs/install-from-source.md
+
+narrative:
+  target: framework/workspace-bootstrap/tests/SEAL_COMMIT.notes
+  body: |
+    # FBE.4 — Path B in-tree resolution via install-from-source.{txt,md} (fence-three-no-edit)
+
+    2026-05-03. v0.1.0 reviewer foldback closes BLOCKER 3 (pip deps
+    don't resolve for stranger-clone). Reviewer dossier:
+    `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+    Parent plan:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` §4 FBE.4
+    + §3 Decision C (Path B chosen by dispatcher post-empirical halt).
+    Sub-plan:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe4.md`.
+    Empirical anchor (prior FBE.4 dispatch's halt-and-surface):
+    `<workspace>/.scratch/claude-output/fbe4-status-2026-05-03.md`
+    Probes 1-7 (verified pip 26.0.1 rejects the parent plan's
+    Decision C2 `${PROJECT_ROOT}` path-spec form; verified Paths A
+    + B both work).
+
+    Dispatcher rulings (post-halt):
+      - Path B chosen — bare-name inter-component deps STAY in
+        pyprojects (byte-identical to BASELINE). NEW top-level file
+        `install-from-source.txt` carries ordered `-e ./<path>`
+        lines + NEW `docs/install-from-source.md` covers the same
+        install path in prose form. Stranger runs ONE command
+        (`pip install -r install-from-source.txt`) for full setup.
+      - Fence-three-no-edit chosen — sealed-component fence:
+        framework/workspace-bootstrap/ + plugins/dev-sdlc/ +
+        framework/loam-init/. ZERO source edits to those
+        components' pyprojects (deps stay bare-name). Sidecar bumps
+        record FBE.4's architectural ratification.
+      - v0.2 PyPI publish gate captured to FUTURE_IDEAS (out of
+        FBE.4 scope).
+
+    Structural delta (within fence + universal admissions):
+
+      - framework/workspace-bootstrap/tests/SEAL_COMMIT — sidecar
+        bump (current value 99b237ee... → FBE.4 BASELINE cfc9ed4
+        at apply, then to seal SHA at seal). Pyproject byte-
+        identical (verified via post-seal git diff per
+        AC.FBE.4.{1,6}).
+      - framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+        — BASELINE literal bump.
+      - framework/workspace-bootstrap/tests/SEAL_COMMIT.notes —
+        narrative file (THIS body).
+      - plugins/dev-sdlc/tests/SEAL_COMMIT — sidecar bump (current
+        value 66935e0... → FBE.4 BASELINE at apply, then to seal
+        SHA). Pyproject byte-identical per AC.FBE.4.2.
+      - plugins/dev-sdlc/tests/test_no_sealed_amendments.py —
+        BASELINE literal bump.
+      - framework/loam-init/tests/SEAL_COMMIT — sidecar bump
+        (current value 6d5a3f1... → FBE.4 BASELINE at apply, then
+        to seal SHA). Pyproject byte-identical per AC.FBE.4.2.
+      - framework/loam-init/tests/test_no_sealed_amendments.py —
+        BASELINE literal bump.
+      - install-from-source.txt — NEW file at canonical pos-v2 repo
+        root. 17 ordered `-e ./<path>` lines spanning Tier A
+        (leaves: scope-of-work, objective-tracker,
+        observability-aggregator, safety-layer, self-upgrade,
+        workspace-sync) through Tier J (dev-sdlc plugin).
+        Admitted via universal_paths.files.
+      - docs/install-from-source.md — NEW file. Covers prereqs
+        (Python 3.13, fresh venv), the one-command shortcut
+        (`pip install -r install-from-source.txt`), the per-
+        component fallback, troubleshooting (install order, missing
+        loam command, build-failure, why bare-name deps are v0.1.0-
+        only), and reference to README's `loam init` headline path.
+        Admitted via universal_paths.files.
+      - framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml
+        — 2-line admission added to dev_and_public: section so
+        synth strangers get install-from-source.txt + docs/install-
+        from-source.md. Provenance comment cross-references FBE.4
+        sub-plan + parent foldback plan + the empirical halt
+        anchor. Admitted via universal_paths.prefixes for
+        framework/tools/pos-publish-framework-only/ (mirrors
+        FBE.{1,2,3} pattern).
+
+    AC surface (per sub-plan §4):
+
+      - AC.FBE.4.1 (rewritten) — workspace-bootstrap pyproject's 12
+        inter-component deps PRESERVED as bare-name strings (byte-
+        identical to BASELINE).
+      - AC.FBE.4.2 (rewritten) — dev-sdlc pyproject's 3 + loam-init
+        pyproject's 1 inter-component deps PRESERVED as bare-name
+        strings.
+      - AC.FBE.4.3 (rewritten) — install-from-source.txt at repo
+        root carries ordered `-e ./<path>` lines spanning the full
+        topological dep graph (17 components).
+      - AC.FBE.4.4 (kept) — `pip install --dry-run -r install-from-
+        source.txt` in a fresh Python 3.13.12 venv resolves clean:
+        exit 0; "Would install" reports all 17 loam-* packages
+        + PyPI deps. Verified pre-seal in fbe4 sub-plan §7.
+      - AC.FBE.4.5 — DROPPED (no `${PROJECT_ROOT}` mechanism;
+        empirically rejected per the prior dispatch's Probes 1-2).
+      - AC.FBE.4.6 (kept) — negative AC: zero changes to
+        [project.entry-points.loam.bootstrap.contributions] block.
+      - AC.FBE.4.7 (kept + EXPANDED) — docs/install-from-source.md
+        covers prereqs, one-command shortcut, per-component
+        fallback, troubleshooting, README headline-path reference.
+      - AC.FBE.4.8 (NEW) — partition manifest admits both new
+        files to dev_and_public so synth strangers get them.
+        Verified via direct classify_path call: both classify
+        DEV_AND_PUBLIC.
+      - AC.FBE.4.S (rewritten) — sealed-component fence: git diff
+        BASELINE..SEAL_COMMIT --name-only produces only paths
+        under fence-three sidecars + universal admissions.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - Topological order in install-from-source.txt is split into
+        Tier A through Tier J with comment delimiters; each tier's
+        components have no inter-tier-skip deps so pip's resolver
+        walk is monotonic.
+      - install-from-source.txt header carries provenance pointer
+        to FBE.4 + the v0.2 PyPI gate so future readers see why
+        the file exists and when it becomes optional.
+      - Partition-manifest admission is a 2-line addition with a
+        14-line provenance block cross-referencing the FBE.4 sub-
+        plan + parent plan + the empirical halt anchor. Mirrors
+        FBE.3's manifest-edit comment style.
+      - docs/install-from-source.md treats the README's `loam init`
+        flow as the headline path; the install doc is "the
+        precondition" and references the README to continue.
+
+    Out of scope (per sub-plan §9):
+
+      - pyproject.toml edits to workspace-bootstrap, dev-sdlc,
+        loam-init (Surface #2 + dispatcher fence ruling).
+      - v0.2 PyPI publish (Surface #3 — captured to FUTURE_IDEAS).
+      - Synth pipeline path-rewrite (parent Decision D — FBE.2b).
+      - README.md / getting-started.md edits (FBE.5).
+
+    BASELINE cfc9ed4 (pre-apply tip; the FBE.4 source-side delta
+    commit). The workspace-bootstrap anchor's SEAL_COMMIT sidecar
+    lands at the seal SHA via `loam amend seal`. The dev-sdlc and
+    loam-init anchors' SEAL_COMMIT sidecars land at the same seal
+    SHA (single seal commit covers all three components per the
+    fence-three-no-edit shape).

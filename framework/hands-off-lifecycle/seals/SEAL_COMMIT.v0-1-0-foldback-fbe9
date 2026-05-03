@@ -1,0 +1,84 @@
+# FBE.9 — close BLOCKER-FBE6b.1 + comprehensive doc-vs-CLI conformance sweep
+
+2026-05-03. v0.1.0 reviewer foldback closes the FBE.6b NEW BLOCKER and
+audits the public-facing CLI commands so the foldback ping-pong cycle
+breaks (per FBE.6b status `<workspace>/.scratch/claude-output/fbe6b-status-2026-05-03.md`
++ FBE.6b sweep report `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6b-sweep-report.md`).
+
+Two buckets:
+
+- **Bucket 1 (BLOCKER-FBE6b.1 — CLI side, Path B per FBE.6b sweep
+  report §4 recommendation)** —
+  `framework/loam-init/src/loam/loam_init/cli.py` makes `--from`
+  optional. When omitted, the resolver defaults to the current working
+  directory if it is a git tree (typical pattern when `loam init` runs
+  from inside a cloned loam tree); otherwise raises a structured error
+  so the existing `CanonicalSourceInvalidError` handler returns exit
+  2. Updates module docstring + epilog to reflect the new shape;
+  inverts `test_AC_FBE_1_3_canonical_source_required` to
+  `test_AC_FBE_1_3_canonical_source_optional` (the new parser-side
+  contract); adds two new resolver-side tests in
+  `test_AC_FBE_1_5_dispatch_exit_codes.py`
+  (`test_AC_FBE_1_5_canonical_source_omitted_defaults_to_cwd_when_git_tree`
+  + `test_AC_FBE_1_5_canonical_source_omitted_errors_when_cwd_not_git`).
+  `framework/loam-init/README.md` Usage block updated to show
+  `[--from <canonical-source>]` (optional bracket) + bullet describes
+  the smart-default.
+
+- **Bucket 2 (comprehensive doc-vs-CLI conformance sweep)** — every
+  documented public CLI command in `README.md`, `docs/getting-started.md`,
+  `docs/install-from-source.md`, `framework/loam-init/README.md`
+  enumerated and verified against the actual CLI behaviour. **5 doc
+  fixes applied** (4 distinct `loam init .` → `loam init ~/loam-workspace`
+  substitutions across the 3 public docs + 1 component-README `--from`
+  syntax bracket). All other 21+ commands PASS (verified by FBE.4 +
+  FBE.6b smoke). Audit table in sub-plan §6.4. Adjacent prose updated
+  for the new out-of-tree workspace shape ("The cloned `loam/`
+  directory is also your workspace root" → describes the canonical-
+  source framework relationship instead).
+
+**Explicit dispatcher-deferrals (NOT in FBE.9 scope):**
+
+- HIGH-FBE6b.1 (339 `Amendment #N` source-comment references) —
+  deferred to v0.1.x dedicated source-comment scrub amendment per
+  FBE.6b agent recommendation.
+- Mode-B `loam init .` semantics (re-init the cloned tree as
+  workspace) — bigger than dispatcher's "small fix" framing; would
+  require nontrivial reinterpretation of `bootstrap_new_workspace`'s
+  "clone canonical INTO `<target>/framework/`" contract;
+  FUTURE_IDEAS_DRAFT candidate.
+
+Negative AC.FBE.9.6: scope-discipline preserved. No behaviour code
+edits outside the named CLI-fix in `loam-init/src/loam/loam_init/cli.py`.
+No source-comment scrubs. No broader README rewrites.
+
+Sealed-component fence (1 component): `framework/loam-init/`.
+Universal-paths admissions for `README.md`, `docs/getting-started.md`,
+`docs/install-from-source.md`, `docs/rebuild/plans/`. HOL
+`frozen_baseline: true` per amendment #23 + prior FBE precedent
+(narrative-only via universal admission).
+
+AC surface (per sub-plan §4):
+
+- AC.FBE.9.1 — `--from` is optional in argparse (`required=False`,
+  `default=None`); resolver in `_cmd_init` defaults to cwd when cwd
+  is a git tree, errors helpfully (exit 2) otherwise. 16/16 loam-init
+  tests pass.
+- AC.FBE.9.2 — `framework/loam-init/README.md` Usage block shows
+  `[--from <canonical-source>]` (optional bracket) + bullet describes
+  the default-to-cwd-when-git-tree behaviour.
+- AC.FBE.9.3 — README + getting-started.md + install-from-source.md
+  no longer carry `loam init .`; replaced with
+  `loam init ~/loam-workspace` (out-of-tree workspace example).
+- AC.FBE.9.4 — Audit table populated in sub-plan §6.4. ~26 commands
+  audited; 5 fixes applied.
+- AC.FBE.9.5 — End-to-end smoke verifies every documented command
+  runs cleanly against the post-FBE.9 canonical clone (transcript in
+  `<workspace>/.scratch/claude-output/fbe9-status-2026-05-03.md`).
+- AC.FBE.9.6 — Scope-discipline diff matches the 2 buckets only.
+- AC.FBE.9.S — Fence diff matches the 1-component fence + universal
+  admissions.
+
+Closes BLOCKER-FBE6b.1; M12 publish-flip remains GATED behind FBE.6c
+re-running the synth + sweep + smoke + reviewer cycle against the
+post-FBE.9 canonical HEAD.

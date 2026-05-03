@@ -15,10 +15,13 @@
 """``loam init`` subcommand builder.
 
 Per FBE.1 sub-plan §6 + parent plan AC.FBE.1.1..1.6: registers the
-`loam init <path> --from <canonical-source>` argparse parser whose
+`loam init <path> [--from <canonical-source>]` argparse parser whose
 action wraps the existing
 ``loam.workspace_bootstrap.new_workspace.bootstrap_new_workspace``
-function.
+function. Per FBE.9 (AC.FBE.9.1): ``--from`` is optional; when
+omitted, the resolver defaults to the current working directory if it
+is a git tree (the typical pattern when ``loam init`` runs from inside
+a cloned loam tree).
 
 The builder follows the M6a contract — `loam_cli/cli.py` discovers
 this builder via the `loam.cli.subcommands` entry-point group and
@@ -81,10 +84,31 @@ def _cmd_init(args: argparse.Namespace) -> int:
         )
         return 6
 
+    # FBE.9 (AC.FBE.9.1) — resolve `--from` smart-default. When omitted
+    # via the CLI, default to the current working directory if it is a
+    # git tree (the typical pattern when `loam init` runs from inside a
+    # cloned loam tree). Otherwise raise a structured error so the
+    # existing CanonicalSourceInvalidError handler returns exit 2.
+    canonical_source = args.canonical_source
+    if canonical_source is None:
+        cwd = Path.cwd().resolve()
+        if (cwd / ".git").exists():
+            canonical_source = str(cwd)
+        else:
+            print(
+                f"[loam init] --from omitted AND current working directory "
+                f"{cwd!s} is not a git tree (missing .git/). Pass --from "
+                f"with an absolute POSIX path to a local git working tree "
+                f"or an http(s)/git@ URL, or run `loam init` from inside "
+                f"a cloned loam tree.",
+                file=sys.stderr,
+            )
+            return 2
+
     try:
         result = bootstrap_new_workspace(
             new_ws_path=args.path,
-            canonical_source=args.canonical_source,
+            canonical_source=canonical_source,
             init_existing=args.init_existing,
             persona_handle=args.persona_handle,
         )
@@ -170,6 +194,8 @@ def build_init_subcommand(
             "  loam init ~/my-ws --from /Users/.../loam\n"
             "  loam init ~/my-ws --from https://github.com/lukeivers/loam\n"
             "  loam init ~/existing-ws --from /Users/.../loam --init-existing\n"
+            "  loam init ~/my-ws       (run from inside a cloned loam tree;\n"
+            "                          --from defaults to cwd)\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -185,14 +211,20 @@ def build_init_subcommand(
     parser.add_argument(
         "--from",
         dest="canonical_source",
-        required=True,
+        required=False,
+        default=None,
         type=str,
         help=(
             "Canonical loam source: an absolute POSIX path to a local "
             "git working tree, or an http(s)/git@ URL. URL form clones "
             "to ~/.loam/canonical-cache/<repo-id>/ first; the original "
             "URL is recorded in the new workspace's sync-config.yaml so "
-            "subsequent pos-sync runs resolve it the same way."
+            "subsequent pos-sync runs resolve it the same way. Optional "
+            "(per FBE.9 / AC.FBE.9.1); if omitted, defaults to the "
+            "current working directory when it is a git tree (the "
+            "typical pattern when `loam init` runs from inside a cloned "
+            "loam tree). Errors with exit-2 if omitted AND cwd is not a "
+            "git tree."
         ),
     )
     parser.add_argument(

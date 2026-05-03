@@ -87,10 +87,19 @@ def test_AC_FBE_1_3_persona_handle_default_is_primary() -> None:
     assert ns.init_existing is False
 
 
-def test_AC_FBE_1_3_canonical_source_required() -> None:
-    """Omitting `--from` is a parse error."""
-    with pytest.raises(SystemExit):
-        _build_loam_init_namespace(["init", "/tmp/x"])
+def test_AC_FBE_1_3_canonical_source_optional() -> None:
+    """Omitting `--from` parses as canonical_source=None.
+
+    Per FBE.9 (AC.FBE.9.1): `--from` became optional in cli.py. The
+    parser-side outcome is canonical_source=None; the `_cmd_init`
+    action callable resolves the smart-default (cwd if it's a git
+    tree, else exit 2). This test pins only the parser-side contract
+    inversion (no SystemExit on omission); the action-side resolver
+    is exercised by AC.FBE.1.5 tests.
+    """
+    ns = _build_loam_init_namespace(["init", "/tmp/x"])
+    assert ns.canonical_source is None
+    assert ns.path == Path("/tmp/x")
 
 
 def test_AC_FBE_1_3_dispatch_calls_bootstrap_with_parsed_kwargs(

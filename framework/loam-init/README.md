@@ -5,11 +5,11 @@ The `loam init` subcommand of the unified `loam` CLI. Bootstrap a fresh loam wor
 ## Usage
 
 ```
-loam init <new-ws-path> --from <canonical-source> [--init-existing] [--persona-handle <handle>]
+loam init <new-ws-path> [--from <canonical-source>] [--init-existing] [--persona-handle <handle>]
 ```
 
 - `<new-ws-path>` — target path for the new workspace.
-- `--from <canonical-source>` — absolute POSIX path to a local git working tree, or an `http(s)`/`git@` URL.
+- `--from <canonical-source>` — absolute POSIX path to a local git working tree, or an `http(s)`/`git@` URL. Optional; if omitted, defaults to the current working directory when it is a git tree (the typical pattern when `loam init` runs from inside a cloned loam tree).
 - `--init-existing` — re-scaffold an already-bootstrapped workspace (skips clone).
 - `--persona-handle <handle>` — workspace primary-persona handle (default: `primary`).
 

@@ -1,0 +1,83 @@
+schema_version: 1
+amendment:
+  number: 112
+  slug: v0-1-0-foldback-scope-expansion-fbe6
+  title: "FBE.6 — re-synth + sweep + extended smoke + reviewer re-run + staging push (HOL no-op narrative anchor)"
+
+# BASELINE: 6310769 — the FBE.6 sub-plan-doc commit (the FBE.6 dispatch's
+# canonical HEAD at synth-run-time). FBE.6 carries NO source-side delta
+# per AC.FBE.6.7 (negative AC: zero source/doc edits during FBE.6).
+#
+# Commit ladder pre-apply:
+#   6310769 — FBE.6 sub-plan-doc (NEW commit, the BASELINE)
+#   <synth ran from 6310769 producing framework-only 4d105f6>
+#   <sweeps + smoke + staging push executed; sweep report written>
+#   <seal narrative authored at framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6>
+#   <this manifest commit lands next>
+#   <loam amend apply lands as the next commit>
+#   <loam amend seal lands as the seal commit>
+#   <parent §8 register backfill commit lands last>
+#
+# HOL no-op narrative anchor pattern (per M2-partition / M9-scrub /
+# M1c..M1g precedent for amendments with structural surface that's
+# narrative-only or tools-tree-only). HOL is its own anchor here — the
+# byte-content invariant at HOL stays unchanged (frozen_baseline: true)
+# and the seal narrative file is the entire structural artefact.
+#
+# Per parent plan §4 FBE.6.S clause: "Sealed-component fence: NONE —
+# this is a sweep + smoke + review amendment with no source-side delta.
+# Narrative anchor at framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6
+# per M11a precedent."
+baseline: "6310769"
+
+plan: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6.md
+
+seal_description: "FBE.6 sweep + extended smoke + reviewer re-run — close-the-cycle step for v0.1.0 publish foldback. Re-synth canonical HEAD post-FBE.{1,2,2b,2c,3,4,5,5b,7} (source 6310769 → framework-only 4d105f6); re-run all 8 AC.M11a.* sweeps (4 regressions surfaced vs M11a-3 baseline — pos-amend / loam-amend / docs/rebuild/ / graphiti — all admitted by FBE.2 framework/tools/loam admission, missed by FBE.5 scrub scope); EXTENDED smoke via dispatcher's pip install -r install-from-source.txt flow PASSES end-to-end; staging push to lukeivers/loam-staging:main = 4d105f6; reviewer re-run (stranger-perspective + Ruthless Feedback) surfaces NEW BLOCKER-FBE6.1 (README/getting-started.md install flow broken — describes pip install -e framework/tools/loam which does NOT pull in loam-init; stranger gets loam: error: argument subcommand: invalid choice: 'init') + NEW BLOCKER-FBE6.2 (framework/tools/loam/README.md heavy dev-vocabulary leak — admitted by FBE.2 to ship but never scrubbed by FBE.5). Verdict: FOLDBACK to FBE.8. M12 publish-flip is GATED. Per AC.FBE.6.7 negative AC + halt-trigger #1, FBE.6 closes WITHOUT silently fixing in-band. Sweep report at <workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6-sweep-report.md."
+
+# HOL no-op narrative anchor (mirrors M2-partition / M9-scrub / M1c..M1g
+# precedent for amendments where the structural surface is the seal
+# narrative itself; no source-side fence delta to enforce).
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail
+# (FBE.6 sub-plan + manifest YAML + parent plan-doc backfill).
+# `framework/hands-off-lifecycle/seals/` admits the seal narrative file
+# (HOL is the narrative anchor home per parent plan §4 FBE.6.S).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+    - framework/hands-off-lifecycle/seals/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6
+  body: |
+    # FBE.6 narrative-only seal (sweep + smoke + reviewer re-run)
+
+    See the full narrative at the target file (already authored
+    pre-apply per AC.FBE.6.6 + AC.FBE.6.S) for FBE.6 outcome,
+    sweep regressions, smoke results, reviewer verdict
+    (FOLDBACK to FBE.8 with named blockers BLOCKER-FBE6.1 +
+    BLOCKER-FBE6.2 + HIGH-FBE6.1 + HIGH-FBE6.2), and path forward.
+
+    Sub-plan-doc:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6.md`.
+    Sweep report:
+    `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6-sweep-report.md`.
+    Status file:
+    `<workspace>/.scratch/claude-output/fbe6-status-2026-05-03.md`.
+
+    BASELINE 6310769 (the FBE.6 sub-plan-doc commit; FBE.6's source
+    canonical HEAD at synth-run-time). No source-side delta per
+    AC.FBE.6.7 negative AC.

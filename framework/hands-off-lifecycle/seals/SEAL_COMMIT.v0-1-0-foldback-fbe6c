@@ -193,3 +193,25 @@ negative-AC held).
 ---
 
 End of FBE.6c narrative seal. Reference verdict: FOLDBACK to FBE.11.
+
+# FBE.6c narrative-only seal (re-run of FBE.6b close-cycle)
+
+See the full narrative at the target file (already authored
+pre-apply per AC.FBE.6c.6 + AC.FBE.6c.S) for FBE.6c outcome,
+sweep results (all PASS — no regressions), smoke results
+(PASS end-to-end against LOCAL canonical pos-v2), reviewer
+verdict (FOLDBACK to FBE.11 with NEW BLOCKER-FBE6c.1 — staging
+publish of `framework-only:main` deprives stranger clones of
+the `origin/framework-only` ref the bootstrap requires), and
+path forward.
+
+Sub-plan-doc:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6c.md`.
+Sweep report:
+`<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6c-sweep-report.md`.
+Status file:
+`<workspace>/.scratch/claude-output/fbe6c-status-2026-05-03.md`.
+
+BASELINE 48ba955 (the FBE.6c sub-plan-doc commit; FBE.6c's source
+canonical HEAD at synth-run-time). No source-side delta per
+AC.FBE.6c.7 negative AC.

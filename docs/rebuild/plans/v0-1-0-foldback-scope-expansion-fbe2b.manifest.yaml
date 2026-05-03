@@ -1,0 +1,185 @@
+schema_version: 1
+amendment:
+  number: 109
+  slug: v0-1-0-foldback-scope-expansion-fbe2b
+  title: "FBE.2b — synth pipeline preserves framework/ prefix on shipped paths (Decision D)"
+
+# BASELINE: <pre-apply tip after the source+test+sidecar+manifest
+# commits land>. Filled by `loam amend apply` to the actual SHA.
+#
+# Commit ladder pre-apply:
+#   <plan-doc commit> — FBE.2b sub-plan-doc (NEW commit)
+#   <source+test commit> — synth.py + cli.py + 3 test edits + NEW
+#                          tests/SEAL_COMMIT + NEW
+#                          tests/test_no_sealed_amendments.py
+#   <this manifest commit lands next>
+#   <loam amend apply lands as #4>
+#   <potentially corrective hand-admit lands as #5 per Surface #7>
+#   <loam amend seal lands as #5 or #6>
+#
+# Single sealed-component fence: `framework/tools/pos-publish-framework-only/`
+# (the manifest owner + synth pipeline owner; NEW seal anchor
+# established at FBE.2b — same shape FBE.2 used for loam-cli; the
+# sidecar landing in the same amendment as the substantive code edit
+# is the canonical pattern for "first time a component crosses into
+# sealed-amendment territory").
+#
+# The component name in the manifest is `pos-publish-framework-only`
+# (matches the pyproject name).
+#
+# Per Surface #7 (FBE.4/FBE.5 partner-prefix gap precedent): expect
+# potential corrective hand-admit if `loam amend seal` fails on the
+# fence test with offending paths under the missing
+# `framework/tools/pos-publish-framework-only/` prefix. The apply
+# tool's partner_prefix derivation assumes `framework/<name>/`-shape;
+# for `pos-publish-framework-only` it admits
+# `pos-publish-framework-only/` and `framework/pos-publish-framework-only/`
+# (both wrong shapes) and may miss `framework/tools/pos-publish-framework-only/`.
+baseline: 03f261e
+
+plan: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2b.md
+
+components:
+  - name: pos-publish-framework-only
+    seal_test: framework/tools/pos-publish-framework-only/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/pos-publish-framework-only/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail
+# (FBE.2b sub-plan + manifest YAML + parent plan-doc backfill).
+# No other universal-paths needed: the source + test edits live
+# entirely inside the `pos-publish-framework-only/` fence component.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/tools/pos-publish-framework-only/tests/SEAL_COMMIT.notes
+  body: |
+    # FBE.2b — synth pipeline preserves framework/ prefix on shipped paths
+
+    2026-05-03. v0.1.0 reviewer foldback closes the doc-vs-synth
+    path-shape divergence (HIGH 1) by fixing the synth pipeline to
+    preserve canonical's `framework/<comp>/` shape rather than
+    stripping the `framework/` prefix on shipped paths. Reviewer
+    dossier:
+    `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+    Parent plan:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` §3
+    Decision D + §4 (FBE.2b inserted).
+    Sub-plan:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2b.md`.
+
+    Decision D from the parent plan locked: fix the synth, not the
+    docs. 15+ doc files reference `framework/<comp>/` paths
+    consistently; rewriting them all would be a 50+ edit sweep with
+    high risk. The synth strip is a targeted edit in
+    `synth.py:_build_synthetic_tree` (lines 302-312 pre-FBE.2b).
+    FBE.2b removes the strip + updates docstrings + flips the three
+    in-fence test files that asserted on post-strip paths.
+
+    Establishes `framework/tools/pos-publish-framework-only/` as a
+    NEW sealed component (sidecar + invariant), mirroring FBE.2's
+    loam-cli pattern. Pre-FBE.2b, the manifest-owner component rode
+    universal-paths admission alone (verified at FBE.2 + FBE.5 — no
+    `tests/SEAL_COMMIT` or `test_no_sealed_amendments.py`); FBE.2b is
+    a substantive code edit so the universal-paths-only ride is no
+    longer enough.
+
+    Structural delta (within fence + universal admissions):
+
+      - `framework/tools/pos-publish-framework-only/src/loam/publish_framework_only/synth.py`
+        — drop the framework/ prefix strip (~10 lines); update
+        module docstring + _LeafEntry.synthetic_path docstring +
+        _build_synthetic_tree docstring + adjacent comment to
+        describe prefix-preserving behaviour; preserve
+        saw_framework_leaf semantic (just no longer coupled to the
+        strip).
+      - `framework/tools/pos-publish-framework-only/src/loam/publish_framework_only/cli.py`
+        — drop the obsolete "framework/framework/<comp>/ doubling"
+        rationale from --help description; replace with the
+        prefix-preserving description.
+      - `framework/tools/pos-publish-framework-only/tests/test_AC_SFR_2_synthesis_pipeline.py`
+        — flip path-shape assertions to prefix-preserved paths;
+        invert the no-doubled-framework-prefix assertion to
+        no-doubled-framework/framework + at-least-one-framework/
+        positive shape check; HC#4 byte-content pairs become
+        same-path pairs for framework leaves.
+      - `framework/tools/pos-publish-framework-only/tests/test_AC_OSS_3_synthesis_drops_dev_only.py`
+        — flip ships-paths + drops-paths + audit-excludes-paths
+        assertions to prefix-preserved paths.
+      - `framework/tools/pos-publish-framework-only/tests/test_AC_OSS_M9_substitution_after_partition.py`
+        — flip tree-entry path assertions to prefix-preserved paths.
+      - `framework/tools/pos-publish-framework-only/tests/SEAL_COMMIT`
+        — NEW sidecar (placeholder HEAD; bumped to BASELINE at
+        apply, then to seal SHA at seal).
+      - `framework/tools/pos-publish-framework-only/tests/test_no_sealed_amendments.py`
+        — NEW structural fence test (AC.FBE.2b.S; mirrors FBE.2's
+        loam-cli shape; allowed_prefixes includes
+        `framework/tools/pos-publish-framework-only/` + standard
+        cross-component admissions per FBE.2 precedent).
+
+    AC surface (per sub-plan §4):
+
+      - AC.FBE.2b.1 — synth.py drops the prefix-strip rewrite.
+      - AC.FBE.2b.2 — synth.py docstrings updated to describe
+        prefix-preserving behaviour.
+      - AC.FBE.2b.3 — cli.py --help description rationale
+        rephrased.
+      - AC.FBE.2b.4 — synth re-run produces framework/-prefixed
+        paths in framework-only tree.
+      - AC.FBE.2b.5/6/7 — three in-fence test files updated to
+        assert on prefix-preserved paths and pass.
+      - AC.FBE.2b.8 — eight other in-fence test files continue to
+        pass byte-identically.
+      - AC.FBE.2b.9 — NEW sidecar files exist; fence-test passes
+        for FBE.2b BASELINE.
+      - AC.FBE.2b.10 — partition.py / substitution.py /
+        publish-mode-manifest.yaml unchanged; no other components
+        touched.
+      - AC.FBE.2b.S — sealed-component fence: git diff
+        BASELINE..SEAL_COMMIT --name-only produces only paths under
+        framework/tools/pos-publish-framework-only/ +
+        docs/rebuild/plans/.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - saw_framework_leaf semantic preserved as inline check
+        (`source_path.startswith(f"{FRAMEWORK_PREFIX}/")`) rather
+        than restructuring the loop — minimal-diff principle.
+      - Sidecar shape mirrors FBE.2's loam-cli exactly (REPO_ROOT
+        depth 5 — same parent.parent.parent.parent.parent
+        traversal; same _seal_commit() helper; same allowed_prefixes
+        admission shape with cross-component admissions for the
+        FBE.5-fence-fifteen sweep + plugins/dev-sdlc/ + tools/loam/
+        partner prefixes).
+      - The bare-`framework` safety branch (currently elif clause)
+        dropped entirely — it was vestigial (`ls-tree -r` never
+        emits a leaf named exactly `framework`).
+      - cli.py description preserves the manifest-path default
+        clause and the pos-new-workspace --from clause; only the
+        promotion / doubling rationale text changes.
+
+    Out of scope (per sub-plan §8):
+
+      - Partition manifest content edits (no reclassification —
+        path-shaping only).
+      - Edits to partition.py or substitution.py.
+      - Other components' descriptions / sources / tests / sidecars.
+      - README / getting-started rewrites (already use
+        framework/<comp>/ — FBE.2b aligns synth with these docs).
+      - Re-staging the synth to a remote (FBE.6's job).
+      - Pyproject metadata edits to any component.
+
+    BASELINE filled by loam amend apply (the pre-apply tip after
+    plan-doc + source-edit + manifest commits land). The
+    pos-publish-framework-only anchor's SEAL_COMMIT sidecar lands
+    at the seal SHA via `loam amend seal`.

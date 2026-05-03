@@ -1,0 +1,202 @@
+# FBE.6d — Re-run FBE.6c close-cycle against post-FBE.11 canonical HEAD (dual-ref staging path)
+
+2026-05-03. v0.1.0 publish foldback close-cycle re-verification step
+post-FBE.11 (the publish-side dual-ref push closure of BLOCKER-FBE6c.1).
+Per parent plan `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`
+§4 FBE.6, this amendment re-synthesises canonical HEAD post-FBE.11,
+re-runs the M11a-3 sweep AC checks (verifying FBE.11's doc-only edits
+landed cleanly with no source-side regressions), runs the EXTENDED
+smoke that exercises the dual-ref staging path end-to-end (init bare +
+dual-ref push + stranger clone-from-bare + install + `loam init`),
+pushes the synth to actual GitHub staging via the dual-ref command,
+and re-dispatches a stranger-perspective reviewer probe against the
+freshly-pushed staging tree using the PUBLIC GitHub URL. Sealed-
+component fence: hands-off-lifecycle only (HOL no-op narrative anchor
+pattern; `frozen_baseline: true` per amendment #23 + FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c/FBE.11
+manifest precedent).
+
+Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6d.md`.
+Sweep report: `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6d-sweep-report.md`.
+Status file: `<workspace>/.scratch/claude-output/fbe6d-status-2026-05-03.md`.
+FBE.11 status (where BLOCKER-FBE6c.1 was closed): `<workspace>/.scratch/claude-output/fbe11-status-2026-05-03.md`.
+FBE.6c status (where BLOCKER-FBE6c.1 was surfaced): `<workspace>/.scratch/claude-output/fbe6c-status-2026-05-03.md`.
+Original reviewer dossier: `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+
+Composes on FBE.{1,2,2b,2c,3,4,5,5b,7,8,6b,9,10,6c,11} all sealed
+(`21b9480`, `8d2b770`, `47ccb3a`, `1d6ff13`, `becf183`, `99c03a6`,
+`bc56f0d`, `48bb7e2`, `a102bde`, `cc66b08`, `08589ce`, `308d7b4`,
+`428deeb`, `6fd3812`, `771e649`); FBE.6 apply at `364c37d` (apply-only;
+seal intentionally pending — FBE.6 stays the FOLDBACK record). BASELINE
+for FBE.6d is `e834a98` (the FBE.11 §8 register backfill commit); the
+FBE.6d sub-plan-doc commit `6b311db` is the source canonical HEAD that
+synth ran against.
+
+## Outcome — GO (foldback closes; M12 publish-flip dispatches next)
+
+The FBE.6d dispatch executed cleanly through synth (AC.FBE.6d.1 PASS;
+new framework-only SHA `ed37820`), sweeps (AC.FBE.6d.2 PASS — all 8
+banned literals at zero, all 4 substitution tokens at zero, all 15
+wired components ≥1 caller, zero `tests/` files, all 6 MFBM deps at
+zero across 17 pyprojects), extended dual-ref smoke (AC.FBE.6d.3 PASS
+end-to-end via dispatcher's exact step list: bare init + dual-ref push
+to bare + stranger clone-from-bare + venv + install + `loam init` no
+`--from`), staging push (AC.FBE.6d.4 PASS; both `refs/heads/main` AND
+`refs/heads/framework-only` AND `HEAD` at `ed37820`), and reviewer
+agent (AC.FBE.6d.5 GO — full README-literal stranger flow from PUBLIC
+GitHub staging URL works end-to-end).
+
+Per AC.FBE.6d.7's negative-AC clause: zero source/doc edits during
+FBE.6d (the build authored only sub-plan, manifest, narrative anchor,
+sidecar bump, and parent §8 backfill — all under universal-paths
+admissions; `framework/<comp>/src/` and `framework/<comp>/tests/`
+were NOT touched).
+
+**Foldback closes. M12 publish-flip is the next dispatch.**
+
+## What FBE.6d verified (positive findings — all five prior BLOCKERs verified closed)
+
+- **All 8 banned literals at zero hits** in synth `ed37820`.
+  No regressions from FBE.6c's clean baseline.
+- **All 4 substitution tokens at zero**, **all 6 MFBM deps at zero**
+  across 17 pyprojects.
+- **All 15 wired components ≥1 production caller** in synth (counts
+  identical to FBE.6c — FBE.11 was doc-only at operator-instruction
+  surfaces, did not touch source).
+- **Zero `tests/` files in synth.**
+- **EXTENDED dual-ref smoke PASSES end-to-end.** Bare staging + dual-
+  ref push + stranger clone + venv + `pip install -r install-from-source.txt`
+  + `loam --version`=`loam 0.1.0` + `loam init <ws>` (NO `--from`)
+  produces runnable workspace shape: framework/ on `framework-only`,
+  workspace/personas/primary/{contract.yaml,prompt.md} scaffolded,
+  .claude/settings.json={}, ~/.loam/{dormancy.sqlite,logs/} scaffolded.
+  Note: local bare repo HEAD-symref needed manual setting via
+  `git symbolic-ref HEAD refs/heads/main` to mirror real-GitHub
+  default-branch behaviour (Surface FBE.6d #1; smoke-shape gap not
+  a stranger-flow regression).
+- **Staging push** to `https://github.com/lukeivers/loam-staging.git`
+  via the dual-ref command (per FBE.11 documented operator instruction)
+  succeeds in a single invocation; both refs land at the same SHA.
+- **BLOCKER-FBE6.1 closed** (install-flow doc): README + getting-
+  started.md describe the working `pip install -r install-from-source.txt`
+  flow; reviewer probe followed literally.
+- **BLOCKER-FBE6.2 closed** (loam-cli scrub): zero dev-vocabulary leaks
+  in `framework/tools/loam/` per banned-literal sweep.
+- **BLOCKER-FBE6b.1 closed** (CLI `--from` smart-default): stranger
+  ran `loam init <ws>` with NO `--from` — the CLI accepted it.
+- **BLOCKER-FBE9.1 closed** (workspace-bootstrap local-path
+  materialisation): the workspace's framework/ subdir is on
+  `framework-only` post-`loam init`.
+- **BLOCKER-FBE6c.1 closed** (publish-side dual-ref push). **THIS IS
+  THE NEW VERIFICATION FOR FBE.6d.** Stranger cloning the PUBLIC
+  staging URL `https://github.com/lukeivers/loam-staging.git` gets
+  `refs/remotes/origin/framework-only` available (in addition to
+  `refs/remotes/origin/main`); the bootstrap's `_clone_canonical`
+  checkout step succeeds; `loam init` produces a runnable workspace.
+  The FBE.6c failure mode (`fatal: 'origin/framework-only' is not a
+  commit`) is gone.
+- **HIGH-FBE6.1 + HIGH-FBE6.2 closed** (primary-persona scrubs).
+- **README quickstart accuracy:** README quickstart steps 1-4 match
+  the verified flow exactly. The two-copies-of-loam-source hedge in
+  README + `docs/getting-started.md` (per Luke's interleaved commit
+  `0a0767e`) reads correctly; reviewer probe confirms the documented
+  flow matches the verified flow.
+
+## Reviewer probe transcript (PUBLIC GitHub staging URL — the README-literal stranger flow)
+
+```
+$ cd /tmp && rm -rf loam-stranger-fbe6d loam-stranger-fbe6d-ws
+$ git clone https://github.com/lukeivers/loam-staging.git loam-stranger-fbe6d
+Cloning into 'loam-stranger-fbe6d'... done.
+--- clone exit 0
+
+$ cd loam-stranger-fbe6d
+$ git for-each-ref --format='%(refname) %(objectname:short)'
+refs/heads/main ed37820
+refs/remotes/origin/HEAD ed37820
+refs/remotes/origin/framework-only ed37820     ← NEW post-FBE.11; the ref BLOCKER-FBE6c.1 required
+refs/remotes/origin/main ed37820
+
+$ python3.13 -m venv .venv && .venv/bin/pip install -r install-from-source.txt
+(all 17 loam-* packages installed; install exit 0)
+
+$ .venv/bin/loam --version
+loam 0.1.0
+
+$ .venv/bin/loam init /tmp/loam-stranger-fbe6d-ws
+[loam init] bootstrapped /private/tmp/loam-stranger-fbe6d-ws
+  framework/  ← clone of /private/tmp/loam-stranger-fbe6d (local)
+  workspace/  ← scaffolded (persona=primary, reason=fresh_scaffold)
+  .claude/    ← scaffolded (Claude Code expects this here)
+--- init exit 0
+
+$ git -C /tmp/loam-stranger-fbe6d-ws/framework rev-parse --abbrev-ref HEAD
+framework-only     ← BLOCKER-FBE6c.1 closed: framework subdir is on framework-only
+
+$ ls /tmp/loam-stranger-fbe6d-ws/workspace/personas/primary/
+contract.yaml  prompt.md
+
+$ ls ~/.loam/
+dormancy.sqlite  logs
+```
+
+This is the dispositive verification: the README's literal flow against
+the actual GitHub URL works end-to-end after FBE.11's dual-ref push.
+
+## What FBE.6d surfaced (no foldback-reopening findings)
+
+### HIGH-FBE6b.1 (deferred, recurring) — Pervasive `Amendment #N` source-comment references
+
+Still 339 occurrences across 95 files in synth `ed37820` (verified by
+`git grep -i -F "amendment #" framework-only | wc -l` = 339). Stays
+deferred per FBE.6b/FBE.9/FBE.10/FBE.6c/FBE.11 path-forward; document
+as known limitation in v0.1.0 release notes. Not first-run-visible.
+
+### Surface FBE.6d #1 — Local bare repo HEAD-symref handling (smoke-shape gap, not regression)
+
+The dispatcher's smoke step list creates a local bare via `git init --bare`
+which does not auto-set HEAD; downstream `git clone` produces an empty
+working tree on `master`. Real GitHub repos auto-set HEAD to default
+branch; smoke compensated via `git symbolic-ref HEAD refs/heads/main`
+on the bare after the dual-ref push. NOT a stranger-flow regression
+(the actual GitHub staging push verified in AC.FBE.6d.4 produces correct
+HEAD via GitHub's default-branch handling; reviewer probe in §4.1 used
+the actual GitHub URL and works without the workaround). v0.1.x
+candidate: add `symbolic-ref` step to bare-staging smoke recipe.
+
+### Surface FBE.6d #2-5 — recurring no-action items (recorded in sweep report §5)
+
+- `--force-with-lease` skipped per accumulated precedent (no recurrence).
+- Reviewer dispatched in-band per FBE.6/FBE.6b/FBE.6c precedent (Task
+  tool not exposed).
+- `loam amend apply` no-auto-commit pattern is convention not regression
+  per dispatcher's empirically-verified diagnosis (apply.py has zero git
+  commit calls; only seal.py creates commits) — manually committed.
+- Clean-tree workaround for `loam amend seal` (recurrence; expected).
+- `pos-publish-framework-only` pyproject missing `pyyaml` runtime dep
+  (recurrence of FBE.6c Surface #2; FUTURE_IDEAS_DRAFT candidate).
+
+## Path forward
+
+- **M12 publish-flip dispatches next** (gated on FBE.6d GO; this seal
+  is the GO).
+- **FBE.6 pending seal:** stays apply-only at `364c37d` as the FOLDBACK
+  record per FBE.6b/FBE.9/FBE.10/FBE.6c/FBE.11 path-forward Decision 5;
+  FBE.{6c,11,6d} continue the close-cycle and FBE.6d's GO seal IS
+  the close.
+- **HIGH-FBE6b.1** stays deferred to v0.1.x; document as known
+  limitation in v0.1.0 release notes.
+- **Surface FBE.6d #1** (bare-staging HEAD-symref) is a v0.1.x
+  candidate for any future re-verification cycles using bare-staging
+  smoke recipes.
+
+This narrative seal anchor records the FBE.6d close-cycle outcome:
+re-synth + sweeps + dual-ref smoke + staging push + reviewer probe
+ran, four artefacts produced (sub-plan, sweep report, this seal
+narrative, status file), foldback CLOSES. No source-side changes were
+made during FBE.6d (AC.FBE.6d.7 negative-AC held).
+
+---
+
+End of FBE.6d narrative seal. Reference verdict: GO — close foldback;
+M12 publish-flip is the next dispatch. BLOCKER-FBE6c.1 closure
+verified end-to-end via actual GitHub staging URL with the dual-ref push.

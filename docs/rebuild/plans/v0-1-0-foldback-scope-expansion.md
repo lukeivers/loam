@@ -560,6 +560,26 @@ install-from-source.{txt,md}") without touching pyproject content.
 - Verification: `loam init /tmp/test-fbe5-ws --from /Users/lukeivers/ivers-corp-pos-v2/` smoke exits 0 (run pre-source-edit per sub-plan §12 step 2); 14/15 fence-tests pass post-corrective (scope-of-work has no fence test, skipped — this is pre-existing); `git grep -E "pOS v2|Phase 4|amendment #|M[0-9][a-z]|M-series|M-FBM"` returns zero hits in the 15 in-scope `description` lines (verified post-edit); `framework/tools/loam/src/loam_cli/cli.py` has zero amendment-number references (verified post-edit); README + getting-started edits per AC.FBE.5.{4,5}.
 - Halt-and-surface from build (recorded for the dispatcher): **Surface #7 (`<workspace>/.claude/` not created despite CLI claim).** Pre-build smoke surfaced that `loam init` prints "  .claude/    ← scaffolded (Claude Code expects this here)" but no code creates `<workspace>/.claude/`. Verified at `framework/loam-init/src/loam/loam_init/cli.py:128` + `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py:508` (`claude_dir` declared but never `mkdir`-ed). FBE.7 retired the `mcp_json_writer` invocation which may have been the historical creator. **Out of FBE.5 scope** per ODD §2.5 (AC.FBE.5.6 verification scope is `~/.loam/`, not `<workspace>/.claude/`); FUTURE_IDEAS_DRAFT candidate or FBE.6 reviewer-flag candidate. **Surface #8 (orchestrator launchd test assertion stale since `f0c4aa9`).** Pre-existing test assertion `pos_orchestrator` lagged the production template's `loam.orchestrator` value (rename happened at `f0c4aa9` 2026-05-03 06:55:52, missed updating the test). Surfaced when FBE.5's seal pipeline ran orchestrator's component test suite. Hand-corrective at `18e4c13` (single-line: `pos_orchestrator` → `loam.orchestrator`); test passes post-corrective. **Surface #9 (`safety-layer` dry-run false-positive — no admission list in test file).** `safety-layer/tests/test_no_sealed_amendments.py` is purely integration tests (A15/A17/A18) with no `allowed_prefixes`/`allowed_files`/`allowed` admission list. The `loam amend apply --dry-run` post-seal verification reports MISSING_ADMISSION for safety-layer; this is a false-positive (no fence-diff check exists in safety-layer's seal test, so the pre-amendment claim is vacuously true). The actual fence test passes 5/5; seal validity preserved. Mirrors FBE.4's apply-tool gap pattern. FUTURE_IDEAS_DRAFT candidate: "loam amend apply dry-run treats components-without-admission-list as fence-violation; should treat as 'no fence test, skip'."
 
+### FBE.2b — Synth pipeline preserves `framework/` prefix on shipped paths (Decision D)
+
+Inserted post-FBE.5 per the parent dispatcher's ruling (Decision D from
+parent §3 was deferred at FBE.2 + FBE.3 + FBE.4 + FBE.5 builds; FBE.2 +
+FBE.5 status files both surfaced the doc-vs-synth divergence as the
+remaining HIGH 1 blocker for FBE.6's extended smoke). Single sealed-
+component fence (`framework/tools/pos-publish-framework-only/`) — NEW
+seal anchor established at FBE.2b mirroring FBE.2's loam-cli pattern.
+Closes the doc-vs-synth path-shape divergence (HIGH 1) without rewriting
+the 15+ docs that reference `framework/<comp>/` paths.
+
+- Plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2b.md` (authored at `2ac582f` by FBE.2b build agent before code per `feedback_plan_before_code`).
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2b.manifest.yaml` (amendment #109, committed at `0506074`).
+- Source + 3-test + sidecar combined commit (synth.py prefix-strip removal + cli.py description scrub + 3 in-fence test path-shape updates + NEW tests/SEAL_COMMIT + NEW tests/test_no_sealed_amendments.py): `03f261e`.
+- Apply commit: `a058ba9`.
+- Seal commit: `47ccb3a`.
+- ACs satisfied: AC.FBE.2b.{1,2,3,4,5,6,7,8,9,10,S} (11/11).
+- Verification: 64/64 pos-publish-framework-only tests pass post-seal (was 63 pre-FBE.2b — the new fence test); cross-component fence-test sample (loam-init + safety-layer + orchestrator + cost-governance + workspace-sync + tools/loam + workspace-bootstrap + primary-persona + dev-sdlc) all green; AC.FBE.2b.4 verified via direct `synthesise_framework_only` invocation against post-seal HEAD — synth tree-SHA `aa38b71` carries 328 `framework/`-prefixed leaves (`framework/loam-init/{pyproject.toml,README.md,src/loam/loam_init/{__init__.py,cli.py}}`, `framework/tools/loam/{pyproject.toml,README.md,src/loam_cli/{__init__.py,__main__.py,cli.py}}`, `framework/workspace-bootstrap/...` etc.), zero bare-comp paths (`tools/loam/...` returns 0), zero doubled-framework leakage (`framework/framework/...` returns 0); fence diff `git diff 03f261e..47ccb3a --name-only` produces only paths under `framework/tools/pos-publish-framework-only/` + `docs/rebuild/plans/`.
+- Halt-and-surface from build (recorded for the dispatcher): **No new surfaces.** Surface #7 from sub-plan §2 (FBE.4/FBE.5 partner-prefix gap recurrence risk) did NOT recur — defensive cross-component partner-prefix admissions in the new `test_no_sealed_amendments.py` `allowed_prefixes` were sufficient; no corrective hand-admit needed. The synth re-run produced the documented install-path shape exactly; FBE.6's extended smoke (AC.FBE.6.3) can now reference `pip install -e framework/tools/loam` against a framework-only checkout and find the package.
+
 ### FBE.6 — Sweep + extended smoke + reviewer re-run
 - Sweep report: `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6-sweep-report.md`.
 - HOL narrative: `framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6`.
@@ -589,4 +609,4 @@ implementing plugin against the existing surface.
 
 ---
 
-*End of foldback plan-doc. FBE.3 sealed 2026-05-03 (closes BLOCKER 2 plugin-half — split-admit plugins/dev-sdlc/** so user-facing src ships while dev-discipline stays). Sequence post-FBE.3: FBE.4 → FBE.5 → FBE.2b (synth path-layout fix, newly added) → FBE.6.*
+*End of foldback plan-doc. FBE.2b sealed 2026-05-03 at `47ccb3a` (closes Decision D — synth pipeline preserves canonical's `framework/<comp>/` shape verbatim; FBE.6's extended smoke now has the documented install paths reachable in the synth tree). Remaining sequence: FBE.5b (Surface #7 — `<workspace>/.claude/` scaffold gap) if dispatched → FBE.6 sweep + extended smoke + reviewer re-run → M12 publish-flip.*

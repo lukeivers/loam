@@ -1,0 +1,179 @@
+schema_version: 1
+amendment:
+  number: 105
+  slug: v0-1-0-foldback-scope-expansion-fbe7
+  title: "FBE.7 — drop memory-graphiti from v0.1.0 first-run shape (M-FBM is the v0.1.0 floor)"
+
+# BASELINE: a22272c — the FBE.7 source + test edits commit (the
+# pre-apply tip after the workspace-bootstrap source + test edits
+# landed).
+#
+# Commit ladder pre-apply:
+#   db17485 — FBE.7 sub-plan-doc (NEW commit)
+#   a22272c — workspace-bootstrap source + 10 test edits
+#   <this manifest commit lands next>
+#   <loam amend apply lands as #4>
+#   <loam amend seal lands as #5>
+#
+# Single sealed-component fence: `framework/workspace-bootstrap/`
+# (existing seal anchor at `framework/workspace-bootstrap/tests/SEAL_COMMIT`;
+# this amendment bumps it via `loam amend apply` + `loam amend seal`).
+#
+# NO universal_paths admissions for source/tests — every source/test
+# edit lives entirely under `framework/workspace-bootstrap/`. Plan-doc
+# + manifest YAML + parent plan-doc backfill ride via
+# `docs/rebuild/plans/` universal prefix admission, exactly the same
+# pattern FBE.1 + FBE.2 used.
+#
+# `framework/primary-persona/` is NOT in the fence — verified at
+# planning that the M-FBM contract is already satisfied in
+# primary-persona's production runtime path (sub-plan §2 Surface #1):
+# session_start_emitter._default_memory_client_factory returns None +
+# build_session_composer registers FileMemoryStore in the else branch;
+# memory_write_worker.drain_once defaults to build_file_backed_memory_client;
+# stop_emitter._spawn_memory_write enqueues to disk + the worker drains.
+# Zero source edits land in primary-persona at FBE.7.
+baseline: a22272c
+
+plan: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# Plan-doc + manifest YAML + parent plan-doc backfill ride here.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/workspace-bootstrap/tests/SEAL_COMMIT.notes
+  body: |
+    # FBE.7 — drop memory-graphiti from v0.1.0 first-run shape (M-FBM is the v0.1.0 floor)
+
+    2026-05-03. Luke's 2026-05-03 16:53 + 16:55 UTC ruling: graphiti
+    must NOT ship enabled in v0.1.0. M-FBM (file-based memory; built
+    at `framework/primary-persona/src/loam/primary_persona/file_memory.py`)
+    becomes the default memory backing for stranger-clone workspaces.
+    Direct Python calls into FileMemoryStore; no MCP server, no port,
+    no service.
+
+    Parent plan:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` §8 (FBE.7
+    backfilled post-FBE.2 by this amendment). Sub-plan:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md`.
+
+    Verified at planning (sub-plan §2 Surface #1): primary-persona's
+    production runtime ALREADY uses M-FBM. The remaining net work is
+    the workspace-bootstrap first-run scaffold:
+
+      - `framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/first_run_scaffold.py`:
+        - `_SERVICE_KINDS` tuple: REMOVE `"memory-graphiti"` (line 223
+          → 227-235 with FBE.7 provenance comments). Auto-launched set
+          becomes `("orchestrator", "memory-write-worker")`.
+        - `service_label`: docstring expanded; the `if kind not in
+          _SERVICE_KINDS` guard now raises ValueError for
+          `"memory-graphiti"`.
+        - `_install_service_manager_files`: iteration switched from
+          `_LAUNCHD_TEMPLATES.items()` to `_SERVICE_KINDS` so the
+          retired graphiti template doesn't get written. The
+          `_LAUNCHD_TEMPLATES["memory-graphiti"]` entry is preserved
+          on disk (M-GMP re-admission shape).
+        - `run_first_run_scaffold`: REMOVE the `_run_mcp_json_writer`
+          invocation; replace with a literal `MCPJsonWriteResult(...,
+          reason="skipped_v0_1_0_no_graphiti", path=None)`. The
+          `_run_mcp_json_writer` helper itself stays in the tree
+          (M-GMP + tests).
+      - `framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/mcp_json_writer.py`:
+        - `MCPJsonWriteResult.path` widened from `Path` to `Path | None`
+          (one-line type widening) to support the FBE.7 neutral-default
+          construction. New reason value `"skipped_v0_1_0_no_graphiti"`
+          documented in the docstring.
+
+    AC surface (per sub-plan §4):
+
+      - AC.FBE.7.1 — `_SERVICE_KINDS` no longer contains
+        `"memory-graphiti"`.
+      - AC.FBE.7.2 — `_LAUNCHD_TEMPLATES["memory-graphiti"]` retained
+        (M-GMP shape); `service_label("memory-graphiti", slug)` raises
+        ValueError.
+      - AC.FBE.7.3 — `run_first_run_scaffold` no longer calls
+        `_run_mcp_json_writer`; pure-function builders preserved.
+      - AC.FBE.7.4 — `ScaffoldResult.mcp_json_*` fields gain neutral
+        defaults (path=None, wrote=False, reason=
+        "skipped_v0_1_0_no_graphiti").
+      - AC.FBE.7.5 — 10 test files updated:
+        - test_first_run_scaffold.py: labels-set assertion drops
+          `"com.loam.pos-v2.memory-graphiti"`; AC1 service_label test
+          updated to assert the ValueError-raising behaviour.
+        - test_AC29_scaffold_memory_port.py: module-level skip
+          (both AC29.2 + AC29.3 contracts moot at v0.1.0).
+        - test_AC47_1_fresh_clone_writes_mcp_json.py: module-level
+          skip (both scaffold-integration tests).
+        - test_AC47_2_deep_merge_preserves_user_entries.py: skip
+          only the scaffold-integration test; pure-function tests
+          (write_mcp_json + merge_mcp_json direct invocation) stay.
+        - test_AC47_3_write_failure_graceful.py: scaffold-integration
+          test updated to assert the FBE.7 neutral-default reason +
+          path=None; pure-function tests (malformed-existing,
+          non-dict, permission-denied) stay byte-identical.
+        - test_D5_plist_path_emission.py: module-level skip (D5.1
+          /health probe + D5.2/D5.3 graphiti-comparison halves).
+        - test_d2_workspace_state_scaffold.py: skip
+          test_AC_D_2_1_mcp_json_lands_under_workspace_state +
+          test_HC4_mcp_json_byte_content_match.
+        - test_pos_new_workspace.py: 2 inline assertions inverted to
+          assert `.mcp.json` is NOT created at v0.1.0.
+      - AC.FBE.7.6 — negative AC: zero edits to
+        `framework/primary-persona/src/loam/primary_persona/mcp_memory_client.py`.
+      - AC.FBE.7.7 — negative AC: zero source edits to
+        `framework/primary-persona/src/loam/primary_persona/`.
+      - AC.FBE.7.8 — negative AC: zero edits to
+        `framework/memory-system/`.
+      - AC.FBE.7.9 — primary-persona tests pass 521/521 byte-identically.
+      - AC.FBE.7.S — sealed-component fence: every diffed path is
+        under `framework/workspace-bootstrap/` + universal-admissions.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - cli_memory_write in stop_emitter.py PRESERVED (sub-plan §2
+        Surface #2 conflict-resolution): production runtime uses the
+        queue → worker → FileBackedMemoryClient chain (which already
+        satisfies "no MCP roundtrip in production"), and editing
+        cli_memory_write would break the AC.J.8 + AC.M.10 + AC.J.2
+        backwards-compat contracts that depend on
+        build_live_mcp_memory_client being the patch site.
+        Surface to the dispatcher in the FBE.7 status report so they
+        can rule on whether AC #3's literal reading needs a corrective
+        amendment.
+      - mcp_json_writer kept entirely (sub-plan §2 Surface #3): the
+        pure-function builders are the only callers M-GMP needs;
+        deleting the writer would break AC47.2 + AC47.3 pure-function
+        tests with no v0.1.0 benefit.
+      - `_install_service_manager_files` iteration switched to
+        `_SERVICE_KINDS` (sub-plan §2 Surface #4): the alternative of
+        keeping graphiti in `_SERVICE_KINDS` and skipping its bootstrap
+        was rejected — the plist file write IS the user-visible
+        surface that says "graphiti is part of v0.1.0".
+
+    Out of scope (per sub-plan §8):
+
+      - cli_memory_write source edit (Surface #2 ruling).
+      - mcp_memory_client.py edits (dispatch hard constraint).
+      - M-GMP plugin authoring.
+      - Pos3 dev-workspace local cleanup.
+      - framework/memory-system/ edits.
+
+    BASELINE a22272c (pre-apply tip; the FBE.7 source + test edits
+    commit). The workspace-bootstrap anchor's SEAL_COMMIT sidecar
+    lands at the seal SHA via `loam amend seal`.

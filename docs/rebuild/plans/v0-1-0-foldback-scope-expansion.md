@@ -580,6 +580,37 @@ the 15+ docs that reference `framework/<comp>/` paths.
 - Verification: 64/64 pos-publish-framework-only tests pass post-seal (was 63 pre-FBE.2b — the new fence test); cross-component fence-test sample (loam-init + safety-layer + orchestrator + cost-governance + workspace-sync + tools/loam + workspace-bootstrap + primary-persona + dev-sdlc) all green; AC.FBE.2b.4 verified via direct `synthesise_framework_only` invocation against post-seal HEAD — synth tree-SHA `aa38b71` carries 328 `framework/`-prefixed leaves (`framework/loam-init/{pyproject.toml,README.md,src/loam/loam_init/{__init__.py,cli.py}}`, `framework/tools/loam/{pyproject.toml,README.md,src/loam_cli/{__init__.py,__main__.py,cli.py}}`, `framework/workspace-bootstrap/...` etc.), zero bare-comp paths (`tools/loam/...` returns 0), zero doubled-framework leakage (`framework/framework/...` returns 0); fence diff `git diff 03f261e..47ccb3a --name-only` produces only paths under `framework/tools/pos-publish-framework-only/` + `docs/rebuild/plans/`.
 - Halt-and-surface from build (recorded for the dispatcher): **No new surfaces.** Surface #7 from sub-plan §2 (FBE.4/FBE.5 partner-prefix gap recurrence risk) did NOT recur — defensive cross-component partner-prefix admissions in the new `test_no_sealed_amendments.py` `allowed_prefixes` were sufficient; no corrective hand-admit needed. The synth re-run produced the documented install-path shape exactly; FBE.6's extended smoke (AC.FBE.6.3) can now reference `pip install -e framework/tools/loam` against a framework-only checkout and find the package.
 
+### FBE.2c — README + getting-started clone-line + 4 broken fixture tests (Decision D follow-through)
+
+Inserted post-FBE.5b per the dispatcher's Path α ruling (FBE.5b's seal
+halted on 4 pre-existing FBE.2b-induced fixture-test failures + a
+paired real production install-flow defect; FBE.2c closes both).
+Single sealed-component fence (`framework/workspace-bootstrap/`) +
+universal admissions for `README.md` + `docs/getting-started.md`
+(pre-admitted in workspace-bootstrap fence-test's `allowed_files`).
+
+The shape-evolution narrative: pre-FBE.2b synth stripped `framework/`
+prefix on shipped paths; the documented `git clone <repo> framework/`
++ that strip-shape produced single-level `<ws>/framework/<comp>/...`.
+Post-FBE.2b synth keeps `framework/` prefix verbatim; combined with
+the same `git clone <repo> framework/` it produces DOUBLED
+`<ws>/framework/framework/<comp>/...`. FBE.2c keeps FBE.2b's synth
+shape (semantically richer; matches the docs that reference
+`framework/<comp>/`) AND fixes the README + getting-started.md so the
+documented flow becomes `git clone <repo>` → `cd loam` (no
+`framework/` arg). The 4 fixture tests update to assert the new
+doubled-component contract for `loam init`-bootstrapped workspaces.
+The source-side `bootstrap_new_workspace` contract is UNCHANGED.
+
+- Plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2c.md` (authored at `6a0f832` by FBE.2c build agent before code per `feedback_plan_before_code`).
+- Source + 5-file edit commit (README.md Quickstart shape change + docs/getting-started.md collapse-and-renumber + 3 fixture-test files' assertion-flips + path-literal updates + docstring tightens): `cd2a77e`.
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2c.manifest.yaml` (amendment #111, committed at `03e7073`).
+- Apply commit: `0e78289`.
+- Seal commit: `1d6ff13`.
+- ACs satisfied: AC.FBE.2c.{1,2,3,4,5,6,7,8,S} (9/9).
+- Verification: 18/18 tests pass in the 3 touched fixture-test files (was 14 PASS + 4 FAIL pre-FBE.2c); full workspace-bootstrap component suite 243/243 pass + 11 skipped (matches FBE.7's 10-net-new-skip baseline); apply tool's partner-prefix derivation passed cleanly (workspace-bootstrap is canonical `framework/<name>/` shape — no corrective hand-admit needed); seal pipeline scoped sweep clean. Smoke (AC.FBE.2c.7): `git clone --branch framework-only <fixture-canonical> /tmp/fbe2c-fixture-smoke` (no `framework/` arg) exits 0; result `/tmp/fbe2c-fixture-smoke/framework/{README.md,workspace-sync/,tools/,workspace-bootstrap/}` single-level; `/tmp/fbe2c-fixture-smoke/framework/framework/` does NOT exist (no doubling at user CWD per Path α). Real canonical's framework-only branch is still pre-FBE.2b shape (gated on FBE.6's "push synth to staging" per parent §4 FBE.6.4); the fixture-canonical smoke documents the post-FBE.2b user-visible shape.
+- Halt-and-surface from build (recorded for the dispatcher): **No new surfaces.** The 4 failing tests' contract inversion was verified empirically; the doc edits stayed within the locked Quickstart + §1+§2 scope; the partner-prefix gap did NOT recur (single-component canonical-shape fence). Post-FBE.2c, dispatcher re-runs `loam amend seal` against FBE.5b's manifest (apply commit `ea6fad1` already in place pre-FBE.2c) — at that point the 4 fixture tests pass and FBE.5b's seal can complete.
+
 ### FBE.6 — Sweep + extended smoke + reviewer re-run
 - Sweep report: `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6-sweep-report.md`.
 - HOL narrative: `framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6`.
@@ -609,4 +640,4 @@ implementing plugin against the existing surface.
 
 ---
 
-*End of foldback plan-doc. FBE.2b sealed 2026-05-03 at `47ccb3a` (closes Decision D — synth pipeline preserves canonical's `framework/<comp>/` shape verbatim; FBE.6's extended smoke now has the documented install paths reachable in the synth tree). Remaining sequence: FBE.5b (Surface #7 — `<workspace>/.claude/` scaffold gap) if dispatched → FBE.6 sweep + extended smoke + reviewer re-run → M12 publish-flip.*
+*End of foldback plan-doc. FBE.2c sealed 2026-05-03 at `1d6ff13` (closes the doc-and-test-shape side of Decision D — README + getting-started.md drop the `framework/` arg from `git clone`; 4 workspace-bootstrap fixture tests updated to assert the post-FBE.2b doubled-component contract). Remaining sequence: re-seal FBE.5b (apply commit `ea6fad1` already in place; FBE.2c unblocked the seal) → FBE.6 sweep + extended smoke + reviewer re-run → M12 publish-flip.*

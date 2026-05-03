@@ -1,0 +1,195 @@
+# FBE.6c — Re-run FBE.6b close-cycle against post-FBE.10 canonical HEAD
+
+2026-05-03. v0.1.0 publish foldback close-cycle re-verification step.
+Per parent plan `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`
+§4 FBE.6, this amendment re-synthesises canonical HEAD post-FBE.10,
+re-runs the M11a-3 sweep AC checks (verifying FBE.{9,10}'s source-side
+fixes landed cleanly with no regressions), runs the EXTENDED smoke that
+exercises the documented install path end-to-end via the post-FBE.{9,10}
+no-`--from` invocation, pushes the synth to staging, and re-dispatches
+a stranger-perspective reviewer probe against the freshly-pushed staging
+tree. Sealed-component fence: hands-off-lifecycle only (HOL no-op
+narrative anchor pattern; `frozen_baseline: true` per amendment #23 +
+FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10 manifest precedent).
+
+Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6c.md`.
+Sweep report: `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6c-sweep-report.md`.
+Status file: `<workspace>/.scratch/claude-output/fbe6c-status-2026-05-03.md`.
+Original reviewer dossier: `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+
+Composes on FBE.{1,2,2b,2c,3,4,5,5b,7,8,6b,9,10} all sealed (`21b9480`,
+`8d2b770`, `47ccb3a`, `1d6ff13`, `becf183`, `99c03a6`, `bc56f0d`,
+`48bb7e2`, `a102bde`, `cc66b08`, `08589ce`, `308d7b4`, `428deeb`);
+FBE.6 apply at `364c37d` (apply-only; seal intentionally pending —
+FBE.6 stays the FOLDBACK record). BASELINE for FBE.6c is `a87bc87`
+(the FBE.10 §8 register backfill commit); the FBE.6c sub-plan-doc
+commit `48ba955` is the source canonical HEAD that synth ran against.
+
+## Outcome — FOLDBACK (NEW BLOCKER-FBE6c.1)
+
+The FBE.6c dispatch executed cleanly through synth (AC.FBE.6c.1 PASS;
+new framework-only SHA `19422ed`), sweeps (AC.FBE.6c.2 PASS — all 8
+banned literals at zero, all 4 substitution tokens at zero, all 15
+wired components ≥1 caller, zero `tests/` files, all 6 MFBM deps at
+zero across 17 pyprojects), extended smoke (AC.FBE.6c.3 PASS end-to-end
+via dispatcher's `git clone --branch framework-only --single-branch <local>
++ pip install -r install-from-source.txt + loam init <ws>` with NO
+`--from`), staging push (AC.FBE.6c.4 PASS; remote at `19422ed`), and
+reviewer agent (AC.FBE.6c.5 surfaces NEW BLOCKER-FBE6c.1).
+
+Per AC.FBE.6c.7's negative-AC clause and the parent plan's halt-trigger
+#1 + dispatcher's halt-trigger #2 ("Reviewer agent surfaces a new
+BLOCKER → halt; re-open foldback"), FBE.6c closes WITHOUT silently
+fixing the new blocker in-band. **Foldback re-opens at FBE.11** to
+close the new blocker before M12 publish-flip can dispatch.
+
+## What FBE.6c verified (positive findings — FBE.{8,9,10} closures
+verified clean)
+
+- **All 8 banned literals at zero hits** in synth `19422ed`.
+  No regressions from FBE.6b's clean baseline.
+- **All 4 substitution tokens at zero**, **all 6 MFBM deps at zero**
+  across 17 pyprojects.
+- **All 15 wired components ≥1 production caller** in synth (slight
+  count drift vs FBE.6b for components that gained tests in FBE.10:
+  test files correctly stripped from synth per AC.M11a.4 invariant;
+  no production-side caller dropped to zero).
+- **Zero `tests/` files in synth.**
+- **EXTENDED smoke PASSES end-to-end** against the LOCAL canonical
+  pos-v2 path — clone with `--branch framework-only --single-branch`,
+  venv, `pip install -r install-from-source.txt`, `loam --version`=
+  `loam 0.1.0`, `loam init <ws>` (NO `--from`) produces runnable
+  workspace shape (framework/, workspace/personas/primary/, .claude/
+  settings.json={}; ~/.loam/ scaffolded with dormancy.sqlite + logs/);
+  framework subdir checked out on `framework-only`. **Note: this smoke
+  uses the LOCAL canonical path (the dispatcher's exact step list);
+  the BLOCKER below is exposed only by the reviewer's stranger-clone
+  probe from the public staging URL.**
+- **BLOCKER-FBE6.1 closed** (install-flow doc): README + getting-
+  started.md describe the working `pip install -r install-from-source.txt`
+  flow.
+- **BLOCKER-FBE6.2 closed** (loam-cli scrub): zero dev-vocabulary leaks
+  in `framework/tools/loam/` per banned-literal sweep.
+- **BLOCKER-FBE6b.1 closed** (CLI `--from` smart-default): stranger
+  ran `loam init <ws>` with NO `--from` — the CLI accepted it
+  (defaulted to cwd which is a git tree). Pre-FBE.9 this would have
+  errored with "the following arguments are required: --from"; that
+  error is gone.
+- **BLOCKER-FBE9.1 closed** (workspace-bootstrap local-path
+  materialisation): the `_materialise_framework_only_branch` helper
+  runs at the local-path branch in `bootstrap_new_workspace`, with
+  the existing fail-soft semantics. The helper itself behaves
+  correctly when the source path has `refs/remotes/origin/
+  framework-only`; the BLOCKER-FBE6c.1 below is a different shape —
+  the source path doesn't have that ref AT ALL when it's a clone
+  of the public staging URL.
+- **HIGH-FBE6.1 + HIGH-FBE6.2 closed** (primary-persona scrubs).
+- **Surface FBE.6 #6 closed** (FBE.4 H19 admit + FBE.5 HC#4 retire-
+  and-rebaseline): seal pipeline ran clean.
+- **Staging push** to `https://github.com/lukeivers/loam-staging.git`
+  succeeded via plain `--force` (skipped `--force-with-lease` per
+  FBE.6 + FBE.6b precedent).
+
+## What FBE.6c surfaced (foldback-reopening findings)
+
+### BLOCKER-FBE6c.1 — Staging publish of `framework-only:main` deprives stranger clones of the `origin/framework-only` ref the bootstrap requires
+
+The README's literal install (`git clone https://github.com/lukeivers/loam`
+followed by `pip install -r install-from-source.txt` + `loam init
+~/loam-workspace`) FAILS at step 3 because the staging publish writes
+`framework-only` content into staging's `refs/heads/main`. Strangers
+cloning staging see only `main` — there is no `framework-only` branch
+ref published. The bootstrap's `_materialise_framework_only_branch`
+helper looks for `refs/remotes/origin/framework-only` on the source
+path; it doesn't exist on the stranger's staging clone (which has only
+`origin/main`); the materialisation `update-ref` fail-softs (per design),
+and the downstream `_clone_canonical` checkout step fails with the
+BLOCKER hint "canonical must publish a 'framework-only' branch."
+
+Reproducible just-now from staging URL `19422ed`:
+
+```
+$ git clone https://github.com/lukeivers/loam-staging.git /tmp/loam-stranger-fbe6c
+$ cd /tmp/loam-stranger-fbe6c
+$ git for-each-ref --format='%(refname) %(objectname:short)'
+refs/heads/main 19422ed
+refs/remotes/origin/HEAD 19422ed
+refs/remotes/origin/main 19422ed
+$ python3.13 -m venv .venv && source .venv/bin/activate
+$ pip install -r install-from-source.txt   # → exit 0
+$ loam --version   # → loam 0.1.0
+$ loam init ~/loam-stranger-fbe6c-ws
+[loam init] git checkout -B framework-only origin/framework-only in
+/Users/lukeivers/loam-stranger-fbe6c-ws/framework failed (exit 128):
+"fatal: 'origin/framework-only' is not a commit and a branch
+'framework-only' cannot be created from it". Hint: canonical must
+publish a 'framework-only' branch.
+EXIT: 3
+```
+
+For comparison, the LOCAL canonical pos-v2 has both refs:
+`refs/heads/framework-only` AND `refs/remotes/origin/framework-only`
+(`framework-only` is a real local branch on the dev tree). FBE.10's
+smoke + AC.FBE.6c.3's smoke both clone the LOCAL pos-v2 path
+(`/Users/lukeivers/ivers-corp-pos-v2`), which has the ref —
+so they passed. The bug only manifests when the source is a clone
+of the PUBLIC URL.
+
+This is the same SHAPE of bug FBE.6's BLOCKER-FBE6.1, FBE.6b's
+BLOCKER-FBE6b.1, and FBE.9's BLOCKER-FBE9.1 were: documented
+invocation works in the dev environment but fails for the stranger.
+ODD §2.5 framing: the README's documented contract (clone → install
+→ `loam init <ws>` works) is not satisfied by the actual code path
+the README describes.
+
+Fix shape (paths in priority order):
+
+- **Path A (publish-side, recommended).** Push `framework-only:framework-only`
+  instead of `framework-only:main` to staging; set staging's default
+  branch to `framework-only` via `gh repo edit lukeivers/loam-staging
+  --default-branch framework-only`. Strangers cloning staging then
+  get `refs/heads/framework-only` + `refs/remotes/origin/
+  framework-only` directly. Single-line change in the M12 publish-flip
+  step's git push command + GitHub repo settings change.
+- **Path B (publish-side, dual-ref).** Push BOTH `framework-only:main`
+  AND `framework-only:framework-only` so strangers get both refs
+  (`main` for the human-friendly default, `framework-only` for the
+  bootstrap to resolve). Two-line change in the M12 publish step;
+  preserves `main` as friendly browse default.
+- **Path C (CLI-side, NOT recommended).** Make `_clone_canonical`
+  fall through to the default branch when `framework-only` is absent.
+  Weakens the named-synthetic-branch invariant; risky.
+- **Path D (synth tool-default).** Make `pos-publish-framework-only`
+  push to `framework-only:framework-only` by default. Same as Path A
+  but at the tool-default level instead of the M12 invocation level.
+
+Recommendation: Path A or Path B. Single-fence M12-or-publish-step
+amendment; estimated 10-20 min wall-clock for the fix + a re-staging
+push + a re-FBE.6d verification cycle.
+
+### HIGH-FBE6b.1 (deferred, recurring) — Pervasive `Amendment #N` source-comment references
+
+Still 339 occurrences across 95 files. Stays deferred per
+FBE.6b/FBE.9/FBE.10 path-forward; document as known limitation in
+v0.1.0 release notes.
+
+## Path forward
+
+M12 publish-flip is GATED behind FBE.11 closure of BLOCKER-FBE6c.1
++ a FBE.6d re-verification cycle (mirrors FBE.6c's pattern post-
+FBE.11 publish-side fix). Estimated FBE.11 wall-clock: 10–20 min
+(publish-step or tool-default change + re-staging push). Estimated
+FBE.6d wall-clock: 25–40 min (mirrors FBE.6c).
+
+Once FBE.11 seals + FBE.6d re-verifies, M12 dispatches.
+
+This narrative seal anchor records the FBE.6c close-cycle outcome:
+re-synth + sweeps + smoke + reviewer ran, four artefacts produced
+(sub-plan, sweep report, this seal narrative, status file), foldback
+re-opens at FBE.11 with the named BLOCKER + recommended fix shapes.
+No source-side changes were made during FBE.6c (AC.FBE.6c.7
+negative-AC held).
+
+---
+
+End of FBE.6c narrative seal. Reference verdict: FOLDBACK to FBE.11.

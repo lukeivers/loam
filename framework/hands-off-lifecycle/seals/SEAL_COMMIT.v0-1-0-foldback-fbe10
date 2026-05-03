@@ -1,0 +1,70 @@
+# FBE.10 — close BLOCKER-FBE9.1 (workspace-bootstrap local-path clones must materialise framework-only)
+
+2026-05-03. v0.1.0 reviewer foldback closes the FBE.9 NEW BLOCKER
+surfaced during stranger-flow smoke (per FBE.9 status
+`<workspace>/.scratch/claude-output/fbe9-status-2026-05-03.md`
+"Surface FBE.9 #1"). FBE.9's auto-default-to-cwd made the typical
+`--from` source the stranger's `git clone <canonical-url>` of canonical
+— not canonical itself — so `framework-only` was present only as
+`refs/remotes/origin/framework-only` on the source path, and the
+downstream `_clone_canonical` checkout step failed with
+`fatal: 'origin/framework-only' is not a commit`.
+
+**Fix shape (single-component, ~15 LOC source + ~50 LOC test):**
+
+`framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py`
+extracts the `git update-ref refs/heads/framework-only
+refs/remotes/origin/framework-only` block into a private helper
+`_materialise_framework_only_branch(path: Path) -> None` (preserves
+the fail-soft semantics: non-zero exit ignored, downstream checkout
+diagnoses absence precisely). The helper is called from BOTH
+`_resolve_url_to_clone_source` (replacing the existing inline block)
+AND from `bootstrap_new_workspace`'s local-path branch (after the
+`local_path` validation, before passing it to `_clone_canonical`).
+URL-form behaviour is byte-identical post-refactor; the local-path
+branch gains the materialisation step that was missing pre-FBE.10.
+
+`framework/workspace-bootstrap/tests/test_AC_FBE_10_1_local_path_clone_of_canonical.py`
+(NEW) reproduces the BLOCKER-FBE9.1 case exactly — builds a fixture
+canonical, clones it into a "stranger-clone" path (so `framework-only`
+exists ONLY as a remote-tracking ref on the clone), and asserts
+`bootstrap_new_workspace` succeeds with the resulting workspace's
+framework subdir checked out on `framework-only`. The test is RED
+pre-fix (verified via the FBE.9 reproduction) and GREEN post-fix.
+
+Negative AC.FBE.10.4: scope-discipline preserved. No behaviour code
+edits outside the named source fix. No source-comment scrubs
+(HIGH-FBE6b.1 explicitly deferred). No doc edits (the smoke flow uses
+the post-FBE.9 `loam init <path>` invocation that's already documented
+correctly). No changes to other components.
+
+Sealed-component fence (1 component): `framework/workspace-bootstrap/`.
+Universal-paths admissions for `docs/rebuild/plans/` and
+`framework/hands-off-lifecycle/seals/`. HOL `frozen_baseline: true`
+per amendment #23 + prior FBE precedent (narrative-only via universal
+admission).
+
+AC surface (per sub-plan §4):
+
+- AC.FBE.10.1 — `_materialise_framework_only_branch` extracted; called
+  from both `_resolve_url_to_clone_source` and `bootstrap_new_workspace`'s
+  local-path branch.
+- AC.FBE.10.2 — `test_AC_FBE_10_1_local_path_clone_of_canonical.py`
+  reproduces the BLOCKER-FBE9.1 case + asserts the post-fix bootstrap
+  succeeds. RED pre-fix, GREEN post-fix.
+- AC.FBE.10.3 — End-to-end smoke (the FBE.9 BLOCKER-FBE9.1 reproduction
+  flow: `git clone <canonical> /tmp/loam-fbe10-smoke && cd … &&
+  pip install -r install-from-source.txt && loam init <ws>` no
+  `--from`) succeeds end-to-end against post-FBE.10 canonical HEAD;
+  transcript captured in
+  `<workspace>/.scratch/claude-output/fbe10-status-2026-05-03.md`.
+- AC.FBE.10.4 — Scope-discipline diff matches the workspace-bootstrap
+  fence + universal admissions only.
+- AC.FBE.10.S — Fence diff matches the 1-component fence + universal
+  admissions; workspace-bootstrap sidecar advances; HOL
+  frozen-baseline narrative-only contribution preserves byte-identity
+  on its fence-test.
+
+Closes BLOCKER-FBE9.1; M12 publish-flip remains GATED behind FBE.6c
+re-running the synth + sweep + smoke + reviewer cycle against the
+post-FBE.10 canonical HEAD.

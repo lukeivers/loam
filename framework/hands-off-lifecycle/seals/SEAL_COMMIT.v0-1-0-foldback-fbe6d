@@ -200,3 +200,25 @@ made during FBE.6d (AC.FBE.6d.7 negative-AC held).
 End of FBE.6d narrative seal. Reference verdict: GO — close foldback;
 M12 publish-flip is the next dispatch. BLOCKER-FBE6c.1 closure
 verified end-to-end via actual GitHub staging URL with the dual-ref push.
+
+# FBE.6d narrative-only seal (re-run of FBE.6c close-cycle; GO)
+
+See the full narrative at the target file (already authored
+pre-apply per AC.FBE.6d.6 + AC.FBE.6d.S) for FBE.6d outcome,
+sweep results (all PASS — no regressions), smoke results
+(PASS end-to-end via dual-ref staging path), staging push
+(both refs land at ed37820 on actual GitHub), reviewer verdict
+(GO — full README-literal stranger flow from PUBLIC GitHub
+staging URL works end-to-end; BLOCKER-FBE6c.1 verified closed),
+and path forward (M12 publish-flip is the next dispatch).
+
+Sub-plan-doc:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6d.md`.
+Sweep report:
+`<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6d-sweep-report.md`.
+Status file:
+`<workspace>/.scratch/claude-output/fbe6d-status-2026-05-03.md`.
+
+BASELINE 6b311db (the FBE.6d sub-plan-doc commit; FBE.6d's source
+canonical HEAD at synth-run-time). No source-side delta per
+AC.FBE.6d.7 negative AC.

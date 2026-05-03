@@ -1,0 +1,88 @@
+schema_version: 1
+amendment:
+  number: 117
+  slug: v0-1-0-foldback-scope-expansion-fbe6c
+  title: "FBE.6c — re-run FBE.6b close-cycle against post-FBE.10 canonical HEAD (HOL no-op narrative anchor)"
+
+# BASELINE: 48ba955 — the FBE.6c sub-plan-doc commit (the FBE.6c
+# dispatch's canonical HEAD at synth-run-time). FBE.6c carries NO
+# source-side delta per AC.FBE.6c.7 (negative AC: zero source/doc
+# edits during FBE.6c).
+#
+# Commit ladder pre-apply:
+#   48ba955 — FBE.6c sub-plan-doc (NEW commit, the BASELINE)
+#   <synth ran from 48ba955 producing framework-only 19422ed>
+#   <sweeps + smoke + staging push executed; sweep report written>
+#   <seal narrative authored at framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6c>
+#   <this manifest commit lands next>
+#   <loam amend apply lands as the next commit>
+#   <loam amend seal lands as the seal commit>
+#   <parent §8 register backfill commit lands last>
+#
+# HOL no-op narrative anchor pattern (per FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10
+# precedent for amendments with structural surface that's narrative-only).
+# HOL is its own anchor here — the byte-content invariant at HOL
+# stays unchanged (frozen_baseline: true) and the seal narrative
+# file is the entire structural artefact.
+#
+# Per parent plan §4 FBE.6.S clause: "Sealed-component fence: NONE
+# — this is a sweep + smoke + review amendment with no source-side
+# delta. Narrative anchor at framework/hands-off-lifecycle/seals/
+# SEAL_COMMIT.v0-1-0-foldback-fbe6c per FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10
+# precedent."
+baseline: "48ba955"
+
+plan: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6c.md
+
+seal_description: "FBE.6c re-run of FBE.6b close-cycle against post-FBE.10 canonical HEAD — verification step for v0.1.0 publish foldback. Re-synth canonical HEAD post-FBE.10 (source 48ba955 → framework-only 19422ed, advance from FBE.6b's 8f57bde); re-run all 8 AC.M11a.* sweeps (all PASS — no regressions; banned literals + substitution tokens + wired components + MFBM deps all clean); EXTENDED smoke via dispatcher's `git clone --branch framework-only --single-branch <local> + pip install -r install-from-source.txt + loam init <ws>` (NO `--from`) PASSES end-to-end against the LOCAL canonical pos-v2 path; staging push to lukeivers/loam-staging:main = 19422ed; reviewer re-run (stranger-perspective + Ruthless Feedback) verifies FBE.{8,9,10} closures (BLOCKER-FBE6.1 + BLOCKER-FBE6.2 + HIGH-FBE6.1 + HIGH-FBE6.2 + BLOCKER-FBE6b.1 + BLOCKER-FBE9.1) all clean BUT surfaces NEW BLOCKER-FBE6c.1 (staging publish of `framework-only:main` deprives stranger clones of the `origin/framework-only` ref `_clone_canonical` requires — README's literal `git clone https://github.com/lukeivers/loam` flow fails at `loam init` with `fatal: 'origin/framework-only' is not a commit`). Verdict: FOLDBACK to FBE.11. M12 publish-flip is GATED. Per AC.FBE.6c.7 negative AC + halt-trigger #2, FBE.6c closes WITHOUT silently fixing in-band. Sweep report at <workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6c-sweep-report.md."
+
+# HOL no-op narrative anchor (mirrors FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10
+# precedent for amendments where the structural surface is the seal
+# narrative itself; no source-side fence delta to enforce).
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail
+# (FBE.6c sub-plan + manifest YAML + parent plan-doc backfill).
+# `framework/hands-off-lifecycle/seals/` admits the seal narrative
+# file (HOL is the narrative anchor home per parent plan §4 FBE.6.S).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+    - framework/hands-off-lifecycle/seals/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6c
+  body: |
+    # FBE.6c narrative-only seal (re-run of FBE.6b close-cycle)
+
+    See the full narrative at the target file (already authored
+    pre-apply per AC.FBE.6c.6 + AC.FBE.6c.S) for FBE.6c outcome,
+    sweep results (all PASS — no regressions), smoke results
+    (PASS end-to-end against LOCAL canonical pos-v2), reviewer
+    verdict (FOLDBACK to FBE.11 with NEW BLOCKER-FBE6c.1 — staging
+    publish of `framework-only:main` deprives stranger clones of
+    the `origin/framework-only` ref the bootstrap requires), and
+    path forward.
+
+    Sub-plan-doc:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6c.md`.
+    Sweep report:
+    `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6c-sweep-report.md`.
+    Status file:
+    `<workspace>/.scratch/claude-output/fbe6c-status-2026-05-03.md`.
+
+    BASELINE 48ba955 (the FBE.6c sub-plan-doc commit; FBE.6c's source
+    canonical HEAD at synth-run-time). No source-side delta per
+    AC.FBE.6c.7 negative AC.

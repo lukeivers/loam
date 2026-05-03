@@ -70,3 +70,12 @@ AC surface (per sub-plan §4):
 Closes the FBE.6 FOLDBACK; M12 publish-flip is GATED behind FBE.6b
 re-running the sweep + smoke + reviewer cycle against the post-FBE.8
 canonical HEAD.
+
+# FBE.8 seal — apply ladder
+
+Apply ladder (per `loam amend apply` + `loam amend seal`):
+BASELINE `f14a5a4` → seal `<seal-sha>`. Three fence components
+advance their `tests/SEAL_COMMIT` sidecars; tools/loam +
+primary-persona BASELINE literals bump (HOL frozen-baseline
+pinned project-start). Cross-component sweep validates fence
+discipline post-seal.

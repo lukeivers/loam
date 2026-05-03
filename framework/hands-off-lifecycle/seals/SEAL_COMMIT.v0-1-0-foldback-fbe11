@@ -165,3 +165,22 @@ delta; no test-side delta; no other component touched.
 BLOCKER-FBE6c.1 via doc-only operator-instruction update + local-tmp-ref
 smoke verification. M12 publish-flip remains GATED behind a FBE.6d
 re-verification cycle that exercises the dual-ref push path.*
+
+# FBE.11 narrative-only seal (closes BLOCKER-FBE6c.1)
+
+See the full narrative at the target file (already authored
+pre-apply per AC.FBE.11.S) for FBE.11 outcome (CLOSED via
+publish-side dual-ref push per dispatcher's locked Path B),
+smoke verification (local-tmp-ref dual-ref push to fresh bare
+repo + clone confirming stranger gets `origin/framework-only`),
+ACs satisfied (7/7 PASS), and path forward (FBE.6d re-verification
+cycle is the next dispatch; M12 publish-flip remains GATED).
+
+Sub-plan-doc:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe11.md`.
+Status file:
+`<workspace>/.scratch/claude-output/fbe11-status-2026-05-03.md`.
+
+BASELINE — the FBE.6c §8 register backfill commit (FBE.11's
+canonical HEAD at dispatch-time). No source-side delta per
+AC.FBE.11.6 negative AC.

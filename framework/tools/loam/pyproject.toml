@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "loam-cli"
 version = "0.1.0"
-description = "Unified loam top-level CLI; amend subcommand for amendment dispatch (post-M1g rename of pos-amend per loam-rename-decisions.md Tier-1 #6)."
+description = "Unified loam top-level CLI; amend subcommand for amendment dispatch."
 requires-python = ">=3.11"
 dependencies = ["PyYAML>=6"]
 

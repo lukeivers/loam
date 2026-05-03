@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "loam-self-upgrade"
 version = "0.1.0"
-description = "pOS self-upgrade framework — coordinates every sealed component's upgrade-fidelity surfaces into a single atomic operation enforcing the seven-clause acceptance (a–g)"
+description = "loam self-upgrade framework — coordinates every sealed component's upgrade-fidelity surfaces into a single atomic operation enforcing the seven-clause acceptance (a–g)"
 requires-python = ">=3.13"
 dependencies = [
   "pydantic>=2.5",

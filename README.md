@@ -49,14 +49,6 @@ the file-based memory at `<workspace>/.loam/memory/`, and drops you
 into a primary-persona greeting. Normal
 runs surface what needs attention without you opening a terminal.
 
-> **Note on the CLI name during the v0.1.0 release sequence.** The
-> binary is currently shipped as `pos` (legacy build name); the
-> release sequence renames it to `loam` before public flip. Throughout
-> this README the CLI is referred to as `loam`; if you build from
-> the canonical source tree before the rename amendment lands, the
-> commands above use `pos` instead. After v0.1.0 publishes the rename
-> is complete and the CLI is `loam`.
-
 ## What ships in v0.1.0
 
 Fifteen runtime components plus the Dev/SDLC plugin. Highlights:

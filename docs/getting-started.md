@@ -38,9 +38,9 @@ Code already manages, a database server, or admin/root privileges
 
 ---
 
-## Five-step bootstrap
+## Six-step bootstrap
 
-The whole walkthrough is five shell commands. Run them in order.
+The whole walkthrough is six shell commands. Run them in order.
 
 ### 1. Create a fresh workspace
 
@@ -110,7 +110,7 @@ whether any background work has finished, whether there is anything
 waiting for you to rule on. You did not have to ask for any of that;
 the harness surfaced it because that is what the persona does.
 
-### 5. Try a first turn
+### 6. Try a first turn
 
 You are now in a normal Claude Code session, but with the primary-
 persona contract on top of the raw Claude turn loop. Try something

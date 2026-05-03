@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "loam-safety-layer"
 version = "0.1.0"
-description = "Safety layer for pOS v2 — three kill switches, always-ask list, dangerous-op gate."
+description = "Safety layer for loam — three kill switches, always-ask list, dangerous-op gate."
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2",

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "loam-cost-governance"
 version = "0.1.0"
-description = "Cost governance for pOS v2 — aggregate budget ceilings (money / tokens / time) with activation-gate wrap + sidecar ledger."
+description = "Cost governance for loam — aggregate budget ceilings (money / tokens / time) with activation-gate wrap + sidecar ledger."
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2",

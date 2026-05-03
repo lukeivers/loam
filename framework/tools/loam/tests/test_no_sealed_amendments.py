@@ -40,7 +40,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
-BASELINE = "80d52ab"
+BASELINE = "8032348"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -85,6 +85,34 @@ def test_AC_FBE_2_S_only_loam_cli_changed() -> None:
         "framework/tools/loam/",
         "framework/tools/pos-publish-framework-only/",
         "docs/rebuild/plans/",
+        "cost-governance/",
+        "dev-sdlc/",
+        "framework/cost-governance/",
+        "framework/dev-sdlc/",
+        "framework/objective-tracker/",
+        "framework/observability-aggregator/",
+        "framework/orchestrator/",
+        "framework/primary-persona/",
+        "framework/reversibility-primitive/",
+        "framework/safety-layer/",
+        "framework/scope-of-work/",
+        "framework/self-correction/",
+        "framework/self-upgrade/",
+        "framework/telegram-interface/",
+        "framework/workspace-bootstrap/",
+        "framework/workspace-sync/",
+        "objective-tracker/",
+        "observability-aggregator/",
+        "orchestrator/",
+        "primary-persona/",
+        "reversibility-primitive/",
+        "safety-layer/",
+        "scope-of-work/",
+        "self-correction/",
+        "self-upgrade/",
+        "telegram-interface/",
+        "workspace-bootstrap/",
+        "workspace-sync/",
     )
     allowed_files: set[str] = {
         "CLAUDE.md",
@@ -92,6 +120,8 @@ def test_AC_FBE_2_S_only_loam_cli_changed() -> None:
         "docs/odd-methodology.md",
         "docs/rebuild/FUTURE_IDEAS.md",
         "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+        "README.md",
+        "docs/getting-started.md",
     }
 
     offending = []

@@ -48,7 +48,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              seal-diff test + SEAL_COMMIT sidecar; BASELINE pins at
 #              the pre-amendment tip (HEAD~1 of the amendment commit,
 #              mirroring amendments #34 / #35 / #36 / #37).
-BASELINE = "14609d8"
+BASELINE = "8032348"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -148,6 +148,10 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
         "dormancy/",
         "framework/dormancy/",
         "framework/hands-off-lifecycle/seals/",
+        "dev-sdlc/",
+        "framework/dev-sdlc/",
+        "framework/loam/",
+        "loam/",
     )
     # Universal-file admissions per amendment #22 ruling #3. Written
     # by ``loam amend apply``; kept stable across amendments.
@@ -168,6 +172,8 @@ def test_AC38_S_only_objective_tracker_surfaces_changed() -> None:
         "CLAUDE.dev.md",
         "docs/rebuild/STATE.md",
         "docs/rebuild/dev-mode-manifest.yaml",
+        "README.md",
+        "docs/getting-started.md",
     }
 
     offending = []

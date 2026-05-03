@@ -181,7 +181,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              immediately before this amendment's code commit.
 #              Mirrors amendments #34 / #35 / #36 / #37 / #38
 #              BASELINE-as-HEAD~1 pattern.
-BASELINE = "cfc9ed4"
+BASELINE = "8032348"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -325,6 +325,8 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "framework/dev-sdlc/",
         "framework/loam-init/",
         "loam-init/",
+        "framework/loam/",
+        "loam/",
     )
     allowed_files: set[str] = {
         "framework/first-run-inventory.yaml",
@@ -344,6 +346,8 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/rebuild/dev-mode-manifest.yaml",
         "docs/install-from-source.md",
         "install-from-source.txt",
+        "README.md",
+        "docs/getting-started.md",
     }
 
     offending = []

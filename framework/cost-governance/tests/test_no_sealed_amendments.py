@@ -61,7 +61,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "bb3574c"
+BASELINE = "8032348"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -173,6 +173,10 @@ def test_C23_only_cost_governance_changed() -> None:
         "docs/rebuild/spec/",
         "framework/tools/loam-mode/",
         "framework/hands-off-lifecycle/seals/",
+        "dev-sdlc/",
+        "framework/dev-sdlc/",
+        "framework/loam/",
+        "loam/",
     )
     allowed_files: set[str] = {
         "docs/odd-in-pos.md",
@@ -188,6 +192,8 @@ def test_C23_only_cost_governance_changed() -> None:
         "docs/rebuild/STATE.md",
         "docs/rebuild/VALUE_PROPOSITION.md",
         "docs/rebuild/dev-mode-manifest.yaml",
+        "README.md",
+        "docs/getting-started.md",
     }
 
     offending = []

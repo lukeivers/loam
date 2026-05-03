@@ -57,6 +57,18 @@ the file-based memory at `<workspace>/.loam/memory/`, and drops you
 into a primary-persona greeting. Normal
 runs surface what needs attention without you opening a terminal.
 
+> **Note: you'll have two copies of loam source on disk.** The clone
+> from step 1 (at `./loam/`) is what the loam CLI was installed from
+> and what `loam init` reads as its canonical source. The new
+> workspace from step 3 has its own copy of the framework under
+> `<workspace>/framework/` — the workspace is self-contained from
+> that point. The install clone is *disposable* once the workspace is
+> bootstrapped: keep it if you want to reinstall or pull updates;
+> delete it if you don't. v0.2 ships the CLI from PyPI directly,
+> eliminating the install clone — for v0.1.0, the source-only install
+> path is intentional + the two copies are the price of being
+> self-contained.
+
 ## What ships in v0.1.0
 
 Fifteen runtime components plus the Dev/SDLC plugin. Highlights:

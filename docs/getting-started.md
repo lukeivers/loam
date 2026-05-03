@@ -61,6 +61,20 @@ step. Your eventual workspace lives elsewhere (step 3 creates it at a
 path you choose); the cloned `loam/` is the canonical-source
 framework that `loam init` clones from.
 
+> **Heads-up: you'll end up with two copies of loam source on disk.**
+> This `./loam/` clone is the *install source* — what the CLI was
+> installed from and what `loam init` reads. The workspace step 3
+> creates has its own copy of the framework under
+> `<workspace>/framework/`, scaffolded from this clone. The two
+> copies are intentional: the workspace is self-contained once
+> bootstrapped, so it can sync framework updates independently of
+> whether you keep the install clone around. The install clone is
+> *disposable* once the workspace exists — keep it if you want to
+> reinstall or pull updates; delete it if you don't. v0.2 will ship
+> the CLI from PyPI directly, eliminating the install clone. The
+> source-only install in v0.1.0 is a deliberate iterate-in-public
+> tradeoff.
+
 ### 2. Install loam
 
 The loam CLI plus every framework component installs from the

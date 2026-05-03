@@ -12,26 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AC.SFR.1 — `pos-new-workspace --from <canonical>` produces a
-single-level framework directory.
+"""AC.SFR.1 — `pos-new-workspace --from <canonical>` clones canonical's
+framework-only branch into `<new-ws>/framework/`.
 
 Single-framework restructure (amendment #67). After the restructure
 landed, `pos-new-workspace` clones canonical's `framework-only`
-synthetic branch (rather than the default `pos-v2` branch). The
-synthetic branch's tree promotes canonical's `framework/<entry>` to
-root + carries top-level docs verbatim, so the resulting workspace
-has shape `<new-ws>/framework/<comp>/` for every sealed component
-(no `framework/framework/<comp>/` doubling).
+synthetic branch (rather than the default `pos-v2` branch).
+
+**Shape evolution:** Pre-FBE.2b (amendment #109) the synth pipeline
+stripped the `framework/` prefix on shipped paths, so the framework-
+only branch carried bare-component paths (`workspace-sync/...`,
+`tools/loam/...`) at root; cloning into `<new-ws>/framework/`
+produced single-level shape `<new-ws>/framework/<comp>/`. Post-
+FBE.2b the synth preserves canonical's `framework/<comp>/` shape
+verbatim on shipped paths, so cloning into `<new-ws>/framework/`
+produces `<new-ws>/framework/framework/<comp>/` (DOUBLED). Post-
+FBE.2c (amendment #111) commits to the doubled-component contract
+in this test; top-level docs (CLAUDE.md, docs/) stay single-level
+because they were never under `framework/` in pos-v2.
+
+The historical "single level" / "no doubling" framing in this
+file's name + the test function name is preserved as a documentation
+artifact (rename = scope creep per FBE.2c sub-plan §9). Per
+AC.FBE.2c.3 the test body asserts the post-FBE.2b/FBE.2c contract;
+binding AC family is `AC.FBE.2c.*`.
 
 Test surface verifies:
 
-- Single-level shape: `<new-ws>/framework/<comp>/` exists for the
-  fixture's components (e.g. workspace-sync, workspace-bootstrap).
-- No doubling: `<new-ws>/framework/framework/` MUST NOT exist.
-- Top-level docs land under `<new-ws>/framework/`: framework-only
-  carries CLAUDE.md / docs/ etc. at the synthetic-branch root.
+- Doubled component-leaf shape: `<new-ws>/framework/framework/<comp>/`
+  exists for the fixture's components (e.g. workspace-sync,
+  workspace-bootstrap) — AC.FBE.2c.3.
+- Top-level docs land under `<new-ws>/framework/<doc>` (single-level):
+  framework-only carries CLAUDE.md / docs/ at the synthetic-branch
+  root because they were never under `framework/` in pos-v2.
 - HC#4 byte-content match: `<new-ws>/framework/CLAUDE.md` byte-equals
-  canonical's pos-v2 `CLAUDE.md`.
+  canonical's pos-v2 `CLAUDE.md` (top-level doc; single-level).
 - Workspace's `<new-ws>/framework/` tracks `framework-only` as the
   checked-out branch (so subsequent `pos-sync` runs against the
   synthetic branch — AC.SFR.4 binding).
@@ -78,14 +93,23 @@ def test_AC_SFR_1_single_level_framework_directory(
     tmp_path: Path,
     make_fixture_canonical,
 ) -> None:
-    """The bootstrap produces `<new-ws>/framework/<comp>/` (no doubling).
+    """The bootstrap produces `<new-ws>/framework/framework/<comp>/`
+    (doubled component shape, post-FBE.2b/FBE.2c).
 
-    AC.SFR.1: when canonical publishes a `framework-only` branch (the
-    fixture does so by default), `pos-new-workspace` clones that branch
-    into `<new-ws>/framework/`. Components live at single level
-    (`<new-ws>/framework/workspace-sync/...` rather than
-    `<new-ws>/framework/framework/workspace-sync/...`), and top-level
-    docs (CLAUDE.md, docs/) live under `<new-ws>/framework/`.
+    Function name preserved as a documentation artifact (the original
+    AC.SFR.1 named "single level"; FBE.2b/FBE.2c shifted the contract
+    to "doubled-component shape, single-level top-level docs").
+    Binding AC family post-FBE.2c is `AC.FBE.2c.*`; see file-level
+    docstring for the shape-evolution narrative.
+
+    Post-FBE.2b/FBE.2c contract: when canonical publishes a
+    `framework-only` branch (the fixture does so by default),
+    `pos-new-workspace` clones that branch into `<new-ws>/framework/`.
+    Components live DOUBLED at `<new-ws>/framework/framework/<comp>/`
+    because the synth preserves the `framework/` prefix on component
+    leaves (FBE.2b synth contract). Top-level docs (CLAUDE.md, docs/)
+    live SINGLE-LEVEL at `<new-ws>/framework/<doc>` because they were
+    never under `framework/` in pos-v2.
     """
     canonical = make_fixture_canonical(tmp_path / "canonical")
     new_ws = tmp_path / "new-ws"
@@ -100,19 +124,25 @@ def test_AC_SFR_1_single_level_framework_directory(
 
     framework = new_ws / "framework"
 
-    # AC.SFR.1: components at single level.
-    assert (framework / "workspace-sync").is_dir()
-    assert (framework / "workspace-bootstrap").is_dir()
+    # AC.FBE.2c.3: components at DOUBLED location post-FBE.2b synth.
+    assert (framework / "framework" / "workspace-sync").is_dir()
+    assert (framework / "framework" / "workspace-bootstrap").is_dir()
 
-    # AC.SFR.1: no doubling. The failure class the restructure
-    # eliminates.
-    assert not (framework / "framework").exists(), (
-        f"AC.SFR.1: doubling failure class re-introduced; "
-        f"<new-ws>/framework/framework/ at "
-        f"{framework / 'framework'}"
+    # AC.FBE.2c.3: doubling REQUIRED for component leaves to land
+    # (post-FBE.2b synth contract). Pre-FBE.2b this assertion was
+    # `assert not (...).exists()`; FBE.2c flipped it to commit to the
+    # post-FBE.2b shape. See FBE.2b sub-plan §1 + FBE.2c sub-plan §1
+    # for the synth-shape narrative.
+    assert (framework / "framework").is_dir(), (
+        f"AC.FBE.2c.3: post-FBE.2b doubled-component shape required; "
+        f"<new-ws>/framework/framework/ MUST exist at "
+        f"{framework / 'framework'} for component leaves to land "
+        f"(synth preserves canonical's framework/ prefix verbatim)"
     )
 
-    # AC.SFR.1: top-level docs at <new-ws>/framework/<doc>.
+    # AC.FBE.2c.3: top-level docs at <new-ws>/framework/<doc>
+    # (single-level — they were never under framework/ in pos-v2 so
+    # the synth doesn't double-prefix them).
     assert (framework / "CLAUDE.md").exists()
     assert (framework / "docs" / "odd-methodology.md").exists()
 

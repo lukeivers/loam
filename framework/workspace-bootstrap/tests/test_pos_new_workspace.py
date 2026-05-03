@@ -119,27 +119,40 @@ def test_AC_D_4_1_local_canonical_creates_working_workspace(
     assert result.framework_dir.is_dir()
     assert (result.framework_dir / ".git").exists()
 
-    # AC.D.4.1 (HC#4) + AC.SFR.1: byte-content-match for every fixture
-    # file. Post single-framework restructure (amendment #67) the
-    # bootstrap clones the `framework-only` branch; canonical's
-    # `framework/<entry>` lands at `<new-ws>/framework/<entry>` (single
-    # level). Top-level docs land at `<new-ws>/framework/<doc>` because
-    # framework-only carries them at the synthetic-branch root.
+    # AC.D.4.1 (HC#4) + AC.FBE.2c.5: byte-content-match for every
+    # fixture file. Post single-framework restructure (amendment #67)
+    # the bootstrap clones the `framework-only` branch.
+    #
+    # **Shape evolution:** Pre-FBE.2b (amendment #109) the synth
+    # pipeline stripped `framework/` from shipped paths, so component
+    # leaves on framework-only lived at bare `<comp>/...` and the
+    # bootstrap's clone-into `<new-ws>/framework/` produced single-
+    # level `<new-ws>/framework/<comp>/...`. Post-FBE.2b the synth
+    # preserves canonical's `framework/<comp>/` shape verbatim, so
+    # the same clone produces DOUBLED `<new-ws>/framework/framework/
+    # <comp>/...`. Post-FBE.2c (amendment #111) commits to the
+    # doubled-component contract here. Top-level docs (CLAUDE.md,
+    # docs/) STAY single-level at `<new-ws>/framework/<doc>` because
+    # they were never under `framework/` in pos-v2 (no double-prefix
+    # by the synth).
     #
     # Each tuple is (canonical-pos-v2-path, workspace-side-path).
     fixture_pairs = [
-        # framework entries: pos-v2 has `framework/X`, framework-only
-        # promotes to `X` at root, workspace-side lives at
-        # `<new-ws>/framework/X`.
+        # Component leaves: pos-v2 has `framework/<comp>/...`;
+        # framework-only preserves `framework/<comp>/...` (FBE.2b);
+        # workspace-side lands DOUBLED at
+        # `<new-ws>/framework/framework/<comp>/...` (FBE.2c).
         ("framework/workspace-sync/src/workspace_sync/__init__.py",
-         "framework/workspace-sync/src/workspace_sync/__init__.py"),
+         "framework/framework/workspace-sync/src/workspace_sync/__init__.py"),
         ("framework/workspace-bootstrap/src/workspace_bootstrap/__init__.py",
-         "framework/workspace-bootstrap/src/workspace_bootstrap/__init__.py"),
-        ("framework/README.md", "framework/README.md"),
+         "framework/framework/workspace-bootstrap/src/workspace_bootstrap/__init__.py"),
+        # framework/README.md is also under framework/ in pos-v2, so
+        # it doubles too.
+        ("framework/README.md", "framework/framework/README.md"),
         # Top-level docs: pos-v2 has them at root; framework-only
         # carries them at root verbatim; workspace-side they land at
-        # `<new-ws>/framework/<doc>` (the readers fall through per
-        # AC.SFR.3).
+        # `<new-ws>/framework/<doc>` SINGLE-LEVEL (the readers fall
+        # through per AC.SFR.3).
         ("docs/odd-methodology.md", "framework/docs/odd-methodology.md"),
         ("CLAUDE.md", "framework/CLAUDE.md"),
     ]
@@ -152,12 +165,20 @@ def test_AC_D_4_1_local_canonical_creates_working_workspace(
             f"on_disk={on_disk!r} vs canonical={canonical_bytes!r}"
         )
 
-    # AC.SFR.1: no doubling — `<new-ws>/framework/framework/` MUST NOT
-    # exist (the failure class the restructure eliminates).
-    assert not (new_ws / "framework" / "framework").exists(), (
-        f"AC.SFR.1: doubling failure class re-introduced; "
-        f"<new-ws>/framework/framework/ exists at "
-        f"{new_ws / 'framework' / 'framework'}"
+    # AC.FBE.2c.5: doubling REQUIRED — `<new-ws>/framework/framework/`
+    # MUST exist as a directory because component leaves on the
+    # framework-only branch carry `framework/<comp>/...` and the
+    # bootstrap's clone-into `<new-ws>/framework/` produces
+    # `<new-ws>/framework/framework/<comp>/...`. Pre-FBE.2b this
+    # assertion was the inverse (`assert not (...).exists()`); FBE.2c
+    # flipped it post-FBE.2b synth-shape change. See FBE.2b sub-plan
+    # §1 + FBE.2c sub-plan §1 for the shape-evolution narrative.
+    assert (new_ws / "framework" / "framework").is_dir(), (
+        f"AC.FBE.2c.5: post-FBE.2b doubled-component shape required; "
+        f"<new-ws>/framework/framework/ MUST exist as a directory at "
+        f"{new_ws / 'framework' / 'framework'} for component leaves "
+        f"to land (synth preserves canonical's framework/ prefix "
+        f"verbatim)"
     )
 
     # AC.SFR.1: workspace's framework/ tracks framework-only as origin
@@ -332,12 +353,16 @@ def test_AC_D_4_1_url_form_routes_through_cache_clone(
 
     # AC.D.4.1: framework/ cloned + byte-matches canonical.
     # Post single-framework restructure (amendment #67) the cloned
-    # branch is `framework-only`; canonical's `framework/README.md`
-    # lands at `<new-ws>/framework/README.md` (framework/ promoted to
-    # root on the synthetic branch).
+    # branch is `framework-only`. Post-FBE.2b (amendment #109) the
+    # synth preserves canonical's `framework/` prefix on shipped
+    # paths, so `framework/README.md` on canonical's pos-v2 stays at
+    # `framework/README.md` on the framework-only branch — and the
+    # bootstrap's clone-into `<new-ws>/framework/` produces DOUBLED
+    # `<new-ws>/framework/framework/README.md`. AC.FBE.2c.6 commits
+    # to that contract here.
     assert (new_ws / "framework" / ".git").exists()
     canonical_readme = _read_canonical_blob(canonical, "framework/README.md")
-    assert (new_ws / "framework" / "README.md").read_text() == (
+    assert (new_ws / "framework" / "framework" / "README.md").read_text() == (
         canonical_readme
     )
 

@@ -30,9 +30,9 @@ The full positioning lives at [`docs/positioning.md`](docs/positioning.md).
 ## Quickstart
 
 ```bash
-# 1. Clone loam into a fresh workspace's framework directory.
-mkdir my-loam-workspace && cd my-loam-workspace
-git clone https://github.com/lukeivers/loam framework/
+# 1. Clone loam.
+git clone https://github.com/lukeivers/loam
+cd loam
 
 # 2. Install the loam CLI from the cloned tree.
 pip install -e framework/tools/loam

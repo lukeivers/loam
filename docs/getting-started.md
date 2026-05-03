@@ -38,35 +38,29 @@ Code already manages, a database server, or admin/root privileges
 
 ---
 
-## Six-step bootstrap
+## Five-step bootstrap
 
-The whole walkthrough is six shell commands. Run them in order.
+The whole walkthrough is five shell commands. Run them in order.
 
-### 1. Create a fresh workspace
+### 1. Clone loam
 
-A loam workspace is just a directory you treat as the root of one
-named project. Pick anything — `~/work/my-loam`, `~/loam`, whatever
-fits your existing setup.
-
-```bash
-mkdir -p ~/loam-demo
-cd ~/loam-demo
-```
-
-### 2. Clone loam into the workspace's framework directory
-
-loam ships as a Git repository the workspace mounts under
-`framework/`. The workspace itself is *yours*; the framework is
-loam's contribution and gets versioned independently.
+`git clone` (no second argument) creates a `loam/` directory in
+your current working directory and populates it with the loam
+component tree. Pick a parent directory that fits your existing
+setup — `~/work`, `~`, whatever — and clone there.
 
 ```bash
-git clone https://github.com/lukeivers/loam framework
+git clone https://github.com/lukeivers/loam
+cd loam
 ```
 
-You should see `framework/` populated with the loam component tree
-(`framework/primary-persona/`, `framework/safety-layer/`, and so on).
+You should see the cloned `loam/` directory populated with the loam
+component tree (`framework/primary-persona/`, `framework/safety-layer/`,
+and so on); `cd loam` puts you at the framework root for the next
+step. The cloned `loam/` directory is also your workspace root —
+`loam init` (step 3) treats it as such.
 
-### 3. Install the loam CLI
+### 2. Install the loam CLI
 
 The loam CLI is shipped inside the cloned framework tree. At v0.1.0
 the only install path is editable-install via `pip` (a global
@@ -83,7 +77,7 @@ is not on PATH; either add it (`export PATH="$(python3 -m site
 --user-base)/bin:$PATH"`) or use the absolute path the editable
 install reported.
 
-### 4. Initialise the workspace
+### 3. Initialise the workspace
 
 The `loam init` verb scaffolds the per-host config under `~/.loam/`,
 installs the per-component runtimes, brings up the memory primitive,
@@ -98,7 +92,7 @@ packages and warming the memory primitive accounts for most of it.
 Subsequent `loam init` calls in other workspaces reuse the per-host
 state and finish in seconds.
 
-### 5. Open Claude Code in the workspace
+### 4. Open Claude Code in the workspace
 
 ```bash
 claude
@@ -110,7 +104,7 @@ whether any background work has finished, whether there is anything
 waiting for you to rule on. You did not have to ask for any of that;
 the harness surfaced it because that is what the persona does.
 
-### 6. Try a first turn
+### 5. Try a first turn
 
 You are now in a normal Claude Code session, but with the primary-
 persona contract on top of the raw Claude turn loop. Try something

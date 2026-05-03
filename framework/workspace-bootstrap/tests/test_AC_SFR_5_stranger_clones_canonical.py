@@ -124,12 +124,28 @@ def test_AC_SFR_5_framework_only_reachable_via_explicit_branch(
     )
     assert bare_branch == "framework-only"
 
-    # The framework-only clone has the synthetic shape (no nested
-    # framework/ subdir).
+    # The framework-only clone has the synthetic shape: post-FBE.2b
+    # (amendment #109) the synth pipeline preserves canonical's
+    # `framework/` prefix on shipped paths verbatim, so component
+    # leaves on the framework-only branch live at
+    # `framework/<comp>/...`. Top-level docs (CLAUDE.md, docs/...)
+    # remain at synth-tree root because they were never under
+    # `framework/` in pos-v2. AC.FBE.2c.4 (amendment #111): this
+    # assertion mirrors the FBE.2b synth contract; the workspace-
+    # bootstrap-side mirror of the path-shape inversion FBE.2b
+    # applied to the synth-pipeline tests inside
+    # `framework/tools/pos-publish-framework-only/tests/`.
     bare_tree = _git(
         ["ls-tree", "-r", "--name-only", "HEAD"], cwd=bare_clone
     )
     paths = bare_tree.split("\n")
-    assert all(not p.startswith("framework/") for p in paths)
+    # AC.FBE.2c.4: at-least-one framework-prefixed leaf for shipping
+    # components (the inversion of the pre-FBE.2b strip-shape
+    # assertion).
+    assert any(p.startswith("framework/") for p in paths), (
+        "AC.FBE.2c.4: at least one framework/-prefixed leaf required "
+        "post-FBE.2b synth (prefix-preserving shape); none found in "
+        f"{paths!r}"
+    )
     # Top-level docs at root.
     assert "CLAUDE.md" in paths

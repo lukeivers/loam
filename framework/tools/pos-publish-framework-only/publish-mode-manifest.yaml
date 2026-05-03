@@ -117,6 +117,13 @@ dev_and_public:
   - glob: "framework/cost-governance/**"
   - glob: "framework/dormancy/**"
   - glob: "framework/hands-off-lifecycle/**"
+  # framework/loam-init/** ADMITTED at FBE.1 (v0.1.0 reviewer foldback;
+  # plan-doc: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe1.md;
+  # parent: docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md §4
+  # FBE.1). NEW component exposing `loam init` as a registered
+  # loam.cli.subcommands entry-point; user-facing onboarding verb;
+  # ships with the public synth.
+  - glob: "framework/loam-init/**"
   # framework/memory-system/** RECLASSIFIED to `dev_only` post-M-FBM
   # (memory-substrate pivot, 2026-05-01) per AC.MFBM.3 + plan
   # `oss-v0-1-0-publish-memory-pivot.md`. The file-based memory

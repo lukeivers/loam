@@ -85,7 +85,13 @@ def test_plugins_dev_sdlc_classifies_dev_and_public(
 
 def test_canonical_manifest_classifies_plugin_files() -> None:
     """Against the canonical manifest, every plugin file classifies
-    (no None returns) at M6a baseline shape (dev_and_public)."""
+    (no None returns) according to the FBE.3 split-admit shape.
+
+    Per FBE.3 (v0.1.0 reviewer foldback; parent plan §3 Decision B.2),
+    the plugin source ships dev_and_public; the dev-discipline
+    subtree stays dev_only. Per-subtree expected class is computed
+    from the path prefix.
+    """
     if not CANONICAL_MANIFEST.exists():
         import pytest
 
@@ -112,16 +118,34 @@ def test_canonical_manifest_classifies_plugin_files() -> None:
             continue
         cls = classify_path(manifest, rel)
         assert cls is not None, f"{rel} unclassified"
+        # Per-subtree expected class.
+        #
         # Pre-M6b.0 (M6a baseline): plugin paths classified
         # `dev_and_public` per AC.OSS-M6.8 (the plugin's user-facing
         # capabilities ship publicly so users could compose against
         # the harness extension protocol).
-        # Post-M6b.0: plugin paths RECLASSIFY to `dev_only` per
-        # AC.OSS-M6b0.9 + master plan D-build.M6.14 — the plugin now
-        # contains the dev-discipline corpus (CDCs, long-form ODD
-        # docs, conventions, gate hooks, loam-mode tooling) and is
-        # itself dev-discipline machinery.
-        assert cls == PartitionClass.DEV_ONLY, (
-            f"{rel}: expected dev_only post-M6b.0 (plugin reclassified "
-            f"from dev_and_public per AC.OSS-M6b0.9 + D-build.M6.14); got {cls}"
+        # M6b.0: plugin paths RECLASSIFIED to `dev_only` per
+        # AC.OSS-M6b0.9 + master plan D-build.M6.14 — the plugin
+        # gained the dev-discipline corpus (CDCs, long-form ODD docs,
+        # conventions, gate hooks, loam-mode tooling) so the BLANKET
+        # `dev_only` placement was correct at M6b.0.
+        # FBE.3 (v0.1.0 reviewer foldback; parent plan §3 Decision
+        # B.2): SPLIT-ADMITTED. The user-facing plugin source (`src/`,
+        # `pyproject.toml`, `README.md`) ships `dev_and_public`; the
+        # dev-discipline subtree (`docs/`, `hooks/`, `templates/`,
+        # `tools/`, `dev-mode-manifest.yaml`) STAYS `dev_only`. Pre-
+        # existing universal `**/seals/**` + `**/tests/**` precedence
+        # rules continue to win for those subtrees.
+        if (
+            rel == "plugins/dev-sdlc/pyproject.toml"
+            or rel == "plugins/dev-sdlc/README.md"
+            or rel.startswith("plugins/dev-sdlc/src/")
+            or rel.startswith("plugins/dev-sdlc/skills/")
+        ):
+            expected = PartitionClass.DEV_AND_PUBLIC
+        else:
+            expected = PartitionClass.DEV_ONLY
+        assert cls == expected, (
+            f"{rel}: expected {expected} per FBE.3 split-admit "
+            f"(parent plan §3 Decision B.2); got {cls}"
         )

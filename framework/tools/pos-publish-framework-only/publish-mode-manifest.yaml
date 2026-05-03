@@ -187,12 +187,40 @@ dev_and_public:
   - glob: "docs/plugins/**"
   # Existing live public-relevant docs.
   - path: docs/CLAUDE_CAPABILITIES.md
-  # Pre-M6b.0 the Dev/SDLC plugin classified `dev_and_public` per
-  # M6a baseline (master plan §4 AC.OSS-M6.8). M6b.0 RECLASSIFIED it
-  # to `dev_only` per AC.OSS-M6b0.9 + master plan D-build.M6.14
-  # (the plugin now contains the dev-discipline corpus — CDCs, long-
-  # form ODD docs, conventions, gate hooks, loam-mode tooling, dev-
-  # mode-manifest). See `dev_only:` block below for the new entry.
+  # plugins/dev-sdlc/ SPLIT-ADMITTED at FBE.3 (v0.1.0 reviewer
+  # foldback; plan-doc: docs/rebuild/plans/v0-1-0-foldback-scope-
+  # expansion-fbe3.md; parent: docs/rebuild/plans/v0-1-0-foldback-
+  # scope-expansion.md §4 FBE.3 + §3 Decision B.2 (Decision B.alt =
+  # SHIP at v0.1.0)).
+  #
+  # Pre-M6b.0 the plugin classified `dev_and_public` per M6a baseline.
+  # M6b.0 RECLASSIFIED it `dev_only` per AC.OSS-M6b0.9 + D-build.M6.14
+  # because the plugin contains the dev-discipline corpus (CDCs,
+  # long-form ODD docs, conventions, gate hooks, loam-mode tooling,
+  # dev-mode-manifest). FBE.3 SPLITS the admission: the user-facing
+  # plugin source (`src/`, `pyproject.toml`, `README.md`) ships
+  # publicly so a stranger can `pip install -e plugins/dev-sdlc`
+  # against the synth tree and reach the contribution-protocol +
+  # `loam project` verb (BLOCKER 2 in the reviewer foldback). The
+  # dev-discipline subtree (`docs/`, `hooks/`, `templates/`,
+  # `tools/`, `dev-mode-manifest.yaml`) STAYS `dev_only` (see
+  # `dev_only:` block below for the explicit subtree globs). The
+  # pre-existing universal `**/seals/**` + `**/tests/**` precedence
+  # rules continue to win for `plugins/dev-sdlc/seals/` +
+  # `plugins/dev-sdlc/tests/` per partition-precedence rule #2.
+  - glob: "plugins/dev-sdlc/src/**"
+  - path: plugins/dev-sdlc/pyproject.toml
+  - path: plugins/dev-sdlc/README.md
+  # plugins/dev-sdlc/skills/** ADMITTED dev_and_public at FBE.3
+  # build-time per the dispatcher's split-admit framing extended to
+  # cover the user-facing first-click intent-routing surface
+  # (skills/start-project.md is explicitly the user-facing
+  # entry-point per its own front-matter — "first-click intent
+  # routing for the Dev/SDLC plugin"). Parent plan §3 Decision B.2
+  # enumeration was non-exhaustive (skills/ not listed in either
+  # bucket). Surfaced in FBE.3 status report; reversible if the
+  # dispatcher rules differently.
+  - glob: "plugins/dev-sdlc/skills/**"
 
 # Stays in the dev tree, NEVER ships publicly. Dev-discipline machinery.
 dev_only:
@@ -294,21 +322,31 @@ dev_only:
   # Dev-mode-only top-level fragment (CLAUDE.dev.md is the dev-
   # extension of CLAUDE.md per loam-mode B's load-time partition).
   - path: CLAUDE.dev.md
-  # Dev/SDLC plugin — RECLASSIFIED to `dev_only` post-M6b.0 per
-  # AC.OSS-M6b0.9 + master plan D-build.M6.14. The plugin now
-  # contains: dev CDCs at plugins/dev-sdlc/docs/cdcs/, long-form
-  # ODD docs at plugins/dev-sdlc/docs/{odd-methodology,odd-in-loam,
-  # duration-estimation-rubric}.md, convention codifications at
-  # plugins/dev-sdlc/docs/conventions/, gate hook source files at
-  # plugins/dev-sdlc/hooks/, loam-mode tooling at plugins/dev-sdlc/
-  # tools/loam-mode/, dispatch + plan templates at plugins/dev-sdlc/
-  # templates/, and the dev-mode-manifest at plugins/dev-sdlc/dev-
-  # mode-manifest.yaml. The plugin's user-facing capabilities (api,
-  # cli, contribution, stages, store, observability, errors, skills/
-  # start-project.md) are also dev-discipline machinery — they ship
-  # under the plugin's `pip install` path, not under the public
-  # synthesis surface.
-  - glob: "plugins/dev-sdlc/**"
+  # plugins/dev-sdlc/ SPLIT-ADMITTED at FBE.3 (v0.1.0 reviewer
+  # foldback; plan-doc: docs/rebuild/plans/v0-1-0-foldback-scope-
+  # expansion-fbe3.md; parent: docs/rebuild/plans/v0-1-0-foldback-
+  # scope-expansion.md §4 FBE.3 + §3 Decision B.2). Pre-FBE.3 the
+  # broad `glob: "plugins/dev-sdlc/**"` lived here (M6b.0 placement
+  # per AC.OSS-M6b0.9 + D-build.M6.14). FBE.3 REMOVED the broad
+  # glob and added the user-facing plugin source
+  # (`src/`/`pyproject.toml`/`README.md`) to `dev_and_public:` (see
+  # block above) so a stranger can `pip install -e plugins/dev-sdlc`
+  # against the synth tree. The DEV-DISCIPLINE SUBTREE (the
+  # contents enumerated below) STAYS `dev_only` — those paths
+  # carry CDCs, long-form ODD docs, conventions, gate hooks,
+  # loam-mode tooling, the loam-amend tool, dispatch + plan
+  # templates, the dev-mode-manifest. None of that ships publicly.
+  #
+  # The pre-existing universal `**/seals/**` + `**/tests/**`
+  # precedence rules continue to win for `plugins/dev-sdlc/seals/`
+  # + `plugins/dev-sdlc/tests/` per partition-precedence rule #2
+  # (dev_only checked before dev_and_public). They are NOT re-listed
+  # here.
+  - glob: "plugins/dev-sdlc/docs/**"
+  - glob: "plugins/dev-sdlc/hooks/**"
+  - glob: "plugins/dev-sdlc/templates/**"
+  - glob: "plugins/dev-sdlc/tools/**"
+  - path: plugins/dev-sdlc/dev-mode-manifest.yaml
 
 # MUST NOT ship publicly under any condition. Mostly defensive — these
 # paths are .gitignore'd so git ls-tree never sees them; the manifest

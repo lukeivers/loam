@@ -121,6 +121,17 @@ def test_default_partition_classifies_runtime_components_dev_and_public() -> Non
         # unified loam CLI binary is the primary user-facing executable;
         # M2 lumping it with publish/migration tooling was wrong.
         "framework/tools/loam/pyproject.toml",
+        # plugins/dev-sdlc user-facing surface SPLIT-ADMITTED to
+        # dev_and_public at FBE.3 (v0.1.0 reviewer foldback; parent
+        # plan §4 FBE.3 + §3 Decision B.2). The plugin src/ +
+        # pyproject.toml + README.md ship publicly so a stranger can
+        # `pip install -e plugins/dev-sdlc` against the synth tree.
+        # Dev-discipline subtree (docs/, hooks/, templates/, tools/,
+        # dev-mode-manifest.yaml) STAYS dev_only — covered by the
+        # 4 explicit dev_only entries in sample_dev_only_paths below.
+        "plugins/dev-sdlc/pyproject.toml",
+        "plugins/dev-sdlc/README.md",
+        "plugins/dev-sdlc/src/loam/plugins/dev_sdlc/api.py",
     ]
     for p in sample_runtime_paths:
         klass = classify_path(manifest, p)

@@ -1,0 +1,74 @@
+# loam v0.1.0 — install-from-source path
+#
+# Stranger-clone install: a fresh Python 3.13 venv + this requirements file.
+# Each line is `-e ./<path>` so pip walks them in order; later
+# components' bare-name inter-component deps hit the already-installed
+# in-flight wheels (no PyPI roundtrip needed).
+#
+# Generated as part of FBE.4 (foldback amendment lane,
+# v0-1-0-foldback-scope-expansion-fbe4). When the loam component
+# family publishes to PyPI at v0.2, this file becomes optional and
+# the documented entry-point shifts to:
+#   pip install loam-cli loam-init loam-workspace-bootstrap loam-plugin-dev-sdlc
+# See docs/install-from-source.md for the prose guide and
+# troubleshooting.
+
+# ---------------------------------------------------------------
+# Tier A — leaf components (no inter-component deps).
+# ---------------------------------------------------------------
+-e ./framework/scope-of-work
+-e ./framework/objective-tracker
+-e ./framework/observability-aggregator
+-e ./framework/safety-layer
+-e ./framework/self-upgrade
+-e ./framework/workspace-sync
+
+# ---------------------------------------------------------------
+# Tier B — depend only on Tier A.
+# ---------------------------------------------------------------
+-e ./framework/primary-persona
+
+# ---------------------------------------------------------------
+# Tier C — depend on Tier A + Tier B.
+# ---------------------------------------------------------------
+-e ./framework/orchestrator
+-e ./framework/telegram-interface
+
+# ---------------------------------------------------------------
+# Tier D — depend on Tier A through Tier C.
+# ---------------------------------------------------------------
+-e ./framework/reversibility-primitive
+-e ./framework/dormancy
+
+# ---------------------------------------------------------------
+# Tier E — depend on Tier A through Tier D.
+# ---------------------------------------------------------------
+-e ./framework/cost-governance
+
+# ---------------------------------------------------------------
+# Tier F — depend on Tier A through Tier E.
+# ---------------------------------------------------------------
+-e ./framework/self-correction
+
+# ---------------------------------------------------------------
+# Tier G — composer (depends on every Tier A–F runtime component).
+# ---------------------------------------------------------------
+-e ./framework/workspace-bootstrap
+
+# ---------------------------------------------------------------
+# Tier H — user-facing CLI binary (no inter-component deps; PyYAML
+# only). Installed here so the `loam` console-script is present
+# before later entry points reference it indirectly via init flow.
+# ---------------------------------------------------------------
+-e ./framework/tools/loam
+
+# ---------------------------------------------------------------
+# Tier I — `loam init` subcommand (depends on workspace-bootstrap).
+# ---------------------------------------------------------------
+-e ./framework/loam-init
+
+# ---------------------------------------------------------------
+# Tier J — Dev/SDLC plugin (depends on scope-of-work,
+# objective-tracker, workspace-bootstrap; all installed above).
+# ---------------------------------------------------------------
+-e ./plugins/dev-sdlc

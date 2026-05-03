@@ -187,6 +187,23 @@ dev_and_public:
   - glob: "docs/plugins/**"
   # Existing live public-relevant docs.
   - path: docs/CLAUDE_CAPABILITIES.md
+  # install-from-source.txt + docs/install-from-source.md ADMITTED at
+  # FBE.4 (v0.1.0 reviewer foldback; plan-doc: docs/rebuild/plans/
+  # v0-1-0-foldback-scope-expansion-fbe4.md; parent: docs/rebuild/
+  # plans/v0-1-0-foldback-scope-expansion.md §4 FBE.4). Path B
+  # (in-tree resolution via ordered `-e ./<comp>` requirements file)
+  # ratified after the prior FBE.4 dispatch's empirical halt
+  # (pip 26.0.1 rejects ${PROJECT_ROOT} substitution in
+  # [project.dependencies] and requirements.txt parsing alike;
+  # documented in <workspace>/.scratch/claude-output/fbe4-status-
+  # 2026-05-03.md Probes 1-7). Bare-name inter-component deps stay
+  # in pyprojects (workspace-bootstrap + dev-sdlc + loam-init,
+  # byte-identical to BASELINE per AC.FBE.4.{1,2}); the requirements
+  # file plus prose doc carry the in-tree resolution mechanism for
+  # v0.1.0 stranger-clone install. v0.2 PyPI publish gate captured
+  # to FUTURE_IDEAS.
+  - path: install-from-source.txt
+  - path: docs/install-from-source.md
   # plugins/dev-sdlc/ SPLIT-ADMITTED at FBE.3 (v0.1.0 reviewer
   # foldback; plan-doc: docs/rebuild/plans/v0-1-0-foldback-scope-
   # expansion-fbe3.md; parent: docs/rebuild/plans/v0-1-0-foldback-

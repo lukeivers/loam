@@ -34,8 +34,10 @@ The full positioning lives at [`docs/positioning.md`](docs/positioning.md).
 git clone https://github.com/lukeivers/loam
 cd loam
 
-# 2. Install the loam CLI from the cloned tree.
-pip install -e framework/tools/loam
+# 2. Install loam from the cloned tree.
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r install-from-source.txt
 
 # 3. Initialise the workspace.
 loam init .
@@ -43,6 +45,11 @@ loam init .
 # 4. Open Claude Code in this directory.
 claude
 ```
+
+The install step walks `install-from-source.txt` so every loam
+component is installed in the right order. See
+[`docs/install-from-source.md`](docs/install-from-source.md) for the
+prose guide and troubleshooting.
 
 Your first run scaffolds `~/.loam/`, starts the orchestrator, primes
 the file-based memory at `<workspace>/.loam/memory/`, and drops you

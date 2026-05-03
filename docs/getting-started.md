@@ -60,22 +60,27 @@ and so on); `cd loam` puts you at the framework root for the next
 step. The cloned `loam/` directory is also your workspace root —
 `loam init` (step 3) treats it as such.
 
-### 2. Install the loam CLI
+### 2. Install loam
 
-The loam CLI is shipped inside the cloned framework tree. At v0.1.0
-the only install path is editable-install via `pip` (a global
-`pipx`-style install will land in a later v0.1.x — see the [`pos-new-
-workspace`](../docs/components/) component reference). One command:
+The loam CLI plus every framework component installs from the
+cloned tree via `install-from-source.txt` at the repo root. The file
+lists each component in topological order so pip can walk it in one
+pass. Strongly recommended: install into a fresh Python 3.13 venv
+to keep loam isolated from system Python.
 
 ```bash
-pip install -e framework/tools/loam
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r install-from-source.txt
 ```
 
-This places the `loam` binary on your Python's `bin/` directory. If
-`loam` is not on your PATH after the install, your Python's `bin/`
-is not on PATH; either add it (`export PATH="$(python3 -m site
---user-base)/bin:$PATH"`) or use the absolute path the editable
-install reported.
+This installs the `loam` binary plus every component package into
+the active venv. If `loam` is not on your PATH after the install,
+the venv is not active — `source .venv/bin/activate` again, or
+invoke `.venv/bin/loam` directly.
+
+For the prose guide, troubleshooting, and per-component fallback
+order, see [`install-from-source.md`](install-from-source.md).
 
 ### 3. Initialise the workspace
 
@@ -166,10 +171,9 @@ the harness adds capability without removing any.
 
 ## Common first-run problems
 
-**`loam: command not found` after `pip install -e framework/tools/loam`.**
-Your Python's `bin/` directory is not on PATH. Either add it
-(`export PATH="$(python3 -m site --user-base)/bin:$PATH"`) or use
-the full path the editable install reported.
+**`loam: command not found` after `pip install -r install-from-source.txt`.**
+Your venv is not active — run `source .venv/bin/activate`, or
+invoke `.venv/bin/loam` directly.
 
 **`claude` does not see the SessionStart hook.** Check that
 `.claude/settings.json` exists at the workspace root after `loam

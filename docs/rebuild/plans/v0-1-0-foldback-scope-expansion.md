@@ -817,6 +817,39 @@ Universal admissions for `docs/rebuild/plans/` and
 - Verification: 242 passed + 11 skipped in workspace-bootstrap test suite (matches FBE.7 baseline; new test is the +1 in passes); URL-form tests (test_AC_SFR_5_*, test_AC_SFR_1_*, test_pos_new_workspace) pass byte-identically (no URL-form regression from the helper extraction); end-to-end smoke (the FBE.9 BLOCKER-FBE9.1 reproduction flow: `git clone /Users/lukeivers/ivers-corp-pos-v2 /tmp/loam-fbe10-smoke && cd /tmp/loam-fbe10-smoke && python3.13 -m venv .venv && .venv/bin/pip install -r install-from-source.txt && .venv/bin/loam init /tmp/loam-fbe10-smoke-ws` no `--from`) PASSES end-to-end against post-FBE.10 canonical HEAD; resulting workspace's `framework/` is checked out on `framework-only`; `.claude/settings.json={}`; workspace shape correct.
 - Halt-and-surface from build (recorded for the dispatcher): **Surface FBE.10 #1 — `loam amend apply` did not auto-commit (recurrence; FBE.6b Surface #5 + FBE.9 Surface #3 precedent).** Same pattern as FBE.6b/FBE.9. Manually committed via `chore(amend): FBE.10 apply` per the same pattern. Worth investigating in the loam-amend tooling robustness sweep — appears to be a regression for the multi-component-with-frozen-baseline case; recurred 3 amendments in a row now (FBE.6b + FBE.9 + FBE.10). **Surface FBE.10 #2 — clean-tree workaround for `loam amend seal` (recurrence; expected).** Same pattern as every prior FBE.x. Pre-existing untracked + dirty paths stashed pre-seal, popped clean post-seal.
 
+### FBE.6c — Re-run FBE.6b close-cycle against post-FBE.10 canonical HEAD
+
+**Outcome: FOLDBACK to FBE.11.** FBE.6c dispatched 2026-05-03
+re-verified that all FBE.{8,9,10} closures landed cleanly (BLOCKER-FBE6.1
++ BLOCKER-FBE6.2 + HIGH-FBE6.1 + HIGH-FBE6.2 + BLOCKER-FBE6b.1 +
+BLOCKER-FBE9.1 all gone from the synth); re-synth + sweeps + smoke +
+staging push all PASS with no regressions (8 banned literals + 4
+substitution tokens + 6 MFBM deps all at zero across the synth; all
+15 wired components ≥1 production caller). Stranger-perspective reviewer
+probe surfaced NEW BLOCKER-FBE6c.1: README's literal `git clone
+https://github.com/lukeivers/loam` flow fails at step 3 (`loam init
+~/loam-workspace`) because the staging publish writes `framework-only`
+content into `refs/heads/main` (we push `framework-only:main`), so
+stranger clones get only `origin/main` — no `origin/framework-only`
+ref — and the bootstrap's `_materialise_framework_only_branch` helper
+(introduced by FBE.10) fail-softs because the source ref is absent,
+then the downstream `_clone_canonical` checkout fails with `fatal:
+'origin/framework-only' is not a commit`. Same SHAPE as FBE.6's
+BLOCKER-FBE6.1 / FBE.6b's BLOCKER-FBE6b.1 / FBE.9's BLOCKER-FBE9.1 —
+documented invocation works in the dev environment but fails for the
+stranger. Per AC.FBE.6c.7 negative AC + halt-trigger #2, FBE.6c closes
+WITHOUT silently fixing in-band. M12 publish-flip remains GATED behind
+FBE.11 closure of BLOCKER-FBE6c.1 + a FBE.6d re-verification cycle.
+
+- Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6c.md` (authored at `48ba955` by FBE.6c build agent before code per `feedback_plan_before_code`).
+- Seal narrative commit: `6e977f1`.
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6c.manifest.yaml` (amendment #117, committed at `c9c723f`).
+- Apply commit: `740d307` (manually committed per FBE.6b/FBE.9/FBE.10 precedent — `loam amend apply` did NOT auto-commit; 4th consecutive recurrence).
+- Seal commit: `6fd3812`.
+- ACs satisfied: AC.FBE.6c.{1,2,3,4,6,7,S} PASS (7/9); AC.FBE.6c.5 FOLDBACK (NEW BLOCKER-FBE6c.1 surfaced).
+- Verification: synth `48ba955 → 19422ed` (advance from FBE.6b's `8f57bde`); 8/8 banned-literal grep zero hits; 4/4 substitution-token zero hits; 15/15 wired-component ≥1 caller; 6/6 MFBM-dep zero hits across 17 pyprojects; zero `tests/` files in synth; extended smoke PASS end-to-end (clone with `--branch framework-only --single-branch /Users/lukeivers/ivers-corp-pos-v2` + venv + `pip install -r install-from-source.txt` + `loam --version`=`loam 0.1.0` + `loam init <ws>` NO `--from` produces runnable workspace shape with `.claude/settings.json={}` + `~/.loam/{dormancy.sqlite,logs/}`); staging push to lukeivers/loam-staging:main = `19422ed` (plain `--force`, skipped `--force-with-lease` per accumulated FBE.6/FBE.6b precedent — succeeded first try); seal pipeline ran clean.
+- Halt-and-surface from build (recorded for the dispatcher): **NEW BLOCKER-FBE6c.1 (staging publish of `framework-only:main` deprives stranger clones of the `origin/framework-only` ref the bootstrap requires)** — fix shape recommendations: Path A (publish-side: push `framework-only:framework-only` instead of `framework-only:main`; set staging default branch to `framework-only`); Path B (publish-side dual-ref: push BOTH `framework-only:main` AND `framework-only:framework-only`); Path C (CLI-side: make `_clone_canonical` fall through to default branch when `framework-only` absent — NOT recommended, weakens invariant); Path D (synth tool-default: change `pos-publish-framework-only` push default). Recommendation: Path A or Path B (publish-side; 10–20 min wall-clock single-fence M12-or-publish-step amendment). **Surface FBE.6c #2 — `pos-publish-framework-only` pyproject missing `pyyaml` runtime dep** — building a fresh venv with `pip install -e framework/tools/pos-publish-framework-only` raises `ModuleNotFoundError: No module named 'yaml'` because `pyyaml` is imported by `partition.py` but not declared in the tool's `pyproject.toml` `dependencies`; workaround: `pip install pyyaml` after editable install; FUTURE_IDEAS_DRAFT candidate. **Surface FBE.6c #3 — `--force-with-lease` skipped per accumulated precedent (no recurrence; expected behaviour now baked in).** **Surface FBE.6c #4 — Reviewer dispatched in-band (recurrence; expected — Task tool not exposed in this environment).** **Surface FBE.6c #5 — `loam amend apply` did not auto-commit (4th consecutive recurrence; FBE.6b + FBE.9 + FBE.10 precedent).** Manually committed via `chore(amend): FBE.6c apply`. Pattern STRONG (4 in a row); high-confidence regression in loam-amend tooling for the multi-component-with-frozen-baseline case (or HOL-only-narrative case as FBE.6c demonstrates). **Surface FBE.6c #6 — clean-tree workaround for `loam amend seal` (recurrence; expected).** Pre-existing untracked + dirty paths stashed pre-seal, popped clean post-seal.
+
 ---
 
-*End of foldback plan-doc. FBE.10 dispatched + sealed 2026-05-03 (sub-plan `e112f17`, source + new test `3fefbb9`, narrative anchor `579188b`, manifest `804d806`, apply `8596bae`, seal `428deeb`). FBE.10 closes BLOCKER-FBE9.1 with a single-component workspace-bootstrap source-side fix (extract `_materialise_framework_only_branch` helper; call from both URL-form and local-path branches; preserves URL-form byte-identically). End-to-end smoke (the FBE.9 BLOCKER-FBE9.1 reproduction flow) PASSES against post-FBE.10 canonical HEAD. Remaining sequence: FBE.6c (re-synth + sweep + smoke + reviewer against post-FBE.10 canonical HEAD) → M12 publish-flip on GO.*
+*End of foldback plan-doc. FBE.6c dispatched + sealed 2026-05-03 (sub-plan `48ba955`, narrative anchor `6e977f1`, manifest `c9c723f`, apply `740d307`, seal `6fd3812`). FBE.6c FOLDBACK — NEW BLOCKER-FBE6c.1 surfaced (publish-side branch-name divergence: `framework-only:main` push deprives stranger clones of the `origin/framework-only` ref). M12 publish-flip is GATED behind FBE.11 closure of BLOCKER-FBE6c.1 + a FBE.6d re-verification cycle. Recommended fix: Path A (publish `framework-only:framework-only` + set staging default branch to `framework-only`).*

@@ -25,7 +25,9 @@ themselves every session. loam absorbs that translation burden into
 the primary persona; the user expresses intent, the persona handles
 execution.
 
-The full positioning lives at [`docs/positioning.md`](docs/positioning.md).
+The full positioning lives at [`docs/positioning.md`](docs/positioning.md);
+the design choice to scaffold (rather than ship a thin agent) is
+articulated at [`docs/design/why-loam-scaffolds.md`](docs/design/why-loam-scaffolds.md).
 
 ## Quickstart
 

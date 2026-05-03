@@ -51,16 +51,20 @@ from .context_composer import CorpusGateState
 # as a defence-in-depth only; the dynamic parse is the authoritative
 # path (research §9 flag #5).
 _FALLBACK_BASELINE_PATHS: tuple[str, ...] = (
-    "docs/odd-methodology.md",
-    "docs/odd-in-loam.md",
-    "docs/rebuild/VALUE_PROPOSITION.md",
-    "docs/rebuild/STATE.md",
-    # FUTURE_IDEAS-style draft-capture surface STRIPPED at C2-prime
-    # per §11 D-Q.ABC-prime.2: dev-only file with no public
-    # counterpart. The fallback tuple is fail-soft (the dynamic
-    # CLAUDE.md parse is the authoritative path); shrinking the
-    # tuple by one entry preserves canonical-mode behaviour for
-    # stranger workspaces.
+    # v0.1.0 ship-correct fallback: only paths that exist in BOTH
+    # canonical (dev) and the synthesised public framework-only tree.
+    # The four prior entries (docs/odd-methodology.md,
+    # docs/odd-in-loam.md, docs/rebuild/VALUE_PROPOSITION.md,
+    # docs/rebuild/STATE.md) were dev-only — they shipped no-where
+    # in public synthesis (long-form ODD = DEV_ONLY per AC.OSS.3;
+    # docs/rebuild/** = excluded entirely). Their presence in the
+    # fallback caused permanent corpus_gate_state: partial in any
+    # stranger workspace where the dynamic CLAUDE.md parse failed.
+    # Replaced with the condensed public ODD doc, which ships under
+    # public_only/dev_and_public per the publish-mode manifest.
+    # Dynamic CLAUDE.md parse remains the authoritative path; this
+    # tuple fires only as last-resort defence-in-depth.
+    "docs/design/odd.md",
 )
 
 

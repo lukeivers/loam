@@ -1,0 +1,97 @@
+# FBE.2 — partition admit framework/tools/loam/** (CLI binary ships)
+
+2026-05-03. v0.1.0 reviewer foldback closes the synth-omission
+of the unified `loam` CLI binary itself (M2 manifest had it
+classified `dev_only` — pre-FBE.2 the public synth tree shipped
+zero CLI). Reviewer dossier:
+`<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+Parent plan:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` §4 FBE.2.
+Sub-plan:
+`docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2.md`.
+
+Decision B.1 from the parent plan locked: reclassify
+framework/tools/loam/** entirely to dev_and_public; keep the
+legitimately-dev tools (heavy-b-migrate, orphan-plist-cleanup,
+upgrade-merge-resolver, pos-publish-framework-only,
+loam-migrate-host-config, loam-migrate-launchd-labels,
+loam-migrate-dormancy-config, loam-memory-inspect) as dev_only
+per parent §4 FBE.2.3.
+
+Establishes loam-cli as a NEW sealed component (sidecar +
+invariant), mirroring FBE.1's loam-init pattern. The sidecar
+bump per the dev_only→dev_and_public reclassification convention
+is the mechanical way the partition status is encoded into the
+seal trail.
+
+Structural delta (within fence + universal admissions):
+
+  - `framework/tools/loam/tests/SEAL_COMMIT` — NEW sidecar
+    (placeholder HEAD; bumped to BASELINE 80d52ab at apply,
+    then to seal SHA at seal).
+  - `framework/tools/loam/tests/test_no_sealed_amendments.py` —
+    NEW structural fence test (AC.FBE.2.S; mirrors FBE.1's
+    loam-init shape).
+  - `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`
+    — 2-line glob edit + provenance comments; admitted via
+    universal_paths.prefixes.
+  - `framework/tools/pos-publish-framework-only/tests/test_AC_OSS_3_default_partition_complete.py`
+    — spot-check fixture move (loam pyproject from
+    sample_dev_only_paths to sample_runtime_paths); admitted
+    via universal_paths.prefixes.
+  - `framework/tools/pos-publish-framework-only/tests/test_AC_OSS_3_partition_manifest_load.py`
+    — dev_only spot-check switches from "tools/loam/" to
+    "tools/pos-publish-framework-only/"; admitted via
+    universal_paths.prefixes.
+
+AC surface (per sub-plan §4):
+
+  - AC.FBE.2.1 — dev_only: REMOVES framework/tools/loam/** entry.
+  - AC.FBE.2.2 — dev_and_public: ADDS framework/tools/loam/** entry.
+  - AC.FBE.2.3 — 8 legitimately-dev tools STAY dev_only.
+  - AC.FBE.2.4 — synth re-run produces tools/loam/{pyproject.toml,
+    README.md, src/loam_cli/{__init__.py, __main__.py, cli.py}}
+    in framework-only tree (5 leaves; tests/ correctly drops via
+    **/tests/** precedence). Verified at apply-time via direct
+    synthesise_framework_only invocation; tree-SHA da4e2b9 carries
+    all 5 expected leaves.
+  - AC.FBE.2.5 — audit-completeness test passes for canonical
+    pos-v2 HEAD; spot-check fixture updates compose cleanly.
+  - AC.FBE.2.6 — negative AC: zero edits to loam_cli/cli.py
+    source or pyproject.toml description (FBE.5's scope; verified
+    via git diff BASELINE..SEAL_COMMIT).
+  - AC.FBE.2.7 — sidecar files exist; fence-test passes for
+    FBE.2 BASELINE.
+  - AC.FBE.2.S — sealed-component fence: git diff
+    BASELINE..SEAL_COMMIT --name-only produces only paths under
+    framework/tools/loam/ + universal-paths admissions.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - Sidecar shape mirrors FBE.1's loam-init exactly (REPO_ROOT
+    depth 5 — verified at planning).
+  - Manifest provenance comments at BOTH edit sites
+    (dev_and_public ADD + dev_only REMOVE) so a future reader
+    sees the cross-reference without git-archeology.
+  - Spot-check test fixture edits inline-commented with FBE.2
+    attribution.
+  - dev_only spot-check rebased to "tools/pos-publish-framework-only/"
+    rather than another tool (heavy-b-migrate / etc.) — chosen
+    because pos-publish-framework-only is the canonical "dev-
+    discipline tool that emits the public synth and stays
+    internal" — pedagogically clear example.
+
+Out of scope (per sub-plan §8):
+
+  - Source edits to loam_cli/cli.py (description / docstring
+    scrub — FBE.5).
+  - Pyproject description field scrub — FBE.5.
+  - Synth pipeline path-rewrite to preserve framework/<comp>/
+    shape — parent Decision D; deferred.
+  - Path-spec dep rewrite — FBE.4 (loam-cli has no inter-component
+    deps so FBE.4 doesn't visit it).
+  - Edits to legitimately-dev tools' pyproject / source.
+
+BASELINE 80d52ab (pre-apply tip; the partition-admission commit).
+The loam-cli anchor's SEAL_COMMIT sidecar lands at the seal SHA
+via `loam amend seal`.

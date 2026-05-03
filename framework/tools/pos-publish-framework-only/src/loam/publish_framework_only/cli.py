@@ -28,14 +28,15 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Synthesise the `framework-only` branch on canonical "
             "pos-v2 from a `pos-v2` commit. The synthesised branch's "
-            "tree promotes `framework/<entry>` to root + carries top-"
-            "level docs (CLAUDE.md, README.md, docs/, etc.) under the "
-            "publish-mode partition manifest at "
+            "tree mirrors canonical's `framework/<comp>/` layout "
+            "verbatim and carries top-level docs (CLAUDE.md, "
+            "README.md, docs/, etc.) under the publish-mode "
+            "partition manifest at "
             "framework/tools/pos-publish-framework-only/"
             "publish-mode-manifest.yaml. Workspaces produced by "
-            "`pos-new-workspace --from <canonical>` clone this branch, "
-            "eliminating the `framework/framework/<comp>/` doubling "
-            "failure class."
+            "`pos-new-workspace --from <canonical>` clone this "
+            "branch into `<workspace>/framework/<comp>/...` matching "
+            "the documented install paths."
         ),
     )
     parser.add_argument(

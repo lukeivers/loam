@@ -1,8 +1,8 @@
 """Synthesise the ``framework-only`` branch from a ``pos-v2`` commit.
 
 The synthesis is a pure git-plumbing composition: read the source
-commit's tree; build a working index that promotes
-``framework/<entry>`` paths to root and drops paths classified as
+commit's tree; build a working index that preserves canonical's
+``framework/<entry>`` shape verbatim and drops paths classified as
 ``dev_only`` / ``excluded_from_publish`` per the publish-mode
 partition manifest (amendment #83 — M2). The resulting tree is
 written via ``git write-tree``; a new commit is composed via
@@ -72,9 +72,15 @@ from loam.publish_framework_only.substitution import (
 )
 
 
-# The subdir under canonical's ``pos-v2`` whose contents promote to
-# the synthetic-branch root. Manifest-driven synthesis preserves
-# this promotion convention; the constant documents intent.
+# The subdir under canonical's ``pos-v2`` that anchors the framework
+# components. Per FBE.2b (Decision D in
+# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`` §3),
+# canonical's ``framework/<entry>`` shape is preserved verbatim in
+# the synthetic tree (the ``framework/`` prefix is NOT stripped). The
+# constant documents intent + drives the
+# ``saw_framework_leaf`` validation guard ("synthesis must emit at
+# least one ``framework/``-prefixed leaf") and the negative test
+# (``test_synthesis_fails_when_framework_subdir_absent``).
 FRAMEWORK_PREFIX = "framework"
 
 
@@ -169,8 +175,15 @@ class _LeafEntry:
     submodules); ``sha`` is the object SHA; ``source_path`` is the
     canonical's tree-relative path (with the ``framework/`` prefix
     intact for component paths); ``synthetic_path`` is the path the
-    leaf takes in the synthetic tree (``framework/<rel>`` rewritten
-    to ``<rel>`` at root; top-level paths verbatim).
+    leaf takes in the synthetic tree.
+
+    Per FBE.2b (Decision D), ``synthetic_path`` equals ``source_path``
+    verbatim — both framework and top-level leaves carry their
+    canonical shape into the synthetic tree (the ``framework/``
+    prefix is NOT stripped). The field is retained as a distinct
+    name so the downstream tree-build / collision-check passes
+    document intent, and so a future amendment that re-introduces
+    path shaping has a single place to write the rewritten path.
     """
 
     mode: str
@@ -270,10 +283,23 @@ def _build_synthetic_tree(
 
     Walks every leaf under ``source_sha``'s tree, classifies each
     via the partition manifest, drops non-publishable + audit-
-    excluded leaves, rewrites ``framework/<rel>`` → ``<rel>`` at
-    root, and assembles the resulting paths into a tree via a
-    temporary git index (``read-tree`` + ``update-index`` +
+    excluded leaves, and assembles the resulting paths into a tree
+    via a temporary git index (``read-tree`` + ``update-index`` +
     ``write-tree``).
+
+    Per FBE.2b (Decision D in
+    ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`` §3),
+    the source path shape is preserved verbatim — ``framework/<rel>``
+    leaves remain at ``framework/<rel>`` in the synthetic tree
+    (the ``framework/`` prefix is NOT stripped). Top-level leaves
+    (``CLAUDE.md``, ``README.md``, ``docs/...``) also pass through
+    verbatim.
+
+    Validates ``saw_framework_leaf`` post-walk: the synthetic tree
+    must contain at least one ``framework/``-prefixed shipping leaf
+    (else nothing to synthesise — ``SynthesisError`` raised; the
+    negative test ``test_synthesis_fails_when_framework_subdir_absent``
+    pins this contract).
 
     Raises ``SynthesisError`` if any non-audit-excluded leaf doesn't
     classify into any of the four partition classes (the manifest
@@ -299,17 +325,17 @@ def _build_synthetic_tree(
             continue
         if not is_publishable(klass):
             continue
-        # Promote framework/<rel> to root; top-level entries verbatim.
-        framework_prefix = f"{FRAMEWORK_PREFIX}/"
-        if source_path.startswith(framework_prefix):
-            synthetic_path = source_path[len(framework_prefix):]
+        # Per FBE.2b (Decision D): preserve canonical's path shape
+        # verbatim. ``framework/<rel>`` leaves stay at ``framework/<rel>``
+        # in the synthetic tree (no prefix strip); top-level entries
+        # also pass through verbatim. Track the
+        # ``saw_framework_leaf`` flag so the post-walk validation
+        # ("synthesis must emit at least one framework/-prefixed
+        # shipping leaf") still works without coupling to the
+        # (now-removed) strip rewrite.
+        synthetic_path = source_path
+        if source_path.startswith(f"{FRAMEWORK_PREFIX}/"):
             saw_framework_leaf = True
-        elif source_path == FRAMEWORK_PREFIX:
-            # Bare framework path (unlikely — ls-tree -r emits leaves);
-            # safety branch — drop, the children handle it.
-            continue
-        else:
-            synthetic_path = source_path
 
         # M9 substitution pass (AC.OSS-M9.2). Applied AFTER the
         # partition filter (this loop reaches here only for shipping
@@ -352,9 +378,11 @@ def _build_synthetic_tree(
         )
 
     # Collision check: two distinct source_paths must not map to the
-    # same synthetic_path (e.g. a top-level ``cost-governance.md``
-    # would collide with the promoted ``framework/cost-governance/``
-    # entry — same name at synthetic root). Halt explicitly.
+    # same synthetic_path. Per FBE.2b synthetic_path == source_path
+    # for shipping leaves, so a collision is only possible if the
+    # canonical tree itself contained two entries at the same path
+    # (which git itself rejects); the check stays as a defence-in-
+    # depth invariant against future path-shaping reintroduction.
     by_synthetic: dict[str, str] = {}
     for entry in publishable:
         existing = by_synthetic.get(entry.synthetic_path)

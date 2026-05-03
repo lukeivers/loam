@@ -5,8 +5,10 @@ Each test in this file constructs a fixture canonical with a `pos-v2`
 branch, runs the synthesis, and asserts:
 
 - the `framework-only` ref exists post-synthesis;
-- its tree promotes `framework/<entry>` entries to root (no nested
-  `framework/` subdir);
+- its tree preserves canonical's `framework/<entry>` shape verbatim
+  (per FBE.2b — Decision D in
+  ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`` §3 — the
+  ``framework/`` prefix is NOT stripped);
 - top-level docs (`CLAUDE.md`, `CLAUDE.dev.md`, `README.md`, `docs/`)
   are present at the synthetic-branch root verbatim;
 - after a follow-on `pos-v2` commit, re-running synthesis produces a
@@ -42,8 +44,8 @@ def test_AC_SFR_2_synthesis_creates_framework_only_branch(
     git_run,
 ) -> None:
     """The synthesis advances `framework-only` to a new commit whose
-    tree promotes framework/ entries to root and carries top-level
-    docs verbatim.
+    tree preserves canonical's framework/<entry> shape verbatim and
+    carries top-level docs verbatim.
     """
     canonical = make_fixture_canonical(tmp_path / "canonical")
 
@@ -62,21 +64,26 @@ def test_AC_SFR_2_synthesis_creates_framework_only_branch(
     )
     assert framework_only_sha == result.framework_only_sha
 
-    # framework/<entries> promoted to root.
+    # framework/<entries> preserved verbatim (FBE.2b — Decision D).
     tree_listing = git_run(
         ["ls-tree", "-r", "--name-only", "refs/heads/framework-only"],
         cwd=canonical,
     )
     paths = set(tree_listing.split("\n"))
 
-    # AC.SFR.2 (a): components promoted to root.
-    assert "cost-governance/__init__.py" in paths
-    assert "workspace-bootstrap/src/__init__.py" in paths
-    assert "tools/loam-mode/__init__.py" in paths
+    # AC.SFR.2 (a) — post-FBE.2b: components ship under
+    # framework/<comp>/ verbatim (NOT promoted to root).
+    assert "framework/cost-governance/__init__.py" in paths
+    assert "framework/workspace-bootstrap/src/__init__.py" in paths
+    assert "framework/tools/loam-mode/__init__.py" in paths
 
-    # AC.SFR.2 (a): no doubled framework/ prefix.
-    assert "framework/cost-governance/__init__.py" not in paths
-    assert all(not p.startswith("framework/") for p in paths)
+    # AC.SFR.2 (a) — post-FBE.2b: at least one framework/-prefixed
+    # leaf ships (positive shape check) AND no doubled
+    # framework/framework/ paths (collision-prevention check; the
+    # canonical-tree input only has single-framework/ paths so a
+    # synthesised double-prefix would indicate a path-shaping bug).
+    assert any(p.startswith("framework/") for p in paths)
+    assert all(not p.startswith("framework/framework/") for p in paths)
 
     # AC.SFR.2 (b): top-level docs verbatim.
     assert "CLAUDE.md" in paths
@@ -100,13 +107,15 @@ def test_AC_SFR_2_HC4_byte_content_match(
         manifest_path=fixture_manifest_path(canonical),
     )
 
+    # Per FBE.2b — Decision D: source path == synth path verbatim
+    # for both framework/<comp>/ leaves and top-level leaves alike.
     pairs = [
         ("framework/cost-governance/__init__.py",
-         "cost-governance/__init__.py"),
+         "framework/cost-governance/__init__.py"),
         ("framework/workspace-bootstrap/src/__init__.py",
-         "workspace-bootstrap/src/__init__.py"),
+         "framework/workspace-bootstrap/src/__init__.py"),
         ("framework/tools/loam-mode/__init__.py",
-         "tools/loam-mode/__init__.py"),
+         "framework/tools/loam-mode/__init__.py"),
         ("CLAUDE.md", "CLAUDE.md"),
         ("CLAUDE.dev.md", "CLAUDE.dev.md"),
         ("README.md", "README.md"),
@@ -158,12 +167,13 @@ def test_AC_SFR_2_lockstep_advances_with_pos_v2(
     )
     assert parent_sha == first.framework_only_sha
 
-    # The new file appears at root in framework-only's tree.
+    # The new file appears under framework/cost-governance/ in
+    # framework-only's tree (FBE.2b — verbatim shape preserved).
     new_listing = git_run(
         ["ls-tree", "-r", "--name-only", "refs/heads/framework-only"],
         cwd=canonical,
     )
-    assert "cost-governance/added.py" in new_listing.split("\n")
+    assert "framework/cost-governance/added.py" in new_listing.split("\n")
 
 
 def test_AC_SFR_2_idempotent_re_run(

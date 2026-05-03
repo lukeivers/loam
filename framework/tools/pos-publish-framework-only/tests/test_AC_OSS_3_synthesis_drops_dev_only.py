@@ -106,14 +106,17 @@ def test_synthesis_drops_dev_only_paths(
     )
     paths = set(tree_listing.split("\n"))
 
-    # dev_and_public ships.
-    assert "cost-governance/__init__.py" in paths
+    # dev_and_public ships. Per FBE.2b — Decision D: framework/<comp>/
+    # leaves preserve their canonical shape verbatim in the synth
+    # tree (no prefix strip).
+    assert "framework/cost-governance/__init__.py" in paths
     assert "CLAUDE.md" in paths
     assert "README.md" in paths
     assert "docs/positioning.md" in paths
 
-    # dev_only does NOT ship.
-    assert "tools/loam/cli.py" not in paths
+    # dev_only does NOT ship. Per FBE.2b: drops-paths assertions
+    # also use the canonical (prefix-preserved) path shape.
+    assert "framework/tools/loam/cli.py" not in paths
     assert "CLAUDE.dev.md" not in paths
     assert "docs/rebuild/STATE.md" not in paths
     # The fixture manifest itself classifies as dev_only (under
@@ -247,8 +250,9 @@ def test_synthesis_audit_excludes_drop_silently(
         cwd=canonical,
     )
     # .DS_Store is audit-excluded; it should not appear in the
-    # synthetic tree.
+    # synthetic tree. Per FBE.2b — Decision D: assertions use the
+    # canonical (prefix-preserved) path shape.
     paths = set(tree_listing.split("\n"))
-    assert "cost-governance/.DS_Store" not in paths
+    assert "framework/cost-governance/.DS_Store" not in paths
     # But framework/cost-governance/__init__.py still ships.
-    assert "cost-governance/__init__.py" in paths
+    assert "framework/cost-governance/__init__.py" in paths

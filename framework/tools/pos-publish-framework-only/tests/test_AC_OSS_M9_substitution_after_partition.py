@@ -106,15 +106,17 @@ def test_AC_OSS_M9_2_substitution_runs_after_partition(
         _, _, sha = head.split(" ")
         tree_entries[name] = sha
 
-    # (a) dev_only blob absent from synthetic tree.
-    assert "tools/loam/cli.py" not in tree_entries
+    # (a) dev_only blob absent from synthetic tree. Per FBE.2b —
+    # Decision D: tree-entry path assertions use the canonical
+    # (prefix-preserved) path shape.
+    assert "framework/tools/loam/cli.py" not in tree_entries
     # (b) dev_and_public blob present BUT with a different SHA than
     #     source — the substitution pass rewrote the content.
-    assert "cost-governance/__init__.py" in tree_entries
-    synthetic_sha = tree_entries["cost-governance/__init__.py"]
+    assert "framework/cost-governance/__init__.py" in tree_entries
+    synthetic_sha = tree_entries["framework/cost-governance/__init__.py"]
     assert synthetic_sha != source_dev_and_public_sha, (
         f"substitution did not change blob SHA for "
-        f"cost-governance/__init__.py — substitution pass not wired"
+        f"framework/cost-governance/__init__.py — substitution pass not wired"
     )
     # Negative-control: dev_only's source SHA is preserved in the
     # canonical's history (we re-fetch it; not used for the synthetic
@@ -165,5 +167,7 @@ def test_AC_OSS_M9_2_blob_without_token_preserves_sha(
         _, _, sha = head.split(" ")
         tree_entries[name] = sha
 
-    # No token in source → SHA preserved verbatim.
-    assert tree_entries["cost-governance/__init__.py"] == source_sha
+    # No token in source → SHA preserved verbatim. Per FBE.2b —
+    # Decision D: tree-entry path uses the canonical (prefix-
+    # preserved) shape.
+    assert tree_entries["framework/cost-governance/__init__.py"] == source_sha

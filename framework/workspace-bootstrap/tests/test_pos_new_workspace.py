@@ -33,6 +33,7 @@ Test isolation:
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -189,12 +190,28 @@ def test_AC_D_4_1_local_canonical_creates_working_workspace(
         f"sync-config.yaml does not carry canonical_source; got:\n{payload}"
     )
 
-    # AC.D.4.1: .claude/ at workspace root (D-Q.A4).
-    # The scaffold doesn't create .claude/ directly today (it's part of
-    # workspace-bootstrap's separate path); verify .claude_dir is named
-    # at the right location even if the directory itself isn't yet
-    # populated — the BootstrapResult records the location.
+    # AC.D.4.1 + AC.FBE.5b.{1,2}: .claude/ at workspace root (D-Q.A4)
+    # — directory created AND minimal settings.json scaffolded.
+    # FBE.5b (amendment #110) closed FBE.5 Surface #7: pre-FBE.5b the
+    # CLI claimed "  .claude/    ← scaffolded" but no code path created
+    # the directory; post-FBE.5b bootstrap_new_workspace's
+    # _scaffold_claude_dir helper creates `.claude/` + writes `{}\n` as
+    # the minimal settings.json (no project-level overrides; defer to
+    # user-level + Claude Code defaults).
     assert result.claude_dir == new_ws / ".claude"
+    assert (new_ws / ".claude").is_dir(), (
+        "AC.FBE.5b.1: <new-ws>/.claude/ must exist as a directory"
+    )
+    settings_path = new_ws / ".claude" / "settings.json"
+    assert settings_path.exists(), (
+        "AC.FBE.5b.2: <new-ws>/.claude/settings.json must exist"
+    )
+    assert json.loads(settings_path.read_text(encoding="utf-8")) == {}, (
+        "AC.FBE.5b.2: settings.json must parse to an empty object"
+    )
+    assert settings_path.stat().st_mode & 0o777 == 0o644, (
+        "AC.FBE.5b.2: settings.json must be mode 0o644"
+    )
 
     # AC.D.4.1: .gitignore declares framework/ as the only tracked subtree.
     gitignore = new_ws / ".gitignore"
@@ -402,6 +419,59 @@ def test_AC_D_4_2_init_existing_is_idempotent(
         )
 
     assert result.init_existing is True
+
+
+# ---- AC.FBE.5b.3 — init-existing preserves operator-customised
+# .claude/settings.json -----------------------------------------------
+
+
+def test_AC_FBE_5b_3_init_existing_preserves_claude_settings(
+    tmp_path: Path,
+    make_fixture_canonical,
+) -> None:
+    """Re-invoking with --init-existing does NOT clobber an operator-
+    customised .claude/settings.json.
+
+    FBE.5b's _scaffold_claude_dir helper follows the
+    "scaffold if absent" pattern (mirrors _write_workspace_gitignore):
+    on a re-bootstrap the directory exists and settings.json exists,
+    so neither is rewritten and the operator's edits survive.
+    """
+    canonical = make_fixture_canonical(tmp_path / "fixture-canonical")
+    new_ws = tmp_path / "new-ws"
+    agents = tmp_path / "LaunchAgents"
+
+    # First bootstrap: directory + minimal settings.json scaffolded.
+    bootstrap_new_workspace(
+        new_ws_path=new_ws,
+        canonical_source=str(canonical),
+        service_manager_dir_override=agents,
+        tracker_seed_runner=_stub_tracker_seed_runner,
+    )
+    settings_path = new_ws / ".claude" / "settings.json"
+    assert settings_path.exists()
+    assert json.loads(settings_path.read_text(encoding="utf-8")) == {}
+
+    # Operator customises settings.json post-bootstrap.
+    customised = {"agent": "test-handle", "permissions": {"allow": []}}
+    settings_path.write_text(
+        json.dumps(customised, indent=2) + "\n", encoding="utf-8"
+    )
+
+    # Re-invoke with --init-existing.
+    bootstrap_new_workspace(
+        new_ws_path=new_ws,
+        canonical_source=str(canonical),
+        init_existing=True,
+        service_manager_dir_override=agents,
+        tracker_seed_runner=_stub_tracker_seed_runner,
+    )
+
+    # AC.FBE.5b.3: operator's customisation survived.
+    assert json.loads(settings_path.read_text(encoding="utf-8")) == customised, (
+        "AC.FBE.5b.3: --init-existing must not overwrite an operator-"
+        "customised .claude/settings.json"
+    )
 
 
 # ---- AC.D.4.1 — HC#6 structural promise carries forward -------------

@@ -393,6 +393,45 @@ def _write_sync_config_yaml(
     return target
 
 
+# FBE.5b (amendment #110) — minimal `<workspace>/.claude/` scaffold.
+#
+# AC.FBE.5b.{1,2,3}: bootstrap_new_workspace creates `<workspace>/.claude/`
+# (so Claude Code's workspace-discovery primitive resolves to a real
+# location) and writes a minimal `settings.json` (empty object — no
+# project-level overrides; defer to user-level settings + Claude Code
+# defaults). Idempotent: if `settings.json` already exists, the operator
+# may have customised it — leave it untouched. Mirrors the
+# `_write_workspace_gitignore` "scaffold if absent" pattern in
+# `adapters/first_run_scaffold.py`.
+#
+# Out of scope per AC.FBE.5b.5: hooks pointing at framework code,
+# `.claude/agents/` subdir, persona seeds, and any `settings.json`
+# key beyond the bare `{}`. Those land in v0.1.x amendments.
+_CLAUDE_SETTINGS_JSON_TEMPLATE = "{}\n"
+
+
+def _scaffold_claude_dir(claude_dir: Path) -> bool:
+    """Scaffold ``<workspace>/.claude/`` if absent.
+
+    Idempotent: if ``settings.json`` already exists, leaves it
+    untouched (the operator may have customised it after first
+    bootstrap; AC.FBE.5b.3). Returns True iff the directory was newly
+    created OR the settings.json was newly written.
+    """
+    created = False
+    if not claude_dir.exists():
+        claude_dir.mkdir(parents=True, exist_ok=True)
+        created = True
+    settings = claude_dir / "settings.json"
+    if not settings.exists():
+        settings.write_text(
+            _CLAUDE_SETTINGS_JSON_TEMPLATE, encoding="utf-8"
+        )
+        settings.chmod(0o644)
+        created = True
+    return created
+
+
 def _stub_tracker_seed_runner_default() -> Any:
     """Return a no-op tracker-seed runner.
 
@@ -572,6 +611,13 @@ def bootstrap_new_workspace(
             f"first-run scaffold failed for {new_ws_path!s}: "
             f"{type(exc).__name__}: {exc}"
         ) from exc
+
+    # FBE.5b (amendment #110) — AC.FBE.5b.{1,2}: scaffold
+    # `<workspace>/.claude/` + minimal `settings.json` so the CLI's
+    # ".claude/    ← scaffolded" success-summary message is truthful
+    # at runtime (closes FBE.5 Surface #7). Runs AFTER the scaffold
+    # block so workspace state is fully populated first.
+    _scaffold_claude_dir(claude_dir)
 
     return BootstrapResult(
         new_ws_path=new_ws_path,

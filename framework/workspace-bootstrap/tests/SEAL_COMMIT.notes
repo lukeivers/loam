@@ -389,3 +389,174 @@ BASELINE 8032348 (pre-apply tip; the FBE.5 source-side delta
 commit). The 15 fence-component sidecars all advance to the
 same seal SHA at `loam amend seal` (single seal commit covers
 all 15 components per the fence-fifteen-with-edit shape).
+
+# FBE.2c — README + getting-started clone-line + 4 broken fixture tests (Decision D follow-through)
+
+2026-05-03. v0.1.0 reviewer foldback closes the doc-and-test-shape
+side of HIGH 1 / Decision D, paired with FBE.2b which closed the
+synth-shape side. FBE.5b halted at seal because FBE.2b's prefix-
+preserving synth introduced two paired defects:
+
+  (1) The documented `git clone https://github.com/lukeivers/loam
+      framework/` (clone INTO a `framework/` subdir) combined with
+      the post-FBE.2b synth shape (which keeps `framework/` prefix
+      on shipped paths) produced doubled
+      `<workspace>/framework/framework/<comp>/...` paths in the
+      user-visible install flow.
+  (2) Four workspace-bootstrap fixture tests asserted the OLD
+      single-level shape (pre-FBE.2b strip-shape contract) and
+      broke at FBE.5b's seal pipeline:
+      - test_pos_new_workspace.py::test_AC_D_4_1_local_canonical_creates_working_workspace
+      - test_pos_new_workspace.py::test_AC_D_4_1_url_form_routes_through_cache_clone
+      - test_AC_SFR_1_single_framework_directory.py::test_AC_SFR_1_single_level_framework_directory
+      - test_AC_SFR_5_stranger_clones_canonical.py::test_AC_SFR_5_framework_only_reachable_via_explicit_branch
+
+FBE.2c implements **Path α** (dispatcher-locked): keep FBE.2b's
+synth shape (semantically richer, matches the docs that reference
+`framework/<comp>/`); fix the README + getting-started.md so the
+documented `git clone` no longer takes a `framework/` arg; update
+the 4 fixture tests to assert the post-FBE.2b doubled-component
+contract.
+
+Reviewer dossier: `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+FBE.5b status (failure diagnosis): `<workspace>/.scratch/claude-output/fbe5b-status-2026-05-03.md`.
+Parent plan: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`
+(FBE.2c row backfilled at completion).
+Sub-plan: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2c.md`.
+FBE.2b sub-plan (synth-shape change root cause): `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe2b.md`.
+
+Single-fence amendment (workspace-bootstrap). Source-side
+`bootstrap_new_workspace` contract is UNCHANGED — it still clones
+canonical's framework-only branch INTO `<new-ws>/framework/`. The
+doubling at `<new-ws>/framework/framework/<comp>/` for component
+leaves is the deliberate consequence of FBE.2b's synth shape +
+the existing bootstrap clone target. Top-level docs (CLAUDE.md,
+docs/) STAY single-level at `<new-ws>/framework/<doc>` because
+they were never under `framework/` in pos-v2.
+
+Structural delta (within fence + universal admissions):
+
+  - `README.md` — Quickstart code block: drop `mkdir
+    my-loam-workspace && cd my-loam-workspace` line; change `git
+    clone https://github.com/lukeivers/loam framework/` to `git
+    clone https://github.com/lukeivers/loam` + `cd loam`. Comment
+    text updated from "Clone loam into a fresh workspace's
+    framework directory." to "Clone loam.". Lines 37-44
+    (`pip install -e framework/tools/loam`, `loam init .`,
+    `claude`) byte-unchanged. Admitted via workspace-bootstrap
+    fence-test's pre-existing `allowed_files` entry for
+    `README.md` at line 349.
+  - `docs/getting-started.md` — collapse old §1 + §2 into a
+    single §1 ("Clone loam"); drop the `mkdir -p ~/loam-demo &&
+    cd ~/loam-demo` block; change the `git clone` line to drop
+    the `framework` arg + add `cd loam`; renumber §3 → §2,
+    §4 → §3, §5 → §4, §6 → §5; change "Six-step bootstrap"
+    header to "Five-step bootstrap"; "six shell commands" body
+    line to "five shell commands". The §"What just happened"
+    body's "Five shell commands" was already accurate post-FBE.5
+    renumbering (LOW 1 fix). Admitted via workspace-bootstrap
+    fence-test's pre-existing `allowed_files` entry at line 350.
+  - `framework/workspace-bootstrap/tests/test_pos_new_workspace.py`
+    — `test_AC_D_4_1_local_canonical_creates_working_workspace`:
+    `fixture_pairs` workspace-side paths updated for component
+    leaves (prepend `framework/`); inline comment block tightened
+    to describe FBE.2b/FBE.2c shape evolution; no-doubling
+    assertion at lines 155-161 flipped to require doubling.
+    `test_AC_D_4_1_url_form_routes_through_cache_clone`: read of
+    `(new_ws / "framework" / "README.md")` updated to
+    `(new_ws / "framework" / "framework" / "README.md")`; inline
+    comment tightened.
+  - `framework/workspace-bootstrap/tests/test_AC_SFR_1_single_framework_directory.py`
+    — `test_AC_SFR_1_single_level_framework_directory`:
+    component-existence assertions updated to expect
+    `(framework / "framework" / "<comp>").is_dir()`; no-doubling
+    assertion flipped; module + function docstrings tightened to
+    describe shape evolution. Function name PRESERVED as a
+    documentation artifact (rename = scope creep per FBE.2c sub-
+    plan §9; binding AC family is `AC.FBE.2c.*`).
+  - `framework/workspace-bootstrap/tests/test_AC_SFR_5_stranger_clones_canonical.py`
+    — `test_AC_SFR_5_framework_only_reachable_via_explicit_branch`:
+    `assert all(not p.startswith("framework/") for p in paths)`
+    flipped to `assert any(p.startswith("framework/") for p in
+    paths)` (mirrors the inversion FBE.2b applied to the synth-
+    pipeline tests inside `framework/tools/pos-publish-framework-
+    only/tests/`).
+  - `framework/workspace-bootstrap/tests/SEAL_COMMIT` advances to
+    FBE.2c seal SHA via `loam amend seal`.
+  - `framework/workspace-bootstrap/tests/test_no_sealed_amendments.py`
+    BASELINE literal bumps via `loam amend apply`.
+  - `framework/workspace-bootstrap/tests/SEAL_COMMIT.notes` —
+    this body (single-fence narrative).
+
+AC surface (per sub-plan §4):
+
+  - AC.FBE.2c.1 — README.md `git clone` line drops the
+    `framework/` arg; `cd loam` follows; `mkdir my-loam-workspace`
+    line dropped.
+  - AC.FBE.2c.2 — docs/getting-started.md §1+§2 collapse into
+    one §1 + step renumber + header "Six-step" → "Five-step".
+  - AC.FBE.2c.3 — `test_AC_SFR_1_single_level_framework_directory`
+    passes against current source asserting the post-FBE.2b
+    doubled-component contract.
+  - AC.FBE.2c.4 — `test_AC_SFR_5_framework_only_reachable_via_explicit_branch`
+    passes asserting at-least-one framework-prefixed leaf in the
+    framework-only synth tree.
+  - AC.FBE.2c.5 — `test_AC_D_4_1_local_canonical_creates_working_workspace`
+    passes; fixture_pairs paths updated for component leaves;
+    no-doubling assertion flipped.
+  - AC.FBE.2c.6 — `test_AC_D_4_1_url_form_routes_through_cache_clone`
+    passes; read-of-README path updated to doubled location.
+  - AC.FBE.2c.7 — Smoke: cloning the framework-only branch
+    WITHOUT a `framework/` arg produces single-level
+    `<clone>/framework/<comp>/...` (no doubling at the user-
+    visible CWD). Documented in the FBE.2c status file.
+  - AC.FBE.2c.8 — Negative AC: no scope expansion (no source
+    edits, no broader doc rewrites, no test refactors beyond the
+    4 broken ones).
+  - AC.FBE.2c.S — Sealed-component fence: SINGLE component
+    `framework/workspace-bootstrap/` + universal admissions for
+    README.md + docs/getting-started.md (pre-admitted in
+    workspace-bootstrap fence-test's `allowed_files`).
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - `test_AC_SFR_1_single_level_framework_directory` function
+    name preserved (rename would expand scope into a cross-file
+    rename + the AC family rename — both out of FBE.2c's locked
+    scope).
+  - The "no doubling" / "single level" wording in the existing
+    AC.SFR.1 docstring is replaced with FBE.2c's shape-evolution
+    narrative; the new contract binds to `AC.FBE.2c.*` while the
+    old `AC.SFR.1` family stays as a documentation artifact.
+  - The bootstrap_new_workspace source code is UNCHANGED — the
+    doubling is acceptable as an internal `loam init` contract
+    because users don't navigate `<workspace>/framework/...` by
+    hand; the user-visible CWD post-`git clone <repo>` + `cd
+    loam` shows single-level `framework/<comp>/...` (the
+    framework-only branch's content, unprefixed at CWD).
+
+Smoke verification (AC.FBE.2c.7) — POST-seal, documented in the
+status file at
+`<workspace>/.scratch/claude-output/fbe2c-status-2026-05-03.md`.
+
+Out of scope (per sub-plan §9):
+
+  - Renaming the `test_AC_SFR_1_single_level_framework_directory`
+    file or function (scope creep).
+  - Renaming the `AC.SFR.1` AC family.
+  - Editing `framework/workspace-bootstrap/src/` source.
+  - Editing any other component source (synth pipeline, loam-init,
+    etc.).
+  - Broader README rewrites (only the Quickstart code block + its
+    comment).
+  - Broader getting-started.md rewrites (only §1 + §2 collapse +
+    renumber + header/body counts).
+  - Editing the CLI summary message at loam-init/cli.py:128.
+
+BASELINE cd2a77e (pre-apply tip; the FBE.2c source-side delta
+commit). The workspace-bootstrap anchor's SEAL_COMMIT sidecar
+lands at the seal SHA via `loam amend seal`. Post-FBE.2c seal,
+the dispatcher re-runs `loam amend seal` against FBE.5b's
+manifest (apply commit `ea6fad1` already in place pre-FBE.2c) —
+at that point the 4 failing tests pass and FBE.5b's seal can
+complete.

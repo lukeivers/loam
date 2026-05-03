@@ -773,6 +773,50 @@ implementing plugin against the existing surface.
 - Verification: workspace-bootstrap 242/253 pass + 11 skipped (10 net new skips relative to baseline 252+1=253 — every skip carries FBE.7 + M-GMP attribution per AC.FBE.7.5); primary-persona 521/521 pass byte-identically (AC.FBE.7.7 + AC.FBE.7.9); partition tests 3/3 pass; sealed-component fence diff clean (only paths under `framework/workspace-bootstrap/` + `docs/rebuild/plans/` per AC.FBE.7.S).
 - Halt-and-surface from build (recorded for the dispatcher): **Surface #2 (cli_memory_write preserved).** AC #3's literal reading would have edited `framework/primary-persona/src/loam/primary_persona/stop_emitter.py` line 551 to drop the `build_live_mcp_memory_client` call; the multi-signal conflict-resolution in sub-plan §2 Surface #2 ruled NOT to edit (production runtime path already uses M-FBM via the queue → worker → `FileBackedMemoryClient` chain; editing `cli_memory_write` would break the AC.J.8 + AC.M.10 + AC.J.2 backwards-compat contracts). Dispatcher rules whether AC #3 needs a corrective amendment. **Surface #4 (`_install_service_manager_files` iteration switched).** Iteration switched from `_LAUNCHD_TEMPLATES.items()` to `_SERVICE_KINDS` so removing `memory-graphiti` from `_SERVICE_KINDS` actually prevents the graphiti plist from being written; the alternative (iterate templates but skip bootstrap) leaves the plist on disk + the launchd label registered, defeating the user-visible cleanliness goal.
 
+### FBE.10 — Close BLOCKER-FBE9.1 (workspace-bootstrap local-path clones must materialise framework-only)
+
+Inserted post-FBE.9 per the dispatcher's FOLDBACK ruling. Single-component
+workspace-bootstrap source-side fix: `bootstrap_new_workspace`'s
+local-path branch did NOT materialise `framework-only` as a local
+branch (the URL-form path did, via `_resolve_url_to_clone_source`).
+When `local_path` is a stranger's `git clone <canonical-url>` of
+canonical (the typical post-FBE.9 cwd-default-when-git-tree pattern:
+stranger clones loam, cd's in, runs `loam init <ws>` with no `--from`),
+`framework-only` exists only as `refs/remotes/origin/framework-only`
+on `local_path` — and the downstream `_clone_canonical` checkout step
+fails with `fatal: 'origin/framework-only' is not a commit`.
+
+Fix shape (~15 LOC source + ~120 LOC test):
+- Extract `_materialise_framework_only_branch(path: Path) -> None`
+  helper (preserves existing fail-soft semantics: non-zero exit
+  ignored, downstream checkout diagnoses absence precisely).
+- Call it from BOTH `_resolve_url_to_clone_source` (replacing the
+  existing inline block) AND from `bootstrap_new_workspace`'s
+  local-path branch (after `local_path` validation, before passing
+  to `_clone_canonical`).
+- New test `test_AC_FBE_10_1_local_path_clone_of_canonical.py`
+  reproduces the exact BLOCKER-FBE9.1 case (build fixture canonical
+  → clone into stranger-clone path → bootstrap against stranger-clone)
+  and asserts the post-fix bootstrap succeeds with the workspace's
+  framework subdir checked out on `framework-only`.
+
+URL-form behaviour preserved byte-identically (existing tests pass
+unchanged). Sealed-component fence: 1 component
+(`framework/workspace-bootstrap/`); HOL `frozen_baseline: true`
+narrative-only contribution per FBE.6/FBE.6b/FBE.8/FBE.9 precedent.
+Universal admissions for `docs/rebuild/plans/` and
+`framework/hands-off-lifecycle/seals/`.
+
+- Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe10.md` (authored at `e112f17` by FBE.10 build agent before code per `feedback_plan_before_code`).
+- Source + new test commit (workspace-bootstrap helper extraction + local-path call site + new test): `3fefbb9`.
+- HOL seal narrative anchor commit: `579188b`.
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe10.manifest.yaml` (amendment #116, committed at `804d806`; 2-fence: workspace-bootstrap + HOL frozen-baseline narrative).
+- Apply commit: `8596bae` (manually committed per FBE.6b Surface #5 + FBE.9 Surface #3 precedent — `loam amend apply` modified sidecars + BASELINE literal but did NOT auto-commit).
+- Seal commit: `428deeb`.
+- ACs satisfied: AC.FBE.10.{1,2,3,4,S} (5/5).
+- Verification: 242 passed + 11 skipped in workspace-bootstrap test suite (matches FBE.7 baseline; new test is the +1 in passes); URL-form tests (test_AC_SFR_5_*, test_AC_SFR_1_*, test_pos_new_workspace) pass byte-identically (no URL-form regression from the helper extraction); end-to-end smoke (the FBE.9 BLOCKER-FBE9.1 reproduction flow: `git clone /Users/lukeivers/ivers-corp-pos-v2 /tmp/loam-fbe10-smoke && cd /tmp/loam-fbe10-smoke && python3.13 -m venv .venv && .venv/bin/pip install -r install-from-source.txt && .venv/bin/loam init /tmp/loam-fbe10-smoke-ws` no `--from`) PASSES end-to-end against post-FBE.10 canonical HEAD; resulting workspace's `framework/` is checked out on `framework-only`; `.claude/settings.json={}`; workspace shape correct.
+- Halt-and-surface from build (recorded for the dispatcher): **Surface FBE.10 #1 — `loam amend apply` did not auto-commit (recurrence; FBE.6b Surface #5 + FBE.9 Surface #3 precedent).** Same pattern as FBE.6b/FBE.9. Manually committed via `chore(amend): FBE.10 apply` per the same pattern. Worth investigating in the loam-amend tooling robustness sweep — appears to be a regression for the multi-component-with-frozen-baseline case; recurred 3 amendments in a row now (FBE.6b + FBE.9 + FBE.10). **Surface FBE.10 #2 — clean-tree workaround for `loam amend seal` (recurrence; expected).** Same pattern as every prior FBE.x. Pre-existing untracked + dirty paths stashed pre-seal, popped clean post-seal.
+
 ---
 
-*End of foldback plan-doc. FBE.9 dispatched + sealed 2026-05-03 (sub-plan `2d75fa1`, Bucket 1 source `4754a22`, Bucket 2 docs `6e13e71`, narrative anchor `5c94fe3`, manifest `087ec1f`, apply `77029ec`, seal `308d7b4`). FBE.9 closes BLOCKER-FBE6b.1 (CLI side `--from` becomes optional + cwd-default-when-git-tree; doc side `loam init .` → `loam init ~/loam-workspace` across 3 public docs) AND audits 26 documented public CLI commands (5 fixes applied). NEW BLOCKER-FBE9.1 surfaced during smoke: bootstrap_new_workspace local-path clones don't materialise `framework-only` as a local branch from `remotes/origin/framework-only` — pre-existing in workspace-bootstrap; pre-FBE.9 hidden because users had to pass explicit `--from <canonical-pos-v2>` (which had local `framework-only`); FBE.9's auto-default makes the failure the default for cloned-loam strangers. Remaining sequence: FBE.10 (workspace-bootstrap source-side fix for BLOCKER-FBE9.1; ~10-20 LOC; 1-component fence) → FBE.6c (re-synth + sweep + smoke + reviewer against post-FBE.10 canonical HEAD) → M12 publish-flip on GO.*
+*End of foldback plan-doc. FBE.10 dispatched + sealed 2026-05-03 (sub-plan `e112f17`, source + new test `3fefbb9`, narrative anchor `579188b`, manifest `804d806`, apply `8596bae`, seal `428deeb`). FBE.10 closes BLOCKER-FBE9.1 with a single-component workspace-bootstrap source-side fix (extract `_materialise_framework_only_branch` helper; call from both URL-form and local-path branches; preserves URL-form byte-identically). End-to-end smoke (the FBE.9 BLOCKER-FBE9.1 reproduction flow) PASSES against post-FBE.10 canonical HEAD. Remaining sequence: FBE.6c (re-synth + sweep + smoke + reviewer against post-FBE.10 canonical HEAD) → M12 publish-flip on GO.*

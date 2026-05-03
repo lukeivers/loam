@@ -527,6 +527,28 @@ The plan should be re-opened if any of these occur:
 - HOL narrative: `framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6`.
 - Seal commit: `<TBD>`.
 
+### FBE.7 — Drop graphiti from v0.1.0 first-run shape (M-FBM is the v0.1.0 floor)
+
+Added post-FBE.2 per Luke's 2026-05-03 16:53 + 16:55 UTC ruling: graphiti
+must NOT ship enabled in v0.1.0. M-FBM (file-based memory; built at
+`framework/primary-persona/src/loam/primary_persona/file_memory.py`)
+becomes the v0.1.0 floor. Closes the workspace-bootstrap-side gap:
+fresh stranger-clone v0.1.0 workspaces no longer auto-launch the
+graphiti sidecar and no longer register `memory-graphiti` in
+`<workspace>/workspace/.mcp.json`. Primary-persona's runtime production
+path was already M-FBM-aligned; FBE.7 verified-but-no-source-edits
+there. M-GMP plugin (post-v0.1.0) restores graphiti as a `MemoryProvider`-
+implementing plugin against the existing surface.
+
+- Plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md` (authored at `db17485` by FBE.7 build agent before code per `feedback_plan_before_code`).
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.manifest.yaml` (amendment #105, committed at `89eec03`).
+- Source + 10 test edits commit: `a22272c`.
+- Apply commit: `99b237e`.
+- Seal commit: `a102bde`.
+- ACs satisfied: AC.FBE.7.{1,2,3,4,5,6,7,8,9,S} (10/10).
+- Verification: workspace-bootstrap 242/253 pass + 11 skipped (10 net new skips relative to baseline 252+1=253 — every skip carries FBE.7 + M-GMP attribution per AC.FBE.7.5); primary-persona 521/521 pass byte-identically (AC.FBE.7.7 + AC.FBE.7.9); partition tests 3/3 pass; sealed-component fence diff clean (only paths under `framework/workspace-bootstrap/` + `docs/rebuild/plans/` per AC.FBE.7.S).
+- Halt-and-surface from build (recorded for the dispatcher): **Surface #2 (cli_memory_write preserved).** AC #3's literal reading would have edited `framework/primary-persona/src/loam/primary_persona/stop_emitter.py` line 551 to drop the `build_live_mcp_memory_client` call; the multi-signal conflict-resolution in sub-plan §2 Surface #2 ruled NOT to edit (production runtime path already uses M-FBM via the queue → worker → `FileBackedMemoryClient` chain; editing `cli_memory_write` would break the AC.J.8 + AC.M.10 + AC.J.2 backwards-compat contracts). Dispatcher rules whether AC #3 needs a corrective amendment. **Surface #4 (`_install_service_manager_files` iteration switched).** Iteration switched from `_LAUNCHD_TEMPLATES.items()` to `_SERVICE_KINDS` so removing `memory-graphiti` from `_SERVICE_KINDS` actually prevents the graphiti plist from being written; the alternative (iterate templates but skip bootstrap) leaves the plist on disk + the launchd label registered, defeating the user-visible cleanliness goal.
+
 ---
 
-*End of foldback plan-doc. Awaiting Luke's ruling on Decision B.alt before launching FBE.1.*
+*End of foldback plan-doc. FBE.7 sealed 2026-05-03 (post-Luke-ruling pivot to M-FBM floor at v0.1.0). Sequence post-FBE.7: FBE.3 → FBE.4 → FBE.5 → FBE.2b (synth path-layout fix, newly added) → FBE.6.*

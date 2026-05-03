@@ -1,0 +1,144 @@
+# FBE.6 — Re-synth + sweep + extended smoke + reviewer re-run
+
+2026-05-03. v0.1.0 publish foldback close-the-cycle step. Per parent
+plan `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` §4
+FBE.6, this amendment re-synthesises canonical HEAD post-FBE.5b,
+re-runs the M11a-3 sweep AC checks, runs an EXTENDED smoke that
+exercises the documented install path end-to-end, pushes the synth
+to staging, and re-dispatches a stranger-perspective reviewer
+against the freshly-pushed staging tree. Sealed-component fence:
+NONE — narrative seal only at this anchor file (per parent plan §4
+FBE.6.S clause + M11a precedent).
+
+Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe6.md`.
+Sweep report: `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6-sweep-report.md`.
+Status file: `<workspace>/.scratch/claude-output/fbe6-status-2026-05-03.md`.
+Original reviewer dossier: `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+
+Composes on FBE.{1,2,2b,2c,3,4,5,5b,7} all sealed (`21b9480`,
+`8d2b770`, `47ccb3a`, `1d6ff13`, `becf183`, `99c03a6`, `bc56f0d`,
+`48bb7e2`, `a102bde`). BASELINE for FBE.6 is `48bb7e2` (the FBE.5b
+seal commit); the FBE.6 sub-plan-doc commit `6310769` is the source
+canonical HEAD that synth ran against.
+
+## Outcome — FOLDBACK
+
+The FBE.6 dispatch executed cleanly through synth (AC.FBE.6.1 PASS;
+new framework-only SHA `4d105f6`), sweeps (AC.FBE.6.2 mostly PASS
+with 4 regressions vs M11a-3 baseline — see below), extended smoke
+(AC.FBE.6.3 PASS end-to-end via `pip install -r install-from-source.txt`),
+staging push (AC.FBE.6.4 PASS; remote at `4d105f6`), and reviewer
+agent (AC.FBE.6.5 surfaces NEW BLOCKER-FBE6.1 + BLOCKER-FBE6.2).
+
+Per AC.FBE.6.7's negative-AC clause and the parent plan's halt-
+trigger #1 ("Reviewer agent surfaces a new BLOCKER → halt; re-open
+foldback"), FBE.6 closes WITHOUT silently fixing the new blockers
+in-band. **Foldback re-opens at FBE.8** to close the new blockers
+before M12 publish-flip can dispatch.
+
+## What FBE.6 verified (positive findings)
+
+- Synth pipeline produces a deterministic framework-only branch SHA
+  from canonical HEAD post-FBE.{1,2,2b,2c,3,4,5,5b,7}: source
+  `6310769` → framework-only `4d105f6` (advance from M11a-3-era
+  `da4e2b9`).
+- All 17 loam-* packages install cleanly from a fresh stranger clone
+  via `pip install -r install-from-source.txt` (FBE.4's mechanism
+  works as designed; no PyPI 404s on bare-name inter-component
+  deps; in-flight resolution succeeds in tier order).
+- `loam --version` exits 0 with `loam 0.1.0`; `loam --help` lists
+  `init` and `project` subcommands (the post-install discovery
+  surface is correct).
+- `loam init <ws> --from <repo>` produces a runnable workspace shape
+  end-to-end: `framework/` (with FBE.2c doubled-component shape at
+  `framework/framework/<comp>/`), `workspace/personas/primary/`,
+  `.claude/settings.json={}` (FBE.5b mechanism works), `~/.loam/{
+  dormancy.sqlite, logs/}` (FBE.7-aligned scaffold; no graphiti
+  artefacts).
+- 15/15 wired components have ≥1 production caller in synth (no
+  unwired-component leakage); zero `tests/` files in synth tree.
+- 4/4 substitution source-side tokens (M9 SUBSTITUTION_TABLE) scan
+  to zero in synth — `Luke Ivers` / `lukeivers/pos-v2` / canonical
+  workspace path all rewritten cleanly.
+- Staging push to `https://github.com/lukeivers/loam-staging.git`
+  succeeded via `--force` (the prior remote SHA `c74bc25` was an
+  intermediate synth never tracked by sweep tooling — required
+  plain `--force` after `--force-with-lease` rejected stale info;
+  recorded as Surface FBE.6 #5 for the next dispatcher).
+
+## What FBE.6 surfaced (foldback-reopening findings)
+
+### BLOCKER-FBE6.1 — README/getting-started.md install flow broken
+
+The README's literal install (`pip install -e framework/tools/loam`
+followed by `loam init .`) FAILS at step 3 because `loam-init` is a
+separate Python package not pulled in by installing
+`framework/tools/loam` alone. A stranger following the README
+literally gets `loam: error: argument subcommand: invalid choice:
+'init' (choose from )` (exit code 2).
+
+The actual working install path is `pip install -r install-from-
+source.txt` (FBE.4 ratified this), but neither README.md nor docs/
+getting-started.md mention `install-from-source.txt`. The supporting
+doc `docs/install-from-source.md` exists but is only linked from the
+install-from-source.txt header comment; the headline install flow in
+README/getting-started.md still describes the broken single-component
+install.
+
+This is an ODD §2.5 violation: the README's documented contract
+(install → loam init works) is not satisfied by the actual code path
+the README describes. The install-from-source.txt mechanism IS
+satisfied by the code path FBE.4 introduced — the docs just weren't
+updated to point at it.
+
+Fix shape: doc-edit amendment (FBE.8) updating README.md +
+getting-started.md to point at `install-from-source.txt` as the
+v0.1.0 entry point.
+
+### BLOCKER-FBE6.2 — `framework/tools/loam/README.md` heavy dev-vocabulary leak
+
+FBE.2 admitted `framework/tools/loam/**` to ship in synth so the
+loam-cli binary becomes installable from source. This included the
+loam-cli component's own `README.md`, which is heavily dev-vocabulary
+contaminated: titled "loam (amend subcommand)", references `pos-amend
+CLI per loam-rename-decisions.md Tier-1 #6`, `Amendment #22`, `M1g`,
+plus internal-process cross-links to `docs/rebuild/plans/amendment-
+22-pos-amend-cli.md` (which does not exist in synth). Also:
+`framework/tools/loam/src/loam_cli/__init__.py` module docstring +
+`framework/tools/loam/src/loam_cli/cli.py` docstring carry similar
+leaks. FBE.5's scrub scoped pyproject `description` fields and
+selected source files; the loam-cli README + docstrings were not in
+scope.
+
+Fix shape: extended scrub pass over loam-cli sources (FBE.8 batched
+or separate). Single-fence amendment at `framework/tools/loam/`.
+
+### HIGH-FBE6.1 + HIGH-FBE6.2 — Comment-block dev-vocabulary leaks
+
+`framework/primary-persona/pyproject.toml` carries an "Amendment #48
+/ amendment #47 / memory-graphiti service" comment block; `framework/
+primary-persona/src/loam/primary_persona/session_start_gate.py` line
+60 references non-existent `docs/rebuild/**` path. Cosmetic but
+visible to strangers reading source. Could batch into FBE.8 or defer
+to v0.1.x.
+
+## Path forward
+
+M12 publish-flip is GATED behind FBE.8 closure of BLOCKER-FBE6.1 +
+BLOCKER-FBE6.2 (HIGH-FBE6.1 + HIGH-FBE6.2 dispatcher's call on
+inclusion). Estimated FBE.8 wall-clock: 20–45 min (single doc-edit
+amendment + single-fence loam-cli scrub).
+
+Once FBE.8 seals, FBE.6 reruns (or a thin FBE.6b sweep-only
+re-verification) confirms the install path works end-to-end against
+the new staging tree, then M12 dispatches.
+
+This narrative seal anchor records the FBE.6 close-cycle outcome:
+sweep + smoke + reviewer ran, four artefacts produced (sub-plan,
+sweep report, this seal narrative, status file), foldback re-opens
+at FBE.8 with named blockers + recommended fix shapes. No source-
+side changes were made during FBE.6 (AC.FBE.6.7 negative-AC held).
+
+---
+
+End of FBE.6 narrative seal. Reference verdict: FOLDBACK.

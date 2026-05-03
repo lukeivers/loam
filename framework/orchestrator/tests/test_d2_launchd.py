@@ -63,7 +63,7 @@ def test_launchd_plist_renders_to_valid_plist():
     assert data["RunAtLoad"] is True
     assert data["ThrottleInterval"] == 30
     assert data["ProgramArguments"][0] == "/usr/bin/python3"
-    assert data["ProgramArguments"][1:3] == ["-m", "pos_orchestrator"]
+    assert data["ProgramArguments"][1:3] == ["-m", "loam.orchestrator"]
 
 
 def test_launchd_throttle_interval_locked_at_30s():

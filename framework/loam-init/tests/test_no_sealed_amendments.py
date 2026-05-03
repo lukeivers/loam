@@ -37,7 +37,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "cfc9ed4"
+BASELINE = "5c94fe3"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -99,6 +99,9 @@ def test_AC_FBE_1_S_only_loam_init_changed() -> None:
         "framework/dev-sdlc/",
         "framework/workspace-bootstrap/",
         "workspace-bootstrap/",
+        "framework/hands-off-lifecycle/",
+        "framework/hands-off-lifecycle/seals/",
+        "hands-off-lifecycle/",
     )
     allowed_files: set[str] = {
         "CLAUDE.md",
@@ -108,6 +111,8 @@ def test_AC_FBE_1_S_only_loam_init_changed() -> None:
         "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
         "docs/install-from-source.md",
         "install-from-source.txt",
+        "README.md",
+        "docs/getting-started.md",
     }
 
     offending = []

@@ -326,6 +326,7 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         "plugins",
         "dev-sdlc",
         "loam",
+        "loam-init",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

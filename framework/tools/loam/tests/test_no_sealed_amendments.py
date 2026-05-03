@@ -40,7 +40,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
-BASELINE = "8032348"
+BASELINE = "f14a5a4"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -114,6 +114,8 @@ def test_AC_FBE_2_S_only_loam_cli_changed() -> None:
         "telegram-interface/",
         "workspace-bootstrap/",
         "workspace-sync/",
+        "framework/hands-off-lifecycle/",
+        "hands-off-lifecycle/",
     )
     allowed_files: set[str] = {
         "CLAUDE.md",

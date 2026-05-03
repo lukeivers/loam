@@ -68,3 +68,16 @@ AC surface (per sub-plan §4):
 Closes BLOCKER-FBE9.1; M12 publish-flip remains GATED behind FBE.6c
 re-running the synth + sweep + smoke + reviewer cycle against the
 post-FBE.10 canonical HEAD.
+
+# FBE.10 seal — apply ladder
+
+Apply ladder (per `loam amend apply` + `loam amend seal`):
+BASELINE `579188b` → seal `<seal-sha>`. Two fence components:
+workspace-bootstrap advances its `tests/SEAL_COMMIT` sidecar +
+BASELINE literal bumps; HOL advances its sidecar (frozen-baseline
+pinned project-start; narrative-only contribution). Cross-component
+sweep validates fence discipline post-seal.
+
+See the full narrative at the target file (already authored
+pre-apply per AC.FBE.10.S) for FBE.10 outcome, sub-plan reference,
+status file, and BLOCKER-FBE9.1 closure detail.

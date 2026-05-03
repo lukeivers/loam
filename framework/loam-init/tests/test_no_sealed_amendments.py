@@ -82,6 +82,19 @@ def test_AC_FBE_1_S_only_loam_init_changed() -> None:
         "loam-init/",
         "docs/rebuild/plans/",
         "framework/tools/pos-publish-framework-only/",
+        # FBE.4 cross-component partner — dev-sdlc lives at
+        # plugins/dev-sdlc/, NOT framework/dev-sdlc/. The `loam
+        # amend apply` tool's partner-prefix derivation assumes
+        # framework/<name>/ naming and admits both `dev-sdlc/` +
+        # `framework/dev-sdlc/`; for plugin-located components the
+        # actual path-prefix needed for the seal-diff sweep is
+        # `plugins/<name>/`. Manually admitted here as the
+        # corrective for the FBE.4 fence-three (workspace-bootstrap +
+        # dev-sdlc + loam-init). Other plugin admissions
+        # (framework/<name>/-prefixed) remain harmless. See
+        # docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe4.md
+        # § halt-trigger HT-3 / HT-4.
+        "plugins/dev-sdlc/",
         "dev-sdlc/",
         "framework/dev-sdlc/",
         "framework/workspace-bootstrap/",

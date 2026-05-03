@@ -1,0 +1,99 @@
+schema_version: 1
+amendment:
+  number: 118
+  slug: v0-1-0-foldback-scope-expansion-fbe11
+  title: "FBE.11 — close BLOCKER-FBE6c.1 (publish-side dual-ref push; HOL no-op narrative anchor)"
+
+# BASELINE: the FBE.11 dispatch's pre-build canonical HEAD.
+# Per the doc-edit + local-tmp-ref-smoke path, FBE.11 lands the
+# operator-instruction doc edits + the seal narrative file pre-apply,
+# then this manifest commit lands next, then `loam amend apply` lands,
+# then `loam amend seal` lands, then the parent §8 register backfill.
+#
+# Commit ladder pre-apply:
+#   <BASELINE>     — FBE.6c §8 register backfill (the canonical HEAD at
+#                    FBE.11 dispatch-time)
+#   <subplan>      — FBE.11 sub-plan-doc commit (NEW)
+#   <docedits>     — operator-instruction doc edits commit (NEW;
+#                    oss-v0-1-0-publish-dry-run.md AC.M11a.7 + line 32 +
+#                    line ~431; v0-1-0-foldback-scope-expansion.md
+#                    §4 AC.FBE.6.4)
+#   <narrative>    — feat(hands-off-lifecycle): FBE.11 seal narrative
+#                    anchor commit (NEW)
+#   <this manifest commit lands next>
+#   <loam amend apply lands as the next commit; per FBE.{6b,9,10,6c}
+#    precedent expected to NOT auto-commit (4 consecutive recurrences);
+#    manually committed as `chore(amend): FBE.11 apply ...`>
+#   <loam amend seal lands as the seal commit>
+#   <parent §8 register backfill commit lands last>
+#
+# HOL no-op narrative anchor pattern (per FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c
+# precedent for amendments where the structural surface is the seal
+# narrative itself + universal-paths-admitted doc edits; no source-side
+# fence delta to enforce on a sealed component). HOL is its own anchor
+# here — the byte-content invariant at HOL stays unchanged
+# (frozen_baseline: true) and the seal narrative file + the operator-
+# instruction doc edits (which ride universal_paths.prefixes) constitute
+# the entire structural artefact.
+#
+# Per parent plan §4 FBE.6.S clause + dispatcher's sealed-component
+# fence guidance ("doc-only edits to docs/rebuild/plans/oss-v0-1-0-publish.md
+# if push is manual operator step"): no source-side fence on any
+# shipping component; HOL narrative anchor is the seal mechanism.
+baseline: "c55358d"
+
+plan: docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe11.md
+
+seal_description: "FBE.11 closes BLOCKER-FBE6c.1 (publish-side branch-name divergence: staging publish of `framework-only:main` deprived stranger clones of the `origin/framework-only` ref the bootstrap requires). Per dispatcher's locked Path B: dual-ref push. Doc-only operator-instruction update at the live publish-mechanic surfaces — `docs/rebuild/plans/oss-v0-1-0-publish-dry-run.md` AC.M11a.7 §body rewritten to instruct `git push <staging-url> framework-only:main framework-only:framework-only --force` (single invocation; both refspecs in one command); line 32 (M11a summary) + line ~431 (D-build.M11a.10 historical record) annotated with the dual-ref shape; `docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md` §4 AC.FBE.6.4 row updated so future FBE.6d inherits the new push command verbatim. The publish path is operator-manual (the synthesis tool at framework/tools/pos-publish-framework-only/ advances only the local framework-only branch; the push to staging or public is operator-typed); no source-side delta needed. Sealed-component fence: hands-off-lifecycle only (HOL no-op narrative anchor pattern; frozen_baseline: true per amendment #23 + FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c manifest precedent). Local-tmp-ref smoke verified pre-doc-edit: dual-ref push to /tmp/loam-staging-fbe11-smoke.git (fresh local bare) lands BOTH refs/heads/main AND refs/heads/framework-only at the same SHA (canonical's framework-only tip 19422ed); subsequent git clone of the bare into a stranger path produces refs/remotes/origin/framework-only — exactly the bootstrap-required ref. No GitHub state written; M12 publish-flip remains GATED behind a FBE.6d re-verification cycle that exercises the dual-ref push path against actual staging. Status file at <workspace>/.scratch/claude-output/fbe11-status-2026-05-03.md."
+
+# HOL no-op narrative anchor (mirrors FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c
+# precedent for amendments where the structural surface is the seal
+# narrative itself; no source-side fence delta to enforce).
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail
+# (FBE.11 sub-plan + manifest YAML + parent plan-doc backfill) AND
+# the operator-instruction doc edits (the dry-run plan AC.M11a.7
+# rewrite + parent plan §4 AC.FBE.6.4 row update — both live under
+# docs/rebuild/plans/, so the universal prefix admits them by-shape).
+# `framework/hands-off-lifecycle/seals/` admits the seal narrative
+# file (HOL is the narrative anchor home per FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c
+# precedent).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+    - framework/hands-off-lifecycle/seals/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe11
+  body: |
+    # FBE.11 narrative-only seal (closes BLOCKER-FBE6c.1)
+
+    See the full narrative at the target file (already authored
+    pre-apply per AC.FBE.11.S) for FBE.11 outcome (CLOSED via
+    publish-side dual-ref push per dispatcher's locked Path B),
+    smoke verification (local-tmp-ref dual-ref push to fresh bare
+    repo + clone confirming stranger gets `origin/framework-only`),
+    ACs satisfied (7/7 PASS), and path forward (FBE.6d re-verification
+    cycle is the next dispatch; M12 publish-flip remains GATED).
+
+    Sub-plan-doc:
+    `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe11.md`.
+    Status file:
+    `<workspace>/.scratch/claude-output/fbe11-status-2026-05-03.md`.
+
+    BASELINE — the FBE.6c §8 register backfill commit (FBE.11's
+    canonical HEAD at dispatch-time). No source-side delta per
+    AC.FBE.11.6 negative AC.

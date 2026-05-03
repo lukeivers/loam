@@ -101,6 +101,7 @@ def test_AC_FBE_2_S_only_loam_cli_changed() -> None:
         "framework/telegram-interface/",
         "framework/workspace-bootstrap/",
         "framework/workspace-sync/",
+        "plugins/dev-sdlc/",
         "objective-tracker/",
         "observability-aggregator/",
         "orchestrator/",

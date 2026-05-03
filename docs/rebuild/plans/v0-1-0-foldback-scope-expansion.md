@@ -651,6 +651,32 @@ FBE.6's seal commit is deferred to FBE.6b post-FBE.8.
 - Verification: extended smoke ran end-to-end against fresh stranger clone via `pip install -r install-from-source.txt` — 17 packages installed, `loam --version`=`loam 0.1.0`, `loam init` produces runnable workspace shape (`framework/`, `workspace/personas/primary/`, `.claude/settings.json={}`, `~/.loam/{dormancy.sqlite, logs/}`).
 - Halt-and-surface from build (recorded for the dispatcher): **Surface FBE.6 #1-#6** documented in full in `<workspace>/.scratch/claude-output/fbe6-status-2026-05-03.md`. The actionable summary: FBE.8 needs to close BLOCKER-FBE6.1 (README/getting-started.md → `install-from-source.txt`) + BLOCKER-FBE6.2 (loam-cli README + docstrings scrub) + Surface FBE.6 #6 (H19 admit + HC#4 retire-and-rebaseline). Then FBE.6b re-runs the close-cycle with all FBE.8 fixes in place; M12 dispatches on GO.
 
+### FBE.8 — Close FBE.6 reviewer BLOCKERs + HIGH cosmetics + FBE.6 seal-debt
+
+Inserted post-FBE.6 per the dispatcher's FOLDBACK ruling. Single
+amendment closing four buckets: BLOCKER-FBE6.1 (README +
+getting-started.md install flow → install-from-source.txt);
+BLOCKER-FBE6.2 (loam-cli README + __init__.py + cli.py
+dev-vocabulary scrub); HIGH-FBE6.1 + HIGH-FBE6.2 (primary-persona
+pyproject mcp-pin annotation + session_start_gate.py comment +
+docstring scrubs); Surface FBE.6 #6 (H19 admit `install-from-source.txt`
++ HC#4 retire-and-rebaseline for two pyprojects FBE.5 edited but
+didn't rebaseline). Three sealed-component fence: tools/loam +
+primary-persona + hands-off-lifecycle (HOL `frozen_baseline: true`
+per amendment #23). Universal admissions for README + getting-started.md.
+
+- Sub-plan-doc: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe8.md` (authored at `4467637` by FBE.8 build agent before code per `feedback_plan_before_code`).
+- Bucket 2 source edit commit (loam-cli README + __init__.py + cli.py scrub): `fda303b`.
+- Bucket 3 source edit commit (primary-persona pyproject + session_start_gate.py): `65abb86`.
+- Bucket 4 commit (H19 admit + HC#4 retire-and-rebaseline + FBE.8 seal narrative anchor): `81c23ce`.
+- Bucket 1 doc edit commit (README + getting-started.md install-flow): `f14a5a4`.
+- Manifest: `docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe8.manifest.yaml` (amendment #113, committed at `db4c36b`).
+- Apply commit: `8bec8f2`.
+- Seal commit: `cc66b08`.
+- ACs satisfied: AC.FBE.8.{1,2,3,4,5,6,7,8,S} (9/9).
+- Verification: 521/521 primary-persona tests pass; 7/7 tools/loam tests pass; 470/470 hands-off-lifecycle tests pass (including the post-FBE.8 H19 + HC#4 fixes); seal pipeline ran clean (HOL frozen-baseline noted; partner-prefix derivation again admitted bare `loam` to H19's allowed set, harmless because no top-level `loam/` dir exists per FBE.4 + FBE.5 precedent). Smoke: `pip install -r install-from-source.txt` against post-FBE.8 canonical clone exits 0; `loam --version` reports `loam 0.1.0`. The full `loam init` end-to-end smoke was verified by FBE.6 against the framework-only branch at `4d105f6`; FBE.8's source-side delta ships only doc + cosmetic + test-bookkeeping changes that don't affect runtime behaviour, so the FBE.6-verified contract holds. FBE.6b will re-run the full close-cycle smoke against the post-FBE.8 framework-only branch after re-synth.
+- Halt-and-surface from build (recorded for the dispatcher): **No new BLOCKERs or HIGHs surfaced during build.** The 4 buckets closed cleanly per the sub-plan §6 file-by-file map. Stranger-clone smoke verified the documented install flow now works end-to-end (post-FBE.8 README + getting-started.md both describe the working `pip install -r install-from-source.txt` flow; install ran clean; `loam --version` returned `loam 0.1.0`). M12 publish-flip remains GATED behind FBE.6b's re-synth + sweep + smoke + reviewer cycle against the post-FBE.8 canonical HEAD.
+
 ### FBE.7 — Drop graphiti from v0.1.0 first-run shape (M-FBM is the v0.1.0 floor)
 
 Added post-FBE.2 per Luke's 2026-05-03 16:53 + 16:55 UTC ruling: graphiti
@@ -675,4 +701,4 @@ implementing plugin against the existing surface.
 
 ---
 
-*End of foldback plan-doc. FBE.6 dispatched 2026-05-03 (sub-plan `6310769`, narrative `2dff17d`, manifest `2a574ac`, apply `364c37d`); seal HALTED on pre-existing FBE.4 H19 + FBE.5 HC#4 debt; reviewer probe surfaced 2 NEW BLOCKERs (BLOCKER-FBE6.1 + BLOCKER-FBE6.2) + 2 HIGH; verdict FOLDBACK to FBE.8. Remaining sequence: FBE.8 (closes Surface FBE.6 #1-#4 + Surface FBE.6 #6 source-side debt) → FBE.6b (re-runs sweep + smoke + reviewer + completes seal commit) → M12 publish-flip on GO.*
+*End of foldback plan-doc. FBE.8 dispatched + sealed 2026-05-03 (sub-plan `4467637`, Bucket 2 source `fda303b`, Bucket 3 source `65abb86`, Bucket 4 H19+HC#4+narrative `81c23ce`, Bucket 1 docs `f14a5a4`, manifest `db4c36b`, apply `8bec8f2`, seal `cc66b08`). FBE.8 closes the 4 reviewer + seal-debt buckets cleanly; install flow now describes the working `pip install -r install-from-source.txt` path. Remaining sequence: FBE.6b (re-synth + sweep + smoke + reviewer against post-FBE.8 canonical HEAD; completes the seal cycle FBE.6 left open) → M12 publish-flip on GO.*

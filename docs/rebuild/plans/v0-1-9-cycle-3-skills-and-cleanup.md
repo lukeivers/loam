@@ -233,10 +233,7 @@ Per AC.D-sa.7, every plan-doc that selects non-default methods records the decis
 
 ### Commit SHAs
 
-(Reserved — backfill on apply + seal.)
-
-- Plan-doc commit: `<TBD>` — `docs(plans): v0.1.9 Cycle 3 sub-plan + manifest — 6 dev-sdlc SKILLs second pass + audit-allowlist cleanup`
-- Source-edit commit (BASELINE): `<TBD>` — `feat(dev-sdlc): 6 dev-sdlc SKILL packages second pass + audit-allowlist cleanup (v0.1.9 Cycle 3)`
-- Amendment commit: `<TBD>` — `chore(amend): v0-1-9-cycle-3-skills-and-cleanup manifest+apply — dev-sdlc BASELINE+sidecar bump to <BASELINE>`
-- Seal commit: `<TBD>` — `chore(seals): v0-1-9-cycle-3-skills-and-cleanup — dev-sdlc at <BASELINE>`
-- §14 backfill commit: `<TBD>` — `docs(plans): record v0-1-9-cycle-3-skills-and-cleanup commit SHAs in method-decision register`
+- Amendment commit: `6378cc56427940e3d757fe2d7822ea716d6b210d` —
+  `chore(amend): v0-1-9-cycle-3-skills-and-cleanup manifest+apply — dev-sdlc BASELINE+sidecar bump to d8e3f01`
+- Seal commit: `328408756f19a09595ac4f74ab7de0365cefab4b` —
+  `chore(seals): v0-1-9-cycle-3-skills-and-cleanup — dev-sdlc at 6378cc5`

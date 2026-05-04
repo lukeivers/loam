@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>jsts-playwright-app — synthetic fixture</title>
+</head>
+<body>
+  <h1>Welcome</h1>
+  <button id="login-btn">Log in</button>
+  <script>
+    // Plain client-side JS surface — this script tag is what the
+    // plain_html_js recognizer detects.
+    document.getElementById('login-btn').addEventListener('click', () => {
+      window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin — jsts-playwright-app</title>
+</head>
+<body>
+  <h1>Admin</h1>
+  <div id="users"></div>
+  <script>
+    // Second plain HTML/JS surface.
+    fetch('/users')
+      .then((r) => r.json())
+      .then((users) => {
+        const div = document.getElementById('users');
+        div.innerHTML = users.map((u) => `<p>${u.name}</p>`).join('');
+      });
+  </script>
+</body>
+</html>

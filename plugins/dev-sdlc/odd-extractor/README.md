@@ -215,16 +215,104 @@ ratio across slices raises `SliceDriftError` (the F3-swarming
 See `docs/odd-methodology.md` §12 for the full per-language
 adapter conventions.
 
-## Out of scope (Cycles 1+2+3)
+## JS/TS/Playwright first-class adapter (Cycle 4a)
 
-- Python adapter → Cycle 4.
-- Canonical full Ruby-Rails-payment fixture + e2e smoke → Cycle 4.
+v0.1.8 Cycle 4a ships the JavaScript / TypeScript / Playwright
+adapter as the second registered language adapter — load-bearing
+for Eric's first-project shape (TypeScript Playwright tests + page
+objects under `src/playwright/` and `tests/`; JavaScript Node.js/
+Express backend under `src/`; plain HTML/JS surface). Public API:
+
+```python
+from loam_odd_extractor import JsTsAdapter
+from loam_odd_extractor.lang.jsts import extract_jsts_acs
+
+# Convenience function — runs the adapter against ``repo`` directly.
+raw = extract_jsts_acs(repo=Path("/path/to/jsts/app"))
+# raw.acs is a list of dict-shaped BandedAC entries
+```
+
+The adapter handles BOTH JavaScript (.js / .mjs / .cjs / .jsx) and
+TypeScript (.ts / .tsx) via three tree-sitter grammars
+(`tree-sitter-javascript` for JS + JSX; `tree-sitter-typescript`'s
+`language_typescript()` for `.ts`; `language_tsx()` for `.tsx`).
+Both ESM (`import` / `export`) and CommonJS (`require` /
+`module.exports`) module shapes are parsed.
+
+### Recognized JS/TS/Playwright idioms
+
+- Express routes — `app.get/post/put/delete/patch/use(...)`,
+  `router.<verb>(...)` (PLAUSIBLE; middleware names captured in AC
+  text).
+- Playwright tests — `test(...)`, `test.describe(...)`,
+  `test.beforeEach/afterEach/...` in files importing from
+  `@playwright/test` (VERIFIED with non-null `repo_sha`; PLAUSIBLE
+  downgrade without).
+- Playwright page objects — classes under `src/playwright/` (or
+  matching `*-page.ts`/`*Page.ts`) whose method bodies contain
+  `page.locator()`/`page.goto()` calls (PLAUSIBLE).
+- TypeScript types/interfaces — `interface X { ... }` and `type X
+  = { ... }` (PLAUSIBLE).
+- Zod schemas — `z.object({...})` and chained field constructors
+  `z.string().email()`, `z.string().min(N)`, etc. (PLAUSIBLE).
+- class-validator decorators — `@IsEmail()`, `@IsNotEmpty()`,
+  `@MinLength(N)`, etc. on class fields (PLAUSIBLE).
+- Test runners — Jest / Mocha / Vitest `describe(...)` /
+  `it(...)` / `test(...)` calls; runner identity detected via
+  import statements (VERIFIED with `repo_sha`; PLAUSIBLE downgrade).
+- Plain HTML/JS — file-level: HTML files containing `<script>`
+  tags emit one PLAUSIBLE AC each.
+- Heuristic inferences — Zod `.email()` → "<Schema> requires a
+  valid email"; class-validator `@IsEmail()` → email-required;
+  Express auth-middleware → "route requires authentication";
+  Playwright page-object `login*` method → auth entry point
+  (HYPOTHESISED with `rationale`).
+
+### tree-sitter-javascript / tree-sitter-typescript dependencies
+
+Both grammars are pre-compiled wheels (no native compile step) and
+are required dependencies of the package; lazy-imported at first
+parse-call so `import loam_odd_extractor` is still cheap.
+
+### Slice-and-swarm
+
+The JsTs adapter ships its own `slicer.py` with a JS/TS-domain
+partitioning strategy (per-page-object cluster, per-route-domain,
+per-test-file cohort, per-src-module). Aggregator + `SliceDriftError`
+are reused from the Ruby adapter (single canonical drift-detection
+contract).
+
+### Synthetic fixture
+
+`tests/fixtures/jsts-playwright-app/` is a small but realistic
+Eric-first-project-shaped fixture (~17 files; TS Playwright + JS
+Express + HTML/JS + Zod + class-validator + ≥10 tests across
+runners + ESM/CJS module-shape mix). Cycle-level smoke runs against
+this fixture; release-level smoke against a real OSS JS/TS-Playwright
+fixture is at v0.2.1.
+
+See `docs/odd-methodology.md` §13 for the full per-language adapter
+conventions (JS/TS/Playwright second).
+
+## Out of scope (Cycles 1+2+3+4a)
+
+- Python adapter → v0.2.2+ (deferred from Cycle 4 reroute).
+- Canonical full Ruby-Rails-payment fixture + e2e smoke → Cycle 4b
+  (residue surfaced from Cycle 4 via 4a/4b split per master plan
+  §7.9).
 - 6 dev-sdlc SKILLs → Cycle 5.
-- Continuous codebase-watch → v0.2.0.
+- Continuous codebase-watch → v0.2.0+.
 - Persona-side natural-language → RatificationAction parser → v0.2.0+.
-- LLM-driven HYPOTHESISED inference → Cycle 4+ (heuristic-shaped
-  in Cycle 3).
-- Real test execution to verify VERIFIED claims → v0.1.9+ (Cycle 3
-  grants VERIFIED on ratification-mediated assumption).
+- LLM-driven HYPOTHESISED inference → v0.2+ (heuristic-shaped in
+  Cycles 3 + 4a).
+- Real test execution to verify VERIFIED claims → v0.1.9+ (both
+  adapters grant VERIFIED on ratification-mediated assumption).
+- DRY refactor of `repo_sha` + `slugify` + heuristic-inference
+  patterns across Ruby/JsTs adapters → Cycle 4b/5 (local copies in
+  Cycle 4a per RF §10 #6).
+- joi schema validator recognizer → Cycle 4b/4c (Zod +
+  class-validator only in 4a).
+- NestJS-specific decorator patterns (`@Controller`, `@Get`, etc.)
+  → v0.2+.
 
 See the master plan for full scope and sequencing.

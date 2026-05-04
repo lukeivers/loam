@@ -20,6 +20,16 @@ dependencies = [
     # the package's public surface from this cycle on.
     "tree-sitter>=0.23",
     "tree-sitter-ruby>=0.23",
+    # v0.1.8 Cycle 4a — JS/TS/Playwright first-class adapter.
+    # tree-sitter-javascript covers .js/.mjs/.cjs/.jsx;
+    # tree-sitter-typescript covers .ts (typescript grammar) and
+    # .tsx (tsx grammar). Both pre-compiled wheels. Per cycle
+    # plan-doc Surface #11 — required (not optional) since the
+    # JS/TS adapter is part of the package's public surface from
+    # this cycle on; lazy-imported at first parse-call so
+    # ``import loam_odd_extractor`` is still cheap.
+    "tree-sitter-javascript>=0.23",
+    "tree-sitter-typescript>=0.23",
 ]
 
 [project.optional-dependencies]
@@ -44,6 +54,9 @@ odd-extract = "loam_odd_extractor.cli:build_odd_extract_subcommand"
 # instances are stateless; the singleton avoids re-instantiating
 # the parser cache on every discover_adapters() call).
 ruby = "loam_odd_extractor.lang.ruby.adapter:_singleton_factory"
+# Cycle 4a (v0.1.8) — JS/TS/Playwright adapter. Same factory
+# pattern as Ruby per plan-doc §3 + Surface #1 mirror.
+jsts = "loam_odd_extractor.lang.jsts.adapter:_singleton_factory"
 
 [tool.setuptools.packages.find]
 where = ["src"]

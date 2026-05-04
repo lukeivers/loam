@@ -85,8 +85,9 @@ def _walk_repo(repo_path: Path) -> list[Path]:
 
 
 # Per Cycle 3 plan-doc Surface #6 — language-hint routing table.
-# Initial mapping; later cycles extend (Cycle 4 adds Python; modern
-# Rails apps with .js / .ts / .haml are RF gap §10 #3).
+# Initial mapping; later cycles extend.
+# Cycle 4a (v0.1.8) adds "jsts" entry per plan-doc §3 + Surface #9.
+# Modern Rails apps with .haml / .erb templates are RF gap §10 #3.
 _LANGUAGE_HINTS: dict[str, frozenset[str]] = {
     "ruby": frozenset(
         {".rb", ".rake", ".gemspec"}
@@ -94,10 +95,20 @@ _LANGUAGE_HINTS: dict[str, frozenset[str]] = {
     "python": frozenset(
         {".py"}
     ),
+    "jsts": frozenset(
+        {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx",
+         ".html", ".htm"}
+    ),
 }
 _LANGUAGE_HINT_NAMES: dict[str, frozenset[str]] = {
     "ruby": frozenset(
         {"Rakefile", "Gemfile", "config.ru"}
+    ),
+    "jsts": frozenset(
+        {"package.json", "tsconfig.json",
+         "playwright.config.ts", "playwright.config.js",
+         "vitest.config.ts", "vitest.config.js",
+         "jest.config.js", "jest.config.ts"}
     ),
 }
 

@@ -1014,3 +1014,147 @@ filename). This unblocks multi-adapter codebases — modern Rails
 apps include JS, ERB, YAML, JSON, and (occasionally) Python data-
 science scripts that the Ruby adapter shouldn't claim. Files
 matching no claiming adapter's hint land in `unhandled_paths`.
+
+## 13. Per-language adapter conventions (JS/TS/Playwright second)
+
+v0.1.8 Cycle 4a ships the JavaScript / TypeScript / Playwright
+first-class adapter at
+`plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/lang/jsts/`
+— the second registered adapter, parallel to `lang/ruby/`. Eric's
+first project is JS/TS/Playwright (per the cycle reroute
+2026-05-04), so this adapter is load-bearing for the
+first-impression deliverable. The conventions below mirror §12's
+Ruby/Rails treatment, adjusted for the JS/TS surface.
+
+### 13.1 Confidence band rules per JS/TS/Playwright idiom
+
+| Idiom | Band emitted |
+|---|---|
+| Express routes (`app.get/post/...`, `router.<verb>(...)`) | PLAUSIBLE |
+| Playwright tests (`test(...)` in `@playwright/test`-importing files) | VERIFIED (with non-null `repo_sha`) / PLAUSIBLE (downgrade) |
+| Playwright page objects (classes under `src/playwright/` with `page.locator()`/`page.goto()` calls) | PLAUSIBLE |
+| TypeScript types/interfaces (`interface X {...}`, `type X = ...`) | PLAUSIBLE |
+| Zod schemas (`z.object({...})`, `z.string()`, `z.array()`, etc.) | PLAUSIBLE |
+| class-validator decorators (`@IsEmail()`, `@MinLength()`, etc.) | PLAUSIBLE |
+| Jest/Mocha/Vitest tests (`describe`/`it`/`test`) | VERIFIED (with non-null `repo_sha`) / PLAUSIBLE (downgrade) |
+| Plain HTML/JS surface (HTML files containing `<script>` tags) | PLAUSIBLE (file-level only) |
+| Heuristic inferences (Zod `.email()` → required email; auth-named middleware → auth-gated route; etc.) | HYPOTHESISED |
+
+The mapping is enforced **structurally** by Cycle 2's
+`BandedAC.model_validator` — a band/evidence pair that violates
+the band's required fields raises `pydantic.ValidationError`. The
+adapter catches such violations + downgrades + logs a
+`band_downgrade` audit entry (e.g., VERIFIED → PLAUSIBLE when
+`repo_sha` is None for a Playwright/Vitest test).
+
+### 13.2 Multi-grammar tree-sitter dispatch
+
+Three grammars are loaded lazily on first parse-call:
+
+- `tree-sitter-javascript` for `.js`, `.mjs`, `.cjs`, `.jsx` (the
+  JS grammar accepts JSX natively).
+- `tree-sitter-typescript`'s `language_typescript()` for `.ts`.
+- `tree-sitter-typescript`'s `language_tsx()` for `.tsx` (the
+  typescript-only grammar treats `<>` as generics, not JSX; the
+  TSX grammar is required).
+
+The per-grammar parser cache keeps three separate parser instances.
+Routing is by extension; content sniff (e.g., shebang) is a v0.2+
+extension.
+
+### 13.3 ESM and CommonJS module shapes
+
+Both `import`/`export` (ESM) and `require`/`module.exports` (CJS)
+are parsed cleanly by `tree-sitter-javascript` — no special
+handling at the adapter level. The synthetic fixture exercises
+both shapes (`src/routes/users.js` is CJS; `src/routes/sessions.mjs`
+is ESM) so the band-distribution test catches regressions.
+
+### 13.4 Test-first extraction granularity
+
+Per-`test(...)`-block (Playwright) + per-`it(...)`/`test(...)`-block
+(Jest/Mocha/Vitest). Each block becomes one VERIFIED-band AC. The
+enclosing `test.describe(...)` (or `describe(...)`) provides
+context — captured in the AC text + citation, but not its own AC
+(matching Cycle 3's per-`it`-block convention).
+
+### 13.5 Test-runner identity detection
+
+Runner identity (Playwright vs Jest vs Mocha vs Vitest) is
+detected via import statements at file head:
+
+- `import { test } from '@playwright/test'` → handled by
+  `playwright_tests` recognizer.
+- `import { describe, it } from 'vitest'` → vitest.
+- `import { describe, it } from 'mocha'` → mocha.
+- `import { describe, it } from '@jest/globals'` (or no import,
+  Jest globals) → jest / unknown.
+
+The runner identity is recorded in `evidence.citations` as
+`f"{file}:{line}:{runner}:{describe}#{test}"`. Per the cycle
+plan-doc Surface #6 — runner identity is METADATA, not a gate on
+the VERIFIED band; the test claims VERIFIED based on its passing
+state regardless of runner.
+
+### 13.6 Test-pass assumption
+
+Same caveat as §12.3: the JsTs adapter does NOT execute Playwright
+or Jest/Mocha/Vitest tests in Cycle 4a. The VERIFIED band is
+granted on the assumption that tests in the repo were passing at
+the resolved `repo_sha`. The persona MUST verify test pass-state
+during ratification. This is a known limitation; the band is
+"VERIFIED *as-of-extraction-time-by-human-authority*" not
+"VERIFIED *by automated test run*." A future `--run-tests` flag
+can tighten this.
+
+### 13.7 HYPOTHESISED inference engine
+
+Same shape as §12.4: heuristic-based inference (no LLM call in
+Cycle 4a). The 5 patterns shipped: Zod `.email()` chain → required
+email; Zod `.min(N)` → minimum length; class-validator `@IsEmail()`
+→ email-required; Express middleware chain with auth-named
+middleware → auth-gated route; Playwright page-object `login*`/
+`signIn*`/`signUp*` method → auth entry point. Each
+HYPOTHESISED AC's `rationale` field captures the heuristic
+provenance, making the inference chain machine-traceable.
+
+LLM-driven HYPOTHESISED inference enters at v0.2+ under the same
+rationale-required contract; the BandedAC schema is unchanged.
+
+### 13.8 Slice-and-swarm decomposition
+
+The JsTs adapter ships its own `slicer.py` with a JS/TS-domain
+partitioning strategy (per-page-object cluster, per-route-domain,
+per-test-cohort, per-src-module). The aggregator + `SliceDriftError`
+class are reused from `lang/ruby/slicer.py` — drift detection is a
+slice-level concern, not language-level, so a single canonical
+exception class is right level of DRY (Cycle 4a Surface #4 +
+RF §10 #6).
+
+### 13.9 Plain HTML/JS file-level recognizer
+
+HTML files containing `<script>` tags emit one PLAUSIBLE AC each
+(file-level; no inline-JS AST analysis in pass-1). Per cycle
+plan-doc Surface #8 — the dispatch brief explicitly named this as
+"PLAUSIBLE-by-default." Deep inline-JS analysis is a v0.2+
+extension.
+
+### 13.10 Per-file routing extension
+
+Cycle 4a extends Cycle 3's `_LANGUAGE_HINTS` table with `jsts` →
+`{.js, .mjs, .cjs, .jsx, .ts, .tsx, .html, .htm}` plus `package.json`,
+`tsconfig.json`, etc. The routing logic is unchanged from Cycle 3;
+only the hint table grows. Multi-adapter co-existence (a Rails
+project with a Node tools script) is verified by
+`tests/lang/jsts/test_per_file_routing.py::test_multi_adapter_partitioning`.
+
+### 13.11 Local-copy DRY surface (RF §10 #6)
+
+Cycle 4a takes the local-copy approach for `repo_sha.py` (byte-
+identical to the Ruby adapter's `repo_sha.py`), `slugify(text)`
+regex (identical), and the heuristic-inference rationale-string
+pattern (identical structurally). Refactoring into a shared
+`lang/_common/` module is deferred to Cycle 4b/5 — the locked
+design (Cycle 3) shipped per-language modules; copy-and-extend
+matches that, and the cleanup is a doc-only behaviour-preserving
+refactor.

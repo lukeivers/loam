@@ -97,6 +97,12 @@ from .verify import verify_contract
 # inside :mod:`.lang.ruby.parser` is itself lazy at first parse-call.
 from .lang.ruby import RubyAdapter
 
+# Cycle 4a (v0.1.8) — JavaScript/TypeScript/Playwright first-class
+# adapter. Same lazy-import pattern as the Ruby adapter (per
+# plan-doc Surface #11); ``import loam_odd_extractor`` does not
+# pull tree-sitter-javascript/typescript into memory.
+from .lang.jsts import JsTsAdapter
+
 __all__ = [
     "AnalysisPlan",
     "BandedAC",
@@ -115,6 +121,7 @@ __all__ = [
     "RawACs",
     "RegistryError",
     "RubyAdapter",
+    "JsTsAdapter",
     "Slice",
     "StageError",
     "analyze_repo",

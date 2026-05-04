@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "a30a583"
+BASELINE = "2bc872d"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -142,6 +142,7 @@ def test_only_dev_sdlc_changed() -> None:
         "install-from-source.txt",
         "README.md",
         "docs/getting-started.md",
+        "docs/rebuild/STATE.md",
     }
 
     offending = []

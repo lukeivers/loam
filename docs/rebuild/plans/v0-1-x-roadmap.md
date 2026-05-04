@@ -269,7 +269,7 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 |---|---|---|---|
 | v0.1.1 | (in flight; locked content authored in parallel) | — | — |
 | v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03); V11.E sealed at `7d19a7e` (2026-05-03); ack-first persona contract sealed at `32ff67d` (2026-05-03); loam-amend ergonomics sweep sealed at `2c32c1b` (2026-05-03). |
-| v0.1.3 | (planned) | — | — |
+| v0.1.3 | (in flight) | — | R.5 design note 1 (primary-persona-shape) sealed at `7ae346d` (2026-05-03); SKILL.md packages bundle (item 1) sealed at `f04e925` (2026-05-04). |
 | v0.1.4 | (planned) | — | — |
 | v0.1.5 | (planned) | — | — |
 
@@ -385,6 +385,40 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 - Manifest-level `allow_untracked_globs` admission — deferred. CLI flag covers immediate workflow; manifest field can land later if observed pain-point recurs.
 - Migrating prior manifests' `extra_allowed_prefixes` to drop now-redundant `<name>/` bare admissions — out-of-fence; opportunistic at next per-component touch.
 - Cross-component sweep discovery (`_discover_sealed_components`) globs `framework/*/tests/SEAL_COMMIT` only; misses `plugins/*/tests/SEAL_COMMIT`. Pre-existing limitation (not introduced here); composes naturally with a follow-on "extend seal-discovery to plugins/" amendment when other plugins seal.
+
+### v0.1.3 — item 1 (SKILL.md packages bundle) — sealed 2026-05-04
+
+**Sub-plan:** `docs/rebuild/plans/v0-1-3-skill-packages.md`.
+**Manifest:** `docs/rebuild/plans/v0-1-3-skill-packages.manifest.yaml` (amendment #124).
+**Status file:** `<pos3>/workspace/.scratch/claude-output/v0-1-3-skill-packages-status-2026-05-04.md`.
+**FIDRAFT provenance:** "Anthropic-perspective recommendation ladder (R.1-R.6)" item R.4 (2026-05-03).
+**Decision locked:** Decision D in §5 — ship 5 packages (final set: `memory-recall`, `scope-decompose`, `dispatch-with-gates`, `onboarding-conversation`, `session-handoff`).
+
+| Step | Commit SHA | Notes |
+|---|---|---|
+| Plan-doc | `2c95507` | Sub-plan-doc; placement decision = `plugins/loam-skills/` (NEW component); AC family `AC.LSK.*` (collision-safe); 7 surfaces named pre-build. |
+| Source edit | `059dc05` | NEW component `plugins/loam-skills/` — 5 × `skills/<name>/SKILL.md` + `pyproject.toml` + `README.md` + 3 × `test_AC_LSK_{1,2,3}_*.py` (43 parametric tests) + `test_no_sealed_amendments.py` + `SEAL_COMMIT` sidecar. Tier K append in `install-from-source.txt` + `docs/install-from-source.md`. |
+| Manifest | `6749f44` | Amendment #124; baseline `059dc05`; single-component fence on `plugins/loam-skills/`; `extra_allowed_files` admits Tier K install paths. |
+| `loam amend apply` (auto-commit) | `bb9bcb1` | Auto-committed per v0.1.2 item 6 (`2c32c1b`). Sidecar SEAL_COMMIT `2c95507` → `059dc05`; BASELINE literal bump; `allowed_files` += `[docs/odd-in-loam.md, docs/odd-methodology.md]` (universal admissions). |
+| `loam amend seal` | `f04e925` | Deterministic seal commit. Narrative at `plugins/loam-skills/tests/SEAL_COMMIT.notes`. Used `--allow-untracked-globs` for 12 unrelated dirty paths. |
+
+**Acceptance summary:**
+- AC.LSK.1 (5 SKILL.md packages present and well-formed) — verified by `test_AC_LSK_1_skill_packages_present.py` (6 tests pass: per-package shape + cross-check that exactly 5 are discovered).
+- AC.LSK.2 (frontmatter follows Anthropic SKILL.md schema) — verified by `test_AC_LSK_2_frontmatter_well_formed.py` (20 tests pass: directory-name kebab-case + name-field-matches-dir + description-trigger-phrase + no-unknown-fields per package).
+- AC.LSK.3 (body content shape) — verified by `test_AC_LSK_3_body_content_shape.py` (15 tests pass: required-sections + loam-pattern-reference + raw-claude-code-degradation per package).
+- AC.LSK.S (single-component fence on `plugins/loam-skills/`) — verified post-seal: `git diff 2c95507..f04e925 --name-only` = 16 paths; 12 in `plugins/loam-skills/`, 1 in `docs/rebuild/plans/` (universal), 2 in install-from-source admissions, 1 manifest YAML — all admitted; zero outside.
+
+**Smokes (pre-seal):**
+- Smoke A: all 5 SKILL.md frontmatters parse cleanly; descriptions 432–533 chars (well under 1536 cap); each carries trigger-phrase clause.
+- Smoke C: `pip install -e ./plugins/loam-skills` → `loam-plugin-loam-skills 0.1.0`. Filesystem walk finds all 5 SKILL.md files at the canonical paths.
+- Smoke E: `pytest plugins/loam-skills/tests/` → 43 passed in 0.06s.
+
+**Surfaces recorded (out of v0.1.3-item-1 scope; carried forward):**
+- Migration of existing flat-shape skills (`plugins/dev-sdlc/skills/start-project.md`, `framework/primary-persona/skills/memory-{search,archive}.md`) to modern directory-per-skill shape — out of fence; v0.2+ if Anthropic discovery requires it.
+- Live `claude` binary discovery smoke (boot-claude-in-fixture) — out of fence; static-walk smoke is sufficient at amendment-cycle level. Can land in v0.2 if regression coverage is desired.
+- `dev-mode-manifest.yaml` update for `plugins/loam-skills/` — `roots:` doesn't include `plugins/*` by default; same treatment as `plugins/dev-sdlc/`. Follow-on amendment if dev-mode loading wants to surface to the persona.
+- PyPI publish — deferred to v0.2 per the broader publish gate.
+- Cross-component sweep discovery extension to `plugins/*/tests/SEAL_COMMIT` — pre-existing limitation (not introduced here); reused workaround from v0.1.2 item 6 (touched-only run + manual verification).
 
 ---
 

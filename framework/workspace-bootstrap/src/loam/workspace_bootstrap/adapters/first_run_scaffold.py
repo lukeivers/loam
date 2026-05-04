@@ -786,6 +786,16 @@ def run_first_run_scaffold(
     if skills_gitkeep_written:
         written.append("<workspace>/.claude/skills/.gitkeep")
 
+    # v0.1.7 AC.PERSONAS.6 + AC.PERSONAS.7: symlink plugin-shipped
+    # subagent personas (``plugins/<plugin>/agents/<name>.md``) into
+    # ``<workspace>/.claude/agents/<name>.md`` so Claude Code's
+    # project-agent discovery surface picks them up. Idempotent.
+    # Collision (non-symlink file already at the target path) raises
+    # ``PluginAgentCollisionError`` — operator-precedence per
+    # AC.PERSONAS.7.
+    plugin_agents_written = _symlink_plugin_agents(Path(ws))
+    written.extend(plugin_agents_written)
+
     # Amendment #39: seed the workspace's objective-tracker DB with
     # the value-prop root + spec-tier descendants. Idempotent by
     # query (the seed-runner uses ``query_projection_view`` to detect
@@ -1022,6 +1032,124 @@ def _write_skills_gitkeep(workspace_root: Path) -> bool:
     target.write_text("")
     target.chmod(0o644)
     return True
+
+
+# ---- v0.1.7 Cycle 1: subagent persona registration ----------------------
+#
+# Plugin-shipped subagent personas live at
+# ``plugins/<plugin>/agents/<name>.md`` in the source-of-truth tree. At
+# first-run scaffold time, we symlink each into
+# ``<workspace>/.claude/agents/<name>.md`` so Claude Code's
+# project-agent discovery finds them.
+#
+# Source-tree resolution:
+#   - canonical pos-v2:    <workspace>/plugins/<plugin>/agents/
+#   - derived workspaces:  <workspace>/framework/plugins/<plugin>/agents/
+# (the D-architecture nests the synced canonical tree under
+# ``<workspace>/framework/``; canonical IS the source so plugins live
+# at the workspace root.)
+#
+# Idempotence: existing symlinks pointing at the correct target are
+# left untouched. Existing files (non-symlinks) are NOT overwritten —
+# operator-precedence: a workspace-authored override at
+# ``<workspace>/.claude/agents/<name>.md`` wins. Collision (non-
+# symlink file with the same name as a plugin agent) raises
+# ``PluginAgentCollisionError`` so the operator can resolve
+# explicitly. Per AC.PERSONAS.6 + AC.PERSONAS.7.
+
+
+class PluginAgentCollisionError(BootstrapError):
+    """A plugin agent's target path is already a non-symlink file/dir.
+
+    Operator-precedence: the existing file is preserved; the scaffold
+    refuses to overwrite. The operator either renames their file or
+    deletes it to accept the plugin agent. Per AC.PERSONAS.7.
+    """
+
+    code = ERR_HANDS_OFF_INTERNAL
+
+
+def _resolve_plugins_root(workspace_root: Path) -> Path | None:
+    """Locate the plugins/ directory for the active workspace.
+
+    Two cases:
+      - canonical pos-v2 (``<workspace>/plugins/<name>/`` directly)
+      - derived workspace (``<workspace>/framework/plugins/<name>/``,
+        the D-architecture's nested synced subtree)
+
+    Returns the resolved plugins/ directory, or ``None`` if neither
+    location holds a plugins/ directory (no plugin-shipped agents to
+    register; not an error — the workspace may simply have no plugins
+    enabled yet).
+    """
+    canonical_candidate = Path(workspace_root) / "plugins"
+    if canonical_candidate.is_dir():
+        return canonical_candidate
+    derived_candidate = Path(workspace_root) / "framework" / "plugins"
+    if derived_candidate.is_dir():
+        return derived_candidate
+    return None
+
+
+def _symlink_plugin_agents(workspace_root: Path) -> tuple[str, ...]:
+    """v0.1.7 AC.PERSONAS.6 — symlink plugin-shipped subagent personas
+    from ``plugins/<plugin>/agents/<name>.md`` into
+    ``<workspace>/.claude/agents/<name>.md``.
+
+    Walks every plugin under the resolved plugins/ root; for each
+    ``<plugin>/agents/<name>.md`` file, creates a symlink at
+    ``<workspace>/.claude/agents/<name>.md`` pointing at the absolute
+    path of the plugin agent file.
+
+    Idempotent. Returns the tuple of relative paths written
+    (or empty tuple when no plugins were present / no agents to
+    register).
+
+    Raises ``PluginAgentCollisionError`` when a non-symlink file
+    already exists at a target path (operator-precedence: never
+    overwrite operator artefacts).
+    """
+    plugins_root = _resolve_plugins_root(Path(workspace_root))
+    if plugins_root is None:
+        return ()
+
+    agents_dir = Path(workspace_root) / ".claude" / "agents"
+    agents_dir.mkdir(parents=True, exist_ok=True)
+
+    written: list[str] = []
+    for plugin_dir in sorted(plugins_root.iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+        plugin_agents_dir = plugin_dir / "agents"
+        if not plugin_agents_dir.is_dir():
+            continue
+        for agent_file in sorted(plugin_agents_dir.glob("*.md")):
+            if not agent_file.is_file():
+                continue
+            target = agents_dir / agent_file.name
+            absolute_source = agent_file.resolve()
+            if target.is_symlink():
+                # Already a symlink. Verify it points at the correct
+                # source. If it does, leave alone (idempotent). If it
+                # points elsewhere, treat as operator override and
+                # leave alone (operator-precedence). Collision applies
+                # only to non-symlink files.
+                continue
+            if target.exists():
+                # Non-symlink collision. Halt-and-surface per
+                # AC.PERSONAS.7. Operator resolves explicitly.
+                raise PluginAgentCollisionError(
+                    "kind=plugin_agent_collision "
+                    f"plugin={plugin_dir.name!r} "
+                    f"agent={agent_file.name!r} "
+                    f"target_path={target!s} — non-symlink file "
+                    "already exists; refuse to overwrite."
+                )
+            target.symlink_to(absolute_source)
+            written.append(
+                f"<workspace>/.claude/agents/{agent_file.name}"
+            )
+    return tuple(written)
 
 
 _OLLAMA_PREWARM_ADVISORY = """\

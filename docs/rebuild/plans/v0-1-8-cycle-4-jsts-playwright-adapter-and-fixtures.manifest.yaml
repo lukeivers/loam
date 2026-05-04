@@ -1,0 +1,166 @@
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-1-8-cycle-4-jsts-playwright-adapter-and-fixtures
+  title: "v0.1.8 Cycle 4a — JS/TS/Playwright first-class adapter + jsts-playwright-app fixture (single-component fence: dev-sdlc/odd-extractor)"
+
+# BASELINE: <pending> — source-edit feat commit covering the JS/TS
+# adapter (lang/jsts/ tree + 8 recognizers + slicer + heuristic
+# inferences + adapter class), per-file routing extension to
+# Cycle 3's analyze.py _LANGUAGE_HINTS table, registered entry-point
+# in pyproject, README + odd-methodology.md doc updates, jsts-
+# playwright-app synthetic fixture, ~80 new tests across
+# AC.JSTS.{1..5} + AC.FIXTURES.{1, 3-jsts} + per-file routing + 4
+# smoke dimensions.
+#
+# Cycle 4a/4b split rationale (plan-doc §0 + Surface #0 + master
+# plan §7.9 explicit halt-trigger authorization):
+#   4a: JsTs adapter + JsTs fixture + JsTs e2e smoke (this build).
+#   4b: canonical Ruby-Rails-payment fixture (AC.FIXTURES.2) + Ruby
+#       e2e ratification (AC.FIXTURES.4 ruby-portion) + DRY refactor
+#       of repo_sha + slugify + heuristic-inference patterns across
+#       Ruby/JsTs adapters.
+#
+# Commit ladder pre-apply:
+#   1c2c478 — v0.1.8 master plan (Cycle 0 predecessor).
+#   c1abda1 — v0.1.8 Cycle 1 seal.
+#   774d465 — Cycle 1 §9 backfill.
+#   4865028 — v0.1.8 Cycle 2 seal.
+#   cbde592 — Cycle 2 §9 backfill.
+#   236fdcd — Cycle 2 §9 backfill (continued).
+#   3b4fe9b — Cycle 3 plan-doc.
+#   f1c762c — Cycle 3 source-edit BASELINE.
+#   2a64b23 — Cycle 3 manifest+apply commit.
+#   6711dd7 — Cycle 3 seal commit.
+#   cfee099 — Cycle 3 §9 backfill.
+#   17f32a9 — v0.1.8 master plan reroute (Cycle 4 Python → JS/TS/Playwright).
+#   <plan-doc commit lands NEXT, then source-edit feat commit, then
+#    `loam amend apply` lands as single merged manifest+apply commit
+#    per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path>` lands as deterministic
+#    seal commit per AC.DPS2.{1,4,6}>
+#
+# Single-component fence — dev-sdlc/odd-extractor:
+#   - JS/TS/Playwright first-class adapter at
+#     plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/lang/jsts/
+#     (NEW sub-tree parallel to lang/ruby/).
+#   - Multi-grammar tree-sitter wrapper: tree-sitter-javascript for
+#     .js/.mjs/.cjs/.jsx; tree-sitter-typescript.language_typescript()
+#     for .ts; tree-sitter-typescript.language_tsx() for .tsx.
+#   - 8 idiom recognizers: Express routes, Playwright tests,
+#     Playwright page objects, TS types/interfaces, Zod schemas,
+#     class-validator decorators, Jest/Mocha/Vitest test runners,
+#     plain HTML/JS file-level.
+#   - Heuristic-inference HYPOTHESISED-band ACs (5 patterns;
+#     mirroring Cycle 3 Surface #4).
+#   - Slicer + aggregator + SliceDriftError reuse from
+#     lang/ruby/slicer.py.
+#   - Per-file routing extension to analyze.py _LANGUAGE_HINTS
+#     (Cycle 3 inheritance; additive).
+#   - tree-sitter-javascript + tree-sitter-typescript required-deps
+#     declared in pyproject; lazy-imported.
+#   - Entry-point declaration loam.odd_extractor.language_adapters
+#     jsts = loam_odd_extractor.lang.jsts.adapter:_singleton_factory.
+#   - jsts-playwright-app synthetic fixture under
+#     tests/fixtures/jsts-playwright-app/ (~17 files; covers Eric's
+#     first-project shape: TS Playwright + JS Express + HTML/JS +
+#     Zod + class-validator + 4 test runners + ESM/CJS mix).
+#   - odd-methodology.md §13 (per-language adapter conventions —
+#     JS/TS/Playwright second).
+#
+# AC families locked per plan-doc §4:
+#   AC.JSTS.1 — JS/TS AST adapter via tree-sitter (multi-grammar);
+#               LanguageAdapter Protocol-compliant; entry-point-
+#               discoverable; ESM + CommonJS module shapes parsed.
+#   AC.JSTS.2 — JS/TS/Playwright-idiom recognizers: 8 modules
+#               (Express + Playwright tests + page objects +
+#               TS types + Zod + class-validator + test runners
+#               + plain HTML/JS).
+#   AC.JSTS.3 — Test-first extraction: per-`test(...)`-block
+#               (Playwright) + per-`it(...)`/`test(...)`-block
+#               (Jest/Mocha/Vitest) → VERIFIED ACs with repo_sha
+#               pin; downgrade to PLAUSIBLE without repo_sha per
+#               AC.BANDS.2.
+#   AC.JSTS.4 — Slice-and-swarm: per-JS/TS-domain partitioning +
+#               lexicographic aggregator + SliceDriftError reuse
+#               at >50% duplicate-ratio (F3 needs_fresh_start
+#               analog).
+#   AC.JSTS.5 — Confidence band rules per JS/TS/Playwright idiom
+#               (mapping table); band/evidence pairs validated by
+#               Cycle 2's model_validator at construction time.
+#   AC.FIXTURES.1 — jsts-playwright-app realistic fixture matching
+#                   Eric-first-project shape (TS Playwright + JS
+#                   Express + HTML/JS + Zod + class-validator +
+#                   ≥10 tests across runners + ESM/CJS mix).
+#   AC.FIXTURES.3 (jsts-only) — End-to-end smoke band distribution
+#                  on JsTs fixture (≥3 VERIFIED + ≥5 PLAUSIBLE +
+#                  ≥2 HYPOTHESISED). Ruby portion of AC.FIXTURES.3
+#                  (and AC.FIXTURES.{2, 4, 5} fully) move to
+#                  Cycle 4b per Surface #0.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §6):
+#   D1 cold-state — fresh tmp workspace + jsts-playwright-app fixture
+#     → loam odd-extract (live, --budget-cents 5000) → banded
+#     contract draft with band-tagged AC table at <!-- ACS_TABLE_HERE -->;
+#     ≥3 VERIFIED + ≥5 PLAUSIBLE + ≥2 HYPOTHESISED. Verified by
+#     test_smoke_d1_cold_state.py.
+#   D2 steady-state — n/a structurally (one-shot CLI). Idempotency
+#     variant: 5 extractions byte-identical (modulo timestamps);
+#     per-grammar idempotency. Verified by test_smoke_d2_idempotency.py.
+#   D3 restart — n/a structurally (no long-running process).
+#   D4 reboot — n/a structurally (same as D3).
+#   D5 cross-session — partial extraction state survives subprocess
+#     boundary; resume completes remaining stages. Verified by
+#     test_smoke_d5_cross_session.py.
+#   D6 telemetry-floor — full extraction writes extraction_start +
+#     4× stage_complete + ≥1× slice_complete + ≥6× recognizer_finding
+#     + extraction_end audit-log entries; schema v1 preserved;
+#     filenames monotonic NNNN.yaml. Verified by
+#     test_smoke_d6_telemetry_floor.py.
+#
+# Bookkeeping note: this is the SIXTH amendment to use schema v3
+# (DPS1 / DPS2 / Cycle 1 / Cycle 2 / Cycle 3 / THIS = Cycle 4a).
+# v3 fields exercised: plan_doc_ref + ac_count + smoke_outcome at
+# the manifest level; single-component sweep at seal time.
+
+baseline: "<pending>"
+
+plan: docs/rebuild/plans/v0-1-8-cycle-4-jsts-playwright-adapter-and-fixtures.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-1-8-cycle-4-jsts-playwright-adapter-and-fixtures.md
+
+ac_count: 7
+smoke_outcome: "D1+D2-idempotency+D5+D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI)"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3
+# precedent. `docs/rebuild/plans/` admits the plan-before-code
+# paper trail. `plugins/dev-sdlc/docs/odd-methodology.md` is the
+# AC-JSTS-equivalent §13 extension target (mirrors Cycle 3's §12
+# precedent).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-1-8-cycle-4-jsts-playwright-adapter-and-fixtures
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

@@ -31,17 +31,29 @@ present:
   - five top-value-trait sections — Autonomy, Asymmetric problem
     solving, Parallelism, Test theories before acting on them,
     Self-correction
-  - six operational-rule sections — Lean on the harness, Use the
-    right tool, Codify what repeats, Structural enforcement
-    default, ODD-shaped internal model, Light-touch narration on
-    choices
+  - eight operational-rule sections — Acknowledge first on non-
+    trivial requests, Lean on the harness, Use the right tool,
+    Codify what repeats, Structural enforcement default, ODD-shaped
+    internal model, Light-touch narration on choices, Lean on the
+    corpus
 
 The template carries the ``{user_preferred_name}`` and
 ``{persona_given_name}`` substitution tokens (str.format-compatible)
 so AC.O.4's write-back substitution lands user-chosen names without
 template editing.
 
+Operational-rule count history:
+  - L (sealed at 040e577): 6 operational rules.
+  - α (sealed): added "Lean on the corpus" → 7 operational rules.
+    Test count was not widened in α (pre-existing AC drift; surfaced
+    by v0.1.2 item 5).
+  - v0.1.2 item 5 (ack-first persona contract amendment): adds
+    "Acknowledge first on non-trivial requests" → 8 operational
+    rules; widens the count assertions in lock-step (composes the
+    new addition with the α drift fix).
+
 Plan: docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+v0.1.2 item 5 plan: docs/rebuild/plans/v0-1-2-ack-first-persona-contract.md
 """
 
 from __future__ import annotations
@@ -197,16 +209,26 @@ def test_AC_O_1_five_top_value_trait_sections_present():
         )
 
 
-def test_AC_O_1_six_operational_rule_sections_present():
-    """All six operational-rule sections are present."""
+def test_AC_O_1_eight_operational_rule_sections_present():
+    """All eight operational-rule sections are present.
+
+    Composes L's six (sealed at 040e577), α's "Lean on the corpus"
+    addition, and v0.1.2 item 5's "Acknowledge first on non-trivial
+    requests" addition (per AC.VPC.5.2). The α addition was not
+    reflected in the prior test count (pre-existing AC drift); v0.1.2
+    item 5's lock-step widening from 6→8 fixes the drift in-band per
+    feedback_loose_AC_text_fix_AC_not_implementation.
+    """
     body = _body()
     rules = (
+        "### Acknowledge first on non-trivial requests",
         "### Lean on the harness",
         "### Use the right tool",
         "### Codify what repeats",
         "### Structural enforcement default",
         "### ODD-shaped internal model",
         "### Light-touch narration on choices",
+        "### Lean on the corpus",
     )
     for rule_heading in rules:
         assert rule_heading in body, (
@@ -214,26 +236,36 @@ def test_AC_O_1_six_operational_rule_sections_present():
         )
 
 
-def test_AC_O_1_named_section_count_is_eleven():
-    """Five trait sections + six rule sections == eleven named
-    sections total (the locked plan §7 hard constraint #11)."""
+def test_AC_O_1_named_section_count_is_thirteen():
+    """Five trait sections + eight rule sections == thirteen named
+    sections total.
+
+    History:
+      - L (sealed 040e577): 5 traits + 6 rules == 11.
+      - α: + "Lean on the corpus" → 5 + 7 == 12 (test count not
+        widened — pre-existing drift).
+      - v0.1.2 item 5: + "Acknowledge first on non-trivial requests"
+        → 5 + 8 == 13. Test count widened in lock-step (AC.VPC.5.2).
+    """
     body = _body()
-    eleven = (
+    thirteen = (
         "### Autonomy",
         "### Asymmetric problem solving",
         "### Parallelism",
         "### Test theories before acting on them",
         "### Self-correction",
+        "### Acknowledge first on non-trivial requests",
         "### Lean on the harness",
         "### Use the right tool",
         "### Codify what repeats",
         "### Structural enforcement default",
         "### ODD-shaped internal model",
         "### Light-touch narration on choices",
+        "### Lean on the corpus",
     )
-    present = sum(1 for h in eleven if h in body)
-    assert present == 11, (
-        f"expected all 11 named-section headers present; "
+    present = sum(1 for h in thirteen if h in body)
+    assert present == 13, (
+        f"expected all 13 named-section headers present; "
         f"found {present}"
     )
 

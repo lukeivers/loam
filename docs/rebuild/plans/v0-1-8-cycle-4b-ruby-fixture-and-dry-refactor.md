@@ -425,7 +425,7 @@ This plan-doc is gate-ready when:
 
 ---
 
-## §14 — Method-decision record (per AC.D-sa.7 lint requirement)
+## 14. Method-decision record (per AC.D-sa.7 lint requirement)
 
 Per AC.D-sa.7, every plan-doc that selects non-default methods records the decision + rationale. This cycle's method-level decisions:
 
@@ -451,8 +451,11 @@ Per AC.D-sa.7, every plan-doc that selects non-default methods records the decis
 
 ### Commit SHAs
 
-- Plan-doc commit: (lands first; SHA filled at build-time).
-- Source-edit feat commit: (lands second).
-- `loam amend apply` commit: (lands third — manifest+apply merged).
-- `loam amend seal` commit: (lands fourth — deterministic short-form).
-- §9 backfill commit: (lands fifth — master plan §9 row).
+- Plan-doc commit: `3f8a8d1` —
+  `docs(plans): v0.1.8 Cycle 4b — canonical Ruby-Rails fixture + DRY refactor sub-plan`
+- Source-edit feat (BASELINE) commit: `c3c5afc` —
+  `feat(dev-sdlc): canonical Ruby-Rails fixture + Ruby e2e + DRY refactor (v0.1.8 Cycle 4b)`
+- Amendment (manifest+apply) commit: `042c3e19134052ad47981dbd90635f67ce73b81a` —
+  `chore(amend): v0-1-8-cycle-4b-ruby-fixture-and-dry-refactor manifest+apply — dev-sdlc BASELINE+sidecar bump to c3c5afc`
+- Seal commit: `c648cf99d63774cd9a1ccfe0bc1c117d97f5f018` —
+  `chore(seals): v0-1-8-cycle-4b-ruby-fixture-and-dry-refactor — dev-sdlc at 042c3e1`

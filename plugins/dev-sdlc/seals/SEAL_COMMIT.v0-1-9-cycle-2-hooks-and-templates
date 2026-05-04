@@ -1,0 +1,11 @@
+# v0.1.9 Cycle 2 — Hook installers + 3 CI templates + provenance-traceable PR description template (extends plugins/dev-sdlc/pr-safety/); single-component fence on plugins/dev-sdlc/
+
+slug: v0-1-9-cycle-2-hooks-and-templates
+components: dev-sdlc
+baseline: 17d02ca
+amendment-commit: 68859d9d21ad7af0ff84fdbba98e36e31d776028
+plan-doc: docs/rebuild/plans/v0-1-9-cycle-2-hooks-and-templates.md
+acs-satisfied: 10
+smoke: All 6 dimensions exercised (D1+D2+D3 subprocess-restart+D4 filesystem-state+D5 cross-session+D6 telemetry-floor); 183 tests green (105 Cycle 1 + 78 new)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

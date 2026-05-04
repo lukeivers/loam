@@ -1,0 +1,139 @@
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-1-8-cycle-3-ruby-rails-adapter
+  title: "v0.1.8 Cycle 3 — Ruby/Rails first-class adapter (single-component fence: dev-sdlc/odd-extractor)"
+
+# BASELINE: f1c762c — source-edit feat commit covering the Ruby
+# adapter (lang/ruby/ tree + recognizers + slicer + heuristic
+# inferences + adapter class), per-file routing extension to
+# Cycle 1's analyze.py, registered entry-point in pyproject, README
+# + odd-methodology.md doc updates, synthetic Rails fixture, 81
+# new tests across AC.RAILS.{1..8} + per-file routing + 4 smoke
+# dimensions.
+#
+# Commit ladder pre-apply:
+#   1c2c478 — v0.1.8 master plan (Cycle 0 predecessor).
+#   c1abda1 — v0.1.8 Cycle 1 seal.
+#   774d465 — Cycle 1 §9 backfill.
+#   4865028 — v0.1.8 Cycle 2 seal.
+#   cbde592 — Cycle 2 §9 backfill.
+#   236fdcd — Cycle 2 §9 backfill.
+#   3b4fe9b — Cycle 3 plan-doc.
+#   f1c762c — Cycle 3 source-edit BASELINE.
+#   <`loam amend apply` lands NEXT — single merged manifest+apply
+#    commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path>` lands as deterministic
+#    seal commit per AC.DPS2.{1,4,6}>
+#
+# Single-component fence — dev-sdlc/odd-extractor:
+#   - Ruby/Rails first-class adapter at
+#     plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/lang/ruby/
+#     (NEW sub-tree).
+#   - Per-file routing extension to analyze.py (Surface #6).
+#   - Banded-AC band-mapping per AC.RAILS.6 (composes with Cycle 2
+#     bands schema; no schema migration).
+#   - Tree-sitter required-dep declared in pyproject; lazy-imported.
+#   - Entry-point declaration loam.odd_extractor.language_adapters
+#     ruby = loam_odd_extractor.lang.ruby.adapter:_singleton_factory.
+#   - 81 new tests across AC.RAILS.{1..8} + per-file routing
+#     extension + smoke D1/D2-idempotency/D5/D6.
+#   - Synthetic Rails fixture under tests/fixtures/synthetic-rails/
+#     (11 files; canonical full Rails-payment fixture lands Cycle 4).
+#   - odd-methodology.md §12 (per-language adapter conventions).
+#
+# AC families locked per docs/rebuild/plans/v0-1-8-cycle-3-ruby-rails-adapter.md §4:
+#   AC.RAILS.1 — Ruby AST adapter via tree-sitter; LanguageAdapter
+#                Protocol-compliant; entry-point-discoverable.
+#   AC.RAILS.2 — Rails-idiom recognizers: ActiveRecord + migrations
+#                + callbacks + concerns + polymorphic + jobs (ActiveJob
+#                + Sidekiq) + routes.
+#   AC.RAILS.3 — Test-first extraction: per-`it`-block (RSpec) +
+#                per-`test '...'`-block / `def test_<name>` (Minitest)
+#                → VERIFIED ACs with repo_sha pin; downgrade to
+#                PLAUSIBLE without repo_sha per AC.BANDS.2.
+#   AC.RAILS.4 — Slice-and-swarm: per-Rails-idiom-domain partitioning
+#                + lexicographic aggregator + SliceDriftError at >50%
+#                duplicate-ratio (F3 needs_fresh_start analog).
+#   AC.RAILS.5 — Eric-ratification end-to-end pin: adapter output
+#                consumable by enqueue_ratification_batch; meets
+#                master plan AC.FIXTURES.3 distribution thresholds
+#                on the synthetic fixture.
+#   AC.RAILS.6 — Confidence band rules per Rails idiom (mapping
+#                table); band/evidence pairs validated by Cycle 2's
+#                model_validator at construction time.
+#   AC.RAILS.7 — Cost-governance dry-run + budget envelope; slicer
+#                makes single-vs-multi-slice decision based on
+#                estimate vs budget threshold; per-slice idempotency.
+#   AC.RAILS.8 — Adapter unit tests against synthetic Ruby snippets:
+#                per-recognizer positive + negative case.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §6):
+#   D1 cold-state — fresh tmp workspace + synthetic fixture →
+#     loam odd-extract (live, --budget-cents 5000) → banded contract
+#     draft with band-tagged AC table at <!-- ACS_TABLE_HERE -->;
+#     ≥1 VERIFIED + ≥3 PLAUSIBLE + ≥1 HYPOTHESISED. Verified by
+#     test_smoke_d1_cold_state.py.
+#   D2 steady-state — n/a structurally (one-shot CLI). Idempotency
+#     variant: 5 extractions byte-identical (modulo timestamps);
+#     per-slice idempotency. Verified by test_smoke_d2_idempotency.py.
+#   D3 restart — n/a structurally (no long-running process).
+#   D4 reboot — n/a structurally (same as D3).
+#   D5 cross-session — partial extraction state survives subprocess
+#     boundary; resume completes remaining stages. Verified by
+#     test_smoke_d5_cross_session.py.
+#   D6 telemetry-floor — full extraction writes extraction_start +
+#     4× stage_complete + extraction_end audit-log entries; schema
+#     v1 preserved; filenames monotonic NNNN.yaml. Verified by
+#     test_smoke_d6_telemetry_floor.py.
+#
+# Bookkeeping note: this is the FOURTH amendment to use schema v3
+# (DPS1 = first; DPS2 = second; v0.1.8 Cycle 1 = third; v0.1.8 Cycle 2
+# = fourth multi-component v3 build; THIS = fifth single-component
+# v3 build). v3 fields exercised: plan_doc_ref + ac_count +
+# smoke_outcome at the manifest level; single-component sweep at
+# seal time (mirrors Cycle 1 shape).
+
+baseline: "f1c762c"
+
+plan: docs/rebuild/plans/v0-1-8-cycle-3-ruby-rails-adapter.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-1-8-cycle-3-ruby-rails-adapter.md
+
+ac_count: 8
+smoke_outcome: "D1+D2-idempotency+D5+D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI)"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail
+# (sub-plan + manifest + master-plan §9 backfill).
+# `plugins/dev-sdlc/docs/odd-methodology.md` is the AC-RAILS-equivalent
+# §12 extension target (mirrors Cycle 2's §11 doc-edit precedent);
+# admitted explicitly to document intent for SOC-2-style audit
+# readers.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-1-8-cycle-3-ruby-rails-adapter
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

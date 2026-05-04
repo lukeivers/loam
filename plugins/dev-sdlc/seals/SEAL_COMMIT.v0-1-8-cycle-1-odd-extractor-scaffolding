@@ -1,0 +1,11 @@
+# v0.1.8 Cycle 1 — odd-extractor scaffolding (NEW sub-package plugins/dev-sdlc/odd-extractor/)
+
+slug: v0-1-8-cycle-1-odd-extractor-scaffolding
+components: dev-sdlc
+baseline: b33a0dc
+amendment-commit: 9637b5836e5b2485276149d4d57b1ea2f6f86cc0
+plan-doc: docs/rebuild/plans/v0-1-8-cycle-1-odd-extractor-scaffolding.md
+acs-satisfied: 7
+smoke: D1+D2-idempotency+D5+D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

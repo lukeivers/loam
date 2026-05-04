@@ -1,0 +1,46 @@
+# Amendment #133 — Dev-pattern simplifications #1
+
+2026-05-04. Per
+`docs/rebuild/plans/dev-pattern-simplifications-1.md` and
+cost-audit at
+`docs/rebuild/plans/cost-audit-loam-dev-pattern-2026-05-04.md`
+Recommendations A, D, E.
+
+Three simplifications landed together inside the dev-sdlc fence:
+
+- **A — Manifest narrative collapse.** New schema v3 introduces
+  an optional top-level `plan_doc_ref:` field. `narrative.body`
+  becomes optional at v3. When v3 manifest carries
+  `plan_doc_ref` only, the seal step synthesizes a 5-15 line
+  summary instead of inlining ~150 LOC of duplicated narrative
+  per amendment.
+
+- **D — Manifest+apply commit merge.** Schema v3 `loam amend
+  apply` stages the manifest YAML alongside BASELINE/sidecar
+  bumps and produces ONE commit (subject token: `manifest+apply`)
+  instead of two. Schema v1/v2 preserve the legacy two-commit
+  ladder verbatim.
+
+- **E — Amendment-number deprecation.** Schema v3 makes
+  `amendment.number` optional; identification is by `slug` only.
+  Apply/seal commit subjects degrade gracefully when number is
+  None (no `#N` prefix). v1/v2 still require number.
+
+Sub-plan: `docs/rebuild/plans/dev-pattern-simplifications-1.md`.
+Tests: 19 new in
+`plugins/dev-sdlc/tools/loam-amend/tests/test_AC_DPS1_dev_pattern_simplifications_1.py`.
+AC families: AC.DPS1.{1..15}.
+
+Backward-compat hard guarantees:
+
+- All 109 existing manifest YAMLs validate clean post-bump
+  (test_AC_DPS1_13 sweep + CLI loop both pass).
+- dev-sdlc seal-test stays green at f629f14 BASELINE.
+
+THIS amendment ITSELF uses schema_version: 1 + amendment.number:
+133 because it is the amendment INTRODUCING v3 (chicken-and-egg
+avoidance — Decision D-5 in the plan-doc). The next amendment
+may author at v3.
+
+Smoke: all 6 dimensions exercised; see manifest header for
+per-dimension verification trace.

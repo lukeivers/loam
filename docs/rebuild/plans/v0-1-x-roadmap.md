@@ -10,7 +10,7 @@
 
 ## §1. Top-line summary
 
-Five releases. Total AI-time across all of them: **~12–22 h** (midpoint ~17 h). Total owner gate-review time: **~2–3 h** distributed across ~10 review touchpoints.
+Five releases. Total AI-time across all of them: **~10–18 h** (midpoint ~14 h). Total owner gate-review time: **~2–3 h** distributed across ~10 review touchpoints.
 
 Cadence is hours-to-days between releases — iterate-in-public friendly, not a months-long programme. Each release ships a coherent bundle: v0.1.1 says what loam is; v0.1.2 fixes what v0.1.0 strangers will trip over; v0.1.3 makes memory pluggable; v0.1.4 makes loam compositional with raw Claude Code; v0.1.5 surfaces who-is-doing-what across the harness.
 
@@ -20,10 +20,10 @@ The story across the cadence: **v0.1.0 shipped a coherent thing; v0.1.x makes it
 |---|---|---|---|
 | v0.1.1 | Articulate the scaffolding choice plainly | 45–90 min | 5–10 min |
 | v0.1.2 | Fix what v0.1.0 strangers will hit | 2–4 h | 30–45 min |
-| v0.1.3 | loam composes with raw Claude Code | 4–7 h | 30–45 min |
+| v0.1.3 | loam composes with raw Claude Code | 3–5 h | 30–45 min |
 | v0.1.4 | The harness gets self-aware about roles | 3–5 h | 25–35 min |
 | v0.1.5 | Memory becomes pluggable | 3–5 h | 20–30 min |
-| **Total** | | **~12–22 h** | **~2–3 h** |
+| **Total** | | **~10–18 h** | **~2–3 h** |
 
 **Reorder applied 2026-05-03 (post-v0.1.1 ship) per owner directive:** memory-pluggable moved to last; the two releases formerly behind it (loam-composes + harness-self-aware) shift forward. Each release's bundle content is unchanged; only the ordering moves. Sequencing diagram in §4 reflects the new order.
 
@@ -90,19 +90,18 @@ Owner-decision bottlenecks are listed in §5; most are minor and default to a re
 
 ### v0.1.3 — "loam composes with raw Claude Code"
 
-**What this release is about.** Lens 1 (Claude-leverage-first) is the always-on lens that asks "what Claude capability does this lean on or extend?" v0.1.0 ships zero SKILL.md packages — the harness's "translation layer" function is implicit in the persona prompt, not exposed as discoverable skills that compose with raw Claude Code. v0.1.3 fixes this: 3–5 SKILL.md packages capture loam's load-bearing translation patterns, AND ships the ODD-reverse-engineering skill (which is itself a skill — shape-coherent with the package set) AND the first of three planned design-notes (`primary-persona-shape.md`). Coherent bundle: each item is "loam's value made discoverable to people who haven't installed loam." Strangers running raw Claude Code can `pip install loam-skills` and benefit from loam's patterns without committing to the full harness.
+**What this release is about.** Lens 1 (Claude-leverage-first) is the always-on lens that asks "what Claude capability does this lean on or extend?" v0.1.0 ships zero SKILL.md packages — the harness's "translation layer" function is implicit in the persona prompt, not exposed as discoverable skills that compose with raw Claude Code. v0.1.3 fixes this: 3–5 SKILL.md packages capture loam's load-bearing translation patterns AND the first of three planned design-notes (`primary-persona-shape.md`) lands. Coherent bundle: each item is "loam's value made discoverable to people who haven't installed loam." Strangers running raw Claude Code can `pip install loam-skills` and benefit from loam's patterns without committing to the full harness.
 
 **Bundle:**
 
 1. **3–5 SKILL.md packages — `framework/skills/` (or `plugins/loam-skills/`).** Suggested set (final list deferred to plan-author): `memory-recall` (composes with v0.1.3's progressive-disclosure surface), `scope-decompose` (codifies the F3 swarming stopping criterion), `dispatch-with-gates` (codifies scope-only dispatch + halt-and-surface), `onboarding-conversation` (codifies the primary-persona greeting/context-restoration shape), `session-handoff` (codifies the durable-capture rule). Each is a small folder with `SKILL.md` (frontmatter: name + description) + 1–3 reference scripts. Provenance: FIDRAFT entry "Anthropic-perspective recommendation ladder (R.1-R.6)" item R.4 (2026-05-03) + Lens 1 from `framework/CLAUDE.md`.
-2. **V11.C — ODD-reverse-engineering skill.** Per ODD-RE research §7: thin skill in `plugins/dev-sdlc/skills/`, heavy lifting in new `framework/odd-extractor/` component. Slice-and-swarm (Cartographer ~500K-token shards) + four-stage workflow (init/analyze/generate/verify). Eight owner decisions land at plan-author dispatch (D-Q.RE.1..8 from research doc; Decisions 5–9 in §5 below carry recommendations). Provenance: FIDRAFT entry "ODD-reverse-engineering skill — research-complete" (2026-05-03) + research doc at `workspace/.scratch/claude-output/odd-reverse-engineering-skill-research.md`.
-3. **R.5 design note (1 of 3): `docs/design/primary-persona-shape.md`.** Why a single named persistent identity is a different shape than a multi-agent system or a plain Claude Code session. Composes with v0.1.1's scaffolding-choice note as the second piece of the design-notes voice. Provenance: FIDRAFT entry "Anthropic-perspective recommendation ladder" item R.5 part 1 (2026-05-03).
+2. **R.5 design note (1 of 3): `docs/design/primary-persona-shape.md`.** Why a single named persistent identity is a different shape than a multi-agent system or a plain Claude Code session. Composes with v0.1.1's scaffolding-choice note as the second piece of the design-notes voice. Provenance: FIDRAFT entry "Anthropic-perspective recommendation ladder" item R.5 part 1 (2026-05-03).
 
-**AI-time band:** 4–7 h total. Per-item: SKILL packages (~2–4 h for 5 skills + registration + verification), ODD-RE skill (~plan 30–45 min + build cycle 1 90–180 min + build cycle 2 30–60 min ≈ 2.5–4.5 h; some parallelism with skill-packages possible), R.5 design note (~45–90 min).
+**AI-time band:** 3–5 h total. Per-item: SKILL packages (~2–4 h for 5 skills + registration + verification), R.5 design note (~45–90 min).
 
-**Dependencies:** v0.1.3 ships first (sequencing). SKILL packages and design-note parallelise. ODD-RE skill plan-author dispatch needs Decisions 5–9 (recommendations carry; defaults adoptable autonomously per §5).
+**Dependencies:** v0.1.3 ships first (sequencing). SKILL packages and design-note parallelise.
 
-**Gate (closes the release):** at least 3 SKILL.md packages installable and visible to raw Claude Code; ODD-RE skill produces a coverage map on at least one external repo; design note reads as builder-explaining-decision (not project-prose). Tag `v0.1.4`.
+**Gate (closes the release):** at least 3 SKILL.md packages installable and visible to raw Claude Code; design note reads as builder-explaining-decision (not project-prose). Tag `v0.1.4`.
 
 ---
 
@@ -132,6 +131,7 @@ These items are real but don't fit the v0.1.x shape (each is too large, requires
 - **V2.C — swarm-runtime primitive** (FIDRAFT provenance: "Swarms 'apply-now' patterns triplet" 2026-05-03; multi-release-roadmap §3.3). Large new component (4–8 h AI critical path). PlannerWorkerSwarm + `CycleVerdict` + drift fresh-start + `EVAL_DIMENSIONS` named-axis judging. F3 principle is currently text-corpus-only; runtime-enforce is the right v0.2 move once the principle has accumulated more usage data. **Sequenced for v0.2.0.**
 - **PyPI publish gate** (FIDRAFT provenance: "v0.2 PyPI publish gate" 2026-05-03). Account claims, namespace registration, signing/sigstore, README badges, package metadata polish, classifiers, project URLs, CHANGELOG conventions. Real release ceremony. Closes the two-copies-of-loam friction at its root (vs v0.1.2's docs-explain hedge). **Sequenced for v0.2.0.**
 - **ODD-conformance sweep across all sealed components** (FIDRAFT provenance: "ODD-conformance sweep across all sealed components" 2026-05-03). Audit phase 4–12 h + per-component fix amendments. Decomposes via Lens 5 swarming into 15 per-component sub-audits. Benefits from one shipped release behind it (production usage surfaces additional violation patterns). **Sequenced post-v0.1.5; likely v0.2.x.**
+- **V11.C — ODD-reverse-engineering skill (heavy version with `framework/odd-extractor/` Cartographer-style slice-and-swarm).** Lightweight version (thin SKILL.md only) was a workaround for broken M-FBM retrieval; deferred 2026-05-04 after M-FBM operational-health amendment scoped. Heavy version retains value for foreign codebases too large for direct read; sequenced for v0.1.4+ once M-FBM is healthy. Provenance: Luke ruling 2026-05-04 + `workspace/.scratch/claude-output/m-fbm-operational-failure-diagnosis-2026-05-04.md`.
 - **Foundation-revision FR.1/FR.2/FR.3** — principles spec + ODD methodology re-author + ODD-in-loam bridge re-author (FIDRAFT provenance: "Principles distribution shape" 2026-05-03 + FUTURE_IDEAS Idea 1 surfaces). Bigger than v0.1.x; substantive document re-authoring with cross-cutting impact on multiple sealed components. **Sequenced for v0.2.x.**
 - **Channel-violation hook hardening** (FIDRAFT provenance: "Telegram-only channel + pause-on-outage as structural-enforcement amendment" 2026-04-29). PreToolUse hook on Agent + Bash + dispatch-shaped tools; depends on Idea 25 (workspace-level `primary_channel` config slot) graduation. **Sequenced for v0.2.x after Idea 25 graduates.**
 - **Silent-swallow audit pass** (FIDRAFT provenance: "Graceful fallthrough must include detection + surface" 2026-05-01 + 7+ concrete sites captured across memory-system + orchestrator). Composes with the ODD-conformance sweep. Single audit-pass amendment surfaces all `try/except/pass` patterns; per-component remediation amendments follow. **Sequenced post-v0.1.5; likely batched with the ODD-conformance sweep.**
@@ -164,7 +164,6 @@ v0.1.2 ── orchestrator fix ────────────┐
   │       loam-amend ergonomics ×3    │
   ▼                                    │
 v0.1.3 ── 3-5 SKILL.md packages        │
-  │       ODD-RE skill (V11.C)         │
   │       design note: primary-persona │
   ▼                                    │
 v0.1.4 ── 5 subagent personas          │
@@ -214,7 +213,8 @@ Most decisions land at recommendation; surfaced here so they're explicit and in 
 **Recommendation:** **5, per the suggested set above** (`memory-recall`, `scope-decompose`, `dispatch-with-gates`, `onboarding-conversation`, `session-handoff`). Each one captures a distinct loam translation pattern and each is independently usable from raw Claude Code. Ship 3 if AI-time band overruns; defer the other 2 to v0.1.5 or v0.2.x.
 **Why surfaced:** R.4 in the Anthropic-bar recommendation says "3–5"; final count is judgment.
 
-### Decision E — ODD-RE skill, eight D-Q.RE.* sub-decisions
+### Decision E — ODD-RE skill, eight D-Q.RE.* sub-decisions [DEFERRED 2026-05-04]
+**DEFERRED 2026-05-04 to v0.1.4+ per Luke ruling.** Heavy V11.C (`framework/odd-extractor/`) retains value for foreign codebases; lightweight V11.C is workaround for broken M-FBM and obviated by the operational-health amendment now in flight. Sub-decisions re-open when V11.C is re-sequenced.
 **Recommendations adopted from multi-release-roadmap §5 Decisions 5–12** (HYBRID placement, language-agnostic skeleton, markdown+YAML output, explicit token-budget knob, ODD §2.5-violation-surface for coverage gaps; sub-decisions 6–8 defer to V11.C plan-author per ODD authoring discipline).
 **Owner-call only if you want to override a recommendation.** Default: accept all five recommendations and let plan-author handle the inside-the-fence sub-decisions.
 
@@ -256,7 +256,7 @@ Every item in §2 carries a FIDRAFT entry name or FUTURE_IDEAS Idea number inlin
 - **`docs/rebuild/plans/oss-v0-1-0-publish.md`** — master plan for v0.1.0; multi-release-roadmap §3.3 V2.A names M-GMP shape.
 - **`docs/rebuild/plans/v0-1-0-foldback-scope-expansion.md`** — foldback ladder (FBE.1–11 + FBE.6{b,c,d}) that closed v0.1.0; method-decision register at §8 for what landed.
 - **`workspace/.scratch/claude-output/loam-anthropic-bar-recommendation-2026-05-03.md`** — R.1–R.6 recommendations (R.4 = SKILL packages → v0.1.4; R.5 design notes split across v0.1.4 + v0.1.5; R.3 essence absorbed into v0.1.1's locked content; R.6 + R.7 deferred per §3).
-- **`workspace/.scratch/claude-output/multi-release-roadmap-2026-05-03.md`** — pre-foldback roadmap whose V11.A/V11.B/V11.C/V11.D/V11.E item-IDs are reused in this roadmap for continuity (V11.A → v0.1.2, V11.B → v0.1.5, V11.C → v0.1.4, V11.D → v0.1.3, V11.E → v0.1.2).
+- **`workspace/.scratch/claude-output/multi-release-roadmap-2026-05-03.md`** — pre-foldback roadmap whose V11.A/V11.B/V11.C/V11.D/V11.E item-IDs are reused in this roadmap for continuity (V11.A → v0.1.2, V11.B → v0.1.5, V11.C → DEFERRED to v0.1.4+ per 2026-05-04 ruling, V11.D → v0.1.3, V11.E → v0.1.2).
 - **`workspace/.scratch/claude-output/odd-reverse-engineering-skill-research.md`** — 907-line research artefact for V11.C; eight D-Q.RE.* sub-decisions referenced in §5 Decision E.
 
 ---

@@ -199,6 +199,8 @@ Each release below: theme, concrete bundle (with placement), AI-time band (quali
 
 ### v0.1.9 — PR-safety gate + dev-sdlc skill-ification pass 2
 
+**Status:** IN FLIGHT. Three-cycle decomposition. Master plan `b01d3eb`. **Cycle 1 (PR-safety gate engine + override workflow)** SEALED 2026-05-04 — NEW component `plugins/dev-sdlc/pr-safety/`; per-band gating engine (3-band × 4-shape × 3-profile decision matrix = 13 cells + 6 mixed-touch pre-emption rules); override-commit recognition (`Loam-Override:` trailer + `contract-update:` prefix + `--override` flag; Decision I default-no honoured; no silent override); CLI `loam pr-safety gate <repo>`; SOC-2 audit-trail floor (Decision P) at `<workspace>/.loam/pr-safety/audit-log/<YYYY-MM-DD>-<NNNN>.yaml`; production-stake profile integration (reads `Manifest.safety_profile`); classifier accuracy 100% on 12-case synthetic test set (≥90% bar held — master plan §7.1 most-load-bearing risk; halt-trigger NOT fired). Plan-doc `3d5f52d`; source-edit BASELINE `bb592fa`; apply `136adc6`; seal `790807d`; §14 backfill `2f154c8`. AC.PRSG.1..9 satisfied; 105 cycle tests + 392 odd-extractor tests = 497 green; 719 in extended dev-sdlc sweep; zero regressions. D1+D2-idempotency+D5+D6 smoke exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI, not daemon). **Cycle 2 (hook installers + 3 CI templates + provenance-traceable PR description template)** PENDING. **Cycle 3 (6 dev-sdlc SKILLs second pass + audit-allowlist cleanup)** PENDING. Tag deferred until v0.1.9 release-level SOFT smoke gate (Decision R) green AND Luke gates the release.
+
 **Theme.** Contract enforcement at PR-time. Six more dev-sdlc SKILLs ship.
 
 **Bundle:**

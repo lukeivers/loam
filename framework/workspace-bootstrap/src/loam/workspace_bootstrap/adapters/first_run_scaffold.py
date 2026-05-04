@@ -267,6 +267,30 @@ _BOOTSTRAP_YAML = """\
 # Auto-generated on first run. Edit freely; the scaffold only runs on
 # a fresh workspace (no ~/.loam/ directory present) and never overwrites.
 
+# v0.1.6 AC.PSAFE.1 / AC.PSAFE.2 — workspace-level safety profile.
+# Legal values: production-stake | dev | research. Default `dev`
+# matches today's behavior. `production-stake` activates non-tunable
+# floors (audit_trail on; cost_governance.warning_fraction floor at
+# 0.6; always_ask floor extended) per Decision P (SOC-2 audit-trail
+# floor RESOLVED YES — non-negotiable for SOC-2 compliance posture).
+safety_profile: dev
+
+# v0.1.6 AC.SKILLS-BUG.1 — discoverable plugins (filesystem-walk; no
+# bootstrap.yaml `contributions:` entry required). Claude Code walks
+# `<plugin>/skills/<name>/SKILL.md` natively when the plugin is on
+# the Python path. The two plugins shipped with loam:
+#   - plugins/loam-skills/  — base SKILLs (memory-recall,
+#                              scope-decompose, dispatch-with-gates,
+#                              onboarding-conversation, session-handoff,
+#                              translation-discipline, audit-block-on-telegram,
+#                              owner-decision-summary)
+#   - plugins/dev-sdlc/     — dev-mode SKILLs (gated by loam-mode
+#                              and plugins/dev-sdlc/dev-mode-manifest.yaml)
+# Workspace-local skills land at <workspace>/.claude/skills/<name>/SKILL.md
+# (the .gitkeep at scaffold time ensures the directory exists from
+# session-zero so live-change-detection picks up new SKILLs without
+# session restart).
+
 contributions:
   - name: observability_aggregator
     module: loam.workspace_bootstrap.adapters.observability_aggregator
@@ -750,6 +774,18 @@ def run_first_run_scaffold(
     if workspace_gitignore_written:
         written.append("<workspace>/.gitignore")
 
+    # v0.1.6 AC.SKILLS-BUG.2: pre-create ``<workspace>/.claude/skills/``
+    # with a zero-byte ``.gitkeep`` so live-change-detection picks up
+    # new SKILL.md files without requiring a Claude Code session
+    # restart. Per Anthropic's documented live-change semantics, a NEW
+    # top-level skills directory needs session restart but new files
+    # within an EXISTING directory are picked up live. Pre-creating
+    # the directory at scaffold time ensures the workspace is ready
+    # for workspace-local skills from session-zero. Idempotent.
+    skills_gitkeep_written = _write_skills_gitkeep(Path(ws))
+    if skills_gitkeep_written:
+        written.append("<workspace>/.claude/skills/.gitkeep")
+
     # Amendment #39: seed the workspace's objective-tracker DB with
     # the value-prop root + spec-tier descendants. Idempotent by
     # query (the seed-runner uses ``query_projection_view`` to detect
@@ -956,6 +992,34 @@ def _write_workspace_gitignore(workspace_root: Path) -> bool:
     if target.exists():
         return False
     target.write_text(_WORKSPACE_GITIGNORE)
+    target.chmod(0o644)
+    return True
+
+
+def _write_skills_gitkeep(workspace_root: Path) -> bool:
+    """v0.1.6 AC.SKILLS-BUG.2 — pre-create
+    ``<workspace>/.claude/skills/.gitkeep`` so Claude Code's
+    live-change-detection picks up new SKILL.md files without a
+    session restart.
+
+    Per Anthropic's published SKILL.md primitive (verified 2026-05-04):
+    creating a NEW top-level skills directory requires Claude Code
+    restart, but NEW files inside an existing directory are picked up
+    live. Pre-creating the directory + a zero-byte sentinel at
+    scaffold time guarantees the directory exists from session-zero,
+    so the operator's first workspace-local SKILL.md drop is live
+    without restart.
+
+    Idempotent: an existing ``.gitkeep`` (even with non-zero bytes
+    from operator edits) is left untouched. Returns True iff the
+    file was authored on this invocation.
+    """
+    skills_dir = Path(workspace_root) / ".claude" / "skills"
+    skills_dir.mkdir(parents=True, exist_ok=True)
+    target = skills_dir / ".gitkeep"
+    if target.exists():
+        return False
+    target.write_text("")
     target.chmod(0o644)
     return True
 

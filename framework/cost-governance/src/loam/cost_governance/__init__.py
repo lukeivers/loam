@@ -48,13 +48,22 @@ Dispatch chain: safety → reversibility → cost → orig_activate.
 from __future__ import annotations
 
 from .config import (
+    PRODUCTION_STAKE_WARNING_FRACTION_FLOOR,
     CostConfig,
     RollingCeiling,
     SessionCeiling,
+    apply_safety_profile_floor,
     default_config,
     load_config,
 )
 from .controller import CostController
+from .dry_run import (
+    BudgetEnvelope,
+    ConfidenceBand,
+    EstimateResult,
+    OverrunAction,
+    dry_run_estimate,
+)
 from .ipc_wiring import register_cost_governance_ipc
 from .ledger import CostLedger
 from .notification import (
@@ -79,7 +88,9 @@ from .store import CostStore
 
 
 __all__ = [
+    "BudgetEnvelope",
     "CeilingAdjustment",
+    "ConfidenceBand",
     "CostChannel",
     "CostConfig",
     "CostController",
@@ -87,9 +98,12 @@ __all__ = [
     "CostNotification",
     "CostNotifier",
     "CostStore",
+    "EstimateResult",
     "IPC_COST_ROLLING_CEILING_EXCEEDED",
     "IPC_COST_SCOPE_BUDGET_EXCEEDED",
     "IPC_COST_SESSION_CEILING_EXCEEDED",
+    "OverrunAction",
+    "PRODUCTION_STAKE_WARNING_FRACTION_FLOOR",
     "Reservation",
     "RollingCeiling",
     "RollingRollup",
@@ -97,7 +111,9 @@ __all__ = [
     "RollupTask",
     "SessionCeiling",
     "SessionRollup",
+    "apply_safety_profile_floor",
     "default_config",
+    "dry_run_estimate",
     "iso_now",
     "load_config",
     "register_cost_governance_ipc",

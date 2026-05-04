@@ -21,6 +21,13 @@ for tests. Refuses negative ceilings and `warning_fraction` outside
 Eve-inferences held (proposal §8):
   - Default rolling windows: daily + hourly, money-only (inference #1).
   - `warning_fraction` default: 0.8 (inference #2).
+
+v0.1.6 AC.PSAFE.3 — production-stake floor:
+  - When the workspace's `safety_profile` is `production-stake`, the
+    `warning_fraction` is floored at 0.6 — anything > 0.6 is clamped.
+    The user's value remains visible (we do not silently rewrite the
+    file); the runtime `CostConfig` returned by
+    `apply_safety_profile_floor` carries the clamped value.
 """
 
 from __future__ import annotations
@@ -147,3 +154,45 @@ def load_config(path: str | Path | None = None) -> CostConfig:
             f"ceilings.yaml must be a mapping at top level; got {type(data).__name__}"
         )
     return CostConfig(**data)
+
+
+# v0.1.6 AC.PSAFE.3 — production-stake floor for warning_fraction.
+# When the workspace's `safety_profile` is `production-stake`, this
+# is the maximum value permitted for `warning_fraction`. The pydantic
+# model's structural validation accepts any value in (0.0, 1.0)
+# exclusive; this floor is applied *on top* by
+# `apply_safety_profile_floor` when the profile is production-stake.
+PRODUCTION_STAKE_WARNING_FRACTION_FLOOR: float = 0.6
+
+
+def apply_safety_profile_floor(
+    config: CostConfig,
+    *,
+    safety_profile: str,
+) -> CostConfig:
+    """Return a `CostConfig` with the production-stake floor applied.
+
+    When ``safety_profile == "production-stake"`` and the user-set
+    ``warning_fraction`` exceeds
+    ``PRODUCTION_STAKE_WARNING_FRACTION_FLOOR`` (0.6), the returned
+    config carries the clamped value. Otherwise, the original config
+    is returned unchanged.
+
+    The user-supplied YAML is *not* mutated — only the runtime
+    `CostConfig` is adjusted. This matches the v0.1.6 AC.PSAFE.3
+    "floor, not absolute" semantic: the user's intent is preserved on
+    disk, but the production-stake profile guarantees a tighter
+    governance posture at runtime (Decision P RESOLVED YES, SOC-2
+    floor non-tunable).
+
+    `dev` and `research` profiles are no-op pass-throughs.
+    """
+    if safety_profile != "production-stake":
+        return config
+    if config.warning_fraction <= PRODUCTION_STAKE_WARNING_FRACTION_FLOOR:
+        return config
+    # model_copy preserves session + rolling references; only
+    # warning_fraction is replaced.
+    return config.model_copy(
+        update={"warning_fraction": PRODUCTION_STAKE_WARNING_FRACTION_FLOOR}
+    )

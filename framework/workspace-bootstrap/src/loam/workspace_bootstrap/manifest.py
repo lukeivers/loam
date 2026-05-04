@@ -19,6 +19,12 @@
     version: 1
     config_dir: ~/.loam/config          # optional; default = workspace_root/config
     workspace_root: ~/.my-workspace    # optional; default = parent of manifest
+    safety_profile: dev                 # optional; default = "dev".
+                                        # Legal values: production-stake | dev | research.
+                                        # production-stake activates non-tunable floors
+                                        # (audit_trail on; cost-governance warning_fraction
+                                        # floor at 0.6; always_ask floor extended) per
+                                        # v0.1.6 Decision P (SOC-2 audit-trail floor).
     contributions:
       - observability_aggregator       # name → entry-point group lookup
       - name: custom_adapter           # workspace-local escape hatch
@@ -86,6 +92,14 @@ class ContributionRef:
         )
 
 
+# v0.1.6 AC.PSAFE.1 — legal values for `safety_profile`. The default
+# (when the field is absent) is `"dev"` per AC.PSAFE.2.
+LEGAL_SAFETY_PROFILES: frozenset[str] = frozenset(
+    {"production-stake", "dev", "research"}
+)
+DEFAULT_SAFETY_PROFILE: str = "dev"
+
+
 @dataclass(frozen=True)
 class Manifest:
     version: int
@@ -93,6 +107,12 @@ class Manifest:
     workspace_root: Path
     manifest_path: Path
     refs: tuple[ContributionRef, ...]
+    # v0.1.6 AC.PSAFE.1 — workspace-level safety profile. Legal
+    # values are in `LEGAL_SAFETY_PROFILES`; the manifest loader
+    # defaults to `DEFAULT_SAFETY_PROFILE` when the field is absent
+    # (AC.PSAFE.2). When `production-stake`, downstream components
+    # MUST honour the non-tunable floors per AC.PSAFE.3.
+    safety_profile: str = DEFAULT_SAFETY_PROFILE
 
 
 def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
@@ -144,12 +164,33 @@ def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
         ref = _parse_entry(entry, idx, manifest_parent=p.parent)
         refs.append(ref)
 
+    # v0.1.6 AC.PSAFE.1 / AC.PSAFE.2 — `safety_profile` validation +
+    # default. Absent → DEFAULT_SAFETY_PROFILE (`"dev"`). Present-but-
+    # not-in-LEGAL_SAFETY_PROFILES → fail-closed MissingConfigError
+    # (matches the rest of the loader's fail-closed shape).
+    safety_profile_raw = raw.get("safety_profile")
+    if safety_profile_raw is None:
+        safety_profile = DEFAULT_SAFETY_PROFILE
+    elif (
+        isinstance(safety_profile_raw, str)
+        and safety_profile_raw in LEGAL_SAFETY_PROFILES
+    ):
+        safety_profile = safety_profile_raw
+    else:
+        raise MissingConfigError(
+            f"bootstrap manifest at {p} declares "
+            f"safety_profile={safety_profile_raw!r}; legal values are "
+            f"{sorted(LEGAL_SAFETY_PROFILES)}",
+            data={"path": str(p), "safety_profile": safety_profile_raw},
+        )
+
     return Manifest(
         version=version,
         config_dir=config_dir,
         workspace_root=workspace_root,
         manifest_path=p,
         refs=tuple(refs),
+        safety_profile=safety_profile,
     )
 
 

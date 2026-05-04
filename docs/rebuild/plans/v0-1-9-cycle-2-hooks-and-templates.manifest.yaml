@@ -150,7 +150,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "<set-by-build-agent-post-source-commit>"
+baseline: "17d02ca"
 
 plan: docs/rebuild/plans/v0-1-9-cycle-2-hooks-and-templates.md
 
@@ -160,7 +160,7 @@ plan: docs/rebuild/plans/v0-1-9-cycle-2-hooks-and-templates.md
 plan_doc_ref: docs/rebuild/plans/v0-1-9-cycle-2-hooks-and-templates.md
 
 ac_count: 10
-smoke_outcome: "All 6 dimensions exercised — D1 cold-state + D2 idempotency + D3 subprocess-restart + D4 filesystem-state + D5 cross-session + D6 telemetry-floor; full-suite green sweep including 105 inherited Cycle 1 tests"
+smoke_outcome: "All 6 dimensions exercised (D1+D2+D3 subprocess-restart+D4 filesystem-state+D5 cross-session+D6 telemetry-floor); 183 tests green (105 Cycle 1 + 78 new)"
 
 components:
   - name: dev-sdlc

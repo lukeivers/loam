@@ -130,6 +130,29 @@ Each release below: theme, concrete bundle (with placement), AI-time band (quali
 - Decision-surfacing discipline is the SOC-2-compliant audit shape: every Eric-decision is logged via PM's surfacing mechanism, not chat-buried.
 - One-question-at-a-time onboarding (Decision Q) is enforced through the PM's surfacing protocol — PM batches questions, then surfaces in single-question form when Eric is in interaction mode.
 
+### OSS dev-architecture migration follow-up — workspace-bootstrap framework-only → main — **SHIPPED 2026-05-04**
+
+**Status:** SHIPPED. Sealed at `a1e231c` (amendment #132). Sub-plan: `docs/rebuild/plans/workspace-bootstrap-framework-only-to-main.md`. Status file: `<pos3>/workspace/.scratch/claude-output/workspace-bootstrap-framework-only-to-main-status-2026-05-04.md`.
+
+**Theme.** Migration follow-up. Surfaced from the OSS dev-architecture migration (sealed at `ea8c4bb`) as halt-and-surface §8.8: workspace-bootstrap was wired against the synthesis-only `framework-only` branch, which is gone post-migration. Sealed-component amendment to switch the clone-target to canonical's `main`.
+
+**Bundle:**
+
+| Item | Source | Placement |
+|---|---|---|
+| Constant rename: `FRAMEWORK_ONLY_BRANCH = "framework-only"` → `CANONICAL_BRANCH = "main"` | Migration §8.8 | `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py` |
+| Helper rename: `_materialise_framework_only_branch` → `_materialise_canonical_branch` | Migration §8.8 | same |
+| 3 production callsites flipped to new constant + helper | Migration §8.8 | same |
+| Conftest rewrite: drops archived synthesis-tool import; `git init --initial-branch=main` | Migration §8.8 | `framework/workspace-bootstrap/tests/conftest.py` |
+| 7 existing AC tests updated/rewritten (AC.FBE.10, AC.SFR.{1,4,5}, AC.D.4.1, plus seal-test cleanup) | AC.WBM2M.5 | `framework/workspace-bootstrap/tests/` |
+| 4 new AC tests (AC.WBM2M.{1,3,4}) | AC.WBM2M.* | `framework/workspace-bootstrap/tests/` |
+
+**AI-time:** ~3 h actual (2 h author plan + 1 h source/test edits + apply/seal/smoke).
+
+**Outcome:** 310 tests pass + 11 skipped (zero regressions). D1 cold-state smoke ✓ (stranger clone → `loam init` → workspace on `main`); D2 idempotency smoke ✓.
+
+**Post-seal cleanup (Luke's discretion):** delete `loam:framework-only` ref on the remote (`git push lukeivers/loam :framework-only`). After that, `loam:main` is the only ref Eric needs to clone; the OSS dev-architecture migration is fully complete.
+
 ### v0.1.8 — ODD reverse-engineering (heavy) + dev-sdlc skill-ification pass 1
 
 **Theme.** The headline release. Loam reads Eric's Rails SaaS and produces a confidence-banded contract draft. Six high-leverage dev-sdlc SKILLs ship.

@@ -34,7 +34,7 @@ from .recognizers import (
     recognize_ts_types,
     recognize_zod_schemas,
 )
-from .repo_sha import resolve_repo_sha
+from .._common.repo_sha import resolve_repo_sha
 
 if TYPE_CHECKING:  # pragma: no cover
     pass

@@ -4,6 +4,13 @@ Per AC.JSTS.5 + Surface #7 — Cycle 4a produces HYPOTHESISED ACs
 from heuristic-shaped inferences over already-extracted PLAUSIBLE
 ACs. Mirror of Cycle 3 ``lang/ruby/heuristic_inferences.py``.
 
+Per AC.DRY.3 (v0.1.8 Cycle 4b) — the per-heuristic
+``BandedAC(... confidence=HYPOTHESISED, evidence=Evidence(
+kind="inference", ...))`` boilerplate is delegated to
+:func:`make_inferred_banded_ac` from
+``loam_odd_extractor.lang._common.heuristic_helpers``. This module
+retains the per-language regex tables + heuristic firing logic.
+
 Heuristic patterns (5; extensible — Cycle 4b/5+ extends this list):
 
 - Zod ``email: z.string().email()`` (or chained ``.email()``)
@@ -26,7 +33,8 @@ from __future__ import annotations
 
 import re
 
-from ...bands import BandedAC, ConfidenceBand, Evidence
+from ...bands import BandedAC, ConfidenceBand
+from .._common.heuristic_helpers import make_inferred_banded_ac
 
 
 # Regexes to extract structure from PLAUSIBLE AC text (from the
@@ -83,7 +91,6 @@ def infer_domain_rules(
             continue
         text = ac.text
         ac_id = ac.ac_id
-        backing = list(ac.backing_files)
 
         # Heuristic 1: Zod `.email()` validator → "<Schema> requires
         # a valid <field>".
@@ -91,7 +98,7 @@ def infer_domain_rules(
         if m:
             schema, field = m.group(1), m.group(2)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.JSTS.inferred.zod_email_required."
                         f"{schema.lower()}.{field.lower()}"
@@ -100,18 +107,13 @@ def infer_domain_rules(
                         f"Inferred: {schema} requires a valid "
                         f"{field}"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: Zod schema {schema} has "
-                            f"a `{field}: z.string().email()` "
-                            f"chain → infers email-format requirement. "
-                            f"Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: Zod schema {schema} has "
+                        f"a `{field}: z.string().email()` "
+                        f"chain → infers email-format requirement. "
+                        f"Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
             continue
@@ -122,7 +124,7 @@ def infer_domain_rules(
         if m:
             schema, field, n = m.group(1), m.group(2), m.group(3)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.JSTS.inferred.zod_min_length."
                         f"{schema.lower()}.{field.lower()}"
@@ -131,18 +133,13 @@ def infer_domain_rules(
                         f"Inferred: {schema}.{field} has minimum "
                         f"length {n}"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: Zod schema {schema} has "
-                            f"a `{field}: ...min({n})` chain → "
-                            f"infers minimum-length constraint. "
-                            f"Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: Zod schema {schema} has "
+                        f"a `{field}: ...min({n})` chain → "
+                        f"infers minimum-length constraint. "
+                        f"Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
             continue
@@ -153,7 +150,7 @@ def infer_domain_rules(
         if m:
             cls, field = m.group(1), m.group(2)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.JSTS.inferred.cv_is_email."
                         f"{cls.lower()}.{field.lower()}"
@@ -162,17 +159,12 @@ def infer_domain_rules(
                         f"Inferred: {cls}.{field} must be a valid "
                         f"email address"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: class-validator @IsEmail() "
-                            f"on {cls}.{field} → infers email-format "
-                            f"requirement. Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: class-validator @IsEmail() "
+                        f"on {cls}.{field} → infers email-format "
+                        f"requirement. Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
             continue
@@ -185,7 +177,7 @@ def infer_domain_rules(
             matched, mw_name = _has_auth_middleware(mw_csv)
             if matched:
                 out.append(
-                    BandedAC(
+                    make_inferred_banded_ac(
                         ac_id=(
                             f"AC.JSTS.inferred.route_requires_auth."
                             f"{verb.lower()}."
@@ -195,19 +187,14 @@ def infer_domain_rules(
                             f"Inferred: Route {verb} {path} requires "
                             f"authentication (middleware: {mw_name})"
                         ),
-                        confidence=ConfidenceBand.HYPOTHESISED,
-                        evidence=Evidence(
-                            kind="inference",
-                            citations=list(ac.evidence.citations),
-                            rationale=(
-                                f"heuristic: Express route {verb} "
-                                f"{path} chains middleware "
-                                f"`{mw_name}` whose name matches the "
-                                f"auth-token list → infers auth gate. "
-                                f"Source AC: {ac_id}"
-                            ),
+                        rationale=(
+                            f"heuristic: Express route {verb} "
+                            f"{path} chains middleware "
+                            f"`{mw_name}` whose name matches the "
+                            f"auth-token list → infers auth gate. "
+                            f"Source AC: {ac_id}"
                         ),
-                        backing_files=backing,
+                        source_ac=ac,
                     )
                 )
                 continue
@@ -218,7 +205,7 @@ def infer_domain_rules(
         if m:
             page, method = m.group(1), m.group(2)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.JSTS.inferred.page_auth_entry."
                         f"{page.lower()}.{method.lower()}"
@@ -228,19 +215,14 @@ def infer_domain_rules(
                         f"authentication entry point via "
                         f"{page}#{method}"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: Playwright page object "
-                            f"{page} has method {method} whose name "
-                            f"matches the auth-method-prefix list "
-                            f"(login*/signIn*/signUp*) → infers "
-                            f"auth entry point. Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: Playwright page object "
+                        f"{page} has method {method} whose name "
+                        f"matches the auth-method-prefix list "
+                        f"(login*/signIn*/signUp*) → infers "
+                        f"auth entry point. Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
 

@@ -36,7 +36,7 @@ from .recognizers import (
     recognize_routes,
     recognize_rspec_tests,
 )
-from .repo_sha import resolve_repo_sha
+from .._common.repo_sha import resolve_repo_sha
 
 if TYPE_CHECKING:  # pragma: no cover
     pass

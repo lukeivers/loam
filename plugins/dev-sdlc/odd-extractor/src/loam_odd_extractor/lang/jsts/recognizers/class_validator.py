@@ -26,12 +26,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ....bands import BandedAC, ConfidenceBand, Evidence
+from ..._common.slugs import file_slug, slugify
 from .._ast_utils import (
     class_field_decorators,
     class_name,
-    file_slug,
     find_class_declarations,
-    slugify,
 )
 from ..parser import node_line
 

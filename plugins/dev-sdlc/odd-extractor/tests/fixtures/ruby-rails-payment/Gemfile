@@ -1,0 +1,33 @@
+# SYNTHETIC TEST FIXTURE — see README.md
+# Representative Rails-payment-shape Gemfile.
+source 'https://rubygems.org'
+
+ruby '3.3.0'
+
+gem 'rails', '~> 7.1.0'
+gem 'pg', '~> 1.5'
+gem 'puma', '~> 6.4'
+
+# Auth (Rails built-in via has_secure_password — no Devise).
+gem 'bcrypt', '~> 3.1'
+
+# Background jobs.
+gem 'sidekiq', '~> 7.2'
+
+# JSON serialization.
+gem 'jbuilder', '~> 2.11'
+
+group :development, :test do
+  gem 'rspec-rails', '~> 6.1'
+  gem 'factory_bot_rails', '~> 6.4'
+end
+
+group :development do
+  gem 'listen', '~> 3.8'
+  gem 'spring', '~> 4.1'
+end
+
+group :test do
+  gem 'shoulda-matchers', '~> 5.3'
+  gem 'database_cleaner-active_record', '~> 2.1'
+end

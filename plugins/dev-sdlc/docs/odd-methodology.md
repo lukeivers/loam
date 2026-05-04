@@ -1148,13 +1148,36 @@ only the hint table grows. Multi-adapter co-existence (a Rails
 project with a Node tools script) is verified by
 `tests/lang/jsts/test_per_file_routing.py::test_multi_adapter_partitioning`.
 
-### 13.11 Local-copy DRY surface (RF §10 #6)
+### 13.11 Local-copy DRY surface (RF §10 #6) — closed in Cycle 4b
 
-Cycle 4a takes the local-copy approach for `repo_sha.py` (byte-
+Cycle 4a took the local-copy approach for `repo_sha.py` (byte-
 identical to the Ruby adapter's `repo_sha.py`), `slugify(text)`
 regex (identical), and the heuristic-inference rationale-string
-pattern (identical structurally). Refactoring into a shared
-`lang/_common/` module is deferred to Cycle 4b/5 — the locked
-design (Cycle 3) shipped per-language modules; copy-and-extend
-matches that, and the cleanup is a doc-only behaviour-preserving
-refactor.
+pattern (identical structurally). The cleanup landed in Cycle 4b
+as the canonical home `loam_odd_extractor.lang._common/`:
+
+- `_common/repo_sha.py` exposes the single canonical
+  `resolve_repo_sha`; per-adapter `lang/{ruby,jsts}/repo_sha.py`
+  files were deleted.
+- `_common/slugs.py` exposes `slugify` + `file_slug`; per-adapter
+  `_ast_utils.py` modules retain a compat-shim re-export for
+  external/historical callers but recognizer modules import from
+  `..._common.slugs` directly (the canonical path).
+- `_common/heuristic_helpers.py` exposes
+  `make_inferred_banded_ac()` — both adapters'
+  `heuristic_inferences.py` modules call it instead of hand-rolling
+  the `BandedAC(...)` + `Evidence(kind="inference", ...)`
+  boilerplate.
+
+`SliceDriftError` + `aggregate_slice_results` stay where they were
+(defined in `lang/ruby/slicer.py`; re-exported by
+`lang/jsts/slicer.py`) — already DRY (one canonical home + one
+re-exporter), and moving them to `_common/` is symmetric but
+cosmetic. Cycle 5+ can revisit if a Python adapter (v0.2.2+) or
+other future adapter changes the calculus.
+
+Future adapters (Python in v0.2.2+) inherit the consolidated shape:
+import `resolve_repo_sha`, `slugify`, `file_slug`, and
+`make_inferred_banded_ac` from `..._common`; build per-language
+recognizers, AST helpers, and heuristic regex tables in
+`lang/<name>/`.

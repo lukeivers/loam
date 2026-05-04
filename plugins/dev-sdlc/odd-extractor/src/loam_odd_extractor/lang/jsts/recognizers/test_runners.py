@@ -29,13 +29,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ....bands import BandedAC, ConfidenceBand, Evidence
+from ..._common.slugs import file_slug, slugify
 from .._ast_utils import (
     call_callee_object,
     call_first_arg_string,
     file_imports,
-    file_slug,
     find_call_expressions,
-    slugify,
 )
 from ..parser import node_line
 

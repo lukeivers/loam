@@ -1,9 +1,16 @@
-"""Resolve the git HEAD SHA for a target repo.
+"""Resolve the git HEAD SHA for a target repo (cross-language shared).
 
-Per AC.RAILS.3 + AC.BANDS.2 — VERIFIED ACs require a non-null
-``repo_sha`` so the test pin survives codebase drift. Per Surface #7
-— the resolver shells out to ``git rev-parse HEAD`` (no Python git
-library dep; matches loam-amend precedent).
+Per AC.DRY.1 (v0.1.8 Cycle 4b) — the single canonical home for
+the ``resolve_repo_sha`` helper. Pre-4b this function was duplicated
+byte-equivalent (modulo docstring) at ``lang/ruby/repo_sha.py`` and
+``lang/jsts/repo_sha.py``; both per-adapter copies are deleted in
+Cycle 4b in favour of this shared implementation.
+
+Per Cycle 3 Surface #7 — the resolver shells out to
+``git rev-parse HEAD`` (no Python git library dep; matches loam-amend
+precedent). Per AC.RAILS.3 + AC.JSTS.3 + AC.BANDS.2 — VERIFIED ACs
+require a non-null ``repo_sha`` so the test pin survives codebase
+drift.
 """
 
 from __future__ import annotations

@@ -20,12 +20,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ....bands import BandedAC, ConfidenceBand, Evidence
+from ..._common.slugs import file_slug, slugify
 from .._ast_utils import (
-    file_slug,
     find_interface_declarations,
     find_type_alias_declarations,
     interface_name,
-    slugify,
     type_alias_name,
 )
 from ..parser import node_line

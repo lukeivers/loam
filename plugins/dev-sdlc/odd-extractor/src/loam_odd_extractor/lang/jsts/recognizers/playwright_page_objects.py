@@ -23,15 +23,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ....bands import BandedAC, ConfidenceBand, Evidence
+from ..._common.slugs import file_slug, slugify
 from .._ast_utils import (
     call_callee_object,
     class_name,
-    file_slug,
     find_call_expressions,
     find_class_declarations,
     find_method_definitions,
     method_name,
-    slugify,
 )
 from ..parser import node_line
 

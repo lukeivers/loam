@@ -64,3 +64,50 @@ def fixed_repo_sha() -> str:
     environments).
     """
     return "deadbeef" * 5
+
+
+_CANONICAL_FIXTURE_SOURCE = (
+    Path(__file__).parent.parent.parent / "fixtures" / "ruby-rails-payment"
+)
+
+
+@pytest.fixture
+def canonical_ruby_rails_payment_repo(tmp_path: Path) -> Path:
+    """A copy of the canonical ruby-rails-payment fixture in a fresh
+    tmp dir (v0.1.8 Cycle 4b — AC.FIXTURES.2).
+
+    The copy is initialised as a git repo with one committed snapshot
+    so :func:`resolve_repo_sha` returns a deterministic SHA in tests.
+    """
+    target = tmp_path / "ruby-rails-payment"
+    shutil.copytree(_CANONICAL_FIXTURE_SOURCE, target)
+    subprocess.run(
+        ["git", "init", "--quiet", "--initial-branch=main"],
+        cwd=target,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-c", "user.email=test@example.com",
+         "-c", "user.name=test",
+         "add", "-A"],
+        cwd=target,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-c", "user.email=test@example.com",
+         "-c", "user.name=test",
+         "commit", "--quiet", "-m", "ruby-rails-payment fixture"],
+        cwd=target,
+        check=True,
+    )
+    return target
+
+
+@pytest.fixture
+def canonical_ruby_rails_payment_repo_no_git(tmp_path: Path) -> Path:
+    """The canonical fixture without a git repo (for VERIFIED →
+    PLAUSIBLE downgrade verification).
+    """
+    target = tmp_path / "ruby-rails-payment-no-git"
+    shutil.copytree(_CANONICAL_FIXTURE_SOURCE, target)
+    return target

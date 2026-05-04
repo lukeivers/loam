@@ -12,10 +12,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ....bands import BandedAC, ConfidenceBand, Evidence
+from ..._common.slugs import file_slug
 from .._ast_utils import (
     call_first_arg,
     call_method_name,
-    file_slug,
     find_calls,
 )
 from ..parser import node_line

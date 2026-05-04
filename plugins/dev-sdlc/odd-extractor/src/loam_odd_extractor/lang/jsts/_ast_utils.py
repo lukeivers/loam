@@ -5,48 +5,24 @@ specific node types. Per Surface #2 — recognizer modules share these
 helpers (DRY); each recognizer focuses on idiom-specific pattern
 detection while delegating tree-walking + slug derivation here.
 
-Per RF gap §10 #6 — ``slugify`` + ``file_slug`` are byte-identical to
-Ruby's; refactor into ``lang/_common/`` deferred to Cycle 4b/5.
+Per AC.DRY.{2, 4} (v0.1.8 Cycle 4b) — :func:`slugify` and
+:func:`file_slug` were factored into ``loam_odd_extractor.lang._common.slugs``
+(closing Cycle 4a §10 RF #6). This module retains them as a
+compat-shim re-export so external callers (and any historical import
+sites) continue to work; new recognizer code imports from
+``.._common.slugs`` directly.
 """
 
 from __future__ import annotations
 
-import re
-from pathlib import Path
 from typing import TYPE_CHECKING, Iterator
+
+# Compat-shim re-export per AC.DRY.{2, 4} — canonical home is
+# loam_odd_extractor.lang._common.slugs.
+from .._common.slugs import file_slug, slugify  # noqa: F401
 
 if TYPE_CHECKING:  # pragma: no cover
     import tree_sitter
-
-
-_SLUG_RE = re.compile(r"[^a-zA-Z0-9]+")
-
-
-def slugify(text: str) -> str:
-    """Lowercase + non-alphanumeric → underscore + strip.
-
-    Used to derive deterministic AC IDs from arbitrary text. Empty
-    inputs return ``""``; the caller must guard against that if
-    required.
-
-    DRY surface (RF §10 #6): identical to ``lang/ruby/_ast_utils.slugify``.
-    """
-    return _SLUG_RE.sub("_", text).strip("_").lower()
-
-
-def file_slug(file_path: Path, repo_root: Path) -> str:
-    """A path-relative slug used as the suffix of cross-slice-unique
-    ``ac_id`` values.
-
-    Per Cycle 3 Surface #9 / Cycle 4 RF §10 #9 — slugs extended with
-    file-relative-path suffix to mitigate cross-slice ``ac_id``
-    collisions.
-    """
-    try:
-        rel = file_path.relative_to(repo_root)
-    except ValueError:
-        rel = Path(file_path.name)
-    return slugify(rel.as_posix())
 
 
 def walk_nodes(

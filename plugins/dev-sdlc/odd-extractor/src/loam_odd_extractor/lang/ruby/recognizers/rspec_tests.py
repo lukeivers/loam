@@ -21,10 +21,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ....bands import BandedAC, ConfidenceBand, Evidence
+from ..._common.slugs import file_slug
 from .._ast_utils import (
     call_first_arg,
     call_method_name,
-    file_slug,
     find_calls,
     walk_nodes,
 )
@@ -98,7 +98,7 @@ def recognize_rspec_tests(
         line = node_line(call_node)
 
         # Slug components must be deterministic + non-empty.
-        from .._ast_utils import slugify
+        from ..._common.slugs import slugify
 
         ac_id = (
             f"AC.RAILS.test.rspec.{slugify(describe_clean)}."

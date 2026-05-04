@@ -6,6 +6,13 @@ ACs (no LLM call). Each heuristic carries a rationale string
 capturing its provenance so Cycle 4+ LLM-driven inference can swap
 in under the same contract.
 
+Per AC.DRY.3 (v0.1.8 Cycle 4b) — the per-heuristic
+``BandedAC(... confidence=HYPOTHESISED, evidence=Evidence(
+kind="inference", ...))`` boilerplate is delegated to
+:func:`make_inferred_banded_ac` from
+``loam_odd_extractor.lang._common.heuristic_helpers``. This module
+retains the per-language regex tables + heuristic firing logic.
+
 Heuristic patterns (extensible — Cycle 4+ extends this list):
 
 - ``validates :foo, presence: true`` → "<Model> creation requires
@@ -25,7 +32,8 @@ from __future__ import annotations
 
 import re
 
-from ...bands import BandedAC, ConfidenceBand, Evidence
+from ...bands import BandedAC, ConfidenceBand
+from .._common.heuristic_helpers import make_inferred_banded_ac
 
 
 # Regex to extract the model name from active_record AC IDs.
@@ -58,7 +66,6 @@ def infer_domain_rules(
             continue
         text = ac.text
         ac_id = ac.ac_id
-        backing = list(ac.backing_files)
 
         # Heuristic 1: validates :foo, presence: true → "<Model>
         # requires <foo> to be created."
@@ -72,7 +79,7 @@ def infer_domain_rules(
         if m:
             model, attr = m.group(1), m.group(2)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.RAILS.inferred.required_on_create."
                         f"{model.lower()}.{attr}"
@@ -81,17 +88,12 @@ def infer_domain_rules(
                         f"Inferred: {model} creation requires "
                         f"{attr} to be present"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: presence-validator on "
-                            f"{model}.{attr} → infers required-on-"
-                            f"create. Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: presence-validator on "
+                        f"{model}.{attr} → infers required-on-"
+                        f"create. Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
             continue
@@ -108,7 +110,7 @@ def infer_domain_rules(
         if m:
             model, attr = m.group(1), m.group(2)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.RAILS.inferred.unique."
                         f"{model.lower()}.{attr}"
@@ -117,17 +119,12 @@ def infer_domain_rules(
                         f"Inferred: {attr} is unique across all "
                         f"{model} instances"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: uniqueness-validator on "
-                            f"{model}.{attr} → infers global-"
-                            f"uniqueness. Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: uniqueness-validator on "
+                        f"{model}.{attr} → infers global-"
+                        f"uniqueness. Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
             continue
@@ -140,7 +137,7 @@ def infer_domain_rules(
         if m:
             model, assoc = m.group(1), m.group(2)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.RAILS.inferred.polymorphic_owner."
                         f"{model.lower()}.{assoc}"
@@ -149,17 +146,12 @@ def infer_domain_rules(
                         f"Inferred: {model} can be owned by "
                         f"multiple types via {assoc}"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: polymorphic belongs_to "
-                            f"{model}.{assoc} → infers multi-type "
-                            f"ownership. Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: polymorphic belongs_to "
+                        f"{model}.{assoc} → infers multi-type "
+                        f"ownership. Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
             continue
@@ -172,7 +164,7 @@ def infer_domain_rules(
         if m:
             model, target = m.group(1), m.group(2)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.RAILS.inferred.normalised_before_save."
                         f"{model.lower()}.{target}"
@@ -181,18 +173,13 @@ def infer_domain_rules(
                         f"Inferred: {model}.{target} is normalised "
                         f"before persistence"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: before_save :normalize_"
-                            f"{target} on {model} → infers "
-                            f"pre-persistence normalisation. "
-                            f"Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: before_save :normalize_"
+                        f"{target} on {model} → infers "
+                        f"pre-persistence normalisation. "
+                        f"Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
             continue
@@ -205,7 +192,7 @@ def infer_domain_rules(
         if m:
             model, target = m.group(1), m.group(2)
             out.append(
-                BandedAC(
+                make_inferred_banded_ac(
                     ac_id=(
                         f"AC.RAILS.inferred.async_after_create."
                         f"{model.lower()}.{target}"
@@ -214,17 +201,12 @@ def infer_domain_rules(
                         f"Inferred: {target} is enqueued "
                         f"asynchronously after {model} creation"
                     ),
-                    confidence=ConfidenceBand.HYPOTHESISED,
-                    evidence=Evidence(
-                        kind="inference",
-                        citations=list(ac.evidence.citations),
-                        rationale=(
-                            f"heuristic: after_create :enqueue_"
-                            f"{target} on {model} → infers async "
-                            f"enqueue. Source AC: {ac_id}"
-                        ),
+                    rationale=(
+                        f"heuristic: after_create :enqueue_"
+                        f"{target} on {model} → infers async "
+                        f"enqueue. Source AC: {ac_id}"
                     ),
-                    backing_files=backing,
+                    source_ac=ac,
                 )
             )
 

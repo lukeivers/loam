@@ -26,11 +26,16 @@ import pytest
 SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
 
 EXPECTED_SKILLS = [
+    # v0.1.3 bundle.
     "memory-recall",
     "scope-decompose",
     "dispatch-with-gates",
     "onboarding-conversation",
     "session-handoff",
+    # v0.1.6 Cycle 2 additions.
+    "translation-discipline",
+    "audit-block-on-telegram",
+    "owner-decision-summary",
 ]
 
 # Per Anthropic schema: lowercase letters, numbers, and hyphens;

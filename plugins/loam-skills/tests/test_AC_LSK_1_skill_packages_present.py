@@ -1,11 +1,16 @@
-"""AC.LSK.1 — five SKILL.md packages present and well-formed.
+"""AC.LSK.1 — eight SKILL.md packages present and well-formed.
 
-Per sub-plan §5 AC.LSK.1: five SKILL.md files exist at the
-canonical paths. Each file: starts with valid YAML frontmatter
-delimited by `---` lines; frontmatter parses without error and is
-a mapping; carries a non-empty `description` field (string,
-≤1536 chars per Anthropic's combined-cap); body (post-frontmatter)
-is non-empty markdown.
+Per sub-plan §5 AC.LSK.1: SKILL.md files exist at the canonical
+paths. Each file: starts with valid YAML frontmatter delimited by
+`---` lines; frontmatter parses without error and is a mapping;
+carries a non-empty `description` field (string, ≤1536 chars per
+Anthropic's combined-cap); body (post-frontmatter) is non-empty
+markdown.
+
+v0.1.6 Cycle 2 extension (per
+docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md §5
+AC.SKILLS-BASE.4): 3 new SKILLs land alongside the original 5,
+taking EXPECTED_SKILLS to 8.
 
 Anthropic SKILL.md schema reference:
 https://code.claude.com/docs/en/skills
@@ -24,11 +29,16 @@ import pytest
 SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
 
 EXPECTED_SKILLS = [
+    # v0.1.3 bundle (sealed at f04e925).
     "memory-recall",
     "scope-decompose",
     "dispatch-with-gates",
     "onboarding-conversation",
     "session-handoff",
+    # v0.1.6 Cycle 2 additions.
+    "translation-discipline",
+    "audit-block-on-telegram",
+    "owner-decision-summary",
 ]
 
 # Anthropic-published cap per
@@ -90,14 +100,21 @@ def test_skill_file_exists_with_frontmatter_and_body(
     )
 
 
-def test_all_five_skills_discovered() -> None:
-    """Cross-check: walking the skills/ directory yields exactly
-    the five expected packages — no orphans, no misnames."""
+def test_all_skills_discovered() -> None:
+    """Cross-check: walking the skills/ directory yields exactly the
+    expected packages — no orphans, no misnames. v0.1.6 Cycle 2
+    extends from 5 to 8."""
     on_disk = sorted(
         p.name for p in SKILLS_DIR.iterdir()
         if p.is_dir() and (p / "SKILL.md").is_file()
     )
     assert on_disk == sorted(EXPECTED_SKILLS), (
         f"discovered skills {on_disk} != expected {sorted(EXPECTED_SKILLS)}; "
-        "AC.LSK.1 requires exactly the named five packages."
+        "AC.LSK.1 requires exactly the named eight packages "
+        "(5 from v0.1.3 + 3 from v0.1.6 Cycle 2)."
     )
+
+
+def test_skills_count_eight() -> None:
+    """v0.1.6 Cycle 2 — the bundle is 8 SKILLs total."""
+    assert len(EXPECTED_SKILLS) == 8

@@ -91,6 +91,12 @@ from .state import (
 )
 from .verify import verify_contract
 
+# Cycle 3 (v0.1.8) — Ruby/Rails first-class adapter. Lazy-loadable
+# but re-exported here so callers can ``from loam_odd_extractor
+# import RubyAdapter``. Per Surface #8, the tree-sitter import
+# inside :mod:`.lang.ruby.parser` is itself lazy at first parse-call.
+from .lang.ruby import RubyAdapter
+
 __all__ = [
     "AnalysisPlan",
     "BandedAC",
@@ -108,6 +114,7 @@ __all__ = [
     "RatificationState",
     "RawACs",
     "RegistryError",
+    "RubyAdapter",
     "Slice",
     "StageError",
     "analyze_repo",

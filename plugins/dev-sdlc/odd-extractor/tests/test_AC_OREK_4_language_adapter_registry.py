@@ -102,17 +102,34 @@ def test_register_adapter_rejects_duplicate_name() -> None:
         register_adapter(_StubAdapter())
 
 
-def test_discover_adapters_empty_at_cycle_1() -> None:
-    """No manual registration + zero entry-points → []."""
+def test_discover_adapters_post_cycle_3() -> None:
+    """No manual registration → registry contains only entry-point-
+    discovered adapters.
+
+    Cycle 1 shipped zero adapters; v0.1.8 Cycle 3 (Ruby/Rails) is the
+    first cycle to register an adapter via the
+    ``loam.odd_extractor.language_adapters`` entry-point group. The
+    test confirms (a) the registry returns a list (empty or not is
+    install-dependent), (b) every returned adapter is Protocol-
+    compliant, (c) the Ruby adapter is in the list when its package
+    is installed (the canonical pos-v2 setup).
+    """
     found = discover_adapters()
-    assert found == []
+    assert isinstance(found, list)
+    for adapter in found:
+        assert hasattr(adapter, "name")
+        assert callable(getattr(adapter, "supports", None))
+        assert callable(getattr(adapter, "extract", None))
+    # In the canonical pos-v2 install, the Ruby adapter is wired.
+    names = [a.name for a in found]
+    assert "ruby" in names
 
 
 def test_discover_includes_manual_registrations() -> None:
     register_adapter(_StubAdapter())
     found = discover_adapters()
-    # At minimum the stub; possibly more if other entry-points
-    # are installed (none expected in Cycle 1).
+    # At minimum the stub; entry-point-discovered adapters
+    # (e.g., ruby starting from Cycle 3) coexist.
     assert any(a.name == "stub" for a in found)
 
 

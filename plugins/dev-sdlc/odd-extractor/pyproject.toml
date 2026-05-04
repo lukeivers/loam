@@ -12,6 +12,14 @@ dependencies = [
     "pydantic>=2",
     "loam-cli",
     "loam-cost-governance",
+    # v0.1.8 Cycle 3 — Ruby/Rails first-class adapter. tree-sitter
+    # provides the AST library; tree-sitter-ruby provides the Ruby
+    # grammar. Both ship as pre-compiled wheels (no native compile
+    # step on user machines). Per cycle plan-doc Surface #8 — these
+    # are required (not optional) since the Ruby adapter is part of
+    # the package's public surface from this cycle on.
+    "tree-sitter>=0.23",
+    "tree-sitter-ruby>=0.23",
 ]
 
 [project.optional-dependencies]
@@ -26,11 +34,16 @@ test = [
 odd-extract = "loam_odd_extractor.cli:build_odd_extract_subcommand"
 
 # AC.OREK.4 — language-adapter registry discovers adapters via this
-# entry-point group. Cycle 1 ships zero adapters; Cycle 3 (Ruby) and
-# Cycle 4 (Python) populate. The group name is namespaced under
-# loam.odd_extractor for collision avoidance with future loam features.
-# (No entries declared on this side — adapters declare the producing
-# entry on their own pyprojects.)
+# entry-point group. Cycle 1 ships zero adapters; Cycle 3 (Ruby)
+# populates first, Cycle 4 (Python) extends. The group name is
+# namespaced under loam.odd_extractor for collision avoidance with
+# future loam features.
+[project.entry-points."loam.odd_extractor.language_adapters"]
+# Resolve to a module-level factory callable that returns the
+# singleton instance (per Cycle 3 plan-doc Surface #1 — adapter
+# instances are stateless; the singleton avoids re-instantiating
+# the parser cache on every discover_adapters() call).
+ruby = "loam_odd_extractor.lang.ruby.adapter:_singleton_factory"
 
 [tool.setuptools.packages.find]
 where = ["src"]

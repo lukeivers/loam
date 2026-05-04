@@ -153,12 +153,78 @@ from loam_odd_extractor import (
 )
 ```
 
-## Out of scope (Cycles 1+2)
+## Ruby/Rails first-class adapter (Cycle 3)
 
-- Ruby/Rails adapter → Cycle 3.
+v0.1.8 Cycle 3 ships the Ruby/Rails adapter as the first registered
+language adapter. Public API:
+
+```python
+from loam_odd_extractor import RubyAdapter
+from loam_odd_extractor.lang.ruby.adapter import extract_rails_acs
+
+# Convenience function — runs the adapter against ``repo`` directly.
+raw = extract_rails_acs(repo=Path("/path/to/rails/app"))
+# raw.acs is a list of dict-shaped BandedAC entries
+```
+
+The adapter implements the `LanguageAdapter` Protocol and is wired
+via the `loam.odd_extractor.language_adapters` entry-point group
+(Cycle 1's discovery mechanism).
+
+### Recognized Rails idioms
+
+- ActiveRecord models — `class X < ApplicationRecord` (PLAUSIBLE).
+- ActiveRecord migrations — `db/migrate/*.rb` with `create_table`,
+  `add_column`, `add_index`, `add_foreign_key`, `add_reference :X,
+  polymorphic: true` (PLAUSIBLE).
+- Callbacks — `before_save`, `after_create`, etc. (PLAUSIBLE).
+- Concerns — `module X; extend ActiveSupport::Concern; ...; end`
+  (PLAUSIBLE definition + PLAUSIBLE `include X` usage).
+- Polymorphic associations — `belongs_to :owner, polymorphic: true`
+  (PLAUSIBLE).
+- ActiveJob — `class X < ApplicationJob` + `queue_as :name`
+  (PLAUSIBLE).
+- Sidekiq — `include Sidekiq::Worker / Sidekiq::Job` +
+  `sidekiq_options queue: :name` (PLAUSIBLE).
+- Routes — `config/routes.rb` with `resources`, `get/post/...`,
+  `namespace`, `scope`, `root` (PLAUSIBLE).
+- RSpec tests — `RSpec.describe ... it '...' do ... end` (VERIFIED
+  with non-null `repo_sha`; downgrades to PLAUSIBLE without).
+- Minitest tests — `test '...' do ... end` + `def test_<name>`
+  (VERIFIED, same downgrade rule).
+- Heuristic inferences — validates-presence → required-on-create;
+  before_save :normalize_X → normalised-before-save; etc.
+  (HYPOTHESISED with `rationale` capturing heuristic provenance).
+
+### Tree-sitter dependency
+
+The Ruby adapter uses the `tree-sitter` Python bindings + the
+`tree-sitter-ruby` grammar (both pre-compiled wheels — no native
+compile step). The imports are lazy at first parse-call so
+``import loam_odd_extractor`` doesn't pull tree-sitter into
+memory unnecessarily.
+
+### Slice-and-swarm
+
+When the dry-run estimate exceeds the budget envelope, the slicer
+partitions the repo by Rails-idiom domain. The aggregator merges
+per-slice results lexicographically by `ac_id`; >50% duplicate-
+ratio across slices raises `SliceDriftError` (the F3-swarming
+`needs_fresh_start` analog).
+
+See `docs/odd-methodology.md` §12 for the full per-language
+adapter conventions.
+
+## Out of scope (Cycles 1+2+3)
+
 - Python adapter → Cycle 4.
+- Canonical full Ruby-Rails-payment fixture + e2e smoke → Cycle 4.
 - 6 dev-sdlc SKILLs → Cycle 5.
 - Continuous codebase-watch → v0.2.0.
 - Persona-side natural-language → RatificationAction parser → v0.2.0+.
+- LLM-driven HYPOTHESISED inference → Cycle 4+ (heuristic-shaped
+  in Cycle 3).
+- Real test execution to verify VERIFIED claims → v0.1.9+ (Cycle 3
+  grants VERIFIED on ratification-mediated assumption).
 
 See the master plan for full scope and sequencing.

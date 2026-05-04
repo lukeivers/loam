@@ -84,6 +84,49 @@ def _walk_repo(repo_path: Path) -> list[Path]:
     return out
 
 
+# Per Cycle 3 plan-doc Surface #6 — language-hint routing table.
+# Initial mapping; later cycles extend (Cycle 4 adds Python; modern
+# Rails apps with .js / .ts / .haml are RF gap §10 #3).
+_LANGUAGE_HINTS: dict[str, frozenset[str]] = {
+    "ruby": frozenset(
+        {".rb", ".rake", ".gemspec"}
+    ),
+    "python": frozenset(
+        {".py"}
+    ),
+}
+_LANGUAGE_HINT_NAMES: dict[str, frozenset[str]] = {
+    "ruby": frozenset(
+        {"Rakefile", "Gemfile", "config.ru"}
+    ),
+}
+
+
+def _adapter_handles_file(adapter, file_path: Path) -> bool:
+    """Return True if ``adapter`` claims ``file_path`` per the
+    language-hint table.
+
+    The check is a pure-Python lookup; adapters can override by
+    declaring a ``handles_file(path: Path) -> bool`` method (Cycle 4+
+    extension hook). Cycle 3 uses the static table.
+    """
+    # Adapter-supplied hook overrides the static table.
+    handles_file = getattr(adapter, "handles_file", None)
+    if callable(handles_file):
+        try:
+            return bool(handles_file(file_path))
+        except Exception:
+            return False
+
+    suffixes = _LANGUAGE_HINTS.get(adapter.name, frozenset())
+    if file_path.suffix in suffixes:
+        return True
+    names = _LANGUAGE_HINT_NAMES.get(adapter.name, frozenset())
+    if file_path.name in names:
+        return True
+    return False
+
+
 def analyze_repo(
     *,
     config: ExtractionConfig,
@@ -109,29 +152,53 @@ def analyze_repo(
         # Cycle 1 path — every file is unhandled.
         unhandled = files
     else:
-        # Cycles 3+4 path — partition files among adapters.
-        # An adapter "claims" the repo if its supports() returns
-        # True; per Cycle 1, the adapter is offered the repo
-        # root (per-file dispatch is a Cycle-3 refinement).
+        # Cycle 3 (per-file routing): partition files among adapters
+        # by language hint. Per v0-1-8-cycle-3 plan-doc Surface #6 —
+        # the all-or-nothing claim model from Cycle 1 is replaced by
+        # per-file dispatch so multi-adapter repos (e.g., Rails app
+        # with a Python data-science script under tools/) don't
+        # collapse onto the first adapter that supports() the repo.
+        #
+        # Routing rule: each adapter sees the repo root via
+        # supports(); for adapters that claim the repo, files are
+        # routed by the language hint table (file extension /
+        # filename). Files matching no claiming adapter's hint land
+        # in unhandled_paths.
+        claiming_adapters = []
         for adapter in adapters:
             try:
                 claimed = bool(adapter.supports(config.repo_path))
             except Exception:
                 claimed = False
             if claimed:
-                slices.append(
-                    Slice(
-                        slice_id=f"{adapter.name}-root",
-                        adapter_name=adapter.name,
-                        paths=files,
+                claiming_adapters.append(adapter)
+
+        if not claiming_adapters:
+            unhandled = files
+        else:
+            adapter_files: dict[str, list[Path]] = {
+                a.name: [] for a in claiming_adapters
+            }
+            for f in files:
+                routed = False
+                for adapter in claiming_adapters:
+                    if _adapter_handles_file(adapter, f):
+                        adapter_files[adapter.name].append(f)
+                        routed = True
+                        break
+                if not routed:
+                    unhandled.append(f)
+
+            for adapter in claiming_adapters:
+                claimed_files = adapter_files[adapter.name]
+                if claimed_files:
+                    slices.append(
+                        Slice(
+                            slice_id=f"{adapter.name}-root",
+                            adapter_name=adapter.name,
+                            paths=claimed_files,
+                        )
                     )
-                )
-                # Cycle 1's contract: an adapter that claims gets
-                # ALL files; subsequent adapters see nothing. Cycle 3
-                # tightens this to per-file routing.
-                files = []
-                break
-        unhandled = files
 
     plan = AnalysisPlan(
         extraction_id=config.repo_id,

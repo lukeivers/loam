@@ -913,3 +913,104 @@ AC referenced via re-extension provenance) is the durable record.
 Silent acceptance of a wrong HYPOTHESISED AC, or silent promotion
 of a PLAUSIBLE AC without confirming the test pin, **is** the
 violation §4.4 prohibits.
+
+
+---
+
+## 12. Per-language adapter conventions (Ruby/Rails first)
+
+Per v0.1.8 Cycle 3 (the Ruby/Rails first-class adapter), the
+`loam odd-extractor` ships per-language adapters that populate the
+banded-AC contract from a target codebase. Each adapter implements
+the `LanguageAdapter` Protocol from Cycle 1 (`name`, `supports`,
+`extract`); the per-Rails-idiom recognizers under
+`plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/lang/ruby/recognizers/`
+are the canonical reference shape. Cycle 4 mirrors the same shape
+for Python.
+
+### 12.1 Confidence band rules per Rails idiom
+
+| Idiom | Band | Evidence |
+|---|---|---|
+| Passing RSpec / Minitest test | `VERIFIED` | `kind="test"`, `repo_sha` non-null, `citations=[<file>:<line>:<framework>:<descriptor>]` |
+| ActiveRecord model declaration | `PLAUSIBLE` | `kind="source"`, `citations=[<file>:<line>]` |
+| ActiveRecord migration (`create_table`, `add_column`, `add_index`, `add_foreign_key`, `add_reference`) | `PLAUSIBLE` | same |
+| Callbacks (`before_save`, `after_create`, etc.) | `PLAUSIBLE` | same |
+| Concern definition (`module X; extend ActiveSupport::Concern`) | `PLAUSIBLE` | same |
+| Concern usage (`include X` in a model/controller) | `PLAUSIBLE` | same |
+| Polymorphic association (`belongs_to :owner, polymorphic: true`) | `PLAUSIBLE` | same |
+| ActiveJob class (`class X < ApplicationJob`) | `PLAUSIBLE` | same |
+| Sidekiq worker (`include Sidekiq::Worker / Sidekiq::Job`) | `PLAUSIBLE` | same |
+| Routes (`resources`, `get/post/...`, `namespace`, `scope`) | `PLAUSIBLE` | same |
+| Heuristic-derived domain inference (validates-presence → required-on-create; before_save :normalize_X → normalised-before-save; etc.) | `HYPOTHESISED` | `kind="inference"`, `rationale` non-empty (heuristic provenance string) |
+
+Adapters MUST construct `BandedAC` instances directly (Cycle 2's
+Pydantic + model_validator catches malformed band/evidence pairs
+at construction time); adapter outputs append to `RawACs.acs` as
+`model_dump()`-d dicts that round-trip through
+`BandedAC.model_validate()` without schema migration.
+
+### 12.2 Test-first granularity
+
+Per Eric synthesis Decision G1 (test-name-as-AC-name), each test
+file's `it` block (RSpec) or `test '...'` block / `def test_<name>`
+method (Minitest) becomes one `VERIFIED` AC. Per-`describe` /
+per-`context` clusters are too coarse; per-`expect(...)` assertions
+are too fine. The `it`/`test` block IS the verification-as-spec
+boundary that ratification consumes.
+
+### 12.3 Test-pass assumption
+
+Cycle 3 grants `VERIFIED` on the **assumption that the test passed
+at the resolved repo SHA**. Loam doesn't execute tests — running
+RSpec / Minitest against a foreign Rails codebase requires a Ruby
+runtime + Rails environment that's outside loam's process scope.
+Ratification is the human verification step: the persona surfaces
+each `VERIFIED` AC for owner confirmation that the test was
+genuinely passing at the time of extraction.
+
+When the repo isn't a git repo (no SHA), the test recognizer
+**downgrades** `VERIFIED` → `PLAUSIBLE` per AC.BANDS.2 — the
+evidence reverts to source-citation only and the persona is
+expected to upgrade to `VERIFIED` only after running the test
+suite themselves.
+
+### 12.4 HYPOTHESISED inference engine
+
+Cycle 3 produces HYPOTHESISED ACs from **heuristic-shaped
+inferences** over already-extracted PLAUSIBLE ACs (no LLM call).
+Each heuristic carries a rationale string capturing its
+provenance; Cycle 4+ may swap in LLM-driven inference under the
+same `rationale`-required contract.
+
+Heuristic provenance changes when the inference engine changes
+(heuristic → LLM); ratification is the cross-version reconciliation
+point. Owners reviewing a HYPOTHESISED AC produced by the heuristic
+engine in v0.1.8 Cycle 3 should re-evaluate (not blindly accept)
+the same AC if it re-emerges from an LLM-driven engine in a later
+version — the `rationale` field is the visible signal.
+
+### 12.5 Slice-and-swarm decomposition
+
+Per AC.RAILS.4 — when the dry-run estimate exceeds the budget
+envelope, the Ruby adapter slices the repo by Rails-idiom domain
+(one slice per `app/models/` cluster, one per `db/migrate/`
+cohort split into chunks of 25, etc.) and aggregates per-slice
+results deterministically (lexicographic sort by `ac_id`;
+last-write-wins on duplicates).
+
+When the aggregator detects >50% duplicate `ac_id`s across slices
+(the F3-swarming `needs_fresh_start` analog), it raises
+`SliceDriftError`; the adapter halts. Per Lens 5 — completing a
+diverged shard chain is never the correct response; the slicing
+strategy must be re-run with adjusted shard boundaries.
+
+### 12.6 Per-file routing
+
+Cycle 1's analyze stage routed all files to the first adapter that
+claimed the repo (all-or-nothing). Cycle 3 extends this to
+**per-file routing** by language hint (file extension /
+filename). This unblocks multi-adapter codebases — modern Rails
+apps include JS, ERB, YAML, JSON, and (occasionally) Python data-
+science scripts that the Ruby adapter shouldn't claim. Files
+matching no claiming adapter's hint land in `unhandled_paths`.

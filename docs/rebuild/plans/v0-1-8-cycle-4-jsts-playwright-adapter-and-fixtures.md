@@ -693,3 +693,10 @@ Per AC.D-sa.7, every plan-doc that selects non-default methods records the decis
 | ESM + CommonJS coverage in fixture | Mixed: `.js` (CJS), `.mjs` (ESM), `.ts/.tsx` (TS module-resolution per tsconfig) | AC.JSTS.1's "ESM and CommonJS module shapes both supported" claim verified directly via fixture content. |
 
 ---
+
+### Commit SHAs
+
+- Amendment commit: `07033d3a2ab650661b68eb6f27581cbb9bb4fdae` —
+  `chore(amend): v0-1-8-cycle-4-jsts-playwright-adapter-and-fixtures manifest+apply — dev-sdlc BASELINE+sidecar bump to c2356a6`
+- Seal commit: `67dd302031f5b8f132ca87b5760c0ba3521b50cc` —
+  `chore(seals): v0-1-8-cycle-4-jsts-playwright-adapter-and-fixtures — dev-sdlc at 07033d3`

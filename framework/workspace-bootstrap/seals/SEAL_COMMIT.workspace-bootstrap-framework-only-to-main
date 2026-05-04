@@ -1,0 +1,131 @@
+# workspace-bootstrap: framework-only → main — apply ladder
+
+2026-05-04. Sealed-component follow-up amendment to the OSS
+dev-architecture migration (sealed at `ea8c4bb`, 2026-05-04).
+Closes the migration agent's halt-and-surface (§8.8 of the
+migration plan-doc) by switching workspace-bootstrap's clone-
+target branch from `framework-only` (the now-deprecated
+synthesis output) to `main` (the canonical default branch on
+`lukeivers/loam` post-migration).
+
+Sub-plan: `docs/rebuild/plans/workspace-bootstrap-framework-only-to-main.md`.
+Builder-plan: `docs/rebuild/plans/workspace-bootstrap-framework-only-to-main.builder-plan.md`.
+
+Scope (per sub-plan §3): single-component fence on
+`framework/workspace-bootstrap/`. Touches one source file
+(`new_workspace.py`), one conftest, ~5 existing AC tests
+(assertion + docstring updates), 4 new AC tests
+(AC.WBM2M.{1,2,3,4}). Surface area: the module-level constant
+`FRAMEWORK_ONLY_BRANCH = "framework-only"` becomes
+`CANONICAL_BRANCH = "main"`; helper rename
+`_materialise_framework_only_branch` →
+`_materialise_canonical_branch`; 3 production callsites flip
+to the new constant + helper; conftest's
+`make_fixture_canonical` factory drops the dependency on the
+archived `loam.publish_framework_only.synth` module and
+initialises the fixture canonical with `git init
+--initial-branch=main` directly.
+
+AC families:
+
+  - AC.WBM2M.1 — constant rename + 3 callsite flips. Asserts
+    the source contains `CANONICAL_BRANCH = "main"`, no
+    `FRAMEWORK_ONLY_BRANCH` name, no `"framework-only"` string
+    literal.
+  - AC.WBM2M.2 — stranger-clone of canonical produces a
+    working workspace whose `framework/` subdir is checked
+    out on `main`. End-to-end smoke at the AC level
+    (successor to AC.FBE.10.2).
+  - AC.WBM2M.3 — local-path branch's materialise helper
+    is idempotent on the typical case where `main` is the
+    stranger-clone's local default branch (helper is a no-op
+    but defensive against cache-clone edge cases).
+  - AC.WBM2M.4 — conftest's `make_fixture_canonical` factory
+    builds a `main`-shape fixture canonical without
+    importing `loam.publish_framework_only.synth` (the
+    synthesis tool is archived; the import is not reachable
+    from active source).
+  - AC.WBM2M.5 — existing AC tests (AC.FBE.10, AC.SFR.5,
+    AC.D.4.1) updated, not deleted, where contracts persist.
+    The obsolete AC.SFR.5 second test (asserts `framework-only`
+    reachable as a non-default branch) is DELETED — there is
+    no second branch on canonical `main` post-migration.
+  - AC.WBM2M.6 — seal-diff hygiene (single-component fence).
+    Only `framework/workspace-bootstrap/` + universal
+    admissions appear in the seal-diff; verified by
+    `test_no_sealed_amendments.py` at the manifest BASELINE
+    + per-component sweep.
+
+Smoke (REALISTIC CONDITION — all 6 dimensions per sub-plan §5):
+D1 cold-state, D2 steady-state, D3 restart, D4 reboot,
+D5 cross-session (the ship-test), D6 telemetry-floor — all
+exercised; HARD gate. If D5 fails, halt + surface (the bug is
+upstream of this amendment).
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - Constant naming: `CANONICAL_BRANCH = "main"` (keeps the
+    indirection for self-documentation; alternative is
+    inline literal `"main"` at the 3 callsites — equally
+    acceptable).
+  - Helper rename: `_materialise_canonical_branch` (was
+    `_materialise_framework_only_branch`). Module-private;
+    no external callers (verified pre-edit).
+  - Conftest fixture shape: single-tree fixture with
+    `git init --initial-branch=main`; no second branch
+    synthesis. Drops the `_FIXTURE_MANIFEST_REL` +
+    `_FIXTURE_MANIFEST_YAML` constants entirely.
+  - Test file renaming: keep file paths, rename test fn
+    bodies + docstrings. AC.FBE.10's body → AC.WBM2M.2;
+    AC.SFR.5's second test → deleted.
+  - Doubled-component contract (FBE.2c.5/.6): KEPT verbatim.
+    Canonical `main` carries the same `framework/<comp>/...`
+    paths as the prior `framework-only` branch did, so the
+    clone-into `<new-ws>/framework/` continues to produce
+    the doubled `<new-ws>/framework/framework/<comp>/...`
+    shape. Only the branch name changes.
+
+Out of scope (sub-plan §3 + dispatcher direction):
+
+  - The dead-text reference to
+    `"framework/tools/pos-publish-framework-only/"` in
+    `framework/tools/loam/tests/test_no_sealed_amendments.py`
+    `allowed_prefixes` — outside fence (touches `loam`
+    component, not `workspace-bootstrap`); deferred to a
+    separate follow-up amendment that touches `loam`.
+  - The dead-text reference in
+    `framework/tools/loam-memory-inspect/README.md` — same.
+  - v0.1.8 work (extractor heavy / Ruby first-class / 6 SKILLs).
+  - Cost-audit recommendations (manifest narrative collapse,
+    commit merge, etc.) — separate amendment per dispatcher.
+
+Post-seal cleanup (sub-plan §6, NOT part of this amendment's
+fence):
+
+  - Doc-backfill commit: STATE.md Change log entry +
+    eric-final-delivery-plan §2 row + v0-1-x-roadmap §8
+    method-decision register row.
+  - Remote ref deletion:
+    `git push lukeivers/loam :framework-only`. After this,
+    `loam:main` is the only ref Eric (or any stranger) needs
+    to clone.
+  - DO NOT push tags this amendment (per dispatcher).
+
+Predecessor commits (anchor):
+
+  - `ea8c4bb` — chore(migration): archive synthesis tool +
+    log OSS dev-architecture migration execution. Synthesis
+    tool moved to `docs/rebuild/archive/synthesis-tool-2026-05-04/`.
+  - `c7e5dd7` — docs(plans): record v0.1.7 release-close.
+  - `ad1e6bb` — docs(plans): cost-audit loam dev pattern
+    (canonical HEAD at plan-authoring time).
+
+BASELINE TBD (filled at apply-time as HEAD~1 of the source-
+edit commit). workspace-bootstrap's SEAL_COMMIT sidecar
+advances to the seal SHA via `loam amend seal`.
+
+With this amendment sealed, the OSS dev-architecture
+migration is fully complete: `loam:main` is the only ref
+Eric needs; the workspace-bootstrap-as-shipped points at it;
+`framework-only` is gone from active code and (after the
+post-seal cleanup) from the public remote.

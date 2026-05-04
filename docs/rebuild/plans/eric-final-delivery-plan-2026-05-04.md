@@ -92,9 +92,13 @@ Each release below: theme, concrete bundle (with placement), AI-time band (quali
 - SOC 2 audit-trail floor satisfied via the cost-governance + dry-run audit (every Eric-pointed dispatch has a budget estimate + post-run actuals recorded).
 - The 3 base SKILLs are persona-discipline shaping that benefits Eric's primary-persona on day 1.
 
-### v0.1.7 — Subagent personas + PM persona + layered-skill architecture mechanism
+### v0.1.7 — Subagent personas + PM persona + layered-skill architecture mechanism + one-question-at-a-time PM flow — **SHIPPED 2026-05-04**
 
-**Theme.** Coordination machinery off the persona's user-visible surface. Layered-skill architecture lands. Per-project PM ships.
+**Theme.** Coordination machinery off the persona's user-visible surface. Layered-skill architecture lands. Per-project PM ships. One-question-at-a-time PM-enforced surfacing flow enforces Decision Q structurally.
+
+**Cycle seal SHAs:** Cycle 1 (5 subagent personas + symlink registration) `3aa20dd`; Cycle 2 (per-project PM NEW component; queue + API) `73505f0`; Cycle 3 (layered-skill discovery + collision rules) `bcf699a`; Cycle 4 (one-question-at-a-time PM flow + audit-block SKILL composition) `122a7c8`.
+
+**Sub-plan:** `docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md` + per-cycle plan-docs.
 
 **Bundle:**
 
@@ -284,7 +288,7 @@ Each release below: theme, concrete bundle (with placement), AI-time band (quali
 | Release | Theme | AI-time | Quality-bar | Eric-gap closed |
 |---|---|---|---|---|
 | v0.1.6 | Production-safety + base-skills + 2 bug fixes | 9–15 h | ✓ all 6 dimensions | Defensive shield + skills bug fixed |
-| v0.1.7 | Subagents + PM + layered-skill mechanism | 22–34 h | ✓ all 6 dimensions | Coordination off persona's surface |
+| v0.1.7 | Subagents + PM + layered-skill mechanism + one-question-at-a-time PM flow — **SHIPPED 2026-05-04** (local; tag deferred) | 22–34 h estimate; 4 cycles sealed at `3aa20dd` / `73505f0` / `bcf699a` / `122a7c8` | ✓ all 6 dimensions PASS (HARD gate Decision R) | Coordination off persona's surface; PM ships; Decision Q one-question-at-a-time enforced structurally; audit-block SKILL composition wired |
 | v0.1.8 | Extractor heavy + Ruby-first-class + 6 SKILLs | 42–66 h | ✓ all 6 dimensions | Contract derivation possible |
 | v0.1.9 | PR-gate + 6 SKILLs | 15–28 h | ✓ all 6 dimensions | Contract enforcement |
 | v0.2.0 | Codebase-watch + auto-creation MVP | 14–24 h | ✓ all 6 dimensions | Contract evolves; Eric patterns captured |

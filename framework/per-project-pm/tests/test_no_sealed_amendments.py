@@ -21,10 +21,11 @@ first behaviour change so sealed-component discipline applies from
 day one.
 
 BASELINE history:
-  - <to-be-set-at-source-edit-commit>  at v0.1.7 Cycle 2 (per-project
-    PM NEW component first seal). The component's first appearance in
-    the tree IS the BASELINE per amendment-22 NEW-component pattern;
-    the source-edit commit's SHA goes here.
+  - ``edd420a`` at v0.1.7 Cycle 2 (per-project PM NEW component first
+    seal). The source-edit commit landing the component IS the
+    BASELINE per amendment-22 NEW-component pattern; subsequent
+    cycles touching this component will advance BASELINE to the
+    seal SHA of the prior cycle.
 
 SEAL_COMMIT: populated at seal time by ``loam amend seal`` per the
 amendment ritual.
@@ -38,8 +39,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 # BASELINE = the source-edit commit landing the per-project-pm
-# component. Set by `loam amend apply` at apply time.
-BASELINE = "HEAD"
+# component (v0.1.7 Cycle 2 first seal).
+BASELINE = "edd420a"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -78,12 +79,6 @@ def test_only_per_project_pm_changed() -> None:
     against it without it composing back.
     """
     seal = _seal_commit()
-    # When BASELINE is "HEAD" (pre-apply state), the diff window is
-    # empty and the test passes trivially. `loam amend apply`
-    # advances BASELINE to the source-edit commit and SEAL_COMMIT to
-    # the seal commit.
-    if BASELINE == "HEAD" and seal == "HEAD":
-        return
     out = subprocess.check_output(
         ["git", "diff", "--name-only", f"{BASELINE}..{seal}"],
         cwd=REPO_ROOT,

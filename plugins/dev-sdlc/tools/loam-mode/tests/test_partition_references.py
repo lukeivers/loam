@@ -47,38 +47,27 @@ from loam_mode.manifest import load_manifest
 # files, so AC.F3's always-loaded artefact set was empty and these
 # pre-existing prose cross-mode refs were masked. Post-realignment
 # the globs match the actual component sources and the pre-existing
-# refs surface. Each entry below is a sealed-component README /
-# template carrying a dev-only-path reference that this amendment is
-# NOT authorised to scrub (the AC.PMR.S fence sits at hands-off-
-# lifecycle + dev-sdlc + pos-publish-framework-only; opening the
-# workspace-sync / memory-system / primary-persona fences would be
-# a sealed-amendment in disguise per dispatch §6 out-of-scope
-# "Anything not on the three surfaces above"). Captured to FIDRAFT:
-# a follow-on amendment that opens each affected fence (e.g. a
-# workspace-sync README cleanup, a memory-system launchd cleanup, a
-# primary-persona prompt-template scrub) is the right home for each
-# of these scrubs. The allowlist must shrink to empty when those
-# amendments land.
+# refs surface.
+#
+# Post-v0.1.9 Cycle 3 (audit-allowlist cleanup): empirical pre-flight
+# at master-plan-author time + re-verification at cycle-build-time
+# confirmed that 4 prior allowlist entries became stale (zero
+# source-file matches): 1× primary-persona prompt template + 3×
+# workspace-sync README. Those 4 entries graduated out of the
+# allowlist. The remaining entry below is the still-valid
+# pending-debt: `framework/memory-system/launchd/README.md`
+# references the true-first-run component-narrative under
+# `docs/rebuild/components/`. The README itself sits inside the
+# memory-system sealed-component fence; touching it from the
+# dev-sdlc fence would be a sealed-amendment in disguise. A future
+# memory-system amendment (e.g., a launchd-cleanup amendment) is
+# the right home for the scrub. The allowlist must shrink to empty
+# when that amendment lands. FIDRAFT line 143 (audit-allowlist
+# drift) closes on this Cycle 3 seal.
 KNOWN_CROSS_MODE_DEBT: set[tuple[str, str]] = {
     (
         "framework/memory-system/launchd/README.md",
         "docs/rebuild/components/true-first-run/research.md",
-    ),
-    (
-        "framework/primary-persona/templates/persona-template/prompt.md",
-        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
-    ),
-    (
-        "framework/workspace-sync/README.md",
-        "docs/rebuild/plans/workspace-sync.builder-plan.md",
-    ),
-    (
-        "framework/workspace-sync/README.md",
-        "docs/rebuild/plans/workspace-sync.manifest.yaml",
-    ),
-    (
-        "framework/workspace-sync/README.md",
-        "docs/rebuild/plans/workspace-sync.md",
     ),
 }
 

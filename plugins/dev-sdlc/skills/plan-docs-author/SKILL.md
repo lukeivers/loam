@@ -1,0 +1,263 @@
+---
+description: Author a plan-doc per the dev-sdlc methodology — the structural execution of `feedback_plan_before_code`'s "every build writes a plan to docs/rebuild/plans/<slug>.md BEFORE code" rule. Plan-doc carries objective + scope + AC family + halt triggers + smoke + bookkeeping + F2 RF + provenance + acceptance gate + `## 14.` method-decision register (per AC.D-sa.7 lint regex). Distinct from `plan-before-code-author` (which carries the WHEN — the rule that a plan must precede code); this skill carries the HOW-of-authoring — the section-by-section execution per the methodology. Use whenever a sealed-component or major-feature build is about to start in a loam dev-mode workspace.
+---
+
+# plan-docs-author
+
+`feedback_plan_before_code` says every build writes a plan to
+`docs/rebuild/plans/<slug>.md` BEFORE code. The first-pass
+SKILL `plan-before-code-author` codifies the WHEN — the rule
+that a plan-doc must precede code commits. This skill codifies
+the HOW-of-authoring — the section-by-section execution per
+the dev-sdlc methodology, including the load-bearing `## 14.`
+method-decision register that the AC.D-sa.7 lint regex pins.
+
+A plan-doc that exists but skips sections (no §14, no halt
+triggers, no smoke dimensions, no F2 RF) is a paper-trail
+ritual without substance. This skill is the substance — the
+shape that makes the plan-doc actually load-bearing for the
+cycle.
+
+## What this skill captures
+
+The plan-doc canonical section layout:
+
+```
+# <Plan-doc title — usually the cycle slug + one-line summary>
+
+**Slug:** `<slug>`
+**Date authored:** YYYY-MM-DD.
+**Parent master plan:** <path or N/A>.
+**Predecessor cycles:** <prior-cycle SHAs or N/A>.
+**Component fence:** <single-component fence on plugins/<comp>/
+                     OR multi-component admission list>.
+
+## §1 — Outcome shape (the "why")
+## §2 — Lens checks (per CLAUDE.md design lenses)
+## §3 — Single-component fence (or multi-component list)
+## §4 — AC family — `AC.<FAMILY>.*`
+## §5 — Halt-and-surface BEFORE build (recorded autonomous
+        decisions)
+## §6 — Smoke (REALISTIC CONDITION — applicable dimensions per
+        smoke-test-discipline.md)
+## §7 — Out of scope
+## §8 — Halt triggers (in-flight)
+## §9 — Bookkeeping
+## §10 — F2 Ruthless Feedback (gaps named this turn)
+## §11 — Provenance trail
+## §12 — Acceptance gate
+## 14. Method-decision record (per AC.D-sa.7 lint requirement)
+```
+
+The required sections + each one's purpose:
+
+1. **Header block (preamble).** Slug + date + parent + predecessors
+   + fence in 4–6 lines. Grep-discoverable identification.
+2. **§1 Outcome shape.** Why this cycle exists. The deeper objective
+   the work ladders up to. Not what — what is in §3 + §4.
+3. **§2 Lens checks.** Each of CLAUDE.md's 5 lenses (or however many
+   apply) with a one-line answer. Lens 4 (scope ↔ confidence) often
+   captures the load-bearing tradeoff.
+4. **§3 Component fence.** Exactly which directories the cycle
+   edits. Single-component cycles name one fence; multi-component
+   cycles enumerate each component's sub-fence. Universal admissions
+   (e.g., `docs/rebuild/plans/`) called out explicitly.
+5. **§4 AC family.** Every AC the cycle commits to satisfy. Format:
+   `AC.<FAMILY>.<index> — <one-line summary>. <2–4 sentence
+   detail>.` Each AC must be testable + observable.
+6. **§5 Halt-and-surface BEFORE build.** Pre-build verifications +
+   autonomous decisions recorded inline. WD confirmation,
+   predecessor verification, pre-flight empirical checks, locked
+   methodological choices.
+7. **§6 Smoke (REALISTIC CONDITION).** Each of the 6 smoke
+   dimensions (D1 cold-state / D2 steady-state / D3 restart / D4
+   reboot / D5 cross-session / D6 telemetry-floor) named with how
+   it's exercised — verified, inherited, or n/a-with-rationale.
+   Plus a full-suite green sweep clause.
+8. **§7 Out of scope.** What this cycle does NOT cover (deferred to
+   later versions / explicitly excluded surfaces). Prevents
+   scope-creep when the build agent finds adjacent work.
+9. **§8 Halt triggers (in-flight).** Conditions that fire mid-build
+   stop the build for surface-and-RF. Different from §5 (pre-build
+   gates).
+10. **§9 Bookkeeping.** pos-amend usage, manifest schema version,
+    commit ladder shape, §14 backfill, master-plan §9 row update,
+    tag-push policy.
+11. **§10 F2 Ruthless Feedback.** Gaps named at plan-author time.
+    The honest doubts about the cycle's shape, named explicitly to
+    prevent silent drift.
+12. **§11 Provenance trail.** Every load-bearing input (master
+    plan, predecessor cycles, FIDRAFT entries, research artefacts,
+    feedback memories) with SHA / line-number citations.
+13. **§12 Acceptance gate.** A checklist of pre-cycle conditions
+    (predecessors sealed, plan-doc authored, AC family locked,
+    smoke dimensions covered, bookkeeping discipline named).
+14. **§14 Method-decision record (per AC.D-sa.7 lint).** Every
+    method-level decision that's not the default, with rationale.
+    The heading must be `## 14. Method-decision record` literally
+    — the lint regex pins on `## 14.` (not `## §14`).
+
+The §14 heading shape is load-bearing: AC.D-sa.7 in dev-sdlc
+methodology pins the lint regex on the literal `## 14.`
+prefix (no §, no leading zero, no trailing whitespace before the
+period).
+
+## When to use
+
+Trigger conditions:
+
+- About to start any sealed-component amendment cycle — plan-doc
+  is the gate; source code only commits after the plan-doc lands.
+- Authoring a master plan (multi-cycle plan-doc) — same shape
+  applies; the cycle decomposition lives in §3 of the master plan.
+- Reviewing a draft plan-doc for dispatch readiness — verify
+  every section is present + populated; missing sections are
+  halt-and-surface findings.
+- Repairing a plan-doc that skipped §14 (lint failure surfaces
+  the gap) or skipped halt-triggers (in-flight halts have no
+  documented exit ramp).
+
+Skip when:
+
+- The change is a workspace-local edit / non-sealed file /
+  documentation-only README touch — these don't need the full
+  ODD-shaped plan-doc per `feedback_odd_cdc_scope`.
+- The change is FIDRAFT capture / TaskCreate / scratch-file
+  authoring — different surfaces with different ritual.
+- The change is a test-only edit within a sealed component
+  (test-fix amendment) — author a smaller plan-doc covering
+  only §1 + §3 + §4 + §9 + §14; full 14-section shape is
+  overkill.
+
+## How the persona applies it
+
+1. **Verify the working directory.** `pwd` confirms the canonical
+   dev-mode workspace. Per `feedback_always_specify_wd_in_
+   dispatches`.
+2. **Lock the slug.** Slug is kebab-case + version-prefixed for
+   versioned cycles (e.g., `v0-1-9-cycle-3-skills-and-cleanup`)
+   or feature-named for one-off amendments (e.g.,
+   `dev-pattern-simplifications-2`). Slug is the filename stem.
+3. **Author the header block first.** Slug + date + parent +
+   predecessors + fence. ~6 lines. Establishes identity.
+4. **Author §1 Outcome shape.** Why this cycle. The "deeper
+   objective" the work ladders up to. 1–3 paragraphs.
+5. **Author §2 Lens checks.** Each lens with a checkmark + 1–2
+   line rationale. Lens 4 (scope ↔ confidence) usually carries
+   the load-bearing tradeoff; spend more text there.
+6. **Author §3 Fence.** Enumerate every directory + every file
+   the cycle edits. Universal admissions called out. Multi-
+   component cycles list each sub-fence.
+7. **Author §4 AC family.** Every AC named, with 2–4 sentence
+   detail. AC numbering: `AC.<FAMILY-NAME>.<index>` where
+   family-name uses uppercase + dashes. Each AC must be testable.
+8. **Author §5 Halt-and-surface BEFORE build.** Pre-build
+   verifications + autonomous decisions recorded inline.
+   Numbered list; ~5–10 entries.
+9. **Author §6 Smoke.** All 6 dimensions named explicitly. For
+   each: `verified by <test file>` OR `inherited from <upstream
+   sealed cycle>` OR `n/a structurally because <rationale>`.
+   Plus a full-suite green sweep line.
+10. **Author §7 Out of scope.** Bulleted list. Each item names
+    the deferral surface (later version / explicit exclusion).
+11. **Author §8 Halt triggers (in-flight).** Conditions that fire
+    mid-build. Different from §5; these are the build-agent's
+    halt-and-surface conditions.
+12. **Author §9 Bookkeeping.** pos-amend / manifest schema /
+    commit ladder / §14 backfill / master-plan §9 row / tag-push
+    policy.
+13. **Author §10 F2 RF.** 2–6 honest doubts named. Each with
+    mitigation. Per `feedback_ruthless_feedback`.
+14. **Author §11 Provenance trail.** Every load-bearing input
+    cited with SHA / line / path. The plan-doc's "where this
+    decision came from."
+15. **Author §12 Acceptance gate.** Numbered checklist of
+    pre-cycle conditions. Each checked at plan-author time.
+16. **Author §14 Method-decision record with `## 14.` heading
+    LITERALLY.** Table form: `| Decision | Choice | Rationale |`.
+    Every non-default method-level decision named. AC.D-sa.7
+    lint regex pins on `## 14.` — verify by `grep '^## 14\.'
+    docs/rebuild/plans/<slug>.md` returning the heading line.
+17. **Reserve commit-SHA backfill section at the bottom.** Empty
+    placeholders for plan-doc commit / source-edit commit /
+    apply commit / seal commit / §14 backfill commit. Filled
+    post-cycle by the §14 backfill.
+18. **Run `loam amend validate` against the manifest companion**
+    — if the manifest is invalid, the plan-doc commit lands but
+    the apply will fail; catch early.
+19. **Commit the plan-doc + manifest as a single `docs(plans):`
+    commit.** Plan-before-code gate: source code only commits
+    AFTER this commit.
+
+## Graceful degradation
+
+When raw Claude Code without loam dev-sdlc plugin:
+
+- The 14-section shape still applies. The plan-doc lives at
+  whatever paper-trail surface the project uses (`docs/`,
+  `plans/`, GitHub Issue, Notion doc).
+- §14 method-decision record is universally valuable — the
+  AC.D-sa.7 lint is dev-sdlc-specific, but the discipline
+  (record non-default decisions with rationale) carries to
+  any project.
+- The smoke-dimensions framework (D1–D6) generalizes: cold
+  start / steady state / process restart / reboot / cross
+  session / telemetry. Apply per-feature; substitute project-
+  specific equivalents.
+- Detection on fallback: if the sub-agent or co-authoring
+  persona produces a plan-doc that's missing §14 or skips
+  halt-triggers, surface the gap inline — don't silently
+  accept a stub plan-doc. See
+  `graceful-fallthrough-with-detection` for the wider
+  pattern.
+
+## Composition
+
+- **`plan-before-code-author` skill** — the WHEN. Pairs with
+  this skill: that one says "plan-doc must exist before code";
+  this one says "and here's the section-by-section shape."
+  Use both together for plan-doc authoring.
+- **`loam-amend-cycle` skill** — the wider ladder. Plan-doc
+  is step 1 of the 5-commit ladder; this skill drills into
+  the plan-doc authoring; `loam-amend-cycle` covers the rest.
+- **`seal-narrative-writer` skill** — the downstream surface.
+  The plan-doc is what the seal narrative points AT;
+  plan-doc shape determines what the seal narrative
+  summarises.
+- **`dispatch-brief-authoring` skill** — when dispatching a
+  build agent for the cycle, the dispatch brief composes
+  with the plan-doc; the brief carries scope + halt + status
+  file path; the plan-doc carries §1–§14.
+- **`audit-finding-triage` skill** — if the build agent
+  surfaces a halt-and-surface finding mid-cycle, the triage
+  may amend §10 (deferral) or §4 (AC tightening).
+- **`fidraft-capture` skill** — out-of-scope §7 entries that
+  warrant capture beyond the plan-doc go to FIDRAFT via
+  this skill.
+- **`feedback_summarize_and_surface_decisions`** — the
+  plan-doc itself is a summary surface; Luke rules from §1
+  + §10 + §12, not by reading every section.
+- **`feedback_locked_design_not_license_for_bad_outcomes`** —
+  if a §10 RF surfaces a previously-locked decision producing
+  a bad outcome, the plan-doc is the right surface to revisit
+  (don't terminate at "it's the locked design").
+
+## Out of scope
+
+- Master-plan-specific structure — master plans have a §3
+  cycle decomposition + §9 method-decision register that this
+  skill doesn't enumerate; reference v0.1.8 / v0.1.9 master
+  plans for shape.
+- The AC.D-sa.7 lint mechanism's implementation — this skill
+  captures the OUTPUT (the `## 14.` heading); the lint
+  regex's source lives in dev-sdlc methodology code.
+- ODD methodology rationale — `feedback_odd_no_non_objective_
+  code` carries the rationale for AC-mapping discipline; this
+  skill captures the §4 shape that operationalises it.
+- Manifest schema (lives in `loam-amend` schema docs).
+- Smoke-test framework rationale — lives in
+  `plugins/dev-sdlc/docs/smoke-test-discipline.md`; this
+  skill references the 6 dimensions but doesn't justify them.
+- Repair walks for plan-docs that drifted from the shape — a
+  drifted plan-doc is repaired in a follow-on amendment;
+  this skill informs the corrective rewrite.

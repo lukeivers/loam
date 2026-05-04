@@ -284,3 +284,10 @@ Per `feedback_subagent_odd_violation_halt`: halt and surface any ODD violation o
 ## 14. Commit SHAs
 
 (populated by `loam amend seal --plan-doc` post-build)
+
+### Commit SHAs
+
+- Amendment commit: `990e60a56e1cfabe6f0066973e186bb0ba57b688` —
+  `docs(plans): tighten §14 heading shape for loam-amend seal regex`
+- Seal commit: `019cfca7fd2a117c32b824ee4f09edefcac70da9` —
+  `chore(seals): dev-pattern-simplifications-1 — dev-sdlc at 990e60a`

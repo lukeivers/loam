@@ -72,3 +72,10 @@
 # objective-tracker, workspace-bootstrap; all installed above).
 # ---------------------------------------------------------------
 -e ./plugins/dev-sdlc
+
+# ---------------------------------------------------------------
+# Tier K — Loam Skills plugin (no inter-component runtime deps;
+# ships SKILL.md packages discovered by Claude Code natively).
+# Per v0.1.3 item 1 (docs/rebuild/plans/v0-1-3-skill-packages.md).
+# ---------------------------------------------------------------
+-e ./plugins/loam-skills

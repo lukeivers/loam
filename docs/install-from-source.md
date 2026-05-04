@@ -104,6 +104,10 @@ pip install -e ./framework/loam-init
 
 # Tier J — Dev/SDLC plugin (depends on Tier A leaves + Tier G composer).
 pip install -e ./plugins/dev-sdlc
+
+# Tier K — Loam Skills plugin (no inter-component runtime deps;
+# ships SKILL.md packages discovered by Claude Code natively).
+pip install -e ./plugins/loam-skills
 ```
 
 ---

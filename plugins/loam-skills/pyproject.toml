@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-plugin-loam-skills"
+version = "0.1.0"
+description = "Loam Skills plugin — five SKILL.md packages capturing loam's load-bearing translation patterns (memory-recall, scope-decompose, dispatch-with-gates, onboarding-conversation, session-handoff). Discoverable by Claude Code via the standard <plugin>/skills/<skill-name>/SKILL.md filesystem walk; no bootstrap-time wiring required. Composes with raw Claude Code: a stranger can pip install this plugin and benefit from loam's patterns without committing to the full harness."
+requires-python = ">=3.13"
+# No runtime dependencies — the plugin ships static markdown files
+# that Claude Code reads directly. The pyproject exists to make
+# `pip install -e ./plugins/loam-skills` recognise the package and
+# include the skill directories' markdown via package-data.
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "PyYAML>=6",
+]
+
+# Skills are filesystem-discovered by Claude Code per Anthropic's
+# SKILL.md schema (https://code.claude.com/docs/en/skills). NO
+# `loam.bootstrap.contributions` entry-point is required — these
+# skills do NOT contribute to loam's bootstrap composer's
+# contribution graph. The plugin's runtime artefact is exclusively
+# the static markdown.
+
+[tool.setuptools]
+# No Python source modules to package — the plugin ships markdown
+# files only. Declare an empty packages list so setuptools doesn't
+# auto-discover spurious top-level modules.
+packages = []
+include-package-data = true
+
+[tool.setuptools.package-data]
+# Surface the skill markdown files via package-data so editable
+# install includes them in the build manifest.
+"*" = [
+    "skills/*/SKILL.md",
+    "skills/*/*.md",
+    "README.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

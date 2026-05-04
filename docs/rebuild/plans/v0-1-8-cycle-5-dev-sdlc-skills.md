@@ -377,4 +377,7 @@ Per AC.D-sa.7, every plan-doc that selects non-default methods records the decis
 
 ### Commit SHAs
 
-(to be appended by `loam amend seal --plan-doc` per AC.D-sa.7)
+- Amendment commit: `5ceffe43eacaa19873cf42ad698c871582494a40` —
+  `chore(amend): v0-1-8-cycle-5-dev-sdlc-skills manifest+apply — dev-sdlc BASELINE+sidecar bump to 1d5c75f`
+- Seal commit: `e4512b924f27203eb7435374ff959c52543bb07a` —
+  `chore(seals): v0-1-8-cycle-5-dev-sdlc-skills — dev-sdlc at 5ceffe4`

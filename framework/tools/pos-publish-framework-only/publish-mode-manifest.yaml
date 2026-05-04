@@ -238,6 +238,22 @@ dev_and_public:
   # bucket). Surfaced in FBE.3 status report; reversible if the
   # dispatcher rules differently.
   - glob: "plugins/dev-sdlc/skills/**"
+  # plugins/loam-skills/ ADMITTED dev_and_public 2026-05-04 (v0.1.3
+  # SKILL.md packages bundle, sealed at f04e925). loam-skills carries
+  # 5 general harness-translation patterns (memory-recall, scope-
+  # decompose, dispatch-with-gates, onboarding-conversation, session-
+  # handoff) that benefit any loam user (not dev-specific). Strangers
+  # running raw Claude Code can `pip install -e plugins/loam-skills/`
+  # against the synth tree and reach the SKILL.md set without
+  # adopting the full harness. Per Luke's 2026-05-04 partition rule
+  # ("anything specifically dev related goes into dev SDLC plugin"),
+  # loam-skills correctly lives outside dev-sdlc. Universal
+  # `**/seals/**` + `**/tests/**` precedence covers internal
+  # subtrees per partition-precedence rule #2.
+  - glob: "plugins/loam-skills/src/**"
+  - path: plugins/loam-skills/pyproject.toml
+  - path: plugins/loam-skills/README.md
+  - glob: "plugins/loam-skills/skills/**"
 
 # Stays in the dev tree, NEVER ships publicly. Dev-discipline machinery.
 dev_only:

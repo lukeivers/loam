@@ -55,7 +55,9 @@ The path to Eric-ready ships in **six interleaved releases (v0.1.6 → v0.2.1)**
 
 Each release below: theme, concrete bundle (with placement), AI-time band (quality-bar absorbed), dependencies + gate, quality-bar audit, Eric-specific enables.
 
-### v0.1.6 — Production-safety mode + base-skills additions
+### v0.1.6 — Production-safety mode + base-skills additions — **SHIPPED 2026-05-04**
+
+**Status:** SHIPPED. Cycle 1 sealed at `3f1d237`; Cycle 2 sealed at `88674cb`. Sub-plan: `docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md`. Status file: `<pos3>/workspace/.scratch/claude-output/v0-1-6-status-2026-05-04.md`. All 6 smoke dimensions ✓; 395 tests pass; no regressions. Decision P (SOC-2 audit-trail floor) RESOLVED YES per dispatcher autonomy + applied as non-tunable production-stake floor.
 
 **Theme.** Defensive shield ships first. Three base-tier SKILLs land alongside.
 

@@ -272,6 +272,7 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 | v0.1.3 | (in flight) | — | R.5 design note 1 (primary-persona-shape) sealed at `7ae346d` (2026-05-03); SKILL.md packages bundle (item 1) sealed at `f04e925` (2026-05-04); M-FBM operational-health AC family (`AC.MFBM-OPS.*`) sealed at `1a1f830` (2026-05-04). |
 | v0.1.4 | (planned) | — | — |
 | v0.1.5 | (planned) | — | — |
+| v0.1.6 | (in flight) | — | Production-safety mode + 3 base-SKILL additions + 2 bug fixes. Cycle 1 (production-safety + bug fixes) sealed at `3f1d237` (2026-05-04). Cycle 2 (3 base SKILLs — translation-discipline, audit-block-on-telegram, owner-decision-summary) sealed at `88674cb` (2026-05-04). Sub-plan: `docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md`. Decision P (SOC-2 audit-trail floor) RESOLVED YES per dispatcher autonomy. |
 
 ### v0.1.2 — V11.A (orchestrator fix) — sealed 2026-05-03
 

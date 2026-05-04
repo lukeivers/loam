@@ -143,12 +143,9 @@ amendment:
 # v3 fields exercised: plan_doc_ref + ac_count + smoke_outcome at
 # the manifest level; single-component sweep at seal time.
 
-# BASELINE pinned at plan-doc commit time as a 7-zero placeholder;
-# the build agent updates this to the source-edit feat commit's
-# actual SHA BEFORE running `loam amend apply`. The schema v3
-# validator requires a 7-40 char lowercase hex SHA; `0000000`
-# satisfies that pattern. Build-agent updates this string in-place.
-baseline: "0000000"
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "bb592fa"
 
 plan: docs/rebuild/plans/v0-1-9-cycle-1-pr-safety-gate-engine.md
 

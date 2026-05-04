@@ -182,6 +182,19 @@ class Manifest:
     # the field and the slug-fallback applies. No schema-version
     # bump required.
     seal_description: str | None = None
+    # Schema v3 only: optional ACs-satisfied count, surfaced in the
+    # synthesized seal-narrative body when ``plan_doc_ref`` mode is
+    # active. Per cost-audit Recommendation B + plan
+    # ``dev-pattern-simplifications-2.md`` AC.DPS2.{1,2}. v1 / v2
+    # manifests REJECT this field (forward-only, same pattern as
+    # ``plan_doc_ref``).
+    ac_count: int | None = None
+    # Schema v3 only: optional one-line smoke-outcome string, surfaced
+    # in the synthesized seal-narrative body. Per AC.DPS2.{1,3}.
+    # Free-form short string (e.g. "all 6 dimensions exercised");
+    # validation is non-empty + single-line + max 200 chars. v1 / v2
+    # manifests REJECT this field.
+    smoke_outcome: str | None = None
     # Schema v2 only: the ``objectives`` block, parsed into a tuple
     # of ``ObjectiveEntry``. v1 manifests carry the empty tuple. The
     # presence of entries is what the apply / seal commands key on
@@ -507,6 +520,63 @@ def load_manifest(path: Path) -> Manifest:
             )
         seal_description = seal_description_raw
 
+    # Schema v3 only: optional ``ac_count`` (top-level int >= 0) and
+    # ``smoke_outcome`` (top-level non-empty single-line str <= 200
+    # chars). Per cost-audit Recommendation B + plan
+    # ``dev-pattern-simplifications-2.md`` AC.DPS2.{2,3}. v1 / v2
+    # manifests REJECT both fields (forward-only).
+    ac_count_raw = data.get("ac_count")
+    ac_count: int | None = None
+    if schema_version in (1, 2):
+        if ac_count_raw is not None:
+            raise InvalidField(
+                f"{path}: 'ac_count' is a schema_version 3 field; "
+                "either remove it or bump 'schema_version: 3'"
+            )
+    else:  # schema_version == 3
+        if ac_count_raw is not None:
+            # Reject bool first (bool is a subclass of int in Python;
+            # without this guard, ``ac_count: true`` would be accepted
+            # as ``ac_count: 1`` — author intent is unambiguous).
+            if isinstance(ac_count_raw, bool) or not isinstance(
+                ac_count_raw, int
+            ):
+                raise InvalidField(
+                    f"{path}: 'ac_count' must be an integer when present"
+                )
+            if ac_count_raw < 0:
+                raise InvalidField(
+                    f"{path}: 'ac_count' must be a non-negative integer; "
+                    f"got {ac_count_raw}"
+                )
+            ac_count = ac_count_raw
+
+    smoke_outcome_raw = data.get("smoke_outcome")
+    smoke_outcome: str | None = None
+    if schema_version in (1, 2):
+        if smoke_outcome_raw is not None:
+            raise InvalidField(
+                f"{path}: 'smoke_outcome' is a schema_version 3 field; "
+                "either remove it or bump 'schema_version: 3'"
+            )
+    else:  # schema_version == 3
+        if smoke_outcome_raw is not None:
+            if not isinstance(smoke_outcome_raw, str) or not smoke_outcome_raw:
+                raise InvalidField(
+                    f"{path}: 'smoke_outcome' must be a non-empty string"
+                )
+            if "\n" in smoke_outcome_raw or "\r" in smoke_outcome_raw:
+                raise InvalidField(
+                    f"{path}: 'smoke_outcome' must be a single-line string "
+                    "(no embedded newlines)"
+                )
+            if len(smoke_outcome_raw) > 200:
+                raise InvalidField(
+                    f"{path}: 'smoke_outcome' must be <= 200 chars; "
+                    f"got {len(smoke_outcome_raw)}"
+                )
+            smoke_outcome = smoke_outcome_raw
+
     # Schema v2 only: parse the ``objectives`` block. The schema-version
     # gate is bidirectional (plan §6 constraint 6 / D-build.2 (a)):
     #   - v1 manifests MUST NOT carry an ``objectives`` key
@@ -584,6 +654,8 @@ def load_manifest(path: Path) -> Manifest:
         universal_paths=universal,
         narrative=narrative,
         seal_description=seal_description,
+        ac_count=ac_count,
+        smoke_outcome=smoke_outcome,
         objectives=objectives,
         cleanup_directives=tuple(cleanup_directives),
     )

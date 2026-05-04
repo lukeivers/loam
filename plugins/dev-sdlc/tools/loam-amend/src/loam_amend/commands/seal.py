@@ -248,6 +248,16 @@ def _build_commit_message(
         body_lines.append(f"Narrative appended to: {narrative_target}")
     else:
         body_lines.append("Narrative: (none)")
+    # AC.DPS2.6: schema v3 manifests carrying ``plan_doc_ref`` get a
+    # ``Plan doc:`` body line so readers of ``git log`` see the
+    # pointer to the full reasoning without opening the
+    # ``SEAL_COMMIT.<slug>`` file. Schema v1 / v2 (and v3 manifests
+    # without ``plan_doc_ref``) keep today's body byte-identical.
+    if (
+        manifest.schema_version == 3
+        and manifest.plan_doc_ref is not None
+    ):
+        body_lines.append(f"Plan doc: {manifest.plan_doc_ref}")
     body_lines.append("")
     body_lines.append(
         f"Diff window: {manifest.baseline} .. {amendment_sha}"
@@ -422,17 +432,24 @@ def _resolve_narrative_body(manifest: Manifest, amendment_sha: str) -> str:
       ``narrative.body``): return the manifest-supplied body
       verbatim.
     - Schema v3 with ``plan_doc_ref`` and no ``narrative.body``
-      (the new collapsed shape per cost-audit Recommendation A):
-      synthesize a 5-15 line summary citing the plan-doc + the
-      amendment SHA. The full plan-doc content is NOT inlined —
-      readers follow the ``plan_doc_ref`` pointer for detail.
+      (the new collapsed shape per cost-audit Recommendation A +
+      Recommendation B): synthesize a 5-15 line summary citing the
+      plan-doc, the amendment SHA, plus optional ACs-satisfied count
+      and smoke outcome from the manifest's ``ac_count`` /
+      ``smoke_outcome`` fields. The full plan-doc content is NOT
+      inlined — readers follow the ``plan_doc_ref`` pointer for
+      detail.
 
-    Per plan ``dev-pattern-simplifications-1.md`` AC.DPS1.4.
+    Per plan ``dev-pattern-simplifications-1.md`` AC.DPS1.4 +
+    ``dev-pattern-simplifications-2.md`` AC.DPS2.{1,2,3,4,5}.
     """
     assert manifest.narrative is not None  # caller-checked
     if manifest.narrative.body is not None:
+        # AC.DPS2.5: explicit body returned verbatim. Preserves
+        # AC.DPS1.4 invariant for v3 manifests authored with body.
         return manifest.narrative.body
-    # v3 collapsed shape: synthesize from plan_doc_ref.
+    # v3 collapsed shape: synthesize from plan_doc_ref + optional
+    # ac_count / smoke_outcome.
     if manifest.plan_doc_ref is None:  # defensive — load_manifest forbids
         raise AssertionError(
             "v3 manifest reached _resolve_narrative_body with neither "
@@ -444,21 +461,31 @@ def _resolve_narrative_body(manifest: Manifest, amendment_sha: str) -> str:
     else:
         ident_line = f"# Amendment #{manifest.number} — {manifest.title}"
     components_part = "+".join(c.name for c in manifest.components)
-    summary = (
-        f"{ident_line}\n"
-        f"\n"
-        f"slug: {manifest.slug}\n"
-        f"components: {components_part}\n"
-        f"baseline: {manifest.baseline}\n"
-        f"amendment-commit: {amendment_sha}\n"
-        f"plan-doc: {manifest.plan_doc_ref}\n"
-        f"\n"
-        f"Narrative body collapsed per cost-audit 2026-05-04 "
-        f"Recommendation A (manifest narrative collapse) — see the "
-        f"plan-doc above for full rationale, AC family, and smoke "
-        f"results."
+    # AC.DPS2.1 + AC.DPS2.4: body covers what-shipped (title, slug,
+    # components), ACs-satisfied count + smoke outcome (when set), and
+    # the plan-doc reference. Optional fields produce optional lines —
+    # the body fits in 5-15 lines across the full input matrix.
+    body_lines = [
+        ident_line,
+        "",
+        f"slug: {manifest.slug}",
+        f"components: {components_part}",
+        f"baseline: {manifest.baseline}",
+        f"amendment-commit: {amendment_sha}",
+        f"plan-doc: {manifest.plan_doc_ref}",
+    ]
+    if manifest.ac_count is not None:
+        body_lines.append(f"acs-satisfied: {manifest.ac_count}")
+    if manifest.smoke_outcome is not None:
+        body_lines.append(f"smoke: {manifest.smoke_outcome}")
+    body_lines.append("")
+    body_lines.append(
+        "Narrative body collapsed per cost-audit 2026-05-04 "
+        "Recommendations A + B (manifest narrative collapse + seal-"
+        "narrative compression) — see the plan-doc above for full "
+        "rationale, AC family, and smoke results."
     )
-    return summary
+    return "\n".join(body_lines)
 
 
 def _finalize(

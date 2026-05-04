@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-pr-safety"
+version = "0.1.0"
+description = "loam pr-safety — gates PRs against the v0.1.8-authored banded ODD contract. Cycle 1 (v0.1.9): engine without delivery wrapping — banded-contract reader + diff classifier (line-overlap + symbol-overlap, ≥90% accuracy on synthetic test set) + per-band gating engine (3-band × 4-shape × 3-profile decision matrix) + override-commit recognition (`contract-update:` prefix or `Loam-Override:` trailer + --override flag) + SOC-2 audit-trail floor + production-stake profile integration. Cycle 2 ships hooks + CI templates + PR description template; Cycle 3 ships SKILLs + audit-allowlist cleanup."
+requires-python = ">=3.11"
+dependencies = [
+    "PyYAML>=6",
+    "pydantic>=2",
+    "loam-cli",
+    "loam-odd-extractor",
+    "loam-per-project-pm",
+    "loam-workspace-bootstrap",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+# AC.PRSG.1 + AC.PRSG.6 — the unified loam CLI dispatcher's
+# `loam.cli.subcommands` entry-point group resolves `loam pr-safety`
+# to this builder. Mirrors the loam-amend / loam project / loam
+# odd-extract precedents.
+[project.entry-points."loam.cli.subcommands"]
+pr-safety = "loam_pr_safety.cli:build_pr_safety_subcommand"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

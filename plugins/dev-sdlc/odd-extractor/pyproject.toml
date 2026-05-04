@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-odd-extractor"
+version = "0.1.0"
+description = "loam odd-extractor — Cartographer-style ODD reverse-engineering scaffold for the dev-sdlc plugin. Cycle 1 (v0.1.8): four-stage workflow shape (init/analyze/generate/verify) + language-adapter registry (zero adapters) + dry-run cost estimate via cost-governance + foreign-codebase budget envelope. Cycles 2-4 ship confidence bands, ratification workflow, Ruby/Rails first-class adapter, Python first-class adapter."
+requires-python = ">=3.11"
+dependencies = [
+    "PyYAML>=6",
+    "pydantic>=2",
+    "loam-cli",
+    "loam-cost-governance",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+# AC.OREK.1 / AC.OREK.2 — the unified loam CLI dispatcher's
+# `loam.cli.subcommands` entry-point group resolves `loam odd-extract`
+# to this builder. Mirrors the loam-amend / loam project precedents.
+[project.entry-points."loam.cli.subcommands"]
+odd-extract = "loam_odd_extractor.cli:build_odd_extract_subcommand"
+
+# AC.OREK.4 — language-adapter registry discovers adapters via this
+# entry-point group. Cycle 1 ships zero adapters; Cycle 3 (Ruby) and
+# Cycle 4 (Python) populate. The group name is namespaced under
+# loam.odd_extractor for collision avoidance with future loam features.
+# (No entries declared on this side — adapters declare the producing
+# entry on their own pyprojects.)
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

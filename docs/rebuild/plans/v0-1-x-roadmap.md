@@ -268,7 +268,7 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 | Release | Status | Tag SHA | Notes |
 |---|---|---|---|
 | v0.1.1 | (in flight; locked content authored in parallel) | — | — |
-| v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03). |
+| v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03); V11.E sealed at `7d19a7e` (2026-05-03). |
 | v0.1.3 | (planned) | — | — |
 | v0.1.4 | (planned) | — | — |
 | v0.1.5 | (planned) | — | — |
@@ -296,6 +296,35 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 **Surfaces recorded (out of V11.A scope; carried forward):**
 - Surface #1: `pos_orchestrator` source-string vocabulary leakage in 4 docstring/help-text/operations-doc sites — FUTURE_IDEAS_DRAFT candidate (consider bundling with FBE.5 Surface #1 dev-tool description scrubs).
 - Surface #5: Luke's installed plist at `~/Library/LaunchAgents/com.loam.orchestrator.plist` is STALE (pre-`f0c4aa9` content + points at `pos3/.venv` not canonical) — operator-hygiene reinstall recipe captured in status file.
+
+### v0.1.2 — V11.E item (b) (graphiti probe graceful-skip — Resolution A) — sealed 2026-05-03
+
+**Sub-plan:** `docs/rebuild/plans/v0-1-2-V11-E-graphiti-probe-skip.md`.
+**Manifest:** `docs/rebuild/plans/v0-1-2-V11-E-graphiti-probe-skip.manifest.yaml` (amendment #121).
+**Status file:** `<pos3>/workspace/.scratch/claude-output/v11e-graphiti-probe-skip-status-2026-05-03.md`.
+**Predecessor status (4-option matrix + Resolution A justification):** `<pos3>/workspace/.scratch/claude-output/v11e-followon-hazards-status-2026-05-03.md`.
+
+| Step | Commit SHA | Notes |
+|---|---|---|
+| Plan-doc | `212f347` | Sub-plan-doc; two-component fence on `framework/orchestrator/` + `framework/primary-persona/`. |
+| Source edit | `c3b74b2` | `pos_session_start.py` + `session_start_gate.py` gate memory probe on `~/Library/LaunchAgents/com.loam.memory-graphiti.plist` existence; new `_is_memory_expected` helper + new `not_expected` sentinel + new `memory_expected: bool` result-dict field. New tests + widened `test_D8_1_session_start_emission` closed-set assertion. |
+| Manifest | `6c3d7c7` | Amendment #121; baseline `c3b74b2`; two-component fence. |
+| `loam amend apply` (manual `chore(amend)`) | `2416661` | Both BASELINE literals + both SEAL_COMMIT sidecars bumped to `c3b74b2`. |
+| `loam amend seal` | `7d19a7e` | Deterministic seal commit. Narrative at `framework/orchestrator/tests/SEAL_COMMIT.notes`. Scoped sweep (orchestrator + primary-persona only). |
+
+**Acceptance summary:**
+- AC.V11.E.1 (orchestrator probe graceful-skip when plist absent) — verified by `test_AC_V11_E_1_*` suite + smoke A (`status: ready`, `memory_expected: False`, `exit_code: 0`).
+- AC.V11.E.2 (gate `_probe_memory` returns `not_expected` when plist absent) — verified by new test file + smoke C (`memory: not_expected`).
+- AC.V11.E.3 (canonical plist path single source-of-truth) — verified by `test_AC_V11_E_3_canonical_plist_path_matches_orchestrator_helper`.
+- AC.V11.E.4 (negative — plist-present preserves legacy behaviour) — verified by smokes B (`status: partial`, `memory_expected: True`) + D (`memory: up`).
+- AC.V11.E.S (two-component fence) — verified post-seal (sealed sweep across both components passed; `git diff c3b74b2..7d19a7e --name-only` confines to fence + universal admissions).
+
+**Items (a) and (c) of original V11.E scope — already-fixed at `f0c4aa9` per prior status file (no source delta required for V11.E):**
+- (a) Corpus-gate `_FALLBACK_BASELINE_PATHS` — public-mode-clean (only `docs/design/odd.md`).
+- (c) Plist template module name — `<string>loam.orchestrator</string>` post-fix; double-verified at V11.A.
+
+**Surfaces recorded (out of V11.E scope; carried forward):**
+- None new. The four resolutions from the prior V11.E status (B inventory-driven probe set, C remove probe, D workspace-config flag) remain explicitly deferred per the dispatcher's Resolution A lock. Resolution D composes with v0.1.5 D-3 / v0.2 M-GMP if a richer config slot becomes warranted.
 
 ---
 

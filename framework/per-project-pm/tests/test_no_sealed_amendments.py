@@ -40,7 +40,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 # BASELINE = the source-edit commit landing the per-project-pm
 # component (v0.1.7 Cycle 2 first seal).
-BASELINE = "edd420a"
+BASELINE = "bcef0fb"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

@@ -328,39 +328,39 @@ Each release below: theme, concrete bundle (with placement), AI-time band (quali
 | M | Auto-creation: SKILL or feedback-file or both? | **Both options surfaced**; persona suggests default by pattern shape. | AUTONOMOUS |
 | N | Auto-creation v0.2.0 scope: MVP or full? | **MVP** (3 triggers); layer in passive triggers + cool-down + budget at v0.2.x. | AUTONOMOUS |
 
-### Synthesis-introduced decisions (escalated to Luke)
+### Synthesis-introduced decisions (resolved autonomously 2026-05-04)
 
-These five decisions are introduced by the synthesis (quality bar + Rails + SOC 2 + onboarding) and warrant Luke's explicit ruling.
+These five decisions were introduced by the synthesis (quality bar + Rails + SOC 2 + onboarding). Originally escalated; re-tested against the operational objective ("deliver to Eric, high quality, ready to go") on 2026-05-04 by main session and ALL FIVE resolved autonomously per Luke's "answer questions you would have asked me by testing them against the operational objective" directive. Original recommendations preserved as resolutions; full reasoning intact below.
 
-**Decision O — Ruby-first-class extractor at v0.1.8 (vs Ruby-fallback)?** ESCALATED.
+**Decision O — Ruby-first-class extractor at v0.1.8 (vs Ruby-fallback)?** RESOLVED YES.
 
 - **Question.** Eric's app is Rails. Layered-skills/Eric research assumed Ruby fallback via grep+LLM. Quality bar says no half-measures. Ship Ruby first-class (AST-aware, dedicated extractor adapter) at v0.1.8?
 - **Recommendation.** **Yes — Ruby first-class.** Adds +8–16 h to v0.1.8. Rails-aware codebase reading needs ActiveRecord migrations, callbacks, concerns, service objects, polymorphic associations, ActiveJob/Sidekiq. A Ruby-grep-fallback produces HYPOTHESISED-band-dominant contracts → thin gate → thin safety. Quality bar fails.
 - **Reasoning.** F2 RF on the original Eric §11.3 doubt: a thin Ruby fallback DOES fail the quality bar. The choice is not "thin Ruby fallback" or "Eric waits"; it's "first-class Ruby in v0.1.8" or "Eric ships on a v0.1.8 that under-delivers his contract." Choose first-class.
 - **Risk if wrong.** v0.1.8 expands to 50–80 h scope. Mitigation: Ruby-first-class adapter is bounded scope (parse Rails idioms, no orchestration); plan-author dispatch can split into v0.1.8.a (Python first-class + Ruby AST adapter) + v0.1.8.b (full Cartographer + bands) if 50+ hours surfaces.
 
-**Decision P — SOC-2 audit-trail floor as a hard production-safety constraint?** ESCALATED.
+**Decision P — SOC-2 audit-trail floor as a hard production-safety constraint?** RESOLVED YES (baked into v0.1.6 build dispatch).
 
 - **Question.** Eric's company is SOC 2. The SOC-2 floor (audit trail, change management, no-bypass-of-access-controls) is an external constraint loam doesn't currently model. Should production-safety mode in v0.1.6 explicitly require: every dispatch logged, every decision surfaced via PM, every override auditable, no silent bypasses?
 - **Recommendation.** **Yes — bake SOC-2 audit-trail floor into production-stake mode.** Specifically: (a) production-stake mode requires PM-mediated decisions (no chat-buried decisions); (b) override workflow at v0.1.9 produces an auditable commit trail; (c) silent-swallow patterns are halt-and-surface (not warn-and-continue) under production-stake.
 - **Reasoning.** SOC 2 is the floor for ANY company-grade SaaS. Modeling it upfront avoids retrofitting. Cost: marginal — most of these are already implied by production-stake mode; making them explicit closes the SOC-2 gap.
 - **Risk if wrong.** Eric's specific SOC-2 control set has stricter requirements (e.g., explicit attestation logs). Mitigation: §6 onboarding ritual asks Eric for his SOC-2 control deltas; v0.2.x can extend.
 
-**Decision Q — One-question-at-a-time onboarding structurally enforced?** ESCALATED.
+**Decision Q — One-question-at-a-time onboarding structurally enforced?** RESOLVED YES.
 
 - **Question.** Luke confirmed one-question-at-a-time is the default for everyone (Eric especially hates question-bombing). Enforce structurally (PM-mediated, code-level) or convention-only?
 - **Recommendation.** **Structurally enforced via PM** at v0.1.7 (PM batches questions, surfaces in single-question form). Onboarding ritual at v0.2.1 has a hard test: "user is asked exactly one question per turn during onboarding."
 - **Reasoning.** Convention-only fails under load (the persona will batch questions when it's faster). Structural enforcement is reliability under realistic conditions per the quality bar.
 - **Risk if wrong.** PM-mediation adds friction for non-onboarding-mode interactions. Mitigation: scoped to onboarding-mode + ratification batches; normal interaction unaffected.
 
-**Decision R — v0.1.6 quality-bar gate: full 6-dimension smoke before v0.1.7 builds?** ESCALATED.
+**Decision R — v0.1.6 quality-bar gate: full 6-dimension smoke before v0.1.7 builds?** RESOLVED YES (HARD gate at v0.1.6 / v0.1.8 / v0.2.1; SOFT elsewhere).
 
 - **Question.** Each release's gate-to-next includes a 6-dimension smoke. Is this a HARD gate (block v0.1.7 builds until v0.1.6 smoke is green) or a SOFT gate (build v0.1.7 in parallel; surface smoke failures)?
 - **Recommendation.** **HARD gate** for the production-safety release (v0.1.6) and the headline release (v0.1.8 + v0.2.1). SOFT gate (parallel builds) for v0.1.7, v0.1.9, v0.2.0 where smoke regressions are bounded.
 - **Reasoning.** Quality bar IS the hard gate at the load-bearing releases. Soft gate elsewhere keeps the cadence moving.
 - **Risk if wrong.** Hard gate at v0.1.6 stretches v0.1.7 launch by ~1 day. Mitigation: smoke is parallelizable (background-agent dispatched per dimension); 1-day delay is the quality-bar cost.
 
-**Decision S — 30-min Eric pre-call before v0.1.6 builds?** ESCALATED.
+**Decision S — 30-min Eric pre-call before v0.1.6 builds?** RESOLVED YES (recommendation; Luke schedules; not blocking v0.1.6 — recommended before v0.1.7 plan-author work where Eric domain-shape becomes load-bearing).
 
 - **Question.** The Eric path makes assumptions about Rails / SOC 2 / onboarding shape. Recommend a short call with Eric BEFORE v0.1.6 builds to lock his actual context (specific Rails version, specific SOC-2 control set, his channel preference, his domain — Stripe-shape vs accounting vs marketplace).
 - **Recommendation.** **Yes — recommend a 30-min Eric call.** Topics: (a) confirm Rails version + Ruby version; (b) confirm SOC-2 control set deltas; (c) confirm channel (Telegram vs Slack vs CLI); (d) confirm domain (payment / accounting / marketplace); (e) confirm onboarding cadence (30-min weekly review or async); (f) confirm authority bounds (read-only vs PR-authoring vs auto-merge ceiling).

@@ -317,3 +317,10 @@ If the dispatcher considers this F2 finding non-obvious enough that the work sco
 ## 14. Commit SHAs
 
 (populated by `loam amend seal --plan-doc` post-build)
+
+### Commit SHAs
+
+- Amendment commit: `282620ec2e73f8d3a7011966103ab930d0f1ad84` —
+  `chore(amend): dev-pattern-simplifications-2 manifest+apply — dev-sdlc BASELINE+sidecar bump to ce5d13e`
+- Seal commit: `df3f50f69f2f67de0907e1e0506cd6ecc4895653` —
+  `chore(seals): dev-pattern-simplifications-2 — dev-sdlc at 282620e`

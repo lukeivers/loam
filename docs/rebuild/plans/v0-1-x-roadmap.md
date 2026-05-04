@@ -269,7 +269,7 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 |---|---|---|---|
 | v0.1.1 | (in flight; locked content authored in parallel) | — | — |
 | v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03); V11.E sealed at `7d19a7e` (2026-05-03); ack-first persona contract sealed at `32ff67d` (2026-05-03); loam-amend ergonomics sweep sealed at `2c32c1b` (2026-05-03). |
-| v0.1.3 | (in flight) | — | R.5 design note 1 (primary-persona-shape) sealed at `7ae346d` (2026-05-03); SKILL.md packages bundle (item 1) sealed at `f04e925` (2026-05-04). |
+| v0.1.3 | (in flight) | — | R.5 design note 1 (primary-persona-shape) sealed at `7ae346d` (2026-05-03); SKILL.md packages bundle (item 1) sealed at `f04e925` (2026-05-04); M-FBM operational-health AC family (`AC.MFBM-OPS.*`) sealed at `1a1f830` (2026-05-04). |
 | v0.1.4 | (planned) | — | — |
 | v0.1.5 | (planned) | — | — |
 
@@ -419,6 +419,44 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 - `dev-mode-manifest.yaml` update for `plugins/loam-skills/` — `roots:` doesn't include `plugins/*` by default; same treatment as `plugins/dev-sdlc/`. Follow-on amendment if dev-mode loading wants to surface to the persona.
 - PyPI publish — deferred to v0.2 per the broader publish gate.
 - Cross-component sweep discovery extension to `plugins/*/tests/SEAL_COMMIT` — pre-existing limitation (not introduced here); reused workaround from v0.1.2 item 6 (touched-only run + manual verification).
+
+### v0.1.3 — M-FBM operational-health amendment (`AC.MFBM-OPS.*`) — sealed 2026-05-04
+
+**Sub-plan:** `docs/rebuild/plans/m-fbm-operational-health.md`.
+**Manifest:** `docs/rebuild/plans/m-fbm-operational-health.manifest.yaml` (amendment #125).
+**Status file:** `<pos3>/workspace/.scratch/claude-output/m-fbm-operational-health-status-2026-05-04.md`.
+**Diagnosis trigger:** `<pos3>/workspace/.scratch/claude-output/m-fbm-operational-failure-diagnosis-2026-05-04.md` — Luke's M-FBM worker died on 2026-05-01, 175-item queue backlog accumulated over 3 days while structural ACs (`AC.MFBM.*`, `AC.J.*`) passed throughout.
+**FIDRAFT entry added (1):** "Stale amendment-test launchd plists litter `~/Library/LaunchAgents/` — sweeper CLI subcommand to evict orphans" — captures the empirical correction to the diagnosis's plist-Label-collision hypothesis (namespacing was already in place via amendment #6) plus the follow-on sweeper CLI item.
+
+| Step | Commit SHA | Notes |
+|---|---|---|
+| Plan-doc | `f50647f` | Sub-plan-doc; two-component fence on `framework/primary-persona/` + `framework/workspace-bootstrap/`; AC family `AC.MFBM-OPS.*` (collision-safe); 7 surfaces named pre-build (incl. Surface #1 dispatch-fence-correction + Surface #2 plist-collision empirical correction). |
+| Source edit | `c8de8e3` | `memory_write_queue.py`: `heartbeat_interval_iterations` key added to `DEFAULT_WORKER_CONFIG` (default 60). `memory_write_worker.py`: `run_worker_loop` emits `worker-heartbeat` NDJSON every N iterations carrying `pid` + `iteration` + `queue_depth` + `ts`. Five new test files: 4 in `framework/primary-persona/tests/` (`test_AC_MFBM_OPS_{1,2,3,6}_*.py`) + 1 in `framework/workspace-bootstrap/tests/` (`test_AC_MFBM_OPS_5_*.py`). |
+| Manifest | `c7c429c` | Amendment #125; baseline `c8de8e3`; two-component fence on primary-persona + workspace-bootstrap. FIDRAFT plist-sweeper entry committed in lock-step. |
+| `loam amend apply` (auto-commit) | `dc408f7` | Auto-committed per v0.1.2 item 6. Both BASELINE literals + both SEAL_COMMIT sidecars bumped to `c8de8e3`. |
+| `loam amend seal` | `1a1f830` | Deterministic seal commit. Narrative at `framework/primary-persona/seals/SEAL_COMMIT.m-fbm-operational-health`. Stash-then-pop workaround for unrelated dirty paths. |
+
+**Acceptance summary:**
+- AC.MFBM-OPS.1 (queue empties under N=10 enqueue load) — verified by `test_AC_MFBM_OPS_1_queue_stability_under_load.py` (2 tests: post-drain counters all-OK + queue dir empty; FIFO ordering pin).
+- AC.MFBM-OPS.2 (`service_label` workspace-slug-namespaced contract) — verified by `test_AC_MFBM_OPS_2_worker_liveness_label_contract.py` (5 tests: `pos3` slug + `alpha-ws` slug + `ivers-corp-pos-v2` slug + distinct-slugs-yield-distinct-Labels + unknown-kind-raises).
+- AC.MFBM-OPS.3 (recent-episode floor) — verified by `test_AC_MFBM_OPS_3_recent_episode_floor.py` (2 tests: drain produces episode file with mtime ≥ enqueue-moment + body carries user/assistant turn text).
+- AC.MFBM-OPS.5 (scaffold-output plist Label namespacing) — verified by `test_AC_MFBM_OPS_5_plist_label_workspace_slug.py` (3 tests: `pos3` workspace yields `com.loam.pos3.memory-write-worker.plist` + `alpha-ws` workspace yields `com.loam.alpha-ws.memory-write-worker.plist` + no `com.loam.ws.memory-write-worker.plist` is ever produced).
+- AC.MFBM-OPS.6 (`worker-heartbeat` periodic emission) — verified by `test_AC_MFBM_OPS_6_worker_heartbeat_emission.py` (4 tests: emission-every-iteration with `every=1` + payload-shape (`pid`/`iteration`/`queue_depth`/`ts`) + emission-skipped-between-intervals with `every=10` + `queue_depth` reflects un-drained entries when client is unavailable).
+- ODD §2.5 negative AC (no out-of-fence edits) — verified post-seal: fence diff confined to `framework/primary-persona/` + `framework/workspace-bootstrap/` + `docs/rebuild/plans/` (universal) + `docs/rebuild/FUTURE_IDEAS_DRAFT.md` (universal).
+
+**Touched-only test verification (pre-seal):**
+- `framework/primary-persona/tests/` — 544 passed.
+- `framework/workspace-bootstrap/tests/` — 247 passed, 11 skipped pre-existing.
+
+**Halt-and-surface findings (recorded; non-blocking):**
+- Surface #1 — dispatch's stated fence `framework/framework/memory-system/` was incorrect; actual code lives in `framework/primary-persona/` (worker source) + `framework/workspace-bootstrap/` (plist generator). Resolved autonomously by re-fencing per ODD §1.1.
+- Surface #2 — dispatch's hypothesised plist-Label collision (generic `com.loam.ws.memory-write-worker` Label hijackable across workspaces) was empirically incorrect; namespacing was already in place via amendment #6. Production plist on Luke's machine is correctly `com.loam.pos3.memory-write-worker.plist`. AC.MFBM-OPS.5 retained as regression-pin (preserves the existing namespacing as a tested invariant); FIDRAFT entry corrected from "fix collision" to "stale-plist-clutter sweeper CLI".
+
+**Surfaces recorded (out of `AC.MFBM-OPS.*` scope; carried forward):**
+- AC.MFBM-OPS.4 (retrieval-quality / non-probe-episode floor) — soft objective; deferred to v0.1.4+ if needed.
+- AC.MFBM-OPS.7 (reboot resilience via bootout+bootstrap launchctl integration) — fragile in CI; deferred.
+- Stale-amendment-plist sweeper CLI subcommand — captured as FIDRAFT entry; likely lands in `plugins/dev-sdlc/tools/` as a follow-on amendment.
+- Log-rotation for `memory-write-worker.{out,err}.log` and `memory-writes.log` — separate FIDRAFT-worthy item; not blocking.
 
 ---
 

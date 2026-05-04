@@ -1,0 +1,11 @@
+# v0.1.8 Cycle 5 — dev-sdlc skill-ification first pass (6 SKILLs: loam-amend-cycle, dispatch-brief-authoring, plan-before-code-author, fidraft-capture, front-load-principle-walk, audit-finding-triage); single-component fence on plugins/dev-sdlc/
+
+slug: v0-1-8-cycle-5-dev-sdlc-skills
+components: dev-sdlc
+baseline: 1d5c75f
+amendment-commit: 5ceffe43eacaa19873cf42ad698c871582494a40
+plan-doc: docs/rebuild/plans/v0-1-8-cycle-5-dev-sdlc-skills.md
+acs-satisfied: 8
+smoke: D1+D2 exercised live (14 SKILLs auto-symlinked, idempotent); D3/D4 n/a; D5 inherited from Anthropic native; D6 inherited from v0.1.7 Cycle 3; 463 prior tests + 38 new = 501 green
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

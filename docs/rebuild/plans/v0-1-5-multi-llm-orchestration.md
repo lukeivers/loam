@@ -1,6 +1,8 @@
-# Plan — v0.1.5 multi-LLM orchestration via OpenRouter
+# Plan — multi-LLM orchestration via OpenRouter (DEFERRED — was-v0.1.5)
 
-**Status:** plan-doc (pre-build, plan-before-code). Authored 2026-05-04 by multi-llm-plan-author dispatch.
+> **DEFERRED 2026-05-04 by owner directive shortly after authoring.** Owner reversed the v0.1.5 swap; memory-pluggable (D-1/D-2/D-3) restored as v0.1.5. This plan-doc stays committed as durable research/design output for future reactivation; the multi-LLM orchestration work is captured in `docs/rebuild/FUTURE_IDEAS_DRAFT.md` for re-evaluation when the work is wanted. The §9 "roadmap delta" no longer applies — v0.1.x roadmap is unchanged from its 2026-05-03 reorder. Filename retains `v0-1-5-` only because rename would orphan git history; mental model: "the multi-LLM plan, deferred."
+
+**Status:** plan-doc (pre-build, plan-before-code) — DEFERRED. Authored 2026-05-04 by multi-llm-plan-author dispatch.
 **Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/`.
 **Programme master:** `docs/rebuild/plans/v0-1-x-roadmap.md` (the v0.1.x roadmap; this plan-doc proposes a §2 v0.1.5 reauthoring + §4 sequencing-diagram update).
 **Predecessors:** v0.1.0 shipped; v0.1.1 design-note shipped; v0.1.2 in flight (V11.A + V11.E + ack-first + loam-amend ergonomics sealed); v0.1.3 (memory-pluggable D-1/D-2/D-3) and v0.1.4 (SKILL packages + ODD-RE) currently planned but not built.

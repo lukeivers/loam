@@ -1,0 +1,11 @@
+# v0.1.8 Cycle 2 — confidence bands + ratification workflow (two-component fence: dev-sdlc/odd-extractor + framework/per-project-pm)
+
+slug: v0-1-8-cycle-2-confidence-bands-and-ratification
+components: dev-sdlc+per-project-pm
+baseline: 08256cf
+amendment-commit: 96bacfeefd48c7688018488ae3b0a694c7cec20f
+plan-doc: docs/rebuild/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md
+acs-satisfied: 7
+smoke: D1+D2-idempotency+D5+D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

@@ -1,0 +1,83 @@
+# v0.1.6 Cycle 1 — production-safety + 2 bug fixes — apply ladder
+
+2026-05-04. v0.1.6 Cycle 1 per
+`docs/rebuild/plans/eric-final-delivery-plan-2026-05-04.md` §2
+v0.1.6 row + Decision P (SOC-2 audit-trail floor RESOLVED YES per
+dispatcher autonomous resolution).
+
+Sub-plan: `docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md`.
+
+Scope (per sub-plan §6 Cycle 1): three-component fence on
+`framework/workspace-bootstrap/`, `framework/cost-governance/`,
+`plugins/dev-sdlc/`. Cycle 2 (3 new SKILLs at
+`plugins/loam-skills/`) ships under a separate manifest
+(v0-1-6-production-safety-and-base-skills-cycle2.manifest.yaml)
+serialized after this seal — per
+`feedback_serialize_amendment_builds`.
+
+AC families:
+
+  - AC.PSAFE.1 — `safety_profile` field accepted at workspace-
+    bootstrap; legal values: production-stake | dev | research.
+  - AC.PSAFE.2 — default value when absent is `dev`.
+  - AC.PSAFE.3 — `production-stake` profile non-tunable floors
+    (audit_trail: on; cost_governance.warning_fraction floor at
+    0.6; always_ask floor includes production-data-mutation +
+    customer-record-edit).
+  - AC.PSAFE.4 — cost-governance dry_run_estimate primitive
+    returns EstimateResult (estimated_money_cents,
+    estimated_tokens, estimated_time_seconds, confidence_band).
+  - AC.PSAFE.5 — foreign-codebase BudgetEnvelope Pydantic model
+    with hard_cap, soft_cap, overrun_action enum (warn / halt /
+    continue).
+  - AC.PSAFE.6 — production-stake observable in canonical pos-v2
+    (smoke-test, status-file recorded).
+  - AC.SKILLS-BUG.1 — plugins/loam-skills/ named in default
+    bootstrap.yaml template (discoverable-plugins comment block).
+  - AC.SKILLS-BUG.2 — workspace-bootstrap pre-creates
+    <workspace>/.claude/skills/.gitkeep at first-run (idempotent).
+  - AC.SKILLS-BUG.3 — Smoke: fresh canonical workspace shows all
+    8 SKILLs visible without restart (status-file recorded;
+    gates against Cycle 2 seal).
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - safety_profile is a single top-level string field on
+    bootstrap.yaml; default `dev` matches today's behavior.
+  - production-stake floors are NON-tunable (Decision P RESOLVED
+    YES); SOC-2 audit-trail floor is structural for Eric's
+    compliance posture.
+  - dry_run_estimate is a thin extrapolator (no model-call);
+    consumes rolling-window recent-actuals; confidence_band is
+    HIGH/MEDIUM/LOW based on sample-size of recent actuals.
+  - .gitkeep pre-create only on fresh-scaffold and partial-
+    recovery; never overwrites existing.
+  - Loam-skills enrollment is via comment block in default
+    bootstrap.yaml + .claude/skills/.gitkeep; the plugin has no
+    loam.bootstrap.contributions entry-point so no contribution-
+    list edit needed (Surface #6 refined autonomous resolution).
+  - dev-sdlc plugin touch is minimal (docs entry only); no
+    runtime-code change.
+
+Out of scope (per sub-plan §7):
+
+  - Cycle 2 (3 new SKILLs at plugins/loam-skills/) — separate
+    manifest, sealed after this Cycle 1.
+  - dev-mode-manifest edits — defer to v0.1.7.
+  - Auto-creation mechanism — defer to v0.2.0.
+  - PM-shape work — defer to v0.1.7.
+  - Heavy reverse-engineering / Rails extractor — defer to v0.1.8.
+  - Migration of existing flat-shape skills — out of fence.
+
+Predecessor commits:
+  - f04e925 — v0.1.3 SKILL.md packages bundle seal (5 base SKILLs).
+  - 1a1f830 — M-FBM operational-health AC family seal.
+  - 7ae346d — v0.1.3 R.5 design note 1 (primary-persona-shape) seal.
+  - 5438860 — eric-final-delivery synthesis plan-doc.
+  - 972293b — canonical pos-v2 pre-amendment HEAD (this Cycle 1's
+    pre-build tip).
+
+BASELINE 2bc872d — the source-edit commit. Multi-component fence
+on `framework/workspace-bootstrap/`, `framework/cost-governance/`,
+`plugins/dev-sdlc/`. Sidecars advance to the v0.1.6 Cycle 1 seal
+SHA at apply time.

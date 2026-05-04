@@ -34,6 +34,9 @@ Public API:
     :class:`PendingResponseError` (Cycle 4) — named exception classes.
   - :class:`PerProjectPMContribution` — workspace-bootstrap contribution.
   - :class:`PerProjectPMRuntime` — host-published runtime factory.
+  - :class:`RatificationBatch` (v0.1.8 Cycle 2) — composes with
+    ``plugins/dev-sdlc/odd-extractor/`` to enqueue confidence-banded
+    AC ratification questions through the PM's decision queue.
 
 See ``docs/design.md`` for PM/M-FBM boundary articulation + the
 Cycle 4 one-question-at-a-time flow + audit-block-on-telegram SKILL
@@ -61,6 +64,7 @@ from loam.per_project_pm.errors import (
     PMNotFoundError,
     PMStateCorruptedError,
 )
+from loam.per_project_pm.ratification import RatificationBatch
 from loam.per_project_pm.runtime import PMRuntime
 from loam.per_project_pm.state import (
     RecordedResponse,
@@ -78,6 +82,7 @@ __all__ = [
     "PMRuntime",
     "PerProjectPMContribution",
     "PerProjectPMRuntime",
+    "RatificationBatch",
     "RecordedResponse",
     "StateOfWorld",
     "SurfacedQuestion",

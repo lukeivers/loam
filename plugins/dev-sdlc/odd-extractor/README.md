@@ -110,13 +110,55 @@ class LanguageAdapter(Protocol):
 Adapters register via the `loam.odd_extractor.language_adapters`
 entry-point group on their own pyproject.
 
-## Out of scope (Cycle 1)
+## Confidence bands + ratification workflow (Cycle 2)
 
-- Confidence bands → Cycle 2.
-- Ratification workflow → Cycle 2.
+Cycle 2 of v0.1.8 adds the band schema + ratification workflow. Every
+derived AC carries a `confidence:` field with one of three values
+(`VERIFIED | PLAUSIBLE | HYPOTHESISED`) and an `evidence:` block
+whose shape depends on the band. See `bands.py` for the typed model
+and `plugins/dev-sdlc/docs/odd-methodology.md` §11 for the
+methodology.
+
+Ratification mediates band changes through the per-project PM's
+one-question-at-a-time decision queue:
+
+```
+loam odd-extract <contract-draft.md> --ratify --pm-name <handle>
+```
+
+Per Eric synthesis Decision I, `PLAUSIBLE → VERIFIED` requires
+explicit user confirmation (default-no on silent promotion); other
+band changes are default-allow. Every action writes one audit-log
+entry per the SOC-2 audit-trail floor (Decision P).
+
+## Public API (Cycle 2 additions)
+
+```python
+from loam_odd_extractor import (
+    # Confidence bands.
+    ConfidenceBand,    # Enum: VERIFIED | PLAUSIBLE | HYPOTHESISED
+    Evidence,          # Pydantic model — kind/citations/repo_sha/rationale
+    BandedAC,          # Pydantic model — ac_id/text/confidence/evidence
+    # Ratification.
+    RatificationAction,
+    promote, demote, edit, reject,         # factory functions
+    apply_ratification_action,
+    enqueue_ratification_batch,
+    # Ratification state.
+    RatificationState, CompletedAction,
+    load_ratification_state, save_ratification_state,
+    initialise_ratification_state,
+    # Errors.
+    RatificationRefusedError,
+)
+```
+
+## Out of scope (Cycles 1+2)
+
 - Ruby/Rails adapter → Cycle 3.
 - Python adapter → Cycle 4.
 - 6 dev-sdlc SKILLs → Cycle 5.
 - Continuous codebase-watch → v0.2.0.
+- Persona-side natural-language → RatificationAction parser → v0.2.0+.
 
 See the master plan for full scope and sequencing.

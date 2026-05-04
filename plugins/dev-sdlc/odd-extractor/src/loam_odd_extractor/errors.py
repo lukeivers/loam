@@ -46,3 +46,15 @@ class BudgetExceededError(OddExtractorError):
     ``hard_cap_money_cents``. Carries the estimate + envelope on the
     message for diagnosability.
     """
+
+
+class RatificationRefusedError(OddExtractorError):
+    """A ratification action was rejected at construction or apply.
+
+    Per AC.BANDS.5 (v0.1.8 Cycle 2) — raised when a PLAUSIBLE→VERIFIED
+    promotion attempt lacks the explicit-yes opt-in (Decision I:
+    silent promotion forbidden). Also raised for malformed action
+    constructions (missing ``ac_id``, mismatched bands on a promote/
+    demote, etc.) so a caller can distinguish "structurally invalid
+    action" from "AC not found in pending list".
+    """

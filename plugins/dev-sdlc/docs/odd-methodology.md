@@ -792,3 +792,124 @@ document.
 
 When the three documents disagree, this one governs the mechanics. The
 others are context.
+
+---
+
+## 11. Confidence bands for derived ACs
+
+> *Added 2026-05-04 in v0.1.8 Cycle 2. Applies to ACs **derived** by the
+> odd-extractor from foreign codebases. Hand-authored ACs in plan-docs
+> for new loam work are not banded — they are authored under §2.3
+> directly.*
+
+The odd-extractor (`plugins/dev-sdlc/odd-extractor/`) reads a foreign
+codebase and emits a contract draft full of derived ACs. Derived ACs
+are not all equal: some are pinned to passing tests, some are inferred
+from source-code citations, some are LLM hypotheses without direct
+evidence. Treating them as a flat list would force the persona to
+either trust everything (and ship false ACs) or ratify every AC by
+hand (defeating the extractor's value). The three-band taxonomy
+makes the trust gradient explicit.
+
+### 11.1 The three bands
+
+- **VERIFIED.** The AC is backed by a passing test in the foreign
+  codebase. Evidence carries the test name + file path + repo SHA at
+  evidence-collection time. A VERIFIED AC means: this behaviour is
+  asserted by an executable test the repo runs green; if the test
+  passes, the AC holds; if the test breaks, the AC is unmet.
+- **PLAUSIBLE.** The AC is backed by source-code citations (file
+  path + line numbers). Evidence carries the citation list. A
+  PLAUSIBLE AC means: the behaviour is visible in the source but not
+  verified by any test the extractor found; the persona / user reads
+  the cited code to confirm or refute.
+- **HYPOTHESISED.** The AC is an LLM-derived inference; evidence
+  carries a rationale string explaining the inference chain (and
+  optionally citations the LLM consulted). A HYPOTHESISED AC means:
+  the behaviour is suspected but not directly visible in source or
+  tests; the persona / user must independently confirm before
+  treating the AC as binding.
+
+The bands are an enumeration of trust, not of importance. A
+HYPOTHESISED AC may name a load-bearing behaviour the codebase
+cannot survive without; the band only states how confident the
+extractor is that the named behaviour holds.
+
+### 11.2 Evidence requirements per band
+
+The `evidence:` block on every banded AC carries fields that depend
+on the band. The `BandedAC` model
+(`plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/bands.py`)
+enforces these structurally via a Pydantic model_validator:
+
+- **VERIFIED requires:**
+  - `evidence.kind` = `"test"`.
+  - `evidence.citations` = non-empty list (test name + file path).
+  - `evidence.repo_sha` = the repo SHA at extraction time
+    (non-null).
+- **PLAUSIBLE requires:**
+  - `evidence.kind` = `"source"`.
+  - `evidence.citations` = non-empty list (file path + line
+    numbers).
+- **HYPOTHESISED requires:**
+  - `evidence.kind` = `"inference"`.
+  - `evidence.rationale` = non-empty, non-whitespace-only string
+    explaining the inference chain.
+
+The model_validator is structural enforcement per §5.3 — Pydantic
+violations raise on construction, not at runtime in some inner
+loop. ODD §5 applies: invariants that must hold "always" should be
+encoded structurally, not advisory.
+
+### 11.3 Promotion and demotion (the ratification workflow)
+
+A banded AC's confidence can be **promoted** (e.g., HYPOTHESISED →
+PLAUSIBLE → VERIFIED) when fresh evidence emerges, or **demoted**
+when prior evidence proves wrong. Promotion / demotion is mediated
+by the per-project PM's one-question-at-a-time decision queue
+(v0.1.7 Cycle 4). The CLI verb is `loam odd-extract ratify
+<contract-draft>`.
+
+Promotion has an asymmetric rule per Eric synthesis Decision I:
+**PLAUSIBLE → VERIFIED requires explicit user confirmation**
+(default-no on silent promotion). Other promotions
+(HYPOTHESISED → PLAUSIBLE, HYPOTHESISED → VERIFIED) are
+default-allow. Demotions are always default-allow — the safer
+direction is permitted without ceremony.
+
+The four ratification action kinds:
+
+- **promote** — raise an AC's confidence band; requires fresh
+  evidence to satisfy the new band's evidence rules.
+- **demote** — lower an AC's confidence band; the prior evidence
+  is preserved on the demoted record.
+- **edit** — modify an AC's prose without changing the band; the
+  evidence stays attached.
+- **reject** — drop an AC from the contract draft entirely; the
+  audit-log entry preserves the rejection rationale for SOC-2
+  audit trail.
+
+Every action writes one entry to the extraction's audit log under
+`<workspace>/.loam/extractions/<repo-id>/audit-log/` per the SOC-2
+audit-trail floor (Eric synthesis Decision P). The PM-side
+`record_response` audit entry is cross-referenced on each
+ratification entry's `pm_audit_path` field so audit readers can
+join the two trails.
+
+### 11.4 When re-extension applies
+
+Per §4.1 (re-extension pattern): when a HYPOTHESISED AC's rationale
+turns out to name a defect the foreign codebase doesn't actually
+exhibit, the AC isn't promoted — it's **re-extended** as a
+new-named negative AC describing what the codebase actually does.
+The HYPOTHESISED AC is rejected (with rationale recorded in the
+audit log); a fresh AC is added at the appropriate band based on
+the actual behaviour discovered.
+
+This composes with §4.4 — re-extension is never a violation. The
+audit-log entry pair (the rejected HYPOTHESISED + the new banded
+AC referenced via re-extension provenance) is the durable record.
+
+Silent acceptance of a wrong HYPOTHESISED AC, or silent promotion
+of a PLAUSIBLE AC without confirming the test pin, **is** the
+violation §4.4 prohibits.

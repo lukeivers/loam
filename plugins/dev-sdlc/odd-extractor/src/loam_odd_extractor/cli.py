@@ -327,14 +327,144 @@ def _add_workspace_root_arg(parser: argparse.ArgumentParser) -> None:
 def _cmd_dispatch(args: argparse.Namespace) -> int:
     """Dispatch handler for ``loam odd-extract``.
 
-    Routes between extract / status / resume based on the
-    ``--status`` / ``--resume`` flags. Default action is extract.
+    Routes between extract / status / resume / ratify based on the
+    ``--status`` / ``--resume`` / ``--ratify`` flags. Default action
+    is extract.
+
+    The ratify-flag form (``loam odd-extract <draft-md-path> --ratify``)
+    treats the positional ``repo_path`` as a contract-draft markdown
+    path; the ``ratify`` sub-verb in :func:`build_odd_extract_subcommand`
+    is the canonical entry. Per AC.BANDS.4 + plan-doc §5 Surface #3.
     """
     if getattr(args, "status", False):
         return _cmd_status(args)
     if getattr(args, "resume", False):
         return _cmd_resume(args)
+    if getattr(args, "ratify", False):
+        return _cmd_ratify(args)
     return _cmd_extract(args)
+
+
+def _cmd_ratify(args: argparse.Namespace) -> int:
+    """Handle ``loam odd-extract <contract-draft-md> --ratify``.
+
+    Per AC.BANDS.4 — loads the contract-draft + sidecar YAML;
+    constructs the BandedAC list; resolves the named PM via
+    PMRuntime; calls enqueue_ratification_batch; reports the count
+    of pending decisions + the next surfaced question (if PM has a
+    decision policy that surfaces immediately).
+
+    Per plan-doc §5 Surface #7 — the CLI handler does the parsing +
+    constructs the BandedAC list; the helper consumes typed objects.
+    """
+    try:
+        # Treat repo_path as the contract-draft markdown path.
+        draft_md_path = args.repo_path.expanduser().resolve()
+        if not draft_md_path.exists():
+            raise OddExtractorError(
+                f"contract-draft path does not exist: {draft_md_path}"
+            )
+        # Sidecar — same basename, .yaml extension.
+        sidecar_path = draft_md_path.with_suffix(".yaml")
+        if not sidecar_path.exists():
+            raise OddExtractorError(
+                f"contract-draft sidecar (.yaml) not found at "
+                f"{sidecar_path}"
+            )
+
+        # Load sidecar → BandedAC list.
+        from .bands import BandedAC
+        sidecar_payload = (
+            yaml.safe_load(sidecar_path.read_text(encoding="utf-8"))
+            or {}
+        )
+        raw_acs = sidecar_payload.get("acs") or []
+        if not isinstance(raw_acs, list):
+            raise OddExtractorError(
+                f"contract-draft sidecar at {sidecar_path}: 'acs' must "
+                f"be a list; got {type(raw_acs).__name__}"
+            )
+        banded_acs = [BandedAC.model_validate(d) for d in raw_acs]
+
+        if not banded_acs:
+            print("No banded ACs in contract draft; nothing to ratify.")
+            return _EXIT_OK
+
+        # Resolve PM. Lazy import to keep odd-extractor → per-project-pm
+        # dep direction one-way.
+        try:
+            from loam.per_project_pm import PMRuntime
+        except ImportError as exc:
+            raise OddExtractorError(
+                "loam.per_project_pm not importable; install "
+                "loam-per-project-pm to use the ratification "
+                f"workflow ({exc})"
+            ) from exc
+
+        workspace_root = _resolve_workspace_root(args.workspace_root)
+        pm_name = args.pm_name
+        if not pm_name:
+            raise OddExtractorError(
+                "ratify: --pm-name is required (the PM mediating "
+                "ratification batches; see "
+                "framework/per-project-pm/ for PM authoring)"
+            )
+        pm_runtime = PMRuntime.from_workspace(workspace_root, pm_name)
+
+        extraction_id = sidecar_payload.get("extraction_id")
+        if not extraction_id:
+            raise OddExtractorError(
+                f"contract-draft sidecar at {sidecar_path}: missing "
+                f"required 'extraction_id' field"
+            )
+
+        from .ratify import enqueue_ratification_batch
+
+        # Compute draft path relative to extraction-dir for the
+        # ratification-state record.
+        ext_dir = extraction_dir(workspace_root, extraction_id)
+        try:
+            draft_relative = str(
+                draft_md_path.relative_to(ext_dir)
+            )
+        except ValueError:
+            draft_relative = str(draft_md_path)
+
+        enqueued = enqueue_ratification_batch(
+            extraction_id=extraction_id,
+            banded_acs=banded_acs,
+            workspace_root=workspace_root,
+            pm_runtime=pm_runtime,
+            pm_handle=pm_name,
+            draft_path=draft_relative,
+        )
+
+        if args.json:
+            payload = {
+                "ratification": {
+                    "extraction_id": extraction_id,
+                    "enqueued_count": enqueued,
+                    "pm_handle": pm_name,
+                    "draft_path": draft_relative,
+                    "total_acs": len(banded_acs),
+                }
+            }
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"Ratification batch enqueued for {extraction_id}.")
+            print(f"  PM handle:        {pm_name}")
+            print(f"  Draft:            {draft_relative}")
+            print(f"  ACs in draft:     {len(banded_acs)}")
+            print(f"  Newly enqueued:   {enqueued}")
+            print(
+                "  Next: persona surfaces one question via "
+                "PM.surface_next_questions_batch + relays + records "
+                "response."
+            )
+        return _EXIT_OK
+    except OddExtractorError as exc:
+        print(f"loam odd-extract ratify: {exc}", file=sys.stderr)
+        return _EXIT_ERR
 
 
 def build_odd_extract_subcommand(
@@ -422,6 +552,31 @@ def build_odd_extract_subcommand(
         help=(
             "resume an interrupted extraction (re-runs only the "
             "stages that did not complete)."
+        ),
+    )
+    # AC.BANDS.4 — ratification CLI sub-mode. The positional
+    # ``repo_path`` is reused: when ``--ratify`` is set, it is treated
+    # as the contract-draft markdown path. Single-positional shape
+    # avoids argparse subparser conflict; the flag form keeps this
+    # backward-compatible with Cycle 1's CLI surface.
+    odd_parser.add_argument(
+        "--ratify",
+        action="store_true",
+        help=(
+            "ratify a confidence-banded contract draft. Treats the "
+            "positional argument as the contract-draft markdown path "
+            "(its sidecar .yaml is loaded automatically). Requires "
+            "--pm-name (the PM mediating the ratification batch). "
+            "Per AC.BANDS.4 (v0.1.8 Cycle 2)."
+        ),
+    )
+    odd_parser.add_argument(
+        "--pm-name",
+        type=str,
+        default=None,
+        help=(
+            "name of the PM (handle) mediating the ratification "
+            "batch. Required with --ratify."
         ),
     )
     _add_workspace_root_arg(odd_parser)

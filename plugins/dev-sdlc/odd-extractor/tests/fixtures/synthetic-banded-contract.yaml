@@ -1,0 +1,49 @@
+schema_version: 1
+extraction_id: "synthetic-fixture-v0-1-8-c2"
+repo_path: "/synthetic/test-repo"
+ac_count: 3
+unhandled_count: 0
+dry_run: true
+created_at: "2026-05-04T00:00:00+00:00"
+acs:
+  - ac_id: "AC.SYNTH.1"
+    text: "User authentication flow validates password length >= 8."
+    confidence: VERIFIED
+    evidence:
+      kind: test
+      citations:
+        - "tests/test_auth.py::test_password_length_validation"
+        - "app/auth.py:42-58"
+      repo_sha: "abc1234567890def"
+      rationale: null
+    backing_files:
+      - "app/auth.py"
+      - "tests/test_auth.py"
+  - ac_id: "AC.SYNTH.2"
+    text: "Order model has-many LineItems with cascade-delete on order destruction."
+    confidence: PLAUSIBLE
+    evidence:
+      kind: source
+      citations:
+        - "app/models/order.rb:12"
+        - "db/migrate/2024_01_15_create_line_items.rb:8-15"
+      repo_sha: null
+      rationale: null
+    backing_files:
+      - "app/models/order.rb"
+      - "app/models/line_item.rb"
+  - ac_id: "AC.SYNTH.3"
+    text: "Payment gateway retries failed charges up to 3 times with exponential backoff."
+    confidence: HYPOTHESISED
+    evidence:
+      kind: inference
+      citations: []
+      repo_sha: null
+      rationale: |
+        The codebase mentions a Stripe integration in app/services/payments.rb
+        but no explicit retry logic is visible. Inferred from a comment
+        "// Stripe handles retries internally" and the absence of
+        application-level retry code; the actual retry policy lives in
+        Stripe's webhook handlers.
+    backing_files:
+      - "app/services/payments.rb"

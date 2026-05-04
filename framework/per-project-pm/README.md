@@ -162,10 +162,27 @@ surface the SKILL's structured audit-block trailer (Executed /
 Deferred-to-owner / Missed). Cycle 4 always returns `True`; future
 cycles may gate. See `docs/design.md` §12.
 
+## Ratification batches (Cycle 2 of v0.1.8 odd-extractor)
+
+`RatificationBatch` (`loam.per_project_pm.ratification`) composes
+with `plugins/dev-sdlc/odd-extractor/` to enqueue confidence-banded
+AC ratification questions through the PM's decision queue. Construct
+via `RatificationBatch.from_banded_acs(extraction_id=..., banded_acs=...)`
+then `.enqueue(pm_runtime)` to write per-AC entries to
+`decision-queue.yaml`. Provenance string format:
+`f"odd-extract:{extraction_id}:{ac_id}"`.
+
+The helper consumes duck-typed banded-AC mappings (with `ac_id`,
+`text`, `confidence`, `evidence` keys); typed `BandedAC` instances
+from the odd-extractor side flow through `[ac.model_dump() for ac in
+banded_acs]`. See `docs/rebuild/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md`
+for the full ratification workflow.
+
 ## See also
 
 - Cycle 2 plan-doc: `docs/rebuild/plans/v0-1-7-cycle-2-per-project-pm.md`.
 - Cycle 4 plan-doc: `docs/rebuild/plans/v0-1-7-cycle-4-one-question-pm-flow.md`.
+- v0.1.8 Cycle 2 ratification: `docs/rebuild/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md`.
 - Parent plan: `docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md`.
 - Design rationale: `docs/design.md` (this component).
 - M-FBM: `framework/primary-persona/src/loam/primary_persona/file_memory.py`.

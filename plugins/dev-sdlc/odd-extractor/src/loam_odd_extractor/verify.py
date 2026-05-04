@@ -65,14 +65,63 @@ def _render_contract_markdown(
     lines.append("<!-- ACS_TABLE_HERE -->")
     lines.append("")
     if raw.acs:
-        lines.append("(Cycle 2+ will band-tag these ACs.)")
-        lines.append("")
-        for idx, ac in enumerate(raw.acs, 1):
-            lines.append(f"### AC.{idx}")
+        # Band-tagged rendering per v0.1.8 Cycle 2 (AC.BANDS.1+3) —
+        # if every AC dict carries a ``confidence`` key, render the
+        # banded summary table + per-AC sections; otherwise fall back
+        # to the Cycle 1 generic key-value rendering.
+        all_banded = all(
+            isinstance(ac, dict) and "confidence" in ac
+            for ac in raw.acs
+        )
+        if all_banded:
+            lines.append("| AC | Band | Evidence kind | Citations |")
+            lines.append("|----|------|---------------|-----------|")
+            for ac in raw.acs:
+                ac_id = ac.get("ac_id", "(unnamed)")
+                band = ac.get("confidence", "?")
+                ev = ac.get("evidence", {}) or {}
+                kind = ev.get("kind", "?")
+                cites = ev.get("citations") or []
+                cites_summary = (
+                    f"{len(cites)} citation(s)" if cites else "(none)"
+                )
+                lines.append(
+                    f"| {ac_id} | {band} | {kind} | {cites_summary} |"
+                )
             lines.append("")
-            for k, v in ac.items():
-                lines.append(f"- **{k}:** {v}")
+            for ac in raw.acs:
+                ac_id = ac.get("ac_id", "(unnamed)")
+                band = ac.get("confidence", "?")
+                lines.append(f"### {ac_id} — {band}")
+                lines.append("")
+                lines.append(f"**Text:** {ac.get('text', '')}")
+                lines.append("")
+                ev = ac.get("evidence", {}) or {}
+                lines.append(f"- **Evidence kind:** {ev.get('kind', '?')}")
+                cites = ev.get("citations") or []
+                if cites:
+                    lines.append(f"- **Citations:** {len(cites)} entries")
+                    for c in cites:
+                        lines.append(f"  - `{c}`")
+                if ev.get("repo_sha"):
+                    lines.append(f"- **Repo SHA:** `{ev['repo_sha']}`")
+                if ev.get("rationale"):
+                    lines.append(f"- **Rationale:** {ev['rationale']}")
+                if ac.get("backing_files"):
+                    lines.append(
+                        f"- **Backing files:** "
+                        f"{len(ac['backing_files'])} file(s)"
+                    )
+                lines.append("")
+        else:
+            lines.append("(Cycle 1 raw shape — bands not yet attached.)")
             lines.append("")
+            for idx, ac in enumerate(raw.acs, 1):
+                lines.append(f"### AC.{idx}")
+                lines.append("")
+                for k, v in ac.items():
+                    lines.append(f"- **{k}:** {v}")
+                lines.append("")
     else:
         lines.append(
             "_No ACs extracted in this run. Cycle 1's scaffold "

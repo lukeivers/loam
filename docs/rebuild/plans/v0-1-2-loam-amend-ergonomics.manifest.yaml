@@ -1,0 +1,211 @@
+schema_version: 1
+amendment:
+  number: 123
+  slug: v0-1-2-loam-amend-ergonomics
+  title: "v0.1.2 item 6 — loam-amend ergonomics sweep"
+
+# BASELINE: a30a583 — the v0.1.2 item 6 source-edit commit (the tip
+# after the feat(v0.1.2): loam-amend ergonomics sweep commit lands;
+# pre-apply tip).
+#
+# Commit ladder pre-apply:
+#   bda2ced — canonical pos-v2 pre-amendment HEAD (ack-first §8 backfill).
+#   be76e41 — v0.1.2 item 6 sub-plan-doc (NEW commit).
+#   a30a583 — v0.1.2 item 6 source-edit commit (this BASELINE).
+#   <this manifest commit lands next>
+#   <loam amend apply lands; manual chore(amend): apply commit per
+#    pre-fix convention — this amendment is itself adding auto-commit>
+#   <loam amend seal lands as deterministic seal commit>
+#
+# Single-component fence — v0.1.2 item 6:
+#   - dev-sdlc (the dev-sdlc plugin's seal-test fences
+#     plugins/dev-sdlc/tools/loam-amend/ along with the rest of the
+#     plugin). Source edits land in:
+#       plugins/dev-sdlc/tools/loam-amend/src/loam_amend/commands/apply.py
+#       plugins/dev-sdlc/tools/loam-amend/src/loam_amend/commands/seal.py
+#       plugins/dev-sdlc/tools/loam-amend/src/loam_amend/cli.py
+#       plugins/dev-sdlc/tools/loam-amend/tests/test_AC_LAE_1_*.py (NEW)
+#       plugins/dev-sdlc/tools/loam-amend/tests/test_AC_LAE_2_*.py (NEW)
+#       plugins/dev-sdlc/tools/loam-amend/tests/test_AC_LAE_3_*.py (NEW)
+#       plugins/dev-sdlc/tools/loam-amend/tests/test_tracker_integration.py
+#         (back-compat update to fixture: post-apply state commit logic)
+#       plugins/dev-sdlc/tests/SEAL_COMMIT (sidecar bump)
+#
+# All three AC families locked per v0.1.x roadmap §2 v0.1.2 item 6.
+baseline: "a30a583"
+
+plan: docs/rebuild/plans/v0-1-2-loam-amend-ergonomics.md
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: plugins/dev-sdlc/tests/SEAL_COMMIT.notes
+  body: |
+    # v0.1.2 item 6 — loam-amend ergonomics sweep
+
+    2026-05-03. v0.1.2 item per `docs/rebuild/plans/v0-1-x-roadmap.md`
+    §2 v0.1.2 item 6 + §8 method-decision register backfill.
+
+    Sub-plan: `docs/rebuild/plans/v0-1-2-loam-amend-ergonomics.md`.
+
+    FIDRAFT entries closed (`docs/rebuild/FUTURE_IDEAS_DRAFT.md` —
+    all 2026-05-03 captures from main session):
+      - "`loam amend apply` does not commit the apply step BY DESIGN"
+      - "`loam amend seal` requires clean working tree — stash-then-pop
+        workaround used in every FBE.x"
+      - "`loam amend apply` partner-prefix derivation bug — derives
+        from name field assuming framework/<name>/+ bare-<name>/
+        shapes; misses plugins/<name>/ shaped components"
+
+    Scope (per sub-plan §4): single-component fence on
+    `plugins/dev-sdlc/`. The dev-sdlc plugin's seal-test fences
+    `plugins/dev-sdlc/tools/loam-amend/` along with the rest of the
+    plugin. Three AC families:
+
+      - AC.LAE.1 — `loam amend apply` (non-dry-run) auto-commits the
+        apply step. Stages per-component seal_test + sidecar paths;
+        authors a deterministic `chore(amend): <description> apply —
+        <comp-list> BASELINE+sidecar bump to <baseline-short>` commit.
+        Co-Authored-By trailer mirrors seal.py's `_claude_environment()`.
+        Idempotent re-runs with no on-disk change skip the commit.
+        Commit failure halts with operator-actionable diagnostic +
+        exit 3.
+
+      - AC.LAE.2 — `loam amend seal --allow-untracked-globs <pattern>`
+        flag (repeatable) admits dirty paths matching the named glob
+        via `fnmatch.fnmatchcase`. Patterns are dirty-check-only;
+        NOT staged or committed. Patterns are anchored at the repo
+        root (no implicit trailing `*`). Common case:
+        `--allow-untracked-globs docs/rebuild/FUTURE_IDEAS_DRAFT.md`
+        for in-flight capture state.
+
+      - AC.LAE.3 — `loam amend apply` partner-prefix derivation now
+        reads from the manifest's `seal_test` path (canonical
+        shape-discriminator) rather than the `name` field. Fixes the
+        latent `plugins/<name>/`-located component mis-shape.
+        Defensive fallbacks preserve back-compat with
+        framework-located + legacy 3-segment fixture seal_test paths.
+
+      - AC.LAE.S — single-component fence on `plugins/dev-sdlc/`;
+        plus `docs/rebuild/plans/` via universal prefix.
+
+    Smokes captured pre-seal (verbatim):
+
+        === Smoke A (AC.LAE.1 — auto-commit) ===
+        applied:
+          - comp: BASELINE → 076223b...
+          - comp: SEAL_COMMIT → 076223b...
+        committed: 86d63ba (apply auto-commit)
+        Last commit subject: "chore(amend): smoke-a apply — comp
+        BASELINE+sidecar bump to 076223b"
+        Body carries: amendment-#99 reference, sub-plan reference,
+        per-change list, mechanised-by note, Co-Authored-By trailer
+        (under CLAUDECODE=1).
+
+        === Smoke B (AC.LAE.2 — --allow-untracked-globs) ===
+        Without flag:
+          HALT: dirty-working-tree
+          working tree carries unrelated dirty paths:
+            ?? docs/
+          Refusing to seal.
+        With --allow-untracked-globs 'docs/rebuild/FUTURE_IDEAS_DRAFT.md'
+        --allow-untracked-globs 'docs/':
+          sealed: chore(seals): smoke-a — comp at 86d63ba
+        Post-seal: docs/ remains untracked (admission was dirty-check-
+        only; not staged).
+
+        === Smoke C (AC.LAE.3 — partner-prefix from seal_test) ===
+        Mixed-fence amendment with framework/alpha/ + plugins/beta/:
+          alpha: allowed_prefixes += ['plugins/beta/']
+          beta: allowed_prefixes += ['framework/alpha/']
+        alpha test file post-apply carries `"plugins/beta/"` (correct
+        shape; NOT the buggy `framework/beta/` or bare `beta/`).
+        beta test file post-apply carries `"framework/alpha/"`.
+
+        === Smoke D (loam-amend test suite — touched-only) ===
+        183 passed in ~40s.
+
+        === Smoke E (dev-sdlc sealed-component sweep) ===
+        48 passed in ~1s.
+
+    All ACs (AC.LAE.{1,2,3}) pass: auto-commit lands with conventional
+    shape; --allow-untracked-globs admits glob-matched dirt without
+    staging; partner-prefix derives from seal_test path correctly
+    across framework/ + plugins/ + mixed shapes.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - Auto-commit subject shape `chore(amend): <desc> apply —
+        <comp-list> BASELINE+sidecar bump to <baseline-short>` mirrors
+        the manual apply commits authored by recent agents (e.g.
+        `8cbab6a` for v0.1.2 item 5) for audit-trail consistency.
+      - Auto-commit body sections: amendment-number reference, sub-
+        plan reference, per-component change list, mechanised-by
+        note, Co-Authored-By trailer (under Claude env).
+      - Stage-explicit (per-component seal_test + sidecar paths from
+        manifest). Avoid `git add -A` — could pick up unrelated
+        dirty state if operator's tree is dirty. Mirrors seal.py's
+        paths_to_stage pattern.
+      - Co-Authored-By detection re-implements `_claude_environment()`
+        helper in apply.py rather than re-importing from seal.py
+        (smaller import surface; both helpers track the same env-var
+        list `_CLAUDE_ENV_VARS`).
+      - `fnmatch.fnmatchcase` for glob matching — standard library,
+        case-sensitive (POSIX-shell convention), no shape-magic.
+      - `--allow-untracked-globs` patterns anchored at repo root:
+        `docs/rebuild/FUTURE_IDEAS_DRAFT.md` matches the literal file;
+        `docs/rebuild/*` matches direct children only; `docs/**/*` is
+        the recursive form. Documented in --help.
+      - `--allow-untracked-globs` admission is dirty-check-only —
+        patterns are NOT staged or committed. The seal step still
+        only stages declared sidecars + narrative + plan-doc per
+        existing logic.
+      - Partner-prefix helper `_partner_prefix(seal_test, name)`
+        parses 4-segment `<base>/<name>/tests/<file>.py` shape →
+        `<base>/<name>/`. 3-segment legacy `<name>/tests/<file>.py`
+        shape → `<name>/`. Defensive fallback to `framework/<name>/`
+        for any non-canonical seal_test. Self-exclusion in widening
+        uses the same derivation.
+
+    Out of scope (per sub-plan §8):
+
+      - Manifest-level `allow_untracked_globs` admission — deferred;
+        CLI flag covers immediate workflow. Manifest field can land
+        later if observed pain-point recurs.
+      - Updating in-flight dispatch prompts that say "manually create
+        the apply commit" — out of fence. Backwards-compat per
+        sub-plan Surface #2 / Outcome A: manual commits become
+        no-ops on top of the auto-commit; harmless.
+      - Migrating prior manifests' `extra_allowed_prefixes` to drop
+        now-redundant `<name>/` bare admissions — out of fence;
+        opportunistic cleanup at next touch.
+
+    Predecessor commits:
+      - 9d58062 — V11.A seal (orchestrator runtime fix).
+      - 7d19a7e — V11.E seal (graphiti probe graceful-skip).
+      - 32ff67d — ack-first persona contract seal.
+      - bda2ced — v0-1-x roadmap §8 backfill (canonical pos-v2 HEAD
+        pre-this-build).
+      - be76e41 — v0.1.2 item 6 sub-plan-doc (NEW commit; pre-baseline).
+      - a30a583 — v0.1.2 item 6 source-edit commit (BASELINE for this
+        amendment).
+
+    BASELINE a30a583 (the v0.1.2 item 6 source-edit commit). Single-
+    component fence on `plugins/dev-sdlc/`; sidecar advances to
+    v0.1.2-item-6 seal SHA.

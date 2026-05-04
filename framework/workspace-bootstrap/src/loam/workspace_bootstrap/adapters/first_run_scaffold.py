@@ -796,6 +796,20 @@ def run_first_run_scaffold(
     plugin_agents_written = _symlink_plugin_agents(Path(ws))
     written.extend(plugin_agents_written)
 
+    # v0.1.7 Cycle 3 AC.LAYERED.2 + AC.LAYERED.3 + AC.LAYERED.4: symlink
+    # plugin-shipped skill directories (``plugins/<plugin>/skills/<name>/``)
+    # into ``<workspace>/.claude/skills/<name>`` so Claude Code's
+    # project-skill discovery (``<workspace>/.claude/skills/<name>/SKILL.md``
+    # per Anthropic spec) picks them up uniformly. Symlink targets the
+    # directory (not the SKILL.md file) so companion files in the skill
+    # directory survive the discovery walk. Idempotent. Collision
+    # (non-symlink file/dir at the target path = workspace-local
+    # override, OR two plugins shipping the same skill name = cross-
+    # plugin collision) raises ``PluginSkillCollisionError`` —
+    # operator-precedence per AC.LAYERED.3 / AC.LAYERED.4.
+    plugin_skills_written = _symlink_plugin_skills(Path(ws))
+    written.extend(plugin_skills_written)
+
     # Amendment #39: seed the workspace's objective-tracker DB with
     # the value-prop root + spec-tier descendants. Idempotent by
     # query (the seed-runner uses ``query_projection_view`` to detect
@@ -1148,6 +1162,141 @@ def _symlink_plugin_agents(workspace_root: Path) -> tuple[str, ...]:
             target.symlink_to(absolute_source)
             written.append(
                 f"<workspace>/.claude/agents/{agent_file.name}"
+            )
+    return tuple(written)
+
+
+# ---- v0.1.7 Cycle 3: layered-skill discovery ---------------------------
+#
+# Plugin-shipped skills live at ``plugins/<plugin>/skills/<name>/SKILL.md``
+# in the source-of-truth tree. At first-run scaffold time, we symlink each
+# *skill directory* (not the SKILL.md file alone) into
+# ``<workspace>/.claude/skills/<name>/`` so Claude Code's project-skill
+# discovery surface (``<workspace>/.claude/skills/<name>/SKILL.md`` per the
+# Anthropic spec verified 2026-05-04) picks them up uniformly. The symlink
+# targets the directory rather than the file because skills can ship
+# companion files (scripts/, references/, templates/) that the discovery
+# walk needs intact.
+#
+# Source-tree resolution reuses ``_resolve_plugins_root`` from the agent
+# symlinking — same canonical/derived layout logic.
+#
+# Idempotence + operator-precedence mirror the agent surface: existing
+# symlinks pointing at the correct target are left untouched; symlinks
+# pointing elsewhere (operator manually retargeted) are left untouched;
+# non-symlink collisions raise ``PluginSkillCollisionError`` so the
+# operator can resolve explicitly. Per AC.LAYERED.2 / AC.LAYERED.3 /
+# AC.LAYERED.4. Cross-plugin collisions (two plugins ship a skill with
+# the same name) also raise ``PluginSkillCollisionError`` per AC.LAYERED.4.
+#
+# Flat-file ``<plugin>/skills/<name>.md`` shapes are NOT auto-symlinked —
+# Anthropic discovery is per-directory; flat-file skills are out of fence
+# for the auto-symlinking layer.
+
+
+class PluginSkillCollisionError(BootstrapError):
+    """A plugin skill's target path is already a non-symlink file/dir, OR
+    two plugins ship a skill with the same name.
+
+    Operator-precedence (workspace-local override case): the existing
+    file/dir is preserved; the scaffold refuses to overwrite. The
+    operator either renames their override or deletes it to accept the
+    plugin skill.
+
+    Cross-plugin case: the operator (or plugin maintainer) renames one
+    of the colliding skills.
+
+    Per AC.LAYERED.3 + AC.LAYERED.4.
+    """
+
+    code = ERR_HANDS_OFF_INTERNAL
+
+
+def _symlink_plugin_skills(workspace_root: Path) -> tuple[str, ...]:
+    """v0.1.7 AC.LAYERED.2 — symlink plugin-shipped skill directories
+    from ``plugins/<plugin>/skills/<name>/`` into
+    ``<workspace>/.claude/skills/<name>``.
+
+    Walks every plugin under the resolved plugins/ root; for each
+    ``<plugin>/skills/<name>/`` directory containing a ``SKILL.md`` file,
+    creates a symlink at ``<workspace>/.claude/skills/<name>`` pointing
+    at the absolute path of the plugin skill directory.
+
+    Idempotent. Returns the tuple of relative paths written
+    (or empty tuple when no plugins were present / no skills to
+    register).
+
+    Raises ``PluginSkillCollisionError`` when:
+      - a non-symlink file/dir already exists at a target path
+        (workspace-local operator override, AC.LAYERED.3); OR
+      - two plugins ship a skill with the same name
+        (cross-plugin collision, AC.LAYERED.4).
+    """
+    plugins_root = _resolve_plugins_root(Path(workspace_root))
+    if plugins_root is None:
+        return ()
+
+    skills_dir = Path(workspace_root) / ".claude" / "skills"
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    # Track which plugin claimed each skill name so we can raise on the
+    # cross-plugin collision case (AC.LAYERED.4).
+    claimed_by: dict[str, str] = {}
+
+    written: list[str] = []
+    for plugin_dir in sorted(plugins_root.iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+        plugin_skills_dir = plugin_dir / "skills"
+        if not plugin_skills_dir.is_dir():
+            continue
+        for skill_dir in sorted(plugin_skills_dir.iterdir()):
+            if not skill_dir.is_dir():
+                # Skip flat-file <plugin>/skills/<name>.md shapes.
+                # Anthropic discovery is per-directory; flat-file
+                # skills are out of fence for auto-symlinking.
+                continue
+            if not (skill_dir / "SKILL.md").is_file():
+                # Not a discoverable skill — skip silently.
+                continue
+            skill_name = skill_dir.name
+            # AC.LAYERED.4 — cross-plugin collision. The first plugin
+            # to claim the name (alphabetical sort order) holds the
+            # symlink; the second raises so the operator (or plugin
+            # maintainer) renames one of them.
+            if skill_name in claimed_by:
+                raise PluginSkillCollisionError(
+                    "kind=plugin_skill_cross_plugin_collision "
+                    f"skill={skill_name!r} "
+                    f"plugin_first={claimed_by[skill_name]!r} "
+                    f"plugin_second={plugin_dir.name!r} — two plugins "
+                    "ship a skill with the same name; rename one."
+                )
+            target = skills_dir / skill_name
+            absolute_source = skill_dir.resolve()
+            if target.is_symlink():
+                # Already a symlink. Verify it points at the correct
+                # source. If it does, leave alone (idempotent). If it
+                # points elsewhere, treat as operator override and
+                # leave alone (operator-precedence). Collision applies
+                # only to non-symlink files/dirs.
+                claimed_by[skill_name] = plugin_dir.name
+                continue
+            if target.exists():
+                # Non-symlink collision (workspace-local override).
+                # Halt-and-surface per AC.LAYERED.3. Operator resolves
+                # explicitly.
+                raise PluginSkillCollisionError(
+                    "kind=plugin_skill_workspace_override_collision "
+                    f"plugin={plugin_dir.name!r} "
+                    f"skill={skill_name!r} "
+                    f"target_path={target!s} — non-symlink "
+                    "file/directory already exists; refuse to overwrite."
+                )
+            target.symlink_to(absolute_source)
+            claimed_by[skill_name] = plugin_dir.name
+            written.append(
+                f"<workspace>/.claude/skills/{skill_name}"
             )
     return tuple(written)
 

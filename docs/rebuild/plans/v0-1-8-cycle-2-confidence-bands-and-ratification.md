@@ -449,4 +449,7 @@ Method-level decisions made during this build (a record for future cycles + audi
 
 ### Commit SHAs
 
-(populated at seal time by `loam amend seal --plan-doc ...`)
+- Amendment commit: `96bacfeefd48c7688018488ae3b0a694c7cec20f` —
+  `chore(amend): v0-1-8-cycle-2-confidence-bands-and-ratification manifest+apply — dev-sdlc+per-project-pm BASELINE+sidecar bump to 08256cf`
+- Seal commit: `4865028d144b3b5c5a480913719376a258515891` —
+  `chore(seals): v0-1-8-cycle-2-confidence-bands-and-ratification — dev-sdlc+per-project-pm at 96bacfe`

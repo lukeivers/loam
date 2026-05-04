@@ -281,6 +281,6 @@ Per `feedback_subagent_odd_violation_halt`: halt and surface any ODD violation o
 
 ---
 
-## §14 — Commit SHAs
+## 14. Commit SHAs
 
 (populated by `loam amend seal --plan-doc` post-build)

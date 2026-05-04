@@ -4,16 +4,23 @@ Schema-v2 manifests carrying an ``objectives`` block additionally
 register ObjectiveSpec records into the workspace's tracker DB at
 the start of the (non-dry-run) apply step. See
 ``pos-amend-tracker-integration.md`` AC.D-pa.1 / AC.D-pa.2 / AC.D-pa.5.
+
+Per AC.LAE.1 (v0.1.2 item 6 — loam-amend ergonomics sweep): a
+successful non-dry-run apply that produced changes auto-stages the
+touched paths (sidecars + seal-tests) and creates a deterministic
+``chore(amend): <description> apply ...`` commit. Idempotent
+re-runs (no changes) skip the commit.
 """
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
 from loam_amend.baseline import BaselineNotFound, read_baseline, set_baseline
 from loam_amend.dry_run import analyse, format_reports
-from loam_amend.manifest import ManifestError, load_manifest
+from loam_amend.manifest import Manifest, ManifestError, load_manifest
 from loam_amend.paths import find_repo_root
 from loam_amend.rename_detection import is_rename_only
 from loam_amend.seal_diff import BindingNotFound, widen_binding
@@ -22,6 +29,24 @@ from loam_amend.tracker_registration import (
     TrackerUnavailableError,
     register_objectives,
 )
+
+
+# Co-Authored-By trailer per AC.LAE.1 (mirrors seal.py's pattern).
+# Trailer text matches the convention from prior chore(amend) commits.
+_CO_AUTHORED_BY = (
+    "Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
+)
+_CLAUDE_ENV_VARS = ("CLAUDECODE", "CLAUDE_CODE_SDK", "CLAUDE_AGENT_RUN")
+
+
+def _claude_environment() -> bool:
+    """Return True iff invoked under a Claude-Code-attributed shell.
+
+    Auto-detected via any of the env vars commonly set in dispatched-
+    agent shells. None set → human invocation; trailer omitted.
+    Mirrors ``loam_amend.commands.seal._claude_environment``.
+    """
+    return any(os.environ.get(name) for name in _CLAUDE_ENV_VARS)
 
 
 def _git_head_sha(repo_root: Path) -> str:
@@ -34,6 +59,39 @@ def _git_head_sha(repo_root: Path) -> str:
         check=True,
     )
     return proc.stdout.strip()
+
+
+def _short_sha(sha: str) -> str:
+    return sha[:7]
+
+
+def _partner_prefix(component_seal_test: str, component_name: str) -> str:
+    """Derive the partner-prefix for *component* from its seal_test path.
+
+    Per AC.LAE.3: canonical post-D.1 seal_test shape is
+    ``<base>/<name>/tests/test_*.py`` (4 path segments) — the
+    partner-prefix is ``<base>/<name>/`` (the first two path segments).
+    Pre-D.1 / fixture shape ``<name>/tests/test_*.py`` (3 segments)
+    is handled by the legacy ``<name>/`` partner — back-compat for
+    fixtures + any unmigrated manifest.
+    """
+    parts = Path(component_seal_test).parts
+    if (
+        len(parts) >= 4
+        and parts[-2] == "tests"
+        and parts[-1].endswith(".py")
+    ):
+        # <base>/<name>/tests/<file>.py — canonical post-D.1 shape.
+        return f"{parts[0]}/{parts[1]}/"
+    if (
+        len(parts) == 3
+        and parts[-2] == "tests"
+        and parts[-1].endswith(".py")
+    ):
+        # <name>/tests/<file>.py — legacy / fixture shape.
+        return f"{parts[0]}/"
+    # Defensive fallback: should not trigger on canonical manifests.
+    return f"framework/{component_name}/"
 
 
 def run(manifest_path: Path, *, dry_run: bool) -> int:
@@ -86,14 +144,13 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
     # Cross-component partners: every manifest-listed component's
     # top-level dir. Each component's seal-diff test sees the whole-repo
     # diff, so partner edits need admission on every seal-test.
-    # Post-D.1: components live under framework/<name>/ so partner
-    # prefixes carry both the new framework/ form and the bare-<name>
-    # form (for back-compat with pre-D.1 baselines whose diffs show
-    # the deletion side of the rename pair).
+    # Per AC.LAE.3 (v0.1.2 item 6): partner prefix is derived from the
+    # manifest's ``seal_test`` path (the canonical shape-discriminator)
+    # rather than from the ``name`` field — the latter mis-shapes
+    # ``plugins/<name>/``-located components as ``framework/<name>/``.
     partner_prefixes: set[str] = set()
     for _c in manifest.components:
-        partner_prefixes.add(f"framework/{_c.name}/")
-        partner_prefixes.add(f"{_c.name}/")
+        partner_prefixes.add(_partner_prefix(_c.seal_test, _c.name))
     # AC.D.1.5.1 / AC.D.1.5.2 (amendment #62): per-component
     # rename-only verdict. Computed once per component up-front so the
     # diagnostic line carries the prior-state SHAs from the same read
@@ -118,9 +175,8 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
         if comp.name in cleanup_protected:
             # Still run the widening pass so prefix admissions advance
             # for downstream amendments. Skip bumps + sidecar advance.
-            partners = sorted(
-                partner_prefixes - {f"{comp.name}/", f"framework/{comp.name}/"}
-            )
+            self_prefix = _partner_prefix(comp.seal_test, comp.name)
+            partners = sorted(partner_prefixes - {self_prefix})
             prefixes = (
                 list(manifest.universal_paths.prefixes)
                 + list(comp.extra_allowed_prefixes)
@@ -211,10 +267,10 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
             except BaselineNotFound:
                 print(f"note {comp.name}: no BASELINE literal (structural test?)")
         # 2. Widen bindings with universal + extras + cross-component
-        # partners (excluding self — both pre- and post-D.1 self forms).
-        partners = sorted(
-            partner_prefixes - {f"{comp.name}/", f"framework/{comp.name}/"}
-        )
+        # partners (excluding self — derived from this component's
+        # seal_test path per AC.LAE.3).
+        self_prefix = _partner_prefix(comp.seal_test, comp.name)
+        partners = sorted(partner_prefixes - {self_prefix})
         prefixes = (
             list(manifest.universal_paths.prefixes)
             + list(comp.extra_allowed_prefixes)
@@ -333,9 +389,132 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
                 )
 
     if not changes:
-        print("no changes (idempotent re-run)")
-    else:
-        print("applied:")
-        for c in changes:
-            print(f"  - {c}")
+        print("no changes (idempotent re-run); skipping commit")
+        return 0
+
+    print("applied:")
+    for c in changes:
+        print(f"  - {c}")
+
+    # AC.LAE.1 (v0.1.2 item 6): auto-commit the apply step. Stage the
+    # per-component seal_test + sidecar paths from the manifest;
+    # author a deterministic ``chore(amend): <description> apply ...``
+    # commit. On commit failure, leave staged + working-tree changes
+    # in place and exit 3 with operator-actionable diagnostic.
+    return _auto_commit_apply(manifest, repo_root, changes)
+
+
+def _build_apply_commit_message(
+    *,
+    manifest: Manifest,
+    changes: list[str],
+    include_co_authored_by: bool,
+) -> str:
+    """Assemble the deterministic apply-commit message (AC.LAE.1).
+
+    Subject:
+        chore(amend): <description> apply — <comp1>[+<comp2>...] BASELINE+sidecar bump to <baseline-short>
+
+    Body sections (each with a leading blank line):
+        1. Amendment-number reference + sub-plan reference.
+        2. Per-component change list (BASELINE / sidecar / widening edits).
+        Optional: Co-Authored-By trailer.
+    """
+    description = manifest.seal_description or manifest.slug
+    components_part = "+".join(c.name for c in manifest.components)
+    baseline_short = _short_sha(manifest.baseline)
+    subject = (
+        f"chore(amend): {description} apply — "
+        f"{components_part} BASELINE+sidecar bump to {baseline_short}"
+    )
+
+    body_lines = [subject, ""]
+    body_lines.append(
+        f"Apply commit for amendment #{manifest.number} ({manifest.slug})."
+    )
+    body_lines.append("")
+    body_lines.append(f"Sub-plan: {manifest.plan}.")
+    body_lines.append("")
+    body_lines.append("Applied changes:")
+    for c in changes:
+        body_lines.append(f"  - {c}")
+    body_lines.append("")
+    body_lines.append(
+        "Mechanised by `loam amend apply` per AC.LAE.1 (auto-commit)."
+    )
+    if include_co_authored_by:
+        body_lines.append("")
+        body_lines.append(_CO_AUTHORED_BY)
+    return "\n".join(body_lines) + "\n"
+
+
+def _auto_commit_apply(
+    manifest: Manifest, repo_root: Path, changes: list[str]
+) -> int:
+    """Stage the apply-step paths + create the chore(amend) commit.
+
+    Per AC.LAE.1: stage the per-component seal_test + sidecar paths
+    from the manifest. Avoids ``git add -A`` so unrelated dirty paths
+    are not picked up. On staging or commit failure, emit a HALT
+    diagnostic and return 3.
+    """
+    paths_to_stage: list[str] = []
+    for comp in manifest.components:
+        paths_to_stage.append(comp.seal_test)
+        paths_to_stage.append(comp.sidecar)
+
+    add_proc = subprocess.run(
+        ["git", "add", "--"] + paths_to_stage,
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    if add_proc.returncode != 0:
+        print("HALT: apply-commit-failed")
+        print(
+            "git add failed during apply auto-commit:\n"
+            + (add_proc.stdout or "")
+            + (add_proc.stderr or "")
+            + "\nApply edits remain in the working tree. Stage + "
+            "commit manually before invoking `loam amend seal`."
+        )
+        return 3
+
+    # If `git add` produced no staged change, the apply edits were
+    # idempotent at the byte level (the changes list reported moves
+    # but the on-disk content was already current). Skip the commit.
+    diff_check = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=repo_root,
+    )
+    if diff_check.returncode == 0:
+        print(
+            "no staged changes after apply (byte-idempotent); skipping commit"
+        )
+        return 0
+
+    commit_message = _build_apply_commit_message(
+        manifest=manifest,
+        changes=changes,
+        include_co_authored_by=_claude_environment(),
+    )
+    commit_proc = subprocess.run(
+        ["git", "commit", "-m", commit_message],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    if commit_proc.returncode != 0:
+        print("HALT: apply-commit-failed")
+        print(
+            "git commit failed during apply auto-commit:\n"
+            + (commit_proc.stdout or "")
+            + (commit_proc.stderr or "")
+            + "\nStaged apply edits remain in the index. Commit "
+            "manually before invoking `loam amend seal`."
+        )
+        return 3
+
+    apply_sha = _git_head_sha(repo_root)
+    print(f"committed: {_short_sha(apply_sha)} (apply auto-commit)")
     return 0

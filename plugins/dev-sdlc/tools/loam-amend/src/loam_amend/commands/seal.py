@@ -19,13 +19,22 @@ Plan-doc projection (per AC.D-sa.7): when ``--plan-doc <path>`` is
 supplied, append a ``### Commit SHAs`` subsection under the plan
 doc's ``## 14.`` heading and create a follow-up
 ``docs(plans): record amendment #N commit SHAs ...`` commit.
+
+Per AC.LAE.2 (v0.1.2 item 6 — loam-amend ergonomics sweep):
+``--allow-untracked-globs <pattern>`` (repeatable) admits paths
+matching the named glob pattern when computing dirty-tree status.
+Common case: dirty ``docs/rebuild/FUTURE_IDEAS_DRAFT.md`` from
+in-flight capture. Patterns are NOT staged or committed by the seal
+step — admission is dirty-check-only.
 """
 
 from __future__ import annotations
 
+import fnmatch
 import os
 import re
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -85,13 +94,27 @@ def _commit_subject(repo_root: Path, sha: str) -> str:
     return result.stdout.strip()
 
 
-def _working_tree_dirty(repo_root: Path, ignore_paths: set[Path]) -> list[str]:
-    """Return list of dirty paths NOT in *ignore_paths*.
+def _working_tree_dirty(
+    repo_root: Path,
+    ignore_paths: set[Path],
+    *,
+    allow_untracked_globs: Sequence[str] = (),
+) -> list[str]:
+    """Return list of dirty paths NOT in *ignore_paths* / glob-admitted.
 
     *ignore_paths* are repo-relative paths the seal step is itself
     expected to have written (sidecars + narrative target + plan doc).
     Anything else dirty at invocation time is unrelated dirt and the
     seal step refuses to proceed (AC.D-sa.5 case (c)).
+
+    *allow_untracked_globs* (per AC.LAE.2) is a sequence of shell-style
+    glob patterns; any dirty path matching one of these via
+    ``fnmatch.fnmatchcase`` is admitted into the ignore set. Patterns
+    are NOT staged or committed — admission is dirty-check-only.
+    Patterns are anchored at the repo root (no implicit trailing ``*``):
+    ``docs/rebuild/FUTURE_IDEAS_DRAFT.md`` matches the literal file;
+    ``docs/rebuild/*`` matches direct children only; ``docs/**/*`` is
+    the recursive form.
     """
     result = subprocess.run(
         ["git", "status", "--porcelain"],
@@ -110,8 +133,14 @@ def _working_tree_dirty(repo_root: Path, ignore_paths: set[Path]) -> list[str]:
         if " -> " in path_part:
             path_part = path_part.split(" -> ", 1)[1]
         rel = Path(path_part)
-        if rel not in ignore_paths:
-            dirty.append(line)
+        if rel in ignore_paths:
+            continue
+        if any(
+            fnmatch.fnmatchcase(path_part, pattern)
+            for pattern in allow_untracked_globs
+        ):
+            continue
+        dirty.append(line)
     return dirty
 
 
@@ -380,6 +409,7 @@ def _finalize(
     *,
     scoped_sweep: bool,
     plan_doc: Path | None,
+    allow_untracked_globs: Sequence[str] = (),
 ) -> int:
     """Full finalisation per AC.D-sa.1 + AC.D-sa.5 + AC.D-sa.7."""
 
@@ -401,7 +431,11 @@ def _finalize(
     # (b) Pre-flight: refuse to proceed on unrelated dirty state
     # (case (c) of AC.D-sa.5).
     # ------------------------------------------------------------------
-    dirty = _working_tree_dirty(repo_root, expected_writes)
+    dirty = _working_tree_dirty(
+        repo_root,
+        expected_writes,
+        allow_untracked_globs=allow_untracked_globs,
+    )
     if dirty:
         _emit_diagnostic(
             _FailureCheckpoint(
@@ -755,6 +789,7 @@ def run(
     no_finalize: bool = False,
     scoped_sweep: bool = False,
     plan_doc: Path | None = None,
+    allow_untracked_globs: Sequence[str] = (),
 ) -> int:
     try:
         manifest = load_manifest(manifest_path)
@@ -769,6 +804,8 @@ def run(
 
     if no_finalize:
         # Pre-extension behaviour preserved byte-identically.
+        # ``--allow-untracked-globs`` is a finalisation-pre-flight flag;
+        # the legacy path doesn't dirty-check, so the flag has no effect.
         return _legacy_seal(manifest, repo_root)
 
     return _finalize(
@@ -777,4 +814,5 @@ def run(
         repo_root,
         scoped_sweep=scoped_sweep,
         plan_doc=plan_doc,
+        allow_untracked_globs=allow_untracked_globs,
     )

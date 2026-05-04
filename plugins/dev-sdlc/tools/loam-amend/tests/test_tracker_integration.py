@@ -449,8 +449,13 @@ def test_AC_D_pa_3_seal_source_commit_idempotent(tracker_repo) -> None:
     )
     rc_apply = cli_main(["apply", str(manifest_path)])
     assert rc_apply == 0
-    _git(repo, "add", "-A")
-    _git(repo, "commit", "-q", "-m", "fixture: post-apply state")
+    # Per AC.LAE.1 (v0.1.2 item 6): apply auto-commits its own edits.
+    # Stage + commit any residual working-tree edits (tracker DB is
+    # gitignored) only when something is actually pending.
+    status = _git(repo, "status", "--porcelain").stdout
+    if status.strip():
+        _git(repo, "add", "-A")
+        _git(repo, "commit", "-q", "-m", "fixture: post-apply state")
 
     amendment_sha = _make_amendment_commit(repo, "alpha", payload="ac3i")
     rc_seal = cli_main(["seal", str(manifest_path)])

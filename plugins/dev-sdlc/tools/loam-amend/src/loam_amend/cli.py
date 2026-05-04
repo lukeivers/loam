@@ -97,6 +97,20 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
             "follow-up commit (per AC.D-sa.7)"
         ),
     )
+    p_seal.add_argument(
+        "--allow-untracked-globs",
+        action="append",
+        default=[],
+        metavar="PATTERN",
+        help=(
+            "admit dirty paths matching the named shell-style glob "
+            "pattern when computing dirty-tree status (repeatable; "
+            "patterns are anchored at the repo root and are NOT "
+            "auto-staged or committed). Common case: "
+            "`--allow-untracked-globs docs/rebuild/FUTURE_IDEAS_DRAFT.md` "
+            "for in-flight capture state. Per AC.LAE.2."
+        ),
+    )
 
     # ``template`` subcommand family — markdown template engine for
     # high-repetition authored artefacts. Per
@@ -263,6 +277,7 @@ def dispatch(args: argparse.Namespace) -> int:
             no_finalize=args.no_finalize,
             scoped_sweep=args.scoped_sweep,
             plan_doc=plan_doc,
+            allow_untracked_globs=tuple(args.allow_untracked_globs),
         )
     if args.command == "template":
         templates_root = args.templates_root or template_cmd.DEFAULT_TEMPLATES_ROOT

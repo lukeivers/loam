@@ -229,7 +229,13 @@ def _build_commit_message(
     )
 
     body_lines = [subject, ""]
-    body_lines.append(f"Amendment #{manifest.number} seal commit.")
+    # AC.DPS1.11: schema v3 manifests may omit ``amendment.number``.
+    # Drop the ``#N`` prefix when ``manifest.number is None``;
+    # identify by slug only via the existing subject line.
+    if manifest.number is None:
+        body_lines.append(f"Amendment {manifest.slug} seal commit.")
+    else:
+        body_lines.append(f"Amendment #{manifest.number} seal commit.")
     body_lines.append("")
     body_lines.append("Bumped sidecars:")
     if bumped_sidecars:
@@ -380,6 +386,12 @@ def _legacy_seal(manifest: Manifest, repo_root: Path) -> int:
 
     Used when ``--no-finalize`` is set. Output and exit-code semantics
     are byte-identical to pre-extension ``loam amend seal``.
+
+    Per AC.DPS1.4: schema v3 manifests with ``plan_doc_ref`` and no
+    ``narrative.body`` get a synthesized 5-15 line seal-narrative
+    body composed from ``<title> + plan_doc_ref + amendment-SHA``.
+    Schema v1 / v2 unchanged (the ``narrative.body`` field is required
+    + carries the full text).
     """
     sha = _head_sha(repo_root)
     changes: list[str] = []
@@ -389,7 +401,8 @@ def _legacy_seal(manifest: Manifest, repo_root: Path) -> int:
             changes.append(f"{comp.name}: SEAL_COMMIT → {sha}")
     if manifest.narrative is not None:
         target = repo_root / manifest.narrative.target
-        if append_narrative(target, manifest.narrative.body):
+        body = _resolve_narrative_body(manifest, sha)
+        if append_narrative(target, body):
             changes.append(
                 f"narrative appended to {manifest.narrative.target}"
             )
@@ -400,6 +413,52 @@ def _legacy_seal(manifest: Manifest, repo_root: Path) -> int:
         for c in changes:
             print(f"  - {c}")
     return 0
+
+
+def _resolve_narrative_body(manifest: Manifest, amendment_sha: str) -> str:
+    """Return the seal-narrative body to append to ``narrative.target``.
+
+    - Schema v1 / v2 (and any v3 manifest that explicitly sets
+      ``narrative.body``): return the manifest-supplied body
+      verbatim.
+    - Schema v3 with ``plan_doc_ref`` and no ``narrative.body``
+      (the new collapsed shape per cost-audit Recommendation A):
+      synthesize a 5-15 line summary citing the plan-doc + the
+      amendment SHA. The full plan-doc content is NOT inlined —
+      readers follow the ``plan_doc_ref`` pointer for detail.
+
+    Per plan ``dev-pattern-simplifications-1.md`` AC.DPS1.4.
+    """
+    assert manifest.narrative is not None  # caller-checked
+    if manifest.narrative.body is not None:
+        return manifest.narrative.body
+    # v3 collapsed shape: synthesize from plan_doc_ref.
+    if manifest.plan_doc_ref is None:  # defensive — load_manifest forbids
+        raise AssertionError(
+            "v3 manifest reached _resolve_narrative_body with neither "
+            "narrative.body nor plan_doc_ref — load_manifest should have "
+            "rejected this earlier"
+        )
+    if manifest.number is None:
+        ident_line = f"# {manifest.title}"
+    else:
+        ident_line = f"# Amendment #{manifest.number} — {manifest.title}"
+    components_part = "+".join(c.name for c in manifest.components)
+    summary = (
+        f"{ident_line}\n"
+        f"\n"
+        f"slug: {manifest.slug}\n"
+        f"components: {components_part}\n"
+        f"baseline: {manifest.baseline}\n"
+        f"amendment-commit: {amendment_sha}\n"
+        f"plan-doc: {manifest.plan_doc_ref}\n"
+        f"\n"
+        f"Narrative body collapsed per cost-audit 2026-05-04 "
+        f"Recommendation A (manifest narrative collapse) — see the "
+        f"plan-doc above for full rationale, AC family, and smoke "
+        f"results."
+    )
+    return summary
 
 
 def _finalize(
@@ -474,7 +533,11 @@ def _finalize(
     narrative_target_str: str | None = None
     if manifest.narrative is not None:
         target = repo_root / manifest.narrative.target
-        if append_narrative(target, manifest.narrative.body):
+        # Per AC.DPS1.4: schema v3 manifests with ``plan_doc_ref`` and
+        # no ``narrative.body`` get a synthesized 5-15 line summary;
+        # v1 / v2 keep the explicit ``body`` verbatim.
+        body = _resolve_narrative_body(manifest, amendment_sha)
+        if append_narrative(target, body):
             narrative_target_str = manifest.narrative.target
         else:
             # Idempotent — narrative already present.
@@ -735,19 +798,36 @@ def _finalize(
             print(f"plan-doc {rel_plan_doc}: §14 SHAs already current.")
             return 0
 
-        backfill_subject = (
-            f"docs(plans): record amendment #{manifest.number} "
-            "commit SHAs in method-decision register"
-        )
-        backfill_body_lines = [
-            backfill_subject,
-            "",
-            (
+        # AC.DPS1.11: schema v3 manifests may omit ``amendment.number``;
+        # the backfill subject + body identify by slug instead. The
+        # commit-SHAs subsection itself is still keyed by the amendment
+        # commit SHA, so it remains addressable.
+        if manifest.number is None:
+            backfill_subject = (
+                f"docs(plans): record {manifest.slug} commit SHAs "
+                "in method-decision register"
+            )
+            backfill_intro = (
+                f"Backfills the §14 commit-SHAs subsection of the "
+                f"{manifest.slug} plan with the actual amendment "
+                f"commit ({_short_sha(amendment_sha)}) and seal "
+                f"commit ({_short_sha(seal_sha)}) SHAs."
+            )
+        else:
+            backfill_subject = (
+                f"docs(plans): record amendment #{manifest.number} "
+                "commit SHAs in method-decision register"
+            )
+            backfill_intro = (
                 f"Backfills the §14 commit-SHAs subsection of the "
                 f"amendment #{manifest.number} plan with the actual "
                 f"amendment commit ({_short_sha(amendment_sha)}) and "
                 f"seal commit ({_short_sha(seal_sha)}) SHAs."
-            ),
+            )
+        backfill_body_lines = [
+            backfill_subject,
+            "",
+            backfill_intro,
             "",
             "Mechanised by `loam amend seal --plan-doc` per AC.D-sa.7.",
         ]

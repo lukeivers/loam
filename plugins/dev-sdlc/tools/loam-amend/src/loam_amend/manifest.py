@@ -32,7 +32,7 @@ import yaml
 
 
 SCHEMA_VERSION = 1
-SUPPORTED_SCHEMA_VERSIONS = (1, 2)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)
 _SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 
 
@@ -77,7 +77,13 @@ class UniversalPaths:
 @dataclass(frozen=True)
 class NarrativeSpec:
     target: str
-    body: str
+    # Schema v1 / v2: ``body`` is required and carries the
+    # full seal-narrative text. Schema v3: ``body`` is optional;
+    # when omitted, the seal step synthesizes a 5-15 line summary
+    # from ``plan_doc_ref`` + apply-commit metadata. Per cost-audit
+    # 2026-05-04 Recommendation A (manifest narrative collapse) +
+    # plan ``dev-pattern-simplifications-1.md`` AC.DPS1.{2,4,5}.
+    body: str | None = None
 
 
 @dataclass(frozen=True)
@@ -150,12 +156,23 @@ class ObjectiveEntry:
 @dataclass(frozen=True)
 class Manifest:
     schema_version: int
-    number: int
+    # Schema v1 / v2: ``number`` is required (integer >= 0).
+    # Schema v3: ``number`` is optional and may be ``None`` —
+    # amendments are identified by ``slug`` exclusively. Per
+    # cost-audit Recommendation E (amendment-number deprecation)
+    # + plan AC.DPS1.{10,11,12}. Apply / seal commit subjects
+    # degrade gracefully when ``None`` (no ``#N`` prefix).
+    number: int | None
     slug: str
     title: str
     baseline: str
     plan: str
     components: tuple[ComponentEntry, ...]
+    # Schema v3 only: pointer to the plan-doc that holds the
+    # narrative content. When set, the seal step synthesizes a
+    # short summary from this pointer + apply-commit metadata
+    # rather than inlining ``narrative.body``. Per Recommendation A.
+    plan_doc_ref: str | None = None
     universal_paths: UniversalPaths = field(default_factory=UniversalPaths)
     narrative: NarrativeSpec | None = None
     # Optional human-readable seal description used as the
@@ -340,9 +357,29 @@ def load_manifest(path: Path) -> Manifest:
     if not isinstance(amendment, dict):
         raise InvalidField(f"{path}: 'amendment' must be a mapping")
     where = f"{path}:amendment"
-    number = _require(amendment, "number", where)
-    if not isinstance(number, int):
-        raise InvalidField(f"{where}: 'number' must be an integer")
+    # Schema v1 / v2: ``number`` is required (legacy invariant).
+    # Schema v3: ``number`` is optional — amendments identify by
+    # slug only. Per Recommendation E + AC.DPS1.10. The schema-
+    # version gate is bidirectional: v1/v2 manifests carrying
+    # ``number: <int>`` continue to validate; v3 manifests MAY
+    # omit the field entirely.
+    number_raw = amendment.get("number")
+    if schema_version in (1, 2):
+        if number_raw is None:
+            raise MissingField(
+                f"{where}: missing required field 'number' "
+                f"(schema_version {schema_version} requires it; "
+                "bump to schema_version: 3 to omit)"
+            )
+        if not isinstance(number_raw, int):
+            raise InvalidField(f"{where}: 'number' must be an integer")
+        number: int | None = number_raw
+    else:  # schema_version == 3
+        if number_raw is not None and not isinstance(number_raw, int):
+            raise InvalidField(
+                f"{where}: 'number' must be an integer when present"
+            )
+        number = number_raw  # may be None
     slug = _require_str(amendment, "slug", where)
     title = _require_str(amendment, "title", where)
 
@@ -396,10 +433,70 @@ def load_manifest(path: Path) -> Manifest:
         if not isinstance(narrative_raw, dict):
             raise InvalidField(f"{path}: 'narrative' must be a mapping if present")
         where = f"{path}:narrative"
+        # ``target`` remains required at every schema version — it
+        # names the per-component-boundary audit-trail file.
+        narrative_target = _require_str(narrative_raw, "target", where)
+        # ``body`` is required at schema v1 / v2 (legacy invariant).
+        # At schema v3, ``body`` is OPTIONAL: when omitted, the seal
+        # step synthesizes a 5-15 line summary from ``plan_doc_ref``
+        # + apply-commit metadata. Per AC.DPS1.{2,4,5}.
+        body_raw = narrative_raw.get("body")
+        if schema_version in (1, 2):
+            if body_raw is None:
+                raise MissingField(
+                    f"{where}: missing required field 'body' "
+                    f"(schema_version {schema_version} requires it; "
+                    "bump to schema_version: 3 + set top-level "
+                    "'plan_doc_ref:' to omit)"
+                )
+            if not isinstance(body_raw, str) or not body_raw:
+                raise InvalidField(
+                    f"{where}: 'body' must be a non-empty string"
+                )
+            narrative_body: str | None = body_raw
+        else:  # schema_version == 3
+            if body_raw is not None:
+                if not isinstance(body_raw, str) or not body_raw:
+                    raise InvalidField(
+                        f"{where}: 'body' must be a non-empty string when present"
+                    )
+            narrative_body = body_raw
         narrative = NarrativeSpec(
-            target=_require_str(narrative_raw, "target", where),
-            body=_require_str(narrative_raw, "body", where),
+            target=narrative_target,
+            body=narrative_body,
         )
+
+    # Schema v3 only: ``plan_doc_ref`` (top-level) — pointer to the
+    # plan-doc carrying the narrative content. Per Recommendation A
+    # + AC.DPS1.{1,2,3}. v1 / v2 manifests REJECT this field
+    # (forward-only).
+    plan_doc_ref_raw = data.get("plan_doc_ref")
+    plan_doc_ref: str | None = None
+    if schema_version in (1, 2):
+        if plan_doc_ref_raw is not None:
+            raise InvalidField(
+                f"{path}: 'plan_doc_ref' is a schema_version 3 field; "
+                "either remove it or bump 'schema_version: 3'"
+            )
+    else:  # schema_version == 3
+        if plan_doc_ref_raw is not None:
+            if not isinstance(plan_doc_ref_raw, str) or not plan_doc_ref_raw:
+                raise InvalidField(
+                    f"{path}: 'plan_doc_ref' must be a non-empty string"
+                )
+            plan_doc_ref = plan_doc_ref_raw
+        # v3 contract: at least one of ``plan_doc_ref`` or
+        # ``narrative.body`` must be present so the seal step has
+        # source material. Per AC.DPS1.2.
+        body_present = (
+            narrative is not None and narrative.body is not None
+        )
+        if plan_doc_ref is None and not body_present:
+            raise MissingField(
+                f"{path}: schema_version 3 requires at least one of "
+                "'plan_doc_ref' (top-level) or 'narrative.body'; "
+                "neither is set"
+            )
 
     seal_description_raw = data.get("seal_description")
     seal_description: str | None = None
@@ -414,6 +511,7 @@ def load_manifest(path: Path) -> Manifest:
     # gate is bidirectional (plan §6 constraint 6 / D-build.2 (a)):
     #   - v1 manifests MUST NOT carry an ``objectives`` key
     #   - v2 manifests MUST carry an ``objectives`` key
+    #   - v3 manifests MAY carry an ``objectives`` key (optional)
     # Mismatches reject as ``InvalidField`` — explicit beats implicit.
     objectives_raw = data.get("objectives")
     objectives: tuple[ObjectiveEntry, ...] = ()
@@ -431,6 +529,10 @@ def load_manifest(path: Path) -> Manifest:
                 "'schema_version: 1'"
             )
         objectives = _parse_objectives_block(objectives_raw, str(path))
+    else:  # schema_version == 3
+        # Optional at v3 — when present, parse with the same rules.
+        if objectives_raw is not None:
+            objectives = _parse_objectives_block(objectives_raw, str(path))
 
     # Optional cleanup_directives block (D.1.5 / amendment #62).
     # v1-compatible: missing block defaults to empty tuple. Each
@@ -478,6 +580,7 @@ def load_manifest(path: Path) -> Manifest:
         baseline=baseline,
         plan=plan,
         components=tuple(components),
+        plan_doc_ref=plan_doc_ref,
         universal_paths=universal,
         narrative=narrative,
         seal_description=seal_description,

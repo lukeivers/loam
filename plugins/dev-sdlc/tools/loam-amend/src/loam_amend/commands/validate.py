@@ -13,8 +13,14 @@ def run(manifest_path: Path) -> int:
     except ManifestError as exc:
         print(f"invalid: {exc}")
         return 2
+    # Schema v3 makes ``amendment.number`` optional — degrade
+    # gracefully so ``validate`` works for slug-only manifests.
+    if manifest.number is None:
+        ident = f"amendment '{manifest.slug}'"
+    else:
+        ident = f"amendment #{manifest.number} '{manifest.slug}'"
     print(
-        f"ok: amendment #{manifest.number} '{manifest.slug}' — "
+        f"ok: {ident} — "
         f"{len(manifest.components)} components, baseline {manifest.baseline}"
     )
     return 0

@@ -401,7 +401,11 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
     # author a deterministic ``chore(amend): <description> apply ...``
     # commit. On commit failure, leave staged + working-tree changes
     # in place and exit 3 with operator-actionable diagnostic.
-    return _auto_commit_apply(manifest, repo_root, changes)
+    #
+    # AC.DPS1.6 (schema v3): also stage the manifest YAML itself so
+    # the manifest commit + apply commit collapse into one. v1 / v2
+    # manifests preserve the legacy two-commit shape per AC.DPS1.7.
+    return _auto_commit_apply(manifest, repo_root, changes, manifest_path)
 
 
 def _build_apply_commit_message(
@@ -409,29 +413,45 @@ def _build_apply_commit_message(
     manifest: Manifest,
     changes: list[str],
     include_co_authored_by: bool,
+    merged_manifest: bool,
 ) -> str:
     """Assemble the deterministic apply-commit message (AC.LAE.1).
 
-    Subject:
+    Subject (legacy v1 / v2):
         chore(amend): <description> apply — <comp1>[+<comp2>...] BASELINE+sidecar bump to <baseline-short>
 
+    Subject (v3, merged manifest+apply per AC.DPS1.6):
+        chore(amend): <description> manifest+apply — <comp1>[+<comp2>...] BASELINE+sidecar bump to <baseline-short>
+
     Body sections (each with a leading blank line):
-        1. Amendment-number reference + sub-plan reference.
+        1. Amendment identification (with or without ``#N`` per AC.DPS1.11).
         2. Per-component change list (BASELINE / sidecar / widening edits).
         Optional: Co-Authored-By trailer.
     """
     description = manifest.seal_description or manifest.slug
     components_part = "+".join(c.name for c in manifest.components)
     baseline_short = _short_sha(manifest.baseline)
+    # AC.DPS1.6: schema v3 emits ``manifest+apply`` token to signal
+    # the merged-commit form. Legacy v1 / v2 keep ``apply`` token.
+    verb = "manifest+apply" if merged_manifest else "apply"
     subject = (
-        f"chore(amend): {description} apply — "
+        f"chore(amend): {description} {verb} — "
         f"{components_part} BASELINE+sidecar bump to {baseline_short}"
     )
 
+    # AC.DPS1.11: degrade gracefully when ``manifest.number is None``
+    # (schema v3 may omit ``amendment.number``). Drop the ``#N``
+    # prefix; identify by slug only.
+    if manifest.number is None:
+        amendment_ref = f"Apply commit for amendment {manifest.slug}."
+    else:
+        amendment_ref = (
+            f"Apply commit for amendment #{manifest.number} "
+            f"({manifest.slug})."
+        )
+
     body_lines = [subject, ""]
-    body_lines.append(
-        f"Apply commit for amendment #{manifest.number} ({manifest.slug})."
-    )
+    body_lines.append(amendment_ref)
     body_lines.append("")
     body_lines.append(f"Sub-plan: {manifest.plan}.")
     body_lines.append("")
@@ -439,9 +459,15 @@ def _build_apply_commit_message(
     for c in changes:
         body_lines.append(f"  - {c}")
     body_lines.append("")
-    body_lines.append(
-        "Mechanised by `loam amend apply` per AC.LAE.1 (auto-commit)."
-    )
+    if merged_manifest:
+        body_lines.append(
+            "Mechanised by `loam amend apply` per AC.LAE.1 + "
+            "AC.DPS1.6 (merged manifest+apply commit; schema v3)."
+        )
+    else:
+        body_lines.append(
+            "Mechanised by `loam amend apply` per AC.LAE.1 (auto-commit)."
+        )
     if include_co_authored_by:
         body_lines.append("")
         body_lines.append(_CO_AUTHORED_BY)
@@ -449,7 +475,10 @@ def _build_apply_commit_message(
 
 
 def _auto_commit_apply(
-    manifest: Manifest, repo_root: Path, changes: list[str]
+    manifest: Manifest,
+    repo_root: Path,
+    changes: list[str],
+    manifest_path: Path,
 ) -> int:
     """Stage the apply-step paths + create the chore(amend) commit.
 
@@ -457,11 +486,33 @@ def _auto_commit_apply(
     from the manifest. Avoids ``git add -A`` so unrelated dirty paths
     are not picked up. On staging or commit failure, emit a HALT
     diagnostic and return 3.
+
+    Per AC.DPS1.6 / AC.DPS1.7: schema v3 manifests additionally stage
+    ``manifest_path`` so the manifest YAML lands in the same commit
+    as the BASELINE / sidecar bumps (collapsing the legacy two-commit
+    ladder). Schema v1 / v2 preserve the legacy two-commit shape —
+    the manifest YAML is expected to be committed BEFORE this call.
+    Per AC.DPS1.8: when the manifest YAML is already committed
+    (legacy ladder, or repeated apply), staging produces no extra
+    delta and the commit content matches today's behaviour.
     """
     paths_to_stage: list[str] = []
     for comp in manifest.components:
         paths_to_stage.append(comp.seal_test)
         paths_to_stage.append(comp.sidecar)
+    # AC.DPS1.6: at schema v3, also stage the manifest YAML path so
+    # the manifest commit + apply commit collapse into one.
+    merged_manifest = manifest.schema_version == 3
+    if merged_manifest:
+        try:
+            manifest_rel = str(
+                manifest_path.resolve().relative_to(repo_root.resolve())
+            )
+        except ValueError:
+            # Manifest path is outside repo_root (unusual but defensive).
+            # Fall back to the as-supplied path string.
+            manifest_rel = str(manifest_path)
+        paths_to_stage.append(manifest_rel)
 
     add_proc = subprocess.run(
         ["git", "add", "--"] + paths_to_stage,
@@ -497,6 +548,7 @@ def _auto_commit_apply(
         manifest=manifest,
         changes=changes,
         include_co_authored_by=_claude_environment(),
+        merged_manifest=merged_manifest,
     )
     commit_proc = subprocess.run(
         ["git", "commit", "-m", commit_message],

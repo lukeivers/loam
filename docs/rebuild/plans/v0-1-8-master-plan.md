@@ -915,7 +915,7 @@ The places this decomposition is least confident.
 | Cycle | Status | Apply SHA | Seal SHA | Notes |
 |---|---|---|---|---|
 | Cycle 1 — odd-extractor scaffolding | sealed | `9637b58` | `c1abda1` | NEW sub-package `plugins/dev-sdlc/odd-extractor/`. Plan-doc `e3a20b3`; source-edit BASELINE `b33a0dc`. AC.OREK.{1..7} all green; 56 tests pass. D1+D2-idempotency+D5+D6 smoke exercised; D3/D4 n/a (one-shot CLI). |
-| Cycle 2 — bands + ratification | (planned) | — | — | Two-component fence (odd-extractor + per-project-pm). |
+| Cycle 2 — bands + ratification | sealed | `96bacfe` | `4865028` | Two-component fence (dev-sdlc + per-project-pm). Plan-doc `8f97d64`; source-edit BASELINE `08256cf`; §14 SHA backfill `cbde592`. AC.BANDS.{1..7} all green; 54 new tests on dev-sdlc side (124 total) + 10 new tests on per-project-pm side (124 total) all pass. D1+D2-idempotency+D5+D6 smoke exercised; D3/D4 n/a (one-shot CLI). odd-methodology.md §11 confidence-band semantics added; cross-component allowed-prefixes auto-extended via apply step. |
 | Cycle 3 — Ruby/Rails adapter | (planned) | — | — | Highest-risk; halt-trigger at ~5 h. |
 | Cycle 4 — Python adapter + fixtures | (planned) | — | — | DRY aggregator with Ruby. |
 | Cycle 5 — 6 SKILLs first pass | (planned) | — | — | Independent at plan-author; serializes at build. |

@@ -320,7 +320,6 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "framework/tools/loam-mode/",
         "framework/tools/loam-migrate-dormancy-config/",
         "framework/hands-off-lifecycle/seals/",
-        "framework/tools/pos-publish-framework-only/",
         "dev-sdlc/",
         "framework/dev-sdlc/",
         "framework/loam-init/",

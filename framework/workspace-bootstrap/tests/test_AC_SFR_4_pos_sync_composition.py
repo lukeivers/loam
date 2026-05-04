@@ -12,31 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AC.SFR.4 — `pos-sync` composition with the synthetic branch is
-unchanged from D.3's invariant.
+"""AC.SFR.4 — `pos-sync` composition with canonical's main is unchanged
+from D.3's invariant.
 
-Single-framework restructure (amendment #67). After the restructure:
+Single-framework restructure (amendment #67) + OSS dev-architecture
+migration (2026-05-04). Post-migration the bootstrap targets
+canonical's ``main`` branch directly; the test exercises the
+ff-graph composition without the (now-archived) synthesis layer:
 
-1. `pos-new-workspace` clones canonical's `framework-only` branch.
-2. Canonical advances `pos-v2`; the synthesis (manual or pre-push hook
-   driven) advances `framework-only` to a new commit whose parent is
-   the prior `framework-only` tip (lockstep ff-graph).
-3. From the workspace, `pos-sync` runs `git fetch + git merge --ff-only`
-   against `framework-only`'s HEAD; the workspace's `framework/`
-   fast-forwards.
-4. After `pos-sync`, every file under `<workspace>/framework/<rel>` is
-   byte-identical to `framework-only` HEAD's `<rel>`.
-5. Files under `<workspace>/workspace/` are byte-identical pre/post
+1. ``pos-new-workspace`` clones canonical's ``main``.
+2. Canonical advances its ``main`` (a direct commit; pre-migration
+   this advance went via the synthesis tool but post-migration the
+   advance is just a normal commit).
+3. From the workspace, ``pos-sync`` runs ``git fetch + git merge
+   --ff-only`` against ``main``'s HEAD; the workspace's
+   ``framework/`` fast-forwards.
+4. After ``pos-sync``, every file under ``<workspace>/framework/<rel>``
+   is byte-identical to canonical's ``main`` HEAD's ``<rel>``.
+5. Files under ``<workspace>/workspace/`` are byte-identical pre/post
    sync (D.3's HC#6 structural promise carried forward).
 
 The test composes:
 
-- `pos-publish-framework-only.synthesise_framework_only` — to
-  initialise the canonical's `framework-only` ref + advance it after a
-  follow-on `pos-v2` commit.
-- `workspace_bootstrap.new_workspace.bootstrap_new_workspace` — to
+- ``workspace_bootstrap.new_workspace.bootstrap_new_workspace`` — to
   produce the workspace.
-- `workspace_sync.cli.main` — to run `pos-sync` against the workspace.
+- ``workspace_sync.cli.main`` — to run ``pos-sync`` against the
+  workspace.
+
+Pre-migration the test also imported
+``loam.publish_framework_only.synthesise_framework_only`` to advance
+the synthesis-only ``framework-only`` branch lockstep with each
+``pos-v2`` commit. Post-migration that import is gone; canonical's
+``main`` advances directly via a normal git commit.
 """
 
 from __future__ import annotations
@@ -85,32 +92,26 @@ def _snapshot_tree_sha(root: Path) -> dict[str, str]:
     return out
 
 
-def test_AC_SFR_4_pos_sync_fast_forwards_framework_only(
+def test_AC_SFR_4_pos_sync_fast_forwards_main(
     tmp_path: Path,
     make_fixture_canonical,
 ) -> None:
-    """The full bootstrap-then-sync flow over framework-only.
+    """The full bootstrap-then-sync flow over canonical's main.
 
     Steps:
-      1. Construct fixture canonical with pos-v2 + initial
-         framework-only synthesis.
-      2. `pos-new-workspace` produces a workspace tracking
-         framework-only.
-      3. Capture `<workspace>/workspace/` tree snapshot pre-sync.
-      4. Advance canonical's pos-v2 with a follow-on commit.
-      5. Re-synthesise framework-only (lockstep advance).
-      6. From the workspace, `pos-sync` runs.
-      7. Assert: workspace's framework/ HEAD equals framework-only's
-         new HEAD (`git fetch + git merge --ff-only` succeeded).
-      8. Assert: workspace files byte-equal post-sync to framework-only
-         HEAD's tree (HC#4 carry-forward).
-      9. Assert: `<workspace>/workspace/` files byte-identical
+      1. Construct fixture canonical on ``main``.
+      2. ``pos-new-workspace`` produces a workspace tracking ``main``.
+      3. Capture ``<workspace>/workspace/`` tree snapshot pre-sync.
+      4. Advance canonical's ``main`` with a follow-on commit.
+      5. From the workspace, ``pos-sync`` runs.
+      6. Assert: workspace's framework/ HEAD equals canonical's main
+         HEAD (``git fetch + git merge --ff-only`` succeeded).
+      7. Assert: workspace files byte-equal post-sync to canonical's
+         main HEAD's tree (HC#4 carry-forward).
+      8. Assert: ``<workspace>/workspace/`` files byte-identical
          pre/post sync (HC#6 carry-forward).
     """
     pytest.importorskip("workspace_sync.cli")
-    from loam.publish_framework_only.synth import (  # noqa: PLC0415
-        synthesise_framework_only,
-    )
     from loam.workspace_sync.cli import main as sync_cli_main  # noqa: PLC0415
 
     canonical = make_fixture_canonical(tmp_path / "canonical")
@@ -127,13 +128,13 @@ def test_AC_SFR_4_pos_sync_fast_forwards_framework_only(
     framework = new_ws / "framework"
     workspace_state_dir = new_ws / "workspace"
 
-    # Sanity: workspace-side initial HEAD matches canonical's
-    # framework-only initial HEAD.
-    initial_fo_sha = _git(
-        ["rev-parse", "refs/heads/framework-only"], cwd=canonical
+    # Sanity: workspace-side initial HEAD matches canonical's main
+    # initial HEAD.
+    initial_main_sha = _git(
+        ["rev-parse", "refs/heads/main"], cwd=canonical
     )
     initial_ws_sha = _git(["rev-parse", "HEAD"], cwd=framework)
-    assert initial_ws_sha == initial_fo_sha
+    assert initial_ws_sha == initial_main_sha
 
     # Step 3: snapshot workspace-state.
     pre_workspace_state = _snapshot_tree_sha(workspace_state_dir)
@@ -141,45 +142,44 @@ def test_AC_SFR_4_pos_sync_fast_forwards_framework_only(
         "<workspace>/workspace/ must contain scaffolded state pre-sync"
     )
 
-    # Step 4: advance canonical's pos-v2.
+    # Step 4: advance canonical's main with a direct commit (post-
+    # migration there is no synthesis layer; advances are normal
+    # git commits on main).
     new_file = canonical / "framework" / "workspace-bootstrap" / "added.py"
     new_file.write_text("# new content for AC.SFR.4 sync\n")
     _git(["add", "-A"], cwd=canonical)
-    _git(["commit", "-m", "advance pos-v2 for AC.SFR.4"], cwd=canonical)
+    _git(["commit", "-m", "advance main for AC.SFR.4"], cwd=canonical)
+    advanced_main_sha = _git(["rev-parse", "refs/heads/main"], cwd=canonical)
+    assert advanced_main_sha != initial_main_sha
 
-    # Step 5: re-synthesise framework-only.
-    # Per amendment #83 — M2 — manifest_path is required. The fixture
-    # canonical's conftest writes the manifest at the canonical path.
-    synth = synthesise_framework_only(
-        canonical,
-        manifest_path=canonical
-        / "framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml",
-    )
-    assert not synth.no_op
-    advanced_fo_sha = synth.framework_only_sha
-    assert advanced_fo_sha != initial_fo_sha
-
-    # Step 6: pos-sync from the workspace.
+    # Step 5: pos-sync from the workspace.
     rc = sync_cli_main(["--workspace", str(new_ws)])
     assert rc == 0, f"pos-sync exited non-zero: {rc}"
 
-    # Step 7: workspace's framework/ now at framework-only HEAD.
+    # Step 6: workspace's framework/ now at canonical's main HEAD.
     post_ws_sha = _git(["rev-parse", "HEAD"], cwd=framework)
-    assert post_ws_sha == advanced_fo_sha, (
+    assert post_ws_sha == advanced_main_sha, (
         f"AC.SFR.4: workspace HEAD post-sync should equal advanced "
-        f"framework-only ({advanced_fo_sha!r}); got {post_ws_sha!r}"
+        f"main ({advanced_main_sha!r}); got {post_ws_sha!r}"
     )
 
-    # Step 8: workspace's framework/<rel> byte-equals framework-only
-    # HEAD's <rel>. The advance landed `framework/workspace-bootstrap/
-    # added.py` on canonical's pos-v2 → framework-only carries it as
-    # `workspace-bootstrap/added.py` at root → workspace lands it at
-    # `<workspace>/framework/workspace-bootstrap/added.py`.
-    advanced_file = framework / "workspace-bootstrap" / "added.py"
-    assert advanced_file.exists()
+    # Step 7: workspace's framework/<rel> byte-equals canonical's
+    # main HEAD's <rel>. The advance landed `framework/workspace-
+    # bootstrap/added.py` on canonical's main → workspace lands it
+    # DOUBLED at `<workspace>/framework/framework/workspace-
+    # bootstrap/added.py` (post-migration doubling contract preserved
+    # because canonical's main carries `framework/<comp>/` paths
+    # verbatim).
+    advanced_file = (
+        framework / "framework" / "workspace-bootstrap" / "added.py"
+    )
+    assert advanced_file.exists(), (
+        f"AC.SFR.4: advanced file should land at {advanced_file} "
+        f"(doubled-component shape); not found"
+    )
     assert advanced_file.read_text() == "# new content for AC.SFR.4 sync\n"
 
-    # Step 9: workspace-state byte-identical pre/post sync (HC#6) for
+    # Step 8: workspace-state byte-identical pre/post sync (HC#6) for
     # files OTHER than pos-sync's own state-record at
     # `<workspace>/workspace/.pos/sync/state.yaml` — D.3 records its
     # own audit trail there. The structural promise is that pos-sync

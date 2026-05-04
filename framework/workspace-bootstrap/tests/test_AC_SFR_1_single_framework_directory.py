@@ -13,45 +13,43 @@
 # limitations under the License.
 
 """AC.SFR.1 — `pos-new-workspace --from <canonical>` clones canonical's
-framework-only branch into `<new-ws>/framework/`.
+default branch (``main``) into ``<new-ws>/framework/``.
 
-Single-framework restructure (amendment #67). After the restructure
-landed, `pos-new-workspace` clones canonical's `framework-only`
-synthetic branch (rather than the default `pos-v2` branch).
+Single-framework restructure (amendment #67) + OSS dev-architecture
+migration (2026-05-04). Post-migration the bootstrap targets
+canonical's ``main`` branch directly (no synthesis layer). Canonical
+carries ``framework/<comp>/`` paths + top-level docs at root, so the
+clone-into ``<new-ws>/framework/`` produces:
 
-**Shape evolution:** Pre-FBE.2b (amendment #109) the synth pipeline
-stripped the `framework/` prefix on shipped paths, so the framework-
-only branch carried bare-component paths (`workspace-sync/...`,
-`tools/loam/...`) at root; cloning into `<new-ws>/framework/`
-produced single-level shape `<new-ws>/framework/<comp>/`. Post-
-FBE.2b the synth preserves canonical's `framework/<comp>/` shape
-verbatim on shipped paths, so cloning into `<new-ws>/framework/`
-produces `<new-ws>/framework/framework/<comp>/` (DOUBLED). Post-
-FBE.2c (amendment #111) commits to the doubled-component contract
-in this test; top-level docs (CLAUDE.md, docs/) stay single-level
-because they were never under `framework/` in pos-v2.
+- ``<new-ws>/framework/framework/<comp>/`` (DOUBLED component shape;
+  FBE.2c.5 binding) — components live one level deeper than the
+  workspace's framework/ root because canonical already prefixes
+  them with ``framework/``.
+- ``<new-ws>/framework/<doc>`` (single-level) — top-level docs
+  (CLAUDE.md, docs/) live at one level under workspace's framework/
+  because they were never under ``framework/`` in canonical.
 
-The historical "single level" / "no doubling" framing in this
-file's name + the test function name is preserved as a documentation
-artifact (rename = scope creep per FBE.2c sub-plan §9). Per
-AC.FBE.2c.3 the test body asserts the post-FBE.2b/FBE.2c contract;
-binding AC family is `AC.FBE.2c.*`.
+The historical "single level" / "no doubling" framing in this file's
+name + the test function name is preserved as a documentation
+artifact (rename = scope creep per FBE.2c sub-plan §9). Binding AC
+family is AC.FBE.2c.* + AC.WBM2M.*; see file-level docstring for the
+shape-evolution narrative.
 
 Test surface verifies:
 
 - Doubled component-leaf shape: `<new-ws>/framework/framework/<comp>/`
-  exists for the fixture's components (e.g. workspace-sync,
-  workspace-bootstrap) — AC.FBE.2c.3.
-- Top-level docs land under `<new-ws>/framework/<doc>` (single-level):
-  framework-only carries CLAUDE.md / docs/ at the synthetic-branch
-  root because they were never under `framework/` in pos-v2.
+  exists for the fixture's components.
+- Top-level docs at `<new-ws>/framework/<doc>` (single-level).
 - HC#4 byte-content match: `<new-ws>/framework/CLAUDE.md` byte-equals
-  canonical's pos-v2 `CLAUDE.md` (top-level doc; single-level).
-- Workspace's `<new-ws>/framework/` tracks `framework-only` as the
-  checked-out branch (so subsequent `pos-sync` runs against the
-  synthetic branch — AC.SFR.4 binding).
-- Failure mode: when canonical does not publish `framework-only`, the
-  bootstrap fails with a structured CloneFailedError.
+  canonical's `main` `CLAUDE.md`.
+- Workspace's `<new-ws>/framework/` tracks `main` as the checked-out
+  branch (so subsequent `pos-sync` runs against canonical's main).
+
+The pre-migration "framework-only absent" failure-mode test was
+DELETED with the OSS dev-architecture migration: with `main` as
+canonical's default branch, the equivalent failure mode (canonical
+doesn't publish `main`) cannot occur for any real clone (git refuses
+to clone a repo with no default branch).
 """
 
 from __future__ import annotations
@@ -59,11 +57,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-import pytest
-
 from loam.workspace_bootstrap.adapters import tracker_seed
 from loam.workspace_bootstrap.new_workspace import (
-    CloneFailedError,
     bootstrap_new_workspace,
 )
 
@@ -99,17 +94,15 @@ def test_AC_SFR_1_single_level_framework_directory(
     Function name preserved as a documentation artifact (the original
     AC.SFR.1 named "single level"; FBE.2b/FBE.2c shifted the contract
     to "doubled-component shape, single-level top-level docs").
-    Binding AC family post-FBE.2c is `AC.FBE.2c.*`; see file-level
-    docstring for the shape-evolution narrative.
+    Binding AC family post-migration is AC.FBE.2c.* + AC.WBM2M.*.
 
-    Post-FBE.2b/FBE.2c contract: when canonical publishes a
-    `framework-only` branch (the fixture does so by default),
-    `pos-new-workspace` clones that branch into `<new-ws>/framework/`.
-    Components live DOUBLED at `<new-ws>/framework/framework/<comp>/`
-    because the synth preserves the `framework/` prefix on component
-    leaves (FBE.2b synth contract). Top-level docs (CLAUDE.md, docs/)
-    live SINGLE-LEVEL at `<new-ws>/framework/<doc>` because they were
-    never under `framework/` in pos-v2.
+    Post-migration contract: ``pos-new-workspace`` clones canonical's
+    ``main`` branch into ``<new-ws>/framework/``. Components live
+    DOUBLED at ``<new-ws>/framework/framework/<comp>/`` because
+    canonical's ``framework/<comp>/`` prefix is preserved verbatim by
+    the clone. Top-level docs (CLAUDE.md, docs/) live SINGLE-LEVEL at
+    ``<new-ws>/framework/<doc>`` because they were never under
+    ``framework/`` in canonical.
     """
     canonical = make_fixture_canonical(tmp_path / "canonical")
     new_ws = tmp_path / "new-ws"
@@ -124,36 +117,36 @@ def test_AC_SFR_1_single_level_framework_directory(
 
     framework = new_ws / "framework"
 
-    # AC.FBE.2c.3: components at DOUBLED location post-FBE.2b synth.
+    # AC.FBE.2c.3: components at DOUBLED location (canonical's
+    # framework/<comp>/ prefix is preserved verbatim by the clone).
     assert (framework / "framework" / "workspace-sync").is_dir()
     assert (framework / "framework" / "workspace-bootstrap").is_dir()
 
-    # AC.FBE.2c.3: doubling REQUIRED for component leaves to land
-    # (post-FBE.2b synth contract). Pre-FBE.2b this assertion was
-    # `assert not (...).exists()`; FBE.2c flipped it to commit to the
-    # post-FBE.2b shape. See FBE.2b sub-plan §1 + FBE.2c sub-plan §1
-    # for the synth-shape narrative.
+    # AC.FBE.2c.3: doubling REQUIRED for component leaves to land.
+    # Canonical carries `framework/<comp>/` paths; the clone-into
+    # `<new-ws>/framework/` lands them at `<new-ws>/framework/
+    # framework/<comp>/`.
     assert (framework / "framework").is_dir(), (
-        f"AC.FBE.2c.3: post-FBE.2b doubled-component shape required; "
+        f"AC.FBE.2c.3: doubled-component shape required; "
         f"<new-ws>/framework/framework/ MUST exist at "
         f"{framework / 'framework'} for component leaves to land "
-        f"(synth preserves canonical's framework/ prefix verbatim)"
+        f"(canonical's framework/ prefix preserved verbatim)"
     )
 
     # AC.FBE.2c.3: top-level docs at <new-ws>/framework/<doc>
-    # (single-level — they were never under framework/ in pos-v2 so
-    # the synth doesn't double-prefix them).
+    # (single-level — they were never under framework/ in canonical
+    # so the clone doesn't double-prefix them).
     assert (framework / "CLAUDE.md").exists()
     assert (framework / "docs" / "odd-methodology.md").exists()
 
 
-def test_AC_SFR_1_byte_content_match_against_pos_v2(
+def test_AC_SFR_1_byte_content_match_against_main(
     tmp_path: Path,
     make_fixture_canonical,
 ) -> None:
     """HC#4 binding — `<new-ws>/framework/CLAUDE.md` byte-equals
-    canonical's `pos-v2` `CLAUDE.md`. The synthesis carries content
-    verbatim; the bootstrap clones it verbatim; HC#4 holds end-to-end.
+    canonical's `main` `CLAUDE.md`. The bootstrap clones content
+    verbatim; HC#4 holds end-to-end.
     """
     canonical = make_fixture_canonical(tmp_path / "canonical")
     new_ws = tmp_path / "new-ws"
@@ -165,24 +158,24 @@ def test_AC_SFR_1_byte_content_match_against_pos_v2(
         tracker_seed_runner=_stub_tracker_seed_runner,
     )
 
-    canonical_claude = _git_show(canonical, "pos-v2:CLAUDE.md")
+    canonical_claude = _git_show(canonical, "main:CLAUDE.md")
     workspace_claude = (new_ws / "framework" / "CLAUDE.md").read_text()
     assert canonical_claude == workspace_claude
 
-    canonical_odd = _git_show(canonical, "pos-v2:docs/odd-methodology.md")
+    canonical_odd = _git_show(canonical, "main:docs/odd-methodology.md")
     workspace_odd = (
         new_ws / "framework" / "docs" / "odd-methodology.md"
     ).read_text()
     assert canonical_odd == workspace_odd
 
 
-def test_AC_SFR_1_workspace_tracks_framework_only_branch(
+def test_AC_SFR_1_workspace_tracks_main_branch(
     tmp_path: Path,
     make_fixture_canonical,
 ) -> None:
-    """AC.SFR.1: the workspace's `<new-ws>/framework/.git/` tracks
-    `framework-only` as origin. AC.SFR.4 composition binding:
-    subsequent `pos-sync` operates against the synthetic branch.
+    """AC.SFR.1 + AC.WBM2M.2: the workspace's `<new-ws>/framework/.git/`
+    tracks `main` as origin. AC.SFR.4 composition binding: subsequent
+    `pos-sync` operates against canonical's main.
     """
     canonical = make_fixture_canonical(tmp_path / "canonical")
     new_ws = tmp_path / "new-ws"
@@ -203,10 +196,9 @@ def test_AC_SFR_1_workspace_tracks_framework_only_branch(
         capture_output=True,
         text=True,
     ).stdout.strip()
-    assert head_branch == "framework-only"
+    assert head_branch == "main"
 
-    # And origin's HEAD on the workspace's clone tracks origin/
-    # framework-only.
+    # And origin's HEAD on the workspace's clone tracks origin/main.
     upstream = subprocess.run(  # noqa: S603
         [
             "git",
@@ -220,34 +212,4 @@ def test_AC_SFR_1_workspace_tracks_framework_only_branch(
         capture_output=True,
         text=True,
     ).stdout.strip()
-    assert upstream == "origin/framework-only"
-
-
-def test_AC_SFR_1_failure_when_framework_only_absent(
-    tmp_path: Path,
-) -> None:
-    """When canonical does not publish `framework-only`, the bootstrap
-    fails with CloneFailedError naming the missing branch.
-
-    The fixture is constructed with publish_framework_only=False so the
-    canonical exposes only the default `pos-v2` branch. The clone with
-    `--branch framework-only` fails non-zero; the bootstrap surfaces a
-    structured error rather than silently producing a broken workspace.
-    """
-    from .conftest import _make_fixture_canonical
-
-    canonical = _make_fixture_canonical(
-        tmp_path / "canonical-no-fo",
-        publish_framework_only=False,
-    )
-    new_ws = tmp_path / "new-ws"
-
-    with pytest.raises(CloneFailedError) as excinfo:
-        bootstrap_new_workspace(
-            new_ws_path=new_ws,
-            canonical_source=str(canonical),
-            service_manager_dir_override=tmp_path / "LaunchAgents",
-            tracker_seed_runner=_stub_tracker_seed_runner,
-        )
-    msg = str(excinfo.value)
-    assert "framework-only" in msg
+    assert upstream == "origin/main"

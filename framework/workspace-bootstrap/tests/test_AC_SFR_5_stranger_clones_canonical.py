@@ -14,17 +14,18 @@
 
 """AC.SFR.5 — stranger-clones-canonical property preserved.
 
-Single-framework restructure (amendment #67). The synthesis pipeline
-runs on canonical-side, but the stranger-clones-canonical property
-must hold: a `git clone <canonical-url>` (no `--branch`, no
-`--recurse-submodules`) produces a working tree byte-identical to
-canonical's primary `pos-v2` branch. No bootstrap script required to
-make canonical browseable / clone-able.
+Post-OSS-dev-architecture-migration (2026-05-04): the synthesis
+pipeline is retired; canonical has only one default branch
+(``main``). A ``git clone <canonical-url>`` (no ``--branch``, no
+``--recurse-submodules``) produces a working tree byte-identical to
+canonical's ``main``. No bootstrap script required to make canonical
+browseable / clone-able.
 
-The `framework-only` branch is a sibling; reachable via
-`git fetch origin framework-only` or `git clone --branch
-framework-only <canonical-url>` but NOT required for canonical-side
-inspection.
+Pre-migration there was a ``framework-only`` synthesis-only sibling
+branch reachable via explicit ``git clone --branch framework-only``;
+that branch is gone. The second AC.SFR.5 test (which asserted the
+framework-only branch was reachable) was DELETED with this amendment
+(no equivalent post-migration shape exists).
 """
 
 from __future__ import annotations
@@ -43,48 +44,47 @@ def _git(args: list[str], *, cwd: Path) -> str:
     ).stdout.rstrip("\n")
 
 
-def test_AC_SFR_5_stranger_clone_byte_identical_to_pos_v2(
+def test_AC_SFR_5_stranger_clone_byte_identical_to_main(
     tmp_path: Path,
     make_fixture_canonical,
 ) -> None:
-    """A no-flag `git clone <canonical>` produces a tree byte-identical
-    to canonical's `pos-v2` (post-synthesis).
+    """A no-flag ``git clone <canonical>`` produces a tree byte-
+    identical to canonical's ``main``.
 
-    AC.SFR.5: the synthesis runs against canonical, advancing only
-    `framework-only`. The default branch (`pos-v2`) is unchanged. A
-    stranger cloning canonical's URL (no `--branch`) sees the full
-    pos-v2 tree — `framework/<comp>/` + top-level docs + everything
-    else — without needing to know about `framework-only`.
+    AC.SFR.5: a stranger cloning canonical's URL (no ``--branch``)
+    sees the full ``main`` tree — ``framework/<comp>/`` + top-level
+    docs + everything else — without needing to know about any
+    sibling branch. Post-OSS-dev-architecture-migration the only
+    branch IS ``main``; this test verifies the contract directly.
     """
-    # The fixture publishes framework-only by default.
     canonical = make_fixture_canonical(tmp_path / "canonical")
 
-    # AC.SFR.5: pos-v2's HEAD + tree are unchanged by the synthesis.
-    canonical_pos_v2_sha = _git(["rev-parse", "pos-v2"], cwd=canonical)
+    # AC.SFR.5: canonical's HEAD is on main.
+    canonical_main_sha = _git(["rev-parse", "main"], cwd=canonical)
     canonical_default_sha = _git(["rev-parse", "HEAD"], cwd=canonical)
-    assert canonical_pos_v2_sha == canonical_default_sha, (
-        "AC.SFR.5: canonical's HEAD must remain on pos-v2 post-synthesis"
+    assert canonical_main_sha == canonical_default_sha, (
+        "AC.SFR.5: canonical's HEAD must be on main"
     )
 
     # AC.SFR.5: a no-branch clone defaults to canonical's primary
-    # branch (pos-v2). The cloned tree is byte-identical to pos-v2.
+    # branch (main). The cloned tree is byte-identical to main.
     stranger = tmp_path / "stranger"
     _git(["clone", str(canonical), str(stranger)], cwd=tmp_path)
 
-    # Stranger's HEAD == canonical's pos-v2.
+    # Stranger's HEAD == canonical's main.
     stranger_head = _git(["rev-parse", "HEAD"], cwd=stranger)
-    assert stranger_head == canonical_pos_v2_sha
+    assert stranger_head == canonical_main_sha
 
-    # Stranger's checked-out branch == pos-v2 (default).
+    # Stranger's checked-out branch == main (default).
     stranger_branch = _git(
         ["rev-parse", "--abbrev-ref", "HEAD"], cwd=stranger
     )
-    assert stranger_branch == "pos-v2"
+    assert stranger_branch == "main"
 
     # Tree byte-identity: every file in the stranger's tree byte-equals
-    # canonical's pos-v2 tree (excluding .git/).
+    # canonical's main tree (excluding .git/).
     canonical_tree = _git(
-        ["ls-tree", "-r", "--name-only", "pos-v2"], cwd=canonical
+        ["ls-tree", "-r", "--name-only", "main"], cwd=canonical
     )
     stranger_tree = _git(
         ["ls-tree", "-r", "--name-only", "HEAD"], cwd=stranger
@@ -96,56 +96,8 @@ def test_AC_SFR_5_stranger_clone_byte_identical_to_pos_v2(
     # ``git show`` (via _git) strips one trailing newline — re-add for
     # a like-for-like comparison.
     for rel in ["CLAUDE.md", "framework/README.md", "docs/odd-methodology.md"]:
-        canonical_bytes = _git(["show", f"pos-v2:{rel}"], cwd=canonical)
+        canonical_bytes = _git(["show", f"main:{rel}"], cwd=canonical)
         stranger_bytes = (stranger / rel).read_text()
         assert canonical_bytes + "\n" == stranger_bytes or (
             canonical_bytes == stranger_bytes
         )
-
-
-def test_AC_SFR_5_framework_only_reachable_via_explicit_branch(
-    tmp_path: Path,
-    make_fixture_canonical,
-) -> None:
-    """The `framework-only` branch is reachable via explicit fetch /
-    clone-with-branch — but not required for canonical inspection.
-    """
-    canonical = make_fixture_canonical(tmp_path / "canonical")
-
-    # Explicit fetch.
-    bare_clone = tmp_path / "bare-clone"
-    _git(
-        ["clone", "--branch", "framework-only", str(canonical),
-         str(bare_clone)],
-        cwd=tmp_path,
-    )
-    bare_branch = _git(
-        ["rev-parse", "--abbrev-ref", "HEAD"], cwd=bare_clone
-    )
-    assert bare_branch == "framework-only"
-
-    # The framework-only clone has the synthetic shape: post-FBE.2b
-    # (amendment #109) the synth pipeline preserves canonical's
-    # `framework/` prefix on shipped paths verbatim, so component
-    # leaves on the framework-only branch live at
-    # `framework/<comp>/...`. Top-level docs (CLAUDE.md, docs/...)
-    # remain at synth-tree root because they were never under
-    # `framework/` in pos-v2. AC.FBE.2c.4 (amendment #111): this
-    # assertion mirrors the FBE.2b synth contract; the workspace-
-    # bootstrap-side mirror of the path-shape inversion FBE.2b
-    # applied to the synth-pipeline tests inside
-    # `framework/tools/pos-publish-framework-only/tests/`.
-    bare_tree = _git(
-        ["ls-tree", "-r", "--name-only", "HEAD"], cwd=bare_clone
-    )
-    paths = bare_tree.split("\n")
-    # AC.FBE.2c.4: at-least-one framework-prefixed leaf for shipping
-    # components (the inversion of the pre-FBE.2b strip-shape
-    # assertion).
-    assert any(p.startswith("framework/") for p in paths), (
-        "AC.FBE.2c.4: at least one framework/-prefixed leaf required "
-        "post-FBE.2b synth (prefix-preserving shape); none found in "
-        f"{paths!r}"
-    )
-    # Top-level docs at root.
-    assert "CLAUDE.md" in paths

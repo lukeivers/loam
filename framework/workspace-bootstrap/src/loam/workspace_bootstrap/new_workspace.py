@@ -172,49 +172,52 @@ def _canonical_source_kind(source: str) -> str:
 # ---- helpers --------------------------------------------------------
 
 
-# Single-framework restructure (amendment #67). The bootstrap clones
-# canonical's ``framework-only`` synthetic branch (rather than the
-# default ``pos-v2`` branch) so the resulting workspace has shape
-# ``<workspace>/framework/<comp>/`` (single level) plus
-# ``<workspace>/framework/CLAUDE.md`` etc. — no
-# ``framework/framework/<comp>/`` doubling. The corpus-discovery
-# readers fall through to ``<workspace>/framework/`` when the
-# workspace-root copy is absent (AC.SFR.3).
-FRAMEWORK_ONLY_BRANCH = "framework-only"
+# OSS dev-architecture migration (2026-05-04). The bootstrap clones
+# canonical's default branch ``main`` (post-migration). Canonical
+# carries ``framework/<comp>/`` paths + top-level docs at root; the
+# clone-into ``<new-ws>/framework/`` produces ``<new-ws>/framework/
+# framework/<comp>/`` (the doubled-component shape; FBE.2c.5 binding)
+# plus ``<new-ws>/framework/CLAUDE.md`` etc. at one level under
+# ``framework/`` (the corpus-discovery readers fall through to
+# ``<workspace>/framework/`` per AC.SFR.3).
+#
+# Pre-migration (synthesis era) the bootstrap targeted the now-
+# deprecated ``framework-only`` synthetic branch produced by the
+# pos-publish-framework-only tool (archived at
+# ``docs/rebuild/archive/synthesis-tool-2026-05-04/``).
+CANONICAL_BRANCH = "main"
 
 
-def _materialise_framework_only_branch(path: Path) -> None:
-    """Materialise ``framework-only`` as a local branch on ``path``.
+def _materialise_canonical_branch(path: Path) -> None:
+    """Materialise ``main`` as a local branch on ``path``.
 
-    Re-points ``refs/heads/framework-only`` at ``refs/remotes/origin/
-    framework-only`` so a subsequent ``git clone <path>`` propagates
-    the synthetic branch as a LOCAL ref (``git clone`` only propagates
-    LOCAL refs from the source).
+    Re-points ``refs/heads/main`` at ``refs/remotes/origin/main`` so
+    a subsequent ``git clone <path>`` propagates the canonical branch
+    as a LOCAL ref (``git clone`` only propagates LOCAL refs from the
+    source).
 
     Two call sites:
 
     1. ``_resolve_url_to_clone_source`` — runs against the
        ``~/.loam/canonical-cache/<repo-id>/`` clone produced by
        ``ensure_cache_clone``. The cache's ``git clone <url>`` makes
-       ``framework-only`` available only as
-       ``refs/remotes/origin/framework-only``; this materialisation
-       step lets the downstream ``_clone_canonical`` checkout step
-       find it as a local ref on the cache.
+       the remote's default branch available as both
+       ``refs/heads/main`` AND ``refs/remotes/origin/main`` — so the
+       materialisation step is a no-op idempotency on the typical
+       case but stays defensive against any future scenario where
+       a non-default branch becomes the canonical clone target.
     2. ``bootstrap_new_workspace``'s local-path branch — runs against
        a stranger's ``git clone <canonical-url>`` of canonical when
        ``--from`` resolves to that local clone (the typical post-FBE.9
-       cwd-default-when-git-tree pattern). Same root cause: the
-       stranger's clone has ``framework-only`` only as
-       ``refs/remotes/origin/framework-only``; without this step, the
-       downstream ``_clone_canonical`` checkout fails with
-       ``fatal: 'origin/framework-only' is not a commit``. Closes
-       BLOCKER-FBE9.1 (FBE.10).
+       cwd-default-when-git-tree pattern). Same idempotency on the
+       typical case (``main`` is already a local branch on the
+       stranger-clone because it was the source's default branch).
 
     Fail-soft: a non-zero exit (e.g. the remote-tracking ref is
-    absent because canonical does not yet publish ``framework-only``)
-    is non-fatal here; the downstream ``_clone_canonical`` checkout
-    step will diagnose the absence with a structured
-    ``CloneFailedError`` naming ``framework-only``.
+    absent because canonical does not publish ``main``) is non-
+    fatal here; the downstream ``_clone_canonical`` checkout step
+    will diagnose the absence with a structured ``CloneFailedError``
+    naming ``main``.
     """
     subprocess.run(  # noqa: S603 — argv constructed
         [
@@ -222,8 +225,8 @@ def _materialise_framework_only_branch(path: Path) -> None:
             "-C",
             str(path),
             "update-ref",
-            f"refs/heads/{FRAMEWORK_ONLY_BRANCH}",
-            f"refs/remotes/origin/{FRAMEWORK_ONLY_BRANCH}",
+            f"refs/heads/{CANONICAL_BRANCH}",
+            f"refs/remotes/origin/{CANONICAL_BRANCH}",
         ],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
@@ -294,19 +297,16 @@ def _resolve_url_to_clone_source(url: str) -> str:
             f"canonical cache failed for {url!r}: {exc}"
         ) from exc
 
-    # Single-framework restructure (amendment #67, AC.SFR.1):
-    # ``ensure_cache_clone`` runs ``git clone <url>`` which makes the
-    # remote's branches available as remote-tracking refs
-    # (``refs/remotes/origin/framework-only``) but only checks out
-    # the default branch as a local branch (``refs/heads/pos-v2``).
-    # Subsequent ``git clone <cache-path>`` in ``_clone_canonical``
-    # only propagates LOCAL branches, so ``framework-only`` would be
-    # missing in the workspace's clone. Materialise it as a local
-    # branch on the cache via the shared helper (FBE.10 extracted the
-    # block; the local-path branch in ``bootstrap_new_workspace`` runs
-    # the same step against the stranger-clone source path to close
-    # BLOCKER-FBE9.1).
-    _materialise_framework_only_branch(cache_path)
+    # OSS dev-architecture migration (2026-05-04): post-migration
+    # canonical's default branch is ``main``, so ``ensure_cache_clone``
+    # makes ``main`` available as both ``refs/heads/main`` AND
+    # ``refs/remotes/origin/main``. The materialise step is a no-op
+    # idempotency on the typical case (``git update-ref`` succeeds
+    # silently when the ref already points at the target SHA) but
+    # stays defensive — kept for symmetry with the local-path branch
+    # in ``bootstrap_new_workspace`` and for any future scenario where
+    # a non-default branch becomes the canonical clone target.
+    _materialise_canonical_branch(cache_path)
     return str(cache_path)
 
 
@@ -314,30 +314,27 @@ def _clone_canonical(
     clone_source: str,
     target_framework_dir: Path,
     *,
-    branch: str = FRAMEWORK_ONLY_BRANCH,
+    branch: str = CANONICAL_BRANCH,
 ) -> None:
     """Clone canonical and check out ``branch``.
 
-    Single-framework restructure (amendment #67, AC.SFR.1): clones
-    canonical and checks out the ``framework-only`` synthetic branch.
-    The synthetic branch's tree promotes canonical's
-    ``framework/<entry>`` to root + carries top-level docs verbatim,
-    so the resulting workspace has shape
-    ``<workspace>/framework/<comp>/`` (single level, no doubling) with
-    ``<workspace>/framework/CLAUDE.md`` etc. at one level deeper than
-    the four corpus-discovery readers expect — the readers fall
-    through to ``<workspace>/framework/`` per AC.SFR.3.
+    OSS dev-architecture migration (2026-05-04): clones canonical and
+    checks out ``main`` (canonical's default branch). Canonical
+    carries ``framework/<comp>/`` paths + top-level docs at root, so
+    the clone-into ``<new-ws>/framework/`` produces
+    ``<new-ws>/framework/framework/<comp>/`` (the doubled-component
+    shape; FBE.2c.5 binding) with ``<new-ws>/framework/CLAUDE.md``
+    etc. at one level deeper than the four corpus-discovery readers
+    expect — the readers fall through to ``<workspace>/framework/``
+    per AC.SFR.3.
 
     The flow is two-step (``clone`` → ``checkout -B <branch>
     origin/<branch>``) rather than one-step (``clone --branch
-    <branch>``) because the URL-form path routes through the cache
-    layer, which materialises non-default branches as remote-tracking
-    refs (``refs/remotes/origin/<branch>``) rather than as local
-    branches. ``git clone --branch <branch>`` against the cache then
-    fails with ``Remote branch <branch> not found in upstream
-    origin``. The two-step flow accepts both shapes (local branch on
-    the source OR remote-tracking ref) by issuing the explicit
-    ``checkout -B`` after the clone.
+    <branch>``) for symmetry with non-default-branch scenarios that
+    might be reintroduced later (e.g. a release-branch clone target).
+    On the typical case where ``branch`` is canonical's default,
+    ``checkout -B main origin/main`` is a defensive no-op that lands
+    on the same SHA as the freshly-cloned HEAD.
 
     Raises ``CloneFailedError`` on non-zero exit at either step. The
     target directory is created by ``git clone``; the caller MUST
@@ -599,19 +596,18 @@ def bootstrap_new_workspace(
         if kind == "url":
             clone_source = _resolve_url_to_clone_source(canonical_source)
         else:
-            # FBE.10 (closes BLOCKER-FBE9.1): mirror the URL-form
-            # materialisation step at the local-path branch. When
-            # ``local_path`` is a stranger's ``git clone <canonical-url>``
-            # of canonical (the typical post-FBE.9 cwd-default-when-
-            # git-tree pattern: stranger clones loam, cd's in, runs
-            # ``loam init <ws>`` with no ``--from``), ``framework-only``
-            # is present only as ``refs/remotes/origin/framework-only``
-            # on ``local_path`` because ``git clone`` propagates only
-            # LOCAL refs from the source. Materialise it as a local
-            # branch so the downstream ``_clone_canonical`` checkout
-            # step finds it. Fail-soft (non-zero exit ignored — the
-            # downstream checkout step diagnoses absence precisely).
-            _materialise_framework_only_branch(local_path)
+            # OSS dev-architecture migration (2026-05-04): mirror the
+            # URL-form materialisation step at the local-path branch.
+            # On the typical case (``local_path`` is a stranger's
+            # ``git clone <canonical-url>`` of canonical, the post-
+            # FBE.9 cwd-default-when-git-tree pattern), ``main`` is
+            # already ``local_path``'s local default branch (it was
+            # the source's default), so the materialise step is a
+            # no-op idempotency. Kept for symmetry with the URL-form
+            # cache-clone path + defensive against any future
+            # scenario where ``CANONICAL_BRANCH`` is a non-default
+            # branch on the source.
+            _materialise_canonical_branch(local_path)
             clone_source = str(local_path)
         try:
             _clone_canonical(clone_source, framework_dir)

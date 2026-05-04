@@ -1,0 +1,11 @@
+# Dev-pattern simplifications #2 — seal-narrative compression (cost-audit recommendation B)
+
+slug: dev-pattern-simplifications-2
+components: dev-sdlc
+baseline: ce5d13e
+amendment-commit: 282620ec2e73f8d3a7011966103ab930d0f1ad84
+plan-doc: docs/rebuild/plans/dev-pattern-simplifications-2.md
+acs-satisfied: 14
+smoke: all 6 dimensions exercised
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

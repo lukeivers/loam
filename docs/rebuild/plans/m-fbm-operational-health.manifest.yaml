@@ -1,0 +1,103 @@
+schema_version: 1
+amendment:
+  number: 125
+  slug: m-fbm-operational-health
+  title: "M-FBM operational-health AC family — AC.MFBM-OPS.* (queue stability, label-contract, episode-floor, plist-label-namespacing, worker-heartbeat)"
+
+# BASELINE: c8de8e3 — the source-edit + tests commit (pre-apply tip).
+#
+# Commit ladder pre-apply:
+#   4fb9e3c — canonical pos-v2 pre-amendment HEAD
+#             (smoke-test-discipline doc; agent C parallel-merge).
+#   f50647f — m-fbm-operational-health sub-plan-doc (NEW commit).
+#   c8de8e3 — feat(primary-persona,workspace-bootstrap): AC.MFBM-OPS.*
+#             family — source + 5 new test files (this BASELINE).
+#   <this manifest commit lands next>
+#   <loam amend apply lands; auto-commit per v0.1.2 ergonomics>
+#   <loam amend seal lands as deterministic seal commit>
+#   <FIDRAFT entry + parent §8 backfill ride via universal admissions>
+#
+# Two-component fence — sealed-component amendment:
+#   - primary-persona — heartbeat addition to run_worker_loop +
+#     heartbeat_interval_iterations key in DEFAULT_WORKER_CONFIG +
+#     4 new test files for AC.MFBM-OPS.{1,2,3,6}.
+#   - workspace-bootstrap — 1 new test file for AC.MFBM-OPS.5
+#     (plist Label namespacing regression-pin).
+#
+# AC.MFBM-OPS family locked per
+# docs/rebuild/plans/m-fbm-operational-health.md §4 — five ACs total
+# (1, 2, 3, 5, 6). OPS.4 (retrieval-quality) and OPS.7 (reboot
+# resilience) deferred per plan §8 out-of-scope.
+baseline: "c8de8e3"
+
+plan: docs/rebuild/plans/m-fbm-operational-health.md
+
+seal_description: "Adds AC.MFBM-OPS.* family (5 ACs) to the M-FBM substrate's operational-health surface in response to 2026-05-04 diagnosis (worker died 2026-05-01, 175-item queue backlog, structural ACs passed throughout). AC.MFBM-OPS.1 — queue empties under N=10 enqueue load. AC.MFBM-OPS.2 — service_label returns workspace-slug-namespaced reverse-DNS Label; raises on unknown kind (function contract). AC.MFBM-OPS.3 — single-entry drain produces an episode file on disk with current mtime + body containing user_message + assistant_reply. AC.MFBM-OPS.5 — first-run-scaffold-generated plist Label is workspace-slug-namespaced (regression-pin at scaffold-output level; companion to OPS.2). AC.MFBM-OPS.6 — run_worker_loop emits periodic worker-heartbeat NDJSON entries (default every 60 iterations) carrying pid + iteration + queue_depth + ts. Two-component fence: primary-persona (4 tests + worker source change) and workspace-bootstrap (1 test). Per plan §2 Surface #2: the dispatch's hypothesised plist-Label collision was empirically wrong (namespacing already in place via amendment #6); AC.MFBM-OPS.5 retained as regression-pin. Existing AC.MFBM.* + AC.J.* tests pass byte-identically (544 primary-persona + 247 workspace-bootstrap, 11 skipped pre-existing)."
+
+components:
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — plan-doc + manifest YAML + parent §8 backfill
+# (docs/rebuild/plans/ universal prefix) + FIDRAFT entry
+# (docs/rebuild/FUTURE_IDEAS_DRAFT.md universal file).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/FUTURE_IDEAS.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/primary-persona/seals/SEAL_COMMIT.m-fbm-operational-health
+  body: |
+    # M-FBM operational-health amendment — apply ladder
+
+    Apply ladder (per `loam amend apply` + `loam amend seal`):
+    BASELINE `c8de8e3` → seal `<seal-sha>`. Two fence components:
+    primary-persona advances its `tests/SEAL_COMMIT` sidecar (4 new
+    tests covering AC.MFBM-OPS.{1,2,3,6} + worker source change for
+    OPS.6 heartbeat emission); workspace-bootstrap advances its
+    `tests/SEAL_COMMIT` sidecar (1 new test covering AC.MFBM-OPS.5
+    plist Label namespacing regression-pin).
+
+    5 new ACs in family AC.MFBM-OPS.*:
+
+      - AC.MFBM-OPS.1 — queue empties under N=10 enqueue load
+        (drain_once end-to-end against file-backed client; FIFO).
+      - AC.MFBM-OPS.2 — service_label function-level contract
+        (workspace-slug Label; raises on unknown kind).
+      - AC.MFBM-OPS.3 — recent-episode floor (drain → episode file
+        with current mtime + body containing user/assistant turns).
+      - AC.MFBM-OPS.5 — scaffold-output plist Label is
+        workspace-slug-namespaced (regression-pin at file level).
+      - AC.MFBM-OPS.6 — worker-heartbeat NDJSON emission every N
+        iterations carrying pid + iteration + queue_depth + ts.
+
+    Diagnosis trigger: 2026-05-04 finding that Luke's M-FBM worker
+    died on 2026-05-01 + accumulated 175-item queue backlog over 3
+    days while structural ACs (`AC.MFBM.*`, `AC.J.*`) passed
+    throughout. Per the plan §2 Surface #2 ground-truth check: the
+    dispatch's hypothesised plist-Label collision
+    (`com.loam.ws.memory-write-worker` hijackable across workspaces)
+    was empirically wrong — namespacing was already in place via
+    `service_label` (amendment #6). The actual issue caught by
+    AC.MFBM-OPS.6 is silent-worker-empty-queue-no-log; AC.MFBM-OPS.5
+    retained as regression-pin against future Label-template
+    regressions.
+
+    See the full narrative at the plan-doc
+    (`docs/rebuild/plans/m-fbm-operational-health.md`) and status
+    file at
+    `/Users/lukeivers/pos3/workspace/.scratch/claude-output/m-fbm-operational-health-status-2026-05-04.md`.

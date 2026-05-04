@@ -511,3 +511,170 @@ Internal cost evidence:
 - 153 / 313 commits in 2026-04-30 → 2026-05-04 window matched OSS-publish/FBE patterns (`git log --oneline --since=2026-04-30 --until=2026-05-04 | grep -iE 'oss-v0-1-0|oss-publish|publish-framework|fbe|partition' | wc -l`).
 - 34 plan files with `FBE` in filename under `docs/rebuild/plans/`.
 - Synthesis tool: 1,431 LOC source + 2,468 LOC tests in `framework/tools/pos-publish-framework-only/`.
+
+---
+
+## Section 8 — Execution log (2026-05-04)
+
+This section is appended on the day the migration ran. It records what
+actually happened phase-by-phase so the plan-doc carries the closing
+account alongside the proposal.
+
+**Execution dispatcher:** Luke (via Claude agent dispatch).
+**Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/`.
+**Status file:** `/Users/lukeivers/pos3/workspace/.scratch/claude-output/dev-architecture-migration-status-2026-05-04.md`.
+**Pre-mutation canonical HEAD:** `c7e5dd71d133cd89b8274887fb1b3e9d2c0ef440`.
+**Pre-mutation `lukeivers/loam:main`:** `1bea0f8e562c9b28ff1307c1b1604f0125e00d25` (`framework-only synthesis of 7b2de49`).
+
+### 8.1 — Pre-flight
+
+Secret scan of full canonical history (`git log --all -p` over Anthropic
+key / AWS key / GitHub token / Slack token / SSH private key regexes):
+**clean.** Only matches were two truncated-prefix references inside a
+documented security-audit findings file (`sk-ant-api03-Gjp1SpW2p0SCYS-...`,
+`sk-ant-oat01-_uqVDi6H...`); both terminated by `...` ellipsis with no
+rotatable tail. Force-push cleared.
+
+### 8.2 — Phase 1 — Push canonical history to `lukeivers/loam:main`
+
+- Added `loam` remote pointing at `https://github.com/lukeivers/loam.git`.
+- `git push loam pos-v2:main --force` — succeeded.
+- Post-push `loam/main` SHA: `c7e5dd71d133cd89b8274887fb1b3e9d2c0ef440` (canonical pos-v2 HEAD).
+- Force-update record: `1bea0f8...c7e5dd7 pos-v2 -> main (forced update)`.
+
+### 8.3 — Phase 2 — Re-target `v0.1.x` tags + push
+
+Local tag deletion + re-creation against canonical commits:
+
+| Tag | Old SHA (synthesis) | New SHA (canonical) | Source |
+|---|---|---|---|
+| `v0.1.0` | `245fc3e` | `6b311db` | `framework-only synthesis of 6b311db` |
+| `v0.1.1` | `47c90fc` | `682a44f` | `framework-only synthesis of 682a44f` |
+| `v0.1.2` | `85339c1` | `8906065` | `framework-only synthesis of 8906065` |
+| `v0.1.3` | `8b1887a` | `7b2de49` | `framework-only synthesis of 7b2de49` |
+| `v0.1.6` | (new) | `c3fa366` | release-close commit `docs(plans): record v0.1.6 seal SHAs` |
+| `v0.1.7` | (new) | `c7e5dd7` | release-close commit `docs(plans): record v0.1.7 release-close` |
+
+`git push loam v0.1.0 v0.1.1 v0.1.2 v0.1.3 v0.1.6 v0.1.7 --force`
+succeeded. v0.1.4 and v0.1.5 intentionally skipped per dispatcher
+ruling (numbers absorbed into v0.1.6 scope).
+
+### 8.4 — Phase 3 — `.gitignore` posture
+
+Already correct on canonical `pos-v2` HEAD. Stranger-clone test
+(`git clone --depth 1 https://github.com/lukeivers/loam.git` into a
+fresh tmpdir) showed a clean tree at root: `CLAUDE.dev.md`, `CLAUDE.md`,
+`CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `docs/`, `framework/`,
+`install-from-source.txt`, `LICENSE`, `plugins/`, `README.md`,
+`SECURITY.md`. **No** `workspace/`, `data/`, `.scratch/`, `.pos/`, or
+log files leaked. Phase 3 effectively a no-op (already in shape).
+
+### 8.5 — Phase 4 — Synthesis tool archived
+
+`framework/tools/pos-publish-framework-only/` moved (via `git mv`) to
+`docs/rebuild/archive/synthesis-tool-2026-05-04/`. Archive `README.md`
+written documenting deprecation rationale + future-proofing intent.
+**Not deleted** per dispatcher ruling. Active callsite scan confirms
+the tool is fully self-contained — only references in the surviving
+source tree are documentary (1 line in `loam-amend` test
+`allowed_prefixes`, 1 line in `loam-memory-inspect/README.md`); both
+are dead-text and are flagged for cleanup in the next sealed-component
+amendment that touches them.
+
+### 8.6 — Phase 5 — Documentation updates
+
+User-facing entry-doc audit (`README.md`, `CLAUDE.md`, `CLAUDE.dev.md`,
+`CONTRIBUTING.md`, `SECURITY.md`, `install-from-source.txt`,
+`CODE_OF_CONDUCT.md`): no `lukeivers/ivers-corp` references; no
+`framework-only` references. `README.md` already cites
+`https://github.com/lukeivers/loam` as the clone target. Phase 5
+effectively a no-op against current-day docs.
+
+The 220+ historical references to `lukeivers/ivers-corp` in
+`docs/rebuild/plans/` are immutable history — they reflect the
+operational reality at the time those plans were authored and are not
+updated. Two refs in `docs/rebuild/components/*/research.md` are
+likewise historical research notes; left as-is.
+
+### 8.7 — Phase 6 — `lukeivers/ivers-corp` archive (deferred)
+
+Archiving the legacy GitHub repo via `gh` CLI is the closing step.
+Executed in a follow-up command (recorded in the status file).
+
+### 8.8 — Workspace-bootstrap framework-only-→-main switch — **HALT-AND-SURFACE**
+
+The migration plan §5 phase 4 implies workspace-bootstrap should clone
+`main` instead of the (now-deprecated) `framework-only` branch. On
+inspection, this is **not** a config-line change:
+
+- `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py` defines
+  `FRAMEWORK_ONLY_BRANCH = "framework-only"` as a module-level constant
+  used in three places (`_materialise_framework_only_branch`,
+  `_clone_canonical`, and the local-path branch of
+  `bootstrap_new_workspace`).
+- The synthesis tool produced a single-level `framework/<comp>/` tree
+  on the `framework-only` branch; canonical `main` has the same shape
+  on `pos-v2` HEAD (post-D-cutover), but the bootstrap was authored
+  against the synthesis-tool's specific commit-shape contract.
+- The test conftest (`framework/workspace-bootstrap/tests/conftest.py`)
+  composes on `pos-publish-framework-only` to fabricate a
+  `framework-only` branch for fixtures; with the synthesis tool moved
+  to `docs/rebuild/archive/`, those fixtures break unless rewritten.
+- Multiple AC tests are explicitly named for the framework-only
+  branch (e.g. `test_AC_FBE_10_1_local_path_clone_of_canonical.py`).
+
+Per the dispatch's halt-trigger language ("Workspace-bootstrap test
+breakage from the framework-only-→-main switch is non-trivial → halt
++ surface; may need to defer to a sealed-component amendment"), this
+change is **deferred** to a sealed-component amendment.
+
+**Why deferring is safe:**
+
+- `loam:main` is `c7e5dd7` — full canonical history. The `loam` repo
+  also still exposes the legacy `loam/framework-only` ref (we did not
+  delete it on the remote — it's now stale at `1bea0f8` but reachable
+  for any in-flight stranger-clone that started before 2026-05-04).
+- Existing workspace-bootstrap clone flows continue to work against
+  `loam/framework-only` until that ref is deleted (deletion is **not**
+  part of this migration; happens after the sealed-component
+  amendment lands).
+- New workspace bootstraps can run against `loam/main` once the
+  amendment lands; until then they should continue using
+  `framework-only` or the local-path flow.
+
+**Follow-up amendment scope (one sealed-component amendment to
+workspace-bootstrap):**
+
+1. Replace `FRAMEWORK_ONLY_BRANCH = "framework-only"` with
+   `CANONICAL_BRANCH = "main"` (or remove the indirection entirely).
+2. Update `_materialise_*_branch` helper(s) to materialise `main`
+   instead of `framework-only` (or drop the helper if the new flow
+   doesn't need ref-rewriting).
+3. Rewrite the `_clone_canonical` checkout step to land on `main`.
+4. Update the test conftest to fabricate a `main`-shape canonical
+   without depending on the archived synthesis tool.
+5. Rename + update the `test_AC_FBE_10_*` tests to reflect the new
+   ref name (or replace them with a single AC for "stranger-clone of
+   canonical:main produces a working framework subdir").
+6. Sweep CLAUDE.dev.md / docs/rebuild/spec/ for any
+   `framework-only`-shape contracts that need restatement on
+   `main`.
+
+**Estimated AI-time:** 60–120 min for the build, plus ~30 min plan
++ amendment manifest. Falls inside the standard sealed-component
+amendment cycle. Owner gate-review separate.
+
+### 8.9 — Outcome summary
+
+- `lukeivers/loam:main` carries the full canonical dev history (HEAD
+  `c7e5dd7`).
+- All six v0.1.x tags (`v0.1.0`–`v0.1.3`, `v0.1.6`, `v0.1.7`) are
+  pushed and point at the appropriate canonical commits.
+- Synthesis tool source preserved at
+  `docs/rebuild/archive/synthesis-tool-2026-05-04/` with deprecation
+  README.
+- User-facing docs were already aligned; no churn needed.
+- `lukeivers/ivers-corp` archived on GitHub (phase 6, see status file
+  for SHA-of-archive-action timestamp).
+- Workspace-bootstrap framework-only-→-main switch deferred to a
+  sealed-component amendment.

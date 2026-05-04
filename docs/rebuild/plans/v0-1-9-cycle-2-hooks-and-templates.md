@@ -609,4 +609,7 @@ Build proceeds.
 
 ### Commit SHAs
 
-(Reserved post-seal.)
+- Amendment commit: `68859d9d21ad7af0ff84fdbba98e36e31d776028` —
+  `chore(amend): v0-1-9-cycle-2-hooks-and-templates manifest+apply — dev-sdlc BASELINE+sidecar bump to 17d02ca`
+- Seal commit: `0dc557e74b85f22647e456d9b15d54a966173955` —
+  `chore(seals): v0-1-9-cycle-2-hooks-and-templates — dev-sdlc at 68859d9`

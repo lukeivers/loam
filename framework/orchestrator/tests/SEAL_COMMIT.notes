@@ -231,3 +231,136 @@ Predecessor commits:
 
 BASELINE e7e7925 (the V11.A sub-plan-doc commit). Single-
 component-fence; sidecar advances to V11.A seal SHA.
+
+# V11.E item (b) — graphiti probe graceful-skip (Resolution A)
+
+2026-05-03. v0.1.2 item per `docs/rebuild/plans/v0-1-x-roadmap.md`
+§2 v0.1.2 item 2 (item-b-only — items (a) and (c) verified
+already-fixed at f0c4aa9 per prior V11.E status).
+
+Sub-plan: `docs/rebuild/plans/v0-1-2-V11-E-graphiti-probe-skip.md`.
+Predecessor status: `<pos3>/workspace/.scratch/claude-output/
+v11e-followon-hazards-status-2026-05-03.md` (4-option matrix +
+Resolution A justification).
+
+Scope (per sub-plan §4 + §6): two-component fence on
+`framework/orchestrator/` + `framework/primary-persona/`. Source
+edits gate both session-start memory probe sites on the existence
+of `~/Library/LaunchAgents/com.loam.memory-graphiti.plist`. M-FBM-
+only stranger workspaces (no graphiti installed → no plist) see
+`memory: not_expected` instead of `memory: down`; status `ready`
+instead of `partial`; exit_code 0 instead of 3.
+
+Resolution A choice rationale (per prior V11.E status §item (b)):
+minimum-surface (ranked over Resolutions B/C/D); uses existing
+source-of-truth (`ask_service_manager_to_start` already inspects
+the same plist); self-correcting for future M-GMP (graphiti as
+plugin in v0.2) — when the user installs graphiti, the plist
+appears and probing re-engages naturally with no further code
+change.
+
+AC surface (per sub-plan §4):
+
+  - AC.V11.E.1 — `pos_session_start.run_session_start` consults
+    the plist before invoking `probe_memory_fn`; absent → skip;
+    `memory_expected: False` in result; `additional_context`
+    warning text drops the `memory_up=...` token. Verified by
+    new tests `test_AC_V11_E_1_*` + smoke A.
+  - AC.V11.E.2 — `session_start_gate._probe_memory` returns the
+    sentinel `"not_expected"` when the plist is absent; existing
+    `dict[str, str]` schema admits the new string value (no
+    schema change). Verified by new test file
+    `test_AC_V11_E_2_probe_memory_skips_when_plist_absent.py`
+    + smoke C.
+  - AC.V11.E.3 — both probe sites use the SAME canonical location
+    (`Path.home() / "Library" / "LaunchAgents" /
+    "com.loam.memory-graphiti.plist"`). Verified by direct file
+    read post-fix + the new test
+    `test_AC_V11_E_3_canonical_plist_path_matches_orchestrator_helper`.
+  - AC.V11.E.4 — negative AC: plist-present scenario reports
+    identical behaviour to pre-fix (memory_up/down per probe
+    outcome). Verified by smokes B + D and by the existing tests
+    passing without any behaviour-pinning regression.
+  - AC.V11.E.S — fence: `framework/orchestrator/` +
+    `framework/primary-persona/` only; plus
+    `docs/rebuild/plans/` via universal prefix.
+
+Smokes captured pre-seal (verbatim):
+
+    === Smoke A: pos_session_start, plist absent ===
+    status: ready
+    memory_up: True
+    memory_expected: False
+    exit_code: 0
+    additional_context: pos v2 ready
+
+    === Smoke B: plist PRESENT, memory down ===
+    status: partial
+    memory_up: False
+    memory_expected: True
+    exit_code: 3
+    additional_context: pos v2 session-start: services did not come
+        up within 0s (memory_up=False, orchestrator_up=True).
+        Supervisor will escalate loudly on start. Warnings:
+        com.loam.orchestrator.plist not installed at /tmp/v11e-
+        smoke/present-launchagents/com.loam.orchestrator.plist.
+
+    === Smoke C: gate _probe_memory, plist absent ===
+    memory: not_expected
+    orchestrator: unknown
+
+    === Smoke D: gate _probe_memory, plist PRESENT ===
+    memory: up
+    orchestrator: unknown
+
+All four contracts (per AC.V11.E.{1,2,4}) pass: plist-absent
+skips probe + reports not_expected/memory_expected=False; plist-
+present preserves legacy probe behaviour.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - `memory_up` semantic in result-dict: reports the not-blocking
+    state — True when probed-and-up OR when not-expected
+    (graceful skip). `memory_expected` disambiguates the two
+    cases for callers that need to distinguish (e.g.,
+    observability). This preserves existing-consumer compat
+    (consumers reading `memory_up` see "not blocking"); the
+    `memory_expected` field is additive for new consumers.
+  - Sentinel string `not_expected` chosen over `n/a` / omit-
+    from-dict because:
+      * the prior status file's owner-ruling matrix recommended
+        `not_expected` for the gate (retains architectural-state
+        visibility in the rendered service_state block);
+      * existing `dict[str, str]` schema admits arbitrary
+        strings (verified by reading `context_composer.py:165`).
+  - `ask_service_manager_to_start` not modified — instead, the
+    memory-label "plist not installed" warning is filtered from
+    the `additional_context` string in the not-expected case
+    (Surface #4). The warning is still informative when memory
+    IS expected (real problem) but is filtered as noise in the
+    M-FBM case (expected state).
+  - Existing tests in `test_pos_session_start.py` opt into
+    legacy "memory expected" semantics by passing
+    `is_memory_expected_fn=lambda: True` (4 sites). This is
+    in-fence test sidecar; preserves the test behaviour and
+    clarifies the new-default vs legacy semantics.
+
+Out of scope (per sub-plan §9):
+
+  - Items (a) corpus_gate fallback + (c) plist template module
+    name (verified already-fixed at f0c4aa9 per prior V11.E
+    status).
+  - Workspace-config flag for memory provider (Resolution D;
+    deferred to v0.1.5 D-3 / v0.2 M-GMP).
+  - Inventory-driven probe set (Resolution B; rejected).
+  - Removing memory probe entirely (Resolution C; rejected).
+  - Renaming `memory_up` → `memory_expected` (additive only).
+
+Predecessor commits:
+  - f0c4aa9 — items (a) and (c) of original V11.E (plist template
+    module name + corpus_gate fallback).
+  - 9d58062 — V11.A seal (orchestrator runtime fix).
+  - 4cfeae4 — bug-investigation template (BASELINE for V11.E).
+
+BASELINE c3b74b2 (the V11.E source-edit commit). Two-component
+fence; both sidecars advance to V11.E seal SHA.

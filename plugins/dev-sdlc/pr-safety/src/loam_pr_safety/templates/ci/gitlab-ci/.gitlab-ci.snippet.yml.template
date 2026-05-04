@@ -1,0 +1,29 @@
+# loam-pr-safety:managed:start:{LOAM_PR_SAFETY_VERSION}
+# loam-pr-safety:managed:{LOAM_PR_SAFETY_VERSION}
+#
+# GitLab CI snippet installed by
+# `loam pr-safety install ci gitlab-ci`.
+# Per AC.PRSI.5 (v0.1.9 Cycle 2).
+#
+# Idempotency: this block is delimited by managed:start..managed:end
+# sentinels. Re-installs refresh the block in-place; the surrounding
+# .gitlab-ci.yml content is preserved.
+
+stages:
+  - test
+
+loam_pr_safety:
+  stage: test
+  image: python:3.11
+  before_script:
+    - pip install loam-cli loam-pr-safety || pip install -e ./plugins/dev-sdlc/pr-safety
+  script:
+    - loam pr-safety gate "$CI_PROJECT_DIR" --diff "$CI_MERGE_REQUEST_DIFF_BASE_SHA..$CI_COMMIT_SHA" --json --render-pr-description > pr-description.md
+  artifacts:
+    when: always
+    paths:
+      - pr-description.md
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+# loam-pr-safety:managed:end

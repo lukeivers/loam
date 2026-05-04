@@ -38,7 +38,13 @@ def test_pyproject_parses_and_declares_required_metadata() -> None:
     pp_path = _ROOT / "pyproject.toml"
     data = tomllib.loads(pp_path.read_text(encoding="utf-8"))
     assert data["project"]["name"] == "loam-pr-safety"
-    assert data["project"]["version"] == "0.1.0"
+    # Cycle 1 shipped 0.1.0; Cycle 2 bumped to 0.2.0 (intra-v0.1.9
+    # version bump per Cycle 2 plan-doc §5 Surface #11). Accept any
+    # 0.x.0 tag-shape so future cycles inside v0.1.9 can extend
+    # without breaking AC.PRSG.1.
+    assert data["project"]["version"].startswith("0."), (
+        f"unexpected version: {data['project']['version']!r}"
+    )
     assert data["project"]["requires-python"].startswith(">=3.")
     deps = data["project"]["dependencies"]
     for required in (

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# loam-pr-safety:managed:{LOAM_PR_SAFETY_VERSION}
+#
+# Pre-push hook installed by `loam pr-safety install pre-push`.
+# Per AC.PRSI.2 + AC.PRSI.3 (v0.1.9 Cycle 2).
+#
+# Behaviour:
+#   1. Resolves the repo root.
+#   2. Reads the pre-push stdin protocol (lines of
+#      `<local-ref> <local-sha> <remote-ref> <remote-sha>`).
+#   3. Invokes `loam pr-safety hook-fire <repo> --hook pre-push`
+#      passing the stdin through; the gate iterates each ref's
+#      diff range and aggregates the worst-case decision.
+#
+# Exit codes:
+#   0 PASS / dev-profile bypass honoured
+#   2 HARD-BLOCK on any ref
+#   3 SURFACE-DECISION
+#   4 OVERRIDE-REJECTED
+#   5 GateError
+#
+# Edits: refresh via `loam pr-safety install pre-push <repo>`.
+
+set -euo pipefail
+
+REPO="$(git rev-parse --show-toplevel)"
+
+# Pre-push stdin is consumed once; pass through to hook-fire.
+exec loam pr-safety hook-fire "$REPO" --hook pre-push

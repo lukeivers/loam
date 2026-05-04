@@ -2,7 +2,31 @@
 
 PR-safety gate engine for loam. Reads a v0.1.8-authored banded ODD contract, classifies a git diff against the contract's confidence-banded ACs, and emits a `GateDecision` per the 3-band × 4-shape × 3-profile decision matrix. Composes with `loam-odd-extractor` (banded contract types), `loam-per-project-pm` (override-ratification flow), and `loam-workspace-bootstrap` (`safety_profile` field).
 
-**Cycle 1 (v0.1.9):** engine without delivery wrapping. CLI invocation only (`loam pr-safety gate <repo>`); pre-commit / pre-push hooks + 3 CI templates + provenance-traceable PR description template land in **Cycle 2**. Six dev-sdlc SKILLs second pass + audit-allowlist cleanup land in **Cycle 3**.
+**Cycle 1 (v0.1.9):** engine without delivery wrapping. CLI invocation only (`loam pr-safety gate <repo>`).
+
+**Cycle 2 (v0.1.9):** delivery wrapping. Pre-commit + pre-push hook installers (idempotent + husky-aware + halt-on-conflict) + three CI templates (GitHub Actions / GitLab CI / CircleCI) + provenance-traceable PR description template (auto-populates from gate output + audit-log) + install ergonomics CLI (`loam pr-safety install <surface>`).
+
+**Cycle 3 (v0.1.9):** Six dev-sdlc SKILLs second pass + audit-allowlist cleanup.
+
+## Cycle 2 install surfaces
+
+| CLI verb | Function | Standard target | Husky variant target |
+|---|---|---|---|
+| `install pre-commit <repo>` | install_pre_commit | `<repo>/.git/hooks/pre-commit` | `<repo>/.husky/pre-commit` |
+| `install pre-push <repo>` | install_pre_push | `<repo>/.git/hooks/pre-push` | `<repo>/.husky/pre-push` |
+| `install ci github-actions <repo>` | install_ci_github_actions | `<repo>/.github/workflows/loam-pr-safety.yml` | n/a |
+| `install ci gitlab-ci <repo>` | install_ci_gitlab_ci | `<repo>/.gitlab-ci.yml` (sentinel-block-delimited region) | n/a |
+| `install ci circleci <repo>` | install_ci_circleci | `<repo>/.circleci/config.yml` (sentinel-block-delimited region) | n/a |
+| `install pr-template <repo>` | install_pr_template | `<repo>/.github/pull_request_template.md` + `<repo>/.loam/pr-safety/pr_description.template.md` | n/a |
+| `install all <repo>` | all above | all above | husky-routed where applicable |
+
+**Idempotency** — every loam-managed file carries a sentinel comment (`# loam-pr-safety:managed:<version>`); re-installs are no-ops at matching version, refresh on version change, halt-on-conflict for non-loam content (use `--force` to replace with backup).
+
+**Husky detection** — pre-commit/pre-push install routes to `.husky/<hook>` when EITHER `<repo>/.husky/_/husky.sh` exists (v6+) OR `<repo>/package.json` has a top-level `"husky"` key (v4-v5). Other hook-managers (`pre-commit` Python, `lefthook`) fall through to standard `.git/hooks/<hook>` install — conflict detection catches collisions.
+
+**Hook-fire dispatcher** — installed hooks invoke `loam pr-safety hook-fire <repo> --hook <name>` which honours `LOAM_PR_SAFETY_BYPASS=1` ONLY under dev/research profiles. Under production-stake the env var is ignored; the bypass attempt is audit-logged. `git commit --no-verify` bypasses loam at the git level (out-of-band; the gate catches it on subsequent push or CI run).
+
+**PR description rendering** — `loam pr-safety gate <repo> --render-pr-description` renders the gate decision + ACs touched + novel candidates + override history + audit-log excerpt as markdown to stdout. CI templates pipe this to `pr-description.md` artefact for upload. Body-overflow strategy: when total exceeds 60,000 chars, deterministic truncation (per-AC provenance trimmed to ~200 chars; audit-log excerpt truncated to last 1 entry; novel-candidates section dropped); truncation footer always cites the workspace audit-log path.
 
 ## What this component does
 

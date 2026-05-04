@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# loam-pr-safety:managed:{LOAM_PR_SAFETY_VERSION}
+#
+# husky-shaped pre-commit hook (per AC.PRSI.1 husky variant +
+# plan-doc §5 Surface #4). Installed at `<repo>/.husky/pre-commit`
+# when husky is detected (v6+ runner-file OR v4-v5 package.json key).
+
+. "$(dirname -- "$0")/_/husky.sh"
+
+REPO="$(git rev-parse --show-toplevel)"
+
+exec loam pr-safety hook-fire "$REPO" --hook pre-commit

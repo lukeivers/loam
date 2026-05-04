@@ -1,0 +1,33 @@
+<!-- loam-pr-safety:managed:{LOAM_PR_SAFETY_VERSION} -->
+<!--
+  PR description template installed by
+  `loam pr-safety install pr-template`.
+  Per AC.PRSI.7 (v0.1.9 Cycle 2).
+
+  When a PR is opened in a repo that has the loam-pr-safety CI
+  template installed (.github/workflows/loam-pr-safety.yml or
+  equivalent), the gate's --render-pr-description flag will replace
+  the placeholders below with structured sections (gate decision,
+  ACs touched, novel candidates, override history, audit-log
+  excerpt). The resulting markdown is uploaded as a workflow artefact;
+  reviewers can paste it into the PR description (or the workflow
+  can do so via gh CLI).
+-->
+
+## Summary
+
+<!-- Author writes the PR summary here. -->
+
+---
+
+## loam-pr-safety report
+
+{{LOAM_PR_SAFETY_GATE_DECISION}}
+
+{{LOAM_PR_SAFETY_TOUCHED_ACS}}
+
+{{LOAM_PR_SAFETY_NOVEL_CANDIDATES}}
+
+{{LOAM_PR_SAFETY_OVERRIDE_HISTORY}}
+
+{{LOAM_PR_SAFETY_AUDIT_LOG_EXCERPT}}

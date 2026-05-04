@@ -223,6 +223,106 @@ def make_repo_commit(tmp_git_repo: Path):
 
 
 @pytest.fixture
+def workspace_with_contract_and_repo(
+    workspace_with_contract: tuple[Path, str],
+    tmp_path: Path,
+) -> tuple[Path, str, Path]:
+    """Workspace + contract + a fresh git repo at the contract's
+    repo-id'd path. Returns ``(workspace_root, repo_id, repo_path)``.
+
+    The repo is initialised with a starter commit; tests can then
+    introduce diffs via :func:`make_repo_commit`-style helpers.
+    """
+    workspace_root, repo_id = workspace_with_contract
+    repo_path = tmp_path / "test-target-repo"
+    repo_path.mkdir()
+    subprocess.run(
+        ["git", "-C", str(repo_path), "init", "-q", "-b", "main"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo_path),
+            "config",
+            "user.email",
+            "test@example.com",
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo_path),
+            "config",
+            "user.name",
+            "Test User",
+        ],
+        check=True,
+    )
+    (repo_path / "README.md").write_text(
+        "# test-target-repo\n", encoding="utf-8"
+    )
+    subprocess.run(
+        ["git", "-C", str(repo_path), "add", "README.md"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo_path),
+            "commit",
+            "-q",
+            "-m",
+            "initial",
+        ],
+        check=True,
+    )
+    return (workspace_root, repo_id, repo_path)
+
+
+@pytest.fixture
+def repo_with_husky(tmp_path: Path) -> Path:
+    """Create a tmp repo with husky v6+ runner-file present."""
+    repo = tmp_path / "husky-repo"
+    repo.mkdir()
+    subprocess.run(
+        ["git", "-C", str(repo), "init", "-q"], check=True
+    )
+    husky_dir = repo / ".husky" / "_"
+    husky_dir.mkdir(parents=True)
+    (husky_dir / "husky.sh").write_text(
+        "# husky runner shim\n", encoding="utf-8"
+    )
+    return repo
+
+
+@pytest.fixture
+def repo_with_husky_via_pkgjson(tmp_path: Path) -> Path:
+    """Create a tmp repo with husky v4-v5 config via package.json."""
+    repo = tmp_path / "husky-pkgjson-repo"
+    repo.mkdir()
+    subprocess.run(
+        ["git", "-C", str(repo), "init", "-q"], check=True
+    )
+    pkg = {
+        "name": "test-pkg",
+        "version": "1.0.0",
+        "husky": {
+            "hooks": {"pre-commit": "echo from husky"}
+        },
+    }
+    import json as _json
+    (repo / "package.json").write_text(
+        _json.dumps(pkg, indent=2), encoding="utf-8"
+    )
+    return repo
+
+
+@pytest.fixture
 def fixed_clock(monkeypatch):
     """Freeze ``datetime.datetime.now(tz)`` to a fixed timestamp.
 

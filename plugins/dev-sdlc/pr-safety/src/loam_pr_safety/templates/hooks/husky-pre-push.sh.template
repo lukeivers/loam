@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# loam-pr-safety:managed:{LOAM_PR_SAFETY_VERSION}
+#
+# husky-shaped pre-push hook (per AC.PRSI.2 husky variant +
+# plan-doc §5 Surface #4). Installed at `<repo>/.husky/pre-push`
+# when husky is detected.
+
+. "$(dirname -- "$0")/_/husky.sh"
+
+REPO="$(git rev-parse --show-toplevel)"
+
+exec loam pr-safety hook-fire "$REPO" --hook pre-push

@@ -1,0 +1,42 @@
+# loam-pr-safety:managed:start:{LOAM_PR_SAFETY_VERSION}
+# loam-pr-safety:managed:{LOAM_PR_SAFETY_VERSION}
+#
+# CircleCI snippet installed by
+# `loam pr-safety install ci circleci`.
+# Per AC.PRSI.6 (v0.1.9 Cycle 2).
+#
+# Idempotency block delimited by managed:start..managed:end sentinels.
+
+version: 2.1
+
+jobs:
+  loam_pr_safety:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - run:
+          name: Install loam-pr-safety
+          command: |
+            pip install loam-cli loam-pr-safety || pip install -e ./plugins/dev-sdlc/pr-safety
+      - run:
+          name: Run loam pr-safety gate
+          command: |
+            loam pr-safety gate ./ \
+              --diff "${CIRCLE_SHA1}..${CIRCLE_BRANCH}" \
+              --json \
+              --render-pr-description \
+              > pr-description.md
+      - store_artifacts:
+          path: pr-description.md
+          destination: loam-pr-description.md
+
+workflows:
+  version: 2
+  pr_safety:
+    jobs:
+      - loam_pr_safety:
+          filters:
+            branches:
+              ignore: main
+# loam-pr-safety:managed:end

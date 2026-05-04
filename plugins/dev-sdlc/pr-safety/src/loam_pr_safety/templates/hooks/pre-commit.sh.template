@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# loam-pr-safety:managed:{LOAM_PR_SAFETY_VERSION}
+#
+# Pre-commit hook installed by `loam pr-safety install pre-commit`.
+# Per AC.PRSI.1 + AC.PRSI.3 (v0.1.9 Cycle 2).
+#
+# Behaviour:
+#   1. Resolves the repo root (the dir containing this hook's parent
+#      `.git/`).
+#   2. Invokes `loam pr-safety hook-fire <repo> --hook pre-commit`
+#      which honours `LOAM_PR_SAFETY_BYPASS=1` under dev profile,
+#      ignores it under production-stake (audit-logging the rejection).
+#   3. Exits with the hook-fire's exit code.
+#
+# Exit codes:
+#   0 PASS / dev-profile bypass honoured (audit-logged)
+#   2 HARD-BLOCK (commit rejected)
+#   3 SURFACE-DECISION
+#   4 OVERRIDE-REJECTED
+#   5 ContractMissing / ClassifierAccuracy / GateError
+#
+# Edits: refresh via `loam pr-safety install pre-commit <repo>`.
+# Manual edits void the sentinel and trigger conflict-halt on next
+# refresh — back-up via `--force` if intentional.
+
+set -euo pipefail
+
+REPO="$(git rev-parse --show-toplevel)"
+
+exec loam pr-safety hook-fire "$REPO" --hook pre-commit

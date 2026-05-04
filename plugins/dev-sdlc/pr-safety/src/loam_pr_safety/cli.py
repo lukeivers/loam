@@ -1,9 +1,8 @@
 """CLI builder for ``loam pr-safety``.
 
-Per AC.PRSG.6 — registered with the unified ``loam`` CLI via the
-``loam.cli.subcommands`` entry-point group (declared in pyproject.toml).
-``loam_cli.cli.main`` discovers this builder + invokes it with the
-parent argparse subparsers handle.
+Per AC.PRSG.6 (Cycle 1) + AC.PRSI.{8,3,7} (Cycle 2) — registered with
+the unified ``loam`` CLI via the ``loam.cli.subcommands`` entry-point
+group (declared in pyproject.toml).
 
 Builder contract (per loam_cli convention):
 
@@ -15,8 +14,10 @@ Builder contract (per loam_cli convention):
 Sets ``func`` on each leaf parser via ``set_defaults`` so ``main``
 dispatches via ``args.func(args)``.
 
-Sub-subcommands shipped this cycle: ``gate``. Cycle 2 adds
-``install`` (hook + CI installer).
+Sub-subcommands shipped:
+  - ``gate`` (Cycle 1; Cycle 2 adds --render-pr-description flag)
+  - ``install`` (Cycle 2 — pre-commit / pre-push / ci / pr-template / --all)
+  - ``hook-fire`` (Cycle 2 — internal-use; invoked by hook scripts)
 
 Exit codes:
 
@@ -25,6 +26,7 @@ Exit codes:
   3 — SURFACE-DECISION
   4 — OVERRIDE-REJECTED
   5 — ContractMissingError / ClassifierAccuracyError / GateError
+  6 — InstallConflictError (Cycle 2)
 """
 
 from __future__ import annotations
@@ -64,6 +66,7 @@ _EXIT_HARD_BLOCK = 2
 _EXIT_SURFACE_DECISION = 3
 _EXIT_OVERRIDE_REJECTED = 4
 _EXIT_ERR = 5
+_EXIT_INSTALL_CONFLICT = 6  # Cycle 2 — AC.PRSI.8
 
 
 def build_pr_safety_subcommand(
@@ -160,7 +163,152 @@ def build_pr_safety_subcommand(
         action="store_true",
         help="emit structured JSON output instead of human-readable",
     )
+    p_gate.add_argument(
+        "--render-pr-description",
+        action="store_true",
+        help=(
+            "Cycle 2 (AC.PRSI.7) — render a markdown PR description "
+            "from the gate's decision + audit-log; emitted to stdout "
+            "instead of the human-readable text."
+        ),
+    )
     p_gate.set_defaults(func=_run_gate)
+
+    # ---- install sub-subcommand (AC.PRSI.8) -----------------------
+
+    p_install = inner.add_parser(
+        "install",
+        help="install hook + CI surfaces (AC.PRSI.8)",
+        description=(
+            "loam pr-safety install — wires hook installers, CI "
+            "templates, and the PR description template into a "
+            "target repo. Cycle 2 (v0.1.9)."
+        ),
+    )
+    install_inner = p_install.add_subparsers(
+        dest="install_surface", required=True
+    )
+
+    def _add_install_common_args(p: argparse.ArgumentParser) -> None:
+        p.add_argument(
+            "repo",
+            type=Path,
+            help="path to the target repo",
+        )
+        p.add_argument(
+            "--workspace-root",
+            type=Path,
+            default=None,
+            help="workspace root (default: cwd)",
+        )
+        p.add_argument(
+            "--force",
+            action="store_true",
+            help=(
+                "replace non-loam content (with backup) instead of "
+                "halting on conflict (per AC.PRSI.8)"
+            ),
+        )
+        p.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="describe what would be written without writing",
+        )
+
+    p_pre_commit = install_inner.add_parser(
+        "pre-commit",
+        help="install pre-commit hook (AC.PRSI.1)",
+    )
+    _add_install_common_args(p_pre_commit)
+    p_pre_commit.set_defaults(
+        func=_run_install,
+        install_surface_value="pre-commit",
+    )
+
+    p_pre_push = install_inner.add_parser(
+        "pre-push",
+        help="install pre-push hook (AC.PRSI.2)",
+    )
+    _add_install_common_args(p_pre_push)
+    p_pre_push.set_defaults(
+        func=_run_install,
+        install_surface_value="pre-push",
+    )
+
+    p_ci = install_inner.add_parser(
+        "ci",
+        help="install CI template (AC.PRSI.{4,5,6})",
+    )
+    ci_inner = p_ci.add_subparsers(dest="ci_provider", required=True)
+    for prov in ("github-actions", "gitlab-ci", "circleci"):
+        p_ci_prov = ci_inner.add_parser(
+            prov,
+            help=f"install {prov} CI template",
+        )
+        _add_install_common_args(p_ci_prov)
+        p_ci_prov.set_defaults(
+            func=_run_install,
+            install_surface_value=f"ci/{prov}",
+        )
+
+    p_pr = install_inner.add_parser(
+        "pr-template",
+        help="install PR description template (AC.PRSI.7)",
+    )
+    _add_install_common_args(p_pr)
+    p_pr.set_defaults(
+        func=_run_install,
+        install_surface_value="pr-template",
+    )
+
+    p_all = install_inner.add_parser(
+        "all",
+        help="install every Cycle 2 surface (AC.PRSI.8 --all)",
+    )
+    _add_install_common_args(p_all)
+    p_all.set_defaults(
+        func=_run_install,
+        install_surface_value="all",
+    )
+
+    # Also accept the dispatch-friendlier `--all` flag form on the
+    # parent install subcommand. We achieve this by having a helper
+    # parser that recognises `install --all <repo>` invocations
+    # (omitting the explicit `all` sub-subcommand). Argparse can't
+    # cleanly mix optional-as-positional with required subparsers, so
+    # `loam pr-safety install all <repo>` IS the canonical form;
+    # documented in README.
+
+    # ---- hook-fire sub-subcommand (AC.PRSI.3) ---------------------
+
+    p_hook_fire = inner.add_parser(
+        "hook-fire",
+        help="(internal) fire the gate from a hook script (AC.PRSI.3)",
+        description=(
+            "Internal-use subcommand invoked by hook scripts "
+            "installed via `loam pr-safety install pre-commit/"
+            "pre-push`. Honours LOAM_PR_SAFETY_BYPASS=1 under "
+            "dev/research; ignores it under production-stake."
+        ),
+    )
+    p_hook_fire.add_argument(
+        "repo",
+        type=Path,
+        help="path to the target repo",
+    )
+    p_hook_fire.add_argument(
+        "--hook",
+        choices=["pre-commit", "pre-push"],
+        required=True,
+        help="which hook is firing",
+    )
+    p_hook_fire.add_argument(
+        "--workspace-root",
+        type=Path,
+        default=None,
+        help="workspace root (default: auto-detect via .loam/)",
+    )
+    p_hook_fire.set_defaults(func=_run_hook_fire)
 
 
 def _resolve_workspace_root(arg: Path | None) -> Path:
@@ -348,8 +496,38 @@ def _run_gate(args: argparse.Namespace) -> int:
             reason=decision.reason,
         )
 
-        # Emit decision.
-        _emit_decision(decision, json_mode=args.json)
+        # Cycle 2 AC.PRSI.7 — render PR description if requested.
+        if getattr(args, "render_pr_description", False):
+            from loam_pr_safety.installers.pr_template import (
+                render_pr_description,
+            )
+            md = render_pr_description(
+                decision,
+                workspace_root=workspace_root,
+                repo_id=repo_id,
+            )
+            print(md)
+            # Audit the render.
+            write_audit_entry(
+                workspace_root,
+                event_kind="pr_description_rendered",
+                repo_id=repo_id,
+                repo_sha=contract.repo_sha or "",
+                diff_range=diff_range_str,
+                safety_profile=safety_profile,
+                decision=decision.action.value,
+                requires_ratification=decision.requires_ratification,
+                touched_acs=[
+                    t.ac.ac_id for t in decision.touched_acs
+                ],
+                novel_count=len(decision.novel),
+                reason=f"rendered PR description ({len(md)} chars)",
+                owner=None,
+                rationale=None,
+            )
+        else:
+            # Emit decision.
+            _emit_decision(decision, json_mode=args.json)
 
         return _action_to_exit_code(decision.action)
     except OverrideRejectedError as exc:
@@ -361,3 +539,141 @@ def _run_gate(args: argparse.Namespace) -> int:
     except PRSafetyError as exc:
         sys.stderr.write(f"Error: {exc}\n")
         return _EXIT_ERR
+
+
+# ---- _run_install (Cycle 2 — AC.PRSI.{1,2,4,5,6,7,8}) ---------------
+
+
+def _run_install(args: argparse.Namespace) -> int:
+    """Execute the ``loam pr-safety install <surface>`` invocation.
+
+    Per AC.PRSI.8.
+    """
+    from loam_pr_safety.installers import (
+        InstallConflictError,
+        install_all,
+        install_ci_circleci,
+        install_ci_github_actions,
+        install_ci_gitlab_ci,
+        install_pr_template,
+        install_pre_commit,
+        install_pre_push,
+    )
+
+    surface = args.install_surface_value
+    repo_path = _resolve_repo_path(args.repo)
+    workspace_root = _resolve_workspace_root(args.workspace_root)
+    force = bool(args.force)
+    dry_run = bool(args.dry_run)
+
+    dispatch = {
+        "pre-commit": lambda: install_pre_commit(
+            repo_path,
+            workspace_root=workspace_root,
+            force=force,
+            dry_run=dry_run,
+        ),
+        "pre-push": lambda: install_pre_push(
+            repo_path,
+            workspace_root=workspace_root,
+            force=force,
+            dry_run=dry_run,
+        ),
+        "ci/github-actions": lambda: install_ci_github_actions(
+            repo_path,
+            workspace_root=workspace_root,
+            force=force,
+            dry_run=dry_run,
+        ),
+        "ci/gitlab-ci": lambda: install_ci_gitlab_ci(
+            repo_path,
+            workspace_root=workspace_root,
+            force=force,
+            dry_run=dry_run,
+        ),
+        "ci/circleci": lambda: install_ci_circleci(
+            repo_path,
+            workspace_root=workspace_root,
+            force=force,
+            dry_run=dry_run,
+        ),
+        "pr-template": lambda: install_pr_template(
+            repo_path,
+            workspace_root=workspace_root,
+            force=force,
+            dry_run=dry_run,
+        ),
+    }
+
+    try:
+        if surface == "all":
+            results = install_all(
+                repo_path,
+                workspace_root=workspace_root,
+                force=force,
+                dry_run=dry_run,
+            )
+            had_conflict = False
+            for result in results:
+                _emit_install_result(result)
+                if result.is_conflict:
+                    had_conflict = True
+            return _EXIT_INSTALL_CONFLICT if had_conflict else _EXIT_PASS
+
+        result = dispatch[surface]()
+        _emit_install_result(result)
+        return _EXIT_PASS
+    except InstallConflictError as exc:
+        _emit_install_result(exc.result)
+        sys.stderr.write(
+            f"Error: install conflict at {exc.result.target_path}; "
+            f"pass --force to replace with backup.\n"
+        )
+        return _EXIT_INSTALL_CONFLICT
+    except PRSafetyError as exc:
+        sys.stderr.write(f"Error: {exc}\n")
+        return _EXIT_ERR
+
+
+def _emit_install_result(result) -> None:  # type: ignore[no-untyped-def]
+    """Pretty-print an :class:`InstallResult` to stdout."""
+    sys.stdout.write(
+        f"[install:{result.surface}] {result.action} {result.target_path}"
+    )
+    if result.husky_routed:
+        sys.stdout.write(" (husky)")
+    if result.backup_path:
+        sys.stdout.write(f" (backup={result.backup_path})")
+    if result.prior_version:
+        sys.stdout.write(f" (prior={result.prior_version})")
+    sys.stdout.write("\n")
+    if result.detail and result.detail != f"{result.action} {result.target_path}":
+        sys.stdout.write(f"  {result.detail}\n")
+    if result.is_conflict and result.conflict_excerpt:
+        sys.stdout.write(
+            f"  conflict excerpt (200 chars): "
+            f"{result.conflict_excerpt!r}\n"
+        )
+
+
+# ---- _run_hook_fire (Cycle 2 — AC.PRSI.3) ---------------------------
+
+
+def _run_hook_fire(args: argparse.Namespace) -> int:
+    """Execute the ``loam pr-safety hook-fire`` invocation.
+
+    Internal-use; invoked by hook scripts. Per AC.PRSI.3.
+    """
+    from loam_pr_safety.installers.hooks import fire_hook
+
+    repo_path = _resolve_repo_path(args.repo)
+    workspace_root = (
+        _resolve_workspace_root(args.workspace_root)
+        if args.workspace_root is not None
+        else None
+    )
+    return fire_hook(
+        repo_path,
+        args.hook,
+        workspace_root=workspace_root,
+    )

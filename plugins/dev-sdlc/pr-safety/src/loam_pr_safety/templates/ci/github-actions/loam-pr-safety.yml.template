@@ -1,0 +1,57 @@
+# loam-pr-safety:managed:{LOAM_PR_SAFETY_VERSION}
+#
+# GitHub Actions workflow installed by
+# `loam pr-safety install ci github-actions`.
+# Per AC.PRSI.4 (v0.1.9 Cycle 2).
+#
+# Triggers on pull_request events; runs the gate against the PR's
+# diff range; surfaces HARD-BLOCK as a workflow failure; uploads
+# the rendered PR description as an artefact.
+#
+# Edits: refresh via `loam pr-safety install ci github-actions <repo>`.
+
+name: loam-pr-safety
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install loam-pr-safety
+        run: |
+          # Try public-PyPI install; fall back to repo-local editable
+          # install if the package isn't published yet (Cycle 2
+          # simplification per plan-doc §10.8).
+          pip install loam-cli loam-pr-safety || \
+            pip install -e ./plugins/dev-sdlc/pr-safety
+
+      - name: Run loam pr-safety gate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          loam pr-safety gate "$GITHUB_WORKSPACE" \
+            --diff "${BASE_SHA}..${HEAD_SHA}" \
+            --json \
+            --render-pr-description \
+            > pr-description.md
+
+      - name: Upload PR description artefact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: loam-pr-description
+          path: pr-description.md

@@ -77,11 +77,22 @@ def write_audit_entry(
     rationale: str | None = None,
     timestamp: str | None = None,
     today_ymd: str | None = None,
+    target_path: str | None = None,
+    hook: str | None = None,
 ) -> Path:
     """Append one audit-log entry; return the entry's path.
 
     ``event_kind`` ∈ {``gate_decision``, ``override_proposed``,
-    ``override_approved``, ``override_rejected``, ``dry_run``}.
+    ``override_approved``, ``override_rejected``, ``dry_run``,
+    ``install_pre_commit``, ``install_pre_push``,
+    ``install_ci_github_actions``, ``install_ci_gitlab_ci``,
+    ``install_ci_circleci``, ``install_pr_template``,
+    ``install_conflict``, ``hook_fired``, ``hook_bypass``,
+    ``hook_bypass_attempt_rejected``, ``pr_description_rendered``}.
+
+    ``target_path`` populated by Cycle 2 install actions (per
+    AC.PRSI.{1..8} + plan-doc §5 Surface #8).
+    ``hook`` populated by Cycle 2 hook-fire events.
 
     ``timestamp`` and ``today_ymd`` are injectable for deterministic
     tests; default to ``_utc_now_iso()`` and ``_utc_today()``.
@@ -108,6 +119,8 @@ def write_audit_entry(
         "reason": reason,
         "owner": owner,
         "rationale": rationale,
+        "target_path": target_path,
+        "hook": hook,
     }
     entry_path.write_text(
         yaml.safe_dump(payload, sort_keys=False),

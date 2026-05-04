@@ -68,3 +68,28 @@ existing-repo on-ramp (objective-extraction skill) and per-plugin
 depth (workflow-state-machine engine, contradiction detection,
 external issue-tracker integration, multi-project orchestration,
 roadmap tooling). v0.1.0 ships the WORKFLOW SHAPE.
+
+## Sub-packages
+
+The dev-sdlc plugin contains separately-pyproject'd sub-packages
+under its sealed fence:
+
+- `odd-extractor/` (v0.1.8) — ODD reverse-engineering. Reads a target
+  repo and emits a confidence-banded contract draft (VERIFIED /
+  PLAUSIBLE / HYPOTHESISED bands). CLI: `loam odd-extract`. Composes
+  with `framework/per-project-pm` for ratification flow.
+- `pr-safety/` (v0.1.9 Cycle 1 + Cycle 2) — PR-safety gate. Reads the
+  banded contract; classifies a git diff against it; decides per the
+  3-band × 4-shape × 3-profile decision matrix; HARD-BLOCKs
+  regressions on VERIFIED ACs; surfaces PLAUSIBLE-touched diffs for
+  ratification. Cycle 1 ships the engine + CLI (`loam pr-safety
+  gate`); Cycle 2 ships hook installers (`loam pr-safety install
+  pre-commit / pre-push`) + 3 CI templates (GitHub Actions / GitLab
+  CI / CircleCI) + provenance-traceable PR description template
+  (`loam pr-safety install pr-template`; gate's
+  `--render-pr-description` flag renders from gate output + audit
+  log).
+- `tools/loam-amend/` (M-FBM) — amendment-dispatch tooling for
+  sealed-component bookkeeping. CLI: `loam amend`.
+- `tools/loam-mode/` (M-FBM) — partition-rule + mode auditor. Used
+  by canonical pos-v2's seal tests.

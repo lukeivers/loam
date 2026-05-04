@@ -67,6 +67,23 @@ from loam_pr_safety.spec import (
     TouchedAC,
 )
 
+# Cycle 2 (v0.1.9) — AC.PRSI.{1..10}.
+from loam_pr_safety.installers import (
+    InstallConflictError,
+    InstallResult,
+    LOAM_PR_SAFETY_VERSION,
+    detect_husky,
+    fire_hook,
+    install_all,
+    install_ci_circleci,
+    install_ci_github_actions,
+    install_ci_gitlab_ci,
+    install_pr_template,
+    install_pre_commit,
+    install_pre_push,
+    render_pr_description,
+)
+
 
 __all__ = [
     "BandedContract",
@@ -81,6 +98,9 @@ __all__ = [
     "GateDecision",
     "GateError",
     "Hunk",
+    "InstallConflictError",
+    "InstallResult",
+    "LOAM_PR_SAFETY_VERSION",
     "OverrideRejectedError",
     "OverrideRequest",
     "PRSafetyError",
@@ -89,10 +109,20 @@ __all__ = [
     "audit_log_dir",
     "classify",
     "decide",
+    "detect_husky",
+    "fire_hook",
+    "install_all",
+    "install_ci_circleci",
+    "install_ci_github_actions",
+    "install_ci_gitlab_ci",
+    "install_pr_template",
+    "install_pre_commit",
+    "install_pre_push",
     "is_production_stake",
     "list_entries",
     "parse_diff",
     "read_contract",
     "recognise_override",
+    "render_pr_description",
     "write_audit_entry",
 ]

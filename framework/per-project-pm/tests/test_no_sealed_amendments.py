@@ -40,7 +40,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 # BASELINE = the source-edit commit landing the per-project-pm
 # component (v0.1.7 Cycle 2 first seal).
-BASELINE = "bcef0fb"
+BASELINE = "08256cf"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -89,6 +89,7 @@ def test_only_per_project_pm_changed() -> None:
     allowed_prefixes = (
         "framework/per-project-pm/",
         "docs/rebuild/plans/",
+        "plugins/dev-sdlc/",
     )
     allowed_files: set[str] = {
         # Universal-file admissions per amendment #22 ruling #3.

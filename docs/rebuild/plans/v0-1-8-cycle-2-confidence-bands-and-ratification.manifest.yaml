@@ -90,7 +90,7 @@ amendment:
 # exercised: plan_doc_ref + ac_count + smoke_outcome at the manifest
 # level; multi-`components:` cross-component sweep at seal time.
 
-baseline: "<TBD-source-edit-SHA>"
+baseline: "08256cf"
 
 plan: docs/rebuild/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md
 

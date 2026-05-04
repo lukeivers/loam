@@ -523,7 +523,7 @@ Per dispatch + master plan:
 
 ---
 
-## §12 — Method-decision record (per AC.D-sa.7 lint requirement)
+## 14. Method-decision record (per AC.D-sa.7 lint requirement)
 
 Per AC.D-sa.7, every plan-doc that selects non-default methods records the decision + rationale. This cycle's method-level decisions:
 
@@ -552,6 +552,6 @@ This plan-doc is gate-ready when:
 4. Halt triggers named (§8) — done.
 5. Bookkeeping path named (§9) — done.
 6. F2 gaps named (§10) — done.
-7. Method-decision record named per AC.D-sa.7 (§12) — done.
+7. Method-decision record named per AC.D-sa.7 (§14) — done.
 
 Build proceeds.

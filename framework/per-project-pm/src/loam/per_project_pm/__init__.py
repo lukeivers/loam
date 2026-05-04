@@ -25,18 +25,25 @@ Public API:
   - :class:`PMContract` — Pydantic model of an authored PM.
   - :class:`DecisionSurfacingPolicy` — policy knobs on the contract.
   - :class:`StateOfWorld` — read snapshot of PM state.
-  - :class:`SurfacedQuestion` — return value of ``surface_next_question``.
-  - :class:`PMNotFoundError`, :class:`PMStateCorruptedError` — named
-    exception classes.
+  - :class:`SurfacedQuestion` — return value of ``surface_next_question``
+    (and one element of the tuple returned by
+    ``surface_next_questions_batch``).
+  - :class:`RecordedResponse` (Cycle 4) — return value of
+    ``record_response``.
+  - :class:`PMNotFoundError`, :class:`PMStateCorruptedError`,
+    :class:`PendingResponseError` (Cycle 4) — named exception classes.
   - :class:`PerProjectPMContribution` — workspace-bootstrap contribution.
   - :class:`PerProjectPMRuntime` — host-published runtime factory.
 
-See ``docs/design.md`` for PM/M-FBM boundary articulation.
+See ``docs/design.md`` for PM/M-FBM boundary articulation + the
+Cycle 4 one-question-at-a-time flow + audit-block-on-telegram SKILL
+composition.
 
-v0.1.7 Cycle 2 surfaces only the queue + API. ``record_response()``,
-``surface_next_questions_batch()``, ``require_owner_response``-blocking
-enforcement, and ``onboarding_mode`` enforcement on the persona-side
-flow are deferred to Cycle 4 per the plan-doc §1 + §10.
+v0.1.7 Cycle 4 lands the deferred Cycle 2 surfaces:
+``record_response()``, ``surface_next_questions_batch()``,
+``require_owner_response``-blocking enforcement (on the batch API),
+``onboarding_mode`` enforcement (forces 1 per batch), and
+``PendingResponseError``.
 """
 
 from __future__ import annotations
@@ -50,11 +57,13 @@ from loam.per_project_pm.contribution import (
     PerProjectPMRuntime,
 )
 from loam.per_project_pm.errors import (
+    PendingResponseError,
     PMNotFoundError,
     PMStateCorruptedError,
 )
 from loam.per_project_pm.runtime import PMRuntime
 from loam.per_project_pm.state import (
+    RecordedResponse,
     StateOfWorld,
     SurfacedQuestion,
 )
@@ -63,11 +72,13 @@ from loam.per_project_pm.state import (
 __all__ = [
     "DecisionSurfacingPolicy",
     "PMContract",
+    "PendingResponseError",
     "PMNotFoundError",
     "PMStateCorruptedError",
     "PMRuntime",
     "PerProjectPMContribution",
     "PerProjectPMRuntime",
+    "RecordedResponse",
     "StateOfWorld",
     "SurfacedQuestion",
 ]

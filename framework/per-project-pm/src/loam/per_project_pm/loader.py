@@ -132,17 +132,32 @@ def load_state_yaml(pm_dir: Path) -> dict[str, Any]:
     """Load + minimally validate ``<pm_dir>/state.yaml``.
 
     Returns a dict with keys: ``in_flight`` (list), ``last_surfaced_at``
-    (str | None), ``notes`` (str). If the file is absent, returns the
-    empty default (``in_flight=[]``, ``last_surfaced_at=None``,
-    ``notes=""``) — state.yaml is optional at PM-creation; the runtime
-    creates it lazily.
+    (str | None), ``notes`` (str), ``pending_response_for`` (str | None;
+    Cycle 4 addition — the question text awaiting a recorded response,
+    or ``None`` if no surfacing is currently blocking under
+    ``require_owner_response=True``).
+
+    If the file is absent, returns the empty default (``in_flight=[]``,
+    ``last_surfaced_at=None``, ``notes=""``, ``pending_response_for=None``)
+    — state.yaml is optional at PM-creation; the runtime creates it
+    lazily.
+
+    Backward-compat: a Cycle 2 state.yaml (without ``pending_response_for``)
+    loads cleanly and returns ``pending_response_for=None``. The field
+    is read with ``raw.get("pending_response_for")`` which returns
+    ``None`` for absent keys.
 
     Raises :class:`PMStateCorruptedError` on malformed YAML / missing
     schema_version / unexpected schema_version.
     """
     state_path = pm_dir / "state.yaml"
     if not state_path.exists():
-        return {"in_flight": [], "last_surfaced_at": None, "notes": ""}
+        return {
+            "in_flight": [],
+            "last_surfaced_at": None,
+            "notes": "",
+            "pending_response_for": None,
+        }
 
     try:
         raw = yaml.safe_load(state_path.read_text(encoding="utf-8"))
@@ -169,6 +184,9 @@ def load_state_yaml(pm_dir: Path) -> dict[str, Any]:
         "in_flight": raw.get("in_flight") or [],
         "last_surfaced_at": raw.get("last_surfaced_at"),
         "notes": raw.get("notes") or "",
+        # Cycle 4: blocking flag for require_owner_response enforcement.
+        # Absent in Cycle 2 state.yaml files; loader returns None.
+        "pending_response_for": raw.get("pending_response_for"),
     }
 
 

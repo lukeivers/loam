@@ -278,7 +278,176 @@ Cycle 2 shipping:
 All four release-note promises have tested + reliable behavior at Cycle 2's
 boundary. Cycle 4 extends the surfacing into the persona-side flow.
 
-## 10. References
+## 11. One-question-at-a-time flow (Cycle 4)
+
+Cycle 4 lands the persona-side surfacing flow that Cycle 2 deferred.
+Three new surfaces; one extension to existing state.
+
+### 11.1. New API methods on `PMRuntime`
+
+- `surface_next_questions_batch(n=None)` — surfaces up to `n` questions
+  in one call. The effective batch size is computed from policy:
+  - With `onboarding_mode=True`: forced to `1` regardless of `n` or
+    `max_questions_per_turn`. **This is the structural enforcement of
+    Eric synthesis Decision Q (one-question-at-a-time PM-enforced).**
+  - With `onboarding_mode=False`: `min(n_or_max,
+    max_questions_per_turn, len(queue))` where `n_or_max` defaults to
+    `max_questions_per_turn` when `n is None`.
+  - Raises `PendingResponseError` immediately (no partial surface) when
+    `require_owner_response=True` AND `pending_response_for` is non-null.
+
+- `record_response(surfaced_audit_path, response_text)` — records the
+  owner's response, writes a sibling `record_response`-kind audit-log
+  entry, clears the `pending_response_for` flag in `state.yaml`.
+  Idempotent: a second call against the same `surfaced_audit_path`
+  returns the previously-recorded `RecordedResponse` without writing
+  a duplicate audit entry.
+
+### 11.2. State extension — `pending_response_for` field
+
+`state.yaml` gains a new field:
+
+```yaml
+schema_version: 1
+in_flight: []
+last_surfaced_at: "2026-05-04T11:30:00+00:00"
+notes: ""
+pending_response_for: "Should we ship D5 with degraded mode?"   # NEW
+```
+
+Semantics:
+
+- Set to the surfaced question's text when a `surface_*` call lands
+  under `require_owner_response=True`.
+- Cleared (set to `null`) when `record_response` writes the linked
+  response.
+- When non-null AND `require_owner_response=True`, the next call to
+  `surface_next_questions_batch` raises `PendingResponseError`.
+- Backward-compat: a Cycle 2 `state.yaml` without the field loads as
+  `pending_response_for: null` (no blocking).
+
+### 11.3. Blocking enforcement — batch API only
+
+`surface_next_question()` (the Cycle 2 API) is **preserved verbatim**
+— it does NOT enforce blocking. This keeps Cycle 2 callers' contract
+intact. The structural one-question-at-a-time discipline lives on the
+Cycle 4 batch API:
+
+```python
+# Onboarding mode — exactly one question per call, every call:
+runtime.contract.decision_surfacing_policy.onboarding_mode == True
+batch = runtime.surface_next_questions_batch()  # always len <= 1
+```
+
+The persona-side flow (which lands in primary-persona at v0.2.0+
+alongside auto-creation) calls `surface_next_questions_batch()` to
+get the questions to relay to the user this turn — onboarding-mode
+enforcement is structural at the batch API, not advisory.
+
+### 11.4. Audit-log entry shape — `record_response` event
+
+```yaml
+schema_version: 1
+event_kind: record_response                              # vs surface_question
+timestamp: "2026-05-04T11:42:00+00:00"
+pm_handle: "test-pm"
+response_text: "Hold for fix; ship in v0.1.8."
+surfaced_audit_path: "audit-log/2026-05-04-0001.yaml"    # relative
+surfaced_question_text: "Should we ship D5 with degraded mode?"
+responded_at: "2026-05-04T11:42:00+00:00"
+```
+
+The `<NNNN>` counter is shared across both event_kinds within
+(pm-name, UTC date). A `surface_question` at `0001` and a
+`record_response` at `0002` share the same monotonic sequence — the
+audit-log is fully ordered.
+
+### 11.5. Idempotency of `record_response`
+
+The audit-log is the source of truth (per Cycle 2 design rule).
+`record_response` scans `audit-log/` for an existing
+`record_response`-kind entry whose `surfaced_audit_path` matches the
+caller's argument; on hit, returns the prior `RecordedResponse`
+without writing a duplicate entry. This prevents double-recording
+when the persona retries after a transient error.
+
+## 12. Composition with `audit-block-on-telegram` SKILL
+
+Per AC.QSURF.8 (Cycle 4) — composition with the
+`audit-block-on-telegram` SKILL (sealed v0.1.6 at
+`plugins/loam-skills/skills/audit-block-on-telegram/SKILL.md`).
+
+### 12.1. The SKILL's surface-when-meaningful rule
+
+The audit-block SKILL surfaces a structured trailer (Executed /
+Deferred-to-owner / Missed) under user-visible replies when at least
+one of four conditions holds. The relevant condition for PM
+composition:
+
+> **A decision was made** — the persona made a non-trivial ruling
+> autonomously and the user should see it.
+
+PM surfacings AND PM-recorded responses are exactly that: a decision
+was made (the persona is asking the user to decide → surfacing; OR
+the user made the decision → response recorded). Both events satisfy
+the SKILL's "decision was made" trigger condition.
+
+### 12.2. Programmatic composition surface — `is_audit_block_trigger`
+
+`SurfacedQuestion` and `RecordedResponse` both expose:
+
+```python
+@property
+def is_audit_block_trigger(self) -> bool:
+    """Whether this PM event satisfies the
+    audit-block-on-telegram SKILL's 'decision was made'
+    trigger condition.
+    """
+    return True
+```
+
+A persona authoring a Telegram reply that includes a PM event checks
+the property to know whether to surface the audit-block:
+
+```python
+surfaced = pm.surface_next_questions_batch()
+for sq in surfaced:
+    if sq.is_audit_block_trigger:
+        # SKILL's "decision was made" condition fires; surface the
+        # audit-block in this Telegram reply.
+        ...
+```
+
+Cycle 4 returns `True` unconditionally. Future cycles may gate on
+event metadata — e.g., a "low-stakes status update" event shape that
+doesn't trigger the audit-block. The property mechanism (vs an
+always-True field) is the forward-compat extension point.
+
+### 12.3. One-way composition
+
+PM produces events the SKILL consumes. The SKILL does not produce
+events PM consumes. Cycle 4 ships ONLY the consumption contract on
+the PM side; Cycle 4 does NOT modify the
+`audit-block-on-telegram` SKILL itself (it's a v0.1.6 sealed
+artefact). This keeps the Cycle 4 fence on
+`framework/per-project-pm/`.
+
+### 12.4. Cross-reference invariant
+
+The composition contract is verified structurally by
+`tests/test_AC_QSURF_8_audit_block_composition.py`:
+
+1. Both `SurfacedQuestion` and `RecordedResponse` expose
+   `is_audit_block_trigger` returning `True`.
+2. This design-note carries the path
+   `plugins/loam-skills/skills/audit-block-on-telegram/` and the
+   exact "decision was made" trigger condition string.
+3. The SKILL.md file at the referenced path actually exists and
+   contains the named trigger string.
+
+If any of those three structural facts is false, the test fails.
+
+## 13. References
 
 - **Plan-doc:** `docs/rebuild/plans/v0-1-7-cycle-2-per-project-pm.md`.
 - **Parent plan:** `docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md`.

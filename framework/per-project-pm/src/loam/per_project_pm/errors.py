@@ -15,8 +15,8 @@
 """Named exception classes for the per-project PM component.
 
 Per ODD §2.5: every defensive branch / failure mode maps to a named
-exception class, so callers can pattern-match on intent. Cycle 2 ships
-two exceptions; Cycle 4 adds ``PendingResponseError`` for the
+exception class, so callers can pattern-match on intent. Cycle 2 shipped
+two exceptions; Cycle 4 adds :class:`PendingResponseError` for the
 ``require_owner_response``-blocking enforcement.
 
   - :class:`PMNotFoundError` — ``contract.yaml`` absent at the named
@@ -28,6 +28,13 @@ two exceptions; Cycle 4 adds ``PendingResponseError`` for the
     unexpected ``schema_version``, malformed YAML). Fail-loud at the
     loader boundary; never silently extend a corrupt state. Per
     AC.PPM.4.
+  - :class:`PendingResponseError` — caller attempted to surface a new
+    question while a prior surfacing is awaiting a recorded response,
+    under a contract with ``require_owner_response=True``. The blocking
+    enforcement is the structural side of the SOC-2 audit-trail floor
+    (Eric synthesis Decision P) at the PM boundary: production-stake
+    contracts cannot dispatch a second question before the first is
+    answered. Per AC.QSURF.5 (Cycle 4).
 """
 
 from __future__ import annotations
@@ -76,3 +83,45 @@ class PMStateCorruptedError(PerProjectPMError):
 
     Per AC.PPM.4 (parent plan §5).
     """
+
+
+class PendingResponseError(PerProjectPMError):
+    """A surfacing was attempted while a prior surfacing is awaiting
+    a recorded response, under a contract with
+    ``require_owner_response=True``.
+
+    Raised by:
+
+      - :meth:`loam.per_project_pm.runtime.PMRuntime.surface_next_question`
+      - :meth:`loam.per_project_pm.runtime.PMRuntime.surface_next_questions_batch`
+
+    when ``state.yaml`` carries a non-null ``pending_response_for``
+    and the PM contract's ``require_owner_response`` is True. The
+    caller resolves by invoking
+    :meth:`loam.per_project_pm.runtime.PMRuntime.record_response`
+    against the prior surfacing's audit-log path; subsequent
+    surfacings then succeed.
+
+    The exception body carries:
+
+      - ``pending_question`` — the still-unanswered question text
+        (so the caller can re-prompt the user).
+      - ``surfaced_audit_path`` — the audit-log path of the prior
+        surfacing (``record_response`` parameter for clearance).
+
+    Per AC.QSURF.5 (Cycle 4). The blocking is the structural side of
+    Eric synthesis Decision P (SOC-2 audit-trail floor): no
+    surfacing slips past without a response trace at production-stake
+    mode.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        pending_question: str,
+        surfaced_audit_path: str,
+    ) -> None:
+        super().__init__(message)
+        self.pending_question = pending_question
+        self.surfaced_audit_path = surfaced_audit_path

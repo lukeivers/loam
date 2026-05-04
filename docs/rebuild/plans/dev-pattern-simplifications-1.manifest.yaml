@@ -1,0 +1,129 @@
+schema_version: 1
+amendment:
+  number: 133
+  slug: dev-pattern-simplifications-1
+  title: "Dev-pattern simplifications #1 — manifest narrative collapse + manifest+apply commit merge + amendment-number deprecation"
+
+# BASELINE: abdcdb8 — the source-edit commit (pre-apply tip).
+#
+# Commit ladder pre-apply:
+#   f629f14 — amendment #132 plan-doc §14 backfill.
+#   abdcdb8 — feat(dev-sdlc): source edits + plan-doc + AC.DPS1.* tests.
+#   <this manifest commit lands next>
+#   <loam amend apply lands; auto-commit per AC.LAE.1 — LEGACY 2-commit
+#    path, since this manifest itself uses schema_version: 1>
+#   <loam amend seal lands as deterministic seal commit>
+#
+# Single-component fence — dev-sdlc:
+#   - dev-sdlc — schema v3 surface added to loam-amend manifest +
+#     apply + seal + validate. Schema v1/v2 paths preserved verbatim
+#     (backward-compat hard guarantee per AC.DPS1.13/14). Tests under
+#     plugins/dev-sdlc/tools/loam-amend/tests/test_AC_DPS1_*.py.
+#
+# AC families locked per docs/rebuild/plans/dev-pattern-simplifications-1.md §4:
+#   AC.DPS1.1  — plan_doc_ref field on Manifest dataclass.
+#   AC.DPS1.2  — v3 requires plan_doc_ref OR narrative.body.
+#   AC.DPS1.3  — v1/v2 reject plan_doc_ref.
+#   AC.DPS1.4  — seal synthesizes 5-15 line summary from plan_doc_ref.
+#   AC.DPS1.5  — narrative.target still required at v3.
+#   AC.DPS1.6  — apply produces single commit under v3.
+#   AC.DPS1.7  — v1/v2 preserve two-commit shape.
+#   AC.DPS1.8  — already-committed manifest YAML produces no extra delta.
+#   AC.DPS1.9  — idempotent re-run skips commit.
+#   AC.DPS1.10 — amendment.number optional at v3.
+#   AC.DPS1.11 — commit subjects degrade gracefully when number is None.
+#   AC.DPS1.12 — new-plan does not pre-fill amendment number.
+#   AC.DPS1.13 — all 109 existing manifests validate clean.
+#   AC.DPS1.14 — sealed amendments stay green.
+#   AC.DPS1.15 — per-AC tests authored.
+#
+# Smoke (REALISTIC CONDITION — all 6 dimensions per dispatch text):
+#   D1 cold-state — `loam amend apply` on fresh test fixture under v3
+#     manifest produces exactly 1 commit; manifest validates with
+#     plan_doc_ref:; no amendment-number assigned. Verified by
+#     test_AC_DPS1_6_v3_apply_produces_single_commit (PASS).
+#   D2 steady-state — repeated v3 apply runs idempotent. Verified by
+#     test_AC_DPS1_9_v3_idempotent_re_run_skips (PASS).
+#   D3 restart — schema validation independent of process state;
+#     load_manifest is pure (no side-state). Verified structurally.
+#   D4 reboot — same as D3.
+#   D5 cross-session — existing legacy-format manifests still readable.
+#     Verified by test_AC_DPS1_13_existing_manifests_validate_clean
+#     (PASS over 109 manifest YAMLs); also via CLI loop (109/109).
+#   D6 telemetry-floor — apply auto-commit emits the same chore(amend)
+#     commit shape (subject + body) per AC.LAE.1; v3 adds the
+#     "manifest+apply" verb. Audit-trail floor preserved.
+#
+# Bookkeeping: this amendment ITSELF uses schema_version: 1 +
+# amendment.number: 133 because it's the amendment INTRODUCING v3
+# (chicken-and-egg avoidance per Decision D-5). The next amendment
+# can author at v3.
+baseline: "abdcdb8"
+
+plan: docs/rebuild/plans/dev-pattern-simplifications-1.md
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.dev-pattern-simplifications-1
+  body: |
+    # Amendment #133 — Dev-pattern simplifications #1
+
+    2026-05-04. Per
+    `docs/rebuild/plans/dev-pattern-simplifications-1.md` and
+    cost-audit at
+    `docs/rebuild/plans/cost-audit-loam-dev-pattern-2026-05-04.md`
+    Recommendations A, D, E.
+
+    Three simplifications landed together inside the dev-sdlc fence:
+
+    - **A — Manifest narrative collapse.** New schema v3 introduces
+      an optional top-level `plan_doc_ref:` field. `narrative.body`
+      becomes optional at v3. When v3 manifest carries
+      `plan_doc_ref` only, the seal step synthesizes a 5-15 line
+      summary instead of inlining ~150 LOC of duplicated narrative
+      per amendment.
+
+    - **D — Manifest+apply commit merge.** Schema v3 `loam amend
+      apply` stages the manifest YAML alongside BASELINE/sidecar
+      bumps and produces ONE commit (subject token: `manifest+apply`)
+      instead of two. Schema v1/v2 preserve the legacy two-commit
+      ladder verbatim.
+
+    - **E — Amendment-number deprecation.** Schema v3 makes
+      `amendment.number` optional; identification is by `slug` only.
+      Apply/seal commit subjects degrade gracefully when number is
+      None (no `#N` prefix). v1/v2 still require number.
+
+    Sub-plan: `docs/rebuild/plans/dev-pattern-simplifications-1.md`.
+    Tests: 19 new in
+    `plugins/dev-sdlc/tools/loam-amend/tests/test_AC_DPS1_dev_pattern_simplifications_1.py`.
+    AC families: AC.DPS1.{1..15}.
+
+    Backward-compat hard guarantees:
+
+    - All 109 existing manifest YAMLs validate clean post-bump
+      (test_AC_DPS1_13 sweep + CLI loop both pass).
+    - dev-sdlc seal-test stays green at f629f14 BASELINE.
+
+    THIS amendment ITSELF uses schema_version: 1 + amendment.number:
+    133 because it is the amendment INTRODUCING v3 (chicken-and-egg
+    avoidance — Decision D-5 in the plan-doc). The next amendment
+    may author at v3.
+
+    Smoke: all 6 dimensions exercised; see manifest header for
+    per-dimension verification trace.

@@ -409,6 +409,12 @@ def run_worker_loop(
     config = config if config is not None else mwq.load_worker_config(workspace_root)
     poll_interval = float(config.get("poll_interval_s", 1.0))
     tmp_cleanup_age = float(config.get("tmp_cleanup_age_s", 3600.0))
+    # AC.MFBM-OPS.6 — heartbeat emission cadence; default 60 iterations.
+    # Cast through int to tolerate YAML-loaded floats that survive
+    # ``load_worker_config``'s type coercion intact.
+    heartbeat_interval_iterations = max(
+        1, int(config.get("heartbeat_interval_iterations", 60))
+    )
 
     _append_diag(
         workspace_root,
@@ -432,6 +438,37 @@ def run_worker_loop(
             workspace_slug=workspace_slug,
             sleep_fn=sleep_fn,
         )
+        # AC.MFBM-OPS.6 — periodic worker-heartbeat emission. An empty
+        # queue produces no per-entry log lines; without this, a long-
+        # idle worker is indistinguishable from a dead one (the failure
+        # mode on 2026-05-01: 5 lines / 3 days of memory-writes.log).
+        # Best-effort queue-depth read; a transient OS error here must
+        # not bring down the loop.
+        if iteration % heartbeat_interval_iterations == 0:
+            qdir = mwq.queue_dir(workspace_root)
+            if qdir.exists():
+                try:
+                    queue_depth = sum(1 for _ in qdir.iterdir())
+                except OSError:
+                    # Transient FS error: report -1 sentinel so an
+                    # operator can correlate heartbeat anomalies with
+                    # the OS error in the surrounding stderr stream.
+                    queue_depth = -1
+            else:
+                # Empty workspace (queue dir not yet materialised) —
+                # depth is structurally 0; the writer creates the
+                # dir lazily on first enqueue.
+                queue_depth = 0
+            _append_diag(
+                workspace_root,
+                {
+                    "ts": datetime.now(timezone.utc).isoformat(),
+                    "kind": "worker-heartbeat",
+                    "pid": os.getpid(),
+                    "iteration": iteration,
+                    "queue_depth": queue_depth,
+                },
+            )
         # Periodic stale-tmp cleanup keeps the queue dir tidy.
         if iteration % 60 == 0:
             mwq.cleanup_stale_tmp(

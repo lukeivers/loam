@@ -317,6 +317,14 @@ DEFAULT_WORKER_CONFIG: dict[str, Any] = {
     "backoff_max_s": 60.0,
     "poll_interval_s": 1.0,
     "tmp_cleanup_age_s": 3600.0,
+    # AC.MFBM-OPS.6 — emit a `worker-heartbeat` NDJSON entry every
+    # N drain-loop iterations so an empty queue still produces a
+    # liveness signal in memory-writes.log. At the default poll
+    # interval (1.0s) this is ~60s wall-clock between heartbeats —
+    # enough fidelity to detect a hung worker without flooding the
+    # log. Operators can lower the value for diagnostics or raise
+    # it (e.g., 600) to quiet the log on cold workspaces.
+    "heartbeat_interval_iterations": 60,
 }
 
 

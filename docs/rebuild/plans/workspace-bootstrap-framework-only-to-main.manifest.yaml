@@ -1,22 +1,19 @@
 schema_version: 1
 amendment:
-  number: null  # next sequential number assigned at apply time
+  number: 132
   slug: workspace-bootstrap-framework-only-to-main
   title: "workspace-bootstrap: switch FRAMEWORK_ONLY_BRANCH from \"framework-only\" to \"main\""
 
-# BASELINE: TBD at apply time — set to HEAD~1 of the source-edit
-# commit (the per-cycle BASELINE-as-HEAD~1 pattern from amendments
-# #34–#39 + v0.1.6/v0.1.7 cycles). At plan-authoring time canonical
-# HEAD is `ad1e6bb` (`docs(plans): cost-audit loam dev pattern`); the
-# plan-doc + manifest commits will advance the tip before the source-
-# edit commit lands. The BASELINE pin is filled in the manifest by
-# the builder at apply-time.
+# BASELINE: 926a08b — HEAD~1 of the source-edit commit (737c644).
+# 926a08b is the plan-doc commit (`docs(plans): workspace-bootstrap
+# framework-only → main sub-plan`); 737c644 is the source-edit commit
+# (`feat(workspace-bootstrap): switch FRAMEWORK_ONLY_BRANCH from
+# "framework-only" to "main"`).
 #
-# Rationale for the per-cycle BASELINE: workspace-bootstrap's prior
-# seal (`5ec3d33` per Cycle 1 v0.1.7 — confirm at apply time) is too
-# distant; pin to the immediate source-edit predecessor so the
-# BASELINE..HEAD diff is narrow to this amendment's surface.
-baseline: "TBD-fill-at-apply-time"
+# Per-cycle BASELINE-as-HEAD~1 pattern from amendments #34–#39 +
+# v0.1.6/v0.1.7 cycles: pin to the immediate source-edit predecessor
+# so the BASELINE..HEAD diff is narrow to this amendment's surface.
+baseline: "926a08b"
 
 plan: docs/rebuild/plans/workspace-bootstrap-framework-only-to-main.md
 

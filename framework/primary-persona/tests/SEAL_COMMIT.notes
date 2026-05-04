@@ -433,3 +433,155 @@ BASELINE `9a6b938` (master-plan §5 row update commit, the
 second of the 5-commit M-FBM build sequence). primary-
 persona's SEAL_COMMIT sidecar advances to the M-FBM seal
 SHA via `loam amend seal`.
+
+# v0.1.2 item 5 — ack-first persona contract amendment
+
+2026-05-03. v0.1.2 item per `docs/rebuild/plans/v0-1-x-roadmap.md`
+§2 v0.1.2 item 5 + §5 Decision B (hard rule with 5 explicit
+triggers) + §8 method-decision register backfill.
+
+Sub-plan: `docs/rebuild/plans/v0-1-2-ack-first-persona-contract.md`.
+FIDRAFT entry: "Acknowledge-first on complex requests"
+(`docs/rebuild/FUTURE_IDEAS_DRAFT.md` 2026-05-03; rationale +
+composition with Telegram-only channel rule, pause-on-Telegram-
+outage, summarize-and-surface-decisions, critical-thinking-on-
+deviations).
+
+Scope (per sub-plan §4 + §6): single-component fence on
+`framework/primary-persona/`. Source edit adds a new operational-
+rule subsection `### Acknowledge first on non-trivial requests`
+under `## Operational rules` in the persona template prompt.md.
+The rule lands as a hard rule (Decision B) with five explicit
+triggers, the trivial-back-and-forth carve-out, the ack-shape
+literal "got it — doing X", and the absence-as-observable-
+violation framing (mirrors the swarming-corpus model-rationale
+absence-as-violation pattern).
+
+Decision B choice rationale (from v0.1.x roadmap §5):
+discipline encoded as observable habit, not as structural
+enforcement (no UserPromptSubmit hook). Hook implementation is
+non-trivial — "complex thought" requires LLM judgment that hooks
+don't have access to; the simpler hook would be "ack EVERY user
+prompt submit" which is too noisy for trivial messages.
+Persona-level discipline is the right first cut.
+
+Composes with Surface #2 (in-band drift fix per
+feedback_loose_AC_text_fix_AC_not_implementation): pre-existing
+test_AC_O_1_six_operational_rule_sections_present asserted six
+ops; live template carried seven (post-α "Lean on the corpus"
+landed additively but the AC count was not widened in α). v0.1.2
+item 5 widens 6→8 ops + 11→13 total in lock-step (composes
+Decision B's new addition with the α drift fix). The
+test_AC_alpha_6_L_eleven_sections_unchanged test was unaffected
+(asserts presence not count; additive landing preserves AC.α.6).
+
+AC surface (per sub-plan §4):
+
+  - AC.VPC.5.1 — `### Acknowledge first on non-trivial requests`
+    subsection landed under `## Operational rules` with all 5
+    triggers, carve-out, ack-shape literal, and absence-as-
+    violation framing present. Verified by new test file
+    `test_AC_VPC_5_ack_first_rule.py` (6 tests, all passing).
+  - AC.VPC.5.2 — `test_AC_O_1_six_operational_rule_sections_*`
+    renamed to `..._eight_*` (8 ops); `test_AC_O_1_named_section_
+    count_is_eleven` renamed to `..._is_thirteen` (5 traits + 8
+    rules). Both tests' tuples + assertion messages updated;
+    module docstring updated in lock-step. Verified by
+    `pytest framework/primary-persona/tests/test_AC_O_1_*` (15
+    tests, all passing).
+  - AC.VPC.5.3 — hard-rule shape verified (imperative voice,
+    explicit trigger list, no softening language inside the
+    subsection). Verified by `test_AC_VPC_5_3_hard_rule_
+    imperative_voice`.
+  - AC.VPC.5.4 — `str.format` compatibility preserved (no new
+    unescaped `{` / `}` literals); existing
+    `test_AC_O_1_template_is_str_format_compatible` passes.
+  - AC.VPC.5.5 — smoke: tmp workspace scaffolded via
+    `_install_persona_directory(workspace_root, handle)` carries
+    the ack-first rule text verbatim in its scaffolded
+    prompt.md. Captured pre-seal (Smoke B verbatim below).
+  - AC.VPC.5.S — fence: `framework/primary-persona/` only; plus
+    `docs/rebuild/plans/` via universal prefix.
+
+Smokes captured pre-seal (verbatim):
+
+    === Smoke A: direct grep ===
+    ### Acknowledge first on non-trivial requests
+    [subsection text with all 5 triggers, carve-out, ack-shape,
+    absence-as-violation framing visible]
+
+    === Smoke B: scaffold tmp workspace ===
+    installed: True
+    persona_dir: /private/tmp/ack-first-smoke-NNNNN/workspace/personas/smoke-test
+    PASS: ack-first rule present in scaffolded prompt at
+        /private/tmp/ack-first-smoke-NNNNN/workspace/personas/smoke-test/prompt.md
+
+    === Smoke C: pytest touched-only rerun ===
+    23 passed in 0.05s (test_AC_O_1_default_archetype_prompt_md.py
+    15 tests + test_AC_VPC_5_ack_first_rule.py 6 tests +
+    test_AC_alpha_6_L_eleven_sections_unchanged.py 3 tests
+    — Note: test_AC_alpha_6 is run alongside as adjacent-test
+    check that it remains additive-friendly per HT-11
+    verification).
+
+All ACs (AC.VPC.5.{1,2,3,4,5}) pass: ack-first rule subsection
+present in template + scaffolded prompt; test counts widened in
+lock-step; hard-rule imperative voice verified; str.format
+compatibility preserved; tmp-workspace smoke confirms scaffold
+pathway propagation.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - Subsection placement: FIRST subsection under
+    `## Operational rules` (positioned before
+    `### Lean on the harness`). Rationale: ack-first fires on
+    every non-trivial request before any other operational rule
+    engages; placement reflects the temporal precedence (the
+    persona reads the rule list top-down and the ack is the
+    first move).
+  - Trigger phrasing: enumerated bullets matching the FIDRAFT
+    entry verbatim (`≥3 tool calls`, `≥1 background-agent
+    dispatch`, `decision/judgment vs pure execution`,
+    `file authoring vs reading`, `multi-paragraph or multi-
+    question`). Bold-marked for scannability.
+  - Carve-out shape: enumerated examples (yes/no, single-fact
+    lookup, simple status, one-line confirmation, "answerable
+    in one breath from already-loaded context"). Plain prose
+    rather than bullet list — the carve-out is the exception,
+    the trigger list is the rule.
+  - Ack-shape example: single quoted literal "got it — doing X"
+    for the abstract shape + a concrete example "got it —
+    reading the roadmap and dispatching the build". The negative
+    examples ("I'd be happy to help!", "Great question!") tie
+    the rule to the global voice rule already in `## Voice`.
+  - Section heading text: `### Acknowledge first on non-trivial
+    requests` chosen over `### Acknowledge first` (too short,
+    ambiguous) and `### Ack-first on non-trivial requests` (too
+    terse — uses internal jargon "ack" in the heading).
+
+Out of scope (per sub-plan §9):
+
+  - UserPromptSubmit hook for automated ack emission (deferred
+    per Decision B; FIDRAFT names as "hardening path if drift
+    observed").
+  - Subagent persona files (`.claude/agents/<name>.md`) — v0.1.5
+    V2.B scope.
+  - Updating any pre-existing workspace's local
+    `personas/<handle>/prompt.md` — opt-in by user re-scaffold.
+  - Other v0.1.2 items (gh-create→push race docs, two-copies
+    hedge, loam-amend ergonomics) — sequenced separately per
+    dispatcher.
+
+Predecessor commits:
+  - 7d19a7e — V11.E seal (graphiti probe graceful-skip;
+    primary-persona last touched here).
+  - 18e708c — V11.E §8 backfill (canonical pos-v2 HEAD pre-
+    v0.1.2-item-5).
+  - 7041ac7 — v0.1.2 item 5 sub-plan-doc (NEW commit; pre-
+    baseline).
+  - d2754be — v0.1.2 item 5 source-edit commit (BASELINE for
+    this amendment).
+
+BASELINE d2754be (the v0.1.2 item 5 source-edit commit). Single-
+component fence on `framework/primary-persona/`; sidecar advances
+to v0.1.2-item-5 seal SHA.

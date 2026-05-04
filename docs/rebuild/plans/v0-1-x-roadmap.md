@@ -268,7 +268,7 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 | Release | Status | Tag SHA | Notes |
 |---|---|---|---|
 | v0.1.1 | (in flight; locked content authored in parallel) | — | — |
-| v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03); V11.E sealed at `7d19a7e` (2026-05-03); ack-first persona contract sealed at `32ff67d` (2026-05-03). |
+| v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03); V11.E sealed at `7d19a7e` (2026-05-03); ack-first persona contract sealed at `32ff67d` (2026-05-03); loam-amend ergonomics sweep sealed at `2c32c1b` (2026-05-03). |
 | v0.1.3 | (planned) | — | — |
 | v0.1.4 | (planned) | — | — |
 | v0.1.5 | (planned) | — | — |
@@ -355,6 +355,36 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 - UserPromptSubmit hook for automated ack emission — deferred per Decision B; FIDRAFT names as "hardening path if drift observed". Persona-level discipline is the right first cut.
 - Subagent persona files (`.claude/agents/<name>.md`) inheriting the ack-first rule — v0.1.5 V2.B scope.
 - Pre-existing user-edited workspace `personas/<handle>/prompt.md` files — opt-in by user re-scaffold; no migration shipped (inconsistent with the user-edited-content principle for personas).
+
+### v0.1.2 — item 6 (loam-amend ergonomics sweep) — sealed 2026-05-03
+
+**Sub-plan:** `docs/rebuild/plans/v0-1-2-loam-amend-ergonomics.md`.
+**Manifest:** `docs/rebuild/plans/v0-1-2-loam-amend-ergonomics.manifest.yaml` (amendment #123).
+**Status file:** `<pos3>/workspace/.scratch/claude-output/loam-amend-ergonomics-status-2026-05-03.md`.
+**FIDRAFT provenance (3 entries closed; all 2026-05-03):**
+- "`loam amend apply` does not commit the apply step BY DESIGN — convention is to manually create the apply commit"
+- "`loam amend seal` requires clean working tree — stash-then-pop workaround used in every FBE.x"
+- "`loam amend apply` partner-prefix derivation bug — derives from name field assuming `framework/<name>/`+ bare-`<name>/` shapes; misses `plugins/<name>/` shaped components"
+
+| Step | Commit SHA | Notes |
+|---|---|---|
+| Plan-doc | `be76e41` | Sub-plan-doc; single-component fence on `plugins/dev-sdlc/`; AC family `AC.LAE.*` (collision-safe). |
+| Source edit | `a30a583` | Three improvements landed in `plugins/dev-sdlc/tools/loam-amend/`: (a) auto-commit in `commands/apply.py` + Co-Authored-By trailer + idempotent-skip; (b) `--allow-untracked-globs` flag in `commands/seal.py` + `cli.py`; (c) `_partner_prefix` helper in `commands/apply.py` derives from `seal_test` (4-segment + 3-segment legacy fallback). 3 new test files (`test_AC_LAE_{1,2,3}_*.py`) + 1 backwards-compat update to `test_tracker_integration.py` (`fixture: post-apply state` commit becomes conditional under the new auto-commit semantics). |
+| Manifest | `46f4e0f` | Amendment #123; baseline `a30a583`; single-component fence on `plugins/dev-sdlc/`. |
+| `loam amend apply` (auto-commit) | `7a41b03` | Meta-recursive: this amendment's apply step uses the auto-commit code it ships. Sidecar `18e4c136` → `7a41b03`; BASELINE literal `8032348` → `a30a583`. |
+| `loam amend seal` | `2c32c1b` | Deterministic seal commit. Narrative at `plugins/dev-sdlc/tests/SEAL_COMMIT.notes`. Scoped sweep on dev-sdlc (sweep skipped per pre-existing `framework/*/tests/SEAL_COMMIT` discovery limitation; dev-sdlc seal-fence test verified passing manually + in pre-seal touched-only run). |
+
+**Acceptance summary:**
+- AC.LAE.1 (auto-commit on `loam amend apply`) — verified by `test_AC_LAE_1_apply_auto_commit.py` (5 tests pass) + Smoke A (chore(amend) commit landed with conventional subject + Co-Authored-By trailer under `CLAUDECODE=1`; idempotent re-runs skip the commit).
+- AC.LAE.2 (`--allow-untracked-globs` flag) — verified by `test_AC_LAE_2_seal_allow_untracked_globs.py` (4 tests pass) + Smoke B (seal aborts WITHOUT flag; proceeds WITH flag; admitted patterns remain untracked post-seal — admission is dirty-check-only).
+- AC.LAE.3 (partner-prefix from `seal_test` path) — verified by `test_AC_LAE_3_partner_prefix_from_seal_test.py` (4 tests pass) + Smoke C (mixed `framework/alpha/` + `plugins/beta/` fence — alpha admits `plugins/beta/`, beta admits `framework/alpha/`; NO buggy-shape `framework/beta/` or bare `beta/` admissions).
+- AC.LAE.S (single-component fence on `plugins/dev-sdlc/`) — verified post-seal (`git diff a30a583..2c32c1b --name-only` produces 4 paths: 3 in `plugins/dev-sdlc/tests/` + 1 in `docs/rebuild/plans/` universal admission; zero outside).
+
+**Surfaces recorded (out of v0.1.2-item-6 scope; carried forward):**
+- Backwards-compat for in-flight dispatch prompts that say "manually create the apply commit": now becomes a no-op (the manual commit lands as empty / no-staged-changes after auto-commit). Harmless; existing dispatch prompts not updated as part of this amendment (out-of-fence; opportunistic at next dispatch authoring touch).
+- Manifest-level `allow_untracked_globs` admission — deferred. CLI flag covers immediate workflow; manifest field can land later if observed pain-point recurs.
+- Migrating prior manifests' `extra_allowed_prefixes` to drop now-redundant `<name>/` bare admissions — out-of-fence; opportunistic at next per-component touch.
+- Cross-component sweep discovery (`_discover_sealed_components`) globs `framework/*/tests/SEAL_COMMIT` only; misses `plugins/*/tests/SEAL_COMMIT`. Pre-existing limitation (not introduced here); composes naturally with a follow-on "extend seal-discovery to plugins/" amendment when other plugins seal.
 
 ---
 

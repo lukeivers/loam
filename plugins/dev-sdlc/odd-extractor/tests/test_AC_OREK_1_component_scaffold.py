@@ -16,12 +16,21 @@ _ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_directory_layout() -> None:
-    """src/, tests/, seals/ all exist; pyproject.toml + README.md present."""
+    """src/, tests/ exist; pyproject.toml + README.md present.
+
+    Seal-narrative sidecars land in the parent dev-sdlc plugin's
+    seals/ directory (plugins/dev-sdlc/seals/SEAL_COMMIT.<slug>),
+    not under odd-extractor/seals/ — the dev-sdlc plugin is the
+    sealed-component fence and its seals/ is the canonical
+    narrative location.
+    """
     assert (_ROOT / "pyproject.toml").exists()
     assert (_ROOT / "README.md").exists()
     assert (_ROOT / "src" / "loam_odd_extractor" / "__init__.py").exists()
     assert (_ROOT / "tests").is_dir()
-    assert (_ROOT / "seals").is_dir()
+    # Parent plugin's seals dir is the canonical seal-narrative
+    # location for this sub-tree.
+    assert (_ROOT.parent / "seals").is_dir()
 
 
 def test_pyproject_parses_and_declares_required_metadata() -> None:

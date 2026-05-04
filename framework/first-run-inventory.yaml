@@ -55,6 +55,7 @@ shared_venv:
     - "observability-aggregator"
     - "self-upgrade"
     - "workspace-bootstrap"
+    - "per-project-pm"
 
 # M-FBM (memory-substrate pivot, 2026-05-01) — AC.MFBM.7:
 # memory-system retires from first-run-inventory at v0.1.0. The

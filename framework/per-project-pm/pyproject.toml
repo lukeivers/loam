@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-per-project-pm"
+version = "0.1.0"
+description = "Per-project PM persona for loam — workspace-scoped project-manager: holds project-domain decision/ratification state + state-of-world snapshot, surfaces decisions needing user attention, auto-loads when persona begins work in workspace. Harness-general (not dev-only). Composes against M-FBM episode memory (PM owns project state; M-FBM owns episode memory; the boundary is articulated in docs/design.md)."
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2",
+    "PyYAML>=6",
+    "loam-workspace-bootstrap",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+# v0.1.7 Cycle 2 AC.PPM.8 — workspace-bootstrap discovers the PM
+# component via this entry-point. Per the layered contribution-discovery
+# protocol (v0.1.0 M6a precedent + plugins/dev-sdlc/pyproject.toml
+# pattern), the contribution registers a runtime factory at
+# host.per_project_pm; lazy resolution per cycle-2 plan §4 Surface #6
+# (F2.C resolution).
+[project.entry-points."loam.bootstrap.contributions"]
+per_project_pm = "loam.per_project_pm.contribution:PerProjectPMContribution"
+
+[tool.setuptools]
+package-dir = {"loam.per_project_pm" = "src/loam/per_project_pm"}
+packages = ["loam.per_project_pm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,11 @@
+# v0.1.9 Cycle 3 — 6 dev-sdlc SKILLs second pass + audit-allowlist cleanup; single-component fence on plugins/dev-sdlc/
+
+slug: v0-1-9-cycle-3-skills-and-cleanup
+components: dev-sdlc
+baseline: d8e3f01
+amendment-commit: 6378cc56427940e3d757fe2d7822ea716d6b210d
+plan-doc: docs/rebuild/plans/v0-1-9-cycle-3-skills-and-cleanup.md
+acs-satisfied: 11
+smoke: All 6 dims (D1 12-SKILL + 1-entry allowlist; D2/D3/D4 filesystem; D5 native discovery; D6 audit-floor); 71 cycle tests green; release-level SOFT smoke runs post-seal
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

@@ -268,7 +268,7 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 | Release | Status | Tag SHA | Notes |
 |---|---|---|---|
 | v0.1.1 | (in flight; locked content authored in parallel) | — | — |
-| v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03); V11.E sealed at `7d19a7e` (2026-05-03). |
+| v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03); V11.E sealed at `7d19a7e` (2026-05-03); ack-first persona contract sealed at `32ff67d` (2026-05-03). |
 | v0.1.3 | (planned) | — | — |
 | v0.1.4 | (planned) | — | — |
 | v0.1.5 | (planned) | — | — |
@@ -325,6 +325,36 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 
 **Surfaces recorded (out of V11.E scope; carried forward):**
 - None new. The four resolutions from the prior V11.E status (B inventory-driven probe set, C remove probe, D workspace-config flag) remain explicitly deferred per the dispatcher's Resolution A lock. Resolution D composes with v0.1.5 D-3 / v0.2 M-GMP if a richer config slot becomes warranted.
+
+### v0.1.2 — item 5 (ack-first persona contract amendment) — sealed 2026-05-03
+
+**Sub-plan:** `docs/rebuild/plans/v0-1-2-ack-first-persona-contract.md`.
+**Manifest:** `docs/rebuild/plans/v0-1-2-ack-first-persona-contract.manifest.yaml` (amendment #122).
+**Status file:** `<pos3>/workspace/.scratch/claude-output/ack-first-persona-contract-status-2026-05-03.md`.
+**FIDRAFT provenance:** "Acknowledge-first on complex requests" (2026-05-03).
+**Decision locked:** Decision B in §5 — hard rule with 5 explicit triggers.
+
+| Step | Commit SHA | Notes |
+|---|---|---|
+| Plan-doc | `7041ac7` | Sub-plan-doc; single-component fence on `framework/primary-persona/`; AC family `AC.VPC.5.*` (collision-safe); Surface #2 in-band drift fix per `feedback_loose_AC_text_fix_AC_not_implementation`. |
+| Source edit | `d2754be` | Adds `### Acknowledge first on non-trivial requests` as the first subsection under `## Operational rules` in `templates/persona-template/prompt.md` — names 5 triggers, trivial carve-out, ack-shape literal, absence-as-observable-violation framing. Widens `test_AC_O_1_six_*` → `test_AC_O_1_eight_*` (composes Surface #2 α-drift fix); renames `..._count_is_eleven` → `..._count_is_thirteen`. New test file `test_AC_VPC_5_ack_first_rule.py` (6 tests). |
+| Manifest | `4672abd` | Amendment #122; baseline `d2754be`; single-component fence. |
+| `loam amend apply` (manual `chore(amend)`) | `8cbab6a` | Sidecar SEAL_COMMIT 24166619 → d2754bee; BASELINE literal `c3b74b2` → `d2754be`. |
+| `loam amend seal` | `32ff67d` | Deterministic seal commit. Narrative at `framework/primary-persona/tests/SEAL_COMMIT.notes`. |
+
+**Acceptance summary:**
+- AC.VPC.5.1 (ack-first subsection landed with 5 triggers + carve-out + ack-shape + absence-as-violation framing) — verified by `test_AC_VPC_5_1_*` suite (5 tests pass).
+- AC.VPC.5.2 (test count widened 6→8 ops + 11→13 total in lock-step; composes new addition with α drift) — verified by widened `test_AC_O_1_eight_operational_rule_sections_present` + `test_AC_O_1_named_section_count_is_thirteen` (15 AC.O.1 tests pass).
+- AC.VPC.5.3 (hard-rule shape — imperative voice + no softening language) — verified by `test_AC_VPC_5_3_hard_rule_imperative_voice`.
+- AC.VPC.5.4 (`str.format` compatibility preserved) — verified by `test_AC_O_1_template_is_str_format_compatible` (no new unescaped braces in the new subsection).
+- AC.VPC.5.5 (smoke: tmp-workspace scaffold) — verified by Smoke B: `_install_persona_directory` against `/tmp/ack-first-smoke-NNNNN/` produces `personas/smoke-test/prompt.md` carrying the ack-first heading + ack-shape literal + carve-out keywords verbatim.
+- AC.VPC.5.S (single-component fence on `framework/primary-persona/`) — verified post-seal (`git diff 18e708c..32ff67d --name-only` produces 8 paths: 6 in `framework/primary-persona/` + 2 in `docs/rebuild/plans/` universal admission; zero outside).
+
+**Surfaces recorded (out of v0.1.2-item-5 scope; carried forward):**
+- Surface #2 (in-band fixed): pre-existing α-drift in `test_AC_O_1_*` widened in lock-step with the new addition (now consistent — 8 ops, 13 total).
+- UserPromptSubmit hook for automated ack emission — deferred per Decision B; FIDRAFT names as "hardening path if drift observed". Persona-level discipline is the right first cut.
+- Subagent persona files (`.claude/agents/<name>.md`) inheriting the ack-first rule — v0.1.5 V2.B scope.
+- Pre-existing user-edited workspace `personas/<handle>/prompt.md` files — opt-in by user re-scaffold; no migration shipped (inconsistent with the user-edited-content principle for personas).
 
 ---
 

@@ -238,19 +238,23 @@ Two modes:
 | 3 | User-ratification fatigue | Threshold tunable; cool-down; "decline-all-this-session"; per-week budget (3 default) |
 | 4 | Workspace-local shadows future plugin name | Convention: workspace-prefix (`pos3-`, `eric-`); rubric review catches; namespace defense partial (Decision K) |
 | 5 | Method-in-skill smuggling | Template checklist "pattern or instance?"; rubric quality signal catches |
-| 6 | Auto-creation runs in non-dev workspaces | Two gates: dev-mode partition + `enable_auto_skill_capture` flag default false (Decision C, E) |
+| 6 | Auto-creation fires before user is ready | Single gate: `enable_auto_skill_capture` flag default false; user opts in when ready (Decision C, E). Universal availability across workflows is correct per Luke's 2026-05-04 clarification. |
 
-### 3.6 — Dev-only gating
+### 3.6 — Three-tier gating (auto-creation universal, promotion dev-scoped)
 
-Per Luke's directive: *"this isn't something that needs to be behavior for anyone who isn't doing loam development specifically."*
+Luke's framing was clarified across two same-day corrections (2026-05-04 messages 9951, 9953). Final gating model:
 
-The mechanism: the existing `plugins/dev-sdlc/dev-mode-manifest.yaml` partitions the workspace into NORMAL USE and DEV MODE. Auto-creation skill-capture is a dev-mode-only behavior — gated on the manifest's mode being DEV (i.e., the workspace's bootstrap.yaml lists `dev_sdlc` as a contribution).
+- **Auto-creation:** UNIVERSAL — any loam user, dev or non-dev. Especially valuable for non-devs whose patterns rarely fit the dev-tooling shape (writers capturing reusable rhetorical structures; researchers capturing methodology checklists; ops people capturing runbooks). Auto-creation is the persona's bidirectional translation extended to "this pattern recurs; make it explicit and invokable."
+- **Promotion to a plugin:** plugin-dev-only — only the dev who owns the plugin can graduate workspace-local skills into it (or refuse). Eric's workspace-local skills don't promote unless Eric owns a loam plugin, which he doesn't.
+- **Promotion to base loam:** loam-dev-only — only Luke (canonical loam owner) can graduate skills into the base set.
 
-A second gate refines this further: even within dev-mode workspaces, the auto-creation behavior is **opt-in via a workspace-config flag** (`enable_auto_skill_capture: true`, default false). Reasoning: a fresh dev-mode workspace shouldn't immediately start proposing skills — the user should turn it on when they're ready. Captured as Decision E.
+A single workflow-level gate refines this: even though auto-creation is universal, it remains **opt-in via a workspace-config flag** (`enable_auto_skill_capture: true`, default false). Reasoning: a fresh workspace shouldn't immediately start proposing skills — the user turns it on when they're ready. Captured as Decision E.
 
-This satisfies the partition rule cleanly:
-- The auto-creation **mechanism** lives in `plugins/dev-sdlc/` (dev-only behavior).
-- The **layered architecture** (base / plugin / workspace-local skill discovery) lives in `framework/` (every loam user benefits, including non-dev users).
+This satisfies the partition rule with the corrected placement:
+- The auto-creation **mechanism** lives in `framework/` (every loam user benefits, including non-dev users — auto-creation is harness-general).
+- The auto-creation **config flag** lives in `framework/workspace-bootstrap/` (config primitive co-located with the mechanism it gates).
+- The **layered architecture** (base / plugin / workspace-local skill discovery) lives in `framework/` (every loam user benefits from layered discovery).
+- The **promotion rubric** lives in `plugins/dev-sdlc/skills/skill-promotion-review/` (dev-scoped — only loam-devs and plugin-devs need to promote workspace-locals upward).
 
 ---
 
@@ -508,9 +512,9 @@ Single sealed-component amendment cycle on `plugins/dev-sdlc/`. AI-time: 8–12 
 
 Single sealed-component amendment cycle on `plugins/dev-sdlc/`. AI-time: 5–10 h. Lower-priority than v0.1.8's 6.
 
-**v0.2.0 — auto-creation mechanism (DEV-ONLY).** Ship the auto-creation skill capture workflow as a SKILL itself + the supporting workspace-config flag. Lives in `plugins/dev-sdlc/skills/skill-capture-proposal/`. AI-time: 6–10 h. Includes:
+**v0.2.0 — auto-creation mechanism (UNIVERSAL — any workflow).** Ship the auto-creation skill capture workflow as a SKILL itself + the supporting workspace-config flag. Lives in `plugins/loam-skills/skills/skill-capture-proposal/` (harness-general; not dev-only per Luke's 2026-05-04 clarification — auto-creation benefits non-devs especially). AI-time: 6–10 h. Includes:
 - The `skill-capture-proposal` SKILL — the workflow from §3.3.
-- The `enable_auto_skill_capture` workspace-config flag in workspace-bootstrap.
+- The `enable_auto_skill_capture` workspace-config flag in `framework/workspace-bootstrap/`.
 - The 6 trigger-detection signals from §3.2 implemented as detection logic.
 - Tests covering the proposal-draft workflow.
 - Design note `docs/design/persona-driven-skill-capture.md`.
@@ -581,7 +585,7 @@ Tight list. Each: question + recommendation + brief reasoning.
 
 **Decision B — Workspace-bootstrap pre-creates `<workspace>/.claude/skills/.gitkeep`?** *Recommendation:* **Yes.** Anthropic's live-change-detection requires the dir exist at session-start; pre-creating eliminates the session-restart UX cost on first skill capture.
 
-**Decision C — Auto-creation gates on dev-mode + opt-in flag, default false?** *Recommendation:* **Yes — both gates, default false.** Dev-mode gate satisfies Luke's directive; opt-in flag protects new dev-mode users from immediate noisy proposals. Mitigate discoverability via first-run-inventory hint.
+**Decision C — Auto-creation gating: workflow-flag-only or also dev-mode?** *Recommendation:* **Workflow-flag only, default false.** Per Luke's 2026-05-04 clarification (messages 9951, 9953), auto-creation is universal — any loam user, dev or non-dev; non-devs especially benefit. Dev-mode gate REMOVED from earlier draft. Single gate is the `enable_auto_skill_capture` workspace-config flag (default false; user opts in when ready). Mitigate discoverability via first-run-inventory hint.
 
 **Decision D — Skill drafting: Mode 1 (persona drafts full) or Mode 2 (fill-in-blanks)?** *Recommendation:* **Mode 1 with explicit "review carefully" framing.** Lower friction; review catches misframing. Switch to Mode 2 if user fatigue surfaces in practice.
 
@@ -674,8 +678,8 @@ The §3 design layers in 6 triggers, cool-down, per-week budget, 6 failure modes
 | Base loam-skills additions (3 SKILLs: translation-discipline, audit-block-on-telegram, owner-decision-summary) | `plugins/loam-skills/skills/` | Harness-general patterns |
 | Dev-sdlc skill-ification (12 SKILLs from §5) | `plugins/dev-sdlc/skills/` | Dev-mode-only |
 | Workspace-local skill directory | `<workspace>/.claude/skills/` (Anthropic-native) | Harness-general (Claude Code surface) |
-| Auto-creation mechanism | `plugins/dev-sdlc/skills/skill-capture-proposal/` | Dev-only per Luke directive |
-| Auto-creation config flag (`enable_auto_skill_capture`) | `framework/workspace-bootstrap/` | Config primitive is harness-general; flag is inert without dev-sdlc |
+| Auto-creation mechanism | `plugins/loam-skills/skills/skill-capture-proposal/` | UNIVERSAL per Luke 2026-05-04 clarification — any loam user; non-devs especially benefit |
+| Auto-creation config flag (`enable_auto_skill_capture`) | `framework/workspace-bootstrap/` | Config primitive is harness-general; co-located with mechanism it gates |
 | Promotion rubric | `plugins/dev-sdlc/skills/skill-promotion-review/` | Dev-only — Eric doesn't promote skills |
 | Design-note `layered-skill-architecture.md` | `docs/design/` | Mode-agnostic |
 

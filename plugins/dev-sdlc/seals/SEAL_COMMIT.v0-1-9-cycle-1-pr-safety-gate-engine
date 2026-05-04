@@ -1,0 +1,11 @@
+# v0.1.9 Cycle 1 — PR-safety gate engine + override workflow (NEW sub-package plugins/dev-sdlc/pr-safety/); single-component fence on plugins/dev-sdlc/
+
+slug: v0-1-9-cycle-1-pr-safety-gate-engine
+components: dev-sdlc
+baseline: bb592fa
+amendment-commit: 136adc6f8eca113283b5431043066684e190ee16
+plan-doc: docs/rebuild/plans/v0-1-9-cycle-1-pr-safety-gate-engine.md
+acs-satisfied: 9
+smoke: D1 + D2-idempotency + D5 + D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI); classifier accuracy ≥90% on synthetic test set; full-suite green sweep
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

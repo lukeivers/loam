@@ -1,0 +1,11 @@
+# v0.1.8 Cycle 3 — Ruby/Rails first-class adapter (single-component fence: dev-sdlc/odd-extractor)
+
+slug: v0-1-8-cycle-3-ruby-rails-adapter
+components: dev-sdlc
+baseline: f1c762c
+amendment-commit: 2a64b2388f9635714b8b80b9ac35d80a8973f39d
+plan-doc: docs/rebuild/plans/v0-1-8-cycle-3-ruby-rails-adapter.md
+acs-satisfied: 8
+smoke: D1+D2-idempotency+D5+D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

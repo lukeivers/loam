@@ -181,7 +181,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              immediately before this amendment's code commit.
 #              Mirrors amendments #34 / #35 / #36 / #37 / #38
 #              BASELINE-as-HEAD~1 pattern.
-BASELINE = "baa2b1d"
+BASELINE = "926a08b"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

@@ -1,0 +1,39 @@
+# M-FBM operational-health amendment — apply ladder
+
+Apply ladder (per `loam amend apply` + `loam amend seal`):
+BASELINE `c8de8e3` → seal `<seal-sha>`. Two fence components:
+primary-persona advances its `tests/SEAL_COMMIT` sidecar (4 new
+tests covering AC.MFBM-OPS.{1,2,3,6} + worker source change for
+OPS.6 heartbeat emission); workspace-bootstrap advances its
+`tests/SEAL_COMMIT` sidecar (1 new test covering AC.MFBM-OPS.5
+plist Label namespacing regression-pin).
+
+5 new ACs in family AC.MFBM-OPS.*:
+
+  - AC.MFBM-OPS.1 — queue empties under N=10 enqueue load
+    (drain_once end-to-end against file-backed client; FIFO).
+  - AC.MFBM-OPS.2 — service_label function-level contract
+    (workspace-slug Label; raises on unknown kind).
+  - AC.MFBM-OPS.3 — recent-episode floor (drain → episode file
+    with current mtime + body containing user/assistant turns).
+  - AC.MFBM-OPS.5 — scaffold-output plist Label is
+    workspace-slug-namespaced (regression-pin at file level).
+  - AC.MFBM-OPS.6 — worker-heartbeat NDJSON emission every N
+    iterations carrying pid + iteration + queue_depth + ts.
+
+Diagnosis trigger: 2026-05-04 finding that Luke's M-FBM worker
+died on 2026-05-01 + accumulated 175-item queue backlog over 3
+days while structural ACs (`AC.MFBM.*`, `AC.J.*`) passed
+throughout. Per the plan §2 Surface #2 ground-truth check: the
+dispatch's hypothesised plist-Label collision
+(`com.loam.ws.memory-write-worker` hijackable across workspaces)
+was empirically wrong — namespacing was already in place via
+`service_label` (amendment #6). The actual issue caught by
+AC.MFBM-OPS.6 is silent-worker-empty-queue-no-log; AC.MFBM-OPS.5
+retained as regression-pin against future Label-template
+regressions.
+
+See the full narrative at the plan-doc
+(`docs/rebuild/plans/m-fbm-operational-health.md`) and status
+file at
+`/Users/lukeivers/pos3/workspace/.scratch/claude-output/m-fbm-operational-health-status-2026-05-04.md`.

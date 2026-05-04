@@ -1,0 +1,11 @@
+# v0.1.8 Cycle 4b — canonical ruby-rails-payment fixture + Ruby e2e ratification + DRY refactor of repo_sha/slugify/heuristic-helpers into lang/_common/ (single-component fence: dev-sdlc/odd-extractor)
+
+slug: v0-1-8-cycle-4b-ruby-fixture-and-dry-refactor
+components: dev-sdlc
+baseline: c3c5afc
+amendment-commit: 042c3e19134052ad47981dbd90635f67ce73b81a
+plan-doc: docs/rebuild/plans/v0-1-8-cycle-4b-ruby-fixture-and-dry-refactor.md
+acs-satisfied: 8
+smoke: D1+D2-idempotency+D5+D6 exercised against canonical fixture; D3/D4 n/a (one-shot CLI); 375 prior-cycle tests green post-refactor (behaviour preserved)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

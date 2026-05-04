@@ -1,0 +1,11 @@
+# v0.1.8 Cycle 4a — JS/TS/Playwright first-class adapter + jsts-playwright-app fixture (single-component fence: dev-sdlc/odd-extractor)
+
+slug: v0-1-8-cycle-4-jsts-playwright-adapter-and-fixtures
+components: dev-sdlc
+baseline: c2356a6
+amendment-commit: 07033d3a2ab650661b68eb6f27581cbb9bb4fdae
+plan-doc: docs/rebuild/plans/v0-1-8-cycle-4-jsts-playwright-adapter-and-fixtures.md
+acs-satisfied: 7
+smoke: D1+D2-idempotency+D5+D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

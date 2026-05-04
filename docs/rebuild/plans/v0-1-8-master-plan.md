@@ -914,7 +914,7 @@ The places this decomposition is least confident.
 
 | Cycle | Status | Apply SHA | Seal SHA | Notes |
 |---|---|---|---|---|
-| Cycle 1 — odd-extractor scaffolding | (planned) | — | — | NEW component `plugins/dev-sdlc/odd-extractor/`. |
+| Cycle 1 — odd-extractor scaffolding | sealed | `9637b58` | `c1abda1` | NEW sub-package `plugins/dev-sdlc/odd-extractor/`. Plan-doc `e3a20b3`; source-edit BASELINE `b33a0dc`. AC.OREK.{1..7} all green; 56 tests pass. D1+D2-idempotency+D5+D6 smoke exercised; D3/D4 n/a (one-shot CLI). |
 | Cycle 2 — bands + ratification | (planned) | — | — | Two-component fence (odd-extractor + per-project-pm). |
 | Cycle 3 — Ruby/Rails adapter | (planned) | — | — | Highest-risk; halt-trigger at ~5 h. |
 | Cycle 4 — Python adapter + fixtures | (planned) | — | — | DRY aggregator with Ruby. |

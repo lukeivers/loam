@@ -148,7 +148,7 @@ amendment:
 # smoke_outcome at the manifest level; single-component sweep at
 # seal time.
 
-baseline: "<pending — source-edit feat commit SHA fills here>"
+baseline: "c3c5afc"
 
 plan: docs/rebuild/plans/v0-1-8-cycle-4b-ruby-fixture-and-dry-refactor.md
 
@@ -158,7 +158,7 @@ plan: docs/rebuild/plans/v0-1-8-cycle-4b-ruby-fixture-and-dry-refactor.md
 plan_doc_ref: docs/rebuild/plans/v0-1-8-cycle-4b-ruby-fixture-and-dry-refactor.md
 
 ac_count: 8
-smoke_outcome: "D1+D2-idempotency+D5+D6 exercised against canonical ruby-rails-payment fixture; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI); full-suite green sweep — 375 prior-cycle tests pass post-refactor (verifying behaviour preservation)"
+smoke_outcome: "D1+D2-idempotency+D5+D6 exercised against canonical fixture; D3/D4 n/a (one-shot CLI); 375 prior-cycle tests green post-refactor (behaviour preserved)"
 
 components:
   - name: dev-sdlc

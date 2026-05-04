@@ -268,10 +268,34 @@ Reserved for actual amendment commit SHAs as each v0.1.N release lands. Per `fee
 | Release | Status | Tag SHA | Notes |
 |---|---|---|---|
 | v0.1.1 | (in flight; locked content authored in parallel) | — | — |
-| v0.1.2 | (planned) | — | — |
+| v0.1.2 | (in flight) | — | V11.A sealed at `9d58062` (2026-05-03). |
 | v0.1.3 | (planned) | — | — |
 | v0.1.4 | (planned) | — | — |
 | v0.1.5 | (planned) | — | — |
+
+### v0.1.2 — V11.A (orchestrator fix) — sealed 2026-05-03
+
+**Sub-plan:** `docs/rebuild/plans/v0-1-2-V11-A-orchestrator-fix.md`.
+**Manifest:** `docs/rebuild/plans/v0-1-2-V11-A-orchestrator-fix.manifest.yaml` (amendment #120).
+**Status file:** `<pos3>/workspace/.scratch/claude-output/v11a-orchestrator-fix-status-2026-05-03.md`.
+
+| Step | Commit SHA | Notes |
+|---|---|---|
+| Plan-doc | `e7e7925` | Sub-plan-doc; fence-one-no-edit shape per FBE.4 precedent. |
+| Manifest | `d6e5498` | Amendment #120; baseline `e7e7925`; single-component fence on `framework/orchestrator/`. |
+| `loam amend apply` (manual `chore(amend)`) | `1889db6` | Sidecar SEAL_COMMIT 8032348 → e7e7925; BASELINE literal bump. |
+| `loam amend seal` | `9d58062` | Deterministic seal commit. Narrative at `framework/orchestrator/tests/SEAL_COMMIT.notes`. |
+
+**Acceptance summary:**
+- AC.V11.A.1 (plist template `loam.orchestrator`) — verified pre-build (already fixed at `f0c4aa9`).
+- AC.V11.A.2 (`framework/orchestrator/` in install list) — verified pre-build (already present per FBE.4 at `install-from-source.txt:34` + `docs/install-from-source.md:83`).
+- AC.V11.A.3 (smoke runtime contract) — passed all four contracts: PID alive after 5s, socket bound at `/tmp/v11a-smoke/.loam/orchestrator.sock` mode 0600, clean SIGTERM exit 0, empty stderr.
+- AC.V11.A.4 (negative — zero source-side delta) — verified post-seal (`git diff e7e7925..9d58062 --name-only` produces only sidecars + manifest YAML).
+- AC.V11.A.S (fence-one-no-edit) — verified post-seal (4 paths in fence diff; all sidecars + universal-admitted manifest).
+
+**Surfaces recorded (out of V11.A scope; carried forward):**
+- Surface #1: `pos_orchestrator` source-string vocabulary leakage in 4 docstring/help-text/operations-doc sites — FUTURE_IDEAS_DRAFT candidate (consider bundling with FBE.5 Surface #1 dev-tool description scrubs).
+- Surface #5: Luke's installed plist at `~/Library/LaunchAgents/com.loam.orchestrator.plist` is STALE (pre-`f0c4aa9` content + points at `pos3/.venv` not canonical) — operator-hygiene reinstall recipe captured in status file.
 
 ---
 

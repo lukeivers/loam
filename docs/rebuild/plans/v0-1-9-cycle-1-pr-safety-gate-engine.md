@@ -521,3 +521,10 @@ Build proceeds.
 | Apply commit (manifest+apply merged per AC.DPS1.6) | TBD | chore(amend): v0-1-9-cycle-1-pr-safety-gate-engine manifest+apply — dev-sdlc BASELINE+sidecar bump |
 | Seal commit | TBD | chore(seals): v0-1-9-cycle-1-pr-safety-gate-engine — dev-sdlc at <baseline> |
 | Post-seal SHA-record commit (this §14 backfill + master plan §9) | TBD | docs(plans): record v0-1-9-cycle-1 commit SHAs in method-decision register |
+
+### Commit SHAs
+
+- Amendment commit: `136adc6f8eca113283b5431043066684e190ee16` —
+  `chore(amend): v0-1-9-cycle-1-pr-safety-gate-engine manifest+apply — dev-sdlc BASELINE+sidecar bump to bb592fa`
+- Seal commit: `790807dca8fb5e5fd7cfde7d0af1ad536334148b` —
+  `chore(seals): v0-1-9-cycle-1-pr-safety-gate-engine — dev-sdlc at 136adc6`

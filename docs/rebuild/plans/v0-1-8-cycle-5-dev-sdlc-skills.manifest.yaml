@@ -117,7 +117,7 @@ amendment:
 # release-level rollup backfills (STATE.md + roadmap §8 + eric-
 # final §2) only after release-level smoke passes.
 
-baseline: "<PENDING — fill at apply time with source-edit feat SHA>"
+baseline: "1d5c75f"
 
 plan: docs/rebuild/plans/v0-1-8-cycle-5-dev-sdlc-skills.md
 
@@ -127,7 +127,7 @@ plan: docs/rebuild/plans/v0-1-8-cycle-5-dev-sdlc-skills.md
 plan_doc_ref: docs/rebuild/plans/v0-1-8-cycle-5-dev-sdlc-skills.md
 
 ac_count: 8
-smoke_outcome: "D1+D5 exercised against fresh canonical workspace via test_AC_SKILLS_DSDLC1_7 directory walk; D2 idempotency inherited from AC.LAYERED.2; D3/D4 n/a (filesystem state); D6 inherited from v0.1.7 Cycle 3 audit-trail floor; 463 prior dev-sdlc tests green post-cycle (behaviour preserved); ≥7 new test functions across 7 new test files"
+smoke_outcome: "D1+D2 exercised live (14 SKILLs auto-symlinked, idempotent); D3/D4 n/a; D5 inherited from Anthropic native; D6 inherited from v0.1.7 Cycle 3; 463 prior tests + 38 new = 501 green"
 
 components:
   - name: dev-sdlc

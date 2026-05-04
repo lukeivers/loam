@@ -122,7 +122,11 @@ def test_D8_1_service_state_fields_present(tmp_path: Path) -> None:
     assert "memory" in payload.service_state
     assert "orchestrator" in payload.service_state
     # Values are short status strings per the gate's contract.
-    assert payload.service_state["memory"] in {"up", "down", "unknown"}
+    # V11.E item (b): memory admits the additional "not_expected"
+    # sentinel when the memory-graphiti launchd plist is absent at the
+    # canonical location (M-FBM-only stranger workspace; graceful skip
+    # of the TCP probe instead of false-alarm "down").
+    assert payload.service_state["memory"] in {"up", "down", "unknown", "not_expected"}
     assert payload.service_state["orchestrator"] in {"up", "down", "unknown"}
 
 

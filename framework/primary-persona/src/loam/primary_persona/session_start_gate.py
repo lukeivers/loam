@@ -184,7 +184,13 @@ def probe_service_state(workspace_root: Path) -> dict[str, str]:
         uses the cheaper setting since the session-start budget
         aggregates multiple probes.
       - orchestrator: UNIX-socket reachability on the recorded path.
-    Returns a dict with string values: "up" / "down" / "unknown".
+
+    Returns a dict with string values: "up" / "down" / "unknown" /
+    "not_expected". The "not_expected" sentinel (V11.E item (b),
+    Resolution A) signals that the memory-graphiti launchd plist is
+    absent at the canonical location — graphiti is not installed on
+    this host, so probing would false-alarm. M-FBM-only stranger
+    workspaces see "memory: not_expected" instead of "memory: down".
     """
     state: dict[str, str] = {}
     state["memory"] = _probe_memory(workspace_root)
@@ -192,8 +198,35 @@ def probe_service_state(workspace_root: Path) -> dict[str, str]:
     return state
 
 
+# V11.E item (b) — Resolution A: plist-existence detection signal.
+# When the memory-graphiti launchd plist is absent at the canonical
+# location, the workspace is M-FBM-only (file-based memory; v0.1.0
+# default) and graphiti is not expected to respond on its TCP port.
+# Probing in that case false-alarms with `memory: down`. The fix
+# returns `not_expected` instead, signalling the architectural state
+# without false alarm.
+_MEMORY_GRAPHITI_LABEL = "com.loam.memory-graphiti"
+
+
+def _memory_graphiti_plist_path() -> Path:
+    """Canonical location of the memory-graphiti launchd plist.
+
+    Mirrors the path used by the orchestrator-side helper
+    ``pos_session_start.ask_service_manager_to_start`` (single
+    source-of-truth for the detection signal).
+    """
+    return Path.home() / "Library" / "LaunchAgents" / f"{_MEMORY_GRAPHITI_LABEL}.plist"
+
+
 def _probe_memory(workspace_root: Path) -> str:
     from loam.workspace_bootstrap.workspace_paths import pos_subdir
+
+    # V11.E: plist-absence → graceful skip with `not_expected`
+    # sentinel. Same canonical location as the orchestrator-side
+    # helper. Composes with future M-GMP plugin: when the user
+    # installs graphiti, the plist appears and probing re-engages.
+    if not _memory_graphiti_plist_path().exists():
+        return "not_expected"
 
     port = 8765
     port_file = pos_subdir(workspace_root) / "memory-port"

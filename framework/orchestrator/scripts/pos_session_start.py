@@ -130,6 +130,41 @@ def probe_orchestrator(
         return False, f"{type(e).__name__}: {e}"
 
 
+# ---- plist-existence detection (V11.E item (b) — Resolution A) -------
+#
+# Resolution A: plist-existence as the detection signal for "is the
+# memory-graphiti sidecar expected on this host?". M-FBM-only stranger
+# workspaces don't run graphiti — the launchd plist is absent at the
+# canonical location. Probing memory in that case false-alarms with
+# `memory: down`. The fix gates the probe on plist existence; absent →
+# graceful skip (`memory_expected: False` in the result; no probe call;
+# no false-alarm warning text). Self-correcting for future M-GMP: when
+# graphiti ships as a plugin and the user installs it, the plist
+# appears, probing re-engages naturally with no further code change.
+#
+# Mirrors the plist-check in `ask_service_manager_to_start` line 162–164
+# (same path, same semantics) — single source-of-truth for the signal.
+
+
+def _is_memory_expected(
+    *,
+    launch_agents_dir: Path | None = None,
+    memory_label: str = "com.loam.memory-graphiti",
+) -> bool:
+    """Return True iff the memory-graphiti launchd plist exists.
+
+    The canonical location is ``~/Library/LaunchAgents/<label>.plist``;
+    test callers may override ``launch_agents_dir`` for isolation.
+
+    Per V11.E Resolution A: plist-installed-or-not is the ground-truth
+    signal for "is graphiti expected on this host." When absent, the
+    session-start memory probe gracefully skips rather than reporting a
+    false `memory: down`.
+    """
+    dir_ = launch_agents_dir or (Path.home() / "Library" / "LaunchAgents")
+    return (dir_ / f"{memory_label}.plist").exists()
+
+
 # ---- service-manager bring-up (FD-safe) ----------------------------
 
 
@@ -186,6 +221,9 @@ def run_session_start(
     platform_override: str | None = None,
     bring_up_timeout_s: float = 15.0,
     bring_up_poll_interval_s: float = 0.5,
+    launch_agents_dir: Path | None = None,
+    memory_label: str = "com.loam.memory-graphiti",
+    is_memory_expected_fn: Any | None = None,
 ) -> dict[str, Any]:
     """Main entry. Returns a dict for caller consumption.
 
@@ -193,19 +231,36 @@ def run_session_start(
         {
           "status": "ready" | "partial" | "platform-unsupported",
           "memory_up": bool,
+          "memory_expected": bool,  # V11.E: False when plist absent
           "orchestrator_up": bool,
           "additional_context": "pos v2 ready" | <named diagnostic>,
           "exit_code": int,
         }
+
+    V11.E item (b) — Resolution A: when the launchd plist for
+    ``memory_label`` is absent at ``launch_agents_dir`` (defaults to
+    ``~/Library/LaunchAgents/``), memory is treated as not-expected.
+    The probe is skipped; ``memory_up`` is reported True (interpreted
+    as "not blocking"); ``memory_expected`` is False; the
+    ``additional_context`` warning text omits ``memory_up=...`` and
+    instead carries ``memory_expected=False``. This closes the v0.1.0
+    M-FBM-only stranger-workspace false-alarm.
     """
     plat = platform_override or detect_platform()
     pm = probe_memory_fn or (lambda: probe_memory())
     po = probe_orchestrator_fn or (lambda: probe_orchestrator())
+    me = is_memory_expected_fn or (
+        lambda: _is_memory_expected(
+            launch_agents_dir=launch_agents_dir,
+            memory_label=memory_label,
+        )
+    )
 
     if plat != "macos":
         return {
             "status": "platform-unsupported",
             "memory_up": False,
+            "memory_expected": False,
             "orchestrator_up": False,
             "additional_context": (
                 f"pos v2 session-start: platform-unsupported:{plat} — "
@@ -215,30 +270,49 @@ def run_session_start(
             "exit_code": 2,
         }
 
-    m_ok, m_lat, m_err = pm()
+    memory_expected = bool(me())
+    if memory_expected:
+        m_ok, m_lat, m_err = pm()
+    else:
+        # V11.E: plist absent → graceful skip. Treat memory as not
+        # blocking; probe is not called.
+        m_ok, m_lat, m_err = True, 0.0, None
     o_ok, o_err = po()
     if m_ok and o_ok:
         return {
+            # V11.E: memory_up reports the not-blocking state — True
+            # when probed-and-up OR when not-expected (graceful skip).
+            # memory_expected disambiguates the two cases for callers
+            # that need to distinguish (e.g., observability).
             "status": "ready",
             "memory_up": True,
+            "memory_expected": memory_expected,
             "orchestrator_up": True,
             "additional_context": "pos v2 ready",
             "exit_code": 0,
         }
 
-    # Ask the service manager to bring things up (non-blocking).
+    # Ask the service manager to bring things up (non-blocking). When
+    # memory is not expected, we still ask for the orchestrator label;
+    # ask_service_manager_to_start iterates both labels but the
+    # memory_label warning is informative (plist not installed) and is
+    # filtered from additional_context below.
     smf = service_manager_fn or (lambda: ask_service_manager_to_start(plat=plat))
     warnings = smf()
 
     # Poll for them to become healthy, up to the budget.
     deadline = time.monotonic() + float(bring_up_timeout_s)
     while time.monotonic() < deadline:
-        m_ok, m_lat, m_err = pm()
+        if memory_expected:
+            m_ok, m_lat, m_err = pm()
+        else:
+            m_ok, m_lat, m_err = True, 0.0, None
         o_ok, o_err = po()
         if m_ok and o_ok:
             return {
                 "status": "ready",
                 "memory_up": True,
+                "memory_expected": memory_expected,
                 "orchestrator_up": True,
                 "additional_context": "pos v2 ready",
                 "exit_code": 0,
@@ -247,16 +321,38 @@ def run_session_start(
 
     # Did not come up within the budget — return partial but keep
     # additionalContext helpful; the supervisor will escalate loudly.
+    # V11.E: when memory is not expected, the warning text shape
+    # carries memory_expected=False instead of memory_up=... (which
+    # would be a misleading false-alarm). The "plist not installed"
+    # warning from ask_service_manager_to_start for the memory label
+    # is also filtered out in that case (it names the expected state).
+    if memory_expected:
+        services_token = (
+            f"(memory_up={m_ok}, orchestrator_up={o_ok})"
+        )
+        kept_warnings = warnings
+    else:
+        services_token = (
+            f"(memory_expected=False, orchestrator_up={o_ok})"
+        )
+        kept_warnings = [
+            w
+            for w in warnings
+            if f"{memory_label}.plist not installed" not in w
+        ]
     return {
+        # V11.E: memory_up reports the not-blocking state — True when
+        # not-expected (graceful skip), m_ok otherwise.
         "status": "partial",
-        "memory_up": m_ok,
+        "memory_up": True if not memory_expected else m_ok,
+        "memory_expected": memory_expected,
         "orchestrator_up": o_ok,
         "additional_context": (
             "pos v2 session-start: services did not come up within "
             f"{bring_up_timeout_s:.0f}s "
-            f"(memory_up={m_ok}, orchestrator_up={o_ok}). Supervisor "
+            f"{services_token}. Supervisor "
             "will escalate loudly on start. "
-            f"Warnings: {', '.join(warnings) if warnings else 'none'}."
+            f"Warnings: {', '.join(kept_warnings) if kept_warnings else 'none'}."
         ),
         "exit_code": 3,
     }

@@ -58,6 +58,9 @@ def test_ready_path_when_both_services_up() -> None:
         probe_orchestrator_fn=o,
         service_manager_fn=lambda: [],
         platform_override="macos",
+        # V11.E: opt into legacy "memory expected" semantics so the
+        # probe runs (mirrors a workspace where graphiti IS installed).
+        is_memory_expected_fn=lambda: True,
     )
     assert r["status"] == "ready"
     assert r["memory_up"] is True
@@ -106,6 +109,8 @@ def test_service_manager_invoked_when_services_down() -> None:
         platform_override="macos",
         bring_up_timeout_s=1.0,
         bring_up_poll_interval_s=0.01,
+        # V11.E: memory expected → probe actually runs.
+        is_memory_expected_fn=lambda: True,
     )
     assert sm_called["n"] == 1  # service manager was asked to start
     assert r["status"] == "ready"
@@ -121,7 +126,116 @@ def test_partial_status_when_services_dont_come_up() -> None:
         platform_override="macos",
         bring_up_timeout_s=0.05,
         bring_up_poll_interval_s=0.01,
+        # V11.E: legacy semantics — probe runs and reports memory down.
+        is_memory_expected_fn=lambda: True,
     )
     assert r["status"] == "partial"
     assert r["exit_code"] == 3
     assert "Supervisor will escalate loudly" in r["additional_context"]
+
+
+# ---- AC.V11.E.1 — graphiti probe graceful-skip (Resolution A) -------
+
+
+def test_AC_V11_E_1_memory_skipped_when_plist_absent() -> None:
+    """When the memory-graphiti launchd plist is absent at the canonical
+    location, ``run_session_start`` skips the memory probe entirely:
+    ``probe_memory_fn`` is not called; ``memory_expected`` is False;
+    ``status`` is 'ready' if the orchestrator is up; the additional
+    context warning text omits ``memory_up=...``.
+
+    Per V11.E item (b) Resolution A — plist-existence-as-detection-
+    signal. Closes the M-FBM-only stranger-workspace false-alarm.
+    """
+    pm_called = {"n": 0}
+
+    def pm_should_not_run():
+        pm_called["n"] += 1
+        return False, 0.0, "ConnectionRefused"
+
+    _, o = _probe_fn(orchestrator=True)
+    r = run_session_start(
+        probe_memory_fn=pm_should_not_run,
+        probe_orchestrator_fn=o,
+        service_manager_fn=lambda: [],
+        platform_override="macos",
+        is_memory_expected_fn=lambda: False,
+    )
+    assert pm_called["n"] == 0, "memory probe ran despite plist-absent"
+    assert r["memory_expected"] is False
+    assert r["status"] == "ready"
+    assert r["exit_code"] == 0
+    assert r["additional_context"] == "pos v2 ready"
+
+
+def test_AC_V11_E_1_partial_warning_text_drops_memory_up_when_not_expected() -> None:
+    """When memory is not expected AND the orchestrator is down, the
+    partial-status warning text carries ``memory_expected=False`` rather
+    than ``memory_up=...`` (which would be a misleading false-alarm).
+    The ``com.loam.memory-graphiti.plist not installed`` warning is
+    filtered from ``additional_context`` in the not-expected case.
+    """
+    _, o = _probe_fn(orchestrator=False)
+    r = run_session_start(
+        probe_memory_fn=lambda: (True, 0.0, None),  # never called
+        probe_orchestrator_fn=o,
+        service_manager_fn=lambda: [
+            "com.loam.memory-graphiti.plist not installed at /tmp/x",
+            "com.loam.orchestrator.plist not installed at /tmp/y",
+        ],
+        platform_override="macos",
+        bring_up_timeout_s=0.05,
+        bring_up_poll_interval_s=0.01,
+        is_memory_expected_fn=lambda: False,
+    )
+    assert r["status"] == "partial"
+    assert r["memory_expected"] is False
+    # Warning string carries the not-expected token.
+    assert "memory_expected=False" in r["additional_context"]
+    assert "memory_up=" not in r["additional_context"]
+    # The memory-plist-not-installed warning is filtered (it's the
+    # expected state for an M-FBM-only workspace).
+    assert "memory-graphiti.plist not installed" not in r["additional_context"]
+    # The orchestrator-plist warning is preserved (real problem).
+    assert "orchestrator.plist not installed" in r["additional_context"]
+
+
+def test_AC_V11_E_4_memory_probe_runs_when_plist_present() -> None:
+    """Negative AC: when the plist IS present, behaviour is unchanged
+    from pre-V11.E. The memory probe runs; up/down outcome is reported
+    per the probe result; ``memory_expected`` is True.
+    """
+    m, o = _probe_fn(memory=True, orchestrator=True)
+    r = run_session_start(
+        probe_memory_fn=m,
+        probe_orchestrator_fn=o,
+        service_manager_fn=lambda: [],
+        platform_override="macos",
+        is_memory_expected_fn=lambda: True,
+    )
+    assert r["memory_expected"] is True
+    assert r["memory_up"] is True
+    assert r["status"] == "ready"
+    assert r["exit_code"] == 0
+
+
+def test_AC_V11_E_3_is_memory_expected_uses_canonical_location(
+    tmp_path,
+) -> None:
+    """The plist-existence helper checks the canonical launchd location
+    ``<launch_agents_dir>/<memory_label>.plist``. Test parameterises
+    ``launch_agents_dir`` (matching ``ask_service_manager_to_start``'s
+    existing pattern) for isolation.
+    """
+    from scripts.pos_session_start import _is_memory_expected
+
+    # Empty dir → not expected.
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert _is_memory_expected(launch_agents_dir=empty) is False
+
+    # Touch the plist → expected.
+    present = tmp_path / "present"
+    present.mkdir()
+    (present / "com.loam.memory-graphiti.plist").write_text("<plist/>")
+    assert _is_memory_expected(launch_agents_dir=present) is True

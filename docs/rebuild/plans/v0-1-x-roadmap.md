@@ -70,7 +70,7 @@ Owner-decision bottlenecks are listed in §5; most are minor and default to a re
 
 ---
 
-### v0.1.3 — "Memory becomes pluggable"
+### v0.1.5 — "Memory becomes pluggable"
 
 **What this release is about.** M-FBM (file-based memory) shipped at v0.1.0 with a `MemoryProvider` Protocol stub already authored as the seam for future providers. v0.1.3 widens that Protocol surface and ships the first two non-file-based providers: an Anthropic Memory tool adapter (Lens 1 at its purest — Anthropic's beta `memory_20250818` tool plugged in as a provider), and progressive-disclosure retrieval (L1/L2/L3 — preview-then-expand) that reduces context burn on UPS-hook retrieval. Three small amendments share one Protocol surface, so they ship as one release. Memory-as-pluggable is the load-bearing claim that makes M-GMP (graphiti as plugin, deferred to v0.2) a clean addition rather than a re-architecture.
 
@@ -88,9 +88,9 @@ Owner-decision bottlenecks are listed in §5; most are minor and default to a re
 
 ---
 
-### v0.1.4 — "loam composes with raw Claude Code"
+### v0.1.3 — "loam composes with raw Claude Code"
 
-**What this release is about.** Lens 1 (Claude-leverage-first) is the always-on lens that asks "what Claude capability does this lean on or extend?" v0.1.0 ships zero SKILL.md packages — the harness's "translation layer" function is implicit in the persona prompt, not exposed as discoverable skills that compose with raw Claude Code. v0.1.4 fixes this: 3–5 SKILL.md packages capture loam's load-bearing translation patterns, AND ships the ODD-reverse-engineering skill (which is itself a skill — shape-coherent with the package set) AND the first of three planned design-notes (`primary-persona-shape.md`). Coherent bundle: each item is "loam's value made discoverable to people who haven't installed loam." Strangers running raw Claude Code can `pip install loam-skills` and benefit from loam's patterns without committing to the full harness.
+**What this release is about.** Lens 1 (Claude-leverage-first) is the always-on lens that asks "what Claude capability does this lean on or extend?" v0.1.0 ships zero SKILL.md packages — the harness's "translation layer" function is implicit in the persona prompt, not exposed as discoverable skills that compose with raw Claude Code. v0.1.3 fixes this: 3–5 SKILL.md packages capture loam's load-bearing translation patterns, AND ships the ODD-reverse-engineering skill (which is itself a skill — shape-coherent with the package set) AND the first of three planned design-notes (`primary-persona-shape.md`). Coherent bundle: each item is "loam's value made discoverable to people who haven't installed loam." Strangers running raw Claude Code can `pip install loam-skills` and benefit from loam's patterns without committing to the full harness.
 
 **Bundle:**
 
@@ -106,7 +106,7 @@ Owner-decision bottlenecks are listed in §5; most are minor and default to a re
 
 ---
 
-### v0.1.5 — "The harness gets self-aware about roles"
+### v0.1.4 — "The harness gets self-aware about roles"
 
 **What this release is about.** Three threads converge here that all touch "who's doing what." First, subagent personas — `.claude/agents/<name>.md` files that prime dispatched background agents with methodology fluency, so dispatches stay scope-only per `feedback_agent_prompts_scope_only`. Currently every dispatch re-derives fluency in-prompt; the persona files amortise that across years of dispatches. Second, the orchestrator-fix from v0.1.2 unblocks three sealed amendments (#38/#39/#40 — objective-tracker schema widening + workspace-bootstrap tracker seed + primary-persona tracker-context contributor) that surface tracker-context into the persona's session-start so the persona knows what background work is in flight. Third, the remaining two R.5 design notes (`file-based-memory-rationale.md` + `odd-for-delegation.md`) close the design-notes voice so a reader can find Luke's reasoning across the load-bearing decisions. Coherent bundle: roles get named (subagents), in-flight work gets surfaced (tracker-context contributor), and design reasoning gets articulated (design notes).
 

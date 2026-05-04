@@ -101,7 +101,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "<set-by-build-agent-post-source-commit>"
+baseline: "d8e3f01"
 
 plan: docs/rebuild/plans/v0-1-9-cycle-3-skills-and-cleanup.md
 
@@ -111,7 +111,7 @@ plan: docs/rebuild/plans/v0-1-9-cycle-3-skills-and-cleanup.md
 plan_doc_ref: docs/rebuild/plans/v0-1-9-cycle-3-skills-and-cleanup.md
 
 ac_count: 11
-smoke_outcome: "All 6 dimensions exercised (D1 12-SKILL discovery + allowlist 1-entry; D2 deterministic; D3/D4 filesystem-state; D5 native discovery + v0.1.7 Cycle 3 mechanism; D6 audit-trail-floor inherited); ≥508 tests green (501 inherited + 7 new); release-level SOFT smoke gate runs post-seal"
+smoke_outcome: "All 6 dims (D1 12-SKILL + 1-entry allowlist; D2/D3/D4 filesystem; D5 native discovery; D6 audit-floor); 71 cycle tests green; release-level SOFT smoke runs post-seal"
 
 components:
   - name: dev-sdlc

@@ -1,5 +1,5 @@
 ---
-description: Author an ODD-shaped plan-doc at `docs/rebuild/plans/<slug>.md` BEFORE any source code is written for a sealed-component amendment cycle. The plan-doc carries Outcome shape + Lens checks + Single-component fence + AC family (every AC explicit) + Halt-and-surface BEFORE build + Smoke (six dimensions) + Out of scope + Halt triggers (in-flight) + Bookkeeping + F2 RF + Provenance + Acceptance gate + `## 14. Method-decision record` (per AC.D-sa.7 lint). Use when the persona is about to start any sealed-component amendment cycle. Composes on `feedback_plan_before_code` (the hard rule); this skill ships the structural skeleton.
+description: Author an ODD-shaped plan-doc at `docs/rebuild/plans/<slug>.md` BEFORE any source code is written for a sealed-component amendment cycle. The plan-doc carries Outcome shape + Lens checks + Single-component fence + AC family (every AC explicit) + Halt-and-surface BEFORE build + Smoke (six dimensions) + Out of scope + Halt triggers (in-flight) + Bookkeeping + F2 RF + Provenance + Acceptance gate + `## 14. Method-decision record` (per AC.D-sa.7 lint). Trim discipline applied 2026-05-05: master plan §3 carries the cycle decomposition (light per-cycle entry + AC family seed); sub-plan §4 carries the full AC enumeration; sub-plan §5 build dispatch brief drops to a one-paragraph stub (briefs are authored inline at dispatch time per dispatch-brief-authoring SKILL). Use when the persona is about to start any sealed-component amendment cycle. Composes on `feedback_plan_before_code` (the hard rule); this skill ships the structural skeleton.
 ---
 
 # plan-before-code-author
@@ -144,6 +144,49 @@ Skip when:
 15. **Commit the plan-doc + manifest as a single
     `docs(plans):` commit BEFORE source code.** This is the
     gate. Per `loam-amend-cycle` skill step 4.
+
+## Trim discipline (Luke 2026-05-05)
+
+The structural skeleton above operationalises the
+plan-doc shape; the trim discipline ratified 2026-05-05
+governs **what goes inside the sections** when the
+plan-doc is part of a master/sub-plan pair.
+
+**Sub-plan §4 (AC family) carries the full AC
+enumeration.** Every AC named with acceptance text +
+pytest path. The master plan §3 cycle-decomposition entry
+carries only an AC family seed (one-line summary naming
+`AC.<FAMILY>.*` + the load-bearing concerns). Do NOT
+duplicate the full AC.X.N enumeration in the master plan
+§3 entry — it drifts from sub-plan §4 over the cycle's
+life and creates a stale parallel surface.
+
+**Build dispatch brief drops to a stub paragraph.** Some
+legacy sub-plan-docs included a "§5 — Build dispatch
+brief" section (between AC family and halt-and-surface)
+enumerating the dispatch operational fields (WD, manifest
+schema, model rationale, halt triggers). With the trim
+discipline, this is dropped; the section is replaced by
+a one-paragraph stub:
+
+> Build dispatch brief authored inline by dispatcher at
+> dispatch time per `dispatch-brief-authoring` SKILL.
+
+The dispatcher's brief at dispatch time is the
+source-of-truth — the dispatch wrapper carries fence +
+ACs + halt triggers + model rationale + WD. Keeping a
+parallel build dispatch brief in the plan-doc creates
+drift between what's planned and what's actually
+dispatched.
+
+**SHA backfill centralizes at master plan §9.** The
+master plan §9 method-decision register carries the
+canonical per-cycle SHA backfill table. Sub-plan §14
+keeps the cycle's own commit ladder (plan-doc / source /
+apply / seal SHAs) for the cycle-doc audit trail.
+STATE.md SHIPPED entries summarize (cycle count + key
+seal SHAs + tests-green count + smoke verdict) without
+repeating the full ladder.
 
 ## Graceful degradation
 

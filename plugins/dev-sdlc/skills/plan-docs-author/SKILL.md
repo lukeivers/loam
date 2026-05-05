@@ -1,5 +1,5 @@
 ---
-description: Author a plan-doc per the dev-sdlc methodology — the structural execution of `feedback_plan_before_code`'s "every build writes a plan to docs/rebuild/plans/<slug>.md BEFORE code" rule. Plan-doc carries objective + scope + AC family + halt triggers + smoke + bookkeeping + F2 RF + provenance + acceptance gate + `## 14.` method-decision register (per AC.D-sa.7 lint regex). Distinct from `plan-before-code-author` (which carries the WHEN — the rule that a plan must precede code); this skill carries the HOW-of-authoring — the section-by-section execution per the methodology. Use whenever a sealed-component or major-feature build is about to start in a loam dev-mode workspace.
+description: Author a plan-doc per the dev-sdlc methodology — the structural execution of `feedback_plan_before_code`'s "every build writes a plan to docs/rebuild/plans/<slug>.md BEFORE code" rule. Plan-doc carries objective + scope + AC family + halt triggers + smoke + bookkeeping + F2 RF + provenance + acceptance gate + `## 14.` method-decision register (per AC.D-sa.7 lint regex). Distinct from `plan-before-code-author` (which carries the WHEN — the rule that a plan must precede code); this skill carries the HOW-of-authoring — the section-by-section execution per the methodology. Trim discipline applied 2026-05-05: master plan §3 carries cycle decomposition (light per-cycle entry + AC family seed only); sub-plan §4 carries the AC enumeration; §4 per-cycle dispatch briefs drop to a stub paragraph (briefs are authored inline at dispatch time); SHA backfill centralizes at master plan §9. Use whenever a sealed-component or major-feature build is about to start in a loam dev-mode workspace.
 ---
 
 # plan-docs-author
@@ -242,12 +242,78 @@ When raw Claude Code without loam dev-sdlc plugin:
   a bad outcome, the plan-doc is the right surface to revisit
   (don't terminate at "it's the locked design").
 
+## Master plan vs sub-plan shape (trim discipline, Luke 2026-05-05)
+
+Master plans (multi-cycle plan-docs at e.g.
+`docs/rebuild/plans/v0-X-Y-master-plan.md`) decompose into
+cycle sub-plan-docs. The trim discipline ratified
+2026-05-05 makes the master/sub-plan partition strict:
+
+**Master plan §3 — cycle decomposition (light per-cycle entry).**
+Each cycle entry carries:
+
+- **Theme** — one sentence.
+- **Scope-tightening** — how this cycle's AC is strictly
+  tighter than the parent's.
+- **Fence** — PRIMARY component + read-only compose-points.
+- **AC family seed** — one-line summary naming the AC family
+  (`AC.<FAMILY>.*`) and the load-bearing concerns it covers.
+  **Full AC enumeration is the cycle sub-plan-doc's §4
+  responsibility, NOT the master plan's.**
+- **Smoke dimensions** — one line listing covered + inherited
+  + n/a dimensions.
+- **Dependencies** — one line.
+- **Out-of-scope** — one line.
+- **AI-time band** — one line per the duration-estimation
+  rubric (`wall_clock_minutes ≈ tool_calls × 0.1–0.15`).
+- **Eric-relevance** (or persona-relevance) — one line,
+  optional.
+
+Master plan §3 entries do NOT carry: full AC.X.N enumeration
+(sub-plan §4 covers); per-cycle quality-bar audit (redundant
+with §6 honest doubts + §5 release smoke gate at master-plan
+altitude).
+
+**Master plan §4 — per-cycle dispatch briefs.** Replaced
+with a one-paragraph stub:
+
+> Per-cycle dispatch briefs are authored inline at dispatch
+> time per the dispatch-brief-authoring SKILL. Source-of-truth
+> for fence + ACs + smoke + AI-time + out-of-scope lives at §3
+> above + the cycle sub-plan-doc. Common shape: WD <canonical
+> path>; LOAD `docs/odd-llm-grounding.lean.md` FIRST;
+> principles per dispatch-brief-authoring SKILL; manifest
+> schema v3; loam amend apply (NOT --amend); single semantic
+> commit; short-form seal; §14 backfill separate; master plan
+> §9 backfill on seal.
+
+The dispatch wrapper carries fence + ACs + halt triggers +
+model-rationale at dispatch time. Stale dispatch briefs in
+the master plan drift from the true dispatch and cause more
+rework than they save.
+
+**Master plan §9 — canonical SHA register.** Master plan §9
+carries the per-cycle SHA backfill table (Apply SHA / Seal
+SHA per cycle). STATE.md SHIPPED entries summarize (cycle
+count + key seal SHAs + tests-green count + smoke verdict)
+without repeating the full apply / seal / §14 / master plan
+§9 ladder. Sub-plan §14 keeps the cycle's own commit ladder
+for the cycle-doc audit trail.
+
+**Sub-plan §5 — build dispatch brief** — replaced by a
+one-paragraph stub: *"Build dispatch brief authored inline
+by dispatcher at dispatch time per dispatch-brief-authoring
+SKILL."*
+
+When this skill is applied to a master plan, the 14-section
+ladder above still anchors but §3 expands into the
+cycle-decomposition shape; §4 drops to the stub; §9 carries
+the SHA register. When applied to a sub-plan, the 14-section
+ladder applies as-is, full AC enumeration in §4, §5 drops
+to the dispatch-brief stub.
+
 ## Out of scope
 
-- Master-plan-specific structure — master plans have a §3
-  cycle decomposition + §9 method-decision register that this
-  skill doesn't enumerate; reference v0.1.8 / v0.1.9 master
-  plans for shape.
 - The AC.D-sa.7 lint mechanism's implementation — this skill
   captures the OUTPUT (the `## 14.` heading); the lint
   regex's source lives in dev-sdlc methodology code.

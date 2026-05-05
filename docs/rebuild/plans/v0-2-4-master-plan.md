@@ -133,31 +133,17 @@ Three cycles. Each: theme, scope-tightening relative to v0.2.4 parent, fence, AC
 
 **Fence.** PRIMARY `plugins/dev-sdlc/odd-extractor/`. Read-only compose-points: `framework/per-project-pm/` (v0.1.7 PM batch API); `framework/cost-governance/` (LLM-judge budget).
 
-**AC family seed: AC.COMPINT.\* (Completeness interview).**
+**AC family seed.** `AC.COMPINT.*` — augmented-set Pydantic shape (additive `Objective.source` enum; `AugmentedObjectiveSet` container), hybrid missing-objective detection (heuristic pre-pass + LLM-judge cap 5; §self-checks 1-5 applied prompt-side), PM batch API interview surface (one-question-at-a-time per AC.QSURF.1; three question shapes — confirm/flag-missing/free-form-add), interview-added objectives default PLAUSIBLE, persistence at `<workspace>/.loam/extractions/<repo-id>/augmented-objectives.yaml`, audit-log event_kinds for every interview action, cost band $0.20 default ($0.05–$0.50 halt), resumability mirroring v0.2.1 D3, component tests on 3+ synthetic fixtures. Full enumeration in cycle sub-plan-doc §4.
 
-- **AC.COMPINT.1** — Augmented set Pydantic shape: additive `source: Literal["extracted", "added_by_user", "flagged_by_persona"]` field on `Objective` (default `"extracted"`). New `AugmentedObjectiveSet` container: extracted-list + interview-added-list + interview-audit-trail.
-- **AC.COMPINT.2** — Missing-objective LLM-judge over `(extracted objectives, survey context, production-stake profile, repo metadata)` proposes 0-N candidates at outcome altitude. Cap: 5 per run. Each carries text + rationale + confidence (HIGH/MEDIUM/LOW). §self-checks 1-5 applied prompt-side.
-- **AC.COMPINT.3** — Heuristic pre-pass (cheap; before LLM): production-stake without security-shape objective → flag; compliance-mentioned-in-survey without compliance-shape → flag; payment-related symbols without data-protection objective → flag. Feeds LLM-judge as priors; LLM may add or drop.
-- **AC.COMPINT.4** — Interview surface consumes `PMRuntime.enqueue_decision` + `surface_next_questions_batch(n=1)` + `record_response` per v0.1.7 AC.QSURF.1. ONE question per candidate. Confirm-extracted-VERIFIED skipped by default (user toggle to confirm all). NO question-bombing.
-- **AC.COMPINT.5** — Three question shapes: (a) confirm-extracted "Extracted: '<text>' (band: <V/P/H>). (1) Confirm (2) Adjust: <free-form> (3) Reject." (b) flagged-missing "Persona flagged: '<text>'. Rationale: <r>. (1) Add (band: PLAUSIBLE) (2) Skip (3) Adjust: <free-form>." (c) free-form-add "Anything else? (blank to skip)" — once after flagged-missing pass.
-- **AC.COMPINT.6** — User-added objectives enter PLAUSIBLE; v0.2.3 ratify flow handles P→V (no new ratification surface). User-flagged-V at interview-time blocked per AC.OBJRAT.2 (backing required).
-- **AC.COMPINT.7** — Persistence at `<workspace>/.loam/extractions/<repo-id>/augmented-objectives.yaml`; round-trips Pydantic; D5-survives; schema-versioned for v0.2.5 forward-compat.
-- **AC.COMPINT.8** — Audit-log event_kinds: `completeness_interview_question_asked` / `*_response_recorded` / `objective_added_via_interview` / `*_adjusted_*` / `*_rejected_*` / `completeness_interview_completed`. Schema mirrors v0.2.3 audit-log.
-- **AC.COMPINT.9** — Cost band: $0.20 default per interview (~4 model calls × ~5K tokens at Sonnet rates). Halt outside $0.05-$0.50.
-- **AC.COMPINT.10** — Resumability: kill mid-batch → re-invoke reads audit-log + persisted set, resumes at next unanswered candidate. Mirrors v0.2.1 D3 resume.
-- **AC.COMPINT.11** — Component tests against 3+ synthetic fixtures (production-stake-no-security; survey-mentions-compliance-no-compliance-objective; clean-no-flagging). Each exercises detection + interview + persistence.
+**Smoke dimensions.** D1 cold-state ✓; D5 cross-session ✓; D6 telemetry-floor ✓; D2/D3/D4 inherited.
 
-**Smoke dimensions.** D1 cold-state ✓ (fresh fixture → interview runs → augmented-objectives.yaml present); D5 cross-session ✓ (resume across `/clear`); D6 telemetry-floor ✓ (per-interview audit log); D2/D3/D4 inherited.
-
-**Dependencies.** v0.2.3 (Objective shape); v0.1.7 PM batch API; v0.1.6 cost-governance; v0.2.2 grounding-doc auto-load (load-bearing for LLM-judge altitude).
+**Dependencies.** v0.2.3 (Objective shape); v0.1.7 PM batch API; v0.1.6 cost-governance; v0.2.2 grounding-doc auto-load.
 
 **Out-of-scope.** Gap analysis (Cycle 2); build-next (Cycle 3); negative-alignment (v0.2.6+); auto-promotion (never).
 
 **AI-time band.** ~12-20 min wall-clock (~80-130 tool calls × 0.1-0.15). Variability: LLM-judge prompt design + interview-surface composition.
 
 **Eric-relevance.** Cycle 1 flags Eric's auth-bypass concern as missing security objective. Production-stake (Q4=Yes) + survey §5 auth-middleware findings + no security-shape objective in extracted set = high-confidence flag. Eric adds → set augmented → Cycle 2 surfaces backing gap.
-
-**Quality-bar audit.** Detection fully wired (heuristic + LLM-judge); PM batch API consumer; persistence schema-versioned; resumability + audit-log per event. **No partial features.** ✓
 
 ---
 
@@ -169,19 +155,9 @@ Three cycles. Each: theme, scope-tightening relative to v0.2.4 parent, fence, AC
 
 **Fence.** PRIMARY `plugins/dev-sdlc/odd-extractor/`. New `gap_analysis.py`. Read-only compose: `backing_map.py` + `spec.py` + adapter evidence-rows.
 
-**AC family seed: AC.GAPAN.\* (Gap analysis).**
+**AC family seed.** `AC.GAPAN.*` — `Gap` + `GapInventory` Pydantic shapes (two-category Literal, STRONG/WEAK confidence orthogonal to objective banding), `analyze_gaps()` over (augmented_objectives, backing_map, evidence_rows) with orphan-cluster collapse, confidence rule (STRONG = V/P + empty-backing OR non-test orphan; WEAK = HYPOTHESISED OR test/config orphan), persistence at `<workspace>/.loam/extractions/<repo-id>/gap-inventory.yaml`, audit-log event_kinds, CLI `loam odd-extract gaps <workspace>`, forward-compat `Gap.negative_alignment_evidence` field (null at v0.2.4), component tests on 4 synthetic fixtures (clean / category-a-only / category-b-only / mixed). Full enumeration in cycle sub-plan-doc §4.
 
-- **AC.GAPAN.1** — `Gap` Pydantic: `gap_id` (`G.<category>.<n>`), `category` (Literal of two), `text`, `objective_id` (set if category-a; null else), `evidence_rows` (set if category-b), `confidence: STRONG | WEAK` (orthogonal to objective banding), `rationale`.
-- **AC.GAPAN.2** — `GapInventory` container: two named lists + `analysis_metadata` (timestamp + source SHAs + counts).
-- **AC.GAPAN.3** — `analyze_gaps(augmented_objectives, backing_map, evidence_rows) -> GapInventory`. (a) For each objective, lookup backing-map; emit category-a if no entry OR all rows WEAK OR HYPOTHESISED-with-empty-rows. (b) For each evidence-row, check if any backing-map entry references it; emit category-b if not. Orphans in same file/symbol-cluster collapse into one Gap with multi-row evidence.
-- **AC.GAPAN.4** — Confidence rule: STRONG when V/P objective with empty backing OR orphan in non-test non-config code; WEAK when HYPOTHESISED objective with empty backing OR orphan in test/config code (may not need ladder per ODD §2.5 nuance).
-- **AC.GAPAN.5** — Persistence at `<workspace>/.loam/extractions/<repo-id>/gap-inventory.yaml`; Pydantic round-trip; D5-survives.
-- **AC.GAPAN.6** — Audit-log event_kinds: `gap_analysis_started` / `*_completed` / `gap_inventory_persisted`; notes carries category counts.
-- **AC.GAPAN.7** — CLI: `loam odd-extract gaps <workspace>` reads existing artefacts; runs analysis; writes inventory + stdout summary (per-category count + top-3 STRONG from each).
-- **AC.GAPAN.8** — Forward-compat: optional `Gap.negative_alignment_evidence` field (null at v0.2.4); v0.2.6+ uses for the third gap category.
-- **AC.GAPAN.9** — Component tests against 4 synthetic fixtures: clean (both empty); category-a-only; category-b-only; mixed. Verify shape + confidence rule.
-
-**Smoke dimensions.** D1 cold-state ✓ (fresh fixture → inventory + stdout summary); D5 ✓ (survives `/clear`; idempotent re-run); D6 ✓ (per-analysis audit-log); D2/D3/D4 inherited.
+**Smoke dimensions.** D1 cold-state ✓; D5 ✓; D6 ✓; D2/D3/D4 inherited.
 
 **Dependencies.** Cycle 1 sealed; v0.2.3 substrate (backing-map + evidence-rows + spec.py).
 
@@ -190,8 +166,6 @@ Three cycles. Each: theme, scope-tightening relative to v0.2.4 parent, fence, AC
 **AI-time band.** ~7-12 min wall-clock (~50-80 tool calls × 0.1-0.15). Variability: confidence-rule tuning + orphan-grouping.
 
 **Eric-relevance.** Cycle 2 turns Eric's interview-added security objective into "O.security.audit_trail (PLAUSIBLE) has 0 STRONG backing rows; 3 WEAK rows in authMiddleware.js." Plus orphans like "process-disputes route in disputeroutes.js has no objective ladder." Eric reads, sees his Q5 concern surfaced.
-
-**Quality-bar audit.** Two categories fully implemented; confidence rule explicit; orphan-grouping documented; v0.2.6+ forward-compat field; CLI complete. **No partial features.** ✓
 
 ---
 
@@ -203,28 +177,14 @@ Three cycles. Each: theme, scope-tightening relative to v0.2.4 parent, fence, AC
 
 **Fence.** PRIMARY `plugins/dev-sdlc/odd-extractor/`. New `build_next.py` + CLI subcommand. Read-only compose: `gap_analysis.py` output + survey-context at v0.2.1 AC.ONBOARD.15 path. Persona surface IS the CLI invocation at user-question-trigger.
 
-**AC family seeds: AC.BLDNXT.\* + AC.PERSONA-PULL.\*.**
+**AC family seeds.**
 
-#### AC.BLDNXT.* — Build-next recommendation
+- `AC.BLDNXT.*` — `BuildNextCandidate` Pydantic, composite ranking (gap-confidence × priority-match × estimated-impact; tie-break by category with objectives-without-backing > orphans), priority-match via survey-context (Q11/Q12) + keyword overlap + LLM-judge for borderline, output cap top-10 (`--limit` configurable), stdout markdown + YAML + human-readable Markdown outputs, **informative-not-prescriptive denylist** at output-emit, cost band $0.10 default ($0.02–$0.30 halt), audit-log event_kinds, component tests on 3+ fixtures (high-priority-match / no-survey-context / orphan-only).
+- `AC.PERSONA-PULL.*` — CLI subcommand `loam odd-extract build-next <workspace>` (idempotent ± LLM variance), persona invokes CLI on user-question-trigger (no new SKILL.md at v0.2.4), composition with v0.2.3 ratification (un-ratified flagged in rationale, not blocked), integration test on canonical jsts-playwright-app fixture.
 
-- **AC.BLDNXT.1** — `BuildNextCandidate` Pydantic: `candidate_id` (`B.<n>`), `gap_id`, `priority_match: HIGH/MEDIUM/LOW/NONE`, `estimated_impact: HIGH/MEDIUM/LOW` (gap-class × surface-area), `rationale` (1-3 lines), `rank` (1-based descending).
-- **AC.BLDNXT.2** — Ranking: composite = gap-confidence × priority-match × estimated-impact. Tie-break by category (`objective_without_verified_backing` > `implementation_orphan` — former typically a missing capability user stated; latter more often refactoring signal). Cycle plan-doc commits exact weights; halt if calibration diverges.
-- **AC.BLDNXT.3** — Priority-match: read survey-context (v0.2.1 AC.ONBOARD.15 path) + interview-recorded priorities. Match gap text/rationale against survey Q11 first-task + Q12 pain-points via keyword overlap + LLM-as-judge for borderline. HIGH if multi-keyword + LLM confirms; LOW if pattern-only; NONE if neither.
-- **AC.BLDNXT.4** — Output cap: top-10 default; `--limit` configurable. Informative not exhaustive.
-- **AC.BLDNXT.5** — Output: stdout markdown table + `<workspace>/.loam/extractions/<repo-id>/build-next.yaml` (Pydantic) + `build-next.md` (human-readable).
-- **AC.BLDNXT.6** — **Informative-not-prescriptive:** rationale frames as "this gap matches X priority because Y" — NEVER "you should do this first" / "highest priority". Programmatic denylist check at output-emit; flagged prose rewritten or dropped (cycle plan-doc commits mechanism). User makes the call; build-next surfaces signal.
-- **AC.BLDNXT.7** — Cost band: $0.10 default per run (~≤2 model calls). Halt outside $0.02-$0.30.
-- **AC.BLDNXT.8** — Audit-log event_kinds: `build_next_analysis_started` / `build_next_output_generated`; notes carries candidate counts + cost-actual.
-- **AC.BLDNXT.9** — Component tests against 3+ fixtures: (a) high-priority-match-on-multiple-gaps (Eric shape); (b) no-survey-context (degenerate); (c) orphan-only. Verify ranking + denylist + cap.
+Full enumeration in cycle sub-plan-doc §4.
 
-#### AC.PERSONA-PULL.* — Persona pull-point
-
-- **AC.PERSONA-PULL.1** — CLI subcommand `loam odd-extract build-next <workspace>` reads artefacts; runs analysis; emits + persists. Idempotent (re-run stable ± LLM-judge variance).
-- **AC.PERSONA-PULL.2** — Persona surface: when user asks "what should I build next?", persona invokes CLI + reads output. NO new SKILL.md at v0.2.4 — v0.2.0 auto-skill-capture composes if question recurs. Documented in cycle plan-doc + release notes.
-- **AC.PERSONA-PULL.3** — Composition with v0.2.3 ratification: candidates referencing un-ratified objectives flagged in rationale ("ratify O.<id> to V before acting"); NOT a hard block.
-- **AC.PERSONA-PULL.4** — Integration test: full path (extract → interview → gaps → build-next) on canonical jsts-playwright-app fixture.
-
-**Smoke dimensions (release-level SOFT integration smoke).** D1 ✓ (full path → ranked list persisted); D2 ✓ (idempotent re-run; LLM-judge variance noted, ranking-shape stable); D3 ✓ (kill mid → re-invoke clean); D5 ✓ (Session B reads build-next.md + persona invokes CLI); D6 ✓ (audit-log per stage); D4 n/a. **§self-checks gate: ≥90%** of augmented objectives + capabilities + constraints pass §self-checks 1-5 (programmatic + LLM-as-judge double-pass). Rate <90% → halt + surface.
+**Smoke dimensions (release-level SOFT integration smoke).** D1 ✓; D2 ✓ (LLM-judge variance noted, ranking-shape stable); D3 ✓; D5 ✓; D6 ✓; D4 n/a. **§self-checks gate: ≥90%** of augmented objectives + capabilities + constraints pass §self-checks 1-5 (programmatic + LLM-as-judge double-pass). Rate <90% → halt + surface.
 
 **Dependencies.** Cycles 1+2 sealed; v0.2.3 substrate; v0.1.6 cost-governance.
 
@@ -233,8 +193,6 @@ Three cycles. Each: theme, scope-tightening relative to v0.2.4 parent, fence, AC
 **AI-time band.** ~12-18 min wall-clock (~80-120 tool calls × 0.1-0.15). Variability: ranking + denylist + smoke setup.
 
 **Eric-relevance.** Cycle 3 closes the loop. Eric's added security objective + Cycle 2 gap → ranked rank 1 with rationale: "This gap matches your stated SOC-2 CC6 concern; WEAK backing at authMiddleware.js:36-55 reflects the auth-bypass paths you flagged in your survey." Eric reads → can act.
-
-**Quality-bar audit.** Ranking fully wired; denylist enforces informative tone; CLI complete; persona surface documented; SOFT smoke + §self-checks gate. **No partial features.** ✓
 
 ---
 
@@ -250,39 +208,9 @@ Three cycles. Each: theme, scope-tightening relative to v0.2.4 parent, fence, AC
 
 ---
 
-## §4 — Per-cycle dispatch briefs (light)
+## §4 — Per-cycle dispatch briefs
 
-Source-of-truth (fence, ACs, smoke, AI-time, out-of-scope) lives at §3. Briefs reference §3 + add operational fields. Common shape: WD `/Users/lukeivers/ivers-corp-pos-v2/`; LOAD `docs/odd-llm-grounding.lean.md` FIRST; principles per "Principles applied this turn"; manifest schema v3; pos-amend apply (NOT --amend); single semantic commit; short-form seal; §14 backfill separate; master plan §9 backfill on seal.
-
-### Cycle 1 — Completeness interview
-
-Output: `docs/rebuild/plans/v0-2-4-cycle-1-completeness-interview.md` + manifest.
-
-Source pointers: master plan §3 Cycle 1; `docs/odd-llm-grounding.lean.md`; v0.2.3 Cycle 1 seal `9b9f87c`; v0.1.7 PM batch API `runtime.py:118/240/313/405`; v0.1.6 cost-governance.
-
-Halt triggers: WD drifts; plan-not-before-code; cost band outside $0.05-$0.50; >5 candidates consistently on synthetic fixtures (LLM-judge altitude drift); PM-side extension needed; >30% §self-check fail rate; ODD violations in surrounding code; >3 escalations.
-
-Model rationale: Sonnet default. Opus permitted for LLM-judge prompt design with mandatory `model-rationale:` line per Lens 5.
-
-### Cycle 2 — Gap analysis
-
-Output: `docs/rebuild/plans/v0-2-4-cycle-2-gap-analysis.md` + manifest.
-
-Source pointers: master plan §3 Cycle 2; Cycle 1 SHAs (backfilled); v0.2.3 Cycle 2 seal `857749c` (BackingMap + EvidenceRow); v0.2.3 Cycle 1 seal `9b9f87c`.
-
-Halt triggers: WD drifts; plan-not-before-code; Cycle 1 not sealed; >100 orphans on canonical fixture (grouping too-narrow); 100%-STRONG or 100%-WEAK confidence (rule miscalibrated); >3 escalations.
-
-Model rationale: Sonnet default.
-
-### Cycle 3 — Build-next + persona surface + SOFT smoke
-
-Output: `docs/rebuild/plans/v0-2-4-cycle-3-build-next-and-persona-surface.md` + manifest. Single semantic commit covers `build_next.py` + CLI + SOFT-smoke fixture.
-
-Source pointers: master plan §3 Cycle 3 + §5; Cycles 1+2 SHAs (backfilled); v0.2.3 SHIPPED rollup `50b5385`; v0.2.1 AC.ONBOARD.15 survey-file path; v0.1.6 cost-governance.
-
-Halt triggers: WD drifts; plan-not-before-code; Cycles 1 or 2 not sealed; >10% rationales flagged at output-emit (denylist insufficient); SOFT smoke fails on canonical fixture; §self-checks <90%; >3 escalations. v0.2.4 SHIPPED rollup follows.
-
-Model rationale: Sonnet default.
+Per-cycle dispatch briefs are authored inline at dispatch time per the dispatch-brief-authoring SKILL. Source-of-truth for fence + ACs + smoke + AI-time + out-of-scope lives at §3 above + the cycle sub-plan-doc. Common shape: WD `/Users/lukeivers/ivers-corp-pos-v2/`; LOAD `docs/odd-llm-grounding.lean.md` FIRST; principles per dispatch-brief-authoring SKILL; manifest schema v3; loam amend apply (NOT --amend); single semantic commit; short-form seal; §14 backfill separate; master plan §9 backfill on seal.
 
 ---
 

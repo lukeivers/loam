@@ -1,0 +1,11 @@
+# v0.2.3 Cycle 3 — PR-safety + continuous-watch reframe at objective altitude + release SOFT smoke; pr-safety reads objectives.yaml + backing-map.yaml directly; classifier consumes BackingMap.entries; gate decision matrix preserved at altitude (V→HARD_BLOCK; P→SURFACE_DECISION; H→DOCS_ONLY; pre-emption preserved); override flow carries original_objectives + proposed_objectives; PR description template renders objective text; watch incremental engine consults backing-map for OutOfDateObjective + OrphanedObjective; legacy `acs:` consumers retired per master plan §6.2; SOFT smoke runs end-to-end on canonical jsts-playwright-app fixture; two-component fence (pr-safety + odd-extractor) under shared dev-sdlc parent with single seal
+
+slug: v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke
+components: dev-sdlc
+baseline: 4157092
+amendment-commit: e277c274f6b120ac5fe68c76a7e425a53ea1bcd5
+plan-doc: docs/rebuild/plans/v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke.md
+acs-satisfied: 14
+smoke: D1+D2+D5+D6 on jsts-playwright-app; D3 inherited; D4 n/a; SOFT smoke green; full-suite 871 tests pass (pr-safety 93, odd-extractor 583, cost-gov 71, pm 124)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

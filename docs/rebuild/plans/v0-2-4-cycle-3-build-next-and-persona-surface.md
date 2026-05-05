@@ -278,6 +278,7 @@ Cycle-3-specific decisions only. Master-plan-altitude decisions at master plan �
 
 ### Commit SHAs
 
-- Plan-doc commit: TBD — populated post-commit by §14 backfill.
-- Amendment commit: TBD — populated post-`loam amend apply` by §14 backfill.
-- Seal commit: TBD — populated post-`loam amend seal --plan-doc` by §14 backfill.
+- Amendment commit: `9e054d7d37d2dc7bada32936194383d9629db5c8` —
+  `chore(amend): v0-2-4-cycle-3-build-next-and-persona-surface manifest+apply — dev-sdlc BASELINE+sidecar bump to 9c9ed19`
+- Seal commit: `064cc2ee6adb395f13b4e949964c4d075ff2b873` —
+  `chore(seals): v0-2-4-cycle-3-build-next-and-persona-surface — dev-sdlc at 9e054d7`

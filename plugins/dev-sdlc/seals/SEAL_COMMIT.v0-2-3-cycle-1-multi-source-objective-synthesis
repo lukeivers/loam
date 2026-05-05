@@ -1,0 +1,11 @@
+# v0.2.3 Cycle 1 — Multi-source objective synthesis (extraction-core rebuild); LLM-pass synthesis layer + multi-source input pipeline (README + design docs + tests + user-survey + code patterns) + Objective/Constraint/Capability Pydantic models + altitude validator + evidence-rows routing; single-component fence on plugins/dev-sdlc/odd-extractor/
+
+slug: v0-2-3-cycle-1-multi-source-objective-synthesis
+components: dev-sdlc
+baseline: 404f4d3
+amendment-commit: 1e2003760a7ab22a22e4cf20deb550dff1e37cc3
+plan-doc: docs/rebuild/plans/v0-2-3-cycle-1-multi-source-objective-synthesis.md
+acs-satisfied: 12
+smoke: D1+D2+D5+D6 exercised; D3 inherited (atomic LLM-pass); D4 n/a; 3 multi-source fixtures (readme-rich + thin-tests-rich + pattern-only); full-suite green sweep
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

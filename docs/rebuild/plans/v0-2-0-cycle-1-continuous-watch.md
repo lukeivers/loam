@@ -483,3 +483,10 @@ Build proceeds.
 | Apply commit (manifest+apply merged per AC.DPS1.6) | TBD | chore(amend): v0-2-0-cycle-1-continuous-watch manifest+apply — dev-sdlc BASELINE+sidecar bump |
 | Seal commit | TBD | chore(seals): v0-2-0-cycle-1-continuous-watch — dev-sdlc at <baseline> |
 | Post-seal SHA-record commit (this §14 backfill + master plan §9) | TBD | docs(plans): record v0-2-0-cycle-1 commit SHAs in method-decision register |
+
+### Commit SHAs
+
+- Amendment commit: `faff84e61db588b67d258ae6f0cedcd37c534957` —
+  `chore(amend): v0-2-0-cycle-1-continuous-watch manifest+apply — dev-sdlc BASELINE+sidecar bump to 9bed44c`
+- Seal commit: `6fef2f194d433263b26a9eb5f9abe69e34a14ca9` —
+  `chore(seals): v0-2-0-cycle-1-continuous-watch — dev-sdlc at faff84e`

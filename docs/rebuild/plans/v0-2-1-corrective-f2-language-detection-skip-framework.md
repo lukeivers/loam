@@ -101,9 +101,7 @@ Corrective amendment scope is tight (single-line edit to `_walk()` skip-set). Me
 
 ### Commit SHAs
 
-- Plan-doc commit: `<pending>` — `docs(plans): v0-2-1-corrective-f2-language-detection-skip-framework plan-doc + manifest`
-- Source-edit feat commit (BASELINE): `<pending>` — `fix(workspace-bootstrap): language detection skips framework/ subdir (v0.2.1 corrective F2)`
-- Manifest baseline-pin commit: `<pending>` — `docs(plans): pin v0-2-1-corrective-f2 manifest baseline to <SHA>`
-- Amendment apply commit: `<pending>` — `chore(amend): v0-2-1-corrective-f2-language-detection-skip-framework manifest+apply`
-- Seal commit: `<pending>` — `chore(seals): v0-2-1-corrective-f2-language-detection-skip-framework — workspace-bootstrap at <SHA>`
-- §14 backfill commit: this commit (post-seal follow-up per AC.D-sa.7)
+- Amendment commit: `70987e515564a8e1ee7974c995f6ffe0a6fda4ce` —
+  `chore(amend): v0-2-1-corrective-f2-language-detection-skip-framework manifest+apply — workspace-bootstrap BASELINE+sidecar bump to 0efd160`
+- Seal commit: `d82a43bd4411c92bc02c4cbbf0224ce13e7b7613` —
+  `chore(seals): v0-2-1-corrective-f2-language-detection-skip-framework — workspace-bootstrap at 70987e5`

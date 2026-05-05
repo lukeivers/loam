@@ -224,6 +224,7 @@ Cycle-2 method decisions at §7. Master-plan method decisions at master plan §9
 
 ### Commit SHAs
 
-- Plan-doc commit: `<pending — set on plan-doc commit>`
-- Amendment commit: `<pending — set by `loam amend apply`>`
-- Seal commit: `<pending — set by `loam amend seal --plan-doc`>`
+- Amendment commit: `5636fc3d465f7956c37782b444ae5c4be12fb992` —
+  `chore(amend): v0-2-4-cycle-2-gap-analysis manifest+apply — dev-sdlc BASELINE+sidecar bump to df67276`
+- Seal commit: `9d15333c5a8ba00aaaa74e03a1cee2e3eac234c6` —
+  `chore(seals): v0-2-4-cycle-2-gap-analysis — dev-sdlc at 5636fc3`

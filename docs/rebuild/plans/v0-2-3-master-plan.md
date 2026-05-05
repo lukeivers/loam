@@ -447,7 +447,7 @@ Master-plan-level method decisions. Per-cycle plan-docs author own §14.
 |---|---|---|---|
 | Cycle 1 | Multi-source objective synthesis | 1e20037 | 9b9f87c |
 | Cycle 2 | Backing-implementation map + ratification reframe | 716da0a | 857749c |
-| Cycle 3 | PR-safety + continuous-watch reframe (release SOFT smoke) | TBD | TBD |
+| Cycle 3 | PR-safety + continuous-watch reframe (release SOFT smoke) | e277c27 | f78bb36 |
 
 Backfilled per cycle as cycles seal. Final v0.2.3 SHIPPED rollup updates STATE.md + roadmap + ODD-rebuild master plan §3 v0.2.3 row + this register's per-cycle SHAs after Cycle 3 + SOFT smoke green.
 

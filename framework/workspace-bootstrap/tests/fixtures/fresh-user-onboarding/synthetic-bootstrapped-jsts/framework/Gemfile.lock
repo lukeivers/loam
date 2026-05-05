@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rails (7.1.0)
+    puma (6.4.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  puma
+  rails (~> 7.1.0)
+
+BUNDLED WITH
+   2.5.0

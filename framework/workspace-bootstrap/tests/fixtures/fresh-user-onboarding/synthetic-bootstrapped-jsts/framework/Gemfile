@@ -1,0 +1,8 @@
+source "https://rubygems.org"
+
+# Cloned canonical's archived Ruby fixtures live under framework/.
+# These signals MUST NOT leak into project-language detection because
+# they describe loam's harness internals, not the user's app.
+# See AC.LD.SKIP-FRAMEWORK.1.
+gem "rails", "~> 7.1.0"
+gem "puma"

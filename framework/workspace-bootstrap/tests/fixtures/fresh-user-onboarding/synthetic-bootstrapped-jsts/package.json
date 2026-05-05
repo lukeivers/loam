@@ -1,0 +1,13 @@
+{
+  "name": "fixture-bootstrapped-jsts-app",
+  "version": "0.0.0-fixture",
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@playwright/test": "^1.50.0"
+  }
+}

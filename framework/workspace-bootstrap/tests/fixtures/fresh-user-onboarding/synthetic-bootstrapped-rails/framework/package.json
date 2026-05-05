@@ -1,0 +1,9 @@
+{
+  "name": "fixture-cloned-canonical-tooling",
+  "version": "0.0.0-fixture",
+  "private": true,
+  "comment": "Cloned canonical's archived JS tooling lives under framework/. These signals MUST NOT leak into project-language detection because they describe loam's harness internals, not the user's app. See AC.LD.SKIP-FRAMEWORK.1.",
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

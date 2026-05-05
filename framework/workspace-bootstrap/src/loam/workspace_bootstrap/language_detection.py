@@ -123,12 +123,44 @@ def detect_language(workspace_root: Path) -> LanguageDetection:
     )
 
 
+# AC.LD.SKIP-FRAMEWORK.1 — directories opaque to the walker. Names
+# matched case-sensitively against single path components. The set
+# unifies two intents:
+#   (a) noise directories whose contents are not the user's app
+#       (build artefacts, dependency caches, version-control internals);
+#   (b) loam-harness internals inside a bootstrapped workspace
+#       (specifically `framework/`, which `loam init` populates with a
+#       cloned canonical that may carry archived fixtures in languages
+#       different from the user's actual app — see v0.2.1 corrective F2).
+# Adding a new entry requires a named-AC test demonstrating the skip.
+_SKIPPED_DIRS: frozenset[str] = frozenset(
+    {
+        ".git",
+        "node_modules",
+        "vendor",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "dist",
+        "build",
+        ".next",
+        ".turbo",
+        # AC.LD.SKIP-FRAMEWORK.1 — `framework/` is loam's harness
+        # scaffolding inside a bootstrapped workspace; its contents are
+        # NOT the user's app and must not influence language detection.
+        "framework",
+    }
+)
+
+
 def _walk(directory: Path, found: set[str], *, depth: int) -> None:
     """Recursive directory walk capped at MAX_WALK_DEPTH.
 
     Records every detection-file hit (relative to workspace_root) into
-    ``found``. Skips ``.git/``, ``node_modules/``, ``vendor/``,
-    ``.venv/`` to keep the walk fast on real projects.
+    ``found``. Skips entries listed in :data:`_SKIPPED_DIRS` (noise
+    directories and loam-harness internals) to keep the walk fast on
+    real projects and to prevent loam's own framework/ subtree from
+    leaking signals into the user's project-language detection.
     """
     if depth > MAX_WALK_DEPTH:
         return
@@ -146,19 +178,9 @@ def _walk(directory: Path, found: set[str], *, depth: int) -> None:
             # checked below via the directory traversal.
             continue
         if entry.is_dir():
-            # Skip noise dirs that explode walk time.
-            if entry.name in {
-                ".git",
-                "node_modules",
-                "vendor",
-                ".venv",
-                "venv",
-                "__pycache__",
-                "dist",
-                "build",
-                ".next",
-                ".turbo",
-            }:
+            # Skip noise dirs + loam-harness internals (AC.LD.SKIP-
+            # FRAMEWORK.1).
+            if entry.name in _SKIPPED_DIRS:
                 continue
             # Detect the special two-component signal at depth-1
             # boundaries: <root>/config/application.rb.

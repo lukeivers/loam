@@ -207,7 +207,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "<pending>"
+baseline: "c01f50e"
 
 plan: docs/rebuild/plans/v0-2-1-cycle-2-promotion-rubric.md
 
@@ -217,7 +217,7 @@ plan: docs/rebuild/plans/v0-2-1-cycle-2-promotion-rubric.md
 plan_doc_ref: docs/rebuild/plans/v0-2-1-cycle-2-promotion-rubric.md
 
 ac_count: 12
-smoke_outcome: "D1+D2+D3+D5+D6 exercised; D4 n/a (stateless SKILL body); 4 synthetic-skill fixtures (well-formed-harness-general, well-formed-dev-specific, duplicate-of-existing, quality-fail); full-suite green sweep on plugins/dev-sdlc/"
+smoke_outcome: "D1+D2+D3+D5+D6 exercised; D4 n/a (stateless SKILL body); 4 synthetic-skill fixtures cover signal paths; full-suite green sweep on plugins/dev-sdlc/ (215 passed)"
 
 components:
   - name: dev-sdlc

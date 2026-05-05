@@ -320,7 +320,7 @@ Master-plan-level decisions. Per-cycle plan-docs author own §14.
 |---|---|---|---|
 | Cycle 1 | Completeness interview | `e1a4239` | `d42ace9` |
 | Cycle 2 | Gap analysis | `5636fc3` | `9d15333` |
-| Cycle 3 | Build-next + persona surface + SOFT smoke (release SOFT smoke) | TBD | TBD |
+| Cycle 3 | Build-next + persona surface + SOFT smoke (release SOFT smoke) | `9e054d7` | `064cc2e` |
 
 Backfilled per cycle as cycles seal. Final v0.2.4 SHIPPED rollup updates STATE.md + roadmap + ODD-rebuild master plan §3 v0.2.4 row + this register's per-cycle SHAs after Cycle 3 + SOFT smoke green.
 

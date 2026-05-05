@@ -1,0 +1,11 @@
+# v0.2.2 — ODD grounding propagation + dispatch-brief template hardening; lean grounding doc auto-loads in DEV-MODE corpus-required set + inlined into additionalContext + referenced from CLAUDE.dev.md; dispatch-brief-authoring SKILL extended with 5 propagated principles (lean-grounding-load / no-closing-line / specific-claims / operational-objective-test / no-false-fault); single-component fence on plugins/dev-sdlc/
+
+slug: v0-2-2-grounding-propagation
+components: dev-sdlc
+baseline: da58ad8
+amendment-commit: ada74e195559b67803da8f5c0aaf2128016bac34
+plan-doc: docs/rebuild/plans/v0-2-2-grounding-propagation.md
+acs-satisfied: 10
+smoke: D1+D2+D5+D6 exercised; D3+D4 n/a (one-shot session-start); 4 AC.OGP.* + 6 AC.DBT.* tests green; AC.DBT.7 prose-only; full-suite green at seal.
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

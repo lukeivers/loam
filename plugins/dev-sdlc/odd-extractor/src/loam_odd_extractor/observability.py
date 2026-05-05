@@ -41,6 +41,17 @@ COMPLETENESS_INTERVIEW_EVENT_KINDS: tuple[str, ...] = (
 )
 
 
+# Per v0.2.4 Cycle 2 AC.GAPAN.6 — gap-analysis event_kinds. Structured
+# payload uses the existing ``estimate`` field (no schema bump).
+# Listed here as a module-level constant so tests + downstream
+# consumers can introspect the canonical set.
+GAP_ANALYSIS_EVENT_KINDS: tuple[str, ...] = (
+    "gap_analysis_start",
+    "gap_inventory_persisted",
+    "gap_analysis_end",
+)
+
+
 def audit_log_dir(extraction_dir_: Path) -> Path:
     """``<extraction_dir>/audit-log/``."""
     return extraction_dir_ / "audit-log"
@@ -89,7 +100,11 @@ def write_audit_entry(
     ``completeness_interview_start``, ``objective_confirmed``,
     ``objective_adjusted``, ``objective_flagged_out_of_scope``,
     ``objective_added_by_user``, ``objective_flagged_by_persona``,
-    ``completeness_interview_end``}.
+    ``completeness_interview_end``,
+    plus the v0.2.4 Cycle 2 gap-analysis kinds in
+    :data:`GAP_ANALYSIS_EVENT_KINDS`:
+    ``gap_analysis_start``, ``gap_inventory_persisted``,
+    ``gap_analysis_end``}.
 
     ``stage`` is one of ``init`` / ``analyze`` / ``generate`` /
     ``verify`` for ``stage_complete`` and ``synthesis_complete`` /

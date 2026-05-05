@@ -1,0 +1,32 @@
+schema_version: 1
+extraction_id: cat-a-only-fixture
+augmented_at: "2026-05-04T16:00:00+00:00"
+interview_audit_path: "/tmp/audit-log"
+objectives:
+  - objective_id: "O.security.1"
+    text: "Audit trail identifies who initiated each dispute filing for SOC-2 CC6 readiness."
+    confidence: PLAUSIBLE
+    domain: "security"
+    source: "added_by_user"
+    evidence:
+      readme_excerpts: []
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs:
+        - "Q5: SOC-2 CC6 audit trail concern"
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null
+  - objective_id: "O.future-feature.1"
+    text: "Operators receive automated email notifications when their disputes are accepted by the merchant."
+    confidence: HYPOTHESISED
+    domain: "notifications"
+    source: "added_by_user"
+    evidence:
+      readme_excerpts: []
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: "Persona inferred from operator workflow patterns; no implementation yet."

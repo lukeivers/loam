@@ -1,0 +1,42 @@
+schema_version: 1
+extraction_id: mixed-fixture
+entries:
+  # WEAK rows for security objective → category-a WEAK gap.
+  - objective_id: "O.security.1"
+    evidence_rows:
+      - evidence_row_id: "callback:src/authMiddleware.js:36"
+        kind: "callback"
+        path: "src/authMiddleware.js"
+        line_range: [36, 55]
+        symbol_name: null
+        language: "jsts"
+        confidence: "WEAK"
+    match_rationale: "WEAK signal — auth middleware partially covers audit-trail concern"
+  # No rows for HYPOTHESISED → category-a WEAK.
+  - objective_id: "O.future-feature.1"
+    evidence_rows: []
+    match_rationale: "No implementation yet"
+  # No rows for PLAUSIBLE → category-a STRONG.
+  - objective_id: "O.batch-export.1"
+    evidence_rows: []
+    match_rationale: "No backing-map entries located"
+  # Fully backed → no gap.
+  - objective_id: "O.dispute-flow.1"
+    evidence_rows:
+      - evidence_row_id: "route:src/disputeRoutes.js:42"
+        kind: "route"
+        path: "src/disputeRoutes.js"
+        line_range: [42, 60]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+    match_rationale: "STRONG match"
+orphan_rows: []
+created_at: "2026-05-04T16:00:00+00:00"
+model_id: "(test)"
+cost_actual_cents: 0.0
+total_evidence_rows: 2
+objective_count: 4
+unmatched_objective_ids:
+  - "O.future-feature.1"
+  - "O.batch-export.1"

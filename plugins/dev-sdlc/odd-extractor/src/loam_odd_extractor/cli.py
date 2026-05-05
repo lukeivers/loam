@@ -351,6 +351,8 @@ def _cmd_dispatch(args: argparse.Namespace) -> int:
         return _cmd_incremental(args)
     if getattr(args, "interview", False):
         return _cmd_interview(args)
+    if getattr(args, "gaps", False):
+        return _cmd_gaps(args)
     return _cmd_extract(args)
 
 
@@ -449,6 +451,142 @@ def _cmd_interview(args: argparse.Namespace) -> int:
         print(
             f"loam odd-extract --interview: {exc}", file=sys.stderr
         )
+        return _EXIT_ERR
+
+
+def _cmd_gaps(args: argparse.Namespace) -> int:
+    """Handle ``loam odd-extract <repo> --gaps``.
+
+    Per v0.2.4 Cycle 2 AC.GAPAN.7 — runs the gap analysis against
+    the prior extraction's augmented-objectives.yaml + backing-map.yaml
+    + evidence-rows.yaml; writes gap-inventory.yaml; emits stdout
+    summary.
+
+    Halts with exit code 2 + actionable message when any predecessor
+    artefact is missing.
+    """
+    try:
+        repo_path = _resolve_repo_path(args.repo_path)
+        workspace_root = _resolve_workspace_root(args.workspace_root)
+        repo_id = compute_repo_id(repo_path)
+        ext_dir = extraction_dir(workspace_root, repo_id)
+        if not ext_dir.exists():
+            raise OddExtractorError(
+                f"no prior extraction at {ext_dir} — run "
+                "`loam odd-extract <repo> --interview` first to "
+                "produce augmented-objectives.yaml."
+            )
+
+        # Predecessor: augmented-objectives.yaml (Cycle 1 output).
+        from .interview import load_augmented_objectives
+
+        augmented = load_augmented_objectives(ext_dir)
+        if augmented is None:
+            raise OddExtractorError(
+                f"no augmented-objectives.yaml at {ext_dir} — run "
+                "`loam odd-extract <repo> --interview` first to "
+                "produce the augmented objective set."
+            )
+
+        # Predecessor: backing-map.yaml (v0.2.3 substrate).
+        from .backing_map import load_backing_map
+
+        bm = load_backing_map(ext_dir)
+        if bm is None:
+            raise OddExtractorError(
+                f"no backing-map.yaml at {ext_dir} — run "
+                "`loam odd-extract <repo>` first to produce the "
+                "backing-map."
+            )
+
+        # Predecessor: evidence-rows.yaml (v0.2.3 substrate).
+        evidence_path = ext_dir / "evidence-rows.yaml"
+        if not evidence_path.exists():
+            raise OddExtractorError(
+                f"no evidence-rows.yaml at {evidence_path} — run "
+                "`loam odd-extract <repo>` first to produce evidence "
+                "rows."
+            )
+        evidence_payload = (
+            yaml.safe_load(evidence_path.read_text(encoding="utf-8"))
+            or {}
+        )
+        evidence_rows = (
+            evidence_payload.get("acs", [])
+            if isinstance(evidence_payload, dict)
+            else []
+        )
+        if not isinstance(evidence_rows, list):
+            evidence_rows = []
+
+        from .gap_analysis import (
+            analyze_gaps,
+            emit_end_audit,
+            emit_persisted_audit,
+            emit_start_audit,
+            gap_inventory_path,
+            render_stdout_summary,
+            save_gap_inventory,
+        )
+        import time as _time
+
+        # Audit: start.
+        emit_start_audit(
+            ext_dir,
+            extraction_id=repo_id,
+            augmented_objective_count=len(augmented.objectives),
+            backing_map_objective_count=len(bm.entries),
+            evidence_row_count=len(evidence_rows),
+        )
+
+        t0 = _time.monotonic()
+        inventory = analyze_gaps(
+            augmented_objectives=augmented,
+            backing_map=bm,
+            evidence_rows=evidence_rows,
+            extraction_id=repo_id,
+            audit_path=str(ext_dir / "audit-log"),
+        )
+
+        # Persist (idempotent on no-change).
+        path, wrote = save_gap_inventory(inventory, ext_dir)
+
+        # Audit: persisted.
+        emit_persisted_audit(
+            ext_dir,
+            extraction_id=repo_id,
+            inventory=inventory,
+            gap_inventory_path_str=str(path),
+        )
+
+        # Audit: end.
+        duration_ms = int((_time.monotonic() - t0) * 1000)
+        emit_end_audit(
+            ext_dir,
+            extraction_id=repo_id,
+            duration_ms=duration_ms,
+        )
+
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "extraction_id": repo_id,
+                        "gap_inventory_path": str(path),
+                        "wrote": wrote,
+                        "summary": inventory.summary.model_dump(),
+                    },
+                    indent=2,
+                )
+            )
+        else:
+            print(render_stdout_summary(inventory))
+            print()
+            print(f"  Inventory:  {path}")
+            print(f"  Wrote:      {wrote} (False = no-change skip)")
+        return _EXIT_OK
+    except OddExtractorError as exc:
+        print(f"loam odd-extract --gaps: {exc}", file=sys.stderr)
         return _EXIT_ERR
 
 
@@ -802,6 +940,21 @@ def build_odd_extract_subcommand(
             "(confirm-existing / flag-missing-candidate / free-form-"
             "add); writes <workspace>/.loam/extractions/<repo-id>/"
             "augmented-objectives.yaml. Per AC.COMPINT.{4,5,6,7,8}."
+        ),
+    )
+    # AC.GAPAN.7 — gap-analysis flag. v0.2.4 Cycle 2.
+    odd_parser.add_argument(
+        "--gaps",
+        action="store_true",
+        help=(
+            "v0.2.4 Cycle 2 — gap analysis. Loads "
+            "<workspace>/.loam/extractions/<repo-id>/{augmented-"
+            "objectives,backing-map,evidence-rows}.yaml; produces "
+            "two-category GapInventory (objectives without verified "
+            "backing + implementation orphans) at "
+            "<workspace>/.loam/extractions/<repo-id>/gap-inventory.yaml; "
+            "emits stdout summary + audit-log entries. Idempotent "
+            "on unchanged inputs. Per AC.GAPAN.{3,4,5,6,7}."
         ),
     )
     # AC.WATCH.6 — invocation-source flag. v0.2.0 Cycle 1.

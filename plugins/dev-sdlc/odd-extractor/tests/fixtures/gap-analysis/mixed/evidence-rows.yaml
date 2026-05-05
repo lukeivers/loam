@@ -1,0 +1,35 @@
+# Mixed fixture evidence-rows — Eric-shape (synthetic, NOT real paths).
+extraction_id: mixed-fixture
+acs:
+  # Claimed: dispute-flow.
+  - ac_id: "route:src/disputeRoutes.js:42"
+    kind: "route"
+    path: "src/disputeRoutes.js"
+    line_range: [42, 60]
+    language: "jsts"
+  # Claimed (WEAK): authMiddleware for security.1.
+  - ac_id: "callback:src/authMiddleware.js:36"
+    kind: "callback"
+    path: "src/authMiddleware.js"
+    line_range: [36, 55]
+    language: "jsts"
+  # Orphan production code → category-b STRONG.
+  - ac_id: "route:src/disputeProcessRoutes.js:5"
+    kind: "route"
+    path: "src/disputeProcessRoutes.js"
+    line_range: [5, 25]
+    language: "jsts"
+  # Orphan test rows → category-b WEAK.
+  - ac_id: "test:tests/disputeProcess.test.js:10"
+    kind: "test"
+    path: "tests/disputeProcess.test.js"
+    line_range: [10, 25]
+    language: "jsts"
+  - ac_id: "test:tests/disputeProcess.test.js:30"
+    kind: "test"
+    path: "tests/disputeProcess.test.js"
+    line_range: [30, 45]
+    language: "jsts"
+unhandled_paths: []
+per_slice_costs: {}
+created_at: "2026-05-04T16:00:00+00:00"

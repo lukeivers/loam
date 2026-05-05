@@ -1,0 +1,40 @@
+schema_version: 1
+extraction_id: clean-fixture
+entries:
+  - objective_id: "O.dispute-flow.1"
+    evidence_rows:
+      - evidence_row_id: "route:src/disputeRoutes.js:42"
+        kind: "route"
+        path: "src/disputeRoutes.js"
+        line_range: [42, 60]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+    match_rationale: "STRONG match on dispute path"
+  - objective_id: "O.csv-upload.1"
+    evidence_rows:
+      - evidence_row_id: "route:src/csvRoutes.js:10"
+        kind: "route"
+        path: "src/csvRoutes.js"
+        line_range: [10, 30]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+    match_rationale: "STRONG match on csv-upload"
+  - objective_id: "O.audit-log.1"
+    evidence_rows:
+      - evidence_row_id: "callback:src/auditMiddleware.js:5"
+        kind: "callback"
+        path: "src/auditMiddleware.js"
+        line_range: [5, 25]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+    match_rationale: "STRONG match on audit middleware"
+orphan_rows: []
+created_at: "2026-05-04T16:00:00+00:00"
+model_id: "(test)"
+cost_actual_cents: 0.0
+total_evidence_rows: 3
+objective_count: 3
+unmatched_objective_ids: []

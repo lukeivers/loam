@@ -725,3 +725,169 @@ class FlaggedMissing(BaseModel):
     evidence_refs: list[str] = Field(default_factory=list)
     priority: Literal["high", "medium", "low"] = "medium"
     domain: str = Field(min_length=1, default="uncategorized")
+
+
+# ====================================================================
+# v0.2.4 Cycle 2 — Gap analysis (AC.GAPAN.{1,2})
+# ====================================================================
+#
+# Per sub-plan-doc §3 AC.GAPAN.1 + AC.GAPAN.2: typed Gap + GapInventory
+# Pydantic models. Two-category inventory (objectives_without_verified_
+# backing + implementation_orphans) with STRONG/WEAK confidence
+# orthogonal to the objective banding.
+
+# Gap-id regex per AC.GAPAN.1.
+_GAP_ID_RE = re.compile(r"^G\.(BACKING|ORPHAN)\.[a-z0-9_-]+$")
+
+
+class Gap(BaseModel):
+    """A single gap finding produced by :func:`gap_analysis.analyze_gaps`.
+
+    Per sub-plan-doc §3 AC.GAPAN.1:
+
+    - ``gap_id`` matches ``^G\\.(BACKING|ORPHAN)\\.[a-z0-9_-]+$``.
+    - ``category`` ∈ {``objective_without_verified_backing``,
+      ``implementation_orphan``}.
+    - ``confidence`` ∈ {``STRONG``, ``WEAK``} per :func:`_classify_confidence`.
+    - ``objective_id`` set for category-a (objective_without_verified_
+      backing) gaps; ``None`` for category-b (implementation_orphan)
+      gaps. The ``model_validator`` enforces this invariant in both
+      directions.
+    - ``evidence_rows`` empty for empty-backing category-a gaps;
+      populated otherwise (the WEAK rows for a category-a gap with
+      WEAK-only backing; the orphan rows for a category-b gap).
+    - ``rationale`` ≥20 chars; auditable explanation of why the gap
+      was surfaced. Includes the orphan group-key for category-b.
+    - ``negative_alignment_evidence`` per AC.GAPAN.8: forward-compat
+      seam for v0.2.6+ negative-alignment. Defaults to ``None`` at
+      v0.2.4; never populated by this cycle. Round-trip safe via
+      ``model_dump(exclude_none=True)`` so legacy v0.2.4 YAML stays
+      clean (no ``negative_alignment_evidence: null`` clutter).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    gap_id: str = Field(min_length=1)
+    category: Literal[
+        "objective_without_verified_backing",
+        "implementation_orphan",
+    ]
+    confidence: Literal["STRONG", "WEAK"]
+    objective_id: str | None = None
+    evidence_rows: list[EvidenceRowRef] = Field(default_factory=list)
+    rationale: str = Field(min_length=20)
+    negative_alignment_evidence: list[EvidenceRowRef] | None = None
+
+    @model_validator(mode="after")
+    def _enforce_id_regex_and_category_invariants(self) -> "Gap":
+        if not _GAP_ID_RE.match(self.gap_id):
+            raise ValueError(
+                f"Gap.gap_id must match {_GAP_ID_RE.pattern!r}; "
+                f"got {self.gap_id!r}"
+            )
+        if self.category == "objective_without_verified_backing":
+            if self.objective_id is None:
+                raise ValueError(
+                    "Gap: category='objective_without_verified_backing' "
+                    "requires objective_id to be set"
+                )
+            if not _OBJECTIVE_ID_RE.match(self.objective_id):
+                raise ValueError(
+                    f"Gap.objective_id must match "
+                    f"{_OBJECTIVE_ID_RE.pattern!r}; got "
+                    f"{self.objective_id!r}"
+                )
+        else:  # implementation_orphan
+            if self.objective_id is not None:
+                raise ValueError(
+                    "Gap: category='implementation_orphan' requires "
+                    "objective_id=None (orphans have no claimed "
+                    "objective by definition)"
+                )
+        return self
+
+
+class GapSummary(BaseModel):
+    """Pre-aggregated counts inside a :class:`GapInventory`.
+
+    Per sub-plan-doc §3 AC.GAPAN.2: counts surface to Cycle 3 build-
+    next + CLI stdout summary without re-traversing ``gaps``. The
+    container's ``model_validator`` enforces these match the actual
+    list aggregate.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    category_a_count: int = 0
+    category_b_count: int = 0
+    strong_count: int = 0
+    weak_count: int = 0
+    total: int = 0
+
+
+class GapInventory(BaseModel):
+    """The two-category gap inventory persisted at gap-inventory.yaml.
+
+    Per sub-plan-doc §3 AC.GAPAN.2:
+
+    - ``schema_version`` is the literal int 1; future bumps need
+      migration.
+    - ``extraction_id`` ties the inventory to the workspace's
+      extraction.
+    - ``analyzed_at`` is the ISO 8601 timestamp; excluded from the
+      idempotence content-hash per AC.GAPAN.5.
+    - ``audit_path`` points at the audit-log directory whose entries
+      trace the analysis run that produced this inventory.
+    - ``gaps`` carries each :class:`Gap` produced by the run.
+    - ``summary`` carries pre-aggregated counts; the ``model_validator``
+      enforces no duplicate ``gap_id`` AND that ``summary`` matches
+      the aggregate of ``gaps``.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal[1] = 1
+    extraction_id: str = Field(min_length=1)
+    analyzed_at: str  # ISO 8601 with timezone
+    audit_path: str = Field(min_length=1)
+    gaps: list[Gap] = Field(default_factory=list)
+    summary: GapSummary = Field(default_factory=GapSummary)
+
+    @model_validator(mode="after")
+    def _enforce_no_duplicate_gap_id_and_summary_match(
+        self,
+    ) -> "GapInventory":
+        seen: set[str] = set()
+        for g in self.gaps:
+            if g.gap_id in seen:
+                raise ValueError(
+                    f"GapInventory: duplicate gap_id={g.gap_id!r} "
+                    f"(each ID must be unique in the inventory)"
+                )
+            seen.add(g.gap_id)
+        # Aggregate-vs-summary check.
+        a_count = sum(
+            1 for g in self.gaps
+            if g.category == "objective_without_verified_backing"
+        )
+        b_count = sum(
+            1 for g in self.gaps if g.category == "implementation_orphan"
+        )
+        s_count = sum(1 for g in self.gaps if g.confidence == "STRONG")
+        w_count = sum(1 for g in self.gaps if g.confidence == "WEAK")
+        total = len(self.gaps)
+        s = self.summary
+        if (
+            s.category_a_count != a_count
+            or s.category_b_count != b_count
+            or s.strong_count != s_count
+            or s.weak_count != w_count
+            or s.total != total
+        ):
+            raise ValueError(
+                f"GapInventory: summary mismatch — got "
+                f"summary={s.model_dump()} but aggregate "
+                f"category_a={a_count} category_b={b_count} "
+                f"strong={s_count} weak={w_count} total={total}"
+            )
+        return self

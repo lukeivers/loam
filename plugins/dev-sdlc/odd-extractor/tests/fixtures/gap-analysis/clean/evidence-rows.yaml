@@ -1,0 +1,20 @@
+extraction_id: clean-fixture
+acs:
+  - ac_id: "route:src/disputeRoutes.js:42"
+    kind: "route"
+    path: "src/disputeRoutes.js"
+    line_range: [42, 60]
+    language: "jsts"
+  - ac_id: "route:src/csvRoutes.js:10"
+    kind: "route"
+    path: "src/csvRoutes.js"
+    line_range: [10, 30]
+    language: "jsts"
+  - ac_id: "callback:src/auditMiddleware.js:5"
+    kind: "callback"
+    path: "src/auditMiddleware.js"
+    line_range: [5, 25]
+    language: "jsts"
+unhandled_paths: []
+per_slice_costs: {}
+created_at: "2026-05-04T16:00:00+00:00"

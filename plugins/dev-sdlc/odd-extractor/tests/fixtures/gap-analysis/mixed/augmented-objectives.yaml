@@ -1,0 +1,64 @@
+# Mixed fixture — Eric-shape (synthetic, NOT real customer paths).
+# Spans all 4 cells of (category × confidence) — calibration anchor.
+schema_version: 1
+extraction_id: mixed-fixture
+augmented_at: "2026-05-04T16:00:00+00:00"
+interview_audit_path: "/tmp/audit-log"
+objectives:
+  # Category-a WEAK: PLAUSIBLE objective with WEAK rows only.
+  - objective_id: "O.security.1"
+    text: "Audit trail identifies who initiated each dispute filing for SOC-2 CC6 readiness."
+    confidence: PLAUSIBLE
+    domain: "security"
+    source: "added_by_user"
+    evidence:
+      readme_excerpts: []
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs:
+        - "Q5: SOC-2 CC6 audit trail concern"
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null
+  # Category-a WEAK: HYPOTHESISED with no rows.
+  - objective_id: "O.future-feature.1"
+    text: "Operators receive automated email notifications when their disputes are accepted by the merchant."
+    confidence: HYPOTHESISED
+    domain: "notifications"
+    source: "added_by_user"
+    evidence:
+      readme_excerpts: []
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: "Persona inferred from operator workflow patterns; no implementation yet."
+  # Category-a STRONG: PLAUSIBLE objective with EMPTY backing.
+  - objective_id: "O.batch-export.1"
+    text: "Operators can export refund-status batches to CSV for accounting reconciliation downstream."
+    confidence: PLAUSIBLE
+    domain: "csv-export"
+    source: "extracted"
+    evidence:
+      readme_excerpts: ["Batch CSV export"]
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null
+  # Fully backed (no gap surfaced).
+  - objective_id: "O.dispute-flow.1"
+    text: "Operators file refund disputes against merchant portals at scale, replacing manual portal clickwork."
+    confidence: VERIFIED
+    domain: "dispute-flow"
+    source: "extracted"
+    evidence:
+      readme_excerpts: ["File refunds at scale"]
+      design_doc_refs: []
+      test_name_refs: ["test_dispute_filing_pipeline"]
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: "abc123"
+      rationale: null

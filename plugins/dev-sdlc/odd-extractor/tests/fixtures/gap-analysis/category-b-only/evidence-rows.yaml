@@ -1,0 +1,48 @@
+extraction_id: cat-b-only-fixture
+acs:
+  # Claimed rows.
+  - ac_id: "route:src/disputeRoutes.js:42"
+    kind: "route"
+    path: "src/disputeRoutes.js"
+    line_range: [42, 60]
+    language: "jsts"
+  - ac_id: "route:src/csvRoutes.js:10"
+    kind: "route"
+    path: "src/csvRoutes.js"
+    line_range: [10, 30]
+    language: "jsts"
+  - ac_id: "callback:src/auditMiddleware.js:5"
+    kind: "callback"
+    path: "src/auditMiddleware.js"
+    line_range: [5, 25]
+    language: "jsts"
+  # Orphan production rows (3 rows in same file → 1 STRONG orphan).
+  - ac_id: "route:src/orphanRoutes.js:5"
+    kind: "route"
+    path: "src/orphanRoutes.js"
+    line_range: [5, 20]
+    language: "jsts"
+  - ac_id: "route:src/orphanRoutes.js:25"
+    kind: "route"
+    path: "src/orphanRoutes.js"
+    line_range: [25, 40]
+    language: "jsts"
+  - ac_id: "callback:src/orphanRoutes.js:50"
+    kind: "callback"
+    path: "src/orphanRoutes.js"
+    line_range: [50, 65]
+    language: "jsts"
+  # Orphan test rows (2 rows in same test file → 1 WEAK orphan).
+  - ac_id: "test:tests/orphan.test.js:10"
+    kind: "test"
+    path: "tests/orphan.test.js"
+    line_range: [10, 25]
+    language: "jsts"
+  - ac_id: "test:tests/orphan.test.js:30"
+    kind: "test"
+    path: "tests/orphan.test.js"
+    line_range: [30, 45]
+    language: "jsts"
+unhandled_paths: []
+per_slice_costs: {}
+created_at: "2026-05-04T16:00:00+00:00"

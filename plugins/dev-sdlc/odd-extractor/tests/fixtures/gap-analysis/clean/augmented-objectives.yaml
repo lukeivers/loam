@@ -1,0 +1,50 @@
+schema_version: 1
+extraction_id: clean-fixture
+augmented_at: "2026-05-04T16:00:00+00:00"
+interview_audit_path: "/tmp/audit-log"
+objectives:
+  - objective_id: "O.dispute-flow.1"
+    text: "Operators file refund disputes against merchant portals at scale, replacing manual portal clickwork."
+    confidence: VERIFIED
+    domain: "dispute-flow"
+    source: "extracted"
+    evidence:
+      readme_excerpts:
+        - "File refunds at scale"
+      design_doc_refs: []
+      test_name_refs:
+        - "test_dispute_filing_pipeline"
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: "abc123"
+      rationale: null
+  - objective_id: "O.csv-upload.1"
+    text: "CSV upload + validation pipeline accepts operator-prepared dispute lists in batches."
+    confidence: VERIFIED
+    domain: "csv-upload"
+    source: "extracted"
+    evidence:
+      readme_excerpts:
+        - "Bulk CSV upload"
+      design_doc_refs: []
+      test_name_refs:
+        - "test_csv_validation"
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: "abc123"
+      rationale: null
+  - objective_id: "O.audit-log.1"
+    text: "Audit trail identifies who initiated each dispute filing for SOC-2 CC6 readiness."
+    confidence: VERIFIED
+    domain: "audit-log"
+    source: "extracted"
+    evidence:
+      readme_excerpts:
+        - "Audit trail per filing"
+      design_doc_refs: []
+      test_name_refs:
+        - "test_audit_writes_user_id"
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: "abc123"
+      rationale: null

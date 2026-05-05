@@ -1,0 +1,18 @@
+schema_version: 1
+extraction_id: cat-a-only-fixture
+entries:
+  - objective_id: "O.security.1"
+    evidence_rows: []
+    match_rationale: "No backing rows located"
+  - objective_id: "O.future-feature.1"
+    evidence_rows: []
+    match_rationale: "Forward-looking outcome; no implementation yet"
+orphan_rows: []
+created_at: "2026-05-04T16:00:00+00:00"
+model_id: "(test)"
+cost_actual_cents: 0.0
+total_evidence_rows: 0
+objective_count: 2
+unmatched_objective_ids:
+  - "O.security.1"
+  - "O.future-feature.1"

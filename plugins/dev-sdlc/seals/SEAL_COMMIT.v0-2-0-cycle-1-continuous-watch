@@ -1,0 +1,11 @@
+# v0.2.0 Cycle 1 — Continuous codebase-watch (incremental extractor) + scheduling + PM ratification-queue + domain-batched AC surfacing; single-component fence on plugins/dev-sdlc/
+
+slug: v0-2-0-cycle-1-continuous-watch
+components: dev-sdlc
+baseline: 9bed44c
+amendment-commit: faff84e61db588b67d258ae6f0cedcd37c534957
+plan-doc: docs/rebuild/plans/v0-2-0-cycle-1-continuous-watch.md
+acs-satisfied: 10
+smoke: D1 + D2-idempotency + D5 + D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI); classifier accuracy ≥90% on synthetic test set; full-suite green sweep
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

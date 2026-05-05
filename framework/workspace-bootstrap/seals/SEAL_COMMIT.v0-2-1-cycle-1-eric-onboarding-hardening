@@ -1,0 +1,11 @@
+# v0.2.1 Cycle 1 — Eric onboarding ritual hardening; install-time 6-question one-at-a-time PM-mediated ritual + survey-as-default-source + production-stake honour-flow + SOC-2 audit-log floor + fresh-user fixture; single-component fence on framework/workspace-bootstrap/
+
+slug: v0-2-1-cycle-1-eric-onboarding-hardening
+components: workspace-bootstrap
+baseline: 0bf33f1
+amendment-commit: f6b5047ec2afce68a09e0d8305d10bf5d0434ccd
+plan-doc: docs/rebuild/plans/v0-2-1-cycle-1-eric-onboarding-hardening.md
+acs-satisfied: 15
+smoke: D1+D2+D3+D5+D6 exercised; D4 n/a (one-shot CLI); 4 synthetic-tree + 3 survey-file fixtures; full-suite green sweep (401 passed, 11 pre-existing skips)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

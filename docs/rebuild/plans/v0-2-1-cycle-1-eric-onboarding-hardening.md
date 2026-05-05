@@ -402,3 +402,10 @@ The plan-doc commits "audit-log serves as resume points" but resume-flow specifi
 ## 14. Method-decision record (per AC.D-sa.7 lint requirement)
 
 Cycle-1 method decisions at §7. Master-plan method decisions at master plan §9 (`docs/rebuild/plans/v0-2-1-master-plan.md`).
+
+### Commit SHAs
+
+- Amendment commit: `f6b5047ec2afce68a09e0d8305d10bf5d0434ccd` —
+  `chore(amend): v0-2-1-cycle-1-eric-onboarding-hardening manifest+apply — workspace-bootstrap BASELINE+sidecar bump to 0bf33f1`
+- Seal commit: `55640b1dadc0256c6090615eae18de1dfe91c846` —
+  `chore(seals): v0-2-1-cycle-1-eric-onboarding-hardening — workspace-bootstrap at f6b5047`

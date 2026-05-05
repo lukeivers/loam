@@ -76,16 +76,18 @@ PR-safety, continuous-watch, and ratification flow all operate at objective alti
 
 **Why second.** The core capability rebuild. v0.2.4 + v0.2.5 layer above.
 
-### v0.2.4 — Completeness interview + gap analysis
+### v0.2.4 — Completeness interview + gap analysis — **SHIPPED 2026-05-05** (local; tag deferred)
 
-**Theme.** After extraction lands, the persona interviews the user about the extracted objective set; gap analysis runs on the augmented set.
+**Theme.** After extraction lands, the persona interviews the user about the extracted objective set; gap analysis runs on the augmented set; the system produces a "what should I build next?" output the user can act on. Negative-alignment carved out to v0.2.6+ per Luke 2026-05-05 ruling.
 
-**Primary work:**
-- Completeness interview: persona presents extracted objectives + flags missing-but-expected ones (e.g., "real-money app with no security-shaped objective"). User confirms / adjusts / adds via PM batch API one-question-at-a-time.
-- Gap analysis: compare augmented objective set against backing-implementation map. Surface objectives without VERIFIED backing + implementation orphans (no objective ladder) + (subset) negative-alignment cases — see v0.2.5 for the full negative-alignment work.
-- "What should I build next?" output: derived from gap inventory + user-stated priorities (first-task / pain-points from survey).
+**Cycle SHAs (sealed):**
+- Cycle 1 — Completeness interview: seal `d42ace9`; §14 `afdbcde`. 11 ACs AC.COMPINT.1-11.
+- Cycle 2 — Gap analysis: seal `9d15333`; §14 `b67c0bb`. 9 ACs AC.GAPAN.1-9.
+- Cycle 3 — Build-next + persona surface + SOFT smoke (closes v0.2.4): seal `064cc2e`; §14 `38a0473`. 13 ACs AC.BLDNXT.1-9 + AC.PERSONA-PULL.1-4.
+- 1421 total tests green at v0.2.4 close (813 odd-extractor + 73 cost-governance + 124 per-project-pm + 411 workspace-bootstrap).
+- SOFT release smoke against canonical jsts-playwright-app fixture: ALL 6 dimensions exercised; §self-checks ≥90% gate passed.
 
-**AI-time band.** 6-12 h. Medium cycle. Likely 2-3 sub-cycles (completeness-interview / gap-analysis / build-next-recommendation).
+**AI-time actuals:** Cycle 1 ~15 min / 130 calls; Cycle 2 ~14 min / 70 calls; Cycle 3 ~24 min / 110 calls. Aggregate ~53 min wall-clock (vs 6-12h human-developer band — ~10× faster, per rubric).
 
 **Why third.** Depends on extractor producing objectives at the right altitude.
 

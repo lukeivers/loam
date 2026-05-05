@@ -1,0 +1,11 @@
+# v0.2.3 Cycle 2 — Backing-implementation map + ratification reframe; new backing_map.py module + populate_backing_map heuristic-pre-filter + LLM-pass classifier; objective-altitude ratification factory + apply path; v1→v2 ratification-state schema migration; PM-side altitude-tagged provenance; single-component fence on plugins/dev-sdlc/odd-extractor/
+
+slug: v0-2-3-cycle-2-backing-map-and-ratification-reframe
+components: dev-sdlc
+baseline: 27111ed
+amendment-commit: 716da0af8444a149568ea3ea90e00f005d2aa907
+plan-doc: docs/rebuild/plans/v0-2-3-cycle-2-backing-map-and-ratification-reframe.md
+acs-satisfied: 15
+smoke: D1+D2+D5+D6 exercised; D3 inherited (PM batch API + state.yaml resume); D4 n/a; 3 backing-map + 3 ratification fixtures; full-suite green sweep
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

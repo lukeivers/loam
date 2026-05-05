@@ -117,7 +117,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "<pending>"
+baseline: "da58ad8"
 
 plan: docs/rebuild/plans/v0-2-2-grounding-propagation.md
 

@@ -1,0 +1,152 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-4-master-plan
+  title: "v0.2.4 master plan — completeness interview + gap analysis + 'what should I build next?' output; 3 cycles (completeness interview / gap analysis / build-next + persona surface + SOFT smoke); SOFT smoke gate at v0.2.4 (HARD deferred to v0.2.5); v0.2.3 substrate consumed read-only (objectives + backing-map + ratification flow); v0.1.7 PM batch API consumed read-only for one-question-at-a-time interview surface; two-category gap analysis (objectives_without_verified_backing + implementation_orphans) per Luke 2026-05-05 split; negative-alignment OUT OF SCOPE (carved to v0.2.6+); informative-not-prescriptive build-next output; AI-time band ~31-50 min wall-clock"
+
+# This manifest is plan-doc-only; the v0.2.4 release lands as three
+# cycle-level apply+seal pairs with their own per-cycle manifests.
+# This master-plan manifest exists to:
+#   - declare the master plan-doc paper trail under
+#     docs/rebuild/plans/ universal-prefix admission;
+#   - establish the plan_doc_ref for the v0.2.4 release rollup
+#     (final SHIPPED rollup commit references this manifest);
+#   - record the master-plan method-decision register at §9 for
+#     traceability.
+#
+# v0.2.4 is the THIRD cycle of the v0.2.2 → v0.2.5/v0.2.6+ rebuild path.
+# v0.2.2 SHIPPED at:
+#   - apply ada74e1
+#   - seal  5eda09d
+#   - post-seal SHA backfill ebca7dc (dev-sdlc at da58ad8)
+# v0.2.3 SHIPPED at:
+#   - Cycle 1 seal 9b9f87c (multi-source objective synthesis)
+#   - Cycle 2 seal 857749c (backing-map + ratification reframe)
+#   - Cycle 3 seal f78bb36 (PR-safety + watch reframe + SOFT smoke)
+#   - SHIPPED rollup 50b5385 (combined v0.2.2 + v0.2.3 with v0.2.5/v0.2.6 split note)
+# v0.2.5 (Eric re-ship; HARD smoke against rd-automation) follows v0.2.4.
+# v0.2.6+ (negative-alignment detection; standalone post-Eric release) follows v0.2.5.
+#
+# Commit ladder pre-apply:
+#   d37c623 — lean grounding doc (always-load).
+#   ffd9c95 — verbose grounding doc.
+#   5974103 — odd-rebuild master plan (v0.2.2 → v0.2.6+ sequence; AUTHORITATIVE).
+#   ada74e1 / 5eda09d / ebca7dc — v0.2.2 apply / seal / backfill.
+#   9b9f87c / 857749c / f78bb36 — v0.2.3 cycle seals.
+#   50b5385 — v0.2.3 SHIPPED rollup with v0.2.5/v0.2.6 split note.
+#   <THIS plan-doc commit lands NEXT (master plan-doc + this manifest)>
+#   <per-cycle dispatches author sub-plan-docs + sub-manifests>
+#   <per-cycle apply + seal + §14 backfill commits land>
+#   <v0.2.4 SHIPPED rollup commit references this manifest's plan_doc_ref + the per-cycle SHAs in §9 register>
+#
+# Three-cycle decomposition (per master plan §3):
+#   Cycle 1 — Completeness interview
+#     PRIMARY plugins/dev-sdlc/odd-extractor/
+#     AC families: AC.COMPINT.* (11 ACs)
+#     AI-time: ~12-20 min wall-clock (~80-130 tool calls × 0.1-0.15)
+#     Output: completeness.py + interview.py + augmented-objectives.yaml shape
+#     Read-only compose: framework/per-project-pm/ (PM batch API);
+#                        framework/cost-governance/ (LLM-judge budget)
+#     Surface: missing-objective LLM-judge + interview Q-loop +
+#              augmented set persistence
+#   Cycle 2 — Gap analysis
+#     PRIMARY plugins/dev-sdlc/odd-extractor/
+#     AC families: AC.GAPAN.* (9 ACs)
+#     AI-time: ~7-12 min wall-clock (~50-80 tool calls × 0.1-0.15)
+#     Output: gap_analysis.py + gap-inventory.yaml shape
+#     Read-only compose: backing_map.py + spec.py + adapter evidence-rows
+#     Two categories: objectives_without_verified_backing +
+#                     implementation_orphans (negative-alignment OUT;
+#                     forward-compat field for v0.2.6+)
+#   Cycle 3 — Build-next + persona surface + SOFT smoke
+#     PRIMARY plugins/dev-sdlc/odd-extractor/
+#     AC families: AC.BLDNXT.* (9 ACs) + AC.PERSONA-PULL.* (4 ACs)
+#     AI-time: ~12-18 min wall-clock (~80-120 tool calls × 0.1-0.15)
+#     Output: build_next.py + CLI subcommand + build-next.yaml + build-next.md
+#     Ranking: composite gap-confidence × priority-match × estimated-impact
+#     Informative-not-prescriptive enforced via denylist
+#     Persona pull-point: CLI invocation; no new SKILL.md
+#     SOFT integration smoke on canonical jsts-playwright-app fixture
+#
+# Aggregate AI-time band: ~31-50 min wall-clock (midpoint ~40 min).
+# Lower edge of parent §3 v0.2.4 ~36-72 min band given v0.2.3 substrate
+# is more complete than projections assumed.
+#
+# Smoke (per smoke-test-discipline §6 + master plan §3 + §5):
+#   Cycle 1 smoke (D1+D5+D6 inheriting D2/D3/D4 from component-shape):
+#     fresh fixture → interview runs → augmented-objectives.yaml present
+#   Cycle 2 smoke (D1+D5+D6):
+#     augmented set + backing-map → gap-inventory.yaml + stdout summary
+#   Cycle 3 smoke (D1+D2+D3+D5+D6 — release-level SOFT integration smoke):
+#     canonical jsts-playwright-app fixture + survey-context augment →
+#     full path (extract → interview → gaps → build-next) → ranked
+#     candidate list with rationale produced + persisted;
+#     §self-checks pass-rate ≥90% over augmented objective+capability+constraint set
+#   Release-level SOFT gate (per parent Decision R): SOFT at v0.2.4;
+#     HARD deferred to v0.2.5 against rd-automation
+#
+# Negative-alignment OUT OF SCOPE per Luke 2026-05-05 ruling:
+#   - 25%+ false-positive risk per ODD-rebuild master plan §7.5
+#   - No real-world calibration data exists for the heuristic
+#   - Eric's auth-bypass case surfaces via gap analysis indirectly
+#     (interview-flag-missing → gap-analysis-WEAK-backing →
+#      build-next-rank-high)
+#   - v0.2.3 + v0.2.4 IS the complete "what should I build next?"
+#     capability against Eric's stated priorities
+#   - Negative-alignment is a marginal demo-cleanliness enhancement,
+#     not a load-bearing capability
+#   - v0.2.6+ ships post-Eric, post-calibration-data as standalone
+#
+# Bookkeeping note: this manifest is plan-doc-only — no source-edit
+# commit to declare BASELINE against; no apply / seal expected from
+# THIS manifest. Plan-doc lands as a single semantic commit on
+# canonical pos-v2; per-cycle work cycles dispatch separately.
+# Universal-paths admit docs/rebuild/plans/ (plan-doc paper trail).
+
+# Plan-doc-only — baseline pins to the v0.2.3 SHIPPED rollup so the
+# manifest validator's structural lint passes. No apply / seal expected
+# from THIS manifest; per-cycle manifests handle their own apply/seal.
+baseline: "50b5385"
+
+plan: docs/rebuild/plans/v0-2-4-master-plan.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# This master plan-doc IS the durable surface; per-cycle plan-docs
+# expand at cycle plan-author dispatch time.
+plan_doc_ref: docs/rebuild/plans/v0-2-4-master-plan.md
+
+# AC count is structural — sum of per-cycle AC seeds named at §3.
+# AC.COMPINT.* 11 + AC.GAPAN.* 9 + AC.BLDNXT.* 9 + AC.PERSONA-PULL.* 4 = 33
+ac_count: 33
+
+smoke_outcome: "SOFT release-level integration smoke at Cycle 3 against canonical jsts-playwright-app fixture (D1+D2+D3+D5+D6) with synthetic survey-context augment; §self-checks ≥90% pass-rate gate over augmented objective+capability+constraint set; HARD against rd-automation deferred to v0.2.5."
+
+# components — the v0.2.4 build cycles seal under the dev-sdlc
+# parent (consistent with v0.1.8/v0.1.9/v0.2.0/v0.2.1/v0.2.2/v0.2.3
+# precedent for sealed components living at plugins/dev-sdlc/tests/
+# SEAL_COMMIT). This master-plan manifest is plan-doc-only and does
+# NOT trigger a seal; per-cycle manifests do.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + v0.1.9 + v0.2.0
+# + v0.2.1 + v0.2.2 + v0.2.3 precedent.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail (this
+# master plan-doc + per-cycle sub-plan-docs + their manifests).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files: []
+
+narrative:
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. This master-plan
+  # manifest is plan-doc-only — there is no seal commit synthesized
+  # from it. The per-cycle manifests handle their own seals.
+  target: docs/rebuild/plans/v0-2-4-master-plan.md

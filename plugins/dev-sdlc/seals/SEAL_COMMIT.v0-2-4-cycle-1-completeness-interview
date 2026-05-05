@@ -1,0 +1,11 @@
+# v0.2.4 Cycle 1 — Completeness interview (augmented objective set via PM batch interview); heuristic pre-pass + LLM-as-judge missing-objective detection (cap 5) + PM batch API consumer (one-question-at-a-time via surface_next_questions_batch(n=1)) + 3 question shapes (confirm-existing / flag-missing-candidate / free-form-add) + augmented-set persistence at <workspace>/.loam/extractions/<repo-id>/augmented-objectives.yaml + audit-log event_kinds + cost band $0.20 default ($0.05–$0.50 halt); single-component fence on plugins/dev-sdlc/odd-extractor/
+
+slug: v0-2-4-cycle-1-completeness-interview
+components: dev-sdlc
+baseline: 89f3933f5ec7d5b2b4bf3a8ce0cc017a6e391249
+amendment-commit: e1a4239a3d814c2d9bb9536ffb145445e8422802
+plan-doc: docs/rebuild/plans/v0-2-4-cycle-1-completeness-interview.md
+acs-satisfied: 11
+smoke: D1+D5+D6 exercised; D2+D3 inherited (FIFO no-op + PM crash-safe); D4 n/a; 3 completeness-interview fixtures (clean-codebase + eric-shape + persona-flagged); full-suite green sweep
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

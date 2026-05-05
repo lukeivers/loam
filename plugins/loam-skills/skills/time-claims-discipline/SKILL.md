@@ -46,14 +46,23 @@ plan band raw. Translate to AI-time at the moment of citation:
 
 ## When this skill applies
 
-ANY time-related claim in user-facing output. Includes:
+ANY time-related claim — produced OR cited — by any agent. Two audience classes:
+
+**1. Plan-authoring agents (master plans, sub-plan-docs, synthesis docs).**
+This is where the failure mode originates. When a plan-author writes "AI-time band: 5-10h," that band needs to ALREADY be AI-time (not human-developer-time copied from intuition or from a parent plan). Apply the rubric at authoring time so downstream consumers don't have to translate. If the band lives in a parent plan in human-developer-time, translate at the moment you cite it in your sub-plan-doc.
+
+**2. Status-reporting personas (Telegram replies, audit blocks, post-task reports).**
+This is where the failure mode usually manifests as a user-visible error. Every elapsed-time / expected-duration claim verified before stating; master-plan bands translated at citation; never parroted raw.
+
+Specific triggers in either audience:
 
 - "Started X minutes ago" / "X minutes elapsed"
 - "Should take Y hours" / "Estimated wall-clock Z minutes"
 - "It's been Q time since ..."
 - "Expected band: H to K hours"
-- Master-plan band citations
-- Sub-plan-doc band citations
+- "AI-time:" lines in plan-doc / manifest authoring
+- Master-plan band citations in sub-plan-docs or status reports
+- Sub-plan-doc band citations in dispatch briefs
 - Status reports including timing
 - Audit reports including timing
 

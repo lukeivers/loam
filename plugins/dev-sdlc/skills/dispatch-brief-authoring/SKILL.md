@@ -70,6 +70,19 @@ The dispatch-brief structural shape, in canonical order:
      third-party-reviewer attribution? All no → ship forward
      without retroactive blame per
      `feedback_no_false_fault_admission`. Universal.
+   - **TIME-CLAIMS-DISCIPLINE** (added 2026-05-05): every
+     time-related claim in plan-doc / manifest / dispatch brief /
+     post-task report is verified or correctly translated. Two
+     rules: (1) for current-time / elapsed-time claims, run
+     `date` (or equivalent verifiable proxy) — don't estimate
+     from memory. (2) for expected-duration bands, use AI-time
+     not human-developer-time per the rubric (AI is 10-50× faster;
+     wall-clock minutes ≈ tool_calls × 0.1-0.15). Plan-authoring
+     agents apply this at the AC.AI-time line so downstream
+     consumers don't have to translate. See
+     `plugins/loam-skills/skills/time-claims-discipline/SKILL.md`.
+     Universal — applies to every plan-doc, manifest, dispatch
+     brief, and post-task report.
 
    **AUDIT-BLOCK discipline** (AC.DBT.7; discipline-note prose
    only — not a separate test-AC). Apply minimal audit per

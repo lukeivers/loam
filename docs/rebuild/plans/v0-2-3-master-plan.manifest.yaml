@@ -77,8 +77,10 @@ amendment:
 # canonical pos-v2; per-cycle work cycles dispatch separately.
 # Universal-paths admit docs/rebuild/plans/ (plan-doc paper trail).
 
-# No baseline pinning — plan-doc-only, not a build manifest.
-baseline: null
+# Plan-doc-only — baseline pins to the master plan-doc commit so the
+# manifest validator's structural lint passes. No apply / seal expected
+# from THIS manifest; per-cycle manifests handle their own apply/seal.
+baseline: "35155fd"
 
 plan: docs/rebuild/plans/v0-2-3-master-plan.md
 

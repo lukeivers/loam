@@ -1,0 +1,157 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-2-grounding-propagation
+  title: "v0.2.2 — ODD grounding propagation + dispatch-brief template hardening; lean grounding doc auto-loads in DEV-MODE corpus-required set + inlined into additionalContext + referenced from CLAUDE.dev.md; dispatch-brief-authoring SKILL extended with 5 propagated principles (lean-grounding-load / no-closing-line / specific-claims / operational-objective-test / no-false-fault); single-component fence on plugins/dev-sdlc/"
+
+# BASELINE: <pending> — source-edit feat commit covering the
+# dev-mode-manifest entry + corpus-inline-hook tuple entry +
+# dispatch-brief-authoring SKILL.md extension + CLAUDE.dev.md
+# session-start-discipline reference + 10 AC tests (4 OGP + 6 DBT;
+# DBT.7 prose-only).
+#
+# v0.2.2 is the FIRST cycle of the v0.2.2 → v0.2.5 rebuild path.
+# v0.2.3 (objective-first extractor; replaces v0.1.8 extraction
+# logic) follows. v0.2.4 (completeness interview + gap analysis)
+# follows v0.2.3. v0.2.5 (negative-alignment detection + Eric
+# re-ship gate) follows v0.2.4.
+#
+# Commit ladder pre-apply:
+#   6d66a2e — v0.2.1 SHIPPED rollup (predecessor; v0.2.1 release).
+#   d37c623 — lean grounding doc.
+#   ffd9c95 — verbose grounding doc.
+#   5974103 — odd-rebuild master plan (v0.2.2 → v0.2.5 sequence).
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §3
+#    v0.2.2 SHA row per AC.D-sa.7>
+#
+# Single-component fence — plugins/dev-sdlc/ (PRIMARY):
+#   - EXTEND plugins/dev-sdlc/dev-mode-manifest.yaml — additive
+#     entry under dev_only:
+#       - path: docs/odd-llm-grounding.lean.md
+#   - EXTEND plugins/dev-sdlc/skills/dispatch-brief-authoring/SKILL.md —
+#     extend "Principles to apply at turn-start" section + composition
+#     section per AC.DBT.1 → AC.DBT.6 (5 propagated principles + 1
+#     prose-only discipline-note for DBT.7).
+#   - NEW tests under plugins/dev-sdlc/skills/dispatch-brief-authoring/
+#     tests/ (or co-located per dev-sdlc convention; build agent
+#     verifies precedent):
+#       test_AC_DBT_1_skill_principle_enumeration.py
+#       test_AC_DBT_2_lean_grounding_in_skill.py
+#       test_AC_DBT_3_no_closing_line_in_skill.py
+#       test_AC_DBT_4_specific_claims_in_skill.py
+#       test_AC_DBT_5_operational_objective_test_in_skill.py
+#       test_AC_DBT_6_no_false_fault_in_skill.py
+#
+# Tertiary additives:
+#   - EDIT framework/hands-off-lifecycle/hooks/corpus_inline_session_start.py —
+#     additive entry to _ALWAYS_LOAD tuple (recommended) or _ON_DEMAND
+#     (fallback if size pressure; surface decision in §14):
+#       "docs/odd-llm-grounding.lean.md"
+#   - NEW tests under framework/hands-off-lifecycle/tests/:
+#       test_AC_OGP_1_lean_grounding_in_required_set.py
+#       test_AC_OGP_2_lean_grounding_inlined.py
+#       test_AC_OGP_3_claudedev_references_lean_grounding.py
+#       test_AC_OGP_4_pos_v2_dev_mode_classification.py
+#   - EDIT CLAUDE.dev.md — extend "Session-start discipline" bulleted
+#     list with reference to docs/odd-llm-grounding.lean.md (load FIRST
+#     + §self-checks discipline).
+#
+# AC families locked per plan-doc §3:
+#   AC.OGP.1 — Lean grounding doc in DEV MODE corpus-required set
+#              (manifest entry → compute_corpus_paths_required output).
+#   AC.OGP.2 — Lean grounding doc inlined into additionalContext
+#              (inline-hook tuple entry → stdout emission on
+#              SessionStart).
+#   AC.OGP.3 — CLAUDE.dev.md references lean grounding doc as
+#              session-start required reading (load FIRST + §self-
+#              checks).
+#   AC.OGP.4 — Pos-v2 itself classified DEV MODE (verification AC; no
+#              edit; halt + surface if mis-classified).
+#   AC.DBT.1 — dispatch-brief-authoring SKILL.md enumerates the
+#              propagated principle set.
+#   AC.DBT.2 — Lean ODD grounding load reference in the skill (PROMOTE).
+#   AC.DBT.3 — No-closing-line-permission-asks reference (PROMOTE).
+#   AC.DBT.4 — Specific-claims-verified reference (PROMOTE).
+#   AC.DBT.5 — Test-against-operational-objective-before-escalating
+#              reference (PROMOTE).
+#   AC.DBT.6 — No-false-fault-admission reference (PROMOTE).
+#   AC.DBT.7 — Audit-block-when-meaningful (DISCIPLINE-NOTE prose
+#              only; not promoted to a separate test-AC).
+#
+# Smoke (per smoke-test-discipline §6 + plan-doc §3):
+#   D1 cold-state — fresh DEV MODE pos-v2 session-start;
+#     compute_corpus_paths_required output includes lean grounding
+#     path; inline hook emits content. Verified by test_AC_OGP_1 +
+#     test_AC_OGP_2.
+#   D2 idempotent re-load — re-fire session-start; sentinel content
+#     idempotent; inline emission deterministic. Covered by existing
+#     A1 sentinel write contract (AC.SE.4 + amendment 73 idempotency
+#     tests) + integration test re-fire.
+#   D5 cross-session — post-/clear, next session-start re-loads
+#     structurally. Verified by integration test re-invocation.
+#   D6 telemetry-floor — corpus-load sentinel reflects new path
+#     (sentinel IS the audit surface). Verified by sentinel-content
+#     assertion in integration test.
+#   D3 restart — n/a structurally (no daemon; one-shot per session).
+#   D4 reboot — n/a structurally (filesystem-persistence-trivial).
+#   PLUS: full-suite green sweep — pre-v0.2.2
+#     framework/hands-off-lifecycle/ + plugins/dev-sdlc/ tests at HEAD
+#     all pass post-v0.2.2; halt + surface on regression.
+#
+# Bookkeeping note: this is the v0.2.2 build (immediate successor to
+# v0.2.1 SHIPPED rollup at 6d66a2e + the lean/verbose grounding docs
+# at d37c623/ffd9c95 + the master plan at 5974103). v3 fields
+# exercised: plan_doc_ref + ac_count + smoke_outcome at the manifest
+# level; single-component sweep at seal time. Universal-paths admit
+# docs/rebuild/plans/ for plan-doc paper trail + CLAUDE.dev.md
+# extension + framework/hands-off-lifecycle/hooks/
+# corpus_inline_session_start.py additive tuple entry.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "<pending>"
+
+plan: docs/rebuild/plans/v0-2-2-grounding-propagation.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-2-2-grounding-propagation.md
+
+ac_count: 10
+smoke_outcome: "D1+D2+D5+D6 exercised; D3+D4 n/a (one-shot session-start; filesystem-persistence-trivial); 4 AC.OGP.* tests + 6 AC.DBT.* tests; AC.DBT.7 prose-only discipline-note; full-suite green sweep (counts pinned at seal time)"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + v0.1.9 + v0.2.0
+# + v0.2.1 precedent.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail.
+# `CLAUDE.dev.md` admits per AC.OGP.3 session-start-discipline edit.
+# `framework/hands-off-lifecycle/hooks/corpus_inline_session_start.py`
+# admits the additive tuple entry per AC.OGP.2 (~5-10 lines).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.dev.md
+    - framework/hands-off-lifecycle/hooks/corpus_inline_session_start.py
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-2-grounding-propagation
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

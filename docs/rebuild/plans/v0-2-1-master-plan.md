@@ -11,7 +11,7 @@
 
 > "I want this to WOW him. It can't be half-assed. What ships needs to deliver what we promise. No excuses."
 
-v0.2.1 is **THE Eric ship**. Eric installs this release. Quality bar absolutely binding — no compromise, no partial features. The first 5–10 minutes must feel intentional. HARD smoke gate at release-level per Decision R: every promised v0.1.6 → v0.2.1 capability exercises end-to-end against real OSS fixtures.
+v0.2.1 is **THE Eric ship**. Eric installs this release. Quality bar absolutely binding — no compromise, no partial features. The first 5–10 minutes must feel intentional. HARD smoke gate at release-level per Decision R: every promised v0.1.6 → v0.2.1 capability exercises end-to-end against `rd-automation` (Eric's actual project; single fixture per §6.2).
 
 ---
 
@@ -62,7 +62,7 @@ Pulled verbatim from parent §2 v0.2.1 + layered-skills §4.
 | Onboarding ritual sealed | Eric §6.2 | `framework/workspace-bootstrap/` + `plugins/dev-sdlc/` |
 | One-question-at-a-time enforcement | Eric §6 + Decision Q | `framework/per-project-pm/` (already shipped v0.1.7 Cycle 4) |
 | Eric-facing install docs (general + production-stake) | Eric §6.2 | `docs/getting-started.md` + `docs/dev-mode-getting-started.md` |
-| Live OSS smoke pass against Rails-payment-shape repo | Eric §6.2 | `plugins/dev-sdlc/odd-extractor/tests/integration/` |
+| Live smoke pass against `rd-automation` (Eric's project; single fixture per §6.2 ruling 2026-05-05) | Eric §6.2 | `plugins/dev-sdlc/odd-extractor/tests/integration/` (read-only against existing local checkout) |
 | Telegram (or Eric-chosen channel) integration | Eric §6.2 | `framework/telegram-interface/` integration |
 | `skill-promotion-review` SKILL (3-signal MVP per Decision L) | layered-skills §4 | `plugins/dev-sdlc/skills/skill-promotion-review/` |
 | Quarterly-review trigger | layered-skills §4.3 | `framework/scope-of-work/` integration |

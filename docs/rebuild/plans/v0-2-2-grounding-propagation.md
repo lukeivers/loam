@@ -336,7 +336,7 @@ v0.2.2 method decisions at §7. Master-plan method decisions at master plan §7 
 
 ### Commit SHAs
 
-- Plan-doc commit: `<pending>` — `docs(plans): v0.2.2 grounding-propagation sub-plan-doc + manifest`
-- Apply commit: `<pending>` — set on `loam amend apply` per v3 schema.
-- Seal commit: `<pending>` — set on `loam amend seal` per v3 schema.
-- Post-seal §14 backfill commit: `<pending>` — set after seal per AC.D-sa.7.
+- Amendment commit: `ada74e195559b67803da8f5c0aaf2128016bac34` —
+  `chore(amend): v0-2-2-grounding-propagation manifest+apply — dev-sdlc BASELINE+sidecar bump to da58ad8`
+- Seal commit: `5eda09d28806741387aa145fa20644e0a682ce5d` —
+  `chore(seals): v0-2-2-grounding-propagation — dev-sdlc at ada74e1`

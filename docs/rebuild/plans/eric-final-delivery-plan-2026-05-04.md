@@ -318,7 +318,7 @@ Each release below: theme, concrete bundle (with placement), AI-time band (quali
 | v0.1.7 | Subagents + PM + layered-skill mechanism + one-question-at-a-time PM flow — **SHIPPED 2026-05-04** (local; tag deferred) | 22–34 h estimate; 4 cycles sealed at `3aa20dd` / `73505f0` / `bcf699a` / `122a7c8` | ✓ all 6 dimensions PASS (HARD gate Decision R) | Coordination off persona's surface; PM ships; Decision Q one-question-at-a-time enforced structurally; audit-block SKILL composition wired |
 | v0.1.8 | Extractor heavy + Ruby-first-class + 6 SKILLs | 42–66 h | ✓ all 6 dimensions | Contract derivation possible |
 | v0.1.9 | PR-gate + 6 SKILLs | 15–28 h | ✓ all 6 dimensions | Contract enforcement |
-| v0.2.0 | Codebase-watch + auto-creation MVP | 14–24 h | ✓ all 6 dimensions | Contract evolves; Eric patterns captured |
+| v0.2.0 | Codebase-watch + auto-creation MVP — **SHIPPED 2026-05-04** (local; tag deferred) | 14–24 h estimate; 2 cycles sealed at `6fef2f1` (Cycle 1; apply `faff84e`) + `549fe88` (Cycle 2; apply `5cb84a5`) | ✓ all 6 dimensions exercised (SOFT gate per Decision R; quality-bar-non-negotiable applies); 754 tests green across 4 affected sealed components; pre-flight v0.1.7 Cycle 3 layered-skill discovery still functional | Contract evolves (Cycle 1 incremental mode keeps v0.1.8 banded contract synced as Eric's code evolves); Eric patterns captured (Cycle 2 auto-skill-capture MVP — 3 triggers MVP; user-ratification gate; cool-down + budget + hard-cap; `enable_auto_skill_capture` flag default false; design note co-shipped) |
 | v0.2.1 | Eric-smoke + onboarding + promotion rubric | 12–22 h | ✓ all 6 dimensions; fresh-user | Eric installs |
 | **Total** | | **114–189 h** (midpoint ~152 h) | | |
 

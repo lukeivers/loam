@@ -220,21 +220,14 @@ def test_contract_draft_acs_carries_typed_objectives_when_synthesis_present(
         config=config, raw=raw, synthesis=synthesis, timestamp=FIXED_TS
     )
 
+    # v0.2.3 Cycle 3 — legacy `acs:` retired; objectives.yaml is canonical.
     ext_dir = extraction_dir(workspace_root, config.repo_id)
-    sidecar = yaml.safe_load(
-        (ext_dir / "contract-draft.yaml").read_text(encoding="utf-8")
+    objs_data = yaml.safe_load(
+        (ext_dir / "objectives.yaml").read_text(encoding="utf-8")
     )
-    # Legacy ``acs`` carries typed Objective rows (objective_id in
-    # ac_id field; objective_payload preserved).
-    assert len(sidecar["acs"]) == 1
-    legacy_row = sidecar["acs"][0]
-    assert legacy_row["ac_id"] == "O.dispute-flow.1"
-    assert "objective_payload" in legacy_row
-    # Typed ``objectives`` list also present.
-    assert len(sidecar["objectives"]) == 1
-    assert sidecar["objectives"][0]["objective_id"] == "O.dispute-flow.1"
-    # Capability list present.
-    assert len(sidecar["capabilities"]) == 1
+    assert len(objs_data["objectives"]) == 1
+    assert objs_data["objectives"][0]["objective_id"] == "O.dispute-flow.1"
+    assert len(objs_data["capabilities"]) == 1
 
 
 def test_contract_draft_acs_falls_back_to_raw_when_no_synthesis(
@@ -260,11 +253,17 @@ def test_contract_draft_acs_falls_back_to_raw_when_no_synthesis(
     )
     verify_contract(config=config, raw=raw, timestamp=FIXED_TS)
 
+    # v0.2.3 Cycle 3 — when synthesis empty, objectives.yaml has empty
+    # objectives. Evidence rows still in evidence-rows.yaml (canonical
+    # since Cycle 1 OBJX.7).
     ext_dir = extraction_dir(workspace_root, config.repo_id)
-    sidecar = yaml.safe_load(
-        (ext_dir / "contract-draft.yaml").read_text(encoding="utf-8")
+    objs_data = yaml.safe_load(
+        (ext_dir / "objectives.yaml").read_text(encoding="utf-8")
     )
-    assert len(sidecar["acs"]) == 3
-    # Empty typed lists.
-    assert sidecar["objectives"] == []
-    assert sidecar["capabilities"] == []
+    assert objs_data["objectives"] == []
+    assert objs_data["capabilities"] == []
+    # Evidence rows present in evidence-rows.yaml.
+    evidence_rows = yaml.safe_load(
+        (ext_dir / "evidence-rows.yaml").read_text(encoding="utf-8")
+    )
+    assert len(evidence_rows["acs"]) == 3

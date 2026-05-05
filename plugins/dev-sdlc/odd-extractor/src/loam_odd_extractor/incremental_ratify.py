@@ -26,7 +26,7 @@ from pathlib import Path
 
 import yaml
 
-from .domain_batching import group_by_domain
+from .domain_batching import group_proposals_by_domain
 from .proposals import IncrementalProposal, IncrementalProposalSet
 
 
@@ -56,23 +56,21 @@ class EnqueueResult:
 def _format_proposal_line(proposal: IncrementalProposal) -> str:
     """One bullet line per proposal in the domain-batch question.
 
-    Format mirrors the master plan example shape:
-      - AC.X.1 (PLAUSIBLE; citation-line-changed): a/b.rb:42-58 → a/b.rb:51-67
-      - AC.X.2 (VERIFIED; backing-file-changed): a/c.rb (3 hunks)
-      - AC.X.3 (HYPOTHESISED → orphaned): a/d.rb (file deleted)
+    Per AC.WATCHOBJ.3 — at objective altitude. Renders objective_id +
+    band + drift_kind + affected_files. Reviewer reads outcome-prose
+    summary, not implementation rows directly.
     """
     band = proposal.confidence_band.value
     drift = proposal.drift_kind
-    if drift == "orphaned":
-        files = ", ".join(proposal.affected_files) or "(no files)"
-        return (
-            f"  - {proposal.ac_id} ({band} → orphaned): "
-            f"{files} (file deleted)"
-        )
     files = ", ".join(proposal.affected_files) or "(no files)"
+    if drift == "orphaned":
+        return (
+            f"  - {proposal.objective_id} ({band} → orphaned): "
+            f"{files} (rows deleted)"
+        )
     drift_label = drift.replace("_", "-")
     return (
-        f"  - {proposal.ac_id} ({band}; {drift_label}): {files}"
+        f"  - {proposal.objective_id} ({band}; {drift_label}): {files}"
     )
 
 
@@ -99,7 +97,7 @@ def _format_domain_question(
 
     lines: list[str] = []
     lines.append(
-        f"Domain '{domain}' has {n} AC re-extraction "
+        f"Domain '{domain}' has {n} objective re-extraction "
         f"proposal{'s' if n != 1 else ''} (drift detected since "
         f"{prior_short} → {curr_short}):"
     )
@@ -112,17 +110,21 @@ def _format_domain_question(
         )
     lines.append("")
     lines.append(
-        "Reply with: ratify-all / revise-each / reject-all (or per-AC: "
-        "AC.X.1=ratify AC.X.2=revise<text> AC.X.3=keep). Note: "
-        "PLAUSIBLE→VERIFIED requires explicit confirmation per "
+        "Reply with: ratify-all / revise-each / reject-all (or per-objective: "
+        "O.<domain>.1=ratify O.<domain>.2=revise<text> O.<domain>.3=keep). "
+        "Note: PLAUSIBLE→VERIFIED requires explicit confirmation per "
         "Decision I."
     )
     return "\n".join(lines)
 
 
 def _provenance_for(extraction_id: str, domain: str) -> str:
-    """Provenance string per AC.WATCH.4."""
-    return f"odd-extract:incremental:{extraction_id}:{domain}"
+    """Provenance string per AC.WATCHOBJ.3.
+
+    Carries ``objective`` altitude tag so downstream consumers can
+    distinguish from v0.2.0 AC-altitude provenance shape.
+    """
+    return f"odd-extract:incremental:{extraction_id}:objective:{domain}"
 
 
 # ---- duplicate detection -------------------------------------------
@@ -195,7 +197,7 @@ def enqueue_incremental_proposals(
         )
 
     domain_buckets: OrderedDict[str, list[IncrementalProposal]] = (
-        group_by_domain(list(proposal_set.proposals))
+        group_proposals_by_domain(list(proposal_set.proposals))
     )
 
     # Read existing PM queue's provenance strings for duplicate-skip.

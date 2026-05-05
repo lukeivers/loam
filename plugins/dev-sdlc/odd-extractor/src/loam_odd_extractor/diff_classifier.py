@@ -1,26 +1,24 @@
 """Diff-against-prior-contract logic.
 
-Per AC.WATCH.2 (v0.2.0 Cycle 1) — `classify_evidence(prior_contract,
-repo_path)` walks each AC's evidence and classifies it as
-still_current / out_of_date / orphaned.
+Per AC.WATCHOBJ.1 (v0.2.3 Cycle 3) — `classify_evidence(prior_objectives,
+prior_backing_map, repo_path)` walks each Objective's backing-map
+evidence rows and classifies the objective as still_current /
+out_of_date / orphaned at OBJECTIVE altitude.
 
-Heuristic (master plan §7.1 most-load-bearing risk; ≥90% accuracy
-on synthetic test set):
+Heuristic:
 
-  1. **File-existence path:** if any backing-file or citation file
-     no longer exists at `repo_path / file`, the AC is `orphaned`.
-  2. **Line-overlap path (with SHA pin):** for VERIFIED ACs whose
-     `evidence.repo_sha` is set, parse each citation of shape
-     `<file_path>:<start_line>[-<end_line>]`. For each cited range,
-     check whether the range was modified between the SHA and HEAD.
-     Cycle 1 uses `git log --follow -L <start>,<end>:<file>` reverse-
-     walk; if any commit between prior_sha + HEAD touched the range
-     → out_of_date.
-  3. **Backing-files heuristic (no SHA pin OR PLAUSIBLE/HYPOTHESISED):**
-     when `evidence.repo_sha` is unset, use file-mtime + git history
-     fallback. If any backing-file's `git log --since=<contract.created_at>`
-     returns commits → out_of_date. If git history unavailable,
-     mtime > created_at → out_of_date.
+  1. **File-existence path:** if any evidence row's ``path`` no longer
+     exists at `repo_path / path`, the objective is `orphaned`.
+  2. **Line-overlap path (with SHA pin):** for objectives whose
+     evidence ``repo_sha`` is set and whose backing rows have
+     ``line_range``, check whether the line range was modified between
+     the SHA and HEAD via `git log -L`. Any commit between prior_sha +
+     HEAD touched the range → out_of_date with
+     ``drift_kind="evidence_row_line_changed"``.
+  3. **File-history fallback:** when no line_range OR no SHA pin, use
+     file-mtime + git history fallback against the prior contract's
+     ``repo_sha`` (or ``contract_created_at`` if SHA unavailable). Any
+     touch → out_of_date with ``drift_kind="evidence_row_file_changed"``.
   4. **Default to still_current** when none of the above flags fire.
 
 This module is intentionally git-aware but degrades gracefully:
@@ -28,9 +26,12 @@ non-git repos use mtime-only checks. The `git` invocation is wrapped
 in try/except so missing git or non-repo paths fall back to mtime.
 
 The classifier is pure-deterministic for fixed input given a stable
-clock — running it twice on the same (prior, repo, time) tuple
-produces byte-identical output. Idempotency (AC.WATCH.4) depends on
-this property.
+clock. Idempotency (AC.RELSMOKE.2) depends on this property.
+
+Cycle 3 reframe (v0.2.3): the v0.2.0 AC-altitude classification is
+replaced with the objective-altitude classification by swapping the
+input list type. v0.1.8 BandedAC is no longer the top-level shape;
+:class:`Objective` + :class:`BackingMap` from Cycles 1+2 are.
 """
 
 from __future__ import annotations
@@ -41,10 +42,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from .bands import BandedAC
+from .spec import BackingMap, EvidenceRowRef, Objective
 
 
-DriftKind = Literal["citation_line_changed", "backing_file_changed"]
+DriftKind = Literal[
+    "evidence_row_line_changed",
+    "evidence_row_file_changed",
+    "evidence_row_path_missing",
+]
 
 
 # Citation shape: "<file_path>:<start>" or "<file_path>:<start>-<end>"
@@ -56,43 +61,62 @@ _TEST_CITATION_RE = re.compile(r"^(?P<file>[^:]+)::.+$")
 
 
 @dataclass(frozen=True)
-class OutOfDateAC:
-    """An AC whose evidence is out-of-date relative to the current
-    repo state.
+class OutOfDateObjective:
+    """An objective whose backing-row evidence is out-of-date
+    relative to the current repo state.
+
+    Per AC.WATCHOBJ.1 — the objective itself is preserved verbatim
+    (its text + band did not change); what's stale is the
+    backing-implementation map row pointing at code lines that have
+    since shifted.
 
     Fields:
 
-    - `ac` — the prior banded AC (preserved verbatim).
-    - `drift_kind` — discriminator naming why drift was detected.
-    - `affected_files` — tuple of file paths (relative to repo root)
-      that triggered the drift detection.
-    - `from_sha` — prior SHA (when known; None for PLAUSIBLE/
-      HYPOTHESISED without SHA pin).
-    - `to_sha` — current HEAD SHA at watch-time.
+    - ``objective`` — the prior :class:`Objective` (preserved).
+    - ``drift_kind`` — discriminator naming why drift was detected.
+    - ``affected_rows`` — tuple of :class:`EvidenceRowRef` instances
+      that triggered drift detection.
+    - ``from_sha`` — prior SHA (when known; None when prior contract
+      had no VERIFIED objective with SHA pin).
+    - ``to_sha`` — current HEAD SHA at watch-time.
     """
 
-    ac: BandedAC
+    objective: Objective
     drift_kind: DriftKind
-    affected_files: tuple[str, ...]
+    affected_rows: tuple[EvidenceRowRef, ...]
     from_sha: str | None
     to_sha: str
 
+    @property
+    def affected_files(self) -> tuple[str, ...]:
+        """Convenience: paths from affected_rows."""
+        return tuple(sorted({r.path for r in self.affected_rows}))
+
 
 @dataclass(frozen=True)
-class OrphanedAC:
-    """An AC whose backing files / citation files no longer exist."""
+class OrphanedObjective:
+    """An objective whose backing-row paths no longer exist on disk."""
 
-    ac: BandedAC
-    missing_files: tuple[str, ...]
+    objective: Objective
+    missing_evidence_rows: tuple[EvidenceRowRef, ...]
+
+    @property
+    def missing_files(self) -> tuple[str, ...]:
+        """Convenience: paths from missing_evidence_rows."""
+        return tuple(sorted({r.path for r in self.missing_evidence_rows}))
 
 
 @dataclass(frozen=True)
 class EvidenceClassification:
-    """Output of :func:`classify_evidence`."""
+    """Output of :func:`classify_evidence`.
 
-    still_current: tuple[BandedAC, ...] = field(default_factory=tuple)
-    out_of_date: tuple[OutOfDateAC, ...] = field(default_factory=tuple)
-    orphaned: tuple[OrphanedAC, ...] = field(default_factory=tuple)
+    Per AC.WATCHOBJ.1 — at objective altitude. Three buckets keyed by
+    objective rather than AC.
+    """
+
+    still_current: tuple[Objective, ...] = field(default_factory=tuple)
+    out_of_date: tuple[OutOfDateObjective, ...] = field(default_factory=tuple)
+    orphaned: tuple[OrphanedObjective, ...] = field(default_factory=tuple)
 
     @property
     def still_current_count(self) -> int:
@@ -152,44 +176,25 @@ def _current_head_sha(repo_path: Path) -> str | None:
     return sha or None
 
 
-def _file_paths_for_ac(ac: BandedAC) -> set[str]:
-    """All file paths an AC references — backing_files +
-    citation file-paths (the path before ':' or '::')."""
-    out: set[str] = set()
-    for bf in ac.backing_files:
-        out.add(str(bf))
-    for cite in ac.evidence.citations:
-        m = _LINE_CITATION_RE.match(cite)
-        if m:
-            out.add(m.group("file"))
-            continue
-        m = _TEST_CITATION_RE.match(cite)
-        if m:
-            out.add(m.group("file"))
-            continue
-        # Fallback: take the prefix before the first ':'; if no ':',
-        # the whole string is treated as a path.
-        if ":" in cite:
-            out.add(cite.split(":", 1)[0])
-        else:
-            out.add(cite)
-    return out
+def _evidence_row_paths(rows: list[EvidenceRowRef]) -> set[str]:
+    """All file paths from a list of evidence rows."""
+    return {r.path for r in rows}
 
 
-def _line_citations(ac: BandedAC) -> list[tuple[str, int, int]]:
-    """Parse `evidence.citations` for line-citation shape; return a
-    list of (file_path, start_line, end_line) tuples. Test-citations
-    (`<file>::<name>`) and bare paths are skipped.
+def _evidence_row_line_ranges(
+    rows: list[EvidenceRowRef],
+) -> list[tuple[str, int, int, EvidenceRowRef]]:
+    """Per-row (path, start, end, ref) triples for rows with line_range set.
+
+    Rows without ``line_range`` are skipped — they fall through to the
+    file-history fallback path.
     """
-    out: list[tuple[str, int, int]] = []
-    for cite in ac.evidence.citations:
-        m = _LINE_CITATION_RE.match(cite)
-        if not m:
+    out: list[tuple[str, int, int, EvidenceRowRef]] = []
+    for r in rows:
+        if r.line_range is None:
             continue
-        start = int(m.group("start"))
-        end_str = m.group("end")
-        end = int(end_str) if end_str else start
-        out.append((m.group("file"), start, end))
+        start, end = r.line_range
+        out.append((r.path, int(start), int(end), r))
     return out
 
 
@@ -288,141 +293,158 @@ def _file_mtime_after_iso(
 
 def classify_evidence(
     *,
-    prior_acs: list[BandedAC],
+    prior_objectives: list[Objective],
+    prior_backing_map: BackingMap,
     repo_path: Path,
     contract_created_at: str,
     current_repo_sha: str | None = None,
 ) -> EvidenceClassification:
-    """Classify each AC in `prior_acs` as still_current / out_of_date
-    / orphaned given the current state of `repo_path`.
+    """Classify each objective in ``prior_objectives`` as still_current /
+    out_of_date / orphaned given the current state of ``repo_path``.
 
-    Per AC.WATCH.2 — heuristic combines:
+    Per AC.WATCHOBJ.1 — at objective altitude. The heuristic walks the
+    backing-map's per-objective evidence rows (path + line_range +
+    symbol_name) instead of v0.2.0's BandedAC citations:
 
-      - File-existence (orphaned if any cited file is missing).
-      - Line-overlap (out_of_date for VERIFIED ACs with SHA pin if
-        cited line range was modified between prior SHA and HEAD).
-      - Backing-files git history (out_of_date if any backing-file
-        was modified since `contract_created_at`).
-      - File-mtime fallback (out_of_date if any backing-file's mtime
-        > `contract_created_at`).
+      - **File-existence** — orphan if any backing-row's ``path`` is missing.
+      - **Line-overlap** — out_of_date when an evidence row's
+        ``line_range`` was touched between the contract's
+        ``repo_sha`` (or the first VERIFIED objective's repo_sha) and
+        HEAD via ``git log -L``.
+      - **File-history fallback** — out_of_date when an evidence row's
+        ``path`` shows commits since ``contract_created_at`` (or mtime
+        > created_at when git history is unavailable).
+      - **Default to still_current** otherwise.
 
-    Pure given a stable clock — same (prior_acs, repo state, time)
-    tuple produces byte-identical output.
+    HYPOTHESISED objectives whose backing-map entry has zero evidence
+    rows (forward-looking; no implementation yet) are still_current
+    by definition — they have no rows to drift.
+
+    Pure given a stable clock.
     """
     is_repo = _is_git_repo(repo_path)
     to_sha = current_repo_sha or (
         _current_head_sha(repo_path) if is_repo else None
     )
     if to_sha is None:
-        # Non-git or git failure — use a placeholder SHA for the
-        # classification record. Out_of_date detection falls back to
-        # mtime-only.
         to_sha = "<no-sha>"
 
-    still_current: list[BandedAC] = []
-    out_of_date: list[OutOfDateAC] = []
-    orphaned: list[OrphanedAC] = []
+    # Build objective_id → evidence rows index.
+    rows_by_objective: dict[str, list[EvidenceRowRef]] = {}
+    for entry in prior_backing_map.entries:
+        rows_by_objective[entry.objective_id] = list(entry.evidence_rows)
 
-    for ac in prior_acs:
-        all_files = _file_paths_for_ac(ac)
-        # Step 1 — file-existence (orphan detection).
-        missing = _files_missing(all_files, repo_path=repo_path)
-        if missing:
+    # Pick a global from_sha — first objective with a repo_sha pin.
+    from_sha: str | None = None
+    for o in prior_objectives:
+        if o.evidence.repo_sha:
+            from_sha = o.evidence.repo_sha
+            break
+
+    still_current: list[Objective] = []
+    out_of_date: list[OutOfDateObjective] = []
+    orphaned: list[OrphanedObjective] = []
+
+    for objective in prior_objectives:
+        rows = rows_by_objective.get(objective.objective_id, [])
+        if not rows:
+            # No backing rows — nothing to drift. Common for
+            # HYPOTHESISED objectives with no impl yet.
+            still_current.append(objective)
+            continue
+
+        # Step 1 — file-existence (orphan detection per row).
+        missing_rows: list[EvidenceRowRef] = []
+        for r in rows:
+            if not (repo_path / r.path).exists():
+                missing_rows.append(r)
+        if missing_rows:
             orphaned.append(
-                OrphanedAC(
-                    ac=ac,
-                    missing_files=tuple(sorted(missing)),
+                OrphanedObjective(
+                    objective=objective,
+                    missing_evidence_rows=tuple(missing_rows),
                 )
             )
             continue
 
-        # Step 2 — line-overlap path (VERIFIED + SHA pin + git repo).
-        from_sha = ac.evidence.repo_sha
-        line_drift_files: set[str] = set()
-        if is_repo and from_sha and ac.evidence.kind == "test":
-            for fp, start, end in _line_citations(ac):
+        # Step 2 — line-overlap path for rows with line_range pinned.
+        line_changed_rows: list[EvidenceRowRef] = []
+        rows_with_line_ranges: list[EvidenceRowRef] = []
+        if is_repo and from_sha:
+            for path, start, end, row in _evidence_row_line_ranges(rows):
+                rows_with_line_ranges.append(row)
                 if _commits_touching_lines(
-                    file_path=fp,
+                    file_path=path,
                     start=start,
                     end=end,
                     from_sha=from_sha,
                     to_sha=to_sha,
                     repo_path=repo_path,
                 ):
-                    line_drift_files.add(fp)
-        if line_drift_files:
+                    line_changed_rows.append(row)
+        if line_changed_rows:
             out_of_date.append(
-                OutOfDateAC(
-                    ac=ac,
-                    drift_kind="citation_line_changed",
-                    affected_files=tuple(sorted(line_drift_files)),
+                OutOfDateObjective(
+                    objective=objective,
+                    drift_kind="evidence_row_line_changed",
+                    affected_rows=tuple(line_changed_rows),
                     from_sha=from_sha,
                     to_sha=to_sha,
                 )
             )
             continue
 
-        # Step 3 — backing-files heuristic (git history + mtime
-        # fallback).
-        backing_drift_files: set[str] = set()
-        for bf in ac.backing_files:
-            bf_str = str(bf)
+        # If line-range pin path ran on every row (every row had a
+        # line_range AND we have from_sha), and reported no drift,
+        # the line-overlap result is authoritative — don't fall through
+        # to file-history fallback (which uses contract_created_at and
+        # would report init-commit as drift for a brand-new contract).
+        all_rows_have_line_pin = (
+            is_repo
+            and from_sha is not None
+            and len(rows_with_line_ranges) == len(rows)
+            and len(rows) > 0
+        )
+        if all_rows_have_line_pin:
+            still_current.append(objective)
+            continue
+
+        # Step 3 — file-history fallback for rows without line_range
+        # OR for objectives whose contract has no SHA pin.
+        file_changed_rows: list[EvidenceRowRef] = []
+        for r in rows:
+            # Skip rows that already participated in line-overlap
+            # check (they passed; don't re-check via file-history).
+            if r in rows_with_line_ranges:
+                continue
             touched = False
             if is_repo:
                 touched = _commits_touching_file_since_iso(
-                    file_path=bf_str,
+                    file_path=r.path,
                     since_iso=contract_created_at,
                     repo_path=repo_path,
                 )
             if not touched:
                 touched = _file_mtime_after_iso(
-                    file_path=bf_str,
+                    file_path=r.path,
                     since_iso=contract_created_at,
                     repo_path=repo_path,
                 )
             if touched:
-                backing_drift_files.add(bf_str)
-        # Also check citation files when no backing_files exist OR
-        # when no backing-file drift was detected. This covers ACs
-        # whose only file reference is a citation.
-        if not backing_drift_files:
-            citation_files = {
-                fp for fp, _, _ in _line_citations(ac)
-            }
-            for fp in citation_files - {
-                str(b) for b in ac.backing_files
-            }:
-                touched = False
-                if is_repo:
-                    touched = _commits_touching_file_since_iso(
-                        file_path=fp,
-                        since_iso=contract_created_at,
-                        repo_path=repo_path,
-                    )
-                if not touched:
-                    touched = _file_mtime_after_iso(
-                        file_path=fp,
-                        since_iso=contract_created_at,
-                        repo_path=repo_path,
-                    )
-                if touched:
-                    backing_drift_files.add(fp)
-        if backing_drift_files:
+                file_changed_rows.append(r)
+        if file_changed_rows:
             out_of_date.append(
-                OutOfDateAC(
-                    ac=ac,
-                    drift_kind="backing_file_changed",
-                    affected_files=tuple(
-                        sorted(backing_drift_files)
-                    ),
+                OutOfDateObjective(
+                    objective=objective,
+                    drift_kind="evidence_row_file_changed",
+                    affected_rows=tuple(file_changed_rows),
                     from_sha=from_sha,
                     to_sha=to_sha,
                 )
             )
             continue
 
-        # Step 4 — default still_current.
-        still_current.append(ac)
+        still_current.append(objective)
 
     return EvidenceClassification(
         still_current=tuple(still_current),

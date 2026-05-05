@@ -1,26 +1,25 @@
 """Domain inference + batching for incremental-mode proposals.
 
-Per AC.WATCH.5 (v0.2.0 Cycle 1) — `infer_domain(ac)` runs the
-heuristic:
+Per AC.WATCHOBJ.3 (v0.2.3 Cycle 3) — `infer_domain(objective)` runs
+the heuristic:
 
-  1. AC ID prefix path (primary): parse `ac_id` for shape
-     `AC.<DOMAIN>.<n>`; return lowercased `<DOMAIN>` unless the
-     domain is in the loam-internal blocklist.
-  2. File-path-prefix fallback: longest common prefix across
-     `backing_files` + citation-file-paths; return the last
-     non-empty path segment.
-  3. `_uncategorised` fallback: when neither path produces a
-     domain.
+  1. **Objective ID prefix path (primary):** parse ``objective_id`` for
+     shape ``O.<domain>.<n>`` (per Cycle 1's ID convention); return
+     ``<domain>`` lowercased.
+  2. **File-path-prefix fallback (rare):** longest common prefix across
+     backing-row paths when the objective_id regex misses (defensive;
+     Cycle 1's ID validator enforces shape).
+  3. ``_uncategorised`` fallback.
 
-Per AC.WATCH.5 — `group_by_domain(proposals)` is pure:
-deterministic for fixed input (sorted-key output dict; insertion-
-order preserved within each value list). Determinism is
-load-bearing for AC.WATCH.4 idempotency check (same proposals →
-same domain-grouping → same enqueue → no duplicates).
+Cycle 1's :class:`Objective` ID regex is ``^O\\.[a-z][a-z0-9-]*\\.\\d+$``
+— domain is the middle segment, lowercase a-z + digits + hyphen,
+inherently human-readable. No loam-internal blocklist needed at
+objective altitude (loam-internal ACs were the v0.1.8 problem; Cycle
+1's ID convention sidesteps it).
 
-The blocklist is hard-coded in this module per F2 RF gap #7
-(plan-doc §10): loam-internal AC namespaces should NOT surface as
-domains. Update when adding new loam-internal AC namespaces.
+`group_proposals_by_domain(proposals)` is pure: deterministic for
+fixed input (sorted-key output dict). Determinism is load-bearing
+for AC.RELSMOKE.2 idempotency.
 """
 
 from __future__ import annotations
@@ -30,40 +29,43 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .bands import BandedAC
     from .proposals import IncrementalProposal
+    from .spec import Objective
 
 
-# AC ID prefix shape: "AC.<DOMAIN>.<n>" — DOMAIN is uppercase
-# letters/digits, n is one or more characters (typically digits or
-# hyphens). The regex is anchored so partial matches don't bleed.
-_AC_ID_PREFIX_RE = re.compile(r"^AC\.([A-Z][A-Z0-9_]*)\.")
+# Cycle 1 objective_id shape: "O.<domain>.<n>" — domain is lowercase
+# letters/digits/hyphens, n is one or more digits.
+_OBJECTIVE_ID_DOMAIN_RE = re.compile(
+    r"^O\.([a-z][a-z0-9-]*)\.\d+$"
+)
 
-
-# Loam-internal AC namespaces — must NOT surface as domains. When
-# matched against this blocklist, fall through to file-path-prefix.
-# Update this set when adding new loam-internal AC namespaces. See
-# F2 RF gap #7 (plan-doc §10).
+# v0.2.0 retained for backward compat by anyone constructing custom
+# AC IDs against the watch — preserves the exported set for legacy
+# imports. Cycle 3 retires AC ID inference; this remains as a
+# documented constant to avoid breaking imports of
+# ``LOAM_INTERNAL_AC_NAMESPACES``.
 LOAM_INTERNAL_AC_NAMESPACES: frozenset[str] = frozenset(
     {
-        "OREK",       # odd-extractor scaffold
-        "BANDS",      # banded contract types
-        "SYNTH",      # synthetic fixtures
-        "FIXTURES",   # fixture-management ACs
-        "DPS1",       # dev-pattern-simplifications-1
-        "DPS2",       # dev-pattern-simplifications-2
-        "PRSG",       # PR-safety gate
-        "WATCH",      # this cycle (v0.2.0 Cycle 1)
-        "SKILLCAP",   # v0.2.0 Cycle 2 (forward; named here so the
-                      # blocklist is right BEFORE Cycle 2 ships)
-        "PPM",        # per-project-pm core
-        "QSURF",      # per-project-pm question-surfacing
-        "SAFETY",     # workspace-bootstrap safety_profile
-        "BUDGET",     # cost-governance
-        "MFBM",       # memory-system / M-FBM
-        "D-sa",       # loam-amend seal
-        "D-np",       # loam-amend new-plan
-        "D-st",       # loam-amend status
+        "OREK",
+        "BANDS",
+        "SYNTH",
+        "FIXTURES",
+        "DPS1",
+        "DPS2",
+        "PRSG",
+        "WATCH",
+        "WATCHOBJ",
+        "SKILLCAP",
+        "PPM",
+        "QSURF",
+        "SAFETY",
+        "BUDGET",
+        "MFBM",
+        "PRGATE",
+        "RELSMOKE",
+        "D-sa",
+        "D-np",
+        "D-st",
     }
 )
 
@@ -71,20 +73,14 @@ LOAM_INTERNAL_AC_NAMESPACES: frozenset[str] = frozenset(
 _UNCATEGORISED = "_uncategorised"
 
 
-def _ac_id_prefix(ac_id: str) -> str | None:
-    """Extract the `<DOMAIN>` segment from an AC ID, or None if the
-    AC ID doesn't follow the canonical shape OR the domain is in the
-    loam-internal blocklist.
-    """
-    if not ac_id:
+def _objective_id_domain(objective_id: str) -> str | None:
+    """Extract the ``<domain>`` segment from an objective_id."""
+    if not objective_id:
         return None
-    m = _AC_ID_PREFIX_RE.match(ac_id)
+    m = _OBJECTIVE_ID_DOMAIN_RE.match(objective_id)
     if m is None:
         return None
-    raw = m.group(1)
-    if raw in LOAM_INTERNAL_AC_NAMESPACES:
-        return None
-    return raw.lower()
+    return m.group(1)
 
 
 def _common_path_prefix(paths: list[str]) -> str | None:
@@ -138,61 +134,41 @@ def _common_path_prefix(paths: list[str]) -> str | None:
     return candidate or None
 
 
-def _all_path_strings_for_ac(ac: "BandedAC") -> list[str]:
-    """Collect all path-bearing strings from an AC: backing_files +
-    citation file-paths (the part before ':' or '::').
+def infer_domain(objective: "Objective") -> str:
+    """Infer a domain slug for ``objective``.
+
+    Per AC.WATCHOBJ.3 — primary path is objective_id regex
+    (``O.<domain>.<n>``); fallback is ``_uncategorised`` (Cycle 1's
+    ID validator enforces the regex shape on construction; the
+    fallback is defensive for malformed legacy data).
+
+    Pure function (no side effects).
     """
-    paths: list[str] = []
-    for bf in ac.backing_files:
-        paths.append(str(bf))
-    for cite in ac.evidence.citations:
-        # Citations of shape "path:start-end" or "path::test_name".
-        # Strip the suffix to get just the file path.
-        if "::" in cite:
-            paths.append(cite.split("::", 1)[0])
-        elif ":" in cite:
-            paths.append(cite.split(":", 1)[0])
-        else:
-            paths.append(cite)
-    return paths
-
-
-def infer_domain(ac: "BandedAC") -> str:
-    """Infer a domain slug for `ac`.
-
-    Per AC.WATCH.5 — primary path is AC ID prefix
-    (`AC.<DOMAIN>.<n>` where DOMAIN is not in the loam-internal
-    blocklist); fallback is longest common file-path-prefix across
-    backing_files + citation file-paths; final fallback is
-    `_uncategorised`.
-
-    Returns a non-empty string. Pure function (no side effects).
-    """
-    primary = _ac_id_prefix(ac.ac_id)
-    if primary:
-        return primary
-    paths = _all_path_strings_for_ac(ac)
-    fallback = _common_path_prefix(paths)
-    if fallback:
-        return fallback
+    domain = _objective_id_domain(objective.objective_id)
+    if domain:
+        return domain
     return _UNCATEGORISED
 
 
-def group_by_domain(
+def group_proposals_by_domain(
     proposals: list["IncrementalProposal"],
 ) -> "OrderedDict[str, list[IncrementalProposal]]":
-    """Group `proposals` by their AC's inferred domain.
+    """Group ``proposals`` by their objective's inferred domain.
 
-    Per AC.WATCH.5 — deterministic: same input always produces the
+    Per AC.WATCHOBJ.3 — deterministic: same input always produces the
     same dict (keys sorted; insertion-order preserved within each
-    value list). Load-bearing for AC.WATCH.4 idempotency check.
-
-    Returns an :class:`OrderedDict` so callers can iterate in sorted-
-    key order.
+    value list). Load-bearing for AC.RELSMOKE.2 idempotency.
     """
     buckets: dict[str, list["IncrementalProposal"]] = {}
     for proposal in proposals:
-        domain = infer_domain(proposal.ac)
+        domain = infer_domain(proposal.objective)
         buckets.setdefault(domain, []).append(proposal)
-    # Sort keys for determinism.
     return OrderedDict(sorted(buckets.items()))
+
+
+# Backward-compat alias for callers using the v0.2.0 name.
+def group_by_domain(
+    proposals: list["IncrementalProposal"],
+) -> "OrderedDict[str, list[IncrementalProposal]]":
+    """Alias of :func:`group_proposals_by_domain` for legacy callers."""
+    return group_proposals_by_domain(proposals)

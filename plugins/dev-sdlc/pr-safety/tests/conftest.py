@@ -21,6 +21,204 @@ def tmp_workspace(tmp_path: Path) -> Path:
     return ws
 
 
+# ====================================================================
+# v0.2.3 Cycle 3 — objective-altitude fixtures
+# ====================================================================
+
+
+@pytest.fixture
+def synthetic_objectives_dict() -> dict[str, Any]:
+    """A 3-objective banded contract — VERIFIED + PLAUSIBLE + HYPOTHESISED.
+
+    Per AC.PRGATE.1 — at objective altitude. Mirrors the rebuild's
+    Objective + multi-source evidence shape.
+    """
+    return {
+        "schema_version": 1,
+        "extraction_id": "synth-cycle-3-test",
+        "repo_path": "/synthetic/test-repo",
+        "created_at": "2026-05-04T00:00:00+00:00",
+        "objectives": [
+            {
+                "objective_id": "O.auth.1",
+                "text": (
+                    "Operators authenticate against the system with "
+                    "password-length validation enforced."
+                ),
+                "confidence": "VERIFIED",
+                "domain": "auth",
+                "evidence": {
+                    "readme_excerpts": [
+                        "Auth supports password length >= 8."
+                    ],
+                    "design_doc_refs": [],
+                    "test_name_refs": [
+                        "tests/test_auth.py::test_password_length"
+                    ],
+                    "survey_line_refs": [],
+                    "code_pattern_refs": [],
+                    "repo_sha": "abc1234567890def",
+                    "rationale": None,
+                },
+            },
+            {
+                "objective_id": "O.orders.1",
+                "text": (
+                    "Operators place orders with line items that cascade-"
+                    "delete on order removal."
+                ),
+                "confidence": "PLAUSIBLE",
+                "domain": "orders",
+                "evidence": {
+                    "readme_excerpts": [],
+                    "design_doc_refs": [
+                        "docs/orders.md#cascade-delete"
+                    ],
+                    "test_name_refs": [],
+                    "survey_line_refs": [],
+                    "code_pattern_refs": [],
+                    "repo_sha": None,
+                    "rationale": None,
+                },
+            },
+            {
+                "objective_id": "O.payments.1",
+                "text": (
+                    "Operators retry failed charges with exponential "
+                    "backoff; reliability target inferred from comments."
+                ),
+                "confidence": "HYPOTHESISED",
+                "domain": "payments",
+                "evidence": {
+                    "readme_excerpts": [],
+                    "design_doc_refs": [],
+                    "test_name_refs": [],
+                    "survey_line_refs": [],
+                    "code_pattern_refs": [],
+                    "repo_sha": None,
+                    "rationale": (
+                        "Inferred from a comment in the payment "
+                        "integration; no application-level retry "
+                        "code visible."
+                    ),
+                },
+            },
+        ],
+        "constraints": [],
+        "capabilities": [],
+    }
+
+
+@pytest.fixture
+def synthetic_backing_map_dict() -> dict[str, Any]:
+    """A backing-map covering the 3 synthetic objectives.
+
+    Per AC.PRGATE.1 — Cycle 2 :class:`BackingMap` shape.
+    """
+    return {
+        "schema_version": 1,
+        "extraction_id": "synth-cycle-3-test",
+        "created_at": "2026-05-04T00:00:00+00:00",
+        "model_id": "stub-test",
+        "cost_actual_cents": 0.0,
+        "total_evidence_rows": 3,
+        "objective_count": 3,
+        "unmatched_objective_ids": [],
+        "entries": [
+            {
+                "objective_id": "O.auth.1",
+                "match_rationale": "test asserts password length",
+                "evidence_rows": [
+                    {
+                        "evidence_row_id": "test:tests/test_auth.py:42-58",
+                        "kind": "test",
+                        "path": "tests/test_auth.py",
+                        "line_range": [42, 58],
+                        "symbol_name": "test_password_length",
+                        "language": "python",
+                        "confidence": "STRONG",
+                    },
+                    {
+                        "evidence_row_id": "route:app/auth.py:10-25",
+                        "kind": "route",
+                        "path": "app/auth.py",
+                        "line_range": [10, 25],
+                        "symbol_name": "validate_password",
+                        "language": "python",
+                        "confidence": "STRONG",
+                    },
+                ],
+            },
+            {
+                "objective_id": "O.orders.1",
+                "match_rationale": "model has-many cascade-delete",
+                "evidence_rows": [
+                    {
+                        "evidence_row_id": "model:app/models/order.rb:12-25",
+                        "kind": "model",
+                        "path": "app/models/order.rb",
+                        "line_range": [12, 25],
+                        "symbol_name": "Order",
+                        "language": "ruby",
+                        "confidence": "STRONG",
+                    },
+                ],
+            },
+            {
+                "objective_id": "O.payments.1",
+                "match_rationale": "(none — HYPOTHESISED)",
+                "evidence_rows": [],
+            },
+        ],
+        "orphan_rows": [],
+    }
+
+
+@pytest.fixture
+def workspace_with_objectives(
+    tmp_workspace: Path,
+    synthetic_objectives_dict: dict[str, Any],
+    synthetic_backing_map_dict: dict[str, Any],
+) -> tuple[Path, str]:
+    """Place objectives.yaml + backing-map.yaml under
+    ``.loam/extractions/<repo-id>/``. Returns
+    ``(workspace_root, repo_id)``.
+
+    Per AC.PRGATE.1 — Cycle 3 source layout.
+    """
+    repo_id = "synth-cycle-3-test"
+    ext_dir = tmp_workspace / ".loam" / "extractions" / repo_id
+    ext_dir.mkdir(parents=True)
+    (ext_dir / "objectives.yaml").write_text(
+        yaml.safe_dump(synthetic_objectives_dict, sort_keys=False),
+        encoding="utf-8",
+    )
+    (ext_dir / "backing-map.yaml").write_text(
+        yaml.safe_dump(synthetic_backing_map_dict, sort_keys=False),
+        encoding="utf-8",
+    )
+    # Top-level summary file (Cycle 3 shape).
+    (ext_dir / "contract-draft.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": 2,
+                "extraction_id": repo_id,
+                "repo_path": "/synthetic/test-repo",
+                "ac_count": 3,
+                "objective_count": 3,
+                "constraint_count": 0,
+                "capability_count": 0,
+                "unhandled_count": 0,
+                "dry_run": True,
+                "created_at": "2026-05-04T00:00:00+00:00",
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    return (tmp_workspace, repo_id)
+
+
 @pytest.fixture
 def synthetic_contract_dict() -> dict[str, Any]:
     """A 3-AC banded contract — VERIFIED + PLAUSIBLE + HYPOTHESISED.

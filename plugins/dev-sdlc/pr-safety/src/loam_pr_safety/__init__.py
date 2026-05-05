@@ -56,15 +56,15 @@ from loam_pr_safety.override import (
 from loam_pr_safety.profile import is_production_stake
 from loam_pr_safety.spec import (
     BandedContract,
-    CandidateAC,
     ClassificationResult,
     Diff,
     DiffEntry,
     GateAction,
     GateDecision,
     Hunk,
+    NovelDiff,
     OverrideRequest,
-    TouchedAC,
+    TouchedObjective,
 )
 
 # Cycle 2 (v0.1.9) — AC.PRSI.{1..10}.
@@ -87,7 +87,6 @@ from loam_pr_safety.installers import (
 
 __all__ = [
     "BandedContract",
-    "CandidateAC",
     "ClassificationResult",
     "ClassifierAccuracyError",
     "ContractMalformedError",
@@ -101,10 +100,11 @@ __all__ = [
     "InstallConflictError",
     "InstallResult",
     "LOAM_PR_SAFETY_VERSION",
+    "NovelDiff",
     "OverrideRejectedError",
     "OverrideRequest",
     "PRSafetyError",
-    "TouchedAC",
+    "TouchedObjective",
     "apply_override",
     "audit_log_dir",
     "classify",

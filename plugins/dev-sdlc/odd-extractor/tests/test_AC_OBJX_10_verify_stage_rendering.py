@@ -118,18 +118,26 @@ def test_sidecar_carries_typed_lists_and_legacy_acs(
     verify_contract(
         config=config, raw=raw, synthesis=synthesis, timestamp=FIXED_TS
     )
+    # v0.2.3 Cycle 3 — objectives.yaml is canonical; contract-draft.yaml
+    # shrinks to top-level summary (legacy `acs:` retired per master
+    # plan §6.2).
     ext_dir = extraction_dir(workspace_root, config.repo_id)
+    objs_data = yaml.safe_load(
+        (ext_dir / "objectives.yaml").read_text(encoding="utf-8")
+    )
+    assert "objectives" in objs_data
+    assert "constraints" in objs_data
+    assert "capabilities" in objs_data
+    assert len(objs_data["objectives"]) == 1
+    assert len(objs_data["constraints"]) == 1
+    assert len(objs_data["capabilities"]) == 1
+    # Top-level summary in contract-draft.yaml carries counts.
     sidecar = yaml.safe_load(
         (ext_dir / "contract-draft.yaml").read_text(encoding="utf-8")
     )
-    assert "objectives" in sidecar
-    assert "constraints" in sidecar
-    assert "capabilities" in sidecar
-    assert "acs" in sidecar  # legacy compat
-    assert len(sidecar["objectives"]) == 1
-    assert len(sidecar["constraints"]) == 1
-    assert len(sidecar["capabilities"]) == 1
-    assert len(sidecar["acs"]) == 1
+    assert sidecar["objective_count"] == 1
+    assert sidecar["constraint_count"] == 1
+    assert sidecar["capability_count"] == 1
 
 
 def test_dangling_capability_reference_raises_stage_error(
@@ -194,6 +202,9 @@ def test_altitude_report_persisted_in_sidecar(
     sidecar = yaml.safe_load(
         (ext_dir / "contract-draft.yaml").read_text(encoding="utf-8")
     )
-    assert "altitude_report" in sidecar
-    rep = sidecar["altitude_report"]
+    # v0.2.3 Cycle 3 — top-level summary carries
+    # altitude_report_summary (compact); full altitude_report
+    # rendered into contract-draft.md.
+    assert "altitude_report_summary" in sidecar
+    rep = sidecar["altitude_report_summary"]
     assert rep["total_rows"] == 3  # 1 obj + 1 cstr + 1 cap

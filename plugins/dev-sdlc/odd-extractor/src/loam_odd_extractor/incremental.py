@@ -30,7 +30,7 @@ from pathlib import Path
 
 import yaml
 
-from .bands import BandedAC
+from .backing_map import load_backing_map
 from .diff_classifier import (
     EvidenceClassification,
     classify_evidence,
@@ -42,6 +42,7 @@ from .incremental_ratify import (
 )
 from .observability import write_audit_entry
 from .proposals import IncrementalProposalSet, generate_proposals
+from .spec import BackingMap, Objective
 from .state import compute_repo_id, extraction_dir
 
 
@@ -122,38 +123,66 @@ def _now_iso() -> str:
     return _dt.datetime.now(_dt.timezone.utc).isoformat()
 
 
-def _load_prior_contract(
+def _load_prior_objectives(
     *, ext_dir: Path
-) -> tuple[list[BandedAC], dict, Path]:
-    """Read the prior contract sidecar (YAML) and reconstruct the
-    typed BandedAC list.
+) -> tuple[list[Objective], BackingMap, str, Path, Path]:
+    """Read prior objectives.yaml + backing-map.yaml and reconstruct
+    typed lists.
 
-    Returns (banded_acs, full_sidecar_payload, sidecar_path). Raises
-    :class:`ContractNotFoundError` if the sidecar is missing.
+    Returns ``(prior_objectives, prior_backing_map, contract_created_at,
+    objectives_path, backing_map_path)``. Raises
+    :class:`ContractNotFoundError` if either source file is missing.
+
+    Per AC.WATCHOBJ.4 — Cycle 3 reads objectives.yaml + backing-map.yaml
+    directly (Cycles 1+2 outputs); legacy contract-draft.yaml.acs:
+    retired per master plan §6.2.
     """
-    sidecar_path = ext_dir / "contract-draft.yaml"
-    if not sidecar_path.exists():
+    objectives_path = ext_dir / "objectives.yaml"
+    backing_map_path = ext_dir / "backing-map.yaml"
+
+    if not objectives_path.exists():
         raise ContractNotFoundError(
-            f"--incremental requires a prior contract sidecar; "
-            f"none found at {sidecar_path}. Run `loam odd-extract "
-            f"<repo>` (full mode) first to author one."
+            f"--incremental requires prior objectives at "
+            f"{objectives_path}. Run `loam odd-extract <repo>` "
+            f"(full mode) first to synthesize objectives + "
+            f"populate the backing-map."
         )
-    payload = yaml.safe_load(sidecar_path.read_text(encoding="utf-8"))
+
+    payload = yaml.safe_load(objectives_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ContractNotFoundError(
-            f"prior contract sidecar at {sidecar_path} is malformed "
+            f"prior objectives.yaml at {objectives_path} is malformed "
             f"(expected mapping, got {type(payload).__name__})"
         )
-    raw_acs = payload.get("acs") or []
-    if not isinstance(raw_acs, list):
+    raw_objs = payload.get("objectives") or []
+    if not isinstance(raw_objs, list):
         raise ContractNotFoundError(
-            f"prior contract sidecar at {sidecar_path}: 'acs' must "
-            f"be a list; got {type(raw_acs).__name__}"
+            f"prior objectives.yaml at {objectives_path}: 'objectives' "
+            f"must be a list; got {type(raw_objs).__name__}"
         )
-    banded: list[BandedAC] = []
-    for d in raw_acs:
-        banded.append(BandedAC.model_validate(d))
-    return banded, payload, sidecar_path
+    objectives: list[Objective] = []
+    for d in raw_objs:
+        objectives.append(Objective.model_validate(d))
+
+    bm = load_backing_map(ext_dir)
+    if bm is None:
+        raise ContractNotFoundError(
+            f"--incremental requires prior backing-map at "
+            f"{backing_map_path}. Run Cycle 2 backing-map population "
+            f"(part of `loam odd-extract` post-synthesis pipeline) first."
+        )
+
+    contract_created_at = str(
+        payload.get("created_at") or "1970-01-01T00:00:00+00:00"
+    )
+
+    return (
+        objectives,
+        bm,
+        contract_created_at,
+        objectives_path,
+        backing_map_path,
+    )
 
 
 def _resolve_safety_profile(workspace_root: Path) -> str:
@@ -191,15 +220,16 @@ def _is_production_stake(safety_profile: str) -> bool:
     return safety_profile == "production-stake"
 
 
-def _prior_repo_sha(prior_acs: list[BandedAC]) -> str | None:
-    """Pick a representative prior repo SHA from the prior contract.
+def _prior_repo_sha(prior_objectives: list[Objective]) -> str | None:
+    """Pick a representative prior repo SHA from the prior objectives.
 
-    Uses the first VERIFIED AC's evidence.repo_sha if any; else the
-    first non-null repo_sha across all ACs; else None.
+    Returns the first non-null evidence.repo_sha across the objective
+    list; ``None`` if no objective pinned a SHA (e.g., all-PLAUSIBLE
+    extraction).
     """
-    for ac in prior_acs:
-        if ac.evidence.repo_sha:
-            return ac.evidence.repo_sha
+    for o in prior_objectives:
+        if o.evidence.repo_sha:
+            return o.evidence.repo_sha
     return None
 
 
@@ -244,9 +274,13 @@ def run_incremental(
     extraction_id = compute_repo_id(repo_path)
     ext_dir = extraction_dir(workspace_root, extraction_id)
 
-    prior_acs, prior_payload, sidecar_path = _load_prior_contract(
-        ext_dir=ext_dir
-    )
+    (
+        prior_objectives,
+        prior_backing_map,
+        contract_created_at,
+        objectives_path,
+        backing_map_path,
+    ) = _load_prior_objectives(ext_dir=ext_dir)
 
     safety_profile = _resolve_safety_profile(workspace_root)
     is_prod = _is_production_stake(safety_profile)
@@ -264,7 +298,8 @@ def run_incremental(
 
     # --- Audit: incremental_watch_run -------------------------------
     notes_run_parts = [
-        f"prior_contract_path={sidecar_path}",
+        f"prior_objectives_path={objectives_path}",
+        f"prior_backing_map_path={backing_map_path}",
         f"safety_profile={safety_profile}",
         f"dry_run={str(effective_dry_run).lower()}",
         f"invocation_source={invocation_source}",
@@ -281,11 +316,9 @@ def run_incremental(
     audit_count += 1
 
     # --- Classify ---------------------------------------------------
-    contract_created_at = str(
-        prior_payload.get("created_at") or "1970-01-01T00:00:00+00:00"
-    )
     classification = classify_evidence(
-        prior_acs=prior_acs,
+        prior_objectives=prior_objectives,
+        prior_backing_map=prior_backing_map,
         repo_path=repo_path,
         contract_created_at=contract_created_at,
     )
@@ -306,7 +339,7 @@ def run_incremental(
     audit_count += 1
 
     # --- Generate proposals -----------------------------------------
-    prior_sha = _prior_repo_sha(prior_acs)
+    prior_sha = _prior_repo_sha(prior_objectives)
     # Current repo SHA — best-effort; classifier helper will have
     # used the same one. We re-derive here to avoid leaking it
     # across module boundaries.
@@ -338,9 +371,9 @@ def run_incremental(
         # Even under dry-run, emit a per-domain audit entry so the
         # dry-run is observable per AC.WATCH.8 (event_kind=
         # incremental_proposal w/ enqueued=false).
-        from .domain_batching import group_by_domain
+        from .domain_batching import group_proposals_by_domain
 
-        for domain, props in group_by_domain(
+        for domain, props in group_proposals_by_domain(
             list(proposal_set.proposals)
         ).items():
             write_audit_entry(
@@ -348,9 +381,9 @@ def run_incremental(
                 event_kind="incremental_proposal",
                 extraction_id=extraction_id,
                 notes=(
-                    f"domain={domain} ac_count={len(props)} "
+                    f"domain={domain} objective_count={len(props)} "
                     f"provenance_string=odd-extract:incremental:"
-                    f"{extraction_id}:{domain} enqueued=false "
+                    f"{extraction_id}:objective:{domain} enqueued=false "
                     f"reason={'dry_run' if effective_dry_run else 'no_pm_runtime'}"
                 ),
                 timestamp=ts,
@@ -377,7 +410,7 @@ def run_incremental(
                 notes=(
                     f"domain={domain} "
                     f"provenance_string=odd-extract:incremental:"
-                    f"{extraction_id}:{domain} enqueued=true"
+                    f"{extraction_id}:objective:{domain} enqueued=true"
                 ),
                 timestamp=ts,
             )
@@ -390,11 +423,40 @@ def run_incremental(
                 notes=(
                     f"domain={domain} "
                     f"provenance_string=odd-extract:incremental:"
-                    f"{extraction_id}:{domain}"
+                    f"{extraction_id}:objective:{domain}"
                 ),
                 timestamp=ts,
             )
             audit_count += 1
+
+    # --- AC.WATCHOBJ.5 — incremental_run_complete (objective-altitude
+    #     telemetry; additive payload; SOC-2 floor preserved). -------
+    objectives_by_domain: dict[str, int] = {}
+    for objective in prior_objectives:
+        from .domain_batching import infer_domain
+        d = infer_domain(objective)
+        objectives_by_domain[d] = objectives_by_domain.get(d, 0) + 1
+    backing_map_staleness = (
+        classification.out_of_date_count > 0
+        or classification.orphaned_count > 0
+    )
+    write_audit_entry(
+        ext_dir,
+        event_kind="incremental_run_complete",
+        extraction_id=extraction_id,
+        notes=(
+            f"still_current_objective_count={classification.still_current_count} "
+            f"out_of_date_objective_count={classification.out_of_date_count} "
+            f"orphaned_objective_count={classification.orphaned_count} "
+            f"backing_map_staleness_detected={str(backing_map_staleness).lower()} "
+            f"domain_batches_enqueued={enqueue_result.enqueued_count} "
+            f"objectives_by_domain={','.join(f'{k}={v}' for k, v in sorted(objectives_by_domain.items()))} "
+            f"prior_repo_sha={prior_sha or '<no-sha>'} "
+            f"current_repo_sha={current_sha}"
+        ),
+        timestamp=ts,
+    )
+    audit_count += 1
 
     return IncrementalRunResult(
         extraction_id=extraction_id,

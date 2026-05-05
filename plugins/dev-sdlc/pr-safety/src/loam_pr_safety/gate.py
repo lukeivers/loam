@@ -1,9 +1,9 @@
 """Per-band gating engine for loam-pr-safety.
 
-Per AC.PRSG.4 + plan-doc §6 — runs the 3-band × 4-shape × 3-profile
-decision matrix.
+Per AC.PRGATE.3 (v0.2.3 Cycle 3) — runs the decision matrix at
+OBJECTIVE altitude.
 
-Pre-emption order:
+Pre-emption order (preserved verbatim from v0.1.9 AC.PRSG.4):
 
     HARD_BLOCK > SURFACE_DECISION > DOCS_ONLY > PASS
 
@@ -11,21 +11,19 @@ A diff that touches multiple bands fires the highest pre-empt:
 
     VERIFIED + anything → HARD_BLOCK
     PLAUSIBLE + HYPOTHESISED → SURFACE_DECISION
-    PLAUSIBLE + novel → SURFACE_DECISION (consolidated batch)
-    HYPOTHESISED + novel → SURFACE_DECISION (novel pre-empts
-                          DOCS_ONLY since novel introduces an
-                          unmapped surface)
+    PLAUSIBLE + novel → SURFACE_DECISION (consolidated)
+    HYPOTHESISED + novel → SURFACE_DECISION
 
-Per AC.PRSG.8 — production-stake demands ``requires_ratification=True``
-on every SURFACE_DECISION. Dev / research default to
-``requires_ratification=False`` unless the caller passes
-``require_ratification=True`` (the ``--require-ratification`` CLI
-flag).
+Per AC.PRGATE.3 + v0.1.9 AC.PRSG.8 — production-stake honour:
+``requires_ratification=True`` on every SURFACE_DECISION. Dev /
+research default to ``False`` unless ``--require-ratification`` is
+passed.
 
-Cycle 1 simplification (per plan-doc §10 F2 RF gap #4):
-"VERIFIED-touched ≡ regression-suspect" by default. The engine
-cannot run the underlying test in-process; reviewer ratifies via
-``--override`` (override flow) to let it through.
+Reason text renders OBJECTIVE prose (not symbol-altitude AC IDs).
+The reviewer reads outcome-shaped statements like "diff touches
+VERIFIED objective O.dispute-flow.1: 'operators file refund disputes
+against DoorDash + Uber Eats merchant portals at scale'; backing
+rows: src/routes/disputeRoutes.js:42-58".
 """
 
 from __future__ import annotations
@@ -36,7 +34,7 @@ from loam_pr_safety.spec import (
     ClassificationResult,
     GateAction,
     GateDecision,
-    TouchedAC,
+    TouchedObjective,
 )
 
 
@@ -45,36 +43,59 @@ _DEV = "dev"
 _RESEARCH = "research"
 
 
-def _has_band(touched_acs: list[TouchedAC], band: ConfidenceBand) -> bool:
-    return any(t.ac.confidence is band for t in touched_acs)
+def _has_band(
+    touched_objectives: list[TouchedObjective], band: ConfidenceBand
+) -> bool:
+    return any(t.objective.confidence is band for t in touched_objectives)
+
+
+def _format_backing_rows(touched: TouchedObjective) -> str:
+    """Render the touched backing rows as a compact 'path:line-range'
+    string for inclusion in reason text. AC.PRGATE.5 + AC.PRGATE.3
+    both render objective-altitude provenance via this helper.
+    """
+    parts: list[str] = []
+    for row in touched.touched_evidence_rows[:3]:
+        if row.line_range:
+            start, end = row.line_range
+            if start == end:
+                parts.append(f"{row.path}:{start}")
+            else:
+                parts.append(f"{row.path}:{start}-{end}")
+        else:
+            parts.append(row.path)
+    if len(touched.touched_evidence_rows) > 3:
+        parts.append(f"… ({len(touched.touched_evidence_rows) - 3} more)")
+    return ", ".join(parts)
 
 
 def _build_pm_pairs_plausible(
-    touched_acs: list[TouchedAC],
+    touched_objectives: list[TouchedObjective],
     extraction_id: str,
 ) -> list[tuple[str, str]]:
-    """Build PM batch pairs for PLAUSIBLE-touched ACs.
+    """Build PM batch pairs for PLAUSIBLE-touched objectives.
 
-    Per Decision Q (one-question-at-a-time) — the gate constructs
-    the batch shape; the caller (CLI) decides whether to enqueue
-    via ``RatificationBatch.from_banded_acs`` + ``surface_next_questions_batch(n=1)``.
-
-    Provenance string per Surface #8 of v0.1.8 Cycle 2 plan-doc:
-    ``f"pr-safety:plausible:{extraction_id}:{ac_id}"``.
+    Per AC.PRGATE.3 — one question per touched PLAUSIBLE objective.
+    Provenance per master plan §3 Cycle 3:
+    ``pr-safety:plausible-objective:{ext}:{obj_id}``.
     """
     pairs: list[tuple[str, str]] = []
-    for t in touched_acs:
-        if t.ac.confidence is not ConfidenceBand.PLAUSIBLE:
+    for t in touched_objectives:
+        if t.objective.confidence is not ConfidenceBand.PLAUSIBLE:
             continue
+        rows_str = _format_backing_rows(t)
         question = (
-            f"PR diff touches PLAUSIBLE AC {t.ac.ac_id}: "
-            f"{t.ac.text}\n\n"
+            f"PR diff touches PLAUSIBLE objective "
+            f"{t.objective.objective_id}: {t.objective.text}\n\n"
+            f"Domain: {t.objective.domain}\n"
             f"Touch kind: {t.touch_kind}; "
+            f"backing rows touched: {rows_str}; "
             f"hunks: {len(t.touched_hunks)}.\n\n"
             f"Ratify (proceed) or escalate (block)?"
         )
         prov = (
-            f"pr-safety:plausible:{extraction_id}:{t.ac.ac_id}"
+            f"pr-safety:plausible-objective:{extraction_id}:"
+            f"{t.objective.objective_id}"
         )
         pairs.append((question, prov))
     return pairs
@@ -84,20 +105,23 @@ def _build_pm_pairs_novel(
     novel_count: int,
     extraction_id: str,
 ) -> list[tuple[str, str]]:
-    """Build PM batch pairs for novel candidates.
+    """Build PM batch pairs for novel diffs.
 
-    One consolidated question per novel-only batch — promote the
-    candidate(s) to PLAUSIBLE / HYPOTHESISED / skip. Cycle 2+ may
-    refine to per-novel-candidate questions.
+    Per AC.PRGATE.3 — Cycle 3 records audit-only at the gate; v0.2.4
+    gap-analysis owns objective creation. The PM question surfaces
+    the count for reviewer awareness.
     """
     if novel_count == 0:
         return []
     question = (
-        f"PR diff introduces {novel_count} novel candidate(s) — "
-        f"diff lines not mapped to any AC.\n\n"
-        f"Promote to PLAUSIBLE / HYPOTHESISED / skip?"
+        f"PR diff introduces {novel_count} novel diff(s) — "
+        f"hunks not mapped to any objective's backing-implementation "
+        f"row.\n\n"
+        f"Cycle 3 records this audit-only. v0.2.4 gap-analysis will "
+        f"extract structured proposals; for now, surface for reviewer "
+        f"awareness."
     )
-    prov = f"pr-safety:novel:{extraction_id}"
+    prov = f"pr-safety:novel-diff:{extraction_id}"
     return [(question, prov)]
 
 
@@ -110,72 +134,76 @@ def decide(
 ) -> GateDecision:
     """Run the decision matrix.
 
-    Per AC.PRSG.4 + plan-doc §6.
+    Per AC.PRGATE.3.
 
     Parameters:
       classification — output of :func:`loam_pr_safety.classifier.classify`.
       safety_profile — one of ``{production-stake, dev, research}``.
-      extraction_id — for PM batch provenance strings (best-effort).
+      extraction_id — for PM batch provenance strings.
       require_ratification — when ``True`` under dev/research, forces
-        ``requires_ratification=True`` on SURFACE_DECISION (the
-        ``--require-ratification`` CLI flag). Ignored under
-        production-stake (already True).
+        ``requires_ratification=True`` on SURFACE_DECISION.
 
     Returns :class:`GateDecision`.
     """
     is_prodstake = safety_profile == _PRODUCTION_STAKE
 
     has_verified = _has_band(
-        classification.touched_acs, ConfidenceBand.VERIFIED
+        classification.touched_objectives, ConfidenceBand.VERIFIED
     )
     has_plausible = _has_band(
-        classification.touched_acs, ConfidenceBand.PLAUSIBLE
+        classification.touched_objectives, ConfidenceBand.PLAUSIBLE
     )
     has_hypothesised = _has_band(
-        classification.touched_acs, ConfidenceBand.HYPOTHESISED
+        classification.touched_objectives, ConfidenceBand.HYPOTHESISED
     )
     has_novel = bool(classification.novel)
 
     # ---- Pre-emption: HARD_BLOCK first --------------------------------
 
     if has_verified:
-        # VERIFIED-touched (Cycle 1 simplification: regression-suspect
-        # by default).
-        verified_ac_ids = [
-            t.ac.ac_id
-            for t in classification.touched_acs
-            if t.ac.confidence is ConfidenceBand.VERIFIED
+        verified_touched = [
+            t
+            for t in classification.touched_objectives
+            if t.objective.confidence is ConfidenceBand.VERIFIED
         ]
+        # Reason renders objective TEXT (not AC IDs).
+        verified_summaries: list[str] = []
+        for t in verified_touched:
+            rows_str = _format_backing_rows(t)
+            verified_summaries.append(
+                f"{t.objective.objective_id}: '{t.objective.text}' "
+                f"(backing rows: {rows_str})"
+            )
         reason = (
-            f"HARD_BLOCK — diff touches VERIFIED AC(s): "
-            f"{', '.join(verified_ac_ids)}. "
-            f"Cycle 1 treats VERIFIED-touched as regression-suspect; "
+            f"HARD_BLOCK — diff touches VERIFIED objective(s): "
+            f"{'; '.join(verified_summaries)}. "
+            f"VERIFIED-touched is regression-suspect by default; "
             f"reviewer ratifies via `--override` flag with "
             f"`Loam-Override:` trailer to let through."
         )
         decision = GateDecision(
             action=GateAction.HARD_BLOCK,
             requires_ratification=True,
-            touched_acs=classification.touched_acs,
+            touched_objectives=classification.touched_objectives,
             novel=classification.novel,
             safety_profile=safety_profile,
             reason=reason,
             pm_batch_pairs=[],
             audit_payload={
                 "decision": GateAction.HARD_BLOCK.value,
-                "verified_ac_ids": verified_ac_ids,
+                "verified_objective_ids": [
+                    t.objective.objective_id for t in verified_touched
+                ],
                 "novel_count": len(classification.novel),
             },
         )
         return decision
 
-    # ---- SURFACE_DECISION: PLAUSIBLE OR novel ------------------------
+    # ---- SURFACE_DECISION: PLAUSIBLE OR novel -----------------------
 
     if has_plausible or has_novel:
-        # Build consolidated PM batch — PLAUSIBLE questions + novel
-        # questions in one batch.
         plausible_pairs = _build_pm_pairs_plausible(
-            classification.touched_acs, extraction_id
+            classification.touched_objectives, extraction_id
         )
         novel_pairs = _build_pm_pairs_novel(
             len(classification.novel), extraction_id
@@ -190,29 +218,35 @@ def decide(
         else:
             req_ratification = False
 
-        plausible_ac_ids = [
-            t.ac.ac_id
-            for t in classification.touched_acs
-            if t.ac.confidence is ConfidenceBand.PLAUSIBLE
+        plausible_touched = [
+            t
+            for t in classification.touched_objectives
+            if t.objective.confidence is ConfidenceBand.PLAUSIBLE
         ]
         reason_parts: list[str] = []
-        if plausible_ac_ids:
+        if plausible_touched:
+            plausible_summaries = [
+                f"{t.objective.objective_id}: '{t.objective.text[:80]}{'…' if len(t.objective.text) > 80 else ''}'"
+                for t in plausible_touched
+            ]
             reason_parts.append(
-                f"PLAUSIBLE AC(s) touched: {', '.join(plausible_ac_ids)}"
+                f"PLAUSIBLE objective(s) touched: "
+                f"{'; '.join(plausible_summaries)}"
             )
         if has_novel:
             reason_parts.append(
-                f"{len(classification.novel)} novel candidate(s)"
+                f"{len(classification.novel)} novel diff(s)"
             )
         if has_hypothesised:
-            hypoth_ac_ids = [
-                t.ac.ac_id
-                for t in classification.touched_acs
-                if t.ac.confidence is ConfidenceBand.HYPOTHESISED
+            hypoth_touched = [
+                t
+                for t in classification.touched_objectives
+                if t.objective.confidence is ConfidenceBand.HYPOTHESISED
             ]
+            hypoth_ids = [t.objective.objective_id for t in hypoth_touched]
             reason_parts.append(
-                f"HYPOTHESISED AC(s) touched (annotation): "
-                f"{', '.join(hypoth_ac_ids)}"
+                f"HYPOTHESISED objective(s) touched (annotation): "
+                f"{', '.join(hypoth_ids)}"
             )
         reason = (
             f"SURFACE_DECISION — {'; '.join(reason_parts)}. "
@@ -223,53 +257,56 @@ def decide(
         return GateDecision(
             action=GateAction.SURFACE_DECISION,
             requires_ratification=req_ratification,
-            touched_acs=classification.touched_acs,
+            touched_objectives=classification.touched_objectives,
             novel=classification.novel,
             safety_profile=safety_profile,
             reason=reason,
             pm_batch_pairs=pm_batch_pairs,
             audit_payload={
                 "decision": GateAction.SURFACE_DECISION.value,
-                "plausible_ac_ids": plausible_ac_ids,
+                "plausible_objective_ids": [
+                    t.objective.objective_id for t in plausible_touched
+                ],
                 "novel_count": len(classification.novel),
             },
         )
 
-    # ---- DOCS_ONLY: HYPOTHESISED touched, no VERIFIED, no PLAUSIBLE,
-    #      no novel.
+    # ---- DOCS_ONLY: HYPOTHESISED touched, no V/P, no novel ---------
+
     if has_hypothesised:
-        hypoth_ac_ids = [
-            t.ac.ac_id
-            for t in classification.touched_acs
-            if t.ac.confidence is ConfidenceBand.HYPOTHESISED
+        hypoth_touched = [
+            t
+            for t in classification.touched_objectives
+            if t.objective.confidence is ConfidenceBand.HYPOTHESISED
         ]
+        hypoth_ids = [t.objective.objective_id for t in hypoth_touched]
         reason = (
-            f"DOCS_ONLY — diff touches HYPOTHESISED AC(s): "
-            f"{', '.join(hypoth_ac_ids)}. Annotation only; no block."
+            f"DOCS_ONLY — diff touches HYPOTHESISED objective(s): "
+            f"{', '.join(hypoth_ids)}. Annotation only; no block."
         )
         return GateDecision(
             action=GateAction.DOCS_ONLY,
             requires_ratification=False,
-            touched_acs=classification.touched_acs,
+            touched_objectives=classification.touched_objectives,
             novel=classification.novel,
             safety_profile=safety_profile,
             reason=reason,
             pm_batch_pairs=[],
             audit_payload={
                 "decision": GateAction.DOCS_ONLY.value,
-                "hypothesised_ac_ids": hypoth_ac_ids,
+                "hypothesised_objective_ids": hypoth_ids,
             },
         )
 
-    # ---- PASS: untouched ---------------------------------------------
+    # ---- PASS: untouched -------------------------------------------
 
     return GateDecision(
         action=GateAction.PASS,
         requires_ratification=False,
-        touched_acs=[],
+        touched_objectives=[],
         novel=[],
         safety_profile=safety_profile,
-        reason="PASS — no AC touched; no novel candidates.",
+        reason="PASS — no objective touched; no novel diffs.",
         pm_batch_pairs=[],
         audit_payload={
             "decision": GateAction.PASS.value,

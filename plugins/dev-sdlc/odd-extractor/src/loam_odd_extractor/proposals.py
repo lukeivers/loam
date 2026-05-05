@@ -1,94 +1,100 @@
 """Re-extraction proposal generation for incremental-mode watch.
 
-Per AC.WATCH.3 (v0.2.0 Cycle 1) — for each `OutOfDateAC` from the
-diff_classifier output, generate a structured proposal carrying:
+Per AC.WATCHOBJ.2 (v0.2.3 Cycle 3) — for each :class:`OutOfDateObjective`
+or :class:`OrphanedObjective` from the diff_classifier output,
+generate a structured proposal carrying:
 
-  - `ac_id`
-  - `current_evidence` — the prior contract's evidence block
-  - `proposed_new_evidence` — fresh evidence with current `repo_sha`
-    pin (None for orphaned-AC proposals)
-  - `confidence_band` — preserved from prior; Decision I default-no
+  - ``objective_id``
+  - ``current_evidence`` — the prior objective's ObjectiveEvidence block
+  - ``proposed_new_evidence`` — fresh ObjectiveEvidence with current
+    ``repo_sha`` (None for orphaned)
+  - ``confidence_band`` — preserved from prior; Decision I default-no
     forbids silent promotion
-  - `drift_kind` — `citation_line_changed` / `backing_file_changed`
-    / `orphaned`
-  - `affected_files` — files that triggered the drift detection
+  - ``drift_kind`` — `evidence_row_line_changed` /
+    `evidence_row_file_changed` / `evidence_row_path_missing` /
+    `orphaned`
+  - ``affected_rows`` — :class:`EvidenceRowRef` instances triggering
+    drift detection
 
-Cycle 1 simplification: re-extraction does NOT re-invoke the v0.1.8
-full-mode workflow inline (that would require adapter integration
-which is heavy). Instead, the proposal carries fresh-evidence
-metadata (current `repo_sha`, refreshed line ranges where derivable)
-and the reviewer ratifies via PM. The full-mode re-invocation is
-left to the reviewer's response (e.g., "ratify with re-extracted
-evidence"). The persona-side flow re-invokes `analyze_repo` /
-`generate_raw_acs` / `verify_contract` scoped to `affected_files` if
-the response requires it.
+Cycle 3 reframe: v0.2.0's BandedAC-altitude :class:`IncrementalProposal`
+is replaced with the objective-altitude :class:`IncrementalProposal`.
+The proposal still carries ``proposed_new_evidence`` so the reviewer
+can ratify a fresh repo_sha pin without re-running synthesis. The
+backing-map row updates flow through Cycle 2's backing-map
+re-population (out of cycle 3 scope).
 
-Per F2 RF gap #10 (plan-doc §10) — Cycle 1's full-mode (v0.1.8)
-ships zero language adapters that produce real ACs in non-fixture
-cases; the synthetic-banded-contract.yaml fixture is hand-authored.
-The smoke against synthetic prior-contract uses hand-authored
-proposed evidence; the engine path that re-invokes verify_contract
-is exercised but the evidence content is fixture-driven.
+Per F2 RF gap #10 (v0.2.0) — full-mode adapter ships zero real-AC
+production for non-fixture cases; fixture-driven smoke validates the
+wiring + altitude shape.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Literal
 
-from .bands import BandedAC, ConfidenceBand, Evidence
+from .bands import ConfidenceBand
 from .diff_classifier import (
     EvidenceClassification,
-    OrphanedAC,
-    OutOfDateAC,
+    OrphanedObjective,
+    OutOfDateObjective,
 )
+from .spec import EvidenceRowRef, Objective, ObjectiveEvidence
 
 
 DriftKind = Literal[
-    "citation_line_changed", "backing_file_changed", "orphaned"
+    "evidence_row_line_changed",
+    "evidence_row_file_changed",
+    "evidence_row_path_missing",
+    "orphaned",
 ]
 
 
 @dataclass(frozen=True)
 class IncrementalProposal:
-    """One re-extraction proposal for an AC that drifted.
+    """One re-extraction proposal for an objective that drifted.
 
-    Frozen dataclass — `IncrementalProposal` instances are immutable
-    once constructed; mutation happens by building a new instance.
+    Per AC.WATCHOBJ.2 — at objective altitude. Frozen dataclass;
+    immutable once constructed.
 
     Fields:
 
-    - `ac` — the AC's typed banded representation (preserved from
-      prior contract for reviewer reference + domain inference).
-    - `ac_id` — convenience accessor; equals `ac.ac_id`.
-    - `current_evidence` — the prior contract's evidence block.
-    - `proposed_new_evidence` — fresh evidence with current
-      `repo_sha`; `None` for orphaned-AC proposals.
-    - `confidence_band` — preserved from prior (Decision I).
-    - `drift_kind` — one of the three discriminants.
-    - `affected_files` — sorted, deduplicated list of files that
-      triggered drift detection.
+    - ``objective`` — the prior :class:`Objective` (preserved verbatim
+      for reviewer reference + domain inference).
+    - ``objective_id`` — convenience accessor.
+    - ``current_evidence`` — the prior ObjectiveEvidence block.
+    - ``proposed_new_evidence`` — fresh ObjectiveEvidence with
+      refreshed ``repo_sha``; ``None`` for orphaned proposals.
+    - ``confidence_band`` — preserved from prior (Decision I default-no
+      forbids silent promotion).
+    - ``drift_kind`` — discriminant.
+    - ``affected_rows`` — :class:`EvidenceRowRef` instances triggering
+      drift detection.
     """
 
-    ac: BandedAC
-    current_evidence: Evidence
-    proposed_new_evidence: Evidence | None
+    objective: Objective
+    current_evidence: ObjectiveEvidence
+    proposed_new_evidence: ObjectiveEvidence | None
     confidence_band: ConfidenceBand
     drift_kind: DriftKind
-    affected_files: tuple[str, ...] = field(default_factory=tuple)
+    affected_rows: tuple[EvidenceRowRef, ...] = field(default_factory=tuple)
 
     @property
-    def ac_id(self) -> str:
-        return self.ac.ac_id
+    def objective_id(self) -> str:
+        return self.objective.objective_id
+
+    @property
+    def affected_files(self) -> tuple[str, ...]:
+        """Sorted unique paths from affected_rows."""
+        return tuple(sorted({r.path for r in self.affected_rows}))
 
 
 @dataclass(frozen=True)
 class IncrementalProposalSet:
     """The full set of proposals for one watch run.
 
-    Per AC.WATCH.3 — carries the metadata needed for downstream
-    domain-batching + PM enqueue + audit-log entries.
+    Per AC.WATCHOBJ.2 — carries metadata for downstream domain-batching
+    + PM enqueue + audit-log entries.
     """
 
     extraction_id: str
@@ -102,85 +108,69 @@ class IncrementalProposalSet:
         return len(self.proposals)
 
 
-def _propose_for_out_of_date(
-    out_of_date: OutOfDateAC,
-    *,
-    current_repo_sha: str,
-) -> IncrementalProposal:
-    """Generate a proposal for an out-of-date AC.
+def _refresh_evidence(
+    prior: ObjectiveEvidence, *, current_repo_sha: str
+) -> ObjectiveEvidence:
+    """Return a copy of the prior evidence with ``repo_sha`` refreshed.
 
-    Cycle 1 builds proposed evidence by:
-
-      - Preserving the prior `kind` (test/source/inference) — band
-        determines kind; band is preserved.
-      - Setting `repo_sha` to the current HEAD SHA (the watch's
-        observed `to_sha`).
-      - Preserving citations + rationale verbatim from prior — the
-        reviewer ratifies whether the citations need updating; the
-        watch doesn't speculate on new line ranges. (A future
-        amendment may add citation-range refresh from diff hunks;
-        Cycle 1 keeps the citations stable so reviewer revises
-        explicitly when desired.)
-
-    This is a structural placeholder — the per-band evidence
-    invariants are preserved (PLAUSIBLE keeps `kind=source` +
-    citations; VERIFIED keeps `kind=test` + repo_sha + citations;
-    HYPOTHESISED keeps `kind=inference` + rationale).
+    All other fields preserved verbatim. Per Cycle 1 multi-source
+    evidence shape — readme_excerpts / design_doc_refs /
+    test_name_refs / survey_line_refs / code_pattern_refs / rationale
+    survive intact.
     """
-    prior_evidence = out_of_date.ac.evidence
-    band = out_of_date.ac.confidence
-    # Per-band evidence reconstruction — bands enforce invariants
-    # via Pydantic model_validator; we satisfy them by preserving
-    # the prior kind + filling SHA where applicable.
-    if band is ConfidenceBand.VERIFIED:
-        proposed = Evidence(
-            kind="test",
-            citations=prior_evidence.citations,
-            repo_sha=current_repo_sha,
-            rationale=prior_evidence.rationale,
-        )
-    elif band is ConfidenceBand.PLAUSIBLE:
-        proposed = Evidence(
-            kind="source",
-            citations=prior_evidence.citations,
-            repo_sha=current_repo_sha,
-            rationale=prior_evidence.rationale,
-        )
-    else:  # HYPOTHESISED
-        proposed = Evidence(
-            kind="inference",
-            citations=prior_evidence.citations,
-            repo_sha=current_repo_sha,
-            rationale=prior_evidence.rationale,
-        )
-    return IncrementalProposal(
-        ac=out_of_date.ac,
-        current_evidence=prior_evidence,
-        proposed_new_evidence=proposed,
-        confidence_band=band,
-        drift_kind=out_of_date.drift_kind,
-        affected_files=tuple(
-            sorted({str(p) for p in out_of_date.affected_files})
-        ),
+    return ObjectiveEvidence(
+        readme_excerpts=list(prior.readme_excerpts),
+        design_doc_refs=list(prior.design_doc_refs),
+        test_name_refs=list(prior.test_name_refs),
+        survey_line_refs=list(prior.survey_line_refs),
+        code_pattern_refs=list(prior.code_pattern_refs),
+        repo_sha=current_repo_sha,
+        rationale=prior.rationale,
     )
 
 
-def _propose_for_orphan(orphan: OrphanedAC) -> IncrementalProposal:
-    """Generate a proposal for an orphaned AC (file deleted).
+def _propose_for_out_of_date(
+    out_of_date: OutOfDateObjective,
+    *,
+    current_repo_sha: str,
+) -> IncrementalProposal:
+    """Generate a proposal for an out-of-date objective.
 
-    No `proposed_new_evidence` — reviewer's options are
-    keep / reject / re-extract-with-new-evidence. The proposal
-    surfaces the missing files so the reviewer has context.
+    Cycle 3 builds proposed evidence by:
+
+      - Preserving multi-source evidence verbatim.
+      - Refreshing ``repo_sha`` to the watch's observed ``to_sha``.
+      - Per-band evidence rules enforced through ObjectiveEvidence
+        construction (the reviewer ratifies whether the rows need
+        updating; the watch doesn't speculate on new line ranges).
+    """
+    proposed = _refresh_evidence(
+        out_of_date.objective.evidence,
+        current_repo_sha=current_repo_sha,
+    )
+    return IncrementalProposal(
+        objective=out_of_date.objective,
+        current_evidence=out_of_date.objective.evidence,
+        proposed_new_evidence=proposed,
+        confidence_band=out_of_date.objective.confidence,
+        drift_kind=out_of_date.drift_kind,
+        affected_rows=out_of_date.affected_rows,
+    )
+
+
+def _propose_for_orphan(orphan: OrphanedObjective) -> IncrementalProposal:
+    """Generate a proposal for an orphaned objective.
+
+    No ``proposed_new_evidence`` — the reviewer's options are
+    keep / reject / re-extract-with-new-evidence.
     """
     return IncrementalProposal(
-        ac=orphan.ac,
-        current_evidence=orphan.ac.evidence,
+        objective=orphan.objective,
+        current_evidence=orphan.objective.evidence,
         proposed_new_evidence=None,
-        confidence_band=orphan.ac.confidence,
+        confidence_band=orphan.objective.confidence,
         drift_kind="orphaned",
-        affected_files=tuple(
-            sorted({str(p) for p in orphan.missing_files})
-        ),
+        affected_rows=orphan.missing_evidence_rows,
     )
 
 
@@ -194,11 +184,11 @@ def generate_proposals(
 ) -> IncrementalProposalSet:
     """Generate the full proposal set from a classification result.
 
-    Per AC.WATCH.3 — one proposal per out-of-date AC + one proposal
-    per orphan AC. Still-current ACs do NOT generate proposals.
+    Per AC.WATCHOBJ.2 — one proposal per out-of-date objective + one
+    per orphan. Still-current objectives produce no proposals.
 
-    Returns a sorted (by ac_id) tuple of proposals so the output is
-    deterministic for fixed input.
+    Returns proposals sorted by objective_id for determinism (load-
+    bearing for AC.RELSMOKE.2 idempotency).
     """
     proposals: list[IncrementalProposal] = []
     for ood in classification.out_of_date:
@@ -210,10 +200,7 @@ def generate_proposals(
         )
     for orphan in classification.orphaned:
         proposals.append(_propose_for_orphan(orphan))
-    # Sort by ac_id for determinism — load-bearing for AC.WATCH.4
-    # idempotency check (same input → same proposal order → same
-    # domain-grouping → same enqueue).
-    proposals.sort(key=lambda p: p.ac_id)
+    proposals.sort(key=lambda p: p.objective_id)
     return IncrementalProposalSet(
         extraction_id=extraction_id,
         proposals=tuple(proposals),

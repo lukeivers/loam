@@ -69,49 +69,10 @@ def _empty_synthesis_result(
     )
 
 
-def _objectives_as_legacy_acs(synthesis: SynthesisResult) -> list[dict]:
-    """Render :class:`Objective` rows in the legacy ``acs:`` shape.
-
-    Per AC.OBJX.7 + master plan §6.2 — v0.1.9 PR-safety reads
-    ``contract-draft.yaml acs:`` as a list of dict-shaped rows. We
-    preserve that field with typed :class:`Objective` rows so PR-
-    safety smoke continues to pass; full schema retirement is
-    Cycle 3.
-
-    The objective's ``objective_id`` lands in the ``ac_id`` field
-    so PR-safety pinning continues to identify rows.
-    """
-    out: list[dict] = []
-    for o in synthesis.objectives:
-        ev = o.evidence
-        # Convert evidence into the closest legacy shape: pick the
-        # most reliable source kind for evidence.kind.
-        if ev.test_name_refs:
-            kind = "test"
-            cites = list(ev.test_name_refs)
-        elif ev.readme_excerpts or ev.design_doc_refs:
-            kind = "source"
-            cites = list(ev.readme_excerpts) + list(ev.design_doc_refs)
-        else:
-            kind = "inference"
-            cites = list(ev.code_pattern_refs)
-        legacy_evidence: dict[str, Any] = {
-            "kind": kind,
-            "citations": cites,
-        }
-        if ev.repo_sha:
-            legacy_evidence["repo_sha"] = ev.repo_sha
-        if ev.rationale:
-            legacy_evidence["rationale"] = ev.rationale
-        out.append({
-            "ac_id": o.objective_id,
-            "text": o.text,
-            "confidence": o.confidence.value,
-            "evidence": legacy_evidence,
-            "backing_files": [],
-            "objective_payload": o.model_dump(mode="json"),
-        })
-    return out
+# Per v0.2.3 Cycle 3 + master plan §6.2 — `_objectives_as_legacy_acs`
+# retired. The legacy `acs:` field in `contract-draft.yaml` is no
+# longer rendered. PR-safety reads `objectives.yaml` +
+# `backing-map.yaml` directly per AC.PRGATE.1.
 
 
 def generate_raw_acs(

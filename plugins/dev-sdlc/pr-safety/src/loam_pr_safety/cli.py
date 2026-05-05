@@ -350,8 +350,8 @@ def _emit_decision(decision, *, json_mode: bool) -> None:
             "requires_ratification": decision.requires_ratification,
             "safety_profile": decision.safety_profile,
             "reason": decision.reason,
-            "touched_ac_ids": [
-                t.ac.ac_id for t in decision.touched_acs
+            "touched_objective_ids": [
+                t.objective.objective_id for t in decision.touched_objectives
             ],
             "novel_count": len(decision.novel),
             "pm_batch_pairs": [
@@ -365,15 +365,16 @@ def _emit_decision(decision, *, json_mode: bool) -> None:
     print(f"requires_ratification: {decision.requires_ratification}")
     print(f"safety_profile: {decision.safety_profile}")
     print(f"reason: {decision.reason}")
-    if decision.touched_acs:
-        print("touched ACs:")
-        for t in decision.touched_acs:
+    if decision.touched_objectives:
+        print("touched objectives:")
+        for t in decision.touched_objectives:
             print(
-                f"  - {t.ac.ac_id} ({t.ac.confidence.value}, "
-                f"touch={t.touch_kind})"
+                f"  - {t.objective.objective_id} "
+                f"({t.objective.confidence.value}, "
+                f"touch={t.touch_kind}) — {t.objective.text}"
             )
     if decision.novel:
-        print(f"novel candidates: {len(decision.novel)}")
+        print(f"novel diffs: {len(decision.novel)}")
         for c in decision.novel:
             print(
                 f"  - {c.file_path!s} ({len(c.hunks)} hunk(s))"
@@ -467,19 +468,42 @@ def _run_gate(args: argparse.Namespace) -> int:
                     safety_profile=safety_profile,
                     decision="OVERRIDE_PROPOSED",
                     requires_ratification=True,
-                    touched_acs=[ac.ac_id for ac in request.original_acs],
+                    touched_acs=[
+                        o.objective_id for o in request.original_objectives
+                    ],
+                    objective_ids_touched=[
+                        o.objective_id for o in request.original_objectives
+                    ],
+                    objective_bands_touched={
+                        o.objective_id: o.confidence.value
+                        for o in request.original_objectives
+                    },
+                    extraction_id=contract.extraction_id,
                     novel_count=len(classification.novel),
                     reason=(
                         "Override recognised; ratification flow not "
-                        "auto-run from CLI in Cycle 1 — caller "
-                        "should invoke the override flow programmatically "
-                        "or via Cycle 2's hook installer surface."
+                        "auto-run from CLI — invoke programmatically "
+                        "or via hook installer surface."
                     ),
                     owner=owner,
                     rationale=rationale,
                 )
 
-        # Audit the gate decision.
+        # Audit the gate decision (with objective-altitude payload
+        # extensions per AC.PRGATE.6).
+        objective_ids_touched = [
+            t.objective.objective_id for t in decision.touched_objectives
+        ]
+        objective_bands_touched = {
+            t.objective.objective_id: t.objective.confidence.value
+            for t in decision.touched_objectives
+        }
+        backing_rows_overlapped = {
+            t.objective.objective_id: [
+                row.evidence_row_id for row in t.touched_evidence_rows
+            ]
+            for t in decision.touched_objectives
+        }
         write_audit_entry(
             workspace_root,
             event_kind="dry_run" if dry_run else "gate_decision",
@@ -489,9 +513,11 @@ def _run_gate(args: argparse.Namespace) -> int:
             safety_profile=safety_profile,
             decision=decision.action.value,
             requires_ratification=decision.requires_ratification,
-            touched_acs=[
-                t.ac.ac_id for t in decision.touched_acs
-            ],
+            touched_acs=objective_ids_touched,
+            objective_ids_touched=objective_ids_touched,
+            objective_bands_touched=objective_bands_touched,
+            backing_rows_overlapped=backing_rows_overlapped,
+            extraction_id=contract.extraction_id,
             novel_count=len(decision.novel),
             reason=decision.reason,
         )
@@ -518,8 +544,12 @@ def _run_gate(args: argparse.Namespace) -> int:
                 decision=decision.action.value,
                 requires_ratification=decision.requires_ratification,
                 touched_acs=[
-                    t.ac.ac_id for t in decision.touched_acs
+                    t.objective.objective_id for t in decision.touched_objectives
                 ],
+                objective_ids_touched=[
+                    t.objective.objective_id for t in decision.touched_objectives
+                ],
+                extraction_id=contract.extraction_id,
                 novel_count=len(decision.novel),
                 reason=f"rendered PR description ({len(md)} chars)",
                 owner=None,

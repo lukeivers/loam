@@ -1,7 +1,7 @@
 """Override-commit recognition + ratification flow for loam-pr-safety.
 
-Per AC.PRSG.5 — recognises override-shaped commits and runs the
-override-ratification flow through the per-project-pm batch API.
+Per AC.PRGATE.4 (v0.2.3 Cycle 3) — recognises override-shaped commits
+and runs the override-ratification flow at OBJECTIVE altitude.
 
 Recognition:
 
@@ -14,14 +14,23 @@ Recognition:
          whitespace).
     2. The gate is invoked with ``--override`` flag.
 
-  Per Decision I default-no — both signals required; commit-shape
-  alone is not sufficient.
+  Per Decision I default-no — both signals required.
 
-Application strategy (Surface #4): approved overrides are recorded as
-**additive overlays** at
-``<workspace>/.loam/pr-safety/contract-overrides/<repo-id>/<override-N>.yaml``
-rather than mutating the odd-extractor's contract sidecar in-place.
-The next ``read_contract`` call composes overlays on top.
+Application strategy: approved overrides are recorded as additive
+overlays at
+``<workspace>/.loam/pr-safety/contract-overrides/<repo-id>/<override-N>.yaml``.
+Cycle 3 overlay shape:
+
+    schema_version: 2
+    kind: replace_verified_objective
+    original_objective_id: <id>
+    replacement_objective: <Objective dict>
+
+Cycle 3 simplification: VERIFIED-objective-touched override demotes
+the objective to PLAUSIBLE preserving objective_id + text + domain +
+multi-source evidence. Novel diffs at this cycle do NOT promote to
+objectives — Cycle 3 records audit-only; v0.2.4 gap-analysis owns
+novel→objective promotion.
 """
 
 from __future__ import annotations
@@ -33,10 +42,10 @@ from pathlib import Path
 
 import yaml
 
-from loam_odd_extractor.bands import (
-    BandedAC,
-    ConfidenceBand,
-    Evidence,
+from loam_odd_extractor.bands import ConfidenceBand
+from loam_odd_extractor.spec import (
+    Objective,
+    ObjectiveEvidence,
 )
 from loam.per_project_pm import (
     PMRuntime,
@@ -53,7 +62,7 @@ from loam_pr_safety.spec import (
     BandedContract,
     ClassificationResult,
     OverrideRequest,
-    TouchedAC,
+    TouchedObjective,
 )
 from loam_pr_safety.state import overrides_dir
 
@@ -68,11 +77,7 @@ _CONTRACT_UPDATE_PREFIX_RE = re.compile(
 
 
 def read_commit_message(repo_path: Path, sha: str = "HEAD") -> str:
-    """Read the commit message at ``sha``.
-
-    Used for override-recognition. Wraps ``git -C <repo> log -1
-    --format=%B <sha>``.
-    """
+    """Read the commit message at ``sha``."""
     repo_path = repo_path.expanduser().resolve()
     try:
         proc = subprocess.run(  # noqa: S603 — controlled command
@@ -139,15 +144,13 @@ def recognise_override(
     Returns ``(recognised, rationale)``.
 
     Per Decision I default-no: returns ``(False, "")`` whenever
-    ``override_flag`` is ``False``, regardless of commit shape.
+    ``override_flag`` is ``False``.
 
     When ``override_flag`` is ``True``:
-      - If the body has a ``Loam-Override: <rationale>`` trailer,
-        returns ``(True, <rationale>)``.
+      - If the body has a ``Loam-Override: <rationale>`` trailer with
+        non-empty rationale, returns ``(True, <rationale>)``.
       - Else if the subject (first line) starts with
-        ``contract-update:``, returns ``(True, <prose-after-prefix>)``
-        — the prose after the colon is treated as rationale; can
-        be empty.
+        ``contract-update:``, returns ``(True, <prose-after-prefix>)``.
       - Else returns ``(False, "")``.
     """
     if not override_flag:
@@ -155,15 +158,12 @@ def recognise_override(
     if not commit_message:
         return (False, "")
 
-    # Trailer recognition first (most-compatible-with-conventional-commits
-    # path — Surface #3).
     m_trailer = _LOAM_OVERRIDE_TRAILER_RE.search(commit_message)
     if m_trailer is not None:
         rationale = m_trailer.group("rationale").strip()
         if rationale:
             return (True, rationale)
 
-    # Prefix recognition (ergonomics path — also requires --override).
     first_line = commit_message.splitlines()[0] if commit_message else ""
     m_prefix = _CONTRACT_UPDATE_PREFIX_RE.match(first_line)
     if m_prefix is not None:
@@ -173,82 +173,67 @@ def recognise_override(
     return (False, "")
 
 
-def _proposed_acs_from_classification(
+def _proposed_objectives_from_classification(
     classification: ClassificationResult,
     *,
     repo_sha: str,
-) -> list[BandedAC]:
-    """Build the override-flow's ``proposed_acs`` from a classification.
+) -> list[Objective]:
+    """Build the override-flow's ``proposed_objectives`` from a
+    classification.
 
-    Per F2 RF gap #9 — Cycle 1 default: novel candidates promote to
-    PLAUSIBLE (most-conservative — PLAUSIBLE-touched is
-    SURFACE_DECISION in future runs, not HARD_BLOCK). Reviewer's PM-
-    mediated answer can adjust at ratification time.
-
-    For VERIFIED-touched ACs that the override is overriding, the
-    proposal is "convert to PLAUSIBLE with the diff's hunks as the
-    new evidence citations."
+    Per AC.PRGATE.4 — Cycle 3 default: VERIFIED-touched objectives
+    propose conversion to PLAUSIBLE preserving objective_id + text +
+    domain + multi-source evidence (banding rules enforced via
+    Pydantic; the multi-source evidence stays valid for PLAUSIBLE).
+    Novel diffs do NOT generate objective proposals at this cycle —
+    v0.2.4 gap-analysis owns novel→objective promotion.
     """
-    proposed: list[BandedAC] = []
-    # VERIFIED-touched → propose conversion to PLAUSIBLE.
-    for touched in classification.touched_acs:
-        if touched.ac.confidence is not ConfidenceBand.VERIFIED:
+    proposed: list[Objective] = []
+    for touched in classification.touched_objectives:
+        if touched.objective.confidence is not ConfidenceBand.VERIFIED:
             continue
-        # Build new citations from touched hunks (file:start-end).
-        new_cites: list[str] = []
-        for hunk in touched.touched_hunks:
-            if hunk.new_lines > 0:
-                end_line = hunk.new_start + hunk.new_lines - 1
-                new_cites.append(
-                    f"{touched.ac.backing_files[0] if touched.ac.backing_files else 'unknown'}:"
-                    f"{hunk.new_start}-{end_line}"
-                )
-        # Fallback to existing citations if hunks didn't map to ranges.
-        if not new_cites:
-            new_cites = list(touched.ac.evidence.citations)
-        proposed.append(
-            BandedAC(
-                ac_id=touched.ac.ac_id,
-                text=touched.ac.text,
-                confidence=ConfidenceBand.PLAUSIBLE,
-                evidence=Evidence(
-                    kind="source",
-                    citations=new_cites or [str(touched.ac.backing_files[0]) if touched.ac.backing_files else "unspecified"],
-                    repo_sha=None,
-                    rationale=None,
-                ),
-                backing_files=list(touched.ac.backing_files),
-            )
+        # Proposed = same objective at PLAUSIBLE band.
+        # Preserve evidence verbatim (multi-source evidence shape is
+        # valid for PLAUSIBLE — the readme/design_doc/survey refs all
+        # transfer; the Pydantic per-band validator allows
+        # PLAUSIBLE with any of those refs). drop the test_name_refs
+        # only if needed — they're additive at PLAUSIBLE.
+        original = touched.objective
+        # Build PLAUSIBLE-compatible evidence: must have at least one
+        # of readme_excerpts / design_doc_refs / survey_line_refs.
+        ev = original.evidence
+        proposed_ev = ObjectiveEvidence(
+            readme_excerpts=list(ev.readme_excerpts),
+            design_doc_refs=list(ev.design_doc_refs),
+            test_name_refs=list(ev.test_name_refs),
+            survey_line_refs=list(ev.survey_line_refs),
+            code_pattern_refs=list(ev.code_pattern_refs),
+            repo_sha=ev.repo_sha,
+            rationale=(
+                ev.rationale
+                or "VERIFIED→PLAUSIBLE conversion via override flow"
+            ),
         )
-    # Novel candidates → promote to PLAUSIBLE.
-    for idx, novel in enumerate(classification.novel):
-        novel_cites: list[str] = []
-        for hunk in novel.hunks:
-            if hunk.new_lines > 0:
-                end_line = hunk.new_start + hunk.new_lines - 1
-                novel_cites.append(
-                    f"{novel.file_path!s}:{hunk.new_start}-{end_line}"
+        # If PLAUSIBLE requires at least one of readme/design/survey
+        # refs and none are populated, fall through to keeping the
+        # objective (defensive — but we know VERIFIED required
+        # readme_excerpts OR design_doc_refs by per-band rule, so
+        # PLAUSIBLE rule is satisfied automatically).
+        try:
+            proposed.append(
+                Objective(
+                    objective_id=original.objective_id,
+                    text=original.text,
+                    confidence=ConfidenceBand.PLAUSIBLE,
+                    evidence=proposed_ev,
+                    domain=original.domain,
                 )
-        if not novel_cites:
-            novel_cites = [str(novel.file_path)]
-        proposed.append(
-            BandedAC(
-                ac_id=f"AC.NOVEL.{idx + 1}",
-                text=(
-                    f"Novel candidate from override; "
-                    f"file {novel.file_path!s}; "
-                    f"covered by override commit"
-                ),
-                confidence=ConfidenceBand.PLAUSIBLE,
-                evidence=Evidence(
-                    kind="source",
-                    citations=novel_cites,
-                    repo_sha=None,
-                    rationale=None,
-                ),
-                backing_files=[str(novel.file_path)],
             )
-        )
+        except ValueError:
+            # Defensive: if VERIFIED objective somehow lacks
+            # PLAUSIBLE-compatible refs, skip rather than blow up
+            # the override flow.
+            continue
     return proposed
 
 
@@ -262,19 +247,19 @@ def build_override_request(
 ) -> OverrideRequest:
     """Construct an :class:`OverrideRequest` from a classification.
 
-    Per AC.PRSG.5.
+    Per AC.PRGATE.4.
     """
-    original_acs = [
-        t.ac
-        for t in classification.touched_acs
-        if t.ac.confidence is ConfidenceBand.VERIFIED
+    original_objectives = [
+        t.objective
+        for t in classification.touched_objectives
+        if t.objective.confidence is ConfidenceBand.VERIFIED
     ]
-    proposed_acs = _proposed_acs_from_classification(
+    proposed_objectives = _proposed_objectives_from_classification(
         classification, repo_sha=repo_sha
     )
     return OverrideRequest(
-        original_acs=original_acs,
-        proposed_acs=proposed_acs,
+        original_objectives=original_objectives,
+        proposed_objectives=proposed_objectives,
         rationale=rationale,
         owner=owner,
         commit_sha=commit_sha,
@@ -303,21 +288,12 @@ def apply_override(
 ) -> Path:
     """Write an additive overlay file recording an approved override.
 
-    Per Surface #4 (plan-doc §5) — overlays land at
-    ``<workspace>/.loam/pr-safety/contract-overrides/<repo-id>/override-<N>.yaml``.
-    Each overlay can either:
+    Per AC.PRGATE.4 — Cycle 3 overlay shape:
 
-      - Replace one VERIFIED AC with a new (lower-band) entry
-        (kind=``replace_verified``), OR
-      - Promote a novel candidate (kind=``promote_novel``).
-
-    For an :class:`OverrideRequest` with multiple
-    ``original_acs``/``proposed_acs``, this function writes ONE
-    overlay containing the FIRST original-and-replacement pair (the
-    typical case is one VERIFIED AC overridden per commit). Multiple
-    pairs are split across multiple overlay files (override-1,
-    override-2, ...) — Cycle 1 simplification; Cycle 2+ may
-    consolidate.
+        schema_version: 2
+        kind: replace_verified_objective
+        original_objective_id: <id>
+        replacement_objective: <Objective dict>
 
     Returns the path of the FIRST overlay file written.
     """
@@ -325,59 +301,30 @@ def apply_override(
     rd.mkdir(parents=True, exist_ok=True)
     first_path: Path | None = None
 
-    # Build pair list — for each original_ac (VERIFIED-touched), pair
-    # with the same-id proposed AC (the conversion target). Then any
-    # remaining proposed ACs are promote_novel.
-    original_by_id = {ac.ac_id: ac for ac in request.original_acs}
-    paired_proposed_ids: set[str] = set()
-
-    for original in request.original_acs:
+    # Pair each VERIFIED original_objective with its same-id
+    # proposed_objective (the conversion target).
+    for original in request.original_objectives:
         replacement = next(
-            (p for p in request.proposed_acs if p.ac_id == original.ac_id),
+            (
+                p
+                for p in request.proposed_objectives
+                if p.objective_id == original.objective_id
+            ),
             None,
         )
         if replacement is None:
             continue
-        paired_proposed_ids.add(replacement.ac_id)
         seq = _next_overlay_seq(rd)
         path = rd / f"override-{seq}.yaml"
         path.write_text(
             yaml.safe_dump(
                 {
-                    "schema_version": 1,
-                    "kind": "replace_verified",
-                    "original_ac_id": original.ac_id,
-                    "replacement_ac": replacement.model_dump(mode="json"),
-                    "rationale": request.rationale,
-                    "owner": request.owner,
-                    "commit_sha": request.commit_sha,
-                    "repo_sha": request.repo_sha,
-                    "applied_at": _dt.datetime.now(
-                        _dt.timezone.utc
-                    ).isoformat(),
-                },
-                sort_keys=False,
-            ),
-            encoding="utf-8",
-        )
-        if first_path is None:
-            first_path = path
-
-    # Remaining proposed ACs → promote_novel overlays.
-    for proposed in request.proposed_acs:
-        if proposed.ac_id in paired_proposed_ids:
-            continue
-        if proposed.ac_id in original_by_id:
-            # original-without-pair edge case; covered above.
-            continue
-        seq = _next_overlay_seq(rd)
-        path = rd / f"override-{seq}.yaml"
-        path.write_text(
-            yaml.safe_dump(
-                {
-                    "schema_version": 1,
-                    "kind": "promote_novel",
-                    "replacement_ac": proposed.model_dump(mode="json"),
+                    "schema_version": 2,
+                    "kind": "replace_verified_objective",
+                    "original_objective_id": original.objective_id,
+                    "replacement_objective": replacement.model_dump(
+                        mode="json"
+                    ),
                     "rationale": request.rationale,
                     "owner": request.owner,
                     "commit_sha": request.commit_sha,
@@ -394,12 +341,29 @@ def apply_override(
             first_path = path
 
     if first_path is None:
-        # No pairs and no novel → nothing applied. Audit-log captures
-        # at the caller; we return a synthetic "no-op" path under the
-        # overrides_dir so callers can detect.
-        first_path = rd / ".no-op"
-        first_path.parent.mkdir(parents=True, exist_ok=True)
-        first_path.write_text("(no-op override)\n", encoding="utf-8")
+        # No conversion pairs — record an audit-only overlay so the
+        # override is preserved on disk for audit even when no
+        # objective demotion happened (e.g., novel-diff-only override).
+        seq = _next_overlay_seq(rd)
+        path = rd / f"override-{seq}.yaml"
+        path.write_text(
+            yaml.safe_dump(
+                {
+                    "schema_version": 2,
+                    "kind": "audit_only",
+                    "rationale": request.rationale,
+                    "owner": request.owner,
+                    "commit_sha": request.commit_sha,
+                    "repo_sha": request.repo_sha,
+                    "applied_at": _dt.datetime.now(
+                        _dt.timezone.utc
+                    ).isoformat(),
+                },
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+        first_path = path
 
     return first_path
 
@@ -415,29 +379,27 @@ def run_override_ratification(
     """Surface the override request through the PM batch API and
     apply if approved.
 
-    Per AC.PRSG.5 + Decision Q (one-question-at-a-time).
+    Per AC.PRGATE.4 + Decision Q (one-question-at-a-time).
 
     Flow:
 
-      1. Build a :class:`RatificationBatch` from the proposed_acs.
+      1. Build a :class:`RatificationBatch` from the
+         proposed_objectives (model_dump'd as dicts for PM).
       2. Enqueue + ``surface_next_questions_batch(n=1)``.
-      3. The caller (CLI) collects the operator's response;
-         ``response_recorder`` is a callable (or stub) that returns
-         ``(approved: bool, response_text: str)`` — Cycle 1 ships
-         a synchronous-prompt stub for tests; Cycle 2 wires the
-         persona-side relay.
+      3. ``response_recorder`` returns ``(approved, response_text)``.
       4. ``record_response`` clears pending_response_for; if approved,
-         :func:`apply_override` writes the overlay; if rejected,
-         raises :class:`OverrideRejectedError`.
+         :func:`apply_override` writes the overlay; else raises
+         :class:`OverrideRejectedError`.
 
     Returns ``(approved, response_text, overlay_path_or_None)``.
     """
     batch = RatificationBatch.from_banded_acs(
         extraction_id=request.commit_sha[:8] or "override",
-        banded_acs=[ac.model_dump() for ac in request.proposed_acs],
+        banded_acs=[
+            obj.model_dump(mode="json") for obj in request.proposed_objectives
+        ],
     )
     enqueued = batch.enqueue(pm)
-    # surface one (Decision Q one-question-at-a-time).
     try:
         surfaced = pm.surface_next_questions_batch(n=1)
     except PendingResponseError as exc:
@@ -447,19 +409,15 @@ def run_override_ratification(
             f"({exc})"
         ) from exc
     if not surfaced:
-        # Empty queue or onboarding-mode forced no surfacing.
         return (False, "(no question surfaced)", None)
     sq = surfaced[0]
 
-    # Collect operator response.
     if response_recorder is None:
-        # Default: assume rejection (safe-by-default; Decision I).
         approved = False
         response_text = "(no response recorder; default deny)"
     else:
         approved, response_text = response_recorder(sq)
 
-    # Record the response (clears pending_response_for).
     pm.record_response(sq.audit_path, response_text)
 
     if approved:
@@ -473,7 +431,9 @@ def run_override_ratification(
             repo_sha=request.repo_sha,
             decision="OVERRIDE_APPROVED",
             requires_ratification=True,
-            touched_acs=[ac.ac_id for ac in request.original_acs],
+            touched_acs=[
+                o.objective_id for o in request.original_objectives
+            ],
             owner=request.owner,
             rationale=request.rationale,
             reason=f"Override approved; overlay at {overlay_path!s}",
@@ -487,7 +447,9 @@ def run_override_ratification(
         repo_sha=request.repo_sha,
         decision="OVERRIDE_REJECTED",
         requires_ratification=True,
-        touched_acs=[ac.ac_id for ac in request.original_acs],
+        touched_acs=[
+            o.objective_id for o in request.original_objectives
+        ],
         owner=request.owner,
         rationale=request.rationale,
         reason="Override rejected by reviewer",

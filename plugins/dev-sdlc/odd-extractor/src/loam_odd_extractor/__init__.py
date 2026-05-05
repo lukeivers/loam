@@ -137,17 +137,19 @@ from .state import (
 )
 from .verify import verify_contract
 
-# Cycle 1 (v0.2.0) — incremental-mode watch surface. Composes on top
-# of v0.1.8 full-mode workflow + v0.1.7 PM batch API.
+# v0.2.3 Cycle 3 — incremental-mode watch reframed at objective altitude.
+# The v0.2.0 BandedAC-altitude types are replaced with
+# OutOfDateObjective + OrphanedObjective per AC.WATCHOBJ.1.
 from .diff_classifier import (
     EvidenceClassification,
-    OrphanedAC,
-    OutOfDateAC,
+    OrphanedObjective,
+    OutOfDateObjective,
     classify_evidence,
 )
 from .domain_batching import (
     LOAM_INTERNAL_AC_NAMESPACES,
     group_by_domain,
+    group_proposals_by_domain,
     infer_domain,
 )
 from .incremental import (
@@ -212,8 +214,8 @@ __all__ = [
     "ObjectiveRatificationAction",
     "OddExtractorError",
     "OrphanRow",
-    "OrphanedAC",
-    "OutOfDateAC",
+    "OrphanedObjective",
+    "OutOfDateObjective",
     "PendingTarget",
     "RatificationAction",
     "RatificationRefusedError",
@@ -256,6 +258,7 @@ __all__ = [
     "generate_proposals",
     "generate_raw_acs",
     "group_by_domain",
+    "group_proposals_by_domain",
     "infer_domain",
     "init_extraction",
     "initialise_ratification_state",

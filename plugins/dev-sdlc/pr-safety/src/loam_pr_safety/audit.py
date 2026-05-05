@@ -79,8 +79,18 @@ def write_audit_entry(
     today_ymd: str | None = None,
     target_path: str | None = None,
     hook: str | None = None,
+    objective_ids_touched: list[str] | None = None,
+    objective_bands_touched: dict[str, str] | None = None,
+    backing_rows_overlapped: dict[str, list[str]] | None = None,
+    extraction_id: str | None = None,
 ) -> Path:
     """Append one audit-log entry; return the entry's path.
+
+    Per AC.PRGATE.6 (v0.2.3 Cycle 3) — payload extends additively
+    with objective-altitude fields (``objective_ids_touched`` +
+    ``objective_bands_touched`` + ``backing_rows_overlapped`` +
+    ``extraction_id``). No schema-version bump per master plan
+    direction; SOC-2 floor (Decision P) preserved.
 
     ``event_kind`` ∈ {``gate_decision``, ``override_proposed``,
     ``override_approved``, ``override_rejected``, ``dry_run``,
@@ -90,12 +100,12 @@ def write_audit_entry(
     ``install_conflict``, ``hook_fired``, ``hook_bypass``,
     ``hook_bypass_attempt_rejected``, ``pr_description_rendered``}.
 
-    ``target_path`` populated by Cycle 2 install actions (per
-    AC.PRSI.{1..8} + plan-doc §5 Surface #8).
-    ``hook`` populated by Cycle 2 hook-fire events.
+    Backward compat: legacy callers passing only ``touched_acs``
+    continue to work; the field name is preserved (``touched_acs``
+    holds objective_ids in Cycle 3).
 
     ``timestamp`` and ``today_ymd`` are injectable for deterministic
-    tests; default to ``_utc_now_iso()`` and ``_utc_today()``.
+    tests.
     """
     audit_dir = audit_log_dir(workspace_root)
     audit_dir.mkdir(parents=True, exist_ok=True)
@@ -121,6 +131,11 @@ def write_audit_entry(
         "rationale": rationale,
         "target_path": target_path,
         "hook": hook,
+        # AC.PRGATE.6 — objective-altitude additive fields.
+        "objective_ids_touched": list(objective_ids_touched or []),
+        "objective_bands_touched": dict(objective_bands_touched or {}),
+        "backing_rows_overlapped": dict(backing_rows_overlapped or {}),
+        "extraction_id": extraction_id,
     }
     entry_path.write_text(
         yaml.safe_dump(payload, sort_keys=False),

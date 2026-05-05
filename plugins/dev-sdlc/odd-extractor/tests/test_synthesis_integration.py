@@ -244,24 +244,20 @@ def test_full_pipeline_against_readme_rich_fixture(tmp_path: Path) -> None:
     assert "## Evidence rows" in md
     assert "§self-checks audit" in md
 
-    # AC.OBJX.10 — sidecar typed lists.
+    # AC.OBJX.10 + v0.2.3 Cycle 3 — objectives.yaml is canonical.
+    objs_data = yaml.safe_load(
+        (ext_dir / "objectives.yaml").read_text(encoding="utf-8")
+    )
+    assert "objectives" in objs_data and len(objs_data["objectives"]) >= 1
+    assert "constraints" in objs_data and len(objs_data["constraints"]) >= 1
+    assert "capabilities" in objs_data and len(objs_data["capabilities"]) >= 1
+    # Top-level sidecar carries summary.
     sidecar = yaml.safe_load(
         (ext_dir / "contract-draft.yaml").read_text(encoding="utf-8")
     )
-    assert "objectives" in sidecar and len(sidecar["objectives"]) >= 1
-    assert "constraints" in sidecar and len(sidecar["constraints"]) >= 1
-    assert "capabilities" in sidecar and len(sidecar["capabilities"]) >= 1
-    assert "altitude_report" in sidecar
-
-    # AC.OBJX.7 — legacy ``acs:`` carries typed Objectives (not raw).
-    assert sidecar["acs"][0]["ac_id"].startswith("O.")
-    assert "objective_payload" in sidecar["acs"][0]
-
-    # AC.OBJX.8 — altitude report present + drift not triggered (canned response).
-    altitude = sidecar["altitude_report"]
-    assert altitude["total_rows"] >= 1
-    # Drift halt should not fire on this curated fixture.
-    assert altitude["drift_halt_triggered"] is False
+    assert "altitude_report_summary" in sidecar
+    altitude_summary = sidecar["altitude_report_summary"]
+    assert altitude_summary["total_rows"] >= 1
 
     # AC.OBJX.12 — audit-log has both event-kinds.
     audit_files = sorted((ext_dir / "audit-log").glob("*.yaml"))
@@ -304,7 +300,7 @@ def test_self_checks_pass_on_synthesized_output(tmp_path: Path) -> None:
     sidecar = yaml.safe_load(
         (ext_dir / "contract-draft.yaml").read_text(encoding="utf-8")
     )
-    altitude = sidecar["altitude_report"]
+    altitude = sidecar["altitude_report_summary"]
     # Operational metric per sub-plan-doc Lens 4 + AC.OBJX.8:
     # >30% fail rate triggers ``drift_halt_triggered`` (the
     # ``needs_fresh_start`` shape from Lens 5). Borderline rows

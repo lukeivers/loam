@@ -224,28 +224,46 @@ def _render_section_touched_acs(
     *,
     truncate: bool = False,
 ) -> str:
-    """Section: per-AC bullets with band + touch-kind + provenance."""
-    if not decision.touched_acs:
-        return "### ACs touched: none"
-    lines = [f"### ACs touched ({len(decision.touched_acs)})"]
+    """Section: per-objective bullets with band + touch-kind +
+    backing rows.
+
+    Per AC.PRGATE.5 — at objective altitude. Renders objective TEXT
+    + domain + band + backing rows path:line. AC.* IDs DO NOT appear.
+    """
+    if not decision.touched_objectives:
+        return "### Touched objectives: none"
+    lines = [
+        f"### Touched objectives ({len(decision.touched_objectives)})"
+    ]
     lines.append("")
-    for t in decision.touched_acs:
-        ac = t.ac
-        prov = ""
-        if ac.evidence and ac.evidence.citations:
-            prov = ", ".join(ac.evidence.citations[:2])
-            if len(ac.evidence.citations) > 2:
-                prov += ", …"
-        ac_text = ac.text
+    for t in decision.touched_objectives:
+        obj = t.objective
+        # Backing-row provenance (path:line-range).
+        rows_str_parts: list[str] = []
+        for row in t.touched_evidence_rows[:3]:
+            if row.line_range:
+                start, end = row.line_range
+                if start == end:
+                    rows_str_parts.append(f"{row.path}:{start}")
+                else:
+                    rows_str_parts.append(f"{row.path}:{start}-{end}")
+            else:
+                rows_str_parts.append(row.path)
+        rows_str = ", ".join(rows_str_parts) if rows_str_parts else ""
+        if len(t.touched_evidence_rows) > 3:
+            rows_str += f", … ({len(t.touched_evidence_rows) - 3} more)"
+
+        obj_text = obj.text
         if truncate:
-            ac_text = ac_text[:_PROVENANCE_TRUNCATE_CHARS]
-            if len(ac.text) > _PROVENANCE_TRUNCATE_CHARS:
-                ac_text += "…"
-            prov = prov[:_PROVENANCE_TRUNCATE_CHARS]
+            obj_text = obj_text[:_PROVENANCE_TRUNCATE_CHARS]
+            if len(obj.text) > _PROVENANCE_TRUNCATE_CHARS:
+                obj_text += "…"
+            rows_str = rows_str[:_PROVENANCE_TRUNCATE_CHARS]
+
         lines.append(
-            f"- **{ac.ac_id}** [`{ac.confidence.value}`] "
-            f"({t.touch_kind}) — {ac_text}"
-            + (f"\n  - provenance: {prov}" if prov else "")
+            f"- **{obj.objective_id}** [`{obj.confidence.value}`] "
+            f"({obj.domain}; touch={t.touch_kind}) — {obj_text}"
+            + (f"\n  - backing rows: {rows_str}" if rows_str else "")
         )
     return "\n".join(lines)
 
@@ -255,12 +273,16 @@ def _render_section_novel(
     *,
     include_section: bool = True,
 ) -> str:
-    """Section: novel candidate diffs (per-file)."""
+    """Section: novel diff hunks (per-file).
+
+    Per AC.PRGATE.5 — Cycle 3 surfaces audit-only; v0.2.4 gap-analysis
+    extracts structured proposals.
+    """
     if not include_section:
         return ""
     if not decision.novel:
         return ""
-    lines = [f"### Novel candidates ({len(decision.novel)})", ""]
+    lines = [f"### Novel diffs ({len(decision.novel)})", ""]
     for c in decision.novel:
         lines.append(
             f"- `{c.file_path}` ({len(c.hunks)} hunk(s))"
@@ -281,7 +303,7 @@ def _render_section_override_history(
     overlays = sorted(od.glob("override-*.yaml"))
     if not overlays:
         return ""
-    lines = [f"### Override history ({len(overlays)})", ""]
+    lines = [f"### Override audit trail ({len(overlays)})", ""]
     for ovl_path in overlays:
         try:
             data = yaml.safe_load(
@@ -296,13 +318,17 @@ def _render_section_override_history(
         owner = data.get("owner", "")
         applied_at = data.get("applied_at", "")
         commit_sha = data.get("commit_sha", "")
-        ac_id = (
-            data.get("original_ac_id")
-            or data.get("replacement_ac", {}).get("ac_id")
-            or "(unknown AC)"
+        # Cycle 3 overlay shape carries original_objective_id +
+        # replacement_objective. Legacy migrated overlays carry
+        # legacy_original_ac_id.
+        obj_id = (
+            data.get("original_objective_id")
+            or data.get("replacement_objective", {}).get("objective_id")
+            or data.get("legacy_original_ac_id")
+            or "(unknown objective)"
         )
         lines.append(
-            f"- **{ac_id}** [{kind}] — {owner} at "
+            f"- **{obj_id}** [{kind}] — {owner} at "
             f"{applied_at}; commit `{commit_sha[:8]}`; rationale: "
             f"{rationale[:200]}"
         )

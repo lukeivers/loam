@@ -1,21 +1,28 @@
 """Banded-contract reader for loam-pr-safety.
 
-Per AC.PRSG.2 — reads the odd-extractor's
-``<workspace>/.loam/extractions/<repo-id>/contract-draft.yaml``
-sidecar and reconstructs a typed :class:`BandedContract`.
+Per AC.PRGATE.1 (v0.2.3 Cycle 3) — reads the odd-extractor's
+``objectives.yaml`` + ``backing-map.yaml`` directly. Legacy
+``contract-draft.yaml.acs:`` retired per master plan §6.2.
 
-Per Surface #4 (plan-doc §5) — composes any approved-override
-overlays at
+Per AC.PRGATE.4 — composes any approved-override overlays at
 ``<workspace>/.loam/pr-safety/contract-overrides/<repo-id>/<override-N>.yaml``
-on top, in sorted order. Each overlay replaces an
-original-VERIFIED-AC's BandedAC entry with a new (potentially
-different-band) entry, or extends the contract with a promoted novel
-candidate.
+on top, in sorted order. Each overlay either:
 
-Round-trip: every ``ac`` dict in the sidecar is fed through
-:meth:`BandedAC.model_validate`; the per-band evidence rules from
-``loam_odd_extractor.bands`` raise :class:`pydantic.ValidationError`
-on any malformed entry, which is wrapped into
+  - Replaces an original-VERIFIED-objective with a new (typically
+    PLAUSIBLE) Objective row (kind=replace_verified_objective), or
+  - Records audit-only state (kind=audit_only) — Cycle 3 simplification
+    for novel-diff cases; v0.2.4 gap-analysis owns objective
+    creation.
+
+v1→v2 overlay migration: legacy v0.1.9 overlays
+(``kind: replace_verified``, ``original_ac_id``, ``replacement_ac``)
+are auto-migrated on read into the v2 shape with a ``.v1.bak``
+sidecar preserved for audit. Mirrors Cycle 2's RatificationStateV2
+migration pattern.
+
+Round-trip: every Objective dict is fed through
+:meth:`Objective.model_validate`; per-band evidence rules raise
+``pydantic.ValidationError`` on malformed entries, wrapped into
 :class:`ContractMalformedError`.
 """
 
@@ -28,7 +35,12 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from loam_odd_extractor.bands import BandedAC
+from loam_odd_extractor.backing_map import load_backing_map
+from loam_odd_extractor.spec import (
+    BackingMap,
+    BackingMapEntry,
+    Objective,
+)
 
 from loam_pr_safety.errors import (
     ContractMalformedError,
@@ -41,13 +53,13 @@ from loam_pr_safety.state import (
 )
 
 
-def _build_bandedac(ac_dict: dict[str, Any], idx: int) -> BandedAC:
-    """Validate one banded-AC dict, wrapping ValidationError."""
+def _build_objective(obj_dict: dict[str, Any], idx: int) -> Objective:
+    """Validate one Objective dict, wrapping ValidationError."""
     try:
-        return BandedAC.model_validate(ac_dict)
+        return Objective.model_validate(obj_dict)
     except ValidationError as exc:
         raise ContractMalformedError(
-            f"Contract sidecar AC at index {idx} failed banded-AC "
+            f"objectives.yaml entry at index {idx} failed Objective "
             f"validation: {exc}"
         ) from exc
 
@@ -57,7 +69,7 @@ def _load_yaml_dict(path: Path) -> dict[str, Any]:
     data = yaml.safe_load(text)
     if not isinstance(data, dict):
         raise ContractMalformedError(
-            f"Sidecar at {path!s} is not a YAML mapping at top level."
+            f"YAML file at {path!s} is not a mapping at top level."
         )
     return data
 
@@ -75,70 +87,124 @@ def _list_sorted_overlays(repo_overrides_dir: Path) -> list[Path]:
     return overlays
 
 
-def _apply_overlay(
-    acs: list[BandedAC],
-    overlay_dict: dict[str, Any],
-) -> list[BandedAC]:
-    """Apply one overlay to the AC list.
+def _migrate_v1_overlay_in_place(
+    overlay_path: Path, overlay_dict: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Detect a v0.1.9-shape overlay; back it up + migrate to v2 shape.
 
-    Overlay shape (Surface #4):
+    Per AC.PRGATE.4 — read-time auto-migration. A v0.1.9 overlay has
+    ``kind`` ∈ {``replace_verified``, ``promote_novel``} and
+    ``replacement_ac`` (BandedAC dict). We can't faithfully migrate the
+    BandedAC dict to an Objective dict at read-time (the altitudes
+    differ structurally); we record the audit-only intent so the
+    overlay still composes (no-op) and the original is preserved at
+    ``<overlay>.v1.bak``.
 
-      schema_version: 1
-      kind: replace_verified | promote_novel
-      original_ac_id: <id|null>      # for replace_verified
-      replacement_ac: <BandedAC dict>
-
-    For ``replace_verified``: find the AC with matching ``ac_id`` in
-    ``acs`` and replace it with the overlay's ``replacement_ac``.
-    For ``promote_novel``: append the overlay's ``replacement_ac``.
-
-    Per AC.PRSG.5 — the replacement AC goes through BandedAC
-    validation (per-band evidence rules enforced).
+    Returns the migrated dict (or ``None`` if no migration needed).
     """
     kind = overlay_dict.get("kind")
-    replacement_dict = overlay_dict.get("replacement_ac")
+    if kind not in {"replace_verified", "promote_novel"}:
+        return None
+    # Back up the v1 overlay.
+    backup = overlay_path.with_suffix(overlay_path.suffix + ".v1.bak")
+    if not backup.exists():
+        backup.write_text(
+            yaml.safe_dump(overlay_dict, sort_keys=False),
+            encoding="utf-8",
+        )
+    # Replace with an audit-only marker so the overlay composes as
+    # a no-op against the objective-altitude contract.
+    migrated = {
+        "schema_version": 2,
+        "kind": "audit_only",
+        "rationale": (
+            f"Auto-migrated from v0.1.9 overlay (kind={kind}); "
+            f"original preserved at {backup.name}. Re-create the "
+            f"override against the objective-altitude contract if "
+            f"the original intent still applies."
+        ),
+        "owner": str(overlay_dict.get("owner", "")),
+        "commit_sha": str(overlay_dict.get("commit_sha", "")),
+        "repo_sha": str(overlay_dict.get("repo_sha", "")),
+        "applied_at": str(
+            overlay_dict.get("applied_at")
+            or _dt.datetime.now(_dt.timezone.utc).isoformat()
+        ),
+        "legacy_kind": kind,
+        "legacy_original_ac_id": overlay_dict.get("original_ac_id"),
+    }
+    overlay_path.write_text(
+        yaml.safe_dump(migrated, sort_keys=False),
+        encoding="utf-8",
+    )
+    return migrated
+
+
+def _apply_overlay(
+    objectives: list[Objective],
+    overlay_dict: dict[str, Any],
+) -> list[Objective]:
+    """Apply one overlay to the Objective list.
+
+    Overlay shape (Cycle 3):
+
+      schema_version: 2
+      kind: replace_verified_objective | audit_only
+      original_objective_id: <id>            # for replace_verified_objective
+      replacement_objective: <Objective dict>
+
+    For ``replace_verified_objective``: find the objective with
+    matching ``objective_id`` in ``objectives`` and replace it with
+    the overlay's ``replacement_objective``.
+    For ``audit_only``: no-op against the objective list (the overlay
+    is preserved on disk for audit; doesn't mutate the in-memory
+    contract).
+    """
+    kind = overlay_dict.get("kind")
+    if kind == "audit_only":
+        # No mutation; overlay records audit trail only.
+        return objectives
+
+    if kind != "replace_verified_objective":
+        raise ContractMalformedError(
+            f"Overlay 'kind' must be 'replace_verified_objective' or "
+            f"'audit_only'; got {kind!r}"
+        )
+
+    replacement_dict = overlay_dict.get("replacement_objective")
     if not isinstance(replacement_dict, dict):
         raise ContractMalformedError(
-            f"Overlay missing or malformed 'replacement_ac' field "
-            f"(got {type(replacement_dict).__name__})"
+            f"Overlay missing or malformed 'replacement_objective' "
+            f"field (got {type(replacement_dict).__name__})"
         )
     try:
-        replacement = BandedAC.model_validate(replacement_dict)
+        replacement = Objective.model_validate(replacement_dict)
     except ValidationError as exc:
         raise ContractMalformedError(
-            f"Overlay replacement_ac failed banded-AC validation: {exc}"
+            f"Overlay replacement_objective failed Objective "
+            f"validation: {exc}"
         ) from exc
 
-    if kind == "replace_verified":
-        original_id = overlay_dict.get("original_ac_id")
-        if not isinstance(original_id, str) or not original_id:
-            raise ContractMalformedError(
-                "Overlay kind=replace_verified requires non-empty "
-                "'original_ac_id' field."
-            )
-        new_acs: list[BandedAC] = []
-        replaced = False
-        for ac in acs:
-            if ac.ac_id == original_id and not replaced:
-                new_acs.append(replacement)
-                replaced = True
-            else:
-                new_acs.append(ac)
-        if not replaced:
-            # The overlay references an AC that doesn't exist; treat
-            # as a promote (additive) rather than failing — this can
-            # happen when the underlying contract is re-extracted
-            # and the original AC's id changed.
-            new_acs.append(replacement)
-        return new_acs
-
-    if kind == "promote_novel":
-        return [*acs, replacement]
-
-    raise ContractMalformedError(
-        f"Overlay 'kind' must be 'replace_verified' or 'promote_novel'; "
-        f"got {kind!r}"
-    )
+    original_id = overlay_dict.get("original_objective_id")
+    if not isinstance(original_id, str) or not original_id:
+        raise ContractMalformedError(
+            "Overlay kind=replace_verified_objective requires "
+            "non-empty 'original_objective_id' field."
+        )
+    new_objectives: list[Objective] = []
+    replaced = False
+    for o in objectives:
+        if o.objective_id == original_id and not replaced:
+            new_objectives.append(replacement)
+            replaced = True
+        else:
+            new_objectives.append(o)
+    if not replaced:
+        # Treat as additive when underlying contract was re-extracted
+        # and the original ID changed — preserves audit visibility
+        # without losing the override.
+        new_objectives.append(replacement)
+    return new_objectives
 
 
 def read_contract(
@@ -148,83 +214,91 @@ def read_contract(
     """Read the banded contract for ``repo_id`` from
     ``workspace_root``.
 
-    Per AC.PRSG.2:
+    Per AC.PRGATE.1:
 
-      1. Resolve the odd-extractor's contract-draft.yaml at
-         ``<workspace_root>/.loam/extractions/<repo-id>/contract-draft.yaml``.
-      2. Parse + validate every AC dict against
-         :class:`BandedAC` (per-band evidence rules enforced).
-      3. Apply any overrides at
+      1. Resolve ``<workspace_root>/.loam/extractions/<repo-id>/objectives.yaml``
+         + ``<workspace_root>/.loam/extractions/<repo-id>/backing-map.yaml``.
+      2. Parse + validate every Objective dict against
+         :class:`Objective` (per-band evidence rules enforced).
+      3. Apply overrides at
          ``<workspace_root>/.loam/pr-safety/contract-overrides/<repo-id>/<override-N>.yaml``
-         in sorted order.
+         in sorted order. v0.1.9 overlays are auto-migrated to v2
+         shape on read.
       4. Return :class:`BandedContract`.
 
     Raises:
 
-      :class:`ContractMissingError` — sidecar absent.
-      :class:`ContractMalformedError` — sidecar present but
-        malformed (subclass of ContractMissingError).
+      :class:`ContractMissingError` — objectives.yaml or backing-map.yaml absent.
+      :class:`ContractMalformedError` — present but malformed
+        (subclass of ContractMissingError).
     """
     workspace_root = workspace_root.expanduser().resolve()
-    sidecar = (
-        extractions_dir(workspace_root, repo_id) / "contract-draft.yaml"
-    )
-    if not sidecar.exists():
+    ext_dir = extractions_dir(workspace_root, repo_id)
+    objectives_path = ext_dir / "objectives.yaml"
+    if not objectives_path.exists():
         raise ContractMissingError(
-            f"Contract sidecar not found at {sidecar!s}. Run "
-            f"`loam odd-extract <repo>` first."
+            f"objectives.yaml not found at {objectives_path!s}. "
+            f"Run `loam odd-extract <repo>` first."
         )
 
-    sidecar_data = _load_yaml_dict(sidecar)
-
-    extraction_id = str(sidecar_data.get("extraction_id") or repo_id)
-    repo_path = Path(str(sidecar_data.get("repo_path", "")))
-    raw_acs = sidecar_data.get("acs") or []
-    if not isinstance(raw_acs, list):
+    objectives_data = _load_yaml_dict(objectives_path)
+    extraction_id = str(objectives_data.get("extraction_id") or repo_id)
+    repo_path = Path(str(objectives_data.get("repo_path", "")))
+    raw_objs = objectives_data.get("objectives") or []
+    if not isinstance(raw_objs, list):
         raise ContractMalformedError(
-            f"Sidecar 'acs' field must be a list; got "
-            f"{type(raw_acs).__name__}"
+            f"objectives.yaml 'objectives' field must be a list; got "
+            f"{type(raw_objs).__name__}"
         )
-    acs: list[BandedAC] = []
+    objectives: list[Objective] = []
     inferred_repo_sha: str | None = None
-    for idx, ac_dict in enumerate(raw_acs):
-        if not isinstance(ac_dict, dict):
+    for idx, obj_dict in enumerate(raw_objs):
+        if not isinstance(obj_dict, dict):
             raise ContractMalformedError(
-                f"Sidecar 'acs[{idx}]' must be a mapping; got "
-                f"{type(ac_dict).__name__}"
+                f"objectives.yaml 'objectives[{idx}]' must be a "
+                f"mapping; got {type(obj_dict).__name__}"
             )
-        ac = _build_bandedac(ac_dict, idx)
-        acs.append(ac)
+        o = _build_objective(obj_dict, idx)
+        objectives.append(o)
         if (
             inferred_repo_sha is None
-            and ac.evidence.repo_sha is not None
+            and o.evidence.repo_sha is not None
         ):
-            inferred_repo_sha = ac.evidence.repo_sha
+            inferred_repo_sha = o.evidence.repo_sha
 
-    unhandled_paths_raw = sidecar_data.get("unhandled_paths") or []
-    unhandled_paths: list[Path] = []
-    if isinstance(unhandled_paths_raw, list):
-        for p in unhandled_paths_raw:
-            unhandled_paths.append(Path(str(p)))
+    # Backing-map is REQUIRED — Cycle 2 produces it as part of
+    # post-synthesis pipeline. ContractMissingError if absent.
+    backing_map = load_backing_map(ext_dir)
+    if backing_map is None:
+        raise ContractMissingError(
+            f"backing-map.yaml not found at "
+            f"{ext_dir / 'backing-map.yaml'}. Cycle 2 backing-map "
+            f"population is required; run `loam odd-extract <repo>` "
+            f"with the synthesis pipeline (LLM-pass) to populate."
+        )
 
-    created_at = str(sidecar_data.get("created_at") or _utc_now_iso())
+    created_at = str(objectives_data.get("created_at") or _utc_now_iso())
 
-    # Apply overlays.
+    # Apply overlays (with v1→v2 migration on read).
     overlay_paths = _list_sorted_overlays(
         overrides_dir(workspace_root, repo_id)
     )
     override_count = 0
     for overlay_path in overlay_paths:
         overlay_data = _load_yaml_dict(overlay_path)
-        acs = _apply_overlay(acs, overlay_data)
+        # v1→v2 migration if needed.
+        migrated = _migrate_v1_overlay_in_place(overlay_path, overlay_data)
+        effective = migrated if migrated is not None else overlay_data
+        objectives = _apply_overlay(objectives, effective)
         override_count += 1
 
     return BandedContract(
         extraction_id=extraction_id,
         repo_path=repo_path,
         repo_sha=inferred_repo_sha,
-        acs=acs,
-        unhandled_paths=unhandled_paths,
+        objectives=objectives,
+        backing_map=backing_map,
+        unhandled_paths=[],
         created_at=created_at,
         override_count=override_count,
     )

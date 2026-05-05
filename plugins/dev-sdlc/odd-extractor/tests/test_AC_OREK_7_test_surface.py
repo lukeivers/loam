@@ -32,12 +32,13 @@ def test_per_ac_test_files_exist() -> None:
 
 
 def test_integration_test_files_exist() -> None:
-    """Integration tests named in plan-doc §4."""
+    """Integration tests — v0.2.3 Cycle 3 surface (legacy
+    test_full_workflow_dry_run + test_steady_state_idempotent
+    retired with v0.1.9 PR-safety reframe per master plan §6.2)."""
     expected = [
-        "test_full_workflow_dry_run.py",
         "test_audit_log_entries.py",
         "test_cross_session_state.py",
-        "test_steady_state_idempotent.py",
+        "test_v0_2_3_release_soft_smoke.py",
     ]
     for fname in expected:
         assert (_TESTS_DIR / fname).exists(), f"missing {fname}"

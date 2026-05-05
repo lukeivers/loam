@@ -633,40 +633,35 @@ def verify_contract(
     md_path = ext_dir / "contract-draft.md"
     md_path.write_text(markdown, encoding="utf-8")
 
-    # Per AC.OBJX.7: legacy ``acs:`` field carries typed Objective rows
-    # transitionally for v0.1.9 PR-safety compat. When synthesis is
-    # empty (test path), preserve the v0.1.8 raw.acs shape.
-    from .generate import _objectives_as_legacy_acs
+    # Per v0.2.3 Cycle 3 + master plan §6.2 — legacy ``acs:`` field
+    # retired. PR-safety reads ``objectives.yaml`` + ``backing-map.yaml``
+    # directly. ``contract-draft.yaml`` shrinks to a top-level
+    # summary; ``objectives.yaml`` is the canonical authority for
+    # downstream consumers.
 
-    if synthesis.objectives:
-        legacy_acs = _objectives_as_legacy_acs(synthesis)
-    else:
-        legacy_acs = list(raw.acs)
-
+    # Top-level contract-draft.yaml summary (canonical handle).
     sidecar_payload: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,  # bumped: legacy `acs:` field retired.
         "extraction_id": config.repo_id,
         "repo_path": str(config.repo_path),
-        "ac_count": len(legacy_acs),
+        "ac_count": len(synthesis.objectives),
+        "objective_count": len(synthesis.objectives),
+        "constraint_count": len(synthesis.constraints),
+        "capability_count": len(synthesis.capabilities),
         "unhandled_count": len(raw.unhandled_paths),
         "dry_run": config.dry_run,
         "created_at": ts,
-        # Legacy v0.1.9 PR-safety compat.
-        "acs": legacy_acs,
-        "unhandled_paths": [str(p) for p in raw.unhandled_paths],
-        # v0.2.3 typed lists.
-        "objectives": [o.model_dump(mode="json") for o in synthesis.objectives],
-        "constraints": [k.model_dump(mode="json") for k in synthesis.constraints],
-        "capabilities": [c.model_dump(mode="json") for c in synthesis.capabilities],
         "synthesis_model_id": synthesis.model_id,
         "synthesis_cost_actual_cents": synthesis.cost_actual_cents,
     }
     if altitude_report is not None:
-        sidecar_payload["altitude_report"] = altitude_report.model_dump(
-            mode="json"
-        )
-    if backing_map is not None:
-        sidecar_payload["backing_map"] = backing_map.model_dump(mode="json")
+        sidecar_payload["altitude_report_summary"] = {
+            "total_rows": altitude_report.total_rows,
+            "pass_count": altitude_report.pass_count,
+            "fail_count": altitude_report.fail_count,
+            "pass_rate": altitude_report.pass_rate,
+            "drift_halt_triggered": altitude_report.drift_halt_triggered,
+        }
 
     yaml_path = ext_dir / "contract-draft.yaml"
     yaml_path.write_text(
@@ -674,11 +669,33 @@ def verify_contract(
         encoding="utf-8",
     )
 
+    # Canonical objectives.yaml (PR-safety + watch read this directly).
+    objectives_path = ext_dir / "objectives.yaml"
+    objectives_payload = {
+        "schema_version": 1,
+        "extraction_id": config.repo_id,
+        "repo_path": str(config.repo_path),
+        "created_at": ts,
+        "objectives": [
+            o.model_dump(mode="json") for o in synthesis.objectives
+        ],
+        "constraints": [
+            k.model_dump(mode="json") for k in synthesis.constraints
+        ],
+        "capabilities": [
+            c.model_dump(mode="json") for c in synthesis.capabilities
+        ],
+    }
+    objectives_path.write_text(
+        yaml.safe_dump(objectives_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
     draft = ContractDraft(
         extraction_id=config.repo_id,
         markdown_path=md_path,
         sidecar_path=yaml_path,
-        ac_count=len(legacy_acs),
+        ac_count=len(synthesis.objectives),
         unhandled_count=len(raw.unhandled_paths),
         created_at=ts,
     )
@@ -699,6 +716,9 @@ def verify_contract(
     state.last_updated_at = ts
     state.artefacts["contract_md"] = md_path.relative_to(ext_dir).as_posix()
     state.artefacts["contract_yaml"] = yaml_path.relative_to(ext_dir).as_posix()
+    state.artefacts["objectives"] = objectives_path.relative_to(
+        ext_dir
+    ).as_posix()
     save_state(ext_dir, state)
 
     write_audit_entry(
@@ -711,7 +731,6 @@ def verify_contract(
             f"objective_count={len(synthesis.objectives)} "
             f"constraint_count={len(synthesis.constraints)} "
             f"capability_count={len(synthesis.capabilities)} "
-            f"legacy_ac_count={len(legacy_acs)} "
             f"unhandled_count={len(raw.unhandled_paths)}"
         ),
         timestamp=ts,

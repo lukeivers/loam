@@ -122,7 +122,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "<pending>"
+baseline: "330e66e"
 
 plan: docs/rebuild/plans/v0-2-1-corrective-f1-odd-extractor-contract-draft-fields.md
 

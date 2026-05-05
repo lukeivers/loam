@@ -382,10 +382,7 @@ Cycle-1 method decisions at §7. Master-plan method decisions at master plan §9
 
 ### Commit SHAs
 
-- Plan-doc commit: TBD (this commit).
-- Source-edit feat commit (BASELINE): TBD.
-- Amendment commit (`loam amend apply`): TBD.
-- Seal commit (`loam amend seal`): TBD.
-- Post-seal §14 + master plan §9 backfill commit: TBD.
-
-Backfilled by build agent per `feedback_no_amend_in_agent_dispatches` (NEW commit, never `--amend`).
+- Amendment commit: `1e2003760a7ab22a22e4cf20deb550dff1e37cc3` —
+  `chore(amend): v0-2-3-cycle-1-multi-source-objective-synthesis manifest+apply — dev-sdlc BASELINE+sidecar bump to 404f4d3`
+- Seal commit: `9b9f87c8efb0503003ff78e3a8f296cdb1ff8b2a` —
+  `chore(seals): v0-2-3-cycle-1-multi-source-objective-synthesis — dev-sdlc at 1e20037`

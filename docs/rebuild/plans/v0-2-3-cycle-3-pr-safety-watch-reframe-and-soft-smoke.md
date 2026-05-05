@@ -334,8 +334,7 @@ Cycle-3 method decisions at §7. Master-plan method decisions at master plan §9
 
 ### Commit SHAs
 
-- Plan-doc commit: TBD (this commit).
-- Amendment commit: TBD (post-source-edit; pos-amend apply).
-- Seal commit: TBD (post-apply; pos-amend seal).
-- §14 backfill commit: TBD (post-seal; per AC.D-sa.7).
-- v0.2.3 SHIPPED rollup commit: TBD (post-seal + smoke green).
+- Amendment commit: `e277c274f6b120ac5fe68c76a7e425a53ea1bcd5` —
+  `chore(amend): v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke manifest+apply — dev-sdlc BASELINE+sidecar bump to 4157092`
+- Seal commit: `f78bb362931e0e7b7a64782c1c407c812a941533` —
+  `chore(seals): v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke — dev-sdlc at e277c27`

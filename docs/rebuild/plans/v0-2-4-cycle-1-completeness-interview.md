@@ -286,9 +286,7 @@ Cycle-1 method decisions at §7. Master-plan method decisions at master plan §9
 
 ### Commit SHAs
 
-- Plan-doc commit: TBD (this commit).
-- Source-edit commit: TBD (build agent).
-- Apply commit: TBD (`loam amend apply`).
-- Seal commit: TBD (`loam amend seal --plan-doc`).
-- §14 backfill commit: TBD (post-seal).
-- Master plan §9 row update commit: TBD (post-seal).
+- Amendment commit: `e1a4239a3d814c2d9bb9536ffb145445e8422802` —
+  `chore(amend): v0-2-4-cycle-1-completeness-interview manifest+apply — dev-sdlc BASELINE+sidecar bump to 89f3933`
+- Seal commit: `d42ace940c6d594f4d0fdf1e86afed7509c7b2be` —
+  `chore(seals): v0-2-4-cycle-1-completeness-interview — dev-sdlc at e1a4239`

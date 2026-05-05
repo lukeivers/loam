@@ -246,7 +246,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "PENDING_SOURCE_EDIT_COMMIT"
+baseline: "9c9ed19"
 
 plan: docs/rebuild/plans/v0-2-4-cycle-3-build-next-and-persona-surface.md
 
@@ -256,7 +256,7 @@ plan: docs/rebuild/plans/v0-2-4-cycle-3-build-next-and-persona-surface.md
 plan_doc_ref: docs/rebuild/plans/v0-2-4-cycle-3-build-next-and-persona-surface.md
 
 ac_count: 13
-smoke_outcome: "Release-level SOFT integration smoke on canonical jsts-playwright-app fixture; D1+D2+D3+D5+D6 exercised; D4 n/a; §self-checks pass-rate ≥90% gate over augmented objectives + capabilities + constraints (programmatic + LLM-as-judge double-pass); 3 build-next fixtures (high-priority-match + no-survey-context + orphan-only); full-suite green sweep across plugins/dev-sdlc/odd-extractor/ + framework/cost-governance/ + framework/per-project-pm/ + framework/workspace-bootstrap/"
+smoke_outcome: "Release SOFT smoke on canonical jsts-playwright-app: D1+D2+D3+D5+D6 ✓ (D4 n/a); §self-checks ≥90%; 3 fixtures; 813+73+124+411 tests pass across components."
 
 components:
   - name: dev-sdlc

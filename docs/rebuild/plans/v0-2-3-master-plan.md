@@ -445,7 +445,7 @@ Master-plan-level method decisions. Per-cycle plan-docs author own §14.
 
 | Cycle | Theme | Apply SHA | Seal SHA |
 |---|---|---|---|
-| Cycle 1 | Multi-source objective synthesis | TBD | TBD |
+| Cycle 1 | Multi-source objective synthesis | 1e20037 | 9b9f87c |
 | Cycle 2 | Backing-implementation map + ratification reframe | TBD | TBD |
 | Cycle 3 | PR-safety + continuous-watch reframe (release SOFT smoke) | TBD | TBD |
 

@@ -410,7 +410,7 @@ Master-plan-level method decisions. Per-cycle plan-docs author own §14.
 | Cycle | Theme | Apply SHA | Seal SHA |
 |---|---|---|---|
 | Cycle 1 | Eric onboarding ritual hardening | f6b5047 | 55640b1 |
-| Cycle 2 | Promotion rubric mechanism | TBD | TBD |
+| Cycle 2 | Promotion rubric mechanism | c48aa68 | 298172e |
 | Cycle 3 | Release-level HARD smoke gate execution | n/a (no canonical commit) | n/a |
 | Release-level smoke | Six-dimension HARD smoke + Eric-path (Path 1 + Path 2) + fresh-user pass | TBD evidence-doc commit on pos3 | n/a |
 

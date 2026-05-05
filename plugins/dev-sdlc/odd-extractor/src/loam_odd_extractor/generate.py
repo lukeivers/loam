@@ -260,6 +260,40 @@ def generate_raw_acs(
         encoding="utf-8",
     )
 
+    # v0.2.3 Cycle 2 — backing-map population post-synthesis.
+    # Per AC.BACKMAP.{2,3,7}: populate via heuristic pre-filter +
+    # LLM-pass classifier, persist, audit-log. D2 idempotent skip when
+    # the prior backing-map's counts match the current run.
+    backing_map_persisted_path: Path | None = None
+    if synthesis_result.objectives and not config.dry_run:
+        from .backing_map import (
+            is_idempotent_skip,
+            load_backing_map,
+            populate_backing_map,
+            save_backing_map,
+        )
+
+        existing_bm = load_backing_map(ext_dir)
+        if anthropic_client is not None and not is_idempotent_skip(
+            existing_bm,
+            objective_count=len(synthesis_result.objectives),
+            total_evidence_rows=len(aggregated_acs),
+        ):
+            backing_map = populate_backing_map(
+                synthesis_result.objectives,
+                aggregated_acs,
+                extraction_id=config.repo_id,
+                anthropic_client=anthropic_client,
+                repo_sha=bundle.repo_sha,
+                extraction_dir=ext_dir,
+                timestamp=ts,
+            )
+            backing_map_persisted_path = save_backing_map(
+                ext_dir, backing_map
+            )
+        elif existing_bm is not None:
+            backing_map_persisted_path = ext_dir / "backing-map.yaml"
+
     state = load_state(ext_dir)
     if state is None:
         from .state import ExtractionState
@@ -285,6 +319,10 @@ def generate_raw_acs(
     state.artefacts["multi_source_bundle"] = bundle_path.relative_to(
         ext_dir
     ).as_posix()
+    if backing_map_persisted_path is not None:
+        state.artefacts["backing_map"] = backing_map_persisted_path.relative_to(
+            ext_dir
+        ).as_posix()
     save_state(ext_dir, state)
 
     write_audit_entry(

@@ -1,0 +1,39 @@
+# 6 rows; only 1 weakly relates to dispute. The 4 hypothesised objectives
+# have no backing (correct — H-band is forward-looking).
+rows:
+  - ac_id: "model:src/models/Dispute.js:5"
+    kind: model
+    path: "src/models/Dispute.js"
+    symbol: "Dispute"
+    text: "Dispute schema (weak signal)"
+    line_range: [5, 50]
+  - ac_id: "pattern:src/util/log.js:1"
+    kind: pattern
+    path: "src/util/log.js"
+    symbol: "logger"
+    text: "logger utility orphan"
+    line_range: [1, 20]
+  - ac_id: "pattern:src/util/format.js:1"
+    kind: pattern
+    path: "src/util/format.js"
+    symbol: "format"
+    text: "format helpers orphan"
+    line_range: [1, 20]
+  - ac_id: "pattern:src/util/dates.js:1"
+    kind: pattern
+    path: "src/util/dates.js"
+    symbol: "dates"
+    text: "date helpers orphan"
+    line_range: [1, 20]
+  - ac_id: "pattern:src/util/colors.js:1"
+    kind: pattern
+    path: "src/util/colors.js"
+    symbol: "colors"
+    text: "color theme orphan"
+    line_range: [1, 20]
+  - ac_id: "pattern:src/util/random.js:1"
+    kind: pattern
+    path: "src/util/random.js"
+    symbol: "random"
+    text: "random helpers orphan"
+    line_range: [1, 20]

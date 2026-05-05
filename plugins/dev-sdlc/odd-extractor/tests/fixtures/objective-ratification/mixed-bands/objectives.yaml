@@ -1,0 +1,56 @@
+# mixed-bands: 3 V-band + 4 P-band + 2 H-band objectives.
+objectives:
+  - objective_id: O.v1.1
+    text: "Operators receive verified outcome 1 happens reliably each session"
+    confidence: VERIFIED
+    domain: alpha
+    evidence:
+      readme_excerpts: ["x"]
+      test_name_refs: ["test_v1::should happen"]
+      repo_sha: "abc123def4567890"
+  - objective_id: O.v2.1
+    text: "Operators receive verified outcome 2 happens reliably each session"
+    confidence: VERIFIED
+    domain: beta
+    evidence:
+      readme_excerpts: ["x"]
+      test_name_refs: ["test_v2::should happen"]
+      repo_sha: "abc123def4567890"
+  - objective_id: O.v3.1
+    text: "Operators receive verified outcome 3 happens reliably each session"
+    confidence: VERIFIED
+    domain: gamma
+    evidence:
+      readme_excerpts: ["x"]
+      test_name_refs: ["test_v3::should happen"]
+      repo_sha: "abc123def4567890"
+  - objective_id: O.p1.1
+    text: "Operators see plausible outcome 1 surfaced through the dashboard"
+    confidence: PLAUSIBLE
+    domain: delta
+    evidence: { readme_excerpts: ["x"] }
+  - objective_id: O.p2.1
+    text: "Operators see plausible outcome 2 surfaced through the dashboard"
+    confidence: PLAUSIBLE
+    domain: epsilon
+    evidence: { readme_excerpts: ["x"] }
+  - objective_id: O.p3.1
+    text: "Operators see plausible outcome 3 surfaced through the dashboard"
+    confidence: PLAUSIBLE
+    domain: zeta
+    evidence: { readme_excerpts: ["x"] }
+  - objective_id: O.p4.1
+    text: "Operators see plausible outcome 4 surfaced through the dashboard"
+    confidence: PLAUSIBLE
+    domain: eta
+    evidence: { readme_excerpts: ["x"] }
+  - objective_id: O.h1.1
+    text: "Operators see hypothesised future outcome 1 someday in the future"
+    confidence: HYPOTHESISED
+    domain: theta
+    evidence: { rationale: "LLM inferred from comments" }
+  - objective_id: O.h2.1
+    text: "Operators see hypothesised future outcome 2 someday in the future"
+    confidence: HYPOTHESISED
+    domain: iota
+    evidence: { rationale: "LLM inferred from comments" }

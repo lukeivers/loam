@@ -1,0 +1,17 @@
+# loose-multi-row: 2 objectives + 12 evidence rows (multi-row backing
+# + orphans).
+objectives:
+  - objective_id: O.dispute.1
+    text: "Operators file refund disputes against DoorDash and Uber Eats portals at scale"
+    confidence: PLAUSIBLE
+    domain: dispute
+    evidence:
+      readme_excerpts:
+        - "Refund disputes against DoorDash and Uber Eats"
+  - objective_id: O.upload.1
+    text: "Operators upload CSV files of disputes for batch processing"
+    confidence: PLAUSIBLE
+    domain: upload
+    evidence:
+      readme_excerpts:
+        - "Bulk CSV upload"

@@ -1,0 +1,38 @@
+# all-plausible: 5 P-band objectives + populated backing-map.
+objectives:
+  - objective_id: O.alpha.1
+    text: "Operators see alpha outcome through the dashboard interface"
+    confidence: PLAUSIBLE
+    domain: alpha
+    evidence:
+      readme_excerpts: ["alpha"]
+  - objective_id: O.beta.1
+    text: "Operators see beta outcome delivered through the system reliably"
+    confidence: PLAUSIBLE
+    domain: beta
+    evidence:
+      readme_excerpts: ["beta"]
+  - objective_id: O.gamma.1
+    text: "Operators see gamma outcome from the platform consistently"
+    confidence: PLAUSIBLE
+    domain: gamma
+    evidence:
+      readme_excerpts: ["gamma"]
+  - objective_id: O.delta.1
+    text: "Operators see delta outcome happen on schedule each day"
+    confidence: PLAUSIBLE
+    domain: delta
+    evidence:
+      readme_excerpts: ["delta"]
+  - objective_id: O.epsilon.1
+    text: "Operators see epsilon outcome consistently in the dashboard"
+    confidence: PLAUSIBLE
+    domain: epsilon
+    evidence:
+      readme_excerpts: ["epsilon"]
+backing_map:
+  alpha: STRONG
+  beta: STRONG
+  gamma: STRONG
+  delta: STRONG
+  epsilon: STRONG

@@ -1,0 +1,20 @@
+# edge-cases: P→V-without-backing-blocked + capability-with-H-served-objective.
+objectives:
+  - objective_id: O.no-backing.1
+    text: "Operators get an outcome but the codebase has no implementation yet"
+    confidence: PLAUSIBLE
+    domain: missing
+    evidence:
+      readme_excerpts: ["mentioned in readme but not built"]
+  - objective_id: O.h-served.1
+    text: "Operators get a hypothesised future outcome that capability serves"
+    confidence: HYPOTHESISED
+    domain: future
+    evidence:
+      rationale: "LLM inferred"
+capabilities:
+  - capability_id: C.depends-on-h.1
+    text: "Capability that serves a hypothesised objective"
+    serves: ["O.h-served.1"]
+    evidence:
+      readme_excerpts: ["future feature"]

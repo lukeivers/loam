@@ -1,0 +1,31 @@
+# no-evidence-hypothesised: 4 mixed-band objectives + 6 mostly-orphan rows.
+# H-band objectives have no backing (forward-looking outcomes); P-band
+# has weak coverage; V-band has none either (test fixture for the
+# "objective references absent code" edge).
+objectives:
+  - objective_id: O.dispute.1
+    text: "Operators file refund disputes through portals at scale"
+    confidence: PLAUSIBLE
+    domain: dispute
+    evidence:
+      readme_excerpts:
+        - "Refund disputes"
+  - objective_id: O.future-llm.1
+    text: "Operators see LLM-summarized dispute trends in a weekly digest"
+    confidence: HYPOTHESISED
+    domain: digest
+    evidence:
+      rationale: "LLM inferred from comments mentioning future digest feature"
+  - objective_id: O.future-export.1
+    text: "Operators export per-restaurant ledger views as PDF for ledger reconciliation"
+    confidence: HYPOTHESISED
+    domain: ledger
+    evidence:
+      rationale: "Comment says PDF ledger export is on the roadmap"
+  - objective_id: O.alerts.1
+    text: "Operators receive Slack alerts when dispute SLA exceeds 7 days uniformly"
+    confidence: PLAUSIBLE
+    domain: slack
+    evidence:
+      readme_excerpts:
+        - "Slack alerts on SLA breach"

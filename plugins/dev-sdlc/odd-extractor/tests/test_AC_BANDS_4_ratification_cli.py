@@ -134,7 +134,10 @@ def test_ratify_cli_creates_ratification_state(
     )
     assert rstate_path.exists()
     payload = yaml.safe_load(rstate_path.read_text(encoding="utf-8"))
-    assert payload["schema_version"] == 1
+    # Per v0.2.3 Cycle 2 (AC.OBJRAT.6): fresh writes land at v2 schema
+    # with v0.1.8 back-compat fields (pending_acs / in_flight_action)
+    # mirrored from the v2 pending_targets / in_flight_target pair.
+    assert payload["schema_version"] == 2
     assert payload["extraction_id"] == extraction_id
     assert payload["pm_handle"] == pm_name
     assert set(payload["pending_acs"]) == {
@@ -144,6 +147,23 @@ def test_ratify_cli_creates_ratification_state(
     }
     assert payload["completed_actions"] == []
     assert payload["in_flight_action"] is None
+    # v0.2.3 Cycle 2 additive surface — banded_ac altitude tagging
+    # for v0.1.8-shape ratifications routed through the v1 API.
+    assert payload["altitude_index"] == {
+        "AC.SYNTH.1": "banded_ac",
+        "AC.SYNTH.2": "banded_ac",
+        "AC.SYNTH.3": "banded_ac",
+    }
+    pt_by_target = {
+        pt["target_id"]: pt["altitude"]
+        for pt in payload["pending_targets"]
+    }
+    assert pt_by_target == {
+        "AC.SYNTH.1": "banded_ac",
+        "AC.SYNTH.2": "banded_ac",
+        "AC.SYNTH.3": "banded_ac",
+    }
+    assert payload["in_flight_target"] is None
 
 
 def test_ratify_cli_first_surfacing_returns_one_question(

@@ -1,0 +1,32 @@
+# 5 evidence rows aligning 1-to-1 with the 3 objectives plus 1 orphan.
+rows:
+  - ac_id: "route:src/routes/disputeRoutes.js:42"
+    kind: route
+    path: "src/routes/disputeRoutes.js"
+    symbol: "POST /dispute"
+    text: "POST handler for filing dispute"
+    line_range: [42, 47]
+  - ac_id: "test:tests/dispute.spec.ts:10"
+    kind: test
+    path: "tests/dispute.spec.ts"
+    symbol: "operator files dispute"
+    text: "operator files dispute should complete"
+    line_range: [10, 25]
+  - ac_id: "route:src/routes/exportRoutes.js:66"
+    kind: route
+    path: "src/routes/exportRoutes.js"
+    symbol: "GET /export"
+    text: "GET handler for exporting orders to CSV"
+    line_range: [66, 75]
+  - ac_id: "callback:src/jobs/summaryJob.js:5"
+    kind: callback
+    path: "src/jobs/summaryJob.js"
+    symbol: "dailySummaryJob"
+    text: "daily summary cron sends summary emails"
+    line_range: [5, 30]
+  - ac_id: "pattern:src/util/log.js:1"
+    kind: pattern
+    path: "src/util/log.js"
+    symbol: "logger"
+    text: "logger utility (orphan)"
+    line_range: [1, 20]

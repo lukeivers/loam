@@ -1,0 +1,24 @@
+# tight-1-to-1: 3 objectives + 5 evidence rows; clean per-objective
+# mapping. Each objective gets 1-2 STRONG matches.
+objectives:
+  - objective_id: O.dispute.1
+    text: "Operators file refund disputes through the DoorDash merchant portal"
+    confidence: PLAUSIBLE
+    domain: dispute
+    evidence:
+      readme_excerpts:
+        - "Files refund disputes against DoorDash"
+  - objective_id: O.export.1
+    text: "Operators export order data as CSV files for accounting reconciliation"
+    confidence: PLAUSIBLE
+    domain: export
+    evidence:
+      readme_excerpts:
+        - "Exports order data to CSV"
+  - objective_id: O.summary.1
+    text: "Operators receive daily summary emails of dispute outcomes from yesterday"
+    confidence: PLAUSIBLE
+    domain: summary
+    evidence:
+      readme_excerpts:
+        - "Daily summary emails"

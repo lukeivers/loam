@@ -34,10 +34,17 @@ from typing import Any
 import yaml
 
 from .altitude_validator import validate_altitude
+from .backing_map import load_backing_map
 from .errors import StageError
 from .generate import load_synthesis_result
 from .observability import write_audit_entry
-from .spec import ContractDraft, ExtractionConfig, RawACs, SynthesisResult
+from .spec import (
+    BackingMap,
+    ContractDraft,
+    ExtractionConfig,
+    RawACs,
+    SynthesisResult,
+)
 from .state import extraction_dir, load_state, save_state
 
 
@@ -79,12 +86,100 @@ def _render_legacy_evidence_summary(ev: dict) -> str:
     return "(none)"
 
 
+def _render_backing_map_section(bm: BackingMap | None) -> list[str]:
+    """v0.2.3 Cycle 2 (AC.BACKMAP.4) — backing-implementation map section.
+
+    Renders per-objective row counts (STRONG / WEAK / total) + first-3
+    path:line previews; orphan section with first-10 paths annotated by
+    reason; HYPOTHESISED objectives' empty backing rendered as
+    ``(none)``.
+    """
+    lines: list[str] = []
+    lines.append("## Backing-implementation map")
+    lines.append("")
+    if bm is None:
+        lines.append(
+            "_No backing-map persisted (population skipped or run "
+            "predates v0.2.3 Cycle 2)._"
+        )
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+        return lines
+    lines.append(
+        f"**Total evidence rows:** {bm.total_evidence_rows} | "
+        f"**Objectives:** {bm.objective_count} | "
+        f"**Orphans:** {len(bm.orphan_rows)} | "
+        f"**Unmatched objectives:** {len(bm.unmatched_objective_ids)}"
+    )
+    lines.append("")
+    lines.append(
+        f"**Cost:** {bm.cost_actual_cents:.4f} cents (model "
+        f"`{bm.model_id}`)"
+    )
+    lines.append("")
+    if bm.entries:
+        lines.append("| objective_id | STRONG | WEAK | total | preview |")
+        lines.append("|--------------|--------|------|-------|---------|")
+        for entry in bm.entries:
+            strong = sum(
+                1 for r in entry.evidence_rows if r.confidence == "STRONG"
+            )
+            weak = sum(
+                1 for r in entry.evidence_rows if r.confidence == "WEAK"
+            )
+            total = len(entry.evidence_rows)
+            preview_parts: list[str] = []
+            for ref in entry.evidence_rows[:3]:
+                if ref.line_range and ref.line_range[0] != ref.line_range[1]:
+                    preview_parts.append(
+                        f"`{ref.path}:{ref.line_range[0]}-{ref.line_range[1]}`"
+                    )
+                elif ref.line_range:
+                    preview_parts.append(
+                        f"`{ref.path}:{ref.line_range[0]}`"
+                    )
+                else:
+                    preview_parts.append(f"`{ref.path}`")
+            preview = ", ".join(preview_parts) if preview_parts else "(none)"
+            lines.append(
+                f"| `{entry.objective_id}` | {strong} | {weak} | {total} | "
+                f"{preview} |"
+            )
+        lines.append("")
+    if bm.unmatched_objective_ids:
+        lines.append(
+            "**Unmatched objectives** (non-HYPOTHESISED with empty "
+            "backing — gap-analysis input for v0.2.4):"
+        )
+        for oid in bm.unmatched_objective_ids:
+            lines.append(f"- `{oid}`")
+        lines.append("")
+    if bm.orphan_rows:
+        lines.append(
+            f"**Orphan evidence rows** ({len(bm.orphan_rows)}; first 10):"
+        )
+        lines.append("")
+        lines.append("| evidence_row_id | reason | path |")
+        lines.append("|-----------------|--------|------|")
+        for orow in bm.orphan_rows[:10]:
+            lines.append(
+                f"| `{orow.evidence_row_id}` | {orow.reason} | "
+                f"`{orow.path}` |"
+            )
+        lines.append("")
+    lines.append("---")
+    lines.append("")
+    return lines
+
+
 def _render_outcome_altitude_markdown(
     *,
     config: ExtractionConfig,
     raw: RawACs,
     synthesis: SynthesisResult,
     altitude_report: Any,
+    backing_map: BackingMap | None = None,
 ) -> str:
     """Render the v0.2.3 outcome-altitude contract draft.
 
@@ -231,6 +326,9 @@ def _render_outcome_altitude_markdown(
         lines.append("")
     lines.append("---")
     lines.append("")
+
+    # v0.2.3 Cycle 2 — Backing-implementation map (AC.BACKMAP.4).
+    lines.extend(_render_backing_map_section(backing_map))
 
     # §self-checks audit table
     lines.append("## §self-checks audit (altitude validator)")
@@ -512,6 +610,9 @@ def verify_contract(
             timestamp=ts,
         )
 
+    # v0.2.3 Cycle 2 (AC.BACKMAP.4) — load backing-map for rendering.
+    backing_map = load_backing_map(ext_dir)
+
     # Render markdown.
     if (
         synthesis.objectives
@@ -523,6 +624,7 @@ def verify_contract(
             raw=raw,
             synthesis=synthesis,
             altitude_report=altitude_report,
+            backing_map=backing_map,
         )
     else:
         # Test path / empty-synthesis path: v0.1.8 fallback.
@@ -563,6 +665,8 @@ def verify_contract(
         sidecar_payload["altitude_report"] = altitude_report.model_dump(
             mode="json"
         )
+    if backing_map is not None:
+        sidecar_payload["backing_map"] = backing_map.model_dump(mode="json")
 
     yaml_path = ext_dir / "contract-draft.yaml"
     yaml_path.write_text(

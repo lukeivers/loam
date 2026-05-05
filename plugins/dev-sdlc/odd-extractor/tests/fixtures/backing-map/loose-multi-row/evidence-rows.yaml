@@ -1,0 +1,74 @@
+# 12 rows: 4 dispute + 4 upload + 4 unrelated orphans.
+rows:
+  - ac_id: "route:src/routes/disputeRoutes.js:42"
+    kind: route
+    path: "src/routes/disputeRoutes.js"
+    symbol: "dispute"
+    text: "filing dispute"
+    line_range: [42, 47]
+  - ac_id: "route:src/routes/disputeBatch.js:50"
+    kind: route
+    path: "src/routes/disputeBatch.js"
+    symbol: "dispute batch"
+    text: "batch dispute filing"
+    line_range: [50, 80]
+  - ac_id: "model:src/models/Dispute.js:5"
+    kind: model
+    path: "src/models/Dispute.js"
+    symbol: "Dispute"
+    text: "Dispute schema for refund disputes"
+    line_range: [5, 50]
+  - ac_id: "test:tests/dispute.spec.ts:10"
+    kind: test
+    path: "tests/dispute.spec.ts"
+    symbol: "operator files dispute"
+    text: "operator files dispute should complete"
+    line_range: [10, 25]
+  - ac_id: "route:src/routes/uploadRoutes.js:5"
+    kind: route
+    path: "src/routes/uploadRoutes.js"
+    symbol: "POST /upload"
+    text: "CSV upload handler"
+    line_range: [5, 25]
+  - ac_id: "route:src/routes/uploadBatch.js:30"
+    kind: route
+    path: "src/routes/uploadBatch.js"
+    symbol: "batch upload"
+    text: "batch CSV upload of disputes"
+    line_range: [30, 70]
+  - ac_id: "test:tests/upload.spec.ts:1"
+    kind: test
+    path: "tests/upload.spec.ts"
+    symbol: "operator uploads CSV"
+    text: "operator uploads CSV should complete"
+    line_range: [1, 20]
+  - ac_id: "model:src/models/UploadJob.js:1"
+    kind: model
+    path: "src/models/UploadJob.js"
+    symbol: "UploadJob"
+    text: "UploadJob queue model"
+    line_range: [1, 30]
+  - ac_id: "pattern:src/util/log.js:1"
+    kind: pattern
+    path: "src/util/log.js"
+    symbol: "logger"
+    text: "logger utility orphan"
+    line_range: [1, 20]
+  - ac_id: "pattern:src/util/format.js:1"
+    kind: pattern
+    path: "src/util/format.js"
+    symbol: "format"
+    text: "format helpers orphan"
+    line_range: [1, 20]
+  - ac_id: "pattern:src/util/dates.js:1"
+    kind: pattern
+    path: "src/util/dates.js"
+    symbol: "dates"
+    text: "date helpers orphan"
+    line_range: [1, 20]
+  - ac_id: "pattern:src/util/colors.js:1"
+    kind: pattern
+    path: "src/util/colors.js"
+    symbol: "colors"
+    text: "color theme orphan"
+    line_range: [1, 20]

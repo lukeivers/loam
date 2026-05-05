@@ -481,3 +481,143 @@ class ValidationReport(BaseModel):
     drift_halt_triggered: bool = False
     fail_threshold: float = 0.30
     results: list[AltitudeCheckResult] = Field(default_factory=list)
+
+
+# ====================================================================
+# v0.2.3 Cycle 2 — Backing-implementation map (AC.BACKMAP.1)
+# ====================================================================
+#
+# Per sub-plan-doc §3 AC.BACKMAP.1: typed Pydantic models linking each
+# :class:`Objective` to the symbol-altitude evidence rows that back it.
+# Bidirectional structure carrying orphan rows for forward-compat with
+# v0.2.4 gap-analysis + v0.2.5 negative-alignment.
+
+# Composite ``kind:path:line`` regex per sub-plan-doc §7. Tolerates
+# missing line (some adapters emit ``kind:path``); ``line`` may be a
+# range (``42-47``) or a single int (``42``).
+_EVIDENCE_ROW_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[^:]+(?::\d+(?:-\d+)?)?$")
+
+
+class EvidenceRowRef(BaseModel):
+    """Reference to a symbol-altitude evidence row backing an objective.
+
+    Per sub-plan-doc §3 AC.BACKMAP.1: ``evidence_row_id`` mirrors the
+    composite ``kind:path:line`` shape of :class:`bands.BandedAC.ac_id`.
+    Stable across re-extractions; round-trips cleanly via Pydantic.
+
+    ``confidence`` is signal-strength (STRONG/WEAK), structurally
+    orthogonal to the V/P/H objective banding — STRONG means the
+    backing relationship is high-confidence, regardless of the objective's
+    own band.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    evidence_row_id: str = Field(min_length=1)
+    kind: Literal["route", "callback", "model", "test", "pattern", "other"]
+    path: str = Field(min_length=1)
+    line_range: tuple[int, int] | None = None
+    symbol_name: str | None = None
+    language: Literal["jsts", "ruby", "python", "other"] = "other"
+    confidence: Literal["STRONG", "WEAK"] = "WEAK"
+
+    @model_validator(mode="after")
+    def _enforce_id_regex(self) -> "EvidenceRowRef":
+        if not _EVIDENCE_ROW_ID_RE.match(self.evidence_row_id):
+            raise ValueError(
+                f"EvidenceRowRef.evidence_row_id must match "
+                f"{_EVIDENCE_ROW_ID_RE.pattern!r}; got "
+                f"{self.evidence_row_id!r}"
+            )
+        return self
+
+
+class OrphanRow(BaseModel):
+    """An evidence row that did not match any objective.
+
+    Per sub-plan-doc §3 AC.BACKMAP.5: forward-compat carrier for
+    v0.2.4 gap-analysis + v0.2.5 negative-alignment. The ``reason``
+    enum is intentionally open-shaped; new values will be added in
+    forward cycles (e.g. ``negative-alignment-detected``).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    evidence_row_id: str = Field(min_length=1)
+    kind: Literal["route", "callback", "model", "test", "pattern", "other"]
+    path: str = Field(min_length=1)
+    line_range: tuple[int, int] | None = None
+    symbol_name: str | None = None
+    language: Literal["jsts", "ruby", "python", "other"] = "other"
+    reason: Literal[
+        "no-objective-match",
+        "weak-signal-only",
+        "anti-feature-candidate",
+    ]
+
+    @model_validator(mode="after")
+    def _enforce_id_regex(self) -> "OrphanRow":
+        if not _EVIDENCE_ROW_ID_RE.match(self.evidence_row_id):
+            raise ValueError(
+                f"OrphanRow.evidence_row_id must match "
+                f"{_EVIDENCE_ROW_ID_RE.pattern!r}; got "
+                f"{self.evidence_row_id!r}"
+            )
+        return self
+
+
+class BackingMapEntry(BaseModel):
+    """Per-objective backing-row list with a match rationale.
+
+    Per sub-plan-doc §3 AC.BACKMAP.1: one entry per objective.
+    ``evidence_rows`` may be empty for HYPOTHESISED objectives that
+    have no implementation yet (forward-looking outcomes).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    objective_id: str = Field(min_length=1)
+    evidence_rows: list[EvidenceRowRef] = Field(default_factory=list)
+    match_rationale: str = ""
+
+    @model_validator(mode="after")
+    def _enforce_objective_id_regex(self) -> "BackingMapEntry":
+        if not _OBJECTIVE_ID_RE.match(self.objective_id):
+            raise ValueError(
+                f"BackingMapEntry.objective_id must match "
+                f"{_OBJECTIVE_ID_RE.pattern!r}; got "
+                f"{self.objective_id!r}"
+            )
+        return self
+
+
+class BackingMap(BaseModel):
+    """Bidirectional Objective ↔ evidence-row map.
+
+    Per sub-plan-doc §3 AC.BACKMAP.1: top-level structure persisted
+    at ``<workspace>/.loam/extractions/<repo-id>/backing-map.yaml``.
+    ``unmatched_objective_ids`` is the gap signal for v0.2.4: lists
+    non-HYPOTHESISED objectives that have no backing rows.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    extraction_id: str = Field(min_length=1)
+    entries: list[BackingMapEntry] = Field(default_factory=list)
+    orphan_rows: list[OrphanRow] = Field(default_factory=list)
+    created_at: str
+    model_id: str = "(none)"
+    cost_actual_cents: float = 0.0
+    total_evidence_rows: int = 0
+    objective_count: int = 0
+    unmatched_objective_ids: list[str] = Field(default_factory=list)
+
+
+# ====================================================================
+# v0.2.3 Cycle 2 — Objective-altitude ratification action (AC.OBJRAT.1)
+# ====================================================================
+#
+# Frozen-dataclass primitive parallels v0.1.8 ``RatificationAction``;
+# the actual dataclass + factories live in :mod:`ratify` to avoid
+# circular imports. The model_dump-equivalent payload shape is
+# documented here for reference; see :mod:`ratify` for the dataclass.

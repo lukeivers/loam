@@ -126,7 +126,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "<pending>"
+baseline: "31dce27"
 
 plan: docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md
 
@@ -136,7 +136,7 @@ plan: docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md
 plan_doc_ref: docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md
 
 ac_count: 13
-smoke_outcome: "D1 + D2-idempotency + D5 + D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (static artefacts); pre-flight v0.1.7 Cycle 3 layered-skill discovery test passes; full-suite green sweep across loam-skills + workspace-bootstrap; release-level smoke at v0.2.0 SOFT gate per master plan §5"
+smoke_outcome: "D1 + D2-idempotency + D5 + D6 exercised; D3/D4 n/a (static artefacts); 471 tests green across loam-skills + workspace-bootstrap; release-level smoke at v0.2.0 SOFT gate per master plan §5"
 
 components:
   - name: loam-skills

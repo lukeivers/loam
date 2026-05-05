@@ -76,12 +76,28 @@ from .registry import (
     register_adapter,
 )
 from .spec import (
+    AltitudeCheckResult,
     AnalysisPlan,
+    Capability,
+    CapabilityEvidence,
+    Constraint,
+    ConstraintEvidence,
     ContractDraft,
     ExtractionConfig,
+    MultiSourceBundle,
+    Objective,
+    ObjectiveEvidence,
     RawACs,
     Slice,
+    SynthesisResult,
+    ValidationReport,
 )
+from .multi_source import collect_multi_source_inputs
+from .synthesis import (
+    estimate_synthesis_cost_cents,
+    synthesize_objectives,
+)
+from .altitude_validator import validate_altitude
 from .state import (
     ExtractionState,
     compute_repo_id,
@@ -133,11 +149,16 @@ from .lang.ruby import RubyAdapter
 from .lang.jsts import JsTsAdapter
 
 __all__ = [
+    "AltitudeCheckResult",
     "AnalysisPlan",
     "BandedAC",
     "BudgetExceededError",
+    "Capability",
+    "CapabilityEvidence",
     "CompletedAction",
     "ConfidenceBand",
+    "Constraint",
+    "ConstraintEvidence",
     "ContractDraft",
     "ContractNotFoundError",
     "EnqueueResult",
@@ -152,6 +173,9 @@ __all__ = [
     "JsTsAdapter",
     "LOAM_INTERNAL_AC_NAMESPACES",
     "LanguageAdapter",
+    "MultiSourceBundle",
+    "Objective",
+    "ObjectiveEvidence",
     "OddExtractorError",
     "OrphanedAC",
     "OutOfDateAC",
@@ -163,12 +187,15 @@ __all__ = [
     "RubyAdapter",
     "Slice",
     "StageError",
+    "SynthesisResult",
+    "ValidationReport",
     "analyze_repo",
     "apply_ratification_action",
     "budget_from_cents",
     "build_odd_extract_subcommand",
     "classify_evidence",
     "clear_manual_registry",
+    "collect_multi_source_inputs",
     "compute_repo_id",
     "default_budget",
     "demote",
@@ -178,6 +205,7 @@ __all__ = [
     "enqueue_incremental_proposals",
     "enqueue_ratification_batch",
     "estimate_for_extraction",
+    "estimate_synthesis_cost_cents",
     "extraction_dir",
     "generate_proposals",
     "generate_raw_acs",
@@ -193,5 +221,7 @@ __all__ = [
     "run_incremental",
     "save_ratification_state",
     "save_state",
+    "synthesize_objectives",
+    "validate_altitude",
     "verify_contract",
 ]

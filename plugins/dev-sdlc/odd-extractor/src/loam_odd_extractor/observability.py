@@ -66,10 +66,14 @@ def write_audit_entry(
     """Append one audit-log entry; return the entry's path.
 
     ``event_kind`` ∈ {``extraction_start``, ``stage_complete``,
-    ``extraction_end``, ``extraction_failed``, ``budget_override``}.
+    ``extraction_end``, ``extraction_failed``, ``budget_override``,
+    ``synthesis_complete`` (v0.2.3 AC.OBJX.12),
+    ``altitude_check_complete`` (v0.2.3 AC.OBJX.12)}.
 
     ``stage`` is one of ``init`` / ``analyze`` / ``generate`` /
-    ``verify`` for ``stage_complete``; ``None`` otherwise.
+    ``verify`` for ``stage_complete`` and ``synthesis_complete`` /
+    ``altitude_check_complete`` (which both anchor at ``generate``);
+    ``None`` otherwise.
 
     ``timestamp`` is injectable for deterministic tests; defaults to
     ``_now_iso()``.

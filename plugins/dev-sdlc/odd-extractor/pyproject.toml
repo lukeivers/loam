@@ -36,6 +36,15 @@ dependencies = [
 test = [
     "pytest>=8.0",
 ]
+# v0.2.3 Cycle 1 (AC.OBJX.5) — Anthropic SDK for the multi-source
+# objective synthesis layer. Lazy-imported in
+# loam_odd_extractor.synthesis; tests pass stub clients matching the
+# Messages API shape rather than the real SDK. Production callers
+# install with `pip install loam-odd-extractor[synthesis]` per
+# sub-plan-doc §7 method-decision register.
+synthesis = [
+    "anthropic>=0.40",
+]
 
 # AC.OREK.1 / AC.OREK.2 — the unified loam CLI dispatcher's
 # `loam.cli.subcommands` entry-point group resolves `loam odd-extract`

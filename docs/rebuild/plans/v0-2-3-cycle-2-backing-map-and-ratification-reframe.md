@@ -282,7 +282,7 @@ Cycle-2 method decisions at §7. Master-plan method decisions at master plan §9
 
 ### Commit SHAs
 
-- Amendment commit: `<TBD-pending-build>` —
-  `chore(amend): v0-2-3-cycle-2-backing-map-and-ratification-reframe manifest+apply — dev-sdlc BASELINE+sidecar bump to <baseline-sha>`
-- Seal commit: `<TBD-pending-build>` —
-  `chore(seals): v0-2-3-cycle-2-backing-map-and-ratification-reframe — dev-sdlc at <amend-sha>`
+- Amendment commit: `716da0af8444a149568ea3ea90e00f005d2aa907` —
+  `chore(amend): v0-2-3-cycle-2-backing-map-and-ratification-reframe manifest+apply — dev-sdlc BASELINE+sidecar bump to 27111ed`
+- Seal commit: `857749c4b9a803a49f254f2ed2d6e59c77eee7cf` —
+  `chore(seals): v0-2-3-cycle-2-backing-map-and-ratification-reframe — dev-sdlc at 716da0a`

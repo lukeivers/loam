@@ -128,6 +128,52 @@ whether any background work has finished, whether there is anything
 waiting for you to rule on. You did not have to ask for any of that;
 the harness surfaced it because that is what the persona does.
 
+### 4½. Onboarding ritual (the first 5–10 minutes)
+
+`loam init` ends by handing you to the onboarding ritual. Six
+questions, one at a time, no question-bombing. The ritual auto-
+detects your project language (Rails, Ruby, JS/TS, mixed, unknown)
+and asks:
+
+1. **Language confirmation.** "I detected this is Rails. Continue?"
+   On a mixed Ruby+JS/TS tree, you pick the primary; on an unknown
+   tree, you type the language free-form.
+2. **Channel preference.** Telegram, CLI-only, or skip-for-now.
+   Picking Telegram triggers the existing setup-walkthrough — five
+   minutes of step-by-step instructions to install the plugin and
+   pair your bot.
+3. **Safety profile.** `production-stake` / `dev` / `research`.
+   Rails apps default-highlight production-stake (SOC-2 audit-trail
+   floor; non-tunable safety floors per v0.1.6).
+4. **Extractor opt-in.** Y / Defer / Never. On Y, the ODD extractor
+   fires against your codebase and produces a banded contract draft
+   under `<workspace>/.loam/extractions/`.
+5. **Continuous-watch opt-in.** Y / Defer (default) / N. Defer is
+   recommended for fresh-user low-context — you can enable later
+   with `loam odd-extract <repo> --incremental` once you understand
+   the watch surface.
+6. **Auto-skill-capture opt-in.** Y / N (default). When the persona
+   notices a recurring pattern, it can draft a workspace-local
+   SKILL.md you ratify. Off by default. Forced off in production-
+   stake mode (SOC-2 floor).
+
+The ritual writes your answers to `bootstrap.yaml` and emits a
+SOC-2-compliant audit-log at `<workspace>/.loam/audit-log/onboarding-
+<YYYY-MM-DD>.yaml`. A completion summary lands at
+`<workspace>/.loam/onboarding-summary.md` with the active
+capabilities and your single-next-action.
+
+To skip the ritual entirely (CI-friendly), set
+`LOAM_ONBOARDING_SKIP=1` in your environment. To pre-fill defaults
+from a survey file you previously filled out asynchronously, drop the
+file at `~/loam-onboarding-survey.md` (or set
+`LOAM_ONBOARDING_SURVEY=<absolute-path>`) — the ritual reads the
+H2-section answers, pre-fills the questions, and you confirm-or-
+adjust each one-at-a-time.
+
+To re-run the ritual (e.g., after changing your safety profile
+preferences), run `loam onboard` from inside the workspace.
+
 ### 5. Try a first turn
 
 You are now in a normal Claude Code session, but with the primary-

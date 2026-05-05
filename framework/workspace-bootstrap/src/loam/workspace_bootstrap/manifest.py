@@ -123,6 +123,26 @@ DEFAULT_SAFETY_PROFILE: str = "dev"
 DEFAULT_ENABLE_AUTO_SKILL_CAPTURE: bool = False
 
 
+# v0.2.1 Cycle 1 AC.ONBOARD.* — onboarding ritual fields written to
+# bootstrap.yaml as the user walks through the six install-time
+# questions. All five fields are optional — fresh workspaces with no
+# onboarding history default to None; the onboarding ritual writes
+# them as the user answers. Fail-closed validation mirrors the
+# safety_profile + enable_auto_skill_capture shape.
+LEGAL_CHANNEL_PREFERENCES: frozenset[str] = frozenset(
+    {"telegram", "cli", "deferred"}
+)
+LEGAL_EXTRACTOR_OPT_INS: frozenset[str] = frozenset(
+    {"yes", "deferred", "never"}
+)
+LEGAL_WATCH_OPT_INS: frozenset[str] = frozenset(
+    {"yes", "deferred", "no"}
+)
+LEGAL_LANGUAGE_PRIMARIES: frozenset[str] = frozenset(
+    {"rails", "ruby", "ts", "js", "mixed", "unknown", "other"}
+)
+
+
 @dataclass(frozen=True)
 class Manifest:
     version: int
@@ -147,6 +167,25 @@ class Manifest:
     # research §3.6 Decision E (auto-creation universal across
     # users; opt-in flag fences the timing).
     enable_auto_skill_capture: bool = DEFAULT_ENABLE_AUTO_SKILL_CAPTURE
+    # v0.2.1 Cycle 1 AC.ONBOARD.4 — channel preference recorded by
+    # the onboarding ritual. None when the ritual has not yet run
+    # (fresh workspace pre-onboarding); one of LEGAL_CHANNEL_PREFERENCES
+    # otherwise. Per AC.ONBOARD.4 + plan-doc §3.
+    channel_preference: str | None = None
+    # v0.2.1 Cycle 1 AC.ONBOARD.6 — extractor opt-in recorded by the
+    # ritual. None pre-onboarding; one of LEGAL_EXTRACTOR_OPT_INS post.
+    extractor_opt_in: str | None = None
+    # v0.2.1 Cycle 1 AC.ONBOARD.7 — continuous-watch opt-in.
+    watch_opt_in: str | None = None
+    # v0.2.1 Cycle 1 AC.ONBOARD.2 — primary-language detection result
+    # (the user's answer to Q1). None pre-onboarding; one of
+    # LEGAL_LANGUAGE_PRIMARIES otherwise.
+    language_primary: str | None = None
+    # v0.2.1 Cycle 1 AC.ONBOARD.9 — ISO 8601 UTC timestamp of ritual
+    # completion. None pre-onboarding; populated when the ritual
+    # writes the completion summary. Used by D2 idempotent-rerun
+    # detection (already-onboarded → offer per-question re-ask).
+    onboarding_completed_at: str | None = None
 
 
 def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
@@ -245,6 +284,52 @@ def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
             },
         )
 
+    # v0.2.1 Cycle 1 AC.ONBOARD.4 / .6 / .7 / .2 / .9 — onboarding
+    # field validation. Each field is optional (fresh workspaces with
+    # no onboarding history default to None); when present, the value
+    # must be a string in the corresponding LEGAL_* frozenset (fail-
+    # closed mirrors safety_profile shape). onboarding_completed_at
+    # accepts any string (ISO 8601 timestamp; not a closed-set field).
+    channel_preference = _validate_optional_enum_str(
+        raw.get("channel_preference"),
+        field_name="channel_preference",
+        legal_values=LEGAL_CHANNEL_PREFERENCES,
+        manifest_path=p,
+    )
+    extractor_opt_in = _validate_optional_enum_str(
+        raw.get("extractor_opt_in"),
+        field_name="extractor_opt_in",
+        legal_values=LEGAL_EXTRACTOR_OPT_INS,
+        manifest_path=p,
+    )
+    watch_opt_in = _validate_optional_enum_str(
+        raw.get("watch_opt_in"),
+        field_name="watch_opt_in",
+        legal_values=LEGAL_WATCH_OPT_INS,
+        manifest_path=p,
+    )
+    language_primary = _validate_optional_enum_str(
+        raw.get("language_primary"),
+        field_name="language_primary",
+        legal_values=LEGAL_LANGUAGE_PRIMARIES,
+        manifest_path=p,
+    )
+    onboarding_completed_at_raw = raw.get("onboarding_completed_at")
+    if onboarding_completed_at_raw is None:
+        onboarding_completed_at = None
+    elif isinstance(onboarding_completed_at_raw, str):
+        onboarding_completed_at = onboarding_completed_at_raw
+    else:
+        raise MissingConfigError(
+            f"bootstrap manifest at {p} declares "
+            f"onboarding_completed_at={onboarding_completed_at_raw!r}; "
+            f"must be a string (ISO 8601 timestamp) or absent.",
+            data={
+                "path": str(p),
+                "onboarding_completed_at": onboarding_completed_at_raw,
+            },
+        )
+
     return Manifest(
         version=version,
         config_dir=config_dir,
@@ -253,7 +338,127 @@ def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
         refs=tuple(refs),
         safety_profile=safety_profile,
         enable_auto_skill_capture=enable_auto_skill_capture,
+        channel_preference=channel_preference,
+        extractor_opt_in=extractor_opt_in,
+        watch_opt_in=watch_opt_in,
+        language_primary=language_primary,
+        onboarding_completed_at=onboarding_completed_at,
     )
+
+
+def _validate_optional_enum_str(
+    raw_value: Any,
+    *,
+    field_name: str,
+    legal_values: frozenset[str],
+    manifest_path: Path,
+) -> str | None:
+    """Validate an optional enum-shaped string field.
+
+    Per AC.ONBOARD.4 / .6 / .7 / .2: the field is absent on fresh
+    workspaces (returns None); present-and-in-legal-set returns the
+    value; otherwise fails-closed with MissingConfigError matching
+    the safety_profile shape.
+    """
+    if raw_value is None:
+        return None
+    if isinstance(raw_value, str) and raw_value in legal_values:
+        return raw_value
+    raise MissingConfigError(
+        f"bootstrap manifest at {manifest_path} declares "
+        f"{field_name}={raw_value!r}; legal values are "
+        f"{sorted(legal_values)} or absent.",
+        data={"path": str(manifest_path), field_name: raw_value},
+    )
+
+
+def write_onboarding_fields(
+    manifest_path: Union[str, Path],
+    *,
+    safety_profile: str | None = None,
+    enable_auto_skill_capture: bool | None = None,
+    channel_preference: str | None = None,
+    extractor_opt_in: str | None = None,
+    watch_opt_in: str | None = None,
+    language_primary: str | None = None,
+    onboarding_completed_at: str | None = None,
+) -> None:
+    """Update onboarding fields on `bootstrap.yaml` in place (atomic).
+
+    Per AC.ONBOARD.4 / .5 / .6 / .7 / .8 / .9: the onboarding ritual
+    writes user-supplied values to bootstrap.yaml as the user answers
+    each question. Only non-None arguments are written; None arguments
+    leave the existing value intact (idempotent partial updates).
+
+    Atomic via tmp+rename. Preserves `version` + `contributions` + any
+    other unrelated keys on disk verbatim.
+    """
+    p = Path(manifest_path).expanduser()
+    if not p.exists():
+        raise MissingConfigError(
+            f"bootstrap manifest not found at {p}; cannot write "
+            f"onboarding fields without an existing manifest.",
+            data={"path": str(p)},
+        )
+    raw = yaml.safe_load(p.read_text())
+    if not isinstance(raw, dict):
+        raise MissingConfigError(
+            f"bootstrap manifest at {p} must be a YAML mapping; got "
+            f"{type(raw).__name__}",
+            data={"path": str(p)},
+        )
+
+    updates: dict[str, Any] = {}
+    if safety_profile is not None:
+        if safety_profile not in LEGAL_SAFETY_PROFILES:
+            raise ValueError(
+                f"safety_profile={safety_profile!r} not in "
+                f"{sorted(LEGAL_SAFETY_PROFILES)}"
+            )
+        updates["safety_profile"] = safety_profile
+    if enable_auto_skill_capture is not None:
+        if not isinstance(enable_auto_skill_capture, bool):
+            raise ValueError("enable_auto_skill_capture must be bool")
+        updates["enable_auto_skill_capture"] = enable_auto_skill_capture
+    if channel_preference is not None:
+        if channel_preference not in LEGAL_CHANNEL_PREFERENCES:
+            raise ValueError(
+                f"channel_preference={channel_preference!r} not in "
+                f"{sorted(LEGAL_CHANNEL_PREFERENCES)}"
+            )
+        updates["channel_preference"] = channel_preference
+    if extractor_opt_in is not None:
+        if extractor_opt_in not in LEGAL_EXTRACTOR_OPT_INS:
+            raise ValueError(
+                f"extractor_opt_in={extractor_opt_in!r} not in "
+                f"{sorted(LEGAL_EXTRACTOR_OPT_INS)}"
+            )
+        updates["extractor_opt_in"] = extractor_opt_in
+    if watch_opt_in is not None:
+        if watch_opt_in not in LEGAL_WATCH_OPT_INS:
+            raise ValueError(
+                f"watch_opt_in={watch_opt_in!r} not in "
+                f"{sorted(LEGAL_WATCH_OPT_INS)}"
+            )
+        updates["watch_opt_in"] = watch_opt_in
+    if language_primary is not None:
+        if language_primary not in LEGAL_LANGUAGE_PRIMARIES:
+            raise ValueError(
+                f"language_primary={language_primary!r} not in "
+                f"{sorted(LEGAL_LANGUAGE_PRIMARIES)}"
+            )
+        updates["language_primary"] = language_primary
+    if onboarding_completed_at is not None:
+        if not isinstance(onboarding_completed_at, str):
+            raise ValueError("onboarding_completed_at must be a string")
+        updates["onboarding_completed_at"] = onboarding_completed_at
+
+    raw.update(updates)
+
+    # Atomic tmp+rename write — mirrors the per-project-pm pattern.
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    tmp.write_text(yaml.safe_dump(raw, sort_keys=False))
+    tmp.replace(p)
 
 
 def _resolve_path(value: Any, *, default: Path) -> Path:

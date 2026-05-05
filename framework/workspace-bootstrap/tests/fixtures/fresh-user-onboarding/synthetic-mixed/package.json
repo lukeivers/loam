@@ -1,0 +1,7 @@
+{
+  "name": "fixture-mixed-app",
+  "version": "0.0.0-fixture",
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

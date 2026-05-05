@@ -152,6 +152,39 @@ def _cmd_init(args: argparse.Namespace) -> int:
         "  .claude/    ← scaffolded (Claude Code expects this here)",
         file=sys.stderr,
     )
+
+    # v0.2.1 Cycle 1 AC.ONBOARD.1 — additive post-bootstrap callout.
+    # Lazy-import for cross-component isolation (mirrors lines 69-86
+    # above). TTY + LOAM_ONBOARDING_SKIP gates per plan-doc §3.
+    # Failure of the onboarding ritual MUST NOT fail `loam init`
+    # (the bootstrap succeeded; onboarding is value-add but optional).
+    import os as _os
+    if (
+        _os.environ.get("LOAM_ONBOARDING_SKIP") != "1"
+        and sys.stdin.isatty()
+    ):
+        try:
+            from loam.workspace_bootstrap.onboarding import (
+                run_onboarding,
+            )
+            from loam.workspace_bootstrap.onboarding_cli import (
+                _stdin_answerer,
+            )
+            print(
+                "[loam init] starting onboarding ritual "
+                "(set LOAM_ONBOARDING_SKIP=1 to disable)",
+                file=sys.stderr,
+            )
+            run_onboarding(
+                Path(result.new_ws_path).resolve(),
+                answerer=_stdin_answerer,
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(
+                f"[loam init] onboarding ritual failed but bootstrap "
+                f"succeeded: {exc}. Run `loam onboard` later.",
+                file=sys.stderr,
+            )
     return 0
 
 

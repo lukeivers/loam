@@ -64,7 +64,18 @@ from .errors import (
 )
 from .host import BootstrapHost, HostAttributeNotYetAvailable
 from .main import Bootstrapper, ResolvedContribution, cli_main
-from .manifest import ContributionRef, Manifest, load_manifest
+from .manifest import (
+    ContributionRef,
+    Manifest,
+    load_manifest,
+    write_onboarding_fields,
+)
+from .onboarding import (
+    OnboardingResult,
+    QUESTION_SLUGS,
+    SKIP_ENV_VAR,
+    run_onboarding,
+)
 from .ordering import topological_order
 from .spec import (
     PHASE_ORDER,
@@ -96,14 +107,19 @@ __all__ = [
     "MetadataInvalidError",
     "MissingConfigError",
     "NameCollisionError",
+    "OnboardingResult",
     "OrderingCycleError",
     "PHASE_ORDER",
     "Phase",
+    "QUESTION_SLUGS",
     "ResolvedContribution",
+    "SKIP_ENV_VAR",
     "UnknownReferenceError",
     "cli_main",
     "load_manifest",
     "read_metadata",
     "resolve_ref",
+    "run_onboarding",
     "topological_order",
+    "write_onboarding_fields",
 ]

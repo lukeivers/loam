@@ -60,6 +60,13 @@ pos-bootstrap = "loam.workspace_bootstrap.main:cli_main"
 # is tight (one component owns the scaffold + the bootstrap CLI).
 pos-new-workspace = "loam.workspace_bootstrap.new_workspace:cli_main"
 
+# v0.2.1 Cycle 1 AC.ONBOARD.1 — `loam onboard` registers as a
+# subcommand of the unified loam CLI via the `loam.cli.subcommands`
+# entry-point group (mirrors loam-init's wiring at
+# framework/loam-init/pyproject.toml).
+[project.entry-points."loam.cli.subcommands"]
+onboard = "loam.workspace_bootstrap.onboarding_cli:build_onboard_subcommand"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["loam*"]

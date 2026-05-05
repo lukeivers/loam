@@ -207,7 +207,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "<pending>"
+baseline: "0bf33f1"
 
 plan: docs/rebuild/plans/v0-2-1-cycle-1-eric-onboarding-hardening.md
 
@@ -217,7 +217,7 @@ plan: docs/rebuild/plans/v0-2-1-cycle-1-eric-onboarding-hardening.md
 plan_doc_ref: docs/rebuild/plans/v0-2-1-cycle-1-eric-onboarding-hardening.md
 
 ac_count: 15
-smoke_outcome: "D1 + D2 + D3 + D5 + D6 exercised; D4 n/a per smoke-test-discipline §6 (one-shot CLI); 4 synthetic-tree fixtures + 3 survey-file fixtures cover language-detection + survey-parse paths; full-suite green sweep"
+smoke_outcome: "D1+D2+D3+D5+D6 exercised; D4 n/a (one-shot CLI); 4 synthetic-tree + 3 survey-file fixtures; full-suite green sweep (401 passed, 11 pre-existing skips)"
 
 components:
   - name: workspace-bootstrap

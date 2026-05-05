@@ -87,10 +87,15 @@ This corrective amendment is single-agent: plan-author + builder are the same So
 
 ---
 
-## §14 — Commit SHAs (post-seal backfill)
+## 14. Method-decision record (per AC.D-sa.7 lint requirement)
 
-To be filled by `loam amend seal --plan-doc` invocation per AC.D-sa.7.
+Corrective amendment scope is tight (single producer-side YAML field write). Method decisions at §1 (producer-side single-source-of-truth fix; gate-side reader unchanged) + §2 (5 ACs locked under `AC.OE.CONTRACT-FULL.*`) + §4 (halt triggers + bookkeeping). Predecessor master plan: `docs/rebuild/plans/v0-2-1-master-plan.md` §3 Cycle 3 + Decision R.
 
 ### Commit SHAs
 
-(pending)
+- Plan-doc commit: `eda155c` — `docs(plans): v0-2-1-corrective-f1-odd-extractor-contract-draft-fields plan-doc + manifest`
+- Source-edit feat commit (BASELINE): `330e66e` — `fix(odd-extractor): write acs + unhandled_paths into contract-draft.yaml (v0.2.1 corrective F1)`
+- Manifest baseline-pin commit: `2e74bbd` — `docs(plans): pin v0-2-1-corrective-f1 manifest baseline to 330e66e`
+- Amendment apply commit: `0904064` — `chore(amend): v0-2-1-corrective-f1-odd-extractor-contract-draft-fields manifest+apply`
+- Seal commit: `ad42314` — `chore(seals): v0-2-1-corrective-f1-odd-extractor-contract-draft-fields — dev-sdlc at 0904064`
+- §14 backfill commit: this commit (post-seal follow-up per AC.D-sa.7)

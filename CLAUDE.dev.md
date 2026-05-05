@@ -16,6 +16,12 @@ The partition that drives the user-vs-dev split is declared in
 Before acting on any non-trivial pos-v2 work — planning, proposing,
 editing code, dispatching agents, ruling on designs — read:
 
+- `docs/odd-llm-grounding.lean.md` (load FIRST for any ODD-shaped task —
+  extraction, ratification, plan-authoring, AC-tightening, gap-analysis;
+  hold §altitudes + §drift-modes + §self-checks in working memory; run
+  §self-checks on every output declared "objective," "AC," "constraint,"
+  or "capability"). Verbose derivation at
+  `docs/odd-llm-grounding-derivation.md` is read on-demand for depth.
 - `plugins/dev-sdlc/docs/odd-methodology.md` (normative; this governs)
 - `plugins/dev-sdlc/docs/odd-in-loam.md` (worked examples)
 - `docs/rebuild/VALUE_PROPOSITION.md`

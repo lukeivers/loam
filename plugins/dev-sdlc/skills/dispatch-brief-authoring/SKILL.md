@@ -31,6 +31,54 @@ The dispatch-brief structural shape, in canonical order:
    CODE / POS-AMEND BOOKKEEPING / SCOPE-ONLY / etc.). Each name
    gets a one-line how-applied. The agent walks this list at
    turn-start (per `front-load-principle-walk` skill).
+
+   **Propagated principles for sub-agents (v0.2.2; AC.DBT.1–6).**
+   In addition to the per-cycle principles named above, every
+   dispatch brief authored by this skill carries the following
+   propagated set so sub-agents inherit them at turn-start:
+
+   - **LEAN-GROUNDING-LOAD** (AC.DBT.2): when the work is
+     ODD-shaped (extraction, ratification, plan-authoring,
+     AC-tightening, gap-analysis), load
+     `docs/odd-llm-grounding.lean.md` FIRST and run §self-checks
+     on every output declared "objective," "AC," "constraint," or
+     "capability." Non-ODD work omits the load directive. The
+     dispatcher decides per-cycle whether the work is ODD-shaped.
+   - **NO-CLOSING-LINE-PERMISSION-ASKS** (AC.DBT.3): sub-agent
+     post-task reports must not close with "want me to..." on
+     in-scope authorized work. Recommendation IS the decision per
+     `feedback_no_closing_line_permission_asks`. Universal —
+     applies regardless of task shape.
+   - **SPECIFIC-CLAIMS-VERIFIED** (AC.DBT.4): every fact in the
+     post-task report (line counts, cost estimates, SHAs,
+     durations, tool-call counts) is empirically verified OR
+     explicitly marked as guess/estimate/band per
+     `feedback_specific_claims_verified_or_marked_guess`.
+     Universal — applies to every post-task report.
+   - **TEST-AGAINST-OPERATIONAL-OBJECTIVE-BEFORE-ESCALATING**
+     (AC.DBT.5): sub-agent runs the operational-objective test
+     before treating any decision as dispatcher-escalation. State
+     the operational objective; test if it implies a clear
+     answer; if yes, decide autonomously; only escalate on
+     critical-call / public-action / financial decisions per
+     `feedback_test_against_operational_objective_before_escalating`.
+     Universal.
+   - **NO-FALSE-FAULT** (AC.DBT.6): sub-agent does not manufacture
+     audit ✗ when no real miss occurred. Apply the four-test
+     before writing ✗: (1) was upstream input clear? (2)
+     over-anticipation? (3) ignored prior signals? (4)
+     third-party-reviewer attribution? All no → ship forward
+     without retroactive blame per
+     `feedback_no_false_fault_admission`. Universal.
+
+   **AUDIT-BLOCK discipline** (AC.DBT.7; discipline-note prose
+   only — not a separate test-AC). Apply minimal audit per
+   `feedback_principle_application_front_load_and_audit` —
+   surface ✓ on clean turns; surface ✗ + course-correction only
+   on real misses. The negative case is pinned by AC.DBT.6
+   (no manufactured ✗); the positive case (when to surface ✓)
+   is behavioral and lives as prose here rather than as a
+   structural AC.
 4. **QUALITY BAR** — a quoted line from the dispatcher
    (typically Luke's voice) naming the acceptance intensity
    for this cycle, plus 2–4 enforcement bullets. Example:
@@ -189,6 +237,23 @@ When raw Claude Code without loam:
 - **`feedback_subagent_odd_violation_halt`** — the brief
   carries the "halt and surface ODD violations in your work
   OR surrounding code" line. Standard.
+- **`docs/odd-llm-grounding.lean.md`** (AC.DBT.2) — the lean
+  ODD grounding prime; loaded FIRST on ODD-shaped sub-agent
+  work. Verbose derivation at
+  `docs/odd-llm-grounding-derivation.md`.
+- **`feedback_no_closing_line_permission_asks`** (AC.DBT.3) —
+  recommendation IS the decision; no "want me to..." closes
+  on authorized in-scope work.
+- **`feedback_specific_claims_verified_or_marked_guess`**
+  (AC.DBT.4) — every fact in the post-task report verified or
+  marked guess.
+- **`feedback_test_against_operational_objective_before_escalating`**
+  (AC.DBT.5) — operational-objective test before any
+  dispatcher-escalation.
+- **`feedback_no_false_fault_admission`** (AC.DBT.6) — no
+  manufactured audit ✗; four-test before writing ✗.
+- **`feedback_principle_application_front_load_and_audit`**
+  (AC.DBT.7 prose) — minimal audit at end of every reply.
 
 ## Out of scope
 

@@ -135,6 +135,11 @@ dev_only:
   # MOVED into the Dev/SDLC plugin tree.
   - path: plugins/dev-sdlc/docs/odd-methodology.md
   - path: plugins/dev-sdlc/docs/odd-in-loam.md
+  # v0.2.2 (AC.OGP.1) — lean ODD grounding prime. Loads FIRST in
+  # DEV-MODE corpus-required set; held in working memory for ODD-
+  # shaped tasks; verbose derivation in odd-llm-grounding-derivation.md
+  # is read on-demand for depth.
+  - path: docs/odd-llm-grounding.lean.md
   # Dev/SDLC tracker docs.
   - path: docs/rebuild/STATE.md
   - path: docs/rebuild/BACKLOG.md

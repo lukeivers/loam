@@ -141,6 +141,14 @@ _ALWAYS_LOAD: tuple[str, ...] = (
     "CLAUDE.md",
     "docs/rebuild/VALUE_PROPOSITION.md",
     "docs/rebuild/STATE.md",
+    # v0.2.2 (AC.OGP.2) — lean ODD grounding prime auto-loads on every
+    # DEV-MODE session-start so the failure mode the v0.1.8 extractor
+    # shipped (implementation-altitude facts labeled as ACs) is
+    # prevented structurally rather than by discipline. ~3 KB; fits
+    # comfortably under the 50_000-char per-file ceiling. Verbose
+    # derivation at docs/odd-llm-grounding-derivation.md remains
+    # on-demand.
+    "docs/odd-llm-grounding.lean.md",
 )
 
 _ON_DEMAND: tuple[str, ...] = (

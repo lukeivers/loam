@@ -1,0 +1,11 @@
+# v0.2.4 Cycle 2 — Gap analysis (two-category GapInventory over augmented objectives + backing-map + adapter evidence-rows); Gap + GapInventory Pydantic shapes (two-category Literal, STRONG/WEAK confidence orthogonal to objective banding) + analyze_gaps() pure function over (augmented_objectives, backing_map, evidence_rows) with same-file orphan-cluster collapse + confidence rule (STRONG = V/P + empty-backing OR non-test orphan; WEAK = HYPOTHESISED OR test/config-only orphan) + persistence at <workspace>/.loam/extractions/<repo-id>/gap-inventory.yaml + 3 additive audit-log event_kinds (gap_analysis_start / gap_inventory_persisted / gap_analysis_end) + CLI `loam odd-extract gaps <workspace>` + forward-compat Gap.negative_alignment_evidence field (null at v0.2.4 for v0.2.6+ negative-alignment) + component tests on 4 synthetic fixtures (clean / category-a-only / category-b-only / mixed); single-component fence on plugins/dev-sdlc/odd-extractor/
+
+slug: v0-2-4-cycle-2-gap-analysis
+components: dev-sdlc
+baseline: df6727684832f624841cc7f017aefccd2de0751f
+amendment-commit: 5636fc3d465f7956c37782b444ae5c4be12fb992
+plan-doc: docs/rebuild/plans/v0-2-4-cycle-2-gap-analysis.md
+acs-satisfied: 9
+smoke: D1+D5+D6 exercised; D2+D3 inherited (pure-function idempotence + no in-flight state); D4 n/a; 4 gap-analysis fixtures (clean + category-a-only + category-b-only + mixed); full-suite green sweep
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

@@ -1,10 +1,12 @@
-"""AC.SKILLS-DSDLC2.7 — all 12 dev-sdlc SKILLs auto-discoverable.
+"""AC.SKILLS-DSDLC2.7 — all dev-sdlc SKILLs auto-discoverable.
 
-Per v0.1.9 Cycle 3 plan-doc §4 AC.SKILLS-DSDLC2.7: walking
-`plugins/dev-sdlc/skills/` yields exactly the 12 expected SKILL
+Per v0.1.9 Cycle 3 plan-doc §4 AC.SKILLS-DSDLC2.7 (extended by
+v0.2.1 Cycle 2 to admit `skill-promotion-review`): walking
+`plugins/dev-sdlc/skills/` yields exactly the 13 expected SKILL
 packages (each containing a valid SKILL.md) — 6 from v0.1.8
-Cycle 5 first pass + 6 from v0.1.9 Cycle 3 second pass — in
-addition to the flat-file `start-project.md` shipped with v0.1.0.
+Cycle 5 first pass + 6 from v0.1.9 Cycle 3 second pass + 1 from
+v0.2.1 Cycle 2 — in addition to the flat-file `start-project.md`
+shipped with v0.1.0.
 
 The Anthropic SKILL.md auto-discovery primitive walks
 `<plugin>/skills/<name>/SKILL.md` files; v0.1.7 Cycle 3
@@ -33,7 +35,7 @@ import yaml
 SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
 
 # 6 from v0.1.8 Cycle 5 (first pass) + 6 from v0.1.9 Cycle 3
-# (second pass) = 12 total dev-sdlc SKILLs.
+# (second pass) + 1 from v0.2.1 Cycle 2 = 13 total dev-sdlc SKILLs.
 EXPECTED_SKILLS = [
     # First pass (v0.1.8 Cycle 5, sealed e4512b9):
     "loam-amend-cycle",
@@ -49,6 +51,8 @@ EXPECTED_SKILLS = [
     "component-scaffold-author",
     "graceful-fallthrough-with-detection",
     "loam-amend-status-quick",
+    # Third pass (v0.2.1 Cycle 2):
+    "skill-promotion-review",
 ]
 
 DESCRIPTION_MAX_CHARS = 1536
@@ -111,9 +115,10 @@ def test_each_expected_skill_has_valid_frontmatter(
 
 def test_all_twelve_dev_sdlc_skills_discovered() -> None:
     """AC.SKILLS-DSDLC2.7 cross-check — walking the skills/
-    directory yields the 12 expected dev-sdlc SKILL packages.
+    directory yields the expected dev-sdlc SKILL packages.
     Asserts no orphans (no extra subdirectories with SKILL.md)
-    and no misnames."""
+    and no misnames. Extended by v0.2.1 Cycle 2 to include
+    `skill-promotion-review` (13th SKILL)."""
     discovered = sorted(
         p.name for p in SKILLS_DIR.iterdir()
         if p.is_dir() and (p / "SKILL.md").is_file()
@@ -121,12 +126,12 @@ def test_all_twelve_dev_sdlc_skills_discovered() -> None:
     assert discovered == sorted(EXPECTED_SKILLS), (
         f"discovered dev-sdlc SKILLs {discovered} != expected "
         f"{sorted(EXPECTED_SKILLS)}; AC.SKILLS-DSDLC2.7 requires "
-        "exactly the 12 named packages."
+        "exactly the named packages."
     )
 
 
-def test_skills_count_twelve() -> None:
-    """v0.1.9 Cycle 3 — the dev-sdlc SKILL bundle is 12 SKILLs
-    total (6 first pass from v0.1.8 Cycle 5 + 6 second pass
-    from v0.1.9 Cycle 3)."""
-    assert len(EXPECTED_SKILLS) == 12
+def test_skills_count_thirteen() -> None:
+    """v0.1.9 Cycle 3 set the bundle at 12 (6 first pass from
+    v0.1.8 Cycle 5 + 6 second pass from v0.1.9 Cycle 3); v0.2.1
+    Cycle 2 added `skill-promotion-review` as the 13th."""
+    assert len(EXPECTED_SKILLS) == 13

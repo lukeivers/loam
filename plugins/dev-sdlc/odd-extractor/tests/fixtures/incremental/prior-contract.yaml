@@ -1,0 +1,55 @@
+schema_version: 1
+extraction_id: "synthetic-incremental-prior-v0-2-0-c1"
+repo_path: "/synthetic/incremental-fixture-repo"
+ac_count: 4
+unhandled_count: 0
+dry_run: true
+created_at: "2026-04-01T00:00:00+00:00"
+acs:
+  - ac_id: "AC.PAYMENT.1"
+    text: "Payment charge endpoint validates amount > 0 before submission."
+    confidence: PLAUSIBLE
+    evidence:
+      kind: source
+      citations:
+        - "app/payment/charge.rb:12-30"
+      repo_sha: null
+      rationale: null
+    backing_files:
+      - "app/payment/charge.rb"
+  - ac_id: "AC.PAYMENT.2"
+    text: "Payment refund flow is idempotent across duplicate webhook deliveries."
+    confidence: VERIFIED
+    evidence:
+      kind: test
+      citations:
+        - "tests/test_charge.rb::test_charge_idempotency"
+        - "app/payment/charge.rb:55-72"
+      repo_sha: "abc1234567890def"
+      rationale: null
+    backing_files:
+      - "app/payment/charge.rb"
+      - "tests/test_charge.rb"
+  - ac_id: "AC.AUTH.1"
+    text: "Login endpoint hashes password before comparing."
+    confidence: PLAUSIBLE
+    evidence:
+      kind: source
+      citations:
+        - "app/auth/login.rb:5-25"
+      repo_sha: null
+      rationale: null
+    backing_files:
+      - "app/auth/login.rb"
+  - ac_id: "AC.LEGACY.1"
+    text: "Legacy migration helper runs once on first boot."
+    confidence: HYPOTHESISED
+    evidence:
+      kind: inference
+      citations: []
+      repo_sha: null
+      rationale: |
+        The codebase has a comment in app/legacy/old_module.rb suggesting
+        a one-time migration was added years ago. No tests reference it.
+    backing_files:
+      - "app/legacy/old_module.rb"

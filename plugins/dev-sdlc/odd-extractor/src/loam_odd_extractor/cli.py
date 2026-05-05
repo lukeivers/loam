@@ -327,14 +327,19 @@ def _add_workspace_root_arg(parser: argparse.ArgumentParser) -> None:
 def _cmd_dispatch(args: argparse.Namespace) -> int:
     """Dispatch handler for ``loam odd-extract``.
 
-    Routes between extract / status / resume / ratify based on the
-    ``--status`` / ``--resume`` / ``--ratify`` flags. Default action
-    is extract.
+    Routes between extract / status / resume / ratify / incremental
+    based on the ``--status`` / ``--resume`` / ``--ratify`` /
+    ``--incremental`` flags. Default action is extract.
 
     The ratify-flag form (``loam odd-extract <draft-md-path> --ratify``)
     treats the positional ``repo_path`` as a contract-draft markdown
     path; the ``ratify`` sub-verb in :func:`build_odd_extract_subcommand`
     is the canonical entry. Per AC.BANDS.4 + plan-doc §5 Surface #3.
+
+    The incremental-flag form (``loam odd-extract <repo> --incremental``)
+    is v0.2.0 Cycle 1 AC.WATCH.1 — reads the prior contract sidecar,
+    classifies evidence, generates proposals, enqueues domain-batched
+    PM questions.
     """
     if getattr(args, "status", False):
         return _cmd_status(args)
@@ -342,7 +347,98 @@ def _cmd_dispatch(args: argparse.Namespace) -> int:
         return _cmd_resume(args)
     if getattr(args, "ratify", False):
         return _cmd_ratify(args)
+    if getattr(args, "incremental", False):
+        return _cmd_incremental(args)
     return _cmd_extract(args)
+
+
+def _cmd_incremental(args: argparse.Namespace) -> int:
+    """Handle ``loam odd-extract <repo> --incremental``.
+
+    Per AC.WATCH.1 (v0.2.0 Cycle 1) — invokes
+    :func:`loam_odd_extractor.incremental.run_incremental` against
+    the resolved (repo_path, workspace_root) pair; optionally
+    composes through :class:`loam.per_project_pm.PMRuntime` if
+    ``--pm-name`` is supplied.
+
+    Exit codes:
+
+    - ``0`` — success (proposals enqueued OR no drift detected).
+    - ``2`` — :class:`OddExtractorError` (incl. ContractNotFoundError,
+      IncrementalRefusedError).
+    - ``3`` — :class:`BudgetExceededError` (existing budget envelope
+      inherited; not currently exercised by Cycle 1's path).
+    """
+    try:
+        repo_path = _resolve_repo_path(args.repo_path)
+        workspace_root = _resolve_workspace_root(args.workspace_root)
+
+        # Optionally resolve PM. Without --pm-name, the watch runs
+        # without enqueueing through PM; useful for dry-runs +
+        # tests.
+        pm_runtime = None
+        pm_handle: str | None = args.pm_name
+        if pm_handle:
+            try:
+                from loam.per_project_pm import PMRuntime
+            except ImportError as exc:
+                raise OddExtractorError(
+                    "loam.per_project_pm not importable; install "
+                    "loam-per-project-pm to use the incremental "
+                    f"workflow with --pm-name ({exc})"
+                ) from exc
+            pm_runtime = PMRuntime.from_workspace(
+                workspace_root, pm_handle
+            )
+
+        from .incremental import run_incremental
+
+        # `--live` opts into PM enqueue (mirrors full-mode
+        # behaviour). Default = dry-run; production-stake forces
+        # dry-run regardless.
+        explicit_dry_run = not args.live
+
+        result = run_incremental(
+            repo_path=repo_path,
+            workspace_root=workspace_root,
+            pm_runtime=pm_runtime,
+            pm_handle=pm_handle,
+            invocation_source=args.invocation_source,
+            dry_run=explicit_dry_run,
+        )
+
+        if args.json:
+            print(json.dumps(result.to_json_dict(), indent=2))
+        else:
+            print(f"Incremental watch run for {result.extraction_id}")
+            print(f"  Summary: {result.summary_line()}")
+            print(
+                f"  Safety profile:    {result.safety_profile} "
+                f"(dry_run={result.dry_run})"
+            )
+            print(f"  Prior repo SHA:    {result.prior_contract_sha}")
+            print(f"  Current repo SHA:  {result.current_repo_sha}")
+            print(
+                f"  PM enqueued:       "
+                f"{result.enqueue_result.enqueued_count} "
+                f"domain-batches"
+            )
+            if result.enqueue_result.skipped_count:
+                print(
+                    f"  PM skipped (dup):  "
+                    f"{result.enqueue_result.skipped_count} "
+                    f"domain-batches"
+                )
+            print(
+                f"  Audit-log entries written: "
+                f"{result.audit_log_entries_written}"
+            )
+        return _EXIT_OK
+    except OddExtractorError as exc:
+        print(
+            f"loam odd-extract --incremental: {exc}", file=sys.stderr
+        )
+        return _EXIT_ERR
 
 
 def _cmd_ratify(args: argparse.Namespace) -> int:
@@ -576,7 +672,35 @@ def build_odd_extract_subcommand(
         default=None,
         help=(
             "name of the PM (handle) mediating the ratification "
-            "batch. Required with --ratify."
+            "batch. Required with --ratify; optional with "
+            "--incremental (when omitted, --incremental runs the "
+            "classifier + generates proposals but does not enqueue)."
+        ),
+    )
+    # AC.WATCH.1 — incremental-mode flag. v0.2.0 Cycle 1.
+    odd_parser.add_argument(
+        "--incremental",
+        action="store_true",
+        help=(
+            "v0.2.0 Cycle 1 — incremental-mode watch. Reads the "
+            "prior contract sidecar at <workspace>/.loam/extractions/"
+            "<repo-id>/contract-draft.yaml; classifies each AC's "
+            "evidence as still-current / out-of-date / orphaned; "
+            "generates re-extraction proposals; enqueues domain-"
+            "batched PM questions when --pm-name is supplied. "
+            "Per AC.WATCH.{1,2,3,4,7,8}."
+        ),
+    )
+    # AC.WATCH.6 — invocation-source flag. v0.2.0 Cycle 1.
+    odd_parser.add_argument(
+        "--invocation-source",
+        type=str,
+        default="cli_human",
+        help=(
+            "trigger-source slug recorded in audit-log "
+            "(`incremental_watch_run` event_kind notes). Default "
+            "`cli_human`; schedulers can pass `cli_cron`, "
+            "`cli_schedule_skill`, etc. Per AC.WATCH.6."
         ),
     )
     _add_workspace_root_arg(odd_parser)

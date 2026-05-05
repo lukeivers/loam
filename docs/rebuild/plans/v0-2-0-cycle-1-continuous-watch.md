@@ -188,7 +188,7 @@ Each AC has at least one explicit pytest. ODD §2.5 — every line of code, ever
   - Test: gate run against tmp workspace with `safety_profile: production-stake` → audit-log has downgrade note + sidecar unchanged; same against `safety_profile: dev` → no downgrade note + sidecar still unchanged (defense in depth); no `loam.yaml` (default profile=dev fallback) → dev-profile behaviour.
 
 - **AC.WATCH.8 — Audit-trail floor.**
-  - Audit-log directory: existing `<workspace>/.loam/extractions/<repo-id>/audit-log/`. Filename: `<YYYY-MM-DD>-<NNNN>.yaml` (existing convention).
+  - Audit-log directory: existing `<workspace>/.loam/extractions/<repo-id>/audit-log/`. Filename: `<NNNN>.yaml` (the actual existing odd-extractor convention per `observability.py:80` — monotonic counter, NOT date-scoped; per-project-pm uses date-scoped `<YYYY-MM-DD>-<NNNN>.yaml` but odd-extractor's audit-log is per-extraction-bounded so no date scoping is needed).
   - Event kinds added by Cycle 1:
     - `incremental_watch_run` — written at start of every `--incremental` invocation; carries `prior_contract_path`, `prior_repo_sha`, `current_repo_sha`, `invocation_source`, `safety_profile`, `dry_run`.
     - `incremental_classification` — one entry summarising the classification result; carries `still_current_count`, `out_of_date_count`, `orphaned_count`.

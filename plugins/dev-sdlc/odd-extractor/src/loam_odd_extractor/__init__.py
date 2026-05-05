@@ -91,6 +91,35 @@ from .state import (
 )
 from .verify import verify_contract
 
+# Cycle 1 (v0.2.0) — incremental-mode watch surface. Composes on top
+# of v0.1.8 full-mode workflow + v0.1.7 PM batch API.
+from .diff_classifier import (
+    EvidenceClassification,
+    OrphanedAC,
+    OutOfDateAC,
+    classify_evidence,
+)
+from .domain_batching import (
+    LOAM_INTERNAL_AC_NAMESPACES,
+    group_by_domain,
+    infer_domain,
+)
+from .incremental import (
+    ContractNotFoundError,
+    IncrementalRefusedError,
+    IncrementalRunResult,
+    run_incremental,
+)
+from .incremental_ratify import (
+    EnqueueResult,
+    enqueue_incremental_proposals,
+)
+from .proposals import (
+    IncrementalProposal,
+    IncrementalProposalSet,
+    generate_proposals,
+)
+
 # Cycle 3 (v0.1.8) — Ruby/Rails first-class adapter. Lazy-loadable
 # but re-exported here so callers can ``from loam_odd_extractor
 # import RubyAdapter``. Per Surface #8, the tree-sitter import
@@ -110,24 +139,35 @@ __all__ = [
     "CompletedAction",
     "ConfidenceBand",
     "ContractDraft",
+    "ContractNotFoundError",
+    "EnqueueResult",
     "Evidence",
+    "EvidenceClassification",
     "ExtractionConfig",
     "ExtractionState",
+    "IncrementalProposal",
+    "IncrementalProposalSet",
+    "IncrementalRefusedError",
+    "IncrementalRunResult",
+    "JsTsAdapter",
+    "LOAM_INTERNAL_AC_NAMESPACES",
     "LanguageAdapter",
     "OddExtractorError",
+    "OrphanedAC",
+    "OutOfDateAC",
     "RatificationAction",
     "RatificationRefusedError",
     "RatificationState",
     "RawACs",
     "RegistryError",
     "RubyAdapter",
-    "JsTsAdapter",
     "Slice",
     "StageError",
     "analyze_repo",
     "apply_ratification_action",
     "budget_from_cents",
     "build_odd_extract_subcommand",
+    "classify_evidence",
     "clear_manual_registry",
     "compute_repo_id",
     "default_budget",
@@ -135,10 +175,14 @@ __all__ = [
     "discover_adapters",
     "edit",
     "enforce_budget",
+    "enqueue_incremental_proposals",
     "enqueue_ratification_batch",
     "estimate_for_extraction",
     "extraction_dir",
+    "generate_proposals",
     "generate_raw_acs",
+    "group_by_domain",
+    "infer_domain",
     "init_extraction",
     "initialise_ratification_state",
     "load_ratification_state",
@@ -146,6 +190,7 @@ __all__ = [
     "promote",
     "register_adapter",
     "reject",
+    "run_incremental",
     "save_ratification_state",
     "save_state",
     "verify_contract",

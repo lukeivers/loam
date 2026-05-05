@@ -316,3 +316,72 @@ conventions (JS/TS/Playwright second).
   → v0.2+.
 
 See the master plan for full scope and sequencing.
+
+## Scheduling (v0.2.0 Cycle 1 — `--incremental` watch)
+
+Per AC.WATCH.6 — `loam odd-extract <repo> --incremental` is the
+schedulable primitive for keeping the v0.1.8 banded contract
+synchronised as the codebase evolves. Any external scheduler can
+invoke it; pass `--invocation-source <slug>` to record the trigger
+in the audit-log.
+
+### Example 1 — system crontab (Linux)
+
+```cron
+# Run watch every 6 hours; log to home directory.
+0 */6 * * * loam odd-extract /path/to/repo --incremental --invocation-source cli_cron --pm-name myteam --workspace-root /path/to/workspace >> $HOME/loam-watch.log 2>&1
+```
+
+### Example 2 — macOS launchd
+
+`~/Library/LaunchAgents/com.loam.watch.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.loam.watch</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/loam</string>
+        <string>odd-extract</string>
+        <string>/path/to/repo</string>
+        <string>--incremental</string>
+        <string>--invocation-source</string>
+        <string>cli_launchd</string>
+        <string>--pm-name</string>
+        <string>myteam</string>
+        <string>--workspace-root</string>
+        <string>/path/to/workspace</string>
+    </array>
+    <key>StartInterval</key><integer>21600</integer>
+    <key>StandardOutPath</key><string>/tmp/loam-watch.out.log</string>
+    <key>StandardErrorPath</key><string>/tmp/loam-watch.err.log</string>
+</dict>
+</plist>
+```
+
+Then `launchctl load ~/Library/LaunchAgents/com.loam.watch.plist`.
+
+### Example 3 — Anthropic Claude Code `/schedule` skill
+
+Use the `schedule` skill to run a recurring routine that invokes
+the watch:
+
+```
+/schedule create --cron "0 */6 * * *" -- loam odd-extract /path/to/repo --incremental --invocation-source cli_schedule_skill --pm-name myteam
+```
+
+The `/schedule` skill records the routine in your harness; the
+audit-log on the workspace side records each invocation with
+`invocation_source=cli_schedule_skill`.
+
+### Telemetry guarantee
+
+Every invocation (whether human-driven or scheduler-driven) writes
+a `incremental_watch_run` audit-log entry under
+`<workspace>/.loam/extractions/<repo-id>/audit-log/<YYYY-MM-DD>-<NNNN>.yaml`.
+The `notes` field carries `invocation_source=<slug>` so post-hoc
+analysis can attribute runs.
+

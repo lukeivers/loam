@@ -209,6 +209,17 @@ def verify_contract(
     md_path = ext_dir / "contract-draft.md"
     md_path.write_text(markdown, encoding="utf-8")
 
+    # Per AC.OE.CONTRACT-FULL.{1,2} (v0.2.1 corrective F1) — the
+    # contract-draft.yaml sidecar carries the full ``acs:`` list +
+    # ``unhandled_paths:`` list so downstream consumers (notably
+    # ``loam_pr_safety.contract.read_contract``) can construct a
+    # populated :class:`BandedContract` without a separate read of
+    # ``raw-acs.yaml``. Producer-side single-source-of-truth.
+    #
+    # Shape: ``acs`` carries the same ``list[dict]`` ``RawACs.acs``
+    # holds (each dict is the ``BandedAC.model_dump()`` round-trip
+    # shape). ``unhandled_paths`` is string-coerced because YAML
+    # ``safe_dump`` cannot serialize ``Path`` objects directly.
     sidecar_payload = {
         "schema_version": 1,
         "extraction_id": config.repo_id,
@@ -217,6 +228,8 @@ def verify_contract(
         "unhandled_count": len(raw.unhandled_paths),
         "dry_run": config.dry_run,
         "created_at": ts,
+        "acs": list(raw.acs),
+        "unhandled_paths": [str(p) for p in raw.unhandled_paths],
     }
     yaml_path = ext_dir / "contract-draft.yaml"
     yaml_path.write_text(

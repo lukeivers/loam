@@ -1,0 +1,11 @@
+# v0.2.0 Cycle 2 — Persona-driven skill capture (auto-creation MVP) + workspace-config flag + design note; two-component fence on plugins/loam-skills/ + framework/workspace-bootstrap/
+
+slug: v0-2-0-cycle-2-auto-skill-creation
+components: loam-skills+workspace-bootstrap
+baseline: 31dce27
+amendment-commit: 5cb84a56695b485ae22c0c7a84ed9193e0995f56
+plan-doc: docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md
+acs-satisfied: 13
+smoke: D1 + D2-idempotency + D5 + D6 exercised; D3/D4 n/a (static artefacts); 471 tests green across loam-skills + workspace-bootstrap; release-level smoke at v0.2.0 SOFT gate per master plan §5
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

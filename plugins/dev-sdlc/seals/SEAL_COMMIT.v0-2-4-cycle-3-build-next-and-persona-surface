@@ -1,0 +1,11 @@
+# v0.2.4 Cycle 3 — Build-next ranking + persona pull-point + release-level SOFT integration smoke; BuildNextCandidate + BuildNextRecommendation Pydantic shapes + composite-score ranking (gap-confidence × priority-match × estimated-impact, deterministic default; LLM-judge for priority-match borderline only with cap-of-5) + tie-break (category-a > category-b > STRONG > WEAK > lex gap_id) + dual output (build-next.md + build-next.yaml at <workspace>/.loam/extractions/<repo-id>/) + informative-not-prescriptive denylist (module-level seed list + word-boundary check; opt-in LLM-judge pass behind LOAM_BUILD_NEXT_LLM_DENYLIST=1) + cost band $0.10 default ($0.02-$0.30 halt) + 3 additive audit-log event_kinds (build_next_start / build_next_persisted / build_next_end) + CLI flag `loam odd-extract <repo> --build-next` (mirrors Cycle 2 --gaps form) + persona pull-point as documentation-only (no new SKILL.md) + ratification compose (HYPOTHESISED objectives flagged in rationale not blocked) + release-level SOFT integration smoke on canonical jsts-playwright-app fixture (D1+D2+D3+D5+D6 exercised; D4 n/a; §self-checks pass-rate ≥90% gate) + component tests on 3 synthetic fixtures (high-priority-match / no-survey-context / orphan-only) + release SOFT smoke integration test; single-component fence on plugins/dev-sdlc/odd-extractor/
+
+slug: v0-2-4-cycle-3-build-next-and-persona-surface
+components: dev-sdlc
+baseline: 9c9ed19
+amendment-commit: 9e054d7d37d2dc7bada32936194383d9629db5c8
+plan-doc: docs/rebuild/plans/v0-2-4-cycle-3-build-next-and-persona-surface.md
+acs-satisfied: 13
+smoke: Release SOFT smoke on canonical jsts-playwright-app: D1+D2+D3+D5+D6 ✓ (D4 n/a); §self-checks ≥90%; 3 fixtures; 813+73+124+411 tests pass across components.
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

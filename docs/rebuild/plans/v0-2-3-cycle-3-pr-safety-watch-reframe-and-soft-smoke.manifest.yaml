@@ -252,9 +252,8 @@ amendment:
 # docs/rebuild/plans/ for plan-doc paper trail only — Cycle 3 ships
 # zero docs/ edits beyond the plan-doc itself.
 
-# BASELINE pinned to the source-edit feat commit. Updated post-
-# source-commit by the build agent.
-baseline: "<pending>"
+# BASELINE pinned to the source-edit feat commit.
+baseline: "4157092"
 
 plan: docs/rebuild/plans/v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke.md
 
@@ -264,7 +263,7 @@ plan: docs/rebuild/plans/v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke.m
 plan_doc_ref: docs/rebuild/plans/v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke.md
 
 ac_count: 14
-smoke_outcome: "D1+D2+D5+D6 exercised end-to-end on canonical jsts-playwright-app fixture; D3 inherited (PM batch API + state.yaml resume); D4 n/a; release-level SOFT smoke green; full-suite green sweep across pr-safety + odd-extractor + cost-governance + per-project-pm"
+smoke_outcome: "D1+D2+D5+D6 on jsts-playwright-app; D3 inherited; D4 n/a; SOFT smoke green; full-suite 871 tests pass (pr-safety 93, odd-extractor 583, cost-gov 71, pm 124)"
 
 components:
   - name: dev-sdlc

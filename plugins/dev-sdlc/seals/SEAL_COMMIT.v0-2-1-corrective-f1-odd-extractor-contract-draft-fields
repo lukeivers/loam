@@ -1,0 +1,11 @@
+# v0.2.1 corrective F1 — odd-extractor verify_contract() writes acs + unhandled_paths into contract-draft.yaml so pr-safety gate can read full banded contract on real-fixture extractions; producer-side single-source-of-truth fix per smoke evidence; 4 named-AC tests + meta-AC for full-suite green
+
+slug: v0-2-1-corrective-f1-odd-extractor-contract-draft-fields
+components: dev-sdlc
+baseline: 330e66e
+amendment-commit: 0904064f6b0ea6e9ae4f6fa56f64845d2db42c0a
+plan-doc: docs/rebuild/plans/v0-2-1-corrective-f1-odd-extractor-contract-draft-fields.md
+acs-satisfied: 5
+smoke: D1+D2+D5+D6 exercised; D3+D4 n/a (stateless one-shot writer); 4 named-AC tests + meta-AC; full-suite green sweep on plugins/dev-sdlc/odd-extractor/ + plugins/dev-sdlc/pr-safety/
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

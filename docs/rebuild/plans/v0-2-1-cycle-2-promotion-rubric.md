@@ -353,6 +353,7 @@ Cycle-2 method decisions at §7. Master-plan method decisions at master plan §9
 
 ### Commit SHAs
 
-- Plan-doc + manifest commit: TBD (this commit).
-- Amendment commit: TBD (build-agent landing).
-- Seal commit: TBD (build-agent landing).
+- Amendment commit: `c48aa686ee696555e1b810d4f64279055f892e3c` —
+  `chore(amend): v0-2-1-cycle-2-promotion-rubric manifest+apply — dev-sdlc BASELINE+sidecar bump to c01f50e`
+- Seal commit: `298172e9a99d73ad807074c81289407677a396ed` —
+  `chore(seals): v0-2-1-cycle-2-promotion-rubric — dev-sdlc at c48aa68`

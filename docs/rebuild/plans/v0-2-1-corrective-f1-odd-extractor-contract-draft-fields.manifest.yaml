@@ -1,0 +1,160 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-1-corrective-f1-odd-extractor-contract-draft-fields
+  title: "v0.2.1 corrective F1 — odd-extractor verify_contract() writes acs + unhandled_paths into contract-draft.yaml so pr-safety gate can read full banded contract on real-fixture extractions; producer-side single-source-of-truth fix per smoke evidence; 4 named-AC tests + meta-AC for full-suite green"
+
+# BASELINE: <pending> — source-edit feat commit covering verify.py
+# extension + 4 named-AC test files under plugins/dev-sdlc/
+# odd-extractor/tests/.
+#
+# Corrective amendment landing the F1 fix surfaced by v0.2.1
+# Cycle 3 HARD smoke (RED). Master plan §3 Cycle 3 + Decision R
+# explicitly authorize "halt + corrective amendment, NOT
+# 'ship-anyway-with-caveats'." This manifest carries one of three
+# HARD-BLOCK correctives (F1; F2 + F5 land via separate dispatches).
+#
+# Commit ladder pre-apply:
+#   bbc93a7 — v0.2.0 SHIPPED rollup.
+#   2ff444e — v0.2.1 master plan + cycle decomposition.
+#   2ba7fcd — v0.2.1 master plan patch.
+#   9355ef2 — v0.2.1 master plan sweep.
+#   df447bc — FIDRAFT entry: claude-code-pasteable-survey pattern.
+#   0bf33f1 — v0.2.1 Cycle 1 source-edit feat.
+#   f6b5047 — v0.2.1 Cycle 1 manifest+apply.
+#   55640b1 — v0.2.1 Cycle 1 seal.
+#   d7c5b2d — v0.2.1 Cycle 1 §14 backfill.
+#   4c4a1d3 — v0.2.1 master plan §9 Cycle 1 SHA backfill.
+#   c01f50e — v0.2.1 Cycle 2 source-edit feat.
+#   c48aa68 — v0.2.1 Cycle 2 manifest+apply.
+#   298172e — v0.2.1 Cycle 2 seal.
+#   29b26ed — v0.2.1 Cycle 2 §14 backfill.
+#   5b9b3fd — v0.2.1 master plan §9 Cycle 2 SHA backfill.
+#   5a9dd26 — FIDRAFT: loam-amend-cycle SKILL doc drift (HEAD).
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 per AC.D-sa.7>
+#
+# Single-component fence — dev-sdlc:
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/
+#     verify.py — extend sidecar_payload dict with acs +
+#     unhandled_paths fields (raw.acs as list[dict] via
+#     model_dump-equivalent shape; unhandled_paths as list[str]
+#     coerced from list[Path]).
+#   - NEW tests under plugins/dev-sdlc/odd-extractor/tests/:
+#       test_AC_OE_CONTRACT_FULL_1_acs_field_written.py
+#                    — verify_contract() writes acs as list[dict];
+#                      length matches input; entries round-trip
+#                      through BandedAC.model_validate.
+#       test_AC_OE_CONTRACT_FULL_2_unhandled_paths_field_written.py
+#                    — verify_contract() writes unhandled_paths as
+#                      list[str]; length matches input.
+#       test_AC_OE_CONTRACT_FULL_3_round_trip.py
+#                    — extractor-write → pr-safety read_contract
+#                      round-trip; BandedContract.acs populated.
+#       test_AC_OE_CONTRACT_FULL_4_jsts_fixture_e2e.py
+#                    — production pipeline against
+#                      jsts-playwright-app fixture or
+#                      pre-constructed RawACs with VERIFIED AC;
+#                      pr-safety gate emits HARD_BLOCK on synthetic
+#                      VERIFIED-AC-touching diff.
+#   - NO edits to existing pr-safety/ source. Producer-side fix
+#     only; consumer's contract is correct as-shipped.
+#   - NO edits to existing sealed extractor surfaces beyond
+#     verify.py (single-file edit; halt-trigger if scope expands
+#     by more than 3 files per plan-doc §4).
+#   - NO edits to spec.py (RawACs / ContractDraft Pydantic shapes
+#     unchanged; the fix passes existing raw.acs through verbatim).
+#
+# AC families locked per plan-doc §2:
+#   AC.OE.CONTRACT-FULL.1 — verify_contract() writes acs field.
+#   AC.OE.CONTRACT-FULL.2 — verify_contract() writes unhandled_paths.
+#   AC.OE.CONTRACT-FULL.3 — extractor → pr-safety round-trip clean.
+#   AC.OE.CONTRACT-FULL.4 — real-fixture e2e: production-pipeline
+#                            write produces gate-readable contract;
+#                            HARD_BLOCK on VERIFIED-touching diff.
+#   AC.OE.CONTRACT-FULL.5 — meta: pre-existing extractor + pr-safety
+#                            test suites remain green post-fix.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §1):
+#   D1 cold-state — fresh tmp workspace; fresh extraction via
+#     init_extraction → analyze_repo → generate_raw_acs →
+#     verify_contract; assert contract-draft.yaml carries acs +
+#     unhandled_paths. Verified by AC.OE.CONTRACT-FULL.1 +
+#     AC.OE.CONTRACT-FULL.2.
+#   D2 steady-state — re-running verify_contract on same RawACs
+#     produces byte-identical contract-draft.yaml. Verified
+#     structurally — yaml.safe_dump is deterministic with
+#     sort_keys=False; raw.acs ordering is preserved through
+#     RawACs.model_dump.
+#   D5 cross-session — extractor in process A writes
+#     contract-draft.yaml; pr-safety read_contract in fresh
+#     process B parses it cleanly and produces populated
+#     BandedContract. Verified by AC.OE.CONTRACT-FULL.3 (in-process
+#     equivalent — read_contract reads from disk, so the
+#     cross-process boundary is the file system).
+#   D6 telemetry-floor — verify_contract appends stage_complete +
+#     extraction_end audit-log entries unchanged; contract-draft
+#     content change does NOT regress audit-log shape. Verified
+#     structurally — audit-log writes are independent of
+#     sidecar_payload contents.
+#   D3 restart — n/a structurally (verify_contract is stateless on
+#     input; restart equivalent is re-run with same RawACs).
+#   D4 reboot — n/a structurally (one-shot CLI; D4 collapses to D5
+#     for one-shot CLIs per plugins/dev-sdlc/docs/
+#     smoke-test-discipline.md).
+#   PLUS: full-suite green sweep — pre-corrective extractor +
+#     pr-safety tests at HEAD all pass post-corrective; halt +
+#     surface on any regression. Verified by AC.OE.CONTRACT-FULL.5.
+#
+# Bookkeeping: this is a corrective amendment outside the v0.2.1
+# Cycle 1/2/3 numbered ladder (Cycle 3 was smoke-only; F1 corrective
+# is the first of three blocked corrections). Sealed-content
+# invariant: pre-existing AC.* tests remain green; only one source
+# file edited (verify.py); only new test files added.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "<pending>"
+
+plan: docs/rebuild/plans/v0-2-1-corrective-f1-odd-extractor-contract-draft-fields.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-2-1-corrective-f1-odd-extractor-contract-draft-fields.md
+
+ac_count: 5
+smoke_outcome: "D1+D2+D5+D6 exercised; D3+D4 n/a (stateless one-shot writer); 4 named-AC tests + meta-AC; full-suite green sweep on plugins/dev-sdlc/odd-extractor/ + plugins/dev-sdlc/pr-safety/"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent + v0.1.9 Cycle 1 precedent + v0.2.0 Cycle 1
+# precedent + v0.2.1 Cycle 1/2 precedent.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-1-corrective-f1-odd-extractor-contract-draft-fields
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

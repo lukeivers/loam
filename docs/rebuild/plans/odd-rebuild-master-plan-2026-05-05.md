@@ -51,19 +51,28 @@ PR-safety, continuous-watch, and ratification flow all operate at objective alti
 
 **Why first.** Every subsequent release authoring will keep producing wrong-altitude output without this. Foundation-altitude correctness is prerequisite.
 
-### v0.2.3 — Objective-first extractor (replaces v0.1.8 extraction logic)
+### v0.2.3 — Objective-first extractor (replaces v0.1.8 extraction logic) — **SHIPPED 2026-05-05** (local; tag deferred)
 
 **Theme.** Rebuild the actual extraction logic to produce objectives at outcome altitude. Repurpose v0.1.8 substrate (banding, audit-log, ratification flow, four-stage workflow) but rebuild the extraction itself.
 
-**Primary work:**
+**Primary work shipped:**
 - Multi-source input pipeline: README + design docs + tests + user-survey context + code patterns (the LLM synthesizes from all sources, not just symbol-tree walking).
 - Output: objectives (outcome-altitude, banded V/P/H), constraints (bounds on solution space), capabilities (features serving objectives).
-- Backing-implementation map: objectives → code paths. The v0.1.8 structural extraction becomes evidence-rows mapping objectives to backing implementation.
+- Backing-implementation map: objectives → code paths. The v0.1.8 structural extraction repurposed as evidence-rows mapping objectives to backing implementation.
 - Rename surface: no more `AC.JSTS.express.get.<route>` labels for primary output. ACs are objectives.
-- Update ratification flow to ratify objectives (PLAUSIBLE → VERIFIED on the OBJECTIVE, not on the symbol).
-- Update PR-safety to consume objectives + backing-map (gate triggers when a change touches code backing a VERIFIED objective).
+- Ratification flow ratifies objectives (PLAUSIBLE → VERIFIED on the OBJECTIVE).
+- PR-safety consumes objectives + backing-map (gate triggers when a change touches code backing a VERIFIED objective).
+- Continuous-watch operates at objective altitude.
+- Legacy `acs:` field retired.
 
-**AI-time band.** 12-22 h. Heavy cycle. Likely 3-4 sub-cycles (extraction logic / backing-map / ratification reframe / PR-safety reframe).
+**Cycle SHAs (sealed):**
+- Cycle 1 — Multi-source objective synthesis: seal `9b9f87c`; §14 `66de327`.
+- Cycle 2 — Backing-implementation map + ratification reframe: seal `857749c`; §14 `5a6ddd2`.
+- Cycle 3 — PR-safety + continuous-watch reframe + SOFT smoke: seal `f78bb36`; §14 `f2174ed`.
+- SOFT smoke evidence: `<pos3>/workspace/.scratch/claude-output/v0-2-3-soft-smoke-2026-05-05.md`.
+- 871 total tests green at v0.2.3 close (pr-safety 93 + odd-extractor 583 + cost-governance 71 + per-project-pm 124).
+
+**AI-time actuals (per AI-time rubric `wall_clock_minutes ≈ tool_calls × 0.1-0.15`):** Cycle 1 ~30 min / 95 calls; Cycle 2 ~27 min / 75 calls; Cycle 3 ~36 min / 190 calls. Aggregate ~93 min wall-clock (vs 12-22h human-developer band — ~10× faster, per rubric).
 
 **Why second.** The core capability rebuild. v0.2.4 + v0.2.5 layer above.
 
@@ -80,18 +89,34 @@ PR-safety, continuous-watch, and ratification flow all operate at objective alti
 
 **Why third.** Depends on extractor producing objectives at the right altitude.
 
-### v0.2.5 — Negative-alignment detection + Eric re-ship
+### v0.2.5 — Eric re-ship (HARD smoke gate) — split per Luke 2026-05-05
 
-**Theme.** Hardest layer + ship gate.
+**Theme.** Ship gate. Negative-alignment detection carved out per Luke 2026-05-05 ruling and pushed to v0.2.6+ (see below); v0.2.5 is now Eric-re-ship-only.
+
+**Primary work:**
+- HARD smoke gate against rd-automation end-to-end: extraction → completeness interview → gap analysis → "what to build next" output. (Negative-alignment NOT part of this scope; v0.2.6+.)
+- Push pos-v2 → lukeivers/loam:main; tag v0.2.5; Eric installs (or upgrades). Gate the tag-push on Luke's ship-to-Eric ruling per master plan policy.
+
+**AI-time band.** 2-5 h human-developer band → ~12-30 min AI wall-clock per the rubric (smoke-execution + publish dance; no new component code).
+
+**Why fourth.** Last release-shape gate before Eric. Needs v0.2.4's gap-analysis + "what to build next" output to demo end-to-end. Negative-alignment held out so we ship sooner with verified capability instead of unverified judgment-class output.
+
+### v0.2.6+ — Negative-alignment detection (carved out from v0.2.5; post-Eric)
+
+**Theme.** Hardest layer; defer to post-calibration-data shipment.
 
 **Primary work:**
 - Negative-alignment detection: where an objective says X and implementation does the opposite or inverse. Eric's auth-bypass finding is the canonical example — objective O2 ("audit trail identifies who initiated each action") vs implementation that trusts client-controlled Referer header + accepts arbitrary `runner_email` query param. The system says it does X; the code does ¬X.
-- HARD smoke gate against rd-automation end-to-end: extraction → completeness interview → gap analysis → "what to build next" → negative-alignment surfacing.
-- Push pos-v2 → lukeivers/loam:main; tag v0.2.5; Eric installs (or upgrades). Gate the tag-push on Luke's ship-to-Eric ruling per master plan policy.
 
-**AI-time band.** 6-12 h. Likely 2 sub-cycles (negative-alignment detection / Eric re-ship gate).
+**Why carved out (per Luke 2026-05-05 ruling):**
+- 25%+ false-positive risk per master plan §7.5; shipping unverified judgment-class output to a high-quality-bar user is a risk multiplier, not a quality WOW.
+- No real-world calibration data exists for the heuristic. Better to ship after we have data, not before.
+- Eric's auth-bypass case is something he flagged himself in survey Q5; gap analysis + his stated security priority will surface it via the existing v0.2.4 pipeline. Negative-alignment isn't required to deliver "the system found this."
+- v0.2.3 + v0.2.4 IS the complete "what should I build next?" capability; negative-alignment is a marginal demo-cleanliness enhancement, not a load-bearing capability.
 
-**Why fourth.** Hardest layer; needs all prior layers landed. Eric ship gates here.
+**AI-time band.** 4-8 h human-developer → ~25-50 min AI wall-clock per the rubric. Standalone release post-Eric once we have field calibration data on which to tune the false-positive rate.
+
+**Why later.** Speculative + needs calibration data; shipping it before Eric installs adds risk without adding load-bearing capability.
 
 ---
 

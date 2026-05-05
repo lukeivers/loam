@@ -1,0 +1,11 @@
+# v0.2.1 Cycle 2 — Promotion rubric mechanism; skill-promotion-review SKILL package under plugins/dev-sdlc/skills/ with 3-signal MVP (Categorization + Quality + Conflict primary; Reusability + Tests + Usage secondary non-blocking) + 10-row decision matrix + PM-mediated owner ratification (default-to-no) + graduation amendment-cycle composition + workspace-local removal via pointer.md + on-demand `/skill-promotion-review` quarterly-trigger fallback + 4 synthetic-skill fixtures + 12 structural tests
+
+slug: v0-2-1-cycle-2-promotion-rubric
+components: dev-sdlc
+baseline: c01f50e
+amendment-commit: c48aa686ee696555e1b810d4f64279055f892e3c
+plan-doc: docs/rebuild/plans/v0-2-1-cycle-2-promotion-rubric.md
+acs-satisfied: 12
+smoke: D1+D2+D3+D5+D6 exercised; D4 n/a (stateless SKILL body); 4 synthetic-skill fixtures cover signal paths; full-suite green sweep on plugins/dev-sdlc/ (215 passed)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

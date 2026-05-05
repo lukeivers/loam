@@ -103,7 +103,7 @@ amendment:
 
 # BASELINE pinned to the source-edit feat commit. Updated post-
 # source-commit by the build agent.
-baseline: "<pending>"
+baseline: "0efd160"
 
 plan: docs/rebuild/plans/v0-2-1-corrective-f2-language-detection-skip-framework.md
 
@@ -113,7 +113,7 @@ plan: docs/rebuild/plans/v0-2-1-corrective-f2-language-detection-skip-framework.
 plan_doc_ref: docs/rebuild/plans/v0-2-1-corrective-f2-language-detection-skip-framework.md
 
 ac_count: 4
-smoke_outcome: "D1 exercised on 2 new fixtures (synthetic-bootstrapped-jsts + synthetic-bootstrapped-rails); D2 structural pass (deterministic walk); D3+D4+D5+D6 n/a (stateless function); 3 named-AC tests + meta-AC; full-suite green sweep on framework/workspace-bootstrap/"
+smoke_outcome: "D1 exercised on 2 new fixtures; D2 structural (deterministic walk); D3/D4/D5/D6 n/a (stateless); 3 named-AC tests + meta-AC; workspace-bootstrap suite green (411 pass / 11 skip / 0 regress)"
 
 components:
   - name: workspace-bootstrap

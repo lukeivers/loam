@@ -318,7 +318,7 @@ Master-plan-level decisions. Per-cycle plan-docs author own §14.
 
 | Cycle | Theme | Apply SHA | Seal SHA |
 |---|---|---|---|
-| Cycle 1 | Completeness interview | TBD | TBD |
+| Cycle 1 | Completeness interview | `e1a4239` | `d42ace9` |
 | Cycle 2 | Gap analysis | TBD | TBD |
 | Cycle 3 | Build-next + persona surface + SOFT smoke (release SOFT smoke) | TBD | TBD |
 

@@ -25,6 +25,18 @@
                                         # (audit_trail on; cost-governance warning_fraction
                                         # floor at 0.6; always_ask floor extended) per
                                         # v0.1.6 Decision P (SOC-2 audit-trail floor).
+    enable_auto_skill_capture: false   # optional; default = false (opt-in).
+                                        # Boolean. When true, the persona MAY propose
+                                        # workspace-local SKILL captures via the
+                                        # skill-capture-proposal SKILL (3 triggers MVP:
+                                        # explicit-request / repeated-invocation /
+                                        # ask-and-answer; user-ratified via PM batch
+                                        # API; written to <workspace>/.claude/skills/
+                                        # <slug>/SKILL.md on Y). When false, the
+                                        # persona MUST NOT propose. Per v0.2.0 Cycle 2
+                                        # plan-doc §4 AC.SKILLCAP.7 + layered-skill
+                                        # research §3.6 Decision E (universal-tier;
+                                        # workflow-flag-only gating).
     contributions:
       - observability_aggregator       # name → entry-point group lookup
       - name: custom_adapter           # workspace-local escape hatch
@@ -100,6 +112,17 @@ LEGAL_SAFETY_PROFILES: frozenset[str] = frozenset(
 DEFAULT_SAFETY_PROFILE: str = "dev"
 
 
+# v0.2.0 Cycle 2 AC.SKILLCAP.7 — `enable_auto_skill_capture` field.
+# Default-false opt-in flag gating the persona's auto-skill-capture
+# behaviour (skill-capture-proposal SKILL at plugins/loam-skills/).
+# Mirrors safety_profile's shape — frozenset of legal values, default
+# literal, fail-closed `MissingConfigError` on invalid types. Bool
+# only; legal values are exactly `True` / `False`. Per layered-skill
+# research §3.6 Decision E (universal-tier; workflow-flag-only
+# gating; fresh workspace shouldn't auto-propose).
+DEFAULT_ENABLE_AUTO_SKILL_CAPTURE: bool = False
+
+
 @dataclass(frozen=True)
 class Manifest:
     version: int
@@ -113,6 +136,17 @@ class Manifest:
     # (AC.PSAFE.2). When `production-stake`, downstream components
     # MUST honour the non-tunable floors per AC.PSAFE.3.
     safety_profile: str = DEFAULT_SAFETY_PROFILE
+    # v0.2.0 Cycle 2 AC.SKILLCAP.7 — auto-skill-capture opt-in flag.
+    # When `False` (default), the persona's `skill-capture-proposal`
+    # SKILL's "When to use" gate is closed and the persona MUST NOT
+    # propose workspace-local SKILL captures. When `True`, the
+    # persona MAY propose per the SKILL's three triggers
+    # (explicit-request / repeated-invocation / ask-and-answer)
+    # subject to cool-down + budget + hard-cap suppression gates.
+    # The flag is a single workflow-level gate per layered-skill
+    # research §3.6 Decision E (auto-creation universal across
+    # users; opt-in flag fences the timing).
+    enable_auto_skill_capture: bool = DEFAULT_ENABLE_AUTO_SKILL_CAPTURE
 
 
 def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
@@ -184,6 +218,33 @@ def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
             data={"path": str(p), "safety_profile": safety_profile_raw},
         )
 
+    # v0.2.0 Cycle 2 AC.SKILLCAP.7 — `enable_auto_skill_capture`
+    # validation + default. Absent → DEFAULT_ENABLE_AUTO_SKILL_CAPTURE
+    # (`False`). Present-and-bool → use that value. Present-and-not-
+    # bool → fail-closed MissingConfigError (mirrors the safety_profile
+    # fail-closed shape; matches the loader's existing discipline).
+    #
+    # Important: PyYAML parses `true` / `True` / `false` / `False` as
+    # bool; integers / strings / floats / lists / dicts all reach the
+    # `else` branch and fail-closed. The fail-closed message names the
+    # legal values explicitly (True / False) so authoring typos are
+    # observable at load.
+    eascr = raw.get("enable_auto_skill_capture")
+    if eascr is None:
+        enable_auto_skill_capture = DEFAULT_ENABLE_AUTO_SKILL_CAPTURE
+    elif isinstance(eascr, bool):
+        enable_auto_skill_capture = eascr
+    else:
+        raise MissingConfigError(
+            f"bootstrap manifest at {p} declares "
+            f"enable_auto_skill_capture={eascr!r}; legal values are "
+            f"True / False (boolean only).",
+            data={
+                "path": str(p),
+                "enable_auto_skill_capture": eascr,
+            },
+        )
+
     return Manifest(
         version=version,
         config_dir=config_dir,
@@ -191,6 +252,7 @@ def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
         manifest_path=p,
         refs=tuple(refs),
         safety_profile=safety_profile,
+        enable_auto_skill_capture=enable_auto_skill_capture,
     )
 
 

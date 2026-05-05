@@ -39,6 +39,8 @@ EXPECTED_SKILLS = [
     "translation-discipline",
     "audit-block-on-telegram",
     "owner-decision-summary",
+    # v0.2.0 Cycle 2 addition (auto-skill-creation MVP).
+    "skill-capture-proposal",
 ]
 
 # Anthropic-published cap per
@@ -102,19 +104,20 @@ def test_skill_file_exists_with_frontmatter_and_body(
 
 def test_all_skills_discovered() -> None:
     """Cross-check: walking the skills/ directory yields exactly the
-    expected packages — no orphans, no misnames. v0.1.6 Cycle 2
-    extends from 5 to 8."""
+    expected packages — no orphans, no misnames. v0.2.0 Cycle 2
+    extends from 8 to 9 (+ skill-capture-proposal)."""
     on_disk = sorted(
         p.name for p in SKILLS_DIR.iterdir()
         if p.is_dir() and (p / "SKILL.md").is_file()
     )
     assert on_disk == sorted(EXPECTED_SKILLS), (
         f"discovered skills {on_disk} != expected {sorted(EXPECTED_SKILLS)}; "
-        "AC.LSK.1 requires exactly the named eight packages "
-        "(5 from v0.1.3 + 3 from v0.1.6 Cycle 2)."
+        "AC.LSK.1 requires exactly the named nine packages "
+        "(5 from v0.1.3 + 3 from v0.1.6 Cycle 2 + 1 from v0.2.0 "
+        "Cycle 2)."
     )
 
 
-def test_skills_count_eight() -> None:
-    """v0.1.6 Cycle 2 — the bundle is 8 SKILLs total."""
-    assert len(EXPECTED_SKILLS) == 8
+def test_skills_count_nine() -> None:
+    """v0.2.0 Cycle 2 — the bundle is 9 SKILLs total."""
+    assert len(EXPECTED_SKILLS) == 9

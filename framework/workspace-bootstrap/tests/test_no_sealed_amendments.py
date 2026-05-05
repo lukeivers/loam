@@ -283,6 +283,16 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         # cross-component partner so the seal-diff sweep passes when
         # the plugin's diff is in flight.
         "plugins/dev-sdlc/",
+        # v0.2.0 Cycle 2 — plugins/loam-skills/ is the PRIMARY fence
+        # of the auto-skill-creation cycle; workspace-bootstrap is
+        # the SECONDARY co-shipping fence (the
+        # `enable_auto_skill_capture` manifest field). Admitted as
+        # cross-component partner so the seal-diff sweep passes when
+        # the plugin's diff is in flight, mirroring the dev-sdlc
+        # admission pattern. Per
+        # docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md
+        # §3 two-component fence.
+        "plugins/loam-skills/",
         "framework/cost-governance/",
         "framework/dormancy/",
         "framework/graceful-degradation/",

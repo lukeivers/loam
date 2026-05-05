@@ -33,6 +33,8 @@ EXPECTED_SKILLS = [
     "translation-discipline",
     "audit-block-on-telegram",
     "owner-decision-summary",
+    # v0.2.0 Cycle 2 addition (auto-skill-creation MVP).
+    "skill-capture-proposal",
 ]
 
 # Required body section markers (case-insensitive substring match).

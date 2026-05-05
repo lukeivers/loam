@@ -69,17 +69,32 @@ def test_only_loam_skills_changed() -> None:
     )
     changed = [ln for ln in out.splitlines() if ln.strip()]
 
-    # v0.1.3 item 1 authors a NEW sealed component at
+    # v0.1.3 item 1 authored a NEW sealed component at
     # plugins/loam-skills/. The primary fence is the plugin's own
     # subtree. The Tier K append to the install-from-source flow is
     # admitted via allowed_files (the two install paths sit at the
     # repo root + docs/install-from-source.md respectively). The
     # universal docs/rebuild/plans/ admission carries the sub-plan-
-    # doc + manifest. No cross-component partners are needed —
-    # loam-skills is a leaf plugin (markdown-only, no runtime deps).
+    # doc + manifest.
+    #
+    # v0.2.0 Cycle 2 admits two compose-points (per
+    # docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md §3
+    # two-component fence + §10 universal admissions):
+    #   - framework/workspace-bootstrap/ — the SECONDARY co-shipping
+    #     fence; the new manifest field `enable_auto_skill_capture`
+    #     lives there. The reverse seal-fence (workspace-bootstrap's
+    #     test) already admits docs/design/ + plugins/loam-skills/
+    #     prefixes (extensive list at line ~70 of that test).
+    #   - docs/design/ — the TERTIARY universal admission for the
+    #     new design note (auto-skill-capture-shape.md). Mirrors the
+    #     v0.1.7 Cycle 3 pattern (layered-skill-architecture.md was
+    #     admitted via the same prefix at workspace-bootstrap's
+    #     seal-fence).
     allowed_prefixes = (
         "plugins/loam-skills/",
         "docs/rebuild/plans/",
+        "docs/design/",
+        "framework/workspace-bootstrap/",
     )
     allowed_files: set[str] = {
         "install-from-source.txt",

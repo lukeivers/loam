@@ -127,7 +127,7 @@ plan: docs/rebuild/plans/v0-2-2-grounding-propagation.md
 plan_doc_ref: docs/rebuild/plans/v0-2-2-grounding-propagation.md
 
 ac_count: 10
-smoke_outcome: "D1+D2+D5+D6 exercised; D3+D4 n/a (one-shot session-start; filesystem-persistence-trivial); 4 AC.OGP.* tests + 6 AC.DBT.* tests; AC.DBT.7 prose-only discipline-note; full-suite green sweep (counts pinned at seal time)"
+smoke_outcome: "D1+D2+D5+D6 exercised; D3+D4 n/a (one-shot session-start); 4 AC.OGP.* + 6 AC.DBT.* tests green; AC.DBT.7 prose-only; full-suite green at seal."
 
 components:
   - name: dev-sdlc

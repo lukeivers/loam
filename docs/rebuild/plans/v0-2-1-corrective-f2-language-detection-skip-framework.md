@@ -101,7 +101,10 @@ Corrective amendment scope is tight (single-line edit to `_walk()` skip-set). Me
 
 ### Commit SHAs
 
-- Amendment commit: `70987e515564a8e1ee7974c995f6ffe0a6fda4ce` —
-  `chore(amend): v0-2-1-corrective-f2-language-detection-skip-framework manifest+apply — workspace-bootstrap BASELINE+sidecar bump to 0efd160`
-- Seal commit: `d82a43bd4411c92bc02c4cbbf0224ce13e7b7613` —
-  `chore(seals): v0-2-1-corrective-f2-language-detection-skip-framework — workspace-bootstrap at 70987e5`
+- Plan-doc commit: `92b970c` — `docs(plans): v0-2-1-corrective-f2-language-detection-skip-framework plan-doc + manifest`
+- Source-edit feat commit (BASELINE): `0efd160` — `fix(workspace-bootstrap): language detection skips framework/ subdir (v0.2.1 corrective F2)`
+- Manifest baseline-pin commit: `5954870` — `docs(plans): pin v0-2-1-corrective-f2 manifest baseline to 0efd160`
+- Amendment apply commit: `70987e5` — `chore(amend): v0-2-1-corrective-f2-language-detection-skip-framework manifest+apply — workspace-bootstrap BASELINE+sidecar bump to 0efd160`
+- Seal commit: `d82a43b` — `chore(seals): v0-2-1-corrective-f2-language-detection-skip-framework — workspace-bootstrap at 70987e5`
+- Auto-backfill commit (loam amend seal --plan-doc): `2520adc` — `docs(plans): record v0-2-1-corrective-f2-language-detection-skip-framework commit SHAs in method-decision register`
+- Manual §14 full-ladder backfill commit: this commit (post-seal follow-up matching F1 corrective's pattern per dispatch direction)

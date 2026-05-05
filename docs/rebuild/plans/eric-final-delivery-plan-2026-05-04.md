@@ -275,7 +275,7 @@ Each release below: theme, concrete bundle (with placement), AI-time band (quali
 - Eric's Rails-specific patterns (e.g., "this Rails concern always pairs with a service object") become workspace-local SKILLs that loam invokes automatically.
 - Eric's domain-specific ratification batches (payment-handling / accounting / Rails-callback-discipline) surface at sane cadence.
 
-### v0.2.1 — Eric-deliverable smoke + onboarding hardening + promotion rubric
+### v0.2.1 — Eric-deliverable smoke + onboarding hardening + promotion rubric — **SHIPPED 2026-05-05** (local; tag deferred)
 
 **Theme.** The release Eric installs.
 
@@ -319,7 +319,7 @@ Each release below: theme, concrete bundle (with placement), AI-time band (quali
 | v0.1.8 | Extractor heavy + Ruby-first-class + 6 SKILLs | 42–66 h | ✓ all 6 dimensions | Contract derivation possible |
 | v0.1.9 | PR-gate + 6 SKILLs | 15–28 h | ✓ all 6 dimensions | Contract enforcement |
 | v0.2.0 | Codebase-watch + auto-creation MVP — **SHIPPED 2026-05-04** (local; tag deferred) | 14–24 h estimate; 2 cycles sealed at `6fef2f1` (Cycle 1; apply `faff84e`) + `549fe88` (Cycle 2; apply `5cb84a5`) | ✓ all 6 dimensions exercised (SOFT gate per Decision R; quality-bar-non-negotiable applies); 754 tests green across 4 affected sealed components; pre-flight v0.1.7 Cycle 3 layered-skill discovery still functional | Contract evolves (Cycle 1 incremental mode keeps v0.1.8 banded contract synced as Eric's code evolves); Eric patterns captured (Cycle 2 auto-skill-capture MVP — 3 triggers MVP; user-ratification gate; cool-down + budget + hard-cap; `enable_auto_skill_capture` flag default false; design note co-shipped) |
-| v0.2.1 | Eric-smoke + onboarding + promotion rubric | 12–22 h | ✓ all 6 dimensions; fresh-user | Eric installs |
+| v0.2.1 | Eric-smoke + onboarding + promotion rubric — **SHIPPED 2026-05-05** (local; tag deferred) | 12–22 h estimate; 3 cycles + 2 correctives; Cycle 1 seal `55640b1`, Cycle 2 seal `298172e`, Cycle 3 verdict YELLOW (F5 dev-mode persists; resolves for Eric via lukeivers/loam push), corrective F1 seal `ad42314`, corrective F2 seal `d82a43b` | YELLOW gate (F1+F2 validated end-to-end on rd-automation; F5 dev-mode persists, resolves via lukeivers/loam:main push) | Eric installs (pending tag-push gate: F5-via-publish + Eric-survey-response received) |
 | **Total** | | **114–189 h** (midpoint ~152 h) | | |
 
 (The total is higher than either source plan because the quality-bar absorption applies to BOTH Eric work AND skills work, the Rails-first-class adder lands at v0.1.8, and skill-ification is interleaved end-to-end.)

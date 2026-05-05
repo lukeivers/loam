@@ -403,7 +403,7 @@ Master-plan-level method decisions. Per-cycle plan-docs author own §14.
 | Dispatch model tier | Sonnet for all 3 cycles | No model-rationale needed; mitigates prior Opus-stall RF. |
 | Quality-bar absorption | 20% (baked into 11–21 h band post single-fixture ruling) | Mirrors v0.1.9 + v0.2.0; recalibrate post-Cycle-3. |
 | Release-level HARD smoke | YES — Cycle 3 per Decision R | THE Eric ship; quality-bar binding. |
-| Release-tag push | Defer until Luke gates Eric install | Standard policy. |
+| Release-tag push | Defer until Luke gates Eric install. Loam/main fast-forward push autonomous-authorized per Luke 2026-05-05 (resolves F5 dev-mode for Eric); tag-push remains gated on F5-via-publish + Eric-survey-response. | Standard policy + post-re-smoke YELLOW gating. |
 
 ### Per-cycle SHA backfill table
 
@@ -411,10 +411,12 @@ Master-plan-level method decisions. Per-cycle plan-docs author own §14.
 |---|---|---|---|
 | Cycle 1 | Eric onboarding ritual hardening | f6b5047 | 55640b1 |
 | Cycle 2 | Promotion rubric mechanism | c48aa68 | 298172e |
-| Cycle 3 | Release-level HARD smoke gate execution | n/a (no canonical commit) | n/a |
-| Release-level smoke | Six-dimension HARD smoke + Eric-path (Path 1 + Path 2) + fresh-user pass | TBD evidence-doc commit on pos3 | n/a |
+| Cycle 3 | Release-level HARD smoke gate execution (smoke-only; original verdict RED) | n/a (no canonical commit) | n/a |
+| Corrective F1 | odd-extractor contract-draft.yaml acs+unhandled_paths | apply `0904064` | seal `ad42314` (§14 backfill `5fea94c`) |
+| Corrective F2 | workspace-bootstrap language-detection framework/ skip | apply `70987e5` | seal `d82a43b` (§14 backfill `686d65c`) |
+| Re-smoke | Post-F1/F2 HARD gate verdict YELLOW (F5 dev-mode persists, resolves via loam push) | evidence at `<pos3>/workspace/.scratch/claude-output/v0-2-1-live-oss-smoke-2026-05-05-rerun.md` | n/a |
 
-Backfilled per cycle as cycles seal. Final v0.2.1 SHIPPED rollup updates STATE.md + v0-1-x-roadmap.md §8 + eric-final-delivery-plan-2026-05-04 §2 v0.2.1 row only AFTER Cycle 3 HARD smoke green + evidence document authored.
+Backfilled per cycle as cycles seal. Final v0.2.1 SHIPPED rollup updates STATE.md + v0-1-x-roadmap.md §8 + eric-final-delivery-plan-2026-05-04 §2 v0.2.1 row after Cycle 3 + correctives F1/F2 + re-smoke verdict YELLOW (F5 resolves for Eric via lukeivers/loam:main fast-forward push, authorized 2026-05-05).
 
 ---
 

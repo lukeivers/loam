@@ -1,0 +1,141 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-1-corrective-f2-language-detection-skip-framework
+  title: "v0.2.1 corrective F2 — language_detection.py walker skips framework/ subdir so loam onboard's Q1 reports the user's app language (not loam's harness internals) on the documented loam-init-then-onboard happy path; 3 named-AC tests + meta-AC for full-suite green"
+
+# BASELINE: <pending> — source-edit feat commit covering
+# language_detection.py _walk() skip-set extension + 2 new test
+# fixtures + 3 named-AC test files under framework/workspace-bootstrap/
+# tests/.
+#
+# Corrective amendment landing the F2 fix surfaced by v0.2.1
+# Cycle 3 HARD smoke (RED). Master plan §3 Cycle 3 + Decision R
+# explicitly authorize "halt + corrective amendment, NOT
+# 'ship-anyway-with-caveats'." This manifest carries the second
+# of three HARD-BLOCK correctives (F1 sealed at ad42314; F5
+# lands via separate dispatch).
+#
+# Commit ladder pre-apply:
+#   eda155c — F1 plan-doc + manifest.
+#   330e66e — F1 source-edit feat (BASELINE for F1).
+#   2e74bbd — F1 manifest baseline-pin.
+#   0904064 — F1 manifest+apply.
+#   ad42314 — F1 seal.
+#   5fea94c — F1 §14 backfill (HEAD).
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 per AC.D-sa.7>
+#
+# Single-component fence — workspace-bootstrap:
+#   - EDIT framework/workspace-bootstrap/src/loam/workspace_bootstrap/
+#     language_detection.py — extend _walk()'s skip-set with
+#     "framework" so cloned-canonical contents inside a
+#     loam-bootstrapped workspace don't leak into language
+#     detection.
+#   - NEW test fixtures under framework/workspace-bootstrap/tests/
+#     fixtures/fresh-user-onboarding/:
+#       synthetic-bootstrapped-jsts/
+#         package.json
+#         tsconfig.json
+#         framework/Gemfile
+#         framework/Gemfile.lock
+#       synthetic-bootstrapped-rails/
+#         Gemfile
+#         config/application.rb
+#         framework/package.json
+#         framework/tsconfig.json
+#   - NEW tests under framework/workspace-bootstrap/tests/:
+#       test_AC_LD_SKIP_FRAMEWORK_1_framework_dir_skipped.py
+#                    — tmp workspace with framework/Gemfile;
+#                      detect_language returns primary="unknown".
+#       test_AC_LD_SKIP_FRAMEWORK_2_bootstrapped_jsts_primary_ts.py
+#                    — synthetic-bootstrapped-jsts fixture →
+#                      primary="ts"; signals exclude Gemfile.
+#       test_AC_LD_SKIP_FRAMEWORK_3_bootstrapped_rails_primary_rails.py
+#                    — synthetic-bootstrapped-rails fixture →
+#                      primary="rails"; signals exclude package.json.
+#   - NO edits to existing AC.ONBOARD.2 tests (additive skip).
+#   - NO edits to other source files in workspace_bootstrap/
+#     (single-file edit; halt-trigger if scope expands by more
+#     than 2 source files per plan-doc §4).
+#
+# AC families locked per plan-doc §2:
+#   AC.LD.SKIP-FRAMEWORK.1 — _walk() skips framework/ subdir.
+#   AC.LD.SKIP-FRAMEWORK.2 — bootstrapped JS/TS → primary="ts".
+#   AC.LD.SKIP-FRAMEWORK.3 — bootstrapped Rails → primary="rails".
+#   AC.LD.SKIP-FRAMEWORK.4 — meta: pre-existing AC.ONBOARD.2 tests
+#                            remain green post-fix.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §1):
+#   D1 cold-state — fresh tmp workspace; new fixture exercises
+#     language_detection from clean state; correct primary
+#     emerges. Verified by AC.LD.SKIP-FRAMEWORK.{1,2,3}.
+#   D2 steady-state — re-running detect_language on same fixture
+#     produces identical LanguageDetection. Verified structurally —
+#     _walk is deterministic; sorted(found) is stable.
+#   D5 cross-session — detect_language is pure / one-shot;
+#     no on-disk state. D5 collapses to D1 for stateless functions
+#     per plugins/dev-sdlc/docs/smoke-test-discipline.md.
+#   D6 telemetry-floor — no audit-log writes from
+#     detect_language; structural n/a.
+#   D3 restart — n/a structurally (stateless function; restart
+#     equivalent is re-call).
+#   D4 reboot — n/a structurally (stateless function; D4
+#     collapses to D5 for one-shot operations).
+#   PLUS: full-suite green sweep — pre-corrective AC.ONBOARD.*
+#     tests at HEAD all pass post-corrective; halt + surface on
+#     any regression. Verified by AC.LD.SKIP-FRAMEWORK.4.
+#
+# Bookkeeping: corrective amendment outside the v0.2.1 Cycle 1/2/3
+# numbered ladder (Cycle 3 was smoke-only; F1 already sealed; F2 is
+# the second of three blocked corrections). Sealed-content invariant:
+# pre-existing AC.ONBOARD.* tests remain green; only one source file
+# edited (language_detection.py); only new test files + new fixture
+# directories added.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "<pending>"
+
+plan: docs/rebuild/plans/v0-2-1-corrective-f2-language-detection-skip-framework.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-2-1-corrective-f2-language-detection-skip-framework.md
+
+ac_count: 4
+smoke_outcome: "D1 exercised on 2 new fixtures (synthetic-bootstrapped-jsts + synthetic-bootstrapped-rails); D2 structural pass (deterministic walk); D3+D4+D5+D6 n/a (stateless function); 3 named-AC tests + meta-AC; full-suite green sweep on framework/workspace-bootstrap/"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent + v0.1.9 Cycle 1 precedent + v0.2.0 Cycle 1
+# precedent + v0.2.1 Cycle 1/2/F1 precedent.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.v0-2-1-corrective-f2-language-detection-skip-framework
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

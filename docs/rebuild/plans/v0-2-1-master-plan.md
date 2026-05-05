@@ -41,13 +41,13 @@ v0.2.1 is **THE Eric ship**. Six prior releases (v0.1.6 → v0.2.0) built the ca
 
 1. **Cycle 1 — Eric onboarding ritual hardening.** PRIMARY `framework/workspace-bootstrap/`. Auto-detect project language; sequence onboarding via PM batch API one-at-a-time per Decision Q; bootstrap production-stake profile + language adapter + Telegram (or CLI fallback) channel; fresh-user-tested ritual.
 2. **Cycle 2 — Promotion rubric mechanism.** PRIMARY `plugins/dev-sdlc/skills/skill-promotion-review/`. 3-signal MVP per Decision L (Categorization + Quality + Conflict primary; Reusability/Tests/Usage secondary). Decision matrix + graduation workflow per layered-skills §4.2/§4.3. Quarterly-trigger via `framework/scope-of-work/`.
-3. **Cycle 3 — Release-level HARD smoke gate execution.** No new component code. Execute Decision R HARD gate against TWO real OSS fixtures (Playwright JS/TS + Rails-payment-shape — see §6 open items). Output: evidence document gating release tag.
+3. **Cycle 3 — Release-level HARD smoke gate execution.** No new component code. Execute Decision R HARD gate against Eric's actual project (`rd-automation`, local stale snapshot at `/Users/lukeivers/cowork-openclaw/_tmp-checkmate/rd-automation/`). Output: evidence document gating release tag.
 
-**AI-time band.** **12–22 h** per parent §2, midpoint ~17 h. Cycle 1: **5–9 h**. Cycle 2: **4–8 h**. Cycle 3: **3–5 h**. 20% quality-bar absorption baked in.
+**AI-time band.** **11–21 h** per parent §2 (revised post single-fixture ruling), midpoint ~16 h. Cycle 1: **5–9 h**. Cycle 2: **4–8 h**. Cycle 3: **2–4 h**. 20% quality-bar absorption baked in.
 
 **Dependencies.** Cycle 3 depends on Cycle 1 + Cycle 2 sealed. All prior versions exercised by HARD smoke.
 
-**What closes the release.** All 6 smoke dimensions exercised end-to-end on **two real OSS fixtures**. Onboarding fresh-user-tested with anyone-but-Luke. One-question-at-a-time enforced via PM end-to-end. Auto-skill-capture MVP fires on real recurring pattern. Continuous-watch detects synthetic external commit. Promotion rubric SKILL discoverable + invokable. Install docs (general + production-stake) authored + tested. SOC-2 audit-trail floor satisfied. If any feature ships partial, halt + surface BEFORE proceeding.
+**What closes the release.** All 6 smoke dimensions exercised end-to-end on **Eric's `rd-automation` (single fixture)**. Onboarding fresh-user-tested with anyone-but-Luke. One-question-at-a-time enforced via PM end-to-end. Auto-skill-capture MVP fires on real recurring pattern. Continuous-watch detects synthetic external commit. Promotion rubric SKILL discoverable + invokable. Install docs (general + production-stake) authored + tested. SOC-2 audit-trail floor satisfied. If any feature ships partial, halt + surface BEFORE proceeding.
 
 ---
 
@@ -165,7 +165,7 @@ Three cycles, each: theme, fence, AC family seed, smoke dimensions, dependencies
 
 ### Cycle 3 — Release-level HARD smoke gate execution
 
-**Theme.** No new component code. Execute Decision R HARD gate against TWO real OSS fixtures. Artefact gating release tag.
+**Theme.** No new component code. Execute Decision R HARD gate against Eric's actual `rd-automation` codebase (single fixture). Artefact gating release tag.
 
 **Scope-tightening.** Cycle 1 + Cycle 2 ship code. Cycle 3 EXECUTES the gate proving end-to-end works on someone-else's-codebase. Strictly tighter — no code edits, only smoke + evidence document + halt-and-surface.
 
@@ -173,33 +173,32 @@ Three cycles, each: theme, fence, AC family seed, smoke dimensions, dependencies
 
 **AC family: AC.HARDSMOKE.\***
 
-- **AC.HARDSMOKE.1** — Two OSS fixtures cloned to `<pos3>/workspace/.scratch/oss-fixtures/` (NOT canonical). Specific repos at §6 open items #1+#2.
+- **AC.HARDSMOKE.1** — Fixture is Eric's `rd-automation` at the existing local path `/Users/lukeivers/cowork-openclaw/_tmp-checkmate/rd-automation/` (NOT cloned to pos3 scratch — already on disk; private repo, owner's access revoked). Fixture HEAD SHA captured in evidence document.
 - **AC.HARDSMOKE.2** — D1 cold-state on JS/TS fixture: `loam init` → banded contract above floor (≥3 VERIFIED + ≥5 PLAUSIBLE + ≥2 HYPOTHESISED per v0.1.8 floor); JS/TS adapter recognises Express/Playwright/page-objects/TS-types/Zod/class-validator/Jest-Mocha-Vitest idioms.
-- **AC.HARDSMOKE.3** — D1 cold-state on Rails fixture: same shape; Ruby adapter recognises ActiveRecord/callbacks/concerns/polymorphic/ActiveJob-Sidekiq/RSpec idioms.
-- **AC.HARDSMOKE.4** — PR-safety gate detects synthetic violations on both fixtures (delete a method tied to extracted VERIFIED AC) → hard-block + provenance-traceable PR description per v0.1.9 Cycle 1 + Cycle 2.
-- **AC.HARDSMOKE.5** — Auto-skill-creation MVP fires on real recurring pattern (3+ instances) → proposal in PM → ratify → SKILL materialises → auto-loads next turn. End-to-end path.
-- **AC.HARDSMOKE.6** — Continuous-watch detects synthetic external commit modifying code tied to extracted AC → PM proposal → ratify → contract updates. Composes with v0.2.0 Cycle 1.
-- **AC.HARDSMOKE.7** — Onboarding fresh-user-tested with anyone-but-Luke per Decision Q reasoning + parent §6.4 mitigation. Pass criterion: ≤10 min completion + "feels intentional" verbatim.
-- **AC.HARDSMOKE.8** — Promotion rubric SKILL invokable on real workspace post-AC.HARDSMOKE.5: 3-signal evaluation table → recommendations → synthetic Y for one promotion → SKILL graduates (rolled back post-smoke to avoid plugin-tree pollution).
-- **AC.HARDSMOKE.9** — D2 steady-state across all surfaces (extract / gate / skill-capture / promotion-review): re-run idempotent.
-- **AC.HARDSMOKE.10** — D3 restart: mid-extraction + mid-onboarding `kill -TERM` → re-invoke clean.
-- **AC.HARDSMOKE.11** — D4 reboot: macOS reboot equivalent; post-reboot state survives (contract / ratified SKILLs / audit-log / profile config).
-- **AC.HARDSMOKE.12** — D5 cross-session (most-load-bearing per STATE.md): Session A onboards + ratifies + extracts; Session B persona auto-loads ratified SKILL + reads contract + gate fires + promotion-review walks correctly.
-- **AC.HARDSMOKE.13** — D6 telemetry-floor: audit-log per onboarding question + extraction + gate decision + skill-capture trigger + ratification + promotion-review walk + promotion ratification.
-- **AC.HARDSMOKE.14** — Live-OSS-smoke evidence document at `<pos3>/workspace/.scratch/claude-output/v0-2-1-live-oss-smoke-2026-05-04.md` covering: fixture identification (commits cloned); per-AC.HARDSMOKE evidence (pass/fail + command output excerpts); fresh-user feedback verbatim; halt-and-surface findings; release-tag recommendation. IS the gating artefact.
-- **AC.HARDSMOKE.15** — One-question-at-a-time enforced end-to-end across onboarding + extractor ratification + watch ratification + skill-capture ratification + promotion-review ratification. No question-bombing observed.
+- **AC.HARDSMOKE.3** — PR-safety gate detects synthetic violations on `rd-automation` (delete a method tied to extracted VERIFIED AC) → hard-block + provenance-traceable PR description per v0.1.9 Cycle 1 + Cycle 2.
+- **AC.HARDSMOKE.4** — Auto-skill-creation MVP fires on real recurring pattern (3+ instances) → proposal in PM → ratify → SKILL materialises → auto-loads next turn. End-to-end path.
+- **AC.HARDSMOKE.5** — Continuous-watch detects synthetic external commit modifying code tied to extracted AC → PM proposal → ratify → contract updates. Composes with v0.2.0 Cycle 1.
+- **AC.HARDSMOKE.6** — Onboarding fresh-user-tested with anyone-but-Luke per Decision Q reasoning + parent §6.4 mitigation. Pass criterion: ≤10 min completion + "feels intentional" verbatim.
+- **AC.HARDSMOKE.7** — Promotion rubric SKILL invokable on real workspace post-AC.HARDSMOKE.4: 3-signal evaluation table → recommendations → synthetic Y for one promotion → SKILL graduates (rolled back post-smoke to avoid plugin-tree pollution).
+- **AC.HARDSMOKE.8** — D2 steady-state across all surfaces (extract / gate / skill-capture / promotion-review): re-run idempotent.
+- **AC.HARDSMOKE.9** — D3 restart: mid-extraction + mid-onboarding `kill -TERM` → re-invoke clean.
+- **AC.HARDSMOKE.10** — D4 reboot: macOS reboot equivalent; post-reboot state survives (contract / ratified SKILLs / audit-log / profile config).
+- **AC.HARDSMOKE.11** — D5 cross-session (most-load-bearing per STATE.md): Session A onboards + ratifies + extracts; Session B persona auto-loads ratified SKILL + reads contract + gate fires + promotion-review walks correctly.
+- **AC.HARDSMOKE.12** — D6 telemetry-floor: audit-log per onboarding question + extraction + gate decision + skill-capture trigger + ratification + promotion-review walk + promotion ratification.
+- **AC.HARDSMOKE.13** — Live-OSS-smoke evidence document at `<pos3>/workspace/.scratch/claude-output/v0-2-1-live-oss-smoke-2026-05-04.md` covering: fixture identification (rd-automation local-path + HEAD SHA at smoke time); per-AC.HARDSMOKE evidence (pass/fail + command output excerpts); fresh-user feedback verbatim; halt-and-surface findings; release-tag recommendation. IS the gating artefact.
+- **AC.HARDSMOKE.14** — One-question-at-a-time enforced end-to-end across onboarding + extractor ratification + watch ratification + skill-capture ratification + promotion-review ratification. No question-bombing observed.
 
-**Smoke dimensions.** All 6 exercised explicitly per AC.HARDSMOKE.2/3 (D1) + .9 (D2) + .10 (D3) + .11 (D4) + .12 (D5) + .13 (D6).
+**Smoke dimensions.** All 6 exercised explicitly per AC.HARDSMOKE.2 (D1) + .8 (D2) + .9 (D3) + .10 (D4) + .11 (D5) + .12 (D6).
 
 **Dependencies.** Cycle 1 + Cycle 2 sealed. ANY prior version broken under real-OSS-fixture conditions surfaces here.
 
 **Out-of-scope.** Eric himself running smoke (post-Eric-go-live). Multi-fixture concurrent smoke. Smoke against Eric's actual codebase (deferred to first install). "Ship anyway with caveats" — corrective amendment instead.
 
-**AI-time band.** **3–5 h**. Wall-clock ~15–30 min if all green; up to ~60 min on findings. No new code.
+**AI-time band.** **2–4 h**. Wall-clock ~10–25 min if all green; up to ~45 min on findings. Single fixture; no new code.
 
 **Eric-relevance.** Proves to Luke (and Eric, post-hoc) the system works on real code. Without Cycle 3, Eric is the first real-codebase user — too risky for a quality-bar release.
 
-**Quality-bar audit.** HARD gate per Decision R. Two real OSS fixtures. Fresh-user-tested. End-to-end path exercised. Halt-and-surface on ANY breakage; no "ship anyway." **No partial features.** ✓
+**Quality-bar audit.** HARD gate per Decision R. Single fixture (Eric's `rd-automation`). Fresh-user-tested. End-to-end path exercised. Halt-and-surface on ANY breakage; no "ship anyway." **No partial features.** ✓
 
 ---
 
@@ -208,7 +207,7 @@ Three cycles, each: theme, fence, AC family seed, smoke dimensions, dependencies
 Per Lens 5: decompose until each subtask's AC strictly tighter than parent; stop when split adds only coordination overhead.
 
 - Three cycles each strictly tighter than v0.2.1 parent.
-- Considered + rejected: split Cycle 1 onboarding into 6 sub-cycles (share fence + PM-mediation; redundant scaffolding); split Cycle 2 SKILL from quarterly-trigger (thin dependency; no AC tightening); split Cycle 3 per-fixture (sequential clone+execute; no parallelism gain); fold Cycle 3 into Cycle 1+2 tails (release-level smoke is integration-level + has its own AC family per ODD §2.5).
+- Considered + rejected: split Cycle 1 onboarding into 6 sub-cycles (share fence + PM-mediation; redundant scaffolding); split Cycle 2 SKILL from quarterly-trigger (thin dependency; no AC tightening); fold Cycle 3 into Cycle 1+2 tails (release-level smoke is integration-level + has its own AC family per ODD §2.5).
 - Cycle count: 3 ∈ [2, 3] (parent halt-trigger range, upper edge); no cleaner 2-cycle option.
 
 ---
@@ -276,13 +275,13 @@ Smoke-execution dispatch (NO new component code). Output: `<pos3>/workspace/.scr
 
 Principles: same as Cycle 1 + Cycle 2 + RUTHLESS-FEEDBACK on every smoke result (no rationalising near-passes as passes).
 
-Quality bar: HARD gate per Decision R. TWO real OSS fixtures (Luke ruled at §6 open items #1+#2). All 6 dimensions end-to-end on both. Fresh-user-tested onboarding. Halt-and-surface on ANY breakage; no "ship anyway with caveats." THE Eric ship — release tag deferred until smoke green.
+Quality bar: HARD gate per Decision R. Single fixture: Eric's `rd-automation` (Luke ruled 2026-05-05). All 6 dimensions end-to-end on rd-automation. Fresh-user-tested onboarding. Halt-and-surface on ANY breakage; no "ship anyway with caveats." THE Eric ship — release tag deferred until smoke green.
 
 Source pointers: master plan §3 Cycle 3 + §5; Eric synthesis §2 v0.2.1 (line 289 live OSS smoke); Decision R; v0.1.6 / v0.1.7 / v0.1.8 / v0.1.9 / v0.2.0 SHAs (per master plan §8); v0.2.1 Cycle 1 + Cycle 2 SHAs backfilled post-seal; smoke discipline; STATE.md (D5 cross-session is THE ship-test).
 
 Fence + ACs + smoke + AI-time + out-of-scope: per master plan §3 Cycle 3.
 
-Halt triggers: WD drifts; OSS fixtures not yet ruled at §6; Cycle 1 OR Cycle 2 not sealed; fresh-user not available within reasonable window (escalate — async fallback); ANY AC.HARDSMOKE.* fails (halt + corrective amendment, NOT "ship with caveats"); D5 cross-session fails (THE ship-test — halt); audit-log floor missing on real fixture (Decision P violation — halt); cycle >6 h wall-clock no progress; ODD violations in prior-shipped surface (halt + RF); >3 escalations needed.
+Halt triggers: WD drifts; OSS fixtures (resolved — single fixture: rd-automation); Cycle 1 OR Cycle 2 not sealed; fresh-user not available within reasonable window (escalate — async fallback); ANY AC.HARDSMOKE.* fails (halt + corrective amendment, NOT "ship with caveats"); D5 cross-session fails (THE ship-test — halt); audit-log floor missing on real fixture (Decision P violation — halt); cycle >6 h wall-clock no progress; ODD violations in prior-shipped surface (halt + RF); >3 escalations needed.
 
 Bookkeeping: NO new component commits expected. Evidence document at pos3 scratch (workspace-local; NOT canonical commit). On smoke-green: dispatcher creates v0.2.1 SHIPPED rollup commit on canonical — backfills STATE.md + roadmap §8 + eric-final-delivery §2 v0.2.1 row with Cycle 1 + Cycle 2 SHAs + SHIPPED status. Tag deferred until Luke gates.
 
@@ -297,30 +296,36 @@ HARD gate per Decision R (HARD at v0.1.6 / v0.1.8 / v0.2.1; SOFT elsewhere). Qua
 
 After Cycle 1 + Cycle 2 seal, Cycle 3 build agent runs:
 
-1. **D1 cold-state on TWO real OSS fixtures** (not synthetic in-tree). Per fixture: `loam init` → 6-question onboarding sequenced cleanly → extractor produces banded contract above v0.1.8 floor → audit-log entries observable.
+1. **D1 cold-state on Eric's `rd-automation`** (not synthetic in-tree). The fixture: `loam init` → 6-question onboarding sequenced cleanly → extractor produces banded contract above v0.1.8 floor → audit-log entries observable.
 2. **D2 steady-state.** Re-run extract/gate/skill-capture/promotion-review on unchanged → idempotent.
 3. **D3 restart.** Mid-extraction + mid-onboarding `kill -TERM` → re-invoke clean.
 4. **D4 reboot.** macOS reboot equivalent. Post-reboot: contract / ratified SKILLs / audit-log / profile config survive.
 5. **D5 cross-session (most-load-bearing per STATE.md).** Session A onboards + ratifies + extracts. Session B persona auto-loads ratified SKILL + reads contract + gate fires + promotion-review walks correctly.
 6. **D6 telemetry-floor.** Audit-log per onboarding Q + extraction + gate decision + skill-capture trigger + ratification + promotion-review walk + promotion ratification.
 
-**End-to-end Eric-path smoke (per fixture).** (A) `loam init` → 6 questions one-at-a-time → production-stake activated → extractor opt-in → continuous-watch opt-in → auto-skill-capture deferred-default-no → completion summary. (B) Banded contract on real OSS code above floor + audit-log per stage. (C) Synthetic PR breaks VERIFIED AC → gate hard-blocks + provenance PR description. (D) Synthetic recurring pattern → auto-skill-capture trigger → PM proposal → ratify → SKILL materialises → auto-loads. (E) Synthetic external commit → continuous-watch detects → PM proposal → ratify → contract updates. (F) `/skill-promotion-review` walks workspace → 3-signal evaluation → recommendations → synthetic Y for one promotion → SKILL graduates (rolled back post-smoke).
+**End-to-end Eric-path smoke.** (A) `loam init` → 6 questions one-at-a-time → production-stake activated → extractor opt-in → continuous-watch opt-in → auto-skill-capture deferred-default-no → completion summary. (B) Banded contract on real OSS code above floor + audit-log per stage. (C) Synthetic PR breaks VERIFIED AC → gate hard-blocks + provenance PR description. (D) Synthetic recurring pattern → auto-skill-capture trigger → PM proposal → ratify → SKILL materialises → auto-loads. (E) Synthetic external commit → continuous-watch detects → PM proposal → ratify → contract updates. (F) `/skill-promotion-review` walks workspace → 3-signal evaluation → recommendations → synthetic Y for one promotion → SKILL graduates (rolled back post-smoke).
 
-**Fresh-user smoke (AC.HARDSMOKE.7).** Anyone-but-Luke runs onboarding on either fixture. Pass criterion: ≤10 min without halting + "feels intentional" verbatim.
+**Fresh-user smoke (AC.HARDSMOKE.6).** Anyone-but-Luke runs onboarding on rd-automation. Pass criterion: ≤10 min without halting + "feels intentional" verbatim.
 
-**Gate to v0.2.1 release tag.** All 6 dimensions green on both fixtures + fresh-user pass + evidence document authored → dispatcher creates v0.2.1 SHIPPED rollup commit + `git tag v0.2.1` (DO NOT push until Luke gates Eric install).
+**Gate to v0.2.1 release tag.** All 6 dimensions green on rd-automation + Eric-survey-response received and reflected in install-config defaults + evidence document authored → dispatcher creates v0.2.1 SHIPPED rollup commit + `git tag v0.2.1` (DO NOT push until Luke gates Eric install).
 
 ---
 
-## §6 — Open items for Luke
+## §6 — Open items for Luke (RESOLVED 2026-05-05)
 
-Three items max per parent dispatch. Architectural / context calls only.
+All three items resolved by owner ruling 2026-05-05. Resolution notes preserved below for traceability.
 
-1. **OSS fixture — Rails-payment-shape (Cycle 3).** Three candidates: (a) **Solidus** (`solidusio/solidus`) — actively-maintained Rails commerce; medium-size; payment-rich. (b) **Spree** (`spree/spree`) — older platform; large codebase. (c) **jumpstart-pro shape** (e.g., `bullettrain-co/bullet_train`) — closer to "real SaaS app." *Recommendation:* **Solidus** — actively-maintained, medium-size for fast smoke, payment-rich (Eric-relevant). Halt-fallback: switch to smaller Rails app if Solidus too large for sub-60-min smoke. *Criticality:* medium. Luke rules OR delegates to Cycle 3 halt-trigger.
+### §6.1 — OSS fixture (Rails-payment-shape) — RESOLVED: dropped
 
-2. **OSS fixture — Playwright JS/TS (Cycle 3).** Two candidates: (a) `microsoft/playwright` itself — Playwright source; very large. (b) Small Playwright-using OSS app (community examples or small public e2e repo). *Recommendation:* **A small Playwright-using app** for sub-30-min smoke. Specific repo TBD — Luke rules OR Cycle 3 halt-and-surface. *Criticality:* medium.
+Eric is JS/TS only for v0.2.1. Rails fixture not needed. Solidus held in FIDRAFT for whenever Rails work re-engages.
 
-3. **Eric pre-call (Decision S re-surface).** Parent §3 Decision S recommended a 30-min Eric pre-call BEFORE v0.1.7 plan-author work. v0.1.6 → v0.2.0 SHIPPED without it. v0.2.1 is THE Eric ship; assumptions in Cycle 1 (Rails = production-stake default; Telegram preferred channel; SOC-2-only no PCI-DSS/HIPAA; payment-handling domain) become load-bearing on real install. *Recommendation:* **Yes — strongly recommend a 30-min Eric call BEFORE v0.2.1 release-tag push.** Topics: Rails+Ruby version; SOC-2 control-set deltas; channel; domain; onboarding cadence; authority bounds. *Criticality:* high — Eric-specific assumptions un-verifiable without him become load-bearing on real install. Mitigation if unavailable: ship v0.2.1 anyway (assumptions in install docs); first-Eric-install surfaces deltas as corrective amendments.
+### §6.2 — OSS fixture (Playwright JS/TS) — RESOLVED: rd-automation single-fixture
+
+Owner ruled 2026-05-05: smoke against Eric's actual project, `rd-automation`. Local stale snapshot at `/Users/lukeivers/cowork-openclaw/_tmp-checkmate/rd-automation/` (commit dated 2026-03-25; owner's GH access revoked, fetch fails). Single-fixture; the public-OSS landscape research surfaced no real-app-shape candidate, and rd-automation is strictly the more relevant target. Profile: TypeScript 5.7, Playwright 1.50, Express 4.21, AWS SDK (S3/CloudWatch/ECS); 2.7 MB / 81 files / ~17.7k LOC; tests `dd_dispute.spec.ts`, `uber_dispute.spec.ts`, `uber.spec.ts`; README + LOCAL_SETUP_GUIDE.md exist. Public-OSS fixture-research report at `/Users/lukeivers/pos3/workspace/.scratch/claude-output/v0-2-1-playwright-fixture-candidates.md`.
+
+### §6.3 — Eric pre-call (Decision S) — RESOLVED: async Claude-Code-survey
+
+Owner ruled 2026-05-05: live call replaced by async Claude-Code-pasteable onboarding survey. Eric receives prompt → pastes into Claude Code → walks 12 questions one-at-a-time → writes `~/loam-onboarding-eric-<date>.md` → sends file back. Owner is courier. Survey artefact at `/Users/lukeivers/pos3/workspace/.scratch/claude-output/eric-onboarding-prompt-2026-05-05.md`. Companion live-walk-mode question list at `/Users/lukeivers/pos3/workspace/.scratch/claude-output/eric-onboarding-questions-call-mode-2026-05-05.md` (owner reference only). Question set: 8 required (stack versions / Playwright shape / app purpose / production-stake / SOC-2 controls / authority bounds / channel / codebase shape) + 4 optional (existing tooling / off-limits zones / first task / pain points). Eric's responses populate the v0.2.1 install-config defaults.
 
 (No other escalations — Decisions L / G / Q / R RESOLVED at parent §3.)
 
@@ -340,15 +345,15 @@ The places this decomposition is least confident.
 
 **7.5 — 3-signal MVP may produce too-loose recommendations.** Without Reusability/Tests/Usage as gates, may recommend promotions that lack reuse evidence. *Mitigation:* secondary signals discussed in body (not blocking); owner-default-to-no per Decision G is ultimate gate; v0.2.x layers in.
 
-**7.6 — Cycle 3 OSS fixture clone may pollute canonical-tree state.** *Mitigation:* clone to `<pos3>/workspace/.scratch/oss-fixtures/` (outside canonical); evidence document cites commit SHAs + path explicitly.
+**7.6 — Cycle 3 OSS fixture clone may pollute canonical-tree state.** Narrowed post single-fixture ruling: rd-automation already on disk at non-canonical path `/Users/lukeivers/cowork-openclaw/_tmp-checkmate/rd-automation/` — no clone, no pollution risk. *Mitigation (now trivial):* evidence document cites local-path + HEAD SHA explicitly.
 
-**7.7 — Fresh-user availability may delay Cycle 3.** *Mitigation:* escalate halt-trigger; async fallback (transcript); worst-case fallback (synthetic fresh-user simulation with explicit weaker-evidence RF).
+**7.7 — Fresh-user availability may delay Cycle 3.** Restructured post async-survey ruling: async-survey-via-Eric replaces fresh-user-with-Luke. *Mitigation:* if Eric is slow to return survey, Cycle 3 still runs against rd-automation with default-derived install-config; Eric's responses retrofit defaults post-survey. Halt-trigger only if survey returns evidence Cycle 3 ran on materially-wrong defaults.
 
-**7.8 — HARD smoke may surface real breakage from prior versions.** v0.1.6 → v0.2.0 shipped on synthetic; real-OSS may break paths. *Mitigation:* corrective amendments per `feedback_audit_finding_triage`; ANY breakage halts + surfaces; SHIPPED rollup waits on amendments green.
+**7.8 — HARD smoke may surface real breakage from prior versions.** v0.1.6 → v0.2.0 shipped on synthetic; real-OSS may break paths. Narrowing the fixture set narrows the surface (single fixture vs two), but the failure mode persists. *Mitigation:* corrective amendments per `feedback_audit_finding_triage`; ANY breakage halts + surfaces; SHIPPED rollup waits on amendments green.
 
-**7.9 — Cycle 3 AI-time band (3–5 h) may be optimistic.** Real-OSS clone + 6-dim per fixture + evidence + halt-and-surface could push to 8+ h. *Mitigation:* log actuals; halt-trigger at >6 h wall-clock.
+**7.9 — Cycle 3 AI-time band (2–4 h) may be optimistic.** Single-fixture cuts the band relative to original 3–5 h estimate. Real-OSS + 6-dim + evidence + halt-and-surface could still push past upper bound on findings. *Mitigation:* log actuals; halt-trigger at >6 h wall-clock.
 
-**7.10 — Decision S Eric pre-call deferral may bite hard.** v0.1.6 → v0.2.0 deferred; v0.2.1 install-time may surface assumptions Luke can't fix. *Mitigation:* open item #3 strongly recommends pre-call BEFORE release-tag push; even async exchange surfaces deltas earlier than first-install.
+**7.10 — Decision S Eric pre-call deferral may bite hard.** Replaced post async-survey ruling: pre-call deferral resolved by async Claude-Code-survey (12 questions; §6.3). *Residual risk:* whether 12 written questions surface as much as a 30-min synchronous interaction would. Honestly noted — written-Q-via-courier loses follow-up dynamics, body language, and ad-hoc clarification. *Mitigation:* survey question set is intentionally broad (8 required + 4 optional) to compensate; if Eric's responses surface unanswered deltas, escalate to async follow-up before release-tag push.
 
 ---
 
@@ -385,17 +390,18 @@ Master-plan-level method decisions. Per-cycle plan-docs author own §14.
 | Cycle 2 MVP signals | 3 primary (Categorization + Quality + Conflict); 3 secondary discussed not blocking | Decision L. Mitigates 7.5. |
 | Cycle 2 owner-ratification | PM batch API; default-to-no | Decision G; mirrors Eric Decision I. |
 | Cycle 2 quarterly-trigger | scope-of-work integration; halt-and-surface if non-trivial; on-demand fallback | Mitigates 7.4. |
-| Cycle 3 fence | Read-only; no new code | Mitigates 7.6 — clone outside canonical. |
-| Cycle 3 OSS fixture count | 2 (Playwright JS/TS + Rails-payment-shape) | Decision R; specific repos at §6. |
+| Cycle 3 fence | Read-only; no new code | rd-automation already at non-canonical path; no clone needed. Mitigates 7.6. |
+| Cycle 3 OSS fixture count | 1 (rd-automation, Eric's actual project) | Owner ruled 2026-05-05; single-fixture; profile per §6.2. |
 | Cycle 3 fresh-user test | Anyone-but-Luke; ≤10 min + "feels intentional" verbatim | Decision Q + parent §6.4. Mitigates 7.7. |
 | Cycle 3 evidence document | `<pos3>/workspace/.scratch/claude-output/v0-2-1-live-oss-smoke-2026-05-04.md` | Mitigates 7.6. |
 | Halt-on-breakage policy | Halt + corrective amendment; NO "ship with caveats" | Decision R + quality bar. Mitigates 7.8. |
-| Eric pre-call (Decision S) | Strongly recommend BEFORE release-tag push | Open item #3. Mitigates 7.10. |
+| Eric pre-call (Decision S) | RESOLVED — async Claude-Code-survey replaces live call (per Luke 2026-05-05) | §6.3. Mitigates 7.10. |
+| v0.2.1 fixture | rd-automation single (private; local stale snapshot 2026-03-25) | Owner ruled 2026-05-05; public-OSS landscape lacks real-app-shape candidate. |
 | SKILL frontmatter shape | `description`-only (no `name`) | Mirrors 20+ sealed SKILLs. |
 | SKILL body section ordering | What / When / How / Graceful degradation / Composition / Out of scope | Verified across 20+ sealed. |
 | Test file granularity | One per AC (~10–15 per cycle) | Mirrors dev-sdlc convention. |
 | Dispatch model tier | Sonnet for all 3 cycles | No model-rationale needed; mitigates prior Opus-stall RF. |
-| Quality-bar absorption | 20% (baked into 12–22 h band) | Mirrors v0.1.9 + v0.2.0; recalibrate post-Cycle-3. |
+| Quality-bar absorption | 20% (baked into 11–21 h band post single-fixture ruling) | Mirrors v0.1.9 + v0.2.0; recalibrate post-Cycle-3. |
 | Release-level HARD smoke | YES — Cycle 3 per Decision R | THE Eric ship; quality-bar binding. |
 | Release-tag push | Defer until Luke gates Eric install | Standard policy. |
 

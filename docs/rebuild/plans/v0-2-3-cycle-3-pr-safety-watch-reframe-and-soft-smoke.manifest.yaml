@@ -1,0 +1,295 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke
+  title: "v0.2.3 Cycle 3 — PR-safety + continuous-watch reframe at objective altitude + release SOFT smoke; pr-safety reads objectives.yaml + backing-map.yaml directly; classifier consumes BackingMap.entries; gate decision matrix preserved at altitude (V→HARD_BLOCK; P→SURFACE_DECISION; H→DOCS_ONLY; pre-emption preserved); override flow carries original_objectives + proposed_objectives; PR description template renders objective text; watch incremental engine consults backing-map for OutOfDateObjective + OrphanedObjective; legacy `acs:` consumers retired per master plan §6.2; SOFT smoke runs end-to-end on canonical jsts-playwright-app fixture; two-component fence (pr-safety + odd-extractor) under shared dev-sdlc parent with single seal"
+
+# BASELINE: <pending> — source-edit feat commit covering:
+#   - pr-safety {contract,classifier,gate,override,spec,audit,cli,
+#     templates/pr/}.py reshape (objectives + backing-map consumer-swap;
+#     TouchedObjective + NovelDiff replace TouchedAC + CandidateAC;
+#     decision matrix preserved at altitude; override flow reshape;
+#     PR description template reshape with AC.* IDs removed)
+#   - odd-extractor {diff_classifier,proposals,incremental,
+#     incremental_ratify,domain_batching,generate,verify,
+#     observability}.py reshape (classify_evidence consumes prior_
+#     objectives + prior_backing_map; OutOfDateObjective +
+#     OrphanedObjective replace OutOfDateAC + OrphanedAC;
+#     IncrementalProposal carries objective_id + Cycle 1 evidence;
+#     domain_batching groups by O.<domain>.<n>; legacy `acs:` retire
+#     in generate.py + verify.py)
+#   - per-AC tests (6 PRGATE + 5 WATCHOBJ + 3 RELSMOKE = 14) +
+#     full integration smoke against canonical jsts-playwright-app fixture
+#   - audit-log payload extensions (additive only; no schema-version bump)
+#
+# Cycle 3 is the third + final cycle in v0.2.3. After this cycle's
+# seal + SOFT smoke green, the v0.2.3 SHIPPED rollup commit lands on
+# canonical, backfilling STATE.md + roadmap §8 + odd-rebuild master
+# plan §3 v0.2.3 row + master plan §9 per-cycle SHA register. Tag
+# is set on the rollup commit but NOT pushed until v0.2.5 ship gate
+# per parent master plan §3 v0.2.5 (Eric ship paused per Luke
+# 2026-05-05).
+#
+# Commit ladder pre-apply:
+#   ada74e1 — v0.2.2 grounding propagation apply.
+#   5eda09d — v0.2.2 seal.
+#   ebca7dc — v0.2.2 §14 backfill.
+#   35155fd — v0.2.3 master plan + cycle decomposition.
+#   1e20037 — v0.2.3 Cycle 1 manifest+apply.
+#   9b9f87c — v0.2.3 Cycle 1 seal.
+#   66de327 — v0.2.3 Cycle 1 §14 backfill.
+#   914809d — v0.2.3 master plan §9 Cycle 1 SHA backfill.
+#   716da0a — v0.2.3 Cycle 2 manifest+apply.
+#   857749c — v0.2.3 Cycle 2 seal.
+#   5a6ddd2 — v0.2.3 Cycle 2 §14 backfill.
+#   06779c4 — v0.2.3 master plan §9 Cycle 2 SHA backfill.
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §9
+#    Cycle 3 SHA row per AC.D-sa.7>
+#   <v0.2.3 SHIPPED rollup commit AFTER seal + SOFT smoke green;
+#    updates STATE.md + roadmap §8 + odd-rebuild master plan §3
+#    v0.2.3 row + master plan §9 register; tag deferred>
+#
+# Two-component fence under shared dev-sdlc parent:
+#   - PRIMARY edits to plugins/dev-sdlc/pr-safety/src/loam_pr_safety/:
+#       contract.py     — read_contract swaps source files (reads
+#                          objectives.yaml + backing-map.yaml from
+#                          Cycles 1+2 outputs; legacy contract-draft.
+#                          yaml.acs: retired per master plan §6.2);
+#                          overlay composition reshapes to operate on
+#                          Objective rows.
+#       classifier.py   — classify consumes contract.backing_map.
+#                          entries; line-overlap helpers preserved;
+#                          novel detection logic preserved structurally.
+#       gate.py         — decide consumes ClassificationResult.
+#                          touched_objectives; pre-emption order
+#                          (HARD_BLOCK > SURFACE_DECISION > DOCS_ONLY
+#                          > PASS) preserved verbatim per v0.1.9
+#                          AC.PRSG.4; production-stake honour preserved
+#                          per v0.1.9 AC.PRSG.8.
+#       override.py     — build_override_request reshape; VERIFIED-
+#                          objective-touched conversion preserves
+#                          objective_id + text + domain + evidence;
+#                          novel-diff records audit-only at this cycle
+#                          (v0.2.4 gap-analysis owns objective creation).
+#       spec.py         — BandedContract carries objectives +
+#                          backing_map (typed from loam_odd_extractor.
+#                          spec); TouchedObjective + NovelDiff replace
+#                          TouchedAC + CandidateAC; ClassificationResult
+#                          + OverrideRequest fields rename.
+#       audit.py        — gate_decision_recorded payload extends
+#                          additively (objective_ids_touched +
+#                          objective_bands_touched + backing_rows_
+#                          overlapped + existing fields); no schema-
+#                          version bump.
+#       cli.py          — flag + arg surface unchanged; internal call
+#                          sites swap to objective-altitude types.
+#       templates/pr/pr_description.md.template — sections reshape:
+#                                                 Touched objectives
+#                                                 (per-objective:
+#                                                 objective_id + band
+#                                                 + text + domain +
+#                                                 backing rows path:line)
+#                                                 + Novel diff +
+#                                                 Override audit trail;
+#                                                 AC.* IDs removed.
+#   - SECONDARY edits to plugins/dev-sdlc/odd-extractor/src/
+#     loam_odd_extractor/:
+#       diff_classifier.py     — classify_evidence signature reshapes
+#                                  (consumes prior_objectives + prior_
+#                                  backing_map); OutOfDateObjective +
+#                                  OrphanedObjective dataclasses
+#                                  replace OutOfDateAC + OrphanedAC;
+#                                  helpers _git_log_range + line-
+#                                  citation regex preserved.
+#       proposals.py            — IncrementalProposal dataclass (new)
+#                                  parallel to v0.2.0 Proposal;
+#                                  IncrementalProposalSet.proposals
+#                                  reshape; v0.2.0 Proposal preserved
+#                                  for legacy callers.
+#       incremental.py          — run_incremental reads objectives.yaml
+#                                  + backing-map.yaml; IncrementalRun
+#                                  Result.classification reshapes;
+#                                  production-stake refusal preserved
+#                                  per v0.2.0 F2 RF gap #6 (sidecar
+#                                  never-mutated invariant).
+#       incremental_ratify.py   — enqueue_incremental_proposals accepts
+#                                  IncrementalProposal; PM-side schema
+#                                  unchanged (provenance carries
+#                                  altitude tag).
+#       domain_batching.py      — group_proposals_by_domain parses
+#                                  O.<domain>.<n> regex from
+#                                  objective_id; one batch per domain
+#                                  per v0.2.0 precedent.
+#       generate.py             — retire _objectives_as_legacy_acs
+#                                  rendering; aggregated_acs becomes
+#                                  empty in RawACs; legacy `acs:` field
+#                                  retire per master plan §6.2.
+#       verify.py               — retire legacy `acs:` rendering paths
+#                                  in contract-draft.md (~lines 310,
+#                                  437, 445, 455, 564); render Objective
+#                                  rows directly from objectives.yaml;
+#                                  contract-draft.yaml shrinks to top-
+#                                  level summary.
+#       observability.py        — incremental_run_complete payload
+#                                  extends additively per AC.WATCHOBJ.5;
+#                                  no schema-version bump.
+#       __init__.py             — additive exports of objective-altitude
+#                                  types.
+#   - NEW tests under plugins/dev-sdlc/pr-safety/tests/:
+#       test_AC_PRGATE_1_contract_reader.py
+#       test_AC_PRGATE_2_classifier.py
+#       test_AC_PRGATE_3_decision_matrix.py
+#       test_AC_PRGATE_4_override_flow.py
+#       test_AC_PRGATE_5_pr_description_template.py
+#       test_AC_PRGATE_6_audit_log.py
+#   - NEW tests under plugins/dev-sdlc/odd-extractor/tests/:
+#       test_AC_WATCHOBJ_1_diff_classifier.py
+#       test_AC_WATCHOBJ_2_proposals.py
+#       test_AC_WATCHOBJ_3_domain_batching.py
+#       test_AC_WATCHOBJ_4_incremental_engine.py
+#       test_AC_WATCHOBJ_5_audit_log.py
+#       test_AC_RELSMOKE_1_cold_state.py
+#       test_AC_RELSMOKE_2_idempotent.py
+#       test_AC_RELSMOKE_3_cross_session_telemetry.py
+#       test_v0_2_3_release_soft_smoke.py    (full integration smoke
+#                                              against canonical
+#                                              jsts-playwright-app
+#                                              fixture)
+#
+# AC families locked per plan-doc §3:
+#   AC.PRGATE.1  — Contract reader consumes objectives.yaml +
+#                   backing-map.yaml (legacy contract-draft.yaml.acs:
+#                   retired); BandedContract reshape; overlay
+#                   composition operates on Objective rows.
+#   AC.PRGATE.2  — Classifier consumes BackingMap.entries; emits
+#                   TouchedObjective + NovelDiff; line-overlap helpers
+#                   preserved.
+#   AC.PRGATE.3  — Gate decision matrix at objective altitude (V→
+#                   HARD_BLOCK; P→SURFACE_DECISION; H→DOCS_ONLY;
+#                   novel→SURFACE_DECISION); pre-emption preserved;
+#                   production-stake honour preserved.
+#   AC.PRGATE.4  — Override flow reshape (original_objectives +
+#                   proposed_objectives); VERIFIED-objective conversion
+#                   preserves text + demotes confidence; novel records
+#                   audit-only; overlay v1→v2 migration on read with
+#                   .v1.bak.
+#   AC.PRGATE.5  — PR description template at objective altitude;
+#                   Touched objectives + Novel diff + Override audit
+#                   trail sections; AC.* IDs removed.
+#   AC.PRGATE.6  — Audit-log per gate decision at objective altitude
+#                   (additive payload; no schema-version bump);
+#                   SOC-2 floor preserved.
+#   AC.WATCHOBJ.1 — diff_classifier.py consults backing-map; per-
+#                    objective evidence row walked; OutOfDateObjective
+#                    + OrphanedObjective replace OutOfDateAC +
+#                    OrphanedAC.
+#   AC.WATCHOBJ.2 — IncrementalProposalSet at objective altitude;
+#                    IncrementalProposal dataclass; current/proposed
+#                    evidence preserved from Cycle 1; band preservation
+#                    per Decision I default-no.
+#   AC.WATCHOBJ.3 — domain_batching.py groups by O.<domain>.<n> regex;
+#                    one batch per domain; PM provenance carries
+#                    altitude.
+#   AC.WATCHOBJ.4 — incremental.py engine output-type swap; reads
+#                    objectives.yaml + backing-map.yaml; production-
+#                    stake refusal preserved; sidecar-never-mutated
+#                    invariant preserved.
+#   AC.WATCHOBJ.5 — Audit-log per incremental run at objective altitude
+#                    (additive payload; SOC-2 floor preserved).
+#   AC.RELSMOKE.1 — Cold-state SOFT smoke on canonical jsts-playwright-
+#                    app fixture; full pipeline (extract → ratify →
+#                    gate → watch); typed output + audit assertions
+#                    each step; evidence document at <pos3>/workspace/
+#                    .scratch/claude-output/v0-2-3-soft-smoke-2026-05-
+#                    05.md.
+#   AC.RELSMOKE.2 — Idempotent re-run; cross-cycle idempotency
+#                    (Cycle 1+2+3 all idempotent in sequence).
+#   AC.RELSMOKE.3 — Cross-session SOFT smoke + telemetry-floor; Session
+#                    A → cache → Session B reads + gate fires + watch
+#                    detects drift; audit entries from all 3 cycles
+#                    observable.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per smoke-test-
+# discipline §6 + plan-doc §4):
+#   D1 cold-state — full release-level SOFT smoke per AC.RELSMOKE.1
+#                    end-to-end on canonical jsts-playwright-app fixture.
+#                    Verified by test_v0_2_3_release_soft_smoke.py +
+#                    test_AC_RELSMOKE_1_cold_state.py + per-AC tests.
+#   D2 steady-state — idempotent re-run per AC.RELSMOKE.2 (extract /
+#                      gate / watch on unchanged → byte-identical
+#                      modulo timestamps).
+#   D3 restart — inherited from v0.1.9 + v0.2.0 substrate (mid-gate
+#                  Ctrl-C; mid-watch kill -TERM); no new D3-specific
+#                  code.
+#   D5 cross-session — AC.RELSMOKE.3 + per-component v0.1.9/v0.2.0 D5
+#                       inherited; objectives.yaml + backing-map.yaml
+#                       + audit-log files survive /clear.
+#   D6 telemetry-floor — per AC.PRGATE.6 + AC.WATCHOBJ.5 + AC.RELSMOKE.3;
+#                         all 5 cross-cycle audit event_kinds
+#                         observable; SOC-2 floor (Decision P)
+#                         preserved.
+#   D4 reboot — n/a structurally (gate + watch invoked-on-demand;
+#                filesystem state survives reboot trivially per v0.1.9
+#                + v0.2.0 + Cycle 1+2 precedent).
+#   PLUS: full-suite green sweep — pre-Cycle-3 plugins/dev-sdlc/
+#         {pr-safety,odd-extractor}/ + framework/cost-governance/ +
+#         framework/per-project-pm/ tests at HEAD all pass post-Cycle-3;
+#         halt + surface on any regression.
+#
+# Bookkeeping note: this is the v0.2.3 third + final cycle (immediate
+# successor to v0.2.3 Cycle 2 via apply 716da0a / seal 857749c +
+# §14 backfill 5a6ddd2 + master plan §9 backfill 06779c4). v3 fields
+# exercised: plan_doc_ref + ac_count + smoke_outcome at the manifest
+# level; single-component sweep at seal time. Universal-paths admit
+# docs/rebuild/plans/ for plan-doc paper trail only — Cycle 3 ships
+# zero docs/ edits beyond the plan-doc itself.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "<pending>"
+
+plan: docs/rebuild/plans/v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke.md
+
+ac_count: 14
+smoke_outcome: "D1+D2+D5+D6 exercised end-to-end on canonical jsts-playwright-app fixture; D3 inherited (PM batch API + state.yaml resume); D4 n/a; release-level SOFT smoke green; full-suite green sweep across pr-safety + odd-extractor + cost-governance + per-project-pm"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 1+2
+# precedent.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail.
+# Cycle 3 ships zero non-plan docs/ edits.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+    - plugins/dev-sdlc/docs/odd-methodology.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-3-cycle-3-pr-safety-watch-reframe-and-soft-smoke
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

@@ -1,0 +1,183 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-0-cycle-1-continuous-watch
+  title: "v0.2.0 Cycle 1 — Continuous codebase-watch (incremental extractor) + scheduling + PM ratification-queue + domain-batched AC surfacing; single-component fence on plugins/dev-sdlc/"
+
+# BASELINE: <pending> — source-edit feat commit covering the new
+# incremental modules at plugins/dev-sdlc/odd-extractor/ + extending
+# cli.py with --incremental flag + per-AC tests + integration
+# smoke + classifier-accuracy + cross-session + idempotency tests +
+# tests/fixtures/incremental/ (synthetic prior-contract + repo-states
+# covering all classifier-accuracy paths + domain-inference cases).
+#
+# Cycle 1 is the first of two cycles in v0.2.0. Cycle 2 follows:
+#   - Cycle 2: Persona-driven skill capture (auto-creation MVP) +
+#              workspace-config flag + design note. Single-component
+#              fence on plugins/loam-skills/.
+# After Cycle 2 seals, the v0.2.0 release-level SOFT smoke gate runs
+# (master plan §5 + Decision R). Tag is local-only (NOT pushed) until
+# Luke gates the release.
+#
+# Commit ladder pre-apply:
+#   9022df1 — v0.1.9 SHIPPED rollup (predecessor; v0.1.9 release).
+#   7c0f87b — v0.2.0 master plan + cycle decomposition (Cycle 0
+#              predecessor for v0.2.0).
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §9
+#    per AC.D-sa.7>
+#
+# Single-component fence — dev-sdlc:
+#   - NEW modules under plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/:
+#       incremental.py        — incremental engine + entry-point.
+#       diff_classifier.py    — diff-against-prior-contract logic.
+#       proposals.py          — re-extraction proposal generation.
+#       domain_batching.py    — domain inference + batching.
+#       incremental_ratify.py — PM enqueue for incremental proposals.
+#   - EDITS to existing modules (additive only):
+#       cli.py                — add --incremental flag + handler dispatch.
+#       __init__.py           — add new module exports.
+#       (observability.py is NOT edited — write_audit_entry already
+#        accepts arbitrary event_kind strings.)
+#   - NEW tests under plugins/dev-sdlc/odd-extractor/tests/:
+#       test_AC_WATCH_1_incremental_cli.py
+#       test_AC_WATCH_2_diff_classifier.py
+#       test_AC_WATCH_3_proposal_generation.py
+#       test_AC_WATCH_4_pm_ratification.py
+#       test_AC_WATCH_5_domain_batching.py
+#       test_AC_WATCH_6_scheduling_primitive.py
+#       test_AC_WATCH_7_production_stake.py
+#       test_AC_WATCH_8_audit_log.py
+#       test_AC_WATCH_9_test_surface.py
+#       test_incremental_smoke.py
+#       test_incremental_idempotent.py
+#       test_incremental_cross_session.py
+#       test_diff_classifier_accuracy.py
+#   - NEW fixtures under plugins/dev-sdlc/odd-extractor/tests/fixtures/incremental/:
+#       prior-contract.yaml          — synthetic v0.1.8-shape prior contract.
+#       repo-states/no-drift/        — all files unchanged.
+#       repo-states/single-line-edit/ — citation-line drift in 1 AC.
+#       repo-states/mixed-drift/     — drift in 3 ACs across 3 domains + 1 orphan.
+#       classifier-accuracy/01-no-drift/ ... 10-test-citation-stale/
+#       domain-inference-cases/      — 5 fixtures for AC.WATCH.5 algorithm.
+#   - EDIT to plugins/dev-sdlc/odd-extractor/README.md — append
+#     "Scheduling" section showing 3 example schedules (launchd,
+#     crontab, /schedule skill) per AC.WATCH.6.
+#
+# AC families locked per plan-doc §4:
+#   AC.WATCH.1  — Incremental-mode CLI (--incremental flag; reads prior
+#                  contract; classifies + generates + enqueues).
+#   AC.WATCH.2  — Diff-against-prior-contract logic (line-overlap +
+#                  file-existence + backing-files-overlap heuristic;
+#                  ≥90% accuracy on synthetic test set; halt-trigger
+#                  if below).
+#   AC.WATCH.3  — Re-extraction proposal generation (per out-of-date
+#                  AC; reuses v0.1.8 full-mode workflow scoped to
+#                  affected files; orphan handling distinct).
+#   AC.WATCH.4  — PM ratification-queue mechanics (one enqueue per
+#                  domain-batch; provenance prefix
+#                  odd-extract:incremental:<id>:<domain>; idempotent
+#                  duplicate-skip).
+#   AC.WATCH.5  — Domain-batched AC surfacing (AC ID prefix primary +
+#                  file-path-prefix fallback + _uncategorised; loam-
+#                  internal namespace blocklist; deterministic group_by_domain).
+#   AC.WATCH.6  — Scheduling integration (CLI-as-primitive; --invocation-source
+#                  flag; README documents 3 example schedules).
+#   AC.WATCH.7  — Production-stake honour-flow (defense-in-depth: no
+#                  auto-mutation regardless of profile; production-stake
+#                  records downgrade note in audit-log).
+#   AC.WATCH.8  — Audit-trail floor (5 new event-kinds + reuses
+#                  existing ratification_<kind>; SOC-2 floor per
+#                  Decision P).
+#   AC.WATCH.9  — Component-level test surface (one file per AC + 5
+#                  integration tests).
+#   AC.WATCH.10 — End-to-end smoke against synthetic fixture (Cycle-
+#                  level; canonical Eric-fixture smoke at v0.2.0
+#                  release-level per master plan §5).
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §7):
+#   D1 cold-state — fresh tmp workspace + tmp git repo with synthetic
+#     prior-contract + mixed-drift repo-state runs --incremental end-
+#     to-end; produces 3 domain-batched PM entries + 6 audit-log
+#     event-kinds. Verified by test_incremental_smoke.py.
+#   D2 steady-state — n/a structurally (one-shot CLI, not daemon).
+#     Idempotency variant exercised: 5 watch invocations against same
+#     state produce byte-identical results; PM queue grows by N on
+#     first run, 0 on runs 2-5; audit-log carries skip-duplicate
+#     entries. Verified by test_incremental_idempotent.py.
+#   D3 restart — n/a structurally (no long-running process).
+#   D4 reboot — n/a structurally (filesystem state survives reboot
+#     trivially).
+#   D5 cross-session — subprocess invocations: process A enqueues 3
+#     entries; process B detects all 3 as duplicates; process C
+#     consumes 1 via record_response; process D re-runs and detects
+#     2 as still-pending (the consumed one no longer in PM queue, but
+#     the response is recorded). Verified by
+#     test_incremental_cross_session.py via subprocess invocations.
+#   D6 telemetry-floor — every event-kind (incremental_watch_run /
+#     incremental_classification / incremental_proposal /
+#     incremental_enqueue_skip_duplicate / ratification_<kind> /
+#     incremental_rejection) writes one audit-log entry; SOC-2 audit-
+#     trail floor (Decision P). Verified by
+#     test_AC_WATCH_8_audit_log.py + test_incremental_smoke.py.
+#   PLUS: classifier accuracy ≥90% on synthetic test set (master
+#     plan §7.1 most-load-bearing risk; halt-trigger if below).
+#     Verified by test_diff_classifier_accuracy.py.
+#   PLUS: full-suite green sweep — pre-Cycle-1 odd-extractor + parent
+#     dev-sdlc tests at HEAD 7c0f87b all pass post-Cycle-1; halt +
+#     surface on any regression.
+#
+# Bookkeeping note: this is the post-v0.1.9 v3-schema build (immediate
+# successor to v0-1-9-cycle-3-skills-and-cleanup at 3284087). v3
+# fields exercised: plan_doc_ref + ac_count + smoke_outcome at the
+# manifest level; single-component sweep at seal time.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "<pending>"
+
+plan: docs/rebuild/plans/v0-2-0-cycle-1-continuous-watch.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-2-0-cycle-1-continuous-watch.md
+
+ac_count: 10
+smoke_outcome: "D1 + D2-idempotency + D5 + D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI); classifier accuracy ≥90% on synthetic test set; full-suite green sweep"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent + v0.1.9 Cycle 1 precedent.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail.
+# No `odd-methodology.md` edit required (Cycle 1 builds engine, not
+# methodology).
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-0-cycle-1-continuous-watch
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

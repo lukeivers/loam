@@ -1,0 +1,234 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-4-cycle-1-completeness-interview
+  title: "v0.2.4 Cycle 1 — Completeness interview (augmented objective set via PM batch interview); heuristic pre-pass + LLM-as-judge missing-objective detection (cap 5) + PM batch API consumer (one-question-at-a-time via surface_next_questions_batch(n=1)) + 3 question shapes (confirm-existing / flag-missing-candidate / free-form-add) + augmented-set persistence at <workspace>/.loam/extractions/<repo-id>/augmented-objectives.yaml + audit-log event_kinds + cost band $0.20 default ($0.05–$0.50 halt); single-component fence on plugins/dev-sdlc/odd-extractor/"
+
+# BASELINE: <pending> — source-edit feat commit covering new modules at
+# plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/
+# (completeness.py, interview.py) + extending spec.py with
+# Objective.source enum + AugmentedObjectiveSet container model +
+# extending observability.py (7 new event_kinds for interview actions)
+# + additive cli.py subcommand `loam odd-extract interview` + per-AC
+# tests + 3 completeness-interview fixtures.
+#
+# Cycle 1 is the first of three cycles in v0.2.4. Cycles 2 + 3 follow:
+#   - Cycle 2: Gap analysis. PRIMARY plugins/dev-sdlc/odd-extractor/.
+#              New gap_analysis.py; GapInventory with two categories
+#              (objectives_without_verified_backing + implementation_
+#              orphans); persisted; CLI surface (AC.GAPAN.*).
+#   - Cycle 3: Build-next + persona surface + SOFT smoke (release
+#              SOFT smoke gate). PRIMARY plugins/dev-sdlc/odd-extractor/.
+#              New build_next.py + CLI subcommand for persona pull;
+#              ranked-candidate output with rationale; informative not
+#              prescriptive (AC.BLDNXT.* + AC.PERSONA-PULL.*).
+# After Cycle 3 seals + SOFT smoke green, the v0.2.4 SHIPPED rollup
+# commit lands on canonical, backfilling STATE.md + roadmap §8 +
+# odd-rebuild master plan §3 v0.2.4 row + master plan §9 per-cycle
+# SHA register. Tag deferred until v0.2.5 ship gate per Luke
+# 2026-05-05.
+#
+# Commit ladder pre-apply:
+#   50b5385 — v0.2.3 SHIPPED rollup (combined v0.2.2 + v0.2.3;
+#              v0.2.5/v0.2.6 split recorded). Cycle 3 seal f78bb36.
+#   7fb6c5c — v0.2.4 master plan-doc.
+#   f230333 — trim discipline applied to v0.2.4 master plan +
+#              plan-author SKILLs.
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §9
+#    Cycle 1 SHA row per AC.D-sa.7>
+#
+# Single-component fence — plugins/dev-sdlc/odd-extractor/:
+#   - NEW modules under plugins/dev-sdlc/odd-extractor/src/
+#     loam_odd_extractor/:
+#       completeness.py    — heuristic pre-pass + LLM-as-judge
+#                             missing-objective detection;
+#                             flag_missing_objectives() + helper
+#                             heuristic_priors(); cap-of-5
+#                             enforcement; cost-budget integration;
+#                             reuses v0.2.3 synthesis.py Anthropic
+#                             client construction pattern (lazy-
+#                             import + cost-governance).
+#       interview.py       — PM batch API consumer + question-shape
+#                             rendering (3 shapes — confirm-existing /
+#                             flag-missing-candidate / free-form-add) +
+#                             response-parser + augmented-set
+#                             persistence + resume-state
+#                             reconstruction; run_interview()
+#                             function; consumes
+#                             PMRuntime.from_workspace +
+#                             enqueue_decision +
+#                             surface_next_questions_batch(n=1) +
+#                             record_response (zero PM-side edits).
+#   - EDITS to existing modules (additive only):
+#       spec.py        — extend with Objective.source enum field
+#                        (additive Literal["extracted","added_by_user",
+#                        "flagged_by_persona"], default "extracted"
+#                        for round-trip safety) + new
+#                        AugmentedObjectiveSet container Pydantic
+#                        model (objectives + extraction_id +
+#                        augmented_at + interview_audit_path; no-
+#                        duplicate-objective_id model_validator).
+#       observability.py — extend event_kinds (7 new kinds for
+#                          interview actions:
+#                          completeness_interview_start /
+#                          objective_confirmed / objective_adjusted /
+#                          objective_flagged_out_of_scope /
+#                          objective_added_by_user /
+#                          objective_flagged_by_persona /
+#                          completeness_interview_end); structured
+#                          payload uses existing estimate field
+#                          (no schema-version bump).
+#       cli.py         — additive subcommand `loam odd-extract
+#                        interview <workspace>` + --budget-cents
+#                        integration with cost band per AC.COMPINT.9
+#                        + --pm-handle flag with default via
+#                        workspace PM-dir scan.
+#       __init__.py    — additive exports of new module entry-points
+#                        + new Pydantic models.
+#   - NEW tests under plugins/dev-sdlc/odd-extractor/tests/:
+#       test_AC_COMPINT_1_augmented_set.py
+#       test_AC_COMPINT_2_llm_judge.py
+#       test_AC_COMPINT_3_heuristic_priors.py
+#       test_AC_COMPINT_4_pm_batch_consumer.py
+#       test_AC_COMPINT_5_question_shapes.py
+#       test_AC_COMPINT_6_promotion_rules.py
+#       test_AC_COMPINT_7_persistence.py
+#       test_AC_COMPINT_8_audit_log.py
+#       test_AC_COMPINT_9_cost_band.py
+#       test_AC_COMPINT_10_resume.py
+#       test_AC_COMPINT_11_integration.py
+#   - NEW fixtures under plugins/dev-sdlc/odd-extractor/tests/
+#     fixtures/completeness-interview/:
+#       clean-codebase/    — synthetic v0.2.3 extraction artefacts
+#                             where heuristics produce 0 priors and
+#                             LLM-judge returns 0 flagged.
+#       eric-shape/        — extraction artefacts lacking security
+#                             objective + survey snippet with
+#                             production_use=Yes + SOC-2 substring;
+#                             heuristic-1 fires.
+#       persona-flagged/   — extraction artefacts lacking data-
+#                             persistence objective + evidence rows
+#                             showing POST/DELETE routes; heuristic-3
+#                             fires.
+#
+# AC families locked per plan-doc §3:
+#   AC.COMPINT.1   — Augmented-set Pydantic shape (Objective.source
+#                     enum + AugmentedObjectiveSet container; no-
+#                     duplicate-objective_id validator).
+#   AC.COMPINT.2   — Missing-objective LLM-as-judge
+#                     (flag_missing_objectives; cap-of-5;
+#                     structured-JSON; lean grounding inject).
+#   AC.COMPINT.3   — Heuristic pre-pass (3 baseline patterns;
+#                     production-stake-no-security; survey-
+#                     compliance-no-compliance; data-modify-routes-
+#                     no-persistence).
+#   AC.COMPINT.4   — PM batch API consumer (read-only consumption
+#                     of v0.1.7 PMRuntime; n=1 enforcement;
+#                     completeness_interview: provenance prefix).
+#   AC.COMPINT.5   — Question-shape design (3 shapes — confirm-
+#                     existing / flag-missing-candidate / free-form-
+#                     add; numeric-prefix response parser; one re-
+#                     ask cap on malformed).
+#   AC.COMPINT.6   — Promotion rules + interview-added defaults
+#                     (PLAUSIBLE-default with survey_line_refs from
+#                     audit-log; source enum routing; user-flagged-
+#                     out-of-scope removal; user-adjusted text in-
+#                     place).
+#   AC.COMPINT.7   — Persistence at canonical workspace path
+#                     (<workspace>/.loam/extractions/<repo-id>/
+#                     augmented-objectives.yaml; atomic tmp+rename;
+#                     idempotent re-write on no-change).
+#   AC.COMPINT.8   — Audit-log event_kinds (7 new kinds; structured
+#                     payload via existing estimate field; no
+#                     schema-version bump).
+#   AC.COMPINT.9   — Cost band for LLM-as-judge ($0.20 default
+#                     ceiling; $0.05–$0.50 halt band; dry-run
+#                     estimate via SDK count_tokens or 4-chars-per-
+#                     token).
+#   AC.COMPINT.10  — Resumability across /clear + restart (PM-
+#                     audit-log + decision-queue + state.yaml as
+#                     resume source; per-response augmented-set
+#                     write; mid-LLM-judge re-run on resume).
+#   AC.COMPINT.11  — Component tests against 3+ synthetic fixtures
+#                     (clean-codebase + eric-shape + persona-
+#                     flagged); full pipeline e2e per fixture.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §4):
+#   D1 cold-state — `loam odd-extract interview <fresh-workspace>`
+#     against canonical fixture produces augmented-objectives.yaml +
+#     audit-log entries. Verified by test_AC_COMPINT_11_integration.py.
+#   D5 cross-session — augmented-set + audit-log persist at
+#     <workspace>/.loam/extractions/<repo-id>/; survive /clear.
+#     Verified by test_AC_COMPINT_10_resume.py + test_AC_COMPINT_7_*.
+#   D6 telemetry-floor — all 7 new event_kinds present per run; SOC-2
+#     audit-trail floor (Decision P). Verified by test_AC_COMPINT_8_*.
+#   D2 steady-state — re-run interview on completed augmented set is
+#     no-op (FIFO queue empty; nothing to surface).
+#   D3 restart — inherited from PM's existing crash-safe surface
+#     (v0.1.7 Cycle 4 + Cycle 2 contract); this cycle adds resume-
+#     state reconstruction (AC.COMPINT.10) on top.
+#   D4 reboot — n/a structurally (odd-extract is invoked-on-demand,
+#     not a daemon; filesystem state survives reboot trivially per
+#     v0.1.8 / v0.2.3 precedent).
+#   PLUS: full-suite green sweep — pre-Cycle-1 plugins/dev-sdlc/
+#     odd-extractor/ + framework/cost-governance/ +
+#     framework/per-project-pm/ tests at HEAD (f230333 or successor)
+#     all pass post-Cycle-1; halt + surface on any regression.
+#
+# Bookkeeping note: this is the v0.2.4 first cycle (immediate
+# successor to v0.2.3 SHIPPED rollup 50b5385 + v0.2.4 master plan
+# at f230333). v3 fields exercised: plan_doc_ref + ac_count +
+# smoke_outcome at the manifest level; single-component sweep at
+# seal time. Universal-paths admit docs/rebuild/plans/ for plan-
+# doc paper trail.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "<pending>"
+
+plan: docs/rebuild/plans/v0-2-4-cycle-1-completeness-interview.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-2-4-cycle-1-completeness-interview.md
+
+ac_count: 11
+smoke_outcome: "D1+D5+D6 exercised; D2+D3 inherited (FIFO no-op + PM crash-safe); D4 n/a; 3 completeness-interview fixtures (clean-codebase + eric-shape + persona-flagged); full-suite green sweep"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent + v0.1.9 Cycle 1 precedent + v0.2.0 Cycle 1
+# precedent + v0.2.1 Cycle 1 precedent + v0.2.3 Cycle 1 precedent.
+# `docs/rebuild/plans/` admits the plan-before-code paper trail.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+    - plugins/dev-sdlc/docs/odd-methodology.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-4-cycle-1-completeness-interview
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

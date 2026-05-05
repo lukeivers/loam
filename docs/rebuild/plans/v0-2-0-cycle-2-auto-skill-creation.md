@@ -358,4 +358,7 @@ Cycle-2 method-level decisions are recorded at §6 above. The `## 14.` heading e
 
 ### Commit SHAs
 
-(populated by `loam amend seal --plan-doc` post-seal)
+- Amendment commit: `5cb84a56695b485ae22c0c7a84ed9193e0995f56` —
+  `chore(amend): v0-2-0-cycle-2-auto-skill-creation manifest+apply — loam-skills+workspace-bootstrap BASELINE+sidecar bump to 31dce27`
+- Seal commit: `549fe88a81cdc789ebc690a0a22d8e4d666f970e` —
+  `chore(seals): v0-2-0-cycle-2-auto-skill-creation — loam-skills+workspace-bootstrap at 5cb84a5`

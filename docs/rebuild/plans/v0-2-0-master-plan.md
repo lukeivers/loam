@@ -380,7 +380,7 @@ Master-plan-level method decisions. Per-cycle plan-docs author their own §14 wi
 
 | Cycle | Theme | Apply SHA | Seal SHA |
 |---|---|---|---|
-| Cycle 1 | Continuous codebase-watch + scheduling + PM ratification-queue + domain-batched AC surfacing | TBD | TBD |
+| Cycle 1 | Continuous codebase-watch + scheduling + PM ratification-queue + domain-batched AC surfacing | `faff84e` | `6fef2f1` |
 | Cycle 2 | Persona-driven skill capture (auto-creation MVP) + workspace-config flag + design note | TBD | TBD |
 | Release-level smoke | Six-dimension smoke + Eric-path smoke (Path 1 + Path 2) | TBD | n/a |
 

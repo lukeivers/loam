@@ -1,0 +1,11 @@
+# v0.2.1 corrective F2 — language_detection.py walker skips framework/ subdir so loam onboard's Q1 reports the user's app language (not loam's harness internals) on the documented loam-init-then-onboard happy path; 3 named-AC tests + meta-AC for full-suite green
+
+slug: v0-2-1-corrective-f2-language-detection-skip-framework
+components: workspace-bootstrap
+baseline: 0efd160
+amendment-commit: 70987e515564a8e1ee7974c995f6ffe0a6fda4ce
+plan-doc: docs/rebuild/plans/v0-2-1-corrective-f2-language-detection-skip-framework.md
+acs-satisfied: 4
+smoke: D1 exercised on 2 new fixtures; D2 structural (deterministic walk); D3/D4/D5/D6 n/a (stateless); 3 named-AC tests + meta-AC; workspace-bootstrap suite green (411 pass / 11 skip / 0 regress)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

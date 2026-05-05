@@ -52,6 +52,17 @@ GAP_ANALYSIS_EVENT_KINDS: tuple[str, ...] = (
 )
 
 
+# Per v0.2.4 Cycle 3 AC.BLDNXT.8 — build-next event_kinds. Structured
+# payload uses the existing ``estimate`` field (no schema bump).
+# Listed here as a module-level constant so tests + downstream
+# consumers can introspect the canonical set.
+BUILD_NEXT_EVENT_KINDS: tuple[str, ...] = (
+    "build_next_start",
+    "build_next_persisted",
+    "build_next_end",
+)
+
+
 def audit_log_dir(extraction_dir_: Path) -> Path:
     """``<extraction_dir>/audit-log/``."""
     return extraction_dir_ / "audit-log"

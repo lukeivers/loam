@@ -1,0 +1,66 @@
+schema_version: 1
+extraction_id: orphan-only-fixture
+analyzed_at: "2026-05-04T16:00:00+00:00"
+audit_path: "/tmp/audit-log"
+gaps:
+  # Three orphan clusters; one large (cluster-bonus 0.10), two small.
+  # Tie-break by gap_id lex ordering when scores tie.
+  - gap_id: "G.ORPHAN.src-aroute-js"
+    category: "implementation_orphan"
+    confidence: "STRONG"
+    objective_id: null
+    evidence_rows:
+      - evidence_row_id: "route:src/aroute.js:5"
+        kind: "route"
+        path: "src/aroute.js"
+        line_range: [5, 25]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+      - evidence_row_id: "route:src/aroute.js:30"
+        kind: "route"
+        path: "src/aroute.js"
+        line_range: [30, 50]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+      - evidence_row_id: "route:src/aroute.js:55"
+        kind: "route"
+        path: "src/aroute.js"
+        line_range: [55, 75]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+    rationale: "Implementation orphan cluster at source-file 'src/aroute.js' (3 unclaimed evidence row(s); kinds: route); group-key=path:src/aroute.js."
+  - gap_id: "G.ORPHAN.src-broute-js"
+    category: "implementation_orphan"
+    confidence: "STRONG"
+    objective_id: null
+    evidence_rows:
+      - evidence_row_id: "route:src/broute.js:5"
+        kind: "route"
+        path: "src/broute.js"
+        line_range: [5, 25]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+    rationale: "Implementation orphan cluster at source-file 'src/broute.js' (1 unclaimed evidence row(s); kinds: route); group-key=path:src/broute.js."
+  - gap_id: "G.ORPHAN.src-croute-js"
+    category: "implementation_orphan"
+    confidence: "STRONG"
+    objective_id: null
+    evidence_rows:
+      - evidence_row_id: "route:src/croute.js:5"
+        kind: "route"
+        path: "src/croute.js"
+        line_range: [5, 25]
+        symbol_name: null
+        language: "jsts"
+        confidence: "STRONG"
+    rationale: "Implementation orphan cluster at source-file 'src/croute.js' (1 unclaimed evidence row(s); kinds: route); group-key=path:src/croute.js."
+summary:
+  category_a_count: 0
+  category_b_count: 3
+  strong_count: 3
+  weak_count: 0
+  total: 3

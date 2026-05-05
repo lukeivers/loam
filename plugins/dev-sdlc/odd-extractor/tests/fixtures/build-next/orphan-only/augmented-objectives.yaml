@@ -1,0 +1,18 @@
+schema_version: 1
+extraction_id: orphan-only-fixture
+augmented_at: "2026-05-04T16:00:00+00:00"
+interview_audit_path: "/tmp/audit-log"
+objectives:
+  - objective_id: "O.dispute-flow.1"
+    text: "Operators file refund disputes against merchant portals at scale, replacing manual portal clickwork."
+    confidence: VERIFIED
+    domain: "dispute-flow"
+    source: "extracted"
+    evidence:
+      readme_excerpts: ["File refunds at scale"]
+      design_doc_refs: []
+      test_name_refs: ["test_dispute_filing_pipeline"]
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: "abc123"
+      rationale: null

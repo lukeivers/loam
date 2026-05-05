@@ -1,0 +1,23 @@
+schema_version: 1
+extraction_id: no-survey-context-fixture
+analyzed_at: "2026-05-04T16:00:00+00:00"
+audit_path: "/tmp/audit-log"
+gaps:
+  - gap_id: "G.BACKING.o-security-1"
+    category: "objective_without_verified_backing"
+    confidence: "STRONG"
+    objective_id: "O.security.1"
+    evidence_rows: []
+    rationale: "Objective O.security.1 (PLAUSIBLE) flagged as backing gap — PLAUSIBLE objective has empty backing-map entry; no implementation evidence rows are claimed by it."
+  - gap_id: "G.BACKING.o-batch-export-1"
+    category: "objective_without_verified_backing"
+    confidence: "WEAK"
+    objective_id: "O.batch-export.1"
+    evidence_rows: []
+    rationale: "Objective O.batch-export.1 (PLAUSIBLE) flagged as backing gap — PLAUSIBLE objective has empty backing-map entry; reconciliation pipeline unbacked structurally."
+summary:
+  category_a_count: 2
+  category_b_count: 0
+  strong_count: 1
+  weak_count: 1
+  total: 2

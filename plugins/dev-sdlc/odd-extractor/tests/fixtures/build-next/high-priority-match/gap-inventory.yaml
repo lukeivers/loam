@@ -1,0 +1,41 @@
+schema_version: 1
+extraction_id: high-priority-match-fixture
+analyzed_at: "2026-05-04T16:00:00+00:00"
+audit_path: "/tmp/audit-log"
+gaps:
+  # Category-a STRONG: PLAUSIBLE objective on audit/SOC-2/compliance, empty backing.
+  # Rationale carries multiple priority-keywords (audit, trail, soc-2,
+  # compliance) so survey overlap >= 2 → factor 1.0.
+  - gap_id: "G.BACKING.o-security-1"
+    category: "objective_without_verified_backing"
+    confidence: "STRONG"
+    objective_id: "O.security.1"
+    evidence_rows: []
+    rationale: "Objective O.security.1 (PLAUSIBLE) flagged as backing gap — PLAUSIBLE objective has empty backing-map entry; no implementation evidence rows; audit-trail and SOC-2 compliance posture unverified."
+  # Category-a STRONG: csv-export with empty backing. Lower priority-match.
+  - gap_id: "G.BACKING.o-batch-export-1"
+    category: "objective_without_verified_backing"
+    confidence: "STRONG"
+    objective_id: "O.batch-export.1"
+    evidence_rows: []
+    rationale: "Objective O.batch-export.1 (PLAUSIBLE) flagged as backing gap — PLAUSIBLE objective has empty backing-map entry; CSV reconciliation export pipeline unbacked."
+  # Category-b WEAK orphan (test-only).
+  - gap_id: "G.ORPHAN.tests-someroute-test-js"
+    category: "implementation_orphan"
+    confidence: "WEAK"
+    objective_id: null
+    evidence_rows:
+      - evidence_row_id: "test:tests/someroute.test.js:5"
+        kind: "test"
+        path: "tests/someroute.test.js"
+        line_range: [5, 25]
+        symbol_name: null
+        language: "jsts"
+        confidence: "WEAK"
+    rationale: "Implementation orphan cluster at source-file 'tests/someroute.test.js' (1 unclaimed evidence row(s); kinds: test); group-key=path:tests/someroute.test.js."
+summary:
+  category_a_count: 2
+  category_b_count: 1
+  strong_count: 2
+  weak_count: 1
+  total: 3

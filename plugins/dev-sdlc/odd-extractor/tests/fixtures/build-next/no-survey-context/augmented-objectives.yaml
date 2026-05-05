@@ -1,0 +1,31 @@
+schema_version: 1
+extraction_id: no-survey-context-fixture
+augmented_at: "2026-05-04T16:00:00+00:00"
+interview_audit_path: "/tmp/audit-log"
+objectives:
+  - objective_id: "O.security.1"
+    text: "Operators see audit-trail rows identifying who did what for SOC-2 CC6 readiness on dispute filings."
+    confidence: PLAUSIBLE
+    domain: "security"
+    source: "extracted"
+    evidence:
+      readme_excerpts: ["Audit trail planned"]
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null
+  - objective_id: "O.batch-export.1"
+    text: "Operators export refund-status batches to CSV for accounting reconciliation downstream automatically."
+    confidence: PLAUSIBLE
+    domain: "csv-export"
+    source: "extracted"
+    evidence:
+      readme_excerpts: ["Batch CSV export"]
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null

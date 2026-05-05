@@ -825,6 +825,177 @@ class GapSummary(BaseModel):
     total: int = 0
 
 
+# ====================================================================
+# v0.2.4 Cycle 3 — Build-next ranking (AC.BLDNXT.1)
+# ====================================================================
+#
+# Per sub-plan-doc §3 AC.BLDNXT.1 + AC.BLDNXT.5: typed ranked-candidate
+# + recommendation container persisted at build-next.{md,yaml}.
+# Composite_score = gap_confidence_factor × priority_match_factor ×
+# estimated_impact_factor (priority_match_factor=1.0 substituted when
+# None, i.e. survey-degenerate path).
+
+
+_PRIORITY_MATCH_SIGNAL_VALUES = (
+    "survey",
+    "interview",
+    "keyword",
+    "llm_judge",
+    "none",
+)
+
+
+class BuildNextCandidate(BaseModel):
+    """One ranked candidate in a :class:`BuildNextRecommendation`.
+
+    Per sub-plan-doc §3 AC.BLDNXT.1:
+
+    - ``gap_id`` matches the gap-id regex (``^G\\.(BACKING|ORPHAN)\\.[a-z0-9_-]+$``).
+    - ``composite_score`` ∈ [0.0, 1.0]; equals the product of the
+      three factor fields (priority_match_factor=1.0 when None).
+    - ``gap_confidence_factor`` ∈ [0.0, 1.0]; STRONG=1.0 / WEAK=0.5
+      (AC.BLDNXT.2).
+    - ``priority_match_factor`` ∈ [0.0, 1.0] OR ``None``. ``None``
+      signals survey-degenerate path (AC.BLDNXT.3).
+    - ``estimated_impact_factor`` ∈ [0.0, 1.0]; deterministic
+      category-base + bonuses (AC.BLDNXT.2).
+    - ``priority_match_signal`` ∈ {``survey``, ``interview``,
+      ``keyword``, ``llm_judge``, ``none``}.
+    - ``rationale`` ≥ 40 chars; auditable explanation referencing the
+      gap + which user-priority signal matched.
+    - ``category`` mirrored from the source :class:`Gap`.
+    - ``objective_id`` mirrored when source is category-a; ``None``
+      for category-b orphans.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    gap_id: str = Field(min_length=1)
+    composite_score: float = Field(ge=0.0, le=1.0)
+    gap_confidence_factor: float = Field(ge=0.0, le=1.0)
+    priority_match_factor: float | None = None
+    estimated_impact_factor: float = Field(ge=0.0, le=1.0)
+    priority_match_signal: Literal[
+        "survey", "interview", "keyword", "llm_judge", "none"
+    ]
+    rationale: str = Field(min_length=40)
+    category: Literal[
+        "objective_without_verified_backing",
+        "implementation_orphan",
+    ]
+    objective_id: str | None = None
+
+    @model_validator(mode="after")
+    def _enforce_id_regex_and_factor_consistency(self) -> "BuildNextCandidate":
+        if not _GAP_ID_RE.match(self.gap_id):
+            raise ValueError(
+                f"BuildNextCandidate.gap_id must match {_GAP_ID_RE.pattern!r}; "
+                f"got {self.gap_id!r}"
+            )
+        if self.priority_match_factor is not None:
+            if not 0.0 <= self.priority_match_factor <= 1.0:
+                raise ValueError(
+                    "BuildNextCandidate.priority_match_factor must be in "
+                    f"[0.0, 1.0]; got {self.priority_match_factor!r}"
+                )
+        # Factor-product-matches-composite (rounding tolerance 1e-4).
+        pm = (
+            self.priority_match_factor
+            if self.priority_match_factor is not None
+            else 1.0
+        )
+        expected = (
+            self.gap_confidence_factor
+            * pm
+            * self.estimated_impact_factor
+        )
+        if abs(self.composite_score - expected) > 1e-4:
+            raise ValueError(
+                "BuildNextCandidate: composite_score must equal "
+                "gap_confidence_factor × priority_match_factor × "
+                "estimated_impact_factor (priority_match_factor=1.0 "
+                f"when None); expected {expected:.6f} got "
+                f"{self.composite_score:.6f}"
+            )
+        # Category / objective_id mirror invariant.
+        if self.category == "objective_without_verified_backing":
+            if self.objective_id is None:
+                raise ValueError(
+                    "BuildNextCandidate: category="
+                    "'objective_without_verified_backing' requires "
+                    "objective_id to be set (mirrored from source Gap)"
+                )
+            if not _OBJECTIVE_ID_RE.match(self.objective_id):
+                raise ValueError(
+                    f"BuildNextCandidate.objective_id must match "
+                    f"{_OBJECTIVE_ID_RE.pattern!r}; got "
+                    f"{self.objective_id!r}"
+                )
+        else:  # implementation_orphan
+            if self.objective_id is not None:
+                raise ValueError(
+                    "BuildNextCandidate: category='implementation_orphan' "
+                    "requires objective_id=None (orphans have no claimed "
+                    "objective)"
+                )
+        return self
+
+
+class BuildNextRecommendation(BaseModel):
+    """The ranked-candidate recommendation persisted at build-next.yaml.
+
+    Per sub-plan-doc §3 AC.BLDNXT.1 + AC.BLDNXT.5:
+
+    - ``schema_version`` literal int 1; future bumps need migration.
+    - ``extraction_id`` ties to workspace's extraction.
+    - ``analyzed_at`` ISO 8601 timestamp; excluded from idempotence
+      content-hash (AC.BLDNXT.4).
+    - ``audit_path`` points at audit-log directory of producing run.
+    - ``degenerate_survey`` True when survey absent at both canonical
+      paths AND no interview-added objectives (AC.BLDNXT.3).
+    - ``candidates`` ranked top-N (default 10; ``--limit`` configurable
+      via CLI per AC.PERSONA-PULL.1).
+    - ``truncated_count`` = (underlying-list size) − len(candidates);
+      surfaced to caller when limit truncates.
+    - ``llm_judge_invocations`` count of borderline-only LLM-judge
+      calls actually made (AC.BLDNXT.3 cap-of-5).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal[1] = 1
+    extraction_id: str = Field(min_length=1)
+    analyzed_at: str  # ISO 8601 with timezone
+    audit_path: str = Field(min_length=1)
+    degenerate_survey: bool = False
+    candidates: list[BuildNextCandidate] = Field(default_factory=list)
+    truncated_count: int = 0
+    llm_judge_invocations: int = 0
+
+    @model_validator(mode="after")
+    def _enforce_no_duplicate_gap_id(self) -> "BuildNextRecommendation":
+        seen: set[str] = set()
+        for c in self.candidates:
+            if c.gap_id in seen:
+                raise ValueError(
+                    f"BuildNextRecommendation: duplicate gap_id="
+                    f"{c.gap_id!r} (each gap_id must be unique in the "
+                    f"candidate list)"
+                )
+            seen.add(c.gap_id)
+        if self.truncated_count < 0:
+            raise ValueError(
+                "BuildNextRecommendation.truncated_count must be >= 0; "
+                f"got {self.truncated_count}"
+            )
+        if self.llm_judge_invocations < 0:
+            raise ValueError(
+                "BuildNextRecommendation.llm_judge_invocations must be "
+                f">= 0; got {self.llm_judge_invocations}"
+            )
+        return self
+
+
 class GapInventory(BaseModel):
     """The two-category gap inventory persisted at gap-inventory.yaml.
 

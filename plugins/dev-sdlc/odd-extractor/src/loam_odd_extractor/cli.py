@@ -353,6 +353,8 @@ def _cmd_dispatch(args: argparse.Namespace) -> int:
         return _cmd_interview(args)
     if getattr(args, "gaps", False):
         return _cmd_gaps(args)
+    if getattr(args, "build_next", False):
+        return _cmd_build_next(args)
     return _cmd_extract(args)
 
 
@@ -587,6 +589,179 @@ def _cmd_gaps(args: argparse.Namespace) -> int:
         return _EXIT_OK
     except OddExtractorError as exc:
         print(f"loam odd-extract --gaps: {exc}", file=sys.stderr)
+        return _EXIT_ERR
+
+
+def _cmd_build_next(args: argparse.Namespace) -> int:
+    """Handle ``loam odd-extract <repo> --build-next``.
+
+    Per v0.2.4 Cycle 3 AC.PERSONA-PULL.1 — runs the build-next
+    ranking against the prior extraction's gap-inventory.yaml +
+    augmented-objectives.yaml + (optional) onboarding-survey context.
+    Persists build-next.yaml + build-next.md; emits stdout summary +
+    audit-log entries.
+
+    Persona invokes via `loam odd-extract <repo> --build-next` on
+    user-question-trigger such as 'what should I build next?'.
+
+    Halts with exit code 2 + actionable message when any predecessor
+    artefact is missing.
+    """
+    try:
+        repo_path = _resolve_repo_path(args.repo_path)
+        workspace_root = _resolve_workspace_root(args.workspace_root)
+        repo_id = compute_repo_id(repo_path)
+        ext_dir = extraction_dir(workspace_root, repo_id)
+        if not ext_dir.exists():
+            raise OddExtractorError(
+                f"no prior extraction at {ext_dir} — run "
+                "`loam odd-extract <repo> --gaps` first to produce "
+                "gap-inventory.yaml + augmented-objectives.yaml."
+            )
+
+        # Predecessor: gap-inventory.yaml (Cycle 2 output).
+        from .gap_analysis import load_gap_inventory
+
+        inventory = load_gap_inventory(ext_dir)
+        if inventory is None:
+            raise OddExtractorError(
+                f"no gap-inventory.yaml at {ext_dir} — run "
+                "`loam odd-extract <repo> --gaps` first to produce "
+                "the gap inventory."
+            )
+
+        # Predecessor: augmented-objectives.yaml (Cycle 1 output).
+        from .interview import load_augmented_objectives
+
+        augmented = load_augmented_objectives(ext_dir)
+        if augmented is None:
+            raise OddExtractorError(
+                f"no augmented-objectives.yaml at {ext_dir} — run "
+                "`loam odd-extract <repo> --interview` first to "
+                "produce the augmented objective set."
+            )
+
+        # Optional: survey-context via lazy-imported multi_source helper.
+        from .multi_source import _read_user_survey
+
+        survey_bundle = _read_user_survey(repo_path, workspace_root)
+        survey_text: str | None = None
+        if survey_bundle is not None:
+            survey_text = survey_bundle.get("raw_text") or None
+
+        # Optional: interview-added objective-ids from audit-log.
+        from .build_next import (
+            DEFAULT_LIMIT,
+            DEFAULT_LLM_JUDGE_BUDGET_CENTS,
+            _read_interview_added_objective_ids,
+            check_build_next_cost_band,
+            emit_build_next_end_audit,
+            emit_build_next_persisted_audit,
+            emit_build_next_start_audit,
+            estimate_build_next_cost_cents,
+            render_stdout_summary as _bn_stdout_summary,
+            save_recommendation,
+            score_candidates,
+        )
+        from .gap_analysis import render_stdout_summary as _gap_stdout_summary
+        import time as _time
+
+        audit_dir = ext_dir / "audit-log"
+        interview_ids = _read_interview_added_objective_ids(audit_dir)
+        survey_present = bool(survey_text)
+
+        # Pre-flight cost-band check (AC.BLDNXT.7).
+        budget_cents = (
+            float(args.budget_cents)
+            if getattr(args, "budget_cents", None) is not None
+            else float(DEFAULT_LLM_JUDGE_BUDGET_CENTS)
+        )
+        estimated = estimate_build_next_cost_cents(
+            gap_count=len(inventory.gaps),
+            survey_present=survey_present,
+        )
+        check_build_next_cost_band(
+            estimated_cost_cents=estimated,
+            budget_cents=budget_cents,
+        )
+
+        # Audit: start.
+        emit_build_next_start_audit(
+            ext_dir,
+            extraction_id=repo_id,
+            gap_count=len(inventory.gaps),
+            survey_present=survey_present,
+            interview_priority_count=len(interview_ids),
+            llm_judge_budget_cents=int(budget_cents),
+        )
+
+        limit = int(getattr(args, "limit", None) or DEFAULT_LIMIT)
+        t0 = _time.monotonic()
+
+        # Ranking — anthropic_client=None means deterministic only
+        # (no LLM-judge tier). The CLI handler does NOT construct a
+        # real Anthropic client; tests inject via direct call to
+        # :func:`score_candidates`.
+        rec = score_candidates(
+            gap_inventory=inventory,
+            augmented_objectives=augmented,
+            survey_text=survey_text,
+            extraction_id=repo_id,
+            audit_path=str(audit_dir),
+            limit=limit,
+            interview_added_objective_ids=interview_ids,
+            anthropic_client=None,
+        )
+
+        # Inventory summary text — for the markdown header.
+        inv_summary = _gap_stdout_summary(inventory)
+        yaml_p, md_p, wrote = save_recommendation(
+            rec, ext_dir, inventory_summary_text=inv_summary
+        )
+
+        # Audit: persisted.
+        emit_build_next_persisted_audit(
+            ext_dir,
+            extraction_id=repo_id,
+            rec=rec,
+            build_next_md_path_str=str(md_p),
+            build_next_yaml_path_str=str(yaml_p),
+        )
+
+        # Audit: end.
+        duration_ms = int((_time.monotonic() - t0) * 1000)
+        emit_build_next_end_audit(
+            ext_dir,
+            extraction_id=repo_id,
+            duration_ms=duration_ms,
+            total_cost_cents=0.0,
+        )
+
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "extraction_id": repo_id,
+                        "build_next_yaml_path": str(yaml_p),
+                        "build_next_md_path": str(md_p),
+                        "wrote": wrote,
+                        "candidate_count": len(rec.candidates),
+                        "truncated_count": rec.truncated_count,
+                        "llm_judge_invocations": rec.llm_judge_invocations,
+                        "degenerate_survey": rec.degenerate_survey,
+                    },
+                    indent=2,
+                )
+            )
+        else:
+            print(_bn_stdout_summary(rec))
+            print()
+            print(f"  Recommendation YAML:  {yaml_p}")
+            print(f"  Recommendation MD:    {md_p}")
+            print(f"  Wrote:                {wrote} (False = no-change skip)")
+        return _EXIT_OK
+    except OddExtractorError as exc:
+        print(f"loam odd-extract --build-next: {exc}", file=sys.stderr)
         return _EXIT_ERR
 
 
@@ -955,6 +1130,34 @@ def build_odd_extract_subcommand(
             "<workspace>/.loam/extractions/<repo-id>/gap-inventory.yaml; "
             "emits stdout summary + audit-log entries. Idempotent "
             "on unchanged inputs. Per AC.GAPAN.{3,4,5,6,7}."
+        ),
+    )
+    # AC.PERSONA-PULL.1 — build-next flag. v0.2.4 Cycle 3.
+    odd_parser.add_argument(
+        "--build-next",
+        action="store_true",
+        dest="build_next",
+        help=(
+            "v0.2.4 Cycle 3 — build-next ranking. Loads "
+            "<workspace>/.loam/extractions/<repo-id>/{augmented-"
+            "objectives,gap-inventory}.yaml + (optional) onboarding-"
+            "survey context; produces ranked candidate list at "
+            "<workspace>/.loam/extractions/<repo-id>/build-next."
+            "{md,yaml}; emits stdout summary + audit-log entries. "
+            "Idempotent on unchanged inputs. Output is informative "
+            "(not prescriptive) — operator chooses what to build. "
+            "Persona invokes on user-question-trigger such as 'what "
+            "should I build next?'. Per AC.BLDNXT.{1..9} + "
+            "AC.PERSONA-PULL.{1..4}."
+        ),
+    )
+    odd_parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help=(
+            "(--build-next) cap the ranked candidate list at top-N. "
+            f"Default {10}. Per AC.BLDNXT.5."
         ),
     )
     # AC.WATCH.6 — invocation-source flag. v0.2.0 Cycle 1.

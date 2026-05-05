@@ -26,6 +26,21 @@ _AUDIT_LOG_SCHEMA_VERSION = 1
 _FILENAME_RE = re.compile(r"^(\d{4})\.yaml$")
 
 
+# Per v0.2.4 Cycle 1 AC.COMPINT.8 — completeness-interview event_kinds.
+# Structured payload uses the existing ``estimate`` field (no schema
+# bump). Listed here as a module-level constant so tests + downstream
+# consumers can introspect the canonical set.
+COMPLETENESS_INTERVIEW_EVENT_KINDS: tuple[str, ...] = (
+    "completeness_interview_start",
+    "objective_confirmed",
+    "objective_adjusted",
+    "objective_flagged_out_of_scope",
+    "objective_added_by_user",
+    "objective_flagged_by_persona",
+    "completeness_interview_end",
+)
+
+
 def audit_log_dir(extraction_dir_: Path) -> Path:
     """``<extraction_dir>/audit-log/``."""
     return extraction_dir_ / "audit-log"
@@ -68,7 +83,13 @@ def write_audit_entry(
     ``event_kind`` ∈ {``extraction_start``, ``stage_complete``,
     ``extraction_end``, ``extraction_failed``, ``budget_override``,
     ``synthesis_complete`` (v0.2.3 AC.OBJX.12),
-    ``altitude_check_complete`` (v0.2.3 AC.OBJX.12)}.
+    ``altitude_check_complete`` (v0.2.3 AC.OBJX.12),
+    plus the v0.2.4 Cycle 1 completeness-interview kinds in
+    :data:`COMPLETENESS_INTERVIEW_EVENT_KINDS`:
+    ``completeness_interview_start``, ``objective_confirmed``,
+    ``objective_adjusted``, ``objective_flagged_out_of_scope``,
+    ``objective_added_by_user``, ``objective_flagged_by_persona``,
+    ``completeness_interview_end``}.
 
     ``stage`` is one of ``init`` / ``analyze`` / ``generate`` /
     ``verify`` for ``stage_complete`` and ``synthesis_complete`` /

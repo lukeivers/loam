@@ -1,0 +1,10 @@
+code_patterns:
+  - ac_id: AC.JSTS.1
+    text: "Express POST /orders route at src/routes/orders.js"
+    evidence_kind: route
+  - ac_id: AC.JSTS.2
+    text: "Express PUT /orders/:id route at src/routes/orders.js"
+    evidence_kind: route
+  - ac_id: AC.JSTS.3
+    text: "Express DELETE /orders/:id route at src/routes/orders.js"
+    evidence_kind: route

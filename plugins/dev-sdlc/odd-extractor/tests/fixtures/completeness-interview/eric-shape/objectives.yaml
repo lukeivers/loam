@@ -1,0 +1,30 @@
+extraction_id: eric-shape
+objectives:
+  - objective_id: O.dispute-flow.1
+    text: "Operators file refund disputes against merchant portals at scale, replacing manual portal clickwork."
+    confidence: PLAUSIBLE
+    domain: dispute-flow
+    source: extracted
+    evidence:
+      readme_excerpts:
+        - "File refunds at scale"
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null
+  - objective_id: O.csv-upload.1
+    text: "Operators upload CSV files of dispute targets and validate them before processing."
+    confidence: PLAUSIBLE
+    domain: csv-upload
+    source: extracted
+    evidence:
+      readme_excerpts:
+        - "CSV upload + validation"
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null

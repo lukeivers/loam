@@ -273,6 +273,16 @@ class Objective(BaseModel):
     confidence: ConfidenceBand
     evidence: ObjectiveEvidence
     domain: str = Field(min_length=1)
+    # Per v0.2.4 Cycle 1 AC.COMPINT.1: provenance for the augmented
+    # objective set. Additive Literal field with default "extracted"
+    # (round-trip safe — every legacy v0.2.3 objectives.yaml row
+    # parses as ``source="extracted"`` without explicit field).
+    # Set to "added_by_user" by Shape (b)(1)/(b)(2)/(c) of the
+    # completeness interview; "flagged_by_persona" when a
+    # persona-flagged candidate is accepted at Shape (b)(1).
+    source: Literal["extracted", "added_by_user", "flagged_by_persona"] = (
+        "extracted"
+    )
 
     @model_validator(mode="after")
     def _enforce_id_regex_and_per_band(self) -> "Objective":
@@ -621,3 +631,97 @@ class BackingMap(BaseModel):
 # the actual dataclass + factories live in :mod:`ratify` to avoid
 # circular imports. The model_dump-equivalent payload shape is
 # documented here for reference; see :mod:`ratify` for the dataclass.
+
+
+# ====================================================================
+# v0.2.4 Cycle 1 — Completeness interview augmented objective set
+# (AC.COMPINT.1)
+# ====================================================================
+#
+# Per sub-plan-doc §3 AC.COMPINT.1: persisted form of the user-confirmed
+# (or adjusted, or extended) objective set. Symmetric with v0.2.3's
+# :class:`BackingMap` shape — top-level container with ``extraction_id``
+# + ``objectives`` list + ``model_validator`` enforcing no duplicate IDs.
+# ``interview_audit_path`` points at the audit-log directory whose
+# entries trace the interview run that produced this set.
+
+
+class AugmentedObjectiveSet(BaseModel):
+    """The completeness-interview output: extracted + user-augmented objectives.
+
+    Per sub-plan-doc §3 AC.COMPINT.1: container Pydantic model
+    persisted at ``<workspace>/.loam/extractions/<repo-id>/augmented-
+    objectives.yaml``. Schema-versioned for forward compatibility.
+
+    Invariants (enforced via ``model_validator``):
+
+    - No two ``Objective.objective_id`` values collide in the set.
+    - ``schema_version`` is the int 1; future bumps need a migration.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal[1] = 1
+    extraction_id: str = Field(min_length=1)
+    augmented_at: str  # ISO 8601 with timezone
+    interview_audit_path: str = Field(min_length=1)
+    objectives: list[Objective] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _enforce_no_duplicate_ids(self) -> "AugmentedObjectiveSet":
+        seen: set[str] = set()
+        for obj in self.objectives:
+            if obj.objective_id in seen:
+                raise ValueError(
+                    f"AugmentedObjectiveSet: duplicate "
+                    f"objective_id={obj.objective_id!r} (each ID must "
+                    f"be unique in the augmented set)"
+                )
+            seen.add(obj.objective_id)
+        return self
+
+
+class HeuristicPrior(BaseModel):
+    """A heuristic-flagged missing-objective prior.
+
+    Per sub-plan-doc §3 AC.COMPINT.3: heuristic pre-pass output
+    feeding the LLM-as-judge. Each prior names an ABSENT-objective
+    pattern with structural evidence refs. The LLM-judge consumes
+    these to either confirm + augment, downgrade, or filter.
+
+    ``priority`` ranks the prior so the cap-of-5 truncation in the
+    LLM-judge keeps the highest-priority candidates.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    pattern_id: Literal[
+        "production-stake-no-security-objective",
+        "survey-compliance-no-compliance-objective",
+        "data-modify-routes-no-persistence-objective",
+    ]
+    prior_text: str = Field(min_length=1)
+    priority: Literal["high", "medium", "low"] = "medium"
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class FlaggedMissing(BaseModel):
+    """An LLM-flagged missing-objective candidate.
+
+    Per sub-plan-doc §3 AC.COMPINT.2: structured output of
+    :func:`completeness.flag_missing_objectives`. Each row is a
+    candidate-objective the user can choose to add (Shape (b) in the
+    interview), reject, or defer.
+
+    ``candidate_text`` is ≥20 chars (mirrors :class:`Objective.text`'s
+    minimum); LLM-judge prompt enforces this, but the Pydantic model
+    holds the contract structurally.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_text: str = Field(min_length=20)
+    reasoning: str = Field(min_length=1)
+    evidence_refs: list[str] = Field(default_factory=list)
+    priority: Literal["high", "medium", "low"] = "medium"
+    domain: str = Field(min_length=1, default="uncategorized")

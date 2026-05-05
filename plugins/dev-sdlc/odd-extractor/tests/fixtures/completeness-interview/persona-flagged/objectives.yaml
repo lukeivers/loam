@@ -1,0 +1,16 @@
+extraction_id: persona-flagged
+objectives:
+  - objective_id: O.api.1
+    text: "Operators interact with the dispute API via authenticated REST calls."
+    confidence: PLAUSIBLE
+    domain: api
+    source: extracted
+    evidence:
+      readme_excerpts:
+        - "REST API"
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null

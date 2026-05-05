@@ -1,0 +1,44 @@
+extraction_id: clean-codebase
+objectives:
+  - objective_id: O.dispute-flow.1
+    text: "Operators file refund disputes against merchant portals at scale, replacing manual portal clickwork."
+    confidence: PLAUSIBLE
+    domain: dispute-flow
+    source: extracted
+    evidence:
+      readme_excerpts:
+        - "File refunds at scale"
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null
+  - objective_id: O.auth.1
+    text: "Operators authenticate with single sign-on before initiating dispute filings."
+    confidence: PLAUSIBLE
+    domain: auth
+    source: extracted
+    evidence:
+      readme_excerpts:
+        - "SSO authentication"
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null
+  - objective_id: O.persistence.1
+    text: "Dispute filings persist durably across application restarts."
+    confidence: PLAUSIBLE
+    domain: persistence
+    source: extracted
+    evidence:
+      readme_excerpts:
+        - "PostgreSQL backed"
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null

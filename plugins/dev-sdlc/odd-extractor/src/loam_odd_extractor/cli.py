@@ -349,7 +349,107 @@ def _cmd_dispatch(args: argparse.Namespace) -> int:
         return _cmd_ratify(args)
     if getattr(args, "incremental", False):
         return _cmd_incremental(args)
+    if getattr(args, "interview", False):
+        return _cmd_interview(args)
     return _cmd_extract(args)
+
+
+def _cmd_interview(args: argparse.Namespace) -> int:
+    """Handle ``loam odd-extract <workspace> --interview``.
+
+    Per v0.2.4 Cycle 1 AC.COMPINT.4 + AC.COMPINT.11 — runs the
+    completeness interview against the prior extraction's
+    objectives.yaml. Loads existing objectives → optionally calls
+    flag_missing_objectives → runs run_interview → persists augmented
+    set at <workspace>/.loam/extractions/<repo-id>/augmented-
+    objectives.yaml.
+
+    Default response producer is a stdin-based interactive prompt;
+    tests inject via direct call to :func:`loam_odd_extractor.run_interview`.
+    """
+    try:
+        repo_path = _resolve_repo_path(args.repo_path)
+        workspace_root = _resolve_workspace_root(args.workspace_root)
+        repo_id = compute_repo_id(repo_path)
+        ext_dir = extraction_dir(workspace_root, repo_id)
+        if not ext_dir.exists():
+            raise OddExtractorError(
+                f"no prior extraction at {ext_dir} — run "
+                "`loam odd-extract <repo>` first to produce "
+                "objectives.yaml + multi-source bundle."
+            )
+
+        # Load extracted objectives from objectives.yaml (v0.2.3 output).
+        objectives_path = ext_dir / "objectives.yaml"
+        if not objectives_path.exists():
+            raise OddExtractorError(
+                f"no objectives.yaml at {objectives_path} — v0.2.3 "
+                "synthesis pass has not been run."
+            )
+        from .spec import (
+            AugmentedObjectiveSet,
+            Objective,
+        )
+        import datetime as _dt
+        raw = yaml.safe_load(objectives_path.read_text(encoding="utf-8")) or {}
+        if isinstance(raw, dict):
+            objs_raw = raw.get("objectives") or []
+        elif isinstance(raw, list):
+            objs_raw = raw
+        else:
+            objs_raw = []
+        objectives = [Objective.model_validate(d) for d in objs_raw]
+
+        # Resolve PM handle.
+        from .interview import resolve_pm_handle, run_interview
+        pm_handle = resolve_pm_handle(workspace_root, args.pm_name)
+
+        from loam.per_project_pm import PMRuntime
+        pm_runtime = PMRuntime.from_workspace(workspace_root, pm_handle)
+
+        flagged: list = []  # CLI-time: skip LLM-judge when --no-llm; tests use direct call.
+        baseline = AugmentedObjectiveSet(
+            extraction_id=repo_id,
+            augmented_at=_dt.datetime.now(_dt.timezone.utc).isoformat(),
+            interview_audit_path=str(ext_dir / "audit-log"),
+            objectives=objectives,
+        )
+
+        def _stdin_producer(sq) -> str:  # pragma: no cover (interactive)
+            text = getattr(sq, "text", "")
+            print(f"\n{text}\n")
+            print("> ", end="", flush=True)
+            try:
+                return input()
+            except EOFError:
+                return ""
+
+        result = run_interview(
+            workspace_root=workspace_root,
+            extraction_dir_=ext_dir,
+            extraction_id=repo_id,
+            pm=pm_runtime,
+            augmented_set_in=baseline,
+            flagged_missing=flagged,
+            response_producer=_stdin_producer,
+        )
+
+        if args.json:
+            print(json.dumps({
+                "augmented_set_path": str(ext_dir / "augmented-objectives.yaml"),
+                "objective_count_post": len(result.objectives),
+                "extraction_id": result.extraction_id,
+            }, indent=2))
+        else:
+            print(f"Completeness interview complete for {repo_id}.")
+            print(f"  Augmented set:    {ext_dir / 'augmented-objectives.yaml'}")
+            print(f"  Objective count:  {len(result.objectives)}")
+        return _EXIT_OK
+    except OddExtractorError as exc:
+        print(
+            f"loam odd-extract --interview: {exc}", file=sys.stderr
+        )
+        return _EXIT_ERR
 
 
 def _cmd_incremental(args: argparse.Namespace) -> int:
@@ -689,6 +789,19 @@ def build_odd_extract_subcommand(
             "generates re-extraction proposals; enqueues domain-"
             "batched PM questions when --pm-name is supplied. "
             "Per AC.WATCH.{1,2,3,4,7,8}."
+        ),
+    )
+    # AC.COMPINT.4 — completeness-interview flag. v0.2.4 Cycle 1.
+    odd_parser.add_argument(
+        "--interview",
+        action="store_true",
+        help=(
+            "v0.2.4 Cycle 1 — completeness interview. Loads "
+            "<workspace>/.loam/extractions/<repo-id>/objectives.yaml; "
+            "runs the PM-batch one-question-at-a-time interview "
+            "(confirm-existing / flag-missing-candidate / free-form-"
+            "add); writes <workspace>/.loam/extractions/<repo-id>/"
+            "augmented-objectives.yaml. Per AC.COMPINT.{4,5,6,7,8}."
         ),
     )
     # AC.WATCH.6 — invocation-source flag. v0.2.0 Cycle 1.

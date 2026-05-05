@@ -381,7 +381,7 @@ Master-plan-level method decisions. Per-cycle plan-docs author their own §14 wi
 | Cycle | Theme | Apply SHA | Seal SHA |
 |---|---|---|---|
 | Cycle 1 | Continuous codebase-watch + scheduling + PM ratification-queue + domain-batched AC surfacing | `faff84e` | `6fef2f1` |
-| Cycle 2 | Persona-driven skill capture (auto-creation MVP) + workspace-config flag + design note | TBD | TBD |
+| Cycle 2 | Persona-driven skill capture (auto-creation MVP) + workspace-config flag + design note | `5cb84a5` | `549fe88` |
 | Release-level smoke | Six-dimension smoke + Eric-path smoke (Path 1 + Path 2) | TBD | n/a |
 
 Backfilled per cycle as cycles seal. Final v0.2.0 SHIPPED rollup updates STATE.md + v0-1-x-roadmap.md §8 + eric-final-delivery-plan-2026-05-04 §2 v0.2.0 row only AFTER release-level smoke green.

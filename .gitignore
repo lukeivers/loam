@@ -46,3 +46,11 @@ orchestrator/data/
 data/
 workspace/
 personas/
+
+# odd-extractor per-extraction state (v0.2.5 corrective C6 F-DESIGN-3
+# fix). Pre-C6 default workspace-root was cwd; running smoke / dev
+# invocations of `loam odd-extract` from inside pos-v2 would write to
+# `<pos-v2>/.loam/extractions/`. C6 changed the default to the target
+# repo, but explicit `--workspace-root <pos-v2>` still lands artefacts
+# here. Either way, the per-extraction state must never be committed.
+.loam/

@@ -50,8 +50,21 @@ _EXIT_BUDGET = 3
 # ---- helpers --------------------------------------------------------
 
 
-def _resolve_workspace_root(arg: Path | None) -> Path:
-    return (arg if arg is not None else Path.cwd()).expanduser().resolve()
+def _resolve_workspace_root(arg: Path | None, repo_path: Path) -> Path:
+    """Resolve the workspace-root from --workspace-root or default.
+
+    Per v0.2.5 corrective C6 (HARD-smoke F-DESIGN-3): the default is
+    the target ``<repo>`` positional arg, NOT ``Path.cwd()``. The
+    cwd-default semantics surprised callers running
+    ``loam odd-extract <some-other-repo>`` from inside a loam tree —
+    extraction artefacts landed in the loam tree rather than under
+    the target. Pre-C6 default was ``Path.cwd()``; existing tests
+    pass ``--workspace-root`` explicitly so the default-shift is
+    backward-compatible against the test surface.
+    """
+    if arg is not None:
+        return arg.expanduser().resolve()
+    return repo_path.expanduser().resolve()
 
 
 def _resolve_repo_path(arg: Path) -> Path:
@@ -88,7 +101,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
     """Default verb — runs the full four-stage workflow."""
     try:
         repo_path = _resolve_repo_path(args.repo_path)
-        workspace_root = _resolve_workspace_root(args.workspace_root)
+        workspace_root = _resolve_workspace_root(args.workspace_root, repo_path)
 
         # Budget envelope
         if args.budget_cents is not None:
@@ -221,7 +234,7 @@ def _cmd_status(args: argparse.Namespace) -> int:
     """Report extraction status without running."""
     try:
         repo_path = _resolve_repo_path(args.repo_path)
-        workspace_root = _resolve_workspace_root(args.workspace_root)
+        workspace_root = _resolve_workspace_root(args.workspace_root, repo_path)
         repo_id = compute_repo_id(repo_path)
         ext_dir = extraction_dir(workspace_root, repo_id)
         state = load_state(ext_dir)
@@ -267,7 +280,7 @@ def _cmd_resume(args: argparse.Namespace) -> int:
     """
     try:
         repo_path = _resolve_repo_path(args.repo_path)
-        workspace_root = _resolve_workspace_root(args.workspace_root)
+        workspace_root = _resolve_workspace_root(args.workspace_root, repo_path)
         repo_id = compute_repo_id(repo_path)
         ext_dir = extraction_dir(workspace_root, repo_id)
         state = load_state(ext_dir)
@@ -349,8 +362,11 @@ def _add_workspace_root_arg(parser: argparse.ArgumentParser) -> None:
         type=Path,
         default=None,
         help=(
-            "workspace root (default: cwd). Per-extraction state "
-            "lives under <workspace>/.loam/extractions/<repo-id>/."
+            "workspace root (default: target <repo> positional arg). "
+            "Per-extraction state lives under "
+            "<workspace>/.loam/extractions/<repo-id>/. Per v0.2.5 "
+            "corrective C6: the default tracks the target repo so "
+            "artefacts land alongside it, not in the invoker's cwd."
         ),
     )
 
@@ -404,7 +420,7 @@ def _cmd_interview(args: argparse.Namespace) -> int:
     """
     try:
         repo_path = _resolve_repo_path(args.repo_path)
-        workspace_root = _resolve_workspace_root(args.workspace_root)
+        workspace_root = _resolve_workspace_root(args.workspace_root, repo_path)
         repo_id = compute_repo_id(repo_path)
         ext_dir = extraction_dir(workspace_root, repo_id)
         if not ext_dir.exists():
@@ -500,7 +516,7 @@ def _cmd_gaps(args: argparse.Namespace) -> int:
     """
     try:
         repo_path = _resolve_repo_path(args.repo_path)
-        workspace_root = _resolve_workspace_root(args.workspace_root)
+        workspace_root = _resolve_workspace_root(args.workspace_root, repo_path)
         repo_id = compute_repo_id(repo_path)
         ext_dir = extraction_dir(workspace_root, repo_id)
         if not ext_dir.exists():
@@ -640,7 +656,7 @@ def _cmd_build_next(args: argparse.Namespace) -> int:
     """
     try:
         repo_path = _resolve_repo_path(args.repo_path)
-        workspace_root = _resolve_workspace_root(args.workspace_root)
+        workspace_root = _resolve_workspace_root(args.workspace_root, repo_path)
         repo_id = compute_repo_id(repo_path)
         ext_dir = extraction_dir(workspace_root, repo_id)
         if not ext_dir.exists():
@@ -815,7 +831,7 @@ def _cmd_incremental(args: argparse.Namespace) -> int:
     """
     try:
         repo_path = _resolve_repo_path(args.repo_path)
-        workspace_root = _resolve_workspace_root(args.workspace_root)
+        workspace_root = _resolve_workspace_root(args.workspace_root, repo_path)
 
         # Optionally resolve PM. Without --pm-name, the watch runs
         # without enqueueing through PM; useful for dry-runs +
@@ -941,7 +957,13 @@ def _cmd_ratify(args: argparse.Namespace) -> int:
                 f"workflow ({exc})"
             ) from exc
 
-        workspace_root = _resolve_workspace_root(args.workspace_root)
+        # For --ratify, the positional arg is a contract-draft.md file,
+        # not a repo directory. Default workspace-root to the file's
+        # parent (preserves the C6 default-shift intent: artefacts live
+        # alongside the input target, not in CWD).
+        workspace_root = _resolve_workspace_root(
+            args.workspace_root, draft_md_path.parent
+        )
         pm_name = args.pm_name
         if not pm_name:
             raise OddExtractorError(

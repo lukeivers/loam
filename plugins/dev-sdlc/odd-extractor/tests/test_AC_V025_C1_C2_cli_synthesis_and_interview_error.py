@@ -349,13 +349,19 @@ def test_AC_V025_C2_interview_no_pm_emits_clean_error_no_traceback(
     # 1. Non-zero exit.
     assert rc != 0, f"--interview without PM must exit non-zero; got {rc}"
 
-    # 2. Actionable phrase present.
+    # 2. Actionable phrase present. Per v0.2.5 corrective C6 (HARD-smoke
+    # F-DESIGN-2): the error message no longer references the
+    # nonexistent ``loam project init`` subcommand. Actionable guidance
+    # = workspace path + ``--pm-handle`` flag.
     err_lower = err.lower()
     assert (
-        "no pm authored" in err_lower
-        or "loam project init" in err_lower
-        or "--pm-handle" in err_lower
+        "no pm authored" in err_lower or "--pm-handle" in err_lower
     ), f"stderr must carry actionable phrase; got: {err!r}"
+    assert "loam project init" not in err_lower, (
+        f"stderr must NOT reference the nonexistent `loam project "
+        f"init` subcommand (v0.2.5 corrective C6 F-DESIGN-2 fix); "
+        f"got: {err!r}"
+    )
 
     # 3. NO Python traceback.
     combined = err + captured.out

@@ -300,8 +300,12 @@ def resolve_pm_handle(
     if not discovered:
         raise OddExtractorError(
             "No PM authored under "
-            f"{workspace_root}/workspace/.loam/pms/. Run `loam project "
-            "init` to author one, or pass --pm-handle explicitly."
+            f"{workspace_root}/workspace/.loam/pms/. Author a PM by "
+            f"writing a contract.yaml at "
+            f"{workspace_root}/workspace/.loam/pms/<handle>/contract.yaml "
+            "(see framework/per-project-pm/tests/conftest.py for the "
+            "minimum-valid contract shape), or pass --pm-handle "
+            "explicitly to name an existing handle."
         )
     if len(discovered) > 1:
         raise OddExtractorError(

@@ -1,0 +1,11 @@
+# v0.2.5 corrective C6 — closes the three design-shape findings (F-DESIGN-1/2/3) surfaced by the v0.2.5 HARD smoke 3rd-run report after the F1+F2+F5+F8 history closed via C1+C2+C4-pivot+C5; ships an outcome-altitude full-4-stage smoke test that authors a stub PM under <workspace>/workspace/.loam/pms/ before invoking the CLI; corrects the resolve_pm_handle error message to reference the workspace path + --pm-handle (no longer the nonexistent `loam project init` subcommand); shifts the --workspace-root default from Path.cwd() to the target <repo> positional arg so artefacts land under the target instead of the invoker's cwd; adds .loam/ to pos-v2's .gitignore to prevent self-pollution; 5 named ACs
+
+slug: v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution
+components: dev-sdlc
+baseline: b53e628
+amendment-commit: b37da701cd855520998874d941bb10d7452c0fc6
+plan-doc: docs/rebuild/plans/v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution.md
+acs-satisfied: 5
+smoke: C6.1 outcome-alt smoke 4 stages exit 0 + 4 artefacts; C6.2 err-msg references ws path + --pm-handle; C6.3 ws-root default=<repo>; C6.4 .gitignore lists .loam/; C6.5 no regressions
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

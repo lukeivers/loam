@@ -270,10 +270,10 @@ The plan §11 left D-build.x method choices to the builder within the ACs' outco
 
 ### Commit SHAs
 
-(placeholder — auto-emitted by `loam amend seal --plan-doc`.)
-
----
-
+- Amendment commit: `b37da701cd855520998874d941bb10d7452c0fc6` —
+  `chore(amend): v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution manifest+apply — dev-sdlc BASELINE+sidecar bump to b53e628`
+- Seal commit: `5138dd7ce107212b5256258fe7153dcb4c90e4d8` —
+  `chore(seals): v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution — dev-sdlc at b37da70`
 ## 15. References
 
 - v0.2.5 HARD smoke 3rd-run report: `/Users/lukeivers/pos3/workspace/.scratch/claude-output/v0-2-5-hard-smoke-3rd-run-report.md`

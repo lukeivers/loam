@@ -1,0 +1,11 @@
+# ODD test-altitude procedural fix — L1 + L2 + L3-conditional (4 artefacts: docs/odd-llm-grounding.lean.md outcome-altitude AC requirement section + plugins/dev-sdlc/skills/odd-test-altitude-discipline NEW SKILL with pre-arrangement detection rubric + risk-band classifier + 4 trigger-points + concrete anti-example + 3 SKILL extensions (plan-docs-author / plan-before-code-author / dispatch-brief-authoring) + memory rule feedback_test_outcome_altitude_required.md with MEMORY.md index reference; closes the procedural gap behind 3 failures (v0.2.1 F1, v0.2.1 F2, v0.2.5 F1) where ACs passed at implementation-altitude but real-world outcomes broke at the release-level HARD smoke gate; methodology fix not a v0.2.x release; release-gate HARD acceptable per risk-band classifier (doc-only); single-component sweep on dev-sdlc
+
+slug: odd-test-altitude-procedural-fix
+components: dev-sdlc
+baseline: a75e2b0
+amendment-commit: 16d6e508f6792b46b90f8e0bcfc5aa1365359920
+plan-doc: docs/rebuild/plans/odd-test-altitude-procedural-fix.md
+acs-satisfied: 5
+smoke: D2+D5 verified (grep on 4 artefact files + memory file with MEMORY.md ref); D1/D3/D4/D6 n/a structurally; release-gate HARD acceptable per risk-band classifier (doc-only); full-suite green sweep
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

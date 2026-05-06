@@ -1,0 +1,11 @@
+# v0.2.5 corrective C4-pivot — synthesis routes through `claude -p` subprocess against Claude Max subscription (NO Anthropic SDK; NO API key) per owner ruling Telegram 10194; new ClaudePrintAnthropicShimClient mirrors framework/memory-system claude_print_client subprocess pattern; build_default_anthropic_client body rewritten (symbol preserved for sealed C1+C2 monkeypatch backward-compat); install-from-source.txt [synthesis] line reverted; pyproject.toml [synthesis] extra removed; outcome-altitude tests C3.3+C4.3 pivoted from ANTHROPIC_API_KEY/importorskip to shutil.which('claude'); F8 banding fix folded in (prompt-engineering preserved + first-pass demotion-guard preserved + NEW second-pass demotion-or-drop guard for PLAUSIBLE-no-single-source rows surfaced under live claude -p transport); 7 named ACs + meta-AC; closes both F8 BLOCKER (LLM banding violation) and the direction-pivot (subscription-only constraint)
+
+slug: v0-2-5-corrective-c4-pivot-claude-print-synthesis
+components: dev-sdlc
+baseline: 6a29038
+amendment-commit: 3dc26ccafc57001148a9dbe70316ae5821e8a6c2
+plan-doc: docs/rebuild/plans/v0-2-5-corrective-c4-pivot-claude-print-synthesis.md
+acs-satisfied: 7
+smoke: C4P.1 claude -p shim; C4P.2 extra removed; C4P.3 install revert; C4P.4 C3.3+C4.3 live PASS; C4P.5 F8 fix + 2nd-pass guard; C4P.6 825/1 green; C4P.7 OBJX.5 refined
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

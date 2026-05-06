@@ -159,9 +159,7 @@ Per dispatch:
 
 ### Commit SHAs
 
-- Plan-doc + manifest commit: <pending>
-- Source-edit commit: <pending>
-- Apply commit: <pending>
-- Seal commit: <pending>
-- §14 backfill commit: <pending>
-- STATE.md update commit: <pending>
+- Amendment commit: `16d6e508f6792b46b90f8e0bcfc5aa1365359920` —
+  `chore(amend): odd-test-altitude-procedural-fix manifest+apply — dev-sdlc BASELINE+sidecar bump to a75e2b0`
+- Seal commit: `a9bc524be71b794ad68596a05612446a0c6352f0` —
+  `chore(seals): odd-test-altitude-procedural-fix — dev-sdlc at 16d6e50`

@@ -189,10 +189,7 @@ Pivot-corrective scope is large in surface area but small per-file (single-pass 
 
 ### Commit SHAs
 
-- Plan-doc + manifest commit: `<pending>`
-- Source-edit feat commit (BASELINE): `<pending>`
-- Manifest baseline-pin commit: `<pending>`
-- `loam amend apply` commit: `<pending>`
-- `loam amend seal` commit: `<pending>`
-- §14 backfill commit (auto via seal --plan-doc): `<pending>`
-- STATE update commit: `<pending>`
+- Amendment commit: `3dc26ccafc57001148a9dbe70316ae5821e8a6c2` —
+  `chore(amend): v0-2-5-corrective-c4-pivot-claude-print-synthesis manifest+apply — dev-sdlc BASELINE+sidecar bump to 6a29038`
+- Seal commit: `76e5a8f6fab40e52bd266525b643b8ff2dc3beaa` —
+  `chore(seals): v0-2-5-corrective-c4-pivot-claude-print-synthesis — dev-sdlc at 3dc26cc`

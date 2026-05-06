@@ -402,8 +402,10 @@ ACs' outcome bounds. This section is populated post-build.
 
 ### Commit SHAs
 
-(placeholder; auto-filled by `loam amend seal --plan-doc <ABSOLUTE PATH>` per the seal-automation extension. Pass an ABSOLUTE path to avoid the `Path.relative_to` crash documented at commit `75c4d73`. The amendment commit + seal commit + plan-SHA backfill commit each appear here on completion.)
-
+- Amendment commit: `290ed00a22b757d8c155d8a9ff34609d00f98991` —
+  `chore(amend): v0-2-5-corrective-c5-claude-print-mcp-isolation manifest+apply — memory-system+dev-sdlc BASELINE+sidecar bump to cf8a338`
+- Seal commit: `6d2052de0659e45bf67953d2097e8c7966a9201f` —
+  `chore(seals): v0-2-5-corrective-c5-claude-print-mcp-isolation — memory-system+dev-sdlc at 290ed00`
 ### Commit SHAs
 
 (populated by `loam amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)

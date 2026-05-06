@@ -1,0 +1,11 @@
+# v0.2.5 corrective C3 — install-from-source.txt adds -e ./plugins/dev-sdlc/odd-extractor[synthesis] so a fresh install pulls in the anthropic SDK; new outcome-altitude AC test exercises the production CLI --live path against the real SDK with no monkeypatch (skip-or-pass on ANTHROPIC_API_KEY); F6 dispatch-text drift verified absent in pos-v2 (audit-closure); 5 named ACs + meta-AC for full-suite green
+
+slug: v0-2-5-corrective-c3-install-and-outcome-altitude-ac
+components: dev-sdlc
+baseline: 2fd17a6
+amendment-commit: 1ca5f478767d84808c63cc34363c243ee053c401
+plan-doc: docs/rebuild/plans/v0-2-5-corrective-c3-install-and-outcome-altitude-ac.md
+acs-satisfied: 5
+smoke: C3.1 install-line added; C3.2 anthropic SDK in workstation Python; C3.3 outcome-altitude test (first SKILL worked instance); C3.4 F6 drift absent; C3.5 odd-extractor green
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

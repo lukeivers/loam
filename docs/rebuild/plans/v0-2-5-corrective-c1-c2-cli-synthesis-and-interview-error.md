@@ -125,9 +125,14 @@ Corrective amendment scope is tight (CLI client wire-through + ValueError → Od
 
 ### Commit SHAs
 
-- Plan-doc + manifest commit: `<pending>`
-- Source-edit feat commit (BASELINE): `<pending>`
-- Manifest baseline-pin commit: `<pending>`
-- Amendment apply commit: `<pending>`
-- Seal commit: `<pending>`
-- §14 backfill commit: `<pending>`
+**Bookkeeping note (2026-05-05):** the v0.2.5 corrective C1+C2 source edits (`cli.py`, `interview.py`, `test_AC_OREK_6_*.py`, new `test_AC_V025_C1_C2_*.py`) landed inside the parallel `odd-test-altitude-procedural-fix` amendment cycle's apply commit `16d6e50` rather than under their own separately-named `loam amend apply` commit. The v0.2.5 corrective plan-doc + manifest are at `c098b3b`. The parallel `odd-test-altitude-procedural-fix` amendment cycle was authored / dispatched / applied / sealed by the dispatcher concurrently with this build; its apply step swept my unstaged source edits into its merged-manifest+apply commit. This is anomalous for the v0.2.1 corrective F1 precedent (which used a dedicated source-edit feat commit + dedicated apply + seal); the functional outcome is the same (fixes shipped, tests green) but the audit trail bundles the v0.2.5 corrective into the odd-test-altitude cycle's seal. The v0.2.5 corrective manifest at `c098b3b` did NOT receive its own separate apply/seal commits.
+
+- Plan-doc + manifest commit (v0.2.5 corrective C1+C2): `c098b3b` (jointly with `odd-test-altitude-procedural-fix` plan-doc; same author commit)
+- Source-edit feat commit (BASELINE) — functionally absorbed: `16d6e50` (titled `chore(amend): odd-test-altitude-procedural-fix manifest+apply` but containing the v0.2.5 corrective source edits)
+- Manifest baseline-pin commit (v0.2.5 corrective): N/A — separate apply was not run
+- Amendment apply commit (v0.2.5 corrective): N/A — fixes apply-pinned via `16d6e50`
+- Seal commit: `a9bc524` (titled `chore(seals): odd-test-altitude-procedural-fix — dev-sdlc at 16d6e50`; the v0.2.5 corrective source edits ride along)
+- §14 backfill commit: `876bf66` (titled `docs(plans): record odd-test-altitude-procedural-fix commit SHAs in method-decision register`; v0.2.5 corrective §14 backfill — THIS doc — lands as a separate post-seal commit)
+- v0.2.5 corrective §14 backfill (this doc-update): `<pending>`
+
+**Verification at HEAD `876bf66`:** full odd-extractor test suite is 815 passed / 1 skipped (vs v0.2.4 baseline 813 / 1; the +2 tests are AC.V025-C1 + AC.V025-C2). No regressions. The fixes are functionally complete; v0.2.5 HARD smoke can re-run GREEN.

@@ -73,6 +73,17 @@
 # ---------------------------------------------------------------
 -e ./plugins/dev-sdlc
 
+# odd-extractor sub-package under dev-sdlc — installs editable
+# with the [synthesis] extra so the anthropic SDK is available
+# for `loam odd-extract --live` synthesis pass. Per v0.2.3 Cycle 1
+# sub-plan-doc §7 method-decision register, the synthesis extra
+# is deliberately optional in the package's pyproject.toml; this
+# install-from-source line elevates it to the standard install
+# path so fresh installs (workstation + Eric + future stranger-
+# clones) get the SDK without manual `pip install ...[synthesis]`.
+# Closes v0.2.5 HARD-smoke F5 BLOCKER.
+-e ./plugins/dev-sdlc/odd-extractor[synthesis]
+
 # ---------------------------------------------------------------
 # Tier K — Loam Skills plugin (no inter-component runtime deps;
 # ships SKILL.md packages discovered by Claude Code natively).

@@ -146,9 +146,19 @@ def test_live_with_override_proceeds(
     monkeypatch, fixture_repo: Path, workspace_root: Path
 ) -> None:
     """Same high estimate + --budget-override → proceeds + writes
-    a budget_override audit-log entry."""
+    a budget_override audit-log entry.
+
+    Post-v0.2.5-corrective-C1: ``--live`` now triggers
+    ``build_default_anthropic_client`` so the synthesis pass actually
+    fires (pre-corrective the CLI silently fell into the empty-
+    synthesis path). The AC.OREK.6 invariant under test is the
+    budget-override audit-log entry; the synthesis path itself is
+    out-of-scope. Stub the client so the test exercises the
+    intended code path without invoking real LLM infrastructure.
+    """
     from loam_odd_extractor import budget as budget_mod
     from loam_odd_extractor import cli as cli_mod
+    from loam_odd_extractor import synthesis as synthesis_mod
 
     high_estimate = EstimateResult(
         estimated_money_cents=99_000,
@@ -165,6 +175,49 @@ def test_live_with_override_proceeds(
     )
     monkeypatch.setattr(
         budget_mod, "estimate_for_extraction", _stub_estimate
+    )
+
+    # Per v0.2.5 corrective C1: --live now constructs an Anthropic
+    # client. Stub it so the budget-audit assertion runs without a
+    # real SDK install.
+    class _StubBlock:
+        def __init__(self, text: str) -> None:
+            self.type = "text"
+            self.text = text
+
+    class _StubResponse:
+        def __init__(self, text: str) -> None:
+            self.content = [_StubBlock(text)]
+            self.usage = type(
+                "Usage",
+                (),
+                {"input_tokens": 10, "output_tokens": 5},
+            )()
+
+    class _StubMessages:
+        def create(self, **kwargs):  # noqa: ANN001 — stub signature
+            # Empty objectives + verdicts; the budget-override audit
+            # log fires before any synthesis call regardless.
+            import json
+
+            return _StubResponse(
+                json.dumps(
+                    {
+                        "objectives": [],
+                        "constraints": [],
+                        "capabilities": [],
+                    }
+                )
+            )
+
+    class _StubClient:
+        def __init__(self) -> None:
+            self.messages = _StubMessages()
+
+    monkeypatch.setattr(
+        synthesis_mod,
+        "build_default_anthropic_client",
+        lambda: _StubClient(),
     )
 
     rc = cli_main(

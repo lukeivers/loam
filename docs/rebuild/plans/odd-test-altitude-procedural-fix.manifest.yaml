@@ -75,7 +75,7 @@ amendment:
 # BASELINE pinned to the source-edit commit covering the 4 artefact
 # files in pos-v2 tree (lean doc + 4 SKILLs). Updated post-source-
 # commit.
-baseline: "<pending>"
+baseline: "a75e2b0"
 
 plan: docs/rebuild/plans/odd-test-altitude-procedural-fix.md
 
@@ -83,7 +83,7 @@ plan: docs/rebuild/plans/odd-test-altitude-procedural-fix.md
 plan_doc_ref: docs/rebuild/plans/odd-test-altitude-procedural-fix.md
 
 ac_count: 5
-smoke_outcome: "D2+D5 verified (grep counts on 4 artefact files + memory file at global path with MEMORY.md inline ref); D1/D3/D4/D6 n/a structurally (markdown / no daemon / no audit-log surface); release-gate HARD acceptable per risk-band classifier (doc-only methodology fix; no production code path affected); full-suite green sweep at HEAD"
+smoke_outcome: "D2+D5 verified (grep on 4 artefact files + memory file with MEMORY.md ref); D1/D3/D4/D6 n/a structurally; release-gate HARD acceptable per risk-band classifier (doc-only); full-suite green sweep"
 
 components:
   - name: dev-sdlc

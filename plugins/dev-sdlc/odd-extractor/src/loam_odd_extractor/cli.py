@@ -151,6 +151,27 @@ def _cmd_extract(args: argparse.Namespace) -> int:
 
         config: ExtractionConfig | None = None
 
+        # Per v0.2.5 corrective C1 (HARD-smoke RED finding F1):
+        # construct the default Anthropic client when ``--live`` is
+        # set so the synthesis pass + backing-map population actually
+        # run end-to-end through the CLI surface. Pre-corrective the
+        # CLI silently fell into ``_empty_synthesis_result`` with
+        # ``model_id="(none)"`` even with ``--live`` because it never
+        # threaded a client into ``generate_raw_acs``.
+        anthropic_client: Any | None = None
+        if args.live and target_stage in (None, "generate"):
+            from .synthesis import build_default_anthropic_client
+
+            try:
+                anthropic_client = build_default_anthropic_client()
+            except OddExtractorError:
+                # Lazy-import failure (anthropic SDK missing) raises
+                # ``StageError`` per ``synthesis.build_default_anthropic_client``;
+                # the surrounding ``except OddExtractorError`` catch
+                # below converts it to actionable stderr + exit 2,
+                # NOT a Python traceback.
+                raise
+
         if target_stage in (None, "init"):
             config = init_extraction(
                 repo_path=repo_path,
@@ -168,7 +189,12 @@ def _cmd_extract(args: argparse.Namespace) -> int:
             if config is None:
                 config = _load_config(workspace_root, repo_id)
             plan = _load_plan(workspace_root, repo_id)
-            raw = generate_raw_acs(config=config, plan=plan)
+            raw = generate_raw_acs(
+                config=config,
+                plan=plan,
+                anthropic_client=anthropic_client,
+                synthesis_required=args.live,
+            )
 
         if target_stage in (None, "verify"):
             if config is None:

@@ -36,6 +36,7 @@ from typing import Any, Callable, Iterable, Protocol
 
 import yaml
 
+from .errors import OddExtractorError
 from .observability import write_audit_entry
 from .spec import (
     AugmentedObjectiveSet,
@@ -286,19 +287,24 @@ def resolve_pm_handle(
 ) -> str:
     """Per sub-plan-doc §6.5: explicit > scan(one) > halt.
 
-    Raises ``ValueError`` on zero (halt) or >1 (explicit-required).
+    Raises :class:`OddExtractorError` on zero (halt) or >1
+    (explicit-required) so the CLI's existing
+    ``except OddExtractorError`` catch produces a clean
+    actionable error + exit code 2 (no Python traceback leaks
+    to the user). v0.2.5 corrective C2 per the v0.2.5 HARD
+    smoke RED finding F2.
     """
     if explicit_handle:
         return explicit_handle
     discovered = _scan_workspace_pms(workspace_root)
     if not discovered:
-        raise ValueError(
+        raise OddExtractorError(
             "No PM authored under "
             f"{workspace_root}/workspace/.loam/pms/. Run `loam project "
             "init` to author one, or pass --pm-handle explicitly."
         )
     if len(discovered) > 1:
-        raise ValueError(
+        raise OddExtractorError(
             f"Multiple PMs authored under {workspace_root}/workspace/"
             f".loam/pms/ ({', '.join(discovered)}); pass --pm-handle "
             "explicitly to disambiguate."

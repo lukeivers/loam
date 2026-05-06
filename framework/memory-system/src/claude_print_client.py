@@ -63,6 +63,7 @@ import asyncio
 import json
 import os
 import shutil
+import tempfile
 import typing
 from dataclasses import dataclass
 from typing import Any
@@ -108,6 +109,47 @@ _UNAUTH_MARKERS = (
     "not logged in",
     "please run /login",
 )
+
+# v0.2.5 corrective C5 — MCP-isolation payload for the child ``claude -p``
+# subprocess. Mirrors ``framework/workspace-sync/src/loam/workspace_sync/_resolver_client.py``
+# (AC.WSα.8, verified 2026-04-27).
+#
+# Without this isolation, the child claude inherits the parent session's MCP
+# server config — including the telegram MCP. The telegram loader at
+# ``~/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6/server.ts:60-78``
+# has PID-stomp dedup logic: any new instance SIGTERMs the prior PID-file
+# holder. Result without isolation: every memory-system ingest that forks
+# ``claude -p`` kills the parent session's telegram bot.
+#
+# Owner ruling 2026-05-05 (Telegram 10196): subprocess invocations must launch
+# without telegram. We use ``--strict-mcp-config --mcp-config <empty config>``
+# rather than the alternative ``CLAUDE_PERSONA`` env-var skip mechanism (which
+# is telegram-specific) because the flag-based approach disables EVERY MCP
+# server in the child — protecting telegram and any other MCP the user adds.
+# See plan-doc §14 D-1 method-decision register for the full rationale.
+_EMPTY_MCP_CONFIG: dict[str, dict[str, Any]] = {"mcpServers": {}}
+
+
+def _write_empty_mcp_config() -> str:
+    """Write the empty MCP config to a process-cached tempfile.
+
+    Returns the absolute path. ``delete=False`` because the subprocess
+    inherits the path and reads it after the writing handle is closed.
+    Cleanup is best-effort at process exit; the file is small (~25 bytes)
+    and lives in ``$TMPDIR`` / ``/tmp``.
+    """
+    fd = tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix="-memory-system-empty-mcp.json",
+        delete=False,
+        encoding="utf-8",
+    )
+    try:
+        json.dump(_EMPTY_MCP_CONFIG, fd)
+        fd.flush()
+    finally:
+        fd.close()
+    return fd.name
 
 # Markers that indicate the model hit a subscription rate-limit.
 # Only the two substrings AC6's live tests exercise (amendment #11
@@ -252,7 +294,7 @@ def _response_is_unauthenticated(result_text: str) -> bool:
 
 
 async def _probe_claude_authenticated(
-    binary_path: str, env: dict[str, str]
+    binary_path: str, env: dict[str, str], empty_mcp_config_path: str
 ) -> None:
     """Invoke ``claude -p`` with a trivial prompt to verify OAuth state.
 
@@ -260,9 +302,19 @@ async def _probe_claude_authenticated(
     ``ClaudeUnauthenticatedError``. Any other non-empty response means
     OAuth resolved (even if the model produced unusable output — the
     factory is checking auth, not response quality).
+
+    ``empty_mcp_config_path`` is the absolute path of the tempfile
+    written by :func:`_write_empty_mcp_config`; the probe argv carries
+    ``--strict-mcp-config --mcp-config <path>`` before ``-p`` so the
+    probe subprocess loads zero MCP servers (v0.2.5 corrective C5).
     """
     argv = [
         binary_path,
+        # v0.2.5 corrective C5 — MCP-isolation flags. Order matters:
+        # MUST precede ``-p`` so they bind to the print-mode invocation.
+        "--strict-mcp-config",
+        "--mcp-config",
+        empty_mcp_config_path,
         "-p",
         "--no-session-persistence",
         "--output-format",
@@ -342,6 +394,13 @@ class ClaudePrintLLMClient(LLMClient):
             )
         self._binary_path: str = resolved
         self._child_env: dict[str, str] = _build_child_env()
+        # v0.2.5 corrective C5 — write the empty MCP config tempfile once
+        # at construction; every probe + per-call subprocess argv references
+        # this path via ``--mcp-config`` so the child claude loads zero MCP
+        # servers. Without this, the child inherits the parent session's
+        # telegram MCP and SIGTERMs the parent's bot via the loader's
+        # PID-stomp dedup branch.
+        self._empty_mcp_config_path: str = _write_empty_mcp_config()
         self.cost_tracker = SubscriptionCostTracker()
 
         # AC5: probe OAuth state before returning a "ready" client.
@@ -356,7 +415,11 @@ class ClaudePrintLLMClient(LLMClient):
         # ``skip_auth_probe=True`` + ``await client.probe_authenticated()``.
         if not skip_auth_probe:
             _run_sync(
-                _probe_claude_authenticated(self._binary_path, self._child_env)
+                _probe_claude_authenticated(
+                    self._binary_path,
+                    self._child_env,
+                    self._empty_mcp_config_path,
+                )
             )
 
     async def probe_authenticated(self) -> None:
@@ -368,7 +431,9 @@ class ClaudePrintLLMClient(LLMClient):
         ``__init__`` — raises ``ClaudeUnauthenticatedError`` on the
         "Not logged in" signal, returns ``None`` on success.
         """
-        await _probe_claude_authenticated(self._binary_path, self._child_env)
+        await _probe_claude_authenticated(
+            self._binary_path, self._child_env, self._empty_mcp_config_path
+        )
 
     # ---- LLMClient API ---------------------------------------------
 
@@ -431,9 +496,18 @@ class ClaudePrintLLMClient(LLMClient):
 
         ``--bare`` is explicitly NOT included — the whole point of this
         client is to route through OAuth, which ``--bare`` bypasses.
+
+        v0.2.5 corrective C5: prepends ``--strict-mcp-config --mcp-config <path>``
+        before ``-p`` so the child subprocess loads zero MCP servers. Order
+        matters — these flags MUST precede ``-p``.
         """
         return [
             self._binary_path,
+            # v0.2.5 corrective C5 — MCP-isolation flags. See module docstring
+            # + ``_EMPTY_MCP_CONFIG`` comment for the why.
+            "--strict-mcp-config",
+            "--mcp-config",
+            self._empty_mcp_config_path,
             "-p",
             "--no-session-persistence",
             "--output-format",

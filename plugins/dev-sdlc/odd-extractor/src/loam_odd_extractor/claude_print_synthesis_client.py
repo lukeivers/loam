@@ -83,6 +83,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -105,6 +106,46 @@ _UNAUTH_MARKERS = (
     "not logged in",
     "please run /login",
 )
+
+# v0.2.5 corrective C5 — MCP-isolation payload for the child ``claude -p``
+# subprocess. Mirrors ``framework/workspace-sync/src/loam/workspace_sync/_resolver_client.py``
+# (AC.WSα.8, verified 2026-04-27) + memory-system's claude_print_client.
+#
+# Without this isolation, the child claude inherits the parent session's MCP
+# server config — including the telegram MCP. The telegram loader at
+# ``~/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6/server.ts:60-78``
+# has PID-stomp dedup logic: any new instance SIGTERMs the prior PID-file
+# holder. Result without isolation: every odd-extractor synthesis call that
+# forks ``claude -p`` kills the parent session's telegram bot.
+#
+# Owner ruling 2026-05-05 (Telegram 10196): subprocess invocations must launch
+# without telegram. ``--strict-mcp-config --mcp-config <empty config>``
+# disables every MCP server in the child — protecting telegram and any other
+# MCP the user adds later. See plan-doc §14 D-1 for the alternative
+# (``CLAUDE_PERSONA`` env-var) and why it was rejected.
+_EMPTY_MCP_CONFIG: dict[str, dict[str, Any]] = {"mcpServers": {}}
+
+
+def _write_empty_mcp_config() -> str:
+    """Write the empty MCP config to a process-cached tempfile.
+
+    Returns the absolute path. ``delete=False`` because the subprocess
+    inherits the path and reads it after the writing handle is closed.
+    Cleanup is best-effort at process exit; the file is small (~25 bytes)
+    and lives in ``$TMPDIR`` / ``/tmp``.
+    """
+    fd = tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix="-odd-extractor-empty-mcp.json",
+        delete=False,
+        encoding="utf-8",
+    )
+    try:
+        json.dump(_EMPTY_MCP_CONFIG, fd)
+        fd.flush()
+    finally:
+        fd.close()
+    return fd.name
 
 
 # ---- errors --------------------------------------------------------
@@ -314,6 +355,13 @@ class ClaudePrintAnthropicShimClient:
         self.model: str = model
         self._timeout_seconds: float = timeout_seconds
         self._child_env: dict[str, str] = _build_child_env()
+        # v0.2.5 corrective C5 — write the empty MCP config tempfile once
+        # at construction; every per-call subprocess argv references this
+        # path via ``--mcp-config`` so the child claude loads zero MCP
+        # servers. Without this, the child inherits the parent session's
+        # telegram MCP and SIGTERMs the parent's bot via the loader's
+        # PID-stomp dedup branch.
+        self._empty_mcp_config_path: str = _write_empty_mcp_config()
         # Lazily-constructed `.messages` accessor mirrors the SDK shape.
         self.messages: _Messages = _Messages(self)
 
@@ -322,9 +370,18 @@ class ClaudePrintAnthropicShimClient:
 
         Sync subprocess (blocking) — synthesis call sites are sync; no
         asyncio loop is required here.
+
+        v0.2.5 corrective C5: argv prepends ``--strict-mcp-config
+        --mcp-config <path>`` before ``-p`` so the child subprocess loads
+        zero MCP servers. Order matters — these flags MUST precede ``-p``.
         """
         argv = [
             self._binary_path,
+            # v0.2.5 corrective C5 — MCP-isolation flags. See module docstring
+            # + ``_EMPTY_MCP_CONFIG`` comment for the why.
+            "--strict-mcp-config",
+            "--mcp-config",
+            self._empty_mcp_config_path,
             "-p",
             "--no-session-persistence",
             "--output-format",

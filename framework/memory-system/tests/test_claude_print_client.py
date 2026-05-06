@@ -170,7 +170,18 @@ def test_AC2_subprocess_argv_and_env_scrubbed(
     env = call.kwargs["env"]
 
     assert argv[0] == "/bin/claude"
-    assert argv[1] == "-p"
+    # v0.2.5 corrective C5 — the MCP-isolation flag triple now precedes `-p`.
+    # AC2's invariant is the print-mode SHAPE (the flags are present + ordered
+    # correctly), not a literal index of `-p`. Use index-of so the assertion
+    # composes with C5's prepend.
+    assert "-p" in argv
+    p_idx = argv.index("-p")
+    # MCP-isolation flags must precede `-p` (Claude CLI requirement; per
+    # AC.WSα.8 + AC.V025-C5.1).
+    assert "--strict-mcp-config" in argv
+    assert argv.index("--strict-mcp-config") < p_idx
+    assert "--mcp-config" in argv
+    assert argv.index("--mcp-config") < p_idx
     assert "--no-session-persistence" in argv
     assert "--output-format" in argv
     assert argv[argv.index("--output-format") + 1] == "json"

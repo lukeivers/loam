@@ -63,6 +63,18 @@ Single source insufficient. Banding reflects multi-source confidence gradient.
   - Capability C1 (→ O1): "CSV upload + validation pipeline."
   - Implementation: "Express route GET /all-orders at src/routes/exportRoutes.js:66" — backing-implementation evidence row for C1, NOT primary output.
 
+## Outcome-altitude AC requirement
+
+Every AC set MUST include ≥1 AC explicitly marked at outcome-altitude. Without one, the set can pass §2.5 mapping while collectively missing the user-facing outcome (three failures observed: v0.2.1 F1, v0.2.1 F2, v0.2.5 F1).
+
+An outcome-altitude AC is verified by a test that:
+
+- Invokes the production code path (CLI / API / dispatch surface) the user actually uses.
+- Does NOT pre-arrange state that the production code would normally produce (pre-arrangement bypasses upstream — STUB-class, can satisfy implementation-altitude ACs only).
+- Produces a real outcome artefact (file written, response returned, side-effect observed).
+
+AC schema marks each AC `outcome-altitude: true|false` so plan-authors and reviewers spot-check at a glance. Risk-band classifier + pre-arrangement detection rubric live in the `odd-test-altitude-discipline` SKILL.
+
 ## Use sequence
 
 1. Read this prime.

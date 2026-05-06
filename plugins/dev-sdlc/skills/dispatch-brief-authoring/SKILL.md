@@ -112,6 +112,15 @@ The dispatch-brief structural shape, in canonical order:
    plan-doc. Per ODD §2.5: every AC has an explicit pytest
    path (or equivalent verification surface). The brief seeds
    the AC family; the plan-doc tightens the per-AC specs.
+   **Tests must include an outcome-altitude probe.** The seed
+   AC family carries at least one outcome-altitude AC — verified
+   by a test that invokes the production entry-point (CLI / API /
+   dispatch surface) with realistic inputs (no pre-arrangement of
+   state the production code would produce). Risk-band classifier
+   governs whether HARD per-cycle is required (production-facing
+   surface) or release-gate HARD is acceptable (pure-internal
+   refactor). Full rubric in `plugins/dev-sdlc/skills/
+   odd-test-altitude-discipline/SKILL.md`.
 9. **Smoke** — the six-dimension smoke list per
    smoke-test-discipline.md §6: D1 cold-state / D2 steady-state
    / D3 restart / D4 reboot / D5 cross-session / D6 telemetry-

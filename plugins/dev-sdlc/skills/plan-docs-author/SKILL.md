@@ -151,6 +151,20 @@ Skip when:
 7. **Author §4 AC family.** Every AC named, with 2–4 sentence
    detail. AC numbering: `AC.<FAMILY-NAME>.<index>` where
    family-name uses uppercase + dashes. Each AC must be testable.
+   **Each AC set MUST include ≥1 AC explicitly marked at
+   outcome-altitude** per `docs/odd-llm-grounding.lean.md`
+   "Outcome-altitude AC requirement" section. Mark each AC
+   `outcome-altitude: true|false`. Outcome-altitude ACs are
+   verified by tests that invoke the production entry-point
+   the user invokes, do NOT pre-arrange state the production
+   code would produce, and assert on the outcome artefact.
+   Risk-band classifier: cycles touching production-facing
+   surface (CLI command / flag / plugin surface / user-visible
+   artefact / config schema / cross-session persistence) require
+   HARD per-cycle verification; pure-internal refactor with no
+   observable change can rely on release-gate HARD. Full rubric
+   in `plugins/dev-sdlc/skills/odd-test-altitude-discipline/
+   SKILL.md`.
 8. **Author §5 Halt-and-surface BEFORE build.** Pre-build
    verifications + autonomous decisions recorded inline.
    Numbered list; ~5–10 entries.
@@ -231,6 +245,11 @@ When raw Claude Code without loam dev-sdlc plugin:
 - **`audit-finding-triage` skill** — if the build agent
   surfaces a halt-and-surface finding mid-cycle, the triage
   may amend §10 (deferral) or §4 (AC tightening).
+- **`odd-test-altitude-discipline` skill** — every §4 AC set
+  authored by this skill includes ≥1 outcome-altitude AC per
+  the discipline; the test-altitude SKILL carries the
+  pre-arrangement detection rubric + risk-band classifier
+  used at AC-authoring time.
 - **`fidraft-capture` skill** — out-of-scope §7 entries that
   warrant capture beyond the plan-doc go to FIDRAFT via
   this skill.

@@ -111,6 +111,17 @@ Skip when:
    pytest path (or equivalent). Don't enumerate ACs in the
    dispatch brief — the brief seeds the family; the plan-doc
    tightens. ODD §2.5: every line maps to a named AC.
+   **Outcome-altitude requirement:** every AC set includes ≥1
+   AC marked `outcome-altitude: true` per
+   `docs/odd-llm-grounding.lean.md`. Outcome-altitude ACs are
+   verified by tests invoking the production entry-point with
+   realistic inputs (no pre-arrangement bypass). Risk-band
+   classifier: production-facing surface (CLI / plugin /
+   user-visible artefact / config / cross-session persistence)
+   → HARD per-cycle required; pure-internal refactor →
+   release-gate HARD acceptable. Full rubric in
+   `plugins/dev-sdlc/skills/odd-test-altitude-discipline/
+   SKILL.md`.
 6. **Author §5 autonomous decisions.** Each decision A/B/C/...
    has a one-line rationale + (when applicable) an evidence
    citation. If any decision needs owner ruling, halt + surface
@@ -229,6 +240,10 @@ When raw Claude Code without loam:
   every test count / file count / SHA in §11 provenance is
   empirically verified before stating, OR explicitly marked
   as guess/estimate.
+- **`odd-test-altitude-discipline` skill** — §4 AC family
+  authoring runs through this skill's outcome-altitude
+  requirement + pre-arrangement detection rubric +
+  risk-band classifier.
 
 ## Out of scope
 

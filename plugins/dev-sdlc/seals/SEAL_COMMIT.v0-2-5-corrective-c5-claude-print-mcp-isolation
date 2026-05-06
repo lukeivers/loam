@@ -1,0 +1,11 @@
+# v0.2.5 corrective C5 — claude -p subprocess MCP-isolation via --strict-mcp-config + empty config tempfile per owner ruling Telegram 10196 (subprocess must launch without telegram); both memory-system claude_print_client.py and odd-extractor claude_print_synthesis_client.py now prepend --strict-mcp-config --mcp-config <path> before -p in argv (probe + per-call); mirrors framework/workspace-sync _resolver_client.py AC.WSα.8 precedent verified 2026-04-27; 5 named ACs; closes the telegram-bot-killed-by-subprocess defect
+
+slug: v0-2-5-corrective-c5-claude-print-mcp-isolation
+components: memory-system+dev-sdlc
+baseline: cf8a338
+amendment-commit: 290ed00a22b757d8c155d8a9ff34609d00f98991
+plan-doc: docs/rebuild/plans/v0-2-5-corrective-c5-claude-print-mcp-isolation.md
+acs-satisfied: 5
+smoke: C5.1 mem-sys argv flags before -p (probe+gen); C5.2 odd-ext argv flags before -p; C5.3 empty cfg payload {mcpServers:{}}; C5.4 932 green +6; C5.5 §14
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

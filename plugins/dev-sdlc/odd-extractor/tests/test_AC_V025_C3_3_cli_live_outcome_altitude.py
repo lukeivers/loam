@@ -5,18 +5,24 @@
 
 This is the FIRST WORKED INSTANCE of the ``odd-test-altitude-discipline`` SKILL's
 "HARD per-cycle required" classifier path applied to a production-facing surface
-(``install-from-source.txt`` + the CLI ``--live`` flow against the real ``anthropic``
-SDK).
+(``install-from-source.txt`` + the CLI ``--live`` flow against the production
+``claude -p`` subprocess transport).
 
 The test exists to close the procedural gap behind v0.2.5 BLOCKER F5 — the C1
 verification test monkey-patched the import boundary, so the real-world install
-path was never exercised end-to-end. This test exercises the production CLI
-surface against:
+path was never exercised end-to-end. **v0.2.5 corrective C4-pivot 2026-05-05:
+the test was rewired from the Anthropic SDK + ``ANTHROPIC_API_KEY`` precondition
+to the ``claude`` binary on PATH precondition** (subscription-routed auth via
+``claude -p`` per owner ruling Telegram 10194: "we absolutely will not be using
+an Anthropic api key of any kind. We only use the subscription").
 
-- the REAL ``anthropic`` SDK (no ``monkeypatch.setattr`` of
-  ``synthesis.build_default_anthropic_client``; no ``mock.patch`` of the SDK);
-- the REAL Anthropic API (requires ``ANTHROPIC_API_KEY`` env var; skips cleanly
-  if not set);
+The test exercises the production CLI surface against:
+
+- the REAL ``claude -p`` subprocess (no ``monkeypatch.setattr`` of
+  ``synthesis.build_default_anthropic_client`` or
+  ``claude_print_synthesis_client.build_default_synthesis_client``;
+  no ``mock.patch`` of subprocess.run / subprocess.Popen);
+- the REAL Claude Max subscription via OAuth keychain (no API key reads);
 - a REAL fixture (``jsts-playwright-app`` per the canonical pattern); and
 - NO pre-arrangement of ``objectives.yaml`` / ``backing-map.yaml`` — the
   production code must produce them.
@@ -24,13 +30,14 @@ surface against:
 Skip semantics (per the SKILL's "skip-by-default-locally + run-on-demand by
 humans" pattern):
 
-- Skips with explicit reason if ``ANTHROPIC_API_KEY`` is not set in the
-  environment.
-- Skips with explicit reason if the ``anthropic`` SDK cannot be imported
-  (the F5 condition pre-fix).
+- Skips with explicit reason if ``claude`` binary is not on PATH (out-of-band
+  install per https://docs.anthropic.com/claude-code).
 
-When BOTH preconditions are present, the test runs against the live API and
-asserts the production outcome (objectives + backing-map + real model_id).
+When the ``claude`` binary resolves on PATH and OAuth state is present, the
+test runs against the live subscription and asserts the production outcome
+(objectives + backing-map + real model_id). If OAuth is absent, the synthesis
+client surfaces a "Not logged in" error which the test treats as a real
+failure (instructions to run ``claude /login``).
 
 **Pre-arrangement detection rubric** (per the SKILL):
 
@@ -40,20 +47,22 @@ asserts the production outcome (objectives + backing-map + real model_id).
   backing-map.yaml / synthesis.yaml are pre-written.
 - ☐ Asserts on production-produced artefacts? YES — objectives.yaml content,
   backing-map.yaml existence, synthesis.yaml model_id.
-- ☐ No SDK / client mocking? YES — no monkeypatch / mock of the synthesis
-  module's build_default_anthropic_client.
+- ☐ No SDK / client / subprocess mocking? YES — no monkeypatch / mock of
+  ``synthesis.build_default_anthropic_client`` or
+  ``claude_print_synthesis_client.build_default_synthesis_client`` or
+  ``subprocess.run`` / ``subprocess.Popen`` / the ``claude`` binary.
 
 This test is **OUTCOME-class** per the SKILL's classifier.
 
 **Cost note** — live synthesis on the jsts-playwright-app fixture per v0.2.4
-Cycle 3 SOFT smoke evidence consumed under 1¢. ``--budget-cents 500`` is
-generous; ``--budget-override`` set so the test exits cleanly even if the
-foreign-codebase budget envelope gates kick in.
+Cycle 3 SOFT smoke evidence consumed under 1¢ on the metered API; on Max
+subscription via ``claude -p`` the per-call billing is 0 (subscription-flat).
+``--budget-cents 500`` is generous; ``--budget-override`` set so the test
+exits cleanly even if the foreign-codebase budget envelope gates kick in.
 """
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -102,53 +111,46 @@ def _setup_jsts_repo(tmp_path: Path) -> Path:
 
 def test_AC_V025_C3_3_cli_live_outcome_altitude(tmp_path: Path) -> None:
     """End-to-end OUTCOME-altitude probe: ``loam odd-extract <repo> --live``
-    against the REAL Anthropic SDK + API produces real synthesis output.
+    against the REAL ``claude -p`` subprocess produces real synthesis output.
 
-    NO monkey-patching of ``anthropic`` or
-    ``synthesis.build_default_anthropic_client``.
+    NO monkey-patching of ``synthesis.build_default_anthropic_client`` or
+    ``claude_print_synthesis_client.build_default_synthesis_client``.
+    NO ``subprocess`` / ``claude`` binary mocking.
     NO pre-arrangement of objectives.yaml / backing-map.yaml.
 
-    Skips cleanly if ``ANTHROPIC_API_KEY`` is unset OR ``anthropic`` SDK
-    is not importable (the F5 pre-fix condition).
+    Skips cleanly if the ``claude`` binary is not on PATH (out-of-band
+    install per https://docs.anthropic.com/claude-code).
 
     Failure of this test indicates EITHER:
 
     1. The CLI synthesis wire-through is broken (the F1 condition the v0.2.5
        C1 corrective fixed); OR
-    2. The ``[synthesis]`` extra install path is broken (the F5 condition the
-       v0.2.5 C3 corrective fixed); OR
+    2. The ``claude`` binary is on PATH but OAuth is absent (run
+       ``claude /login`` interactively); OR
     3. Real-world live synthesis returns malformed responses that the
        production parser can't handle (a regression in the synthesis layer
-       not caught by stub-based tests).
+       not caught by stub-based tests); OR
+    4. The C4-pivot shim's prompt flattening / response parsing diverges
+       from the LLM's actual response shape.
 
     Per the ``odd-test-altitude-discipline`` SKILL: this test is the
     OUTCOME-class verification for AC.V025-C3.3. STUB-class probes (e.g.,
     ``test_AC_V025_C1_C2_*``) satisfy implementation-altitude ACs but
     cannot satisfy outcome-altitude ACs.
     """
-    # Precondition 1 — anthropic SDK importable. Pre-C3 (and on any system
-    # without [synthesis] extra installed) this fails; pytest.importorskip
-    # is the canonical pattern.
-    pytest.importorskip(
-        "anthropic",
-        reason=(
-            "outcome-altitude AC.V025-C3.3 requires the real anthropic SDK; "
-            "install with `pip install -r install-from-source.txt` (which now "
-            "includes the [synthesis] extra per v0.2.5 corrective C3) or "
-            "`pip install anthropic>=0.40` directly."
-        ),
-    )
-
-    # Precondition 2 — ANTHROPIC_API_KEY set. The production CLI's
-    # build_default_anthropic_client constructs anthropic.Anthropic() which
-    # reads the key from env; absent env, the constructor either raises or
-    # the API call fails. Skip cleanly if absent.
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    # Precondition — `claude` binary on PATH.
+    # Pre-C4-pivot this required ANTHROPIC_API_KEY + anthropic SDK;
+    # post-pivot it requires the `claude` Code CLI installed
+    # (https://docs.anthropic.com/claude-code) with OAuth state already
+    # written to the system keychain via `claude /login`.
+    if shutil.which("claude") is None:
         pytest.skip(
-            "ANTHROPIC_API_KEY env var not set; outcome-altitude "
-            "AC.V025-C3.3 requires real-API access. To run locally: "
-            "`export ANTHROPIC_API_KEY=$(security find-generic-password "
-            "-s ANTHROPIC_API_KEY -w)` (macOS keychain) before pytest."
+            "outcome-altitude AC.V025-C3.3 requires the `claude` CLI on "
+            "PATH (v0.2.5 corrective C4-pivot: subscription-routed auth "
+            "via `claude -p`). Install Claude Code per "
+            "https://docs.anthropic.com/claude-code and run "
+            "`claude /login` once to write OAuth state to the system "
+            "keychain."
         )
 
     workspace = tmp_path / "ws"
@@ -173,11 +175,13 @@ def test_AC_V025_C3_3_cli_live_outcome_altitude(tmp_path: Path) -> None:
 
     # 1. Clean exit. If the CLI fails (F5 install gap, F1 wire-through gap,
     #    or any new regression), rc != 0 and the assertion below names which
-    #    of the three failure paths is in play.
+    #    of the failure paths is in play.
     assert rc == 0, (
-        f"CLI must exit cleanly with --live + real SDK; got rc={rc}. "
-        f"This indicates one of: (a) F5 — anthropic SDK missing despite "
-        f"install path; (b) F1 — CLI synthesis wire-through broken; (c) a "
+        f"CLI must exit cleanly with --live + claude -p; got rc={rc}. "
+        f"This indicates one of: (a) `claude` binary on PATH but OAuth "
+        f"absent (run `claude /login`); (b) F1 — CLI synthesis wire-"
+        f"through broken; (c) C4-pivot shim's prompt-flattening or "
+        f"response parsing diverges from claude -p's actual shape; (d) a "
         f"new regression in the synthesis layer. Check stderr for the "
         f"OddExtractorError carrier message."
     )

@@ -73,16 +73,16 @@
 # ---------------------------------------------------------------
 -e ./plugins/dev-sdlc
 
-# odd-extractor sub-package under dev-sdlc — installs editable
-# with the [synthesis] extra so the anthropic SDK is available
-# for `loam odd-extract --live` synthesis pass. Per v0.2.3 Cycle 1
-# sub-plan-doc §7 method-decision register, the synthesis extra
-# is deliberately optional in the package's pyproject.toml; this
-# install-from-source line elevates it to the standard install
-# path so fresh installs (workstation + Eric + future stranger-
-# clones) get the SDK without manual `pip install ...[synthesis]`.
-# Closes v0.2.5 HARD-smoke F5 BLOCKER.
--e ./plugins/dev-sdlc/odd-extractor[synthesis]
+# odd-extractor sub-package under dev-sdlc — installs editable.
+# v0.2.5 corrective C4-pivot REVERTED the previous `[synthesis]`
+# extra (which pulled the anthropic SDK). Synthesis now routes
+# through `claude -p` subprocess against the user's Claude Max
+# subscription (OAuth keychain auth) per owner ruling 2026-05-05
+# (Telegram 10194: "we absolutely will not be using an Anthropic
+# api key of any kind. We only use the subscription"). The
+# `claude` CLI must be on PATH out-of-band
+# (https://docs.anthropic.com/claude-code) — not a Python dep.
+-e ./plugins/dev-sdlc/odd-extractor
 
 # ---------------------------------------------------------------
 # Tier K — Loam Skills plugin (no inter-component runtime deps;

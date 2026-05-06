@@ -574,19 +574,27 @@ def flag_missing_objectives(
 # ---- Default Anthropic client construction -------------------------
 
 
-def build_default_anthropic_client() -> Any:  # pragma: no cover (network)
-    """Construct a default ``anthropic.Anthropic()`` client.
+def build_default_anthropic_client() -> Any:  # pragma: no cover (subprocess)
+    """Construct the production-default subscription-routed synthesis client.
 
-    Lazy-imports ``anthropic``; raises :class:`StageError` if the
-    package isn't installed (mirrors :mod:`synthesis`).
+    Per v0.2.5 corrective C4-pivot — no Anthropic SDK; no API key.
+    Mirrors :func:`synthesis.build_default_anthropic_client`. Returns a
+    :class:`ClaudePrintAnthropicShimClient` routing through ``claude -p``
+    against the user's Claude Max subscription. NO ANTHROPIC_API_KEY
+    consulted.
     """
+    from .claude_print_synthesis_client import (
+        ClaudeBinaryMissingError,
+        build_default_synthesis_client,
+    )
+
     try:
-        import anthropic  # type: ignore[import]
-    except ImportError as exc:
+        return build_default_synthesis_client()
+    except ClaudeBinaryMissingError as exc:
         raise StageError(
-            "completeness: anthropic SDK not installed. Add the "
-            "`synthesis` extra to loam-odd-extractor (pip install "
-            "loam-odd-extractor[synthesis]) or pass a stub client "
-            "for tests."
+            "completeness: claude CLI not found on PATH. Install Claude "
+            "Code (https://docs.anthropic.com/claude-code) so the "
+            "`claude` binary resolves on this process's PATH. v0.2.5 "
+            "corrective C4-pivot: completeness routes through `claude -p` "
+            "subscription auth — NO ANTHROPIC_API_KEY required."
         ) from exc
-    return anthropic.Anthropic()

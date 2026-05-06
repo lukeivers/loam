@@ -7,9 +7,16 @@ LLM-pass call that emits banded :class:`Objective` +
 
 - :mod:`loam.cost_governance` ``BudgetEnvelope`` + ``enforce_budget``
   + ``BudgetExceededError`` for the ceiling-check (v0.1.6 primitive).
-- ``anthropic`` SDK (lazy-imported; configured as
-  ``[project.optional-dependencies]`` extra ``synthesis``) for the
-  Messages API + prompt caching.
+- ``claude -p`` subprocess (subscription-routed; mirrors
+  ``framework/memory-system/src/claude_print_client.py``) for the LLM
+  call. The synthesis client at
+  :mod:`claude_print_synthesis_client` exposes an Anthropic-Messages-
+  shaped API so call sites stay structurally identical to the v0.2.3
+  SDK-shaped contract; underneath, every call is a ``claude -p
+  --output-format json`` subprocess that consumes the user's Claude Max
+  subscription via OAuth keychain. NO ``ANTHROPIC_API_KEY`` is
+  required or consulted — v0.2.5 corrective C4-pivot's central
+  constraint.
 - :func:`observability.write_audit_entry` for the
   ``synthesis_complete`` event-kind.
 
@@ -26,13 +33,19 @@ sub-plan-doc §7.
 
 Test-time path: callers pass ``anthropic_client=<stub>`` returning a
 canned ``Message``-shaped object (``content[0].text`` is JSON
-matching :class:`SynthesisResult`). No real API calls in CI.
+matching :class:`SynthesisResult`). No real network calls in CI.
+The ``anthropic_client`` parameter name is preserved as a duck-typed
+LLM-handle identifier for backward-compat with sealed AC tests
+(test_AC_OBJX_5, test_AC_BACKMAP_2, test_AC_BLDNXT_3, test_AC_COMPINT_2,
+etc.); the parameter does NOT couple to the ``anthropic`` PyPI package
+post-pivot. v0.2.5 corrective C4-pivot §14 records the rename rationale.
 """
 
 from __future__ import annotations
 
 import datetime as _dt
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Any, Callable
@@ -50,8 +63,12 @@ from .spec import (
 )
 
 
-# Per sub-plan-doc §7 method-decision register.
-# Anthropic Sonnet — claude-api SKILL conventions.
+logger = logging.getLogger(__name__)
+
+
+# Per sub-plan-doc §7 method-decision register + v0.2.5 corrective
+# C4-pivot §14 (token-efficiency rule: Sonnet for synthesis is
+# default; deviation requires explicit model-rationale).
 _DEFAULT_MODEL_ID = "claude-sonnet-4-5"
 
 # Cost rate (cents per token) — Sonnet input/output blended estimate.
@@ -142,6 +159,31 @@ BANDING RULE (V/P/H):
   claim to VERIFIED.
 - HYPOTHESISED: pattern-only inference (code patterns without README
   or test corroboration). Rationale REQUIRED.
+
+BANDING DEMOTION RULE (CRITICAL — read carefully):
+
+If you cannot supply BOTH at least one test_name_ref AND at least one
+of readme_excerpts/design_doc_refs for an objective, you MUST band it
+as PLAUSIBLE — NEVER as VERIFIED. The two-source rule is structural;
+banding VERIFIED without two sources will be REJECTED downstream and
+the entire synthesis output will be DEMOTED or DISCARDED.
+
+Concretely:
+
+- If you have only test_name_refs (tests assert it but README/design-
+  doc do not state it): band as PLAUSIBLE. Tests-only is single-source
+  per this rule.
+- If you have only readme_excerpts (README states it but no test asserts
+  it): band as PLAUSIBLE.
+- If you have only design_doc_refs (design doc states it but no test
+  asserts it): band as PLAUSIBLE.
+- If you have ONLY tests AND ONLY readme_excerpts/design_doc_refs (i.e.
+  both sides populated): you MAY band as VERIFIED. Set repo_sha.
+- If you cannot supply any of the above: do not emit the row. Do not
+  fabricate evidence to satisfy a band.
+
+When in doubt between VERIFIED and PLAUSIBLE: choose PLAUSIBLE. A
+correctly-PLAUSIBLE row is better than an incorrectly-VERIFIED row.
 
 ID FORMAT:
 
@@ -340,6 +382,159 @@ def _parse_synthesis_json(raw: str) -> dict[str, Any]:
     return data
 
 
+def _apply_band_demotion_guard(
+    objectives_raw: list[Any],
+) -> int:
+    """Pre-validator pass: demote VERIFIED-without-two-sources to PLAUSIBLE.
+
+    Per v0.2.5 corrective C4 (AC.V025-C4.2): the synthesis LLM does not
+    reliably produce VERIFIED-banded objectives that satisfy the two-source
+    rule (AC.OBJX.5 — VERIFIED requires evidence in tests AND in either
+    readme_excerpts OR design_doc_refs). The Pydantic validator at
+    :class:`spec.Objective` correctly raises ``ValidationError`` on this
+    shape; this guard normalizes the band BEFORE validation rather than
+    letting the entire synthesis stage exit 2 on a recoverable mismatch.
+
+    For each ``VERIFIED``-banded row missing BOTH ``readme_excerpts`` AND
+    ``design_doc_refs``, the row's ``confidence`` is rewritten to
+    ``"PLAUSIBLE"`` IN-PLACE. Each demotion is logged at WARN level naming
+    the objective_id and the reason.
+
+    Per v0.2.5 corrective C4 §14 method-decision: this is a methodology
+    refinement of AC.OBJX.5's "raise on malformed" — band-rule violations
+    are now demote-able rather than always-raise. Structural malformation
+    (extra fields, type mismatches, missing required fields) still raises.
+
+    Returns the count of demotions performed (for telemetry / test
+    assertions).
+    """
+    demotion_count = 0
+    for i, row in enumerate(objectives_raw):
+        if not isinstance(row, dict):
+            continue
+        if row.get("confidence") != "VERIFIED":
+            continue
+        ev = row.get("evidence") or {}
+        if not isinstance(ev, dict):
+            continue
+        readme = ev.get("readme_excerpts") or []
+        design = ev.get("design_doc_refs") or []
+        if not readme and not design:
+            objective_id = row.get("objective_id", f"<unnamed-row-{i}>")
+            logger.warning(
+                "synthesis: LLM produced VERIFIED-band without two sources "
+                "(missing both readme_excerpts and design_doc_refs); "
+                "demoting %s to PLAUSIBLE per band-rule guard",
+                objective_id,
+            )
+            row["confidence"] = "PLAUSIBLE"
+            demotion_count += 1
+    return demotion_count
+
+
+def _apply_plausible_demotion_or_drop_guard(
+    objectives_raw: list[Any],
+) -> tuple[list[Any], int, int]:
+    """Second-pass guard: handle PLAUSIBLE-without-single-source rows.
+
+    Per v0.2.5 corrective C4-pivot (AC.V025-C4P.5 extension): the live
+    LLM (under claude -p subscription routing) was observed producing
+    PLAUSIBLE-banded objectives that lack ALL of
+    readme_excerpts/design_doc_refs/survey_line_refs (the PLAUSIBLE
+    band's structural minimum per :class:`spec.Objective`). This is a
+    second class of band-rule overshoot — symptom-equivalent to
+    AC.V025-C4.2's VERIFIED-overshoot but at the next band down.
+
+    For each ``PLAUSIBLE``-banded row missing ALL THREE of
+    readme_excerpts/design_doc_refs/survey_line_refs:
+
+    - If the row has a non-empty ``rationale`` (or any
+      ``code_pattern_refs``), demote to ``HYPOTHESISED`` in-place and
+      synthesize a ``rationale`` from the existing rationale or a
+      stock string referencing the code patterns. The HYPOTHESISED
+      band's structural rule (non-empty rationale) is then satisfied.
+    - Otherwise, DROP the row entirely (no band can hold an objective
+      with literally zero evidence). The drop is logged at WARN level.
+
+    This pairs with :func:`_apply_band_demotion_guard` to cover the full
+    band-rule-violation surface area surfaced by live-LLM stochasticity
+    on the C4-pivot transport. Per the same §14 method-decision: band-
+    rule violations are demote-able / drop-able; structural malformation
+    (type mismatches, missing required non-band fields) still raises at
+    Pydantic validation.
+
+    Returns ``(filtered_rows, demotion_count, drop_count)`` — the
+    filtered_rows list with dropped rows removed; counts for telemetry.
+    The caller (``_validate_rows``) re-binds ``objectives_raw`` to the
+    returned filtered list.
+    """
+    filtered: list[Any] = []
+    demotion_count = 0
+    drop_count = 0
+    for i, row in enumerate(objectives_raw):
+        if not isinstance(row, dict):
+            filtered.append(row)
+            continue
+        if row.get("confidence") != "PLAUSIBLE":
+            filtered.append(row)
+            continue
+        ev = row.get("evidence") or {}
+        if not isinstance(ev, dict):
+            filtered.append(row)
+            continue
+        readme = ev.get("readme_excerpts") or []
+        design = ev.get("design_doc_refs") or []
+        survey = ev.get("survey_line_refs") or []
+        if readme or design or survey:
+            filtered.append(row)
+            continue
+        # PLAUSIBLE-no-single-source. Try to demote to HYPOTHESISED
+        # if there's enough material; otherwise drop.
+        objective_id = row.get("objective_id", f"<unnamed-row-{i}>")
+        rationale = ev.get("rationale") or ""
+        code_patterns = ev.get("code_pattern_refs") or []
+        if isinstance(rationale, str) and rationale.strip():
+            row["confidence"] = "HYPOTHESISED"
+            logger.warning(
+                "synthesis: LLM produced PLAUSIBLE-band without single-"
+                "source evidence (no readme_excerpts / design_doc_refs / "
+                "survey_line_refs) but rationale present; demoting %s "
+                "to HYPOTHESISED per band-rule guard",
+                objective_id,
+            )
+            filtered.append(row)
+            demotion_count += 1
+            continue
+        if code_patterns:
+            row["confidence"] = "HYPOTHESISED"
+            ev["rationale"] = (
+                "code-pattern-only inference; rationale synthesized "
+                "by C4-pivot demotion guard since LLM produced "
+                "PLAUSIBLE-band without single-source evidence"
+            )
+            row["evidence"] = ev
+            logger.warning(
+                "synthesis: LLM produced PLAUSIBLE-band without single-"
+                "source evidence and without rationale, but with "
+                "code_pattern_refs; demoting %s to HYPOTHESISED with "
+                "synthesized rationale per band-rule guard",
+                objective_id,
+            )
+            filtered.append(row)
+            demotion_count += 1
+            continue
+        # Truly empty — drop.
+        logger.warning(
+            "synthesis: LLM produced PLAUSIBLE-band without single-"
+            "source evidence and without rationale or code_pattern_refs; "
+            "DROPPING %s entirely (no band can hold a row with zero "
+            "evidence) per band-rule guard",
+            objective_id,
+        )
+        drop_count += 1
+    return filtered, demotion_count, drop_count
+
+
 def _validate_rows(
     payload: dict[str, Any],
     *,
@@ -350,6 +545,11 @@ def _validate_rows(
     Per sub-plan-doc §3 AC.OBJX.5: malformed LLM rows are surfaced
     with the offending dict for triage; the response is not silently
     discarded.
+
+    Per v0.2.5 corrective C4 (AC.V025-C4.2): before per-row Pydantic
+    validation, the band-demotion guard normalizes VERIFIED-without-
+    two-sources rows to PLAUSIBLE (AC.OBJX.5 methodology refinement —
+    band-rule violations demote-able; structural malformation still raises).
     """
     objectives_raw = payload.get("objectives") or []
     constraints_raw = payload.get("constraints") or []
@@ -361,6 +561,26 @@ def _validate_rows(
         raise StageError("synthesis: 'constraints' must be a list")
     if not isinstance(capabilities_raw, list):
         raise StageError("synthesis: 'capabilities' must be a list")
+
+    # Per v0.2.5 corrective C4 AC.V025-C4.2: apply the band-demotion guard
+    # BEFORE per-row Pydantic validation. VERIFIED-without-two-sources rows
+    # are normalized to PLAUSIBLE; the validator's strict per-band invariants
+    # then accept the demoted rows (provided they have at least one of
+    # readme_excerpts/design_doc_refs/survey_line_refs for the PLAUSIBLE
+    # rule). Structural malformation still raises.
+    _apply_band_demotion_guard(objectives_raw)
+
+    # Per v0.2.5 corrective C4-pivot (AC.V025-C4P.5 extension): apply the
+    # second-pass guard handling PLAUSIBLE-no-single-source rows. The live
+    # LLM under claude -p subscription routing was observed producing this
+    # shape on the jsts-playwright-app fixture (rows with ONLY tests +
+    # code_pattern_refs but none of readme/design-doc/survey). The guard
+    # demotes to HYPOTHESISED when rationale or code patterns exist; drops
+    # truly-empty rows. The filtered list replaces the raw list before
+    # per-row Pydantic validation.
+    objectives_raw, _plaus_demoted, _plaus_dropped = (
+        _apply_plausible_demotion_or_drop_guard(objectives_raw)
+    )
 
     objectives: list[Objective] = []
     constraints: list[Constraint] = []
@@ -452,16 +672,19 @@ def synthesize_objectives(
     if anthropic_client is None:
         raise StageError(
             "synthesize_objectives: anthropic_client is required (pass a "
-            "real Anthropic client or a stub for tests). The synthesis "
-            "layer never makes implicit network calls."
+            "real LLM client or a stub for tests). The synthesis layer "
+            "never makes implicit network calls."
         )
 
     sha = repo_sha if repo_sha is not None else bundle.repo_sha
     user_prompt = _format_user_prompt(bundle)
 
-    # Anthropic Messages API call. Prompt caching: system block is the
-    # static lean-grounding + banding rule; user is per-extraction.
-    # Per sub-plan-doc §3 AC.OBJX.5 + claude-api SKILL conventions.
+    # Anthropic-Messages-shaped API call (production-routed via
+    # ``claude -p`` per v0.2.5 corrective C4-pivot; stubs in tests).
+    # Prompt caching kwargs (``cache_control``) are accepted by the
+    # shim client but are no-ops over the subprocess transport — the
+    # CLI does not expose ephemeral-cache controls. The call is still
+    # cheap on Max subscription.
     try:
         response = anthropic_client.messages.create(
             model=model_id,
@@ -575,19 +798,38 @@ def synthesize_objectives(
 # ====================================================================
 
 
-def build_default_anthropic_client() -> Any:  # pragma: no cover (network)
-    """Construct a default ``anthropic.Anthropic()`` client.
+def build_default_anthropic_client() -> Any:  # pragma: no cover (subprocess)
+    """Construct the production-default subscription-routed synthesis client.
 
-    Lazy-imports ``anthropic`` so the SDK is optional. Raises
-    :class:`StageError` if the package isn't installed.
+    Per v0.2.5 corrective C4-pivot — no Anthropic SDK; no API key.
+    Returns a :class:`ClaudePrintAnthropicShimClient` that exposes the
+    Anthropic-Messages-shaped API odd-extractor's call sites already
+    invoke (``client.messages.create(model=, max_tokens=, system=...,
+    messages=[...])`` returning ``response.content[0].text``), but
+    routes every call through ``claude -p --output-format json``
+    against the user's Claude Max subscription (OAuth keychain auth).
+
+    The function name is preserved for backward-compat with sealed AC
+    tests (test_AC_V025_C1_*) that monkeypatch
+    ``synthesis.build_default_anthropic_client`` to inject duck-typed
+    stubs. The returned object is NO LONGER an ``anthropic.Anthropic``
+    instance — it is the C4-pivot shim.
+
+    Raises :class:`StageError` if the ``claude`` CLI is not on PATH
+    (mirrors the pre-pivot ImportError → StageError contract).
     """
+    from .claude_print_synthesis_client import (
+        ClaudeBinaryMissingError,
+        build_default_synthesis_client,
+    )
+
     try:
-        import anthropic  # type: ignore[import]
-    except ImportError as exc:
+        return build_default_synthesis_client()
+    except ClaudeBinaryMissingError as exc:
         raise StageError(
-            "synthesis: anthropic SDK not installed. Add the "
-            "`synthesis` extra to loam-odd-extractor (pip install "
-            "loam-odd-extractor[synthesis]) or pass a stub client "
-            "for tests."
+            "synthesis: claude CLI not found on PATH. Install Claude "
+            "Code (https://docs.anthropic.com/claude-code) so the "
+            "`claude` binary resolves on this process's PATH. v0.2.5 "
+            "corrective C4-pivot: synthesis routes through `claude -p` "
+            "subscription auth — NO ANTHROPIC_API_KEY required."
         ) from exc
-    return anthropic.Anthropic()

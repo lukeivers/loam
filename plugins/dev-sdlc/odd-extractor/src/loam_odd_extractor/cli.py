@@ -151,25 +151,30 @@ def _cmd_extract(args: argparse.Namespace) -> int:
 
         config: ExtractionConfig | None = None
 
-        # Per v0.2.5 corrective C1 (HARD-smoke RED finding F1):
-        # construct the default Anthropic client when ``--live`` is
-        # set so the synthesis pass + backing-map population actually
-        # run end-to-end through the CLI surface. Pre-corrective the
-        # CLI silently fell into ``_empty_synthesis_result`` with
-        # ``model_id="(none)"`` even with ``--live`` because it never
-        # threaded a client into ``generate_raw_acs``.
-        anthropic_client: Any | None = None
+        # Per v0.2.5 corrective C1 (HARD-smoke RED finding F1) +
+        # corrective C4-pivot: construct the default subscription-routed
+        # synthesis client when ``--live`` is set so the synthesis pass
+        # + backing-map population actually run end-to-end through the
+        # CLI surface. Pre-C1 the CLI silently fell into
+        # ``_empty_synthesis_result`` with ``model_id="(none)"`` even
+        # with ``--live`` because it never threaded a client into
+        # ``generate_raw_acs``. Pre-C4-pivot the constructed client was
+        # an ``anthropic.Anthropic()`` instance reading
+        # ``ANTHROPIC_API_KEY``; post-C4-pivot the client is a
+        # :class:`ClaudePrintAnthropicShimClient` that routes every call
+        # through ``claude -p`` against the user's Claude Max
+        # subscription via OAuth keychain — NO API key.
+        llm_client: Any | None = None
         if args.live and target_stage in (None, "generate"):
             from .synthesis import build_default_anthropic_client
 
             try:
-                anthropic_client = build_default_anthropic_client()
+                llm_client = build_default_anthropic_client()
             except OddExtractorError:
-                # Lazy-import failure (anthropic SDK missing) raises
-                # ``StageError`` per ``synthesis.build_default_anthropic_client``;
-                # the surrounding ``except OddExtractorError`` catch
-                # below converts it to actionable stderr + exit 2,
-                # NOT a Python traceback.
+                # ``StageError`` from ``build_default_anthropic_client``
+                # (claude binary missing); the surrounding ``except
+                # OddExtractorError`` catch below converts it to
+                # actionable stderr + exit 2, NOT a Python traceback.
                 raise
 
         if target_stage in (None, "init"):
@@ -192,7 +197,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
             raw = generate_raw_acs(
                 config=config,
                 plan=plan,
-                anthropic_client=anthropic_client,
+                anthropic_client=llm_client,
                 synthesis_required=args.live,
             )
 

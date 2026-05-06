@@ -133,6 +133,6 @@ Corrective amendment scope is tight (CLI client wire-through + ValueError → Od
 - Amendment apply commit (v0.2.5 corrective): N/A — fixes apply-pinned via `16d6e50`
 - Seal commit: `a9bc524` (titled `chore(seals): odd-test-altitude-procedural-fix — dev-sdlc at 16d6e50`; the v0.2.5 corrective source edits ride along)
 - §14 backfill commit: `876bf66` (titled `docs(plans): record odd-test-altitude-procedural-fix commit SHAs in method-decision register`; v0.2.5 corrective §14 backfill — THIS doc — lands as a separate post-seal commit)
-- v0.2.5 corrective §14 backfill (this doc-update): `<pending>`
+- v0.2.5 corrective §14 backfill (this doc-update + STATE.md + FIDRAFT F3/F4): `e699958`
 
 **Verification at HEAD `876bf66`:** full odd-extractor test suite is 815 passed / 1 skipped (vs v0.2.4 baseline 813 / 1; the +2 tests are AC.V025-C1 + AC.V025-C2). No regressions. The fixes are functionally complete; v0.2.5 HARD smoke can re-run GREEN.

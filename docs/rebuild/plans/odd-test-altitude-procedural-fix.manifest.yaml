@@ -1,0 +1,112 @@
+---
+schema_version: 3
+amendment:
+  slug: odd-test-altitude-procedural-fix
+  title: "ODD test-altitude procedural fix — L1 + L2 + L3-conditional (4 artefacts: docs/odd-llm-grounding.lean.md outcome-altitude AC requirement section + plugins/dev-sdlc/skills/odd-test-altitude-discipline NEW SKILL with pre-arrangement detection rubric + risk-band classifier + 4 trigger-points + concrete anti-example + 3 SKILL extensions (plan-docs-author / plan-before-code-author / dispatch-brief-authoring) + memory rule feedback_test_outcome_altitude_required.md with MEMORY.md index reference; closes the procedural gap behind 3 failures (v0.2.1 F1, v0.2.1 F2, v0.2.5 F1) where ACs passed at implementation-altitude but real-world outcomes broke at the release-level HARD smoke gate; methodology fix not a v0.2.x release; release-gate HARD acceptable per risk-band classifier (doc-only); single-component sweep on dev-sdlc"
+
+# Methodology fix; ships independent of v0.2.x release tags. No code
+# changes; doc + SKILL + memory only. Risk-band classifier puts this
+# in "release-gate HARD acceptable" band — pure-internal refactor /
+# test-only / docs.
+#
+# Commit ladder pre-apply:
+#   4f54649 — v0.2.4 SHIPPED rollup.
+#   <plan-doc + manifest commit lands NEXT (THIS plan-doc + manifest),
+#    then source-edit commit covering 5 artefact files (lean doc + 1
+#    new SKILL + 3 SKILL extensions; memory file is at the global path
+#    under ~/.claude/, NOT in the pos-v2 tree, so not part of the
+#    BASELINE source-edit), then `loam amend apply <manifest>` lands
+#    as merged manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills plan-doc §14 commit-SHA section>
+#   <STATE.md methodology-fix entry inline (separate docs(state):
+#    commit)>
+#
+# Single-component fence — plugins/dev-sdlc/ (SKILLs) + universal-paths
+# admit docs/odd-llm-grounding.lean.md and docs/rebuild/plans/:
+#   - EDITS to plugins/dev-sdlc/skills/plan-docs-author/SKILL.md
+#     (extend §4 AC-family authoring guidance + composition entry)
+#   - EDITS to plugins/dev-sdlc/skills/plan-before-code-author/SKILL.md
+#     (extend §4 AC-family authoring guidance + composition entry)
+#   - EDITS to plugins/dev-sdlc/skills/dispatch-brief-authoring/SKILL.md
+#     (extend acceptance-criteria slot)
+#   - NEW plugins/dev-sdlc/skills/odd-test-altitude-discipline/SKILL.md
+#     (pre-arrangement detection rubric + risk-band classifier +
+#     concrete anti-example + 4 trigger-points + composition)
+#   - EDITS to docs/odd-llm-grounding.lean.md (universal-path) — new
+#     "Outcome-altitude AC requirement" section before "Use sequence";
+#     ≤150 words.
+#
+# AC families locked per plan-doc §4 (AC.OAA.1-5; all but AC.OAA.5
+# marked outcome-altitude: true):
+#   AC.OAA.1 — Lean grounding doc has new "Outcome-altitude AC
+#              requirement" section with 3 bullets (production
+#              entry-point invocation + no pre-arrangement + real
+#              outcome artefact) + AC schema marker; word-count
+#              delta ≤150.
+#   AC.OAA.2 — odd-test-altitude-discipline SKILL exists with ≥4
+#              sections (pre-arrangement rubric / risk-band classifier
+#              / anti-example / trigger-points); description front-
+#              matter triggers on AC-authoring + test-authoring +
+#              test-review.
+#   AC.OAA.3 — feedback_test_outcome_altitude_required.md memory file
+#              exists; MEMORY.md index references it inline.
+#   AC.OAA.4 — plan-docs-author + plan-before-code-author + dispatch-
+#              brief-authoring SKILLs grep-positive for "outcome-
+#              altitude"; all reference the new SKILL by path.
+#   AC.OAA.5 — No code changes; no regressions; only doc + SKILL +
+#              memory + plan-doc + manifest files in git diff.
+#
+# Smoke (release-gate HARD acceptable per risk-band classifier; doc-
+# only; no production code path affected):
+#   D1 cold-state — n/a structurally (markdown read on session-start;
+#     no runtime state).
+#   D2 steady-state — verified via grep counts on the 4 artefact files.
+#   D3 restart — n/a structurally (no daemon; no in-flight state).
+#   D4 reboot — n/a structurally (markdown survives reboot).
+#   D5 cross-session — verified via memory file at global path loaded
+#     by Anthropic auto-memory + MEMORY.md inline reference.
+#   D6 telemetry-floor — n/a structurally (no audit-log surface; no
+#     code emitting events).
+#   PLUS: full-suite green sweep — existing dev-sdlc test sweep at
+#     HEAD (4f54649) remains green; seal-test confirms no regression.
+
+# BASELINE pinned to the source-edit commit covering the 4 artefact
+# files in pos-v2 tree (lean doc + 4 SKILLs). Updated post-source-
+# commit.
+baseline: "<pending>"
+
+plan: docs/rebuild/plans/odd-test-altitude-procedural-fix.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+plan_doc_ref: docs/rebuild/plans/odd-test-altitude-procedural-fix.md
+
+ac_count: 5
+smoke_outcome: "D2+D5 verified (grep counts on 4 artefact files + memory file at global path with MEMORY.md inline ref); D1/D3/D4/D6 n/a structurally (markdown / no daemon / no audit-log surface); release-gate HARD acceptable per risk-band classifier (doc-only methodology fix; no production code path affected); full-suite green sweep at HEAD"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — docs/rebuild/plans/ for plan-doc paper trail
+# + docs/odd-llm-grounding.lean.md as the methodology surface this
+# fix amends.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/odd-llm-grounding.lean.md
+    - docs/rebuild/STATE.md
+    - plugins/dev-sdlc/docs/odd-methodology.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.odd-test-altitude-procedural-fix
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

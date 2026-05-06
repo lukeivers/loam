@@ -87,7 +87,7 @@ plan: docs/rebuild/plans/v0-2-5-corrective-c6-fixture-pm-and-extraction-resoluti
 plan_doc_ref: docs/rebuild/plans/v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution.md
 
 ac_count: 5
-smoke_outcome: "C6.1 outcome-alt smoke test passes end-to-end (4 stages exit 0; 4 artefacts produced; ~4.5min wall-clock); C6.2 err-msg references workspace path + --pm-handle; C6.3 ws-root default=<repo> + help-text reflects; C6.4 .gitignore lists .loam/; C6.5 no regressions (11 pre-existing failures verified pre-C6 HEAD)"
+smoke_outcome: "C6.1 outcome-alt smoke 4 stages exit 0 + 4 artefacts; C6.2 err-msg references ws path + --pm-handle; C6.3 ws-root default=<repo>; C6.4 .gitignore lists .loam/; C6.5 no regressions"
 
 components:
   - name: dev-sdlc

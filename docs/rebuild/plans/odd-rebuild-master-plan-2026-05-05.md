@@ -91,17 +91,30 @@ PR-safety, continuous-watch, and ratification flow all operate at objective alti
 
 **Why third.** Depends on extractor producing objectives at the right altitude.
 
-### v0.2.5 — Eric re-ship (HARD smoke gate) — split per Luke 2026-05-05
+### v0.2.5 — Eric re-ship (HARD smoke gate) — SHIPPED 2026-05-06
 
-**Theme.** Ship gate. Negative-alignment detection carved out per Luke 2026-05-05 ruling and pushed to v0.2.6+ (see below); v0.2.5 is now Eric-re-ship-only.
+**Theme.** Ship gate. Negative-alignment detection carved out per Luke 2026-05-05 ruling and pushed to v0.2.6+ (see below); v0.2.5 was Eric-re-ship-only and effectively became a v0.2.4.1 stabilization release.
 
-**Primary work:**
-- HARD smoke gate against rd-automation end-to-end: extraction → completeness interview → gap analysis → "what to build next" output. (Negative-alignment NOT part of this scope; v0.2.6+.)
-- Push pos-v2 → lukeivers/loam:main; tag v0.2.5; Eric installs (or upgrades). Gate the tag-push on Luke's ship-to-Eric ruling per master plan policy.
+**SHIPPED ARTEFACTS:**
+- HEAD `7f41ed0` pushed to `lukeivers/loam:main` 2026-05-06 (93 commits covering v0.2.2 → v0.2.5).
+- Tag `v0.2.5` pushed to `lukeivers/loam` 2026-05-06.
+- Eric outreach explicitly held per owner directive 2026-05-05; v0.2.5 sits as published-and-tagged release awaiting re-engagement.
 
-**AI-time band.** 2-5 h human-developer band → ~12-30 min AI wall-clock per the rubric (smoke-execution + publish dance; no new component code).
+**Cycle ladder (6 corrective rounds + 1 methodology amendment + 4 HARD smoke runs):**
+- C1+C2 (corrective) — CLI synthesis client wire-through + interview ValueError → OddExtractorError; absorbed under methodology-amendment seal `a9bc524` due to F-RACE incident (parallel dispatch in same WD; per `feedback_serialize_amendment_builds`).
+- ODD test-altitude procedural fix (methodology) — outcome-altitude AC requirement + new SKILL `odd-test-altitude-discipline` (with Luke's L3-conditional risk-band classifier per Telegram 10188) + memory rule `feedback_test_outcome_altitude_required.md`. Seal `a9bc524`.
+- C3 (corrective) — install-from-source synthesis extra + outcome-altitude AC C3.3 (first worked instance of the new SKILL). Seal `89f97c6`. C3.3 caught F8 (LLM banding violation) on first live run — validation case for the procedural rule.
+- C4-pivot (corrective) — MAJOR DIRECTION CHANGE per owner ruling Telegram 10194: rip Anthropic SDK; replace with `claude -p` subscription auth via NEW `claude_print_synthesis_client.py` mirroring memory-system precedent. F8 fix folded in (prompt + two-pass demotion-guard). Seal `76e5a8f`.
+- C5 (corrective) — `--strict-mcp-config` + empty MCP config tempfile in claude -p subprocess invocations (memory-system + odd-extractor) so spawned `claude` processes don't kill the parent session's telegram MCP via PID-file-stomp dedup. Seal `6d2052d`.
+- C6 (corrective) — fixture-PM smoke + extraction-dir resolution to target `<repo>` + `.loam/` gitignore + error message references valid command. Seal `5138dd7`.
 
-**Why fourth.** Last release-shape gate before Eric. Needs v0.2.4's gap-analysis + "what to build next" output to demo end-to-end. Negative-alignment held out so we ship sooner with verified capability instead of unverified judgment-class output.
+**HARD smoke trajectory (against rd-automation real-world):** RED → RED → RED → GREEN. Each RED excavated layered F1+F2+F5+F8+F-DESIGN-1/2/3 production-path bugs that v0.2.3 + v0.2.4's SOFT smokes never exercised.
+
+**HARD smoke 4th run GREEN 2026-05-06:** 6 outcome-altitude objectives extracted from rd-automation; §self-checks 13/15 = 87% pass (above 80% threshold); 6/6 backing-map coverage with VERIFIED or PLAUSIBLE evidence rows; 3 gaps in `gap-inventory.yaml`; 3 ranked candidates in `build-next.yaml` with rationale referencing specific gaps; stages 1-4 all exit 0; no Python tracebacks; loam tree + rd-automation tree clean (extraction redirected to `<repo>/.loam/` per C6 fix); telegram MCP stayed up under real-world synthesis load (C5 verified). 3 yellow non-blockers carried forward.
+
+**AI-time actuals:** ~5-7 h aggregate wall-clock across all corrective rounds + 4 HARD smoke runs. Initial band of "12-30 min AI wall-clock" was for the planned smoke-execution-only scope; the actual cycle was 10× larger because of the layered production-path gaps surfaced.
+
+**Architectural constraint locked-in:** subscription-only via `claude -p`; NO Anthropic API key anywhere in loam (memory rule `feedback_no_anthropic_api_key.md`).
 
 ### v0.2.6+ — Negative-alignment detection (carved out from v0.2.5; post-Eric)
 

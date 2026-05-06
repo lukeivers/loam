@@ -87,9 +87,8 @@ amendment:
 # odd-extractor remain green; only one config file edited
 # (install-from-source.txt); only one new test file added.
 
-# BASELINE pinned to the source-edit feat commit. Updated post-
-# source-commit by the build agent.
-baseline: "a43e37d"
+# BASELINE pinned to the source-edit feat commit (v0.2.5 corrective C3).
+baseline: "2fd17a6"
 
 plan: docs/rebuild/plans/v0-2-5-corrective-c3-install-and-outcome-altitude-ac.md
 

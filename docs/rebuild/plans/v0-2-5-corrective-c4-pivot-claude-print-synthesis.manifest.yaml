@@ -127,7 +127,7 @@ plan: docs/rebuild/plans/v0-2-5-corrective-c4-pivot-claude-print-synthesis.md
 plan_doc_ref: docs/rebuild/plans/v0-2-5-corrective-c4-pivot-claude-print-synthesis.md
 
 ac_count: 7
-smoke_outcome: "C4P.1 claude -p shim transport; C4P.2 [synthesis] extra removed; C4P.3 install-from-source revert; C4P.4 outcome-altitude tests pivot to claude-on-PATH (BOTH C3.3+C4.3 PASS live on workstation); C4P.5 F8 fix folded in (prompt + first-pass guard preserved + NEW second-pass guard for PLAUSIBLE-no-single-source); C4P.6 odd-extractor 825/1 green; C4P.7 AC.OBJX.5 refinement documented"
+smoke_outcome: "C4P.1 claude -p shim; C4P.2 extra removed; C4P.3 install revert; C4P.4 C3.3+C4.3 live PASS; C4P.5 F8 fix + 2nd-pass guard; C4P.6 825/1 green; C4P.7 OBJX.5 refined"
 
 components:
   - name: dev-sdlc

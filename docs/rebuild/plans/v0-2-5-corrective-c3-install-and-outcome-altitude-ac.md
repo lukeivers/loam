@@ -163,11 +163,7 @@ Corrective amendment scope is tight (install-from-source line addition + new tes
 
 ### Commit SHAs
 
-To be backfilled post-seal per AC.D-sa.7. Pre-build SHAs:
-
-- Plan-doc + manifest commit: `<pending>`
-- Source-edit feat commit (BASELINE): `<pending>`
-- Manifest baseline-pin commit: `<pending>`
-- Amendment apply commit: `<pending>`
-- Seal commit: `<pending>`
-- §14 backfill commit (this doc-update + STATE.md): `<pending>`
+- Amendment commit: `1ca5f478767d84808c63cc34363c243ee053c401` —
+  `chore(amend): v0-2-5-corrective-c3-install-and-outcome-altitude-ac manifest+apply — dev-sdlc BASELINE+sidecar bump to 2fd17a6`
+- Seal commit: `89f97c67cd05eaaea66a7e771a66b65ef16a46c1` —
+  `chore(seals): v0-2-5-corrective-c3-install-and-outcome-altitude-ac — dev-sdlc at 1ca5f47`

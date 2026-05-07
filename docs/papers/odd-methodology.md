@@ -426,42 +426,51 @@ savings on release-gate rework are substantial.
 
 ---
 
-## 6. Composition with LLM-Harness Primitives
+## 6. Composition with Claude Code
 
-The methodology composes with primitives an LLM-attached harness
-already provides. Three examples:
+The methodology composes with primitives Claude Code already provides.
+Three examples:
 
 ### 6.1 Hook-based memory
 
-A harness with hooks at session lifecycle events (start, prompt
-submit, stop) persists methodology context across sessions without
-bloating the in-context corpus. The four altitudes, mapping rule,
-drift modes, and outcome-altitude requirement load at session-start;
-cross-session memory captures violations and fixes so the agent does
-not re-derive the rule from drift each session.
+Claude Code's hook system fires at session lifecycle events
+(SessionStart, UserPromptSubmit, Stop). The four altitudes, mapping
+rule, drift modes, and outcome-altitude requirement load at
+SessionStart via a corpus contributor that surfaces them as
+additional context; a Stop hook persists methodology violations and
+fixes to disk; a UserPromptSubmit hook retrieves the relevant prior
+entries on the next session's first turn. The agent does not
+re-derive the methodology from drift each session, and the in-context
+budget is paid only for content that scored above a relevance
+threshold.
 
 ### 6.2 Subprocess-driven LLM calls under subscription auth
 
 The synthesis stage invokes an LLM. When the agent runs under a
-developer's subscription rather than a keychain-stored API token, the
-cleanest invocation is a subprocess call to the harness CLI, sandboxed
-via an empty configuration so the subprocess inherits no plugins from
-the parent session. Subprocess is the auth boundary; empty
+developer's Claude Max subscription rather than a keychain-stored
+Anthropic API key, the cleanest invocation is <code>claude -p</code> as a
+subprocess — Claude Code's print mode — sandboxed via
+<code>--strict-mcp-config</code> against an empty MCP configuration so
+the spawned process inherits no plugins from the parent session.
+The subprocess boundary is the auth boundary; the empty MCP
 configuration is the isolation boundary; together they let the
-pipeline call the LLM from automated runs without credential plumbing
-or state leakage.
+pipeline call the model from automated runs without credential
+plumbing or state leakage.
 
 ### 6.3 Skill packages for sub-agent propagation
 
 When work is dispatched to a sub-agent, the methodology must travel.
-A skill-package mechanism that names the methodology's principles in
-the brief — and that the sub-agent loads into its own session-start
-corpus — closes the context gap that otherwise leaves sub-agents to
-re-derive the rule from scratch.
+Claude Code's skill-package mechanism — markdown documents under
+<code>.claude/skills/</code> the agent loads when their descriptions
+match the active task — propagates the methodology's principles to
+the sub-agent's session-start corpus. This closes the context gap
+that otherwise leaves sub-agents to re-derive the rule from scratch
+or worse, ignore it because the parent session's reminders never
+crossed the dispatch boundary.
 
-In each case ODD leans on a primitive the harness already provides.
+In each case ODD leans on a primitive Claude Code already provides.
 The methodology is not a re-implementation; it is a discipline layered
-on the harness's existing surface.
+on Claude Code's existing surface.
 
 ---
 

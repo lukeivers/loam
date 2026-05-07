@@ -162,19 +162,37 @@ an agent runs five questions over its own output:
 Any failure indicates the wrong altitude. The fix is to restate, not
 label loosely.
 
-### 2.5 Why this is novel
+### 2.5 Positive framing
+
+Acceptance criteria are stated in the positive: what the system does,
+not what it must not do. "The component does not crash on malformed
+input" tests for the bug. "The component refuses malformed input with
+an actionable error" names the outcome — the rejection is observable,
+and the error message is the artefact the test asserts on.
+
+This converts regressions into objectives. When a defect surfaces,
+the question is not "what test catches this bug" but "what objective
+was missing that allowed this code to ship?" The answer becomes a
+positively-stated criterion. Positive criteria concentrate on the
+contract the system delivers; the agent authors against contracts,
+not against past failure modes.
+
+### 2.6 Why this is novel
 
 Adjacent methodologies operate at outcome-altitude in their greenfield
 framing — Gherkin scenarios, user-story templates, acceptance-test
-names. They diverge from ODD in three ways. First, none enforce strict
+names. They diverge from ODD in four ways. First, none enforce strict
 mapping in both directions; orphan code is allowed by default. Second,
 none distinguish four altitudes explicitly; objectives, features, and
-implementations are routinely conflated. Third, none were designed for
-the LLM-as-builder context — where the spec must be statable in
-natural language, the criteria observable without reading code, and
-method left to the agent's optimisation room. ODD is the operational
-shape that falls out when those three constraints are taken seriously
-together.
+implementations are routinely conflated. Third, none require positive
+framing — negative-tested invariants are routine in BDD and
+design-by-contract, where they accumulate as regression scaffolding
+rather than as criteria the agent authors against. Fourth, none were
+designed for the LLM-as-builder context — where the spec must be
+statable in natural language, the criteria observable without reading
+code, and method left to the agent's optimisation room. ODD is the
+operational shape that falls out when those four constraints are
+taken seriously together.
 
 ---
 

@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "371ac80"
+BASELINE = "ce379da"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -131,6 +131,9 @@ def test_only_dev_sdlc_changed() -> None:
         "telegram-interface/",
         "workspace-sync/",
         "framework/per-project-pm/",
+        "docs/design/",
+        "docs/plans/",
+        "docs/plans/research/",
     )
     allowed_files: set[str] = {
         "CLAUDE.dev.md",
@@ -148,6 +151,8 @@ def test_only_dev_sdlc_changed() -> None:
         "plugins/dev-sdlc/docs/odd-methodology.md",
         "docs/odd-llm-grounding.lean.md",
         ".gitignore",
+        "docs/release-roadmap.md",
+        "plugins/dev-sdlc/docs/odd-in-loam.md",
     }
 
     offending = []

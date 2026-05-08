@@ -54,9 +54,8 @@ Pulled from `docs/rebuild/STATE.md`. Each entry is the minor's objective sentenc
 | v0.2.4 | Loam runs a completeness interview, computes a gap analysis, and produces a "what should I build next?" output ranked against extracted objectives. | seals `d42ace9`, `9d15333`, `064cc2e` |
 | v0.2.5 | Loam's reverse-ODD pipeline runs HARD smoke-clean against a real-world codebase (`rd-automation`); the `claude -p` synthesis client replaces the Anthropic SDK; subscription-only architecture verified. | seal `7f41ed0`; tag `v0.2.5` pushed 2026-05-06 |
 | v0.2.5.1 | Loam respects user-declared off-limits zones, exposes a configurable synthesis timeout, and cascades capability drops when their target objectives are guarded out. | seals `b1d5f1e` (apply), `7a06034` (§14 backfill) — closes Eric's three F-LEAK / F-TIMEOUT / F-VERIFY-ORPHAN findings |
-| v0.6.1 | Loam's foundation docs are landed at canonical: principle-derivation-map.md ported, odd-in-loam.md F1c bridge merged (preserving canonical §10 BASELINE convention), CLAUDE.md Lens 6 (M5 principle-conflict-resolution) + Lens 7 (F2 Ruthless Feedback) added. META-FRAMEWORK class; foundational prerequisite separating principle codification from v0.7.0's structural enforcement. | seal pending; tag `v0.6.1` created locally (NOT pushed). |
 
-**Total shipped:** 11 minor + 2 patches. 132+ amendments + ~30 corrective rounds. All pushed to `lukeivers/loam` except v0.6.1 (local-only pending owner ruling on tag-push).
+**Total shipped:** 12 minor + 1 patch. 132+ amendments + ~30 corrective rounds. All pushed to `lukeivers/loam`.
 
 ---
 

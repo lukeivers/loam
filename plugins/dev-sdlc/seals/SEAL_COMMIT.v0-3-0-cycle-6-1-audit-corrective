@@ -1,0 +1,11 @@
+# v0.3.0 Cycle 6.1 audit-corrective — close FHA findings #1+#2 in-cycle (component-count drift + memory.md graphiti reframe) + carry FHA #3 (Docker stranger-clone gap) to release-roadmap §6 owner-action-line. NEW: docs/components/loam-init.md + docs/components/per-project-pm.md (16-component → 18-component recount; precise denomination per audit §9.1 Path A). REWRITE: docs/components/memory.md (no v0.1.x graphiti plugin framing; FBE.7 file-backed memory canonical). UPDATE: README.md + docs/architecture.md + docs/components/index.md (fifteen → eighteen). UPDATE: docs/release-roadmap.md §6 (Docker-equivalent FBE.7 cross-process / fresh-install / fresh-user-account verification entered as known-gap).
+
+slug: v0-3-0-cycle-6-1-audit-corrective
+components: dev-sdlc
+baseline: cc3d077
+amendment-commit: 9864b0a49c10991fae6729ab45b1a497e9170cd2
+plan-doc: docs/plans/v0-3-0-cycle-6-1-audit-corrective.md
+acs-satisfied: 6
+smoke: AC.FHA1.6 reviewer-perspective walk produces 100% PASS in scope; 0 occurrences of fifteen / graphiti / v0.1.x plugin in target docs; cross-references resolve; no source code touched
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

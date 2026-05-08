@@ -1,0 +1,34 @@
+schema_version: 3
+amendment:
+  slug: v0-4-0-cycle-3-substrate-composition-routines-codereview-outcomes
+  title: "v0.4.0 Cycle 3 — substrate composition: Routines + Code Review + Outcomes-pattern ADR; SKILL extension to plan-docs-author + 1 example plan-doc each (Routines / Code Review) + Outcomes ADR; folds C2 F2 finding (print-on-success len(diff.commits)) into existing C2 outcome-altitude test; closes AC.V040.2 + AC.V040.3 + AC.V040.5 per master-plan §3"
+
+# BASELINE captured at apply time; predecessor seal is C2 at f031c89c.
+baseline: "f031c89c"
+
+plan: docs/plans/v0-4-0-cycle-3-substrate-composition-routines-codereview-outcomes.md
+plan_doc_ref: docs/plans/v0-4-0-cycle-3-substrate-composition-routines-codereview-outcomes.md
+
+ac_count: 6
+smoke_outcome: "Substrate composition: Routines memory file + 2 example plan-docs + plan-author SKILL section + Outcomes ADR; AC.V040C3.{1,2,3,4,5,6} green; CLI-verb divergence documented; AC.V040.2/3/5 closed"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/design/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-4-0-cycle-3-substrate-composition-routines-codereview-outcomes

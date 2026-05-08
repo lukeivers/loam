@@ -1,0 +1,11 @@
+# v0.3.0 Cycle 5 — terminology consistency + glossary publication (docs/glossary.md NEW with 11 cluster-grouped entries: substrate / seed / cultivar / growth / amend / seal / contract / objective / capability / banded AC / ratification; each entry single canonical definition + Authority line + See also line; cross-linked from 4 entry-point docs: getting-started.md / dev-mode-getting-started.md / architecture.md / odd-llm-grounding.lean.md)
+
+slug: v0-3-0-cycle-5-terminology-consistency-and-glossary
+components: dev-sdlc
+baseline: 9baa8b2
+amendment-commit: dddaf8de2df66cf63935108c46bad62bd3928347
+plan-doc: docs/plans/v0-3-0-cycle-5-terminology-consistency-and-glossary.md
+acs-satisfied: 6
+smoke: docs/glossary.md NEW (11 entries: substrate/seed/cultivar/growth/amend/seal/contract/objective/capability/banded-AC/ratification); 4 entry-point docs cross-link; no drift introduced; sweep green
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

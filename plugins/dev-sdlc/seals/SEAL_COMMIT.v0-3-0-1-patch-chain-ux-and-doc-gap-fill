@@ -1,0 +1,11 @@
+# v0.3.0.1 PATCH — workflow chain UX hints + doc gap-fill (Eric drop-off fix). UPDATE: plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/cli.py (4 success-path next-step pointers + dry-run AC=0 hint). NEW: plugins/dev-sdlc/odd-extractor/tests/test_AC_V031_chain_ux.py (5 tests; AC.V031.{1,2,3,4,8,9}). UPDATE: README.md + docs/getting-started.md + docs/dev-mode-getting-started.md (Workflow chain sections + getting-started Q4 follow-on). NEW: docs/plans/v0-3-0-1-patch-chain-ux-and-doc-gap-fill.md (plan-doc). Closes Eric Telegram 10375 dropoff report. Path C (SKILL persona-pull) deferred to v0.4.0 per LOCKED-DESIGN-NOT-LICENSE. AC.V031.7 verified-as-shipped (project verbs registered via entry-point group). Bundle (c) audit-altitude gap deferred to v0.4.0 per dispatcher brief.
+
+slug: v0-3-0-1-patch-chain-ux-and-doc-gap-fill
+components: dev-sdlc
+baseline: a137906c
+amendment-commit: 634b3f1faf9c0b20463ea9778f920093c6f5773a
+plan-doc: docs/plans/v0-3-0-1-patch-chain-ux-and-doc-gap-fill.md
+acs-satisfied: 9
+smoke: 5/5 V031 tests pass; 19/19 existing CLI tests green; cold-run extract surfaces Next: pointer + Dry-run --live hint on AC=0; chain stdout-grep matches at every stage
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

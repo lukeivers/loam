@@ -1,0 +1,11 @@
+# v0.3.0 Cycle 1 — collapse docs/rebuild/ subtree into docs/ + cross-reference scrub (~4900 refs across ~720 files); preserves historical context (sealed test_no_sealed_amendments.py + docs/archive/* + sealed plan-docs); 8 seal-diff-window tests retain docs/rebuild/plans/ as historical-window allowed prefix
+
+slug: v0-3-0-cycle-1-rebuild-collapse-and-reference-scrub
+components: dev-sdlc
+baseline: 66bf869
+amendment-commit: e80437b4e1664315545eb319951539f58f061fe5
+plan-doc: docs/plans/v0-3-0-cycle-1-rebuild-collapse-and-reference-scrub.md
+acs-satisfied: 7
+smoke: find docs/rebuild -type f -> 0; ~4900 refs scrubbed across ~720 files; 8 seal-diff tests pass with historical path retained; sweeps green modulo 4 pre-existing failures
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

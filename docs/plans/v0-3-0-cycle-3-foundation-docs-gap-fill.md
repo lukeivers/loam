@@ -240,9 +240,9 @@ This audit confirms R3 reframe holds: gap-fill into existing surfaces (CLAUDE.md
 
 | Commit | Type | SHA |
 |---|---|---|
-| Plan-doc expand | docs(plans) | (this commit, pending) |
-| Source-edit | docs/feat | (pending) |
-| Manifest | docs(plans) | (pending) |
-| Apply | chore(amend) | (pending) |
-| Seal | chore(seals) | (pending) |
-| §14/§16 backfill | docs(plans) | (pending) |
+| Plan-doc expand | docs(plans) | `f67f2c9` |
+| Source-edit | docs(v0.3.0) | `17d238e` |
+| Manifest | docs(plans) | `5c93dbb` |
+| Apply | chore(amend) | `ad12cc1` |
+| Seal | chore(seals) | `be48b34` |
+| §16 backfill | docs(plans) | (this commit) |

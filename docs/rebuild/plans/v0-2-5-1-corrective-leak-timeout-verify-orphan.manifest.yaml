@@ -1,0 +1,104 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-5-1-corrective-leak-timeout-verify-orphan
+  title: "v0.2.5.1 corrective — closes the three production-path defects (F-LEAK + F-TIMEOUT + F-VERIFY-ORPHAN) surfaced by Eric's actual install of v0.2.5 against rd-automation; analyze step honors off-limits zones from user-survey §10 + extended default skip-list with html-captures/screenshots/html-output/test-results/coverage/playwright-report; --synthesis-timeout CLI flag threads through to the claude -p subprocess timeout; default raised 180s -> 600s; demotion-guard cascades to dependent capabilities (cascade-drop with multi-serves retention); outcome-altitude integration test against rd-automation real-world; 5 named ACs"
+
+# BASELINE: source-edit feat commit covering:
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/analyze.py
+#       1. _SKIP_DIR_NAMES extended with v0.2.5.1 artefact-dir
+#          basenames (html-captures / screenshots / html-output /
+#          test-results / coverage / playwright-report).
+#          Closes F-LEAK part (a).
+#       2. NEW _extract_off_limits_dirs(survey_text) best-effort
+#          parser of the survey markdown's §10 "Off-limits zones"
+#          section; returns a frozenset of dir-name basenames.
+#          Mirrors AC.ONBOARD.15 best-effort contract.
+#       3. _walk_repo signature shifts to accept extra_skip_dir_names
+#          frozenset kwarg; unioned with _SKIP_DIR_NAMES per-run.
+#       4. analyze_repo lazy-imports multi_source._read_user_survey
+#          and computes the extra-skip set from the survey raw text;
+#          calls _walk_repo with extra_skip_dir_names=<parsed>.
+#          Closes F-LEAK part (b).
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/synthesis.py
+#       1. NEW _cascade_drop_orphan_capabilities(...) helper:
+#          drops capabilities whose entire serves list resolves to
+#          dropped objectives; multi-serves caps retain surviving
+#          references. WARN logs name each cascade.
+#          Closes F-VERIFY-ORPHAN.
+#       2. _validate_rows applies the cascade AFTER both demotion
+#          guards run; before per-row Pydantic validation.
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/claude_print_synthesis_client.py
+#       1. ClaudePrintAnthropicShimClient ctor default
+#          timeout_seconds bumped 180.0 -> 600.0.
+#       2. build_default_synthesis_client accepts timeout_seconds
+#          kwarg; threads to ctor.
+#          Closes F-TIMEOUT part (a) + (b).
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/cli.py
+#       1. --synthesis-timeout argparse argument added (type=float,
+#          default=None, dest=synthesis_timeout). Help text
+#          references AC.V025-1.2.
+#       2. _cmd_extract live-client construction switched to import
+#          build_default_synthesis_client directly + thread the
+#          --synthesis-timeout value into the kwarg.
+#          Closes F-TIMEOUT part (c).
+#   - NEW plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_1_1_off_limits_skip.py
+#       8 tests covering off-limits parser + static skip-list
+#       extension + survey-parsed extra-skip + malformed-survey
+#       fallback.
+#   - NEW plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_1_2_synthesis_timeout_flag.py
+#       5 tests covering ctor default + ctor kwarg + builder
+#       propagation + CLI flag parse + help-text.
+#   - NEW plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_1_3_cascade_drop.py
+#       4 tests covering single-serves cascade + multi-serves
+#       filter + non-dict-row passthrough + verify-stage strictness
+#       preserved.
+#   - NEW plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_1_4_full_pipeline_rd_automation.py
+#       1 outcome-altitude integration test exercising the full
+#       4-stage CLI pipeline against rd-automation real-world;
+#       skips cleanly on missing claude / loam / rd-automation.
+#       Closes AC.V025-1.4.
+#
+# Corrective amendment outside any v0.2.5 numbered cycle ladder.
+# Sealed-content invariant: pre-existing AC.* tests remain green
+# (post-v0.2.5 SHIPPED baseline at HEAD 7f41ed0; documented
+# pre-existing OSS_M6 collection errors + stochastic live-LLM
+# failures verified non-regressions).
+
+baseline: "371ac80"
+
+plan: docs/rebuild/plans/v0-2-5-1-corrective-leak-timeout-verify-orphan.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/rebuild/plans/v0-2-5-1-corrective-leak-timeout-verify-orphan.md
+
+ac_count: 5
+smoke_outcome: "V025-1.1 analyze honors off-limits; V025-1.2 --synthesis-timeout + 600s default; V025-1.3 cascade-drop guards caps; V025-1.4 rd-automation GREEN; V025-1.5 no regressions"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/rebuild/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/rebuild/STATE.md
+    - docs/rebuild/FUTURE_IDEAS_DRAFT.md
+    - .gitignore
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-5-1-corrective-leak-timeout-verify-orphan
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

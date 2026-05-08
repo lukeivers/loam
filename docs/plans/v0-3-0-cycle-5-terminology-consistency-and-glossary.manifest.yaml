@@ -32,7 +32,7 @@ plan: docs/plans/v0-3-0-cycle-5-terminology-consistency-and-glossary.md
 plan_doc_ref: docs/plans/v0-3-0-cycle-5-terminology-consistency-and-glossary.md
 
 ac_count: 6
-smoke_outcome: "docs/glossary.md created with 11 H2 entries (substrate / seed / cultivar / growth / amend / seal / contract / objective / capability / banded AC / ratification); 4 entry-point docs cross-link the glossary; no drift introduced; sealed-component sweep tests green"
+smoke_outcome: "docs/glossary.md NEW (11 entries: substrate/seed/cultivar/growth/amend/seal/contract/objective/capability/banded-AC/ratification); 4 entry-point docs cross-link; no drift introduced; sweep green"
 
 components:
   - name: dev-sdlc

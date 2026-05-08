@@ -1,0 +1,11 @@
+# v0.4.0 Cycle 2 — code-gen outcome-altitude verification on jsts-playwright-app; new test_AC_V040C2_1_outcome_altitude.py invokes the full chain (--live → --interview → --gaps → --build-next → --code-gen) against real claude -p; F2 cleanup deletes redundant local seal-diff test; closes AC.V040.1 + AC.V040.6 per master-plan §3 split rationale; folds in C1 F1/F2/F3/F5 findings
+
+slug: v0-4-0-cycle-2-code-gen-outcome-altitude-verification
+components: dev-sdlc
+baseline: 5c1deb30
+amendment-commit: b358646863c4c1cbb5241150d052f7f7639f3a42
+plan-doc: docs/plans/v0-4-0-cycle-2-code-gen-outcome-altitude-verification.md
+acs-satisfied: 6
+smoke: Outcome-altitude probe vs jsts-playwright-app real fixture: AC.V040C2.{1,2,3,4,5,6} green; real claude -p subprocess exercised; AC.V040.1 + AC.V040.6 closed
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

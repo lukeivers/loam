@@ -118,10 +118,11 @@ Conditions that fire during cycle execution stop the build for surface-and-RF:
 
 ### Commit SHAs
 
-To be filled at cycle-seal + post-seal backfill:
-
-- Plan-doc commit: (pending)
-- Source-edit feat commit (BASELINE): (pending)
-- Manifest+apply commit: (pending)
-- Seal commit: (pending)
-- §14 backfill commit: (pending)
+| Commit | Type | SHA |
+|---|---|---|
+| Plan-doc expand | docs(plans) | `ea461de` |
+| Source-edit (BASELINE) | chore(v0.3.0) | `a0006dd` |
+| Manifest | docs(plans) | `fe04f53` |
+| Apply | chore(amend) | `46fd2a7` |
+| Seal | chore(seals) | `7afb648` |
+| §14 backfill | docs(plans) | (this commit) |

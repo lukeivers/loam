@@ -150,7 +150,11 @@ and asks:
    floor; non-tunable safety floors per v0.1.6).
 4. **Extractor opt-in.** Y / Defer / Never. On Y, the ODD extractor
    fires against your codebase and produces a banded contract draft
-   under `<workspace>/.loam/extractions/`.
+   under `<workspace>/.loam/extractions/`. The contract draft is the
+   first stage of the four-step **workflow chain** (see below);
+   after the draft lands, run `loam odd-extract <repo> --interview`
+   to confirm the extracted objectives, then `--gaps`, then
+   `--build-next`. Each step's stdout points at the next.
 5. **Continuous-watch opt-in.** Y / Defer (default) / N. Defer is
    recommended for fresh-user low-context — you can enable later
    with `loam odd-extract <repo> --incremental` once you understand
@@ -219,6 +223,50 @@ workspace. You can:
 
 You can keep using Claude Code exactly as you would without loam;
 the harness adds capability without removing any.
+
+---
+
+## Workflow chain — extract → interview → gap-analysis → build-next
+
+When the onboarding ritual's Q4 extractor opt-in fires (or any time
+you run `loam odd-extract <repo>` manually), loam produces the
+first artefact in a four-step chain. Each step refines the prior
+step's output:
+
+| Stage | Command                                       | What it produces                                                            |
+|-------|-----------------------------------------------|-----------------------------------------------------------------------------|
+| 1     | `loam odd-extract <repo>` (default)           | Banded contract draft + sidecar at `<workspace>/.loam/extractions/<id>/`.   |
+| 2     | `loam odd-extract <repo> --interview`         | Augmented objective set; Q&A resolves flagged-missing items.                |
+| 3     | `loam odd-extract <repo> --gaps`              | Gap inventory: objectives without verified evidence backing.                |
+| 4     | `loam odd-extract <repo> --build-next`        | Ranked candidate work to close the highest-value gaps.                      |
+
+Each command's success-path stdout points at the next step
+explicitly — you do not need to memorise the order. After
+`--build-next` lands, implement a candidate (or have the persona
+implement it), then re-run the chain to refresh objectives against
+the new codebase state.
+
+The chain is the documented surface; pass `--live` on stage 1 to
+invoke synthesis (the default is a structural-seam dry-run that
+returns zero ACs).
+
+A first cold run on rd-automation looks like:
+
+```
+$ loam odd-extract rd-automation --live
+... estimate + artefact paths ...
+AC count:       17
+Unhandled:      1
+Next: run `loam odd-extract rd-automation --interview` to confirm the extracted objectives.
+
+$ loam odd-extract rd-automation --interview
+Completeness interview complete for rd-automation.
+  Augmented set:    .../augmented-objectives.yaml
+  Objective count:  18
+Next: run `loam odd-extract rd-automation --gaps` to identify objectives without verified backing.
+```
+
+…and so on through `--gaps` and `--build-next`.
 
 ---
 

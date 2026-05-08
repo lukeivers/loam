@@ -235,6 +235,22 @@ def _cmd_extract(args: argparse.Namespace) -> int:
             print(f"Sidecar:        {draft.sidecar_path}")
             print(f"AC count:       {draft.ac_count}")
             print(f"Unhandled:      {draft.unhandled_count}")
+            # AC.V031.8 — dry-run AC=0 hint. When the user did not
+            # pass --live and the contract draft has zero ACs, the
+            # cause is the structural-seam dry-run; surface the
+            # remedy explicitly.
+            if not args.live and draft.ac_count == 0:
+                print(
+                    "(Dry-run mode — pass `--live` to invoke "
+                    "synthesis and produce real ACs.)"
+                )
+            # AC.V031.1 — next-step pointer to the interview stage
+            # of the four-step chain (extract → interview →
+            # gap-analysis → build-next).
+            print(
+                f"Next: run `loam odd-extract {repo_id} --interview` "
+                f"to confirm the extracted objectives."
+            )
 
         return _EXIT_OK
     except OddExtractorError as exc:
@@ -507,6 +523,11 @@ def _cmd_interview(args: argparse.Namespace) -> int:
             print(f"Completeness interview complete for {repo_id}.")
             print(f"  Augmented set:    {ext_dir / 'augmented-objectives.yaml'}")
             print(f"  Objective count:  {len(result.objectives)}")
+            # AC.V031.2 — next-step pointer to gap-analysis stage.
+            print(
+                f"Next: run `loam odd-extract {repo_id} --gaps` to "
+                f"identify objectives without verified backing."
+            )
         return _EXIT_OK
     except OddExtractorError as exc:
         print(
@@ -644,6 +665,11 @@ def _cmd_gaps(args: argparse.Namespace) -> int:
             print()
             print(f"  Inventory:  {path}")
             print(f"  Wrote:      {wrote} (False = no-change skip)")
+            # AC.V031.3 — next-step pointer to build-next stage.
+            print(
+                f"Next: run `loam odd-extract {repo_id} --build-next` "
+                f"to see ranked candidate work."
+            )
         return _EXIT_OK
     except OddExtractorError as exc:
         print(f"loam odd-extract --gaps: {exc}", file=sys.stderr)
@@ -817,6 +843,15 @@ def _cmd_build_next(args: argparse.Namespace) -> int:
             print(f"  Recommendation YAML:  {yaml_p}")
             print(f"  Recommendation MD:    {md_p}")
             print(f"  Wrote:                {wrote} (False = no-change skip)")
+            # AC.V031.4 — chain-closing next-step pointer. The
+            # build-next stage is the terminus of the four-step
+            # chain at v0.3.0; v0.4.0 introduces code-gen as a
+            # fifth step.
+            print(
+                "Next: implement a candidate, then re-run the chain "
+                "(--interview / --gaps / --build-next) to refine "
+                "objectives against the new state."
+            )
         return _EXIT_OK
     except OddExtractorError as exc:
         print(f"loam odd-extract --build-next: {exc}", file=sys.stderr)

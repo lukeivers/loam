@@ -111,6 +111,29 @@ Three principles every feature passes:
    inside the constraint envelope. See
    [`docs/design/odd.md`](docs/design/odd.md).
 
+## Workflow chain
+
+After `loam init` (or any time the extractor opt-in fires), loam's
+ODD extractor produces a banded contract draft from your codebase.
+That draft is the first stage of a four-step workflow chain — each
+stage refines the prior stage's output:
+
+| Stage | Command                                       | What it produces                                                            |
+|-------|-----------------------------------------------|-----------------------------------------------------------------------------|
+| 1     | `loam odd-extract <repo>` (default)           | Banded contract draft + sidecar; objective inventory.                       |
+| 2     | `loam odd-extract <repo> --interview`         | Augmented objective set; resolves flagged-missing items via Q&A.            |
+| 3     | `loam odd-extract <repo> --gaps`              | Gap inventory: objectives without verified evidence backing.                |
+| 4     | `loam odd-extract <repo> --build-next`        | Ranked candidate work to close the highest-value gaps.                      |
+
+Each command's success-path stdout points at the next step. Run
+the chain through once on a fresh codebase to see what loam
+extracted; re-run periodically as the codebase evolves to refresh
+the contract.
+
+For a reverse-engineered ODD reference, the same chain produces
+machine-readable artefacts under
+`<workspace>/.loam/extractions/<repo-id>/`.
+
 ## Status
 
 loam v0.1.0 is the first public release. It is intentionally narrow:

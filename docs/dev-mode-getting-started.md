@@ -107,6 +107,39 @@ Persona: That's component-level work in framework/workspace-
 
 ---
 
+## Workflow chain — extract → interview → gap-analysis → build-next
+
+dev-mode contributors interact with the same four-step ODD
+workflow chain as user-mode workspaces. The chain produces the
+contract draft, augmented objective set, gap inventory, and ranked
+build-next recommendations — useful both for reverse-engineering
+existing components and for validating that an in-flight
+amendment's claimed objectives match what the codebase actually
+exposes.
+
+| Stage | Command                                       | What it produces                                                            |
+|-------|-----------------------------------------------|-----------------------------------------------------------------------------|
+| 1     | `loam odd-extract <repo>` (default)           | Banded contract draft + sidecar.                                            |
+| 2     | `loam odd-extract <repo> --interview`         | Augmented objective set via Q&A.                                            |
+| 3     | `loam odd-extract <repo> --gaps`              | Gap inventory.                                                              |
+| 4     | `loam odd-extract <repo> --build-next`        | Ranked candidate work.                                                      |
+
+Each step's stdout points at the next. dev-mode-specific
+considerations:
+
+- **Pass `--live`** on stage 1 to invoke synthesis. The default
+  dry-run returns zero ACs (structural seam) — useful for
+  validating the path-resolution chain, not for producing real
+  ACs.
+- **Re-run the chain after seal** to refresh the contract
+  against the post-seal codebase. Stale extractions diverge fast
+  in a high-amendment-cadence dev-mode workspace.
+- **Compose with `loam project`** when starting new component-
+  level work; the Dev/SDLC plugin's project flow uses the
+  chain's output as input to plan-doc authorship.
+
+---
+
 ## Where to go next
 
 - [`design/odd.md`](design/odd.md) — the methodology dev-mode is

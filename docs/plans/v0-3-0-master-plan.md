@@ -318,7 +318,7 @@ Conditions that fire during cycle execution stop the build for surface-and-RF (n
 | 5 — terminology-consistency-and-glossary | `dddaf8d` | `542b939` |
 | 6 — feature-honesty-audit-and-verification | `f8beeaa` | `0734ea9` |
 | 6.1 — audit-corrective (sub-cycle, in-cycle FHA findings #1+#2 close + #3 carry) | `9864b0a` | `58da132` |
-| 7 — release-level-smoke-gate-and-ship | (backfilled at seal) | (backfilled at seal) |
+| 7 — release-level-smoke-gate-and-ship | `d849aee` | `3c6fdd5` |
 
 ---
 

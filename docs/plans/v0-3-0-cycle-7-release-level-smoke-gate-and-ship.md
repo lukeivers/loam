@@ -56,7 +56,7 @@ Build dispatch brief authored inline by dispatcher at dispatch time per `dispatc
 
 Master plan §3 Cycle 7; release-roadmap §3 v0.3.0 (the entry being collapsed); `docs/release-versioning-policy.md` §Tagging (tag-push policy).
 
-## §14 — Method-decision record
+## 14. Method-decision record (per AC.D-sa.7 lint requirement)
 
 | Decision | Choice | Rationale |
 |---|---|---|
@@ -68,12 +68,14 @@ Master plan §3 Cycle 7; release-roadmap §3 v0.3.0 (the entry being collapsed);
 | C7 SHA backfill timing | Apply / Seal SHAs land in §11 + STATE.md after seal commit lands; this plan-doc commits before the seal | Standard C1–C6 pattern: source-edit → manifest → apply → seal → §14 backfill (separate commit). C7's plan-doc edits land before seal; SHAs backfilled in the §14 backfill commit per `feedback_no_amend_in_agent_dispatches`. |
 | HARD HALT before public actions | Held — no `git push lukeivers/loam`, no `git tag v0.3.0`, no GitHub Release | Per Cycle 7 dispatch brief explicit halt list. Tag push + GitHub Release + remote push are owner-action-separate per `docs/release-versioning-policy.md` §Tagging. |
 
-### Post-seal SHA register (backfilled in §14 backfill commit)
+### Post-seal SHA register
 
 | Commit | SHA |
 |---|---|
-| Source-edit (this commit; release-roadmap + STATE.md + master plan §11 + this §14) | (this commit) |
-| Manifest commit | (pending) |
-| `loam amend apply` commit | (pending) |
-| `loam amend seal` commit | (pending) |
-| §14 SHA backfill commit | (pending) |
+| Source-edit doc-bundle (release-roadmap §3→§2, STATE.md SHIPPED row, master plan §11 backfill, this §14) | `7892818` |
+| Manifest commit | `7a80b5a` |
+| Manifest smoke_outcome trim corrective (1st) | `d44cd47` |
+| Manifest smoke_outcome trim corrective (2nd; landed under 200-char limit) | `c67b27d` |
+| `loam amend apply` commit | `d849aee` |
+| `loam amend seal` commit | `3c6fdd5` |
+| §14 SHA backfill commit (this) | (this commit) |

@@ -137,7 +137,7 @@ Master plan §3 Cycle 1; release-roadmap §3 v0.3.0 AC.V030.8.
 - [x] Migration map covers every file under `docs/rebuild/` (12 mapped paths).
 - [x] Excluded-files list covers historical context (16 test files + seals/).
 
-## §14 — Method-decision record (backfilled at seal)
+## §14 — Method-decision record
 
 | Decision | Choice | Rationale |
 |---|---|---|
@@ -146,7 +146,19 @@ Master plan §3 Cycle 1; release-roadmap §3 v0.3.0 AC.V030.8.
 | Sed order | More-specific-first | Avoids `docs/rebuild/plans/` being substituted to `docs/plans/` then re-substituted to wrong target. |
 | Components/ → archive | `docs/archive/component-research/` | Historical research per dispatch; not active-design surface. |
 | Pre-existing dirty state | Carry through, do NOT commit | Predates cycle; not in scope; surface at report. |
+| Path-style construction scrub | Python multi-line script for `/ "rebuild"` patterns | Sed misses multi-line Path constructions; 51 .py files needed Python script handling. |
+| Seal-diff window historical retention | Add `docs/rebuild/plans/` back to `_ALLOWED_PREFIXES` of 8 seal-diff window tests | Tests check historical BASELINE..SEAL_COMMIT diff windows where files were at old paths; preserve historical commit-window assertions. |
+| In-flight smoke_outcome fix on v0-2-4-master-plan.manifest.yaml | Trim 281 -> 186 chars | Pre-existing data violation surfaced when manifest-validation test moved to scan post-collapse `docs/plans/`; minimal-scope correction to keep cycle whole. |
+| Seal `--allow-untracked-globs` usage | 7 patterns covering pre-existing dirty paths | Pre-existing dirty state predates cycle per F2 RF #1; admission-only (no auto-stage) per AC.LAE.2. |
 | `--amend` policy | NEW commits only | Per master plan §9 + `feedback_no_amend_in_agent_dispatches.md`. |
 | Tag-push policy | NO tag push, NO remote push | Per dispatch + master plan. |
 
-(SHAs backfilled post-seal.)
+### Commit SHAs
+
+| Commit | SHA | Description |
+|---|---|---|
+| 1 — plan-doc | `2c2fd75` | `docs(plans): v0.3.0 Cycle 1 — expand stub to sub-plan-doc` |
+| 2 — source-edit (BASELINE) | `66bf869` | `docs(v0.3.0): Cycle 1 — collapse docs/rebuild/ + scrub references` |
+| 3 — manifest | `fb441a7` | `docs(plans): v0.3.0 Cycle 1 — manifest YAML` |
+| 4 — apply auto-commit | `e80437b` | `chore(amend): v0-3-0-cycle-1-rebuild-collapse-and-reference-scrub manifest+apply — dev-sdlc BASELINE+sidecar bump to 66bf869` |
+| 5 — seal | `459c7fc` | `chore(seals): v0-3-0-cycle-1-rebuild-collapse-and-reference-scrub — dev-sdlc at e80437b` |

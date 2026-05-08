@@ -311,7 +311,7 @@ Conditions that fire during cycle execution stop the build for surface-and-RF (n
 
 | Cycle | Apply SHA | Seal SHA |
 |---|---|---|
-| 1 — rebuild-collapse-and-reference-scrub | (pending) | (pending) |
+| 1 — rebuild-collapse-and-reference-scrub | `e80437b` | `459c7fc` |
 | 2 — graphiti-ripout-and-fbe7 | (pending) | (pending) |
 | 3 — foundation-docs-gap-fill | (pending) | (pending) |
 | 4 — lint-pass-cross-mode-debt-f3-f4 | (pending) | (pending) |

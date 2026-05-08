@@ -54,74 +54,15 @@ Pulled from `docs/STATE.md`. Each entry is the minor's objective sentence + the 
 | v0.2.4 | Loam runs a completeness interview, computes a gap analysis, and produces a "what should I build next?" output ranked against extracted objectives. | seals `d42ace9`, `9d15333`, `064cc2e` |
 | v0.2.5 | Loam's reverse-ODD pipeline runs HARD smoke-clean against a real-world codebase (`rd-automation`); the `claude -p` synthesis client replaces the Anthropic SDK; subscription-only architecture verified. | seal `7f41ed0`; tag `v0.2.5` pushed 2026-05-06 |
 | v0.2.5.1 | Loam respects user-declared off-limits zones, exposes a configurable synthesis timeout, and cascades capability drops when their target objectives are guarded out. | seals `b1d5f1e` (apply), `7a06034` (§14 backfill) — closes Eric's three F-LEAK / F-TIMEOUT / F-VERIFY-ORPHAN findings |
+| v0.3.0 | Loam's documented features work as advertised AND loam's terminology is consistent across forward-looking surface — `docs/rebuild/` collapsed (~5300 refs scrubbed); graphiti rip-out + FBE.7 file-backed memory canonical; foundation-docs gap-fill (CLAUDE.md Lens 6/7 + principle-derivation-map port); lint pass clean (`ruff` + F821 sweep); `KNOWN_CROSS_MODE_DEBT` shrinks 1 → 0; F3 + F4 closures; `docs/glossary.md` published (12 canonical terms); feature-honesty audit 100% match post-C6.1; `claude -p --strict-mcp-config` invariant verified 3/3 production sources; ODD-conformance allowlist published (18 entries); HARD smoke GREEN against rd-automation. | Cycles 1–7 + C6.1: apply `e80437b` / seal `459c7fc` (C1); apply `39094ea` / seal `013553e` (C2); apply `ad12cc1` / seal `be48b34` (C3); apply `46fd2a7` / seal `7afb648` (C4); apply `dddaf8d` / seal `542b939` (C5); apply `f8beeaa` / seal `0734ea9` (C6); apply `9864b0a` / seal `58da132` (C6.1); apply / seal SHAs for C7 backfilled at seal |
 
-**Total shipped:** 12 minor + 1 patch. 132+ amendments + ~30 corrective rounds. All pushed to `lukeivers/loam`.
+**Total shipped:** 13 minor + 1 patch. v0.1.0 → v0.3.0 published. v0.3.0 ships META-FRAMEWORK foundation; v0.4.0 code-gen-from-objectives lands against this baseline.
 
 ---
 
-## §3 Active version — v0.3.0
+## §3 Active version
 
-### Objective
-
-> **Loam's documented features work as advertised AND loam's terminology is consistent across forward-looking surface.** A stranger cloning loam can verify every named capability is operational; loam-aligned names (substrate / seed / cultivar / amend / seal) are used consistently with single definitions; the project's own naming is glossary-published; no "rebuild" artefacts surface in user-facing docs.
-
-**Class:** META-FRAMEWORK (foundational; users feel reliability indirectly)
-
-### Constraints
-
-- All `docs/rebuild/` references migrate to `docs/` (or component-specific paths). The `docs/rebuild/` subtree is collapsed; its artefacts move to one of: `docs/spec/`, `docs/components/`, `docs/design/`, `docs/plans/`, `docs/archive/` (per content). 744 file references scrubbed.
-- Graphiti-the-component is **fully removed** — the directory, the venv segregation, the install-from-source line, all cross-references. Graphiti **re-implementation** is backlog (Luke's explicit ruling 2026-05-08); the rip-out is roadmap.
-- Memory system pivots to FBE.7 file-backed approach: Stop hook persists, UserPromptSubmit retrieves; verified operational on at least one stranger-clone.
-- Every `claude -p` invocation in loam carries `--strict-mcp-config` (regression scan).
-- Own-component ODD-conformance sweep: every framework component meets the §2.5 standard at least at the PLAUSIBLE band; named exemptions land in a tracked allowlist.
-- `KNOWN_CROSS_MODE_DEBT` allowlist shrinks (must shrink-not-grow per existing test design).
-- F3 (odd-extractor `analyze` step adds `framework/` to `_SKIP_DIR_NAMES`) lands; F4 v0.2.1 corrective F1 seal-text doc-drift resolved.
-- Lint pass: ruff + mypy both clean across `framework/` + `plugins/`.
-
-### Acceptance criteria
-
-- **AC.V030.1 — Feature-honesty audit.** Stranger-perspective audit deliverable at `docs/v0-3-0-feature-honesty-audit.md` (or equivalent path) cross-references every named capability in README + `docs/getting-started.md` + `docs/dev-mode-getting-started.md` against the actual sealed-component surface. 100% match or named exemption.
-- **AC.V030.2 — Graphiti rip-out.** `framework/memory-system/` no longer references graphiti-core; install-from-source.txt graphiti line removed; venv segregation removed; `kuzu_db.wal` and `graphiti-service.{log,err.log}` no longer appear in workspace state. Tests pass against the FBE.7 path.
-- **AC.V030.3 — Memory verification on stranger clone.** Cold-state install on a fresh machine, run a session, /clear, run another session, verify the memory surface returns content from the prior session. Outcome-altitude AC (per `feedback_test_outcome_altitude_required.md`).
-- **AC.V030.4 — claude -p discipline regression scan.** Repo-wide grep proves every `claude -p` subprocess invocation in loam source code carries `--strict-mcp-config`. Test asserts the invariant.
-- **AC.V030.5 — ODD-conformance sweep on own components.** Every component in `framework/` declares its own objectives.yaml (or named exemption); audit-log entries trace the sweep; orphans in own components either close or land in tracked-allowlist with rationale.
-- **AC.V030.6 — Lint pass clean.** `ruff check framework/ plugins/` exits 0; `mypy --strict` (or named profile) exits 0.
-- **AC.V030.7 — Loam-aligned-name terminology + glossary.** `docs/glossary.md` (NEW) defines: substrate, seed, cultivar, growth, amend, seal, contract, objective, capability, banded AC, ratification. Doc-only sweep replaces ad-hoc usages; references resolve to the glossary.
-- **AC.V030.8 — `docs/rebuild/` collapse.** No file lives under `docs/rebuild/`; redirects (or archive pointers) preserve link integrity for 6 months.
-- **AC.V030.9 — F3 + F4 close.** odd-extractor analyze skips `framework/`; v0.2.1 corrective F1 seal-text doc-drift resolved (per FIDRAFT entry).
-- **AC.V030.10 — KNOWN_CROSS_MODE_DEBT shrinkage.** Allowlist count strictly decreases vs v0.2.5.1 baseline (target: zero).
-
-### Source items (ladder to AC.V030.x)
-
-- Feature-honesty audit (cross-component, stranger-perspective) → AC.1
-- Graphiti rip-out (per Luke 2026-05-08) → AC.2
-- Memory system FBE.7 verification (Stop persists; UserPromptSubmit retrieves) → AC.3
-- claude -p discipline verification (every invocation `--strict-mcp-config`) → AC.4
-- ODD-conformance sweep on own components (TaskList #25) → AC.5
-- Lint pass — ruff + mypy clean (FIDRAFT) → AC.6
-- Loam-aligned-name terminology consistency pass + glossary publication → AC.7
-- `docs/rebuild/` collapse + 744-file reference scrub → AC.8
-- F3 framework/ skip in odd-extractor analyze (FIDRAFT) → AC.9
-- F4 v0.2.1 corrective F1 seal-text doc-drift (FIDRAFT, doc-only) → AC.9
-- KNOWN_CROSS_MODE_DEBT shrinkage (FIDRAFT) → AC.10
-
-### Estimated AI-time
-
-- Feature-honesty audit (cross-component): 60-90 min (~600 tool calls midpoint)
-- Graphiti rip-out: 90-150 min (~1000 tool calls; touches install + memory-system + 60+ refs)
-- Memory FBE.7 verification: 30-60 min (~400 tool calls; mostly verification not build)
-- claude -p discipline scan + fix: 20-40 min (~250 tool calls)
-- ODD-conformance sweep: 60-120 min (~900 tool calls; per-component pass)
-- Lint pass: 60-120 min (~800 tool calls; ruff + mypy + fixes)
-- Terminology + glossary + `docs/rebuild/` collapse: 60-90 min (~600 tool calls)
-- F3, F4, KNOWN_CROSS_MODE_DEBT (small batch): 30-60 min (~350 tool calls)
-
-**Total v0.3.0 AI-time: 6.5-12 hours**, midpoint **~9 hours** AI-time. Owner gate-review time separate.
-
-### Dependencies
-
-- Inherits all v0.2.5.1 state. No upstream version dependency.
-- Depends on `docs/release-versioning-policy.md` + `docs/odd-semver-pinning.md` (this file's siblings) being published.
+v0.3.0 SHIPPED (collapsed to §2 per `docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md` per the per-minor seal ritual at §7). Next minor: **v0.4.0** — see §4 below for objective + ACs + dependencies (depends on v0.3.0; the META-FRAMEWORK foundation v0.3.0 ships unblocks v0.4.0's code-gen-from-objectives surface).
 
 ---
 

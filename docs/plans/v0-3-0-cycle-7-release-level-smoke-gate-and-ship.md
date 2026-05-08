@@ -56,6 +56,24 @@ Build dispatch brief authored inline by dispatcher at dispatch time per `dispatc
 
 Master plan §3 Cycle 7; release-roadmap §3 v0.3.0 (the entry being collapsed); `docs/release-versioning-policy.md` §Tagging (tag-push policy).
 
-## §14 — Method-decision record (backfilled at dispatch + seal)
+## §14 — Method-decision record
 
-To be filled at cycle-dispatch authoring + post-seal backfill.
+| Decision | Choice | Rationale |
+|---|---|---|
+| Canonical cycle-count framing | "Seven cycles + one in-cycle audit-corrective sub-cycle (C6.1)" | Master plan §3 names 7 cycles; C6.1 was unscheduled at master-plan landing — added in-cycle to close FHA findings #1 + #2 (audit deliverable's own correctives) per AUTONOMY (recommendation IS the decision). C6.1 is not a separate cycle by master-plan ordinal but is a sealed sub-cycle in §11. F2 RF: framing as "7+C6.1" honors both — owner sees both the locked plan structure and the actual sealed-component history. |
+| Aggregate tests-green count framing | Per-cycle counts named with peak-aggregate (1202 at C4) + framework-side breakdown (C6) + smoke ride-along (825 odd-extractor at HEAD `bfe55cf`) | No single repo-wide pytest invocation produces a canonical aggregate because each cycle touched a different fence; per-cycle counts are the verifiable claim per `feedback_specific_claims_verified_or_marked_guess`. Reporting C4's 1202 as the highest aggregate name + C6's framework-side 888 + smoke ride-along 825 lets reader trace each number to its source. |
+| Smoke verdict format | Single sentence + structured ride-along bullets in STATE.md row | Mirrors v0.2.5.1 STATE.md narrative-paragraph precedent (single dense paragraph append; no separate table row exists in STATE.md for shipped versions). The release-roadmap §2 row separately captures objective + anchor in tabular form. |
+| STATE.md row format | Append `**v0.3.0 SHIPPED YYYY-MM-DD**` paragraph to §1 narrative line, mirroring v0.2.5.1's append shape | STATE.md §1 carries the canonical SHIPPED record as one running paragraph. Adding a separate component-table row would break that precedent; the SHIPPED rollup is the dense narrative append. |
+| Release-roadmap §3 collapse shape | §3 v0.3.0 entry deleted; §3 header retained as pointer to v0.4.0 in §4 (active version pointer) | Per release-roadmap §7 protocol: "When a minor ships, its §3-or-§4 entry collapses into §2 with the seal anchor." v0.3.0's §3 entry collapsed to a one-line pointer; v0.4.0's full entry remains in §4 (it has not yet been promoted to §3 active — that is v0.4.0 plan-author's responsibility). |
+| C7 SHA backfill timing | Apply / Seal SHAs land in §11 + STATE.md after seal commit lands; this plan-doc commits before the seal | Standard C1–C6 pattern: source-edit → manifest → apply → seal → §14 backfill (separate commit). C7's plan-doc edits land before seal; SHAs backfilled in the §14 backfill commit per `feedback_no_amend_in_agent_dispatches`. |
+| HARD HALT before public actions | Held — no `git push lukeivers/loam`, no `git tag v0.3.0`, no GitHub Release | Per Cycle 7 dispatch brief explicit halt list. Tag push + GitHub Release + remote push are owner-action-separate per `docs/release-versioning-policy.md` §Tagging. |
+
+### Post-seal SHA register (backfilled in §14 backfill commit)
+
+| Commit | SHA |
+|---|---|
+| Source-edit (this commit; release-roadmap + STATE.md + master plan §11 + this §14) | (this commit) |
+| Manifest commit | (pending) |
+| `loam amend apply` commit | (pending) |
+| `loam amend seal` commit | (pending) |
+| §14 SHA backfill commit | (pending) |

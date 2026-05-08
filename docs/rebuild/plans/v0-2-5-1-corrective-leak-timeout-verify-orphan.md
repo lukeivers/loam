@@ -585,8 +585,10 @@ and logs"), not a filename leak. F-LEAK fix verified live.
 
 ### Commit SHAs
 
-(placeholder — populated post-seal by `--plan-doc` backfill)
-
+- Amendment commit: `8130058b320ef592b8b4b4f0ec84bb43ae1f5833` —
+  `docs(plans): v0.2.5.1 §14 D-build.{2,3} method-decisions + test breakdown`
+- Seal commit: `b1d5f1e2a2966f03b07a076b89bd14fa670d4284` —
+  `chore(seals): v0-2-5-1-corrective-leak-timeout-verify-orphan — dev-sdlc at 8130058`
 ## 15. References
 
 - Eric run issues capture: `/Users/lukeivers/pos3/workspace/.scratch/claude-output/eric-run-issues-friday-processing.md`

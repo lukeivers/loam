@@ -1,0 +1,61 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-cycle-1-rebuild-collapse-and-reference-scrub
+  title: "v0.3.0 Cycle 1 — collapse docs/rebuild/ subtree into docs/ + cross-reference scrub (~4900 refs across ~720 files); preserves historical context (sealed test_no_sealed_amendments.py + docs/archive/* + sealed plan-docs); 8 seal-diff-window tests retain docs/rebuild/plans/ as historical-window allowed prefix"
+
+# BASELINE: 66bf869 — the source-edit commit (file moves + reference
+# scrub).
+#
+# Commit ladder pre-apply:
+#   2c2fd75 — docs(plans): v0.3.0 Cycle 1 — expand stub to sub-plan-doc
+#   66bf869 — docs(v0.3.0): Cycle 1 — collapse docs/rebuild/ + scrub
+#             references (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§14 backfill commit lands last>
+#
+# Doc-only cycle. No sealed-component source-code edit; dev-sdlc
+# frozen_baseline: true serves as the bookkeeping owner per the
+# v0-2-5-1-corrective precedent shape (schema v3 minimal-component
+# manifest with broad universal_paths admissions covering the
+# cross-component reference scrub).
+
+baseline: "66bf869"
+
+plan: docs/plans/v0-3-0-cycle-1-rebuild-collapse-and-reference-scrub.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-3-0-cycle-1-rebuild-collapse-and-reference-scrub.md
+
+ac_count: 7
+smoke_outcome: "find docs/rebuild -type f -> 0; ~4900 refs scrubbed across ~720 files; 8 seal-diff tests pass with historical path retained; sweeps green modulo 4 pre-existing failures"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # doc-only cycle; no source change to dev-sdlc
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# Broad coverage required: the cross-reference scrub touches every
+# top-level dir.
+universal_paths:
+  prefixes:
+    - docs/
+    - framework/
+    - plugins/
+  files:
+    - CLAUDE.md
+    - CLAUDE.dev.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-cycle-1-rebuild-collapse-and-reference-scrub
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

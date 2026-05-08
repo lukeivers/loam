@@ -138,4 +138,29 @@ If the reviewer-perspective walk surfaces a NEW row not enumerated above (drift 
 
 This plan-doc is sub-cycle 6.1 under v0.3.0; supersedes any informal C7 docs-cleanup expectation. Owner-ratified ahead of dispatch via AUTONOMY (recommendation IS the decision) per the audit §9 recommendations.
 
-When the cycle seals, this plan-doc receives a §14 backfill if applicable (recording apply / seal SHAs).
+When the cycle seals, this plan-doc receives a §14 backfill recording apply / seal SHAs.
+
+## 14. Method-decision record (per AC.D-sa.7 lint requirement)
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Component-count denomination | "Eighteen" (precise denomination per audit §9.1 Path A escape hatch) | Adding `loam-init` + `per-project-pm` reference pages plus including `memory` (no directory) makes the table 18 rows. The audit's "sixteen" alternative was based on a strict-15 reading + memory; once the table grows by 2 new entries the strict-18 count is the only honest match for AC.FHA1.6. The audit's Path A explicitly named "either a precise denomination or 'sixteen'" — precise denomination chosen. |
+| `memory` row treatment | Footnote on the row + paragraph after grouped table | Explicit naming of "implementation lives inside `framework/primary-persona/`; no separate `framework/memory/` directory" honors AC.FHA1.6 honest-reading-of-reality. |
+| `memory.md` graphiti reframe | Drop graphiti from the doc entirely; add "post-v0.1.0 backlog" sentence in Stable surfaces | Cleaner than retaining graphiti with a different timing label; the substrate-pluggability story stands on `MemoryProvider` Protocol alone. |
+| Docker-gap row placement | Append row to release-roadmap §6 owner-action table | Matches existing §6 shape (Action / Trigger / Notes columns); discoverable from owner's release-prep walk-through. |
+| Plan-doc structure | Mirror v0.2.1 corrective F1 plan-doc shape (§1 outcome / §2 ACs / §3 build sequence / §4 touched / §5 halts / §6 smoke / §7 authority + §14 backfill) | Established corrective-cycle plan-doc convention; lower cognitive overhead than authoring fresh structure. |
+| Cycle bookkeeping owner | dev-sdlc (cross-cutting doc cycle) | Same precedent as C1/C2/C3/C4/C5/C6; doc-only cycle from dev-sdlc's perspective. |
+| `--amend` discipline | NEW commits only (5-commit ladder: plan-doc / BASELINE / manifest / apply / seal / §14 backfill) | Per `feedback_no_amend_in_agent_dispatches`; C5 had inadvertent `--amend` mid-build (recovered); C6 stayed clean; C6.1 stays clean. |
+| Build report path | `/Users/lukeivers/pos3/workspace/.scratch/claude-output/v0-3-0-cycle-6-1-build-report.md` (per dispatch brief) | Per dispatch instruction; ephemeral scratch surface in pos3 workspace; canonical pos-v2 carries no build artefact. |
+
+### Post-seal SHA register (backfill)
+
+| Commit | SHA |
+|---|---|
+| Plan-doc finalization commit | `ad86fd4` |
+| Source-edit BASELINE | `cc3d077` |
+| Manifest commit | `afebdf8` |
+| `loam amend apply` commit | `9864b0a` |
+| `loam amend seal` commit | `58da132` |
+| §14 backfill commit | (this commit) |
+

@@ -331,6 +331,132 @@ the SHA register. When applied to a sub-plan, the 14-section
 ladder applies as-is, full AC enumeration in §4, §5 drops
 to the dispatch-brief stub.
 
+## Compose on Claude Code review primitives (v0.4.0 C3)
+
+Per Lens 1 (Claude-leverage-first) and the v0.4.0 C3
+substrate-composition cycle: when a plan-doc has a step that
+reviews diffs / branches / PRs, **compose on the Claude-native
+review surface rather than reimplementing review prose inside
+loam**.
+
+### Verified-live invocation surface (HEAD `2.1.128`, 2026-05-08)
+
+The conference research at
+`<workspace>/.scratch/claude-output/claude-conference-features-2026-05-06.md`
+§1 #5 + §1 #7 named the CLI as `claude code review` +
+`claude code security review`. **Those verbs do NOT exist
+at HEAD.** The Code Review + Security Review capabilities
+are exposed via four verified-live surfaces:
+
+- **`claude ultrareview`** subcommand — *"Run a cloud-hosted
+  multi-agent code review of the current branch (or a PR
+  number / base branch) and print the findings."* Best for
+  cross-branch / PR-level multi-agent review.
+- **`/review` SKILL** — *"Review a pull request."* In-session
+  PR review.
+- **`/security-review` SKILL** — *"Complete a security
+  review of the pending changes on the current branch."*
+  Security-specific review of pending changes.
+- **`/ultrareview` SKILL** — slash-surface wrapper around
+  the `claude ultrareview` CLI.
+
+Verified-live wins over secondary citation per
+`feedback_trust_operational_reality` and
+`feedback_specific_claims_verified_or_marked_guess`. If a
+future Anthropic release adds the literal `claude code
+review` alias, this section's invocation guidance updates;
+the *pattern* is stable.
+
+### When to compose Code Review
+
+Three composition shapes:
+
+1. **Review-as-plan-step** (most common). The cycle has a
+   discrete review step at a named ladder position (typically
+   after the source-edit feat commit + before `loam amend
+   apply`). Plan-doc names the SKILL or CLI invocation
+   inline; build agent runs it; output feeds the next step
+   (e.g., HIGH-severity findings → halt-and-surface; LOW
+   findings → §10 F2 RF).
+2. **Review-as-cycle**. Entire cycle is "review the prior
+   cycle's output" (e.g., a v0.X.Y patch cycle that's purely
+   a review pass with no source-edit). The SKILL or CLI runs
+   as the cycle's primary action; plan-doc §4 ACs name the
+   review verdicts as observable outcomes.
+3. **Hand-author review prose**. Last resort. Only when no
+   verified-live review surface fits the cycle's review
+   altitude (rare; almost always one of the four surfaces
+   above matches). The plan-doc author writes a review
+   checklist into §10 F2 RF and the build agent self-reviews.
+   Detect-and-document via
+   `graceful-fallthrough-with-detection` SKILL.
+
+### Choosing among the four surfaces
+
+- **`/security-review` SKILL** — when the cycle's AC family
+  includes input-validation / injection / auth / authz /
+  crypto / supply-chain concerns. Specificity wins.
+- **`claude ultrareview`** — when the review needs to run
+  cross-branch / against a specific PR number / base-branch
+  comparison; produces multi-agent findings on a remote
+  cloud session.
+- **`/review` SKILL** — in-session PR review; lighter-weight
+  than `claude ultrareview`; runs in the current session
+  context.
+- **`/ultrareview` SKILL** — slash-surface to the CLI verb;
+  use when a plan-doc step prefers the SKILL composition
+  over a raw CLI invocation.
+
+### Composition inside the §4 AC family
+
+A review-step AC takes the shape:
+
+```
+- AC.<FAM>.<n> — <Review verb> dispatched at <ladder
+  position> against <target>; <SKILL or CLI> output captured
+  in build report; HIGH-severity findings = halt-and-surface
+  before next ladder step; outcome-altitude: <true|false>.
+```
+
+Outcome-altitude is `true` when the AC asserts on the
+review's actual verdict (e.g., "no HIGH-severity findings,
+or owner ratifies a documented exception"). Outcome-altitude
+is `false` when the AC asserts only on the dispatch's
+existence (e.g., "the review SKILL was invoked at the named
+position"). Per `feedback_test_outcome_altitude_required`,
+the AC family includes ≥1 outcome-altitude review AC if the
+review is load-bearing for the cycle's release gate.
+
+### Worked example
+
+See `docs/plans/example-code-review-composition.md` for a
+worked-example plan-doc demonstrating a security-sensitive
+cycle that composes on `/security-review` SKILL +
+`claude ultrareview` as discrete plan-steps. The example
+shows the AC shape, the dispatch ladder position, and the
+graceful-degradation fallback when neither SKILL is
+available.
+
+### Composition with existing rules
+
+- **`feedback_no_anthropic_api_key.md`** — `claude
+  ultrareview` and the SKILLs run on subscription auth; no
+  API key needed; subscription-only invariant preserved.
+- **`feedback_specific_claims_verified_or_marked_guess.md`**
+  — every plan-doc citing the review surface verifies
+  against `claude --help` + the available-skills list at
+  authoring time; invocation lines that don't match HEAD are
+  halt-and-surface findings.
+- **`graceful-fallthrough-with-detection`** SKILL — the
+  detection pattern for when SKILLs aren't available; routes
+  to the next composition shape down the rubric.
+- **`audit-finding-triage`** SKILL — review findings feed
+  into triage; HIGH findings update §4 AC families; LOW
+  findings update §10 F2 RF.
+- **PR-safety SKILL** — final pre-public gate; runs against
+  the cycle's diff after seal + before any `git push`.
+  Distinct from the cycle-internal review-step composition.
+
 ## Out of scope
 
 - The AC.D-sa.7 lint mechanism's implementation — this skill

@@ -416,3 +416,14 @@ def test_AC_V040C2_1_outcome_altitude_full_chain_jsts_playwright_app(
             f"be None at code-gen time; commit[{idx}] got "
             f"{commit.lifted_from.source_commit!r}"
         )
+
+    # ---- AC.V040C3.5 (folded F2-from-C2) — stage-count print ------
+    # Print the produced commit count so future log-readers can
+    # classify single-commit vs multi-commit baselines without
+    # re-running the test. Per v0.4.0 C2 build report F2 #2 +
+    # v0.4.0 C3 plan-doc §4 AC.V040C3.5. Cosmetic; no assertion.
+    print(
+        f"AC.V040C3.5 stage-count: code-gen produced "
+        f"{len(diff.commits)} commit(s); shape = "
+        f"{'single-commit' if len(diff.commits) == 1 else 'multi-commit'}"
+    )

@@ -1,0 +1,59 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-cycle-4-lint-pass-cross-mode-debt-f3-f4
+  title: "v0.3.0 Cycle 4 — lint auto-fix sweep (ruff 674 of 765 violations fixed; residual 87 surfaced as ratification candidates) + odd-extractor analyze _SKIP_DIR_NAMES extends with framework (AC.LDC.F3 mirrors v0.2.1 corrective F2; new test_AC_LDC_F3_framework_skip.py with 3 tests) + KNOWN_CROSS_MODE_DEBT shrinks 1 → 0 (lone entry stale post-v0.3.0 C2 graphiti rip-out) + v0.2.1 corrective F1 plan-doc supersession addendum (AC.LDC.F4 doc-only; v0.2.3 Cycle 3 §6.2 retired the acs: + unhandled_paths: fields)"
+
+# BASELINE: a0006dd — the source-edit commit (ruff --fix sweep across
+# framework/ + plugins/ touching 339 files; analyze.py _SKIP_DIR_NAMES
+# extension; test_AC_LDC_F3_framework_skip.py NEW; test_partition_references.py
+# KNOWN_CROSS_MODE_DEBT shrink to set(); v0-2-1-corrective-f1 plan-doc
+# top-of-file addendum).
+#
+# Commit ladder:
+#   ea461de — docs(plans): v0.3.0 Cycle 4 — expand stub to sub-plan-doc
+#   a0006dd — chore(v0.3.0): Cycle 4 — lint auto-fix + F3 + F4 + KNOWN_CROSS_MODE_DEBT shrink (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§14 backfill commit lands last>
+#
+# Bookkeeping owner per Cycles 1/2/3 precedent: dev-sdlc with
+# frozen_baseline: true. Cross-cutting cycle from dev-sdlc's perspective;
+# dev-sdlc carries the cycle's seal anchor as the methodology-surface
+# owner.
+
+baseline: "a0006dd"
+
+plan: docs/plans/v0-3-0-cycle-4-lint-pass-cross-mode-debt-f3-f4.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-3-0-cycle-4-lint-pass-cross-mode-debt-f3-f4.md
+
+ac_count: 5
+smoke_outcome: "ruff 765 → 87 (674 fixed); KNOWN_CROSS_MODE_DEBT 1 → 0; F3 framework skip + 3 new tests; F4 addendum; 372+816+11 tests green"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # bookkeeping owner; cross-cutting cycle from dev-sdlc's perspective
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# Edits cross many top-level dirs: framework/ + plugins/ + docs/plans/.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/
+    - plugins/
+  files: []
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-cycle-4-lint-pass-cross-mode-debt-f3-f4
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

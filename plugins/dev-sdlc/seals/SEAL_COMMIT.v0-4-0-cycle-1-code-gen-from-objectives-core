@@ -1,0 +1,11 @@
+# v0.4.0 Cycle 1 — code-gen-from-objectives core (SOFT smoke vs synthetic fixture); new code_gen.py + code_gen_spec.py modules + --code-gen CLI flag on `loam odd-extract`; per-commit objectives: block per amendment #38 LiftedFrom schema; outcome-altitude AC.V040C1.5 deferred to C2 against jsts-playwright-app real fixture per master-plan §3 split rationale
+
+slug: v0-4-0-cycle-1-code-gen-from-objectives-core
+components: dev-sdlc
+baseline: b59a228d
+amendment-commit: a7d1182b090dd41c9480b0af1d0d10a6ecfb8823
+plan-doc: docs/plans/v0-4-0-cycle-1-code-gen-from-objectives-core.md
+acs-satisfied: 5
+smoke: SOFT-altitude smoke vs synthetic fixture: AC.V040C1.{1,2,3,4} green (25 new tests pass); AC.V040C1.S verified at seal time; AC.V040C1.5 outcome-altitude DEFERRED to C2
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

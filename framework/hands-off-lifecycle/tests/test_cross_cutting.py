@@ -397,7 +397,9 @@ def test_H19_frozen_baseline_is_project_start() -> None:
         ("workspace-bootstrap", 60),  # 57 baseline + 9 new
         ("orchestrator", 70),  # 56 baseline + 17 new
         ("dormancy", 95),  # 93 baseline + 6 new (formerly graceful-degradation; renamed in M1f)
-        ("memory-system", 40),  # 26 baseline + 17 new (excl. graphiti)
+        # memory-system entry retired at v0.3.0 Cycle 2 (graphiti rip-out);
+        # the component is deleted; FBE.7 file-backed substrate replaces it
+        # at framework/primary-persona/src/loam/primary_persona/file_memory.py.
     ],
 )
 def test_H20_component_suite_passes(
@@ -436,8 +438,9 @@ def test_H21_root_readme_present() -> None:
 
 
 def test_all_four_amended_components_have_seal_commit_sidecars() -> None:
+    # memory-system retired at v0.3.0 Cycle 2 (graphiti rip-out); the
+    # post-rip-out cohort is three sidecar-bearing amended components.
     for component in (
-        "memory-system",
         "orchestrator",
         "dormancy",
         "workspace-bootstrap",

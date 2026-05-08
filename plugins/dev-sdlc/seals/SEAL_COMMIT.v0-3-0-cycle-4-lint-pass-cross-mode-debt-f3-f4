@@ -1,0 +1,11 @@
+# v0.3.0 Cycle 4 — lint auto-fix sweep (ruff 674 of 765 violations fixed; residual 87 surfaced as ratification candidates) + odd-extractor analyze _SKIP_DIR_NAMES extends with framework (AC.LDC.F3 mirrors v0.2.1 corrective F2; new test_AC_LDC_F3_framework_skip.py with 3 tests) + KNOWN_CROSS_MODE_DEBT shrinks 1 → 0 (lone entry stale post-v0.3.0 C2 graphiti rip-out) + v0.2.1 corrective F1 plan-doc supersession addendum (AC.LDC.F4 doc-only; v0.2.3 Cycle 3 §6.2 retired the acs: + unhandled_paths: fields)
+
+slug: v0-3-0-cycle-4-lint-pass-cross-mode-debt-f3-f4
+components: dev-sdlc
+baseline: a0006dd
+amendment-commit: 46fd2a741789e12ad3795f6db1ccb5f26f3b569a
+plan-doc: docs/plans/v0-3-0-cycle-4-lint-pass-cross-mode-debt-f3-f4.md
+acs-satisfied: 5
+smoke: ruff 765 → 87 (674 fixed); KNOWN_CROSS_MODE_DEBT 1 → 0; F3 framework skip + 3 new tests; F4 addendum; 372+816+11 tests green
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

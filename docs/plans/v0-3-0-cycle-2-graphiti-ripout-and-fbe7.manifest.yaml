@@ -1,0 +1,61 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-cycle-2-graphiti-ripout-and-fbe7
+  title: "v0.3.0 Cycle 2 — graphiti rip-out (delete framework/memory-system/ entirely; 68 files); FBE.7 file-backed memory substrate is the v0.3.0 floor; verified operational via 20 named tests; zero edits to sealed workspace-bootstrap / primary-persona / self-upgrade components per FBE.7's prior dormancy decisions"
+
+# BASELINE: b92aaea — the source-edit commit (delete memory-system +
+# delete D6 integration test + 2-line edit to hands-off-lifecycle
+# cross-cutting test).
+#
+# Commit ladder pre-apply:
+#   08ac5a0 — docs(plans): v0.3.0 Cycle 2 — expand stub to sub-plan-doc
+#   b92aaea — chore(v0.3.0): Cycle 2 — delete framework/memory-system/
+#             (graphiti rip-out) (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§14 backfill commit lands last>
+#
+# Bookkeeping owner per cycle-1 precedent: dev-sdlc with
+# frozen_baseline: true. memory-system is being deleted; can't own
+# its own seal. dev-sdlc carries the cycle's seal anchor as the
+# methodology-surface owner (mirroring the v0-2-5-1-corrective +
+# v0-3-0-cycle-1 shape).
+
+baseline: "b92aaea"
+
+plan: docs/plans/v0-3-0-cycle-2-graphiti-ripout-and-fbe7.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-3-0-cycle-2-graphiti-ripout-and-fbe7.md
+
+ac_count: 7
+smoke_outcome: "find framework/memory-system -type f -> 0; pytest framework/primary-persona/tests -> 544 passed; 20 FBE.7-verification tests green; no new failures"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # bookkeeping owner; doc-only cycle from dev-sdlc's perspective
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# memory-system deletion + scope-of-work test deletion + hands-off-lifecycle
+# test edit cross top-level dirs framework/ + docs/.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/memory-system/
+    - framework/scope-of-work/
+    - framework/hands-off-lifecycle/
+  files: []
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-cycle-2-graphiti-ripout-and-fbe7
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

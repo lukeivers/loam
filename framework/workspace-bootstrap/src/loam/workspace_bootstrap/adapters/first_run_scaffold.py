@@ -52,11 +52,22 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import yaml
 
 from ..errors import BootstrapError
+
+if TYPE_CHECKING:
+    # AC.FHA.5 — F821 closure. ``mcp_json_writer`` and ``tracker_seed``
+    # are imported lazily inside helper bodies (acyclic import-graph
+    # discipline; see helper docstrings). Their dotted-name return-type
+    # string annotations only resolve under ``from __future__ import
+    # annotations`` if the names are visible at module scope. The
+    # TYPE_CHECKING guard exposes them to the typing layer (and to
+    # ``ruff``'s F821 forward-reference resolution) without paying the
+    # eager-import cost at runtime.
+    from . import mcp_json_writer, tracker_seed
 from ..spec import BaseContribution, ContributionMetadata, Phase
 
 

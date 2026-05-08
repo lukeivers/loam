@@ -27,6 +27,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -47,6 +48,17 @@ DEFAULT_MODEL = "claude-haiku-4-5"
 _ENV_ALLOWED_VARS = ("PATH", "HOME", "USER")
 
 _UNAUTH_MARKERS = ("not logged in", "please run /login")
+
+# AC.FHA.3 — claude -p MCP-isolation invariant. Every loam-spawned
+# ``claude -p`` child must carry ``--strict-mcp-config --mcp-config
+# <empty config>`` so the subprocess loads zero MCP servers. The
+# v0.2.5 incident — a parent session's Telegram MCP was killed when
+# a child ``claude -p`` inherited the parent's MCP universe and shut
+# the bot down on child-exit — proved the flag-set is load-bearing
+# (see workspace-sync ``_resolver_client.py``). The pattern below
+# mirrors workspace-sync exactly: an empty ``mcpServers`` JSON
+# tempfile is process-cached and referenced by every invoke().
+_EMPTY_MCP_CONFIG: dict[str, dict[str, Any]] = {"mcpServers": {}}
 
 
 class _ClaudePrintResolverClient:
@@ -77,6 +89,33 @@ class _ClaudePrintResolverClient:
         self._model = model
         self._timeout_s = timeout_s
         self._child_env = self._build_child_env()
+        self._empty_mcp_config_path = self._write_empty_mcp_config()
+
+    @staticmethod
+    def _write_empty_mcp_config() -> str:
+        """Write an empty ``mcpServers`` JSON tempfile.
+
+        Returns the absolute path. Mirrors the workspace-sync resolver
+        pattern (`framework/workspace-sync/src/loam/workspace_sync/
+        _resolver_client.py::_write_empty_mcp_config`) byte-for-byte
+        so both code paths share one MCP-isolation discipline. The
+        file is small (~25 bytes), lives under ``$TMPDIR`` / ``/tmp``,
+        and is left in place at process exit (best-effort cleanup);
+        the subprocess inherits the path and reads it after the
+        writing handle closes.
+        """
+        fd = tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix="-loam-upgrade-merge-empty-mcp.json",
+            delete=False,
+            encoding="utf-8",
+        )
+        try:
+            json.dump(_EMPTY_MCP_CONFIG, fd)
+            fd.flush()
+        finally:
+            fd.close()
+        return fd.name
 
     @staticmethod
     def _build_child_env() -> dict[str, str]:
@@ -106,6 +145,15 @@ class _ClaudePrintResolverClient:
         full_prompt = self._build_prompt(prompt, response_model)
         argv = [
             self._binary_path,
+            # AC.FHA.3 MCP-isolation invariant — these flags must
+            # precede ``-p`` so they bind to the print-mode invocation.
+            # ``--strict-mcp-config`` plus an empty ``--mcp-config``
+            # makes Claude ignore every other MCP source; the
+            # subprocess loads zero servers (mirrors workspace-sync
+            # ``_resolver_client.py::invoke``).
+            "--strict-mcp-config",
+            "--mcp-config",
+            self._empty_mcp_config_path,
             "-p",
             "--no-session-persistence",
             "--output-format",

@@ -69,7 +69,7 @@ plan: docs/plans/v0-6-1-foundation-docs-plan.md
 plan_doc_ref: docs/plans/v0-6-1-foundation-docs-plan.md
 
 ac_count: 7
-smoke_outcome: "V061.1 principle-derivation-map ported to docs/design/; V061.2 odd-in-loam.md merged; V061.3 CLAUDE.md gap-fill (M5+F2 as Lens 6+7); V061.4 STATE.md + roadmap entries; V061.5 tag created locally; V061.6 closure note appended; V061.7 amend apply+seal cycle clean"
+smoke_outcome: "V061.1 derivation-map port; V061.2 odd-in-loam merge; V061.3 CLAUDE.md gap-fill M5+F2; V061.4 STATE+roadmap; V061.5 local tag; V061.6 closure note; V061.7 cycle clean"
 
 components:
   - name: dev-sdlc

@@ -1,0 +1,36 @@
+---
+schema_version: 3
+amendment:
+  slug: v0-4-0-cycle-2-code-gen-outcome-altitude-verification
+  title: "v0.4.0 Cycle 2 — code-gen outcome-altitude verification on jsts-playwright-app; new test_AC_V040C2_1_outcome_altitude.py invokes the full chain (--live → --interview → --gaps → --build-next → --code-gen) against real claude -p; F2 cleanup deletes redundant local seal-diff test; closes AC.V040.1 + AC.V040.6 per master-plan §3 split rationale; folds in C1 F1/F2/F3/F5 findings"
+
+# BASELINE captured at apply time; predecessor seal is C1 at cc2efbba.
+# Source-edit commit this dispatch lands sits between cc2efbba and the
+# apply commit.
+baseline: "5c1deb30"
+
+plan: docs/plans/v0-4-0-cycle-2-code-gen-outcome-altitude-verification.md
+plan_doc_ref: docs/plans/v0-4-0-cycle-2-code-gen-outcome-altitude-verification.md
+
+ac_count: 6
+smoke_outcome: "Outcome-altitude probe vs jsts-playwright-app real fixture: AC.V040C2.{1,2,3,4,5,6} green; real claude -p subprocess exercised; AC.V040.1 + AC.V040.6 closed"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-4-0-cycle-2-code-gen-outcome-altitude-verification

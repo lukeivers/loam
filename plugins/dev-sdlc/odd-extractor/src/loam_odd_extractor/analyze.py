@@ -14,11 +14,24 @@ Hidden directories (``.git``, ``.loam``, ``.scratch``, ``.venv``,
 ``__pycache__``, etc.) are skipped to avoid extracting against
 metadata. The skip list is intentionally minimal — a real repo
 walk needs ``.gitignore`` parsing in Cycles 3+4.
+
+Per v0.2.5.1 corrective AC.V025-1.1 (F-LEAK closure): the static
+``_SKIP_DIR_NAMES`` is extended with common artefact-directory
+names (``html-captures``, ``screenshots``, ``html-output``,
+``test-results``, ``coverage``, ``playwright-report``) as
+belt-and-suspenders defaults. In addition, when a user-survey
+markdown is resolvable, the §10 "Off-limits zones" section is
+parsed best-effort and the dir-name basenames extracted from it
+are unioned into the per-run skip-set. This prevents filenames
+from artefact directories from leaking into evidence rows /
+synthesis prompts.
 """
 
 from __future__ import annotations
 
 import datetime as _dt
+import logging
+import re
 from pathlib import Path
 
 import yaml
@@ -27,6 +40,9 @@ from .observability import write_audit_entry
 from .registry import discover_adapters
 from .spec import AnalysisPlan, ExtractionConfig, Slice
 from .state import extraction_dir, load_state, save_state
+
+
+logger = logging.getLogger(__name__)
 
 
 _SKIP_DIR_NAMES: frozenset[str] = frozenset(
@@ -44,26 +60,135 @@ _SKIP_DIR_NAMES: frozenset[str] = frozenset(
         "build",
         "dist",
         ".eggs",
+        # v0.2.5.1 corrective AC.V025-1.1 (F-LEAK belt-and-suspenders):
+        # common artefact directories observed on real-world repos
+        # (rd-automation playwright app + similar shapes). Any of these
+        # dirs is skipped even when no off-limits config is supplied,
+        # preventing filenames from leaking into the synthesis prompt
+        # for users who haven't authored a survey.
+        "html-captures",
+        "screenshots",
+        "html-output",
+        "test-results",
+        "coverage",
+        "playwright-report",
     }
 )
+
+
+# v0.2.5.1 corrective AC.V025-1.1 — best-effort off-limits parser.
+# Reads dir-name basenames from a user-survey markdown's "Off-limits
+# zones" section and returns them as a frozenset for unioning into
+# the analyze-walk skip-set. Mirrors the AC.ONBOARD.15 best-effort
+# contract (never raises on parse failure; never blocks).
+_OFF_LIMITS_HEADING_RE = re.compile(
+    r"^#{1,6}\s*\d*\.?\s*off[- ]?limits[^\n]*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+_NEXT_HEADING_RE = re.compile(r"^#{1,6}\s+\S", re.MULTILINE)
+# Match dir-name fragments inside off-limits prose. The shape covers
+# the Eric-survey idiom — paths embedded in bulleted prose with
+# trailing slashes ("under public/uploads/, /logs/, html-captures/")
+# plus absolute-path callouts. We extract the BASENAME of each path-
+# like token so the dir-name match in `_walk_repo` works directly.
+_PATH_TOKEN_RE = re.compile(
+    r"[/\w][\w./-]*?/(?=[\s,;.)\]]|$)",
+)
+
+
+def _extract_off_limits_dirs(survey_text: str | None) -> frozenset[str]:
+    """Best-effort extraction of off-limits directory basenames.
+
+    Per v0.2.5.1 AC.V025-1.1: read the "Off-limits zones" H2/H3 section
+    of a user-survey markdown and pull dir-name basenames from the
+    bulleted prose. Returns a frozenset of basenames suitable for
+    unioning with ``_SKIP_DIR_NAMES`` at analyze-walk time.
+
+    Contract:
+
+    - Never raises on malformed / absent survey. Returns empty set.
+    - Never logs at ERROR/WARN — this is best-effort enrichment, not
+      a primary signal.
+    - Returns BASENAMES (e.g., ``html-captures``, ``uploads``), not
+      absolute paths. The walk's per-entry comparison is by
+      ``entry.name``, so basenames are the correct shape.
+    - Filters out single-letter / extension-like tokens (``.env``)
+      since the analyze step skips those by file-level filters
+      already; the off-limits set is dir-only.
+
+    The shape mirrors AC.ONBOARD.15's best-effort contract. Survey
+    parser at ``framework/workspace-bootstrap/`` is sealed; this
+    parser stays component-local.
+    """
+    if not survey_text:
+        return frozenset()
+    try:
+        # Locate the off-limits heading; bound the section by the next
+        # H2/H3 (whichever comes first).
+        heading_match = _OFF_LIMITS_HEADING_RE.search(survey_text)
+        if heading_match is None:
+            return frozenset()
+        section_start = heading_match.end()
+        next_heading = _NEXT_HEADING_RE.search(
+            survey_text, pos=section_start
+        )
+        section_end = (
+            next_heading.start() if next_heading is not None
+            else len(survey_text)
+        )
+        section_text = survey_text[section_start:section_end]
+        # Pull dir-like tokens (anything ending in ``/``).
+        out: set[str] = set()
+        for token in _PATH_TOKEN_RE.findall(section_text):
+            # Strip leading/trailing slashes; take the LAST non-empty
+            # path segment as the basename.
+            parts = [p for p in token.strip("/").split("/") if p]
+            if not parts:
+                continue
+            basename = parts[-1]
+            # Skip dotfiles + single-segment env-likes; analyze's
+            # file-level filters handle those.
+            if basename.startswith(".") or basename in {"env", "key"}:
+                continue
+            # Skip anything that LOOKS like a file with an extension
+            # (the analyze walk only matches against directory names).
+            if "." in basename and not basename.startswith("."):
+                # e.g., 'foo.csv' — not a directory; skip.
+                continue
+            out.add(basename)
+        return frozenset(out)
+    except Exception:  # noqa: BLE001 — best-effort, never propagate
+        return frozenset()
 
 
 def _now_iso() -> str:
     return _dt.datetime.now(_dt.timezone.utc).isoformat()
 
 
-def _walk_repo(repo_path: Path) -> list[Path]:
+def _walk_repo(
+    repo_path: Path,
+    *,
+    extra_skip_dir_names: frozenset[str] = frozenset(),
+) -> list[Path]:
     """Yield every regular file under ``repo_path``, skipping hidden +
     dependency directories.
 
     Returns absolute paths sorted lexicographically for deterministic
     ordering across runs (D2 idempotency).
+
+    Per v0.2.5.1 AC.V025-1.1: ``extra_skip_dir_names`` is unioned with
+    the static ``_SKIP_DIR_NAMES`` for this run only. Callers compute
+    the extra set from the user-survey's off-limits section
+    (best-effort) and pass it here; the walk skips any directory
+    whose basename matches either set.
     """
     out: list[Path] = []
     if not repo_path.exists():
         return out
     if repo_path.is_file():
         return [repo_path]
+
+    skip_set: frozenset[str] = _SKIP_DIR_NAMES | extra_skip_dir_names
 
     def _recurse(directory: Path) -> None:
         try:
@@ -72,7 +197,7 @@ def _walk_repo(repo_path: Path) -> list[Path]:
             return
         for entry in entries:
             if entry.is_dir():
-                if entry.name in _SKIP_DIR_NAMES:
+                if entry.name in skip_set:
                     continue
                 if entry.name.startswith(".") and entry.name not in {".github"}:
                     continue
@@ -154,7 +279,35 @@ def analyze_repo(
     ext_dir = extraction_dir(config.workspace_root, config.repo_id)
     ts = timestamp if timestamp is not None else _now_iso()
 
-    files = _walk_repo(config.repo_path)
+    # Per v0.2.5.1 AC.V025-1.1: best-effort read of the user-survey's
+    # off-limits section. Lazy-import avoids circular dependency with
+    # multi_source. Survey resolution mirrors the same read-order used
+    # by the synthesis-bundle collector (`<repo>/.loam/onboarding-
+    # survey.md` → `~/loam-onboarding-survey.md` → env-var). Never
+    # blocks on parse failure.
+    extra_skip: frozenset[str] = frozenset()
+    try:
+        from .multi_source import _read_user_survey
+
+        survey = _read_user_survey(config.repo_path, config.workspace_root)
+        if survey is not None:
+            raw_text = survey.get("raw_text") if isinstance(survey, dict) else None
+            extra_skip = _extract_off_limits_dirs(raw_text)
+            if extra_skip:
+                logger.info(
+                    "analyze: off-limits skip-set extended with %d "
+                    "dir-name(s) from survey: %s",
+                    len(extra_skip),
+                    sorted(extra_skip),
+                )
+    except Exception as exc:  # noqa: BLE001 — best-effort
+        logger.debug(
+            "analyze: off-limits survey read failed best-effort "
+            "(continuing with default skip-set): %s",
+            exc,
+        )
+
+    files = _walk_repo(config.repo_path, extra_skip_dir_names=extra_skip)
     adapters = discover_adapters()
 
     slices: list[Slice] = []

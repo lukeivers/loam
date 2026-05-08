@@ -535,6 +535,105 @@ def _apply_plausible_demotion_or_drop_guard(
     return filtered, demotion_count, drop_count
 
 
+def _cascade_drop_orphan_capabilities(
+    *,
+    objectives_raw: list[Any],
+    capabilities_raw: list[Any],
+) -> list[Any]:
+    """Per v0.2.5.1 AC.V025-1.3 (F-VERIFY-ORPHAN closure): drop or
+    filter capabilities whose ``serves`` references no longer exist.
+
+    Eric's run on rd-automation surfaced this failure mode: the live
+    LLM emitted ``C.state-diff.1 → O.verification.1`` and
+    ``C.dry-run.1 → O.simulation.1``, then the band-rule guards
+    dropped both ``O.verification.1`` and ``O.simulation.1`` for
+    having zero evidence. The verify stage (AC.OBJX.10) caught the
+    orphan references and exited — correct behaviour given the
+    contract, but the parsing layer should have removed those
+    capabilities BEFORE per-row validation rather than letting verify
+    halt downstream.
+
+    Algorithm:
+
+    1. Compute the set of surviving objective IDs from
+       ``objectives_raw`` (after the two demotion guards have run).
+    2. For each capability row, filter ``serves`` to retain only
+       references to surviving objective IDs.
+    3. If filtering empties the ``serves`` list — drop the capability
+       (a capability with no surviving objective served is not a
+       capability per ODD §altitudes; the Pydantic validator would
+       raise on empty ``serves``). WARN-log naming the capability
+       and the dropped objective(s).
+    4. Otherwise — retain the capability with the filtered ``serves``.
+       WARN-log naming the dropped objective(s) when the capability
+       had multi-objective ``serves``.
+
+    The validator at :func:`verify._check_capability_references`
+    stays strict — this cascade only fires inside the synthesis
+    layer's parsing path. A static contract file with a manually-
+    edited dangling reference still raises StageError at verify
+    time.
+
+    Returns the filtered capabilities list. Non-dict / unparseable
+    rows are passed through unchanged so the per-row Pydantic
+    validation downstream can surface them with a clean error.
+    """
+    surviving_ids: set[str] = set()
+    for row in objectives_raw:
+        if not isinstance(row, dict):
+            continue
+        oid = row.get("objective_id")
+        if isinstance(oid, str):
+            surviving_ids.add(oid)
+
+    filtered_capabilities: list[Any] = []
+    for row in capabilities_raw:
+        if not isinstance(row, dict):
+            filtered_capabilities.append(row)
+            continue
+        serves = row.get("serves") or []
+        if not isinstance(serves, list):
+            # Pass through; per-row Pydantic validation will surface
+            # the type mismatch with a clean error.
+            filtered_capabilities.append(row)
+            continue
+        cap_id = row.get("capability_id", "<unnamed-capability>")
+        retained = [r for r in serves if r in surviving_ids]
+        dropped = [r for r in serves if r not in surviving_ids]
+        if not retained:
+            # All references resolve to dropped objectives — drop
+            # the capability per §14 D-build.1 cascade-drop choice.
+            if dropped:
+                logger.warning(
+                    "synthesis: capability %s references only dropped "
+                    "objectives %s; dropping capability per "
+                    "v0.2.5.1 AC.V025-1.3 cascade-drop guard",
+                    cap_id,
+                    dropped,
+                )
+            else:
+                # ``serves`` was empty in the LLM response; let the
+                # Pydantic validator surface the empty-serves error.
+                filtered_capabilities.append(row)
+            continue
+        if dropped:
+            # Multi-objective serves with at least one survivor;
+            # retain the capability with the survivors.
+            row["serves"] = retained
+            logger.warning(
+                "synthesis: capability %s referenced dropped "
+                "objectives %s; retaining capability with surviving "
+                "references %s per v0.2.5.1 AC.V025-1.3 cascade "
+                "filter",
+                cap_id,
+                dropped,
+                retained,
+            )
+        filtered_capabilities.append(row)
+
+    return filtered_capabilities
+
+
 def _validate_rows(
     payload: dict[str, Any],
     *,
@@ -580,6 +679,19 @@ def _validate_rows(
     # per-row Pydantic validation.
     objectives_raw, _plaus_demoted, _plaus_dropped = (
         _apply_plausible_demotion_or_drop_guard(objectives_raw)
+    )
+
+    # Per v0.2.5.1 AC.V025-1.3 (F-VERIFY-ORPHAN closure): after both
+    # band-rule guards have run, cascade the resulting drops to
+    # capabilities that reference dropped objectives. The verify
+    # stage's AC.OBJX.10 strictness stays unchanged for genuinely
+    # dangling references in static contract files; this cascade
+    # handles the LIVE-LLM case where the synthesis layer itself
+    # dropped an objective that a synthesis-emitted capability
+    # pointed at.
+    capabilities_raw = _cascade_drop_orphan_capabilities(
+        objectives_raw=objectives_raw,
+        capabilities_raw=capabilities_raw,
     )
 
     objectives: list[Objective] = []

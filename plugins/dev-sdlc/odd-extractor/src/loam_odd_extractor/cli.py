@@ -179,15 +179,27 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         # subscription via OAuth keychain — NO API key.
         llm_client: Any | None = None
         if args.live and target_stage in (None, "generate"):
-            from .synthesis import build_default_anthropic_client
+            from .claude_print_synthesis_client import (
+                build_default_synthesis_client,
+            )
 
+            # Per v0.2.5.1 AC.V025-1.2 (F-TIMEOUT closure): thread the
+            # ``--synthesis-timeout`` operator override into the
+            # subscription-routed shim. ``None`` (no flag passed)
+            # accepts the shim's own default (600s post-corrective).
+            synthesis_timeout: float | None = getattr(
+                args, "synthesis_timeout", None
+            )
             try:
-                llm_client = build_default_anthropic_client()
+                llm_client = build_default_synthesis_client(
+                    timeout_seconds=synthesis_timeout,
+                )
             except OddExtractorError:
-                # ``StageError`` from ``build_default_anthropic_client``
-                # (claude binary missing); the surrounding ``except
-                # OddExtractorError`` catch below converts it to
-                # actionable stderr + exit 2, NOT a Python traceback.
+                # ``StageError`` / ``ClaudeBinaryMissingError`` from
+                # ``build_default_synthesis_client`` (claude binary
+                # missing); the surrounding ``except OddExtractorError``
+                # catch below converts it to actionable stderr + exit 2,
+                # NOT a Python traceback.
                 raise
 
         if target_stage in (None, "init"):
@@ -1076,6 +1088,21 @@ def build_odd_extract_subcommand(
         help=(
             "override the foreign-codebase budget ceiling (cents). "
             f"Default: {1000} hard / {500} soft (AC.OREK.6)."
+        ),
+    )
+    # AC.V025-1.2 — synthesis-timeout flag. v0.2.5.1 corrective.
+    odd_parser.add_argument(
+        "--synthesis-timeout",
+        type=float,
+        default=None,
+        dest="synthesis_timeout",
+        help=(
+            "v0.2.5.1 corrective AC.V025-1.2 — synthesis subprocess "
+            "timeout in seconds. Threads through to the claude -p "
+            "subprocess wrapping the synthesis LLM-pass. Default: "
+            "600s (raised from 180s after Eric's rd-automation run "
+            "hit the 180s ceiling). Operator override for large "
+            "repos with big synthesis prompts."
         ),
     )
     odd_parser.add_argument(

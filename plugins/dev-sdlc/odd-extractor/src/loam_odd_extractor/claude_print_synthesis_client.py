@@ -340,8 +340,13 @@ class ClaudePrintAnthropicShimClient:
         *,
         binary_path: str | None = None,
         model: str = DEFAULT_MODEL,
-        timeout_seconds: float = 180.0,
+        timeout_seconds: float = 600.0,
     ) -> None:
+        # Per v0.2.5.1 AC.V025-1.2 (F-TIMEOUT closure): default raised
+        # from 180s to 600s after Eric's real-world run hit the 180s
+        # ceiling on rd-automation. Operator can override via the
+        # ``--synthesis-timeout`` CLI flag, which threads through
+        # :func:`build_default_synthesis_client`.
         resolved = binary_path or shutil.which("claude")
         if resolved is None:
             raise ClaudeBinaryMissingError(
@@ -471,6 +476,7 @@ class ClaudePrintAnthropicShimClient:
 def build_default_synthesis_client(
     *,
     model: str = DEFAULT_MODEL,
+    timeout_seconds: float | None = None,
 ) -> ClaudePrintAnthropicShimClient:
     """Construct the production-default subscription-routed synthesis client.
 
@@ -480,5 +486,14 @@ def build_default_synthesis_client(
 
     No environment variables consulted (no ``ANTHROPIC_API_KEY``); auth
     is the user's Claude Max subscription resolved via OAuth keychain.
+
+    Per v0.2.5.1 AC.V025-1.2 (F-TIMEOUT closure): ``timeout_seconds``
+    threads through to the shim ctor. ``None`` (the default) accepts
+    the ctor's own default (600s). The CLI flag ``--synthesis-timeout``
+    is the user-facing surface.
     """
-    return ClaudePrintAnthropicShimClient(model=model)
+    if timeout_seconds is None:
+        return ClaudePrintAnthropicShimClient(model=model)
+    return ClaudePrintAnthropicShimClient(
+        model=model, timeout_seconds=timeout_seconds
+    )

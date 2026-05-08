@@ -27,7 +27,7 @@ plan: docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md
 plan_doc_ref: docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md
 
 ac_count: 7
-smoke_outcome: "v0.3.0 ships feature-honesty-clean: rd-automation extraction GREEN (rc=0, 177s); FBE.7 stranger-clone PASS-WITH-OWNER-ACTION-LINE for Docker; claude -p invariant 3/3; release-roadmap §2 + STATE.md + master plan §11 resolve to same SHAs"
+smoke_outcome: "v0.3.0 ships feature-honesty-clean: rd-automation extraction GREEN (rc=0); FBE.7 PASS-WITH-OWNER-ACTION for Docker; claude -p invariant 3/3; §2 + STATE.md + §11 resolve to same SHAs"
 
 components:
   - name: dev-sdlc

@@ -157,6 +157,73 @@ change required; verified-as-shipped.
 
 ---
 
-## §7 — Method-decisions (filled at seal time §14 backfill)
+## 14. Method-decisions (filled at seal time §14 backfill)
 
-(empty at plan-author time; populated post-seal per AC.D-sa.7)
+Plan-doc uses the AC.D-sa.7-required `## 14.` heading; this PATCH
+cycle's plan-doc is intentionally short so prior numbered sections
+read as `§1`-`§6`. The §14 record below is the canonical
+method-decisions ledger consumed by `loam amend seal --plan-doc`.
+
+### Method decisions (recorded at plan-author time)
+
+1. **Bundle item (a) closure: verify-as-shipped, no code change.**
+   Empirical evidence in `plugins/dev-sdlc/pyproject.toml` +
+   `plugins/dev-sdlc/tests/test_AC_OSS_M6_6_loam_project_subcommand_registered.py`
+   shows `loam project new` / `loam project advance` are registered
+   via entry-point group `loam.cli.subcommands` and exercised by an
+   AC-altitude test. The local-env "invalid choice" reflects the
+   plugin not being pip-installed in the active venv, not a
+   registration miss. Decision: AC.V031.7 closes by verification,
+   not edit.
+
+2. **Path C deferred per LOCKED-DESIGN-NOT-LICENSE.** v0.2.4 §6.3
+   ruled the persona-pull contract was documentation-only. Eric's
+   data is the first empirical disproof. Per the principle: revisit
+   when outcomes are bad WITH new data — A + B addresses the
+   visible symptom; if the persona still doesn't pull after, revisit
+   C at v0.4.0 plan-time (when the new code-gen step is added and
+   the chain extends to five steps anyway).
+
+3. **Bundle item (c) audit altitude gap deferred.** Brief explicit:
+   v0.4.0 master plan §6 methodology amendments. Not in this PATCH.
+
+4. **JSON paths NOT modified.** All four next-step `print()`
+   additions land on the human-readable success-paths only;
+   `if args.json:` branches are machine-consumed and remain
+   stable. (Avoids breaking machine-pipeline consumers.)
+
+5. **`repo_id` interpolated into hint string.** Each next-step
+   pointer interpolates the actual `repo_id` so the user can
+   copy-paste the exact next command — no placeholder text. The
+   stdout-grep test in AC.V031.{1,3,9} checks for the literal
+   `repo_id` to enforce this.
+
+6. **`frozen_baseline: false` in manifest.** Bundle (b) edits
+   `cli.py` directly — sealed-component code under
+   dev-sdlc/odd-extractor. The cycle is NOT doc-only from
+   dev-sdlc's perspective (precedent v0.3.0 C1-C7 used
+   `frozen_baseline: true` because those WERE doc-only). This is
+   the v0.3.0.1 PATCH-shape variant.
+
+7. **Outcome-altitude AC explicit.** AC.V031.9 follows
+   `feedback_test_outcome_altitude_required` — a stdout-grep
+   regression contract for Eric's "it stopped" report. Eric is
+   real-world user data, not a synthetic fixture; the outcome the
+   AC verifies is the cold-run user-experience progression.
+
+8. **Plan-doc heading style.** Sections are numbered `§1`-`§6` for
+   readability; `## 14.` is the AC.D-sa.7-required heading that
+   `loam amend seal --plan-doc` consumes for SHA backfill. The
+   numerical gap is intentional — short PATCH cycles don't need
+   sections 7-13 of a full feature plan-doc.
+
+### Commit SHAs
+
+| Commit | SHA |
+|---|---|
+| Source-edit BASELINE (cli.py + tests + 3 user-facing docs + plan-doc) | `a137906c` |
+| Manifest commit | `fa294a1f` |
+| `loam amend apply` commit | `634b3f1f` |
+| `loam amend seal` commit | `8569b727` |
+| §14 SHA backfill commit (this) | (this commit) |
+

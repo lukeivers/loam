@@ -15,7 +15,6 @@
 """D7 — Decaying retention + retention-class handling."""
 from __future__ import annotations
 
-import time
 from datetime import datetime, timedelta, timezone
 
 from loam.observability_aggregator.api import QueryAPI, SpanFilter

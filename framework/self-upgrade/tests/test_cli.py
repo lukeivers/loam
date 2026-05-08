@@ -17,15 +17,11 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 from pathlib import Path
 
-import pytest
 
 from loam.self_upgrade.cli import build_parser, main, refuse_if_invoked_from_live_path
-from loam.self_upgrade.conflict_detection import detect_conflicts
-from loam.self_upgrade.conflict_report import Resolution, save_conflict_report
 from loam.self_upgrade.manifest import Manifest, save_manifest
 from loam.self_upgrade.paths import Paths
 

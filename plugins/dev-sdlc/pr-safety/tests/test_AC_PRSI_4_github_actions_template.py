@@ -9,7 +9,6 @@ import yaml
 
 from loam_pr_safety.installers import (
     InstallConflictError,
-    LOAM_PR_SAFETY_VERSION,
     install_ci_github_actions,
 )
 

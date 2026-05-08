@@ -48,7 +48,6 @@ from typing import Any
 from loam.per_project_pm.contract import PMContract
 from loam.per_project_pm.errors import (
     PendingResponseError,
-    PMNotFoundError,
     PMStateCorruptedError,
 )
 from loam.per_project_pm.loader import (

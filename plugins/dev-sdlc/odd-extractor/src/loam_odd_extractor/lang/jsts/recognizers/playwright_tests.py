@@ -25,7 +25,6 @@ from ....bands import BandedAC, ConfidenceBand, Evidence
 from ..._common.slugs import file_slug, slugify
 from .._ast_utils import (
     call_callee_object,
-    call_callee_text,
     call_first_arg_string,
     file_imports,
     find_call_expressions,

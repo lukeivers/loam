@@ -16,14 +16,12 @@
 
 from __future__ import annotations
 
-from typing import Any
 
 import pytest
 from pydantic import BaseModel
 
 from loam.self_upgrade.merge_resolver import (
     BudgetExhausted,
-    LLMClient,
     MergeResolver,
     MergeVerdict,
     ResolverBudget,

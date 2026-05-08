@@ -34,7 +34,6 @@ Maps to the amendment's six acceptance criteria from the brief:
 
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import sys
@@ -58,11 +57,9 @@ from first_run_state import (  # noqa: E402
     FirstRunState,
     append_log,
     is_stale_live_state,
-    log_path,
     mark_failed_silently,
     process_alive,
     read_state,
-    state_path,
     write_state,
 )
 

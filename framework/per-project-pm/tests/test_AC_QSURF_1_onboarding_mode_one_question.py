@@ -27,7 +27,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import yaml
 
 from loam.per_project_pm.runtime import PMRuntime

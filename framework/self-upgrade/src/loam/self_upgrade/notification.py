@@ -40,7 +40,7 @@ import queue
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Protocol
+from typing import Protocol
 
 
 class NotificationChannel(Protocol):

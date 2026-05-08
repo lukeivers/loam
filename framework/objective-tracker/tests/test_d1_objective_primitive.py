@@ -29,7 +29,6 @@ import pytest
 from pydantic import ValidationError
 
 from loam.objective_tracker.projection import project, projection_to_state_row
-from loam.objective_tracker.runtime import ObjectiveTracker
 from loam.objective_tracker.spec import (
     ObjectiveSpec,
     ObjectiveStatus,

@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -33,9 +32,7 @@ from loam.scope_of_work import (
 from loam.cost_governance import (
     CostChannel,
     CostConfig,
-    CostController,
     CostLedger,
-    CostNotifier,
     CostStore,
     RollingCeiling,
     SessionCeiling,

@@ -103,7 +103,6 @@ from first_run_state import (  # noqa: E402
     write_state,
 )
 from agent_file_authoring import (  # noqa: E402
-    AgentFileWriteResult,
     write_agent_file,
 )
 

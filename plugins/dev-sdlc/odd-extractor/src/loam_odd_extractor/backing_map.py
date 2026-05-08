@@ -34,7 +34,7 @@ import datetime as _dt
 import json
 import re
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import yaml
 

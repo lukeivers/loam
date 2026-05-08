@@ -30,17 +30,13 @@ D-3 RE-LOCKED 2026-04-27 — uses MCP-isolation flags rather than
 from __future__ import annotations
 
 import json
-import shutil
-import subprocess
 from pathlib import Path
 from unittest import mock
 
-import pytest
 
 from loam.workspace_sync._resolver_client import (
     _ClaudePrintResolverClient,
 )
-from loam.workspace_sync.merge_resolver import ResolverFailure
 
 
 def _fake_claude_binary(tmp_path: Path) -> str:

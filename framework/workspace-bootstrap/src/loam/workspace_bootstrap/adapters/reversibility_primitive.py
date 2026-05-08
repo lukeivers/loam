@@ -21,7 +21,7 @@ reversibility runs between safety (outermost) and cost (innermost).
 from __future__ import annotations
 
 import logging
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
 

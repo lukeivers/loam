@@ -73,7 +73,9 @@ def test_CR10_order_recorded_via_at_timestamp() -> None:
     # Records persisted any-order — the `at` timestamp preserves real order.
     from loam.self_correction import CorrectionStore, REQUIRED_RECORD_TYPES
 
-    import tempfile, os, time
+    import tempfile
+    import os
+    import time
     tmp = tempfile.mkdtemp()
     try:
         store = CorrectionStore(os.path.join(tmp, "t.sqlite"))
@@ -120,7 +122,6 @@ def test_CR10_order_recorded_via_at_timestamp() -> None:
         ]
 
         # All four present → precheck passes.
-        from loam.self_correction import CompletionPrecheck
         # We need to wire correction_scope_id on the episode for the
         # precheck to find it; seed one.
         # (simpler: just check record_types_for directly)

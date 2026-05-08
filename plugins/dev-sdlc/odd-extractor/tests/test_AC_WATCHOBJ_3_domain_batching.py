@@ -5,7 +5,6 @@ Per v0.2.3 Cycle 3 sub-plan-doc §3 AC.WATCHOBJ.3.
 
 from __future__ import annotations
 
-import pytest
 
 from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.domain_batching import (

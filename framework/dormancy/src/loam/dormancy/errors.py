@@ -42,7 +42,6 @@ pydantic → regex → LLM-judge chain.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
 
 
 # ---- signal enum (used for event logging + metric tags) ----------------

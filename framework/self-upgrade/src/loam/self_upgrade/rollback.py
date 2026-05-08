@@ -32,13 +32,12 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Callable
 
 from .observability import span as otel_span
 from .orchestrator_control import atomic_symlink_swap
 from .paths import Paths
-from .snapshot import restore_substrate_snapshots, substrate_components
+from .snapshot import restore_substrate_snapshots
 
 
 @dataclass

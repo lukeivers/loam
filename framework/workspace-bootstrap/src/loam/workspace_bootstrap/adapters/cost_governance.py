@@ -32,7 +32,7 @@ against the sealed integration test shows the inverse is required
 from __future__ import annotations
 
 import logging
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
 
@@ -50,7 +50,6 @@ class CostGovernanceContribution(BaseContribution):
 
     def contribute(self, host) -> None:
         from loam.cost_governance import (
-            CostLedger,
             CostNotifier,
             CostStore,
             default_config,

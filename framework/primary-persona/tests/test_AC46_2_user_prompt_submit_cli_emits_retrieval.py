@@ -33,7 +33,6 @@ from __future__ import annotations
 
 import io
 import json
-import sys
 from pathlib import Path
 
 from loam.primary_persona.session_start_emitter import (

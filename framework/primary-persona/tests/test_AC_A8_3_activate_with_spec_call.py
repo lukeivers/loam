@@ -21,7 +21,6 @@ the wrapper returns a structured `DispatchRefusal` per AC.A8.7
 
 from __future__ import annotations
 
-from pathlib import Path
 
 import pytest
 

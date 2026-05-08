@@ -20,7 +20,7 @@ import datetime as _dt
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ...bands import BandedAC, ConfidenceBand
+from ...bands import BandedAC
 from ...spec import AnalysisPlan, RawACs, Slice
 from .heuristic_inferences import infer_domain_rules
 from .parser import grammar_for_path, parse_file

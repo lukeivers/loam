@@ -120,8 +120,8 @@ def test_skill_md_contains_decision_was_made_trigger() -> None:
     """
     text = _SKILL_PATH.read_text(encoding="utf-8")
     assert "decision was made" in text.lower(), (
-        f"audit-block-on-telegram SKILL.md missing 'decision was made' "
-        f"trigger condition string"
+        "audit-block-on-telegram SKILL.md missing 'decision was made' "
+        "trigger condition string"
     )
 
 

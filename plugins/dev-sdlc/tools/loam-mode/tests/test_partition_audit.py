@@ -8,11 +8,8 @@ and cross-mode references. Exit non-zero if any of those are present.
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
 
-import pytest
 import yaml
 
 from loam_mode.audit import audit_partition

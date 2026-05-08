@@ -39,9 +39,9 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Awaitable, Callable, Sequence
+from typing import Any, Sequence
 
-from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
+from loam.primary_persona.introduction import OneOnOneChannel
 
 from . import observability as obs
 from .adapter import ClaudeClient

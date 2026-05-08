@@ -24,7 +24,6 @@ from loam_odd_extractor import (
     ObjectiveEvidence,
     budget_from_cents,
     enforce_budget,
-    estimate_for_extraction,
     estimate_judge_cost_cents,
     heuristic_priors,
 )

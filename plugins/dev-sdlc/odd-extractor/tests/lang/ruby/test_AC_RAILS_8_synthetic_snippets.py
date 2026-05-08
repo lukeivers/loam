@@ -185,7 +185,7 @@ end
 def test_heuristic_uniqueness_inference() -> None:
     """The uniqueness heuristic (not exercised in the synthetic
     fixture) fires on a snippet."""
-    from loam_odd_extractor.bands import BandedAC, ConfidenceBand, Evidence
+    from loam_odd_extractor.bands import BandedAC, Evidence
 
     # Hand-construct a PLAUSIBLE AC matching the heuristic shape.
     plausible = BandedAC(
@@ -206,7 +206,7 @@ def test_heuristic_uniqueness_inference() -> None:
 
 def test_heuristic_required_on_create() -> None:
     """Presence-validator → required-on-create heuristic."""
-    from loam_odd_extractor.bands import BandedAC, ConfidenceBand, Evidence
+    from loam_odd_extractor.bands import BandedAC, Evidence
 
     plausible = BandedAC(
         ac_id="AC.RAILS.active_record.user.validates.email.x",

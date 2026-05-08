@@ -27,7 +27,6 @@ Acceptance (brief):
 
 from __future__ import annotations
 
-import pytest
 
 from loam.dormancy import ClaudeClient, DegradationConfig, DegradationMode
 from loam.dormancy.config import load_config

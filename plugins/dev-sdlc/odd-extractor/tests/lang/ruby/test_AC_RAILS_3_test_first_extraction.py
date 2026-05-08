@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from loam_odd_extractor.bands import BandedAC, ConfidenceBand
+from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.lang.ruby.parser import parse_file
 from loam_odd_extractor.lang.ruby.recognizers import (
     recognize_minitest_tests,

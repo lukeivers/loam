@@ -44,7 +44,7 @@ from loam.dormancy.notification import (
     ThresholdTrigger,
     tier_for_mode,
 )
-from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
+from loam.primary_persona.introduction import ChannelKind
 
 from .fakes import make_capture_channel
 

@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from loam_odd_extractor.lang.ruby import RubyAdapter
 from loam_odd_extractor.lang.ruby.parser import (

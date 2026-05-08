@@ -28,8 +28,6 @@ from loam.workspace_sync.sync_protected import (
     SyncProtectedRule,
     classify,
     default_sync_protected,
-    load_sync_protected,
-    save_sync_protected,
     write_default_if_absent,
 )
 

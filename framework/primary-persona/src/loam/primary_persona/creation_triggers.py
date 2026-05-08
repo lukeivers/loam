@@ -37,14 +37,10 @@ and equivalent defaults for the other signals).
 
 from __future__ import annotations
 
-import asyncio
-import json
 import time
-import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Awaitable, Callable, Iterable
+from typing import Any, Awaitable, Callable
 
 
 # ---- types ------------------------------------------------------------

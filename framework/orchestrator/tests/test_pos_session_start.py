@@ -22,10 +22,7 @@ up (a non-blocking request), polls for health, and exits.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
 
-import pytest
 
 from scripts.pos_session_start import (
     detect_platform,

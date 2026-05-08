@@ -37,7 +37,6 @@ from loam.dormancy import (
     DegradationConfig,
     DegradationMode,
     DegradationNotifier,
-    FSMState,
 )
 from loam.dormancy import observability as gd_obs
 
@@ -54,7 +53,6 @@ from .fakes import (
 @pytest.fixture(autouse=True)
 def setup_otel_exporter(monkeypatch):
     """Install an in-memory exporter for testing."""
-    from opentelemetry import trace
 
     provider = TracerProvider()
     exporter = InMemorySpanExporter()
@@ -207,9 +205,6 @@ async def test_emission_succeeds_with_no_consumer_a1_safe() -> None:
     every emission helper must succeed."""
     # No consumer fixture — use the default global tracer which is
     # noop by default if no TracerProvider is installed.
-    from opentelemetry import trace
-    from loam.dormancy.adapter import AdapterEvent
-    from loam.dormancy.errors import DegradationSignal
 
     # These calls must not raise even with the noop tracer.
     gd_obs.fsm_transition("down", "closed", "open", "trip:connection_error")

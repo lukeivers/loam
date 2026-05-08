@@ -41,7 +41,7 @@ import datetime as _dt
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 from .language_detection import (
     LanguageDetection,

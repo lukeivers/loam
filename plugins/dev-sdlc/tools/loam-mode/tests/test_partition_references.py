@@ -19,8 +19,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-import yaml
 
 from loam_mode.audit import (
     _resolve_set,
@@ -54,22 +52,23 @@ from loam_mode.manifest import load_manifest
 # confirmed that 4 prior allowlist entries became stale (zero
 # source-file matches): 1× primary-persona prompt template + 3×
 # workspace-sync README. Those 4 entries graduated out of the
-# allowlist. The remaining entry below is the still-valid
+# allowlist. The remaining entry was the still-valid
 # pending-debt: `framework/memory-system/launchd/README.md`
-# references the true-first-run component-narrative under
-# `docs/archive/component-research/`. The README itself sits inside the
-# memory-system sealed-component fence; touching it from the
-# dev-sdlc fence would be a sealed-amendment in disguise. A future
-# memory-system amendment (e.g., a launchd-cleanup amendment) is
-# the right home for the scrub. The allowlist must shrink to empty
-# when that amendment lands. FIDRAFT line 143 (audit-allowlist
-# drift) closes on this Cycle 3 seal.
-KNOWN_CROSS_MODE_DEBT: set[tuple[str, str]] = {
-    (
-        "framework/memory-system/launchd/README.md",
-        "docs/archive/component-research/true-first-run/research.md",
-    ),
-}
+# referencing the true-first-run component-narrative under
+# `docs/archive/component-research/`. FIDRAFT line 143
+# (audit-allowlist drift) closed on the v0.1.9 Cycle 3 seal.
+#
+# Post-v0.3.0 Cycle 2 (graphiti rip-out): `framework/memory-system/`
+# was deleted entirely (apply 39094ea, seal 013553e). The lone
+# remaining allowlist entry's source path no longer exists on
+# disk, so the cross-mode reference scanner reports zero
+# residual cross-mode references. Per v0.3.0 Cycle 4 plan-doc
+# AC.LDC (KNOWN_CROSS_MODE_DEBT strictly decreases; target zero):
+# the allowlist shrinks to the empty set. The shrink-not-grow
+# discipline below remains enforced — any future regression
+# surfaces as `unexpected` and any new debt requires explicit
+# allowlist authoring in a NEW commit, never an implicit append.
+KNOWN_CROSS_MODE_DEBT: set[tuple[str, str]] = set()
 
 
 def test_AC_F3_always_loaded_no_dev_refs(

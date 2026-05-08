@@ -12,11 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from loam_odd_extractor import (
-    BackingMap,
-    BackingMapEntry,
     ConfidenceBand,
     Objective,
     ObjectiveEvidence,

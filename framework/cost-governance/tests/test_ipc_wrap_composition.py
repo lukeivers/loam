@@ -38,7 +38,7 @@ import pytest
 
 from loam.orchestrator.ipc import ApplicationError, IPCServer
 from loam.primary_persona.introduction import ChannelKind
-from loam.scope_of_work import Budget, ReversibilityClass, ScopeRuntime, ScopeSpec, SuccessCriterion
+from loam.scope_of_work import ReversibilityClass, ScopeRuntime, ScopeSpec
 
 from loam.cost_governance import (
     CostLedger,

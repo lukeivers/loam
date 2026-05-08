@@ -17,14 +17,12 @@
 from __future__ import annotations
 
 import json
-import sqlite3
 from pathlib import Path
 
 import pytest
 
 from loam.self_upgrade.paths import Paths
 from loam.self_upgrade.probes import (
-    ProbeBundle,
     collect_pre_probe,
     post_upgrade_probe_hashes,
 )

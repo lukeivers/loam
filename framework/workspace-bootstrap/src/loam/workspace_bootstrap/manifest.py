@@ -73,7 +73,6 @@ from typing import Any, Union
 import yaml
 
 from .errors import (
-    ContributionNotFoundError,
     MissingConfigError,
 )
 

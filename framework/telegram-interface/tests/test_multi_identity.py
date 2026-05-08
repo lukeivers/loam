@@ -34,7 +34,6 @@ from loam.telegram_interface.allowlist import AccessFile, AuthorityClass
 from loam.telegram_interface.availability import (
     AvailabilityProbe,
     AvailabilityState,
-    FailureClass,
     ProbeResult,
 )
 from loam.telegram_interface.confirmation import ConfirmationOutcome

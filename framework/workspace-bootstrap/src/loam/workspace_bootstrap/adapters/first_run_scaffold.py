@@ -45,14 +45,12 @@ for the supervisor.
 from __future__ import annotations
 
 import os
-import platform
 import re
 import shutil
-import stat
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 

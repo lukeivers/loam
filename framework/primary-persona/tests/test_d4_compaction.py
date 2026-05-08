@@ -38,12 +38,10 @@ from loam.scope_of_work.spec import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
-    ScopeState,
     SuccessCriterion,
 )
 
 from loam.primary_persona.compaction import (
-    CompactionSurvivor,
     SURVIVAL_LIST,
     build_survival_payload,
     clear_precompact_flag,
@@ -53,7 +51,6 @@ from loam.primary_persona.compaction import (
 )
 from loam.primary_persona.loader import PersonaLoader
 
-from tests.conftest import VALID_CONTRACT_YAML, write_persona_dir
 
 
 @pytest.fixture

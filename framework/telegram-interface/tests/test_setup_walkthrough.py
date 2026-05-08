@@ -36,7 +36,6 @@ import pytest
 
 from loam.telegram_interface.allowlist import AccessFile, AuthorityClass
 from loam.telegram_interface.setup_walkthrough import (
-    OPENING_OFFER,
     STEP1,
     STEP2,
     STEP3,

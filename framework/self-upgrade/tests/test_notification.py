@@ -19,7 +19,6 @@ from __future__ import annotations
 import threading
 import time
 
-import pytest
 
 from loam.self_upgrade.notification import (
     ConfirmationDecision,

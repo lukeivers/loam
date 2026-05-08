@@ -26,8 +26,6 @@ Acceptance (brief D7):
 
 from __future__ import annotations
 
-import asyncio
-import os
 import shutil
 from pathlib import Path
 
@@ -35,7 +33,6 @@ import pytest
 
 from loam.scope_of_work.runtime import ScopeRuntime
 from loam.scope_of_work.spec import Budget, ScopeState
-from loam.scope_of_work.store import EventStore
 from loam.scope_of_work.upgrade import (
     assert_no_drift,
     capture_pre_upgrade,

@@ -36,7 +36,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import pwd
 import string
 import subprocess
 import sys

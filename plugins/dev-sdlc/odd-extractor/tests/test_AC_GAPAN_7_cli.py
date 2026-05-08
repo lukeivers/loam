@@ -13,7 +13,6 @@ Per v0.2.4 Cycle 2 sub-plan-doc §3 AC.GAPAN.7:
 from __future__ import annotations
 
 import datetime as _dt
-import os
 from pathlib import Path
 
 import yaml
@@ -21,8 +20,6 @@ import yaml
 from loam_odd_extractor import (
     BackingMapEntry,
     ConfidenceBand,
-    Objective,
-    ObjectiveEvidence,
     save_augmented_objectives,
     save_backing_map,
 )

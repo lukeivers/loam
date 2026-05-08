@@ -27,10 +27,8 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
 
 from loam.self_correction import (
-    CorrectionNotifier,
     SelfCorrectionController,
     build_trigger_from_user_report,
 )

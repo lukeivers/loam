@@ -5,9 +5,7 @@ Per v0.2.3 Cycle 3 sub-plan-doc §3 AC.WATCHOBJ.2.
 
 from __future__ import annotations
 
-from pathlib import Path
 
-import pytest
 
 from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.diff_classifier import (

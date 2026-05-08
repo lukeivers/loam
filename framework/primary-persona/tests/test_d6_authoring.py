@@ -29,7 +29,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -44,15 +43,12 @@ from loam.scope_of_work.spec import (
 from loam.primary_persona.authoring import (
     AuthoringOutcome,
     AuthoringPipeline,
-    AuthoringResult,
     LLMResult,
-    SelfReviewDimension,
 )
 from loam.primary_persona.contract import load_contract
 from loam.primary_persona.creation_triggers import TriggerSignal
 from loam.primary_persona.loader import PersonaLoader
 
-from tests.conftest import VALID_CONTRACT_YAML, write_persona_dir
 
 
 # ---- helpers ---------------------------------------------------------

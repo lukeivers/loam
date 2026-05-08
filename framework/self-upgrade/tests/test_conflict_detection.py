@@ -19,7 +19,6 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-import pytest
 
 from loam.self_upgrade.conflict_detection import detect_conflicts
 from loam.self_upgrade.conflict_report import (

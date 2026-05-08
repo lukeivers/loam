@@ -49,7 +49,6 @@ from __future__ import annotations
 import fnmatch
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator

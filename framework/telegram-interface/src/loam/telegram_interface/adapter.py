@@ -43,13 +43,8 @@ from typing import Any, Awaitable, Callable
 # Sealed import — no amendment, pure consumption.
 from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
 
-from . import (
-    IPC_TELEGRAM_ALLOWLIST_REJECTED,
-    IPC_TELEGRAM_SEND_FAILED,
-    IPC_TELEGRAM_UNAVAILABLE,
-)
 from . import observability as obs
-from .allowlist import AccessFile, AuthorityClass, Identity
+from .allowlist import AccessFile, Identity
 from .availability import AvailabilityProbe, FailureClass
 from .bot_api import BotApiClient, BotApiError
 from .confirmation import ConfirmationGate, ConfirmationOutcome

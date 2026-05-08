@@ -259,8 +259,8 @@ def _render_always_load_block(
         lines.append(f"--- {rel} ---")
         if not resolved.exists():
             lines.append(
-                f"[missing] file not found at workspace-root or "
-                f"framework subdir"
+                "[missing] file not found at workspace-root or "
+                "framework subdir"
             )
             lines.append("")
             continue
@@ -268,7 +268,7 @@ def _render_always_load_block(
         if not content:
             # Read failure (permission denied, decode error, etc.).
             lines.append(
-                f"[missing] file present but unreadable"
+                "[missing] file present but unreadable"
             )
             lines.append("")
             continue

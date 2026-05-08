@@ -22,8 +22,8 @@ FakeScopeRuntime: minimal stand-in; records pause/resume/fail calls.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Sequence
+from dataclasses import dataclass
+from typing import Any, Sequence
 
 
 # ---- clock -----------------------------------------------------------

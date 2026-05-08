@@ -37,10 +37,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterable, Protocol, Sequence
+from typing import Any, Awaitable, Callable, Sequence
 
 from . import observability as obs
-from .contract import PersonaContract
 from .creation_triggers import TriggerSignal
 from .loader import LoadedPersona
 

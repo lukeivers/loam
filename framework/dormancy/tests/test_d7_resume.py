@@ -23,7 +23,6 @@ Acceptance (brief):
 
 from __future__ import annotations
 
-import pytest
 
 from loam.dormancy import (
     ClaudeClient,
@@ -33,7 +32,6 @@ from loam.dormancy import (
     DegradationNotifier,
     FSMState,
 )
-from loam.dormancy.state import DegradationStore
 
 from .fakes import (
     FakeClock,

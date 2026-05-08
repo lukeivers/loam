@@ -29,7 +29,6 @@ test_AC7_workspace_slug_parity_with_workspace_bootstrap``.
 
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 
 import pytest

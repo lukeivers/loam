@@ -41,7 +41,7 @@ from loam.telegram_interface.availability import (
     FailureClass,
     ProbeResult,
 )
-from loam.telegram_interface.bot_api import BotApiClient, BotApiError
+from loam.telegram_interface.bot_api import BotApiClient
 from loam.telegram_interface.fallback import fallback_preamble
 from loam.telegram_interface.mcp_client import McpReplyClient
 

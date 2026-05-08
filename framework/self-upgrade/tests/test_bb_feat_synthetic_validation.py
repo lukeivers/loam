@@ -39,12 +39,10 @@ import hashlib
 import os
 from pathlib import Path
 
-import pytest
 import yaml
 from pydantic import BaseModel
 
-from loam.self_upgrade.canonical import resolve_canonical_to_staging
-from loam.self_upgrade.cli import build_parser, main
+from loam.self_upgrade.cli import main
 from loam.self_upgrade.clause_checks import resolve_clause_h_inferred
 from loam.self_upgrade.conflict_report import (
     ConflictChangeKind,
@@ -63,11 +61,7 @@ from loam.self_upgrade.merge_resolver import (
 from loam.self_upgrade.paths import Paths
 from loam.self_upgrade.sync_protected import (
     FRAMEWORK_FLOOR,
-    FileClass,
-    SyncProtected,
-    SyncProtectedRule,
     default_sync_protected,
-    save_sync_protected,
 )
 
 

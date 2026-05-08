@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Sequence
+from typing import Any, Awaitable, Callable
 
 from loam.orchestrator.ipc import ApplicationError
 from loam.scope_of_work import ScopeRuntime, ScopeSpec
@@ -45,15 +45,13 @@ from loam.scope_of_work.events import (
 from loam.scope_of_work.spec import ScopeState
 
 from . import observability as obs
-from .config import CostConfig, RollingCeiling, SessionCeiling
+from .config import CostConfig, RollingCeiling
 from .notification import CostNotification, CostNotifier, render_ceiling_warning_text
 from .spec import (
     IPC_COST_ROLLING_CEILING_EXCEEDED,
-    IPC_COST_SCOPE_BUDGET_EXCEEDED,
     IPC_COST_SESSION_CEILING_EXCEEDED,
     CeilingAdjustment,
     Reservation,
-    iso_now,
     unix_now,
 )
 from .store import CostStore

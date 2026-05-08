@@ -50,7 +50,6 @@ from loam.dormancy import (
     DegradationConfig,
     DegradationMode,
     DegradationNotifier,
-    FSMState,
 )
 from loam.dormancy import observability as gd_obs
 

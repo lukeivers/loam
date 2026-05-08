@@ -35,18 +35,17 @@ awaits anywhere.
 
 from __future__ import annotations
 
-import asyncio
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Sequence
+from typing import Any, Callable
 
 from . import observability as obs
 from .adapter import AdapterEvent, ClaudeClient
 from .config import DegradationConfig
-from .detection import DegradationDetector, GarbagePipeline
+from .detection import DegradationDetector
 from .errors import DegradationSignal
-from .fsm import DegradationMode, FSMState, FSMTransition, ModeFSM
+from .fsm import DegradationMode, FSMState, FSMTransition
 from .notification import (
     DegradationNotification,
     DegradationNotifier,
@@ -59,7 +58,6 @@ from .notification import (
 from .policy import (
     OrchestratorHooks,
     Policy,
-    PolicyApplication,
     PolicyDispatcher,
     ScopeRuntimeLike,
     build_defaults_from_config,
@@ -67,7 +65,6 @@ from .policy import (
 )
 from .state import (
     DegradationStore,
-    EpisodeRow,
     FSMStateRow as FSMStateRowDB,
     ReconciliationPlan,
     reconcile,

@@ -42,11 +42,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Awaitable, Callable
 
-from . import (
-    IPC_TELEGRAM_CONFIRMATION_REFUSED,
-    IPC_TELEGRAM_CONFIRMATION_TIMEOUT,
-    IPC_TELEGRAM_NONOWNER_TIER_A_REFUSED,
-)
 from . import observability as obs
 
 

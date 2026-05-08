@@ -25,7 +25,6 @@ from loam_odd_extractor import (
     EvidenceRowRef,
     Gap,
     GapInventory,
-    GapSummary,
     analyze_gaps,
     save_gap_inventory,
 )

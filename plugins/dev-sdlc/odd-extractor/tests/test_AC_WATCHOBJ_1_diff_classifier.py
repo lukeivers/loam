@@ -8,7 +8,6 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-import pytest
 
 from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.diff_classifier import (

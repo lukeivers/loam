@@ -42,7 +42,6 @@ component's default empty allowlist or a synthetic owner ID string
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 

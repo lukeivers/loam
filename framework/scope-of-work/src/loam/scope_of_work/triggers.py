@@ -29,7 +29,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from .events import BudgetDebited, StateTransitioned, SuccessCriterionEvaluated
+from .events import StateTransitioned, SuccessCriterionEvaluated
 from .projection import ScopeProjectionData
 from .spec import (
     BudgetAxis,

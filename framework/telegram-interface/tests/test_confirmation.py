@@ -23,12 +23,11 @@ TG19: confirmation timeout (30 minutes default) refuses the request;
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 
 import pytest
 
-from loam.telegram_interface.adapter import ChannelEvent, TelegramAdapter
-from loam.telegram_interface.allowlist import AccessFile, AuthorityClass, Identity
+from loam.telegram_interface.adapter import TelegramAdapter
+from loam.telegram_interface.allowlist import AccessFile
 from loam.telegram_interface.availability import (
     AvailabilityProbe,
     AvailabilityState,

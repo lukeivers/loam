@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Coroutine
 
-from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
+from loam.primary_persona.introduction import ChannelKind
 
 
 def default_send() -> Callable[[str], Coroutine[Any, Any, None]]:

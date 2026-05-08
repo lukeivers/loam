@@ -27,15 +27,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from loam.dormancy import (
     ClaudeClient,
     DegradationComponent,
     DegradationConfig,
-    DegradationMode,
     DegradationNotifier,
-    FSMState,
 )
 from loam.dormancy.state import (
     DegradationStore,

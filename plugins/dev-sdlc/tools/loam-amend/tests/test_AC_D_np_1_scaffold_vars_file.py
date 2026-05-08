@@ -24,8 +24,6 @@ import yaml
 
 from loam_amend.cli import main
 from loam_amend.commands import new_plan as new_plan_cmd
-from loam_amend.commands import template as template_cmd
-from loam_amend.template_engine import parse_template
 
 
 # Required variables per the plan-doc skeleton (locked at 16 per

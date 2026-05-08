@@ -616,7 +616,7 @@ def _render_rationale(
     if priority_match_signal == "survey":
         parts.append(
             "This gap matches your stated survey priorities — "
-            f"survey-keyword overlap is the matching signal."
+            "survey-keyword overlap is the matching signal."
         )
     elif priority_match_signal == "interview":
         parts.append(

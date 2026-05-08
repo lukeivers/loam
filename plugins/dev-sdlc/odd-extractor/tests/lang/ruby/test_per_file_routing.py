@@ -10,14 +10,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from loam_odd_extractor.analyze import analyze_repo
 from loam_odd_extractor.init import init_extraction
 from loam_odd_extractor.budget import default_budget
 from loam_odd_extractor.registry import (
-    LanguageAdapter,
-    clear_manual_registry,
     register_adapter,
 )
 

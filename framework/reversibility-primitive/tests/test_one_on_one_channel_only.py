@@ -52,7 +52,6 @@ def test_R23_notifier_rejects_forced_group_channel() -> None:
         pass
 
     # Bypass the post_init by forging a frozen dataclass directly.
-    import dataclasses
 
     class _ForgedChannel(OneOnOneChannel):
         def __post_init__(self) -> None:  # override to skip guard

@@ -23,7 +23,7 @@ from .._ast_utils import (
     call_method_name,
     find_calls,
 )
-from ..parser import node_line, node_text
+from ..parser import node_line
 
 if TYPE_CHECKING:  # pragma: no cover
     import tree_sitter

@@ -35,11 +35,7 @@ from typing import Any, Callable
 from loam.orchestrator.ipc import ApplicationError, IPCServer
 from loam.scope_of_work import ScopeSpec
 
-from . import observability as obs
 from .ledger import CostLedger
-from .spec import (
-    CeilingAdjustment,
-)
 
 
 def register_cost_governance_ipc(

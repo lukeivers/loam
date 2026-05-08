@@ -11,13 +11,11 @@ Per plan-doc §6 D5.
 
 from __future__ import annotations
 
-import shutil
 import subprocess
 import sys
 import textwrap
 from pathlib import Path
 
-import pytest
 import yaml
 
 from loam.per_project_pm import PMRuntime

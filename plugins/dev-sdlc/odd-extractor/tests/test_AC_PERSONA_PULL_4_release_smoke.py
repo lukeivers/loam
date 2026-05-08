@@ -24,7 +24,6 @@ run; ≥90% pass §self-checks 1-5.
 
 from __future__ import annotations
 
-import datetime as _dt
 import shutil
 import subprocess
 from pathlib import Path
@@ -34,7 +33,6 @@ import yaml
 
 from loam_odd_extractor import (
     AugmentedObjectiveSet,
-    BuildNextRecommendation,
     GapInventory,
     Objective,
     ObjectiveEvidence,
@@ -42,16 +40,12 @@ from loam_odd_extractor import (
     ConstraintEvidence,
     Capability,
     CapabilityEvidence,
-    save_recommendation,
-    score_candidates,
     validate_altitude,
 )
 from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.cli import main as cli_main
 from loam_odd_extractor.observability import list_entries
 from loam_odd_extractor.spec import (
-    BackingMap,
-    BackingMapEntry,
     EvidenceRowRef,
     GapSummary,
     Gap,

@@ -21,9 +21,7 @@ and ``mcp_tool_probe`` callables.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 

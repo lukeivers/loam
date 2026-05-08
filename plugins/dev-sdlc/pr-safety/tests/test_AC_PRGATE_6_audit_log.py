@@ -7,9 +7,7 @@ Additive payload (no schema-version bump); SOC-2 floor preserved.
 
 from __future__ import annotations
 
-from pathlib import Path
 
-import pytest
 import yaml
 
 from loam_pr_safety.audit import list_entries, write_audit_entry

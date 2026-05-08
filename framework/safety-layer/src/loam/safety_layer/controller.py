@@ -32,10 +32,9 @@ the sealed `IPCServer.register()` surface (A15).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from pathlib import Path
 from typing import Any, Awaitable, Callable
 
 from loam.orchestrator.ipc import ApplicationError
@@ -47,7 +46,6 @@ from .config import SafetyConfig
 from .dangerous_op import DangerousOpGate, _extract_action_classes
 from .events import (
     AskDecisionRecord,
-    iso_now,
     structural_hash,
 )
 from .kill import KillEngine

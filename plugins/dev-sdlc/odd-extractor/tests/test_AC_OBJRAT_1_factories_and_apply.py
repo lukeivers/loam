@@ -21,7 +21,6 @@ from loam_odd_extractor import (
     ConstraintEvidence,
     Objective,
     ObjectiveEvidence,
-    ObjectiveRatificationAction,
     RatificationRefusedError,
     apply_objective_ratification_action,
     demote_capability,

@@ -31,7 +31,6 @@ so the user can tell something is off.
 
 from __future__ import annotations
 
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Awaitable, Callable
@@ -68,7 +67,7 @@ async def write_fallback(
         try:
             await in_session_send(framed)
             surfaces.append("in_session")
-        except Exception as e:  # noqa: BLE001 — fallback must be robust
+        except Exception:  # noqa: BLE001 — fallback must be robust
             obs.outbound_failed(
                 path="in_session_fallback",
                 chat_id=None,
@@ -81,7 +80,7 @@ async def write_fallback(
     try:
         _append_attention(path, text=text, reason=reason, identity=identity)
         surfaces.append("attention_md")
-    except Exception as e:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         obs.outbound_failed(
             path="attention_md",
             chat_id=None,

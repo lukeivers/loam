@@ -40,10 +40,6 @@ from loam.self_upgrade.merge_resolver import (
     ResolverFailure,
 )
 from loam.self_upgrade.sync_protected import (
-    FRAMEWORK_FLOOR,
-    FileClass,
-    SyncProtected,
-    SyncProtectedRule,
     default_sync_protected,
 )
 

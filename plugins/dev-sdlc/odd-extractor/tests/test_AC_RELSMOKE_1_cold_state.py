@@ -13,22 +13,14 @@ deferred to v0.2.5.
 
 from __future__ import annotations
 
-import shutil
-import subprocess
 from pathlib import Path
-from typing import Any
 
-import pytest
 import yaml
 
 from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.incremental import run_incremental
 from loam_odd_extractor.spec import (
-    BackingMap,
-    BackingMapEntry,
-    EvidenceRowRef,
     Objective,
-    ObjectiveEvidence,
 )
 from loam_odd_extractor.state import compute_repo_id, extraction_dir
 

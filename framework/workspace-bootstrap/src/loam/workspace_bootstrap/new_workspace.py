@@ -806,12 +806,12 @@ def cli_main(argv: list[str] | None = None) -> int:
         file=sys.stderr,
     )
     print(
-        f"  .claude/    ← scaffolded (Claude Code expects this here)",
+        "  .claude/    ← scaffolded (Claude Code expects this here)",
         file=sys.stderr,
     )
     print(
-        f"  sync-config.yaml ← canonical_source recorded; "
-        f"`pos-sync` from inside the workspace works no-args.",
+        "  sync-config.yaml ← canonical_source recorded; "
+        "`pos-sync` from inside the workspace works no-args.",
         file=sys.stderr,
     )
     if not result.init_existing:

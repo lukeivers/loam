@@ -28,9 +28,7 @@ from typing import Iterable
 import yaml
 
 from loam_amend.template_engine import (
-    ParsedTemplate,
     TemplateError,
-    TemplateNotFound,
     TemplateMalformed,
     discover_templates,
     parse_template,

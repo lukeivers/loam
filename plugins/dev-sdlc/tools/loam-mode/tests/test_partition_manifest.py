@@ -16,7 +16,6 @@ import yaml
 
 from loam_mode.audit import _resolve_set, _walk_audit_tree
 from loam_mode.manifest import (
-    Manifest,
     ManifestEntry,
     expand_entry,
     load_manifest,

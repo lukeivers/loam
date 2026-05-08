@@ -31,8 +31,6 @@ from loam.cost_governance import (
     CostLedger,
     CostNotifier,
     CostStore,
-    RollingCeiling,
-    SessionCeiling,
 )
 
 from .conftest import build_config, make_fake_channel, make_spec

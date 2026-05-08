@@ -27,7 +27,6 @@ from loam.cost_governance import (
     Reservation,
     RollingRollup,
     RollupTask,
-    SessionRollup,
 )
 
 from .conftest import build_config
@@ -85,7 +84,6 @@ def test_C20_session_rollups_pruned_after_365d(store: CostStore) -> None:
     """Per Luke's ruling #3: 365 days, not 30."""
     # Seed an ended session from 400 days ago.
     store.upsert_session_start("old_sess")
-    import sqlite3
     with store._lock:
         store._conn.execute(
             "UPDATE session_rollups SET ended_at = ? WHERE session_id = ?",

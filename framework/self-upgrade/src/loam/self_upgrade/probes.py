@@ -48,7 +48,6 @@ from pathlib import Path
 from typing import Any
 
 from .aggregator_probes import (
-    AggregatorProbeResult,
     aggregator_probe_hash,
     run_aggregator_probes,
 )

@@ -11,7 +11,6 @@ import subprocess
 from pathlib import Path
 
 import yaml
-import pytest
 
 from loam_pr_safety.installers.hooks import fire_hook
 

@@ -7,12 +7,10 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import Any
 
 import pytest
 import yaml
 
-from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.incremental import (
     ContractNotFoundError,
     IncrementalRunResult,

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from loam_odd_extractor.state import compute_repo_id, extraction_dir
+from loam_odd_extractor.state import extraction_dir
 
 
 FIXTURE_PATH = (

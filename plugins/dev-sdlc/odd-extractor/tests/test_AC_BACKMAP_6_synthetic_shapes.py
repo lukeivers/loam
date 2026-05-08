@@ -11,7 +11,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import pytest
 import yaml
 
 from loam_odd_extractor import (

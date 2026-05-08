@@ -28,11 +28,9 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
 
 from loam.scope_of_work.events import ChildLinked, ParentCloseRequested
 from loam.scope_of_work.spec import (
-    Budget,
     ParentClosePolicy,
     ScopeState,
 )

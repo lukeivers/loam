@@ -33,7 +33,6 @@ exceeds any ceiling. We catch at this layer, mark the episode
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
@@ -43,7 +42,7 @@ from loam.orchestrator.ipc import ApplicationError
 from . import observability as obs
 from .bounds import depth_cap_check, same_class_cascade_check
 from .completion_check import CompletionPrecheck
-from .config import CorrectionConfig, default_config
+from .config import CorrectionConfig
 from .notification import (
     CorrectionNotification,
     CorrectionNotifier,
@@ -56,8 +55,6 @@ from .spec import (
     CorrectionTrigger,
     EpisodeState,
     RecordType,
-    TriggerSource,
-    iso_now,
 )
 from .spec_builder import build_correction_spec
 from .store import CorrectionStore

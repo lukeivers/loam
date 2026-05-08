@@ -28,10 +28,10 @@ the gap on next session startup.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Sequence
+from dataclasses import dataclass
+from typing import Sequence
 
-from loam.primary_persona.introduction import ChannelKind, OneOnOneChannel
+from loam.primary_persona.introduction import OneOnOneChannel
 
 from . import observability as obs
 

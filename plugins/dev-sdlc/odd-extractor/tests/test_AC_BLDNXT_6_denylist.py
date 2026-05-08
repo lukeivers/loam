@@ -64,7 +64,6 @@ def test_clean_rationale_passes():
 
 def test_score_candidates_clean_path_does_not_raise():
     """End-to-end: a normal scoring run produces clean markdown."""
-    from pathlib import Path
     import yaml
     from loam_odd_extractor import (
         AugmentedObjectiveSet, GapInventory, save_recommendation

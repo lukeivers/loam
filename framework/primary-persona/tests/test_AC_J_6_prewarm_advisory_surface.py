@@ -30,7 +30,6 @@ The workspace-bootstrap-side write is exercised in
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from loam.primary_persona import memory_prewarm

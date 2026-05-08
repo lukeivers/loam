@@ -18,8 +18,6 @@ tests; an empty DB is fine).
 from __future__ import annotations
 
 import asyncio
-import json
-import sqlite3
 import subprocess
 import textwrap
 from pathlib import Path

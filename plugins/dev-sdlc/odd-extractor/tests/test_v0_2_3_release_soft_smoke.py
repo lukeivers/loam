@@ -10,21 +10,12 @@ path named in master plan §5.
 
 from __future__ import annotations
 
-import shutil
 import subprocess
 from pathlib import Path
 
-import pytest
 import yaml
 
-from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.incremental import run_incremental
-from loam_odd_extractor.spec import (
-    BackingMap,
-    EvidenceRowRef,
-    Objective,
-    ObjectiveEvidence,
-)
 from loam_odd_extractor.state import compute_repo_id, extraction_dir
 from loam_pr_safety import (
     BandedContract,

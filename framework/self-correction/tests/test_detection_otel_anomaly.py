@@ -24,7 +24,6 @@ investigating. Documented in return summary.
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
 

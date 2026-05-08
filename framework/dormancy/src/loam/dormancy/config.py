@@ -26,7 +26,6 @@ ValidationError — caller's choice whether to catch).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field

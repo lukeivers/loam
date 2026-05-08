@@ -77,13 +77,11 @@ from __future__ import annotations
 
 import argparse
 import importlib
-import json
 import re
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -101,9 +99,7 @@ from .observability import span as otel_span
 from .state import (
     SyncState,
     SyncOutcome,
-    load_state,
     save_state,
-    state_yaml_path,
 )
 from .sync_config import canonical_source_kind, load_sync_config
 

@@ -43,7 +43,6 @@ from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     FirstRunScaffoldContribution,
     PartialScaffoldError,
     PlatformUnsupportedError,
-    ScaffoldResult,
     ServiceManagerBootoutError,
     ServiceManagerRunner,
     WorkspaceSlugUnrepresentableError,
@@ -456,7 +455,7 @@ def test_AC5_stale_label_clears_on_rebootstrap(
     bootouts = [call for call in fake.calls if call[1] == "bootout"]
     assert len(bootouts) == 2
     assert all(
-        f"com.loam.alpha.orchestrator" in call[2] for call in bootouts
+        "com.loam.alpha.orchestrator" in call[2] for call in bootouts
     )
     # Second bootstrap references new_plist, not old_plist.
     bootstraps = [call for call in fake.calls if call[1] == "bootstrap"]

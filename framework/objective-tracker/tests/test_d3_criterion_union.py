@@ -36,11 +36,8 @@ from pyee.asyncio import AsyncIOEventEmitter
 from loam.objective_tracker.spec import (
     ChildClosureCriterion,
     ExternalPredicateCriterion,
-    ObjectiveSpec,
-    ObjectiveStatus,
     ProseCriterion,
     ScopeSuccessCriterion,
-    TimeBound,
 )
 from tests.conftest import make_child_spec, make_user_root_spec
 

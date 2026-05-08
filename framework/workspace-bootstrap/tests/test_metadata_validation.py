@@ -28,7 +28,6 @@ from loam.workspace_bootstrap import (
     MetadataInvalidError,
     Phase,
     load_manifest,
-    read_metadata,
 )
 
 

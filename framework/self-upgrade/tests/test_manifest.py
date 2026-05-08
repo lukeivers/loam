@@ -22,12 +22,9 @@ import pytest
 from pydantic import ValidationError
 
 from loam.self_upgrade.manifest import (
-    BreakingChange,
     ChangeKind,
-    ComponentSchema,
     FileEntry,
     Manifest,
-    Migration,
     load_manifest,
     save_manifest,
     sha256_of_bytes,

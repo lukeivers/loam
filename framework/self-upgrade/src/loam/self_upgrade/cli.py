@@ -34,8 +34,6 @@ or ``[halt: <reason>]``. Non-TTY output is grep-friendly.
 from __future__ import annotations
 
 import argparse
-import json
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -46,11 +44,9 @@ from .canonical import (
     resolve_canonical_to_staging,
 )
 from .clause_checks import resolve_clause_h_inferred
-from .config import AutoUpdateMode, UpgradeConfig
+from .config import UpgradeConfig
 from .conflict_detection import detect_conflicts
 from .conflict_report import (
-    ConflictReport,
-    Resolution,
     load_conflict_report,
     save_conflict_report,
 )
@@ -58,17 +54,7 @@ from .manifest import Manifest, load_manifest
 from .merge_resolver import (
     BudgetExhausted,
     MergeResolver,
-    ResolverBudget,
     ResolverFailure,
-)
-from .notification import (
-    ConfirmationDecision,
-    notify_accepted,
-    notify_and_apply_with_cancel_window,
-    notify_rolled_back,
-    notify_rollback_failed,
-    notify_upgrade_available,
-    wait_for_confirmation,
 )
 from .paths import Paths
 from .state import audit_yaml_path, load_state
@@ -77,7 +63,7 @@ from .sync_protected import (
     load_sync_protected,
     write_default_if_absent,
 )
-from .upgrade import UpgradeResult, execute_upgrade
+from .upgrade import execute_upgrade
 
 
 # ---- live-path safety check ----------------------------------------

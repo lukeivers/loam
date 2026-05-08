@@ -8,7 +8,6 @@ from pathlib import Path
 import yaml
 
 from loam_amend.commands.apply import run as apply_run
-from loam_amend.manifest import load_manifest
 
 
 def _build_fake_component_tree(repo: Path, name: str, allowed_prefix: str) -> None:

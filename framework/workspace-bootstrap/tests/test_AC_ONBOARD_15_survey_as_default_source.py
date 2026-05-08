@@ -15,13 +15,11 @@ override; conventional default path.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
 
 from loam.workspace_bootstrap.survey_parser import (
-    SurveyDefaults,
     SURVEY_ENV_VAR,
     parse_survey_file,
     resolve_survey_path,

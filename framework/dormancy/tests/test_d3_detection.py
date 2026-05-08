@@ -38,7 +38,7 @@ from loam.dormancy.detection import (
     GarbagePipeline,
 )
 from loam.dormancy.errors import DegradationSignal
-from loam.dormancy.fsm import DegradationMode, FSMState, FSMTransition
+from loam.dormancy.fsm import FSMTransition
 
 from .fakes import FakeClock
 

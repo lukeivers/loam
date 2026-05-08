@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import json
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
@@ -47,16 +47,14 @@ from .config import UpgradeConfig
 from .manifest import Manifest
 from .observability import span as otel_span
 from .orchestrator_control import (
-    ControlTiming,
     OrchestratorControlError,
     atomic_symlink_swap,
-    read_orchestrator_pid,
     sigterm_and_wait,
     wait_for_boot,
     wait_for_drain,
 )
 from .paths import Paths
-from .probes import ProbeBundle, collect_pre_probe, post_upgrade_probe_hashes
+from .probes import collect_pre_probe, post_upgrade_probe_hashes
 from .rollback import RollbackFailed, rollback as do_rollback
 from .snapshot import capture_substrate_snapshots, substrate_components
 

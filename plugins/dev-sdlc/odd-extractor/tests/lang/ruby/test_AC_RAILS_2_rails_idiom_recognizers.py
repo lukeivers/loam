@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
-from loam_odd_extractor.bands import BandedAC, ConfidenceBand
+from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.lang.ruby.parser import parse_file, parse_source
 from loam_odd_extractor.lang.ruby.recognizers import (
     recognize_active_record_models,

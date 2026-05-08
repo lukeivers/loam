@@ -36,14 +36,13 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from .schema import (
     AuditRecord,
     EventRecord,
     RetentionClass,
     SpanRecord,
-    TokenRecord,
 )
 from .store import Store
 

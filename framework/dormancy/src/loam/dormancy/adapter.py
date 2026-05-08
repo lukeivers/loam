@@ -56,14 +56,13 @@ import asyncio
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Protocol
+from typing import Any, Callable, Protocol
 
 from . import observability as obs
 from .errors import (
     ClaudeAPIError,
     DegradationSignal,
     classify_exception,
-    is_non_degradation_signal,
 )
 
 

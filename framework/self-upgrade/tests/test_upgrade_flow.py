@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -33,8 +32,7 @@ import pytest
 from loam.self_upgrade.config import UpgradeConfig
 from loam.self_upgrade.manifest import Manifest
 from loam.self_upgrade.paths import Paths
-from loam.self_upgrade.snapshot import capture_substrate_snapshots
-from loam.self_upgrade.upgrade import UpgradeResult, execute_upgrade
+from loam.self_upgrade.upgrade import execute_upgrade
 
 
 # ---- fake adapter --------------------------------------------------

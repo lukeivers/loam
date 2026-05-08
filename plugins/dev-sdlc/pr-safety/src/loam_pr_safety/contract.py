@@ -37,8 +37,6 @@ from pydantic import ValidationError
 
 from loam_odd_extractor.backing_map import load_backing_map
 from loam_odd_extractor.spec import (
-    BackingMap,
-    BackingMapEntry,
     Objective,
 )
 

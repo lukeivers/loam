@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import IO
 
 from .migrate import (
-    BootoutResult,
     MigrationOutcome,
     MigrationResult,
     migrate_launchd_labels,

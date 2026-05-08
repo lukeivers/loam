@@ -46,7 +46,6 @@ from loam.scope_of_work import ScopeSpec
 
 from .activation_gate import ActivationGate
 from .rollback import (
-    IPC_REVERSIBILITY_UNREGISTERED_HANDLE,
     RollbackRuntime,
 )
 from .spec import CompensationPathBinding, iso_now

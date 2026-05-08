@@ -72,6 +72,16 @@ _SKIP_DIR_NAMES: frozenset[str] = frozenset(
         "test-results",
         "coverage",
         "playwright-report",
+        # v0.3.0 Cycle 4 AC.LDC.F3 — cross-component-skip discipline.
+        # Mirrors the v0.2.1 corrective F2 fix in
+        # framework/workspace-bootstrap/.../language_detection.py
+        # (the `loam init` codepath). When `loam odd-extract` is
+        # pointed at a loam-tree (e.g., for self-extraction), it
+        # walked into `framework/` and treated harness scaffolding
+        # as candidates. Skipping `framework/` prevents loam-internal
+        # source / fixtures / venv code from leaking into evidence
+        # rows. Per FIDRAFT v0.2.5 yellow finding F3.
+        "framework",
     }
 )
 

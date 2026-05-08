@@ -51,13 +51,12 @@ import sys
 import traceback
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
 from .discovery import read_metadata, resolve_ref
 from .errors import (
     AdapterRaisedError,
     BootstrapError,
-    ContributionNotFoundError,
     MetadataInvalidError,
     NameCollisionError,
 )

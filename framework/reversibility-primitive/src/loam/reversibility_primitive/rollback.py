@@ -53,7 +53,6 @@ from .notification import (
     render_rollback_failure_text,
 )
 from .spec import (
-    CompensationPathBinding,
     RollbackContext,
     RollbackInvocationRecord,
     RollbackResult,

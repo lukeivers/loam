@@ -34,7 +34,6 @@ Test isolation:
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -43,10 +42,7 @@ import pytest
 
 from loam.workspace_bootstrap.adapters import tracker_seed
 from loam.workspace_bootstrap.new_workspace import (
-    BootstrapResult,
     CanonicalSourceInvalidError,
-    CloneFailedError,
-    NewWorkspaceError,
     TargetNotEmptyError,
     bootstrap_new_workspace,
     build_parser,
@@ -304,7 +300,7 @@ def test_AC_D_4_1_url_form_routes_through_cache_clone(
     """
     # Construct a fixture canonical exposed via file:// URL.
     canonical = make_fixture_canonical(tmp_path / "fixture-canonical")
-    canonical_url = f"https://test-host/lukeivers/loam-fixture"
+    canonical_url = "https://test-host/lukeivers/loam-fixture"
 
     # Redirect the cache to tmp_path/home/.pos/canonical-cache/ so we
     # don't pollute the operator's actual home dir.

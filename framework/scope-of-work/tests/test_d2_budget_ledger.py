@@ -31,14 +31,10 @@ Acceptance (brief D2):
 
 from __future__ import annotations
 
-import json
 
 import pytest
 
 from loam.scope_of_work.events import (
-    BudgetDebited,
-    BudgetExtended,
-    BudgetRefunded,
     ExtensionRejected,
     ExtensionRequested,
 )

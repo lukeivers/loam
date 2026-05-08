@@ -28,13 +28,11 @@ Acceptance (from brief D5):
 
 from __future__ import annotations
 
-import asyncio
 
 import pytest
 
 from loam.objective_tracker import (
     ObjectiveSpec,
-    ObjectiveStatus,
     ProseCriterion,
     TimeBound,
 )

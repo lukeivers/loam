@@ -27,7 +27,6 @@ A18. Zero imports from current pOS / legacy Ruby safety constructs.
 
 from __future__ import annotations
 
-import importlib
 import inspect
 from pathlib import Path
 
@@ -35,7 +34,7 @@ import pytest
 
 from loam.primary_persona.introduction import ChannelKind
 
-from loam.safety_layer import SafetyChannel, SafetyNotifier
+from loam.safety_layer import SafetyChannel
 
 
 SAFETY_SRC = Path(__file__).parent.parent / "src"
@@ -77,7 +76,6 @@ def test_A18_no_legacy_ruby_imports():
     """No safety-layer module imports from the current-pOS Ruby rules
     machinery. We assert none of our files mention Ruby-only paths or
     `ops/orchestrator` or `.claude/rules/` in import statements."""
-    import re
 
     banned_substrings = [
         "ops/orchestrator",

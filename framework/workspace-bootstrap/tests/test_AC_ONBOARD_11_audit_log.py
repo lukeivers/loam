@@ -17,7 +17,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
 
 from loam.workspace_bootstrap.onboarding import run_onboarding
 from loam.workspace_bootstrap.onboarding_audit import (

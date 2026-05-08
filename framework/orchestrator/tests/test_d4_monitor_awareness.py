@@ -34,7 +34,7 @@ import pytest
 
 from loam.orchestrator import Orchestrator
 from loam.orchestrator.ipc import IPCClient
-from loam.scope_of_work import ScopeRuntime, ScopeSpec
+from loam.scope_of_work import ScopeSpec
 from loam.scope_of_work.spec import Budget, ReversibilityClass
 
 

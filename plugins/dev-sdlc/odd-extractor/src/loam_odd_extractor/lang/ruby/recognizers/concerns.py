@@ -19,14 +19,12 @@ from typing import TYPE_CHECKING
 from ....bands import BandedAC, ConfidenceBand, Evidence
 from ..._common.slugs import file_slug
 from .._ast_utils import (
-    call_first_arg,
     call_method_name,
     class_name,
     find_calls,
     find_classes,
     find_modules,
     module_name,
-    walk_nodes,
 )
 from ..parser import node_line, node_text
 

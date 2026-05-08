@@ -25,7 +25,6 @@ Two fixtures: now-30s (inside window) and now-3600s (outside window).
 
 from __future__ import annotations
 
-import os
 import sys
 import time
 from pathlib import Path

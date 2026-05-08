@@ -52,7 +52,6 @@ def span_exporter_clean():
     return _IN_MEMORY_EXPORTER
 
 
-from loam.primary_persona import contract as _contract  # noqa: E402
 from loam.primary_persona import loader as _loader  # noqa: E402
 
 

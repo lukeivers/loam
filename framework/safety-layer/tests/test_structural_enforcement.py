@@ -29,7 +29,6 @@ from pydantic import ValidationError
 
 from loam.safety_layer import (
     AlwaysAskList,
-    AskListEntry,
     DEFAULT_DANGEROUS_OP_SUBSET,
     DEFAULT_FRAMEWORK_FLOOR,
     FrameworkFloorCategory,

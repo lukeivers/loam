@@ -287,7 +287,6 @@ class EventStore:
         Callers must ensure no writes are in flight when they snapshot;
         the runtime's upgrade harness quiesces before calling this.
         """
-        import shutil
 
         target = Path(target_path)
         target.parent.mkdir(parents=True, exist_ok=True)

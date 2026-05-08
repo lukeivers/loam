@@ -34,7 +34,7 @@ import logging
 import sqlite3
 import threading
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 
 _LOGGER = logging.getLogger(__name__)

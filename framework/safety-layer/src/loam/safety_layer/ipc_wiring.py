@@ -32,16 +32,12 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from loam.orchestrator.ipc import ApplicationError, IPCServer, MethodHandler
+from loam.orchestrator.ipc import ApplicationError, IPCServer
 from loam.scope_of_work import ScopeSpec
 
 from .controller import (
-    IPC_SAFETY_CHANNEL_UNAVAILABLE,
     SafetyController,
-    structural_hash,
 )
-from .kill import KillEngine
-from .store import SafetyStore
 
 
 def register_safety_ipc(

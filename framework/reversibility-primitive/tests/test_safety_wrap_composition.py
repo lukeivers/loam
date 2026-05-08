@@ -37,7 +37,6 @@ import pytest
 from loam.orchestrator.ipc import ApplicationError, IPCServer
 
 from loam.reversibility_primitive import (
-    CompensationPathBinding,
     IPC_REVERSIBILITY_MISSING_COMPENSATION,
     ReversibilityController,
     ReversibilityStore,
@@ -55,11 +54,9 @@ from loam.safety_layer import (
 )
 from loam.safety_layer.ipc_wiring import register_safety_ipc
 from loam.scope_of_work import (
-    Budget,
     ReversibilityClass,
     ScopeRuntime,
     ScopeSpec,
-    SuccessCriterion,
 )
 
 from .conftest import make_fake_channel, make_spec

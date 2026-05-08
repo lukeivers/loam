@@ -627,7 +627,7 @@ def render_stdout_summary(inventory: GapInventory) -> str:
     lines.append(
         f"    implementation orphans:              {s.category_b_count}"
     )
-    lines.append(f"  By confidence:")
+    lines.append("  By confidence:")
     lines.append(f"    STRONG: {s.strong_count}")
     lines.append(f"    WEAK:   {s.weak_count}")
     if s.total == 0:

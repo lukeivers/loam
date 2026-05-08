@@ -208,7 +208,7 @@ def test_AC_V025_1_4_full_pipeline_rd_automation(tmp_path: Path) -> None:
     )
     augmented_path = ext_dir / "augmented-objectives.yaml"
     assert augmented_path.exists(), (
-        f"Stage 2 must produce augmented-objectives.yaml"
+        "Stage 2 must produce augmented-objectives.yaml"
     )
     assert augmented_path.stat().st_size > 0
 

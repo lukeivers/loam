@@ -38,7 +38,7 @@ persona-side work (out of Cycle 2 scope per parent plan §7); Cycle
 from __future__ import annotations
 
 import datetime as _dt
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
@@ -48,7 +48,6 @@ from .observability import write_audit_entry
 from .ratification_state import (
     CompletedAction,
     PendingTarget,
-    RatificationState,
     RatificationStateV2,
     initialise_ratification_state,
     load_ratification_state,

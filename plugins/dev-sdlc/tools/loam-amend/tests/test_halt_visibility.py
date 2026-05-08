@@ -21,11 +21,8 @@ Per ``docs/plans/pos-amend-halt-visibility.md`` AC.PA-hv.5.
 
 from __future__ import annotations
 
-import io
 import subprocess
-import sys
 import textwrap
-from contextlib import redirect_stdout
 from pathlib import Path
 
 from loam_amend.cli import main as cli_main

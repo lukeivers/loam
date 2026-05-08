@@ -87,7 +87,7 @@ def _build_probe(url: str):
                     error_class=None if ok else f"http_{resp.status}",
                     latency_ms=latency_ms,
                 )
-        except (urllib.error.URLError, OSError) as exc:
+        except (urllib.error.URLError, OSError):
             latency_ms = (_time.monotonic() - started) * 1000.0
             return ProbeResult(
                 ok=False,

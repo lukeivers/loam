@@ -18,7 +18,6 @@ globally installed. The primitive must not construct its own.
 
 from __future__ import annotations
 
-import sys
 
 
 def test_R22_no_tracerprovider_constructed() -> None:

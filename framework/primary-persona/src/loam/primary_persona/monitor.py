@@ -40,7 +40,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Awaitable, Callable, Deque, Iterable, Sequence
+from typing import Any, Awaitable, Callable, Deque, Sequence
 
 from loam.scope_of_work.runtime import ScopeRuntime  # type: ignore[import-not-found]
 from loam.scope_of_work.spec import ScopeState  # type: ignore[import-not-found]

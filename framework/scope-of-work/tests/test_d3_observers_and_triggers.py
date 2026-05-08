@@ -30,13 +30,10 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
 
 from loam.scope_of_work.events import (
-    BudgetDebited,
     ObserverAdded,
     ObserverRemoved,
-    StateTransitioned,
     TriggerFired,
 )
 from loam.scope_of_work.spec import (
@@ -48,7 +45,6 @@ from loam.scope_of_work.spec import (
     ReversibilityClass,
     ReversibilityTrigger,
     ScopeState,
-    SuccessCriterion,
     SuccessCriterionTrigger,
     TimeElapsed,
 )

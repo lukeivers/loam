@@ -29,14 +29,12 @@ Acceptance (brief D7):
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from loam.primary_persona.authoring import AuthoringOutcome, AuthoringPipeline, LLMResult
-from loam.primary_persona.contract import PersonaContract, load_contract
+from loam.primary_persona.contract import load_contract
 from loam.primary_persona.creation_triggers import TriggerSignal
 from loam.primary_persona.introduction import (
     ChannelKind,
@@ -46,7 +44,7 @@ from loam.primary_persona.introduction import (
 )
 from loam.primary_persona.loader import LoadedPersona, PersonaLoader
 
-from tests.conftest import VALID_CONTRACT_YAML, write_persona_dir
+from tests.conftest import VALID_CONTRACT_YAML
 
 
 # ---- one-on-one channel invariant -----------------------------------

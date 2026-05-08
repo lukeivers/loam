@@ -17,7 +17,7 @@ from loam_odd_extractor.analyze import analyze_repo
 from loam_odd_extractor.budget import budget_from_cents
 from loam_odd_extractor.generate import generate_raw_acs
 from loam_odd_extractor.init import init_extraction
-from loam_odd_extractor.observability import audit_log_dir, list_entries
+from loam_odd_extractor.observability import list_entries
 from loam_odd_extractor.state import compute_repo_id, extraction_dir
 from loam_odd_extractor.verify import verify_contract
 

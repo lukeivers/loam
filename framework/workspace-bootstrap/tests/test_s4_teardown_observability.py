@@ -31,7 +31,6 @@ from __future__ import annotations
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -72,7 +71,6 @@ def test_s4_aggregator_adapter_processor_shutdown_surfaces(tmp_path, caplog):
     from loam.workspace_bootstrap.adapters.observability_aggregator import (
         ObservabilityAggregatorContribution,
     )
-    import loam.workspace_bootstrap.adapters.observability_aggregator as adapter_mod
 
     host = _make_host(tmp_path)
 

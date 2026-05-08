@@ -20,7 +20,6 @@ from __future__ import annotations
 import datetime as _dt
 from pathlib import Path
 
-import yaml
 
 from loam_odd_extractor.analyze import analyze_repo
 from loam_odd_extractor.lang.jsts import JsTsAdapter

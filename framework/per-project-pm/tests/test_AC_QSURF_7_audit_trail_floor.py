@@ -135,7 +135,7 @@ def test_audit_entries_carry_pm_handle(tmp_workspace: Path) -> None:
 def test_audit_entries_have_iso_8601_timestamps(tmp_workspace: Path) -> None:
     """Every audit entry has an ISO 8601 UTC timestamp (SOC-2: ordered,
     parseable audit trail)."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     _author_pm(tmp_workspace, "iso-pm")
     runtime = PMRuntime.from_workspace(tmp_workspace, "iso-pm")

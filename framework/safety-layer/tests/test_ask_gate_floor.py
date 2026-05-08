@@ -29,13 +29,11 @@ import pytest
 from pydantic import ValidationError
 
 from loam.orchestrator.ipc import ApplicationError
-from loam.scope_of_work import ReversibilityClass
 
 from loam.safety_layer import (
     AlwaysAskList,
     DEFAULT_DANGEROUS_OP_SUBSET,
     DEFAULT_FRAMEWORK_FLOOR,
-    FrameworkFloorCategory,
 )
 from loam.safety_layer.controller import IPC_ASK_GATE_PENDING, structural_hash
 

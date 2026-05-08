@@ -20,10 +20,8 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
-import pytest
 
 from loam.self_upgrade.clause_checks import (
-    ClauseResult,
     check_clause_a,
     check_clause_b,
     check_clause_c,

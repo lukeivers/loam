@@ -25,8 +25,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from loam.observability_aggregator import open_store
 from loam.observability_aggregator.api import QueryAPI, SpanFilter
 from loam.observability_aggregator.ingest import (
-    AggregatorSpanExporter,
-    IngestionPipeline,
     SpoolDrainer,
     register_otel_provider,
     detect_proxy_late_binding_failure,

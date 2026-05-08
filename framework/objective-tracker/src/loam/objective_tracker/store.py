@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from .errors import ManifestRowError
-from .events import ObjectiveEvent, event_from_row
+from .events import event_from_row
 
 
 _SCHEMA = """

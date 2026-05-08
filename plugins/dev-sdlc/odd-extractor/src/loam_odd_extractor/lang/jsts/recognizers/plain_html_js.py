@@ -20,7 +20,7 @@ import re
 from pathlib import Path
 
 from ....bands import BandedAC, ConfidenceBand, Evidence
-from ..._common.slugs import file_slug, slugify
+from ..._common.slugs import file_slug
 
 
 _SCRIPT_TAG_RE = re.compile(rb"<script\b", re.IGNORECASE)

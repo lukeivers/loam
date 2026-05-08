@@ -22,7 +22,6 @@ Acceptance (brief):
 
 from __future__ import annotations
 
-import pytest
 
 from loam.dormancy import DegradationConfig, DegradationMode, FSMState
 from loam.dormancy.errors import DegradationSignal

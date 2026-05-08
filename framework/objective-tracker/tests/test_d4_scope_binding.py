@@ -30,8 +30,7 @@ from __future__ import annotations
 import pytest
 
 from loam.objective_tracker.errors import OrphanRootError, UnresolvedObjectiveError
-from loam.objective_tracker.spec import ObjectiveSpec, ProseCriterion, TimeBound
-from tests.conftest import future_deadline, make_child_spec, make_user_root_spec
+from tests.conftest import make_child_spec, make_user_root_spec
 
 
 # ---- binding basics -------------------------------------------------
@@ -122,7 +121,6 @@ def test_scope_of_work_tree_untouched():
     this test just checks the file tree hasn't been mutated since
     the sealed component was created.
     """
-    import os
     from pathlib import Path
 
     # Post-D.1: scope-of-work moved under framework/.

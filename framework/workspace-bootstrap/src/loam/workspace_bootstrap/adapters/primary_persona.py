@@ -35,10 +35,8 @@ that directory exists; tests can skip persona loading by omitting it.
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from typing import Any, ClassVar
+from typing import ClassVar
 
-import yaml
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
 

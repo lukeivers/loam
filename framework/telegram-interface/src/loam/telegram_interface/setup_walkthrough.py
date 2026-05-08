@@ -47,10 +47,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
-from . import IPC_TELEGRAM_SETUP_FAILED
 from . import observability as obs
 from .allowlist import AccessFile, AuthorityClass
-from .availability import plugin_installed, token_configured
+from .availability import plugin_installed
 
 
 DEFAULT_MARKER_PATH = Path("~/.loam/telegram-setup-offered").expanduser()

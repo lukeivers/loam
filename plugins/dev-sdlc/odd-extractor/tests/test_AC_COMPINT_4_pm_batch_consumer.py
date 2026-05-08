@@ -16,7 +16,6 @@ from __future__ import annotations
 import datetime as _dt
 from pathlib import Path
 
-import pytest
 
 from loam_odd_extractor import (
     AugmentedObjectiveSet,

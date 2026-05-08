@@ -30,7 +30,6 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 from . import observability as obs
 from .config import CostConfig, RollingCeiling

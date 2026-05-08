@@ -35,10 +35,9 @@ import argparse
 import json
 import sys
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Any
 
-from .api import EventFilter, QueryAPI, SpanFilter, TimeRange
+from .api import QueryAPI, SpanFilter, TimeRange
 from .config import AggregatorConfig
 from .nl_path import NLPath
 from .schema import RetentionClass

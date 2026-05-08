@@ -228,7 +228,7 @@ def test_AC_V025_C4_2_does_not_demote_verified_with_readme(
     # No demotion warning logged.
     assert not any(
         "demoting" in r.message for r in caplog.records
-    ), f"Guard must not log demotion when no demotion happens"
+    ), "Guard must not log demotion when no demotion happens"
 
 
 def test_AC_V025_C4_2_does_not_demote_verified_with_design_doc(

@@ -17,16 +17,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import ClassVar
 
 import pytest
 
 from loam.workspace_bootstrap import (
-    BaseContribution,
     Bootstrapper,
-    ContributionMetadata,
     HostAttributeNotYetAvailable,
-    Phase,
     load_manifest,
 )
 

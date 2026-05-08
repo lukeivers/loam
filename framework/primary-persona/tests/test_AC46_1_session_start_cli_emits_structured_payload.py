@@ -39,9 +39,7 @@ registered. The session-level payload is independently AC-correct.
 
 from __future__ import annotations
 
-import io
 import json
-import sys
 from pathlib import Path
 
 from loam.primary_persona.context_composer import ADDITIONAL_CONTEXT_CAP

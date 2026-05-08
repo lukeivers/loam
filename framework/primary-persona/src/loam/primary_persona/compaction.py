@@ -46,7 +46,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 
 from loam.scope_of_work.runtime import ScopeRuntime  # type: ignore[import-not-found]
 

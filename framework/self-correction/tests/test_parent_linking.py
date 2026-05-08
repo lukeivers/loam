@@ -18,7 +18,6 @@ from __future__ import annotations
 
 from loam.self_correction import (
     CorrectionEpisode,
-    CorrectionStore,
     EpisodeState,
     SelfCorrectionController,
     build_trigger_from_user_report,

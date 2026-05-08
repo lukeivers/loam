@@ -37,7 +37,6 @@ no free-text uncited claims.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
@@ -46,7 +45,7 @@ from opentelemetry import trace
 from pydantic import BaseModel, Field
 
 from .api import EventFilter, QueryAPI, SpanFilter, TimeRange
-from .schema import RetentionClass, SpanRecord
+from .schema import SpanRecord
 
 
 # Aggregator's own tracer for NL spans (filtered out at ingest).

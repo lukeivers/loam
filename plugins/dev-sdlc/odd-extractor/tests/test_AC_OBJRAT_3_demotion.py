@@ -14,7 +14,6 @@ import pytest
 import yaml
 
 from loam_odd_extractor import (
-    BackingMap,
     ConfidenceBand,
     Objective,
     ObjectiveEvidence,

@@ -6,7 +6,6 @@ Per Cycle 2 plan-doc §4. Idempotent + husky-aware + halt-on-conflict
 
 from __future__ import annotations
 
-import os
 import subprocess
 from pathlib import Path
 

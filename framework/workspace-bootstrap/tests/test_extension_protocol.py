@@ -27,14 +27,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
 
 import pytest
 import yaml
 
 from loam.workspace_bootstrap import (
     Bootstrapper,
-    ContributionMetadata,
     IPC_BOOTSTRAP_ORDERING_CYCLE,
     OrderingCycleError,
     Phase,
@@ -120,7 +118,8 @@ async def test_B18_synthetic_contribution_orders_against_foundational(
     )
 
     # Full workspace so self_correction is available.
-    import tempfile, uuid
+    import tempfile
+    import uuid
 
     (tmp_path / "config").mkdir()
     (tmp_path / ".pos").mkdir()

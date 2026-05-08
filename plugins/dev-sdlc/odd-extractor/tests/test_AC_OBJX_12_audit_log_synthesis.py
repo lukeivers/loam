@@ -15,11 +15,7 @@ from pathlib import Path
 import yaml
 
 from loam_odd_extractor import (
-    Capability,
-    CapabilityEvidence,
     ConfidenceBand,
-    Constraint,
-    ConstraintEvidence,
     MultiSourceBundle,
     Objective,
     ObjectiveEvidence,

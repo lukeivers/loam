@@ -37,11 +37,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-from .aggregator_probes import aggregator_probe_hash, run_aggregator_probes
 from .conflict_report import (
     INFERRED_RESOLUTIONS,
     ConflictChangeKind,
-    ConflictEntry,
     ConflictReport,
     Resolution,
     save_conflict_report,
@@ -56,7 +54,6 @@ from .merge_resolver import (
 from .observability import span as otel_span
 from .paths import Paths
 from .state import (
-    StateRecord,
     UpgradeStatus,
     audit_yaml_path,
     make_state_record,

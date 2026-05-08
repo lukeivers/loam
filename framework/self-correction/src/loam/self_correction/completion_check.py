@@ -43,7 +43,6 @@ from . import observability as obs
 from .spec import (
     IPC_CORRECTION_INCOMPLETE_RECORDS,
     REQUIRED_RECORD_TYPES,
-    RecordType,
 )
 from .store import CorrectionStore
 

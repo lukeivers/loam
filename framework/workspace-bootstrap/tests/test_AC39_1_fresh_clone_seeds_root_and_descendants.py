@@ -39,7 +39,6 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-import pytest
 from loam.objective_tracker import (
     ObjectiveFilter,
     ObjectiveTracker,

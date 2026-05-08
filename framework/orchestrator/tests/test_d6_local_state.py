@@ -24,9 +24,7 @@ Acceptance (from brief D6):
 
 from __future__ import annotations
 
-import asyncio
 import sqlite3
-from pathlib import Path
 
 import pytest
 

@@ -3,12 +3,10 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
 
-import pytest
 
 # We invoke the CLI in-process via the loam_cli builder; conftest's
 # subprocess invocation tests the entry-point chain end-to-end.

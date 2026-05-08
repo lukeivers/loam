@@ -42,14 +42,11 @@ from loam.scope_of_work.spec import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
-    ScopeState,
     SuccessCriterion,
 )
 
 from loam.primary_persona.monitor import (
     AwarenessBlock,
-    AwarenessCategory,
-    AwarenessRow,
     BackgroundWorkMonitor,
 )
 
@@ -147,7 +144,6 @@ async def test_stuck_scope_appears_in_stuck_category(runtime, monkeypatch):
     await runtime.start("s-stuck")
 
     # Simulate wall-clock elapsed past 2× expected.
-    import loam.primary_persona.monitor as monitor_mod
     import loam.scope_of_work.triggers as sow_triggers
     import loam.scope_of_work.projection_view as sow_view
 

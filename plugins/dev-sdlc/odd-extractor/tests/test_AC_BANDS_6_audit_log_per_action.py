@@ -28,7 +28,7 @@ from loam_odd_extractor import (
     promote,
     reject,
 )
-from loam_odd_extractor.observability import audit_log_dir, list_entries
+from loam_odd_extractor.observability import list_entries
 from loam_odd_extractor.ratification_state import (
     initialise_ratification_state,
 )

@@ -59,10 +59,8 @@ from loam_pr_safety.errors import (
     OverrideRejectedError,
 )
 from loam_pr_safety.spec import (
-    BandedContract,
     ClassificationResult,
     OverrideRequest,
-    TouchedObjective,
 )
 from loam_pr_safety.state import overrides_dir
 

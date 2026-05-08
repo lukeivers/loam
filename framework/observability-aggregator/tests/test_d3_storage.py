@@ -15,22 +15,16 @@
 """D3 — DuckDB storage + SQLite fallback parity + size projection."""
 from __future__ import annotations
 
-import json
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 
-import pytest
 
 from loam.observability_aggregator import open_store
-from loam.observability_aggregator.api import QueryAPI, SpanFilter, TimeRange
+from loam.observability_aggregator.api import QueryAPI, SpanFilter
 from loam.observability_aggregator.config import AggregatorConfig
 from loam.observability_aggregator.schema import (
-    AuditRecord,
-    EventRecord,
     RetentionClass,
     SpanRecord,
-    TokenRecord,
 )
 
 

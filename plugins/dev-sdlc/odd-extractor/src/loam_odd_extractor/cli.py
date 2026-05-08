@@ -585,7 +585,6 @@ def _cmd_gaps(args: argparse.Namespace) -> int:
             emit_end_audit,
             emit_persisted_audit,
             emit_start_audit,
-            gap_inventory_path,
             render_stdout_summary,
             save_gap_inventory,
         )

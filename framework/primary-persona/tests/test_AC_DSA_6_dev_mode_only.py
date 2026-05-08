@@ -24,8 +24,6 @@ NORMAL USE is bounded by the mode-bit read alone.
 
 from __future__ import annotations
 
-import asyncio
-from pathlib import Path
 
 import pytest
 

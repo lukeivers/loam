@@ -21,7 +21,7 @@ so at dispatch time safety runs first.
 from __future__ import annotations
 
 import logging
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from ..spec import BaseContribution, ContributionMetadata, Phase
 

@@ -19,7 +19,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import yaml
 
 from loam.self_upgrade.conflict_report import (
     INFERRED_RESOLUTIONS,

@@ -41,13 +41,11 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import threading
-import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource

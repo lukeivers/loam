@@ -1,5 +1,18 @@
 # v0.2.1 Corrective F1 — odd-extractor `contract-draft.yaml` carries `acs:` + `unhandled_paths:`
 
+> **Superseded by v0.2.3 Cycle 3 (2026-05-08 addendum, v0.3.0 Cycle 4 doc-only F4 closure).**
+> The `acs:` + `unhandled_paths:` fields written into `contract-draft.yaml`
+> by this corrective amendment were RETIRED by v0.2.3 Cycle 3 (master plan §6.2).
+> Post-v0.2.3, `contract-draft.yaml` carries `schema_version: 2` without
+> those keys; pr-safety reads `objectives.yaml` + `backing-map.yaml`
+> directly per AC.PRGATE.1. The historical record below stays intact;
+> the seal-commit message + §1/§2 framing (which talks about the
+> retired-by-v0.2.3 field) is no longer the operational ground-truth.
+> For current pr-safety contract surface see
+> `docs/plans/v0-2-3-master-plan.md` §6.2 + the v0.2.3 Cycle 3 sub-plan.
+> Captured by FIDRAFT v0.2.5 yellow finding F4 (2026-05-05); closed
+> doc-only by v0.3.0 Cycle 4 per AC.LDC.F4.
+
 **Status:** plan-doc; pre-code per `feedback_plan_before_code`. Authored 2026-05-04 (Sonnet, single-agent plan-author + builder).
 
 **Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/` (canonical pos-v2). NOT pos3.

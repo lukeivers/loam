@@ -60,8 +60,7 @@ import signal
 import time
 import uuid
 from contextlib import asynccontextmanager
-from pathlib import Path
-from typing import Any, AsyncIterator, Awaitable, Callable
+from typing import Any, AsyncIterator, Callable
 
 from loam.objective_tracker import ObjectiveTracker
 from loam.objective_tracker.errors import OrphanRootError, UnresolvedObjectiveError

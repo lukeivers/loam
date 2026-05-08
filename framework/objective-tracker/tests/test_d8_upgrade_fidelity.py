@@ -33,7 +33,6 @@ import pytest
 from loam.objective_tracker.runtime import ObjectiveTracker
 from loam.objective_tracker.spec import (
     ChildClosureCriterion,
-    ExternalPredicateCriterion,
     ObjectiveStatus,
     ProseCriterion,
 )

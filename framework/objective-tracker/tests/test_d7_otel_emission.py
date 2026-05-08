@@ -25,7 +25,6 @@ Acceptance (brief §D7):
 from __future__ import annotations
 
 import pytest
-from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
@@ -33,7 +32,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 )
 
 from loam.objective_tracker.spec import ProseCriterion
-from tests.conftest import make_child_spec, make_user_root_spec
+from tests.conftest import make_user_root_spec
 
 
 @pytest.fixture

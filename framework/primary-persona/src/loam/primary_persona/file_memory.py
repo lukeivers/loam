@@ -72,14 +72,12 @@ Per ODD §2.5 every code path traces back to a named AC; defensive
 
 from __future__ import annotations
 
-import json
 import re
 import sqlite3
-import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable, Protocol
+from typing import Any, Callable, Protocol
 
 
 # ---- public dir resolver (D-Q.MFBM.3) -------------------------------

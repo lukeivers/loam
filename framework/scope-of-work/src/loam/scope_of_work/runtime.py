@@ -51,29 +51,23 @@ from .events import (
     SuccessCriterionEvaluated,
     TriggerFired,
 )
-from .policies import LEGAL_TRANSITIONS, TERMINAL_STATES, is_legal, is_terminal
+from .policies import is_legal, is_terminal
 from .projection import (
     ScopeProjectionData,
-    apply_event,
     project,
     projection_to_state_row,
 )
 from .projection_view import ScopeProjection, public_projection
 from .spec import (
-    Budget,
     BudgetAxis,
     BudgetExhaustionPolicy,
     Observer,
     ParentClosePolicy,
-    ReversibilityClass,
     ScopeSpec,
     ScopeState,
-    SuccessCriterion,
-    Trigger,
 )
 from .store import EventStore
 from .triggers import (
-    active_seconds_elapsed,
     evaluate_trigger,
     remaining_for_axis,
 )

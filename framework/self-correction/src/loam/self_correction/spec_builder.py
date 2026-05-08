@@ -34,7 +34,6 @@ from __future__ import annotations
 
 from loam.scope_of_work import (
     Budget,
-    BudgetAxis,
     ReversibilityClass,
     ScopeSpec,
     SuccessCriterion,

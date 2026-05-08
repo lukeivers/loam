@@ -81,7 +81,6 @@ Per ODD §2.5 every code path traces back to a named AC. Defensive
 from __future__ import annotations
 
 import json
-import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone

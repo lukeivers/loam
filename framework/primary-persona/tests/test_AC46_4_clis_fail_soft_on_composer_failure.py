@@ -33,13 +33,11 @@ import io
 import json
 from pathlib import Path
 
-import pytest
 
 from loam.primary_persona.session_start_emitter import (
     cli_session_start,
     cli_user_prompt_submit,
     emit_session_start_context,
-    emit_user_prompt_submit_context,
 )
 
 

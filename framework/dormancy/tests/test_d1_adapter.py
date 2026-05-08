@@ -33,8 +33,6 @@ from loam.dormancy import (
     ClaudeClient,
     DegradationSignal,
     OverloadedError,
-    RateLimitError,
-    classify_exception,
 )
 from loam.dormancy.adapter import AdapterEvent
 

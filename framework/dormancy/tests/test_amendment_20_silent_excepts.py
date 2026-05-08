@@ -185,7 +185,6 @@ async def test_S2_site7_reconcile_on_startup_surfaces_invalid_stored_enum_values
     )
 
     # Build a custom reconcile plan directly hitting the case-1 branch.
-    from loam.dormancy.state import ReconciliationPlan
 
     orch.paused = True
     # Patch unresolved_episodes to return the drifted row so reconcile()
@@ -230,7 +229,6 @@ def test_S2_site8_episode_started_surfaces_paused_scope_ids_attr_failure(
     # We monkey-patch the tracer's start_as_current_span to yield a span
     # whose set_attribute RAISES on the ids attr but succeeds on others,
     # so only the targeted set fails.
-    from opentelemetry import trace as ot_trace
 
     real_tracer = gd_obs._TRACER
 

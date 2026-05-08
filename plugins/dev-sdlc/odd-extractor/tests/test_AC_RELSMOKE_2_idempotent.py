@@ -8,15 +8,11 @@ Re-run extract / gate / watch on unchanged repo → same outputs
 
 from __future__ import annotations
 
-import shutil
-import subprocess
 from pathlib import Path
 
-import pytest
-import yaml
 
 from loam_odd_extractor.incremental import run_incremental
-from loam_odd_extractor.state import compute_repo_id, extraction_dir
+from loam_odd_extractor.state import compute_repo_id
 
 # Reuse setup helpers from RELSMOKE.1.
 from _relsmoke_helpers import (

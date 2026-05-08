@@ -39,10 +39,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Iterable, Protocol, Sequence
+from typing import Any, Protocol, Sequence
 
 from . import observability as obs
-from .fsm import DegradationMode, FSMState, FSMTransition
+from .fsm import DegradationMode
 
 
 # ---- policy enum -------------------------------------------------------

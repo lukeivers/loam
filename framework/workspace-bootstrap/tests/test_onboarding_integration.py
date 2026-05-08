@@ -23,7 +23,6 @@ import pytest
 from loam.workspace_bootstrap.manifest import load_manifest
 from loam.workspace_bootstrap.onboarding import QUESTION_SLUGS, run_onboarding
 from loam.workspace_bootstrap.onboarding_audit import (
-    audit_log_path,
     read_audit_entries,
 )
 

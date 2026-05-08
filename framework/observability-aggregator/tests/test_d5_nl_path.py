@@ -16,23 +16,18 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from opentelemetry import trace
 
 from loam.observability_aggregator import open_store
 from loam.observability_aggregator.api import QueryAPI
 from loam.observability_aggregator.ingest import register_otel_provider, SpoolDrainer
 from loam.observability_aggregator.nl_corpus import (
-    CORPUS,
     evaluate_corpus,
-    matches_ground_truth,
 )
 from loam.observability_aggregator.nl_path import (
     NLPath,
     rule_based_translate,
-    format_cited_answer,
 )
 from loam.observability_aggregator.schema import SpanRecord
 

@@ -20,7 +20,6 @@ all four present → completion proceeds.
 
 from __future__ import annotations
 
-from typing import Any
 
 import pytest
 from loam.orchestrator.ipc import ApplicationError

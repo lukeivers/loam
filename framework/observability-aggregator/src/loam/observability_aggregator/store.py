@@ -40,10 +40,8 @@ import json
 import logging
 import sqlite3
 import threading
-from contextlib import contextmanager
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Iterable, Iterator, Sequence
+from typing import Any, Sequence
 
 
 _LOGGER = logging.getLogger("loam.aggregator.store")
@@ -52,7 +50,6 @@ from .config import AggregatorConfig, Substrate
 from .schema import (
     AuditRecord,
     EventRecord,
-    RetentionClass,
     SpanRecord,
     TokenRecord,
     apply_retention_class,

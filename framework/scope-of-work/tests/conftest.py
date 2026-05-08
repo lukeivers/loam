@@ -28,8 +28,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from loam.scope_of_work.runtime import ScopeRuntime  # noqa: E402
 from loam.scope_of_work.spec import (  # noqa: E402
     Budget,
-    BudgetExhaustionPolicy,
-    Observer,
     ParentClosePolicy,
     ReversibilityClass,
     ScopeSpec,

@@ -34,7 +34,6 @@ manages the budget internally.
 
 from __future__ import annotations
 
-import re
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -48,11 +47,9 @@ from .config import DegradationConfig
 from .errors import (
     ClaudeAPIError,
     DegradationSignal,
-    GarbageResponseError,
 )
 from .fsm import (
     DegradationMode,
-    FSMState,
     FSMTransition,
     LatencyFSM,
     ModeFSM,

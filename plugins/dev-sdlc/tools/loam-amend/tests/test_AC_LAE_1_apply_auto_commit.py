@@ -6,7 +6,6 @@ Per v0.1.2 item 6 (loam-amend ergonomics sweep).
 
 from __future__ import annotations
 
-import os
 import subprocess
 import textwrap
 from pathlib import Path

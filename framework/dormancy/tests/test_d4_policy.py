@@ -25,9 +25,7 @@ Acceptance (brief):
 
 from __future__ import annotations
 
-from pathlib import Path
 
-import pytest
 
 from loam.dormancy import DegradationConfig, DegradationMode
 from loam.dormancy.policy import (

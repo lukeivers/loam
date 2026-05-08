@@ -34,25 +34,18 @@ exists and debits against it for each LLM call).
 
 from __future__ import annotations
 
-import asyncio
 import json
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterable, Sequence
+from typing import Any, Awaitable, Callable, Sequence
 
 from loam.scope_of_work.runtime import ScopeRuntime  # type: ignore[import-not-found]
-from loam.scope_of_work.spec import BudgetAxis  # type: ignore[import-not-found]
 
 from . import observability as obs
 from .contract import (
-    AuthorityBoundary,
-    EscalationTaxonomy,
     PersonaContract,
-    Responsibilities,
-    SeverityVocabulary,
-    TierAction,
 )
 from .creation_triggers import TriggerSignal
 from .loader import LoadedPersona

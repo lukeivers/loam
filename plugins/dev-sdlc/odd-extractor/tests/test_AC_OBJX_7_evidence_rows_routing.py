@@ -20,9 +20,6 @@ from loam_odd_extractor import (
     ConfidenceBand,
     Capability,
     CapabilityEvidence,
-    Constraint,
-    ConstraintEvidence,
-    ExtractionConfig,
     Objective,
     ObjectiveEvidence,
     Slice,
@@ -34,7 +31,6 @@ from loam_odd_extractor import (
     verify_contract,
 )
 from loam_odd_extractor.registry import (
-    LanguageAdapter,
     register_adapter,
 )
 from loam_odd_extractor.spec import RawACs

@@ -38,17 +38,10 @@ structurally — the obs helpers tolerate the default noop tracer.
 
 from __future__ import annotations
 
-from pathlib import Path
 
 import pytest
 
 from loam.objective_tracker import ObjectiveSpec, ProseCriterion, TimeBound
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
-    InMemorySpanExporter,
-)
 from loam.orchestrator import Orchestrator
 
 from .conftest import make_scope_spec

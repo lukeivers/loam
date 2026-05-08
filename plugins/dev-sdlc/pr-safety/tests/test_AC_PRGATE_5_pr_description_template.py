@@ -11,13 +11,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import pytest
 
 from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.spec import EvidenceRowRef, Objective, ObjectiveEvidence
 
 from loam_pr_safety import (
-    ClassificationResult,
     GateAction,
     GateDecision,
     Hunk,

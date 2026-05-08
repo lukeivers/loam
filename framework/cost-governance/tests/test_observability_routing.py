@@ -18,7 +18,6 @@ The component does not construct its own TracerProvider.
 
 from __future__ import annotations
 
-import ast
 import pathlib
 
 import loam.cost_governance as cg
@@ -27,7 +26,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry import trace
 
-from loam.cost_governance import CostLedger, CostStore, observability as obs
+from loam.cost_governance import CostLedger, CostStore
 
 from .conftest import build_config, make_spec
 

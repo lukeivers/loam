@@ -15,7 +15,6 @@ idempotent; LOAM_ONBOARDING_SKIP=1 short-circuits.
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
 
 import pytest

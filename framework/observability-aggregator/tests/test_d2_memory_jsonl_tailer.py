@@ -175,7 +175,6 @@ def test_tailer_skips_malformed_lines(tmp_config):
 
 def test_tail_latency_under_one_second_p95(tmp_config):
     """Tail thread polls at 0.5s; new lines reach the store within ~1s."""
-    import threading
     store = open_store(tmp_config)
     try:
         sink_dir = tmp_config.resolved_memory_sink_dir()

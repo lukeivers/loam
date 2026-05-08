@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 
 from opentelemetry import trace
@@ -28,12 +27,9 @@ from loam.observability_aggregator.ingest import (
     SpoolDrainer,
     register_otel_provider,
     IngestionPipeline,
-    memory_span_to_canonical,
 )
 from loam.observability_aggregator.nl_corpus import (
-    CORPUS,
     evaluate_corpus,
-    matches_ground_truth,
 )
 from loam.observability_aggregator.nl_path import NLPath, rule_based_translate
 from loam.observability_aggregator.schema import RetentionClass

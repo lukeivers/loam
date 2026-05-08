@@ -45,7 +45,6 @@ async def _cancel_friendly_background():
 async def test_s4_stop_background_surfaces_broad_exception(caplog):
     async def _noop_getme():
         from loam.telegram_interface.availability import (
-            FailureClass,
             ProbeResult,
         )
         return ProbeResult(available=True)

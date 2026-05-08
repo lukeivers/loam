@@ -47,7 +47,6 @@ from loam_pr_safety.contract import read_contract
 from loam_pr_safety.diff import parse_diff
 from loam_pr_safety.errors import (
     ContractMissingError,
-    GateError,
     PRSafetyError,
 )
 from loam_pr_safety.gate import decide
@@ -266,7 +265,7 @@ def _install_hook(
         backup_path=backup_path,
         detail=(
             f"{action} {target}"
-            + (f" (husky)" if husky else "")
+            + (" (husky)" if husky else "")
             + (f"; backup at {backup_path}" if backup_path else "")
         ),
     )

@@ -31,11 +31,10 @@ no-ops (B17 covered separately with a real file).
 
 from __future__ import annotations
 
-import asyncio
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any
 
 import pytest
 import yaml
@@ -60,10 +59,7 @@ def _write_orchestrator_yaml(workspace: Path) -> None:
     (workspace / "config" / "orchestrator.yaml").write_text(yaml.safe_dump(cfg))
 
 from loam.workspace_bootstrap import (
-    BaseContribution,
     Bootstrapper,
-    ContributionMetadata,
-    Phase,
     load_manifest,
 )
 
@@ -169,7 +165,6 @@ async def test_B12_dispatch_chain_order(tmp_path: Path) -> None:
     handler is NOT the orchestrator's original — meaning the wraps
     composed on top.
     """
-    from loam.orchestrator.ipc import IPCServer
 
     manifest_path = _write_workspace(tmp_path)
     bs = Bootstrapper(load_manifest(manifest_path))
@@ -308,7 +303,6 @@ async def test_B15_self_upgrade_cli_probe_success(tmp_path: Path) -> None:
     default (pos --help) and `required: False`, the adapter no-ops
     if `pos` is missing. A failing probe with required=True raises
     -32086. We test both sides."""
-    from loam.workspace_bootstrap import AdapterRaisedError
 
     (tmp_path / "config").mkdir()
     # A probe that always succeeds (`true` exits 0 on POSIX).

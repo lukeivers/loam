@@ -28,13 +28,11 @@ protocol contract the real memory-sidecar obeys.
 from __future__ import annotations
 
 import json
-import socket
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]

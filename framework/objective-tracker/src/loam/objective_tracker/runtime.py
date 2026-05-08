@@ -32,7 +32,7 @@ import asyncio
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterable, Sequence
+from typing import Any, Callable, Iterable, Sequence
 
 from pyee.asyncio import AsyncIOEventEmitter
 
@@ -53,7 +53,7 @@ from .events import (
     StatusTransitioned,
 )
 from .filter import ObjectiveFilter
-from .policies import TERMINAL_STATES, is_legal, is_terminal
+from .policies import is_legal, is_terminal
 from .projection import (
     ObjectiveProjectionData,
     project,
@@ -62,7 +62,6 @@ from .projection import (
 from .projection_view import ObjectiveProjection, public_projection
 from .spec import (
     Criterion,
-    LiftedFrom,
     ObjectiveSpec,
     ObjectiveStatus,
     ParentCloseEventKind,

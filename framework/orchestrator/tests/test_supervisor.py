@@ -32,16 +32,13 @@ Covers H-criteria from proposal §5.2 + §5.4:
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from loam.orchestrator.supervisor import (
-    ERR_MEMORY_UNREACHABLE,
     EscalationClass,
-    EscalationRecord,
     MemorySupervisor,
     ProbeResult,
     SupervisorConfig,

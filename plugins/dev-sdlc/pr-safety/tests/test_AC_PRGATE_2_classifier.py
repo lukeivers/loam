@@ -7,16 +7,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from loam_pr_safety import (
-    BandedContract,
     ClassificationResult,
     Diff,
     DiffEntry,
     Hunk,
     NovelDiff,
-    TouchedObjective,
     classify,
     read_contract,
 )

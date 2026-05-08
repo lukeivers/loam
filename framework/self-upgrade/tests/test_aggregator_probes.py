@@ -19,7 +19,6 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-import pytest
 
 from loam.self_upgrade.aggregator_probes import (
     PROBE_SET_VERSION,

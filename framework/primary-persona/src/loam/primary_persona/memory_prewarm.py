@@ -40,7 +40,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import memory_write_queue as mwq
 
 
 # ---- advisory-file shape --------------------------------------------

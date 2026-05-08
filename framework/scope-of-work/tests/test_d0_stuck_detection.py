@@ -40,7 +40,6 @@ from loam.scope_of_work.spec import (
     Budget,
     ReversibilityClass,
     ScopeSpec,
-    ScopeState,
     SuccessCriterion,
 )
 from loam.scope_of_work.triggers import is_stuck, seconds_since_first_activation

@@ -46,10 +46,9 @@ from __future__ import annotations
 
 import asyncio
 import re
-import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Awaitable, Callable
 
 from loam.objective_tracker import (
     LiftedFrom,

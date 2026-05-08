@@ -19,8 +19,7 @@ import io
 import json
 import time
 from contextlib import redirect_stdout
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from datetime import datetime, timezone
 
 import pytest
 

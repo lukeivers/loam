@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 
-from loam_odd_extractor.bands import BandedAC, ConfidenceBand
+from loam_odd_extractor.bands import ConfidenceBand
 from loam_odd_extractor.lang.ruby.adapter import extract_rails_acs
 
 

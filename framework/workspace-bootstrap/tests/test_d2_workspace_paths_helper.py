@@ -26,7 +26,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from loam.workspace_bootstrap.workspace_paths import (
     CLAUDE_SUBDIR,

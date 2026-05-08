@@ -40,7 +40,7 @@ adapter wraps ``ClaudePrintLLMClient`` (memory-system) — wired in
 
 from __future__ import annotations
 
-from typing import Any, Literal, Protocol
+from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 

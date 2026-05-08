@@ -1,0 +1,61 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-cycle-6-feature-honesty-audit-and-verification
+  title: "v0.3.0 Cycle 6 — feature-honesty audit (docs/v0-3-0-feature-honesty-audit.md NEW; 7 CLI verbs / 16-component table / 4 hook surfaces audited; 3 docs-drift findings surfaced for owner ruling) + ODD-conformance allowlist (docs/odd-conformance-allowlist.md NEW; 18 framework/ components allowlisted with v0.7.0 structural-enforcement lift named) + claude-p MCP-isolation invariant (upgrade-merge-resolver gap closed; 2-test invariant suite mirrors workspace-sync) + F821 closures (TYPE_CHECKING guard in first_run_scaffold.py; 2 lines closed; 0 F821 across framework/ + plugins/) + outcome-altitude FBE.7 stranger-clone test (production-CLI altitude tempdir probe green; Docker-equivalent gap surfaced for owner-action-line)"
+
+# BASELINE: 98f4e1c — the source-edit + audit + allowlist commit.
+# Doc-cycle (touches sealed framework code) — multi-component fence
+# (workspace-bootstrap source + tools/upgrade-merge-resolver source +
+# primary-persona tests + docs). Manifest carries dev-sdlc as
+# bookkeeping owner per Cycles 1/2/3/4/5 precedent (cross-cutting
+# cycle from dev-sdlc's perspective; dev-sdlc carries the cycle's
+# seal anchor as the methodology-surface owner).
+#
+# Commit ladder:
+#   44403a5 — docs(plans): v0.3.0 Cycle 6 — finalise sub-plan-doc
+#   98f4e1c — feat(v0.3.0): Cycle 6 — feature-honesty audit +
+#             claude-p invariant + F821 closures (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§14 backfill commit lands last>
+
+baseline: "98f4e1c"
+
+plan: docs/plans/v0-3-0-cycle-6-feature-honesty-audit-and-verification.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-3-0-cycle-6-feature-honesty-audit-and-verification.md
+
+ac_count: 6
+smoke_outcome: "audit cross-refs resolve; FBE.7 probe green; 3/3 claude-p sources carry --strict-mcp-config; ruff F821=0; ODD-allowlist 18 entries; tests primary-persona 397 + workspace-bootstrap 411 + UMR 2 pass"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # bookkeeping owner; cross-cutting cycle from dev-sdlc's perspective
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# C6 touches: docs/ (audit + allowlist + plan-doc); framework/
+# (workspace-bootstrap source F821; tools/upgrade-merge-resolver
+# source MCP-isolation; tools/upgrade-merge-resolver tests; primary-
+# persona tests).
+universal_paths:
+  prefixes:
+    - docs/
+    - framework/workspace-bootstrap/
+    - framework/tools/upgrade-merge-resolver/
+    - framework/primary-persona/tests/
+  files: []
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-cycle-6-feature-honesty-audit-and-verification
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

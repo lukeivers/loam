@@ -15,9 +15,9 @@ codebase.
 
 ## Design lenses for every feature
 
-Five principles must become part of the research of every future
+Seven principles must become part of the research of every future
 feature — not one-time exercises, but always-on lenses. A feature
-proposal that does not answer all five is incomplete.
+proposal that does not answer all seven is incomplete.
 
 ### Lens 1 — Claude-leverage-first
 
@@ -86,7 +86,7 @@ but it is **NOT a first axiom** from which all others derive.
 Several lenses and principles (Lens 2, ODD itself per Lens 3,
 ruthless feedback) stand independent of scope-confidence and
 compose with it rather than being derived from it. The
-companion derivation map at `framework/docs/design/principle-derivation-map.md`
+companion derivation map at `docs/design/principle-derivation-map.md`
 labels each principle compose-with-F4 / independent / partial.
 
 The required research question: **"What is my confidence that the
@@ -154,6 +154,84 @@ so, am I selecting the right model tier for each phase
 Composes tightly with Lens 4: the stopping criterion uses
 scope-confidence as its primary signal. Full text in
 `~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_swarming_recursive_decomposition.md`.
+
+### Lens 6 — Principle-conflict resolution (multi-signal, four-step)
+
+> **No principle always beats another. When two principles conflict
+> in a specific situation, run the named four-step process: (1) name
+> the conflict — both principles, the specific tension; (2) name the
+> active signals — open list, at minimum scope-confidence (Lens 4),
+> reversibility, blast radius, audience, time pressure, information
+> asymmetry; (3) make the call given signal weights; (4) surface to
+> owner if non-obvious — when reasonable people would weigh signals
+> differently, halt-and-surface.**
+
+Silent resolution (apply one principle, ignore the other, never
+name the conflict) is the failure mode this lens prevents. Silent
+precedent compounds: an unmarked resolution becomes the next agent's
+implicit rule, which becomes the agent-after-that's load-bearing
+assumption, until the corpus has a rule no one ever wrote down.
+
+The signal list is open. Lens 4 (scope ↔ confidence) is one signal,
+not the master signal. Adding a new signal to the M5 process does
+not require re-doing the principle-derivation map — that map only
+covers F4 specifically. New signals enter the signal list as they
+surface; the four-step process accommodates them without revision.
+
+Procedural rule: every new feedback memory or principle added to
+the corpus carries a derivation/relationship line saying how it
+relates to existing principles (compose-with, independent, partial).
+This is the M5 input the table at `docs/design/principle-derivation-map.md`
+indexes. Without the derivation line, the principle is unindexable
+and resolution against it falls back to first-principles each time.
+
+The required research question: **"If this lens conflicts with
+another lens or a feedback memory in this specific situation,
+what signals weigh which way — and is the resolution obvious enough
+that I can rule autonomously, or do I need to halt and surface?"**
+
+Composes-with: every other lens (M5 IS the resolution mechanism for
+their conflicts). Independent of: nothing — M5 sits above all other
+principles as the meta-process. Full text in
+`~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_principle_conflict_resolution_multi_signal.md`.
+
+### Lens 7 — Ruthless Feedback
+
+> **Name the disagreement, name the evidence, name the alternative.
+> Surface every quality gap, scope compromise, design disagreement
+> immediately — including disagreements with the owner's framing.
+> Silent acceptance of a known problem is the failure mode this
+> lens prevents.**
+
+Three required elements every time the lens fires:
+
+1. **Name the disagreement.** State the specific claim or framing
+   that is wrong, in one sentence. "The plan says X; X is wrong
+   because Y."
+2. **Name the evidence.** Cite the source — a file path, a
+   commit SHA, a test result, an observed runtime behaviour. Bare
+   assertion is not evidence; it is restatement.
+3. **Name the alternative.** State what should happen instead. A
+   feedback note that surfaces a problem without proposing a path
+   forward leaves the receiver with a worse decision context than
+   silent acceptance would have.
+
+T1 resolution (the scope-discipline / Ruthless-Feedback tension):
+scope-discipline constrains *action* — agents do not silently
+extend their scope to fix problems they discover outside it.
+Ruthless Feedback constrains *silence* — agents halt-and-surface
+the out-of-scope discovery, then proceed inside scope unless owner
+rules otherwise. The two compose: the surface is mandatory; the
+extension is owner-gated.
+
+Independent of Lens 4. Composes with Lens 6 (Ruthless Feedback IS
+the surfacing step in M5's four-step process). The required
+research question: **"What disagreement, gap, or compromise have
+I noticed but not yet named — and what would the receiver of my
+output need to know to make a better decision?"**
+
+Full text in
+`~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_ruthless_feedback.md`.
 
 ---
 

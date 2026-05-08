@@ -37,8 +37,60 @@ by walking through four of the thirteen sealed components of loam:
   extension protocol itself.
 
 Then: how to add an ODD-compliant component, how to review ODD work, and
-the mistakes loam's own rebuild actually made (which are probably the
+the mistakes loam's own development surfaced (which are probably the
 mistakes you will also make, given the chance).
+
+---
+
+## 1A. Three explicit mappings
+
+Before the worked examples, three mappings every loam contributor needs
+when applying ODD here:
+
+### 1A.1 Prime objective = VALUE_PROPOSITION
+
+loam's prime objective is stated in `docs/VALUE_PROPOSITION.md`. Every
+component, feature, and amendment in loam ladders up to it. The two
+acceptance criteria of the prime objective are:
+
+- **Primary-persona test:** does this reduce the translation burden
+  between the user's natural-language intent and AI-effective
+  execution?
+- **Harness test:** does this add to the toolkit the primary persona can
+  draw from?
+
+A feature that fails either test needs redesign. A feature that fails the
+harness test is almost always wrong. When evaluating a proposal or a
+proposed amendment, ask both questions explicitly before proceeding. Per
+§10.2 of `odd-methodology.md`, these are soft objectives — the operative
+probe is the A/B eval pattern (loam-assisted session vs naked-Claude
+session, LLM-as-judge per rubric).
+
+### 1A.2 Acceptance criteria live in amendment plans
+
+In loam, acceptance criteria for component builds and amendments live at
+`docs/plans/<name>.md`. The amendment plan IS the ODD brief for that
+scope. It contains the objective, constraints, and acceptance criteria.
+During build, the builder's obligation is to satisfy the plan's ACs,
+author tests named for them, and cite them in commit messages. The seal
+commits the plan as the definitive record.
+
+The "plan before code" discipline is non-negotiable: write the plan to
+`docs/plans/<name>.md` BEFORE touching source. Verify the plan exists and
+the outcome matches on completion.
+
+### 1A.3 Runtime probes use the A/B eval pattern
+
+Hard objectives (does the thing exist, run, produce output Y?) use direct
+probes against the criterion. Soft objectives (translation burden,
+toolkit additions) use A/B eval: loam-assisted session vs naked-Claude
+session, LLM-as-judge per rubric, named-axis judging per AC.
+
+The five operationalisation concerns (cost discipline, confounders,
+probe authoring via real transcripts, judge-bias mitigation,
+repeatability via `claude -p`) are specified in `odd-methodology.md`
+§10.2. This document does not duplicate them; it names the pattern as
+the operative probe for loam's prime-objective ACs.
 
 ---
 
@@ -1025,7 +1077,74 @@ parallel post-amendment #23; Class C — structurally serial).
 
 ---
 
-## 11. Where to go next
+## 11. The dev-mode partition — what ODD machinery is dev-only
+
+loam ships a two-mode partition that determines which corpus files are
+auto-loaded into any given session. The partition definition lives at
+`plugins/dev-sdlc/dev-mode-manifest.yaml`.
+
+### 11.1 What the partition does
+
+**NORMAL USE sessions** auto-load `always_loaded` entries only: the
+sealed Phase 1–4 component source trees, the framework's foundational
+docs, and the always-on design lenses. Normal-use contributors get
+enough context to operate loam correctly without the dev-cycle
+mechanics.
+
+**DEV MODE sessions** auto-load `always_loaded ∪ dev_only`: everything
+a normal session sees, plus the full ODD methodology corpus. The
+`dev_only` set contains the documentation, tooling, and methodology
+that governs how loam itself is built — none of it is needed by
+someone using loam to run their own workflows.
+
+The mode selector lives at `plugins/dev-sdlc/tools/loam-mode/`.
+
+### 11.2 What lives in dev_only (ODD-relevant)
+
+| Item | Why dev-only |
+|------|-------------|
+| `plugins/dev-sdlc/docs/odd-methodology.md` | The ODD how-to spec; needed by contributors building components, not by loam end-users. |
+| `plugins/dev-sdlc/docs/odd-in-loam.md` (this file) | The ODD bridge; same audience. |
+| `docs/STATE.md` | The tracker of in-flight builds and amendments. |
+| `docs/BACKLOG.md`, `docs/FUTURE_IDEAS.md` | Dev roadmap surfaces. |
+| `docs/plans/**` | Per-amendment ODD plans — proposal + AC sets. |
+| `docs/archive/component-research/**` | Per-component proposals + seal narratives. |
+| `plugins/dev-sdlc/tools/loam-amend/**` | The `loam amend` bookkeeping CLI. |
+| `plugins/dev-sdlc/tools/loam-mode/**` | The mode-selector itself. |
+| `CLAUDE.dev.md` | The dev-mode CLAUDE.md extension fragment (when present). |
+
+### 11.3 What ships in always_loaded
+
+The design-tier docs (`docs/design/odd.md`,
+`docs/design/principle-derivation-map.md`) are `always_loaded`.
+Normal-use contributors see the design rationale and the principle
+derivation map; they do not see the dev-cycle methodology manual.
+
+This means a user of loam encounters ODD as a system of values and
+structural constraints, not as a how-to manual. The how-to manual
+auto-loads only when the contributor is doing loam-development work.
+
+### 11.4 ODD compliance obligation for dev-only machinery
+
+The dev-mode partition itself was built under ODD. The partition
+acceptance criteria govern it:
+
+- **Disjoint sets.** `always_loaded ∩ dev_only` is empty.
+- **Resolvable references inside always_loaded.** Every path reference
+  inside an `always_loaded` artefact must resolve to another
+  `always_loaded` path or an external URL. (This is why this bridge
+  references `odd-methodology.md` without expecting it in a normal-use
+  corpus — the bridge itself is dev-only.)
+- **Coverage.** Every workspace-tree path under `roots` (after
+  excludes) is matched by exactly one partition set — no orphans, no
+  overlap.
+
+These are enforced structurally by the partition audit (in
+`plugins/dev-sdlc/tools/loam-mode/`), not by convention.
+
+---
+
+## 12. Where to go next
 
 - `odd-methodology.md` — the operational specification. When this doc and
   it disagree, it wins. Read it for definitions, the authoring order
@@ -1042,7 +1161,7 @@ parallel post-amendment #23; Class C — structurally serial).
 
 ---
 
-## 12. Closing
+## 13. Closing
 
 ODD is not a new idea — outcome-based delegation is older than software.
 What loam contributes is concrete operational discipline: the five-gate

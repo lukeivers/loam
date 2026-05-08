@@ -224,3 +224,25 @@ Per plan §Out-of-scope, this classification dispatch:
 - Foundation-revision-rebuild plan: `/Users/lukeivers/ivers-corp-pos-v2/docs/rebuild/plans/foundation-revision-rebuild.md` (defines FR.1/FR.2/FR.3 shape).
 - v0.7.0 roadmap entry: `/Users/lukeivers/ivers-corp-pos-v2/docs/release-roadmap.md` lines 271–315.
 - Leverage discipline: `/Users/lukeivers/ivers-corp-pos-v2/docs/leverage-discipline.md` (rubric for proposing promotion shape).
+
+---
+
+## §8 Closure note (added 2026-05-08 at v0.6.1 ship)
+
+Per Luke's R3 reframe (2026-05-08), the foundation-docs work shipped as **v0.6.1** (META-FRAMEWORK class patch) rather than as the `FR.1 + FR.2 + FR.3` amendment ladder originally proposed in §3. Plan-doc: `docs/plans/v0-6-1-foundation-docs-plan.md`. Manifest: `docs/plans/v0-6-1-foundation-docs.manifest.yaml`.
+
+**Disposition of the 9 forward-staging files:**
+
+- **`framework/CLAUDE.md`** (1.1 — NEEDS-MERGE): SHIPPED at v0.6.1. Lens 4 + Lens 5 already landed at canonical commit `5a0e63a` (2026-05-08 pre-v0.6.1). Lens 6 (M5) + Lens 7 (F2) added by v0.6.1.
+- **`framework/docs/rebuild/FUTURE_IDEAS_DRAFT.md`** (1.2 — NEEDS-RULING): out of v0.6.1 scope; FIDRAFT-discipline operates outside the build cycle. Defer per the original §1.2 recommendation (separate `docs(fidraft):` commit when the dispatcher next does FIDRAFT bookkeeping).
+- **`framework/framework/workspace-bootstrap/.../first_run_scaffold.py`** (1.3 — NEEDS-MERGE): **DROPPED from v0.6.1 per R4.** Stays fork-only in pos3. Revisit later as a separate scope question (see plan-doc §Constraints).
+- **`framework/framework/workspace-bootstrap/.../tests/test_F1a_principles_install_resolver.py`** (1.4 — NEEDS-PORT): **DROPPED from v0.6.1 per R4.** Stays fork-only in pos3. Pairs with 1.3.
+- **`framework/docs/design/principle-derivation-map.md`** (1.5 — NEEDS-PORT): SHIPPED at v0.6.1 → canonical `docs/design/principle-derivation-map.md`. Path resolved to canonical's existing `docs/design/` directory (canonical does NOT have `framework/docs/design/`). The CLAUDE.md Lens 4 + Lens 5 references corrected from `framework/docs/design/...` to `docs/design/...` to match the actual landing path.
+- **`framework/docs/principles/principles.md`** (1.6 — NEEDS-PORT): **DROPPED from v0.6.1 per R3 reframe.** Pos3's draft was treated as RESEARCH INPUT for an audit-and-gap-fill pass against existing canonical surfaces (CLAUDE.md, `plugins/dev-sdlc/docs/odd-methodology.md`, `docs/design/odd.md`, `~/.claude/projects/-Users-lukeivers-pos3/memory/`). Audit result: F4 + F3 already covered in CLAUDE.md Lens 4 + 5 (skipped); ODD-tier §§2.1–2.11 already covered in canonical odd-methodology.md §§1–13 + design/odd.md (skipped); operating-tier §§3.1–3.20 already covered by 43 memory feedback files (skipped); net gap-fill = M5 + F2 → CLAUDE.md as Lens 6 + 7. NO new `principles.md` or `odd-principles.md` file authored at canonical.
+- **`framework/plugins/dev-sdlc/docs/odd-in-loam.md`** (1.7 — NEEDS-MERGE): SHIPPED at v0.6.1 → canonical `plugins/dev-sdlc/docs/odd-in-loam.md`. Pos3's §1.1–1.3 three-explicit-mappings inserted as canonical §1A; pos3's §11 dev-mode-partition inserted as new canonical §11; canonical's existing §11/§12 renumbered §12/§13. Canonical §10 BASELINE convention v0.1.8/v0.2.3 adapter additions preserved intact.
+- **`framework/plugins/dev-sdlc/docs/odd-methodology.md`** (1.8 — NEEDS-MERGE): **DROPPED from v0.6.1.** Pos3's draft is STALE (missing canonical's v0.1.8/v0.2.3 adapter additions). Canonical version is correct as-is; no merge performed.
+- **`framework/docs/design/odd.md`** (1.9 — NEEDS-MERGE if any): canonical's `docs/design/odd.md` (281 lines) reviewed against pos3's draft (280 lines) during audit; substantively identical content with cosmetic reflow only. No merge required at v0.6.1.
+
+**Net classification outcome at v0.6.1 close:** 3 items SHIPPED (CLAUDE.md augment, odd-in-loam.md merge, principle-derivation-map.md port); 4 items DROPPED (1.3 + 1.4 fork-only per R4; 1.6 audit-and-gap-fill into existing surfaces per R3; 1.8 stale); 1 item DEFERRED (1.2 FIDRAFT entries for separate commit); 1 item NO-OP (1.9 substantively identical).
+
+**Audit-trail:** v0.6.1 SHIPPED entry inline in `docs/rebuild/STATE.md` (line 3); §2 Shipped table row in `docs/release-roadmap.md`; tag `v0.6.1` annotated, local-only (NOT pushed pending owner ruling). Plan-doc + manifest + apply + seal commits per the standard `loam amend apply` + `loam amend seal` cycle.

@@ -527,13 +527,61 @@ fabricating a remap is worse than dropping; (b) verify-stage
 strictness is the design contract; cascade is the parsing-layer
 concession, not a verify-layer relaxation.
 
+### D-build.2 — survey-resolver lazy-import in analyze.py
+
+`analyze_repo` lazy-imports `multi_source._read_user_survey` rather
+than top-level importing. Rationale: `multi_source.py` already
+imports the user-survey resolver via the same lazy-import pattern
+(survey-parser is in `framework/workspace-bootstrap/` which is a
+separate component); maintaining the lazy-import discipline avoids
+a hard dependency in the analyze stage. Best-effort never-block-on-
+parse-failure mirrors AC.ONBOARD.15 contract.
+
+### D-build.3 — `_walk_repo` signature additive change
+
+`_walk_repo(repo_path)` → `_walk_repo(repo_path, *, extra_skip_dir_names)`
+with default empty frozenset. Keyword-only argument with default
+preserves the AC.OREK.3 backward-compat surface. All existing
+callers (analyze_repo, fixture-loader callers) continue to work
+unchanged; the new caller in `analyze_repo` opts in.
+
 ### Test breakdown
 
-(placeholder — populated post-build)
+- AC.V025-1.1 (off-limits skip): 8 tests — 4 parser unit + 1 static-
+  list-extension + 1 const-presence + 2 integration (survey extra-
+  skip + malformed-survey fallback).
+- AC.V025-1.2 (synthesis-timeout): 5 tests — 2 ctor + 1 builder + 1
+  CLI parse + 1 help-text.
+- AC.V025-1.3 (cascade-drop): 4 tests — 1 cascade-drop + 1 multi-
+  serves-filter + 1 helper-non-dict-passthrough + 1 verify-strictness.
+- AC.V025-1.4 (rd-automation pipeline): 1 outcome-altitude integration
+  test — 4-stage pipeline + F-LEAK regression assertion + F-VERIFY-
+  ORPHAN regression assertion (skip-clean on missing claude / loam /
+  rd-automation).
+
+Net new tests: 18.
 
 ### Backwards-compat verification
 
-(placeholder — populated post-build)
+- All sealed-AC tests pass post-corrective. Pre-existing OSS_M6
+  collection errors + stochastic live-LLM failures verified non-
+  regressions against pre-corrective HEAD f480edc (fail with same
+  signature on the prior commit; not introduced by this corrective).
+- `_walk_repo` signature shift is backward-compatible (new kwarg has
+  default empty frozenset).
+- `build_default_synthesis_client(timeout_seconds=None)` matches
+  prior shape (None passes through to ctor default).
+- `--synthesis-timeout` flag is additive on the CLI surface.
+
+### Live verification — F-LEAK fix on rd-automation synthesis prompt
+
+Mid-build process inspection of the live `claude -p` argv for the
+rd-automation synthesis call confirmed ZERO occurrences of
+html-capture filenames (`01-login-page-*.html`), ZERO `public/uploads/`
+paths, ZERO `/logs/` paths, ZERO `test-results/` paths in the
+synthesis prompt. The single occurrence of "screenshots" in the
+prompt was narrative prose from the rd-automation README ("screenshots
+and logs"), not a filename leak. F-LEAK fix verified live.
 
 ### Commit SHAs
 

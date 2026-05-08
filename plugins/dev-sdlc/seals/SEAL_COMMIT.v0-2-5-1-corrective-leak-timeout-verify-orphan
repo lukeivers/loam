@@ -1,0 +1,11 @@
+# v0.2.5.1 corrective — closes the three production-path defects (F-LEAK + F-TIMEOUT + F-VERIFY-ORPHAN) surfaced by Eric's actual install of v0.2.5 against rd-automation; analyze step honors off-limits zones from user-survey §10 + extended default skip-list with html-captures/screenshots/html-output/test-results/coverage/playwright-report; --synthesis-timeout CLI flag threads through to the claude -p subprocess timeout; default raised 180s -> 600s; demotion-guard cascades to dependent capabilities (cascade-drop with multi-serves retention); outcome-altitude integration test against rd-automation real-world; 5 named ACs
+
+slug: v0-2-5-1-corrective-leak-timeout-verify-orphan
+components: dev-sdlc
+baseline: 371ac80
+amendment-commit: 8130058b320ef592b8b4b4f0ec84bb43ae1f5833
+plan-doc: docs/rebuild/plans/v0-2-5-1-corrective-leak-timeout-verify-orphan.md
+acs-satisfied: 5
+smoke: V025-1.1 analyze honors off-limits; V025-1.2 --synthesis-timeout + 600s default; V025-1.3 cascade-drop guards caps; V025-1.4 rd-automation GREEN; V025-1.5 no regressions
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

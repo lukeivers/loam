@@ -4,7 +4,7 @@ amendment:
   title: "v0.4.0 Cycle 3 — substrate composition: Routines + Code Review + Outcomes-pattern ADR; SKILL extension to plan-docs-author + 1 example plan-doc each (Routines / Code Review) + Outcomes ADR; folds C2 F2 finding (print-on-success len(diff.commits)) into existing C2 outcome-altitude test; closes AC.V040.2 + AC.V040.3 + AC.V040.5 per master-plan §3"
 
 # BASELINE captured at apply time; predecessor seal is C2 at f031c89c.
-baseline: "f031c89c"
+baseline: "7d7e2ee1"
 
 plan: docs/plans/v0-4-0-cycle-3-substrate-composition-routines-codereview-outcomes.md
 plan_doc_ref: docs/plans/v0-4-0-cycle-3-substrate-composition-routines-codereview-outcomes.md

@@ -4,7 +4,11 @@ This page is for contributors and harness builders working on loam
 itself — the framework, plugins, and methodology — rather than users
 running loam-attached projects. If you're a normal loam user, the
 non-dev [`getting-started.md`](getting-started.md) is the page you
-want; come back here only if you intend to extend loam.
+want; come back here only if you intend to extend loam. The
+[`glossary.md`](glossary.md) records the canonical definition of the
+recurring loam vocabulary (amend, seal, contract, objective, capability,
+banded AC, ratification, plus the loam-metaphor cluster) used across
+this guide and the rest of the dev-mode surface.
 
 dev-mode is a layered overlay on top of the standard loam workspace.
 It auto-loads an extra fragment of `CLAUDE.md` (the codebase-and-

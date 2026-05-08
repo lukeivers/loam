@@ -1,6 +1,6 @@
 # ODD — LLM context prime (lean)
 
-**Load before ODD-shaped tasks.** Verbose derivation: `docs/odd-llm-grounding-derivation.md`.
+**Load before ODD-shaped tasks.** Verbose derivation: `docs/odd-llm-grounding-derivation.md`. **Glossary** of the recurring ODD-cluster vocabulary (objective, capability, contract, banded AC, ratification): `docs/glossary.md`.
 
 ## Failure mode this prevents
 

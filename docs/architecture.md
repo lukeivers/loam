@@ -17,6 +17,14 @@ before reading on. The [Claude Code
 docs](https://docs.claude.com/en/docs/claude-code/overview) cover
 those primitives in depth.
 
+For the canonical definitions of the recurring vocabulary on this
+page (harness, primary persona, contract, objective, capability,
+substrate / seed / cultivar / growth) consult
+[`glossary.md`](glossary.md). This page is the authority source for
+"harness" and "primary persona"; the glossary cross-references back
+here. The remaining terms have their own authority docs and the
+glossary records them centrally.
+
 ---
 
 ## The one-line shape

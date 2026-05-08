@@ -3,7 +3,10 @@
 This page walks you from `git clone` to your first useful primary-
 persona session inside a Claude Code workspace. If you have not read
 [`positioning.md`](positioning.md) yet, skim it first to know whether
-loam is a fit; come back here when you decide to try it.
+loam is a fit; come back here when you decide to try it. For a single
+canonical reference of loam's recurring vocabulary (substrate, seed,
+cultivar, amend, seal, contract, objective, capability, banded AC,
+ratification, growth) consult [`glossary.md`](glossary.md).
 
 **Audience.** This guide assumes you use [Claude
 Code](https://docs.claude.com/en/docs/claude-code/) — Anthropic's

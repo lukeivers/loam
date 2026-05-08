@@ -128,5 +128,24 @@ Per master plan §6 cycle-altitude smoke. D1 n/a; D2 `grep -c "^## " docs/glossa
 | "harness" + "primary persona" | NOT in glossary; cross-referenced from "See also" | Master plan §3 Cycle 5 locks list at 11. Both terms have full-doc canonical definitions in `architecture.md` (`harness`) + `architecture.md` + `personas-methodology.md` (`primary persona`); glossary doesn't double-codify. |
 | Drift sweep scope | Targeted (entry-point cross-links + spot-check) | Bulk find-replace would burn ~50× more tool calls without tightening any AC; most existing "amend"/"seal" usages are correct technical usage. Master plan §3 Cycle 5 AI-time band 60–90 min would not accommodate bulk sweep. |
 | `loam amend apply` + `seal` | Used despite doc-only universal-admission | Plan-doc authoring discipline: every cycle uses the canonical commit ladder for traceability. Manifest carries no sealed-component fences (universal-admission only); apply + seal land empty manifests for the bookkeeping commit ladder. |
-| Apply SHA | (pending — backfilled at seal) | |
-| Seal SHA | (pending — backfilled at seal) | |
+| Apply SHA | `dddaf8d` | |
+| Seal SHA | `542b939` | |
+
+### Commit SHAs
+
+| Commit | Type | SHA |
+|---|---|---|
+| Plan-doc finalise | docs(plans) | `f3f2494` |
+| Source-edit (BASELINE) | docs(v0.3.0) | `9baa8b2` |
+| Manifest | docs(plans) | `f6ba6ee` |
+| Manifest smoke_outcome trim (corrective) | docs(plans) | `57bdb6e` |
+| Apply | chore(amend) | `dddaf8d` |
+| Seal | chore(seals) | `542b939` |
+| §14 backfill | docs(plans) | (this commit) |
+
+### F2 RF — halt-and-surface during build
+
+During the cycle build, **two halt triggers fired** and resolved without owner gate:
+
+1. **Manifest validator failure (smoke_outcome 261 chars > 200 limit).** Detected at `loam amend apply` time; manifest YAML rejected with field-length validation error. Resolution: trim smoke_outcome to ≤200 chars (194 chars final, slash-joined term list). Landed as a NEW corrective commit (`57bdb6e`) per `feedback_no_amend_in_agent_dispatches.md`, NOT a `git commit --amend` of the prior manifest commit.
+2. **`git commit --amend` violation.** During the smoke_outcome fix, an interim `git commit --amend` was used inadvertently before the no-amend rule fired in the persona's working memory. Resolution: `git reset --soft f6ba6ee` restored the original manifest commit (preserving its SHA in the audit trail), and the smoke_outcome fix re-landed as the NEW corrective commit `57bdb6e`. The amended commit (`bf4daff`) exists only in reflog and is not reachable from any branch tip; the audit trail through the canonical commit ladder is intact. Surfaced in the C5 build report.

@@ -1,0 +1,11 @@
+# v0.3.0 Cycle 6 — feature-honesty audit (docs/v0-3-0-feature-honesty-audit.md NEW; 7 CLI verbs / 16-component table / 4 hook surfaces audited; 3 docs-drift findings surfaced for owner ruling) + ODD-conformance allowlist (docs/odd-conformance-allowlist.md NEW; 18 framework/ components allowlisted with v0.7.0 structural-enforcement lift named) + claude-p MCP-isolation invariant (upgrade-merge-resolver gap closed; 2-test invariant suite mirrors workspace-sync) + F821 closures (TYPE_CHECKING guard in first_run_scaffold.py; 2 lines closed; 0 F821 across framework/ + plugins/) + outcome-altitude FBE.7 stranger-clone test (production-CLI altitude tempdir probe green; Docker-equivalent gap surfaced for owner-action-line)
+
+slug: v0-3-0-cycle-6-feature-honesty-audit-and-verification
+components: dev-sdlc
+baseline: 98f4e1c
+amendment-commit: f8beeaa525a1933a61287b6a892dbe60a56f95d6
+plan-doc: docs/plans/v0-3-0-cycle-6-feature-honesty-audit-and-verification.md
+acs-satisfied: 6
+smoke: audit cross-refs resolve; FBE.7 probe green; 3/3 claude-p sources carry --strict-mcp-config; ruff F821=0; ODD-allowlist 18 entries; tests primary-persona 397 + workspace-bootstrap 411 + UMR 2 pass
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

@@ -1,0 +1,11 @@
+# v0.3.0 Cycle 2 — graphiti rip-out (delete framework/memory-system/ entirely; 68 files); FBE.7 file-backed memory substrate is the v0.3.0 floor; verified operational via 20 named tests; zero edits to sealed workspace-bootstrap / primary-persona / self-upgrade components per FBE.7's prior dormancy decisions
+
+slug: v0-3-0-cycle-2-graphiti-ripout-and-fbe7
+components: dev-sdlc
+baseline: b92aaea
+amendment-commit: 39094ea4ffae7f48dff09d10c1d65cc60bd2ed1c
+plan-doc: docs/plans/v0-3-0-cycle-2-graphiti-ripout-and-fbe7.md
+acs-satisfied: 7
+smoke: find framework/memory-system -type f -> 0; pytest framework/primary-persona/tests -> 544 passed; 20 FBE.7-verification tests green; no new failures
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

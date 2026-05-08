@@ -1,0 +1,11 @@
+# v0.3.0 Cycle 7 — release-level smoke gate + STATE.md SHIPPED rollup. UPDATE: docs/release-roadmap.md (§3 v0.3.0 → §2 collapse with per-cycle apply + seal SHAs; §3 collapsed to one-line pointer to v0.4.0 in §4). UPDATE: docs/STATE.md (§1 narrative paragraph append — v0.3.0 SHIPPED rollup with per-cycle seal anchors + smoke verdict + claude-p invariant + FBE.7 stranger-clone owner-action-line + ODD-conformance allowlist + tests-green per-cycle counts + tag-push/release/push owner-action-separate framing). UPDATE: docs/plans/v0-3-0-master-plan.md §11 SHA register (C6.1 row added; C7 row pending-at-seal). UPDATE: docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md §14 (8 method-decisions recorded: cycle-count framing, tests-green aggregation, smoke-verdict format, STATE.md row format, release-roadmap §3 collapse shape, C7 SHA backfill timing, HARD-HALT-before-public-actions). Doc-only cycle; bookkeeping owner: dev-sdlc (cross-cutting; same precedent as C1–C6.1).
+
+slug: v0-3-0-cycle-7-release-level-smoke-gate-and-ship
+components: dev-sdlc
+baseline: 7892818
+amendment-commit: d849aee1248ac16c62ddf77994db98088b339383
+plan-doc: docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md
+acs-satisfied: 7
+smoke: v0.3.0 ships feature-honesty-clean: rd-automation extraction GREEN (rc=0); FBE.7 PASS-WITH-OWNER-ACTION for Docker; claude -p invariant 3/3; §2 + STATE.md + §11 resolve to same SHAs
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

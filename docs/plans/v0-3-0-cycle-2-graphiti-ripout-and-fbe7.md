@@ -160,12 +160,10 @@ Master plan §3 Cycle 2; release-roadmap §3 v0.3.0 AC.V030.2 + AC.V030.3; FBE.7
 
 ### Commit SHAs
 
-Backfilled post-seal.
-
 | Commit | SHA | Description |
 |---|---|---|
-| 1 — plan-doc expand | `(pending)` | `docs(plans): v0.3.0 Cycle 2 — expand stub to sub-plan-doc` |
-| 2 — source-edit (BASELINE; rip-out) | `(pending)` | `chore(v0.3.0): Cycle 2 — delete framework/memory-system/ (graphiti rip-out)` |
-| 3 — manifest | `(pending)` | `docs(plans): v0.3.0 Cycle 2 — manifest YAML` |
-| 4 — apply auto-commit | `(pending)` | `chore(amend): v0-3-0-cycle-2-graphiti-ripout-and-fbe7 manifest+apply — dev-sdlc BASELINE+sidecar bump` |
-| 5 — seal | `(pending)` | `chore(seals): v0-3-0-cycle-2-graphiti-ripout-and-fbe7 — dev-sdlc at <apply-sha>` |
+| 1 — plan-doc expand | `08ac5a0` | `docs(plans): v0.3.0 Cycle 2 — expand stub to sub-plan-doc` |
+| 2 — source-edit (BASELINE; rip-out) | `b92aaea` | `chore(v0.3.0): Cycle 2 — delete framework/memory-system/ (graphiti rip-out)` |
+| 3 — manifest | `3ce13cc` | `docs(plans): v0.3.0 Cycle 2 — manifest YAML` |
+| 4 — apply auto-commit | `39094ea` | `chore(amend): v0-3-0-cycle-2-graphiti-ripout-and-fbe7 manifest+apply — dev-sdlc BASELINE+sidecar bump to b92aaea` |
+| 5 — seal | `013553e` | `chore(seals): v0-3-0-cycle-2-graphiti-ripout-and-fbe7 — dev-sdlc at 39094ea` |

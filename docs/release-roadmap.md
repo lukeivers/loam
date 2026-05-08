@@ -502,6 +502,7 @@ These items are real work but do not name a version's outcome shape. They live h
 | **Public-remote tag pushes** | Each minor's tag push is owner-gated. v0.2.1 / v0.2.2 / v0.2.3 / v0.2.4 / v0.1.7 / v0.1.8 / v0.1.9 / v0.2.0 currently sit as local releases per their respective STATE.md entries. | Tag push is a per-minor owner action, not a roadmap line. The roadmap names what each minor delivers; the policy doc names tag dance shape. |
 | **GitHub Releases marked --latest** | Per `docs/release-versioning-policy.md` §Tagging. | Per-minor; not a roadmap line. |
 | **Dispatcher-side smoke verifications** | Some ACs (V025.4 outcome-altitude, V025.5 telegram-MCP isolation outcome-altitude) require parent-session verification not visible from sub-agents. | Per-minor; documented in each minor's plan-doc. |
+| **Docker-equivalent / fresh-machine FBE.7 stranger-clone verification** | v0.3.0 Cycle 6 audit (`docs/v0-3-0-feature-honesty-audit.md` §4 + §9.3) closed production-CLI altitude via `framework/primary-persona/tests/test_AC_FHA_6_stranger_clone_fbe7_outcome.py`; cross-process / fresh-install / fresh-user-account altitude verification still pending. Trigger: owner brings Docker Desktop up OR runs probe on a fresh machine. | On positive verdict, AC.FHA.2 lifts from PASS-WITH-OWNER-ACTION-LINE to PASS; on negative verdict, in-cycle fix triggers at the version then active. |
 
 ---
 

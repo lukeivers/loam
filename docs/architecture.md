@@ -110,9 +110,9 @@ yours.
 
 ---
 
-## The 15 runtime components
+## The 18 runtime components
 
-The harness ships fifteen Python components. Each has a stable
+The harness ships eighteen Python components. Each has a stable
 package name (`loam.<component>`), a per-component CLI where it
 makes sense, an OTel emission surface, and a per-component
 reference page under [`components/`](components/).
@@ -122,10 +122,15 @@ The full list, grouped by role:
 | Group | Components |
 |-------|------------|
 | **User-facing surface** | [`primary-persona`](components/primary-persona.md), [`telegram-interface`](components/telegram-interface.md) |
-| **Composition + lifecycle** | [`workspace-bootstrap`](components/workspace-bootstrap.md), [`hands-off-lifecycle`](components/hands-off-lifecycle.md), [`workspace-sync`](components/workspace-sync.md), [`self-upgrade`](components/self-upgrade.md), [`orchestrator`](components/orchestrator.md) |
+| **Composition + lifecycle** | [`workspace-bootstrap`](components/workspace-bootstrap.md), [`loam-init`](components/loam-init.md), [`hands-off-lifecycle`](components/hands-off-lifecycle.md), [`workspace-sync`](components/workspace-sync.md), [`self-upgrade`](components/self-upgrade.md), [`orchestrator`](components/orchestrator.md) |
 | **Safety + governance** | [`safety-layer`](components/safety-layer.md), [`cost-governance`](components/cost-governance.md), [`reversibility-primitive`](components/reversibility-primitive.md), [`self-correction`](components/self-correction.md), [`dormancy`](components/dormancy.md) |
 | **Memory + observability** | [`memory`](components/memory.md), [`observability-aggregator`](components/observability-aggregator.md) |
-| **Work tracking** | [`scope-of-work`](components/scope-of-work.md), [`objective-tracker`](components/objective-tracker.md) |
+| **Work tracking** | [`scope-of-work`](components/scope-of-work.md), [`objective-tracker`](components/objective-tracker.md), [`per-project-pm`](components/per-project-pm.md) |
+
+The `memory` component's implementation lives inside
+`framework/primary-persona/`; there is no standalone
+`framework/memory/` directory. See
+[`components/memory.md`](components/memory.md) for the rationale.
 
 A summary table with the one-line "what it does" for each lives at
 [`components/index.md`](components/index.md).

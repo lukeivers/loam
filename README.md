@@ -73,7 +73,7 @@ runs surface what needs attention without you opening a terminal.
 
 ## What ships in v0.1.0
 
-Fifteen runtime components plus the Dev/SDLC plugin. Highlights:
+Eighteen runtime components plus the Dev/SDLC plugin. Highlights:
 
 | Component | Role |
 |-----------|------|
@@ -90,7 +90,7 @@ Fifteen runtime components plus the Dev/SDLC plugin. Highlights:
 
 The full architecture map lives at
 [`docs/architecture.md`](docs/architecture.md); per-component
-references for all fifteen live under
+references for all eighteen live under
 [`docs/components/`](docs/components/).
 
 ## Design lenses

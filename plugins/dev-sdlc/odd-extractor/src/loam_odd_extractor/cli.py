@@ -430,6 +430,8 @@ def _cmd_dispatch(args: argparse.Namespace) -> int:
         return _cmd_gaps(args)
     if getattr(args, "build_next", False):
         return _cmd_build_next(args)
+    if getattr(args, "code_gen", False):
+        return _cmd_code_gen(args)
     return _cmd_extract(args)
 
 
@@ -858,6 +860,86 @@ def _cmd_build_next(args: argparse.Namespace) -> int:
         return _EXIT_ERR
 
 
+def _cmd_code_gen(args: argparse.Namespace) -> int:
+    """Handle ``loam odd-extract <repo> --code-gen``.
+
+    Per v0.4.0 Cycle 1 AC.V040C1.{1,2,3} — runs the code-gen-from-
+    objectives pipeline against the prior extraction's
+    augmented-objectives.yaml + gap-inventory.yaml + build-next.yaml.
+    Persists ``<extraction_dir>/code-gen/{diff.patch,manifest.json}``
+    where each commit carries an ``objectives:`` block per amendment
+    #38 ``LiftedFrom`` schema.
+
+    Production wiring routes through
+    :class:`claude_print_synthesis_client.ClaudePrintSynthesisClient`
+    (subscription-only via ``claude -p`` subprocess; NO Anthropic
+    SDK, NO ``ANTHROPIC_API_KEY``). Cycle-1 tests inject a duck-typed
+    stub matching the ``messages.create(...)`` shape.
+
+    Halts with exit code 2 + actionable message when any predecessor
+    artefact is missing.
+    """
+    try:
+        repo_path = _resolve_repo_path(args.repo_path)
+        workspace_root = _resolve_workspace_root(args.workspace_root, repo_path)
+        repo_id = compute_repo_id(repo_path)
+        ext_dir = extraction_dir(workspace_root, repo_id)
+        if not ext_dir.exists():
+            raise OddExtractorError(
+                f"no prior extraction at {ext_dir} — run "
+                "`loam odd-extract <repo> --build-next` first to "
+                "produce build-next.yaml."
+            )
+
+        # Construct production LLM client (subscription-only).
+        from .claude_print_synthesis_client import (
+            ClaudePrintAnthropicShimClient,
+        )
+        from .code_gen import generate_code, persist_diff
+
+        client = ClaudePrintAnthropicShimClient()
+
+        diff = generate_code(
+            ext_dir,
+            selected_candidate_gap_id=getattr(args, "candidate_gap_id", None),
+            llm_client=client,
+        )
+        manifest_path = persist_diff(diff, ext_dir)
+
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "extraction_id": repo_id,
+                        "code_gen_manifest_path": str(manifest_path),
+                        "commit_count": len(diff.commits),
+                        "selected_candidate_gap_id": diff.request.selected_candidate_gap_id,
+                    },
+                    indent=2,
+                )
+            )
+        else:
+            print(
+                f"loam odd-extract --code-gen: produced "
+                f"{len(diff.commits)} commit(s) at {manifest_path}"
+            )
+            print(
+                f"Selected candidate: "
+                f"{diff.request.selected_candidate_gap_id}"
+            )
+            print(
+                "Each commit carries an `objectives:` block "
+                "(amendment #38 LiftedFrom schema). v0.4.0 Cycle 1 "
+                "ships SOFT-altitude smoke; outcome-altitude "
+                "verification against real codebase fixture lands "
+                "in C2."
+            )
+        return _EXIT_OK
+    except OddExtractorError as exc:
+        print(f"loam odd-extract --code-gen: {exc}", file=sys.stderr)
+        return _EXIT_ERR
+
+
 def _cmd_incremental(args: argparse.Namespace) -> int:
     """Handle ``loam odd-extract <repo> --incremental``.
 
@@ -1272,6 +1354,35 @@ def build_odd_extract_subcommand(
         help=(
             "(--build-next) cap the ranked candidate list at top-N. "
             f"Default {10}. Per AC.BLDNXT.5."
+        ),
+    )
+    # AC.V040C1.1 — code-gen flag. v0.4.0 Cycle 1.
+    odd_parser.add_argument(
+        "--code-gen",
+        action="store_true",
+        dest="code_gen",
+        help=(
+            "v0.4.0 Cycle 1 — code-gen-from-objectives. Loads "
+            "<workspace>/.loam/extractions/<repo-id>/{augmented-"
+            "objectives,gap-inventory,build-next}.yaml + selects a "
+            "build-next candidate; produces a unified diff (or "
+            "branch) at <workspace>/.loam/extractions/<repo-id>/"
+            "code-gen/{diff.patch,manifest.json} where each commit "
+            "carries an `objectives:` block per amendment #38 "
+            "lifted_from schema. Production wiring routes through "
+            "claude_print_synthesis_client (subscription-only via "
+            "claude -p subprocess); tests inject a stub. Per "
+            "AC.V040C1.{1,2,3}."
+        ),
+    )
+    odd_parser.add_argument(
+        "--candidate",
+        type=str,
+        default=None,
+        dest="candidate_gap_id",
+        help=(
+            "(--code-gen) select a build-next candidate by gap_id. "
+            "Default: highest-ranked candidate in build-next.yaml."
         ),
     )
     # AC.WATCH.6 — invocation-source flag. v0.2.0 Cycle 1.

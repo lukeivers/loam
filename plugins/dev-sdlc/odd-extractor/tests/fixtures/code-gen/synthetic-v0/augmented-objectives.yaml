@@ -1,0 +1,22 @@
+# Code-gen synthetic-v0 fixture (cycle-1 SOFT smoke).
+# 1 objective, 1 gap, 1 build-next candidate. Single-commit case.
+# Used by tests/test_AC_V040C1_3_soft_smoke_synthetic.py.
+schema_version: 1
+extraction_id: code-gen-synthetic-v0
+augmented_at: "2026-05-08T12:00:00+00:00"
+interview_audit_path: "/tmp/code-gen-synthetic-audit"
+objectives:
+  - objective_id: "O.greeting.1"
+    text: "Operators receive a greeting message when invoking the CLI's hello subcommand."
+    confidence: PLAUSIBLE
+    domain: "cli-ux"
+    source: "extracted"
+    evidence:
+      readme_excerpts:
+        - "README: `mytool hello` prints a greeting."
+      design_doc_refs: []
+      test_name_refs: []
+      survey_line_refs: []
+      code_pattern_refs: []
+      repo_sha: null
+      rationale: null

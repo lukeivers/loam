@@ -1,0 +1,18 @@
+# Code-gen synthetic-v0 fixture: one STRONG backing-gap to drive code-gen.
+schema_version: 1
+extraction_id: code-gen-synthetic-v0
+analyzed_at: "2026-05-08T12:00:00+00:00"
+audit_path: "/tmp/code-gen-synthetic-audit"
+gaps:
+  - gap_id: "G.BACKING.o-greeting-1"
+    category: "objective_without_verified_backing"
+    confidence: "STRONG"
+    objective_id: "O.greeting.1"
+    evidence_rows: []
+    rationale: "Objective O.greeting.1 (PLAUSIBLE) flagged as backing gap — no implementation evidence rows for the hello subcommand greeting; CLI handler is missing."
+summary:
+  category_a_count: 1
+  category_b_count: 0
+  strong_count: 1
+  weak_count: 0
+  total: 1

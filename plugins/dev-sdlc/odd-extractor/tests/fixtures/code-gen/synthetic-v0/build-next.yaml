@@ -1,0 +1,20 @@
+# Code-gen synthetic-v0 fixture: one ranked candidate.
+# composite_score = gap_confidence_factor * priority_match_factor * estimated_impact_factor
+#                 = 1.0 * 1.0 * 0.85 = 0.85
+schema_version: 1
+extraction_id: code-gen-synthetic-v0
+analyzed_at: "2026-05-08T12:00:00+00:00"
+audit_path: "/tmp/code-gen-synthetic-audit"
+degenerate_survey: false
+candidates:
+  - gap_id: "G.BACKING.o-greeting-1"
+    composite_score: 0.85
+    gap_confidence_factor: 1.0
+    priority_match_factor: 1.0
+    estimated_impact_factor: 0.85
+    priority_match_signal: "keyword"
+    category: "objective_without_verified_backing"
+    objective_id: "O.greeting.1"
+    rationale: "STRONG backing gap; objective surface (CLI greeting) is well-bounded; small-impact category; no LLM-judge invoked at synthetic-fixture time."
+truncated_count: 0
+llm_judge_invocations: 0

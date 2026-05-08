@@ -1,0 +1,36 @@
+---
+schema_version: 3
+amendment:
+  slug: v0-4-0-cycle-1-code-gen-from-objectives-core
+  title: "v0.4.0 Cycle 1 — code-gen-from-objectives core (SOFT smoke vs synthetic fixture); new code_gen.py + code_gen_spec.py modules + --code-gen CLI flag on `loam odd-extract`; per-commit objectives: block per amendment #38 LiftedFrom schema; outcome-altitude AC.V040C1.5 deferred to C2 against jsts-playwright-app real fixture per master-plan §3 split rationale"
+
+# BASELINE captured at apply time; predecessor commit is v0.3.0.1
+# patch chain seal `8569b727`. Any source-edit commits this dispatch
+# lands sit between the predecessor seal and the apply commit.
+baseline: "<captured-at-apply>"
+
+plan: docs/plans/v0-4-0-cycle-1-code-gen-from-objectives-core.md
+plan_doc_ref: docs/plans/v0-4-0-cycle-1-code-gen-from-objectives-core.md
+
+ac_count: 5
+smoke_outcome: "SOFT-altitude smoke vs synthetic fixture: AC.V040C1.{1,2,3,4} green (25 new tests pass); AC.V040C1.S verified at seal time; AC.V040C1.5 outcome-altitude DEFERRED to C2"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-4-0-cycle-1-code-gen-from-objectives-core

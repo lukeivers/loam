@@ -1,0 +1,54 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-1-patch-chain-ux-and-doc-gap-fill
+  title: "v0.3.0.1 PATCH — workflow chain UX hints + doc gap-fill (Eric drop-off fix). UPDATE: plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/cli.py (4 success-path next-step pointers + dry-run AC=0 hint). NEW: plugins/dev-sdlc/odd-extractor/tests/test_AC_V031_chain_ux.py (5 tests; AC.V031.{1,2,3,4,8,9}). UPDATE: README.md + docs/getting-started.md + docs/dev-mode-getting-started.md (Workflow chain sections + getting-started Q4 follow-on). NEW: docs/plans/v0-3-0-1-patch-chain-ux-and-doc-gap-fill.md (plan-doc). Closes Eric Telegram 10375 dropoff report. Path C (SKILL persona-pull) deferred to v0.4.0 per LOCKED-DESIGN-NOT-LICENSE. AC.V031.7 verified-as-shipped (project verbs registered via entry-point group). Bundle (c) audit-altitude gap deferred to v0.4.0 per dispatcher brief."
+
+# BASELINE: a137906c — the source-edit commit (cli.py + tests + 3
+# user-facing docs + plan-doc).
+#
+# Commit ladder:
+#   a137906c — feat(v0.3.0.1): chain UX hints + doc gap-fill (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§7 method-decisions backfill commit lands last>
+#
+# Bookkeeping owner per v0.3.0 cycle precedent: dev-sdlc.
+# frozen_baseline: false because cli.py IS sealed-component code
+# under dev-sdlc/odd-extractor — bundle (b) edits cli.py directly.
+
+baseline: "a137906c"
+
+plan: docs/plans/v0-3-0-1-patch-chain-ux-and-doc-gap-fill.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-3-0-1-patch-chain-ux-and-doc-gap-fill.md
+
+ac_count: 9
+smoke_outcome: "5/5 V031 tests pass; 19/19 existing CLI tests green; cold-run extract surfaces Next: pointer + Dry-run --live hint on AC=0; chain stdout-grep matches at every stage"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false  # cli.py IS sealed-component code
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# Edits cross root (README.md), docs/, plugins/dev-sdlc/.
+universal_paths:
+  prefixes:
+    - docs/
+    - plugins/dev-sdlc/
+  files:
+    - README.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-1-patch-chain-ux-and-doc-gap-fill
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

@@ -133,6 +133,7 @@ def test_only_dev_sdlc_changed() -> None:
         "framework/per-project-pm/",
         "framework/",
         "plugins/",
+        "docs/plans/",
     )
     allowed_files: set[str] = {
         "CLAUDE.dev.md",

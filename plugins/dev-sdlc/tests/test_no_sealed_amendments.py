@@ -131,6 +131,8 @@ def test_only_dev_sdlc_changed() -> None:
         "telegram-interface/",
         "workspace-sync/",
         "framework/per-project-pm/",
+        "framework/",
+        "plugins/",
     )
     allowed_files: set[str] = {
         "CLAUDE.dev.md",

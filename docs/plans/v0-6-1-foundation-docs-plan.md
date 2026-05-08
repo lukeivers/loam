@@ -67,3 +67,57 @@ Build report at `<workspace>/.scratch/claude-output/v0-6-1-build-report.md`. Rep
 ## Halt-and-surface
 
 WD mismatch. Authority docs missing. The pos3 principles.md content is so substantively different from existing ODD doc framing that gap-filling would distort canonical voice — surface for owner ruling. The principle-derivation-map.md port reveals canonical doesn't have a `framework/docs/design/` directory — surface for path resolution. Push or tag-push attempt. Any modification to canonical files outside the named scope.
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+### D-1 — Path resolution for `principle-derivation-map.md`
+
+**Decision:** landed at `docs/design/principle-derivation-map.md` (canonical's existing `docs/design/` directory) rather than at the pos3-source path `framework/docs/design/principle-derivation-map.md`. Canonical does not have a `framework/docs/` directory; the pos3 path was authored against a forward-looking layout that fits the v0.3.0 directory rename.
+
+**Halt-and-surface trigger fired** per plan-doc §70 ("canonical doesn't have `framework/docs/design/` (the principle-derivation-map.md target path)") — auto-resolved per F4 + F2: confidence in the correct landing path was high (canonical's `docs/design/` is the only existing peer surface), and the dangling `framework/docs/design/...` references in CLAUDE.md Lens 4 + Lens 5 (which were pointing at a non-existent path) were corrected to match the actual landing path. Both edits are in scope per AC.V061.3 (CLAUDE.md gap-fill).
+
+### D-2 — Audit-result for the pos3 principles.md gap-fill (AC.V061.3)
+
+**Decision:** of the 33 sections in pos3's `framework/docs/principles/principles.md` draft, only §1.2 (M5) and §1.F2 (Ruthless Feedback) required gap-fill into existing canonical surfaces. The remaining 31 sections were already covered:
+
+- **§1.1 F4 (scope-confidence)** — already in canonical CLAUDE.md Lens 4. SKIP.
+- **§1.3 F3 (Swarming)** — already in canonical CLAUDE.md Lens 5. SKIP.
+- **§§2.1–2.11 (ODD principles, 11 sections)** — already in canonical `plugins/dev-sdlc/docs/odd-methodology.md` §§1–13 + `docs/design/odd.md`. SKIP per R3 reframe.
+- **§§3.1–3.20 (operating principles, 20 sections)** — already covered by 43 memory feedback files at `~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_*.md`. SKIP per R3 reframe (feedback files are the operative surface for operating-tier rules; auto-loaded as the global memory layer at every session-start).
+
+**Net gap-fill:** §1.2 (M5) + §1.F2 (F2) → CLAUDE.md as Lens 6 + Lens 7. Method-decision rationale: CLAUDE.md is the named target per AC.V061.3, already carries Lens 4 + Lens 5 referencing M5/F4/F3, and the foundational principles in pos3 §1.x map cleanly onto the existing Lens shape. Adding M5 + F2 as Lens 6 + 7 completes the "all foundation principles named in CLAUDE.md" coverage with zero structural change.
+
+Per R3 reframe: NO new `principles.md` or `odd-principles.md` file authored at canonical.
+
+### D-3 — odd-in-loam.md merge shape (AC.V061.2)
+
+**Decision:** rather than a wholesale replacement of canonical's odd-in-loam.md with pos3's draft, the merge inserts pos3's net-new content as additive sections:
+
+- Pos3 §1.1–1.3 "Three explicit mappings" → new canonical **§1A** (between existing §1 Orientation and §2 five-gate-chain).
+- Pos3 §11 "The dev-mode partition" + 4 sub-sections → new canonical **§11** (between existing §10 BASELINE convention and existing §11 Where to go next; existing §11 + §12 renumbered §12 + §13).
+
+**Rationale:** pos3's draft is shorter (731 lines vs canonical's 1058) because it dropped canonical's §10 BASELINE convention (v0.1.8/v0.2.3 adapter additions). Per the plan-doc constraint "Pos3's `odd-methodology.md` draft is STALE", treating pos3's odd-in-loam.md as a wholesale replacement would have lost the §10 content. The additive-merge shape preserves all canonical content + adds pos3's net-new mappings + dev-mode-partition section.
+
+### Test breakdown
+
+This is a doc-only amendment. No source code edits, no new tests authored, no test sweep required beyond the `loam amend seal` finalize step (which ran the standard component-touched + cross-component sweep on `dev-sdlc`).
+
+### Backwards-compat verification
+
+- `docs/design/principle-derivation-map.md` is NEW; no prior version to break.
+- `plugins/dev-sdlc/docs/odd-in-loam.md` merge is purely additive: existing §1–§10 unchanged in body; existing §11 + §12 renumbered to §12 + §13 (pure section-number shift). Any cross-document reference to §10 or below is unaffected; references to §11 + §12 in other docs may need updating in a future cycle.
+- `CLAUDE.md` Lens 4 + Lens 5 had dangling `framework/docs/design/principle-derivation-map.md` references corrected to `docs/design/principle-derivation-map.md`. The forward-looking path was authored before the actual landing; the correction makes the references resolve.
+- `docs/rebuild/STATE.md` + `docs/release-roadmap.md` + `docs/plans/research/pos3-forward-staging-promotion-classification.md` edits are purely additive (new entries appended at end of existing structures).
+
+### Commit SHAs
+
+- `ce379da` — feat source-edit (BASELINE): foundation-docs gap-fill across 6 files (CLAUDE.md, docs/design/principle-derivation-map.md NEW, docs/plans/research/pos3-forward-staging-promotion-classification.md, docs/rebuild/STATE.md, docs/release-roadmap.md, plugins/dev-sdlc/docs/odd-in-loam.md).
+- `9af9a6b` — docs(plans): plan-doc + amendment manifest (v0-6-1-foundation-docs-plan.md + v0-6-1-foundation-docs.manifest.yaml).
+- `0c03367` — docs(plans): manifest smoke_outcome trim (261 → 158 chars; schema-bound fix surfaced by `loam amend apply --dry-run`).
+- `b2f6c0b` — chore(amend): `loam amend apply` auto-commit; advances dev-sdlc BASELINE + SEAL_COMMIT sidecar to `ce379da`; widens dev-sdlc allowed_prefixes (docs/design/, docs/plans/, docs/plans/research/) + allowed_files (docs/release-roadmap.md, plugins/dev-sdlc/docs/odd-in-loam.md).
+- `b8d20b6` — chore(seals): `loam amend seal` deterministic seal commit; sealed at amendment apply commit `b2f6c0b`; HALT-ed on §14-missing finalize stage per AC.D-sa.7 (operator §14 backfill follows in this commit).
+
+NEW commits only; no `--amend` deviations across the cycle (C5 lesson honored).
+

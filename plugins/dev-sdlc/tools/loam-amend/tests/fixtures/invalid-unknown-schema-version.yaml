@@ -4,7 +4,7 @@ amendment:
   slug: test-bad-schema
   title: "test: bad schema"
 baseline: abcdef0
-plan: docs/rebuild/plans/bad.md
+plan: docs/plans/bad.md
 components:
   - name: example
     seal_test: example/tests/test.py

@@ -22,7 +22,7 @@ contributor causing a ``AdditionalContextCapExceededError``.
 
 Maps to: primary-persona context-composer cap-guard surface → AC.PO.1.
 
-Plan: docs/rebuild/plans/amendment-40-primary-persona-tracker-context-contributor.md
+Plan: docs/plans/amendment-40-primary-persona-tracker-context-contributor.md
 """
 
 from __future__ import annotations

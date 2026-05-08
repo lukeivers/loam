@@ -1,0 +1,364 @@
+schema_version: 1
+amendment:
+  number: 102
+  slug: oss-v0-1-0-publish-public-docs-classes-abc-prime
+  title: "C2-prime — Class C 21 RW + 6 SUB/MIXED production-file remediation + M9 SUBSTITUTION_TABLE +8 entries (M11a-2 AC.M11a.2 foldback, post-C2-bis)"
+
+# BASELINE: 79b445e — HEAD post-feature commit + STRIP-comment
+# corrective. The feature-bundled commit (0eca50d) introduced 27
+# files of per-component edits + the M9 SUBSTITUTION_TABLE +8
+# extension. The STRIP-comment corrective (79b445e) cleaned up a
+# residual ``docs/FUTURE_IDEAS.md`` literal that landed in
+# a STRIP-explanation comment in session_start_gate.py.
+#
+# Multi-component sealed fence: 7 framework components +
+# pos-publish-framework-only admitted via universal-paths. Each
+# component's sealed-amendment test anchors its sidecar advance.
+baseline: 79b445e
+
+plan: docs/plans/oss-v0-1-0-publish-public-docs-classes-abc-prime.md
+
+# Seven sealed components touched by per-file edits + admissions
+# for cross-component edits via extra_allowed_prefixes. The
+# pos-publish-framework-only TABLE extension is admitted via
+# universal_paths.prefixes (M2 partition manifest convention from
+# C2-bis + M-FBM precedent — tools-tree edits don't carry a
+# sealed-component anchor of their own).
+components:
+  - name: hands-off-lifecycle
+    # H19 frozen-baseline pinned at project-start per amendment #23.
+    # HOL uses test_cross_cutting.py as its sealed-amendment anchor
+    # (per M7-partition-fix + C2-bis precedent — HOL has no
+    # test_no_sealed_amendments.py).
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes:
+      - framework/dormancy/
+      - framework/orchestrator/
+      - framework/primary-persona/
+      - framework/safety-layer/
+      - framework/workspace-bootstrap/
+      - framework/workspace-sync/
+      - framework/tools/pos-publish-framework-only/
+
+  - name: dormancy
+    seal_test: framework/dormancy/tests/test_no_sealed_amendments.py
+    sidecar: framework/dormancy/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: orchestrator
+    seal_test: framework/orchestrator/tests/test_no_sealed_amendments.py
+    sidecar: framework/orchestrator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: safety-layer
+    seal_test: framework/safety-layer/tests/test_no_sealed_amendments.py
+    sidecar: framework/safety-layer/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: workspace-sync
+    seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# - docs/plans/ admits the plan-doc + manifest + §14 SHA
+#   backfill commit.
+# - framework/tools/pos-publish-framework-only/ admits the M9
+#   SUBSTITUTION_TABLE extension + the test rebaselines (size 4 →
+#   12 + dev_only post-C2-bis negative-control rebase). Per
+#   amendment-#22 ruling #3 + C2-bis + M7-partition-fix +
+#   M-FBM precedent.
+# - docs/CLAUDE_CAPABILITIES.md is the top-level capability
+#   reference doc; admitted as a universal file (file 2 of §5.4 —
+#   the 6 RW edits there).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/tools/pos-publish-framework-only/
+    # safety-layer's seal_test (test_no_sealed_amendments.py) has no
+    # allowed_prefixes / allowed_files / allowed binding — it's a
+    # purely structural integration test. Admit safety-layer's whole
+    # tree via universal-paths so the seal-cycle's SEAL_COMMIT
+    # sidecar bump is admitted on safety-layer side. (The H19
+    # cross-cutting test in HOL already admits "safety-layer" as a
+    # top-level prefix; this universal-path entry is the loam-amend-
+    # dry-run-side mirror.)
+    - framework/safety-layer/
+  files:
+    - CLAUDE.md
+    - docs/CLAUDE_CAPABILITIES.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/tests/SEAL_COMMIT.notes
+  body: |
+    # C2-prime — Class C 21 RW + 6 SUB/MIXED production-file remediation
+
+    2026-05-02. Foldback for M11a dispatch-2 halt at AC.M11a.2
+    (AC.OSS.3 literal-match grep on production-source Class C
+    residuals; post-C1 + post-C2-bis the remaining surface was the
+    27-file production-source Class C population enumerated in the
+    C2-prime sub-plan §5.4).
+
+    Source surfaces (audit trail):
+
+      - C1+C2 combined sub-plan at `docs/plans/
+        oss-v0-1-0-publish-public-docs-classes-abc.md` (§14
+        D-build.ABC-C2.HALT narrative; superseded by C2-prime for
+        the C2 portion only — C1 sealed `e2cbeec` retained).
+      - C2 halt-and-surface report at `<workspace>/.scratch/
+        claude-output/oss-v0-1-0-publish-classes-abc-c2-halt.md`.
+      - C2-bis sub-plan (test-fence partition extension; sealed
+        `990e95c`).
+      - C2-prime sub-plan at `docs/plans/oss-v0-1-0-publish-
+        public-docs-classes-abc-prime.md`.
+
+    All four §11 D-Q.ABC-prime decisions ruled to plan recommendations
+    per autonomy directive (each had structural grounding +
+    reversibility):
+
+      - D-Q.ABC-prime.1 — per-file shape overrides for files 4, 5,
+        18, 26 (revised from predecessor REWRITE-as-default to SUB
+        for load-bearing constants + REWRITE-drop for file 26's
+        synthesise-hint). APPROVE.
+      - D-Q.ABC-prime.2 — M9 SUBSTITUTION_TABLE +8 entries (3
+        D-Q.ABC.4 carry-forward + 5 D-Q.ABC-prime.2). STRIP applied
+        for FUTURE_IDEAS{,_DRAFT}.md (no public counterpart;
+        gate-helper handles 0-entry tuple fail-soft). APPROVE.
+      - D-Q.ABC-prime.3 — File 18 SUBSTITUTE confirmed (entry 12
+        ``docs/plans/`` → ``docs/components/``).
+      - D-Q.ABC-prime.4 — File 26 REWRITE-drop the synthesise-hint
+        confirmed.
+
+    Surface changes (multi-component fence):
+
+    REWRITE/REMOVE — 21 files (cosmetic prose / comments /
+    docstrings referencing dev-only paths rewritten to public
+    counterparts or stripped):
+
+      - docs/CLAUDE_CAPABILITIES.md (5 pos-amend + 1 odd-methodology)
+      - framework/dormancy/docs/architecture.md
+      - framework/hands-off-lifecycle/README.md
+      - framework/hands-off-lifecycle/hooks/corpus_load_sentinel.py
+        (loam-mode prose RW; legacy + framework_manifest path
+        fallbacks restored as path-segment construction — runtime
+        AC.SFR.3 binding preserved)
+      - framework/hands-off-lifecycle/hooks/first_run_helper.py
+        (13 loam-mode → dev-mode-session-start)
+      - framework/hands-off-lifecycle/hooks/first_run_settings.py
+        (8 loam-mode → dev-mode-session-start)
+      - framework/hands-off-lifecycle/hooks/settings.json.fragment
+      - framework/hands-off-lifecycle/hooks/statusline.py
+      - framework/orchestrator/scripts/pos_session_start.py
+      - framework/orchestrator/src/loam/orchestrator/__main__.py
+      - framework/orchestrator/src/loam/orchestrator/orchestrator.py
+      - framework/primary-persona/src/loam/primary_persona/context_composer.py
+      - framework/primary-persona/src/loam/primary_persona/dispatch_wrapper.py
+        (duration-estimation rubric → budget-inference rubric)
+      - framework/primary-persona/src/loam/primary_persona/session_start_emitter.py
+        (HC#4 SHA bump for cosmetic-prose RW)
+      - framework/primary-persona/templates/persona-template/prompt.md
+        (capability-index 8-entry path table DROPPED per predecessor
+        §11 D-Q.ABC.5(b); FUTURE_IDEAS_DRAFT path generic-prose
+        rewrite)
+      - framework/safety-layer/docs/architecture.md
+      - framework/safety-layer/src/loam/safety_layer/__init__.py
+      - framework/safety-layer/src/loam/safety_layer/events.py
+      - framework/safety-layer/src/loam/safety_layer/observability.py
+      - framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py
+        (REWRITE-drop synthesise-hint per D-Q.ABC-prime.4(a))
+      - framework/workspace-sync/README.md
+
+    SUBSTITUTE — KEEP CANONICAL LITERALS (load-bearing source
+    paths/tuples/constants stay verbatim; SUBSTITUTION_TABLE
+    rewrites at synth time):
+
+      - CLAUDE.md (file 1; entry 5 → docs/positioning.md)
+      - framework/hands-off-lifecycle/hooks/_gate_helpers.py (file 4;
+        STRIP for FUTURE_IDEAS{,_DRAFT}.md exact-admission
+        entries — parent ``docs/`` prefix carve-out admits in dev;
+        odd-methodology + odd-in-loam handled by entries 7+8)
+      - framework/hands-off-lifecycle/hooks/corpus_inline_session_start.py
+        (file 5; MIXED — SUB for _ALWAYS_LOAD + _ON_DEMAND tuples;
+        RW for 2 loam-mode docstring refs; STRIP for
+        FUTURE_IDEAS.md _ON_DEMAND entry + docstring references)
+      - framework/primary-persona/src/loam/primary_persona/session_start_gate.py
+        (file 18; STRIP for FUTURE_IDEAS.md _FALLBACK_BASELINE_PATHS
+        entry; entry 12 SUB rewrites docstring ``docs/rebuild/
+        plans/`` to ``docs/components/`` — function-body path-
+        segment construction unchanged, runtime fail-soft)
+      - framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/first_run_scaffold.py
+        (file 24; SUB-only — 3 hits handled by entries 5+7)
+      - framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/tracker_seed.py
+        (file 25; SUB-only — 4+ hits handled by entries 5+6)
+
+    M9 SUBSTITUTION_TABLE +8 entries (4 M9-locked + 3 D-Q.ABC.4 +
+    5 D-Q.ABC-prime.2 = 12 total; framework/tools/
+    pos-publish-framework-only/src/loam/publish_framework_only/
+    substitution.py):
+
+      - Entry 5 (D-Q.ABC.4): docs/VALUE_PROPOSITION.md
+        → docs/positioning.md.
+      - Entry 6 (D-Q.ABC.4): docs/spec/loam-objectives-
+        spec.md → docs/architecture.md.
+      - Entry 7 (D-Q.ABC.4): docs/odd-methodology.md
+        → docs/design/odd.md.
+      - Entry 8 (D-Q.ABC-prime.2): docs/odd-in-loam.md
+        → docs/design/odd.md.
+      - Entry 9 (D-Q.ABC-prime.2): plugins/dev-sdlc/docs/odd-
+        methodology.md → docs/design/odd.md.
+      - Entry 10 (D-Q.ABC-prime.2): plugins/dev-sdlc/docs/odd-
+        in-loam.md → docs/design/odd.md.
+      - Entry 11 (D-Q.ABC-prime.2): docs/STATE.md
+        → docs/getting-started.md.
+      - Entry 12 (D-Q.ABC-prime.2): docs/plans/
+        → docs/components/. Trailing-slash entry; precedes any
+        future no-slash partner.
+
+    Test rebaselines (ODD §4 in-band per
+    `feedback_loose_AC_text_fix_AC_not_implementation`):
+
+      - test_AC_OSS_M9_substitution_smoke.py — TABLE size 4 → 12
+        with explicit assertion of all 8 new sources +
+        idempotence check.
+      - test_AC_PMR_1_gate_tests_dev_only.py — negative-control
+        test rebaselined to dev_only post-C2-bis test-fence
+        (was previously asserting DEV_AND_PUBLIC; pre-existing
+        post-C2-bis stale).
+      - test_AC_CI_2_on_demand_pointer_block.py — FUTURE_IDEAS.md
+        pointer no longer in on-demand block.
+      - test_AC_PMR_2_corpus_gate_on_demand_paths.py — _ON_DEMAND
+        tuple asserts 2 entries (was 3); FUTURE_IDEAS.md STRIP.
+      - test_AC_alpha_1_capability_leverage_spine.py — capability
+        index no longer enforces inline 8-entry path table; rule
+        names "capability corpus" generically.
+      - test_d1_byte_content_match.py — HC#4 SHA bump for
+        session_start_emitter.py.
+
+    AC surface (AC.ABC-Cprime.1 + AC.ABC-Cprime.2 +
+    AC.ABC-Cprime.3 + AC.ABC-Cprime.S):
+
+      - AC.ABC-Cprime.1: post-fix synthesis output carries zero
+        AC.OSS.3 banned literals (pos-amend / loam-amend /
+        loam-mode / docs/rebuild/ / odd-methodology / odd-in-loam /
+        duration-estimation-rubric / pos-publish-framework-only).
+        Verified pre-seal via ``.venv/bin/pos-publish-framework-
+        only --quiet`` + per-literal ``git grep -F -l`` against
+        ``refs/heads/framework-only`` — zero hits across all 8
+        literals.
+      - AC.ABC-Cprime.2: M9 SUBSTITUTION_TABLE size = 12; all
+        replacements absent from sources (idempotence verified by
+        re-running synthesis on already-synthesised tree —
+        framework-only SHA stable across two runs:
+        88c883de3f397dfd03053b8b304f52207fa1c08a).
+      - AC.ABC-Cprime.3: SUBSTITUTE files preserve canonical-mode
+        behaviour by construction (M9 SUB applied AFTER partition
+        filter; canonical reads original literal at runtime).
+        Per-component pytest passes on every touched component.
+      - AC.ABC-Cprime.S: Sealed-component fence — 7 framework
+        components + universal-paths (pos-publish-framework-only,
+        docs/plans/, top-level CLAUDE.md +
+        docs/CLAUDE_CAPABILITIES.md).
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - Single feature commit bundling per-file edits + M9 TABLE
+        extension (cheaper coordination than per-component
+        commits; multi-component bundle precedent per dispatch).
+      - One STRIP-comment corrective NEW commit
+        (`feedback_no_amend_in_agent_dispatches`) — the initial
+        feature commit's STRIP-explanation comment carried the
+        very ``docs/FUTURE_IDEAS.md`` literal it was
+        documenting; corrective rephrased to "FUTURE_IDEAS-style
+        draft-capture surface" to clear the residual.
+      - Restored corpus_load_sentinel.py's 3-path manifest probe
+        after initial RW broke AC.SFR.3 single-framework-
+        restructure tests; the path-segment-construction shape
+        carries no textual banned literals (each of "docs",
+        "rebuild", "dev-mode-manifest.yaml" is a separate
+        Python token; AC.OSS.3 grep on ``docs/rebuild/`` doesn't
+        match the multi-segment construction).
+      - HC#4 byte-content rebaseline: 1 sample file
+        (session_start_emitter.py) updated; cosmetic-prose RW
+        intent matches AC.OSS.3.
+
+    Halt-and-surface findings (one surfaced; resolved):
+
+      - HSF#1 — Pre-existing failures in
+        test_AC35_6_framework_not_content.py +
+        test_AC40_7_framework_not_content.py:
+        ``Luke`` substring in M8-injected Apache-2.0 license
+        header trips the persona-prose-constant assertion
+        ``"Luke"``. Pre-existing failure (verified via stash
+        +baseline pytest run); NOT introduced by C2-prime.
+        OUT-OF-FENCE for C2-prime; surfaced for owner to dispatch
+        a separate M8-corrective2 (tighten the persona-prose
+        forbidden-substring list to exclude license-header
+        ``Luke Ivers`` mentions per
+        ``feedback_loose_AC_text_fix_AC_not_implementation``).
+      - HSF#2 — corpus_load_sentinel.py initial RW removed
+        ``legacy_manifest`` + ``framework_manifest`` fallbacks
+        per plan §5.4 file 6's wording. Verification via
+        per-component pytest immediately surfaced 3 AC.SFR.3
+        test failures (``test_compute_corpus_paths_required_
+        falls_through_to_framework`` + 2 siblings asserting on
+        the framework-fallback contract). Plan-author wording
+        was wrong about "the only viable location is plugins/";
+        framework/docs/rebuild/dev-mode-manifest.yaml IS
+        load-bearing for AC.SFR.3 (framework-only-shaped
+        workspaces). Resolved by restoring the 3-path probe;
+        AC.OSS.3 grep clears anyway because path-segment
+        construction (``"docs" / "rebuild" / "dev-mode-manifest.
+        yaml"``) carries no textual ``docs/rebuild/`` literal.
+      - HSF#3 — M9 idempotence verified (re-run synthesis on
+        already-synthesised tree; SHA stable
+        88c883de…3a). AC.ABC-Cprime.2 + AC.OSS-M9.3 invariants
+        preserved.
+
+    Out of scope (per plan §8 + ODD §2.5):
+
+      - M11a sweep re-dispatch (M11a-3 lands next, post-C2-prime
+        seal; AC.M11a.1..6 + AC.M11a.7 staging push).
+      - Pre-existing M8 license-header collision tests
+        (AC35.6 + AC40.7) — separate M8-corrective2 dispatch.
+      - Authoring new public-shipping docs.
+      - History rewrite of canonical pos-v2.
+
+    Touched-component test counts (post-C2-prime, pre-seal):
+
+      - dormancy: 104 passed.
+      - hands-off-lifecycle: 470 passed.
+      - orchestrator: 102 passed.
+      - primary-persona: 519 passed (2 pre-existing M8-license
+        collisions, OUT-OF-FENCE per HSF#1).
+      - safety-layer: 72 passed.
+      - workspace-bootstrap: 252 passed, 1 skipped.
+      - workspace-sync: 81 passed.
+      - pos-publish-framework-only: 63 passed (admitted via
+        universal-paths).
+
+    BASELINE `79b445e` (HEAD post-feature commit + STRIP-comment
+    corrective). hands-off-lifecycle SEAL_COMMIT sidecar advances
+    + this notes file lands at the seal SHA via
+    ``loam amend seal``.

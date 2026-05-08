@@ -65,14 +65,14 @@ def _write_manifest(
     extras_per_component = extras_per_component or {}
     # Place manifest inside the repo but admit it via extra_allowed_files
     # on every component — real-world manifests live under
-    # docs/rebuild/plans/ which is admitted by universal paths. This
+    # docs/plans/ which is admitted by universal paths. This
     # fixture approximation keeps dry-run green on the manifest file itself.
     manifest_path = repo / "manifest.yaml"
     manifest = {
         "schema_version": 1,
         "amendment": {"number": 1, "slug": "test", "title": "t"},
         "baseline": baseline,
-        "plan": "docs/rebuild/plans/test.md",
+        "plan": "docs/plans/test.md",
         "components": [
             {
                 "name": c,

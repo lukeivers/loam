@@ -22,7 +22,7 @@ OR matches ``CLAUDE*.md`` at workspace root, OR matches
 ``framework/tools/`` (post-D-migration framework-rooted analogues),
 OR is one of the universal-paths admissions
 (``docs/odd-methodology.md``, ``docs/odd-in-loam.md``,
-``docs/rebuild/FUTURE_IDEAS.md``, ``docs/rebuild/FUTURE_IDEAS_DRAFT.md``):
+``docs/FUTURE_IDEAS.md``, ``docs/FUTURE_IDEAS_DRAFT.md``):
 hook allows regardless of sentinel/manifest state and regardless of
 mode.
 """
@@ -64,11 +64,11 @@ def gate_dev_mode_no_sentinel(monkeypatch):
 @pytest.mark.parametrize(
     "rel_path",
     [
-        "docs/rebuild/plans/x.md",
+        "docs/plans/x.md",
         "docs/odd-methodology.md",
         "docs/odd-in-loam.md",
-        "docs/rebuild/FUTURE_IDEAS.md",
-        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+        "docs/FUTURE_IDEAS.md",
+        "docs/FUTURE_IDEAS_DRAFT.md",
         "tools/some-script.sh",
         ".scratch/notes.txt",
         "personas/primary.yaml",

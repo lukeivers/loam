@@ -21,7 +21,7 @@ SKILL_PATH = (
 )
 
 # 10 row-class action labels per layered-skills §4.2 (lines
-# 290-307 in docs/rebuild/plans/layered-skill-story-research-
+# 290-307 in docs/plans/layered-skill-story-research-
 # 2026-05-04.md). Match against the body's recommendation column
 # (allow normalized casing / hyphenation).
 EXPECTED_ROW_LABELS = (

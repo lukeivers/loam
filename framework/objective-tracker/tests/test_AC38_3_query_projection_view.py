@@ -14,7 +14,7 @@
 
 """AC38.3 — `query_projection_view(filter)` returns matching records.
 
-Plan: docs/rebuild/plans/amendment-38-objective-tracker-schema-widening.md
+Plan: docs/plans/amendment-38-objective-tracker-schema-widening.md
 §4 AC38.3.
 
 Outcome (paraphrased from the AC):
@@ -39,9 +39,9 @@ from tests.conftest import make_user_root_spec
 # ---- helpers ---------------------------------------------------------
 
 
-VP_DOC = "docs/rebuild/VALUE_PROPOSITION.md"
-PLAN_DOC = "docs/rebuild/plans/amendment-38.md"
-OTHER_DOC = "docs/rebuild/plans/amendment-39.md"
+VP_DOC = "docs/VALUE_PROPOSITION.md"
+PLAN_DOC = "docs/plans/amendment-38.md"
+OTHER_DOC = "docs/plans/amendment-39.md"
 
 
 async def _seed_mixed_population(rt):

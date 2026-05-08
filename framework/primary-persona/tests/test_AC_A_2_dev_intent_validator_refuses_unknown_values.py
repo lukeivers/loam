@@ -22,7 +22,7 @@ at validation time; the persona cannot end up in an undefined dev-mode
 state (AC.PO.1). The contract field is the canonical signal sub-plans
 E / B / F compose on (AC.PO.2).
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/A-onboarding-dev-intent.md
+Plan: docs/plans/two-modes-and-multi-workspace/A-onboarding-dev-intent.md
 """
 
 from __future__ import annotations

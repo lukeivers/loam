@@ -2,7 +2,7 @@
 ``plugins/dev-sdlc/agents/<name>.md`` exist with valid frontmatter
 and the standard 5-section body shape.
 
-Per ``docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md`` §5:
+Per ``docs/plans/v0-1-7-personas-pm-layered-skills.md`` §5:
 - AC.PERSONAS.1 — `loam-builder` present + frontmatter valid + body
   references `loam amend apply`, `loam amend seal`, ODD §2.5,
   plan-before-code rule.

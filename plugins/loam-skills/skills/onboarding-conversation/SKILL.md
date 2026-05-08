@@ -57,7 +57,7 @@ Skip when:
 
 1. **Read the durable surfaces.** Standard locations for
    in-flight state: `<workspace>/workspace/.scratch/` for
-   ephemeral status files; `docs/rebuild/plans/` for plans;
+   ephemeral status files; `docs/plans/` for plans;
    FIDRAFT entries for pending captures; `STATE.md` for
    component-level state.
 2. **Read the recent commit log.** Last 5-10 commits give the

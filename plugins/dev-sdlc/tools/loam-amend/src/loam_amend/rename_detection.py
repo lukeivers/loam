@@ -5,7 +5,7 @@ consists entirely of byte-identical renames (every file ``R100``)
 plus apply-step bookkeeping sidecar add/delete pairs, the component's
 fence didn't conceptually move and ``apply`` should NOT advance the
 BASELINE literal or the ``SEAL_COMMIT`` sidecar. See plan
-``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.1.
+``docs/plans/d-migration-1-5.md`` AC.D.1.5.1.
 
 Algorithm — strict R100 + bookkeeping whitelist:
 

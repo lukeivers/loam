@@ -24,7 +24,7 @@ block contains at minimum the goal text of each in-flight objective.
 Maps to: v1.0 Architectural "Objective-based" + VALUE_PROPOSITION
 "process structure" → AC.PO.1.
 
-Plan: docs/rebuild/plans/amendment-40-primary-persona-tracker-context-contributor.md
+Plan: docs/plans/amendment-40-primary-persona-tracker-context-contributor.md
 """
 
 from __future__ import annotations

@@ -100,7 +100,7 @@ When raw Claude Code (no loam dispatch infrastructure):
   the outcome shape. High confidence → tight scope; low
   confidence → loose scope so the agent can think broadly.
 - **Loam's plan-before-code rule** — every build dispatch
-  authors a plan-doc at `docs/rebuild/plans/<name>.md` before
+  authors a plan-doc at `docs/plans/<name>.md` before
   any source code is written. The plan-doc carries the
   file-level + symbol-level + AC-level detail that the dispatch
   prompt deliberately omits.

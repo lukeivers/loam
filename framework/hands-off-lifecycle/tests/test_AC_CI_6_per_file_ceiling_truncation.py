@@ -51,7 +51,7 @@ def _make_dev_mode_workspace(
     (tmp_path / "CLAUDE.md").write_text(
         "# C — small file (under ceiling)\n", encoding="utf-8"
     )
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text(
         "# V — small file\n", encoding="utf-8"
@@ -98,7 +98,7 @@ def test_AC_CI_6_emits_truncation_marker_when_ceiling_exceeded(
     tmp_path: Path,
 ) -> None:
     """STATE.md exceeds the ceiling → emits ``[truncated at 50000
-    chars; full file at docs/rebuild/STATE.md]`` marker; the
+    chars; full file at docs/STATE.md]`` marker; the
     truncated content is bounded by the ceiling."""
     workspace = _make_dev_mode_workspace(tmp_path, oversized_state=True)
     stdout, rc = _run_hook(workspace)
@@ -106,7 +106,7 @@ def test_AC_CI_6_emits_truncation_marker_when_ceiling_exceeded(
     # The marker MUST mention the ceiling literal value AND the
     # workspace-relative path.
     expected_marker = (
-        "[truncated at 50000 chars; full file at docs/rebuild/STATE.md]"
+        "[truncated at 50000 chars; full file at docs/STATE.md]"
     )
     assert expected_marker in stdout
 
@@ -133,7 +133,7 @@ def test_AC_CI_6_truncated_content_bounded_by_ceiling(
     stdout, rc = _run_hook(workspace)
     assert rc == 0
     # Find the STATE.md slot.
-    state_idx = stdout.index("--- docs/rebuild/STATE.md ---")
+    state_idx = stdout.index("--- docs/STATE.md ---")
     state_block = stdout[state_idx:]
     # Locate the next delimiter or pointer-block boundary.
     next_delim = state_block.find("\n---", 1)

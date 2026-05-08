@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.12 — Audit-log shape named in body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.12: the SKILL body names the audit-log directory
 (`<workspace>/.loam/skill-capture/audit-log/<YYYY-MM-DD>-<NNNN>.yaml`),
 the 6 event-kinds, and the SOC-2 audit-trail floor (Decision P)

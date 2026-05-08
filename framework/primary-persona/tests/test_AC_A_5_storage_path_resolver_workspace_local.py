@@ -25,7 +25,7 @@ Sub-plans E / B / F consume this resolver, not the contract directly,
 so the storage shape is substitutable without re-reading those
 sub-plans (asymmetric observation #2: resolver-as-API).
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/A-onboarding-dev-intent.md
+Plan: docs/plans/two-modes-and-multi-workspace/A-onboarding-dev-intent.md
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 """AC.DPS1.* — dev-pattern simplifications #1.
 
-Plan: ``docs/rebuild/plans/dev-pattern-simplifications-1.md``.
+Plan: ``docs/plans/dev-pattern-simplifications-1.md``.
 Source authority: cost-audit 2026-05-04 Recommendations A, D, E.
 
 Coverage:
@@ -94,7 +94,7 @@ def _author_v3_manifest(
     components: list[dict[str, str]],
     slug: str = "ac-dps1",
     title: str = "AC.DPS1 test",
-    plan_doc_ref: str | None = "docs/rebuild/plans/ac-dps1.md",
+    plan_doc_ref: str | None = "docs/plans/ac-dps1.md",
     narrative_body: str | None = None,
     include_number: bool = False,
     include_narrative: bool = True,
@@ -108,7 +108,7 @@ def _author_v3_manifest(
         "schema_version": 3,
         "amendment": amendment,
         "baseline": baseline_sha,
-        "plan": f"docs/rebuild/plans/{slug}.md",
+        "plan": f"docs/plans/{slug}.md",
         "components": components,
     }
     if plan_doc_ref is not None:
@@ -142,7 +142,7 @@ def _author_v1_manifest(
         "schema_version": 1,
         "amendment": {"number": 99, "slug": slug, "title": f"{slug} test"},
         "baseline": baseline_sha,
-        "plan": f"docs/rebuild/plans/{slug}.md",
+        "plan": f"docs/plans/{slug}.md",
         "components": components,
     }
     if extra_top_level:
@@ -168,9 +168,9 @@ def test_AC_DPS1_1_plan_doc_ref_field_present() -> None:
         baseline="abcdef0",
         plan="docs/x.md",
         components=(),
-        plan_doc_ref="docs/rebuild/plans/x.md",
+        plan_doc_ref="docs/plans/x.md",
     )
-    assert m.plan_doc_ref == "docs/rebuild/plans/x.md"
+    assert m.plan_doc_ref == "docs/plans/x.md"
     # Default is None when omitted.
     m2 = Manifest(
         schema_version=1,
@@ -241,12 +241,12 @@ def test_AC_DPS1_2_v3_with_only_plan_doc_ref_validates(
             }
         ],
         slug="ac-dps1-2-collapsed",
-        plan_doc_ref="docs/rebuild/plans/ac-dps1-2-collapsed.md",
+        plan_doc_ref="docs/plans/ac-dps1-2-collapsed.md",
         narrative_body=None,
     )
     m = load_manifest(manifest_path)
     assert m.schema_version == 3
-    assert m.plan_doc_ref == "docs/rebuild/plans/ac-dps1-2-collapsed.md"
+    assert m.plan_doc_ref == "docs/plans/ac-dps1-2-collapsed.md"
     assert m.narrative is not None
     assert m.narrative.body is None  # body collapsed
 
@@ -309,7 +309,7 @@ def test_AC_DPS1_3_v1_rejects_plan_doc_ref(scratch_repo: Path) -> None:
             }
         ],
         slug="ac-dps1-3-v1-rejects",
-        extra_top_level={"plan_doc_ref": "docs/rebuild/plans/x.md"},
+        extra_top_level={"plan_doc_ref": "docs/plans/x.md"},
     )
     with pytest.raises(InvalidField) as exc_info:
         load_manifest(manifest_path)
@@ -331,9 +331,9 @@ def test_AC_DPS1_4_seal_synthesizes_summary_from_plan_doc_ref() -> None:
         slug="ac-dps1-4-test",
         title="AC.DPS1.4 synthesis test",
         baseline="aaaaaaa",
-        plan="docs/rebuild/plans/ac-dps1-4-test.md",
+        plan="docs/plans/ac-dps1-4-test.md",
         components=(),
-        plan_doc_ref="docs/rebuild/plans/ac-dps1-4-test.md",
+        plan_doc_ref="docs/plans/ac-dps1-4-test.md",
         narrative=NarrativeSpec(
             target="framework/x/seals/SEAL_COMMIT.ac-dps1-4-test",
             body=None,
@@ -342,7 +342,7 @@ def test_AC_DPS1_4_seal_synthesizes_summary_from_plan_doc_ref() -> None:
     body = _resolve_narrative_body(manifest, amendment_sha="bbbbbbb")
     # Sanity: body cites slug + plan-doc + amendment SHA.
     assert "ac-dps1-4-test" in body
-    assert "docs/rebuild/plans/ac-dps1-4-test.md" in body
+    assert "docs/plans/ac-dps1-4-test.md" in body
     assert "bbbbbbb" in body
     assert "AC.DPS1.4 synthesis test" in body
     # Body is short (5-15 lines per AC.DPS1.4); count newlines.
@@ -362,7 +362,7 @@ def test_AC_DPS1_4_seal_keeps_explicit_body_verbatim() -> None:
         slug="ac-dps1-4-explicit",
         title="explicit body test",
         baseline="aaaaaaa",
-        plan="docs/rebuild/plans/ac-dps1-4-explicit.md",
+        plan="docs/plans/ac-dps1-4-explicit.md",
         components=(),
         plan_doc_ref=None,
         narrative=NarrativeSpec(
@@ -382,7 +382,7 @@ def test_AC_DPS1_4_v1_body_returned_verbatim() -> None:
         slug="ac-dps1-4-v1",
         title="v1 verbatim test",
         baseline="aaaaaaa",
-        plan="docs/rebuild/plans/ac-dps1-4-v1.md",
+        plan="docs/plans/ac-dps1-4-v1.md",
         components=(),
         narrative=NarrativeSpec(
             target="framework/x/seals/SEAL_COMMIT.ac-dps1-4-v1",
@@ -410,8 +410,8 @@ def test_AC_DPS1_5_v3_narrative_target_required(scratch_repo: Path) -> None:
         "schema_version": 3,
         "amendment": {"slug": "ac-dps1-5", "title": "ac-dps1-5"},
         "baseline": baseline,
-        "plan": "docs/rebuild/plans/ac-dps1-5.md",
-        "plan_doc_ref": "docs/rebuild/plans/ac-dps1-5.md",
+        "plan": "docs/plans/ac-dps1-5.md",
+        "plan_doc_ref": "docs/plans/ac-dps1-5.md",
         "components": [
             {
                 "name": "epsilon",
@@ -691,7 +691,7 @@ def test_AC_DPS1_10_v1_still_requires_number(scratch_repo: Path) -> None:
         "schema_version": 1,
         "amendment": {"slug": "ac-dps1-10-v1", "title": "ac-dps1-10-v1"},
         "baseline": baseline,
-        "plan": "docs/rebuild/plans/ac-dps1-10-v1.md",
+        "plan": "docs/plans/ac-dps1-10-v1.md",
         "components": [
             {
                 "name": "lambda",
@@ -799,7 +799,7 @@ def test_AC_DPS1_12_new_plan_does_not_prefill_number(
         repo_root=repo,
     )
     assert rc == 0
-    vars_file = repo / "docs" / "rebuild" / "plans" / "ac-dps1-12-test.vars.yaml"
+    vars_file = repo / "docs" / "plans" / "ac-dps1-12-test.vars.yaml"
     assert vars_file.exists()
     content = vars_file.read_text(encoding="utf-8")
     # The scaffold must not contain any literal "amendment number" /
@@ -824,7 +824,7 @@ def test_AC_DPS1_12_new_plan_does_not_prefill_number(
 # AC.DPS1.13 — all existing manifests validate clean post-amendment.
 #
 # This test validates EVERY existing manifest YAML under
-# docs/rebuild/plans/. If the schema bump broke any of them, this fails
+# docs/plans/. If the schema bump broke any of them, this fails
 # with the offending path.
 
 
@@ -844,7 +844,7 @@ def test_AC_DPS1_13_existing_manifests_validate_clean() -> None:
             "could not locate canonical repo root — skipping backward-compat sweep"
         )
 
-    plans_dir = repo_root / "docs" / "rebuild" / "plans"
+    plans_dir = repo_root / "docs" / "plans"
     if not plans_dir.is_dir():
         pytest.skip(f"no plans directory at {plans_dir}")
 

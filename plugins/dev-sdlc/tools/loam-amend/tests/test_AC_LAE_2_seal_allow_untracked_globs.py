@@ -1,6 +1,6 @@
 """AC.LAE.2 — ``loam amend seal --allow-untracked-globs <pattern>``.
 
-Plan: ``docs/rebuild/plans/v0-1-2-loam-amend-ergonomics.md`` AC.LAE.2.
+Plan: ``docs/plans/v0-1-2-loam-amend-ergonomics.md`` AC.LAE.2.
 Per v0.1.2 item 6 (loam-amend ergonomics sweep). Patterns admit
 dirty paths via ``fnmatch.fnmatchcase`` for the seal-step
 dirty-tree pre-flight; admitted patterns are NOT staged or

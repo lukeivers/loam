@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.9 — Per-week budget (≤3 proposals/week) named in body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.9: the SKILL body names the ≤3 proposals/week cap, the
 rolling 7-day window, the state path
 (`<workspace>/.loam/skill-capture/budget.yaml`), and the reset

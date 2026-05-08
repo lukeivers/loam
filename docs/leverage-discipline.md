@@ -2,7 +2,7 @@
 
 Authored 2026-05-08. Methodology-tier doc, peer to ODD methodology +
 release-versioning policy + ODD-SemVer pinning + personas methodology.
-Authority above: `docs/rebuild/VALUE_PROPOSITION.md`. Authority below:
+Authority above: `docs/VALUE_PROPOSITION.md`. Authority below:
 `docs/release-roadmap.md` and any specific re-rank output.
 
 This doc answers a single question: **how does loam decide what to
@@ -26,7 +26,7 @@ is a separate work item.
 Leverage is the ratio between the **value-prop advancement a unit of
 work delivers** and the **token + maintainer cost it consumes.**
 Loam's value proposition has two tests, both load-bearing
-(`docs/rebuild/VALUE_PROPOSITION.md` §The test for any future
+(`docs/VALUE_PROPOSITION.md` §The test for any future
 feature):
 
 1. **Primary-persona test** — does the work reduce translation burden
@@ -46,7 +46,7 @@ advancement, for two reasons:
 
 - **Bus-factor-1 mitigation.** loam is a one-person foundation
   authored against a health context that is explicitly in-scope
-  (`docs/rebuild/FUTURE_IDEAS.md` Idea 12 risk block). External
+  (`docs/FUTURE_IDEAS.md` Idea 12 risk block). External
   attention recruits co-maintainers, which is risk reduction not
   vanity.
 - **Real-user calibration.** The codebase generates synthetic
@@ -82,7 +82,7 @@ products (Devin-class, Cursor-class, Replit Agent), and recent papers
 
 - **Capture:** weekly Friday-morning scan; the persona drafts a
   one-page brief with the top 3-5 items and what each tells loam.
-- **Surface:** `docs/rebuild/FUTURE_IDEAS_DRAFT.md` for items worth
+- **Surface:** `docs/FUTURE_IDEAS_DRAFT.md` for items worth
   capturing; direct mention in chat for items that warrant immediate
   re-rank consideration.
 - **Acts on:** Luke (rank-order rulings); persona (drafts options +
@@ -411,7 +411,7 @@ short-circuit on intuition but the rubric remains the audit trail.
 
 The discipline treats external-attention work as a load-bearing
 leverage axis (§1, §5.2) specifically because bus-factor-1 is named
-risk in `docs/rebuild/FUTURE_IDEAS.md` Idea 12: "loam is a one-person
+risk in `docs/FUTURE_IDEAS.md` Idea 12: "loam is a one-person
 foundation built against a health context that's explicitly
 design-in-scope and equally a maintenance-capacity input."
 

@@ -31,7 +31,7 @@ explicit trigger list; explicit carve-out; absence-as-observable-
 violation framing (mirrors the swarming-corpus model-rationale
 absence-as-violation pattern).
 
-Plan: docs/rebuild/plans/v0-1-2-ack-first-persona-contract.md
+Plan: docs/plans/v0-1-2-ack-first-persona-contract.md
 """
 
 from __future__ import annotations

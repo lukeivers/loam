@@ -23,7 +23,7 @@ a string shipped in the framework. ``to_agent_md``'s output for a
 fixture contract under ``tests/`` does not contain any string copied
 from a hardcoded persona-prose constant inside the framework source.
 
-Plan: docs/rebuild/plans/amendment-35-primary-persona-renderer-and-onboarding.md
+Plan: docs/plans/amendment-35-primary-persona-renderer-and-onboarding.md
 """
 
 from __future__ import annotations

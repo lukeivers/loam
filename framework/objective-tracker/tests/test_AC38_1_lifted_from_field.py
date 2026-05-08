@@ -14,7 +14,7 @@
 
 """AC38.1 — `lifted_from` field exists on `ObjectiveSpec` and validates.
 
-Plan: docs/rebuild/plans/amendment-38-objective-tracker-schema-widening.md
+Plan: docs/plans/amendment-38-objective-tracker-schema-widening.md
 §4 AC38.1.
 
 Outcome (paraphrased from the AC):
@@ -50,18 +50,18 @@ from tests.conftest import make_user_root_spec
 
 def test_AC38_1_lifted_from_all_three_keys_validates() -> None:
     lf = LiftedFrom(
-        source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+        source_doc="docs/VALUE_PROPOSITION.md",
         source_ac="AC.PO.1",
         source_commit="5ad573d",
     )
-    assert lf.source_doc == "docs/rebuild/VALUE_PROPOSITION.md"
+    assert lf.source_doc == "docs/VALUE_PROPOSITION.md"
     assert lf.source_ac == "AC.PO.1"
     assert lf.source_commit == "5ad573d"
 
 
 def test_AC38_1_lifted_from_without_source_commit_validates() -> None:
     lf = LiftedFrom(
-        source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+        source_doc="docs/VALUE_PROPOSITION.md",
         source_ac="AC.PO.2",
     )
     assert lf.source_commit is None
@@ -131,7 +131,7 @@ def test_AC38_1_objective_spec_explicit_null_is_none() -> None:
 
 def test_AC38_1_objective_spec_with_populated_lifted_from() -> None:
     lf = LiftedFrom(
-        source_doc="docs/rebuild/plans/amendment-38.md",
+        source_doc="docs/plans/amendment-38.md",
         source_ac="AC38.1",
         source_commit="HEAD",
     )
@@ -144,13 +144,13 @@ def test_AC38_1_objective_spec_with_populated_lifted_from() -> None:
         lifted_from=lf,
     )
     assert spec.lifted_from == lf
-    assert spec.lifted_from.source_doc == "docs/rebuild/plans/amendment-38.md"
+    assert spec.lifted_from.source_doc == "docs/plans/amendment-38.md"
 
 
 def test_AC38_1_objective_spec_round_trip_preserves_lifted_from() -> None:
     """Serialise → validate produces an equivalent ObjectiveSpec."""
     lf = LiftedFrom(
-        source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+        source_doc="docs/VALUE_PROPOSITION.md",
         source_ac="AC.PO.1",
     )
     original = ObjectiveSpec(

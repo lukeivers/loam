@@ -66,7 +66,7 @@ def test_AC_DSA_2_stub_body_contains_function_definition() -> None:
         component="primary-persona",
         ac_id="AC.DSA.99",
         scope_id="scope-test",
-        plan_path="docs/rebuild/plans/x.md",
+        plan_path="docs/plans/x.md",
     )
     # A3's regex (verbatim from tdd_guard._file_contains_matching_function).
     pattern = r"^def\s+test_AC_DSA_99_\w*\s*\("

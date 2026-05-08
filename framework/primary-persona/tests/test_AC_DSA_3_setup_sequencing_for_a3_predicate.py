@@ -110,7 +110,7 @@ def test_AC_DSA_3_setup_phase_writes_sentinel_before_manifest(
     _run_setup_phase(
         workspace,
         scope_id="scope-test",
-        plan_path="docs/rebuild/plans/test.md",
+        plan_path="docs/plans/test.md",
         new_acs=(
             NewACSpec(
                 component="primary-persona",

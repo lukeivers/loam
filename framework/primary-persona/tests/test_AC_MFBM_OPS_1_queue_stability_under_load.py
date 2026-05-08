@@ -14,7 +14,7 @@
 
 """AC.MFBM-OPS.1 — Queue empties under N-entry sustained load.
 
-Plan ref: ``docs/rebuild/plans/m-fbm-operational-health.md`` §4
+Plan ref: ``docs/plans/m-fbm-operational-health.md`` §4
 AC.MFBM-OPS.1.
 
 Diagnosis trigger (2026-05-04): the worker died on 2026-05-01 and

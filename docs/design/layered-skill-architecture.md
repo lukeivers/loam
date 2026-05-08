@@ -10,11 +10,11 @@ three layers.
 - Anthropic SKILL.md spec — verified 2026-05-04. Discovery locations
   (precedence: enterprise > personal > project; plugin in its own
   `plugin-name:skill-name` namespace).
-- `docs/rebuild/plans/layered-skill-story-research-2026-05-04.md` — research
+- `docs/plans/layered-skill-story-research-2026-05-04.md` — research
   pass that grounds this doc.
-- `docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md` — parent plan,
+- `docs/plans/v0-1-7-personas-pm-layered-skills.md` — parent plan,
   §5 AC.LAYERED.* family.
-- `docs/rebuild/plans/v0-1-7-cycle-3-layered-skill-discovery.md` — sub-plan
+- `docs/plans/v0-1-7-cycle-3-layered-skill-discovery.md` — sub-plan
   that ships this doc + the auto-symlinking mechanism.
 
 ---

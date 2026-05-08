@@ -117,7 +117,7 @@ async def test_crash_during_startup_yields_non_zero(tmp_path, monkeypatch):
 #   * test_AC2_missing_bootstrap_py_is_not_a_fail_closed_condition (below)
 #   * workspace-bootstrap/tests/test_integration_foundational.py
 #     (AC3/AC4/AC5/AC6).
-# See docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md.
+# See docs/archive/component-research/orchestrator-bootstrap-unification/proposal.md.
 
 
 @pytest.mark.asyncio

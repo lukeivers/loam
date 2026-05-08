@@ -14,7 +14,7 @@
 
 """AC.OSS-M3.1 — `loam-kill` console-script registered.
 
-Per plan `docs/rebuild/plans/oss-v0-1-0-publish-wire-clis.md` §4
+Per plan `docs/plans/oss-v0-1-0-publish-wire-clis.md` §4
 AC.OSS-M3.1: `framework/safety-layer/pyproject.toml` registers
 `loam-kill` as a `[project.scripts]` entry pointing at
 `loam.safety_layer.cli:main`.

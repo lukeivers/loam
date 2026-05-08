@@ -1,7 +1,7 @@
 """Tests for AC.D-np.7 — skeleton's §14 scaffold preserved byte-identical
 for ``loam amend seal --plan-doc``.
 
-Per `docs/rebuild/plans/pos-amend-new-plan-orchestration.md`:
+Per `docs/plans/pos-amend-new-plan-orchestration.md`:
 
     A plan-doc rendered from the post-extension skeleton can be the
     target of ``loam amend seal --plan-doc <abs-path>`` exactly as a

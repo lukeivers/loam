@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.5 — Proposal draft workflow named in SKILL body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.5: the SKILL body names the draft path
 (`<workspace>/.scratch/claude-output/skill-draft-<slug>.md`), names
 the 6-section template the draft must follow, names the draft

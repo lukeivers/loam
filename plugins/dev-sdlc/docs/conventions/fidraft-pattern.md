@@ -6,13 +6,13 @@ This document is the concise codification of the FIDRAFT pattern. The exhaustive
 
 ## 1. The two surfaces
 
-- **`docs/rebuild/FUTURE_IDEAS_DRAFT.md`** — workspace-side draft surface. Bullet-list of ideas captured at point-of-occurrence. Each bullet:
+- **`docs/FUTURE_IDEAS_DRAFT.md`** — workspace-side draft surface. Bullet-list of ideas captured at point-of-occurrence. Each bullet:
   - Names a concrete improvement / observation / follow-up.
   - Carries a date stamp.
   - Carries the originating session / agent / source.
   - Is short — a paragraph or two; no Idea numbering; no formal structure.
 
-- **`docs/rebuild/FUTURE_IDEAS.md`** — graduated catalogue. Each entry has a numbered Idea identifier (`Idea N`) + structured shape (rationale + sequencing + sub-features + status). Ideas graduate from the draft when they prove durable + earn a structural slot.
+- **`docs/FUTURE_IDEAS.md`** — graduated catalogue. Each entry has a numbered Idea identifier (`Idea N`) + structured shape (rationale + sequencing + sub-features + status). Ideas graduate from the draft when they prove durable + earn a structural slot.
 
 ## 2. The capture mechanic
 

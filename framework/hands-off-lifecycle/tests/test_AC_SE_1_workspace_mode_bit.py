@@ -15,7 +15,7 @@
 """AC.SE.1 — workspace-mode bit is queryable.
 
 Per the locked plan-doc
-``docs/rebuild/plans/structural-enforcement-a1-substrate.md`` §4
+``docs/plans/structural-enforcement-a1-substrate.md`` §4
 AC.SE.1: a pure-Python helper returns ``"dev-mode" | "normal-use"``
 deterministically given the workspace's primary-persona contract
 ``dev_intent`` field. Sub-100ms p95, callable from inside a Claude

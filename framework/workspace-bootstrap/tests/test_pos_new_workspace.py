@@ -248,7 +248,7 @@ def test_AC_D_4_1_local_canonical_creates_working_workspace(
     # v0.1.0 (memory-graphiti retired from _SERVICE_KINDS per Luke's
     # 2026-05-03 ruling). The path is reserved for M-GMP's post-v0.1.0
     # re-admission. See
-    # docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md.
+    # docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md.
     mcp_json = workspace_state / ".mcp.json"
     assert not mcp_json.exists(), (
         "FBE.7: .mcp.json should NOT be scaffolded at v0.1.0; "
@@ -540,7 +540,7 @@ def test_AC_D_4_1_HC6_workspace_state_inside_workspace_subdir(
     assert (new_ws / "workspace" / "personas").is_dir()
     # FBE.7: .mcp.json is intentionally NOT scaffolded at v0.1.0; M-GMP
     # restores the writer's invocation post-v0.1.0. See
-    # docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md.
+    # docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md.
     assert not (new_ws / "workspace" / ".mcp.json").exists()
 
     # framework/ must not contain workspace-state files.

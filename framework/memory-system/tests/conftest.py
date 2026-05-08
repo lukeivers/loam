@@ -9,7 +9,7 @@ unknown markers as errors; registering here is the narrowest-scope fix
 pre-existing marker convention).
 
 Cadence for ``-m slow`` tests is documented in
-``docs/rebuild/plans/d12-chaos-durability-split-pytest.md`` §6: run
+``docs/plans/d12-chaos-durability-split-pytest.md`` §6: run
 manually before any pos-v2 release cut, and on any PR whose diff
 touches ``memory-system/src/factory.py``,
 ``memory-system/src/retention.py``, or kuzu-adjacent surfaces in

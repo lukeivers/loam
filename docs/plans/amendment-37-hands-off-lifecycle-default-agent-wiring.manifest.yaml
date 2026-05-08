@@ -1,0 +1,246 @@
+schema_version: 1
+amendment:
+  number: 37
+  slug: hands-off-lifecycle-default-agent-wiring
+  title: "hands-off-lifecycle Claude-Code default-agent wiring"
+
+# BASELINE: 14fcf81 — the commit immediately preceding this amendment
+# commit (docs(plans): record amendment #36 commit SHAs in
+# method-decision register). Mirrors amendments #29 / #34 / #35 / #36
+# pattern: BASELINE is HEAD~1 of the amendment commit, not the prior
+# hands-off-lifecycle seal commit (b35e0c0 — the true-first-run /
+# workspace-identity-routing seal). This keeps the BASELINE..HEAD diff
+# narrow to amendment #37's surface and avoids spurious cross-component
+# "missing admission" reports for intervening commits (#28-#36) that
+# landed under their own amendments between hands-off-lifecycle's prior
+# seal and this amendment.
+#
+# H19's frozen BASELINE per amendment #23 is preserved separately —
+# the manifest sets ``frozen_baseline: true`` on hands-off-lifecycle so
+# the project-start anchor (3780603) is not advanced by this amendment.
+baseline: 14fcf81
+
+plan: docs/plans/amendment-37-hands-off-lifecycle-default-agent-wiring.md
+
+# Single-component amendment per amendment plan §2: hands-off-lifecycle
+# only. No surface change to primary-persona, workspace-bootstrap, or
+# any other sealed component (sub-plan #37's seal-diff AC enforces
+# this; sibling sub-plans #35 + #36 own the cross-component surfaces).
+# primary-persona's renderer is consumed via subprocess import; the
+# workspace-bootstrap scaffold output is read from disk.
+components:
+  - name: hands-off-lifecycle
+    seal_test: hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: hands-off-lifecycle/seals/SEAL_COMMIT.true-first-run
+  body: |
+    # Amendment #37 — hands-off-lifecycle Claude-Code default-agent
+    #                  wiring (`.claude/settings.json` "agent" field
+    #                  + `.claude/agents/<handle>.md`)
+
+    2026-04-25. Closes the first-run primary-persona-default-agent-
+    wiring family per master plan `docs/plans/first-run-
+    primary-persona-default-agent-wiring.md` and sub-plan
+    `docs/plans/amendment-37-hands-off-lifecycle-default-
+    agent-wiring.md`. Predecessor amendments #35 (primary-persona
+    renderer + onboarding + is_starter) sealed at ce07242; #36
+    (workspace-bootstrap persona-scaffold) sealed at 0031d1e.
+
+    The amendment lands two new responsibilities on the existing
+    first-run hook surface inside the hands-off-lifecycle fence:
+
+      - `hands-off-lifecycle/hooks/first_run_settings.py` —
+        `merge_session_start(...)` gains an optional `agent_handle:
+        str | None = None` parameter. When provided, the merger
+        sets `existing["agent"] = agent_handle` after the
+        SessionStart-stanza merge so a fresh Claude Code session
+        selects the workspace persona as its default subagent.
+        The pre-amendment-#37 callers (no agent_handle) are
+        backwards-compatible — the field is left untouched.
+
+      - `hands-off-lifecycle/hooks/agent_file_authoring.py` (new) —
+        stdlib-only writer for `<workspace>/.claude/agents/
+        <handle>.md`. Atomic write via `.tmp` sibling +
+        `os.replace`; write-only-if-different policy preserves
+        mtime stability across re-runs (AC37.3). Failures are
+        returned via `AgentFileWriteResult` rather than raising —
+        the caller's graceful-degradation path inspects the
+        dataclass and routes the diagnostic.
+
+      - `hands-off-lifecycle/hooks/agent_file_runner.py` (new) —
+        thin CLI runner that spawns under the shared venv. Loads
+        the workspace persona via `PersonaLoader.primary()`, calls
+        `to_agent_md(loaded.contract, prompt_text=loaded.prompt_
+        text)`, and emits a JSON envelope `{"handle": "<handle>",
+        "body": "<rendered>"}` on stdout. Mirrors the established
+        `first_run_scaffold_runner.py` pattern — the helper itself
+        stays stdlib-only.
+
+      - `hands-off-lifecycle/hooks/first_run_helper.py` — new
+        Phase 4c (agent-file authorship) inserted between Phase 4a
+        (scaffold) and Phase 4b (health poll). Spawns the runner,
+        parses the envelope, writes the agent file, then re-merges
+        settings.json with `agent_handle=<resolved>`. Phase 6
+        self-retire threads `agent_handle` through so the post-
+        retire settings.json carries the agent field. Every
+        failure path (subprocess timeout, JSON parse error, runner
+        non-zero exit, write-permission denied) is caught and
+        surfaced via `_advance_state` — the helper never halts on
+        this phase.
+
+    Behaviour:
+
+      - On a fresh-clone first-run, after the workspace-bootstrap
+        scaffold (amendment #36) materialises `<workspace>/personas/
+        <handle>/`, Phase 4c renders `.claude/agents/<handle>.md`
+        from the contract via amendment #35's `to_agent_md()` and
+        merges `"agent": "<handle>"` into `.claude/settings.json`.
+      - Subsequent SessionStart hooks re-load the agent file as
+        Claude Code's structural identity-anchor; the context-load
+        gate (amendment #32) still composes `additionalContext`
+        with the runtime persona context.
+      - Re-running first-run on a workspace whose persona contract
+        is non-starter is a no-op for the agent file (write-only-
+        if-different) and preserves the settings.json `"agent"`
+        field. User edits to the contract reach the agent file via
+        the persona-layer reload path, not via the first-run path.
+      - Agent-file write failure (permissions, malformed
+        settings.json that cannot merge) surfaces a structured
+        diagnostic via `_advance_state` and proceeds; the
+        SessionStart hook still fires; the gate still loads; the
+        session degrades to generic-Claude-with-context-load-gate.
+
+    No source edits to primary-persona/, workspace-bootstrap/, or
+    any other sealed component. The agent renderer is consumed by
+    importing it inside the runner subprocess; the scaffolded
+    persona directory is consumed by reading it from disk in the
+    same subprocess.
+
+    AC surface (AC37.1 – AC37.6 + AC37.S) — 29 tests covering 6
+    outcome-shaped criteria:
+
+      - AC37.1: settings.json merges `"agent": "<handle>"` on a
+        fresh write; existing user keys preserved; pre-existing
+        `"agent"` value overwritten by the workspace-bootstrap-
+        resolved handle; `agent_handle=None` (backwards-compat
+        path) leaves the field untouched; self-retire threads the
+        handle through; preserved-user-keys excludes the agent
+        field.
+      - AC37.2: agent file exists after write; on-disk content
+        equals direct `to_agent_md()` output; frontmatter `name:
+        <handle>`/`description:`/`model: inherit` present;
+        `.claude/agents/` parent dir created.
+      - AC37.3: identical body skips write (skipped-identical
+        reason); mtime unchanged when content matches; changed
+        body overwrites; settings.json `"agent"` preserved across
+        re-run; user-edited handle round-trips through the writer.
+      - AC37.4: unwritable parent → failed-permission result, no
+        exception; persona scaffold remains in place after write
+        failure; empty handle → failed-empty-handle result; failed
+        write does not corrupt existing file (atomic-rename
+        contract); helper-level Phase 4c failure compiles +
+        routes via state-update.
+      - AC37.5: identity-anchor block present in agent file;
+        handle and given_name both appear on disk; SessionStart
+        gate composes additionalContext with the starter-pending
+        contributor's given_name reference; agent-file path is
+        keyed by handle (`<handle>.md`).
+      - AC37.6: sentinel prose flows from contract to on-disk file;
+        hooks source carries no persona-prose constants; renderer
+        is not re-implemented in hooks; `agent_file_authoring`
+        module remains stdlib-only.
+      - AC37.S: seal-diff discipline — only hands-off-lifecycle/ +
+        plans/ + universal paths changed (verified by
+        test_cross_cutting.py at frozen BASELINE 3780603 +
+        per-component test_no_sealed_amendments.py sweep across
+        every other sealed component).
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - D-build.1 (settings.json merge generalisation shape): (a)
+        parameterise `merge_session_start` with optional
+        `agent_handle: str | None`. Backwards-compat preserved
+        (default None = no-op). Plan §11 D-build.1 recommendation
+        aligns; minimal blast radius; no refactor to a generic
+        merger class.
+
+      - D-build.2 (agent-file write atomicity): atomic-rename via
+        `.tmp` sibling + `os.replace`. Mirrors the existing
+        settings-merge atomic write. Interrupted writes never
+        leave Claude Code with a partial agent file to parse.
+
+      - D-build.3 (diagnostic surface routing): structured
+        diagnostic via `_advance_state` with phase=
+        `phase-4c-agent-file-authorship`, detail names the
+        failure class (e.g. `agent-file-render-timeout`,
+        `agent-file-write-failed:failed-permission`). State
+        stays `running` (the failure is non-fatal); next phase
+        proceeds. Matches the existing observability surface.
+
+      - D-build.4 (write-only-if-different): compare existing-
+        file bytes to rendered body; skip write when equal.
+        Preserves mtime stability across re-runs (AC37.3
+        measures this) and avoids file-watch tooling churn.
+        Single `read_bytes()` per first-run; trivially cheap.
+
+    Fail-closed behaviours:
+
+      - Phase 4c subprocess timeout → diagnostic, no halt.
+      - Runner non-zero exit (renderer raised) → JSON failure
+        payload captured into the diagnostic, no halt.
+      - JSON envelope malformed → diagnostic, no halt.
+      - Write permission denied → diagnostic, no halt.
+      - Empty handle (programmer error) → writer returns
+        failed-empty-handle, never raises.
+      - Subsequent agent-field merge failure → diagnostic, no
+        halt; Phase 6 self-retire retries the merge.
+
+    Out of scope (sub-plan §7):
+
+      - Renderer + onboarding work — amendment #35.
+      - Workspace-bootstrap scaffold work — amendment #36.
+      - Per-session subagent invocation (`/agents` command flow).
+      - Composing the persona prompt into project-level
+        `CLAUDE.md` (master plan D1 (c) rejected).
+      - Claude Code skill alternative (master plan D1 (d)
+        rejected).
+      - Drift-detector for hand-edited agent files (master plan
+        R4 — defer).
+      - Agent-file regeneration on contract change at the
+        persona-layer reload surface — amendment #35 AC35.5
+        territory; AC37.2 verifies the first-run-time write only.
+      - `tools:` frontmatter on the agent file (master plan §6.2
+        constraint 5 — omitted by default, Claude Code's default
+        is inherit-all).
+      - Multi-persona-in-one-workspace settings.json wiring —
+        primary persona only here.
+
+    BASELINE 14fcf81 (pre-amendment tip — the commit immediately
+    preceding amendment #37). hands-off-lifecycle's H19 BASELINE
+    stays frozen at 3780603 per amendment #23 (manifest declares
+    `frozen_baseline: true`). SEAL_COMMIT sidecar lands at the
+    amendment commit on the empty-diff window; advanced to the
+    seal SHA via `pos-amend seal` on the seal commit.
+
+    With this amendment, the first-run primary-persona-default-
+    agent-wiring family is complete. A fresh-clone first-run now
+    structurally lands a Claude Code session AS the workspace's
+    primary persona (default-agent binding via settings.json +
+    agent file body via amendment #35's renderer projected from
+    amendment #36's scaffolded contract). The Heavy-B chain
+    (#38 / #39 / #40 + dev-discipline) inherits a satisfied
+    persona-setup precondition and is cleared to dispatch.

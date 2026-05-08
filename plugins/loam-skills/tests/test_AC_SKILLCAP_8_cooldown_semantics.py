@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.8 — Cool-down semantics (14d post-N) named in body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.8: the SKILL body names the 14-day cool-down + the
 state path (`<workspace>/.loam/skill-capture/cooldowns.yaml`) + the
 state shape + the persona's check-before-propose discipline.

@@ -1,0 +1,271 @@
+schema_version: 1
+amendment:
+  number: 77
+  slug: oss-v0-1-0-publish-rename-1b
+  title: "M1b — env-vars (POS_V2_* → LOAM_*) + per-host config dir (~/.pos/ → ~/.loam/) + one-shot migration helper; second sub-amendment of M1.rename multi-amendment series"
+
+# BASELINE: 143d465 — M1a's seal commit
+# (chore(seals): M1a docs/prose-only brand rebrand … objective-tracker
+# +workspace-bootstrap+hands-off-lifecycle+scope-of-work+workspace-sync
+# at f3041a5). M1b's BASELINE..HEAD diff is the precursor doc-only
+# programme-plan §5 update + the M1b feature commit + apply commit +
+# any corrective commits + seal commit.
+baseline: 143d4656f0c319bdc644f7a925b073e0ecaaff72
+
+plan: docs/plans/oss-v0-1-0-publish-rename-1b.md
+
+seal_description: "M1b env-vars + per-host config dir — POS_V2_* → LOAM_* (with POS_V2_ROOT+POS_V2_REPO dedup to LOAM_REPO; POS_V2_POS_ROOT de-doubled to LOAM_DATA_DIR) + ~/.pos/ → ~/.loam/ path-constants + one-shot per-host migration helper"
+
+# Eleven sealed components per locked plan §1 fence statement. The
+# eleven-component fence is wider than the series-master §2 ladder's
+# "likely 3–5" estimate — the dispatch's authority text ("All code-
+# side path constants and string literals referencing `~/.pos/`")
+# binds the scope to all per-host path-constant callsites. Empirical
+# surface inventory at plan time (§11 finding #1):
+#
+#   Env-var callsites (narrow): three sealed components — HOL,
+#   memory-system, workspace-bootstrap.
+#
+#   Per-host ~/.pos/ path-constant callsites (wide): eleven sealed
+#   components — cost-governance, graceful-degradation, hands-off-
+#   lifecycle, memory-system, observability-aggregator, orchestrator,
+#   primary-persona, self-correction, self-upgrade, telegram-
+#   interface, workspace-bootstrap. Plus framework/tools/upgrade-
+#   merge-resolver/ (1 docstring; admitted by framework/tools/
+#   universal-paths prefix). Plus framework/first-run-inventory.yaml
+#   (1 path-string; admitted by H19's existing top-level entry).
+#
+# hands-off-lifecycle is included because (a) HOL hosts the env-var
+# scaffold (first-run-helper, first-run-progress, first-run-settings,
+# first-run.sh, settings.json.fragment) AND (b) HOL has per-host
+# path-constants in src/hooks. HOL is the conventional narrative
+# anchor for amendment seal commits; HOL's H19 frozen-baseline byte-
+# content sample does NOT include any of M1b's touched src files
+# (verified: the sample pins primary-persona, workspace-bootstrap,
+# scope-of-work source files — none of which contain POS_V2_* env-
+# var or per-host ~/.pos/ callsites). So M1b does NOT trigger HC#4
+# retire-and-rebaseline.
+components:
+  - name: cost-governance
+    seal_test: framework/cost-governance/tests/test_no_sealed_amendments.py
+    sidecar: framework/cost-governance/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: graceful-degradation
+    seal_test: framework/graceful-degradation/tests/test_no_sealed_amendments.py
+    sidecar: framework/graceful-degradation/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+  - name: memory-system
+    seal_test: framework/memory-system/tests/test_no_sealed_amendments.py
+    sidecar: framework/memory-system/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: observability-aggregator
+    seal_test: framework/observability-aggregator/tests/test_no_sealed_amendments.py
+    sidecar: framework/observability-aggregator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: orchestrator
+    seal_test: framework/orchestrator/tests/test_no_sealed_amendments.py
+    sidecar: framework/orchestrator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: self-correction
+    seal_test: framework/self-correction/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-correction/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: self-upgrade
+    seal_test: framework/self-upgrade/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-upgrade/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: telegram-interface
+    seal_test: framework/telegram-interface/tests/test_no_sealed_amendments.py
+    sidecar: framework/telegram-interface/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3 + the precedent
+# under which framework/tools/ is admitted as a top-level prefix
+# (single-framework-restructure manifest §44–47). M1b's migration
+# helper lives at framework/tools/loam-migrate-host-config/ (per
+# §10 D-build.M1b.1 recommendation; final placement is a builder
+# call within AC.RNM-1b.3). framework/tools/upgrade-merge-resolver/
+# carries one docstring edit; same prefix.
+#
+# framework/first-run-inventory.yaml is admitted by H19's existing
+# top-level entry (it's already in the H19 allowed set per the
+# established admission window). M1b's edit is a single path-string
+# update on the socket_path line.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/tools/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - framework/first-run-inventory.yaml
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-rename-1b
+  body: |
+    # Amendment #77 — M1b env-vars + per-host config dir + migration helper
+
+    2026-04-29. Second sub-amendment of the M1.rename multi-amendment
+    series per locked series master plan-doc
+    `docs/plans/oss-v0-1-0-publish-rename.md` (committed
+    `ebe0a57`) and locked sub-plan-doc
+    `docs/plans/oss-v0-1-0-publish-rename-1b.md`.
+
+    Composes on M1a (sealed `143d465`, 2026-04-29 — docs/prose-only
+    brand rebrand) and on the OSS v0.1.0 publish programme (see
+    `docs/plans/oss-v0-1-0-publish.md` §5 — M1b includes
+    the precursor doc-only commit that replaces the single M1.rename
+    row with the seven-row M1a..M1g ladder per series-master §11 /
+    M1a's recommendation). M1b is the first code-touching sub-
+    amendment of the rename series.
+
+    Owner rulings closed at series-master commit time (2026-04-29):
+
+      - D-RNM.1 SPLIT: M1b is one slice of the multi-amendment series.
+      - D-RNM.2 per-component namespace-package: deferred to M1e
+        (M1b's scope is env-vars + path-constants; namespace pivot
+        is later).
+      - D-RNM.3 no compat window: hard-cutover; no fallback module
+        reading both old and new env-var names; no symlink-compat in
+        the migration helper.
+
+    Surface changes (eleven sealed components + migration helper +
+    programme-plan §5 update + first-run-inventory.yaml):
+
+      - Env-var callsites (three components — HOL, memory-system,
+        workspace-bootstrap):
+          POS_V2_POS_ROOT          → LOAM_DATA_DIR    (de-doubled)
+          POS_V2_PYTHON            → LOAM_PYTHON
+          POS_V2_ROOT              → LOAM_REPO        (dedup w/ REPO)
+          POS_V2_REPO              → LOAM_REPO        (dedup w/ ROOT)
+          POS_V2_WORKSPACE_ROOT    → LOAM_WORKSPACE_ROOT
+          POS_V2_WORKSPACE_SLUG    → LOAM_WORKSPACE_SLUG  (doc-only)
+          POS_V2_FIRST_RUN_NO_TTY  → LOAM_FIRST_RUN_NO_TTY
+          POS_V2_FIRST_RUN_PROGRESS_FILE
+                                   → LOAM_FIRST_RUN_PROGRESS_FILE
+
+      - Per-host path-constant callsites (eleven components):
+          ~/.pos/                  → ~/.loam/
+          Path.home() / ".pos"     → Path.home() / ".loam"
+          $HOME/.pos               → $HOME/.loam
+          (every src/script/hook reference; component-internal docs
+          touched only where they carry a load-bearing path-constant)
+
+      - Migration helper (NEW):
+          One-shot helper that relocates ~/.pos/ to ~/.loam/ on first
+          invocation. Idempotent: safe to re-run; halts on conflict
+          (both ~/.pos/ and ~/.loam/ present); reports cleanly on
+          empty (neither present) or already-migrated (only ~/.loam/
+          present) state.
+
+      - Programme master plan §5 (precursor doc-only commit):
+          The single M1.rename row is replaced with the seven-row
+          M1a..M1g ladder. Each row gets its own AI-time + midpoint.
+          Programme-total prose updates accordingly.
+
+      - framework/first-run-inventory.yaml (one-line edit):
+          socket_path: "~/.pos/orchestrator.sock"
+          → socket_path: "~/.loam/orchestrator.sock"
+
+    Out of scope (locked plan-doc §6, named explicitly):
+
+      - Workspace-side <workspace>/.pos/ sentinel directory — distinct
+        surface from per-host config dir; not in loam-rename-decisions
+        Tier-1; deferred.
+      - Internal Python identifiers carrying POS_V2_ decoration
+        (_POS_V2_*, CANONICAL_POS_V2_PATH, CLASSIFICATION_POS_V2_DEV,
+        POS_V2_PATH) — namespace work; M1e.
+      - launchd labels com.pos-v2.* — M1c.
+      - OTel pos.* roots — M1d.
+      - Code imports `from pos_<comp>` — M1e.
+      - pos-amend CLI rename → loam amend — M1g.
+      - graceful-degradation → dormancy — M1f.
+      - Filename-portion changes (degradation.sqlite → dormancy.sqlite,
+        etc.) — M1f.
+      - Path strings /Users/lukeivers/ivers-corp-pos-v2/... — M9.
+      - Historical seal narratives — preserved.
+      - Historical plan-docs — preserved.
+
+    HC#4 byte-content sample status: GREEN. The fifteen sample files
+    in framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py
+    contain ZERO POS_V2_* env-var or per-host ~/.pos/ callsites
+    (verified pre-build per locked plan §11 finding #2). HC#4 remains
+    green post-M1b without retirement.
+
+    H19 admission: not applicable. M1b touches no new top-level dirs;
+    every touched component already exists in H19's allowed set; the
+    migration helper lives under framework/tools/ which is admitted.
+
+    Test surface (narrow per feedback_amendment_dispatch_speedups):
+
+      - AC.RNM-1b.1 — env-var dedup + rename: verified by grep-count
+        post-edit + the touched test files in HOL + memory-system +
+        workspace-bootstrap.
+      - AC.RNM-1b.2 — per-host path-constant rename: verified by
+        grep-count post-edit + touched test files across the eleven
+        sealed components.
+      - AC.RNM-1b.3 — migration helper idempotency: verified by the
+        helper's own test scaffold (four named cases).
+      - AC.RNM-1b.4 — programme master plan §5 update: verified by
+        the precursor doc-only commit's diff.
+      - AC.RNM-1b.5 — migration helper documentation: verified by
+        presence of the helper's docs covering the four cases.
+      - AC.RNM-1b.6 — fence-narrowing negative AC: verified by
+        `git diff <baseline>..HEAD --stat` showing ONLY the named
+        surfaces.
+      - AC.RNM-1b.S — this seal commit.
+
+    ODD §2.5 reverse-direction audit clean: every change in this
+    amendment's diff is an env-var rename, a per-host path-constant
+    rename, a migration-helper authored line, the precursor §5
+    programme-plan update, or the first-run-inventory.yaml one-line
+    edit. Each line traces back to a named AC under §4.
+
+    BASELINE 143d465 (M1a seal commit). Eleven sealed components
+    touched: cost-governance, graceful-degradation, hands-off-
+    lifecycle, memory-system, observability-aggregator, orchestrator,
+    primary-persona, self-correction, self-upgrade, telegram-
+    interface, workspace-bootstrap.
+
+    Composes on (consumers-only; no semantic edits):
+
+      - The OSS v0.1.0 publish programme master plan
+        (`oss-v0-1-0-publish.md`) — M1b's precursor commit replaces
+        the M1.rename row with the M1a..M1g ladder.
+      - The M1.rename series master plan
+        (`oss-v0-1-0-publish-rename.md`) — M1b is the second sub-
+        amendment per the §2 ladder.
+      - `loam-rename-decisions.md` — Tier-1 items 2 + 3 (per-host
+        config dir + env-var prefix).
+      - `.scratch/claude-output/loam-rename-migration-plan.md` §2.5
+        + §3.3 (env-var dedup recommendations + migration mechanics).
+
+    FIDRAFT items closed by this amendment: none. The M1.rename
+    series as a whole closes the brand-rebrand portion of AC.OSS.5;
+    M1b closes the env-var-prefix and per-host-config-dir slices.

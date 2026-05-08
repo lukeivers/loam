@@ -1,0 +1,243 @@
+schema_version: 1
+amendment:
+  number: 56
+  slug: workspace-sync
+  title: "workspace-sync — canonical-to-workspace git-shaped sync with LLM-mediated semantic merge"
+
+# BASELINE: caafdf0 — current HEAD at amendment-commit time (the
+# `chore(self-upgrade,tools): release manifest pos-v2-v0.2.0 +
+# upgrade-merge-resolver factory` commit immediately before this
+# amendment's first touch). BASELINE-as-HEAD~1 pattern used across
+# amendments #29 / #34-#55.
+baseline: caafdf0ec2eb2e7b85f4c1145ae3f27ce874d62e
+
+plan: docs/plans/workspace-sync.md
+
+seal_description: "workspace-sync — canonical-to-workspace git-shaped sync with LLM-mediated semantic merge"
+
+# One sealed component touched, lands FIRST seal of workspace-sync.
+# Seal-bookkeeping infrastructure (test_no_sealed_amendments.py +
+# SEAL_COMMIT sidecar + seals/) is created by THIS amendment alongside
+# the source per the standard "create at first seal" pattern (see
+# every component sealed since amendment #53). Salvage is by file-copy
+# from self-upgrade/src/self_upgrade/ + tools/upgrade-merge-resolver/
+# per Hard Constraint #1 (no edits to self-upgrade/, no edits to
+# tools/upgrade-merge-resolver/) — both salvage sources remain
+# byte-identical post-amendment.
+components:
+  - name: workspace-sync
+    seal_test: workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: workspace-sync/seals/SEAL_COMMIT.workspace-sync
+  body: |
+    # Amendment #56 — workspace-sync (B-mode canonical→workspace)
+
+    2026-04-26. Introduces the new sealed component
+    `workspace-sync/` — the keystone for Luke's milestone "running
+    upgrade on pos3 doesn't lose workspace-specific content."
+    Architecture B (per-workspace embedded framework, locked
+    2026-04-26) replaces Architecture A (global symlink swap) for
+    downstream-workspace pull semantics. Self-upgrade remains the
+    canonical-only A-mode mechanism (ruling A5); workspace-sync is
+    the new B-mode mechanism for downstream clones (e.g. pos3).
+
+    Surface added under `workspace-sync/`:
+
+      - `pyproject.toml` — package `pos_workspace_sync`; entry-points
+        `pos-sync` and `pos-workspace-sync` (hyphenated, per pos-v2
+        component-binary convention; D-build.0). Ships templates as
+        package data.
+
+      - `src/workspace_sync/__init__.py` — package marker + version.
+
+      - `src/workspace_sync/cli.py` (new, ~250 LOC) — argparse +
+        `pos-sync` entry; workspace-root derivation per Hard
+        Constraint #12 (cwd / `--workspace` / `.pos/` / `.git/` fall-
+        through; NO `paths.current_link` / `refuse_if_invoked_from_
+        live_path` / symlink resolution); idempotency fast-path
+        against state.yaml; resolver-factory loader; stage / detect
+        / resolve / confirm-or-discard / apply-or-fail-closed flow.
+
+      - `src/workspace_sync/canonical.py` (salvage-with-edits, ~110
+        LOC) — drops the manifest validator + `default_manifest_path`
+        + `Manifest` import; renames `tag` → `ref`; renames
+        `resolve_canonical_to_staging` → `resolve_canonical`; adds
+        `git rev-parse <ref>` resolution so symbolic refs collapse
+        to a stable SHA the audit + state can key idempotency
+        against (AC.WS.8).
+
+      - `src/workspace_sync/conflict_detection.py` (new, ~210 LOC) —
+        B-shape git-tree-vs-working-tree classifier replacing
+        self-upgrade's manifest-vs-staging `detect_conflicts`. Uses
+        git shellout (`ls-tree` + `show`) to compare canonical vs
+        workspace SHAs; pre-resolves Class-A entries to
+        `KEEP_LOCAL` at detection time (AC.WS.2 structural).
+
+      - `src/workspace_sync/conflict_report.py` (salvage-with-edits,
+        ~290 LOC) — full module lift from self-upgrade with field
+        rename `upgrade_tag` → `sync_ref` + `prior_tag` → `prior_ref`.
+        `Resolution` enum keeps the structural omission of `skipped`
+        (no-silent-skip carries over); `INFERRED_*` extensions +
+        ConflictEntry rationale/confidence/user_override fields +
+        `_reject_skipped` validator + `sorted_low_confidence_first`
+        + `inferred_entries` all preserved.
+
+      - `src/workspace_sync/state.py` (salvage-with-edits, ~150 LOC)
+        — `UpgradeStatus` → `SyncStatus`; `upgrade_tag` field →
+        `sync_ref`; `audit_yaml_path` returns `<workspace>/.pos/sync/
+        <ref>/audit.yaml` (was `.pos/upgrade/<tag>/audit.yaml`);
+        `state_yaml_path` returns `.pos/sync/state.yaml` (AC.WS.5 +
+        AC.WS.8).
+
+      - `src/workspace_sync/sync_protected.py` (salvage-as-is, ~170
+        LOC) — A/B/C envelope; FRAMEWORK_FLOOR refused-on-removal
+        validator; `classify`; `default_sync_protected`;
+        `write_default_if_absent`. Workspace-shaped from day one;
+        no edits.
+
+      - `src/workspace_sync/merge_resolver.py` (salvage-as-is, ~190
+        LOC) — Resolver Protocol + ResolverBudget + BudgetExhausted
+        + ResolverFailure + MergeVerdict + build_prompt +
+        MergeResolver. Architecture-neutral; no edits.
+
+      - `src/workspace_sync/merge_helper.py` (salvage-with-edits,
+        ~250 LOC) — lifted four functions from self-upgrade's
+        `clause_checks.py`: `_read_text_or_none`,
+        `_verdict_to_resolution`, `resolve_inferred_conflicts`
+        (was `resolve_clause_h_inferred`),
+        `check_inferred_resolution_invariants` (was `check_clause_h`).
+        Renames: `report.upgrade_tag` → `report.sync_ref`;
+        `.pos/upgrade/<tag>/merged` → `.pos/sync/<ref>/merged`;
+        OTel `pos.upgrade.merge_gate.*` → `pos.sync.merge_gate.*`
+        (AC.WS.11). Hidden-coupling check (plan §10 trigger 6):
+        verified the lifted block at HEAD `caafdf0` lines 355-579
+        of clause_checks.py contains no `paths.current_link` /
+        `paths.history` / `live_root` references — clean.
+
+      - `src/workspace_sync/observability.py` (salvage-with-edits,
+        ~55 LOC) — tracer name `pos.self_upgrade` → `pos.workspace_
+        sync` so spans are namespaced separately from A-mode
+        self-upgrade.
+
+      - `src/workspace_sync/staging.py` (new, ~140 LOC) — three
+        primitives: `stage_canonical_clean_writes`,
+        `stage_resolved_content`, `apply_staging_atomically`,
+        `discard_staging`. Per-file atomic rename via
+        `tempfile.mkstemp` + `os.replace`. Class-A paths are
+        structurally absent from the staging tree (filtered at
+        detection time) — AC.WS.7 + AC.WS.12.
+
+      - `src/workspace_sync/_resolver_client.py` (re-vendor, ~270
+        LOC) — copied from `tools/upgrade-merge-resolver/.../__init__.py`
+        with the import line `from self_upgrade.merge_resolver` →
+        `from .merge_resolver`. Per Hard Constraint #11 (salvage
+        by COPY, not import) — workspace-sync owns its own
+        `_ClaudePrintResolverClient` so there is no A↔B runtime
+        coupling. tools/upgrade-merge-resolver/ remains untouched.
+
+      - `src/workspace_sync/_audit.py` (new, ~90 LOC) —
+        `summarize_audit_for_operator` + `confirmed_by_operator`
+        helpers. Composable by future `/sync` slash-command (Lens
+        1 future composition).
+
+      - `src/workspace_sync/templates/sync-protected.default.yaml`
+        (salvage-as-is) — 30-line default Class-A floor envelope.
+
+      - `tests/conftest.py` (new) — `make_canonical_repo` and
+        `make_workspace` fixtures for hermetic-git-repo tests.
+
+      - `tests/test_*.py` (new, ~46 tests across 9 files) — full
+        AC.WS.1–AC.WS.12 + AC.WS.S coverage.
+
+      - `tests/test_no_sealed_amendments.py` + `tests/SEAL_COMMIT`
+        (first-seal pattern; `BASELINE = caafdf0...`).
+
+      - `seals/.gitkeep` (new) — directory placeholder for narrative
+        seal artefacts.
+
+      - `README.md` (new) — component-level docs.
+
+    Tests (workspace-sync — ~46 new):
+
+      - `test_merge_resolver.py` (6) — AC.WS.4/6/12: verdict-shape,
+        per-conflict budget, cumulative, exhaustion, failure
+        translation, prompt-builds-correctly.
+      - `test_sync_protected.py` (7) — AC.WS.2/10: classify-A/B/C,
+        floor-refuse, default-write, idempotent, workspace-rules
+        first-match.
+      - `test_conflict_report_b_shape.py` (6) — AC.WS.4/5/9: enum,
+        validators, sorted-low-confidence-first, override-shape,
+        sync_ref-rename, round-trip.
+      - `test_state.py` (5) — AC.WS.5/8: audit/state path
+        resolution, save/load round-trip, sync_ref field rename.
+      - `test_canonical.py` (5) — AC.WS.1: resolves HEAD, missing,
+        not-directory, no-.git, unknown-ref.
+      - `test_conflict_detection_b_shape.py` (5) — AC.WS.1/2/4:
+        identical-no-entry, canonical-only-clean-write,
+        both-sides-pending-class-c, class-A-pre-resolved, workspace-
+        modified-pending.
+      - `test_staging.py` (7) — AC.WS.7/12: stage-clean,
+        stage-resolved, atomic-apply, replace-existing, discard,
+        discard-idempotent, staging-root-path.
+      - `test_merge_helper.py` (10) — AC.WS.2/3/4/6/9/11/12:
+        Class-A→KEEP_LOCAL no resolver call, Class-B-modified →
+        KEEP_LOCAL, Class-C invokes resolver + writes audit,
+        budget-halt persists FAILURE state, resolver-failure
+        persists state, user-override skips resolver, OTel summary
+        span emitted, invariants pass / pending-fails / no-report-
+        passes.
+      - `test_cli_b_shape.py` (8) — AC.WS.1/7/10: derive-workspace
+        from .pos / .git / explicit / halt-on-neither / invalid-arg,
+        seed-default-envelope, ref-already-applied-no-state,
+        main-halts-on-missing-canonical, dry-run-clean-tree.
+
+    Backwards-compatibility verified (Hard Constraint #5):
+    - workspace-sync's pyproject.toml declares `pos-sync` and
+      `pos-workspace-sync` console_scripts only; the existing
+      `pos = self_upgrade.cli:main` console_script in
+      `self-upgrade/pyproject.toml` is untouched.
+    - Zero edits to `self-upgrade/` (Hard Constraint #1).
+    - Zero edits to `tools/upgrade-merge-resolver/` (Hard Constraint
+      #11).
+    - workspace-sync source has no `from self_upgrade ...` /
+      `import self_upgrade` / `from upgrade_merge_resolver ...` /
+      `import upgrade_merge_resolver` imports — both components
+      carry their own copy of the merge-resolver primitives.
+
+    Halt-trigger surface review (per plan §10):
+      #1 (new top-level objective): no — composition under v1.0
+         self-upgrade objective + Gap-3 line 114 + AC.PO.1/2.
+      #2 (ODD violation in surrounding code): none observed in the
+         salvage-source files at HEAD `caafdf0`.
+      #4 (source edits outside workspace-sync/): none — strict
+         workspace-sync/ fence.
+      #5 (B-shape requires new dep): not fired — git is a system
+         binary; subprocess shellout is stdlib.
+      #6 (GG salvage map wrong on close inspection): not fired —
+         hidden-coupling sweep on lifted block clean.
+      #9 (clause-(a)–(g) implicit): not fired — workspace-sync is
+         orchestrator-agnostic; no clause-bundle re-run needed
+         post-sync.
+      #10 (wall-time exceeds 6-8h): not exceeded.
+
+    Composition unlocked by this amendment:
+    - `/sync` slash-command (future amendment) wraps `pos-sync` for
+      direct persona-invokability.
+    - `--canonical <git-url>` remote-fetch mode (future amendment).
+    - Background-scope mode (AA D-3 future composition).
+    - Workspace-clone primitive (`pos clone-workspace`).
+    - Auto-accept-by-default tier (would re-open Hard Constraint #8;
+      requires owner ruling).

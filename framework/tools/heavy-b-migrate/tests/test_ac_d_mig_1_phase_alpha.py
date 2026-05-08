@@ -7,7 +7,7 @@ discovered. Each record:
 
 - has ``parent_id`` pointing at ``spec-v1.0`` (per builder-plan §6),
 - has ``authored_by == "user"``,
-- has ``lifted_from.source_doc == docs/rebuild/components/<slug>/proposal.md``,
+- has ``lifted_from.source_doc == docs/archive/component-research/<slug>/proposal.md``,
 - chains to the value-prop root via ``trace_to_root``.
 """
 
@@ -60,7 +60,7 @@ def test_phase_alpha_records_are_authored_by_user(
         assert proj.parent_id == "spec-v1.0"
         assert proj.lifted_from is not None
         assert proj.lifted_from.source_doc == (
-            "docs/rebuild/components/fixture-c/proposal.md"
+            "docs/archive/component-research/fixture-c/proposal.md"
         )
     finally:
         tracker.close()
@@ -87,7 +87,7 @@ def test_phase_alpha_skips_components_without_proposal(
     workspace: Path, seeded_tracker_db: Path, write_component_proposal
 ) -> None:
     # Make a dir without a proposal.md.
-    (workspace / "docs" / "rebuild" / "components" / "no-proposal").mkdir()
+    (workspace / "docs" / "archive" / "component-research" / "no-proposal").mkdir()
     write_component_proposal(workspace, "with-proposal", "# With\n")
     tracker = ObjectiveTracker(seeded_tracker_db)
     try:

@@ -15,7 +15,7 @@
 """AC.SKILLCAP.7 — `enable_auto_skill_capture` flag default-false +
 fail-closed on non-bool.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.7: the workspace-bootstrap manifest carries an
 `enable_auto_skill_capture: bool` field, default `False`. Mirrors
 `safety_profile`'s shape — frozenset of legal values (here: bool

@@ -1,0 +1,148 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-5-corrective-c1-c2-cli-synthesis-and-interview-error
+  title: "v0.2.5 corrective C1+C2 — cli._cmd_extract wires synthesis.build_default_anthropic_client when --live so objectives.yaml + backing-map.yaml populate end-to-end through the CLI; interview.resolve_pm_handle raises OddExtractorError instead of ValueError so _cmd_interview emits actionable error + exit 2 (not Python traceback) when no PM is authored; 3 named-AC tests + meta-AC for full-suite green"
+
+# BASELINE: <pending> — source-edit feat commit covering cli.py +
+# interview.py + 1 new test file + 1 updated test under
+# plugins/dev-sdlc/odd-extractor/.
+#
+# Corrective amendment landing C1 + C2 fixes surfaced by v0.2.5
+# HARD smoke (RED). Master plan §3 v0.2.5 + the dispatch brief
+# explicitly authorize "land both correctives so the v0.2.5 HARD
+# smoke can re-run GREEN." This manifest carries both BLOCKERs as
+# a single combined corrective per v0.2.1 corrective F1 single-
+# amendment-multi-AC precedent (both fixes touch only odd-extractor).
+#
+# Commit ladder pre-apply:
+#   064cc2e — v0.2.4 Cycle 3 seal.
+#   38a0473 — v0.2.4 Cycle 3 §14 backfill.
+#   7f8e8b3 — v0.2.4 master plan §9 Cycle 3 SHA backfill.
+#   4f54649 — v0.2.4 SHIPPED rollup (HEAD).
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 per AC.D-sa.7>
+#
+# Single-component fence — dev-sdlc:
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/
+#     cli.py — _cmd_extract constructs synthesis.build_default_anthropic_client()
+#     when args.live and the generate stage is active; passes the
+#     client into generate_raw_acs along with synthesis_required=
+#     args.live. Lazy-import failure raises StageError →
+#     OddExtractorError; existing CLI catch emits actionable
+#     error + exit 2.
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/
+#     interview.py — resolve_pm_handle raises OddExtractorError
+#     instead of ValueError on zero / multiple PMs; adds import
+#     of OddExtractorError from .errors.
+#   - EDIT plugins/dev-sdlc/odd-extractor/tests/
+#     test_AC_OREK_6_budget_envelope.py — test_live_with_override_proceeds
+#     monkeypatches synthesis.build_default_anthropic_client to
+#     inject a stub client (test was previously coupled to the F1
+#     bug where --live silently no-op'd synthesis; AC.OREK.6
+#     invariant — budget-override audit-log entry — preserved).
+#   - NEW test under plugins/dev-sdlc/odd-extractor/tests/:
+#       test_AC_V025_C1_C2_cli_synthesis_and_interview_error.py
+#                    — AC.V025-C1: cli.main(--live) against
+#                      jsts-playwright-app fixture + monkeypatched
+#                      stub client produces objectives.yaml ≥1
+#                      objective + backing-map.yaml exists +
+#                      synthesis.yaml model_id != "(none)".
+#                    — AC.V025-C2: cli.main(--interview) against
+#                      no-PM workspace exits non-zero with actionable
+#                      stderr; NO Python traceback substring.
+#   - NO edits to other source files in odd-extractor/ (2-file
+#     edit; halt-trigger if scope expands by more than 3 source
+#     files per plan-doc §4).
+#   - NO edits to spec.py / errors.py (existing OddExtractorError
+#     base class is the typed-error target; no schema change).
+#
+# AC families locked per plan-doc §2:
+#   AC.V025-C1 — CLI synthesis wire-through.
+#   AC.V025-C2 — _cmd_interview ValueError leak fixed.
+#   AC.V025-C3 — meta: pre-existing odd-extractor test suite remains
+#                green post-fix.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §5):
+#   D1 cold-state — fresh tmp workspace; cli.main(--live) against
+#     jsts-playwright-app + stub client produces non-empty
+#     objectives.yaml + backing-map.yaml. Verified by AC.V025-C1.
+#   D2 steady-state — re-running cli.main(--live) on byte-identical
+#     inputs produces byte-identical artefacts. Inherited from
+#     v0.2.3 idempotence verification (AC.BACKMAP.D2 + AC.OBJX.D2);
+#     not re-verified per fix-scope.
+#   D5 cross-session — extractor in process A writes objectives.yaml;
+#     augmented-objectives + gap-analysis stages in fresh process B
+#     parse cleanly. Inherited from v0.2.4 cross-session verification
+#     (AC.COMPINT + AC.GAPAN); not re-verified per fix-scope.
+#   D6 telemetry-floor — _cmd_extract continues to emit the same
+#     audit-log shape; synthesis_complete + backing_map_populated
+#     entries land when synthesis runs (existing generate.py /
+#     backing_map.py audit-log primitives unchanged). Verified
+#     structurally — audit-log writes are unchanged by this fix.
+#   D3 restart — n/a structurally (_cmd_extract is stateless on
+#     entry; restart equivalent is re-run with same workspace).
+#   D4 reboot — n/a structurally (one-shot CLI; D4 collapses to D5
+#     for one-shot CLIs per plugins/dev-sdlc/docs/
+#     smoke-test-discipline.md).
+#   PLUS: full-suite green sweep — pre-corrective odd-extractor
+#     tests at HEAD all pass post-corrective; halt + surface on
+#     any regression. Verified by AC.V025-C3 (815 passed / 1
+#     skipped vs v0.2.4 baseline 813 / 1 + 2 new C1/C2 tests).
+#
+# Bookkeeping: corrective amendment outside any v0.2.5 numbered
+# cycle ladder (v0.2.5 has no cycles; the release was pure smoke-
+# gate). Sealed-content invariant: pre-existing AC.* tests in
+# odd-extractor remain green; only two source files edited (cli.py
+# + interview.py); only one test file edited
+# (test_AC_OREK_6_budget_envelope.py — bug-coupling fix, preserves
+# AC.OREK.6 invariant); only one new test file added.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "4f54649"
+
+plan: docs/plans/v0-2-5-corrective-c1-c2-cli-synthesis-and-interview-error.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-2-5-corrective-c1-c2-cli-synthesis-and-interview-error.md
+
+ac_count: 3
+smoke_outcome: "D1 exercised on jsts fixture with stub client; D2/D5 inherited; D3/D4 n/a (stateless); D6 structural; 2 named-AC + meta-AC; odd-extractor green (815 pass / 1 skip vs baseline 813 / 1)"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent + v0.1.9 Cycle 1 precedent + v0.2.0 Cycle 1
+# precedent + v0.2.1 Cycle 1/2/F1/F2 precedent + v0.2.4 Cycle 3
+# precedent.
+# `docs/plans/` admits the plan-before-code paper trail.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-5-corrective-c1-c2-cli-synthesis-and-interview-error
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

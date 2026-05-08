@@ -17,7 +17,7 @@ fixture without depending on the archived synthesis tool.
 
 Post-OSS-dev-architecture-migration (2026-05-04): the synthesis tool
 (``loam.publish_framework_only.synth.synthesise_framework_only``) is
-archived at ``docs/rebuild/archive/synthesis-tool-2026-05-04/`` and
+archived at ``docs/archive/synthesis-tool-2026-05-04/`` and
 not importable from active source. The conftest's
 ``_make_fixture_canonical`` factory was rewritten to drop the
 synthesis-tool dependency:
@@ -112,7 +112,7 @@ def test_AC_WBM2M_4_synthesis_tool_not_importable_from_conftest():
     module-level globals.
 
     The synthesis tool's source is at
-    ``docs/rebuild/archive/synthesis-tool-2026-05-04/``; not on the
+    ``docs/archive/synthesis-tool-2026-05-04/``; not on the
     active import path.
     """
     # Import the conftest module itself — even though it's normally

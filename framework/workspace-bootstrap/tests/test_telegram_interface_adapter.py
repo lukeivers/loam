@@ -16,7 +16,7 @@
 telegram-interface-framework-integration.
 
 Maps 1:1 to ACs in
-docs/rebuild/components/telegram-interface-framework-integration/proposal.md.
+docs/archive/component-research/telegram-interface-framework-integration/proposal.md.
 
 AC coverage in this file:
   AC1 — adapter class exists with correct metadata

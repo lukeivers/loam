@@ -60,20 +60,19 @@ def _seed_workspace(root: Path, *, with_starter_persona: bool = True) -> None:
         "Before acting, read:\n\n"
         "- `docs/odd-methodology.md`\n"
         "- `docs/odd-in-loam.md`\n"
-        "- `docs/rebuild/VALUE_PROPOSITION.md`\n"
-        "- `docs/rebuild/STATE.md`\n"
-        "- `docs/rebuild/FUTURE_IDEAS.md`\n"
+        "- `docs/VALUE_PROPOSITION.md`\n"
+        "- `docs/STATE.md`\n"
+        "- `docs/FUTURE_IDEAS.md`\n"
         "\n---\n\n"
     )
     (root / "docs").mkdir()
     (root / "docs" / "odd-methodology.md").write_text("odd")
     (root / "docs" / "odd-in-loam.md").write_text("in-pos")
-    (root / "docs" / "rebuild").mkdir()
-    (root / "docs" / "rebuild" / "VALUE_PROPOSITION.md").write_text("vp")
-    (root / "docs" / "rebuild" / "STATE.md").write_text("state")
-    (root / "docs" / "rebuild" / "FUTURE_IDEAS.md").write_text("ideas")
-    (root / "docs" / "rebuild" / "plans").mkdir()
-    (root / "docs" / "rebuild" / "plans" / "amendment-x.md").write_text("#x")
+    (root / "docs" / "VALUE_PROPOSITION.md").write_text("vp")
+    (root / "docs" / "STATE.md").write_text("state")
+    (root / "docs" / "FUTURE_IDEAS.md").write_text("ideas")
+    (root / "docs" / "plans").mkdir()
+    (root / "docs" / "plans" / "amendment-x.md").write_text("#x")
     # D-migration D.2 (amendment #63): workspace-state under
     # <ws>/workspace/.pos/ post-D.2.
     pos = root / "workspace" / ".pos"

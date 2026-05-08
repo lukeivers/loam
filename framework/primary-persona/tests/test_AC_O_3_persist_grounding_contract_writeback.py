@@ -23,7 +23,7 @@ equivalent contract. On a malformed payload (any required field
 empty, dev-intent not in {yes, no}) raises
 ``OnboardingGroundingError`` without writing any file.
 
-Plan: docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+Plan: docs/plans/primary-persona-conversational-onboarding-and-default-archetype.md
 """
 
 from __future__ import annotations

@@ -13,8 +13,8 @@ adapter, Python first-class adapter.
 
 **Plan-docs:**
 
-- v0.1.8 master plan: `docs/rebuild/plans/v0-1-8-master-plan.md`.
-- Cycle 1 (this scaffolding): `docs/rebuild/plans/v0-1-8-cycle-1-odd-extractor-scaffolding.md`.
+- v0.1.8 master plan: `docs/plans/v0-1-8-master-plan.md`.
+- Cycle 1 (this scaffolding): `docs/plans/v0-1-8-cycle-1-odd-extractor-scaffolding.md`.
 
 ## What this package is
 

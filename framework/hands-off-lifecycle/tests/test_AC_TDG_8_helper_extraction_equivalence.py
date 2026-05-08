@@ -109,7 +109,7 @@ def test_AC_TDG_8_carve_out_predicate_byte_equivalent() -> None:
         "framework/CLAUDE.md",
         "framework/orchestrator/src/x.py",  # NOT a carve-out
         "framework/orchestrator/tests/test_x.py",  # NOT a carve-out (per A2)
-        "docs/rebuild/FUTURE_IDEAS.md",
+        "docs/FUTURE_IDEAS.md",
         ".gitignore",
     ]
     for case in cases:
@@ -126,7 +126,7 @@ def test_AC_TDG_8_a2_evaluate_allow_path_unchanged(tmp_path, monkeypatch) -> Non
     explicitly.)"""
     sentinel = ActiveScopeSentinel(
         scope_id="test-scope",
-        plan_path="docs/rebuild/plans/test.md",
+        plan_path="docs/plans/test.md",
         bindings=(
             ScopeBinding(component="orchestrator", ac_id="AC.O8.A1"),
         ),

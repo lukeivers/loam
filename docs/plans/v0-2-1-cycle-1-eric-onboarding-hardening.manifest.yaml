@@ -1,0 +1,254 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-1-cycle-1-eric-onboarding-hardening
+  title: "v0.2.1 Cycle 1 — Eric onboarding ritual hardening; install-time 6-question one-at-a-time PM-mediated ritual + survey-as-default-source + production-stake honour-flow + SOC-2 audit-log floor + fresh-user fixture; single-component fence on framework/workspace-bootstrap/"
+
+# BASELINE: <pending> — source-edit feat commit covering the new
+# onboarding modules at framework/workspace-bootstrap/src/loam/
+# workspace_bootstrap/ + extending manifest.py with new fields +
+# additive post-bootstrap callout in framework/loam-init/cli.py +
+# per-AC tests + integration smoke + cross-session manifest test +
+# survey-parser tests + tests/fixtures/fresh-user-onboarding/ (4
+# synthetic-tree shapes + 3 survey-file shapes) + new
+# docs/dev-mode-getting-started.md + docs/getting-started.md
+# walkthrough section.
+#
+# Cycle 1 is the first of three cycles in v0.2.1. Cycle 2 follows:
+#   - Cycle 2: Promotion rubric mechanism. PRIMARY plugins/dev-sdlc/
+#              skills/skill-promotion-review/. 3-signal MVP per
+#              Decision L; decision matrix per layered-skills §4.2;
+#              graduation workflow per §4.3; quarterly trigger via
+#              framework/scope-of-work/.
+#   - Cycle 3: Release-level HARD smoke gate execution against
+#              Eric's rd-automation (single fixture per master plan
+#              §6.2 ruling 2026-05-05). NO new component code.
+# After Cycle 3 seals, the v0.2.1 SHIPPED rollup commit lands on
+# canonical, backfilling STATE.md + roadmap §8 + eric-final-delivery
+# §2 v0.2.1 row. Tag deferred until Luke gates Eric install.
+#
+# Commit ladder pre-apply:
+#   bbc93a7 — v0.2.0 SHIPPED rollup (predecessor; v0.2.0 release).
+#   2ff444e — v0.2.1 master plan + cycle decomposition.
+#   2ba7fcd — v0.2.1 master plan patch (single-fixture rd-automation).
+#   9355ef2 — v0.2.1 master plan sweep (remaining two-fixture refs).
+#   df447bc — FIDRAFT entry: claude-code-pasteable-survey pattern.
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §9
+#    Cycle 1 SHA row per AC.D-sa.7>
+#
+# Single-component fence — workspace-bootstrap:
+#   - NEW modules under framework/workspace-bootstrap/src/loam/
+#     workspace_bootstrap/:
+#       onboarding.py              — orchestrator entry-point;
+#                                     run_onboarding(...) hosts
+#                                     question-loop.
+#       language_detection.py      — depth-bounded tree walk +
+#                                     Gemfile / package.json /
+#                                     tsconfig.json detection.
+#       survey_parser.py           — AC.ONBOARD.15 survey-file
+#                                     parser; H2-section extraction
+#                                     + best-effort question-slug
+#                                     match; never-block.
+#       onboarding_audit.py        — Decision P SOC-2 audit-log
+#                                     emitter; <workspace>/.loam/
+#                                     audit-log/onboarding-<date>.yaml.
+#       onboarding_activations.py  — extractor + channel + watch +
+#                                     auto-skill-capture activations.
+#       onboarding_cli.py          — `loam onboard` subcommand
+#                                     builder; mirrors loam-init M6a
+#                                     contract.
+#   - EDITS to existing modules (additive only):
+#       manifest.py    — extend Manifest dataclass + load_manifest
+#                        validation: channel_preference,
+#                        extractor_opt_in, watch_opt_in,
+#                        language_primary, onboarding_completed_at.
+#                        Existing safety_profile +
+#                        enable_auto_skill_capture unchanged.
+#       __init__.py    — additive exports of new module entry-points.
+#   - NEW tests under framework/workspace-bootstrap/tests/:
+#       test_AC_ONBOARD_1_trigger_and_skip.py
+#       test_AC_ONBOARD_2_language_detection.py
+#       test_AC_ONBOARD_3_pm_sequencing.py
+#       test_AC_ONBOARD_4_channel_preference.py
+#       test_AC_ONBOARD_5_safety_profile.py
+#       test_AC_ONBOARD_6_extractor_opt_in.py
+#       test_AC_ONBOARD_7_watch_opt_in.py
+#       test_AC_ONBOARD_8_auto_skill_capture_opt_in.py
+#       test_AC_ONBOARD_9_completion_summary.py
+#       test_AC_ONBOARD_10_production_stake_default_flip.py
+#       test_AC_ONBOARD_11_audit_log.py
+#       test_AC_ONBOARD_12_fresh_user_smoke.py
+#       test_AC_ONBOARD_13_install_docs.py
+#       test_AC_ONBOARD_14_test_surface.py        (meta-test on roster)
+#       test_AC_ONBOARD_15_survey_as_default_source.py
+#       test_onboarding_integration.py             (full ritual end-to-end)
+#   - NEW fixtures under framework/workspace-bootstrap/tests/fixtures/
+#     fresh-user-onboarding/:
+#       synthetic-rails/         — Gemfile + config/application.rb +
+#                                  app/controllers/users_controller.rb.
+#       synthetic-jsts/          — package.json + tsconfig.json +
+#                                  src/index.ts.
+#       synthetic-mixed/         — both Gemfile + package.json at root.
+#       synthetic-unknown/       — empty repo with only .git/.
+#       survey-files/well-formed.md — all 6 questions prefilled.
+#       survey-files/partial.md     — 3 of 6 questions present.
+#       survey-files/malformed.md   — broken H2 shapes.
+#   - ADDITIVE callout in framework/loam-init/src/loam/loam_init/cli.py:
+#       Post-bootstrap_new_workspace success branch invokes
+#       run_onboarding when interactive (TTY) AND
+#       LOAM_ONBOARDING_SKIP unset. Lazy-import for cross-component
+#       isolation (mirrors existing pattern at lines 69-86).
+#   - DOCS (universal-paths admission):
+#       docs/getting-started.md            — extend with
+#                                            onboarding-walkthrough
+#                                            section (~50-80 lines
+#                                            additive).
+#       docs/dev-mode-getting-started.md   — NEW file; minimum 80
+#                                            lines; covers dev-mode
+#                                            enable + walkthrough +
+#                                            CLAUDE.md fragment
+#                                            auto-load.
+#
+# AC families locked per plan-doc §3:
+#   AC.ONBOARD.1  — `loam onboard` triggers ritual; LOAM_ONBOARDING_SKIP
+#                    disables.
+#   AC.ONBOARD.2  — Project-language auto-detection (Rails / Ruby /
+#                    JS/TS / mixed / unknown); depth-bounded walk;
+#                    Q1 confirm-detection.
+#   AC.ONBOARD.3  — PM batch API single-question sequencing
+#                    (n=1; one enqueue per question; await
+#                    record_response).
+#   AC.ONBOARD.4  — Q2: channel preference (Telegram via existing
+#                    SetupWalkthrough / CLI / Skip).
+#   AC.ONBOARD.5  — Q3: safety profile (production-stake / dev /
+#                    research); default-highlight production-stake on
+#                    Rails.
+#   AC.ONBOARD.6  — Q4: extractor opt-in (Y now / Defer / Never).
+#   AC.ONBOARD.7  — Q5: continuous-watch opt-in (Y / Defer-default /
+#                    N).
+#   AC.ONBOARD.8  — Q6: auto-skill-capture opt-in (Y / N-default).
+#   AC.ONBOARD.9  — Ritual completion summary (capabilities-active +
+#                    single next-action + audit-log location).
+#   AC.ONBOARD.10 — Production-stake defaults flip (force
+#                    auto-skill-capture false; verify v0.1.6 +
+#                    v0.1.9 + v0.2.0 honour-flows fire).
+#   AC.ONBOARD.11 — Audit-trail floor honored per Decision P
+#                    (SOC-2). Schema mirrors odd-extractor v0.2.0
+#                    Cycle 1.
+#   AC.ONBOARD.12 — Fresh-user smoke fixture (4 synthetic trees;
+#                    end-to-end with PM-mock).
+#   AC.ONBOARD.13 — Install docs at quality-bar feel-intentional
+#                    level (extend getting-started.md + author NEW
+#                    dev-mode-getting-started.md).
+#   AC.ONBOARD.14 — Component-level tests + integration test surface.
+#   AC.ONBOARD.15 — Survey-as-default-source (NEW per Luke 2026-05-05);
+#                    ~/loam-onboarding-survey.md OR
+#                    $LOAM_ONBOARDING_SURVEY env-var; tolerant H2
+#                    parser; never-block; ≤30 lines new code per
+#                    brief constraint.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §4):
+#   D1 cold-state — fresh tmp workspace + each of 4 synthetic-tree
+#     fixtures runs full ritual end-to-end; manifest + audit-log +
+#     summary present post-ritual. Verified by
+#     test_onboarding_integration.py + test_AC_ONBOARD_12_*.
+#   D2 steady-state — re-run ritual on already-onboarded workspace
+#     idempotent (read existing manifest; offer per-question re-ask;
+#     no double-write on no-change). Verified by integration test
+#     re-invocation variant.
+#   D3 restart — mid-onboarding kill -TERM; restart re-uses partial
+#     state from audit-log onboarding_question_asked entries; user
+#     sees "resuming at Q<N>" prompt. Verified by
+#     test_AC_ONBOARD_11_audit_log.py kill-mid-Q3 variant.
+#   D5 cross-session — manifest + audit-log + summary survive
+#     /clear; subsequent session reads manifest. Verified by
+#     manifest-roundtrip test.
+#   D6 telemetry-floor — every event-kind
+#     (onboarding_question_asked / onboarding_response_recorded /
+#     onboarding_capability_activated / onboarding_default_flip /
+#     onboarding_skipped / onboarding_completed) writes one
+#     audit-log entry. SOC-2 audit-trail floor (Decision P).
+#     Verified by test_AC_ONBOARD_11_audit_log.py +
+#     test_onboarding_integration.py.
+#   D4 reboot — n/a structurally (one-shot CLI; filesystem state
+#     survives reboot trivially).
+#   PLUS: full-suite green sweep — pre-Cycle-1
+#     framework/workspace-bootstrap/ + framework/loam-init/ tests at
+#     HEAD (df447bc or successor) all pass post-Cycle-1; halt +
+#     surface on any regression.
+#
+# Bookkeeping note: this is the v0.2.1 first cycle (immediate
+# successor to v0.2.0 SHIPPED rollup at bbc93a7 + v0.2.1 master plan
+# at 2ff444e/2ba7fcd/9355ef2/df447bc). v3 fields exercised:
+# plan_doc_ref + ac_count + smoke_outcome at the manifest level;
+# single-component sweep at seal time. Universal-paths admit
+# docs/plans/ for plan-doc paper trail + docs/getting-started.md
+# extension + docs/dev-mode-getting-started.md new authoring.
+#
+# Cycle 1 includes a tertiary additive callout in framework/loam-init/
+# (post-bootstrap onboarding hook). This is intentionally minimal
+# (lazy-import + TTY + skip-flag check + invocation; ~10-20 lines)
+# and per-component sealed-content unchanged for loam-init's existing
+# code path. The seal_test convention (single-component fence) holds:
+# the workspace-bootstrap seal_test verifies workspace-bootstrap's
+# fence; loam-init's existing seal_test continues to verify loam-init's
+# fence. The additive callout is admissible under workspace-bootstrap's
+# fence as a cross-component import (mirroring how loam-init imports
+# from workspace-bootstrap today).
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "0bf33f1"
+
+plan: docs/plans/v0-2-1-cycle-1-eric-onboarding-hardening.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-2-1-cycle-1-eric-onboarding-hardening.md
+
+ac_count: 15
+smoke_outcome: "D1+D2+D3+D5+D6 exercised; D4 n/a (one-shot CLI); 4 synthetic-tree + 3 survey-file fixtures; full-suite green sweep (401 passed, 11 pre-existing skips)"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent + v0.1.9 Cycle 1 precedent + v0.2.0 Cycle 1
+# precedent.
+# `docs/plans/` admits the plan-before-code paper trail.
+# `docs/getting-started.md` + `docs/dev-mode-getting-started.md`
+# admit per AC.ONBOARD.13 install-doc deliverable.
+# `framework/loam-init/src/loam/loam_init/cli.py` admits the additive
+# post-bootstrap onboarding callout (lazy-import; ~10-20 lines).
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+    - docs/getting-started.md
+    - docs/dev-mode-getting-started.md
+    - framework/loam-init/src/loam/loam_init/cli.py
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.v0-2-1-cycle-1-eric-onboarding-hardening
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

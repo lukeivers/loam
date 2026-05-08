@@ -8,9 +8,9 @@ This document is the concise codification of the amendment-cycle convention. The
 
 A standard amendment cycle, in order:
 
-1. **Research** (if non-trivial). Produces `docs/rebuild/plans/research/<slug>.md` or inline research section in the plan.
+1. **Research** (if non-trivial). Produces `docs/plans/research/<slug>.md` or inline research section in the plan.
 2. **Spec** (if a new component / capability — uses the master plan-doc as the spec).
-3. **Plan + manifest**. Produces `docs/rebuild/plans/<slug>.md` + `<slug>.manifest.yaml`. Committed first per `feedback_plan_before_code`.
+3. **Plan + manifest**. Produces `docs/plans/<slug>.md` + `<slug>.manifest.yaml`. Committed first per `feedback_plan_before_code`.
 4. **Build**. Feature commits per the plan. Corrective commits if the plan's seal-diff fence misses a path or a test reveals an empirical issue.
 5. **Apply**. `loam amend apply` commit. Auto-generated; deterministic.
 6. **Seal**. `loam amend seal` commit. Advances SEAL_COMMIT sidecars; writes the per-amendment seal narrative; runs the seal-tests.
@@ -45,7 +45,7 @@ Each amendment is independently revertable (`git revert <seal-sha>`). Sub-amendm
 
 ## 5. Cross-references
 
-- Master sequencing rule: `docs/rebuild/STATE.md` §"Governing rules" rule #1.
+- Master sequencing rule: `docs/STATE.md` §"Governing rules" rule #1.
 - Plan-doc + manifest convention: `plan-docs.md`.
 - Commit-ladder convention: `commit-ladder.md`.
 - Sealed-component invariants: `sealed-component-invariants.md`.

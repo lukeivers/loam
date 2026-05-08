@@ -1,0 +1,109 @@
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-1-8-cycle-1-odd-extractor-scaffolding
+  title: "v0.1.8 Cycle 1 — odd-extractor scaffolding (NEW sub-package plugins/dev-sdlc/odd-extractor/)"
+
+# BASELINE: b33a0dc — the source-edit commit (pre-apply tip).
+#
+# Commit ladder pre-apply:
+#   1c2c478 — v0.1.8 master plan + cycle decomposition (predecessor).
+#   e3a20b3 — Cycle 1 sub-plan-doc (plan-before-code; THIS plan).
+#   b33a0dc — feat(dev-sdlc): odd-extractor scaffolding source edits + tests.
+#   <`loam amend apply` lands NEXT — single merged manifest+apply
+#    commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path>` lands as deterministic
+#    seal commit, with synthesized 5-15 line narrative body per
+#    AC.DPS2.{1,4} and `Plan doc:` line in the commit message body
+#    per AC.DPS2.6>
+#
+# Single-component fence — dev-sdlc:
+#   - dev-sdlc — NEW sub-package plugins/dev-sdlc/odd-extractor/
+#     containing pyproject.toml + README.md + src/loam_odd_extractor/
+#     (12 .py modules: __init__, errors, spec, state, observability,
+#     registry, budget, init, analyze, generate, verify, cli) + tests/
+#     (12 test files: 7 per-AC + 4 integration smoke + 1 scaffold-
+#     invariants seal-style) + seals/ (empty at scaffold time).
+#     56 tests; all green pre-apply.
+#
+# AC families locked per docs/plans/v0-1-8-cycle-1-odd-extractor-scaffolding.md §4:
+#   AC.OREK.1 — Component scaffold present: dirs + pyproject.toml +
+#               README.md + entry-point declaration.
+#   AC.OREK.2 — `loam odd-extract <repo>` CLI invocable; dry-run by
+#               default per Decision D; --live, --budget-cents,
+#               --budget-override, --workspace-root, --stage,
+#               --status, --resume, --json flags.
+#   AC.OREK.3 — Four-stage workflow (init/analyze/generate/verify);
+#               each stage pure function; structured per-stage
+#               artefacts; --stage flag for independent invocation.
+#   AC.OREK.4 — Language-adapter registry with LanguageAdapter
+#               Protocol; manual + entry-point discovery; zero
+#               adapters in Cycle 1.
+#   AC.OREK.5 — Dry-run cost estimate via cost-governance primitive;
+#               cold-start LOW band; estimate surfaces in stdout.
+#   AC.OREK.6 — Foreign-codebase budget envelope ($10/$5/halt
+#               defaults); --live without --budget-override blocked
+#               when estimate exceeds ceiling.
+#   AC.OREK.7 — Component-level test surface: per-AC tests +
+#               integration smoke + scaffold-invariants test.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §6):
+#   D1 cold-state — fresh tmp workspace + tmp fixture repo runs full
+#     four-stage workflow end-to-end; all artefacts land. Verified by
+#     test_full_workflow_dry_run.py (PASS x 2).
+#   D2 steady-state — n/a structurally (one-shot CLI, not daemon).
+#     Idempotency variant: 5 repeated runs produce byte-identical
+#     artefacts. Verified by test_steady_state_idempotent.py (PASS x 2).
+#   D3 restart — n/a structurally (no long-running process to kill).
+#     Cross-session continuity (D5) is the relevant analog.
+#   D4 reboot — n/a structurally (same reason as D3). Not a daemon.
+#   D5 cross-session — state.yaml at <workspace>/.loam/extractions/
+#     <repo-id>/state.yaml persists across fresh-process boundary;
+#     resume picks up where prior process left off; status reads
+#     prior state. Verified by test_cross_session_state.py via
+#     subprocess invocations (PASS x 3).
+#   D6 telemetry-floor — every extraction run writes 6 audit-log
+#     entries (extraction_start + 4 stage_complete + extraction_end);
+#     SOC-2 audit-trail floor (Decision P). Verified by
+#     test_audit_log_entries.py (PASS x 3).
+#
+# Bookkeeping note: this is the SECOND amendment to use schema v3
+# (DPS2 was the first). v3 fields exercised: plan_doc_ref + ac_count
+# + smoke_outcome at the manifest level.
+
+baseline: "b33a0dc"
+
+plan: docs/plans/v0-1-8-cycle-1-odd-extractor-scaffolding.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-1-8-cycle-1-odd-extractor-scaffolding.md
+
+ac_count: 7
+smoke_outcome: "D1+D2-idempotency+D5+D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI)"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-1-8-cycle-1-odd-extractor-scaffolding
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

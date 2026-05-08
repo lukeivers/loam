@@ -53,7 +53,7 @@ Build dispatch brief authored inline by dispatcher at dispatch time per `dispatc
 
 ## §11 — Provenance trail
 
-Master plan §3 Cycle 3; release-roadmap §3 v0.3.0 (foundation-docs absorption per Luke 2026-05-08); `docs/rebuild/plans/foundation-revision-rebuild.md` FR.1/FR.2/FR.3 (now absorbed); `docs/plans/research/pos3-forward-staging-promotion-classification.md`.
+Master plan §3 Cycle 3; release-roadmap §3 v0.3.0 (foundation-docs absorption per Luke 2026-05-08); `docs/plans/foundation-revision-rebuild.md` FR.1/FR.2/FR.3 (now absorbed); `docs/plans/research/pos3-forward-staging-promotion-classification.md`.
 
 ## §14 — Method-decision record (backfilled at dispatch + seal)
 

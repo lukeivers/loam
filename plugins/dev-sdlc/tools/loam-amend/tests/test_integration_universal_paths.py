@@ -13,12 +13,12 @@ from loam_amend.seal_diff import read_entries
 
 
 _COMPONENTS = ("alpha", "beta", "gamma")
-_UNIVERSAL_PREFIXES = ("docs/rebuild/plans/",)
+_UNIVERSAL_PREFIXES = ("docs/plans/",)
 _UNIVERSAL_FILES = (
     "CLAUDE.md",
     "docs/odd-in-loam.md",
     "docs/odd-methodology.md",
-    "docs/rebuild/FUTURE_IDEAS.md",
+    "docs/FUTURE_IDEAS.md",
 )
 
 
@@ -66,7 +66,7 @@ def _write_retrofit_manifest(repo: Path, baseline: str) -> Path:
             "title": "universal paths retrofit",
         },
         "baseline": baseline,
-        "plan": "docs/rebuild/plans/retrofit.md",
+        "plan": "docs/plans/retrofit.md",
         "components": [
             {
                 "name": c,

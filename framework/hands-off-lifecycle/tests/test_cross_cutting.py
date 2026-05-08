@@ -139,14 +139,14 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         # touching this file.
         ".claude",
         # Amendment #6 (namespaced-labels-and-bootout) additions:
-        #   - `docs/rebuild/components/namespaced-labels-and-bootout/`
+        #   - `docs/archive/component-research/namespaced-labels-and-bootout/`
         #     (proposal + brief live with the amendment; top-level
         #     `docs` match lets first_prefix pass here — finer-grained
         #     filtering lives in workspace-bootstrap's seal test).
         #   - `first-run-inventory.yaml` — workspace-level manifest
         #     templating service labels per workspace slug.
         # Amendment #7 (orchestrator-bootstrap-unification) additions:
-        #   - `docs/rebuild/components/orchestrator-bootstrap-unification/`
+        #   - `docs/archive/component-research/orchestrator-bootstrap-unification/`
         #     (proposal lives with the amendment; same top-level `docs`
         #     bucket). Primary surface is orchestrator/ which is already
         #     in the allowed set.
@@ -174,7 +174,7 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         #     component. The amendment adds two new outcome-shaped
         #     C14 tests (pre-write ordering + fire-once-across-debits)
         #     without touching cost-governance/src/. The finer-grained
-        #     diff-scope filter (including the `docs/rebuild/plans/`
+        #     diff-scope filter (including the `docs/plans/`
         #     extension for the plan-before-code paper trail) lives
         #     in cost-governance/tests/test_no_sealed_amendments.py.
         "cost-governance",

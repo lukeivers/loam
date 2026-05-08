@@ -1,7 +1,7 @@
 """AC.D.1.5.4 — Backwards-compat with v1 manifests + substantive
 amendments. Pre-D.1.5 behaviour preserved for the common case.
 
-Plan: ``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.4.
+Plan: ``docs/plans/d-migration-1-5.md`` AC.D.1.5.4.
 """
 
 from __future__ import annotations

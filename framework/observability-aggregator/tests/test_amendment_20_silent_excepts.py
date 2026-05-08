@@ -14,7 +14,7 @@
 
 """Amendment #20 — S2 silent-except bundle new-behaviour tests (sites 9-10).
 
-Research doc: docs/rebuild/plans/research/amendment-20-s2-silent-excepts-research.md.
+Research doc: docs/plans/research/amendment-20-s2-silent-excepts-research.md.
 
 Two new tests covering the two observability-aggregator silent-except sites:
   Site 9  — NLPath.translate LLM failure captured as llm_translate_failed event.

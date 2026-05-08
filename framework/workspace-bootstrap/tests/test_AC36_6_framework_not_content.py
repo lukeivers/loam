@@ -29,7 +29,7 @@ Plan §4 AC36.6 outcomes:
   constants.
 
 Maps to v1.2 R16 framework-not-content
-(``docs/rebuild/spec/loam-objectives-spec.md`` §348–356) →
+(``docs/spec/loam-objectives-spec.md`` §348–356) →
 AC.PO.2 (toolkit purity).
 """
 

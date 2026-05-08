@@ -10,7 +10,7 @@
 ``<workspace>/.claude/agents/<name>.md`` halts the scaffold rather
 than overwrites the operator's file.
 
-Per ``docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md`` §5
+Per ``docs/plans/v0-1-7-personas-pm-layered-skills.md`` §5
 AC.PERSONAS.7 + Surface #2: operator-precedence is preserved
 structurally. A workspace-authored agent file at the target path
 beats the plugin's offering; the scaffold raises

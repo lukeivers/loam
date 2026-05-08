@@ -15,13 +15,13 @@ can run a cycle without re-deriving the steps.
 
 The amendment-cycle ladder in canonical order:
 
-1. **Plan-doc authoring** at `docs/rebuild/plans/<slug>.md`. Sections:
+1. **Plan-doc authoring** at `docs/plans/<slug>.md`. Sections:
    Outcome shape (the "why") + Lens checks + Single-component fence +
    AC family (every AC explicit) + Halt-and-surface BEFORE build +
    Smoke (six dimensions) + Out of scope + Halt triggers (in-flight) +
    Bookkeeping + F2 RF + Provenance + Acceptance gate +
    `## 14. Method-decision record` (per AC.D-sa.7 lint).
-2. **Manifest authoring** at `docs/rebuild/plans/<slug>.manifest.yaml`
+2. **Manifest authoring** at `docs/plans/<slug>.manifest.yaml`
    — schema v3. Required top-level fields: `schema_version: 3` +
    `amendment.slug` + `amendment.title` + `baseline` (7–40 char
    lowercase-hex SHA) + `plan` + `plan_doc_ref` + `ac_count` +
@@ -85,7 +85,7 @@ Skip when:
    pos-v2 (or the appropriate dev-mode workspace root).
    `feedback_always_specify_wd_in_dispatches` is non-negotiable.
 2. **Author the plan-doc FIRST.** No source code is touched until
-   the plan-doc lands at `docs/rebuild/plans/<slug>.md`. Use
+   the plan-doc lands at `docs/plans/<slug>.md`. Use
    `plan-before-code-author` skill for the structural walk.
 3. **Author the manifest second.** Schema v3; reference the latest
    sealed cycle's manifest as the structural template (e.g.,

@@ -14,7 +14,7 @@
 
 """AC.MFBM-OPS.2 — Worker-liveness Label-contract regression-pin.
 
-Plan ref: ``docs/rebuild/plans/m-fbm-operational-health.md`` §4
+Plan ref: ``docs/plans/m-fbm-operational-health.md`` §4
 AC.MFBM-OPS.2.
 
 Diagnosis trigger (2026-05-04): the dispatch's hypothesised failure

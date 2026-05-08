@@ -11,7 +11,7 @@ exists and articulates the 3-tier model + override semantics + lifecycle
 + the auto-symlinking mechanism + collision rules + Anthropic SKILL.md
 spec reference.
 
-Per ``docs/rebuild/plans/v0-1-7-cycle-3-layered-skill-discovery.md`` §4.
+Per ``docs/plans/v0-1-7-cycle-3-layered-skill-discovery.md`` §4.
 """
 
 from __future__ import annotations

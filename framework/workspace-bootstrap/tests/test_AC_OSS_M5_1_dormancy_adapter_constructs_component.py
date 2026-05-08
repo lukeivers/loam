@@ -20,7 +20,7 @@ adapter actually constructs a ``DegradationComponent`` and assigns it
 to ``host.dormancy``.
 
 Programme: OSS v0.1.0 publish — M5 — wire-dormancy.
-Plan: docs/rebuild/plans/oss-v0-1-0-publish-dormancy-constructor.md.
+Plan: docs/plans/oss-v0-1-0-publish-dormancy-constructor.md.
 AC family: AC.OSS-M5.1.
 """
 

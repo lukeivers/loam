@@ -14,7 +14,7 @@
 
 """AC.OSS-M3.2 — `loam-cost` console-script registered.
 
-Per plan `docs/rebuild/plans/oss-v0-1-0-publish-wire-clis.md` §4
+Per plan `docs/plans/oss-v0-1-0-publish-wire-clis.md` §4
 AC.OSS-M3.2: `framework/cost-governance/pyproject.toml` registers
 `loam-cost` as a `[project.scripts]` entry pointing at
 `loam.cost_governance.cli:main`.

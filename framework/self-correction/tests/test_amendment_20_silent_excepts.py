@@ -14,7 +14,7 @@
 
 """Amendment #20 — S2 silent-except bundle new-behaviour tests (sites 1-5).
 
-Research doc: docs/rebuild/plans/research/amendment-20-s2-silent-excepts-research.md.
+Research doc: docs/plans/research/amendment-20-s2-silent-excepts-research.md.
 
 Five new tests covering the five self-correction silent-except sites:
   Site 1 — build_trigger_from_span attribute-lookup failure emits span.

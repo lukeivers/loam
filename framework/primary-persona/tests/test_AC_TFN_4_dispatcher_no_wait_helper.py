@@ -15,7 +15,7 @@
 """AC.TFN.4 — dispatcher no longer needs the iso-second wait.
 
 Per the locked plan-doc
-``docs/rebuild/plans/a1-substrate-timestamp-format-normalization.md``
+``docs/plans/a1-substrate-timestamp-format-normalization.md``
 §4 AC.TFN.4: the dispatcher's setup-phase sentinel-then-manifest
 sequence produces strictly-increasing lex-compared ``created_at``
 strings WITHOUT any wall-clock wait between the two writes.

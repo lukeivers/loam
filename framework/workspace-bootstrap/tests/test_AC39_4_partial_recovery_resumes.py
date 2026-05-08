@@ -61,11 +61,10 @@ def _build_workspace(tmp_path: Path) -> tuple[Path, Path]:
     returns "pos-v2-dev"."""
     workspace = tmp_path / "ws-partial"
     workspace.mkdir()
-    (workspace / "docs" / "rebuild").mkdir(parents=True)
+    (workspace / "docs").mkdir(parents=True)
     framework_vp = (
         Path(__file__).resolve().parent.parent.parent.parent
         / "docs"
-        / "rebuild"
         / "VALUE_PROPOSITION.md"
     )
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(

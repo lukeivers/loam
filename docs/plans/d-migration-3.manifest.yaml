@@ -1,0 +1,218 @@
+schema_version: 1
+amendment:
+  number: 64
+  slug: d-migration-3-pos-sync-becomes-git-merge
+  title: "D-migration D.3 — pos-sync becomes git fetch + git merge --ff-only against framework/; LLM-resolver kept as rare-conflict fallback"
+
+# BASELINE: 231a0b0 — current HEAD at dispatch (D.2's §14-backfill commit
+# `docs(plans): backfill d-migration-2 plan §14 method-decision register
+# + §15 verdict`). Per BASELINE-as-HEAD~1 pattern (#29 / #34-#62), when
+# D.3's feat commit lands HEAD advances and apply runs against this
+# BASELINE.
+baseline: 231a0b02ffd33817ddd757e404b924225960d12c
+
+plan: docs/plans/d-migration-3.builder-plan.md
+
+seal_description: "D-migration D.3 — pos-sync becomes git fetch + git merge --ff-only against framework/"
+
+# Single-component sealed amendment per plan §4 D.3 (D-Q.A3 LOCKED).
+# Workspace-sync is the only fence; the change is structural source-
+# pruning (~2400 LOC retired) + cli.py rewrite + new git-merge-based
+# tests. No cross-component readers of retired workspace_sync surface
+# (verified by grep at builder-plan time).
+components:
+  - name: workspace-sync
+    seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+
+# Universal admissions per amendment #22 ruling #3 + D.1 / D.2 precedent.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.true-first-run
+  body: |
+    # Amendment #64 — D-migration D.3 — pos-sync becomes git fetch + git merge --ff-only against framework/
+
+    2026-04-26. Third of the five D-migration amendments. D.1 (sealed
+    at 570092a, Amendment #61) restructured canonical pos-v2's
+    `framework/<component>/` layout. D.1.5 (sealed at 21e27f2,
+    Amendment #62) added rename-aware seal logic to pos-amend. D.2
+    (sealed at 7ef1e23, Amendment #63) established the
+    `<workspace>/workspace/` directory + cut over every reader of
+    workspace-state paths. D.3 retires the bespoke
+    resolve→stage→apply pipeline in workspace-sync in favour of
+    `git fetch + git merge --ff-only` against `<workspace>/framework/`.
+    The LLM-resolver primitives (merge_resolver.py + _resolver_client.py
+    with --strict-mcp-config) are preserved as the rare-conflict
+    fallback the new CLI invokes only when the merge produces
+    unresolved conflicts.
+
+    This is the keystone semantic change of D: it eliminates the
+    bug class that triggered the migration (workspace-state lost or
+    overwritten by α / α-hotfix-2's bespoke pipeline). Post-D.3,
+    workspace-state under `<workspace>/workspace/` is structurally
+    unreachable from pos-sync — the merge operates exclusively
+    inside `<workspace>/framework/`. HC#6 structural promise
+    delivered.
+
+    ## Surface retired (~2400 LOC src + ~2900 LOC tests)
+
+      - framework/workspace-sync/src/workspace_sync/ancestor_detection.py
+      - framework/workspace-sync/src/workspace_sync/conflict_detection.py
+      - framework/workspace-sync/src/workspace_sync/conflict_report.py
+      - framework/workspace-sync/src/workspace_sync/merge_helper.py
+      - framework/workspace-sync/src/workspace_sync/merge_primitives.py
+      - framework/workspace-sync/src/workspace_sync/staging.py
+
+      - framework/workspace-sync/tests/test_ancestor_detection.py
+      - framework/workspace-sync/tests/test_conflict_detection_b_shape.py
+      - framework/workspace-sync/tests/test_conflict_report_b_shape.py
+      - framework/workspace-sync/tests/test_merge_helper.py
+      - framework/workspace-sync/tests/test_merge_primitives.py
+      - framework/workspace-sync/tests/test_staging.py
+      - framework/workspace-sync/tests/test_cli_b_shape.py
+
+    ## Surface rewritten
+
+      - framework/workspace-sync/src/workspace_sync/cli.py
+        (679 LOC bespoke pipeline → ~250 LOC git-merge flow):
+          * argparse + workspace-root derivation
+          * canonical-source resolution (URL → cache-clone via
+            ensure_cache_clone; local → use directly)
+          * `<ws>/framework/` git-tree validation
+          * `canonical` remote configuration (idempotent)
+          * `git -C <ws>/framework fetch canonical`
+          * idempotency fast-path (rev-parse equality)
+          * `git -C <ws>/framework merge --ff-only FETCH_HEAD`
+          * non-FF fallback: `git merge` + per-conflict
+            MergeResolver + `git add` + `git commit`
+          * MergeVerdict persistence under
+            `<ws>/workspace/.pos/sync/resolver-runs/<sha>/<path>.yaml`
+          * SyncState recorded at
+            `<ws>/workspace/.pos/sync/state.yaml`
+
+      - framework/workspace-sync/src/workspace_sync/state.py
+        (StateRecord + ConflictReport-coupled helpers → ~60 LOC
+        SyncState model with last_synced_sha + last_synced_at +
+        last_branch + last_outcome).
+
+      - framework/workspace-sync/src/workspace_sync/_audit.py
+        (ConflictReport-shaped renderer → MergeVerdict-list
+        renderer; confirmed_by_operator unchanged).
+
+      - framework/workspace-sync/src/workspace_sync/__init__.py
+        (docstring updated; version pin preserved).
+
+    ## Surface added (new tests)
+
+      - framework/workspace-sync/tests/test_cli_d_shape.py — AC.D.3.1
+        through AC.D.3.5 verifications. HC#4 byte-content-match
+        for framework/ files post-fast-forward. HC#6 structural
+        guard: every file under <fixture-ws>/workspace/ is byte-
+        identical pre/post sync.
+
+      - framework/workspace-sync/tests/test_state_d_shape.py —
+        SyncState model unit tests.
+
+      - framework/workspace-sync/tests/_stub_resolver.py — test-side
+        MergeResolver factory emitting canned verdicts; loaded via
+        `--merge-resolver-module workspace_sync.tests._stub_resolver`.
+
+    ## Surface preserved (unchanged or near-unchanged)
+
+      - framework/workspace-sync/src/workspace_sync/merge_resolver.py
+        — MergeResolver, MergeVerdict, ResolverBudget, ResolverFailure,
+        BudgetExhausted. Used by the rare-conflict fallback path.
+
+      - framework/workspace-sync/src/workspace_sync/_resolver_client.py
+        — Claude-print client with --strict-mcp-config. Default
+        merge-resolver-module per pyproject.
+
+      - framework/workspace-sync/src/workspace_sync/canonical.py —
+        canonical-path resolver (still validates the canonical
+        source is a git working tree).
+
+      - framework/workspace-sync/src/workspace_sync/canonical_cache.py
+        — URL → cache-clone (per-workspace shared cache at
+        ~/.pos/canonical-cache/<repo-id>/ for URL-form
+        canonical_source).
+
+      - framework/workspace-sync/src/workspace_sync/sync_config.py —
+        sync-config schema (canonical_source + budget overrides).
+
+      - framework/workspace-sync/src/workspace_sync/sync_protected.py
+        — vestigial documentation surface; FRAMEWORK_FLOOR retained
+        for back-compat with already-scaffolded workspaces.
+
+      - framework/workspace-sync/src/workspace_sync/observability.py
+        — OTel span helpers.
+
+    ## ACs delivered
+
+      - AC.D.3.1 — `pos-sync` invokes `git fetch` against the canonical
+        remote configured per `<workspace>/workspace/.pos/sync-config.yaml`.
+
+      - AC.D.3.2 — `pos-sync` runs `git merge --ff-only` and exits 0
+        on success.
+
+      - AC.D.3.3 — On non-fast-forward, falls back to `git merge` +
+        LLM-resolver per remaining conflict; resolved content
+        committed via `git add` + `git commit`.
+
+      - AC.D.3.4 — Class-A protection structural. Every file under
+        `<fixture-ws>/workspace/` is byte-identical pre/post sync;
+        the merge operates exclusively inside `<fixture-ws>/framework/`.
+
+      - AC.D.3.5 — Audit log derives from git log; fallback resolver-
+        runs persisted at `<ws>/workspace/.pos/sync/resolver-runs/`.
+
+      - AC.D.3.6 — Pre-D.3 workspace-sync code retired (~2400 LOC
+        src + ~2900 LOC tests).
+
+      - AC.D.3.S — Seal-diff invariant. Single-component fence;
+        diff confined to `framework/workspace-sync/` + universal
+        admissions.
+
+    ## Backwards-compatibility (HC#2)
+
+      - workspace-sync's own tests will replace retired-mechanism
+        tests with new git-merge tests; net test count decreases
+        as the simpler architecture has less surface to test.
+
+      - No external readers of retired workspace_sync surface
+        (verified via grep at builder-plan time — only internal
+        workspace-sync code references the retired modules).
+
+      - HC#3: no new third-party deps (git binary is OS-level, not
+        a Python dep; pre-existing pyproject deps unchanged).
+
+      - HC#4: byte-content-match assertions in
+        test_cli_d_shape.py: framework/ files post-fast-forward
+        byte-equal canonical's HEAD.
+
+      - HC#5: pos3 in-place D.3 verification deferred to D.4
+        (which establishes pos3's `framework/` as a git working
+        tree via β.2 absorption). D.3's tests verify the merge-
+        based mechanism on synthetic fixtures; the operator-
+        confirmed pos3 smoke (HC#5) runs once D.4 has bootstrapped
+        pos3 to the new shape.
+
+      - HC#6: structural guard test asserts that <fixture-ws>/workspace/
+        is byte-identical pre/post `pos-sync`.
+
+      - HC#7-#9: scope-only-dispatch + no `--amend` + plan-before-
+        code adhered.
+
+    BASELINE 231a0b0 (D.2's §14 backfill commit — HEAD at dispatch).
+    Workspace-sync's BASELINE advances per `pos-amend apply`.
+
+    Next: D.4 (pos-new-workspace console-script with β.2 absorption)
+    dispatches against the post-D.3 tree.

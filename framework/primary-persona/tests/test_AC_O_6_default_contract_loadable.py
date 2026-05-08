@@ -28,7 +28,7 @@ prior template carried. ``dev_intent`` is ``"unanswered"``.
 ``is_primary`` is ``true``. ``tier_d`` is ``defer`` (per the
 archetype's chief-of-staff register).
 
-Plan: docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+Plan: docs/plans/primary-persona-conversational-onboarding-and-default-archetype.md
 """
 
 from __future__ import annotations

@@ -25,7 +25,7 @@ equals the framework template parsed content with only the
 flipped to ``True``. No source edit to ``workspace-bootstrap/`` is
 required for this AC to pass.
 
-Plan: docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+Plan: docs/plans/primary-persona-conversational-onboarding-and-default-archetype.md
 """
 
 from __future__ import annotations

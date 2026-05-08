@@ -8,7 +8,7 @@
 
 """AC.PSAFE.3 — `production-stake` profile non-tunable floors.
 
-Per ``docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md``
+Per ``docs/plans/v0-1-6-production-safety-and-base-skills.md``
 §5 AC.PSAFE.3 + Decision P (RESOLVED YES): the production-stake
 profile, when active, sets non-tunable floors:
 

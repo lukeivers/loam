@@ -1,0 +1,172 @@
+schema_version: 1
+amendment:
+  number: 33
+  slug: memory-consumer-wiring-primary-persona
+  title: "primary-persona memory-consumer wiring (D7)"
+
+# BASELINE: 8e7c558 — pre-amendment tip (amendment #32 seal commit,
+# chore(seals): session-start-context-load-gate seal — primary-persona
+# at d2601dc). Amendment #33 is the next sequential number after #32.
+baseline: 8e7c558
+plan: docs/plans/amendment-33-memory-consumer-wiring-primary-persona.md
+
+# Single-component amendment per amendment plan §3 (primary-persona
+# fence). The sealed-component sidecar surface was established by
+# amendment #32; this amendment reuses it and advances the BASELINE
+# + SEAL_COMMIT through pos-amend.
+components:
+  - name: primary-persona
+    seal_test: primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: primary-persona/seals/SEAL_COMMIT.memory-consumer-wiring
+  body: |
+    # Amendment #33 — primary-persona memory-consumer wiring (D7)
+
+    2026-04-23. Delivers the D7 memory-consumer wiring per amendment
+    plan `docs/plans/amendment-33-memory-consumer-wiring-
+    primary-persona.md` + research doc `docs/plans/research/
+    amendment-33-memory-consumer-wiring-research.md`. D7's sibling D8
+    (session-start context-load gate) shipped at amendment #32 and
+    landed the shared `ComposedContextPayload` composer + contributor
+    registry; D7 REGISTERS a turn-level memory-retrieval contributor
+    against that existing registry (plan §3 constraint 3).
+
+    The amendment lands one new module inside the primary-persona
+    fence:
+
+      - `primary-persona/src/memory_consumer.py` — the D7 wiring:
+        - `MemoryClient` Protocol bound against amendment #24's MCP
+          tool surface (`add_episode`, `search`). Persona never
+          imports memory-system source.
+        - `resolve_workspace_slug(workspace_root)` — pure-function
+          basename sanitisation matching
+          `workspace_bootstrap.adapters.first_run_scaffold.
+          workspace_slug`. Parity-tested against the canonical on a
+          fixture set (AC-D7.4). Precedent: hands-off-lifecycle ships
+          the same pattern with the same parity discipline.
+        - `TurnAggregator` + `close_turn(...)` — per-turn
+          aggregation; exactly one `add_episode` per user↔AI turn;
+          fire-and-forget via `asyncio.create_task` (AC-D7.2,
+          AC-D7.3). Structurally non-blocking per plan §3
+          constraint 5.
+        - `build_memory_retrieval_contributor` +
+          `register_memory_retrieval` — factory + registration
+          helper for the turn-level contributor. Issues one `search`
+          per `UserPromptSubmit` with `group_ids=[workspace_slug]`
+          (AC-D7.4), returns a plain-text block under a soft
+          character cap (AC-D7.6). Fail-closed on every memory-
+          boundary exception (AC-D7.7).
+
+    No source edits outside `primary-persona/src/`. No edits to
+    `context_composer.py`, `session_start_gate.py`, or any other
+    existing primary-persona module — the D7 surface is purely
+    additive.
+
+    AC surface (AC-D7.1 – AC-D7.7 + AC-D7.S) — 16 tests covering 7
+    outcome-shaped criteria:
+
+      - AC-D7.1: turn-start retrieval lands in `UserPromptSubmit`
+        additionalContext; the search call carries the workspace
+        slug in `group_ids`.
+      - AC-D7.2: exactly one aggregated episode per user↔AI turn
+        (not per-message, not per-state-event); single-turn fixture
+        produces 1 call; three-turn fixture produces 3 calls; body
+        captures both the user message and the persona reply.
+      - AC-D7.3: interactive turn returns promptly while a prior
+        write is held on an `asyncio.Event` (stand-in for the 113 s
+        empirical per-episode cost); next-turn `on_user_prompt_submit`
+        completes in well under 1 s.
+      - AC-D7.4: every search's `group_ids` and every add_episode's
+        `group_id` equals the workspace slug; parity test against
+        canonical `workspace_bootstrap.workspace_slug` on six
+        fixture basenames; unrepresentable basename raises a
+        structural `WorkspaceSlugUnrepresentableError`.
+      - AC-D7.5: session-level + turn-level contributors co-exist
+        on the shared registry; session entry-point fires only
+        session contributors; turn entry-point fires only turn
+        contributors; late-binding of the turn contributor after
+        session composition still picks up on turn-fire (registry
+        is the authority, not any cached state).
+      - AC-D7.6: memory-retrieval contribution respects its soft
+        char cap; combined awareness-sized + memory-retrieval
+        contributions pass through the composer's structural 10 000-
+        char refusal (the D8-owned Pydantic `_cap_guard`).
+      - AC-D7.7: every boundary failure class (connection refused,
+        HTTP 5xx, asyncio.TimeoutError, OSError) yields an empty
+        memory-retrieval contribution and the turn proceeds; the
+        awareness-block path is unaffected.
+      - AC-D7.S: seal-diff discipline — only primary-persona/ +
+        plans/ + universal paths changed (verified by
+        `test_no_sealed_amendments.py` which amendment #32
+        established).
+
+    Method-level choices (builder's call per ODD §1.1, plan §3
+    constraint 10):
+
+      - Async shape: `asyncio.create_task` fire-and-forget. The
+        research §3.3.1 lean (background-scope via orchestrator)
+        would require a new scope-kind; research §3.3.2
+        (orchestrator-internal task) would require an orchestrator
+        amendment. Both blocked by plan §3 constraint 2 (no
+        cross-component source edits). `asyncio.create_task` is
+        the cheapest non-amendment shape that satisfies plan §3
+        constraint 5 (structurally non-blocking).
+      - Query shape: raw user prompt (research §4.2 #1). Research
+        leans toward #2 (prompt + last-3-turn context), but that
+        requires a persona-layer conversation-history primitive
+        this amendment does not ship (would expand scope).
+        Candidate-2 is non-blocked future work; AC-D7.1 measures
+        retrieval happens, not the query shape.
+      - Retention class: default-normal (research §5.2). Memory-
+        system's D10 tagger enforces it; the persona-override path
+        is non-blocked future work once persona-layer has content
+        classification primitives.
+      - Retrieval payload soft cap: 1600 chars (upper-band of
+        research §4.3's 200–400 token budget).
+      - `center_node_uuid`: `None` at v1. Persona-layer does not
+        yet carry an active-scope primary-entity primitive;
+        wiring it is non-blocked future work once scope-of-work
+        exposes an anchor-entity surface the persona can read.
+
+    Out of scope (plan §8):
+
+      - Other candidate consumers (scope-of-work, orchestrator,
+        objective-tracker, self-correction) — deferred per research
+        §10.
+      - Per-scope `group_id` — v1 is per-workspace only (Rule B).
+      - Session-close / per-message aggregation — ruled out
+        (Rules C + research §3.1).
+      - D8's session-level contributor — shipped at amendment #32.
+      - Memory-system source amendments — MCP surface consumed
+        as-is (amendment #24).
+      - Orchestrator / scope-of-work source amendments — the
+        research §3.3.1 / §3.3.2 leans both require an amendment
+        the plan §3 constraint 2 fence rules out; `asyncio.create_
+        task` is the non-amendment shape selected.
+      - Cost-governance source amendments (plan §9 halt #8) —
+        `asyncio.create_task` has no triggering-scope budget
+        attribution; neither research §3.2 candidate requires
+        cost-governance source changes.
+      - New OTel spans beyond the persona layer's existing D9
+        surface.
+      - Workspace-supplied persona content (`prompt.md` /
+        `contract.yaml`) — workspace-owned.
+
+    BASELINE 8e7c558 (pre-amendment tip — #32 seal commit).
+    primary-persona's SEAL_COMMIT sidecar advances to the
+    amendment commit on apply; advanced to the seal SHA via
+    `pos-amend seal` on the seal commit.

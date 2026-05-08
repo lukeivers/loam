@@ -14,7 +14,7 @@
 
 """AC38.4 — D8 semantic round-trip harness covers `lifted_from`.
 
-Plan: docs/rebuild/plans/amendment-38-objective-tracker-schema-widening.md
+Plan: docs/plans/amendment-38-objective-tracker-schema-widening.md
 §4 AC38.4.
 
 Outcome (paraphrased from the AC):
@@ -44,7 +44,7 @@ from loam.objective_tracker.upgrade import (
 from tests.conftest import make_user_root_spec
 
 
-VP_DOC = "docs/rebuild/VALUE_PROPOSITION.md"
+VP_DOC = "docs/VALUE_PROPOSITION.md"
 
 
 async def _seed_lifted_from_probes(rt: ObjectiveTracker) -> dict[str, str]:

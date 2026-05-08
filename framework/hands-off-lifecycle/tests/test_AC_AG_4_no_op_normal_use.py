@@ -61,7 +61,7 @@ def test_AC_AG_4_normal_use_short_circuit(
         tool_name="Task",
         tool_input={
             "prompt": (
-                "Build amendment #51 in docs/rebuild/plans/foo.md. "
+                "Build amendment #51 in docs/plans/foo.md. "
                 + ("x" * 5000)
             )
         },

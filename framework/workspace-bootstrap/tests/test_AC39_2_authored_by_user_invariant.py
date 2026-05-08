@@ -55,11 +55,10 @@ def _seed_dev(tmp_path: Path) -> Path:
     tracker DB lives there per sub-plan E AC.E.6)."""
     workspace = tmp_path / "ws-auth"
     workspace.mkdir()
-    (workspace / "docs" / "rebuild").mkdir(parents=True)
+    (workspace / "docs").mkdir(parents=True)
     framework_vp = (
         Path(__file__).resolve().parent.parent.parent.parent
         / "docs"
-        / "rebuild"
         / "VALUE_PROPOSITION.md"
     )
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(

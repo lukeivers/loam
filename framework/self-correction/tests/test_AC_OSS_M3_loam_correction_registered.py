@@ -14,7 +14,7 @@
 
 """AC.OSS-M3.3 — `loam-correction` console-script registered.
 
-Per plan `docs/rebuild/plans/oss-v0-1-0-publish-wire-clis.md` §4
+Per plan `docs/plans/oss-v0-1-0-publish-wire-clis.md` §4
 AC.OSS-M3.3: `framework/self-correction/pyproject.toml` registers
 `loam-correction` as a `[project.scripts]` entry pointing at
 `loam.self_correction.cli:main`.

@@ -16,7 +16,7 @@
 ``Z``-suffixed timestamp (format γ).
 
 Per the locked plan-doc
-``docs/rebuild/plans/a1-substrate-timestamp-format-normalization.md``
+``docs/plans/a1-substrate-timestamp-format-normalization.md``
 §4 AC.TFN.1: the two A1 sentinel writers (``active_scope_sentinel``,
 ``corpus_load_sentinel``) emit ``created_at`` strings that
 byte-conform to the regex

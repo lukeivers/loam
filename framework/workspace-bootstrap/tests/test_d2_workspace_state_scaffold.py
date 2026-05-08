@@ -120,7 +120,7 @@ def test_AC_D_2_1_personas_dir_lands_under_workspace_state(
         "v0.1.0 (memory-graphiti retired from _SERVICE_KINDS); the path "
         "shape is preserved by mcp_json_writer's pure functions and "
         "M-GMP restores the scaffold-side write post-v0.1.0. See "
-        "docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
+        "docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
     )
 )
 def test_AC_D_2_1_mcp_json_lands_under_workspace_state(tmp_path: Path) -> None:
@@ -323,7 +323,7 @@ def test_HC4_persona_contract_byte_content_match(tmp_path: Path) -> None:
         "v0.1.0 (memory-graphiti retired from _SERVICE_KINDS); the byte "
         "content shape is preserved by mcp_json_writer's pure functions "
         "and M-GMP restores the scaffold-side write post-v0.1.0. See "
-        "docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
+        "docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
     )
 )
 def test_HC4_mcp_json_byte_content_match(tmp_path: Path) -> None:

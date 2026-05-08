@@ -16,11 +16,11 @@
 
 First-run extension that seeds the workspace's objective-tracker DB
 with a value-prop-rooted objective tree. Sub-plan reference:
-``docs/rebuild/plans/amendment-39-workspace-bootstrap-tracker-seed.md``.
+``docs/plans/amendment-39-workspace-bootstrap-tracker-seed.md``.
 
 Sub-plan §1 owner ruling D-4 (b): the workspace user authors the
 value-prop root; pos-v2 dev workspaces template Luke's value prop
-from ``docs/rebuild/VALUE_PROPOSITION.md`` (read at first-run time,
+from ``docs/VALUE_PROPOSITION.md`` (read at first-run time,
 not bundled in source — AC39.6 enforces no-payload-in-source).
 Non-dev workspaces read a workspace-supplied path
 (``<workspace>/value-prop.md``); if absent, the seed skips with a
@@ -72,7 +72,7 @@ from loam.objective_tracker import (
 # remains load-bearing for ``load_value_prop_source`` (the dev path
 # still reads this file as content); only the CLASSIFICATION source-
 # of-truth moves to ``read_dev_intent``.
-FRAMEWORK_VALUE_PROP_RELPATH = "docs/rebuild/VALUE_PROPOSITION.md"
+FRAMEWORK_VALUE_PROP_RELPATH = "docs/VALUE_PROPOSITION.md"
 
 # Path of the workspace-user-authored value-prop doc on a workspace
 # NOT classified pos-v2 dev. Pre-populated by the workspace operator
@@ -153,7 +153,7 @@ def load_value_prop_source(
     """Read the value-prop source for the workspace.
 
     On a pos-v2 dev workspace, reads the framework's canonical
-    ``docs/rebuild/VALUE_PROPOSITION.md`` (or the override path the
+    ``docs/VALUE_PROPOSITION.md`` (or the override path the
     test fixture passes). On a non-dev workspace, reads
     ``<workspace>/value-prop.md`` (or the override). Returns
     ``ValuePropSource(available=False, ...)`` if the file is missing
@@ -327,7 +327,7 @@ def extract_value_prop_record(text: str) -> ValuePropRecord:
 # building pos-v2 itself can leave the file absent — the spec-tier
 # seed simply records the canonical path as its ``source_doc``
 # without requiring the file to exist on disk).
-SPEC_DOC_RELPATH = "docs/rebuild/spec/loam-objectives-spec.md"
+SPEC_DOC_RELPATH = "docs/spec/loam-objectives-spec.md"
 
 
 # Each entry: (suffix used in objective_id, AC label stored in

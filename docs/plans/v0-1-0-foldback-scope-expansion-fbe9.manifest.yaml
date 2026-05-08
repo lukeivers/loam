@@ -1,0 +1,89 @@
+schema_version: 1
+amendment:
+  number: 115
+  slug: v0-1-0-foldback-scope-expansion-fbe9
+  title: "FBE.9 — close BLOCKER-FBE6b.1 + comprehensive doc-vs-CLI conformance sweep"
+
+# BASELINE: 5c94fe3 — the HOL seal narrative anchor commit (pre-apply
+# tip after Bucket 1 + Bucket 2 + narrative anchor commits).
+#
+# Commit ladder pre-apply:
+#   2d75fa1 — FBE.9 sub-plan-doc (NEW commit)
+#   4754a22 — Bucket 1: loam-init cli.py + tests + README (`--from` optional)
+#   6e13e71 — Bucket 2: README + getting-started.md + install-from-source.md
+#             (`loam init .` → `loam init ~/loam-workspace`)
+#   5c94fe3 — HOL seal narrative anchor (NEW file)
+#   <this manifest commit lands next>
+#   <loam amend apply lands as the next commit>
+#   <potentially corrective hand-admit lands per FBE.4/FBE.5 precedent>
+#   <loam amend seal lands as the seal commit>
+#   <parent §8 register backfill lands last>
+#
+# Two sealed components in fence:
+#   - framework/loam-init/ (Bucket 1: cli.py `--from` becomes optional +
+#     resolver default-to-cwd-when-git-tree; 5 test file updates +
+#     component README Usage block bracket).
+#   - framework/hands-off-lifecycle/ (HOL no-op narrative anchor pattern
+#     per FBE.6/FBE.6b/FBE.8 precedent; HOL `frozen_baseline: true` per
+#     amendment #23 + prior FBE manifest precedent).
+#
+# README.md + docs/getting-started.md + docs/install-from-source.md
+# (Bucket 2) ride via universal_paths.files admission. Plan-doc +
+# manifest YAML + parent §8 backfill ride via universal_paths.prefixes
+# for docs/plans/.
+#
+# Per FBE.4/FBE.5/FBE.5b/FBE.6/FBE.6b partner-prefix gap precedent:
+# loam-init lives at framework/loam-init/ (canonical shape) — apply
+# tool should derive cleanly. If a corrective is needed at apply,
+# mirror FBE.4's recipe (`0c4d9a0`).
+baseline: "5c94fe3"
+
+plan: docs/plans/v0-1-0-foldback-scope-expansion-fbe9.md
+
+seal_description: "FBE.9 closes BLOCKER-FBE6b.1 (README + getting-started.md `loam init .` does not match CLI's required --from flag — surfaced by FBE.6b's stranger-perspective reviewer probe) AND audits + fixes every other doc-vs-CLI mismatch in the public-facing docs to break the foldback ping-pong cycle. Two buckets: Bucket 1 (Path B per FBE.6b sweep report §4 recommendation) — loam-init cli.py makes `--from` optional, defaults to cwd when cwd is a git tree, errors helpfully (exit 2) otherwise; 5 test files updated; loam-init component README Usage bracket. Bucket 2 — comprehensive doc-vs-CLI conformance sweep across README.md + docs/getting-started.md + docs/install-from-source.md + framework/loam-init/README.md; ~26 commands audited; 5 fixes applied (4 distinct `loam init .` → `loam init ~/loam-workspace` substitutions + 1 component-README `--from` syntax bracket). HIGH-FBE6b.1 (339 `Amendment #N` source-comment references) explicitly deferred per dispatcher's brief. Mode-B `loam init .` semantics (re-init cloned tree as workspace) deferred to FUTURE_IDEAS_DRAFT (bigger than dispatcher's 'small fix' framing). M12 publish-flip remains GATED behind FBE.6c re-running synth + sweep + smoke + reviewer cycle against post-FBE.9 canonical HEAD."
+
+components:
+  - name: loam-init
+    seal_test: framework/loam-init/tests/test_no_sealed_amendments.py
+    sidecar: framework/loam-init/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true  # H19's BASELINE pinned at project-start; FBE.9 contributes only the seal narrative
+    extra_allowed_prefixes: []
+
+# Universal admissions — README + getting-started.md + install-from-source.md
+# (Bucket 2) + the docs/plans/ universal prefix for the
+# sub-plan + manifest + parent §8 backfill commits +
+# framework/hands-off-lifecycle/seals/ for the FBE.9 narrative anchor.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/hands-off-lifecycle/seals/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - README.md
+    - docs/getting-started.md
+    - docs/install-from-source.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe9
+  body: |
+    # FBE.9 seal — apply ladder
+
+    Apply ladder (per `loam amend apply` + `loam amend seal`):
+    BASELINE `5c94fe3` → seal `<seal-sha>`. Two fence components:
+    loam-init advances its `tests/SEAL_COMMIT` sidecar + BASELINE
+    literal bumps; HOL advances its sidecar (frozen-baseline pinned
+    project-start; narrative-only contribution). Cross-component
+    sweep validates fence discipline post-seal.
+
+    See the full narrative at the target file (already authored
+    pre-apply per AC.FBE.9.S) for FBE.9 outcome, sub-plan reference,
+    sweep report, status file, and BLOCKER-FBE6b.1 closure detail.

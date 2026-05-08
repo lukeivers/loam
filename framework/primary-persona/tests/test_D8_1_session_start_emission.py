@@ -55,22 +55,21 @@ def _seed_baseline_workspace(root: Path) -> None:
         "Before acting, read:\n\n"
         "- `docs/odd-methodology.md`\n"
         "- `docs/odd-in-loam.md`\n"
-        "- `docs/rebuild/VALUE_PROPOSITION.md`\n"
-        "- `docs/rebuild/STATE.md`\n"
-        "- `docs/rebuild/FUTURE_IDEAS.md`\n"
+        "- `docs/VALUE_PROPOSITION.md`\n"
+        "- `docs/STATE.md`\n"
+        "- `docs/FUTURE_IDEAS.md`\n"
         "\n---\n\n"
     )
     (root / "docs").mkdir()
     (root / "docs" / "odd-methodology.md").write_text("odd")
     (root / "docs" / "odd-in-loam.md").write_text("in-pos")
-    (root / "docs" / "rebuild").mkdir()
-    (root / "docs" / "rebuild" / "VALUE_PROPOSITION.md").write_text("vp")
-    (root / "docs" / "rebuild" / "STATE.md").write_text("state")
-    (root / "docs" / "rebuild" / "FUTURE_IDEAS.md").write_text("ideas")
-    (root / "docs" / "rebuild" / "plans").mkdir()
+    (root / "docs" / "VALUE_PROPOSITION.md").write_text("vp")
+    (root / "docs" / "STATE.md").write_text("state")
+    (root / "docs" / "FUTURE_IDEAS.md").write_text("ideas")
+    (root / "docs" / "plans").mkdir()
     # Two in-flight amendments; enumerated by glob.
-    (root / "docs" / "rebuild" / "plans" / "amendment-one.md").write_text("#1")
-    (root / "docs" / "rebuild" / "plans" / "amendment-two.md").write_text("#2")
+    (root / "docs" / "plans" / "amendment-one.md").write_text("#1")
+    (root / "docs" / "plans" / "amendment-two.md").write_text("#2")
     # First-run state with a completed_at timestamp. D-migration D.2
     # (amendment #63): workspace-state under <ws>/workspace/.pos/
     # post-D.2.
@@ -94,22 +93,22 @@ def test_D8_1_corpus_paths_with_present_indicator(tmp_path: Path) -> None:
     assert "CLAUDE.md" in paths
     assert "docs/odd-methodology.md" in paths
     assert "docs/odd-in-loam.md" in paths
-    assert "docs/rebuild/VALUE_PROPOSITION.md" in paths
-    assert "docs/rebuild/STATE.md" in paths
-    assert "docs/rebuild/FUTURE_IDEAS.md" in paths
+    assert "docs/VALUE_PROPOSITION.md" in paths
+    assert "docs/STATE.md" in paths
+    assert "docs/FUTURE_IDEAS.md" in paths
     # Every present-indicator is True on a complete workspace.
     assert all(present for present in paths.values())
 
 
 def test_D8_1_amendments_in_flight_enumerated(tmp_path: Path) -> None:
     """(b) In-flight ``amendment-*.md`` paths under
-    ``docs/rebuild/plans/`` are listed."""
+    ``docs/plans/`` are listed."""
     _seed_baseline_workspace(tmp_path)
     composer = ComposedContextPayload(session_builder=compose_session_fields)
     payload = composer.on_session_start(tmp_path)
 
-    assert "docs/rebuild/plans/amendment-one.md" in payload.amendments_in_flight
-    assert "docs/rebuild/plans/amendment-two.md" in payload.amendments_in_flight
+    assert "docs/plans/amendment-one.md" in payload.amendments_in_flight
+    assert "docs/plans/amendment-two.md" in payload.amendments_in_flight
 
 
 def test_D8_1_service_state_fields_present(tmp_path: Path) -> None:

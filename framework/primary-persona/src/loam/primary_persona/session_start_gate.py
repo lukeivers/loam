@@ -157,11 +157,11 @@ def enumerate_amendments_in_flight(workspace_root: Path) -> list[str]:
     copy is the source, the returned strings carry the ``framework/``
     prefix so the caller can read them at the right location.
     """
-    plans_dir = workspace_root / "docs" / "rebuild" / "plans"
+    plans_dir = workspace_root / "docs" / "plans"
     base_root = workspace_root
     if not plans_dir.is_dir():
         framework_plans_dir = (
-            workspace_root / "framework" / "docs" / "rebuild" / "plans"
+            workspace_root / "framework" / "docs" / "plans"
         )
         if not framework_plans_dir.is_dir():
             return []

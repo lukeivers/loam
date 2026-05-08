@@ -38,11 +38,11 @@ Read it fully before any code lands. ACs ({{AC_PREFIX}}) are outcome-shaped; met
 
 - `CLAUDE.md` — three lenses, operational cautions
 - `plugins/dev-sdlc/docs/odd-methodology.md` — §2.5, §3, §4
-- `docs/rebuild/VALUE_PROPOSITION.md` — prime objective
-- `docs/rebuild/FUTURE_IDEAS.md` — three lenses + dev CDCs
-- `docs/rebuild/STATE.md`
+- `docs/VALUE_PROPOSITION.md` — prime objective
+- `docs/FUTURE_IDEAS.md` — three lenses + dev CDCs
+- `docs/STATE.md`
 - The plan referenced above + any in-flight amendment plans
-- The component's `docs/rebuild/components/{{COMPONENT}}/` artefacts (proposal, research, seal narrative)
+- The component's `docs/archive/component-research/{{COMPONENT}}/` artefacts (proposal, research, seal narrative)
 
 # Constraints (load-bearing)
 

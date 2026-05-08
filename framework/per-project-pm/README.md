@@ -8,9 +8,9 @@ attention, and auto-loads when a persona begins work in the workspace.
 seal at v0.1.7 Cycle 2; Cycle 4 extends with the deferred surfacing flow).
 
 **Plan-docs:**
-- Cycle 2 (initial component): `docs/rebuild/plans/v0-1-7-cycle-2-per-project-pm.md`.
+- Cycle 2 (initial component): `docs/plans/v0-1-7-cycle-2-per-project-pm.md`.
 - Cycle 4 (one-question-at-a-time PM-enforced surfacing flow):
-  `docs/rebuild/plans/v0-1-7-cycle-4-one-question-pm-flow.md`.
+  `docs/plans/v0-1-7-cycle-4-one-question-pm-flow.md`.
 
 ## What this component is
 
@@ -175,15 +175,15 @@ then `.enqueue(pm_runtime)` to write per-AC entries to
 The helper consumes duck-typed banded-AC mappings (with `ac_id`,
 `text`, `confidence`, `evidence` keys); typed `BandedAC` instances
 from the odd-extractor side flow through `[ac.model_dump() for ac in
-banded_acs]`. See `docs/rebuild/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md`
+banded_acs]`. See `docs/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md`
 for the full ratification workflow.
 
 ## See also
 
-- Cycle 2 plan-doc: `docs/rebuild/plans/v0-1-7-cycle-2-per-project-pm.md`.
-- Cycle 4 plan-doc: `docs/rebuild/plans/v0-1-7-cycle-4-one-question-pm-flow.md`.
-- v0.1.8 Cycle 2 ratification: `docs/rebuild/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md`.
-- Parent plan: `docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md`.
+- Cycle 2 plan-doc: `docs/plans/v0-1-7-cycle-2-per-project-pm.md`.
+- Cycle 4 plan-doc: `docs/plans/v0-1-7-cycle-4-one-question-pm-flow.md`.
+- v0.1.8 Cycle 2 ratification: `docs/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md`.
+- Parent plan: `docs/plans/v0-1-7-personas-pm-layered-skills.md`.
 - Design rationale: `docs/design.md` (this component).
 - M-FBM: `framework/primary-persona/src/loam/primary_persona/file_memory.py`.
 - Composing SKILL: `plugins/loam-skills/skills/audit-block-on-telegram/SKILL.md`.

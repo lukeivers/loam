@@ -54,7 +54,7 @@ The required parts:
 
 The **anti-pattern** (the regression this skill prevents):
 
-> "I've put my analysis in `docs/rebuild/plans/X.md` — please review §3 for the open questions."
+> "I've put my analysis in `docs/plans/X.md` — please review §3 for the open questions."
 
 This forces the owner to read the doc to find the questions. The
 persona has hidden its conclusions inside the artefact and

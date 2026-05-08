@@ -67,7 +67,7 @@ def tmp_config(tmp_path: Path) -> OrchestratorConfig:
     workspace-bootstrap integration tests that exercise the
     ``WorkspaceBootstrapPyContribution`` adapter path find the expected
     file. The orchestrator itself does not load it post-amendment #7
-    (docs/rebuild/components/orchestrator-bootstrap-unification/
+    (docs/archive/component-research/orchestrator-bootstrap-unification/
     proposal.md), but keeping the fixture's on-disk shape stable avoids
     cross-suite churn.
     """

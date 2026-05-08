@@ -14,7 +14,7 @@
 
 """AC.OSS-M3.4 — `loam-reversibility` + `loam-rollback` registered.
 
-Per plan `docs/rebuild/plans/oss-v0-1-0-publish-wire-clis.md` §4
+Per plan `docs/plans/oss-v0-1-0-publish-wire-clis.md` §4
 AC.OSS-M3.4: `framework/reversibility-primitive/pyproject.toml`
 registers TWO `[project.scripts]` entries:
 

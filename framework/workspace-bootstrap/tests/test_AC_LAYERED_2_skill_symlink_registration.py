@@ -10,8 +10,8 @@
 directories (``plugins/<plugin>/skills/<name>/``) into
 ``<workspace>/.claude/skills/<name>`` at first-run.
 
-Per ``docs/rebuild/plans/v0-1-7-cycle-3-layered-skill-discovery.md`` §4
-+ parent ``docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md``
+Per ``docs/plans/v0-1-7-cycle-3-layered-skill-discovery.md`` §4
++ parent ``docs/plans/v0-1-7-personas-pm-layered-skills.md``
 §5 AC.LAYERED.2: the first-run scaffold scans every plugin under the
 resolved plugins/ root, walks each ``<plugin>/skills/<name>/``
 directory containing a ``SKILL.md``, and creates a symlink at

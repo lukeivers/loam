@@ -1,0 +1,157 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-1-8-cycle-5-dev-sdlc-skills
+  title: "v0.1.8 Cycle 5 — dev-sdlc skill-ification first pass (6 SKILLs: loam-amend-cycle, dispatch-brief-authoring, plan-before-code-author, fidraft-capture, front-load-principle-walk, audit-finding-triage); single-component fence on plugins/dev-sdlc/"
+
+# BASELINE: <pending> — source-edit feat commit covering the 6 new
+# SKILL.md files at plugins/dev-sdlc/skills/<name>/SKILL.md plus
+# the 7 new pytest files at plugins/dev-sdlc/tests/
+# test_AC_SKILLS_DSDLC1_*.py. The cycle is documentation-shape: no
+# new mechanism, no new behaviour. Auto-discovery composes on
+# v0.1.7 Cycle 3's _symlink_plugin_skills (sealed at bcf699a).
+#
+# Cycle 5 is the FINAL cycle of v0.1.8. After Cycle 5 seals, the
+# release-level smoke gate (master plan §5) runs. If green, the
+# v0.1.8 release-level rollup (STATE.md + roadmap §8 + eric-final
+# §2) backfills SHIPPED status. Tag is local-only (NOT pushed)
+# until Luke gates.
+#
+# Commit ladder pre-apply:
+#   1c2c478 — v0.1.8 master plan (Cycle 0 predecessor).
+#   c1abda1 — v0.1.8 Cycle 1 seal.
+#   774d465 — Cycle 1 §9 backfill.
+#   4865028 — v0.1.8 Cycle 2 seal.
+#   cbde592 — Cycle 2 §9 backfill.
+#   236fdcd — Cycle 2 §9 backfill (continued).
+#   3b4fe9b — Cycle 3 plan-doc.
+#   f1c762c — Cycle 3 source-edit BASELINE.
+#   2a64b23 — Cycle 3 manifest+apply.
+#   6711dd7 — Cycle 3 seal.
+#   cfee099 — Cycle 3 §9 backfill.
+#   17f32a9 — v0.1.8 master plan reroute (Cycle 4 Python → JS/TS).
+#   5ed881d — Cycle 4a plan-doc.
+#   c2356a6 — Cycle 4a source-edit BASELINE.
+#   07033d3 — Cycle 4a manifest+apply.
+#   67dd302 — Cycle 4a seal.
+#   79f6960 — Cycle 4a §9 backfill.
+#   180e2b1 — master plan §9 + 4b residue row backfill.
+#   3f8a8d1 — Cycle 4b plan-doc.
+#   c3c5afc — Cycle 4b source-edit BASELINE.
+#   042c3e1 — Cycle 4b manifest+apply.
+#   c648cf9 — Cycle 4b seal.
+#   d1c4f3a — Cycle 4b §9 backfill.
+#   <plan-doc commit lands NEXT, then source-edit feat commit, then
+#    `loam amend apply` lands as single merged manifest+apply commit
+#    per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path>` lands as deterministic
+#    seal commit per AC.DPS2.{1,4,6}>
+#
+# Single-component fence — dev-sdlc:
+#   - Six new SKILL.md packages at:
+#       plugins/dev-sdlc/skills/loam-amend-cycle/SKILL.md
+#       plugins/dev-sdlc/skills/dispatch-brief-authoring/SKILL.md
+#       plugins/dev-sdlc/skills/plan-before-code-author/SKILL.md
+#       plugins/dev-sdlc/skills/fidraft-capture/SKILL.md
+#       plugins/dev-sdlc/skills/front-load-principle-walk/SKILL.md
+#       plugins/dev-sdlc/skills/audit-finding-triage/SKILL.md
+#   - Seven new pytest files at:
+#       plugins/dev-sdlc/tests/test_AC_SKILLS_DSDLC1_1_loam_amend_cycle_skill_present.py
+#       plugins/dev-sdlc/tests/test_AC_SKILLS_DSDLC1_2_dispatch_brief_authoring_skill_present.py
+#       plugins/dev-sdlc/tests/test_AC_SKILLS_DSDLC1_3_plan_before_code_author_skill_present.py
+#       plugins/dev-sdlc/tests/test_AC_SKILLS_DSDLC1_4_fidraft_capture_skill_present.py
+#       plugins/dev-sdlc/tests/test_AC_SKILLS_DSDLC1_5_front_load_principle_walk_skill_present.py
+#       plugins/dev-sdlc/tests/test_AC_SKILLS_DSDLC1_6_audit_finding_triage_skill_present.py
+#       plugins/dev-sdlc/tests/test_AC_SKILLS_DSDLC1_7_all_six_skills_discovered.py
+#
+# AC families locked per plan-doc §4:
+#   AC.SKILLS-DSDLC1.1 — loam-amend-cycle SKILL.md (frontmatter +
+#                          body covers plan→manifest→apply→seal→
+#                          backfill).
+#   AC.SKILLS-DSDLC1.2 — dispatch-brief-authoring SKILL.md
+#                          (sections + principle footer + halt
+#                          triggers).
+#   AC.SKILLS-DSDLC1.3 — plan-before-code-author SKILL.md
+#                          (ODD-shaped plan skeleton).
+#   AC.SKILLS-DSDLC1.4 — fidraft-capture SKILL.md (entry shape +
+#                          provenance + composes-with).
+#   AC.SKILLS-DSDLC1.5 — front-load-principle-walk SKILL.md
+#                          (turn-start ritual).
+#   AC.SKILLS-DSDLC1.6 — audit-finding-triage SKILL.md (surface-
+#                          when-meaningful + categorisation).
+#   AC.SKILLS-DSDLC1.7 — All 6 auto-discoverable via layered-skill
+#                          mechanism.
+#   AC.SKILLS-DSDLC1.8 — Regression test per SKILL (≥7 new tests).
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §6):
+#   D1 cold-state — fresh canonical workspace shows all 6 SKILLs
+#     in `/` menu. Verified by
+#     test_AC_SKILLS_DSDLC1_7_all_six_skills_discovered.py walking
+#     plugins/dev-sdlc/skills/ + asserting each contains a valid
+#     SKILL.md. Inherited from layered-skill mechanism (auto-
+#     symlink at first-run scaffold).
+#   D2 steady-state — n/a structurally (one-shot scaffold;
+#     idempotency inherited from AC.LAYERED.2).
+#   D3 restart — n/a structurally (no long-running process).
+#   D4 reboot — n/a structurally (filesystem state).
+#   D5 cross-session — SKILLs visible after /clear (THE ship-test).
+#     Inherited from Anthropic's native discovery primitive.
+#   D6 telemetry-floor — inherited from layered-skill discovery's
+#     audit-trail floor (v0.1.7 Cycle 3).
+#   PLUS: full-suite green sweep — 463 dev-sdlc parent tests at
+#     HEAD c648cf9 (Cycle 4b seal) all pass post-Cycle-5; halt +
+#     surface on any regression. Cycle 5 adds ~7 new test
+#     functions; expected post-cycle test count ≥ 470.
+#
+# Bookkeeping note: this is the EIGHTH amendment to use schema v3
+# (DPS1 / DPS2 / Cycle 1 / Cycle 2 / Cycle 3 / Cycle 4a / Cycle 4b /
+# THIS = Cycle 5). v3 fields exercised: plan_doc_ref + ac_count +
+# smoke_outcome at the manifest level; single-component sweep at
+# seal time.
+#
+# Release-level smoke gate (master plan §5) runs AFTER Cycle 5
+# seals — separate from this amendment cycle's smoke. v0.1.8
+# release-level rollup backfills (STATE.md + roadmap §8 + eric-
+# final §2) only after release-level smoke passes.
+
+baseline: "1d5c75f"
+
+plan: docs/plans/v0-1-8-cycle-5-dev-sdlc-skills.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-1-8-cycle-5-dev-sdlc-skills.md
+
+ac_count: 8
+smoke_outcome: "D1+D2 exercised live (14 SKILLs auto-symlinked, idempotent); D3/D4 n/a; D5 inherited from Anthropic native; D6 inherited from v0.1.7 Cycle 3; 463 prior tests + 38 new = 501 green"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent. `docs/plans/` admits the
+# plan-before-code paper trail. No `odd-methodology.md` edit
+# required (Cycle 5 ships SKILLs, not methodology).
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-1-8-cycle-5-dev-sdlc-skills
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

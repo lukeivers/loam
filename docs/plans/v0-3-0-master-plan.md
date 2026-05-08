@@ -11,7 +11,7 @@
 - `docs/release-versioning-policy.md`, `docs/odd-semver-pinning.md`, `docs/leverage-discipline.md` — sibling methodology + policy docs.
 - `docs/plans/v0-3-0-master-plan-authoring-plan.md` — plan-for-the-plan (AC.V030MP.1–7).
 - `docs/plans/research/pos3-forward-staging-promotion-classification.md` — foundation-docs research input.
-- `docs/rebuild/plans/foundation-revision-rebuild.md` — FR.1/FR.2/FR.3 plan absorbed into C3.
+- `docs/plans/foundation-revision-rebuild.md` — FR.1/FR.2/FR.3 plan absorbed into C3.
 
 **Quality bar (META-FRAMEWORK class):** v0.3.0 doesn't ship new user-visible capability. It UNBLOCKS every subsequent minor by making canonical surface honest. A stranger cloning loam at v0.3.0 must verify every named capability operates per docs, hit consistent terminology, and never see "rebuild" residue or graphiti segregation. **No partial close.**
 
@@ -183,7 +183,7 @@ Each cycle's full AC enumeration lives in its sub-plan-doc stub at `docs/plans/v
 
 - **Theme.** v0.3.0 SHIPPED sealing event. Master plan §3 collapses to STATE.md §2 with seal anchor; release-roadmap updated.
 - **Scope-tightening.** Parent names release-level smoke gate; C7 narrows to "release-roadmap §3 v0.3.0 → §2 with seal SHA + apply SHA; STATE.md SHIPPED rollup row added; aggregate cycle-count + tests-green count + smoke verdict named."
-- **Fence.** PRIMARY `docs/release-roadmap.md` (§3 → §2 collapse). Secondary `docs/rebuild/STATE.md` (or post-C1 equivalent path; likely `docs/STATE.md`). Universal admissions: master plan §11 SHA register backfill.
+- **Fence.** PRIMARY `docs/release-roadmap.md` (§3 → §2 collapse). Secondary `docs/STATE.md` (or post-C1 equivalent path; likely `docs/STATE.md`). Universal admissions: master plan §11 SHA register backfill.
 - **AC family seed.** `AC.SHIP.*` — release-roadmap §3 → §2 collapse; STATE.md SHIPPED row (objective sentence + seal anchor); aggregate cycle count = 7; aggregate tests-green count; aggregate smoke verdict; tag-push owner-action-separate.
 - **Smoke.** Inherited from C6.
 - **Dependencies.** C1–C6 sealed.
@@ -304,7 +304,7 @@ Conditions that fire during cycle execution stop the build for surface-and-RF (n
 - `plugins/dev-sdlc/skills/plan-docs-author/SKILL.md` — canonical plan-doc shape.
 - `plugins/dev-sdlc/skills/dispatch-brief-authoring/SKILL.md` — cycle dispatch shape.
 - `docs/plans/research/pos3-forward-staging-promotion-classification.md` — foundation-docs research input.
-- `docs/rebuild/plans/foundation-revision-rebuild.md` — FR.1/FR.2/FR.3 plan absorbed into C3.
+- `docs/plans/foundation-revision-rebuild.md` — FR.1/FR.2/FR.3 plan absorbed into C3.
 - `docs/plans/v0-3-0-master-plan-authoring-plan.md` — plan-for-the-plan; AC.V030MP.1–7.
 
 ### Canonical SHA register (backfilled as cycles seal)

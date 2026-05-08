@@ -9,7 +9,7 @@
 """AC.SKILLS-BUG.2 — workspace-bootstrap pre-creates
 ``<workspace>/.claude/skills/.gitkeep`` at first-run.
 
-Per ``docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md``
+Per ``docs/plans/v0-1-6-production-safety-and-base-skills.md``
 §5 AC.SKILLS-BUG.2: the first-run scaffold pre-creates the directory
 + a zero-byte ``.gitkeep`` so Claude Code's live-change-detection
 picks up new SKILL.md files added later WITHOUT requiring a session

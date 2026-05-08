@@ -2,8 +2,8 @@
 
 Heavy-B Phase α / β / γ data-migration tooling. Dev-discipline.
 
-**Plan:** `docs/rebuild/plans/heavy-b-phase-alpha-beta-gamma-migration.md`.
-**Builder plan:** `docs/rebuild/plans/heavy-b-phase-alpha-beta-gamma-migration.builder-plan.md`.
+**Plan:** `docs/plans/heavy-b-phase-alpha-beta-gamma-migration.md`.
+**Builder plan:** `docs/plans/heavy-b-phase-alpha-beta-gamma-migration.builder-plan.md`.
 
 ## What it does
 
@@ -11,13 +11,13 @@ Populates a dev-intent workspace's tracker DB with ObjectiveSpec
 records lifted from the workspace's docs corpus, in three phases:
 
 1. **Phase α** — one ObjectiveSpec per sealed-component proposal.md
-   under `docs/rebuild/components/<slug>/proposal.md`. Parented at
+   under `docs/archive/component-research/<slug>/proposal.md`. Parented at
    `spec-v1.0` (the value-prop-rooted spec phase).
 2. **Phase β** — one ObjectiveSpec per parseable AC anchor inside each
    component proposal. Parented at the component objective from α.
    Unparseable proposals get a single placeholder record.
 3. **Phase γ** — one ObjectiveSpec per parseable AC anchor inside each
-   amendment plan under `docs/rebuild/plans/amendment-*.md` (excluding
+   amendment plan under `docs/plans/amendment-*.md` (excluding
    `.builder-plan.md` companions). Parented at `spec-v1.0`.
    Unparseable plans get a placeholder.
 

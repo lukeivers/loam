@@ -21,7 +21,7 @@ read of the workspace-local dev-intent answer (sub-plan A's
 ``read_dev_intent`` reader). When the persona contract carries
 ``dev_intent: yes``, the workspace classifies as ``"pos-v2-dev"``.
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
+Plan: docs/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
 """
 
 from __future__ import annotations

@@ -151,12 +151,12 @@ def test_discover_baseline_corpus_prefers_workspace_root(
 def test_enumerate_amendments_in_flight_falls_through_to_framework(
     tmp_path: Path,
 ) -> None:
-    """When `<workspace>/docs/rebuild/plans/` is absent, the reader
-    walks `<workspace>/framework/docs/rebuild/plans/` instead.
+    """When `<workspace>/docs/plans/` is absent, the reader
+    walks `<workspace>/framework/docs/plans/` instead.
     """
     workspace_root = tmp_path
     framework_plans = (
-        workspace_root / "framework" / "docs" / "rebuild" / "plans"
+        workspace_root / "framework" / "docs" / "plans"
     )
     framework_plans.mkdir(parents=True)
     (framework_plans / "amendment-1-foo.md").write_text("# foo\n")
@@ -166,8 +166,8 @@ def test_enumerate_amendments_in_flight_falls_through_to_framework(
     matches = enumerate_amendments_in_flight(workspace_root)
     # Returned paths are workspace-relative against the framework
     # location (callers can read them at <workspace>/<rel>).
-    assert "framework/docs/rebuild/plans/amendment-1-foo.md" in matches
-    assert "framework/docs/rebuild/plans/amendment-2-bar.md" in matches
+    assert "framework/docs/plans/amendment-1-foo.md" in matches
+    assert "framework/docs/plans/amendment-2-bar.md" in matches
     assert all(
         "not-an-amendment" not in m for m in matches
     )
@@ -176,22 +176,22 @@ def test_enumerate_amendments_in_flight_falls_through_to_framework(
 def test_enumerate_amendments_in_flight_prefers_workspace_root(
     tmp_path: Path,
 ) -> None:
-    """When `<workspace>/docs/rebuild/plans/` is present, the reader
+    """When `<workspace>/docs/plans/` is present, the reader
     uses it (and ignores any framework-side copy).
     """
     workspace_root = tmp_path
-    plans = workspace_root / "docs" / "rebuild" / "plans"
+    plans = workspace_root / "docs" / "plans"
     plans.mkdir(parents=True)
     (plans / "amendment-99-from-root.md").write_text("# root\n")
 
     framework_plans = (
-        workspace_root / "framework" / "docs" / "rebuild" / "plans"
+        workspace_root / "framework" / "docs" / "plans"
     )
     framework_plans.mkdir(parents=True)
     (framework_plans / "amendment-99-from-fw.md").write_text("# fw\n")
 
     matches = enumerate_amendments_in_flight(workspace_root)
-    assert matches == ["docs/rebuild/plans/amendment-99-from-root.md"]
+    assert matches == ["docs/plans/amendment-99-from-root.md"]
 
 
 # ---- compose_session_fields end-to-end -----------------------------
@@ -213,14 +213,13 @@ def test_compose_session_fields_end_to_end_with_framework_fall_through(
     framework_claude.write_text(
         "# fixture\n## Session-start discipline\n"
         "load `docs/odd-methodology.md` and "
-        "`docs/rebuild/VALUE_PROPOSITION.md`.\n## next\n"
+        "`docs/VALUE_PROPOSITION.md`.\n## next\n"
     )
 
     # Fall-through targets must exist for `corpus_gate_state == loaded`.
     (framework / "docs").mkdir()
     (framework / "docs" / "odd-methodology.md").write_text("# odd\n")
-    (framework / "docs" / "rebuild").mkdir()
-    (framework / "docs" / "rebuild" / "VALUE_PROPOSITION.md").write_text(
+    (framework / "docs" / "VALUE_PROPOSITION.md").write_text(
         "# vp\n"
     )
 

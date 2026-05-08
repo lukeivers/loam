@@ -33,14 +33,14 @@ def test_T7_widen_allowed_prefixes_tuple(tmp_path: Path) -> None:
     p = tmp_path / "t.py"
     p.write_text(_TUPLE_FILE, encoding="utf-8")
     changed, new, added = widen_binding(
-        p, "allowed_prefixes", ["docs/rebuild/plans/", "new-component/"], mode="tuple"
+        p, "allowed_prefixes", ["docs/plans/", "new-component/"], mode="tuple"
     )
     assert changed is True
-    assert added == ["docs/rebuild/plans/", "new-component/"]
+    assert added == ["docs/plans/", "new-component/"]
     # Existing entries preserved, new entries appended (sorted among new).
-    assert new == ["example/", "data/", "docs/rebuild/plans/", "new-component/"]
+    assert new == ["example/", "data/", "docs/plans/", "new-component/"]
     text = p.read_text(encoding="utf-8")
-    assert '"docs/rebuild/plans/"' in text
+    assert '"docs/plans/"' in text
     assert '"new-component/"' in text
     entries = read_entries(p, "allowed_prefixes")
     assert entries == new
@@ -74,11 +74,11 @@ def test_T8_widen_binding_idempotent(tmp_path: Path) -> None:
     p = tmp_path / "t.py"
     p.write_text(_TUPLE_FILE, encoding="utf-8")
     widen_binding(
-        p, "allowed_prefixes", ["docs/rebuild/plans/"], mode="tuple"
+        p, "allowed_prefixes", ["docs/plans/"], mode="tuple"
     )
     first = p.read_text(encoding="utf-8")
     changed, _new, added = widen_binding(
-        p, "allowed_prefixes", ["docs/rebuild/plans/"], mode="tuple"
+        p, "allowed_prefixes", ["docs/plans/"], mode="tuple"
     )
     assert changed is False
     assert added == []

@@ -1,0 +1,147 @@
+schema_version: 1
+amendment:
+  number: 54
+  slug: self-upgrade-clause-h-llm-merge
+  title: "self-upgrade clause-(h) — canonical pull + LLM-mediated semantic-merge gate"
+
+# BASELINE: 8ae1b82 — current HEAD at amendment-commit time (post
+# amendment #53 SHA-record commit). BASELINE-as-HEAD~1 pattern used
+# across amendments #29 / #34-#53.
+baseline: 8ae1b82ffaf6f0794bf8b9839143e288ccf6af6d
+
+plan: docs/plans/self-upgrade-clause-h-llm-merge.md
+
+seal_description: "self-upgrade clause-(h) — canonical pull + LLM-mediated semantic-merge gate"
+
+# One sealed component touched. Seal-bookkeeping infrastructure
+# (test_no_sealed_amendments.py + SEAL_COMMIT sidecar + seals/) was
+# retrofitted in amendment #53; this amendment composes onto it.
+# All clause-(h) source code lands under self-upgrade/src/ +
+# self-upgrade/tests/ + self-upgrade/templates/. No edits outside
+# the self-upgrade/ fence.
+components:
+  - name: self-upgrade
+    seal_test: self-upgrade/tests/test_no_sealed_amendments.py
+    sidecar: self-upgrade/tests/SEAL_COMMIT
+    frozen_baseline: false
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: self-upgrade/seals/SEAL_COMMIT.clause-h-llm-merge
+  body: |
+    # Amendment #54 — self-upgrade clause-(h)
+    #                  canonical pull + LLM-mediated semantic-merge gate
+
+    2026-04-26. Adds clause-(h) to self-upgrade's seven-clause
+    acceptance contract: workspace-customisation collision resolution
+    via an LLM-mediated semantic-merge gate, plus a canonical-as-source
+    pull adapter that lets `pos upgrade` source the manifest+staging
+    pair from a local canonical git tree without rebuilding
+    `execute_upgrade`'s pipeline.
+
+    BB-feat re-dispatch after amendment #53 (seal-bookkeeping
+    retrofit) split off the bookkeeping work.
+
+    Surface added under `self-upgrade/`:
+
+      - `src/self_upgrade/canonical.py` (new) — `--canonical` adapter:
+        validates a local canonical git working tree, resolves the
+        manifest at `<canonical>/self-upgrade/manifests/<tag>.yaml`,
+        returns a `(staging_dir, manifest)` resolution that
+        `execute_upgrade` already consumes. Local-canonical:
+        `staging_dir == canonical_path` (no copy).
+      - `src/self_upgrade/sync_protected.py` (new) — Class A/B/C
+        workspace-data envelope. Pydantic-validated framework floor
+        refused-on-removal (mirrors safety-layer's always_ask floor).
+        `classify(path, sp) -> FileClass`; first-match
+        (workspace_rules then framework_floor); default Class C.
+      - `templates/sync-protected.default.yaml` (new) — default
+        envelope shipped on first-run; Class-A coverage for
+        `personas/**/contract.yaml`, `.pos/**`, `.scratch/**`,
+        `.mcp.json`, `.pos/objective_tracker.sqlite`; Class-B for
+        `memory.yaml`.
+      - `src/self_upgrade/merge_resolver.py` (new) — per-conflict
+        LLM resolver with cumulative budget tracking. `MergeVerdict`
+        Pydantic schema; `ResolverBudget` (BB D-1: 5k per-conflict,
+        100k cumulative, workspace-tunable); `BudgetExhausted` and
+        `ResolverFailure` exceptions; duck-typed `LLMClient` Protocol
+        for test-time substitution.
+      - `src/self_upgrade/conflict_report.py` (extended) — Resolution
+        enum gains three INFERRED_* values; ConflictEntry gains
+        `rationale`/`confidence`/`user_override`/`override_rationale`;
+        model_validator enforces inferred-requires-rationale-confidence
+        and INFERRED_MERGED-requires-resolved_content_path; clause-(g)
+        `_reject_skipped` validator preserved unchanged.
+        `ConflictReport.sorted_low_confidence_first()` and
+        `inferred_entries()` helpers added.
+      - `src/self_upgrade/clause_checks.py` (extended) — adds
+        `resolve_clause_h_inferred(...)` pre-stage helper (mutates
+        ConflictReport in place; A→KEEP_LOCAL, B→override semantics,
+        C→resolver), `check_clause_h(...)` post-restart verifier,
+        and `"h"` entry in `run_all_clauses` bundle. OTel spans
+        `pos.upgrade.merge_gate.resolution` per call +
+        `pos.upgrade.merge_gate.summary` per upgrade.
+      - `src/self_upgrade/cli.py` (extended) — `--canonical` argparse
+        flag (mutex with `--staging-dir`, required group);
+        `--merge-resolver-module` flag for clause-(h) factory wiring;
+        `cmd_upgrade` resolves canonical → staging, seeds default
+        sync-protected if absent, runs `resolve_clause_h_inferred`
+        before the legacy has-pending block. Backward-compat: legacy
+        `--staging-dir` invocation produces byte-identical
+        pre-amendment behaviour.
+
+    Tests (self-upgrade — 122 pre / 175 post; +53 new):
+
+      - `tests/test_canonical.py` (new, 8 tests) — AC.H.1 canonical-
+        resolve + argparse mutex + backward-compat.
+      - `tests/test_sync_protected.py` (new, 9 tests) — AC.H.2/3/10
+        classify-A/B/C, floor-refuse, default-write, idempotent.
+      - `tests/test_conflict_report_inferred.py` (new, 11 tests) —
+        AC.H.4/5/9 enum, validators, sorted-low-confidence-first,
+        round-trip.
+      - `tests/test_merge_resolver.py` (new, 12 tests) — AC.H.4/6/12
+        verdict-shape, per-conflict budget, cumulative, exhaustion,
+        failure translation.
+      - `tests/test_clause_h_integration.py` (new, 13 tests) —
+        AC.H.7/8/9/12 pre-stage helper integration, override-skip,
+        idempotency, budget-halt, resolver-failure, verifier.
+
+    Backwards-compatibility verified: legacy
+    `pos upgrade <tag> --staging-dir <path> --manifest <path>`
+    invocation calls through `execute_upgrade` unchanged; no
+    clause-(h) pre-stage runs unless `--canonical` is supplied; the
+    new `"h"` entry in `run_all_clauses` no-ops to passed when
+    `conflict_report` is None (legacy path).
+
+    Halt-trigger surface review:
+      #1 (new top-level objective): no — composition on existing
+         v1.0 self-upgrade objective + AC.PO.1/2.
+      #2 (ODD violation in surrounding code): none observed.
+      #4 (source edits outside self-upgrade/): none — strict
+         self-upgrade/ fence. test-fixture admissions: none required.
+      #5 (no LLM adapter): not fired —
+         `memory-system/src/claude_print_client.py` exposes the
+         structured-output surface. Production wiring is deferred
+         to the `--merge-resolver-module` factory the operator
+         supplies; clause-(h) code accepts any duck-typed LLMClient.
+      #6 (clause-bundle / pipeline rebuild): not fired —
+         clause-(h) verifier joins `run_all_clauses` as a sibling of
+         (a)-(g); pre-stage helper runs in `cmd_upgrade` (not inside
+         `execute_upgrade`'s pipeline), preserving the existing
+         pipeline contract.
+      #9 (4-6h wall-time): not exceeded.
+
+    With this amendment, self-upgrade exposes the substrate for
+    canonical-pull workflows: future amendments will compose
+    `--canonical <git-url>` (remote fetch), background-scope mode
+    (per AA D-3), the persona-invokable `/sync` slash-command, and
+    workspace-clone primitives onto the same surface.

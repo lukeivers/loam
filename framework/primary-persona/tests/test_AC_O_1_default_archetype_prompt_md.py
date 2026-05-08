@@ -52,8 +52,8 @@ Operational-rule count history:
     rules; widens the count assertions in lock-step (composes the
     new addition with the α drift fix).
 
-Plan: docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
-v0.1.2 item 5 plan: docs/rebuild/plans/v0-1-2-ack-first-persona-contract.md
+Plan: docs/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+v0.1.2 item 5 plan: docs/plans/v0-1-2-ack-first-persona-contract.md
 """
 
 from __future__ import annotations

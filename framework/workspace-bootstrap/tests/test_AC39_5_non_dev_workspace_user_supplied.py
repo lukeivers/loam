@@ -18,7 +18,7 @@ workspace user's value-prop content.
 Plan §4 AC39.5 outcomes:
 
 - On a workspace NOT classified as pos-v2 dev (no
-  ``docs/rebuild/VALUE_PROPOSITION.md`` at the framework path), the
+  ``docs/VALUE_PROPOSITION.md`` at the framework path), the
   seed reads ``<workspace>/value-prop.md`` as the source.
 - The root's ``authored_by == "user"``.
 - ``lifted_from.source_doc`` points at the workspace-supplied source
@@ -70,7 +70,7 @@ Does this add to the compliance toolkit our primary persona draws from?
 def test_AC39_5_classifier_returns_user_when_framework_doc_absent(
     tmp_path: Path,
 ) -> None:
-    """A workspace that lacks ``docs/rebuild/VALUE_PROPOSITION.md``
+    """A workspace that lacks ``docs/VALUE_PROPOSITION.md``
     classifies as ``"user"``, not ``"pos-v2-dev"``."""
     workspace = tmp_path / "ws-user"
     workspace.mkdir()

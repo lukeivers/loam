@@ -15,7 +15,7 @@
 """AC.α.2 — Two-class corpus authoring guide present at canonical path.
 
 Per plan §4 AC.α.2, the file
-``docs/rebuild/capability-corpus/AUTHORING.md`` exists and carries:
+``docs/capability-corpus/AUTHORING.md`` exists and carries:
 
   - A *Class A — Anthropic-canonical reference* section naming the
     deterministic-projection contract, the required sections per
@@ -40,7 +40,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 AUTHORING_MD = (
-    REPO_ROOT / "docs" / "rebuild" / "capability-corpus" / "AUTHORING.md"
+    REPO_ROOT / "docs" / "capability-corpus" / "AUTHORING.md"
 )
 
 

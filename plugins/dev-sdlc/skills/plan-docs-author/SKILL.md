@@ -1,11 +1,11 @@
 ---
-description: Author a plan-doc per the dev-sdlc methodology — the structural execution of `feedback_plan_before_code`'s "every build writes a plan to docs/rebuild/plans/<slug>.md BEFORE code" rule. Plan-doc carries objective + scope + AC family + halt triggers + smoke + bookkeeping + F2 RF + provenance + acceptance gate + `## 14.` method-decision register (per AC.D-sa.7 lint regex). Distinct from `plan-before-code-author` (which carries the WHEN — the rule that a plan must precede code); this skill carries the HOW-of-authoring — the section-by-section execution per the methodology. Trim discipline applied 2026-05-05: master plan §3 carries cycle decomposition (light per-cycle entry + AC family seed only); sub-plan §4 carries the AC enumeration; §4 per-cycle dispatch briefs drop to a stub paragraph (briefs are authored inline at dispatch time); SHA backfill centralizes at master plan §9. Use whenever a sealed-component or major-feature build is about to start in a loam dev-mode workspace.
+description: Author a plan-doc per the dev-sdlc methodology — the structural execution of `feedback_plan_before_code`'s "every build writes a plan to docs/plans/<slug>.md BEFORE code" rule. Plan-doc carries objective + scope + AC family + halt triggers + smoke + bookkeeping + F2 RF + provenance + acceptance gate + `## 14.` method-decision register (per AC.D-sa.7 lint regex). Distinct from `plan-before-code-author` (which carries the WHEN — the rule that a plan must precede code); this skill carries the HOW-of-authoring — the section-by-section execution per the methodology. Trim discipline applied 2026-05-05: master plan §3 carries cycle decomposition (light per-cycle entry + AC family seed only); sub-plan §4 carries the AC enumeration; §4 per-cycle dispatch briefs drop to a stub paragraph (briefs are authored inline at dispatch time); SHA backfill centralizes at master plan §9. Use whenever a sealed-component or major-feature build is about to start in a loam dev-mode workspace.
 ---
 
 # plan-docs-author
 
 `feedback_plan_before_code` says every build writes a plan to
-`docs/rebuild/plans/<slug>.md` BEFORE code. The first-pass
+`docs/plans/<slug>.md` BEFORE code. The first-pass
 SKILL `plan-before-code-author` codifies the WHEN — the rule
 that a plan-doc must precede code commits. This skill codifies
 the HOW-of-authoring — the section-by-section execution per
@@ -61,7 +61,7 @@ The required sections + each one's purpose:
 4. **§3 Component fence.** Exactly which directories the cycle
    edits. Single-component cycles name one fence; multi-component
    cycles enumerate each component's sub-fence. Universal admissions
-   (e.g., `docs/rebuild/plans/`) called out explicitly.
+   (e.g., `docs/plans/`) called out explicitly.
 5. **§4 AC family.** Every AC the cycle commits to satisfy. Format:
    `AC.<FAMILY>.<index> — <one-line summary>. <2–4 sentence
    detail>.` Each AC must be testable + observable.
@@ -191,7 +191,7 @@ Skip when:
     LITERALLY.** Table form: `| Decision | Choice | Rationale |`.
     Every non-default method-level decision named. AC.D-sa.7
     lint regex pins on `## 14.` — verify by `grep '^## 14\.'
-    docs/rebuild/plans/<slug>.md` returning the heading line.
+    docs/plans/<slug>.md` returning the heading line.
 17. **Reserve commit-SHA backfill section at the bottom.** Empty
     placeholders for plan-doc commit / source-edit commit /
     apply commit / seal commit / §14 backfill commit. Filled
@@ -264,7 +264,7 @@ When raw Claude Code without loam dev-sdlc plugin:
 ## Master plan vs sub-plan shape (trim discipline, Luke 2026-05-05)
 
 Master plans (multi-cycle plan-docs at e.g.
-`docs/rebuild/plans/v0-X-Y-master-plan.md`) decompose into
+`docs/plans/v0-X-Y-master-plan.md`) decompose into
 cycle sub-plan-docs. The trim discipline ratified
 2026-05-05 makes the master/sub-plan partition strict:
 

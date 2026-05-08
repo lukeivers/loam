@@ -45,7 +45,7 @@ from loam.workspace_bootstrap.adapters.first_run_scaffold import (
 # scaffold; ``service_label("memory-graphiti", ...)`` raises
 # ``ValueError``. The module-level skip below preserves the AC contract
 # for M-GMP's post-v0.1.0 re-admission. See
-# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+# ``docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
 pytestmark = pytest.mark.skip(
     reason=(
         "FBE.7 (v0.1.0 foldback): memory-graphiti not in _SERVICE_KINDS "

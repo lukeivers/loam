@@ -73,7 +73,7 @@ References:
 
 - ``framework/memory-system/src/claude_print_client.py`` — the precedent
   this client mirrors.
-- ``docs/rebuild/plans/v0-2-5-corrective-c4-pivot-claude-print-synthesis.md``
+- ``docs/plans/v0-2-5-corrective-c4-pivot-claude-print-synthesis.md``
   §14 method-decision register.
 """
 

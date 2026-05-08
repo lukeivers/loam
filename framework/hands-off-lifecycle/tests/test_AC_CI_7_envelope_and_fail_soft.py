@@ -92,7 +92,7 @@ def test_AC_CI_7_envelope_missing_session_id_still_emits(
         "is_primary: true\ndev_intent: yes\n", encoding="utf-8"
     )
     (tmp_path / "CLAUDE.md").write_text("# c\n", encoding="utf-8")
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# v\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# s\n", encoding="utf-8")
@@ -114,7 +114,7 @@ def test_AC_CI_7_completes_within_5s_budget(tmp_path: Path) -> None:
         "is_primary: true\ndev_intent: yes\n", encoding="utf-8"
     )
     (tmp_path / "CLAUDE.md").write_text("# c\n", encoding="utf-8")
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# v\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# s\n", encoding="utf-8")
@@ -144,7 +144,7 @@ def test_AC_CI_7_unreadable_file_handled_gracefully(
     )
     # CLAUDE.md is valid UTF-8.
     (tmp_path / "CLAUDE.md").write_text("# c\n", encoding="utf-8")
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# v\n", encoding="utf-8")
     # STATE.md contains invalid UTF-8 bytes.
@@ -172,7 +172,7 @@ def test_AC_CI_7_never_raises_on_disk_io_failure(
         "is_primary: true\ndev_intent: yes\n", encoding="utf-8"
     )
     (tmp_path / "CLAUDE.md").write_text("# c\n", encoding="utf-8")
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# v\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# s\n", encoding="utf-8")

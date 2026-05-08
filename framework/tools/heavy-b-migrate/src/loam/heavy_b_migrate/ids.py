@@ -18,7 +18,7 @@ Naming scheme (per builder-plan §5):
 - ``amendment-<NN>-placeholder`` — Phase γ placeholder.
 
 Slugs are workspace-relative directory names from
-``docs/rebuild/components/`` (already lowercase-hyphenated) and
+``docs/archive/component-research/`` (already lowercase-hyphenated) and
 amendment numbers are extracted from the plan-file basename.
 """
 

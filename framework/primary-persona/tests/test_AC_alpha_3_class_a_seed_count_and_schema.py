@@ -15,8 +15,8 @@
 """AC.α.3 — ≥ 5 seed Class A docs covering highest-leverage primitives.
 
 Per plan §4 AC.α.3, at least five files exist under
-``docs/rebuild/capability-corpus/claude-code/`` and/or
-``docs/rebuild/capability-corpus/harness/``, each satisfying the
+``docs/capability-corpus/claude-code/`` and/or
+``docs/capability-corpus/harness/``, each satisfying the
 Class A schema from AC.α.2:
 
   - Surface
@@ -34,7 +34,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-CORPUS_ROOT = REPO_ROOT / "docs" / "rebuild" / "capability-corpus"
+CORPUS_ROOT = REPO_ROOT / "docs" / "capability-corpus"
 CLASS_A_DIRS = (
     CORPUS_ROOT / "claude-code",
     CORPUS_ROOT / "harness",

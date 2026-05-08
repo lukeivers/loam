@@ -1,0 +1,309 @@
+schema_version: 1
+amendment:
+  number: 45
+  slug: merge-session-start-multi-contributor
+  title: "merge_session_start multi-contributor generalisation (sub-plan B unblock)"
+
+# BASELINE: c046f78 — pre-amendment tip (HEAD~1 of the amendment
+# commit, "docs(rebuild): append #44 cross-mode-debt finding + mark
+# .gitignore actioned"). Mirrors amendments #29 / #34-#44
+# BASELINE-as-HEAD~1 pattern: pin to the immediate-prior commit, not
+# the prior hands-off-lifecycle seal commit (d9ec5078 — the
+# amendment-#37 default-agent-wiring seal), so the BASELINE..HEAD
+# diff is narrow to amendment #45's surface and avoids spurious
+# cross-component "missing admission" reports for intervening
+# commits (#38-#44) that landed under their own amendments between
+# hands-off-lifecycle's prior seal and this amendment.
+#
+# H19's frozen BASELINE per amendment #23 is preserved separately —
+# the manifest sets ``frozen_baseline: true`` on hands-off-lifecycle
+# so the project-start anchor (3780603) is not advanced by this
+# amendment.
+baseline: c046f782d6f4bb820f70158622ae1e1972b83dab
+
+plan: docs/plans/amendment-45-merge-session-start-multi-contributor.md
+
+# Single-component sealed amendment per amendment plan §2: hands-off-
+# lifecycle only. Sub-plan B's emitter + tests land in the SAME
+# working-tree commit under tools/loam-mode/ — admitted at the H19
+# top-level via the existing ``tools`` admission (amendment #22 +
+# convention parity with tools/pos-amend/, tools/loam-mode/ from
+# sub-plan F). No surface change to primary-persona, workspace-
+# bootstrap, objective-tracker, or any other sealed component.
+# AC.45.S enforces this on every amendment-window diff.
+components:
+  - name: hands-off-lifecycle
+    seal_test: hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes:
+      - tools/loam-mode/
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: hands-off-lifecycle/seals/SEAL_COMMIT.true-first-run
+  body: |
+    # Amendment #45 — merge_session_start multi-contributor
+    #                  generalisation (sub-plan B unblock)
+
+    2026-04-25. Re-extension of amendment #37 (hands-off-lifecycle
+    default-agent wiring; sealed at d9ec5078). Per sub-plan
+    `docs/plans/amendment-45-merge-session-start-multi-
+    contributor.md` and the prior B-build agent's halt-finding
+    (`.scratch/claude-output/B-mode-loading-halt-finding-2.md`).
+
+    The amendment generalises the pre-amendment-#45
+    `hooks["SessionStart"] = [new_entry]` idiom in
+    `merge_session_start` (which overwrote SessionStart with a single-
+    entry list at every call) to compose multiple SessionStart
+    contributors via a contributor registry. The registry surface is
+    a new optional `extra_inner_hooks: list[dict] | None = None`
+    parameter on `build_first_run_stanza` and `build_supervisor_stanza`;
+    `merge_session_start` itself was already generic over the
+    inner-hook count of `new_entry` (multi-contributor lives in the
+    inner `hooks: [...]` array, not by appending more outer entries).
+
+    Sub-plan B's emitter at `tools/loam-mode/src/loam_mode/
+    session_start.py` (~210 lines) lands in the SAME amendment
+    commit under H19's existing `tools` admission. It exposes
+    `compute_session_mode`, `read_dev_intent_safe`,
+    `emit_session_start_context`, and `build_loam_mode_inner_hook`;
+    the last is the seam hands-off-lifecycle's stanza builders
+    compose against to register loam-mode as the second inner hook
+    on every SessionStart envelope.
+
+    Surface added (hands-off-lifecycle):
+
+      - `hands-off-lifecycle/hooks/first_run_settings.py` —
+        `build_first_run_stanza` and `build_supervisor_stanza`
+        gain `extra_inner_hooks: list[dict] | None = None`. A new
+        helper `_compose_inner_hooks(base, extras)` does the actual
+        list assembly. `_is_pos_v2_owned` recognises the new
+        loam-mode session-start command markers
+        (`loam_mode.cli session-start`, `-m loam_mode`,
+        `loam_mode.cli session_start`) so a re-merge over a stanza
+        we wrote does not trigger the user-stanza backup path.
+      - `hands-off-lifecycle/hooks/first_run_helper.py` — Phase 3d,
+        Phase 4c re-merge, and Phase 6 self-retire call sites pass
+        `extra_inner_hooks=_loam_mode_inner_hooks(pos_v2_root)` to
+        the stanza builders. The lazy-import helper inserts the
+        workspace venv's site-packages onto `sys.path` if needed,
+        then imports `build_loam_mode_inner_hook`; on ImportError
+        or any unexpected exception the helper returns `[]` and the
+        envelope degrades to the pre-amendment single-inner-hook
+        shape (AC.45.5 backwards-compat in the degraded path).
+
+    Surface added (tools/loam-mode):
+
+      - `tools/loam-mode/src/loam_mode/session_start.py` (new) —
+        sub-plan B's emitter module. Pure functions:
+        `compute_session_mode("yes" → "dev"; else "user")`,
+        `read_dev_intent_safe(workspace_root)` (fail-soft local YAML
+        reader of `personas/<handle>/contract.yaml`'s `dev_intent`
+        field; never imports primary-persona; returns
+        `"yes" | "no" | "absent"`), `emit_session_start_context(
+        workspace_root, *, dev_extension_filename)` (returns the
+        dev-extension content in dev mode, empty string in user
+        mode, fail-soft diagnostic line when dev mode + extension
+        file missing), `build_loam_mode_inner_hook(pos_v2_root)`
+        (returns the inner-hook dict the stanza builders compose).
+      - `tools/loam-mode/src/loam_mode/cli.py` — `session-start`
+        subcommand registered. Always exits 0 (AC.B5 fail-soft —
+        a non-zero exit would block Claude Code's SessionStart
+        fan-out).
+      - `tools/loam-mode/src/loam_mode/__init__.py` — re-exports the
+        emitter's public surface.
+
+    Behaviour:
+
+      - On a fresh-clone first-run, after Phase 3d's first
+        `merge_session_start`, `.claude/settings.json`'s
+        SessionStart envelope contains TWO inner hooks: the
+        first-run shim (FIRST, so Phase 6 self-retire's
+        `inner[0]['command']` check still finds it) plus
+        `loam-mode session-start` (SECOND).
+      - On Phase 6 self-retire, `build_supervisor_stanza` emits the
+        same multi-inner-hook shape: supervisor (FIRST) + loam-mode
+        (SECOND). Every Claude Code session post-first-run runs
+        BOTH commands at SessionStart; loam-mode emits the
+        dev-extension content as `additionalContext` only when the
+        workspace's `dev_intent` answer is `"yes"`.
+      - Backwards-compat: zero-or-one-contributor produces output
+        BYTE-IDENTICAL to the pre-amendment-#45 path. Pre-existing
+        `merge_session_start` callers (the test suite, the
+        confirmation-sentence path, the verifier) see the same
+        envelope they did before. AC.45.5 codifies this; the
+        hands-off-lifecycle test suite (124 tests) stays green.
+      - Fail-soft chain: if loam-mode is not importable (degraded
+        install, partial venv) the helper-side `_loam_mode_inner_hooks`
+        returns `[]` and the envelope falls back to the
+        pre-amendment shape. If loam-mode IS imported but
+        `read_dev_intent_safe` cannot resolve the answer (missing
+        contract, parse error), the emitter returns empty
+        (user-mode default per locked owner ruling D-MASTER.4). The
+        SessionStart hook NEVER blocks on selector error.
+
+    Re-extension under existing objectives per ODD §4 — anchored to
+    v1.0 architectural-layer "the harness composes multiple
+    capabilities at session-start without per-capability bespoke
+    wiring" (re-extension of amendment #37's surface). No new
+    spec v1.x clause; this is a structural generalisation enabling
+    sub-plan B's dev-discipline scope. NO v1.3 spec addendum
+    authored.
+
+    No source edits to `primary-persona/`, `workspace-bootstrap/`,
+    `objective-tracker/`, `orchestrator/`, or any other sealed
+    component. The dev-intent answer is read via local YAML parsing
+    in `tools/loam-mode/` (convention parity with primary-persona's
+    `read_dev_intent`, NOT import-coupling). The hands-off-lifecycle
+    helper's import of `build_loam_mode_inner_hook` is lazy and
+    fail-soft.
+
+    AC surface (AC.45.1 – AC.45.5 + AC.45.S + AC.B1 – AC.B5 +
+    AC.B.S) — 11 outcome-shaped criteria, one test file per AC
+    (per the #41 one-file-per-AC convention):
+
+      - AC.45.1: `merge_session_start` accepts a multi-inner-hook
+        envelope; zero contributors produces a stanza byte-identical
+        to the pre-amendment-#45 shape; one or N extras append in
+        order; the OUTER `hooks.SessionStart` list still carries
+        exactly one envelope entry.
+      - AC.45.2: `build_first_run_stanza` emits the multi-inner-hook
+        envelope with the first-run shim FIRST and the loam-mode
+        contributor SECOND when registered.
+      - AC.45.3: `build_supervisor_stanza` mirrors the AC.45.2 shape
+        for the post-self-retire stanza; supervisor FIRST, loam-mode
+        SECOND.
+      - AC.45.4: B's emitter at
+        `tools/loam-mode/src/loam_mode/session_start.py` produces the
+        inner-hook dict; the seam ends-to-end through hands-off-
+        lifecycle's stanza builders into `merge_session_start` and
+        out into `.claude/settings.json`.
+      - AC.45.5: backwards-compat preserved; default-call bytes
+        match pre-amendment shape; amendment #32 + #37 inner-hook
+        semantics preserved; multi-inner-hook stanzas we wrote are
+        recognised on re-merge and NOT backed up as user-authored.
+      - AC.45.S: seal-diff window confined to hands-off-lifecycle/,
+        tools/loam-mode/, and admitted plan/CLAUDE.md/methodology
+        paths.
+      - AC.B1: `compute_session_mode` maps `"yes"` → `"dev"`, else
+        `"user"`; `read_dev_intent_safe` reads `personas/<handle>/
+        contract.yaml`'s `dev_intent` field; chains correctly.
+      - AC.B2: `build_loam_mode_inner_hook` returns the canonical
+        inner-hook dict; composes into `build_first_run_stanza` and
+        `build_supervisor_stanza` via `extra_inner_hooks`.
+      - AC.B3: dev-extension (`CLAUDE.dev.md`) loaded only in dev
+        sessions; silent in user sessions; filename configurable.
+      - AC.B4: end-to-end mode-aware corpus — F's `select_corpus`
+        and B's `emit_session_start_context` agree (CLAUDE.dev.md
+        in dev_only set; user-mode payload empty; dev-mode payload
+        non-empty).
+      - AC.B5: fail-soft — corrupt contract.yaml, missing personas
+        dir, missing dev-extension all return without raising; the
+        CLI subcommand returns 0 on every code path.
+      - AC.B.S: B's emitter does not import any sealed component at
+        module-import time; the loam-mode session-start subcommand
+        is registered.
+
+    Method-level choices (builder's call per ODD §1.1; recorded in
+    plan §14):
+
+      - D-build.1 (merge_session_start generalisation shape):
+        optional `extra_inner_hooks` parameter (default None =
+        legacy single-inner-hook shape; non-empty composes into the
+        outer envelope's `hooks` array). Mirrors amendment #37's
+        `agent_handle: str | None = None` pattern. Minimal blast
+        radius. Backwards-compat is structural — the default branch
+        produces byte-identical output to pre-amendment.
+
+      - D-build.2 (loam-mode contributor home): emitter lives at
+        `tools/loam-mode/src/loam_mode/session_start.py`. D-B.1
+        already locked the standalone-tool home for B's selector
+        mechanism; this places the SessionStart emitter in the same
+        package. Sealed-component touch confined to hands-off-
+        lifecycle (the registry seam); the tools/loam-mode side is
+        dev-discipline.
+
+      - D-build.3 (`_is_pos_v2_owned` recognition under multi-
+        contributor): expand the recognised-command set to include
+        loam-mode's command markers (`loam_mode.cli session-start`,
+        `-m loam_mode`, `loam_mode.cli session_start`). A multi-
+        inner-hook stanza we authored is still ours; the predicate's
+        contract is "is this our stanza?", and a stanza whose every
+        inner hook matches a recognised pos-v2 marker is still a
+        pos-v2 stanza.
+
+      - D-build.4 (helper-side wiring): lazy `from
+        loam_mode.session_start import build_loam_mode_inner_hook`
+        wrapped in try/except, with workspace-venv site-packages
+        prepended to `sys.path`. Fail-soft: missing or broken
+        loam-mode degrades to the pre-amendment single-inner-hook
+        shape (AC.45.5 in the degraded path).
+
+      - D-build.5 (dev-intent fail-soft reader): local YAML parser
+        walking `personas/<handle>/contract.yaml`. Mirrors
+        primary-persona's `read_dev_intent` semantics WITHOUT
+        importing it (sealed-component coupling avoided). Returns
+        `"yes" | "no" | "absent"`; YAML 1.1 implicit-bool semantics
+        (unquoted `yes`/`no` parsed as Python True/False) handled
+        explicitly so contract authors can write either form.
+
+    Fail-closed behaviours:
+
+      - Lazy loam-mode import fails → `_loam_mode_inner_hooks`
+        returns `[]` → stanza degrades to single-inner-hook shape.
+      - `read_dev_intent_safe` raises (impossible — outer try/except
+        catches everything) → returns `"absent"` → user-mode
+        default.
+      - `emit_session_start_context` raises (any unexpected error)
+        → returns `""` → empty payload, session proceeds.
+      - Missing dev-extension file in dev mode → returns a
+        diagnostic line rather than raising or returning empty
+        (so the user notices the misconfiguration).
+      - `cli_session_start` always returns 0 — non-zero exit would
+        block Claude Code's SessionStart fan-out which AC.B5
+        forbids.
+
+    Out of scope (sub-plan §7 + amendment plan §7):
+
+      - Other SessionStart contributors (light-touch-education,
+        plugin hooks etc.) — those compose against the new
+        registry surface but are separate future work.
+      - Mode-aware-corpus selector logic itself — that lives in
+        F (sealed at cb584ba) and is consumed unchanged here.
+      - Multi-workspace state-file migration (sub-plan C, deferred
+        per master plan).
+      - Slash-command toggle for `dev_intent` (sub-plan B's
+        AC.B6 is documentation-only; this amendment does NOT
+        ship a toggle).
+      - Per-component mode toggles. Mode is a single boolean per
+        workspace.
+
+    BASELINE c046f78 (pre-amendment tip — HEAD~1 of the amendment
+    commit). hands-off-lifecycle's H19 BASELINE stays frozen at
+    3780603 per amendment #23 (manifest declares `frozen_baseline:
+    true`). SEAL_COMMIT sidecar lands at the amendment commit on the
+    empty-diff window; advanced to the seal SHA via `pos-amend
+    seal` on the seal commit.
+
+    With this amendment, sub-plan B's mode-aware loading mechanism
+    is structurally complete. The active two-modes programme
+    (A/E/F/B) lands its acceptance shape: A delivers `dev_intent`
+    storage (sealed at 85a82f7), E delivers the workspace
+    classifier replacement (sealed at ad0d211), F delivers the
+    auto-load partition data + selector (sealed at cb584ba), and
+    this amendment delivers the registration seam + B's emitter
+    (sealed at the amendment-#45 seal commit). Future SessionStart
+    contributors (Idea 2 light-touch education, mode-aware persona
+    prompts, plugin hooks) compose against the new registry
+    without re-extending #37 each time — the asymmetric programme-
+    level win is realised.

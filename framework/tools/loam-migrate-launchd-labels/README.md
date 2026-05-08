@@ -110,7 +110,7 @@ once when they upgrade.
 
 - Launchd-label rename: `loam-rename-decisions.md` Tier-1 #4 (label
   rebase + version-suffix drop concurrent).
-- M1c sub-plan: `docs/rebuild/plans/oss-v0-1-0-publish-rename-1c.md`
+- M1c sub-plan: `docs/plans/oss-v0-1-0-publish-rename-1c.md`
   AC.RNM-1c.3 (idempotency contract) + AC.RNM-1c.5 (orphan-plist-
   cleanup NAMESPACED-arm rebase, distinct mission from this helper).
 - Hard-cutover policy: series-master D-RNM.3 (no compat module, no

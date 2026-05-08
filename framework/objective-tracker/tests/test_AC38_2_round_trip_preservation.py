@@ -14,7 +14,7 @@
 
 """AC38.2 — Pre-widening records round-trip post-widening unchanged.
 
-Plan: docs/rebuild/plans/amendment-38-objective-tracker-schema-widening.md
+Plan: docs/plans/amendment-38-objective-tracker-schema-widening.md
 §4 AC38.2.
 
 Outcome (paraphrased from the AC):
@@ -211,7 +211,7 @@ async def test_AC38_2_widened_record_round_trips_via_event_replay(
     """A record authored with `lifted_from` populated round-trips
     through the event log; cold-restart projection equals live."""
     lf = LiftedFrom(
-        source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+        source_doc="docs/VALUE_PROPOSITION.md",
         source_ac="AC.PO.1",
         source_commit="HEAD",
     )

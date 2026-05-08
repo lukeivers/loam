@@ -1,7 +1,7 @@
 """Tests for AC.D-np.4 — failure modes halt with structured diagnostics
 (no partial output).
 
-Per `docs/rebuild/plans/pos-amend-new-plan-orchestration.md`:
+Per `docs/plans/pos-amend-new-plan-orchestration.md`:
 
     When ``loam amend new-plan`` encounters one of:
       (a) an invalid slug (slug containing ``/``, slug not matching
@@ -67,7 +67,7 @@ def test_AC_D_np_4_invalid_slug_writes_no_partial_file(
 ) -> None:
     rc = new_plan_cmd.run("with/slash", repo_root=tmp_path)
     assert rc == 2
-    plans_dir = tmp_path / "docs" / "rebuild" / "plans"
+    plans_dir = tmp_path / "docs" / "plans"
     if plans_dir.exists():
         # Defensive: if the plans dir was created (it shouldn't be), it
         # must not contain any vars-file or plan-doc for the rejected slug.
@@ -81,7 +81,7 @@ def test_AC_D_np_4_existing_vars_file_refuses_overwrite_exit_3(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    target = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.vars.yaml"
+    target = tmp_path / "docs" / "plans" / "example-slug.vars.yaml"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("PRE-EXISTING\n", encoding="utf-8")
     rc = new_plan_cmd.run("example-slug", repo_root=tmp_path)
@@ -95,7 +95,7 @@ def test_AC_D_np_4_existing_vars_file_refuses_overwrite_exit_3(
 def test_AC_D_np_4_force_overwrites_existing_vars_file(
     tmp_path: Path,
 ) -> None:
-    target = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.vars.yaml"
+    target = tmp_path / "docs" / "plans" / "example-slug.vars.yaml"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("PRE-EXISTING\n", encoding="utf-8")
     rc = new_plan_cmd.run("example-slug", repo_root=tmp_path, force=True)
@@ -111,7 +111,7 @@ def test_AC_D_np_4_existing_plan_doc_refuses_overwrite_when_render(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    plan_target = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.md"
+    plan_target = tmp_path / "docs" / "plans" / "example-slug.md"
     plan_target.parent.mkdir(parents=True, exist_ok=True)
     plan_target.write_text("PRE-EXISTING\n", encoding="utf-8")
     rc = new_plan_cmd.run(
@@ -136,10 +136,10 @@ def test_AC_D_np_4_pre_existing_plan_doc_blocks_before_vars_write(
     refuse-overwrite check fires before the vars-file write — no partial
     output anywhere.
     """
-    plan_target = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.md"
+    plan_target = tmp_path / "docs" / "plans" / "example-slug.md"
     plan_target.parent.mkdir(parents=True, exist_ok=True)
     plan_target.write_text("PRE-EXISTING\n", encoding="utf-8")
-    vars_target = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.vars.yaml"
+    vars_target = tmp_path / "docs" / "plans" / "example-slug.vars.yaml"
     rc = new_plan_cmd.run(
         "example-slug",
         title="T",
@@ -163,7 +163,7 @@ def test_AC_D_np_4_io_failure_exits_3_with_diagnostic(
     """A read-only target directory triggers OSError on write; orchestration
     surfaces it as exit 3 with an io-failure diagnostic.
     """
-    plans_dir = tmp_path / "docs" / "rebuild" / "plans"
+    plans_dir = tmp_path / "docs" / "plans"
     plans_dir.mkdir(parents=True)
     # Create a directory at the vars-file's expected path so write_text raises.
     blocker = plans_dir / "example-slug.vars.yaml"

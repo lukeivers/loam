@@ -1,0 +1,279 @@
+schema_version: 1
+amendment:
+  number: 39
+  slug: workspace-bootstrap-tracker-seed
+  title: "workspace-bootstrap tracker-seed (first-run seeds value-prop-rooted tree)"
+
+# BASELINE: fa15127 — pre-amendment tip (HEAD~1 of the amendment
+# commit, "docs(plans): record amendment #38 commit SHAs in
+# method-decision register"). Mirrors amendments #29 / #34 / #35 /
+# #36 / #37 / #38 BASELINE-as-HEAD~1 pattern: pin to the immediate-
+# prior commit, not the prior workspace-bootstrap seal (0031d1e —
+# the amendment-#36 persona-scaffold seal), so the BASELINE..HEAD
+# diff is narrow to amendment #39's surface and avoids spurious
+# cross-component "missing admission" reports for unrelated commits
+# intervening between workspace-bootstrap's prior seal and this
+# amendment.
+baseline: fa15127134ad5dfa68166b9641cfa6cc174e66df
+
+plan: docs/plans/amendment-39-workspace-bootstrap-tracker-seed.md
+
+# Single-component amendment per amendment plan §2: workspace-
+# bootstrap only. No surface change to objective-tracker (consumed
+# via its public runtime API — `LiftedFrom`, `ObjectiveFilter`,
+# `query_projection_view` are amendment #38's surface), primary-
+# persona, hands-off-lifecycle, or any other sealed component.
+# Sub-plan #39's AC39.S enforces this.
+components:
+  - name: workspace-bootstrap
+    seal_test: workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: workspace-bootstrap/seals/SEAL_COMMIT.tracker-seed
+  body: |
+    # Amendment #39 — workspace-bootstrap tracker-seed
+    #                  (first-run seeds value-prop-rooted tracker tree)
+
+    2026-04-25. Second of four Heavy-B sealed-component amendments
+    delivering VALUE_PROPOSITION-as-prime-objective migration, per
+    sub-plan `docs/plans/amendment-39-workspace-bootstrap-
+    tracker-seed.md` + master research artefact `docs/plans/
+    research/value-prop-as-root-heavy-b-migration-research.md`.
+    Predecessor amendment #38 (objective-tracker schema widening —
+    `lifted_from` + `query_projection_view`) sealed at 92bead1;
+    amendment #39 consumes that surface unchanged.
+
+    The amendment lands one new responsibility on the existing
+    `first_run_scaffold` adapter inside the `workspace-bootstrap`
+    fence:
+
+      - `workspace-bootstrap/src/workspace_bootstrap/adapters/
+        tracker_seed.py` (new) — pure-function workspace classifier
+        (`classify_workspace`), value-prop source loader
+        (`load_value_prop_source`), value-prop content extractor
+        (`extract_value_prop_record`), async seed coroutine
+        (`seed_tracker`), synchronous wrapper
+        (`run_seed_synchronously`), `TrackerSeedResult` dataclass,
+        `ValuePropSource` dataclass, and stable-ID constants
+        (`ROOT_OBJECTIVE_ID`, spec-tier phase tuple).
+      - `workspace-bootstrap/src/workspace_bootstrap/adapters/
+        first_run_scaffold.py` — `run_first_run_scaffold(...)` gains
+        optional `value_prop_path_override` and
+        `tracker_seed_runner` kwargs; invokes the seed step after
+        persona-directory install. `ScaffoldResult` extended with
+        six new fields surfacing the seed outcome (`tracker_seeded`,
+        `tracker_seed_reason`, `tracker_classification`,
+        `tracker_root_id`, `tracker_descendants_seeded`,
+        `tracker_value_prop_source`).
+
+    Behaviour:
+
+      - On a workspace classified as pos-v2 dev (the framework's
+        canonical `docs/VALUE_PROPOSITION.md` is present at
+        the workspace root), the seed reads that doc at first-run
+        time and projects it onto an `ObjectiveSpec` with
+        `authored_by="user"`, `parent_id=None`, two `prose` criteria
+        (AC.PO.1 + AC.PO.2 derived from the `Primary-persona test`
+        and `Harness test` sections), `time_bound=TimeBound(
+        evergreen=True, review_cadence="amendment-driven")`, and
+        `lifted_from=LiftedFrom(source_doc=
+        "docs/VALUE_PROPOSITION.md", source_ac="prime")`.
+      - Spec-tier descendants — three objectives, one per spec
+        phase (v1.0, v1.1, v1.2) — each chain to the value-prop root
+        via `parent_id == "value-prop-root"`, each
+        `authored_by="user"`, each carry
+        `lifted_from.source_doc=
+        "docs/spec/pos-v2-objectives-spec.md"` and
+        `source_ac in {"v1.0", "v1.1", "v1.2"}`.
+      - On a workspace classified non-dev (the framework value-prop
+        doc is absent), the seed reads `<workspace>/value-prop.md`
+        if present and seeds against that user-supplied content;
+        `lifted_from.source_doc == "value-prop.md"` (NOT the
+        framework path). If `value-prop.md` is absent, the seed
+        SKIPS with `tracker_seed_reason="skipped_no_value_prop"` —
+        non-fatal; the user can supply the file and complete the
+        seed via a follow-up `seed_tracker` call.
+      - Idempotency: re-running first-run on an already-seeded
+        workspace is a no-op via `tracker.query_projection_view(
+        ObjectiveFilter(lifted_from_source_doc=...))` — already-
+        seeded records are detected and skipped; never clobbered.
+        User-driven status transitions on seeded descendants
+        survive re-seeds.
+      - Partial recovery: an interrupted seed (root present, some
+        descendants missing) resumes cleanly on the next
+        `seed_tracker` call; only missing descendants are created;
+        already-seeded records are left untouched.
+      - Framework-not-content: `workspace-bootstrap/src/` carries
+        zero literal value-prop prose. AC39.6's sentinel-scan test
+        verifies the canonical VALUE_PROPOSITION.md sentences do
+        not appear hard-coded in source. The seed reads the doc
+        from disk at runtime; the doc is core-framework
+        documentation (`docs/`), not bootstrap-seed payload.
+
+    Resolves the "zero content" tension (research §F.4) per owner
+    ruling D-4 (b): the canonical doc lives in core-framework
+    documentation (`docs/VALUE_PROPOSITION.md`), READ at
+    first-run time on dev workspaces; the workspace user replaces
+    the file (or supplies their own `value-prop.md` on a non-dev
+    workspace) so authority over the root's content remains with
+    the workspace user. STATE.md rule #4 ("pOS core ships zero
+    personas/content") + single-tree ruling + D-4 (b) all hold:
+    pos-v2 source code embeds zero value-prop prose; the doc is
+    read at runtime; clones of the framework template Luke's text
+    by default; user-authored workspaces supply their own content.
+
+    No source edits to `objective-tracker/`, `primary-persona/`,
+    `hands-off-lifecycle/`, or any other sealed component.
+    Amendment #38's public runtime API (`LiftedFrom`,
+    `ObjectiveFilter`, `query_projection_view`,
+    `ObjectiveTracker.create(spec, objective_id=...)`) is consumed
+    via `from objective_tracker import ...` — the same shape any
+    workspace-external consumer uses.
+
+    AC surface (AC39.1 – AC39.6 + AC39.S) — 24 tests covering
+    five outcome-shaped criteria + the framework-not-content
+    invariant + the seal-diff invariant:
+
+      - AC39.1: fresh-clone first-run on a pos-v2 dev workspace
+        seeds value-prop root + spec descendants; root has
+        `parent_id=None`, two prose criteria, `authored_by="user"`,
+        evergreen time-bound, `lifted_from.source_doc=
+        "docs/VALUE_PROPOSITION.md"`; descendants chain to
+        root via `trace_to_root`; `bind_scope` on a descendant
+        succeeds; `query_projection_view` returns the seeded subset;
+        `ScaffoldResult` reports the seed outcome.
+      - AC39.2: every seeded record carries `authored_by="user"`;
+        `trace_to_root` chain has every link user-authored;
+        no record carries `authored_by` set to a persona handle or
+        to `"workspace-bootstrap"`.
+      - AC39.3: re-running `seed_tracker` directly produces
+        `reason="already_seeded"` and leaves every record unchanged;
+        `run_first_run_scaffold` re-invocation hits the
+        `already_scaffolded` short-circuit and leaves the tracker
+        intact; user-driven status transitions on seeded records
+        survive re-seeds; exactly one `ObjectiveCreated` event per
+        seeded objective ID after multiple re-runs.
+      - AC39.4: a tracker carrying only the value-prop root resumes
+        to the full tree on the next `seed_tracker` call
+        (`reason="completed_partial"`); a tracker carrying root +
+        one descendant creates only the missing descendants and
+        leaves the existing one's event count unchanged; no
+        duplicate records after resume.
+      - AC39.5: classifier returns `"user"` when the framework
+        value-prop doc is absent; user workspace with
+        `value-prop.md` seeds from the local file with
+        `lifted_from.source_doc="value-prop.md"`, AC.PO.1 + AC.PO.2
+        prose extracted from the user's headers; user workspace
+        without `value-prop.md` skips with
+        `reason="skipped_no_value_prop"` (non-fatal); framework
+        sentinels do not leak into a user workspace's tree;
+        re-invoking `seed_tracker` after the user supplies the
+        file completes the seed.
+      - AC39.6: source under `workspace-bootstrap/src/` contains
+        none of the unique prose markers from
+        `docs/VALUE_PROPOSITION.md`'s primary statement;
+        spec-doc sentinels also absent; `tracker_seed.py`
+        structurally references the doc paths and uses
+        `.read_text()` (file IO at runtime) rather than embedding
+        prose constants; the seed composes `LiftedFrom` +
+        `ObjectiveFilter` from amendment #38's API.
+      - AC39.S: seal-diff discipline — only `workspace-bootstrap/`
+        + `docs/plans/` + universal paths changed
+        (verified by `workspace-bootstrap/tests/
+        test_no_sealed_amendments.py` at BASELINE fa15127 +
+        per-component `test_no_sealed_amendments.py` sweep across
+        every other sealed component).
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - D-build.1 (pos-v2-dev classifier): candidate (a) — detect
+        by presence of `docs/VALUE_PROPOSITION.md` at the
+        workspace root. Pure-function `classify_workspace`
+        returning `"pos-v2-dev" | "user"`. Master-research
+        recommendation. Minimal blast radius; no new metadata
+        surface; existing artefact is sufficient.
+
+      - D-build.2 (spec-tier descendant shape): candidate (a) — one
+        objective per spec phase (v1.0, v1.1, v1.2). Three
+        descendants. Master-research recommendation. Compact tree
+        (~4 records); matches research §B.2 Phase α subset.
+
+      - D-build.3 (non-dev workspace UX): candidate (b) — templated
+        path `<workspace>/value-prop.md` the workspace user
+        pre-creates. If absent at first-run-time, the seed skips
+        with `tracker_seed_reason="skipped_no_value_prop"` and is
+        non-fatal; idempotent on re-run once the user supplies the
+        file. Master-research recommendation. Non-interactive,
+        durable, parallels amendment #36's persona template-from-
+        disk shape.
+
+      - D-build.4 (seed transaction boundary): candidate (b) — root
+        first, then descendants individually. Matches the partial-
+        recovery contract — interrupted seed resumes via
+        `query_projection_view` filter on `lifted_from.source_doc`
+        to detect already-seeded records. Master-research
+        recommendation.
+
+    Fail-closed behaviours:
+
+      - Idempotency-by-query: re-runs query the tracker for
+        already-seeded records and skip; no `tracker.create` call
+        clobbers an existing record.
+      - Stable objective IDs (`value-prop-root`, `spec-v1.0`,
+        `spec-v1.1`, `spec-v1.2`): the re-run check is observably
+        deterministic.
+      - On a pos-v2 dev workspace whose framework value-prop doc
+        is missing despite the classifier matching, the seed
+        raises `FileNotFoundError` rather than silently skipping —
+        the classifier and the loader contradict each other, so
+        the failure surfaces loudly.
+      - On a non-dev workspace without `value-prop.md`, the seed
+        skips with a structured `TrackerSeedResult` carrying
+        `seeded=False`, `reason="skipped_no_value_prop"`,
+        `value_prop_source=None`. The scaffold completes; no
+        partial tracker state is left behind.
+
+    Out of scope (sub-plan §7):
+
+      - Schema widening or query API on `ObjectiveTracker` —
+        amendment #38 (sealed at 92bead1).
+      - Primary-persona tracker-context contributor — amendment #40.
+      - pos-amend `objectives` manifest block + `project` /
+        `audit-coverage` subcommands — pos-amend-tracker-integration
+        (dev-discipline).
+      - α/β/γ data migration of legacy plan docs into tracker
+        records — heavy-b-phase-alpha-beta-gamma-migration plan
+        (dev-discipline).
+      - Plan-doc rendering — dev-discipline.
+      - Drift detection — dev-discipline.
+      - CDC-as-objective seeding under the harness-toolkit branch —
+        deferred.
+      - First-run UX for prompting the workspace user when
+        `value-prop.md` is absent — non-interactive shape (b)
+        adopted; future UX layer can compose without touching this
+        adapter.
+
+    BASELINE fa15127 (pre-amendment tip — HEAD~1 of the amendment
+    commit). workspace-bootstrap's SEAL_COMMIT sidecar advances to
+    the amendment commit on the empty-diff window; advanced to the
+    seal SHA via `pos-amend seal` on the seal commit.
+
+    With this amendment, the Heavy-B chain advances. Sibling
+    sub-plan #40 (primary-persona tracker-context contributor),
+    pos-amend-tracker-integration (dev-discipline), and
+    heavy-b-phase-alpha-beta-gamma-migration (dev-discipline) are
+    cleared to dispatch — each inherits a satisfied workspace-
+    bootstrap-seeded-tracker precondition.

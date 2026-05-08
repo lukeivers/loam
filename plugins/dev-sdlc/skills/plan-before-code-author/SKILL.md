@@ -1,11 +1,11 @@
 ---
-description: Author an ODD-shaped plan-doc at `docs/rebuild/plans/<slug>.md` BEFORE any source code is written for a sealed-component amendment cycle. The plan-doc carries Outcome shape + Lens checks + Single-component fence + AC family (every AC explicit) + Halt-and-surface BEFORE build + Smoke (six dimensions) + Out of scope + Halt triggers (in-flight) + Bookkeeping + F2 RF + Provenance + Acceptance gate + `## 14. Method-decision record` (per AC.D-sa.7 lint). Trim discipline applied 2026-05-05: master plan §3 carries the cycle decomposition (light per-cycle entry + AC family seed); sub-plan §4 carries the full AC enumeration; sub-plan §5 build dispatch brief drops to a one-paragraph stub (briefs are authored inline at dispatch time per dispatch-brief-authoring SKILL). Use when the persona is about to start any sealed-component amendment cycle. Composes on `feedback_plan_before_code` (the hard rule); this skill ships the structural skeleton.
+description: Author an ODD-shaped plan-doc at `docs/plans/<slug>.md` BEFORE any source code is written for a sealed-component amendment cycle. The plan-doc carries Outcome shape + Lens checks + Single-component fence + AC family (every AC explicit) + Halt-and-surface BEFORE build + Smoke (six dimensions) + Out of scope + Halt triggers (in-flight) + Bookkeeping + F2 RF + Provenance + Acceptance gate + `## 14. Method-decision record` (per AC.D-sa.7 lint). Trim discipline applied 2026-05-05: master plan §3 carries the cycle decomposition (light per-cycle entry + AC family seed); sub-plan §4 carries the full AC enumeration; sub-plan §5 build dispatch brief drops to a one-paragraph stub (briefs are authored inline at dispatch time per dispatch-brief-authoring SKILL). Use when the persona is about to start any sealed-component amendment cycle. Composes on `feedback_plan_before_code` (the hard rule); this skill ships the structural skeleton.
 ---
 
 # plan-before-code-author
 
 `feedback_plan_before_code` says every sealed-component build
-writes a plan-doc to `docs/rebuild/plans/<slug>.md` BEFORE code.
+writes a plan-doc to `docs/plans/<slug>.md` BEFORE code.
 This skill ships the structural skeleton — the ODD-shaped section
 ladder every Cycle 1–4b plan-doc walked. The skill replaces "did
 I miss a section?" with a checklist; the persona authors body
@@ -96,8 +96,8 @@ Skip when:
 
 1. **Pick the slug.** `kebab-case`; matches the manifest's
    `amendment.slug`. Plan-doc lives at
-   `docs/rebuild/plans/<slug>.md`; manifest at
-   `docs/rebuild/plans/<slug>.manifest.yaml`.
+   `docs/plans/<slug>.md`; manifest at
+   `docs/plans/<slug>.manifest.yaml`.
 2. **Author §1 first.** Outcome shape pins. Use "Pin:" prefix
    for each bullet. Anchor each pin to a verification surface
    (test path / spec ref / smoke dimension).

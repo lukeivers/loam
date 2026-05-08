@@ -8,7 +8,7 @@
 
 """AC.PSAFE.1 — `safety_profile` field accepted at workspace-bootstrap.
 
-Per ``docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md``
+Per ``docs/plans/v0-1-6-production-safety-and-base-skills.md``
 §5 AC.PSAFE.1: legal values are ``production-stake | dev | research``.
 Any other value fails-closed via ``MissingConfigError`` (matches the
 loader's existing fail-closed shape).

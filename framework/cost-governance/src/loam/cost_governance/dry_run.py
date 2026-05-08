@@ -15,7 +15,7 @@
 """v0.1.6 — dry-run primitive + foreign-codebase budget envelope.
 
 Per AC.PSAFE.4 and AC.PSAFE.5 (sub-plan
-``docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md``).
+``docs/plans/v0-1-6-production-safety-and-base-skills.md``).
 
 **Dry-run primitive (AC.PSAFE.4)**: a thin extrapolator that consumes
 the cost-governance store's recent rolling-window actuals and projects

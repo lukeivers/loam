@@ -1,0 +1,178 @@
+schema_version: 1
+amendment:
+  number: 94
+  slug: post-m6-partition-realignment
+  title: "post-M6 partition realignment — gate-test reclassification + corpus-gate path-list + dev-mode-manifest roots/always_loaded refresh"
+
+# BASELINE: 699a391 — current HEAD (post-M1c-corrective §14 SHA backfill).
+# Multi-component amendment (3 sealed components) — pos-publish-framework-only +
+# hands-off-lifecycle + dev-sdlc plugin. LAST PRE-PUBLISH BLOCKER per
+# dispatcher recommendation analysis 2026-04-29; M11 dry-run unblocked
+# once this seals.
+baseline: 699a391
+
+plan: docs/plans/post-m6-partition-realignment.md
+
+components:
+  - name: hands-off-lifecycle
+    # H19 frozen-baseline pinned at project-start per amendment #23.
+    # Mirrors corpus-inlining-session-start-hook.manifest.yaml (#73).
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes: []
+
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# pos-publish-framework-only is admitted via universal_paths.prefixes
+# (no per-component seal-test sidecar — same admission shape M9 used).
+# The structural surface is the partition manifest YAML edit + 1 new
+# test file under framework/tools/pos-publish-framework-only/tests/.
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/tools/pos-publish-framework-only/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/tests/SEAL_COMMIT.notes
+  body: |
+    # post-M6 partition realignment — gate-test reclassification + corpus-gate path-list + dev-mode-manifest roots/always_loaded refresh
+
+    2026-04-29. Closes the LAST PRE-PUBLISH BLOCKER per dispatcher
+    recommendation analysis 2026-04-29 — three coherent surfaces, each
+    a "post-M6b.0 path move not fully propagated" instance.
+
+    Surface A — gate-test partition reclassification (M9 plan §7
+    finding #1). 12 gate-test files at framework/hands-off-lifecycle/
+    tests/test_AC_AG_*.py (5 files: 1_wrong_wd_dispatch +
+    2_method_enumerated_prompt + 3_stale_dispatch + 4_no_op_normal_use
+    + 5_audit_log) + test_AC_BAG_*.py (7 files: 1_secret_commit +
+    2_blast_radius + 3_amend_in_subagent + 4_loam_amend_dry_run +
+    5_wrong_tree_write + 6_no_op_non_matching + 7_audit_log) sys.path-
+    probe into plugins/dev-sdlc/hooks/ (dev_only). Pre-fix they
+    classified dev_and_public via the broad framework/hands-off-
+    lifecycle/** glob; post-fix they classify dev_only via an explicit
+    glob entry that wins per partition-precedence rule #2 (dev_only
+    checked before dev_and_public). Synthesised public artefact no
+    longer carries gate-test files that depend on dropped plugin
+    modules.
+
+    Surface B — corpus_gate hook on-demand path-list update. framework/
+    hands-off-lifecycle/hooks/corpus_inline_session_start.py _ON_DEMAND
+    constant lines 135-139: first two entries rebased from docs/odd-
+    methodology.md + docs/odd-in-loam.md (pre-M6b.0 paths) to plugins/
+    dev-sdlc/docs/odd-methodology.md + plugins/dev-sdlc/docs/odd-in-
+    loam.md (post-M6b.0 plugin-tree paths). The hook's mode-partition
+    early-return (line 333-334 — mode != "dev-mode" no-ops) is the
+    graceful-skip mechanism for NORMAL-USE workspaces where the plugin
+    is dropped; no additional graceful-skip wiring needed.
+
+    Surface C — dev-mode-manifest.yaml roots: + always_loaded:
+    realignment (M1c-corrective plan §16 HSF#1). plugins/dev-sdlc/dev-
+    mode-manifest.yaml roots: block (lines 36-64) + always_loaded:
+    block (lines 78-110) referenced 15 top-level component dirs that
+    MOVED under framework/ post-M6b.0. Realignment shape:
+      - 14 component refs rebased to framework/<comp>/ — cost-
+        governance, hands-off-lifecycle, memory-system, objective-
+        tracker, observability-aggregator, orchestrator, primary-
+        persona, reversibility-primitive, safety-layer, scope-of-work,
+        self-correction, self-upgrade, telegram-interface, workspace-
+        bootstrap.
+      - 1 component RENAME + REBASE — graceful-degradation/ → framework/
+        dormancy/ (the component was renamed to dormancy/ pre-M6b.0;
+        the manifest carried the old name forward). HSF#1 surfaced.
+      - 1 component ADD — framework/workspace-sync/ — a missing
+        component admission (workspace-sync was never in the manifest;
+        original sub-plan F authoring's 15-component list predated
+        the workspace-sync component and no subsequent amendment added
+        it). HSF#2 surfaced.
+      - tools/ → framework/tools/.
+      - first-run-inventory.yaml → framework/first-run-inventory.yaml.
+      - data/ STAYS top-level (workspace runtime telemetry, not a
+        component source surface).
+      - docs/ + CLAUDE.md + CLAUDE.dev.md + README.md STAY top-level.
+      - dev_only: block NO EDITS (already realigned at M6c HSF#1 fix
+        + M1c-corrective HSF#1 fix per HSF#5 finding).
+
+    AC surface (AC.PMR.1..PMR.7 + AC.PMR.S):
+
+      - AC.PMR.1: 12 gate-test files classify dev_only via classify_path.
+        Negative-control: non-gate test files in same dir continue
+        dev_and_public.
+      - AC.PMR.2: corpus_inline_session_start.py _ON_DEMAND first 2
+        entries are plugins/dev-sdlc/docs/odd-{methodology,in-loam}.md;
+        end-to-end SessionStart envelope drives main() and rendered
+        on-demand block lists both plugin-relative paths.
+      - AC.PMR.3: dev-mode-manifest roots: every entry resolves on disk;
+        graceful-degradation/ → dormancy/ rename verified; framework/
+        workspace-sync/ ADD verified.
+      - AC.PMR.4: dev-mode-manifest always_loaded: every glob/path
+        resolves to a non-empty match-set; data/ stays top-level;
+        first-run-inventory.yaml rebased.
+      - AC.PMR.5: compute_corpus_paths_required(workspace_root, "dev-
+        mode") returns ≥10 paths, all of which exist on disk via the
+        existing two-tier fall-through.
+      - AC.PMR.6: corpus_gate sentinel state ∈ {"loaded", "partial"}
+        post-realignment (NOT "missing"). The "loaded vs partial"
+        branch depends on subset relationship between inline hook's
+        static 3-path always-load and manifest-derived required set;
+        AC asserts only that the degenerate "missing" state is gone.
+      - AC.PMR.7: pre-existing tests pass — gate hook tests + corpus
+        load tests + partition tests + 60 loam-mode tests.
+      - AC.PMR.S: seal-diff invariant — 3 sealed components fence;
+        edits land only under framework/hands-off-lifecycle/, plugins/
+        dev-sdlc/, framework/tools/pos-publish-framework-only/, or
+        universal admissions.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - D-build.PMR.1: Surface A entry shape — glob-with-pattern vs
+        explicit 12-path list. Glob-with-pattern matches partition
+        manifest's existing entry-shape precedent.
+      - D-build.PMR.2: Surface C roots: style — per-component-glob
+        (preserves granularity, matches publish-mode manifest pattern)
+        vs bulk framework/** (loses surgical control).
+      - D-build.PMR.3: workspace-sync/ ADD in-amendment vs deferred.
+        In-amendment per scope-cohesion (single-source-of-truth pass).
+      - D-build.PMR.4: AC.PMR.3+.4 test-file placement — plugins/dev-
+        sdlc/tests/ (matches AC.PMR.S fence) vs plugins/dev-sdlc/tools/
+        loam-mode/tests/ (co-locates with consumer).
+      - D-build.PMR.5: Manifest-authoring commit ladder — separate
+        docs(plans): for manifest yaml + feature commit for source/
+        test (mirrors M9 + M1c-corrective precedent) vs single feature
+        commit.
+
+    Out of scope (per plan §6):
+
+      - 3 silent-swallow patterns in memory-system + 6 in orchestrator/
+        supervisor.py (graceful-fallthrough-with-detection CDC
+        retroactive audit; post-v0.1.0).
+      - pos_orchestrator editable-install provisioning gap (HSF#3 from
+        M1c-corrective; pre-existing; not pre-publish blocker).
+      - Reorganising dev_only: block beyond workspace-sync ADD.
+      - Adding NORMAL-USE-mode graceful-skip for missing plugin docs
+        in corpus_inline_session_start.py (verified existing mode-
+        partition is the skip).
+      - Substitution-table extension (realigned paths are workspace-
+        relative, not canonical-host).
+      - Promoting data/ from always_loaded to its own root partition.
+      - Anything not on Surface A / B / C.
+
+    BASELINE 699a391 (current HEAD post-M1c-corrective SHA backfill).
+    Each component's SEAL_COMMIT sidecar lands at the seal SHA via
+    `loam amend seal --scoped-sweep`. pos-publish-framework-only
+    admitted via universal_paths.prefixes (no per-component seal-test
+    sidecar — same shape M9 used; the structural surface is the
+    partition manifest YAML edit + 1 new test under tests/).

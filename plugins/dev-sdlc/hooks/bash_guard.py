@@ -216,9 +216,9 @@ def _candidate_manifest_paths(
     """Discover candidate manifest paths for the loam amend dry-run.
 
     Method per ODD §7.4: when an active-scope sentinel is present and
-    its ``plan_path`` resolves to a ``docs/rebuild/plans/<slug>.md``,
+    its ``plan_path`` resolves to a ``docs/plans/<slug>.md``,
     derive the sibling ``<slug>.manifest.yaml``. Otherwise, fall
-    through to a glob over ``docs/rebuild/plans/*.manifest.yaml`` —
+    through to a glob over ``docs/plans/*.manifest.yaml`` —
     the dry-run iterates and aggregates the result.
     """
     candidates: list[Path] = []
@@ -231,7 +231,7 @@ def _candidate_manifest_paths(
             if manifest_p.is_file():
                 candidates.append(manifest_p)
     if not candidates:
-        plans_dir = workspace_root / "docs" / "rebuild" / "plans"
+        plans_dir = workspace_root / "docs" / "plans"
         if plans_dir.is_dir():
             candidates = sorted(plans_dir.glob("*.manifest.yaml"))
     return candidates

@@ -1,0 +1,235 @@
+schema_version: 1
+amendment:
+  number: 41
+  slug: primary-persona-onboarding-dev-intent
+  title: "primary-persona onboarding dev-intent question (sub-plan A — two-modes-and-multi-workspace)"
+
+# BASELINE: ddb5032 — pre-amendment tip (HEAD immediately before
+# sub-plan A's amendment commit, advanced past the parallel doc-
+# update agent's three commits during session A:
+#   - 3f7443f: graduate seven entries from FUTURE_IDEAS_DRAFT to
+#     FUTURE_IDEAS.md
+#   - 9e392d3: reframe heavy-b-phase-migration as lazy projection
+#   - ddb5032: append doc-update-agent's three design-time observations
+# Mirrors the BASELINE-as-HEAD~1 pattern from amendments #29 / #34
+# / #35 / #36 / #37 / #38 / #39 / #40: pin to the immediate pre-
+# amendment tip, not the prior primary-persona seal (61ad8f9 —
+# amendment #40's pre-amendment tip), so the BASELINE..HEAD diff
+# is narrow to sub-plan A's surface and excludes the parallel
+# doc-update agent's `FUTURE_IDEAS_DRAFT.md` + `heavy-b-phase-*`
+# touches (which are dev-discipline doc work outside sub-plan A's
+# sealed-component scope).
+baseline: ddb5032fe2e4b66f92da806fb7181de260b42dcd
+
+plan: docs/plans/two-modes-and-multi-workspace/A-onboarding-dev-intent.md
+
+# Single-component amendment per sub-plan A §2 + §7: primary-persona
+# only. AC.A.S enforces single-component scope at test level.
+components:
+  - name: primary-persona
+    seal_test: primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: primary-persona/seals/SEAL_COMMIT.dev-intent-onboarding
+  body: |
+    # Amendment #41 — primary-persona onboarding dev-intent question
+    #                 (sub-plan A of two-modes-and-multi-workspace)
+
+    2026-04-25. First sub-plan of the two-modes-and-multi-workspace
+    programme (master plan
+    `docs/plans/two-modes-and-multi-workspace/MASTER.md`).
+    Re-extension of amendment #35's first-run conversational
+    elicitation surface (v1.1). Single-component amendment on the
+    `primary-persona` sealed surface; AC.A.S enforces.
+
+    Surface delta inside `primary-persona/`:
+
+      - `primary-persona/src/contract.py` — `PersonaContract` extended
+        with `dev_intent: Literal["unanswered", "yes", "no"]` field
+        (default `"unanswered"`). Per locked owner ruling D-MASTER.1
+        (a) the answer lives on the contract itself; the Literal
+        constraint structurally rejects any other string at validation
+        time (AC.A.2 / AC.PO.1).
+
+      - `primary-persona/src/onboarding.py` — `ONBOARDING_QUESTIONS`
+        canonical tuple grows from three to four entries; the new
+        entry has id `"dev_intent"`, `required=True`, and
+        `contract_field="dev_intent"`. The starter-pending
+        contributor's body derives the question count from
+        `len(ONBOARDING_QUESTIONS)` per D-A.3 (no hard-coded count;
+        future fifth question won't drift the prose). Two new helpers
+        — `dev_intent_storage_path(workspace_root)` resolver (AC.A.5)
+        and `read_dev_intent(workspace_root) -> Literal["yes","no",
+        "absent"]` reader (AC.A.6). The `persist_elicitation_transcript`
+        write-back path normalises a free-text yes/no answer to the
+        contract's Literal admissible values (synonyms accepted:
+        yes/y/develop/dev/pos-v2/true → `"yes"`; no/n/use/user/
+        harness/false → `"no"`); an unrecognised non-empty answer
+        raises `OnboardingTranscriptError` (structural defect, not
+        incomplete-transcript).
+
+      - `primary-persona/src/observability.py` — two new event helpers:
+        `onboarding_dev_intent_question_event` (fires once per starter
+        session at question time) and `onboarding_dev_intent_answer_event`
+        (fires once when the answer is recorded; carries the
+        normalised literal, not the user's free-text). Both emit
+        under `pos.persona.onboarding.dev_intent_*` so observability
+        consumers can count them without filtering on the generic
+        `question_id` attribute (AC.A.7).
+
+    Behaviour:
+
+      - `is_starter` lifecycle is unchanged in shape: the four-answer
+        complete transcript flips it to False; an incomplete
+        transcript leaves it True. The new entry's `required=True`
+        means a missing dev_intent answer counts as "incomplete" and
+        prevents the flip — sub-plan A consumers (E / B / F) treat
+        `dev_intent="unanswered"` as "no" via sub-plan E's `"absent"`
+        mapping; locked owner ruling D-MASTER.4.
+      - The reader funnels through the persona contract's existing
+        `load_contract` surface; a malformed contract returns
+        `"absent"` (fail-safe — the reader never raises). A workspace
+        with no `personas/` directory returns `"absent"`. The reader
+        prefers a primary-flagged contract; otherwise alphabetical
+        first.
+      - The persona-template prompt prose is the workspace's call per
+        D-MASTER.3; the framework holds the scaffolding (id +
+        required + contract_field). The framework ships a starter
+        prompt; workspaces override via the existing
+        template-override mechanic (amendment #36).
+      - Sub-plan A's `dev_intent_storage_path` is the resolver-as-API
+        seam: sub-plans E / B / F consume it, not the contract layout
+        directly, so D-MASTER.1's choice between (a) and (b) can move
+        without breaking downstream (asymmetric observation #2).
+
+    AC surface (AC.A.1 – AC.A.7 + AC.A.S) — 35 new tests covering
+    seven outcome-shaped criteria + the seal-diff invariant:
+
+      - AC.A.1: `ONBOARDING_QUESTIONS` carries exactly one entry with
+        id `"dev_intent"`, required=True, contract_field
+        `"dev_intent"`; the entry has a non-empty starter prompt;
+        amendment #35's three entries are preserved (no removal).
+      - AC.A.2: `PersonaContract.dev_intent` validates `"yes"`,
+        `"no"`, `"unanswered"` and rejects any other string (`maybe`),
+        empty string, and non-string types (Pydantic ValidationError);
+        constructing without specifying defaults to `"unanswered"`.
+      - AC.A.3: `persist_elicitation_transcript` writes the
+        normalised yes/no answer to the contract on disk;
+        round-trips through `load_contract`; an omitted answer keeps
+        the unanswered sentinel and `is_starter=True` (incomplete);
+        an unrecognised non-empty answer raises
+        `OnboardingTranscriptError`; synonyms (`develop`) normalise.
+      - AC.A.4: starter-pending contributor body surfaces the
+        canonical-tuple count (`f"{len(ONBOARDING_QUESTIONS)} questions"`);
+        count is at least four with this amendment; the
+        `STARTER_PENDING_MARKER` first-line prefix is unchanged.
+      - AC.A.5: `dev_intent_storage_path(workspace_root)` returns a
+        Path workspace-rooted under `workspace_root` (not host-rooted);
+        two distinct workspace_roots yield two distinct paths; the
+        resolver is pure (no on-disk side effects).
+      - AC.A.6: `read_dev_intent` returns `"absent"` for a workspace
+        with no contract, for a starter-flagged contract whose
+        dev_intent is `"unanswered"`, and for a malformed contract;
+        returns `"yes"` / `"no"` after `persist_elicitation_transcript`
+        writes the corresponding answer.
+      - AC.A.7: `pos.persona.onboarding.dev_intent_question` event
+        fires exactly once per persist call (carrying handle +
+        workspace_slug); `pos.persona.onboarding.dev_intent_answer`
+        event fires exactly once per answered persist call (carrying
+        the normalised literal, not the free-text); when dev_intent
+        is omitted the question event still fires but the answer
+        event does not.
+      - AC.A.S: sub-plan A is single-component (manifest declares one
+        component, `primary-persona`); the universal seal-diff
+        machinery in `test_no_sealed_amendments.py` (B23 sidecar
+        pattern) is present and routes BASELINE..SEAL_COMMIT through
+        the sidecar.
+
+    Pre-existing AC35.x test fixtures (3 fixtures across 2 files)
+    advanced to include the new fourth answer in their transcripts
+    per owner ruling 2026-04-25 (a) — `dev_intent` is required for
+    "complete transcript" by AC.A.3, so a 3-answer transcript is
+    incomplete by the new definition. The AC35.x AC outcome shapes
+    (complete-transcript-flips-is_starter; full-event-set-fires) are
+    unchanged. Affected fixtures:
+    `test_AC35_4_complete_transcript_persists_answers_and_flips_is_starter`,
+    `test_AC35_4_complete_transcript_round_trips_through_to_yaml`,
+    `test_AC35_7_complete_transcript_emits_full_event_set`. The
+    AC35.7 answer-event count assertion shifted from `== 3` to
+    `== len(ONBOARDING_QUESTIONS)` so it absorbs future tuple growth
+    without re-amendment.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - D-build.1 (Literal vs Enum): `Literal["unanswered","yes","no"]`.
+        Pydantic Literal is the lighter-weight reach-for than StrEnum
+        for a closed set of three string values; ODD §5.3 reach-for
+        (Pydantic + field_validator) is the default. Already in the
+        WIP diff carried through halt-and-resume.
+      - D-build.2 (synonym normalisation set): `{yes, y, develop,
+        dev, pos-v2, true}` → `"yes"`; `{no, n, use, user, harness,
+        false}` → `"no"`. Case-insensitive, whitespace-trimmed. The
+        contract's Literal typing structurally constrains the
+        admissible set; the normaliser is the sanitiser between
+        free-text and validation.
+      - D-build.3 (event-name shape): `pos.persona.onboarding.dev_intent_question`
+        + `pos.persona.onboarding.dev_intent_answer`. Mirrors the
+        existing `pos.persona.onboarding.<event>` namespace. Distinct
+        event types (not generic question/answer with a question_id
+        attribute) so consumers can count dev-intent prompts without
+        attribute filtering.
+      - D-build.4 (storage-path resolver shape): the resolver returns
+        `<workspace_root>/personas` (the directory the reader walks
+        to find the primary persona's contract.yaml). Locked owner
+        ruling D-MASTER.1 (a): the answer is on the persona contract
+        itself; the path-resolver hides the walk so consumers compose
+        on a stable seam.
+      - D-build.5 (incomplete-transcript-keeps-unanswered): when the
+        transcript omits dev_intent, the contract field stays at
+        `"unanswered"` (its prior value) — best-effort partial
+        application from amendment #35 carries forward. The contract
+        is re-written with the same unanswered value; the reader
+        returns `"absent"` (per AC.A.6's mapping). is_starter stays
+        True.
+
+    BASELINE 3f7443f (pre-amendment tip — current HEAD at session
+    start; the parallel doc-update agent's
+    `docs(rebuild): graduate seven entries from FUTURE_IDEAS_DRAFT to
+    FUTURE_IDEAS.md` commit). primary-persona's SEAL_COMMIT sidecar
+    advances to the amendment commit on the empty-diff window;
+    advanced to the seal SHA via `pos-amend seal` on the seal commit.
+
+    Continuation status: this amendment was originally halted at ~70%
+    completion when extending `_is_complete_transcript` to require
+    `dev_intent` invalidated 3 existing AC35.x test fixtures. The
+    halt trigger language ("any AC35.x test amendment") was over-
+    specified — it conflated AC35.x AC TEXT amendments (which would
+    warrant halt) with AC35.x FIXTURE data updates (which are
+    mechanical and preserve all AC outcome shapes). Owner ruling
+    2026-04-25 mid-session approved (a): mechanical fixture data
+    update for the extended question-tuple is AC-preserving; AC35.x
+    ACs themselves are unchanged. Sub-plan A's §6 halt-trigger 1 is
+    overridden for this specific situation. The halt artefacts are
+    preserved at `.scratch/halt-surface-A/`.
+
+    With this amendment, dev-intent capture lands as the user-visible
+    handhold for the two-modes-and-multi-workspace programme: the
+    user's natural-language statement of "I'm here to develop pos-v2"
+    or "I'm here to use pos-v2" is captured once at first-run and
+    structurally honoured thereafter. Sibling sub-plans B (mode-
+    loading), E (classify_workspace replacement), and F (auto-load
+    partition) inherit a satisfied dev-intent precondition; their
+    dispatches are cleared.

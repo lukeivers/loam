@@ -45,8 +45,8 @@ duplicate-rather-than-cross-component-boundary precedent).
 Static set of three workspace-relative paths:
 
   - ``CLAUDE.md``
-  - ``docs/rebuild/VALUE_PROPOSITION.md``
-  - ``docs/rebuild/STATE.md``
+  - ``docs/VALUE_PROPOSITION.md``
+  - ``docs/STATE.md``
 
 Lean tier per the locked owner ruling. ~6.8k tokens / 27k chars per
 session-start emission. The static set avoids the manifest-
@@ -81,10 +81,10 @@ Format:
     --- CLAUDE.md ---
     <content>
 
-    --- docs/rebuild/VALUE_PROPOSITION.md ---
+    --- docs/VALUE_PROPOSITION.md ---
     <content>
 
-    --- docs/rebuild/STATE.md ---
+    --- docs/STATE.md ---
     <content>
 
     === pos-v2 on-demand corpus (read via Read tool when relevant) ===
@@ -139,8 +139,8 @@ from corpus_load_sentinel import (  # noqa: E402
 
 _ALWAYS_LOAD: tuple[str, ...] = (
     "CLAUDE.md",
-    "docs/rebuild/VALUE_PROPOSITION.md",
-    "docs/rebuild/STATE.md",
+    "docs/VALUE_PROPOSITION.md",
+    "docs/STATE.md",
     # v0.2.2 (AC.OGP.2) — lean ODD grounding prime auto-loads on every
     # DEV-MODE session-start so the failure mode the v0.1.8 extractor
     # shipped (implementation-altitude facts labeled as ACs) is

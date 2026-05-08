@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.13 — Self-contained SKILL body (component-level smoke).
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.13: the SKILL.md body is well-formed enough that the
 persona reading it can apply the workflow without referring back
 to the plan-doc — i.e., the SKILL is self-contained instruction.

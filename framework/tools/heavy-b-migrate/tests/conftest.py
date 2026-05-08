@@ -3,8 +3,8 @@
 Provides a tmpfs-style workspace fixture that mirrors the real
 workspace layout enough to exercise the extractors deterministically:
 
-- ``docs/rebuild/components/<slug>/proposal.md`` for component fixtures.
-- ``docs/rebuild/plans/amendment-<NN>-<slug>.md`` for amendment fixtures.
+- ``docs/archive/component-research/<slug>/proposal.md`` for component fixtures.
+- ``docs/plans/amendment-<NN>-<slug>.md`` for amendment fixtures.
 
 Each test pre-seeds the tracker with the value-prop root + spec-v1.0
 (mirroring #39's seed) so phase α has a parent to chain to and phase
@@ -31,13 +31,13 @@ from loam.objective_tracker import (
 def workspace(tmp_path: Path) -> Path:
     """Return a fresh workspace root with the seed-stub tree.
 
-    Includes empty ``docs/rebuild/components/`` and
-    ``docs/rebuild/plans/`` dirs so discovery functions return empty
+    Includes empty ``docs/archive/component-research/`` and
+    ``docs/plans/`` dirs so discovery functions return empty
     lists rather than raising. Tests populate these as needed.
     """
-    (tmp_path / "docs" / "rebuild" / "components").mkdir(parents=True)
-    (tmp_path / "docs" / "rebuild" / "plans").mkdir(parents=True)
-    (tmp_path / "docs" / "rebuild" / "spec").mkdir(parents=True)
+    (tmp_path / "docs" / "archive" / "component-research").mkdir(parents=True)
+    (tmp_path / "docs" / "plans").mkdir(parents=True)
+    (tmp_path / "docs" / "spec").mkdir(parents=True)
     return tmp_path
 
 
@@ -78,7 +78,7 @@ async def _seed_minimal(db_path: Path) -> None:
                 time_bound=TimeBound(evergreen=True),
                 authored_by="user",
                 lifted_from=LiftedFrom(
-                    source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+                    source_doc="docs/VALUE_PROPOSITION.md",
                     source_ac="prime",
                 ),
             ),
@@ -98,7 +98,7 @@ async def _seed_minimal(db_path: Path) -> None:
                     time_bound=TimeBound(evergreen=True),
                     authored_by="user",
                     lifted_from=LiftedFrom(
-                        source_doc="docs/rebuild/spec/loam-objectives-spec.md",
+                        source_doc="docs/spec/loam-objectives-spec.md",
                         source_ac=ac_label,
                     ),
                 ),
@@ -114,7 +114,7 @@ def write_component_proposal():
 
     def _write(workspace: Path, slug: str, proposal_text: str) -> None:
         component_dir = (
-            workspace / "docs" / "rebuild" / "components" / slug
+            workspace / "docs" / "archive" / "component-research" / slug
         )
         component_dir.mkdir(parents=True, exist_ok=True)
         (component_dir / "proposal.md").write_text(
@@ -131,7 +131,7 @@ def write_amendment_plan():
     def _write(
         workspace: Path, number: int, slug: str, plan_text: str
     ) -> None:
-        plans_dir = workspace / "docs" / "rebuild" / "plans"
+        plans_dir = workspace / "docs" / "plans"
         plans_dir.mkdir(parents=True, exist_ok=True)
         (plans_dir / f"amendment-{number}-{slug}.md").write_text(
             plan_text, encoding="utf-8"

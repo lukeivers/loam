@@ -18,9 +18,9 @@ Per the locked plan-doc §4 AC.CI.S: the seal-diff window for this
 amendment contains only edits under
 ``framework/hands-off-lifecycle/{hooks,tests,seals}/`` plus the
 universal-paths admissions
-(``docs/rebuild/plans/``, ``CLAUDE.md``, ``docs/odd-methodology.md``,
-``docs/odd-in-loam.md``, ``docs/rebuild/FUTURE_IDEAS.md``,
-``docs/rebuild/FUTURE_IDEAS_DRAFT.md``).
+(``docs/plans/``, ``CLAUDE.md``, ``docs/odd-methodology.md``,
+``docs/odd-in-loam.md``, ``docs/FUTURE_IDEAS.md``,
+``docs/FUTURE_IDEAS_DRAFT.md``).
 
 Pinned per ODD §10.3 per-invariant BASELINE convention: this test
 asserts the window of THIS amendment specifically, not the floating
@@ -45,7 +45,6 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 MANIFEST_PATH = (
     REPO_ROOT
     / "docs"
-    / "rebuild"
     / "plans"
     / "corpus-inlining-session-start-hook.manifest.yaml"
 )
@@ -62,15 +61,16 @@ _ALLOWED_PREFIXES: tuple[str, ...] = (
     "framework/hands-off-lifecycle/hooks/",
     "framework/hands-off-lifecycle/tests/",
     "framework/hands-off-lifecycle/seals/",
-    "docs/rebuild/plans/",
+    "docs/plans/",
+    "docs/rebuild/plans/",  # historical pre-v0.3.0-C1 path retained for diff-window check
 )
 _ALLOWED_FILES: frozenset[str] = frozenset(
     {
         "CLAUDE.md",
         "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
-        "docs/rebuild/FUTURE_IDEAS.md",
-        "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+        "docs/FUTURE_IDEAS.md",
+        "docs/FUTURE_IDEAS_DRAFT.md",
     }
 )
 

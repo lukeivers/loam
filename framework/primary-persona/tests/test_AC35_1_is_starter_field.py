@@ -22,7 +22,7 @@ omitting the field validates with ``is_starter: False``. A YAML
 containing a non-Boolean value rejects with a clear validation error.
 No existing v1.0 / v1.1 / v1.2 contract field is renamed or removed.
 
-Plan: docs/rebuild/plans/amendment-35-primary-persona-renderer-and-onboarding.md
+Plan: docs/plans/amendment-35-primary-persona-renderer-and-onboarding.md
 """
 
 from __future__ import annotations

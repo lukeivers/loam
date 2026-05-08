@@ -3,7 +3,7 @@
 Detects and reversibly remediates pre-amendment-#6 archaeological
 orphan launchd plists in `~/Library/LaunchAgents/` on a macOS host.
 
-Plan: `docs/rebuild/plans/orphan-plist-cleanup-tool.md`.
+Plan: `docs/plans/orphan-plist-cleanup-tool.md`.
 
 ## Background
 

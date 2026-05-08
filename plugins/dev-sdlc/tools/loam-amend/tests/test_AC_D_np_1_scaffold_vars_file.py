@@ -1,10 +1,10 @@
 """Tests for AC.D-np.1 — `loam amend new-plan <slug>` scaffolds a vars-file
 at the predictable path.
 
-Per `docs/rebuild/plans/pos-amend-new-plan-orchestration.md`:
+Per `docs/plans/pos-amend-new-plan-orchestration.md`:
 
     Invoking ``loam amend new-plan <slug>`` (with no other flags) writes a
-    YAML vars-file at ``<repo-root>/docs/rebuild/plans/<slug>.vars.yaml``.
+    YAML vars-file at ``<repo-root>/docs/plans/<slug>.vars.yaml``.
     The file is a YAML mapping carrying one entry per required variable
     in the plan-doc skeleton's frontmatter contract (the 16 required vars
     per the research-doc inventory).
@@ -57,7 +57,7 @@ def test_AC_D_np_1_scaffolds_vars_file_at_predictable_path(
 ) -> None:
     rc = new_plan_cmd.run("example-slug", repo_root=tmp_path)
     assert rc == 0
-    expected = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.vars.yaml"
+    expected = tmp_path / "docs" / "plans" / "example-slug.vars.yaml"
     assert expected.is_file()
 
 
@@ -66,7 +66,7 @@ def test_AC_D_np_1_scaffolded_file_is_wellformed_yaml_mapping(
 ) -> None:
     rc = new_plan_cmd.run("example-slug", repo_root=tmp_path)
     assert rc == 0
-    target = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.vars.yaml"
+    target = tmp_path / "docs" / "plans" / "example-slug.vars.yaml"
     loaded = yaml.safe_load(target.read_text(encoding="utf-8"))
     assert isinstance(loaded, dict)
 
@@ -74,7 +74,7 @@ def test_AC_D_np_1_scaffolded_file_is_wellformed_yaml_mapping(
 def test_AC_D_np_1_every_required_var_present_as_key(tmp_path: Path) -> None:
     rc = new_plan_cmd.run("example-slug", repo_root=tmp_path)
     assert rc == 0
-    target = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.vars.yaml"
+    target = tmp_path / "docs" / "plans" / "example-slug.vars.yaml"
     loaded = yaml.safe_load(target.read_text(encoding="utf-8"))
     for name in REQUIRED_VARS:
         assert name in loaded, f"required var '{name}' missing from scaffold"
@@ -90,7 +90,7 @@ def test_AC_D_np_1_scaffolded_vars_render_skeleton_clean(
     rc = new_plan_cmd.run("example-slug", repo_root=tmp_path)
     assert rc == 0
     capsys.readouterr()  # discard stdout from new-plan
-    vars_file = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.vars.yaml"
+    vars_file = tmp_path / "docs" / "plans" / "example-slug.vars.yaml"
     rc = main(
         [
             "template",
@@ -144,5 +144,5 @@ def test_AC_D_np_1_scaffold_does_not_render_plan_doc_by_default(
     """
     rc = new_plan_cmd.run("example-slug", repo_root=tmp_path)
     assert rc == 0
-    plan_path = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.md"
+    plan_path = tmp_path / "docs" / "plans" / "example-slug.md"
     assert not plan_path.exists()

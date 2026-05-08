@@ -16,7 +16,7 @@
 
 Sub-plan E (two-modes-and-multi-workspace, amendment #42). The
 classification source-of-truth moves from
-``docs/rebuild/VALUE_PROPOSITION.md`` presence (amendment #39's
+``docs/VALUE_PROPOSITION.md`` presence (amendment #39's
 heuristic) to the workspace-local dev-intent answer. The function's
 behaviour MUST NOT depend on whether ``VALUE_PROPOSITION.md`` exists
 at the workspace root.
@@ -27,7 +27,7 @@ classifies as ``"user"``. (Under the old heuristic this would have
 returned ``"pos-v2-dev"``.) The presence of the canonical file is
 content, not a marker.
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
+Plan: docs/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
 """
 
 from __future__ import annotations
@@ -78,7 +78,7 @@ def _seed_contract(workspace: Path, dev_intent: str) -> None:
 
 
 def _drop_framework_value_prop(workspace: Path) -> None:
-    """Place a dummy ``docs/rebuild/VALUE_PROPOSITION.md`` at the
+    """Place a dummy ``docs/VALUE_PROPOSITION.md`` at the
     framework path. Content is irrelevant — the marker check is what
     we're isolating."""
     target = workspace / FRAMEWORK_VALUE_PROP_RELPATH

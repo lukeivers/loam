@@ -1,7 +1,7 @@
 """AC.D.1.5.5 — manifest ``cleanup_directives:`` block triggers
 retroactive BASELINE/SEAL_COMMIT revert.
 
-Plan: ``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.5.
+Plan: ``docs/plans/d-migration-1-5.md`` AC.D.1.5.5.
 """
 
 from __future__ import annotations
@@ -76,7 +76,7 @@ def test_cleanup_directive_writes_pre_baseline_and_sidecar_back(
                     "title": "cleanup test",
                 },
                 "baseline": head_sha,
-                "plan": "docs/rebuild/plans/cleanup-test.md",
+                "plan": "docs/plans/cleanup-test.md",
                 "components": [
                     {
                         "name": "alpha",
@@ -132,7 +132,7 @@ def test_cleanup_directive_idempotent(scratch_repo: Path) -> None:
                     "title": "idempotent cleanup",
                 },
                 "baseline": head_sha,
-                "plan": "docs/rebuild/plans/cleanup-idempotent.md",
+                "plan": "docs/plans/cleanup-idempotent.md",
                 "components": [
                     {
                         "name": "beta",
@@ -184,7 +184,7 @@ def test_manifest_parses_cleanup_directives(tmp_path: Path) -> None:
                     "title": "test cleanup parse",
                 },
                 "baseline": "1111111",
-                "plan": "docs/rebuild/plans/test.md",
+                "plan": "docs/plans/test.md",
                 "components": [
                     {
                         "name": "alpha",
@@ -226,7 +226,7 @@ def test_manifest_rejects_invalid_cleanup_directive_sha(tmp_path: Path) -> None:
                     "title": "test",
                 },
                 "baseline": "1111111",
-                "plan": "docs/rebuild/plans/test.md",
+                "plan": "docs/plans/test.md",
                 "components": [
                     {
                         "name": "alpha",
@@ -268,7 +268,7 @@ def test_manifest_without_cleanup_directives_defaults_empty(
                     "title": "t",
                 },
                 "baseline": "1111111",
-                "plan": "docs/rebuild/plans/t.md",
+                "plan": "docs/plans/t.md",
                 "components": [
                     {
                         "name": "alpha",

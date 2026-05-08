@@ -211,13 +211,12 @@ def compute_corpus_paths_required(
         / "dev-mode-manifest.yaml"
     )
     legacy_manifest = (
-        workspace_root / "docs" / "rebuild" / "dev-mode-manifest.yaml"
+        workspace_root / "docs" / "dev-mode-manifest.yaml"
     )
     framework_manifest = (
         workspace_root
         / "framework"
         / "docs"
-        / "rebuild"
         / "dev-mode-manifest.yaml"
     )
     if plugin_manifest.exists():

@@ -61,7 +61,7 @@ have the right thing happen.
 
 ## Why scaffold at all
 
-The motivating observation, articulated in `docs/rebuild/VALUE_PROPOSITION.md`,
+The motivating observation, articulated in `docs/VALUE_PROPOSITION.md`,
 is that AI's capabilities are accessible to a user in proportion to
 how much the user already knows about how to use AI — not in
 proportion to the model's raw power. The gap between what the AI can

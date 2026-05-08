@@ -25,7 +25,7 @@ back to ``"user"`` per locked owner ruling 4 — defensive default,
 This is the documented behaviour at first-run scaffold time before
 onboarding completes.
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
+Plan: docs/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
 """
 
 from __future__ import annotations

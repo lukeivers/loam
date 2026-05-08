@@ -1,0 +1,90 @@
+schema_version: 1
+amendment:
+  number: 113
+  slug: v0-1-0-foldback-scope-expansion-fbe8
+  title: "FBE.8 — close FBE.6 reviewer BLOCKERs + HIGH cosmetics + FBE.6 seal-debt"
+
+# BASELINE: f14a5a4 — the pre-apply tip after the four bucket commits
+# (Bucket 2 loam-cli scrub + Bucket 3 primary-persona scrubs + Bucket 4
+# H19 admit + HC#4 retire-and-rebaseline + FBE.8 narrative anchor +
+# Bucket 1 README + getting-started.md install-flow).
+#
+# Commit ladder pre-apply:
+#   4467637 — FBE.8 sub-plan-doc (NEW commit)
+#   fda303b — Bucket 2 loam-cli README + __init__.py + cli.py scrub
+#   65abb86 — Bucket 3 primary-persona pyproject + session_start_gate.py
+#   81c23ce — Bucket 4 H19 admit + HC#4 retire-and-rebaseline + FBE.8 narrative
+#   f14a5a4 — Bucket 1 README + getting-started.md install-flow
+#   <this manifest commit lands next>
+#   <loam amend apply lands as #6>
+#   <potentially corrective hand-admit lands as #7 per Surface #7>
+#   <loam amend seal lands as #7 or #8>
+#
+# Three sealed components in fence:
+#   - framework/tools/loam/ (Bucket 2: README + __init__.py + cli.py
+#     dev-vocabulary scrub).
+#   - framework/primary-persona/ (Bucket 3: pyproject mcp-pin annotation
+#     comment scrub + session_start_gate.py comment + docstring scrub).
+#   - framework/hands-off-lifecycle/ (Bucket 4: test_cross_cutting.py
+#     H19 admit-list addition + test_d1_byte_content_match.py 2-SHA
+#     retire-and-rebaseline + NEW seal narrative anchor file). HOL
+#     `frozen_baseline: true` per amendment #23 + FBE.6 manifest
+#     precedent (H19's BASELINE pinned at project-start).
+#
+# README.md and docs/getting-started.md (Bucket 1) ride via
+# universal_paths.files admission. Plan-doc + manifest YAML +
+# parent §8 backfill ride via universal_paths.prefixes for
+# docs/plans/.
+#
+# Per FBE.4 + FBE.5 partner-prefix gap precedent: framework/tools/loam
+# may again surface the "apply tool derives `framework/loam/` not
+# `framework/tools/loam/`" gap (per FBE.5 corrective `e20445f`).
+# Apply with watchful eye; hand-correct if needed.
+baseline: "f14a5a4"
+
+plan: docs/plans/v0-1-0-foldback-scope-expansion-fbe8.md
+
+components:
+  - name: loam
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - framework/tools/loam/
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true  # H19's BASELINE pinned at project-start
+    extra_allowed_prefixes: []
+
+# Universal admissions — README + getting-started.md (Bucket 1) +
+# the docs/plans/ universal prefix for the sub-plan + manifest
+# + parent §8 backfill commits.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - README.md
+    - docs/getting-started.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe8
+  body: |
+    # FBE.8 seal — apply ladder
+
+    Apply ladder (per `loam amend apply` + `loam amend seal`):
+    BASELINE `f14a5a4` → seal `<seal-sha>`. Three fence components
+    advance their `tests/SEAL_COMMIT` sidecars; tools/loam +
+    primary-persona BASELINE literals bump (HOL frozen-baseline
+    pinned project-start). Cross-component sweep validates fence
+    discipline post-seal.

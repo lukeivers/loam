@@ -10,7 +10,7 @@
 subagent personas (``plugins/<plugin>/agents/<name>.md``) into
 ``<workspace>/.claude/agents/<name>.md`` at first-run.
 
-Per ``docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md`` §5
+Per ``docs/plans/v0-1-7-personas-pm-layered-skills.md`` §5
 AC.PERSONAS.6 + Surface #2: the first-run scaffold scans every
 plugin under the resolved plugins/ root, walks each
 ``<plugin>/agents/*.md``, and creates a symlink at

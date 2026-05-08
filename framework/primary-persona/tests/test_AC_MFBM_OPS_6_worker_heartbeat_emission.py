@@ -14,7 +14,7 @@
 
 """AC.MFBM-OPS.6 — Worker-heartbeat instrumentation.
 
-Plan ref: ``docs/rebuild/plans/m-fbm-operational-health.md`` §4
+Plan ref: ``docs/plans/m-fbm-operational-health.md`` §4
 AC.MFBM-OPS.6.
 
 Diagnosis trigger (2026-05-04): Luke's ``memory-writes.log`` carried

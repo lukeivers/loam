@@ -8,7 +8,7 @@
 
 """AC.PSAFE.2 — default value when safety_profile is absent is `dev`.
 
-Per ``docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md``
+Per ``docs/plans/v0-1-6-production-safety-and-base-skills.md``
 §5 AC.PSAFE.2: when the bootstrap manifest does NOT carry a
 ``safety_profile`` field, the loader defaults to ``"dev"`` (matches
 today's behavior — dev workspaces don't pay the production-stake tax).

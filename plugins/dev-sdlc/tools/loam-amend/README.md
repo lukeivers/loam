@@ -18,5 +18,5 @@ group (M6a-authored).
   `framework/tools/loam/`; only the `amend` subcommand-package moves.
 
 See `plugins/dev-sdlc/README.md` for the parent plugin overview and
-`docs/rebuild/plans/oss-v0-1-0-publish-dev-sdlc-plugin-m6b1.md` for
+`docs/plans/oss-v0-1-0-publish-dev-sdlc-plugin-m6b1.md` for
 the M6b.1 sub-plan.

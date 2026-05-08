@@ -1,0 +1,193 @@
+schema_version: 1
+amendment:
+  number: 62
+  slug: d-migration-1-5-rename-aware-seal
+  title: "D-migration D.1.5 — pos-amend rename-aware seal + D.1 retroactive cleanup"
+
+# BASELINE: cdd6e2a — current HEAD at dispatch (D.1's §14-backfill commit).
+# Per BASELINE-as-HEAD~1 pattern, when D.1.5's feat commit lands HEAD
+# advances to that feat commit and apply runs against this BASELINE
+# (the commit immediately before the feat).
+baseline: cdd6e2aed50991c4309c125b3889dc50e8f59048
+
+plan: docs/plans/d-migration-1-5.md
+
+seal_description: "D-migration D.1.5 — pos-amend rename-aware seal + D.1 cleanup"
+
+# Single-component sealed amendment: ONLY the rename-only components from
+# D.1 are listed for the cleanup pass. pos-amend itself (the surface
+# being modified) is admitted via universal_paths prefix per amendment
+# #22 precedent (D-Q.3 lock).
+#
+# Apply step over these components serves TWO purposes simultaneously:
+#   1. Exercises the new rename-only-detection logic (each is rename-only
+#      vs cdd6e2a..HEAD-of-D.1.5-feat — the feat commit is itself a code
+#      edit confined to framework/tools/pos-amend/, so each rename-only
+#      component's diff window vs cdd6e2a..feat is empty for that
+#      component, classifying as no-changes).
+#   2. The cleanup_directives block (below) declares the pre-D.1 SEAL_COMMIT
+#      + BASELINE values to revert to.
+#
+# Net effect: the apply step's standard component loop is a no-op for
+# these components (no diff in window from cdd6e2a..feat); the
+# cleanup_directives block writes back the pre-D.1 values.
+components:
+  - name: cost-governance
+    seal_test: framework/cost-governance/tests/test_no_sealed_amendments.py
+    sidecar: framework/cost-governance/tests/SEAL_COMMIT
+  - name: graceful-degradation
+    seal_test: framework/graceful-degradation/tests/test_no_sealed_amendments.py
+    sidecar: framework/graceful-degradation/tests/SEAL_COMMIT
+  - name: memory-system
+    seal_test: framework/memory-system/tests/test_no_sealed_amendments.py
+    sidecar: framework/memory-system/tests/SEAL_COMMIT
+  - name: observability-aggregator
+    seal_test: framework/observability-aggregator/tests/test_no_sealed_amendments.py
+    sidecar: framework/observability-aggregator/tests/SEAL_COMMIT
+  - name: reversibility-primitive
+    seal_test: framework/reversibility-primitive/tests/test_no_sealed_amendments.py
+    sidecar: framework/reversibility-primitive/tests/SEAL_COMMIT
+  - name: self-correction
+    seal_test: framework/self-correction/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-correction/tests/SEAL_COMMIT
+  - name: self-upgrade
+    seal_test: framework/self-upgrade/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-upgrade/tests/SEAL_COMMIT
+  - name: telegram-interface
+    seal_test: framework/telegram-interface/tests/test_no_sealed_amendments.py
+    sidecar: framework/telegram-interface/tests/SEAL_COMMIT
+
+# Cleanup directives (D.1.5 introduces this manifest field) — for
+# each rename-only component, the pre-D.1 BASELINE + SEAL_COMMIT
+# values to write back.
+#
+# Recovery method: `git show 57d735f^:<comp>/tests/SEAL_COMMIT` and
+# `git show 57d735f^:<comp>/tests/test_no_sealed_amendments.py` (per
+# d-migration-1-5.md §13 finding 2).
+cleanup_directives:
+  - comp_name: cost-governance
+    pre_baseline: dd11677
+    pre_seal_commit: 06ea4ef17d7173fafe072c83dcb4ea390b211e9c
+  - comp_name: graceful-degradation
+    pre_baseline: 9559ca7
+    pre_seal_commit: 5d92d710c04bf86073b5a43810a652a319f6ecaa
+  - comp_name: memory-system
+    pre_baseline: 045f6db
+    pre_seal_commit: 135398d372bb6398d2d78eec0e14406cc031d18e
+  - comp_name: observability-aggregator
+    pre_baseline: dd11677
+    pre_seal_commit: 06ea4ef17d7173fafe072c83dcb4ea390b211e9c
+  - comp_name: reversibility-primitive
+    pre_baseline: dd11677
+    pre_seal_commit: 06ea4ef17d7173fafe072c83dcb4ea390b211e9c
+  - comp_name: self-correction
+    pre_baseline: dd11677
+    pre_seal_commit: 06ea4ef17d7173fafe072c83dcb4ea390b211e9c
+  - comp_name: self-upgrade
+    pre_baseline: 90246dc4dafa953c1f5ad5d97819e24d97a761a7
+    pre_seal_commit: 4da967edcb3926e5cbb7dfb776fc54aa9609e253
+  - comp_name: telegram-interface
+    pre_baseline: dd11677
+    pre_seal_commit: 06ea4ef17d7173fafe072c83dcb4ea390b211e9c
+
+# Universal admissions per amendment #22 ruling #3 + D-Q.3 / D-Q.4 lock.
+# pos-amend itself is admitted via the framework/tools/pos-amend/ prefix.
+# The cleanup target paths (each rename-only component's SEAL_COMMIT
+# sidecar + seal-test) are admitted in the per-component framework/<comp>/
+# admissions, which the apply step's standard widening already covers
+# from cross-component partner prefixes.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/tools/pos-amend/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.true-first-run
+  body: |
+    # Amendment #62 — D-migration D.1.5 — pos-amend rename-aware seal + D.1 cleanup
+
+    2026-04-26. Interstitial amendment between D.1 (sealed at 570092a)
+    and D.2 (yet to dispatch). Closes the structural gap surfaced
+    during D.1's seal cycle: pos-amend's apply step bumped BASELINE +
+    SEAL_COMMIT uniformly across all 14 sealed components in D.1's
+    manifest, including components whose actual diff in D.1's window
+    was rename-only (every file `R100` per `git diff --find-renames`
+    plus apply-step bookkeeping A/D pairs). The uniform bump made
+    every prior amendment's AC.X.S seal-diff test see paths from
+    D.1's rename window inside its own (now-stale) diff window,
+    producing a fence-violation cascade across primary-persona,
+    hands-off-lifecycle, and other components.
+
+    D.1.5's fix: per-component rename-only detection in `pos-amend
+    apply`. When a component's amendment-window diff is entirely
+    `R100`-renames (modulo apply-step bookkeeping sidecars), skip the
+    BASELINE + SEAL_COMMIT bump for that component. The fence origin
+    stays at the prior seal commit; the prior amendment's AC.X.S
+    tests continue to assert against their original (and correct)
+    diff window.
+
+    D.1.5 also reverts D.1's spurious BASELINE/SEAL_COMMIT bumps for
+    each rename-only component, restoring each to its pre-D.1 value
+    via the manifest's `cleanup_directives` block. The cascade
+    unwinds structurally — no inner AC.X.S test edits required for
+    the 8 rename-only components. Substantive components
+    (objective-tracker, orchestrator, primary-persona,
+    hands-off-lifecycle, workspace-bootstrap, workspace-sync) keep
+    their post-D.1 SEAL_COMMITs by design (HC#4 — false-positive
+    worse than false-negative); their AC.X.S tests' cascade fix
+    (where required) is a separate concern.
+
+    Reverted (cleanup):
+
+      - 8 sealed components' SEAL_COMMIT sidecars + BASELINE
+        literals — restored to pre-D.1 values:
+          cost-governance, graceful-degradation, memory-system,
+          observability-aggregator, reversibility-primitive,
+          self-correction, self-upgrade, telegram-interface.
+
+    Surface edited:
+
+      - framework/tools/pos-amend/src/pos_amend/rename_detection.py
+        (new module — `is_rename_only` helper).
+      - framework/tools/pos-amend/src/pos_amend/commands/apply.py
+        (rename-only conditional bump path + cleanup_directives
+        processing).
+      - framework/tools/pos-amend/src/pos_amend/manifest.py
+        (optional `cleanup_directives:` v1-compatible field).
+      - framework/tools/pos-amend/src/pos_amend/dry_run.py
+        (per-component rename-only verdict in preview output).
+      - framework/tools/pos-amend/tests/ — new tests for AC.D.1.5.1
+        through AC.D.1.5.5.
+
+    Behaviour:
+
+      - rename-only verdict computed via `git diff --find-renames=99%
+        --name-status BASELINE..HEAD -- <old-path> <new-path>`.
+        Verdict True iff every entry is `R100` OR an A/D pair whose
+        leaf is in {SEAL_COMMIT, test_no_sealed_amendments.py,
+        test_cross_cutting.py}.
+      - Apply skips BASELINE + SEAL_COMMIT bump on rename-only;
+        widening still applies.
+      - --dry-run previews per-component rename-only verdict.
+      - Schema unchanged (cleanup_directives is a v1-compatible
+        additive optional field; no schema bump).
+
+    Backwards-compat:
+
+      - HC#1: substantive amendments byte-identical to pre-D.1.5
+        behaviour. Existing test suite passes unchanged.
+      - HC#2: existing manifests parse + apply unchanged. No
+        manifest-author migration required.
+
+    BASELINE cdd6e2a (D.1's §14 backfill commit — HEAD at dispatch).
+    pos-amend not sealed; admitted via framework/tools/pos-amend/
+    universal-paths prefix per amendment #22's pattern.
+
+    Next: D.2 dispatches against the post-D.1.5 tree. D.2's
+    rename-only sub-set (e.g. components that get only a path edit
+    inside their tree) flows through the new path automatically.

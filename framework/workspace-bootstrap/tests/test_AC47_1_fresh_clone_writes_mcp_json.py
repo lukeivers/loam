@@ -49,7 +49,7 @@ from loam.workspace_bootstrap.adapters.mcp_json_writer import (
 # builders inside ``mcp_json_writer.py`` are still used by AC47.2's
 # pure-function variants and will be re-wired by M-GMP post-v0.1.0.
 # The scaffold-integration variants below are skipped at v0.1.0. See
-# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+# ``docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
 pytestmark = pytest.mark.skip(
     reason=(
         "FBE.7 (v0.1.0 foldback): scaffold doesn't write .mcp.json at "

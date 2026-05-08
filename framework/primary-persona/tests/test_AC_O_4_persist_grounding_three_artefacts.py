@@ -30,7 +30,7 @@ identity-anchor block naming the captured ``given_name``. A second
 regenerates both files with the new name (no caching shadows the
 change).
 
-Plan: docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+Plan: docs/plans/primary-persona-conversational-onboarding-and-default-archetype.md
 """
 
 from __future__ import annotations

@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.6 — User-ratification via PM (Y/N/R gate) named in body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.6: the SKILL body names the PM ratification surface
 (`PMRuntime.enqueue_decision` + `surface_next_questions_batch(n=1)`),
 the one-line decision-question shape, the Y/N/R semantics including

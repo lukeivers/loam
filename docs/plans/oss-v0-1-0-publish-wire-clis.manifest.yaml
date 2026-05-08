@@ -1,0 +1,236 @@
+schema_version: 1
+amendment:
+  number: 84
+  slug: oss-v0-1-0-publish-wire-clis
+  title: "M3 — wire per-component CLIs as [project.scripts] console-script entries — register loam-kill (safety-layer) + loam-cost (cost-governance) + loam-correction (self-correction) + loam-reversibility + loam-rollback (both reversibility-primitive) + author two new public shim functions main_reversibility(argv) + main_rollback(argv) in loam.reversibility_primitive.cli (existing main(call, argv) preserved untouched per dispatch constraint) + 4 new test files asserting importlib.metadata entry-point registration + editable-install refresh per touched component. Five entries across 4 pyproject.toml files. AC.OSS.2 (D-3 from feature-usage audit). Master plan §5 M3 row + §6 sequencing rule #3 — M3 cheapest of M3/M4/M5 wire-or-strip amendments; recommended FIRST."
+
+# BASELINE: bb3574c — M2's §14 SHA-register backfill commit
+# (docs(plans): record amendment #83 commit SHAs in method-decision
+# register). M2's seal commit 4cda805 is the locked sealed-state of
+# the M2.partition amendment; the §14 backfill is the tip at M3-build
+# time. M3's BASELINE..HEAD diff is the M3 sub-plan + manifest commit
+# + the M3 feature commit + apply commit + any corrective commits +
+# seal commit.
+baseline: bb3574c
+
+plan: docs/plans/oss-v0-1-0-publish-wire-clis.md
+
+seal_description: "M3 wire per-component CLIs as [project.scripts] console-script entries — register loam-kill = loam.safety_layer.cli:main (framework/safety-layer/pyproject.toml) + loam-cost = loam.cost_governance.cli:main (framework/cost-governance/pyproject.toml) + loam-correction = loam.self_correction.cli:main (framework/self-correction/pyproject.toml) + loam-reversibility = loam.reversibility_primitive.cli:main_reversibility + loam-rollback = loam.reversibility_primitive.cli:main_rollback (framework/reversibility-primitive/pyproject.toml) + author two NEW public shim functions main_reversibility(argv) + main_rollback(argv) in framework/reversibility-primitive/src/loam/reversibility_primitive/cli.py (each builds IPCClient from --socket / POS_SOCKET_PATH mirroring loam.safety_layer.cli pattern + wraps client.call as CliCall + dispatches to existing build_parser + dispatch surface scoped to its respective subtree; existing main(call, argv) preserved untouched per dispatch constraint + plan §10 D-build.M3.1) + 4 new tests (test_AC_OSS_M3_loam_kill_registered.py + test_AC_OSS_M3_loam_cost_registered.py + test_AC_OSS_M3_loam_correction_registered.py + test_AC_OSS_M3_loam_reversibility_registered.py [covers both loam-reversibility + loam-rollback]) + editable-install refresh per touched component (pip install -e framework/<comp>/ for safety-layer + cost-governance + self-correction + reversibility-primitive). Naming convention loam-* per master plan §5 M3 row + post-M1g rebrand (deviates from feature-usage-audit's in-text pos-* suggestion which pre-dates M1g; master plan + dispatch authoritative per plan §10 D-build.M3.5). Existing pos-* binaries (pos-obs + pos-bootstrap + pos-sync + pos-workspace-sync + pos) STAY on pos-* per M1g FIDRAFT-deferral — out of M3 scope. Socket env-var POS_SOCKET_PATH preserved in new shims per plan §10 D-build.M3.2 (M1b did NOT rename it; safety CLI still reads POS_SOCKET_PATH; consistency preserved). AC.OSS.2 (D-3 from feature-usage audit — per-component CLIs were authored but unregistered; M3 lands the registrations). Sealed-component fence: 4 components — safety-layer + cost-governance + self-correction + reversibility-primitive (HOL narrative-target only; not in components per plan §10 D-build.M3.4). HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE (no HC#4 sample paths under any of the 4 touched components impacted by M3 diff; verified at plan-authoring per plan §11 finding #6)."
+
+# Four sealed components in the M3 fence per plan §1 + AC.OSS-M3.S +
+# §10 D-build.M3.4: safety-layer, cost-governance, self-correction,
+# reversibility-primitive. HOL is NOT in components — M3 doesn't bump
+# HOL's sidecar; HOL is the narrative-target file only (per M1c..M2
+# precedent — HOL hosts the narrative file at framework/hands-off-
+# lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-wire-clis).
+#
+# Empirical surface inventory at plan time (§4 ACs + §11 findings):
+#
+#   safety-layer (structural fence — framework/safety-layer/):
+#     - pyproject.toml — extended (5-line [project.scripts] block:
+#       loam-kill = "loam.safety_layer.cli:main")
+#     - tests/test_AC_OSS_M3_loam_kill_registered.py — NEW (~25 LOC)
+#
+#   cost-governance (structural fence — framework/cost-governance/):
+#     - pyproject.toml — extended (5-line [project.scripts] block:
+#       loam-cost = "loam.cost_governance.cli:main")
+#     - tests/test_AC_OSS_M3_loam_cost_registered.py — NEW (~25 LOC)
+#
+#   self-correction (structural fence — framework/self-correction/):
+#     - pyproject.toml — extended (5-line [project.scripts] block:
+#       loam-correction = "loam.self_correction.cli:main")
+#     - tests/test_AC_OSS_M3_loam_correction_registered.py — NEW (~25 LOC)
+#
+#   reversibility-primitive (structural fence — framework/reversibility-primitive/):
+#     - pyproject.toml — extended (6-line [project.scripts] block; 2 entries:
+#       loam-reversibility = "loam.reversibility_primitive.cli:main_reversibility"
+#       loam-rollback = "loam.reversibility_primitive.cli:main_rollback")
+#     - src/loam/reversibility_primitive/cli.py — extended (~40-60 LOC added —
+#       2 NEW public functions main_reversibility(argv) + main_rollback(argv);
+#       existing main(call, argv) + build_parser + dispatch preserved untouched)
+#     - tests/test_AC_OSS_M3_loam_reversibility_registered.py — NEW (~40 LOC,
+#       covers BOTH loam-reversibility + loam-rollback entries)
+#
+#   HOL (narrative anchor only — not in components):
+#     - seals/SEAL_COMMIT.oss-v0-1-0-publish-wire-clis — NEW seal narrative file
+#
+# HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE.
+# Pre-build verification at plan-authoring time confirms no HC#4
+# sample paths under the 4 touched components are impacted by the
+# M3 diff (additive pyproject + new shim functions + new test files).
+# The HC#4 invariant is expected to remain GREEN through M3.
+components:
+  - name: safety-layer
+    seal_test: framework/safety-layer/tests/test_no_sealed_amendments.py
+    sidecar: framework/safety-layer/tests/SEAL_COMMIT
+    frozen_baseline: false
+    # safety-layer's test_no_sealed_amendments.py has NO allowed_prefixes
+    # binding (it tests A15/A17/A18 module-shape invariants only — no
+    # diff-based admission mechanism). The other 3 components in this
+    # fence have allowed_prefixes that admit `framework/<own-name>/`
+    # directly. safety-layer admits its own subtree via this manifest
+    # entry. Plan §11 finding #7 (added at apply time).
+    extra_allowed_prefixes:
+      - framework/safety-layer/
+  - name: cost-governance
+    seal_test: framework/cost-governance/tests/test_no_sealed_amendments.py
+    sidecar: framework/cost-governance/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: self-correction
+    seal_test: framework/self-correction/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-correction/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: reversibility-primitive
+    seal_test: framework/reversibility-primitive/tests/test_no_sealed_amendments.py
+    sidecar: framework/reversibility-primitive/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3.
+#
+# No prefixes admitted beyond the per-component fences — M3's diff is
+# entirely contained within the 4 component subtrees + docs/plans/
+# (this manifest + the plan-doc) + framework/hands-off-lifecycle/seals/
+# (the narrative file).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/hands-off-lifecycle/seals/
+  files: []
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-wire-clis
+  body: |
+    # Amendment #84 — M3 wire per-component CLIs as [project.scripts] console-script entries
+
+    2026-04-29. Multi-component sealed amendment for the OSS v0.1.0
+    publish programme. M3 per locked programme master plan-doc
+    `docs/plans/oss-v0-1-0-publish.md` §5 M3 row + §6
+    sequencing rule #3 + §3 AC.OSS.2 (D-3 — per-component CLIs are
+    authored but unregistered). Sub-plan-doc:
+    `docs/plans/oss-v0-1-0-publish-wire-clis.md`.
+
+    Composes on the M1.rename multi-amendment series (sealed M1a..M1g
+    2026-04-29; M1g seal `f6c22fd`; §14 backfill `d5b8dcd`) and on
+    M2.partition (sealed `4cda805` 2026-04-29; §14 backfill `bb3574c`).
+
+    M3 closes the AC.OSS.2 D-3 gap surfaced by the feature-usage
+    audit (`.scratch/claude-output/feature-usage-audit.md` §D-3 line
+    430): per-component CLIs (`loam.safety_layer.cli`,
+    `loam.cost_governance.cli`, `loam.self_correction.cli`,
+    `loam.reversibility_primitive.cli`) ship working argparse
+    parsers but no `[project.scripts]` registrations expose them.
+    Operators who type `loam-kill scope <id>` (etc.) get
+    `command not found`.
+
+    M3 registers five console-scripts across four pyproject.toml
+    files:
+
+      framework/safety-layer/pyproject.toml:
+        loam-kill = "loam.safety_layer.cli:main"
+
+      framework/cost-governance/pyproject.toml:
+        loam-cost = "loam.cost_governance.cli:main"
+
+      framework/self-correction/pyproject.toml:
+        loam-correction = "loam.self_correction.cli:main"
+
+      framework/reversibility-primitive/pyproject.toml:
+        loam-reversibility = "loam.reversibility_primitive.cli:main_reversibility"
+        loam-rollback = "loam.reversibility_primitive.cli:main_rollback"
+
+    Three of the four existing `cli.main` callables are zero-arg
+    entry-point compatible. The fourth — `loam.reversibility_primitive.cli.main`
+    — has signature `main(call: CliCall, argv: list[str] | None = None)`
+    requiring a positional `CliCall` arg (the docstring at line 12-13
+    notes "production wiring is a thin wrapper in the workspace
+    bootstrap" — but no such wrapper is shipped). M3 adds two NEW
+    public shim functions `main_reversibility(argv)` and
+    `main_rollback(argv)` to that module, each:
+
+      1. Builds its own argparse parser exposing only its respective
+         subtree (`reversibility {bind, handlers}` for `main_reversibility`;
+         `rollback {scope, status}` for `main_rollback`).
+      2. Reads `--socket` / `POS_SOCKET_PATH` to resolve the
+         orchestrator IPC socket (mirrors `loam.safety_layer.cli`
+         pattern verbatim; verified at plan-authoring time that
+         M1b did NOT rename `POS_SOCKET_PATH`, so the env-var name
+         stays consistent across kill/safety + reversibility/rollback
+         CLIs per plan §10 D-build.M3.2).
+      3. Builds an `IPCClient`, connects, wraps `client.call` as a
+         `CliCall` lambda.
+      4. Calls the existing `dispatch(call, args)` function with
+         resolved args; the per-shim parser sets `args.cmd` to the
+         constant `"reversibility"` or `"rollback"` so the existing
+         dispatch function dispatches correctly without modification.
+
+    Existing `main(call, argv)` + `build_parser` + `dispatch` preserved
+    untouched per dispatch constraint "no change to the `main()`
+    function itself" — the design is additive (NEW shim functions
+    around an unchanged `main`). Any future workspace-bootstrap
+    wrapper that injects a `CliCall` directly remains supported.
+
+    Naming convention: `loam-*` per master plan §5 M3 row + post-M1g
+    rebranded identity. Deviates from feature-usage-audit's in-text
+    `pos-*` suggestion (audit pre-dates M1g; master plan + dispatch
+    authoritative per plan §10 D-build.M3.5). The five existing
+    `pos-*` binaries (`pos-obs` + `pos-bootstrap` + `pos-sync` +
+    `pos-workspace-sync` + `pos`) STAY on the `pos-*` prefix per
+    M1g's FIDRAFT-deferral ruling — those are out of M3's named
+    scope.
+
+    Editable-install refresh: `pip install -e framework/<comp>/`
+    re-run for each of the four touched components inside the shared
+    venv `<repo>/.venv/` so the new `loam-*` binaries become bootable
+    from PATH. The registration test (post-build) reads
+    `importlib.metadata.entry_points(group="console_scripts")` —
+    entry-point metadata refreshes automatically from `pip install -e`.
+
+    Tests: 4 new test files (one per component; reversibility-primitive's
+    covers both entries) — each asserts the corresponding `loam-*`
+    entry-point is registered + dispatches to the expected callable
+    via `importlib.metadata.entry_points`. Test scope deliberately
+    narrow per dispatch constraint — registration is the AC, not
+    behaviour. No actual shell invocation.
+
+    Sealed-component fence: 4 components (safety-layer, cost-governance,
+    self-correction, reversibility-primitive). HOL narrative-target
+    only — HOL is not in `components:` because M3 doesn't bump HOL's
+    sidecar; HOL hosts this narrative file by convention per M1c..M2
+    precedent. The structural fences are the four component subtrees:
+
+      framework/safety-layer/
+      framework/cost-governance/
+      framework/self-correction/
+      framework/reversibility-primitive/
+
+    Each fence's diff is intentionally minimal: a single `[project.scripts]`
+    block in pyproject.toml + a single new test file (plus, for
+    reversibility-primitive, two new shim functions in cli.py).
+
+    HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE.
+    Pre-build verification at plan-authoring time confirms no HC#4
+    sample paths under any of the 4 touched components are impacted
+    by the M3 diff. The HC#4 invariant is expected to remain GREEN
+    through M3.
+
+    AC family: AC.OSS-M3.1..M3.6 + AC.OSS-M3.S (sealed-component
+    fence). Each AC maps to a unique change in the diff per ODD §2.5
+    (no behaviour without a named AC).
+
+    Cross-tree consumer impact: NONE. Each component's pyproject.toml
+    is independently consumed by `pip install -e`; no cross-tree
+    consumer needs an update.
+
+    Dependents cleared post-M3:
+      - M4 (wire-dispatch) — independent in scope (touches primary-
+        persona + hands-off-lifecycle, not the 4 M3 components).
+      - M5 (wire-dormancy) — independent in scope (workspace-bootstrap
+        + dormancy + orchestrator).
+      - M6, M7, M8, M9 — not gated on M3.
+
+    M3 is the cheapest of the three independent-but-serial wire-or-
+    strip amendments (M3 / M4 / M5) per master plan §6 sequencing
+    rule #3 — recommended FIRST to land easy progress.

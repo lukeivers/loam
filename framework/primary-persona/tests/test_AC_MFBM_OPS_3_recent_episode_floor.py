@@ -14,7 +14,7 @@
 
 """AC.MFBM-OPS.3 — Recent-episode floor.
 
-Plan ref: ``docs/rebuild/plans/m-fbm-operational-health.md`` §4
+Plan ref: ``docs/plans/m-fbm-operational-health.md`` §4
 AC.MFBM-OPS.3.
 
 Diagnosis trigger (2026-05-04): the worker reported `worker-ok` for

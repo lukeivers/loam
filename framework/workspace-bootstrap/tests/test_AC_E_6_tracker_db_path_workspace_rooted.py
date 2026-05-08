@@ -30,7 +30,7 @@ the workspace-rooted location, and that the same path equals the
 primary-persona contributor-side resolver's output for the same
 workspace.
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
+Plan: docs/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
 """
 
 from __future__ import annotations

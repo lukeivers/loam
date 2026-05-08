@@ -49,7 +49,7 @@ def test_phase_gamma_extracts_ac_records_per_amendment(
         report = extract_and_seed(workspace, tracker)
         assert report.plans_visited == 1
         assert len(report.created) == 3
-        plan_rel = "docs/rebuild/plans/amendment-999-fixture.md"
+        plan_rel = "docs/plans/amendment-999-fixture.md"
         records = tracker.query_projection_view(
             ObjectiveFilter(lifted_from_source_doc=plan_rel)
         )
@@ -88,7 +88,7 @@ def test_phase_gamma_excludes_builder_plan_companions(
     """Builder-plan companions (.builder-plan.md) are filtered out."""
     write_amendment_plan(workspace, 997, "fix", _AMENDMENT_PLAN_WITH_THREE_ACS)
     # Drop a .builder-plan.md sibling that should be skipped.
-    plans_dir = workspace / "docs" / "rebuild" / "plans"
+    plans_dir = workspace / "docs" / "plans"
     (plans_dir / "amendment-997-fix.builder-plan.md").write_text(
         "# Builder plan stub\n## AC.builder.1 — should not be lifted\n"
     )

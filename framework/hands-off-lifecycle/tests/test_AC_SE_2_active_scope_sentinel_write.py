@@ -48,7 +48,7 @@ def test_AC_SE_2_writes_sentinel_with_required_fields(
     result = write_active_scope_sentinel(
         tmp_path,
         scope_id="A1-substrate",
-        plan_path="docs/rebuild/plans/structural-enforcement-a1-substrate.md",
+        plan_path="docs/plans/structural-enforcement-a1-substrate.md",
         bindings=[
             ScopeBinding(component="objective-tracker", ac_id="AC.SE.6"),
             ScopeBinding(component="hands-off-lifecycle", ac_id="AC.SE.4"),
@@ -60,7 +60,7 @@ def test_AC_SE_2_writes_sentinel_with_required_fields(
     on_disk = json.loads((tmp_path / "workspace" / ".pos" / "active-scope.json").read_text())
     assert on_disk["scope_id"] == "A1-substrate"
     assert on_disk["plan_path"] == (
-        "docs/rebuild/plans/structural-enforcement-a1-substrate.md"
+        "docs/plans/structural-enforcement-a1-substrate.md"
     )
     assert on_disk["bindings"] == [
         {"component": "objective-tracker", "ac_id": "AC.SE.6"},

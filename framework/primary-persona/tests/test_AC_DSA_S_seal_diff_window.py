@@ -19,9 +19,9 @@
 ``framework/primary-persona/tests/``,
 ``framework/primary-persona/pyproject.toml`` (if dependency add
 needed; expected: no add — pytest is already a test dep), and the
-universal-paths admissions (``docs/rebuild/plans/``, ``CLAUDE.md``,
+universal-paths admissions (``docs/plans/``, ``CLAUDE.md``,
 ``docs/odd-in-loam.md``, ``docs/odd-methodology.md``,
-``docs/rebuild/FUTURE_IDEAS.md``, ``docs/rebuild/FUTURE_IDEAS_DRAFT.md``).
+``docs/FUTURE_IDEAS.md``, ``docs/FUTURE_IDEAS_DRAFT.md``).
 Anything outside this set is a halt condition.
 
 Smoke test: this file declares the AC; the ``test_no_sealed_amendments``

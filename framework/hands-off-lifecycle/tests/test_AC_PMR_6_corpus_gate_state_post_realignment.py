@@ -68,7 +68,7 @@ def _make_dev_mode_workspace_with_full_corpus(tmp_path: Path) -> Path:
     )
     # Always-load tier (3 paths).
     (tmp_path / "CLAUDE.md").write_text("# C\n", encoding="utf-8")
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text(
         "# V\n", encoding="utf-8"
@@ -98,8 +98,8 @@ def _make_dev_mode_workspace_with_full_corpus(tmp_path: Path) -> Path:
         "audit_excludes: []\n"
         "always_loaded:\n"
         "  - path: CLAUDE.md\n"
-        "  - path: docs/rebuild/VALUE_PROPOSITION.md\n"
-        "  - path: docs/rebuild/STATE.md\n"
+        "  - path: docs/VALUE_PROPOSITION.md\n"
+        "  - path: docs/STATE.md\n"
         "dev_only:\n"
         "  - path: plugins/dev-sdlc/docs/odd-methodology.md\n"
     )
@@ -185,5 +185,5 @@ def test_AC_PMR_6_sentinel_records_loaded_paths(tmp_path: Path) -> None:
     loaded = set(data.get("corpus_paths_loaded", []))
     # The static always-load tier has 3 paths; all 3 should appear.
     assert "CLAUDE.md" in loaded
-    assert "docs/rebuild/VALUE_PROPOSITION.md" in loaded
-    assert "docs/rebuild/STATE.md" in loaded
+    assert "docs/VALUE_PROPOSITION.md" in loaded
+    assert "docs/STATE.md" in loaded

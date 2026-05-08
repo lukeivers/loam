@@ -82,7 +82,7 @@ After enabling dev-mode, your first session will:
    before accepting new work.
 3. **Default to plan-before-code.** Per the dev-mode methodology,
    every non-trivial build writes a plan-doc to
-   `docs/rebuild/plans/<slug>.md` BEFORE any code lands. The persona
+   `docs/plans/<slug>.md` BEFORE any code lands. The persona
    refuses to dispatch a build agent against a missing plan-doc.
 4. **Run amendment cycles via `loam amend`.** The dev workflow uses
    `loam amend apply <manifest>` and `loam amend seal --plan-doc
@@ -97,7 +97,7 @@ A typical first dev-mode turn looks like:
 You: I want to add a new field to the Manifest dataclass.
 Persona: That's component-level work in framework/workspace-
          bootstrap/. Plan-before-code applies. I'll write the plan-doc
-         at docs/rebuild/plans/<slug>.md first; do you have an AC
+         at docs/plans/<slug>.md first; do you have an AC
          family in mind, or should I propose one?
 ```
 
@@ -107,9 +107,9 @@ Persona: That's component-level work in framework/workspace-
 
 - [`design/odd.md`](design/odd.md) — the methodology dev-mode is
   shaped around.
-- [`rebuild/plans/`](rebuild/plans/) — the plan-doc archive; every
+- [`plans/`](plans/) — the plan-doc archive; every
   shipped feature has a plan-doc here.
-- [`rebuild/STATE.md`](rebuild/STATE.md) — current ship-state,
+- [`STATE.md`](STATE.md) — current ship-state,
   in-flight cycles, and release rollups.
 - [`../CLAUDE.dev.md`](../CLAUDE.dev.md) — the dev-mode overlay
   fragment itself; read it once to understand what gets auto-loaded.
@@ -133,7 +133,7 @@ non-dev workspace.
 **`loam amend apply` fails with "manifest references missing
 admissions."** The manifest's `universal_paths` block needs the path
 you're editing. Read the existing manifest examples under
-`docs/rebuild/plans/*.manifest.yaml` for the shape.
+`docs/plans/*.manifest.yaml` for the shape.
 
 **Anything else.** Open a GitHub issue on `lukeivers/loam` with
 `dev-mode:` in the title and a copy of the failing command output.

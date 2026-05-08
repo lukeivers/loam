@@ -2,7 +2,7 @@
 
 **Authored:** 2026-05-08.
 **Plan-doc authority:** `docs/plans/research/harness-landscape-and-roadmap-rerank-plan.md`.
-**Composes with:** `docs/release-roadmap.md` (target ordering this artefact may propose adjusting), `docs/rebuild/VALUE_PROPOSITION.md` (the prioritization filter), `docs/release-versioning-policy.md`, `docs/odd-semver-pinning.md`.
+**Composes with:** `docs/release-roadmap.md` (target ordering this artefact may propose adjusting), `docs/VALUE_PROPOSITION.md` (the prioritization filter), `docs/release-versioning-policy.md`, `docs/odd-semver-pinning.md`.
 **Window:** 2026-04-22 → 2026-05-08 (past two weeks; older shipments are background context only).
 **Architectural floor (non-negotiable across this artefact):** subscription-only via `claude -p`; no Anthropic API key anywhere; no migration to multi-provider routers; software-as-deliverable framing (loam exists to help people use LLMs to build software).
 
@@ -254,7 +254,7 @@ All three pass both tests; EV.2 + EV.3 are currently unnamed in the roadmap and 
 
 ## §6 Authority chain (per AC.HL.8)
 
-- `docs/rebuild/VALUE_PROPOSITION.md` — primary-persona test + harness test (the prioritization filter applied throughout §4 and §5).
+- `docs/VALUE_PROPOSITION.md` — primary-persona test + harness test (the prioritization filter applied throughout §4 and §5).
 - `docs/release-roadmap.md` — current target ordering; this artefact proposes adjustments to §3 (active v0.3.0), §4 (mapped v0.4.0–v1.0.0), and §6 (External actions).
 - `docs/release-versioning-policy.md` + `docs/odd-semver-pinning.md` — versioning + outcome-target shape (used as the constraint surface in §4 RR.1–RR.8).
 - `<workspace>/.scratch/claude-output/claude-conference-features-2026-05-06.md` — extended (not re-researched) for items #1–#7, #25 in §1.

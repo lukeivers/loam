@@ -1,0 +1,300 @@
+schema_version: 1
+amendment:
+  number: 108
+  slug: v0-1-0-foldback-scope-expansion-fbe5
+  title: "FBE.5 — description scrub + LOW-fix sweep + ~/.loam verify (fence-fifteen)"
+
+# BASELINE: 8032348 — the FBE.5 source-side delta commit (15
+# pyproject description scrubs + cli.py docstring/comments scrub +
+# README block removal + getting-started.md three-edit coherence
+# fix). Pre-apply tip after the source delta lands.
+#
+# Commit ladder pre-apply:
+#   dda7fe4 — FBE.5 sub-plan-doc (NEW commit)
+#   fb7c55d — FBE.5 sub-plan Surface #7 + AC.FBE.5.6 contract-tighten
+#   8032348 — 15 pyproject description scrubs + cli.py
+#             docstring/comments scrub + README block removal +
+#             getting-started.md three-edit coherence fix
+#   <this manifest commit lands next>
+#   <loam amend apply lands as #5>
+#   <potentially corrective hand-admit lands as #6 per Surface #3>
+#   <loam amend seal lands as #6 or #7>
+#
+# Fifteen sealed components in fence — fence-fifteen-with-edit:
+#   - framework/cost-governance/ (description scrub)
+#   - framework/observability-aggregator/ (description scrub)
+#   - framework/orchestrator/ (description scrub)
+#   - framework/objective-tracker/ (description scrub)
+#   - framework/scope-of-work/ (description scrub)
+#   - framework/safety-layer/ (description scrub)
+#   - framework/primary-persona/ (description scrub)
+#   - framework/reversibility-primitive/ (description scrub)
+#   - framework/workspace-bootstrap/ (description scrub: pOS v2 +
+#     Phase 4+ extension protocol → loam + plugin contribution
+#     protocol)
+#   - framework/telegram-interface/ (description scrub: pOS v2 +
+#     trailing "Zero sealed-component amendments." dropped)
+#   - framework/self-upgrade/ (description scrub: pOS → loam)
+#   - framework/self-correction/ (description scrub)
+#   - framework/workspace-sync/ (description scrub: pOS v2 +
+#     "Architecture A/B" parentheticals dropped)
+#   - framework/tools/loam/ (description scrub +
+#     src/loam_cli/cli.py docstring + in-function comments scrub)
+#   - plugins/dev-sdlc/ (description scrub:
+#     contribution-based extension protocol → plugin contribution
+#     protocol)
+#
+# Each fence component edits its own `description` line in
+# pyproject.toml (single-line); `framework/tools/loam` additionally
+# edits `src/loam_cli/cli.py` lines 1-33 (module docstring) +
+# lines 116-122 + 138-140 (in-function comments).
+#
+# README.md and docs/getting-started.md ride via universal_paths.files
+# admission (top-level README + docs/ file). Plan-doc + manifest YAML
+# ride via universal_paths.prefixes admission for docs/plans/.
+#
+# Per Surface #3 (FBE.4 partner-prefix gap precedent): expect
+# potential corrective hand-admit if `loam amend seal` fails on a
+# fence component's fence test with `plugins/dev-sdlc/`-prefix paths.
+# loam amend apply derives partner_prefixes assuming
+# `framework/<name>/` + bare-`<name>/` shape; for `dev-sdlc` (which
+# lives at `plugins/dev-sdlc/`), it admits `dev-sdlc/` and
+# `framework/dev-sdlc/` (both wrong shapes) and misses
+# `plugins/dev-sdlc/`. Most framework/* fence members have
+# `plugins/dev-sdlc/` admitted via M6a baseline; gaps surface only on
+# components established post-M6a.
+baseline: "8032348"
+
+plan: docs/plans/v0-1-0-foldback-scope-expansion-fbe5.md
+
+components:
+  - name: cost-governance
+    seal_test: framework/cost-governance/tests/test_no_sealed_amendments.py
+    sidecar: framework/cost-governance/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: observability-aggregator
+    seal_test: framework/observability-aggregator/tests/test_no_sealed_amendments.py
+    sidecar: framework/observability-aggregator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: orchestrator
+    seal_test: framework/orchestrator/tests/test_no_sealed_amendments.py
+    sidecar: framework/orchestrator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: objective-tracker
+    seal_test: framework/objective-tracker/tests/test_no_sealed_amendments.py
+    sidecar: framework/objective-tracker/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: scope-of-work
+    seal_test: framework/scope-of-work/tests/test_no_sealed_amendments.py
+    sidecar: framework/scope-of-work/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: safety-layer
+    seal_test: framework/safety-layer/tests/test_no_sealed_amendments.py
+    sidecar: framework/safety-layer/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: reversibility-primitive
+    seal_test: framework/reversibility-primitive/tests/test_no_sealed_amendments.py
+    sidecar: framework/reversibility-primitive/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: telegram-interface
+    seal_test: framework/telegram-interface/tests/test_no_sealed_amendments.py
+    sidecar: framework/telegram-interface/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: self-upgrade
+    seal_test: framework/self-upgrade/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-upgrade/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: self-correction
+    seal_test: framework/self-correction/tests/test_no_sealed_amendments.py
+    sidecar: framework/self-correction/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-sync
+    seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: loam
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - framework/tools/loam/
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# README.md + docs/getting-started.md admitted as explicit files.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - README.md
+    - docs/getting-started.md
+
+narrative:
+  target: framework/workspace-bootstrap/tests/SEAL_COMMIT.notes
+  body: |
+    # FBE.5 — description scrub + LOW-fix sweep + ~/.loam verify (fence-fifteen)
+
+    2026-05-03. v0.1.0 reviewer foldback closes HIGH 4 + LOW 1 +
+    LOW 3 + AC.FBE.5.6 verification. Reviewer dossier:
+    `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+    Parent plan:
+    `docs/plans/v0-1-0-foldback-scope-expansion.md` §4 FBE.5
+    + §2.{5,7,8} (HIGH 2 + HIGH 4 + LOW 1 + LOW 3 surfaces).
+    Sub-plan:
+    `docs/plans/v0-1-0-foldback-scope-expansion-fbe5.md`.
+
+    Scope (per sub-plan §4 + §6):
+      - 15 component pyproject `description` field scrubs
+        (vocabulary substitution + parenthetical drops; per
+        AC.FBE.5.{1,2}). Single-line edit per pyproject;
+        behaviour preserved.
+      - `framework/tools/loam/src/loam_cli/cli.py` module docstring
+        + in-function comments scrub (per AC.FBE.5.3). Behaviour
+        preserved.
+      - `README.md` "before public flip" block removal (per
+        AC.FBE.5.4). The rename has landed; surrounding prose
+        already uses `loam`.
+      - `docs/getting-started.md` double-step-5 fix + minimal
+        coherence updates (header + intro sentence; per
+        AC.FBE.5.5).
+      - `loam init` end-to-end smoke (per AC.FBE.5.6 — rewritten
+        to align with verified `bootstrap_new_workspace` contract;
+        local-path form does not write to `~/.loam/`, only URL form
+        writes `~/.loam/canonical-cache/<repo-id>/`). Pre-seal
+        smoke verified `loam init /tmp/test-fbe5-ws --from
+        /Users/lukeivers/ivers-corp-pos-v2/` exits 0.
+
+    Negative AC.FBE.5.7: zero behaviour changes.
+
+    Surface #7 (recorded for FBE.6 reviewer + FIDRAFT candidate):
+    `loam init` prints "  .claude/    ← scaffolded" but no code
+    creates `<workspace>/.claude/` (verified at
+    `framework/loam-init/src/loam/loam_init/cli.py:128` +
+    `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py:508`
+    — `claude_dir` declared but never `mkdir`-ed; FBE.7 retired
+    the `mcp_json_writer` invocation which may have been the
+    historical creator). Out of FBE.5 scope per ODD §2.5
+    (AC.FBE.5.6 verification scope is `~/.loam/`, not
+    `<workspace>/.claude/`).
+
+    Structural delta (within fence + universal admissions):
+
+      - 15 sealed-component sidecars (`<comp>/tests/SEAL_COMMIT`)
+        bump to FBE.5 seal SHA via `loam amend seal`. Each
+        component's `tests/test_no_sealed_amendments.py` BASELINE
+        literal bumps via `loam amend apply`.
+      - Single narrative file at
+        `framework/workspace-bootstrap/tests/SEAL_COMMIT.notes`
+        carries this body (multi-fence narrative target per FBE.4
+        precedent).
+      - 15 component `pyproject.toml` files: single `description`
+        field edit each (verified post-edit via grep).
+      - `framework/tools/loam/src/loam_cli/cli.py`: module
+        docstring (lines 1-33 pre-edit) + in-function comments
+        (lines 118-124 + 141-143 pre-edit) scrubbed of amendment-
+        number references.
+      - `README.md`: 7-line block removed (the "before public
+        flip" note); surrounding prose preserved.
+      - `docs/getting-started.md`: 3 edits (header line 41 +
+        intro sentence line 43 + step-5-to-6 renumber line 113).
+
+    AC surface (per sub-plan §4):
+
+      - AC.FBE.5.1 — 15 in-scope `description` fields no longer
+        contain `pOS v2` / `Phase 4` / `amendment #N` / `M-series`
+        / `M1g` / `M6a` / `M6b.1` / `M-FBM` vocabulary.
+      - AC.FBE.5.2 — vocabulary substitutions per the AC table:
+        `pOS v2` → `loam`; `Phase 4+ extension protocol` (and
+        synonym) → `the plugin contribution protocol`;
+        `(post-M1g namespace pivot per M1e §11 finding #4)` →
+        dropped; `M-series` references dropped.
+      - AC.FBE.5.3 — `cli.py` module docstring + in-function
+        comments scrubbed of amendment-number references.
+      - AC.FBE.5.4 — README "before public flip" block removed.
+      - AC.FBE.5.5 — getting-started.md three-edit coherence fix
+        produces six consecutive `### N.` subheadings (1-6) +
+        consistent `Six-step bootstrap` header + intro.
+      - AC.FBE.5.6 (rewritten — contract-aligned) — `loam init`
+        smoke exits 0; `~/.loam/` contract intact for local-path
+        form (no writes); URL-form `~/.loam/canonical-cache/`
+        contract verified by code-read of `new_workspace.py:638-642`.
+      - AC.FBE.5.7 — zero behaviour changes; only doc-shape +
+        docstring/comment edits land.
+      - AC.FBE.5.S — fence-fifteen: every fence component's
+        diff is sidecar bump + BASELINE bump + `description` edit
+        (and for `framework/tools/loam` also the cli.py
+        docstring/comments scrub). README + getting-started ride
+        via universal_paths.files; plan-doc + manifest YAML +
+        parent §8 backfill ride via universal prefix.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - `framework/workspace-bootstrap/`'s description: dropped
+        the "ten foundational components" count phrase (v0.1.0
+        ships fifteen — keeping the count would make a false
+        statement after the FBE foldback added components like
+        `loam-init`); replaced with "the foundational components".
+      - `framework/telegram-interface/`'s description: dropped
+        the trailing "Zero sealed-component amendments." sentence
+        (internal-vocabulary leakage about how it was built —
+        not user-facing meaning).
+      - `framework/workspace-sync/`'s description: dropped the
+        "Architecture A/B" parentheticals (internal architectural-
+        letter shorthand; user-facing meaning is "git-shaped sync"
+        without the letter shorthand).
+      - `framework/observability-aggregator/`'s description: kept
+        "v1.1 R10 retention-class" reference (forward-looking spec
+        class name, not amendment-number leakage); dropped the
+        "(Reading A)" parenthetical (internal architectural-letter
+        shorthand).
+      - `cli.py` docstring: replaced "At M1g sealing time the only
+        registered subcommand was..." preamble with "The namespace
+        is reserved for..." present-tense statement. Behaviour
+        clauses preserved verbatim.
+
+    Out of scope (per sub-plan §9):
+
+      - Dev-only tool `description` scrubs (Surface #1 — 9 dev-only
+        tools with similar leakage; FUTURE_IDEAS_DRAFT candidate).
+      - `<workspace>/.claude/` not-created bug (Surface #7 — out of
+        FBE.5 scope; FBE.6 reviewer + FIDRAFT candidate).
+      - README rewrites beyond named "before public flip" block
+        (HT-3).
+      - getting-started.md edits beyond the named LOW 1 fix +
+        minimal coherence (HT-3 / Surface #5).
+      - Behaviour code edits anywhere (AC.FBE.5.7 negative AC).
+
+    BASELINE 8032348 (pre-apply tip; the FBE.5 source-side delta
+    commit). The 15 fence-component sidecars all advance to the
+    same seal SHA at `loam amend seal` (single seal commit covers
+    all 15 components per the fence-fifteen-with-edit shape).

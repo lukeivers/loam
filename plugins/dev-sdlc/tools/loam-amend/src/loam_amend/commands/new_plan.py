@@ -1,9 +1,9 @@
 """``loam amend new-plan <slug>`` — scaffold a vars-file for a new plan-doc.
 
-Surface (per ``docs/rebuild/plans/pos-amend-new-plan-orchestration.md`` — historical):
+Surface (per ``docs/plans/pos-amend-new-plan-orchestration.md`` — historical):
 
 - ``loam amend new-plan <slug>`` — write a YAML vars-file at
-  ``<repo>/docs/rebuild/plans/<slug>.vars.yaml`` pre-stubbed with the
+  ``<repo>/docs/plans/<slug>.vars.yaml`` pre-stubbed with the
   plan-doc skeleton's contract (16 required + 6 optional vars). Plan
   author edits the vars-file and runs
   ``loam amend template render plan/dev-discipline --vars-file <…>``
@@ -111,7 +111,7 @@ def _vars_file_content(slug: str, title: str, ac_prefix: str) -> str:
     iso_date = datetime.date.today().isoformat()
     return f"""# loam amend new-plan scaffold for {slug}
 # Edit this file, then render with:
-#   loam amend template render plan/dev-discipline --vars-file <this-file> --out docs/rebuild/plans/{slug}.md --force
+#   loam amend template render plan/dev-discipline --vars-file <this-file> --out docs/plans/{slug}.md --force
 
 # --- Required vars (16) ---
 
@@ -151,7 +151,7 @@ OUT_OF_SCOPE: |
 IMPLEMENTATION_ORDER: |
   1. Read session-start corpus per CLAUDE.md.
   2. Read this plan + research doc + companions.
-  3. Write builder-plan to `docs/rebuild/plans/{slug}.builder-plan.md`.
+  3. Write builder-plan to `docs/plans/{slug}.builder-plan.md`.
   4. Land code per plan + builder-plan.
   5. Run tests (narrow scope first; full suite before commit).
   6. Conventional commits land the change. No `--amend`.
@@ -185,7 +185,7 @@ HALT_FINDINGS: |
 # REFERENCES: |
 #   (override the standard refs stub if needed)
 STATUS_LINE: "plan (pre-dispatch). {iso_date}."
-RESEARCH_PATH: "docs/rebuild/plans/research/{slug}-research.md"
+RESEARCH_PATH: "docs/plans/research/{slug}-research.md"
 # WORKING_DIRECTORY: "/Users/lukeivers/ivers-corp-pos-v2/"
 """
 
@@ -209,7 +209,7 @@ def _emit_diagnostic(exc: NewPlanError) -> None:
     # line for stderr-dropped contexts (e.g. some Bash-tool eval-
     # wrapper invocations); stderr carries the existing detail
     # for back-compat with prior assertions. Per AC.PA-hv.1 /
-    # AC.PA-hv.2 of `docs/rebuild/plans/pos-amend-halt-visibility.md`.
+    # AC.PA-hv.2 of `docs/plans/pos-amend-halt-visibility.md`.
     print(f"HALT: {exc.failure_class}: {exc}")
     print(f"new-plan error [{exc.failure_class}]: {exc}", file=sys.stderr)
 
@@ -239,10 +239,10 @@ def run(
         Pre-fill the corresponding vars; empty when ``None``.
     vars_out
         Output path for the vars-file. Default:
-        ``<repo>/docs/rebuild/plans/<slug>.vars.yaml``.
+        ``<repo>/docs/plans/<slug>.vars.yaml``.
     plan_out
         Output path for the rendered plan-doc when ``--render``. Default:
-        ``<repo>/docs/rebuild/plans/<slug>.md``.
+        ``<repo>/docs/plans/<slug>.md``.
     render
         When True, also render the plan-doc (delegates to
         ``loam_amend.commands.template.run("render", ...)``).
@@ -265,9 +265,9 @@ def run(
         return 2
 
     if vars_out is None:
-        vars_out = root / "docs" / "rebuild" / "plans" / f"{slug}.vars.yaml"
+        vars_out = root / "docs" / "plans" / f"{slug}.vars.yaml"
     if plan_out is None:
-        plan_out = root / "docs" / "rebuild" / "plans" / f"{slug}.md"
+        plan_out = root / "docs" / "plans" / f"{slug}.md"
 
     # Refuse-overwrite check BEFORE writing anything (no partial output
     # — AC.D-np.4).

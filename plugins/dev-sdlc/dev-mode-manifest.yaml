@@ -108,7 +108,7 @@ always_loaded:
   - glob: "framework/workspace-bootstrap/**"
   - glob: "framework/workspace-sync/**"
   # Tracker-root-load-bearing per amendment #39 + sub-plan E.
-  - path: docs/rebuild/VALUE_PROPOSITION.md
+  - path: docs/VALUE_PROPOSITION.md
   # End-user-facing harness docs. CLAUDE_CAPABILITIES STAYS top-level
   # (public-surface harness orientation); duration-estimation-rubric
   # MOVED to plugins/dev-sdlc/docs/ post-M6b.0 (dev-discipline doc per
@@ -141,17 +141,17 @@ dev_only:
   # is read on-demand for depth.
   - path: docs/odd-llm-grounding.lean.md
   # Dev/SDLC tracker docs.
-  - path: docs/rebuild/STATE.md
-  - path: docs/rebuild/BACKLOG.md
-  - path: docs/rebuild/FUTURE_IDEAS.md
-  - path: docs/rebuild/FUTURE_IDEAS_DRAFT.md
-  - path: docs/rebuild/decay-retention-analysis.md
+  - path: docs/STATE.md
+  - path: docs/BACKLOG.md
+  - path: docs/FUTURE_IDEAS.md
+  - path: docs/FUTURE_IDEAS_DRAFT.md
+  - path: docs/archive/decay-retention-analysis.md
   # All plan docs (per-amendment + per-sub-plan).
-  - glob: "docs/rebuild/plans/**"
+  - glob: "docs/plans/**"
   # Component-scoped proposals + seal narratives.
-  - glob: "docs/rebuild/components/**"
+  - glob: "docs/archive/component-research/**"
   # Spec docs.
-  - glob: "docs/rebuild/spec/**"
+  - glob: "docs/spec/**"
   # The partition manifest itself (read by loam-mode; dev infrastructure).
   # Post-M6b.0: relocated under the dev-sdlc plugin tree.
   - path: plugins/dev-sdlc/dev-mode-manifest.yaml

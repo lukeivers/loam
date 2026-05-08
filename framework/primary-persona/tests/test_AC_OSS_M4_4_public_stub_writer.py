@@ -86,7 +86,7 @@ def test_AC_OSS_M4_4_writes_stub_on_first_call(
         tmp_path,
         spec,
         scope_id="scope-fixture",
-        plan_path="docs/rebuild/plans/foo.md",
+        plan_path="docs/plans/foo.md",
     )
     assert outcome["outcome"] == "written"
     target = Path(outcome["path"])

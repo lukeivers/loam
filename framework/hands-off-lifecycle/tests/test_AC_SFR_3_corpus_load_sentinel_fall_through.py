@@ -18,7 +18,7 @@
 Single-framework restructure (amendment #67). Verifies:
 
 - ``compute_corpus_paths_required`` reads
-  ``<workspace>/framework/docs/rebuild/dev-mode-manifest.yaml`` when
+  ``<workspace>/framework/docs/dev-mode-manifest.yaml`` when
   the workspace-root copy is absent (and resolves the manifest's
   paths against the framework root so they exist on disk).
 - ``_classify_corpus_state`` counts a path as present when either
@@ -61,12 +61,12 @@ def test_compute_corpus_paths_required_falls_through_to_framework(
     tmp_path: Path,
 ) -> None:
     """Manifest absent at workspace root → reader uses
-    ``<workspace>/framework/docs/rebuild/dev-mode-manifest.yaml``.
+    ``<workspace>/framework/docs/dev-mode-manifest.yaml``.
     The selector resolves manifest paths against the framework root.
     """
     workspace_root = tmp_path
     framework = workspace_root / "framework"
-    framework_docs = framework / "docs" / "rebuild"
+    framework_docs = framework / "docs"
     framework_docs.mkdir(parents=True)
     (framework_docs / "dev-mode-manifest.yaml").write_text(_FIXTURE_MANIFEST)
 
@@ -87,7 +87,7 @@ def test_compute_corpus_paths_required_prefers_workspace_root(
     manifest, ignores framework copy.
     """
     workspace_root = tmp_path
-    docs = workspace_root / "docs" / "rebuild"
+    docs = workspace_root / "docs"
     docs.mkdir(parents=True)
     (docs / "dev-mode-manifest.yaml").write_text(_FIXTURE_MANIFEST)
     (workspace_root / "docs" / "odd-methodology.md").write_text(
@@ -96,7 +96,7 @@ def test_compute_corpus_paths_required_prefers_workspace_root(
 
     # Distinct framework manifest names a different path; if it leaks,
     # we'd see the wrong path returned.
-    framework_docs = workspace_root / "framework" / "docs" / "rebuild"
+    framework_docs = workspace_root / "framework" / "docs"
     framework_docs.mkdir(parents=True)
     (framework_docs / "dev-mode-manifest.yaml").write_text(
         _FIXTURE_MANIFEST.replace(
@@ -167,7 +167,7 @@ def test_write_corpus_load_sentinel_loaded_via_framework_fall_through(
     """
     workspace_root = tmp_path
     framework = workspace_root / "framework"
-    framework_docs_rebuild = framework / "docs" / "rebuild"
+    framework_docs_rebuild = framework / "docs"
     framework_docs_rebuild.mkdir(parents=True)
     (framework_docs_rebuild / "dev-mode-manifest.yaml").write_text(
         _FIXTURE_MANIFEST

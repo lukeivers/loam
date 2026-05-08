@@ -7,7 +7,7 @@ when the workspace is classified `pos-v2-dev`). NORMAL USE workspaces
 never see this content.
 
 The partition that drives the user-vs-dev split is declared in
-`docs/rebuild/dev-mode-manifest.yaml` (sub-plan F).
+`plugins/dev-sdlc/dev-mode-manifest.yaml` (sub-plan F).
 
 ---
 
@@ -24,14 +24,14 @@ editing code, dispatching agents, ruling on designs — read:
   `docs/odd-llm-grounding-derivation.md` is read on-demand for depth.
 - `plugins/dev-sdlc/docs/odd-methodology.md` (normative; this governs)
 - `plugins/dev-sdlc/docs/odd-in-loam.md` (worked examples)
-- `docs/rebuild/VALUE_PROPOSITION.md`
-- `docs/rebuild/STATE.md`
+- `docs/VALUE_PROPOSITION.md`
+- `docs/STATE.md`
 - `docs/duration-estimation-rubric.md` (AI-build wall-time estimation rubric)
-- `docs/rebuild/FUTURE_IDEAS.md` (CDCs live here; they apply to every build)
-- Any `docs/rebuild/plans/amendment-*.md` whose amendment is in-flight
+- `docs/FUTURE_IDEAS.md` (CDCs live here; they apply to every build)
+- Any `docs/plans/amendment-*.md` whose amendment is in-flight
 
 Component-scoped work additionally reads that component's
-`docs/rebuild/components/<name>/` artefacts (proposal, research,
+`docs/archive/component-research/<name>/` artefacts (proposal, research,
 seal narrative) before editing or proposing.
 
 Proceeding without those loaded is how past sessions produced
@@ -61,20 +61,20 @@ require the read. If in doubt, read.
 - `plugins/dev-sdlc/docs/odd-methodology.md` — the ODD methodology itself.
 - `plugins/dev-sdlc/docs/odd-in-loam.md` — ODD applied to pOS v2 specifically, including
   worked examples.
-- `docs/rebuild/FUTURE_IDEAS.md` — future ideas (including the Dev/SDLC
+- `docs/FUTURE_IDEAS.md` — future ideas (including the Dev/SDLC
   plugin at Idea 3) and the currently-parked dev CDCs. The CDCs are
   temporary residents of that file; when the Dev/SDLC plugin lands, they
   migrate there.
-- `docs/rebuild/FUTURE_IDEAS_DRAFT.md` — no-overhead capture surface for
+- `docs/FUTURE_IDEAS_DRAFT.md` — no-overhead capture surface for
   improvement ideas (companion to FUTURE_IDEAS.md). Every improvement
   idea (Luke's or assistant's) lands here at point-of-occurrence; daily
   rigor (post-initial-phase) reviews and graduates entries to
   FUTURE_IDEAS.md or drops them. Agents surface to chat; parent appends.
-- `docs/rebuild/plans/` — per-amendment and per-scope plan docs
+- `docs/plans/` — per-amendment and per-scope plan docs
   (plan-before-code artefacts).
-- `docs/rebuild/components/` — proposal + seal narratives per sealed
+- `docs/archive/component-research/` — proposal + seal narratives per sealed
   component.
-- `docs/rebuild/dev-mode-manifest.yaml` — the user-vs-dev auto-load
+- `plugins/dev-sdlc/dev-mode-manifest.yaml` — the user-vs-dev auto-load
   partition (sub-plan F). `tools/loam-mode/` parses + audits it.
 - `tools/pos-amend/` — amendment-dispatch tooling. The `pos-amend` CLI
   mechanises sealed-component amendment-cycle bookkeeping (BASELINE
@@ -92,7 +92,7 @@ The three design lenses (Lens 1 — Claude-leverage-first; Lens 2 —
 harness + primary-persona value; Lens 3 — ODD authoring) are captured
 as design principles in the always-loaded `CLAUDE.md`. The execution
 programme to *mechanically enforce* them in future research plans
-(see `docs/rebuild/FUTURE_IDEAS.md` Idea 1) does not start until the
+(see `docs/FUTURE_IDEAS.md` Idea 1) does not start until the
 new pOS v2 copy is being tested in a live evaluation workspace. Until
 enforcement lands, feature authors apply the lenses by discipline;
 once enforcement lands, a research plan missing an answer to any lens

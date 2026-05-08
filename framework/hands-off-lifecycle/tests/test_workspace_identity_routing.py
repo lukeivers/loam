@@ -15,7 +15,7 @@
 """Amendment #28 acceptance tests — workspace-identity-routed first-run.
 
 Each test maps 1:1 to an acceptance criterion in the amendment plan
-(docs/rebuild/plans/amendment-28-workspace-identity-routed-first-run.md,
+(docs/plans/amendment-28-workspace-identity-routed-first-run.md,
 §4). AC10 is the re-extension of amendment #6's AC6 per ODD §4; AC11–14
 close the related behaviours the plan objective names.
 

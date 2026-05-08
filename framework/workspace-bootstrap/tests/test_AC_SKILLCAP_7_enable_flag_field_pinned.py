@@ -14,7 +14,7 @@
 
 """AC.SKILLCAP.7 (pinning test) — `Manifest` dataclass shape.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.7: the `Manifest` dataclass declares the field
 `enable_auto_skill_capture: bool` with default `False` (boolean
 literal, not string). This test pins that shape so an accidental

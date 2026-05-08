@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.2 — Trigger 1 (explicit-request) named in SKILL body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.2: the SKILL body explicitly names the explicit-request
 trigger, lists ≥3 phrase examples (including "remember this", a
 "make this a {thing,skill}" variant, and "let's codify this" or

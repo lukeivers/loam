@@ -1,7 +1,7 @@
 """Amendment #34 — memory-system eager lifespan / D1 conformance tests.
 
 Three tests, one per acceptance criterion in
-``docs/rebuild/plans/amendment-34-memory-system-eager-lifespan-d1-conformance.md`` §6:
+``docs/plans/amendment-34-memory-system-eager-lifespan-d1-conformance.md`` §6:
 
   - AC34.1: a ``python -m src.service`` subprocess returns 200 OK from
     ``GET /health`` (with a ``workspace_root`` field) within 5s of

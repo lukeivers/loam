@@ -6,7 +6,7 @@ This document is the concise codification of the plan-doc + manifest authoring c
 
 ## 1. Plan-doc shape
 
-A plan-doc is a Markdown file at `docs/rebuild/plans/<slug>.md`. Each plan has:
+A plan-doc is a Markdown file at `docs/plans/<slug>.md`. Each plan has:
 
 - **§1 Objective** — outcome-shaped, single sentence.
 - **§2 Predecessors / context** — which sealed amendments this plan composes against.
@@ -23,7 +23,7 @@ Section numbering is convention; insert section gaps where structure changes (e.
 
 ## 2. Sub-plan shape
 
-When a master plan splits into sub-amendments (M1.rename's M1a..M1g, M6's M6a/M6b/M6c/M6b.0/M6b.1), each sub-amendment gets its own sub-plan at `docs/rebuild/plans/<master-slug>-<suffix>.md`. The sub-plan:
+When a master plan splits into sub-amendments (M1.rename's M1a..M1g, M6's M6a/M6b/M6c/M6b.0/M6b.1), each sub-amendment gets its own sub-plan at `docs/plans/<master-slug>-<suffix>.md`. The sub-plan:
 
 - References the master plan-doc + ratifies any owner rulings already issued at master-plan time.
 - Declares the sub-amendment's specific scope (subset of master's surface).
@@ -33,7 +33,7 @@ When a master plan splits into sub-amendments (M1.rename's M1a..M1g, M6's M6a/M6
 
 ## 3. Manifest YAML shape
 
-A manifest at `docs/rebuild/plans/<slug>.manifest.yaml` drives `loam amend apply` + `loam amend seal`. Required fields:
+A manifest at `docs/plans/<slug>.manifest.yaml` drives `loam amend apply` + `loam amend seal`. Required fields:
 
 - `schema_version: 1`
 - `amendment.number` — global counter; advances per amendment.
@@ -48,7 +48,7 @@ A manifest at `docs/rebuild/plans/<slug>.manifest.yaml` drives `loam amend apply
 
 ## 4. AC ladder-up
 
-Every AC ladders up to the master plan's outcome ACs, which themselves ladder up to AC.PO.1 + AC.PO.2 (prime objective in `docs/rebuild/VALUE_PROPOSITION.md`). Per `feedback_value_proposition_as_prime_objective` this is the required reverse-trace.
+Every AC ladders up to the master plan's outcome ACs, which themselves ladder up to AC.PO.1 + AC.PO.2 (prime objective in `docs/VALUE_PROPOSITION.md`). Per `feedback_value_proposition_as_prime_objective` this is the required reverse-trace.
 
 ## 5. §14 method-decision register
 

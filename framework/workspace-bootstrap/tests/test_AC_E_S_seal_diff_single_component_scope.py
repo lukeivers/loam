@@ -21,8 +21,8 @@ surface. Per the master plan's seal-diff discipline, no source
 surface outside ``workspace-bootstrap/`` may change as part of this
 amendment; the amendment commit's diff is restricted to
 ``workspace-bootstrap/`` plus universal admissions
-(``docs/rebuild/plans/``, ``CLAUDE.md``, ``docs/odd-*.md``,
-``docs/rebuild/FUTURE_IDEAS.md``).
+(``docs/plans/``, ``CLAUDE.md``, ``docs/odd-*.md``,
+``docs/FUTURE_IDEAS.md``).
 
 Two enforcement layers:
 
@@ -38,7 +38,7 @@ Two enforcement layers:
    future hand-edit to the manifest cannot silently widen the
    amendment to multiple sealed surfaces without updating this AC.
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
+Plan: docs/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
 """
 
 from __future__ import annotations
@@ -55,7 +55,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 MANIFEST_PATH = (
     REPO_ROOT
     / "docs"
-    / "rebuild"
     / "plans"
     / "two-modes-and-multi-workspace"
     / "E-classify-workspace-replacement.manifest.yaml"

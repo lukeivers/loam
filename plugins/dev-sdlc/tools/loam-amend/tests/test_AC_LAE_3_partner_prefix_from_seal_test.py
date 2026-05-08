@@ -1,6 +1,6 @@
 """AC.LAE.3 — partner-prefix derived from manifest's ``seal_test`` path.
 
-Plan: ``docs/rebuild/plans/v0-1-2-loam-amend-ergonomics.md`` AC.LAE.3.
+Plan: ``docs/plans/v0-1-2-loam-amend-ergonomics.md`` AC.LAE.3.
 Per v0.1.2 item 6 (loam-amend ergonomics sweep). Fixes the latent
 ``plugins/<name>/``-located component mis-shape; framework-located
 manifests' admissions are unchanged (modulo the dropped bare-
@@ -114,7 +114,7 @@ def test_mixed_fence_admissions_have_correct_shapes(
                     "title": "mixed fence",
                 },
                 "baseline": baseline,
-                "plan": "docs/rebuild/plans/ac-lae-3-mixed.md",
+                "plan": "docs/plans/ac-lae-3-mixed.md",
                 "components": [
                     {
                         "name": "alpha",

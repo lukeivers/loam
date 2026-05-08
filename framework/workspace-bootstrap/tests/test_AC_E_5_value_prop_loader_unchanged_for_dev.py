@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """AC.E.5 — Downstream value-prop loader still reads
-docs/rebuild/VALUE_PROPOSITION.md on dev workspaces.
+docs/VALUE_PROPOSITION.md on dev workspaces.
 
 Sub-plan E (two-modes-and-multi-workspace, amendment #42) decouples
 the classification source-of-truth from the content source. The
@@ -21,13 +21,13 @@ classifier now reads dev_intent; the ``load_value_prop_source``
 function — which decides which file to read for the value-prop
 content — is unchanged in shape. On a workspace classified as
 ``"pos-v2-dev"``, ``load_value_prop_source`` reads
-``docs/rebuild/VALUE_PROPOSITION.md``. On a workspace classified as
+``docs/VALUE_PROPOSITION.md``. On a workspace classified as
 ``"user"``, it reads ``<workspace>/value-prop.md``.
 
 This test asserts the loader's behaviour is preserved across the
 amendment.
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
+Plan: docs/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
 """
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ def test_AC_E_5_loader_reads_framework_path_on_dev_classification(
     tmp_path: Path,
 ) -> None:
     """When the classification is ``"pos-v2-dev"``, the loader reads
-    ``docs/rebuild/VALUE_PROPOSITION.md`` (the framework path)."""
+    ``docs/VALUE_PROPOSITION.md`` (the framework path)."""
     workspace = tmp_path / "ws-dev"
     workspace.mkdir()
     framework_path = workspace / FRAMEWORK_VALUE_PROP_RELPATH

@@ -53,12 +53,13 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 _ALLOWED_PREFIXES: tuple[str, ...] = (
     "hands-off-lifecycle/",
     "tools/loam-mode/",
-    "docs/rebuild/plans/",
+    "docs/plans/",
+    "docs/rebuild/plans/",  # historical pre-v0.3.0-C1 path retained for diff-window check
     # Universal admissions per amendment #22 ruling #3.
     "CLAUDE.md",
     "docs/odd-in-loam.md",
     "docs/odd-methodology.md",
-    "docs/rebuild/FUTURE_IDEAS.md",
+    "docs/FUTURE_IDEAS.md",
 )
 
 
@@ -106,7 +107,6 @@ def test_AC45_S_no_path_outside_admitted_prefixes_against_HEAD() -> None:
     manifest_path = (
         REPO_ROOT
         / "docs"
-        / "rebuild"
         / "plans"
         / "amendment-45-merge-session-start-multi-contributor.manifest.yaml"
     )

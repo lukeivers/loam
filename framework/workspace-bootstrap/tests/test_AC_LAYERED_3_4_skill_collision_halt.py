@@ -10,8 +10,8 @@
 rather than overwriting operator artefacts or silently picking a
 winner across plugins.
 
-Per ``docs/rebuild/plans/v0-1-7-cycle-3-layered-skill-discovery.md`` §4
-+ parent ``docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md``:
+Per ``docs/plans/v0-1-7-cycle-3-layered-skill-discovery.md`` §4
++ parent ``docs/plans/v0-1-7-personas-pm-layered-skills.md``:
 
 - AC.LAYERED.3 — workspace-local override collision: operator pre-
   authored ``<workspace>/.claude/skills/<name>/`` as a non-symlink

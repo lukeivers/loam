@@ -16,7 +16,7 @@
 
 Each test is the 1:1 acceptance-criterion complement of the
 corresponding AC in
-``docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md``.
+``docs/archive/component-research/orchestrator-bootstrap-unification/proposal.md``.
 
 Covered here (orchestrator-owned behaviours):
   * AC2 — a missing ``bootstrap.py`` is not a fail-closed condition

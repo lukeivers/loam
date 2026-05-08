@@ -3,7 +3,7 @@ amendment:
   slug: test-missing-number
   title: "test: missing number"
 baseline: abcdef0
-plan: docs/rebuild/plans/bad.md
+plan: docs/plans/bad.md
 components:
   - name: example
     seal_test: example/tests/test.py

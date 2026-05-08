@@ -1,0 +1,124 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-3-master-plan
+  title: "v0.2.3 master plan — objective-first extractor (replaces v0.1.8 extraction logic); 3 cycles (multi-source objective synthesis / backing-implementation map + ratification reframe / PR-safety + continuous-watch reframe); SOFT smoke gate at v0.2.3 (HARD deferred to v0.2.5); substrate preserved (banding shape / four-stage workflow / audit-log / ratification flow / PR-safety stage shape / watch engine shape); adapter outputs reshape to evidence-row producers; backing-map links objectives to code paths; AI-time band 12-22 h"
+
+# This manifest is plan-doc-only; the v0.2.3 release lands as three
+# cycle-level apply+seal pairs with their own per-cycle manifests.
+# This master-plan manifest exists to:
+#   - declare the master plan-doc paper trail under
+#     docs/plans/ universal-prefix admission;
+#   - establish the plan_doc_ref for the v0.2.3 release rollup
+#     (final SHIPPED rollup commit references this manifest);
+#   - record the master-plan method-decision register at §9 for
+#     traceability.
+#
+# v0.2.3 is the SECOND cycle of the v0.2.2 → v0.2.5 rebuild path.
+# v0.2.2 SHIPPED at:
+#   - apply ada74e1
+#   - seal  5eda09d
+#   - post-seal SHA backfill ebca7dc (dev-sdlc at da58ad8)
+# v0.2.4 (completeness interview + gap analysis) follows v0.2.3.
+# v0.2.5 (negative-alignment detection + Eric re-ship gate) follows v0.2.4.
+#
+# Commit ladder pre-apply:
+#   6d66a2e — v0.2.1 SHIPPED rollup (ancestor; Eric ship paused).
+#   d37c623 — lean grounding doc (always-load).
+#   ffd9c95 — verbose grounding doc.
+#   5974103 — odd-rebuild master plan (v0.2.2 → v0.2.5 sequence; AUTHORITATIVE).
+#   ada74e1 — v0.2.2 apply (lean grounding auto-loads).
+#   5eda09d — v0.2.2 seal.
+#   ebca7dc — v0.2.2 §14 + master plan §3 v0.2.2 SHA row backfill.
+#   <THIS plan-doc commit lands NEXT (master plan-doc + this manifest)>
+#   <per-cycle dispatches author sub-plan-docs + sub-manifests>
+#   <per-cycle apply + seal + §14 backfill commits land>
+#   <v0.2.3 SHIPPED rollup commit references this manifest's plan_doc_ref + the per-cycle SHAs in §9 register>
+#
+# Three-cycle decomposition (per master plan §3):
+#   Cycle 1 — Multi-source objective synthesis
+#     PRIMARY plugins/dev-sdlc/odd-extractor/
+#     AC families: AC.OBJX.* (12 ACs)
+#     AI-time: 5-10 h
+#     Output: objective-altitude contract draft (objectives + constraints + capabilities)
+#     Surface migration: contract-draft.md/.yaml structurally reshaped; adapter outputs reshape to evidence-rows
+#   Cycle 2 — Backing-implementation map + ratification reframe
+#     PRIMARY plugins/dev-sdlc/odd-extractor/
+#     AC families: AC.BACKMAP.* (7 ACs) + AC.OBJRAT.* (8 ACs)
+#     AI-time: 3-6 h
+#     Output: backing_map.py module + reframed ratify.py + reframed ratification_state.py
+#     Persisted at <workspace>/.loam/extractions/<repo-id>/backing-map.yaml
+#   Cycle 3 — PR-safety + continuous-watch reframe
+#     PRIMARY plugins/dev-sdlc/pr-safety/ + secondary plugins/dev-sdlc/odd-extractor/incremental*.py
+#     AC families: AC.PRSGOBJ.* (8 ACs) + AC.WATCHOBJ.* (6 ACs)
+#     AI-time: 4-6 h
+#     Output: reframed gate consumer / classifier / override-flow / PR description template + reframed watch incremental engine
+#     Two-component fence under shared dev-sdlc parent; single seal
+#
+# Smoke (per smoke-test-discipline §6 + master plan §3 + §5):
+#   Cycle 1 smoke (D1+D5+D6 inheriting D2/D3/D4 from component-shape):
+#     fresh-fixture extraction produces banded objectives + constraints + capabilities
+#   Cycle 2 smoke (D1+D5+D6):
+#     synthetic objective + backing-map fixture → ratify objective P→V
+#     with backing evidence; round-trip persistence
+#   Cycle 3 smoke (D1+D2+D3+D5+D6 — release-level SOFT integration smoke):
+#     canonical jsts-playwright-app fixture + objective contract + backing-map +
+#     synthetic VERIFIED-objective-touching diff → HARD_BLOCK observed;
+#     synthetic backing-row-shifting commit → watch flags coverage shift;
+#     §self-checks pass-rate ≥90% over released contract output
+#   Release-level SOFT gate (per parent Decision R): SOFT at v0.2.3;
+#     HARD deferred to v0.2.5 against rd-automation
+#
+# Bookkeeping note: this manifest is plan-doc-only — no source-edit
+# commit to declare BASELINE against; no apply / seal expected from
+# THIS manifest. Plan-doc lands as a single semantic commit on
+# canonical pos-v2; per-cycle work cycles dispatch separately.
+# Universal-paths admit docs/plans/ (plan-doc paper trail).
+
+# Plan-doc-only — baseline pins to the master plan-doc commit so the
+# manifest validator's structural lint passes. No apply / seal expected
+# from THIS manifest; per-cycle manifests handle their own apply/seal.
+baseline: "35155fd"
+
+plan: docs/plans/v0-2-3-master-plan.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# This master plan-doc IS the durable surface; per-cycle plan-docs
+# expand at cycle plan-author dispatch time.
+plan_doc_ref: docs/plans/v0-2-3-master-plan.md
+
+# AC count is structural — sum of per-cycle AC seeds named at §3.
+# AC.OBJX.* 12 + AC.BACKMAP.* 7 + AC.OBJRAT.* 8 + AC.PRSGOBJ.* 8 + AC.WATCHOBJ.* 6 = 41
+ac_count: 41
+
+smoke_outcome: "SOFT release-level integration smoke at Cycle 3 against canonical jsts-playwright-app fixture (D1+D2+D3+D5+D6); §self-checks ≥90% pass-rate gate; HARD against rd-automation deferred to v0.2.5."
+
+# components — the v0.2.3 build cycles seal under the dev-sdlc
+# parent (consistent with v0.1.8/v0.1.9/v0.2.0/v0.2.1/v0.2.2 precedent
+# for sealed components living at plugins/dev-sdlc/tests/SEAL_COMMIT).
+# This master-plan manifest is plan-doc-only and does NOT trigger a
+# seal; per-cycle manifests do.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + v0.1.9 + v0.2.0
+# + v0.2.1 + v0.2.2 precedent.
+# `docs/plans/` admits the plan-before-code paper trail (this
+# master plan-doc + per-cycle sub-plan-docs + their manifests).
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. This master-plan
+  # manifest is plan-doc-only — there is no seal commit synthesized
+  # from it. The per-cycle manifests handle their own seals.
+  target: docs/plans/v0-2-3-master-plan.md

@@ -1,0 +1,114 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution
+  title: "v0.2.5 corrective C6 — closes the three design-shape findings (F-DESIGN-1/2/3) surfaced by the v0.2.5 HARD smoke 3rd-run report after the F1+F2+F5+F8 history closed via C1+C2+C4-pivot+C5; ships an outcome-altitude full-4-stage smoke test that authors a stub PM under <workspace>/workspace/.loam/pms/ before invoking the CLI; corrects the resolve_pm_handle error message to reference the workspace path + --pm-handle (no longer the nonexistent `loam project init` subcommand); shifts the --workspace-root default from Path.cwd() to the target <repo> positional arg so artefacts land under the target instead of the invoker's cwd; adds .loam/ to pos-v2's .gitignore to prevent self-pollution; 5 named ACs"
+
+# BASELINE: source-edit feat commit covering:
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/interview.py
+#       1. resolve_pm_handle no-PM error message: replaced
+#          "Run `loam project init` to author one" with workspace-path
+#          + contract.yaml shape + per-project-pm conftest pointer +
+#          `--pm-handle` flag mention. Closes F-DESIGN-2.
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/cli.py
+#       1. _resolve_workspace_root signature changes from
+#          (arg: Path | None) -> Path to
+#          (arg: Path | None, repo_path: Path) -> Path; default falls
+#          back to repo_path when arg is None (was Path.cwd()).
+#          Closes F-DESIGN-3 (a).
+#       2. All 8 call sites updated:
+#          - 7 sites pass repo_path (already in scope from
+#            _resolve_repo_path(args.repo_path))
+#          - 1 site (_cmd_ratify) passes draft_md_path.parent (the
+#            ratify positional is a contract-draft.md file, not a repo)
+#       3. _add_workspace_root_arg help-text describes the new default
+#          ("default: target <repo> positional arg" + C6 explainer).
+#   - EDIT .gitignore (pos-v2 universal)
+#       1. Added `.loam/` entry with explainer block (F-DESIGN-3 (b)).
+#   - EDIT plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_C1_C2_cli_synthesis_and_interview_error.py
+#       1. Removed `or "loam project init" in err_lower` clause from
+#          the OR-assertion + added negative assertion that the message
+#          must NOT contain `loam project init`. Tracks the F-DESIGN-2
+#          error-message correction.
+#   - NEW plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_C6_1_full_pipeline_with_authored_pm.py
+#       1 outcome-altitude test exercising the full 4-stage CLI
+#       pipeline end-to-end via subprocess against the canonical
+#       jsts-playwright-app fixture, with a stub PM authored inline
+#       BEFORE invocation. Skips on missing claude / loam binaries.
+#       Asserts all four stages exit 0 + four artefacts produced
+#       (objectives.yaml, augmented-objectives.yaml, gap-inventory.yaml,
+#       build-next.yaml). Closes F-DESIGN-1.
+#   - NEW plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_C6_2_interview_error_message.py
+#       3 unit tests verifying the corrected resolve_pm_handle error
+#       message: (a) does NOT reference `loam project init`,
+#       (b) DOES reference the workspace path + contract.yaml,
+#       (c) DOES reference the `--pm-handle` flag.
+#   - NEW plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_C6_3_workspace_root_default_is_repo.py
+#       4 tests verifying (a) helper defaults to repo_path, (b) explicit
+#       arg wins, (c) end-to-end CLI without --workspace-root from a
+#       different CWD lands artefacts under <repo>/.loam/ not <cwd>/.loam/,
+#       (d) help-text describes the new default.
+#
+# Corrective amendment outside any v0.2.5 numbered cycle ladder.
+# Sealed-content invariant: pre-existing AC.* tests remain green
+# (1059 odd-extractor + dev-sdlc post-C6 baseline; 11 pre-existing
+# failures verified against pre-C6 HEAD f69fb1f — 10 SKILLS-DSDLC
+# yaml-frontmatter parse failures + 1 stochastic C3.3 live-LLM test;
+# all 11 are NOT regressions from C6).
+#
+# Commit ladder pre-apply (relative to current HEAD f69fb1f):
+#   f69fb1f — v0.2.5 corrective C5 STATE entry (current HEAD)
+#   <source-edit feat (BASELINE for THIS amendment) — interview.py +
+#    cli.py + .gitignore + 4 test files lands NEXT>
+#   <plan-doc + manifest commit lands NEXT (THIS plan-doc + manifest), then
+#    `loam amend apply <manifest>` lands as single merged manifest+apply
+#    commit per AC.DPS1.6, then `loam amend seal --plan-doc <abs path>` lands
+#    deterministic seal commit, then post-seal §14 backfill is auto-emitted
+#    by --plan-doc>
+#
+# Cross-component fence:
+#   - 2 EDITED source files in odd-extractor (interview.py + cli.py)
+#   - 1 EDITED test file in odd-extractor (C1_C2 message-update)
+#   - 3 NEW test files in odd-extractor (C6.1 + C6.2 + C6.3)
+#   - 1 EDITED universal config file (.gitignore)
+#   - NO edits to per-project-pm component
+#   - NO new CLI subcommand
+#   - NO new third-party dependency
+
+baseline: "b53e628"
+
+plan: docs/plans/v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution.md
+
+ac_count: 5
+smoke_outcome: "C6.1 outcome-alt smoke 4 stages exit 0 + 4 artefacts; C6.2 err-msg references ws path + --pm-handle; C6.3 ws-root default=<repo>; C6.4 .gitignore lists .loam/; C6.5 no regressions"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - .gitignore
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-5-corrective-c6-fixture-pm-and-extraction-resolution
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

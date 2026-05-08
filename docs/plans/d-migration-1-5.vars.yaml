@@ -1,0 +1,306 @@
+# d-migration-1-5.vars.yaml
+#
+# Vars-file companion to `d-migration-1-5.md` (D.1.5 — pos-amend
+# rename-aware seal). Captures the locked decisions, AC IDs, fence
+# sketch, and dispatch-template-friendly variables for the D.1.5
+# interstitial amendment.
+#
+# This file is consumable by future `pos-amend template render`
+# invocations OR readable directly by the per-amendment dispatcher.
+#
+# Decisions LOCKED at parent-plan level (D.1.5 inherits from
+# d-migration's D-D1..D-D5) and at plan-author level (D-Q.1
+# through D-Q.5) are captured in dedicated sections.
+
+# --- Top-level amendment metadata ---
+
+AMENDMENT_NAME: "d-migration-1-5"
+AMENDMENT_TITLE: "D-migration D.1.5 — pos-amend rename-aware seal + D.1 retroactive cleanup"
+AMENDMENT_SLUG: "d-migration-1-5-rename-aware-seal"
+AMENDMENT_NUMBER: 62  # next free after D.1's #61
+AMENDMENT_DATE_AUTHORED: "2026-04-27"
+AMENDMENT_STATUS: "plan (pre-dispatch)"
+
+WORKING_DIRECTORY: "/Users/lukeivers/ivers-corp-pos-v2/"
+
+PLAN_DOC_PATH: "docs/plans/d-migration-1-5.md"
+VARS_FILE_PATH: "docs/plans/d-migration-1-5.vars.yaml"
+MANIFEST_PATH: "docs/plans/d-migration-1-5.manifest.yaml"  # authored by builder
+BUILDER_PLAN_PATH: "docs/plans/d-migration-1-5.builder-plan.md"  # authored by builder
+
+PARENT_PLAN_DOC: "docs/plans/d-migration.md"
+SURFACE_DOC: "/Users/lukeivers/pos3/.scratch/claude-output/d1-seal-blocker-surface-2026-04-27.md"
+
+# --- Sequencing context ---
+
+SEQUENCE:
+  predecessor: "D.1 (amendment #61, sealed at 570092a, §14-backfilled at cdd6e2a)"
+  successor: "D.2 (amendment #63, pending; benefits structurally from D.1.5)"
+  position: "Interstitial — between D.1 and D.2 in the D-migration chain"
+  same_tree_serialize: true  # per feedback_serialize_amendment_builds
+
+# --- Amendment shape ---
+
+SHAPE: "single-component sealed amendment (pos-amend) + cross-component cleanup"
+FENCE_COMPONENTS:
+  - tools/pos-amend  # primary; lives at framework/tools/pos-amend/ post-D.1
+RETROACTIVE_CLEANUP_COMPONENTS:
+  # Components whose D.1 diff was rename-only — their SEAL_COMMIT/BASELINE
+  # need restoration to pre-D.1 values. Builder confirms each via
+  # `git diff --find-renames=99% --name-status 57d735f..0d599bb -- <old> <new>`
+  # at build time. List below is plan-author's read of the codebase;
+  # builder authoritatively classifies.
+  candidate_rename_only:
+    - cost-governance
+    - graceful-degradation
+    - memory-system
+    - objective-tracker
+    - observability-aggregator
+    - reversibility-primitive
+    - self-correction
+    - telegram-interface
+    - workspace-sync  # TBD — verify; D.1's restructure may have edited paths
+    - primary-persona  # TBD — verify
+    - self-upgrade  # TBD — verify
+    - orchestrator  # TBD — verify
+  # Components with substantive D.1 edits (do NOT cleanup):
+  candidate_substantive:
+    - hands-off-lifecycle  # first_run_helper.py + .claude template + first-run.sh
+    - workspace-bootstrap  # first_run_scaffold.py LAUNCHD_TEMPLATES
+  # Components with no SEAL_COMMIT pre-D.1 (no-op for cleanup):
+  no_op_for_cleanup:
+    - safety-layer
+    - scope-of-work
+
+ESTIMATED_WALLTIME_HOURS: "2-3"  # AI-builder; per duration-estimation rubric
+
+# --- Acceptance criteria (outcome-shape; method-shape is builder's call) ---
+
+ACCEPTANCE_CRITERIA:
+  AC.D.1.5.1: "Rename-only detection returns True iff every file in the component's diff window is R<threshold>-renamed (modulo apply-step bookkeeping sidecars)."
+  AC.D.1.5.2: "Apply skips BASELINE+SEAL_COMMIT bump on rename-only; widening still applied; structured stdout diagnostic emitted."
+  AC.D.1.5.3: "--dry-run preview surfaces per-component rename-only verdict."
+  AC.D.1.5.4: "Substantive amendments + existing manifests byte-identical to pre-D.1.5 behaviour."
+  AC.D.1.5.5: "Retroactive cleanup of D.1's spurious BASELINE/SEAL_COMMIT bumps for rename-only components."
+  AC.D.1.5.6: "(Optional, builder's call per D-Q.5) Manifest override `rename_only: true|false|auto`."
+  AC.D.1.5.S: "Seal-diff invariant — pos-amend code + tests + the cleanup edits + universal admissions."
+
+# --- Hard constraints (binding from dispatch + plan-doc §6) ---
+
+HARD_CONSTRAINTS:
+  HC1: "No regression of pos-amend's current behaviour for substantively-changed amendments. Rename-aware path is purely additive."
+  HC2: "Backwards-compat with existing manifests. No required schema changes for pre-D.1.5 manifests."
+  HC3: "D.1 retroactively benefits — D.1.5's scope includes one-shot cleanup of D.1's spurious bumps for rename-only components."
+  HC4: "No new third-party deps. subprocess + git + stdlib + existing pos_amend modules."
+  HC5: "Halt-and-surface: builder must acknowledge D-Q.4 ruling before cross-fence cleanup edits land."
+  HC6: "No --amend. New corrective commits only."
+  HC7: "Plan-before-code: builder-plan authored before any source edit."
+
+# --- Halt triggers (per plan-doc §10) ---
+
+HALT_TRIGGERS:
+  - "Rename-detection heuristic disagrees with operator's known-state for a component."
+  - "Cleanup target list audit fails (e.g. component never sealed pre-D.1)."
+  - "Sealed-component fence violation surfaces during cleanup."
+  - "Wall-time exceeds 1.5h (plan-author) or 3h (builder)."
+  - "Pre-existing pos-amend test fails post-edit."
+  - "Cross-component AC.X.S test still fails after retroactive cleanup."
+  - "Manifest schema needs v3 bump for the optional override (D-Q.5)."
+  - "D-Q.4 multi-component edit cross-fence is unresolvable under D.1.5's locked single-component shape."
+
+# --- Decisions surfaced for owner ruling (D-Q.1 through D-Q.5) ---
+
+PLAN_AUTHOR_DECISIONS:
+  D-Q.1:
+    question: "Detection mechanism — git diff --find-renames vs sha256-of-tree?"
+    recommendation: "(a) git diff --diff-filter=ADMRT --find-renames=99% with apply-step-bookkeeping whitelist for A/D pairs."
+    rationale: "Mature primitive; fits existing pos-amend shellout pattern. 99% threshold catches rename-with-trivial-edit cases the way we want them caught (see D.1's hands-off-lifecycle R099 entries)."
+    confidence: "medium-high"
+    alternatives:
+      - "(b) sha256-of-tree — content-equivalence; cleaner but more code + more edge cases."
+      - "(c) Hybrid (a+b) — fall back to (b) if (a)'s heuristic disagrees with operator expectation."
+  D-Q.2:
+    question: "Retroactive cleanup invocation shape — bundled into apply, new subcommand, or manual hand-edit?"
+    recommendation: "(a) Bundled into apply via manifest-driven cleanup directives."
+    rationale: "Mechanises the cleanup; one verb; one chore commit; audit trail in version control."
+    confidence: "medium"
+    alternatives:
+      - "(b) New `pos-amend cleanup-d1` subcommand — more code, more CLI surface, less general."
+      - "(c) Manual hand-edit + separate chore commit — simplest but loses mechanisation."
+      - "(d) Generic cleanup directive — over-engineering for a one-shot."
+  D-Q.3:
+    question: "D.1.5 sealed-component fence shape — seal pos-amend, or admit via universal-paths prefix?"
+    recommendation: "(b) Admit pos-amend via universal-paths prefix `framework/tools/pos-amend/` (per amendment #22 precedent)."
+    rationale: "Keeps D.1.5 minimal; sealing pos-amend is in-scope creep; defer to a future amendment."
+    confidence: "high"
+    alternatives:
+      - "(a) Seal pos-amend — cleaner long-term, larger D.1.5 surface, defer."
+  D-Q.4:
+    question: "Multi-component cleanup-edit fence — D.1.5 (single-component) edits 8-10 sealed components' tests/. How to fence?"
+    recommendation: "(a) Treat as in-scope by doctrine — pos-amend's apply has fence-crossing privilege by design (it's THE canonical writer of SEAL_COMMITs across every component's tree). Universal-paths admissions cover the cleanup target paths."
+    rationale: "Pos-amend's apply has historically been the SEAL_COMMIT/BASELINE writer across every component (amendment #22+). The cleanup is the same path mechanically with reverted values."
+    confidence: "medium"
+    load_bearing: true
+    alternatives:
+      - "(b) Multi-component sealed amendment — ergonomically worse, fence-discipline cleaner."
+      - "(c) Split D.1.5 into D.1.5a (pos-amend logic) + D.1.5b (cleanup) — two cycles for one logical change."
+  D-Q.5:
+    question: "Build the optional `rename_only:` manifest override (AC.D.1.5.6)?"
+    recommendation: "(b) Skip — heuristic-only. Add the override only if a build-time fixture surfaces a heuristic edge case."
+    rationale: "ODD §4 — don't build unrequested machinery. Heuristic surface is robust on D-migration's known manifests."
+    confidence: "high"
+    alternatives:
+      - "(a) Build the override — insurance against edge cases; ~20 LOC + 1 schema field + 1 test."
+
+# --- Plan-author halt-and-surface findings (informational, builder awareness) ---
+
+HALT_FINDINGS:
+  finding_1:
+    summary: "pos-amend's apply step is the canonical SEAL_COMMIT/BASELINE writer; the 'fence-crossing' doctrine needs explicit confirmation."
+    impact: "D-Q.4 captures this. Plan-author leans (a) — apply has fence-crossing privilege by design, evident from amendment #22's apply behaviour. Confirm with Luke at dispatch."
+    severity: "load-bearing — surfaced for owner ruling"
+  finding_2:
+    summary: "Pre-D.1 SEAL_COMMIT values for rename-only components are recoverable via `git show 57d735f^:<comp>/tests/SEAL_COMMIT`."
+    impact: "Mechanical; builder pulls these at build time. Pre-D.1 path is bare <comp>/tests/SEAL_COMMIT, not framework/<comp>/tests/SEAL_COMMIT."
+    severity: "info — surfaced for builder awareness"
+  finding_3:
+    summary: "pos-amend test fixtures use post-D.1 layout (framework/<name>/)."
+    impact: "Existing _make_fake_component fixture builder reusable; new rename-detection tests parametrize a 'pre-rename state' for the fixture."
+    severity: "info — confirmation for builder"
+  finding_4:
+    summary: "git diff --diff-filter=ADMRT over the apply window catches A/D pairs that are apply-step bookkeeping (sidecar deletes/creates). Detection logic must whitelist these or the heuristic over-counts substantive."
+    impact: "Builder authors the whitelist (component's own seal-test path + sidecar path are excluded from the 'substantive' count)."
+    severity: "info — surfaced for builder awareness"
+  finding_5:
+    summary: "c7fb441 (D.1's transitional OLD prefix fix) is a substantive edit by the rename-detection metric — it touches 13 test_no_sealed_amendments.py files."
+    impact: "D.1.5's cleanup machinery must use the window 57d735f..0d599bb (the amendment commit, NOT the seal commit) for the rename-only verdict. Builder threads correctly."
+    severity: "info — build-time pitfall"
+  finding_6:
+    summary: "D.2 plan needs an addendum after D.1.5 lands."
+    impact: "Captured as a follow-up task post-D.1.5; not in D.1.5's scope."
+    severity: "info — follow-up"
+  finding_7:
+    summary: "safety-layer + scope-of-work are unsealed pre-D.1 (no SEAL_COMMIT sidecar)."
+    impact: "Cleanup is a no-op for them — detection logic skips gracefully when prior sidecar absent."
+    severity: "info — surfaced for builder awareness"
+
+# --- Detection mechanism (per D-Q.1 recommendation) ---
+
+DETECTION_MECHANISM:
+  primary: "git diff --diff-filter=ADMRT --find-renames=99% --name-status <BASELINE>..<HEAD> -- <old-path>/ <new-path>/"
+  whitelist:
+    description: "A/D pairs are 'substantive' UNLESS the path matches the component's own seal-bookkeeping (sidecar + seal-diff test)."
+    paths_per_component:
+      - "<old-path>/tests/SEAL_COMMIT"
+      - "<new-path>/tests/SEAL_COMMIT"
+      - "<old-path>/tests/test_no_sealed_amendments.py"
+      - "<new-path>/tests/test_no_sealed_amendments.py"
+      - "<old-path>/tests/test_cross_cutting.py"  # for hands-off-lifecycle
+      - "<new-path>/tests/test_cross_cutting.py"
+  verdict:
+    rename_only: "every diff entry is R>=99% rename, OR an A/D pair from the whitelist"
+    substantive: "any diff entry is M (modified) or R<99% or A/D outside the whitelist"
+  fallback: "(c) hybrid — when heuristic returns True, optionally cross-check via sha256-of-tree on the component's old vs new path. Builder's call to invoke; plan-author leans 'skip unless a test fixture surfaces an edge case'."
+
+# --- Retroactive cleanup target machinery (per AC.D.1.5.5) ---
+
+CLEANUP_MACHINERY:
+  pre_d1_baseline_recovery:
+    method: "git show 57d735f^:<old-path>/tests/test_no_sealed_amendments.py | grep '^BASELINE = '"
+    path_form_pre_d1: "bare <comp>/ (e.g. cost-governance/tests/test_no_sealed_amendments.py)"
+    path_form_post_d1: "framework/<comp>/ (e.g. framework/cost-governance/tests/test_no_sealed_amendments.py)"
+  pre_d1_seal_commit_recovery:
+    method: "git show 57d735f^:<old-path>/tests/SEAL_COMMIT"
+    path_form_pre_d1: "bare <comp>/tests/SEAL_COMMIT"
+    path_form_post_d1: "framework/<comp>/tests/SEAL_COMMIT"
+  cleanup_invocation:
+    recommended: "(D-Q.2 (a)) — bundled into pos-amend apply via manifest cleanup directives"
+    fallback: "(D-Q.2 (c)) — manual hand-edit + separate chore commit"
+
+# --- D-migration parent-plan inheritance (locked) ---
+
+INHERITED_LOCKED_DECISIONS:
+  D-D1: "Strict D over D' on merits. (Inherited from d-migration.vars.yaml.)"
+  D-D2: "flat→directory-split target structure. (Inherited.)"
+  D-D3: "pos-sync becomes git-merge. (Inherited.)"
+  D-D4: "β.2 (new-workspace bootstrap) absorbs into D's migration. (Inherited.)"
+  D-D5: "β.3 (global install) unchanged, independent. (Inherited.)"
+  surface_b_plus_c_2026_04_27: "(b) D.1 sealed via manual narrative + skipped sweep; (c) D.1.5 fixes pos-amend's rename-aware-seal logic. THIS PLAN realises (c)."
+
+# --- Speedups applied (per feedback_amendment_dispatch_speedups) ---
+
+SPEEDUPS:
+  - id: "(a) scoped-sweep seal"
+    description: "pos-amend seal --scoped-sweep on the pos-amend touched component (single-component). Cross-component sweep optional; replaced by post-seal AC.X.S empirical verification (HC#3 confidence)."
+  - id: "(b) pre-seal smoke"
+    description: "pos-amend's full test suite passes before commit; full repo-wide pytest skipped pre-seal. Empirical AC.X.S sweep is a post-seal verification, not pre-seal gate."
+  - id: "(c) inline methodology snippets"
+    description: "Inline odd-methodology snippets in dispatch + commit prose."
+
+# --- Empirical verification (post-seal, HC#3 confidence) ---
+
+EMPIRICAL_VERIFICATION:
+  description: "After D.1.5 seal commit lands, run the AC.X.S test sweep across rename-only components."
+  expectation: "Every prior-amendment AC.X.S test now passes — the cascade unwinds structurally without test edits."
+  failure_handling: "If any AC.X.S test still fails post-cleanup, halt and surface — design assumption (cascade is purely SEAL_COMMIT-bump-driven) is wrong; investigate."
+  test_set_examples:
+    - "framework/primary-persona/tests/test_AC_M_S_seal_diff_window.py"
+    - "framework/primary-persona/tests/test_AC_A_S_seal_diff_single_component_scope.py"
+    - "framework/hands-off-lifecycle/tests/test_AC_SE_S_seal_diff_window.py"
+    - "framework/hands-off-lifecycle/tests/test_AC45_S_seal_diff_window.py"
+    - "framework/objective-tracker/tests/test_AC_SE_S_seal_diff_window.py"
+    - "framework/workspace-bootstrap/tests/test_AC_E_S_seal_diff_single_component_scope.py"
+    - "framework/tools/loam-mode/tests/test_AC_B_S_seal_diff.py"
+
+# --- Companions / references ---
+
+COMPANIONS:
+  parent_plan: "docs/plans/d-migration.md"
+  parent_vars: "docs/plans/d-migration.vars.yaml"
+  d1_builder_plan: "docs/plans/d-migration-1.builder-plan.md"
+  d1_manifest: "docs/plans/d-migration-1.manifest.yaml"
+  surface_doc: "/Users/lukeivers/pos3/.scratch/claude-output/d1-seal-blocker-surface-2026-04-27.md"
+  amendment_precedents:
+    - "amendment #22: pos-amend CLI introduction (apply / seal / validate subcommands)."
+    - "amendment #23: frozen_baseline manifest field (additive schema extension precedent)."
+    - "amendment #41: --plan-doc seal flag (additive flag precedent)."
+    - "amendment #46: seal_description manifest field (additive schema extension)."
+    - "amendment #61 (D.1): the framework restructure that triggered D.1.5 + the surface artefact."
+  pos_amend_source:
+    - "framework/tools/pos-amend/src/pos_amend/commands/apply.py"
+    - "framework/tools/pos-amend/src/pos_amend/commands/seal.py"
+    - "framework/tools/pos-amend/src/pos_amend/manifest.py"
+    - "framework/tools/pos-amend/src/pos_amend/sidecar.py"
+    - "framework/tools/pos-amend/src/pos_amend/baseline.py"
+    - "framework/tools/pos-amend/src/pos_amend/seal_diff.py"
+  pos_amend_tests:
+    - "framework/tools/pos-amend/tests/test_apply.py  # (or wherever apply tests live)"
+    - "framework/tools/pos-amend/tests/test_seal.py  # _make_fake_component fixture"
+    - "framework/tools/pos-amend/tests/test_baseline.py"
+    - "framework/tools/pos-amend/tests/test_dry_run.py"
+
+# --- Audit trail ---
+
+AUDIT_TRAIL_EXPECTATION: |
+  Luke is engaged. Primary persona reviews + locks decisions per
+  confidence-delegation + dispatches builder. D.1.5 is critical-path
+  for D.2/D.3/D.4/D.5 success. Owner ruling at dispatch covers
+  D-Q.1 through D-Q.5; method-shape decisions deferred to builder.
+
+  Post-seal empirical verification (run AC.X.S sweep across rename-only
+  components) is the load-bearing confidence check that the cleanup
+  unwound the cascade. If it doesn't, halt + surface — the design
+  assumption was incomplete.
+
+# --- Plan-authoring run summary ---
+
+PLAN_AUTHORING_RUN:
+  start_date: "2026-04-27"
+  walltime_minutes: "~50"  # under the 1.5h ceiling
+  walltime_ceiling_minutes: 90
+  ceiling_reached: false
+  halts_surfaced: 0  # no critical halts
+  informational_findings_surfaced: 7
+  decisions_for_owner: 5  # D-Q.1 through D-Q.5
+  load_bearing_decisions: 1  # D-Q.4 (multi-component cleanup-edit fence)
+  outcome_decisions_only: true

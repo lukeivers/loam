@@ -15,7 +15,7 @@
 """AC.SKILLCAP.1 — `skill-capture-proposal` SKILL package present +
 well-formed.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.1: the SKILL package directory exists at
 ``plugins/loam-skills/skills/skill-capture-proposal/`` with a valid
 ``SKILL.md``. Frontmatter ``description`` ≤1536 chars; description

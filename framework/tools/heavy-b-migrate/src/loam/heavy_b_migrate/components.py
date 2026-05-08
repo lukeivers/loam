@@ -1,6 +1,6 @@
 """Phase α — seed sealed-component objectives chained to the value-prop root.
 
-Each component dir under ``docs/rebuild/components/<slug>/`` whose
+Each component dir under ``docs/archive/component-research/<slug>/`` whose
 ``proposal.md`` is present yields one Phase α objective record. The
 record's ``parent_id`` is the appropriate spec-phase ancestor (per
 sub-plan §1.1 + builder-plan §6 — every Phase 1–4 sealed component
@@ -33,7 +33,7 @@ from loam.heavy_b_migrate.extraction import truncate_for_goal
 from loam.heavy_b_migrate.ids import SPEC_V10, component_objective_id
 
 
-COMPONENTS_DIR_REL = "docs/rebuild/components"
+COMPONENTS_DIR_REL = "docs/archive/component-research"
 
 
 @dataclass(frozen=True)
@@ -136,7 +136,7 @@ async def seed_phase_alpha_async(
         )
         criterion_prose = (
             f"The {slug} sealed component is in COMPLETE state per "
-            f"docs/rebuild/STATE.md. Source proposal: {proposal_rel}."
+            f"docs/STATE.md. Source proposal: {proposal_rel}."
         )
         spec = ObjectiveSpec(
             goal=goal,

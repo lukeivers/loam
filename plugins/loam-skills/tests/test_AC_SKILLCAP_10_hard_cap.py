@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.10 — Hard-cap (20 workspace-local SKILLs) named in body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.10: the SKILL body names the 20-skill hard-cap on
 workspace-local SKILLs at `<workspace>/.claude/skills/`, the no-op
 + promotion-rubric-pointer behavior on cap-reached, and the

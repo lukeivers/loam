@@ -14,7 +14,7 @@
 
 """AC38.5 — Existing tracker test suite passes unchanged.
 
-Plan: docs/rebuild/plans/amendment-38-objective-tracker-schema-widening.md
+Plan: docs/plans/amendment-38-objective-tracker-schema-widening.md
 §4 AC38.5.
 
 Outcome (paraphrased from the AC):

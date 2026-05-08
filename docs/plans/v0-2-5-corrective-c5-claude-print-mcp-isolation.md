@@ -1,0 +1,423 @@
+# v0.2.5 corrective C5 — claude -p subprocess MCP-isolation flags — plan
+
+Dev-discipline work. **NOT** a sealed-component amendment. No `loam amend` manifest, no `SEAL_COMMIT` bump, no seal commit. Plan-before-code per the dev CDC; corrective new commits land the change.
+
+**Status:** plan + manifest + tests + source — ready for apply + seal. 2026-05-05.
+**Working directory:** /Users/lukeivers/ivers-corp-pos-v2/
+**Companions:** 
+**Ancestor record:** 
+**Research:** (none — research consolidated in §14 method-decision register; the precedent at _resolver_client.py + the loader at server.ts:60-78 are the only two sources required)
+
+---
+
+## 1. Summary / TLDR
+
+Two `claude -p` subprocess clients (`framework/memory-system/src/claude_print_client.py`
+and `plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/claude_print_synthesis_client.py`)
+spawn child Claude processes that load the user's MCP servers — including the
+telegram MCP. The telegram MCP loader has PID-stomp dedup logic
+(`~/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6/server.ts:60-78`):
+any new instance SIGTERMs the prior holder of the PID file. Result: every memory-system
+ingest call OR odd-extractor synthesis call kills the parent session's telegram bot.
+Owner ruled 2026-05-05 (Telegram 10196) that subprocess invocations must launch
+without telegram. This corrective adds `--strict-mcp-config --mcp-config <empty>`
+flags to both clients' argv — mirroring the existing precedent at
+`framework/workspace-sync/src/loam/workspace_sync/_resolver_client.py` (AC.WSα.8,
+verified 2026-04-27). The empty config (`{"mcpServers": {}}`) plus
+`--strict-mcp-config` makes the child claude ignore every MCP source (project,
+user, environment) and load zero servers — surgical fix that protects telegram
+and any other MCP the user may add later.
+
+
+---
+
+## 2. Spec-objective placement (per CLAUDE.md §2.5 framing)
+
+Per CLAUDE.md §2.5 (every line of code/branch/test maps to a named AC), this
+corrective lands FIVE ACs that together fence: argv shape (AC.V025-C5.1 +
+AC.V025-C5.2 — both clients), tempfile contents (AC.V025-C5.3), no-regression
+guarantee on full suite (AC.V025-C5.4), and method-decision documentation
+(AC.V025-C5.5).
+
+Memory-system has a sealed AC family (AC.MS.*) but adding an AC there would
+expand a sealed component's scope; instead this corrective claims its own
+V025-C5.* prefix scoped to the C5 corrective itself, mirroring the C4-pivot
+precedent (V025-C4P.*). The no-regression dimension (C5.4) ensures no
+sealed-AC test breaks.
+
+
+---
+
+## 3. Three-lens analysis (per CLAUDE.md design lenses)
+
+### Lens 1 — Claude leverage
+
+This corrective is squarely Claude-leverage: the bug stems from `claude -p`
+subprocess spawning loading the parent session's MCP servers, and the fix
+uses Claude's own `--strict-mcp-config` + `--mcp-config` flags to disable
+that loading. No external mechanism, no env-var monkey-patch, no upstream
+patch. The flags are a stable Claude CLI primitive (verified empirically
+2026-04-27 via `_resolver_client.py`'s integration test).
+
+### Lens 2 — Harness + primary-persona value
+
+Primary-persona test: this fix removes a translation burden Luke is
+currently carrying — every time the persona dispatches synthesis or
+memory-system work, the telegram bot dies and Luke has to manually
+restart it (or the persona has to message in-terminal for the rest
+of the session). Removing the burden is the harness's whole job.
+
+Harness test: this adds nothing user-visible to the toolkit — it's
+pure plumbing. But the harness test is "does it add to the toolkit"
+not "does it ship a new tool"; preserving an in-flight channel is
+table-stakes harness reliability. The harness MUST be able to run
+background subprocesses without killing its own UI.
+
+### Lens 3 — ODD authoring
+
+Five outcome-shaped ACs. None state HOW (no "use --strict-mcp-config" in
+the AC body); each pins WHAT the observable surface is (argv carries
+the flags; tempfile contains the empty config object; full-suite
+remains green; method-decision is recorded). The flag-name lives in
+§14 and in the implementation, not in the ACs.
+
+### Lens 4 — Prompt scope ↔ confidence
+
+High confidence: the codebase already solved this exact problem in
+workspace-sync (AC.WSα.8). The path is "mirror that pattern in two
+more files." Tight scope appropriate.
+
+### Lens 5 — Swarming
+
+Single corrective, two clients. Decomposing further (one agent per
+client) adds coordination overhead with no tighter AC. Single agent.
+
+
+---
+
+## 4. Acceptance criteria (V025-C5 — dev-discipline plan)
+
+### AC.V025-C5.1 — memory-system claude_print_client argv carries MCP-isolation flags
+
+When `ClaudePrintLLMClient` invokes `claude -p` (either via the construction-time
+OAuth probe `_probe_claude_authenticated` or via per-call `_generate_response`
+→ `_build_argv`), the argv MUST carry `--strict-mcp-config` immediately followed
+by `--mcp-config <abs path>`, BEFORE the `-p` flag. The `<abs path>` MUST refer
+to a real file readable by the child process.
+
+**Verification:** unit test that constructs the client with a fake binary,
+monkeypatches `asyncio.create_subprocess_exec`, captures argv, and asserts the
+flag triple appears at the expected position for both probe-call and
+generate-call code paths.
+
+### AC.V025-C5.2 — odd-extractor claude_print_synthesis_client argv carries MCP-isolation flags
+
+When `ClaudePrintAnthropicShimClient._invoke_claude_print` runs `subprocess.run`
+with `claude -p`, the argv MUST carry `--strict-mcp-config --mcp-config <abs path>`
+before the `-p` flag, with `<abs path>` referring to a real readable file.
+
+**Verification:** unit test that constructs the shim with a fake binary,
+monkeypatches `subprocess.run`, captures argv, asserts the flag triple is
+present at the expected position.
+
+### AC.V025-C5.3 — empty MCP config tempfile contents are exactly `{"mcpServers": {}}`
+
+The path passed via `--mcp-config` in both clients MUST point at a JSON file
+whose decoded content is exactly `{"mcpServers": {}}` (no other keys, no other
+servers). This is the payload Claude's `--strict-mcp-config` documentation
+treats as "load no MCP servers."
+
+**Verification:** unit test reads the path captured from each client's argv,
+json-decodes the file, asserts `== {"mcpServers": {}}`.
+
+### AC.V025-C5.4 — Full odd-extractor + memory-system test suites pass; no regressions
+
+Sealed AC tests at `plugins/dev-sdlc/odd-extractor/tests/` and
+`framework/memory-system/tests/` MUST remain fully green after the change.
+Live `claude -p` tests (C3.3, C4.3) MAY skip on machines without the binary;
+on the build workstation they MUST PASS.
+
+**Verification:** `pytest plugins/dev-sdlc/odd-extractor/tests/ framework/memory-system/tests/`
+pass-count meets or exceeds the C4-pivot baseline (825 odd-extractor + memory-system
+tests; new C5 tests add ≥3).
+
+### AC.V025-C5.5 — Method-decision recorded in §14 register
+
+§14 of this plan-doc MUST capture: (a) the named candidates considered
+(`CLAUDE_PERSONA` env var vs `--strict-mcp-config + empty config`),
+(b) the winning method + rationale (workspace-sync precedent + broader
+protection), (c) why the alternative was rejected, (d) the file:line
+reference to the loader code that motivates the fix
+(`~/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6/server.ts:60-78`).
+
+
+---
+
+## 5. Behaviour-count check (ODD §3.3 forward; applied as dev-discipline check)
+
+| # | Declared behaviour | AC |
+|---|--------------------|-----|
+| 1 | memory-system claude_print_client subprocess argv carries `--strict-mcp-config --mcp-config <path>` before `-p` (probe + generate paths) | AC.V025-C5.1 |
+| 2 | odd-extractor synthesis shim subprocess argv carries the same triple before `-p` | AC.V025-C5.2 |
+| 3 | empty MCP config tempfile decodes to exactly `{"mcpServers": {}}` | AC.V025-C5.3 |
+| 4 | no test regressions in odd-extractor + memory-system suites | AC.V025-C5.4 |
+| 5 | §14 method-decision register is populated (named candidates, winner, rationale) | AC.V025-C5.5 |
+
+
+---
+
+## 6. Hard constraints
+
+1. **No `--amend`.** Corrective new commits only. The C4-pivot agent's `--amend`
+   deviation is exactly the failure mode to avoid.
+2. **Scope fence.** Edits limited to:
+   - `framework/memory-system/src/claude_print_client.py`
+   - `plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/claude_print_synthesis_client.py`
+   - new test files under `framework/memory-system/tests/` + `plugins/dev-sdlc/odd-extractor/tests/`
+   - `docs/plans/v0-2-5-corrective-c5-claude-print-mcp-isolation.{md,manifest.yaml}`
+   - `docs/STATE.md` (post-seal entry)
+3. **No edit to the telegram MCP server.ts.** Fix is loam-side invocation, not loader patch.
+4. **No new third-party dependency.** Stdlib `tempfile` + `json` only (already used in workspace-sync precedent).
+5. **Backward-compat preserved unconditionally.** All sealed AC tests green; no API surface change.
+6. **CDC adherence.** No new CDC; this corrective extends the existing dev-sdlc + memory-system seal patterns.
+7. **Tempfile lifetime: process-cached.** `delete=False` per workspace-sync precedent — child reads the path after parent's writing handle closes; cleanup is best-effort at process exit (small file in `$TMPDIR`).
+
+
+---
+
+## 7. Out of scope (explicit)
+
+- Patching the telegram MCP server.ts loader.
+- Modifying `framework/workspace-sync/src/loam/workspace_sync/_resolver_client.py`
+  (already implements the pattern correctly per AC.WSα.8).
+- Modifying `framework/tools/upgrade-merge-resolver/src/loam/upgrade_merge_resolver/__init__.py`
+  (separate component; if it lacks isolation, captured to FIDRAFT not fixed here).
+- Pushing pos-v2 to remote.
+- Tagging.
+- Eric outreach.
+- F7 (`ANTHROPIC_API_KEY` keychain lift) — moot per C4-pivot.
+- Renaming `anthropic_client` parameter (separate cleanup, captured at C4-pivot).
+
+
+---
+
+## 8. Implementation order (suggested — builder's call to refine)
+
+1. Verify pwd is `/Users/lukeivers/ivers-corp-pos-v2`.
+2. Read this plan-doc + the C4-pivot plan-doc + workspace-sync `_resolver_client.py` (precedent) + telegram server.ts skip-region.
+3. Edit `framework/memory-system/src/claude_print_client.py`:
+   - Add `_EMPTY_MCP_CONFIG = {"mcpServers": {}}` module-level.
+   - Add `_write_empty_mcp_config()` helper (tempfile, json-dump, return path).
+   - Store `self._empty_mcp_config_path` on `__init__`.
+   - Edit `_build_argv()` to prepend `--strict-mcp-config --mcp-config <path>` before `-p`.
+   - Edit `_probe_claude_authenticated()` argv same way.
+   - (Probe takes `binary_path`, `env` only; we either pass an explicit path arg or
+     inline the call to use the same helper. Keep the helper module-level so probe
+     can call it directly without a class instance.)
+4. Edit `plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/claude_print_synthesis_client.py`:
+   - Same pattern. `_EMPTY_MCP_CONFIG`, `_write_empty_mcp_config()`,
+     `self._empty_mcp_config_path` on `__init__`, prepend in `_invoke_claude_print` argv.
+5. Author tests:
+   - `framework/memory-system/tests/test_claude_print_client_mcp_isolation.py` —
+     three asserts: argv shape on `_build_argv`, argv shape on probe, tempfile content.
+   - `plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_C5_claude_print_synthesis_mcp_isolation.py` —
+     two asserts: argv shape, tempfile content.
+6. Run narrow tests: new C5 tests pass.
+7. Run full odd-extractor + memory-system test suites (deselect slow live tests):
+   `pytest plugins/dev-sdlc/odd-extractor/tests/ framework/memory-system/tests/ -q --deselect <slow live>`.
+8. Run live tests on workstation if claude binary available (C3.3, C4.3, factory live test).
+9. Author manifest at `docs/plans/v0-2-5-corrective-c5-claude-print-mcp-isolation.manifest.yaml`.
+10. `git add` files; conventional commit ladder:
+    - feat: source + tests (BASELINE)
+    - docs: plan-doc + manifest
+    - chore(amend): manifest + apply
+    - chore(seals): seal commit (via `loam amend seal`)
+    - docs(plans): §14 SHA backfill (via `--plan-doc` flag on seal — should auto-emit)
+    - docs(state): STATE.md entry
+11. Run `loam amend apply <manifest>` then `loam amend seal --plan-doc <plan-doc> <manifest>`.
+12. Write build report to `/Users/lukeivers/pos3/workspace/.scratch/claude-output/v0-2-5-corrective-c5-report.md`.
+
+
+---
+
+## 9. Bookkeeping surface
+
+Sealed-component touched: `dev-sdlc` (odd-extractor) + `memory-system`. Both
+carry sidecar bumps via `loam amend apply`.
+
+```yaml
+schema_version: 3
+amendment:
+  slug: v0-2-5-corrective-c5-claude-print-mcp-isolation
+  title: <rendered at manifest authoring time>
+baseline: <pinned to source-edit feat commit SHA at manifest commit time>
+plan: docs/plans/v0-2-5-corrective-c5-claude-print-mcp-isolation.md
+plan_doc_ref: docs/plans/v0-2-5-corrective-c5-claude-print-mcp-isolation.md
+ac_count: 5
+smoke_outcome: "C5.1 mem-sys argv flags; C5.2 odd-ext argv flags; C5.3 empty cfg payload; C5.4 825+ green; C5.5 §14 register"
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: memory-system
+    seal_test: framework/memory-system/tests/test_no_sealed_amendments.py
+    sidecar: framework/memory-system/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-5-corrective-c5-claude-print-mcp-isolation
+```
+
+Single combined seal "v0.2.5 corrective C5 — claude -p MCP isolation" per
+dispatch brief. STATE.md entry mirrors the C4-pivot inline format.
+
+
+---
+
+## 10. Halt triggers (builder halts + signals owner)
+
+1. The telegram MCP loader has no skip mechanism AND `--strict-mcp-config` doesn't
+   work. Halt; surface owner-rule options.
+2. Cross-component scope expansion beyond the named scope fence. Halt.
+3. Backward-compat broken (sealed AC test fails). Halt.
+4. New third-party dependency required. Halt.
+5. `loam amend apply` or `loam amend seal` errors. Halt; investigate.
+6. ODD violation observed in surrounding code/docs. Halt; do NOT extend.
+7. Concurrent agent activity detected (`pos-amend` lock or simultaneous build). Halt.
+
+
+---
+
+## 11. Decisions remaining for the owner to rule on
+
+### D-1 — skip-mechanism choice: `CLAUDE_PERSONA` env var vs `--strict-mcp-config + empty config`
+
+**Two viable mechanisms** discovered during research:
+
+**Option A — `CLAUDE_PERSONA` env var.**
+- Source: `~/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6/server.ts:60-78`.
+  The loader sets `isBackgroundDispatch = !!process.env.CLAUDE_PERSONA`; when true,
+  skips the PID-stomp branch and skips polling.
+- Surgical: addresses ONLY the named telegram-bot-killing problem. Other MCP servers
+  still load in the child.
+- Requires: setting `CLAUDE_PERSONA=<any non-empty>` in the child env dict (note:
+  the existing env scrubbers strip everything but `PATH`/`HOME`/`USER`, so this
+  must be SET explicitly, not relied on as parent-passthrough).
+- Cost: ~3 lines per client.
+
+**Option B — `--strict-mcp-config --mcp-config <empty config tempfile>`.**
+- Source: `framework/workspace-sync/src/loam/workspace_sync/_resolver_client.py`
+  AC.WSα.8 — verified empirically 2026-04-27 to disable all child MCP loading
+  under Claude Max OAuth.
+- Broader: disables EVERY child MCP server (telegram, memory-graphiti, any future
+  MCPs the user adds). Equivalent to running the child claude in a clean MCP
+  universe.
+- Cost: ~15 lines per client (tempfile write + path storage + argv prepend).
+
+**Decision: Option B.**
+
+**Rationale:**
+1. **Codebase precedent.** The exact pattern is already in production at
+   `_resolver_client.py` with a verified integration test (AC.WSα.8). Mirroring
+   a verified precedent is lower-risk than introducing a second skip mechanism.
+2. **Asymmetric problem solving** (per `feedback_asymmetric_problem_solving`).
+   Option B costs ~5× more code but provides indefinitely broader protection:
+   any future MCP the user wires up (a new memory MCP, a new search MCP, a
+   dev-tool MCP) is automatically isolated. Option A only protects the
+   specific MCP that happens to have a self-skip branch — every new MCP would
+   need its own self-skip code OR loam would need a fresh corrective.
+3. **Owner ruling alignment.** The Telegram 10196 ruling said "make sure it's
+   launched without telegram." Option B satisfies this AND extends naturally
+   to any other MCP that has the same architectural pitfall.
+4. **Loader-edit avoidance.** Both options stay loam-side; Option B is the
+   CLI-flag mechanism Anthropic explicitly built for this case
+   (`--strict-mcp-config` is documented public API).
+
+**Why Option A was rejected:**
+- Couples loam to one specific MCP's internal env-var convention.
+- Requires every other MCP we want isolated to invent its own convention.
+- The convention name (`CLAUDE_PERSONA`) doesn't cleanly describe what the
+  setter wants — it's "I'm a worker, please skip me" by accident of orchestrator
+  history (referenced in server.ts as "a background claude -p task spawned by
+  the orchestrator"). Hidden coupling is a smell.
+
+### D-2 — Probe-path argv: same flags or unflagged?
+
+The construction-time OAuth probe (`_probe_claude_authenticated`) builds its
+own argv with prompt `"probe"`. **Decision: same flags** — the probe ALSO
+forks `claude -p` and would also kill the parent telegram bot if unguarded.
+No reason to leave a vulnerable seam.
+
+
+---
+
+## 12. Summary of named decisions (owner-readable)
+
+| Decision | Recommendation | Why it matters |
+|---|---|---|
+| D-1 — skip mechanism | `--strict-mcp-config + empty config` (Option B) | Codebase precedent; broader protection (covers all current + future MCPs); avoids hidden coupling to per-MCP env-var conventions |
+| D-2 — probe-path argv | Same MCP-isolation flags | Probe is a real `claude -p` fork; would kill the bot too if left unflagged |
+
+
+---
+
+## 13. Halt-and-surface findings encountered during plan authoring
+
+Per `feedback_subagent_odd_violation_halt`: halt and surface any
+ODD violation observed in surrounding code/docs.
+
+**(none observed during plan authoring.)** The two clients' existing
+argv shapes (`_build_argv`, `_invoke_claude_print`) are well-named,
+outcome-scoped functions; the addition of two flags before `-p`
+matches the existing pattern at `_resolver_client.py` line 173-189.
+
+
+---
+
+## 14. Method-decision record (builder, post-build)
+
+The plan §11 left D-build.x method choices to the builder within the
+ACs' outcome bounds. This section is populated post-build.
+
+### D-build.x — (placeholder for the build agent's method choices)
+
+### Test breakdown
+
+(placeholder)
+
+### Backwards-compat verification
+
+(placeholder)
+
+### Commit SHAs
+
+- Amendment commit: `290ed00a22b757d8c155d8a9ff34609d00f98991` —
+  `chore(amend): v0-2-5-corrective-c5-claude-print-mcp-isolation manifest+apply — memory-system+dev-sdlc BASELINE+sidecar bump to cf8a338`
+- Seal commit: `6d2052de0659e45bf67953d2097e8c7966a9201f` —
+  `chore(seals): v0-2-5-corrective-c5-claude-print-mcp-isolation — memory-system+dev-sdlc at 290ed00`
+### Commit SHAs
+
+(populated by `loam amend seal --plan-doc <this-file> ...` after build, or appended manually for dev-discipline plans)
+
+### Dependents cleared to dispatch
+
+(placeholder)
+
+---
+
+## 15. References
+
+- CLAUDE.md (project + global)
+- `plugins/dev-sdlc/docs/odd-methodology.md`, `plugins/dev-sdlc/docs/odd-in-loam.md`
+- `docs/VALUE_PROPOSITION.md`, `docs/STATE.md`, `docs/FUTURE_IDEAS.md`

@@ -1,7 +1,7 @@
 """AC.D-pa.1 – AC.D-pa.5 — `loam amend` tracker integration.
 
 Each AC has at least one test function. Plan:
-``docs/rebuild/plans/pos-amend-tracker-integration.md`` §4.
+``docs/plans/pos-amend-tracker-integration.md`` §4.
 
 Fixture shape: a tmpfs git repo (mirrors ``test_seal.py``'s
 ``sealed_repo`` fixture but pared to a single component) with a
@@ -68,7 +68,7 @@ def _make_fake_component(repo: Path, name: str) -> None:
         # Fixture seal-diff test for {name}.
         allowed_prefixes = (
             "framework/{name}/",
-            "docs/rebuild/plans/",
+            "docs/plans/",
         )
         allowed_files = (
             "CLAUDE.md",
@@ -132,7 +132,7 @@ def _seed_tracker_with_value_prop_root(repo: Path) -> Path:
             time_bound=TimeBound(evergreen=True),
             authored_by="user",
             lifted_from=LiftedFrom(
-                source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+                source_doc="docs/VALUE_PROPOSITION.md",
                 source_ac="prime",
             ),
         )
@@ -160,7 +160,7 @@ def _write_v2_manifest(
     """
     import yaml
 
-    plans_dir = repo / "docs" / "rebuild" / "plans"
+    plans_dir = repo / "docs" / "plans"
     plans_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = plans_dir / f"amendment-{number}-{slug}.manifest.yaml"
     head_proc = _git(repo, "rev-parse", "HEAD")
@@ -279,7 +279,7 @@ def test_AC_D_pa_1_apply_registers_records(tracker_repo) -> None:
     """`loam amend apply` against a v2 manifest creates one tracker
     record per ``objectives`` entry, queryable by source_doc."""
     repo = tracker_repo
-    plan_doc = "docs/rebuild/plans/amendment-200-fixture.md"
+    plan_doc = "docs/plans/amendment-200-fixture.md"
     manifest_path = _write_v2_manifest(
         repo,
         components=["alpha"],
@@ -321,7 +321,7 @@ def test_AC_D_pa_2_apply_idempotent_across_objectives_block(
     """Re-running ``apply`` against the same v2 manifest does NOT create
     duplicate records (matched by source_doc + source_ac)."""
     repo = tracker_repo
-    plan_doc = "docs/rebuild/plans/amendment-201-fixture.md"
+    plan_doc = "docs/plans/amendment-201-fixture.md"
     manifest_path = _write_v2_manifest(
         repo,
         components=["alpha"],
@@ -376,7 +376,7 @@ def test_AC_D_pa_3_seal_writes_source_commit(tracker_repo) -> None:
     """After apply → amendment-commit → seal, every registered record
     carries ``lifted_from.source_commit == amendment_sha``."""
     repo = tracker_repo
-    plan_doc = "docs/rebuild/plans/amendment-202-fixture.md"
+    plan_doc = "docs/plans/amendment-202-fixture.md"
     manifest_path = _write_v2_manifest(
         repo,
         components=["alpha"],
@@ -434,7 +434,7 @@ def test_AC_D_pa_3_seal_source_commit_idempotent(tracker_repo) -> None:
     """Re-running seal against the same amendment SHA produces no new
     diff in the tracker (the source_commit update is idempotent)."""
     repo = tracker_repo
-    plan_doc = "docs/rebuild/plans/amendment-203-fixture.md"
+    plan_doc = "docs/plans/amendment-203-fixture.md"
     manifest_path = _write_v2_manifest(
         repo,
         components=["alpha"],
@@ -516,7 +516,7 @@ def test_AC_D_pa_4_v1_apply_no_tracker_interaction(tracker_repo) -> None:
         tracker.close()
 
     # Author a v1 manifest (no objectives block).
-    plans_dir = repo / "docs" / "rebuild" / "plans"
+    plans_dir = repo / "docs" / "plans"
     plans_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = plans_dir / "amendment-204-v1.manifest.yaml"
     head = _git(repo, "rev-parse", "HEAD").stdout.strip()
@@ -529,7 +529,7 @@ def test_AC_D_pa_4_v1_apply_no_tracker_interaction(tracker_repo) -> None:
               slug: v1-no-tracker
               title: "v1 amendment, no tracker interaction"
             baseline: {head}
-            plan: docs/rebuild/plans/amendment-204-v1.md
+            plan: docs/plans/amendment-204-v1.md
             components:
               - name: alpha
                 seal_test: framework/alpha/tests/test_no_sealed_amendments.py
@@ -564,7 +564,7 @@ def test_AC_D_pa_4_v1_dry_run_green_on_post_fix_tree(
     thoroughly by test_dry_run.py and test_integration_*."""
     # Use the tracker_repo just to ensure no v1 path queries the tracker.
     repo = tracker_repo
-    plans_dir = repo / "docs" / "rebuild" / "plans"
+    plans_dir = repo / "docs" / "plans"
     plans_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = plans_dir / "amendment-205-v1-dryrun.manifest.yaml"
     head = _git(repo, "rev-parse", "HEAD").stdout.strip()
@@ -577,7 +577,7 @@ def test_AC_D_pa_4_v1_dry_run_green_on_post_fix_tree(
               slug: v1-dryrun
               title: "v1 dry-run smoke"
             baseline: {head}
-            plan: docs/rebuild/plans/amendment-205-v1-dryrun.md
+            plan: docs/plans/amendment-205-v1-dryrun.md
             components:
               - name: alpha
                 seal_test: framework/alpha/tests/test_no_sealed_amendments.py
@@ -611,7 +611,7 @@ def test_AC_D_pa_5_corrupt_tracker_db_halts_with_diagnostic(
     # Corrupt the DB by overwriting the file header with garbage.
     db_path.write_bytes(b"NOT A VALID SQLITE DATABASE FILE\n" * 8)
 
-    plan_doc = "docs/rebuild/plans/amendment-206-corrupt.md"
+    plan_doc = "docs/plans/amendment-206-corrupt.md"
     manifest_path = _write_v2_manifest(
         repo,
         components=["alpha"],
@@ -645,7 +645,7 @@ def test_AC_D_pa_5_corrupt_tracker_db_halts_with_diagnostic(
     # nothing would have been added (universal_paths empty + extras
     # empty in our manifest). So this is a structural confirmation.
     assert "alpha/" in seal_test
-    assert "docs/rebuild/plans/" in seal_test
+    assert "docs/plans/" in seal_test
 
 
 def test_AC_D_pa_5_missing_tracker_parent_dir_halts(
@@ -663,7 +663,7 @@ def test_AC_D_pa_5_missing_tracker_parent_dir_halts(
     import loam_amend.tracker_registration as tr_mod
 
     repo = tracker_repo
-    plan_doc = "docs/rebuild/plans/amendment-207-missing-parent.md"
+    plan_doc = "docs/plans/amendment-207-missing-parent.md"
     manifest_path = _write_v2_manifest(
         repo,
         components=["alpha"],

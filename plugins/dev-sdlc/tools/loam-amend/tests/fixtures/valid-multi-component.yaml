@@ -4,7 +4,7 @@ amendment:
   slug: test-multi
   title: "test: multi-component valid"
 baseline: abcdef0
-plan: docs/rebuild/plans/test-multi.md
+plan: docs/plans/test-multi.md
 components:
   - name: alpha
     seal_test: alpha/tests/test_no_sealed_amendments.py
@@ -18,7 +18,7 @@ components:
       - alpha/
 universal_paths:
   prefixes:
-    - docs/rebuild/plans/
+    - docs/plans/
   files:
     - CLAUDE.md
 narrative:

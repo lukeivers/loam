@@ -72,7 +72,7 @@ class _NewAcTracker:
 def gate_dev_mode_new_ac(monkeypatch):
     sentinel = ActiveScopeSentinel(
         scope_id="test-scope",
-        plan_path="docs/rebuild/plans/test.md",
+        plan_path="docs/plans/test.md",
         bindings=(
             ScopeBinding(component="orchestrator", ac_id="AC.O8.A1"),
         ),

@@ -9,7 +9,7 @@
 """AC.LAYERED.7 — ``<workspace>/.claude/skills/.gitkeep`` is idempotent
 across scaffold + symlink runs.
 
-Per ``docs/rebuild/plans/v0-1-7-cycle-3-layered-skill-discovery.md`` §4
+Per ``docs/plans/v0-1-7-cycle-3-layered-skill-discovery.md`` §4
 + §7 Method choice 7: the v0.1.6 ``.gitkeep`` pre-create is preserved
 across the Cycle 3 ``_symlink_plugin_skills`` flow. The skills
 directory is created at scaffold time; the symlink loop afterwards

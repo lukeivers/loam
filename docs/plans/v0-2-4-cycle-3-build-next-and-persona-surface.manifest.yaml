@@ -1,0 +1,287 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-4-cycle-3-build-next-and-persona-surface
+  title: "v0.2.4 Cycle 3 — Build-next ranking + persona pull-point + release-level SOFT integration smoke; BuildNextCandidate + BuildNextRecommendation Pydantic shapes + composite-score ranking (gap-confidence × priority-match × estimated-impact, deterministic default; LLM-judge for priority-match borderline only with cap-of-5) + tie-break (category-a > category-b > STRONG > WEAK > lex gap_id) + dual output (build-next.md + build-next.yaml at <workspace>/.loam/extractions/<repo-id>/) + informative-not-prescriptive denylist (module-level seed list + word-boundary check; opt-in LLM-judge pass behind LOAM_BUILD_NEXT_LLM_DENYLIST=1) + cost band $0.10 default ($0.02-$0.30 halt) + 3 additive audit-log event_kinds (build_next_start / build_next_persisted / build_next_end) + CLI flag `loam odd-extract <repo> --build-next` (mirrors Cycle 2 --gaps form) + persona pull-point as documentation-only (no new SKILL.md) + ratification compose (HYPOTHESISED objectives flagged in rationale not blocked) + release-level SOFT integration smoke on canonical jsts-playwright-app fixture (D1+D2+D3+D5+D6 exercised; D4 n/a; §self-checks pass-rate ≥90% gate) + component tests on 3 synthetic fixtures (high-priority-match / no-survey-context / orphan-only) + release SOFT smoke integration test; single-component fence on plugins/dev-sdlc/odd-extractor/"
+
+# BASELINE: <pending> — source-edit feat commit covering new module at
+# plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/build_next.py
+# + extending spec.py with BuildNextCandidate + BuildNextRecommendation
+# Pydantic models + extending observability.py (3 new event_kinds for
+# build-next actions) + additive cli.py flag `--build-next` with handler
+# `_cmd_build_next` + per-AC tests + 3 build-next fixtures + release
+# SOFT smoke integration test.
+#
+# Cycle 3 is the third + closing cycle of v0.2.4. Cycle 1 sealed at
+# d42ace9 (completeness interview). Cycle 2 sealed at 9d15333 (gap
+# analysis). After Cycle 3 seals + SOFT smoke green, the v0.2.4
+# SHIPPED rollup commit lands on canonical, backfilling STATE.md +
+# roadmap §8 + odd-rebuild master plan §3 v0.2.4 row + master plan
+# §9 per-cycle SHA register. Tag deferred until v0.2.5 ship gate per
+# Luke 2026-05-05.
+#
+# Commit ladder pre-apply:
+#   50b5385 — v0.2.3 SHIPPED rollup. Cycle 3 seal f78bb36.
+#   f230333 — v0.2.4 master plan-doc (trim discipline applied).
+#   36ca3e2 — v0.2.4 Cycle 1 sub-plan-doc + manifest.
+#   e1a4239 — v0.2.4 Cycle 1 amendment apply (BASELINE 89f3933).
+#   d42ace9 — v0.2.4 Cycle 1 seal.
+#   <Cycle 2 plan-doc commit>
+#   5636fc3 — v0.2.4 Cycle 2 amendment apply (BASELINE df67276).
+#   9d15333 — v0.2.4 Cycle 2 seal.
+#   b67c0bb — v0.2.4 Cycle 2 §14 SHA backfill.
+#   1dc66d9 — v0.2.4 master plan §9 Cycle 2 SHA backfill.
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §9
+#    Cycle 3 SHA row per AC.D-sa.7>
+#   <v0.2.4 SHIPPED rollup commit (post-Cycle-3-seal + SOFT-smoke-green)
+#    updates STATE.md SHIPPED entry + roadmap §8 + odd-rebuild master
+#    plan §3 v0.2.4 row + tags v0.2.4 (NOT pushed)>
+#
+# Single-component fence — plugins/dev-sdlc/odd-extractor/:
+#   - NEW module under plugins/dev-sdlc/odd-extractor/src/
+#     loam_odd_extractor/:
+#       build_next.py     — pure-function ranking core;
+#                            score_candidates(*, gap_inventory,
+#                            augmented_objectives, survey_text |
+#                            None, extraction_id, audit_path,
+#                            limit=10, llm_judge_budget_cents=10)
+#                            -> BuildNextRecommendation; helpers
+#                            _score_candidate / _compute_priority_match
+#                            / _classify_estimated_impact
+#                            / _assert_informative_not_prescriptive
+#                            / _render_markdown / save_recommendation;
+#                            module-level _PRESCRIPTIVE_DENYLIST seed.
+#   - EDITS to existing modules (additive only):
+#       spec.py        — extend with BuildNextCandidate Pydantic
+#                        model (gap_id + composite_score range
+#                        validator + factor breakdown +
+#                        priority_match_signal Literal +
+#                        rationale-min-length + category mirror +
+#                        objective_id Optional) + BuildNextRecommendation
+#                        container model (schema_version=1;
+#                        extraction_id; analyzed_at; audit_path;
+#                        degenerate_survey: bool; candidates;
+#                        truncated_count; no-duplicate-gap_id +
+#                        composite-range model_validators).
+#       observability.py — extend event_kinds (3 new kinds for
+#                          build-next actions:
+#                          build_next_start /
+#                          build_next_persisted /
+#                          build_next_end); structured payload uses
+#                          existing estimate field (no schema-version
+#                          bump).
+#       cli.py         — additive `--build-next` flag in `_cmd_dispatch`
+#                        + new handler `_cmd_build_next(args)` mirroring
+#                        `_cmd_gaps` shape; missing-predecessor halt
+#                        with exit code 2 + actionable message
+#                        ("run `loam odd-extract <repo> --gaps` first");
+#                        idempotent re-run; --limit + --budget-cents
+#                        flags.
+#       __init__.py    — additive exports of new module entry-points +
+#                        new Pydantic models.
+#   - NEW tests under plugins/dev-sdlc/odd-extractor/tests/:
+#       test_AC_BLDNXT_1_candidate_model.py
+#       test_AC_BLDNXT_2_score_and_tiebreak.py
+#       test_AC_BLDNXT_3_priority_match.py
+#       test_AC_BLDNXT_4_idempotence.py
+#       test_AC_BLDNXT_5_dual_output.py
+#       test_AC_BLDNXT_6_denylist.py
+#       test_AC_BLDNXT_7_cost_band.py
+#       test_AC_BLDNXT_8_audit_log.py
+#       test_AC_BLDNXT_9_integration.py
+#       test_AC_PERSONA_PULL_1_cli.py
+#       test_AC_PERSONA_PULL_2_contract.py
+#       test_AC_PERSONA_PULL_3_ratification.py
+#       test_AC_PERSONA_PULL_4_release_smoke.py
+#   - NEW fixtures under plugins/dev-sdlc/odd-extractor/tests/
+#     fixtures/build-next/:
+#       high-priority-match/  — augmented-objectives.yaml +
+#                                gap-inventory.yaml + synthetic
+#                                onboarding-survey.md (H2-section
+#                                markdown matching AC.ONBOARD.15
+#                                shape with Q11/Q12 keywords
+#                                intersecting category-a STRONG
+#                                gap rationale tokens) → top
+#                                rank-1 priority_match_signal=
+#                                "survey" + factor 1.0; rationale
+#                                names matched priority-keyword.
+#       no-survey-context/    — same gap-inventory.yaml; no survey
+#                                file at either canonical path;
+#                                interview-priorities empty → all
+#                                candidates priority_match_factor=
+#                                None + signal "none"; degenerate
+#                                flag set; ranking falls back to
+#                                gap-confidence × estimated-impact;
+#                                stdout flags degenerate explicitly.
+#       orphan-only/          — gap-inventory.yaml with only
+#                                category-b orphans; no
+#                                objectives_without_backing → top-N
+#                                populated entirely with orphan
+#                                candidates; tie-break order respects
+#                                gap_id lexicographic.
+#
+# AC families locked per plan-doc §4 (13 ACs total: 9 BLDNXT + 4
+# PERSONA-PULL):
+#
+#   AC.BLDNXT.1   — BuildNextCandidate Pydantic shape (gap_id +
+#                   composite_score range [0.0, 1.0] +
+#                   gap_confidence_factor + priority_match_factor
+#                   Optional + estimated_impact_factor +
+#                   priority_match_signal Literal[survey | interview |
+#                   keyword | llm_judge | none] + category mirror +
+#                   objective_id Optional + rationale-min-length 40 +
+#                   factor-product-matches-composite validator).
+#   AC.BLDNXT.2   — Composite ranking (gap-confidence × priority-match
+#                   × estimated-impact; STRONG=1.0 / WEAK=0.5 gap-
+#                   confidence factor; category-a base 0.8 / category-b
+#                   base 0.5 estimated-impact + interview-bonus +
+#                   cluster-size-bonus) + tie-break (category-a >
+#                   category-b > STRONG > WEAK > lex gap_id);
+#                   deterministic + table-driven test.
+#   AC.BLDNXT.3   — Priority-match heuristic + LLM-judge for borderline
+#                   (signal hierarchy survey > interview > keyword >
+#                   llm_judge > none; LLM-judge cap-of-5 invocations
+#                   per run; halt-on-collapse when survey present at
+#                   either canonical path AND every candidate signal
+#                   "none").
+#   AC.BLDNXT.4   — Idempotence semantics (content-identical re-run
+#                   sans analyzed_at; LLM-judge structured-JSON
+#                   variance bounded; halt if 3 dry-run variance
+#                   observed).
+#   AC.BLDNXT.5   — Output cap + dual output (top-N=10 default,
+#                   --limit configurable; build-next.md +
+#                   build-next.yaml at <extraction_dir>; atomic
+#                   tmp+rename; truncated_count accurate).
+#   AC.BLDNXT.6   — Informative-not-prescriptive denylist (module-
+#                   level seed list with word-boundary case-insensitive
+#                   check; opt-in LLM-judge pass behind
+#                   LOAM_BUILD_NEXT_LLM_DENYLIST=1; raises
+#                   OddExtractorError on phrase fire).
+#   AC.BLDNXT.7   — Cost band ($0.10 default ceiling; $0.02-$0.30 halt
+#                   band; --budget-cents override; pre-flight estimate
+#                   via cost-governance dry_run; per-LLM-judge call
+#                   ledger).
+#   AC.BLDNXT.8   — Audit-log event_kinds (3 new kinds; structured
+#                   payload via existing estimate field; no
+#                   schema-version bump).
+#   AC.BLDNXT.9   — Component tests against 3 synthetic fixtures
+#                   (high-priority-match + no-survey-context +
+#                   orphan-only); full pipeline e2e per fixture.
+#
+#   AC.PERSONA-PULL.1 — CLI flag `--build-next` registration (additive
+#                        in `_cmd_dispatch`; handler `_cmd_build_next`
+#                        mirrors `_cmd_gaps` shape; missing-predecessor
+#                        halt exit code 2 + actionable message;
+#                        idempotent re-run; stdout summary).
+#   AC.PERSONA-PULL.2 — Persona pull-point contract (documentation-
+#                        only at v0.2.4 — module docstring + `--help`
+#                        text + build-next.md closing line; no new
+#                        SKILL.md per master plan §6.3 ruling).
+#   AC.PERSONA-PULL.3 — Composition with v0.2.3 ratification
+#                        (HYPOTHESISED objectives flagged in rationale
+#                        with explicit "ratify via interview" prefix;
+#                        not blocked from ranking; PLAUSIBLE / VERIFIED
+#                        ranked normally; ordering preserved).
+#   AC.PERSONA-PULL.4 — Release-level SOFT integration smoke on
+#                        canonical jsts-playwright-app fixture (D1
+#                        cold-state + D2 steady-state + D3 restart +
+#                        D5 cross-session + D6 telemetry-floor
+#                        exercised; D4 n/a; §self-checks pass-rate ≥90%
+#                        gate over augmented objectives + capabilities
+#                        + constraints; programmatic + LLM-as-judge
+#                        double-pass; rate <90% → halt + surface).
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §6 + master plan §3 Cycle 3 +
+# §5 release SOFT smoke gate):
+#   D1 cold-state — `loam odd-extract <fresh-workspace> --build-next`
+#     (after --interview + --gaps predecessor chain) produces
+#     build-next.md + build-next.yaml + audit-log entries + stdout
+#     summary on canonical jsts-playwright-app fixture. Verified by
+#     test_AC_BLDNXT_9_integration.py + test_AC_PERSONA_PULL_4_*.
+#   D2 steady-state — re-run on completed extraction-dir is idempotent
+#     (no LLM-judge re-invocation on byte-identical inputs; LLM-judge
+#     structured-JSON variance bounded). Verified by
+#     test_AC_BLDNXT_4_idempotence.py + test_AC_PERSONA_PULL_4_*.
+#   D3 restart — mid-build-next kill -TERM → re-invoke clean (pure-
+#     function pattern; LLM-judge resume re-runs the call per master
+#     plan §7.8 precedent). Verified by test_AC_PERSONA_PULL_4_*.
+#   D5 cross-session — build-next.md + build-next.yaml + audit-log
+#     persist at <workspace>/.loam/extractions/<repo-id>/; survive
+#     /clear. Session B reads + invokes CLI. Verified by
+#     test_AC_BLDNXT_5_dual_output.py + test_AC_PERSONA_PULL_4_*.
+#   D6 telemetry-floor — full chain produces ≥13 audit-log entries
+#     (7 completeness + 3 gap-analysis + 3 build-next event_kinds);
+#     SOC-2 audit-trail floor (Decision P). Verified by
+#     test_AC_BLDNXT_8_audit_log.py + test_AC_PERSONA_PULL_4_*.
+#   D4 reboot — n/a structurally (odd-extract is invoked-on-demand,
+#     not a daemon; filesystem state survives reboot trivially per
+#     v0.1.8 / v0.2.3 / Cycle 1 / Cycle 2 precedent).
+#   §self-checks gate — programmatic + LLM-as-judge double-pass over
+#     augmented objectives + capabilities + constraints from canonical
+#     jsts-playwright-app run; ≥90% pass §self-checks 1-5; rate <90%
+#     → halt + surface (master plan §3 Cycle 3 + §5).
+#   PLUS: full-suite green sweep — pre-Cycle-3 plugins/dev-sdlc/
+#     odd-extractor/ + framework/cost-governance/ + framework/
+#     per-project-pm/ + framework/workspace-bootstrap/ tests at HEAD
+#     (Cycle 2 seal 9d15333 or successor) all pass post-Cycle-3;
+#     halt + surface on any regression.
+#
+# Bookkeeping note: this is the v0.2.4 third + closing cycle (immediate
+# successor to Cycle 2 seal 9d15333 + Cycle 1 seal d42ace9 + v0.2.4
+# master plan at f230333 + Cycle 2 sub-plan-doc at the Cycle-2 plan-doc
+# commit). v3 fields exercised: plan_doc_ref + ac_count + smoke_outcome
+# at the manifest level; single-component sweep at seal time. Universal-
+# paths admit docs/plans/ for plan-doc paper trail. After
+# Cycle 3 seal + SOFT smoke green, v0.2.4 SHIPPED rollup commit lands
+# (separate from this manifest's seal).
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "9c9ed19"
+
+plan: docs/plans/v0-2-4-cycle-3-build-next-and-persona-surface.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-2-4-cycle-3-build-next-and-persona-surface.md
+
+ac_count: 13
+smoke_outcome: "Release SOFT smoke on canonical jsts-playwright-app: D1+D2+D3+D5+D6 ✓ (D4 n/a); §self-checks ≥90%; 3 fixtures; 813+73+124+411 tests pass across components."
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent + v0.1.9 Cycle 1 + v0.2.0 Cycle 1 + v0.2.1
+# Cycle 1 + v0.2.3 Cycle 1 + v0.2.4 Cycle 1 + v0.2.4 Cycle 2 precedent.
+# `docs/plans/` admits the plan-before-code paper trail.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+    - plugins/dev-sdlc/docs/odd-methodology.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-4-cycle-3-build-next-and-persona-surface
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

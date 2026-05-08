@@ -31,7 +31,7 @@ The doc is methodology-tier (alongside ODD methodology + release-versioning poli
 5. **AC.PM.5 — Decision rubric.** Doc gives a 4-7 question rubric a future authoring agent walks before proposing a new persona. Output of the rubric is a recommendation: "add this persona" / "extend an existing one" / "primary handles it; reject."
 6. **AC.PM.6 — Per-language personas worked example.** Doc covers Luke's 2026-05-08 example explicitly: per-programming-language personas inside dev-sdlc (e.g., `loam-builder-python` / `loam-builder-typescript` / `loam-builder-ruby`). Walks the rubric for this case; concludes with the right shape (extend existing? new sub-personas? refine the language-adapter dispatch instead?).
 7. **AC.PM.7 — Existing-persona-shape audit.** Doc surveys the current 6 loam personas (1 primary + 5 dev-sdlc subagents) against the rubric. Each persona has a one-sentence value-prop + a one-sentence why-it-passes-the-rubric. This validates the rubric against shipped reality.
-8. **AC.PM.8 — Authority chain cited.** `CLAUDE.md` (Lenses 1, 2, 4); `docs/rebuild/VALUE_PROPOSITION.md` (primary translation layer); `personas/primary/`; `plugins/dev-sdlc/agents/`; `docs/rebuild/STATE.md` v0.1.7 entry; `docs/rebuild/FUTURE_IDEAS.md` Idea 3 (plugin suite framing).
+8. **AC.PM.8 — Authority chain cited.** `CLAUDE.md` (Lenses 1, 2, 4); `docs/VALUE_PROPOSITION.md` (primary translation layer); `personas/primary/`; `plugins/dev-sdlc/agents/`; `docs/STATE.md` v0.1.7 entry; `docs/FUTURE_IDEAS.md` Idea 3 (plugin suite framing).
 9. **AC.PM.9 — Word count 1500–2500.** Verified by `wc -w`.
 10. **AC.PM.10 — F2 RF tension surfaced.** Name at least one tension (e.g., "more personas = better constraints vs more dispatch overhead + drift between personas"; "primary translates everything = single coherent voice vs delegation = primary's coherence loss"). Resolve or defer; don't gloss.
 
@@ -45,11 +45,11 @@ The doc is methodology-tier (alongside ODD methodology + release-versioning poli
 ## Authority chain
 
 - `CLAUDE.md` at repo root (Lens 1 Claude-leverage-first; Lens 2 harness + primary-persona value; Lens 4 prompt scope ↔ confidence)
-- `docs/rebuild/VALUE_PROPOSITION.md` (primary persona's translation-layer role)
+- `docs/VALUE_PROPOSITION.md` (primary persona's translation-layer role)
 - `personas/primary/contract.yaml` + `personas/primary/prompt.md` (canonical persona shape)
 - `plugins/dev-sdlc/agents/` (the 5 subagent personas as shipped)
-- `docs/rebuild/STATE.md` v0.1.7 entry (current persona-shape state)
-- `docs/rebuild/FUTURE_IDEAS.md` Idea 3 (plugin suite framing — implies persona-domain expansion)
+- `docs/STATE.md` v0.1.7 entry (current persona-shape state)
+- `docs/FUTURE_IDEAS.md` Idea 3 (plugin suite framing — implies persona-domain expansion)
 
 ## Output
 

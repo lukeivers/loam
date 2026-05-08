@@ -21,8 +21,8 @@ markers, the authoring-guide markers) lives under one of:
 
   - ``framework/primary-persona/templates/persona-template/prompt.md``
     (template-tree exception per v1.2 R16);
-  - ``docs/rebuild/capability-corpus/AUTHORING.md`` (authoring guide);
-  - ``docs/rebuild/capability-corpus/<class-dir>/*.md`` (seed docs).
+  - ``docs/capability-corpus/AUTHORING.md`` (authoring guide);
+  - ``docs/capability-corpus/<class-dir>/*.md`` (seed docs).
 
 This test greps the repo for the schema-marker strings + asserts
 zero matches outside admitted paths. Negative-shape — verifies α
@@ -58,11 +58,11 @@ SCHEMA_MARKERS = (
 # Admitted paths (any path under one of these is OK).
 ADMITTED_PREFIXES = (
     "framework/primary-persona/templates/persona-template/",
-    "docs/rebuild/capability-corpus/",
+    "docs/capability-corpus/",
     # Plan + builder-plan + manifest + this dispatch's research live
-    # under docs/rebuild/plans/ — they discuss the schema markers as
+    # under docs/plans/ — they discuss the schema markers as
     # specification language.
-    "docs/rebuild/plans/",
+    "docs/plans/",
     # Tests under framework/primary-persona/tests/ encode the schema
     # in assertions; not capability content.
     "framework/primary-persona/tests/",

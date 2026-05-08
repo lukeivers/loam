@@ -58,11 +58,10 @@ def _seed_dev(tmp_path: Path, suffix: str = "") -> tuple[Path, Path]:
     ``classify_workspace`` returns "pos-v2-dev"."""
     workspace = tmp_path / f"ws-noop{suffix}"
     workspace.mkdir()
-    (workspace / "docs" / "rebuild").mkdir(parents=True)
+    (workspace / "docs").mkdir(parents=True)
     framework_vp = (
         Path(__file__).resolve().parent.parent.parent.parent
         / "docs"
-        / "rebuild"
         / "VALUE_PROPOSITION.md"
     )
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(

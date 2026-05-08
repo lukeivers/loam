@@ -1,7 +1,7 @@
 # Per-project PM — design
 
 **Status:** v0.1.7 Cycle 2 (NEW component).
-**Plan-doc:** `docs/rebuild/plans/v0-1-7-cycle-2-per-project-pm.md`.
+**Plan-doc:** `docs/plans/v0-1-7-cycle-2-per-project-pm.md`.
 
 This document articulates the design rationale for the per-project PM
 component. It is the AC.PPM.9 deliverable: PM/M-FBM boundary, workspace-state
@@ -449,8 +449,8 @@ If any of those three structural facts is false, the test fails.
 
 ## 13. References
 
-- **Plan-doc:** `docs/rebuild/plans/v0-1-7-cycle-2-per-project-pm.md`.
-- **Parent plan:** `docs/rebuild/plans/v0-1-7-personas-pm-layered-skills.md`.
+- **Plan-doc:** `docs/plans/v0-1-7-cycle-2-per-project-pm.md`.
+- **Parent plan:** `docs/plans/v0-1-7-personas-pm-layered-skills.md`.
 - **Eric synthesis Decision G5** — PM-shape is harness-general.
 - **Eric synthesis Decision Q (RESOLVED YES)** — one-question-at-a-time
   PM-enforced; Cycle 4.

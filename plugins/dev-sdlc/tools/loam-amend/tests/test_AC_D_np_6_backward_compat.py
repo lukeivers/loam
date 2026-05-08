@@ -1,6 +1,6 @@
 """Tests for AC.D-np.6 — pre-existing loam amend behaviour byte-identical.
 
-Per `docs/rebuild/plans/pos-amend-new-plan-orchestration.md`:
+Per `docs/plans/pos-amend-new-plan-orchestration.md`:
 
     The full pre-extension ``tools/loam/tests/`` suite passes against
     the post-extension tree without modification. ``loam amend validate``,
@@ -61,7 +61,7 @@ def test_AC_D_np_6_template_render_pre_existing_dispatch_template_still_renders(
         "COMPONENT: example-component\n"
         "AMENDMENT_NUMBER: 99\n"
         "AC_PREFIX: AC.X.x\n"
-        "PLAN_PATH: docs/rebuild/plans/example.md\n"
+        "PLAN_PATH: docs/plans/example.md\n"
         "OBJECTIVE: \"Single-paragraph fixture objective.\"\n"
         "SCOPE_FENCE: \"path/to/component/\"\n"
         "WORKING_DIRECTORY: /tmp/fixture\n",

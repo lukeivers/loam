@@ -17,9 +17,8 @@
 Per the locked plan-doc §4 AC.AG.1: given workspace-mode = ``dev-
 mode``, given a Task tool call whose ``tool_input.prompt`` mentions
 loam surfaces (the prompt contains at least one of:
-``docs/rebuild/``, ``framework/<comp>/src/`` or
-``framework/<comp>/tests/`` patterns, the literal ``loam amend``
-(post-M1g rename of pre-M1g ``pos-amend``),
+``framework/<comp>/src/`` or ``framework/<comp>/tests/`` patterns,
+the literal ``loam amend`` (post-M1g rename of pre-M1g ``pos-amend``),
 the literal "seal commit", the literal canonical path
 ``/Users/lukeivers/ivers-corp-pos-v2/``, OR an amendment-shape
 pattern ``amendment #\\d+``), given the envelope's top-level ``cwd``
@@ -58,7 +57,8 @@ def _stub_modules(monkeypatch, *, mode: str):
 def test_AC_AG_1_pos_v2_surface_wrong_cwd_denies(
     tmp_path, monkeypatch
 ) -> None:
-    """Prompt mentions docs/rebuild/ + cwd is non-canonical → deny."""
+    """Prompt mentions a pos-v2 surface (canonical path) + cwd is
+    non-canonical → deny."""
     _stub_modules(monkeypatch, mode="dev-mode")
     import agent_guard
 
@@ -67,8 +67,9 @@ def test_AC_AG_1_pos_v2_surface_wrong_cwd_denies(
         tool_name="Task",
         tool_input={
             "prompt": (
-                "Please update docs/rebuild/plans/foo.md and "
-                "register the AC."
+                "Please update files at "
+                "/Users/lukeivers/ivers-corp-pos-v2/docs/plans/foo.md "
+                "and register the AC."
             ),
             "subagent_type": "general-purpose",
         },
@@ -77,7 +78,6 @@ def test_AC_AG_1_pos_v2_surface_wrong_cwd_denies(
     assert decision.decision == "deny"
     assert decision.failure_class == "wrong-wd"
     assert "AC.AG.1" in decision.reason
-    assert "docs/rebuild/" in decision.reason
     assert "/Users/lukeivers/ivers-corp-pos-v2" in decision.reason
 
 
@@ -129,7 +129,7 @@ def test_AC_AG_1_pos_v2_surface_canonical_cwd_admitted(
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={
-            "prompt": "Update docs/rebuild/plans/foo.md.",
+            "prompt": "Update docs/plans/foo.md.",
         },
         envelope_cwd=agent_guard.CANONICAL_LOAM_PATH,
     )
@@ -163,7 +163,7 @@ def test_AC_AG_1_normal_use_no_op(tmp_path, monkeypatch) -> None:
         workspace_root=tmp_path,
         tool_name="Task",
         tool_input={
-            "prompt": "Update docs/rebuild/plans/foo.md.",
+            "prompt": "Update docs/plans/foo.md.",
         },
         envelope_cwd=str(tmp_path),
     )
@@ -178,7 +178,7 @@ def test_AC_AG_1_non_task_tool_no_op(tmp_path, monkeypatch) -> None:
         workspace_root=tmp_path,
         tool_name="Bash",
         tool_input={
-            "prompt": "Update docs/rebuild/plans/foo.md.",
+            "prompt": "Update docs/plans/foo.md.",
         },
         envelope_cwd=str(tmp_path),
     )

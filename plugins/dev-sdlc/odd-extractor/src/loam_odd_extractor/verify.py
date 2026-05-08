@@ -392,7 +392,7 @@ def _render_outcome_altitude_markdown(
     lines.append("")
     lines.append(
         "- v0.2.3 sub-plan-doc: "
-        "`docs/rebuild/plans/v0-2-3-cycle-1-multi-source-objective-synthesis.md`"
+        "`docs/plans/v0-2-3-cycle-1-multi-source-objective-synthesis.md`"
     )
     lines.append(
         "- ODD lean grounding: `docs/odd-llm-grounding.lean.md`"
@@ -514,7 +514,7 @@ def _render_legacy_markdown(
     lines.append("")
     lines.append(
         "- Plan-doc: "
-        "`docs/rebuild/plans/v0-2-3-cycle-1-multi-source-objective-synthesis.md`"
+        "`docs/plans/v0-2-3-cycle-1-multi-source-objective-synthesis.md`"
     )
     lines.append(
         "- Per-stage artefacts: `<workspace>/.loam/extractions/"

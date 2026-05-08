@@ -17,7 +17,7 @@
 Per plan §4 AC.α.5, this is the cross-cutting structural check
 verifying that AC.α.3 + AC.α.4 are not satisfied by minimum-viable
 token content. For every file under
-``docs/rebuild/capability-corpus/{claude-code,harness,best-practice}/``:
+``docs/capability-corpus/{claude-code,harness,best-practice}/``:
 
   - Determine class from parent directory.
   - Load the class schema markers from AC.α.2's authoring guide
@@ -40,7 +40,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-CORPUS_ROOT = REPO_ROOT / "docs" / "rebuild" / "capability-corpus"
+CORPUS_ROOT = REPO_ROOT / "docs" / "capability-corpus"
 
 CLASS_A_REQUIRED = (
     "## Surface",

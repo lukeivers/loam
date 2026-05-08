@@ -1,0 +1,139 @@
+schema_version: 1
+amendment:
+  number: 31
+  slug: workspace-bootstrap-plist-path
+  title: "workspace-bootstrap plist PATH emission (D5)"
+
+# BASELINE: 795768c — pre-amendment tip (amendment #30 seal commit,
+# chore(seals): memory-system-env-scrubber-user seal). Amendment #31
+# is the next sequential number after #30.
+baseline: 795768cd87e7e923e976c9e2c28cce1b48c4c3d4
+plan: docs/plans/amendment-31-workspace-bootstrap-plist-path.md
+
+# Single-component amendment per owner ruling (amendment plan
+# §Owner-ruling-summary #4 + §9 single-component default). The
+# sandbox-launchctl seal test for D5.1 is authored in
+# workspace-bootstrap/tests/ directly via subprocess.run(launchctl);
+# no hands-off-lifecycle helper extension required. Manifest stays
+# one-component.
+components:
+  - name: workspace-bootstrap
+    seal_test: workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: workspace-bootstrap/seals/SEAL_COMMIT.plist-path-emission
+  body: |
+    # Amendment #31 — workspace-bootstrap plist PATH emission (D5)
+
+    2026-04-24. Closes the PATH-missing defect in the first-run
+    scaffold's emitted launchd plists: prior amendments left the
+    `EnvironmentVariables` dict at launchd's minimal default PATH
+    (`/usr/bin:/bin:/usr/sbin:/sbin`), so the memory-graphiti
+    service's `shutil.which("claude")` at `ClaudePrintLLMClient`
+    construction could not resolve the user-installed `claude`
+    binary at `~/.local/bin/claude`. The service crashed with
+    `ClaudeBinaryMissingError` (-32110) before `/health` came up.
+
+    Re-extension of amendment #4's H1 scaffold-content contract
+    per ODD §4: the prior test surface asserted plist *existence*
+    but not plist *content*; this amendment adds content-level
+    structural guards plus an end-to-end liveness assertion.
+
+    Structural remedy (amendment plan §1 + §3):
+
+      - New `_launchd_path()` helper returns the canonical PATH
+        string per research §7.1: `~/.local/bin` (resolved against
+        Path.home() at emit time) + `/opt/homebrew/bin` +
+        `/usr/local/bin` + `/usr/bin` + `/bin` + `/usr/sbin` +
+        `/sbin`. Single source of truth; both plists consume
+        identical output.
+      - Both `_LAUNCHD_TEMPLATES` entries (memory-graphiti and
+        orchestrator) gain `<key>PATH</key><string>{path}</string>`
+        in their `EnvironmentVariables` dicts. `.format(...)` wires
+        `path=_launchd_path()` at emission.
+      - Three new tests in
+        `workspace-bootstrap/tests/test_D5_plist_path_emission.py`:
+        D5.1 loads the emitted memory-graphiti plist into launchd's
+        gui domain under a UUID-unique sandbox label and asserts
+        `/health` → 200 within memory.yaml's `startup_timeout_s`;
+        D5.2 asserts parse-back equivalence of the PATH string
+        across both plists; D5.3 is the structural anti-creep
+        guard — each plist's `EnvironmentVariables` key set is
+        exactly the amendment-declared set (memory-graphiti = 5
+        keys; orchestrator = 2 keys).
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - PATH-helper shape: canonical ordered list from research
+        §7.1 flagged-default. Host-adaptive resolution (reading
+        the scaffold-invoker's `$PATH`) rejected per amendment
+        plan §7 inference 1 — the invoker's PATH is non-
+        deterministic under the first-run hook. memory.yaml-
+        override seam is a future-amendment surface (§6 out-of-
+        scope).
+      - D5.1 test shape: strong shape per research §Q4 (real
+        launchctl bootstrap in a sandboxed gui domain under a
+        UUID-unique label, `/health` poll, bootout-in-teardown).
+        Deterministic on the dispatch host (macOS 26.3 Tahoe);
+        clean-skips on CI hosts that lack `claude` or the
+        memory-system venv rather than gating the test behind a
+        `@pytest.mark.integration` marker.
+      - D5.3 exact-set assertion via plistlib parse-back on
+        `EnvironmentVariables` key sets; the per-plist declared
+        sets come from amendment plan §D5.3 (reflecting
+        amendment #29's additions to memory-graphiti only and
+        this amendment's `PATH` addition to both plists).
+
+    Fail-closed behaviours preserved:
+
+      - `PYTHONUNBUFFERED=1` remains on both plists.
+      - Amendment #29's `GRAPHITI_SERVICE_HOST`, `GRAPHITI_SERVICE_
+        PORT`, `POS_V2_WORKSPACE_ROOT` on memory-graphiti preserved
+        verbatim.
+      - Label shape, filename shape, bootout-before-bootstrap
+        order, KeepAlive / ThrottleInterval / StandardOutPath
+        semantics unchanged.
+      - A plist missing PATH fails D5.3's exact-set assertion on
+        the 5-key / 2-key invariant; the fail-closed direction
+        (amendment plan §2.4) is structurally enforced.
+
+    AC surface (D5.1, D5.2, D5.3, D5:S):
+
+      - D5.1: memory-graphiti emitted plist reaches `/health` → 200
+        end-to-end under launchctl bootstrap in sandbox gui domain.
+      - D5.2: orchestrator plist's PATH emission is parse-back
+        equivalent to memory-graphiti's — same helper output.
+      - D5.3: per-plist exact-set env key guard (5 keys / 2 keys).
+      - D5:S: seal-diff discipline — workspace-bootstrap-only plus
+        universal paths.
+
+    Out of scope (per amendment plan §6):
+
+      - D4 (memory-system env-scrubber `_ENV_ALLOWED_VARS` USER
+        widening) — landed as separate amendment #30.
+      - USER / HOME / LOGNAME / SHELL / TMPDIR defensive emission
+        — ruled out by research §Q3 (launchd gui-domain session
+        context already injects them).
+      - Orchestrator end-to-end liveness probe (orchestrator uses
+        a UNIX-socket supervisor probe, not HTTP `/health`); D5.2
+        asserts emission equivalence, not runtime liveness.
+      - memory.yaml-override for the PATH string — future
+        amendment if the need surfaces.
+
+    BASELINE 795768c (pre-amendment tip). workspace-bootstrap's
+    SEAL_COMMIT sidecar lands at 795768c on the amendment commit
+    for the empty-diff window; advanced to the amendment SHA in
+    the seal commit via `pos-amend seal`.

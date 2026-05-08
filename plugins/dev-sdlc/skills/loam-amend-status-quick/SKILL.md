@@ -155,7 +155,7 @@ Skip when:
    Placeholder string → source-edit feat hasn't landed yet.
    Real SHA → source-edit landed.
 3. **Read the plan-doc §14 Commit SHAs section.** `grep -A
-   20 "Commit SHAs" docs/rebuild/plans/<slug>.md`. Each line
+   20 "Commit SHAs" docs/plans/<slug>.md`. Each line
    either has a SHA or `<TBD>`.
 4. **Identify which commits landed.** `git log --oneline -20
    --grep=<slug>` returns every commit referencing the slug.

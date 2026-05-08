@@ -1,7 +1,7 @@
 """AC.D.1.5.2 — ``loam amend apply`` skips BASELINE + SEAL_COMMIT bump
 on rename-only components; widening still applies.
 
-Plan: ``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.2.
+Plan: ``docs/plans/d-migration-1-5.md`` AC.D.1.5.2.
 """
 
 from __future__ import annotations
@@ -113,7 +113,7 @@ def test_rename_only_skips_baseline_and_sidecar_bump(
                     "title": "rename-only test",
                 },
                 "baseline": pre_amend_sha,
-                "plan": "docs/rebuild/plans/rename-only.md",
+                "plan": "docs/plans/rename-only.md",
                 "components": [
                     {
                         "name": "alpha",
@@ -214,7 +214,7 @@ def test_substantive_advances_baseline_and_sidecar(
                     "title": "substantive test",
                 },
                 "baseline": baseline_sha,
-                "plan": "docs/rebuild/plans/substantive.md",
+                "plan": "docs/plans/substantive.md",
                 "components": [
                     {
                         "name": "delta",

@@ -16,7 +16,7 @@
 present in prompt.md template.
 
 Per plan
-``docs/rebuild/plans/claude-code-corpus-prompt-spine-and-seed-docs.md``
+``docs/plans/claude-code-corpus-prompt-spine-and-seed-docs.md``
 §4 AC.α.1, the framework template
 ``framework/primary-persona/templates/persona-template/prompt.md``
 carries:
@@ -28,7 +28,7 @@ carries:
         both Claude-Code-leverage and harness-leverage halves);
       * a *Capability index* sub-section (one-line entries
         pointing at corpus-doc paths under
-        ``docs/rebuild/capability-corpus/``; ≥ 8 entries; ≤ 1500
+        ``docs/capability-corpus/``; ≥ 8 entries; ≤ 1500
         chars total for the index block).
   - a new operational-rule entry **Lean on the corpus** under
     the existing ``## Operational rules`` section (sibling to
@@ -181,7 +181,7 @@ def test_AC_alpha_1_lean_on_the_corpus_names_read_tool_and_corpus_path():
     assert "read tool" in rule_section, (
         "Lean on the corpus rule must name the Read tool"
     )
-    # C2-prime: the inline ``docs/rebuild/capability-corpus/`` path
+    # C2-prime: the inline ``docs/capability-corpus/`` path
     # was retired in favour of generic "workspace's capability
     # corpus" prose (predecessor §11 D-Q.ABC.5(b) DROP locked +
     # current plan §5.4 file 19). AC.α.1 intent ("on-demand fetch

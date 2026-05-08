@@ -50,7 +50,7 @@ HALT_FINDINGS: |
 COMPANIONS: "fixture-companion-path.md"
 ANCESTOR_RECORD: "fixture ancestor record."
 STATUS_LINE: "fixture status (pre-dispatch). 2026-01-01."
-RESEARCH_PATH: "docs/rebuild/plans/research/fixture-research.md"
+RESEARCH_PATH: "docs/plans/research/fixture-research.md"
 WORKING_DIRECTORY: "/fixture/working/dir/"
 REFERENCES: |
   - Fixture reference one.

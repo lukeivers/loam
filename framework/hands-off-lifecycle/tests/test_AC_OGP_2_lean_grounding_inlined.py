@@ -57,7 +57,7 @@ def _make_dev_mode_workspace(tmp_path: Path) -> Path:
         "# Workspace CLAUDE\n\nClaude is the model.\n",
         encoding="utf-8",
     )
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text(
         "# VALUE_PROPOSITION\n\nPrime objective text here.\n",

@@ -2,7 +2,7 @@
 
 **Effective:** 2026-05-08.
 **Status:** Forward-looking; ratified versions land here as `STATE.md` rollups when they ship.
-**Composes with:** `docs/release-versioning-policy.md` (SemVer commitment), `docs/odd-semver-pinning.md` (ODD ↔ SemVer pinning), `docs/rebuild/VALUE_PROPOSITION.md` (prime objective), `docs/odd-llm-grounding.lean.md` (methodology).
+**Composes with:** `docs/release-versioning-policy.md` (SemVer commitment), `docs/odd-semver-pinning.md` (ODD ↔ SemVer pinning), `docs/VALUE_PROPOSITION.md` (prime objective), `docs/odd-llm-grounding.lean.md` (methodology).
 
 This file replaces the prior per-release master plans (the v0.1.x roadmap fragments and the ODD-rebuild master plan). The canonical forward-looking artefact is one file.
 
@@ -18,7 +18,7 @@ The sentence is the version's identity. Acceptance criteria and constraints foll
 
 ### Loam's prime objective shapes every entry
 
-Loam exists to help people use LLMs to **build software** (`docs/rebuild/VALUE_PROPOSITION.md`). The Dev/SDLC plugin is "Software Development Life Cycle" — `extraction is a scaffold` that places initial boundaries on what gets built; **working code is the deliverable**, not the extracted contract. Roadmap entries from v0.4.0 onward are framed against that deliverable shape.
+Loam exists to help people use LLMs to **build software** (`docs/VALUE_PROPOSITION.md`). The Dev/SDLC plugin is "Software Development Life Cycle" — `extraction is a scaffold` that places initial boundaries on what gets built; **working code is the deliverable**, not the extracted contract. Roadmap entries from v0.4.0 onward are framed against that deliverable shape.
 
 ### Architectural constraints (apply to every entry)
 
@@ -38,7 +38,7 @@ These are non-negotiable across the roadmap unless the policy doc itself changes
 
 ## §2 Shipped (concise summary, v0.1.0 → v0.2.5.1)
 
-Pulled from `docs/rebuild/STATE.md`. Each entry is the minor's objective sentence + the seal anchor.
+Pulled from `docs/STATE.md`. Each entry is the minor's objective sentence + the seal anchor.
 
 | Version | Objective sentence | Anchor |
 |---|---|---|
@@ -454,7 +454,7 @@ Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." This is a quality-
 
 The `maybe-someday` list. Items here are not committed to any version; they activate when their named trigger fires (or stay deferred indefinitely).
 
-**Authoritative source:** `docs/rebuild/FUTURE_IDEAS.md` (collapses to `docs/FUTURE_IDEAS.md` per v0.3.0 AC.V030.8) + `docs/rebuild/BACKLOG.md`.
+**Authoritative source:** `docs/FUTURE_IDEAS.md` (collapses to `docs/FUTURE_IDEAS.md` per v0.3.0 AC.V030.8) + `docs/BACKLOG.md`.
 
 ### Items explicitly in backlog (not roadmap)
 

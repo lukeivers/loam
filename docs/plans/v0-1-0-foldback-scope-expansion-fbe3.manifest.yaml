@@ -1,0 +1,172 @@
+schema_version: 1
+amendment:
+  number: 106
+  slug: v0-1-0-foldback-scope-expansion-fbe3
+  title: "FBE.3 — partition split-admit plugins/dev-sdlc/** (user-facing src ships, dev-discipline stays)"
+
+# BASELINE: 9cdcc92 — the partition-admission commit (the pre-apply
+# tip after the manifest YAML edit + 2 test fixture edits landed).
+#
+# Commit ladder pre-apply:
+#   4ced26c — FBE.3 sub-plan-doc (NEW commit)
+#   9cdcc92 — partition admission (manifest YAML edit + 2 test fixture edits)
+#   <this manifest commit lands next>
+#   <loam amend apply lands as #4>
+#   <loam amend seal lands as #5>
+#
+# Single sealed-component fence: `plugins/dev-sdlc/` (EXISTING
+# seal anchor at `plugins/dev-sdlc/tests/SEAL_COMMIT` — pre-FBE.3
+# value `54794d7b08080f4e87315a81eadcadf292eb4bb9`; this amendment
+# bumps it via `loam amend apply` + `loam amend seal`). Unlike
+# FBE.1 (NEW component anchor) and FBE.2 (newly-established anchor
+# for loam-cli), the dev-sdlc plugin already has the sidecar +
+# fence-test shape from M6a — FBE.3 cycles through the established
+# anchor.
+#
+# The partition-manifest 2-section edit + 2 test fixture spot-check
+# edits at `framework/tools/pos-publish-framework-only/` ride via
+# universal_paths.prefixes admission — exactly the same pattern
+# FBE.1 + FBE.2 used.
+baseline: 9cdcc92
+
+plan: docs/plans/v0-1-0-foldback-scope-expansion-fbe3.md
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `framework/tools/pos-publish-framework-only/` admits the partition-
+# manifest edit + the 2 test fixture spot-check edits (the structural
+# surface for the split-admit reclassification). Mirrors FBE.1 + FBE.2.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/tools/pos-publish-framework-only/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: plugins/dev-sdlc/tests/SEAL_COMMIT.notes
+  body: |
+    # FBE.3 — partition split-admit plugins/dev-sdlc/** (user-facing src ships, dev-discipline stays)
+
+    2026-05-03. v0.1.0 reviewer foldback closes BLOCKER 2 (plugin
+    half — FBE.2 closed the CLI binary half). Reviewer dossier:
+    `<workspace>/.scratch/claude-output/loam-user-review-2026-05-03.md`.
+    Parent plan:
+    `docs/plans/v0-1-0-foldback-scope-expansion.md` §4 FBE.3
+    + §3 Decision B.2 (Decision B.alt = SHIP at v0.1.0 because the
+    contribution-protocol demo matters more than text-only reference).
+    Sub-plan:
+    `docs/plans/v0-1-0-foldback-scope-expansion-fbe3.md`.
+
+    Decision B.2 from the parent plan locked: split the
+    `plugins/dev-sdlc/**` admission so the user-facing plugin source
+    ships while the dev-discipline subtree stays `dev_only`. Pre-
+    existing universal `**/seals/**` + `**/tests/**` precedence rules
+    continue to win for `plugins/dev-sdlc/seals/` +
+    `plugins/dev-sdlc/tests/` per partition-precedence rule #2.
+
+    `plugins/dev-sdlc/` is already a sealed component (existing
+    sidecar + fence-test from M6a baseline). FBE.3 cycles through
+    the established anchor — sidecar bump + fence-test BASELINE bump
+    via `loam amend apply` + `loam amend seal`.
+
+    Structural delta (within fence + universal admissions):
+
+      - `plugins/dev-sdlc/tests/SEAL_COMMIT` — sidecar bump
+        (current value `54794d7b08080f4e87315a81eadcadf292eb4bb9` →
+        FBE.3 BASELINE 9cdcc92 at apply, then to seal SHA at seal).
+      - `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` —
+        BASELINE literal bump (`699a391` → FBE.3 BASELINE).
+      - `plugins/dev-sdlc/tests/SEAL_COMMIT.notes` — narrative file
+        appended/replaced with the FBE.3 body.
+      - `framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml`
+        — broad `dev_only: plugins/dev-sdlc/**` REMOVED; 4 entries
+        ADDED to `dev_and_public:` (src/**, pyproject.toml, README.md,
+        skills/**); 5 entries ADDED to `dev_only:` (docs/**, hooks/**,
+        templates/**, tools/**, dev-mode-manifest.yaml). Provenance
+        comments at both edit sites. Admitted via universal_paths.
+      - `framework/tools/pos-publish-framework-only/tests/test_AC_OSS_3_default_partition_complete.py`
+        — 3 entries added to `sample_runtime_paths`
+        (plugins/dev-sdlc/pyproject.toml, README.md, src/.../api.py).
+        Admitted via universal_paths.
+      - `framework/tools/pos-publish-framework-only/tests/test_AC_OSS_M6_8_partition_includes_dev_sdlc_plugin.py`
+        — `test_canonical_manifest_classifies_plugin_files` rewrite:
+        per-subtree expected-class logic (replaces M6b.0 blanket
+        DEV_ONLY assertion). Other two tests in the file unchanged.
+        Admitted via universal_paths.
+
+    AC surface (per sub-plan §4):
+
+      - AC.FBE.3.1 — dev_only: REMOVES the broad plugins/dev-sdlc/**
+        entry.
+      - AC.FBE.3.2 — dev_and_public: ADDS 3 (+1) entries (src/**,
+        pyproject.toml, README.md, skills/**).
+      - AC.FBE.3.3 — dev_only: ADDS 5 explicit subtree entries
+        (docs/**, hooks/**, templates/**, tools/**,
+        dev-mode-manifest.yaml).
+      - AC.FBE.3.4 — pre-existing universal **/seals/** +
+        **/tests/** precedence wins for those subtrees.
+      - AC.FBE.3.5 — synth re-run produces 16 leaves under
+        plugins/dev-sdlc/ (1 pyproject + 1 README + 1 skill + 8
+        src/.../*.py + 5 src/.../templates/odd-*.md). Verified at
+        apply-time via direct partition classifier invocation: 16
+        ship + 120 stay dev_only. Note: parent plan §4 FBE.3.5
+        anticipated 15 leaves; the 16th is skills/start-project.md,
+        admitted at build-time per halt-and-surface (skills/ was
+        non-enumerated in parent plan §3 Decision B.2; user-facing
+        first-click intent-routing surface).
+      - AC.FBE.3.6 — audit-completeness test passes for canonical
+        pos-v2 HEAD; spot-check fixture updates compose cleanly
+        (3/3).
+      - AC.FBE.3.7 — M6_8 plugin-classification test rewrite
+        passes 3/3 with per-subtree expected-class logic.
+      - AC.FBE.3.8 — pip install --dry-run -e plugins/dev-sdlc
+        resolves cleanly ("Would install loam-plugin-dev-sdlc-0.1.0").
+      - AC.FBE.3.9 — negative AC: zero edits to plugin source
+        (verified via git diff).
+      - AC.FBE.3.S — sealed-component fence: git diff
+        BASELINE..SEAL_COMMIT --name-only produces only paths under
+        plugins/dev-sdlc/ + universal-paths admissions.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - Manifest provenance comments at BOTH edit sites
+        (dev_and_public ADDs + dev_only ADDs) so a future reader
+        sees the cross-reference without git-archeology. Each block
+        retains its own narrative pointing to the FBE.3 sub-plan +
+        parent foldback plan.
+      - skills/** admitted dev_and_public at build-time (NOT in
+        parent plan §3 Decision B.2 enumeration — surfaced in FBE.3
+        status report; reversible).
+      - Spot-check test fixture edits inline-commented with FBE.3
+        attribution.
+      - M6_8 test's per-subtree assertion logic uses simple prefix
+        comparison (no manifest re-introspection); narrative comment
+        gains a third paragraph documenting FBE.3 per parent §3 B.2.
+
+    Out of scope (per sub-plan §8):
+
+      - Path-spec dep rewrite for plugin's 3 inter-component deps —
+        FBE.4.
+      - Plugin pyproject description scrub — FBE.5.
+      - Plugin README scrub — FBE.5.
+      - Plugin source edits — partition-only.
+      - `loam amend` console-script shipping — explicitly OUT per
+        parent §3 Decision B.2 (stays at plugins/dev-sdlc/tools/
+        loam-amend/ → plugins/dev-sdlc/tools/** glob → dev_only).
+      - Synth pipeline path-rewrite (Decision D) — plugins/ paths
+        not subject to prefix-strip anyway.
+
+    BASELINE 9cdcc92 (pre-apply tip; the partition-admission commit).
+    The dev-sdlc anchor's SEAL_COMMIT sidecar lands at the seal SHA
+    via `loam amend seal`.

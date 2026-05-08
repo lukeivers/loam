@@ -258,7 +258,7 @@ def _scope_id_for_dispatch(prompt: str, session_id: str | None) -> str:
 def _derive_plan_path(prompt: str) -> str:
     """Best-effort plan-doc path extraction from the dispatch prompt.
 
-    Looks for ``docs/rebuild/plans/<slug>.md`` mentions; falls back to
+    Looks for ``docs/plans/<slug>.md`` mentions; falls back to
     a sentinel ``"<plan-not-declared>"`` when none found. The sentinel
     keeps the field non-empty per the active-scope sentinel's schema
     (plan_path is required + must be a non-empty string).
@@ -266,7 +266,7 @@ def _derive_plan_path(prompt: str) -> str:
     if not isinstance(prompt, str):
         return "<plan-not-declared>"
     m = re.search(
-        r"docs/rebuild/plans/[A-Za-z0-9._-]+\.md", prompt
+        r"docs/plans/[A-Za-z0-9._-]+\.md", prompt
     )
     if m is not None:
         return m.group(0)

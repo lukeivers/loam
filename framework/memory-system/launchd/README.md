@@ -49,7 +49,7 @@ Two reasons:
 1. The plist shape — `RunAtLoad` + `KeepAlive` + `ThrottleInterval: 10`
    + log paths + `PYTHONUNBUFFERED=1` — is useful reading when
    debugging what the scaffold's template produces.
-2. Prior research (`docs/rebuild/components/true-first-run/research.md`)
+2. Prior research (`docs/archive/component-research/true-first-run/research.md`)
    explicitly ruled that this file could stay in place as reference
    since it is not used at runtime.
 

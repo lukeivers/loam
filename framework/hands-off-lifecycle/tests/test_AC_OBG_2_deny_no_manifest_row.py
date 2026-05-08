@@ -59,7 +59,7 @@ def gate_dev_mode_sentinel_no_rows(monkeypatch):
     returns no manifest rows."""
     sentinel = ActiveScopeSentinel(
         scope_id="test-scope",
-        plan_path="docs/rebuild/plans/test.md",
+        plan_path="docs/plans/test.md",
         bindings=(ScopeBinding(component="orchestrator", ac_id="AC.X.1"),),
         created_at="2026-04-28T00:00:00Z",
         session_id=None,

@@ -8,7 +8,7 @@ Anthropic's combined-cap); body (post-frontmatter) is non-empty
 markdown.
 
 v0.1.6 Cycle 2 extension (per
-docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md §5
+docs/plans/v0-1-6-production-safety-and-base-skills.md §5
 AC.SKILLS-BASE.4): 3 new SKILLs land alongside the original 5,
 taking EXPECTED_SKILLS to 8.
 

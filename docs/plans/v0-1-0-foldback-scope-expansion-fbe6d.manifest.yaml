@@ -1,0 +1,93 @@
+schema_version: 1
+amendment:
+  number: 119
+  slug: v0-1-0-foldback-scope-expansion-fbe6d
+  title: "FBE.6d — re-run FBE.6c close-cycle against post-FBE.11 canonical HEAD (HOL no-op narrative anchor; dual-ref staging path)"
+
+# BASELINE: 6b311db — the FBE.6d sub-plan-doc commit (the FBE.6d
+# dispatch's canonical HEAD at synth-run-time). FBE.6d carries NO
+# source-side delta per AC.FBE.6d.7 (negative AC: zero source/doc
+# edits during FBE.6d).
+#
+# Commit ladder pre-apply:
+#   e834a98 — FBE.11 §8 register backfill (canonical HEAD pre-FBE.6d
+#             dispatch)
+#   6b311db — FBE.6d sub-plan-doc (NEW commit)
+#   <synth ran from 6b311db producing framework-only ed37820>
+#   <sweeps + dual-ref smoke + actual GitHub staging push executed;
+#    sweep report written>
+#   <seal narrative authored at framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6d>
+#   <this manifest commit lands next>
+#   <loam amend apply lands as the next commit; per dispatcher's brief
+#    apply does NOT auto-commit by design — apply.py has zero git
+#    commit calls; manually committed as `chore(amend): FBE.6d apply ...`>
+#   <loam amend seal lands as the seal commit>
+#   <parent §8 register backfill commit lands last>
+#
+# HOL no-op narrative anchor pattern (per FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c/FBE.11
+# precedent for amendments with structural surface that's narrative-only).
+# HOL is its own anchor here — the byte-content invariant at HOL
+# stays unchanged (frozen_baseline: true) and the seal narrative
+# file is the entire structural artefact.
+#
+# Per parent plan §4 FBE.6.S clause: "Sealed-component fence: NONE
+# — this is a sweep + smoke + review amendment with no source-side
+# delta. Narrative anchor at framework/hands-off-lifecycle/seals/
+# SEAL_COMMIT.v0-1-0-foldback-fbe6d per FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c/FBE.11
+# precedent."
+baseline: "6b311db"
+
+plan: docs/plans/v0-1-0-foldback-scope-expansion-fbe6d.md
+
+seal_description: "FBE.6d re-run of FBE.6c close-cycle against post-FBE.11 canonical HEAD — verification step for v0.1.0 publish foldback. Re-synth canonical HEAD post-FBE.11 (source 6b311db → framework-only ed37820, advance from FBE.6c's 19422ed); re-run all 8 AC.M11a.* sweeps (all PASS — no regressions; banned literals + substitution tokens + wired components + MFBM deps all clean; identical counts to FBE.6c since FBE.11 was doc-only at operator-instruction surfaces); EXTENDED smoke via dispatcher's dual-ref staging step list (init bare /tmp/loam-fbe6d-staging.git + dual-ref push framework-only:main framework-only:framework-only + stranger clone-from-bare + venv + pip install -r install-from-source.txt + loam --version=loam 0.1.0 + loam init <ws> NO --from) PASSES end-to-end; staging push to lukeivers/loam-staging via dual-ref command lands BOTH refs/heads/main AND refs/heads/framework-only AND HEAD at ed37820; reviewer re-run (in-band per FBE.6/FBE.6b/FBE.6c precedent — Task tool not exposed) cloning the PUBLIC GitHub staging URL https://github.com/lukeivers/loam-staging.git verifies BLOCKER-FBE6c.1 CLOSED — stranger gets refs/remotes/origin/framework-only available, install + loam init succeed, framework/ on framework-only. Verdict: GO — close foldback; M12 publish-flip is the next dispatch. All five prior BLOCKERs (FBE.6.{1,2}, FBE.6b.1, FBE.9.1, FBE.6c.1) verified closed; no new BLOCKERs surfaced. Sealed-component fence: hands-off-lifecycle only (HOL no-op narrative anchor pattern; frozen_baseline: true per amendment #23 + FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c/FBE.11 manifest precedent). Sweep report at <workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6d-sweep-report.md."
+
+# HOL no-op narrative anchor (mirrors FBE.6/FBE.6b/FBE.8/FBE.9/FBE.10/FBE.6c/FBE.11
+# precedent for amendments where the structural surface is the seal
+# narrative itself; no source-side fence delta to enforce).
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# `docs/plans/` admits the plan-before-code paper trail
+# (FBE.6d sub-plan + manifest YAML + parent plan-doc backfill).
+# `framework/hands-off-lifecycle/seals/` admits the seal narrative
+# file (HOL is the narrative anchor home per parent plan §4 FBE.6.S).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/hands-off-lifecycle/seals/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.v0-1-0-foldback-fbe6d
+  body: |
+    # FBE.6d narrative-only seal (re-run of FBE.6c close-cycle; GO)
+
+    See the full narrative at the target file (already authored
+    pre-apply per AC.FBE.6d.6 + AC.FBE.6d.S) for FBE.6d outcome,
+    sweep results (all PASS — no regressions), smoke results
+    (PASS end-to-end via dual-ref staging path), staging push
+    (both refs land at ed37820 on actual GitHub), reviewer verdict
+    (GO — full README-literal stranger flow from PUBLIC GitHub
+    staging URL works end-to-end; BLOCKER-FBE6c.1 verified closed),
+    and path forward (M12 publish-flip is the next dispatch).
+
+    Sub-plan-doc:
+    `docs/plans/v0-1-0-foldback-scope-expansion-fbe6d.md`.
+    Sweep report:
+    `<workspace>/.scratch/claude-output/v0-1-0-foldback-fbe6d-sweep-report.md`.
+    Status file:
+    `<workspace>/.scratch/claude-output/fbe6d-status-2026-05-03.md`.
+
+    BASELINE 6b311db (the FBE.6d sub-plan-doc commit; FBE.6d's source
+    canonical HEAD at synth-run-time). No source-side delta per
+    AC.FBE.6d.7 negative AC.

@@ -8,7 +8,7 @@
 
 """AC.PSAFE.5 — foreign-codebase BudgetEnvelope Pydantic model.
 
-Per ``docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md``
+Per ``docs/plans/v0-1-6-production-safety-and-base-skills.md``
 §5 AC.PSAFE.5: the model declares
 ``hard_cap_money_cents``, ``soft_cap_money_cents``, ``overrun_action``
 (enum: ``warn`` | ``halt`` | ``continue``). Pydantic validation

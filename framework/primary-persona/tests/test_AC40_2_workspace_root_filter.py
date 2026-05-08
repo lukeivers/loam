@@ -21,7 +21,7 @@ NOT appear in the contributor's output.
 Maps to: objective-tracker D2 (user-authored-root invariant per
 workspace) + v1.0 Architectural "Objective-based" → AC.PO.1.
 
-Plan: docs/rebuild/plans/amendment-40-primary-persona-tracker-context-contributor.md
+Plan: docs/plans/amendment-40-primary-persona-tracker-context-contributor.md
 """
 
 from __future__ import annotations

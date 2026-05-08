@@ -46,7 +46,7 @@ lean on or extend?"**
 > the toolkit the primary persona draws from.** Every feature must
 > reduce translation burden for the user and add to the toolkit the
 > primary persona can invoke. Full detail in
-> `docs/rebuild/VALUE_PROPOSITION.md`.
+> `docs/VALUE_PROPOSITION.md`.
 
 The two required research questions:
 

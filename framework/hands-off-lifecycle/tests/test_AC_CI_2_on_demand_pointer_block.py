@@ -50,7 +50,7 @@ def _make_dev_mode_workspace(
         "is_primary: true\ndev_intent: yes\n", encoding="utf-8"
     )
     (tmp_path / "CLAUDE.md").write_text("# C\n", encoding="utf-8")
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# V\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# S\n", encoding="utf-8")
@@ -94,7 +94,7 @@ def test_AC_CI_2_emits_on_demand_pointer_block(tmp_path: Path) -> None:
     on its own line, prefixed with ``- ``.
 
     C2-prime amendment §11 D-Q.ABC-prime.2 STRIPPED the prior
-    third pointer entry (``docs/rebuild/FUTURE_IDEAS.md``) — no
+    third pointer entry (``docs/FUTURE_IDEAS.md``) — no
     public counterpart available. AC.CI.2 intent ("on-demand
     pointer block emitted") is preserved; only the pointer set
     shrank. ODD §4 in-band rebaseline.
@@ -106,7 +106,7 @@ def test_AC_CI_2_emits_on_demand_pointer_block(tmp_path: Path) -> None:
     assert "- plugins/dev-sdlc/docs/odd-methodology.md" in stdout
     assert "- plugins/dev-sdlc/docs/odd-in-loam.md" in stdout
     # FUTURE_IDEAS.md pointer STRIPPED at C2-prime.
-    assert "- docs/rebuild/FUTURE_IDEAS.md" not in stdout
+    assert "- docs/FUTURE_IDEAS.md" not in stdout
 
 
 def test_AC_CI_2_omits_missing_on_demand_files(tmp_path: Path) -> None:
@@ -130,7 +130,7 @@ def test_AC_CI_2_omits_missing_on_demand_files(tmp_path: Path) -> None:
     # Other on-demand files still listed.
     assert "- plugins/dev-sdlc/docs/odd-in-loam.md" in block
     # FUTURE_IDEAS.md pointer STRIPPED at C2-prime.
-    assert "- docs/rebuild/FUTURE_IDEAS.md" not in block
+    assert "- docs/FUTURE_IDEAS.md" not in block
 
 
 def test_AC_CI_2_pointer_entries_are_workspace_relative_paths(

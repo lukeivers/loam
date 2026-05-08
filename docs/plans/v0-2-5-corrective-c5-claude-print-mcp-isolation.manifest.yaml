@@ -1,0 +1,112 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-5-corrective-c5-claude-print-mcp-isolation
+  title: "v0.2.5 corrective C5 — claude -p subprocess MCP-isolation via --strict-mcp-config + empty config tempfile per owner ruling Telegram 10196 (subprocess must launch without telegram); both memory-system claude_print_client.py and odd-extractor claude_print_synthesis_client.py now prepend --strict-mcp-config --mcp-config <path> before -p in argv (probe + per-call); mirrors framework/workspace-sync _resolver_client.py AC.WSα.8 precedent verified 2026-04-27; 5 named ACs; closes the telegram-bot-killed-by-subprocess defect"
+
+# BASELINE: cf8a338 — source-edit feat commit covering:
+#   - EDIT framework/memory-system/src/claude_print_client.py
+#       1. Added `import tempfile`.
+#       2. NEW module-level _EMPTY_MCP_CONFIG = {"mcpServers": {}}.
+#       3. NEW _write_empty_mcp_config() helper (NamedTemporaryFile,
+#          json.dump, return path).
+#       4. _probe_claude_authenticated(): added empty_mcp_config_path
+#          parameter; argv prepends --strict-mcp-config --mcp-config <path>
+#          before -p.
+#       5. ClaudePrintLLMClient.__init__: stores
+#          self._empty_mcp_config_path = _write_empty_mcp_config().
+#       6. ClaudePrintLLMClient.probe_authenticated: passes the path.
+#       7. ClaudePrintLLMClient._build_argv: argv prepends the flag
+#          triple before -p.
+#   - EDIT framework/memory-system/tests/test_claude_print_client.py
+#       1. AC2 test's argv[1] == "-p" assertion replaced with index-of
+#          checks; positive-asserts --strict-mcp-config + --mcp-config
+#          appear and precede -p (AC2 invariant preserved).
+#   - NEW framework/memory-system/tests/test_claude_print_client_mcp_isolation.py
+#       4 tests:
+#       - AC.V025-C5.1 generate-call argv carries flags
+#       - AC.V025-C5.1 probe-call argv carries flags
+#       - AC.V025-C5.3 empty MCP config tempfile decodes to {"mcpServers": {}}
+#       - AC.V025-C5.3 helper unit-test (payload contract in isolation)
+#   - EDIT plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/claude_print_synthesis_client.py
+#       1. Added `import tempfile`.
+#       2. NEW module-level _EMPTY_MCP_CONFIG and _write_empty_mcp_config().
+#       3. ClaudePrintAnthropicShimClient.__init__ stores
+#          self._empty_mcp_config_path.
+#       4. _invoke_claude_print: argv prepends --strict-mcp-config
+#          --mcp-config <path> before -p.
+#   - NEW plugins/dev-sdlc/odd-extractor/tests/test_AC_V025_C5_claude_print_synthesis_mcp_isolation.py
+#       3 tests:
+#       - AC.V025-C5.2 synthesis argv carries flags
+#       - AC.V025-C5.3 synthesis empty MCP config payload
+#       - AC.V025-C5.3 synthesis helper unit-test
+#
+# Corrective amendment outside any v0.2.5 numbered cycle ladder.
+# Sealed-content invariant: pre-existing AC.* tests remain green
+# (104 memory-system + 828 odd-extractor + 1 skip each — net +3 + +3
+# from new C5 tests; AC2 test in claude_print_client.py was edited
+# to update an argv-position assertion no longer literal but its
+# AC2 invariant was preserved via index-of checks).
+#
+# Commit ladder pre-apply (relative to current HEAD):
+#   ccf640f — v0.2.5 corrective C4-pivot STATE entry
+#   c1c68f3 — v0.2.5 C4-pivot §14 SHA backfill
+#   76e5a8f — v0.2.5 C4-pivot seal commit
+#   3dc26cc — v0.2.5 C4-pivot manifest+apply
+#   cf8a338 — v0.2.5 corrective C5 source+tests feat (BASELINE for THIS amendment).
+#   <plan-doc + manifest commit lands NEXT (THIS plan-doc + manifest), then
+#    `loam amend apply <manifest>` lands as single merged manifest+apply
+#    commit per AC.DPS1.6, then `loam amend seal --plan-doc <abs path>` lands
+#    deterministic seal commit, then post-seal §14 backfill is auto-emitted
+#    by --plan-doc>
+#
+# Cross-component fence:
+#   - 1 EDITED source file in memory-system
+#   - 1 EDITED test file in memory-system (AC2 argv-position update)
+#   - 1 NEW test file in memory-system
+#   - 1 EDITED source file in odd-extractor
+#   - 1 NEW test file in odd-extractor
+#   - NO edits to telegram MCP server.ts, _resolver_client.py, upgrade-merge-resolver
+#     (all out of scope per plan-doc §3).
+
+baseline: "cf8a338"
+
+plan: docs/plans/v0-2-5-corrective-c5-claude-print-mcp-isolation.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-2-5-corrective-c5-claude-print-mcp-isolation.md
+
+ac_count: 5
+smoke_outcome: "C5.1 mem-sys argv flags before -p (probe+gen); C5.2 odd-ext argv flags before -p; C5.3 empty cfg payload {mcpServers:{}}; C5.4 932 green +6; C5.5 §14"
+
+components:
+  - name: memory-system
+    seal_test: framework/memory-system/tests/test_no_sealed_amendments.py
+    sidecar: framework/memory-system/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-5-corrective-c5-claude-print-mcp-isolation
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

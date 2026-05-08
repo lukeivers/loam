@@ -23,7 +23,7 @@ the orchestrator. This test exercises that wiring directly:
 flip True; ``dispatcher.release(...)`` flips it False.
 
 Programme: OSS v0.1.0 publish — M5 — wire-dormancy.
-Plan: docs/rebuild/plans/oss-v0-1-0-publish-dormancy-constructor.md.
+Plan: docs/plans/oss-v0-1-0-publish-dormancy-constructor.md.
 AC family: AC.OSS-M5.2.
 """
 

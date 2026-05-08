@@ -1,0 +1,190 @@
+schema_version: 1
+amendment:
+  number: 60
+  slug: workspace-sync-alpha-hotfix-2
+  title: "workspace-sync — α-hotfix-2: close 4 correctness bugs of the verdict-without-stage class"
+
+# BASELINE = current HEAD before the amendment commit. The amendment
+# commit lands on top of `8083a02` ("docs(plans): record amendment
+# #59 commit SHAs in method-decision register"). Per the
+# BASELINE-as-HEAD~1 pattern (#29 / #34-#59).
+baseline: 8083a029034a0d69aafa7f512df7de2b667c2369
+
+plan: docs/plans/workspace-sync-alpha-hotfix-2.md
+
+seal_description: "workspace-sync — α-hotfix-2: close 4 correctness bugs of the verdict-without-stage class"
+
+# One sealed component touched: workspace-sync. The hotfix patches
+# cli.py + conflict_report.py + merge_helper.py + state.py + adds
+# 5 regression tests. No edits to self-upgrade/ (HC#1). No edits
+# to workspace-bootstrap/ (HC#1).
+components:
+  - name: workspace-sync
+    seal_test: workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: workspace-sync/seals/SEAL_COMMIT.alpha-hotfix-2
+  body: |
+    # Amendment #60 — workspace-sync α-hotfix-2: close 4 correctness bugs of the verdict-without-stage class
+
+    2026-04-26. Sealed-component amendment closing 4 correctness bugs
+    of the same fault-class as α-hotfix #59 (sealed `f1abded`). #59
+    fixed the NN ancestor-detection branch only (HC#1 named-scope
+    binding). The 3 remaining bugs were surfaced as HALT-FOUND #1, #2,
+    #3 in #59's plan-doc §13. Bug D (state.yaml hygiene) was caught
+    by primary persona during post-#59 verification.
+
+    All four share the shape: verdict set without canonical content
+    staged → apply silently no-ops → false-success.
+
+    Bug A — cli.py:271-274 LLM-resolver INFERRED_ACCEPT_CANONICAL was
+      unstaged (the "do nothing extra" comment was wrong; clean_writes
+      contains only paths the conflict-detector flagged as canonical-
+      clean writes, NOT paths the resolver later resolved as accept-
+      canonical). Fix: cli.py post-resolve loop calls the centralized
+      stage_canonical_at_ref primitive when an INFERRED_ACCEPT_CANONICAL
+      entry has resolved_content_path=None (NN entries already populated
+      it via #59's fix).
+
+    Bug B — cli.py:275-278 Class-B ACCEPT_UPSTREAM did
+      clean_writes.append AFTER stage_canonical_clean_writes had
+      already run; the append was a no-op. Fix: replaced with a direct
+      call to stage_canonical_at_ref.
+
+    Bug C — conflict_report.py validator did not require
+      resolved_content_path for INFERRED_ACCEPT_CANONICAL or
+      ACCEPT_UPSTREAM. Fix: extended _resolution_requires to enforce
+      the contract structurally per ODD §5.3.
+
+    Bug D — state.yaml advanced to SUCCESS even when staging was
+      discarded (e.g., --auto-accept floor not met → CLI prints
+      "discarded" → exit). Subsequent runs hit the convergent-
+      idempotency fast-path in _ref_already_applied and silently
+      no-op. Fix: added SyncStatus.NEEDS_APPLY; merge_helper writes
+      that on clean-resolve; cli.py post-apply remains the only
+      writer of SUCCESS.
+
+    Three locked decisions drive the surface:
+
+      - **D-build.A** — promote the staging primitive
+        `_stage_canonical_for_nn_match` (added in #59) to a public
+        `stage_canonical_at_ref`. cli.py imports + invokes it from
+        both INFERRED_ACCEPT_CANONICAL and ACCEPT_UPSTREAM branches
+        with halt-on-failure (cli.py runs AFTER the resolver helper —
+        no fallback path; failing closed is correct). Closes Bug A
+        + Bug B.
+
+      - **D-build.B** — extend the existing _resolution_requires
+        model_validator in conflict_report.py to require
+        resolved_content_path on INFERRED_ACCEPT_CANONICAL +
+        ACCEPT_UPSTREAM. Mirrors the existing rule for
+        INFERRED_MERGED + THREE_WAY_MERGE. INFERRED_ACCEPT_WORKSPACE
+        + KEEP_LOCAL correctly remain ungated. Closes Bug C
+        structurally.
+
+      - **D-build.C** — add SyncStatus.NEEDS_APPLY; change
+        merge_helper.py's finally-block state-write from SUCCESS
+        to NEEDS_APPLY on clean-resolve. cli.py post-apply remains
+        the authoritative SUCCESS writer. The idempotency fast-
+        path in _ref_already_applied requires
+        status is SyncStatus.SUCCESS so NEEDS_APPLY does not
+        short-circuit re-runs. Closes Bug D.
+
+    Surface added under `workspace-sync/`:
+
+      - `src/workspace_sync/state.py` (EXTENDED, +1 LOC) — new
+        SyncStatus.NEEDS_APPLY enum value.
+
+      - `src/workspace_sync/merge_helper.py` (EXTENDED, +/- ~5 LOC)
+        — rename `_stage_canonical_for_nn_match` →
+        `stage_canonical_at_ref` (drop leading underscore so
+        cli.py can import); change line 786 SUCCESS → NEEDS_APPLY.
+
+      - `src/workspace_sync/cli.py` (EXTENDED, +~30 / -10 LOC) —
+        replace lines 268-278 with explicit per-resolution staging
+        block. Import `stage_canonical_at_ref` from merge_helper.
+
+      - `src/workspace_sync/conflict_report.py` (EXTENDED, +6 LOC)
+        — extend _resolution_requires model_validator.
+
+      - `tests/test_cli_b_shape.py` (EXTENDED, +3 tests, ~250 LOC) —
+        Bug A, Bug B, Bug D file-content-byte-match assertions.
+
+      - `tests/test_conflict_report_b_shape.py` (EXTENDED, +2 tests,
+        ~50 LOC) — Bug C validator-rejection assertions.
+
+      - Pre-existing fixtures: mechanical updates for any test that
+        constructs a now-gated entry with null resolved_content_path.
+
+      - `tests/SEAL_COMMIT` advanced from `f5190b6` (#59 amendment)
+        to the amendment-#60 commit SHA via `pos-amend apply`.
+
+      - `tests/test_no_sealed_amendments.py` BASELINE bumped to the
+        amendment-commit's HEAD~1 = `8083a02`.
+
+    Tests (workspace-sync — 5 new):
+
+      - `test_cli_b_shape.py::test_alpha_hotfix_2_LLM_accept_canonical_overwrites_workspace_file` (Bug A).
+      - `test_cli_b_shape.py::test_alpha_hotfix_2_class_B_accept_upstream_overwrites_workspace_file` (Bug B).
+      - `test_cli_b_shape.py::test_alpha_hotfix_2_discard_path_does_not_advance_state_to_success` (Bug D).
+      - `test_conflict_report_b_shape.py::test_alpha_hotfix_2_inferred_accept_canonical_requires_resolved_content_path` (Bug C).
+      - `test_conflict_report_b_shape.py::test_alpha_hotfix_2_accept_upstream_requires_resolved_content_path` (Bug C).
+
+    Backwards-compatibility verified (HC#2 binding):
+
+      - All 140 existing #56 + #57 + #58 + #59 tests remain green at
+        the amendment commit; post-hotfix total = 145.
+      - Some pre-existing fixtures with the bug-shape (null
+        `resolved_content_path` on now-gated resolutions) required
+        mechanical updates to satisfy the tightened validator;
+        intent preserved (the original tests asserted verdict-shape,
+        not null-content-path).
+      - The α.1 NN ancestor-detection path (#57 / #59) is unchanged.
+      - The INFERRED_MERGED write_merged path is unchanged.
+      - Class-A protection unchanged.
+      - The cli.py orchestration is unchanged outside the post-resolve
+        loop replacement.
+      - β.1 (#58) canonical-source resolution unchanged.
+      - No new third-party deps (HC#4): subprocess + Pydantic + stdlib.
+      - Zero edits to `self-upgrade/`.
+      - Zero edits to `workspace-bootstrap/`.
+
+    Halt-trigger surface review (per plan-doc §10):
+
+      #1 (centralization touches resolver Protocol): not fired —
+         pre-build verification confirms staging is downstream of
+         the verdict; MergeResolver.resolve()'s contract is unchanged.
+      #2 (Bug D collides with state-write convention): not fired —
+         post-fix, merge_helper writes NEEDS_APPLY on clean-resolve;
+         cli.py post-apply remains the authoritative SUCCESS writer.
+         cli.py:335 comment's intent preserved.
+      #3 (wall-time): not fired pre-build (~2-3h projection).
+
+    Composition unlocked / repaired by this amendment:
+
+      - The LLM-resolver INFERRED_ACCEPT_CANONICAL code path now
+        actually delivers its observable: workspace files match
+        canonical's HEAD content post-sync.
+      - The Class-B ACCEPT_UPSTREAM code path now actually delivers
+        its observable: workspace files match canonical's HEAD
+        content post-sync.
+      - The verdict-without-stage fault-class is now structurally
+        impossible: the validator refuses to construct an entry with
+        the bug shape.
+      - The discard-then-re-run flow now correctly re-resolves
+        instead of false-idempotenting via state.yaml.
+      - Combined with #59, the entire workspace-sync apply pipeline
+        delivers byte-correct file content for ALL accept-canonical-
+        flavored verdicts.

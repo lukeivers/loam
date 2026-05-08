@@ -15,7 +15,7 @@
 """Amendment #7 — orchestrator-bootstrap-unification (framework side).
 
 Each test maps 1:1 to an acceptance criterion in
-``docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md``.
+``docs/archive/component-research/orchestrator-bootstrap-unification/proposal.md``.
 
 Covered here (framework/adapter-owned behaviours):
   * AC3 — missing ``bootstrap.yaml`` is the new fail-closed trigger.

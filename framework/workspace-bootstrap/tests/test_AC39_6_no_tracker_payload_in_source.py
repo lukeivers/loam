@@ -23,7 +23,7 @@ Plan §4 AC39.6 outcomes:
   first-run-time (on pos-v2 dev workspaces) or from a workspace-
   supplied path (on non-dev workspaces).
 - A test-fixture scan asserts the source files contain none of the
-  unique prose markers from ``docs/rebuild/VALUE_PROPOSITION.md``'s
+  unique prose markers from ``docs/VALUE_PROPOSITION.md``'s
   primary statement.
 
 Maps to v1.2 R16 framework-not-content (tracker-seeding extension)
@@ -44,7 +44,7 @@ _WB_SRC_ROOT = (
     / "workspace_bootstrap"
 )
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-_FRAMEWORK_VP_PATH = _REPO_ROOT / "docs" / "rebuild" / "VALUE_PROPOSITION.md"
+_FRAMEWORK_VP_PATH = _REPO_ROOT / "docs" / "VALUE_PROPOSITION.md"
 
 
 # Distinctive sentences from VALUE_PROPOSITION.md — pulled from the
@@ -113,7 +113,7 @@ def test_AC39_6_spec_doc_sentinels_not_in_workspace_bootstrap_src() -> None:
     ``LiftedFrom.source_doc`` provenance pointer); its prose must
     not appear hard-coded in source either."""
     spec_doc_path = (
-        _REPO_ROOT / "docs" / "rebuild" / "spec" / "loam-objectives-spec.md"
+        _REPO_ROOT / "docs" / "spec" / "loam-objectives-spec.md"
     )
     if not spec_doc_path.exists():
         pytest.skip("spec doc absent in this checkout; sentinel scan moot")

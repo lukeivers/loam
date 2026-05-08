@@ -183,7 +183,7 @@ def _normalise_target(target: str) -> str:
 def _path_in_set(target: str, resolved_set: set[str]) -> bool:
     """Check whether ``target`` resolves to a path in ``resolved_set``.
 
-    Handles the trailing-slash convention (``docs/rebuild/plans/``
+    Handles the trailing-slash convention (``docs/plans/``
     matches any path under that prefix in the set).
     """
     if target in resolved_set:

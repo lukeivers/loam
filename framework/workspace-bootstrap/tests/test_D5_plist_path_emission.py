@@ -16,7 +16,7 @@
 plist PATH emission.
 
 Each test function maps 1:1 to a D5 criterion named in
-`docs/rebuild/plans/amendment-31-workspace-bootstrap-plist-path.md`:
+`docs/plans/amendment-31-workspace-bootstrap-plist-path.md`:
 
 D5.1 — memory-graphiti emitted plist reaches `/health` → 200 end-to-end
        under a real `launchctl bootstrap` in the user's gui domain,
@@ -75,7 +75,7 @@ from loam.workspace_bootstrap.adapters.first_run_scaffold import (
 # verified by ``test_first_run_scaffold.py`` indirectly. The graphiti
 # halves of D5.1 / D5.2 / D5.3 are skipped at v0.1.0; M-GMP restores
 # them post-v0.1.0. See
-# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+# ``docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
 pytestmark = pytest.mark.skip(
     reason=(
         "FBE.7 (v0.1.0 foldback): memory-graphiti plist not emitted at "

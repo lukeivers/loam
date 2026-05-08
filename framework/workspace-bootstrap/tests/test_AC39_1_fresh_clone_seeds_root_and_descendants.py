@@ -19,14 +19,14 @@ Plan §4 AC39.1 outcomes:
 
 - The tracker contains exactly one objective whose ``parent_id is
   None``, with ``goal`` derived from
-  ``docs/rebuild/VALUE_PROPOSITION.md``'s prime statement, two
+  ``docs/VALUE_PROPOSITION.md``'s prime statement, two
   ``prose`` criteria (AC.PO.1 + AC.PO.2),
   ``authored_by == "user"``, ``time_bound.evergreen is True``, and
-  ``lifted_from.source_doc == "docs/rebuild/VALUE_PROPOSITION.md"``.
+  ``lifted_from.source_doc == "docs/VALUE_PROPOSITION.md"``.
 - The tracker contains spec-tier child objectives chaining to the
   root: at minimum one objective per spec phase (v1.0, v1.1, v1.2),
   each ``authored_by == "user"``, each with
-  ``lifted_from.source_doc == "docs/rebuild/spec/pos-v2-objectives-
+  ``lifted_from.source_doc == "docs/spec/pos-v2-objectives-
   spec.md"``.
 - ``tracker.bind_scope`` against any descendant succeeds.
 
@@ -66,11 +66,10 @@ def _seed_pos_v2_dev_workspace(tmp_path: Path) -> tuple[Path, Path]:
     scaffold, return ``(workspace_root, pos_root)``."""
     workspace = tmp_path / "ws-dev"
     workspace.mkdir()
-    (workspace / "docs" / "rebuild").mkdir(parents=True)
+    (workspace / "docs").mkdir(parents=True)
     framework_vp = (
         Path(__file__).resolve().parent.parent.parent.parent
         / "docs"
-        / "rebuild"
         / "VALUE_PROPOSITION.md"
     )
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(
@@ -233,11 +232,10 @@ def test_AC39_1_scaffold_result_reports_seed_outcome(tmp_path: Path) -> None:
     landed."""
     workspace = tmp_path / "ws-result"
     workspace.mkdir()
-    (workspace / "docs" / "rebuild").mkdir(parents=True)
+    (workspace / "docs").mkdir(parents=True)
     framework_vp = (
         Path(__file__).resolve().parent.parent.parent.parent
         / "docs"
-        / "rebuild"
         / "VALUE_PROPOSITION.md"
     )
     (workspace / FRAMEWORK_VALUE_PROP_RELPATH).write_text(

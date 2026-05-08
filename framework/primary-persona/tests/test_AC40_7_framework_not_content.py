@@ -24,7 +24,7 @@ invariant on tracker seeding).
 Maps to: v1.2 R16 framework-not-content (extended to tracker
 projection) → AC.PO.2 (toolkit purity).
 
-Plan: docs/rebuild/plans/amendment-40-primary-persona-tracker-context-contributor.md
+Plan: docs/plans/amendment-40-primary-persona-tracker-context-contributor.md
 """
 
 from __future__ import annotations

@@ -136,7 +136,7 @@ def seed_value_prop_tree(db_path: Path) -> dict[str, Any]:
     Returns a dict with the seeded objective IDs. Mirrors amendment
     #39's contract: root with ``authored_by="user"``, ``parent_id=None``,
     two prose criteria (AC.PO.1 + AC.PO.2), evergreen time-bound,
-    ``LiftedFrom(source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+    ``LiftedFrom(source_doc="docs/VALUE_PROPOSITION.md",
     source_ac="prime")``. One spec-tier descendant for the live-tree
     tests (we don't need three; the contributor walks them
     structurally).
@@ -173,7 +173,7 @@ def seed_value_prop_tree(db_path: Path) -> dict[str, Any]:
             time_bound=TimeBound(evergreen=True, review_cadence="amendment-driven"),
             authored_by="user",
             lifted_from=LiftedFrom(
-                source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+                source_doc="docs/VALUE_PROPOSITION.md",
                 source_ac="prime",
             ),
         )
@@ -194,7 +194,7 @@ def seed_value_prop_tree(db_path: Path) -> dict[str, Any]:
             time_bound=TimeBound(evergreen=True, review_cadence="amendment-driven"),
             authored_by="user",
             lifted_from=LiftedFrom(
-                source_doc="docs/rebuild/spec/loam-objectives-spec.md",
+                source_doc="docs/spec/loam-objectives-spec.md",
                 source_ac="v1.0",
             ),
         )

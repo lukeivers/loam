@@ -9,7 +9,7 @@
 """AC.SKILLS-BUG.1 — `plugins/loam-skills/` named in default
 bootstrap.yaml template.
 
-Per ``docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md``
+Per ``docs/plans/v0-1-6-production-safety-and-base-skills.md``
 §5 AC.SKILLS-BUG.1: the rendered default ``_BOOTSTRAP_YAML`` template
 references ``plugins/loam-skills/`` in a discoverable-plugins comment
 block. This is the bug fix for the v0.1.0-shipper-tripping issue

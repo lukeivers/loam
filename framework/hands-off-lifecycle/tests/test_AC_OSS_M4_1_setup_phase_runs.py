@@ -79,7 +79,7 @@ def _stub_tracker(monkeypatch, tracker: _FakeTracker) -> None:
 
 def _build_envelope_prompt() -> str:
     return (
-        "Build amendment per docs/rebuild/plans/foo.md.\n"
+        "Build amendment per docs/plans/foo.md.\n"
         "\n"
         "<AC-MANIFEST>\n"
         "primary-persona,AC.X.1,framework/primary-persona/src/foo.py\n"
@@ -114,7 +114,7 @@ def test_AC_OSS_M4_1_setup_phase_writes_sentinel_and_stubs(
     )
     assert sentinel_path.exists()
     sentinel = json.loads(sentinel_path.read_text(encoding="utf-8"))
-    assert sentinel["plan_path"] == "docs/rebuild/plans/foo.md"
+    assert sentinel["plan_path"] == "docs/plans/foo.md"
     assert len(sentinel["bindings"]) == 2
 
     # Gate 2 — manifest rows registered on the tracker.
@@ -149,7 +149,7 @@ def test_AC_OSS_M4_1_setup_phase_writes_sentinel_and_stubs(
         if s.get("step") == "plan-doc-reference"
     ]
     assert len(plan_steps) == 1
-    assert plan_steps[0]["plan_path"] == "docs/rebuild/plans/foo.md"
+    assert plan_steps[0]["plan_path"] == "docs/plans/foo.md"
     assert plan_steps[0]["outcome"] == "recorded-via-sentinel"
 
 

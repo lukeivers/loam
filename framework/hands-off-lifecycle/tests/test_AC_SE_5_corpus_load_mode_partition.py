@@ -68,13 +68,14 @@ def _seed_minimal_workspace(workspace_root: Path) -> None:
     )
     target_manifest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src_manifest, target_manifest)
-    # Also seed the legacy docs/rebuild/ location for tests that may
-    # still reference it through downstream code that hasn't yet
-    # been updated; both paths resolve to the same byte-content.
+    # Also seed the workspace-root docs/ legacy fallback location for
+    # tests that may still reference it through downstream code that
+    # hasn't been migrated; both paths resolve to the same byte-content.
+    # (v0.3.0 Cycle 1: docs/rebuild/ collapsed; legacy fallback now
+    # sits at docs/ root.)
     legacy_target = (
         workspace_root
         / "docs"
-        / "rebuild"
         / "dev-mode-manifest.yaml"
     )
     legacy_target.parent.mkdir(parents=True, exist_ok=True)

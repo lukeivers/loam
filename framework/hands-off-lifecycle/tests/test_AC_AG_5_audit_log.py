@@ -71,7 +71,10 @@ def test_AC_AG_5_deny_writes_one_ndjson_line(
         "hook_event_name": "PreToolUse",
         "tool_name": "Task",
         "tool_input": {
-            "prompt": "Update docs/rebuild/plans/foo.md.",
+            "prompt": (
+                "Update files at "
+                "/Users/lukeivers/ivers-corp-pos-v2/docs/plans/foo.md."
+            ),
             "subagent_type": "general-purpose",
         },
     }

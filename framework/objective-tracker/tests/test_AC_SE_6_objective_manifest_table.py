@@ -15,7 +15,7 @@
 """AC.SE.6 — objective-manifest table accepts well-formed rows.
 
 Per the locked plan-doc
-``docs/rebuild/plans/structural-enforcement-a1-substrate.md`` §4
+``docs/plans/structural-enforcement-a1-substrate.md`` §4
 AC.SE.6: a new table inside the existing ``objective-tracker``
 SQLite store accepts rows of shape ``(component, ac_id,
 source_path_glob)`` with appropriate uniqueness on the row tuple.

@@ -27,7 +27,7 @@ The output informs whether v0.6.0+ (or a different version) should include a "pl
 4. **AC.PR.4 — Recommendation.** Doc concludes with: which (if any) candidate personas are worth adding now (mapped to a version target); which are speculative (backlog); which would dilute the primary's translation role and should NOT be added. Each verdict has a one-sentence rationale.
 5. **AC.PR.5 — F2 RF tension surfaced.** Doc names at least one tension explicitly (e.g., "more personas = more dispatch overhead vs more specialised expertise"; "primary translates everything = single bottleneck vs delegation = primary's coherence loss"). Resolves or defers the tension explicitly; doesn't gloss.
 6. **AC.PR.6 — Word count 1500–3000.** Tight; not a treatise.
-7. **AC.PR.7 — Authority chain cited.** `docs/rebuild/VALUE_PROPOSITION.md` (Lens 2 + primary-persona role); CLAUDE.md (Lens 1 — Claude-leverage); FUTURE_IDEAS Idea 3 (plugin suite framing); STATE.md v0.1.7 (existing persona shape).
+7. **AC.PR.7 — Authority chain cited.** `docs/VALUE_PROPOSITION.md` (Lens 2 + primary-persona role); CLAUDE.md (Lens 1 — Claude-leverage); FUTURE_IDEAS Idea 3 (plugin suite framing); STATE.md v0.1.7 (existing persona shape).
 
 ## Out of scope
 
@@ -38,10 +38,10 @@ The output informs whether v0.6.0+ (or a different version) should include a "pl
 
 ## Authority chain
 
-- `docs/rebuild/VALUE_PROPOSITION.md` (primary-persona translation layer)
+- `docs/VALUE_PROPOSITION.md` (primary-persona translation layer)
 - `CLAUDE.md` at repo root (Lens 1, Lens 2, Lens 5)
-- `docs/rebuild/FUTURE_IDEAS.md` Idea 3 (initial plugin suite — Luke's framing of multiple plugin domains beyond dev-sdlc)
-- `docs/rebuild/STATE.md` v0.1.7 entry (existing 5 dev-sdlc subagent personas)
+- `docs/FUTURE_IDEAS.md` Idea 3 (initial plugin suite — Luke's framing of multiple plugin domains beyond dev-sdlc)
+- `docs/STATE.md` v0.1.7 entry (existing 5 dev-sdlc subagent personas)
 - `personas/` directory (primary persona contract + prompt)
 - `plugins/dev-sdlc/agents/` (the 5 subagent personas as shipped)
 

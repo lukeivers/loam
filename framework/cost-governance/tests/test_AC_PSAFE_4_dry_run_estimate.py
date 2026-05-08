@@ -9,7 +9,7 @@
 """AC.PSAFE.4 — cost-governance dry_run_estimate primitive returns
 EstimateResult.
 
-Per ``docs/rebuild/plans/v0-1-6-production-safety-and-base-skills.md``
+Per ``docs/plans/v0-1-6-production-safety-and-base-skills.md``
 §5 AC.PSAFE.4: the primitive returns an ``EstimateResult`` carrying
 ``estimated_money_cents``, ``estimated_tokens``,
 ``estimated_time_seconds``, ``confidence_band`` (HIGH / MEDIUM / LOW

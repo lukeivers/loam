@@ -64,7 +64,7 @@ def _stub_modules(monkeypatch, *, mode: str, sentinel):
 def _make_sentinel():
     return ActiveScopeSentinel(
         scope_id="amendment-72-build",
-        plan_path="docs/rebuild/plans/structural-enforcement-a4-bash-and-agent-context-guards.md",
+        plan_path="docs/plans/structural-enforcement-a4-bash-and-agent-context-guards.md",
         bindings=(
             ScopeBinding(component="hands-off-lifecycle", ac_id="AC.BAG.3"),
         ),

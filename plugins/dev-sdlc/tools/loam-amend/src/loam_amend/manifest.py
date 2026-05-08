@@ -94,7 +94,7 @@ class CleanupDirective:
     the fence anyway). Introduced in amendment #62 (D.1.5) to revert
     D.1's spurious bumps on rename-only components.
 
-    See ``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.5.
+    See ``docs/plans/d-migration-1-5.md`` AC.D.1.5.5.
 
     The directive's ``comp_name`` references a corresponding entry in
     the manifest's ``components:`` list — apply uses that entry's

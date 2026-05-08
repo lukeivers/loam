@@ -184,7 +184,7 @@ def _canonical_source_kind(source: str) -> str:
 # Pre-migration (synthesis era) the bootstrap targeted the now-
 # deprecated ``framework-only`` synthetic branch produced by the
 # pos-publish-framework-only tool (archived at
-# ``docs/rebuild/archive/synthesis-tool-2026-05-04/``).
+# ``docs/archive/synthesis-tool-2026-05-04/``).
 CANONICAL_BRANCH = "main"
 
 

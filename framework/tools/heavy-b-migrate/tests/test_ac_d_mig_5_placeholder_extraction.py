@@ -66,7 +66,7 @@ def test_ambiguous_plan_yields_placeholder(
         assert len(report.created) == 0
         assert "2" in report.placeholders_seeded
         # Verify the placeholder record landed.
-        plan_rel = "docs/rebuild/plans/amendment-2-ambiguous.md"
+        plan_rel = "docs/plans/amendment-2-ambiguous.md"
         records = tracker.query_projection_view(
             ObjectiveFilter(lifted_from_source_doc=plan_rel)
         )

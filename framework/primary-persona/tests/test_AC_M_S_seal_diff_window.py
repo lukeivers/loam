@@ -67,15 +67,16 @@ _AMENDMENT_48_ALLOWED_PREFIXES: tuple[str, ...] = (
     "hands-off-lifecycle/hooks/",
     "hands-off-lifecycle/tests/",
     "hands-off-lifecycle/seals/",
-    "docs/rebuild/plans/",
-    "docs/rebuild/plans/research/",
+    "docs/plans/",
+    "docs/rebuild/plans/",  # historical pre-v0.3.0-C1 path retained for diff-window check
+    "docs/plans/research/",
 )
 _AMENDMENT_48_ALLOWED_FILES: frozenset[str] = frozenset({
     "CLAUDE.md",
     "docs/odd-in-pos.md",
     "docs/odd-in-loam.md",
     "docs/odd-methodology.md",
-    "docs/rebuild/FUTURE_IDEAS.md",
+    "docs/FUTURE_IDEAS.md",
 })
 
 
@@ -121,8 +122,9 @@ _AMENDMENT_69_SEAL_COMMIT = "3be9a783fe2cf95315780c835f0d10bb7e0bf6bb"
 _AMENDMENT_69_ALLOWED_PREFIXES: tuple[str, ...] = (
     "framework/primary-persona/tests/",
     "framework/primary-persona/seals/",
-    "docs/rebuild/plans/",
-    "docs/rebuild/plans/research/",
+    "docs/plans/",
+    "docs/rebuild/plans/",  # historical pre-v0.3.0-C1 path retained for diff-window check
+    "docs/plans/research/",
 )
 _AMENDMENT_69_ALLOWED_FILES: frozenset[str] = frozenset({
     "docs/odd-in-pos.md",

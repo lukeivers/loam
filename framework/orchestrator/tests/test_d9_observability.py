@@ -141,7 +141,7 @@ async def test_orchestrator_emissions_cover_required_events(tmp_config):
 # framework's adapter, and the fail-closed point moved upstream to
 # missing `~/.loam/bootstrap.yaml` (framework's `MissingConfigError`,
 # code -32080). See
-# docs/rebuild/components/orchestrator-bootstrap-unification/proposal.md.
+# docs/archive/component-research/orchestrator-bootstrap-unification/proposal.md.
 
 
 def test_span_processor_receives_spans_when_installed(tmp_path):

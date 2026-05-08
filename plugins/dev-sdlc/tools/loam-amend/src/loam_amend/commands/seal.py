@@ -23,7 +23,7 @@ doc's ``## 14.`` heading and create a follow-up
 Per AC.LAE.2 (v0.1.2 item 6 — loam-amend ergonomics sweep):
 ``--allow-untracked-globs <pattern>`` (repeatable) admits paths
 matching the named glob pattern when computing dirty-tree status.
-Common case: dirty ``docs/rebuild/FUTURE_IDEAS_DRAFT.md`` from
+Common case: dirty ``docs/FUTURE_IDEAS_DRAFT.md`` from
 in-flight capture. Patterns are NOT staged or committed by the seal
 step — admission is dirty-check-only.
 """
@@ -112,8 +112,8 @@ def _working_tree_dirty(
     ``fnmatch.fnmatchcase`` is admitted into the ignore set. Patterns
     are NOT staged or committed — admission is dirty-check-only.
     Patterns are anchored at the repo root (no implicit trailing ``*``):
-    ``docs/rebuild/FUTURE_IDEAS_DRAFT.md`` matches the literal file;
-    ``docs/rebuild/*`` matches direct children only; ``docs/**/*`` is
+    ``docs/FUTURE_IDEAS_DRAFT.md`` matches the literal file;
+    ``docs/plans/*`` matches direct children only; ``docs/**/*`` is
     the recursive form.
     """
     result = subprocess.run(
@@ -194,7 +194,7 @@ def _emit_diagnostic(checkpoint: _FailureCheckpoint) -> None:
     # scannable across all loam amend subcommands and survives
     # contexts where stderr is dropped (e.g. some Bash-tool eval-
     # wrapper invocations). Per AC.PA-hv.1 / AC.PA-hv.2 of
-    # `docs/rebuild/plans/pos-amend-halt-visibility.md`.
+    # `docs/plans/pos-amend-halt-visibility.md`.
     print(f"HALT: {checkpoint.klass}")
     print(checkpoint.detail)
 

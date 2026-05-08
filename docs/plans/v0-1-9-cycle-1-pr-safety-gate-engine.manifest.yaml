@@ -1,0 +1,185 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-1-9-cycle-1-pr-safety-gate-engine
+  title: "v0.1.9 Cycle 1 — PR-safety gate engine + override workflow (NEW sub-package plugins/dev-sdlc/pr-safety/); single-component fence on plugins/dev-sdlc/"
+
+# BASELINE: <pending> — source-edit feat commit covering the new
+# pr-safety sub-package at plugins/dev-sdlc/pr-safety/ with
+# pyproject.toml + README.md + src/loam_pr_safety/ (12 .py modules:
+# __init__, errors, spec, state, profile, contract, diff, classifier,
+# gate, override, audit, cli) + tests/ (per-AC tests + integration
+# smoke + classifier-accuracy + decision-matrix-coverage + override-
+# flow + cross-session + idempotency + audit-log entries) + tests/
+# fixtures/ (synthetic banded contract + synthetic diffs covering
+# all decision-matrix shapes + classifier-accuracy synthetic test
+# set + override-commit fixtures).
+#
+# Cycle 1 is the first cycle of v0.1.9. Cycles 2 + 3 follow:
+#   - Cycle 2: hook installers + 3 CI templates + provenance-traceable
+#              PR description template (composes on Cycle 1's gate
+#              engine).
+#   - Cycle 3: 6 dev-sdlc SKILLs second pass + audit-allowlist cleanup.
+# After Cycle 3 seals, the v0.1.9 release-level SOFT smoke gate runs
+# (master plan §5 + Decision R). Tag is local-only (NOT pushed) until
+# Luke gates the release.
+#
+# Commit ladder pre-apply:
+#   9b64cd4 — v0.1.8 SHIPPED rollup (predecessor; v0.1.8 release).
+#   b01d3eb — v0.1.9 master plan (Cycle 0 predecessor for v0.1.9).
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §9
+#    + roadmap §8 + eric-final-delivery §2 per AC.D-sa.7>
+#
+# Single-component fence — dev-sdlc:
+#   - NEW sub-package plugins/dev-sdlc/pr-safety/ containing:
+#       pyproject.toml + README.md
+#       src/loam_pr_safety/ (12 .py modules):
+#         __init__, errors, spec, state, profile, contract, diff,
+#         classifier, gate, override, audit, cli
+#       tests/ (per-AC + integration + accuracy + matrix coverage +
+#               override flow + cross-session + idempotency + audit-
+#               log + scaffold-invariants):
+#         test_AC_PRSG_1_component_scaffold.py
+#         test_AC_PRSG_2_contract_reader.py
+#         test_AC_PRSG_3_diff_classifier.py
+#         test_AC_PRSG_4_decision_matrix.py
+#         test_AC_PRSG_5_override_flow.py
+#         test_AC_PRSG_6_cli_invocable.py
+#         test_AC_PRSG_7_audit_log_entries.py
+#         test_AC_PRSG_8_production_stake_integration.py
+#         test_AC_PRSG_9_test_surface.py
+#         test_full_gate_against_fixture.py
+#         test_audit_log_entries.py
+#         test_cross_session_state.py
+#         test_steady_state_idempotent.py
+#         test_classifier_accuracy.py
+#         test_decision_matrix_coverage.py
+#         test_override_flow.py
+#       tests/fixtures/ (synthetic banded contract + diffs):
+#         synthetic-contract-draft.yaml (or re-uses odd-extractor's
+#                                         existing fixture)
+#         classifier-accuracy/<10+ synthetic diff fixtures>
+#         override-commits/<contract-update + Loam-Override fixtures>
+#   - Edit to plugins/dev-sdlc/README.md — append "Sub-packages"
+#     entry pointing at pr-safety/ (universal-admitted; existing
+#     entry for odd-extractor/ is the precedent).
+#
+# AC families locked per plan-doc §4:
+#   AC.PRSG.1 — Component scaffold present (pyproject + README + src
+#                + tests dirs; entry-point declaration present;
+#                manifest schema v3).
+#   AC.PRSG.2 — Banded-contract reader API (read_contract returns
+#                BandedContract; round-trips through BandedAC's per-
+#                band evidence rules; raises on missing/malformed).
+#   AC.PRSG.3 — Diff classifier with line-overlap + symbol-overlap
+#                heuristic (touched_acs / untouched / novel);
+#                ≥90% accuracy on synthetic test set (halt-trigger
+#                if below).
+#   AC.PRSG.4 — Per-band gating engine (3-band × 4-shape × 3-profile
+#                = 13 cells + 6 mixed-touch pre-emption rules; fully
+#                tested).
+#   AC.PRSG.5 — Override-commit recognition (contract-update: prefix
+#                or Loam-Override: trailer + --override flag; PM-
+#                mediated ratification via RatificationBatch +
+#                surface_next_questions_batch; additive-overlay
+#                contract-update strategy; Decision I default-no
+#                honoured).
+#   AC.PRSG.6 — CLI: loam pr-safety gate <repo> with --diff,
+#                --override, --dry-run, --workspace-root, --repo-id,
+#                --json, --require-ratification flags; documented
+#                exit codes.
+#   AC.PRSG.7 — SOC-2 audit-trail floor: every gate decision audit-
+#                logged at <workspace>/.loam/pr-safety/audit-log/
+#                <YYYY-MM-DD>-<NNNN>.yaml (Decision P).
+#   AC.PRSG.8 — Production-stake profile integration (reads workspace
+#                manifest's safety_profile; production-stake demands
+#                requires_ratification=True for SURFACE-DECISION;
+#                dev/research default proceed-with-warning).
+#   AC.PRSG.9 — Component-level test surface: per-AC tests + 7
+#                integration tests; scaffold-invariants test
+#                inherited from parent dev-sdlc plugin.
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §7):
+#   D1 cold-state — fresh tmp workspace + tmp git repo with synthetic
+#     banded-contract + synthetic regression diff runs gate end-to-
+#     end; produces HARD-BLOCK + audit-log entry. Verified by
+#     test_full_gate_against_fixture.py.
+#   D2 steady-state — n/a structurally (one-shot CLI / library, not
+#     daemon). Idempotency variant exercised: 5 gate runs against
+#     same diff produce byte-identical decisions (modulo timestamps).
+#     Verified by test_steady_state_idempotent.py.
+#   D3 restart — n/a structurally (no long-running process to kill).
+#   D4 reboot — n/a structurally (filesystem state survives reboot
+#     trivially).
+#   D5 cross-session — audit-log at <workspace>/.loam/pr-safety/
+#     audit-log/ persists across fresh-process boundary; subsequent
+#     gate runs append correctly (no overwrite). Verified by
+#     test_cross_session_state.py via subprocess invocations.
+#   D6 telemetry-floor — every gate decision (PASS / HARD-BLOCK /
+#     SURFACE-DECISION / DOCS-ONLY / dry-run / override-proposed /
+#     override-approved / override-rejected) writes one audit-log
+#     entry; SOC-2 audit-trail floor (Decision P). Verified by
+#     test_audit_log_entries.py.
+#   PLUS: classifier accuracy ≥90% on synthetic test set (master
+#     plan §7 most-load-bearing risk; halt-trigger if below).
+#     Verified by test_classifier_accuracy.py.
+#   PLUS: full-suite green sweep — pre-Cycle-1 dev-sdlc parent tests
+#     at HEAD b01d3eb all pass post-Cycle-1; halt + surface on any
+#     regression. Cycle 1 adds many new test functions across new
+#     pr-safety sub-package; expected post-cycle test count
+#     significantly higher than pre-cycle.
+#
+# Bookkeeping note: this is the NINTH amendment to use schema v3
+# (DPS1 / DPS2 / v0.1.8 Cycles 1-5 / THIS = first v0.1.9 cycle).
+# v3 fields exercised: plan_doc_ref + ac_count + smoke_outcome at
+# the manifest level; single-component sweep at seal time.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "bb592fa"
+
+plan: docs/plans/v0-1-9-cycle-1-pr-safety-gate-engine.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-1-9-cycle-1-pr-safety-gate-engine.md
+
+ac_count: 9
+smoke_outcome: "D1 + D2-idempotency + D5 + D6 exercised; D3/D4 n/a per smoke-test-discipline §6 (one-shot CLI); classifier accuracy ≥90% on synthetic test set; full-suite green sweep"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent. `docs/plans/` admits the
+# plan-before-code paper trail. No `odd-methodology.md` edit
+# required (Cycle 1 builds engine, not methodology).
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-1-9-cycle-1-pr-safety-gate-engine
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

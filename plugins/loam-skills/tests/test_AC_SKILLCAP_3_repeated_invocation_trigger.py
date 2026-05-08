@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.3 — Trigger 2 (repeated-invocation) named in SKILL body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.3: the SKILL body explicitly names the repeated-
 invocation trigger, names the ≥3 threshold, names the structural-
 overlap heuristic, and explicitly frames detection as session-

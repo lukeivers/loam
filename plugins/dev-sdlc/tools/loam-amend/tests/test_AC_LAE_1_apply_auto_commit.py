@@ -1,6 +1,6 @@
 """AC.LAE.1 — ``loam amend apply`` (non-dry-run) auto-commits the apply step.
 
-Plan: ``docs/rebuild/plans/v0-1-2-loam-amend-ergonomics.md`` AC.LAE.1.
+Plan: ``docs/plans/v0-1-2-loam-amend-ergonomics.md`` AC.LAE.1.
 Per v0.1.2 item 6 (loam-amend ergonomics sweep).
 """
 
@@ -75,7 +75,7 @@ def _author_manifest(
             "title": f"{slug} test",
         },
         "baseline": baseline_sha,
-        "plan": f"docs/rebuild/plans/{slug}.md",
+        "plan": f"docs/plans/{slug}.md",
         "components": components,
     }
     if seal_description is not None:

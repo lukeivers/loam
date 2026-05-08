@@ -10,7 +10,7 @@ This module is purely additive to loam amend (AC.D-tpl.6): no existing
 subcommand reads from it; no existing function imports it. Stdlib +
 ``PyYAML`` only — no new third-party dependency.
 
-ACs covered (per ``docs/rebuild/plans/dispatch-prompt-template-extension.md``):
+ACs covered (per ``docs/plans/dispatch-prompt-template-extension.md``):
 
 - AC.D-tpl.1 — deterministic ``{{KEY}}`` substitution.
 - AC.D-tpl.2 — frontmatter ``required`` / ``optional`` contract.

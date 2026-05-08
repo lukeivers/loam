@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.4 — Trigger 3 (ask-and-answer) named in SKILL body.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.4: the SKILL body explicitly names the ask-and-answer
 trigger, names the 3+ exchanges + answer-stabilization threshold,
 names the non-dev-emphasis (especially valuable for non-dev users),

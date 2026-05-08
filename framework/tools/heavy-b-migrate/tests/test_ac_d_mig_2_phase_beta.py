@@ -47,7 +47,7 @@ def test_phase_beta_extracts_ac_records_per_proposal(
         assert len(report.created) == 3
         # Verify the three records are queryable + carry lifted_from.
         proposal_rel = (
-            "docs/rebuild/components/memory-fixture/proposal.md"
+            "docs/archive/component-research/memory-fixture/proposal.md"
         )
         records = tracker.query_projection_view(
             ObjectiveFilter(lifted_from_source_doc=proposal_rel)
@@ -92,7 +92,7 @@ def test_phase_beta_records_parent_at_component_objective(
     try:
         seed_phase_alpha(workspace, tracker)
         extract_and_seed(workspace, tracker)
-        proposal_rel = "docs/rebuild/components/x-comp/proposal.md"
+        proposal_rel = "docs/archive/component-research/x-comp/proposal.md"
         records = tracker.query_projection_view(
             ObjectiveFilter(lifted_from_source_doc=proposal_rel)
         )

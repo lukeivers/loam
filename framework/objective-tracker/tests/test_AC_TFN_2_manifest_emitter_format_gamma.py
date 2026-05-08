@@ -16,7 +16,7 @@
 ``Z``-suffixed timestamp (format γ).
 
 Per the locked plan-doc
-``docs/rebuild/plans/a1-substrate-timestamp-format-normalization.md``
+``docs/plans/a1-substrate-timestamp-format-normalization.md``
 §4 AC.TFN.2: every newly-inserted ``objective_manifest`` row carries
 a ``created_at`` byte-conforming to
 ``^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$``.

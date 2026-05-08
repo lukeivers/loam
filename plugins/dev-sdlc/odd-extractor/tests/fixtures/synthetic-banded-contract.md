@@ -51,4 +51,4 @@ _No unhandled paths._
 ## Provenance
 
 - Synthetic fixture for v0.1.8 Cycle 2 ratification tests.
-- Plan-doc: `docs/rebuild/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md`.
+- Plan-doc: `docs/plans/v0-1-8-cycle-2-confidence-bands-and-ratification.md`.

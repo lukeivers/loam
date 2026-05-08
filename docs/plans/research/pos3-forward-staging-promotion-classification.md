@@ -9,7 +9,7 @@
 - canonical: `/Users/lukeivers/ivers-corp-pos-v2/` (HEAD `ee5ec61`).
 - pos3-update-report (file enumeration authority): `<pos3>/workspace/.scratch/claude-output/pos3-update-report.md`.
 - v0.7.0 roadmap entry: `docs/release-roadmap.md` lines 271–315.
-- foundation-revision plan (the canonical authority for F1a/F1b/F1c shape): `docs/rebuild/plans/foundation-revision-rebuild.md`.
+- foundation-revision plan (the canonical authority for F1a/F1b/F1c shape): `docs/plans/foundation-revision-rebuild.md`.
 
 ---
 
@@ -36,9 +36,9 @@ The 9 files break into 3 bands by promotion shape: **3 NEEDS-MERGE** (existing c
 - **Promotion shape:** straight append of the +87 lines after Lens 3 (the new content is purely additive — no edits to existing Lens 1–3 text). Verification: line numbers in pos3's CLAUDE.md show lines 71–157 are all NEW; lines 1–70 unchanged from canonical.
 - **Per-plan AC mapping:** maps to foundation-revision-rebuild plan AC.FR.PROG.2 ("foundational principles F4/M5/F2/F3 codified in canonical's session-start corpus") — Lens 4 and Lens 5 ARE the F4 + F3 session-start surfaces.
 
-### 1.2 — `framework/docs/rebuild/FUTURE_IDEAS_DRAFT.md` → canonical `docs/rebuild/FUTURE_IDEAS_DRAFT.md`
+### 1.2 — `framework/docs/FUTURE_IDEAS_DRAFT.md` → canonical `docs/FUTURE_IDEAS_DRAFT.md`
 
-- **pos3 path:** `/Users/lukeivers/pos3/framework/docs/rebuild/FUTURE_IDEAS_DRAFT.md` (modified, +10 lines).
+- **pos3 path:** `/Users/lukeivers/pos3/framework/docs/FUTURE_IDEAS_DRAFT.md` (modified, +10 lines).
 - **Content delta:** 5 new idea entries — HeavySwarm 4-role decomposition, LLMCouncil with anonymized peer ranking, SequentialWorkflow drift_detection, MessageTransforms middle-out compression, per-run autosave directory layout. All from the swarms research deep-dive.
 - **Canonical state:** none of the 5 entries present in canonical FUTURE_IDEAS_DRAFT.md (verified via `grep` for each title — all absent).
 - **Classification: NEEDS-RULING (commit-shape ambiguity, content uncontroversial).**
@@ -221,6 +221,6 @@ Per plan §Out-of-scope, this classification dispatch:
 - Pos3 update report: `/Users/lukeivers/pos3/workspace/.scratch/claude-output/pos3-update-report.md` (the file enumeration).
 - Forward-staging files: `/Users/lukeivers/pos3/framework/` (HEAD `11f78e6`).
 - Canonical: `/Users/lukeivers/ivers-corp-pos-v2/` (HEAD `ee5ec61`).
-- Foundation-revision-rebuild plan: `/Users/lukeivers/ivers-corp-pos-v2/docs/rebuild/plans/foundation-revision-rebuild.md` (defines FR.1/FR.2/FR.3 shape).
+- Foundation-revision-rebuild plan: `/Users/lukeivers/ivers-corp-pos-v2/docs/plans/foundation-revision-rebuild.md` (defines FR.1/FR.2/FR.3 shape).
 - v0.7.0 roadmap entry: `/Users/lukeivers/ivers-corp-pos-v2/docs/release-roadmap.md` lines 271–315.
 - Leverage discipline: `/Users/lukeivers/ivers-corp-pos-v2/docs/leverage-discipline.md` (rubric for proposing promotion shape).

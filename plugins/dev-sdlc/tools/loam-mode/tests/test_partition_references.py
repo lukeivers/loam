@@ -6,7 +6,7 @@ resolves to a ``dev_only`` path.
 
 **Known-debt allowlist.** F surfaced one residual cross-mode reference
 during build: ``memory-system/launchd/README.md`` references the
-true-first-run component-narrative under ``docs/rebuild/components/``.
+true-first-run component-narrative under ``docs/archive/component-research/``.
 The README itself is inside the memory-system sealed-component fence
 (touching it from F's amendment would be a sealed-amendment in
 disguise — F's plan §6 halt trigger 1). The reference is recorded
@@ -36,7 +36,7 @@ from loam_mode.manifest import load_manifest
 # fixed, not an allowlist expansion.
 #
 # Post-D.1 (amendment #61): the prior known-debt entry
-# (memory-system/launchd/README.md → docs/rebuild/components/...)
+# (memory-system/launchd/README.md → docs/archive/component-research/...)
 # became stale because memory-system moved under framework/.
 #
 # Post-M6 partition realignment (amendment #94 / AC.PMR.4 / HSF#3):
@@ -57,7 +57,7 @@ from loam_mode.manifest import load_manifest
 # allowlist. The remaining entry below is the still-valid
 # pending-debt: `framework/memory-system/launchd/README.md`
 # references the true-first-run component-narrative under
-# `docs/rebuild/components/`. The README itself sits inside the
+# `docs/archive/component-research/`. The README itself sits inside the
 # memory-system sealed-component fence; touching it from the
 # dev-sdlc fence would be a sealed-amendment in disguise. A future
 # memory-system amendment (e.g., a launchd-cleanup amendment) is
@@ -67,7 +67,7 @@ from loam_mode.manifest import load_manifest
 KNOWN_CROSS_MODE_DEBT: set[tuple[str, str]] = {
     (
         "framework/memory-system/launchd/README.md",
-        "docs/rebuild/components/true-first-run/research.md",
+        "docs/archive/component-research/true-first-run/research.md",
     ),
 }
 
@@ -165,18 +165,18 @@ def test_AC_F3_anchor_only_links_are_ignored(tmp_path: Path) -> None:
 def test_AC_F3_directory_glob_in_dev_set_matches_subpath_refs(
     tmp_path: Path,
 ) -> None:
-    """A reference like ``docs/rebuild/plans/`` (trailing slash) is
+    """A reference like ``docs/plans/`` (trailing slash) is
     flagged when the dev-only set contains paths under that prefix."""
     (tmp_path / "main.md").write_text(
-        "Plans live in `docs/rebuild/plans/`.\n", encoding="utf-8"
+        "Plans live in `docs/plans/`.\n", encoding="utf-8"
     )
     refs = scan_cross_mode_references(
         tmp_path,
         {"main.md"},
         {
-            "docs/rebuild/plans/A.md",
-            "docs/rebuild/plans/B.md",
+            "docs/plans/A.md",
+            "docs/plans/B.md",
         },
     )
     assert len(refs) == 1
-    assert refs[0].target_path == "docs/rebuild/plans/"
+    assert refs[0].target_path == "docs/plans/"

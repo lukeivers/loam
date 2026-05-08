@@ -157,7 +157,7 @@ def test_AC47_3_scaffold_completes_when_writer_skips(
     The pure-function malformed/permission tests above continue to
     exercise the writer's fail-soft contract directly. M-GMP restores
     the scaffold-side invocation post-v0.1.0. See
-    ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+    ``docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
     """
     workspace = tmp_path / "alpha-ws"
     workspace.mkdir()

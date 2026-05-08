@@ -1,7 +1,7 @@
 """AC.D.1.5.3 — ``loam amend apply --dry-run`` surfaces per-component
 rename-only verdict in the preview output.
 
-Plan: ``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.3.
+Plan: ``docs/plans/d-migration-1-5.md`` AC.D.1.5.3.
 """
 
 from __future__ import annotations
@@ -119,7 +119,7 @@ def test_dry_run_reports_rename_only_true_and_false(
                     "title": "preview test",
                 },
                 "baseline": baseline_sha,
-                "plan": "docs/rebuild/plans/preview-test.md",
+                "plan": "docs/plans/preview-test.md",
                 "components": [
                     {
                         "name": "alpha",

@@ -73,7 +73,7 @@ def test_T16_frozen_baseline_preserves_baseline_literal(
                     "title": "frozen baseline test",
                 },
                 "baseline": baseline_sha,
-                "plan": "docs/rebuild/plans/frozen-test.md",
+                "plan": "docs/plans/frozen-test.md",
                 "components": [
                     {
                         "name": "frozen-comp",
@@ -147,7 +147,7 @@ def test_T16_frozen_baseline_idempotent(scratch_repo: Path) -> None:
                     "title": "frozen baseline idempotency",
                 },
                 "baseline": baseline_sha,
-                "plan": "docs/rebuild/plans/frozen-test.md",
+                "plan": "docs/plans/frozen-test.md",
                 "components": [
                     {
                         "name": "frozen-comp",

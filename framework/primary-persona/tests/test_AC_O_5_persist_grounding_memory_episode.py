@@ -32,7 +32,7 @@ the function does not raise; the disk write-back succeeds; the
 episode-write failure is observable via an event but not via an
 exception to the caller.
 
-Plan: docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+Plan: docs/plans/primary-persona-conversational-onboarding-and-default-archetype.md
 """
 
 from __future__ import annotations

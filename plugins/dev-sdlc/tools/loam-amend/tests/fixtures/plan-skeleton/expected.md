@@ -6,7 +6,7 @@ Dev-discipline work. **NOT** a sealed-component amendment. No `loam amend` manif
 **Working directory:** /fixture/working/dir/
 **Companions:** fixture-companion-path.md
 **Ancestor record:** fixture ancestor record.
-**Research:** docs/rebuild/plans/research/fixture-research.md
+**Research:** docs/plans/research/fixture-research.md
 
 ---
 

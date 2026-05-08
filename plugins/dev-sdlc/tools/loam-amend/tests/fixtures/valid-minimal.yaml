@@ -4,7 +4,7 @@ amendment:
   slug: test-minimal
   title: "test: minimal valid manifest"
 baseline: abcdef0
-plan: docs/rebuild/plans/test-minimal.md
+plan: docs/plans/test-minimal.md
 components:
   - name: example
     seal_test: example/tests/test_no_sealed_amendments.py

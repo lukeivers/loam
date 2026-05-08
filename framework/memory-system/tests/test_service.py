@@ -4,7 +4,7 @@ Seven outcome-shaped tests covering AC24.1 – AC24.7. The service
 layer had zero test coverage pre-amendment; these are the first
 service-layer tests to exist. Each test is named
 ``test_AC24_<n>_<slug>`` per the amendment plan at
-``docs/rebuild/plans/amendment-24-memory-system-mcp-migration.md`` §3.
+``docs/plans/amendment-24-memory-system-mcp-migration.md`` §3.
 
 All tests are deterministic under mocks. No real LLM / Claude /
 network call fires — the halt trigger "any test requires real LLM /

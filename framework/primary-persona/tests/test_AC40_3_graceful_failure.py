@@ -29,7 +29,7 @@ The session's other contributors continue to fire normally.
 Maps to: primary-persona context-composer error-isolation (amendment
 #32 D8) + amendment #33 D7 graceful-degradation precedent → AC.PO.1.
 
-Plan: docs/rebuild/plans/amendment-40-primary-persona-tracker-context-contributor.md
+Plan: docs/plans/amendment-40-primary-persona-tracker-context-contributor.md
 """
 
 from __future__ import annotations

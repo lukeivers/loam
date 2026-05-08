@@ -25,8 +25,8 @@ are replaced by AC.O.5's ``grounding_persisted`` +
 ``test_AC_O_5_persist_grounding_memory_episode.py``). The
 renderer-event tests are preserved here.
 
-Plan: docs/rebuild/plans/amendment-35-primary-persona-renderer-and-onboarding.md
-      docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+Plan: docs/plans/amendment-35-primary-persona-renderer-and-onboarding.md
+      docs/plans/primary-persona-conversational-onboarding-and-default-archetype.md
 """
 
 from __future__ import annotations

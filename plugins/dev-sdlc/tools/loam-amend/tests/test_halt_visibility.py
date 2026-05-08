@@ -16,7 +16,7 @@ This module exercises:
 - ``seal._emit_diagnostic`` — dirty-working-tree halt (rc=3)
 - ``new_plan._emit_diagnostic`` — invalid-slug halt (rc=2)
 
-Per ``docs/rebuild/plans/pos-amend-halt-visibility.md`` AC.PA-hv.5.
+Per ``docs/plans/pos-amend-halt-visibility.md`` AC.PA-hv.5.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ def _make_minimal_repo_with_dirty_tree(tmp_path: Path) -> Path:
             """
             allowed_prefixes = (
                 "alpha/",
-                "docs/rebuild/plans/",
+                "docs/plans/",
             )
             allowed_files = (
                 "CLAUDE.md",
@@ -83,7 +83,7 @@ def _make_minimal_repo_with_dirty_tree(tmp_path: Path) -> Path:
     _git(repo, "commit", "-q", "-m", "fixture: initial")
 
     # Manifest pinned to current HEAD as baseline.
-    plans_dir = repo / "docs" / "rebuild" / "plans"
+    plans_dir = repo / "docs" / "plans"
     plans_dir.mkdir(parents=True, exist_ok=True)
     head_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
     manifest_path = plans_dir / "amendment-999-halt-vis.manifest.yaml"
@@ -96,7 +96,7 @@ def _make_minimal_repo_with_dirty_tree(tmp_path: Path) -> Path:
               slug: halt-vis
               title: "fixture amendment 999"
             baseline: {head_sha}
-            plan: docs/rebuild/plans/amendment-999-halt-vis.md
+            plan: docs/plans/amendment-999-halt-vis.md
             components:
               - name: alpha
                 seal_test: alpha/tests/test_no_sealed_amendments.py
@@ -105,7 +105,7 @@ def _make_minimal_repo_with_dirty_tree(tmp_path: Path) -> Path:
         ).lstrip(),
         encoding="utf-8",
     )
-    _git(repo, "add", "--", "docs/rebuild/plans/amendment-999-halt-vis.manifest.yaml")
+    _git(repo, "add", "--", "docs/plans/amendment-999-halt-vis.manifest.yaml")
     _git(repo, "commit", "-q", "-m", "fixture: manifest")
 
     # Land a fake amendment commit under alpha so apply --dry-run
@@ -136,7 +136,6 @@ def test_AC_PA_hv_seal_dirty_tree_halt_visible_on_stdout(
         str(
             repo
             / "docs"
-            / "rebuild"
             / "plans"
             / "amendment-999-halt-vis.manifest.yaml"
         ),

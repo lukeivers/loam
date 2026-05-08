@@ -25,7 +25,7 @@ the ``tracker_db_path`` argument the helper hands it, then asserts
 the captured path is workspace-rooted (under ``workspace_root``) and
 NOT pos_root-rooted.
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
+Plan: docs/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
 """
 
 from __future__ import annotations

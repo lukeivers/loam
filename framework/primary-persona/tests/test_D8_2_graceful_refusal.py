@@ -52,19 +52,18 @@ def _seed_partial_workspace(root: Path, missing: set[str]) -> None:
         "Read:\n\n"
         "- `docs/odd-methodology.md`\n"
         "- `docs/odd-in-loam.md`\n"
-        "- `docs/rebuild/VALUE_PROPOSITION.md`\n"
-        "- `docs/rebuild/STATE.md`\n"
-        "- `docs/rebuild/FUTURE_IDEAS.md`\n"
+        "- `docs/VALUE_PROPOSITION.md`\n"
+        "- `docs/STATE.md`\n"
+        "- `docs/FUTURE_IDEAS.md`\n"
         "\n---\n\n"
     )
     (root / "docs").mkdir()
-    (root / "docs" / "rebuild").mkdir()
     all_paths = {
         "docs/odd-methodology.md",
         "docs/odd-in-loam.md",
-        "docs/rebuild/VALUE_PROPOSITION.md",
-        "docs/rebuild/STATE.md",
-        "docs/rebuild/FUTURE_IDEAS.md",
+        "docs/VALUE_PROPOSITION.md",
+        "docs/STATE.md",
+        "docs/FUTURE_IDEAS.md",
     }
     for rel in all_paths - missing:
         full = root / rel
@@ -75,7 +74,7 @@ def _seed_partial_workspace(root: Path, missing: set[str]) -> None:
 def test_D8_2_partial_sentinel_on_one_missing_path(tmp_path: Path) -> None:
     """One missing baseline path → sentinel is ``partial``, not
     ``loaded``, not ``missing``."""
-    _seed_partial_workspace(tmp_path, missing={"docs/rebuild/STATE.md"})
+    _seed_partial_workspace(tmp_path, missing={"docs/STATE.md"})
     composer = ComposedContextPayload(session_builder=compose_session_fields)
     payload = composer.on_session_start(tmp_path)
 
@@ -98,16 +97,16 @@ def test_D8_2_missing_paths_named_in_diagnostic(tmp_path: Path) -> None:
     in a structured diagnostic block."""
     _seed_partial_workspace(
         tmp_path,
-        missing={"docs/rebuild/STATE.md", "docs/odd-in-loam.md"},
+        missing={"docs/STATE.md", "docs/odd-in-loam.md"},
     )
     composer = ComposedContextPayload(session_builder=compose_session_fields)
     payload = composer.on_session_start(tmp_path)
 
-    assert "docs/rebuild/STATE.md" in payload.missing_paths
+    assert "docs/STATE.md" in payload.missing_paths
     assert "docs/odd-in-loam.md" in payload.missing_paths
     # The serialised additionalContext body surfaces the diagnostic
     # block so Claude can read the structured reason.
-    assert "docs/rebuild/STATE.md" in payload.additional_context_text
+    assert "docs/STATE.md" in payload.additional_context_text
     assert "docs/odd-in-loam.md" in payload.additional_context_text
 
 
@@ -127,7 +126,7 @@ def test_D8_2_turn_observes_sentinel_and_does_not_block(tmp_path: Path) -> None:
     """A subsequent ``on_user_prompt_submit`` invocation observes the
     ``missing`` / ``partial`` sentinel via the shared composer and does
     not block the turn. The turn-payload surface returns normally."""
-    _seed_partial_workspace(tmp_path, missing={"docs/rebuild/STATE.md"})
+    _seed_partial_workspace(tmp_path, missing={"docs/STATE.md"})
     composer = ComposedContextPayload(session_builder=compose_session_fields)
     composer.on_session_start(tmp_path)
 
@@ -136,7 +135,7 @@ def test_D8_2_turn_observes_sentinel_and_does_not_block(tmp_path: Path) -> None:
     turn = composer.on_user_prompt_submit(prompt="any message")
 
     assert turn.corpus_gate_state == CorpusGateState.partial
-    assert "docs/rebuild/STATE.md" in turn.missing_paths
+    assert "docs/STATE.md" in turn.missing_paths
     # The turn payload carries the diagnostic visibly so any turn-
     # level contributor (D7) may narrow its own contribution.
-    assert "docs/rebuild/STATE.md" in turn.additional_context_text
+    assert "docs/STATE.md" in turn.additional_context_text

@@ -59,7 +59,7 @@ def _make_dev_mode_workspace(tmp_path: Path) -> Path:
         "is_primary: true\ndev_intent: yes\n", encoding="utf-8"
     )
     (tmp_path / "CLAUDE.md").write_text("# C\n", encoding="utf-8")
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# V\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# S\n", encoding="utf-8")
@@ -97,8 +97,8 @@ def test_AC_CI_4_sentinel_corpus_paths_loaded_populated_full(
     assert sentinel is not None
     loaded = set(sentinel.corpus_paths_loaded)
     assert "CLAUDE.md" in loaded
-    assert "docs/rebuild/VALUE_PROPOSITION.md" in loaded
-    assert "docs/rebuild/STATE.md" in loaded
+    assert "docs/VALUE_PROPOSITION.md" in loaded
+    assert "docs/STATE.md" in loaded
 
 
 def test_AC_CI_4_sentinel_state_partial_when_some_missing(
@@ -106,7 +106,7 @@ def test_AC_CI_4_sentinel_state_partial_when_some_missing(
 ) -> None:
     """One always-load file absent → sentinel state == 'partial'."""
     workspace = _make_dev_mode_workspace(tmp_path)
-    (workspace / "docs" / "rebuild" / "STATE.md").unlink()
+    (workspace / "docs" / "STATE.md").unlink()
     rc = _run_hook(workspace, session_id="sess-partial")
     assert rc == 0
     sentinel = read_corpus_load_sentinel(workspace, "sess-partial")
@@ -119,8 +119,8 @@ def test_AC_CI_4_sentinel_state_partial_when_some_missing(
     # contains ONLY the present files.
     loaded = set(sentinel.corpus_paths_loaded)
     assert "CLAUDE.md" in loaded
-    assert "docs/rebuild/VALUE_PROPOSITION.md" in loaded
-    assert "docs/rebuild/STATE.md" not in loaded
+    assert "docs/VALUE_PROPOSITION.md" in loaded
+    assert "docs/STATE.md" not in loaded
 
 
 def test_AC_CI_4_write_corpus_load_sentinel_accepts_new_kwarg(
@@ -136,14 +136,14 @@ def test_AC_CI_4_write_corpus_load_sentinel_accepts_new_kwarg(
         tmp_path,
         session_id="sess-kwarg",
         mode="normal-use",
-        corpus_paths_loaded=["CLAUDE.md", "docs/rebuild/STATE.md"],
+        corpus_paths_loaded=["CLAUDE.md", "docs/STATE.md"],
     )
     assert result.wrote is True
     target = session_state_path(tmp_path, "sess-kwarg")
     on_disk = json.loads(target.read_text())
     assert on_disk["corpus_paths_loaded"] == [
         "CLAUDE.md",
-        "docs/rebuild/STATE.md",
+        "docs/STATE.md",
     ]
 
 
@@ -172,7 +172,7 @@ def test_AC_CI_4_state_loaded_when_all_required_in_loaded(
     `_classify_state_from_loaded` semantics directly."""
     # Manufacture a workspace + manifest so `compute_corpus_paths_required`
     # returns a known set. The simplest path: write a tiny manifest.
-    manifest_dir = tmp_path / "docs" / "rebuild"
+    manifest_dir = tmp_path / "docs"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     (manifest_dir / "dev-mode-manifest.yaml").write_text(
         "roots: []\n"

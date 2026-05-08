@@ -84,7 +84,7 @@ def test_AC_CI_5_resolves_workspace_root_first(tmp_path: Path) -> None:
     (tmp_path / "framework" / "CLAUDE.md").write_text(
         "FRAMEWORK-VARIANT\n", encoding="utf-8"
     )
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# V\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# S\n", encoding="utf-8")
@@ -107,7 +107,7 @@ def test_AC_CI_5_falls_through_to_framework_subdir(
     (framework_dir / "CLAUDE.md").write_text(
         "FRAMEWORK-CLAUDE-CONTENT\n", encoding="utf-8"
     )
-    framework_rebuild = framework_dir / "docs" / "rebuild"
+    framework_rebuild = framework_dir / "docs"
     framework_rebuild.mkdir(parents=True, exist_ok=True)
     (framework_rebuild / "VALUE_PROPOSITION.md").write_text(
         "FRAMEWORK-VP-CONTENT\n", encoding="utf-8"
@@ -131,7 +131,7 @@ def test_AC_CI_5_returns_workspace_root_path_when_neither_exists(
     marker."""
     _make_dev_intent(tmp_path)
     # No CLAUDE.md anywhere.
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# V\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# S\n", encoding="utf-8")

@@ -16,7 +16,7 @@ Output informs whether the current `docs/release-roadmap.md` (just authored) nee
 
 ## Constraints
 
-- **Loam's value-prop is the prioritization filter.** From `docs/rebuild/VALUE_PROPOSITION.md`: (1) primary-persona test = does this reduce translation burden between user's natural-language intent and AI-effective execution? (2) harness test = does this add to the toolkit the primary persona can draw from? Anything that fails either test is a redesign candidate.
+- **Loam's value-prop is the prioritization filter.** From `docs/VALUE_PROPOSITION.md`: (1) primary-persona test = does this reduce translation burden between user's natural-language intent and AI-effective execution? (2) harness test = does this add to the toolkit the primary persona can draw from? Anything that fails either test is a redesign candidate.
 - **Loam's architectural commitments hold.** Subscription-only via `claude -p`; no Anthropic API key anywhere; no migration to OpenRouter or multi-provider; Claude-Code-attached harness is the substrate. Trends incompatible with these constraints get noted but not adopted.
 - **Software-as-deliverable framing.** Loam's prime objective is helping people use LLMs to build software. Trends in agent products that don't ladder up to this can be observed but should NOT pull rank in the re-issued roadmap.
 - **External attention has standalone value.** Not just for vanity — external visibility recruits potential co-maintainers (mitigates the bus-factor-1 risk named in FUTURE_IDEAS Idea 12) AND pulls real users (gives loam calibration data the codebase can't generate alone).
@@ -32,7 +32,7 @@ Output informs whether the current `docs/release-roadmap.md` (just authored) nee
 5. **AC.HL.5 — Both ranking criteria applied.** Each re-rank decision documents which criterion drove it: (a) value-prop advancement, (b) external visibility leverage. A re-rank that doesn't satisfy either gets explicit rationale.
 6. **AC.HL.6 — F2 RF tension surfaced.** At least one tension named explicitly (e.g., "trend X is everywhere but contradicts loam's subscription-only constraint — adopt anyway? defer? differentiate?"). Resolved or deferred to owner ruling, not glossed.
 7. **AC.HL.7 — External visibility lever named concretely.** ≥3 specific moves loam could make in the next 1-3 minor versions that would meaningfully draw attention: e.g., ship a public benchmark submission; publish a methodology paper; release a high-leverage demo video; etc. Each scored against the value-prop tests.
-8. **AC.HL.8 — Authority chain cited.** `docs/rebuild/VALUE_PROPOSITION.md`; `docs/release-roadmap.md`; `docs/release-versioning-policy.md`; `docs/odd-semver-pinning.md`; existing scratch artefacts (Eric run issues; Claude conference research; ProgramBench experiment).
+8. **AC.HL.8 — Authority chain cited.** `docs/VALUE_PROPOSITION.md`; `docs/release-roadmap.md`; `docs/release-versioning-policy.md`; `docs/odd-semver-pinning.md`; existing scratch artefacts (Eric run issues; Claude conference research; ProgramBench experiment).
 9. **AC.HL.9 — Word count 3000-5000.** Substantial enough to cover three stages; tight enough to be readable in one sitting.
 
 ## Out of scope
@@ -44,7 +44,7 @@ Output informs whether the current `docs/release-roadmap.md` (just authored) nee
 
 ## Authority chain
 
-- `docs/rebuild/VALUE_PROPOSITION.md` (the prioritization filter)
+- `docs/VALUE_PROPOSITION.md` (the prioritization filter)
 - `docs/release-roadmap.md` (current target ordering)
 - `docs/release-versioning-policy.md` + `docs/odd-semver-pinning.md` (versioning + outcome-target shape)
 - `<workspace>/.scratch/claude-output/claude-conference-features-2026-05-06.md` (recent Anthropic shipments — read first; extend rather than re-research)

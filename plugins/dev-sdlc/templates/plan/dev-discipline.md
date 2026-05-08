@@ -26,7 +26,7 @@ optional:
   REFERENCES: |
     - CLAUDE.md (project + global)
     - `plugins/dev-sdlc/docs/odd-methodology.md`, `plugins/dev-sdlc/docs/odd-in-loam.md`
-    - `docs/rebuild/VALUE_PROPOSITION.md`, `docs/rebuild/STATE.md`, `docs/rebuild/FUTURE_IDEAS.md`
+    - `docs/VALUE_PROPOSITION.md`, `docs/STATE.md`, `docs/FUTURE_IDEAS.md`
 ---
 # {{TITLE}} — plan
 

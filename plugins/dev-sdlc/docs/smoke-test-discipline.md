@@ -215,7 +215,7 @@ loop itself.
 
 pos-v2 framework components graded on the six dimensions. Almost every
 component is at 1/6 today; the table is the inventory the next amendment
-cycle works against. Source of truth: `docs/rebuild/STATE.md`.
+cycle works against. Source of truth: `docs/STATE.md`.
 
 | Component | D1 cold | D2 steady | D3 restart | D4 reboot | D5 cross-session | D6 telemetry |
 |---|---|---|---|---|---|---|

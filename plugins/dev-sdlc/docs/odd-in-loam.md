@@ -80,7 +80,7 @@ proposals are authored as individual test-shaped statements — they map
 The safety-layer is the foundational component responsible for kill
 switches (scope, session, system), the always-ask list, and the
 dangerous-operation gate. Its proposal lives at
-`docs/rebuild/components/safety-layer/proposal.md` and declares
+`docs/archive/component-research/safety-layer/proposal.md` and declares
 twenty acceptance criteria grouped by spec clause.
 
 ### 3.1 How the criteria group
@@ -438,7 +438,7 @@ committed canonical artifact. The canonical artifact set that lives in
 the repo is proposal + plan + shipped code + seal. (This matches the
 `scope-only-dispatch` CDC — the dispatch carries objective, scope,
 constraints, halt triggers, and ODD-check; the builder's own plan under
-`docs/rebuild/plans/` is the paper trail the repo keeps.)
+`docs/plans/` is the paper trail the repo keeps.)
 
 ### 7.5 Build
 
@@ -907,7 +907,7 @@ the widening-pressure failure class: every amendment that legitimately
 advances the component's SEAL_COMMIT sidecar drags the per-invariant
 test's upper bound forward, and any path admitted by sibling
 amendments enters the per-invariant test's window. Amendment #69
-(`docs/rebuild/plans/ac-m-s-structural-redesign.md`) documents the
+(`docs/plans/ac-m-s-structural-redesign.md`) documents the
 six-amendment widening tax this defect produced on AC.M.S before
 conversion to frozen-both-endpoints.
 
@@ -993,7 +993,7 @@ def test_AC_X_invariant_pinned_to_amendment_N() -> None:
 ```
 
 Canonical example: AC.MS-fix.S (amendment #69) — see
-`docs/rebuild/plans/ac-m-s-structural-redesign.md` §14 for the
+`docs/plans/ac-m-s-structural-redesign.md` §14 for the
 worked corrective-commit mechanics.
 
 ### 10.4 Migration guidance

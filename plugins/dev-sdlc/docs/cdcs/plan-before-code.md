@@ -18,7 +18,7 @@ before any code is produced.
 
 Mechanics:
 
-- Plans live at `docs/rebuild/plans/<work-item-name>.md`.
+- Plans live at `docs/plans/<work-item-name>.md`.
 - Plan structure: objective, ACs-satisfied (cite by ID), files changed,
   validation strategy, halt triggers. Mirrors the proposal format at a
   smaller scale for work that doesn't warrant a full five-gate cycle.

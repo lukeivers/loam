@@ -34,7 +34,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 MANIFEST_PATH = (
     REPO_ROOT
     / "docs"
-    / "rebuild"
     / "plans"
     / "structural-enforcement-a1-substrate.manifest.yaml"
 )
@@ -43,14 +42,15 @@ MANIFEST_PATH = (
 _ALLOWED_PREFIXES: tuple[str, ...] = (
     "hands-off-lifecycle/",
     "objective-tracker/",
-    "docs/rebuild/plans/",
+    "docs/plans/",
+    "docs/rebuild/plans/",  # historical pre-v0.3.0-C1 path retained for diff-window check
 )
 _ALLOWED_FILES: frozenset[str] = frozenset(
     {
         "CLAUDE.md",
         "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
-        "docs/rebuild/FUTURE_IDEAS.md",
+        "docs/FUTURE_IDEAS.md",
         ".gitignore",
     }
 )

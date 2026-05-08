@@ -1,6 +1,6 @@
 """D12 — Kuzu chaos-durability split pytest (amendment #16).
 
-D12 is a named acceptance criterion in ``docs/rebuild/components/
+D12 is a named acceptance criterion in ``docs/archive/component-research/
 memory-system/brief-full-build.md`` (lines ~110-119):
 
   - Kill-mid-ingest scenarios produce clean-rollback or recoverable-WAL
@@ -31,7 +31,7 @@ This module splits D12 into two buckets per prior Luke ruling
       default; runs under ``pytest -m slow``. Runtime ~65s.
 
 Cadence for the slow bucket is documented in
-``docs/rebuild/plans/d12-chaos-durability-split-pytest.md`` §6: run
+``docs/plans/d12-chaos-durability-split-pytest.md`` §6: run
 manually before any pos-v2 release cut, AND on any PR whose diff
 touches ``memory-system/src/factory.py``,
 ``memory-system/src/retention.py``, or kuzu-adjacent surfaces in

@@ -1,0 +1,119 @@
+schema_version: 1
+amendment:
+  number: 55
+  slug: self-upgrade-bb-feat-bugfix
+  title: "self-upgrade BB-feat #54 follow-on bugfix — clause-(h) audit + state.yaml + workspace-local audit-path"
+
+# BASELINE: 90246dc — current HEAD at amendment-commit time (the
+# commit that landed CC's BB-feat synthetic-validation tests). Per
+# the BASELINE-as-HEAD~1 convention used across amendments
+# #29 / #34-#54.
+baseline: 90246dc4dafa953c1f5ad5d97819e24d97a761a7
+
+plan: docs/plans/self-upgrade-bb-feat-bugfix.md
+
+seal_description: "self-upgrade BB-feat #54 follow-on bugfix — clause-(h) audit + state.yaml + workspace-local audit-path"
+
+# One sealed component touched (same fence as #54). Bugfix on three
+# AC.H.* gaps surfaced by CC's synthetic validation. All edits land
+# under self-upgrade/src/ + self-upgrade/tests/. No edits outside
+# the self-upgrade/ fence.
+components:
+  - name: self-upgrade
+    seal_test: self-upgrade/tests/test_no_sealed_amendments.py
+    sidecar: self-upgrade/tests/SEAL_COMMIT
+    frozen_baseline: false
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: self-upgrade/seals/SEAL_COMMIT.bb-feat-bugfix
+  body: |
+    # Amendment #55 — self-upgrade BB-feat #54 follow-on bugfix
+    #                  clause-(h) audit + state.yaml + workspace-local audit-path
+
+    2026-04-26. Follow-on bugfix amendment that aligns the
+    clause-(h) implementation with the AC text already locked
+    in amendment #54. Three #54 ACs the build did not actually
+    satisfy are closed here:
+
+      - **AC.HFX.1 ↔ AC.H.5** — every clause-(h) execution writes
+        the audit YAML, regardless of clean-pass / BudgetExhausted
+        / ResolverFailure terminus. Pre-amendment, only the three
+        error termini wrote the audit; a clean pass produced no
+        on-disk artefact.
+      - **AC.HFX.2 ↔ AC.H.8** — every clause-(h) execution writes
+        `<workspace>/.pos/upgrade/state.yaml`; the next
+        invocation auto-discovers prior state and resumes without
+        requiring `--conflicts-from`. Pre-amendment, no code path
+        wrote state.yaml; idempotency required manual operator
+        threading of the prior conflicts YAML.
+      - **AC.HFX.3 ↔ AC.H.5 / plan §2 path text** — clause-(h)
+        audit lands at `<workspace>/.pos/upgrade/<tag>/audit.yaml`,
+        not the global `~/.pos/framework/history/<tag>-conflicts.yaml`.
+        Legacy `--staging-dir` (no clause-(h)) keeps writing to
+        `paths.conflicts_yaml(tag)` per Hard Constraint 5
+        backward-compat.
+
+    Surface added under `self-upgrade/`:
+
+      - `src/self_upgrade/state.py` (new) — `StateRecord`
+        Pydantic model + read/write helpers + workspace-relative
+        path resolution. Tracks tag, ISO-8601 timestamp,
+        audit-path reference, conflict counts, cumulative
+        resolver tokens, status enum.
+      - `src/self_upgrade/clause_checks.py` (extended) —
+        `resolve_clause_h_inferred` writes audit + state in a
+        finally block so both writes fire on every execution
+        path (clean pass, BudgetExhausted, ResolverFailure).
+      - `src/self_upgrade/cli.py` (extended) — clause-(h) audit
+        path resolution switches to workspace-local on
+        `--canonical` mode; legacy `--staging-dir` continues
+        writing to `paths.conflicts_yaml(tag)`. Auto-discovery
+        of prior state.yaml on re-invocation. The three legacy
+        save_conflict_report sites (BudgetExhausted /
+        ResolverFailure / has_pending) keep emitting at the
+        new path so the operator finds the audit at one
+        predictable location for the canonical-mode flow.
+
+    Tests (self-upgrade — 186 pre / N post):
+
+      - `tests/test_bb_feat_synthetic_validation.py` (edited) —
+        2 halt-surface markers flipped to assert spec'd
+        behaviour; 2 CLI canonical-mode audit-path assertions
+        swapped to the new workspace-local path. The 7 other
+        CC tests stay passing.
+      - `tests/test_state.py` (new) — state.yaml schema +
+        round-trip + auto-discovery coverage.
+      - existing tests (`test_cli.py`, `test_clause_h_integration.py`,
+        etc.) stay green at the legacy path.
+
+    Backwards-compatibility verified: legacy
+    `pos upgrade <tag> --staging-dir <path> --manifest <path>`
+    invocation calls through `execute_upgrade` unchanged; the
+    legacy audit path (`~/.pos/framework/history/<tag>-conflicts.yaml`)
+    is preserved for `--staging-dir` mode. The 11 CC synthetic-
+    validation tests remain passing (3 fail-pinned tests flip
+    to assert the spec'd behaviour; 8 non-fail-pinned tests
+    unchanged).
+
+    Halt-trigger surface review:
+      #1 (source edit outside self-upgrade/): not fired —
+         strict self-upgrade/ fence.
+      #2 (backwards-incompat): not fired — legacy path
+         preserved.
+      #3 (3 bugs aren't 3 bugs): not fired — each maps to a
+         #54 plan §4 AC.
+      #4 (scope expansion): not fired — strict 3-AC bugfix.
+      #5 (ODD violation in surrounding code): none observed.
+      #6 (new top-level objective): not fired — composition
+         on existing #54 ACs.
+      #7 (wall-time): under 90 minutes.

@@ -15,7 +15,7 @@
 """AC.α.4 — ≥ 3 seed Class B docs covering owner-articulated patterns.
 
 Per plan §4 AC.α.4, at least three files exist under
-``docs/rebuild/capability-corpus/best-practice/``, each satisfying
+``docs/capability-corpus/best-practice/``, each satisfying
 the Class B schema from AC.α.2:
 
   - Pattern
@@ -35,7 +35,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 CLASS_B_DIR = (
     REPO_ROOT
-    / "docs" / "rebuild" / "capability-corpus" / "best-practice"
+    / "docs" / "capability-corpus" / "best-practice"
 )
 
 

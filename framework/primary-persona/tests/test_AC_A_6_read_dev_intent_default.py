@@ -31,8 +31,8 @@ write-back surface with ``persist_grounding`` taking a structured
 unchanged. This test file is re-targeted at the new write-back
 to seed the read fixture without re-exporting any removed symbol.
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/A-onboarding-dev-intent.md
-      docs/rebuild/plans/primary-persona-conversational-onboarding-and-default-archetype.md
+Plan: docs/plans/two-modes-and-multi-workspace/A-onboarding-dev-intent.md
+      docs/plans/primary-persona-conversational-onboarding-and-default-archetype.md
 """
 
 from __future__ import annotations

@@ -1,0 +1,269 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-2-3-cycle-1-multi-source-objective-synthesis
+  title: "v0.2.3 Cycle 1 — Multi-source objective synthesis (extraction-core rebuild); LLM-pass synthesis layer + multi-source input pipeline (README + design docs + tests + user-survey + code patterns) + Objective/Constraint/Capability Pydantic models + altitude validator + evidence-rows routing; single-component fence on plugins/dev-sdlc/odd-extractor/"
+
+# BASELINE: <pending> — source-edit feat commit covering new modules at
+# plugins/dev-sdlc/odd-extractor/src/loam_odd_extractor/
+# (synthesis.py, multi_source.py, altitude_validator.py) + extending
+# spec.py with Objective/Constraint/Capability/MultiSourceBundle/
+# SynthesisResult/ValidationReport models + rewiring generate.py
+# (multi-source bundle + LLM-pass + evidence-rows routing) +
+# extending verify.py (objective-altitude rendering + cross-ref
+# validation + §self-checks audit table) + extending observability.py
+# (synthesis_complete + altitude_check_complete event_kinds) +
+# additive cli.py integration + per-AC tests + integration smoke +
+# 3 multi-source synthesis fixtures + plugins/dev-sdlc/docs/
+# odd-methodology.md banding-rule extension + Anthropic SDK
+# integration via [project.optional-dependencies].
+#
+# Cycle 1 is the first of three cycles in v0.2.3. Cycles 2 + 3 follow:
+#   - Cycle 2: Backing-implementation map + ratification reframe.
+#              PRIMARY plugins/dev-sdlc/odd-extractor/. New
+#              backing_map.py (objective_id → code paths); ratify.py +
+#              ratification_state.py reframed at objective altitude
+#              (AC.BACKMAP.* + AC.OBJRAT.*).
+#   - Cycle 3: PR-safety + continuous-watch reframe (release SOFT
+#              smoke gate). Two-component fence: pr-safety/ (PRIMARY)
+#              + odd-extractor incremental*.py (secondary). Gate
+#              consumes objectives + backing-map; watch flags
+#              objective-altitude coverage shift (AC.PRSGOBJ.* +
+#              AC.WATCHOBJ.*).
+# After Cycle 3 seals + SOFT smoke green, the v0.2.3 SHIPPED rollup
+# commit lands on canonical, backfilling STATE.md + roadmap §8 +
+# odd-rebuild master plan §3 v0.2.3 row + master plan §9 per-cycle
+# SHA register. Tag deferred until v0.2.5 ship gate.
+#
+# Commit ladder pre-apply:
+#   ada74e1 — v0.2.2 grounding propagation apply (predecessor; lean
+#              grounding doc auto-loads structurally + dispatch SKILL
+#              extension shipped).
+#   5eda09d — v0.2.2 seal.
+#   ebca7dc — v0.2.2 §14 backfill.
+#   35155fd — v0.2.3 master plan + cycle decomposition.
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §9
+#    Cycle 1 SHA row per AC.D-sa.7>
+#
+# Single-component fence — plugins/dev-sdlc/odd-extractor/:
+#   - NEW modules under plugins/dev-sdlc/odd-extractor/src/
+#     loam_odd_extractor/:
+#       multi_source.py        — multi-source input collector
+#                                 (README + design docs + tests +
+#                                 user-survey + code patterns →
+#                                 MultiSourceBundle); 50KB README cap;
+#                                 20-file × 20KB design-doc caps;
+#                                 reuses framework/workspace-bootstrap/
+#                                 survey_parser.py via lazy-import.
+#       synthesis.py           — LLM-pass synthesis layer
+#                                 (synthesize_objectives); system prompt
+#                                 = lean grounding doc §6 + §7 + §8 +
+#                                 V/P/H banding rule injected verbatim;
+#                                 user prompt = bundle in priority
+#                                 order; structured-JSON response;
+#                                 prompt caching on lean grounding +
+#                                 banding rule + bundle structural
+#                                 shape; cost-banded per AC.OBJX.6.
+#       altitude_validator.py  — §self-checks 1-5 enforcement
+#                                 (validate_altitude); programmatic
+#                                 heuristics first; LLM-as-judge for
+#                                 borderline rows per EVAL_DIMENSIONS
+#                                 (Lens 5); decision tree on failure;
+#                                 >30% fail-rate halts (needs_fresh_start
+#                                 shape).
+#   - EDITS to existing modules (additive only):
+#       spec.py        — extend with new Pydantic models
+#                        (Objective + Constraint + Capability +
+#                        ObjectiveEvidence + ConstraintEvidence +
+#                        CapabilityEvidence + MultiSourceBundle +
+#                        SynthesisResult + ValidationReport); existing
+#                        ExtractionConfig/AnalysisPlan/Slice/RawACs/
+#                        ContractDraft unchanged.
+#       generate.py    — rewire dispatch: adapter outputs →
+#                        evidence-rows.yaml (renamed from raw-acs.yaml);
+#                        multi_source bundle → synthesis →
+#                        SynthesisResult persisted to extraction-dir
+#                        state; populates contract-draft.yaml acs:
+#                        with typed Objective rows for v0.1.9 PR-safety
+#                        transitional compatibility.
+#       verify.py      — extend rendering: section per altitude
+#                        (Objectives/Constraints/Capabilities/Evidence
+#                        rows summary/§self-checks audit table); cross-
+#                        reference validation (Capability.serves
+#                        objective_id must resolve; StageError on
+#                        dangling).
+#       observability.py — extend event_kinds (synthesis_complete +
+#                          altitude_check_complete); structured payload
+#                          uses existing estimate field (no schema-
+#                          version bump).
+#       cli.py         — additive --budget-cents integration with
+#                        synthesis cost band; estimate output extended
+#                        with synthesis-specific token counts.
+#       __init__.py    — additive exports of new module entry-points
+#                        + new Pydantic models.
+#   - NEW tests under plugins/dev-sdlc/odd-extractor/tests/:
+#       test_AC_OBJX_1_objective_model.py
+#       test_AC_OBJX_2_constraint_model.py
+#       test_AC_OBJX_3_capability_model.py
+#       test_AC_OBJX_4_multi_source_pipeline.py
+#       test_AC_OBJX_5_llm_pass_synthesis.py
+#       test_AC_OBJX_6_cost_estimate_and_envelope.py
+#       test_AC_OBJX_7_evidence_rows_routing.py
+#       test_AC_OBJX_8_altitude_validator.py
+#       test_AC_OBJX_9_survey_context.py
+#       test_AC_OBJX_10_verify_stage_rendering.py
+#       test_AC_OBJX_11_multi_source_fixtures.py
+#       test_AC_OBJX_12_audit_log_synthesis.py
+#       test_synthesis_integration.py     (full pipeline e2e)
+#   - NEW fixtures under plugins/dev-sdlc/odd-extractor/tests/
+#     fixtures/multi-source-synthesis/:
+#       readme-rich/             — README purpose statement + 2 design
+#                                  docs + 3 test files asserting
+#                                  outcomes + adapter-stub-evidence.
+#       readme-thin-tests-rich/  — 1-line README + 5 spec files
+#                                  asserting user-facing outcomes +
+#                                  adapter rows.
+#       code-pattern-only/       — empty README + no docs/ + no tests/
+#                                  + adapter-stub-evidence only.
+#   - DOCS (universal-paths admission):
+#       plugins/dev-sdlc/docs/odd-methodology.md — append section
+#                                                   "v0.2.3 multi-source
+#                                                   banding rule" with
+#                                                   V/P/H criteria
+#                                                   verbatim from
+#                                                   plan-doc §3
+#                                                   AC.OBJX.5.
+#   - PYPROJECT extension:
+#       plugins/dev-sdlc/odd-extractor/pyproject.toml — Anthropic SDK
+#                                                        added to
+#                                                        [project.optional-
+#                                                        dependencies]
+#                                                        synthesis extra
+#                                                        (or required —
+#                                                        builder's call
+#                                                        per §6.7).
+#
+# AC families locked per plan-doc §3:
+#   AC.OBJX.1   — Objective Pydantic model (id regex + min-length text +
+#                  ConfidenceBand + ObjectiveEvidence + domain;
+#                  per-band model_validator).
+#   AC.OBJX.2   — Constraint Pydantic model (id regex + bounds_kind +
+#                  ConstraintEvidence; non-empty evidence validator).
+#   AC.OBJX.3   — Capability Pydantic model (id regex + serves: list +
+#                  CapabilityEvidence; non-empty serves + objective_id
+#                  regex compliance).
+#   AC.OBJX.4   — Multi-source input pipeline (README + design docs +
+#                  tests + user-survey + code patterns →
+#                  MultiSourceBundle; per-source caps).
+#   AC.OBJX.5   — LLM-pass synthesis (lean-grounding-injected system
+#                  prompt; priority-ordered user prompt; structured
+#                  JSON; prompt caching; survey-cap-at-PLAUSIBLE).
+#   AC.OBJX.6   — Dry-run cost estimate + budget envelope (token
+#                  counter SDK-or-approximation; halt-band $0.10–$5.00;
+#                  default ceiling $1.00).
+#   AC.OBJX.7   — Adapter-output reshape (evidence-rows.yaml routing;
+#                  contract-draft.yaml acs: preserved with typed
+#                  Objectives for v0.1.9 PR-safety compat).
+#   AC.OBJX.8   — Altitude validator (programmatic heuristics + LLM-as-
+#                  judge for borderline + EVAL_DIMENSIONS + decision
+#                  tree on failure + >30% drift halt).
+#   AC.OBJX.9   — User-survey context (read-order:
+#                  workspace-local → home → env-var; H2-section parser
+#                  via lazy-import; survey-cap-at-PLAUSIBLE).
+#   AC.OBJX.10  — Output schema reshape (verify-stage rendering +
+#                  cross-ref validation + ODD §2.5 coverage check
+#                  extension).
+#   AC.OBJX.11  — Component tests against 3 multi-source fixtures
+#                  (readme-rich; readme-thin-tests-rich; code-pattern-
+#                  only).
+#   AC.OBJX.12  — Audit-log per synthesis call (synthesis_complete +
+#                  altitude_check_complete event_kinds; SOC-2 floor).
+#
+# Smoke (REALISTIC CONDITION — applicable dimensions per
+# smoke-test-discipline §6 + plan-doc §4):
+#   D1 cold-state — `loam odd-extract <readme-rich-fixture>` against
+#     fresh canonical workspace produces banded objectives + constraints +
+#     capabilities + evidence-rows.yaml + audit-log entries. Verified
+#     by test_synthesis_integration.py + per-AC tests.
+#   D2 steady-state — re-run on unchanged fixture is idempotent;
+#     prompt-caching hit-rate increases on second run; no double-write.
+#     Verified by integration test re-invocation variant.
+#   D5 cross-session — extraction artefacts at <workspace>/.loam/
+#     extractions/<repo-id>/ survive /clear (contract-draft.md +
+#     contract-draft.yaml + evidence-rows.yaml + audit-log/<NNNN>.yaml
+#     persist); subsequent session reads them. Verified by manifest-
+#     roundtrip test.
+#   D6 telemetry-floor — synthesis_complete + altitude_check_complete +
+#     existing extraction_start/stage_complete/extraction_end
+#     event_kinds all present per run; SOC-2 audit-trail floor
+#     (Decision P). Verified by test_AC_OBJX_12_*.
+#   D3 restart — inherited from existing --resume mode + state.yaml
+#     shape; LLM-pass is atomic per call (no mid-call partial-state);
+#     synthesis_failed audit-log entry on failure + retry on resume.
+#   D4 reboot — n/a structurally (odd-extract is invoked-on-demand,
+#     not a daemon; filesystem state survives reboot trivially per
+#     v0.1.8 precedent).
+#   PLUS: full-suite green sweep — pre-Cycle-1 plugins/dev-sdlc/
+#     odd-extractor/ + framework/cost-governance/ tests at HEAD
+#     (35155fd or successor) all pass post-Cycle-1; halt + surface on
+#     any regression.
+#
+# Bookkeeping note: this is the v0.2.3 first cycle (immediate
+# successor to v0.2.2 SHIPPED via apply ada74e1 / seal 5eda09d /
+# §14 backfill ebca7dc + v0.2.3 master plan at 35155fd). v3 fields
+# exercised: plan_doc_ref + ac_count + smoke_outcome at the manifest
+# level; single-component sweep at seal time. Universal-paths admit
+# docs/plans/ for plan-doc paper trail + plugins/dev-sdlc/
+# docs/odd-methodology.md for banding-rule extension.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "404f4d3"
+
+plan: docs/plans/v0-2-3-cycle-1-multi-source-objective-synthesis.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-2-3-cycle-1-multi-source-objective-synthesis.md
+
+ac_count: 12
+smoke_outcome: "D1+D2+D5+D6 exercised; D3 inherited (atomic LLM-pass); D4 n/a; 3 multi-source fixtures (readme-rich + thin-tests-rich + pattern-only); full-suite green sweep"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 3 +
+# Cycle 4a/4b precedent + v0.1.9 Cycle 1 precedent + v0.2.0 Cycle 1
+# precedent + v0.2.1 Cycle 1 precedent.
+# `docs/plans/` admits the plan-before-code paper trail.
+# `plugins/dev-sdlc/docs/odd-methodology.md` admits the banding-rule
+# extension per quality bar binding.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+    - plugins/dev-sdlc/docs/odd-methodology.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-2-3-cycle-1-multi-source-objective-synthesis
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

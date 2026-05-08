@@ -9,12 +9,12 @@ why it ships in three triggers (not six), and where it goes next.
 **References:**
 - `plugins/loam-skills/skills/skill-capture-proposal/SKILL.md` — the
   SKILL package that codifies the persona's auto-capture workflow.
-- `docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md` — the
+- `docs/plans/v0-2-0-cycle-2-auto-skill-creation.md` — the
   sub-plan that ships this design note + the SKILL + the manifest
   flag.
-- `docs/rebuild/plans/v0-2-0-master-plan.md` — the master plan
+- `docs/plans/v0-2-0-master-plan.md` — the master plan
   (committed `7c0f87b`) that locks the cycle's scope.
-- `docs/rebuild/plans/layered-skill-story-research-2026-05-04.md`
+- `docs/plans/layered-skill-story-research-2026-05-04.md`
   — the research pass that grounds this design (especially §3 on
   auto-creation + §3.6 on universal-tier framing).
 - `docs/design/layered-skill-architecture.md` — the three-layer

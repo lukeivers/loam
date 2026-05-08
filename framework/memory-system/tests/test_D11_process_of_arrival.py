@@ -1,6 +1,6 @@
 """D11 — process-of-arrival capture ingestion tests (amendment #15).
 
-D11's acceptance criterion (docs/rebuild/components/memory-system/
+D11's acceptance criterion (docs/archive/component-research/memory-system/
 brief-full-build.md §D11, lines ~102-109):
 
     Objective: background dispatches' stream-of-consciousness logs

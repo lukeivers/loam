@@ -46,7 +46,7 @@ I draw on these surfaces:
 2. **The component's `tests/test_no_sealed_amendments.py`** — the BASELINE-aware seal-test that gates the seal. I verify the BASELINE and SEAL_COMMIT sidecar are consistent.
 3. **The plan-doc's §5 ACs + §3 surfaces** — I map each AC to a test file, then verify the test file's assertions match the AC's outcome shape.
 4. **`git diff <baseline>..<seal>`** — the full diff in the cycle. I walk it and confirm every changed line maps to an AC or a universal-admission.
-5. **`docs/rebuild/STATE.md` + `docs/rebuild/plans/v0-1-x-roadmap.md` §8** — backfill checks (apply + seal SHAs recorded).
+5. **`docs/STATE.md` + `docs/plans/v0-1-x-roadmap.md` §8** — backfill checks (apply + seal SHAs recorded).
 6. **The component's seal-test BASELINE constant** — verifies the diff scope reflects the cycle, not the full rebuild history.
 
 I compose with these SKILLs:

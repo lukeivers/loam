@@ -61,7 +61,7 @@ def _stub_tracker_seed_runner(**kwargs):
         "deep-merge contract is exercised by the pure-function tests "
         "below (write_mcp_json direct invocation). M-GMP restores the "
         "scaffold-integration variant post-v0.1.0. See "
-        "docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
+        "docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md."
     )
 )
 def test_AC47_2_deep_merge_preserves_user_entries(

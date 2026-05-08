@@ -57,7 +57,7 @@ def _make_dev_mode_workspace(tmp_path: Path) -> Path:
         "# Workspace CLAUDE\n\nClaude is the model.\n",
         encoding="utf-8",
     )
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text(
         "# VALUE_PROPOSITION\n\nPrime objective text here.\n",
@@ -98,8 +98,8 @@ def test_AC_CI_1_emits_always_load_content_in_dev_mode(
     assert "=== pos-v2 always-loaded corpus (DEV MODE) ===" in stdout
     # Per-file delimiters
     assert "--- CLAUDE.md ---" in stdout
-    assert "--- docs/rebuild/VALUE_PROPOSITION.md ---" in stdout
-    assert "--- docs/rebuild/STATE.md ---" in stdout
+    assert "--- docs/VALUE_PROPOSITION.md ---" in stdout
+    assert "--- docs/STATE.md ---" in stdout
     # File contents present (literal bytes from the workspace files).
     assert "Claude is the model." in stdout
     assert "Prime objective text here." in stdout
@@ -114,7 +114,7 @@ def test_AC_CI_1_emits_missing_marker_for_absent_files(
     content."""
     workspace = _make_dev_mode_workspace(tmp_path)
     # Remove STATE.md to force the missing path.
-    (workspace / "docs" / "rebuild" / "STATE.md").unlink()
+    (workspace / "docs" / "STATE.md").unlink()
     stdout, rc = _run_hook(workspace)
     assert rc == 0
     # Content of the present files is still emitted.
@@ -122,7 +122,7 @@ def test_AC_CI_1_emits_missing_marker_for_absent_files(
     assert "Prime objective text here." in stdout
     # Missing-file marker present in the STATE.md slot.
     # The marker must follow the STATE.md delimiter.
-    state_idx = stdout.index("--- docs/rebuild/STATE.md ---")
+    state_idx = stdout.index("--- docs/STATE.md ---")
     rest = stdout[state_idx:]
     # The first non-blank section after the STATE.md delimiter is
     # the [missing] slot.
@@ -147,5 +147,5 @@ def test_AC_CI_1_per_file_delimiters_disambiguate_files(
         for line in delimiters
     }
     assert "CLAUDE.md" in rels
-    assert "docs/rebuild/VALUE_PROPOSITION.md" in rels
-    assert "docs/rebuild/STATE.md" in rels
+    assert "docs/VALUE_PROPOSITION.md" in rels
+    assert "docs/STATE.md" in rels

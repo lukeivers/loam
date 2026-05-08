@@ -1,5 +1,5 @@
 ---
-description: Capture a future idea, deferred feature, RF surface, or improvement opportunity into `docs/rebuild/FUTURE_IDEAS_DRAFT.md` at point-of-occurrence. Each entry carries timestamp + named idea + provenance (cycle / context / file) + composes-with + recommended next step (graduate to FUTURE_IDEAS.md / merge into existing entry / discard). Daily-rigor reviews graduate qualifying entries; the draft file is the no-overhead capture surface that prevents "I'll remember next session" failures. Use whenever any future-shaped surface appears mid-flow in a loam dev-mode workspace.
+description: Capture a future idea, deferred feature, RF surface, or improvement opportunity into `docs/FUTURE_IDEAS_DRAFT.md` at point-of-occurrence. Each entry carries timestamp + named idea + provenance (cycle / context / file) + composes-with + recommended next step (graduate to FUTURE_IDEAS.md / merge into existing entry / discard). Daily-rigor reviews graduate qualifying entries; the draft file is the no-overhead capture surface that prevents "I'll remember next session" failures. Use whenever any future-shaped surface appears mid-flow in a loam dev-mode workspace.
 ---
 
 # fidraft-capture
@@ -16,7 +16,7 @@ across sessions (the regression
 
 ## What this skill captures
 
-The `docs/rebuild/FUTURE_IDEAS_DRAFT.md` entry shape:
+The `docs/FUTURE_IDEAS_DRAFT.md` entry shape:
 
 ```
 ### <YYYY-MM-DD HH:MM TZ> — <idea-name-in-kebab-or-prose>
@@ -29,7 +29,7 @@ worth capturing>.
 FUTURE_IDEAS.md graduations, feedback memories, or sealed
 components — OR `(none)` if standalone>.
 **Recommended next step:**
-- `graduate` — promote to `docs/rebuild/FUTURE_IDEAS.md` at
+- `graduate` — promote to `docs/FUTURE_IDEAS.md` at
   next daily-rigor review; ready for parent-plan inclusion.
 - `merge` — combine with FIDRAFT entry `<other-entry-slug>`
   on review.
@@ -97,7 +97,7 @@ Skip when:
    "TBD", "deferred", "improvement opportunity",
    "this would be better if").
 2. **Check for duplicates.** `grep -i <keyword>
-   docs/rebuild/FUTURE_IDEAS_DRAFT.md` before authoring
+   docs/FUTURE_IDEAS_DRAFT.md` before authoring
    a new entry. If a duplicate exists, append to the
    existing entry's idea body or composes-with line —
    never create a parallel entry.
@@ -135,7 +135,7 @@ Skip when:
 
 When raw Claude Code without loam:
 
-- Substitute `docs/rebuild/FUTURE_IDEAS_DRAFT.md` with
+- Substitute `docs/FUTURE_IDEAS_DRAFT.md` with
   any project-local capture surface (`TODO.md`,
   `IDEAS.md`, `BACKLOG.md` at the workspace root).
 - The entry shape collapses to: timestamp + idea + one-line
@@ -179,7 +179,7 @@ When raw Claude Code without loam:
   CLAUDE.md fragment).
 - The FUTURE_IDEAS.md entry shape (different shape; lives
   in the workspace's existing
-  `docs/rebuild/FUTURE_IDEAS.md` conventions).
+  `docs/FUTURE_IDEAS.md` conventions).
 - The parent-plan inclusion rubric (when does a graduated
   idea become a sub-plan? — lives in master-plan
   authoring discipline, not in this skill).

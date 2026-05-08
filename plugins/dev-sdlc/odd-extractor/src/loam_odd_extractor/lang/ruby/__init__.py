@@ -9,7 +9,7 @@ Public API:
 - :func:`extract_rails_acs` — convenience function that runs the
   full extraction against a single repo path.
 
-Per :doc:`AC.RAILS.6 </docs/rebuild/plans/v0-1-8-cycle-3-ruby-rails-adapter>`,
+Per :doc:`AC.RAILS.6 </docs/plans/v0-1-8-cycle-3-ruby-rails-adapter>`,
 the adapter emits :class:`~loam_odd_extractor.bands.BandedAC` instances
 with confidence per Rails idiom:
 

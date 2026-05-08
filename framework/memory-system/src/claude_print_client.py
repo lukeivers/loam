@@ -5,7 +5,7 @@ that consume the user's Claude Max subscription via OAuth — **no**
 ``ANTHROPIC_API_KEY`` environment variable is required or consulted.
 This is the sole path for graphiti LLM work after amendment #8's
 option-1 re-scope (GLiNER2 entity-extraction fast-path dropped; see
-``docs/rebuild/components/memory-system-subscription-routed-llm/proposal.md``
+``docs/archive/component-research/memory-system-subscription-routed-llm/proposal.md``
 §0 for the re-scope rationale).
 
 Error codes. Memory-system's historical claim inside the
@@ -91,7 +91,7 @@ DEFAULT_MODEL = "claude-haiku-4-5"
 # to match the real login name. Without USER in the child env the
 # CLI emits "Not logged in · Please run /login" even on an
 # authenticated host. Research §Q1 empirical bisection
-# (docs/rebuild/plans/research/memory-system-env-scrubber-research.md)
+# (docs/plans/research/memory-system-env-scrubber-research.md)
 # pins the minimum allowlist at PATH + USER; HOME retains membership
 # for future ``~/.claude/*`` config reads per §Q3 row 2. Every other
 # candidate surveyed (LOGNAME, TMPDIR, SHELL, LANG,

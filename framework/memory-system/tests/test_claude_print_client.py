@@ -128,7 +128,7 @@ def test_AC2_subprocess_argv_and_env_scrubbed(
     ANTHROPIC_API_KEY / OPENAI_API_KEY even when parent has them set.
 
     Amendment #30 extension (AC-i,
-    docs/rebuild/plans/amendment-30-memory-system-env-scrubber-user.md):
+    docs/plans/amendment-30-memory-system-env-scrubber-user.md):
     positive-assert that USER is preserved from the parent env into the
     scrubbed child env. Closes the USER-missing defect that shipped
     through amendments #8 and #11 — the pre-amendment AC2 test asserted
@@ -203,7 +203,7 @@ def test_AC30_child_env_contains_login_user_at_spawn_time(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Amendment #30 AC-ii (pre-spawn structural check,
-    docs/rebuild/plans/amendment-30-memory-system-env-scrubber-user.md).
+    docs/plans/amendment-30-memory-system-env-scrubber-user.md).
 
     At the moment memory-system is about to spawn a ``claude -p``
     subprocess, the dict that will be handed to the OS as the child's

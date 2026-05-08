@@ -49,7 +49,7 @@ def _make_normal_use_workspace(tmp_path: Path) -> Path:
         "# Workspace CLAUDE — should NOT be emitted in normal-use.\n",
         encoding="utf-8",
     )
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text(
         "# VP — should NOT be emitted in normal-use.\n",

@@ -1,6 +1,6 @@
 """AC.DPS2.* — dev-pattern simplifications #2 (seal-narrative compression).
 
-Plan: ``docs/rebuild/plans/dev-pattern-simplifications-2.md``.
+Plan: ``docs/plans/dev-pattern-simplifications-2.md``.
 Source authority: cost-audit 2026-05-04 Recommendation B.
 Predecessor: ``dev-pattern-simplifications-1`` (sealed 019cfca) which
 landed schema v3 + the initial synthesizer.
@@ -103,7 +103,7 @@ def _author_v3_manifest(
     components: list[dict[str, str]],
     slug: str = "ac-dps2",
     title: str = "AC.DPS2 test",
-    plan_doc_ref: str | None = "docs/rebuild/plans/ac-dps2.md",
+    plan_doc_ref: str | None = "docs/plans/ac-dps2.md",
     narrative_body: str | None = None,
     include_number: bool = False,
     include_narrative: bool = True,
@@ -123,7 +123,7 @@ def _author_v3_manifest(
         "schema_version": 3,
         "amendment": amendment,
         "baseline": baseline_sha,
-        "plan": f"docs/rebuild/plans/{slug}.md",
+        "plan": f"docs/plans/{slug}.md",
         "components": components,
     }
     if plan_doc_ref is not None:
@@ -157,7 +157,7 @@ def _author_v1_manifest(
         "schema_version": 1,
         "amendment": {"number": 99, "slug": slug, "title": f"{slug} test"},
         "baseline": baseline_sha,
-        "plan": f"docs/rebuild/plans/{slug}.md",
+        "plan": f"docs/plans/{slug}.md",
         "components": components,
     }
     if extra_top_level:
@@ -169,7 +169,7 @@ def _author_v1_manifest(
 
 def _make_v3_manifest_in_memory(
     *,
-    plan_doc_ref: str | None = "docs/rebuild/plans/ac-dps2-mem.md",
+    plan_doc_ref: str | None = "docs/plans/ac-dps2-mem.md",
     narrative_body: str | None = None,
     ac_count: int | None = None,
     smoke_outcome: str | None = None,
@@ -194,7 +194,7 @@ def _make_v3_manifest_in_memory(
         slug=slug,
         title=title,
         baseline="aaaaaaa",
-        plan=f"docs/rebuild/plans/{slug}.md",
+        plan=f"docs/plans/{slug}.md",
         components=(),
         plan_doc_ref=plan_doc_ref,
         narrative=narrative,
@@ -218,10 +218,10 @@ def test_AC_DPS2_1_synth_body_includes_what_shipped() -> None:
         slug="ac-dps2-1-test",
         title="AC.DPS2.1 synthesis coverage test",
         baseline="aaaaaaa",
-        plan="docs/rebuild/plans/ac-dps2-1-test.md",
+        plan="docs/plans/ac-dps2-1-test.md",
         # Use a couple of components so the components-line has content.
         components=tuple(),  # synthesizer formats empty as ""; that's fine
-        plan_doc_ref="docs/rebuild/plans/ac-dps2-1-test.md",
+        plan_doc_ref="docs/plans/ac-dps2-1-test.md",
         narrative=NarrativeSpec(
             target="framework/x/seals/SEAL_COMMIT.ac-dps2-1-test",
             body=None,
@@ -234,7 +234,7 @@ def test_AC_DPS2_1_synth_body_includes_what_shipped() -> None:
     assert "ac-dps2-1-test" in body
     assert "AC.DPS2.1 synthesis coverage test" in body
     # plan-doc reference
-    assert "docs/rebuild/plans/ac-dps2-1-test.md" in body
+    assert "docs/plans/ac-dps2-1-test.md" in body
     # ACs satisfied count
     assert "acs-satisfied: 14" in body, (
         f"synthesizer should emit 'acs-satisfied: 14'; body:\n{body}"
@@ -253,7 +253,7 @@ def test_AC_DPS2_1_synth_body_omits_lines_when_optional_fields_absent() -> None:
     invariant for v3 manifests authored without the new fields).
     """
     manifest = _make_v3_manifest_in_memory(
-        plan_doc_ref="docs/rebuild/plans/ac-dps2-min.md",
+        plan_doc_ref="docs/plans/ac-dps2-min.md",
         narrative_body=None,
         ac_count=None,
         smoke_outcome=None,
@@ -271,7 +271,7 @@ def test_AC_DPS2_1_synth_body_omits_lines_when_optional_fields_absent() -> None:
     # Original DPS1.4 content still present.
     assert "ac-dps2-1-min" in body
     assert "ccccccc" in body
-    assert "docs/rebuild/plans/ac-dps2-min.md" in body
+    assert "docs/plans/ac-dps2-min.md" in body
 
 
 # ---------------------------------------------------------------------------
@@ -500,35 +500,35 @@ def test_AC_DPS2_4_synth_body_line_count_in_range() -> None:
     cases: list[Manifest] = [
         # Minimum case (no ac_count, no smoke).
         _make_v3_manifest_in_memory(
-            plan_doc_ref="docs/rebuild/plans/ac-dps2-4-min.md",
+            plan_doc_ref="docs/plans/ac-dps2-4-min.md",
             ac_count=None,
             smoke_outcome=None,
             slug="ac-dps2-4-min",
         ),
         # Maximum case (both optional fields).
         _make_v3_manifest_in_memory(
-            plan_doc_ref="docs/rebuild/plans/ac-dps2-4-full.md",
+            plan_doc_ref="docs/plans/ac-dps2-4-full.md",
             ac_count=14,
             smoke_outcome="all 6 dimensions exercised",
             slug="ac-dps2-4-full",
         ),
         # ac_count only.
         _make_v3_manifest_in_memory(
-            plan_doc_ref="docs/rebuild/plans/ac-dps2-4-ac.md",
+            plan_doc_ref="docs/plans/ac-dps2-4-ac.md",
             ac_count=7,
             smoke_outcome=None,
             slug="ac-dps2-4-ac",
         ),
         # smoke only.
         _make_v3_manifest_in_memory(
-            plan_doc_ref="docs/rebuild/plans/ac-dps2-4-sm.md",
+            plan_doc_ref="docs/plans/ac-dps2-4-sm.md",
             ac_count=None,
             smoke_outcome="green",
             slug="ac-dps2-4-sm",
         ),
         # With number.
         _make_v3_manifest_in_memory(
-            plan_doc_ref="docs/rebuild/plans/ac-dps2-4-num.md",
+            plan_doc_ref="docs/plans/ac-dps2-4-num.md",
             ac_count=14,
             smoke_outcome="all 6 dimensions exercised",
             number=42,
@@ -574,7 +574,7 @@ def test_AC_DPS2_6_seal_commit_message_v3_has_plan_doc_line() -> None:
     body containing ``Plan doc: <ref>``.
     """
     manifest = _make_v3_manifest_in_memory(
-        plan_doc_ref="docs/rebuild/plans/ac-dps2-6.md",
+        plan_doc_ref="docs/plans/ac-dps2-6.md",
         ac_count=14,
         smoke_outcome="all 6 dimensions exercised",
         slug="ac-dps2-6",
@@ -587,7 +587,7 @@ def test_AC_DPS2_6_seal_commit_message_v3_has_plan_doc_line() -> None:
         sweep_summary="3 components green",
         include_co_authored_by=False,
     )
-    assert "Plan doc: docs/rebuild/plans/ac-dps2-6.md" in msg, (
+    assert "Plan doc: docs/plans/ac-dps2-6.md" in msg, (
         f"v3 seal commit message missing Plan doc: line; msg:\n{msg}"
     )
 
@@ -603,7 +603,7 @@ def test_AC_DPS2_6_seal_commit_message_v1_unchanged() -> None:
         slug="ac-dps2-6-v1",
         title="v1 unchanged test",
         baseline="aaaaaaa",
-        plan="docs/rebuild/plans/ac-dps2-6-v1.md",
+        plan="docs/plans/ac-dps2-6-v1.md",
         components=(),
         narrative=NarrativeSpec(
             target="framework/x/seals/SEAL_COMMIT.ac-dps2-6-v1",
@@ -660,10 +660,10 @@ def test_AC_DPS2_7_subject_shape_stable_across_schemas() -> None:
             slug="ac-dps2-7",
             title="subject stability",
             baseline="aaaaaaa",
-            plan="docs/rebuild/plans/ac-dps2-7.md",
+            plan="docs/plans/ac-dps2-7.md",
             components=(),
             plan_doc_ref=(
-                "docs/rebuild/plans/ac-dps2-7.md" if schema == 3 else None
+                "docs/plans/ac-dps2-7.md" if schema == 3 else None
             ),
             narrative=NarrativeSpec(
                 target="framework/x/seals/SEAL_COMMIT.ac-dps2-7",
@@ -791,7 +791,7 @@ def test_AC_DPS2_9_dispatch_template_no_narrative_body_prescription() -> None:
 
 
 def test_AC_DPS2_10_existing_manifests_validate_clean() -> None:
-    """Every manifest YAML under ``docs/rebuild/plans/`` parses clean
+    """Every manifest YAML under ``docs/plans/`` parses clean
     post-amendment. Same shape as AC.DPS1.13's sweep — we re-run it
     here so the AC.DPS2.* additions (``ac_count`` + ``smoke_outcome``
     rejection at v1/v2) are also covered for existing manifests, none
@@ -806,7 +806,7 @@ def test_AC_DPS2_10_existing_manifests_validate_clean() -> None:
     if repo_root is None:
         pytest.skip("could not locate canonical repo root")
 
-    plans_dir = repo_root / "docs" / "rebuild" / "plans"
+    plans_dir = repo_root / "docs" / "plans"
     if not plans_dir.is_dir():
         pytest.skip(f"no plans directory at {plans_dir}")
 
@@ -863,7 +863,7 @@ def test_AC_DPS2_13_v3_end_to_end_apply_with_new_fields(
             }
         ],
         slug="ac-dps2-13-e2e",
-        plan_doc_ref="docs/rebuild/plans/ac-dps2-13-e2e.md",
+        plan_doc_ref="docs/plans/ac-dps2-13-e2e.md",
         include_number=False,
         extra_top_level={
             "ac_count": 14,
@@ -882,7 +882,7 @@ def test_AC_DPS2_13_v3_end_to_end_apply_with_new_fields(
     reloaded = load_manifest(manifest_path)
     assert reloaded.schema_version == 3
     assert reloaded.number is None
-    assert reloaded.plan_doc_ref == "docs/rebuild/plans/ac-dps2-13-e2e.md"
+    assert reloaded.plan_doc_ref == "docs/plans/ac-dps2-13-e2e.md"
     assert reloaded.ac_count == 14
     assert reloaded.smoke_outcome == "all 6 dimensions exercised"
     assert reloaded.narrative is not None

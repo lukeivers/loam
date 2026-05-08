@@ -109,7 +109,7 @@ Skip when:
    `schema_version: 3` at the top of the manifest.
 2. **Author `plan_doc_ref` accurately.** Path is from repo
    root, no leading slash, matching the actual plan-doc
-   filename. Example: `docs/rebuild/plans/v0-1-9-cycle-3-
+   filename. Example: `docs/plans/v0-1-9-cycle-3-
    skills-and-cleanup.md`.
 3. **Author `ac_count` as the integer total of named ACs in
    the plan-doc §4.** Count carefully — every named AC across

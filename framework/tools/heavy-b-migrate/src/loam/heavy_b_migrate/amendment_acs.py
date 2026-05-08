@@ -1,7 +1,7 @@
 """Phase γ — extract amendment plan ACs into tracker records.
 
 For each amendment plan file under
-``docs/rebuild/plans/amendment-*.md`` (excluding ``.builder-plan.md``
+``docs/plans/amendment-*.md`` (excluding ``.builder-plan.md``
 companion files), parse for AC anchors and create one ObjectiveSpec
 record per AC. Plans without parseable ACs receive a placeholder
 record per AC.D-mig.5.
@@ -50,7 +50,7 @@ from loam.heavy_b_migrate.ids import (
 )
 
 
-PLANS_DIR_REL = "docs/rebuild/plans"
+PLANS_DIR_REL = "docs/plans"
 
 # Match ``amendment-NN-...`` filenames; exclude ``.builder-plan.md``
 # companions and ``.manifest.yaml`` siblings.

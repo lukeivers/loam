@@ -1,0 +1,279 @@
+schema_version: 1
+amendment:
+  number: 78
+  slug: oss-v0-1-0-publish-rename-1c
+  title: "M1c — launchd labels (com.pos-v2.<slug>.* → com.loam.<slug>.*; version suffix dropped) + plist filename cascade + per-host migration helper; third sub-amendment of M1.rename multi-amendment series"
+
+# BASELINE: d97c8c1 — M1b's seal commit
+# (chore(seals): M1b env-vars + per-host config dir … cost-governance
+# +graceful-degradation+hands-off-lifecycle+memory-system+observability-
+# aggregator+orchestrator+primary-persona+self-correction+self-upgrade
+# +telegram-interface+workspace-bootstrap at 78f19c6).
+# M1c's BASELINE..HEAD diff is the M1c sub-plan commit + the M1c feature
+# commit + apply commit + any corrective commits + seal commit.
+baseline: d97c8c1
+
+plan: docs/plans/oss-v0-1-0-publish-rename-1c.md
+
+seal_description: "M1c launchd label rebrand — com.pos-v2.<slug>.<kind> → com.loam.<slug>.<kind> (version suffix dropped concurrently per loam-rename-decisions Tier-1 #4) + plist filename cascade (memory-system historical-reference plist renamed via git mv) + orphan-plist-cleanup NAMESPACED arm rebases to com.loam.<slug>.<kind> (pre-#6 ORPHAN arms preserved) + sibling per-host migration helper at framework/tools/loam-migrate-launchd-labels/ (one-shot bootout-of-old + rename-aside; idempotent)"
+
+# Five sealed components per locked plan §1 fence statement. The five-
+# component fence is wider than the series-master §2 ladder's "2: hands-
+# off-lifecycle, workspace-bootstrap" estimate — the dispatch's authority
+# text ("All com.pos-v2.<slug>.* launchd labels across plist files,
+# plist filenames, and bootstrap/teardown shell flow that reads/writes
+# them") binds the scope to all label callsites. Empirical surface
+# inventory at plan time (§11 finding #1):
+#
+#   Five sealed components carry launchd label callsites:
+#     - hands-off-lifecycle  — tests/test_first_run.py
+#     - workspace-bootstrap  — adapters/first_run_scaffold.py + 4 tests
+#     - memory-system        — launchd/README.md + the historical plist
+#     - primary-persona      — cli.py + memory_write_worker.py + 1 test
+#     - orchestrator         — scripts/pos_session_start.py defaults
+#
+#   Plus framework/tools/orphan-plist-cleanup/ (NAMESPACED arm repoint;
+#   admitted by framework/tools/ universal-paths prefix). Plus framework/
+#   tools/loam-migrate-launchd-labels/ (NEW sibling helper; same prefix).
+#   Plus framework/first-run-inventory.yaml (2 service-label template
+#   entries; admitted by H19's existing top-level entry).
+#
+# hands-off-lifecycle is included because its tests carry label-template
+# assertions (T14 + AC7 in test_first_run.py). HOL is the conventional
+# narrative anchor for amendment seal commits; HOL's H19 frozen-baseline
+# byte-content sample contains ZERO plist references (verified per M1b
+# §11 finding #2 + re-confirmed at M1c plan time). M1c does NOT trigger
+# HC#4 retire-and-rebaseline.
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: memory-system
+    seal_test: framework/memory-system/tests/test_no_sealed_amendments.py
+    sidecar: framework/memory-system/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: orchestrator
+    seal_test: framework/orchestrator/tests/test_no_sealed_amendments.py
+    sidecar: framework/orchestrator/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3 + the precedent
+# under which framework/tools/ is admitted as a top-level prefix
+# (single-framework-restructure manifest §44–47). M1c's NEW migration
+# helper lives at framework/tools/loam-migrate-launchd-labels/ (per
+# §10 D-build.M1c.1 recommendation; final placement is a builder
+# call within AC.RNM-1c.3). framework/tools/orphan-plist-cleanup/
+# carries the NAMESPACED-arm-only repoint; same prefix.
+#
+# framework/first-run-inventory.yaml is admitted by H19's existing
+# top-level entry. M1c's edit is two service-label template entries
+# (label: "com.pos-v2.{slug}.memory-graphiti" → "com.loam.{slug}.
+# memory-graphiti"; same for orchestrator).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/tools/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - framework/first-run-inventory.yaml
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-rename-1c
+  body: |
+    # Amendment #78 — M1c launchd label rebrand + plist filename cascade + sibling migration helper
+
+    2026-04-29. Third sub-amendment of the M1.rename multi-amendment
+    series per locked series master plan-doc
+    `docs/plans/oss-v0-1-0-publish-rename.md` (committed
+    `ebe0a57`) and locked sub-plan-doc
+    `docs/plans/oss-v0-1-0-publish-rename-1c.md`.
+
+    Composes on M1a (sealed `143d465`, 2026-04-29 — docs/prose-only
+    brand rebrand) and M1b (sealed `d97c8c1`, 2026-04-29 — env-vars
+    + per-host config dir + migration helper) and on the OSS v0.1.0
+    publish programme (see `docs/plans/oss-v0-1-0-publish.md`
+    §5 — the M1a..M1g ladder is already in place per M1b's precursor
+    doc-only commit `7be713b`).
+
+    Owner rulings closed at series-master commit time (2026-04-29):
+
+      - D-RNM.1 SPLIT: M1c is one slice of the multi-amendment series.
+      - D-RNM.2 per-component namespace-package: deferred to M1f
+        (M1c's scope is launchd labels only; namespace pivot is later).
+      - D-RNM.3 no compat window: hard-cutover; no fallback that
+        loads under both labels concurrently; the migration helper
+        handles the per-host transition once.
+
+    Surface changes (five sealed components + orphan-plist-cleanup
+    NAMESPACED-arm-only repoint + NEW sibling migration helper +
+    first-run-inventory.yaml):
+
+      - Label rebrand (every framework callsite):
+          com.pos-v2.<slug>.<kind>     → com.loam.<slug>.<kind>
+          com.pos-v2.{slug}.<kind>     → com.loam.{slug}.<kind>
+          (template form in YAML inventory)
+          com.pos-v2.memory-graphiti   → com.loam.memory-graphiti
+          (single-segment legacy default in pos_session_start.py)
+          com.pos.orchestrator         → com.loam.orchestrator
+          (single-segment v1-era default in pos_session_start.py;
+          §11 finding #4 — this default is functionally dead post-#6
+          but rebrands for visual consistency with memory_label)
+        The version suffix `-v2` is dropped concurrently per
+        loam-rename-decisions.md Tier-1 #4 (no `v1` to differentiate
+        from any more).
+
+      - Plist filename cascade:
+          framework/memory-system/launchd/com.pos-v2.memory-graphiti.plist
+          → framework/memory-system/launchd/com.loam.memory-graphiti.plist
+        (renamed via git mv to preserve blame; the renamed file's
+        Label key body updates to com.loam.memory-graphiti; the
+        hardcoded absolute paths inside the plist body STAY —
+        M9-deferred per oss-v0-1-0-publish.md §6).
+
+      - Bootstrap/teardown flow inheritance (zero behaviour change):
+          ServiceManagerRunner.bootstrap is structurally label-agnostic.
+          The bootout-before-bootstrap call sequence inherits the new
+          label form from the (now-renamed) service_label() helper.
+
+      - Orphan-plist-cleanup NAMESPACED-arm rebase (per dispatch
+        halt-trigger #7 carve-out within M1c's scope):
+          Classification.NAMESPACED_V2  → Classification.NAMESPACED
+          (drops the version suffix matching the brand-side decision)
+          Classifier prefix-check tuple  ["com", "pos-v2"]
+          → ["com", "loam"] for the NAMESPACED arm.
+          The pre-#6 historical ORPHAN_V2 arm (com.pos-v2.<single>)
+          and ORPHAN_V1 arm (com.pos.<single>) are PRESERVED verbatim
+          — those describe genuine pre-amendment-#6 archaeological
+          shapes whose `pos-v2` / `pos` literals are intrinsic to
+          what the tool detects.
+
+      - NEW sibling migration helper:
+          framework/tools/loam-migrate-launchd-labels/
+          (parallel structure to M1b's loam-migrate-host-config/).
+          One-shot per-host bootout-of-old + rename-aside flow:
+            * Scan ~/Library/LaunchAgents/ for com.pos-v2.<2segments>.plist
+            * launchctl bootout gui/<uid>/<label> (benign-stderr-as-success)
+            * Rename the plist to <base>.label-rebrand-disabled.bak
+          Idempotent: re-run after success finds zero matches.
+          Out of scope for the helper:
+            * pre-#6 single-segment orphans (orphan-plist-cleanup's
+              mission)
+            * writing new com.loam.<slug>.<kind>.plist files
+              (workspace-bootstrap first-run scaffold owns that)
+
+      - framework/first-run-inventory.yaml (two-line edit):
+          label: "com.pos-v2.{slug}.memory-graphiti"
+          → label: "com.loam.{slug}.memory-graphiti"
+          label: "com.pos-v2.{slug}.orchestrator"
+          → label: "com.loam.{slug}.orchestrator"
+
+    Out of scope (locked plan-doc §6, named explicitly):
+
+      - Workspace-side <workspace>/.pos/ sentinel directory — distinct
+        surface; M1b discipline carried forward.
+      - Internal Python identifiers carrying POS_V2_ / pos_v2 / pos-v2
+        decoration (`_POS_V2_*`, `CANONICAL_POS_V2_PATH`, `pos_v2_root`,
+        `--pos-v2-root` shell flag) — namespace work; M1e.
+      - OTel pos.* roots — M1d.
+      - Code imports `from pos_<comp>` — M1f.
+      - pos-amend CLI rename → loam amend — M1e.
+      - graceful-degradation → dormancy — M1g.
+      - Path strings /Users/lukeivers/ivers-corp-pos-v2/... (including
+        the absolute paths inside the renamed historical-reference
+        plist's body) — M9.
+      - Historical seal narratives — preserved.
+      - Historical plan-docs — preserved.
+      - Orphan-plist-cleanup pre-#6 ORPHAN_V2 / ORPHAN_V1 detector
+        arms — preserved verbatim (archaeological identifiers).
+
+    HC#4 byte-content sample status: GREEN. The fifteen sample files
+    in framework/hands-off-lifecycle/tests/test_d1_byte_content_match.py
+    contain ZERO plist references and ZERO launchd-label callsites
+    (verified pre-build per locked plan §11 finding #2). HC#4 remains
+    green post-M1c without retirement; the dispatch's "first sub-
+    amendment that may cross H19" framing was a series-master pre-
+    emptive hedge that empirical surface confirms is moot.
+
+    H19 admission: not applicable. M1c touches no new top-level dirs;
+    every touched component already exists in H19's allowed set; the
+    new migration helper lives under framework/tools/ which is admitted.
+
+    Pre-existing tech-debt observed and resolved in-band (§11 finding
+    #4): orchestrator's pos_session_start.py:126 default
+    `orchestrator_label="com.pos.orchestrator"` is a pre-amendment-#6
+    v1-shape single-segment default. Tracing callers confirms no live
+    caller uses this default; the function's Phase 4a behaviour is
+    structurally a no-op for orchestrator (the warning "com.pos.
+    orchestrator.plist not installed at ..." is appended but unconsumed
+    by the run_session_start caller path). Resolution: rebrand to
+    com.loam.orchestrator for visual consistency with memory_label;
+    no live behaviour change. Recorded for future cleanup amendment.
+
+    Test surface (narrow per feedback_amendment_dispatch_speedups):
+
+      - AC.RNM-1c.1 — label rebrand: verified by grep-count
+        post-edit + the touched test files in HOL + workspace-
+        bootstrap + primary-persona.
+      - AC.RNM-1c.2 — plist filename cascade: verified by ls of
+        memory-system/launchd/ (com.loam.memory-graphiti.plist
+        present; com.pos-v2.memory-graphiti.plist absent) plus the
+        Label-key-body read.
+      - AC.RNM-1c.3 — sibling migration helper idempotency: verified
+        by the helper's own test scaffold (≥4 named cases).
+      - AC.RNM-1c.4 — bootstrap/teardown inheritance: verified by
+        the touched workspace-bootstrap test files (AC4 + AC5 + AC6
+        + H1 in test_first_run_scaffold.py) + AC.J.5 worker plist
+        + HOL T14 + AC7.
+      - AC.RNM-1c.5 — orphan-plist-cleanup NAMESPACED-arm rebase:
+        verified by orphan-plist-cleanup full test suite passing.
+      - AC.RNM-1c.6 — fence-narrowing negative AC: verified by
+        `git diff <baseline>..HEAD --stat` showing ONLY the named
+        surfaces.
+      - AC.RNM-1c.S — this seal commit.
+
+    ODD §2.5 reverse-direction audit clean: every change in this
+    amendment's diff is a launchd label literal rename, the renamed
+    plist filename + Label-key body, the orphan-tool NAMESPACED-arm
+    repoint, the new sibling helper's authored lines, the first-run-
+    inventory.yaml two-line edit, or the in-band rebrand of the
+    orchestrator's v1-shape default (§11 finding #4). Each line
+    traces back to a named AC under §4.
+
+    BASELINE d97c8c1 (M1b seal commit). Five sealed components
+    touched: hands-off-lifecycle, workspace-bootstrap, memory-system,
+    primary-persona, orchestrator.
+
+    Composes on (consumers-only; no semantic edits):
+
+      - The OSS v0.1.0 publish programme master plan
+        (`oss-v0-1-0-publish.md`) — M1c row already in place per
+        M1b's precursor commit `7be713b`.
+      - The M1.rename series master plan
+        (`oss-v0-1-0-publish-rename.md`) — M1c is the third sub-
+        amendment per the §2 ladder.
+      - `loam-rename-decisions.md` — Tier-1 item 4 (launchd labels
+        + version suffix drop).
+      - `.scratch/claude-output/loam-rename-migration-plan.md` §3.4
+        (launchd surface mechanics + breaking-change flag).
+
+    FIDRAFT items closed by this amendment: none. The M1.rename
+    series as a whole closes the brand-rebrand portion of AC.OSS.5;
+    M1c closes the launchd-label slice.

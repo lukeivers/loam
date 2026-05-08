@@ -96,7 +96,7 @@ def test_H1_fresh_first_run_writes_all_yamls(tmp_path: Path) -> None:
     # FBE.7 (v0.1.0 foldback): ``memory-graphiti`` is no longer in
     # ``_SERVICE_KINDS`` per Luke's 2026-05-03 ruling — M-FBM is the
     # v0.1.0 floor; M-GMP restores the graphiti plist post-v0.1.0. See
-    # ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+    # ``docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
     assert labels == {
         "com.loam.pos-v2.orchestrator",
         "com.loam.pos-v2.memory-write-worker",
@@ -219,7 +219,7 @@ def test_dry_run_returns_planned_writes_without_writing(tmp_path: Path) -> None:
 # ---- Amendment #6 — namespaced-labels-and-bootout --------------------
 #
 # Acceptance criteria AC1, AC4, AC5, AC6, AC8 from
-# docs/rebuild/components/namespaced-labels-and-bootout/proposal.md.
+# docs/archive/component-research/namespaced-labels-and-bootout/proposal.md.
 # AC2 and AC3 are covered by the updated H1 tests above (plist/unit
 # filenames embed the workspace slug). AC7 is asserted from the
 # hands-off-lifecycle side (test_first_run.py). AC9 is enforced by
@@ -250,7 +250,7 @@ def test_AC1_service_label_composed_from_kind_and_slug() -> None:
     FBE.7 (v0.1.0 foldback): ``memory-graphiti`` is no longer in
     ``_SERVICE_KINDS`` at v0.1.0 (M-FBM is the floor); ``service_label``
     raises ``ValueError`` for it. M-GMP re-admits post-v0.1.0. See
-    ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+    ``docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
     """
     assert service_label("orchestrator", "pos3") == "com.loam.pos3.orchestrator"
     assert service_label("memory-write-worker", "alpha") == (

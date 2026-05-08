@@ -16,7 +16,7 @@
 structurally.
 
 Per the locked plan-doc
-``docs/rebuild/plans/structural-enforcement-a1-substrate.md`` §4
+``docs/plans/structural-enforcement-a1-substrate.md`` §4
 AC.SE.7: insertion of a row with empty ``component``, empty
 ``ac_id``, or empty ``source_path_glob`` is refused at the API
 boundary with a structured error. Insertion of a row whose

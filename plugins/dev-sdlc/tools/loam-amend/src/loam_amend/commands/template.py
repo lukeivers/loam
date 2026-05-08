@@ -1,7 +1,7 @@
 """``loam amend template`` — markdown template engine for high-repetition
 authored artefacts (dispatch prompts, plan-doc skeletons, ...).
 
-Surface (per ``docs/rebuild/plans/dispatch-prompt-template-extension.md``):
+Surface (per ``docs/plans/dispatch-prompt-template-extension.md``):
 
 - ``loam amend template list`` — enumerate registered templates by family.
 - ``loam amend template render <family>/<id> [--var KEY=VALUE]... [--vars-file PATH] [--out PATH] [--force]``
@@ -90,7 +90,7 @@ def _emit_diagnostic(exc: TemplateError) -> None:
     template halts is provided via stderr only; the seal + new-plan
     halts (where stdout-redirection is not a concern) carry the
     ``HALT:`` stdout prefix per
-    ``docs/rebuild/plans/pos-amend-halt-visibility.md``.
+    ``docs/plans/pos-amend-halt-visibility.md``.
     """
     print(f"template error [{exc.failure_class}]: {exc}", file=sys.stderr)
 

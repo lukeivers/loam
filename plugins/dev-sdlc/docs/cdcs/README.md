@@ -1,7 +1,7 @@
 # Core Development Conventions (CDCs)
 
 > These CDCs are dev-specific machinery that governs how *we* build pOS v2.
-> Pre-M6b.0 they lived in `docs/rebuild/FUTURE_IDEAS.md`'s "temporary parking"
+> Pre-M6b.0 they lived in `docs/FUTURE_IDEAS.md`'s "temporary parking"
 > section under the master rule "until the Dev/SDLC plugin (Idea 3) exists,
 > this file is their temporary home; when the plugin lands, they migrate
 > there." The plugin landed at M6a; M6b.0 executed the migration.

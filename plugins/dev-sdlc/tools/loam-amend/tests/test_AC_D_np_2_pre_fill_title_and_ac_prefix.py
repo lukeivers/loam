@@ -1,7 +1,7 @@
 """Tests for AC.D-np.2 — `--title` and `--ac-prefix` pre-fill the
 corresponding vars in the scaffolded vars-file.
 
-Per `docs/rebuild/plans/pos-amend-new-plan-orchestration.md`:
+Per `docs/plans/pos-amend-new-plan-orchestration.md`:
 
     Invoking ``loam amend new-plan <slug> --title "Some Title"
     --ac-prefix AC.X.x`` writes a vars-file whose ``TITLE`` value equals
@@ -22,7 +22,7 @@ from loam_amend.commands import new_plan as new_plan_cmd
 def _scaffold(tmp_path: Path, **kwargs) -> dict:
     rc = new_plan_cmd.run("example-slug", repo_root=tmp_path, **kwargs)
     assert rc == 0
-    target = tmp_path / "docs" / "rebuild" / "plans" / "example-slug.vars.yaml"
+    target = tmp_path / "docs" / "plans" / "example-slug.vars.yaml"
     return yaml.safe_load(target.read_text(encoding="utf-8"))
 
 

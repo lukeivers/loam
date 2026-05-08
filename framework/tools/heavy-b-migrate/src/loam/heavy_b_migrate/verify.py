@@ -101,7 +101,7 @@ def verify_continuous_registration(
         # Craft a fixture amendment manifest with one ObjectiveEntry.
         fixture_amendment_id = "amendment-fixture-vc"
         fixture_plan_doc = (
-            f"docs/rebuild/plans/{fixture_amendment_id}.md"
+            f"docs/plans/{fixture_amendment_id}.md"
         )
         fixture_ac_id = "AC.fixture.1"
         manifest = Manifest(
@@ -220,7 +220,7 @@ async def _seed_minimal_ancestry(repo_root: Path) -> None:
                 time_bound=TimeBound(evergreen=True),
                 authored_by="user",
                 lifted_from=LiftedFrom(
-                    source_doc="docs/rebuild/VALUE_PROPOSITION.md",
+                    source_doc="docs/VALUE_PROPOSITION.md",
                     source_ac="prime",
                 ),
             ),
@@ -237,7 +237,7 @@ async def _seed_minimal_ancestry(repo_root: Path) -> None:
                 authored_by="user",
                 lifted_from=LiftedFrom(
                     source_doc=(
-                        "docs/rebuild/spec/loam-objectives-spec.md"
+                        "docs/spec/loam-objectives-spec.md"
                     ),
                     source_ac="v1.0",
                 ),

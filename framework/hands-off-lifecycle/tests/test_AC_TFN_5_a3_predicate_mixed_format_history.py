@@ -99,7 +99,7 @@ def gate_dev_mode_mixed_history(monkeypatch):
     # Sentinel γ-format. Wall-clock instant ``T+5``.
     sentinel = ActiveScopeSentinel(
         scope_id="test-scope-mix",
-        plan_path="docs/rebuild/plans/test.md",
+        plan_path="docs/plans/test.md",
         bindings=(
             ScopeBinding(component="orchestrator", ac_id="AC.MIX.1"),
         ),
@@ -197,7 +197,7 @@ def test_AC_TFN_5_pre_fix_only_history_treats_ac_as_existing(
     """
     sentinel = ActiveScopeSentinel(
         scope_id="test-scope-prefix-only",
-        plan_path="docs/rebuild/plans/test.md",
+        plan_path="docs/plans/test.md",
         bindings=(
             ScopeBinding(component="orchestrator", ac_id="AC.MIX.2"),
         ),

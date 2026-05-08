@@ -34,7 +34,7 @@ def test_T1_manifest_parser_accepts_valid_multi_component() -> None:
     assert len(m.components) == 2
     names = [c.name for c in m.components]
     assert names == ["alpha", "beta"]
-    assert m.universal_paths.prefixes == ("docs/rebuild/plans/",)
+    assert m.universal_paths.prefixes == ("docs/plans/",)
     assert m.universal_paths.files == ("CLAUDE.md",)
     assert m.narrative is not None
     assert "test narrative block" in m.narrative.body
@@ -61,7 +61,7 @@ amendment:
   slug: x
   title: "x"
 baseline: "not-a-sha"
-plan: docs/rebuild/plans/x.md
+plan: docs/plans/x.md
 components:
   - name: a
     seal_test: a/tests/t.py
@@ -91,7 +91,7 @@ amendment:
   slug: frozen
   title: "frozen"
 baseline: abcdef0
-plan: docs/rebuild/plans/frozen.md
+plan: docs/plans/frozen.md
 components:
   - name: hands-off-lifecycle
     seal_test: hands-off-lifecycle/tests/test_cross_cutting.py
@@ -114,7 +114,7 @@ amendment:
   slug: frozen
   title: "frozen"
 baseline: abcdef0
-plan: docs/rebuild/plans/frozen.md
+plan: docs/plans/frozen.md
 components:
   - name: x
     seal_test: x/tests/t.py
@@ -143,7 +143,7 @@ def test_T16_schema_v2_with_objectives_block_parses() -> None:
     assert e0.parent_root is True
     assert e0.parent_id is None
     assert e0.lifted_from.source_doc == (
-        "docs/rebuild/plans/test-with-objectives.md"
+        "docs/plans/test-with-objectives.md"
     )
     assert e0.lifted_from.source_ac == "AC.test.1"
     e1 = m.objectives[1]
@@ -162,7 +162,7 @@ amendment:
   slug: x
   title: "x"
 baseline: abcdef0
-plan: docs/rebuild/plans/x.md
+plan: docs/plans/x.md
 components:
   - name: a
     seal_test: a/tests/t.py
@@ -178,7 +178,7 @@ objectives:
       evergreen: true
     authored_by: "user"
     lifted_from:
-      source_doc: "docs/rebuild/plans/x.md"
+      source_doc: "docs/plans/x.md"
       source_ac: "AC.x.1"
 """,
         encoding="utf-8",
@@ -199,7 +199,7 @@ amendment:
   slug: x
   title: "x"
 baseline: abcdef0
-plan: docs/rebuild/plans/x.md
+plan: docs/plans/x.md
 components:
   - name: a
     seal_test: a/tests/t.py
@@ -222,7 +222,7 @@ amendment:
   slug: x
   title: "x"
 baseline: abcdef0
-plan: docs/rebuild/plans/x.md
+plan: docs/plans/x.md
 components:
   - name: a
     seal_test: a/tests/t.py
@@ -275,7 +275,7 @@ amendment:
   slug: x
   title: "x"
 baseline: abcdef0
-plan: docs/rebuild/plans/x.md
+plan: docs/plans/x.md
 components:
   - name: a
     seal_test: a/tests/t.py

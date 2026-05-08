@@ -25,7 +25,7 @@ A's tree; the contributor in workspace B surfaces only B's tree.
 Maps to: workspace-identity invariant (amendments #6/#28/#29) +
 objective-tracker D2 → AC.PO.1.
 
-Plan: docs/rebuild/plans/amendment-40-primary-persona-tracker-context-contributor.md
+Plan: docs/plans/amendment-40-primary-persona-tracker-context-contributor.md
 """
 
 from __future__ import annotations

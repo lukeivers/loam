@@ -1,0 +1,190 @@
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-1-9-cycle-2-hooks-and-templates
+  title: "v0.1.9 Cycle 2 — Hook installers + 3 CI templates + provenance-traceable PR description template (extends plugins/dev-sdlc/pr-safety/); single-component fence on plugins/dev-sdlc/"
+
+# BASELINE: <pending> — source-edit feat commit covering the Cycle 2
+# extension under plugins/dev-sdlc/pr-safety/:
+#   src/loam_pr_safety/installers/ (NEW — hooks.py + ci.py +
+#                                   pr_template.py + conflicts.py +
+#                                   __init__.py)
+#   src/loam_pr_safety/templates/ (NEW — static template assets:
+#                                   hooks/{pre-commit,pre-push,
+#                                   husky-pre-commit,husky-pre-push}.sh.template
+#                                   ci/{github-actions/loam-pr-safety,
+#                                       gitlab-ci/.gitlab-ci.snippet,
+#                                       circleci/config.snippet}.yml.template
+#                                   pr/pr_description.md.template)
+#   src/loam_pr_safety/cli.py (EDIT — extend with `install` sub-
+#                              subcommand + --render-pr-description
+#                              flag on `gate`)
+#   src/loam_pr_safety/__init__.py (EDIT — re-export new public API)
+#   pyproject.toml (EDIT — version bump 0.1.0 → 0.2.0; description
+#                          string mentions Cycle 2 surfaces)
+#   README.md (EDIT — append Cycle 2 surface table)
+#   tests/ (EXTEND — per-AC tests + integration tests + fixtures):
+#     test_AC_PRSI_1_pre_commit_installer.py
+#     test_AC_PRSI_2_pre_push_installer.py
+#     test_AC_PRSI_3_hook_script_semantics.py
+#     test_AC_PRSI_4_github_actions_template.py
+#     test_AC_PRSI_5_gitlab_ci_template.py
+#     test_AC_PRSI_6_circleci_template.py
+#     test_AC_PRSI_7_pr_description_template.py
+#     test_AC_PRSI_8_install_ergonomics.py
+#     test_AC_PRSI_9_e2e_smoke.py
+#     test_AC_PRSI_10_test_surface.py
+#     test_idempotency_d2.py
+#     test_cross_session_state_d5_install.py
+#     test_husky_detection.py
+#     test_conflict_halt.py
+#     test_pr_description_overflow.py
+#     fixtures/husky-detection/ (with-husky/ + without-husky/ repos)
+#     fixtures/ci-templates/ (sample existing CI files for conflict
+#                             detection)
+#
+# Cycle 2 is the second cycle of v0.1.9. Cycle 1 sealed at 790807d.
+# Cycle 3 (6 dev-sdlc SKILLs second pass + audit-allowlist cleanup)
+# follows Cycle 2.
+#
+# Commit ladder pre-apply:
+#   790807d — v0.1.9 Cycle 1 seal (predecessor; PR-safety gate engine)
+#   3162d2f — v0.1.9 Cycle 1 §9 backfill (most recent commit on
+#             pos-v2 branch)
+#   <plan-doc commit lands NEXT (THIS plan-doc + manifest), then
+#    source-edit feat commit (BASELINE pinned to that SHA), then
+#    `loam amend apply <manifest>` lands as single merged
+#    manifest+apply commit per AC.DPS1.6 (v3 schema)>
+#   <`loam amend seal --plan-doc <abs path> <manifest>` lands as
+#    deterministic seal commit per AC.DPS2.{1,4,6}>
+#   <post-seal commit backfills this plan-doc's §14 + master plan §9
+#    + roadmap §8 + eric-final-delivery §2 per AC.D-sa.7>
+#
+# Single-component fence — dev-sdlc:
+#   - Extends plugins/dev-sdlc/pr-safety/ within the same fence
+#     established by Cycle 1; installers/ + templates/ are NEW
+#     directories under the existing src/loam_pr_safety/.
+#   - cli.py + __init__.py + pyproject.toml + README.md edits in-fence.
+#   - Edit to plugins/dev-sdlc/README.md — append "Sub-packages"
+#     entry pointing at pr-safety/ (universal-admitted; existing
+#     entry for odd-extractor/ is the precedent; Cycle 1's plan-doc
+#     said this would land but it didn't — Cycle 2 picks it up
+#     transparently per plan-doc §9 + §10.13).
+#
+# AC families locked per plan-doc §4:
+#   AC.PRSI.1 — Pre-commit hook installer (idempotent; husky-aware;
+#               halt-on-conflict).
+#   AC.PRSI.2 — Pre-push hook installer (idempotent; husky-aware;
+#               halt-on-conflict).
+#   AC.PRSI.3 — Hook-script semantics honour production-stake profile
+#               (LOAM_PR_SAFETY_BYPASS env var honoured under dev,
+#               ignored under production-stake).
+#   AC.PRSI.4 — GitHub Actions CI template (renders to .github/
+#               workflows/loam-pr-safety.yml; runs gate on pull_request
+#               events; render-validates).
+#   AC.PRSI.5 — GitLab CI template (renders to .gitlab-ci.yml or
+#               appends sentinel block; runs gate on merge_request
+#               events; render-validates).
+#   AC.PRSI.6 — CircleCI template (renders to .circleci/config.yml or
+#               appends sentinel block; render-validates).
+#   AC.PRSI.7 — Provenance-traceable PR description template
+#               (auto-populates from gate output; body-overflow
+#               truncation at 60K chars; sections: gate decision,
+#               ACs touched, novel candidates, override history,
+#               audit-log excerpt).
+#   AC.PRSI.8 — Install ergonomics CLI: loam pr-safety install
+#               <surface> + --all + --force + --workspace-root +
+#               --dry-run; conflict-halt with exit code 6.
+#   AC.PRSI.9 — End-to-end smoke against canonical fixtures (jsts-
+#               playwright-app + ruby-rails-payment) covers install +
+#               hook fire + push reject + PR description render +
+#               audit-log witnesses.
+#   AC.PRSI.10 — Component-level test surface — per-AC tests + 5
+#                integration tests; pre-existing 105 Cycle 1 tests
+#                still pass.
+#
+# Smoke (REALISTIC CONDITION — all 6 dimensions per
+# smoke-test-discipline §6 + plan-doc §7):
+#   D1 cold-state — fresh tmp workspace + tmp git repo with synthetic
+#     banded contract; `loam pr-safety install --all` installs every
+#     surface; sentinels present; hook scripts executable; audit-log
+#     witnesses each install; synthetic regression commit triggers
+#     pre-commit HARD-BLOCK; post --no-verify push triggers pre-push
+#     HARD-BLOCK; PR description renders with all 5 sections.
+#     Verified by test_AC_PRSI_9_e2e_smoke.py.
+#   D2 steady-state — 5+ install runs are noop (sentinel matches);
+#     byte-equal content; no audit-log churn beyond run 1.
+#     Verified by test_idempotency_d2.py.
+#   D3 restart — pre-commit hook subprocess receives SIGTERM mid-
+#     execution; exits non-zero; commit rejected; next invocation
+#     spawns fresh hook + completes cleanly.
+#     Verified by test_cross_session_state_d5_install.py::test_d3_*.
+#   D4 reboot — install all surfaces; sync flush; re-mount via fresh
+#     process invocation; byte-equal content + executable bit
+#     preserved.
+#     Verified by test_cross_session_state_d5_install.py::test_d4_*.
+#   D5 cross-session — install state persists across process boundary;
+#     PR description rendering produces consistent output across fresh
+#     processes for the same gate decision.
+#     Verified by test_cross_session_state_d5_install.py::test_d5_*.
+#   D6 telemetry-floor — every install verb writes audit-log entry
+#     (event_kind: install_*); every hook fire writes audit-log entry
+#     (event_kind: hook_fired); every bypass attempt writes (event_kind:
+#     hook_bypass | hook_bypass_attempt_rejected); schema_version + ISO8601
+#     timestamp + repo_id + repo_sha + target_path; filenames follow
+#     <YYYY-MM-DD>-<NNNN>.yaml monotonic counter (continued from
+#     Cycle 1).
+#     Verified by test_AC_PRSI_9_e2e_smoke.py + test_AC_PRSI_3_*.py.
+#   PLUS: full-suite green sweep — pre-Cycle-2 pr-safety tests at HEAD
+#     3162d2f all pass post-Cycle-2 (105 inherited tests); halt +
+#     surface on any regression. Cycle 2 adds many new test functions;
+#     expected post-cycle test count significantly higher than
+#     pre-cycle.
+#
+# Bookkeeping note: this is the TENTH amendment to use schema v3
+# (DPS1 / DPS2 / v0.1.8 Cycles 1-5 / v0.1.9 Cycle 1 / THIS = second
+# v0.1.9 cycle).
+# v3 fields exercised: plan_doc_ref + ac_count + smoke_outcome at
+# the manifest level; single-component sweep at seal time.
+
+# BASELINE pinned to the source-edit feat commit. Updated post-
+# source-commit by the build agent.
+baseline: "17d02ca"
+
+plan: docs/plans/v0-1-9-cycle-2-hooks-and-templates.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-1-9-cycle-2-hooks-and-templates.md
+
+ac_count: 10
+smoke_outcome: "All 6 dimensions exercised (D1+D2+D3 subprocess-restart+D4 filesystem-state+D5 cross-session+D6 telemetry-floor); 183 tests green (105 Cycle 1 + 78 new)"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + Cycle 1
+# precedent. `docs/plans/` admits the plan-before-code paper
+# trail. No `odd-methodology.md` edit required (Cycle 2 builds
+# delivery wrappers, not methodology).
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-1-9-cycle-2-hooks-and-templates
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}. The summary
+  # surfaces title + slug + components + baseline + amendment SHA +
+  # plan_doc_ref + ac_count + smoke_outcome.

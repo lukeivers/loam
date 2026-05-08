@@ -45,7 +45,7 @@ test = [
 # (https://docs.anthropic.com/claude-code), not a Python dep.
 # Owner ruling 2026-05-05 (Telegram 10194): subscription only,
 # never an Anthropic API key. See
-# `docs/rebuild/plans/v0-2-5-corrective-c4-pivot-claude-print-synthesis.md` §14.
+# `docs/plans/v0-2-5-corrective-c4-pivot-claude-print-synthesis.md` §14.
 
 # AC.OREK.1 / AC.OREK.2 — the unified loam CLI dispatcher's
 # `loam.cli.subcommands` entry-point group resolves `loam odd-extract`

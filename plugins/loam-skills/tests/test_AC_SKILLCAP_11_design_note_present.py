@@ -8,7 +8,7 @@
 
 """AC.SKILLCAP.11 — Design note present + structured.
 
-Per ``docs/rebuild/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
+Per ``docs/plans/v0-2-0-cycle-2-auto-skill-creation.md`` §4
 AC.SKILLCAP.11: the design note exists at
 `docs/design/auto-skill-capture-shape.md` with required sections,
 universal-tier framing, user-ratifies-not-persona-decides framing,

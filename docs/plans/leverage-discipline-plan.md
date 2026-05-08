@@ -13,7 +13,7 @@ The doc is methodology-tier (alongside ODD methodology + release-versioning poli
 
 ## Constraints
 
-- **Loam's value-prop is the load-bearing measure of leverage.** From `docs/rebuild/VALUE_PROPOSITION.md`: (1) primary-persona test = does this reduce translation burden? (2) harness test = does this add to the toolkit the persona draws from? Anything that fails both fails leverage even if it looks productive.
+- **Loam's value-prop is the load-bearing measure of leverage.** From `docs/VALUE_PROPOSITION.md`: (1) primary-persona test = does this reduce translation burden? (2) harness test = does this add to the toolkit the persona draws from? Anything that fails both fails leverage even if it looks productive.
 - **External attention has standalone value.** Not vanity — visibility recruits potential co-maintainers (mitigates bus-factor-1 risk per FUTURE_IDEAS Idea 12) AND pulls real users (gives loam calibration data the codebase can't generate alone). The doc names this as a legitimate leverage axis distinct from value-prop advancement.
 - **Loam's architectural commitments hold.** Subscription-only via `claude -p`; no Anthropic API key; Claude-Code-attached harness. Trends incompatible with these get noted but don't pull rank.
 - **No "rebuild" terminology.** Loam is its own project.
@@ -42,12 +42,12 @@ The doc is methodology-tier (alongside ODD methodology + release-versioning poli
 
 ## Authority chain
 
-- `docs/rebuild/VALUE_PROPOSITION.md` (the load-bearing measure)
+- `docs/VALUE_PROPOSITION.md` (the load-bearing measure)
 - `docs/release-roadmap.md` (current ranking; will be re-ranked using this discipline)
 - `docs/release-versioning-policy.md` (SemVer commitment)
 - `docs/odd-semver-pinning.md` (versions as objective targets)
 - `docs/personas-methodology.md` (persona-shape decisions)
-- `docs/rebuild/FUTURE_IDEAS.md` Idea 12 (open-source launch + bus-factor-1 framing)
+- `docs/FUTURE_IDEAS.md` Idea 12 (open-source launch + bus-factor-1 framing)
 - `docs/plans/research/harness-landscape-and-roadmap-rerank-plan.md` (the in-flight research dispatch — will be the first input the leverage-discipline framework consumes)
 
 ## Output

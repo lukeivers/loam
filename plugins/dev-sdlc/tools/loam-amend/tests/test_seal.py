@@ -1,7 +1,7 @@
 """AC.D-sa.1 – AC.D-sa.7 — `loam amend seal` finalisation extension.
 
 Each AC has at least one test function. See
-``docs/rebuild/plans/pos-amend-seal-automation-extension.md`` §4.
+``docs/plans/pos-amend-seal-automation-extension.md`` §4.
 
 Fixture shape: a tmpfs git repo with one or more fake "sealed
 components" — each is a top-level dir carrying ``tests/SEAL_COMMIT``
@@ -64,7 +64,7 @@ def _make_fake_component(
     # admission bindings (per dry_run.py's read_entries lookup). The
     # admissions widen to admit the component's own top-level dir +
     # universal docs paths so a fixture amendment touching
-    # `<comp>/src/...` plus `docs/rebuild/plans/...` and `CLAUDE.md`
+    # `<comp>/src/...` plus `docs/plans/...` and `CLAUDE.md`
     # validates clean against the dry-run gate.
     header = textwrap.dedent(
         f"""
@@ -72,7 +72,7 @@ def _make_fake_component(
         # Post-D.1: components live at framework/{{name}}/.
         allowed_prefixes = (
             "framework/{name}/",
-            "docs/rebuild/plans/",
+            "docs/plans/",
         )
         allowed_files = (
             "CLAUDE.md",
@@ -119,7 +119,7 @@ def _write_manifest(
     seal_description: str | None = None,
     narrative_target: str | None = None,
 ) -> Path:
-    plans_dir = repo / "docs" / "rebuild" / "plans"
+    plans_dir = repo / "docs" / "plans"
     plans_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = plans_dir / f"amendment-{number}-{slug}.manifest.yaml"
     # Read baseline as the current HEAD (pre-amendment tip equivalent)
@@ -132,7 +132,7 @@ def _write_manifest(
         f"  slug: {slug}",
         f'  title: "fixture amendment {number}"',
         f"baseline: {baseline}",
-        f"plan: docs/rebuild/plans/amendment-{number}-{slug}.md",
+        f"plan: docs/plans/amendment-{number}-{slug}.md",
         "components:",
     ]
     for c in components:
@@ -662,7 +662,7 @@ def test_AC_D_sa_7_plan_doc_backfill_appends_subsection_and_commits(
     creates a deterministic follow-up commit naming both SHAs."""
     repo = sealed_repo
     plan_path = (
-        repo / "docs" / "rebuild" / "plans" / "amendment-950-fixture.md"
+        repo / "docs" / "plans" / "amendment-950-fixture.md"
     )
     _write_plan_doc_with_section_14(plan_path)
     _git(repo, "add", "--", str(plan_path.relative_to(repo)))
@@ -735,7 +735,6 @@ def test_AC_D_sa_7_missing_section_14_halts_with_diagnostic(
     plan_path = (
         repo
         / "docs"
-        / "rebuild"
         / "plans"
         / "amendment-952-no-section-14.md"
     )
@@ -785,7 +784,7 @@ def test_AC_D_sa_7_plan_doc_accepts_relative_path(
     """
     repo = sealed_repo
     plan_path = (
-        repo / "docs" / "rebuild" / "plans" / "amendment-953-relpath.md"
+        repo / "docs" / "plans" / "amendment-953-relpath.md"
     )
     _write_plan_doc_with_section_14(plan_path)
     _git(repo, "add", "--", str(plan_path.relative_to(repo)))

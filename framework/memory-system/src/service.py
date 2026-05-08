@@ -3,7 +3,7 @@
 Amendment #24 (2026-04-22) swapped the transport layer from FastAPI +
 uvicorn (HTTP REST) to FastMCP (streamable-HTTP MCP) per Luke's R5
 ruling (2026-04-23). Rationale in the amendment plan
-(``docs/rebuild/plans/amendment-24-memory-system-mcp-migration.md``):
+(``docs/plans/amendment-24-memory-system-mcp-migration.md``):
 the proposal's §Direction always called for "self-hosted as a local
 MCP service"; the initial FastAPI shape was a prototyping stand-in.
 Amendment #24 lands the intended transport.

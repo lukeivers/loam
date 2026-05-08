@@ -4,12 +4,12 @@ F is dev-discipline (sub-plan F's §2). The amendment lives at:
 
   - ``tools/loam-mode/`` (new tool — F's primary surface)
   - ``plugins/dev-sdlc/dev-mode-manifest.yaml`` (the partition data)
-  - ``docs/rebuild/plans/two-modes-and-multi-workspace/F-auto-load-partition.md``
+  - ``docs/plans/two-modes-and-multi-workspace/F-auto-load-partition.md``
     (this plan's §14 method-decision register)
   - ``CLAUDE.md`` + ``CLAUDE.dev.md`` + ``README.md`` +
     ``docs/CLAUDE_CAPABILITIES.md`` + ``docs/duration-estimation-rubric.md``
     (always-loaded scrub for AC.F3 + dev-extension surface)
-  - ``docs/rebuild/FUTURE_IDEAS_DRAFT.md`` (post-build observations)
+  - ``docs/FUTURE_IDEAS_DRAFT.md`` (post-build observations)
 
 This test checks F's amendment-commit diff (HEAD vs HEAD~1) when HEAD
 is recognisably an F-amendment commit. It is informative (skips) when
@@ -45,8 +45,8 @@ ALLOWED_PREFIXES = (
     "framework/tools/loam-mode/",
     "plugins/dev-sdlc/tools/loam-mode/",
     "plugins/dev-sdlc/dev-mode-manifest.yaml",
-    "docs/rebuild/plans/two-modes-and-multi-workspace/F-auto-load-partition",
-    "docs/rebuild/FUTURE_IDEAS_DRAFT.md",
+    "docs/plans/two-modes-and-multi-workspace/F-auto-load-partition",
+    "docs/FUTURE_IDEAS_DRAFT.md",
 )
 ALLOWED_FILES = {
     "CLAUDE.md",

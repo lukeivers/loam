@@ -21,7 +21,7 @@ as ``"user"`` regardless of any other heuristic that pre-dated the
 amendment (e.g. ``VALUE_PROPOSITION.md`` presence — see AC.E.4 for
 the explicit isolation test).
 
-Plan: docs/rebuild/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
+Plan: docs/plans/two-modes-and-multi-workspace/E-classify-workspace-replacement.md
 """
 
 from __future__ import annotations

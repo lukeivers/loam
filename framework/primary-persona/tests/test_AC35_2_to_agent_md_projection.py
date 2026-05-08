@@ -28,7 +28,7 @@ twice with the same contract returns identical strings (idempotence).
 A malformed contract (built via ``model_construct`` to bypass
 validation) raises ``AgentMdProjectionError`` — never silent garbage.
 
-Plan: docs/rebuild/plans/amendment-35-primary-persona-renderer-and-onboarding.md
+Plan: docs/plans/amendment-35-primary-persona-renderer-and-onboarding.md
 """
 
 from __future__ import annotations

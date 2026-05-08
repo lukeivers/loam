@@ -1,0 +1,409 @@
+schema_version: 1
+amendment:
+  number: 83
+  slug: oss-v0-1-0-publish-partition
+  title: "M2 — publish-mode partition manifest + synthesis tool extension — author publish-mode-manifest.yaml at framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml partitioning every workspace path into public_only / dev_and_public / dev_only / excluded_from_publish + extend pos-publish-framework-only.synth to consume the manifest (manifest-driven path classification replaces hardcoded FRAMEWORK_PREFIX + TOP_LEVEL_DOCS constants; hard cutover) + new partition.py module (load_manifest, classify_path, PartitionClass, PartitionManifest, ManifestError) + cli.py --manifest-path flag + 4 new tests (load + classifier + drops_dev_only + default_partition_complete) + 1-line cross-tree consumer update in workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py + fixture extension in conftest.py to write a fixture manifest into the fixture canonical. Default partition assigns dev-discipline machinery (framework/tools/loam, loam-mode, heavy-b-migrate, orphan-plist-cleanup, upgrade-merge-resolver, pos-publish-framework-only, loam-migrate-*) + docs/rebuild/** + docs/odd-methodology.md + docs/odd-in-loam.md + CLAUDE.dev.md to dev_only; runtime framework components + per-component pyproject + README + public top-level docs to dev_and_public; .git/, .scratch/, .pos/, data/, workspace/, personas/, *.egg-info/, __pycache__/, .pytest_cache/, .venv/, *.pth, .env, .DS_Store, .mcp.json, .gitignore to excluded_from_publish; public_only empty (reserved for future public-vs-dev divergence at M11). M2 gates M9 (scrub) + M11 (dry-run) per master plan §6 sequencing rule #2."
+
+# BASELINE: d5b8dcd — M1g's §14 SHA-register backfill commit
+# (docs(plans): record amendment #82 commit SHAs in M1g §14 method-
+# decision register). M1g's seal commit `f6c22fd` is the locked
+# sealed-state of the M1.rename programme; the §14 backfill is the
+# tip of the M1.rename series at M2-build time. M2's BASELINE..HEAD
+# diff is the M2 sub-plan + manifest commit + the M2 feature commit
+# + apply commit + any corrective commits + seal commit.
+baseline: d5b8dcd
+
+plan: docs/plans/oss-v0-1-0-publish-partition.md
+
+seal_description: "M2 publish-mode partition manifest + synthesis tool extension — author publish-mode-manifest.yaml at framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml partitioning every workspace path into public_only / dev_and_public / dev_only / excluded_from_publish (four partition classes; default partition COMPLETE for canonical HEAD with first-match-wins precedence excluded_from_publish > dev_only > public_only > dev_and_public per plan §10 D-build.M2.3) + new partition.py module under framework/tools/pos-publish-framework-only/src/loam/publish_framework_only/ (PartitionClass StrEnum + PartitionManifest dataclass + ManifestEntry dataclass + load_manifest + classify_path + is_publishable + glob-match semantics mirroring loam_mode.manifest._glob_match) + extend synth.py to consume the manifest (new manifest_path: Path required parameter on synthesise_framework_only; per-leaf classification via git ls-tree -r; SynthesisError on partition incomplete; hardcoded FRAMEWORK_PREFIX + TOP_LEVEL_DOCS constants RETIRE per hard cutover D-RNM.3-equivalent + plan §10 D-build.M2.5) + extend cli.py with --manifest-path flag (default <args.repo>/framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml) + extend tests/conftest.py make_fixture_canonical to write a fixture manifest into the fixture canonical at the same canonical path so existing AC.SFR.2 tests continue passing without test-side change + 4 new test files (test_AC_OSS_3_partition_manifest_load.py schema-shape coverage + test_AC_OSS_3_partition_classifier.py classification correctness + first-match-wins precedence + test_AC_OSS_3_synthesis_drops_dev_only.py fixture canonical with mixed framework/cost-governance/ + framework/tools/loam/ classification + test_AC_OSS_3_default_partition_complete.py canonical-HEAD ls-tree completeness check) + 1-line cross-tree consumer update in framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py:97 passing fixture manifest_path. Hard cutover per plan §5 + master plan §6 — no transitional manifest-vs-hardcode dual mode. AC.OSS.3 (no dev-discipline machinery in public synthesis output) — M2 lands the manifest-driven mechanism; verification of AC.OSS.3 against canonical HEAD is M11's job. M2 gates M9 (scrub) + M11 (dry-run) per master plan §6 sequencing rule #2. Sealed-component fence: HOL no-op narrative anchor (per plan §11 finding #5 + D-build.M2.8 — loam amend manifest.py:358 requires components non-empty; HOL is the conventional meta-anchor for tools-tree amendments per M1c..M1g precedent; HOL diff is sidecar bump + new SEAL_COMMIT narrative file only) + structural fence framework/tools/pos-publish-framework-only/ (the structural surface). HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE (no HC#4 sample paths under framework/tools/pos-publish-framework-only/; verified at plan-authoring per plan §13 HC#4 status)."
+
+# One sealed component in the M2 fence per plan §1 fence statement +
+# AC.OSS-M2.S + plan §11 finding #5 + D-build.M2.8: HOL no-op narrative
+# anchor. HOL is the conventional meta-anchor for tools-tree-only
+# amendments per the M1c..M1g precedent. HOL's diff is intentionally
+# trivial (SEAL_COMMIT sidecar bump + new SEAL_COMMIT narrative file
+# at framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-
+# partition); no behaviour edits to HOL hooks or tests. The structural
+# fence is framework/tools/pos-publish-framework-only/.
+#
+# Empirical surface inventory at plan time (§1 + §11 findings):
+#
+#   Tools-tree (the structural fence — framework/tools/pos-publish-framework-only/):
+#     - publish-mode-manifest.yaml — NEW (~150 lines manifest content)
+#     - src/loam/publish_framework_only/partition.py — NEW (~150-250 LOC)
+#     - src/loam/publish_framework_only/__init__.py — extended (export new public surface)
+#     - src/loam/publish_framework_only/synth.py — extended (manifest_path
+#       parameter + manifest-driven walk; FRAMEWORK_PREFIX + TOP_LEVEL_DOCS retire)
+#     - src/loam/publish_framework_only/cli.py — extended (--manifest-path flag)
+#     - pyproject.toml — possibly extended (pyyaml dep declaration if needed
+#       per plan §11 finding #2)
+#     - tests/conftest.py — extended (make_fixture_canonical writes a
+#       fixture publish-mode-manifest.yaml into the fixture canonical)
+#     - tests/test_AC_SFR_2_synthesis_pipeline.py — possibly extended for
+#       fixture compatibility (existing tests preserved)
+#     - tests/test_AC_OSS_3_partition_manifest_load.py — NEW
+#     - tests/test_AC_OSS_3_partition_classifier.py — NEW
+#     - tests/test_AC_OSS_3_synthesis_drops_dev_only.py — NEW
+#     - tests/test_AC_OSS_3_default_partition_complete.py — NEW
+#
+#   Cross-tree consumer (1-line update per plan §11 finding #7):
+#     - framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py:97
+#       — synthesise_framework_only(canonical) gains manifest_path=...
+#       Admitted under universal_paths.files per the same precedent as M1g.
+#
+#   HOL (no-op narrative anchor):
+#     - tests/SEAL_COMMIT — sidecar bump (single-line value update)
+#     - seals/SEAL_COMMIT.oss-v0-1-0-publish-partition — NEW seal narrative file
+#
+# HC#4 byte-content sample status: NO RETIRE-AND-REBASELINE.
+# Pre-build verification at plan-authoring time confirms no HC#4
+# sample paths under framework/tools/pos-publish-framework-only/.
+# The HC#4 invariant is expected to remain GREEN through M2.
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3.
+#
+# framework/tools/ admits the structural-fence subtree
+# framework/tools/pos-publish-framework-only/.
+#
+# framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py
+# admits the 1-line cross-tree consumer update per plan §11 finding #7.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - framework/tools/
+  files:
+    # Cross-tree consumer updates (~5-line edits) per AC.OSS-M2.5 +
+    # plan §11 finding #7. Both files import / call
+    # synthesise_framework_only and need to pass the now-required
+    # manifest_path argument.
+    - framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_composition.py
+    - framework/workspace-bootstrap/tests/conftest.py
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.oss-v0-1-0-publish-partition
+  body: |
+    # Amendment #83 — M2 publish-mode partition manifest + synthesis tool extension
+
+    2026-04-29. Single-component sealed amendment for the OSS v0.1.0
+    publish programme. M2 per locked programme master plan-doc
+    `docs/plans/oss-v0-1-0-publish.md` §5 M2 row + §6
+    sequencing rule #2 + §3 AC.OSS.3 ("No dev-discipline machinery
+    visible in the public synthesis output"). Sub-plan-doc:
+    `docs/plans/oss-v0-1-0-publish-partition.md`.
+
+    Composes on the M1.rename multi-amendment series (sealed
+    M1a..M1g 2026-04-29; M1g sealed `f6c22fd`, §14 backfill `d5b8dcd`).
+    Closes M2 of the OSS v0.1.0 publish programme; gates M9 (scrub)
+    + M11 (dry-run) per master plan §6 sequencing rule #2.
+
+    Programme-level decisions inherited (locked 2026-04-29):
+
+      - R1 — Dormancy rename pre-launch (closed by M1f).
+      - R2 — Dev/SDLC plugin only at v1 (M6).
+      - R3 — Public repo at lukeivers/loam (M12).
+      - D-1 / D-2 / D-3 — wire all three dormant surfaces (M3/M4/M5).
+      - D3 from OSS-readiness-audit — hide dev-discipline machinery
+        via `publish-mode-manifest.yaml` consumed by
+        pos-publish-framework-only (THIS AMENDMENT).
+      - D4 — hide docs/rebuild/ entirely from public synthesis
+        (encoded in the manifest's dev_only section).
+      - D5 — ship condensed docs/design/odd.md (~200 lines); keep
+        full docs/odd-methodology.md + docs/odd-in-loam.md DEV-MODE-
+        only (encoded in the manifest's dev_only section).
+
+    Surface changes:
+
+    Surface A — partition manifest YAML at the tool's canonical
+    location:
+
+      - NEW file: framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml
+      - Schema: schema_version (1) + audit_roots + audit_excludes +
+        four partition-class sections (public_only, dev_and_public,
+        dev_only, excluded_from_publish).
+      - Each entry is {path: <ws-rel>} or {glob: <pattern>, exclude:
+        [<patterns>]} matching dev-mode-manifest.yaml's entry shape
+        + loam_mode.manifest's coercion patterns.
+      - Default partition assignment per plan §1 item 4 + master
+        plan §3 AC.OSS.3:
+          dev_and_public:
+            - All 16 runtime framework components
+              (cost-governance, dormancy, hands-off-lifecycle,
+              memory-system, objective-tracker, observability-
+              aggregator, orchestrator, primary-persona,
+              reversibility-primitive, safety-layer, scope-of-work,
+              self-correction, self-upgrade, telegram-interface,
+              workspace-bootstrap, workspace-sync) — whole-component
+              globs.
+            - Top-level public files: README.md, CLAUDE.md, LICENSE,
+              CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md
+              (forward-looking — authored at M5/M8).
+            - Public docs scaffold (forward-looking — authored at M7):
+              docs/positioning.md, docs/getting-started.md,
+              docs/architecture.md, docs/components/**, docs/design/**,
+              docs/CLAUDE_CAPABILITIES.md.
+            - framework/first-run-inventory.yaml.
+          dev_only:
+            - Dev-discipline tools: framework/tools/loam/ (loam amend
+              CLI), framework/tools/loam-mode/, framework/tools/
+              heavy-b-migrate/, framework/tools/orphan-plist-cleanup/,
+              framework/tools/upgrade-merge-resolver/, framework/
+              tools/pos-publish-framework-only/ (the synth tool
+              itself; OUTPUT ships, not the tool), framework/tools/
+              loam-migrate-host-config/, framework/tools/loam-migrate-
+              launchd-labels/, framework/tools/loam-migrate-dormancy-
+              config/.
+            - Internal docs tree: docs/rebuild/** (entire subtree —
+              plans, components, FUTURE_IDEAS, STATE, BACKLOG,
+              dev-mode-manifest, capability-corpus authoring shape,
+              decay-retention-analysis, spec/).
+            - Long-form ODD methodology: docs/odd-methodology.md,
+              docs/odd-in-loam.md.
+            - Dev-mode-only fragment: CLAUDE.dev.md.
+          excluded_from_publish:
+            - .git/, .scratch/, .pos/, data/, workspace/, personas/.
+            - .mcp.json, .gitignore.
+            - Editable-install + cache state: *.egg-info/,
+              __pycache__/, .pytest_cache/, .venv/, *.pth.
+            - .env files; .DS_Store.
+          public_only: [] (reserved for future public-vs-dev
+            divergence at M11).
+
+    Surface B — partition module (manifest loader + classifier):
+
+      - NEW file: framework/tools/pos-publish-framework-only/src/loam/
+        publish_framework_only/partition.py (~150-250 LOC).
+      - Public surface: PartitionClass StrEnum (PUBLIC_ONLY,
+        DEV_AND_PUBLIC, DEV_ONLY, EXCLUDED_FROM_PUBLISH);
+        PartitionManifest dataclass; ManifestEntry dataclass;
+        ManifestError exception; load_manifest(path) -> PartitionManifest;
+        classify_path(manifest, ws_rel_path) -> PartitionClass | None;
+        is_publishable(klass) -> bool.
+      - Schema validation: missing required key, unknown top-level
+        key, non-list value, malformed entry, schema_version != 1
+        all raise ManifestError.
+      - Classification semantics: first-match-wins precedence
+        (excluded_from_publish > dev_only > public_only >
+        dev_and_public per plan §10 D-build.M2.3). Glob semantics
+        mirror loam_mode.manifest._glob_match.
+      - __init__.py extended to export the new public surface.
+
+    Surface C — synth.py extension:
+
+      - synthesise_framework_only gains required manifest_path: Path
+        parameter (per plan §10 D-build.M2.4 — required forces
+        callers to decide).
+      - Loads manifest via partition.load_manifest; raises
+        SynthesisError on schema problems.
+      - Walks source commit's tree via `git ls-tree -r <source-sha>`
+        to enumerate every leaf path.
+      - For each leaf path: audit-exclude check first; then
+        partition.classify_path; SynthesisError("partition incomplete:
+        <N> unclassified paths: <first-3>...") if any non-audit-
+        excluded leaf returns None.
+      - Builds synthetic tree from public_only ∪ dev_and_public
+        leaves; existing promotion logic (framework/<entry> ->
+        root) preserved; existing collision detection preserved.
+      - mktree + commit-tree + update-ref unchanged.
+      - HARD CUTOVER: FRAMEWORK_PREFIX + TOP_LEVEL_DOCS module-
+        level constants RETIRE (deletion per plan §10 D-build.M2.5).
+
+    Surface D — cli.py extension:
+
+      - --manifest-path <path> argument added (default <args.repo>/
+        framework/tools/pos-publish-framework-only/publish-mode-manifest.yaml).
+      - Passed through to synthesise_framework_only.
+
+    Surface E — test surface:
+
+      - tests/conftest.py extended: make_fixture_canonical writes
+        a fixture publish-mode-manifest.yaml into the fixture
+        canonical at the same canonical path. The fixture manifest
+        is the smallest manifest that classifies the fixture's
+        path set (cost-governance/, workspace-bootstrap/,
+        tools/loam-mode/, top-level CLAUDE.md / CLAUDE.dev.md /
+        README.md / docs/odd-methodology.md / docs/STATE.md
+        — fixture's known set per existing _make_fixture_canonical).
+      - Existing test_AC_SFR_2_synthesis_pipeline.py: passes with
+        the fixture manifest in place.
+      - NEW test_AC_OSS_3_partition_manifest_load.py: schema-shape
+        coverage (well-formed; missing section; bad entry; schema_
+        version != 1; partition incompleteness raises).
+      - NEW test_AC_OSS_3_partition_classifier.py: classification
+        correctness; first-match-wins precedence cases (overlap
+        between dev_and_public + dev_only resolves to dev_only;
+        excluded_from_publish wins over everything; audit_excludes
+        yields None).
+      - NEW test_AC_OSS_3_synthesis_drops_dev_only.py: fixture
+        canonical with mixed framework/cost-governance/__init__.py
+        (dev_and_public) + framework/tools/loam/cli.py (dev_only)
+        + CLAUDE.md (dev_and_public) + CLAUDE.dev.md (dev_only) +
+        docs/STATE.md (dev_only) + docs/positioning.md
+        (dev_and_public); assert post-synthesis framework-only
+        tree contains the dev_and_public paths and does NOT
+        contain the dev_only paths.
+      - NEW test_AC_OSS_3_default_partition_complete.py: runs
+        against canonical HEAD's pos-v2 tree; audit-exclude-filter;
+        asserts every remaining leaf classifies into one of the
+        four buckets.
+
+    Surface F — cross-tree consumer (1-line update):
+
+      - framework/workspace-bootstrap/tests/test_AC_SFR_4_pos_sync_
+        composition.py:97 — the synthesise_framework_only(canonical)
+        call gains manifest_path=<canonical>/framework/tools/pos-
+        publish-framework-only/publish-mode-manifest.yaml. The
+        fixture canonical's manifest is written by the
+        workspace-bootstrap test's own fixture (or the cross-tree
+        consumer copies the canonical manifest into its fixture
+        before calling synthesise — builder's call). Admitted under
+        universal_paths.files per the same precedent as M1g
+        (cross-tree consumer test edits admitted as universal-style
+        single-line updates).
+
+    Out of scope (locked plan-doc §6, named explicitly):
+
+      - Running the synthesis dry-run against canonical HEAD —
+        DEFERRED to M11.
+      - Path / personal-info scrub at synthesis time — DEFERRED to
+        M9.
+      - Publishing destination changes — DEFERRED to M12.
+      - Public docs authoring (docs/positioning.md, docs/getting-
+        started.md, docs/architecture.md, docs/components/<name>.md,
+        docs/design/odd.md) — DEFERRED to M7.
+      - License + governance scaffold (LICENSE, CONTRIBUTING.md,
+        CODE_OF_CONDUCT.md, SECURITY.md) — DEFERRED to M8.
+      - Conditional partitioning (publish-only-when-X) — out of M2
+        scope; flag as M9/M11 deferral if needed.
+      - Per-component fine-grained partition (e.g. ship src/ but
+        not tests/) — FIDRAFT-tracked per plan §11 finding #6.
+      - HOL hooks/ finer-grained partition (A1-A4 gates dev_only)
+        — FIDRAFT-tracked per plan §11 finding #1 + finding #6.
+      - docs/CLAUDE_CAPABILITIES.md rebrand / relocation — out of
+        M2 scope; current path is dev_and_public; if M7 relocates
+        it, M2's manifest needs a follow-up edit.
+
+    HC#4 byte-content sample status post-M2: NO RETIRE-AND-
+    REBASELINE. Pre-build verification at plan-authoring time
+    confirms no HC#4 sample paths under framework/tools/pos-publish-
+    framework-only/. The HC#4 invariant remains GREEN through M2
+    without any sample-file changes.
+
+    H19 admission: HOL is the no-op narrative anchor. HOL's diff is
+    intentionally trivial (SEAL_COMMIT sidecar bump + this seal
+    narrative file). H19 frozen-BASELINE diff window already admits
+    framework/ + tools/ top-level prefixes; no new H19 admission
+    needed.
+
+    Test surface (narrow per feedback_amendment_dispatch_speedups):
+
+      - AC.OSS-M2.1 — manifest YAML authored: verified by YAML-load
+        smoke + test_AC_OSS_3_partition_manifest_load.py.
+      - AC.OSS-M2.2 — loader + classifier module: verified by
+        test_AC_OSS_3_partition_manifest_load.py +
+        test_AC_OSS_3_partition_classifier.py.
+      - AC.OSS-M2.3 — synth.py consumes manifest: verified by
+        test_AC_OSS_3_synthesis_drops_dev_only.py.
+      - AC.OSS-M2.4 — default partition complete: verified by
+        test_AC_OSS_3_default_partition_complete.py.
+      - AC.OSS-M2.5 — CLI surface: verified by `pos-publish-framework-
+        only --help` + subprocess invocation.
+      - AC.OSS-M2.6 — hard cutover: verified by `git grep -nE
+        "FRAMEWORK_PREFIX|TOP_LEVEL_DOCS" framework/tools/pos-publish-
+        framework-only/src/`.
+      - AC.OSS-M2.7 — fence-narrowing negative AC: verified by
+        `git diff <baseline>..HEAD --stat`.
+      - AC.OSS-M2.S — this seal commit; HOL test_cross_cutting.py
+        + HOL test_d1_byte_content_match.py (NO retire-and-rebaseline
+        expected).
+
+    Cross-tree verification:
+
+      - pytest framework/workspace-bootstrap/tests/test_AC_SFR_4_
+        pos_sync_composition.py PASSES (the cross-tree consumer
+        of synthesise_framework_only; 1-line update at line 97).
+
+    Backwards-compat verification:
+
+      - pytest framework/tools/pos-publish-framework-only/tests/
+        test_AC_SFR_2_synthesis_pipeline.py PASSES (existing
+        synthesis-pipeline test suite; conftest.py fixture
+        extension makes this work without breaking changes to
+        existing test bodies).
+
+    ODD §2.5 reverse-direction audit clean: every change in this
+    amendment's diff is a manifest YAML authoring, a partition
+    module authoring, a synth.py extension (manifest_path parameter
+    + per-leaf classification), a cli.py argument addition, a
+    conftest.py fixture extension, a new-test authoring, a cross-
+    tree consumer 1-line update, the HOL SEAL_COMMIT sidecar bump,
+    or this seal narrative file. Each line traces back to a named
+    AC under §4 of the plan-doc.
+
+    BASELINE d5b8dcd (M1g §14 SHA-register backfill commit). HOL
+    is the no-op narrative anchor; the structural fence is the
+    tools-tree (framework/tools/pos-publish-framework-only/) plus
+    the 1-line cross-tree consumer update under universal
+    admissions.
+
+    Composes on (consumers-only; no semantic edits):
+
+      - The OSS v0.1.0 publish programme master plan
+        (`oss-v0-1-0-publish.md`) — M2 row in §5 per master
+        plan ladder; AC.OSS.3 in §3.
+      - The M1.rename series master plan + sealed sub-amendments
+        M1a..M1g.
+      - The OSS-readiness audit (`.scratch/claude-output/oss-
+        readiness-audit.md`) §1.3 + §2 D3 + §4.1–§4.7 (partition
+        recommendations).
+      - The feature-usage audit (`.scratch/claude-output/feature-
+        usage-audit.md`) — wired-vs-dormant matrix; informs
+        which features are public vs dev-only.
+      - dev-mode-manifest.yaml + loam_mode.manifest — schema-
+        shape reference for the partition module.
+
+    Self-build mechanism per plan §14 D-build.M2.* (populated by
+    builder during build).
+
+    FIDRAFT items closed by this amendment: M2 — publish-mode
+    partition manifest + synthesis tool extension (closed via
+    AC.OSS-M2.1 .. AC.OSS-M2.S).
+
+    FIDRAFT items surfaced by this amendment (per plan §11 finding #6):
+
+      - "HOL hooks/ finer-grained partition for OSS publish — A1-A4
+         gates + bash_guard + agent_guard are dev-discipline
+         machinery and should be dev_only at finer granularity than
+         the whole-HOL-component glob in M2's default partition.
+         Estimate ≈10-callsite cleanup amendment; out of M2 per
+         scope-conservatism."
+      - "Per-component fine-grained partition (e.g. ship src/ but
+         not tests/) — out of M2 per scope-conservatism; future
+         follow-on amendment if M11 dry-run review surfaces 'too
+         much surface area' findings."
+      - "docs/CLAUDE_CAPABILITIES.md relocation to docs/claude-
+         capabilities.md per audit §4.1 — out of M2; M7 docs-lane
+         is the natural place for the relocation. M2's manifest
+         carries the current path as dev_and_public; M2 manifest
+         needs follow-up edit at M7 dispatch time if M7 relocates
+         the file."
+
+    OSS v0.1.0 publish programme state post-M2:
+      M0 — owner approval (closed).
+      M1.rename series sealed (closed; M1a..M1g sealed
+        2026-04-29).
+      M2 [this seal] — publish-mode partition manifest +
+        synthesis tool extension.
+      M3..M12 — pending per master plan §5 ladder + §6 sequencing.
+
+    Next dispatch (per master plan §6 sequencing rule #3): M3 —
+    multi-component sealed amendment wiring per-component CLIs
+    ([project.scripts] entries: loam-kill, loam-cost, loam-
+    correction, loam-reversibility, loam-rollback). M3 is the
+    cheapest of the wire-or-strip amendments and is recommended
+    first to land easy progress.

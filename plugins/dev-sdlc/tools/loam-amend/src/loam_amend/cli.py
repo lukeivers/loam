@@ -6,11 +6,11 @@ Subcommand surface: ``validate``, ``apply`` (with ``--dry-run``),
 ``seal``, ``template`` (``list`` / ``render`` / ``validate``),
 ``new-plan``. See the plan doc for rationale on the minimal surface;
 ``template`` extends per
-``docs/rebuild/plans/dispatch-prompt-template-extension.md``;
+``docs/plans/dispatch-prompt-template-extension.md``;
 ``new-plan`` extends per
-``docs/rebuild/plans/pos-amend-new-plan-orchestration.md``.
+``docs/plans/pos-amend-new-plan-orchestration.md``.
 
-Per M1g (``docs/rebuild/plans/oss-v0-1-0-publish-rename-1g.md``): the
+Per M1g (``docs/plans/oss-v0-1-0-publish-rename-1g.md``): the
 binary name + import paths rebrand from ``pos-amend`` /
 ``pos_amend.*`` to ``loam`` / ``loam_amend.*``; the public
 behaviour is unchanged. This module exposes both
@@ -107,14 +107,14 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
             "pattern when computing dirty-tree status (repeatable; "
             "patterns are anchored at the repo root and are NOT "
             "auto-staged or committed). Common case: "
-            "`--allow-untracked-globs docs/rebuild/FUTURE_IDEAS_DRAFT.md` "
+            "`--allow-untracked-globs docs/FUTURE_IDEAS_DRAFT.md` "
             "for in-flight capture state. Per AC.LAE.2."
         ),
     )
 
     # ``template`` subcommand family — markdown template engine for
     # high-repetition authored artefacts. Per
-    # ``docs/rebuild/plans/dispatch-prompt-template-extension.md``
+    # ``docs/plans/dispatch-prompt-template-extension.md``
     # AC.D-tpl.1–AC.D-tpl.7. Purely additive: existing subcommands are
     # untouched (AC.D-tpl.6).
     p_template = sub.add_parser(
@@ -174,14 +174,14 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 
     # ``new-plan`` subcommand — scaffold a vars-file (and optionally
     # render the plan-doc) for a new plan slug. Per
-    # ``docs/rebuild/plans/pos-amend-new-plan-orchestration.md``
+    # ``docs/plans/pos-amend-new-plan-orchestration.md``
     # AC.D-np.1–AC.D-np.7. Purely additive; existing subcommands are
     # untouched (AC.D-np.6).
     p_new_plan = sub.add_parser(
         "new-plan",
         help=(
             "scaffold a vars-file for a new plan-doc at "
-            "<repo>/docs/rebuild/plans/<slug>.vars.yaml; with --render "
+            "<repo>/docs/plans/<slug>.vars.yaml; with --render "
             "also produce the plan-doc"
         ),
     )
@@ -202,7 +202,7 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
         default=None,
         help=(
             "override the vars-file output path "
-            "(default: <repo>/docs/rebuild/plans/<slug>.vars.yaml)"
+            "(default: <repo>/docs/plans/<slug>.vars.yaml)"
         ),
     )
     p_new_plan.add_argument(
@@ -211,7 +211,7 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
         default=None,
         help=(
             "override the plan-doc output path when --render is set "
-            "(default: <repo>/docs/rebuild/plans/<slug>.md)"
+            "(default: <repo>/docs/plans/<slug>.md)"
         ),
     )
     p_new_plan.add_argument(
@@ -267,7 +267,7 @@ def dispatch(args: argparse.Namespace) -> int:
         # crash `relative_to` with ValueError; resolving here gives
         # the seal subcommand a path it can reliably reason about
         # regardless of caller cwd. (Surfaced by the #41 build:
-        # operator passed `docs/rebuild/plans/...` as a relative
+        # operator passed `docs/plans/...` as a relative
         # arg from inside the repo and the seal step crashed.)
         plan_doc = (
             args.plan_doc.resolve() if args.plan_doc is not None else None

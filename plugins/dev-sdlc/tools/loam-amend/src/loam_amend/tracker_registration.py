@@ -13,7 +13,7 @@ two synchronous public entry points:
   rewrites every registered record so its ``lifted_from.source_commit``
   equals ``amendment_sha``. Returns the count of records updated.
 
-Plan: ``docs/rebuild/plans/pos-amend-tracker-integration.md``.
+Plan: ``docs/plans/pos-amend-tracker-integration.md``.
 
 Method-level decisions (D-build.x) are documented in
 ``loam amend-tracker-integration.builder-plan.md``.

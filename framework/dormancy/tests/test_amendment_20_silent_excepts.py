@@ -14,7 +14,7 @@
 
 """Amendment #20 — S2 silent-except bundle new-behaviour tests (sites 6-8).
 
-Research doc: docs/rebuild/plans/research/amendment-20-s2-silent-excepts-research.md.
+Research doc: docs/plans/research/amendment-20-s2-silent-excepts-research.md.
 
 Three new tests covering the three graceful-degradation silent-except sites:
   Site 6 — _any_paused_scope_user_relevant lookup failure emits scope_lookup_failed.

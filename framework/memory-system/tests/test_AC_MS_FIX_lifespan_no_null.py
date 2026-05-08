@@ -1,7 +1,7 @@
 """Memory-sidecar-recovery — lifespan-leak fix + reference_time schema migration.
 
 Three outcome-shaped tests covering AC.MS-FIX.1 / .2 / .3 from
-``docs/rebuild/plans/memory-sidecar-recovery.md`` §4:
+``docs/plans/memory-sidecar-recovery.md`` §4:
 
   - AC.MS-FIX.1: lifespan no longer nulls ``service._graphiti`` on
     session close. After ``async with service.lifespan(server):``

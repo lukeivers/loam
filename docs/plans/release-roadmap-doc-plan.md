@@ -48,11 +48,11 @@ A reader of `docs/release-roadmap.md` answers: "what does the next minor commit 
 
 - `docs/release-versioning-policy.md` (the SemVer commitment)
 - `docs/odd-semver-pinning.md` (the ODD ↔ SemVer composition methodology)
-- `docs/rebuild/STATE.md` (current shipped state through v0.2.5.1; will move in v0.3.0)
-- `docs/rebuild/FUTURE_IDEAS.md` (26 numbered curated ideas)
-- `docs/rebuild/FUTURE_IDEAS_DRAFT.md` (no-overhead capture)
-- `docs/rebuild/BACKLOG.md` (post-foundation-audit residual)
-- `docs/rebuild/VALUE_PROPOSITION.md` (loam's prime objective)
+- `docs/STATE.md` (current shipped state through v0.2.5.1; will move in v0.3.0)
+- `docs/FUTURE_IDEAS.md` (26 numbered curated ideas)
+- `docs/FUTURE_IDEAS_DRAFT.md` (no-overhead capture)
+- `docs/BACKLOG.md` (post-foundation-audit residual)
+- `docs/VALUE_PROPOSITION.md` (loam's prime objective)
 - `plugins/dev-sdlc/docs/odd-methodology.md` (ODD canonical spec — note: NOT at top-level docs/)
 - This-session artefacts at `/Users/lukeivers/pos3/workspace/.scratch/claude-output/` (Eric run issues; Claude conference; ProgramBench v0)
 

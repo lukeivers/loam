@@ -19,7 +19,7 @@ Cycle 7 is bookkeeping-shaped — light AI-time, but the release-ratification ce
 
 PRIMARY: `docs/release-roadmap.md` (§3 v0.3.0 → §2 collapse).
 
-Secondary: `docs/rebuild/STATE.md` (or post-Cycle-1 equivalent path; if Cycle 1 moved STATE.md to `docs/STATE.md`, that's the path). Cycle 1's RBC migration plan determines this.
+Secondary: `docs/STATE.md` (or post-Cycle-1 equivalent path; if Cycle 1 moved STATE.md to `docs/STATE.md`, that's the path). Cycle 1's RBC migration plan determines this.
 
 Universal admissions: master plan §11 SHA register backfill.
 

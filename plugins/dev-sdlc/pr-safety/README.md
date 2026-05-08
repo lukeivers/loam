@@ -93,4 +93,4 @@ No edits to those upstream components in Cycle 1 — single-component fence on `
 
 ## Plan-doc
 
-`docs/rebuild/plans/v0-1-9-cycle-1-pr-safety-gate-engine.md` — full AC ladder (`AC.PRSG.1..9`), single-component fence, decision-matrix coverage, halt triggers, F2 RF gaps, provenance trail.
+`docs/plans/v0-1-9-cycle-1-pr-safety-gate-engine.md` — full AC ladder (`AC.PRSG.1..9`), single-component fence, decision-matrix coverage, halt triggers, F2 RF gaps, provenance trail.

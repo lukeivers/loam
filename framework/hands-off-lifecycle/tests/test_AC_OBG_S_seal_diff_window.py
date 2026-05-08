@@ -16,9 +16,9 @@
 
 Per the locked plan-doc §4 AC.OBG.S: A2's seal-diff window contains
 only edits under ``framework/hands-off-lifecycle/{hooks,tests,seals}/``
-and the universal-paths admissions (``docs/rebuild/plans/``,
+and the universal-paths admissions (``docs/plans/``,
 ``CLAUDE.md``, ``docs/odd-methodology.md``, ``docs/odd-in-loam.md``,
-``docs/rebuild/FUTURE_IDEAS.md``).
+``docs/FUTURE_IDEAS.md``).
 
 Pinned per ODD §10.3 per-invariant BASELINE convention. Both
 endpoints will be constants once amendment #70 seals; pre-seal the
@@ -35,7 +35,6 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 MANIFEST_PATH = (
     REPO_ROOT
     / "docs"
-    / "rebuild"
     / "plans"
     / "structural-enforcement-a2-objective-binding-gate.manifest.yaml"
 )
@@ -45,14 +44,15 @@ _ALLOWED_PREFIXES: tuple[str, ...] = (
     "framework/hands-off-lifecycle/hooks/",
     "framework/hands-off-lifecycle/tests/",
     "framework/hands-off-lifecycle/seals/",
-    "docs/rebuild/plans/",
+    "docs/plans/",
+    "docs/rebuild/plans/",  # historical pre-v0.3.0-C1 path retained for diff-window check
 )
 _ALLOWED_FILES: frozenset[str] = frozenset(
     {
         "CLAUDE.md",
         "docs/odd-in-loam.md",
         "docs/odd-methodology.md",
-        "docs/rebuild/FUTURE_IDEAS.md",
+        "docs/FUTURE_IDEAS.md",
     }
 )
 

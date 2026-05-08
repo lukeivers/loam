@@ -1,0 +1,133 @@
+schema_version: 1
+amendment:
+  number: 68
+  slug: claude-code-corpus-prompt-spine-and-seed-docs
+  title: "Claude-Code-corpus prompt-spine + ≥ 5 seed docs (amendment α of the four-amendment knowledge program)"
+
+# BASELINE: ab4cb12 — current HEAD at dispatch
+# (`docs(rebuild): append amendment #67 build-findings captures`,
+# the chore commit immediately preceding α). BASELINE-as-HEAD~1
+# pattern per amendments #29 / #34–#47 / #50 / #67. The
+# amendment commit lands; HEAD advances; `pos-amend apply` runs
+# against this BASELINE so the diff window is narrow to α's
+# surface.
+baseline: ab4cb12610cf25f82258feb5718bb868160f06f3
+
+plan: docs/plans/claude-code-corpus-prompt-spine-and-seed-docs.md
+
+seal_description: "claude-code-corpus prompt-spine and seed corpus — capability leverage spine + Lean on the corpus operational rule + AUTHORING.md + 5 Class A seeds + 3 Class B seeds"
+
+# Single-component sealed amendment. Per plan §2 + §4 AC.α.S the
+# only sealed source touched is the framework template at
+# framework/primary-persona/templates/persona-template/prompt.md
+# (template-tree exception per v1.2 R16) plus new tests under
+# framework/primary-persona/tests/ for the static-content
+# presence checks. No source edit to primary-persona/src/. No
+# source edit to workspace-bootstrap/ (AC.α.7 verifies passthrough).
+#
+# The seed-corpus tree under docs/capability-corpus/ is
+# new framework-level reference material; admitted via
+# universal_paths below. Per locked research §2.6 the directory
+# layout matches β's eventual MCP resource-URI partition:
+#   - docs/capability-corpus/claude-code/<name>.md  (Class A)
+#   - docs/capability-corpus/harness/<name>.md      (Class A-prime)
+#   - docs/capability-corpus/best-practice/<topic>.md (Class B)
+components:
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - docs/capability-corpus/
+
+# Universal admissions per amendment #22 ruling #3. Adds
+# docs/capability-corpus/ as a universal prefix so the
+# new tree is admitted by every component's seal-diff fence
+# without having to enumerate it per-component. Future α-style
+# amendments (β/δ/γ) extending the corpus inherit the admission.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/capability-corpus/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/STATE.md
+    - docs/VALUE_PROPOSITION.md
+
+narrative:
+  target: framework/primary-persona/seals/SEAL_COMMIT.capability-spine-and-seed-corpus
+  body: |
+    # Amendment #68 — Claude-Code-corpus prompt-spine + seed docs (α)
+
+    2026-04-28. Amendment α of the four-amendment Claude-Code
+    knowledge program (locked research:
+    `docs/plans/research/persona-capability-knowledge-grounding-research.md`,
+    Decision D-2: α prompt-spine + corpus seed → β MCP
+    knowledge-server → δ Class A currency → γ optional dynamic
+    contributor).
+
+    α ships:
+
+      - **Capability leverage spine** — a new top-level named
+        section in the framework template
+        `framework/primary-persona/templates/persona-template/prompt.md`.
+        The spine carries a leverage rule paragraph (the
+        declarative rule the persona runs on every plan that
+        takes action — naming both Claude-Code-leverage and
+        harness-leverage halves) plus a tight capability index
+        (one-line entries pointing at corpus-doc paths under
+        `docs/capability-corpus/`; ≥ 8 entries; ≤ 1500
+        chars total). Slotted between L's identity / archetype
+        block and L's traits block, additively to L's eleven
+        sections (AC.O.1).
+
+      - **Lean on the corpus** — a new operational-rule entry,
+        sibling to L's six existing rules (Lean on the harness,
+        Use the right tool, Codify what repeats, Structural
+        enforcement default, ODD-shaped internal model,
+        Light-touch narration on choices). Names the on-demand
+        fetch convention: the persona reads corpus-doc paths
+        via the Read tool when the spine names a capability the
+        user's prompt invokes. β replaces the Read-by-path
+        convention with `mcp__knowledge__resources/read` once
+        the server lands.
+
+      - **Two-class corpus authoring guide** at
+        `docs/capability-corpus/AUTHORING.md`. Defines
+        the section schemas for Class A (Anthropic-canonical
+        reference, paired with `[user-intent phrasings]`),
+        Class A-prime (pos-v2 harness primitives, same shape),
+        and Class B (best-practice synthesis, paired with
+        `Trust marker` block). Names the No-cross-class-write
+        invariant — Class A's deterministic refresh (δ) never
+        writes to Class B; Class B's accrual channels never
+        write to Class A.
+
+      - **Seed Class A docs** under
+        `docs/capability-corpus/claude-code/` and
+        `docs/capability-corpus/harness/`: 5 docs
+        covering the highest-leverage primitives:
+        `claude-code/schedule.md`, `claude-code/loop.md`,
+        `claude-code/background-agents.md`,
+        `claude-code/hooks.md`, `harness/scope-of-work.md`.
+
+      - **Seed Class B docs** under
+        `docs/capability-corpus/best-practice/`: 3 docs
+        synthesising owner-articulated patterns from MEMORY.md:
+        `background-agents-by-default.md`,
+        `scope-only-dispatch.md`,
+        `verify-dispatch-before-sending.md`.
+
+    α is content + a prompt-section addition. No Python source.
+    No behavioural change to existing sealed components. The
+    spine and the operational rule are workspace-template
+    content (template-tree exception per v1.2 R16); the corpus
+    tree is framework-level reference (consumed by β + δ
+    programmatically; admitted via universal-paths).
+
+    BASELINE fd543fa (the #67 method-decision register
+    backfill commit). primary-persona's BASELINE advances per
+    `pos-amend apply`.

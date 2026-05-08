@@ -1,7 +1,7 @@
 """Tests for AC.D-np.5 — the skeleton template renders cleanly against a
 fixture vars-file, byte-identical to a committed expected output.
 
-Per `docs/rebuild/plans/pos-amend-new-plan-orchestration.md`:
+Per `docs/plans/pos-amend-new-plan-orchestration.md`:
 
     The post-extension ``tools/loam/templates/plan/dev-discipline.md``
     skeleton renders against a fixture vars-file (committed as test data)

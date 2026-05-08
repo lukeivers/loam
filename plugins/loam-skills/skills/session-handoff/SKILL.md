@@ -68,7 +68,7 @@ The status file carries:
 ### Newly-identified work
 
 Write to the project's idea-capture surface. For loam:
-`docs/rebuild/FUTURE_IDEAS_DRAFT.md` — point-of-occurrence
+`docs/FUTURE_IDEAS_DRAFT.md` — point-of-occurrence
 capture, no overhead. Each entry is a paragraph: name + brief +
 provenance + composes-with.
 

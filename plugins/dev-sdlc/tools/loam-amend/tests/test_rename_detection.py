@@ -1,6 +1,6 @@
 """AC.D.1.5.1 — rename-only detection helper unit tests.
 
-Plan: ``docs/rebuild/plans/d-migration-1-5.md`` AC.D.1.5.1.
+Plan: ``docs/plans/d-migration-1-5.md`` AC.D.1.5.1.
 
 Fixture shape: a tmp git repo with two component-shaped trees
 (``alpha/`` and ``framework/alpha/``) staged across two commits

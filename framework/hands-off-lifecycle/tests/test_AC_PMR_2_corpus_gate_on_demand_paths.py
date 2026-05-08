@@ -49,7 +49,7 @@ HOOK_SCRIPT = HOOKS_DIR / "corpus_inline_session_start.py"
 def test_AC_PMR_2_on_demand_constant_points_at_plugin_paths() -> None:
     """The `_ON_DEMAND` tuple carries the post-M6b.0 plugin-relative
     ODD-doc paths. C2-prime amendment §11 D-Q.ABC-prime.2 STRIPPED
-    the prior third entry (``docs/rebuild/FUTURE_IDEAS.md``) — the
+    the prior third entry (``docs/FUTURE_IDEAS.md``) — the
     AC.PMR.2 intent ("on-demand pointer block lists plugin paths")
     is preserved; only the FUTURE_IDEAS pointer was retired (no
     public counterpart). ODD §4 in-band rebaseline per
@@ -76,7 +76,7 @@ def _make_dev_mode_workspace_with_plugin_docs(tmp_path: Path) -> Path:
         "is_primary: true\ndev_intent: yes\n", encoding="utf-8"
     )
     (tmp_path / "CLAUDE.md").write_text("# C\n", encoding="utf-8")
-    rebuild_dir = tmp_path / "docs" / "rebuild"
+    rebuild_dir = tmp_path / "docs"
     rebuild_dir.mkdir(parents=True, exist_ok=True)
     (rebuild_dir / "VALUE_PROPOSITION.md").write_text("# V\n", encoding="utf-8")
     (rebuild_dir / "STATE.md").write_text("# S\n", encoding="utf-8")
@@ -127,7 +127,7 @@ def test_AC_PMR_2_e2e_on_demand_block_lists_plugin_paths(
     # FUTURE_IDEAS.md pointer STRIPPED at C2-prime per §11 D-Q.ABC-
     # prime.2 — no public counterpart, so the on-demand block no
     # longer references it. AC.PMR.2 intent preserved.
-    assert "- docs/rebuild/FUTURE_IDEAS.md" not in block
+    assert "- docs/FUTURE_IDEAS.md" not in block
     # Pre-realignment paths must NOT appear (they would mislead the
     # reader if both shapes were emitted).
     assert "- docs/odd-methodology.md\n" not in block

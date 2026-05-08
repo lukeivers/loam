@@ -1,8 +1,8 @@
 """heavy-b-migrate — Heavy-B Phase α / β / γ data-migration tooling.
 
-Plan: ``docs/rebuild/plans/heavy-b-phase-alpha-beta-gamma-migration.md``.
+Plan: ``docs/plans/heavy-b-phase-alpha-beta-gamma-migration.md``.
 Builder plan:
-``docs/rebuild/plans/heavy-b-phase-alpha-beta-gamma-migration.builder-plan.md``.
+``docs/plans/heavy-b-phase-alpha-beta-gamma-migration.builder-plan.md``.
 
 Dev-discipline; no SEAL_COMMIT bump, no loam amend manifest, no seal
 commit. Composes against amendments #38 (objective-tracker schema

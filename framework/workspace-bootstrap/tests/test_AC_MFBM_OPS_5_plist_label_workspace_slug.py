@@ -14,7 +14,7 @@
 
 """AC.MFBM-OPS.5 — Generated plist Label is workspace-slug-namespaced.
 
-Plan ref: ``docs/rebuild/plans/m-fbm-operational-health.md`` §4
+Plan ref: ``docs/plans/m-fbm-operational-health.md`` §4
 AC.MFBM-OPS.5.
 
 Diagnosis trigger (2026-05-04): the dispatch's diagnosis hypothesised

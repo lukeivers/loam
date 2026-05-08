@@ -43,5 +43,5 @@ file pair until the user resolves the conflict manually.
   (directory rename `~/.pos/` → `~/.loam/`).
 - `framework/tools/loam-migrate-launchd-labels/` — the M1c precedent
   (launchd-label rebrand).
-- `docs/rebuild/plans/oss-v0-1-0-publish-rename-1f.md` — M1f sub-plan
+- `docs/plans/oss-v0-1-0-publish-rename-1f.md` — M1f sub-plan
   AC.RNM-1f.5.

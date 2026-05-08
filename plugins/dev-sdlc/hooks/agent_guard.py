@@ -15,10 +15,11 @@ matcher vs Bash matcher) means no cross-matcher interference.
 ALL DEV-MODE-only (the rules are pos-v2-dev-specific):
 
   - **T1 / AC.AG.1** — wrong-WD dispatch. Detected via prompt
-    mentions of pos-v2 surfaces (``docs/rebuild/``, ``framework/<comp>
-    /src/``, ``loam amend``, "seal commit", canonical path string,
-    ``amendment #N`` shapes) combined with a parent envelope ``cwd``
-    that does NOT match the canonical pos-v2 path.
+    mentions of pos-v2 surfaces (``framework/<comp>/src/``,
+    ``framework/<comp>/tests/``, ``loam amend``, "seal commit",
+    canonical path string, ``amendment #N`` shapes) combined with a
+    parent envelope ``cwd`` that does NOT match the canonical pos-v2
+    path.
   - **T2 / AC.AG.2** — method-enumerated prompt. Detected via a
     prompt length above 2500 characters. The threshold is NAMED in
     the AC text per D-A4.7.
@@ -135,7 +136,6 @@ def _open_tracker(workspace_root: Path) -> Any | None:
 # Surface mentions of pos-v2 — when any of these appears in the
 # dispatch prompt, the dispatch is targeting pos-v2 dev surfaces.
 _LOAM_SURFACE_PATTERNS: tuple[re.Pattern, ...] = (
-    re.compile(r"docs/rebuild/"),
     re.compile(r"framework/[\w-]+/src/"),
     re.compile(r"framework/[\w-]+/tests/"),
     re.compile(r"\bloam amend\b"),

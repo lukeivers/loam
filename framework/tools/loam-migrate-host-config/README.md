@@ -65,7 +65,7 @@ remediation.
 ## Authority
 
 - Per-host path rename: `loam-rename-decisions.md` Tier-1 #2.
-- M1b sub-plan: `docs/rebuild/plans/oss-v0-1-0-publish-rename-1b.md`
+- M1b sub-plan: `docs/plans/oss-v0-1-0-publish-rename-1b.md`
   AC.RNM-1b.3 (idempotency contract) + AC.RNM-1b.5 (this README).
 - Hard-cutover policy: series-master D-RNM.3 (no compat module, no
   symlink shim).

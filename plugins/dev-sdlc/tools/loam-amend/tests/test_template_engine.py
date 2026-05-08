@@ -658,7 +658,7 @@ def test_AC_D_tpl_7_bundled_dispatch_renders_against_fixture_vars(
         "COMPONENT: example-component\n"
         "AMENDMENT_NUMBER: 99\n"
         "AC_PREFIX: AC.X.x\n"
-        "PLAN_PATH: docs/rebuild/plans/example.md\n"
+        "PLAN_PATH: docs/plans/example.md\n"
         "OBJECTIVE: \"Single-paragraph fixture objective.\"\n"
         "SCOPE_FENCE: \"path/to/component/\"\n"
         "WORKING_DIRECTORY: /tmp/fixture\n",
@@ -679,7 +679,7 @@ def test_AC_D_tpl_7_bundled_dispatch_renders_against_fixture_vars(
     assert "example-component" in out
     assert "amendment #99" in out
     assert "AC.X.x" in out
-    assert "docs/rebuild/plans/example.md" in out
+    assert "docs/plans/example.md" in out
     assert "Single-paragraph fixture objective." in out
     assert "path/to/component/" in out
     assert "/tmp/fixture" in out

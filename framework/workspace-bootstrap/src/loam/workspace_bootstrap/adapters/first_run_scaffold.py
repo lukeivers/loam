@@ -227,7 +227,7 @@ def resolve_persona_handle(raw_input: str | None) -> str:
 # v0.1.0 floor; graphiti returns post-v0.1.0 via the M-GMP plugin path.
 # The ``_LAUNCHD_TEMPLATES["memory-graphiti"]`` template entry below is
 # retained so M-GMP's re-admission is a one-line change here. See
-# ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+# ``docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
 _SERVICE_KINDS: tuple[str, ...] = (
     "orchestrator",
     "memory-write-worker",
@@ -606,7 +606,7 @@ def run_first_run_scaffold(
         Amendment #39 — test-only override for the value-prop source
         path the tracker-seed reads. On a workspace classified
         ``"pos-v2-dev"`` the seed reads
-        ``<workspace>/docs/rebuild/VALUE_PROPOSITION.md`` by default;
+        ``<workspace>/docs/VALUE_PROPOSITION.md`` by default;
         on a non-dev workspace it reads
         ``<workspace>/value-prop.md``. The override substitutes
         whichever path applies.
@@ -739,7 +739,7 @@ def run_first_run_scaffold(
     # preserved on disk (its pure-function builders are imported by
     # AC47.x tests + will be re-wired by the M-GMP plugin post-v0.1.0)
     # but is NOT invoked from the v0.1.0 production scaffold path.
-    # See ``docs/rebuild/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
+    # See ``docs/plans/v0-1-0-foldback-scope-expansion-fbe7.md``.
     from . import mcp_json_writer as _mcp_json_writer  # noqa: WPS433
 
     mcp_json_result = _mcp_json_writer.MCPJsonWriteResult(
@@ -814,7 +814,7 @@ def run_first_run_scaffold(
     # the value-prop root + spec-tier descendants. Idempotent by
     # query (the seed-runner uses ``query_projection_view`` to detect
     # already-seeded records and skip). On a workspace classified as
-    # pos-v2 dev (``docs/rebuild/VALUE_PROPOSITION.md`` present at
+    # pos-v2 dev (``docs/VALUE_PROPOSITION.md`` present at
     # the workspace root), the seed reads that doc as the source of
     # the root's goal + criteria. On a workspace classified non-dev,
     # the seed reads ``<workspace>/value-prop.md`` if present, else

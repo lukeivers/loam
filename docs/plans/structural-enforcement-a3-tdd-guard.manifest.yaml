@@ -1,0 +1,211 @@
+schema_version: 1
+amendment:
+  number: 71
+  slug: structural-enforcement-a3-tdd-guard
+  title: "structural-enforcement A3 TDD-guard (PreToolUse Edit/Write/MultiEdit deny on new-AC source edit without backing test)"
+
+# BASELINE: 8c20bba — pre-amendment tip (HEAD at dispatch). Per the
+# established BASELINE-as-HEAD~1 pattern (#29 / #34 .. #70) the
+# manifest pins to the immediate-prior commit so the BASELINE..HEAD
+# diff is narrow to A3's surface (which by D-A3.7 includes the
+# helper-library extraction + A2's objective_binding_gate.py
+# refactor — both stay inside the hands-off-lifecycle fence).
+baseline: 8c20bbacba67afdf659aadf7bf8c0314e3d54241
+
+plan: docs/plans/structural-enforcement-a3-tdd-guard.md
+
+seal_description: "structural-enforcement A3 TDD-guard (PreToolUse Edit/Write/MultiEdit deny on new-AC source edit without backing test; helper-library extraction; A2 refactored to consume; multi-contributor PreToolUse merge; NDJSON audit log)"
+
+# Single sealed component per locked plan §2 (D3 / fence statement):
+# A3 only touches hands-off-lifecycle. objective-tracker is consumer-
+# only (A3 calls A1's public read API; no schema or runtime change).
+# loam-mode is consumer-only via the workspace-mode bit (already a
+# corpus_load_sentinel.workspace_mode() thin wrapper from A1).
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/seals/SEAL_COMMIT.structural-enforcement-a3-tdd-guard
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3 + amendment #44's
+# precedent. The plan-doc, research artefact, builder plan, and
+# manifest itself live under docs/plans/.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.structural-enforcement-a3-tdd-guard
+  body: |
+    # Amendment — structural-enforcement A3 TDD-guard
+    #
+    # 2026-04-28. Per the locked plan-doc
+    # `docs/plans/structural-enforcement-a3-tdd-guard.md`
+    # and the locked research artefact
+    # `docs/plans/research/structural-enforcement-a3-tdd-guard-research.md`.
+    #
+    # A3 is the SECOND gate-that-refuses in the structural-enforcement
+    # programme, after A2 (sealed at amendment #70). A2 refused Edits
+    # whose path didn't trace to a manifest-registered binding the
+    # active-scope sentinel admits. A3 refuses Edits that introduce
+    # code satisfying a NEW acceptance criterion without a test pinned
+    # to that AC landing in the same diff.
+    #
+    # Surface added (hands-off-lifecycle, sealed):
+    #
+    #   - `framework/hands-off-lifecycle/hooks/_gate_helpers.py` (new)
+    #     — shared helper module extracted per locked plan D-A3.7. Carries
+    #     path canonicalisation (_workspace_relative), mode-bit query
+    #     (workspace_mode_or_normal_use), sentinel reader wrapper
+    #     (read_active_scope_sentinel_or_none), tracker open
+    #     (open_tracker), carve-out detection (is_carve_out_path,
+    #     _CARVE_OUT_PREFIXES, _CARVE_OUT_FILES), audit-log appender
+    #     (append_audit_line). Stdlib only; lazy imports for
+    #     workspace-mode + sentinel reader so a system-Python invocation
+    #     still falls through to allow.
+    #   - `framework/hands-off-lifecycle/hooks/tdd_guard.py` (new) —
+    #     PreToolUse hook script. Stdlib + _gate_helpers + A1 substrate
+    #     reads only. Fires on Edit|Write|MultiEdit AFTER A2's gate.
+    #     Decision chain: NORMAL USE → no-op; non-source-tool → no-op;
+    #     foreign path → allow; carve-out → allow; test-tree path →
+    #     allow (chicken-and-egg avoidance); missing sentinel → allow
+    #     (A2 already denied; defensive fall-through); for each binding
+    #     whose manifest row's created_at is strictly after the
+    #     sentinel's created_at (NEW AC in this diff) and whose glob
+    #     admits the path: filename + function-name pinning required —
+    #     `framework/<comp>/tests/test_AC_<Y-normalised>_*.py` must
+    #     exist AND contain a function whose name starts with
+    #     `test_AC_<Y-normalised>_`. Missing test file → deny with
+    #     missing-test-file failure-class. File present, function
+    #     absent → deny with missing-test-function failure-class. NDJSON
+    #     audit log appended on every fire.
+    #   - `framework/hands-off-lifecycle/hooks/objective_binding_gate.py`
+    #     — REFACTORED in-place to consume `_gate_helpers.py`. Carve-out
+    #     prefix/file lists, `_is_carve_out_path`, `_workspace_relative`,
+    #     `_open_tracker`, `_audit_log_path`, `_append_audit_line` move
+    #     into the shared helper. A2's behaviour is preserved byte-for-
+    #     byte; A2's existing AC.OBG.1..AC.OBG.7 + AC.OBG.S +
+    #     AC.OBG.settings_merge tests pass byte-for-byte against the
+    #     post-extraction module. Module-level shim re-exports the
+    #     extracted symbols so existing test imports keep working without
+    #     a test-file rename.
+    #   - `framework/hands-off-lifecycle/hooks/first_run_settings.py`
+    #     — `merge_pre_tool_use` extended to multi-contributor:
+    #     `_POS_V2_PRE_TOOL_USE_COMMAND_MARKERS` adds
+    #     `tdd_guard.py`. The `_is_pos_v2_owned_pre_tool_use` predicate
+    #     accepts a stanza whose every inner-hook command matches one of
+    #     the recognised pos-v2 markers — single-contributor (A2 only)
+    #     and multi-contributor (A2 + A3) shapes are both pos-v2-owned
+    #     and may be replaced without a backup. The merge function's
+    #     signature now accepts `new_entries` (list) OR `new_entry`
+    #     (single, kept for backwards compat); `new_entries` overrides
+    #     when both are present. The OUTER PreToolUse list is composed
+    #     as the supplied list of stanzas in caller-supplied order.
+    #     Single-contributor callers (A2's previous shape) continue to
+    #     pass `new_entry=` and produce byte-identical settings.json
+    #     output to pre-A3 — A2's existing AC.OBG.settings_merge tests
+    #     pass byte-for-byte.
+    #   - `framework/hands-off-lifecycle/hooks/first_run_helper.py`
+    #     — extends `_objective_binding_gate_stanza` neighbours with a
+    #     new `_tdd_guard_stanza` builder. The existing
+    #     `_maybe_merge_pre_tool_use` call site now composes BOTH gates
+    #     into the multi-contributor list (A2 first, A3 second) per
+    #     locked plan D-A3.8. Fail-soft.
+    #   - `framework/hands-off-lifecycle/tests/test_AC_TDG_1_*.py` ..
+    #     `test_AC_TDG_S_*.py` plus `test_AC_TDG_8_helper_extraction*.py`
+    #     and `test_AC_TDG_settings_merge.py` — the AC suite covering
+    #     the seven behaviours plus seal-diff invariant plus helper-
+    #     extraction equivalence (D-A3.7 approved → AC.TDG.8 added).
+    #     Per ODD §8.2.14 byte-content verification, the audit-log test
+    #     reads the on-disk NDJSON file and asserts schema.
+    #
+    # AC surface (AC.TDG.1 – AC.TDG.S, AC.TDG.8) — outcome-shaped per
+    # the locked plan §4. Behaviour count = 8 + invariant + helper-
+    # extraction-regression = 9; ACs declared = 9. Forward + reverse
+    # match.
+    #
+    # Helper-library extraction is in scope per locked plan hard
+    # constraint 18 (D-A3.7 approved). The refactor moves shared logic
+    # out of `objective_binding_gate.py` into `_gate_helpers.py`; A2's
+    # behaviour is preserved (A2's existing AC.OBG.x suite is the
+    # regression contract; AC.TDG.8 is the explicit equivalence AC).
+    # AC.OBG.S frozen-both-endpoints invariant is untouched — its
+    # endpoints close before A3 begins (A2 sealed at #70 with both
+    # BASELINE and SEAL_COMMIT pinned; AC.OBG.S window does not
+    # extend).
+    #
+    # Hook-chain ordering: A2 first, A3 second per D-A3.8. A3 runs the
+    # FULL decision chain (defensive duplication of mode + carve-out +
+    # sentinel-presence checks) so the gate is self-contained against
+    # hook-chain reordering, A2 removal, and asymmetric carve-out lists.
+    # A2's deny short-circuits A3 (Claude Code stops chain on first
+    # deny); when A3 runs, A2 has already admitted the path.
+    #
+    # Mode bit short-circuits A3 to no-op in NORMAL USE (D-A3.6 / D4
+    # programme lock — ODD-discipline gate is DEV-MODE-only).
+    #
+    # AC normalisation rule (D-A3.9 method per ODD §7.4): drop leading
+    # `AC.` if present; replace `.` with `_`; uppercase. So `AC.TDG.1`
+    # normalises to `TDG_1`; the test-file glob is `test_AC_TDG_1_*.py`
+    # and the function-name prefix is `test_AC_TDG_1_`. Verified at
+    # build start by reading existing test names across all framework
+    # components (objective-tracker, hands-off-lifecycle, orchestrator,
+    # workspace-bootstrap, primary-persona, memory-system) — every
+    # `test_AC_*.py` file follows `test_AC_<dot-replaced-with-
+    # underscore>_*.py` convention. Pre-`AC` legacy names (e.g.
+    # `test_AC38_*` for orchestrator) are not in scope — those tests
+    # were authored before the dotted-AC-id convention crystallised.
+    #
+    # Audit log shape (D-A3.10 method per ODD §7.4): NDJSON at
+    # `<workspace>/workspace/.pos/tdd-guard.log` mirroring A2's
+    # objective-binding-gate.log pattern. Atomic append via POSIX
+    # O_APPEND for writes < PIPE_BUF.
+    #
+    # Self-bootstrap order followed (locked plan hard constraint 16):
+    # (a) tracker manifest rows registered for AC.TDG.1..AC.TDG.S +
+    # AC.TDG.8 BEFORE first source edit (the build agent's authoring
+    # discipline); (b) A3's tests authored BEFORE A3's source files
+    # (test files admitted by A3's own test-tree carve-out, AC.TDG.3);
+    # (c) A3's source files authored last. This bootstrap order
+    # satisfies BOTH A2 (rows registered → A2 admits) AND A3 (tests
+    # authored before source for new ACs → A3 admits).
+    #
+    # ODD §2.5 reverse-direction audit clean: every code path,
+    # branch, dependency, and test in the diff traces back to a
+    # named AC. No silent exception branches; no defensive `if`
+    # for cases the ACs do not name; no method-in-AC drift.
+    #
+    # Out of scope (locked plan-doc §7, named explicitly):
+    #
+    #   - A4 Bash/Agent-context guards.
+    #   - Direction B (test-without-implementation refusal).
+    #   - Test quality validation (body correctness, assertion strength).
+    #   - Dispatcher-side test-author-on-dispatch wrapper.
+    #   - Audit-log rotation.
+    #   - Cross-amendment manifest queries.
+    #   - Test-file deletion detection.
+    #   - Persona-side surfacing of A3 deny diagnostics.
+    #   - Composition with FIDRAFT-130 corpus-inlining.
+    #   - Composition with FIDRAFT-136 main-session-write-prevention.
+    #   - Audit-log consumers (FIDRAFT-143 dispatch-staleness, etc.).
+    #   - Helper-library expansion beyond what A3 needs.
+    #   - Settings.json migration on existing workspaces.
+    #
+    # BASELINE 8c20bba (pre-amendment tip — HEAD at dispatch). hands-
+    # off-lifecycle is H19-frozen at 3780603; only the SEAL_COMMIT
+    # sidecar advances per the established frozen-baseline pattern.
+    #
+    # With this amendment, A4 (Bash/Agent-context guards) is unblocked:
+    # A4 inherits A3's `_gate_helpers.py` library + the multi-
+    # contributor `merge_pre_tool_use` mechanism. Per locked plan-doc
+    # constraint 12, A1 + A2 substrate stays sealed-after-A2; A3
+    # consumes both without amending them (the helper-library extraction
+    # is internal A2 refactor that does not change A2's external
+    # behaviour).

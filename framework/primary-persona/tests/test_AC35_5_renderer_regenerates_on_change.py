@@ -21,7 +21,7 @@ field reflecting the changed prose differs between the two calls.
 The renderer reads from the contract argument every call; it has no
 caching that would shadow a subsequent contract change.
 
-Plan: docs/rebuild/plans/amendment-35-primary-persona-renderer-and-onboarding.md
+Plan: docs/plans/amendment-35-primary-persona-renderer-and-onboarding.md
 """
 
 from __future__ import annotations

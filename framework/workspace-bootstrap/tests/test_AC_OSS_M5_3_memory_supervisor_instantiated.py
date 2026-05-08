@@ -29,7 +29,7 @@ The probe path is mocked (no real HTTP) by patching the adapter's
 internal ``_build_probe`` helper.
 
 Programme: OSS v0.1.0 publish — M5 — wire-dormancy.
-Plan: docs/rebuild/plans/oss-v0-1-0-publish-dormancy-constructor.md.
+Plan: docs/plans/oss-v0-1-0-publish-dormancy-constructor.md.
 AC family: AC.OSS-M5.3.
 """
 

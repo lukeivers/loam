@@ -316,7 +316,7 @@ Conditions that fire during cycle execution stop the build for surface-and-RF (n
 | 3 — foundation-docs-gap-fill | `ad12cc1` | `be48b34` |
 | 4 — lint-pass-cross-mode-debt-f3-f4 | `46fd2a7` | `7afb648` |
 | 5 — terminology-consistency-and-glossary | `dddaf8d` | `542b939` |
-| 6 — feature-honesty-audit-and-verification | (pending) | (pending) |
+| 6 — feature-honesty-audit-and-verification | `f8beeaa` | `0734ea9` |
 | 7 — release-level-smoke-gate-and-ship | (pending) | (pending) |
 
 ---

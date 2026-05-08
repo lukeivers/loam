@@ -77,7 +77,7 @@ Authored inline by dispatcher at cycle-6 dispatch turn (this turn).
 - `feedback_test_outcome_altitude_required.md` (AC.FHA.6 binding).
 - Predecessor cycles: C1 `459c7fc`, C2 `013553e`, C3 `be48b34`, C4 `7afb648`, C5 `542b939`.
 
-## §14 — Method-decision record
+## 14. Method-decision record (per AC.D-sa.7 lint requirement)
 
 | Decision | Choice | Rationale |
 |---|---|---|
@@ -95,9 +95,9 @@ Authored inline by dispatcher at cycle-6 dispatch turn (this turn).
 
 | Commit | SHA |
 |---|---|
-| Plan-doc finalization commit (this doc final) | (pending) |
-| Source-edit + audit + allowlist BASELINE | (pending) |
-| Manifest commit | (pending) |
-| `loam amend apply` commit | (pending) |
-| `loam amend seal` commit | (pending) |
-| §14 backfill commit | (pending) |
+| Plan-doc finalization commit | `44403a5` |
+| Source-edit + audit + allowlist BASELINE | `98f4e1c` |
+| Manifest commit | `c40ded9` |
+| `loam amend apply` commit | `f8beeaa` |
+| `loam amend seal` commit | `0734ea9` |
+| §14 backfill commit | (this commit) |

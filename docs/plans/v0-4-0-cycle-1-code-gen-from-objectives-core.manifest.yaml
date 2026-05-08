@@ -7,7 +7,7 @@ amendment:
 # BASELINE captured at apply time; predecessor commit is v0.3.0.1
 # patch chain seal `8569b727`. Any source-edit commits this dispatch
 # lands sit between the predecessor seal and the apply commit.
-baseline: "<captured-at-apply>"
+baseline: "b59a228d"
 
 plan: docs/plans/v0-4-0-cycle-1-code-gen-from-objectives-core.md
 plan_doc_ref: docs/plans/v0-4-0-cycle-1-code-gen-from-objectives-core.md

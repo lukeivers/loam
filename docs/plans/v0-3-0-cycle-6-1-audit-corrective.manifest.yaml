@@ -1,0 +1,50 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-cycle-6-1-audit-corrective
+  title: "v0.3.0 Cycle 6.1 audit-corrective — close FHA findings #1+#2 in-cycle (component-count drift + memory.md graphiti reframe) + carry FHA #3 (Docker stranger-clone gap) to release-roadmap §6 owner-action-line. NEW: docs/components/loam-init.md + docs/components/per-project-pm.md (16-component → 18-component recount; precise denomination per audit §9.1 Path A). REWRITE: docs/components/memory.md (no v0.1.x graphiti plugin framing; FBE.7 file-backed memory canonical). UPDATE: README.md + docs/architecture.md + docs/components/index.md (fifteen → eighteen). UPDATE: docs/release-roadmap.md §6 (Docker-equivalent FBE.7 cross-process / fresh-install / fresh-user-account verification entered as known-gap)."
+
+# BASELINE: to-be-set to the source-edit commit SHA after that commit lands.
+# Doc-only cycle. Bookkeeping owner: dev-sdlc (cross-cutting cycle from
+# dev-sdlc's perspective; same precedent as Cycles 1/2/3/4/5/6).
+#
+# Commit ladder:
+#   <source-edit feat commit lands first> (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§14 backfill commit lands last>
+
+baseline: "cc3d077"
+
+plan: docs/plans/v0-3-0-cycle-6-1-audit-corrective.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+plan_doc_ref: docs/plans/v0-3-0-cycle-6-1-audit-corrective.md
+
+ac_count: 6
+smoke_outcome: "AC.FHA1.6 reviewer-perspective walk produces 100% PASS in scope; 0 occurrences of fifteen / graphiti / v0.1.x plugin in target docs; cross-references resolve; no source code touched"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # bookkeeping owner; cross-cutting doc cycle
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# C6.1 touches: docs/ only (component reference pages, index, README,
+# architecture, release-roadmap, plan-doc + manifest). No framework/
+# source code or tests modified.
+universal_paths:
+  prefixes:
+    - docs/
+  files:
+    - README.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-cycle-6-1-audit-corrective
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

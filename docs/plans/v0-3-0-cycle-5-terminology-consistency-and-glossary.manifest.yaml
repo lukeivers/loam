@@ -1,0 +1,54 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-cycle-5-terminology-consistency-and-glossary
+  title: "v0.3.0 Cycle 5 — terminology consistency + glossary publication (docs/glossary.md NEW with 11 cluster-grouped entries: substrate / seed / cultivar / growth / amend / seal / contract / objective / capability / banded AC / ratification; each entry single canonical definition + Authority line + See also line; cross-linked from 4 entry-point docs: getting-started.md / dev-mode-getting-started.md / architecture.md / odd-llm-grounding.lean.md)"
+
+# BASELINE: 9baa8b2 — the source-edit commit that lands the glossary
+# at docs/glossary.md plus cross-links from the four entry-point docs.
+# Doc-only universal-admission cycle (no sealed-component source code
+# touched); manifest carries dev-sdlc as bookkeeping owner per
+# Cycles 1/2/3/4 precedent (cross-cutting cycle from dev-sdlc's
+# perspective; dev-sdlc carries the cycle's seal anchor as the
+# methodology-surface owner).
+#
+# Commit ladder:
+#   f3f2494 — docs(plans): v0.3.0 Cycle 5 — finalise sub-plan-doc
+#   9baa8b2 — docs(v0.3.0): Cycle 5 — glossary publication + entry-point cross-links (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§14 backfill commit lands last>
+
+baseline: "9baa8b2"
+
+plan: docs/plans/v0-3-0-cycle-5-terminology-consistency-and-glossary.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-3-0-cycle-5-terminology-consistency-and-glossary.md
+
+ac_count: 6
+smoke_outcome: "docs/glossary.md created with 11 H2 entries (substrate / seed / cultivar / growth / amend / seal / contract / objective / capability / banded AC / ratification); 4 entry-point docs cross-link the glossary; no drift introduced; sealed-component sweep tests green"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # bookkeeping owner; doc-only cycle from dev-sdlc's perspective
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# Edits are confined to docs/ (top-level forward-looking docs).
+universal_paths:
+  prefixes:
+    - docs/
+  files: []
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-cycle-5-terminology-consistency-and-glossary
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

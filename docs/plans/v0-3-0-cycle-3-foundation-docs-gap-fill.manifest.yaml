@@ -1,0 +1,58 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-cycle-3-foundation-docs-gap-fill
+  title: "v0.3.0 Cycle 3 — foundation-docs gap-fill (NEW docs/design/principle-derivation-map.md ported from pos3 forward-staging draft; CLAUDE.md gains Lens 6 (M5 multi-signal conflict resolution) + Lens 7 (F2 Ruthless Feedback) appended after Lens 5; plugins/dev-sdlc/docs/odd-in-loam.md gains §1A three-explicit-mappings + §11 dev-mode partition with renumber; canonical odd-methodology.md untouched per dispatch override; per-principle audit of pos3 principles.md confirms 33-of-35 COVERED-AS-IS by canonical methodology + memory feedback corpus and 2 GAP-FILLED to Lens 6/7; zero new principles tier document per R3 reframe; F1a-installer fork-only per R4)"
+
+# BASELINE: 17d238e — the source-edit commit (NEW principle-derivation-map.md;
+# CLAUDE.md Lens 6/7 append + path correction at Lens 4; odd-in-loam.md §1A +
+# §11 insert + §11→§12 / §12→§13 renumber).
+#
+# Commit ladder:
+#   f67f2c9 — docs(plans): v0.3.0 Cycle 3 — expand stub to sub-plan-doc
+#   17d238e — docs(v0.3.0): Cycle 3 — foundation-docs gap-fill (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§16 backfill commit lands last>
+#
+# Bookkeeping owner per cycle-1 + cycle-2 precedent: dev-sdlc with
+# frozen_baseline: true. Doc-only cycle from dev-sdlc's perspective;
+# dev-sdlc carries the cycle's seal anchor as the methodology-surface
+# owner.
+
+baseline: "17d238e"
+
+plan: docs/plans/v0-3-0-cycle-3-foundation-docs-gap-fill.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+# `loam amend seal` synthesizes the narrative body from this ref
+# plus ac_count + smoke_outcome below.
+plan_doc_ref: docs/plans/v0-3-0-cycle-3-foundation-docs-gap-fill.md
+
+ac_count: 9
+smoke_outcome: "principle-derivation-map.md exists at docs/design/; CLAUDE.md has Lens 6+7; odd-in-loam.md sections 1/1A/2-10/11/12/13 in order; cross-refs resolve"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # bookkeeping owner; doc-only cycle from dev-sdlc's perspective
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# Edits cross top-level dirs: root (CLAUDE.md), docs/, plugins/dev-sdlc/.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/design/
+    - plugins/dev-sdlc/docs/
+  files:
+    - CLAUDE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-cycle-3-foundation-docs-gap-fill
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

@@ -37,6 +37,18 @@ Patches are named by the defects they close, not by an outcome (e.g., "v0.2.5.1 
 
 ---
 
+## Quality gate — END-USER vs META-FRAMEWORK minors
+
+Each minor in the roadmap carries a class tag (END-USER / META-FRAMEWORK / MIXED) declared at plan time. The class drives a different quality gate at planning:
+
+- **END-USER minors** must demonstrate meaningful end-user value-prop advancement at plan time. The plan-doc names the specific translation-burden delta (per `docs/leverage-discipline.md` §5.1) the user gains from the minor — not "internal coherence improved" but "user can now do X they could not do before." If the plan cannot name a specific user-visible delta, the minor is not END-USER and either re-tags or re-shapes.
+- **MIXED minors** carry the same gate as END-USER for the user-visible portion plus an explicit foundational-investment portion; both halves are named in the plan-doc.
+- **META-FRAMEWORK minors** are exempt from the user-value-delta gate but MUST explicitly tag as such AND name the foundational-investment rationale at plan time — what future end-user work this enables, why it has to land before that work, and the trigger that makes the foundational investment necessary now rather than later.
+
+The class tag is not advisory: an END-USER minor that ships without a named user-visible delta is a leverage failure (per the anti-leverage signals in `docs/leverage-discipline.md` §6); a META-FRAMEWORK minor without named foundational-investment rationale is a discipline failure (the exempt path becomes the default escape hatch).
+
+---
+
 ## When 1.0.0 ships
 
 The MAJOR jump from `0` to `1` happens when ALL of the following are true:

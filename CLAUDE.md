@@ -15,9 +15,9 @@ codebase.
 
 ## Design lenses for every feature
 
-Three principles must become part of the research of every future
+Five principles must become part of the research of every future
 feature — not one-time exercises, but always-on lenses. A feature
-proposal that does not answer all three is incomplete.
+proposal that does not answer all five is incomplete.
 
 ### Lens 1 — Claude-leverage-first
 
@@ -67,6 +67,93 @@ the harness test is almost always wrong.
 > 2 research questions have been answered; it shapes the mechanical
 > form of the feature's authoring, not whether the feature should
 > exist.
+
+### Lens 4 — Prompt scope ↔ confidence
+
+> **A prompt is a probability mass over agent trajectories; the
+> tightness of the scope tracks the author's confidence that a
+> single specific outcome is correct.** When confidence in the
+> outcome shape is high, scope tightly — narrow objective, tight
+> constraints, acceptance that pin the outcome (method stays the
+> builder's call). When confidence drops, loosen scope so the agent
+> can think broadly. The two failure modes are over-tight at low
+> confidence (narrow scope blocks the actually-correct alternative)
+> and over-loose at high confidence (broad scope burns tokens on
+> options the author already knew were wrong).
+
+This is the **most-broadly-applicable** shaping principle in loam,
+but it is **NOT a first axiom** from which all others derive.
+Several lenses and principles (Lens 2, ODD itself per Lens 3,
+ruthless feedback) stand independent of scope-confidence and
+compose with it rather than being derived from it. The
+companion derivation map at `framework/docs/design/principle-derivation-map.md`
+labels each principle compose-with-F4 / independent / partial.
+
+The required research question: **"What is my confidence that the
+outcome shape I have in mind is the right one — and is the scope
+I'm authoring tight enough or loose enough to match?"**
+
+Tight-scope vs method-in-acceptance distinction (this is a common
+trap): tight scope leaves method *inferable from the constraints*.
+Method-in-acceptance states HOW inside the contract. The test —
+can the acceptance criterion be satisfied by a method other than
+the one you have in mind? If yes, scope is tight (good). If no,
+you have stated method (bad — Lens 3 violation).
+
+Conflicts with other lenses or principles are resolved by the
+multi-signal conflict-resolution discipline (named four-step
+process; see `~/.claude/CLAUDE.md` Universal principles).
+Lens 4 is one signal feeding that process, never the sole arbiter.
+
+### Lens 5 — Swarming (recursive task decomposition)
+
+> **When any task can be partitioned into subtasks each with a
+> measurably tighter acceptance criterion, decompose and execute in
+> parallel or dependency order rather than sequentially in a single
+> agent loop.** Apply recursively until further decomposition would
+> add only coordination overhead — an aggregator step whose scope is
+> no tighter than the parent's — or until the judge declares the
+> cycle complete.
+
+**The three reference patterns (from kyegomez/swarms, verified at
+HEAD `e48100a`, 2026-05-02):**
+
+1. **PlannerWorkerSwarm cycle.** Planner → typed task queue with
+   dependency-aware claiming → judge produces `CycleVerdict`
+   (`is_complete`, `gaps`, `needs_fresh_start`). The
+   `needs_fresh_start` flag is the drift-detection escape hatch:
+   discard all subtasks and re-run the planner with judge feedback.
+   Do NOT continue a diverged subtask chain to completion.
+
+2. **`ModelOutput.rationale` field.** Every model-selection decision
+   records why in a dedicated field. In loam, this is a required
+   `model-rationale: <model> — <reason>` line in every dispatch
+   brief that selects a non-default model. Absence on an Opus
+   dispatch is a violation.
+
+3. **`EVAL_DIMENSIONS` named-axis judging.** Each AC or quality
+   dimension is evaluated by a dedicated concurrent judge rather
+   than collapsed into a single yes/no. Applicable to CDC/AC
+   verification and LLM-as-judge probes for soft objectives.
+
+**Stopping criterion:** decompose until each subtask's acceptance
+criterion is strictly tighter than the parent's. Stop when the
+proposed split introduces only coordination overhead. Restart
+from scratch (with judge feedback) when drift is detected —
+completing a diverged chain is never the correct response.
+
+**`max_planner_depth` must be set explicitly.** Default is `1`
+(no sub-planners). Deeper recursion requires an explicit opt-in
+line in the dispatch brief.
+
+The required research question: **"Can this task be partitioned
+into subtasks each with a tighter acceptance criterion — and if
+so, am I selecting the right model tier for each phase
+(enumerate / execute / judge)?"**
+
+Composes tightly with Lens 4: the stopping criterion uses
+scope-confidence as its primary signal. Full text in
+`~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_swarming_recursive_decomposition.md`.
 
 ---
 

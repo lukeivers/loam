@@ -65,6 +65,8 @@ Pulled from `docs/rebuild/STATE.md`. Each entry is the minor's objective sentenc
 
 > **Loam's documented features work as advertised AND loam's terminology is consistent across forward-looking surface.** A stranger cloning loam can verify every named capability is operational; loam-aligned names (substrate / seed / cultivar / amend / seal) are used consistently with single definitions; the project's own naming is glossary-published; no "rebuild" artefacts surface in user-facing docs.
 
+**Class:** META-FRAMEWORK (foundational; users feel reliability indirectly)
+
 ### Constraints
 
 - All `docs/rebuild/` references migrate to `docs/` (or component-specific paths). The `docs/rebuild/` subtree is collapsed; its artefacts move to one of: `docs/spec/`, `docs/components/`, `docs/design/`, `docs/plans/`, `docs/archive/` (per content). 744 file references scrubbed.
@@ -131,6 +133,8 @@ Pulled from `docs/rebuild/STATE.md`. Each entry is the minor's objective sentenc
 
 > **Loam takes objectives.yaml + gap-inventory.yaml + build-next.yaml as planning input and produces working source code that maps every line to a named AC.** ODD-grounded code-gen is the deliverable; the extraction phase becomes load-bearing only because the planning input it produces grounds the code that ships.
 
+**Class:** END-USER
+
 This is the version where loam stops being a contract-extractor and starts being a software-builder. The Dev/SDLC plugin's prime function activates here.
 
 #### Constraints
@@ -182,6 +186,8 @@ This is the version where loam stops being a contract-extractor and starts being
 
 > **Loam can take a binary + documentation as input, observe the binary's behavior, reverse-engineer objectives + capabilities + constraints, and produce working source code that passes a behavioral test suite.** The cold-start case — minimal inputs — is the version's deliverable.
 
+**Class:** END-USER
+
 This is loam against ProgramBench's full input shape: binary + docs, no source. The new component is the binary-usage observation harness.
 
 #### Constraints
@@ -224,6 +230,8 @@ This is loam against ProgramBench's full input shape: binary + docs, no source. 
 #### Objective
 
 > **A non-technical user with a fresh install can describe what they want to build, answer light-touch onboarding questions, and reach working software output without invoking technical concepts (objectives / capabilities / acceptance criteria) directly.** The translation layer (per VALUE_PROPOSITION.md) handles the methodology shape internally.
+
+**Class:** END-USER
 
 This is the version where loam's value proposition (helping non-tech users use AI to build software) becomes empirically demonstrable. One real non-technical user shipping real software is a 1.0.0 gate — v0.6.0 makes it possible.
 
@@ -274,6 +282,8 @@ This is the version where loam's value proposition (helping non-tech users use A
 
 > **Loam's design principles (the three Lenses, plus the canonical principle map at `framework/docs/design/principle-derivation-map.md`) are named primitives in the codebase, structurally enforced via hooks/skills/Stop-hook contributors, not advisory prose.** Drift from declared principles becomes a mechanical violation, not a discipline ask.
 
+**Class:** META-FRAMEWORK
+
 This is the structural-enforcement substrate — A1 expanded.
 
 #### Acceptance criteria
@@ -320,6 +330,8 @@ This is the structural-enforcement substrate — A1 expanded.
 
 > **Negative-alignment detection ships: when generated or edited code drifts from the declared objective, loam surfaces the drift before the user (or CI) sees it as a defect.** Carved out of v0.2.5; deferred until calibration data exists.
 
+**Class:** END-USER
+
 #### Acceptance criteria
 
 - **AC.V080.1 — Negative-alignment detection primitive.** New component (or odd-extractor extension): given a contract + a diff, classify the diff as objective-aligned / objective-orthogonal / objective-contradicting / objective-ambiguous.
@@ -352,6 +364,8 @@ This is the structural-enforcement substrate — A1 expanded.
 #### Objective
 
 > **Loam captures interaction patterns over time and synthesizes them into a durable user-profile artefact that informs persona behavior — without requiring the user to teach the system anything explicitly.** Per VALUE_PROPOSITION's "trust compounds in one relationship."
+
+**Class:** END-USER
 
 #### Acceptance criteria
 
@@ -389,6 +403,8 @@ This is the structural-enforcement substrate — A1 expanded.
 
 > **Loam's plugin ecosystem grows beyond Dev/SDLC.** Each new plugin gets its own minor version with its own objective sentence and ACs.
 
+**Class:** END-USER
+
 Per Idea 3 — the plugin candidates are: project/task management overlay, communications plugin, knowledge management, finance/household-ops, creative/long-form, health/habit tracking, trading/quant research, legal/compliance.
 
 **Plugin selection discipline (per Idea 3):** do not ship all eight. Pick two or three that maximise early loam-v2 value AND prove the plugin ecosystem; let the community build the rest.
@@ -410,6 +426,8 @@ Per Idea 3 — the plugin candidates are: project/task management overlay, commu
 #### Objective
 
 > **All loam-documented features work as advertised; one real non-technical user has shipped real software with loam; backwards-compatibility committed for 6 months minimum; plugin contract is stable.**
+
+**Class:** MIXED
 
 Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." This is a quality-bar event, not a calendar event.
 

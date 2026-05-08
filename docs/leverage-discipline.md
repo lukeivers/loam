@@ -375,10 +375,7 @@ when correcting it isn't immediate.
 Six questions the persona / Luke walks before committing a work item
 to a minor. Output is GO, DEFER, or DROP.
 
-1. **Value-prop ladder.** Does this work reduce translation burden
-   for the user (primary-persona test) OR add to the persona's
-   toolkit (harness test)? Name the specific delta. If neither, it's
-   DROP unless question 2 saves it.
+1. **Value-prop ladder — MEANINGFUL improvement for END USERS specifically (not just internal coherence).** Does this work deliver a meaningful end-user-visible improvement — reducing translation burden for the user (primary-persona test) OR adding a toolkit primitive the persona can demonstrably draw on for user requests (harness test)? Name the specific user-visible delta. Internal coherence improvements (renames, refactors, doc consolidations that don't reach the user surface) DO NOT pass this question on their own — they may pass question 2 (external-attention) or fit as low-energy filler (question 5), but they do not count as value-prop advancement. If neither this nor question 2 ladders, it's DROP.
 2. **External-attention ladder.** Does this work advance external
    attention, user retention, or bus-factor-1 mitigation in a
    measurable way? If neither this nor question 1 ladders, it's DROP.

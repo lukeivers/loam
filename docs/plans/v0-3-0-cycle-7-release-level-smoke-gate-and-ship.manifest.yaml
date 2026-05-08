@@ -1,0 +1,50 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-3-0-cycle-7-release-level-smoke-gate-and-ship
+  title: "v0.3.0 Cycle 7 — release-level smoke gate + STATE.md SHIPPED rollup. UPDATE: docs/release-roadmap.md (§3 v0.3.0 → §2 collapse with per-cycle apply + seal SHAs; §3 collapsed to one-line pointer to v0.4.0 in §4). UPDATE: docs/STATE.md (§1 narrative paragraph append — v0.3.0 SHIPPED rollup with per-cycle seal anchors + smoke verdict + claude-p invariant + FBE.7 stranger-clone owner-action-line + ODD-conformance allowlist + tests-green per-cycle counts + tag-push/release/push owner-action-separate framing). UPDATE: docs/plans/v0-3-0-master-plan.md §11 SHA register (C6.1 row added; C7 row pending-at-seal). UPDATE: docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md §14 (8 method-decisions recorded: cycle-count framing, tests-green aggregation, smoke-verdict format, STATE.md row format, release-roadmap §3 collapse shape, C7 SHA backfill timing, HARD-HALT-before-public-actions). Doc-only cycle; bookkeeping owner: dev-sdlc (cross-cutting; same precedent as C1–C6.1)."
+
+# BASELINE: this is the v0.3.0 SHIP cycle — the source-edit commit
+# preceding this manifest is the doc-bundle commit that lands the
+# release-roadmap collapse + STATE.md SHIPPED rollup + master plan
+# §11 backfill + plan-doc §14 method-decisions. Ladder:
+#
+#   <source-edit doc-bundle feat commit lands first> (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§14 SHA backfill commit lands last>
+#
+# baseline value to be set to source-edit commit SHA after it lands.
+
+baseline: "7892818"
+
+plan: docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+plan_doc_ref: docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md
+
+ac_count: 7
+smoke_outcome: "v0.3.0 ships feature-honesty-clean: rd-automation extraction smoke GREEN (rc=0, 177s, ~42% faster than v0.2.5.1 baseline); FBE.7 stranger-clone PASS-WITH-OWNER-ACTION-LINE for Docker probe; claude -p invariant verified across all production sources; ODD-conformance allowlist published; release-roadmap §2 + STATE.md SHIPPED row + master plan §11 SHA register all resolve to the same set of seal SHAs"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # bookkeeping owner; cross-cutting doc cycle (C1-C6.1 precedent)
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# C7 touches: docs/ only (release-roadmap, STATE.md, plan-docs).
+# No framework/ or plugins/ source code or tests modified.
+universal_paths:
+  prefixes:
+    - docs/
+  files: []
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-3-0-cycle-7-release-level-smoke-gate-and-ship
+  # body omitted — schema v3 with plan_doc_ref synthesizes a 5-15
+  # line summary at seal time per AC.DPS2.{1,4}.

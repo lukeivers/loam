@@ -136,6 +136,8 @@ def test_only_dev_sdlc_changed() -> None:
         "docs/plans/",
         "docs/design/",
         "plugins/dev-sdlc/docs/",
+        "framework/primary-persona/tests/",
+        "framework/tools/upgrade-merge-resolver/",
     )
     allowed_files: set[str] = {
         "CLAUDE.dev.md",

@@ -1,0 +1,11 @@
+# v0.6.1 patch — META-FRAMEWORK foundation docs gap-fill: principle-derivation-map.md ported to canonical at docs/design/principle-derivation-map.md, odd-in-loam.md F1c bridge re-author merged into canonical (preserving canonical §10 BASELINE convention v0.1.8/v0.2.3 adapter additions), pos3 principles.md audit-and-gap-fill into existing CLAUDE.md (M5 + F2 added as Lens 6 + Lens 7; ODD-tier and operating-tier content already covered by odd-methodology.md + memory feedback files dropped per R3); STATE.md v0.6.1 SHIPPED entry; release-roadmap §2 row; pos3-forward-staging-promotion-classification.md closure note. NEW commits only; no --amend; no push; no F1a-installer promotion (R4 fork-only).
+
+slug: v0-6-1-foundation-docs
+components: dev-sdlc
+baseline: ce379da
+amendment-commit: b2f6c0b2cf7bc6643f6186f6d8ae1aa9ddc0fb81
+plan-doc: docs/plans/v0-6-1-foundation-docs-plan.md
+acs-satisfied: 7
+smoke: V061.1 derivation-map port; V061.2 odd-in-loam merge; V061.3 CLAUDE.md gap-fill M5+F2; V061.4 STATE+roadmap; V061.5 local tag; V061.6 closure note; V061.7 cycle clean
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

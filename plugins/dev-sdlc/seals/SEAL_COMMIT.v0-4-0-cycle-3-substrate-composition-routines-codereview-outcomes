@@ -1,0 +1,11 @@
+# v0.4.0 Cycle 3 — substrate composition: Routines + Code Review + Outcomes-pattern ADR; SKILL extension to plan-docs-author + 1 example plan-doc each (Routines / Code Review) + Outcomes ADR; folds C2 F2 finding (print-on-success len(diff.commits)) into existing C2 outcome-altitude test; closes AC.V040.2 + AC.V040.3 + AC.V040.5 per master-plan §3
+
+slug: v0-4-0-cycle-3-substrate-composition-routines-codereview-outcomes
+components: dev-sdlc
+baseline: 7d7e2ee1
+amendment-commit: f9771855ba48703c0aecec2071a8e5da3a45e7be
+plan-doc: docs/plans/v0-4-0-cycle-3-substrate-composition-routines-codereview-outcomes.md
+acs-satisfied: 6
+smoke: Substrate composition: Routines memory file + 2 example plan-docs + plan-author SKILL section + Outcomes ADR; AC.V040C3.{1,2,3,4,5,6} green; CLI-verb divergence documented; AC.V040.2/3/5 closed
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

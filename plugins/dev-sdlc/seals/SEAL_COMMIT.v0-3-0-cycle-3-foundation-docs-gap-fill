@@ -1,0 +1,11 @@
+# v0.3.0 Cycle 3 — foundation-docs gap-fill (NEW docs/design/principle-derivation-map.md ported from pos3 forward-staging draft; CLAUDE.md gains Lens 6 (M5 multi-signal conflict resolution) + Lens 7 (F2 Ruthless Feedback) appended after Lens 5; plugins/dev-sdlc/docs/odd-in-loam.md gains §1A three-explicit-mappings + §11 dev-mode partition with renumber; canonical odd-methodology.md untouched per dispatch override; per-principle audit of pos3 principles.md confirms 33-of-35 COVERED-AS-IS by canonical methodology + memory feedback corpus and 2 GAP-FILLED to Lens 6/7; zero new principles tier document per R3 reframe; F1a-installer fork-only per R4)
+
+slug: v0-3-0-cycle-3-foundation-docs-gap-fill
+components: dev-sdlc
+baseline: 17d238e
+amendment-commit: ad12cc1bdc1434ff3a8a9b652d812512f14fe834
+plan-doc: docs/plans/v0-3-0-cycle-3-foundation-docs-gap-fill.md
+acs-satisfied: 9
+smoke: principle-derivation-map.md exists at docs/design/; CLAUDE.md has Lens 6+7; odd-in-loam.md sections 1/1A/2-10/11/12/13 in order; cross-refs resolve
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

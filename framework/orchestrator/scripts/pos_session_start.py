@@ -233,7 +233,7 @@ def run_session_start(
           "memory_up": bool,
           "memory_expected": bool,  # V11.E: False when plist absent
           "orchestrator_up": bool,
-          "additional_context": "pos v2 ready" | <named diagnostic>,
+          "additional_context": "loam ready" | <named diagnostic>,
           "exit_code": int,
         }
 
@@ -263,7 +263,7 @@ def run_session_start(
             "memory_expected": False,
             "orchestrator_up": False,
             "additional_context": (
-                f"pos v2 session-start: platform-unsupported:{plat} — "
+                f"loam session-start: platform-unsupported:{plat} — "
                 "launchd is required. See docs/platforms.md for the "
                 "supported-platform matrix."
             ),
@@ -288,7 +288,7 @@ def run_session_start(
             "memory_up": True,
             "memory_expected": memory_expected,
             "orchestrator_up": True,
-            "additional_context": "pos v2 ready",
+            "additional_context": "loam ready",
             "exit_code": 0,
         }
 
@@ -314,7 +314,7 @@ def run_session_start(
                 "memory_up": True,
                 "memory_expected": memory_expected,
                 "orchestrator_up": True,
-                "additional_context": "pos v2 ready",
+                "additional_context": "loam ready",
                 "exit_code": 0,
             }
         time.sleep(max(0.01, float(bring_up_poll_interval_s)))
@@ -348,7 +348,7 @@ def run_session_start(
         "memory_expected": memory_expected,
         "orchestrator_up": o_ok,
         "additional_context": (
-            "pos v2 session-start: services did not come up within "
+            "loam session-start: services did not come up within "
             f"{bring_up_timeout_s:.0f}s "
             f"{services_token}. Supervisor "
             "will escalate loudly on start. "

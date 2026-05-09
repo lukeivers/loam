@@ -186,7 +186,7 @@ HALT_FINDINGS: |
 #   (override the standard refs stub if needed)
 STATUS_LINE: "plan (pre-dispatch). {iso_date}."
 RESEARCH_PATH: "docs/plans/research/{slug}-research.md"
-# WORKING_DIRECTORY: "/Users/lukeivers/ivers-corp-pos-v2/"
+# WORKING_DIRECTORY: "/Users/lukeivers/loam/"
 """
 
 

@@ -73,7 +73,7 @@ def test_AC_AG_5_deny_writes_one_ndjson_line(
         "tool_input": {
             "prompt": (
                 "Update files at "
-                "/Users/lukeivers/ivers-corp-pos-v2/docs/plans/foo.md."
+                "/Users/lukeivers/loam/docs/plans/foo.md."
             ),
             "subagent_type": "general-purpose",
         },

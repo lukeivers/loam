@@ -21,7 +21,7 @@ The dispatch-brief structural shape, in canonical order:
    slug + the headline outcome.
 2. **Working directory** — absolute path to the canonical
    workspace, with a NOT-clause naming the wrong path. Example:
-   `Working directory: /Users/lukeivers/ivers-corp-pos-v2/
+   `Working directory: /Users/lukeivers/loam/
    (canonical pos-v2). NOT pos3.` Per
    `feedback_always_specify_wd_in_dispatches`.
 3. **Principles to apply at turn-start** — bulleted list naming

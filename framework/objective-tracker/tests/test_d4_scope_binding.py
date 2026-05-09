@@ -126,7 +126,7 @@ def test_scope_of_work_tree_untouched():
     # Post-D.1: scope-of-work moved under framework/.
     # Post-M1e: namespace pivot to framework/<comp>/src/loam/<comp>/.
     scope_src = Path(
-        "/Users/lukeivers/ivers-corp-pos-v2/framework/scope-of-work/src/loam/scope_of_work"
+        "/Users/lukeivers/loam/framework/scope-of-work/src/loam/scope_of_work"
     )
     expected = {
         "__init__.py", "adapter.py", "events.py", "observability.py",

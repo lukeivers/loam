@@ -22,7 +22,7 @@ optional:
   ANCESTOR_RECORD: ""
   STATUS_LINE: ""
   RESEARCH_PATH: ""
-  WORKING_DIRECTORY: "/Users/lukeivers/ivers-corp-pos-v2/"
+  WORKING_DIRECTORY: "/Users/lukeivers/loam/"
   REFERENCES: |
     - CLAUDE.md (project + global)
     - `plugins/dev-sdlc/docs/odd-methodology.md`, `plugins/dev-sdlc/docs/odd-in-loam.md`

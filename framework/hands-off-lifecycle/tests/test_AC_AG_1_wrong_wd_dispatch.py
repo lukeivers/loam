@@ -20,7 +20,7 @@ loam surfaces (the prompt contains at least one of:
 ``framework/<comp>/src/`` or ``framework/<comp>/tests/`` patterns,
 the literal ``loam amend`` (post-M1g rename of pre-M1g ``pos-amend``),
 the literal "seal commit", the literal canonical path
-``/Users/lukeivers/ivers-corp-pos-v2/``, OR an amendment-shape
+``/Users/lukeivers/loam/``, OR an amendment-shape
 pattern ``amendment #\\d+``), given the envelope's top-level ``cwd``
 does NOT match the canonical pos-v2 path: hook returns
 ``permissionDecision: "deny"`` with reason naming (a) the detected
@@ -68,7 +68,7 @@ def test_AC_AG_1_pos_v2_surface_wrong_cwd_denies(
         tool_input={
             "prompt": (
                 "Please update files at "
-                "/Users/lukeivers/ivers-corp-pos-v2/docs/plans/foo.md "
+                "/Users/lukeivers/loam/docs/plans/foo.md "
                 "and register the AC."
             ),
             "subagent_type": "general-purpose",
@@ -78,7 +78,7 @@ def test_AC_AG_1_pos_v2_surface_wrong_cwd_denies(
     assert decision.decision == "deny"
     assert decision.failure_class == "wrong-wd"
     assert "AC.AG.1" in decision.reason
-    assert "/Users/lukeivers/ivers-corp-pos-v2" in decision.reason
+    assert "/Users/lukeivers/loam" in decision.reason
 
 
 def test_AC_AG_1_amendment_mention_wrong_cwd_denies(

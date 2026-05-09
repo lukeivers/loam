@@ -118,7 +118,7 @@ PROMPT_LENGTH_THRESHOLD = 2500
 # dispatch's parent cwd. Hardcoded per the A2/A3 dispatch-template
 # defaults convention; a future maintainer changing the canonical path
 # updates this in lock-step with the rest of the codebase.
-CANONICAL_LOAM_PATH = "/Users/lukeivers/ivers-corp-pos-v2"
+CANONICAL_LOAM_PATH = "/Users/lukeivers/loam"
 
 
 def _audit_log_path(workspace_root: Path) -> Path:
@@ -140,7 +140,7 @@ _LOAM_SURFACE_PATTERNS: tuple[re.Pattern, ...] = (
     re.compile(r"framework/[\w-]+/tests/"),
     re.compile(r"\bloam amend\b"),
     re.compile(r"\bseal commit\b"),
-    re.compile(r"/Users/lukeivers/ivers-corp-pos-v2/"),
+    re.compile(r"/Users/lukeivers/loam/"),
     re.compile(r"\bamendment\s+#\d+", re.IGNORECASE),
 )
 

@@ -566,7 +566,7 @@ def _reason_wrong_tree_write(command: str, target: str) -> str:
         f"main-session writes to a mirror's framework/ tree corrupt "
         f"the canonical pos-v2 audit trail. Repair directions: (a) "
         f"redirect the command to operate inside canonical pos-v2 "
-        f"(`/Users/lukeivers/ivers-corp-pos-v2/`); (b) if the "
+        f"(`/Users/lukeivers/loam/`); (b) if the "
         f"workspace IS canonical, this gate should not have fired — "
         f"surface the false-positive; (c) `POS_BASH_GUARD_ALLOW=1` "
         f"bypasses for operator-trusted triage."

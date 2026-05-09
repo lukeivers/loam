@@ -89,7 +89,7 @@ def test_AC_BAG_5_cd_framework_then_git_commit_denies(
     assert decision.failure_class == "wrong-tree-write"
     assert "AC.BAG.5" in decision.reason
     assert "FIDRAFT-136" in decision.reason
-    assert "/Users/lukeivers/ivers-corp-pos-v2" in decision.reason
+    assert "/Users/lukeivers/loam" in decision.reason
 
 
 def test_AC_BAG_5_cd_framework_then_redirect_denies(

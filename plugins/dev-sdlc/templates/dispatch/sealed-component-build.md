@@ -8,7 +8,7 @@ required:
   - OBJECTIVE
   - SCOPE_FENCE
 optional:
-  WORKING_DIRECTORY: "/Users/lukeivers/ivers-corp-pos-v2"
+  WORKING_DIRECTORY: "/Users/lukeivers/loam"
   HALT_TRIGGERS_EXTRA: ""
   PARALLEL_AGENTS_NOTE: ""
   ACCEPTANCE_NOTES: ""

@@ -247,31 +247,30 @@ Per duration-estimation rubric (`wall_clock_minutes ≈ tool_calls × 0.1–0.15
 
 **Aggregate range: 110–180 min ≈ 1.8–3.0 hr AI-time.** Midpoint ~2.5 hr. Within halt-trigger 7 upper bound (150 min × 1.5 = 225 min); the 180 min upper edge is within tolerance because the HARD smoke is the dominant variance and v0.4.2 actuals (230s + writeup ≈ 30 min) sit at the band's middle.
 
-## §14 — Method decisions
+## 14. Method decisions
 
-Backfilled at build time per the v0.4.2 / v0.4.1 / v0.4.0 precedent.
-
-- **D-V043.1** (stopword set composition): _builder rules at build time_. Authoring guidance: minimal set ≤20 entries; ASCII-lowercase English-question stopwords (`what, how, the, was, did, does, is, are, a, an, of, to, in, on, for, this, that, it, be, at`); excludes high-signal loam-corpus terms (`loam`, `pos`, `claude`, `eric`, version strings). Surface set composition in the build report.
-- **D-V043.2** (length-normalization path): _builder rules at build time_. Authoring guidance: path (a) sqrt is the default; switch to path (b) BM25-style only if AC.V043.5 verdict falls short on path (a) OR builder argues corpus shape requires it. Document the chosen path + the empirical justification (probe verdict before/after) in the build report.
-- **D-V043.3** (cosmetic log bundling): _builder rules at build time_. Default: bundle in same source-edit commit as AC.V043.{1,2}; alternative: separate commit `fix(memory-write-worker): episode_uuid → path log shape` if builder prefers cleaner audit trail.
-- **D-V043.4** (existing-fixture handling under AC.V043.4): if any pre-existing test in `framework/primary-persona/tests/` empirically depended on the phrase-wrap behavior, the builder updates the fixture under the AC.V043.4 no-regression umbrella, names the fixture + the change in the build report, and keeps the contract update visible in the diff.
-- **D-V043.5** (AC.V043.5 probe harness shape): builder authors the harness as a pytest module marked `requires_live_store` (skip-by-default in CI; runnable locally). Output writeup at `<workspace>/.scratch/claude-output/v0-4-3-retrieval-probe.md` with per-probe verdict table + top-3 paths + relevance judgment + verdict band.
+- **D-V043.1** (stopword set composition): minimal in-tree set of 20 entries — `{a, an, the, of, to, in, on, for, at, by, is, are, was, were, be, do, does, did, what, how, this, that, it}` — ASCII-lowercase English-question stopwords; excludes high-signal loam-corpus terms (`loam`, `pos`, `claude`, `eric`, version strings, AC IDs) deliberately. Implemented as `_FTS_STOPWORDS: frozenset[str]` in `file_memory.py`. Live-store probe (AC.V043.5) hit 10/10 GREEN with this set; no need to widen at v0.4.3.
+- **D-V043.2** (length-normalization path): **path (b)-shaped — linear `raw_score / max(len(content), 1)`** (NOT the §4 default path-a sqrt). Empirical justification at build time: against the AC-spec fixture (100 KB compaction with every query term ≥10 times vs 2 KB focused with rare term 2 times) sqrt(100K)/sqrt(2K)≈7× length down-weighting but raw-count ratio is ~15×, so sqrt-normalized compaction still narrowly beats sqrt-normalized focused. Linear (BM25 `b=1` extreme without avgdoclen precomputation) closes the gap, satisfies the AC unit fixture, remains stdlib-only (no `math` import). Live-store probe (AC.V043.5) confirmed 10/10 GREEN with linear; no further tuning required. Switch shipped as a corrective NEW commit `cd3b9778` after the initial sqrt commit `a254f2c0`.
+- **D-V043.3** (cosmetic log bundling): bundled with main source-edit commit `a254f2c0` per the §14 default. AC.V043.{1,2,3} all in one commit; same component, same release, joint test-pass.
+- **D-V043.4** (existing-fixture handling under AC.V043.4): no pre-existing test required updating. AC.MFBM.2's 10-fixture sweep uses single rare-word queries (e.g., `"pos-amend"`, `"MemoryProvider"`, `"graphiti"`); these still yield results under token-sanitization (single-word queries produce single-token-OR which is equivalent to the rare-word phrase). 543 pre-existing tests pass without modification; AC.V043.4 bar met without touching any pre-V043 fixture.
+- **D-V043.5** (AC.V043.5 probe harness shape): `test_AC_V043_5_live_store_probes.py` marked `pytest.mark.requires_live_store`. Skip-by-default in CI via conftest.py `pytest_collection_modifyitems` auto-skip unless `-m requires_live_store` opt-in. 10 probes (6 from investigation report + 4 against curated session-summary memories). Writeup at `<workspace>/.scratch/claude-output/v0-4-3-retrieval-probe.md` (mirrored to `docs/experiments/v0-4-3-retrieval-probe.md`) with per-probe verdict + top-3 paths + relevance keywords. Verdict: 10/10 GREEN.
 
 ### Commit SHAs
 
 | Order | Type | SHA | Description |
 |---|---|---|---|
-| 1 | plan-doc | _pending_ | docs(plans): v0.4.3 patch — FBE.7 retrieval BM25-bypass + grep-length-bias plan-doc + manifest |
-| 2 | source-edit | _pending_ | fix(file-memory): token-sanitized FTS5 + length-normalized grep (AC.V043.{1,2}) |
-| 3 | source-edit | _pending_ | fix(memory-write-worker): episode_uuid → path log shape (AC.V043.3) — _OR_ bundled into commit 2 per D-V043.3 |
-| 4 | tests | _pending_ | test(file-memory): AC.V043.* test family (token-sanitization + length-normalization + log-shape + live-store probe) |
-| 5 | docs (probe writeup) | _pending_ | docs(experiments): v0.4.3 retrieval probe — verdict ≥7/10 |
-| 6 | docs (HARD smoke) | _pending_ | docs(experiments): v0.4.3 HARD smoke against rd-automation — GREEN |
-| 7 | docs (SHIP rollup) | _pending_ | docs: v0.4.3 SHIPPED rollup — STATE.md + release-roadmap §2/§3/§6 |
-| 8 | docs (FUTURE_IDEAS) | _pending_ | docs(future-ideas): capture v0.4.3 deferred items (stopword expansion / task-notification stripping / recency boost / FastMCP rip-out) |
-| 9 | manifest baseline-update | _pending_ | docs(plans): v0.4.3 patch manifest baseline → <SHA> |
-| 10 | apply | _pending_ | chore(amend): v0-4-3-patch-memory-retrieval-bm25-fix manifest+apply |
-| 11 | seal | _pending_ | chore(seals): v0-4-3-patch-memory-retrieval-bm25-fix — primary-persona at <SHA> |
+| 1 | plan-doc + manifest | `c00e7cc8` | docs(plans): v0.4.3 patch — FBE.7 retrieval BM25-bypass + grep-length-bias plan-doc + manifest |
+| 2 | source-edit | `a254f2c0` | fix(file-memory): token-sanitized FTS5 + length-normalized grep + worker-log shape (AC.V043.{1,2,3}) — D-V043.3 default bundling |
+| 3 | corrective | `cd3b9778` | fix(file-memory): switch _grep_search length-norm sqrt → linear (D-V043.2 builder ruling) |
+| 4 | tests | `a89a8e94` | test(file-memory): AC.V043.* test family — token-sanitization + length-normalization + log-shape + live-store probe |
+| 5 | docs (probe writeup) | `bf3178e0` | docs(experiments): v0.4.3 retrieval probe — verdict 10/10 GREEN |
+| 6 | docs (HARD smoke) | `7bff3817` | docs(experiments): v0.4.3 HARD smoke against rd-automation — GREEN |
+| 7 | docs (SHIP rollup) | `66d11752` | docs: v0.4.3 SHIPPED rollup — STATE.md + release-roadmap §2/§3 |
+| 8 | docs (FUTURE_IDEAS) | `67842e0c` | docs(future-ideas): capture v0.4.3 deferred items (stopword expansion / task-notification stripping / recency boost / FastMCP rip-out) |
+| 9 | manifest baseline-update | `2644a293` | docs(plans): v0.4.3 patch manifest baseline → cd3b9778 |
+| 10 | manifest extension | `6a9a06c7` | docs(plans): admit FUTURE_IDEAS_DRAFT + release-roadmap-dependency-map (v0.4.3 manifest extension) |
+| 11 | apply | `0d9f5c42` | chore(amend): v0-4-3-patch-memory-retrieval-bm25-fix manifest+apply — primary-persona BASELINE+sidecar bump to cd3b977 |
+| 12 | seal | `8dcd827a` | chore(seals): v0-4-3-patch-memory-retrieval-bm25-fix — primary-persona at 0d9f5c4 |
 
 ## §15 — SHA register
 

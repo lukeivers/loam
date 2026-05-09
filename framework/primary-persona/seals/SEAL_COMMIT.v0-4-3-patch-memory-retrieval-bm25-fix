@@ -1,0 +1,11 @@
+# v0.4.3 patch — FBE.7 retrieval BM25-bypass + grep-length-bias + cosmetic worker-log fix on the file-based memory surface (primary-persona)
+
+slug: v0-4-3-patch-memory-retrieval-bm25-fix
+components: primary-persona
+baseline: cd3b9778
+amendment-commit: 0d9f5c42c19d911495eb09c0c2c9de5ecaa095ff
+plan-doc: docs/plans/v0-4-3-patch-memory-retrieval-bm25-fix.md
+acs-satisfied: 7
+smoke: v0.4.3 patch — FTS5 token-sanitization + OR-of-tokens, _grep_search length-normalization, cosmetic worker-log fix; live-store retrieval probe + HARD smoke rd-automation; AC.V043.{1-6,S} green
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

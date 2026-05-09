@@ -1,0 +1,11 @@
+# v0.6.0 minor — concrete release process: `loam release <version>` CLI verb + 6 structural pre-publish gates + tag/push + optional GitHub Release with auto-generated notes + post-ship review block; `docs/release-process.md` runbook + manual fallback. Closes the figured-out-as-I-went publish workflow that bites at the wrong moment under time pressure or session handoff.
+
+slug: v0-6-0-release-process
+components: loam
+baseline: d1a6027a
+amendment-commit: 8125117d4cf429f099438d65483ee35cbac6be15
+plan-doc: docs/plans/v0-6-0-release-process.md
+acs-satisfied: 7
+smoke: v0.6.0 minor; AC.V060.{1-6,S} GREEN via 40 new tests under framework/tools/loam/tests/test_AC_V060_*.py; AC.V060.7 dogfood deferred to dispatcher publish action per ASK-FIRST
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

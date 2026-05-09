@@ -265,3 +265,68 @@ The runs are stochastic; pass-rates for Variant A on Task 2 in particular are hi
 **Aggregate:** 7 of 7 C4 ACs GREEN.
 
 **Outcome-altitude AC count:** 3 (AC.V040C4.{2, 4, 7}). Each is verified by real `claude -p` runs against real fixtures producing measurable behavioral test pass rates, NOT by stub injection or pre-arranged state. Per `feedback_test_outcome_altitude_required.md` — the rubric is satisfied.
+
+---
+
+## v0.4.1 re-run — F-DESIGN-1 closure verification (AC.V041.4)
+
+**Date:** 2026-05-09. **Status:** v0.4.1 patch surface re-run on the same 3 tasks.
+**Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/`. **Builder:** Sonnet (default).
+**HEAD under test:** `bb62f864` (sub-fix 3 commit; build_next tie-breaker beyond alphabetical).
+
+### Verdict
+
+**YELLOW** — partial improvement. Variant A pass-rate **62.5% (10/16) RELAXED** vs C4's 56% (9/16) baseline. The 3 sub-fixes produce **observable, structural improvements in production**, but the behavioral pass-rate gain is bounded by a NEW structural finding (F-DESIGN-2 — see §"v0.4.1 RF surfaces" below). **STRICT pass-rate (no manual executable wrapper) is 0/16** because the LLM-generated commits did not author `compile.sh` in any of the 3 tasks even with from-scratch mode active.
+
+### Per-task results
+
+| Task | C4 Variant A (single-commit) | v0.4.1 Variant A (multi-commit; from-scratch auto) | Δ |
+|---|---|---|---|
+| 1 calculator | 3/3 (100%) | 3/3 (100%, with manual wrap; 3 commits emitted) | tied |
+| 2 jsonpp | 0/7 (default candidate hallucinated path) | 7/7 (100%, with manual wrap; tie-breaker correctly picked `formatting` over `error-handling`) | **+7** |
+| 3 wcclone | 6/6 (100%) | 0/6 (library + CLI output format mismatch; Py 3.9 type-hint syntax) | **−6** |
+| **Aggregate (RELAXED)** | **9/16 = 56%** | **10/16 = 62.5%** | +1 (+6.5pp) |
+| **Aggregate (STRICT, no manual wrap)** | n/a | **0/16 = 0%** | n/a |
+
+### v0.4.1 sub-fixes — production observation receipts
+
+1. **Multi-commit-per-task (AC.V041.1):** all 3 tasks emitted **3 commits each** (vs 1 commit per task in C4). The `===COMMIT===` delimiter parser worked end-to-end against real `claude -p`.
+2. **From-scratch prompt mode (AC.V041.2):** all 3 tasks correctly **auto-detected from-scratch** (the docs_only_repo dirs have only README.md + SPEC.md). All 9 emitted diffs use `--- /dev/null` source-side framing.
+3. **Build-next tie-breaker (AC.V041.3):** **Task 2 jsonpp correctly picked `G.BACKING.o-formatting-1` first** (composite_score 0.8000) over `G.BACKING.o-error-handling-1` (also 0.8000). C4's empirical failure case is now structurally fixed in production.
+
+### v0.4.1 RF surfaces (F-DESIGN-2 candidate)
+
+**F-DESIGN-2 — From-scratch prompt mode produces structurally-valid multi-commit output but doesn't reliably pin SPEC-required filenames.** Empirically: even with multi-commit-per-task + from-scratch framing + `--- /dev/null` instruction, the LLM in 3/3 v0.4.1 runs:
+
+- Did NOT author `compile.sh` (the SPEC-mandated build artefact).
+- Did NOT author an `executable` file directly (chose package shape: `bin/json-format`, `arithmetic/operations.py`, `file_counter.py`).
+- Did NOT consistently match the SPEC's CLI output format (Task 3 wcclone printed `Lines: N\nWords: N\nBytes: N` instead of `<l> <w> <b>`).
+- Did NOT honor the SPEC's "Test interface" section (which names the exact subprocess shape the test harness uses).
+
+The from-scratch prompt prompts the LLM to "create new files" but doesn't pass the SPEC's behavioral test interface as a prompt input. The LLM doesn't see what shape the test suite expects, so it makes reasonable but spec-incompatible choices (Makefile install vs compile.sh; library shape vs CLI; multi-line output vs single-line).
+
+**Closure path (v0.4.2 patch or v0.5.0 surface):**
+
+1. Pass the SPEC's **Test interface** section (or full SPEC) into the from-scratch prompt as load-bearing context — instruct the LLM that the test harness invokes `./executable <args>` and produces stdout matching `<format>`.
+2. OR — author a deterministic **post-processor** that synthesizes `compile.sh` from emitted source files (e.g., `find *.py -maxdepth 1` + emit `cp file.py executable; chmod +x executable`).
+3. OR — change the build-next surface to recognize "compile.sh" as a NAMED REQUIRED ARTEFACT in any task whose SPEC references it, and inject that requirement into the prompt.
+
+This is a structurally smaller gap than F-DESIGN-1 (the 3 sub-fixes ARE working in production; the residual gap is one prompt-engineering pass). Plausibly v0.4.2 patch territory, NOT a v0.5.0 reframe.
+
+### Cost + reproducibility
+
+Per-task cost (synthesis + code-gen): ~$0.10–0.15. Total v0.4.1 re-run cost: **~$0.40** (within the $5 ceiling per dispatch directive; consistent with C4's $0.42).
+
+Re-run reproducibility:
+- Inputs at `/tmp/v041-pbn-runs/{task1_calculator_docs,task2_jsonpp_docs,task3_wcclone_docs}/`.
+- Workspaces at `/tmp/v041-pbn-runs/{task1_calculator_ws,task2_jsonpp_ws,task3_wcclone_ws}/`.
+- Eval scripts at `/tmp/v041-pbn-runs/{run-task,eval-task}.sh`.
+- Diffs at `<ws>/.loam/extractions/<repo-id>/code-gen/diff.patch`.
+
+These are out-of-tree (`/tmp/`); session-bound. v0.4.2 patch could move them to `plugins/dev-sdlc/odd-extractor/tests/fixtures/programbench/v0/` if reproducibility-on-CI becomes load-bearing.
+
+### AC.V041.4 verdict
+
+**GREEN** for the AC contract ("re-run produces measurable improvement; surface findings"). YELLOW for the empirical aggregate (closer to baseline but not GREEN-band). Per the v0.4.1 plan-doc §4 verdict bands: 57–74% = YELLOW = partial improvement, surface for owner ruling. Per `feedback_locked_design_not_license_for_bad_outcomes`: F-DESIGN-2 surfaced explicitly with closure path; do not silently accept partial-progress.
+
+The structural mechanism of F-DESIGN-1 IS resolved (multi-commit + from-scratch + tie-breaker all working in production). The residual behavioral gap is a *prompt-engineering* question (passing SPEC test-interface into the prompt), not the *architectural* question F-DESIGN-1 surfaced.

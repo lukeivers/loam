@@ -1,0 +1,11 @@
+# v0.4.1 patch — F-DESIGN-1 closure: multi-commit-per-task + from-scratch prompt mode + build-next tie-breaker beyond alphabetical; ProgramBench v0 Variant A re-run vs baseline; HARD smoke against rd-automation; closes the §6 owner-action-line entry on F-DESIGN-1
+
+slug: v0-4-1-patch-f-design-1-closure
+components: dev-sdlc
+baseline: 946424d7
+amendment-commit: d20736b238c5f5dfcbcd85e6e4fbc032232dbefd
+plan-doc: docs/plans/v0-4-1-patch-f-design-1-closure.md
+acs-satisfied: 6
+smoke: v0.4.1 patch — 3 sub-fixes (multi-commit + from-scratch + tie-breaker); ProgramBench v0 re-run; HARD smoke rd-automation; AC.V041.{1-6} green; F-DESIGN-1 §6 owner-action-line closed
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

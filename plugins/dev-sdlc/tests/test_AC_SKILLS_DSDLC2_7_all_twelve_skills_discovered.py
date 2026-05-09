@@ -35,7 +35,11 @@ import yaml
 SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
 
 # 6 from v0.1.8 Cycle 5 (first pass) + 6 from v0.1.9 Cycle 3
-# (second pass) + 1 from v0.2.1 Cycle 2 = 13 total dev-sdlc SKILLs.
+# (second pass) + 1 from v0.2.1 Cycle 2 + 1 (odd-test-altitude-
+# discipline) admitted into the registry as part of the v0.4.4
+# AC.V044.4 no-regression closure (pre-existing orphan from the
+# odd-test-altitude-discipline shipping cycle, surfaced by AC.V044.4)
+# + 1 from v0.4.4 Cycle 1 (subagent-routing) = 15 total.
 EXPECTED_SKILLS = [
     # First pass (v0.1.8 Cycle 5, sealed e4512b9):
     "loam-amend-cycle",
@@ -53,6 +57,13 @@ EXPECTED_SKILLS = [
     "loam-amend-status-quick",
     # Third pass (v0.2.1 Cycle 2):
     "skill-promotion-review",
+    # Fourth pass (odd-test-altitude-discipline shipping cycle —
+    # admitted into the registry by v0.4.4 AC.V044.4 to clear the
+    # pre-existing no-orphans regression in this test):
+    "odd-test-altitude-discipline",
+    # Fifth pass (v0.4.4 Cycle 1, subagent-routing — closes the
+    # consumption-gap on the v0.1.7 typed personas):
+    "subagent-routing",
 ]
 
 DESCRIPTION_MAX_CHARS = 1536
@@ -133,5 +144,14 @@ def test_all_twelve_dev_sdlc_skills_discovered() -> None:
 def test_skills_count_thirteen() -> None:
     """v0.1.9 Cycle 3 set the bundle at 12 (6 first pass from
     v0.1.8 Cycle 5 + 6 second pass from v0.1.9 Cycle 3); v0.2.1
-    Cycle 2 added `skill-promotion-review` as the 13th."""
-    assert len(EXPECTED_SKILLS) == 13
+    Cycle 2 added `skill-promotion-review` as the 13th. v0.4.4 AC.V044.4
+    extended the registry to 15 — admitted `odd-test-altitude-
+    discipline` (pre-existing orphan; clears that regression) and
+    `subagent-routing` (new this cycle).
+
+    The function name retains the historical 'thirteen' wording for
+    git-blame continuity with the v0.2.1 + v0.4.4 amendment record;
+    the assertion tracks the current count. Future amendments that
+    add SKILLs update this value + the EXPECTED_SKILLS list together.
+    """
+    assert len(EXPECTED_SKILLS) == 15

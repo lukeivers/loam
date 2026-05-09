@@ -191,6 +191,42 @@ Owner gate-review separate (ratify plan-doc shape before build dispatch + ratify
 - Telegram 10633 (major-release-shape ratification; pre-1.0 never cuts major).
 - Memory rule `feedback_hard_smoke_per_minor_before_publish.md` (HARD smoke gate codification this CLI enforces structurally).
 
-## §13 — §status (post-build backfill)
+## §13 — §status
 
-(Filled in at end of build cycle — per-AC verdict matrix, commit SHAs, dogfood verdict, AI-time actuals.)
+**Build cycle:** 2026-05-09. Single-cycle MINOR per Q2 ratification.
+
+**Plan-doc revision commit:** `c05ce45` — slug + AC IDs + branch + remote + working-directory revision pass.
+**Source-edit commit:** `d1a6027` — feat(loam-cli): `loam release` subcommand + 5-module subpackage + 40 tests + runbook.
+**Apply commit:** TBD-AT-APPLY (lands via `loam amend apply` per sealed-component cycle ritual).
+**Seal commit:** TBD-AT-SEAL (lands via `loam amend seal --plan-doc`).
+
+### AC verdict matrix
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.V060.1 — `loam release` CLI verb | GREEN | 4 tests at `framework/tools/loam/tests/test_AC_V060_1_release_cli_dispatch.py` cover registration, help surface, parse, builder smoke. `loam release --help` produces usage. |
+| AC.V060.2 — Structural pre-publish gates | GREEN | 18 tests at `framework/tools/loam/tests/test_AC_V060_2_pre_publish_gates.py` cover per-gate GREEN + RED variants (each RED variant verifies the specific corrective hint per the AC's "specific corrective hint, not a generic error" requirement). All 6 gates implemented in `framework/tools/loam/src/loam_cli/release/gates.py`; `run_all` does NOT short-circuit. Path A (default per D-V060.2) used: single module, per-gate functions. |
+| AC.V060.3 — Tag + push action | GREEN | 5 tests at `framework/tools/loam/tests/test_AC_V060_3_tag_and_push.py` cover annotated-tag creation against a local fake remote, branch + tag push, idempotent re-run on already-published version, dry-run skips actions, RED-gate aborts before tag. |
+| AC.V060.4 — Optional GitHub Release with auto-generated notes | GREEN | 5 tests at `framework/tools/loam/tests/test_AC_V060_4_release_notes.py` cover notes-section content (outcome shape + AC matrix + commit log), missing-plan-doc graceful handling, `--release` invokes mocked `gh release create`. D-V060.4 default used: plan-doc §1 + §status + commit log; chore-prefix noise filter triggers when log is dense (≥4 lines + >50% noise). |
+| AC.V060.5 — Release-process runbook | GREEN | New doc at `docs/release-process.md`. Six sections: pre-publish gates table, `loam release` invocation + flags, post-publish state + things-to-check-next, manual fallback (when CLI unavailable), composes-with, cross-references. Reviewable in 5 minutes; cross-references the CLI's `--help` output per the AC. |
+| AC.V060.6 — Post-ship review + next-scope decision | GREEN | 6 tests at `framework/tools/loam/tests/test_AC_V060_6_post_ship_review.py` cover proposal field population, missing-roadmap placeholder handling, pre-1.0 vs post-1.0 major-eval branches, format_proposal rendering, runner emits proposal on success + on dry-run. Pre-1.0 branch returns "pre-1.0" verdict + "never cuts major" detail per `release-versioning-policy.md` §1.0.0. |
+| AC.V060.7 — Dogfood v0.6.0 publish | DEFERRED | Per dispatch-brief HARD HALT rule on `git push` / `git tag` from builder, the publish action is dispatcher-side. Builder lands all sealed locally; dispatcher invokes `loam release v0.6.0` post-build to dogfood. Build-time `loam release v0.6.0 --dry-run` (research-only no-public-action) verified the gate surface against the canonical tree's pre-seal state — every RED traced to the seal-cycle ritual not yet completing (gates 2, 3, 6 surfaced corrective hints naming the missing backfill state, exactly as designed). Dogfood verdict pending dispatcher invocation. |
+| AC.V060.S — Seal-diff discipline | TBD-AT-SEAL | `git diff --name-only BASELINE..SEAL_COMMIT` will be verified at seal time by `framework/tools/loam/tests/test_no_sealed_amendments.py` (fence test for `loam` component). Universal admissions cover `docs/plans/`, `docs/experiments/`, `docs/STATE.md`, `docs/release-roadmap.md`, `docs/release-process.md`. |
+
+### AI-time actuals
+
+Build (this cycle, builder agent):
+
+| Stage | Estimated band | Estimated midpoint | Actual |
+|---|---|---|---|
+| Plan-doc revision (slug + branch + remote) | 5-10 min | 7 min | ~10 min |
+| CLI verb + 5-module subpackage + 40 tests | 45-75 min | 60 min | ~50 min |
+| Runbook doc | 15-30 min | 22 min | ~12 min |
+| HARD smoke + plan-doc §13 backfill + STATE/roadmap admin | 15-30 min | 22 min | TBD |
+| **Total v0.6.0 build (excl. dogfood)** | **80-145 min** | **~111 min** | TBD |
+
+Per `feedback_duration_estimation_rubric` log-actuals discipline; final actuals appended after the seal-cycle ritual completes.
+
+### Halt-and-surface findings
+
+None. Build proceeded to seal without architectural blocks. The v0.6.0 surface is small (one new component fence + one new doc) + cleanly composes with the existing `loam` CLI dispatcher's M6a entry-point group + the dev-sdlc plugin's `amend` adapter (sibling registration pattern). No ODD §2.5 violations surfaced in surrounding code; no scope creep beyond the plan-doc fence.

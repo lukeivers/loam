@@ -330,3 +330,78 @@ These are out-of-tree (`/tmp/`); session-bound. v0.4.2 patch could move them to 
 **GREEN** for the AC contract ("re-run produces measurable improvement; surface findings"). YELLOW for the empirical aggregate (closer to baseline but not GREEN-band). Per the v0.4.1 plan-doc §4 verdict bands: 57–74% = YELLOW = partial improvement, surface for owner ruling. Per `feedback_locked_design_not_license_for_bad_outcomes`: F-DESIGN-2 surfaced explicitly with closure path; do not silently accept partial-progress.
 
 The structural mechanism of F-DESIGN-1 IS resolved (multi-commit + from-scratch + tie-breaker all working in production). The residual behavioral gap is a *prompt-engineering* question (passing SPEC test-interface into the prompt), not the *architectural* question F-DESIGN-1 surfaced.
+
+## v0.4.2 re-run — F-DESIGN-2 closure verification (AC.V042.{3,4,5})
+
+**Date:** 2026-05-09. **Status:** v0.4.2 patch surface re-run on the same 3 tasks.
+**Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/`. **Builder:** Sonnet (default).
+**HEAD under test:** v0.4.2 sub-fix 2 commit (test-interface load-bearing prompt + Py-version-compat post-process).
+
+### Verdict
+
+**GREEN** — full recovery + step-up to baseline. Variant A pass-rate **100% (16/16) STRICT** vs v0.4.1's 62.5% (10/16) RELAXED + 0% STRICT. The 2 sub-fixes close F-DESIGN-2:
+
+- Sub-fix 1 (AC.V042.1): from-scratch prompt now embeds the SPEC's "Test interface" section as load-bearing context; LLM is instructed to author named build artefacts (`compile.sh`, `executable`) as first-class commits + match the SPEC's CLI exactly.
+- Sub-fix 2 (AC.V042.2): from-scratch prompt names Python 3.9-compat (no PEP-604, no match/case) AND a deterministic post-processor (`_lower_pep604_unions`) defensively rewrites `X | Y` → `Union[X, Y]` / `Optional[X]` in `+++ b/*.py` hunks.
+
+### Per-task results
+
+| Task | C4 baseline | v0.4.1 Variant A | v0.4.2 Variant A | Δ vs v0.4.1 |
+|---|---|---|---|---|
+| 1 calculator | 3/3 (100%) | 3/3 (100%, RELAXED) | 3/3 (100%, STRICT) | tied |
+| 2 jsonpp | 0/7 | 7/7 (100%, RELAXED) | 7/7 (100%, STRICT) | tied |
+| 3 wcclone | 6/6 (100%) | 0/6 (regression) | 6/6 (100%, STRICT) | **+6** |
+| **Aggregate (STRICT)** | n/a | **0/16 = 0%** | **16/16 = 100%** | n/a |
+| **Aggregate (RELAXED)** | **9/16 = 56%** | **10/16 = 62.5%** | **16/16 = 100%** | **+6 (+37.5pp)** |
+
+### v0.4.2 sub-fixes — production observation receipts
+
+1. **Test-interface section as load-bearing context (AC.V042.1):** all 3 tasks correctly authored either `compile.sh` (calculator + wcclone) OR a directly-runnable `executable` (jsonpp). The SPEC's "Test interface" section was extracted by `_extract_test_interface_excerpt` from each task's `SPEC.md` and embedded under the canonical `Test interface from SPEC:` heading in the user-prompt. The LLM saw the exact `subprocess.run([./executable, ...])` shape the test harness uses, and matched it exactly (single-line stdout for wcclone vs the v0.4.1 multi-line regression).
+
+2. **Py-version compatibility (AC.V042.2):** wcclone's v0.4.1 regression class (`str | Path` PEP-604 syntax under Py 3.9 test harness) is closed structurally. The instruction-side prompt names "Python 3.9 compatibility" + "no PEP-604 unions"; the post-processor `_lower_pep604_unions` runs defensively after parse so even stochastic LLM regressions get caught. Empirically, the v0.4.2 wcclone diff used no PEP-604 unions (instruction worked); no post-process rewrite was needed.
+
+3. **Multi-commit-per-task (AC.V041.1, inherited):** task1 emitted 2 commits (arithmetic.c + compile.sh), task2 emitted 1 commit (single executable matched SPEC), task3 emitted 2 commits (executable + compile.sh). v0.4.1 multi-commit parser preserved.
+
+4. **From-scratch prompt mode (AC.V041.2, inherited):** all 3 tasks correctly auto-detected from-scratch + emitted `--- /dev/null` framing.
+
+5. **Build-next tie-breaker (AC.V041.3, inherited):** jsonpp tie-breaker correctly picked `G.BACKING.o-workflow-1` (task-shape) over alternatives at composite_score 0.8000.
+
+### Diff shapes (the structural difference vs v0.4.1)
+
+**Task 1 calculator (v0.4.2):**
+- `arithmetic.c` — C source with main() taking `<a> <op> <b>` argv + printf(int).
+- `compile.sh` — `gcc -o executable arithmetic.c`.
+
+**Task 2 jsonpp (v0.4.2):**
+- `executable` — Python script with shebang `#!/usr/bin/env python3` reading stdin + writing pretty JSON. Single commit; the file IS the executable. (eval-task.sh chmod +x added in v0.4.2 to honor "executable" as a named artefact when no `compile.sh` is emitted.)
+
+**Task 3 wcclone (v0.4.2):**
+- `executable` — Python script reading argv[1], counting bytes/words/lines, printing single-line `<l> <w> <b>`.
+- `compile.sh` — `chmod +x executable`.
+
+vs the v0.4.1 wcclone shape (library + tests; no executable; PEP-604 unions; multi-line stdout) — fully recovered.
+
+### Cost + reproducibility
+
+Per-task wall-clock + cost (Stage 1 extract + Stage 5 code-gen):
+- task1 calculator: 36.3s code-gen wall-clock; full pipeline ~3 min.
+- task2 jsonpp: 54.3s code-gen wall-clock; full pipeline ~3 min.
+- task3 wcclone: 57.8s code-gen wall-clock; full pipeline ~3 min.
+
+Per-task synthesis cost (Stage 1): ~$0.10–0.15 per task (consistent with v0.4.1 / C4 bands). Total v0.4.2 re-run cost: **~$0.45** (within the $5 ceiling per dispatch directive; consistent with v0.4.1's $0.40).
+
+Re-run reproducibility:
+- Inputs at `/tmp/v042-pbn-runs/{task1_calculator_docs,task2_jsonpp_docs,task3_wcclone_docs}/`.
+- Workspaces at `/tmp/v042-pbn-runs/{task1_calculator_ws,task2_jsonpp_ws,task3_wcclone_ws}/`.
+- Eval scripts at `/tmp/v042-pbn-runs/{run-task,eval-task}.sh`. Eval-task.sh widened in v0.4.2 to chmod +x `executable` when authored directly (no `compile.sh`).
+- Diffs at `<ws>/.loam/extractions/<repo-id>/code-gen/diff.patch`.
+
+These are out-of-tree (`/tmp/`); session-bound. v0.4.3+ patch could move them to `plugins/dev-sdlc/odd-extractor/tests/fixtures/programbench/v0/` if reproducibility-on-CI becomes load-bearing.
+
+### AC.V042.{3,4,5} verdicts
+
+- **AC.V042.3 (wcclone recovery, threshold ≥4/6):** **GREEN** at 6/6. Full structural recovery. The v0.4.1 0/6 regression class (library shape + multi-line stdout + PEP-604 unions) is closed by the test-interface load-bearing prompt + Py-version-compat post-process.
+- **AC.V042.4 (no-regression on calculator + jsonpp, threshold v0.4.1 levels):** **GREEN**. calculator 3/3 (tied), jsonpp 7/7 (tied). Now STRICT (compile.sh authored OR executable matches subprocess shape) where v0.4.1 was RELAXED-only.
+- **AC.V042.5 (aggregate ≥75%, threshold 12/16):** **GREEN** at 16/16 = 100%. Step-up of +6 (+37.5pp) over v0.4.1.
+
+The structural mechanism of F-DESIGN-2 IS resolved. The from-scratch prompt now produces SPEC-compatible artefacts at the rate the direct `claude -p` baseline does. The RELAXED-vs-STRICT distinction collapses to STRICT-only at v0.4.2 because every emitted diff carries the named build artefact (or matches the subprocess-as-source pattern jsonpp uses).

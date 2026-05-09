@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AC.V044.2 — ``subagent-routing`` SKILL.md present and content-correct.
+"""AC.V050.2 — ``subagent-routing`` SKILL.md present and content-correct.
 
-Per ``docs/plans/v0-4-4-subagent-personas-routing-and-priming.md``
-§4 AC.V044.2: a new SKILL at
+Per ``docs/plans/v0-5-0-subagent-personas-routing-and-priming.md``
+§4 AC.V050.2: a new SKILL at
 ``plugins/dev-sdlc/skills/subagent-routing/SKILL.md`` is
 discoverable AND its body carries the full routing rubric.
 
@@ -55,7 +55,7 @@ DESCRIPTION_MAX_CHARS = 1536
 
 def _load_skill() -> tuple[dict, str]:
     assert SKILL_PATH.is_file(), (
-        f"AC.V044.2: expected SKILL.md at {SKILL_PATH}; SKILL must "
+        f"AC.V050.2: expected SKILL.md at {SKILL_PATH}; SKILL must "
         "exist at the canonical path."
     )
     text = SKILL_PATH.read_text(encoding="utf-8")
@@ -68,14 +68,14 @@ def _load_skill() -> tuple[dict, str]:
     return frontmatter, body
 
 
-def test_AC_V044_2_skill_file_exists() -> None:
+def test_AC_V050_2_skill_file_exists() -> None:
     assert SKILL_PATH.is_file(), (
-        f"AC.V044.2: expected subagent-routing SKILL.md at "
+        f"AC.V050.2: expected subagent-routing SKILL.md at "
         f"{SKILL_PATH}"
     )
 
 
-def test_AC_V044_2_skill_frontmatter_valid() -> None:
+def test_AC_V050_2_skill_frontmatter_valid() -> None:
     frontmatter, _body = _load_skill()
     assert isinstance(frontmatter, dict)
     description = frontmatter.get("description")
@@ -87,7 +87,7 @@ def test_AC_V044_2_skill_frontmatter_valid() -> None:
     )
 
 
-def test_AC_V044_2_description_triggers_on_dispatch_authoring() -> None:
+def test_AC_V050_2_description_triggers_on_dispatch_authoring() -> None:
     """Description names the dispatch-authoring trigger so Claude's
     SKILL discovery loads it at the right time."""
     frontmatter, _body = _load_skill()
@@ -95,7 +95,7 @@ def test_AC_V044_2_description_triggers_on_dispatch_authoring() -> None:
     # The description must name the dispatch-authoring trigger
     # (Task / Agent / dispatch).
     assert "dispatch" in description_lower, (
-        "AC.V044.2: description must name 'dispatch' so SKILL "
+        "AC.V050.2: description must name 'dispatch' so SKILL "
         "discovery triggers at brief-authoring time."
     )
     # And must reference subagent_type / persona / typed routing.
@@ -103,12 +103,12 @@ def test_AC_V044_2_description_triggers_on_dispatch_authoring() -> None:
         "subagent_type" in description_lower
         or "persona" in description_lower
     ), (
-        "AC.V044.2: description must reference subagent_type or "
+        "AC.V050.2: description must reference subagent_type or "
         "persona routing."
     )
 
 
-def test_AC_V044_2_rubric_maps_all_five_personas() -> None:
+def test_AC_V050_2_rubric_maps_all_five_personas() -> None:
     """Body carries the work-shape → persona rubric covering all 5
     v0.1.7 personas + the general-purpose fall-back."""
     _frontmatter, body = _load_skill()
@@ -120,16 +120,16 @@ def test_AC_V044_2_rubric_maps_all_five_personas() -> None:
         "loam-documenter",
     ):
         assert persona in body, (
-            f"AC.V044.2: rubric must map a work-shape to {persona!r}."
+            f"AC.V050.2: rubric must map a work-shape to {persona!r}."
         )
     # The general-purpose fall-back is named explicitly.
     assert "general-purpose" in body, (
-        "AC.V044.2: body must name 'general-purpose' as the "
+        "AC.V050.2: body must name 'general-purpose' as the "
         "fall-back routing target."
     )
 
 
-def test_AC_V044_2_fall_back_clause_present() -> None:
+def test_AC_V050_2_fall_back_clause_present() -> None:
     """Body carries an explicit fall-back-to-general-purpose
     section/clause."""
     _frontmatter, body = _load_skill()
@@ -137,26 +137,26 @@ def test_AC_V044_2_fall_back_clause_present() -> None:
     # The clause is named in a heading or paragraph; we accept either
     # phrasing as long as 'fall' + 'general-purpose' co-occur.
     assert "fall back" in body_lower or "fall-back" in body_lower, (
-        "AC.V044.2: body must carry an explicit fall-back-to-"
+        "AC.V050.2: body must carry an explicit fall-back-to-"
         "general-purpose clause."
     )
 
 
-def test_AC_V044_2_references_personas_methodology() -> None:
+def test_AC_V050_2_references_personas_methodology() -> None:
     """Body cites ``docs/personas-methodology.md`` as the rubric
     authority."""
     _frontmatter, body = _load_skill()
     assert "personas-methodology.md" in body, (
-        "AC.V044.2: body must reference docs/personas-methodology.md "
+        "AC.V050.2: body must reference docs/personas-methodology.md "
         "as the rubric authority."
     )
 
 
-def test_AC_V044_2_references_dispatch_brief_authoring_skill() -> None:
+def test_AC_V050_2_references_dispatch_brief_authoring_skill() -> None:
     """Body cites the ``dispatch-brief-authoring`` SKILL for the
     brief-shape extension."""
     _frontmatter, body = _load_skill()
     assert "dispatch-brief-authoring" in body, (
-        "AC.V044.2: body must reference the dispatch-brief-authoring "
+        "AC.V050.2: body must reference the dispatch-brief-authoring "
         "SKILL for the brief-shape extension."
     )

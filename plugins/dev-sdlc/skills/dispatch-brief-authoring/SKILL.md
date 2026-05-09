@@ -93,16 +93,16 @@ The dispatch-brief structural shape, in canonical order:
    is behavioral and lives as prose here rather than as a
    structural AC.
 
-   **When `subagent_type` is not `general-purpose` (v0.4.4;
-   AC.V044.3).** Briefs dispatched via a typed persona handle
+   **When `subagent_type` is not `general-purpose` (v0.5.0;
+   AC.V050.3).** Briefs dispatched via a typed persona handle
    (`subagent_type: loam-builder` / `loam-plan-author` /
    `loam-researcher` / `loam-reviewer` / `loam-documenter`)
    MAY omit the AC.DBT principles the persona body already
    carries — the persona prompt loads at dispatch-start and
    re-asserting in the brief is duplication. The omission is
    PARTIAL because the v0.1.7 persona bodies do not carry
-   every AC.DBT principle uniformly (per the v0.4.4 audit at
-   `workspace/.scratch/claude-output/v0-4-4-dispatch-site-audit.md`
+   every AC.DBT principle uniformly (per the v0.5.0 audit at
+   `workspace/.scratch/claude-output/v0-5-0-dispatch-site-audit.md`
    AC.DBT cross-walk). Per-persona omission table below;
    anything not marked OMIT-OK MUST still propagate in the
    brief.
@@ -328,7 +328,7 @@ When raw Claude Code without loam:
   manufactured audit ✗; four-test before writing ✗.
 - **`feedback_principle_application_front_load_and_audit`**
   (AC.DBT.7 prose) — minimal audit at end of every reply.
-- **`subagent-routing` SKILL** (v0.4.4; AC.V044.2) — chooses
+- **`subagent-routing` SKILL** (v0.5.0; AC.V050.2) — chooses
   the typed `subagent_type` upstream of brief authoring. The
   brief-extension §"When subagent_type is not general-purpose"
   applies the per-persona omission table when the routing

@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AC.V044.1 — production dispatch-site audit artefact.
+"""AC.V050.1 — production dispatch-site audit artefact.
 
-Per ``docs/plans/v0-4-4-subagent-personas-routing-and-priming.md``
-§4 AC.V044.1: a fresh empirical audit confirms the consumption gap
+Per ``docs/plans/v0-5-0-subagent-personas-routing-and-priming.md``
+§4 AC.V050.1: a fresh empirical audit confirms the consumption gap
 before any SKILL authoring. The artefact lives at the canonical
 path under ``workspace/.scratch/claude-output/`` and carries (a) a
 verdict-band line (GREEN / YELLOW / RED), (b) ≥10 audited rows.
@@ -24,7 +24,7 @@ Note on path: the artefact is workspace-scratch and may not exist
 in fresh clones of the canonical pos-v2 (the workspace `.scratch`
 is gitignored). The test gates on the artefact's existence via an
 env var so CI doesn't false-fail when the workspace is fresh; the
-v0.4.4 build sets the env var while the artefact is on disk.
+v0.5.0 build sets the env var while the artefact is on disk.
 """
 
 from __future__ import annotations
@@ -41,14 +41,14 @@ ARTEFACT_PATH = (
     / "workspace"
     / ".scratch"
     / "claude-output"
-    / "v0-4-4-dispatch-site-audit.md"
+    / "v0-5-0-dispatch-site-audit.md"
 )
 
 # The artefact is workspace-scratch and gitignored. The build sets
 # this env var when running the test against a workspace where the
 # artefact exists; CI without the workspace skips the test gracefully
-# (matches the AC.V044.5 outcome-probe gating shape).
-ENV_VAR = "LOAM_V044_AUDIT_ARTEFACT_PRESENT"
+# (matches the AC.V050.5 outcome-probe gating shape).
+ENV_VAR = "LOAM_V050_AUDIT_ARTEFACT_PRESENT"
 
 
 def _artefact_present() -> bool:
@@ -63,10 +63,10 @@ def _artefact_present() -> bool:
         "artefact runs this test with the artefact on disk."
     ),
 )
-def test_AC_V044_1_audit_artefact_exists() -> None:
+def test_AC_V050_1_audit_artefact_exists() -> None:
     """The audit artefact exists at the canonical path."""
     assert ARTEFACT_PATH.is_file(), (
-        f"AC.V044.1: audit artefact must exist at {ARTEFACT_PATH}"
+        f"AC.V050.1: audit artefact must exist at {ARTEFACT_PATH}"
     )
 
 
@@ -77,14 +77,14 @@ def test_AC_V044_1_audit_artefact_exists() -> None:
         f"{ENV_VAR}!=1; skipping."
     ),
 )
-def test_AC_V044_1_audit_artefact_has_verdict_band() -> None:
+def test_AC_V050_1_audit_artefact_has_verdict_band() -> None:
     """The audit artefact carries a verdict-band line (GREEN /
     YELLOW / RED)."""
     text = ARTEFACT_PATH.read_text(encoding="utf-8")
     # Verdict band lives in a top-level "## Verdict" section per the
-    # AC.V044.1 spec.
+    # AC.V050.1 spec.
     assert "## Verdict" in text, (
-        "AC.V044.1: audit artefact must carry a top-level "
+        "AC.V050.1: audit artefact must carry a top-level "
         "'## Verdict' section."
     )
     # The verdict-band keyword (one of GREEN / YELLOW / RED) appears
@@ -93,7 +93,7 @@ def test_AC_V044_1_audit_artefact_has_verdict_band() -> None:
         band in text for band in ("GREEN", "YELLOW", "RED")
     )
     assert band_present, (
-        "AC.V044.1: audit artefact must record a verdict band "
+        "AC.V050.1: audit artefact must record a verdict band "
         "(GREEN / YELLOW / RED) explicitly."
     )
 
@@ -105,7 +105,7 @@ def test_AC_V044_1_audit_artefact_has_verdict_band() -> None:
         f"{ENV_VAR}!=1; skipping."
     ),
 )
-def test_AC_V044_1_audit_artefact_has_minimum_rows() -> None:
+def test_AC_V050_1_audit_artefact_has_minimum_rows() -> None:
     """The audit artefact carries ≥10 audited rows.
 
     Rows are markdown table rows under the dispatch-shape audit
@@ -127,7 +127,7 @@ def test_AC_V044_1_audit_artefact_has_minimum_rows() -> None:
         and "Work-shape" not in line
     ]
     assert len(data_rows) >= 10, (
-        f"AC.V044.1: audit artefact must carry ≥10 audited rows; "
+        f"AC.V050.1: audit artefact must carry ≥10 audited rows; "
         f"found {len(data_rows)}. (data rows are markdown table "
         "rows in the audit body.)"
     )

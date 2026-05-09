@@ -1,0 +1,11 @@
+# v0.5.0 patch — subagent-personas routing + priming consumption-gap closure: new subagent-routing SKILL (work-shape → typed-persona rubric) + dispatch-brief-authoring SKILL extension (partial-omission table per AC.DBT principle × persona); closes the v0.1.7 typed-persona consumption gap on the dispatch-time surface; AC.DBT cross-walk surfaces persona-priming gaps captured as FIDRAFT for v0.4.5+ closure
+
+slug: v0-5-0-subagent-personas-routing-and-priming
+components: dev-sdlc
+baseline: 1901e5e9
+amendment-commit: f1f29caca797680528c2090f227ae0503b867fd5
+plan-doc: docs/plans/v0-5-0-subagent-personas-routing-and-priming.md
+acs-satisfied: 6
+smoke: v0.5.0 patch — subagent-personas routing + priming consumption-gap closure; AC.V050.{1-5,S} green (audit GREEN 13/13; outcome YELLOW -22.9%); release-gate HARD (SKILL+docs only)
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

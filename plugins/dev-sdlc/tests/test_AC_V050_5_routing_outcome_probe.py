@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AC.V044.5 — routing outcome-altitude probe (outcome-altitude AC).
+"""AC.V050.5 — routing outcome-altitude probe (outcome-altitude AC).
 
-Per ``docs/plans/v0-4-4-subagent-personas-routing-and-priming.md``
-§4 AC.V044.5: a real downstream amendment cycle (or, per the
-v0.4.4 build cycle, a real typed-dispatch probe) reports brief-
+Per ``docs/plans/v0-5-0-subagent-personas-routing-and-priming.md``
+§4 AC.V050.5: a real downstream amendment cycle (or, per the
+v0.5.0 build cycle, a real typed-dispatch probe) reports brief-
 length delta + cycle-quality verdict in a writeup at the canonical
 path. This test asserts the artefact exists + carries the verdict
 + records both brief lengths.
 
-Skip-by-default unless ``LOAM_V044_OUTCOME_PROBE_SHIPPED=1`` —
-the probe ships ASYNC after v0.4.4 seals (per D-V044.4 builder
+Skip-by-default unless ``LOAM_V050_OUTCOME_PROBE_SHIPPED=1`` —
+the probe ships ASYNC after v0.5.0 seals (per D-V050.4 builder
 ruling: ASYNC OK; default per dispatch-brief). The env var marks
 the probe as "ready to assert"; CI without the probe shipped
 skips gracefully so the test gate doesn't false-fail.
@@ -48,7 +48,7 @@ PROBE_PATH = (
     / "workspace"
     / ".scratch"
     / "claude-output"
-    / "v0-4-4-routing-probe.md"
+    / "v0-5-0-routing-probe.md"
 )
 
 # Alternative path the plan-doc references; the build cycle ships
@@ -58,11 +58,11 @@ PROBE_PATH_ALT = (
     / "workspace"
     / ".scratch"
     / "claude-output"
-    / "v0-4-4-routing-outcome-probe.md"
+    / "v0-5-0-routing-outcome-probe.md"
 )
 
 
-ENV_VAR = "LOAM_V044_OUTCOME_PROBE_SHIPPED"
+ENV_VAR = "LOAM_V050_OUTCOME_PROBE_SHIPPED"
 
 
 def _probe_path() -> Path | None:
@@ -80,16 +80,16 @@ def _probe_present() -> bool:
 @pytest.mark.skipif(
     os.environ.get(ENV_VAR) != "1",
     reason=(
-        f"{ENV_VAR}!=1 — outcome-probe is async per D-V044.4 "
+        f"{ENV_VAR}!=1 — outcome-probe is async per D-V050.4 "
         "builder ruling; the probe ships post-seal and the env var "
         "marks the probe as ready to assert. Skipping until set."
     ),
 )
-def test_AC_V044_5_probe_artefact_exists() -> None:
+def test_AC_V050_5_probe_artefact_exists() -> None:
     """The outcome-altitude probe artefact exists at one of the
     canonical paths."""
     assert _probe_present(), (
-        f"AC.V044.5: probe artefact must exist at {PROBE_PATH} or "
+        f"AC.V050.5: probe artefact must exist at {PROBE_PATH} or "
         f"{PROBE_PATH_ALT} when {ENV_VAR}=1."
     )
 
@@ -100,7 +100,7 @@ def test_AC_V044_5_probe_artefact_exists() -> None:
         f"{ENV_VAR}!=1 — outcome-probe is async; skipping."
     ),
 )
-def test_AC_V044_5_probe_records_verdict_band() -> None:
+def test_AC_V050_5_probe_records_verdict_band() -> None:
     """The probe artefact carries a verdict-band line (GREEN /
     YELLOW / RED)."""
     path = _probe_path()
@@ -110,7 +110,7 @@ def test_AC_V044_5_probe_records_verdict_band() -> None:
         band in text for band in ("GREEN", "YELLOW", "RED")
     )
     assert band_present, (
-        "AC.V044.5: probe must record a verdict band (GREEN / "
+        "AC.V050.5: probe must record a verdict band (GREEN / "
         "YELLOW / RED)."
     )
 
@@ -121,7 +121,7 @@ def test_AC_V044_5_probe_records_verdict_band() -> None:
         f"{ENV_VAR}!=1 — outcome-probe is async; skipping."
     ),
 )
-def test_AC_V044_5_probe_records_both_brief_lengths() -> None:
+def test_AC_V050_5_probe_records_both_brief_lengths() -> None:
     """The probe records both brief lengths (typed vs general-
     purpose) so the delta is reproducible."""
     path = _probe_path()
@@ -131,7 +131,7 @@ def test_AC_V044_5_probe_records_both_brief_lengths() -> None:
     # Loose check: the probe mentions the comparison + has at least
     # two numeric lengths cited (lines / words / chars).
     assert "brief" in text_lower, (
-        "AC.V044.5: probe must reference 'brief' (the artefact "
+        "AC.V050.5: probe must reference 'brief' (the artefact "
         "being measured)."
     )
     # Numeric digits appear at least twice (representing two
@@ -140,7 +140,7 @@ def test_AC_V044_5_probe_records_both_brief_lengths() -> None:
     # quality.
     digit_runs = sum(1 for ch in text if ch.isdigit())
     assert digit_runs >= 4, (
-        "AC.V044.5: probe must record numeric brief lengths for "
+        "AC.V050.5: probe must record numeric brief lengths for "
         "the comparison (typed vs general-purpose)."
     )
 
@@ -151,7 +151,7 @@ def test_AC_V044_5_probe_records_both_brief_lengths() -> None:
         f"{ENV_VAR}!=1 — outcome-probe is async; skipping."
     ),
 )
-def test_AC_V044_5_probe_names_comparison_dispatch() -> None:
+def test_AC_V050_5_probe_names_comparison_dispatch() -> None:
     """The probe names which dispatch was used as the typed-
     dispatch test case (so the comparison is auditable)."""
     path = _probe_path()
@@ -167,7 +167,7 @@ def test_AC_V044_5_probe_names_comparison_dispatch() -> None:
         "loam-documenter",
     )
     assert any(h in text for h in typed_handles), (
-        "AC.V044.5: probe must name the typed persona used in the "
+        "AC.V050.5: probe must name the typed persona used in the "
         "comparison dispatch (one of loam-builder / loam-plan-author "
         "/ loam-researcher / loam-reviewer / loam-documenter)."
     )

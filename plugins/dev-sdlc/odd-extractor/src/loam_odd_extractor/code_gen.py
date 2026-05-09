@@ -1,6 +1,9 @@
 """v0.4.0 Cycle 1 — Code-gen-from-objectives core (SOFT-altitude).
 v0.4.1 — F-DESIGN-1 closure: multi-commit-per-task + from-scratch
 prompt mode (per AC.V041.{1,2}).
+v0.4.2 — F-DESIGN-2 closure: Test-interface section as load-bearing
+context in from-scratch prompt + Py-version-compat post-processor
+(per AC.V042.{1,2}).
 
 Per cycle-1 plan-doc §1+§3+§4: takes ``objectives.yaml`` (or
 ``augmented-objectives.yaml``) + ``gap-inventory.yaml`` +
@@ -250,10 +253,20 @@ def generate_code(
         selected_candidate_gap_id=selected_candidate_gap_id,
     )
 
+    # ---- AC.V042.1 — extract SPEC content for from-scratch context ---
+
+    spec_excerpt: str | None = None
+    if from_scratch and repo_path is not None:
+        spec_excerpt = _extract_test_interface_excerpt(Path(repo_path))
+
     # ---- LLM dispatch ----------------------------------------------
 
     prompt = _build_prompt(
-        objective, gap, candidate, from_scratch=from_scratch
+        objective,
+        gap,
+        candidate,
+        from_scratch=from_scratch,
+        spec_excerpt=spec_excerpt,
     )
 
     if from_scratch:
@@ -263,8 +276,16 @@ def generate_code(
             "every file you author is brand-new (`--- /dev/null` on "
             "the source side of every diff hunk). Multi-file "
             "submissions are common (e.g., a build script + a source "
-            "file + a test file). Emit ONE OR MORE commits separated "
-            "by a literal `===COMMIT===` line. Each commit starts with "
+            "file + a test file). If the SPEC names a build script "
+            "(e.g., `compile.sh`) or a named output artefact (e.g., "
+            "`executable`), you MUST author that artefact as a "
+            "first-class commit. Match the SPEC's Test interface "
+            "EXACTLY — subprocess form, argument shape, output format "
+            "(single-line vs multi-line, separator characters, "
+            "trailing newlines). For Python source, target Python "
+            "3.9-compatible syntax (no PEP-604 unions; no "
+            "match/case). Emit ONE OR MORE commits separated by a "
+            "literal `===COMMIT===` line. Each commit starts with "
             "`subject: <one-line summary>` and is followed by a "
             "unified diff. Do not include any explanation outside the "
             "subject + diff."
@@ -291,6 +312,21 @@ def generate_code(
     )
 
     parsed = _parse_llm_response(response)
+
+    # ---- AC.V042.2 — post-process: lower PEP-604 unions to Py-3.9 ---
+    # Defensive belt-and-suspenders: even with the prompt-side py-3.9
+    # instruction, the LLM may still emit `X | Y` style unions
+    # (especially in stochastic responses). The post-processor lowers
+    # these to typing.Union form so the resulting diff runs under
+    # Python 3.9 test harnesses (the wcclone v0.4.1 regression class).
+    # Only applied in from-scratch mode where we author code from
+    # scratch; extend-existing mode preserves the LLM's choice
+    # verbatim because the existing tree may target a newer Python.
+    if from_scratch:
+        parsed = [
+            (_lower_pep604_unions(diff_text), subject)
+            for (diff_text, subject) in parsed
+        ]
 
     # ---- AC.V040C1.2 + AC.V041.1 — populate per-commit LiftedFrom --
 
@@ -574,6 +610,7 @@ def _build_prompt(
     candidate: Any,
     *,
     from_scratch: bool = False,
+    spec_excerpt: str | None = None,
 ) -> str:
     """Build the LLM prompt for a code-gen commit.
 
@@ -590,9 +627,27 @@ def _build_prompt(
       emission is encouraged so a build-script + source-file +
       test-file submission can land as three commits.
 
+    Per AC.V042.1: when ``from_scratch=True`` and ``spec_excerpt``
+    is supplied, the SPEC's "Test interface" section (or full SPEC
+    excerpt fallback) is embedded as load-bearing prompt context
+    under the heading ``Test interface from SPEC:``. The LLM is
+    explicitly instructed to author whatever shim/build-script the
+    test interface requires (e.g., ``compile.sh``, ``executable``)
+    as a first-class commit, and to match the SPEC's CLI form +
+    output format exactly.
+
+    Per AC.V042.2: when ``from_scratch=True``, the prompt also
+    instructs Python-3.9-compatible syntax (no PEP-604 unions like
+    ``str | Path``; use ``typing.Union`` / ``typing.Optional``
+    instead; no ``match``/``case`` statements). This is the
+    instruction-side of the Py-version-compat fix; the post-process
+    side lowers PEP-604 unions defensively in
+    :func:`_lower_pep604_unions`.
+
     The exact prompt shape is not in AC scope (no method-in-AC) —
     only the AC contracts on output shape (multi-commit-parseable
-    + from-scratch-marker present) bind the builder.
+    + from-scratch-marker present + Test-interface-substring
+    present + py39-compat instruction present) bind the builder.
     """
     common_header = (
         f"Objective: {objective.text}\n\n"
@@ -601,8 +656,36 @@ def _build_prompt(
         f"Candidate context: {getattr(candidate, 'rationale', '(none)')}\n\n"
     )
     if from_scratch:
+        spec_block = ""
+        if spec_excerpt:
+            spec_block = (
+                "Test interface from SPEC:\n"
+                "------------------------\n"
+                f"{spec_excerpt.rstrip()}\n"
+                "------------------------\n\n"
+                "The above is load-bearing — the test harness invokes "
+                "the program EXACTLY as the SPEC's Test interface "
+                "describes. If the SPEC names a build script (e.g., "
+                "`compile.sh`) or a named output artefact (e.g., "
+                "`executable`), you MUST author that artefact as a "
+                "first-class commit. Match the SPEC's subprocess "
+                "form, argument shape, output format (single-line vs "
+                "multi-line, separator characters, trailing "
+                "newlines) EXACTLY.\n\n"
+            )
+        py_compat_block = (
+            "Python compatibility: if you author Python source "
+            "files, target Python 3.9-compatible syntax. Do NOT use "
+            "PEP-604 union syntax (`X | Y`); use "
+            "`typing.Union[X, Y]` or `typing.Optional[X]` instead. "
+            "Do NOT use `match`/`case` statements (Python 3.10+); "
+            "use `if`/`elif` chains. Do NOT use new-in-3.10+ "
+            "standard-library APIs.\n\n"
+        )
         return (
             common_header
+            + spec_block
+            + py_compat_block
             + "There is NO existing source tree. Create new files "
             "from scratch. The source side of every diff hunk MUST be "
             "`--- /dev/null` (every file is brand-new). The objective "
@@ -779,3 +862,297 @@ def _detect_from_scratch(repo_path: Path) -> bool:
         if entry.suffix.lower() in _SOURCE_FILE_EXTENSIONS:
             return False
     return True
+
+
+# ====================================================================
+# AC.V042.1 — Test-interface excerpt extraction
+# ====================================================================
+
+
+# Markdown filenames considered "spec-bearing" — the extractor scans
+# these (in priority order) for a Test-interface section.
+_SPEC_FILENAMES = (
+    "SPEC.md",
+    "spec.md",
+    "TESTING.md",
+    "testing.md",
+    "INTERFACE.md",
+    "interface.md",
+    "README.md",
+    "readme.md",
+)
+
+
+# Cap the embedded SPEC excerpt to this many characters to bound the
+# prompt token count. Realistic SPECs (calculator/jsonpp/wcclone) are
+# 1–2 KB; the cap protects against pathological multi-MB docs being
+# embedded wholesale.
+_SPEC_EXCERPT_MAX_CHARS = 4000
+
+
+# Markdown headings that MAY name the test-interface section. Match
+# is case-insensitive on the heading line. Order is preference order.
+_TEST_INTERFACE_HEADINGS = (
+    "test interface",
+    "test-interface",
+    "tests",
+    "behavioral test",
+    "behavior",
+    "test harness",
+    "interface",
+)
+
+
+# Headings that fall through to "full doc excerpt" when no
+# test-interface match is found. Keep the regex permissive — the
+# trailing dollar matches any heading-line marker.
+_MD_HEADING_RE = re.compile(r"^(#+)\s+(.+?)\s*$", re.MULTILINE)
+
+
+def _extract_test_interface_excerpt(repo_path: Path) -> str | None:
+    """Extract a load-bearing prompt excerpt from a docs-only repo.
+
+    Per AC.V042.1: walks ``repo_path`` looking for the first SPEC-
+    bearing markdown file (per :data:`_SPEC_FILENAMES`). Within that
+    file, attempts to extract a "Test interface" section (or
+    equivalent — see :data:`_TEST_INTERFACE_HEADINGS`). When a named
+    section is found, returns that section body capped at
+    :data:`_SPEC_EXCERPT_MAX_CHARS`. When no named section matches,
+    returns the full file body capped at the same threshold (the
+    safe-fallback path; gives the LLM the full SPEC even without a
+    structured Test-interface header).
+
+    Returns ``None`` when no SPEC-bearing file is found (the from-
+    scratch prompt then falls back to the v0.4.1 shape — no
+    ``spec_excerpt`` block).
+
+    :param repo_path: Path to the (docs-only) repo.
+    :returns: Excerpt string or ``None``.
+    """
+    if not repo_path.is_dir():
+        return None
+
+    spec_path: Path | None = None
+    for filename in _SPEC_FILENAMES:
+        candidate = repo_path / filename
+        if candidate.is_file():
+            spec_path = candidate
+            break
+
+    if spec_path is None:
+        # Walk one level deeper as a last resort (some docs-only repos
+        # nest the SPEC under a `docs/` subdir).
+        for filename in _SPEC_FILENAMES:
+            for found in repo_path.rglob(filename):
+                if found.is_file():
+                    spec_path = found
+                    break
+            if spec_path is not None:
+                break
+
+    if spec_path is None:
+        return None
+
+    try:
+        body = spec_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+    section = _extract_named_section(body, _TEST_INTERFACE_HEADINGS)
+    if section is not None:
+        # Prefix the section with the SPEC filename so the LLM can
+        # tell where it came from.
+        excerpt = (
+            f"(from {spec_path.name})\n\n{section}".strip()
+        )
+    else:
+        # Fallback: full doc body. The cap keeps prompt size bounded.
+        excerpt = f"(from {spec_path.name}; full doc)\n\n{body}".strip()
+
+    if len(excerpt) > _SPEC_EXCERPT_MAX_CHARS:
+        excerpt = excerpt[:_SPEC_EXCERPT_MAX_CHARS] + "\n[... truncated ...]"
+    return excerpt
+
+
+def _extract_named_section(
+    body: str, heading_keywords: tuple[str, ...]
+) -> str | None:
+    """Extract the body of the first matching markdown section.
+
+    Walks ``body`` looking for a heading line whose text contains
+    any of ``heading_keywords`` (case-insensitive substring match).
+    Returns the section body (lines after the heading, up to the
+    next heading at the same-or-shallower depth, or end-of-file).
+    Returns ``None`` when no heading matches.
+    """
+    matches = list(_MD_HEADING_RE.finditer(body))
+    for idx, m in enumerate(matches):
+        heading_text = m.group(2).lower().strip()
+        depth = len(m.group(1))
+        if any(kw in heading_text for kw in heading_keywords):
+            start = m.end()
+            # Find the next heading at depth <= current depth (sibling
+            # or shallower). Sub-headings are kept inside the section.
+            end = len(body)
+            for n in matches[idx + 1:]:
+                n_depth = len(n.group(1))
+                if n_depth <= depth:
+                    end = n.start()
+                    break
+            section_body = body[start:end].strip()
+            # Re-prefix the heading itself so the LLM keeps context.
+            heading_line = m.group(0).strip()
+            return f"{heading_line}\n\n{section_body}"
+    return None
+
+
+# ====================================================================
+# AC.V042.2 — Py-version compatibility post-processor
+# ====================================================================
+
+
+# Token-character set for type-hint identifiers. PEP-604 union
+# operands are bracket-balanced type expressions; we conservatively
+# match identifiers + dotted names + bracketed generics + None.
+# Examples we want to match (and lower):
+#   `str | Path`            → Union[str, Path]
+#   `str | None`            → Optional[str]
+#   `int | str | None`      → Optional[Union[int, str]]
+#   `list[int] | None`      → Optional[list[int]]
+# Examples we MUST NOT match (false positives):
+#   `a | b` (bitwise or) — but inside a `.py` source line, the
+#     surrounding regex anchors on type-hint contexts (function
+#     signatures + variable annotations) so bitwise operations on
+#     non-annotation lines pass through unchanged.
+_PEP604_PY_FILE_RE = re.compile(r"^\+\+\+ b/.*\.py\s*$", re.MULTILINE)
+_PEP604_TYPE_TOKEN = (
+    r"[A-Za-z_][A-Za-z_0-9.]*"  # identifier or dotted name
+    r"(?:\[[^\[\]]*\])?"        # optional [...] generic
+)
+_PEP604_UNION_RE = re.compile(
+    rf"({_PEP604_TYPE_TOKEN}(?:\s*\|\s*{_PEP604_TYPE_TOKEN})+)"
+)
+
+
+def _lower_pep604_unions(diff_text: str) -> str:
+    """Lower PEP-604 union syntax (``X | Y``) to ``typing.Union``
+    form in Python diff hunks.
+
+    Per AC.V042.2: scans ``diff_text`` for unified-diff hunks
+    targeting ``.py`` files. Within those hunks, rewrites added (+)
+    lines containing PEP-604 union expressions in type-hint
+    contexts:
+
+    - ``X | None``           → ``Optional[X]``
+    - ``X | Y``              → ``Union[X, Y]``
+    - ``X | Y | None``       → ``Optional[Union[X, Y]]``
+
+    Adds ``from typing import Optional, Union`` at the top of any
+    ``+++ b/<path>.py`` hunk that gets a rewrite (and didn't already
+    import them). Idempotent: a second pass is a no-op.
+
+    Conservative scope: rewrites only inside ``+`` lines under
+    ``+++ b/*.py`` hunks. Non-Python files pass through unchanged;
+    extend-existing diffs (which use ``--- a/`` framing) pass
+    through unchanged. Bitwise-or operations on non-type-hint lines
+    are NOT rewritten because the regex matches identifier-shaped
+    operands; integer literals (``a | 0xff``) and call-shaped
+    operands (``f() | g()``) don't satisfy the token shape.
+
+    :param diff_text: The raw diff body (one or more file hunks).
+    :returns: Possibly-rewritten diff body.
+    """
+    if "|" not in diff_text:
+        return diff_text  # fast-path: no unions present
+
+    lines = diff_text.split("\n")
+    out_lines: list[str] = []
+    in_py_file = False
+    py_file_needs_typing_import = False
+    py_hunk_start_idx = -1
+    py_hunk_already_imports_typing = False
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
+        # Detect file-header transitions.
+        if line.startswith("+++ b/"):
+            in_py_file = line.endswith(".py") or ".py" in line.rsplit("/", 1)[-1]
+            if in_py_file:
+                py_file_needs_typing_import = False
+                py_hunk_start_idx = -1
+                py_hunk_already_imports_typing = False
+            out_lines.append(line)
+            i += 1
+            continue
+        if line.startswith("--- "):
+            # New diff segment starting; reset state.
+            in_py_file = False
+            out_lines.append(line)
+            i += 1
+            continue
+
+        if in_py_file and line.startswith("+") and not line.startswith("+++"):
+            content = line[1:]  # strip the leading +
+            # Track if this hunk already imports typing.Union/Optional.
+            if (
+                "from typing import" in content
+                and ("Union" in content or "Optional" in content)
+            ):
+                py_hunk_already_imports_typing = True
+            # Mark the first + line of the file's hunk so we know where
+            # to inject the import if needed.
+            if py_hunk_start_idx == -1:
+                py_hunk_start_idx = len(out_lines)
+
+            # Apply the rewrite.
+            rewritten = _rewrite_pep604_in_line(content)
+            if rewritten != content:
+                py_file_needs_typing_import = True
+            out_lines.append("+" + rewritten)
+            i += 1
+            continue
+
+        out_lines.append(line)
+        i += 1
+
+    # Inject the typing import at the top of any .py hunk that got a
+    # rewrite and didn't already import Union/Optional. We insert one
+    # line at py_hunk_start_idx pointing to a synthetic + line.
+    if py_file_needs_typing_import and not py_hunk_already_imports_typing:
+        # Find the first + line in the rewritten diff that's a content
+        # line (not the file header) and inject the import before it.
+        for idx, ln in enumerate(out_lines):
+            if ln.startswith("+") and not ln.startswith("+++"):
+                out_lines.insert(idx, "+from typing import Optional, Union")
+                break
+
+    return "\n".join(out_lines)
+
+
+def _rewrite_pep604_in_line(content: str) -> str:
+    """Rewrite PEP-604 union expressions in a single source line.
+
+    Conservative: matches identifier-shaped operands separated by
+    ``|`` (one or more times). Splits the union, segregates ``None``,
+    rebuilds as ``Union[...]`` / ``Optional[...]`` / both.
+    """
+    def _replace(m: re.Match[str]) -> str:
+        expr = m.group(1)
+        operands = [p.strip() for p in expr.split("|")]
+        # Filter out empties (shouldn't happen given regex, defensive).
+        operands = [o for o in operands if o]
+        has_none = "None" in operands
+        non_none = [o for o in operands if o != "None"]
+        if not non_none:
+            return expr  # all `None` — unusual; pass through
+        if len(non_none) == 1:
+            inner = non_none[0]
+        else:
+            inner = f"Union[{', '.join(non_none)}]"
+        if has_none:
+            return f"Optional[{inner}]"
+        return inner
+
+    return _PEP604_UNION_RE.sub(_replace, content)

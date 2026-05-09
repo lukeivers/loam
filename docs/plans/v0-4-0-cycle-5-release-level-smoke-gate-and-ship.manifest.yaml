@@ -1,0 +1,41 @@
+---
+schema_version: 3
+amendment:
+  # number omitted — schema v3 deprecates amendment.number per
+  # AC.DPS1.10 + AC.DPS1.11. Identification by slug only.
+  slug: v0-4-0-cycle-5-release-level-smoke-gate-and-ship
+  title: "v0.4.0 Cycle 5 — release-level smoke gate + STATE.md SHIPPED rollup. UPDATE: docs/release-roadmap.md (§3 v0.4.0 → §2 collapse with per-cycle apply + seal SHAs; §3 collapsed to v0.4.1/v0.5.0 forward pointer; §6 owner-action-line entry added documenting F-DESIGN-1 closure path; §2 header range bumped). UPDATE: docs/STATE.md (§1 narrative paragraph append — v0.4.0 SHIPPED rollup with HONEST scope language naming F-DESIGN-1 finding; per-cycle seal anchors + smoke verdict GREEN + claude-p subscription-only invariant + F-LEAK/F-TIMEOUT/F-VERIFY-ORPHAN closures + tests-green per-cycle counts + tag-push/release/push owner-action-separate framing). UPDATE: docs/plans/v0-4-0-master-plan.md §11 SHA register fully populated 5/5 (C1-C4 SHAs; C5 placeholders backfilled at post-seal §14). Doc-only cycle; bookkeeping owner: dev-sdlc (cross-cutting; same precedent as C1-C4 + v0.3.0 C7)."
+
+# BASELINE: this is the v0.4.0 SHIP cycle — the source-edit commit
+# preceding this manifest is the doc-bundle commit that lands the
+# release-roadmap collapse + STATE.md SHIPPED rollup + master plan
+# §11 backfill. Ladder:
+#
+#   <source-edit doc-bundle feat commit lands first> (BASELINE)
+#   <this manifest commit lands next>
+#   <loam amend apply lands>
+#   <loam amend seal lands>
+#   <§14 SHA backfill commit lands last>
+
+baseline: "adf9977f"
+
+plan: docs/plans/v0-4-0-cycle-5-release-level-smoke-gate-and-ship.md
+
+# Top-level plan_doc_ref — schema v3 collapsed-narrative pointer.
+plan_doc_ref: docs/plans/v0-4-0-cycle-5-release-level-smoke-gate-and-ship.md
+
+ac_count: 7
+smoke_outcome: "v0.4.0 ships honest-scope: rd-automation extraction GREEN (rc=0; 230s; 16.97c; 7 objectives + 100% backing-map); F-DESIGN-1 ship-worthy negative result documented at C4 + closure path at v0.4.1 per release-roadmap §6; release-roadmap §2 + STATE.md SHIPPED + master plan §11 resolve to same SHAs"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: true  # bookkeeping owner; cross-cutting doc cycle (C1-C4 + v0.3.0 C7 precedent)
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+# C5 touches: docs/ only (release-roadmap, STATE.md, plan-docs).
+universal_admissions:
+  - path_prefix: docs/
+    rationale: "C5 is a docs-only ship-rollup cycle; release-roadmap + STATE.md + master plan + plan-doc §14 are the only files touched."

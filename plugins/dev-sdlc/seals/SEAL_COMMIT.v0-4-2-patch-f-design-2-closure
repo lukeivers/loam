@@ -1,0 +1,11 @@
+# v0.4.2 patch — F-DESIGN-2 closure: Test-interface section as load-bearing context in from-scratch prompt + Py-version compatibility (PEP-604 unions lowered to typing.Union); ProgramBench v0 re-run vs baseline; HARD smoke against rd-automation; closes the §6 owner-action-line entry on F-DESIGN-2
+
+slug: v0-4-2-patch-f-design-2-closure
+components: dev-sdlc
+baseline: 5cdea12d
+amendment-commit: 507793dba8eb5ca1b8041176e89738722e371c5b
+plan-doc: docs/plans/v0-4-2-patch-f-design-2-closure.md
+acs-satisfied: 7
+smoke: v0.4.2 patch — 2 sub-fixes (Test-interface load-bearing prompt + Py-version compat); ProgramBench v0 re-run; HARD smoke rd-automation; AC.V042.{1-7} green; F-DESIGN-2 §6 owner-action-line closed
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

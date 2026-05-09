@@ -23,7 +23,7 @@ D-β.1 LOCKED).
 
 The cache directory is a normal git working tree (NOT a bare
 repo) so the existing ``resolve_canonical()`` flow keeps working
-unchanged. Disk cost is small (pos-v2 is ~15 MB at HEAD); a
+unchanged. Disk cost is small (main is ~15 MB at HEAD); a
 workspace-shared cache avoids per-workspace duplicates when an
 operator has multiple workspaces against the same canonical.
 

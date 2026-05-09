@@ -68,7 +68,7 @@ class SyncConfig(BaseModel):
         default=None,
         description=(
             "URL (http(s)://, git@) or absolute POSIX path to the "
-            "canonical pos-v2 working tree. When absent, "
+            "canonical loam working tree. When absent, "
             "pos-sync requires --canonical on the CLI."
         ),
     )
@@ -191,6 +191,6 @@ def canonical_source_kind(source: str) -> CanonicalSourceKind:
         f"canonical_source {source!r} must be one of: "
         "an http(s) URL (e.g. 'https://github.com/owner/repo'), "
         "a git@-style SSH spec (e.g. 'git@github.com:owner/repo.git'), "
-        "or an absolute POSIX path (e.g. '/Users/.../pos-v2'). "
+        "or an absolute POSIX path (e.g. '/Users/.../loam'). "
         "Relative paths, file:// URLs, and ssh:// URLs are not accepted."
     )

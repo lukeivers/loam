@@ -1,9 +1,9 @@
-# pOS v2 — CLAUDE.dev.md (dev-extension fragment)
+# loam — CLAUDE.dev.md (dev-extension fragment)
 
-This file is the **dev-extension** of `CLAUDE.md` for the pOS v2
+This file is the **dev-extension** of `CLAUDE.md` for the loam
 codebase. It loads only in DEV MODE workspaces (sub-plan B's
 SessionStart mechanism delivers this fragment as `additionalContext`
-when the workspace is classified `pos-v2-dev`). NORMAL USE workspaces
+when the workspace is classified `loam-dev`). NORMAL USE workspaces
 never see this content.
 
 The partition that drives the user-vs-dev split is declared in
@@ -13,7 +13,7 @@ The partition that drives the user-vs-dev split is declared in
 
 ## Session-start discipline
 
-Before acting on any non-trivial pos-v2 work — planning, proposing,
+Before acting on any non-trivial loam work — planning, proposing,
 editing code, dispatching agents, ruling on designs — read:
 
 - `docs/odd-llm-grounding.lean.md` (load FIRST for any ODD-shaped task —
@@ -59,7 +59,7 @@ require the read. If in doubt, read.
 ## Where dev-mode guidance lives
 
 - `plugins/dev-sdlc/docs/odd-methodology.md` — the ODD methodology itself.
-- `plugins/dev-sdlc/docs/odd-in-loam.md` — ODD applied to pOS v2 specifically, including
+- `plugins/dev-sdlc/docs/odd-in-loam.md` — ODD applied to loam specifically, including
   worked examples.
 - `docs/FUTURE_IDEAS.md` — future ideas (including the Dev/SDLC
   plugin at Idea 3) and the currently-parked dev CDCs. The CDCs are
@@ -93,7 +93,7 @@ harness + primary-persona value; Lens 3 — ODD authoring) are captured
 as design principles in the always-loaded `CLAUDE.md`. The execution
 programme to *mechanically enforce* them in future research plans
 (see `docs/FUTURE_IDEAS.md` Idea 1) does not start until the
-new pOS v2 copy is being tested in a live evaluation workspace. Until
+new loam copy is being tested in a live evaluation workspace. Until
 enforcement lands, feature authors apply the lenses by discipline;
 once enforcement lands, a research plan missing an answer to any lens
 fails its gate.

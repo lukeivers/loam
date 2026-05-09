@@ -540,19 +540,86 @@ _CATEGORY_RANK = {
 _CONFIDENCE_RANK = {"STRONG": 0, "WEAK": 1}
 
 
-def _tiebreak_key(c: BuildNextCandidate, gap: Gap) -> tuple:
-    """Tie-break key per AC.BLDNXT.2.
+def _load_bearing_signal(
+    gap: Gap, *, objective: Objective | None
+) -> tuple[int, int]:
+    """Compute a 2-tuple load-bearing signal for tie-breaking.
 
-    1. category-a > category-b (rank 0 < 1).
-    2. STRONG > WEAK (rank 0 < 1).
-    3. lex ``gap_id``.
+    Per AC.V041.3 (build-next tie-breaker beyond alphabetical):
 
-    Combined with ``-composite_score`` for primary ordering.
+    1. **Orphan cluster size** (``len(gap.evidence_rows)``) — for
+       category-b ``implementation_orphan`` gaps, more unclaimed
+       evidence rows means more load-bearing. Zero for typical
+       category-a gaps where evidence_rows is empty.
+    2. **Objective text length** — for category-a
+       ``objective_without_verified_backing`` gaps, the originating
+       objective's text length is a deterministic load-bearing
+       proxy (longer = more specific/load-bearing). Zero when
+       objective is None (orphan with no resolved objective).
+
+    Both factors are negated at the call site so larger values rank
+    *first* in lexicographic min-sort. Composes lexicographically:
+    cluster-size first (discriminates category-b ties), then
+    objective-text-length (discriminates category-a ties), then the
+    existing alphabetical fallback (still last).
+
+    The empirical motivation is the v0.4.0 C4 ProgramBench Task 2
+    failure: ``error-handling`` vs ``formatting`` candidates tied
+    on composite_score AND category AND confidence; alphabetical
+    selected the less-load-bearing ``error-handling``. With the
+    objective-text-length signal, ``formatting`` (the longer, more
+    specific objective text) wins.
     """
+    cluster_size = len(gap.evidence_rows) if gap.evidence_rows else 0
+    obj_text_len = (
+        len(objective.text) if objective is not None and objective.text else 0
+    )
+    return (cluster_size, obj_text_len)
+
+
+def _tiebreak_key(
+    c: BuildNextCandidate,
+    gap: Gap,
+    *,
+    objective: Objective | None = None,
+) -> tuple:
+    """Tie-break key per AC.BLDNXT.2 + AC.V041.3.
+
+    Hierarchy (negated factors sort larger first under min-sort):
+
+    1. ``-composite_score`` — primary ranking signal (AC.BLDNXT.2).
+    2. ``_CATEGORY_RANK[category]`` — category-a > category-b.
+    3. ``_CONFIDENCE_RANK[gap.confidence]`` — STRONG > WEAK.
+    4. **``-orphan_cluster_size``** — more evidence rows = more
+       load-bearing (AC.V041.3 sub-fix #3 first signal).
+    5. **``-objective_text_length``** — longer objective text = more
+       specific/load-bearing (AC.V041.3 sub-fix #3 second signal).
+    6. ``c.gap_id`` — lex alphabetical (final fallback only).
+
+    Steps 4+5 are NEW at v0.4.1 per AC.V041.3. They sit between the
+    existing v0.2.4 C3 hierarchy (steps 1-3) and the alphabetical
+    final fallback (step 6) so:
+
+    - When all of composite_score / category / confidence tie, the
+      load-bearing signals discriminate before alphabetical fires.
+    - When even those signals tie (extremely unlikely), alphabetical
+      remains the deterministic final fallback.
+
+    Per ODD §2.5 method-altitude: the method (cluster-size,
+    text-length) is named in the docstring + the AC text but the AC
+    contracts the OUTCOME (a non-alphabetical signal beats
+    alphabetical when the other dimensions tie), not the specific
+    factor combination.
+    """
+    cluster_size, obj_text_len = _load_bearing_signal(
+        gap, objective=objective
+    )
     return (
         -c.composite_score,
         _CATEGORY_RANK[c.category],
         _CONFIDENCE_RANK[gap.confidence],
+        -cluster_size,
+        -obj_text_len,
         c.gap_id,
     )
 
@@ -745,7 +812,11 @@ def score_candidates(
     degenerate_survey = (not survey_present) and (not interview_ids)
 
     candidates: list[BuildNextCandidate] = []
-    candidate_gap_pairs: list[tuple[BuildNextCandidate, Gap]] = []
+    # AC.V041.3: pairs carry the resolved Objective for the
+    # _tiebreak_key load-bearing signal (objective text length).
+    candidate_gap_pairs: list[
+        tuple[BuildNextCandidate, Gap, Objective | None]
+    ] = []
     llm_judge_invocations = 0
 
     for gap in gap_inventory.gaps:
@@ -827,7 +898,7 @@ def score_candidates(
             objective_id=gap.objective_id,
         )
         candidates.append(candidate)
-        candidate_gap_pairs.append((candidate, gap))
+        candidate_gap_pairs.append((candidate, gap, objective))
 
     # Halt-and-surface check: survey present AND every candidate's
     # signal collapsed to "none" AND no LLM-judge tier-breaker active.
@@ -845,9 +916,14 @@ def score_candidates(
             f"AC.BLDNXT.3 — signal-detection appears broken."
         )
 
-    # Sort + tie-break.
-    candidate_gap_pairs.sort(key=lambda pair: _tiebreak_key(*pair))
-    sorted_candidates = [c for c, _g in candidate_gap_pairs]
+    # Sort + tie-break (AC.V041.3 — objective passed for load-bearing
+    # signal).
+    candidate_gap_pairs.sort(
+        key=lambda triple: _tiebreak_key(
+            triple[0], triple[1], objective=triple[2]
+        )
+    )
+    sorted_candidates = [c for c, _g, _o in candidate_gap_pairs]
 
     underlying_count = len(sorted_candidates)
     if underlying_count > limit:

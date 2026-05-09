@@ -4,7 +4,9 @@ amendment:
   title: "v0.4.1 patch — F-DESIGN-1 closure: multi-commit-per-task + from-scratch prompt mode + build-next tie-breaker beyond alphabetical; ProgramBench v0 Variant A re-run vs baseline; HARD smoke against rd-automation; closes the §6 owner-action-line entry on F-DESIGN-1"
 
 # BASELINE captured at apply time; predecessor is v0.4.0 C5 §14 backfill at 895718d3.
-baseline: "895718d3"
+# baseline is the latest source-edit commit at apply time (per v0.4.0 C2/C3/C4
+# precedent: "primary source-edit BASELINE captured at apply time").
+baseline: "946424d7"
 
 plan: docs/plans/v0-4-1-patch-f-design-1-closure.md
 plan_doc_ref: docs/plans/v0-4-1-patch-f-design-1-closure.md

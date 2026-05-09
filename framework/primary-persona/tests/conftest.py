@@ -45,6 +45,35 @@ _PROVIDER.add_span_processor(SimpleSpanProcessor(_IN_MEMORY_EXPORTER))
 trace.set_tracer_provider(_PROVIDER)
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    """Register custom markers (per AC.V043.5: ``requires_live_store``
+    is skip-by-default in CI, runnable locally with ``-m
+    requires_live_store``)."""
+    config.addinivalue_line(
+        "markers",
+        "requires_live_store: needs a live ~/.../.loam/memory/ store on disk; skip-by-default in CI per AC.V043.5",
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """Skip ``requires_live_store``-marked tests unless the user
+    explicitly opts in via ``-m requires_live_store`` (AC.V043.5)."""
+    markexpr = config.getoption("-m", default="")
+    if "requires_live_store" in markexpr:
+        return
+    skip_live = pytest.mark.skip(
+        reason=(
+            "AC.V043.5 live-store probe is skip-by-default; "
+            "run with `pytest -m requires_live_store` to enable"
+        )
+    )
+    for item in items:
+        if "requires_live_store" in item.keywords:
+            item.add_marker(skip_live)
+
+
 @pytest.fixture
 def span_exporter_clean():
     """Clear the in-memory exporter before each test and return it."""

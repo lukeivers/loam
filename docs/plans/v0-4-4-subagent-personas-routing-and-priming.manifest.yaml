@@ -1,0 +1,41 @@
+schema_version: 3
+amendment:
+  slug: v0-4-4-subagent-personas-routing-and-priming
+  title: "v0.4.4 patch — subagent-personas routing + priming consumption-gap closure: new subagent-routing SKILL (work-shape → typed-persona rubric) + dispatch-brief-authoring SKILL extension (partial-omission table per AC.DBT principle × persona); closes the v0.1.7 typed-persona consumption gap on the dispatch-time surface; AC.DBT cross-walk surfaces persona-priming gaps captured as FIDRAFT for v0.4.5+ closure"
+
+# BASELINE captured at apply time; predecessor is v0.4.2 dev-sdlc seal at 3f3df670
+# (v0.4.3 sealed primary-persona, not dev-sdlc; the dev-sdlc fence's last seal
+# is v0.4.2). baseline is the latest source-edit commit at apply time.
+baseline: "1901e5e9"
+
+plan: docs/plans/v0-4-4-subagent-personas-routing-and-priming.md
+plan_doc_ref: docs/plans/v0-4-4-subagent-personas-routing-and-priming.md
+
+ac_count: 6
+smoke_outcome: "v0.4.4 patch — subagent-personas routing + priming consumption-gap closure; new subagent-routing SKILL + dispatch-brief-authoring SKILL extension; AC.V044.{1,2,3,4,5,S} green (1 GREEN audit, 2 SKILL-discoverability, 3 SKILL-extension, 4 no-regression, 5 YELLOW outcome-probe -22.9% reduction, S seal-diff); AC.DBT cross-walk surfaces persona-priming gaps captured as FIDRAFT v0.4.5+; HARD smoke n/a (release-gate HARD acceptable per `feedback_hard_smoke_per_minor_before_publish` risk-band classifier — pure SKILL authoring + tests + docs; no production CLI / hook / persistence-schema / artefact change)"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-4-4-subagent-personas-routing-and-priming

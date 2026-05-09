@@ -1,0 +1,37 @@
+schema_version: 3
+amendment:
+  slug: v0-4-1-patch-f-design-1-closure
+  title: "v0.4.1 patch — F-DESIGN-1 closure: multi-commit-per-task + from-scratch prompt mode + build-next tie-breaker beyond alphabetical; ProgramBench v0 Variant A re-run vs baseline; HARD smoke against rd-automation; closes the §6 owner-action-line entry on F-DESIGN-1"
+
+# BASELINE captured at apply time; predecessor is v0.4.0 C5 §14 backfill at 895718d3.
+baseline: "895718d3"
+
+plan: docs/plans/v0-4-1-patch-f-design-1-closure.md
+plan_doc_ref: docs/plans/v0-4-1-patch-f-design-1-closure.md
+
+ac_count: 6
+smoke_outcome: "v0.4.1 patch — 3 sub-fixes (multi-commit + from-scratch + tie-breaker); ProgramBench v0 re-run; HARD smoke rd-automation; AC.V041.{1-6} green; F-DESIGN-1 §6 owner-action-line closed"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/release-roadmap.md
+    - docs/STATE.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-4-1-patch-f-design-1-closure

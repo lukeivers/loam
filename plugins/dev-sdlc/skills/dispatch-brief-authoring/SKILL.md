@@ -92,6 +92,58 @@ The dispatch-brief structural shape, in canonical order:
    (no manufactured ✗); the positive case (when to surface ✓)
    is behavioral and lives as prose here rather than as a
    structural AC.
+
+   **When `subagent_type` is not `general-purpose` (v0.4.4;
+   AC.V044.3).** Briefs dispatched via a typed persona handle
+   (`subagent_type: loam-builder` / `loam-plan-author` /
+   `loam-researcher` / `loam-reviewer` / `loam-documenter`)
+   MAY omit the AC.DBT principles the persona body already
+   carries — the persona prompt loads at dispatch-start and
+   re-asserting in the brief is duplication. The omission is
+   PARTIAL because the v0.1.7 persona bodies do not carry
+   every AC.DBT principle uniformly (per the v0.4.4 audit at
+   `workspace/.scratch/claude-output/v0-4-4-dispatch-site-audit.md`
+   AC.DBT cross-walk). Per-persona omission table below;
+   anything not marked OMIT-OK MUST still propagate in the
+   brief.
+
+   | AC.DBT principle | builder | plan-author | researcher | reviewer | documenter |
+   |---|---|---|---|---|---|
+   | AC.DBT.2 LEAN-GROUNDING-LOAD | propagate (partial coverage; "ODD-fluent" is named, but the lean-grounding load directive is not) | propagate (partial coverage; ODD-fluent + outcome-shape, no explicit lean-grounding load) | OMIT-OK (researcher work is rarely ODD-shaped; Lens 1–3 substitutes) | propagate (partial coverage; ODD §2.5 fluent, no explicit lean-grounding load) | OMIT-OK (documenter work is not ODD-shaped) |
+   | AC.DBT.3 NO-CLOSING-LINE-PERMISSION-ASKS | propagate | propagate | propagate | propagate | propagate |
+   | AC.DBT.4 SPECIFIC-CLAIMS-VERIFIED | propagate (partial — quotes ACs/SHAs but no explicit verified-or-marked-guess clause) | propagate | OMIT-OK (researcher body explicitly carries VERIFIED / PLAUSIBLE / HYPOTHESISED bands + cites the feedback memory) | OMIT-OK (reviewer body explicitly carries VERIFIED bands + "I never confabulate") | propagate (partial — "never include unverified claims") |
+   | AC.DBT.5 TEST-AGAINST-OPERATIONAL-OBJECTIVE-BEFORE-ESCALATING | propagate | propagate | propagate | propagate | propagate |
+   | AC.DBT.6 NO-FALSE-FAULT | propagate | propagate | propagate | propagate | propagate |
+   | TIME-CLAIMS-DISCIPLINE | propagate | propagate | propagate | propagate | propagate |
+
+   The AC.DBT.{3,5,6} + TIME-CLAIMS-DISCIPLINE rows propagate
+   for every typed persona because no v0.1.7 persona body
+   names them. AC.DBT.{2,4} have per-persona OMIT-OK rows
+   only where the persona body explicitly carries the
+   discipline. When in doubt: propagate. Briefs MUST still
+   carry the structural slots that are NOT AC.DBT principles
+   (Working directory + literal `cd <abs-path> && pwd` first
+   action + Sub-plan path + Fence + Acceptance criteria + Halt
+   triggers + Out of scope + Model rationale) — those are
+   universal regardless of `subagent_type`. Briefs dispatched
+   via a typed persona MAY also skip the per-cycle re-derivation
+   of channel rules / autonomy directive / F2 RF reminder /
+   ODD §2.5 reminder / scope-only enforcement (each is
+   identity-anchored in the persona body).
+
+   **Backward-compat (universal).** When `subagent_type ==
+   general-purpose` (the default for un-typed dispatches),
+   the existing AC.DBT.1–6 propagation behavior is preserved
+   unchanged — the brief carries the full propagated-principle
+   block above. The OMIT-OK clauses apply only to typed
+   dispatches.
+
+   **Routing decision is upstream.** Which `subagent_type`
+   to choose for a given dispatch is `subagent-routing`
+   SKILL territory (work-shape → persona rubric). This brief-
+   authoring SKILL applies the brief-shape implications of
+   the routing decision; it does not re-derive the routing
+   rubric.
 4. **QUALITY BAR** — a quoted line from the dispatcher
    (typically Luke's voice) naming the acceptance intensity
    for this cycle, plus 2–4 enforcement bullets. Example:
@@ -276,6 +328,12 @@ When raw Claude Code without loam:
   manufactured audit ✗; four-test before writing ✗.
 - **`feedback_principle_application_front_load_and_audit`**
   (AC.DBT.7 prose) — minimal audit at end of every reply.
+- **`subagent-routing` SKILL** (v0.4.4; AC.V044.2) — chooses
+  the typed `subagent_type` upstream of brief authoring. The
+  brief-extension §"When subagent_type is not general-purpose"
+  applies the per-persona omission table when the routing
+  decision returns a typed persona. Compose order: routing
+  decision first, brief-shape conditional on routing.
 
 ## Out of scope
 

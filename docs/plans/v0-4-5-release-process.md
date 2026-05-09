@@ -82,11 +82,23 @@ VALUE_PROPOSITION.md prime objective (loam helps people use LLMs to **build soft
 
 **Acceptance:** Doc exists at canonical path; covers all 4 sections; reviewable in 5 minutes; cross-references the CLI's `--help` output.
 
-### AC.V045.6 — Outcome-altitude AC: dogfood v0.4.5 publish
+### AC.V045.6 — Post-ship review + next-scope decision
 
-**What:** v0.4.5 itself ships using the new `loam release` CLI. The v0.4.5 publish IS the outcome-altitude test.
+**What:** After a successful publish, the CLI fires an autonomous review step (per Q4 ratification Telegram 10577 + the scope-decision discipline per Telegram 10629):
 
-**Acceptance:** Build report records the dogfood verdict — CLI succeeded against all gates; tag + push landed; runbook reference matched actual ritual. If CLI fails on dogfood, halt-and-surface as F-DESIGN candidate (the design itself didn't survive first-real-use).
+1. **Re-evaluate roadmap priorities.** Read `docs/release-roadmap.md` §4 (priority queue), `docs/FUTURE_IDEAS_DRAFT.md` recent captures, recent halt-and-surface findings, and goal-alignment scoring. Re-rank if priorities have shifted.
+2. **Decide the next scope.** Pick the next bounded purpose from the queue. Name what's IN that scope (one-sentence objective + named ACs or fence). Name the class (PATCH / MINOR / MAJOR) per the work shape, not by pre-assignment. The decision becomes the next cycle's contract; commits accumulate locally on `main` until that scope completes; next publish ships when that scope's done.
+3. **Surface the decision to owner** in the post-publish output. Owner ratifies the scope (or revises) before the next cycle's first commit.
+
+**Why this AC:** versions are scope-of-work boundaries, not commit-frequency boundaries. Without this step, the post-publish moment risks two anti-patterns: (a) over-versioning (every doc edit gets a tag — version inflation), (b) under-defining (commits accumulate without a named purpose — drift).
+
+**Acceptance:** CLI's post-publish output includes a "Next-scope proposal" block naming objective + class + fence + named ACs. Test: a real publish run produces the block; manual review confirms the scope-decision shape matches the policy.
+
+### AC.V045.7 — Outcome-altitude AC: dogfood v0.4.5 publish
+
+**What:** v0.4.5 itself ships using the new `loam release` CLI (publish + post-ship review). The v0.4.5 publish IS the outcome-altitude test.
+
+**Acceptance:** Build report records the dogfood verdict — CLI succeeded against all gates; tag + push landed; runbook reference matched actual ritual; post-ship review block surfaced + named the next scope. If CLI fails on dogfood, halt-and-surface as F-DESIGN candidate (the design itself didn't survive first-real-use).
 
 `outcome-altitude: true` per `feedback_test_outcome_altitude_required`.
 

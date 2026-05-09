@@ -270,7 +270,7 @@ Owner gate-review separate (ratify plan-doc shape before build dispatch + ratify
 - Memory rules: `feedback_test_outcome_altitude_required.md` (NTU.6 + risk-band), `feedback_plan_before_code.md` (this plan-doc IS the gate), `feedback_summarize_and_surface_decisions.md` (Q1/Q2/Q3 surfacing pattern), `feedback_no_amend_in_agent_dispatches.md` (HARD HALT #4), `feedback_no_anthropic_api_key.md` (HARD HALT #7), `feedback_subagent_odd_violation_halt.md` (HARD HALT #2), `feedback_duration_estimation_rubric.md` (§10).
 - Lens 4 (scope-confidence) — plan authored at high confidence on the outcome shape (non-tech-user end-to-end; well-defined per VALUE_PROPOSITION) + medium confidence on the optimal AC granularity (Q1 surfaced for owner ratification rather than ruled silently); scope is correspondingly tight at outcome layer + loose at split-vs-monolith layer.
 
-## §12 — §status
+## §13 — §status
 
 **Build cycle:** SHIPPED LOCAL 2026-05-09 (Q1 = MONOLITH; Q2 = SYNTHETIC PROXY; Q3 = FOLD IN — all owner-ratified per dispatch brief). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
@@ -304,7 +304,7 @@ Builder wall-clock: roughly 90 minutes for source-edit + tests across all 7 ACs 
 - **D-NTU.2.c (NEW; build-time discovery):** Stop-hook integration deferred. The plan-doc's V070.2 description ("Stop-hook contributor refuses terminal-reply on user-reply messages") is partially aspirational — Claude Code Stop hooks can `decision: "block"` to prevent turn-completion but cannot redirect a reply to Telegram. Resolution: ship the slot + a policy-decision function (`channel_routing.decide`) that the persona's reply surface consults at reply-emit time. Stop-hook contributor wiring (audit-log emission + future enforcement) is a follow-on amendment candidate.
 - **D-NTU.6.b (NEW; build-time discovery):** AC.NTU.6 vocabulary check scope tightened from "every doc the stranger might read" to "the docs the non-tech user actually reads" (README quickstart + onboarding questions + completion summary). `docs/getting-started.md` audience is "you use Claude Code" (developer-shaped per the doc's own §Audience); not in the non-tech-user reading path; out-of-scope for the vocab probe.
 
-## §13 — Method decisions
+## §14 — Method decisions
 
 Per the v0.6.0 / v0.4.x precedent — backfilled at build time.
 

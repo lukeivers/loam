@@ -1,0 +1,11 @@
+# v0.4.0 Cycle 4 — ProgramBench v0 docs-only baseline (Variant A): substitute experiment on 3 tasks (1 real ProgramBench seed + 2 hand-authored local) + report at docs/experiments/programbench-v0-docs-only.md; F-DESIGN-1 confirmed empirically; closes AC.V040.4 + ACs V040C4.{1-7}
+
+slug: v0-4-0-cycle-4-programbench-v0-docs-only-baseline
+components: dev-sdlc
+baseline: 781dc1b1
+amendment-commit: fdbdc9188562ce87da369bc45f81c982ae2c7c6f
+plan-doc: docs/plans/v0-4-0-cycle-4-programbench-v0-docs-only-baseline.md
+acs-satisfied: 7
+smoke: ProgramBench v0 docs-only run on 3 tasks; baseline 16/16=100%; Variant A 9/16=56%; F-DESIGN-1 confirmed; report at docs/experiments/; AC.V040C4.{1-7} green; AC.V040.4 closed
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

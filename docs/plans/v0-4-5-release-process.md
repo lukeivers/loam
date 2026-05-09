@@ -84,11 +84,12 @@ VALUE_PROPOSITION.md prime objective (loam helps people use LLMs to **build soft
 
 ### AC.V045.6 — Post-ship review + next-scope decision
 
-**What:** After a successful publish, the CLI fires an autonomous review step (per Q4 ratification Telegram 10577 + the scope-decision discipline per Telegram 10629):
+**What:** After a successful publish, the CLI fires an autonomous review step (per Q4 ratification Telegram 10577 + the scope-decision discipline per Telegram 10629 + the major-release-shape ratification per Telegram 10633):
 
 1. **Re-evaluate roadmap priorities.** Read `docs/release-roadmap.md` §4 (priority queue), `docs/FUTURE_IDEAS_DRAFT.md` recent captures, recent halt-and-surface findings, and goal-alignment scoring. Re-rank if priorities have shifted.
 2. **Decide the next scope.** Pick the next bounded purpose from the queue. Name what's IN that scope (one-sentence objective + named ACs or fence). Name the class (PATCH / MINOR / MAJOR) per the work shape, not by pre-assignment. The decision becomes the next cycle's contract; commits accumulate locally on `main` until that scope completes; next publish ships when that scope's done.
-3. **Surface the decision to owner** in the post-publish output. Owner ratifies the scope (or revises) before the next cycle's first commit.
+3. **Major-release eval.** Pre-1.0: never cut a major; the answer is always PATCH or MINOR (or the v1.0 quality-bar event itself per `release-versioning-policy.md` §1.0.0). Post-1.0: check whether cumulative state since the last major warrants a major boundary (accumulated breaking changes, significant capability shift, plugin-contract revision per the policy doc); if yes, surface to owner with the trigger evidence.
+4. **Surface the decision to owner** in the post-publish output. Owner ratifies the scope (or revises) before the next cycle's first commit.
 
 **Why this AC:** versions are scope-of-work boundaries, not commit-frequency boundaries. Without this step, the post-publish moment risks two anti-patterns: (a) over-versioning (every doc edit gets a tag — version inflation), (b) under-defining (commits accumulate without a named purpose — drift).
 

@@ -60,6 +60,20 @@ The MAJOR jump from `0` to `1` happens when ALL of the following are true:
 
 The bump is named explicitly when it lands. It is not a calendar event; it is a quality-bar event.
 
+**Pre-1.0 majors are not cut.** SemVer convention: pre-1.0 is "in development; breaking changes allowed within minor bumps." Loam follows that convention. The first major release IS the 1.0.0 quality-bar event above; no MAJOR bumps before that.
+
+---
+
+## Post-1.0 majors — emergent, not pre-themed
+
+After 1.0.0 ships, MAJOR releases are emergent rather than pre-planned. The release process's post-ship review (per `loam release` CLI's AC.V045.6 step) checks at every release boundary: "does the cumulative state since the last major indicate a major-release-worthy boundary?" Triggers:
+
+1. **Accumulated breaking changes** that warrant an API contract reset. If the deprecation cycle for major-public-surface changes has run its course in the prior minors, the next release cuts MAJOR.
+2. **Significant capability shift** that re-shapes how loam is used (not just adds new outcome — fundamentally changes the user's mental model of the tool).
+3. **Plugin contract revision** that breaks the prior major's third-party plugin compatibility window.
+
+The post-ship review surfaces a major-eval verdict to owner; owner decides whether to cut. Default is no — MINOR bumps continue absorbing changes — until the cumulative weight of triggers makes a major release the right shape. Same shape as the 1.0.0 quality-bar event: it is not a calendar event; it is a quality-bar event.
+
 ---
 
 ## Pre-release tags

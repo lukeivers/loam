@@ -66,11 +66,58 @@ Pulled from `docs/STATE.md`. Each entry is the minor's objective sentence + the 
 
 ## §3 Active version
 
-v0.4.0 SHIPPED + v0.4.1 patch SHIPPED + v0.4.2 patch SHIPPED LOCAL + v0.4.3 patch SHIPPED LOCAL (all collapsed to §2; v0.4.1 + v0.4.2 + v0.4.3 awaiting joint owner-greenlit publish). Next: **v0.5.0** binary-usage observation harness — see §4 v0.5.0 for objective + ACs + dependencies. F-DESIGN-1 + F-DESIGN-2 both CLOSED at §6; FBE.7 retrieval defect CLOSED at v0.4.3.
+v0.4.0 + v0.4.1 + v0.4.2 + v0.4.3 ALL SHIPPED PUBLIC 2026-05-09 (loam/main advanced from `299290d8` → `15694329`; v0.4.3 tag pushed). v0.4.4 patch (subagent-personas routing + priming consumption-gap closure) in flight; v0.4.5 patch (concrete release process — `loam release` CLI + runbook) next per §4. Then **v0.5.0** binary-usage observation harness. F-DESIGN-1 + F-DESIGN-2 both CLOSED at §6; FBE.7 retrieval defect CLOSED at v0.4.3.
 
 ---
 
-## §4 Mapped versions (v0.5.0 → v1.0.0)
+## §4 Mapped versions (v0.4.5 → v1.0.0)
+
+### v0.4.5 — Loam has a concrete release process
+
+#### Objective
+
+> **Loam ships a single `loam release` CLI verb plus a codified runbook that takes a sealed local version and publishes it (tag + branch push + optional GitHub Release) with structural pre-publish gates.** No future publish requires figuring-out-the-ritual-as-you-go.
+
+**Class:** META-FRAMEWORK
+
+Today's v0.4.3 publish (2026-05-09) was figured-out-as-I-went after `pos-publish-framework-only` was discovered archived. The dispatcher had to investigate canonical state, verify remote tag inventory, identify the architecture migration to direct-push, then execute manually. That workflow will recur on every future publish and is the exact failure shape that bites at the wrong moment. Codifying both a runbook (rule-shape; for the human gate) and a CLI verb (structural; for the mechanical execution) closes the gap.
+
+#### Constraints
+
+- Composes with existing `loam amend apply` seal flow (the seal commit is the publish input).
+- Composes with `feedback_hard_smoke_per_minor_before_publish` (HARD smoke gate is a structural pre-publish prereq).
+- Composes with ASK-FIRST on public actions (the publish action is owner-invoked, not autonomous; the CLI requires explicit owner-issued invocation).
+- Composes with the soft-halt rule (publish soft-halts on owner ratification per ASK-FIRST class).
+- No new external service dependencies (uses `git push` + optional `gh release create` only — both already installed on the maintainer's machine).
+
+#### Acceptance criteria
+
+- **AC.V045.1 — `loam release` CLI verb.** Subcommand under `loam` top-level; takes version arg + optional `--dry-run` + optional `--release` (creates GH Release). Default: tag + branch push only; `--release` adds the GitHub Release page.
+- **AC.V045.2 — Structural pre-publish gates.** CLI verifies before pushing: (a) HARD smoke GREEN for the named version (reads from `docs/experiments/<version>-hard-smoke.md` per existing pattern); (b) all ACs verified per plan-doc §status; (c) STATE.md updated to mark version SHIPPED; (d) no uncommitted changes in canonical; (e) current branch is `pos-v2`; (f) seal commit exists for the version. Each failure surfaces a specific corrective hint, not a generic error.
+- **AC.V045.3 — Tag + push action.** CLI tags the seal commit (annotated tag with version + objective sentence as message), pushes branch + tag to `loam` remote. Idempotent: re-running on already-published version produces no-op + clear message.
+- **AC.V045.4 — Optional GitHub Release with auto-generated notes.** `--release` flag invokes `gh release create` with notes auto-generated from plan-doc §status + commit log between previous version's seal and this version's seal.
+- **AC.V045.5 — Release-process runbook.** New doc at `docs/release-process.md` codifies the manual steps + the CLI mapping. Shape: pre-publish gates list, the `loam release` invocation, the post-publish state. Read-once-on-onboarding; reference at every publish.
+- **AC.V045.6 — Outcome-altitude AC: dogfood v0.4.5 publish.** v0.4.5 itself ships using the new release process. The v0.4.5 publish IS the outcome-altitude test. Build report records the dogfood verdict.
+- **AC.V045.S — Seal-diff.** Sealed-component cycle ritual; sidecar advances; `git diff --name-only BASELINE..SEAL_COMMIT` shows changes only under the named fence.
+
+#### Source items
+
+- Today's v0.4.3 ad-hoc publish (Telegram 10547 owner observation: "having a concrete release process is much safer; let's add that to the roadmap sooner rather than later so later work can use it").
+- Calibration-miss session 2026-05-09: dispatcher misread loam-remote tag state via `head -10` truncation; surfaces the non-codified-process failure shape.
+
+#### Estimated AI-time
+
+- Plan-doc authoring: 15-25 min, midpoint 20 min (this file's plan-doc sibling).
+- CLI verb + tests: 45-75 min, midpoint 60 min.
+- Runbook doc: 15-30 min, midpoint 22 min.
+- HARD smoke + dogfood publish: 15-30 min, midpoint 22 min.
+- **Total v0.4.5 AI-time: 90-160 min**, midpoint **~125 min**.
+
+#### Dependencies
+
+- v0.4.4 (subagent-personas-routing) — **SOFT** per dependency-map taxonomy. Different fence; sequencing preference only. v0.4.5 plan-doc work is parallel-safe with v0.4.4 build.
+
+---
 
 ### v0.5.0 — Loam builds software from minimal input
 

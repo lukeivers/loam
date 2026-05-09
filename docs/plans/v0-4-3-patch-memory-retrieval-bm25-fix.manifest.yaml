@@ -32,7 +32,9 @@ universal_paths:
     - docs/odd-in-pos.md
     - docs/odd-methodology.md
     - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
     - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
     - docs/STATE.md
 
 narrative:

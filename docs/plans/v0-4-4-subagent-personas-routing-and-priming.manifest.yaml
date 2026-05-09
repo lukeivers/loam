@@ -12,7 +12,7 @@ plan: docs/plans/v0-4-4-subagent-personas-routing-and-priming.md
 plan_doc_ref: docs/plans/v0-4-4-subagent-personas-routing-and-priming.md
 
 ac_count: 6
-smoke_outcome: "v0.4.4 patch — subagent-personas routing + priming consumption-gap closure; new subagent-routing SKILL + dispatch-brief-authoring SKILL extension; AC.V044.{1,2,3,4,5,S} green (1 GREEN audit, 2 SKILL-discoverability, 3 SKILL-extension, 4 no-regression, 5 YELLOW outcome-probe -22.9% reduction, S seal-diff); AC.DBT cross-walk surfaces persona-priming gaps captured as FIDRAFT v0.4.5+; HARD smoke n/a (release-gate HARD acceptable per `feedback_hard_smoke_per_minor_before_publish` risk-band classifier — pure SKILL authoring + tests + docs; no production CLI / hook / persistence-schema / artefact change)"
+smoke_outcome: "v0.4.4 patch — subagent-personas routing + priming consumption-gap closure; AC.V044.{1-5,S} green (audit GREEN 13/13; outcome YELLOW -22.9%); release-gate HARD (SKILL+docs only)"
 
 components:
   - name: dev-sdlc

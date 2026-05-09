@@ -131,6 +131,19 @@ DEFAULT_ENABLE_AUTO_SKILL_CAPTURE: bool = False
 LEGAL_CHANNEL_PREFERENCES: frozenset[str] = frozenset(
     {"telegram", "cli", "deferred"}
 )
+# v0.7.0 AC.NTU.2 — runtime-routing slot. Distinct from the v0.2.1
+# AC.ONBOARD.4 channel_preference field (which records the onboarding-
+# ritual answer): primary_channel is what the persona's runtime reply-
+# routing layer reads to decide where to surface user-facing replies.
+# The v0.7.0 onboarding ritual writes BOTH fields when the user picks
+# "telegram" (channel_preference=telegram + primary_channel=telegram);
+# pre-v0.7.0 workspaces have channel_preference set but primary_channel
+# absent — the loader defaults primary_channel from channel_preference
+# at load time (graceful migration path). Per D-NTU.2.a (default extend
+# bootstrap.yaml manifest, not a separate channel.json file).
+LEGAL_PRIMARY_CHANNELS: frozenset[str] = frozenset(
+    {"telegram", "terminal"}
+)
 LEGAL_EXTRACTOR_OPT_INS: frozenset[str] = frozenset(
     {"yes", "deferred", "never"}
 )
@@ -185,6 +198,11 @@ class Manifest:
     # writes the completion summary. Used by D2 idempotent-rerun
     # detection (already-onboarded → offer per-question re-ask).
     onboarding_completed_at: str | None = None
+    # v0.7.0 AC.NTU.2 — runtime-routing slot. Defaults from
+    # channel_preference for pre-v0.7.0 workspaces (graceful
+    # migration). Legal values: LEGAL_PRIMARY_CHANNELS. None when
+    # neither has been set (fresh workspace pre-onboarding).
+    primary_channel: str | None = None
 
 
 def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
@@ -329,6 +347,25 @@ def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
             },
         )
 
+    # v0.7.0 AC.NTU.2 — primary_channel runtime-routing slot. Validated
+    # against LEGAL_PRIMARY_CHANNELS; falls through to a derived value
+    # from channel_preference for pre-v0.7.0 workspaces (graceful
+    # migration path: telegram→telegram; cli→terminal; deferred→None).
+    primary_channel = _validate_optional_enum_str(
+        raw.get("primary_channel"),
+        field_name="primary_channel",
+        legal_values=LEGAL_PRIMARY_CHANNELS,
+        manifest_path=p,
+    )
+    if primary_channel is None and channel_preference is not None:
+        # Migration default: derive from channel_preference.
+        if channel_preference == "telegram":
+            primary_channel = "telegram"
+        elif channel_preference == "cli":
+            primary_channel = "terminal"
+        # "deferred" -> primary_channel stays None (caller treats as
+        # unset; runtime defaults to terminal per current behavior).
+
     return Manifest(
         version=version,
         config_dir=config_dir,
@@ -342,6 +379,7 @@ def load_manifest(manifest_path: Union[str, Path]) -> Manifest:
         watch_opt_in=watch_opt_in,
         language_primary=language_primary,
         onboarding_completed_at=onboarding_completed_at,
+        primary_channel=primary_channel,
     )
 
 
@@ -381,6 +419,7 @@ def write_onboarding_fields(
     watch_opt_in: str | None = None,
     language_primary: str | None = None,
     onboarding_completed_at: str | None = None,
+    primary_channel: str | None = None,
 ) -> None:
     """Update onboarding fields on `bootstrap.yaml` in place (atomic).
 
@@ -451,6 +490,13 @@ def write_onboarding_fields(
         if not isinstance(onboarding_completed_at, str):
             raise ValueError("onboarding_completed_at must be a string")
         updates["onboarding_completed_at"] = onboarding_completed_at
+    if primary_channel is not None:
+        if primary_channel not in LEGAL_PRIMARY_CHANNELS:
+            raise ValueError(
+                f"primary_channel={primary_channel!r} not in "
+                f"{sorted(LEGAL_PRIMARY_CHANNELS)}"
+            )
+        updates["primary_channel"] = primary_channel
 
     raw.update(updates)
 

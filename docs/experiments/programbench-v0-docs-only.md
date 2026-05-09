@@ -6,6 +6,8 @@
 **Cost:** $0.42 total (baseline $0.16 + Variant A $0.26 across 3 tasks).
 **Verdict:** Variant A pass-rate **39%** (5/16 behavioral tests across 3 tasks); baseline pass-rate **100%** (16/16). Variant A's planning layer **does not pay off** on this class of task at the current code-gen surface shape; the F-DESIGN-1 risk surfaced in Cycle 2's plan-doc is empirically confirmed.
 
+> **NOTE on scope:** "ProgramBench v0" here refers to an internal experiment with 3 hand-authored toy tasks (calculator, jsonpp, wcclone). It is NOT the public ProgramBench leaderboard at programbench.com (which scores against hundreds of much-harder tasks; major providers are at 0–3% on that). The real-benchmark eval was blocked at v0.4.0 C4 (Docker daemon issue on the dev host) and is deferred to v0.5.0. This internal experiment validates the architectural mechanism on toy tasks; it does NOT establish loam's performance on real-world program-synthesis tasks.
+
 ---
 
 ## Executive summary (read first)
@@ -274,6 +276,8 @@ The runs are stochastic; pass-rates for Variant A on Task 2 in particular are hi
 **Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/`. **Builder:** Sonnet (default).
 **HEAD under test:** `bb62f864` (sub-fix 3 commit; build_next tie-breaker beyond alphabetical).
 
+> **NOTE on scope:** the "same 3 tasks" are the internal toy fixtures (calculator, jsonpp, wcclone) introduced at v0.4.0 C4 — NOT the public ProgramBench leaderboard. Real-benchmark eval remains deferred to v0.5.0. Pass-rate numbers in this section are bounded to the toy-fixture scope.
+
 ### Verdict
 
 **YELLOW** — partial improvement. Variant A pass-rate **62.5% (10/16) RELAXED** vs C4's 56% (9/16) baseline. The 3 sub-fixes produce **observable, structural improvements in production**, but the behavioral pass-rate gain is bounded by a NEW structural finding (F-DESIGN-2 — see §"v0.4.1 RF surfaces" below). **STRICT pass-rate (no manual executable wrapper) is 0/16** because the LLM-generated commits did not author `compile.sh` in any of the 3 tasks even with from-scratch mode active.
@@ -336,6 +340,8 @@ The structural mechanism of F-DESIGN-1 IS resolved (multi-commit + from-scratch 
 **Date:** 2026-05-09. **Status:** v0.4.2 patch surface re-run on the same 3 tasks.
 **Working directory:** `/Users/lukeivers/ivers-corp-pos-v2/`. **Builder:** Sonnet (default).
 **HEAD under test:** v0.4.2 sub-fix 2 commit (test-interface load-bearing prompt + Py-version-compat post-process).
+
+> **NOTE on scope:** "100% (16/16) STRICT" here is on the 3 internal toy tasks (calculator, jsonpp, wcclone) — NOT the public ProgramBench leaderboard at programbench.com (where major LLM providers score 0–3% on hundreds of much-harder tasks). The real-benchmark eval was blocked at v0.4.0 C4 (Docker daemon issue) and is deferred to v0.5.0. This experiment validates that the architectural mechanism produces SPEC-compatible output on toy fixtures; it does NOT establish loam's performance on real-world program-synthesis tasks.
 
 ### Verdict
 

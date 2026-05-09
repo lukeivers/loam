@@ -12,5 +12,15 @@ dependencies = ["PyYAML>=6"]
 [project.scripts]
 loam = "loam_cli.cli:main"
 
+# AC.V060.1 — `loam release` subcommand registration. Resolves
+# through the unified loam CLI dispatcher's `loam.cli.subcommands`
+# entry-point group (M6a-authored discovery loop). Sibling to the
+# dev-sdlc plugin's `amend` adapter; lives in the `loam-cli` package
+# itself because the release verb is canonical, not plugin-shipped
+# (every loam codebase has the release process; not gated on dev-sdlc
+# being installed).
+[project.entry-points."loam.cli.subcommands"]
+release = "loam_cli.release.cli:build_release_subcommand"
+
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,0 +1,39 @@
+schema_version: 3
+amendment:
+  slug: v0-4-3-patch-memory-retrieval-bm25-fix
+  title: "v0.4.3 patch — FBE.7 retrieval BM25-bypass + grep-length-bias + cosmetic worker-log fix on the file-based memory surface (primary-persona)"
+
+# BASELINE captured at apply time; predecessor is v0.4.2 seal at 3f3df670.
+# baseline is the latest source-edit commit at apply time (per v0.4.0 + v0.4.1
+# + v0.4.2 precedent: "primary source-edit BASELINE captured at apply time").
+baseline: "PENDING_APPLY_TIME"
+
+plan: docs/plans/v0-4-3-patch-memory-retrieval-bm25-fix.md
+plan_doc_ref: docs/plans/v0-4-3-patch-memory-retrieval-bm25-fix.md
+
+ac_count: 7
+smoke_outcome: "v0.4.3 patch — FTS5 token-sanitization + OR-of-tokens, _grep_search length-normalization, cosmetic worker-log fix; live-store retrieval probe + HARD smoke rd-automation; AC.V043.{1-6,S} green"
+
+components:
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/release-roadmap.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/primary-persona/seals/SEAL_COMMIT.v0-4-3-patch-memory-retrieval-bm25-fix

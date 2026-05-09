@@ -1,0 +1,35 @@
+schema_version: 3
+amendment:
+  slug: v0-4-0-cycle-4-programbench-v0-docs-only-baseline
+  title: "v0.4.0 Cycle 4 — ProgramBench v0 docs-only baseline (Variant A): substitute experiment on 3 tasks (1 real ProgramBench seed + 2 hand-authored local) + report at docs/experiments/programbench-v0-docs-only.md; F-DESIGN-1 confirmed empirically; closes AC.V040.4 + ACs V040C4.{1-7}"
+
+# BASELINE captured at apply time; predecessor seal is C3 at 2d1e7f01.
+baseline: "PENDING"
+
+plan: docs/plans/v0-4-0-cycle-4-programbench-v0-docs-only-baseline.md
+plan_doc_ref: docs/plans/v0-4-0-cycle-4-programbench-v0-docs-only-baseline.md
+
+ac_count: 7
+smoke_outcome: "ProgramBench v0 docs-only Variant A vs baseline run on 3 tasks; baseline 100% (16/16); Variant A 56% (9/16); F-DESIGN-1 (extend-existing-vs-write-from-scratch) confirmed; report at docs/experiments/programbench-v0-docs-only.md; AC.V040C4.{1-7} green; AC.V040.4 closed"
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-4-0-cycle-4-programbench-v0-docs-only-baseline

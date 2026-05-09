@@ -72,6 +72,7 @@ Per ODD §2.5 every code path traces back to a named AC; defensive
 
 from __future__ import annotations
 
+import math
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -497,11 +498,18 @@ class FileMemoryStore:
         if not index_path.exists():
             return []
         conn = self._connection()
-        # Quote the query as an FTS5 phrase to keep punctuation /
-        # operators inert; FTS5 raises on a malformed expression.
-        # If quoting fails (the query contains an unbalanced quote),
-        # caller falls back to grep.
-        safe_query = '"' + query.replace('"', "") + '"'
+        # AC.V043.1 — token-level sanitization + OR-of-tokens. Per
+        # plan-doc §4: split on whitespace, strip FTS5-meaningful
+        # punctuation per token (reduce to alnum/_ content; lowercase),
+        # drop tokens shorter than 2 chars, drop a small in-tree
+        # stopword set, then join with " OR " so FTS5 BM25 ranks by
+        # relevance across any-token-matches. Pre-V043 phrase-wrap
+        # produced ~0 hits for natural-language UPS prompts because
+        # the verbatim prompt rarely appeared in any episode body.
+        tokens = _tokenize_for_fts(query)
+        if not tokens:
+            return []
+        safe_query = " OR ".join(tokens)
         if group_ids:
             placeholders = ",".join("?" for _ in group_ids)
             sql = (
@@ -584,16 +592,27 @@ class FileMemoryStore:
         if not terms:
             return []
 
-        scored: list[tuple[int, Path, str, dict[str, Any]]] = []
+        scored: list[tuple[float, Path, str, dict[str, Any]]] = []
         for path in candidates:
             try:
                 content = path.read_text(encoding="utf-8")
             except (OSError, UnicodeDecodeError):
                 continue
             content_lower = content.lower()
-            score = sum(content_lower.count(t) for t in terms)
-            if score == 0:
+            raw_score = sum(content_lower.count(t) for t in terms)
+            if raw_score == 0:
                 continue
+            # AC.V043.2 — length-normalize via sqrt(doclen) per
+            # plan-doc §4 path (a). Pre-V043 ranked by raw count, so
+            # giant compaction-summary episodes (~123 KB; ~17 KB) won
+            # every common-stop-word query against typical 1–4 KB
+            # focused episodes. sqrt is cheap, deterministic, no
+            # extra deps; corpus avg-length precomputation (path b)
+            # not needed at this corpus shape (438 episodes baseline
+            # in the investigation report). max(len(...), 1) guards
+            # the empty-string edge — though raw_score==0 already
+            # skipped above so doclen is strictly > 0 here.
+            score = raw_score / math.sqrt(max(len(content), 1))
             front, body = _split_frontmatter(content)
             scored.append((score, path, body, front))
 
@@ -613,6 +632,62 @@ class FileMemoryStore:
 
 
 # ---- helpers --------------------------------------------------------
+
+
+# AC.V043.1 — minimal English-question stopword set per D-V043.1.
+# Excludes high-signal loam-corpus terms (`loam`, `pos`, `claude`,
+# `eric`, version strings, AC IDs, etc.) deliberately; those should
+# rank, not be filtered. Kept ASCII-lowercase; ≤20 entries per the
+# plan-doc §14 authoring guidance.
+_FTS_STOPWORDS: frozenset[str] = frozenset(
+    {
+        "a", "an", "the", "of", "to", "in", "on", "for", "at", "by",
+        "is", "are", "was", "were", "be", "do", "does", "did",
+        "what", "how", "this", "that", "it",
+    }
+)
+
+# Token-shape: keep alnum + underscore content; everything else is a
+# token boundary. Mirrors `_split_frontmatter`/`_grep_search`'s
+# `\W+` split but applied per-token-after-whitespace-split so we can
+# preserve a word like "AC.V043.1" → "ac" + "v043" + "1" (the "1" is
+# dropped by min-len 2; "ac" + "v043" both survive).
+_FTS_TOKEN_CONTENT_RE = re.compile(r"[A-Za-z0-9_]+")
+
+
+def _tokenize_for_fts(query: str) -> list[str]:
+    """Token-sanitize ``query`` for the FTS5 query construction.
+
+    Per AC.V043.1 + plan-doc §4:
+
+      - Split on whitespace.
+      - Strip FTS5-meaningful punctuation per token (extract alnum/_
+        runs); for tokens with embedded punctuation (e.g., "AC.V043.1"),
+        emit the alnum runs as separate tokens.
+      - Lowercase.
+      - Drop tokens shorter than 2 chars.
+      - Drop the in-tree stopword set (``_FTS_STOPWORDS``).
+      - Deduplicate while preserving first-occurrence order so the
+        FTS5 query stays compact for prompts with repeated tokens.
+
+    Returns a list of survivors. Empty list (zero survivors) maps to
+    an empty FTS5 result by the caller — matches AC.MFBM.2's empty-
+    state contract.
+    """
+    survivors: list[str] = []
+    seen: set[str] = set()
+    for ws_token in query.split():
+        for run in _FTS_TOKEN_CONTENT_RE.findall(ws_token):
+            tok = run.lower()
+            if len(tok) < 2:
+                continue
+            if tok in _FTS_STOPWORDS:
+                continue
+            if tok in seen:
+                continue
+            seen.add(tok)
+            survivors.append(tok)
+    return survivors
 
 
 _FILENAME_UNSAFE_RE = re.compile(r"[^A-Za-z0-9._:-]+")

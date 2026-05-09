@@ -274,6 +274,12 @@ def _process_one_entry(
         return "retry"
 
     mwq.delete_entry(entry_path)
+    # AC.V043.3 — log the substrate's actual return field (`path` for
+    # the file-based store) instead of hard-coding the graphiti-era
+    # `episode_uuid` field that the file-based store does not produce.
+    # Pre-V043 every worker-ok line carried `"episode_uuid": null`,
+    # giving false diagnostic signal that writes were succeeding-
+    # without-an-id when in fact the substrate emits a path.
     _append_diag(
         workspace_root,
         {
@@ -281,8 +287,7 @@ def _process_one_entry(
             "kind": "worker-ok",
             "turn_id": record.get("turn_id"),
             "session_id": record.get("session_id"),
-            "episode_uuid": result.get("episode_uuid")
-            if isinstance(result, dict) else None,
+            "path": result.get("path") if isinstance(result, dict) else None,
         },
     )
     return "ok"

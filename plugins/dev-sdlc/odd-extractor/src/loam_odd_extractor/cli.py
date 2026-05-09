@@ -899,10 +899,18 @@ def _cmd_code_gen(args: argparse.Namespace) -> int:
 
         client = ClaudePrintAnthropicShimClient()
 
+        # AC.V041.2 — from-scratch flag wiring. Tri-state mapping:
+        #   --from-scratch       → from_scratch=True
+        #   --no-from-scratch    → from_scratch=False
+        #   neither (default)    → from_scratch=None (auto-detect from
+        #                          repo_path).
+        from_scratch_flag = getattr(args, "from_scratch", None)
         diff = generate_code(
             ext_dir,
             selected_candidate_gap_id=getattr(args, "candidate_gap_id", None),
             llm_client=client,
+            from_scratch=from_scratch_flag,
+            repo_path=repo_path,
         )
         manifest_path = persist_diff(diff, ext_dir)
 
@@ -1383,6 +1391,31 @@ def build_odd_extract_subcommand(
         help=(
             "(--code-gen) select a build-next candidate by gap_id. "
             "Default: highest-ranked candidate in build-next.yaml."
+        ),
+    )
+    # AC.V041.2 — from-scratch / no-from-scratch flag pair. v0.4.1
+    # F-DESIGN-1 closure sub-fix #2.
+    odd_parser.add_argument(
+        "--from-scratch",
+        action="store_true",
+        default=None,
+        dest="from_scratch",
+        help=(
+            "(--code-gen) explicitly select from-scratch prompt mode "
+            "(LLM authors new files; --- /dev/null source-side framing; "
+            "encourages multi-commit emission). Default: auto-detect "
+            "from <repo>/ — empty source tree ⇒ from-scratch, "
+            "≥1 source file ⇒ extend-existing. Per AC.V041.2."
+        ),
+    )
+    odd_parser.add_argument(
+        "--no-from-scratch",
+        action="store_false",
+        dest="from_scratch",
+        help=(
+            "(--code-gen) explicitly select extend-existing prompt mode "
+            "(v0.4.0 C1 default shape) even when <repo>/ has no source "
+            "files. Per AC.V041.2."
         ),
     )
     # AC.WATCH.6 — invocation-source flag. v0.2.0 Cycle 1.

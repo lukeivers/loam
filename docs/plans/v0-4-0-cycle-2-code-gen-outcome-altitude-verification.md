@@ -242,7 +242,7 @@ Cycle 1 build report (5 halt-and-surface findings folded in here).
 
 | Commit | SHA |
 |---|---|
-| Source-edit commit | (pending) |
-| Apply commit | (pending) |
-| Seal commit | (pending) |
+| Source-edit commit | `5c1deb30` |
+| Apply commit | `b3586468` |
+| Seal commit | `f031c89c` |
 | §14 backfill commit | (deferred to v0.4.0 ship) |

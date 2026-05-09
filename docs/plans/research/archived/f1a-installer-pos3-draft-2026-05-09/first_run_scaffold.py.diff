@@ -1,0 +1,200 @@
+diff --git a/framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/first_run_scaffold.py b/framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/first_run_scaffold.py
+index 76677d2e..7dcf4a81 100644
+--- a/framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/first_run_scaffold.py
++++ b/framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/first_run_scaffold.py
+@@ -212,6 +212,195 @@ def resolve_persona_handle(raw_input: str | None) -> str:
+     return slug
+ 
+ 
++# ---- principles-install resolver (foundation-revision Stage 3b F1a) --
++#
++# The principles spec at ``framework/docs/principles/principles.md`` is
++# the universal/exportable principle-tier of loam's methodology stack.
++# Adopters can install it at one of two scopes:
++#
++#   - "universal" — write a reference from ~/.claude/CLAUDE.md to the
++#     spec path, so every Claude Code session on this machine has the
++#     principles in its global session-start context.
++#   - "local" — do nothing global; the workspace's own session-start
++#     corpus carries the principles by virtue of the workspace being
++#     a loam workspace. The default; preserves the user's global
++#     ~/.claude/CLAUDE.md untouched.
++#
++# This pure resolver mirrors ``resolve_persona_handle``: it takes the
++# raw user input from a caller-side one-question prompt and returns
++# the install choice. The scaffold itself does not solicit input;
++# resolution is the caller's responsibility (today the default is
++# always used — local; the resolver is exposed so future first-run
++# UX layers can wire in a one-question prompt without touching this
++# adapter).
++#
++# Per the foundation-revision plan §1 F1a: default local. Universal
++# install requires explicit affirmative input. Ambiguous input
++# (typos, partial words) falls through to None — caller decides
++# whether to re-prompt or use the default; the resolver itself does
++# NOT silently default ambiguous input to local, because that would
++# silently drop a possible "yes."
++
++DEFAULT_PRINCIPLES_INSTALL_CHOICE: str = "local"
++
++# Affirmative tokens that resolve to "universal" install. Match is
++# case-insensitive, on the trimmed input. Conservative set: the
++# prompt's expected affirmative answers only, no fuzzy matching.
++_PRINCIPLES_INSTALL_UNIVERSAL_TOKENS: frozenset[str] = frozenset({
++    "universal",
++    "u",
++    "yes",
++    "y",
++    "global",
++    "g",
++})
++
++# Negative tokens that resolve to "local" install (the default).
++_PRINCIPLES_INSTALL_LOCAL_TOKENS: frozenset[str] = frozenset({
++    "local",
++    "l",
++    "no",
++    "n",
++    "skip",
++    "default",
++    "",  # blank input → default
++})
++
++
++def resolve_principles_install_choice(
++    raw_input: str | None,
++) -> str | None:
++    """Return the principles-install choice for a one-question prompt.
++
++    Returns one of:
++
++    - ``"universal"`` — caller should write the reference to
++      ``~/.claude/CLAUDE.md``.
++    - ``"local"`` — caller should do nothing global (the default).
++    - ``None`` — input was non-empty but did not match either token
++      set; caller should re-prompt or surface the ambiguity. The
++      resolver does NOT silently default ambiguous input to local
++      because that would drop a possible "yes" from a user who typed
++      something the resolver doesn't recognise.
++
++    - ``None`` input or empty/whitespace input → ``"local"`` (the
++      default). Distinct from non-empty-but-unrecognised input
++      (returns ``None`` for caller re-prompt).
++
++    Pure function; no I/O side effects. Idempotent on the universal
++    and local tokens it returns:
++    ``resolve_principles_install_choice("universal") == "universal"``
++    and ``resolve_principles_install_choice("local") == "local"``.
++
++    Examples:
++
++        >>> resolve_principles_install_choice(None)
++        'local'
++        >>> resolve_principles_install_choice("")
++        'local'
++        >>> resolve_principles_install_choice("universal")
++        'universal'
++        >>> resolve_principles_install_choice("Y")
++        'universal'
++        >>> resolve_principles_install_choice("local")
++        'local'
++        >>> resolve_principles_install_choice("maybe") is None
++        True
++    """
++    if raw_input is None:
++        return DEFAULT_PRINCIPLES_INSTALL_CHOICE
++    normalised = raw_input.strip().lower()
++    if normalised in _PRINCIPLES_INSTALL_UNIVERSAL_TOKENS:
++        return "universal"
++    if normalised in _PRINCIPLES_INSTALL_LOCAL_TOKENS:
++        return "local"
++    # Non-empty, non-matching input — surface ambiguity rather than
++    # silently default. Caller decides whether to re-prompt or use
++    # the default explicitly.
++    return None
++
++
++# ---- principles-install action (foundation-revision Stage 3b F1a) ----
++#
++# When the resolved choice is "universal", the install action writes
++# (or appends) a reference line in ~/.claude/CLAUDE.md pointing at
++# the principles spec path. The action is idempotent: a second call
++# with the same path leaves the file unchanged.
++#
++# Per the foundation-revision plan: "write a reference from
++# ~/.claude/CLAUDE.md to the principles spec path on universal-install;
++# do nothing on local."
++
++# Sentinel marker so the install action can detect a prior install
++# without depending on exact whitespace / formatting.
++_PRINCIPLES_INSTALL_MARKER = "<!-- loam:principles-install -->"
++
++
++def _principles_install_block(spec_path: Path | str) -> str:
++    """Render the markdown block written into ~/.claude/CLAUDE.md.
++
++    The block is bracketed by the install marker so subsequent
++    install actions can locate (and skip / replace) the prior block
++    deterministically.
++    """
++    return (
++        f"\n{_PRINCIPLES_INSTALL_MARKER}\n"
++        f"## Loam principles (universal install)\n\n"
++        f"Loam's principle corpus is installed at universal scope. The\n"
++        f"principle-tier spec lives at:\n\n"
++        f"  {spec_path}\n\n"
++        f"It carries the most-broadly-applicable shaping principles\n"
++        f"(scope-confidence, multi-signal conflict resolution,\n"
++        f"swarming, ODD outcome-orientation, halt-and-surface,\n"
++        f"calibrated claims, and ~20 others). Lift Definition\n"
++        f"sections directly into other prompts; the loam-integration\n"
++        f"sections name where each principle lives in the loam\n"
++        f"harness specifically.\n"
++        f"{_PRINCIPLES_INSTALL_MARKER}\n"
++    )
++
++
++def install_principles_reference_universal(
++    *,
++    spec_path: Path | str,
++    claude_md_path: Path | None = None,
++) -> bool:
++    """Append the principles-install block to ``~/.claude/CLAUDE.md``.
++
++    Idempotent: if the file already contains
++    ``_PRINCIPLES_INSTALL_MARKER``, returns ``False`` without
++    modifying the file. Returns ``True`` on first install (the file
++    was modified or created).
++
++    The ``claude_md_path`` override is for tests; production callers
++    pass ``None`` and the function resolves to
++    ``Path.home() / ".claude" / "CLAUDE.md"``.
++
++    The function does NOT solicit user consent — the caller is
++    responsible for resolving the install choice via
++    ``resolve_principles_install_choice`` before invoking this
++    function. Calling this function is the explicit "universal"
++    branch of the install action.
++    """
++    target = (
++        Path(claude_md_path)
++        if claude_md_path is not None
++        else Path.home() / ".claude" / "CLAUDE.md"
++    )
++    spec_path_str = str(spec_path)
++    block = _principles_install_block(spec_path_str)
++    if target.exists():
++        existing = target.read_text()
++        if _PRINCIPLES_INSTALL_MARKER in existing:
++            # Idempotent: already installed. Don't touch the file.
++            return False
++        target.write_text(existing + block)
++    else:
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.write_text(block.lstrip("\n"))
++    return True
++
++
+ # Service "kinds" installed by the first-run scaffold. The full label
+ # is `com.loam.<slug>.<kind>`; the plist filename matches the label.
+ #

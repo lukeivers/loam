@@ -231,25 +231,28 @@ Per duration-estimation rubric (`wall_clock_minutes ≈ tool_calls × 0.1–0.15
 
 **Aggregate range: 120–220 min ≈ 2.0–3.7 hr AI-time.** Midpoint ~2.8 hr. Within halt-trigger 8 upper bound (240 min × 1.5 = 360 min).
 
-## §14 — Method decisions (filled at build time)
+## 14. Method decisions
 
-(Filled inline as the build proceeds; entries appended below.)
+- **D-V042.1** (Test-interface extraction strategy): walk SPEC-bearing markdown filenames in priority order (`SPEC.md`, `spec.md`, `TESTING.md`, `INTERFACE.md`, `README.md`, lowercase variants); within the first match, find the first H1/H2/H3 heading whose text contains any of `test interface`, `test-interface`, `tests`, `behavioral test`, `behavior`, `test harness`, `interface` (case-insensitive substring). Section body extends until next sibling/shallower heading or EOF. When no named section matches, fall back to full doc body (preserves the LLM's view of the SPEC even without structured headings). Both paths capped at `_SPEC_EXCERPT_MAX_CHARS = 4000` to bound prompt token count. Nested SPECs handled via `rglob` second-pass walk. Returns `None` when no SPEC-bearing markdown found (graceful fallback to v0.4.1 prompt shape).
+- **D-V042.2** (Py-version compat path): **BOTH instruction-side AND post-process-side** — belt-and-suspenders. Instruction-side: prompt names "Python 3.9-compatible syntax" + "no PEP-604 unions (`X | Y`)" + "no match/case" + "use typing.Union/Optional". Post-process-side: `_lower_pep604_unions(diff_text)` walks `+++ b/*.py` hunks, rewrites `+` lines via `_rewrite_pep604_in_line` regex (identifier-shaped operands; bracket-balanced generics like `list[int]`; conservative on bitwise-or in non-type-hint contexts). Auto-injects `from typing import Optional, Union` at top of any rewritten hunk that didn't already import them; idempotent on already-imported hunks. Only applied when `from_scratch=True` (extend-existing preserves the LLM output verbatim because the existing tree may target a newer Python).
+- **D-V042.3** (ProgramBench re-run task selection): same 3 tasks as v0.4.1 (calculator, jsonpp, wcclone) per the dispatch directive. Inputs preserved at `/tmp/v042-pbn-runs/` (mirrors v0.4.1 / C4 pattern).
+- **D-V042.4** (HARD smoke fixture): rd-automation per `feedback_hard_smoke_per_minor_before_publish.md`. Cold install in fresh Python 3.13.12 venv at `<smoke>/install/.venv`.
+- **D-V042.5** (apply + seal bookkeeping): `loam amend apply` + `loam amend seal --scoped-sweep` per v0.4.0 + v0.4.1 precedent (dirty-tree pattern persists at session-level; pre-seal stash dance).
+- **D-V042.6** (eval-task.sh widening): when LLM authors `executable` directly (no separate `compile.sh`), eval-task.sh chmods +x. Honors the SPEC's "Test interface" subprocess shape — the executable IS the named build artefact when no compile.sh is needed (jsonpp shape).
 
-- D-V042.1 (Test-interface extraction strategy) — TBD at sub-fix 1 build time.
-- D-V042.2 (Py-version compat path: instruction vs post-process) — TBD at sub-fix 2 build time.
-- D-V042.3 (ProgramBench re-run task selection) — same 3 tasks as v0.4.1 (calculator, jsonpp, wcclone) per the dispatch directive.
-- D-V042.4 (HARD smoke fixture) — rd-automation per `feedback_hard_smoke_per_minor_before_publish.md`.
-- D-V042.5 (apply + seal bookkeeping) — `loam amend apply` + `loam amend seal --scoped-sweep` per v0.4.0 / v0.4.1 precedent.
-
-## §15 — SHA register (filled at seal time)
-
-(Filled at seal time; backfill commit is the standard §11-style SHA log.)
+### Commit SHAs
 
 | Order | Type | SHA | Description |
 |---|---|---|---|
-| 1 | plan-doc | TBD | docs(plans): v0.4.2 patch plan-doc + manifest |
-| 2 | source-edit (sub-fix 1) | TBD | feat(code-gen): Test-interface section as load-bearing context in from-scratch prompt |
-| 3 | source-edit (sub-fix 2) | TBD | feat(code-gen): Py-version compatibility instruction/post-process |
-| 4 | docs (re-run + ship rollups) | TBD | docs: v0.4.2 ProgramBench re-run + STATE.md SHIPPED + release-roadmap §6 closure |
-| 5 | apply | TBD | chore(amend): v0-4-2-patch-f-design-2-closure manifest+apply |
-| 6 | seal | TBD | chore(seals): v0-4-2-patch-f-design-2-closure |
+| 1 | plan-doc | `7403d2dd` | docs(plans): v0.4.2 patch — F-DESIGN-2 closure plan-doc + manifest |
+| 2 | source-edit (sub-fix 1) | `28229eb8` | feat(code-gen): Test-interface section as load-bearing context (AC.V042.1) |
+| 3 | source-edit (sub-fix 2) | `70e6ba7e` | feat(code-gen): Py-version compatibility tests (AC.V042.2) |
+| 4 | docs (re-run append) | `5cdea12d` | docs(experiments): v0.4.2 ProgramBench re-run — F-DESIGN-2 closure verified |
+| 5 | docs (SHIP rollup) | `c1010c34` | docs: v0.4.2 SHIPPED rollup — STATE.md + release-roadmap §2/§3/§6 |
+| 6 | manifest baseline-update | `a8cb5f1a` | docs(plans): v0.4.2 patch manifest baseline → 5cdea12d |
+| 7 | apply | `507793db` | chore(amend): v0-4-2-patch-f-design-2-closure manifest+apply |
+| 8 | seal | `3f3df670` | chore(seals): v0-4-2-patch-f-design-2-closure — dev-sdlc at 507793d |
+
+## §15 — SHA register
+
+Backfilled at seal time into §14 above (per AC.D-sa.7 convention).

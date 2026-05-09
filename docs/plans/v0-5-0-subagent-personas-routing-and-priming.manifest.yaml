@@ -12,7 +12,7 @@ plan: docs/plans/v0-5-0-subagent-personas-routing-and-priming.md
 plan_doc_ref: docs/plans/v0-5-0-subagent-personas-routing-and-priming.md
 
 ac_count: 6
-smoke_outcome: "v0.5.0 patch — subagent-personas routing + priming consumption-gap closure; AC.V050.{1-5,S} green (audit GREEN 13/13; outcome YELLOW -22.9%); release-gate HARD (SKILL+docs only)"
+smoke_outcome: "v0.5.0 minor + post-seal priming-gap corrective; AC.V050.{1-5,S} green (audit GREEN 13/13; outcome YELLOW -22.9% floor; band unchanged after corrective); HARD release-gate (SKILL+docs+5 personas)"
 
 components:
   - name: dev-sdlc

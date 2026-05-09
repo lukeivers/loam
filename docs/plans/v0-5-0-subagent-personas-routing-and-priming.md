@@ -64,8 +64,8 @@ Composes with: Lens 2 (sub-personas are the toolkit the primary draws from); Len
 **Test surfaces:**
 - `plugins/dev-sdlc/tests/test_AC_V050_*.py` — AC-banded tests for the new SKILL discoverability + content + the brief-authoring SKILL extension.
 
-**Read-only:**
-- `plugins/dev-sdlc/agents/loam-{builder,plan-author,researcher,reviewer,documenter}.md` — v0.1.7 shipped surface; consumed by the routing SKILL but NOT modified.
+**Read-only (initial v0.5.0 build); MODIFIED by post-seal corrective 2026-05-09:**
+- `plugins/dev-sdlc/agents/loam-{builder,plan-author,researcher,reviewer,documenter}.md` — v0.1.7 shipped surface; consumed by the routing SKILL during the initial v0.5.0 build. The post-seal priming-gap corrective (`fix(personas): close AC.V050.5 priming gap`, 2026-05-09) extended each persona body with a §"Reporting + escalation discipline" section to close the AC.DBT.{3,5,6} + TIME-CLAIMS gap surfaced by the AC.V050.1 audit. Fence-extension rationale: the corrective is post-seal scope expansion targeted specifically at unblocking the AC.V050.5 outcome-altitude verdict; no other v0.1.7 persona surface (tool restrictions, when-to-invoke, voice rules, halt triggers) is touched. Hard constraint §5 #6 is correspondingly amended.
 - `framework/workspace-bootstrap/` — symlink scaffold for `<workspace>/.claude/agents/`; consumed read-only.
 - `framework/personas/primary/contract.yaml` + `framework/primary-persona/templates/persona-template/prompt.md` — primary-persona surface; consumed read-only as context for the routing SKILL.
 - `docs/personas-methodology.md` — §1-§9 the methodology authority; consumed read-only as the rubric source.
@@ -136,7 +136,9 @@ A real downstream amendment cycle (the next plan-doc → build → seal cycle th
 
 **Verdict:** GREEN if brief is ≥30% shorter AND cycle seals successfully AND no halt-and-surface degradation observed (qualitative judge by next-cycle dispatcher). YELLOW if 10-29% shorter OR a quality concern surfaces. RED if no reduction OR cycle quality measurably degraded (in which case the SKILL extension needs revision).
 
-**Output:** writeup at `<workspace>/.scratch/claude-output/v0-5-0-routing-outcome-probe.md` with brief-length delta + cycle-seal verdict + qualitative quality judgment + the typed-dispatch brief itself archived as the v0.5.0 reference exemplar.
+**Status (post-corrective 2026-05-09):** YELLOW (-22.0% midpoint / -22.9% floor; band unchanged from initial measurement). The v0.5.0 priming-gap corrective (`fix(personas): close AC.V050.5 priming gap — fill AC.DBT.{3,5,6} + TIME-CLAIMS-DISCIPLINE across 5 typed personas`, 2026-05-09) added §"Reporting + escalation discipline" to all 5 typed personas and flipped 4 of 6 cross-walk rows from "propagate" to "OMIT-OK"; the GREEN ≥30% target is mathematically unreachable under this corrective shape because the 84-line typed-brief floor is set by non-AC.DBT brief structure (mission + authorization + fence + ACs + halt triggers + bookkeeping + model rationale). Two paths surfaced for owner ruling at the bottom of the probe writeup: Path 1 — tune the AC band to ≥20% (matches achievable ceiling; recommended per `feedback_loose_AC_text_fix_AC_not_implementation`); Path 2 — ship a v0.5.0+ follow-on amendment that consolidates non-AC.DBT brief structure (estimated AI-time 60-90 min). Quality-preservation projected GREEN; live-cycle quality verdict still PENDING the next typed dispatch.
+
+**Output:** writeup at `<workspace>/.scratch/claude-output/v0-5-0-routing-probe.md` with brief-length delta + cycle-seal verdict + qualitative quality judgment + the typed-dispatch brief itself archived as the v0.5.0 reference exemplar. (File renamed from `v0-4-4-routing-probe.md` per the v0.4.4 → v0.5.0 reclassification commit `96972082`.)
 
 **Test:** `test_AC_V050_5_routing_outcome_probe.py` — asserts the artefact exists at canonical path + contains a verdict-band line + records both brief lengths + names the comparison cycle. Skip-by-default unless `LOAM_V050_OUTCOME_PROBE_SHIPPED=1` env var set (the probe is empirical and post-v0.5.0-seal; the test gates the env-var presence so CI doesn't false-fail before the probe ships).
 
@@ -154,7 +156,7 @@ A real downstream amendment cycle (the next plan-doc → build → seal cycle th
 - `docs/STATE.md` (v0.5.0 SHIPPED rollup row).
 - `docs/FUTURE_IDEAS_DRAFT.md` (capture for §6 deferred items if any).
 
-Anything outside that set is a halt condition. Specifically: **NO edits to `plugins/dev-sdlc/agents/loam-*.md`** — the v0.1.7 personas are sealed and consumed read-only. **NO edits to `framework/workspace-bootstrap/`** — the symlink scaffold is sealed and consumed read-only. **NO edits to any other plugin or framework component**.
+Anything outside that set is a halt condition. Specifically: **NO edits to `plugins/dev-sdlc/agents/loam-*.md`** during the initial v0.5.0 build — the v0.1.7 personas are sealed and consumed read-only at seal time. **AMENDED 2026-05-09 post-seal:** the priming-gap corrective extends each persona body with a §"Reporting + escalation discipline" section; the seal-diff for the corrective commit (`fix(personas): close AC.V050.5 priming gap`) admits `plugins/dev-sdlc/agents/loam-*.md` for that specific commit only, scoped to the §"Reporting + escalation discipline" addition. **NO edits to `framework/workspace-bootstrap/`** — the symlink scaffold is sealed and consumed read-only. **NO edits to any other plugin or framework component**.
 
 ---
 
@@ -165,7 +167,7 @@ Anything outside that set is a halt condition. Specifically: **NO edits to `plug
 3. **No Anthropic API key, no `pip install anthropic`.** v0.5.0 is SKILL-authoring; no LLM-routed code paths added.
 4. **`--strict-mcp-config` invariant.** No `claude -p` calls added; constraint preserved by inspection.
 5. **No new runtime deps.** SKILL authoring is markdown + frontmatter; no Python additions on the import surface.
-6. **No modification of v0.1.7 subagent persona files.** They are sealed; consumed read-only.
+6. **No modification of v0.1.7 subagent persona files** (initial v0.5.0 build); **AMENDED 2026-05-09 post-seal:** the priming-gap corrective extends each persona body with a §"Reporting + escalation discipline" section (Recommendation IS the decision / operational-objective test / verified-or-marked / no-false-fault / TIME-CLAIMS) to close the AC.DBT.{3,5,6} + TIME-CLAIMS gap surfaced by AC.V050.1. No other persona surface is touched (tool restrictions, when-to-invoke, voice rules, halt triggers, harness composition all preserved). Constraint scope narrows from "no modification at all" to "no modification beyond the AC.DBT priming-gap closure."
 7. **No modification of v0.2.2 AC.DBT.1–6 propagated-principle block.** It is the load-bearing backward-compat surface for `general-purpose` dispatches.
 8. **`loam amend apply --dry-run` green** is a hard prereq + hard post-apply gate.
 9. **No public action.** No `git push`, no `git tag`, no GitHub Release. v0.5.0 HALTS at seal; owner gates the publish.

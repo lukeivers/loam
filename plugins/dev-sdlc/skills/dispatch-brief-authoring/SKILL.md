@@ -109,18 +109,26 @@ The dispatch-brief structural shape, in canonical order:
 
    | AC.DBT principle | builder | plan-author | researcher | reviewer | documenter |
    |---|---|---|---|---|---|
-   | AC.DBT.2 LEAN-GROUNDING-LOAD | propagate (partial coverage; "ODD-fluent" is named, but the lean-grounding load directive is not) | propagate (partial coverage; ODD-fluent + outcome-shape, no explicit lean-grounding load) | OMIT-OK (researcher work is rarely ODD-shaped; Lens 1–3 substitutes) | propagate (partial coverage; ODD §2.5 fluent, no explicit lean-grounding load) | OMIT-OK (documenter work is not ODD-shaped) |
-   | AC.DBT.3 NO-CLOSING-LINE-PERMISSION-ASKS | propagate | propagate | propagate | propagate | propagate |
-   | AC.DBT.4 SPECIFIC-CLAIMS-VERIFIED | propagate (partial — quotes ACs/SHAs but no explicit verified-or-marked-guess clause) | propagate | OMIT-OK (researcher body explicitly carries VERIFIED / PLAUSIBLE / HYPOTHESISED bands + cites the feedback memory) | OMIT-OK (reviewer body explicitly carries VERIFIED bands + "I never confabulate") | propagate (partial — "never include unverified claims") |
-   | AC.DBT.5 TEST-AGAINST-OPERATIONAL-OBJECTIVE-BEFORE-ESCALATING | propagate | propagate | propagate | propagate | propagate |
-   | AC.DBT.6 NO-FALSE-FAULT | propagate | propagate | propagate | propagate | propagate |
-   | TIME-CLAIMS-DISCIPLINE | propagate | propagate | propagate | propagate | propagate |
+   | AC.DBT.2 LEAN-GROUNDING-LOAD | propagate (partial; "ODD-fluent" named, no lean-grounding load directive) | propagate (partial; ODD-fluent + outcome-shape, no lean-grounding load) | OMIT-OK (research rarely ODD-shaped; Lens 1–3 substitutes) | propagate (partial; ODD §2.5 fluent, no lean-grounding load) | OMIT-OK (docs not ODD-shaped) |
+   | AC.DBT.3 NO-CLOSING-LINE-PERMISSION-ASKS | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ |
+   | AC.DBT.4 SPECIFIC-CLAIMS-VERIFIED | propagate (partial — quotes ACs/SHAs, no explicit verified-or-marked clause) | propagate | OMIT-OK (body carries VERIFIED / PLAUSIBLE / HYPOTHESISED bands) | OMIT-OK (body carries VERIFIED bands + "I never confabulate") | propagate (partial — "never include unverified claims") |
+   | AC.DBT.5 TEST-AGAINST-OPERATIONAL-OBJECTIVE-BEFORE-ESCALATING | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ |
+   | AC.DBT.6 NO-FALSE-FAULT | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ |
+   | TIME-CLAIMS-DISCIPLINE | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ | OMIT-OK¹ |
 
-   The AC.DBT.{3,5,6} + TIME-CLAIMS-DISCIPLINE rows propagate
-   for every typed persona because no v0.1.7 persona body
-   names them. AC.DBT.{2,4} have per-persona OMIT-OK rows
-   only where the persona body explicitly carries the
-   discipline. When in doubt: propagate. Briefs MUST still
+   ¹ OMIT-OK as of the v0.5.0 priming-gap corrective
+   (`fix(personas): close AC.V050.5 priming gap`, 2026-05-09):
+   each persona body now carries a §"Reporting + escalation
+   discipline" section naming Recommendation IS the decision /
+   operational-objective test / verified-or-marked /
+   no-false-fault four-test / TIME-CLAIMS (`date` + AI-time
+   rubric).
+
+   AC.DBT.{2,4} retain per-persona OMIT-OK rows only where the
+   persona body explicitly carries the discipline (LEAN-GROUNDING-
+   LOAD stays partial across builder / plan-author / reviewer;
+   SPECIFIC-CLAIMS-VERIFIED stays partial on builder / plan-author
+   / documenter). When in doubt: propagate. Briefs MUST still
    carry the structural slots that are NOT AC.DBT principles
    (Working directory + literal `cd <abs-path> && pwd` first
    action + Sub-plan path + Fence + Acceptance criteria + Halt

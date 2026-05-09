@@ -197,8 +197,9 @@ Owner gate-review separate (ratify plan-doc shape before build dispatch + ratify
 
 **Plan-doc revision commit:** `c05ce45` — slug + AC IDs + branch + remote + working-directory revision pass.
 **Source-edit commit:** `d1a6027` — feat(loam-cli): `loam release` subcommand + 5-module subpackage + 40 tests + runbook.
-**Apply commit:** TBD-AT-APPLY (lands via `loam amend apply` per sealed-component cycle ritual).
-**Seal commit:** TBD-AT-SEAL (lands via `loam amend seal --plan-doc`).
+**Pre-apply admin commit:** `5067797` — STATE rollup + release-roadmap §2 row + plan-doc §13 backfill + HARD smoke writeup.
+**Apply commit:** `8125117` — `loam amend apply` per sealed-component cycle ritual; component fence `loam` (BASELINE → `d1a6027a`; SEAL_COMMIT → `d1a6027a`; `allowed_prefixes` + `allowed_files` widened per universal-paths).
+**Seal commit:** `eaf8f24` — `loam amend seal --scoped-sweep --plan-doc`; sealed `loam` component at `8125117`.
 
 ### AC verdict matrix
 
@@ -230,3 +231,11 @@ Per `feedback_duration_estimation_rubric` log-actuals discipline; final actuals 
 ### Halt-and-surface findings
 
 None. Build proceeded to seal without architectural blocks. The v0.6.0 surface is small (one new component fence + one new doc) + cleanly composes with the existing `loam` CLI dispatcher's M6a entry-point group + the dev-sdlc plugin's `amend` adapter (sibling registration pattern). No ODD §2.5 violations surfaced in surrounding code; no scope creep beyond the plan-doc fence.
+
+## §14 — Method decisions
+
+Backfilled at build time per the v0.4.3 / v0.4.2 / v0.4.1 / v0.4.0 precedent.
+
+- **D-V060.2 (CLI module shape):** Path A chosen — single-module-per-concern (gates.py / notes.py / post_ship.py / runner.py / cli.py). Rationale: the CLI surface is bounded (six gates + one tag/push action + one notes generator + one post-ship block); a pluggable gate registry would add coordination overhead without a tighter acceptance criterion per Lens 5 swarming-stop rule. Path B (registry) deferred to v0.7.0+ if a third-party plugin contributes additional gates.
+- **D-V060.4 (auto-generated release notes shape):** Default — plan-doc §1 outcome + plan-doc §status + commit log between previous seal and this seal. Noise filter (chore-prefix lines drop when log is dense — ≥4 lines + >50% noise) implemented preemptively per the policy hint; threshold tunable in `loam_cli/release/notes.py:_filter_noise` if v0.7.0+ HARD smoke surfaces tuning need.
+- **D-V060.5 (runbook depth):** Default — six-section reference (gates table, invocation, post-publish state, manual fallback, composes-with, cross-references). Reviewable in 5 minutes per AC.V060.5. No tutorial-shape; if first reader (Eric or other OSS consumer) signals confusion, expand at v0.7.0+ via a separate runbook-extension cycle.

@@ -1,0 +1,41 @@
+schema_version: 3
+amendment:
+  slug: v0-6-0-release-process
+  title: "v0.6.0 minor — concrete release process: `loam release <version>` CLI verb + 6 structural pre-publish gates + tag/push + optional GitHub Release with auto-generated notes + post-ship review block; `docs/release-process.md` runbook + manual fallback. Closes the figured-out-as-I-went publish workflow that bites at the wrong moment under time pressure or session handoff."
+
+# BASELINE captured at apply time; source-edit commit landed at d1a6027.
+baseline: "d1a6027a"
+
+plan: docs/plans/v0-6-0-release-process.md
+plan_doc_ref: docs/plans/v0-6-0-release-process.md
+
+ac_count: 7
+smoke_outcome: "v0.6.0 minor; AC.V060.{1-6,S} GREEN via 40 new tests under framework/tools/loam/tests/test_AC_V060_*.py; AC.V060.7 dogfood deferred to dispatcher publish action per ASK-FIRST"
+
+components:
+  - name: loam
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+
+narrative:
+  target: framework/tools/loam/seals/SEAL_COMMIT.v0-6-0-release-process

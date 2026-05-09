@@ -281,7 +281,7 @@ Conditions that fire during cycle execution stop the build for surface-and-RF (n
 | 2 — code-gen-outcome-altitude-verification | `b3586468` | `f031c89c` |
 | 3 — substrate-composition-routines-codereview-outcomes | `f9771855` | `2d1e7f01` |
 | 4 — programbench-v0-docs-only-baseline | `fdbdc918` | `e5c62463` |
-| 5 — release-level-smoke-gate-and-ship | `<C5-apply>` | `<C5-seal>` |
+| 5 — release-level-smoke-gate-and-ship | `1733a7df` | `7787a226` |
 
 ---
 

@@ -71,8 +71,11 @@ Method-decision record finalized at C5 plan-doc dispatch time. Mirrors v0.3.0 C7
 
 | Commit | SHA |
 |---|---|
-| Plan-doc commit | (pending) |
-| Source-edit commit | (pending) |
-| Apply commit | (pending) |
-| Seal commit | (pending) |
-| §14 backfill commit | (pending) |
+| Plan-doc commit | `586a5ec3` (v0.4.0 master plan + 5 cycle stubs, 2026-05-08) |
+| Source-edit commit (BASELINE) | `adf9977f` |
+| Manifest commit | `5a4d94a6` |
+| Manifest-trim corrective | `c072df39` |
+| C2 §14 backfill (carried) | `acc26537` |
+| Apply commit | `1733a7df` |
+| Seal commit | `7787a226` |
+| §14 backfill commit | (this commit) |

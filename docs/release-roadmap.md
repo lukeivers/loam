@@ -36,7 +36,7 @@ These are non-negotiable across the roadmap unless the policy doc itself changes
 
 ---
 
-## §2 Shipped (concise summary, v0.1.0 → v0.2.5.1)
+## §2 Shipped (concise summary, v0.1.0 → v0.4.0)
 
 Pulled from `docs/STATE.md`. Each entry is the minor's objective sentence + the seal anchor.
 
@@ -55,71 +55,19 @@ Pulled from `docs/STATE.md`. Each entry is the minor's objective sentence + the 
 | v0.2.5 | Loam's reverse-ODD pipeline runs HARD smoke-clean against a real-world codebase (`rd-automation`); the `claude -p` synthesis client replaces the Anthropic SDK; subscription-only architecture verified. | seal `7f41ed0`; tag `v0.2.5` pushed 2026-05-06 |
 | v0.2.5.1 | Loam respects user-declared off-limits zones, exposes a configurable synthesis timeout, and cascades capability drops when their target objectives are guarded out. | seals `b1d5f1e` (apply), `7a06034` (§14 backfill) — closes Eric's three F-LEAK / F-TIMEOUT / F-VERIFY-ORPHAN findings |
 | v0.3.0 | Loam's documented features work as advertised AND loam's terminology is consistent across forward-looking surface — `docs/rebuild/` collapsed (~5300 refs scrubbed); graphiti rip-out + FBE.7 file-backed memory canonical; foundation-docs gap-fill (CLAUDE.md Lens 6/7 + principle-derivation-map port); lint pass clean (`ruff` + F821 sweep); `KNOWN_CROSS_MODE_DEBT` shrinks 1 → 0; F3 + F4 closures; `docs/glossary.md` published (12 canonical terms); feature-honesty audit 100% match post-C6.1; `claude -p --strict-mcp-config` invariant verified 3/3 production sources; ODD-conformance allowlist published (18 entries); HARD smoke GREEN against rd-automation. | Cycles 1–7 + C6.1: apply `e80437b` / seal `459c7fc` (C1); apply `39094ea` / seal `013553e` (C2); apply `ad12cc1` / seal `be48b34` (C3); apply `46fd2a7` / seal `7afb648` (C4); apply `dddaf8d` / seal `542b939` (C5); apply `f8beeaa` / seal `0734ea9` (C6); apply `9864b0a` / seal `58da132` (C6.1); apply `d849aee` / seal `3c6fdd5` (C7) |
+| v0.4.0 | Loam ships a code-gen surface (`loam odd-extract <repo> --code-gen`) optimised for **extending an existing repo** — consumes objectives.yaml + gap-inventory.yaml + build-next.yaml + emits a unified diff against the source tree with each commit's `objectives:` block populated (amendment #38 `lifted_from` schema reused); `jsts-playwright-app` outcome-altitude verified end-to-end against real `claude -p` subprocess; substrate composition on Claude Code Routines (`feedback_routines_runtime_layer.md` + 1 example plan-doc) + Code Review (plan-author SKILL section + 1 example) + Outcomes-pattern ADR (`docs/design/odd-vs-outcomes.md` documenting API-key-vs-subscription divergence). **F-DESIGN-1 confirmed empirically at C4 ProgramBench v0 baseline:** Variant A (docs-only feeder → reverse-ODD → ODD-grounded code-gen) **56% (9/16)** vs direct `claude -p` baseline **100% (16/16)** on 3 small tasks; the v0.4.0 surface does NOT (yet) ship cold-start docs-only multi-file code-gen — that surface extension is named in §6 as the v0.4.1 closure path. | Cycles 1–5: apply `a7d1182` / seal `cc2efbb` (C1 code-gen-core, SOFT smoke); apply `b358646` / seal `f031c89` (C2 outcome-altitude verification on jsts-playwright-app); apply `f977185` / seal `2d1e7f0` (C3 substrate composition); apply `fdbdc91` / seal `e5c6246` (C4 ProgramBench v0 docs-only baseline); apply `<C5-apply>` / seal `<C5-seal>` (C5 release-level smoke gate + ship rollup) |
 
-**Total shipped:** 13 minor + 1 patch. v0.1.0 → v0.3.0 published. v0.3.0 ships META-FRAMEWORK foundation; v0.4.0 code-gen-from-objectives lands against this baseline.
+**Total shipped:** 14 minor + 1 patch. v0.1.0 → v0.4.0 published. v0.3.0 ships META-FRAMEWORK foundation; v0.4.0 ships code-gen-from-objectives optimised for extend-existing-repo (cold-start docs-only multi-file generation deferred to v0.4.1 patch per F-DESIGN-1 finding).
 
 ---
 
 ## §3 Active version
 
-v0.3.0 SHIPPED (collapsed to §2 per `docs/plans/v0-3-0-cycle-7-release-level-smoke-gate-and-ship.md` per the per-minor seal ritual at §7). Next minor: **v0.4.0** — see §4 below for objective + ACs + dependencies (depends on v0.3.0; the META-FRAMEWORK foundation v0.3.0 ships unblocks v0.4.0's code-gen-from-objectives surface).
+v0.4.0 SHIPPED (collapsed to §2 per `docs/plans/v0-4-0-cycle-5-release-level-smoke-gate-and-ship.md` per the per-minor seal ritual at §7). Next: **v0.4.1 patch** addressing F-DESIGN-1 (cold-start from-scratch code-gen surface) per §6 owner-action-line — OR proceed directly to **v0.5.0** binary-usage observation harness if owner ratifies forward-pull. See §4 v0.5.0 for objective + ACs + dependencies.
 
 ---
 
-## §4 Mapped versions (v0.4.0 → v1.0.0)
-
-### v0.4.0 — Loam ships working code from extracted objectives
-
-#### Objective
-
-> **Loam takes objectives.yaml + gap-inventory.yaml + build-next.yaml as planning input and produces working source code that maps every line to a named AC.** ODD-grounded code-gen is the deliverable; the extraction phase becomes load-bearing only because the planning input it produces grounds the code that ships.
-
-**Class:** END-USER
-
-This is the version where loam stops being a contract-extractor and starts being a software-builder. The Dev/SDLC plugin's prime function activates here.
-
-#### Constraints
-
-- Subscription-only via `claude -p`; no API keys.
-- Code-gen agent dispatches receive ODD context (objectives + capabilities + gaps + constraints) as part of the planning brief, not as bare task descriptions.
-- Compose on Claude Code Routines (per the conference research at `<workspace>/.scratch/claude-output/claude-conference-features-2026-05-06.md` §4) as the runtime layer for background-agent dispatches.
-- Compose on `claude code review` + `claude code security review` as plan-step primitives — do not reimplement review.
-- `Outcomes` (Anthropic Managed Agents) is named in `docs/design/odd-vs-outcomes.md` as the runtime grader analogue to ODD's authoring-time discipline; the two stack only when both surfaces are available; loam-on-subscription cannot directly compose on Outcomes (API-keyed) — documented divergence, not blocker.
-- Every generated commit traces to a named objective via the `objectives:` block (per amendment #38 schema; reused).
-
-#### Acceptance criteria
-
-- **AC.V040.1 — Code-gen-from-objectives integration.** `loam build-next` (or named successor) accepts objectives.yaml + build-next.yaml, dispatches an LLM-routed code-generation cycle, produces a unified diff or branch with each commit's `objectives:` block populated. Outcome verified end-to-end against the `jsts-playwright-app` canonical fixture.
-- **AC.V040.2 — Routines integration.** Background loam dispatches can invoke `claude routine create` or equivalent; documented pattern + 1 example plan-doc.
-- **AC.V040.3 — Code-review composition.** Plan-author SKILL has a "compose-on-claude-code-review" guidance section; one example plan-doc demonstrates the composition.
-- **AC.V040.4 — ProgramBench docs-only baseline (v0).** Run baseline + Variant A (docs-only feeder → reverse-ODD → ODD-grounded code-gen) on 3-5 small ProgramBench tasks (jq, ripgrep). Score: behavioral test pass rate. Report at `docs/experiments/programbench-v0-docs-only.md`.
-- **AC.V040.5 — Outcomes-pattern ADR.** `docs/design/odd-vs-outcomes.md` exists, names ODD as authoring-time discipline + Outcomes as runtime grader, documents stack-when-both-available shape, names the API-key-vs-subscription architectural divergence.
-- **AC.V040.6 — Outcome-altitude AC for code-gen.** Per `feedback_test_outcome_altitude_required.md` — the V040.1 outcome AC exercises the full path against real `claude -p` subprocess on a real fixture, no monkeypatch.
-
-#### Source items
-
-- Idea 3 — Dev/SDLC plugin sub-feature: code-gen leveraging extracted objectives (the prime objective of the plugin)
-- ProgramBench × loam v0 experiment (`programbench-loam-benchmark-v0.md` Variant A: docs-only feeder)
-- Claude conference features Routines (#4) + Code Review (#5) + Security Review (#7) substrate composition
-- Outcomes-pattern ADR (claude conference features §4 item 3)
-- Code-gen agent receives ODD-grounded planning input (Luke's framing correction Telegram 10233)
-
-#### Estimated AI-time
-
-- Code-gen-from-objectives integration: 4-8 hours (~3000-5000 tool calls; sizeable new surface)
-- Routines integration + 1 example: 5-10 min (per conference doc estimate)
-- Code-review SKILL composition + 1 example: 6-12 min
-- ProgramBench v0 docs-only on 3-5 tasks: 60-120 min (per programbench doc; ~variant A only; binary harness deferred to v0.5.0)
-- Outcomes-pattern ADR: 8-15 min
-- Outcome-altitude AC + verification: 30-60 min
-
-**Total v0.4.0 AI-time: 6-11 hours**, midpoint **~8 hours**. Larger than v0.3.0 because of the new code-gen surface.
-
-#### Dependencies
-
-- v0.3.0 (documented features work; lint-clean Python; honest README).
-
----
+## §4 Mapped versions (v0.5.0 → v1.0.0)
 
 ### v0.5.0 — Loam builds software from minimal input
 
@@ -444,6 +392,7 @@ These items are real work but do not name a version's outcome shape. They live h
 | **GitHub Releases marked --latest** | Per `docs/release-versioning-policy.md` §Tagging. | Per-minor; not a roadmap line. |
 | **Dispatcher-side smoke verifications** | Some ACs (V025.4 outcome-altitude, V025.5 telegram-MCP isolation outcome-altitude) require parent-session verification not visible from sub-agents. | Per-minor; documented in each minor's plan-doc. |
 | **Docker-equivalent / fresh-machine FBE.7 stranger-clone verification** | v0.3.0 Cycle 6 audit (`docs/v0-3-0-feature-honesty-audit.md` §4 + §9.3) closed production-CLI altitude via `framework/primary-persona/tests/test_AC_FHA_6_stranger_clone_fbe7_outcome.py`; cross-process / fresh-install / fresh-user-account altitude verification still pending. Trigger: owner brings Docker Desktop up OR runs probe on a fresh machine. | On positive verdict, AC.FHA.2 lifts from PASS-WITH-OWNER-ACTION-LINE to PASS; on negative verdict, in-cycle fix triggers at the version then active. |
+| **F-DESIGN-1 closure (cold-start docs-only multi-file code-gen)** | v0.4.0 Cycle 4 ProgramBench v0 baseline (`docs/experiments/programbench-v0-docs-only.md` §3) confirmed empirically that the v0.4.0 code-gen surface is shaped for *"extend an existing repo"* (consume objectives.yaml + emit unified diff against source tree), NOT *"write from scratch given only docs"* — Variant A 56% (9/16) vs baseline 100% (16/16) on 3 small tasks. Three sub-findings: (1) single-commit-per-candidate prevents multi-file submissions where ≥2 files are required (build script + source); (2) the code-gen prompt assumes existing source ("Produce a unified diff" — model defaults to `--- a/<path>` against hallucinated source); (3) build-next ranking ties resolve alphabetically rather than by load-bearing-objective heuristics. **Trigger:** owner ratifies the v0.4.1 patch path described in `docs/experiments/programbench-v0-docs-only.md` §5 ("Short-term") — adds a `--from-scratch` mode (or auto-detection on no-source-files-matching-domain) authoring multiple commits per task with a "create new files" prompt shape and `--- /dev/null` source line; tightens build-next tie-break beyond alphabetical. | Closure path is v0.4.1 patch (PATCH-class per `docs/release-versioning-policy.md` — defect closure within v0.4.0's outcome). Ratification gate before patch dispatch. v0.5.0 binary-feeder Variant B is a separate parallel surface and does NOT subsume the v0.4.1 closure. |
 
 ---
 

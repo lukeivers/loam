@@ -277,11 +277,11 @@ Conditions that fire during cycle execution stop the build for surface-and-RF (n
 
 | Cycle | Apply SHA | Seal SHA |
 |---|---|---|
-| 1 — code-gen-from-objectives-core | (pending) | (pending) |
-| 2 — code-gen-outcome-altitude-verification | (pending) | (pending) |
-| 3 — substrate-composition-routines-codereview-outcomes | (pending) | (pending) |
-| 4 — programbench-v0-docs-only-baseline | (pending) | (pending) |
-| 5 — release-level-smoke-gate-and-ship | (pending) | (pending) |
+| 1 — code-gen-from-objectives-core | `a7d1182b` | `cc2efbba` |
+| 2 — code-gen-outcome-altitude-verification | `b3586468` | `f031c89c` |
+| 3 — substrate-composition-routines-codereview-outcomes | `f9771855` | `2d1e7f01` |
+| 4 — programbench-v0-docs-only-baseline | `fdbdc918` | `e5c62463` |
+| 5 — release-level-smoke-gate-and-ship | `<C5-apply>` | `<C5-seal>` |
 
 ---
 

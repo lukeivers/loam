@@ -810,7 +810,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pos-sync",
         description=(
-            "pOS v2 workspace-sync — pull canonical changes into "
+            "loam workspace-sync — pull canonical changes into "
             "<workspace>/framework/ via `git fetch + git merge "
             "--ff-only`. On non-fast-forward, fall back to `git "
             "merge` + LLM-mediated per-conflict resolver. The merge "

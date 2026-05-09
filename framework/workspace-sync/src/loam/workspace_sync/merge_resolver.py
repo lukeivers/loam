@@ -132,7 +132,7 @@ def build_prompt(
     confidence. The response shape is ``MergeVerdict``.
     """
     parts = [
-        "You are resolving a three-way merge conflict in a pOS v2 workspace.",
+        "You are resolving a three-way merge conflict in a loam workspace.",
         "",
         f"File path: {path}",
         "",

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""pOS v2 workspace-sync — git-merge-based canonical-to-workspace sync.
+"""loam workspace-sync — git-merge-based canonical-to-workspace sync.
 
 D-migration D.3 (amendment #64) — pos-sync becomes a thin wrapper
 around `git fetch + git merge --ff-only` against

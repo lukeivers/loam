@@ -1,0 +1,145 @@
+schema_version: 3
+amendment:
+  slug: v0-7-0-non-tech-user-surface
+  title: "v0.7.0 minor — non-tech-user surface (cold-start to working software via natural-language conversation only): light-touch-narration SKILL + channel-config primary_channel slot + channel-routing policy + workspace-corpus-overrides doc + memory-doc skeleton + `loam amend new-memory` orchestration + reference session-transcript + outcome-altitude stranger-clone probe + implementation-tier-picker SKILL + tier-ladder doc. Q1 = MONOLITH; Q2 = SYNTHETIC PROXY; Q3 = FOLD IN. Makes v1.0 quality-bar criterion #2 (one real user has shipped real software with loam) empirically reachable for the first time."
+
+# BASELINE captured at apply time; source-edit commit landed at eb0a4d3.
+baseline: "eb0a4d3"
+
+plan: docs/plans/v0-7-0-non-tech-user-surface.md
+plan_doc_ref: docs/plans/v0-7-0-non-tech-user-surface.md
+
+ac_count: 8
+smoke_outcome: "v0.7.0 minor; AC.NTU.{1-7,S} GREEN via 62 new NTU.* tests across four components; outcome-altitude probe surfaced + scrubbed Q4 vocabulary leak inside cycle; deeper F-DESIGN deferred."
+
+# Four sealed components touched per plan-doc §3 + build-time D-NTU.4 ruling:
+#   - workspace-bootstrap: manifest.py (primary_channel field + LEGAL_PRIMARY_CHANNELS + load + write_onboarding_fields), onboarding.py (_channel_to_primary_channel + Q4 vocabulary scrub + write call), 3 new tests
+#   - primary-persona: channel_routing.py (new module), 2 SKILLs (light-touch-narration.md + implementation-tier-picker.md), 3 new tests
+#   - hands-off-lifecycle: 1 new test only (consumes existing _resolve_corpus_path; no src changes)
+#   - dev-sdlc (plugin): loam-amend new-memory command + cli.py registration, memory-doc/SKELETON.md template, 1 new test
+#
+# Plus universal-admission docs: docs/workspace-corpus-overrides.md, docs/implementation-tiers.md, docs/examples/corpus-overrides/, docs/examples/non-tech-user-session-transcript.md.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/workspace-corpus-overrides.md
+    - docs/implementation-tiers.md
+
+narrative:
+  target: framework/primary-persona/seals/SEAL_COMMIT.v0-7-0-non-tech-user-surface
+  body: |
+    # v0.7.0 — non-tech-user surface (cold-start to working software)
+
+    2026-05-09. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST. v0.7.0 ships the FLOW that makes the v1.0 quality-bar
+    criterion #2 ("one real user has shipped real software with loam")
+    empirically reachable for the first time.
+
+    Q1 = MONOLITH (single cycle). Q2 = SYNTHETIC PROXY (real-user
+    shipping reserved for the v1.0 criterion #2 event). Q3 = FOLD IN
+    (tier picker shipped in v0.7.0).
+
+    Seven ACs across four components plus universal-admission docs.
+
+    AC.NTU.1 — Light-touch-narration SKILL at framework/primary-
+    persona/skills/light-touch-narration.md. Names four decision
+    categories (modality / specialist / tier / data-model) that
+    trigger one-sentence narration with calibrated lead phrases.
+    Verbosity-tunable per education_verbosity (terse | default |
+    richer). 7 tests GREEN.
+
+    AC.NTU.2 — Workspace-bootstrap manifest gains primary_channel
+    field (telegram | terminal). Migration default derives from
+    channel_preference for pre-v0.7.0 workspaces. Onboarding ritual
+    writes both fields from same Q2 answer. Channel-routing policy at
+    framework/primary-persona/src/loam/primary_persona/channel_routing.py
+    exposes decide(primary_channel, reply_target, reply_kind) covering
+    the four AC-named cells. Per D-NTU.2.c (build-time): full Stop-
+    hook integration deferred — slot + policy function deliver the
+    AC.NTU.2 surface. 24 tests GREEN.
+
+    AC.NTU.3 — Workspace-corpus-overrides doc at docs/workspace-corpus-
+    overrides.md plus household-finance reference at docs/examples/
+    corpus-overrides/. Documents the existing _resolve_corpus_path
+    workspace-root-shadows-framework pattern; integration probe loads
+    the reference into a fixture workspace and verifies resolver picks
+    the override. 5 tests GREEN.
+
+    AC.NTU.4 — Memory-doc skeleton template at plugins/dev-sdlc/
+    templates/memory-doc/SKELETON.md plus loam amend new-memory <slug>
+    orchestration parallel to new-plan. Per D-NTU.4 ruling: switched
+    to loam-amend (parallelism is load-bearing — same template engine,
+    same scaffold pattern). 9 tests GREEN.
+
+    AC.NTU.5 — Reference session-transcript demo at docs/examples/
+    non-tech-user-session-transcript.md captured via synthetic-proxy
+    (per Q2 ratification). Four moments: onboarding question-set,
+    natural-language ask, tier-conversation + structural-decision
+    narration, working-software output.
+
+    AC.NTU.6 — Outcome-altitude stranger-clone probe at framework/
+    workspace-bootstrap/tests/test_AC_NTU_6_outcome_altitude_stranger_
+    clone.py. Real-execution probe (not pre-arranged state); invokes
+    production entry-points; verifies user-visible surface (README
+    quickstart + onboarding question text + completion summary)
+    contains zero ODD vocabulary. Probe surfaced ODD-vocabulary leak
+    in onboarding Q4 ("ODD extractor") which was scrubbed inside the
+    cycle (substrate term replaced with "scan this codebase for design
+    patterns"); deeper F-DESIGN finding (Q4/Q5 should be conditional
+    on dev-intent detection — non-tech-user workspaces shouldn't
+    surface these questions at all) deferred to follow-on amendment
+    per build report. 8 tests GREEN.
+
+    AC.NTU.7 — Implementation-tier-picker SKILL at framework/primary-
+    persona/skills/implementation-tier-picker.md plus tier-ladder doc
+    at docs/implementation-tiers.md. Five tiers (one-time on-thread /
+    reusable script / local file-based / local service-based /
+    external service); tier-5 risk-surfacing template (data flow /
+    reach / auth / monitoring / billing / exit plan). Composes with
+    light-touch-narration. 9 tests GREEN.
+
+    Test coverage: 62 new NTU.* tests across four components GREEN.
+    No regressions on pre-existing tests verified by stash-and-rerun
+    (29 pre-existing failures + 17 collection errors unchanged; pass
+    count rose from 365 to 389 in workspace-bootstrap suite).
+
+    Plan-doc rename commit 6c4bf55; source-edit + 62 tests + 2 SKILLs
+    + 1 module + 4 docs eb0a4d3; pre-apply admin (STATE + roadmap +
+    §status + HARD smoke writeup) 6f0e0e9.

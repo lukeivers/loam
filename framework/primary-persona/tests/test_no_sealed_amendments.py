@@ -67,7 +67,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              `pos-amend apply` to the commit immediately preceding
 #              the amendment commit (HEAD~1 pattern). Sub-plan §10's
 #              manifest records the BASELINE rationale.
-BASELINE = "cd3b9778"
+BASELINE = "eb0a4d3"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -175,6 +175,7 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         "docs/design/",
         "docs/experiments/",
         "docs/plans/",
+        "docs/examples/",
     )
     # Universal-file admissions per amendment #22 ruling #3. Written
     # by ``loam amend apply``; kept stable across amendments.
@@ -200,6 +201,10 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         "docs/STATE.md",
         "docs/release-roadmap-dependency-map.md",
         "docs/release-roadmap.md",
+        "docs/implementation-tiers.md",
+        "docs/release-process.md",
+        "docs/release-versioning-policy.md",
+        "docs/workspace-corpus-overrides.md",
     }
 
     offending = []

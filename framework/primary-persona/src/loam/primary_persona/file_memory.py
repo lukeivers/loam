@@ -72,7 +72,6 @@ Per ODD §2.5 every code path traces back to a named AC; defensive
 
 from __future__ import annotations
 
-import math
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -602,17 +601,21 @@ class FileMemoryStore:
             raw_score = sum(content_lower.count(t) for t in terms)
             if raw_score == 0:
                 continue
-            # AC.V043.2 — length-normalize via sqrt(doclen) per
-            # plan-doc §4 path (a). Pre-V043 ranked by raw count, so
-            # giant compaction-summary episodes (~123 KB; ~17 KB) won
-            # every common-stop-word query against typical 1–4 KB
-            # focused episodes. sqrt is cheap, deterministic, no
-            # extra deps; corpus avg-length precomputation (path b)
-            # not needed at this corpus shape (438 episodes baseline
-            # in the investigation report). max(len(...), 1) guards
+            # AC.V043.2 — length-normalize via linear doclen division
+            # (path b-shaped per plan-doc §14 D-V043.2; sqrt was the
+            # plan §4 path-a default but empirically insufficient
+            # against the AC-spec fixture: 100 KB compaction with
+            # every-query-term ≥10 times vs 2 KB focused with rare
+            # term 2 times — sqrt(100K)/sqrt(2K) ≈ 7x but raw-count
+            # ratio is ~15x, so sqrt-normalized compaction still
+            # beats sqrt-normalized focused). Linear normalization
+            # `raw_score / doclen` matches BM25's `b=1` extreme
+            # without requiring avgdoclen precomputation, satisfies
+            # AC.V043.2's stated fixture bar, and remains
+            # deterministic + stdlib-only. max(len(...), 1) guards
             # the empty-string edge — though raw_score==0 already
             # skipped above so doclen is strictly > 0 here.
-            score = raw_score / math.sqrt(max(len(content), 1))
+            score = raw_score / max(len(content), 1)
             front, body = _split_frontmatter(content)
             scored.append((score, path, body, front))
 

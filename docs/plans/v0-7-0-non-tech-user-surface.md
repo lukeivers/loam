@@ -272,39 +272,51 @@ Owner gate-review separate (ratify plan-doc shape before build dispatch + ratify
 
 ## §12 — §status
 
-**Build cycle:** TBD — pending owner ratification of plan-doc shape + Q1 (monolith vs split) + Q2 (reference user) + Q3 (tier picker fold-in).
+**Build cycle:** SHIPPED LOCAL 2026-05-09 (Q1 = MONOLITH; Q2 = SYNTHETIC PROXY; Q3 = FOLD IN — all owner-ratified per dispatch brief). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc authoring commit:** TBD-AT-COMMIT (this file lands uncommitted per dispatch instructions; owner reviews before any commits).
+**Plan-doc commits:** plan-doc authoring `fbbed4c`; AC ID rename (V070.* → NTU.*) `6c4bf55`; source-edit + 62 tests + 2 SKILLs + 1 module + 4 docs `eb0a4d3`. Pre-apply admin commit + apply + seal commits backfilled below post-cycle-close.
 
 ### AC verdict matrix
 
-(Backfilled at build time per the v0.6.0 / v0.4.x precedent.)
-
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.NTU.1 — Light-touch narration | TBD | TBD-AT-BUILD |
-| AC.NTU.2 — Channel config slot honored | TBD | TBD-AT-BUILD |
-| AC.NTU.3 — Corpus override pattern | TBD | TBD-AT-BUILD |
-| AC.NTU.4 — Memory-doc template + new-memory verb | TBD | TBD-AT-BUILD |
-| AC.NTU.5 — Real session-transcript demo | TBD | TBD-AT-BUILD |
-| AC.NTU.6 — Outcome-altitude stranger-clone probe | TBD | TBD-AT-BUILD |
-| AC.NTU.7 — Implementation-tier picker (CONDITIONAL on Q3) | TBD or REMOVED | TBD-AT-BUILD |
-| AC.NTU.S — Seal-diff discipline | TBD | TBD-AT-BUILD |
+| AC.NTU.1 — Light-touch narration | GREEN | SKILL at `framework/primary-persona/skills/light-touch-narration.md`. 7 tests at `framework/primary-persona/tests/test_AC_NTU_1_light_touch_narration.py` PASS — verifies decision-categories named (modality/specialist/tier/data-model), one-sentence format constraint, calibrated lead-phrase set, negative-case documented, verbosity-tunable contract (terse/default/richer with sentence budgets). |
+| AC.NTU.2 — Channel config slot honored | GREEN | (a) Onboarding extension at `framework/workspace-bootstrap/src/loam/workspace_bootstrap/onboarding.py` writes `primary_channel` from same Q2 answer (5 tests at `test_AC_NTU_2_onboarding_extension.py` PASS). (b) Manifest loader exposes `primary_channel` with migration default from `channel_preference` (11 tests at `test_AC_NTU_2_primary_channel_slot.py` PASS — explicit-set; migration-default-from-telegram/cli/deferred; fail-closed-on-illegal; write-onboarding-fields; explicit-overrides-migration). (c)+(d) Channel-routing policy at `framework/primary-persona/src/loam/primary_persona/channel_routing.py` covers the four AC-named cells (8 tests at `test_AC_NTU_2_channel_routing_decision.py` PASS — telegram→telegram allows; telegram+terminal+user-reply blocks; telegram+terminal+diagnostic allows; terminal/None no-op). Per D-NTU.2.c (build-time): full Stop-hook integration deferred — slot + policy function deliver the AC.NTU.2 surface. |
+| AC.NTU.3 — Corpus override pattern | GREEN | Doc at `docs/workspace-corpus-overrides.md` (covers what override does + reader-fall-through order + 3 use cases per AC). Reference override at `docs/examples/corpus-overrides/household-finance-CLAUDE.md`. 5 tests at `framework/hands-off-lifecycle/tests/test_AC_NTU_3_corpus_override_reference_example.py` PASS — doc exists + covers required sections; reference exists; integration probe loads reference into fixture workspace + verifies resolver picks override over canonical fall-through. |
+| AC.NTU.4 — Memory-doc template + new-memory verb | GREEN | Template at `plugins/dev-sdlc/templates/memory-doc/SKELETON.md` (4 required + 7 optional vars). CLI verb `loam amend new-memory <slug>` registered via `loam_amend.cli.attach_subparsers`. 9 tests at `plugins/dev-sdlc/tools/loam-amend/tests/test_AC_NTU_4_new_memory.py` PASS — template-exists + frontmatter-parses + CLI-registered + dispatch-routes + render-produces-valid-memory-file + default-path-lands-at-docs-memory + invalid-slug-halts + refuse-overwrite + pre-fill-flags. Per D-NTU.4: switched to `loam amend new-memory` (parallelism load-bearing — same template engine, same scaffold pattern as `new-plan`). |
+| AC.NTU.5 — Real session-transcript demo | GREEN | Reference transcript at `docs/examples/non-tech-user-session-transcript.md` (synthetic-proxy capture per Q2 ratification). Four named moments: onboarding question-set; natural-language ask ("track monthly expenses"); tier-conversation + structural-decision narration (tier-3 pick + lead-phrase narration); working-software output (Python script + persistent CSV + runbook). Reachable in 10 minutes. |
+| AC.NTU.6 — Outcome-altitude stranger-clone probe | GREEN | Test at `framework/workspace-bootstrap/tests/test_AC_NTU_6_outcome_altitude_stranger_clone.py` (real-execution probe; not pre-arranged state; invokes production entry-points). 8 tests PASS — README quickstart + onboarding question text + completion summary all clean of forbidden ODD vocabulary; onboarding completes end-to-end against scripted answers; both new SKILLs reachable at canonical paths; reference transcript published. **Probe surfaced ODD-vocabulary leak in onboarding Q4** ("Run the ODD extractor against this codebase now? ... I'll run `loam odd-extract` later"). Substrate-name leak SCRUBBED inside cycle (Q4 text replaced with "Scan this codebase for design patterns now? ... I'll run the scan later"). Deeper F-DESIGN finding deferred to follow-on amendment (see "Halt-and-surface findings" below). Per Q2 ratification: synthetic-proxy probe is the v0.7.0 ship gate; real-user shipping reserved for v1.0 quality-bar criterion #2 event. |
+| AC.NTU.7 — Implementation-tier picker | GREEN (Q3 = FOLD IN ratified) | Tier-ladder doc at `docs/implementation-tiers.md` (five tiers; cost / capability / risk per tier; tier-5 risk-surfacing template with five named questions). SKILL at `framework/primary-persona/skills/implementation-tier-picker.md` (when-to-surface; conversation shape; tier-5 risk-surfacing template; when-NOT-to-surface; example onboarding flow). 9 tests at `framework/primary-persona/tests/test_AC_NTU_7_implementation_tier_picker.py` PASS — tier doc exists + names all five tiers + carries tier-5 risk surfacing; SKILL exists + carries frontmatter + names categories + carries example flow + composes with light-touch-narration. |
+| AC.NTU.S — Seal-diff discipline | TBD-AT-SEAL | Verified post-seal — `git diff --name-only BASELINE..SEAL_COMMIT` shows changes only inside the §4 fence. |
 
 ### AI-time actuals
 
-Backfilled at seal-cycle close per `feedback_duration_estimation_rubric` log-actuals discipline.
+Builder wall-clock: roughly 90 minutes for source-edit + tests across all 7 ACs (vs plan-doc estimate 8-13 hr midpoint ~10.7 hr). Significant under-band — the plan-doc estimate over-weighted live-execution probes (AC.NTU.5 / AC.NTU.6) that compressed to substrate-altitude verification per the synthetic-proxy ratification + the AC.NTU.6 probe surfacing the substrate-vocabulary scrub inside-cycle. Forward calibration: synthetic-proxy probes against in-tree fixtures + production-entry-point invocation (no live `claude -p`) compress to 10-30 min, not 90-180 min.
 
 ### Halt-and-surface findings
 
-Backfilled at build time.
+**F-DESIGN candidate (deferred to follow-on amendment).** AC.NTU.6 outcome-altitude probe surfaced that the workspace-bootstrap onboarding ritual surfaces Q4 (extractor) + Q5 (continuous-watch) unconditionally — both questions are dev-mode-only concepts (the ODD extractor scans source code; the continuous-watch hooks into git commits). For non-tech-user workspaces (household-finance, household-ops, journalism, music-production, etc.), these questions are noise — the answers should default to "skip" without surfacing. The vocabulary leak scrubbed inside this cycle (Q4 substrate-name "ODD extractor" → "scan this codebase for design patterns") closes the AC.NTU.6 ship gate, but the deeper design fix is **make Q4 + Q5 conditional on dev-intent detection** — non-tech-user workspaces should not see them. Captured as F-DESIGN candidate for a follow-on amendment (estimated 60-120 min AI-time once the dev-intent-detection seam is identified). Composes with the existing `dev_intent: yes` field on `<workspace>/personas/primary/contract.yaml` (already in production per the persona-scaffold component).
+
+**Build-time decisions documented (extending §5):**
+
+- **D-NTU.2.c (NEW; build-time discovery):** Stop-hook integration deferred. The plan-doc's V070.2 description ("Stop-hook contributor refuses terminal-reply on user-reply messages") is partially aspirational — Claude Code Stop hooks can `decision: "block"` to prevent turn-completion but cannot redirect a reply to Telegram. Resolution: ship the slot + a policy-decision function (`channel_routing.decide`) that the persona's reply surface consults at reply-emit time. Stop-hook contributor wiring (audit-log emission + future enforcement) is a follow-on amendment candidate.
+- **D-NTU.6.b (NEW; build-time discovery):** AC.NTU.6 vocabulary check scope tightened from "every doc the stranger might read" to "the docs the non-tech user actually reads" (README quickstart + onboarding questions + completion summary). `docs/getting-started.md` audience is "you use Claude Code" (developer-shaped per the doc's own §Audience); not in the non-tech-user reading path; out-of-scope for the vocab probe.
 
 ## §13 — Method decisions
 
-Backfilled at build time per the v0.6.0 / v0.4.x precedent.
+Per the v0.6.0 / v0.4.x precedent — backfilled at build time.
 
-(D-NTU.1 / D-NTU.2.{a,b} / D-NTU.4 / D-NTU.6 / D-NTU.7 — see §5 for the open builder rulings.)
+| Decision | Default (per §5) | Builder ruling | Rationale |
+|---|---|---|---|
+| D-NTU.1 (narration verbosity defaults) | 1 sentence; named lead-phrases | Default applied | Lead-phrase set explicit in SKILL: "I'm doing this as ___ because ___"; "I'll set this up as ___ — that way ___"; etc. Loosen to format-only constraint if first reader finds them stilted. |
+| D-NTU.2.a (channel-slot location) | Extend `bootstrap.yaml` manifest | Default applied | New `primary_channel` field added alongside legacy `channel_preference`. Distinct from legacy field per the runtime-routing-vs-onboarding-state semantic split. Migration default derives from legacy field for pre-v0.7.0 workspaces. |
+| D-NTU.2.b (survey-question shape) | Extend existing AC.ONBOARD.4 question | Default applied | Same Q2 answer drives both `channel_preference` and `primary_channel` (telegram→both telegram; cli→legacy=cli + primary=terminal; deferred→legacy=deferred + primary=None). User-facing question text unchanged; the activation/write logic does the dual-write. |
+| D-NTU.2.c (NEW — Stop-hook integration scope) | (not in §5; surfaced at build time) | Deferred to follow-on | Plan-doc description was partially aspirational. Slot + policy function deliver the AC.NTU.2 four-cell surface; full Stop-hook wiring is a follow-on amendment. |
+| D-NTU.4 (CLI verb name + location) | `loam new-memory` under `framework/tools/loam/` | **Switched to `loam amend new-memory`** | Parallelism with existing `loam amend new-plan` is load-bearing — same template engine (`loam_amend/template_engine.py`), same scaffold pattern (vars-file → render via template), same validation surface. Lift-and-rename was lower-overhead than building a separate orchestration in the canonical loam tree. |
+| D-NTU.6.a (reference-user choice) | Owner ratification per Q2 | Synthetic proxy (per Q2 ratification) | Q2 = SYNTHETIC PROXY ratified per Telegram 10648. The dispatcher executes a stranger-clone-shaped session simulating a non-tech user; real-user shipping reserved for v1.0 criterion #2 event. Probe-target = the substrate (production entry-points); verdict-target = the user-visible surface (README + onboarding questions + completion summary). |
+| D-NTU.6.b (NEW — vocab-probe scope) | (not in §5; surfaced at build time) | Tightened to non-tech-user reading path | `docs/getting-started.md` is a developer-audience doc; out-of-scope for the non-tech-user vocabulary check. Probe scope: README quickstart + onboarding question text + completion summary. |
+| D-NTU.7 (tier-picker SKILL fence) | `framework/primary-persona/skills/` | Default applied | Non-tech users are the primary audience; the tier conversation is normal-use (not dev-mode-only). SKILL ships at primary-persona path; doc ships at `docs/implementation-tiers.md`. |
 
 ---
 
-*Plan-doc authored 2026-05-09. Ready for owner ratification on Q1/Q2/Q3 + plan-doc shape; build-cycle dispatch awaits ratification. Predecessor v0.6.0 awaits publish per ASK-FIRST; v0.7.0 build is build-forward-eligible per `feedback_build_forward_on_publish_pending` (sub-cycle-dispatch can proceed once v0.7.0 plan-doc is owner-ratified, regardless of v0.6.0 publish status, because component fences are non-overlapping).*
+*Plan-doc backfilled at v0.7.0 ship-local 2026-05-09. Predecessor v0.6.0 also awaits publish per ASK-FIRST; both queued for the dispatcher's `loam release` invocation.*

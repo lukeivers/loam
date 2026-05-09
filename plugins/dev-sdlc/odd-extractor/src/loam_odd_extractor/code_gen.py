@@ -1,4 +1,6 @@
 """v0.4.0 Cycle 1 — Code-gen-from-objectives core (SOFT-altitude).
+v0.4.1 — F-DESIGN-1 closure: multi-commit-per-task + from-scratch
+prompt mode (per AC.V041.{1,2}).
 
 Per cycle-1 plan-doc §1+§3+§4: takes ``objectives.yaml`` (or
 ``augmented-objectives.yaml``) + ``gap-inventory.yaml`` +
@@ -37,10 +39,29 @@ Per cycle-1 plan-doc §13 builder choices:
 - D-build.4: synthetic fixture lives at
   ``tests/fixtures/code-gen/synthetic-v0/``.
 
-Multi-commit case: cycle-1 verifies single-commit; the schema
-(:class:`CodeGenDiff.commits` is a tuple) supports multi-commit but
-the production prompt-shape that produces multi-commit outputs is
-deferred to C2 / v0.4.1 per master-plan §10.5 RF.
+v0.4.1 method-decisions (per AC.V041.* plan-doc §14):
+
+- D-V041.1 (multi-commit emit shape): the production prompt instructs
+  the LLM to emit ``===COMMIT===`` delimited blocks; each block
+  carries a ``subject: ...`` first line plus a unified diff. The
+  parser :func:`_parse_llm_response` returns ``list[tuple[diff_text,
+  subject]]`` (length-1 list for single-commit responses;
+  backward-compatible).
+- D-V041.2 (from-scratch heuristic): explicit ``from_scratch=True``
+  on :func:`generate_code` selects from-scratch prompt mode; when
+  ``from_scratch=None`` (default) and a ``repo_path`` is supplied,
+  auto-detect is "the repo has zero source files outside docs +
+  config + .git/." When ``repo_path`` is None, default to
+  extend-existing mode.
+- D-V041.3 (build-next tie-breaker primary signal): handled in
+  :mod:`build_next` — extends ``_tiebreak_key`` with cluster-size
+  (orphan_cluster_size desc) before alphabetical fallback. See
+  module-level docstring of :mod:`build_next` for the full hierarchy.
+
+The multi-commit + from-scratch widening preserves the v0.4.0 C1+C2
+single-commit + extend-existing behaviour as the default — every
+existing test continues to pass without edit. v0.4.1's new tests
+exercise the new paths via the same stub-injection pattern.
 """
 
 from __future__ import annotations
@@ -119,6 +140,8 @@ def generate_code(
     llm_client: _LlmClientLike | None = None,
     model: str = "claude-sonnet-4-5",
     max_tokens: int = 8000,
+    from_scratch: bool | None = None,
+    repo_path: Path | str | None = None,
 ) -> CodeGenDiff:
     """Run the code-gen-from-objectives pipeline.
 
@@ -133,6 +156,18 @@ def generate_code(
     document path, ``source_ac`` from the build-next candidate's
     gap-id-derived AC reference, and ``source_commit=None`` per
     D-build.2 (the commit being authored does not yet have a SHA).
+
+    Per AC.V041.1 (multi-commit-per-task): the parser consumes
+    ``===COMMIT===`` delimited blocks in the LLM response; each
+    block becomes one :class:`CodeGenCommit`. Single-commit
+    responses (no delimiters) yield one commit (backward-compatible).
+
+    Per AC.V041.2 (from-scratch prompt mode): when
+    ``from_scratch=True`` the prompt instructs "create new files"
+    + ``--- /dev/null`` source-side framing. When ``from_scratch=None``
+    + ``repo_path`` is supplied, auto-detect: the repo is from-scratch
+    if it has zero non-doc/non-config source files. When ``repo_path``
+    is None, default to extend-existing.
 
     Per the subscription-only constraint: ``llm_client`` is the
     injectable LLM dispatcher matching the ``messages.create(...)``
@@ -151,6 +186,13 @@ def generate_code(
         Default ``claude-sonnet-4-5`` per token-efficiency rule.
     :param max_tokens: Max-tokens parameter passed to
         ``messages.create(...)``.
+    :param from_scratch: Tri-state. ``True`` forces from-scratch
+        mode; ``False`` forces extend-existing mode; ``None`` (default)
+        auto-detects from ``repo_path`` (or falls back to
+        extend-existing when ``repo_path`` is None). Per AC.V041.2.
+    :param repo_path: Optional path to the source repository.
+        Used only for ``from_scratch=None`` auto-detection. When
+        provided, :func:`_detect_from_scratch` examines the tree.
     :returns: :class:`CodeGenDiff` with one or more commits.
     :raises StageError: If required input files missing, no LLM
         client provided, or LLM response cannot be parsed into a
@@ -192,6 +234,14 @@ def generate_code(
     gap = _find_gap(gap_inventory, selected_candidate_gap_id)
     objective = _resolve_objective(objectives, gap)
 
+    # ---- Resolve from_scratch mode (AC.V041.2) ---------------------
+
+    if from_scratch is None:
+        if repo_path is not None:
+            from_scratch = _detect_from_scratch(Path(repo_path))
+        else:
+            from_scratch = False
+
     # ---- Build the request -----------------------------------------
 
     request = CodeGenRequest(
@@ -202,24 +252,47 @@ def generate_code(
 
     # ---- LLM dispatch ----------------------------------------------
 
-    prompt = _build_prompt(objective, gap, candidate)
+    prompt = _build_prompt(
+        objective, gap, candidate, from_scratch=from_scratch
+    )
+
+    if from_scratch:
+        system_prompt = (
+            "You are a senior engineer creating new source files from "
+            "documentation alone. There is NO existing source tree — "
+            "every file you author is brand-new (`--- /dev/null` on "
+            "the source side of every diff hunk). Multi-file "
+            "submissions are common (e.g., a build script + a source "
+            "file + a test file). Emit ONE OR MORE commits separated "
+            "by a literal `===COMMIT===` line. Each commit starts with "
+            "`subject: <one-line summary>` and is followed by a "
+            "unified diff. Do not include any explanation outside the "
+            "subject + diff."
+        )
+    else:
+        system_prompt = (
+            "You are a senior engineer writing minimal patches for an "
+            "existing codebase. Produce one or more unified diffs that "
+            "close the named acceptance criterion. If the change "
+            "naturally decomposes into multiple commits (e.g., schema "
+            "+ handler + test), emit each as a separate commit "
+            "separated by a literal `===COMMIT===` line. Each commit "
+            "starts with `subject: <one-line summary>` and is followed "
+            "by a unified diff. Single-commit responses (no "
+            "`===COMMIT===` delimiter) are still accepted. Do not "
+            "include explanation outside the subject + diff."
+        )
 
     response = llm_client.messages.create(
         model=model,
         max_tokens=max_tokens,
-        system=(
-            "You are a senior engineer writing minimal patches for a "
-            "Python codebase. Produce a single unified diff that closes "
-            "the named acceptance criterion. Output ONLY the unified "
-            "diff text plus a short subject line on the first line "
-            "prefixed `subject:`. Do not include explanation."
-        ),
+        system=system_prompt,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    diff_text, subject = _parse_llm_response(response)
+    parsed = _parse_llm_response(response)
 
-    # ---- AC.V040C1.2 — populate per-commit LiftedFrom --------------
+    # ---- AC.V040C1.2 + AC.V041.1 — populate per-commit LiftedFrom --
 
     lifted_from = LiftedFrom(
         source_doc=_resolve_source_doc(objective, gap),
@@ -227,21 +300,32 @@ def generate_code(
         source_commit=None,  # D-build.2: omitted at code-gen time
     )
 
-    commit = CodeGenCommit(
-        message_subject=subject,
-        message_body=(
-            f"Closes gap {gap.gap_id} (objective "
-            f"{objective.objective_id}). Generated by `loam odd-extract "
-            f"--code-gen` at v0.4.0 Cycle 1."
-        ),
-        diff_text=diff_text,
-        lifted_from=lifted_from,
-    )
+    mode_label = "from-scratch" if from_scratch else "extend-existing"
+    commits: list[CodeGenCommit] = []
+    for idx, (diff_text, subject) in enumerate(parsed):
+        body_suffix = (
+            f" (commit {idx + 1} of {len(parsed)})"
+            if len(parsed) > 1
+            else ""
+        )
+        commits.append(
+            CodeGenCommit(
+                message_subject=subject,
+                message_body=(
+                    f"Closes gap {gap.gap_id} (objective "
+                    f"{objective.objective_id}). Generated by "
+                    f"`loam odd-extract --code-gen` "
+                    f"[{mode_label}{body_suffix}]."
+                ),
+                diff_text=diff_text,
+                lifted_from=lifted_from,
+            )
+        )
 
     return CodeGenDiff(
         extraction_id=build_next.extraction_id,
         request=request,
-        commits=(commit,),
+        commits=tuple(commits),
     )
 
 
@@ -484,45 +568,98 @@ def _resolve_source_ac(gap: Any, candidate: Any) -> str:
 # ====================================================================
 
 
-def _build_prompt(objective: Objective, gap: Any, candidate: Any) -> str:
+def _build_prompt(
+    objective: Objective,
+    gap: Any,
+    candidate: Any,
+    *,
+    from_scratch: bool = False,
+) -> str:
     """Build the LLM prompt for a code-gen commit.
 
-    The prompt is intentionally minimal at cycle-1 SOFT-altitude;
-    cycle-2 outcome-altitude verification will iterate on the
-    real-`claude -p` invocation. The exact prompt shape is not in
-    AC scope (no method-in-AC) — only the existence of a non-empty
-    diff response.
+    Per AC.V041.2: the prompt branches on ``from_scratch``:
+
+    - ``from_scratch=False`` (default; v0.4.0 C1+C2 shape) — the
+      prompt instructs "produce a unified diff" assuming an
+      existing source tree. Multi-commit emission via
+      ``===COMMIT===`` delimiter (v0.4.1 widening) is opt-in for
+      the LLM when the change naturally decomposes.
+    - ``from_scratch=True`` (v0.4.1 NEW) — the prompt instructs
+      "create new files; there is no existing source tree." Source
+      side of every hunk is ``--- /dev/null``. Multi-commit
+      emission is encouraged so a build-script + source-file +
+      test-file submission can land as three commits.
+
+    The exact prompt shape is not in AC scope (no method-in-AC) —
+    only the AC contracts on output shape (multi-commit-parseable
+    + from-scratch-marker present) bind the builder.
     """
-    return (
+    common_header = (
         f"Objective: {objective.text}\n\n"
         f"Gap to close: {gap.gap_id}\n"
         f"Gap rationale: {getattr(gap, 'rationale', '(none)')}\n\n"
         f"Candidate context: {getattr(candidate, 'rationale', '(none)')}\n\n"
-        "Produce a unified diff (one or more file hunks) that closes "
-        "the gap. First line must be `subject: <commit subject>`; "
-        "remaining lines are the unified diff. Output nothing else."
+    )
+    if from_scratch:
+        return (
+            common_header
+            + "There is NO existing source tree. Create new files "
+            "from scratch. The source side of every diff hunk MUST be "
+            "`--- /dev/null` (every file is brand-new). The objective "
+            "may require multiple files (e.g., a build script + a "
+            "source file + a test file) — when it does, emit each as "
+            "a SEPARATE commit, separated by a literal line "
+            "`===COMMIT===` (no leading or trailing whitespace on the "
+            "delimiter line). Each commit starts with "
+            "`subject: <one-line summary>` followed by a blank line "
+            "then the unified diff. Output ONLY commits — no "
+            "explanation, no markdown fence."
+        )
+    return (
+        common_header
+        + "Produce a unified diff (one or more file hunks) that closes "
+        "the gap. If the change naturally decomposes into multiple "
+        "commits (e.g., schema + handler + test), emit each as a "
+        "separate commit separated by a literal line `===COMMIT===` "
+        "(no leading or trailing whitespace on the delimiter line). "
+        "Each commit starts with `subject: <one-line summary>` "
+        "followed by a blank line then the unified diff. Single-commit "
+        "responses (no `===COMMIT===` delimiter) are still accepted "
+        "for changes that don't naturally decompose. Output ONLY "
+        "commits — no explanation, no markdown fence."
     )
 
 
 _RESPONSE_SUBJECT_RE = re.compile(
     r"^subject:\s*(.+?)\s*$", re.MULTILINE
 )
+_COMMIT_DELIMITER_RE = re.compile(r"^===COMMIT===\s*$", re.MULTILINE)
 
 
-def _parse_llm_response(response: Any) -> tuple[str, str]:
-    """Extract the (diff_text, subject) tuple from an LLM
-    ``messages.create(...)`` response.
+def _parse_llm_response(response: Any) -> list[tuple[str, str]]:
+    """Extract the list of ``(diff_text, subject)`` tuples from an
+    LLM ``messages.create(...)`` response.
+
+    Per AC.V041.1: the response may carry one or more commits
+    separated by ``===COMMIT===`` delimiters. Single-commit responses
+    (no delimiter present) yield a length-1 list (backward-compatible
+    with v0.4.0 C1+C2's single-tuple contract — callers iterate the
+    list and produce one :class:`CodeGenCommit` per entry).
 
     Per :mod:`claude_print_synthesis_client` shape: ``response.content[0].text``
-    is the str payload. Format expected:
+    is the str payload. Format expected per commit:
 
         subject: <commit subject>
-        --- a/<file>
+        --- a/<file>     # or `--- /dev/null` in from-scratch mode
         +++ b/<file>
         @@ ...
 
-    :raises StageError: If response shape unexpected or no diff body
-        present.
+    Multi-commit responses interleave additional commits separated by
+    a sole ``===COMMIT===`` line.
+
+    :raises StageError: If response shape unexpected, no commit
+        contains a ``subject:`` line, or any commit has empty diff
+        body.
     """
     try:
         text = response.content[0].text
@@ -537,17 +674,108 @@ def _parse_llm_response(response: Any) -> tuple[str, str]:
             "code_gen: LLM response text empty or non-string."
         )
 
-    m = _RESPONSE_SUBJECT_RE.search(text)
-    if m is None:
+    # Split on the multi-commit delimiter. A response without the
+    # delimiter is a single-commit response; the split yields a
+    # length-1 list of the entire payload.
+    parts = _COMMIT_DELIMITER_RE.split(text)
+    out: list[tuple[str, str]] = []
+    for idx, part in enumerate(parts):
+        part = part.strip("\n")
+        if not part.strip():
+            # Empty segment (e.g., trailing delimiter) — skip silently.
+            continue
+        m = _RESPONSE_SUBJECT_RE.search(part)
+        if m is None:
+            raise StageError(
+                f"code_gen: LLM response commit segment {idx + 1} of "
+                f"{len(parts)} missing `subject: ...` line. Segment "
+                f"was:\n" + part[:500]
+            )
+        subject = m.group(1).strip()
+        # Strip the subject line from the diff body.
+        diff_text = _RESPONSE_SUBJECT_RE.sub("", part, count=1).lstrip("\n")
+        if not diff_text.strip():
+            raise StageError(
+                f"code_gen: LLM response commit segment {idx + 1} had "
+                f"subject but no diff body."
+            )
+        out.append((diff_text, subject))
+
+    if not out:
         raise StageError(
-            "code_gen: LLM response missing `subject: ...` first "
-            "line. Response was:\n" + text[:500]
+            "code_gen: LLM response had no parseable commit segments. "
+            "Response was:\n" + text[:500]
         )
-    subject = m.group(1).strip()
-    # Strip the subject line from the diff body.
-    diff_text = _RESPONSE_SUBJECT_RE.sub("", text, count=1).lstrip("\n")
-    if not diff_text.strip():
-        raise StageError(
-            "code_gen: LLM response had subject but no diff body."
-        )
-    return diff_text, subject
+    return out
+
+
+# ====================================================================
+# AC.V041.2 — From-scratch detection
+# ====================================================================
+
+
+# Source-file extensions that count as "real source" for the
+# extend-existing detection. Doc/config/build-meta files do NOT count.
+_SOURCE_FILE_EXTENSIONS = frozenset({
+    ".py", ".pyi",
+    ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+    ".rb", ".erb",
+    ".go",
+    ".rs",
+    ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp",
+    ".java", ".kt", ".scala",
+    ".swift",
+    ".cs",
+    ".php",
+    ".pl", ".pm",
+    ".sh", ".bash", ".zsh",
+    ".lua",
+    ".elm",
+    ".clj", ".cljs",
+    ".ex", ".exs",
+    ".hs",
+    ".ml", ".mli",
+    ".sql",
+})
+
+# Directory names skipped during from-scratch detection.
+_SKIPPED_DIRECTORIES = frozenset({
+    ".git", ".hg", ".svn",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "venv", ".venv", "env", ".env",
+    "build", "dist", "target",
+    ".loam",
+})
+
+
+def _detect_from_scratch(repo_path: Path) -> bool:
+    """Auto-detect from-scratch mode for a repo.
+
+    Per AC.V041.2: returns True when the repo has zero source files
+    (per :data:`_SOURCE_FILE_EXTENSIONS`) outside skipped directories
+    (per :data:`_SKIPPED_DIRECTORIES`). Markdown / YAML / TOML / JSON
+    config files don't count as source — a docs-only repo with
+    `README.md` + `SPEC.md` + `pyproject.toml` is from-scratch.
+
+    :param repo_path: Path to the source repository.
+    :returns: True if from-scratch (no source files); False if
+        extend-existing (≥1 source file).
+    """
+    if not repo_path.is_dir():
+        # Non-existent or not-a-directory → treat as from-scratch
+        # (consistent with cold-start: there's nothing to extend).
+        return True
+    for entry in repo_path.rglob("*"):
+        if entry.is_dir():
+            continue
+        # Skip files under skipped directories.
+        rel_parts = entry.relative_to(repo_path).parts
+        if any(part in _SKIPPED_DIRECTORIES for part in rel_parts[:-1]):
+            continue
+        if entry.suffix.lower() in _SOURCE_FILE_EXTENSIONS:
+            return False
+    return True

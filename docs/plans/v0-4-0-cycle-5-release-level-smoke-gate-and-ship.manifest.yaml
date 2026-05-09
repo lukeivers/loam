@@ -25,7 +25,7 @@ plan: docs/plans/v0-4-0-cycle-5-release-level-smoke-gate-and-ship.md
 plan_doc_ref: docs/plans/v0-4-0-cycle-5-release-level-smoke-gate-and-ship.md
 
 ac_count: 7
-smoke_outcome: "v0.4.0 ships honest-scope: rd-automation extraction GREEN (rc=0; 230s; 16.97c; 7 objectives + 100% backing-map); F-DESIGN-1 ship-worthy negative result documented at C4 + closure path at v0.4.1 per release-roadmap §6; release-roadmap §2 + STATE.md SHIPPED + master plan §11 resolve to same SHAs"
+smoke_outcome: "v0.4.0 ships honest-scope: rd-automation HARD smoke GREEN; F-DESIGN-1 documented as v0.4.1 closure path; §2 + STATE.md + §11 resolve to same SHAs"
 
 components:
   - name: dev-sdlc

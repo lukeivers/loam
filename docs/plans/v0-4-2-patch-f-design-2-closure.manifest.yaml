@@ -6,7 +6,7 @@ amendment:
 # BASELINE captured at apply time; predecessor is v0.4.1 seal at 7b8e22e0.
 # baseline is the latest source-edit commit at apply time (per v0.4.0 + v0.4.1
 # precedent: "primary source-edit BASELINE captured at apply time").
-baseline: "7b8e22e0"
+baseline: "5cdea12d"
 
 plan: docs/plans/v0-4-2-patch-f-design-2-closure.md
 plan_doc_ref: docs/plans/v0-4-2-patch-f-design-2-closure.md

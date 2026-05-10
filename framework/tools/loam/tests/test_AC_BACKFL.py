@@ -995,3 +995,97 @@ def test_apply_backfill_full_v074_pre_image_yields_zero_residual_tbd(
     assert r2.edits_applied == 0
     assert state_md_after_r2 == state_md_after_r1
     assert roadmap_after_r2 == roadmap_after_r1
+
+
+# --------------------------------------------------------------------
+# AC.NFCLEAN.2 — walker fix tests (v0.8.1).
+#
+# Two compound root causes for the live `Total shipped:` count drift:
+# (a) `_SUMMARY_LINE` regex required single `vX.Y.Z published.` form;
+#     live line carries `v0.1.0 → v0.7.4 published.` (arrow + range)
+#     so regex never matches → no auto-update.
+# (b) `_count_published_versions` counted only marker-bearing rows;
+#     pre-v0.7.3 historical rows lack auto-backfill markers, so the
+#     walker undercounted by 18 (only 8 of 26 §2 rows have markers).
+# --------------------------------------------------------------------
+
+
+def test_count_published_versions_includes_marker_less_historical_rows() -> None:
+    """``_count_published_versions`` counts ALL §2 version rows, not
+    just the marker-bearing subset (AC.NFCLEAN.2 root-cause-B fix).
+
+    The §2 section semantic is "shipped versions" — every row in §2
+    is published regardless of whether it carries the v0.7.3+
+    auto-backfill SHIPPED-PUBLIC marker. Historical rows
+    (pre-v0.7.3) shipped before the marker convention existed; they
+    must still count.
+    """
+    body = (
+        "## §2 Shipped\n\n"
+        "| Version | Objective | Anchor |\n"
+        "|---|---|---|\n"
+        # Two marker-LESS historical rows (pre-v0.7.3 shape).
+        "| v0.1.0 | First public release. | seal `aaaaaaa`. |\n"
+        "| v0.1.1 | First patch. | seal `bbbbbbb`. |\n"
+        # One marker-bearing MINOR row (post-v0.7.3 shape).
+        "| v0.2.0 | Second minor. | Single-cycle MINOR: seal "
+        "`ccccccc`; **SHIPPED PUBLIC 2026-05-01 at tag `v0.2.0` "
+        "(annotated `ddddddd`)** |\n"
+        # One marker-bearing PATCH row.
+        "| v0.2.1 | First patch on second minor. | Single-cycle PATCH: "
+        "seal `eeeeeee`; **SHIPPED PUBLIC 2026-05-02 at tag `v0.2.1` "
+        "(annotated `fffffff`)** |\n"
+    )
+    minor, patch = post_publish_backfill._count_published_versions(body)
+    # 2 minors (v0.1.0 + v0.2.0) + 2 patches (v0.1.1 + v0.2.1).
+    # Pre-fix walker would have returned (1, 1) — only marker-bearing.
+    assert minor == 2, f"expected 2 minor, got {minor}"
+    assert patch == 2, f"expected 2 patch, got {patch}"
+
+
+def test_summary_line_regex_accepts_arrow_range_form() -> None:
+    """``_SUMMARY_LINE`` regex matches both single-version and arrow-
+    range forms (AC.NFCLEAN.2 root-cause-A fix).
+
+    Live release-roadmap.md carried `v0.1.0 → v0.7.4 published.`
+    (arrow + range form generated when the cumulative-prose tail is
+    appended). Pre-fix regex only matched single `vX.Y.Z published.`
+    so the auto-update never fired against the live line.
+    """
+    # Single-version form (existing test fixture shape).
+    single_form = (
+        "**Total shipped:** 5 minor + 10 patches. v0.5.0 published. "
+        "Editorial prose unchanged.\n"
+    )
+    assert post_publish_backfill._SUMMARY_LINE.search(single_form) is not None
+    # Arrow + range form (live release-roadmap shape).
+    range_form = (
+        "**Total shipped:** 8 minor + 18 patches. v0.1.0 → v0.8.0 "
+        "published. v0.3.0 ships META-FRAMEWORK foundation.\n"
+    )
+    assert post_publish_backfill._SUMMARY_LINE.search(range_form) is not None
+
+
+def test_classify_row_falls_back_to_version_pattern_for_historical_rows() -> None:
+    """``_classify_row`` falls back to version-pattern derivation when
+    the third pipe-cell lacks an explicit class keyword (AC.NFCLEAN.2
+    classification fallback for pre-v0.6.0 historical rows).
+
+    X.Y.0 form (no fourth-component segment) = MINOR; X.Y.Z (Z > 0)
+    or X.Y.Z.W = PATCH. Per ``docs/release-versioning-policy.md``.
+    """
+    # Historical MINOR (no class keyword in third cell).
+    minor_row = "| v0.1.0 | First public release. | seal `aaaaaaa`. |"
+    assert post_publish_backfill._classify_row(minor_row) == "MINOR"
+    # Historical PATCH (no class keyword; X.Y.Z form Z>0).
+    patch_row = "| v0.1.6 | First patch shipment. | seals `xxx`, `yyy` |"
+    assert post_publish_backfill._classify_row(patch_row) == "PATCH"
+    # Historical 4-component (.X.Y.Z.W form) — PATCH per policy.
+    four_comp_row = "| v0.2.5.1 | A four-component patch. | seal `zzz` |"
+    assert post_publish_backfill._classify_row(four_comp_row) == "PATCH"
+    # Explicit-class still wins over fallback (post-v0.6.0 convention).
+    explicit_minor_row = (
+        "| v0.6.5 | A patch-numbered row labeled MINOR. | "
+        "Single-cycle MINOR: seal `aaa` |"
+    )
+    assert post_publish_backfill._classify_row(explicit_minor_row) == "MINOR"

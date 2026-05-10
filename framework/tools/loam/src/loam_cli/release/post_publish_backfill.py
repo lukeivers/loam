@@ -503,37 +503,67 @@ def _backfill_roadmap_row(
 
 _SUMMARY_LINE = re.compile(
     r"^\*\*Total shipped:\*\*\s+(\d+)\s+minor\s+\+\s+(\d+)\s+patch(?:es)?\.\s+"
-    r"v[\d.]+\s+published\.",
+    r"v[\d.]+(?:\s*→\s*v[\d.]+)?\s+published\.",
     re.MULTILINE,
 )
 
 
 def _classify_row(row: str) -> str:
-    """Return ``"MINOR"`` if the §2 row's third cell carries
-    ``MINOR`` keyword (Single-cycle MINOR / similar); else ``"PATCH"``.
+    """Return ``"MINOR"`` or ``"PATCH"`` for the §2 row.
+
+    Classification is hybrid (v0.8.1 AC.NFCLEAN.2 robustness fix):
+    1. First, check the third pipe-cell for the ``MINOR`` keyword
+       (Single-cycle MINOR / similar — the post-v0.6.0 explicit-class
+       convention).
+    2. If absent, fall back to version-pattern derivation: X.Y.0 form
+       (third dotted-component is ``0`` AND no fourth component) is
+       MINOR; everything else is PATCH. Per
+       ``docs/release-versioning-policy.md`` semver discipline.
+
+    The fallback covers historical rows (pre-v0.6.0) that predate the
+    explicit-class convention. Without it, ``_count_published_versions``
+    misclassifies all 5 historical MINORs (v0.1.0 / v0.2.0 / v0.3.0 /
+    v0.4.0 / v0.7.0) as PATCH because their third pipe-cell is the
+    seal-anchor commit-list cell, not a class declaration.
     """
     third_cell_split = row.split("|")
-    if len(third_cell_split) < 4:
-        return "PATCH"
-    third = third_cell_split[3]
-    if "MINOR" in third:
-        return "MINOR"
+    if len(third_cell_split) >= 4:
+        third = third_cell_split[3]
+        if "MINOR" in third:
+            return "MINOR"
+        if "PATCH" in third:
+            return "PATCH"
+    # Fallback: derive from version-string pattern.
+    version_match = re.match(r"^\|\s*v(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?\s*\|", row)
+    if version_match is not None:
+        major, minor, patch_, fourth = version_match.groups()
+        if patch_ == "0" and fourth is None:
+            return "MINOR"
     return "PATCH"
 
 
 def _count_published_versions(
     body: str,
 ) -> tuple[int, int]:
-    """Walk §2 table rows + count those that carry a
-    ``SHIPPED PUBLIC at tag`` marker. Returns ``(minor_count,
+    """Walk §2 table rows + count ALL version rows (not just rows
+    carrying a SHIPPED-PUBLIC marker). Returns ``(minor_count,
     patch_count)``. Used to recompute the aggregate-count summary
     after this cycle's edit lands.
+
+    v0.8.1 (AC.NFCLEAN.2): the previous shape required a SHIPPED-PUBLIC
+    marker in every counted row. Pre-v0.7.3 versions (the 18 historical
+    rows) shipped before the auto-backfill marker convention existed,
+    so they have no marker — the walker undercounted by 18. The §2
+    section's semantic is "shipped versions" (per its own header
+    `## §2 Shipped`); every row in §2 is a published version
+    regardless of marker provenance. Drop the marker requirement.
     """
     minor = 0
     patch = 0
-    # A §2 row starts with `| v` and includes the marker.
+    # A §2 row starts with `| v` (the version cell). Marker
+    # provenance not required (per AC.NFCLEAN.2 root-cause fix).
     row_pattern = re.compile(
-        r"^\|\s*v[\d.]+\s*\|.*\*\*SHIPPED PUBLIC[^*]*at tag\s+`v[\d.]+`.*$",
+        r"^\|\s*v[\d.]+\s*\|.*$",
         re.MULTILINE,
     )
     for m in row_pattern.finditer(body):

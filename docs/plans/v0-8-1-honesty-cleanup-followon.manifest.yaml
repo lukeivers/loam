@@ -1,0 +1,100 @@
+schema_version: 3
+amendment:
+  slug: v0-8-1-honesty-cleanup-followon
+  title: "v0.8.1 PATCH — honesty-cleanup follow-on. Closes 2 NEW axis-12 defects surfaced by external-reviewer pass-2 review of v0.8.0: NF1 (v0.7.1/v0.7.2/v0.7.3 STATE.md leading-title contradictions — same defect class as F5 the v0.8.0 cleanup just resolved for v0.5.0; sweep via v0.7.4 _backfill_state_md_leading_title helper retroactively); NF2 (live `Total shipped:` line in release-roadmap.md mathematically wrong — `19 minor + 8 patches` vs actual `8 minor + 18 patches`; root cause: _SUMMARY_LINE regex doesn't match arrow-range form AND _count_published_versions only counts marker-bearing rows). Walker fix tightens regex + counts all §2 rows; live count corrected manually. 2 new tests preserve idempotence. Outcome-altitude probe verifies closure at seal commit."
+
+# BASELINE captured at apply time after source-edit + admin commit lands.
+baseline: "TBD-AT-COMMIT"
+
+plan: docs/plans/v0-8-1-honesty-cleanup-followon.md
+plan_doc_ref: docs/plans/v0-8-1-honesty-cleanup-followon.md
+
+ac_count: 3
+smoke_outcome: "v0.8.1 PATCH AC.NFCLEAN.{1-3,S} GREEN; sweeps v0.7.1/v0.7.2/v0.7.3 historical leading titles; fixes _update_total_shipped_line walker (regex + count-all-rows); 2 new walker tests; corrects live count to 8 minor + 18 patches."
+
+# Single-component fence (framework/tools/loam) plus universal-admission docs.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+    - framework/tools/loam/
+  files:
+    - CLAUDE.md
+    - install-from-source.txt
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/components/memory.md
+    - docs/public-surface-manifest.md
+    - README.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-8-1-honesty-cleanup-followon
+  body: |
+    # v0.8.1 PATCH — honesty-cleanup follow-on
+
+    2026-05-10. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST. v0.8.1 closes 2 NEW axis-12 defects surfaced by the
+    external-reviewer pass-2 verification of v0.8.0 at
+    workspace/.scratch/claude-output/loam-external-review-v0.8.0-2026-05-10.md.
+    Pass-2 verdict: 6/8 prior closures verified-closed; 2 reasonable
+    deferrals (F7 + F8); but introduced 2 NEW axis-12 defects of the
+    same drift class the cleanup was meant to close.
+
+    NF1 — three v0.7.X STATE.md rows (v0.7.1, v0.7.2, v0.7.3) carry
+    leading title `**v0.7.X PATCH SHIPPED LOCAL**` while bodies say
+    SHIPPED PUBLIC. Identical defect class to F5 (v0.5.0) that the
+    v0.8.0 cleanup resolved. Root cause: v0.8.0's per-row manual fix
+    didn't generalize to a sweep; the v0.7.4
+    _backfill_state_md_leading_title helper was never applied
+    retroactively because the auto-backfill only fires at the version
+    being published. AC.NFCLEAN.1 invokes apply_backfill() per
+    version (v0.7.1, v0.7.2, v0.7.3) using each version's known tag +
+    seal SHAs (verified at plan-time via grep against live STATE.md).
+
+    NF2 — `**Total shipped:** 19 minor + 8 patches. v0.1.0 → v0.7.4
+    published.` is mathematically wrong. Actual §2 row count: 8 MINOR
+    (X.Y.0 form) + 18 PATCH (X.Y.Z non-X.Y.0 form) = 26 rows. The line
+    says 19 + 8 = 27 — numbers reversed AND off-by-one. AC.NFCLEAN.2
+    investigation found two compound root causes: (a) `_SUMMARY_LINE`
+    regex `r"v[\d.]+\s+published\."` requires single-version form;
+    live line carries `v0.1.0 → v0.7.4 published.` (arrow + range)
+    so regex never matches → `_backfill_summary_line` returns body
+    unchanged; (b) even with regex fixed, `_count_published_versions`
+    only counts marker-bearing rows; only 8 of 26 rows have markers
+    (pre-v0.7.3 versions lack auto-backfill markers). Walker fix:
+    drop marker requirement; tighten regex to accept arrow-range form.
+    Plus manual one-time correction of the live count line.
+
+    AC.NFCLEAN.3 — outcome-altitude probe at the v0.8.1 seal commit
+    verifies NF1 + NF2 closure at the would-be tag content level.
+    Documented in docs/experiments/v0-8-1-hard-smoke.md.
+
+    No outcome-shape addition. PATCH-class defect closure within the
+    v0.8.0 honesty-cleanup outcome shape. pyproject.toml versions
+    stay at 0.8.0 (D-NFCLEAN.4 — per-component-version discipline
+    advances with shipped MINORs; PATCHes ride the predecessor MINOR's
+    version).
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+    (walker fix + 2 tests + AC.NFCLEAN.1 historical sweep + count-line
+    correction + smoke writeup + FIDRAFT entries + STATE/roadmap admin)
+    TBD-AT-COMMIT; pre-apply admin TBD-AT-COMMIT.

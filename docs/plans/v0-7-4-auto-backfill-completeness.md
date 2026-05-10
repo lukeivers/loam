@@ -298,7 +298,7 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 **Build cycle:** SHIPPED LOCAL 2026-05-10 — owner pre-ratified scope (Telegram 10680, option A). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** plan-doc + manifest `10376d7`; source-edit batch (helpers + 8 tests + release-process update + FIDRAFT capture-and-resolve + STATE/roadmap admin + HARD smoke writeup + plan §13 backfill) TBD-AT-COMMIT; apply TBD-AT-APPLY; seal TBD-AT-SEAL.
+**Plan-doc commits:** plan-doc + manifest `10376d7`; source-edit batch (helpers + 8 tests + release-process update + FIDRAFT capture-and-resolve + STATE/roadmap admin + HARD smoke writeup + plan §13 initial backfill) `84496f3`; manifest baseline + smoke_outcome trim admin `e3f2e29` / `a88bf31`; apply auto-commit (BASELINE + sidecar bump) `9ba3bcf`; seal commit (deterministic seal) `7b9c14e`.
 
 ### AC verdict matrix
 
@@ -343,9 +343,11 @@ The plan-doc's §5 names the build-time decisions (D-BACKFL2.1.a leading-title p
 ### Commit SHAs
 
 - Plan-doc + manifest authoring: `10376d7`
-- Source-edit batch (helpers + 8 tests + release-process update + FIDRAFT + STATE + roadmap + smoke writeup + plan §13 backfill): TBD-AT-COMMIT
-- Apply auto-commit (BASELINE + sidecar bump): TBD-AT-APPLY
-- Seal commit (deterministic seal): TBD-AT-SEAL
+- Source-edit batch (helpers + 8 tests + release-process update + FIDRAFT + STATE + roadmap + smoke writeup + plan §13 initial backfill): `84496f3`
+- Manifest baseline + smoke_outcome trim admin: `e3f2e29` / `a88bf31`
+- Apply auto-commit (BASELINE + sidecar bump): `9ba3bcf`
+- Seal commit (deterministic seal): `7b9c14e`
+- §status SHA backfill (this update): post-seal corrective
 
 ### Build-time decision deviations
 

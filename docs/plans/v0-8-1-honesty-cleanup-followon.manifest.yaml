@@ -12,7 +12,7 @@ plan: docs/plans/v0-8-1-honesty-cleanup-followon.md
 plan_doc_ref: docs/plans/v0-8-1-honesty-cleanup-followon.md
 
 ac_count: 3
-smoke_outcome: "v0.8.1 PATCH AC.NFCLEAN.{1-3,S} GREEN; sweeps v0.7.1/v0.7.2/v0.7.3 historical leading titles; fixes _update_total_shipped_line walker (regex + count-all-rows); 2 new walker tests; corrects live count to 8 minor + 18 patches."
+smoke_outcome: "v0.8.1 AC.NFCLEAN.{1-3,S} GREEN; sweeps v0.7.X leading titles; walker fix (regex + count-all + classify fallback); 3 new tests; live count corrected to 8 minor + 18 patches."
 
 # Single-component fence (framework/tools/loam) plus universal-admission docs.
 components:

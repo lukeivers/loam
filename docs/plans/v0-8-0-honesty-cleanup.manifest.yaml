@@ -3,10 +3,11 @@ amendment:
   slug: v0-8-0-honesty-cleanup
   title: "v0.8.0 MINOR — honesty cleanup. Closes 6 of 8 axis-12 (Honesty) gaps from external-reviewer report 2026-05-10. Establishes per-component-version discipline (18 framework + 12 plugin pyprojects bumped 0.1.0 → 0.8.0). Closes README v0.1.0 narrative drift (3 sites rewritten + 2 preserved as authorship-attribution). Removes ANTHROPIC_API_KEY user-facing string in dormancy notification.py:329 (subscription-aware corrective). Backfills historical TBD-AT-* placeholders for v0.4.2 / v0.4.3 / v0.5.0 rows via v0.7.4 apply_backfill function. Resolves v0.5.0 STATE.md SHIPPED-LOCAL-fossil. Test-failure triage with pytest-asyncio install-from-source addition. Outcome-altitude probe verifies all 8 reviewer findings closed or FIDRAFT-deferred."
 
-# BASELINE captured at apply time after source-edit + admin commit lands.
-# Initial baseline at plan-doc commit; advances post-source-edit per the
-# manifest baseline + admin pattern (see v0.7.4 precedent at e3f2e29).
-baseline: "1c8bf35"
+# BASELINE at source-edit batch (4f1dcf6) — covers all v0.8.0 honesty-
+# cleanup edits across 46 files (30 pyproject bumps + 4 __version__ +
+# README + dormancy + STATE/roadmap + components/index + install-from-
+# source + 2 experiment docs + plan §13 + FIDRAFT entries).
+baseline: "4f1dcf6"
 
 plan: docs/plans/v0-8-0-honesty-cleanup.md
 plan_doc_ref: docs/plans/v0-8-0-honesty-cleanup.md

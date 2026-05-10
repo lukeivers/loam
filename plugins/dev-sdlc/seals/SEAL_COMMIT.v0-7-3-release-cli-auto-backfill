@@ -1,0 +1,55 @@
+# v0.7.3 PATCH — release-CLI post-publish auto-backfill
+
+2026-05-10. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST. v0.7.3 closes the recurring post-publish state-staleness
+defect that has bit at every loam publish since v0.6.0 (manual
+SHIPPED-LOCAL → SHIPPED-PUBLIC backfill commits at f0ae00c for
+v0.7.2, af73a69 for v0.7.1, similar for v0.6.0/v0.7.0).
+
+Defect-closure shape (no new outcome capability). The v0.6.0
+release-process documented "STATE.md updated" as a publish gate
+but did not enforce post-publish state-update. v0.7.3 wires a
+post-tag-push backfill step into runner.run between step 4 (push
+branch + tag) and step 6 (post-ship review). The new module at
+framework/tools/loam/src/loam_cli/release/post_publish_backfill.py
+exports apply_backfill(repo_root, version, tag, tag_sha, *,
+dry_run=False) → BackfillResult.
+
+AC.BACKFL.1 — auto-backfill function. Locates the STATE.md bullet
+body's trailing `<version> SHIPPED LOCAL — owner gates publish.`
+sentence and replaces with `**<version> SHIPPED PUBLIC YYYY-MM-DD
+at tag `<tag>` (annotated `<sha7>`)**.`. Locates the §2 row whose
+first cell starts with `<version>` and appends the SHIPPED-PUBLIC
+marker to the third pipe-cell. Backfills TBD-AT-TAG and TBD-AT-SEAL
+placeholders from known SHAs (TAG from caller; SEAL via
+gates._extract_seal_sha). Leaves TBD-AT-COMMIT / TBD-AT-APPLY alone
+(not discoverable from runner inputs).
+
+AC.BACKFL.2 — aggregate-count summary update. Locates the
+`**Total shipped:** N minor + M patches. v<prev> published.` line
+and increments the count + flips v<prev> → v<this>.
+
+AC.BACKFL.3 — §3 Active Version section new bold entry. Appends
+`**v<X.Y.Z> <CLASS> (<objective>) SHIPPED PUBLIC YYYY-MM-DD**
+(tag `<tag>`, annotated `<sha7>`; seal `<seal_sha7>`).` to §3 body.
+
+AC.BACKFL.4 — idempotence. Re-running on already-published state
+returns BackfillResult(edits_applied=0, idempotent_noop=True);
+no commit; no push.
+
+AC.BACKFL.5 — test module test_AC_BACKFL.py covers positive
+(TBD/SHIPPED-LOCAL → backfilled), negative (already-current →
+no-op), idempotence (re-run no-op), and runner-integration
+(post-publish commit lands on local remote with canonical
+message).
+
+AC.BACKFL.6 — outcome-altitude probe. `loam release v0.7.3
+--dry-run` runs against this very plan-doc + the live STATE.md
++ the live release-roadmap.md; pre-publish gates GREEN; output
+includes a `DRY-RUN: would apply post-publish backfill` summary
+block naming the file edits.
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit (auto-
+backfill module + runner wiring + tests + release-process gates
+table extension) TBD-AT-COMMIT; HARD smoke + experiments TBD-AT-
+COMMIT; pre-apply admin TBD-AT-COMMIT.

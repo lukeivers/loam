@@ -4,7 +4,7 @@ amendment:
   title: "v0.7.4 PATCH — auto-backfill completeness. Defect-closure for v0.7.3's spec gaps surfaced at v0.7.3's own publish dogfood: leading row-title not flipped (STATE.md), STATE.md seal TBD-AT-SEAL not auto-backfilled, TBD-AT-COMMIT/TBD-AT-APPLY left manual. Extends apply_backfill with three helpers (leading-title flip + STATE.md TBD-AT-* mirror + commit-graph-walk discovery from seal commit). Path B ruling (single-component release-CLI extension) per AC.BACKFL2.3. Idempotence preserved across all v0.7.3 + v0.7.4 surfaces; outcome-altitude probe via `loam release v0.7.4 --dry-run`."
 
 # BASELINE captured at apply time after source-edit + admin commit lands.
-baseline: TBD-AT-APPLY
+baseline: "84496f3"
 
 plan: docs/plans/v0-7-4-auto-backfill-completeness.md
 plan_doc_ref: docs/plans/v0-7-4-auto-backfill-completeness.md

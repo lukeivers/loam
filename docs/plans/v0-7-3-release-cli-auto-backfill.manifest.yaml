@@ -10,7 +10,7 @@ plan: docs/plans/v0-7-3-release-cli-auto-backfill.md
 plan_doc_ref: docs/plans/v0-7-3-release-cli-auto-backfill.md
 
 ac_count: 6
-smoke_outcome: "v0.7.3 PATCH; AC.BACKFL.{1-6,S} GREEN; auto-backfill module promotes SHIPPED LOCAL → PUBLIC + appends §2 marker + updates aggregate-count + appends §3 entry; runner wires backfill between tag-push and post-ship review; idempotent on re-run; outcome-altitude probe `loam release v0.7.3 --dry-run` returns dry-run backfill preview naming the file edits."
+smoke_outcome: "v0.7.3 PATCH; AC.BACKFL.{1-6,S} GREEN; post-publish auto-backfill flips STATE.md+roadmap SHIPPED LOCAL→PUBLIC, updates summary line, appends §3 entry; idempotent; 11 new tests GREEN; 60/60 release-CLI tests pass."
 
 # Single-component fence (framework/tools/loam) plus universal-admission docs.
 components:

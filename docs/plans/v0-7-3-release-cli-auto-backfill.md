@@ -267,19 +267,64 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 ## §13 — §status
 
-**Build cycle:** plan-only at authoring time. Build dispatched 2026-05-10 (Telegram 10675); §status backfilled at end-of-build with commit SHAs + AC verdicts.
+**Build cycle:** SHIPPED LOCAL 2026-05-10 — owner pre-ratified scope (Telegram 10675). Awaiting dispatcher dogfood publish per ASK-FIRST.
+
+**Plan-doc commits:** plan-doc + manifest `1c777ed`; source-edit (post_publish_backfill module + runner wiring + 11 tests + release-process gates table extension + FIDRAFT capture-and-resolve + STATE/roadmap admin + HARD smoke writeup) `01e0883`; manifest baseline + smoke_outcome trims (3 admin commits) `3d06d82` / `96cd44b` / `811b18c`; apply auto-commit (BASELINE + sidecar bump) `527698b`; seal commit (deterministic seal) `39170e6`.
 
 ### AC verdict matrix
 
-(Pending — backfilled at end-of-build with GREEN/RED + evidence per AC. Template per v0.7.2's §13 matrix.)
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.BACKFL.1 — Auto-backfill function (SHIPPED LOCAL → PUBLIC + TBD-AT-* placeholders) | GREEN | New module `framework/tools/loam/src/loam_cli/release/post_publish_backfill.py` exports `apply_backfill(repo_root, version, tag, tag_sha, *, today=None, dry_run=False) → BackfillResult`. STATE.md flip via `_shipped_local_pattern` regex (canonical `<version> SHIPPED LOCAL — owner gates publish.` shape, em-dash + hyphen tolerant). Roadmap row marker append + TBD-AT-SEAL / TBD-AT-TAG backfill via `_backfill_roadmap_row` (TBD-AT-COMMIT / TBD-AT-APPLY left alone per D-BACKFL.1.b — not discoverable from runner inputs; surfaced via hints field). Already-public detection prevents double-marker. AC.BACKFL.6 outcome-altitude probe verifies the function correctly identifies all 3 edit targets (STATE.md flip + roadmap row marker + §3 entry) against the live `/Users/lukeivers/loam/` state at `docs/experiments/v0-7-3-hard-smoke.md` §1 Probe 1. |
+| AC.BACKFL.2 — Aggregate-count summary update | GREEN | `_backfill_summary_line` locates the canonical `**Total shipped:** N minor + M patches. v<latest> published.` line via regex; counts published versions by walking §2 rows + counting `**SHIPPED PUBLIC at tag` markers; classifies MINOR vs PATCH via third-cell keyword scan (`Single-cycle MINOR` / `Single-cycle PATCH` shapes). Idempotent: no-op when summary line already current. Test `test_apply_backfill_updates_aggregate_count_summary` verifies fixture counts increment correctly. Verified at probe-time: summary update correctly skipped for v0.7.3 because the §2 row hasn't been marked PUBLIC yet (count would update post-marker). |
+| AC.BACKFL.3 — §3 Active Version section new bold entry | GREEN | `_backfill_section_3` locates §3 body via `(?ms)^(##\s*§3\b[^\n]*\n)(.*?)(?=^##\s|\Z)` regex; appends `**vX.Y.Z <CLASS> (<objective sentence>) SHIPPED PUBLIC YYYY-MM-DD** (tag, annotated, seal)` form. Class extracted from §2 row third-cell (PATCH/MINOR keyword scan; default PATCH). Objective sentence truncation fixed mid-build to handle decimal points in version numbers (`v0.6.0`'s `.` doesn't trip truncation — boundary now requires `.` followed by whitespace OR EOS). Idempotence: no-op when bold entry for version already present in §3. Test `test_apply_backfill_appends_section_3_active_version_entry` verifies fixture insert + content. |
+| AC.BACKFL.4 — Idempotence: re-run is clean no-op | GREEN | Two runner-integration tests verify: `test_runner_idempotent_re_run_skips_backfill_commit` confirms re-run on already-published state returns `out.idempotent_noop=True` AND `out.backfill.idempotent_noop=True` AND `out.backfill_committed=False` AND HEAD does not advance. Function-altitude test `test_apply_backfill_is_noop_on_re_run` verifies the function alone is fully idempotent (apply once → state unchanged on second apply). Defense-in-depth at multiple altitudes: file-content unchanged + zero file writes when state already current; commit step skipped via `if backfill_result.edits_applied > 0` guard in runner.py. |
+| AC.BACKFL.5 — Test fixture: positive + negative + idempotence | GREEN | 11 new tests at `framework/tools/loam/tests/test_AC_BACKFL.py` cover every AC: `test_apply_backfill_promotes_state_md_shipped_local_to_public` (positive STATE.md), `test_apply_backfill_appends_roadmap_row_marker` (positive roadmap row), `test_apply_backfill_updates_aggregate_count_summary` (positive summary), `test_apply_backfill_appends_section_3_active_version_entry` (positive §3), `test_apply_backfill_is_noop_when_state_already_public` (negative — already-current), `test_apply_backfill_is_noop_on_re_run` (idempotence), `test_apply_backfill_dry_run_mutates_nothing_on_disk` (dry-run safety), `test_format_backfill_preview_renders_named_edits` (dry-run preview shape), `test_runner_invokes_backfill_after_tag_push` (runner-integration positive), `test_runner_dry_run_emits_backfill_preview` (runner dry-run preview), `test_runner_idempotent_re_run_skips_backfill_commit` (runner idempotence). Inline-fixture pattern per D-BACKFL.5 default (preserved existing tests' `staged_repo` semantics). 11/11 GREEN; 60/60 release-CLI tests pass (49 prior + 11 new); no regressions. |
+| AC.BACKFL.6 — Outcome-altitude probe (`loam release v0.7.3 --dry-run`) | GREEN | Probe documented at `docs/experiments/v0-7-3-hard-smoke.md` §1. Two-stage probe shape: (1) full release-CLI dry-run captures pre-publish gate state (4 RED gates pre-seal — hard-smoke + acs-verified + clean-tree + seal-reachable; all expected, all clear post-seal at apply); (2) function-altitude `apply_backfill(..., dry_run=True)` against the live state captures the post-publish backfill behavior. Probe correctly identified: STATE.md trailing-claim sentence (would replace), §2 row TBD-AT-TAG placeholder (would backfill), SHIPPED-PUBLIC marker append target, §3 Active Version insertion point. Honestly surfaced missing seal SHA via `hints` field (not yet in §2 row at probe-time; the `?` placeholder in the §3 entry's `seal \`?\`` cite signals this; seal SHA `39170e6` lands post-§13-backfill). Probe found and forced fix of one real bug under itself: the §3 objective-sentence truncation tripped on `v0.6.0`'s `.` character; fix applied to require `.` followed by whitespace/EOS. Real-execution probe per `feedback_test_outcome_altitude_required` — invokes the production CLI binary against realistic input (this very plan-doc + the live STATE.md + the live release-roadmap.md). |
+| AC.BACKFL.S — Seal-diff discipline | GREEN | `git diff --name-only 01e0883..39170e6` shows the apply auto-commit + seal-only files: dev-sdlc sidecar (`plugins/dev-sdlc/tests/SEAL_COMMIT`); narrative (`plugins/dev-sdlc/seals/SEAL_COMMIT.v0-7-3-release-cli-auto-backfill`); manifest baseline bump (3 admin commits). Source-edit batch (`01e0883`) touched: `framework/tools/loam/src/loam_cli/release/post_publish_backfill.py` (AC.BACKFL.{1,2,3} new module) + `framework/tools/loam/src/loam_cli/release/runner.py` (AC.BACKFL.1 — wire backfill into publish flow) + `framework/tools/loam/tests/test_AC_BACKFL.py` (AC.BACKFL.5 — 11 new tests) + `docs/release-process.md` (gates table extension) + `docs/STATE.md` + `docs/release-roadmap.md` + `docs/experiments/v0-7-3-hard-smoke.md` + `docs/FUTURE_IDEAS_DRAFT.md` (capture-and-resolve). All paths in the AC.BACKFL.S allow-list. Cross-component sweep ran with `--scoped-sweep` (sweep-discovery picked up `cost-governance` whose seal-diff test was failing under `python -m pytest` due to PATH python being 3.9 without loam editable-install — this is a pre-existing environment issue unrelated to v0.7.3 source-edits; `--scoped-sweep` restricts to manifest-listed component dev-sdlc per v0.7.2 precedent). |
 
 ### AI-time actuals
 
-(Pending — backfilled at end-of-build comparing predicted vs actual per stage.)
+| Stage | Estimated (plan §9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 15-25 min | ~15 min |
+| AC.BACKFL.1 — auto-backfill function (new module) | 20-35 min | ~14 min |
+| AC.BACKFL.2 — aggregate-count summary update | 8-15 min | ~5 min (folded into module authoring) |
+| AC.BACKFL.3 — §3 Active Version entry append | 8-15 min | ~5 min (folded into module authoring) |
+| AC.BACKFL.4 — idempotence wiring + verification | 5-10 min | ~3 min (designed into module up-front) |
+| AC.BACKFL.5 — test module (11 tests) | 15-25 min | ~10 min |
+| AC.BACKFL.6 — outcome-altitude probe + writeup | 10-15 min | ~7 min (probe re-run after sentence-truncation fix) |
+| FUTURE_IDEAS_DRAFT capture-and-resolve | 3-5 min | ~3 min |
+| docs/release-process.md gates-table extension | 3-5 min | ~2 min |
+| Plan-doc §13 backfill + STATE/roadmap admin + manifest apply + seal | 15-25 min | ~13 min (incl. 3 manifest-validation iterations for smoke_outcome length + baseline) |
+| **Total v0.7.3 build** | **102-175 min (~1.7-2.9 hr)** | **~77 min (~1.3 hr)** |
+
+Significantly under-band — defect-closure with high outcome-shape confidence (Lens 4 — tight scope appropriate); new module came in faster than the band's midpoint despite being 3× the scope of v0.7.2's parser tighten (~430 lines vs ~30 lines), because the orthogonal-edit-targets shape (STATE.md flip + roadmap row marker + summary line + §3 entry) decomposed cleanly into per-target helper functions. Forward calibration: single-component PATCH-class amendments with new-module shape (orthogonal helper-function decomposition) compress to 60-90 min, not 100-175 min.
 
 ### Halt-and-surface findings
 
-(Pending — backfilled at end-of-build with any HARD HALTs hit + dispatcher-surfaced findings.)
+**AC.BACKFL.6 first-probe surfaced sentence-truncation bug → in-cycle fix (in-scope; closed).** First run of `apply_backfill(..., dry_run=True)` against live state surfaced an awkward §3 entry: `**v0.7.3 PATCH (release-CLI post-publish auto-backfill PATCH (defect-closure for v0.) SHIPPED PUBLIC ...** ` — the objective-sentence truncation tripped on the `.` between `v0` and `6.0` of `v0.6.0` (the version number's decimal point). Fix: tighten sentence boundary to require `.` followed by whitespace OR EOS. Re-ran probe: `**v0.7.3 PATCH (release-CLI post-publish auto-backfill PATCH (defect-closure for v0.6.0's release-process).) SHIPPED PUBLIC ...** ` — full first sentence captured. Probe behaved as intended (real-execution probe surfaces real defects under itself; the corrective is in-scope under AC.BACKFL.3 because the §3 entry shape IS what AC.BACKFL.3 commits to). Pre-seal corrective; no separate commit needed.
+
+**Cross-component sweep environment issue → workaround applied (out-of-scope; surfaced).** `loam amend seal` invokes `python -m pytest` for cross-component sweep; PATH `python` resolves to pyenv shim's python3.9 which doesn't have `loam` module editable-installed (every dependent loam package is editable-installed against python3.13 per v0.7.1 AC.READY.{1,2} fix). Cost-governance's `conftest.py` imports `loam.primary_persona.introduction.ChannelKind` and the import fails under python3.9. This is a **pre-existing environment issue unrelated to v0.7.3 source-edits** — v0.7.2 succeeded only because v0.7.2 didn't trigger the cost-governance seal-diff test under that PATH context. Workaround: `loam amend seal --scoped-sweep` restricts the sweep to manifest-listed component (dev-sdlc), bypassing the cost-governance probe. Surfaced per F2 + HARD HALT discipline; dispatcher decides whether (a) to fix the seal-pytest-python-resolution per a v0.8.0+ amendment or (b) to standardize on `--scoped-sweep` for all PATCH cycles.
+
+**No other halt-and-surface findings.** Auto-backfill module lands cleanly; existing 49 release-CLI tests preserved (regression-free); 11 new tests cover positive/negative/idempotence/dry-run/runner-integration; outcome-altitude probe returned correct edits-preview against live state; FUTURE_IDEAS_DRAFT capture-and-resolve entry added.
+
+## §14 — Method decisions
+
+The plan-doc's §5 names the build-time decisions (D-BACKFL.1.a SHIPPED-LOCAL pattern, D-BACKFL.1.b TBD-AT-* scope, D-BACKFL.2.a summary-line parser, D-BACKFL.3.a §3 insertion location, D-BACKFL.4 commit/push mechanics, D-BACKFL.5 fixture choice, D-BACKFL.6 probe location). All builder rulings landed as planned with one in-cycle refinement (objective-sentence truncation boundary required `.` + whitespace/EOS, not just `.` outside backticks — surfaced via AC.BACKFL.6 probe; corrected in-cycle).
+
+### Commit SHAs
+
+- Plan-doc + manifest authoring: `1c777ed`
+- Source-edit + admin batch (auto-backfill module + runner wiring + 11 tests + release-process update + FIDRAFT + STATE + roadmap + smoke writeup): `01e0883`
+- Manifest baseline + smoke_outcome trim admin: `3d06d82` / `96cd44b` / `811b18c`
+- Apply auto-commit (BASELINE + sidecar bump): `527698b`
+- Seal commit (deterministic seal): `39170e6`
+
+### Build-time decision deviations
+
+- **D-BACKFL.3.a (§3 entry-insertion location) — refined.** Originally specified "insert at end of §3 body, just before next `## §<n>` heading boundary OR EOF." Implementation matches; refined the objective-sentence truncation regex per AC.BACKFL.6 first-probe finding (boundary requires `.` followed by whitespace OR EOS to avoid tripping on `v0.6.0`'s decimal point). Other D-* rulings landed as planned.
+- **--scoped-sweep applied at seal time** per pre-existing environment issue (cross-component sweep `python -m pytest` resolves to python3.9 lacking `loam` module — surfaced + worked around per v0.7.2 precedent; not a v0.7.3 source-edit deviation).
 
 ## §14 — Method decisions
 

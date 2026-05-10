@@ -27,10 +27,10 @@ The 4 matches: v0.7.1 (line 135), v0.7.2 (line 132), v0.7.3 (line 133), and the 
 
 ```
 $ grep -c "PATCH SHIPPED LOCAL" docs/STATE.md
-1
+2
 ```
 
-The 1 remaining match is the v0.8.1 in-flight row (will auto-flip to PUBLIC when the dispatcher runs `loam release v0.8.1` per the v0.7.4 helper). The 3 historical row leading titles are flipped:
+The 2 remaining matches are: (1) line 134 (v0.7.4 row's prose narrative describing what v0.7.4 was fixing about v0.7.3 — `**v0.7.3 PATCH SHIPPED LOCAL**` appears inside v0.7.4's defect-description prose, NOT as a leading title); (2) line 139 (the v0.8.1 in-flight row — will auto-flip to PUBLIC when the dispatcher runs `loam release v0.8.1` per the v0.7.4 helper). The 3 historical row leading titles are flipped:
 
 ```
 $ grep -E "^\- \*\*2026-05-10\*\* — \*\*v0\.7\.[1-3] PATCH SHIPPED" docs/STATE.md

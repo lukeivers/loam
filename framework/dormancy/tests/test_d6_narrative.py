@@ -83,7 +83,7 @@ async def test_narrative_uses_template_for_auth_broken() -> None:
     )
     assert len(invoker.call_log) == 0
     assert "auth_broken" in text
-    assert "ANTHROPIC_API_KEY" in text  # recommendation included
+    assert "Claude subscription" in text  # recommendation included (subscription-only per feedback_no_anthropic_api_key)
 
 
 async def test_narrative_falls_back_to_template_on_claude_error() -> None:

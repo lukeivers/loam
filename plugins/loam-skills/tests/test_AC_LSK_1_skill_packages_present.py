@@ -41,6 +41,10 @@ EXPECTED_SKILLS = [
     "owner-decision-summary",
     # v0.2.0 Cycle 2 addition (auto-skill-creation MVP).
     "skill-capture-proposal",
+    # v0.5.0 / v0.7.0 surface — time-claims-discipline orphan
+    # admitted to registry as part of v0.8.0 honesty cleanup
+    # (AC.HONEST.6 in-cycle closure).
+    "time-claims-discipline",
 ]
 
 # Anthropic-published cap per
@@ -112,12 +116,13 @@ def test_all_skills_discovered() -> None:
     )
     assert on_disk == sorted(EXPECTED_SKILLS), (
         f"discovered skills {on_disk} != expected {sorted(EXPECTED_SKILLS)}; "
-        "AC.LSK.1 requires exactly the named nine packages "
+        "AC.LSK.1 requires exactly the named ten packages "
         "(5 from v0.1.3 + 3 from v0.1.6 Cycle 2 + 1 from v0.2.0 "
-        "Cycle 2)."
+        "Cycle 2 + 1 admitted at v0.8.0 honesty cleanup)."
     )
 
 
-def test_skills_count_nine() -> None:
-    """v0.2.0 Cycle 2 — the bundle is 9 SKILLs total."""
-    assert len(EXPECTED_SKILLS) == 9
+def test_skills_count_ten() -> None:
+    """v0.8.0 honesty cleanup — the bundle is 10 SKILLs total
+    (orphan time-claims-discipline admitted to registry)."""
+    assert len(EXPECTED_SKILLS) == 10

@@ -326,7 +326,7 @@ class NarrativeRenderer:
             DegradationMode.overloaded: "Wait briefly; automatic probe recovery follows.",
             DegradationMode.rate_limited: "Wait for the rate window to clear.",
             DegradationMode.garbage: "Review recent outputs; probe recovery follows.",
-            DegradationMode.auth_broken: "Update your ANTHROPIC_API_KEY, then reply 'resume'.",
+            DegradationMode.auth_broken: "Re-authenticate your Claude subscription (run `claude login` or check `claude` is on PATH), then reply 'resume'.",
             DegradationMode.latency_sustained: "Advisory only; no action required.",
         }.get(mode, "No action required.")
 

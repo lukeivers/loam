@@ -4,4 +4,4 @@ See ``docs/plans/orphan-plist-cleanup-tool.md`` for the plan
 and acceptance criteria.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.8.0"

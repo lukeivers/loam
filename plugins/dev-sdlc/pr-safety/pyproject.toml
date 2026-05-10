@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-pr-safety"
-version = "0.2.0"
+version = "0.8.0"
 description = "loam pr-safety — gates PRs against the v0.1.8-authored banded ODD contract. Cycle 1 (v0.1.9): engine — banded-contract reader + diff classifier (line+symbol overlap, ≥90% accuracy on synthetic test set) + per-band gating engine (3-band × 4-shape × 3-profile decision matrix) + override-commit recognition (`contract-update:` prefix or `Loam-Override:` trailer + --override flag) + SOC-2 audit-trail floor + production-stake profile integration. Cycle 2 (v0.1.9): delivery wrapping — pre-commit + pre-push hook installers (idempotent + husky-aware + halt-on-conflict) + 3 CI templates (GitHub Actions / GitLab CI / CircleCI) + provenance-traceable PR description template (auto-populates from gate output + audit-log lookup; 60K-char overflow truncation) + install ergonomics CLI (loam pr-safety install <surface>) + hook-fire dispatcher (LOAM_PR_SAFETY_BYPASS env var honoured under dev/research; ignored under production-stake)."
 requires-python = ">=3.11"
 dependencies = [

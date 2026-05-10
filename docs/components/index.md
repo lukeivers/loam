@@ -1,9 +1,18 @@
 # Components
 
-loam ships eighteen runtime components in v0.1.0. Each has one short
+loam ships eighteen runtime components in v0.8.0. Each has one short
 reference page in this directory. The summary below is the
 one-paragraph "what does it do" view; the per-component pages cover
 how-to-invoke and observable surfaces.
+
+**Per-component versions track shipped minors.** As of v0.8.0, every
+component's `pyproject.toml` `version` field advances with each shipped
+minor (v0.8.0, v0.9.0, ...). Component versions are not independently
+released — they advance in lockstep with the repo-tag — but the per-
+component declaration makes the metadata honest about which minor the
+shipped artifact corresponds to. Plugin authors targeting a specific
+loam minor can pin against the corresponding component version. See
+`docs/plans/v0-8-0-honesty-cleanup.md` for the establishment cycle.
 
 | Component | Role |
 |-----------|------|

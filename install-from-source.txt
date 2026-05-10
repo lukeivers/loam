@@ -1,4 +1,4 @@
-# loam v0.1.0 — install-from-source path
+# loam v0.8.0 — install-from-source path
 #
 # Stranger-clone install: a fresh Python 3.13 venv + this requirements file.
 # Each line is `-e ./<path>` so pip walks them in order; later
@@ -7,11 +7,19 @@
 #
 # Generated as part of FBE.4 (foldback amendment lane,
 # v0-1-0-foldback-scope-expansion-fbe4). When the loam component
-# family publishes to PyPI at v0.2, this file becomes optional and
-# the documented entry-point shifts to:
+# family publishes to PyPI at a future minor, this file becomes optional
+# and the documented entry-point shifts to:
 #   pip install loam-cli loam-init loam-workspace-bootstrap loam-plugin-dev-sdlc
 # See docs/install-from-source.md for the prose guide and
 # troubleshooting.
+
+# ---------------------------------------------------------------
+# Test-runtime dep (added v0.8.0 honesty cleanup AC.HONEST.6.b — closes
+# the bulk of the apparent test-failure count root-caused to missing
+# pytest-asyncio in the install path; @pytest.mark.asyncio decorators
+# fail-silently as 'coroutine never awaited' without this).
+# ---------------------------------------------------------------
+pytest-asyncio>=0.23
 
 # ---------------------------------------------------------------
 # Tier A — leaf components (no inter-component deps).

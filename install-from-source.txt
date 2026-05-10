@@ -84,8 +84,40 @@
 # (https://docs.anthropic.com/claude-code) — not a Python dep.
 -e ./plugins/dev-sdlc/odd-extractor
 
+# loam-amend sub-package under dev-sdlc — the unified loam CLI's
+# `amend` subcommand. MOVED from framework/tools/loam/src/loam_cli/
+# amend/ to plugins/dev-sdlc/tools/loam-amend/ at the M6b.1 milestone
+# (shadow-then-flip migration; the entry-point group
+# `loam.cli.subcommands` resolves `amend` to this package's
+# build_amend_subcommand). v0.7.1 added this line — its absence at
+# v0.7.0 ship caused the documented `loam amend apply <manifest>`
+# workflow to be missing on every fresh install per the v1.0-readiness
+# audit RED-2.
+-e ./plugins/dev-sdlc/tools/loam-amend
+
+# loam-pr-safety sub-package under dev-sdlc — the unified loam CLI's
+# `pr-safety` subcommand. Gates PRs against the v0.1.8-authored banded
+# ODD contract; `loam.cli.subcommands` entry-point resolves
+# `pr-safety` to this package's build_pr_safety_subcommand. v0.7.1
+# added this line for the same install-path-completeness reason as
+# loam-amend (audit YELLOW-3).
+-e ./plugins/dev-sdlc/pr-safety
+
+# loam-mode tool under dev-sdlc — pos-v2 dev-mode auto-load partition
+# selector + audit (sub-plan F). v0.7.1 added this line so the
+# documented dev-mode tooling resolves on a fresh install.
+-e ./plugins/dev-sdlc/tools/loam-mode
+
 # ---------------------------------------------------------------
-# Tier K — Loam Skills plugin (no inter-component runtime deps;
+# Tier K — per-project-pm (depends on workspace-bootstrap; Tier G).
+# Workspace-scoped project-manager runtime. Documented as a runtime
+# component in docs/components/index.md; v0.7.1 added this line for
+# install-path-completeness (audit RED-2 follow-on).
+# ---------------------------------------------------------------
+-e ./framework/per-project-pm
+
+# ---------------------------------------------------------------
+# Tier L — Loam Skills plugin (no inter-component runtime deps;
 # ships SKILL.md packages discovered by Claude Code natively).
 # Per v0.1.3 item 1 (docs/rebuild/plans/v0-1-3-skill-packages.md).
 # ---------------------------------------------------------------

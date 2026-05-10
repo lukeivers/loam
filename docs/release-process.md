@@ -10,7 +10,7 @@ This is the runbook a dispatcher (or a future session, or another persona) can r
 
 ## 1. Pre-publish gates (what `loam release` checks)
 
-Every publish goes through six structural gates before any tag or push happens. The CLI's `--dry-run` flag runs the full gate set + reports verdicts without acting; use it to verify state without committing to publish.
+Every publish goes through seven structural gates before any tag or push happens. The CLI's `--dry-run` flag runs the full gate set + reports verdicts without acting; use it to verify state without committing to publish. (Gate 7 — `system-binary-operational` — was added in v0.7.1 as documentation-only after a v1.0-readiness audit found the system binary had been broken on the maintainer's machine since v0.5.1; structural CLI implementation deferred to v0.8.0+.)
 
 | # | Gate | What it checks | Where it reads |
 |---|------|----------------|----------------|
@@ -20,8 +20,11 @@ Every publish goes through six structural gates before any tag or push happens. 
 | 4 | `clean-tree` | `git status --porcelain` returns empty | working tree |
 | 5 | `branch-main` | `git branch --show-current` returns `main` | local branch state |
 | 6 | `seal-reachable` | `release-roadmap.md` §2 row for the version contains a seal SHA + that SHA is reachable from HEAD | `docs/release-roadmap.md` |
+| 7 | `system-binary-operational` | `which loam` resolves to `/opt/homebrew/bin/loam` (or platform equivalent) AND `loam --help` exits 0 AND the help output lists every documented subcommand (`init`, `amend`, `release`, `odd-extract`, `onboard`, `pr-safety`, `project`). Catches the failure-mode where the system binary's editable installs point at a stale source tree (the v0.5.1 split-worktrees migration introduced this; v0.7.0 shipped with the binary broken because no gate exercised the system path). | `which loam` + `loam --help` invocation against the maintainer's system Python |
 
-**Gates run all six before reporting.** No short-circuit on first RED — the operator sees the full state in one pass and addresses every failure together rather than chasing them one at a time.
+**Gate 7 status (v0.7.1):** documentation-only addition at v0.7.1 ship — the structural CLI implementation (`framework/tools/loam/src/loam_cli/release/gates.py` adding a `system_binary_operational_gate` function) is captured in FUTURE_IDEAS_DRAFT.md as a v0.8.0+ candidate (MINOR-class, extends release-process capability). Until that lands, the gate is operator-verified manually against the HARD smoke writeup; the writeup must contain the `which loam` + `loam --help` output as evidence.
+
+**Gates run all seven before reporting.** No short-circuit on first RED — the operator sees the full state in one pass and addresses every failure together rather than chasing them one at a time. (Gates 1-6 are structural; gate 7 is operator-verified at v0.7.1 — see status note in the gate-7 row.)
 
 **Each RED gate emits a specific corrective hint.** Generic errors are forbidden by AC.V060.2; if a gate fails with vague guidance, file a defect against `framework/tools/loam/src/loam_cli/release/gates.py`.
 

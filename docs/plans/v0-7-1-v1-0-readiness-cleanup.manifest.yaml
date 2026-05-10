@@ -3,14 +3,14 @@ amendment:
   slug: v0-7-1-v1-0-readiness-cleanup
   title: "v0.7.1 PATCH — v1.0-readiness cleanup. Defect-closure for v0.7.0's shipped outcome shape (non-tech user reaches working software). Closes the v1.0-readiness audit gaps: RED-1 broken system binary; RED-2 loam amend missing from install path; RED-3 stale STATE/roadmap publish-status claims; YELLOW-1 component-count drift; YELLOW-2 memory.md re-verified clean (audit over-stated); YELLOW-3 pr-safety undocumented; YELLOW-4 release-process HARD-smoke gap. Plus: AC.READY.8 stranger-clone outcome-altitude probe; AC.READY.9 public-surface manifest for the 6-month commitment."
 
-# BASELINE captured at apply time.
-baseline: TBD-AT-APPLY
+# BASELINE captured at apply time; source-edit + admin commit landed at d9cf905.
+baseline: "d9cf905"
 
 plan: docs/plans/v0-7-1-v1-0-readiness-cleanup.md
 plan_doc_ref: docs/plans/v0-7-1-v1-0-readiness-cleanup.md
 
 ac_count: 10
-smoke_outcome: "v0.7.1 PATCH; AC.READY.{1-9,S} GREEN; cold-clone stranger-walkthrough verifies every documented loam <verb> --help returns clean usage with no broken-import errors; system binary reinstalled correctly on dispatcher's machine; install-from-source.txt extended with loam-amend + pr-safety + loam-mode + per-project-pm; release-process gates table extended with system-binary-operational; public-surface manifest authored at docs/public-surface-manifest.md."
+smoke_outcome: "v0.7.1 PATCH; AC.READY.{1-9,S} GREEN; cold-venv 7-verb walkthrough clean; install-from-source +4 entries; public-surface manifest published."
 
 # Single-component fence (framework/tools/loam) plus universal-admission docs.
 # AC.READY.1 is operational (host machine reinstall) — does NOT touch the

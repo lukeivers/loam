@@ -1,0 +1,122 @@
+schema_version: 3
+amendment:
+  slug: v0-8-0-honesty-cleanup
+  title: "v0.8.0 MINOR — honesty cleanup. Closes 6 of 8 axis-12 (Honesty) gaps from external-reviewer report 2026-05-10. Establishes per-component-version discipline (18 framework + 12 plugin pyprojects bumped 0.1.0 → 0.8.0). Closes README v0.1.0 narrative drift (3 sites rewritten + 2 preserved as authorship-attribution). Removes ANTHROPIC_API_KEY user-facing string in dormancy notification.py:329 (subscription-aware corrective). Backfills historical TBD-AT-* placeholders for v0.4.2 / v0.4.3 / v0.5.0 rows via v0.7.4 apply_backfill function. Resolves v0.5.0 STATE.md SHIPPED-LOCAL-fossil. Test-failure triage with pytest-asyncio install-from-source addition. Outcome-altitude probe verifies all 8 reviewer findings closed or FIDRAFT-deferred."
+
+# BASELINE at source-edit batch (4f1dcf6) — covers all v0.8.0 honesty-
+# cleanup edits across 46 files (30 pyproject bumps + 4 __version__ +
+# README + dormancy + STATE/roadmap + components/index + install-from-
+# source + 2 experiment docs + plan §13 + FIDRAFT entries).
+baseline: "4f1dcf6"
+
+plan: docs/plans/v0-8-0-honesty-cleanup.md
+plan_doc_ref: docs/plans/v0-8-0-honesty-cleanup.md
+
+ac_count: 7
+smoke_outcome: "v0.8.0 MINOR AC.HONEST.{1-7,S} GREEN; 30 pyproject version bumps + README + dormancy + 3 historical backfills + triage doc + 8-finding probe."
+
+# Multi-component MINOR fence (every component touched via pyproject bump
+# plus targeted single-file edits in dormancy + README + STATE/roadmap).
+# Sealed-amendment-cycle ritual lands one SEAL_COMMIT per component;
+# loam amend handles per-component bookkeeping per the established pattern.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+    - framework/
+    - plugins/
+  files:
+    - CLAUDE.md
+    - install-from-source.txt
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/components/memory.md
+    - docs/public-surface-manifest.md
+    - README.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-8-0-honesty-cleanup
+  body: |
+    # v0.8.0 MINOR — honesty cleanup
+
+    2026-05-10. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST. v0.8.0 closes 6 of 8 axis-12 (Honesty) gaps surfaced by
+    the 2026-05-10 external-reviewer report at
+    workspace/.scratch/claude-output/loam-external-review-v0.7.4-2026-05-10.md.
+    Reviewer verdict: NOT v1.0-ready; Axis 12 LOW = FAIL on MUST-PASS.
+
+    OUTCOME-SHAPE ADDITION: per-component-version discipline established
+    as a tracked surface. Component pyproject.toml versions advance with
+    shipped minors going forward. v0.1.0 → 0.8.0 across all 18 framework
+    components + 12 plugin / tool pyprojects (30 files total).
+
+    AC.HONEST.1 — pyproject version bump (30 files). Includes 18 framework
+    runtime components per docs/components/index.md, the 6 framework/tools/
+    auxiliary packages (loam, loam-memory-inspect, upgrade-merge-resolver,
+    plus the 4 loam-migrate-* one-time migration tools that haven't retired
+    yet — bumped for consistency), and 6 plugin packages (dev-sdlc, odd-
+    extractor, loam-amend, loam-mode, pr-safety, loam-skills). The
+    pr-safety pyproject was at 0.2.0 (the one stale exception);
+    bumped to 0.8.0.
+
+    AC.HONEST.2 — README narrative cleanup. 3 sites rewritten (lines 70 /
+    74 / 139) to reflect v0.8.0 current state. 2 sites preserved (lines
+    155 / 158) as authorship-attribution parentheticals. Reviewer's count
+    of 5 v0.1.0 references is accurate; the v0.8.0 cleanup updates 3 and
+    preserves 2 with explicit justification.
+
+    AC.HONEST.3 — Dormancy notification.py:329 ANTHROPIC_API_KEY removal.
+    Replaced 'Update your ANTHROPIC_API_KEY, then reply resume' with
+    'Re-authenticate your Claude subscription (run claude login or check
+    claude is on PATH), then reply resume'. Names the actual recovery
+    action a claude -p subscription user would take. Test assertion at
+    test_d6_narrative.py:86 updated to match the new copy substring.
+
+    AC.HONEST.4 — Historical TBD-AT-* backfill via v0.7.4 apply_backfill
+    function. Three retroactive invocations: v0.4.2 (seal 3f3df67 →
+    discovers source-edit 5cdea12 + apply 507793d), v0.4.3 (seal 8dcd827
+    → discovers source-edit cd3b977 + apply 0d9f5c4), v0.5.0 (seal
+    f7230e0 → discovers source-edit 1901e5e + apply f1f29ca). Single
+    atomic cleanup commit (D-HONEST.4.b).
+
+    AC.HONEST.5 — v0.5.0 STATE.md row resolution. Folded into AC.HONEST.4
+    invocation: the v0.5.0 backfill includes the trailing-claim-flip,
+    which removes the 'SHIPPED LOCAL — owner gates publish' interim
+    sentence. Resulting row carries SHIPPED PUBLIC only.
+
+    AC.HONEST.6 — Known-test-failures triage. New experiment doc at
+    docs/experiments/v0-8-0-test-failure-triage.md inventories per-
+    component test failures, classifies closable-in-cycle vs FIDRAFT,
+    and adds pytest-asyncio>=0.23 to install-from-source.txt (root-cause
+    fix for the bulk of asyncio-marked failures). Remaining failures
+    captured as scoped FIDRAFT entries.
+
+    AC.HONEST.7 — Outcome-altitude probe. Grep sweep against working
+    tree verifies 6 of 8 reviewer findings closed (F1-F6); 2 of 8
+    explicitly FIDRAFT-deferred (F7 plugin contract version surface; F8
+    criterion #2 third-party shipping event). Probe documented in
+    docs/experiments/v0-8-0-hard-smoke.md.
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch (30
+    pyproject bumps + README + dormancy + historical backfill +
+    test-failure triage + experiment docs + FIDRAFT entries + STATE/
+    roadmap admin) TBD-AT-COMMIT; pre-apply admin TBD-AT-COMMIT.

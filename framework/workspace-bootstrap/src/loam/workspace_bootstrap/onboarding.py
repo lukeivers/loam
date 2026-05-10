@@ -253,6 +253,13 @@ def run_onboarding(
     completed_at = _dt.datetime.now(_dt.timezone.utc).isoformat()
     bootstrap_yaml = workspace_root / "bootstrap.yaml"
     if bootstrap_yaml.exists():
+        # v0.7.0 AC.NTU.2 (a) — derive primary_channel from the same Q2
+        # answer (per D-NTU.2.b default: extend existing question to
+        # cover primary_channel semantics). Telegram → telegram;
+        # cli/anything else explicit → terminal; deferred → None
+        # (caller defaults to terminal at runtime, preserving current
+        # behavior).
+        primary_channel = _channel_to_primary_channel(answers["channel"])
         write_onboarding_fields(
             bootstrap_yaml,
             safety_profile=answers["safety_profile"],
@@ -264,6 +271,7 @@ def run_onboarding(
             watch_opt_in=answers["watch"],
             language_primary=answers["language"],
             onboarding_completed_at=completed_at,
+            primary_channel=primary_channel,
         )
 
     # AC.ONBOARD.9 — completion summary.
@@ -369,10 +377,22 @@ def _compose_prompt(
                 f"Q4: From your survey: {survey_default}. Confirm? "
                 f"(1) Yes (2) Adjust"
             )
+        # v0.7.0 AC.NTU.6 — vocabulary scrub: "ODD extractor" was
+        # substrate-name leaking into the user-facing Q4 question text.
+        # The user-facing concept is "scan this codebase for design
+        # patterns" — a code-pattern scanner. Substrate command name
+        # `loam odd-extract` is preserved for the dev-mode CLI surface
+        # (operators know what it does); the user-facing question
+        # avoids the substrate term. Deeper F-DESIGN (Q4 should be
+        # conditional on dev-intent detection — non-tech-user
+        # workspaces shouldn't surface this question at all) deferred
+        # to a follow-on amendment per the v0.7.0 build report.
         return (
-            "Q4: Run the ODD extractor against this codebase now? "
-            "(1) Yes — fire now (2) Defer — I'll run `loam odd-extract` "
-            "later (3) Never — disable extractor for this workspace"
+            "Q4: Scan this codebase for design patterns now? "
+            "(the scanner reads your source files + drafts a design "
+            "summary; useful for software-development workspaces) "
+            "(1) Yes — scan now (2) Defer — I'll run the scan later "
+            "(3) Never — disable the scanner for this workspace"
         )
     if slug == "watch":
         if survey_default:
@@ -479,6 +499,24 @@ def _channel_to_field(channel: str) -> str:
     if channel == "cli":
         return "cli"
     return "deferred"
+
+
+def _channel_to_primary_channel(channel: str) -> str | None:
+    """Map normalised channel answer to v0.7.0 ``primary_channel``
+    runtime-routing slot (AC.NTU.2).
+
+    Per D-NTU.2.b: the same Q2 answer drives both the legacy
+    ``channel_preference`` field and the new ``primary_channel`` field.
+    Telegram → telegram; CLI-only → terminal; Skip-for-now → None
+    (loader/runtime treats None as terminal-equivalent for behavior
+    preservation, matching pre-v0.7.0 behaviour).
+    """
+    if channel == "telegram":
+        return "telegram"
+    if channel == "cli":
+        return "terminal"
+    # "deferred" or anything else: leave unset (None).
+    return None
 
 
 # ---- activation dispatch --------------------------------------------

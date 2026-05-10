@@ -10,7 +10,7 @@ This is the runbook a dispatcher (or a future session, or another persona) can r
 
 ## 1. Pre-publish gates (what `loam release` checks)
 
-Every publish goes through six structural gates before any tag or push happens. The CLI's `--dry-run` flag runs the full gate set + reports verdicts without acting; use it to verify state without committing to publish.
+Every publish goes through seven structural gates before any tag or push happens. The CLI's `--dry-run` flag runs the full gate set + reports verdicts without acting; use it to verify state without committing to publish. (Gate 7 — `system-binary-operational` — was added in v0.7.1 as documentation-only after a v1.0-readiness audit found the system binary had been broken on the maintainer's machine since v0.5.1; structural CLI implementation deferred to v0.8.0+.)
 
 | # | Gate | What it checks | Where it reads |
 |---|------|----------------|----------------|
@@ -20,8 +20,11 @@ Every publish goes through six structural gates before any tag or push happens. 
 | 4 | `clean-tree` | `git status --porcelain` returns empty | working tree |
 | 5 | `branch-main` | `git branch --show-current` returns `main` | local branch state |
 | 6 | `seal-reachable` | `release-roadmap.md` §2 row for the version contains a seal SHA + that SHA is reachable from HEAD | `docs/release-roadmap.md` |
+| 7 | `system-binary-operational` | `which loam` resolves to `/opt/homebrew/bin/loam` (or platform equivalent) AND `loam --help` exits 0 AND the help output lists every documented subcommand (`init`, `amend`, `release`, `odd-extract`, `onboard`, `pr-safety`, `project`). Catches the failure-mode where the system binary's editable installs point at a stale source tree (the v0.5.1 split-worktrees migration introduced this; v0.7.0 shipped with the binary broken because no gate exercised the system path). | `which loam` + `loam --help` invocation against the maintainer's system Python |
 
-**Gates run all six before reporting.** No short-circuit on first RED — the operator sees the full state in one pass and addresses every failure together rather than chasing them one at a time.
+**Gate 7 status (v0.7.1):** documentation-only addition at v0.7.1 ship — the structural CLI implementation (`framework/tools/loam/src/loam_cli/release/gates.py` adding a `system_binary_operational_gate` function) is captured in FUTURE_IDEAS_DRAFT.md as a v0.8.0+ candidate (MINOR-class, extends release-process capability). Until that lands, the gate is operator-verified manually against the HARD smoke writeup; the writeup must contain the `which loam` + `loam --help` output as evidence.
+
+**Gates run all seven before reporting.** No short-circuit on first RED — the operator sees the full state in one pass and addresses every failure together rather than chasing them one at a time. (Gates 1-6 are structural; gate 7 is operator-verified at v0.7.1 — see status note in the gate-7 row.)
 
 **Each RED gate emits a specific corrective hint.** Generic errors are forbidden by AC.V060.2; if a gate fails with vague guidance, file a defect against `framework/tools/loam/src/loam_cli/release/gates.py`.
 
@@ -67,6 +70,7 @@ After a successful `loam release` invocation:
 
 - The version tag is live on `origin/main` — third-party consumers can pin against it.
 - `git ls-remote --tags origin` shows the new tag.
+- **Post-publish state-sync auto-backfill (v0.7.3+; coverage extended at v0.7.4).** Between the tag-push and the post-ship review block, the runner invokes `apply_backfill` from `loam_cli.release.post_publish_backfill` to flip the version's `**vX.Y.Z ... SHIPPED LOCAL**` rows in `docs/STATE.md` and `docs/release-roadmap.md` to the `**SHIPPED PUBLIC YYYY-MM-DD at tag \`vX.Y.Z\` (annotated \`<SHA7>\`)**` shape, update the `**Total shipped:** N minor + M patches. v<latest> published.` aggregate-count summary line, and append a new bold entry to §3 Active version. **v0.7.4 extends coverage** to four additional surfaces v0.7.3 missed: (1) STATE.md leading bolded title `**vX.Y.Z <CLASS> SHIPPED LOCAL**` flips to `**SHIPPED PUBLIC**` (CLASS casing preserved); (2) STATE.md row's `seal TBD-AT-SEAL` placeholder backfills (mirror of roadmap-row behavior); (3) `TBD-AT-COMMIT` (source-edit SHA) backfills via commit-graph walk from the seal commit (canonical apply-message form `BASELINE+sidecar bump to <sha>` carries the source-edit SHA); (4) `TBD-AT-APPLY` backfills via the seal-message form `chore(seals): <slug> — ... at <sha>`. The backfill commits as `docs(release): vX.Y.Z post-publish backfill — SHIPPED PUBLIC` and pushes to `origin main`. Idempotent: re-running on already-current state is a clean no-op (no commit, no push). Closes the recurring manual-backfill defect that bit at every loam publish v0.6.0 → v0.7.2 + the residual gaps surfaced by v0.7.3's own publish dogfood.
 - The post-ship review block surfaced a "Next-scope proposal" — the operator ratifies (or revises) the next scope BEFORE the next cycle's first commit. **Pre-1.0 always returns PATCH or MINOR per `release-versioning-policy.md` §1.0.0.** The v1.0 quality-bar event is a separate ratification, not a post-publish-trigger event.
 
 **Things to check next:**

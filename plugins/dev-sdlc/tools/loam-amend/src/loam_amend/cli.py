@@ -26,6 +26,7 @@ from pathlib import Path
 
 from loam_cli import __version__
 from loam_amend.commands import apply as apply_cmd
+from loam_amend.commands import new_memory as new_memory_cmd
 from loam_amend.commands import new_plan as new_plan_cmd
 from loam_amend.commands import seal as seal_cmd
 from loam_amend.commands import template as template_cmd
@@ -42,7 +43,7 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
         ``loam_cli.cli._build_parser()``.
 
     Either way, the same ``validate / apply / seal / template /
-    new-plan`` subparsers are registered on ``parser``.
+    new-plan / new-memory`` subparsers are registered on ``parser``.
     """
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -228,6 +229,75 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
         help="overwrite existing --vars-out / --plan-out (default: refuse)",
     )
 
+    # ``new-memory`` subcommand — scaffold a vars-file (and optionally
+    # render the memory-doc) for a new memory-rule slug. Per
+    # ``docs/plans/v0-7-0-non-tech-user-surface.md`` AC.NTU.4. Parallel
+    # to ``new-plan`` per D-NTU.4 ruling: same template engine, same
+    # scaffold pattern; only template family + default destination
+    # differ. Purely additive; existing subcommands untouched.
+    p_new_memory = sub.add_parser(
+        "new-memory",
+        help=(
+            "scaffold a vars-file for a new memory-doc at "
+            "<repo>/docs/memory/feedback_<slug>.vars.yaml; with --render "
+            "also produce the memory-doc"
+        ),
+    )
+    p_new_memory.add_argument(
+        "slug", help="memory-doc filename slug, ^[a-z][a-z0-9_]*$"
+    )
+    p_new_memory.add_argument(
+        "--name",
+        default=None,
+        help="pre-fill the NAME variable in the scaffolded vars-file",
+    )
+    p_new_memory.add_argument(
+        "--description",
+        default=None,
+        help="pre-fill the DESCRIPTION variable",
+    )
+    p_new_memory.add_argument(
+        "--vars-out",
+        type=Path,
+        default=None,
+        help=(
+            "override the vars-file output path "
+            "(default: <repo>/docs/memory/feedback_<slug>.vars.yaml)"
+        ),
+    )
+    p_new_memory.add_argument(
+        "--memory-out",
+        type=Path,
+        default=None,
+        help=(
+            "override the memory-doc output path when --render is set "
+            "(default: <memory-dir>/feedback_<slug>.md)"
+        ),
+    )
+    p_new_memory.add_argument(
+        "--memory-dir",
+        type=Path,
+        default=None,
+        help=(
+            "override the default memory-doc destination directory "
+            "(default: <repo>/docs/memory/; production callers point at "
+            "~/.claude/projects/<project>/memory/)"
+        ),
+    )
+    p_new_memory.add_argument(
+        "--render",
+        action="store_true",
+        help=(
+            "after scaffolding the vars-file, render the memory-doc "
+            "to --memory-out (delegates to `loam amend template render`)"
+        ),
+    )
+    p_new_memory.add_argument(
+        "--force",
+        action="store_true",
+        help="overwrite existing --vars-out / --memory-out (default: refuse)",
+    )
+
     return parser
 
 
@@ -309,6 +379,17 @@ def dispatch(args: argparse.Namespace) -> int:
             render=args.render,
             force=args.force,
         )
+    if args.command == "new-memory":
+        return new_memory_cmd.run(
+            args.slug,
+            name=args.name,
+            description=args.description,
+            vars_out=args.vars_out,
+            memory_out=args.memory_out,
+            memory_dir=args.memory_dir,
+            render=args.render,
+            force=args.force,
+        )
     return 2  # unreachable: argparse declares command required
 
 
@@ -355,7 +436,7 @@ def build_amend_subcommand(
     The unified ``loam`` CLI dispatcher discovers + invokes this at
     parser-build time. Calling ``attach_subparsers(amend_parser)``
     populates the ``loam amend`` subparser with the full
-    ``validate / apply / seal / template / new-plan`` surface.
+    ``validate / apply / seal / template / new-plan / new-memory`` surface.
     ``set_defaults(func=dispatch)`` wires the M6a dispatcher's
     ``args.func`` path back to ``dispatch(args)``.
     """
@@ -363,7 +444,7 @@ def build_amend_subcommand(
         "amend",
         help=(
             "amendment-dispatch tooling: validate / apply / seal / "
-            "template / new-plan"
+            "template / new-plan / new-memory"
         ),
         add_help=True,
     )

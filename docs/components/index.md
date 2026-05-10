@@ -1,9 +1,18 @@
 # Components
 
-loam ships eighteen runtime components in v0.1.0. Each has one short
+loam ships eighteen runtime components in v0.8.0. Each has one short
 reference page in this directory. The summary below is the
 one-paragraph "what does it do" view; the per-component pages cover
 how-to-invoke and observable surfaces.
+
+**Per-component versions track shipped minors.** As of v0.8.0, every
+component's `pyproject.toml` `version` field advances with each shipped
+minor (v0.8.0, v0.9.0, ...). Component versions are not independently
+released — they advance in lockstep with the repo-tag — but the per-
+component declaration makes the metadata honest about which minor the
+shipped artifact corresponds to. Plugin authors targeting a specific
+loam minor can pin against the corresponding component version. See
+`docs/plans/v0-8-0-honesty-cleanup.md` for the establishment cycle.
 
 | Component | Role |
 |-----------|------|
@@ -25,6 +34,17 @@ how-to-invoke and observable surfaces.
 | [`telegram-interface`](telegram-interface.md) | Telegram channel adapter — multi-identity allowlist, availability probe, direct Bot API fallback. |
 | [`workspace-sync`](workspace-sync.md) | Canonical-to-workspace git-shaped sync; three-class workspace-data envelope; LLM-mediated semantic-merge gate. |
 | [`self-upgrade`](self-upgrade.md) | Coordinates per-component upgrade fidelity into a single atomic operation; seven-clause acceptance contract. |
+
+### Dev/SDLC plugin verbs (composable, not core runtime)
+
+The Dev/SDLC plugin (shipped at v0.1.0) contributes additional `loam` CLI verbs via the `loam.cli.subcommands` entry-point group. These ship with the canonical install path but are scoped to dev-mode workflows; they are not "runtime components" of the harness itself.
+
+| Verb | Role |
+|------|------|
+| `loam amend` | Amendment-dispatch tooling (`validate / apply / seal / template / new-plan / new-memory`). Lives at `plugins/dev-sdlc/tools/loam-amend/`. |
+| `loam pr-safety` | Gates PRs against the v0.1.8-authored banded ODD contract; pre-commit + pre-push hook installers; CI templates (GitHub Actions / GitLab CI / CircleCI). Lives at `plugins/dev-sdlc/pr-safety/`. |
+| `loam odd-extract` | ODD reverse-engineering — read a target repo and emit a confidence-banded contract draft. Lives at `plugins/dev-sdlc/odd-extractor/`. |
+| `loam project` | Dev/SDLC project lifecycle — methodology-shaped 5-stage workflow with structural gate enforcement. Lives at `plugins/dev-sdlc/`. |
 
 <sup>†</sup> The `memory` component's implementation lives inside
 `framework/primary-persona/` (`file_memory.py`,

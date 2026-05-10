@@ -12,6 +12,7 @@ A plan-doc is a Markdown file at `docs/plans/<slug>.md`. Each plan has:
 - **§2 Predecessors / context** — which sealed amendments this plan composes against.
 - **§3 Scope** — explicit in-scope vs out-of-scope items.
 - **§4 Acceptance criteria** — table of AC IDs + outcome + verification. Each AC outcome-shaped + deterministic + one-test-per-criterion.
+  - **AC ID convention (per 2026-05-09 ratification Telegram 10644):** scope-descriptive, NOT version-packed. Use a short scope abbreviation derived from the work's purpose (e.g., `AC.NTU.1` for non-tech-user surface; `AC.RBPH1.1` for rebrand-Phase-1; `AC.SW.1` for split-worktrees; `AC.OSS-M6b0.1` for OSS-publish M6b.0 sub-amendment). Do NOT use `AC.V<major><minor><patch>.<n>` form (e.g., `AC.V070.1`) — the version number derives at build-time per Q2 ratification, so AC IDs that pre-bake the version require renaming when the version derives differently. Scope-descriptive IDs survive the version derivation step intact. **Historical AC.V<XYZ>.<n> IDs in already-shipped amendments stay as-is** — no retroactive renaming (locked decision).
 - **§5 Sealed-component fence** — the components this amendment touches.
 - **§6 Halt triggers** — conditions under which the builder stops + surfaces.
 - **§7 Ship shape** — sub-amendment series shape (if applicable) + commit ladder.

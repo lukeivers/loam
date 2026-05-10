@@ -197,8 +197,9 @@ Owner gate-review separate (ratify plan-doc shape before build dispatch + ratify
 
 **Plan-doc revision commit:** `c05ce45` — slug + AC IDs + branch + remote + working-directory revision pass.
 **Source-edit commit:** `d1a6027` — feat(loam-cli): `loam release` subcommand + 5-module subpackage + 40 tests + runbook.
-**Apply commit:** TBD-AT-APPLY (lands via `loam amend apply` per sealed-component cycle ritual).
-**Seal commit:** TBD-AT-SEAL (lands via `loam amend seal --plan-doc`).
+**Pre-apply admin commit:** `5067797` — STATE rollup + release-roadmap §2 row + plan-doc §13 backfill + HARD smoke writeup.
+**Apply commit:** `8125117` — `loam amend apply` per sealed-component cycle ritual; component fence `loam` (BASELINE → `d1a6027a`; SEAL_COMMIT → `d1a6027a`; `allowed_prefixes` + `allowed_files` widened per universal-paths).
+**Seal commit:** `eaf8f24` — `loam amend seal --scoped-sweep --plan-doc`; sealed `loam` component at `8125117`.
 
 ### AC verdict matrix
 
@@ -210,8 +211,8 @@ Owner gate-review separate (ratify plan-doc shape before build dispatch + ratify
 | AC.V060.4 — Optional GitHub Release with auto-generated notes | GREEN | 5 tests at `framework/tools/loam/tests/test_AC_V060_4_release_notes.py` cover notes-section content (outcome shape + AC matrix + commit log), missing-plan-doc graceful handling, `--release` invokes mocked `gh release create`. D-V060.4 default used: plan-doc §1 + §status + commit log; chore-prefix noise filter triggers when log is dense (≥4 lines + >50% noise). |
 | AC.V060.5 — Release-process runbook | GREEN | New doc at `docs/release-process.md`. Six sections: pre-publish gates table, `loam release` invocation + flags, post-publish state + things-to-check-next, manual fallback (when CLI unavailable), composes-with, cross-references. Reviewable in 5 minutes; cross-references the CLI's `--help` output per the AC. |
 | AC.V060.6 — Post-ship review + next-scope decision | GREEN | 6 tests at `framework/tools/loam/tests/test_AC_V060_6_post_ship_review.py` cover proposal field population, missing-roadmap placeholder handling, pre-1.0 vs post-1.0 major-eval branches, format_proposal rendering, runner emits proposal on success + on dry-run. Pre-1.0 branch returns "pre-1.0" verdict + "never cuts major" detail per `release-versioning-policy.md` §1.0.0. |
-| AC.V060.7 — Dogfood v0.6.0 publish | DEFERRED | Per dispatch-brief HARD HALT rule on `git push` / `git tag` from builder, the publish action is dispatcher-side. Builder lands all sealed locally; dispatcher invokes `loam release v0.6.0` post-build to dogfood. Build-time `loam release v0.6.0 --dry-run` (research-only no-public-action) verified the gate surface against the canonical tree's pre-seal state — every RED traced to the seal-cycle ritual not yet completing (gates 2, 3, 6 surfaced corrective hints naming the missing backfill state, exactly as designed). Dogfood verdict pending dispatcher invocation. |
-| AC.V060.S — Seal-diff discipline | TBD-AT-SEAL | `git diff --name-only BASELINE..SEAL_COMMIT` will be verified at seal time by `framework/tools/loam/tests/test_no_sealed_amendments.py` (fence test for `loam` component). Universal admissions cover `docs/plans/`, `docs/experiments/`, `docs/STATE.md`, `docs/release-roadmap.md`, `docs/release-process.md`. |
+| AC.V060.7 — Dogfood v0.6.0 publish | GREEN (build-side) / pending dispatcher publish | Per dispatch-brief HARD HALT rule on `git push` / `git tag` from builder, the publish action is dispatcher-side. Builder lands all sealed locally; dispatcher invokes `loam release v0.6.0` post-build to dogfood-publish. Build-time research-only `loam release v0.6.0 --dry-run` verified the gate surface against the canonical tree's post-seal state and reports GREEN on gates 1 (hard-smoke), 3 (state-shipped), 4 (clean-tree), 5 (branch-main), 6 (seal-reachable); gate 2 (acs-verified) flags AC.V060.7 + AC.V060.S until this very §13 backfill commit lands which marks them GREEN — that's the design (the gate enforces the §status verdict matrix is complete). Build-side AC.V060.7 verdict GREEN (CLI is dispatcher-ready); dispatcher publish action verdict pending. |
+| AC.V060.S — Seal-diff discipline | GREEN | `framework/tools/loam/tests/test_no_sealed_amendments.py::test_AC_FBE_2_S_only_loam_cli_changed` PASSED at HEAD `0928866` post-seal. `git diff --name-only d1a6027..eaf8f24` shows changes only under `framework/tools/loam/` + universal-admission paths (`docs/plans/`, `docs/experiments/`, `docs/STATE.md`, `docs/release-roadmap.md`, `docs/release-process.md`); fence invariant holds. |
 
 ### AI-time actuals
 
@@ -230,3 +231,11 @@ Per `feedback_duration_estimation_rubric` log-actuals discipline; final actuals 
 ### Halt-and-surface findings
 
 None. Build proceeded to seal without architectural blocks. The v0.6.0 surface is small (one new component fence + one new doc) + cleanly composes with the existing `loam` CLI dispatcher's M6a entry-point group + the dev-sdlc plugin's `amend` adapter (sibling registration pattern). No ODD §2.5 violations surfaced in surrounding code; no scope creep beyond the plan-doc fence.
+
+## §14 — Method decisions
+
+Backfilled at build time per the v0.4.3 / v0.4.2 / v0.4.1 / v0.4.0 precedent.
+
+- **D-V060.2 (CLI module shape):** Path A chosen — single-module-per-concern (gates.py / notes.py / post_ship.py / runner.py / cli.py). Rationale: the CLI surface is bounded (six gates + one tag/push action + one notes generator + one post-ship block); a pluggable gate registry would add coordination overhead without a tighter acceptance criterion per Lens 5 swarming-stop rule. Path B (registry) deferred to v0.7.0+ if a third-party plugin contributes additional gates.
+- **D-V060.4 (auto-generated release notes shape):** Default — plan-doc §1 outcome + plan-doc §status + commit log between previous seal and this seal. Noise filter (chore-prefix lines drop when log is dense — ≥4 lines + >50% noise) implemented preemptively per the policy hint; threshold tunable in `loam_cli/release/notes.py:_filter_noise` if v0.7.0+ HARD smoke surfaces tuning need.
+- **D-V060.5 (runbook depth):** Default — six-section reference (gates table, invocation, post-publish state, manual fallback, composes-with, cross-references). Reviewable in 5 minutes per AC.V060.5. No tutorial-shape; if first reader (Eric or other OSS consumer) signals confusion, expand at v0.7.0+ via a separate runbook-extension cycle.

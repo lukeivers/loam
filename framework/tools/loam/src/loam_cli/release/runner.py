@@ -19,7 +19,12 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from loam_cli.release import gates, notes, post_ship
+from loam_cli.release import (
+    gates,
+    notes,
+    post_publish_backfill,
+    post_ship,
+)
 
 
 @dataclass(frozen=True)
@@ -37,6 +42,9 @@ class PublishOutcome:
     gh_release_created: bool
     idempotent_noop: bool
     proposal: post_ship.NextScopeProposal | None
+    backfill: post_publish_backfill.BackfillResult | None = None
+    backfill_committed: bool = False
+    backfill_pushed: bool = False
 
 
 _REMOTE = "origin"
@@ -130,6 +138,52 @@ def _push_branch_and_tag(repo_root: Path, tag: str) -> None:
     _git("push", _REMOTE, tag, repo_root=repo_root)
 
 
+def _resolve_tag_sha(repo_root: Path, tag: str) -> str:
+    """Return the annotated-tag-object SHA for *tag* (NOT the
+    underlying commit's SHA — for annotated tags these differ).
+    """
+    proc = _git("rev-parse", tag, repo_root=repo_root, check=False)
+    return proc.stdout.strip()
+
+
+def _commit_and_push_backfill(
+    repo_root: Path, version: str
+) -> tuple[bool, bool]:
+    """Stage the docs paths the backfill touched, commit with the
+    canonical message, and push to ``origin main``.
+
+    Returns ``(committed, pushed)``. Skipped when there's nothing
+    staged (defensive — caller already checks ``edits_applied``).
+    """
+    # Stage the two known doc paths (file-level granularity preserves
+    # any unrelated edits in other parts of the tree, though gate 4
+    # `clean-tree` should have already failed if any existed).
+    _git(
+        "add",
+        "docs/STATE.md",
+        "docs/release-roadmap.md",
+        repo_root=repo_root,
+        check=False,
+    )
+    diff = _git(
+        "diff",
+        "--cached",
+        "--quiet",
+        repo_root=repo_root,
+        check=False,
+    )
+    if diff.returncode == 0:
+        # Nothing actually staged after the add — no commit.
+        return False, False
+    msg = (
+        f"docs(release): {version} post-publish backfill — "
+        f"SHIPPED PUBLIC"
+    )
+    _git("commit", "-m", msg, repo_root=repo_root)
+    _git("push", _REMOTE, _BRANCH, repo_root=repo_root)
+    return True, True
+
+
 def _gh_release_create(
     repo_root: Path, tag: str, notes_body: str
 ) -> None:
@@ -219,6 +273,28 @@ def run(
             f"{tag} already on {_REMOTE} remote at {remote_sha}; "
             "nothing to do."
         )
+        # Post-failure-recovery: still run the backfill in case a
+        # prior run pushed the tag but failed before backfill landed
+        # (per AC.BACKFL.4 — idempotent on already-current state).
+        backfill_result = post_publish_backfill.apply_backfill(
+            repo_root, version, tag, remote_sha, dry_run=False
+        )
+        backfill_committed = False
+        backfill_pushed = False
+        if backfill_result.edits_applied > 0:
+            print(
+                f"post-publish backfill: applied "
+                f"{backfill_result.edits_applied} edit(s) "
+                f"({len(backfill_result.files_touched)} file(s))"
+            )
+            backfill_committed, backfill_pushed = _commit_and_push_backfill(
+                repo_root, version
+            )
+        else:
+            print(
+                "post-publish backfill: no edits needed (state already "
+                "current)."
+            )
         # Still emit the post-ship proposal — the operator may be
         # reading this output to plan the next cycle.
         proposal = post_ship.build_proposal(repo_root, version)
@@ -233,6 +309,9 @@ def run(
             gh_release_created=False,
             idempotent_noop=True,
             proposal=proposal,
+            backfill=backfill_result,
+            backfill_committed=backfill_committed,
+            backfill_pushed=backfill_pushed,
         )
 
     # 3. Resolve seal SHA + objective sentence (used by tag message
@@ -269,6 +348,16 @@ def run(
             print(
                 f"DRY-RUN: would create GitHub Release for {tag} via gh"
             )
+        # Dry-run preview of the post-publish backfill (AC.BACKFL.6).
+        # Use the seal SHA as a stand-in for tag_sha (the annotated-
+        # tag-object SHA isn't knowable without actually creating the
+        # tag); the preview's marker form will reflect the seal SHA.
+        backfill_preview = post_publish_backfill.apply_backfill(
+            repo_root, version, tag, seal_sha,
+            seal_sha=seal_sha, dry_run=True,
+        )
+        print()
+        print(post_publish_backfill.format_backfill_preview(backfill_preview))
         proposal = post_ship.build_proposal(repo_root, version)
         print()
         print(post_ship.format_proposal(proposal))
@@ -281,6 +370,9 @@ def run(
             gh_release_created=False,
             idempotent_noop=False,
             proposal=proposal,
+            backfill=backfill_preview,
+            backfill_committed=False,
+            backfill_pushed=False,
         )
 
     # 4. Tag + push (AC.V060.3).
@@ -291,6 +383,38 @@ def run(
         print(f"created annotated tag {tag} at {seal_sha}")
     _push_branch_and_tag(repo_root, tag)
     print(f"pushed {_REMOTE} {_BRANCH} + {tag}")
+
+    # 4.5. Post-publish state-sync backfill (AC.BACKFL.{1,2,3,4}).
+    #      MUST come AFTER tag push (HARD HALT #7 — the backfill
+    #      commit advances main past the seal SHA the tag points to,
+    #      so the tag MUST already be on remote first to avoid
+    #      tag-vs-main divergence).
+    tag_sha = _resolve_tag_sha(repo_root, tag)
+    backfill_result = post_publish_backfill.apply_backfill(
+        repo_root, version, tag, tag_sha,
+        seal_sha=seal_sha, dry_run=False,
+    )
+    backfill_committed = False
+    backfill_pushed = False
+    if backfill_result.edits_applied > 0:
+        print(
+            f"post-publish backfill: applied "
+            f"{backfill_result.edits_applied} edit(s) "
+            f"({len(backfill_result.files_touched)} file(s))"
+        )
+        backfill_committed, backfill_pushed = _commit_and_push_backfill(
+            repo_root, version
+        )
+        if backfill_committed:
+            print(
+                f"committed + pushed post-publish backfill to "
+                f"{_REMOTE} {_BRANCH}"
+            )
+    else:
+        print(
+            "post-publish backfill: no edits needed (state already "
+            "current)."
+        )
 
     # 5. Optional GitHub Release (AC.V060.4).
     gh_release_created = False
@@ -314,4 +438,7 @@ def run(
         gh_release_created=gh_release_created,
         idempotent_noop=False,
         proposal=proposal,
+        backfill=backfill_result,
+        backfill_committed=backfill_committed,
+        backfill_pushed=backfill_pushed,
     )

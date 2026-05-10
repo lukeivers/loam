@@ -54,3 +54,6 @@ personas/
 # repo, but explicit `--workspace-root <pos-v2>` still lands artefacts
 # here. Either way, the per-extraction state must never be committed.
 .loam/
+
+# loam-init scaffold output (workspace-state, not source — auto-created by plugin install/init flow)
+.claude/

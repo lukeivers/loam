@@ -7,4 +7,4 @@ namespace for future subcommands like ``loam scope new``,
 ``loam status``, ``loam plot create``.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.8.0"

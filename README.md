@@ -66,12 +66,12 @@ runs surface what needs attention without you opening a terminal.
 > `<workspace>/framework/` — the workspace is self-contained from
 > that point. The install clone is *disposable* once the workspace is
 > bootstrapped: keep it if you want to reinstall or pull updates;
-> delete it if you don't. v0.2 ships the CLI from PyPI directly,
-> eliminating the install clone — for v0.1.0, the source-only install
-> path is intentional + the two copies are the price of being
-> self-contained.
+> delete it if you don't. A future minor will ship the CLI from PyPI
+> directly, eliminating the install clone — for the v0.x series, the
+> source-only install path is intentional + the two copies are the
+> price of being self-contained.
 
-## What ships in v0.1.0
+## What ships
 
 Eighteen runtime components plus the Dev/SDLC plugin. Highlights:
 
@@ -136,10 +136,12 @@ machine-readable artefacts under
 
 ## Status
 
-loam v0.1.0 is the first public release. It is intentionally narrow:
-infrastructure components, one demonstration plugin (Dev/SDLC), and
-enough scaffolding for a stranger to clone, run, and reach a useful
-session without reading source.
+loam shipped v0.1.0 as the first public release on 2026-04-29; the
+current public release is v0.8.0. The project remains intentionally
+narrow: infrastructure components, one demonstration plugin (Dev/SDLC),
+and enough scaffolding for a stranger to clone, run, and reach a useful
+session without reading source. See `docs/STATE.md` and
+`docs/release-roadmap.md` for the per-version detail.
 
 The maintainer is one person on a personal GitHub account
 (`lukeivers/loam`). Bus factor is honestly one. If loam helps you,

@@ -1,0 +1,63 @@
+# v0.7.1 PATCH — v1.0-readiness cleanup
+
+2026-05-10. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST. v0.7.1 closes the defect set surfaced by the v1.0-
+readiness audit at workspace/.scratch/claude-output/v1-0-readiness-
+verification-2026-05-10.md.
+
+Defect-closure shape (no new outcome capability). Aggregate effect:
+a stranger with a fresh git clone lukeivers/loam can run the
+documented quickstart, hit every documented `loam <verb> --help`
+cleanly, follow the documented amendment workflow without surprise,
+and read the docs without encountering contradictory or stale
+claims. v0.7.1 closes the gap between "documented" and
+"operational" in v0.7.0's shipped surface.
+
+AC.READY.1 — RED-1 fix. System /opt/homebrew/bin/loam reinstalled
+correctly. Every dependent loam package now editable-installed
+against /Users/lukeivers/loam/ rather than the deleted
+ivers-corp-pos-v2/ tree.
+
+AC.READY.2 — RED-2 fix. install-from-source.txt extended with four
+missing -e entries: loam-amend, loam-pr-safety, loam-mode (all
+under plugins/dev-sdlc/) and per-project-pm (Tier B framework
+component). Cold-venv probe verifies all four register correctly.
+
+AC.READY.3 — RED-3 fix. STATE.md + release-roadmap.md updated.
+v0.6.0 + v0.7.0 marked SHIPPED PUBLIC with seal+tag SHAs (tag
+81443ef for v0.6.0, tag 03060ef for v0.7.0; both pushed to origin
+2026-05-09). Stale "awaiting publish" claims removed.
+
+AC.READY.4 — YELLOW-1 fix. docs/architecture.md:270 "all 15
+components" → "all 18 components". Source-of-truth (docs/components/
+index.md table) confirmed at 18 rows; README + architecture +
+components/index.md now agree.
+
+AC.READY.5 — YELLOW-2 audit over-stated. docs/components/memory.md
+grepped at plan-time + verified clean of Graphiti residue. No edit
+required. Verdict recorded as GREEN per F2 surface-honestly
+discipline.
+
+AC.READY.6 — YELLOW-3 fix. loam pr-safety added to docs/components/
+index.md (component listing). Cites the package's pyproject.toml
+description as the doc-of-record.
+
+AC.READY.7 — YELLOW-4 fix. docs/release-process.md §1 (pre-publish
+gates table) gains system-binary-operational gate. Structural CLI
+implementation deferred to v0.8.0+ (captured in FUTURE_IDEAS_DRAFT).
+The v0.7.1 HARD-smoke writeup verifies the gate manually.
+
+AC.READY.8 — Outcome-altitude probe. Cold-clone +
+cold-venv + iterate every documented loam <verb> --help. Probe
+writeup at docs/experiments/v0-7-1-hard-smoke.md.
+
+AC.READY.9 — Public-surface manifest. docs/public-surface-
+manifest.md lists CLI verbs, plugin entry-point groups, manifest
+fields, on-disk conventions, hook contracts — what v1.0 commits to
+preserving for 6 months minimum, and what's explicitly NOT
+covered. Closes the v1.0-readiness audit §3 forward-commitment-
+realism gap.
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; install-from-source +
+docs edits TBD-AT-COMMIT; HARD-smoke writeup + experiments TBD-AT-
+COMMIT; pre-apply admin TBD-AT-COMMIT.

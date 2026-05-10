@@ -267,7 +267,7 @@ To set expectations:
 ## Where to go next
 
 - [`components/index.md`](components/index.md) — one-line
-  summaries of all 15 components in a single table.
+  summaries of all 18 components in a single table.
 - [`components/<name>.md`](components/) — per-component reference,
   one page per component.
 - [`plugins/dev-sdlc.md`](plugins/dev-sdlc.md) — the reference

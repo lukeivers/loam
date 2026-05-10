@@ -1,0 +1,97 @@
+schema_version: 3
+amendment:
+  slug: v0-7-2-release-cli-parser-fix
+  title: "v0.7.2 PATCH — release-CLI acs-verified gate parser-scoping fix. Defect-closure for v0.6.0's check_acs_verified function: scopes the AC-ID scan to the plan-doc §4 — Acceptance criteria section so cross-reference AC IDs in §6 (out-of-scope) and §8 (dependencies) are no longer flagged as missing-from-§status. Restores AC-ID precision in v0.7.1 plan-doc by reverting two prose-form workarounds (AC.NTU.6 and AC.V060.7 cross-references). New test pair covers the scoped scan; outcome-altitude probe runs `loam release v0.7.2 --dry-run` against this very plan-doc."
+
+# BASELINE captured at apply time.
+baseline: TBD-AT-APPLY
+
+plan: docs/plans/v0-7-2-release-cli-parser-fix.md
+plan_doc_ref: docs/plans/v0-7-2-release-cli-parser-fix.md
+
+ac_count: 5
+smoke_outcome: "v0.7.2 PATCH; AC.READYP.{1-4,S} GREEN; parser scopes to §4; v0.7.1 cross-refs restored; outcome-altitude probe `loam release v0.7.2 --dry-run` returns acs-verified GREEN naming 5 ACs."
+
+# Single-component fence (framework/tools/loam) plus universal-admission docs.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+    - framework/tools/loam/
+  files:
+    - CLAUDE.md
+    - install-from-source.txt
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/components/memory.md
+    - docs/public-surface-manifest.md
+    - README.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-7-2-release-cli-parser-fix
+  body: |
+    # v0.7.2 PATCH — release-CLI acs-verified gate parser-scoping fix
+
+    2026-05-10. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST. v0.7.2 closes the cross-reference-AC-ID parser-scoping
+    defect surfaced at v0.7.1 publish-time and captured at
+    docs/FUTURE_IDEAS_DRAFT.md line 232.
+
+    Defect-closure shape (no new outcome capability). The
+    `check_acs_verified` gate in framework/tools/loam/src/loam_cli/
+    release/gates.py previously scanned the entire plan-doc body for
+    AC.<scope>.<n> tokens and asserted each was GREEN-marked in
+    §status. The scan was too greedy: cross-reference AC IDs in §6
+    (out-of-scope explanations) and §8 (predecessor dependencies)
+    were treated as in-scope ACs requiring §status verdicts. v0.7.1
+    publish hit this twice (AC.NTU.6 in §6, AC.V060.7 in §8) and was
+    worked around by rewriting the cross-references as prose, losing
+    AC-ID precision.
+
+    AC.READYP.1 — Parser scope-restriction. check_acs_verified now
+    parses the plan-doc body for the `## §4 — Acceptance criteria`
+    heading, extracts the slice between that heading and the next
+    `## §<n>` boundary, then runs the AC-ID regex against that slice
+    only. Heading-recognition is permissive across the three observed
+    forms (em-dash, hyphen, no-separator). Absent §4 returns RED with
+    a corrective hint (no fall-back to whole-doc scan).
+
+    AC.READYP.2 — Restored AC-ID precision in v0.7.1 plan-doc. Two
+    cross-reference rewrites reverted to AC-ID form: §6 line restores
+    `AC.NTU.6 deeper F-DESIGN finding`; §8 line restores
+    `per AC.V060.7 dogfood`.
+
+    AC.READYP.3 — Test pair extended. New positive test asserts the
+    fixed parser ignores cross-reference AC IDs in §6/§8 when §4 ACs
+    are GREEN-marked in §status; new negative test asserts the parser
+    still RED-flags missing §4-declared ACs by name. Existing
+    test_AC_V060_2_* tests continue to pass.
+
+    AC.READYP.4 — Outcome-altitude probe. `loam release v0.7.2
+    --dry-run` runs against this very plan-doc and the acs-verified
+    gate returns GREEN naming the 5 in-scope ACs (AC.READYP.{1-4,S}).
+    Probe documented in docs/experiments/v0-7-2-hard-smoke.md.
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit (parser +
+    tests) TBD-AT-COMMIT; v0.7.1 plan-doc cross-reference revert TBD-
+    AT-COMMIT; HARD smoke + experiments TBD-AT-COMMIT; pre-apply
+    admin TBD-AT-COMMIT.

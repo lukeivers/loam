@@ -251,7 +251,7 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 **Build cycle:** SHIPPED LOCAL 2026-05-10 — owner pre-ratified scope (Telegram 10706). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** plan-doc + manifest `4c5f442`; source-edit batch (walker fix + 3 tests + AC.NFCLEAN.1 leading-title sweep + count-line correction + smoke writeup + FIDRAFT entries + STATE/roadmap admin + plan §13 backfill) `15b2918`; manifest baseline + apply auto-commit (BASELINE + sidecar bump) TBD-AT-APPLY; seal commit (deterministic seal) TBD-AT-SEAL.
+**Plan-doc commits:** plan-doc + manifest `4c5f442`; source-edit batch (walker fix + 3 tests + AC.NFCLEAN.1 leading-title sweep + count-line correction + smoke writeup + FIDRAFT entries + STATE/roadmap admin + plan §13 backfill) `15b2918`; manifest baseline trim + §13 backfill `1e9b6bf` + `ecd4db7`; apply auto-commit (BASELINE + sidecar bump to `15b2918`) `b26fc9b`; seal commit (deterministic seal) `9411061`.
 
 ### AC verdict matrix
 
@@ -294,8 +294,10 @@ The plan-doc's §5 names the build-time decisions (D-NFCLEAN.1.a sweep mechanism
 
 - Plan-doc + manifest authoring: `4c5f442`
 - Source-edit batch (walker fix + 3 tests + AC.NFCLEAN.1 sweep + count-line correction + smoke writeup + FIDRAFT entries + STATE/roadmap admin + plan §13 initial backfill): `15b2918`
-- Manifest baseline + apply auto-commit (BASELINE + sidecar bump): TBD-AT-APPLY
-- Seal commit (deterministic seal): TBD-AT-SEAL
+- Plan-doc §13 + manifest baseline backfill: `1e9b6bf`
+- Manifest smoke_outcome trim (200-char schema fit): `ecd4db7`
+- Apply auto-commit (BASELINE + sidecar bump to `15b2918`): `b26fc9b`
+- Seal commit (deterministic seal): `9411061`
 
 ### Build-time decision deviations
 

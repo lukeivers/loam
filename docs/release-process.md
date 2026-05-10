@@ -70,6 +70,7 @@ After a successful `loam release` invocation:
 
 - The version tag is live on `origin/main` — third-party consumers can pin against it.
 - `git ls-remote --tags origin` shows the new tag.
+- **Post-publish state-sync auto-backfill (v0.7.3+).** Between the tag-push and the post-ship review block, the runner invokes `apply_backfill` from `loam_cli.release.post_publish_backfill` to flip the version's `**vX.Y.Z ... SHIPPED LOCAL**` rows in `docs/STATE.md` and `docs/release-roadmap.md` to the `**SHIPPED PUBLIC YYYY-MM-DD at tag \`vX.Y.Z\` (annotated \`<SHA7>\`)**` shape, update the `**Total shipped:** N minor + M patches. v<latest> published.` aggregate-count summary line, and append a new bold entry to §3 Active version. The backfill commits as `docs(release): vX.Y.Z post-publish backfill — SHIPPED PUBLIC` and pushes to `origin main`. Idempotent: re-running on already-current state is a clean no-op (no commit, no push). Closes the recurring manual-backfill defect that bit at every loam publish v0.6.0 → v0.7.2.
 - The post-ship review block surfaced a "Next-scope proposal" — the operator ratifies (or revises) the next scope BEFORE the next cycle's first commit. **Pre-1.0 always returns PATCH or MINOR per `release-versioning-policy.md` §1.0.0.** The v1.0 quality-bar event is a separate ratification, not a post-publish-trigger event.
 
 **Things to check next:**

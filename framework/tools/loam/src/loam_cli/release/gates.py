@@ -226,17 +226,31 @@ def check_acs_verified(repo_root: Path, version: str) -> GateResult:
                 f"there; re-run."
             ),
         )
-    # Find every named AC id in §4 (`AC.V060.1`, `AC.V050.S`, ...).
-    ac_ids = sorted(set(re.findall(r"AC\.[A-Z][A-Z0-9_-]*\.[A-Za-z0-9_-]+", section_4)))
+    # Per AC.READYP.1 (v0.7.2): in-scope ACs are those declared as
+    # `### AC.<...>` headings (the canonical ODD shape — verified at
+    # 519 instances across the plan-doc corpus). AC IDs appearing only
+    # in §4 *prose* (e.g., AC.READYP.2's description naming the
+    # AC.NTU.6 + AC.V060.7 cross-references it reverts) are NOT
+    # in-scope; only heading-form declarations are.
+    #
+    # Heading shapes accepted (verified across the corpus):
+    #   - `### AC.<scope>.<id>` (canonical; 519 instances)
+    #   - `#### AC.<scope>.<id>` (sub-heading; v0.2.3 + ABC family)
+    #   - `## AC.<scope>.<id>` (rare; allowed for completeness)
+    ac_id_re = re.compile(
+        r"^#{2,4}\s+(AC\.[A-Z][A-Z0-9_-]*\.[A-Za-z0-9_-]+)\b",
+        re.MULTILINE,
+    )
+    ac_ids = sorted(set(ac_id_re.findall(section_4)))
     if not ac_ids:
         return GateResult(
             name="acs-verified",
             ok=False,
             message=(
                 f"plan-doc at {plan_doc.relative_to(repo_root)} declares no "
-                f"AC IDs in §4. Verify the doc is the right shape (§4 "
-                f"Acceptance criteria block per ODD §2.5; AC IDs of the "
-                f"form `AC.<scope>.<n>`)."
+                f"AC IDs in §4 (looked for `### AC.<scope>.<n>` heading "
+                f"declarations). Verify the doc is the right shape (§4 "
+                f"Acceptance criteria block per ODD §2.5)."
             ),
         )
     # Locate the §status / §13 section (the post-build backfill block).

@@ -16,17 +16,21 @@
 $ /opt/homebrew/bin/loam release v0.7.2 --dry-run
 ```
 
-The full report is captured below. The `acs-verified` gate's verdict is the load-bearing line for AC.READYP.4:
+**First probe RED + in-cycle refinement.** First run flagged 2 false-positives: `AC.NTU.S` (illustrative cross-ref in §4 line 83 prose for AC.READYP.1) + `AC.READYP.X` (illustrative example AC IDs in §4 line 101 prose for AC.READYP.3). Refinement: scope tightened from "all AC IDs in §4 body" to "AC IDs declared as `### AC.<...>` headings within §4" — matches the canonical ODD shape (519 `### AC.` declarations across the corpus). Probe re-run after refinement returned GREEN.
+
+**Second probe verdict (GREEN):** the load-bearing `acs-verified` line:
 
 ```
   [GREEN] acs-verified: all 5 AC(s) marked GREEN in docs/plans/v0-7-2-release-cli-parser-fix.md §status
 ```
 
-The `5 AC(s)` count matches the §4-declared in-scope ACs (`AC.READYP.1`, `AC.READYP.2`, `AC.READYP.3`, `AC.READYP.4`, `AC.READYP.S`). No cross-reference AC IDs from §6 (none in v0.7.2's §6 — all `AC.READYP.*`-shaped), §8 (`AC.V060.7` cross-reference + `AC.NTU.6` cross-reference NOT present in v0.7.2 §8 — only `feedback_*` cross-references), §11 (authority chain naming `AC.READYP.*`), or §13 (§status backfill naming the same 5 ACs) are flagged.
+The `5 AC(s)` count matches the §4 heading-declared in-scope ACs (`AC.READYP.1`, `AC.READYP.2`, `AC.READYP.3`, `AC.READYP.4`, `AC.READYP.S`). No cross-reference AC IDs from §6 (`AC.READY.7` + `AC.READY.9` mentioned in the structural-enforcement out-of-scope), §8 (`feedback_*` references only), §11 (authority chain naming `AC.V060.*`), or §13 (§status backfill naming the same 5 ACs + cross-ref evidence) are flagged. Importantly: in-§4-prose mentions of `AC.NTU.6` + `AC.V060.7` (in AC.READYP.2's description of the v0.7.1 cross-reference reverts) are also NOT flagged under the heading-form-only invariant.
 
-### Verification — cross-reference scoping holds
+### Verification — cross-reference + prose scoping both hold
 
-The v0.7.2 plan-doc's §6 names `AC.READY.7` and `AC.READY.9` (cross-references to v0.7.1's ACs in the structural-enforcement out-of-scope statement) — these are NOT flagged. The v0.7.2 plan-doc's §11 names ACs from prior versions (`AC.V060.*`) as authority-chain references — these are NOT flagged. Confirms AC.READYP.1's section-scoping behavior under the actual canonical plan-doc shape.
+The v0.7.2 plan-doc's §6 names `AC.READY.7` and `AC.READY.9` (cross-references to v0.7.1's ACs in the structural-enforcement out-of-scope statement) — these are NOT flagged (out of §4). The v0.7.2 plan-doc's §11 names ACs from prior versions (`AC.V060.*`) as authority-chain references — these are NOT flagged (out of §4). The v0.7.2 plan-doc's §4 AC.READYP.2 description names `AC.NTU.6` + `AC.V060.7` in prose — these are NOT flagged (in §4 but not as `### AC.<...>` headings). Confirms AC.READYP.1's section + heading-form scoping behavior under the actual canonical plan-doc shape.
+
+Cross-validation: v0.7.1 plan-doc under the fixed parser (`loam release v0.7.1 --dry-run`) reports `[GREEN] acs-verified: all 10 AC(s) marked GREEN in docs/plans/v0-7-1-v1-0-readiness-cleanup.md §status` — exactly the AC.READY.{1-9,S} heading-declared ACs; restored cross-references AC.NTU.6 + AC.V060.7 (now back in v0.7.1's §6 + §8 per AC.READYP.2) are correctly ignored.
 
 ### Other gate verdicts at probe-time
 

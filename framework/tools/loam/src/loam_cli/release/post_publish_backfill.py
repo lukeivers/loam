@@ -1,4 +1,4 @@
-"""Post-publish state backfill (AC.BACKFL.{1,2,3,4}).
+"""Post-publish state backfill (AC.BACKFL.{1,2,3,4} + AC.BACKFL2.{1,2,3,4}).
 
 After ``loam release`` pushes branch + tag, the version's rows in
 ``docs/STATE.md`` and ``docs/release-roadmap.md`` need to flip from
@@ -6,20 +6,35 @@ After ``loam release`` pushes branch + tag, the version's rows in
 (annotated <SHA>)" so downstream agents reading STATE.md see ground
 truth instead of a stale-claim. Prior to v0.7.3 this was a manual
 backfill commit per publish (recurring miss at v0.6.0 / v0.7.0 /
-v0.7.1 / v0.7.2). v0.7.3 closes the defect by wiring this module
-into :mod:`loam_cli.release.runner` between the tag-push step and
-the post-ship review step.
+v0.7.1 / v0.7.2). v0.7.3 closes the obvious surface by wiring this
+module into :mod:`loam_cli.release.runner` between the tag-push step
+and the post-ship review step.
+
+v0.7.4 closes the 4 residual gaps surfaced by v0.7.3's own publish
+dogfood (commit ``88964cb``): the leading bolded title in STATE.md
+(``**vX.Y.Z PATCH SHIPPED LOCAL**``) was never flipped to
+``**...SHIPPED PUBLIC**``; STATE.md ``seal TBD-AT-SEAL`` was left
+untouched (only the roadmap row got the TBD-AT-* backfill);
+``TBD-AT-COMMIT`` and ``TBD-AT-APPLY`` were left manual because
+v0.7.3 D-BACKFL.1.b deferred them as not-discoverable-from-runner-
+inputs. v0.7.4 adds a leading-title flip, mirrors the TBD-AT-*
+backfill to STATE.md, and discovers source-edit + apply SHAs by
+walking the commit graph from the seal commit (path-B per
+AC.BACKFL2.3 ruling).
 
 Public callable: :func:`apply_backfill`. Returns a
 :class:`BackfillResult` carrying the edits-applied count + the
 files-touched list + the idempotent-noop flag (True when the rows
-already carry the SHIPPED-PUBLIC marker for this version).
+already carry the SHIPPED-PUBLIC marker for this version + no
+residual TBD-AT-* placeholders + no residual SHIPPED-LOCAL
+title).
 """
 
 from __future__ import annotations
 
 import datetime as _dt
 import re
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -123,6 +138,214 @@ def _backfill_state_md(
 
 
 # --------------------------------------------------------------------
+# v0.7.4 — STATE.md leading-title flip (AC.BACKFL2.1).
+# --------------------------------------------------------------------
+
+
+def _leading_title_pattern(version: str) -> re.Pattern[str]:
+    """Match the bolded leading title in a STATE.md row:
+    ``**<version> <CLASS> SHIPPED LOCAL**`` where ``<CLASS>`` is
+    ``MINOR`` / ``PATCH`` / ``minor`` / ``patch`` (case-insensitive
+    — historical rows use both casings; v0.7.3 uses ``PATCH``,
+    v0.5.0 uses ``minor``).
+
+    Per D-BACKFL2.1.a — the regex captures ``<CLASS>`` so the
+    replacement preserves casing.
+    """
+    return re.compile(
+        r"\*\*"
+        + re.escape(version)
+        + r"\s+(MINOR|PATCH|minor|patch)\s+SHIPPED LOCAL\*\*"
+    )
+
+
+def _state_md_title_already_public(body: str, version: str) -> bool:
+    """True iff the STATE.md leading title is already
+    ``**<version> <CLASS> SHIPPED PUBLIC**``.
+    """
+    pattern = re.compile(
+        r"\*\*"
+        + re.escape(version)
+        + r"\s+(MINOR|PATCH|minor|patch)\s+SHIPPED PUBLIC\*\*"
+    )
+    return pattern.search(body) is not None
+
+
+def _backfill_state_md_leading_title(
+    body: str, version: str
+) -> tuple[str, str | None]:
+    """Flip the bolded leading title
+    ``**<version> <CLASS> SHIPPED LOCAL**`` →
+    ``**<version> <CLASS> SHIPPED PUBLIC**`` in STATE.md.
+
+    Per AC.BACKFL2.1 — the eye-grabbing title-claim that v0.7.3's
+    auto-backfill missed. Idempotent: re-run on already-flipped
+    title is a no-op.
+    """
+    if _state_md_title_already_public(body, version):
+        return body, None
+    pattern = _leading_title_pattern(version)
+    match = pattern.search(body)
+    if match is None:
+        return body, None
+    cls = match.group(1)
+    old_title = match.group(0)
+    new_title = f"**{version} {cls} SHIPPED PUBLIC**"
+    new_body = body[: match.start()] + new_title + body[match.end():]
+    edit_summary = (
+        f"STATE.md leading title: {old_title!r} → {new_title!r}"
+    )
+    return new_body, edit_summary
+
+
+# --------------------------------------------------------------------
+# v0.7.4 — STATE.md TBD-AT-* placeholder backfill (AC.BACKFL2.2).
+# --------------------------------------------------------------------
+
+
+def _state_md_row_pattern(version: str) -> re.Pattern[str]:
+    """Match the STATE.md bullet line carrying *version*'s row.
+
+    The canonical shape is ``- **<date>** — **<version> <CLASS>
+    SHIPPED LOCAL** — <prose>...`` (single line, terminated by
+    newline). Captures the entire bullet so the caller can splice
+    edits inline.
+
+    Multiple rows for the same version are unusual but defensible
+    — when present, this picks the FIRST match (the most-recently
+    written row appears later in the file, so callers iterating
+    are encouraged to call once + verify via re-search).
+    """
+    return re.compile(
+        r"^-\s+\*\*[^*]+\*\*\s+—\s+\*\*"
+        + re.escape(version)
+        + r"\b[^\n]*$",
+        re.MULTILINE,
+    )
+
+
+def _backfill_state_md_placeholders(
+    body: str,
+    version: str,
+    tag: str,
+    tag_sha: str,
+    seal_sha: str | None,
+    *,
+    source_edit_sha: str | None = None,
+    apply_sha: str | None = None,
+) -> tuple[str, str | None]:
+    """Apply TBD-AT-{TAG,SEAL,COMMIT,APPLY} backfill to the STATE.md
+    row body for *version*.
+
+    Per AC.BACKFL2.2 — mirror of the v0.7.3 roadmap-row TBD-AT-*
+    backfill. Reuses :func:`_backfill_tbd_placeholders` so the
+    replacement form (backtick-wrapped 7-char SHA) is identical
+    across both files.
+
+    Returns ``(new_body, edit_summary)``; edit_summary is None when
+    no placeholders were present (already-current state).
+    """
+    pattern = _state_md_row_pattern(version)
+    match = pattern.search(body)
+    if match is None:
+        return body, None
+    row = match.group(0)
+    new_row, backfilled = _backfill_tbd_placeholders(
+        row,
+        tag,
+        tag_sha,
+        seal_sha,
+        source_edit_sha=source_edit_sha,
+        apply_sha=apply_sha,
+    )
+    if not backfilled:
+        return body, None
+    new_body = body[: match.start()] + new_row + body[match.end():]
+    edit_summary = (
+        f"STATE.md row placeholders: backfilled "
+        f"{', '.join(backfilled)}"
+    )
+    return new_body, edit_summary
+
+
+# --------------------------------------------------------------------
+# v0.7.4 — commit-graph walk for source-edit + apply SHA discovery
+# (AC.BACKFL2.3 path-B).
+# --------------------------------------------------------------------
+
+
+_SEAL_MESSAGE_PATTERN = re.compile(
+    r"chore\(seals\):\s+\S+\s+—\s+\S+\s+at\s+([0-9a-f]+)"
+)
+_APPLY_MESSAGE_PATTERN = re.compile(
+    r"chore\(amend\):\s+\S+\s+manifest\+apply\s+—\s+.+?"
+    r"BASELINE\+sidecar\s+bump\s+to\s+([0-9a-f]+)",
+    re.DOTALL,
+)
+
+
+def _git_log_message(
+    repo_root: Path, sha: str
+) -> str | None:
+    """Return the commit message body for *sha*, or None if the
+    git invocation fails (commit not found, git binary missing,
+    bad SHA, etc.). Defensive — never raises.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "log", "-1", "--pretty=%B", sha],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except (FileNotFoundError, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
+
+
+def _discover_source_edit_and_apply_shas(
+    repo_root: Path, seal_sha: str | None
+) -> tuple[str | None, str | None]:
+    """Walk the commit graph from *seal_sha* to find the apply
+    commit + the source-edit commit.
+
+    The canonical message forms (verified across 10+ historical
+    cycles at HEAD `88964cb` 2026-05-10):
+
+    - Seal commit: ``chore(seals): <slug> — <component-list> at
+      <apply-sha>``
+    - Apply commit: ``chore(amend): <slug> manifest+apply —
+      <component-list> BASELINE+sidecar bump to <source-edit-sha>``
+
+    Returns ``(source_edit_sha, apply_sha)`` or ``(None, None)``
+    when *seal_sha* is None / git fails / the canonical message
+    form isn't present. Per D-BACKFL2.3.b — discovery is opt-in;
+    failure surfaces via hints + the caller's TBD-AT-COMMIT /
+    TBD-AT-APPLY backfill is skipped (graceful degradation).
+    """
+    if not seal_sha:
+        return None, None
+    seal_msg = _git_log_message(repo_root, seal_sha)
+    if seal_msg is None:
+        return None, None
+    seal_match = _SEAL_MESSAGE_PATTERN.search(seal_msg)
+    if seal_match is None:
+        return None, None
+    apply_sha = seal_match.group(1)
+    apply_msg = _git_log_message(repo_root, apply_sha)
+    if apply_msg is None:
+        return None, apply_sha
+    apply_match = _APPLY_MESSAGE_PATTERN.search(apply_msg)
+    if apply_match is None:
+        return None, apply_sha
+    source_edit_sha = apply_match.group(1)
+    return source_edit_sha, apply_sha
+
+
+# --------------------------------------------------------------------
 # release-roadmap.md §2 row marker append + TBD-AT-* backfill
 # (AC.BACKFL.1 part 2).
 # --------------------------------------------------------------------
@@ -162,14 +385,30 @@ def _format_row_marker_suffix(
 
 
 def _backfill_tbd_placeholders(
-    row: str, tag: str, tag_sha: str, seal_sha: str | None
+    row: str,
+    tag: str,
+    tag_sha: str,
+    seal_sha: str | None,
+    *,
+    source_edit_sha: str | None = None,
+    apply_sha: str | None = None,
 ) -> tuple[str, list[str]]:
-    """Replace TBD-AT-TAG / TBD-AT-SEAL in *row* with known SHAs.
+    """Replace TBD-AT-{TAG,SEAL,COMMIT,APPLY} placeholders in *row*
+    with known / discovered SHAs.
 
-    Per D-BACKFL.1.b: TBD-AT-COMMIT / TBD-AT-APPLY are NOT
-    discoverable from runner inputs and are left alone (operator
-    surface). Returns the (possibly-modified) row + a list of the
-    placeholders backfilled (for the human-readable hint).
+    v0.7.3 (D-BACKFL.1.b): TBD-AT-COMMIT / TBD-AT-APPLY are NOT
+    discoverable from runner inputs and were left alone. v0.7.4
+    (AC.BACKFL2.3 path-B) adds opt-in *source_edit_sha* + *apply_sha*
+    keyword args; the caller obtains them via
+    :func:`_discover_source_edit_and_apply_shas` walking the seal
+    commit's git log message. When the keyword args are None
+    (discovery failed or not attempted), the v0.7.3 graceful-
+    degradation behavior is preserved: the COMMIT / APPLY
+    placeholders are left alone + the operator backfills them
+    manually.
+
+    Returns the (possibly-modified) row + a list of the placeholders
+    backfilled (for the human-readable hint).
     """
     backfilled: list[str] = []
     new_row = row
@@ -179,6 +418,14 @@ def _backfill_tbd_placeholders(
     if tag_sha and "TBD-AT-TAG" in new_row:
         new_row = new_row.replace("TBD-AT-TAG", f"`{tag_sha[:7]}`")
         backfilled.append("TBD-AT-TAG")
+    if source_edit_sha and "TBD-AT-COMMIT" in new_row:
+        new_row = new_row.replace(
+            "TBD-AT-COMMIT", f"`{source_edit_sha[:7]}`"
+        )
+        backfilled.append("TBD-AT-COMMIT")
+    if apply_sha and "TBD-AT-APPLY" in new_row:
+        new_row = new_row.replace("TBD-AT-APPLY", f"`{apply_sha[:7]}`")
+        backfilled.append("TBD-AT-APPLY")
     return new_row, backfilled
 
 
@@ -189,9 +436,17 @@ def _backfill_roadmap_row(
     tag: str,
     tag_sha: str,
     seal_sha: str | None,
+    *,
+    source_edit_sha: str | None = None,
+    apply_sha: str | None = None,
 ) -> tuple[str, str | None]:
     """Apply the SHIPPED-PUBLIC marker append + TBD-AT-* SHA backfill
     to the §2 row for *version*. Returns ``(new_body, edit_summary)``.
+
+    v0.7.4 (AC.BACKFL2.3): *source_edit_sha* + *apply_sha* are
+    discovered SHAs threaded through to
+    :func:`_backfill_tbd_placeholders` so TBD-AT-COMMIT / TBD-AT-APPLY
+    can be backfilled without manual operator touch-up.
     """
     pattern = _section_2_row_pattern(version)
     match = pattern.search(body)
@@ -203,7 +458,12 @@ def _backfill_roadmap_row(
     # TBD-AT-* placeholder backfill first (so the SHIPPED-PUBLIC marker
     # appends to a clean row).
     new_row, backfilled = _backfill_tbd_placeholders(
-        new_row, tag, tag_sha, seal_sha
+        new_row,
+        tag,
+        tag_sha,
+        seal_sha,
+        source_edit_sha=source_edit_sha,
+        apply_sha=apply_sha,
     )
     if backfilled:
         edits.append(f"backfilled placeholders: {', '.join(backfilled)}")
@@ -468,17 +728,46 @@ def apply_backfill(
     hints: list[str] = []
     edits = 0
 
-    # STATE.md edit.
+    # v0.7.4 (AC.BACKFL2.3): discover source-edit + apply SHAs by
+    # walking the commit graph from the seal commit. We need the
+    # roadmap body to extract the seal SHA when not passed in;
+    # read it eagerly so the discovery can run before either file's
+    # edits land.
+    discovery_seal_sha = seal_sha
+    if discovery_seal_sha is None and roadmap_path.exists():
+        roadmap_preview = roadmap_path.read_text(encoding="utf-8")
+        discovery_seal_sha = gates._extract_seal_sha(
+            roadmap_preview, version
+        )
+    source_edit_sha, apply_sha = _discover_source_edit_and_apply_shas(
+        repo_root, discovery_seal_sha
+    )
+    if discovery_seal_sha is not None and (
+        source_edit_sha is None or apply_sha is None
+    ):
+        hints.append(
+            f"commit-graph walk from seal {discovery_seal_sha[:7]}: "
+            f"discovered apply={apply_sha[:7] if apply_sha else 'NONE'}, "
+            f"source_edit={source_edit_sha[:7] if source_edit_sha else 'NONE'}; "
+            f"missing TBD-AT-* placeholders left alone (AC.BACKFL2.3 "
+            f"graceful-degradation per D-BACKFL2.3.b)"
+        )
+
+    # STATE.md edits — three orthogonal: trailing-sentence flip
+    # (v0.7.3 AC.BACKFL.1), leading-title flip (v0.7.4 AC.BACKFL2.1),
+    # row TBD-AT-* placeholders (v0.7.4 AC.BACKFL2.2 + .3).
     state_md_edit: str | None = None
     if state_md_path.exists():
         body = state_md_path.read_text(encoding="utf-8")
-        new_body, edit = _backfill_state_md(body, version, today, tag, tag_sha)
-        if edit is not None:
-            state_md_edit = edit
+        edit_summaries: list[str] = []
+        # Trailing-sentence flip (v0.7.3).
+        new_body, trailing_edit = _backfill_state_md(
+            body, version, today, tag, tag_sha
+        )
+        if trailing_edit is not None:
+            edit_summaries.append(trailing_edit)
+            body = new_body
             edits += 1
-            if not dry_run:
-                state_md_path.write_text(new_body, encoding="utf-8")
-                files_touched.append(state_md_path)
         else:
             if _already_public_in_state_md(body, version):
                 hints.append(
@@ -492,6 +781,34 @@ def apply_backfill(
                     f"'{version} SHIPPED LOCAL — owner gates publish.'); "
                     f"manual edit may be needed."
                 )
+        # Leading-title flip (v0.7.4 AC.BACKFL2.1).
+        new_body, title_edit = _backfill_state_md_leading_title(
+            body, version
+        )
+        if title_edit is not None:
+            edit_summaries.append(title_edit)
+            body = new_body
+            edits += 1
+        # Row TBD-AT-* placeholders (v0.7.4 AC.BACKFL2.2 + .3).
+        new_body, placeholder_edit = _backfill_state_md_placeholders(
+            body,
+            version,
+            tag,
+            tag_sha,
+            seal_sha if seal_sha is not None else discovery_seal_sha,
+            source_edit_sha=source_edit_sha,
+            apply_sha=apply_sha,
+        )
+        if placeholder_edit is not None:
+            edit_summaries.append(placeholder_edit)
+            body = new_body
+            edits += 1
+        # Write + aggregate summary if any edits landed.
+        if edit_summaries:
+            state_md_edit = "; ".join(edit_summaries)
+            if not dry_run:
+                state_md_path.write_text(body, encoding="utf-8")
+                files_touched.append(state_md_path)
     else:
         hints.append(f"STATE.md not found at {state_md_path}")
 
@@ -509,9 +826,17 @@ def apply_backfill(
                 f"§3 entry's seal-cite will read '?' (TBD-AT-SEAL backfill "
                 f"also skipped)"
             )
-        # Row marker append + TBD-AT-* backfill.
+        # Row marker append + TBD-AT-* backfill (v0.7.4: extended to
+        # cover TBD-AT-COMMIT + TBD-AT-APPLY via discovered SHAs).
         new_body, re_edit = _backfill_roadmap_row(
-            body, version, today, tag, tag_sha, seal_sha
+            body,
+            version,
+            today,
+            tag,
+            tag_sha,
+            seal_sha,
+            source_edit_sha=source_edit_sha,
+            apply_sha=apply_sha,
         )
         if re_edit is not None:
             roadmap_edit = re_edit

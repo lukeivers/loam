@@ -32,10 +32,30 @@ from loam_cli.release import post_publish_backfill, runner
 # --------------------------------------------------------------------
 
 
-def _state_md_with_shipped_local(version: str = "v0.9.0") -> str:
+def _state_md_with_shipped_local(
+    version: str = "v0.9.0",
+    *,
+    with_v074_gap_surfaces: bool = False,
+) -> str:
     """STATE.md body with the canonical SHIPPED-LOCAL trailing claim
     for *version* (matches the f0ae00c pre-image shape).
+
+    When *with_v074_gap_surfaces* is True, the row body carries the
+    canonical pre-publish v0.7.4 placeholders ``TBD-AT-COMMIT`` /
+    ``TBD-AT-APPLY`` / ``TBD-AT-SEAL`` rather than hand-authored
+    bbbbbbb/ccccccc/ddddddd literal SHAs. Used by AC.BACKFL2.{2,3}
+    tests that exercise the placeholder backfill paths.
     """
+    if with_v074_gap_surfaces:
+        sha_clause = (
+            "Plan-doc `aaaaaaa`; source-edit TBD-AT-COMMIT; "
+            "apply TBD-AT-APPLY; seal TBD-AT-SEAL"
+        )
+    else:
+        sha_clause = (
+            "Plan-doc `aaaaaaa`; source-edit `bbbbbbb`; "
+            "apply `ccccccc`; seal `ddddddd`"
+        )
     return (
         "# State\n\n"
         "Some preamble prose.\n\n"
@@ -43,28 +63,52 @@ def _state_md_with_shipped_local(version: str = "v0.9.0") -> str:
         "row.\n"
         f"- **2026-05-10** — **{version} PATCH SHIPPED LOCAL** — "
         "release-CLI auto-backfill defect-closure for v0.6.0's shipped "
-        f"release-process. Plan-doc `aaaaaaa`; source-edit `bbbbbbb`; "
-        f"apply `ccccccc`; seal `ddddddd`. {version} SHIPPED LOCAL — "
+        f"release-process. {sha_clause}. {version} SHIPPED LOCAL — "
         "owner gates publish.\n"
     )
 
 
 def _state_md_already_public(version: str = "v0.9.0") -> str:
-    """STATE.md body where *version* already carries the SHIPPED-PUBLIC
-    marker (idempotence-case fixture).
+    """STATE.md body where *version* already carries the full
+    post-v0.7.4 SHIPPED-PUBLIC state (leading title flipped per
+    AC.BACKFL2.1 + trailing-sentence marker per AC.BACKFL.1 +
+    no residual TBD-AT-* placeholders per AC.BACKFL2.{2,3}).
+
+    Used as the canonical idempotence-case fixture: re-running
+    apply_backfill against this state should be a clean no-op
+    (per AC.BACKFL.4 + AC.BACKFL2.4).
     """
     return (
         "# State\n\n"
-        f"- **2026-05-10** — **{version} PATCH SHIPPED LOCAL** — work. "
+        f"- **2026-05-10** — **{version} PATCH SHIPPED PUBLIC** — work. "
         f"Seal `ddddddd`. **{version} SHIPPED PUBLIC 2026-05-10 at tag "
         f"`{version}` (annotated `eeeeeee`)**.\n"
     )
 
 
-def _roadmap_with_shipped_local_row(version: str = "v0.9.0") -> str:
+def _roadmap_with_shipped_local_row(
+    version: str = "v0.9.0",
+    *,
+    with_v074_gap_surfaces: bool = False,
+) -> str:
     """release-roadmap.md body with §2 row + §3 + summary line in
     pre-publish state for *version*.
+
+    When *with_v074_gap_surfaces* is True, the §2 row carries the
+    canonical pre-publish v0.7.4 placeholders ``TBD-AT-COMMIT`` /
+    ``TBD-AT-APPLY`` / ``TBD-AT-SEAL`` rather than literal SHAs.
     """
+    if with_v074_gap_surfaces:
+        third_cell = (
+            "Single-cycle PATCH: plan-doc `aaaaaaa`; "
+            "source-edit TBD-AT-COMMIT; apply TBD-AT-APPLY; "
+            "seal TBD-AT-SEAL"
+        )
+    else:
+        third_cell = (
+            "Single-cycle PATCH: plan-doc `aaaaaaa`; "
+            "source-edit `bbbbbbb`; apply `ccccccc`; seal `ddddddd`"
+        )
     return (
         "# Release Roadmap\n\n"
         "## §2 Shipped\n\n"
@@ -76,9 +120,7 @@ def _roadmap_with_shipped_local_row(version: str = "v0.9.0") -> str:
         "at tag `v0.8.9` (annotated `bbbbbbb`)** |\n"
         f"| {version} | Loam closes the recurring post-publish state-"
         "staleness defect via auto-backfill in the release CLI. The defect "
-        "bit at every publish since v0.6.0. | Single-cycle PATCH: plan-doc "
-        f"`aaaaaaa`; source-edit `bbbbbbb`; apply `ccccccc`; seal "
-        f"`ddddddd` |\n"
+        f"bit at every publish since v0.6.0. | {third_cell} |\n"
         "\n"
         "**Total shipped:** 18 minor + 8 patches. v0.8.9 published. "
         "Editorial prose summary unchanged.\n\n"
@@ -502,3 +544,454 @@ def test_runner_idempotent_re_run_skips_backfill_commit(
     assert out2.backfill_pushed is False
     # HEAD did not advance (no extra commit).
     assert head_before == head_after
+
+
+# --------------------------------------------------------------------
+# AC.BACKFL2.1 — leading-title flip in STATE.md.
+# --------------------------------------------------------------------
+
+
+def test_apply_backfill_flips_state_md_leading_title(
+    tmp_path: Path,
+) -> None:
+    """The bolded leading title ``**vX.Y.Z PATCH SHIPPED LOCAL**``
+    flips to ``**vX.Y.Z PATCH SHIPPED PUBLIC**`` (preserves CLASS
+    casing). v0.7.3's auto-backfill missed this surface; v0.7.4
+    closes the gap (AC.BACKFL2.1)."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "STATE.md").write_text(
+        _state_md_with_shipped_local("v0.9.0")
+    )
+    (docs / "release-roadmap.md").write_text(
+        _roadmap_with_shipped_local_row("v0.9.0")
+    )
+    today = _dt.date(2026, 5, 11)
+    post_publish_backfill.apply_backfill(
+        tmp_path,
+        "v0.9.0",
+        "v0.9.0",
+        "abc1234567890def",
+        today=today,
+    )
+    state_md = (docs / "STATE.md").read_text(encoding="utf-8")
+    # Leading title flipped (with CLASS preserved).
+    assert "**v0.9.0 PATCH SHIPPED PUBLIC**" in state_md, state_md
+    # Original SHIPPED-LOCAL leader is gone.
+    assert "**v0.9.0 PATCH SHIPPED LOCAL**" not in state_md
+
+
+def test_apply_backfill_preserves_class_casing_minor(
+    tmp_path: Path,
+) -> None:
+    """When the leading title says ``**v0.9.0 minor SHIPPED LOCAL**``
+    (lowercase CLASS — historical v0.5.0 / v0.4.3 row shape), the
+    flip preserves the ``minor`` casing."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    body = (
+        "# State\n\n"
+        "- **2026-05-10** — **v0.9.0 minor SHIPPED LOCAL** — work. "
+        "Plan-doc `aaaaaaa`. v0.9.0 SHIPPED LOCAL — owner gates publish.\n"
+    )
+    (docs / "STATE.md").write_text(body)
+    (docs / "release-roadmap.md").write_text(
+        _roadmap_with_shipped_local_row("v0.9.0")
+    )
+    today = _dt.date(2026, 5, 11)
+    post_publish_backfill.apply_backfill(
+        tmp_path,
+        "v0.9.0",
+        "v0.9.0",
+        "abc1234567890def",
+        today=today,
+    )
+    state_md = (docs / "STATE.md").read_text(encoding="utf-8")
+    assert "**v0.9.0 minor SHIPPED PUBLIC**" in state_md, state_md
+
+
+# --------------------------------------------------------------------
+# AC.BACKFL2.2 — STATE.md TBD-AT-* placeholder backfill.
+# --------------------------------------------------------------------
+
+
+def test_apply_backfill_backfills_state_md_seal_placeholder(
+    tmp_path: Path,
+) -> None:
+    """The STATE.md row's ``seal TBD-AT-SEAL`` placeholder gets
+    replaced with ``seal `<sha7>``` (mirror of v0.7.3 roadmap-row
+    behavior; AC.BACKFL2.2)."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "STATE.md").write_text(
+        _state_md_with_shipped_local(
+            "v0.9.0", with_v074_gap_surfaces=True
+        )
+    )
+    # Roadmap with seal SHA in §2 row so apply_backfill can extract
+    # it via gates._extract_seal_sha (drives the STATE.md backfill
+    # via the same seal_sha argument).
+    (docs / "release-roadmap.md").write_text(
+        _roadmap_with_shipped_local_row("v0.9.0")
+    )
+    today = _dt.date(2026, 5, 11)
+    post_publish_backfill.apply_backfill(
+        tmp_path,
+        "v0.9.0",
+        "v0.9.0",
+        "abc1234567890def",
+        seal_sha="ddddddd1234567890",
+        today=today,
+    )
+    state_md = (docs / "STATE.md").read_text(encoding="utf-8")
+    # The plain `seal TBD-AT-SEAL` text was replaced with `seal `ddddddd``.
+    assert "seal `ddddddd`" in state_md, state_md
+    assert "seal TBD-AT-SEAL" not in state_md
+
+
+# --------------------------------------------------------------------
+# AC.BACKFL2.3 — commit-graph walk discovery.
+# --------------------------------------------------------------------
+
+
+def _make_seal_apply_commit_chain(
+    repo_root: Path, slug: str
+) -> tuple[str, str, str]:
+    """Build a real git commit graph in *repo_root* with the
+    canonical seal + apply + source-edit message forms.
+
+    Returns ``(source_edit_sha, apply_sha, seal_sha)`` of the
+    constructed commits.
+    """
+    subprocess.run(
+        ["git", "init", "-q", "-b", "main", str(repo_root)],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo_root), "config", "user.name", "Test"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo_root), "config", "user.email", "t@t"],
+        check=True,
+    )
+    # Initial commit (so the chain has a parent).
+    (repo_root / "README.md").write_text("# test\n")
+    subprocess.run(
+        ["git", "-C", str(repo_root), "add", "README.md"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo_root), "commit", "-q", "-m", "init"],
+        check=True,
+    )
+    # Source-edit commit.
+    (repo_root / "src.py").write_text("x = 1\n")
+    subprocess.run(
+        ["git", "-C", str(repo_root), "add", "src.py"], check=True
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo_root), "commit", "-q",
+            "-m", f"feat({slug}): work landed",
+        ],
+        check=True,
+    )
+    source_edit_sha = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    # Apply commit (canonical message form).
+    (repo_root / "manifest.txt").write_text("baseline\n")
+    subprocess.run(
+        ["git", "-C", str(repo_root), "add", "manifest.txt"], check=True
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo_root), "commit", "-q",
+            "-m",
+            f"chore(amend): {slug} manifest+apply — dev-sdlc "
+            f"BASELINE+sidecar bump to {source_edit_sha}",
+        ],
+        check=True,
+    )
+    apply_sha = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    # Seal commit (canonical message form).
+    (repo_root / "seal.txt").write_text("seal\n")
+    subprocess.run(
+        ["git", "-C", str(repo_root), "add", "seal.txt"], check=True
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo_root), "commit", "-q",
+            "-m",
+            f"chore(seals): {slug} — dev-sdlc at {apply_sha}",
+        ],
+        check=True,
+    )
+    seal_sha = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    return source_edit_sha, apply_sha, seal_sha
+
+
+def test_discover_source_edit_and_apply_walks_canonical_message_forms(
+    tmp_path: Path,
+) -> None:
+    """Direct unit test of the discovery helper — verifies the
+    canonical seal + apply message-form regexes match the real
+    commit graph this codebase emits (AC.BACKFL2.3)."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    source_edit, apply_, seal = _make_seal_apply_commit_chain(
+        repo, "v0-9-0-test"
+    )
+    discovered_source, discovered_apply = (
+        post_publish_backfill._discover_source_edit_and_apply_shas(
+            repo, seal
+        )
+    )
+    assert discovered_source == source_edit
+    assert discovered_apply == apply_
+
+
+def test_discover_returns_none_on_non_canonical_message(
+    tmp_path: Path,
+) -> None:
+    """Discovery returns (None, None) gracefully when the seal
+    commit's message doesn't match the canonical form (defensive
+    per D-BACKFL2.3.b)."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(
+        ["git", "init", "-q", "-b", "main", str(repo)], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "Test"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "t@t"], check=True
+    )
+    (repo / "x").write_text("x")
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "x"], check=True
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo), "commit", "-q",
+            "-m", "non-canonical commit message",
+        ],
+        check=True,
+    )
+    sha = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    src, apl = (
+        post_publish_backfill._discover_source_edit_and_apply_shas(
+            repo, sha
+        )
+    )
+    assert src is None
+    assert apl is None
+
+
+def test_apply_backfill_discovers_source_edit_and_apply_from_seal_commit(
+    tmp_path: Path,
+) -> None:
+    """End-to-end: full backfill against a fixture with a real
+    commit graph + canonical TBD-AT-COMMIT / TBD-AT-APPLY
+    placeholders → discovery succeeds + placeholders backfilled
+    in BOTH STATE.md row and roadmap §2 row (AC.BACKFL2.3)."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    source_edit, apply_, seal = _make_seal_apply_commit_chain(
+        repo, "v0-9-0-test"
+    )
+    docs = repo / "docs"
+    docs.mkdir()
+    (docs / "STATE.md").write_text(
+        _state_md_with_shipped_local(
+            "v0.9.0", with_v074_gap_surfaces=True
+        )
+    )
+    (docs / "release-roadmap.md").write_text(
+        _roadmap_with_shipped_local_row(
+            "v0.9.0", with_v074_gap_surfaces=True
+        )
+    )
+    # Stage + commit so the docs land in the same repo (caller can
+    # find them via repo_root).
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "docs"], check=True
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo), "commit", "-q",
+            "-m", "stage docs for backfill test",
+        ],
+        check=True,
+    )
+    today = _dt.date(2026, 5, 11)
+    result = post_publish_backfill.apply_backfill(
+        repo,
+        "v0.9.0",
+        "v0.9.0",
+        "abc1234567890def",
+        seal_sha=seal,
+        today=today,
+    )
+    state_md = (docs / "STATE.md").read_text(encoding="utf-8")
+    roadmap = (docs / "release-roadmap.md").read_text(encoding="utf-8")
+    # All four discoverable placeholders backfilled in both files.
+    assert "TBD-AT-COMMIT" not in state_md, state_md
+    assert "TBD-AT-APPLY" not in state_md, state_md
+    assert "TBD-AT-SEAL" not in state_md, state_md
+    assert "TBD-AT-COMMIT" not in roadmap, roadmap
+    assert "TBD-AT-APPLY" not in roadmap, roadmap
+    assert "TBD-AT-SEAL" not in roadmap, roadmap
+    # Discovered SHAs landed in the row text (7-char abbreviated form).
+    assert source_edit[:7] in state_md
+    assert apply_[:7] in state_md
+    assert source_edit[:7] in roadmap
+    assert apply_[:7] in roadmap
+    assert result.edits_applied >= 1
+
+
+# --------------------------------------------------------------------
+# AC.BACKFL2.4 — already-public title is a no-op.
+# --------------------------------------------------------------------
+
+
+def test_apply_backfill_state_md_already_public_title_no_op(
+    tmp_path: Path,
+) -> None:
+    """When the STATE.md leading title is already
+    ``SHIPPED PUBLIC``, the leading-title flip helper makes no
+    change (no double-flip; AC.BACKFL2.4 idempotence)."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    body = (
+        "# State\n\n"
+        "- **2026-05-10** — **v0.9.0 PATCH SHIPPED PUBLIC** — work. "
+        "Seal `ddddddd`. **v0.9.0 SHIPPED PUBLIC 2026-05-11 at tag "
+        "`v0.9.0` (annotated `abc1234`)**.\n"
+    )
+    (docs / "STATE.md").write_text(body)
+    (docs / "release-roadmap.md").write_text(
+        "# Release Roadmap\n\n## §2 Shipped\n\n"
+        "| Version | Objective | Anchor |\n"
+        "|---|---|---|\n"
+        "| v0.9.0 | obj. | Single-cycle PATCH: seal `ddddddd`; "
+        "**SHIPPED PUBLIC 2026-05-11 at tag `v0.9.0` (annotated "
+        "`abc1234`)** |\n\n"
+        "**Total shipped:** 0 minor + 1 patch. v0.9.0 published.\n\n"
+        "## §3 Active version\n\n"
+        "**v0.9.0 PATCH (obj.) SHIPPED PUBLIC 2026-05-11** "
+        "(tag `v0.9.0`, annotated `abc1234`; seal `ddddddd`).\n"
+    )
+    today = _dt.date(2026, 5, 11)
+    result = post_publish_backfill.apply_backfill(
+        tmp_path,
+        "v0.9.0",
+        "v0.9.0",
+        "abc1234567890def",
+        today=today,
+    )
+    after = (docs / "STATE.md").read_text(encoding="utf-8")
+    assert after == body, after
+    assert result.idempotent_noop is True
+
+
+# --------------------------------------------------------------------
+# AC.BACKFL2.5 — integration: full canonical pre-image yields zero
+# residual TBD-AT-* + zero residual SHIPPED LOCAL post-call;
+# idempotence re-run is a clean no-op.
+# --------------------------------------------------------------------
+
+
+def test_apply_backfill_full_v074_pre_image_yields_zero_residual_tbd(
+    tmp_path: Path,
+) -> None:
+    """Full canonical v0.7.4 pre-image (leading SHIPPED LOCAL +
+    trailing SHIPPED LOCAL + TBD-AT-COMMIT + TBD-AT-APPLY +
+    TBD-AT-SEAL in BOTH files) → first call applies all edits +
+    zero residual TBD-AT-* + zero residual SHIPPED LOCAL; second
+    call (idempotence re-run) → idempotent_noop, no further file
+    writes (AC.BACKFL2.5 integration)."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    source_edit, apply_, seal = _make_seal_apply_commit_chain(
+        repo, "v0-9-0-test"
+    )
+    docs = repo / "docs"
+    docs.mkdir()
+    (docs / "STATE.md").write_text(
+        _state_md_with_shipped_local(
+            "v0.9.0", with_v074_gap_surfaces=True
+        )
+    )
+    (docs / "release-roadmap.md").write_text(
+        _roadmap_with_shipped_local_row(
+            "v0.9.0", with_v074_gap_surfaces=True
+        )
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "docs"], check=True
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo), "commit", "-q",
+            "-m", "stage docs for backfill test",
+        ],
+        check=True,
+    )
+    today = _dt.date(2026, 5, 11)
+    r1 = post_publish_backfill.apply_backfill(
+        repo,
+        "v0.9.0",
+        "v0.9.0",
+        "abc1234567890def",
+        seal_sha=seal,
+        today=today,
+    )
+    state_md_after_r1 = (docs / "STATE.md").read_text(encoding="utf-8")
+    roadmap_after_r1 = (
+        docs / "release-roadmap.md"
+    ).read_text(encoding="utf-8")
+    # Zero residual TBD-AT-* in both files.
+    for body, name in (
+        (state_md_after_r1, "STATE.md"),
+        (roadmap_after_r1, "release-roadmap.md"),
+    ):
+        assert "TBD-AT-COMMIT" not in body, name
+        assert "TBD-AT-APPLY" not in body, name
+        assert "TBD-AT-SEAL" not in body, name
+        assert "TBD-AT-TAG" not in body, name
+    # Zero residual SHIPPED-LOCAL in BOTH leading title + trailing
+    # sentence in STATE.md (this is the AC.BACKFL2.1 + AC.BACKFL.1
+    # integration verification).
+    assert "v0.9.0 PATCH SHIPPED LOCAL" not in state_md_after_r1
+    assert "v0.9.0 SHIPPED LOCAL —" not in state_md_after_r1
+    assert r1.edits_applied >= 4  # at least: trailing flip + leading
+    # title + STATE.md placeholders + roadmap row marker / placeholders.
+    # Idempotence re-run.
+    r2 = post_publish_backfill.apply_backfill(
+        repo,
+        "v0.9.0",
+        "v0.9.0",
+        "abc1234567890def",
+        seal_sha=seal,
+        today=today,
+    )
+    state_md_after_r2 = (docs / "STATE.md").read_text(encoding="utf-8")
+    roadmap_after_r2 = (
+        docs / "release-roadmap.md"
+    ).read_text(encoding="utf-8")
+    assert r2.idempotent_noop is True, r2
+    assert r2.edits_applied == 0
+    assert state_md_after_r2 == state_md_after_r1
+    assert roadmap_after_r2 == roadmap_after_r1

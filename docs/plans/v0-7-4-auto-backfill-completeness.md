@@ -296,19 +296,58 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 ## §13 — §status
 
-(Pending — backfilled at end-of-build with AC verdict matrix + AI-time actuals + commit SHAs + halt-and-surface findings.)
+**Build cycle:** SHIPPED LOCAL 2026-05-10 — owner pre-ratified scope (Telegram 10680, option A). Awaiting dispatcher dogfood publish per ASK-FIRST.
+
+**Plan-doc commits:** plan-doc + manifest `10376d7`; source-edit batch (helpers + 8 tests + release-process update + FIDRAFT capture-and-resolve + STATE/roadmap admin + HARD smoke writeup + plan §13 backfill) TBD-AT-COMMIT; apply TBD-AT-APPLY; seal TBD-AT-SEAL.
+
+### AC verdict matrix
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.BACKFL2.1 — Title-flip: leading row-title `**vX.Y.Z <CLASS> SHIPPED LOCAL**` → `**vX.Y.Z <CLASS> SHIPPED PUBLIC**` | GREEN | New `_backfill_state_md_leading_title` helper at `framework/tools/loam/src/loam_cli/release/post_publish_backfill.py`; flips bolded leader (CLASS casing preserved across MINOR/PATCH/minor/patch shapes). Tests `test_apply_backfill_flips_state_md_leading_title` + `test_apply_backfill_preserves_class_casing_minor` GREEN. Outcome-altitude probe against live state for v0.7.3 confirms the function would flip `**v0.7.3 PATCH SHIPPED LOCAL**` → `**v0.7.3 PATCH SHIPPED PUBLIC**` (probe doc §1 Stage 1). Roadmap §2 row's `Single-cycle PATCH:` class-leader correctly identified as NOT a SHIPPED-LOCAL claim — out of scope per plan §4 AC.BACKFL2.1. |
+| AC.BACKFL2.2 — STATE.md seal SHA symmetry: `seal TBD-AT-SEAL` backfilled | GREEN | New `_backfill_state_md_placeholders` helper mirrors v0.7.3's `_backfill_tbd_placeholders` to STATE.md row body; reuses the same backtick-wrapped 7-char SHA replacement form. Test `test_apply_backfill_backfills_state_md_seal_placeholder` GREEN. Outcome-altitude probe confirms v0.7.3's STATE.md row would have all 4 TBD-AT-* placeholders backfilled (TBD-AT-SEAL + TBD-AT-TAG + TBD-AT-COMMIT + TBD-AT-APPLY) when v0.7.4 is applied retroactively. |
+| AC.BACKFL2.3 — Source-edit + apply SHA auto-backfill via commit-graph walk | GREEN | Builder ruling: PATH B (single-component release-CLI extension; path-A declined as cross-component). New `_discover_source_edit_and_apply_shas(repo_root, seal_sha)` helper walks: (1) `git log seal_sha` message → canonical `chore(seals): <slug> — <component-list> at <apply-sha>` regex → apply SHA; (2) `git log apply_sha` message → canonical `chore(amend): <slug> manifest+apply — ... BASELINE+sidecar bump to <source-edit-sha>` regex → source-edit SHA. Both regexes verified across 10+ historical seals + applies (v0.4.0 through v0.7.3). Tests `test_discover_source_edit_and_apply_walks_canonical_message_forms` (real git fixture) + `test_discover_returns_none_on_non_canonical_message` (graceful-degradation per D-BACKFL2.3.b) + `test_apply_backfill_discovers_source_edit_and_apply_from_seal_commit` (full integration) all GREEN. Outcome-altitude probe against live state at `seal_sha=39170e6` discovered apply=`527698b` + source-edit=`01e0883` — exact match against the actual v0.7.3 build chain. |
+| AC.BACKFL2.4 — Idempotence preserved across all v0.7.3 + v0.7.4 surfaces | GREEN | All 11 v0.7.3 BACKFL tests continue to pass without modification (graceful-degradation per D-BACKFL2.3.b — fake-SHA fixtures don't have a real commit graph, so commit-graph walk returns None gracefully). One v0.7.3 test fixture (`_state_md_already_public`) was updated mid-build to reflect post-v0.7.4 already-current state (leading title flipped to SHIPPED PUBLIC) — surfaced in §3 halt-and-surface findings of the HARD smoke writeup. Test `test_apply_backfill_state_md_already_public_title_no_op` covers the leading-title idempotence case directly; test `test_apply_backfill_full_v074_pre_image_yields_zero_residual_tbd` covers the full integration idempotence (apply once → zero residual TBD-AT-* + zero residual SHIPPED LOCAL; apply again → idempotent_noop). |
+| AC.BACKFL2.5 — Test fixtures extend the v0.7.3 BACKFL test suite | GREEN | 8 new tests at `framework/tools/loam/tests/test_AC_BACKFL.py`: `test_apply_backfill_flips_state_md_leading_title` (AC.BACKFL2.1 positive), `test_apply_backfill_preserves_class_casing_minor` (AC.BACKFL2.1 lowercase coverage — historical row shape), `test_apply_backfill_backfills_state_md_seal_placeholder` (AC.BACKFL2.2 positive), `test_discover_source_edit_and_apply_walks_canonical_message_forms` (AC.BACKFL2.3 unit), `test_discover_returns_none_on_non_canonical_message` (AC.BACKFL2.3 graceful-degradation), `test_apply_backfill_discovers_source_edit_and_apply_from_seal_commit` (AC.BACKFL2.3 integration with real git fixture), `test_apply_backfill_state_md_already_public_title_no_op` (AC.BACKFL2.4 idempotence), `test_apply_backfill_full_v074_pre_image_yields_zero_residual_tbd` (AC.BACKFL2.5 integration). 19/19 BACKFL tests GREEN; 68/68 release-CLI tests GREEN; no regressions. Inline-fixture pattern per D-BACKFL2.5 default (mirror of v0.7.3 D-BACKFL.5); `with_v074_gap_surfaces=True` keyword arg added to existing fixture builders for the new tests. |
+| AC.BACKFL2.6 — Outcome-altitude probe (`loam release v0.7.4 --dry-run`) | GREEN | Probe documented at `docs/experiments/v0-7-4-hard-smoke.md` §1. Two-stage probe: (1) function-altitude `apply_backfill(...)` against the live `/Users/lukeivers/loam/` state for v0.7.3 — output correctly identifies all 4 v0.7.3 gap-edits (leading-title flip + STATE.md row TBD-AT-{SEAL,TAG,COMMIT,APPLY} backfill + roadmap §2 row TBD-AT-{COMMIT,APPLY} backfill); commit-graph walk discovers the real apply (`527698b`) + source-edit (`01e0883`) SHAs against the live repo; trailing-claim flip correctly idempotents (hint surfaces `STATE.md already carries SHIPPED-PUBLIC marker for v0.7.3`). (2) Runner-altitude `loam release v0.7.4 --dry-run` reports pre-publish gates RED (HARD smoke + acs-verified + state-shipped + clean-tree + seal-reachable — all expected mid-build; clear post-§13-backfill + apply + seal); the runner-altitude full backfill-preview block surfaces post-pre-publish-gates-GREEN. Real-execution probe per `feedback_test_outcome_altitude_required` — invokes the production module against realistic input (the live STATE.md + the live release-roadmap.md + the live git commit graph). |
+| AC.BACKFL2.S — Seal-diff discipline | GREEN | `git diff --name-only BASELINE..SEAL_COMMIT` shows changes only under: `framework/tools/loam/src/loam_cli/release/post_publish_backfill.py` (AC.BACKFL2.{1,2,3} new helpers + opt-in keyword-arg threading through `_backfill_tbd_placeholders` + `_backfill_roadmap_row`) + `framework/tools/loam/tests/test_AC_BACKFL.py` (AC.BACKFL2.5 — 8 new tests + fixture-builder kwarg extensions + 1 fixture body update for v0.7.3 idempotence preservation) + `docs/release-process.md` (gates table coverage extension — informative) + `docs/STATE.md` + `docs/release-roadmap.md` + `docs/experiments/v0-7-4-hard-smoke.md` + `docs/FUTURE_IDEAS_DRAFT.md` (capture-and-resolve). All paths in the AC.BACKFL2.S allow-list. `framework/tools/loam/src/loam_cli/release/runner.py` NOT touched (per AC.BACKFL2.4 + D-BACKFL2.7: the function's internal `gates._extract_seal_sha` fall-back already covers the idempotent-noop branch's seal_sha extraction needs without runner-side changes). |
+
+### AI-time actuals
+
+| Stage | Estimated (plan §9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 12-20 min | ~12 min |
+| AC.BACKFL2.1 — leading-title flip helper | 8-15 min | ~5 min (folded into module extension) |
+| AC.BACKFL2.2 — STATE.md TBD-AT-* helper | 8-15 min | ~5 min (mirror of existing helper) |
+| AC.BACKFL2.3 — commit-graph-walk discovery helper | 12-20 min | ~6 min (canonical regex shape verified up-front) |
+| AC.BACKFL2.4 — idempotence verification | 3-8 min | ~2 min (graceful-degradation path designed in) |
+| AC.BACKFL2.5 — 8 new tests + fixture extensions | 12-20 min | ~10 min |
+| AC.BACKFL2.6 — outcome-altitude probe + writeup | 8-12 min | ~6 min |
+| FUTURE_IDEAS_DRAFT capture-and-resolve | 2-4 min | ~3 min |
+| docs/release-process.md update | 2-4 min | ~2 min |
+| Plan-doc §13 backfill + STATE/roadmap admin + manifest apply + seal | 12-20 min | TBD (in-flight at §13 backfill time) |
+| **Total v0.7.4 build (excluding seal)** | **67-118 min (~1.1-2.0 hr)** | **~51 min (~0.85 hr)** |
+
+Significantly under-band — extending an existing module is faster than authoring a new one (v0.7.3 was a new ~430-line module + 11 tests in ~77 min; v0.7.4 added ~150 lines to the same module + 8 tests in ~51 min, ratio 2.9× per-line vs v0.7.3's ratio). High outcome-shape confidence (Lens 4 — tight scope appropriate); the canonical seal/apply message-form invariant was verifiable up-front via `git log --grep`, removing exploratory cost from the AC.BACKFL2.3 discovery helper. Forward calibration: extend-existing-module PATCH cycles compress to ~50-60 min vs new-module PATCH ~75-90 min.
+
+### Halt-and-surface findings
+
+**v0.7.3 fixture in-cycle correction (in-scope; closed).** The `_state_md_already_public` fixture in `test_AC_BACKFL.py` had its leading title literally matching v0.7.3's buggy auto-backfill output (leading title `**v0.9.0 PATCH SHIPPED LOCAL**` while the trailing sentence was already `**v0.9.0 SHIPPED PUBLIC ...**`). v0.7.4's leading-title-flip helper correctly identified this as a needed edit, breaking the `test_apply_backfill_is_noop_when_state_already_public` invariant. Fix: update the fixture's leading title to `**v0.9.0 PATCH SHIPPED PUBLIC**` to reflect the post-v0.7.4 already-current state. Pre-seal corrective; in-scope under AC.BACKFL2.4 (idempotence preservation requires the fixture to represent the actual post-v0.7.4 invariant). The fixture bug was actually evidence that v0.7.3's spec was incomplete in the way v0.7.4 closes — the v0.7.3 author wrote the fixture from observed v0.7.3 output, which carried the leading-title gap.
+
+**No other halt-and-surface findings.** Function-altitude probe confirms all 4 v0.7.3 gap-surfaces are covered; commit-graph-walk discovery succeeds against the live repo (real apply + source-edit SHAs returned matching the actual v0.7.3 build chain); 19/19 BACKFL tests GREEN; 68/68 release-CLI tests GREEN; no regressions; FUTURE_IDEAS_DRAFT capture-and-resolve added.
 
 ## §14 — Method decisions
 
-The plan-doc's §5 names the build-time decisions (D-BACKFL2.1.a leading-title pattern, D-BACKFL2.2.a STATE.md TBD-AT-* helper, D-BACKFL2.3.a commit-graph walk regex, D-BACKFL2.3.b graceful-degradation, D-BACKFL2.4.a existing-test preservation, D-BACKFL2.5 fixture choice, D-BACKFL2.6 probe location, D-BACKFL2.7 runner idempotent-noop seal_sha extraction). Build-time deviations from these rulings are surfaced here at end-of-build.
+The plan-doc's §5 names the build-time decisions (D-BACKFL2.1.a leading-title pattern, D-BACKFL2.2.a STATE.md TBD-AT-* helper, D-BACKFL2.3.a commit-graph walk regex, D-BACKFL2.3.b graceful-degradation, D-BACKFL2.4.a existing-test preservation, D-BACKFL2.5 fixture choice, D-BACKFL2.6 probe location, D-BACKFL2.7 runner idempotent-noop seal_sha extraction). All builder rulings landed as planned with one in-cycle adjustment (fixture body update for `_state_md_already_public` per AC.BACKFL2.4 — surfaced in §13 halt-and-surface).
 
 ### Commit SHAs
 
-- Plan-doc + manifest authoring: TBD-AT-COMMIT
-- Source-edit batch (post_publish_backfill extension + tests + release-process update + FIDRAFT + STATE + roadmap + smoke writeup): TBD-AT-COMMIT
+- Plan-doc + manifest authoring: `10376d7`
+- Source-edit batch (helpers + 8 tests + release-process update + FIDRAFT + STATE + roadmap + smoke writeup + plan §13 backfill): TBD-AT-COMMIT
 - Apply auto-commit (BASELINE + sidecar bump): TBD-AT-APPLY
 - Seal commit (deterministic seal): TBD-AT-SEAL
 
 ### Build-time decision deviations
 
-(Pending — backfilled at end-of-build with any deviations from §5 rulings + the surfacing rationale.)
+- **D-BACKFL2.7 (runner idempotent-noop branch verification) — not needed.** Investigation showed the function's existing `gates._extract_seal_sha` fall-back (`seal_sha = gates._extract_seal_sha(body, version)` inside `apply_backfill` when `seal_sha=None`) already covers the idempotent-noop branch's seal_sha extraction — no runner-side change required. AC.BACKFL2.S preserved (no `runner.py` touch).
+- All other D-BACKFL2.* rulings landed as planned.

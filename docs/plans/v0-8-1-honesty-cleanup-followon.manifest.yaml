@@ -3,8 +3,10 @@ amendment:
   slug: v0-8-1-honesty-cleanup-followon
   title: "v0.8.1 PATCH — honesty-cleanup follow-on. Closes 2 NEW axis-12 defects surfaced by external-reviewer pass-2 review of v0.8.0: NF1 (v0.7.1/v0.7.2/v0.7.3 STATE.md leading-title contradictions — same defect class as F5 the v0.8.0 cleanup just resolved for v0.5.0; sweep via v0.7.4 _backfill_state_md_leading_title helper retroactively); NF2 (live `Total shipped:` line in release-roadmap.md mathematically wrong — `19 minor + 8 patches` vs actual `8 minor + 18 patches`; root cause: _SUMMARY_LINE regex doesn't match arrow-range form AND _count_published_versions only counts marker-bearing rows). Walker fix tightens regex + counts all §2 rows; live count corrected manually. 2 new tests preserve idempotence. Outcome-altitude probe verifies closure at seal commit."
 
-# BASELINE captured at apply time after source-edit + admin commit lands.
-baseline: "TBD-AT-COMMIT"
+# BASELINE captured at source-edit batch (15b2918) — covers all v0.8.1
+# walker fix + 3 new tests + AC.NFCLEAN.1 sweep + count-line correction +
+# smoke writeup + FIDRAFT + STATE/roadmap admin.
+baseline: "15b2918"
 
 plan: docs/plans/v0-8-1-honesty-cleanup-followon.md
 plan_doc_ref: docs/plans/v0-8-1-honesty-cleanup-followon.md

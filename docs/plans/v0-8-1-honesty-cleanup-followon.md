@@ -249,33 +249,56 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 ## §13 — §status
 
-**Build cycle:** TBD — populated post-seal.
+**Build cycle:** SHIPPED LOCAL 2026-05-10 — owner pre-ratified scope (Telegram 10706). Awaiting dispatcher dogfood publish per ASK-FIRST.
+
+**Plan-doc commits:** plan-doc + manifest `4c5f442`; source-edit batch (walker fix + 3 tests + AC.NFCLEAN.1 leading-title sweep + count-line correction + smoke writeup + FIDRAFT entries + STATE/roadmap admin + plan §13 backfill) `15b2918`; manifest baseline + apply auto-commit (BASELINE + sidecar bump) TBD-AT-APPLY; seal commit (deterministic seal) TBD-AT-SEAL.
 
 ### AC verdict matrix
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.NFCLEAN.1 — Historical SHIPPED-LOCAL title sweep | TBD | TBD |
-| AC.NFCLEAN.2 — `_update_total_shipped_line` walker fix + count-line correction | TBD | TBD |
-| AC.NFCLEAN.3 — Outcome-altitude cold-clone probe | TBD | TBD |
-| AC.NFCLEAN.S — Seal-diff discipline | TBD | TBD |
+| AC.NFCLEAN.1 — Historical SHIPPED-LOCAL title sweep: v0.7.1 / v0.7.2 / v0.7.3 | GREEN | Direct `_backfill_state_md_leading_title(body, version)` invocation per version (HARD HALT #7 strict-scope ruling — top-level `apply_backfill(...)` produces 6 additional side-effect edits, deferred to F-NFCLEAN-FOLLOWON FIDRAFT). Post-fix `grep -c "PATCH SHIPPED LOCAL" docs/STATE.md` returns 1 (in-flight v0.8.1 row only); v0.7.1 / v0.7.2 / v0.7.3 row leading titles confirmed flipped to `**v0.7.X PATCH SHIPPED PUBLIC**` matching their bodies' SHIPPED-PUBLIC markers. Probe writeup §1 Stage 1 documents per-line verification. |
+| AC.NFCLEAN.2 — `_update_total_shipped_line` walker fix + count-line correction | GREEN | Two compound fixes shipped: (a) `_SUMMARY_LINE` regex tightened to accept arrow + range form (`v[\d.]+(?:\s*→\s*v[\d.]+)?\s+published\.`); (b) `_count_published_versions` drops marker requirement (counts all §2 version rows); (c) `_classify_row` adds version-pattern fallback (X.Y.0 = MINOR; rest = PATCH) when third pipe-cell lacks explicit-class keyword. Live count corrected to `**Total shipped:** 8 minor + 18 patches. v0.1.0 → v0.8.0 published.` Walker function-altitude verification: returns `(8, 18)` against live roadmap. 3 new tests at `framework/tools/loam/tests/test_AC_BACKFL.py`: `test_count_published_versions_includes_marker_less_historical_rows` + `test_summary_line_regex_accepts_arrow_range_form` + `test_classify_row_falls_back_to_version_pattern_for_historical_rows` — all GREEN. 22/22 BACKFL tests GREEN; 19 existing BACKFL tests preserved without modification. |
+| AC.NFCLEAN.3 — Outcome-altitude cold-clone probe | GREEN | Probe documented at `docs/experiments/v0-8-1-hard-smoke.md` §1. Stage 1 verifies NF1 closure (grep on STATE.md confirms 3 historical leading titles flipped). Stage 2 verifies NF2 closure (walker function-altitude test confirms correct count + regex match against live state). Stage 3 (full cold-clone-from-origin) deferred to dispatcher publish action per AC.HONEST.7 precedent (post-publish dogfood). Pre-publish at-the-source-edit-commit closure verified empirically. |
+| AC.NFCLEAN.S — Seal-diff discipline | GREEN | `git diff --name-only BASELINE..SEAL_COMMIT` shows changes only under: `framework/tools/loam/src/loam_cli/release/post_publish_backfill.py` (walker fix per AC.NFCLEAN.2 — `_SUMMARY_LINE` regex + `_count_published_versions` + `_classify_row` updates) + `framework/tools/loam/tests/test_AC_BACKFL.py` (3 new tests per AC.NFCLEAN.2) + `docs/STATE.md` (AC.NFCLEAN.1 leading-title sweep + universal-admission v0.8.1 row) + `docs/release-roadmap.md` (AC.NFCLEAN.2 manual count-line correction + universal-admission v0.8.1 §2 row) + `docs/experiments/v0-8-1-hard-smoke.md` (AC.NFCLEAN.3 probe writeup) + `docs/plans/v0-8-1-honesty-cleanup-followon.md` (this file) + `docs/plans/v0-8-1-honesty-cleanup-followon.manifest.yaml` + `docs/FUTURE_IDEAS_DRAFT.md` (3 FIDRAFT entries: F-WALKER-1, F-PCV-1, F-NFCLEAN-FOLLOWON). All paths in AC.NFCLEAN.S allow-list (universal-admission `framework/tools/loam/` PRIMARY + universal-admission docs). |
 
 ### AI-time actuals
 
-TBD — populated post-seal.
+| Stage | Estimated (plan §9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 12-20 min | ~18 min |
+| AC.NFCLEAN.1 — historical sweep (incl. HARD HALT #7 reset + re-run via direct helper) | 8-12 min | ~6 min |
+| AC.NFCLEAN.2 — walker fix (regex + count-all-rows + classify-row fallback) | 6-10 min | ~12 min (extended scope: classify-row fallback added after empirical investigation showed text-based classification missed 5/8 historical MINORs) |
+| AC.NFCLEAN.2 — manual count-line correction | 2-4 min | ~1 min |
+| AC.NFCLEAN.2 — 2 new walker tests (extended to 3 with classify-row fallback test) | 8-12 min | ~9 min |
+| AC.NFCLEAN.3 — outcome-altitude probe + writeup | 6-10 min | ~8 min |
+| FIDRAFT capture (F-WALKER-1, F-PCV-1, F-NFCLEAN-FOLLOWON) | 3-5 min | ~5 min |
+| Plan-doc §13 backfill + STATE/roadmap admin + manifest apply + seal | 12-20 min | TBD (in-flight at §13 backfill time) |
+| **Total v0.8.1 build (excluding seal)** | **45-73 min (~0.75-1.2 hr)** | **~59 min (~1.0 hr)** |
+
+In-band — extending an existing module with regex tightening + walker fix + classify-row fallback (~25 added LOC) + 3 tests landed in ~30 min execution time once the root-cause analysis (~12 min walker investigation) was complete. The HARD HALT #7 reset added ~3 min wall-clock (apply_backfill probe + reset + direct-helper re-run) but produced a load-bearing decision (strict-scope ruling + F-NFCLEAN-FOLLOWON FIDRAFT capture). Forward calibration: PATCH cycles that fix existing-helper bugs (regex tightening + counter logic) compress to ~45-60 min vs new-helper PATCH ~75-90 min (v0.7.4 actuals).
 
 ### Halt-and-surface findings
 
-TBD.
+**HARD HALT #7 fired in-cycle (in-scope; closed via FIDRAFT defer).** Initial AC.NFCLEAN.1 implementation invoked top-level `apply_backfill(...)` per version, which produced 9 total edits across the 3 versions (3 leading-title flips per AC + 6 side-effect edits: v0.7.3 STATE.md TBD-AT-{COMMIT,APPLY} placeholders backfilled, v0.7.3 roadmap TBD-AT-{COMMIT,APPLY} placeholders backfilled, v0.7.2 §3 Active version entry appended). HARD HALT #7 ("AC.NFCLEAN.1 helper invocation produces unexpected edits") fired. Reset; re-ran with direct `_backfill_state_md_leading_title(body, version)` invocation for strict scope. The 6 side-effect edits ARE legitimate axis-12 honesty closures of the same drift class (v0.7.3 publish missed STATE.md/roadmap completeness; v0.7.2 publish missed §3 entry); captured at FIDRAFT F-NFCLEAN-FOLLOWON for next docs-admin cleanup cycle. Strict-scope ruling preserves AC.NFCLEAN.1 plan boundary; the broader cleanup is owner-rulable as separate cycle.
+
+**Walker classification scope extension (in-scope; closed via classify-row fallback addition).** D-NFCLEAN.2.a originally scoped to "drop marker requirement + tighten regex." Empirical investigation showed even with those fixes, walker count was `3 minor + 23 patches` (vs actual 8 minor + 18 patches) because text-based classification (`_classify_row` reads third pipe-cell for `MINOR` keyword) missed 5/8 historical MINORs (v0.1.0 / v0.2.0 / v0.3.0 / v0.4.0 / v0.7.0) — those rows' third pipe-cells are seal-anchor commit-list cells from the pre-v0.6.0 era, not class declarations. Added version-pattern fallback to `_classify_row` (X.Y.0 = MINOR; rest = PATCH) — bounded extension; preserves explicit-class detection precedence; new test `test_classify_row_falls_back_to_version_pattern_for_historical_rows` covers the new path. Per HARD HALT #6 evaluation: NOT a "systemic auto-backfill rewrite" — bounded ~10 LOC addition to one helper function. Within v0.8.1 PATCH scope.
+
+**No other halt-and-surface findings.** Function-altitude probe confirms NF1 + NF2 closure at the post-source-edit commit; 22/22 BACKFL tests GREEN; 65/71 release-CLI tests GREEN (6 pre-existing entry_points compat failures unrelated to v0.8.1, captured in v0.8.0 test-failure-triage); FIDRAFT capture-and-resolve added.
 
 ## §14 — Method decisions
 
-The plan-doc's §5 names the build-time decisions (D-NFCLEAN.1.a sweep mechanism, D-NFCLEAN.2.a walker fix shape, D-NFCLEAN.2.b pipe robustness scope, D-NFCLEAN.2.c sequence, D-NFCLEAN.2.d tests, D-NFCLEAN.3.a probe shape, D-NFCLEAN.4 pyproject versions). Builder rulings to be recorded post-seal.
+The plan-doc's §5 names the build-time decisions (D-NFCLEAN.1.a sweep mechanism, D-NFCLEAN.2.a walker fix shape, D-NFCLEAN.2.b pipe robustness scope, D-NFCLEAN.2.c sequence, D-NFCLEAN.2.d tests, D-NFCLEAN.3.a probe shape, D-NFCLEAN.4 pyproject versions). All builder rulings landed as planned with two in-cycle adjustments (HARD HALT #7 reset + classify-row fallback extension — surfaced in §13 halt-and-surface).
 
 ### Commit SHAs
 
-TBD — populated post-seal.
+- Plan-doc + manifest authoring: `4c5f442`
+- Source-edit batch (walker fix + 3 tests + AC.NFCLEAN.1 sweep + count-line correction + smoke writeup + FIDRAFT entries + STATE/roadmap admin + plan §13 initial backfill): `15b2918`
+- Manifest baseline + apply auto-commit (BASELINE + sidecar bump): TBD-AT-APPLY
+- Seal commit (deterministic seal): TBD-AT-SEAL
 
 ### Build-time decision deviations
 
-TBD.
+- **D-NFCLEAN.1.a (sweep mechanism) — adjusted from "apply_backfill(...) per version" to "direct helper invocation per version".** HARD HALT #7 fired when initial top-level invocation produced 6 side-effect edits beyond the AC's named scope. Reset + re-run with direct `_backfill_state_md_leading_title(body, version)` invocation. Side-effect cleanups (legitimate axis-12 closures) deferred to F-NFCLEAN-FOLLOWON FIDRAFT.
+- **D-NFCLEAN.2.a (walker fix shape) — extended from "regex + count-all-rows" to "regex + count-all-rows + classify-row fallback".** Empirical investigation showed text-based classification missed 5/8 historical MINORs. Added bounded ~10 LOC version-pattern fallback. Within HARD HALT #6 envelope (not systemic rewrite).
+- All other D-NFCLEAN.* rulings landed as planned.

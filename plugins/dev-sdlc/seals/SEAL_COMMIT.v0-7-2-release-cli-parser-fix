@@ -1,0 +1,46 @@
+# v0.7.2 PATCH — release-CLI acs-verified gate parser-scoping fix
+
+2026-05-10. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST. v0.7.2 closes the cross-reference-AC-ID parser-scoping
+defect surfaced at v0.7.1 publish-time and captured at
+docs/FUTURE_IDEAS_DRAFT.md line 232.
+
+Defect-closure shape (no new outcome capability). The
+`check_acs_verified` gate in framework/tools/loam/src/loam_cli/
+release/gates.py previously scanned the entire plan-doc body for
+AC.<scope>.<n> tokens and asserted each was GREEN-marked in
+§status. The scan was too greedy: cross-reference AC IDs in §6
+(out-of-scope explanations) and §8 (predecessor dependencies)
+were treated as in-scope ACs requiring §status verdicts. v0.7.1
+publish hit this twice (AC.NTU.6 in §6, AC.V060.7 in §8) and was
+worked around by rewriting the cross-references as prose, losing
+AC-ID precision.
+
+AC.READYP.1 — Parser scope-restriction. check_acs_verified now
+parses the plan-doc body for the `## §4 — Acceptance criteria`
+heading, extracts the slice between that heading and the next
+`## §<n>` boundary, then runs the AC-ID regex against that slice
+only. Heading-recognition is permissive across the three observed
+forms (em-dash, hyphen, no-separator). Absent §4 returns RED with
+a corrective hint (no fall-back to whole-doc scan).
+
+AC.READYP.2 — Restored AC-ID precision in v0.7.1 plan-doc. Two
+cross-reference rewrites reverted to AC-ID form: §6 line restores
+`AC.NTU.6 deeper F-DESIGN finding`; §8 line restores
+`per AC.V060.7 dogfood`.
+
+AC.READYP.3 — Test pair extended. New positive test asserts the
+fixed parser ignores cross-reference AC IDs in §6/§8 when §4 ACs
+are GREEN-marked in §status; new negative test asserts the parser
+still RED-flags missing §4-declared ACs by name. Existing
+test_AC_V060_2_* tests continue to pass.
+
+AC.READYP.4 — Outcome-altitude probe. `loam release v0.7.2
+--dry-run` runs against this very plan-doc and the acs-verified
+gate returns GREEN naming the 5 in-scope ACs (AC.READYP.{1-4,S}).
+Probe documented in docs/experiments/v0-7-2-hard-smoke.md.
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit (parser +
+tests) TBD-AT-COMMIT; v0.7.1 plan-doc cross-reference revert TBD-
+AT-COMMIT; HARD smoke + experiments TBD-AT-COMMIT; pre-apply
+admin TBD-AT-COMMIT.

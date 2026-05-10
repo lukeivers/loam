@@ -133,18 +133,65 @@ def _find_plan_doc(repo_root: Path, version: str) -> Path | None:
     return matches[0] if matches else None
 
 
+def _extract_section_4_body(body: str) -> str | None:
+    """Slice the plan-doc body to its `## §4 — Acceptance criteria`
+    section.
+
+    Returns the substring between the §4 heading and the next
+    ``## §<n>`` boundary (or end-of-doc if §4 is the final section).
+    Returns ``None`` if no §4 heading is found.
+
+    Heading-recognition is permissive across the three observed
+    forms in the existing plan-doc corpus (verified at v0.7.2
+    plan-time across 88 plan-docs):
+      - ``## §4 — Acceptance criteria`` (em-dash separator; v0.6.0+)
+      - ``## §4. Acceptance criteria`` (period separator; older shape)
+      - ``## §4 Acceptance criteria`` (space separator; conftest fixture)
+
+    Per AC.READYP.1: the AC-ID scan is restricted to this slice, so
+    cross-reference AC IDs in §6 (out-of-scope), §8 (dependencies),
+    §11 (authority chain), §13 (§status), etc. are not flagged as
+    in-scope ACs requiring §status verdicts.
+    """
+    # Match `## §4` followed by an optional separator (em-dash, hyphen,
+    # period, or whitespace) and then any heading text. Case-insensitive
+    # so a future ``Acceptance Criteria`` capitalisation still resolves.
+    heading_match = re.search(
+        r"(?im)^##\s*§4\b[^\n]*$",
+        body,
+    )
+    if heading_match is None:
+        return None
+    section_start = heading_match.end()
+    # Next `## §<n>` heading (any digit) bounds the section. End-of-doc
+    # is the implicit terminator if §4 is the final ``## §`` block.
+    next_section = re.search(
+        r"(?m)^##\s*§\d+\b",
+        body[section_start:],
+    )
+    if next_section is None:
+        return body[section_start:]
+    return body[section_start : section_start + next_section.start()]
+
+
 def check_acs_verified(repo_root: Path, version: str) -> GateResult:
     """Verify the plan-doc's §status / §verdict-matrix marks each AC
-    GREEN.
+    declared in §4 GREEN.
 
-    Pragmatic heuristic for v0.6.0: a plan-doc passes the gate when
-    either of the following holds in the §status / §13 (status)
-    section body:
+    Per AC.READYP.1 (v0.7.2 fix): the AC-ID scan is restricted to
+    the plan-doc's ``## §4 — Acceptance criteria`` section body
+    (between the §4 heading and the next ``## §<n>`` boundary).
+    AC IDs appearing in any other section (§1 prime-objective ladder,
+    §6 out-of-scope, §8 dependencies, §11 authority chain, §13
+    §status, etc.) are NOT treated as in-scope ACs requiring
+    §status verdicts. This fixes the v0.7.1 publish-time defect
+    where cross-reference AC IDs in §6 + §8 were flagged as missing-
+    from-§status.
 
-    1. The doc contains a ``§status`` / ``## §13`` section that
-       explicitly mentions every named AC ID alongside a GREEN marker.
-    2. The doc contains a verdict-matrix table where every row is
-       GREEN.
+    A plan-doc passes the gate when the §status / §13 section names
+    each §4-declared AC ID alongside a GREEN marker (within 240 chars
+    on the same logical span — accommodates table rows + prose
+    verdicts).
 
     For the dogfood self-publish (this very plan-doc), the §status
     backfill is appended at end-of-build; the gate runs against the
@@ -164,16 +211,32 @@ def check_acs_verified(repo_root: Path, version: str) -> GateResult:
             ),
         )
     body = plan_doc.read_text(encoding="utf-8")
-    # Find every named AC id in the doc (`AC.V060.1`, `AC.V050.S`, ...).
-    ac_ids = sorted(set(re.findall(r"AC\.[A-Z][A-Z0-9_-]*\.[A-Za-z0-9_-]+", body)))
+    # Per AC.READYP.1 (v0.7.2): scope the AC-ID scan to §4 only.
+    # Cross-references in §6 / §8 / §11 / §13 are NOT in-scope ACs.
+    section_4 = _extract_section_4_body(body)
+    if section_4 is None:
+        return GateResult(
+            name="acs-verified",
+            ok=False,
+            message=(
+                f"plan-doc at {plan_doc.relative_to(repo_root)} has no "
+                f"`## §4 — Acceptance criteria` heading; the `acs-verified` "
+                f"gate scopes the AC-ID scan to §4 per the plan-doc "
+                f"convention. Add the heading + author the in-scope ACs "
+                f"there; re-run."
+            ),
+        )
+    # Find every named AC id in §4 (`AC.V060.1`, `AC.V050.S`, ...).
+    ac_ids = sorted(set(re.findall(r"AC\.[A-Z][A-Z0-9_-]*\.[A-Za-z0-9_-]+", section_4)))
     if not ac_ids:
         return GateResult(
             name="acs-verified",
             ok=False,
             message=(
                 f"plan-doc at {plan_doc.relative_to(repo_root)} declares no "
-                f"AC IDs. Verify the doc is the right shape (§4 Acceptance "
-                f"criteria block per ODD §2.5)."
+                f"AC IDs in §4. Verify the doc is the right shape (§4 "
+                f"Acceptance criteria block per ODD §2.5; AC IDs of the "
+                f"form `AC.<scope>.<n>`)."
             ),
         )
     # Locate the §status / §13 section (the post-build backfill block).

@@ -110,6 +110,118 @@ def test_acs_verified_red_when_status_omits_an_ac(
     assert "AC.V060.2" in r.message
 
 
+# AC.READYP.1 / AC.READYP.3 — Section-scoped scan: cross-reference AC IDs
+# in §6 (out-of-scope), §8 (dependencies), and §13 (§status itself) must
+# NOT be treated as in-scope ACs requiring §status verdicts. Closes the
+# v0.7.1 publish-time defect captured at FUTURE_IDEAS_DRAFT.md line 232.
+
+
+def test_acs_verified_ignores_cross_references_in_other_sections(
+    staged_repo: Path, fixture_version: str, fixture_slug: str
+) -> None:
+    """Cross-reference AC IDs in §6 / §8 / §13 must NOT be flagged
+    as missing-from-§status. The fixed parser scopes its AC-ID
+    scan to §4 only.
+    """
+    plan_path = (
+        staged_repo
+        / "docs"
+        / "plans"
+        / f"{fixture_slug}-release-process.md"
+    )
+    body = plan_path.read_text(encoding="utf-8")
+    # Append §6 + §8 sections containing cross-reference AC IDs to
+    # other versions' ACs. These are NOT in-scope for v0.6.0 — they
+    # explain dependencies + out-of-scope follow-ons. Without the
+    # AC.READYP.1 fix, the parser would flag AC.OTHER.1 + AC.OTHER.2
+    # + AC.OTHER.3 as missing-from-§status.
+    body += (
+        "\n## §6 Out of scope\n\n"
+        "Reference to **AC.OTHER.1** as an out-of-scope follow-on.\n"
+        "\n## §8 Dependencies\n\n"
+        "Cross-reference to **AC.OTHER.2** as a predecessor.\n"
+    )
+    plan_path.write_text(body, encoding="utf-8")
+    # The §status section already mentions AC.OTHER.3 via a cross-
+    # reference (the verdict matrix can name predecessor ACs without
+    # owning them). Re-author §status to include such a reference.
+    body = plan_path.read_text(encoding="utf-8")
+    body = body.replace(
+        "- AC.V060.2: GREEN\n",
+        "- AC.V060.2: GREEN\n"
+        "- (cross-ref AC.OTHER.3 — predecessor, no GREEN required)\n",
+    )
+    plan_path.write_text(body, encoding="utf-8")
+    r = gates.check_acs_verified(staged_repo, fixture_version)
+    assert r.ok is True, (
+        f"expected GREEN; cross-references in §6/§8/§13 must not "
+        f"trigger missing-from-§status. Got: {r.message}"
+    )
+    # The gate's GREEN message reports only the §4-declared ACs.
+    assert "2 AC" in r.message  # the two AC.V060.* in §4
+
+
+def test_acs_verified_red_names_only_section_4_acs_when_status_incomplete(
+    staged_repo: Path, fixture_version: str, fixture_slug: str
+) -> None:
+    """Negative case: §4 declares two ACs; §status omits one of them
+    AND §6/§8 contain cross-reference AC IDs to other-version ACs.
+    Gate returns RED naming ONLY the missing §4 AC — the cross-
+    references are silent (not RED-flagged, not absent-flagged).
+    """
+    plan_path = (
+        staged_repo
+        / "docs"
+        / "plans"
+        / f"{fixture_slug}-release-process.md"
+    )
+    body = plan_path.read_text(encoding="utf-8")
+    # Append §6 + §8 with cross-reference AC IDs.
+    body += (
+        "\n## §6 Out of scope\n\n"
+        "Reference to **AC.OTHER.1**.\n"
+        "\n## §8 Dependencies\n\n"
+        "Reference to **AC.OTHER.2**.\n"
+    )
+    # Drop the §4-declared AC.V060.2 verdict from §status.
+    body = body.replace("- AC.V060.2: GREEN\n", "")
+    plan_path.write_text(body, encoding="utf-8")
+    r = gates.check_acs_verified(staged_repo, fixture_version)
+    assert r.ok is False
+    # The §4-declared AC.V060.2 is RED-flagged.
+    assert "AC.V060.2" in r.message
+    # The cross-reference AC.OTHER.* IDs are NOT in the missing-list
+    # (they were never in-scope; they're not declared in §4).
+    assert "AC.OTHER.1" not in r.message
+    assert "AC.OTHER.2" not in r.message
+
+
+def test_acs_verified_red_when_section_4_heading_absent(
+    staged_repo: Path, fixture_version: str, fixture_slug: str
+) -> None:
+    """Missing §4 heading returns RED with corrective hint naming the
+    §4 — Acceptance criteria convention. No fall-back to whole-doc
+    scan (per D-READYP.1.b — that would silently re-introduce the
+    pre-fix defect).
+    """
+    plan_path = (
+        staged_repo
+        / "docs"
+        / "plans"
+        / f"{fixture_slug}-release-process.md"
+    )
+    body = plan_path.read_text(encoding="utf-8")
+    # Strip the §4 heading. Replace with a different heading so the
+    # rest of the doc still parses; the AC declarations under it
+    # remain but are no longer in a §4 section.
+    body = body.replace("## §4 Acceptance criteria", "## Acceptance criteria")
+    plan_path.write_text(body, encoding="utf-8")
+    r = gates.check_acs_verified(staged_repo, fixture_version)
+    assert r.ok is False
+    assert "§4" in r.message
+    assert "Acceptance criteria" in r.message
+
+
 # --------------------------------------------------------------------
 # Gate 3 — STATE.md SHIPPED
 # --------------------------------------------------------------------

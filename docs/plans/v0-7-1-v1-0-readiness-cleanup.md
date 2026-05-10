@@ -166,7 +166,7 @@ Sidecar advances per sealed-component-cycle ritual. AC.READY.1 is operational (h
 - **Public-surface manifest STRUCTURAL ENFORCEMENT** — the manifest doc (AC.READY.9) is the deliverable; a test that fails if any surface drifts is the next-stage discipline. MINOR-class; deferred per v1.0-readiness audit §5 step 8.
 - **Deeper plugin-contract revision** — the contract is documented + the entry-point shape is sound (audit §4 verdict). The install-path gap (RED-2) is the only blocker; fix that and the contract is ready for v1.0. No revision in v0.7.1 scope.
 - **New feature work of any kind** — v0.7.1 is defect-closure-only.
-- **v0.7.0's deeper F-DESIGN finding** (Q4/Q5 dev-intent conditional surfacing) — that's a follow-on amendment captured in v0.7.0's §status; not in v0.7.1 scope.
+- **AC.NTU.6 deeper F-DESIGN finding** (Q4/Q5 dev-intent conditional surfacing) — that's a follow-on amendment captured in v0.7.0's §status; not in v0.7.1 scope.
 - **`loam project` documentation (if undocumented)** — out of v0.7.1 scope; if AC.READY.8's stranger-clone probe surfaces this as an additional gap, builder records it as a finding for follow-on, not as in-cycle work.
 - **Multi-LLM via OpenRouter** (per architectural constraint, backlog only).
 - **Anthropic API key paths** (per architectural constraint, never).
@@ -187,7 +187,7 @@ Halt-and-surface to dispatcher (return owner-call) — do NOT proceed past — o
 
 ## §8 — Dependencies
 
-- **v0.7.0 (non-tech-user surface)** — HARD on commit-graph. v0.7.1 builds on v0.7.0's HEAD; the publish ritual for v0.7.1 will use the same `loam release` CLI (per v0.6.0's dogfood AC; second use of the verb post-v0.7.0).
+- **v0.7.0 (non-tech-user surface)** — HARD on commit-graph. v0.7.1 builds on v0.7.0's HEAD; the publish ritual for v0.7.1 will use the same `loam release` CLI (per AC.V060.7 dogfood; second use of the verb post-v0.7.0).
 - **v0.6.0 (concrete release process)** — HARD. AC.READY.7 extends the release-process gates table; v0.7.1 cannot land cleanly without v0.6.0's gate-table substrate.
 - **v0.5.1 (split-worktrees migration)** — HARD on root-cause. AC.READY.1 closes the install breakage v0.5.1 introduced (the migration deleted the source dir but left the dependent package installs pointing at it).
 - **`docs/release-versioning-policy.md`** — SOFT. AC.READY.9 cites it as the manifest's authority chain.

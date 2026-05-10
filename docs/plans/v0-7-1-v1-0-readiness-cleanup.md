@@ -228,29 +228,61 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 ## §13 — §status
 
-**Build cycle:** AUTHORING — plan-doc + manifest authored 2026-05-10 as build step 1; build cycle in flight.
+**Build cycle:** SHIPPED LOCAL 2026-05-10 — owner pre-ratified scope (Telegram 10663). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** plan-doc + manifest authoring TBD-AT-COMMIT.
+**Plan-doc commits:** plan-doc + manifest `7ea5fad`; source-edit + admin (install-from-source.txt + STATE.md + release-roadmap.md + architecture.md + components/index.md + release-process.md + public-surface-manifest.md + HARD smoke writeup + FUTURE_IDEAS_DRAFT capture) `d9cf905`; apply auto-commit (BASELINE + sidecar + allowed_files extension across 4 admin docs) `5332f1a`; seal commit `cdae8ed`.
 
 ### AC verdict matrix
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.READY.1 — System binary reinstall | TBD | TBD |
-| AC.READY.2 — loam amend in install path | TBD | TBD |
-| AC.READY.3 — STATE/roadmap stale-claims | TBD | TBD |
-| AC.READY.4 — Component-count reconciliation | TBD | TBD |
-| AC.READY.5 — memory.md verify-and-record | TBD | TBD |
-| AC.READY.6 — pr-safety documentation | TBD | TBD |
-| AC.READY.7 — HARD-smoke gap closure | TBD | TBD |
-| AC.READY.8 — Stranger-clone outcome-altitude probe | TBD | TBD |
-| AC.READY.9 — Public-surface manifest | TBD | TBD |
-| AC.READY.S — Seal-diff discipline | TBD | TBD |
+| AC.READY.1 — System binary reinstall | GREEN | `which loam` → `/opt/homebrew/bin/loam`; `loam --help` lists 7 documented subcommands; `pip list \| grep loam` shows all 23 packages installed against `/Users/lukeivers/loam/`. Documented in `docs/experiments/v0-7-1-hard-smoke.md` §1. |
+| AC.READY.2 — loam amend in install path | GREEN | `install-from-source.txt` extended with 4 missing `-e` entries: `loam-amend`, `loam-pr-safety`, `loam-mode`, `framework/per-project-pm`. Cold-venv install at `/tmp/loam-stranger-venv-v071/` registers all 23 packages; `loam amend --help` returns `validate / apply / seal / template / new-plan / new-memory`. Documented in `docs/experiments/v0-7-1-hard-smoke.md` §2. |
+| AC.READY.3 — STATE/roadmap stale-claims | GREEN | `docs/release-roadmap.md` §2 v0.6.0 + v0.7.0 rows + §3 active-version updated to "SHIPPED PUBLIC" with seal+tag SHAs; `docs/STATE.md` v0.6.0 + v0.7.0 entries marked SHIPPED PUBLIC with seal+tag+pre-apply admin commits. New v0.7.1 row added to STATE.md + release-roadmap.md §2. `grep -n "SHIPPED LOCAL\|awaiting publish" docs/release-roadmap.md docs/STATE.md` returns no v0.6.0 or v0.7.0 hits. |
+| AC.READY.4 — Component-count reconciliation | GREEN | `docs/architecture.md:270` "summaries of all 15 components" → "summaries of all 18 components". `grep -rn "15 components\|fifteen components" docs/` returns hits only in audit-history (`docs/v0-3-0-feature-honesty-audit.md`) + v0.7.1 plan-doc + STATE/roadmap meta-rows describing the fix; no user-facing docs carry the stale claim. |
+| AC.READY.5 — memory.md verify-and-record | GREEN | `grep -i "graphiti" docs/components/memory.md` returns zero hits at HEAD `cdae8ed`. The audit's YELLOW-2 finding was over-stated — the doc was already cleaned in a prior cycle. No edit required; F2 surface honestly per `feedback_locked_design_not_license_for_bad_outcomes`. |
+| AC.READY.6 — pr-safety documentation | GREEN | `docs/components/index.md` extended with new "Dev/SDLC plugin verbs" sub-section listing `loam pr-safety` (and the other plugin-contributed CLI verbs: `loam amend`, `loam odd-extract`, `loam project`). `grep "pr-safety" docs/components/index.md` returns the new row + verb description. |
+| AC.READY.7 — HARD-smoke gap closure | GREEN (docs-only at v0.7.1; structural CLI deferred to v0.8.0+) | `docs/release-process.md` §1 pre-publish gates table extended with gate 7 `system-binary-operational`. Status note explicitly flags structural CLI implementation as deferred + the v0.7.1 HARD smoke writeup verifies the gate manually. FUTURE_IDEAS_DRAFT.md captures the v0.8.0+ structural-CLI follow-on. |
+| AC.READY.8 — Stranger-clone outcome-altitude probe | GREEN | `docs/experiments/v0-7-1-hard-smoke.md` §3 documents the cold-clone + cold-venv + 7-verb iteration. Per-verb verdict matrix shows 7/7 exit-0 with usage; 0 errors. Real-execution probe (not pre-arranged state); invokes production CLI entry-points. `outcome-altitude: true` per `feedback_test_outcome_altitude_required`. |
+| AC.READY.9 — Public-surface manifest | GREEN | `docs/public-surface-manifest.md` authored — covers §2.1 CLI verbs / §2.2 plugin entry-point groups / §2.3 workspace-bootstrap manifest schema / §2.4 amendment manifest YAML schema / §2.5 file-based memory contract / §2.6 hook contracts / §2.7 on-disk workspace conventions / §2.8 release-process gates contract. §3 names NON-public surfaces; §4 names contract-evolution mechanics; §5 cites authority chain. Closes the v1.0-readiness audit §3 forward-commitment-realism gap. |
+| AC.READY.S — Seal-diff discipline | GREEN | `git diff --name-only d9cf905..cdae8ed` shows 6 files: 1 SEAL_COMMIT sidecar (`plugins/dev-sdlc/tests/SEAL_COMMIT`); 1 narrative file (`plugins/dev-sdlc/seals/SEAL_COMMIT.v0-7-1-v1-0-readiness-cleanup`); 1 seal-test allowed_files bump (`plugins/dev-sdlc/tests/test_no_sealed_amendments.py` — adding the 4 admin docs); plan-doc + manifest. Cross-component sweep used `--scoped-sweep` (manifest-scoped to dev-sdlc only) due to Python-environment issue (cross-component sweep ran under pyenv 3.9.17 instead of homebrew 3.13 + couldn't import `loam` packages installed only against system Python). The single sealed component (dev-sdlc) seal-test invariant: passed. |
 
 ### AI-time actuals
 
-TBD post-build.
+| Stage | Estimated (plan §9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 30-45 min | ~22 min |
+| AC.READY.1 — system binary reinstall | 1-3 min | ~2 min |
+| AC.READY.2 — install-from-source + cold-venv probe | 10-20 min | ~6 min |
+| AC.READY.3 — STATE/roadmap stale-claims fix | 15-30 min | ~8 min |
+| AC.READY.4 — component-count fix | 10-20 min | ~3 min |
+| AC.READY.5 — memory.md verify | 5-10 min | ~2 min |
+| AC.READY.6 — pr-safety doc | 10-20 min | ~5 min |
+| AC.READY.7 — HARD-smoke gate doc | 20-40 min | ~8 min |
+| AC.READY.8 — stranger-clone probe + writeup | 30-60 min | ~12 min |
+| AC.READY.9 — public-surface manifest | 60-90 min | ~28 min |
+| Plan-doc backfill + apply + seal + §14 | 30-60 min | ~18 min |
+| **Total** | **221-398 min** | **~114 min (~1.9 hr)** |
+
+Significantly under-band — plan-time estimate over-weighted documentation-fidelity AC time and the public-surface manifest authoring time. Forward calibration: defect-closure PATCH-class amendments with documentation-heavy ACs compress to 90-150 min, not 220-400 min.
 
 ### Halt-and-surface findings
 
-TBD post-build.
+**Cross-component sweep environment mismatch (operational; not blocking).** `loam amend seal` ran the cross-component sweep under pyenv 3.9.17 (the ambient interpreter on PATH via shim) instead of homebrew 3.13 (where loam packages are installed). The sweep failed with `ModuleNotFoundError: No module named 'loam'` against `framework/cost-governance/tests/conftest.py`. Used `--scoped-sweep` to restrict the sweep to manifest-listed components (dev-sdlc only); single-component seal-test invariant passed. **Forward action:** v0.7.x or v0.8.0 candidate captured in FUTURE_IDEAS_DRAFT — `loam amend seal` should detect the ambient-interpreter mismatch + surface a corrective hint OR pin the interpreter via the manifest. Not v0.7.1 scope (that's a `loam amend` enhancement, MINOR-class).
+
+**Audit YELLOW-2 over-statement (F2 finding; in-cycle).** AC.READY.5's audit-mandated cleanup of `docs/components/memory.md` for Graphiti residue was unnecessary — the doc was already clean at HEAD `8b129e9` per `grep -i "graphiti" docs/components/memory.md` returning zero hits. The audit's YELLOW-2 finding was over-stated. Recorded as GREEN per F2 surface-honestly discipline (no fix-for-the-sake-of-fix per `feedback_locked_design_not_license_for_bad_outcomes`).
+
+## §14 — Method decisions
+
+The plan-doc's §5 already names the build-time decisions (D-READY.1 through D-READY.9 — install-from-source ordering, component count chosen, memory.md edit-or-skip, pr-safety doc location, HARD-smoke gate name, manifest authority paths). All builder rulings landed as planned; no method-deviations from the plan-doc.
+
+### Commit SHAs
+
+- Plan-doc + manifest authoring: `7ea5fad`
+- Source-edit + admin batch: `d9cf905`
+- Apply auto-commit (BASELINE + sidecar + allowed_files): `5332f1a`
+- Seal commit (deterministic seal): `cdae8ed`
+
+### Build-time decision deviations
+
+None. All D-READY.1 through D-READY.9 rulings landed as the plan-doc anticipated.

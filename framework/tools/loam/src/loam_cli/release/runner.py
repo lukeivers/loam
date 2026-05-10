@@ -353,7 +353,8 @@ def run(
         # tag-object SHA isn't knowable without actually creating the
         # tag); the preview's marker form will reflect the seal SHA.
         backfill_preview = post_publish_backfill.apply_backfill(
-            repo_root, version, tag, seal_sha, dry_run=True
+            repo_root, version, tag, seal_sha,
+            seal_sha=seal_sha, dry_run=True,
         )
         print()
         print(post_publish_backfill.format_backfill_preview(backfill_preview))
@@ -390,7 +391,8 @@ def run(
     #      tag-vs-main divergence).
     tag_sha = _resolve_tag_sha(repo_root, tag)
     backfill_result = post_publish_backfill.apply_backfill(
-        repo_root, version, tag, tag_sha, dry_run=False
+        repo_root, version, tag, tag_sha,
+        seal_sha=seal_sha, dry_run=False,
     )
     backfill_committed = False
     backfill_pushed = False

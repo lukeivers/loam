@@ -436,6 +436,7 @@ def apply_backfill(
     tag: str,
     tag_sha: str,
     *,
+    seal_sha: str | None = None,
     today: _dt.date | None = None,
     dry_run: bool = False,
 ) -> BackfillResult:
@@ -447,6 +448,12 @@ def apply_backfill(
     a §3 Active Version bold entry. Idempotent: re-running on
     already-current state returns ``BackfillResult(idempotent_noop=
     True, edits_applied=0)`` + writes nothing.
+
+    *seal_sha* is optional; when None the function falls back to
+    :func:`gates._extract_seal_sha` against the roadmap body. The
+    runner passes the seal SHA explicitly because it has already
+    extracted it for tag creation (and the §2 row may carry a
+    ``TBD-AT-SEAL`` placeholder that the extractor can't resolve).
 
     *dry_run* mode returns the result + per-edit human-readable
     summaries (on ``state_md_edit`` / ``roadmap_edit`` /
@@ -494,7 +501,8 @@ def apply_backfill(
     section_3_edit: str | None = None
     if roadmap_path.exists():
         body = roadmap_path.read_text(encoding="utf-8")
-        seal_sha = gates._extract_seal_sha(body, version)
+        if seal_sha is None:
+            seal_sha = gates._extract_seal_sha(body, version)
         if seal_sha is None:
             hints.append(
                 f"roadmap §2 row for {version}: seal SHA not extractable; "

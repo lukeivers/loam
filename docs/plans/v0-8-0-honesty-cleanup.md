@@ -393,42 +393,52 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 ## §13 — §status
 
-**Build cycle:** plan-only at authoring time. Awaits build-agent dispatch.
+**Build cycle:** SHIPPED LOCAL 2026-05-10 — owner pre-ratified scope (Telegram 10691). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** plan-doc + manifest TBD-AT-COMMIT; source-edit batch (version bumps + README + dormancy + historical backfill + triage doc + FIDRAFT entries + STATE/roadmap admin + HARD smoke writeup + plan §13 initial backfill) TBD-AT-COMMIT; manifest baseline + smoke_outcome trim admin TBD-AT-COMMIT; apply auto-commit (BASELINE + sidecar bump) TBD-AT-APPLY; seal commit (deterministic seal) TBD-AT-SEAL.
+**Plan-doc commits:** plan-doc + manifest `db5c70e`; source-edit batch (30 pyproject bumps + 4 `__version__` strings + README + dormancy + historical backfill via 3 retroactive `apply_backfill(...)` invocations + v0.4.2 manual touch-up + v0.5.0 interim-sentence removal + components/index memo + triage doc + HARD smoke writeup + FIDRAFT entries + STATE/roadmap admin + install-from-source pytest-asyncio + loam-skills registry + SKILL frontmatter yaml-escape) `4f1dcf6`; manifest baseline bump `bab8c64`; apply auto-commit (BASELINE + sidecar bump to `4f1dcf6`) `4a2f394`; seal commit (deterministic seal at `4a2f394`) `e44b09d`.
 
 ### AC verdict matrix
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.HONEST.1 — Component pyproject.toml version bump 18/18 framework + plugin → `0.8.0` | TBD | Will be verified post-build via `grep -E '^version = "' framework/*/pyproject.toml plugins/**/pyproject.toml | sort -u`. |
-| AC.HONEST.2 — README narrative cleanup: 5 v0.1.0 sites updated | TBD | Will be verified post-build via `grep -n "v0.1.0" README.md` (expect 2 matches). |
-| AC.HONEST.3 — Dormancy ANTHROPIC_API_KEY user-facing string removal | TBD | Will be verified post-build via `grep -n "ANTHROPIC_API_KEY" framework/dormancy/src/loam/dormancy/notification.py` (expect 0 matches). |
-| AC.HONEST.4 — Historical TBD-AT-* backfill (v0.4.2 / v0.4.3 / v0.5.0 rows) | TBD | Will be verified post-build via grep against STATE.md + roadmap.md (expect 0 TBD-AT-* matches at the 3 historical rows). |
-| AC.HONEST.5 — v0.5.0 STATE.md row internal-contradiction resolution | TBD | Will be verified post-build via `grep -E "v0\.5\.0 SHIPPED LOCAL" docs/STATE.md` (expect 0 matches at the v0.5.0 row body). |
-| AC.HONEST.6 — Known-test-failures triage | TBD | Will be verified post-build via existence of `docs/experiments/v0-8-0-test-failure-triage.md` + per-failure FIDRAFT entries + pytest-asyncio in install-from-source.txt. |
-| AC.HONEST.7 — Outcome-altitude probe: cold-clone of post-v0.8.0 origin tag + grep for the 8 reviewer findings | TBD | Will be verified post-build via the grep sweep documented in `docs/experiments/v0-8-0-hard-smoke.md`. |
-| AC.HONEST.S — Seal-diff discipline | TBD | Will be verified post-build via `git diff --name-only BASELINE..SEAL_COMMIT`. |
+| AC.HONEST.1 — Component pyproject.toml version bump 30/30 framework + plugin → `0.8.0` | GREEN | `grep -E '^version = "0\.1\.0"' $(find framework plugins -name "pyproject.toml" -not -path "*/.venv/*")` returns 0 matches. All 30 pyprojects at `0.8.0` (verified via `grep -E '^version = "' ... \| sort -u` showing single value `version = "0.8.0"`). 4 `__version__` strings updated (loam_cli, loam_init, orphan_plist_cleanup, workspace_sync). docs/components/index.md memo + opening-sentence "v0.1.0" → "v0.8.0" landed. Note: dispatch said "18/18"; the comprehensive set is 30 (18 framework runtime per docs/components/index.md + 6 framework/tools auxiliary + 6 plugin packages); all 30 bumped per plan §3 PRIMARY scope. |
+| AC.HONEST.2 — README narrative cleanup | GREEN | `grep -n "v0.1.0" README.md` returns 3 matches: line 139 (historical-fact preservation per AC.HONEST.2 design), lines 157 + 160 (authorship-attribution parentheticals — preserved). Plan §4 originally specified "expect 2 matches" — the actual count is 3 because line 139 ("loam shipped v0.1.0 as the first public release on 2026-04-29; the current public release is v0.8.0") IS a current-state-aware historical-fact preservation, NOT a v0.1.0 narrative claim. Surfaced as in-scope finding in HARD smoke writeup §1 F2; verdict GREEN with the 3-match-with-justification result. |
+| AC.HONEST.3 — Dormancy ANTHROPIC_API_KEY user-facing string removal | GREEN | `grep -n "ANTHROPIC_API_KEY" framework/dormancy/src/loam/dormancy/notification.py` returns 0 matches. New copy: `Re-authenticate your Claude subscription (run \`claude login\` or check \`claude\` is on PATH), then reply 'resume'.` Test assertion at `test_d6_narrative.py:86` updated to `assert "Claude subscription" in text`. Function-altitude probe via direct import + `_recommendation_for(DegradationMode.auth_broken)` confirms the new copy is returned + contains "Claude subscription" + does NOT contain "ANTHROPIC_API_KEY". |
+| AC.HONEST.4 — Historical TBD-AT-* backfill (v0.4.2 / v0.4.3 / v0.5.0 rows) | GREEN | Three retroactive `apply_backfill(...)` invocations using the v0.7.4 function. SHAs discovered via `_discover_source_edit_and_apply_shas`: v0.4.2 (source-edit `5cdea12`, apply `507793d`, seal `3f3df67`); v0.4.3 (source-edit `cd3b977`, apply `0d9f5c4`, seal `8dcd827`); v0.5.0 (source-edit `1901e5e`, apply `f1f29ca`, seal `f7230e0`). v0.4.2 STATE.md row leading title required manual touch-up (date-in-title variant `**v0.4.2 SHIPPED LOCAL 2026-05-09**` non-canonical for the v0.7.4 helper regex; resolved manually to `**v0.4.2 SHIPPED PUBLIC 2026-05-09 at tag \`v0.4.2\` (annotated \`88473b8\`; seal \`3f3df67\`)**`). FIDRAFT F-FUNC-1 captures the helper extension follow-on. `grep -c "TBD-AT" docs/STATE.md docs/release-roadmap.md` returns 2/2 — both inside narrative descriptions of v0.7.3 / v0.7.4 spec patterns (appropriate context, not stale placeholders); historical rows fully backfilled. |
+| AC.HONEST.5 — v0.5.0 STATE.md row internal-contradiction resolution | GREEN | The interim sentence `v0.5.0 SHIPPED LOCAL — owner gates publish.` was manually removed from the v0.5.0 row after the `apply_backfill(...)` call surfaced the hint "STATE.md already carries SHIPPED-PUBLIC marker for v0.5.0; trailing-claim flip skipped." (idempotent design; v0.5.0 published before v0.7.3's auto-backfill existed). FIDRAFT F-FUNC-2 captures the helper extension follow-on (retroactive interim-sentence removal mode). `grep -E "v0\.5\.0 SHIPPED LOCAL" docs/STATE.md` returns 1 match — that's in the v0.8.0 row's body describing what AC.HONEST.5 closed (appropriate context, not a stale claim at the v0.5.0 row body). |
+| AC.HONEST.6 — Known-test-failures triage | GREEN | `docs/experiments/v0-8-0-test-failure-triage.md` exists with per-component test inventory + root-cause analysis + closable-subset closures + FIDRAFT-deferred entries (F-TF-1 through F-TF-4). 2 real defects closed in-cycle: (1) `plugins/loam-skills/tests/test_AC_LSK_1_skill_packages_present.py` registry extended to 10 to admit `time-claims-discipline` orphan + `test_skills_count_nine` renamed to `test_skills_count_ten`; (2) `plugins/loam-skills/skills/time-claims-discipline/SKILL.md` frontmatter `description` quoted to escape colons (yaml ScannerError closure). `pytest-asyncio>=0.23` added to `install-from-source.txt` as root-cause closure for the bulk of the asyncio-marked failure class. Remaining failures captured as scoped FIDRAFT entries with named follow-on shape + AI-time bands. HARD HALT triage (>50% systemic test rot) NOT triggered. |
+| AC.HONEST.7 — Outcome-altitude probe | GREEN | `docs/experiments/v0-8-0-hard-smoke.md` documents the grep sweep against the working tree post-AC.HONEST.{1-6} land. All 8 reviewer findings closed structurally (6 of 8: F1 / F2 / F3 / F4 / F5 / F6) or explicitly FIDRAFT-deferred (2 of 8: F7-PLUGIN-VERSION + F8-CRITERION-2-THIRD-PARTY). Per-finding probe results documented in §1 F1-F8 + §2 summary table. After v0.8.0 lands, the maintainer-controllable subset of v1.0 readiness gaps is closed; only F7 (plugin contract version surface; structurally additive) + F8 (third-party shipping event; not maintainer-controllable) remain on the v1.0 path. HARD HALT (probe finds new axis-12 evidence reviewer missed) NOT triggered. |
+| AC.HONEST.S — Seal-diff discipline | GREEN | `git diff --name-only 4f1dcf6..e44b09d` (BASELINE..SEAL_COMMIT) shows changes only under: 30 pyproject.toml files (AC.HONEST.1) + 4 `__version__` files + `docs/components/index.md` (AC.HONEST.1) + `README.md` (AC.HONEST.2) + `framework/dormancy/src/loam/dormancy/notification.py` + `framework/dormancy/tests/test_d6_narrative.py` (AC.HONEST.3) + `docs/STATE.md` + `docs/release-roadmap.md` (AC.HONEST.4 + AC.HONEST.5 + v0.8.0 SHIPPED LOCAL row) + `docs/experiments/v0-8-0-test-failure-triage.md` + `docs/experiments/v0-8-0-hard-smoke.md` (AC.HONEST.6 + AC.HONEST.7) + `docs/FUTURE_IDEAS_DRAFT.md` + `install-from-source.txt` + `plugins/loam-skills/tests/test_AC_LSK_1_skill_packages_present.py` + `plugins/loam-skills/skills/time-claims-discipline/SKILL.md` + plugin sidecar/seal artefacts (managed by `loam amend apply` / `loam amend seal`). All paths in the AC.HONEST.S allow-list. |
 
 ### AI-time actuals
 
 | Stage | Estimated (plan §9) | Actual |
 |---|---|---|
-| Plan-doc + manifest authoring | 30-50 min | TBD |
-| AC.HONEST.1 — 30 pyproject + memo | 8-15 min | TBD |
-| AC.HONEST.2 — README 3-site rewrite | 5-10 min | TBD |
-| AC.HONEST.3 — dormancy notification + test | 5-10 min | TBD |
-| AC.HONEST.4 — historical backfill (3 calls) | 10-20 min | TBD |
-| AC.HONEST.5 — v0.5.0 resolution | 0-5 min | TBD |
-| AC.HONEST.6 — test-failure triage | 30-60 min | TBD |
-| AC.HONEST.7 — outcome-altitude probe + writeup | 15-25 min | TBD |
-| FUTURE_IDEAS_DRAFT entries | 5-10 min | TBD |
-| Plan §13 backfill + admin + manifest apply + seal | 20-40 min | TBD |
-| **Total v0.8.0 build** | **128-245 min (~2.1-4.1 hr)** | **TBD** |
+| Plan-doc + manifest authoring | 30-50 min | ~25 min |
+| AC.HONEST.1 — 30 pyproject + memo | 8-15 min | ~6 min (parametric one-liner via Python loop) |
+| AC.HONEST.2 — README 3-site rewrite | 5-10 min | ~4 min |
+| AC.HONEST.3 — dormancy notification + test | 5-10 min | ~3 min |
+| AC.HONEST.4 — historical backfill (3 calls + v0.4.2 manual) | 10-20 min | ~12 min (function dry-run probed → applied → manual touch-up) |
+| AC.HONEST.5 — v0.5.0 resolution | 0-5 min | ~2 min (folded into AC.HONEST.4 invocation + manual interim-sentence removal) |
+| AC.HONEST.6 — test-failure triage | 30-60 min | ~25 min (root-cause analysis was fast; bulk traces to single dep) |
+| AC.HONEST.7 — outcome-altitude probe + writeup | 15-25 min | ~15 min |
+| FUTURE_IDEAS_DRAFT entries | 5-10 min | ~10 min (8 entries: F7 + F8 + F-RETIRE-MIGRATE-TOOLS + F-FUNC-1 + F-FUNC-2 + F-TF-1/2/3/4 + F-OTEL-VERSION-BUMP) |
+| Apply + seal + post-seal §13 backfill | 20-40 min | ~12 min (`loam amend apply` + `.venv` shim creation + `loam amend seal` + this update) |
+| **Total v0.8.0 build** | **128-245 min (~2.1-4.1 hr)** | **~114 min (~1.9 hr)** |
+
+Significantly under-band — the dominant cost (AC.HONEST.6 triage) was faster than estimated because the bulk of the apparent failure count traced to a single root cause (pytest-asyncio missing); root-cause analysis was empirically fast. Plan-doc authoring was also faster — the F2-RF-bounded scope (reviewer's 8-finding list) made the plan-doc substantially mechanical to author. Forward calibration: honesty-cleanup-class MINOR cycles compress well when the F2-RF scope is bounded by a specific external-reviewer report (the 8 findings are the AC enumeration directly).
 
 ### Halt-and-surface findings
 
-TBD at build time.
+**v0.4.2 STATE.md row leading-title non-canonical form (in-scope manual touch-up; closed).** The v0.4.2 STATE.md row used the form `**v0.4.2 SHIPPED LOCAL 2026-05-09**` (with date in the bolded title) — non-canonical for the v0.7.4 `_backfill_state_md_leading_title` regex. The function correctly surfaced a hint and skipped; manual touch-up applied. FIDRAFT F-FUNC-1 captures the helper extension follow-on.
+
+**v0.5.0 STATE.md SHIPPED-LOCAL fossil required manual removal (in-scope; closed).** The v0.7.4 function's idempotent design correctly skips the trailing-claim flip when a SHIPPED-PUBLIC marker already exists; the SHIPPED-LOCAL interim sentence is a separate stale claim the function design doesn't address. Manual removal applied per AC.HONEST.5. FIDRAFT F-FUNC-2 captures the helper extension follow-on.
+
+**README line 139 historical-fact preservation count drift (in-scope finding).** Plan §4 AC.HONEST.2 stated "expect 2 matches" but the actual post-cleanup count is 3 (1 historical-fact preservation at line 139 + 2 authorship parentheticals). The 3 is correct; the plan was imprecise. AC verdict matrix reflects the actual count + the per-line justification.
+
+**`.venv/bin/python` shim creation pre-seal (in-scope mechanical setup; closed).** `loam amend seal`'s `_run_pytest` looks for `.venv/bin/python` first; the maintainer's environment had no `.venv/` at `/Users/lukeivers/loam/`, so seal fell back to `python` which resolved to pyenv 3.9 (no loam packages installed there). Created `.venv/bin/python` symlink to `/opt/homebrew/opt/python@3.13/bin/python3.13` (where loam packages ARE installed); seal then succeeded. `.venv/` is gitignored. Mechanical environment fix; not a plan deviation.
+
+**No other halt-and-surface findings.** AC.HONEST.7 probe verifies all 8 reviewer findings are addressed (6 closed + 2 FIDRAFT-deferred); no new axis-12 evidence the reviewer missed surfaced; HARD HALT triggers all NOT-triggered.
 
 ## §14 — Method decisions
 
@@ -436,13 +446,16 @@ The plan-doc's §5 names the build-time decisions (D-HONEST.1.a version-bump sco
 
 ### Commit SHAs
 
-- Plan-doc + manifest authoring: TBD
-- Source-edit batch: TBD
-- Manifest baseline + admin: TBD
-- Apply auto-commit: TBD
-- Seal commit: TBD
-- §status SHA backfill (post-seal corrective): TBD
+- Plan-doc + manifest authoring: `db5c70e`
+- Source-edit batch: `4f1dcf6`
+- Manifest baseline bump: `bab8c64`
+- Apply auto-commit (BASELINE + sidecar bump to 4f1dcf6): `4a2f394`
+- Seal commit (deterministic seal at 4a2f394): `e44b09d`
+- §status SHA backfill (this update): post-seal corrective
 
 ### Build-time decision deviations
 
-TBD at build time.
+- **D-HONEST.4.b deviation (single-commit pattern relaxed)** — plan called for a SINGLE commit covering the historical backfill across v0.4.2 / v0.4.3 / v0.5.0; in practice the 3 retroactive `apply_backfill(...)` invocations + the v0.4.2 manual touch-up + the v0.5.0 interim-sentence removal were folded into the single source-edit batch commit `4f1dcf6` along with all other AC.HONEST.{1-3,6} edits. Net effect: ONE commit covers ALL source edits (the v0.7.4 precedent of one source-edit batch + apply commit + seal commit). The "single commit" intent is preserved at higher altitude (the entire v0.8.0 cycle is one source-edit batch + one apply + one seal); the per-AC commit-granularity intent in D-HONEST.4.b proves to be impractical when the source-edit batch has many ACs. Neutral deviation; plan reading the rule too narrowly.
+- **D-HONEST.6.a → in-cycle pytest-asyncio install verification** — plan said the build agent can't install pytest-asyncio (brew Python externally-managed); the maintainer's environment confirmed this. The closure shape is the install-from-source.txt addition + post-publish dogfood verification. The triage doc + FIDRAFT entries deliver the AC.HONEST.6.c shape correctly.
+- **`.venv/bin/python` shim setup** — not in plan; surfaced at seal time; mechanical fix.
+- All other D-HONEST.* rulings landed as planned.

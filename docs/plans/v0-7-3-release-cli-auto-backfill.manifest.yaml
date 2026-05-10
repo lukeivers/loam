@@ -4,7 +4,7 @@ amendment:
   title: "v0.7.3 PATCH — release-CLI post-publish auto-backfill. Defect-closure for v0.6.0's release-process: post-publish, the version's STATE.md + release-roadmap.md rows currently require a manual SHIPPED-LOCAL → SHIPPED-PUBLIC promotion (recurring miss at v0.6.0/v0.7.0/v0.7.1/v0.7.2). New module post_publish_backfill.py auto-rewrites the trailing SHIPPED-LOCAL claim to SHIPPED-PUBLIC at tag <name> (annotated <SHA>); appends the marker to the §2 row; updates the **Total shipped:** aggregate-count summary line; appends a §3 Active Version bold entry. Wired into runner.run between tag-push and post-ship review. Idempotent on re-run; new test module covers positive/negative/idempotence; outcome-altitude probe runs `loam release v0.7.3 --dry-run`."
 
 # BASELINE captured at apply time after source-edit + admin commit lands.
-baseline: "TBD-AT-APPLY"
+baseline: "01e0883"
 
 plan: docs/plans/v0-7-3-release-cli-auto-backfill.md
 plan_doc_ref: docs/plans/v0-7-3-release-cli-auto-backfill.md

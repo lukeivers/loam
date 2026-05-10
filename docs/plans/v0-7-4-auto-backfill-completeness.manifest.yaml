@@ -1,0 +1,110 @@
+schema_version: 3
+amendment:
+  slug: v0-7-4-auto-backfill-completeness
+  title: "v0.7.4 PATCH — auto-backfill completeness. Defect-closure for v0.7.3's spec gaps surfaced at v0.7.3's own publish dogfood: leading row-title not flipped (STATE.md), STATE.md seal TBD-AT-SEAL not auto-backfilled, TBD-AT-COMMIT/TBD-AT-APPLY left manual. Extends apply_backfill with three helpers (leading-title flip + STATE.md TBD-AT-* mirror + commit-graph-walk discovery from seal commit). Path B ruling (single-component release-CLI extension) per AC.BACKFL2.3. Idempotence preserved across all v0.7.3 + v0.7.4 surfaces; outcome-altitude probe via `loam release v0.7.4 --dry-run`."
+
+# BASELINE captured at apply time after source-edit + admin commit lands.
+baseline: TBD-AT-APPLY
+
+plan: docs/plans/v0-7-4-auto-backfill-completeness.md
+plan_doc_ref: docs/plans/v0-7-4-auto-backfill-completeness.md
+
+ac_count: 6
+smoke_outcome: "v0.7.4 PATCH AC.BACKFL2.{1-6,S} GREEN; auto-backfill flips leading title, mirrors TBD-AT-* to STATE.md, discovers source-edit+apply via seal-commit walk; idempotence preserved; 5 new tests; all 11 v0.7.3 BACKFL tests pass."
+
+# Single-component fence (framework/tools/loam) plus universal-admission docs.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+    - framework/tools/loam/
+  files:
+    - CLAUDE.md
+    - install-from-source.txt
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/components/memory.md
+    - docs/public-surface-manifest.md
+    - README.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-7-4-auto-backfill-completeness
+  body: |
+    # v0.7.4 PATCH — auto-backfill completeness
+
+    2026-05-10. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST. v0.7.4 closes the 4 residual gaps in v0.7.3's auto-backfill
+    spec that were surfaced by v0.7.3's own publish dogfood (commit
+    88964cb): the auto-backfill applied 3 edits / 2 files but left
+    leading-title unflipped (STATE.md row title still said SHIPPED LOCAL),
+    STATE.md seal TBD-AT-SEAL placeholder unbackfilled, and TBD-AT-COMMIT
+    / TBD-AT-APPLY placeholders manual (the v0.7.3 spec explicitly
+    deferred these as not-discoverable-from-runner-inputs). Manual
+    touch-up at cb71ca5 + 5c3f7ac closed those gaps for v0.7.3; v0.7.4
+    makes them structural.
+
+    Defect-closure shape (no new outcome capability). v0.7.4 extends
+    the existing v0.7.3 apply_backfill function (581-line module at
+    framework/tools/loam/src/loam_cli/release/post_publish_backfill.py)
+    with three helpers:
+
+    AC.BACKFL2.1 — leading-title flip. New _backfill_state_md_leading_title
+    helper flips the bolded title `**vX.Y.Z <CLASS> SHIPPED LOCAL**` →
+    `**vX.Y.Z <CLASS> SHIPPED PUBLIC**` in STATE.md (preserves CLASS
+    casing). Roadmap §2 row's `Single-cycle PATCH:` leader is NOT a
+    SHIPPED-LOCAL claim — out of scope (the per-row marker append IS
+    the roadmap row's PUBLIC signal).
+
+    AC.BACKFL2.2 — STATE.md TBD-AT-* helper. Mirror of v0.7.3's
+    roadmap-row helper (_backfill_tbd_placeholders) applied to the
+    STATE.md row body. Replaces seal TBD-AT-SEAL → seal `<sha7>` (and
+    after BACKFL2.3 lands, also TBD-AT-COMMIT / TBD-AT-APPLY).
+
+    AC.BACKFL2.3 — commit-graph-walk discovery. Path-B ruling (single-
+    component release-CLI extension; path-A would touch loam-amend +
+    change the seal-step contract — declined). New
+    _discover_source_edit_and_apply_shas(repo_root, seal_sha) helper
+    walks: git log seal_sha message contains 'at <apply_sha>' (canonical
+    form across 10+ historical seals); git log apply_sha message
+    contains 'BASELINE+sidecar bump to <source_edit_sha>' (canonical
+    form across 10+ historical applies). Returns (source_edit_sha,
+    apply_sha) or (None, None) on regex miss; surfaces via hints;
+    never crashes.
+
+    AC.BACKFL2.4 — idempotence preserved across all v0.7.3 + v0.7.4
+    surfaces. All 11 v0.7.3 BACKFL tests continue to pass without
+    modification (existing-test preservation per D-BACKFL2.4.a —
+    fake-SHA fixtures gracefully degrade through D-BACKFL2.3.b's
+    discovery-optional path).
+
+    AC.BACKFL2.5 — 5 new tests at framework/tools/loam/tests/test_AC_BACKFL.py
+    cover positive (title-flip, STATE.md seal-backfill, commit-graph
+    discovery, integration with full v0.7.4 pre-image), negative
+    (already-public title no-op).
+
+    AC.BACKFL2.6 — outcome-altitude probe via `loam release v0.7.4
+    --dry-run` against this very plan-doc + the live state; documented
+    in docs/experiments/v0-7-4-hard-smoke.md.
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit (helpers
+    + tests + release-process update) TBD-AT-COMMIT; HARD smoke +
+    experiments TBD-AT-COMMIT; pre-apply admin TBD-AT-COMMIT.

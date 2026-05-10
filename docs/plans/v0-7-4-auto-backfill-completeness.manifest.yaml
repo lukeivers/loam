@@ -10,7 +10,7 @@ plan: docs/plans/v0-7-4-auto-backfill-completeness.md
 plan_doc_ref: docs/plans/v0-7-4-auto-backfill-completeness.md
 
 ac_count: 6
-smoke_outcome: "v0.7.4 PATCH AC.BACKFL2.{1-6,S} GREEN; auto-backfill flips leading title, mirrors TBD-AT-* to STATE.md, discovers source-edit+apply via seal-commit walk; idempotence preserved; 5 new tests; all 11 v0.7.3 BACKFL tests pass."
+smoke_outcome: "v0.7.4 PATCH AC.BACKFL2.{1-6,S} GREEN; flips leading title + mirrors TBD-AT-* to STATE.md + walks seal commit graph for source-edit+apply; 8 new tests; 68/68 release-CLI tests."
 
 # Single-component fence (framework/tools/loam) plus universal-admission docs.
 components:

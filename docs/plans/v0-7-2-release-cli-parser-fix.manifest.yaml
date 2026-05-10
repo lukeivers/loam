@@ -3,8 +3,8 @@ amendment:
   slug: v0-7-2-release-cli-parser-fix
   title: "v0.7.2 PATCH — release-CLI acs-verified gate parser-scoping fix. Defect-closure for v0.6.0's check_acs_verified function: scopes the AC-ID scan to the plan-doc §4 — Acceptance criteria section so cross-reference AC IDs in §6 (out-of-scope) and §8 (dependencies) are no longer flagged as missing-from-§status. Restores AC-ID precision in v0.7.1 plan-doc by reverting two prose-form workarounds (AC.NTU.6 and AC.V060.7 cross-references). New test pair covers the scoped scan; outcome-altitude probe runs `loam release v0.7.2 --dry-run` against this very plan-doc."
 
-# BASELINE captured at apply time.
-baseline: TBD-AT-APPLY
+# BASELINE captured at apply time; source-edit + admin commit landed at 68b7716.
+baseline: "68b7716"
 
 plan: docs/plans/v0-7-2-release-cli-parser-fix.md
 plan_doc_ref: docs/plans/v0-7-2-release-cli-parser-fix.md

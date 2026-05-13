@@ -1,0 +1,48 @@
+# ODD methodology paper publish — case-study altitude artefact
+
+2026-05-13. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
+
+Lands the ODD methodology paper at `docs/papers/odd-methodology.md` (v19 final
+draft from 12 reviewer-pass iteration arc) + HTML rendering + README link from
+the "key documents" section. The paper is a case-study report — not a
+venue-submitted methodology paper — covering: what ODD proposes; what was
+observed across the ProgramBench-derivative empirical investigation (5 tasks:
+yj n=4 reps + csview/gron/htmlq/figlet n=1 reps); what the case-study data
+does and does not support; what would be needed to convert case observations
+into population-level methodology claims.
+
+Iteration arc applied: claim-or-cite citation discipline (no fabricated
+sources; 5 real citations verified — Beck 2002, North March 2006, Wynne+
+Hellesøy 2012, Zave+Jackson 1997 IEEE TSE 6(1):1-30, Yang et al. 2026
+ProgramBench arXiv:2605.03546); arithmetic-verified statistics (pre-substrate
+yj mean 23.06% sd 18.83pp re-derived from 4 listed reps; substrate yj mean
+47.09% sd 2.77pp); case-study altitude framing explicit in "On this artefact"
+section + H-MAJOR-1 abstract caveat + H-MAJOR-2 §5B.2 "coincides with" not
+"is attributable to"; A-MAJOR-1 §2.4 capability sub-table with outer-objective
+context; scope-creep audit cuts (cost-bounded-stubs class + drift-halt
+pseudocode + checker I/O contract + verification floor + AI-extraction
+markers).
+
+Class (preliminary): MINOR per docs/release-versioning-policy.md — adds new
+artefact category (docs/papers/) and a new aspect of the project's
+user-visible surface (peer-reviewable methodology documentation). Not a
+defect-closure within a prior shipped outcome.
+
+Version assigned at release-time per feedback_version_numbers_at_release_time
+— slug is scope-descriptive (odd-paper-methodology-publish), no version
+pre-baked into plan-doc or AC IDs. Release CLI invocation derives the version
+from (current_published=v0.8.1, class=MINOR) at the moment of release.
+
+AC.ODDPAPER.4 outcome-altitude probe runs cold-clone reader-discovery
+simulation: open README, locate paper link, follow to docs/papers/, read
+first three sections in both light and dark system themes. Documented in
+docs/experiments/odd-paper-methodology-publish-hard-smoke.md.
+
+Out of scope: the §4 restructure of docs/release-roadmap.md (separate plan-doc
+at docs/plans/release-roadmap-priority-queue-restructure.md, committed b269d8e
+on 2026-05-09 against Telegram 10557; runs as the next build cycle after this
+publish).
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch (paper +
+README link + HTML + universal-admission docs) TBD-AT-COMMIT; apply
+TBD-AT-COMMIT; seal TBD-AT-COMMIT.

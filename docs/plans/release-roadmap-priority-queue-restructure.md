@@ -340,12 +340,54 @@ This plan-doc inherits the authority of `docs/release-versioning-policy.md` (whi
 
 ## §12 — §status (post-build backfill)
 
-To be filled at build seal time. Template:
+**Build cycle:** SHIPPED LOCAL 2026-05-13 — owner pre-ratified scope (dispatcher brief 2026-05-13; Telegram 11091). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
-- AC.RR.1 — §4 restructured: VERDICT TBD; evidence: rendered §4 in `docs/release-roadmap.md`.
-- AC.RR.2 — Reclassification audit: VERDICT TBD; evidence: audit table inside §4 (or as §4-prelude).
-- AC.RR.3 — Number-derivation rule: VERDICT TBD; evidence: new section in `docs/release-versioning-policy.md`.
-- AC.RR.4 (outcome-altitude) — Real "what's next?" decision: VERDICT TBD; evidence: writeup at `<workspace>/.scratch/claude-output/release-roadmap-restructure-outcome-probe.md`.
-- AC.RR.S — Seal-diff: VERDICT TBD; evidence: `git diff --name-only` between BASELINE + SEAL_COMMIT under fence only.
+**Plan-doc commits:** plan-doc `b269d8e` (authored 2026-05-09); manifest `71ee3f0`; source-edit batch (§4 restructure + audit table + policy-doc extension + dep-map re-key + HARD smoke writeup + STATE/roadmap admin + 30 pyproject 0.9.0→0.10.0 bumps + 4 __version__ bumps) `3354f73`; manifest baseline backfill `2540718`; manifest smoke_outcome shortening `fad2989`; apply auto-commit (BASELINE + sidecar bump to `3354f73`) `40b2553`; seal commit (deterministic seal) `c71b2fa`.
 
-Open questions (Q1–Q7) ratifications recorded inline with the audit deliverable.
+**Build-time rescope (per dispatch brief 2026-05-13):** the plan-doc was authored 2026-05-09 against then-current state. Between authoring and build-commence-time, v0.4.4 → v0.9.0 ALL shipped (most under different scopes than the plan-doc's audit anticipated). The reclassification audit was rescoped at build-time to apply only to currently-forward-looking §4 entries; for SHIPPED versions, the audit is historical / read-only (surface past mis-classifications but no retroactive renames — would break published tags). The plan-doc's Q1/Q2/Q3/Q5/Q6/Q7 ratifications from the 2026-05-09 era are no longer applicable at this build-commence-time because the work they anchored on has shipped under different shapes; only the rescoped audit deliverable survives.
+
+### AC verdict matrix
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.RR.1 — §4 restructured to priority-ordered queue of unnumbered candidates | GREEN | `docs/release-roadmap.md` §4 restructured at source-edit `3354f73`. Top-level header reads "Priority-ordered candidate queue (next-release pipeline)". 6 candidate sections present (`binary-usage-observation-harness`, `principle-foundation-structural-enforcement`, `negative-alignment-detection`, `deep-personalization`, `plugin-suite-expansion`, `v1.0.0-stability-gate`); each carries the 8 named fields (slug, objective, class, AC family, constraints, source items, AI-time, dependencies); no candidate carries a pre-assigned version-number except `v1.0.0-stability-gate` (structurally pinned by policy per `docs/release-versioning-policy.md` §"When 1.0.0 ships"). Header note explains numbers derive at build-commence-time. Source-edit commit `3354f73`. |
+| AC.RR.2 — Reclassification audit deliverable | GREEN (rescoped) | Audit table at `docs/release-roadmap.md` §4-prelude. Two sections: historical (13 already-shipped rows, read-only per HARD HALT — no retroactive renames; surfaces 2 mis-classifications: v0.4.1 borderline-MINOR shipped as PATCH, v0.4.4 MINOR caught + renamed to v0.5.0 before publish) + forward-looking (6 unshipped candidates, rescope-applied per build-time directive — all retain MINOR class). 6-column table per row per the AC spec (slug-or-version, original-class, audited-class, ships-new-outcome-shape?, evidence, reclassification-call). Source-edit commit `3354f73`. |
+| AC.RR.3 — Number-derivation rule documented | GREEN | New section "Number derivation at build-commence time" in `docs/release-versioning-policy.md` between "When 1.0.0 ships" and "Pre-release tags". Recipe block present (Given clauses + per-class if/elif/elif). 5 narrative paragraphs covering: where the recipe applies; what `current_version` means precisely (highest-numbered shipped tag on canonical remote); hot-patch case (4-digit form + `bump_hotfix`); edge case (in-flight PATCH); implementation choice (documented manual rule per D-RR.5.4; Python helper deferred). Source-edit commit `3354f73`. |
+| AC.RR.4 (outcome-altitude) — Real "what's next?" decision exercises the new shape | GREEN | Real production entry-point `loam release v0.10.0 --plan-doc docs/plans/release-roadmap-priority-queue-restructure.md --dry-run` invoked from `/Users/lukeivers/loam/` at sealed state (HEAD = `c71b2fa`). Verbatim output post-§status-backfill: `[GREEN] hard-smoke: HARD smoke GREEN at docs/experiments/release-roadmap-priority-queue-restructure-hard-smoke.md`; `[GREEN] acs-verified: all 5 AC(s) verified (GREEN or REMOVED) in docs/plans/release-roadmap-priority-queue-restructure.md §status`; `[GREEN] state-shipped: v0.10.0 marked SHIPPED in docs/STATE.md`; `[GREEN] clean-tree: working tree clean`; `[GREEN] branch-main: on branch main`; `[GREEN] seal-reachable: seal c71b2fa reachable from HEAD`. ALL 6 GATES GREEN — the dogfood probe IS the verification that the v0.7.2 + v0.8.2 + v0.8.3 PATCH chain prepared the gates for scope-descriptive plan-docs end-to-end. Probe writeup at `docs/experiments/release-roadmap-priority-queue-restructure-hard-smoke.md` Stage 2. |
+| AC.RR.S — Seal-diff discipline | GREEN | `git diff --name-only 3354f73..c71b2fa` shows changes only under: apply + seal auto-commits (`plugins/dev-sdlc/seals/SEAL_COMMIT.release-roadmap-priority-queue-restructure` + `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar) + manifest baseline bump. `git diff --name-only b269d8e..c71b2fa` (full BASELINE → SEAL) shows changes only under the named fence: `docs/release-roadmap.md` (§4 restructure + audit table + §2 row) + `docs/release-versioning-policy.md` (number-derivation section) + `docs/release-roadmap-dependency-map.md` (re-key) + `docs/STATE.md` (universal-admission row) + `docs/experiments/release-roadmap-priority-queue-restructure-hard-smoke.md` (HARD smoke writeup) + `docs/plans/release-roadmap-priority-queue-restructure.{md,manifest.yaml}` (plan-doc + manifest) + 30 pyproject.toml + 4 __version__.py (per-component MINOR bump per AC.HONEST.1) + auto-managed seal sidecar. All paths in fence allow-list (universal-admission docs + per-component-version discipline for MINOR). No framework source code changes (no helper landed per D-RR.5.4). |
+
+### AI-time actuals
+
+| Stage | Estimated (plan §9) | Actual |
+|---|---|---|
+| §4 restructure (rewrite §4 content + scope-descriptive slugs + header note) | 30-50 min midpoint 40 min | ~15 min |
+| Reclassification audit deliverable (table authoring + per-row evidence; rescoped section) | 25-40 min midpoint 32 min | ~10 min |
+| Number-derivation rule documentation in policy doc | 15-25 min midpoint 20 min | ~8 min |
+| Dependency-map re-keying | 10-20 min midpoint 15 min | ~5 min |
+| Outcome-altitude probe + writeup | 15-30 min midpoint 22 min | ~5 min (writeup pre-authored; probe is single CLI invocation) |
+| Plan-doc + manifest scaffolding | 20-30 min midpoint 25 min | ~10 min (manifest authoring + 2 fixups) |
+| Per-component version bump (30 pyproject + 4 __version__) | not in plan (added at build per AC.HONEST.1) | ~3 min (sed batch) |
+| §status backfill + apply + seal | ~5-10 min | ~5 min |
+| **Total v0.10.0 build** | **plan §9 midpoint ~200 min** (excluding helper path) | **~60 min** |
+
+Well below the plan-doc's estimate. Three factors: (1) the rescoped audit drained ~half the originally-anticipated audit work because most pre-numbered entries had already shipped; (2) the documented-manual-rule path for number-derivation (vs Python helper) was cheaper than the plan-doc's compositional estimate assumed; (3) the per-component pyproject bump was a single sed batch since the convention was already established at v0.8.0. Forward calibration: doc-only MINOR cycles with established per-component-version discipline compress to ~60 min vs the ~200 min wider-scope estimate when audit + helper paths add scope.
+
+### Halt-and-surface findings
+
+**No build-time halt-and-surface findings.** The dispatch brief's HARD HALT triggers (renaming already-published versions; deletion of historical content; out-of-fence edits; in-cycle commit attempts before owner ratification of plan-doc; additional misclassified shipped versions beyond named scope; current_version ambiguity; pre-existing number-derivation rule in policy doc) all held.
+
+The rescope directive was honored: historical-section walks 13 shipped versions read-only (surfaces 2 mis-classifications as lessons-learned; no retroactive renames proposed); forward-looking-section walks 6 currently-unshipped candidates (all retain MINOR class).
+
+The plan-doc's Q1/Q2/Q3/Q5/Q6/Q7 from the 2026-05-09 era are not applicable at this build-commence-time because the work they anchored on (v0.4.4 retroactive rename, v0.4.5 build, v0.4.1/v0.4.2 lessons-learned, helper-vs-manual choice, roadmap-re-review fold-in, goal-alignment scoring) has either shipped under different scope or is now subsumed by other discipline (e.g., goal-alignment is captured in dispatch briefs, not the queue itself). Q4 (descriptive slugs vs version-suffixed slugs) is implicitly answered: descriptive slugs landed throughout.
+
+The v0.10.0 number was derived at release-time per the new section's recipe: `next_MINOR(v0.9.0) = v0.10.0`. The first end-to-end exercise of the v0.7.2 + v0.8.2 + v0.8.3 release-CLI PATCH chain against a scope-descriptive plan-doc returned all 6 gates GREEN.
+
+Open questions (Q1–Q7 from §10) ratifications: the plan-doc's open questions were authored against the 2026-05-09 state and have been overtaken by events; the rescope directive in the dispatch brief is the operative ratification.
+
+## §13 — Build-time decision deviations
+
+- **Audit scope rescoped at build-time** per dispatch brief directive (2026-05-13). Original AC.RR.2 spec named entries v0.4.5 / v0.5.0 / v0.6.0 / v0.7.0 / v0.8.0 / v0.9.0 / v0.10.0+ as forward-looking; at build-commence-time those had all shipped except v0.10.0+. The rescope: historical section walks shipped versions read-only; forward-looking section walks currently-unshipped candidates (6 of them; see §4-prelude). Within the rescope envelope; no AC text changes; verdict still GREEN.
+- **Helper path declined per D-RR.5.4 (Path A).** Documented manual rule landed in the policy doc; Python helper not built. Within plan-doc's §3 OPTIONAL secondary envelope; the helper can land as a future opt-in patch if manual-application cost rises.
+- **D-RR.5.5 not addressed (roadmap re-review fold-in).** The plan-doc's D-RR.5.5 named a choice between folding a "post-ship roadmap re-review" subsection into the §4 restructure or splitting it into a separate amendment. Build-time call: not addressed in this cycle — the post-ship review mechanism is already structurally in `docs/release-process.md` (v0.6.0 release-CLI's post-ship review block) and folding it into §4 would extend scope. Captured as candidate FIDRAFT entry for next docs-admin cycle if needed.
+- **D-RR.5.6 not addressed (goal-alignment scoring per candidate).** Build-time call: not added. Goal-alignment lives in the dispatch brief surfacing per priority decision; adding it to the queue would maintenance-cost more than the signal-richness adds at current cadence (single-maintainer + low queue-promotion frequency).
+- **All other D-RR.* rulings landed as planned.**

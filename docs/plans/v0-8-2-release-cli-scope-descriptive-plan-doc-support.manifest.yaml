@@ -1,0 +1,104 @@
+schema_version: 3
+amendment:
+  slug: v0-8-2-release-cli-scope-descriptive-plan-doc-support
+  title: "v0.8.2 PATCH — `loam release` accepts scope-descriptive plan-doc paths. Defect closure on v0.6.0 release-process outcome: gates assumed version-named filenames (`docs/plans/<version-slug>-*.md` glob; `docs/experiments/<version-slug>-hard-smoke.md` direct construction), but `feedback_version_numbers_at_release_time` (2026-05-13) reverses the convention — slugs are scope-descriptive, no version pre-baked. New `--plan-doc <path>` flag on `loam release` overrides the inference for both gates: `check_acs_verified` reads the named plan-doc; `check_hard_smoke` reads `docs/experiments/<plan-doc-stem>-hard-smoke.md`. Flag-absent behaviour preserved (backward-compat for v0.6.0/v0.7.x/v0.8.x version-named plan-docs). 4 new tests at test_AC_SDPD_plan_doc_flag.py. Outcome-altitude AC.SDPD.4 dogfoods against live paper publish plan-doc + smoke writeup."
+
+# BASELINE captured at source-edit batch — covers gates.py + runner.py + cli.py
+# edits + 4 new tests + universal-admission docs.
+baseline: "TBD-AT-COMMIT"
+
+plan: docs/plans/v0-8-2-release-cli-scope-descriptive-plan-doc-support.md
+plan_doc_ref: docs/plans/v0-8-2-release-cli-scope-descriptive-plan-doc-support.md
+
+ac_count: 4
+smoke_outcome: "v0.8.2 AC.SDPD.{1-4,S} GREEN; --plan-doc flag accepted; check_acs_verified + check_hard_smoke honor flag; dogfood probe against paper publish artefacts verified."
+
+# Single-component fence (framework/tools/loam) plus universal-admission docs.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+    - framework/tools/loam/
+  files:
+    - CLAUDE.md
+    - install-from-source.txt
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/components/memory.md
+    - docs/public-surface-manifest.md
+    - README.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-8-2-release-cli-scope-descriptive-plan-doc-support
+  body: |
+    # v0.8.2 PATCH — `loam release` accepts scope-descriptive plan-doc paths
+
+    2026-05-13. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST. v0.8.2 closes a defect surfaced by the
+    `feedback_version_numbers_at_release_time` convention shift
+    (captured 2026-05-13): plan-doc filenames are now scope-descriptive
+    (the slug describes the work, no version pre-baked) and version
+    derives at release-time from `(current_published, class)`. The
+    v0.6.0 release-CLI gates infer their input paths from the version
+    slug, so the first downstream consumer of the new convention (the
+    paper publish at `docs/plans/odd-paper-methodology-publish.md`)
+    can't pass `loam release` gates without a fix.
+
+    The fix is a single new flag — `--plan-doc <path>` — on
+    `loam release` that overrides path inference for two gates:
+
+    - `check_acs_verified` reads the named plan-doc directly when the
+      flag is provided (skipping the version-slug glob lookup).
+    - `check_hard_smoke` reads `docs/experiments/<plan-doc-stem>-hard-smoke.md`
+      when the flag is provided (stem extraction via `Path.stem`).
+
+    Flag-absent behaviour is preserved verbatim: every existing
+    `loam release <version>` invocation against a version-named
+    plan-doc continues to work. 4 new tests at
+    `framework/tools/loam/tests/test_AC_SDPD_plan_doc_flag.py` cover
+    the flag-acceptance + flag-honoring + RED-with-hint surfaces.
+    Backward-compat verified by existing
+    `test_AC_V060_2_pre_publish_gates.py` test suite passing
+    unmodified.
+
+    AC.SDPD.4 outcome-altitude dogfood: invoked
+    `loam release v0.9.0 --plan-doc docs/plans/odd-paper-methodology-publish.md
+    --dry-run` against the live paper-publish artefacts (v0.9.0
+    SHIPPED LOCAL at seal `4a4535f`). Probe verifies `hard-smoke` gate
+    reads the correct path (GREEN) + `acs-verified` gate reads the
+    correct plan-doc. The paper plan-doc's §13 marks one AC as
+    `REMOVED` (legitimate per ODD §4 re-extension) — the existing gate
+    parser only recognizes `GREEN` as a pass token, so `acs-verified`
+    surfaces RED on that AC. Out of scope for v0.8.2 (HARD HALT #2 —
+    surface but don't extend scope); captured at FIDRAFT
+    F-REMOVED-VERDICT-GATE for next gate-cycle.
+
+    No outcome-shape addition. PATCH-class defect closure within the
+    v0.6.0 release-process outcome shape. pyproject.toml versions
+    stay at 0.8.0 (D-SDPD precedent matches v0.8.1's D-NFCLEAN.4 —
+    per-component-version discipline advances with shipped MINORs;
+    PATCHes ride the predecessor MINOR's version).
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+    (gates.py + runner.py + cli.py + 4 new tests + smoke writeup +
+    FIDRAFT entry + STATE/roadmap admin) TBD-AT-COMMIT; pre-apply
+    admin TBD-AT-COMMIT.

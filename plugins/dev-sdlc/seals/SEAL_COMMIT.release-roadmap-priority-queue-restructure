@@ -1,0 +1,55 @@
+# release-roadmap priority-queue restructure MINOR
+
+2026-05-13. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST.
+
+Lands the §4 restructure of `docs/release-roadmap.md` — from a
+pre-numbered chain of forward-looking releases to a priority-ordered
+queue of scope-descriptive, unnumbered candidates. Each candidate
+carries: stable slug, single-sentence objective, class tag
+(PATCH/MINOR/MAJOR), AC family, constraints, source items, AI-time
+estimate, and dependencies (keyed on candidate slugs for forward
+deps; on shipped version-numbers when the dep is on already-shipped
+work).
+
+The number-derivation recipe is documented in
+`docs/release-versioning-policy.md` as a new "Number derivation at
+build-commence time" section: `next_number = bump(current_version,
+candidate_class)`. The recipe binds at build-commence-time, not at
+queue-authoring-time; priority can change by reordering and class
+can change by re-tagging, both without renumbering.
+
+Reclassification audit deliverable lives as a §4-prelude inside
+`docs/release-roadmap.md`. The audit is rescoped at build-time
+(2026-05-13): the historical section walks already-shipped versions
+read-only (surface mis-classifications; no retroactive renames per
+HARD HALT — would break published tags); the forward-looking
+section walks remaining unshipped §4 entries and re-tags class per
+`docs/release-versioning-policy.md` definitions.
+
+`docs/release-roadmap-dependency-map.md` is re-keyed from
+version-numbers to candidate slugs in its dependency rows. SOFT
+update — dep-graph itself unchanged; only row labels.
+
+Composes with `feedback_version_numbers_at_release_time` (the
+discipline this MINOR structurally encodes at the §4 surface).
+Composes with `feedback_scope_descriptive_ac_ids` (slug + AC IDs
+follow the same convention; v0.8.2 and v0.8.3 implemented the
+release-CLI machinery to make scope-descriptive plan-docs publish-
+able).
+
+Version derived at release-time per
+`feedback_version_numbers_at_release_time`:
+`next_MINOR(v0.9.0) = v0.10.0`. Plan-doc slug scope-descriptive
+(`release-roadmap-priority-queue-restructure`); AC family
+scope-descriptive (`AC.RR.*`).
+
+AC.RR.4 outcome-altitude dogfood probe runs `loam release v0.10.0
+--plan-doc docs/plans/release-roadmap-priority-queue-restructure.md
+--dry-run` after source-edit + apply land; verifies all 6 gates
+return GREEN against the live restructured artefacts.
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch (§4
+restructure + audit table + policy-doc extension + dep-map re-key
++ smoke writeup + STATE/roadmap admin) TBD-AT-COMMIT; apply
+TBD-AT-COMMIT; seal TBD-AT-COMMIT.

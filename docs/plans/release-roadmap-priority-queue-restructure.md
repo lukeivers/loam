@@ -338,7 +338,7 @@ This plan-doc inherits the authority of `docs/release-versioning-policy.md` (whi
 
 ---
 
-## §12 — §status (post-build backfill)
+## §13 — §status (post-build backfill)
 
 **Build cycle:** SHIPPED LOCAL 2026-05-13 — owner pre-ratified scope (dispatcher brief 2026-05-13; Telegram 11091). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
@@ -384,7 +384,7 @@ The v0.10.0 number was derived at release-time per the new section's recipe: `ne
 
 Open questions (Q1–Q7 from §10) ratifications: the plan-doc's open questions were authored against the 2026-05-09 state and have been overtaken by events; the rescope directive in the dispatch brief is the operative ratification.
 
-## §13 — Build-time decision deviations
+## §14 — Build-time decision deviations
 
 - **Audit scope rescoped at build-time** per dispatch brief directive (2026-05-13). Original AC.RR.2 spec named entries v0.4.5 / v0.5.0 / v0.6.0 / v0.7.0 / v0.8.0 / v0.9.0 / v0.10.0+ as forward-looking; at build-commence-time those had all shipped except v0.10.0+. The rescope: historical section walks shipped versions read-only; forward-looking section walks currently-unshipped candidates (6 of them; see §4-prelude). Within the rescope envelope; no AC text changes; verdict still GREEN.
 - **Helper path declined per D-RR.5.4 (Path A).** Documented manual rule landed in the policy doc; Python helper not built. Within plan-doc's §3 OPTIONAL secondary envelope; the helper can land as a future opt-in patch if manual-application cost rises.

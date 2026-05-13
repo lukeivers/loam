@@ -258,9 +258,23 @@ def check_acs_verified(
     from-§status.
 
     A plan-doc passes the gate when the §status / §13 section names
-    each §4-declared AC ID alongside a GREEN marker (within 240 chars
-    on the same logical span — accommodates table rows + prose
-    verdicts).
+    each §4-declared AC ID alongside a recognised non-failure verdict
+    (within 240 chars on the same logical span — accommodates table
+    rows + prose verdicts). Two non-failure verdicts are recognised:
+
+      - ``GREEN`` — the v0.6.0 default; the AC shipped as planned.
+      - ``REMOVED`` — added in v0.8.3 per AC.RVG.1. The AC was
+        legitimately struck at build-time per ODD §4 re-extension
+        (`feedback_locked_design_not_license_for_bad_outcomes`).
+        Plan-doc author + reviewer enforce the discipline that the
+        REMOVED row also names the build-time decision that struck
+        the AC (e.g., `D-<plan-id>.<n>`); the gate verifies only the
+        verdict token, not the justification (D-RVG.2.b).
+
+    Missing-verdict (no GREEN AND no REMOVED token within 240 chars
+    of the AC ID in §status) still returns RED — the REMOVED extension
+    is narrowly defined and doesn't open the gate to silently-skipped
+    ACs.
 
     For the dogfood self-publish (this very plan-doc), the §status
     backfill is appended at end-of-build; the gate runs against the
@@ -349,17 +363,32 @@ def check_acs_verified(
     missing: list[str] = []
     for ac in ac_ids:
         # An AC counts as verified when the status section names it
-        # alongside a GREEN marker on the same logical span (within
-        # 240 chars — accommodates table rows + prose verdicts).
+        # alongside a recognised non-failure verdict on the same
+        # logical span (within 240 chars — accommodates table rows +
+        # prose verdicts). Two verdicts are recognised:
+        #   - GREEN (the v0.6.0 default; the AC shipped as planned).
+        #   - REMOVED (per AC.RVG.1; the AC was struck mid-build via
+        #     ODD §4 re-extension; plan-doc author + reviewer enforce
+        #     that the REMOVED row also names the build-time decision
+        #     that struck the AC).
         if not status_body:
             missing.append(ac)
             continue
-        # Re-search the status body for AC near GREEN.
-        ac_pattern = re.compile(
+        # Per D-RVG.1.a: try GREEN first (the most common case);
+        # fall through to REMOVED if GREEN doesn't match. Per
+        # D-RVG.2.a, only these two pass tokens are recognised —
+        # missing-verdict (no GREEN AND no REMOVED) still RED.
+        green_pattern = re.compile(
             re.escape(ac) + r".{0,240}?GREEN", re.DOTALL
         )
-        if not ac_pattern.search(status_body):
-            missing.append(ac)
+        if green_pattern.search(status_body):
+            continue
+        removed_pattern = re.compile(
+            re.escape(ac) + r".{0,240}?REMOVED", re.DOTALL
+        )
+        if removed_pattern.search(status_body):
+            continue
+        missing.append(ac)
     if missing:
         return GateResult(
             name="acs-verified",
@@ -368,14 +397,16 @@ def check_acs_verified(
                 f"plan-doc {plan_doc_display} §status does "
                 f"not mark these ACs GREEN: {', '.join(missing)}. Backfill "
                 f"§status (or §13) with the verdict matrix; each AC must "
-                f"appear with a GREEN marker. Re-run once backfilled."
+                f"appear with a GREEN marker (or REMOVED if struck "
+                f"build-time per ODD §4 re-extension). Re-run once "
+                f"backfilled."
             ),
         )
     return GateResult(
         name="acs-verified",
         ok=True,
         message=(
-            f"all {len(ac_ids)} AC(s) marked GREEN in "
+            f"all {len(ac_ids)} AC(s) verified (GREEN or REMOVED) in "
             f"{plan_doc_display} §status"
         ),
     )

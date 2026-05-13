@@ -267,30 +267,53 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 ## §13 — §status
 
-**Build cycle:** TBD-AT-BUILD — awaiting source-edit + tests + apply + seal.
+**Build cycle:** SHIPPED LOCAL 2026-05-13 — owner pre-ratified scope (dispatcher brief 2026-05-13). Awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** TBD-AT-BUILD.
+**Plan-doc commits:** plan-doc + manifest `2832ed2`; source-edit batch (gates.py + runner.py + cli.py + 11 tests + smoke writeup + FIDRAFT entry + STATE/roadmap admin) `6bbac04`; manifest baseline backfill `29e9a00`; apply auto-commit (BASELINE + sidecar bump to `6bbac04`) `46e02dd`; seal commit (deterministic seal) `a54295f`.
 
 ### AC verdict matrix
 
-TBD-AT-BUILD.
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.SDPD.1 — `--plan-doc` flag accepted by `loam release` argparse | GREEN | `test_release_parser_accepts_plan_doc_flag` + `test_release_help_mentions_plan_doc_and_scope_descriptive` GREEN. `release_parser.format_help()` output contains `--plan-doc` substring + "scope-descriptive" prose mention. Parser accepts `["release", "v0.8.2", "--plan-doc", "/tmp/x.md"]` → `args.plan_doc == Path("/tmp/x.md")`. Default `None` when flag absent. Source-edit commit `6bbac04`. |
+| AC.SDPD.2 — `check_acs_verified` reads named plan-doc when flag set | GREEN | 3 tests GREEN: `test_acs_verified_reads_named_plan_doc_when_flag_provided` (positive: reads scope-descriptive plan-doc; ignores version-glob match), `test_acs_verified_red_with_hint_when_provided_plan_doc_missing` (negative: RED hint names the missing path + `--plan-doc` flag), `test_acs_verified_accepts_relative_plan_doc_path` (relative paths resolved against repo_root per D-SDPD.1.a). AC.SDPD.4 dogfood at sealed state confirms outcome-altitude: `loam release v0.9.0 --plan-doc docs/plans/odd-paper-methodology-publish.md --dry-run` returns `acs-verified` message naming `docs/plans/odd-paper-methodology-publish.md` (not "no plan-doc found at v0-9-0-*.md"). Backward-compat verified: 21 existing tests in `test_AC_V060_2_pre_publish_gates.py` pass unmodified. Source-edit commit `6bbac04`. |
+| AC.SDPD.3 — `check_hard_smoke` reads stem-derived path when flag set | GREEN | 3 tests GREEN: `test_hard_smoke_reads_stem_derived_path_when_flag_provided` (positive: reads `<stem>-hard-smoke.md` correctly), `test_hard_smoke_red_when_stem_derived_path_missing` (negative: RED hint names the stem-derived path), `test_hard_smoke_uses_plan_doc_stem_not_version_slug_when_both_paths_exist` (precedence: stem-derived wins over version-slug when both exist). AC.SDPD.4 dogfood at sealed state confirms outcome-altitude: `hard-smoke` gate flipped from pre-PATCH RED ("missing docs/experiments/v0-9-0-hard-smoke.md") → post-PATCH GREEN ("HARD smoke GREEN at docs/experiments/odd-paper-methodology-publish-hard-smoke.md"). Source-edit commit `6bbac04`. |
+| AC.SDPD.4 — Outcome-altitude dogfood probe | GREEN | Real production entry-point `loam release v0.9.0 --plan-doc docs/plans/odd-paper-methodology-publish.md --dry-run` invoked from `/Users/lukeivers/loam/` at sealed state. Verbatim output (post-seal): `[GREEN] hard-smoke: HARD smoke GREEN at docs/experiments/odd-paper-methodology-publish-hard-smoke.md` + `[GREEN] state-shipped: v0.9.0 marked SHIPPED in docs/STATE.md` + `[GREEN] clean-tree: working tree clean` + `[GREEN] branch-main: on branch main` + `[GREEN] seal-reachable: seal 4a4535f reachable from HEAD`. The `acs-verified` gate verdict line reads `[RED] acs-verified: plan-doc docs/plans/odd-paper-methodology-publish.md §status does not mark these ACs GREEN: AC.ODDPAPER.3.` — RED for the orthogonal REMOVED-verdict-parser issue (the gate reads the correct plan-doc; AC.ODDPAPER.3 is marked REMOVED at build-time per D-ODDPAPER.5.2 Path C, not GREEN). Captured at FIDRAFT F-REMOVED-VERDICT-GATE; out of scope for v0.8.2 per HARD HALT #2. The AC.SDPD.4 targeted-gate behaviour (gates read scope-descriptive paths) is verified GREEN. Probe writeup at `docs/experiments/v0-8-2-hard-smoke.md` §1 Stages 1-4 documents per-stage verification. |
+| AC.SDPD.S — Seal-diff discipline | GREEN | `git diff --name-only 2832ed2..a54295f` shows changes only under: `framework/tools/loam/src/loam_cli/release/gates.py` (AC.SDPD.{2,3} edits — `_find_plan_doc` + `check_acs_verified` + `check_hard_smoke` + `run_all` parameter additions + `_display_path` helper); `framework/tools/loam/src/loam_cli/release/runner.py` (AC.SDPD parameter forwarding); `framework/tools/loam/src/loam_cli/release/cli.py` (AC.SDPD.1 argparse flag); `framework/tools/loam/tests/test_AC_SDPD_plan_doc_flag.py` (11 new tests); `docs/experiments/v0-8-2-hard-smoke.md` (smoke writeup); `docs/STATE.md` (v0.8.2 universal-admission row); `docs/release-roadmap.md` (v0.8.2 §2 row + Total-shipped count auto-corrected at next publish); `docs/FUTURE_IDEAS_DRAFT.md` (F-REMOVED-VERDICT-GATE FIDRAFT entry); `docs/plans/v0-8-2-release-cli-scope-descriptive-plan-doc-support.md` (this file); `docs/plans/v0-8-2-release-cli-scope-descriptive-plan-doc-support.manifest.yaml`; `plugins/dev-sdlc/seals/SEAL_COMMIT.v0-8-2-release-cli-scope-descriptive-plan-doc-support` + `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar (apply + seal auto-commits). All paths in AC.SDPD.S allow-list (`framework/tools/loam/` PRIMARY + universal-admission docs + auto-managed seal sidecar). No source-code changes outside the 3 release-CLI source files + 1 new test file. No pyproject.toml version bumps. |
 
 ### AI-time actuals
 
-TBD-AT-BUILD.
+| Stage | Estimated (plan §9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 10-15 min | ~14 min |
+| AC.SDPD.{1,2,3} — gates.py + runner.py + cli.py edits | 12-18 min | ~12 min |
+| AC.SDPD.{1,2,3} — 11 new tests at `test_AC_SDPD_plan_doc_flag.py` | 10-15 min | ~9 min |
+| AC.SDPD.4 — dogfood probe + HARD smoke writeup | 8-12 min | ~7 min |
+| FIDRAFT capture (F-REMOVED-VERDICT-GATE) | 2-3 min | ~2 min |
+| Plan-doc §13 backfill + STATE/roadmap admin + manifest apply + seal | 10-15 min | ~5 min (admin docs landed in source-edit batch; backfill + apply + seal only) |
+| **Total v0.8.2 build** | **52-78 min midpoint ~63 min** | **~49 min** |
+
+In-band — toward the lower end of the estimate. The optional-parameter additions through three modules were mechanical; the new tests reused the existing `staged_repo` fixture cleanly; the AC.SDPD.4 dogfood was a single CLI invocation against existing artefacts. Forward calibration: single-component PATCH cycles that add optional parameters to existing gate functions + new tests compress to ~45-55 min vs new-helper PATCHes (~75-90 min, v0.7.4 actuals).
 
 ### Halt-and-surface findings
 
-TBD-AT-BUILD.
+**F-REMOVED-VERDICT-GATE (FIDRAFT capture; out of scope for v0.8.2).** AC.SDPD.4 dogfood probe surfaced an orthogonal `acs-verified` gate parser defect: the verdict-matrix regex (`re.escape(ac) + r".{0,240}?GREEN"`) recognises only `GREEN` as a pass token. ACs marked `REMOVED` at build-time per legitimate ODD §4 re-extension (e.g., paper publish's AC.ODDPAPER.3, struck via D-ODDPAPER.5.2 Path C) trigger false-positive RED. Per HARD HALT #2 dispatch-brief ruling, surfaced but NOT extended scope; captured at `docs/FUTURE_IDEAS_DRAFT.md` as `F-REMOVED-VERDICT-GATE`. Proposed shape: extend the proximity-pattern to accept `(GREEN | REMOVED.{0,160}?D-<plan-id>.<n> | DEFERRED.{0,160}?F-<FIDRAFT-id>)`. Activation gate: v0.8.3+ release-CLI cycle OR triggered by paper publish needing to ship through `loam release` rather than manual fallback.
+
+**No other halt-and-surface findings.** 82/82 release-CLI tests GREEN at sealed state; backward-compat preserved (21 existing v0.6.0/v0.7.2 tests pass unmodified); AC.SDPD.4 dogfood verified the patch closes the defect that motivated it (hard-smoke gate flipped from RED → GREEN against the paper publish artefacts). Seal-diff discipline verified clean (only the 3 release-CLI source files + 1 new test file + universal-admission docs + seal-sidecar touched).
 
 ## §14 — Method decisions
 
-The plan-doc's §5 names the build-time decisions (D-SDPD.1.a parameter shape, D-SDPD.1.b default behaviour, D-SDPD.2.a hint shape, D-SDPD.3.a stem extraction, D-SDPD.3.b hint shape, D-SDPD.4.a CLI flag shape, D-SDPD.4.b runner signature, D-SDPD.5 smoke writeup convention, D-SDPD.6 ALL_GATES tuple, D-SDPD.7 FIDRAFT entries). All builder rulings expected to land as planned; any deviations surfaced in §13 halt-and-surface findings at build-time.
+The plan-doc's §5 names the build-time decisions (D-SDPD.1.a parameter shape, D-SDPD.1.b default behaviour, D-SDPD.2.a hint shape, D-SDPD.3.a stem extraction, D-SDPD.3.b hint shape, D-SDPD.4.a CLI flag shape, D-SDPD.4.b runner signature, D-SDPD.5 smoke writeup convention, D-SDPD.6 ALL_GATES tuple, D-SDPD.7 FIDRAFT entries). All builder rulings landed as planned with one minor in-cycle addition (the `_display_path` helper to handle absolute-path explicit `--plan-doc` arguments — bounded ~10 LOC; preserves the existing relative-path display behaviour for the version-glob default).
 
 ### Commit SHAs
 
-TBD-AT-BUILD.
+- Plan-doc + manifest authoring: `2832ed2`
+- Source-edit batch (gates.py + runner.py + cli.py + 11 tests + smoke writeup + FIDRAFT entry + STATE/roadmap admin): `6bbac04`
+- Manifest baseline backfill: `29e9a00`
+- Apply auto-commit (BASELINE + sidecar bump to `6bbac04`): `46e02dd`
+- Seal commit (deterministic seal): `a54295f`
 
 ### Build-time decision deviations
 
-TBD-AT-BUILD.
+- **`_display_path` helper added in-cycle.** Not named in §5 D-SDPD.* decisions but bounded ~10 LOC; handles the absolute-path case for explicit `--plan-doc` arguments outside `repo_root` (where `Path.relative_to(repo_root)` would raise `ValueError`). The helper is internal-only; preserves the existing relative-path display behaviour for the version-glob default. Within HARD HALT #1 envelope (not >2x current line count).
+- All other D-SDPD.* rulings landed as planned.

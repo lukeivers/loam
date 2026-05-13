@@ -112,7 +112,31 @@ Backward-compat verified: the v0.6.0 default behaviour (GREEN-only recognition) 
 
 ## §3 — Verbatim post-seal CLI capture
 
-TBD-AT-SEAL — captured after the seal commit lands. The probe output in §1 Stage 3 above is the targeted shape; the verbatim run will be inserted here at §status backfill time.
+Captured at HEAD = `6024faf` (seal commit) on 2026-05-13:
+
+```
+$ loam release v0.9.0 --plan-doc docs/plans/odd-paper-methodology-publish.md --dry-run
+== Pre-publish gates ==
+  [GREEN] hard-smoke: HARD smoke GREEN at docs/experiments/odd-paper-methodology-publish-hard-smoke.md
+  [GREEN] acs-verified: all 5 AC(s) verified (GREEN or REMOVED) in docs/plans/odd-paper-methodology-publish.md §status
+  [GREEN] state-shipped: v0.9.0 marked SHIPPED in docs/STATE.md
+  [GREEN] clean-tree: working tree clean
+  [GREEN] branch-main: on branch main
+  [GREEN] seal-reachable: seal 4a4535f reachable from HEAD
+
+DRY-RUN: would create annotated tag v0.9.0 at 4a4535f with message: ...
+DRY-RUN: would push origin main + tag v0.9.0
+DRY-RUN: would apply post-publish backfill — 5 edit(s):
+  - STATE.md: replaced 'v0.9.0 SHIPPED LOCAL — owner gates publish.' → '**v0.9.0 SHIPPED PUBLIC 2026-05-13 at tag `v0.9.0` (annotated `4a4535f`)**.'; STATE.md leading title: '**v0.9.0 MINOR SHIPPED LOCAL**' → '**v0.9.0 MINOR SHIPPED PUBLIC**'
+  - roadmap §2 row: appended SHIPPED-PUBLIC marker
+  - summary line: '**Total shipped:** 9 minor + 21 patches. v0.1.0 → v0.9.0 published.' → '**Total shipped:** 9 minor + 21 patches. v0.9.0 published.'
+  - §3 Active Version: appended '**v0.9.0 MINOR (...) SHIPPED PUBLIC 2026-05-13** (tag `v0.9.0`, annotated `4a4535f`; seal `4a4535f`).'
+
+== Next-scope proposal ==
+...
+```
+
+ALL 6 GATES GREEN at sealed state. The v0.9.0 paper publish is now structurally ready for `loam release` publish pending owner gate per ASK-FIRST.
 
 ---
 

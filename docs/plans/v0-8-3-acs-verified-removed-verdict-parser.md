@@ -255,20 +255,59 @@ Owner gate-review separate (publish per ASK-FIRST after seal).
 
 ## §13 — §status
 
-**Build cycle:** TBD-AT-BUILD.
+**Build cycle:** SHIPPED LOCAL 2026-05-13 — owner pre-ratified scope (dispatcher brief 2026-05-13). Awaiting dispatcher dogfood publish per ASK-FIRST.
+
+**Plan-doc commits:** plan-doc + manifest `d252dc0`; source-edit batch (gates.py verdict-loop extension + 4 new tests + smoke writeup + FIDRAFT F-REMOVED-VERDICT-GATE resolution + STATE/roadmap admin) `1ef9df9`; manifest baseline backfill `c4ed898`; apply auto-commit (BASELINE + sidecar bump to `1ef9df9`) `23b693d`; seal commit (deterministic seal) `6024faf`.
 
 ### AC verdict matrix
 
-TBD-AT-BUILD.
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.RVG.1 — `check_acs_verified` accepts REMOVED as a non-failure verdict | GREEN | `test_acs_verified_green_when_status_marks_ac_removed_table_form` GREEN — plan-doc with a §status table-row matrix containing `\| AC.V060.3 \| REMOVED \| Build-time D-FOO.5.2 ... \|` alongside the default GREEN-only bullet matrix for AC.V060.{1,2}; gate returns GREEN with success message "all 3 AC(s) verified (GREEN or REMOVED)". Source-edit commit `1ef9df9` (verdict-loop extension at `gates.py` lines 372-391 — REMOVED proximity-pattern is the fall-through when GREEN doesn't match). |
+| AC.RVG.2 — REMOVED-marker recognition robust to surrounding text | GREEN | Two tests GREEN: `test_acs_verified_green_when_status_marks_ac_removed_table_form` (canonical table-row form — matches the live paper-publish plan-doc shape at `\| AC.ODDPAPER.3 \| REMOVED \| Build-time D-ODDPAPER.5.2 Path C — ...`); `test_acs_verified_green_when_status_marks_ac_removed_em_dash_form` (prose form — `AC.V060.3 — REMOVED at build per D-FOO.5.2`). Both proximity patterns match via the same 240-char DOTALL scan; no shape-specific code. AC.RVG.4 dogfood confirms the canonical form matches the live paper plan-doc. Source-edit commit `1ef9df9`. |
+| AC.RVG.3 — Missing-verdict still RED (regression) | GREEN | `test_acs_verified_red_when_status_omits_ac_entirely` GREEN — §4 declares `AC.V060.3` but §status carries NEITHER GREEN nor REMOVED near it; gate returns RED with missing-list naming AC.V060.3; corrective hint mentions both GREEN and REMOVED so the operator knows REMOVED is an option for legitimate strikes. The fix doesn't open the gate to silently-skipped ACs. Existing `test_acs_verified_red_when_status_omits_an_ac` continues to pass unmodified. Source-edit commit `1ef9df9`. |
+| AC.RVG.4 — Outcome-altitude dogfood probe | GREEN | Real production entry-point `loam release v0.9.0 --plan-doc docs/plans/odd-paper-methodology-publish.md --dry-run` invoked from `/Users/lukeivers/loam/` at sealed state (HEAD = `6024faf`). Verbatim output: `[GREEN] hard-smoke: HARD smoke GREEN at docs/experiments/odd-paper-methodology-publish-hard-smoke.md`; `[GREEN] acs-verified: all 5 AC(s) verified (GREEN or REMOVED) in docs/plans/odd-paper-methodology-publish.md §status`; `[GREEN] state-shipped: v0.9.0 marked SHIPPED in docs/STATE.md`; `[GREEN] clean-tree: working tree clean`; `[GREEN] branch-main: on branch main`; `[GREEN] seal-reachable: seal 4a4535f reachable from HEAD`. ALL 6 GATES GREEN — the v0.6.0-substrate gate defects surfaced by the v0.9.0 paper publish flow are now fully closed (v0.7.2 §4-scoping + v0.8.2 `--plan-doc` + v0.8.3 REMOVED-verdict-recognition). The v0.9.0 paper publish is structurally ready for `loam release` publish pending owner gate per ASK-FIRST. Probe writeup at `docs/experiments/v0-8-3-hard-smoke.md` documents pre-/post-patch comparison + per-AC test mapping. |
+| AC.RVG.S — Seal-diff discipline | GREEN | `git diff --name-only d252dc0..6024faf` shows changes only under: `framework/tools/loam/src/loam_cli/release/gates.py` (AC.RVG.{1,2} edit — verdict-loop extension; 42 insertions, 11 deletions); `framework/tools/loam/tests/test_AC_RVG_removed_verdict.py` (4 new tests); `docs/experiments/v0-8-3-hard-smoke.md` (smoke writeup); `docs/STATE.md` (v0.8.3 universal-admission row); `docs/release-roadmap.md` (v0.8.3 §2 row + Total-shipped count → "21 patches"); `docs/FUTURE_IDEAS_DRAFT.md` (F-REMOVED-VERDICT-GATE resolution); `docs/plans/v0-8-3-acs-verified-removed-verdict-parser.md` (this file); `docs/plans/v0-8-3-acs-verified-removed-verdict-parser.manifest.yaml`; `plugins/dev-sdlc/seals/SEAL_COMMIT.v0-8-3-acs-verified-removed-verdict-parser` + `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar (apply + seal auto-commits). All paths in AC.RVG.S allow-list (`framework/tools/loam/` PRIMARY + universal-admission docs + auto-managed seal sidecar). No source-code changes outside `gates.py` + 1 new test file. No pyproject.toml version bumps. |
 
 ### AI-time actuals
 
-TBD-AT-BUILD.
+| Stage | Estimated (plan §9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 5-10 min | ~7 min |
+| AC.RVG.{1,2,3} — `gates.py` verdict-loop edit | 3-5 min | ~3 min |
+| AC.RVG.{1,2,3} — 4 new tests at `test_AC_RVG_removed_verdict.py` | 5-8 min | ~5 min |
+| AC.RVG.4 — dogfood probe + HARD smoke writeup | 5-8 min | ~5 min |
+| FIDRAFT update (F-REMOVED-VERDICT-GATE resolved) | 1-2 min | ~1 min |
+| Plan-doc §13 backfill + STATE/roadmap admin + manifest apply + seal | 8-12 min | ~5 min (admin docs landed in source-edit batch; backfill + apply + seal only) |
+| **Total v0.8.3 build** | **27-45 min midpoint ~34 min** | **~26 min** |
+
+In-band — below the lower edge of the estimate. The single-conditional-branch verdict-loop extension was mechanical; the new tests reused the existing `staged_repo` + `fixture_version` + `fixture_slug` conftest fixtures cleanly; the AC.RVG.4 dogfood was a single CLI invocation against the existing artefacts. Forward calibration: single-component PATCH cycles that add a single conditional branch to an existing function + 4 tests compress to ~25-30 min vs the wider-scope v0.8.2 (~49 min for a 3-file optional-parameter addition + 11 tests).
 
 ### Halt-and-surface findings
 
-TBD-AT-BUILD.
+**No halt-and-surface findings.** AC.RVG.4 dogfood probe at sealed state returned all 6 gates GREEN; no orthogonal RED to surface. 86/86 release-CLI tests GREEN at sealed state (82 existing preserved + 4 new); backward-compat preserved (no test in `test_AC_V060_2_pre_publish_gates.py` or `test_AC_SDPD_plan_doc_flag.py` was modified). Seal-diff discipline verified clean (only the 1 release-CLI source file + 1 new test file + universal-admission docs + seal-sidecar touched).
+
+The v0.6.0-substrate `check_acs_verified` defect chain surfaced by the v0.9.0 paper publish flow is fully closed across three PATCHes:
+
+1. v0.7.2 — `AC.READYP.1` scoped the AC-ID scan to §4 only (closes cross-reference flagging).
+2. v0.8.2 — `AC.SDPD.{1,2,3}` added the `--plan-doc` flag (closes version-slug-glob assumption).
+3. v0.8.3 — `AC.RVG.{1,2}` added REMOVED-verdict recognition (closes GREEN-only pass-token assumption).
+
+The v0.9.0 paper publish is now structurally ready for `loam release` publish pending owner gate per ASK-FIRST.
 
 ## §14 — Method decisions
 
-The plan-doc's §5 names the build-time decisions (D-RVG.1.a verdict-loop shape, D-RVG.1.b regex flag, D-RVG.2.a scope-narrow-to-REMOVED-only, D-RVG.2.b no-decision-reference-enforcement, D-RVG.3 test fixture pattern, D-RVG.4 smoke writeup convention). Method-decision-register entries land at §status backfill time.
+The plan-doc's §5 names the build-time decisions (D-RVG.1.a verdict-loop shape, D-RVG.1.b regex flag, D-RVG.2.a scope-narrow-to-REMOVED-only, D-RVG.2.b no-decision-reference-enforcement, D-RVG.3 test fixture pattern, D-RVG.4 smoke writeup convention). All builder rulings landed as planned with one minor in-cycle prose addition: the gate's success message now reads "all N AC(s) verified (GREEN or REMOVED)" (the v0.6.0 default read "all N AC(s) marked GREEN") and the RED corrective hint mentions both verdicts. Bounded ~3 LOC; preserves backward-compat with existing test assertions ("GREEN" substring still present).
+
+### Commit SHAs
+
+- Plan-doc + manifest authoring: `d252dc0`
+- Source-edit batch (gates.py + 4 tests + smoke writeup + FIDRAFT resolution + STATE/roadmap admin): `1ef9df9`
+- Manifest baseline backfill: `c4ed898`
+- Apply auto-commit (BASELINE + sidecar bump to `1ef9df9`): `23b693d`
+- Seal commit (deterministic seal): `6024faf`
+
+### Build-time decision deviations
+
+- **Success message + RED hint copy adjustment in-cycle.** Not named in §5 D-RVG.* decisions but bounded ~3 LOC; the success message changed from "all N AC(s) marked GREEN" → "all N AC(s) verified (GREEN or REMOVED)" to accurately describe the recognised non-failure verdict set; the RED corrective hint added "(or REMOVED if struck build-time per ODD §4 re-extension)" so the operator knows REMOVED is a legitimate option. Within HARD HALT #1 envelope (not >2x current parser complexity). Backward-compat with existing test assertions ("GREEN" substring in messages) preserved.
+- All other D-RVG.* rulings landed as planned.

@@ -33,18 +33,25 @@ loam release v0.10.0 \
 
 **Pre-source-edit baseline (run from current state at b269d8e plan-doc):** N/A — the plan-doc was always uncommitted-source-edit until this build; nothing to baseline against.
 
-**Post-seal verbatim output (TBD-AT-PROBE — backfilled after seal):**
+**Post-seal verbatim output (executed 2026-05-13 at HEAD post-§status-backfill + §13 rename):**
 
-The expected verdict per all 6 v0.6.0-era gates:
+```
+== Pre-publish gates ==
+  [GREEN] hard-smoke: HARD smoke GREEN at docs/experiments/release-roadmap-priority-queue-restructure-hard-smoke.md
+  [GREEN] acs-verified: all 5 AC(s) verified (GREEN or REMOVED) in docs/plans/release-roadmap-priority-queue-restructure.md §status
+  [GREEN] state-shipped: v0.10.0 marked SHIPPED in docs/STATE.md
+  [GREEN] clean-tree: working tree clean
+  [GREEN] branch-main: on branch main
+  [GREEN] seal-reachable: seal c71b2fa reachable from HEAD
 
-1. `hard-smoke` — should be GREEN: reads `docs/experiments/release-roadmap-priority-queue-restructure-hard-smoke.md` per `--plan-doc` stem extraction.
-2. `acs-verified` — should be GREEN: reads `docs/plans/release-roadmap-priority-queue-restructure.md` per `--plan-doc` flag; §status section names all 5 ACs (AC.RR.{1,2,3,4,S}) with GREEN verdicts (or REMOVED for any struck mid-build).
-3. `state-shipped` — should be GREEN: `docs/STATE.md` carries the v0.10.0 SHIPPED LOCAL row (universal-admission add at source-edit batch).
-4. `clean-tree` — should be GREEN at sealed state (no uncommitted changes).
-5. `branch-main` — should be GREEN (on `main` per dispatch brief).
-6. `seal-reachable` — should be GREEN (seal commit reachable from HEAD post-apply + post-seal).
+DRY-RUN: would create annotated tag v0.10.0 at c71b2fa with message: 'v0.10.0 — release-roadmap priority-queue restructure MINOR — ...'
+DRY-RUN: would push origin main + tag v0.10.0
+DRY-RUN: would apply post-publish backfill — 4 edit(s)
+```
 
-ALL 6 GATES GREEN closes AC.RR.4 outcome-altitude. The dogfood probe IS the verification of the v0.6.0 release-CLI substrate against the new scope-descriptive plan-doc convention — composes with the v0.7.2 + v0.8.2 + v0.8.3 PATCH chain that prepared the gates for exactly this shape.
+ALL 6 GATES GREEN closes AC.RR.4 outcome-altitude. The dogfood probe IS the verification of the v0.6.0 release-CLI substrate against the new scope-descriptive plan-doc convention — composes with the v0.7.2 + v0.8.2 + v0.8.3 PATCH chain that prepared the gates for exactly this shape. The v0.10.0 release-roadmap-priority-queue-restructure is the first end-to-end exercise of that chain.
+
+**One in-cycle parser conformance fixup surfaced + closed:** the plan-doc originally placed §status at §12 (per the v0.2.x-era convention); the v0.6.0 release-CLI `check_acs_verified` parser at `gates.py:357-361` recognises only `§13` or `§status` (no number) per a long-standing regex. Renamed §12 → §13 (and the existing §13 "Build-time decision deviations" → §14) for parser conformance. Plan-doc commit `6f2231f`. Captured as a candidate FIDRAFT entry for follow-on parser-flexibility PATCH if more plan-docs adopt the §12-§status convention — for now, one-off rename was cheaper than widening the parser.
 
 ## Stage 3 — Ride-along orthogonality (rd-automation pathway)
 

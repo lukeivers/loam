@@ -3,11 +3,11 @@ amendment:
   slug: release-roadmap-priority-queue-restructure
   title: "release-roadmap priority-queue restructure MINOR — §4 of docs/release-roadmap.md restructured from pre-numbered chain (v0.7.0 / v0.6.0 / v0.7.0-principle / v0.8.0 / v0.9.0 / v0.10.0+ / v1.0.0) to priority-ordered queue of scope-descriptive unnumbered candidates. Each candidate carries stable slug + objective sentence + class tag (PATCH/MINOR/MAJOR) + AC family + constraints + source items + AI-time estimate + dependencies. Numbers derive at build-commence-time per `next_number = bump(current_version, candidate_class)`, documented in `docs/release-versioning-policy.md` new section. Reclassification audit walks forward-looking entries + surfaces historical mis-classifications (already-shipped versions; no retroactive rename per HARD HALT). `docs/release-roadmap-dependency-map.md` re-keyed from version-numbers to candidate-slugs (SOFT update; dep-graph unchanged). Composes with `feedback_version_numbers_at_release_time` (the discipline this MINOR structurally encodes). Plan-doc authored 2026-05-09 (commit `b269d8e`); rescoped at build-time 2026-05-13 — audit applies only to currently-forward-looking §4 entries; SHIPPED versions get historical-section read-only. Owner authorization Telegram 10557; re-authorized 11091."
 
-# BASELINE captured at source-edit batch — covers §4 restructure +
-# audit table + policy-doc extension + dep-map re-key + manifest + HARD
-# smoke writeup + universal-admission docs (STATE.md row + roadmap §2
-# row + FIDRAFT updates if any).
-baseline: "TBD-AT-COMMIT"
+# BASELINE captured at source-edit batch (3354f73) — covers §4
+# restructure + audit table + policy-doc extension + dep-map re-key +
+# HARD smoke writeup + STATE.md row + roadmap §2 row + 30 pyproject
+# 0.9.0 → 0.10.0 bumps + 4 __version__ bumps.
+baseline: "3354f73"
 
 plan: docs/plans/release-roadmap-priority-queue-restructure.md
 plan_doc_ref: docs/plans/release-roadmap-priority-queue-restructure.md

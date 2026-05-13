@@ -1,0 +1,111 @@
+schema_version: 3
+amendment:
+  slug: v0-8-3-acs-verified-removed-verdict-parser
+  title: "v0.8.3 PATCH — `acs-verified` gate accepts REMOVED as a non-failure verdict. Defect closure on v0.6.0 release-process outcome: `check_acs_verified` recognises only GREEN as a pass token, but ODD §4 re-extension legitimately strikes ACs mid-build (paper publish AC.ODDPAPER.3 REMOVED per D-ODDPAPER.5.2 Path C — stale HTML couldn't be regenerated; ship dropped that AC). The fix extends the verdict-loop in `check_acs_verified` with a second proximity-pattern (`re.escape(ac) + r\".{0,240}?REMOVED\"`) so ACs marked REMOVED in §status count as verified alongside GREEN-marked ACs. Missing-verdict (no GREEN AND no REMOVED) still returns RED. 4 new tests at test_AC_RVG_removed_verdict.py covering AC.RVG.{1,2,3} verdict-recognition + AC.RVG.4 outcome-altitude dogfood probe against the live paper publish plan-doc. Closes FIDRAFT F-REMOVED-VERDICT-GATE."
+
+# BASELINE captured at source-edit commit — covers gates.py edit + 4 new
+# tests + universal-admission docs (STATE.md row, roadmap §2 row,
+# experiments writeup, FIDRAFT entry resolution).
+baseline: "TBD-AT-COMMIT"
+
+plan: docs/plans/v0-8-3-acs-verified-removed-verdict-parser.md
+plan_doc_ref: docs/plans/v0-8-3-acs-verified-removed-verdict-parser.md
+
+ac_count: 4
+smoke_outcome: "v0.8.3 AC.RVG.{1-4,S} GREEN; REMOVED-verdict proximity-pattern added to check_acs_verified; dogfood probe against paper publish artefacts returns all 6 gates GREEN."
+
+# Single-component fence (framework/tools/loam) plus universal-admission docs.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+    - framework/tools/loam/
+  files:
+    - CLAUDE.md
+    - install-from-source.txt
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/components/memory.md
+    - docs/public-surface-manifest.md
+    - README.md
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.v0-8-3-acs-verified-removed-verdict-parser
+  body: |
+    # v0.8.3 PATCH — `acs-verified` gate accepts REMOVED as a non-failure verdict
+
+    2026-05-13. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST. v0.8.3 closes the third orthogonal `check_acs_verified`
+    defect surfaced by the v0.9.0 paper publish flow (first two were
+    v0.7.2 §4-scoping + v0.8.2 `--plan-doc` flag).
+
+    The defect: the `check_acs_verified` verdict-loop recognises only
+    `GREEN` as a pass token via `re.escape(ac) + r".{0,240}?GREEN"`.
+    When an AC is legitimately struck mid-build per ODD §4 re-extension
+    (the paper publish's AC.ODDPAPER.3 was REMOVED at build-time per
+    D-ODDPAPER.5.2 Path C — stale HTML couldn't be regenerated, so the
+    HTML-rendering AC was dropped; markdown-only ship), the §status
+    verdict matrix records `| AC.ODDPAPER.3 | REMOVED | Build-time
+    D-ODDPAPER.5.2 ... |` instead of GREEN. The gate flagged the AC as
+    missing-from-§status and RED'd the publish despite a structurally
+    complete build.
+
+    The fix is a narrow extension to the verdict-loop: before adding
+    an AC to the `missing` list, also try the REMOVED proximity-pattern
+    (`re.escape(ac) + r".{0,240}?REMOVED"`). If either GREEN or
+    REMOVED matches within 240 chars, the AC counts as verified.
+    Missing-verdict (no recognised pass token near AC ID) still
+    returns RED — the fix doesn't open the gate to silently-skipped
+    ACs.
+
+    REMOVED encodes ODD §4 re-extension as a recognised build-time
+    outcome per `feedback_locked_design_not_license_for_bad_outcomes`:
+    locked design IS revisitable mid-build when empirical reality
+    contradicts it; the discipline is that the revision must be named
+    in the plan-doc (D-`<plan-id>.<n>` reference). The gate's job is
+    verdict recognition; verdict-justification verification stays
+    plan-doc-author + reviewer responsibility (D-RVG.2.b).
+
+    4 new tests at `framework/tools/loam/tests/test_AC_RVG_removed_verdict.py`
+    cover the table-row form + em-dash prose form + missing-verdict
+    regression + all-GREEN regression. Backward-compat verified by the
+    existing `test_AC_V060_2_pre_publish_gates.py` +
+    `test_AC_SDPD_plan_doc_flag.py` suites passing unmodified.
+
+    AC.RVG.4 outcome-altitude dogfood: invoked `loam release v0.9.0
+    --plan-doc docs/plans/odd-paper-methodology-publish.md --dry-run`
+    against the live paper-publish artefacts (v0.9.0 SHIPPED LOCAL
+    at seal `4a4535f`). All 6 gates return GREEN post-patch, closing
+    the v0.6.0-substrate gate defects surfaced by the paper publish
+    flow.
+
+    No outcome-shape addition. PATCH-class defect closure within
+    v0.6.0 release-process outcome. Same family as v0.7.2 (AC.READYP
+    §4-scoping) and v0.8.2 (AC.SDPD `--plan-doc` flag). pyproject.toml
+    versions stay at 0.9.0 per AC.HONEST.1 / D-NFCLEAN.4 precedent
+    (PATCHes ride predecessor MINOR's version).
+
+    FIDRAFT F-REMOVED-VERDICT-GATE marked RESOLVED at v0.8.3.
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+    (gates.py + 4 new tests + smoke writeup + FIDRAFT resolution +
+    STATE/roadmap admin) TBD-AT-COMMIT; pre-apply admin TBD-AT-COMMIT.

@@ -6,7 +6,7 @@ amendment:
 # BASELINE captured at source-edit commit — covers gates.py edit + 4 new
 # tests + universal-admission docs (STATE.md row, roadmap §2 row,
 # experiments writeup, FIDRAFT entry resolution).
-baseline: "TBD-AT-COMMIT"
+baseline: "1ef9df9"
 
 plan: docs/plans/v0-8-3-acs-verified-removed-verdict-parser.md
 plan_doc_ref: docs/plans/v0-8-3-acs-verified-removed-verdict-parser.md

@@ -13,7 +13,7 @@ plan: docs/plans/release-roadmap-priority-queue-restructure.md
 plan_doc_ref: docs/plans/release-roadmap-priority-queue-restructure.md
 
 ac_count: 4
-smoke_outcome: "AC.RR.{1,2,3,4,S} GREEN; §4 restructured to priority-ordered scope-descriptive candidate queue; reclassification audit deliverable inside §4-prelude (historical-section read-only + forward-looking-section rescope-applied); number-derivation recipe documented in `docs/release-versioning-policy.md`; dep-map re-keyed; AC.RR.4 outcome-altitude probe runs `loam release v0.10.0 --plan-doc docs/plans/release-roadmap-priority-queue-restructure.md --dry-run` returning all 6 gates GREEN."
+smoke_outcome: "AC.RR.{1,2,3,4,S} GREEN; §4 restructured + audit table + derivation recipe + dep-map re-keyed; AC.RR.4 dogfood via loam-release v0.10.0 --plan-doc --dry-run returns 6 gates GREEN."
 
 # Single-component MINOR (doc-only restructure). Use dev-sdlc component
 # as the seal anchor (standard for doc-only releases since the seal

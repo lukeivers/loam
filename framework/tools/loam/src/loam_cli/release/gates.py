@@ -65,16 +65,47 @@ def _version_to_slug(version: str) -> str:
     return version.replace(".", "-")
 
 
-def check_hard_smoke(repo_root: Path, version: str) -> GateResult:
+def _display_path(path: Path, repo_root: Path) -> str:
+    """Return a repo-relative display string for *path* when it lives
+    under *repo_root*; otherwise the absolute path.
+
+    Used in corrective-hint messages. Falls back gracefully when an
+    explicit ``--plan-doc`` argument points outside the repo root
+    (rare but legal — ``relative_to`` would raise ValueError there).
+    """
+    try:
+        return str(path.relative_to(repo_root))
+    except ValueError:
+        return str(path)
+
+
+def check_hard_smoke(
+    repo_root: Path,
+    version: str,
+    *,
+    plan_doc: Path | None = None,
+) -> GateResult:
     """Verify ``docs/experiments/<version-slug>-hard-smoke.md`` exists
     + contains the literal ``GREEN`` verdict token.
 
     Pattern matches the established v0.4.x hard-smoke writeups (see
     ``docs/experiments/v0-4-3-hard-smoke.md`` for the canonical
     template; the file's first heading + verdict line carry ``GREEN``).
+
+    Per AC.SDPD.3 (v0.8.2): when *plan_doc* is provided, the
+    experiments-path is derived from the plan-doc's stem instead of
+    the version slug (``docs/experiments/<plan-doc-stem>-hard-smoke.md``).
+    This supports scope-descriptive plan-doc slugs per
+    ``feedback_version_numbers_at_release_time`` (2026-05-13).
     """
-    slug = _version_to_slug(version)
-    path = repo_root / "docs" / "experiments" / f"{slug}-hard-smoke.md"
+    if plan_doc is not None:
+        # Per D-SDPD.3.a: Path.stem strips the trailing ``.md`` (and
+        # any subdirectory prefix); the experiments directory is fixed.
+        stem = plan_doc.stem
+        path = repo_root / "docs" / "experiments" / f"{stem}-hard-smoke.md"
+    else:
+        slug = _version_to_slug(version)
+        path = repo_root / "docs" / "experiments" / f"{slug}-hard-smoke.md"
     if not path.exists():
         return GateResult(
             name="hard-smoke",
@@ -115,14 +146,42 @@ def check_hard_smoke(repo_root: Path, version: str) -> GateResult:
 # --------------------------------------------------------------------
 
 
-def _find_plan_doc(repo_root: Path, version: str) -> Path | None:
-    """Locate ``docs/plans/<version-slug>*.md`` for the named version.
+def _find_plan_doc(
+    repo_root: Path,
+    version: str,
+    *,
+    plan_doc: Path | None = None,
+) -> Path | None:
+    """Locate the plan-doc for *version*.
 
-    Plan-doc filenames vary slightly: ``v0-6-0-release-process.md`` /
-    ``v0-5-0-subagent-personas-routing-and-priming.md``. The lookup
-    uses the version's slug as a prefix glob so the filename's
-    descriptive tail is permitted.
+    Two paths:
+
+    1. **Explicit (AC.SDPD.2, v0.8.2):** when *plan_doc* is provided,
+       resolve it (relative paths joined to *repo_root*) and return
+       it iff the file exists. The version-slug glob is skipped
+       entirely. Caller is responsible for the corrective hint on
+       missing-explicit-path.
+    2. **Implicit (default, v0.6.0 — v0.8.1):** glob
+       ``docs/plans/<version-slug>*.md`` for the named version.
+       Plan-doc filenames vary slightly:
+       ``v0-6-0-release-process.md`` /
+       ``v0-5-0-subagent-personas-routing-and-priming.md``. The lookup
+       uses the version's slug as a prefix glob so the filename's
+       descriptive tail is permitted.
+
+    Per ``feedback_version_numbers_at_release_time`` (2026-05-13)
+    scope-descriptive plan-doc slugs are the new convention; the
+    explicit path is how that convention reaches the gates.
     """
+    if plan_doc is not None:
+        # Resolve relative paths against repo_root for caller
+        # convenience. Absolute paths pass through.
+        resolved = (
+            plan_doc
+            if plan_doc.is_absolute()
+            else (repo_root / plan_doc)
+        )
+        return resolved if resolved.is_file() else None
     slug = _version_to_slug(version)
     plans_dir = repo_root / "docs" / "plans"
     if not plans_dir.is_dir():
@@ -174,9 +233,19 @@ def _extract_section_4_body(body: str) -> str | None:
     return body[section_start : section_start + next_section.start()]
 
 
-def check_acs_verified(repo_root: Path, version: str) -> GateResult:
+def check_acs_verified(
+    repo_root: Path,
+    version: str,
+    *,
+    plan_doc: Path | None = None,
+) -> GateResult:
     """Verify the plan-doc's §status / §verdict-matrix marks each AC
     declared in §4 GREEN.
+
+    Per AC.SDPD.2 (v0.8.2): when *plan_doc* is provided, the gate
+    reads the named plan-doc directly instead of inferring the path
+    from the version-slug glob. On missing-explicit-path the corrective
+    hint names the path + the ``--plan-doc`` flag.
 
     Per AC.READYP.1 (v0.7.2 fix): the AC-ID scan is restricted to
     the plan-doc's ``## §4 — Acceptance criteria`` section body
@@ -197,8 +266,23 @@ def check_acs_verified(repo_root: Path, version: str) -> GateResult:
     backfill is appended at end-of-build; the gate runs against the
     backfilled doc.
     """
-    plan_doc = _find_plan_doc(repo_root, version)
-    if plan_doc is None:
+    resolved_plan_doc = _find_plan_doc(
+        repo_root, version, plan_doc=plan_doc
+    )
+    if resolved_plan_doc is None:
+        if plan_doc is not None:
+            # AC.SDPD.2 RED-with-hint: name the explicit path the
+            # caller asked for + the --plan-doc flag's role.
+            return GateResult(
+                name="acs-verified",
+                ok=False,
+                message=(
+                    f"plan-doc not found at {plan_doc} (resolved via "
+                    f"`--plan-doc` flag). Verify the path exists relative "
+                    f"to the repo root; re-run with a corrected "
+                    f"`--plan-doc` argument."
+                ),
+            )
         return GateResult(
             name="acs-verified",
             ok=False,
@@ -207,19 +291,22 @@ def check_acs_verified(repo_root: Path, version: str) -> GateResult:
                 f"or {_version_to_slug(version)}.md. Plan-before-code per "
                 f"`feedback_plan_before_code` requires the plan-doc as the "
                 f"AC source-of-truth; author it, backfill §status with each "
-                f"AC verdict, then re-run."
+                f"AC verdict, then re-run. Alternatively, pass "
+                f"`--plan-doc <path>` for a scope-descriptive plan-doc "
+                f"that doesn't follow the version-slug glob convention."
             ),
         )
-    body = plan_doc.read_text(encoding="utf-8")
+    body = resolved_plan_doc.read_text(encoding="utf-8")
     # Per AC.READYP.1 (v0.7.2): scope the AC-ID scan to §4 only.
     # Cross-references in §6 / §8 / §11 / §13 are NOT in-scope ACs.
     section_4 = _extract_section_4_body(body)
+    plan_doc_display = _display_path(resolved_plan_doc, repo_root)
     if section_4 is None:
         return GateResult(
             name="acs-verified",
             ok=False,
             message=(
-                f"plan-doc at {plan_doc.relative_to(repo_root)} has no "
+                f"plan-doc at {plan_doc_display} has no "
                 f"`## §4 — Acceptance criteria` heading; the `acs-verified` "
                 f"gate scopes the AC-ID scan to §4 per the plan-doc "
                 f"convention. Add the heading + author the in-scope ACs "
@@ -247,7 +334,7 @@ def check_acs_verified(repo_root: Path, version: str) -> GateResult:
             name="acs-verified",
             ok=False,
             message=(
-                f"plan-doc at {plan_doc.relative_to(repo_root)} declares no "
+                f"plan-doc at {plan_doc_display} declares no "
                 f"AC IDs in §4 (looked for `### AC.<scope>.<n>` heading "
                 f"declarations). Verify the doc is the right shape (§4 "
                 f"Acceptance criteria block per ODD §2.5)."
@@ -278,7 +365,7 @@ def check_acs_verified(repo_root: Path, version: str) -> GateResult:
             name="acs-verified",
             ok=False,
             message=(
-                f"plan-doc {plan_doc.relative_to(repo_root)} §status does "
+                f"plan-doc {plan_doc_display} §status does "
                 f"not mark these ACs GREEN: {', '.join(missing)}. Backfill "
                 f"§status (or §13) with the verdict matrix; each AC must "
                 f"appear with a GREEN marker. Re-run once backfilled."
@@ -289,7 +376,7 @@ def check_acs_verified(repo_root: Path, version: str) -> GateResult:
         ok=True,
         message=(
             f"all {len(ac_ids)} AC(s) marked GREEN in "
-            f"{plan_doc.relative_to(repo_root)} §status"
+            f"{plan_doc_display} §status"
         ),
     )
 
@@ -521,13 +608,34 @@ ALL_GATES = (
 )
 
 
-def run_all(repo_root: Path, version: str) -> list[GateResult]:
+def run_all(
+    repo_root: Path,
+    version: str,
+    *,
+    plan_doc: Path | None = None,
+) -> list[GateResult]:
     """Run every gate; return the verdict list in declaration order.
 
     Does NOT short-circuit on first RED — the operator sees every
     failure in one pass.
+
+    Per AC.SDPD.{2,3} (v0.8.2): when *plan_doc* is provided, it is
+    forwarded to ``check_hard_smoke`` and ``check_acs_verified``
+    (the two gates whose path inference uses the version slug). The
+    other four gates ignore the parameter — they read fixed paths
+    (``docs/STATE.md``, ``docs/release-roadmap.md``) or invoke
+    ``git`` directly. Per D-SDPD.6 the ``ALL_GATES`` tuple keeps its
+    uniform ``(repo_root, version)`` signature for backward-compat;
+    the per-gate calls below thread the new parameter explicitly.
     """
-    return [gate(repo_root, version) for gate in ALL_GATES]
+    return [
+        check_hard_smoke(repo_root, version, plan_doc=plan_doc),
+        check_acs_verified(repo_root, version, plan_doc=plan_doc),
+        check_state_shipped(repo_root, version),
+        check_clean_tree(repo_root, version),
+        check_branch_main(repo_root, version),
+        check_seal_commit_reachable(repo_root, version),
+    ]
 
 
 def format_report(results: list[GateResult]) -> str:

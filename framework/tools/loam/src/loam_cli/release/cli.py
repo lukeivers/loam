@@ -80,6 +80,23 @@ def build_release_subcommand(
             "are expected to run from the canonical loam repo."
         ),
     )
+    p.add_argument(
+        "--plan-doc",
+        type=Path,
+        default=None,
+        metavar="<path>",
+        help=(
+            "explicit plan-doc path for scope-descriptive plan-doc "
+            "slugs that don't follow the version-glob convention "
+            "(per feedback_version_numbers_at_release_time). When "
+            "set, the `acs-verified` gate reads the named plan-doc "
+            "and the `hard-smoke` gate reads "
+            "docs/experiments/<plan-doc-stem>-hard-smoke.md. When "
+            "omitted, both gates infer paths from the version slug "
+            "(default; backward-compatible for v0.6.0/v0.7.x/v0.8.x "
+            "version-named plan-docs)."
+        ),
+    )
     p.set_defaults(func=dispatch)
 
 
@@ -96,5 +113,6 @@ def dispatch(args: argparse.Namespace) -> int:
         args.version,
         dry_run=args.dry_run,
         create_release=args.create_release,
+        plan_doc=args.plan_doc,
     )
     return outcome.rc

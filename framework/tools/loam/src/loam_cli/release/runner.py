@@ -221,6 +221,7 @@ def run(
     *,
     dry_run: bool = False,
     create_release: bool = False,
+    plan_doc: Path | None = None,
 ) -> PublishOutcome:
     """Execute the publish flow.
 
@@ -232,9 +233,14 @@ def run(
     *dry_run* skips tag creation + push + gh-release; everything
     else (gates + post-ship proposal) still runs so the operator
     sees the full state.
+
+    Per AC.SDPD.{2,3} (v0.8.2): *plan_doc* (when set) overrides the
+    version-slug-glob inference in the ``acs-verified`` and
+    ``hard-smoke`` gates; supports scope-descriptive plan-doc slugs
+    per ``feedback_version_numbers_at_release_time``.
     """
     # 1. Pre-publish gates (AC.V060.2).
-    gate_results = gates.run_all(repo_root, version)
+    gate_results = gates.run_all(repo_root, version, plan_doc=plan_doc)
     print("== Pre-publish gates ==")
     print(gates.format_report(gate_results))
     print()

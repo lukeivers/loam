@@ -3,16 +3,17 @@ amendment:
   slug: odd-paper-methodology-publish
   title: "ODD methodology paper publish — case-study altitude artefact. Lands `docs/papers/odd-methodology.md` (v19 final from <workspace>/.scratch/claude-output/odd-paper-v19-draft-2026-05-12.md) + `docs/papers/odd-methodology.html` rendering + README key-documents link. Paper covers ODD methodology + ProgramBench-derivative empirical observations (yj n=4, csview/gron/htmlq/figlet n=1) with case-study altitude framing, claim-or-cite citation discipline (5 real citations; no fabrications), arithmetic-verified statistics, dual-audience review. Class (preliminary): MINOR per docs/release-versioning-policy.md — adds new artefact category (docs/papers/) + new aspect of project's user-visible surface. Version derives at release-time per feedback_version_numbers_at_release_time. AC family scope-descriptive (AC.ODDPAPER.*); slug not version-packed per same rule. Predecessor v0.8.1 SHIPPED PUBLIC (tag bdc2e81; seal 9411061). Owner authorization Telegram 11074 'Paper first.'"
 
-# BASELINE captured at source-edit batch (TBD-AT-COMMIT) — covers paper artefact +
-# README link + HTML verification + universal-admission docs (STATE.md + roadmap §2
-# row + experiments writeup + FIDRAFT updates).
-baseline: "TBD-AT-COMMIT"
+# BASELINE captured at source-edit batch (c1f7089) — covers paper artefact +
+# README link + 30 pyproject 0.8.0 → 0.9.0 bumps + 4 __version__ bumps +
+# universal-admission docs (STATE.md + roadmap §2 row + experiments writeup +
+# FIDRAFT updates). Plan-doc + manifest + HTML removal landed at 1a8da67.
+baseline: "c1f7089"
 
 plan: docs/plans/odd-paper-methodology-publish.md
 plan_doc_ref: docs/plans/odd-paper-methodology-publish.md
 
 ac_count: 3
-smoke_outcome: "AC.ODDPAPER.{1,2,4,S} GREEN (AC.ODDPAPER.3 REMOVED at build-time per D-ODDPAPER.5.2 Path C — stale HTML removed; ship markdown-only); paper artefact at canonical path with v19 content; README key-docs link present; cold-clone outcome-altitude probe reads first three sections without breakage."
+smoke_outcome: "AC.ODDPAPER.{1,2,4,S} GREEN (AC.ODDPAPER.3 REMOVED per D-ODDPAPER.5.2 Path C); paper at canonical path with v19 content; README link present; cold-clone probe GREEN."
 
 # Docs-only publish; no component-source touched. Universal-admission paths cover
 # the full edit surface. Use dev-sdlc component as the seal anchor since it's the

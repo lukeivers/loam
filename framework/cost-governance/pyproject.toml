@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-cost-governance"
-version = "0.9.0"
+version = "0.10.0"
 description = "Cost governance for loam — aggregate budget ceilings (money / tokens / time) with activation-gate wrap + sidecar ledger."
 requires-python = ">=3.11"
 dependencies = [

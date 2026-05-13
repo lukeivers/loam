@@ -1,12 +1,14 @@
 # Release roadmap — dependency map
 
-**Created:** 2026-05-09. **Last refresh:** 2026-05-09. **Effective with:** `docs/release-roadmap.md` v0.5.0+ entries. **Composes with:** `feedback_soft_halt_vs_hard_halt.md` (memory rule), `feedback_serialize_amendment_builds.md` (worktree-level build serialization), `docs/release-versioning-policy.md` (SemVer commitments).
+**Created:** 2026-05-09. **Last refresh:** 2026-05-13. **Effective with:** `docs/release-roadmap.md` §4 priority-ordered candidate queue (post `release-roadmap-priority-queue-restructure` MINOR). **Composes with:** `feedback_soft_halt_vs_hard_halt.md` (memory rule), `feedback_serialize_amendment_builds.md` (worktree-level build serialization), `docs/release-versioning-policy.md` (SemVer commitments + number-derivation recipe).
 
 ## Why this artefact exists
 
-The release roadmap (`docs/release-roadmap.md` §4) lists per-version dependencies, but the dependency type — HARD (technical prerequisite) vs SOFT (sequencing preference) — isn't named. Read literally, the roadmap implies a strictly serial build chain v0.5 → v0.6 → ... → v1.0 with no parallel work possible.
+The release roadmap (`docs/release-roadmap.md` §4) lists per-candidate dependencies, but the dependency type — HARD (technical prerequisite) vs SOFT (sequencing preference) — isn't named. Read literally, the queue's stated deps could imply a strictly serial build chain with no parallel work possible.
 
 Re-examination shows that read overstates the actual constraint: roughly half the stated dependencies are SOFT — sequencing preferences that can yield to parallel work when fence-discipline holds. This document codifies the HARD-vs-SOFT classification per edge so the parallel-work surface is explicit and so soft-halt declarations have a canonical reference.
+
+**Re-key 2026-05-13 (priority-queue restructure).** Dependency rows are now keyed by **candidate slug** for forward-looking entries (matches `docs/release-roadmap.md` §4 shape). Already-shipped antecedents continue to be keyed by version-number (the published tags are the stable reference). The dep-graph itself is unchanged; only the row labels.
 
 ## Dependency-type taxonomy
 
@@ -16,38 +18,46 @@ Re-examination shows that read overstates the actual constraint: roughly half th
 
 **MIXED** — the version has multiple ACs; some have HARD deps, some have SOFT deps. Sub-AC granularity matters; the version overall is gated by the HARD subset only.
 
-## Per-version dependency edges
+## Per-candidate dependency edges
 
-The current chain from `release-roadmap.md` §4 with type classification:
+The current §4 priority queue with type classification. Edges from forward-looking candidate slugs to either other candidate slugs OR already-shipped version-numbers. Slug labels match the §4 queue entry name; version-numbers refer to published tags on `origin`.
 
 | Edge | Stated dep | Type | Evidence / notes |
 |---|---|---|---|
-| **v0.5.0** ← v0.4.0 | code-gen wired; ProgramBench docs-only baseline | **HARD** | Binary-usage observation harness produces evidence rows that feed the code-gen pipeline shipped in v0.4.0. AC.V050.2 (binary-feeder mode for odd-extractor) literally extends the v0.4.0 evidence-row contract. |
-| **v0.6.0** ← v0.5.0 | working-software output is precondition for non-tech user reaching working-software output | **MIXED** | AC.V060.5 (real session-transcript demo) HARD-depends on v0.5.0 (the demo IS a v0.5.0-shaped end-to-end trace). AC.V060.1 (light-touch education), AC.V060.2 (channel config slot), AC.V060.3 (corpus override pattern), AC.V060.4 (memory-doc skeleton template) are SOFT — could be authored in parallel with v0.5.0. AC.V060.6 (outcome-altitude AC) HARD-depends on v0.5.0. |
-| **v0.7.0** ← v0.6.0 | UX surface stable enough to add structural enforcement on top | **SOFT** | v0.7.0 is META-FRAMEWORK class — structural-enforcement substrate. The substrate work (hook surface widening, principle-foundation files) is orthogonal to END-USER UX. The dep reflects "we'd rather not change the substrate while UX is unstable" — sequencing preference, not technical prereq. |
-| **v0.8.0** ← v0.7.0 | structural enforcement substrate provides hook surface | **HARD** | v0.8.0 contract-validation literally consumes v0.7.0's hook surface (the structural checks fire on the same hook events). |
-| **v0.9.0** ← v0.8.0 | memory FBE.7 stable + production usage long enough for interaction volume | **MIXED** | v0.9.0 deep-personalization features can be CODED without v0.8.0 in production; only the calibration/empirical-tuning work needs production volume. Code-side SOFT; data-side HARD. |
-| **v0.10.0+** ← v0.9.0 | richer user model for plugin composition | **SOFT** | Plugin suite items can ship against v0.7-substrate; v0.9 personalization is enrichment, not gate. |
+| **`binary-usage-observation-harness`** ← v0.4.0 | code-gen wired; ProgramBench docs-only baseline | **HARD** | Binary-usage observation harness produces evidence rows that feed the code-gen pipeline shipped in v0.4.0. The candidate's AC family (binary-feeder mode for odd-extractor) literally extends the v0.4.0 evidence-row contract. |
+| **`principle-foundation-structural-enforcement`** ← v0.7.0 | UX surface stable enough to add structural enforcement on top | **SOFT** | This candidate is META-FRAMEWORK class — structural-enforcement substrate. The substrate work (hook surface widening, principle-foundation files) is orthogonal to END-USER UX. The dep reflects "we'd rather not change the substrate while UX is unstable" — sequencing preference, not technical prereq. |
+| **`negative-alignment-detection`** ← `principle-foundation-structural-enforcement` | structural enforcement substrate provides hook surface | **HARD** | Negative-alignment detection consumes the principle-foundation hook surface (the structural checks fire on the same hook events). HARD when principle-foundation has shipped first; if dep order inverts (negative-alignment ships first), the alignment detection ships with a placeholder hook layer + retrofits later — SOFT under that ordering. |
+| **`deep-personalization`** ← v0.8.0 + memory FBE.7 production volume | memory FBE.7 stable + production usage long enough for interaction volume | **MIXED** | Deep-personalization features can be CODED without v0.8.0 in production; only the calibration/empirical-tuning work needs production volume. Code-side SOFT; data-side HARD. v0.8.0 honesty cleanup MINOR shipped (the dep is on the established cleanup baseline + per-component-version discipline; the original v0.8.0 negative-alignment shape never landed and is now folded into the `negative-alignment-detection` candidate). |
+| **`plugin-suite-expansion`** ← `deep-personalization` | richer user model for plugin composition | **SOFT** | Plugin suite items can ship against the existing principle-foundation substrate; deep-personalization is enrichment, not gate. Each plugin gets its own MINOR with its own objective sentence + ACs. |
+| **`v1.0.0-stability-gate`** ← multiple antecedents | All documented features work + 1 real-user shipping event + 6-month backwards-compat commitment + plugin contract stable | **MIXED** | Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." Quality-bar event, not a calendar event. The "1 real user has shipped real software with loam" criterion is an external dependency (user adoption); the others are internal-roadmap gates. |
 
-## Realistic parallel-work surface (post-v0.4.3)
+## Realistic parallel-work surface (post v0.9.0 / current state)
 
-Once v0.4.3 (memory retrieval BM25 fix) ships locally, the HARD-only constraint chain is:
+The HARD-only constraint chain in the current §4 queue:
 
 ```
-v0.4.3 [in flight] → v0.5.0 (HARD)
-                                  ↓
-                  v0.6.0 outcome-altitude ACs (HARD on V050)
+v0.4.0 [shipped] → binary-usage-observation-harness (HARD)
+v0.7.0 [shipped] → principle-foundation-structural-enforcement (SOFT)
+                          ↓
+                    negative-alignment-detection (HARD)
+                          ↓
+                    deep-personalization (MIXED — code-side SOFT;
+                                                    data-side HARD)
+                          ↓
+                    plugin-suite-expansion (SOFT)
+                          ↓
+                    v1.0.0-stability-gate (MIXED — external dep)
 ```
 
 The SOFT-classified work that can run in parallel:
 
 | Stream | Fence | Parallelizable with | Stage |
 |---|---|---|---|
-| v0.5.0 main (binary harness) | new component `framework/binary-observation-harness/` + adapter in `framework/scope-of-work/` | v0.7.0 substrate (no fence overlap) | build |
-| v0.7.0 META-FRAMEWORK substrate | hook surface widening (`framework/orchestrator/`, `framework/safety-layer/`) + principle-foundation docs | v0.5.0 main, v0.6.0 sub-features | build |
-| v0.6.0 sub-features (V060.1, V060.2, V060.3, V060.4) | various per AC | v0.5.0 main | build |
-| BallotPath Stage 6 (counties) | entirely separate workspace `/Users/lukeivers/ballotpath/` | everything in canonical | build |
-| Subagent-personas amendment | `.claude/agents/<name>.md` in canonical | most things; small fence | build |
+| `binary-usage-observation-harness` | new component `framework/binary-observation-harness/` + adapter in `framework/scope-of-work/` | `principle-foundation` substrate (no fence overlap) | build |
+| `principle-foundation-structural-enforcement` | hook surface widening (`framework/orchestrator/`, `framework/safety-layer/`) + principle-foundation docs | `binary-usage-observation-harness` | build |
+| `negative-alignment-detection` (CODE only; calibration deferred) | new detection primitive + `framework/odd-extractor/` extension | `binary-usage-observation-harness` | build |
+| `plugin-suite-expansion` (per-plugin MINOR) | each plugin gets its own `plugins/<name>/` | other candidates (small fence per plugin) | build |
+| BallotPath workspace work | entirely separate workspace `/Users/lukeivers/ballotpath/` | everything in canonical | build |
 | Rebrand-residue sweep | cross-cutting in canonical | nothing else in canonical (race) | build |
 
 ## Worktree-level constraints (build-time only)
@@ -63,11 +73,11 @@ For different worktrees (canonical + BallotPath), TWO build agents run simultane
 
 ## Soft-halt application
 
-Each version's stated SOFT dependencies enable soft-halt declarations like:
+Each candidate's stated SOFT dependencies enable soft-halt declarations like:
 
-> Soft-halted on v0.4.3 publish (HARD HALT class — public action). Continuing on v0.5.0 plan-doc authoring (fence-clear, parallel-safe per this map). Exit: owner ratifies v0.4.3 publish.
+> Soft-halted on v0.9.0 publish (HARD HALT class — public action). Continuing on `release-roadmap-priority-queue-restructure` build (fence-clear, parallel-safe per this map). Exit: owner ratifies v0.9.0 publish.
 
-> Soft-halted on v0.6.0 sub-feature build (waiting for v0.5.0 main to complete, MIXED dep). Continuing on v0.7.0 META-FRAMEWORK substrate plan (SOFT dep on v0.6.0 per this map; substrate fence orthogonal to v0.5.0 binary-harness fence). Exit: v0.5.0 main lands.
+> Soft-halted on `binary-usage-observation-harness` build (waiting for sandbox infrastructure decision). Continuing on `principle-foundation-structural-enforcement` plan-doc authoring (SOFT dep per this map; substrate fence orthogonal to binary-harness fence). Exit: sandbox decision lands.
 
 The 4-element soft-halt template (item / dep graph / non-blocked work / exit condition) maps directly onto rows from this table.
 
@@ -75,9 +85,10 @@ The 4-element soft-halt template (item / dep graph / non-blocked work / exit con
 
 This artefact is a SHIPPED-state document, not a forward-looking plan. It updates when:
 
-1. New version added to `release-roadmap.md` §4 — add row + classify deps.
+1. New candidate added to `release-roadmap.md` §4 priority queue — add row + classify deps using candidate-slug labels.
 2. A SOFT dep proves operationally HARD (e.g., parallel-build attempt hits unforeseen coupling) — reclassify with note + commit.
 3. A HARD dep gets refactored away (e.g., new abstraction breaks the consumption point) — reclassify with note + commit.
+4. A candidate ships — its row stays as-is (the candidate-slug label is stable across the queue → ship transition); the row's antecedent column becomes the new published-version reference.
 
 No version-line ownership; this lives at the roadmap-level alongside `release-roadmap.md` itself.
 

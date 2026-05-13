@@ -76,6 +76,44 @@ The post-ship review surfaces a major-eval verdict to owner; owner decides wheth
 
 ---
 
+## Number derivation at build-commence time
+
+Per `feedback_version_numbers_at_release_time` (captured 2026-05-13) + the priority-queue restructure (`docs/plans/release-roadmap-priority-queue-restructure.md`), the version number for a forward-looking candidate is **derived at build-commence time** from two inputs, not pre-assigned at queue-authoring time. The recipe:
+
+```
+Given: current_version   — the most-recent shipped tag on the public
+                            remote at the time of build-commence (e.g.,
+                            v0.9.0). NOT the highest-numbered-locally;
+                            the rule pins against published state.
+Given: candidate_class   — PATCH | MINOR | MAJOR — from the queue
+                            entry being built; the class is suggestive
+                            on the roadmap but plan-author rules
+                            authoritatively at build-time (Q2 2026-05-09).
+
+if candidate_class == PATCH:
+    next_number = bump_patch(current_version)   # v0.9.0 → v0.9.1
+elif candidate_class == MINOR:
+    next_number = bump_minor(current_version)   # v0.9.0 → v0.10.0
+elif candidate_class == MAJOR:
+    next_number = bump_major(current_version)   # v0.9.0 → v1.0.0
+                                                  # (only post-1.0
+                                                  # commitment; see
+                                                  # §"When 1.0.0 ships"
+                                                  # for the gate)
+```
+
+**Where the recipe applies.** At build-commence time, when a candidate moves from the priority queue (§4 of `docs/release-roadmap.md`) into an active build. Plan-doc filenames stay scope-descriptive (no version pre-baked); the version number gets assigned to the seal commit, the tag, and the §status verdict block at build-time + recorded in `docs/STATE.md` + `docs/release-roadmap.md` §2 at ship-time.
+
+**What `current_version` means precisely.** The highest-numbered shipped tag on the canonical `loam` remote (`origin`) at the time of build-commence. If local and remote disagree (a tag sealed locally but not yet pushed), the local-but-unpushed version becomes a HARD HALT trigger — the recipe is ambiguous; surface to owner for the disambiguation ruling before proceeding. The build-forward discipline (`feedback_build_forward_on_publish_pending`) governs queue advancement when publish is pending; the **number-derivation** rule pins against published-remote state to prevent two parallel builds racing on the same derived number.
+
+**Hot-patch case (`v0.X.Y.Z` four-digit form).** When a hot patch is needed before the next planned PATCH, the existing four-digit convention applies + the recipe extends with `bump_hotfix(current_version)`. Example: `v0.2.5.1` was a hot patch on `v0.2.5` correcting three production-path defects; `next_HOTFIX(v0.2.5) = v0.2.5.1`. Hot patches do not introduce new capability; they close defects in the most-recent minor's named outcome (same shape as PATCHes; see "What goes in a patch" above).
+
+**Edge case: in-flight PATCH not yet shipped.** If the queue's first item is MINOR but there's an in-flight PATCH that hasn't yet been published, the candidate-class drives the choice independently. The in-flight PATCH bumps PATCH from the current published version; the MINOR after it bumps MINOR from the new PATCH-bumped version once the PATCH ships. Build-forward applies — both can be authored in parallel on the priority queue, but build serialization (per `feedback_serialize_amendment_builds`) applies in the same worktree.
+
+**Implementation choice (documented manual rule).** Per the priority-queue restructure plan-doc's D-RR.5.4 builder ruling (2026-05-13): the recipe is documented as a manual rule in this policy doc (this section). The maintainer reads the recipe at build-commence-time and applies it. A future opt-in Python helper exposing `next_number(current, candidate_class)` for `loam release` CLI consumption can land as a follow-on patch if the manual-application cost rises; current state is single-maintainer + low frequency, so the manual rule is sufficient.
+
+---
+
 ## Pre-release tags
 
 Optional. When used: `v0.4.0-rc.1`, `v0.4.0-beta.2`. The unsuffixed `v0.4.0` is the canonical release.

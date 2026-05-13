@@ -72,6 +72,7 @@ Pulled from `docs/STATE.md`. Each entry is the minor's objective sentence + the 
 | v0.8.1 | honesty-cleanup follow-on PATCH (closes 2 NEW axis-12 defects surfaced by external-reviewer pass-2 verification of v0.8.0 at workspace/.scratch/claude-output/loam-external-review-v0.8.0-2026-05-10.md). NF1 — three v0.7.X STATE.md rows (v0.7.1 / v0.7.2 / v0.7.3) carried leading-title `**v0.7.X PATCH SHIPPED LOCAL**` while bodies said SHIPPED PUBLIC; same defect class as F5 (v0.5.0) v0.8.0 just resolved per-row but didn't sweep. NF2 — `**Total shipped:**` line was mathematically wrong (`19 minor + 8 patches` vs actual `8 minor + 18 patches`). Two compound walker bugs root-caused: (a) `_SUMMARY_LINE` regex didn't match arrow + range form (`v0.1.0 → v0.7.4 published.`) so live line never auto-updated; (b) `_count_published_versions` counted only marker-bearing rows; historical pre-v0.7.3 rows lacked markers. AC.NFCLEAN.1 — historical leading-title sweep via direct `_backfill_state_md_leading_title` helper invocation per version (strict-scope per HARD HALT #7 ruling — top-level `apply_backfill(...)` produces 6 additional side-effect edits captured at FIDRAFT F-NFCLEAN-FOLLOWON for next docs-admin cleanup cycle). AC.NFCLEAN.2 — walker fix tightens `_SUMMARY_LINE` regex to accept arrow + range form; `_count_published_versions` counts ALL §2 rows (the section semantic IS "shipped versions"); `_classify_row` falls back to version-pattern (X.Y.0 = MINOR; rest = PATCH) when third pipe-cell lacks explicit-class keyword. Live count corrected to `8 minor + 18 patches. v0.1.0 → v0.8.0 published.` AC.NFCLEAN.3 — outcome-altitude probe at docs/experiments/v0-8-1-hard-smoke.md verifies closure at post-source-edit commit. 3 new tests at framework/tools/loam/tests/test_AC_BACKFL.py; 22/22 BACKFL tests GREEN; 19 existing tests preserved. pyproject.toml versions stay at 0.8.0 per D-NFCLEAN.4 (per-component-version discipline advances with MINORs; PATCHes ride predecessor MINOR). FIDRAFT captures: F-WALKER-1 (deeper pipe-in-description robustness), F-PCV-1 (per-component pyproject patch-number bumps), F-NFCLEAN-FOLLOWON (v0.7.X side-effect cleanups). | Single-cycle PATCH: plan-doc + manifest `4c5f442`; source-edit (walker fix + 3 tests + AC.NFCLEAN.1 leading-title sweep + count-line correction + smoke writeup + FIDRAFT entries + STATE/roadmap admin) `15b2918`; apply `b26fc9b`; seal `9411061`; **SHIPPED PUBLIC 2026-05-10 at tag `v0.8.1` (annotated `bdc2e81`)** |
 | v0.9.0 | ODD methodology paper publish MINOR — case-study altitude artefact. Lands `docs/papers/odd-methodology.md` (v19 final draft from `<workspace>/.scratch/claude-output/odd-paper-v19-draft-2026-05-12.md`, 629 lines, ~15,200 words; 12 reviewer-pass iteration arc applied) + README key-documents link (one bulleted entry after `docs/design/odd.md` so discovery flow reads: operational ODD spec → published case-study paper). OUTCOME SHAPE: adds a new artefact category (`docs/papers/`) to the project's user-visible surface + publishes the ODD methodology underlying loam's build cadence as a self-contained case-study report external readers can evaluate on its own terms. Version derived at build per `feedback_version_numbers_at_release_time` (`next_MINOR(v0.8.1) = v0.9.0`); plan-doc slug scope-descriptive (`odd-paper-methodology-publish`), no version pre-baked. Three ACs (AC.ODDPAPER.{1,2,4} plus AC.ODDPAPER.S; AC.ODDPAPER.3 REMOVED at build-time per D-ODDPAPER.5.2 Path C — stale HTML from earlier paper iteration didn't match v19 title; pandoc not installed; HTML regen captured as FIDRAFT F-PAPER-HTML-REGEN; shipped markdown-only). AC.ODDPAPER.1 — paper artefact at canonical path with v19 content (case-study altitude framing in "On this artefact" section explicit; H-MAJOR-1 abstract caveat for case-study-altitude n=4; H-MAJOR-2 §5B.2 "coincides with" not "is attributable to"; A-MAJOR-1 §2.4 capability sub-table with outer-objective context); 5 real citations verified per claim-or-cite discipline (Beck 2002, North March 2006, Wynne+Hellesøy 2012, Zave+Jackson 1997 IEEE TSE 6(1):1-30, Yang et al. 2026 ProgramBench arXiv:2605.03546); arithmetic-verified statistics (pre-substrate yj mean 23.06% sd 18.83pp re-derived from 4 listed reps; substrate yj mean 47.09% sd 2.77pp). AC.ODDPAPER.2 — `README.md` "key documents" section gained a bulleted entry linking the paper (single-sentence description; positioned after the `docs/design/odd.md` entry). AC.ODDPAPER.4 — outcome-altitude cold-clone reader-discovery probe at `docs/experiments/odd-paper-methodology-publish-hard-smoke.md` covering Stage 1 repository invariants + Stage 2 five-step cold-clone discovery flow (open README → locate link → follow to paper → read first three sections → verify case-study framing legibility) + Stage 3 rd-automation orthogonality ride-along. pyproject.toml versions advance from 0.8.0 → 0.9.0 (30 pyproject files + 4 `__version__` strings) per AC.HONEST.1 per-component-version discipline (MINORs bump per-component versions; PATCHes ride predecessor MINOR — discipline established at v0.8.0). Sub-plan: `docs/plans/odd-paper-methodology-publish.md`. | Single-cycle MINOR: plan-doc + manifest `1a8da67`; source-edit (paper + README link + HTML removal + 30 pyproject bumps + 4 __version__ bumps + experiments writeup + FIDRAFT F-PAPER-HTML-REGEN + STATE/roadmap admin) `c1f7089`; manifest baseline backfill `afaa26c`; apply `029fc69`; seal `4a4535f`; §status backfill `d437203`. **v0.9.0 SHIPPED LOCAL** — owner gates publish.; **SHIPPED PUBLIC 2026-05-13 at tag `v0.9.0` (annotated `af57cff`)** |
 | v0.8.2 | release-CLI scope-descriptive plan-doc support PATCH — defect-closure on v0.6.0 release-process outcome shape. `feedback_version_numbers_at_release_time` (captured 2026-05-13) reverses the plan-doc filename convention: slugs are scope-descriptive (no version pre-baked) and version derives at release-time from `(current_published, class)`. The v0.6.0 release-CLI gates (`check_acs_verified` + `check_hard_smoke`) infer their input paths from the version slug, so the first downstream consumer of the new convention (the v0.9.0 paper publish at `docs/plans/odd-paper-methodology-publish.md`) couldn't pass `loam release` gates without a fix. New `--plan-doc <path>` flag on `loam release` overrides path inference for two gates: `check_acs_verified` reads the named plan-doc directly when set; `check_hard_smoke` reads `docs/experiments/<plan-doc-stem>-hard-smoke.md` (stem extraction via `Path.stem`). Flag-absent behaviour preserved verbatim (backward-compat for v0.6.0 / v0.7.x / v0.8.x version-named plan-docs). AC.SDPD.{1,2,3} — argparse flag + gate-routing edits across `framework/tools/loam/src/loam_cli/release/{gates,runner,cli}.py`. AC.SDPD.4 — outcome-altitude dogfood: `loam release v0.9.0 --plan-doc docs/plans/odd-paper-methodology-publish.md --dry-run` returns `hard-smoke` GREEN against the live paper smoke writeup + `acs-verified` reads the correct plan-doc (orthogonal RED on AC.ODDPAPER.3 REMOVED-verdict captured as F-REMOVED-VERDICT-GATE FIDRAFT; out of scope per HARD HALT #2). 11 new tests at `framework/tools/loam/tests/test_AC_SDPD_plan_doc_flag.py` (AC.SDPD.1 argparse acceptance, AC.SDPD.2 explicit-plan-doc read + RED-with-hint on missing + relative-path resolution, AC.SDPD.3 stem-derived path + RED-with-hint + precedence-over-version-slug, backward-compat sanity, `run_all` parameter forwarding). 82/82 release-CLI tests GREEN (71 existing preserved + 11 new). pyproject.toml versions stay at 0.8.0 per D-SDPD precedent (per-component-version discipline advances with MINORs; PATCHes ride predecessor MINOR — matches v0.8.1 D-NFCLEAN.4 ruling). Sub-plan: `docs/plans/v0-8-2-release-cli-scope-descriptive-plan-doc-support.md`. | Single-cycle PATCH: plan-doc + manifest `2832ed2`; source-edit (gates.py + runner.py + cli.py optional-parameter additions + 11 tests + smoke writeup + FIDRAFT F-REMOVED-VERDICT-GATE + STATE/roadmap admin) `6bbac04`; manifest baseline backfill `29e9a00`; apply `46e02dd`; seal `a54295f`. **v0.8.2 SHIPPED LOCAL** — owner gates publish.; **SHIPPED PUBLIC 2026-05-13 at tag `v0.8.2` (annotated `161a957`)** |
+| v0.10.0 | release-roadmap priority-queue restructure MINOR — `docs/release-roadmap.md` §4 restructured from pre-numbered chain to priority-ordered queue of scope-descriptive, unnumbered candidates. OUTCOME SHAPE: each candidate carries a stable slug + objective + class tag + AC family + constraints + source items + AI-time estimate + dependencies; numbers derive at build-commence-time per new `docs/release-versioning-policy.md` §"Number derivation at build-commence time" section (recipe block + 5 narrative paragraphs). Reclassification audit deliverable at §4-prelude walks 13 historical-shipped rows (read-only; no retroactive rename per HARD HALT — would break published tags) + 6 forward-looking rows (rescope-applied 2026-05-13 — pre-numbered v0.5.0/v0.6.0/v0.7.0/v0.8.0/v0.9.0 entries from the original 2026-05-09 plan-doc have all shipped under different scopes since authoring; current §4 forward-looking candidates re-tagged as scope-descriptive slugs). Audit surfaces 2 historical mis-classifications (v0.4.1 borderline-MINOR-shipped-PATCH; v0.4.4 MINOR-caught-and-renamed-to-v0.5.0-before-publish); both stay as lessons-learned. `docs/release-roadmap-dependency-map.md` re-keyed: forward edges keyed on candidate-slug; shipped antecedents keyed on version-number; dep-graph unchanged. AC family scope-descriptive (`AC.RR.*`) per `feedback_scope_descriptive_ac_ids`. Five ACs (AC.RR.{1,2,3,4,S}); AC.RR.4 outcome-altitude dogfood probe runs `loam release v0.10.0 --plan-doc docs/plans/release-roadmap-priority-queue-restructure.md --dry-run` returning ALL 6 GATES GREEN against the live restructured artefacts (composes with v0.7.2 §4-scoping + v0.8.2 `--plan-doc` flag + v0.8.3 REMOVED-verdict-parser PATCH chain — the three orthogonal PATCHes shipped specifically to make scope-descriptive plan-docs publishable; this MINOR is the first end-to-end exercise of that chain). Doc-only fence (no framework source touched; no test added or removed; no plugin pyproject bumped — orthogonal to rd-automation by inspection). Per-component pyproject versions advance 0.9.0 → 0.10.0 per AC.HONEST.1 per-component-version discipline (MINORs bump per-component; PATCHes ride predecessor MINOR). Composes with `feedback_version_numbers_at_release_time` (the discipline this MINOR structurally encodes), `feedback_scope_descriptive_ac_ids` (slug + AC IDs follow the same convention), `feedback_locked_design_not_license_for_bad_outcomes` (audit-as-lessons-learned without retroactive renames). Sub-plan: `docs/plans/release-roadmap-priority-queue-restructure.md`. | Single-cycle MINOR: plan-doc `b269d8e` (authored 2026-05-09; rescoped at build 2026-05-13); manifest `71ee3f0`; source-edit (§4 restructure + audit table + policy-doc extension + dep-map re-key + 30 pyproject 0.9.0→0.10.0 bumps + 4 __version__ bumps + smoke writeup + STATE/roadmap admin) TBD-AT-COMMIT; apply TBD-AT-COMMIT; seal TBD-AT-COMMIT. **v0.10.0 SHIPPED LOCAL** — owner gates publish. |
 | v0.8.3 | `acs-verified` gate REMOVED-verdict-parser PATCH — third orthogonal defect closure on v0.6.0 release-process outcome shape (after v0.7.2 §4-scoping fix + v0.8.2 `--plan-doc` flag). The v0.6.0 `check_acs_verified` verdict-loop recognises only `GREEN` as a pass token via `re.escape(ac) + r".{0,240}?GREEN"`; ACs legitimately struck mid-build per ODD §4 re-extension (e.g., v0.9.0 paper publish's AC.ODDPAPER.3 marked REMOVED per D-ODDPAPER.5.2 Path C — stale HTML couldn't be regenerated, ship dropped that AC) tripped the gate as missing-from-§status RED. The fix extends the verdict-loop with a second proximity-pattern (`re.escape(ac) + r".{0,240}?REMOVED"`) so ACs marked REMOVED in §status count as verified alongside GREEN-marked ACs. Per D-RVG.2.b the gate verifies only the verdict token; verdict-justification (the `D-<plan-id>.<n>` reference discipline) stays plan-doc-author + reviewer responsibility, not parser-enforced. Per D-RVG.2.a, DEFERRED + N/A + other-verdict expansions out of scope; if those surface in real plan-docs, capture as new FIDRAFT for a follow-on patch. Missing-verdict (no GREEN AND no REMOVED) still RED (regression preserved). AC.RVG.{1,2,3} — REMOVED-recognition in canonical table-row + prose em-dash forms + missing-verdict regression. AC.RVG.4 — outcome-altitude dogfood: `loam release v0.9.0 --plan-doc docs/plans/odd-paper-methodology-publish.md --dry-run` returns ALL 6 GATES GREEN against the live paper-publish artefacts post-patch (`hard-smoke`, `acs-verified` "all 5 AC(s) verified (GREEN or REMOVED)", `state-shipped`, `clean-tree`, `branch-main`, `seal-reachable`); the v0.9.0 paper publish is now structurally ready for `loam release` publish pending owner gate per ASK-FIRST. 4 new tests at `framework/tools/loam/tests/test_AC_RVG_removed_verdict.py`; 86/86 release-CLI tests GREEN (82 existing preserved + 4 new). pyproject.toml versions stay at 0.9.0 per AC.HONEST.1 / D-NFCLEAN.4 precedent. FIDRAFT F-REMOVED-VERDICT-GATE marked RESOLVED. Sub-plan: `docs/plans/v0-8-3-acs-verified-removed-verdict-parser.md`. | Single-cycle PATCH: plan-doc + manifest `d252dc0`; source-edit (gates.py verdict-loop extension + 4 tests + smoke writeup + FIDRAFT resolution + STATE/roadmap admin) `1ef9df9`; manifest baseline backfill `c4ed898`; apply `23b693d`; seal `6024faf`. **v0.8.3 SHIPPED LOCAL** — owner gates publish.; **SHIPPED PUBLIC 2026-05-13 at tag `v0.8.3` (annotated `d303087`)** |
 
 **Total shipped:** 9 minor + 21 patches. v0.9.0 published. v0.3.0 ships META-FRAMEWORK foundation; v0.4.0 ships code-gen-from-objectives optimised for extend-existing-repo; v0.4.1 closes F-DESIGN-1 (multi-commit + from-scratch + tie-breaker); v0.4.2 closes F-DESIGN-2 (Test-interface load-bearing + Py-version-compat); v0.4.3 closes the FBE.7 file-based memory retrieval BM25-bypass + grep-length-bias; v0.5.0 closes the v0.1.7 subagent-personas consumption-gap on the dispatch-time surface; v0.5.1 retires the dual-tree `ivers-corp-pos-v2` + `pos-v2` branch shape via split-worktrees migration + Phase 1 first-impression cleanse rebrand; v0.6.0 ships the concrete release process (`loam release` CLI + runbook + post-ship review); v0.7.0 ships the non-tech-user surface (narration + tier picker + channel slot + memory template + corpus overrides) making v1.0 criterion #2 reachable; v0.7.1 closes the v1.0-readiness audit gaps (system-binary install + missing install-from-source entries + STATE/roadmap publish backfill + component-count reconciliation); v0.7.2 closes the release-CLI parser-scoping defect; v0.7.3 ships post-publish auto-backfill (closes the recurring SHIPPED-LOCAL → SHIPPED-PUBLIC manual-backfill defect); v0.7.4 closes auto-backfill spec gaps surfaced at v0.7.3's own publish dogfood; v0.8.0 ships honesty cleanup (closes 6 of 8 axis-12 gaps from external review; establishes per-component-version discipline).
@@ -106,21 +107,66 @@ v0.4.0 + v0.4.1 + v0.4.2 + v0.4.3 ALL SHIPPED PUBLIC 2026-05-09 (loam/main advan
 
 **v0.9.0 MINOR (ODD methodology paper publish MINOR — case-study altitude artefact.) SHIPPED PUBLIC 2026-05-13** (tag `v0.9.0`, annotated `af57cff`; seal `4a4535f`).
 
-## §4 Mapped versions (next → v1.0.0)
+## §4 Priority-ordered candidate queue (next-release pipeline)
 
-**Note (2026-05-09 Q3 ratification):** the v0.5.0 label below (binary-usage observation harness) is now in conflict with the just-shipped v0.5.0 (subagent-personas routing — see §2). The §4 entries below retain their original labels pending the priority-queue restructure plan-doc (`docs/plans/release-roadmap-priority-queue-restructure.md`, uncommitted) which removes pre-assigned numbers entirely + derives them at build-commence-time per class. Until that restructure ships, the §4 numbers are placeholder; final assignment happens when each plan-doc dispatches.
+**Shape (post `release-roadmap-priority-queue-restructure` MINOR, 2026-05-13):** §4 lists forward-looking candidates as a **priority-ordered queue of scope-descriptive, unnumbered slugs**. Each candidate carries: a stable slug, a single-sentence objective, a class tag (PATCH / MINOR / MAJOR), an AC family, constraints, source items, an AI-time estimate, and dependencies. Order in the queue reflects current priority decision; first item is "next to build."
 
-**Note (2026-05-09 v0.6.0 ship):** the prior v0.4.5 entry (concrete release process) is REMOVED from §4 — work shipped at v0.6.0. The next §4 entry below was previously labeled v0.5.0 (binary-usage observation harness) and is now likely v0.7.0 final, deferred until the priority-queue restructure runs the renumbering.
+**Numbers derive at build-commence time** per `docs/release-versioning-policy.md` §"Number derivation at build-commence time": `next_number = bump(current_version, candidate_class)`. Priority can change by reordering; class can change by re-tagging; the version-number is downstream of both. Plan-doc filenames + AC IDs use the scope-descriptive slug + family abbreviation respectively (no version pre-baked) — per `feedback_version_numbers_at_release_time` (captured 2026-05-13) + `feedback_scope_descriptive_ac_ids` (captured 2026-05-09). The release CLI accepts `--plan-doc <path>` to read scope-descriptive plan-docs (v0.8.2 PATCH).
+
+**Dependencies in the queue are keyed on candidate-slug** for forward deps and on **shipped version-numbers** for already-shipped antecedents. `docs/release-roadmap-dependency-map.md` carries the HARD/SOFT classification per edge (re-keyed at the same MINOR).
 
 ---
 
-### v0.7.0 (placeholder; was labeled v0.5.0 below) — Loam builds software from minimal input
+### §4-prelude — Reclassification audit
+
+Walks both already-shipped (historical, read-only) and currently-forward-looking entries against `docs/release-versioning-policy.md` MAJOR/MINOR/PATCH definitions to surface class drift. **Historical entries are not retroactively renumbered** — published git tags are external-facing refs and renaming them would break consumers (HARD HALT per the plan-doc). Findings stay as lessons-learned for forward discipline.
+
+**Audit table.** Columns: `(slug-or-version, original-class, audited-class, ships-new-outcome-shape?, evidence, reclassification-call)`.
+
+#### Historical section — already-shipped (read-only; no retroactive rename)
+
+| Slug-or-version | Original | Audited | New outcome shape? | Evidence | Call |
+|---|---|---|---|---|---|
+| v0.4.1 | PATCH | borderline-MINOR | Arguably yes — from-scratch prompt mode + multi-commit emission are new outcome shapes | v0.4.1 plan-doc framed it as "extension of v0.4.0's outcome shape"; from-scratch cold-start docs-only multi-file code-gen was structurally new | NO RENAME — PUBLISHED with `v0.4.1` tag; renaming = revisionism. Lesson-learned: borderline cases default to MINOR going forward |
+| v0.4.2 | PATCH | PATCH | No — defect closures on v0.4.1's from-scratch surface | Two sub-fixes (test-interface load-bearing + Py-version compat); both are bug closures within v0.4.1's outcome | KEEP — correctly classified |
+| v0.4.3 | PATCH | PATCH | No — defect closures on memory retrieval surface | Three fixes inside `framework/primary-persona/` BM25-bypass + grep-length-bias; no new outcome | KEEP — correctly classified |
+| v0.4.4 | PATCH | MINOR | YES — ships TWO new SKILLs | `subagent-routing` brand-new SKILL + `dispatch-brief-authoring` extended SKILL; v0.4.4 plan-doc itself names "PATCH-SHAPED-AS-MINOR-CLASS" tension | RENAMED — `v0.4.4` renumbered to `v0.5.0` at publish time per Q1 2026-05-09 ratification (sealed local, not yet public at audit time; safe to rename) |
+| v0.4.5 | PATCH | MINOR | YES — new `loam release` CLI verb + runbook | New outcome shape: maintainers can run a single command to publish, where before publishing was figured-out-as-you-go | RENAMED — `v0.4.5` renumbered to `v0.6.0` at publish time per Q2 2026-05-09 ratification |
+| v0.5.0 (subagent-personas) | MINOR | MINOR | Yes — typed-persona routing surface | New `subagent-routing` SKILL + `dispatch-brief-authoring` extension; production dispatch shape changes | KEEP — correctly classified (this was the v0.4.4 rename landing point) |
+| v0.5.1 (split-worktrees) | PATCH | PATCH | No — migration + Phase 1 cleanse rebrand | Branch retirement + Tier-1 docs scrub; no new outcome | KEEP — correctly classified |
+| v0.6.0 (release-process) | MINOR | MINOR | Yes — `loam release` CLI verb + 6 gates + runbook | New outcome shape per `feedback_locked_design_not_license_for_bad_outcomes`: maintainer can publish via single command | KEEP — correctly classified (this was the v0.4.5 rename landing point) |
+| v0.7.0 (non-tech-user surface) | MINOR | MINOR | Yes — non-tech-user flow + narration + tier picker + channel slot | 62 new tests across 4 components; new SKILLs + new manifest field | KEEP — correctly classified |
+| v0.7.1-v0.7.4 | PATCH | PATCH | No — defect closures on shipped surfaces | All four close v1.0-readiness / release-CLI / auto-backfill gaps within already-shipped outcomes | KEEP — correctly classified |
+| v0.8.0 (honesty cleanup) | MINOR | borderline-MINOR | Yes — per-component-version discipline establishes new tracked surface | 30 pyproject version bumps + cleanup; the per-component-version discipline IS a new tracked surface, though the named outcome ("close 6 of 8 axis-12 Honesty gaps") reads patch-ish | KEEP — correctly classified (the discipline establishment is the MINOR-shape; the gap-closures are the substance) |
+| v0.8.1-v0.8.3 | PATCH | PATCH | No — three orthogonal release-CLI defect closures on v0.6.0 substrate | v0.8.1 walker fix + leading-title sweep; v0.8.2 `--plan-doc` flag; v0.8.3 REMOVED-verdict recognition | KEEP — all correctly classified |
+| v0.9.0 (ODD paper) | MINOR | MINOR | Yes — new artefact category (`docs/papers/`) + ODD methodology paper | Case-study altitude artefact; new user-visible surface | KEEP — correctly classified |
+
+**Historical findings summary.** Two clear mis-classifications (v0.4.1 borderline + v0.4.4 misnamed PATCH-instead-of-MINOR). v0.4.4 was caught + renamed before publish (became v0.5.0). v0.4.1 stays as-is because already-public; lesson-learned applied going forward. The remaining ~25 shipped versions match their class against the policy. The class-drift rate before the priority-queue restructure was 2/27 = ~7%; after the restructure, class is determined at build-commence time by plan-author rather than pre-baked at queue-authoring time.
+
+#### Forward-looking section — current §4 candidates (rescope applied)
+
+Walks the candidates that remain in §4 below at build-time. Each row re-tags class per the policy definitions; the candidates have not yet been built, so class can change freely.
+
+| Slug | Original class (pre-restructure label) | Audited class | New outcome shape? | Evidence | Call |
+|---|---|---|---|---|---|
+| `binary-usage-observation-harness` | END-USER MINOR (was labeled v0.5.0 → v0.7.0 placeholder) | MINOR | Yes — binary + docs → working source via reverse-ODD on observed behaviour | New component (binary harness) + new feeder shape into odd-extractor; cold-start ProgramBench input shape | KEEP MINOR — composes with v0.4.0 code-gen + v0.4.1/v0.4.2 closures |
+| `principle-foundation-structural-enforcement` | META-FRAMEWORK MINOR (was labeled v0.7.0) | MINOR | Yes — Lenses + principle-derivation-map as named primitives, structurally enforced via hooks/SKILLs | New named primitives in code (not docs-only); 8 ACs touch hook surface widening + Stop-hook contributors | KEEP MINOR |
+| `negative-alignment-detection` | END-USER MINOR (was labeled v0.8.0) | MINOR | Yes — given a contract + a diff, classify alignment; PR-safety gate composition | New detection primitive; new band-tunable signal | KEEP MINOR — calibration data dep is operational, not blocking |
+| `deep-personalization` | END-USER MINOR (was labeled v0.9.0) | MINOR | Yes — interaction capture + synthesis layer + proactive-suggestion primitive | New tracked workspace artefact + new persona-input surface | KEEP MINOR |
+| `plugin-suite-expansion` | END-USER per-plugin MINOR (was labeled v0.10.0+) | per-plugin MINOR | Yes — each plugin gets its own MINOR with own objective + ACs | Plugin selection discipline: don't ship all 8; pick 2-3 high-leverage; community builds the rest | KEEP — each plugin candidate gets its own slug at queue-promotion time |
+| `v1.0.0-stability-gate` | MAJOR MIXED (was labeled v1.0.0) | MAJOR (gated by 4 named criteria) | YES — backwards-compat 6-month commitment + plugin contract stable + real user shipped | Quality-bar event per `docs/release-versioning-policy.md` §"When 1.0.0 ships" | KEEP — the 1.0.0 number is structurally pinned by the policy (one-way commitment); not a number-derivation case |
+
+**Forward-looking findings summary.** All current forward-looking candidates retain MINOR class. The `v1.0.0-stability-gate` is the one exception to the number-derivation rule: the policy doc structurally pins 1.0.0 as a one-way quality-bar commitment (see §"When 1.0.0 ships"); the candidate keeps its `v1.0.0` label.
+
+---
+
+### Candidate 1 — `binary-usage-observation-harness` — Loam builds software from minimal input
+
+**Slug:** `binary-usage-observation-harness`. **Class:** MINOR (END-USER).
 
 #### Objective
 
-> **Loam can take a binary + documentation as input, observe the binary's behavior, reverse-engineer objectives + capabilities + constraints, and produce working source code that passes a behavioral test suite.** The cold-start case — minimal inputs — is the version's deliverable.
-
-**Class:** END-USER
+> **Loam can take a binary + documentation as input, observe the binary's behavior, reverse-engineer objectives + capabilities + constraints, and produce working source code that passes a behavioral test suite.** The cold-start case — minimal inputs — is the candidate's deliverable.
 
 This is loam against ProgramBench's full input shape: binary + docs, no source. The new component is the binary-usage observation harness.
 
@@ -128,15 +174,15 @@ This is loam against ProgramBench's full input shape: binary + docs, no source. 
 
 - Binary-usage observation harness sandboxes execution (Docker-shaped or equivalent safety boundary). Per programbench-loam-benchmark-v0.md §"What this is NOT" — non-trivial.
 - mini-SWE-agent harness compatibility — loam's code-gen pipeline produces output compatible with ProgramBench's evaluation harness.
-- ProgramBench leaderboard submission is **the action of submitting**, not a UI feature. Submission constitutes evidence of v0.5.0's outcome.
+- ProgramBench leaderboard submission is **the action of submitting**, not a UI feature. Submission constitutes evidence of this candidate's outcome.
 
-#### Acceptance criteria
+#### Acceptance criteria (AC family `AC.BUOH.*`)
 
-- **AC.V050.1 — Binary-usage observation harness.** New component (likely under `framework/` or as a dev-sdlc plugin extension): runs binary with sample inputs, captures stdin/stdout/exit codes/file effects/network behavior, produces structured evidence-row-equivalents for the reverse-ODD pipeline. Sandboxed.
-- **AC.V050.2 — Binary-feeder mode for odd-extractor.** odd-extractor accepts evidence rows from the binary harness as a third input source alongside source-files + docs.
-- **AC.V050.3 — mini-SWE-agent compatibility.** Loam's code-gen output is consumable by mini-SWE-agent's evaluation harness without manual intervention.
-- **AC.V050.4 — ProgramBench v0.5 submission (Variant B).** Run docs+binary feeder → reverse-ODD → ODD-grounded code-gen on 3-5 ProgramBench tasks. Score: behavioral test pass rate. Submitted to ProgramBench leaderboard. Report at `docs/experiments/programbench-v0-5-submission.md`.
-- **AC.V050.5 — Outcomes-pattern stack documentation.** When users have both `claude -p` subscription AND API-keyed Outcomes access, the pattern document names how to stack ODD authoring + Outcomes runtime grading.
+- **AC.BUOH.1 — Binary-usage observation harness.** New component (likely under `framework/` or as a dev-sdlc plugin extension): runs binary with sample inputs, captures stdin/stdout/exit codes/file effects/network behavior, produces structured evidence-row-equivalents for the reverse-ODD pipeline. Sandboxed.
+- **AC.BUOH.2 — Binary-feeder mode for odd-extractor.** odd-extractor accepts evidence rows from the binary harness as a third input source alongside source-files + docs.
+- **AC.BUOH.3 — mini-SWE-agent compatibility.** Loam's code-gen output is consumable by mini-SWE-agent's evaluation harness without manual intervention.
+- **AC.BUOH.4 — ProgramBench submission (Variant B).** Run docs+binary feeder → reverse-ODD → ODD-grounded code-gen on 3-5 ProgramBench tasks. Score: behavioral test pass rate. Submitted to ProgramBench leaderboard. Report at `docs/experiments/programbench-binary-usage-harness-submission.md`.
+- **AC.BUOH.5 — Outcomes-pattern stack documentation.** When users have both `claude -p` subscription AND API-keyed Outcomes access, the pattern document names how to stack ODD authoring + Outcomes runtime grading.
 
 #### Source items
 
@@ -148,88 +194,37 @@ This is loam against ProgramBench's full input shape: binary + docs, no source. 
 
 - Binary-usage observation harness: 3-6 hours (sandboxed; new component)
 - mini-SWE-agent compatibility surface: 60-120 min
-- ProgramBench v0 Variant B run on 3-5 tasks: 75-150 min
+- ProgramBench Variant B run on 3-5 tasks: 75-150 min
 - Score aggregation + report + leaderboard submission: 15-30 min
 
-**Total v0.5.0 AI-time: 5-10 hours**, midpoint **~7 hours**.
+**Total candidate AI-time: 5-10 hours**, midpoint **~7 hours**.
 
 #### Dependencies
 
-- v0.4.0 (code-gen-from-objectives wired; ProgramBench docs-only baseline established as comparison).
+- v0.4.0 (code-gen-from-objectives wired; ProgramBench docs-only baseline established as comparison) — SHIPPED.
 
 ---
 
-### v0.6.0 — Loam is usable by a non-technical user from fresh install through working software
+### Candidate 2 — `principle-foundation-structural-enforcement` — Loam's principle foundation is named and structurally enforced
 
-#### Objective
-
-> **A non-technical user with a fresh install can describe what they want to build, answer light-touch onboarding questions, and reach working software output without invoking technical concepts (objectives / capabilities / acceptance criteria) directly.** The translation layer (per VALUE_PROPOSITION.md) handles the methodology shape internally.
-
-**Class:** END-USER
-
-This is the version where loam's value proposition (helping non-tech users use AI to build software) becomes empirically demonstrable. One real non-technical user shipping real software is a 1.0.0 gate — v0.6.0 makes it possible.
-
-#### Constraints
-
-- No technical-concept exposure required from the user surface (user never has to type "objective" or "AC"). Internal model stays ODD-shaped per Idea 6.
-- Onboarding flow scales from 8-question survey (Eric-style) to 15-question full ritual (per AC.ONBOARD.1-15) per user signal.
-- Channel config (`primary_channel` slot per Idea 25) is a workspace-level setting honored by every persona reply.
-- Workspace-specific corpus overrides (Idea 26) supported by all reader paths via the `_resolve_corpus_path` fall-through.
-
-#### Acceptance criteria
-
-- **AC.V060.1 — Light-touch education flow.** Idea 2 — ambient narration of decisions ("I made this a scheduled task because…"); user-survey-tunable verbosity; structural-not-advisory.
-- **AC.V060.2 — Channel config slot.** Idea 25 — `<workspace>/.pos/channel.json` (or persona contract field); Stop-hook contributor refuses terminal-reply when `primary_channel = telegram` and the message is a user-reply.
-- **AC.V060.3 — Workspace corpus override pattern.** Idea 26 — documented; one reference override (e.g., a domain-specific persona prompt) shipped as canonical example.
-- **AC.V060.4 — Memory-doc skeleton template.** Idea 22 — third member of the template family (dispatch-template + plan-doc-template + memory-doc-template); `loam new-memory <slug>` orchestration parallel to `loam new-plan <slug>`.
-- **AC.V060.5 — Real session-transcript demo.** TaskList item #30 — reference transcript captured + published; demonstrates a non-tech user (or proxy) reaching working software output through the V060.1 flow.
-- **AC.V060.6 — Outcome-altitude AC for non-tech user flow.** End-to-end test: stranger-clone → onboarding → request → working output, no technical concepts exposed in the user surface.
-
-#### Source items
-
-- Idea 2 — light-touch education
-- Idea 25 — workspace-level default-conversation-channel config slot
-- Idea 26 — workspace-specific corpus overrides via reader fall-through
-- Idea 22 — memory-doc skeleton template
-- TaskList item #30 — real session-transcript demo
-
-#### Estimated AI-time
-
-- Idea 2 light-touch education flow: 2-4 hours
-- Idea 25 channel config + Stop-hook contributor: 60-120 min
-- Idea 26 documentation + canonical reference override: 30-60 min
-- Idea 22 memory-doc template + new-memory orchestration: 60-90 min
-- Real session-transcript capture + publish: 90-180 min (depends on user-availability)
-- Outcome-altitude AC verification: 30-60 min
-
-**Total v0.6.0 AI-time: 5-10 hours**, midpoint **~7 hours**.
-
-#### Dependencies
-
-- v0.5.0 (working-software output is a precondition for non-tech-user reaching working-software output).
-
----
-
-### v0.7.0 — Loam's principle foundation is named and structurally enforced
+**Slug:** `principle-foundation-structural-enforcement`. **Class:** MINOR (META-FRAMEWORK).
 
 #### Objective
 
 > **Loam's design principles (the three Lenses, plus the canonical principle map at `framework/docs/design/principle-derivation-map.md`) are named primitives in the codebase, structurally enforced via hooks/skills/Stop-hook contributors, not advisory prose.** Drift from declared principles becomes a mechanical violation, not a discipline ask.
 
-**Class:** META-FRAMEWORK
-
 This is the structural-enforcement substrate — A1 expanded.
 
-#### Acceptance criteria
+#### Acceptance criteria (AC family `AC.PFSE.*`)
 
-- **AC.V070.1 — FR.1 / FR.2 / FR.3 named primitives.** TaskList items #34 / #35 / #36 (research → plan → first implementation): the three frame-rules are declared in code, not documents-only.
-- **AC.V070.2 — F6 enforcement substrate.** TaskList #37 — the lens-conflict resolution four-step process becomes a Stop-hook contributor (or equivalent structural surface).
-- **AC.V070.3 — Idea 1 Step 3 enforcement mechanism.** Research-plan template requires all four research questions; gate refuses to advance if any is empty.
-- **AC.V070.4 — Idea 21 persona own-behaviour structural enforcement.** Stop-hook contributor scans outbound replies for permission-asking patterns + rewrites or halts.
-- **AC.V070.5 — Idea 8 structural context-load gate.** Mechanical: the primary persona cannot dispatch until relevant design docs are loaded.
-- **AC.V070.6 — Idea 9 workspace-slug collision detection.** Install-time + bootstrap-time checks; disambiguation knob.
-- **AC.V070.7 — Design notes #26 (terminology drift detection).** Stop-hook contributor warns on dossier-claims that disagree with git log / plan-doc §14 / manifest.
-- **AC.V070.8 — Meta-decision-haiku SKILL.** A SKILL that invokes Haiku as an impartial third-party decision-maker for borderline rule-application calls (plan-doc-needed; dispatch-background-vs-inline; smoke-required-or-skippable). Tightly scoped trigger list to avoid death-by-latency. Composes with the structural-enforcement substrate as the "rule applies here?" arbiter for cases too borderline for strict rubrics yet too biased for unaided persona judgment. Captured 2026-05-08 per Luke's framing — primary persona alone tends to bypass when it thinks bypass will please the owner; Haiku has no skin in the game.
+- **AC.PFSE.1 — FR.1 / FR.2 / FR.3 named primitives.** TaskList items #34 / #35 / #36 (research → plan → first implementation): the three frame-rules are declared in code, not documents-only.
+- **AC.PFSE.2 — F6 enforcement substrate.** TaskList #37 — the lens-conflict resolution four-step process becomes a Stop-hook contributor (or equivalent structural surface).
+- **AC.PFSE.3 — Research-plan four-question enforcement.** Research-plan template requires all four research questions; gate refuses to advance if any is empty.
+- **AC.PFSE.4 — Persona own-behaviour structural enforcement.** Stop-hook contributor scans outbound replies for permission-asking patterns + rewrites or halts.
+- **AC.PFSE.5 — Structural context-load gate.** Mechanical: the primary persona cannot dispatch until relevant design docs are loaded.
+- **AC.PFSE.6 — Workspace-slug collision detection.** Install-time + bootstrap-time checks; disambiguation knob.
+- **AC.PFSE.7 — Terminology drift detection.** Stop-hook contributor warns on dossier-claims that disagree with git log / plan-doc §14 / manifest.
+- **AC.PFSE.8 — Meta-decision-haiku SKILL.** A SKILL that invokes Haiku as an impartial third-party decision-maker for borderline rule-application calls (plan-doc-needed; dispatch-background-vs-inline; smoke-required-or-skippable). Tightly scoped trigger list to avoid death-by-latency. Composes with the structural-enforcement substrate as the "rule applies here?" arbiter for cases too borderline for strict rubrics yet too biased for unaided persona judgment. Captured 2026-05-08 per Luke's framing — primary persona alone tends to bypass when it thinks bypass will please the owner; Haiku has no skin in the game.
 
 #### Source items
 
@@ -244,34 +239,34 @@ This is the structural-enforcement substrate — A1 expanded.
 #### Estimated AI-time
 
 - FR.1 / FR.2 / FR.3 / F6 (4 named-primitive amendments): 4-8 hours total
-- Idea 1 Step 3 mechanism: 60-120 min
-- Idea 21 Stop-hook contributor: 90-180 min
-- Idea 8 structural gate: 90-180 min
-- Idea 9 collision detection: 60-120 min
+- Research-plan four-question mechanism: 60-120 min
+- Persona own-behaviour Stop-hook contributor: 90-180 min
+- Structural context-load gate: 90-180 min
+- Workspace-slug collision detection: 60-120 min
 - Misc structural enforcement candidates: 60-120 min
 
-**Total v0.7.0 AI-time: 9-17 hours**, midpoint **~13 hours**. Largest minor in the roadmap; structural-enforcement work touches many surfaces.
+**Total candidate AI-time: 9-17 hours**, midpoint **~13 hours**. Largest MINOR currently in the queue; structural-enforcement work touches many surfaces.
 
 #### Dependencies
 
-- v0.6.0 (non-tech user surface stable enough to add structural enforcement on top of).
+- v0.7.0 (non-tech user surface stable enough to add structural enforcement on top of) — SHIPPED.
 
 ---
 
-### v0.8.0 — Loam catches code that contradicts its own contract
+### Candidate 3 — `negative-alignment-detection` — Loam catches code that contradicts its own contract
+
+**Slug:** `negative-alignment-detection`. **Class:** MINOR (END-USER).
 
 #### Objective
 
 > **Negative-alignment detection ships: when generated or edited code drifts from the declared objective, loam surfaces the drift before the user (or CI) sees it as a defect.** Carved out of v0.2.5; deferred until calibration data exists.
 
-**Class:** END-USER
+#### Acceptance criteria (AC family `AC.NAD.*`)
 
-#### Acceptance criteria
-
-- **AC.V080.1 — Negative-alignment detection primitive.** New component (or odd-extractor extension): given a contract + a diff, classify the diff as objective-aligned / objective-orthogonal / objective-contradicting / objective-ambiguous.
-- **AC.V080.2 — Calibration data.** ≥50 real-world examples (from rd-automation, jsts-playwright-app, Eric's repos, loam itself) with ground-truth labels.
-- **AC.V080.3 — PR-safety gate composition.** Negative-alignment output integrates as a band-tunable signal in the PR-safety gate; production-stake profiles HARD_BLOCK on objective-contradicting; dev profile WARN.
-- **AC.V080.4 — Outcome-altitude AC.** End-to-end test against real PR diffs.
+- **AC.NAD.1 — Negative-alignment detection primitive.** New component (or odd-extractor extension): given a contract + a diff, classify the diff as objective-aligned / objective-orthogonal / objective-contradicting / objective-ambiguous.
+- **AC.NAD.2 — Calibration data.** ≥50 real-world examples (from rd-automation, jsts-playwright-app, Eric's repos, loam itself) with ground-truth labels.
+- **AC.NAD.3 — PR-safety gate composition.** Negative-alignment output integrates as a band-tunable signal in the PR-safety gate; production-stake profiles HARD_BLOCK on objective-contradicting; dev profile WARN.
+- **AC.NAD.4 — Outcome-altitude AC.** End-to-end test against real PR diffs.
 
 #### Source items
 
@@ -284,30 +279,30 @@ This is the structural-enforcement substrate — A1 expanded.
 - PR-safety integration: 60-120 min
 - Outcome-altitude AC: 60-120 min
 
-**Total v0.8.0 AI-time: 7-13 hours**, midpoint **~10 hours**.
+**Total candidate AI-time: 7-13 hours**, midpoint **~10 hours**.
 
 #### Dependencies
 
-- v0.7.0 (structural enforcement substrate provides the hook surface).
+- `principle-foundation-structural-enforcement` (structural enforcement substrate provides the hook surface) — forward dep.
 - Calibration data depends on real-world repo usage (Eric, ProgramBench experiments, loam itself).
 
 ---
 
-### v0.9.0 — Loam's deep personalization through interaction capture
+### Candidate 4 — `deep-personalization` — Loam's deep personalization through interaction capture
+
+**Slug:** `deep-personalization`. **Class:** MINOR (END-USER).
 
 #### Objective
 
 > **Loam captures interaction patterns over time and synthesizes them into a durable user-profile artefact that informs persona behavior — without requiring the user to teach the system anything explicitly.** Per VALUE_PROPOSITION's "trust compounds in one relationship."
 
-**Class:** END-USER
+#### Acceptance criteria (AC family `AC.DP.*`)
 
-#### Acceptance criteria
-
-- **AC.V090.1 — Interaction capture surface.** Per Idea 4 — session transcripts (or decision-relevant subset), preferences (stated or inferred), patterns observed, reactions to system outputs.
-- **AC.V090.2 — Synthesis layer (separate from raw memory).** Periodic update of a structured user-profile artefact at a stable workspace path.
-- **AC.V090.3 — Privacy + audit + deletion controls.** Per Idea 4's required guarantee — every interaction visible on request; user can delete.
-- **AC.V090.4 — Proactive-suggestion primitive.** Per Idea 5 — surface 1-3 suggestions per week (frequency-tunable); each dismissable without cost.
-- **AC.V090.5 — GLiNER2 evaluation under volume data** (CONTINGENT). Per Idea 7 — graphiti-class re-implementation with local NER for high-volume paths; scope **only if volume data justifies**.
+- **AC.DP.1 — Interaction capture surface.** Per Idea 4 — session transcripts (or decision-relevant subset), preferences (stated or inferred), patterns observed, reactions to system outputs.
+- **AC.DP.2 — Synthesis layer (separate from raw memory).** Periodic update of a structured user-profile artefact at a stable workspace path.
+- **AC.DP.3 — Privacy + audit + deletion controls.** Per Idea 4's required guarantee — every interaction visible on request; user can delete.
+- **AC.DP.4 — Proactive-suggestion primitive.** Per Idea 5 — surface 1-3 suggestions per week (frequency-tunable); each dismissable without cost.
+- **AC.DP.5 — GLiNER2 evaluation under volume data** (CONTINGENT). Per Idea 7 — graphiti-class re-implementation with local NER for high-volume paths; scope **only if volume data justifies**.
 
 #### Source items
 
@@ -323,49 +318,50 @@ This is the structural-enforcement substrate — A1 expanded.
 - Proactive-suggestion primitive: 2-4 hours
 - GLiNER2 (CONTINGENT): 4-8 hours **OR backlog**
 
-**Total v0.9.0 AI-time: 8-14 hours non-contingent**; midpoint **~11 hours**. +4-8 hours if GLiNER2 activates.
+**Total candidate AI-time: 8-14 hours non-contingent**; midpoint **~11 hours**. +4-8 hours if GLiNER2 activates.
 
 #### Dependencies
 
-- v0.8.0 (memory FBE.7 stable + production usage long enough to have interaction volume).
+- v0.8.0 (memory FBE.7 stable + per-component-version discipline established) — SHIPPED.
+- Production usage long enough to have interaction volume — operational, not version-gated.
 
 ---
 
-### v0.10.0+ — Plugin suite expansion (one minor per plugin)
+### Candidate 5 — `plugin-suite-expansion` — Plugin suite expansion (one MINOR per plugin)
+
+**Slug:** `plugin-suite-expansion` (parent; each plugin gets its own slug at queue-promotion time). **Class:** per-plugin MINOR (END-USER).
 
 #### Objective shape
 
-> **Loam's plugin ecosystem grows beyond Dev/SDLC.** Each new plugin gets its own minor version with its own objective sentence and ACs.
-
-**Class:** END-USER
+> **Loam's plugin ecosystem grows beyond Dev/SDLC.** Each new plugin gets its own MINOR with its own objective sentence and ACs.
 
 Per Idea 3 — the plugin candidates are: project/task management overlay, communications plugin, knowledge management, finance/household-ops, creative/long-form, health/habit tracking, trading/quant research, legal/compliance.
 
 **Plugin selection discipline (per Idea 3):** do not ship all eight. Pick two or three that maximise early loam-v2 value AND prove the plugin ecosystem; let the community build the rest.
 
-**Sequencing: highest-leverage first.** Per Luke's prior directive, project/task management overlay (the owner's named example) and communications plugin (Gmail + Calendar MCP composition) are likely candidates for v0.10.0 and v0.11.0. Final selection happens at v0.10.0 plan time, not now.
+**Sequencing: highest-leverage first.** Per Luke's prior directive, project/task management overlay (the owner's named example) and communications plugin (Gmail + Calendar MCP composition) are likely top candidates. Final selection happens at promotion time, not now.
 
-#### Estimated AI-time per plugin minor
+#### Estimated AI-time per plugin MINOR
 
 - 8-15 hours per plugin (range per Idea 3 per-candidate complexity; some plugins like communications compose on existing MCP surface and run cheaper).
 
 #### Dependencies
 
-- v0.9.0 (deep-personalization surface gives plugins a richer user model to compose on).
+- `deep-personalization` (deep-personalization surface gives plugins a richer user model to compose on) — forward dep, SOFT (plugins can ship against existing substrate; personalization is enrichment, not gate).
 
 ---
 
-### v1.0.0 — Loam is stable
+### Candidate 6 — `v1.0.0-stability-gate` — Loam is stable
+
+**Slug:** `v1.0.0-stability-gate`. **Class:** MAJOR (MIXED) — structurally pinned at v1.0.0 by `docs/release-versioning-policy.md` §"When 1.0.0 ships" (one-way commitment; exception to the number-derivation rule).
 
 #### Objective
 
 > **All loam-documented features work as advertised; one real non-technical user has shipped real software with loam; backwards-compatibility committed for 6 months minimum; plugin contract is stable.**
 
-**Class:** MIXED
-
 Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." This is a quality-bar event, not a calendar event.
 
-#### Acceptance criteria (the four named criteria from the policy)
+#### Acceptance criteria — the four named criteria from the policy (AC family `AC.V100.*` — version-pinned because the 1.0.0 number is structurally pinned by the policy, not number-derivation)
 
 - **AC.V100.1 — All documented features work as advertised.** Stranger-clone audit.
 - **AC.V100.2 — One real user has shipped real software with loam.** Not a fixture; a real maintenance-burden codebase.
@@ -379,7 +375,7 @@ Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." This is a quality-
 
 #### Dependencies
 
-- v0.10.0+ to whichever-version-stabilizes-the-plugin-contract.
+- `plugin-suite-expansion` (whichever-plugin-stabilizes-the-plugin-contract) — forward dep.
 - Real-user adoption (external dependency, not an AI-time line).
 
 ---
@@ -418,8 +414,8 @@ These items I classified differently than the original sketch, or where the sket
 3. **Idea 12 (OSS launch).** Already shipped as v0.1.0+. **My call: shipped, not roadmap.**
 4. **Idea 13 (two modes + multi-workspace umbrella).** Active part shipped (sub-plans A/E/B/F); deferred parts (C/D/G) fold under multi-workspace umbrella. **My call:** the deferred parts go to backlog under the "Workspace-sync / multi-workspace" trigger. If multi-workspace becomes a stated objective for any future minor, those re-activate. Currently no minor names multi-workspace; surfacing for ruling.
 5. **Idea 10 (Project rename to loam).** Already shipped. **My call: shipped, not roadmap.** Loam-aligned-name terminology consistency pass (v0.3.0 AC.V030.7) is the residual.
-6. **TaskList items #8, #9, #10, #11.** I do not have the explicit text for these; they are referenced in the dispatch brief by number alone. Best-effort reading: if these correspond to FUTURE_IDEAS Ideas 8, 9, 10, 11 — they are mapped in this roadmap (#8 → v0.7.0; #9 → v0.7.0; #10 → shipped via Idea 10; #11 → backlog). **Surfacing:** if the TaskList numbers reference different items, the mapping needs correction at owner-review time.
-7. **TaskList items #55, #34-37.** #55 is referenced in the dispatch brief as a discussion item; I have not seen its explicit text. #34-37 → v0.7.0 (FR.1/FR.2/FR.3/F6 named primitives). **Surfacing:** #55 needs explicit text to classify.
+6. **TaskList items #8, #9, #10, #11.** I do not have the explicit text for these; they are referenced in the dispatch brief by number alone. Best-effort reading: if these correspond to FUTURE_IDEAS Ideas 8, 9, 10, 11 — they are mapped in this roadmap (#8 → `principle-foundation-structural-enforcement`; #9 → `principle-foundation-structural-enforcement`; #10 → shipped via Idea 10; #11 → backlog). **Surfacing:** if the TaskList numbers reference different items, the mapping needs correction at owner-review time.
+7. **TaskList items #55, #34-37.** #55 is referenced in the dispatch brief as a discussion item; I have not seen its explicit text. #34-37 → `principle-foundation-structural-enforcement` (FR.1/FR.2/FR.3/F6 named primitives). **Surfacing:** #55 needs explicit text to classify.
 8. **`KNOWN_CROSS_MODE_DEBT` shrinkage.** Sketch placed it in v0.3.0; I agreed and kept it there. F2 RF signal: this is technically debt, not a forward-looking outcome — could equally well live as a perpetual lint-pass item (composes with v0.3.0 AC.V030.6). I left it as AC.V030.10 because the discrete shrinkage event is observable; alternative is to fold into AC.V030.6 lint pass. **Surfacing:** structural choice; either resolution is fine.
 
 ---
@@ -432,7 +428,7 @@ These items are real work but do not name a version's outcome shape. They live h
 |---|---|---|
 | **Boris paper push** | Captured as session-discussion item; calibration anchor (13min wall-clock at ~76 tool calls per duration-estimation rubric). | Owner-action; not AI-routed in the version path. |
 | **Eric re-engagement** | Owner directive 2026-05-06 ("ignore eric, he's busy at his real job"). v0.2.5.1 closes Eric's three findings. Re-engagement is owner-driven, not version-gated. | Surface for ruling: should v0.6.0 (non-tech user) wait on Eric re-engagement, or proceed against a synthetic non-tech-user proxy? |
-| **ProgramBench leaderboard submission** | v0.5.0 AC.V050.4. The act of submitting is the action. | Submission is what makes v0.5.0's outcome public. |
+| **ProgramBench leaderboard submission** | `binary-usage-observation-harness` AC.BUOH.4. The act of submitting is the action. | Submission is what makes the candidate's outcome public. |
 | **Public-remote tag pushes** | Each minor's tag push is owner-gated. v0.2.1 / v0.2.2 / v0.2.3 / v0.2.4 / v0.1.7 / v0.1.8 / v0.1.9 / v0.2.0 currently sit as local releases per their respective STATE.md entries. | Tag push is a per-minor owner action, not a roadmap line. The roadmap names what each minor delivers; the policy doc names tag dance shape. |
 | **GitHub Releases marked --latest** | Per `docs/release-versioning-policy.md` §Tagging. | Per-minor; not a roadmap line. |
 | **Dispatcher-side smoke verifications** | Some ACs (V025.4 outcome-altitude, V025.5 telegram-MCP isolation outcome-altitude) require parent-session verification not visible from sub-agents. | Per-minor; documented in each minor's plan-doc. |

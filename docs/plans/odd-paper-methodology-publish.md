@@ -228,11 +228,11 @@ Per `feedback_duration_estimation_rubric` (10-15s per tool call wall-clock):
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.ODDPAPER.1 | TBD-AT-BUILD | TBD-AT-BUILD |
-| AC.ODDPAPER.2 | TBD-AT-BUILD | TBD-AT-BUILD |
-| AC.ODDPAPER.3 | REMOVED | Build-time D-ODDPAPER.5.2 Path C — stale HTML removed; ship markdown-only; HTML regen → FIDRAFT follow-on |
-| AC.ODDPAPER.4 | TBD-AT-BUILD | TBD-AT-BUILD |
-| AC.ODDPAPER.S | TBD-AT-BUILD | TBD-AT-BUILD |
+| AC.ODDPAPER.1 | GREEN | `diff <workspace>/.scratch/claude-output/odd-paper-v19-draft-2026-05-12.md docs/papers/odd-methodology.md` returns no diff at build-time. Paper at canonical path with case-study altitude framing + 5 verified citations + arithmetic-verified statistics. Source-edit commit `c1f7089`. |
+| AC.ODDPAPER.2 | GREEN | `grep -n "odd-methodology" README.md` returns `164:- [\`docs/papers/odd-methodology.md\`](docs/papers/odd-methodology.md) —`. Link present in "key documents" section, positioned after the `docs/design/odd.md` entry. Source-edit commit `c1f7089`. |
+| AC.ODDPAPER.3 | REMOVED | Build-time D-ODDPAPER.5.2 Path C — stale HTML removed in plan-doc commit `1a8da67` (`delete mode 100644 docs/papers/odd-methodology.html`); ship markdown-only; HTML regen captured as FIDRAFT F-PAPER-HTML-REGEN. |
+| AC.ODDPAPER.4 | GREEN | Outcome-altitude cold-clone probe writeup at `docs/experiments/odd-paper-methodology-publish-hard-smoke.md`. Five-step discovery flow verified at post-source-edit state: open README → locate link (line 164) → follow to `docs/papers/odd-methodology.md` → read first three sections (`On this artefact`, abstract, §1) → case-study-altitude framing legibility confirmed. Source-edit commit `c1f7089`. |
+| AC.ODDPAPER.S | GREEN | Seal commit `4a4535f` advances `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar. `git diff --name-only c1f7089..4a4535f` shows only seal-narrative + sidecar advancement (no out-of-fence changes). Apply auto-commit `029fc69`; seal `4a4535f`. |
 
 ### AI-time actuals
 
@@ -248,12 +248,16 @@ TBD-AT-BUILD.
 
 ### Commit SHAs
 
-- Plan-doc + manifest: TBD-AT-COMMIT.
-- Source-edit batch (paper + README + HTML + universal-admission docs): TBD-AT-COMMIT.
-- Apply: TBD-AT-COMMIT.
-- Seal: TBD-AT-COMMIT.
-- Release tag (derived version): TBD-AT-RELEASE-TIME.
+- Plan-doc + manifest + HTML deletion (D-ODDPAPER.5.2 Path C side-effect): `1a8da67`.
+- Source-edit batch (paper + README link + 30 pyproject 0.8.0→0.9.0 bumps + 4 `__version__` bumps + STATE.md row + release-roadmap.md §2 row + experiments writeup + FIDRAFT F-PAPER-HTML-REGEN): `c1f7089`.
+- Manifest baseline backfill + smoke_outcome tightening: `afaa26c`.
+- Apply auto-commit (BASELINE → c1f7089; allowed_prefixes += docs/papers/; SEAL_COMMIT → c1f7089): `029fc69`.
+- Seal: `4a4535f`.
+- §status backfill (this commit): TBD-AT-COMMIT.
+- Release tag (derived version v0.9.0): TBD-AT-RELEASE-TIME (owner-gated publish).
 
 ### Build-time decision deviations
 
-TBD-AT-BUILD.
+- **D-ODDPAPER.5.2 resolved Path C (not Path A or B):** the staged `docs/papers/odd-methodology.html` was from an earlier paper iteration (title contradicted v19); pandoc not installed on dispatcher's machine; HTML regen non-trivial. Dropped HTML from publish; shipped markdown-only. HTML regen captured at FIDRAFT F-PAPER-HTML-REGEN. AC.ODDPAPER.3 removed; AC count down from 4 to 3.
+- **§3 fence corrected at build-time to include pyproject.toml bumps:** initial plan-doc draft incorrectly excluded per-component version bumps; AC.HONEST.1 discipline (v0.8.0) specifies MINORs bump per-component versions independent of whether framework code is touched. Source-edit corrected fence by including 30 pyproject + 4 `__version__` bumps. Plan-doc §3 updated to reflect this at build-time.
+- **Untracked out-of-scope file stashed at seal-time:** `docs/plans/promote-multi-channel-extractor-and-iteration-loop-family.md` triggered `loam amend seal`'s dirty-tree halt; stashed before re-running seal. Stash entry recoverable post-publish.

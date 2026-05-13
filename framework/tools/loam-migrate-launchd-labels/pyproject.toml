@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-migrate-launchd-labels"
-version = "0.8.0"
+version = "0.9.0"
 description = "One-shot per-host migration helper that bootouts pre-M1c com.pos-v2.<slug>.<kind> launchd labels and renames the plist files aside. Idempotent; complement to loam-migrate-host-config."
 requires-python = ">=3.11"
 dependencies = []

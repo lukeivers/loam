@@ -161,6 +161,10 @@ review-circle expansion is the project's biggest non-technical need.
 - [`docs/design/odd.md`](docs/design/odd.md) — Objective-Driven
   Design: the methodology loam practices natively and the Dev/SDLC
   plugin defaults new projects to.
+- [`docs/papers/odd-methodology.md`](docs/papers/odd-methodology.md) —
+  case-study report on Objective-Driven Design: what the methodology
+  proposes, empirical observations from a ProgramBench-derivative
+  investigation, and what the case data does and does not support.
 - [`docs/components/`](docs/components/) — one short reference per
   shipping component.
 

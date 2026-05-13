@@ -3,9 +3,10 @@ amendment:
   slug: v0-8-2-release-cli-scope-descriptive-plan-doc-support
   title: "v0.8.2 PATCH — `loam release` accepts scope-descriptive plan-doc paths. Defect closure on v0.6.0 release-process outcome: gates assumed version-named filenames (`docs/plans/<version-slug>-*.md` glob; `docs/experiments/<version-slug>-hard-smoke.md` direct construction), but `feedback_version_numbers_at_release_time` (2026-05-13) reverses the convention — slugs are scope-descriptive, no version pre-baked. New `--plan-doc <path>` flag on `loam release` overrides the inference for both gates: `check_acs_verified` reads the named plan-doc; `check_hard_smoke` reads `docs/experiments/<plan-doc-stem>-hard-smoke.md`. Flag-absent behaviour preserved (backward-compat for v0.6.0/v0.7.x/v0.8.x version-named plan-docs). 4 new tests at test_AC_SDPD_plan_doc_flag.py. Outcome-altitude AC.SDPD.4 dogfoods against live paper publish plan-doc + smoke writeup."
 
-# BASELINE captured at source-edit batch — covers gates.py + runner.py + cli.py
-# edits + 4 new tests + universal-admission docs.
-baseline: "TBD-AT-COMMIT"
+# BASELINE captured at source-edit batch (6bbac04) — covers gates.py +
+# runner.py + cli.py edits + 11 new tests + universal-admission docs
+# (STATE.md row, roadmap §2 row, experiments writeup, FIDRAFT entry).
+baseline: "6bbac04"
 
 plan: docs/plans/v0-8-2-release-cli-scope-descriptive-plan-doc-support.md
 plan_doc_ref: docs/plans/v0-8-2-release-cli-scope-descriptive-plan-doc-support.md

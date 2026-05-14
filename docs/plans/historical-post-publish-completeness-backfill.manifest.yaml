@@ -1,0 +1,102 @@
+schema_version: 3
+amendment:
+  slug: historical-post-publish-completeness-backfill
+  title: "historical post-publish-completeness backfill PATCH — closes 2 of 3 deferred F-NFCLEAN-FOLLOWON items via strict-scope manual edits. AC.HPPCB.1 resolves the v0.7.3 STATE.md row's trailing `seal TBD-AT-SEAL.` placeholder to `seal `39170e6``; AC.HPPCB.2 appends a v0.7.2 PATCH SHIPPED PUBLIC entry to §3 Active version of docs/release-roadmap.md (tag `v0.7.2` annotated `0e67135`; seal `91ee1fe`); AC.HPPCB.3 captures FIDRAFT F-FUNC-3 (helper narrative-safety gap: `_backfill_state_md_placeholders` non-boundary-aware `str.replace` corrupts prose containing literal `TBD-AT-*` strings — proposed fix: scope replacement to known trailing-position placeholder only). Path-B ruling (helper untouched per HARD HALT #1; Path-A predecessor halted on narrative-safety gap). Doc-only; no framework source; no test added or removed. pyproject versions stay at 0.10.0 (PATCH rides predecessor MINOR)."
+
+# BASELINE captured at source-edit commit covering the 3 surgical
+# edits + pre-apply admin (STATE/roadmap v0.10.1 rows + smoke writeup).
+# Initial value = HEAD at plan-doc authoring time (c37e34e); backfilled
+# to actual source-edit SHA post-source-edit commit per v0.10.0
+# precedent (manifest baseline backfill commit follows source-edit
+# batch in the same cycle).
+baseline: "c37e34e"
+
+plan: docs/plans/historical-post-publish-completeness-backfill.md
+plan_doc_ref: docs/plans/historical-post-publish-completeness-backfill.md
+
+ac_count: 3
+smoke_outcome: "AC.HPPCB.{1,2,3,S} GREEN; v0.7.3 STATE.md trailing seal SHA resolved; §3 v0.7.2 entry inserted; F-FUNC-3 FIDRAFT capture lands; helper untouched."
+
+# Single-component fence (dev-sdlc seal anchor for doc-only PATCH). No
+# framework source; no test surface. Universal-admission docs only.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.historical-post-publish-completeness-backfill
+  body: |
+    # historical post-publish-completeness backfill PATCH
+
+    2026-05-13. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST.
+
+    Closes 2 of 3 deferred F-NFCLEAN-FOLLOWON items (from v0.8.1
+    HARD HALT #7 strict-scope ruling) via strict-scope manual edits.
+    The 3rd item (v0.7.3 TBD-AT-{COMMIT,APPLY} placeholders) stays
+    deferred pending the F-FUNC-3 helper-extension cycle this PATCH
+    captures.
+
+    AC.HPPCB.1 — v0.7.3 STATE.md row's trailing `seal TBD-AT-SEAL.`
+    placeholder (line 133) resolved to `seal `39170e6`.` via a single
+    surgical Edit with unique trailing-context anchor. The prose-
+    narrative `TBD-AT-SEAL` / `TBD-AT-TAG` references embedded
+    inside the same row (describing what the v0.7.3 helper does)
+    stay untouched.
+
+    AC.HPPCB.2 — §3 Active version section of `docs/release-roadmap.md`
+    gains a v0.7.2 PATCH SHIPPED PUBLIC entry. Tag `v0.7.2` annotated
+    `0e67135`; seal `91ee1fe`; publish date 2026-05-10. Format matches
+    existing standalone bold entries in §3.
+
+    AC.HPPCB.3 — FIDRAFT F-FUNC-3 captures the helper's narrative-
+    safety gap surfaced during Path-A predecessor dry-run.
+    `_backfill_state_md_placeholders` at line 416 of
+    `framework/tools/loam/src/loam_cli/release/post_publish_backfill.py`
+    uses non-boundary-aware `str.replace("TBD-AT-SEAL", ...)` which
+    corrupts rows whose prose narrative contains literal `TBD-AT-*`
+    strings. Proposed safety extension: scope replacement to canonical
+    trailing-position placeholder only.
+
+    Path-B ruling per HARD HALT #1: helper code stays untouched in
+    this PATCH; structural fix is a future cycle. The Path-A
+    predecessor dispatch halted on the narrative-safety gap (correct
+    F2 halt-and-surface return). This Path-B re-dispatch closes the
+    two honest-record gaps surgically without exercising the buggy
+    helper.
+
+    No outcome-shape addition. PATCH-class defect closure within the
+    v0.7.x publish outcome shape. pyproject.toml versions stay at
+    0.10.0 (D-HPPCB.4 — per-component-version discipline advances
+    with shipped MINORs; PATCHes ride the predecessor MINOR's
+    version; matches AC.HONEST.1 / D-NFCLEAN.4 / D-SDPD / v0.8.3
+    precedent).
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+    (3 surgical edits + STATE/roadmap admin + smoke writeup)
+    TBD-AT-COMMIT; apply TBD-AT-COMMIT; seal TBD-AT-COMMIT.

@@ -3,13 +3,13 @@ amendment:
   slug: historical-post-publish-completeness-backfill
   title: "historical post-publish-completeness backfill PATCH — closes 2 of 3 deferred F-NFCLEAN-FOLLOWON items via strict-scope manual edits. AC.HPPCB.1 resolves the v0.7.3 STATE.md row's trailing `seal TBD-AT-SEAL.` placeholder to `seal `39170e6``; AC.HPPCB.2 appends a v0.7.2 PATCH SHIPPED PUBLIC entry to §3 Active version of docs/release-roadmap.md (tag `v0.7.2` annotated `0e67135`; seal `91ee1fe`); AC.HPPCB.3 captures FIDRAFT F-FUNC-3 (helper narrative-safety gap: `_backfill_state_md_placeholders` non-boundary-aware `str.replace` corrupts prose containing literal `TBD-AT-*` strings — proposed fix: scope replacement to known trailing-position placeholder only). Path-B ruling (helper untouched per HARD HALT #1; Path-A predecessor halted on narrative-safety gap). Doc-only; no framework source; no test added or removed. pyproject versions stay at 0.10.0 (PATCH rides predecessor MINOR)."
 
-# BASELINE captured at source-edit commit covering the 3 surgical
-# edits + pre-apply admin (STATE/roadmap v0.10.1 rows + smoke writeup).
-# Initial value = HEAD at plan-doc authoring time (c37e34e); backfilled
-# to actual source-edit SHA post-source-edit commit per v0.10.0
-# precedent (manifest baseline backfill commit follows source-edit
-# batch in the same cycle).
-baseline: "c37e34e"
+# BASELINE captured at source-edit commit (fabdf76) covering the 3
+# surgical edits (AC.HPPCB.{1,2,3}) + pre-apply admin (STATE/roadmap
+# v0.10.1 rows + §3 entry + smoke writeup). Backfilled to actual
+# source-edit SHA post-source-edit commit per v0.10.0 precedent
+# (manifest baseline backfill commit follows source-edit batch in the
+# same cycle).
+baseline: "fabdf76"
 
 plan: docs/plans/historical-post-publish-completeness-backfill.md
 plan_doc_ref: docs/plans/historical-post-publish-completeness-backfill.md

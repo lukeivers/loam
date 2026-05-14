@@ -143,30 +143,53 @@ def _backfill_state_md(
 
 
 def _leading_title_pattern(version: str) -> re.Pattern[str]:
-    """Match the bolded leading title in a STATE.md row:
-    ``**<version> <CLASS> SHIPPED LOCAL**`` where ``<CLASS>`` is
-    ``MINOR`` / ``PATCH`` / ``minor`` / ``patch`` (case-insensitive
-    — historical rows use both casings; v0.7.3 uses ``PATCH``,
-    v0.5.0 uses ``minor``).
+    """Match the bolded leading title in a STATE.md row.
 
-    Per D-BACKFL2.1.a — the regex captures ``<CLASS>`` so the
-    replacement preserves casing.
+    Two recognized shapes:
+
+    1. **Canonical form** (v0.7.4 AC.BACKFL2.1): ``**<version>
+       <CLASS> SHIPPED LOCAL**`` where ``<CLASS>`` is ``MINOR`` /
+       ``PATCH`` / ``minor`` / ``patch`` (case-insensitive —
+       historical rows use both casings; v0.7.3 uses ``PATCH``,
+       v0.5.0 uses ``minor``).
+
+    2. **Date-in-title variant** (v0.10.2 AC.SMLTV.1): ``**<version>
+       SHIPPED LOCAL <YYYY-MM-DD>**`` (date in bolded title; no
+       class keyword between version and SHIPPED). Historical
+       v0.4.2 STATE.md row uses this shape; F-FUNC-1 capture
+       (2026-05-10) framed the extension.
+
+    Per D-BACKFL2.1.a + D-SMLTV.2 — the regex uses alternation so
+    one match yields either a CLASS keyword (canonical) or a date
+    (variant); the replacement preserves whichever is matched.
     """
     return re.compile(
         r"\*\*"
         + re.escape(version)
-        + r"\s+(MINOR|PATCH|minor|patch)\s+SHIPPED LOCAL\*\*"
+        + r"(?:"
+        + r"\s+(?P<cls>MINOR|PATCH|minor|patch)\s+SHIPPED LOCAL"
+        + r"|"
+        + r"\s+SHIPPED LOCAL\s+(?P<date>\d{4}-\d{2}-\d{2})"
+        + r")"
+        + r"\*\*"
     )
 
 
 def _state_md_title_already_public(body: str, version: str) -> bool:
     """True iff the STATE.md leading title is already
-    ``**<version> <CLASS> SHIPPED PUBLIC**``.
+    ``**<version> <CLASS> SHIPPED PUBLIC**`` (canonical) OR
+    ``**<version> SHIPPED PUBLIC <YYYY-MM-DD>**`` (date-in-title
+    variant per AC.SMLTV.3).
     """
     pattern = re.compile(
         r"\*\*"
         + re.escape(version)
-        + r"\s+(MINOR|PATCH|minor|patch)\s+SHIPPED PUBLIC\*\*"
+        + r"(?:"
+        + r"\s+(?:MINOR|PATCH|minor|patch)\s+SHIPPED PUBLIC"
+        + r"|"
+        + r"\s+SHIPPED PUBLIC\s+\d{4}-\d{2}-\d{2}"
+        + r")"
+        + r"\*\*"
     )
     return pattern.search(body) is not None
 
@@ -174,13 +197,20 @@ def _state_md_title_already_public(body: str, version: str) -> bool:
 def _backfill_state_md_leading_title(
     body: str, version: str
 ) -> tuple[str, str | None]:
-    """Flip the bolded leading title
-    ``**<version> <CLASS> SHIPPED LOCAL**`` →
-    ``**<version> <CLASS> SHIPPED PUBLIC**`` in STATE.md.
+    """Flip the bolded leading title in STATE.md.
 
-    Per AC.BACKFL2.1 — the eye-grabbing title-claim that v0.7.3's
-    auto-backfill missed. Idempotent: re-run on already-flipped
-    title is a no-op.
+    Two shapes handled:
+
+    - **Canonical** (AC.BACKFL2.1): ``**<version> <CLASS> SHIPPED
+      LOCAL**`` → ``**<version> <CLASS> SHIPPED PUBLIC**``
+      (preserves CLASS casing).
+    - **Date-in-title variant** (AC.SMLTV.1): ``**<version> SHIPPED
+      LOCAL <YYYY-MM-DD>**`` → ``**<version> SHIPPED PUBLIC
+      <YYYY-MM-DD>**`` (preserves date verbatim).
+
+    Per AC.BACKFL2.1 / AC.SMLTV.1 — the eye-grabbing title-claim
+    surfaces. Idempotent for both shapes: re-run on already-flipped
+    title is a no-op (AC.BACKFL2.4 / AC.SMLTV.3).
     """
     if _state_md_title_already_public(body, version):
         return body, None
@@ -188,9 +218,14 @@ def _backfill_state_md_leading_title(
     match = pattern.search(body)
     if match is None:
         return body, None
-    cls = match.group(1)
     old_title = match.group(0)
-    new_title = f"**{version} {cls} SHIPPED PUBLIC**"
+    cls = match.group("cls")
+    date = match.group("date")
+    if cls is not None:
+        new_title = f"**{version} {cls} SHIPPED PUBLIC**"
+    else:
+        # Date-in-title variant — preserve the date verbatim.
+        new_title = f"**{version} SHIPPED PUBLIC {date}**"
     new_body = body[: match.start()] + new_title + body[match.end():]
     edit_summary = (
         f"STATE.md leading title: {old_title!r} → {new_title!r}"

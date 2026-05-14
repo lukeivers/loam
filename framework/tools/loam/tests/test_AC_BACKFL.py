@@ -1089,3 +1089,119 @@ def test_classify_row_falls_back_to_version_pattern_for_historical_rows() -> Non
         "Single-cycle MINOR: seal `aaa` |"
     )
     assert post_publish_backfill._classify_row(explicit_minor_row) == "MINOR"
+
+
+# --------------------------------------------------------------------
+# AC.SMLTV — STATE.md leading-title date-in-title variant (v0.10.2).
+#
+# Extends the v0.7.4 `_backfill_state_md_leading_title` helper to
+# recognize the date-in-title variant `**v<X.Y.Z> SHIPPED LOCAL
+# <YYYY-MM-DD>**` (no class keyword between version and SHIPPED; date
+# appears after LOCAL inside the bold). Historical v0.4.2 row used
+# this shape; F-FUNC-1 (FIDRAFT 2026-05-10) captured the extension
+# proposal. AC.SMLTV.1 (positive flip with date preserved) +
+# AC.SMLTV.2 (canonical-form regression preservation — handled by
+# the 22 existing tests above) + AC.SMLTV.3 (already-public variant
+# no-op).
+# --------------------------------------------------------------------
+
+
+def test_apply_backfill_flips_state_md_date_in_title_variant(
+    tmp_path: Path,
+) -> None:
+    """The date-in-title variant ``**v<X.Y.Z> SHIPPED LOCAL
+    <YYYY-MM-DD>**`` (no class keyword; date in bolded title) flips
+    to ``**v<X.Y.Z> SHIPPED PUBLIC <YYYY-MM-DD>**`` preserving the
+    date verbatim (AC.SMLTV.1).
+
+    Historical v0.4.2 STATE.md row used this shape (``**v0.4.2
+    SHIPPED LOCAL 2026-05-09**``); v0.8.0 AC.HONEST.4 surfaced
+    F-FUNC-1 when the v0.7.4 helper's canonical-only regex skipped
+    the row and required manual touch-up.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    body = (
+        "# State\n\n"
+        "- **2026-05-09** — **v0.4.2 SHIPPED LOCAL 2026-05-09** — "
+        "F-DESIGN-2 closure patch: two specific cross-cutting fixes "
+        "inside the codegen subsystem. Plan-doc `aaaaaaa`. "
+        "v0.4.2 SHIPPED LOCAL — owner gates publish.\n"
+    )
+    (docs / "STATE.md").write_text(body)
+    (docs / "release-roadmap.md").write_text(
+        _roadmap_with_shipped_local_row("v0.4.2")
+    )
+    today = _dt.date(2026, 5, 11)
+    post_publish_backfill.apply_backfill(
+        tmp_path,
+        "v0.4.2",
+        "v0.4.2",
+        "abc1234567890def",
+        today=today,
+    )
+    state_md = (docs / "STATE.md").read_text(encoding="utf-8")
+    # Variant flipped, date preserved verbatim.
+    assert (
+        "**v0.4.2 SHIPPED PUBLIC 2026-05-09**" in state_md
+    ), state_md
+    # Original variant-LOCAL leader is gone.
+    assert "**v0.4.2 SHIPPED LOCAL 2026-05-09**" not in state_md
+
+
+def test_apply_backfill_date_in_title_variant_already_public_no_op(
+    tmp_path: Path,
+) -> None:
+    """When the date-in-title variant is already in the SHIPPED-PUBLIC
+    shape (``**v<X.Y.Z> SHIPPED PUBLIC <YYYY-MM-DD>**``), the
+    leading-title helper makes no change — idempotence for the
+    variant mirrors AC.BACKFL2.4 for the canonical form (AC.SMLTV.3).
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    body = (
+        "# State\n\n"
+        "- **2026-05-09** — **v0.4.2 SHIPPED PUBLIC 2026-05-09** — "
+        "F-DESIGN-2 closure patch landed; tag annotated `884abcd`; "
+        "seal `eeeeeee`.\n"
+    )
+    (docs / "STATE.md").write_text(body)
+    new_body, edit_summary = (
+        post_publish_backfill._backfill_state_md_leading_title(
+            body, "v0.4.2"
+        )
+    )
+    # Idempotent: no edit applied.
+    assert new_body == body
+    assert edit_summary is None
+
+
+def test_leading_title_pattern_captures_both_shapes_distinctly() -> None:
+    """The combined regex captures the CLASS keyword (canonical form)
+    OR the DATE (variant) into named groups; the replacement logic
+    uses whichever is present (AC.SMLTV.1 + AC.SMLTV.2 internal
+    invariant — direct unit test of the dispatcher's named-group
+    contract).
+    """
+    # Canonical form → 'cls' group populated, 'date' group None.
+    canonical = "Some prose **v0.7.3 PATCH SHIPPED LOCAL** more prose."
+    pat = post_publish_backfill._leading_title_pattern("v0.7.3")
+    m = pat.search(canonical)
+    assert m is not None
+    assert m.group("cls") == "PATCH"
+    assert m.group("date") is None
+    # Variant → 'date' group populated, 'cls' group None.
+    variant = "Some prose **v0.4.2 SHIPPED LOCAL 2026-05-09** more."
+    pat2 = post_publish_backfill._leading_title_pattern("v0.4.2")
+    m2 = pat2.search(variant)
+    assert m2 is not None
+    assert m2.group("cls") is None
+    assert m2.group("date") == "2026-05-09"
+    # Lowercase canonical CLASS keyword (historical v0.4.3 / v0.5.0
+    # shape) still matches.
+    lowercase_canonical = "**v0.5.0 minor SHIPPED LOCAL**"
+    pat3 = post_publish_backfill._leading_title_pattern("v0.5.0")
+    m3 = pat3.search(lowercase_canonical)
+    assert m3 is not None
+    assert m3.group("cls") == "minor"
+    assert m3.group("date") is None

@@ -1,0 +1,49 @@
+# historical post-publish-completeness backfill PATCH
+
+2026-05-13. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST.
+
+Closes 2 of 3 deferred F-NFCLEAN-FOLLOWON items (from v0.8.1
+HARD HALT #7 strict-scope ruling) via strict-scope manual edits.
+The 3rd item (v0.7.3 TBD-AT-{COMMIT,APPLY} placeholders) stays
+deferred pending the F-FUNC-3 helper-extension cycle this PATCH
+captures.
+
+AC.HPPCB.1 — v0.7.3 STATE.md row's trailing `seal TBD-AT-SEAL.`
+placeholder (line 133) resolved to `seal `39170e6`.` via a single
+surgical Edit with unique trailing-context anchor. The prose-
+narrative `TBD-AT-SEAL` / `TBD-AT-TAG` references embedded
+inside the same row (describing what the v0.7.3 helper does)
+stay untouched.
+
+AC.HPPCB.2 — §3 Active version section of `docs/release-roadmap.md`
+gains a v0.7.2 PATCH SHIPPED PUBLIC entry. Tag `v0.7.2` annotated
+`0e67135`; seal `91ee1fe`; publish date 2026-05-10. Format matches
+existing standalone bold entries in §3.
+
+AC.HPPCB.3 — FIDRAFT F-FUNC-3 captures the helper's narrative-
+safety gap surfaced during Path-A predecessor dry-run.
+`_backfill_state_md_placeholders` at line 416 of
+`framework/tools/loam/src/loam_cli/release/post_publish_backfill.py`
+uses non-boundary-aware `str.replace("TBD-AT-SEAL", ...)` which
+corrupts rows whose prose narrative contains literal `TBD-AT-*`
+strings. Proposed safety extension: scope replacement to canonical
+trailing-position placeholder only.
+
+Path-B ruling per HARD HALT #1: helper code stays untouched in
+this PATCH; structural fix is a future cycle. The Path-A
+predecessor dispatch halted on the narrative-safety gap (correct
+F2 halt-and-surface return). This Path-B re-dispatch closes the
+two honest-record gaps surgically without exercising the buggy
+helper.
+
+No outcome-shape addition. PATCH-class defect closure within the
+v0.7.x publish outcome shape. pyproject.toml versions stay at
+0.10.0 (D-HPPCB.4 — per-component-version discipline advances
+with shipped MINORs; PATCHes ride the predecessor MINOR's
+version; matches AC.HONEST.1 / D-NFCLEAN.4 / D-SDPD / v0.8.3
+precedent).
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+(3 surgical edits + STATE/roadmap admin + smoke writeup)
+TBD-AT-COMMIT; apply TBD-AT-COMMIT; seal TBD-AT-COMMIT.

@@ -7,7 +7,7 @@ amendment:
 # source-edit SHA post-source-edit commit per v0.10.x precedent
 # (manifest baseline backfill commit follows source-edit batch in
 # the same cycle).
-baseline: "TBD-AT-COMMIT"
+baseline: "d8c24fc"
 
 plan: docs/plans/state-md-leading-title-date-variant.md
 plan_doc_ref: docs/plans/state-md-leading-title-date-variant.md

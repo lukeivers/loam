@@ -1,0 +1,53 @@
+# STATE.md leading-title date-in-title variant PATCH
+
+2026-05-13. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST.
+
+Closes F-FUNC-1 (FIDRAFT captured 2026-05-10 from v0.8.0
+AC.HONEST.4 halt-and-surface against the v0.4.2 row's non-
+canonical leading-title shape `**v0.4.2 SHIPPED LOCAL 2026-05-09**`
+— date in bolded title, no class keyword between version and
+SHIPPED).
+
+AC.SMLTV.1 — extends `_backfill_state_md_leading_title` regex at
+`framework/tools/loam/src/loam_cli/release/post_publish_backfill.py`
+to recognize the date-in-title variant `**v<X.Y.Z> SHIPPED LOCAL
+<YYYY-MM-DD>**` and flip it to `**v<X.Y.Z> SHIPPED PUBLIC
+<YYYY-MM-DD>**` preserving the date verbatim. Mirror extension on
+`_state_md_title_already_public` for the already-public check.
+
+AC.SMLTV.2 — canonical-form behavior preserved. All 22 existing
+BACKFL tests pass unmodified. The canonical form
+`**v<X.Y.Z> (MINOR|PATCH|minor|patch) SHIPPED LOCAL**` still
+flips correctly with CLASS casing preserved.
+
+AC.SMLTV.3 — already-public variant is a no-op. If the row says
+`**v<X.Y.Z> SHIPPED PUBLIC <YYYY-MM-DD>**`, no edit applied.
+Idempotence preserved.
+
+AC.SMLTV.4 — synthetic-fixture dogfood probe at
+`docs/experiments/v0-10-2-hard-smoke.md` verifies all 4 cases
+(canonical-LOCAL flipped, variant-LOCAL flipped with date, both
+already-PUBLIC rows untouched).
+
+Per D-SMLTV.1 the replacement shape is a pure LOCAL → PUBLIC
+token swap with date preserved verbatim — NOT the F-FUNC-1
+"append at-tag-annotated suffix" shape (the at-tag detail lives
+in the sibling trailing-sentence helper, not the leading-title
+helper).
+
+No outcome-shape addition. PATCH-class defect closure within
+the v0.7.4 leading-title-flip outcome shape (widens input domain
+by one variant). pyproject.toml versions stay at 0.10.0
+(D-SMLTV.4 — per-component-version discipline advances with
+shipped MINORs; PATCHes ride the predecessor MINOR; matches
+AC.HONEST.1 / D-NFCLEAN.4 / D-SDPD / v0.8.3 / v0.10.1 precedent).
+
+F-FUNC-3 (narrative-safety extension to
+`_backfill_state_md_placeholders`) deliberately untouched per
+dispatch brief HARD HALT — separate cycle.
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+(regex extension + 3 new tests + smoke writeup + STATE/roadmap
+admin + F-FUNC-1 RESOLVED) TBD-AT-COMMIT; apply TBD-AT-COMMIT;
+seal TBD-AT-COMMIT.

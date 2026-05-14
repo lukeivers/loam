@@ -1,0 +1,77 @@
+# Release-backfill helpers completeness batch PATCH
+
+2026-05-14. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST.
+
+Closes three FIDRAFT-captured gaps in the v0.7.x post-publish
+backfill helper family at `framework/tools/loam/src/loam_cli/
+release/post_publish_backfill.py` in a single PATCH cycle. All
+three gaps had documented operator burden (manual touch-ups at
+v0.8.0 / v0.8.1 / v0.10.1 cycles); this PATCH makes the cleanups
+structural.
+
+AC.RBHCB.1 (F-FUNC-2 — interim-shipped-local removal mode) —
+`_backfill_state_md` extended so when `_already_public_in_state_md`
+returns True AND the stale `<version> SHIPPED LOCAL — owner gates
+publish.` trailing sentence is still present in the same body, the
+stale sentence is removed (plus its preceding whitespace) and the
+helper returns a non-None edit summary naming the removal. Closes
+the v0.5.0 / v0.8.0 AC.HONEST.5 manual-touch-up pattern. Per
+D-RBHCB.1 the cleanup runs unconditionally when triggered (no
+kwarg gate; the F-FUNC-2 capture's `--remove-interim-shipped-
+local-sentence` mode framing was an implementation suggestion,
+not an outcome requirement; tightened per
+`feedback_loose_AC_text_fix_AC_not_implementation`).
+
+AC.RBHCB.2 (F-WALKER-1 — pipe-in-description tokenizer robustness)
+— new `_split_pipe_row_backtick_aware(row) -> list[str]` helper
+walks the row character-by-character tracking backtick parity;
+emits a cell on each `|` only when parity is 0. Replaces naive
+`row.split('|')` in both `_classify_row` and
+`_extract_objective_sentence`. Existing version-pattern fallback
+in `_classify_row` (X.Y.0 = MINOR; rest = PATCH) retained as
+defense-in-depth. Closes the v0.4.2 silent-misclassification path
+where the explicit-class detection was wrong even though the
+fallback happened to give the right answer.
+
+AC.RBHCB.3 (F-FUNC-3 — narrative-safety extension) —
+`_backfill_tbd_placeholders` extended with regex matchers
+anchored via positive lookbehind to canonical surrounding tokens:
+TBD-AT-SEAL ← `seal `, TBD-AT-COMMIT ← `source-edit `,
+TBD-AT-APPLY ← `apply `, TBD-AT-TAG ← `tag `. Backtick-wrapped
+prose-narrative occurrences (e.g., the v0.7.3 row at
+docs/STATE.md:133 whose body literally contains
+`` `TBD-AT-SEAL` / `TBD-AT-TAG` placeholders ``) lack the
+canonical preceding token and are left untouched. Closes the
+v0.10.1 Path-A halt finding.
+
+AC.RBHCB.4 — all 25 existing BACKFL tests pass unmodified
+post-source-edit (regression check); idempotent_noop contract
+preserved across all three helpers' extensions.
+
+AC.RBHCB.5 — three function-altitude dogfood probes (one per
+sub-scope) documented at slug-named path
+`docs/experiments/release-backfill-helpers-completeness-batch-hard-smoke.md`
+per `F-CYCLE-ARTEFACT-SLUG-NAMING` (the prior-cycle FIDRAFT
+capture this PATCH structurally honors at the artefact-naming
+level).
+
+AC.RBHCB.S — seal-diff allow-list (release-CLI helper extension
++ new test cases + universal-admission docs only). NO entries in
+`_backfill_state_md_leading_title` (dispatch HARD HALT
+enforcement; F-FUNC-1 surface just shipped v0.10.2 stays
+untouched). NO pyproject.toml bumps. NO `__version__` updates.
+
+Per D-RBHCB.5 pyproject versions stay at 0.10.0 (PATCH rides
+predecessor MINOR per AC.HONEST.1 / D-NFCLEAN.4 / D-SDPD /
+v0.8.3 / v0.10.1 / v0.10.2 precedent).
+
+No outcome-shape addition. PATCH-class defect closure within
+the v0.7.3 / v0.7.4 / v0.8.1 backfill-helper family outcome
+shapes (widens helper input domains by removing three known
+corruption-trigger patterns).
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+(three helper extensions + ~7-9 new tests + smoke writeup +
+STATE/roadmap admin + F-FUNC-2/F-WALKER-1/F-FUNC-3 RESOLVED)
+TBD-AT-COMMIT; apply TBD-AT-COMMIT; seal TBD-AT-COMMIT.

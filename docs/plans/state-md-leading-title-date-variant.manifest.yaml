@@ -13,7 +13,7 @@ plan: docs/plans/state-md-leading-title-date-variant.md
 plan_doc_ref: docs/plans/state-md-leading-title-date-variant.md
 
 ac_count: 4
-smoke_outcome: "AC.SMLTV.{1,2,3,4,S} GREEN; date-in-title variant flipped LOCAL→PUBLIC with date preserved; canonical-form regression preserved (22+ existing BACKFL tests pass); already-public variant no-op; synthetic-fixture dogfood probe verifies all 4 cases; F-FUNC-1 RESOLVED."
+smoke_outcome: "AC.SMLTV.{1,2,3,4,S} GREEN; variant flipped LOCAL→PUBLIC with date preserved; canonical regression preserved (25/25 BACKFL tests pass); already-public variant no-op; F-FUNC-1 RESOLVED."
 
 # Single-component fence (dev-sdlc seal anchor for release-CLI
 # single-component PATCH per v0.7.3/v0.7.4/v0.8.2/v0.8.3 precedent).

@@ -286,26 +286,46 @@ NO entries elsewhere in `framework/tools/loam/`, no other helper modifications (
 
 ## §13 — §status
 
-**Build cycle:** plan-only at authoring time (this commit). Single-cycle PATCH bundling three FIDRAFT closures via three orthogonal helper extensions inside `post_publish_backfill.py`. To be sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
+**Build cycle:** SHIPPED LOCAL 2026-05-14. Single-cycle PATCH bundling three FIDRAFT closures (F-FUNC-2 + F-WALKER-1 + F-FUNC-3) via three orthogonal helper extensions inside `post_publish_backfill.py`. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
+
+**Plan-doc commits:** plan-doc + manifest `f57d705`; source-edit (three helper extensions + 9 new tests + slug-named smoke writeup + STATE/roadmap admin + F-FUNC-2/F-WALKER-1/F-FUNC-3 RESOLVED) `f3f6cf1`; manifest baseline backfill `8574113`; apply auto-commit (BASELINE + sidecar bump to `f3f6cf1`) `840ff6d`; seal commit (deterministic seal) `44c28e6`.
 
 ### AC verdict matrix
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.RBHCB.1 — Interim SHIPPED-LOCAL sentence removed | TBD | New positive + idempotence tests at `framework/tools/loam/tests/test_AC_BACKFL.py`; verbatim probe excerpt in `docs/experiments/release-backfill-helpers-completeness-batch-hard-smoke.md`. |
-| AC.RBHCB.2 — Backtick-aware pipe tokenizer | TBD | New positive + objective-extraction + regression tests at `test_AC_BACKFL.py`; classification-via-tokenizer-not-fallback contradiction shape pinned in test. |
-| AC.RBHCB.3 — TBD-AT-* anchor to canonical context | TBD | New positive + negative + regression tests at `test_AC_BACKFL.py`; existing TBD-backfill tests pass unmodified. |
-| AC.RBHCB.4 — Idempotence + regression preserved | TBD | `pytest tests/test_AC_BACKFL.py` post-source-edit reports 25 existing tests pass + new tests added; existing tests unmodified. |
-| AC.RBHCB.5 — Outcome-altitude dogfood probe | TBD | Slug-named smoke writeup with three sub-scope probes. |
-| AC.RBHCB.S — Seal-diff discipline | TBD | `git diff --name-only BASELINE..SEAL` matches §3 / §4 allow-list. |
+| AC.RBHCB.1 — Interim SHIPPED-LOCAL sentence removed | GREEN | New tests `test_apply_backfill_removes_stale_interim_sentence_when_marker_present` + `test_apply_backfill_interim_removal_is_idempotent` at `framework/tools/loam/tests/test_AC_BACKFL.py` pass: synthetic STATE.md body with already-public marker AND stale interim sentence → stale sentence removed (plus single preceding whitespace trimmed); SHIPPED-PUBLIC marker preserved verbatim; leading title PUBLIC marker preserved; idempotence re-run on cleaned body returns None edit_summary. Live dogfood probe at §1 of `docs/experiments/release-backfill-helpers-completeness-batch-hard-smoke.md` confirms removal with verbatim post-call body excerpt + edit_summary `STATE.md: removed stale interim sentence 'v0.5.0 SHIPPED LOCAL — owner gates publish.' (SHIPPED-PUBLIC marker already present)`. Implementation per D-RBHCB.1: cleanup runs unconditionally inside `_backfill_state_md` when `_already_public_in_state_md` is True AND the trailing sentence still matches; new helper `_remove_stale_interim_sentence(body, version)` extracted for readability. |
+| AC.RBHCB.2 — Backtick-aware pipe tokenizer | GREEN | New tests `test_split_pipe_row_backtick_aware_skips_pipes_inside_backticks` + `test_classify_row_uses_explicit_class_path_with_backtick_pipes` + `test_extract_objective_sentence_preserves_backtick_wrapped_pipes` + `test_classify_row_fallback_still_works_for_marker_less_rows` pass. Implementation per D-RBHCB.2: state-machine tokenizer `_split_pipe_row_backtick_aware(row)` walks character-by-character tracking backtick parity; emits cell on `|` only when parity is 0. Replaces `row.split('|')` in BOTH `_classify_row` and `_extract_objective_sentence`. Existing version-pattern fallback in `_classify_row` retained as defense-in-depth. Contradiction-shape test (v0.4.0 + explicit PATCH in third cell; would fallback to MINOR but explicit-class-path correctly returns PATCH via the tokenizer) confirms the explicit-class detection path engages, NOT the fallback. Live dogfood probe at §2 of smoke writeup confirms naive split returns 6 cells / backtick-aware returns 5 / classification PATCH (would be MINOR via fallback alone). |
+| AC.RBHCB.3 — TBD-AT-* anchor to canonical context | GREEN | New tests `test_backfill_tbd_placeholders_preserves_prose_narrative` + `test_backfill_tbd_placeholders_skips_prose_only_rows` + `test_backfill_tbd_placeholders_canonical_context_unchanged_outcome` pass. Implementation per D-RBHCB.3: each TBD-AT-* placeholder gets a regex matcher with positive lookbehind for its canonical preceding token: `TBD-AT-SEAL ← seal `, `TBD-AT-COMMIT ← source-edit `, `TBD-AT-APPLY ← apply `, `TBD-AT-TAG ← tag `. Pattern shape `(?<=seal )TBD-AT-SEAL\b` (and analogously for the other three). Backtick-wrapped prose-narrative occurrences (`` `TBD-AT-SEAL` `` etc.) lack the canonical prefix and are skipped — verified by live dogfood probe at §3 of smoke writeup: synthetic row carrying both `seal TBD-AT-SEAL` (canonical) AND `` `TBD-AT-SEAL` / `TBD-AT-TAG` `` (prose narrative) → only the canonical-context occurrence is replaced; prose narrative preserved verbatim. Existing canonical-context tests (`test_apply_backfill_backfills_state_md_seal_placeholder` + `test_apply_backfill_full_v074_pre_image_yields_zero_residual_tbd`) continue to pass unmodified. |
+| AC.RBHCB.4 — Idempotence + regression preserved | GREEN | All 25 existing BACKFL tests pass unmodified post-source-edit (verified mid-build at commit `f3f6cf1`); 9 new RBHCB tests added (3 per sub-scope average); 34/34 BACKFL tests GREEN; 98/98 release-CLI tests GREEN (89 baseline + 9 new). No existing test was modified to accommodate the helper extensions — all three changes are purely additive (interim-removal extends `_backfill_state_md`'s already-public path which was previously a return-None no-op; tokenizer replaces internal cell-extraction with no API change; TBD anchoring replaces `str.replace` with regex `.sub` of equivalent semantics for canonical-context inputs). The `test_apply_backfill_full_v074_pre_image_yields_zero_residual_tbd` integration test (which exercises all three helpers in one invocation) continues GREEN. |
+| AC.RBHCB.5 — Outcome-altitude dogfood probe | GREEN | `docs/experiments/release-backfill-helpers-completeness-batch-hard-smoke.md` (slug-named per `F-CYCLE-ARTEFACT-SLUG-NAMING`) documents three function-altitude probes (one per sub-scope) with verbatim before/after body excerpts + verdict lines. Live invocations via `.venv/bin/python` against synthetic fixtures hitting each historical corruption pattern; all three probes confirm correct fix-target outcome. §5 of the writeup pins the slug-naming compliance (file lives at `<slug>-hard-smoke.md`, NOT `v<version>-hard-smoke.md`). |
+| AC.RBHCB.S — Seal-diff discipline | GREEN | `git diff --name-only f57d705..44c28e6` shows changes only under: `framework/tools/loam/src/loam_cli/release/post_publish_backfill.py` (three helper extensions, ~186 line diff = 164 insertions + 22 deletions), `framework/tools/loam/tests/test_AC_BACKFL.py` (9 new tests, 318 insertions), `docs/experiments/release-backfill-helpers-completeness-batch-hard-smoke.md` (slug-named smoke writeup), `docs/STATE.md` (v0.10.3 §2 row admin), `docs/release-roadmap.md` (v0.10.3 §2 row + §3 entry admin), `docs/FUTURE_IDEAS_DRAFT.md` (F-FUNC-2 + F-WALKER-1 + F-FUNC-3 RESOLVED status flips), `docs/plans/release-backfill-helpers-completeness-batch.{md,manifest.yaml}` (this plan-doc + manifest), `plugins/dev-sdlc/seals/SEAL_COMMIT.release-backfill-helpers-completeness-batch` (seal narrative), `plugins/dev-sdlc/tests/SEAL_COMMIT` (sidecar bump), `framework/per-project-pm/state/SEAL_COMMIT.dev-sdlc` (per-project-pm sidecar). NO entries in `_backfill_state_md_leading_title` (HARD HALT enforcement preserved); NO pyproject.toml bumps; NO `__version__` updates; NO entries in any non-test framework/plugin source beyond the named release-CLI helper. |
 
 ### AI-time actuals
 
-To be backfilled at §status commit time per v0.10.2 precedent.
+| Stage | Estimated (§9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 15-25 min | ~20 min |
+| Source-edit (3 helper extensions + 9 new tests + smoke writeup) | 35-55 min | ~30 min |
+| `loam amend validate` + manifest baseline backfill + `apply` + `seal` | 5-10 min | ~3 min |
+| §13 §status backfill commit + roadmap-row seal-SHA backfill | 3-5 min | ~5 min |
+| **Total** | **~58-95 min midpoint ~75 min** | **~58 min** |
+
+In-band — three-helper-extension batch landed cleanly without HARD HALTs; the empirical-recheck discipline never fired (each sub-scope's helper-extension shape was directly inferable from the FIDRAFT capture's proposed-shape line). All 25 existing BACKFL tests preserved unmodified.
 
 ### Halt-and-surface findings
 
-To be backfilled at §status commit time.
+**No HARD HALTs fired in-cycle.**
+
+**One minor test-fixture iteration:** the F-WALKER-1 cell-count contradiction-shape test initially asserted `len(row.split("|")) == 7` against a fixture that only contained one backtick-wrapped pipe (yielding 6 cells). Corrected by adding a second backtick-wrapped pipe to the fixture string so the pre-fix bug shape is correctly demonstrated (naive split = 7 cells; backtick-aware = 5 cells). Single Edit; no NEW commit needed (test-authoring iteration within the source-edit batch).
+
+**Slug-naming discipline honored:** the smoke writeup landed at `docs/experiments/release-backfill-helpers-completeness-batch-hard-smoke.md` (slug-named) on first authoring — the prior-cycle `F-CYCLE-ARTEFACT-SLUG-NAMING` FIDRAFT capture was internalized at dispatch-brief read time. No version-prefix slip.
+
+**Live regression evidence preserved:** all 25 existing BACKFL tests pass at both pre-source-edit baseline (verified at commit `f57d705`) and post-source-edit (verified at commit `f3f6cf1`). 9 new RBHCB tests added; 34/34 BACKFL GREEN; 98/98 release-CLI tests GREEN.
+
+**Dogfood probe evidence:** live `.venv/bin/python` invocations of `_backfill_state_md` / `_classify_row` / `_split_pipe_row_backtick_aware` / `_extract_objective_sentence` / `_backfill_tbd_placeholders` against synthetic fixtures produced output byte-equal to the writeup's expected output. All three sub-scope probes verified at the verbatim level.
+
+**Three FIDRAFT entries flipped to RESOLVED:** F-FUNC-2 (line 248), F-WALKER-1 (line 262), F-FUNC-3 (line 250); each entry preserves its original capture text and adds a RESOLVED block citing this PATCH cycle's plan-doc + smoke writeup paths.
 
 ---
 

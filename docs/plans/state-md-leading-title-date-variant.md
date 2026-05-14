@@ -222,21 +222,41 @@ NO entries elsewhere in `framework/tools/loam/`, no other helper modifications, 
 
 ## §13 — §status
 
-**Build cycle:** TBD-AT-STATUS-BACKFILL — appended post-seal.
+**Build cycle:** SHIPPED LOCAL 2026-05-13. Single-cycle PATCH closes F-FUNC-1 via the v0.7.4 helper's regex extension. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** TBD-AT-STATUS-BACKFILL — appended post-seal.
+**Plan-doc commits:** plan-doc + manifest `80618a8`; source-edit (regex extension + 3 new tests + smoke writeup + STATE/roadmap admin + F-FUNC-1 RESOLVED) `d8c24fc`; manifest baseline backfill `aef6e31`; manifest smoke_outcome fixup `6cb7d12`; apply auto-commit (BASELINE + sidecar bump to `d8c24fc`) `371e351`; seal commit (deterministic seal) `ee1f5ac`.
 
 ### AC verdict matrix
 
-TBD-AT-STATUS-BACKFILL — appended post-seal.
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.SMLTV.1 — Date-in-title variant recognized + flipped | GREEN | New test `test_apply_backfill_flips_state_md_date_in_title_variant` at `framework/tools/loam/tests/test_AC_BACKFL.py` passes: synthetic `**v0.4.2 SHIPPED LOCAL 2026-05-09**` row → `**v0.4.2 SHIPPED PUBLIC 2026-05-09**` (date preserved verbatim). Implementation uses regex alternation with named groups (`cls` / `date`) so the replacement uses whichever group is populated. Live dogfood probe at `docs/experiments/v0-10-2-hard-smoke.md` confirms variant case (case 2) flipped correctly with edit_summary `STATE.md leading title: '**v0.4.2 SHIPPED LOCAL 2026-05-09**' → '**v0.4.2 SHIPPED PUBLIC 2026-05-09**'`. |
+| AC.SMLTV.2 — Canonical-form behavior preserved | GREEN | All 22 existing BACKFL tests pass unmodified post-regex-extension (verified mid-build at commit `80618a8` baseline AND post-source-edit at commit `d8c24fc`). Existing tests `test_apply_backfill_flips_state_md_leading_title` (canonical PATCH) + `test_apply_backfill_preserves_class_casing_minor` (canonical lowercase `minor`) both GREEN. Live dogfood probe case 1 (`**v0.9.0 MINOR SHIPPED LOCAL**`) flipped correctly to `**v0.9.0 MINOR SHIPPED PUBLIC**` with CLASS casing preserved. |
+| AC.SMLTV.3 — Already-public variant is a no-op | GREEN | New test `test_apply_backfill_date_in_title_variant_already_public_no_op` passes: input `**v0.4.2 SHIPPED PUBLIC 2026-05-09**` → no edit; body byte-equal pre/post call; edit_summary is None. Live dogfood probe case 4 (`**v0.4.3 SHIPPED PUBLIC 2026-05-09**`) confirms variant idempotence. Idempotence preserved for both canonical (AC.BACKFL2.4) and variant (AC.SMLTV.3) shapes. |
+| AC.SMLTV.4 — Outcome-altitude dogfood probe | GREEN | `docs/experiments/v0-10-2-hard-smoke.md` documents synthetic-fixture probe; live invocation `.venv/bin/python -c "..."` against the same fixture verifies all 4 cases: case 1 canonical-LOCAL flipped, case 2 variant-LOCAL flipped with date preserved, case 3 canonical-already-PUBLIC no-op, case 4 variant-already-PUBLIC no-op. Verbatim probe output matches expected output in writeup. |
+| AC.SMLTV.S — Seal-diff discipline | GREEN | `git diff --name-only 80618a8..ee1f5ac` shows changes only under: `framework/tools/loam/src/loam_cli/release/post_publish_backfill.py` (regex extension, 73 lines), `framework/tools/loam/tests/test_AC_BACKFL.py` (3 new test cases, 116 insertions), `docs/experiments/v0-10-2-hard-smoke.md` (smoke writeup), `docs/STATE.md` (v0.10.2 §2 row admin), `docs/release-roadmap.md` (v0.10.2 §2 row + §3 entry admin), `docs/FUTURE_IDEAS_DRAFT.md` (F-FUNC-1 RESOLVED status flip), `docs/plans/state-md-leading-title-date-variant.{md,manifest.yaml}` (this plan-doc + manifest), `plugins/dev-sdlc/seals/SEAL_COMMIT.state-md-leading-title-date-variant` (seal narrative), `plugins/dev-sdlc/tests/SEAL_COMMIT` (sidecar bump), `framework/per-project-pm/state/SEAL_COMMIT.dev-sdlc` (per-project-pm sidecar). NO pyproject.toml bumps; NO `__version__` updates; NO entries in any non-test framework/plugin source beyond the named release-CLI helper. |
 
 ### AI-time actuals
 
-TBD-AT-STATUS-BACKFILL — appended post-seal.
+| Stage | Estimated (§9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 10-15 min | ~14 min |
+| Source-edit (regex extension + 3 new tests + smoke writeup) | 20-30 min | ~17 min |
+| `loam amend validate` + manifest baseline backfill + smoke-outcome fixup + `apply` + `seal` | 5-8 min | ~4 min |
+| §13 §status backfill commit | 2-3 min | ~3 min |
+| **Total** | **~37-56 min midpoint ~45 min** | **~38 min** |
+
+In-band — single-helper extension landed cleanly; no HARD HALTs fired. The named-group regex strategy yielded a small surface (one regex pair extension + one branching condition in `_backfill_state_md_leading_title`) without disturbing the 22 existing tests.
 
 ### Halt-and-surface findings
 
-TBD-AT-STATUS-BACKFILL — appended post-seal.
+**No HARD HALTs fired in-cycle.**
+
+**One minor manifest-validate cycle:** the initial `smoke_outcome` field exceeded the 200-char limit (264 chars). Resolved with a `chore(amend): shorten manifest smoke_outcome to fit 200-char limit` corrective commit (NOT `--amend`; per HARD HALT #4 / `feedback_no_amend_in_agent_dispatches`). Sequence: `80618a8` plan-doc+manifest → `d8c24fc` source-edit → `aef6e31` baseline backfill → `6cb7d12` smoke_outcome shortening → `371e351` apply → `ee1f5ac` seal.
+
+**Live regression evidence preserved:** all 25 BACKFL tests (22 existing + 3 new) pass at both pre-source-edit baseline (verified at commit `80618a8`) and post-source-edit (verified at commit `d8c24fc`). No existing test was modified to accommodate the regex extension — the change is purely additive at the input-domain level.
+
+**Dogfood probe evidence:** live `.venv/bin/python` invocation of `_backfill_state_md_leading_title` against the synthetic fixture documented in `docs/experiments/v0-10-2-hard-smoke.md` produced output byte-equal to the writeup's expected output. The variant-LOCAL case (case 2) yielded `edit_summary: STATE.md leading title: '**v0.4.2 SHIPPED LOCAL 2026-05-09**' → '**v0.4.2 SHIPPED PUBLIC 2026-05-09**'` — note the absence of any at-tag/annotated suffix in the replacement, confirming the D-SMLTV.1 ruling shape.
 
 ---
 

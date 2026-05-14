@@ -234,28 +234,41 @@ NO entries in `framework/tools/loam/` or any other framework/plugin source path.
 
 ## §13 — §status
 
-**Build cycle:** AUTHORING — plan-doc landing first; subsequent commits at source-edit + apply + seal land below as each stage completes.
+**Build cycle:** SHIPPED LOCAL 2026-05-13. Path-B re-dispatch from F-NFCLEAN-FOLLOWON cycle dispatcher (Path-A halted on helper narrative-safety gap). Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** (filled in at §status backfill stage)
+**Plan-doc commits:** plan-doc + manifest `97e1cd6`; source-edit batch (3 surgical edits + STATE/roadmap v0.10.1 admin + smoke writeup) `fabdf76`; manifest baseline backfill `c735cf9`; apply auto-commit (BASELINE + sidecar bump to `fabdf76`) `94f8d09`; seal commit (deterministic seal) `4fb89eb`.
 
 ### AC verdict matrix
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.HPPCB.1 | (filled in at §status backfill) | |
-| AC.HPPCB.2 | (filled in at §status backfill) | |
-| AC.HPPCB.3 | (filled in at §status backfill) | |
-| AC.HPPCB.S | (filled in at §status backfill) | |
+| AC.HPPCB.1 — v0.7.3 STATE.md row trailing seal placeholder resolved | GREEN | Single surgical Edit at the unique trailing-context anchor (`seal TBD-AT-SEAL.` immediately followed by ` **v0.7.3 SHIPPED PUBLIC`). Post-edit grep verified: `grep -c "seal TBD-AT-SEAL\\." docs/STATE.md` returns 0; `grep -n "seal \`39170e6\`" docs/STATE.md` returns line 133 (v0.7.3 row). Prose-narrative `TBD-AT-SEAL` / `TBD-AT-TAG` references inside the same row's body (describing what the v0.7.3 helper does) preserved — grep `\`TBD-AT-SEAL\` / \`TBD-AT-TAG\`` returns the intact embedded reference. Seal SHA `39170e6` matches the canonical v0.7.3 seal commit (`chore(seals): v0-7-3-release-cli-auto-backfill — dev-sdlc at 527698b`). |
+| AC.HPPCB.2 — §3 Active version section gains v0.7.2 entry | GREEN | Single Edit inserting one bold-entry line at `docs/release-roadmap.md:90`, between the v0.4-v0.5 prose roll-up paragraph (line 86) and the standalone v0.7.3 entry (now line 92). Post-edit grep: `grep -n "v0.7.2 PATCH.*SHIPPED PUBLIC.*0e67135.*91ee1fe" docs/release-roadmap.md` returns line 90. Format matches existing standalone §3 entries (bold version header + class + parenthetical objective + SHIPPED PUBLIC marker + tag + annotated + seal). Section bounds verified: §3 starts at line 84; §4 starts at line 114 post-PATCH; line 90 is comfortably inside §3. SHAs verified canonical: `git rev-parse v0.7.2` → `0e67135c...`; `git log --all --oneline | grep 91ee1fe` → `chore(seals): v0-7-2-release-cli-parser-fix — dev-sdlc at 925e773`. |
+| AC.HPPCB.3 — FIDRAFT F-FUNC-3 entry | GREEN | Single Edit appending F-FUNC-3 entry to `docs/FUTURE_IDEAS_DRAFT.md` immediately after F-FUNC-2 (line 250). All 6 required elements present: (1) empirical finding (`_backfill_state_md_placeholders` at `post_publish_backfill.py:415-416` uses non-boundary-aware `str.replace`); (2) corruption shape (rows whose prose narrative contains literal `TBD-AT-*` strings); (3) proposed safety extension (regex-anchored replacement scoped to trailing-position context); (4) composes-with line (F-FUNC-1, F-FUNC-2, F-NFCLEAN-FOLLOWON); (5) status (capture-only); (6) AI-time band (30-60 min midpoint ~45 min for regex anchors + 4 test cases). D-HPPCB.3 ruling preserved: F-FUNC-2 covers a different shape (interim SHIPPED-LOCAL-sentence removal mode); F-FUNC-3 added as new entry per plan-time investigation. |
+| AC.HPPCB.S — Seal-diff allow-list | GREEN | `git diff --name-only c37e34e..4fb89eb` shows changes only under: docs/STATE.md (AC.HPPCB.1 + v0.10.1 §2 row admin), docs/release-roadmap.md (AC.HPPCB.2 + v0.10.1 §2 row + v0.10.1 §3 entry admin), docs/FUTURE_IDEAS_DRAFT.md (AC.HPPCB.3 F-FUNC-3 entry + 2 pre-existing universal-admission entries surfaced in commit message), docs/experiments/historical-post-publish-completeness-backfill-hard-smoke.md (smoke writeup), docs/plans/historical-post-publish-completeness-backfill.md (this plan-doc), docs/plans/historical-post-publish-completeness-backfill.manifest.yaml (manifest), plugins/dev-sdlc/seals/SEAL_COMMIT.historical-post-publish-completeness-backfill (seal narrative), plugins/dev-sdlc/tests/SEAL_COMMIT (sidecar bump), framework/per-project-pm/state/SEAL_COMMIT.dev-sdlc (per-project-pm sidecar bump). NO entries in `framework/tools/loam/` or any framework/plugin source. NO test file additions or modifications. NO pyproject.toml or `__version__` bumps. |
 
 ### AI-time actuals
 
 | Stage | Estimated (§9) | Actual |
 |---|---|---|
-| (filled in at §status backfill) | | |
+| Plan-doc + manifest authoring | 10-15 min | ~16 min |
+| AC.HPPCB.1 — v0.7.3 STATE.md trailing seal SHA edit | 2-4 min | ~1 min |
+| AC.HPPCB.2 — §3 Active version v0.7.2 entry | 2-4 min | ~2 min |
+| AC.HPPCB.3 — F-FUNC-3 FIDRAFT capture | 4-6 min | ~5 min |
+| Pre-apply admin (STATE.md v0.10.1 row + roadmap §2 + roadmap §3 + smoke writeup) | 6-10 min | ~8 min |
+| `loam amend validate` + manifest baseline backfill + `apply` + `seal` | 3-5 min | ~3 min |
+| §13 §status backfill commit | 2-3 min | ~2 min |
+| **Total** | **~29-47 min midpoint ~30 min** | **~37 min** |
+
+In-band — doc-only PATCH with 3 surgical Edits landed cleanly; no HARD HALTs fired in the build cycle (one F2 surface in the commit message about pre-existing universal-admission entries in the working tree, which is NOT a halt, just transparent disclosure). Path-B re-dispatch shape (manual edits, helper untouched) produced exactly the strict-scope outcome the brief specified.
 
 ### Halt-and-surface findings
 
-(filled in at §status backfill)
+**No HARD HALTs fired in-cycle.** All 3 surgical edits matched their unique-anchor `old_string` at the intended target locations on first try (AC.HPPCB.1 anchor `seal TBD-AT-SEAL. **v0.7.3 SHIPPED PUBLIC` was unique by grep; AC.HPPCB.2 inserted at the `---\n\n**v0.7.3 PATCH` boundary; AC.HPPCB.3 inserted after the F-FUNC-2 entry's terminating period-and-newline). Narrative-safety verification (the load-bearing concern from the Path-A predecessor halt) confirmed: the embedded prose `TBD-AT-SEAL` / `TBD-AT-TAG` references in the v0.7.3 STATE.md row's body stay intact at the post-edit commit.
+
+**F2 surface (pre-existing universal-admission entries in working tree):** The `docs/FUTURE_IDEAS_DRAFT.md` source-edit commit (`fabdf76`) landed 3 FIDRAFT entries: (1) my AC.HPPCB.3 F-FUNC-3 capture (in-scope); (2) F-INVERTED-FRAME (pre-existing prior-session capture re: v0.9.0 paper inverted framing, dated 2026-05-13 from Telegram 11104/11105); (3) F-AGENT-EMPIRICAL-RECHECK-BEFORE-HALT (pre-existing prior-session resolved-to-canonical-memory entry, dated 2026-05-12). Entries (2) + (3) were already in the working tree as uncommitted modifications before this dispatch started. Per F2 RF, surfaced explicitly in the source-edit commit message and here in §status — they ARE inside the universal-admission `docs/FUTURE_IDEAS_DRAFT.md` fence path, but they are NOT part of any AC.HPPCB.* named scope. Dispatcher visibility: these landed with this PATCH for cleanup convenience; alternative would have been to revert FIDRAFT.md to HEAD, re-add only F-FUNC-3, and surface (2)+(3) as a separate cleanup commit — but that path would discard prior work without owner ruling.
+
+**No unexpected stash needed:** the brief mentioned a possible untracked `docs/plans/promote-multi-channel-extractor-and-iteration-loop-family.md`; this file did not exist in the working tree at dispatch start (`git ls-files --others --exclude-standard` returned empty pre-edit). `loam amend seal` produced no stash-halt warnings.
 
 ---
 

@@ -114,16 +114,75 @@ def _format_state_md_replacement(
     )
 
 
+def _remove_stale_interim_sentence(
+    body: str, version: str
+) -> tuple[str, str | None]:
+    """When the SHIPPED-PUBLIC marker for *version* is already present
+    AND a stale ``<version> SHIPPED LOCAL — owner gates publish.``
+    trailing sentence still lingers, remove the stale sentence (plus
+    any single preceding whitespace character) so the row reads
+    coherently.
+
+    Per AC.RBHCB.1 (F-FUNC-2 closure) — v0.5.0's row at v0.8.0
+    AC.HONEST.5 needed this manually; the v0.7.4 helper's
+    idempotence-by-skip path correctly avoided double-flipping but
+    didn't clean up the stale interim sentence left over from when
+    the public-marker landed manually before v0.7.3's auto-backfill
+    existed.
+
+    Returns ``(new_body, edit_summary)``; *edit_summary* is None if
+    the trigger condition didn't fire (no stale sentence present).
+    The caller is expected to have already verified
+    :func:`_already_public_in_state_md` returned True.
+    """
+    pattern = _shipped_local_pattern(version)
+    match = pattern.search(body)
+    if match is None:
+        return body, None
+    start = match.start()
+    end = match.end()
+    # Trim a single preceding whitespace character (typically the
+    # space separating the stale sentence from the prior sentence)
+    # so the row reads coherently after removal. Defensive: only
+    # trim if the prior char is whitespace (' ' / '\t'); never
+    # trim a newline (would join two list items).
+    if start > 0 and body[start - 1] in (" ", "\t"):
+        start -= 1
+    new_body = body[:start] + body[end:]
+    edit_summary = (
+        f"STATE.md: removed stale interim sentence "
+        f"{match.group(0)!r} (SHIPPED-PUBLIC marker already present)"
+    )
+    return new_body, edit_summary
+
+
 def _backfill_state_md(
     body: str, version: str, today: _dt.date, tag: str, tag_sha: str
 ) -> tuple[str, str | None]:
     """Apply the SHIPPED-LOCAL → SHIPPED-PUBLIC trailing-claim flip
     to *body*. Returns ``(new_body, edit_summary)`` where
     *edit_summary* is None if the body was unchanged (already public
-    OR pattern not matched).
+    AND no stale interim sentence; OR pattern not matched).
+
+    Two paths:
+
+    1. **Pre-public** — no SHIPPED-PUBLIC marker yet for *version*:
+       flip the SHIPPED-LOCAL trailing-claim sentence to the
+       SHIPPED-PUBLIC marker (canonical v0.7.3 behavior).
+    2. **Already-public + stale interim** — SHIPPED-PUBLIC marker
+       already present AND the stale ``<version> SHIPPED LOCAL —
+       owner gates publish.`` interim sentence still lingers: remove
+       the stale sentence (per AC.RBHCB.1 / F-FUNC-2 closure).
+
+    Idempotent across both paths: re-run on a fully-cleaned body is
+    a no-op (no public-marker-yet path: still no match; already-public
+    + cleaned: the interim-removal helper finds no match either).
     """
     if _already_public_in_state_md(body, version):
-        return body, None
+        # AC.RBHCB.1 — clean up any stale interim sentence left from
+        # a manually-landed public marker (v0.5.0 / v0.8.0 AC.HONEST.5
+        # pattern). Idempotent when no stale sentence remains.
+        return _remove_stale_interim_sentence(body, version)
     pattern = _shipped_local_pattern(version)
     match = pattern.search(body)
     if match is None:
@@ -419,6 +478,20 @@ def _format_row_marker_suffix(
     )
 
 
+# v0.10.3 (AC.RBHCB.3 / F-FUNC-3 closure) — narrative-safe TBD-AT-*
+# anchor regexes. Each placeholder is matched only when preceded by
+# its canonical surrounding token (lookbehind) so prose-narrative
+# occurrences inside backtick-wrapped row body descriptions
+# (e.g., the v0.7.3 STATE.md row at docs/STATE.md:133, whose body
+# literally describes `TBD-AT-SEAL` / `TBD-AT-TAG` placeholders) are
+# left untouched. The pre-v0.10.3 shape used `str.replace` which
+# corrupted such prose narrative — the v0.10.1 Path-A halt finding.
+_TBD_AT_SEAL_ANCHORED = re.compile(r"(?<=seal )TBD-AT-SEAL\b")
+_TBD_AT_TAG_ANCHORED = re.compile(r"(?<=tag )TBD-AT-TAG\b")
+_TBD_AT_COMMIT_ANCHORED = re.compile(r"(?<=source-edit )TBD-AT-COMMIT\b")
+_TBD_AT_APPLY_ANCHORED = re.compile(r"(?<=apply )TBD-AT-APPLY\b")
+
+
 def _backfill_tbd_placeholders(
     row: str,
     tag: str,
@@ -442,24 +515,39 @@ def _backfill_tbd_placeholders(
     placeholders are left alone + the operator backfills them
     manually.
 
+    v0.10.3 (AC.RBHCB.3 / F-FUNC-3 closure) — narrative-safety
+    extension: each placeholder is matched only when preceded by its
+    canonical surrounding token (``seal `` / ``tag `` / ``source-edit ``
+    / ``apply ``) via positive lookbehind. Prose-narrative
+    occurrences inside backtick-wrapped row body descriptions
+    (e.g., ``backfills `TBD-AT-SEAL` / `TBD-AT-TAG` placeholders``)
+    lack the canonical preceding token and are left untouched.
+    Closes the v0.10.1 Path-A halt finding.
+
     Returns the (possibly-modified) row + a list of the placeholders
     backfilled (for the human-readable hint).
     """
     backfilled: list[str] = []
     new_row = row
-    if seal_sha and "TBD-AT-SEAL" in new_row:
-        new_row = new_row.replace("TBD-AT-SEAL", f"`{seal_sha[:7]}`")
+    if seal_sha and _TBD_AT_SEAL_ANCHORED.search(new_row):
+        new_row = _TBD_AT_SEAL_ANCHORED.sub(
+            f"`{seal_sha[:7]}`", new_row
+        )
         backfilled.append("TBD-AT-SEAL")
-    if tag_sha and "TBD-AT-TAG" in new_row:
-        new_row = new_row.replace("TBD-AT-TAG", f"`{tag_sha[:7]}`")
+    if tag_sha and _TBD_AT_TAG_ANCHORED.search(new_row):
+        new_row = _TBD_AT_TAG_ANCHORED.sub(
+            f"`{tag_sha[:7]}`", new_row
+        )
         backfilled.append("TBD-AT-TAG")
-    if source_edit_sha and "TBD-AT-COMMIT" in new_row:
-        new_row = new_row.replace(
-            "TBD-AT-COMMIT", f"`{source_edit_sha[:7]}`"
+    if source_edit_sha and _TBD_AT_COMMIT_ANCHORED.search(new_row):
+        new_row = _TBD_AT_COMMIT_ANCHORED.sub(
+            f"`{source_edit_sha[:7]}`", new_row
         )
         backfilled.append("TBD-AT-COMMIT")
-    if apply_sha and "TBD-AT-APPLY" in new_row:
-        new_row = new_row.replace("TBD-AT-APPLY", f"`{apply_sha[:7]}`")
+    if apply_sha and _TBD_AT_APPLY_ANCHORED.search(new_row):
+        new_row = _TBD_AT_APPLY_ANCHORED.sub(
+            f"`{apply_sha[:7]}`", new_row
+        )
         backfilled.append("TBD-AT-APPLY")
     return new_row, backfilled
 
@@ -543,13 +631,66 @@ _SUMMARY_LINE = re.compile(
 )
 
 
+def _split_pipe_row_backtick_aware(row: str) -> list[str]:
+    """Split *row* on ``|`` characters, but skip pipes inside paired
+    backticks.
+
+    State-machine tokenizer (per AC.RBHCB.2 / D-RBHCB.2 / F-WALKER-1
+    closure): walks the row character-by-character, toggles a boolean
+    on each backtick (parity tracker), and emits a cell on each ``|``
+    only when parity is 0. Matches ``str.split('|')`` semantics for
+    cell counting (empty cells preserved as empty strings; leading /
+    trailing pipes produce leading / trailing empty cells).
+
+    Pre-fix shape (``row.split('|')``) over-segmented rows whose
+    description (cell [2]) contained backtick-wrapped pipes — e.g.,
+    v0.4.2's description pattern containing backtick-wrapped pipes
+    in type-annotation prose caused the third pipe-cell read to land
+    in the SECOND segment of the description rather than the actual
+    class cell. The backtick-parity-aware split returns the correct
+    cell count for any backtick-pipe-containing row.
+
+    Edge cases:
+
+    - Nested backticks (e.g., `` ``code`` ``) are treated as parity
+      toggles — the first pair opens-and-closes, so any further
+      backticks toggle independently. This matches markdown
+      rendering's behaviour for paired backticks.
+    - Unbalanced backticks (odd count) leave parity True at end-of-
+      row; remaining pipes after the unmatched backtick are NOT
+      treated as cell separators. Defensive: real STATE.md prose
+      with unbalanced backticks is malformed; this tokenizer's
+      behaviour matches the markdown renderer's "consume until next
+      backtick" expectation.
+    """
+    cells: list[str] = []
+    buf: list[str] = []
+    in_backtick = False
+    for ch in row:
+        if ch == "`":
+            in_backtick = not in_backtick
+            buf.append(ch)
+        elif ch == "|" and not in_backtick:
+            cells.append("".join(buf))
+            buf = []
+        else:
+            buf.append(ch)
+    cells.append("".join(buf))
+    return cells
+
+
 def _classify_row(row: str) -> str:
     """Return ``"MINOR"`` or ``"PATCH"`` for the §2 row.
 
-    Classification is hybrid (v0.8.1 AC.NFCLEAN.2 robustness fix):
-    1. First, check the third pipe-cell for the ``MINOR`` keyword
-       (Single-cycle MINOR / similar — the post-v0.6.0 explicit-class
-       convention).
+    Classification is hybrid (v0.8.1 AC.NFCLEAN.2 robustness fix +
+    v0.10.3 AC.RBHCB.2 tokenizer hardening):
+
+    1. First, check the third pipe-cell for the ``MINOR`` / ``PATCH``
+       keyword (Single-cycle MINOR / similar — the post-v0.6.0
+       explicit-class convention). Cell extraction uses
+       :func:`_split_pipe_row_backtick_aware` so backtick-wrapped
+       pipes in the description (cell [2]) don't shift cell [3] to
+       the wrong segment (per AC.RBHCB.2 / F-WALKER-1 closure).
     2. If absent, fall back to version-pattern derivation: X.Y.0 form
        (third dotted-component is ``0`` AND no fourth component) is
        MINOR; everything else is PATCH. Per
@@ -561,9 +702,9 @@ def _classify_row(row: str) -> str:
     v0.4.0 / v0.7.0) as PATCH because their third pipe-cell is the
     seal-anchor commit-list cell, not a class declaration.
     """
-    third_cell_split = row.split("|")
-    if len(third_cell_split) >= 4:
-        third = third_cell_split[3]
+    cells = _split_pipe_row_backtick_aware(row)
+    if len(cells) >= 4:
+        third = cells[3]
         if "MINOR" in third:
             return "MINOR"
         if "PATCH" in third:
@@ -674,8 +815,15 @@ def _extract_objective_sentence(row: str) -> str:
     sentence. Sentence boundary = `.` outside backticks AND followed
     by whitespace or end-of-string (so `v0.6.0` mid-sentence doesn't
     trip the truncation). Safety bound: 200 chars.
+
+    v0.10.3 (AC.RBHCB.2 / F-WALKER-1 closure): cell extraction uses
+    :func:`_split_pipe_row_backtick_aware` so backtick-wrapped pipes
+    in the description don't truncate the cell mid-stream. Pre-fix
+    shape (``row.split('|')``) returned only the first segment of
+    descriptions containing backtick-wrapped pipes in type-annotation
+    prose.
     """
-    parts = row.split("|")
+    parts = _split_pipe_row_backtick_aware(row)
     if len(parts) < 3:
         return ""
     sentence = parts[2].strip()

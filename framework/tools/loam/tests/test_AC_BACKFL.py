@@ -1205,3 +1205,321 @@ def test_leading_title_pattern_captures_both_shapes_distinctly() -> None:
     assert m3 is not None
     assert m3.group("cls") == "minor"
     assert m3.group("date") is None
+
+
+# --------------------------------------------------------------------
+# AC.RBHCB — Release-backfill helpers completeness batch (v0.10.3).
+#
+# Three orthogonal helper extensions in one PATCH:
+#
+#   AC.RBHCB.1 (F-FUNC-2) — `_backfill_state_md` extended so when a
+#       SHIPPED-PUBLIC marker already exists for the version AND a
+#       stale `<version> SHIPPED LOCAL — owner gates publish.`
+#       interim sentence still lingers, the stale sentence is
+#       removed (closes the v0.5.0 / v0.8.0 AC.HONEST.5 manual-
+#       touch-up pattern).
+#
+#   AC.RBHCB.2 (F-WALKER-1) — new
+#       `_split_pipe_row_backtick_aware` helper respects backtick
+#       parity so rows whose description (cell [2]) contains
+#       backtick-wrapped pipes classify and extract correctly via
+#       the explicit-class detection path. Existing version-pattern
+#       fallback retained as defense-in-depth.
+#
+#   AC.RBHCB.3 (F-FUNC-3) — `_backfill_tbd_placeholders` regex-
+#       anchored via positive lookbehind to canonical surrounding
+#       tokens (`seal `/`tag `/`source-edit `/`apply `) so prose-
+#       narrative TBD-AT-* references in row body descriptions are
+#       preserved (closes the v0.10.1 Path-A halt finding).
+# --------------------------------------------------------------------
+
+
+# AC.RBHCB.1 — interim-shipped-local sentence removal mode (F-FUNC-2).
+
+
+def test_apply_backfill_removes_stale_interim_sentence_when_marker_present(
+    tmp_path: Path,
+) -> None:
+    """When the STATE.md body carries the SHIPPED-PUBLIC marker for
+    the version AND a stale ``<version> SHIPPED LOCAL — owner gates
+    publish.`` interim sentence still lingers, the stale sentence is
+    removed (per AC.RBHCB.1 / F-FUNC-2 closure).
+
+    Mirrors the v0.5.0 / v0.8.0 AC.HONEST.5 manual-touch-up pattern:
+    the public-marker landed manually before v0.7.3's auto-backfill
+    existed; the v0.7.4 helper's idempotence-by-skip path correctly
+    avoided double-flipping but didn't clean up the stale interim
+    sentence left over from the SHIPPED-LOCAL state.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    # Body shape: leading title already PUBLIC + trailing PUBLIC marker
+    # already present + stale interim SHIPPED-LOCAL sentence still
+    # there (the v0.5.0 pre-v0.8.0 shape).
+    body = (
+        "# State\n\n"
+        "- **2026-05-09** — **v0.5.0 minor SHIPPED PUBLIC** — work. "
+        "Plan-doc `aaaaaaa`. v0.5.0 SHIPPED LOCAL — owner gates publish. "
+        "**v0.5.0 SHIPPED PUBLIC 2026-05-09 at tag `v0.5.0` "
+        "(annotated `bbbbbbb`)**.\n"
+    )
+    (docs / "STATE.md").write_text(body)
+    (docs / "release-roadmap.md").write_text(
+        "# Release Roadmap\n\n## §2 Shipped\n\n"
+        "| Version | Objective | Anchor |\n"
+        "|---|---|---|\n"
+        "| v0.5.0 | obj. | Single-cycle MINOR: seal `ccccccc`; "
+        "**SHIPPED PUBLIC 2026-05-09 at tag `v0.5.0` (annotated "
+        "`bbbbbbb`)** |\n\n"
+        "**Total shipped:** 1 minor + 0 patches. v0.5.0 published.\n\n"
+        "## §3 Active version\n\n"
+        "**v0.5.0 minor (obj.) SHIPPED PUBLIC 2026-05-09** "
+        "(tag `v0.5.0`, annotated `bbbbbbb`; seal `ccccccc`).\n"
+    )
+    today = _dt.date(2026, 5, 14)
+    result = post_publish_backfill.apply_backfill(
+        tmp_path,
+        "v0.5.0",
+        "v0.5.0",
+        "abc1234567890def",
+        today=today,
+    )
+    after = (docs / "STATE.md").read_text(encoding="utf-8")
+    # Stale interim sentence is gone.
+    assert "v0.5.0 SHIPPED LOCAL — owner gates publish." not in after, after
+    # SHIPPED-PUBLIC marker preserved verbatim.
+    assert (
+        "**v0.5.0 SHIPPED PUBLIC 2026-05-09 at tag `v0.5.0` "
+        "(annotated `bbbbbbb`)**" in after
+    ), after
+    # The leading title PUBLIC marker also preserved.
+    assert "**v0.5.0 minor SHIPPED PUBLIC**" in after, after
+    # An edit was applied (the removal counts as one edit).
+    assert result.edits_applied >= 1
+    assert result.idempotent_noop is False
+
+
+def test_apply_backfill_interim_removal_is_idempotent(
+    tmp_path: Path,
+) -> None:
+    """Re-running apply_backfill against an already-cleaned body
+    (SHIPPED-PUBLIC marker present + no stale interim sentence) is a
+    no-op for the trailing-sentence path (per AC.RBHCB.1 idempotence
+    contract).
+    """
+    body = (
+        "# State\n\n"
+        "- **2026-05-09** — **v0.5.0 minor SHIPPED PUBLIC** — work. "
+        "Plan-doc `aaaaaaa`. **v0.5.0 SHIPPED PUBLIC 2026-05-09 at "
+        "tag `v0.5.0` (annotated `bbbbbbb`)**.\n"
+    )
+    new_body, edit_summary = post_publish_backfill._backfill_state_md(
+        body, "v0.5.0", _dt.date(2026, 5, 14), "v0.5.0", "abc1234567890def"
+    )
+    assert new_body == body
+    assert edit_summary is None
+
+
+# AC.RBHCB.2 — backtick-aware pipe tokenizer (F-WALKER-1).
+
+
+def test_split_pipe_row_backtick_aware_skips_pipes_inside_backticks() -> None:
+    """``_split_pipe_row_backtick_aware`` walks the row treating
+    backticks as parity toggles; pipes inside paired backticks are
+    NOT cell separators (per AC.RBHCB.2 / F-WALKER-1 closure).
+
+    Pre-fix shape (``row.split('|')``) over-segmented rows whose
+    description contained backtick-wrapped pipes — e.g., v0.4.2's
+    description with type-annotation prose like ``Y → Union[X, Y]``.
+    """
+    # Row with TWO backtick-wrapped pipes in cell [2] (description).
+    # Naive split would yield 7 cells (5 expected + 2 spurious from
+    # the backtick-wrapped pipes); backtick-aware split yields 5.
+    row = (
+        "| v0.4.2 | covers `Y` `|` `Union[X, Y]` `|` "
+        "`Optional[X]` shapes. | Single-cycle PATCH: seal `xxx` |"
+    )
+    naive = row.split("|")
+    cells = post_publish_backfill._split_pipe_row_backtick_aware(row)
+    # Confirm the pre-fix bug shape (naive split over-segments).
+    assert len(naive) == 7, naive
+    # Backtick-aware split gives 5 cells (matching row's actual
+    # table structure).
+    assert len(cells) == 5, cells
+    # Cell [0] empty (leading pipe); cell [1] = " v0.4.2 ";
+    # cell [2] is the FULL description including the backtick-wrapped
+    # pipes (not truncated mid-stream).
+    assert cells[1].strip() == "v0.4.2"
+    assert "Union[X, Y]" in cells[2]
+    assert "Optional[X]" in cells[2]
+    # Cell [3] is the actual class cell (Anchor column body).
+    assert "PATCH" in cells[3]
+
+
+def test_classify_row_uses_explicit_class_path_with_backtick_pipes() -> None:
+    """``_classify_row`` returns the explicit-class value via the
+    FIRST detection path (third pipe-cell) for rows whose description
+    contains backtick-wrapped pipes — NOT via the version-pattern
+    fallback (per AC.RBHCB.2 / F-WALKER-1 closure).
+
+    Contradiction-shape test: the row's version (v0.4.0) would
+    fallback-classify as MINOR (X.Y.0 form) but the explicit-class
+    keyword in the third cell is PATCH; the backtick-aware tokenizer
+    must reach the third cell correctly so the explicit-class path
+    wins. Pre-fix shape would over-segment, miss the PATCH keyword in
+    the actual third cell, and fall back to MINOR.
+    """
+    # Note: v0.4.0 fallback-classifies as MINOR (X.Y.0 + no fourth);
+    # explicit class in third cell says PATCH. Tokenizer must read
+    # the third cell correctly to honor the explicit-class path.
+    row = (
+        "| v0.4.0 | desc with `a` `|` `b` pipe-wrapped pattern. | "
+        "Single-cycle PATCH: seal `xxx` |"
+    )
+    # Sanity check: confirm the pre-fix bug shape.
+    naive_cells = row.split("|")
+    assert len(naive_cells) >= 4
+    assert "PATCH" not in naive_cells[3], (
+        "fixture should trigger the pre-fix bug — naive split's "
+        "third cell should NOT contain PATCH"
+    )
+    # Backtick-aware tokenizer reaches the actual third cell.
+    classification = post_publish_backfill._classify_row(row)
+    assert classification == "PATCH", (
+        f"explicit-class path should yield PATCH; got {classification} "
+        f"(version-pattern fallback would have given MINOR)"
+    )
+
+
+def test_extract_objective_sentence_preserves_backtick_wrapped_pipes() -> None:
+    """``_extract_objective_sentence`` returns the full description
+    cell content (subject to sentence-boundary truncation) even when
+    the cell contains backtick-wrapped pipes (per AC.RBHCB.2 /
+    F-WALKER-1 closure).
+
+    Pre-fix shape (``row.split('|')`` in the function body) would
+    truncate the cell at the first backtick-wrapped pipe.
+    """
+    row = (
+        "| v0.4.2 | F-DESIGN-2 patch covering `Y` `|` `Union[X, Y]` "
+        "shapes. | Single-cycle PATCH: seal `xxx` |"
+    )
+    objective = post_publish_backfill._extract_objective_sentence(row)
+    # The full description (up to first sentence boundary) is preserved.
+    assert "F-DESIGN-2 patch" in objective
+    assert "Union[X, Y]" in objective
+    # Sentence-boundary truncation still works (cuts at the first
+    # period followed by space — ending at "shapes.").
+    assert objective.endswith("shapes.")
+
+
+def test_classify_row_fallback_still_works_for_marker_less_rows() -> None:
+    """Regression: existing version-pattern fallback in
+    ``_classify_row`` still fires for historical pre-v0.6.0 rows
+    that lack an explicit class keyword (per AC.RBHCB.2 — defense-
+    in-depth preserved).
+    """
+    # Historical MINOR (no class keyword in third cell, no backtick-
+    # pipes — the v0.8.1 AC.NFCLEAN.2 fallback case).
+    minor_row = "| v0.1.0 | First public release. | seal `aaaaaaa`. |"
+    assert post_publish_backfill._classify_row(minor_row) == "MINOR"
+    # Historical PATCH (X.Y.Z form Z>0).
+    patch_row = "| v0.1.6 | First patch shipment. | seals `xxx`, `yyy` |"
+    assert post_publish_backfill._classify_row(patch_row) == "PATCH"
+
+
+# AC.RBHCB.3 — TBD-AT-* anchored to canonical surrounding context (F-FUNC-3).
+
+
+def test_backfill_tbd_placeholders_preserves_prose_narrative() -> None:
+    """``_backfill_tbd_placeholders`` only replaces TBD-AT-*
+    placeholders preceded by their canonical surrounding token; prose-
+    narrative occurrences inside backtick-wrapped descriptions are
+    preserved (per AC.RBHCB.3 / F-FUNC-3 closure).
+
+    Mirrors the v0.7.3 STATE.md row at docs/STATE.md:133 corruption
+    pattern: the row body literally contains
+    ``backfills `TBD-AT-SEAL` / `TBD-AT-TAG` placeholders`` as prose
+    describing what the v0.7.3 helper does. Pre-fix `str.replace`
+    would corrupt this prose; post-fix anchored regex preserves it.
+    """
+    # Row carries BOTH a canonical-context TBD-AT-SEAL (in
+    # `seal TBD-AT-SEAL`) AND a prose-narrative TBD-AT-SEAL (inside
+    # backticks describing the helper's behaviour).
+    row = (
+        "| v0.7.3 | release-CLI auto-backfill helper backfills "
+        "`TBD-AT-SEAL` / `TBD-AT-TAG` placeholders from known SHAs. | "
+        "Single-cycle PATCH: seal TBD-AT-SEAL |"
+    )
+    new_row, backfilled = post_publish_backfill._backfill_tbd_placeholders(
+        row,
+        tag="v0.7.3",
+        tag_sha="ffffffffffffffff",
+        seal_sha="ddddddd1234567890",
+    )
+    # Canonical-context occurrence WAS replaced.
+    assert "seal `ddddddd`" in new_row, new_row
+    assert "TBD-AT-SEAL" in backfilled
+    # Prose-narrative occurrences (inside backticks, no `seal `/`tag `
+    # prefix) were NOT replaced.
+    assert "`TBD-AT-SEAL`" in new_row, new_row
+    assert "`TBD-AT-TAG`" in new_row, new_row
+
+
+def test_backfill_tbd_placeholders_skips_prose_only_rows() -> None:
+    """Negative: a row containing ONLY prose-narrative TBD-AT-*
+    references (no canonical-context occurrences) is unchanged
+    (per AC.RBHCB.3 — narrative-safety preserved).
+    """
+    row = (
+        "| v0.7.3 | helper backfills `TBD-AT-SEAL` / `TBD-AT-TAG` / "
+        "`TBD-AT-COMMIT` / `TBD-AT-APPLY` placeholders from known "
+        "SHAs. | seal `aaaaaaa` |"
+    )
+    new_row, backfilled = post_publish_backfill._backfill_tbd_placeholders(
+        row,
+        tag="v0.7.3",
+        tag_sha="ffffffffffffffff",
+        seal_sha="ddddddd1234567890",
+        source_edit_sha="eeeeeee1234567890",
+        apply_sha="fffffff1234567890",
+    )
+    assert new_row == row, (
+        "prose-only row should be unchanged (no canonical-context "
+        "anchors hit)"
+    )
+    assert backfilled == [], backfilled
+
+
+def test_backfill_tbd_placeholders_canonical_context_unchanged_outcome() -> None:
+    """Regression: the canonical context shape (the v0.7.4 fixture
+    `_state_md_with_shipped_local(with_v074_gap_surfaces=True)` /
+    `_roadmap_with_shipped_local_row(with_v074_gap_surfaces=True)`)
+    still backfills correctly under the anchored-regex shape (per
+    AC.RBHCB.3 — defense-in-depth for the canonical path).
+
+    Direct invocation of the helper against the same canonical row
+    body the existing v0.7.4 tests use; verifies all four placeholder
+    backfills succeed when the canonical surrounding tokens are present.
+    """
+    row = (
+        "Plan-doc `aaaaaaa`; source-edit TBD-AT-COMMIT; "
+        "apply TBD-AT-APPLY; seal TBD-AT-SEAL"
+    )
+    new_row, backfilled = post_publish_backfill._backfill_tbd_placeholders(
+        row,
+        tag="v0.9.0",
+        tag_sha="abc1234567890def",
+        seal_sha="ddddddd1234567890",
+        source_edit_sha="bbbbbbb1234567890",
+        apply_sha="ccccccc1234567890",
+    )
+    assert "TBD-AT-SEAL" not in new_row, new_row
+    assert "TBD-AT-COMMIT" not in new_row, new_row
+    assert "TBD-AT-APPLY" not in new_row, new_row
+    assert "seal `ddddddd`" in new_row
+    assert "source-edit `bbbbbbb`" in new_row
+    assert "apply `ccccccc`" in new_row
+    assert set(backfilled) == {
+        "TBD-AT-SEAL", "TBD-AT-COMMIT", "TBD-AT-APPLY"
+    }

@@ -7,7 +7,7 @@ amendment:
 # source-edit SHA post-source-edit commit per v0.10.x precedent
 # (manifest baseline backfill commit follows source-edit batch in
 # the same cycle).
-baseline: "TBD-AT-COMMIT"
+baseline: "f3f6cf1"
 
 plan: docs/plans/release-backfill-helpers-completeness-batch.md
 plan_doc_ref: docs/plans/release-backfill-helpers-completeness-batch.md

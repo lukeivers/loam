@@ -371,33 +371,51 @@ Owner gate-review time is separate (depends on dispatcher availability for publi
 
 ## §13 — §status
 
-**Build cycle:** TBD-AT-SEAL.
+**Build cycle:** SHIPPED LOCAL 2026-05-14. Single-cycle PATCH closing FIDRAFT F-PAPER-HTML-REGEN via pandoc-3.9.0.2 install + CSS-template extraction from the deleted `cfcb03f` HTML + canonical pandoc invocation `pandoc --from gfm+pipe_tables --to html5 --standalone --metadata pagetitle="<v19-title>" --include-in-header=<css-template> docs/papers/odd-methodology.md --output docs/papers/odd-methodology.html`. Markdown source-of-truth NOT edited per D-PHRG.5. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** plan-doc + manifest TBD-AT-COMMIT; source-edit TBD-AT-COMMIT; manifest baseline backfill TBD-AT-COMMIT; apply TBD-AT-COMMIT; seal TBD-AT-COMMIT.
+**Plan-doc commits:** plan-doc + manifest `aa4e97c`; source-edit (pandoc install + regen + slug-named smoke writeup with both-modes dynamic-theme verification + 2 PNG screenshots + STATE/roadmap admin + F-PAPER-HTML-REGEN RESOLVED) `6b36d31`; manifest baseline backfill `efcd3b2`; apply auto-commit (BASELINE + sidecar bump to `6b36d31`) `5b7cb2b`; seal commit (deterministic seal) `276e0d5`.
 
 ### AC verdict matrix
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.PHRG.1 — Regenerated HTML matches v19 markdown source-of-truth | TBD | TBD-AT-SOURCE-EDIT |
-| AC.PHRG.2 — Dynamic-theme prefers-color-scheme preserved + functional | TBD | TBD-AT-SOURCE-EDIT |
-| AC.PHRG.3 — Reproducible regen mechanism documented + idempotent | TBD | TBD-AT-SOURCE-EDIT |
-| AC.PHRG.4 — Outcome-altitude dogfood probe | TBD | TBD-AT-SOURCE-EDIT |
-| AC.PHRG.S — Seal-diff discipline | TBD | TBD-AT-SEAL |
+| AC.PHRG.1 — Regenerated HTML matches v19 markdown source-of-truth | GREEN | Smoke writeup §2.3: `<title>` + first `<h1>` both carry v19's title "Objective-Driven Design: Methodology Description and Case-Study Observations from LLM-Authored Software" (NOT the deleted HTML's stale "Outcome-Altitude Acceptance"). 10/10 H2 headings in markdown render as `<h2>` elements (verified via `grep -cE '^## ' docs/papers/odd-methodology.md` = 10 vs `grep -cE '<h2' docs/papers/odd-methodology.html` = 10). 12/12 tables (verified via `grep -cE '^\|[ -:|]+\|$' docs/papers/odd-methodology.md` = 12 vs `grep -cE '<table' docs/papers/odd-methodology.html` = 12). Emphasis + strong + code spans rendered. Pandoc invocation exits 0. |
+| AC.PHRG.2 — Dynamic-theme prefers-color-scheme preserved + functional | GREEN | Smoke writeup §2.3 + §3.2-§3.3: `<style>` block carries the full custom CSS template (`grep -cE '<style>' docs/papers/odd-methodology.html` = 2 — pandoc default + custom-after-default cascade order; `grep -cE 'prefers-color-scheme: dark' docs/papers/odd-methodology.html` = 1; `grep -cE '@media \(max-width: 640px\)' docs/papers/odd-methodology.html` = 1). All 13 light-mode + 13 dark-mode CSS variables preserved (key values: light `--bg: #fbfaf7` + `--accent: #92400e`; dark `--bg: #0c0a09` + `--accent: #fcd34d`). Playwright + Chromium headless probe across both color schemes: light-mode `bg=rgb(251,250,247)=#fbfaf7 fg=rgb(28,25,23)=#1c1917 h2-accent=rgb(120,53,15)=#78350f`; dark-mode `bg=rgb(12,10,9)=#0c0a09 fg=rgb(245,245,244)=#f5f5f4 h2-accent=rgb(253,230,138)=#fde68a`. All computed-style values match CSS variable definitions exactly. Both modes look intentional per `feedback_dynamic_theme_for_generated_documents` quality bar (verified via screenshots at `docs/experiments/paper-html-regeneration-{light,dark}-mode.png`: light = cream bg + dark serif text + brown-rust accent; dark = near-black bg + off-white text + golden-yellow accent; contrast hierarchy + accent + borders + abstract block all preserved in both modes). |
+| AC.PHRG.3 — Reproducible regen mechanism documented + idempotent | GREEN | Smoke writeup §2.2 (canonical pandoc invocation) + §6 (CSS template verbatim) + §7 (one-paragraph reproducibility recipe). Idempotence verified at §3.4: `sha256sum docs/papers/odd-methodology.html` = `28ed1f1b527a101500f757e7f068a6ac3729da4929dfeb849cf606e140f408cc6`; re-run pandoc + `sha256sum` = identical hash; `diff -q` = no output (files byte-equal). |
+| AC.PHRG.4 — Outcome-altitude dogfood probe | GREEN | Smoke writeup §3 documents the Playwright + Chromium headless probe across both color schemes; computed-style values match CSS variable definitions exactly; screenshots saved at `docs/experiments/paper-html-regeneration-light-mode.png` (88KB) + `docs/experiments/paper-html-regeneration-dark-mode.png` (75KB). Browser-rendered behavior is the operator-visible surface; both modes verified as intentional + functional. |
+| AC.PHRG.S — Seal-diff discipline | GREEN | `git diff --name-only aa4e97c..276e0d5` shows changes only under: `docs/papers/odd-methodology.html` (regenerated HTML asset); `docs/experiments/paper-html-regeneration-hard-smoke.md` (slug-named smoke writeup); `docs/experiments/paper-html-regeneration-{light,dark}-mode.png` (2 screenshots adjacent to writeup); universal-admission docs (`docs/STATE.md` + `docs/release-roadmap.md` + `docs/FUTURE_IDEAS_DRAFT.md`); plan-doc + manifest (`docs/plans/paper-html-regeneration.{md,manifest.yaml}`); dev-sdlc seal anchor artefacts (`plugins/dev-sdlc/seals/SEAL_COMMIT.paper-html-regeneration` + `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar bump + `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` BASELINE pointer auto-bump — pre-included in §3 allow-list per the plan-doc-template-auto-bump-fence convention). NO entries in pyproject.toml; NO entries in any framework/* component; NO `__version__` updates; NO test additions or removals; NO touch of the markdown source-of-truth (`docs/papers/odd-methodology.md`). |
 
 ### AI-time actuals
 
 | Stage | Estimated (§9) | Actual |
 |---|---|---|
-| Plan-doc + manifest authoring | 15-25 min | TBD-AT-SEAL |
-| Source-edit | 15-30 min | TBD-AT-SEAL |
-| `loam amend validate` + apply + seal | 5-10 min | TBD-AT-SEAL |
-| §13 §status backfill | 3-5 min | TBD-AT-SEAL |
-| **Total** | **~38-70 min** | TBD-AT-SEAL |
+| Plan-doc + manifest authoring | 15-25 min | ~18 min |
+| Source-edit (pandoc install + CSS extraction + regen + smoke writeup with Playwright probe + STATE/roadmap admin + FIDRAFT flip) | 15-30 min | ~22 min |
+| `loam amend validate` + manifest baseline backfill + `apply` + `seal` | 5-10 min | ~5 min |
+| §13 §status backfill commit + roadmap-row seal-SHA backfill | 3-5 min | ~4 min |
+| **Total** | **~38-70 min** | **~49 min** |
+
+In-band — landed cleanly without HARD HALTs. One in-cycle discovery (the `--metadata title="..."` vs `--metadata pagetitle="..."` title-duplication pattern) added a single regen + screenshot re-take pass; captured in smoke writeup §2.4 for next paper-edit cycle.
 
 ### Halt-and-surface findings
 
-TBD-AT-SEAL.
+**No HARD HALTs fired in-cycle.**
+
+**Pandoc-not-installed pre-condition:** resolved via `brew install pandoc` (smoke writeup Stage 1). The v0.9.0 D-ODDPAPER.5.2 Path C trigger condition (pandoc absent → defer HTML) was the FIDRAFT capture's primary blocker; this PATCH dispatches the install + regen as the closure path.
+
+**Title-duplication discovery (smoke writeup §2.4):** pandoc's `--metadata title="..."` injects both `<title>` AND an `<h1 class="title">` block, which duplicated the markdown's first H1 in the rendered output. Fix: switched to `--metadata pagetitle="..."` which sets `<title>` only. Captured in smoke writeup §2.4 so the next paper-edit cycle doesn't re-discover.
+
+**Dual-`<style>`-block observation (smoke writeup §2.3):** pandoc's default `<style>` block stays in the output alongside the custom CSS template. Cascade order resolves correctly (custom-after-default; custom wins for conflicting selectors). Output is functionally correct but ~3.9× larger than the deleted `cfcb03f` HTML (which had only the custom CSS). Captured as informational; future optimization could strip pandoc's default `<style>` block via a Lua filter; not actionable for this PATCH.
+
+**Empirical-recheck-before-halt discipline:** never fired (the regen had an unambiguous fix-target derivable from the FIDRAFT capture's proposed-shape line + plan-doc D-PHRG.{1,2,3,4,5,6,7} rulings).
+
+**One AC text disambiguation at plan-time** (per `feedback_loose_AC_text_fix_AC_not_implementation`): AC.PHRG.1 was authored at outcome-shape ("matches v19 markdown source-of-truth") rather than implementation-shape. Method (pandoc + which flags) stays builder's call.
+
+**One FIDRAFT entry flipped to RESOLVED:** F-PAPER-HTML-REGEN at `docs/FUTURE_IDEAS_DRAFT.md:278`; entry preserved with RESOLVED block citing this PATCH cycle's plan-doc + smoke writeup paths.
+
+**No new FIDRAFT entries captured at AC-time;** D-PHRG.1 captured F-PAPER-REGEN-CUSTOM-SCRIPT (Path B follow-on if pandoc unavailable) + F-PAPER-CSS-EXTRACT-TO-FILE (CSS-to-standalone-file follow-on if a second paper enters the corpus) at plan-time as conditional captures. Neither activated this cycle.
+
+**F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH discipline verified:** `grep -rn "F-PAPER-HTML-REGEN" docs/` returned 1 reference (the entry itself). No other FIDRAFT entries reference F-PAPER-HTML-REGEN as a blocker / dep / unblocker; no flip-on-unblock action needed beyond the entry itself.
 
 ---
 

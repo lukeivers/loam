@@ -243,7 +243,7 @@ Discipline GREEN on all three FIDRAFT edits.
 
 ---
 
-## §8 — §status
+## §13 — §status
 
 **Build cycle:** SHIPPED LOCAL 2026-05-14. Single-cycle PATCH closing FIDRAFT F-TF-1 (RESOLVED) + F-PYTHON-3.9-TEST-FAILURES-PYPROJECT-PIN (RESOLVED-BY-INSPECTION) + amending F-RETIRE-MIGRATE-TOOLS framing (status unchanged). Path A scope only; Path B/C deferred for owner safety-horizon ratification. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
 

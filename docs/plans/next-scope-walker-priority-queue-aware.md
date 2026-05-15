@@ -357,27 +357,47 @@ Owner gate-review time is separate (depends on dispatcher availability for publi
 
 ## §13 — §status
 
-**Build cycle:** TBD-AT-SEAL.
+**Build cycle:** SHIPPED LOCAL 2026-05-14. Single-cycle PATCH closing FIDRAFT F-NEXT-SCOPE-EMPTY-§4 via `_read_roadmap_priority_queue` walker rewrite at `framework/tools/loam/src/loam_cli/release/post_ship.py:56-138` (regex updated from legacy `### vX.Y.Z` shape to v0.10.0+ `### Candidate N — \`<slug>\` — <title>` candidate-queue shape; class extraction from immediately-following `**Slug:** ... **Class:** ...` line; three distinct empty-queue placeholder branches per D-NSWP.4); conftest fixture updated to scaffold v0.10.0+ §4 shape; one test updated; one new test added covering the empty-queue case; slug-named smoke writeup with before/after live-canonical dogfood probe; STATE/roadmap/FIDRAFT admin. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** plan-doc + manifest TBD-AT-COMMIT; source-edit (walker rewrite + conftest fixture update + test update + 1 new test + slug-named smoke writeup with dogfood probe + STATE/roadmap admin + F-NEXT-SCOPE-EMPTY-§4 RESOLVED) TBD-AT-COMMIT; manifest baseline backfill TBD-AT-COMMIT; apply auto-commit TBD-AT-APPLY; seal commit TBD-AT-SEAL.
+**Plan-doc commits:** plan-doc + manifest `ac946a6`; source-edit (walker rewrite + conftest fixture update + 1 test update + 1 new test + slug-named smoke writeup with before/after dogfood probe + STATE/roadmap admin + F-NEXT-SCOPE-EMPTY-§4 RESOLVED) `e3ab0c7`; manifest baseline backfill `74f3f19`; apply auto-commit (BASELINE + sidecar bump to `e3ab0c7`) `96b0bfe`; seal commit (deterministic seal) `da53584`.
 
 ### AC verdict matrix
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.NSWP.1 — Walker reads v0.10.0 §4 candidate-queue structure and surfaces top-priority candidate | TBD-AT-SEAL | Backfilled at §status update commit. |
-| AC.NSWP.2 — Empty-queue case emits structurally-honest message | TBD-AT-SEAL | Backfilled at §status update commit. |
-| AC.NSWP.3 — Pre-v0.10.0 `### vX.Y.Z` heading shape no longer expected; tests updated | TBD-AT-SEAL | Backfilled at §status update commit. |
-| AC.NSWP.4 — Outcome-altitude dogfood probe (live-canonical-roadmap dry-run before vs after) | TBD-AT-SEAL | Backfilled at §status update commit. |
-| AC.NSWP.S — Seal-diff discipline | TBD-AT-SEAL | Backfilled at §status update commit. |
+| AC.NSWP.1 — Walker reads v0.10.0 §4 candidate-queue structure and surfaces top-priority candidate | GREEN | Live-canonical probe (smoke writeup §3.2): `build_proposal(repo_root, "v0.10.4")` returns `next_objective="binary-usage-observation-harness — Loam builds software from minimal input"`, `next_class="MINOR (END-USER)"`, `next_ac_or_fence="see docs/release-roadmap.md §4 candidate \`binary-usage-observation-harness\`"`. Walker regex updated to `r"(?m)^###\s+Candidate\s+\d+\s*[—-]\s*\`(?P<slug>[a-z0-9.-]+)\`\s*[—-]\s*(?P<title>.+)$"` matching live canonical §4 shape; class extracted from `**Slug:** ... **Class:** ...` line via `r"(?m)^\*\*Slug:\*\*\s*\`[a-z0-9.-]+\`\.\s*\*\*Class:\*\*\s*(?P<class>[^.\n]+?)(?:\.\s*$|\s+—.*$|\s*$)"`. |
+| AC.NSWP.2 — Empty-queue case emits structurally-honest message | GREEN | New `test_proposal_handles_empty_candidate_queue` (smoke writeup §3.3): synthetic-fixture roadmap with `## §4` heading + zero `### Candidate N` headings produces `next_objective="queue empty — author next candidate before next cycle"` (and same for `next_class` / `next_ac_or_fence`); legacy "(no entries in §4)" placeholder removed (test asserts `"(no entries in §4)" not in p.next_objective`). Per D-NSWP.4, the three placeholder branches are now distinct: roadmap-missing → `(roadmap not found)`; §4-section-missing → `(no §4 candidate-queue section)`; queue-empty → `queue empty — author next candidate before next cycle`. |
+| AC.NSWP.3 — Pre-v0.10.0 `### vX.Y.Z` heading shape no longer expected; tests updated | GREEN | 8/8 post_ship tests PASS (smoke writeup §2.1): 7 pre-existing (1 updated `test_proposal_carries_next_objective_class_and_fence` asserting on the new shape: `"fixture-candidate" in p.next_objective` + `"FIXTURE" in p.next_class`; 6 unchanged orthogonal-behavior tests) + 1 new `test_proposal_handles_empty_candidate_queue`. Conftest `staged_repo` fixture's roadmap §4 body updated from legacy `### v0.7.0 — next things land here` to `## §4 Priority-ordered candidate queue` + `### Candidate 1 — \`fixture-candidate\` — Fixture next-scope target` + `**Slug:** \`fixture-candidate\`. **Class:** MINOR (FIXTURE).`. 78/78 release-CLI tests GREEN excluding 7 pre-existing Python-3.9 entry-point F-TF artefacts (verified pre-existing via `git stash` baseline at plan-doc commit `ac946a6`). |
+| AC.NSWP.4 — Outcome-altitude dogfood probe (live-canonical-roadmap dry-run before vs after) | GREEN | Slug-named smoke writeup at `docs/experiments/next-scope-walker-priority-queue-aware-hard-smoke.md` §3 documents verbatim before vs after `Next-scope proposal` blocks captured against the LIVE canonical `docs/release-roadmap.md`. Before (cycle-start baseline at v0.10.4 seal `aa78baf`): `Next objective: (no entries in §4)` / `Class hint: (no entries in §4)` / `Fence: (no entries in §4)`. After (post-source-edit at commit `e3ab0c7`): `Next objective: binary-usage-observation-harness — Loam builds software from minimal input` / `Class hint: MINOR (END-USER)` / `Fence: see docs/release-roadmap.md §4 candidate \`binary-usage-observation-harness\``. The change propagated through `pip install -e .` (the homebrew `loam` binary loads `loam_cli` from the edited source tree directly). |
+| AC.NSWP.S — Seal-diff discipline | GREEN | `git diff --name-only ac946a6..da53584` shows changes only under: `framework/tools/loam/src/loam_cli/release/post_ship.py` (walker rewrite); `framework/tools/loam/tests/conftest.py` (fixture update); `framework/tools/loam/tests/test_AC_V060_6_post_ship_review.py` (1 test updated + 1 new); `docs/experiments/next-scope-walker-priority-queue-aware-hard-smoke.md` (slug-named smoke writeup); universal-admission docs (`docs/STATE.md` + `docs/release-roadmap.md` + `docs/FUTURE_IDEAS_DRAFT.md`); plan-doc + manifest (`docs/plans/next-scope-walker-priority-queue-aware.{md,manifest.yaml}`); dev-sdlc seal anchor artefacts (seal narrative `plugins/dev-sdlc/seals/SEAL_COMMIT.next-scope-walker-priority-queue-aware` + `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar bump + `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` BASELINE pointer auto-bump — pre-included in §3 allow-list per the plan-doc-template-auto-bump-fence convention). NO entries in pyproject.toml; NO entries in any framework/* component beyond `framework/tools/loam/`; NO `__version__` updates. |
 
 ### AI-time actuals
 
-Backfilled at §status update commit.
+| Stage | Estimated (§9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 15-25 min | ~18 min |
+| Source-edit (walker rewrite + conftest fixture update + 1 test update + 1 new test + slug-named smoke writeup with dogfood probe + STATE/roadmap admin + FIDRAFT flip) | 15-25 min | ~22 min |
+| `loam amend validate` + manifest baseline backfill + `apply` + `seal` (incl. one stash for unrelated `uv.lock`) | 5-10 min | ~5 min |
+| §13 §status backfill commit + roadmap-row seal-SHA backfill | 3-5 min | ~4 min |
+| **Total** | **~38-65 min** | **~49 min** |
+
+In-band — landed cleanly without HARD HALTs; one minor stash for unrelated untracked `framework/tools/loam/uv.lock` before seal (restored post-seal).
 
 ### Halt-and-surface findings
 
-Backfilled at §status update commit.
+**No HARD HALTs fired in-cycle.**
+
+**Pre-existing-test-failure clarification:** 7 tests fail in the release-CLI suite (`test_AC_V060_1_release_cli_dispatch.py` ×3, `test_AC_OSS_M6_6_loam_cli_subcommand_discovery.py` ×3, `test_AC_SDPD_plan_doc_flag.py` ×1) due to Python 3.9's `entry_points()` API not accepting `group=` kwarg. Verified pre-existing via `git stash` baseline at plan-doc commit `ac946a6` — same 7 failures. F-TF-* class environment artefact (Python 3.9 vs 3.11+ stdlib API mismatch); NOT in F-NEXT-SCOPE-EMPTY-§4 scope. Production `loam` binary uses Python 3.13 where these tests pass.
+
+**Empirical-recheck-before-halt discipline:** never fired (the walker rewrite had an unambiguous fix-target derivable from the FIDRAFT capture's proposed-shape line + plan-doc D-NSWP.{1,2,3,4} rulings).
+
+**One AC text disambiguation at plan-time** (per `feedback_loose_AC_text_fix_AC_not_implementation`): D-NSWP.4 distinguished the three placeholder branches (roadmap-missing, §4-section-missing, queue-empty) instead of conflating them as the legacy implementation did. Doc-only at plan-time; no post-build adjustment needed.
+
+**One FIDRAFT entry flipped to RESOLVED:** F-NEXT-SCOPE-EMPTY-§4 at `docs/FUTURE_IDEAS_DRAFT.md:276`; entry preserved with RESOLVED block citing this PATCH cycle's plan-doc + smoke writeup paths.
+
+**No new FIDRAFT entries captured.**
+
+**F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH discipline verified:** `grep -rn "F-NEXT-SCOPE-EMPTY-§4" docs/` returned 1 reference (the entry itself). No other FIDRAFT entries reference F-NEXT-SCOPE-EMPTY-§4 as a blocker / dep / unblocker; no flip-on-unblock action needed beyond the entry itself.
 
 ---
 

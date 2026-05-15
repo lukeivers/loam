@@ -5,7 +5,7 @@ amendment:
 
 # BASELINE captured at source-edit commit — backfilled to actual
 # source-edit SHA post-source-edit commit per v0.10.x precedent.
-baseline: "42c0ee6"
+baseline: "26a5bee"
 
 plan: docs/plans/workspace-sync-test-and-python-runtime-pin.md
 plan_doc_ref: docs/plans/workspace-sync-test-and-python-runtime-pin.md

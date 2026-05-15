@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "f3f6cf1"
+BASELINE = "b3bc24c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -143,6 +143,15 @@ def test_only_dev_sdlc_changed() -> None:
         "docs/papers/",
         "framework/tools/loam/src/",
         "framework/tools/loam/tests/",
+        "framework/cost-governance/src/",
+        "framework/dormancy/src/",
+        "framework/dormancy/tests/",
+        "framework/observability-aggregator/tests/",
+        "framework/orchestrator/src/",
+        "framework/reversibility-primitive/src/",
+        "framework/safety-layer/src/",
+        "framework/self-correction/src/",
+        "framework/self-correction/tests/",
     )
     allowed_files: set[str] = {
         "CLAUDE.dev.md",

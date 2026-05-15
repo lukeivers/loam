@@ -1,0 +1,174 @@
+# Retire M1 per-host helpers + orphan-plist-cleanup PATCH
+
+2026-05-14. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST.
+
+Closes F-RETIRE-MIGRATE-TOOLS Path B+C (captured 2026-05-10 from
+external-reviewer report Axis-2 weakness #8 + AC.HONEST.6 triage
+F-TF-1 finding; AMENDED 2026-05-14 by v0.10.7 PATCH per prior-
+dispatch (`retire-one-time-migration-tools`) halt-and-surface
+evidence). Path A (test fix + framing amendment) shipped v0.10.7
+(sealed `6bc8dd6`); this PATCH completes the retirement scope by
+deleting the 4 retirement-eligible tool directories + propagating
+the 3 file edits the orphan-plist-cleanup retirement requires.
+`heavy-b-migrate` permanently retained as load-bearing continuous
+trigger per AMENDED F-RETIRE-MIGRATE-TOOLS framing.
+
+AC.RMPH.1 (3 `loam-migrate-*` tool directories deleted) — the
+directories `framework/tools/loam-migrate-launchd-labels/`,
+`framework/tools/loam-migrate-host-config/`, and
+`framework/tools/loam-migrate-dormancy-config/` no longer exist
+in-tree. Sibling cross-references between the 3 retired tools
+(README + `__init__.py` text mentions of each other) vanish with
+the deletions; no separate edit needed. Production code references
+outside the 4 retired tool dirs: empirically zero (verified at
+plan-time via `grep -rn "loam_migrate_launchd_labels|loam_
+migrate_host_config|loam_migrate_dormancy_config" --include="*.py"
+framework/ plugins/` excluding the retired dirs themselves —
+clean). Safety horizon empirically passed: M1 series shipped
+2026-04-29 (~17 days before this PATCH); idempotent design with
+case-2 no-op + case-4 conflict-halt contracts; production hosts
+have had ~daily session-start triggers since; no fresh-install
+dependency (these are migration helpers, not new-install
+requirements).
+
+AC.RMPH.2 (`orphan-plist-cleanup` 4-file retirement) — four edits
+applied: (1) `framework/tools/orphan-plist-cleanup/` directory
+deleted; (2) `plugins/dev-sdlc/dev-mode-manifest.yaml`'s
+`- glob: "framework/tools/orphan-plist-cleanup/**"` line at line
+163 removed + surrounding comment block at lines 159-161 updated
+to remove the orphan-plist-cleanup mention (the `loam-amend` and
+`loam-mode` glob lines + their comments preserved verbatim); (3)
+`plugins/dev-sdlc/tools/loam-mode/tests/test_partition_manifest.
+py`'s `test_AC_F4_glob_with_exclusion` candidate paths at lines
+72,83 swap `tools/orphan-plist-cleanup/README.md` →
+`tools/heavy-b-migrate/README.md` (substitute that still
+exercises `expand_entry()` glob+exclude behavior with a non-
+retired tool); (4) `framework/workspace-sync/tests/test_AC_D_5_
+5_bare_paths_absent.py`'s `framework_tools / "orphan-plist-
+cleanup" / "pyproject.toml"` line dropped from `expected` tuple
+at line 132 + corresponding comment line at line 121 dropped +
+post-cleanup comment block at lines 113-127 updated to reflect
+the post-Path-B/C surface (3 survivors named: `loam`, `heavy-b-
+migrate`, `upgrade-merge-resolver`).
+
+AC.RMPH.3 (`install-from-source.txt` empirical no-op) — empirical
+recheck at plan-time per `feedback_agent_empirical_recheck_
+before_halt` showed NONE of the 4 retired tool directories appear
+in `install-from-source.txt` OR `docs/install-from-source.md`
+(`grep -n "loam-migrate|orphan-plist-cleanup" install-from-
+source.txt docs/install-from-source.md` returns 0 matches). The
+file was always minimal-by-design — these helpers were never in
+the install path (operator-facing helpers; explicit invocation
+only). AC documents the empirical no-op for audit-trail (the
+dispatch brief named install-from-source.txt as a candidate edit;
+empirical recheck found nothing to edit).
+
+AC.RMPH.4 (post-retirement test surface GREEN) —
+`python3.13 -m pytest framework/workspace-sync/tests/test_AC_D_
+5_5_bare_paths_absent.py -v` returns 4/4 PASSED post-edit
+(unchanged GREEN — the orphan-plist-cleanup entry removal leaves
+the test still 4/4 GREEN with the updated `expected` tuple).
+`cd plugins/dev-sdlc/tools/loam-mode && python3.13 -m pytest
+tests/test_partition_manifest.py -v` returns 6/6 PASSED post-
+edit (unchanged GREEN — the candidate-path swap is pure-string
+substitution; the test exercises `expand_entry()` glob+exclude
+behavior, not the existence of the candidate path on disk).
+
+AC.RMPH.5 (outcome-altitude dogfood probe) — slug-named smoke
+writeup at `docs/experiments/retire-m1-per-host-helpers-and-
+orphan-plist-cleanup-hard-smoke.md` documents:
+§1 — outcome shape verified (4 tool dirs absent; 3 file edits
+    applied);
+§2 — retirement-readiness re-verification (4-tool grep + per-
+    tool README quote + cross-reference vanish-with-deletion);
+§3 — post-deletion test surface (workspace-sync 4/4 GREEN +
+    dev-sdlc partition 6/6 GREEN);
+§4 — install-from-source.txt empirical no-op verification;
+§5 — outcome-altitude dogfood probe (release-CLI 6-gate dry-run
+    ALL GREEN against this plan-doc + manifest + STATE/roadmap
+    admin);
+§6 — F-RETIRE-MIGRATE-TOOLS RESOLVED diff summary + F2
+    RUTHLESS FEEDBACK observations.
+
+AC.RMPH.6 (F-RETIRE-MIGRATE-TOOLS FIDRAFT entry RESOLVED with
+chain pointer) — `docs/FUTURE_IDEAS_DRAFT.md` F-RETIRE-MIGRATE-
+TOOLS entry at line 244 STATUS flipped from `capture-only` →
+RESOLVED. Entry text adds: (1) Path B+C closure pointer naming
+this PATCH's slug + commit; (2) chain pointer Path A v0.10.7
+(commit `26a5bee`) + Path B+C this PATCH; (3) summary of what
+shipped under Path B (3 `loam-migrate-*` per-host helpers
+retired) + Path C (`orphan-plist-cleanup` 4-file retirement);
+(4) `heavy-b-migrate` unchanged (load-bearing continuous trigger;
+permanent residency under `framework/tools/`).
+
+AC.RMPH.S (seal-diff allow-list) — 4 framework/tools/ directory
+deletions (admitted via `extra_allowed_prefixes:
+[framework/tools/]`) + 1 framework/workspace-sync test edit
+(admitted via `extra_allowed_prefixes:
+[framework/workspace-sync/tests/]`) + 2 dev-sdlc edits (manifest
++ partition test; admitted via plugins/dev-sdlc/ universal-
+admission) + FIDRAFT-doc edit (`docs/FUTURE_IDEAS_DRAFT.md`) +
+universal-admission docs (STATE.md + release-roadmap.md) +
+slug-named smoke writeup + plan-doc + manifest + dev-sdlc seal
+anchor artefacts. NO entries in pyproject.toml; NO `__version__`
+updates; NO test additions; NO public-API edits.
+
+D-RMPH.1 ruled Path B+C in single PATCH — dispatcher brief
+explicitly authorises the combined scope; separate cycles add
+coordination overhead without buying additional safety; both
+safety horizons (M1 per-host: 17 days; pre-#6 archaeological:
+substantially longer) have empirically passed per dispatcher
+ratification.
+
+D-RMPH.2 ruled `heavy-b-migrate` STAYS — load-bearing continuous
+trigger per `plugins/dev-sdlc/tools/loam-mode/src/loam_mode/
+session_start.py:283-299` via `_invoke_lazy_projection()`;
+AMENDED F-RETIRE-MIGRATE-TOOLS framing (v0.10.7) explicitly
+removed it from the candidate list.
+
+D-RMPH.3 ruled `test_AC_F4_glob_with_exclusion` candidate-path
+substitute is `heavy-b-migrate` (not synthetic) — preserves
+real-tree-paths property of the test fixture; chosen for
+permanent-residency stability over operational helpers
+(`loam-memory-inspect`, `upgrade-merge-resolver`).
+
+D-RMPH.4 ruled `install-from-source.txt` AC documents the
+empirical no-op — preserves audit-trail per `feedback_specific_
+claims_verified_or_marked_guess` + `feedback_agent_empirical_
+recheck_before_halt` at the AC granularity.
+
+D-RMPH.5 pyproject versions stay at 0.10.0 per AC.HONEST.1 /
+D-NFCLEAN.4 / D-SDPD / v0.8.3 / v0.10.1-v0.10.7 precedent
+(PATCHes ride predecessor MINOR). Side-effect note: the 4
+retired tool directories each carried their own pyproject.toml;
+post-deletion the file count drops from 30 → 26 (24 at >=3.11;
+2 at >=3.13). Counts in v0.10.7's F-PYTHON-3.9 evidence remain
+correct as historical state-at-resolution; no retroactive edit.
+
+D-RMPH.6 chose dev-sdlc seal anchor (matches v0.10.7 / v0.10.6
+/ v0.10.5 / v0.10.4 / v0.10.3 / v0.10.2 PATCH precedent).
+AC.RMPH.S allow-list pre-includes `plugins/dev-sdlc/tests/
+test_no_sealed_amendments.py` per F-PLAN-DOC-TEMPLATE-AUTO-BUMP-
+FENCE. Dual `extra_allowed_prefixes: [framework/tools/,
+framework/workspace-sync/tests/]` per the cross-component PATCH
+precedent (v0.10.6 admitted `docs/papers/`; v0.10.7 admitted
+`framework/workspace-sync/tests/`).
+
+D-RMPH.7 ruled F-RETIRE-MIGRATE-TOOLS RESOLVED (not RESOLVED-
+BY-COMPOSITION) — the retirement work IS this PATCH; v0.10.7's
+framing amendment was a precondition, not partial-closure of
+the retirement scope itself. Plain RESOLVED with explicit chain
+pointer to v0.10.7's amendment commit.
+
+F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH discipline check (§6 of plan-
+doc): F-RETIRE-MIGRATE-TOOLS RESOLVED; F-TF-1 already RESOLVED
+at v0.10.7; no other FIDRAFT entries depend on F-RETIRE-MIGRATE-
+TOOLS (verified via `grep -rn "F-RETIRE-MIGRATE-TOOLS|loam-
+migrate|orphan-plist-cleanup" docs/FUTURE_IDEAS_DRAFT.md`).
+Discipline GREEN.
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+(4 dir deletions + 3 file edits + FIDRAFT RESOLVED flip + STATE/
+roadmap admin + slug-named smoke writeup) TBD-AT-COMMIT; apply
+TBD-AT-COMMIT; seal TBD-AT-COMMIT.

@@ -8,13 +8,13 @@ amendment:
 # backfilled at build-cycle source-edit commit time per v0.10.x precedent
 # (manifest baseline backfill commit follows the source-edit batch in the
 # same build cycle).
-baseline: "TBD-AT-BUILD"
+baseline: "bb5ea69"
 
 plan: docs/plans/loam-init-persona-wiring-and-isolated-subloam-driver.md
 plan_doc_ref: docs/plans/loam-init-persona-wiring-and-isolated-subloam-driver.md
 
 ac_count: 7
-smoke_outcome: "loam init persona-wiring + isolated sub-loam driver MINOR — fresh loam init lands the primary persona active (no manual hook install, no dev-template copy); a programmatic PTY driver stands up a real persona-active loam instance and drives an interactive claude session to completion under one isolation mechanism that simultaneously protects the operator's telegram/bun session and yields a clean bench measurement; AC.LIPW.{1,2,3,4,5,6,S} green"
+smoke_outcome: "Fresh loam init lands the persona active; an isolated sub-loam PTY driver drives an interactive claude to multi-turn completion under one operator-safe mechanism; AC.LIPW.{1,2,3,4,5,6,S} green"
 
 # Component fence (preliminary; D-LIPW.3 ratifies at build cycle). Seal
 # anchor: framework/workspace-bootstrap/ — Part 1's first-run scaffold

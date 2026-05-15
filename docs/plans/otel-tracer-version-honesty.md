@@ -364,27 +364,51 @@ Owner gate-review time is separate (depends on dispatcher availability for publi
 
 ## §13 — §status
 
-**Build cycle:** TBD-AT-SEAL. Single-cycle PATCH closing FIDRAFT F-OTEL-VERSION-BUMP via 12 one-line literal substitutions across 7 production observability/supervisor sites + 5 test-fixture monkeypatch installer sites; slug-named outcome-altitude dogfood probe; STATE/roadmap/FIDRAFT admin. Awaiting dispatcher dogfood publish per ASK-FIRST.
+**Build cycle:** SHIPPED LOCAL 2026-05-14. Single-cycle PATCH closing FIDRAFT F-OTEL-VERSION-BUMP via 12 one-line literal substitutions across 7 production observability/supervisor sites + 5 test-fixture monkeypatch installer sites; slug-named outcome-altitude dogfood probe; STATE/roadmap/FIDRAFT admin. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** plan-doc + manifest TBD-AT-COMMIT; source-edit (12 literal substitutions + slug-named smoke writeup with runtime probe + STATE/roadmap admin + F-OTEL-VERSION-BUMP RESOLVED) TBD-AT-COMMIT; manifest baseline backfill TBD-AT-COMMIT; apply auto-commit (BASELINE + sidecar bump) TBD-AT-APPLY; seal commit TBD-AT-SEAL.
+**Plan-doc commits:** plan-doc + manifest `5d0ca57`; source-edit (12 literal substitutions + slug-named smoke writeup with runtime probe + STATE/roadmap admin + F-OTEL-VERSION-BUMP RESOLVED + new FIDRAFT F-OTEL-VERSION-DYNAMIC-IMPORT capture) `b3bc24c`; manifest baseline backfill `963a609`; apply auto-commit (BASELINE + sidecar bump to `b3bc24c`) `6abe3c7`; seal commit (deterministic seal) `aa78baf`.
 
 ### AC verdict matrix
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.OTVH.1 — Production tracer-version literal swept to "0.10.0" across all 7 sites | TBD | `grep -rn 'get_tracer("loam\.[a-z_.]*", "0\.1\.0")' framework/ --include="*.py"` returns 0 production matches; companion `"0.10.0"` grep returns expected production count post-source-edit. |
-| AC.OTVH.2 — Test-fixture monkeypatch installer literal swept to "0.10.0" across all 5 sites | TBD | Same grep pattern returns 0 matches in `tests/` paths post-source-edit; combined production+test count matches expected total. |
-| AC.OTVH.3 — Idempotence — no remaining "0.1.0" literals adjacent to get_tracer | TBD | `grep -rn 'get_tracer.*"0\.1\.0"' framework/ --include="*.py"` returns 0 matches; sweep re-run produces zero diffs. |
-| AC.OTVH.4 — Outcome-altitude dogfood probe (runtime-emitted instrumentation_scope.version) | TBD | `docs/experiments/otel-tracer-version-honesty-hard-smoke.md` documents runtime probe with verbatim Python output showing `instrumentation_scope.version == "0.10.0"` for the chosen component's tracer. |
-| AC.OTVH.S — Seal-diff discipline | TBD | `git diff --name-only <plan-commit>..<seal-commit>` matches the §3 + §4 allow-list with zero unlisted entries. |
+| AC.OTVH.1 — Production tracer-version literal swept to "0.10.0" across all 7 sites | GREEN | `grep -rn 'get_tracer("loam\.[a-z_.]*", "0\.1\.0")' framework/ --include="*.py"` returns 0 matches in `src/` paths post-source-edit; companion `grep -rn 'get_tracer("loam\.[a-z_.]*", "0\.10\.0")' framework/ --include="*.py"` returns 7 production matches at the named line offsets (cost-governance/observability:30 + self-correction/observability:31 + dormancy/observability:40 + reversibility-primitive/observability:30 + safety-layer/observability:32 + orchestrator/supervisor:63 + orchestrator/observability:31). Component-name first arg preserved verbatim across all 7 sites. |
+| AC.OTVH.2 — Test-fixture monkeypatch installer literal swept to "0.10.0" across all 5 sites | GREEN | Same grep pattern returns 0 matches in `tests/` paths post-source-edit; companion `"0.10.0"` grep returns 5 test matches (self-correction/test_amendment_20:56 + dormancy/test_d9:61 + dormancy/test_d10:78 + dormancy/test_amendment_20:66 + observability-aggregator/test_amendment_20:47). 19 tests across the 5 modified test files PASS post-edit (verified mid-build at commit `b3bc24c` with pytest-asyncio installed per `install-from-source.txt`). AC text tightened doc-only at plan-time per `feedback_loose_AC_text_fix_AC_not_implementation` (FIDRAFT capture's "tests if any assert on tracer version" framing was inaccurate to the actual fixture-installer scope — empirically verified zero production assertions on the literal). |
+| AC.OTVH.3 — Idempotence — no remaining "0.1.0" literals adjacent to get_tracer | GREEN | `grep -rn 'get_tracer.*"0\.1\.0"' framework/ --include="*.py"` returns 0 matches post-source-edit. The check explicitly excludes pyproject.toml `version = "0.1.0"` lines (project versions, not tracer-version args), `framework/hands-off-lifecycle/tests/test_first_run.py` synthesized pyproject fixtures (lines 907 / 914 / 920 / 1000 / 1020 / 1090), and `framework/workspace-bootstrap/tests/test_AC47_3_write_failure_graceful.py:186` `"skipped_v0_1_0_no_graphiti"` sentinel value (code-name string, not a tracer-version reference). Sweep re-run produces zero new edits. |
+| AC.OTVH.4 — Outcome-altitude dogfood probe (runtime-emitted instrumentation_scope.version) | GREEN | `docs/experiments/otel-tracer-version-honesty-hard-smoke.md` (slug-named per `F-CYCLE-ARTEFACT-SLUG-NAMING`) §3.1 documents single-component runtime probe (cost-governance) with verbatim Python output showing `instrumentation_scope.version == "0.10.0"` on a captured span. §3.2 cross-verifies all 7 production tracers carry `version=0.10.0` at runtime — uniform across cost_governance + self_correction + dormancy + reversibility_primitive + safety_layer + orchestrator/observability + orchestrator/supervisor. The probe verifies the source-text edit propagates through OTel's `get_tracer(name, version)` contract to the wire (not just the literal in source). |
+| AC.OTVH.S — Seal-diff discipline | GREEN | `git diff --name-only 5d0ca57..aa78baf` shows changes only under: 7 production observability/supervisor files (cost-governance + self-correction + dormancy + reversibility-primitive + safety-layer + orchestrator/observability + orchestrator/supervisor); 5 test-fixture monkeypatch installer files (self-correction/test_amendment_20 + dormancy/test_d9 + dormancy/test_d10 + dormancy/test_amendment_20 + observability-aggregator/test_amendment_20); slug-named smoke writeup at `docs/experiments/otel-tracer-version-honesty-hard-smoke.md`; universal-admission docs (`docs/STATE.md` + `docs/release-roadmap.md` + `docs/FUTURE_IDEAS_DRAFT.md`); plan-doc + manifest (`docs/plans/otel-tracer-version-honesty.{md,manifest.yaml}`); dev-sdlc seal anchor artefacts (seal narrative + `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar bump + `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` BASELINE pointer auto-bump — pre-included in §3 allow-list per the plan-doc-template-auto-bump-fence convention). NO entries in pyproject.toml; NO entries in any `__init__.py`; NO `__version__` updates. |
 
 ### AI-time actuals
 
-TBD-AT-SEAL. Will backfill post-seal per §9 estimated bands.
+| Stage | Estimated (§9) | Actual |
+|---|---|---|
+| Plan-doc + manifest authoring | 15-25 min | ~22 min |
+| Source-edit (12 literal substitutions + slug-named smoke writeup with runtime probe + STATE/roadmap admin + FIDRAFT flip + new FIDRAFT capture) | 20-35 min | ~28 min |
+| `loam amend validate` + manifest baseline backfill + `apply` + `seal` (incl. one validate fixup for smoke_outcome length) | 5-10 min | ~6 min |
+| §13 §status backfill commit + roadmap-row seal-SHA backfill | 3-5 min | ~5 min |
+| **Total** | **~43-75 min** | **~61 min** |
+
+In-band — landed cleanly without HARD HALTs; one minor `loam amend validate` iteration on the manifest's `smoke_outcome` field (length cap 200 chars; trimmed twice from 468 → 238 → 152 chars).
 
 ### Halt-and-surface findings
 
-TBD-AT-SEAL.
+**No HARD HALTs fired in-cycle.**
+
+**Pre-existing-test-failure clarification:** orchestrator's 2 failures (`test_pos_session_start.py::test_ready_path_when_both_services_up` + `test_AC_V11_E_1_memory_skipped_when_plist_absent`) are pre-existing on main (verified via `git stash` baseline at plan-doc commit `5d0ca57`); they are NOT caused by the tracer-version edit. Documented under the F-TF-* class (rebrand-residue from the v0.5.1 split-worktrees migration; expected `'pos v2 ready'` vs actual `'loam ready'`); separate cleanup concern, NOT in F-OTEL-VERSION-BUMP scope.
+
+**Test-environment context:** the homebrew Python 3.13 environment lacks `pytest-asyncio` by default; per `install-from-source.txt` (post-v0.8.0 root-cause closure of the asyncio-marked failure class), pytest-asyncio>=0.23 is the documented install dependency. Tests verified GREEN post-install; pre-existing failure modes documented in F-TF-1/2/3/4 captured at v0.8.0.
+
+**Empirical-recheck-before-halt discipline:** never fired (each of the 12 literal substitutions had an unambiguous fix-target derivable from the FIDRAFT capture's proposed-shape line + plan-doc D-OTVH.1 ruling).
+
+**One AC text tightening at plan-time** (per `feedback_loose_AC_text_fix_AC_not_implementation`): AC.OTVH.2 originally framed by FIDRAFT capture as "tests if any assert on tracer version" — empirically NO production assertions exist; tests install via `provider.get_tracer(...)` monkeypatch with the literal as a fixture-controlled value. AC text tightened doc-only at plan-authoring-time to name the actual scope (fixture installations) rather than the assertion scope the capture suggested. Doc-only; no source-text divergence from intent.
+
+**One FIDRAFT entry flipped to RESOLVED:** F-OTEL-VERSION-BUMP at `docs/FUTURE_IDEAS_DRAFT.md:260`; entry preserved with RESOLVED block citing this PATCH cycle's plan-doc + smoke writeup paths.
+
+**One new FIDRAFT entry captured:** F-OTEL-VERSION-DYNAMIC-IMPORT — proposes the `__version__`-import shape as a follow-on cycle gated on either: (a) a future cycle that's already touching the 6 components' `__init__.py` for other reasons, or (b) structural drift signal (3+ MINORs in a row where the literals were forgotten to bump).
+
+**F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH discipline verified:** `grep -rn "F-OTEL-VERSION-BUMP" docs/` returned 1 reference at `docs/FUTURE_IDEAS_DRAFT.md:260` (the entry itself) plus 1 unrelated count-table reference at `docs/plans/v0-8-0-honesty-cleanup.md:425`. No other FIDRAFT entries reference F-OTEL-VERSION-BUMP as a blocker / dep / unblocker; no flip-on-unblock action needed.
+
+**One manifest schema fixup at validate-time:** `smoke_outcome` field length-capped at 200 chars; initial draft was 468 chars; trimmed twice (238 → 152) to fit. Doc-level; no semantic drift.
 
 ---
 

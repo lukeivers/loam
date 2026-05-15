@@ -1,0 +1,89 @@
+schema_version: 3
+amendment:
+  slug: service-state-file-based-memory-reframe
+  title: "Session-start service_state memory-entry reframe PATCH — the probe_service_state docstring + SessionPayload.service_state Field description + the V11.E comment block model the memory entry as file-based-store reachability under the v0.1.0 M-FBM file-based pivot (no memory daemon / no HTTP health port for the file-based store; the TCP probe engages only when the graphiti/M-GMP plist is present), NOT as a port-probed session-level sidecar service. Prose-only: the SEALED wire contract is preserved byte-identically — the service_state dict, the memory + orchestrator keys, and the value set up/down/unknown/not_expected (not_expected is the V11.E M-FBM signal, already correct and untouched) are unchanged; the orchestrator entry keeps its genuine-UNIX-socket-service framing. The memory-session-continuity builder correctly left this out-of-fence (its §12 halt-trigger 2 — sealed-component widening; its §10 F2 item 1 named service_state:memory:not_expected as the correct M-FBM signal, which is true of the behaviour; the surrounding service-model prose is the separate, correctly-scoped follow-on this PATCH closes). No behaviour change crosses any boundary — verified prose-only by grep (no test asserts the docstring / Field-description / comment text; pre-existing session-start tests D8.1/D8.4/AC46.1/V11.E.2 run unmodified and stay GREEN — AC.SSMR.3 is the structural guard). Four ACs AC.SSMR.{1,2,3,S}: outcome-shape, method the builder's call, no method-in-AC. Class PATCH per docs/release-versioning-policy.md — no behaviour change, no contract change, source-file prose only; D-SSMR.1 ratifies, builder-autonomous because §2 empirically proves prose-only (no owner-gated options surface). Stacks on amend/memory-session-continuity seal 77e3bd7 backfill tip 5957073 as BASELINE (D-SSMR.2 — predecessor unmerged; one linear seal ladder; ships together LOCAL). AC family scope-descriptive (AC.SSMR.*); slug NOT version-packed. Composes on SEALED predecessors: m-fbm-operational-health (the file-based pivot — source of the modelling correction), v0-1-2-V11-E-graphiti-probe-skip (the not_expected sentinel — already correct, untouched here), session-start-context-load-gate (#32 D8 composer — SessionPayload.service_state field). NO Anthropic API key — no LLM step in this amendment. Plan+build+seal+ship-LOCAL cycle."
+
+# Build-cycle baseline. The pre-amendment tip = HEAD immediately after
+# the source-edit + AC-test commit (the commit before `loam amend
+# apply`). The seal-test diff runs BASELINE..SEAL_COMMIT; this
+# amendment's prose-reword source diff + new AC tests live in that
+# window. Mirrors the memory-session-continuity precedent (baseline →
+# post-source-edit tip 91ebdee). This amendment STACKS on
+# amend/memory-session-continuity: its predecessor backfill tip is
+# 5957073; the source-edit commit lands on top and becomes BASELINE.
+baseline: "5957073ca6265c881b4ddb83762e47d3a6fddd33"
+
+plan: docs/plans/service-state-file-based-memory-reframe.md
+plan_doc_ref: docs/plans/service-state-file-based-memory-reframe.md
+
+ac_count: 4
+smoke_outcome: "service_state memory-entry reframe PATCH — docstring + Field-description model file-based-store reachability under M-FBM (not sidecar-service); wire contract byte-identical; AC.SSMR.{1,2,3,S} green"
+
+# Single-component PATCH. Seal anchor: framework/primary-persona/ (both
+# touched source files live here). No extra prefixes needed (no corpus
+# surface in scope — prose lives in src/).
+components:
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+
+# Universal admissions — per amendment #22 ruling #3. Mirrors the
+# memory-session-continuity manifest's admission set (this amendment
+# stacks on it and ships together LOCAL).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/primary-persona/seals/SEAL_COMMIT.service-state-file-based-memory-reframe
+  body: |
+    # service_state memory-entry reframe PATCH
+
+    TBD-AT-SEAL. Sealed local; shipped LOCAL (merged to main + dogfood).
+
+    Prose-only reframe of the session-start `service_state` `memory`
+    entry's modelling language. Under the v0.1.0 M-FBM file-based pivot
+    (D-Q.MFBM.6) memory is a file-based store with no daemon and no
+    health port; the `probe_service_state` docstring + the
+    `SessionPayload.service_state` Pydantic `Field` description + the
+    V11.E comment block previously modelled it as a port-probed
+    session-level sidecar service. They now model it as file-based-store
+    reachability; the TCP probe is documented as engaging only when the
+    graphiti/M-GMP plist is present.
+
+    Wire contract preserved byte-identically: the `service_state` dict,
+    the `memory` + `orchestrator` keys, and the value set
+    `up`/`down`/`unknown`/`not_expected` are unchanged. The
+    `not_expected` sentinel (V11.E, SEALED) is the correct M-FBM signal
+    and is untouched. The `orchestrator` entry keeps its
+    genuine-UNIX-socket-service framing. No behaviour change crosses any
+    boundary — the pre-existing session-start tests (D8.1/D8.4/AC46.1/
+    V11.E.2) run unmodified and stay GREEN (AC.SSMR.3 structural guard).
+
+    The memory-session-continuity builder correctly left this
+    out-of-fence; this PATCH is the correctly-scoped prose-only
+    follow-on. Composes with: the M-FBM file-based pivot (source of the
+    correction); the V11.E `not_expected` sentinel (untouched); #32 D8
+    composer (`SessionPayload.service_state`). No Anthropic API key.
+
+    AC.SSMR.{1,2,3,S} GREEN at seal. Class PATCH. Stacks on
+    memory-session-continuity (seal 77e3bd7). Shipped LOCAL.

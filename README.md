@@ -63,13 +63,17 @@ runs surface what needs attention without you opening a terminal.
 > from step 1 (at `./loam/`) is what the loam CLI was installed from
 > and what `loam init` reads as its canonical source. The new
 > workspace from step 3 has its own copy of the framework under
-> `<workspace>/framework/` — the workspace is self-contained from
-> that point. The install clone is *disposable* once the workspace is
-> bootstrapped: keep it if you want to reinstall or pull updates;
-> delete it if you don't. A future minor will ship the CLI from PyPI
-> directly, eliminating the install clone — for the v0.x series, the
-> source-only install path is intentional + the two copies are the
-> price of being self-contained.
+> `<workspace>/framework/` **and its own `<workspace>/framework/.venv`,
+> which `loam init` builds for you** (no manual venv or hook step
+> inside the workspace — the scaffolded SessionStart hooks resolve to
+> that venv, so the persona + orchestrator session-start context runs
+> on your first `claude` turn). The workspace is genuinely
+> self-contained from that point. The install clone is *disposable*
+> once the workspace is bootstrapped: keep it if you want to reinstall
+> or pull updates; delete it if you don't. A future minor will ship
+> the CLI from PyPI directly, eliminating the install clone — for the
+> v0.x series, the source-only install path is intentional + the two
+> copies are the price of being self-contained.
 
 ## What ships
 

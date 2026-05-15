@@ -118,6 +118,25 @@ class ScaffoldFailedError(NewWorkspaceError):
     """The scaffold step raised; bootstrap halted."""
 
 
+class FrameworkVenvProvisionError(NewWorkspaceError):
+    """Building ``<ws>/framework/.venv`` (the interpreter the scaffolded
+    SessionStart hooks resolve to) failed.
+
+    loam-init-framework-venv-or-robust-interpreter (AC.LIVI.1):
+    bootstrap-time provisioning of the per-workspace framework venv is
+    LOAD-BEARING, not fail-soft. The scaffolded SessionStart hooks
+    (``build_supervisor_stanza`` / ``build_persona_session_start_inner_hook``)
+    invoke ``<ws>/framework/.venv/bin/python``; if that venv is absent
+    or its install failed, both hooks exit 127 on every fresh-init
+    session (the exact silent defect this amendment closes). Per the
+    plan's quality bar (structural over advisory) a provisioning
+    failure surfaces LOUDLY here rather than silently degrading into a
+    workspace whose persona/orchestrator session-start enrichment is
+    dead — a quietly-broken workspace is strictly worse than a refused
+    bootstrap the operator can retry.
+    """
+
+
 # ---- public API -----------------------------------------------------
 
 
@@ -381,6 +400,140 @@ def _clone_canonical(
             f"{(checkout_completed.stderr or '').strip()!r}. "
             f"Hint: canonical must publish a {branch!r} branch."
         )
+
+
+def _provision_framework_venv(framework_dir: Path) -> Path | None:
+    """Build ``<framework_dir>/.venv`` so the scaffolded SessionStart
+    hooks resolve to a WORKING interpreter on a fresh ``loam init``.
+
+    loam-init-framework-venv-or-robust-interpreter, D-LIVI.2 approach
+    (a) (RATIFIED). Closes the verified root cause: the predecessor
+    amendment wrote a correct SessionStart envelope whose two hook
+    commands invoke ``<ws>/framework/.venv/bin/python``
+    (``build_supervisor_stanza`` ``first_run_settings.py:284`` +
+    ``build_persona_session_start_inner_hook``
+    ``session_start_emitter.py:389``, both composing
+    ``loam_root/.venv/bin/python`` with ``loam_root == <ws>/framework/``
+    per the ``_scaffold_persona_binding`` call site), but
+    ``bootstrap_new_workspace`` never built that venv (the documented
+    Quickstart's ``python -m venv .venv`` builds the venv in the
+    *disposable install clone*, not in ``<ws>/framework/``). Net: both
+    hooks exited 127 on every fresh-init session — persona IDENTITY
+    bound but session-start ENRICHMENT dead. This step makes the
+    workspace genuinely self-contained (the README §"self-contained
+    from that point / install clone is disposable" claim becomes TRUE
+    as written) and leaves the SEALED stanza builders UNCHANGED — their
+    ``loam_root/.venv/bin/python`` is now correct because the venv
+    exists (single-component fence; no sealed-stanza-builder edit).
+
+    Mechanism (method is the builder's call within the ratified
+    approach):
+
+    - ``python -m venv`` using ``sys.executable`` (the interpreter
+      running the bootstrap — the documented Quickstart's install-clone
+      venv python, already a 3.13 with the framework resolvable).
+    - ``pip install -r <framework_dir>/install-from-source.txt`` run
+      with the new venv's python. The cloned ``<ws>/framework/`` tree
+      carries ``install-from-source.txt`` at its root plus every
+      ``framework/<comp>`` + ``plugins/`` source tree, so the
+      ``-e ./<path>`` editable entries resolve ENTIRELY against the
+      clone (no PyPI roundtrip for any loam component — Lens 1: reuse
+      the documented dependency set, do not re-implement resolution).
+      Third-party transitive deps are served from pip's local
+      wheel/HTTP cache, already populated by the documented Quickstart
+      step 2 (same machine, same user, same pip cache) — so the common
+      path is offline-capable + fast (halt-trigger 3 mitigation: the
+      install-clone's already-resolved wheel set is reused, not
+      re-fetched). ``--no-input`` keeps it non-interactive for the
+      hands-off scaffold.
+
+    Return contract (mirrors ``_scaffold_persona_binding``'s fail-soft-
+    on-absent-machinery precedent below):
+
+    - The cloned tree carries no ``install-from-source.txt`` (a
+      minimal / stripped / fixture clone — NOT the documented
+      Quickstart): there is no documented dependency set to install,
+      so there is no venv to build and the persona binding will
+      itself fail-soft (no machinery present => no SessionStart
+      envelope wired => no dead hooks scaffolded). Return ``None``;
+      the workspace is still usable, exactly as before this amendment.
+      This is the pre-amendment behaviour, unchanged, for the
+      not-the-documented-Quickstart case — AC.LIVI.1's outcome is
+      scoped to the documented Quickstart (a real canonical clone,
+      which DOES carry install-from-source.txt).
+    - The dependency set IS present but the venv build / install
+      genuinely fails: raise ``FrameworkVenvProvisionError`` LOUDLY.
+      This is the case the quality bar targets — a quietly-dead
+      session-start enrichment on the documented Quickstart is the
+      precise defect this amendment closes; a refused-and-retryable
+      bootstrap is strictly better than a workspace that looks bound
+      but whose enrichment exits 127.
+
+    Returns the path to the provisioned venv's python interpreter
+    (the exact path the scaffolded hooks resolve to) on success, or
+    ``None`` when the clone carries no documented dependency set
+    (fail-soft, pre-amendment behaviour preserved).
+    """
+    venv_dir = framework_dir / ".venv"
+    venv_python = venv_dir / "bin" / "python"
+    requirements = framework_dir / "install-from-source.txt"
+
+    if not requirements.is_file():
+        # No documented dependency set in this clone => not the
+        # documented Quickstart. Fail-soft: no venv, no dead hooks
+        # (the binding fail-softs for the same reason). Pre-amendment
+        # behaviour, unchanged.
+        return None
+
+    venv_completed = subprocess.run(  # noqa: S603 — argv constructed
+        [sys.executable, "-m", "venv", str(venv_dir)],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        text=True,
+    )
+    if venv_completed.returncode != 0:
+        raise FrameworkVenvProvisionError(
+            f"`{sys.executable} -m venv {venv_dir!s}` failed (exit "
+            f"{venv_completed.returncode}): "
+            f"{(venv_completed.stderr or '').strip()!r}"
+        )
+    if not venv_python.is_file():
+        raise FrameworkVenvProvisionError(
+            f"venv build reported success but {venv_python!s} is "
+            "absent — the scaffolded hooks would still exit 127."
+        )
+
+    install_completed = subprocess.run(  # noqa: S603 — argv constructed
+        [
+            str(venv_python),
+            "-m",
+            "pip",
+            "install",
+            "--no-input",
+            "-r",
+            str(requirements),
+        ],
+        cwd=str(framework_dir),
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        text=True,
+    )
+    if install_completed.returncode != 0:
+        raise FrameworkVenvProvisionError(
+            f"`pip install -r install-from-source.txt` into "
+            f"{venv_dir!s} failed (exit "
+            f"{install_completed.returncode}). The fresh-init "
+            "SessionStart hooks would resolve to an interpreter under "
+            "which loam.primary_persona / the orchestrator are not "
+            f"importable. stderr: "
+            f"{(install_completed.stderr or '').strip()[-2000:]!r}"
+        )
+
+    return venv_python
 
 
 # Sync-config.yaml content. Single field (canonical_source) per β.1's
@@ -906,6 +1059,34 @@ def bootstrap_new_workspace(
     # block so workspace state is fully populated first.
     _scaffold_claude_dir(claude_dir)
 
+    # loam-init-framework-venv-or-robust-interpreter (AC.LIVI.1),
+    # D-LIVI.2 approach (a) RATIFIED: build `<ws>/framework/.venv`
+    # BEFORE the persona binding wires the SessionStart hooks against
+    # it. This is the load-bearing fix: the predecessor amendment's
+    # scaffolded hook commands invoke `<ws>/framework/.venv/bin/python`
+    # (the stanza builders compose `loam_root/.venv/bin/python` with
+    # `loam_root == framework_dir`), but nothing built that venv — both
+    # hooks exited 127 on every fresh-init session (persona IDENTITY
+    # bound, session-start ENRICHMENT dead). Provisioning it here makes
+    # the workspace genuinely self-contained (the README's documented
+    # "self-contained from that point / install clone disposable" claim
+    # becomes TRUE as written) and keeps the SEALED stanza builders
+    # UNCHANGED — their interpreter path is now correct because the
+    # venv exists. LOUD when the documented dependency set IS present
+    # but provisioning genuinely fails (a quietly-dead enrichment is
+    # the exact defect this amendment closes); fail-soft (returns None,
+    # pre-amendment behaviour) when the clone carries no
+    # install-from-source.txt — a minimal / stripped / fixture clone is
+    # NOT the documented Quickstart and the persona binding fail-softs
+    # for the same absent-machinery reason, so no dead hooks are
+    # scaffolded — see `_provision_framework_venv`. Runs for both the
+    # fresh-clone and `--init-existing` paths (both produce a
+    # `<ws>/framework/` whose hooks depend on this venv); idempotent
+    # re-provision on a re-`loam init` is acceptable (venv rebuild +
+    # pip re-resolve against the unchanged install set is a no-op-shaped
+    # reinstall).
+    _provision_framework_venv(framework_dir)
+
     # loam-init persona-wiring (AC.LIPW.1/.2/.3): forward extension of
     # the FBE.5b scaffold — write the primary-persona binding surface
     # the `{}` settings.json deliberately out-scoped, so a bare
@@ -918,9 +1099,15 @@ def bootstrap_new_workspace(
     # CLONE ROOT (`<ws>/framework/`): `bootstrap_new_workspace` does
     # `git clone <canonical> <ws>/framework/`, and canonical loam
     # itself carries a top-level `framework/` subdir, so the cloned
-    # layout is `<ws>/framework/framework/<component>/...` +
-    # `<ws>/framework/.venv/`. The settings-stanza builders compose
-    # `loam_root/.venv/bin/python` + `loam_root/framework/
+    # layout is `<ws>/framework/framework/<component>/...`. The
+    # `<ws>/framework/.venv/` the settings-stanza builders compose
+    # against (`loam_root/.venv/bin/python`) is built by the
+    # `_provision_framework_venv` step IMMEDIATELY ABOVE (it is NOT a
+    # passive `git clone` artefact — canonical carries no committed
+    # `.venv`; the predecessor's in-code comment asserting it as a
+    # clone-layout artefact was the load-bearing inconsistency this
+    # amendment corrects, plan §10.1). The settings-stanza builders
+    # compose `loam_root/.venv/bin/python` + `loam_root/framework/
     # orchestrator/...` and `_scaffold_persona_binding` resolves the
     # hooks at `loam_root/framework/hands-off-lifecycle/hooks` — all
     # of which resolve correctly ONLY when `loam_root == <ws>/

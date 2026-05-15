@@ -1,0 +1,117 @@
+schema_version: 3
+amendment:
+  slug: loam-init-framework-venv-or-robust-interpreter
+  title: "loam init framework-venv-or-robust-interpreter PATCH — a fresh non-tech-user `loam init` workspace lands with SessionStart hooks that resolve to a WORKING interpreter, so the persona/orchestrator session-start ENRICHMENT actually runs on the first session with NO manual venv-build or hook-fix step. ROOT CAUSE verified from canonical loam source this turn (the binding-spike report's F2 venv-gap finding CONFIRMED). The predecessor amendment (loam-init-persona-wiring-and-isolated-subloam-driver, SEALED LOCAL ON BRANCH at 2070b3e: BASELINE bb5ea69, apply 4e4df50, seal a7625e0) wrote a CORRECT SessionStart binding envelope via _scaffold_persona_binding (new_workspace.py:546-707,928) — but both scaffolded hook commands invoke `<ws>/framework/.venv/bin/python` (build_supervisor_stanza first_run_settings.py:283-285 + build_persona_session_start_inner_hook session_start_emitter.py:388-389, both composing loam_root/.venv/bin/python with loam_root == <ws>/framework/ per new_workspace.py:931), and bootstrap_new_workspace NEVER builds <ws>/framework/.venv (zero venv/pip primitives anywhere in framework/workspace-bootstrap/src/ — verified by grep this turn). The documented Quickstart's venv (README:40 `python3.13 -m venv .venv`) is built in the INSTALL CLONE, not in <ws>/framework/; the README's own §62-72 'self-contained from that point / install clone is disposable' claim is FALSE for the interpreter the scaffolded hooks depend on. Net (confirmed by the spike report's live hook_response capture, exit_code 127, BOTH hooks): persona-IDENTITY binds (the `agent: <handle>` key + <ws>/.claude/agents/<handle>.md — surfaces Claude Code reads directly, independent of the hook), but persona/orchestrator session-start ENRICHMENT (the SEALED memory-session-continuity substrate `loam.primary_persona.cli session-start` + the orchestrator pos_session_start.py) is DEAD on every fresh-init session. LOCKED-DESIGN-NOT-LICENSE applied: 'the predecessor sealed GREEN' is NOT a reason to keep a bad outcome — the predecessor's seal-test verified IDENTITY binding (the `agent` key path), not hook-interpreter resolution on a documented-Quickstart topology; the corrective is a narrow FORWARD fix in framework/workspace-bootstrap/, NOT a predecessor re-open/re-seal. Four ACs: AC.LIVI.{1,2,3} outcome-shape + AC.LIVI.S seal-diff; method-in-AC test passed per-AC; AC.LIVI.{1,3} ladder to AC.PO.1, AC.LIVI.2 ladders to AC.PO.2. The GATING named decision is D-LIVI.2 (the interpreter-resolution / environment-provisioning mechanism): three approaches evaluated against offline/no-network, loam-init wall-clock, workspace self-containedness vs install-clone coupling, install-clone-move fragility, the NO-Anthropic-API-key constraint, and fence width — RECOMMENDATION APPROACH (a) `loam init` builds <ws>/framework/.venv (self-contained workspace, single-component fence, no sealed-stanza-builder edit, makes the README's documented contract TRUE) over (b) robust-interpreter-resolution-in-the-stanza-builders (NOT self-contained, fragile if the disposable install clone is deleted, WIDENS fence into SEALED hands-off-lifecycle + primary-persona) and (c) onboard-time-venv (REJECTED — directly conflicts with the predecessor AC.LIPW.1 'persona active after loam init ALONE, no onboard step' claim; perpetuates the half-truth for the most common path). Confidence HIGH on shape (a), MEDIUM on the offline/wall-clock implementation detail (build cycle MUST measure + may need install-clone-resolved-wheel reuse — halt-trigger 3). The predecessor's AC.LIPW.1 loose-AC tension is resolved as fix-makes-it-true (the enrichment half is delivered by this follow-on) with an ADDITIVE provenance footnote in the predecessor plan-doc — NOT an AC-text weakening (feedback_loose_AC_text_fix_AC_not_implementation: the impl did NOT match the full intent, so the fix is the right move, not lowering the bar). Class PATCH per docs/release-versioning-policy.md — scaffold-completeness defect closure, an existing claimed surface becomes real, no new user-observable boundary; D-LIVI.1 ratifies, upgrade to MINOR only on explicit build-time evidence the chosen mechanism adds a user-observable boundary. Version derives at release-time per feedback_version_numbers_at_release_time. AC family scope-descriptive (AC.LIVI.*); slug NOT version-packed. Predecessor branch tip 2070b3e (loam-init-persona-wiring-and-isolated-subloam-driver §13/§14 backfill); composes on the SEALED predecessor _scaffold_persona_binding + #45 build_supervisor_stanza + #46 build_persona_session_start_inner_hook + the SEALED memory-session-continuity amendment (d579748/77e3bd7 — orthogonal, this plan makes its inner emitter REACHABLE, does not touch its retrieval/ranking). NO Anthropic API key — approach (a) is venv+pip only, no LLM call (feedback_no_anthropic_api_key satisfied trivially). Plan-author-only cycle — build deferred to a future SERIALIZED cycle on canonical /Users/lukeivers/loam (no parallel builds in that tree per feedback_serialize_amendment_builds) pending owner ratification of D-LIVI.2 (the gating mechanism choice)."
+
+# Plan-author-only cycle — BASELINE TBD at build-cycle source-edit time.
+# This manifest is committed alongside the plan-doc; the BASELINE field gets
+# backfilled at build-cycle source-edit commit time per v0.10.x precedent
+# (manifest baseline backfill commit follows the source-edit batch in the
+# same build cycle). Placeholder pinned to the predecessor seal so a
+# pre-build `loam amend validate` has a parseable anchor; the build cycle
+# REPLACES this with the actual source-edit BASELINE commit.
+baseline: "a7625e0"
+
+plan: docs/plans/loam-init-framework-venv-or-robust-interpreter.md
+plan_doc_ref: docs/plans/loam-init-framework-venv-or-robust-interpreter.md
+
+ac_count: 4
+smoke_outcome: "Fresh documented-Quickstart `loam init` SessionStart hooks resolve to an importing interpreter (exit 0 not 127); persona+orchestrator enrichment runs turn one, no manual step; AC.LIVI.{1,2,3,S} green"
+
+# Component fence (preliminary; D-LIVI.3 ratifies at build cycle). Seal
+# anchor: framework/workspace-bootstrap/ — the interpreter-resolution /
+# environment-provisioning fix lands in the bootstrap_new_workspace ->
+# _scaffold_persona_binding path (and/or a new venv-provisioning step in
+# bootstrap_new_workspace), all within framework/workspace-bootstrap/src/.
+# The canonical workspace-bootstrap sidecar is
+# `framework/workspace-bootstrap/tests/SEAL_COMMIT` and the seal_test is
+# `framework/workspace-bootstrap/tests/test_no_sealed_amendments.py`
+# (VERIFIED this turn against BOTH the predecessor manifest and the
+# v0-7-0-non-tech-user-surface sealed manifest — identical pair). The
+# build cycle MUST re-verify both against a sealed workspace-bootstrap
+# manifest before `loam amend apply` rather than assume. extra_allowed_
+# prefixes is EMPTY for the recommended approach (a): it builds the venv
+# in bootstrap_new_workspace, leaving the SEALED stanza builders
+# (first_run_settings.py build_supervisor_stanza /
+# session_start_emitter.py build_persona_session_start_inner_hook)
+# UNCHANGED — their loam_root/.venv/bin/python becomes correct because the
+# venv now exists. The list is admitted ONLY IF the owner ratifies
+# approach (b) instead (which DOES edit those sealed builders) — in which
+# case the build cycle widens to the minimal sealed prefix the chosen
+# method requires and re-surfaces the fence-width per §5.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. The §9 doc-only
+# corrections (predecessor plan-doc AC.LIPW.1 footnote + README §62-72
+# reconciliation + STATE/roadmap backfill) land under these universal
+# prefixes/files, NOT as a fence widening.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.loam-init-framework-venv-or-robust-interpreter
+  body: |
+    # loam init framework-venv-or-robust-interpreter PATCH
+
+    TBD-AT-SEAL. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST (publish is HELD pending this fix + verification).
+
+    A fresh non-tech-user `loam init` (the documented Quickstart: clone →
+    venv+pip in the install clone → loam init <ws> → cd <ws> → claude) now
+    lands SessionStart hooks that resolve to a WORKING interpreter — so
+    the persona session-start enrichment (the sealed
+    memory-session-continuity substrate) and the orchestrator both RUN on
+    the first session (exit 0), with NO manual venv-build or hook-fix step
+    inside the workspace. Root cause was verified from canonical source:
+    the predecessor amendment wrote a correct SessionStart envelope whose
+    two hook commands invoke `<ws>/framework/.venv/bin/python`, an
+    interpreter bootstrap_new_workspace never created and the documented
+    Quickstart never built inside <ws>/framework/ (the venv it builds is
+    in the disposable install clone). Persona-identity binding (the
+    `agent` key + agents file, independent of the hook) always worked;
+    the persona/orchestrator session-start ENRICHMENT exited 127 on every
+    fresh-init session — confirmed by the binding-spike report's live
+    hook_response capture.
+
+    The corrective is a narrow forward fix in framework/workspace-bootstrap/
+    composing on the existing sealed envelope (LOCKED-DESIGN-NOT-LICENSE
+    applied — "the predecessor sealed GREEN" was not a reason to keep a
+    non-tech user landing in a workspace with a dead session-start
+    enrichment; the predecessor's seal-test verified identity binding, not
+    hook-interpreter resolution on a documented-Quickstart topology).
+    Approach (a) — `loam init` builds <ws>/framework/.venv — makes the
+    README's documented "self-contained from that point" contract TRUE,
+    keeps the seal-diff single-component, and edits no sealed stanza
+    builder. A structural seal-test drives the REAL scaffolded hook
+    command against a fresh workspace and fails RED on regression, so the
+    gap cannot silently re-break (it already did once — the predecessor
+    sealed GREEN while the fresh-init hooks were dead). The predecessor's
+    AC.LIPW.1 loose-AC tension is resolved as fix-makes-it-true with an
+    additive provenance footnote, NOT an AC-text weakening.
+
+    AC.LIVI.{1,2,3,S} green against real test output. SHA register +
+    method-decision record in the plan-doc §14.

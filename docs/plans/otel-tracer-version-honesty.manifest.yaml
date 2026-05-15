@@ -7,7 +7,7 @@ amendment:
 # source-edit SHA post-source-edit commit per v0.10.x precedent
 # (manifest baseline backfill commit follows source-edit batch in
 # the same cycle).
-baseline: "44c28e6"
+baseline: "b3bc24c"
 
 plan: docs/plans/otel-tracer-version-honesty.md
 plan_doc_ref: docs/plans/otel-tracer-version-honesty.md

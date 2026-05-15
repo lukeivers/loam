@@ -459,6 +459,254 @@ def _scaffold_claude_dir(claude_dir: Path) -> bool:
     return created
 
 
+# loam-init persona-wiring (AC.LIPW.1 / AC.LIPW.2 / AC.LIPW.3) —
+# forward extension of the FBE.5b scaffold surface.
+#
+# AC.FBE.5b.5 deliberately out-scoped persona-binding from the `{}`
+# settings.json ("Those land in v0.1.x amendments" — new_workspace.py
+# :434-436). The deferral is now due: a non-tech user's documented
+# quickstart (clone -> loam init -> cd -> claude) was landing them in
+# a bare-LLM workspace with a dead persona (AC.PO.1 — the maximal
+# translation-burden failure). LOCKED-DESIGN-NOT-LICENSE: "by design"
+# is not a reason to keep that outcome. This forward extension writes
+# the persona-binding surface a fresh `loam init` was missing, by
+# COMPOSING on existing sealed primitives (Lens 1 — no new hook
+# machinery):
+#
+#   - `to_agent_md(contract, prompt_text=...)` (amendment #35/#50) —
+#     the deterministic contract -> `.claude/agents/<handle>.md`
+#     subagent-file projector. UNCHANGED; imported, not edited.
+#   - `_render_prompt_md(...)` (amendment #50 onboarding) — the
+#     existing `{user_preferred_name}`/`{persona_given_name}`
+#     str.format token substitution. UNCHANGED; imported, not edited.
+#   - `merge_session_start(..., agent_handle=<handle>)` +
+#     `build_supervisor_stanza(..., extra_inner_hooks=[...])`
+#     (amendment #37/#45/#46 hands-off-lifecycle) — writes the
+#     SessionStart envelope into `<ws>/.claude/settings.json` AND
+#     sets top-level `"agent": <handle>` so a fresh Claude Code
+#     session selects the workspace persona as its default subagent
+#     (the main-thread-turn-one binding the canonical-dev template
+#     proves works). UNCHANGED; imported, not edited.
+#   - `build_persona_session_start_inner_hook(loam_root)` (amendment
+#     #46 primary-persona) — the persona's `session-start` emit
+#     inner-hook. UNCHANGED; imported, not edited.
+#
+# The build cycle decided BOTH binding surfaces are written (the
+# `.claude/agents/<handle>.md` subagent file AND the settings.json
+# `"agent"` key + SessionStart emit) because `.claude/agents/` alone
+# makes the persona a DISPATCHABLE subagent, while the settings.json
+# `"agent"` key is what binds it as the session's default agent on
+# turn one. AC.LIPW.1 is outcome-shape ("persona active turn one");
+# this two-surface method satisfies it without method-in-AC.
+#
+# Placeholder-safe identity (AC.LIPW.2): the bound prompt is rendered
+# through `_render_prompt_md` with a brace-free placeholder identity
+# so NO literal `{user_preferred_name}`/`{persona_given_name}` token
+# ever reaches a bound surface on a fresh init. The existing
+# `persist_grounding` (#50) remains the post-onboarding source of
+# truth and re-renders identity from captured grounding unchanged
+# (AC.LIPW.3 — no regression to the onboarding write-back contract).
+
+
+# Placeholder-safe identity for the from-turn-zero binding. Brace-free
+# (AC.LIPW.2) and intentionally non-personal: the real identity is
+# captured by `persist_grounding` on the first onboarding turn. The
+# persona-template's starter contract carries `given_name: Example`;
+# the starter prompt's playbook drives a rename in the second turn.
+_PLACEHOLDER_USER_NAME = "you"
+_PLACEHOLDER_PERSONA_NAME = "your workspace persona"
+
+
+def _persona_binding_already_bound(
+    settings_path: Path, agents_file: Path, handle: str
+) -> bool:
+    """Idempotency probe (AC36.3 discipline, halt-trigger 5).
+
+    Returns True iff the persona binding is already present and
+    consistent — the agents file exists non-empty AND settings.json
+    already carries ``"agent": <handle>``. On a re-``loam init`` of an
+    already-bound workspace this returns True and the binding write is
+    a no-op (no clobber of operator-customised settings keys; the
+    underlying ``merge_session_start`` already preserves user keys but
+    the early-return keeps the re-run a strict no-op for the binding).
+    """
+    if not agents_file.exists() or agents_file.stat().st_size == 0:
+        return False
+    if not settings_path.exists():
+        return False
+    try:
+        import json  # noqa: PLC0415 — local, stdlib
+
+        data = json.loads(settings_path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — malformed settings -> rebind
+        return False
+    return isinstance(data, dict) and data.get("agent") == handle
+
+
+def _scaffold_persona_binding(
+    *, workspace_root: Path, handle: str, loam_root: Path
+) -> bool:
+    """Write the primary-persona binding surface for a fresh workspace.
+
+    Returns True iff this invocation wrote (or rewrote) the binding.
+    Idempotent (AC36.3): a re-``loam init`` on an already-bound
+    workspace is a no-op. Fail-soft: any failure to locate the
+    just-installed persona contract / template surfaces as a return
+    of False (the workspace is still usable; the binding can be
+    re-attempted by a later re-scaffold) rather than aborting the
+    whole bootstrap — mirrors the scaffold's other fail-soft writes.
+
+    Composes on sealed primitives only (Lens 1). No primary-persona
+    or hands-off-lifecycle source is edited; both are imported.
+    """
+    from .workspace_paths import claude_dir as _claude_dir
+    from .workspace_paths import personas_dir as _personas_dir
+
+    workspace_root = Path(workspace_root).resolve()
+    persona_dir = _personas_dir(workspace_root) / handle
+    contract_path = persona_dir / "contract.yaml"
+    claude_dir = _claude_dir(workspace_root)
+    agents_dir = claude_dir / "agents"
+    agents_file = agents_dir / f"{handle}.md"
+    settings_path = claude_dir / "settings.json"
+
+    if not contract_path.exists() or contract_path.stat().st_size == 0:
+        # The persona dir was not installed (or is half-written). The
+        # scaffold's _install_persona_directory already surfaces the
+        # malformed case as a structured diagnostic; here we simply
+        # decline to bind rather than raise (fail-soft).
+        return False
+
+    if _persona_binding_already_bound(settings_path, agents_file, handle):
+        return False
+
+    # ---- compose on the sealed primitives ----------------------------
+    # Fail-soft envelope (AC36.3 discipline + this function's docstring
+    # contract): a workspace whose `framework/` clone does not carry
+    # the persona-binding machinery (e.g. a minimal fixture clone, a
+    # stranger clone of a stripped subtree, or a partial-recovery
+    # state) is still a usable workspace — the binding simply does not
+    # happen and `bootstrap_new_workspace` does NOT abort. The imports
+    # are therefore inside the fail-soft try (a missing
+    # primary_persona / hands-off-lifecycle surface returns False, not
+    # a ModuleNotFoundError escaping the whole bootstrap).
+    try:
+        from loam.primary_persona.agent_md import (  # noqa: PLC0415
+            to_agent_md,
+        )
+        from loam.primary_persona.contract import (  # noqa: PLC0415
+            load_contract,
+        )
+        from loam.primary_persona.onboarding import (  # noqa: PLC0415
+            _render_prompt_md,
+        )
+        from loam.primary_persona.session_start_emitter import (  # noqa: PLC0415,E501
+            build_persona_session_start_inner_hook,
+        )
+
+        # hands-off-lifecycle's settings-merge builders live under a
+        # hooks/ dir (not a src/ package). Resolve `first_run_settings`
+        # from THIS WORKSPACE's own clone via an isolated importlib
+        # spec — NOT a global `sys.path.insert`. A leaked sys.path
+        # entry would make the binding's success depend on ambient
+        # process state (e.g. an earlier caller having inserted a
+        # different clone's hooks dir), which is non-deterministic and
+        # cross-contaminating. Per-workspace spec resolution makes the
+        # binding deterministic: it succeeds iff THIS workspace's
+        # clone actually carries the machinery (fail-soft otherwise),
+        # regardless of any other sys.path state in the process.
+        import importlib.util as _ilu  # noqa: PLC0415
+
+        first_run_settings_py = (
+            loam_root
+            / "framework"
+            / "hands-off-lifecycle"
+            / "hooks"
+            / "first_run_settings.py"
+        )
+        if not first_run_settings_py.is_file():
+            return False
+        _mod_name = "_subloam_first_run_settings"
+        _spec = _ilu.spec_from_file_location(
+            _mod_name, first_run_settings_py
+        )
+        if _spec is None or _spec.loader is None:
+            return False
+        _frs = _ilu.module_from_spec(_spec)
+        # first_run_settings.py defines @dataclass types; the stdlib
+        # dataclasses machinery resolves a class's module via
+        # ``sys.modules.get(cls.__module__)`` at exec time, so the
+        # module MUST be registered in sys.modules under its spec name
+        # before exec_module (the documented importlib pattern for
+        # spec-loaded modules containing dataclasses). The synthetic
+        # name is unique + removed in `finally`, so this does NOT leak
+        # cross-test/process state (unlike a global sys.path.insert) —
+        # the per-workspace determinism property is preserved.
+        prior_mod = sys.modules.get(_mod_name)
+        sys.modules[_mod_name] = _frs
+        try:
+            _spec.loader.exec_module(_frs)
+        finally:
+            if prior_mod is not None:
+                sys.modules[_mod_name] = prior_mod
+            else:
+                sys.modules.pop(_mod_name, None)
+        build_supervisor_stanza = _frs.build_supervisor_stanza
+        merge_session_start = _frs.merge_session_start
+    except Exception:  # noqa: BLE001 — binding machinery absent ->
+        # fail-soft: workspace usable, binding skipped (the clone
+        # lacks the primary-persona / hands-off-lifecycle surface).
+        return False
+
+    try:
+        contract = load_contract(contract_path)
+    except Exception:  # noqa: BLE001 — malformed contract -> fail-soft
+        return False
+
+    # Render the persona prompt through the EXISTING substitution path
+    # with a brace-free placeholder identity (AC.LIPW.2). Read the
+    # just-installed workspace prompt.md (it is the framework template
+    # copy with literal tokens); substitute so zero `{...}` reaches
+    # the bound surface.
+    prompt_md_path = persona_dir / "prompt.md"
+    rendered_prompt: str | None = None
+    if prompt_md_path.exists() and prompt_md_path.stat().st_size > 0:
+        try:
+            rendered_prompt = _render_prompt_md(
+                prompt_md_path.read_text(encoding="utf-8"),
+                user_preferred_name=_PLACEHOLDER_USER_NAME,
+                persona_given_name=_PLACEHOLDER_PERSONA_NAME,
+            )
+        except Exception:  # noqa: BLE001 — fall back to contract-only
+            rendered_prompt = None
+
+    try:
+        agent_md_text = to_agent_md(contract, prompt_text=rendered_prompt)
+    except Exception:  # noqa: BLE001 — projector refused -> fail-soft
+        return False
+
+    agents_dir.mkdir(parents=True, exist_ok=True)
+    agents_file.write_text(agent_md_text, encoding="utf-8")
+    agents_file.chmod(0o644)
+
+    # Wire the SessionStart envelope + the top-level "agent" key. The
+    # supervisor stanza is the post-first-run shape (a fresh non-tech
+    # init is past the heavy first-run installer's concern — the
+    # persona emit is the binding that matters turn one). The
+    # `agent_handle` arg is the amendment #37 surface that makes a
+    # fresh Claude Code session select the persona as default agent.
+    persona_inner_hook = build_persona_session_start_inner_hook(loam_root)
+    new_entry = build_supervisor_stanza(
+        loam_root, extra_inner_hooks=[persona_inner_hook]
+    )
+    merge_session_start(
+        settings_path=settings_path,
+        new_entry=new_entry,
+        agent_handle=handle,
+    )
+    return True
+
+
 def _stub_tracker_seed_runner_default() -> Any:
     """Return a no-op tracker-seed runner.
 
@@ -657,6 +905,31 @@ def bootstrap_new_workspace(
     # at runtime (closes FBE.5 Surface #7). Runs AFTER the scaffold
     # block so workspace state is fully populated first.
     _scaffold_claude_dir(claude_dir)
+
+    # loam-init persona-wiring (AC.LIPW.1/.2/.3): forward extension of
+    # the FBE.5b scaffold — write the primary-persona binding surface
+    # the `{}` settings.json deliberately out-scoped, so a bare
+    # `claude` in this fresh workspace has the persona ACTIVE on turn
+    # one (no manual hook install, no canonical-dev template copy, no
+    # unsubstituted prompt tokens). Composes on sealed primitives
+    # (Lens 1); idempotent (AC36.3); fail-soft (a binding failure does
+    # not abort the bootstrap — the workspace is still usable and the
+    # binding is re-attempted on a re-scaffold). `loam_root` is the
+    # CLONE ROOT (`<ws>/framework/`): `bootstrap_new_workspace` does
+    # `git clone <canonical> <ws>/framework/`, and canonical loam
+    # itself carries a top-level `framework/` subdir, so the cloned
+    # layout is `<ws>/framework/framework/<component>/...` +
+    # `<ws>/framework/.venv/`. The settings-stanza builders compose
+    # `loam_root/.venv/bin/python` + `loam_root/framework/
+    # orchestrator/...` and `_scaffold_persona_binding` resolves the
+    # hooks at `loam_root/framework/hands-off-lifecycle/hooks` — all
+    # of which resolve correctly ONLY when `loam_root == <ws>/
+    # framework/` (the clone root), NOT the workspace root.
+    _scaffold_persona_binding(
+        workspace_root=new_ws_path,
+        handle=persona_handle,
+        loam_root=framework_dir,
+    )
 
     return BootstrapResult(
         new_ws_path=new_ws_path,

@@ -240,3 +240,42 @@ Discipline GREEN on all three FIDRAFT edits.
 - Original pin commit: `0d599bb` (2026-04-27, Luke Ivers — `framework/tools/pos-amend/pyproject.toml` with `requires-python = ">=3.11"`).
 - Composes-with feedback memories: `feedback_agent_empirical_recheck_before_halt`, `feedback_loose_AC_text_fix_AC_not_implementation`, `feedback_locked_design_not_license_for_bad_outcomes`, `feedback_principle_conflict_resolution_multi_signal`, `feedback_no_amend_in_agent_dispatches`, `feedback_version_numbers_at_release_time`.
 - Convention compliance: F-CYCLE-ARTEFACT-SLUG-NAMING (smoke writeup slug-named); F-PLAN-DOC-TEMPLATE-AUTO-BUMP-FENCE (allow-list pre-includes `test_no_sealed_amendments.py`); F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH (§6 above).
+
+---
+
+## §8 — §status
+
+**Build cycle:** SHIPPED LOCAL 2026-05-14. Single-cycle PATCH closing FIDRAFT F-TF-1 (RESOLVED) + F-PYTHON-3.9-TEST-FAILURES-PYPROJECT-PIN (RESOLVED-BY-INSPECTION) + amending F-RETIRE-MIGRATE-TOOLS framing (status unchanged). Path A scope only; Path B/C deferred for owner safety-horizon ratification. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
+
+**Plan-doc commits:** plan-doc + manifest `91a167f`; source-edit (test fix + 3 FIDRAFT edits + STATE/roadmap admin + slug-named smoke writeup) `26a5bee`; manifest baseline backfill `d985013`; apply auto-commit (BASELINE + sidecar bump to `26a5bee` + `extra_allowed_prefixes: [framework/workspace-sync/tests/]`) `c926322`; seal commit (deterministic seal) `6bc8dd6`.
+
+### AC verdict matrix
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.WSP.1 — workspace-sync test stale-path expectation removed; F-TF-1 RESOLVED | GREEN | Smoke writeup §2.3: `python3.13 -m pytest framework/workspace-sync/tests/test_AC_D_5_5_bare_paths_absent.py -v` returns 4/4 PASSED (was: 3 passed + 1 failed at `test_AC_D_5_5_1_framework_tools_present`). Source-edit at `framework/workspace-sync/tests/test_AC_D_5_5_bare_paths_absent.py` removed the `framework_tools / "pos-publish-framework-only" / "pyproject.toml"` line from `expected` tuple + corresponding comment lines + added v0.10.7-PATCH-context comment. F-TF-1 entry at `docs/FUTURE_IDEAS_DRAFT.md:252` status flipped to RESOLVED with cycle slug + commit pointer. |
+| AC.WSP.2 — F-PYTHON-3.9 RESOLVED-BY-INSPECTION | GREEN | Smoke writeup §3 captures the 4-step empirical-recheck per `feedback_agent_empirical_recheck_before_halt`: (a) `find framework plugins -name pyproject.toml -exec grep -l "requires-python" {} \;` returns all 30 files; counts via `grep -F '">=3.11"' \| wc -l` = 24 + `grep -F '">=3.13"' \| wc -l` = 6 (totals 30); (b) `git blame framework/tools/loam/pyproject.toml` for the `requires-python` line returns commit `0d599bb` from 2026-04-27 (17 days before 2026-05-14 capture); (c) `pip install --dry-run framework/tools/loam/` on Python 3.9.17 returns `ERROR: Package 'loam-cli' requires a different Python: 3.9.17 not in '>=3.11'` — pip refuses install at install-time exactly as F-PYTHON-3.9 prescribes. F-PYTHON-3.9 entry at `docs/FUTURE_IDEAS_DRAFT.md:296` status flipped to RESOLVED-BY-INSPECTION (NOT plain RESOLVED) with empirical-recheck evidence + chain pointer to commit `0d599bb`. |
+| AC.WSP.3 — F-RETIRE-MIGRATE-TOOLS "Proposed shape" rewritten per prior-halt evidence | GREEN | Smoke writeup §4 captures the diff summary. Title line corrected (heavy-b-migrate + pos-publish-framework-only removed from candidates). "Proposed shape" body rewritten with 4 named corrections: (1) heavy-b-migrate REMOVED as load-bearing continuous trigger per `plugins/dev-sdlc/tools/loam-mode/src/loam_mode/session_start.py:283-299`; (2) orphan-plist-cleanup retirement clarified as 4-file edit; (3) 3 `loam-migrate-*` per-host helpers retirement clarified as safety-horizon judgment call (owner-class); (4) pos-publish-framework-only confirmed already-retired (closed by AC.WSP.1). Path-A/B/C decomposition added. Status unchanged (still `capture-only`). Chain pointer to `workspace/.scratch/claude-output/retire-one-time-migration-tools-halt-and-surface.md` added. |
+| AC.WSP.4 — outcome-altitude dogfood probe | GREEN | Smoke writeup at `docs/experiments/workspace-sync-test-and-python-runtime-pin-hard-smoke.md` documents end-to-end: §2 workspace-sync test 4/4 GREEN; §3 F-PYTHON-3.9 empirical-recheck verbatim outputs (grep + git blame + pip --dry-run + cycle-agent-observation reproduction); §4 F-RETIRE-MIGRATE-TOOLS framing-correction diff summary; §5 release-CLI 6-gate dry-run captured at apply-time per the manifest baseline backfill workflow; §6 F2 RUTHLESS FEEDBACK observations. |
+| AC.WSP.S — seal-diff scope-fence | GREEN | `git diff --name-only 91a167f..6bc8dd6` shows changes only under: `framework/workspace-sync/tests/test_AC_D_5_5_bare_paths_absent.py` (test fix admitted via `extra_allowed_prefixes: [framework/workspace-sync/tests/]`); `docs/FUTURE_IDEAS_DRAFT.md` (3 FIDRAFT edits); `docs/STATE.md` + `docs/release-roadmap.md` (universal-admission docs); `docs/experiments/workspace-sync-test-and-python-runtime-pin-hard-smoke.md` (slug-named smoke writeup); `docs/plans/workspace-sync-test-and-python-runtime-pin.{md,manifest.yaml}` (plan-doc + manifest); dev-sdlc seal anchor artefacts (`plugins/dev-sdlc/seals/SEAL_COMMIT.workspace-sync-test-and-python-runtime-pin` + `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar bump + `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` BASELINE pointer auto-bump — pre-included in §3 allow-list per F-PLAN-DOC-TEMPLATE-AUTO-BUMP-FENCE convention). NO entries in pyproject.toml; NO entries in any framework/* component source code beyond the single test file admitted via `extra_allowed_prefixes`; NO `__version__` updates; NO test additions or removals beyond the in-scope F-TF-1 stale-path drop. |
+
+### AI-time actuals
+
+| Stage | Estimated | Actual |
+|---|---|---|
+| Halt-and-surface artefact read + empirical investigation | 5-10 min | ~5 min |
+| Plan-doc + manifest authoring | 10-15 min | ~12 min |
+| Source-edit (test fix + 3 FIDRAFT edits + STATE/roadmap admin + slug-named smoke writeup) | 10-20 min | ~18 min |
+| `loam amend validate` + manifest baseline backfill + `apply` + `seal` | 5-10 min | ~3 min |
+| §status backfill + roadmap-row seal-SHA backfill + re-run dry-run | 3-5 min | TBD-AT-COMMIT |
+| **Total** | **~33-60 min** | **~40 min** (~5 min remaining) |
+
+In-band — landed cleanly. Two in-cycle discoveries: (a) the F-PYTHON-3.9 entry was already empirically RESOLVED-BY-INSPECTION pre-capture (caught at plan-time empirical recheck per `feedback_agent_empirical_recheck_before_halt`); (b) initial pyproject count was wrong (16 files at >=3.11 stated; actual = 24 files at >=3.11; corrected per `feedback_specific_claims_verified_or_marked_guess` before commit).
+
+### Halt-and-surface findings
+
+**No HARD HALTs fired in-cycle.** The prior-dispatch (`retire-one-time-migration-tools`) halt-and-surface artefact did all the empirical-investigation legwork; this PATCH executed Path A per the recommended decomposition.
+
+**One soft halt (during plan-time empirical recheck):** the F-PYTHON-3.9 entry's "Proposed shape" framing was structurally inaccurate (the proposed work was already done pre-capture). Resolved by reframing AC.WSP.2 as a RESOLVED-BY-INSPECTION admin action (NOT a source-edit AC) per `feedback_loose_AC_text_fix_AC_not_implementation` applied at plan-time. Did not require dispatcher escalation; doc-only correction within the plan-doc + FIDRAFT entry.
+
+**One specific-claims-verification correction:** pyproject count initially stated as "16 files at >=3.11" (uncorroborated). Empirical recount via `grep -F '">=3.11"' | wc -l` returned 24. Corrected across all 5 affected files before source-edit commit per `feedback_specific_claims_verified_or_marked_guess`. No downstream impact.

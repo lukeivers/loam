@@ -165,9 +165,16 @@ class SessionPayload(BaseModel):
     service_state: dict[str, str] = Field(
         default_factory=dict,
         description=(
-            "Service-state fields for the memory sidecar, orchestrator, "
-            "and any other session-level services. Values are short "
-            "status strings — 'up', 'down', 'timeout', 'unknown'."
+            "Session-start reachability fields. The 'memory' entry "
+            "reports the file-based memory store under the v0.1.0 "
+            "M-FBM pivot (D-Q.MFBM.6): the store is a file-based "
+            "episode dir, not a daemon — there is no memory service "
+            "and no health port; the entry takes 'not_expected' when "
+            "graphiti/M-GMP is not installed and only TCP-probes when "
+            "that optional provider's plist is present. The "
+            "'orchestrator' entry reports a genuine UNIX-socket "
+            "service. Values are short status strings — 'up', 'down', "
+            "'unknown', 'not_expected'."
         ),
     )
     cost_headroom: dict[str, Any] = Field(

@@ -17,8 +17,9 @@
 This module owns the session-level payload-field dict the
 ``ComposedContextPayload.on_session_start`` entry point consumes. It
 discovers the baseline corpus, enumerates in-flight amendments, probes
-session-level services, reads cost headroom, and computes the
-``corpus_gate_state`` sentinel.
+session-start reachability (the file-based memory store under M-FBM +
+the orchestrator UNIX-socket service), reads cost headroom, and
+computes the ``corpus_gate_state`` sentinel.
 
 Graceful refusal on missing corpus (AC D8.2): missing paths are named
 in ``missing_paths``; the sentinel takes ``partial`` (some present) or
@@ -175,22 +176,31 @@ def enumerate_amendments_in_flight(workspace_root: Path) -> list[str]:
 
 
 def probe_service_state(workspace_root: Path) -> dict[str, str]:
-    """Quick, cheap probe of session-level services.
+    """Quick, cheap session-start reachability probe.
 
-    Probes:
-      - memory-system: HTTP health port as recorded on
-        ``<workspace>/.pos/memory-port``, else default 8765. 250 ms
-        timeout per research §7.3's 1.5 s worst-case envelope; D8
-        uses the cheaper setting since the session-start budget
-        aggregates multiple probes.
-      - orchestrator: UNIX-socket reachability on the recorded path.
+    Two entries, modelled differently because they ARE different:
+
+      - ``memory``: the file-based memory store under the v0.1.0
+        M-FBM pivot (``file_memory.py`` D-Q.MFBM.6). The store is a
+        file-based episode directory on disk — there is no memory
+        daemon and no health port for the file-based store, so the
+        baseline (M-FBM-only) reading is ``not_expected``: the store
+        is the file-based dir, not a service to probe. A TCP probe
+        engages ONLY when the optional graphiti/M-GMP provider is
+        installed (its launchd plist present at the canonical
+        location); then ``up`` / ``down`` report that optional
+        provider's port (250 ms connect timeout — the session-start
+        budget aggregates multiple probes, so the cheaper setting).
+      - ``orchestrator``: a genuine session-level service —
+        UNIX-socket reachability on the recorded path.
 
     Returns a dict with string values: "up" / "down" / "unknown" /
     "not_expected". The "not_expected" sentinel (V11.E item (b),
-    Resolution A) signals that the memory-graphiti launchd plist is
-    absent at the canonical location — graphiti is not installed on
-    this host, so probing would false-alarm. M-FBM-only stranger
-    workspaces see "memory: not_expected" instead of "memory: down".
+    Resolution A) is the M-FBM signal, not a fault: it states the
+    file-based store is the runtime and no graphiti provider is
+    expected to answer. M-FBM-only workspaces see
+    "memory: not_expected"; "down" appears only when graphiti/M-GMP
+    IS installed and its port is unreachable.
     """
     state: dict[str, str] = {}
     state["memory"] = _probe_memory(workspace_root)
@@ -199,12 +209,14 @@ def probe_service_state(workspace_root: Path) -> dict[str, str]:
 
 
 # V11.E item (b) — Resolution A: plist-existence detection signal.
-# When the memory-graphiti launchd plist is absent at the canonical
-# location, the workspace is M-FBM-only (file-based memory; v0.1.0
-# default) and graphiti is not expected to respond on its TCP port.
-# Probing in that case false-alarms with `memory: down`. The fix
-# returns `not_expected` instead, signalling the architectural state
-# without false alarm.
+# Under the v0.1.0 M-FBM pivot the memory store is a file-based
+# episode dir, not a service. When the optional graphiti/M-GMP
+# launchd plist is absent at the canonical location, the workspace
+# is M-FBM-only (file-based memory; v0.1.0 default): there is no
+# memory daemon to TCP-probe, so a port probe would false-alarm with
+# `memory: down`. The fix returns `not_expected` instead — modelling
+# the file-based store's reachability state (the store IS the
+# file-based dir) rather than a non-existent service's liveness.
 _MEMORY_GRAPHITI_LABEL = "com.loam.memory-graphiti"
 
 

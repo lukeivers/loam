@@ -207,6 +207,44 @@ MEMORY_RETRIEVAL_CHAR_CAP = 1600
 # AC.MFBM.2's 7-of-10 fixture bar empirically.
 GREP_FALLBACK_SCAN_LIMIT = 200
 
+# AC.MSC.1 (Gap B — recency reaches the top-N). The pre-MSC ranking
+# was pure BM25 (``ORDER BY score``) with ``reference_time UNINDEXED``
+# — the timestamp was stored but never a ranking input, so a stale
+# lexically-strong episode out-ranked the most-recent active thread.
+# D-MSC.2 ruling: recency-decay *blended* with BM25, not recency-only
+# (recency-only would surface the latest episode regardless of
+# relevance and drown a genuinely-relevant older answer — §12 halt
+# trigger 4). The blend re-ranks a widened FTS candidate pool in
+# Python (stdlib, deterministic, zero SQL date-math portability risk):
+# every candidate's BM25 rank-position is combined with an
+# exponential recency-decay weight keyed off the episode's
+# ``reference_time`` so a recency-shaped query reaches the
+# newest-active-thread episode within the returned top-N while a
+# non-recency query still surfaces a directly-relevant older answer.
+#
+# Half-life default 5 days — the active-thread horizon (D-MSC.2
+# preliminary band 3–7 days; 5d is the midpoint and the §10 smoke
+# fixture is the arbiter). A per-workspace tuning knob is explicitly
+# deferred (plan §3 out-of-scope-deferred).
+RECENCY_HALF_LIFE_DAYS = 5.0
+
+# Candidate-pool widening factor. ``_fts_search`` fetches
+# ``num_results * RECENCY_CANDIDATE_FACTOR`` BM25 hits (floored at
+# RECENCY_CANDIDATE_FLOOR) so the recency re-rank has a pool deep
+# enough that a slightly-weaker-lexical but most-recent active-thread
+# episode is reachable, then returns the top ``num_results`` after the
+# blend. Bounded so the widened query stays within the session-start
+# 5s envelope on a 600+-episode store.
+RECENCY_CANDIDATE_FACTOR = 8
+RECENCY_CANDIDATE_FLOOR = 40
+
+# Relative weight of the recency channel against the BM25-relevance
+# channel in the blended score. 0.0 → pure relevance (pre-MSC
+# behaviour); 1.0 → pure recency. 0.5 keeps both channels load-bearing
+# so neither drowns the other (§12 halt trigger 4 — recency must not
+# trade away retrieval quality).
+RECENCY_BLEND_WEIGHT = 0.5
+
 
 @dataclass
 class FileMemoryStore:
@@ -386,6 +424,103 @@ class FileMemoryStore:
             "episodes": episodes,
         }
 
+    # ---- recency scan (AC.MSC.2 — session-start active-thread) ------
+
+    def recent_episodes(
+        self,
+        *,
+        group_ids: list[str] | None,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        """Return the most-recent ``limit`` episodes newest-first,
+        independent of any query (AC.MSC.2 / D-MSC.4).
+
+        This is the deterministic recency scan the session-start
+        active-thread contributor consumes. Unlike :meth:`search`
+        (BM25 keyword retrieval), this walks the episode date-dirs
+        newest-first and reads up to ``limit`` files — no query, no
+        index, no LLM. Stdlib-only, fits the 5s session-start hook
+        envelope (D-MSC.4: a ``claude -p`` digest does not fit the
+        timeout; the deterministic scan is the structural floor).
+
+        Newest-first order is by ``(date_dir, reference_time)``: the
+        date-dir name is ``YYYY-MM-DD`` (lexically sortable) and the
+        per-file ``reference_time`` frontmatter breaks within-day
+        ties. A file with an unparseable timestamp sorts to the end
+        of its date-dir rather than raising (AC.MSC.5 fail-soft).
+
+        Returns the same per-episode dict shape as :meth:`search`'s
+        ``episodes`` entries (``name``/``content``/``path``/
+        ``group_id``/``valid_at``) so the contributor reuses the
+        existing rendering surface.
+        """
+        episodes_root = self.memory_dir / EPISODES_SUBDIR
+        if not episodes_root.exists() or limit <= 0:
+            return []
+        candidates: list[tuple[str, str, Path]] = []
+        try:
+            group_dirs = [
+                d for d in episodes_root.iterdir() if d.is_dir()
+            ]
+        except OSError:
+            return []
+        for group_dir in group_dirs:
+            if group_ids and group_dir.name not in group_ids:
+                continue
+            try:
+                date_dirs = sorted(
+                    (d for d in group_dir.iterdir() if d.is_dir()),
+                    key=lambda d: d.name,
+                    reverse=True,
+                )
+            except OSError:
+                continue
+            for date_dir in date_dirs:
+                try:
+                    files = [
+                        f
+                        for f in date_dir.iterdir()
+                        if f.is_file() and f.suffix == ".md"
+                    ]
+                except OSError:
+                    continue
+                for ep in files:
+                    candidates.append((date_dir.name, "", ep))
+                # Bound the walk — once we have comfortably more than
+                # ``limit`` from the newest date-dirs we can stop
+                # descending into older dirs (they cannot out-rank).
+                if len(candidates) >= limit * 4:
+                    break
+            if len(candidates) >= limit * 4:
+                break
+        scored: list[tuple[str, str, Path, str, dict[str, str]]] = []
+        for date_name, _placeholder, path in candidates:
+            try:
+                content = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            front, body = _split_frontmatter(content)
+            ref_raw = front.get("reference_time", "")
+            parsed = _parse_reference_time(ref_raw)
+            # Sort key: date-dir desc, then reference_time desc. A
+            # missing/unparseable timestamp sorts last within its
+            # date-dir (empty string < any ISO string under desc).
+            ref_sort = parsed.isoformat() if parsed is not None else ""
+            scored.append((date_name, ref_sort, path, body, front))
+        scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
+        out: list[dict[str, Any]] = []
+        for _dname, _rsort, path, body, front in scored[:limit]:
+            out.append(
+                {
+                    "name": front.get("name", path.stem),
+                    "content": body,
+                    "path": str(path),
+                    "group_id": front.get("group_id", ""),
+                    "valid_at": front.get("reference_time", ""),
+                }
+            )
+        return out
+
     # ---- archive path (AC.MFBM.6) -----------------------------------
 
     def archive_before(self, *, date: datetime) -> int:
@@ -449,7 +584,21 @@ class FileMemoryStore:
 
     def _connection(self) -> sqlite3.Connection:
         """Lazily open the FTS5 sqlite connection; create schema if
-        needed."""
+        needed.
+
+        D-MSC.5 (rebuild-on-mismatch). The recency-blend ranking
+        (AC.MSC.1) reads each hit's ``reference_time`` column. A
+        pre-MSC index whose ``episodes`` table predates the
+        ``reference_time`` column would make the recency SELECT raise.
+        The index is a derived cache (the episode markdown files are
+        the source of truth — ``write_episode`` re-indexes every
+        write); so a schema-mismatched index is *dropped + lazily
+        rebuilt* rather than ALTER-migrated. During the rebuild window
+        the existing grep fallback covers retrieval (AC.MSC.5 — never
+        raise; rebuild-or-fallback). The probe is cheap (one
+        ``PRAGMA``-equivalent column read) and runs once per
+        connection.
+        """
         if self._conn is not None:
             return self._conn
         self.memory_dir.mkdir(parents=True, exist_ok=True)
@@ -461,8 +610,38 @@ class FileMemoryStore:
             "reference_time UNINDEXED)"
         )
         conn.commit()
+        if not self._index_schema_is_current(conn):
+            # Pre-MSC schema (no ``reference_time`` column). Drop the
+            # stale virtual table + recreate with the current schema.
+            # The episodes on disk re-populate it lazily on the next
+            # write; until then ``search`` falls through to grep.
+            conn.execute("DROP TABLE IF EXISTS episodes")
+            conn.execute(
+                "CREATE VIRTUAL TABLE episodes "
+                "USING fts5(name, body, group_id, path UNINDEXED, "
+                "reference_time UNINDEXED)"
+            )
+            conn.commit()
         self._conn = conn
         return conn
+
+    @staticmethod
+    def _index_schema_is_current(conn: sqlite3.Connection) -> bool:
+        """Return ``True`` when the ``episodes`` FTS5 table carries the
+        ``reference_time`` column the recency blend requires.
+
+        A pre-MSC index lacks it. Probing via a bounded SELECT keeps
+        this stdlib + FTS5-portable (``PRAGMA table_info`` is empty for
+        FTS5 virtual tables). Any sqlite error → treat as not-current
+        so the caller rebuilds (fail-toward-rebuild, never raise —
+        AC.MSC.5)."""
+        try:
+            conn.execute(
+                "SELECT reference_time FROM episodes LIMIT 0"
+            ).fetchall()
+        except sqlite3.Error:
+            return False
+        return True
 
     def _index_episode(
         self,
@@ -509,6 +688,18 @@ class FileMemoryStore:
         if not tokens:
             return []
         safe_query = " OR ".join(tokens)
+        # AC.MSC.1 / D-MSC.2: fetch a widened BM25 candidate pool so
+        # the recency re-rank has depth — a slightly-weaker-lexical
+        # but most-recent active-thread episode is reachable in the
+        # pool even though pure BM25 would have ranked it below the
+        # ``num_results`` cut. The pool is still ``ORDER BY score``
+        # (BM25) at the SQL layer; the recency blend happens in
+        # Python over the returned pool (stdlib, deterministic, no
+        # SQL date-math portability risk).
+        candidate_limit = max(
+            num_results * RECENCY_CANDIDATE_FACTOR,
+            RECENCY_CANDIDATE_FLOOR,
+        )
         if group_ids:
             placeholders = ",".join("?" for _ in group_ids)
             sql = (
@@ -517,7 +708,7 @@ class FileMemoryStore:
                 f"FROM episodes WHERE episodes MATCH ? AND group_id IN ({placeholders}) "
                 "ORDER BY score LIMIT ?"
             )
-            params: list[Any] = [safe_query, *group_ids, num_results]
+            params: list[Any] = [safe_query, *group_ids, candidate_limit]
         else:
             sql = (
                 "SELECT name, body, path, group_id, reference_time, "
@@ -525,15 +716,15 @@ class FileMemoryStore:
                 "FROM episodes WHERE episodes MATCH ? "
                 "ORDER BY score LIMIT ?"
             )
-            params = [safe_query, num_results]
+            params = [safe_query, candidate_limit]
         try:
             cur = conn.execute(sql, params)
         except sqlite3.OperationalError:
             return []
-        out: list[dict[str, Any]] = []
+        pool: list[dict[str, Any]] = []
         for row in cur:
             name, body, path, group_id, ref_time, _score = row
-            out.append(
+            pool.append(
                 {
                     "name": name,
                     "content": body,
@@ -542,7 +733,14 @@ class FileMemoryStore:
                     "valid_at": ref_time,
                 }
             )
-        return out
+        # Blend BM25 relevance with recency-decay, then return the
+        # top ``num_results``. ``now`` is injected so the AC.MSC.1
+        # fixture + §10 smoke are deterministic.
+        return _blend_recency(
+            pool,
+            num_results=num_results,
+            now=datetime.now(timezone.utc),
+        )
 
     def _grep_search(
         self,
@@ -735,6 +933,88 @@ def _split_frontmatter(content: str) -> tuple[dict[str, str], str]:
         key, _, value = ln.partition(":")
         front[key.strip()] = value.strip()
     return (front, body)
+
+
+def _parse_reference_time(raw: str) -> datetime | None:
+    """Parse an ISO-8601 ``reference_time`` string to an aware UTC
+    datetime; ``None`` when unparseable.
+
+    Episodes are written with ``reference_time: <ISO-8601-utc>``
+    (``write_episode``); the FTS5 index stores the same string. A
+    malformed / absent value degrades to ``None`` so the recency
+    re-rank treats that episode as recency-neutral rather than
+    raising (AC.MSC.5 fail-soft — never raise on a ranking input).
+    """
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except (ValueError, TypeError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _recency_weight(ref_time: datetime | None, *, now: datetime) -> float:
+    """Exponential recency-decay weight in ``[0.0, 1.0]``.
+
+    ``1.0`` at ``now`` (or future-dated, clamped), decaying with a
+    ``RECENCY_HALF_LIFE_DAYS`` half-life. An episode exactly one
+    half-life old weighs ``0.5``; two half-lives ``0.25``; etc. An
+    unparseable / absent timestamp is recency-neutral (returns
+    ``0.0`` — it competes on BM25 relevance alone, never crowding a
+    dated active-thread episode out on a recency-shaped query).
+
+    Pure function of its inputs (``now`` injected) so the §10 smoke
+    + AC.MSC.1 fixture are deterministic.
+    """
+    if ref_time is None:
+        return 0.0
+    age_days = (now - ref_time).total_seconds() / 86400.0
+    if age_days <= 0.0:
+        return 1.0
+    return 0.5 ** (age_days / RECENCY_HALF_LIFE_DAYS)
+
+
+def _blend_recency(
+    rows: list[dict[str, Any]], *, num_results: int, now: datetime
+) -> list[dict[str, Any]]:
+    """Re-rank a BM25-ordered candidate pool by a recency-blended
+    score and return the top ``num_results`` (AC.MSC.1 / D-MSC.2).
+
+    ``rows`` arrives BM25-ordered (best-relevance first). Each row's
+    BM25 *rank position* is converted to a normalised relevance
+    channel in ``[0.0, 1.0]`` (1.0 = best-ranked) and blended with
+    its recency weight:
+
+        blended = (1 - W) * relevance_channel + W * recency_channel
+
+    with ``W = RECENCY_BLEND_WEIGHT``. Both channels stay
+    load-bearing so a recency-shaped query reaches the newest
+    active-thread episode within the top-N while a non-recency query
+    still surfaces a directly-relevant older answer (§12 halt
+    trigger 4). Stable: equal blended scores preserve the incoming
+    BM25 order (Python sort is stable).
+    """
+    if not rows:
+        return []
+    total = len(rows)
+    scored: list[tuple[float, int, dict[str, Any]]] = []
+    for idx, row in enumerate(rows):
+        # Best BM25 row (idx 0) → relevance_channel 1.0; worst → ~0.
+        relevance_channel = (total - idx) / total
+        ref_time = _parse_reference_time(str(row.get("valid_at", "")))
+        recency_channel = _recency_weight(ref_time, now=now)
+        blended = (
+            (1.0 - RECENCY_BLEND_WEIGHT) * relevance_channel
+            + RECENCY_BLEND_WEIGHT * recency_channel
+        )
+        scored.append((blended, idx, row))
+    # Sort by blended score desc; ``idx`` as a stable secondary key so
+    # equal-blend ties preserve the original BM25 ordering.
+    scored.sort(key=lambda t: (-t[0], t[1]))
+    return [row for _, _, row in scored[:num_results]]
 
 
 def _empty_result(query: str) -> dict[str, Any]:

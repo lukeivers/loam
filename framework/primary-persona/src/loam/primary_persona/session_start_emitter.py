@@ -215,6 +215,47 @@ def build_session_composer(
             # retrieval block. AC46.2 holds.
             pass
 
+    # AC.MSC.2 (Gap A part b) — register the session-start
+    # active-thread contributor at TriggerKind.session so a fresh
+    # session reconstructs the most-recent active working thread from
+    # durably-stored memory WITHOUT any session-end hook. Composed on
+    # the existing SessionStart registry (Lens 1 — no new hook
+    # machinery). Independent of the turn-level retrieval block above:
+    # the active-thread digest is read at session-start, the retrieval
+    # block at turn-time. Fail-soft on registration (AC.MSC.5) — a
+    # registration failure simply omits the block; the session
+    # proceeds.
+    try:
+        from .active_thread import (  # noqa: WPS433
+            build_active_thread_contributor,
+        )
+        from .file_memory import (  # noqa: WPS433
+            FileMemoryStore,
+            memory_dir_for_workspace,
+        )
+
+        slug = resolve_workspace_slug(workspace_root)
+        store = FileMemoryStore(
+            memory_dir=memory_dir_for_workspace(workspace_root)
+        )
+        active_thread_fn = build_active_thread_contributor(
+            store,
+            workspace_root=workspace_root,
+            workspace_slug=slug,
+        )
+        composer.register(
+            name="active-thread",
+            trigger_kind=TriggerKind.session,
+            fn=active_thread_fn,
+        )
+    except Exception:  # noqa: BLE001 — AC.MSC.5 fail-soft
+        # Slug resolution / store construction / contributor
+        # registration failed; the SessionStart payload omits the
+        # active-thread block. The session proceeds (defence-in-depth:
+        # AC.MSC.3's named-thread corpus path still surfaces the
+        # live-thread digest).
+        pass
+
     return composer
 
 

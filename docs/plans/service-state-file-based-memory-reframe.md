@@ -120,7 +120,16 @@ Per `feedback_subagent_odd_violation_halt`: halt and surface any ODD violation o
 
 ## §11 — §status
 
-**Plan-doc cycle:** authored 2026-05-15 (loam-builder). Doc-only + fully reversible (plan-doc + manifest only). D-SSMR.1 (PATCH class) builder-autonomous on build-time evidence (§2 proves prose-only; no owner ruling gates this — the reframe is methodology-answered, not an options surface).
+**Build cycle:** BUILT + SEALED + SHIPPED LOCAL (loam-builder, 2026-05-15). D-SSMR.{1,2} builder-autonomous (methodology-answered — §2 empirically proves prose-only; no owner-gated options); both stuck at build time. Source edits + AC.SSMR.* tests + `loam amend apply` + `loam amend seal` complete; merged to local `main` (`dac03ee`) + dogfood verified (full primary-persona suite 611 passed / 1 skipped on merged `main`; baseline post-memory-session-continuity 601/1; +10 = the 10 new AC.SSMR cases; zero regressions). LOCAL only — NO push, NO tag, NO public action (owner vocabulary lock: ship=LOCAL; owner said "ship it", not "publish").
+
+**AC verdict matrix (GREEN vs real test output):**
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.SSMR.1 | GREEN | `test_AC_SSMR_1_*` 3/3 — `probe_service_state.__doc__` models the memory entry as the file-based store under M-FBM; no HTTP-health-port service framing for the file-based store; orchestrator keeps socket-service framing. |
+| AC.SSMR.2 | GREEN | `test_AC_SSMR_2_*` 3/3 — `SessionPayload.model_fields["service_state"].description` drops the memory "sidecar" mis-model, models file-based store, keeps orchestrator service framing. |
+| AC.SSMR.3 | GREEN | `test_AC_SSMR_3_*` 4/4 — `service_state` dict keys exactly `{memory, orchestrator}`; values ⊆ sealed set `{up,down,unknown,not_expected}`; V11.E `not_expected` signal byte-identical; field type contract `dict[str,str]` unchanged. Pre-existing session-start suites (D8.1/D8.4/AC46.1/V11.E.2 — 22 cases) GREEN, ZERO test files modified by this amendment. |
+| AC.SSMR.S | GREEN | `test_no_sealed_amendments.py` + `test_AC_A_S_seal_diff_single_component_scope.py` GREEN post-seal; post-seal `loam amend apply --dry-run` clean (`primary-persona ok`). |
 
 ## §12 — Decisions
 
@@ -137,8 +146,17 @@ Plan-author authors plan + named decisions WITH recommendations. Both D-SSMR.1 a
 
 | Item | SHA |
 |---|---|
-| Plan-doc + manifest (this cycle) | (this commit) |
-| Source edits + AC.SSMR.* tests (pre-amendment tip / BASELINE-advance) | (build commit) |
-| `loam amend apply` | (apply commit) |
-| `loam amend seal` | (seal commit) |
-| §14 backfill + STATE.md + roadmap | (backfill commit) |
+| Plan-doc + manifest (this cycle) | `ccd00c0` |
+| Source edits + AC.SSMR.* tests (pre-amendment tip / BASELINE) | `0430954` |
+| Manifest baseline backfill (→ `0430954`) | `49f2436` |
+| `loam amend apply` (BASELINE+sidecar bump to `0430954`) | `0556d7f` |
+| `loam amend seal` (deterministic seal commit) | `4e8c41f` |
+| Ship LOCAL — merge `amend/memory-session-continuity` → `main` (no-ff; carries memory-session-continuity seal `77e3bd7` + this seal `4e8c41f`) | `dac03ee` |
+| §11 §status + §14 backfill + STATE.md + roadmap | (this commit) |
+
+Seal-diff window: `BASELINE=0430954..SEAL_COMMIT=0556d7f` (sidecar `tests/SEAL_COMMIT` = `0430954...`). Narrative: `framework/primary-persona/seals/SEAL_COMMIT.service-state-file-based-memory-reframe`. Stacked on `amend/memory-session-continuity` (memory-session-continuity backfill tip `5957073`); both amendments shipped together to local `main`.
+
+### Build-time corrections (F2-surfaced)
+
+- **`smoke_outcome` > 200-char schema cap.** Initial manifest `smoke_outcome` was 247 chars; schema caps at 200. Tightened to 197 chars before the plan-doc+manifest commit (mirrors the memory-session-continuity `b694a07` precedent). `loam amend validate` → ok.
+- **Halt-and-surface (test-prose, NOT extended).** `test_D8_1_session_start_emission.py:115` + `test_D8_4_cold_start_budget.py:18` carry the same "memory sidecar" mis-model in their test docstrings/comments (prose, no behaviour). Per `feedback_subagent_odd_violation_halt` this is SURFACED but NOT absorbed — it is out of this amendment's plan-§3 fence (the fence is the two `src/` files). Recommend a follow-on prose-only sweep of the test-side modelling language; not blocking (no behaviour, all 22 pre-existing tests GREEN).

@@ -69,7 +69,13 @@ def test_AC_F4_glob_with_exclusion(tmp_path: Path) -> None:
         "tools/loam-mode/pyproject.toml",
         "tools/loam/src/loam_cli/amend/cli.py",
         "tools/loam/pyproject.toml",
-        "tools/orphan-plist-cleanup/README.md",
+        # heavy-b-migrate substituted for orphan-plist-cleanup at v0.10.8
+        # PATCH (F-RETIRE-MIGRATE-TOOLS Path C); same exercise of
+        # `expand_entry()` glob+exclude behavior with a non-retired tool.
+        # heavy-b-migrate is the most-stable surviving framework/tools/
+        # entry per AMENDED F-RETIRE-MIGRATE-TOOLS framing (load-bearing
+        # continuous trigger; permanent residency).
+        "tools/heavy-b-migrate/README.md",
         "docs/CLAUDE_CAPABILITIES.md",
     ]
     entry = ManifestEntry(
@@ -80,7 +86,7 @@ def test_AC_F4_glob_with_exclusion(tmp_path: Path) -> None:
     assert matched == {
         "tools/loam-mode/src/loam_mode/cli.py",
         "tools/loam-mode/pyproject.toml",
-        "tools/orphan-plist-cleanup/README.md",
+        "tools/heavy-b-migrate/README.md",
     }
 
 

@@ -110,26 +110,38 @@ def test_AC_D_5_5_1_framework_tools_present() -> None:
         f"framework/tools/ must exist post-D.5.5: {framework_tools}"
     )
     # Sample-check representative survivors. Post-M1g + M6b.0 + M6b.1
-    # + v0.10.7 (workspace-sync-test-and-python-runtime-pin):
+    # + v0.10.7 (workspace-sync-test-and-python-runtime-pin) +
+    # v0.10.8 (retire-m1-per-host-helpers-and-orphan-plist-cleanup):
     #   - framework/tools/loam/                   — unified CLI (post-M1g rename of pos-amend);
     #                                               loam amend MOVED to plugin at M6b.1
     #                                               (subcommand re-registers via entry-point).
     #   - framework/tools/heavy-b-migrate/        — Architecture-B migration tooling (still here;
     #                                               load-bearing continuous trigger per
     #                                               plugins/dev-sdlc/tools/loam-mode/src/
-    #                                               loam_mode/session_start.py:283-299).
-    #   - framework/tools/orphan-plist-cleanup/   — DEV-mode launchd cleanup (still here).
+    #                                               loam_mode/session_start.py:283-299;
+    #                                               permanent residency per AMENDED
+    #                                               F-RETIRE-MIGRATE-TOOLS framing).
     #   - framework/tools/upgrade-merge-resolver/ — self-upgrade internals (still here).
     # Removed at v0.10.7 PATCH per F-TF-1 RESOLVED:
     #   - framework/tools/pos-publish-framework-only/ — RETIRED previously; the
     #     directory does not exist in-tree. Stale assertion produced 1 failure on
     #     every pytest run; v0.10.7 PATCH (slug
     #     workspace-sync-test-and-python-runtime-pin) drops it from `expected`.
+    # Removed at v0.10.8 PATCH per F-RETIRE-MIGRATE-TOOLS Path C RESOLVED:
+    #   - framework/tools/orphan-plist-cleanup/   — RETIRED at v0.10.8 (slug
+    #     retire-m1-per-host-helpers-and-orphan-plist-cleanup). Pre-#6
+    #     archaeological-orphan remediation surface; semantic safety horizon
+    #     empirically passed per dispatcher ratification.
+    # Also removed at v0.10.8 PATCH per F-RETIRE-MIGRATE-TOOLS Path B RESOLVED
+    # (no `expected` line existed for these — they were never asserted-on
+    # here):
+    #   - framework/tools/loam-migrate-launchd-labels/  — M1c per-host helper.
+    #   - framework/tools/loam-migrate-host-config/     — M1b per-host helper.
+    #   - framework/tools/loam-migrate-dormancy-config/ — M1f per-host helper.
     expected = (
         framework_tools / "loam" / "pyproject.toml",
         framework_tools / "loam" / "src" / "loam_cli" / "cli.py",
         framework_tools / "heavy-b-migrate" / "README.md",
-        framework_tools / "orphan-plist-cleanup" / "pyproject.toml",
         framework_tools / "upgrade-merge-resolver" / "pyproject.toml",
     )
     missing = [p for p in expected if not p.is_file()]

@@ -1,0 +1,27 @@
+# Memory session-continuity MINOR
+
+TBD-AT-SEAL. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
+
+A session restart is behaviourally transparent. File-based memory
+makes sessions not matter: a fresh session reconstructs the active
+working thread + live decisions / pending rulings from durably-stored
+memory read at session-start, without any bespoke session-end capture
+hook. Continuous passive capture already exists and is healthy; the
+fix is read-side + ranking-side only.
+
+Closes Gap B (recency never a ranking signal — file_memory.py:489
+ORDER BY pure BM25, reference_time UNINDEXED) via recency-aware
+ranking, and Gap A (named-thread durable surfaces absent from the
+session-start corpus + episode memory never read at session-start)
+via a new TriggerKind.session active-thread contributor composed on
+the SEALED #45/#46 SessionStart substrate plus named-thread surfaces
+entering the session-start corpus as defence-in-depth.
+
+Composes with: #32/#33 D8/D7 composer + memory-consumer; the M-FBM
+file-based pivot (graphiti out of the runtime path); v0.4.3 BM25-fix
+(token sanitisation already sealed — out of scope here); #45
+multi-contributor SessionStart registry; #46 session-start emitter.
+No Anthropic API key — any LLM step is claude -p subprocess.
+
+AC.MSC.{1,2,3,4,5,S} GREEN at seal. Ladders to AC.PO.1 + AC.PO.2.
+Predecessor v0.10.8 SHIPPED PUBLIC.

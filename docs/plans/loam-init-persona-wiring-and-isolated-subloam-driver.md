@@ -1,0 +1,306 @@
+# loam init persona-wiring + isolated sub-loam driver — a fresh-init workspace lands the primary persona active, and a real loam instance can be driven for the corrected ProgramBench bench without colliding with the operator's live session
+
+**Status:** PLAN-AUTHOR ONLY (loam-plan-author, 2026-05-15). No source edits, no build, no apply, no seal. Root cause VERIFIED from canonical loam source (the probe's claim CONFIRMED with one minor path-citation imprecision corrected; the companion researcher's §2.2 sub-claim REFUTED — see §2). Build deferred to a future cycle pending owner ratification of the §13 named decisions. SHA register + method-decision record placeholders in §14.
+
+**Slug:** `loam-init-persona-wiring-and-isolated-subloam-driver` (scope-descriptive per `feedback_scope_descriptive_ac_ids`; no version pre-baked — version derives at release time).
+
+**Class (preliminary):** MINOR. Part 1 adds a new behaviour at the `loam init` boundary (the fresh workspace gains a persona-binding surface it did not have) — that crosses a user-observable boundary, so MINOR is the safe call. Part 2's driver + isolation is net-new tooling under the dev partition (no existing contract broken). D-LIPW.1 ratifies; downgrade to PATCH only on explicit build-time evidence that Part 1 is purely a scaffold-completeness fix touching no user-observable behaviour.
+
+**Working directory (for the proposed build):** `/Users/lukeivers/loam/` (canonical loam — first-run / scaffold / session-start are core framework surfaces; the sub-loam driver is dev-partition tooling that lives in canonical loam, not a pos3 experiment).
+
+**Predecessor:** plan-author HEAD `5957073` (memory-session-continuity §13/§14 backfill). Load-bearing sealed amendments this composes against (verified by file read this turn): amendment **#110 FBE.5b** (`new_workspace.py:423-455` `_scaffold_claude_dir` — the `{}` settings.json); amendment **#36** (`first_run_scaffold.py:1676-1766` `_install_persona_directory` — persona-dir scaffold + handle/is_starter mutation); amendment **#50** (`onboarding.py:36-58,375-459` `persist_grounding` — the contract/prompt/`.claude/agents/<handle>.md` triplet); amendment **#45** true-first-run (multi-contributor SessionStart registry); amendment **#46** (`session_start_emitter.py:334-354` `build_persona_session_start_inner_hook`); amendments **#1.7 / LAYERED** (`first_run_scaffold.py:805` `_symlink_plugin_agents` — plugin-only agent symlink, NOT persona); the SEALED memory-session-continuity amendment (`d579748`/`77e3bd7` — the concurrent builder's work; this plan composes on its session-start substrate and does not touch it).
+
+**Owner authorization:** PENDING. Trigger: owner reframe Telegram 11262/11271 (ProgramBench corrected bench needs a *real* loam instance; the §10 owner correction froze the prompt and made the loam *condition* the variable) + the two 2026-05-15 probe artefacts. Owner's operative intent restated in §1.
+
+**Status-file target:** `docs/STATE.md` (shipped-state record) + `docs/release-roadmap.md` (forward-looking) — bookkeeping itemised in §9.
+
+**Quality bar:** structural over advisory (ODD). The test applied to every mechanism in this plan: *"can a future change re-introduce the empty-persona first-run, or re-introduce sub-session telegram-token contention, without active discipline?"* If yes, the mechanism is rule-shaped and a stronger one is sought; if no stronger one exists, it is marked advisory-fallback explicitly as a residual risk in §10.
+
+---
+
+## §1 — Outcome shape (the "why")
+
+**Owner's operative intent (Telegram 11262 reframe + 11271 correction, 2026-05-15):**
+
+> The ProgramBench experiment feeds the v0.9.0/ODD-paper rewrite (F-INVERTED-FRAME). The loam arm must receive the **same frozen `build_prompt`** raw-LLM gets (bench + paper integrity — prompt is frozen, the *loam condition* is the variable). The loam arm must be a **real fresh loam instance the way a non-tech user invokes it** (`git clone → loam init → cd → claude`), not a `--append-system-prompt` synthetic prepend. The probe established headless `claude -p` in a scaffolded workspace exercises *nothing* of loam (single-pass codegen identical to a bare LLM); the v1/v2 `[SYSTEM] persona [USER]` one-shot was never loam. The thing under test must land where a non-tech user lands.
+
+**The two coupled outcomes this plan delivers:**
+
+1. **A real non-tech user who runs the documented quickstart lands in a workspace where the primary persona is actually wired and active.** Today they do not (root cause §2). "Lands where it should be" = after `git clone → loam init <ws> → cd <ws> → claude`, the first interactive Claude Code turn has the workspace's primary persona bound and behaviourally active (it speaks in persona voice / applies its ODD-shaped internal model), with no manual hook-install and no dev-template copy.
+
+2. **A real loam instance can be stood up and driven programmatically for the corrected ProgramBench bench, in isolation that cannot kill or collide with the operator's live primary session's telegram/bun MCP.** One decided driver mechanism, one decided isolation mechanism — and the isolation that protects the operator's session is the *same* isolation the bench instance needs (§3 + §5 prove they are one mechanism, not two).
+
+These are coupled because outcome 2 is unprovable until outcome 1 is true: you cannot drive a "real loam instance" for the bench if a fresh `loam init` does not produce one with the persona active. Part 1 is the prerequisite for Part 2; the isolation is the shared spine.
+
+**The failure that triggered this (evidence-grounded, verified from source this turn — not from the probe's word):**
+
+- A fresh `loam init <ws>` runs `bootstrap_new_workspace` → `run_first_run_scaffold` (writes `<ws>/personas/<handle>/` contract+prompt only, via `_install_persona_directory`) → `_scaffold_claude_dir` (writes `<ws>/.claude/settings.json` = literal `"{}\n"`). **No `.claude/agents/<handle>.md` for the primary persona, no SessionStart hook, no prompt-token substitution.** The persona exists on disk under `personas/` but has **no binding surface Claude Code reads** at session start. A bare `claude` in `<ws>` is a bare LLM. Verified §2.
+
+**Prime-objective ladder (per `feedback_value_proposition_as_prime_objective` + plan-docs §4):**
+
+- **AC.PO.1** (translation-burden test, `docs/VALUE_PROPOSITION.md`): the primary persona IS the translation layer between a non-tech user's natural-language intent and AI-effective execution. A first-run workspace where the persona is not active is the *maximal* translation-burden failure — the user gets a bare LLM with zero burden reduction, which is the exact opposite of the product's prime promise. Closing it is the single highest-leverage first-run correctness fix. Every Part-1 AC ladders to AC.PO.1.
+- **AC.PO.2** (harness-toolkit test): a programmatic isolated sub-loam driver is a reusable harness primitive — it lets *any* future bench/probe/dogfood exercise a real loam instance without the operator's session as collateral. It is toolkit, not a one-off bench script. Every Part-2 AC ladders to AC.PO.2.
+
+`docs/STATE.md` already names cross-session continuity + non-tech-user surface as ship-gates; the v0.7.0 plan (`docs/plans/v0-7-0-non-tech-user-surface.md`, SHIPPED LOCAL) built the *user-facing surface* but its own concession (`:288,301`) reserves the real-user outcome event for a v1.0 criterion — this plan closes the wiring gap that concession left open.
+
+---
+
+## §2 — Class + current-state-with-evidence (ROOT CAUSE — verified from canonical source, not from the probe's word)
+
+The dispatch required the probe's root-cause claim be confirmed against canonical source before any fix is designed. It was. **Verdict: the probe is CONFIRMED and correct** on substance (one minor path-citation imprecision noted + corrected). **The companion researcher's §2.2 sub-claim is REFUTED** (it conflated the plugin-agent symlink with persona binding). Both findings are load-bearing and recorded here so the build cycle does not re-derive them.
+
+### Verified causal chain — Part 1 (the first-run / `loam init` persona-wiring bug)
+
+1. **`loam init` runs the first-run scaffold but the scaffold writes only `personas/<handle>/`, never `.claude/agents/<handle>.md`.** VERIFIED `new_workspace.py:637` (`bootstrap_new_workspace` calls `run_first_run_scaffold`) → `first_run_scaffold.py:736` (`_install_persona_directory`). `_install_persona_directory` (`first_run_scaffold.py:1676-1766`) copytrees the framework persona template into `<ws>/personas/<handle>/`, mutates `handle` + `is_starter: true` into `contract.yaml`, atomic-renames into place. It writes **nothing** under `.claude/`.
+
+2. **The only `.claude/agents/` writes at `loam init` time are plugin subagents — NOT the primary persona.** VERIFIED `first_run_scaffold.py:799-806` `_symlink_plugin_agents`: symlinks `plugins/<plugin>/agents/<name>.md` → `<ws>/.claude/agents/<name>.md`. The primary persona lives at `personas/<handle>/`, is not a plugin, and is not in this set. **This is precisely where the companion researcher's §2.2 erred** — it cited `first_run_scaffold.py:798-806` as writing `.claude/agents/<handle>.md` for the persona; those lines write *plugin* agents only. The probe is right; the researcher conflated two different surfaces. (F2: §2.2 of `programbench-nontech-user-feasibility-2026-05-15.md` is wrong on this point; this plan does not build on it.)
+
+3. **`.claude/settings.json` is the literal empty object by sealed design, with persona-binding explicitly out-of-scoped.** VERIFIED `new_workspace.py:437` `_CLAUDE_SETTINGS_JSON_TEMPLATE = "{}\n"`; `_scaffold_claude_dir` (`:441-455`) writes it; `bootstrap_new_workspace:660` calls `_scaffold_claude_dir(claude_dir)` after the scaffold. The amendment-#110 comment block (`new_workspace.py:434-436`) reads verbatim: *"Out of scope per AC.FBE.5b.5: hooks pointing at framework code, `.claude/agents/` subdir, persona seeds, and any `settings.json` [overrides]."* The empty `{}` is the *intended* FBE.5b output — but its own scope-exclusion is exactly the persona-binding this plan must add.
+
+4. **The persona `.claude/agents/<handle>.md` is written ONLY by `onboarding.persist_grounding`, which requires an interactive persona conversation that itself requires the persona already bound — a chicken-and-egg.** VERIFIED `onboarding.py:457-459`: `agent_md_path.write_text(to_agent_md(new_contract, prompt_text=rendered_prompt))`. The docstring (`onboarding.py:36-58`) states this fires from a *structured write-back the persona produces when it pivots from listening to proposing* — i.e. only after an interactive onboarding conversation. But that conversation can only happen if the persona is already loaded into the Claude Code session, which requires the very `.claude/agents/<handle>.md` (or a SessionStart hook) that `persist_grounding` is the only writer of. Nothing breaks the cycle on a fresh `loam init`.
+
+5. **The persona-binding SessionStart hook exists only in the canonical-dev template, manually copied — not scaffolded.** VERIFIED `framework/hands-off-lifecycle/canonical-dev/settings.dev-template.json` `_comment` verbatim: *"DEV-CANONICAL TEMPLATE — copy to `<canonical-root>/.claude/settings.json` on a fresh clone of canonical pos-v2 to wire the SessionStart hook for the canonical maintainer's interactive sessions … workspace-side scaffolding scaffolds `<workspace>/.claude/settings.json` from a separate workspace-bootstrap template."* That separate workspace-bootstrap template is the `"{}\n"` of point 3. The `first-run.sh` hook (`hands-off-lifecycle/hooks/first-run.sh`, 171 lines) is reachable only by the maintainer's manually-installed dev settings, never by a non-tech user's `loam init`.
+
+6. **The fresh-template persona prompt carries literal unsubstituted tokens.** VERIFIED `framework/primary-persona/templates/persona-template/prompt.md:7,14,15,24,34,40` — `{persona_given_name}`, `{user_preferred_name}` appear literally. `_install_persona_directory` copies the template verbatim (no token substitution); substitution lives only in `persist_grounding` (point 4), which never runs on a fresh init. Even if the prompt were bound, it would render with literal `{user_preferred_name}` braces.
+
+**Root-cause synthesis (Part 1):** `loam init` produces a workspace where the primary persona exists on disk under `personas/<handle>/` but has **zero binding surface** Claude Code reads at session start (no `.claude/agents/<handle>.md`, no SessionStart hook in the `{}` settings.json) **and** an unsubstituted prompt. The persona is dead on arrival for a non-tech user. The empirical probe (`num_turns:1`, zero persona signals, output byte-shape-identical to `run_raw_llm`) is the observable confirmation of this static chain. The probe's only imprecision: it cited `new_workspace.py` under an `adapters/` subpath; the file is at `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py` (no `adapters/`). Substance fully confirmed.
+
+### Verified causal chain — Part 3 (the telegram/bun-kill — NOT a loam bug; verified from the plugin source + live process model)
+
+7. **The telegram/bun MCP is a Claude-Code-spawned plugin child, NOT a loam launchd service.** VERIFIED from live `ps` this turn: the operator's primary session is `claude --dangerously-skip-permissions --channels plugin:telegram@claude-plugins-official` (PID 22884); it spawns `bun run --cwd ~/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6 … start` → `bun server.ts`. The operator's `<pos3>/.mcp.json` declares **zero MCP servers** (`mcpServers: {}`) — telegram is a *plugin channel*, not a workspace MCP server, and not a loam-managed launchd service.
+
+8. **loam's launchd labels are workspace-namespaced — label collision is NOT the kill vector.** VERIFIED `first_run_scaffold.py:246-255` `service_label(kind, slug)` → `f"com.loam.{slug}.{kind}"`; `:1526` composes per-workspace; `:1590-1591` `launchctl bootout gui/$uid/$label` operates on the *namespaced* label only. A correctly-slugged second workspace's launchd services cannot bootout the primary's by label. There is **no `pkill`/`killall` of telegram or bun anywhere in loam source** (grep across `hands-off-lifecycle/` + `workspace-bootstrap/` — zero hits). loam first-run does not kill telegram/bun.
+
+9. **The kill vector is the telegram plugin's own single-consumer-per-bot-token contention — confirmed from the plugin source.** VERIFIED `~/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6/server.ts:56-75`, verbatim: *"Telegram allows exactly one getUpdates consumer per token. If a previous session crashed … its server.ts grandchild can [hold it and the new one gets] 409 Conflict. Kill any stale holder before we start polling."* → `process.kill(stale, 0)` then `process.kill(stale, 'SIGTERM')`. The load-bearing in-source comment (`:63-65`): *"must NOT kill the interactive session's channel poller … orchestrator dispatch kills the interactive session's bot — confirmed."* **Any second `claude` process that loads `plugin:telegram` (or whose plugin/channel set includes it) spawns a competing `bun server.ts` that SIGTERMs the prior holder of the bot token — i.e. the operator's live session.** This is a Claude-Code-plugin resource-contention model, not a loam defect. The fix is therefore NOT a loam-code change — it is an *invocation-isolation* property the sub-loam driver must carry (§3 + §5).
+
+**Root-cause synthesis (Part 3):** the telegram/bun-kill is the claude-plugins-official telegram plugin enforcing single-consumer-per-bot-token by SIGTERMing the prior poller. The isolation that prevents the sub-loam bench instance from killing the operator's session is: the sub-loam session must **never load the telegram plugin/channel** and must run under an **isolated config/state root** so it cannot reach the operator's bot token or plugin cache singleton. This is the *same* isolation §3 needs for a clean bench measurement — proven one mechanism in §5.
+
+### What is NOT the problem (false leads closed, so the build cycle does not chase them)
+
+- **Not a store/durability problem.** Out of scope here entirely; the SEALED memory-session-continuity amendment owns session-start memory. This plan does not touch `framework/primary-persona/` retrieval/ranking.
+- **Not a launchd-label collision.** Point 8 — labels are namespaced.
+- **Not a loam first-run pkill.** Point 8 — no pkill of telegram/bun in loam source.
+- **Not the FBE.5b `{}` settings.json being "a bug."** Point 3 — `{}` is the *intended* sealed FBE.5b output; the gap is its explicit scope-exclusion of persona-binding, not a regression in FBE.5b. Part 1 *extends* the scaffold, it does not "fix FBE.5b."
+
+### LOCKED-DESIGN-NOT-LICENSE finding (the dispatch required this be named, not treated as a terminator)
+
+The probe frames the empty first-run scaffold as "by design (per AC.FBE.5b.5)." **"By design" is not a reason to keep a bad outcome.** AC.FBE.5b.5's scope-exclusion (`new_workspace.py:434-436`) was a *deliberate deferral* ("Those land in v0.1.x amendments" — `first_run_scaffold` comment lineage). The outcome it produces today — a non-tech user's documented quickstart landing them in a bare-LLM workspace with a dead persona — **is the wrong answer to the prime objective (AC.PO.1)**, regardless of the lock. This plan names that explicitly and scopes the corrective as a *forward extension* of the FBE.5b scaffold surface (Part 1 ACs), composing on the existing `to_agent_md` + SessionStart-registry primitives (Lens 1 — no new hook machinery). It does **not** edit `docs/spec/` and does **not** silently design around the lock; the named decision D-LIPW.2 surfaces the deferral-now-due call to the owner with the recommendation to extend.
+
+---
+
+## §3 — Scope: the three coupled parts (Part 2 is the SHARP, DECIDED mechanism)
+
+### Part 1 — `loam init` lands the persona active (in scope)
+
+The fresh-init scaffold gains a primary-persona binding surface so a bare `claude` in the workspace has the persona active on turn one, with the prompt tokens substituted. Method is the builder's call; the *outcome* is pinned by AC.LIPW.1–.3 (§4). The decided shape (recommendation, ratifiable from §13): extend the first-run scaffold to **write `<ws>/.claude/agents/<handle>.md` via the existing `to_agent_md(contract, prompt_text=…)` primitive** with the persona prompt rendered through the existing substitution path — composing on amendment #50's `to_agent_md` + #36's `_install_persona_directory`, NOT inventing a new binding mechanism (Lens 1). The substituted-token values for a fresh non-tech init default to a placeholder-safe identity (no literal `{…}` braces ever reach a bound prompt) and are re-rendered by `persist_grounding` once onboarding captures real grounding (the existing #50 path stays the source of truth post-onboarding; Part 1 only guarantees a *valid bound persona from turn zero*).
+
+### Part 2 — the isolated sub-loam test-instance driver (in scope — THE SHARP, DECIDED MECHANISM)
+
+This section is intentionally tight (Lens 4: high owner-confidence + the dispatch's explicit sharpness demand). It is **one decided design**, not a menu.
+
+**THE DECIDED MECHANISM (single, concrete, committed):**
+
+> **A scratch loam workspace, created by the real production path (`loam init <scratch-ws> --from /Users/lukeivers/loam` → non-dev onboarding), made persona-active by Part 1's fix, then driven by a programmatic PTY harness (`pexpect`-style pseudo-terminal) that spawns an *interactive* `claude` session inside that workspace under a fully isolated config root, with the telegram plugin and all channels disabled, and feeds it the frozen `build_prompt(task)` as the first user turn over the PTY, capturing the full multi-turn transcript + any emitted FILE blocks.**
+
+The four decided sub-components, each justified, each committed (no alternatives left open):
+
+1. **Driver = a PTY harness, NOT `claude -p`, NOT computer-use.** DECIDED. The probe proved both dead ends from evidence: headless `claude -p` is `num_turns:1` single-pass codegen that binds neither persona nor loop (probe Q2, source-confirmed §2 points 1–6); computer-use cannot type into a terminal (the MCP tier model — terminals are tier-"click", typing blocked). An interactive `claude` session is the only thing that binds `.claude/agents/<handle>.md` and runs the multi-turn agentic loop the persona drives. A PTY harness (`pexpect` / a `pty.openpty()` + `subprocess` driver — the builder picks the exact library; the *outcome* is "a programmatic process that owns an interactive `claude` session's stdin/stdout, sends the frozen prompt, and reads the full transcript to completion") is the one mechanism that programmatically drives an interactive session. **No menu — PTY is the decision.** Rationale that closes the alternatives: `claude -p` (rejected — proven not-loam by the probe); `--append-system-prompt` prepend (rejected — the v1/v2 dead arm, owner-rejected as synthetic contamination, §10 of the feasibility artefact); computer-use terminal automation (rejected — tier-"click" blocks typing; brittle pixel timing; not reproducible for a bench).
+
+2. **Isolation = a dedicated `CLAUDE_CONFIG_DIR` (isolated config/state root) + an explicit empty MCP config + no telegram plugin/channel + a namespaced workspace slug.** DECIDED. The sub-loam `claude` process is spawned with its **own config directory** (e.g. `CLAUDE_CONFIG_DIR=<scratch>/.claude-home`, never `~/.claude`) so it cannot read the operator's plugin cache, channels, or `~/.claude/channels/telegram/.env` bot token; with `--strict-mcp-config --mcp-config <empty.mcp.json>` (zero servers, mirroring `run_raw_llm`'s verified-empty `{"mcpServers":{}}`); with **no `--channels` flag and no telegram plugin on its plugin path** so it never spawns a `bun server.ts` competing for the bot token (§2 point 9 — this is the exact and sole kill vector, so removing the telegram plugin from the sub-session's reachable plugin set is necessary and sufficient); and the scratch workspace gets a unique slug so its launchd labels (`com.loam.<unique-slug>.<kind>`) cannot bootout the operator's (§2 point 8). **The same isolation is the bench-validity isolation:** an empty MCP + isolated config + no channels is also exactly what makes the bench arm a clean measurement of *loam-the-persona-and-loop* rather than loam-plus-the-operator's-environment. §5 proves these are one mechanism.
+
+3. **Service-isolation = `service_bootstrap=False` + scratch-scoped `pos_root`.** DECIDED. `bootstrap_new_workspace`'s `service_bootstrap` default is `False` (VERIFIED `new_workspace.py:538-543` docstring — scaffold writes plist files but does NOT `launchctl bootstrap`), and `pos_root` is scoped to `<scratch-ws>/workspace/.pos/legacy-user-config/` (VERIFIED `new_workspace.py:631-637` — "never touches operator's actual `~/.loam/`"). The decided mechanism *relies on these existing defaults* (Lens 1 — compose, do not re-implement): the sub-loam instance never `launchctl bootstrap`s, so it cannot collide with the operator's services even at the launchd layer. The driver MUST NOT pass `service_bootstrap=True`.
+
+4. **Lifecycle = create-on-demand, teardown-on-exit, scratch-rooted.** DECIDED. The scratch workspace lives under a per-run scratch root (e.g. `/tmp/pb-subloam-<task>-<ts>/` mirroring the probe's `/tmp/pb-loop-probe-…/` discipline), is created fresh per bench run, and is removed on completion. No persistent sub-loam instance; no shared mutable state between runs (eliminates cross-run contamination as a confound and eliminates a long-lived competing process).
+
+**What Part 2 measures (the bench signal, per F3 EVAL_DIMENSIONS — design only, the bench is downstream of this plan):** per `(arm, task, rep)` — (a) did the persona restate the frozen `build_prompt` as objective+constraints+acceptance internally before acting (the ODD-shaped-internal-model bridge, `prompt.md:386-395`)? (b) did it decompose / run an iterative build-test loop across turns? (c) did it emit gradeable FILE blocks? plus (d) the v1 pass-rate via the unchanged grader. Arm RAW = the existing verified-bare `run_raw_llm`. Arm LOAM = this decided mechanism. The dead `run_loam_builder` (`harness/run_agent.py:259`, `--append-system-prompt` prepend) is RETIRED as a bench arm (it was never loam — §10 of the feasibility artefact, owner-confirmed).
+
+### Part 3 — telegram/bun isolation (in scope, == Part 2's isolation)
+
+There is no separate Part-3 mechanism. The telegram/bun-kill (§2 points 7–9) is fixed by Part 2's decided isolation sub-component 2 (no telegram plugin/channel + isolated config root in the sub-loam session). §5 proves the identity. This section exists only to name the reconciliation explicitly so the build cycle does not author a second, redundant isolation surface.
+
+### Out of scope (deferred, with when)
+
+- **Editing `docs/spec/`** — objectives spec is outside any cycle's fence (persona out-of-scope; never).
+- **Running the corrected ProgramBench bench itself** — this plan delivers the *driver + the persona-wiring it needs*; executing the bench, grading, and the paper rewrite are downstream of this plan (a future ProgramBench cycle in `<pos3>`).
+- **Retiring `run_loam_builder` from `harness/run_agent.py`** — that edit lives in the `<pos3>` experiment tree, outside canonical loam's fence; named here as a reconciliation note (§6) for the downstream bench cycle, not done here.
+- **Re-rendering persona identity from real onboarding grounding** — the existing #50 `persist_grounding` path remains the source of truth post-onboarding; Part 1 only guarantees a *valid bound persona from turn zero* (placeholder-safe identity), it does not change the onboarding write-back contract.
+- **`claude -p` enrichment / any LLM call with an API key** — `feedback_no_anthropic_api_key`: every loam LLM call is `claude -p` subprocess via the existing wrapper; Part 2's driver uses the real `claude` binary, no API key, default Sonnet.
+- **Multi-task / multi-rep bench economics** — sample design is the downstream bench cycle's call; this plan delivers a driver that works for one `(task, rep)` and is reusable for N.
+
+---
+
+## §4 — Acceptance criteria (outcome-shape; method is the builder's call; method-in-AC test passed on each)
+
+AC IDs scope-descriptive (`feedback_scope_descriptive_ac_ids`): `AC.LIPW.*` (Loam-Init Persona-Wiring + isolated sub-loam). Each AC states an *observable outcome*; the method-in-AC test (*"can this be satisfied by a method other than the one I have in mind?"*) is recorded passing inline.
+
+| AC | Outcome (what must be observably true) | Verification | Ladders to |
+|---|---|---|---|
+| **AC.LIPW.1** | After `loam init <ws> --from <canonical>` (no onboarding, no manual hook install), `<ws>` carries a primary-persona binding surface that Claude Code reads at session start — such that an interactive `claude` session opened in `<ws>` has the workspace's primary persona active on the first user turn. | Automated: create a scratch `<ws>` via the real bootstrap path; assert a Claude-Code-discoverable persona-binding artefact exists + is non-empty + references the workspace persona handle. Behavioural: a driven interactive session's first turn exhibits persona-identity signal (not bare-LLM output). | AC.PO.1 |
+| **AC.LIPW.2** | The persona prompt bound at first run contains **zero literal unsubstituted `{…}` template tokens** — a fresh-init non-tech user never sees a bound prompt with `{user_preferred_name}`-style braces. | Automated: read the bound persona prompt surface post-`loam init`; assert no `{persona_given_name}` / `{user_preferred_name}` / any `{…}` template-token literal remains. | AC.PO.1 |
+| **AC.LIPW.3** | The existing post-onboarding write-back contract is preserved: after a real onboarding grounding capture, the persona identity is re-rendered from captured grounding exactly as before this change (Part 1 adds a valid-from-turn-zero binding; it does not regress `persist_grounding`). | Automated: the amendment #50 onboarding `persist_grounding` test surface still passes unchanged; an integration check shows post-onboarding the bound surface reflects captured grounding, not the placeholder identity. | AC.PO.1 |
+| **AC.LIPW.4** | A programmatic driver can stand up a fresh persona-active loam instance and drive an **interactive** `claude` session in it to completion with a supplied first-user-turn prompt, capturing the full multi-turn transcript and any emitted FILE blocks — exercising the persona + agentic loop (observably multi-turn / persona-voiced), NOT single-pass `claude -p` codegen. | Automated/integration: the driver, given the frozen `build_prompt(task)`, returns a transcript with `>1` effective turn and persona-identity signal, distinguishable from a `run_raw_llm`-shape single-pass output. | AC.PO.2 |
+| **AC.LIPW.5** | Running the driver does **not** kill, SIGTERM, or steal the Telegram bot-token poller of a concurrently-running operator `claude` session, and does not bootout/collide with the operator's loam launchd services. | Automated/integration: with a sentinel telegram-poller-equivalent process holding the single-consumer slot, a full driver run completes and the sentinel is still alive (not SIGTERM'd); driver run uses an isolated config root + empty MCP + no telegram plugin + namespaced slug + `service_bootstrap=False` (asserted from the spawned process's environment + argv + the absence of any `launchctl bootstrap`). | AC.PO.2 |
+| **AC.LIPW.6** | The isolation in AC.LIPW.5 and the bench-validity isolation in AC.LIPW.4 are **the same mechanism** — no second, divergent isolation surface exists; the driver's single isolation configuration simultaneously protects the operator's session and yields a clean (operator-environment-free) bench measurement. | Code/design review + test: a single isolation configuration object/path drives both properties; a test asserts the bench-measurement environment and the operator-protection environment are produced by one code path, not two. | AC.PO.2 |
+| **AC.LIPW.S** | Seal-diff discipline: the amendment's source/test changes are confined to the declared component fence (§5); `loam amend seal` passes; `test_no_sealed_amendments.py` green in the sweep. | `loam amend seal` `[<component>] ok`; seal-diff sweep BASELINE..SEAL_COMMIT confined to the §5 fence + universal-admitted paths. | (discipline) |
+
+**Method-in-AC test — passed on every AC:** AC.LIPW.1 can be satisfied by `.claude/agents/<handle>.md`, by a SessionStart hook, by a project `CLAUDE.md` injection, or any future Claude-Code binding surface — the AC pins the *outcome* (persona active turn one), not the surface. AC.LIPW.4 can be satisfied by `pexpect`, by `pty.openpty()`+`subprocess`, by `tmux send-keys`, or any PTY-class driver — it pins "interactive multi-turn session driven programmatically," not the library. AC.LIPW.5/.6 pin "operator session unharmed + one isolation mechanism," not the specific env-var names. The §3 *recommendations* name the decided method (so the builder need not re-derive it) while the *ACs* stay outcome-shape — tight scope, not method-in-AC.
+
+---
+
+## §5 — Sealed-component fence + the one-mechanism proof
+
+### Component fence (the build cycle's seal anchor — preliminary; D-LIPW.3 ratifies)
+
+- **`framework/workspace-bootstrap/`** — Part 1's scaffold extension lands here (`first_run_scaffold.py` / `new_workspace.py` — the persona-binding-surface write at first-run time). Seal anchor: `framework/workspace-bootstrap/` with sidecar `framework/workspace-bootstrap/tests/SEAL_COMMIT` (canonical sidecar convention — VERIFIED against the memory-session-continuity build-time correction note: primary-persona's canonical sidecar is `tests/SEAL_COMMIT`, not `seals/SEAL_COMMIT`; the build cycle MUST verify the workspace-bootstrap component's actual sidecar path from a sealed workspace-bootstrap manifest before `loam amend apply`, NOT assume).
+- **`framework/primary-persona/`** — admitted via `extra_allowed_prefixes` ONLY IF Part 1's chosen binding method requires touching `to_agent_md` / persona-render surfaces (the recommended method composes on the *existing* `to_agent_md` unchanged, so this admission may be unnecessary — build cycle confirms).
+- **The sub-loam driver** — net-new tooling under the dev partition (recommended location: a dev-partition tool module, e.g. under `framework/tools/` or `plugins/dev-sdlc/`, builder's call per D-LIPW.4); its own component or admitted via the workspace-bootstrap fence depending on where the binding-reuse lands. D-LIPW.4 ratifies the home.
+
+### The one-mechanism proof (AC.LIPW.6 — why Part 2's isolation and Part 3's fix are identical)
+
+The telegram/bun-kill (§2 point 9) has exactly one vector: a second `claude` process loads the telegram plugin → spawns a competing `bun server.ts` → SIGTERMs the operator's poller for the single bot-token `getUpdates` slot. The bench-validity requirement (§2 owner correction) is: the LOAM arm must measure *loam-the-persona-and-loop*, not loam-plus-the-operator's-ambient-environment. **A single isolation configuration satisfies both:** an isolated `CLAUDE_CONFIG_DIR` + `--strict-mcp-config --mcp-config <empty.mcp.json>` + no `--channels` + no telegram plugin on the sub-session's plugin path + a namespaced workspace slug + `service_bootstrap=False`. Operator-protection falls out (no telegram plugin reachable → no competing `bun server.ts` → operator's poller never SIGTERM'd; namespaced slug + no `launchctl bootstrap` → no service collision). Bench-validity falls out (empty MCP + isolated config + no channels → the measured behaviour is loam's, not the operator's ambient plugins/channels). The two are not "coordinated" — they are *the same configuration*. AC.LIPW.6 forbids the build cycle from authoring two separate isolation surfaces; one config path, asserted by test.
+
+---
+
+## §6 — Reconciliation with the SEALED memory-session-continuity work + the ProgramBench artefacts
+
+- **SEALED memory-session-continuity (`d579748` apply / `77e3bd7` seal)** — orthogonal, composes cleanly. That amendment owns session-start *memory ranking + the active-thread contributor* inside `framework/primary-persona/`. This plan owns first-run *persona binding* inside `framework/workspace-bootstrap/` + a dev-partition driver. No fence overlap (different component anchors). Part 1's bound persona is the *substrate* the memory-session-continuity session-start contributor runs *within* — Part 1 makes the persona exist for a session; memory-session-continuity makes that session remember. They are layered, not competing. This plan does NOT edit `framework/primary-persona/` retrieval/ranking. The concurrent loam-builder's tree changes are theirs; this plan's git footprint is exactly this plan-doc (+ manifest).
+- **`programbench-loam-loop-capability-probe-2026-05-15.md`** — its Q1 verdict (headless `claude -p` = single-pass codegen) and Q2 verdict (headless does not bind persona/loop) are CONFIRMED from source (§2). This plan operationalises the probe's implication: the bench's loam arm needs an interactive/agentic driver — that is Part 2's decided PTY mechanism. The probe's "interactive session would activate the persona" half (its caveat 5, source-and-reasoning not run) is closed by Part 1 (it makes the binding *exist*) + AC.LIPW.4 (it proves the driven session is multi-turn/persona-voiced).
+- **`programbench-nontech-user-feasibility-2026-05-15.md`** — its §1 verdict (the bridge is `prompt.md:386-395`, canonical, not dev-partitioned) stands and is the *reason* Part 1 matters: the bridge is real but unreachable on a fresh init because the persona is unbound. Its §2.2 sub-claim (first_run_scaffold writes `.claude/agents/<handle>.md` for the persona) is **REFUTED** (§2 point 2) — this plan does not build on it. Its §10 owner-correction (prompt frozen, loam condition is the variable, `run_loam_builder` was never loam) is the binding constraint Part 2 honours: the driver feeds the *frozen `build_prompt`*, no substitution, no `--append-system-prompt`.
+- **`harness/run_agent.py` (`<pos3>` experiment tree)** — `run_raw_llm` (`:211`) is the verified-bare RAW arm (reusable). `run_loam_builder` (`:259`, `--append-system-prompt` prepend) is the dead arm — RETIRED as a bench arm; its replacement is Part 2's driver. Editing/retiring `run_agent.py` is OUT of canonical loam's fence (§3 out-of-scope) — flagged here as a reconciliation note for the downstream `<pos3>` bench cycle, not done in this plan.
+- **`F-INVERTED-FRAME` (`docs/FUTURE_IDEAS_DRAFT.md:274`)** — this plan is the wiring prerequisite for the corrected bench that feeds F-INVERTED-FRAME's paper rewrite. Recommend the parent update F-INVERTED-FRAME to point at this plan as the Part-1/Part-2 dependency the bench blocks on (bookkeeping §9).
+
+---
+
+## §7 — Ship shape
+
+Single amendment, one seal. No sub-amendment series (the three parts are one coherent fence — Part 1 is the prerequisite, Part 2 the driver, Part 3 ≡ Part 2's isolation; decomposing into sub-amendments would add only coordination overhead with no tighter per-part AC — Lens 5 stopping criterion: do not decompose). Commit ladder (preliminary): source-edits + `AC.LIPW.*` tests commit (BASELINE) → `loam amend apply` → `loam amend seal` → `## §13 — §status` backfill commit → roadmap-row seal-SHA backfill.
+
+---
+
+## §8 — Halt triggers (in-flight conditions that abort the build cycle)
+
+1. **The chosen Part-1 binding surface, on inspection, would require editing a SEALED `framework/primary-persona/` retrieval/ranking path** → HALT; that fence belongs to memory-session-continuity; re-surface for a fence-widening ruling.
+2. **`loam init`'s real bootstrap path, on build-time inspection, already binds the persona via a route §2 missed** → HALT; the §2 root cause was verified this turn from source, but if a build-time path diverges, re-surface the corrected finding before writing the fix (specific-claims-verified — do not build on a stale diagnosis).
+3. **A PTY-driven interactive `claude` session cannot be made to bind `.claude/agents/<handle>.md` even with Part 1's fix** (i.e. the binding surface is correct but interactive PTY sessions don't pick it up) → HALT; this is the load-bearing build-time unknown the feasibility artefact flagged (§4 of that doc, "single highest-risk unverified assumption"); surface with the empirical finding before declaring AC.LIPW.4 unachievable — and name whether a SessionStart-hook binding (vs `.claude/agents/`) is the required surface.
+4. **Isolation cannot be made safe against the operator's telegram/bun without an operator-environment change** (e.g. the plugin cache singleton reaches across config roots) → do NOT leave open; this is pre-resolved as named decision D-LIPW.5 with a recommended fallback (run the bench instance only when the operator's interactive session's telegram poller is intentionally paused, surfaced as a soft-halt with dep-graph) — surface the decision, do not silently widen.
+5. **Class turns out MAJOR** (Part 1 breaks an existing first-run contract for already-scaffolded workspaces) → HALT; idempotency (AC36.3) must be preserved — re-surface if the binding-surface write is not idempotent on a re-`loam init`.
+
+---
+
+## §9 — Bookkeeping (STATE.md + roadmap + parent-plan backfill)
+
+- `docs/STATE.md` — add a shipped-state line on first-run persona-binding once sealed (the non-tech-user quickstart now lands persona-active).
+- `docs/release-roadmap.md` — forward-looking row for this amendment; seal-SHA backfilled at seal time.
+- `docs/FUTURE_IDEAS_DRAFT.md` — parent updates `F-INVERTED-FRAME` (`:274`) to record that the corrected ProgramBench bench blocks on this plan's Part 1 + Part 2 (durable-capture pairing for the dependency).
+- §14 SHA register + method-decision register backfilled by the build cycle + `loam amend seal --plan-doc`.
+
+---
+
+## §10 — F2 Ruthless Feedback (honest doubts; design risks named)
+
+1. **Disagreement with the probe's framing — minor, named for honesty.** The probe is substantively correct, but its path citation (`new_workspace.py` under `adapters/`) is imprecise; the file has no `adapters/` segment. *Evidence:* `find` this turn — `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py`. *Alternative:* this plan cites verified paths; the build cycle uses §2's paths, not the probe's. Not load-bearing for the fix, named so the build cycle does not chase a non-existent `adapters/new_workspace.py`.
+
+2. **Disagreement with the companion researcher's §2.2 — load-bearing, REFUTED.** `programbench-nontech-user-feasibility-2026-05-15.md:33` claims `first_run_scaffold.py:798-806` writes the persona's `.claude/agents/<handle>.md`. *Evidence:* `first_run_scaffold.py:799-806` is `_symlink_plugin_agents` — `plugins/<plugin>/agents/<name>.md` only; the persona is not a plugin and is never in that set; the persona's `.claude/agents/<handle>.md` is written ONLY by `onboarding.persist_grounding:457-459` (interactive, chicken-and-egg). *Alternative:* this plan builds on the probe (correct) not §2.2 (wrong); the build cycle is explicitly warned not to assume `_symlink_plugin_agents` covers the persona.
+
+3. **The highest-risk unverified assumption — surfaced, not buried.** Whether an *interactive* PTY-driven `claude` session actually binds `.claude/agents/<handle>.md` could not be empirically closed in a read-only/plan-author turn (no live interactive session was driven). §2 verified the *negative* (headless `claude -p` does not bind it — source + probe). The *positive* (interactive PTY binds it once Part 1 writes the surface) is INFERENCE from Claude Code's documented project-agent discovery (cited in `agent_md.py`) — strong prior, not a contract. This is halt-trigger 3 and the load-bearing build-time unknown; the build cycle MUST resolve it empirically *before* declaring AC.LIPW.4 achievable, and if `.claude/agents/` is not the surface an interactive session reads, a SessionStart-hook binding is the named fallback (AC.LIPW.1 stays outcome-shape so the fallback satisfies it).
+
+4. **Scope-realism doubt — Part 2 is non-trivial.** A reliable PTY harness driving an interactive `claude` to completion (detecting turn boundaries, end-of-session, FILE-block emission) is the riskiest build surface. It is correctly *one* amendment (Lens 5 — sub-decomposing adds only coordination overhead), but the AI-time estimate (§12) carries the widest band because of it. If the PTY harness proves to need its own iteration cycle, that is a build-time decomposition the builder may surface — not a plan defect, but named so the estimate is honest.
+
+5. **LOCKED-DESIGN-NOT-LICENSE applied, not deferred.** The probe's "by design per AC.FBE.5b.5" is explicitly NOT treated as a terminator (§2 final subsection). The bad outcome (non-tech quickstart → dead persona) is named as the wrong answer to AC.PO.1 regardless of the lock; the corrective is scoped as a forward extension; the deferral-now-due call is surfaced to the owner as D-LIPW.2 with a recommendation, not silently designed around.
+
+6. **No structural guarantee the persona stays bound across Claude Code version changes.** Part 1 composes on Claude Code's `.claude/agents/` discovery (or SessionStart hook) — both are Claude-Code-platform behaviours loam does not control. If a future Claude Code release changes project-agent discovery, the binding could silently regress. This is an advisory-fallback residual risk (no stronger structural mechanism exists — loam cannot pin Claude Code's discovery contract); named per the quality bar rather than left implicit. Mitigation the build cycle should consider: an AC.LIPW.1 verification that runs against the real `claude` binary (not a mock), so a discovery-contract regression is caught by the seal-test suite, not in production.
+
+---
+
+## §11 — Provenance trail (every load-bearing source cited; verified by Read/Bash this turn 2026-05-15)
+
+- `framework/workspace-bootstrap/src/loam/workspace_bootstrap/new_workspace.py:437` — `_CLAUDE_SETTINGS_JSON_TEMPLATE = "{}\n"`; `:434-436` AC.FBE.5b.5 scope-exclusion (hooks/`.claude/agents/`/persona seeds out-of-scope); `:441-455` `_scaffold_claude_dir`; `:637` `bootstrap_new_workspace` → `run_first_run_scaffold`; `:660` `_scaffold_claude_dir(claude_dir)`; `:538-543` `service_bootstrap=False` default; `:631-637` `pos_root` scoped inside workspace.
+- `framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/first_run_scaffold.py:736` `_install_persona_directory` call; `:1676-1766` its body (writes `personas/<handle>/` only, no `.claude/`); `:799-806` `_symlink_plugin_agents` (plugin agents only, NOT persona); `:246-255` `service_label` → `com.loam.<slug>.<kind>`; `:1526,1590-1591` namespaced `launchctl bootout`.
+- `framework/primary-persona/src/loam/primary_persona/onboarding.py:36-58` `persist_grounding` docstring (interactive write-back); `:375-394,457-459` writes `.claude/agents/<handle>.md` via `to_agent_md` only at grounding-capture.
+- `framework/hands-off-lifecycle/canonical-dev/settings.dev-template.json` — `_comment` (dev-canonical, manually copied, not scaffolded) + the `SessionStart`→`first-run.sh` hook.
+- `framework/primary-persona/templates/persona-template/prompt.md:7,14,15,24,34,40` — literal unsubstituted `{persona_given_name}` / `{user_preferred_name}`; `:386-395` the ODD-shaped-internal-model bridge (per the feasibility artefact, re-cited).
+- `~/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6/server.ts:56-75` — single-consumer-per-bot-token; `process.kill(stale,'SIGTERM')`; `:63-65` "orchestrator dispatch kills the interactive session's bot — confirmed."
+- Live `ps` 2026-05-15 — operator session PID 22884 `claude --channels plugin:telegram@claude-plugins-official`; `bun server.ts` PID 27962 (plugin grandchild); `<pos3>/.mcp.json` + `<pos3>/workspace/.mcp.json` = `mcpServers: {}`.
+- `<pos3>/workspace/experiments/programbench-derivative/harness/run_agent.py:88,211,259` — `build_prompt`, `run_raw_llm` (verified-bare RAW), `run_loam_builder` (dead `--append-system-prompt` arm).
+- Probe + feasibility artefacts: `<pos3>/workspace/.scratch/claude-output/programbench-loam-loop-capability-probe-2026-05-15.md` (Q1/Q2 confirmed); `…/programbench-nontech-user-feasibility-2026-05-15.md` (§1 stands; §2.2 refuted; §10 owner-correction binding).
+- Plan-doc shape: `plugins/dev-sdlc/docs/conventions/plan-docs.md`; exemplar `docs/plans/memory-session-continuity.md` + its manifest (`schema_version: 3`, sidecar `tests/SEAL_COMMIT`); `## §13 — §status` heading literal verified across 3 sealed plans.
+
+---
+
+## §12 — AI-time estimate (per `feedback_duration_estimation_rubric`; ranges with midpoint, never point)
+
+| Phase | Band (wall-clock AI-time) | Midpoint | Basis |
+|---|---|---|---|
+| Part 1 — first-run persona-binding scaffold extension + `AC.LIPW.1-3` tests | 25–50 min | ~38 min | single-component scaffold extension composing on existing `to_agent_md`; bounded by idempotency + token-substitution test surface |
+| Part 2 — PTY driver + isolation + `AC.LIPW.4-6` tests | 50–110 min | ~80 min | widest band — PTY harness reliability (turn-boundary/end-of-session detection) is the riskiest surface (§10.4); real-`claude`-binary integration tests |
+| `loam amend validate` + manifest baseline backfill + `apply` + `seal` + `## §13 — §status` backfill + roadmap seal-SHA backfill | 15–30 min | ~22 min | mirrors the memory-session-continuity seal ladder actual (~22 min) |
+| **Total (serial, one build cycle)** | **90–190 min** | **~140 min** | Part 1 gates Part 2 (Part 2 needs a persona-active instance) — no parallelism; critical path is serial |
+
+Owner gate-review time is separate from AI-time and depends on owner availability — surfaced as a distinct line: the §13 named decisions (esp. D-LIPW.2 the LOCKED-DESIGN-NOT-LICENSE deferral-now-due call) are the gating ratification.
+
+---
+
+## §13 — §status
+
+**Build cycle:** PLAN-AUTHOR ONLY (loam-plan-author, 2026-05-15). No source edits, no build, no apply, no seal. Root cause VERIFIED from canonical loam source this turn (probe CONFIRMED; researcher §2.2 REFUTED). Build deferred to a future cycle pending owner ratification of the named decisions below. NO version bump, NO publish in this cycle.
+
+**Plan-doc commits:** plan-doc + manifest — single doc-only commit pair (SHA backfilled at the doc-commit; the build ladder lands in §14 at build time).
+
+### AC verdict matrix — PENDING (flips at the future build cycle's seal against real test output)
+
+| AC | Verdict | Evidence (at build) |
+|---|---|---|
+| AC.LIPW.1 — `loam init` lands persona-binding surface; interactive session persona-active turn one | PENDING | TBD-AT-BUILD: scratch-bootstrap binding-artefact assertion + driven-session persona-signal |
+| AC.LIPW.2 — bound prompt has zero literal `{…}` template tokens | PENDING | TBD-AT-BUILD: post-`loam init` bound-prompt token scan |
+| AC.LIPW.3 — post-onboarding `persist_grounding` write-back preserved (no regression) | PENDING | TBD-AT-BUILD: amendment #50 onboarding test surface unchanged-green + post-onboarding identity reflects grounding |
+| AC.LIPW.4 — programmatic PTY driver runs an interactive multi-turn persona-voiced session to completion, not single-pass | PENDING | TBD-AT-BUILD: transcript >1 turn + persona signal, distinguishable from `run_raw_llm` shape |
+| AC.LIPW.5 — driver does not SIGTERM operator's telegram poller / collide with operator's launchd services | PENDING | TBD-AT-BUILD: sentinel-poller-survives + isolated-config/empty-MCP/no-telegram-plugin/namespaced-slug/`service_bootstrap=False` asserted from spawned env+argv |
+| AC.LIPW.6 — operator-protection isolation == bench-validity isolation (one mechanism, not two) | PENDING | TBD-AT-BUILD: single isolation config path drives both; test asserts one code path |
+| AC.LIPW.S — seal-diff discipline | PENDING | TBD-AT-BUILD: `loam amend seal` `[<component>] ok`; sweep confined to §5 fence; `test_no_sealed_amendments.py` green |
+
+### Named decisions the owner must rule on (recommendation-first; recommendation IS the decision for in-scope autonomous calls)
+
+1. **D-LIPW.1 — Class: MINOR.** *Recommendation: MINOR* (Part 1 adds user-observable behaviour at the `loam init` boundary — a fresh workspace gains a persona-binding surface it did not have). Downgrade to PATCH only on explicit build-time evidence Part 1 touches no user-observable behaviour. *Autonomous-class decision; surfaced for visibility only.*
+2. **D-LIPW.2 — the LOCKED-DESIGN-NOT-LICENSE deferral-now-due call (the gating owner ruling).** *Recommendation: ratify that AC.FBE.5b.5's persona-binding deferral is now due and is corrected by a forward extension of the first-run scaffold (this plan's Part 1), composing on existing `to_agent_md`+SessionStart primitives.* The bad outcome (non-tech quickstart → dead persona, AC.PO.1 violated) is real and named; "by design" is not a reason to keep it. *Owner rules because this re-opens a sealed deferral (LOCKED-DESIGN-NOT-LICENSE + F2) — the single gating ratification.*
+3. **D-LIPW.3 — component fence + sidecar.** *Recommendation: anchor on `framework/workspace-bootstrap/` (sidecar `tests/SEAL_COMMIT`, build cycle MUST verify against a sealed workspace-bootstrap manifest before apply — do not assume); admit `framework/primary-persona/` via `extra_allowed_prefixes` only if the chosen binding method touches `to_agent_md` (recommended method does not).* *In-scope autonomous if owner defers; surfaced because a wrong sidecar path fails `loam amend apply`.*
+4. **D-LIPW.4 — sub-loam driver home (dev partition location).** *Recommendation: a dev-partition tool module (e.g. under `framework/tools/` or `plugins/dev-sdlc/`); builder picks the exact home at build time consistent with the §5 fence.* *In-scope autonomous; surfaced for visibility.*
+5. **D-LIPW.5 — isolation-cannot-be-made-safe fallback (pre-resolved, not left open per the dispatch).** *Recommendation: the decided isolation (isolated `CLAUDE_CONFIG_DIR` + empty MCP + no telegram plugin/channel + namespaced slug + `service_bootstrap=False`) is necessary and sufficient (§2 point 9 — the SIGTERM vector is the telegram plugin spawning a competing `bun server.ts`; removing the plugin from the sub-session's reachable set removes the vector). IF a build-time finding shows the plugin-cache singleton reaches across config roots (it should not — the kill is keyed on the bot token + a stale-PID file, both unreachable without the telegram plugin loaded), the fallback is: run the bench instance only while the operator's interactive session's telegram poller is intentionally paused, declared as a soft-halt with explicit dep-graph + continuing-work + exit-condition (`feedback_soft_halt_vs_hard_halt`).* *Recommendation IS the decision; the fallback is named so it is never left open (dispatch halt-and-surface requirement satisfied).*
+
+The single owner action that unblocks the future build cycle: **ratify D-LIPW.2** (the deferral-now-due / LOCKED-DESIGN-NOT-LICENSE call). D-LIPW.1/.3/.4/.5 carry recommendations the builder acts on autonomously if the owner defers; only D-LIPW.2 re-opens a sealed deferral and is the gating ruling.
+
+---
+
+## §14 — Method decisions (post-build backfill)
+
+§5 + §13 name the plan-time decisions (D-LIPW.{1,2,3,4,5}); each is a preliminary ruling at plan-time. Post-build record (which stuck, which shifted, empirical evidence) is populated by the build cycle + at seal time by `loam amend seal --plan-doc`.
+
+### Decision outcomes (loam-builder, TBD-AT-BUILD)
+
+- **D-LIPW.1 — Class: MINOR.** TBD-AT-BUILD.
+- **D-LIPW.2 — deferral-now-due forward-extension.** TBD-AT-BUILD (owner ratification SHA + whether the forward-extension method held).
+- **D-LIPW.3 — component fence + sidecar.** TBD-AT-BUILD (verified sidecar path; whether `extra_allowed_prefixes` for primary-persona was needed).
+- **D-LIPW.4 — sub-loam driver home.** TBD-AT-BUILD.
+- **D-LIPW.5 — isolation sufficiency / fallback.** TBD-AT-BUILD (whether the decided isolation was necessary+sufficient empirically; whether the soft-halt fallback fired).
+
+### SHA register (TBD-AT-BUILD)
+
+| Commit | Scope | SHA |
+|---|---|---|
+| Plan-doc + manifest (doc-only pair) | this plan + manifest | TBD-AT-DOC-COMMIT |
+| Source-edits + `AC.LIPW.*` tests (BASELINE) | workspace-bootstrap scaffold extension + PTY driver + tests | TBD-AT-BUILD |
+| `loam amend apply` | manifest apply | TBD-AT-BUILD |
+| `loam amend seal` (SEAL_COMMIT) | seal-diff sweep | TBD-AT-BUILD |
+| `## §13 — §status` backfill commit | §status verdict matrix flip | TBD-AT-BUILD |
+| roadmap-row seal-SHA backfill | `docs/release-roadmap.md` | TBD-AT-BUILD |
+
+---
+
+## Plan-doc audit (the 7 lenses)
+
+- **Lens 1 (Claude-leverage-first):** Part 1 composes on the existing `to_agent_md` + SessionStart-registry (#45/#46) + `.claude/agents/` discovery primitives — no new hook machinery. Part 2 composes on the real `claude` binary's interactive session + Claude Code's `CLAUDE_CONFIG_DIR` + `--strict-mcp-config` isolation + the existing `service_bootstrap=False` / scratch-`pos_root` bootstrap primitives. Re-implementation explicitly forbidden in §3.
+- **Lens 2 (harness + primary-persona value):** primary-persona test — a first-run workspace with a dead persona is the maximal translation-burden failure; Part 1 restores the translation layer (AC.PO.1). Harness test — the isolated sub-loam driver is a reusable harness primitive for any future real-loam bench/probe/dogfood (AC.PO.2). Both pass.
+- **Lens 3 (ODD authoring):** every AC is outcome-shape; the method-in-AC test is recorded passing per-AC in §4; §3 carries the *decided method as recommendations* (so the builder need not re-derive) while ACs stay outcome-pinned — tight scope, not method-in-AC.
+- **Lens 4 (prompt scope ↔ confidence):** Part 2 is authored TIGHT (high owner-confidence + explicit sharpness demand) — one decided PTY mechanism, one decided isolation, alternatives explicitly closed with rationale, no menu. Part 1's binding *surface* is left outcome-shape (loosened one notch) because the interactive-binding-surface question is the load-bearing build-time unknown (§10.3) — scope tightness tracks confidence per-part.
+- **Lens 5 (swarming):** decomposition stopping criterion applied — the three parts are NOT sub-decomposed (§7) because Part 1 gates Part 2 and Part 3 ≡ Part 2's isolation; a sub-amendment split would add only coordination overhead with no tighter per-part AC. `max_planner_depth: 1`.
+- **Lens 6 (principle-conflict resolution):** the LOCKED-DESIGN-NOT-LICENSE ↔ sealed-FBE.5b-deferral conflict is named (§2 final subsection, §10.5), signals weighed (blast radius = prime-objective violation for every non-tech user; reversibility = forward-extension is additive/idempotent; audience = the product's core promise), call made (extend, not terminate), surfaced to owner as the gating D-LIPW.2 (non-obvious → owner-gated). Four-step process applied, not silently resolved.
+- **Lens 7 (Ruthless Feedback):** §10 names the disagreements (probe path imprecision; researcher §2.2 refuted), the evidence (verified source paths this turn), and the alternatives (build on the probe not §2.2; use verified paths) — including the highest-risk unverified assumption surfaced not buried (§10.3), and the scope-realism doubt on Part 2 named (§10.4).

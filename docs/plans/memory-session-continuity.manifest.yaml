@@ -15,7 +15,7 @@ plan: docs/plans/memory-session-continuity.md
 plan_doc_ref: docs/plans/memory-session-continuity.md
 
 ac_count: 6
-smoke_outcome: "AC.MSC.{1,2,3,4,5,S} GREEN; recency-shaped retrieval surfaces the newer active-thread episode in top-N without the older lexically-stronger episode crowding it out; a cold session-start (simulating restart, no in-session state, no session-end hook run) emits session context from which the active thread + its pending owner ruling are recoverable; named-thread durable surface present in the session-start corpus-presence set with graceful-missing preserved when absent; backward-compat suites green + pre-existing FTS5 index without the rankable column rebuilds rather than raising + the session-start contributor fail-soft (empty block, session proceeds); outcome-altitude HARD smoke documents the cold-session cross-session-continuity probe end-to-end."
+smoke_outcome: "memory session-continuity MINOR — recency-blend ranking (Gap B) + session-start active-thread contributor + named-thread corpus (Gap A); cold restart recovers active thread; AC.MSC.{1,2,3,4,5,S} green"
 
 # Single-component MINOR. Seal anchor: framework/primary-persona/ (the
 # file-based store + session-start contributor both live here). The

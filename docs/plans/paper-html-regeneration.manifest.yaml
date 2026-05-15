@@ -1,0 +1,170 @@
+schema_version: 3
+amendment:
+  slug: paper-html-regeneration
+  title: "Paper HTML regeneration PATCH — closes FIDRAFT F-PAPER-HTML-REGEN. v0.9.0's ODD methodology paper publish (D-ODDPAPER.5.2 Path C) deleted the previously-staged `docs/papers/odd-methodology.html` (committed `cfcb03f`, 32KB, custom-CSS-styled with `prefers-color-scheme` dynamic theme) because it was from an earlier paper iteration with a stale title (\"Outcome-Altitude Acceptance for LLM-Authored Software\" instead of v19's \"Methodology Description and Case-Study Observations from LLM-Authored Software\") and substantively different body content. The publish shipped markdown-only (GitHub renders the markdown natively for external readers); pandoc was not installed on the dispatcher's machine; HTML regen captured as FIDRAFT. PATCH installs pandoc, regenerates the HTML from the v19 markdown source-of-truth using the existing custom-CSS template extracted from the deleted HTML (preserving `prefers-color-scheme` dynamic theming), commits the regenerated HTML alongside a documented reproducible-regen invocation. AC.PHRG.{1,2,3,4,S} GREEN. Single-component fence (docs-only addition + no framework source touched; dev-sdlc seal anchor admits docs/ + plan-doc + manifest). Composes with v0.9.0 paper publish (the predecessor that deferred this) + `feedback_dynamic_theme_for_generated_documents` (the regen MUST preserve dynamic-theme behavior)."
+
+# BASELINE captured at source-edit commit — backfilled to actual
+# source-edit SHA post-source-edit commit per v0.10.x precedent.
+baseline: "bcbd5f7"
+
+plan: docs/plans/paper-html-regeneration.md
+plan_doc_ref: docs/plans/paper-html-regeneration.md
+
+ac_count: 4
+smoke_outcome: "AC.PHRG.{1-4,S} GREEN; F-PAPER-HTML-REGEN RESOLVED; HTML regenerated from v19 markdown; prefers-color-scheme verified in both modes; pandoc invocation documented + idempotent."
+
+# Single-component PATCH (docs-only addition: regenerated HTML + plan-doc
+# + smoke writeup + STATE/roadmap admin). Dev-sdlc seal anchor — matches
+# v0.10.5 / v0.10.4 / v0.10.3 / v0.10.2 PATCH precedent. No framework
+# source touched; allow-list does NOT include framework/tools/loam/.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - docs/papers/
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.paper-html-regeneration
+  body: |
+    # Paper HTML regeneration PATCH
+
+    2026-05-14. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST.
+
+    Closes FIDRAFT F-PAPER-HTML-REGEN (captured 2026-05-13 from v0.9.0
+    ODD paper publish build-time decision D-ODDPAPER.5.2 Path C;
+    activation gate: next paper-edit cycle OR pre-v1.0 surface cleanup).
+
+    AC.PHRG.1 (regenerated HTML matches v19 markdown source-of-truth) —
+    pandoc invoked with `gfm+pipe_tables` reader against
+    `docs/papers/odd-methodology.md` produces HTML body content matching
+    the markdown's structural elements (title, abstract, all 8 H2
+    sections, all H3/H4 subsection headings, all 5 tables, ordered +
+    unordered lists, emphasis + strong + code spans, references list).
+    Title in `<title>` + `<h1>` matches v19's
+    "Methodology Description and Case-Study Observations from LLM-Authored Software"
+    NOT the deleted HTML's stale "Outcome-Altitude Acceptance for
+    LLM-Authored Software". Spot-check: every H2 heading from the
+    markdown's grep `^## ` output appears in the HTML output.
+
+    AC.PHRG.2 (dynamic-theme prefers-color-scheme preserved) —
+    `<style>` block embedded in the HTML carries the full CSS template
+    extracted from the deleted HTML at `cfcb03f`: `:root` block defining
+    light-mode CSS variables (`--bg`, `--bg-card`, `--fg`, `--accent`,
+    `--link`, etc.); `@media (prefers-color-scheme: dark)` block
+    redefining all variables for dark-mode (`--bg: #0c0a09`,
+    `--fg: #f5f5f4`, `--accent: #fcd34d`, etc.); responsive
+    `@media (max-width: 640px)` mobile breakpoint preserved. Both modes
+    look intentional per the dark-mode quality bar in
+    `feedback_dynamic_theme_for_generated_documents`: contrast hierarchy
+    preserved, secondary-text tone preserved, accent + link tones
+    preserved, borders preserved.
+
+    AC.PHRG.3 (reproducible regen) — the pandoc command line is
+    documented verbatim in the smoke writeup §3 and in the plan-doc §5
+    D-PHRG.2 ruling. Running it twice produces byte-equal output
+    (verified via `sha256sum` before/after second invocation in smoke
+    writeup §3.4). The CSS template is stored in-repo alongside the
+    invocation in the smoke writeup so future paper-edit cycles can
+    re-run the regen without archaeology.
+
+    AC.PHRG.4 (outcome-altitude dogfood probe) — slug-named smoke
+    writeup at
+    `docs/experiments/paper-html-regeneration-hard-smoke.md` documents:
+    Stage 1 — pandoc install verification + version captured;
+    Stage 2 — regen invocation captured verbatim + output file size +
+    HTML structural verification (head + first H2 + last H2);
+    Stage 3 — dynamic-theme behavior verification in both modes
+    (open in default browser + system theme toggle + screenshot OR
+    inspect the rendered styles via headless tooling — whichever path
+    is available);
+    Stage 4 — idempotence check (re-run pandoc + sha256sum match).
+
+    AC.PHRG.S (seal-diff allow-list) — 1 regenerated HTML asset at
+    `docs/papers/odd-methodology.html` + slug-named smoke writeup at
+    `docs/experiments/paper-html-regeneration-hard-smoke.md` +
+    universal-admission docs (STATE.md + release-roadmap.md +
+    FUTURE_IDEAS_DRAFT.md flipping F-PAPER-HTML-REGEN to RESOLVED) +
+    plan-doc + manifest + dev-sdlc seal anchor artefacts. NO entries
+    in pyproject.toml; NO entries in any framework/* component; NO
+    `__version__` updates; NO test additions or removals; NO touch of
+    the markdown source-of-truth (`docs/papers/odd-methodology.md`).
+
+    D-PHRG.1 ruled Path A (pandoc) over Path B (custom markdown→HTML
+    conversion script in framework/tools/loam/). Path A is cheaper to
+    ship (~30s install + ~2s regen), uses standard tooling, and the
+    markdown is structurally vanilla GFM (tables + lists + emphasis +
+    code spans + ordered/unordered lists; NO code fences, footnotes, or
+    task lists per pre-source-edit grep). Path B would have added 1.5-3h
+    of authoring + maintenance overhead for negligible reproducibility
+    gain — pandoc is widely available across systems and the brew
+    install is one line. Path B captured as new FIDRAFT
+    F-PAPER-REGEN-CUSTOM-SCRIPT for follow-on if a future scenario
+    surfaces value (e.g., system without pandoc; reproducibility gate
+    needing zero system-tool dependencies).
+
+    D-PHRG.2 set the canonical pandoc invocation:
+    `pandoc --from gfm+pipe_tables --to html5 --standalone
+    --metadata title="Objective-Driven Design: Methodology Description
+    and Case-Study Observations from LLM-Authored Software"
+    --include-in-header=<css-template-file>
+    docs/papers/odd-methodology.md
+    --output docs/papers/odd-methodology.html`. CSS template is stored
+    inline in the smoke writeup (extracted verbatim from `cfcb03f`'s
+    HTML) so future regens use the same template; an alternative is to
+    promote the CSS to a standalone file under `docs/papers/` if a
+    second paper enters the corpus (out of scope for this PATCH;
+    captured as F-PAPER-CSS-EXTRACT-TO-FILE).
+
+    D-PHRG.3 chose dev-sdlc seal anchor (matches v0.10.x PATCH
+    precedent for single-cycle docs/single-component PATCHes;
+    `framework/tools/loam/` NOT touched).
+
+    D-PHRG.4 pyproject versions stay at 0.10.0 per AC.HONEST.1 /
+    D-NFCLEAN.4 / D-SDPD / v0.8.3 / v0.10.1-v0.10.5 precedent
+    (PATCHes ride predecessor MINOR).
+
+    D-PHRG.5 scoped to regen-only — the markdown source-of-truth is
+    NOT edited. Any content drift between v19 markdown and the
+    regenerated HTML is structural pandoc-rendering only (e.g.,
+    header-anchor IDs, ordered-list start numbers); content
+    correspondence is verified at AC.PHRG.1.
+
+    F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH discipline verified empirically:
+    grep across `docs/` for "F-PAPER-HTML-REGEN" returned 1 reference
+    (the entry itself at `docs/FUTURE_IDEAS_DRAFT.md:278`); no
+    dependent FIDRAFT entries reference it as blocker / dep / unblocker;
+    no flip-on-unblock action needed beyond the entry itself.
+
+    No outcome-shape addition. PATCH-class defect closure within the
+    docs/papers/ surface (restores the HTML render that was deferred at
+    v0.9.0 publish).
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+    (pandoc install + regen + slug-named smoke writeup with both-modes
+    dynamic-theme verification + STATE/roadmap admin + F-PAPER-HTML-REGEN
+    RESOLVED) TBD-AT-COMMIT; apply TBD-AT-COMMIT; seal TBD-AT-COMMIT.

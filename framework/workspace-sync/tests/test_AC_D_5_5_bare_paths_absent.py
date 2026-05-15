@@ -109,24 +109,28 @@ def test_AC_D_5_5_1_framework_tools_present() -> None:
     assert framework_tools.is_dir(), (
         f"framework/tools/ must exist post-D.5.5: {framework_tools}"
     )
-    # Sample-check representative survivors. Post-M1g + M6b.0 + M6b.1:
+    # Sample-check representative survivors. Post-M1g + M6b.0 + M6b.1
+    # + v0.10.7 (workspace-sync-test-and-python-runtime-pin):
     #   - framework/tools/loam/                   — unified CLI (post-M1g rename of pos-amend);
     #                                               loam amend MOVED to plugin at M6b.1
     #                                               (subcommand re-registers via entry-point).
-    #   - framework/tools/heavy-b-migrate/        — Architecture-B migration tooling (still here).
+    #   - framework/tools/heavy-b-migrate/        — Architecture-B migration tooling (still here;
+    #                                               load-bearing continuous trigger per
+    #                                               plugins/dev-sdlc/tools/loam-mode/src/
+    #                                               loam_mode/session_start.py:283-299).
     #   - framework/tools/orphan-plist-cleanup/   — DEV-mode launchd cleanup (still here).
     #   - framework/tools/upgrade-merge-resolver/ — self-upgrade internals (still here).
-    #   - framework/tools/pos-publish-framework-only/ — synthesis tool
-    #                                               (M2 partition; M9 substitution-pass extension).
+    # Removed at v0.10.7 PATCH per F-TF-1 RESOLVED:
+    #   - framework/tools/pos-publish-framework-only/ — RETIRED previously; the
+    #     directory does not exist in-tree. Stale assertion produced 1 failure on
+    #     every pytest run; v0.10.7 PATCH (slug
+    #     workspace-sync-test-and-python-runtime-pin) drops it from `expected`.
     expected = (
         framework_tools / "loam" / "pyproject.toml",
         framework_tools / "loam" / "src" / "loam_cli" / "cli.py",
         framework_tools / "heavy-b-migrate" / "README.md",
         framework_tools / "orphan-plist-cleanup" / "pyproject.toml",
         framework_tools / "upgrade-merge-resolver" / "pyproject.toml",
-        framework_tools
-        / "pos-publish-framework-only"
-        / "pyproject.toml",
     )
     missing = [p for p in expected if not p.is_file()]
     assert not missing, (

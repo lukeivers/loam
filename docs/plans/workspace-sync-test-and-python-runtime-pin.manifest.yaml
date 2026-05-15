@@ -85,7 +85,7 @@ narrative:
     INSPECTION) — empirical recheck per `feedback_agent_empirical_
     recheck_before_halt` shows: (a) all 30 `pyproject.toml` files
     across `framework/` + `plugins/` already declare
-    `requires-python = ">=3.11"` (16 files) or
+    `requires-python = ">=3.11"` (24 files) or
     `requires-python = ">=3.13"` (6 files); (b) the pin has been in
     place since 2026-04-27 (`git blame` on
     `framework/tools/loam/pyproject.toml` for the `requires-python`

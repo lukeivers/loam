@@ -44,7 +44,7 @@ def setup_nl_exporter(monkeypatch):
     monkeypatch.setattr(
         nl_path_mod,
         "_TRACER",
-        provider.get_tracer("loam.aggregator.nl", "0.1.0"),
+        provider.get_tracer("loam.aggregator.nl", "0.10.0"),
     )
     yield exporter
     exporter.clear()

@@ -58,7 +58,7 @@ def setup_otel_exporter(monkeypatch):
     exporter = InMemorySpanExporter()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     # Swap the module-level tracer.
-    monkeypatch.setattr(gd_obs, "_TRACER", provider.get_tracer("loam.dormancy", "0.1.0"))
+    monkeypatch.setattr(gd_obs, "_TRACER", provider.get_tracer("loam.dormancy", "0.10.0"))
     yield exporter
     exporter.clear()
 

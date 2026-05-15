@@ -63,7 +63,7 @@ def setup_gd_exporter(monkeypatch):
     monkeypatch.setattr(
         gd_obs,
         "_TRACER",
-        provider.get_tracer("loam.dormancy", "0.1.0"),
+        provider.get_tracer("loam.dormancy", "0.10.0"),
     )
     yield exporter
     exporter.clear()

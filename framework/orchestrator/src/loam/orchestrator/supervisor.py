@@ -60,7 +60,7 @@ from typing import Any, Awaitable, Callable
 from opentelemetry import trace
 
 
-_TRACER = trace.get_tracer("loam.hands_off_lifecycle", "0.1.0")
+_TRACER = trace.get_tracer("loam.hands_off_lifecycle", "0.10.0")
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -37,7 +37,7 @@ if TYPE_CHECKING:  # pragma: no cover — hint only
     from .adapter import AdapterEvent
     from .errors import ClaudeAPIError
 
-_TRACER = trace.get_tracer("loam.dormancy", "0.1.0")
+_TRACER = trace.get_tracer("loam.dormancy", "0.10.0")
 
 
 # ---- generic helpers ---------------------------------------------------

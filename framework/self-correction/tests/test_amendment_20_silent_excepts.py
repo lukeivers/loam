@@ -53,7 +53,7 @@ def setup_sc_exporter(monkeypatch):
     monkeypatch.setattr(
         sc_obs,
         "_TRACER",
-        provider.get_tracer("loam.self_correction", "0.1.0"),
+        provider.get_tracer("loam.self_correction", "0.10.0"),
     )
     yield exporter
     exporter.clear()

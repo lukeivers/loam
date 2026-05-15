@@ -29,7 +29,7 @@ from typing import Any, Iterator
 from opentelemetry import trace
 
 
-_TRACER = trace.get_tracer("loam.safety_layer", "0.1.0")
+_TRACER = trace.get_tracer("loam.safety_layer", "0.10.0")
 
 
 @contextmanager

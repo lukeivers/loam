@@ -27,7 +27,7 @@ from typing import Any
 from opentelemetry import trace
 
 
-_TRACER = trace.get_tracer("loam.cost_governance", "0.1.0")
+_TRACER = trace.get_tracer("loam.cost_governance", "0.10.0")
 
 
 def _set(span: trace.Span, attrs: dict[str, Any]) -> None:

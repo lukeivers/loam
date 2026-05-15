@@ -13,7 +13,7 @@ plan: docs/plans/otel-tracer-version-honesty.md
 plan_doc_ref: docs/plans/otel-tracer-version-honesty.md
 
 ac_count: 4
-smoke_outcome: "AC.OTVH.{1,2,3,4,S} GREEN; F-OTEL-VERSION-BUMP RESOLVED; 7 production observability/supervisor sites swept (cost-governance + self-correction + dormancy + reversibility-primitive + safety-layer + orchestrator/observability + orchestrator/supervisor); 5 test-fixture monkeypatch installer sites swept; runtime dogfood probe verifies emitted instrumentation_scope.version == 0.10.0; slug-named smoke writeup at docs/experiments/otel-tracer-version-honesty-hard-smoke.md."
+smoke_outcome: "AC.OTVH.{1-4,S} GREEN; F-OTEL-VERSION-BUMP RESOLVED; 12 sites swept (7 prod + 5 test); runtime probe verifies instrumentation_scope.version == 0.10.0."
 
 # Cross-component PATCH with single dev-sdlc seal anchor (matches
 # v0.8.0 AC.HONEST.1 precedent shape — many components touched

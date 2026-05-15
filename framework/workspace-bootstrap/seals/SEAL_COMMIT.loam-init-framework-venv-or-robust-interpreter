@@ -1,0 +1,40 @@
+# loam init framework-venv-or-robust-interpreter PATCH
+
+TBD-AT-SEAL. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST (publish is HELD pending this fix + verification).
+
+A fresh non-tech-user `loam init` (the documented Quickstart: clone →
+venv+pip in the install clone → loam init <ws> → cd <ws> → claude) now
+lands SessionStart hooks that resolve to a WORKING interpreter — so
+the persona session-start enrichment (the sealed
+memory-session-continuity substrate) and the orchestrator both RUN on
+the first session (exit 0), with NO manual venv-build or hook-fix step
+inside the workspace. Root cause was verified from canonical source:
+the predecessor amendment wrote a correct SessionStart envelope whose
+two hook commands invoke `<ws>/framework/.venv/bin/python`, an
+interpreter bootstrap_new_workspace never created and the documented
+Quickstart never built inside <ws>/framework/ (the venv it builds is
+in the disposable install clone). Persona-identity binding (the
+`agent` key + agents file, independent of the hook) always worked;
+the persona/orchestrator session-start ENRICHMENT exited 127 on every
+fresh-init session — confirmed by the binding-spike report's live
+hook_response capture.
+
+The corrective is a narrow forward fix in framework/workspace-bootstrap/
+composing on the existing sealed envelope (LOCKED-DESIGN-NOT-LICENSE
+applied — "the predecessor sealed GREEN" was not a reason to keep a
+non-tech user landing in a workspace with a dead session-start
+enrichment; the predecessor's seal-test verified identity binding, not
+hook-interpreter resolution on a documented-Quickstart topology).
+Approach (a) — `loam init` builds <ws>/framework/.venv — makes the
+README's documented "self-contained from that point" contract TRUE,
+keeps the seal-diff single-component, and edits no sealed stanza
+builder. A structural seal-test drives the REAL scaffolded hook
+command against a fresh workspace and fails RED on regression, so the
+gap cannot silently re-break (it already did once — the predecessor
+sealed GREEN while the fresh-init hooks were dead). The predecessor's
+AC.LIPW.1 loose-AC tension is resolved as fix-makes-it-true with an
+additive provenance footnote, NOT an AC-text weakening.
+
+AC.LIVI.{1,2,3,S} green against real test output. SHA register +
+method-decision record in the plan-doc §14.

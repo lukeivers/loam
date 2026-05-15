@@ -5,7 +5,7 @@ amendment:
 
 # BASELINE captured at source-edit commit — backfilled to actual
 # source-edit SHA post-source-edit commit per v0.10.x precedent.
-baseline: "TBD-AT-COMMIT"
+baseline: "e3ab0c7"
 
 plan: docs/plans/next-scope-walker-priority-queue-aware.md
 plan_doc_ref: docs/plans/next-scope-walker-priority-queue-aware.md

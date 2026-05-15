@@ -56,16 +56,18 @@ _PRE_1_0_PATTERN = re.compile(r"^v0\.")
 def _read_roadmap_priority_queue(repo_root: Path) -> tuple[str, str, str, str]:
     """Return ``(next_objective, next_class, next_fence, queue_excerpt)``.
 
-    Walks ``docs/release-roadmap.md`` §4 (mapped versions) for the
-    first entry whose objective sentence is named. The current
-    roadmap shape lists entries as ``### v0.X.Y — <objective>``
-    headings under ``## §4`` — the first such heading after §4 is
-    the next-scope candidate.
+    Walks ``docs/release-roadmap.md`` §4 (priority-ordered candidate
+    queue) for the first ``### Candidate N — `<slug>` — <title>``
+    heading. Per the v0.10.0 ``release-roadmap-priority-queue-restructure``
+    MINOR, §4 lists forward-looking candidates as a priority-ordered
+    queue of scope-descriptive, unnumbered slugs; queue order =
+    priority order; first candidate is "next to build."
 
-    Returns four placeholder strings when the roadmap is absent or
-    the §4 section can't be located. The CLI still emits the
-    proposal block; the operator notices the placeholder and
-    investigates.
+    Returns four placeholder strings when the roadmap is absent, the
+    §4 section can't be located, or the queue is genuinely empty
+    (zero candidates between MINORs). The three placeholder branches
+    are distinct so the operator can tell parser-fault from
+    queue-empty-by-design from missing-roadmap.
     """
     path = repo_root / "docs" / "release-roadmap.md"
     if not path.exists():
@@ -81,31 +83,52 @@ def _read_roadmap_priority_queue(repo_root: Path) -> tuple[str, str, str, str]:
     )
     if sec_match is None:
         return (
-            "(no §4 mapped-versions section)",
-            "(no §4 mapped-versions section)",
-            "(no §4 mapped-versions section)",
-            "(no §4 mapped-versions section)",
+            "(no §4 candidate-queue section)",
+            "(no §4 candidate-queue section)",
+            "(no §4 candidate-queue section)",
+            "(no §4 candidate-queue section)",
         )
     sec = sec_match.group(1)
-    # First ### heading naming the next entry.
+    # First ### Candidate N heading naming the top-priority queue
+    # entry. Em-dash + hyphen tolerant per D-NSWP.2; slug captured
+    # from the backtick-delimited segment between separators.
     head_match = re.search(
-        r"(?m)^###\s+(v[0-9][0-9.]*)\s*[—-]\s*(.+)$", sec
+        r"(?m)^###\s+Candidate\s+\d+\s*[—-]\s*"
+        r"`(?P<slug>[a-z0-9.-]+)`\s*[—-]\s*(?P<title>.+)$",
+        sec,
     )
     if head_match is None:
+        # §4 exists but carries zero `### Candidate N` headings —
+        # genuinely empty queue (between MINORs) per D-NSWP.4.
+        # Distinct from "(no §4 ... section)" parser-fault case.
+        empty_msg = (
+            "queue empty — author next candidate before next cycle"
+        )
         return (
-            "(no entries in §4)",
-            "(no entries in §4)",
-            "(no entries in §4)",
+            empty_msg,
+            empty_msg,
+            empty_msg,
             sec[:600],
         )
-    next_version = head_match.group(1)
-    next_objective = head_match.group(2).strip()
-    # Class hint = "MINOR" by default for first §4 entry; operator
-    # ratifies. (Per Q2 ratification: class is suggestive on roadmap;
-    # plan-author rules at build-time.)
-    next_class = "MINOR (plan-author rules at build-time)"
+    next_slug = head_match.group("slug")
+    next_title = head_match.group("title").strip()
+    next_objective = f"{next_slug} — {next_title}"
+    # Class line is the immediately-following `**Slug:** `<slug>`.
+    # **Class:** <class>` line per the §4 candidate-block convention.
+    # Search within the slice of §4 starting at the candidate heading
+    # so we don't accidentally match a later candidate's class line.
+    after_head = sec[head_match.end():]
+    class_match = re.search(
+        r"(?m)^\*\*Slug:\*\*\s*`[a-z0-9.-]+`\.\s*"
+        r"\*\*Class:\*\*\s*(?P<class>[^.\n]+?)(?:\.\s*$|\s+—.*$|\s*$)",
+        after_head,
+    )
+    if class_match is not None:
+        next_class = class_match.group("class").strip()
+    else:
+        next_class = "(class not parsed)"
     next_fence = (
-        f"see docs/release-roadmap.md §4 entry for {next_version}"
+        f"see docs/release-roadmap.md §4 candidate `{next_slug}`"
     )
     # Quote first 600 chars of the §4 body as the queue excerpt.
     queue_excerpt = sec[:600].rstrip() + ("\n…" if len(sec) > 600 else "")

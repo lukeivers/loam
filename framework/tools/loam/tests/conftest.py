@@ -100,8 +100,10 @@ def staged_repo(
         plan_body, encoding="utf-8"
     )
 
-    # release-roadmap with §2 row (gate 6) + §4 mapped versions
-    # (post-ship review block reads §4).
+    # release-roadmap with §2 row (gate 6) + §4 priority-ordered
+    # candidate queue (post-ship review block reads §4 — walker
+    # updated at v0.10.5 PATCH per AC.NSWP.* to read the v0.10.0
+    # restructured §4 shape).
     roadmap_body = (
         "# Release Roadmap\n\n"
         "## §2 Shipped\n\n"
@@ -110,9 +112,10 @@ def staged_repo(
         "| v0.5.1 | predecessor objective | seal `aaaaaaa` |\n"
         f"| {fixture_version} | next outcome shape | "
         "Single-cycle MINOR: apply `bbbbbbb`; seal `SEAL_PLACEHOLDER` |\n\n"
-        "## §4 Mapped versions\n\n"
-        "### v0.7.0 — next things land here\n\n"
-        "Some prose about the next entry.\n"
+        "## §4 Priority-ordered candidate queue\n\n"
+        "### Candidate 1 — `fixture-candidate` — Fixture next-scope target\n\n"
+        "**Slug:** `fixture-candidate`. **Class:** MINOR (FIXTURE).\n\n"
+        "Some prose about the next candidate.\n"
     )
     (docs / "release-roadmap.md").write_text(
         roadmap_body, encoding="utf-8"

@@ -296,18 +296,39 @@ Discipline GREEN. Single FIDRAFT flip (F-RETIRE-MIGRATE-TOOLS) in this PATCH's s
 
 ## §13 — §status
 
-**Build cycle:** TBD-AT-COMMIT (will be filled at sealed-local time). Single-cycle PATCH closing F-RETIRE-MIGRATE-TOOLS Path B+C (retire 3 `loam-migrate-*` per-host helpers + `orphan-plist-cleanup` 4-file edit). v0.10.7 closed Path A; this PATCH completes the entry's retirement scope. `heavy-b-migrate` permanently retained as load-bearing continuous trigger.
+**Build cycle:** SHIPPED LOCAL 2026-05-14. Single-cycle PATCH closing F-RETIRE-MIGRATE-TOOLS Path B+C (retire 3 `loam-migrate-*` per-host helpers + `orphan-plist-cleanup` 4-file edit). v0.10.7 closed Path A; this PATCH completes the entry's retirement scope. `heavy-b-migrate` permanently retained as load-bearing continuous trigger. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
 
-**Plan-doc commits:** TBD-AT-COMMIT.
+**Plan-doc commits:** plan-doc + manifest `3b5d0e0`; source-edit (4 dir deletions + 3 file edits + FIDRAFT RESOLVED flip + STATE/roadmap admin + slug-named smoke writeup) `688e85b`; manifest baseline backfill `3ca8a77`; manifest smoke_outcome shorten `10987d7`; apply auto-commit (BASELINE + sidecar bump to `688e85b` + `extra_allowed_prefixes: [framework/tools/]`) `2605f3a`; seal commit (deterministic seal) `9bd5684`.
 
 ### AC verdict matrix
 
-TBD-AT-COMMIT — populated at sealed-local time with verdicts + evidence pointers.
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.RMPH.1 — 3 `loam-migrate-*` tool directories deleted | GREEN | Smoke writeup §1: `ls /Users/lukeivers/loam/framework/tools/` returns 4 entries (`heavy-b-migrate`, `loam`, `loam-memory-inspect`, `upgrade-merge-resolver`) — the 3 `loam-migrate-*` directories absent. Smoke writeup §2.1-§2.3: per-tool retirement-readiness re-verification (README quotes + zero production references outside their own dirs). Smoke writeup §2.5: cross-reference grep confirms 0 matches outside the retired dirs. Source-edit commit `688e85b` shows `delete mode 100644` for all 28 files across the 3 directories. |
+| AC.RMPH.2 — `orphan-plist-cleanup` 4-file retirement | GREEN | Smoke writeup §1 names all 4 edits applied: (1) `framework/tools/orphan-plist-cleanup/` directory deleted (source-edit `688e85b` shows 16 file deletions); (2) `plugins/dev-sdlc/dev-mode-manifest.yaml` line 163 glob removed + comment block updated; (3) `plugins/dev-sdlc/tools/loam-mode/tests/test_partition_manifest.py` candidate paths swapped to `tools/heavy-b-migrate/README.md`; (4) `framework/workspace-sync/tests/test_AC_D_5_5_bare_paths_absent.py` `expected` tuple line + comment line dropped + post-cleanup comment block updated. |
+| AC.RMPH.3 — `install-from-source.txt` empirical no-op (audit-trail) | GREEN | Smoke writeup §4: `grep -n "loam-migrate\|orphan-plist-cleanup\|loam_migrate\|orphan_plist_cleanup" install-from-source.txt docs/install-from-source.md` returns 0 matches. Empirical no-op verified at plan-time per `feedback_agent_empirical_recheck_before_halt`. AC documents the no-op for audit-trail. |
+| AC.RMPH.4 — post-retirement test surface GREEN | GREEN | Smoke writeup §3.1: `python3.13 -m pytest framework/workspace-sync/tests/test_AC_D_5_5_bare_paths_absent.py -v` returns 4/4 PASSED. Smoke writeup §3.2: `cd plugins/dev-sdlc/tools/loam-mode && python3.13 -m pytest tests/test_partition_manifest.py -v` returns 6/6 PASSED. Both verbatim outputs captured. |
+| AC.RMPH.5 — outcome-altitude dogfood probe | GREEN | Smoke writeup at `docs/experiments/retire-m1-per-host-helpers-and-orphan-plist-cleanup-hard-smoke.md` documents end-to-end: §1 outcome shape; §2 retirement-readiness re-verification (4 tools); §3 post-deletion test surface (workspace-sync 4/4 + dev-sdlc partition 6/6); §4 install-from-source.txt empirical no-op; §5 release-CLI 6-gate dry-run (TBD-AT-APPLY at smoke authoring; backfilled at acs-verified gate-pass time); §6 F-RETIRE-MIGRATE-TOOLS RESOLVED diff summary + F2 RUTHLESS FEEDBACK observations. |
+| AC.RMPH.6 — F-RETIRE-MIGRATE-TOOLS FIDRAFT entry RESOLVED with chain pointer | GREEN | `docs/FUTURE_IDEAS_DRAFT.md:244` F-RETIRE-MIGRATE-TOOLS entry STATUS flipped from `capture-only` → `RESOLVED 2026-05-14 by v0.10.8 PATCH (retire-m1-per-host-helpers-and-orphan-plist-cleanup)`. Entry text adds Path B+C closure summary + chain pointer (Path A v0.10.7 commit `26a5bee` + Path B+C this PATCH). Section (1) `heavy-b-migrate` REMOVED appended `**Permanent residency under framework/tools/.**`; sections (2) and (3) past-tense conversion + executed-blocks added; Path-A/B/C decomposition flipped from "deferred" → "shipped at v0.10.8 PATCH"; composes-with paragraph updated. Smoke writeup §6.1 captures the diff summary. |
+| AC.RMPH.S — seal-diff scope-fence | GREEN | `git diff --name-only 3b5d0e0..9bd5684` shows changes only under the allow-list: 4 framework/tools/ directory deletions (admitted via `extra_allowed_prefixes: [framework/tools/]`); 1 framework/workspace-sync test edit (admitted via `extra_allowed_prefixes: [framework/workspace-sync/tests/]`); 2 dev-sdlc edits (manifest + partition test; admitted via plugins/dev-sdlc/ universal-admission); FIDRAFT-doc edit (`docs/FUTURE_IDEAS_DRAFT.md`); universal-admission docs (`docs/STATE.md` + `docs/release-roadmap.md`); slug-named smoke writeup; plan-doc + manifest; dev-sdlc seal anchor artefacts (`plugins/dev-sdlc/seals/SEAL_COMMIT.retire-m1-per-host-helpers-and-orphan-plist-cleanup` narrative + `plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar + `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` BASELINE pointer auto-bump pre-included in §3 allow-list per F-PLAN-DOC-TEMPLATE-AUTO-BUMP-FENCE). NO entries in pyproject.toml; NO entries in any framework/* component source code beyond the deletions + the single test file admitted via `extra_allowed_prefixes`; NO `__version__` updates; NO test additions. |
 
 ### AI-time actuals
 
-TBD-AT-COMMIT — populated at sealed-local time with actuals from this dispatch.
+| Stage | Estimated | Actual |
+|---|---|---|
+| Halt-and-surface artefact read + spot-check empirical recheck | 5-10 min | ~5 min |
+| Plan-doc + manifest authoring | 15-25 min | ~18 min |
+| Source-edit (4 dir deletions + 3 file edits + FIDRAFT RESOLVED flip + STATE/roadmap admin + slug-named smoke writeup) | 20-35 min | ~25 min |
+| `loam amend apply` + manifest baseline backfill + manifest smoke_outcome shorten + `seal` | 5-10 min | ~5 min |
+| §status backfill + roadmap-row seal-SHA backfill + re-run dry-run | 3-5 min | ~5 min |
+| **Total** | **~50-90 min midpoint ~70 min** | **~58 min** |
+
+In-band — landed cleanly. Two in-cycle adjustments: (a) initial `smoke_outcome` exceeded 200-char limit (482 chars) → corrected via second manifest commit; (b) plan-doc §status section initially carried TBD-AT-COMMIT placeholders → backfilled post-seal per F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH-adjacent §status discipline.
 
 ### Halt-and-surface findings
 
-TBD-AT-COMMIT — populated at sealed-local time.
+**No HARD HALTs fired in-cycle.** The prior-dispatch (`retire-one-time-migration-tools`) halt-and-surface artefact + v0.10.7 amendment did all the empirical-investigation legwork; this PATCH executed Path B+C per the dispatcher-ratified scope per the original brief.
+
+**No soft halts.** Empirical retirement-readiness spot-check at plan-time confirmed all 4 tools retirement-ready (zero production cross-references outside their own dirs; AMENDED F-RETIRE-MIGRATE-TOOLS framing already validated by v0.10.7).
+
+**Smoke writeup §6.2 surfaces 4 F2 Ruthless Feedback observations:** (1) D-RMPH.3 candidate-path substitute choice rationale (heavy-b-migrate stability over operational helpers); (2) side-effect on F-PYTHON-3.9 evidence (post-deletion file count drops 30 → 26; v0.10.7 historical evidence preserved as state-at-resolution); (3) `install-from-source.txt` AC pattern (documenting empirical no-op > dropping the AC); (4) D-RMPH.1 single-PATCH for Path B+C rationale (overhead-without-benefit for split). None require dispatcher escalation.

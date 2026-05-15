@@ -1,0 +1,33 @@
+# loam init persona-wiring + isolated sub-loam driver MINOR
+
+TBD-AT-SEAL. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST.
+
+A fresh `loam init` (the documented non-tech-user quickstart: clone →
+loam init → cd → claude) now lands the workspace's primary persona
+ACTIVE on the first interactive turn — no manual hook install, no
+canonical-dev settings-template copy, no unsubstituted prompt tokens.
+Root cause was verified from canonical source: the first-run scaffold
+wrote `personas/<handle>/` but no Claude-Code-readable binding surface
+(the `{}` settings.json + AC.FBE.5b.5's explicit persona-binding
+out-of-scoping + the chicken-and-egg in onboarding.persist_grounding).
+The corrective is a forward extension of the first-run scaffold
+composing on the existing to_agent_md + SessionStart-registry
+primitives (Lens 1 — no new hook machinery; LOCKED-DESIGN-NOT-LICENSE
+applied — "by design" was not a reason to keep a non-tech user landing
+in a bare-LLM dead-persona workspace).
+
+A programmatic PTY driver stands up a real persona-active scratch loam
+instance via the production bootstrap path and drives an INTERACTIVE
+claude session to completion under ONE isolation mechanism — isolated
+CLAUDE_CONFIG_DIR + empty MCP + no telegram plugin/channel + namespaced
+workspace slug + service_bootstrap=False — that simultaneously (a)
+protects a concurrently-running operator session's telegram/bun poller
+from the claude-plugins-official telegram plugin's single-consumer
+SIGTERM (verified the sole kill vector — not a loam bug) and (b)
+yields a clean operator-environment-free bench measurement for the
+corrected ProgramBench loam arm. The frozen build_prompt is fed
+unchanged (owner constraint — bench + paper integrity); the dead
+--append-system-prompt run_loam_builder arm is retired.
+
+AC.LIPW.{1,2,3,4,5,6,S} green against real test output. SHA register +
+method-decision record in the plan-doc §14.

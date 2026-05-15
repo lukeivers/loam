@@ -5,7 +5,7 @@ amendment:
 
 # BASELINE captured at source-edit commit — backfilled to actual
 # source-edit SHA post-source-edit commit per v0.10.x precedent.
-baseline: "bcbd5f7"
+baseline: "6b36d31"
 
 plan: docs/plans/paper-html-regeneration.md
 plan_doc_ref: docs/plans/paper-html-regeneration.md

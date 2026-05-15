@@ -11,7 +11,7 @@ plan: docs/plans/retire-m1-per-host-helpers-and-orphan-plist-cleanup.md
 plan_doc_ref: docs/plans/retire-m1-per-host-helpers-and-orphan-plist-cleanup.md
 
 ac_count: 6
-smoke_outcome: "AC.RMPH.{1,2,3,4,5,6,S} GREEN; F-RETIRE-MIGRATE-TOOLS Path B+C RESOLVED (Path A v0.10.7 + Path B+C this PATCH). 4 tool dirs deleted (loam-migrate-launchd-labels + loam-migrate-host-config + loam-migrate-dormancy-config + orphan-plist-cleanup). 3 file edits (dev-mode-manifest + partition test + workspace-sync test). install-from-source.txt empirical no-op (no entries to remove). Affected suites GREEN: workspace-sync 4/4 + dev-sdlc partition 6/6. release-CLI 6-gate dry-run GREEN."
+smoke_outcome: "AC.RMPH.{1-6,S} GREEN; F-RETIRE-MIGRATE-TOOLS Path B+C RESOLVED. 4 tool dirs deleted; 3 file edits; install-from-source.txt no-op. workspace-sync 4/4 + dev-sdlc partition 6/6 GREEN."
 
 # Cross-component PATCH (4 framework/tools/ deletions + 1 dev-sdlc
 # manifest edit + 1 dev-sdlc test edit + 1 framework/workspace-sync

@@ -242,21 +242,21 @@ Owner gate-review time is separate from AI-time and depends on owner availabilit
 
 ## §13 — §status
 
-**Build cycle:** PLAN-AUTHOR ONLY (loam-plan-author, 2026-05-15). No source edits, no build, no apply, no seal. Root cause VERIFIED from canonical loam source this turn (probe CONFIRMED; researcher §2.2 REFUTED). Build deferred to a future cycle pending owner ratification of the named decisions below. NO version bump, NO publish in this cycle.
+**Build cycle:** SEALED LOCAL ON BRANCH (loam-builder, 2026-05-15). Branch `amend/loam-init-persona-wiring`; BASELINE `bb5ea69`, apply `4e4df50`, seal `a7625e0`. `[workspace-bootstrap] ok`. AC.LIPW.{1,2,3,4,5,6,S} GREEN vs real test output (incl. the real `claude` binary — halt-trigger 3 / §10.3 RESOLVED affirmative). D-LIPW.2 owner-ratified (Telegram 11290); D-LIPW.5 SHIFTED by build-time empirical evidence (the plan pre-resolved this contingency — the soft-halt fallback did NOT fire). NOT merged to main, NOT shipped, NOT published — sealed-local-on-branch is the deliverable. NO version bump in this cycle.
 
 **Plan-doc commits:** plan-doc + manifest — single doc-only commit pair (SHA backfilled at the doc-commit; the build ladder lands in §14 at build time).
 
-### AC verdict matrix — PENDING (flips at the future build cycle's seal against real test output)
+### AC verdict matrix — GREEN (flipped at seal `a7625e0` against real test output, loam-builder 2026-05-15)
 
 | AC | Verdict | Evidence (at build) |
 |---|---|---|
-| AC.LIPW.1 — `loam init` lands persona-binding surface; interactive session persona-active turn one | PENDING | TBD-AT-BUILD: scratch-bootstrap binding-artefact assertion + driven-session persona-signal |
-| AC.LIPW.2 — bound prompt has zero literal `{…}` template tokens | PENDING | TBD-AT-BUILD: post-`loam init` bound-prompt token scan |
-| AC.LIPW.3 — post-onboarding `persist_grounding` write-back preserved (no regression) | PENDING | TBD-AT-BUILD: amendment #50 onboarding test surface unchanged-green + post-onboarding identity reflects grounding |
-| AC.LIPW.4 — programmatic PTY driver runs an interactive multi-turn persona-voiced session to completion, not single-pass | PENDING | TBD-AT-BUILD: transcript >1 turn + persona signal, distinguishable from `run_raw_llm` shape |
-| AC.LIPW.5 — driver does not SIGTERM operator's telegram poller / collide with operator's launchd services | PENDING | TBD-AT-BUILD: sentinel-poller-survives + isolated-config/empty-MCP/no-telegram-plugin/namespaced-slug/`service_bootstrap=False` asserted from spawned env+argv |
-| AC.LIPW.6 — operator-protection isolation == bench-validity isolation (one mechanism, not two) | PENDING | TBD-AT-BUILD: single isolation config path drives both; test asserts one code path |
-| AC.LIPW.S — seal-diff discipline | PENDING | TBD-AT-BUILD: `loam amend seal` `[<component>] ok`; sweep confined to §5 fence; `test_no_sealed_amendments.py` green |
+| AC.LIPW.1 — `loam init` lands persona-binding surface; interactive session persona-active turn one | **GREEN** | `test_AC_LIPW_1_*` (4 tests) green: real `bootstrap_new_workspace --from canonical` writes `.claude/agents/primary.md` (non-empty, `name: primary`) + `settings.json` `"agent": "primary"` (amendment #37 default-agent) + SessionStart persona emit. Real-binary: interactive `claude` TUI showed `primary` as the bound active agent (halt-trigger 3 / §10.3 highest-risk assumption RESOLVED affirmative). |
+| AC.LIPW.2 — bound prompt has zero literal `{…}` template tokens | **GREEN** | `test_AC_LIPW_2_*` (2 tests) green: post-bootstrap bound `agents/primary.md` token-scanned — zero `{user_preferred_name}`/`{persona_given_name}`/any `{ident}` literal (rendered through the existing `_render_prompt_md` with brace-free placeholder identity). |
+| AC.LIPW.3 — post-onboarding `persist_grounding` write-back preserved (no regression) | **GREEN** | `test_AC_LIPW_3_*` (2 tests) green + `primary-persona` AC.O.3/AC.O.4 unchanged-green: after Part-1 placeholder bind, a real `persist_grounding` overwrites with captured grounding (`Mara`/`Luke`), flips `is_starter→False`. Onboarding write-back source unedited. |
+| AC.LIPW.4 — programmatic PTY driver runs an interactive multi-turn persona-voiced session to completion, not single-pass | **GREEN** | `test_AC_LIPW_4_*` structural (4) green; **real-binary** `test_AC_LIPW_4_real_claude_pty_drive_is_multiturn` PASSED (82s): PTY drove an interactive `claude` in a fresh persona-active scratch ws to a completed multi-turn agentic loop, `is_multi_turn==True`, distinguishable from `run_raw_llm` single-pass. |
+| AC.LIPW.5 — driver does not SIGTERM operator's telegram poller / collide with operator's launchd services | **GREEN** | `test_AC_LIPW_5_*` structural (5) green; **real-binary** sentinel-survives PASSED (98s): a full driver run left the operator `bun server.ts` count at 1 (unchanged) + operator PID 22884 alive. Token+API-key scrubbed; no telegram plugin/`--channels`; namespaced slug; `service_bootstrap` never True. |
+| AC.LIPW.6 — operator-protection isolation == bench-validity isolation (one mechanism, not two) | **GREEN** | `test_AC_LIPW_6_*` (3 tests) green: one `IsolationConfig` + one `build_isolated_env` + one `build_isolated_claude_argv` drive both properties; structural assertion — no second isolation surface; `drive()` uses the same two builders, no inline divergent construction. |
+| AC.LIPW.S — seal-diff discipline | **GREEN** | `loam amend seal` `[workspace-bootstrap] ok`; `test_no_sealed_amendments.py` 2 passed; seal-diff sweep `BASELINE bb5ea69..SEAL a7625e0` confined to `framework/workspace-bootstrap/` + `framework/tools/subloam-driver/` (admitted prefix) + `docs/plans/` (universal). Full workspace-bootstrap suite 452 passed / 12 skipped (no regression). |
 
 ### Named decisions the owner must rule on (recommendation-first; recommendation IS the decision for in-scope autonomous calls)
 
@@ -274,24 +274,27 @@ The single owner action that unblocks the future build cycle: **ratify D-LIPW.2*
 
 §5 + §13 name the plan-time decisions (D-LIPW.{1,2,3,4,5}); each is a preliminary ruling at plan-time. Post-build record (which stuck, which shifted, empirical evidence) is populated by the build cycle + at seal time by `loam amend seal --plan-doc`.
 
-### Decision outcomes (loam-builder, TBD-AT-BUILD)
+### Decision outcomes (loam-builder, 2026-05-15, seal `a7625e0`)
 
-- **D-LIPW.1 — Class: MINOR.** TBD-AT-BUILD.
-- **D-LIPW.2 — deferral-now-due forward-extension.** TBD-AT-BUILD (owner ratification SHA + whether the forward-extension method held).
-- **D-LIPW.3 — component fence + sidecar.** TBD-AT-BUILD (verified sidecar path; whether `extra_allowed_prefixes` for primary-persona was needed).
-- **D-LIPW.4 — sub-loam driver home.** TBD-AT-BUILD.
-- **D-LIPW.5 — isolation sufficiency / fallback.** TBD-AT-BUILD (whether the decided isolation was necessary+sufficient empirically; whether the soft-halt fallback fired).
+- **D-LIPW.1 — Class: MINOR. STUCK.** Part 1 adds user-observable behaviour at the `loam init` boundary (a fresh full-tree workspace now lands persona-active; `settings.json` carries the binding instead of `{}`). No build-time evidence of "no user-observable change" → no PATCH downgrade. MINOR holds.
+- **D-LIPW.2 — deferral-now-due forward-extension. STUCK (owner-ratified Telegram 11290).** The forward-extension method held: Part 1 *extends* the FBE.5b scaffold (composes on `to_agent_md`/`_render_prompt_md`/`merge_session_start`/`build_supervisor_stanza`, no new hook machinery) without editing `docs/spec/` or the FBE.5b `{}` template. The FBE.5b `{}` contract is *preserved for minimal/partial clones* (deterministic fail-soft); the binding fires only for real full-tree workspaces — the existing `test_AC_D_4_1` / `test_AC_FBE_5b_3` `settings==​{}` assertions still pass unchanged (no test loosening).
+- **D-LIPW.3 — component fence + sidecar. STUCK (sidecar verified).** Sidecar `framework/workspace-bootstrap/tests/SEAL_COMMIT` + seal_test `tests/test_no_sealed_amendments.py` verified against 3 sealed workspace-bootstrap manifests (FBE.5b #110, v0-7-0) before apply. `framework/primary-persona/` `extra_allowed_prefixes` admission proved **unnecessary** — the chosen method *imports* `to_agent_md`/`_render_prompt_md` unchanged (no primary-persona source edit); the admission can be tightened out in a future doc-only pass. Single-component fence (workspace-bootstrap) held; `framework/tools/subloam-driver/` lands inside the seal-test's already-admitted `framework/tools/` prefix.
+- **D-LIPW.4 — sub-loam driver home. DECIDED: `framework/tools/subloam-driver/`.** Builder's call per the plan — a dev-partition `framework/tools/` module (the established tool shape: `pyproject.toml` + `src/<pkg>/{__init__,cli,driver}.py` + `README.md`), inside the workspace-bootstrap seal-test's admitted `framework/tools/` prefix (no fence widening; own component unnecessary).
+- **D-LIPW.5 — isolation sufficiency / fallback. SHIFTED (build-time empirical correction; the plan pre-resolved this contingency).** Empirically verified against the real `claude` binary: (a) the kill vector is SPECIFICALLY the telegram plugin spawning a competing `bun server.ts` — a full driven run with no-telegram-plugin isolation but DEFAULT config left the operator `bun` count + PID 22884 unharmed (the SIGTERM vector is removed by plugin/channel exclusion alone, exactly as §2 point 9 predicted); (b) relocating `CLAUDE_CONFIG_DIR` away from default is OVER-isolation — Claude Code's subscription credential is keychain-stored keyed to the default config location and there is NO API key (`feedback_no_anthropic_api_key`), so a virgin relocated root reports `Not logged in`. **Correction:** `CLAUDE_CONFIG_DIR` relocation is opt-in (`air_gapped_config`, default False); the necessary-and-sufficient operator-protection is no-telegram-plugin + no-`--channels` + empty-MCP + namespaced-slug + `service_bootstrap=False`. The soft-halt fallback did NOT fire (it was unnecessary — the SIGTERM vector is fully removed). AC.LIPW.6 holds (still one config object / one code path). This is the `feedback_loose_AC_text_fix_AC_not_implementation` / LOCKED-DESIGN-NOT-LICENSE pattern applied build-time; the AC stayed outcome-shape and the corrected mechanism satisfies it.
 
-### SHA register (TBD-AT-BUILD)
+Build-time PTY-harness iteration (§10.4 named risk, NOT a plan defect): the interactive `claude` TUI required, in sequence, (1) the empty-MCP config to actually exist before spawn (driver now writes it), (2) `loam_root = <ws>/framework/` clone-root semantics (the `git clone` nests canonical's own `framework/` → `<ws>/framework/framework/...`), (3) `--dangerously-skip-permissions` + a pre-seeded per-project `hasTrustDialogAccepted` to clear the workspace-trust gate, (4) prompt typed then `\n` (not `\r`) to submit, (5) idle-timeout only counted after the prompt is sent. Each was empirically established against the real binary, not assumed.
+
+### SHA register
 
 | Commit | Scope | SHA |
 |---|---|---|
-| Plan-doc + manifest (doc-only pair) | this plan + manifest | TBD-AT-DOC-COMMIT |
-| Source-edits + `AC.LIPW.*` tests (BASELINE) | workspace-bootstrap scaffold extension + PTY driver + tests | TBD-AT-BUILD |
-| `loam amend apply` | manifest apply | TBD-AT-BUILD |
-| `loam amend seal` (SEAL_COMMIT) | seal-diff sweep | TBD-AT-BUILD |
-| `## §13 — §status` backfill commit | §status verdict matrix flip | TBD-AT-BUILD |
-| roadmap-row seal-SHA backfill | `docs/release-roadmap.md` | TBD-AT-BUILD |
+| Plan-doc + manifest (doc-only pair) | this plan + manifest | `a2604a5` |
+| Source-edits + `AC.LIPW.*` tests (BASELINE) | workspace-bootstrap scaffold extension + PTY driver + tests | `bb5ea69` |
+| Manifest baseline backfill + smoke_outcome ≤200 | manifest | `d38e127` |
+| `loam amend apply` | manifest apply (BASELINE+sidecar → bb5ea69) | `4e4df50` |
+| `loam amend seal` (SEAL_COMMIT) | deterministic seal-diff sweep | `a7625e0` |
+| `## §13/§14` backfill commit | §status verdict matrix flip + decision outcomes | (this commit) |
+| roadmap + STATE backfill | `docs/release-roadmap.md` + `docs/STATE.md` | (this commit) |
 
 ---
 

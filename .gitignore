@@ -57,3 +57,8 @@ personas/
 
 # loam-init scaffold output (workspace-state, not source — auto-created by plugin install/init flow)
 .claude/
+
+# Lockfiles — uv generates these per-package; we don't commit them (loam is
+# tooling, not a deployed application requiring exact reproducibility). Each
+# package's pyproject.toml is the source-of-truth for dependency declarations.
+**/uv.lock

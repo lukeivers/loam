@@ -1,0 +1,100 @@
+# Next-scope walker priority-queue-aware PATCH
+
+2026-05-14. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST.
+
+Closes FIDRAFT F-NEXT-SCOPE-EMPTY-§4 (captured 2026-05-14 from
+v0.10.1 publish output; activation gate: pre-v1.0 release-CLI
+consistency sweep OR sooner if Luke uses next-scope-proposal
+operationally + the empty output is friction). v0.10.0's
+`release-roadmap-priority-queue-restructure` MINOR (sealed
+`c71b2fa`) restructured §4 from pre-numbered version slots
+(`### vX.Y.Z — <objective>` headings) to a priority-ordered
+candidate queue (`### Candidate N — `<slug>` — <title>` headings
+with a `**Slug:** `<slug>`. **Class:** <class>` line immediately
+following each candidate). The release CLI's
+`_read_roadmap_priority_queue` walker at
+`framework/tools/loam/src/loam_cli/release/post_ship.py:56-112`
+was not updated when the restructure landed; every post-v0.10.0
+publish dry-run returned the misleading "(no entries in §4)"
+placeholder for `next_objective` + `next_class` + `next_ac_or_fence`.
+
+AC.NSWP.1 (walker reads candidate-queue structure) — `_read_roadmap_priority_queue`
+rewritten: regex now matches `### Candidate N — `<slug>` — <title>`
+headings (em-dash + hyphen tolerant); picks the first such heading
+after `## §4` (skipping `### §4-prelude` per §4's authoring
+convention); extracts slug from the backtick-delimited segment +
+title from the post-second-separator segment; reads the
+immediately-following `**Slug:** `<slug>`. **Class:** <class>` line
+to extract the class string. The proposal block's `next_objective`
+field carries `<slug> — <title>`; `next_class` carries the
+parenthesized class string (e.g., `MINOR (END-USER)`);
+`next_ac_or_fence` carries `see docs/release-roadmap.md §4
+candidate `<slug>``.
+
+AC.NSWP.2 (empty-queue case emits structurally-honest message) —
+when §4 exists but contains zero `### Candidate N` headings, the
+walker emits an explicit `queue empty — author next candidate
+before next cycle` message instead of the misleading legacy
+"(no entries in §4)" placeholder. The two prior placeholder
+branches are clarified: roadmap-missing stays; §4-missing-section
+text updated to reflect post-v0.10.0 section name (now
+"candidate-queue" not "mapped-versions").
+
+AC.NSWP.3 (tests updated) — conftest `staged_repo` fixture's
+roadmap §4 body updated from legacy `### v0.7.0 — next things
+land here` to v0.10.0+ candidate-queue shape (`### Candidate 1 —
+`fixture-candidate` — Fixture next-scope target` +
+`**Slug:** `fixture-candidate`. **Class:** MINOR (FIXTURE).`).
+`test_proposal_carries_next_objective_class_and_fence` updated to
+assert against the new shape. New test
+`test_proposal_handles_empty_candidate_queue` added covering
+AC.NSWP.2's empty-queue message. 6 other tests in the file
+unchanged (orthogonal to walker structure).
+
+AC.NSWP.4 (outcome-altitude dogfood probe) — slug-named smoke
+writeup at
+`docs/experiments/next-scope-walker-priority-queue-aware-hard-smoke.md`
+captures verbatim before/after `loam release` dry-run output
+against the live canonical `docs/release-roadmap.md`. Before:
+"(no entries in §4)" placeholder shape. After: top candidate
+`binary-usage-observation-harness` + class `MINOR (END-USER)` +
+slug-fence pointer.
+
+AC.NSWP.S (seal-diff allow-list) — 1 production walker file +
+2 test/conftest files + slug-named smoke writeup +
+universal-admission docs (STATE.md + release-roadmap.md +
+FUTURE_IDEAS_DRAFT.md) + plan-doc + manifest + dev-sdlc seal
+anchor artefacts. NO entries in pyproject.toml; NO entries in
+any framework/* component beyond `framework/tools/loam/`; NO
+`__version__` updates.
+
+D-NSWP.1 ruled first-Candidate-heading-wins (queue-order =
+priority-order per §4's authoring discipline). D-NSWP.2 chose
+em-dash + hyphen tolerant regex matching the live canonical
+shape. D-NSWP.3 captured the parenthesized full class form
+(e.g., `MINOR (END-USER)`) up to first period or em-dash —
+informationally richer than just `MINOR`. D-NSWP.4 distinguished
+the three placeholder branches (roadmap-missing,
+§4-section-missing, queue-empty) instead of the legacy
+one-message-fits-all. D-NSWP.5 chose dev-sdlc seal anchor
+(matches v0.10.2 / v0.10.3 release-CLI helper precedent).
+D-NSWP.6 pyproject versions stay at 0.10.0. D-NSWP.7 scoped to
+`_read_roadmap_priority_queue` only — no other helper or
+dataclass touched.
+
+F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH discipline verified empirically:
+only one reference to F-NEXT-SCOPE-EMPTY-§4 exists in `docs/`
+(the entry itself at `docs/FUTURE_IDEAS_DRAFT.md:276`); no other
+FIDRAFT entries reference it as blocker / dep / unblocker; no
+flip-on-unblock action needed beyond the entry itself.
+
+No outcome-shape addition. PATCH-class defect closure within the
+v0.6.0 release-CLI post-ship review surface (extends the surface
+to recognize the v0.10.0 §4 candidate-queue structure).
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+(walker rewrite + conftest fixture update + 1 test update + 1
+new test + slug-named smoke writeup with dogfood probe +
+STATE/roadmap admin + F-NEXT-SCOPE-EMPTY-§4 RESOLVED)
+TBD-AT-COMMIT; apply TBD-AT-COMMIT; seal TBD-AT-COMMIT.

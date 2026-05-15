@@ -11,7 +11,7 @@ amendment:
 # post-source-edit tip 91ebdee). This amendment STACKS on
 # amend/memory-session-continuity: its predecessor backfill tip is
 # 5957073; the source-edit commit lands on top and becomes BASELINE.
-baseline: "5957073ca6265c881b4ddb83762e47d3a6fddd33"
+baseline: "043095426c3e6bbec22003270ef255cb3ed0645c"
 
 plan: docs/plans/service-state-file-based-memory-reframe.md
 plan_doc_ref: docs/plans/service-state-file-based-memory-reframe.md

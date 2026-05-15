@@ -1,6 +1,6 @@
 # Memory session-continuity — a session restart is behaviourally transparent
 
-**Status:** PLAN-AUTHOR-ONLY cycle. Plan-doc + manifest authored to disk + committed (doc-only commits). NO source edits, NO apply, NO seal, NO version bump, NO publish. Build cycle DEFERRED to a future session pending owner ratification of the named decisions in §13.
+**Status:** BUILT + SEALED LOCAL (loam-builder, 2026-05-15). Owner ratified §13 decision 1 (corrected Gap A framing, Telegram 11268); decisions 2–5 builder-autonomous on the plan's recommendations (all stuck — §14). Source edits + 21 AC.MSC.* tests + `loam amend apply` (`d579748`) + `loam amend seal` (`77e3bd7`) complete. AC.MSC.{1,2,3,4,5,S} GREEN against real test output (full primary-persona suite 601 passed / 1 skipped; baseline 580/1 — zero regressions). Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST. NO version bump, NO publish in this cycle. SHA register + method-decision record in §14.
 
 **Slug:** `memory-session-continuity` (scope-descriptive per `feedback_scope_descriptive_ac_ids`; no version pre-baked — version derives at release time).
 
@@ -254,20 +254,20 @@ Plan-author authors the plan + named decisions WITH recommendations (§13). Owne
 
 ## §13 — §status
 
-**Build cycle:** PLAN-AUTHOR-ONLY cycle. Plan-doc + manifest authored to disk + committed (doc-only commits). NO source edits, NO apply, NO seal, NO version bump, NO publish. Build cycle DEFERRED to a future session pending owner ratification of §13 named decisions.
+**Build cycle:** BUILT + SEALED LOCAL (loam-builder, 2026-05-15). Owner ratified §13 decision 1 (corrected Gap A framing) via Telegram 11268; decisions 2–5 builder-autonomous on the plan's recommendations (all stuck — see §14). Source edits + tests + `loam amend apply` + `loam amend seal` complete. Sealed local; awaiting dispatcher dogfood publish per ASK-FIRST. NO version bump, NO publish in this cycle.
 
-**Plan-doc commits:** plan-doc + manifest TBD-AT-COMMIT (single doc-only commit pair authored by this cycle).
+**Plan-doc commits:** plan-doc + manifest `fc8f402` (single doc-only commit pair); see §14 SHA register for the full build ladder.
 
-### AC verdict matrix (PENDING — flipped to GREEN / YELLOW / RED / DEFERRED at build-cycle time)
+### AC verdict matrix — GREEN (flipped at build-cycle seal against real test output)
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.MSC.1 — recency reaches top-N (Gap B) | PENDING | flipped at build-cycle time |
-| AC.MSC.2 — session-start surfaces active thread, no session-end hook (Gap A b) | PENDING | flipped at build-cycle time |
-| AC.MSC.3 — named-thread surfaces in session-start corpus (Gap A a) | PENDING | flipped at build-cycle time |
-| AC.MSC.4 — behavioural-transparency probe (prime outcome) | PENDING | flipped at build-cycle time |
-| AC.MSC.5 — backward-compat + fail-soft preserved | PENDING | flipped at build-cycle time |
-| AC.MSC.S — seal-diff discipline | PENDING | flipped at build-cycle time |
+| AC.MSC.1 — recency reaches top-N (Gap B) | GREEN | `test_AC_MSC_1_recency_reaches_top_n.py` 3/3 pass — newer active-thread episode reaches top-N; older lexically-stronger does not crowd it out; non-recency query still surfaces a relevant older answer (§12 halt-trigger-4 guard). Recency-decay blended with BM25 in `file_memory.py:_blend_recency`. |
+| AC.MSC.2 — session-start surfaces active thread, no session-end hook (Gap A b) | GREEN | `test_AC_MSC_2_session_start_surfaces_active_thread.py` 5/5 pass — `active-thread` contributor registered at `TriggerKind.session`; cold session-start payload names live topic + pending ruling; no session-end hook in code path; empty workspace → empty block; digest bounded. |
+| AC.MSC.3 — named-thread surfaces in session-start corpus (Gap A a) | GREEN | `test_AC_MSC_3_named_thread_surface_in_corpus.py` 4/4 pass — `docs/FUTURE_IDEAS_DRAFT.md` in `discover_baseline_corpus`; present→corpus-presence True; absent→graceful-missing (no raise); canonical `CLAUDE.dev.md` session-start section + dev-mode emitter surface it. |
+| AC.MSC.4 — behavioural-transparency probe (prime outcome) | GREEN | `test_AC_MSC_4_behavioural_transparency_probe.py` 4/4 pass — cold session-start (via real `emit_session_start_context` + `cli_session_start`) recovers active thread + pending ruling with zero in-session state, zero session-end artefacts. The §10 HARD smoke; AC.MSC.1–3 ladder into it. |
+| AC.MSC.5 — backward-compat + fail-soft preserved | GREEN | `test_AC_MSC_5_backward_compat_fail_soft.py` 5/5 pass — pre-MSC FTS5 index rebuilds-on-mismatch (never raises); bad timestamps recency-neutral; contributor fail-soft to empty; composer sandbox absorbs. Full primary-persona suite 601 passed / 1 skipped (baseline 580/1 — zero regressions). |
+| AC.MSC.S — seal-diff discipline | GREEN | `loam amend seal` `[primary-persona] ok` — seal-diff sweep passed; `BASELINE=91ebdee..SEAL_COMMIT=d579748` confined to `framework/primary-persona/` + `docs/plans/` + universal-admitted `CLAUDE.dev.md`. `test_no_sealed_amendments.py` green in the sweep. |
 
 ### Named decisions the owner must rule on (recommendation-first)
 
@@ -285,14 +285,36 @@ The single owner action required to unblock the build cycle: **ratify decision 1
 
 ---
 
-## §14 — Method decisions (post-build backfill)
+## 14. Method decisions (post-build backfill)
 
-Populated at build-cycle time. §5 names the build-time decisions (D-MSC.{1,2,3,4,5}); each is a preliminary ruling at plan-time. Post-build §14 backfill captures: which preliminary rulings stuck; which shifted; the empirical evidence that drove any shift; the SHA register for plan-doc + source-edit + apply + seal commits.
+§5 names the build-time decisions (D-MSC.{1,2,3,4,5}); each was a preliminary ruling at plan-time. Post-build record — which stuck, which shifted, the empirical evidence.
+
+### Decision outcomes (loam-builder, 2026-05-15)
+
+- **D-MSC.1 — Class: MINOR.** STUCK. AC.MSC.2 introduces a new `TriggerKind.session` `active-thread` contributor that did not exist — new behaviour crosses the session boundary. No build-time evidence supported a PATCH downgrade. Class MINOR.
+- **D-MSC.2 — recency-vs-relevance blend.** STUCK (recency-decay *blended* with BM25, not recency-only). Implemented as a Python re-rank of a widened BM25 candidate pool: exponential recency-decay (5-day half-life, the §5 3–7d midpoint) blended 50/50 with a BM25 rank-position channel (`file_memory.py:_blend_recency`). The §12 halt-trigger-4 guard test (`test_AC_MSC_1...non_recency_query_still_surfaces_relevant_older`) is GREEN — recency does not drown relevance. No shift.
+- **D-MSC.3 — which durable surfaces enter the session-start corpus.** STUCK (`docs/FUTURE_IDEAS_DRAFT.md` primary). Build-time finding: the session-start corpus path-list lives in `CLAUDE.dev.md`'s `## Session-start discipline` section (NOT the workspace-root `CLAUDE.md`, which is the design-lenses doc), parsed by `session_start_gate.discover_baseline_corpus` (workspace path) AND surfaced whole by the `loam-mode` dev-mode partition emitter (dev path). The empirical check showed `docs/FUTURE_IDEAS_DRAFT.md` was at `CLAUDE.dev.md:68` — *outside* the parsed section (terminated by the `---` at line 57; `###` does not terminate it). The edit added it inside the section. STATE.md already covered via in-flight enumeration; active plan-docs not inlined. No shift.
+- **D-MSC.4 — deterministic scan vs `claude -p`.** STUCK (deterministic), **evidence-confirmed decisive.** `session_start_emitter.build_persona_session_start_inner_hook` hard-codes `"timeout": 5` (5s). A `claude -p` cold-start subprocess (multi-second LLM latency) cannot reliably fit a 5s session-start hook bounded by ~250ms service probes + filesystem reads + one SQLite query. The deterministic recency scan (`FileMemoryStore.recent_episodes`, stdlib, $0) is the only safe path and is the structural floor. `claude -p` enrichment remains an explicit follow-on. No shift; halt-trigger on the 5s timeout was checked and did NOT fire (deterministic path fits).
+- **D-MSC.5 — FTS5 schema migration vs rebuild-on-mismatch.** STUCK (rebuild-on-mismatch). `_connection()` probes the `episodes` FTS5 schema via a bounded `SELECT reference_time` and drops+recreates a pre-MSC index lacking the column; the grep fallback covers the rebuild window. No ALTER migration — the index is a derived cache, episodes are source-of-truth. `test_AC_MSC_5...` exercises the legacy-index path GREEN. No shift.
+
+**No D-MSC recommendation shifted at build time.** Owner ratified decision 1 (corrected Gap A framing) via Telegram 11268; decisions 2–5 were builder-autonomous on the plan's recommendations and all held against build-time evidence.
+
+### Build-time corrections (manifest defects from the plan-author cycle, F2-surfaced)
+
+- **Manifest `sidecar:` path defect.** Plan-author manifest declared `framework/primary-persona/seals/SEAL_COMMIT` (non-existent). Canonical convention (verified vs sealed `v0-4-3-patch-memory-retrieval-bm25-fix` + `m-fbm` manifests + `loam_amend.sidecar` module docstring) is `framework/primary-persona/tests/SEAL_COMMIT`. The `narrative.target` `seals/` prefix was correct (that IS the narrative-file convention). Corrected in `fc8f402`.
+- **`CLAUDE.dev.md` not in manifest `universal_paths.files`.** D-MSC.3 selected the `CLAUDE.dev.md` path-list mechanism; the manifest's line-19 comment anticipated this build-time revision. Added to `universal_paths.files` (already in the seal-test `allowed_files`). Corrected in `fc8f402`.
+- **`smoke_outcome` > 200-char schema cap.** Plan-author manifest's `smoke_outcome` was 755 chars; the schema caps at 200. Tightened to the AC-coverage signal in `b694a07` (mirrors the `10987d7 retire-m1 manifest smoke_outcome shorten` precedent). `loam amend validate` → ok.
+
+### SHA register
 
 | Item | SHA |
 |---|---|
-| Plan-doc + manifest (this cycle) | TBD-AT-COMMIT |
-| Source edits (build cycle) | TBD-AT-BUILD |
-| Manifest baseline backfill | TBD-AT-BUILD |
-| Apply + seal | TBD-AT-BUILD |
-| §13 §status backfill + roadmap-row seal-SHA backfill | TBD-AT-BUILD |
+| Plan-doc + manifest (this cycle) | `fc8f402` |
+| Source edits + AC.MSC.* tests (pre-amendment tip / BASELINE) | `91ebdee` |
+| Manifest baseline backfill | `2893dd1` |
+| Manifest smoke_outcome shorten | `b694a07` |
+| `loam amend apply` (BASELINE+sidecar bump; manifest+apply) | `d579748` |
+| `loam amend seal` (deterministic seal commit) | `77e3bd7` |
+| §13 §status + §14 backfill + STATE.md + roadmap | (this commit) |
+
+Seal-diff window: `BASELINE=91ebdee..SEAL_COMMIT=d579748` (sidecar `tests/SEAL_COMMIT` = `d5797483...`). Narrative: `framework/primary-persona/seals/SEAL_COMMIT.memory-session-continuity`.

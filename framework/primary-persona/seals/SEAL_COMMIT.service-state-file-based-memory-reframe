@@ -1,0 +1,31 @@
+# service_state memory-entry reframe PATCH
+
+TBD-AT-SEAL. Sealed local; shipped LOCAL (merged to main + dogfood).
+
+Prose-only reframe of the session-start `service_state` `memory`
+entry's modelling language. Under the v0.1.0 M-FBM file-based pivot
+(D-Q.MFBM.6) memory is a file-based store with no daemon and no
+health port; the `probe_service_state` docstring + the
+`SessionPayload.service_state` Pydantic `Field` description + the
+V11.E comment block previously modelled it as a port-probed
+session-level sidecar service. They now model it as file-based-store
+reachability; the TCP probe is documented as engaging only when the
+graphiti/M-GMP plist is present.
+
+Wire contract preserved byte-identically: the `service_state` dict,
+the `memory` + `orchestrator` keys, and the value set
+`up`/`down`/`unknown`/`not_expected` are unchanged. The
+`not_expected` sentinel (V11.E, SEALED) is the correct M-FBM signal
+and is untouched. The `orchestrator` entry keeps its
+genuine-UNIX-socket-service framing. No behaviour change crosses any
+boundary — the pre-existing session-start tests (D8.1/D8.4/AC46.1/
+V11.E.2) run unmodified and stay GREEN (AC.SSMR.3 structural guard).
+
+The memory-session-continuity builder correctly left this
+out-of-fence; this PATCH is the correctly-scoped prose-only
+follow-on. Composes with: the M-FBM file-based pivot (source of the
+correction); the V11.E `not_expected` sentinel (untouched); #32 D8
+composer (`SessionPayload.service_state`). No Anthropic API key.
+
+AC.SSMR.{1,2,3,S} GREEN at seal. Class PATCH. Stacks on
+memory-session-continuity (seal 77e3bd7). Shipped LOCAL.

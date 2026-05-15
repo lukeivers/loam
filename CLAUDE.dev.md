@@ -28,6 +28,10 @@ editing code, dispatching agents, ruling on designs — read:
 - `docs/STATE.md`
 - `docs/duration-estimation-rubric.md` (AI-build wall-time estimation rubric)
 - `docs/FUTURE_IDEAS.md` (CDCs live here; they apply to every build)
+- `docs/FUTURE_IDEAS_DRAFT.md` (the named-thread durable surface —
+  "where we were + open owner rulings" land here at point-of-occurrence;
+  reading it at session-start is the structural defence against
+  session-amnesia per the memory-session-continuity plan, AC.MSC.3)
 - Any `docs/plans/amendment-*.md` whose amendment is in-flight
 
 Component-scoped work additionally reads that component's

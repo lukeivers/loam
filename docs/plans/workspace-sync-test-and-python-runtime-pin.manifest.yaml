@@ -1,0 +1,197 @@
+schema_version: 3
+amendment:
+  slug: workspace-sync-test-and-python-runtime-pin
+  title: "Workspace-sync test stale-path fix + Python runtime pin honesty PATCH — closes FIDRAFT F-TF-1 + F-PYTHON-3.9-TEST-FAILURES-PYPROJECT-PIN (RESOLVED-BY-INSPECTION) + amends F-RETIRE-MIGRATE-TOOLS framing per prior-dispatch halt-and-surface evidence at `workspace/.scratch/claude-output/retire-one-time-migration-tools-halt-and-surface.md`. Path A scope (cleanly-actionable subset); Path B/C deferred for owner safety-horizon ratification. F-TF-1: workspace-sync test asserts retired `framework/tools/pos-publish-framework-only/pyproject.toml` exists; drop the stale path from `expected` tuple. F-PYTHON-3.9: empirical recheck shows ALL 30 pyproject.toml files already declare `requires-python>=3.11` (16) or `>=3.13` (6); pin in place since 2026-04-27 (commit `0d599bb`); pip refuses install on 3.9 verbatim per F-PYTHON-3.9 prescription. F-RETIRE-MIGRATE-TOOLS framing correction: heavy-b-migrate removed from candidate list (load-bearing continuous trigger per `plugins/dev-sdlc/tools/loam-mode/src/loam_mode/session_start.py:283-299`); orphan-plist-cleanup retirement clarified as 4-file edit; per-host helper safety-horizon framing clarified; entry status unchanged (capture-only awaiting owner Path B/C ratification). AC.WSP.{1,2,3,4,S} GREEN. Single-component fence (test fix + FIDRAFT doc edits + STATE/roadmap admin + smoke writeup; dev-sdlc seal anchor with `extra_allowed_prefixes` admitting `framework/workspace-sync/tests/`)."
+
+# BASELINE captured at source-edit commit — backfilled to actual
+# source-edit SHA post-source-edit commit per v0.10.x precedent.
+baseline: "42c0ee6"
+
+plan: docs/plans/workspace-sync-test-and-python-runtime-pin.md
+plan_doc_ref: docs/plans/workspace-sync-test-and-python-runtime-pin.md
+
+ac_count: 4
+smoke_outcome: "AC.WSP.{1-4,S} GREEN; F-TF-1 RESOLVED; F-PYTHON-3.9 RESOLVED-BY-INSPECTION; F-RETIRE-MIGRATE framing AMENDED (capture-only); test 4/4 PASS; release-CLI 6-gate dry-run GREEN."
+
+# Single-component PATCH (test fix + FIDRAFT doc edits + STATE/roadmap
+# admin + smoke writeup). Dev-sdlc seal anchor — matches v0.10.6 /
+# v0.10.5 / v0.10.4 / v0.10.3 / v0.10.2 PATCH precedent. No framework
+# source touched beyond the single test file admitted via
+# extra_allowed_prefixes; allow-list does NOT include
+# framework/tools/loam/.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - framework/workspace-sync/tests/
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.workspace-sync-test-and-python-runtime-pin
+  body: |
+    # Workspace-sync test stale-path fix + Python runtime pin honesty PATCH
+
+    2026-05-14. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST.
+
+    Closes FIDRAFT F-TF-1 (captured 2026-05-10 from v0.8.0 AC.HONEST.6
+    triage; activation gate: F-RETIRE-MIGRATE-TOOLS cycle) +
+    F-PYTHON-3.9-TEST-FAILURES-PYPROJECT-PIN (captured 2026-05-14 from
+    v0.10.4 + v0.10.5 cycle agents; activation gate: bundle into next
+    release-CLI-touching cycle OR pre-v1.0 surface cleanup).
+
+    Amends F-RETIRE-MIGRATE-TOOLS (captured 2026-05-10 from external-
+    reviewer report Axis-2 weakness #8 + AC.HONEST.6 triage F-TF-1
+    finding) "Proposed shape" line per prior-dispatch halt-and-surface
+    evidence at `workspace/.scratch/claude-output/retire-one-time-
+    migration-tools-halt-and-surface.md`. Status unchanged (capture-
+    only); operator-class Path B/C call stays owner-gated.
+
+    AC.WSP.1 (workspace-sync test stale-path expectation removed;
+    F-TF-1 RESOLVED) — `framework/workspace-sync/tests/test_AC_D_5_5_
+    bare_paths_absent.py` no longer asserts that
+    `framework/tools/pos-publish-framework-only/pyproject.toml` exists
+    (the tool was retired previously; the directory does not exist).
+    `python3.13 -m pytest framework/workspace-sync/tests/test_AC_D_5_
+    5_bare_paths_absent.py -v` returns 4/4 PASSED post-fix (was: 3
+    passed + 1 failed at `test_AC_D_5_5_1_framework_tools_present`).
+    FIDRAFT entry F-TF-1 status flipped to RESOLVED with cycle slug +
+    commit pointer.
+
+    AC.WSP.2 (F-PYTHON-3.9-TEST-FAILURES-PYPROJECT-PIN RESOLVED-BY-
+    INSPECTION) — empirical recheck per `feedback_agent_empirical_
+    recheck_before_halt` shows: (a) all 30 `pyproject.toml` files
+    across `framework/` + `plugins/` already declare
+    `requires-python = ">=3.11"` (16 files) or
+    `requires-python = ">=3.13"` (6 files); (b) the pin has been in
+    place since 2026-04-27 (`git blame` on
+    `framework/tools/loam/pyproject.toml` for the `requires-python`
+    line returns commit `0d599bb` from 2026-04-27); (c)
+    `pip install --dry-run framework/tools/loam/` on Python 3.9
+    returns `ERROR: Package 'loam-cli' requires a different Python:
+    3.9.17 not in '>=3.11'` — pip refuses install at install-time,
+    exactly as F-PYTHON-3.9 prescribes. The FIDRAFT entry was
+    captured 2026-05-14 without the empirical recheck. Entry status
+    flipped to RESOLVED-BY-INSPECTION with the empirical evidence +
+    chain pointer to commit `0d599bb`.
+
+    AC.WSP.3 (F-RETIRE-MIGRATE-TOOLS "Proposed shape" rewritten) —
+    FIDRAFT entry's "Proposed shape" line edited to reflect prior-
+    halt empirical evidence: (a) `heavy-b-migrate` removed from the
+    retirement-candidate list — it's a load-bearing continuous
+    trigger wired into `plugins/dev-sdlc/tools/loam-mode/src/loam_
+    mode/session_start.py:283-299` via `_invoke_lazy_projection()`,
+    NOT a one-time script (idempotent re-runner per
+    `framework/tools/heavy-b-migrate/README.md:22ff`); (b)
+    `orphan-plist-cleanup` retirement clarified as a 4-file edit
+    (delete + `plugins/dev-sdlc/dev-mode-manifest.yaml:163` removal
+    + `plugins/dev-sdlc/tools/loam-mode/tests/test_partition_
+    manifest.py:72,83` allow-list update + `framework/workspace-sync/
+    tests/test_AC_D_5_5_bare_paths_absent.py:117,125` counterpart-
+    list update + `framework/tools/loam-migrate-launchd-labels/`
+    cross-reference cleanup) NOT a 1-file deletion; (c) the 3
+    `loam-migrate-*` per-host helpers' retirement clarified as a
+    safety-horizon judgment call (no central "has been run"
+    registry; per-host / per-operator helpers; owner-class call);
+    (d) `pos-publish-framework-only` confirmed already-retired (the
+    F-TF-1 fix in this PATCH closes the residual stale assertion).
+    Entry STATUS unchanged (still `capture-only`). Entry text adds a
+    chain pointer to `workspace/.scratch/claude-output/retire-one-
+    time-migration-tools-halt-and-surface.md`.
+
+    AC.WSP.4 (outcome-altitude dogfood probe) — slug-named smoke
+    writeup at `docs/experiments/workspace-sync-test-and-python-
+    runtime-pin-hard-smoke.md` documents:
+    §1 — outcome shape verified (4/4 tests pass, FIDRAFTs corrected);
+    §2 — static verification (pytest output before vs after);
+    §3 — F-PYTHON-3.9 empirical-recheck (pip --dry-run output on 3.9
+        + grep across all pyproject.toml files for requires-python +
+        git blame for original pin commit);
+    §4 — F-RETIRE-MIGRATE-TOOLS framing-correction diff summary;
+    §5 — outcome-altitude dogfood probe (release-CLI 6-gate dry-run
+        ALL GREEN against this plan-doc + manifest).
+
+    AC.WSP.S (seal-diff allow-list) — single test-file edit
+    (`framework/workspace-sync/tests/test_AC_D_5_5_bare_paths_
+    absent.py`) admitted via `extra_allowed_prefixes:
+    [framework/workspace-sync/tests/]` + FIDRAFT-doc edit
+    (`docs/FUTURE_IDEAS_DRAFT.md` — three entries) + universal-
+    admission docs (STATE.md + release-roadmap.md) + slug-named
+    smoke writeup + plan-doc + manifest + dev-sdlc seal anchor
+    artefacts. NO entries in pyproject.toml; NO entries in any
+    framework/* component source code; NO `__version__` updates;
+    NO test additions or removals beyond the in-scope F-TF-1 stale-
+    path drop.
+
+    D-WSP.1 ruled Path A scope only (Path B = retire 3 loam-migrate-*
+    per-host helpers; Path C = additionally retire orphan-plist-
+    cleanup) — both deferred for owner safety-horizon ratification
+    per `feedback_principle_conflict_resolution_multi_signal` (M5-
+    class principle-conflict; signal weights: blast radius MEDIUM-
+    to-HIGH; reversibility LOW-to-MEDIUM; audience operator-facing).
+
+    D-WSP.2 ruled F-PYTHON-3.9 RESOLVED-BY-INSPECTION (NOT plain
+    RESOLVED + NOT entry deletion) — captures the actual shape
+    (empirical recheck found the proposed work already in place pre-
+    capture); preserves the audit-trail + extends the
+    `feedback_agent_empirical_recheck_before_halt` discipline by
+    naming the instance.
+
+    D-WSP.3 ruled F-RETIRE-MIGRATE-TOOLS framing correction is doc-
+    only; status unchanged — the operator-class Path B/C call stays
+    owner-gated; correcting the framing improves the decision-
+    context without making the decision.
+
+    D-WSP.4 pyproject versions stay at 0.10.0 per AC.HONEST.1 /
+    D-NFCLEAN.4 / D-SDPD / v0.8.3 / v0.10.1-v0.10.6 precedent
+    (PATCHes ride predecessor MINOR).
+
+    D-WSP.5 chose dev-sdlc seal anchor (matches v0.10.6 / v0.10.5 /
+    v0.10.4 / v0.10.3 / v0.10.2 PATCH precedent). AC.WSP.S allow-
+    list pre-includes `plugins/dev-sdlc/tests/test_no_sealed_
+    amendments.py` per F-PLAN-DOC-TEMPLATE-AUTO-BUMP-FENCE
+    (captured 2026-05-14 specifically to prevent v0.10.3 fix-up
+    rework).
+
+    D-WSP.6 admitted `framework/workspace-sync/tests/` via
+    `extra_allowed_prefixes` for the single F-TF-1 test fix (same
+    pattern v0.10.6 used to admit `docs/papers/`); single targeted
+    prefix; NOT whole `framework/`.
+
+    F-FIDRAFT-FLIP-ON-UNBLOCK-PATCH discipline check (§6 of plan-
+    doc): F-TF-1 RESOLVED + F-RETIRE-MIGRATE-TOOLS doc-only AMENDED
+    in same source-edit (composes-with chain honored); F-PYTHON-3.9
+    has no dependent entries (no flip-on-unblock action needed);
+    F-RETIRE-MIGRATE-TOOLS post-amendment composes-with includes
+    F-TF-1 which is co-edited (discipline GREEN).
+
+    No outcome-shape addition. PATCH-class defect closure within
+    the test surface + FIDRAFT capture surface.
+
+    Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+    (test fix + FIDRAFT 3-entry edits + STATE/roadmap admin + slug-
+    named smoke writeup) TBD-AT-COMMIT; apply TBD-AT-COMMIT; seal
+    TBD-AT-COMMIT.

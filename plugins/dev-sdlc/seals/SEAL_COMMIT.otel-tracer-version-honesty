@@ -1,0 +1,91 @@
+# OTel tracer-version honesty PATCH
+
+2026-05-14. Sealed local; awaiting dispatcher dogfood publish per
+ASK-FIRST.
+
+Closes FIDRAFT F-OTEL-VERSION-BUMP (captured 2026-05-10 from v0.8.0
+AC.HONEST.1 in-cycle finding; deferred to telemetry-touching cycle
+OR pre-v1.0 sweep). Each component's `observability.py` (or
+supervisor.py) carried `_TRACER = trace.get_tracer("loam.<component>",
+"0.1.0")` — the second arg is OTel's `instrumenting_library_version`
+field, distinct from the package version but emitted in every span's
+`instrumentation_scope.version`. v0.8.0 deliberately scoped the
+per-component-version sweep to user-visible surfaces (30 pyproject
+versions + 4 `__version__` strings); the tracer-version literal
+stayed deferred. v0.10.0 MINOR bumped per-component pyproject
+versions to 0.10.0; this PATCH brings the tracer-version literal
+into alignment.
+
+AC.OTVH.1 (production sweep) — 7 production sites updated:
+cost-governance / self-correction / dormancy / reversibility-primitive /
+safety-layer / orchestrator/observability / orchestrator/supervisor.
+Each site's line `_TRACER = trace.get_tracer("loam.<component>",
+"0.1.0")` updated to `_TRACER = trace.get_tracer("loam.<component>",
+"0.10.0")`. Component-name first arg preserved verbatim. Verified
+via `grep -rn 'get_tracer("loam\.[a-z_.]*", "0\.1\.0")' framework/
+--include="*.py"` returns 0 production matches.
+
+AC.OTVH.2 (test-fixture sweep) — 5 test-fixture monkeypatch
+installer sites updated: self-correction (test_amendment_20) +
+dormancy (test_d9 + test_d10 + test_amendment_20) +
+observability-aggregator (test_amendment_20). These sites install
+monkeypatched tracers via `provider.get_tracer("loam.<component>",
+"0.1.0")` for fixture-isolated span capture; they do NOT assert on
+the literal value (verified empirically). Updating them keeps
+fixture instrumentation versions tracking production for
+consistency. AC.OTVH.2 text tightened doc-only at plan-time per
+`feedback_loose_AC_text_fix_AC_not_implementation` (FIDRAFT
+capture's "tests if any assert on tracer version" framing was
+inaccurate to the actual fixture-installer scope).
+
+AC.OTVH.3 (idempotence) — re-running the grep sweep produces zero
+new edits; no `get_tracer(..., "0.1.0")` literals remain anywhere
+in `framework/` source.
+
+AC.OTVH.4 (outcome-altitude dogfood probe) — slug-named smoke
+writeup at `docs/experiments/otel-tracer-version-honesty-hard-smoke.md`
+documents a runtime probe: spawn a production component's tracer
+(cost-governance), start a span, capture via in-memory exporter,
+read `instrumentation_scope.version`, verify equals `"0.10.0"`.
+
+AC.OTVH.S (seal-diff allow-list) — 7 production observability/
+supervisor files + 5 test-fixture files + slug-named smoke writeup +
+universal-admission docs (STATE.md + release-roadmap.md +
+FUTURE_IDEAS_DRAFT.md) + plan-doc + manifest + dev-sdlc seal anchor
+artefacts (SEAL_COMMIT narrative + sidecar + BASELINE-pointer
+auto-bump). NO pyproject.toml bumps. NO `__version__` updates. NO
+`__init__.py` edits.
+
+D-OTVH.1 ruled Path B (current literal "0.10.0") over Path A
+(`__version__` import) because none of the 6 affected components
+export `__version__`; adding 6 new exports would be scope-creep.
+Path A captured as new FIDRAFT F-OTEL-VERSION-DYNAMIC-IMPORT for
+follow-on (gate: cycle already touching the 6 `__init__.py` for
+other reasons OR structural drift signal).
+
+D-OTVH.2 ratified inclusion of test-fixture sites in scope (same
+drift class as production literal; leaving them stale would require
+a follow-on PATCH for the same FIDRAFT entry).
+
+D-OTVH.3 included `loam.aggregator.nl` test fixture despite
+production-side `nl_path.py:52` having no version arg (the
+production-side no-arg state is a separate concern; this PATCH
+sweeps the stale literal at the test-fixture installer regardless).
+
+D-OTVH.4 chose dev-sdlc seal anchor over per-component sealing
+(matches v0.8.0 AC.HONEST.1 precedent shape — cross-component
+PATCH touching many components narrowly).
+
+D-OTVH.5 pyproject versions stay at 0.10.0 (PATCH rides predecessor
+MINOR per AC.HONEST.1 / D-NFCLEAN.4 / D-SDPD / v0.8.3 / v0.10.1 /
+v0.10.2 / v0.10.3 precedent).
+
+No outcome-shape addition. PATCH-class defect closure within the
+v0.8.0 AC.HONEST.1 per-component-version-discipline outcome shape
+(extends the discipline to the telemetry layer).
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+(12 literal substitutions + slug-named smoke writeup with runtime
+probe + STATE/roadmap admin + F-OTEL-VERSION-BUMP RESOLVED + new
+FIDRAFT F-OTEL-VERSION-DYNAMIC-IMPORT capture) TBD-AT-COMMIT;
+apply TBD-AT-COMMIT; seal TBD-AT-COMMIT.

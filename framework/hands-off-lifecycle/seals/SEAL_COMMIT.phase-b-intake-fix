@@ -1,0 +1,91 @@
+# Phase-B intake fix — the three named hands-off-loop intake-leg defects + the honest re-harden
+
+The phase-b-hardening honest-negative (3/7 faithful on 7
+genuinely-vague non-technical intents + one non-deterministic
+process crash) located three contained defects at file:line in
+framework/tools/handsoff-loop/src/handsoff_loop/intake.py. This
+amendment closes them as THREE CONTAINED CORRECTIONS — explicitly
+NOT a verification re-architecture (the containment finding was
+resolved POSITIVE from source: the independent faithfulness judge,
+its independence, its isolation, its either-polarity, and the
+machine-check data it needs ALL already exist in intake.py; only
+the wiring was missing).
+
+Surface changed:
+  - intake.py — three named sites only:
+    - AC.PBF.1: an empty/broken-done gate between derive and the
+      approval call. The derive step is format-fragile (plain text
+      + `---` + JSON); when the model deviates the parser yields an
+      empty plain "done" and/or an empty check command and/or an
+      unparsed machine-checkable, and the old approval gate
+      (`approved = bool(approval_fn(plain_acceptance))`) returned
+      True on the fragment anyway (hardening I2/I7, the compounding
+      rubber-stamp). The fix is an honest refuse-with-reason
+      (D-PBF-A adopted — NOT auto-retry: a silent retry
+      re-introduces the rubber-stamp by another path) produced
+      BEFORE the gate can be reached, so an empty/garbage
+      derivation can never surface as approved=True.
+    - AC.PBF.2: the independent AC.B.4b faithfulness judge is now
+      fed the actual derived machine check command
+      (`mc["check_command"]`) + its spec — a live local already
+      computed ~30 lines above — and is asked the adversarial
+      proxy/plumbing question ("could this exact command exit 0
+      while the user's real outcome is unmet?"). Previously the
+      prompt interpolated only intent + the friendly plain summary
+      and NEVER the machine form, so the loop's own judge was
+      structurally blind to its own canonical failure mode and
+      rubber-stamped both hardening CHECKABLE-BUT-WRONG cases
+      (I3 stale-presence-test, I6 dry-run-flag). The judge process
+      itself is UNCHANGED — same already-independent,
+      already-isolated, already-either-polarity claude -p
+      subprocess; only WHAT it sees and WHAT it is asked changed.
+      This IS the information-trust-ordering inversion: judge the
+      ground-truth artefact, not the loop's own self-summary. NO
+      new judge / NO new isolation / NO verify.py change.
+    - AC.PBF.3: the AC.B.3 jargon guard is now token-boundary
+      matched (the acceptance-ID term as the real `AC.<id>` shape,
+      each other term word-boundary-anchored, the loam `seal`
+      jargon scoped to its amendment/manifest/commit collocation)
+      so an ordinary word that merely contains a forbidden
+      substring ("Mac." -> "ac.", "odd" -> "ODD", "seal the
+      envelope" -> "seal") does NOT raise, while genuine jargon
+      (a real `AC.<id>`, pytest, exit code, sealed manifest) still
+      does. Deterministic — the same plain "done" always raises or
+      never raises, independent of incidental phrasing. Closes the
+      non-deterministic crash that depended on whether the model
+      happened to end a sentence with "Mac.".
+  - framework/hands-off-lifecycle/tests/test_AC_HL_PBF_{1,2,3,4}_*.py
+    — one file per AC. AC.PBF.1 (empty/broken refused before
+    approval, healthy path still reaches the gate), AC.PBF.2 (the
+    faith prompt carries the literal check command + spec + the
+    proxy question; either polarity preserved; unparseable judge
+    still false-not-retried), AC.PBF.3 (the exact hardening "Mac."
+    crash cases + the broader ordinary-word class do NOT raise,
+    genuine jargon still refused, deterministic on repeat),
+    AC.PBF.4 (elicitation bounded, exactly one approval gate on a
+    healthy derive, genuine jargon still refused, the pre-existing
+    deterministic test_AC_HL_B1_B4_intake_structure.py invariants
+    hold). The SKILL.md behavioural-doc line was assessed and NOT
+    touched — its pipeline-shape prose stays accurate after the fix.
+
+AC.PBF.5 — the honest re-harden: a re-run of the EXACT
+phase-b-hardening 7-intent protocol (same 7 intents, one run per
+intent, no retry-to-pass) scored by an INDEPENDENT Tier-0
+faithfulness judge that is NOT the loop's own AC.B.4b judge, at the
+>=6/7 bar. A definite "still not durably reliable — here is the
+residual pattern + evidence" is a VALID plan-success §10.5 outcome,
+reported straight, NEVER retried-to-green, NEVER widened into a
+re-architecture mid-build, NEVER the bar weakened (F2 /
+LOCKED-DESIGN-NOT-LICENSE). >=6/7 not 7/7 is the fair honest bar
+(one case is mechanically-unverifiable-for-anyone — plan §4/§8).
+
+The intake->loop check_command/check_argv seam (plan §3/§6.3/§8) is
+a NAMED OUT-OF-FENCE follow-on — real, but a loop-composition
+concern downstream of Phase-B intake faithfulness; NOT fixed here,
+fix-2 does NOT depend on it; named so it is not silently inherited
+as solved.
+
+Single-component fence: framework/workspace-bootstrap/. NOT merged
+to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+branch is the deliverable; origin/main unchanged. NO Anthropic API
+key — real claude binary, default Sonnet.

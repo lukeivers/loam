@@ -189,12 +189,42 @@ named a scope violation (AC.FOUND.0). No method-in-AC.
 4. A phase end-test cannot be run honestly (env blocks real sub-agent
    dispatch / real verification) → HALT, report; no weaker proxy.
 
-## §14 — Method-decision register + commit SHAs
+## 14. Method-decision register + commit SHAs
 
 Method decisions: D-UNIT/D-COST-BAND/D-NEG-DEPTH per §5 (resolved
-upstream). Anchor-selection decision recorded in §2.
+upstream). Anchor-selection decision recorded in §2 (autonomously
+resolved per the operational-objective test: `workspace-bootstrap`
+chosen over `loam-skills` because the latter's own seal-test is stale
+relative to the repo-wide `docs/rebuild/`→`docs/` path migration and
+would false-fail on `docs/plans/`; the objective requires the
+orchestrator be skill-shaped + persona-invocable, not that
+`loam-skills` be the seal anchor).
 
 ### Commit SHAs
 
-*(Backfilled by `loam amend seal --plan-doc` after the seal commit
-lands.)*
+Single-component fence: `workspace-bootstrap`. Branch
+`amend/loam-init-persona-wiring` (LOCAL SEAL ONLY — NOT merged to
+`main`, NOT pushed, NOT published, NOT tagged).
+
+| Stage | SHA |
+|---|---|
+| BASELINE (source-edit parent) | `1f00d18` |
+| Source-edit commit | `36bbcb8` |
+| Apply auto-commit | `9777d38` |
+| Seal commit | `134062d` |
+| Sidecar `SEAL_COMMIT` value | `9777d38` (apply commit) |
+
+### Phase end-test verdicts (the §10.5 honest outcomes)
+
+| Phase | Polarity | Definite | Evidence |
+|---|---|---|---|
+| **A** — packaged-skill orchestration fidelity (AC.A.4) | **POSITIVE** | yes | all 4 dims positive: reached frozen done w/o human loop-driving (primary_exit=0, held_out_exit=0); no silent regression; honest-negative control structurally intact; cost/wall-clock in band (38.37s, measured $0.1537 via `--output-format json`) |
+| **B** — intent→checkable-done (AC.B.5) | **POSITIVE** | yes | all 4 dims positive: derived done machine-checkable; INDEPENDENT adversarial faithfulness judge faithful=True ("no material gap"); elicitation bounded (3 plain questions, ≤4); one plain-language approval gate, jargon-guard passed pre-gate. Contract §10 flagged B as the risk most likely to retire negative — it retired positive on the run executed. |
+| **C** — end-to-end hands-off (AC.C.1) | **achieved** | yes | gate satisfied (both phases positive → attempted, not gated); reached_done=True; human_touches=1 (the single plain-language approval is the only human touch) |
+
+Honest-negative discipline note: a definite negative on AC.A.4 or
+AC.B.5 would have satisfied the AC exactly as a positive does and
+would have been reported straight, never retried to green. Both
+retired positive on the runs executed; that is the empirical result
+of one run per phase, reported as the definite evidence-backed
+verdict the AC requires (not a claim of universal reliability).

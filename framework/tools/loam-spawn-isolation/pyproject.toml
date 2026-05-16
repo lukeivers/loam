@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-spawn-isolation"
+version = "0.0.0"
+description = "The ONE shared, importable, mandated telegram-plugin-isolation surface for EVERY loam-adjacent `claude` spawn — explicitly including dispatched-agent-authored /tmp test / judge / probe / re-harden harnesses (the class that caused Telegram-death #5: a verify harness that hand-rolled a raw subprocess.run([\"claude\",\"-p\",...]) loaded the user-enabled telegram plugin and SIGTERM'd the operator's single-consumer poller while purporting to prove Telegram was protected). Promotes the PROVEN handsoff-loop _isolation.py adapter pattern over the sealed subloam-driver primitive (build_isolated_claude_argv / build_isolated_env / write_empty_mcp_config / IsolationConfig / the marker-guard) into a single one-line-importable module any out-of-tree caller can use: `spawn_isolated_claude(...)` (the mandated entry point), `inject_isolation(argv)`, `isolated_env(base)`, `isolated_claude_argv(argv)`, and `assert_loam_spawn_isolated(argv)` (the structural mandate guard — a loam-adjacent argv built WITHOUT the isolation raises loudly rather than silently shipping a kill-capable invocation). Adds the one-line CLAUDE_PERSONA belt-and-braces env-var that independently defangs the kill even if a spawn does load the plugin. NO new isolation mechanism (reuses the sealed subloam-driver functions verbatim); NO spawn-router re-architecture. NO Anthropic API key — real claude binary, default Sonnet (feedback_no_anthropic_api_key); the env scrub enforces it. Stdlib-only."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]

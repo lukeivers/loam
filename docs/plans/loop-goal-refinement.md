@@ -643,3 +643,38 @@ Contained evolution of the intake derivation + one named in-scope
 prerequisite (the intake→loop seam, milestone-leg-only). Honest-negative
 per intent class is a first-class valid §10.5 outcome — the bar is
 honest, not gamed.*
+
+---
+
+## 14. Method decision record + commit SHAs
+
+This section satisfies AC.D-sa.7 (the designated plan doc carries the
+§14 method-decision-record heading + the deterministic commit-SHA
+subsection).  The build executed the plan's recommended defaults
+without re-litigation: **D-GR-1 ADOPTED** (bounded refine loop inside
+`derive_acceptance_from_intent`, not a new orchestrator phase),
+**D-GR-2 ADOPTED** (interactive-refine via the existing
+`elicit_answer_fn`/`approval_fn` callback contract; degrade to
+self-refine + milestone-at-the-single-gate when no live user — no new
+mid-run channel), **D-GR-3 ADOPTED** (the same 7 hardening intents for
+the AC.GR.5 re-harden).  The intake→loop seam was promoted to a named
+in-scope prerequisite for the milestone leg only (AC.GR.6, §3b) — a
+read-path connection, not a decompose/dispatch/judge redesign
+(AC.FOUND.0 untouched).  Two `test_AC_HL_PBF_2` tests were adjusted as
+recorded fix-driven tightenings per the sealed AC.PBF.4 precedent
+(AC.GR.1 legitimately converts the `faithful=False` terminal; the
+sealed AC.PBF.2 no-retry-to-green property is preserved exactly — the
+M5 four-step resolution is recorded in the build report).
+
+### Commit SHAs
+
+- Plan + manifest: `d3e79be`
+- Source + tests + doc-truth: `e1a2543`
+- Manifest BASELINE pin → source-edit commit: `a8de2d2`
+- Manifest apply (auto-commit): `da433f1`
+- Seal commit: `ef59d1f`
+- Single-component fence: `framework/workspace-bootstrap/`
+  (sidecar advanced to `e1a2543`)
+- LOCAL SEAL ONLY — `origin/main` unchanged at
+  `f7ccc3db38c616922814019c8341a082592952be`; nothing pushed / merged
+  / tagged / published.

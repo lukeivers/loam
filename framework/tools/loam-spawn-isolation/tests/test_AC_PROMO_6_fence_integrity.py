@@ -127,12 +127,30 @@ def test_AC_PROMO_6_only_additive_new_package() -> None:
         "docs/FUTURE_IDEAS_DRAFT.md",
         "CLAUDE.md",
     }
+    # The amendment-ritual bookkeeping surface the manifest-declared
+    # workspace-bootstrap seal anchor legitimately produces EVERY
+    # cycle: `loam amend apply` advances the sidecar (SEAL_COMMIT) +
+    # bumps the seal-test BASELINE; `loam amend seal` advances them
+    # again + writes the narrative. These are the seal MECHANISM, not
+    # §1a/§1b/§1c source churn and not scope creep (the prior
+    # phase-b-intake-fix / telegram-poller-isolation-fix apply commits
+    # touched the identical two paths). The load-bearing
+    # §1a/§1b/§1c-untouched assertion is the parametrized
+    # `test_AC_PROMO_6_fenced_site_unchanged` above — it stays exact.
+    ritual_bookkeeping = {
+        "framework/workspace-bootstrap/tests/SEAL_COMMIT",
+        "framework/workspace-bootstrap/tests/"
+        "test_no_sealed_amendments.py",
+        "framework/hands-off-lifecycle/seals/"
+        "SEAL_COMMIT.telegram-5-fix",
+    }
     src_changed = [
         p
         for p in changed
         if p.endswith(".py")
         and "/tests/" not in p
         and not p.startswith("docs/")
+        and p not in ritual_bookkeeping
     ]
     unexpected = sorted(
         p
@@ -144,7 +162,8 @@ def test_AC_PROMO_6_only_additive_new_package() -> None:
         f"{unexpected} (AC.PROMO.6). Full changed set: {changed}"
     )
     # Sanity: anything else changed must be the new package, a test
-    # under it, or a universal doc/state path.
+    # under it, a universal doc/state path, or the amendment-ritual
+    # bookkeeping surface (sidecar / seal-test BASELINE / narrative).
     leftover = [
         p
         for p in changed
@@ -153,6 +172,7 @@ def test_AC_PROMO_6_only_additive_new_package() -> None:
             p.startswith(up) for up in universal_prefixes
         )
         and p not in universal_files
+        and p not in ritual_bookkeeping
     ]
     assert leftover == [], (
         f"changed paths outside the new package + universal "

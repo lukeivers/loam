@@ -295,6 +295,40 @@ def run_realpb_experiment(
         tdir.mkdir(parents=True, exist_ok=True)
         run_dir = tdir / "eval_run"
 
+        # --- RESUME GUARD (AC.RPB.6 reproducibility-from-preserved-
+        # evidence): if this task's disposition.json already exists,
+        # the per-(arm,task) evidence (raw transcripts + the REAL
+        # upstream *.eval.json + the independent-judge verdicts +
+        # measured cost) is the durable fact — load it back and SKIP
+        # re-running. Re-spawning real claude + the wall-clock-heavy
+        # real eval to recompute IDENTICAL preserved evidence would
+        # burn the measured D-RPB-4 ceiling on rework and is the
+        # opposite of the frozen "re-running the frozen scorer over
+        # the preserved evidence yields the same verdict" property.
+        # This is a method-only resume mechanism: it does NOT touch
+        # any AC, the frozen pass rule, the frozen margin, the k_min
+        # floor, or the verdict semantics — only WHICH tasks are
+        # (re-)executed vs read back. A partial run that was stopped
+        # externally resumes from the last fully-preserved task.
+        disp_json = tdir / "disposition.json"
+        if disp_json.exists():
+            try:
+                cached = json.loads(disp_json.read_text())
+                b_d = RealPBArmDisposition(**cached["baseline"])
+                l_d = RealPBArmDisposition(**cached["loam"])
+                baseline_disp.append(b_d)
+                loam_disp.append(l_d)
+                completed.append(task.id)
+                ceiling.add_cost(b_d.cost_usd)
+                ceiling.add_cost(l_d.cost_usd)
+                continue
+            except (json.JSONDecodeError, KeyError, TypeError):
+                # a partially-written / schema-drifted disposition is
+                # NOT trusted as preserved evidence — fall through and
+                # re-run this task cleanly (the v2 arms.py wipes the
+                # work dirs fresh, so a partial re-run is clean).
+                pass
+
         # --- Baseline arm (no-harness floor) — REUSED v2 arms.py.
         b_wd = tdir / "baseline_work"
         b_tr, b_dt, b_cost = run_baseline_arm(

@@ -1,0 +1,93 @@
+schema_version: 3
+amendment:
+  slug: subloam-driver-fix
+  title: "subloam-driver corrective cycle — fix three verified defects in the isolated sub-loam PTY driver and end at ONE honest re-test of the real frozen build_prompt (both polarities GREEN). DEFECT 1 (AC.SLF.1, submission): driver.py:535-540 wrote the multi-KB frozen prompt in one os.write, slept a FIXED 0.5s, then sent the submit newline unconditionally; the real TUI fragments a large write into multiple bracketed-paste segments and a newline arriving inside an open bracketed paste is literal text, not submit — the turn was never submitted and the run died on the idle-timeout (verified from code + the captured 3-chunk yj transcript, programbench-step0-rootcause-and-contamination-2026-05-15.md §A). FIX: a paste-settle gate (_paste_has_settled) sends the submit newline ONLY after the bracketed-paste echo has gone quiet for paste_settle_s, reusing the existing in-loop buffer-watch precedent (the trust-dialog handler); delivery-path agnostic — holds regardless of fragment count. DEFECT 2 (AC.SLF.2, honest signal): _count_effective_turns counted three TUI-chrome needles (the input affordance, the bound-persona banner, the per-turn status line) alongside genuine markers and floored at 1, so is_multi_turn floated True on a transcript with ZERO model action — the sealed AC.LIPW.4 real-binary green measured nothing a TUI boot would not also satisfy (§B). FIX: the loop-ran / multi-turn signal is derived from genuine_turns (genuine markers ONLY); effective_turns retained solely as a chrome-inclusive transcript-shape diagnostic explicitly NOT the signal; falsification test built into AC.SLF.2. DEFECT 3 (AC.SLF.3, cost): the interactive driver emits no machine result envelope (no result JSON, no usage fields — step-0 smoke §3). FIX per D-COST: present-or-honestly-absent — an in-session /cost echo parse yields a real figure when one is printed, else absence recorded as absent; NEVER estimated/inferred/fabricated, an unrelated $ is never misread as cost. GATE (AC.SLF.4/.5): the prior contaminated real-binary test (ACK stand-in + chrome signal) is REPLACED by one honest end-test driving the real frozen build_prompt and asserting honest signals + persona-identity; BOTH terminal outcomes — lives and dead-end — are GREEN (the cycle's value is the honest measurement of either polarity, per LOCKED-DESIGN-NOT-LICENSE + F2; a dead-end is reported straight, NOT softened, NOT retried, NOT a build failure). AC.SLF.5 re-verifies exactly the one contaminated recorded result (the AC.LIPW.4 real-binary row) against its OWN written verification clause with an additive in-place provenance note; no other recorded result touched (the root-cause verified every other is independent of the chrome signal). Five outcome-shape ACs AC.SLF.{1,2,3,4,5} + AC.SLF.S seal-diff; method-in-AC test passed per-AC (each satisfiable by more than one implementation). Single-component fence: framework/workspace-bootstrap/ (sidecar framework/workspace-bootstrap/tests/SEAL_COMMIT, seal_test framework/workspace-bootstrap/tests/test_no_sealed_amendments.py — VERIFIED present this turn); the subloam-driver source at framework/tools/subloam-driver/ lands inside the seal-test's already-admitted framework/tools/ prefix (D-LIPW.3/.4 precedent — no fence widening, extra_allowed_prefixes empty). Composes on the SEALED predecessor loam-init-persona-wiring-and-isolated-subloam-driver (BASELINE bb5ea69, apply 4e4df50, seal a7625e0) and its venv follow-on (seal 5c3b105); this is a narrow FORWARD corrective, NOT a predecessor re-open/re-seal (LOCKED-DESIGN-NOT-LICENSE: the sealed AC.LIPW.4 green was a bad outcome — it measured chrome — and is re-taken in-place with an additive provenance note, not silently overwritten). NO Anthropic API key — the driver spawns the real claude binary, default Sonnet (feedback_no_anthropic_api_key). No version bump in this cycle (the plan stops at the honest measurement; version derives at release-time per feedback_version_numbers_at_release_time). AC family scope-descriptive (AC.SLF.*); slug NOT version-packed."
+
+# BASELINE backfilled at build-cycle source-edit commit time per
+# v0.10.x precedent. Placeholder pinned to the pre-amendment branch
+# tip so a pre-apply `loam amend validate` has a parseable anchor;
+# the build cycle REPLACES this with the actual source-edit BASELINE
+# commit (the commit immediately preceding the manifest apply).
+baseline: "f7ccc3d"
+
+plan: docs/plans/subloam-driver-fix.md
+plan_doc_ref: docs/plans/subloam-driver-fix.md
+
+ac_count: 6
+smoke_outcome: "Frozen prompt reaches the model regardless of fragment count; loop signal honest (chrome never a loop); cost real-or-absent; one honest end-test, both polarities GREEN; AC.SLF.{1,2,3,4,5,S} green"
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/.
+# The three-defect fix lands in framework/tools/subloam-driver/src/
+# (driver.py + cli.py) and the deterministic AC.SLF tests +
+# contaminated-test re-verification land in
+# framework/workspace-bootstrap/tests/ — both inside the
+# workspace-bootstrap seal-test's allowed_prefixes (framework/tools/
+# + framework/workspace-bootstrap/, VERIFIED in
+# framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+# this turn). The AC.SLF.5 additive provenance note lands on the
+# predecessor plan-doc under the docs/plans/ universal prefix, NOT a
+# fence widening. extra_allowed_prefixes is EMPTY — no sealed-source
+# edit outside the workspace-bootstrap anchor.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. The AC.SLF.5
+# additive note on the predecessor plan-doc + this plan-doc/manifest +
+# STATE/roadmap backfill land under these universal prefixes/files,
+# NOT as a fence widening.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.subloam-driver-fix
+  body: |
+    # subloam-driver corrective cycle — three defects fixed, one honest end-test
+
+    The isolated sub-loam PTY driver had three verified defects. (1) The
+    submission path wrote the multi-KB frozen prompt in one write, slept a
+    fixed 0.5s, then sent the submit newline unconditionally — the real TUI
+    fragments a large write into multiple bracketed-paste segments and a
+    newline inside an open bracketed paste is literal text, so the turn was
+    never submitted. (2) The loop-ran / multi-turn classifier counted TUI
+    chrome alongside genuine markers, so a zero-model-action transcript
+    floated to multi-turn — the sealed AC.LIPW.4 real-binary green measured
+    nothing a TUI boot would not also satisfy. (3) No per-run cost/usage was
+    captured (the interactive driver emits no machine result envelope).
+
+    The fix is bounded and local: a paste-settle gate submits only after the
+    bracketed-paste echo goes quiet (delivery-path agnostic, any fragment
+    count); the loop signal is derived from genuine markers only with a
+    built-in falsification test; cost is real-or-honestly-absent via an
+    in-session /cost echo parse, never fabricated. The cycle ends at exactly
+    ONE honest re-test of the real frozen build_prompt — both terminal
+    outcomes (lives / dead-end) are equally valid and reported straight; the
+    cycle's value is the honest measurement of either polarity. The one
+    contaminated recorded result (the AC.LIPW.4 real-binary row) is
+    re-verified against its own written clause with an additive in-place
+    provenance note; no other recorded result is touched.
+
+    AC.SLF.{1,2,3,4,5,S} green against real test output. NOT merged to main,
+    NOT pushed, NOT published — sealed-local-on-branch is the deliverable.

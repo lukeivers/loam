@@ -88,6 +88,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=600.0,
         help="Hard wall-clock cap for the driven session.",
     )
+    parser.add_argument(
+        "--paste-settle-s",
+        type=float,
+        default=2.5,
+        help=(
+            "Seconds the bracketed-paste echo must be quiet before "
+            "the submit newline is sent (AC.SLF.1 — gates submission "
+            "on observed paste-settle, not a fixed sleep)."
+        ),
+    )
     return parser
 
 
@@ -118,14 +128,25 @@ def main(argv: list[str] | None = None) -> int:
             prompt,
             idle_timeout_s=args.idle_timeout_s,
             hard_timeout_s=args.hard_timeout_s,
+            paste_settle_s=args.paste_settle_s,
         )
 
     summary = {
-        "effective_turns": result.effective_turns,
+        # AC.SLF.2 — the honest loop-ran / multi-turn signals are
+        # genuine_turns / loop_ran / is_multi_turn (genuine markers
+        # only). effective_turns stays as a chrome-inclusive
+        # transcript-shape diagnostic, NOT the loop signal.
+        "genuine_turns": result.genuine_turns,
+        "loop_ran": result.loop_ran,
         "is_multi_turn": result.is_multi_turn,
+        "effective_turns": result.effective_turns,
         "file_block_count": len(result.file_blocks),
         "exit_status": result.exit_status,
         "timed_out": result.timed_out,
+        # AC.SLF.3 — real-or-honestly-absent. cost_usd is null when
+        # no genuine figure was obtainable (never fabricated).
+        "cost_usd": result.cost_usd,
+        "cost_source": result.cost_source,
         "spawn_argv": list(result.spawn_argv),
         "spawn_env_config_dir": result.spawn_env_config_dir,
         "wall_clock_s": round(time.monotonic() - started, 1),

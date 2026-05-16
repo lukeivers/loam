@@ -314,12 +314,76 @@ class DriverResult:
     spawn_env_config_dir: str
     workspace_root: Path
     timed_out: bool = False
+    # AC.SLF.2 — the count of GENUINE agentic-loop markers only
+    # (assistant turn / tool use / tool result / interactive
+    # assistant-turn bullet), with ALL interface-chrome needles
+    # excluded. ``effective_turns`` retains the historical
+    # chrome-inclusive count for transcript-shape diagnostics ONLY;
+    # the loop-ran / multi-turn signal is derived from this honest
+    # subset, never from ``effective_turns``.
+    genuine_turns: int = 0
+    # AC.SLF.3 — a REAL per-run cost/usage figure when one is
+    # obtainable from the driven session; ``None`` records honest
+    # absence. NEVER an estimated, inferred, or fabricated cost (this
+    # interactive driver emits no machine result envelope, so absent
+    # is a valid, expected terminal — D-COST).
+    cost_usd: float | None = None
+    cost_source: str = "absent"
 
     @property
     def is_multi_turn(self) -> bool:
-        """AC.LIPW.4: an interactive multi-turn run, distinguishable
-        from a ``run_raw_llm``-shape single-pass codegen output."""
-        return self.effective_turns > 1
+        """AC.SLF.2 / AC.LIPW.4: an interactive multi-turn run,
+        distinguishable from a ``run_raw_llm``-shape single-pass
+        codegen output.
+
+        Gated on ``genuine_turns`` (genuine agentic-loop markers
+        only) — a transcript carrying ONLY interface chrome and no
+        model action can never be classified multi-turn. ``> 1``
+        genuine markers means the model produced more than a single
+        block (a single-pass ``run_raw_llm`` output carries none).
+        """
+        return self.genuine_turns > 1
+
+    @property
+    def loop_ran(self) -> bool:
+        """AC.SLF.2: True ONLY when genuine agentic-loop evidence is
+        present (≥1 genuine assistant turn / tool use / tool result /
+        gradeable FILE block). A transcript that contains only
+        interface chrome and zero model action is False — chrome
+        alone can never satisfy this."""
+        return self.genuine_turns >= 1 or len(self.file_blocks) > 0
+
+
+def _paste_has_settled(
+    *,
+    now: float,
+    prompt_written_at: float,
+    last_paste_echo_at: float,
+    paste_settle_s: float,
+) -> bool:
+    """AC.SLF.1 — the submit-gate predicate.
+
+    True iff it is safe to send the submit ``\\n``: the bracketed-
+    paste echo has been quiet for ``paste_settle_s`` (no PTY bytes
+    since the last echo) AND at least ``paste_settle_s`` has elapsed
+    since the prompt write itself (a floor covering the degenerate
+    case where the TUI emits no echo at all).
+
+    This is the verified fix for the root cause. The OLD path wrote
+    the prompt, slept a FIXED 0.5 s, then sent ``\\n`` unconditionally
+    — so a ``\\n`` sent while a bracketed-paste fragment was still
+    arriving landed as literal text inside the open paste, not as the
+    submit key, and the turn was never submitted. This predicate is
+    delivery-path agnostic: it holds regardless of HOW MANY
+    bracketed-paste fragments the TUI split the prompt into, because
+    it gates on observed quiescence (``last_paste_echo_at`` advances
+    on every echoed fragment byte; the gate fires only once the echo
+    has stopped), not on a fixed fragment count or a fixed sleep.
+    """
+    return (
+        (now - last_paste_echo_at) >= paste_settle_s
+        and (now - prompt_written_at) >= paste_settle_s
+    )
 
 
 class SubLoamDriver:
@@ -401,6 +465,7 @@ class SubLoamDriver:
         idle_timeout_s: float = 90.0,
         hard_timeout_s: float = 600.0,
         tui_warmup_s: float = 10.0,
+        paste_settle_s: float = 2.5,
         claude_binary: str = "claude",
     ) -> DriverResult:
         """Spawn the interactive ``claude`` session over a PTY, send
@@ -488,9 +553,50 @@ class SubLoamDriver:
         #
         # The frozen build_prompt is fed UNCHANGED (owner constraint —
         # no substitution, no --append-system-prompt).
+        # AC.SLF.1 — submission is a THREE-state machine, not a blind
+        # write + fixed sleep + newline:
+        #
+        #   1. prompt_written=False        : warming up; nothing typed.
+        #   2. prompt_written, not submitted: the frozen prompt has
+        #      been written to the PTY; the real TUI fragments a
+        #      multi-KB write into multiple bracketed-paste segments
+        #      (ESC[200~ … ESC[201~). The submit newline must NOT be
+        #      sent while a fragment is still arriving — a ``\n`` inside
+        #      an open bracketed paste is literal text, not submit
+        #      (the verified root cause). We watch the SAME PTY read
+        #      buffer the trust-dialog handler already watches and send
+        #      the submit ``\n`` only after the paste echo has gone
+        #      quiet for ``paste_settle_s`` (no new bytes), i.e. all
+        #      fragments have been ingested and the bracketed paste is
+        #      closed. This is the existing in-loop buffer-watch
+        #      precedent, not new machinery.
+        #   3. prompt_submitted           : ``\n`` sent; agentic loop
+        #      may now run; idle-timeout begins.
+        #
+        # The frozen build_prompt is fed UNCHANGED (owner constraint —
+        # no substitution, no --append-system-prompt). The settle gate
+        # is delivery-path agnostic: it holds regardless of HOW MANY
+        # bracketed-paste fragments the TUI splits the prompt into,
+        # because it gates on observed quiescence of the paste echo,
+        # not on a fixed fragment count or a fixed sleep.
+        prompt_written = False
         prompt_sent = False
+        prompt_written_at = 0.0
+        last_paste_echo_at = 0.0
         trust_answered = False
         send_at = time.monotonic() + tui_warmup_s
+
+        # AC.SLF.3 — after the agentic loop settles, issue ONE
+        # in-session ``/cost`` query and capture its echo, so a REAL
+        # per-run cost figure is surfaced when the TUI exposes one.
+        # ``/cost`` is a real Claude Code slash command that prints
+        # the session's actual cost; we parse the printed USD figure
+        # from the transcript. If the command prints no parseable
+        # figure (e.g. a subscription session with no per-session USD
+        # surfaced — the step-0-observed reality), the result records
+        # honest ABSENCE. The figure is NEVER estimated or fabricated.
+        cost_query_sent = False
+        cost_query_sent_at = 0.0
 
         while True:
             now = time.monotonic()
@@ -504,10 +610,31 @@ class SubLoamDriver:
                 prompt_sent
                 and (now - last_activity) > idle_timeout_s
             )
-            if now > deadline or idle_exceeded:
-                timed_out = now > deadline
+            if now > deadline:
+                timed_out = True
                 break
-            rlist, _, _ = select.select([master_fd], [], [], 1.0)
+            # AC.SLF.3 — bounded cost-capture window: once /cost is
+            # issued, exit as soon as its echo settles (a short quiet
+            # window) rather than waiting another full idle_timeout.
+            if (
+                cost_query_sent
+                and (now - cost_query_sent_at) >= paste_settle_s
+                and (now - last_activity) >= paste_settle_s
+            ):
+                break
+            if idle_exceeded:
+                # The agentic loop has gone quiet. AC.SLF.3: issue
+                # ONE ``/cost`` query and give it a capture window
+                # before exiting; if it was already issued, the loop
+                # is genuinely done — exit.
+                if not cost_query_sent:
+                    os.write(master_fd, b"/cost\n")
+                    cost_query_sent = True
+                    cost_query_sent_at = time.monotonic()
+                    last_activity = time.monotonic()
+                else:
+                    break
+            rlist, _, _ = select.select([master_fd], [], [], 0.25)
             if master_fd in rlist:
                 try:
                     data = os.read(master_fd, 65536)
@@ -517,6 +644,16 @@ class SubLoamDriver:
                     break
                 chunks.append(data)
                 last_activity = time.monotonic()
+                # AC.SLF.1 — track paste-echo activity. After the
+                # prompt is written but before it is submitted, every
+                # byte the TUI emits is the bracketed-paste echo /
+                # render of an in-flight fragment. While these keep
+                # arriving the paste is not yet closed; the submit
+                # newline must wait. last_paste_echo_at advances on
+                # each such byte; the settle gate below fires only
+                # once it has been quiet for paste_settle_s.
+                if prompt_written and not prompt_sent:
+                    last_paste_echo_at = time.monotonic()
 
             # Defence-in-depth: pretrust_workspace should have
             # suppressed the trust dialog, but if it still appears
@@ -532,9 +669,36 @@ class SubLoamDriver:
                     trust_answered = True
                     send_at = time.monotonic() + tui_warmup_s
 
-            if not prompt_sent and now >= send_at:
-                os.write(master_fd, first_user_turn.encode("utf-8"))
-                time.sleep(0.5)
+            # AC.SLF.1 phase 2 — write the frozen prompt ONCE, after
+            # the TUI warmup. No submit newline yet.
+            if not prompt_written and now >= send_at:
+                os.write(
+                    master_fd, first_user_turn.encode("utf-8")
+                )
+                prompt_written = True
+                prompt_written_at = time.monotonic()
+                last_paste_echo_at = time.monotonic()
+                last_activity = time.monotonic()
+
+            # AC.SLF.1 phase 3 — submit ONLY after the paste echo has
+            # settled: no new PTY bytes for paste_settle_s since the
+            # last echo, AND a floor of paste_settle_s elapsed since
+            # the write itself (covers the degenerate case of an echo
+            # that never arrives). This is the verified fix for the
+            # root cause: a ``\n`` sent while a bracketed-paste
+            # fragment is still arriving is literal text, not submit.
+            # Gating on observed quiescence holds regardless of how
+            # many fragments the TUI split the prompt into.
+            if (
+                prompt_written
+                and not prompt_sent
+                and _paste_has_settled(
+                    now=now,
+                    prompt_written_at=prompt_written_at,
+                    last_paste_echo_at=last_paste_echo_at,
+                    paste_settle_s=paste_settle_s,
+                )
+            ):
                 os.write(master_fd, b"\n")
                 prompt_sent = True
                 last_activity = time.monotonic()
@@ -554,55 +718,141 @@ class SubLoamDriver:
             exit_status = None
 
         transcript = b"".join(chunks).decode("utf-8", errors="replace")
+        cost_usd, cost_source = _parse_cost(transcript)
         return DriverResult(
             transcript=transcript,
             effective_turns=_count_effective_turns(transcript),
+            genuine_turns=_count_genuine_turns(transcript),
             file_blocks=tuple(_extract_file_blocks(transcript)),
             exit_status=exit_status,
             spawn_argv=tuple(argv),
             spawn_env_config_dir=env.get("CLAUDE_CONFIG_DIR", ""),
             workspace_root=self._workspace_root,
             timed_out=timed_out,
+            cost_usd=cost_usd,
+            cost_source=cost_source,
         )
 
 
-def _count_effective_turns(transcript: str) -> int:
-    """Best-effort effective-turn count from an interactive transcript.
+# AC.SLF.2 — the GENUINE agentic-loop markers. Each is emitted ONLY
+# when the model actually acts: an assistant turn, a tool-use block, a
+# tool-result block, or Claude Code's interactive assistant-turn
+# bullet (``⏺``, printed only when an assistant message is rendered).
+# A single-pass ``run_raw_llm`` codegen output carries none of these.
+_GENUINE_TURN_NEEDLES = (
+    "\nassistant",
+    "tool_use",
+    "tool_result",
+    "⏺",  # Claude Code interactive assistant-turn bullet
+)
 
-    A single-pass ``claude -p`` codegen output is one block with no
-    interactive prompt re-presentation; an interactive multi-turn
-    agentic session re-presents the input affordance and emits
-    tool-use / assistant blocks across turns. Counts the markers an
-    interactive session emits that a single-pass run does not. The
-    AC.LIPW.4 verification compares this against a ``run_raw_llm``
-    single-pass shape; the absolute number is less load-bearing than
-    ``> 1`` (multi-turn) vs ``<= 1`` (single-pass).
-    """
-    if not transcript.strip():
-        return 0
-    # Strip ANSI/OSC control sequences so the interactive-TUI escape
-    # noise does not drown the turn markers (the interactive
-    # transcript is heavy with cursor/colour codes; the single-pass
-    # run_raw_llm shape has none).
+# AC.SLF.2 — interface CHROME. Each is emitted on every interactive
+# TUI boot regardless of whether the model ever acts (the input
+# affordance, the bound-persona banner, the per-turn status line).
+# These are EXCLUDED from the genuine count: a transcript carrying
+# only these and no genuine marker has had zero model action and must
+# never classify as a loop / multi-turn. Retained named (not deleted)
+# only so the chrome-inclusive diagnostic count stays computable.
+_CHROME_NEEDLES = (
+    "❯",  # interactive TUI input affordance re-presentation
+    " primary ",  # the bound persona agent shown in the TUI banner
+    "/effort",  # interactive TUI status line (per-turn)
+)
+
+
+def _strip_ansi(transcript: str) -> str:
+    """Strip ANSI/OSC control sequences so the interactive-TUI escape
+    noise does not drown the turn markers (the interactive transcript
+    is heavy with cursor/colour codes; the single-pass run_raw_llm
+    shape has none)."""
     import re  # noqa: PLC0415 — local, stdlib
 
     clean = re.sub(r"\x1b\[[0-9;?]*[a-zA-Z]", "", transcript)
     clean = re.sub(r"\x1b[()=>78][AB0]?", "", clean)
     clean = re.sub(r"\x1b\]\d*;?[^\x07\x1b]*(\x07|\x1b\\)?", "", clean)
+    return clean
+
+
+def _count_genuine_turns(transcript: str) -> int:
+    """AC.SLF.2 — count ONLY genuine agentic-loop markers.
+
+    The honest loop-ran / multi-turn signal. A transcript that
+    contains only interface chrome (``❯`` / ``─ primary ─`` /
+    ``/effort``) and zero genuine model action returns **0** — it can
+    never float to multi-turn the way the chrome-inclusive counter
+    did. ``> 1`` here means the model produced more than a single
+    block (genuine multi-turn); ``0`` means no model action occurred
+    regardless of how much TUI chrome the transcript carries.
+    """
+    if not transcript.strip():
+        return 0
+    clean = _strip_ansi(transcript)
+    genuine = 0
+    for needle in _GENUINE_TURN_NEEDLES:
+        genuine += clean.count(needle)
+    return genuine
+
+
+def _parse_cost(transcript: str) -> tuple[float | None, str]:
+    """AC.SLF.3 — extract a REAL per-run USD cost from the in-session
+    ``/cost`` command echo, or report honest ABSENCE.
+
+    The driver issues ``/cost`` after the agentic loop settles.
+    Claude Code's ``/cost`` prints a line of the documented shape
+    ``Total cost: $0.1234`` (or ``Total cost: $0.1234 (…)``). We
+    extract ONLY a dollar figure that appears on such a ``cost``
+    line in the captured transcript. Returns:
+
+      - ``(figure, "cost-command")`` when a real ``$N.NN`` is printed
+        by ``/cost`` — a genuine session figure, not derived.
+      - ``(None, "absent")`` when ``/cost`` prints no parseable USD
+        figure (the step-0-observed reality for a subscription
+        session that surfaces no per-session USD). Absence is
+        recorded as absent.
+
+    It NEVER estimates, infers, or fabricates a cost. Any path that
+    does not yield a genuine printed figure returns honest absence.
+    """
+    if not transcript.strip():
+        return (None, "absent")
+    import re  # noqa: PLC0415 — local, stdlib
+
+    clean = _strip_ansi(transcript)
+    # Only consider lines that ``/cost`` itself prints — a line that
+    # mentions cost AND carries a ``$`` figure. This refuses to pick
+    # up an unrelated ``$`` elsewhere in the transcript (e.g. shell
+    # output the model emitted) as if it were the session cost.
+    for line in clean.splitlines():
+        low = line.lower()
+        if "cost" not in low:
+            continue
+        m = re.search(r"\$\s*([0-9]+(?:\.[0-9]+)?)", line)
+        if m:
+            try:
+                return (float(m.group(1)), "cost-command")
+            except ValueError:  # pragma: no cover - regex guarantees
+                continue
+    return (None, "absent")
+
+
+def _count_effective_turns(transcript: str) -> int:
+    """Chrome-INCLUSIVE transcript-shape diagnostic ONLY.
+
+    Historical chrome-inclusive count, retained for transcript-shape
+    diagnostics (how busy the captured TUI transcript was). It is NO
+    LONGER the loop-ran / multi-turn signal — that is now
+    :func:`_count_genuine_turns` (AC.SLF.2). This function still
+    floors at 1 for a non-empty transcript, which is exactly why it
+    must NOT gate the honest signal: a chrome-only boot would float to
+    >= 1 here. ``DriverResult.is_multi_turn`` / ``loop_ran`` read
+    ``genuine_turns``, never this value.
+    """
+    if not transcript.strip():
+        return 0
+    clean = _strip_ansi(transcript)
     markers = 0
-    for needle in (
-        "\nassistant",
-        "tool_use",
-        "tool_result",
-        "⏺",  # Claude Code interactive assistant-turn bullet
-        "❯",  # interactive TUI input affordance re-presentation
-        " primary ",  # the bound persona agent shown in the TUI
-        "/effort",  # interactive TUI status line (per-turn)
-    ):
+    for needle in (*_GENUINE_TURN_NEEDLES, *_CHROME_NEEDLES):
         markers += clean.count(needle)
-    # Floor at 1 for any non-empty transcript; the multi-turn signal
-    # is markers accumulating past a single block (a single-pass
-    # run_raw_llm output carries none of these).
     return max(1, markers)
 
 

@@ -36,6 +36,8 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ._isolation import inject_isolation, isolated_env
+
 
 @dataclass(frozen=True)
 class IntakeOutcome:
@@ -107,15 +109,26 @@ def _claude_json(prompt: str, *, model: str = "sonnet",
     NO Anthropic API key — real binary, default Sonnet.  Returns the
     parsed JSON envelope (carries `result` text + `total_cost_usd` /
     `usage` so cost is MEASURED, D-COST-BAND).
+
+    AC.TPI.2/.3/.4: telegram-poller-isolated.  The argv is wrapped with
+    the empty-strict-MCP isolation (so this spawned `claude` cannot load
+    the telegram plugin → cannot spawn a competing `bun server.ts` that
+    SIGTERMs a concurrently-running operator session's single-consumer
+    poller) and the env is scrubbed of the bot-token / API-key
+    spellings.  Reuses the PROVEN subloam-driver mechanism via
+    `_isolation` (no new isolation machinery).  The argv shape is
+    unchanged — only the isolation flags + env scrub are added.
     """
+    argv = inject_isolation([
+        "claude", "-p", prompt,
+        "--model", model,
+        "--output-format", "json",
+        "--permission-mode", "bypassPermissions",
+    ])
     proc = subprocess.run(
-        [
-            "claude", "-p", prompt,
-            "--model", model,
-            "--output-format", "json",
-            "--permission-mode", "bypassPermissions",
-        ],
+        argv,
         capture_output=True, text=True, timeout=timeout,
+        env=isolated_env(),
     )
     raw = proc.stdout.strip()
     try:

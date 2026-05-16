@@ -34,6 +34,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ._isolation import isolated_env
 from .goal_drive import (
     DONE_SENTINEL,
     GoalDriveSpec,
@@ -133,12 +134,22 @@ def _dispatch_subagent(
     Claude taking turns until the surfaced-exit-code condition holds.
     Returns (transcript, wall_clock_s, cost_usd|None).  Cost is
     MEASURED from the --output-format json envelope (D-COST-BAND).
+
+    AC.TPI.1/.4: telegram-poller-isolated.  `build_goal_drive_argv`
+    returns an argv already carrying the empty-strict-MCP isolation
+    (AC.TPI.3); this consumer owns the spawn env and scrubs the
+    bot-token / API-key spellings (so this sub-agent `claude` can
+    neither load the telegram plugin nor steal the operator's
+    single-consumer poller slot — closing both halves of the verified
+    kill vector).  Reuses the PROVEN subloam-driver env-scrub via
+    `_isolation` (no new isolation machinery).
     """
     argv = build_goal_drive_argv(spec, cost_json=True)
     t0 = time.monotonic()
     proc = subprocess.run(
         argv, cwd=str(work_dir),
         capture_output=True, text=True, timeout=timeout,
+        env=isolated_env(),
     )
     dt = time.monotonic() - t0
     out = proc.stdout or ""

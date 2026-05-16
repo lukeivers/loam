@@ -35,6 +35,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ._isolation import inject_isolation
+
 GOAL_CONDITION_MAX = 4000  # live-sourced cap (binary 2.1.143)
 
 # The surfaced sentinel the in-turn independent check prints.  The
@@ -116,6 +118,19 @@ def build_goal_drive_argv(
     `cost_json=True` adds `--output-format json` so cost is MEASURED
     (D-COST-BAND closes the probe's instrumentation gap), not
     estimated.  `--bare` is intentionally never added.
+
+    AC.TPI.1/.3: the returned argv is telegram-poller-isolated — the
+    empty-strict-MCP isolation is injected so this `/goal`-driven
+    sub-agent `claude` cannot load the telegram plugin and therefore
+    cannot spawn a competing `bun server.ts` that SIGTERMs a
+    concurrently-running operator session's single-consumer poller.
+    Reuses the PROVEN subloam-driver mechanism via `_isolation` (no new
+    isolation machinery).  The argv shape (positional `-p` prompt,
+    `--model`, `--permission-mode bypassPermissions`,
+    `--output-format json`) is preserved — only the isolation flags are
+    added.  The env-scrub half of the kill-vector closure is applied by
+    the consumer (`orchestrator._dispatch_subagent`, AC.TPI.4) which
+    owns the `subprocess.run` env.
     """
     argv = [
         "claude",
@@ -130,4 +145,4 @@ def build_goal_drive_argv(
         argv += ["--output-format", "json"]
     if extra_args:
         argv += list(extra_args)
-    return argv
+    return inject_isolation(argv)

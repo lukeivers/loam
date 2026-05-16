@@ -1,0 +1,36 @@
+# D-RPB-5 evidence-commit policy (builder's call per plan §2 / §14;
+# mirrors the v2 D-PBR-5 precedent exactly — same shape, real-PB
+# task ids).
+#
+# Reproducibility of the HEADLINE (AC.RPB.6) requires the structured
+# evidence retrievable: verdict.json (the computed three-valued
+# verdict + per-arm failure-signature map + measured cost + the
+# agent-vs-eval-emulation wall-clock split) and the per-task
+# disposition.json records ARE committed — re-running the frozen
+# scorer over them yields the same verdict. The BULKY raw `claude`
+# transcripts + per-(arm,task) work dirs + loop artefacts + the real
+# upstream eval_run trees (incl. the large *.eval.json + the
+# submission.tar.gz blobs) stay LOCAL (not committed) — mirrors the
+# v0.4.0 C4 / v2 D-PBR-5 precedent of keeping raw runs out-of-tree
+# without bloating the repo with raw model output + multi-MB eval
+# artefacts. The structured disposition.json records carry the real
+# upstream graded score + n_resolved/n_tests + error_code + the
+# eval.json path, so the headline is reproducible + auditable from
+# the committed records; the raw transcripts + raw eval trees are
+# local-only forensic depth (the detached dispatcher-owned run owns
+# them; they regenerate from the content-hash-pinned frozen set).
+
+# bulky raw run artefacts — local only
+*/baseline.transcript
+*/loam.transcript
+*/baseline_work/
+*/loam_work/
+*/loam_artifacts/
+*/_frozen/
+*/eval_run/
+run.log
+.detached_pid
+
+# KEEP (committed, reproducibility-bearing): verdict.json,
+# <task>/disposition.json, this .gitignore
+!*/disposition.json

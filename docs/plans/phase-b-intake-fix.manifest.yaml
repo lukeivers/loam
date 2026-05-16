@@ -1,0 +1,160 @@
+schema_version: 3
+amendment:
+  slug: phase-b-intake-fix
+  title: "Phase-B intake fix — close the three named hands-off-loop intake-leg defects the phase-b-hardening honest-negative (3/7 faithful + one non-deterministic process crash) located at file:line in framework/tools/handsoff-loop/src/handsoff_loop/intake.py, then run the honest re-harden. THREE CONTAINED FIXES (not a re-architecture), priority order per the hardening report's own §\"Three concrete intake fixes\": (1) AC.PBF.1 — refuse an empty/broken 'done' BEFORE the approval gate (no silent approved=True on an empty plain done / empty check command / unparsed machine-checkable; an honest evidence-carrying refusal-with-reason per D-PBF-A ADOPTED, NOT auto-retry — closes hardening I2/I7 FAILED-TO-DERIVE-plus-rubber-stamp); (2) AC.PBF.2 — the independent faithfulness judge assesses the actual derived machine check command (mc['check_command']/mc['spec'], a live local already computed at intake.py:213-222) adversarially for the proxy/plumbing failure mode ('could this exit 0 while the user's real outcome is unmet?'), NOT only the friendly plain summary — the already-existing, already-independent, already-isolated, already-either-polarity claude -p judge is fed the ground truth; NO new judge process / NO new isolation / NO verify.py change (this IS the information-trust-ordering inversion: judge the ground-truth artefact, not the loop's own self-summary — closes hardening I3/I6 CHECKABLE-BUT-WRONG that the loop's own judge rubber-stamped); (3) AC.PBF.3 — the AC.B.3 jargon guard (intake.py:94-102) is deterministic and token-boundary-matched: ordinary words that merely contain a forbidden substring ('Mac.'->'ac.', 'odd'->'ODD', 'seal the envelope'->'seal') do NOT raise, genuine jargon (real AC.<id> / pytest / exit code / sealed manifest) still refused — closes the non-deterministic process crash. Plus AC.PBF.4 no-regression in the durable parts (elicitation bounded <=4, exactly one approval gate on a healthy derive, genuine jargon still refused, the pre-existing deterministic test_AC_HL_B1_B4_intake_structure.py invariants hold — adjusted ONLY where a fix legitimately tightens, never loosened to pass), and AC.PBF.5 the honest re-harden end-test: a re-run of the EXACT phase-b-hardening 7-intent protocol (same 7 intents per D-PBF-B ADOPTED, one run per intent, NO retry-to-pass) scored by an INDEPENDENT faithfulness judge that is NOT the loop's own AC.B.4b judge (a separate stricter differently-framed Tier-0 probe + an evidence-grounded read of each raw derived check command — the same independent methodology the hardening used; the verdict is a verified empirical observation, never the loop's own self-report) reaching >=6 of 7 faithful — and a definite 'still not durably reliable, here is the residual pattern + evidence' is a VALID plan-success §10.5 outcome reported straight, NEVER retried-to-green, NEVER widened into a re-architecture mid-build, NEVER the bar weakened (>=6/7 not 7/7 is the fair bar per plan §4/§8 — one case is mechanically-unverifiable-for-anyone). FENCE (plan §2, binding): ONLY the three intake.py sites + the intake test surface; the intake->loop check_command/check_argv seam (plan §3/§6.3/§8) is a NAMED OUT-OF-FENCE follow-on — NOT fixed, fix-2 does NOT depend on it. The SKILL.md behavioural-doc line was assessed and is NOT touched — its pipeline-shape prose stays accurate after the fix (the fixes strengthen the described 'independent faithfulness check guarding checkable-but-wrong' shape, they do not contradict it), so the conditional doc-truth touch is NOT triggered (fence kept minimal). OUT (hard, plan §2): the core decompose->dispatch->judge loop / verify.py / orchestrator.py / goal_drive.py; the §1a/§1c launch sites; the Telegram-poller isolation (b33c0a8, untouched — it held under 28 isolated spawns this run, recorded as non-fence corroboration only); the elicitation leg (AC.B.2, the durable part); ProgramBench (downstream, gated on the re-harden); any token/argv/model/config/isolation change; publish/seal-policy/canonical-main mutation. Single-component fence: framework/workspace-bootstrap/ (sidecar framework/workspace-bootstrap/tests/SEAL_COMMIT, seal_test framework/workspace-bootstrap/tests/test_no_sealed_amendments.py — VERIFIED present this turn; LIVE allowed_prefixes admit framework/tools/ + framework/hands-off-lifecycle/ + docs/plans/, all VERIFIED this turn). Anchor rationale: the intake.py site lives under framework/tools/handsoff-loop/ inside the workspace-bootstrap seal-test's admitted framework/tools/ prefix; the AC.PBF.* test files land under framework/hands-off-lifecycle/tests/ inside the admitted framework/hands-off-lifecycle/ prefix; mirrors the telegram-poller-isolation-fix + handsoff-loop-real-build + subloam-driver-fix precedents that sealed cleanly against workspace-bootstrap on this exact branch tip. extra_allowed_prefixes EMPTY — no sealed-source edit outside the workspace-bootstrap anchor. NO Anthropic API key — real claude binary, default Sonnet (feedback_no_anthropic_api_key). LOCAL SEAL ONLY — NOT merged to main, NOT pushed, NOT published, NOT tagged; origin/main stays exactly at its current commit (the public step is a separate owner-asked action, NOT part of this cycle). No version bump (version derives at release-time). AC family scope-descriptive (AC.PBF.1..5); slug NOT version-packed; one test file per AC per the one-file-per-AC convention; method-in-AC test passed per-AC (each satisfiable by more than one implementation)."
+
+# BASELINE backfilled at build-cycle source-edit commit time per
+# v0.10.x precedent (same pattern as telegram-poller-isolation-fix /
+# handsoff-loop-real-build / subloam-driver-fix). Placeholder pinned to
+# the pre-build branch tip (07f4d35 — HEAD at dispatch on branch
+# amend/loam-init-persona-wiring, the telegram-poller-isolation-fix §14
+# SHA backfill commit; that cycle is sealed/done, tree free) so a
+# pre-apply `loam amend validate` has a parseable anchor; the build
+# cycle REPLACES this with the actual source-edit BASELINE commit (the
+# commit immediately preceding the manifest apply).
+baseline: "07f4d35"
+
+plan: docs/plans/phase-b-intake-fix.md
+plan_doc_ref: docs/plans/phase-b-intake-fix.md
+
+ac_count: 5
+
+smoke_outcome: "PBF.1 empty/broken-done refused pre-approval; PBF.2 judge fed ground-truth machine check; PBF.3 jargon guard deterministic; PBF.4 no-regression GREEN; PBF.5 re-harden >=6/7, either polarity valid"
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/.
+# The three intake.py site edits land at framework/tools/handsoff-loop/
+# (inside the workspace-bootstrap seal-test's admitted framework/tools/
+# prefix). The five AC.PBF.* test files land at
+# framework/hands-off-lifecycle/tests/ (inside the admitted
+# framework/hands-off-lifecycle/ prefix — same surface the pre-existing
+# test_AC_HL_B1_B4_intake_structure.py family lives on). The plan-doc +
+# manifest + STATE/roadmap backfill land under the docs/plans/ universal
+# prefix + docs/STATE.md universal file. All VERIFIED in
+# framework/workspace-bootstrap/tests/test_no_sealed_amendments.py this
+# turn. extra_allowed_prefixes EMPTY.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc/manifest +
+# STATE/roadmap backfill land under these universal prefixes/files, NOT
+# as a fence widening.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.phase-b-intake-fix
+  body: |
+    # Phase-B intake fix — the three named hands-off-loop intake-leg defects + the honest re-harden
+
+    The phase-b-hardening honest-negative (3/7 faithful on 7
+    genuinely-vague non-technical intents + one non-deterministic
+    process crash) located three contained defects at file:line in
+    framework/tools/handsoff-loop/src/handsoff_loop/intake.py. This
+    amendment closes them as THREE CONTAINED CORRECTIONS — explicitly
+    NOT a verification re-architecture (the containment finding was
+    resolved POSITIVE from source: the independent faithfulness judge,
+    its independence, its isolation, its either-polarity, and the
+    machine-check data it needs ALL already exist in intake.py; only
+    the wiring was missing).
+
+    Surface changed:
+      - intake.py — three named sites only:
+        - AC.PBF.1: an empty/broken-done gate between derive and the
+          approval call. The derive step is format-fragile (plain text
+          + `---` + JSON); when the model deviates the parser yields an
+          empty plain "done" and/or an empty check command and/or an
+          unparsed machine-checkable, and the old approval gate
+          (`approved = bool(approval_fn(plain_acceptance))`) returned
+          True on the fragment anyway (hardening I2/I7, the compounding
+          rubber-stamp). The fix is an honest refuse-with-reason
+          (D-PBF-A adopted — NOT auto-retry: a silent retry
+          re-introduces the rubber-stamp by another path) produced
+          BEFORE the gate can be reached, so an empty/garbage
+          derivation can never surface as approved=True.
+        - AC.PBF.2: the independent AC.B.4b faithfulness judge is now
+          fed the actual derived machine check command
+          (`mc["check_command"]`) + its spec — a live local already
+          computed ~30 lines above — and is asked the adversarial
+          proxy/plumbing question ("could this exact command exit 0
+          while the user's real outcome is unmet?"). Previously the
+          prompt interpolated only intent + the friendly plain summary
+          and NEVER the machine form, so the loop's own judge was
+          structurally blind to its own canonical failure mode and
+          rubber-stamped both hardening CHECKABLE-BUT-WRONG cases
+          (I3 stale-presence-test, I6 dry-run-flag). The judge process
+          itself is UNCHANGED — same already-independent,
+          already-isolated, already-either-polarity claude -p
+          subprocess; only WHAT it sees and WHAT it is asked changed.
+          This IS the information-trust-ordering inversion: judge the
+          ground-truth artefact, not the loop's own self-summary. NO
+          new judge / NO new isolation / NO verify.py change.
+        - AC.PBF.3: the AC.B.3 jargon guard is now token-boundary
+          matched (the acceptance-ID term as the real `AC.<id>` shape,
+          each other term word-boundary-anchored, the loam `seal`
+          jargon scoped to its amendment/manifest/commit collocation)
+          so an ordinary word that merely contains a forbidden
+          substring ("Mac." -> "ac.", "odd" -> "ODD", "seal the
+          envelope" -> "seal") does NOT raise, while genuine jargon
+          (a real `AC.<id>`, pytest, exit code, sealed manifest) still
+          does. Deterministic — the same plain "done" always raises or
+          never raises, independent of incidental phrasing. Closes the
+          non-deterministic crash that depended on whether the model
+          happened to end a sentence with "Mac.".
+      - framework/hands-off-lifecycle/tests/test_AC_HL_PBF_{1,2,3,4}_*.py
+        — one file per AC. AC.PBF.1 (empty/broken refused before
+        approval, healthy path still reaches the gate), AC.PBF.2 (the
+        faith prompt carries the literal check command + spec + the
+        proxy question; either polarity preserved; unparseable judge
+        still false-not-retried), AC.PBF.3 (the exact hardening "Mac."
+        crash cases + the broader ordinary-word class do NOT raise,
+        genuine jargon still refused, deterministic on repeat),
+        AC.PBF.4 (elicitation bounded, exactly one approval gate on a
+        healthy derive, genuine jargon still refused, the pre-existing
+        deterministic test_AC_HL_B1_B4_intake_structure.py invariants
+        hold). The SKILL.md behavioural-doc line was assessed and NOT
+        touched — its pipeline-shape prose stays accurate after the fix.
+
+    AC.PBF.5 — the honest re-harden: a re-run of the EXACT
+    phase-b-hardening 7-intent protocol (same 7 intents, one run per
+    intent, no retry-to-pass) scored by an INDEPENDENT Tier-0
+    faithfulness judge that is NOT the loop's own AC.B.4b judge, at the
+    >=6/7 bar. A definite "still not durably reliable — here is the
+    residual pattern + evidence" is a VALID plan-success §10.5 outcome,
+    reported straight, NEVER retried-to-green, NEVER widened into a
+    re-architecture mid-build, NEVER the bar weakened (F2 /
+    LOCKED-DESIGN-NOT-LICENSE). >=6/7 not 7/7 is the fair honest bar
+    (one case is mechanically-unverifiable-for-anyone — plan §4/§8).
+
+    The intake->loop check_command/check_argv seam (plan §3/§6.3/§8) is
+    a NAMED OUT-OF-FENCE follow-on — real, but a loop-composition
+    concern downstream of Phase-B intake faithfulness; NOT fixed here,
+    fix-2 does NOT depend on it; named so it is not silently inherited
+    as solved.
+
+    Single-component fence: framework/workspace-bootstrap/. NOT merged
+    to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+    branch is the deliverable; origin/main unchanged. NO Anthropic API
+    key — real claude binary, default Sonnet.

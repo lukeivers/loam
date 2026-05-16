@@ -1,0 +1,155 @@
+schema_version: 3
+amendment:
+  slug: telegram-5-fix
+  title: "Telegram-death-#5 fix — promote the proven isolation (the sealed subloam-driver build_isolated_claude_argv / build_isolated_env / write_empty_mcp_config / IsolationConfig + the proven handsoff-loop _isolation.py adapter pattern, AC.LIPW.5/.6 + AC.TPI.*) into ONE shared, importable, mandated telegram-plugin-isolation surface ANY loam-adjacent caller — explicitly including a dispatched-agent-authored /tmp test/judge/probe/re-harden harness (the class that caused death #5: a re-harden harness that hand-rolled subprocess.run([\"claude\",\"-p\",...]) with ThreadPoolExecutor(max_workers=7), each spawn loading the user-enabled telegram plugin -> competing bun server.ts -> operator single-consumer poller SIGTERM'd, while purporting to prove Telegram protected) — can import in ONE line; plus a structural mandate guard so a loam-adjacent `claude` argv built WITHOUT the shared isolation fails LOUDLY (raises) rather than silently shipping a kill-capable invocation; plus the one-line CLAUDE_PERSONA belt-and-braces env-var that independently defangs the kill even if a spawn does load the plugin. NO new isolation mechanism (the new package wraps the SEALED subloam-driver functions verbatim — zero drift); NO spawn-router re-architecture (the change is CONTAINED — a new additive sibling tool package + a guard + an env-var, the spawn surface is small/enumerable). The b33c0a8/e0b71cb fix did NOT fail and was NOT under-scoped for what it was built for (it isolates the three §1b production launch sites and holds); #5 came through a doorway it was never positioned to reach — the dispatched-agent-authored /tmp harness class. Method (WHERE the shared surface lives + HOW the mandate is enforced) is the builder's call per the binding contract §2/§7 — RESOLVED: a new sibling package framework/tools/loam-spawn-isolation/ exporting spawn_isolated_claude (the mandated entry point) / inject_isolation / isolated_claude_argv / isolated_env / assert_loam_spawn_isolated (the structural mandate guard reusing the sealed marker-guard discipline AND rejecting an argv missing the empty-strict-MCP flag pair — the literal #5 pattern) / canonical_src (the one-line out-of-tree reach handle); the existing isolated sites chose different shapes and all pass. Acceptance: AC.PROMO.1..6 (binding contract §3.3). AC.PROMO.1 (lead) — opt-in real-binary (PROMO_REAL_CLAUDE=1): a sentinel process holding the single-consumer poller slot SURVIVES (.poll() is None) a real harness-style >=2-parallel `claude -p` multi-spawn (modelling the reharden 7-wide judge pattern) routed through the shared surface — the empirical survival IS the proof, never a structural assertion alone, never a self-report. AC.PROMO.2 fast structural (empty-strict-MCP isolation + zero telegram markers in the argv; TELEGRAM_BOT_TOKEN / CLAUDE_PLUGIN_TELEGRAM_BOT_TOKEN / ANTHROPIC_API_KEY absent from the env AND CLAUDE_PERSONA set — the independent belt-and-braces defense). AC.PROMO.3 (THE dogfood-recursion closure — STRUCTURAL, NON-NEGOTIABLE per the binding contract): a static/AST inspection of AC.PROMO.1's OWN test module asserts it constructs its real-`claude` spawns via the shared isolation surface AND contains NO hand-rolled raw subprocess.<run|Popen|call|...>([\"claude\",...]) literal — it goes RED *before* the real-binary path can run (no opt-in env-var gates the AST check), closing the exact #5 recursion (a verify harness killing Telegram while proving Telegram protected) for the fix's OWN verification; the poller sentinel is a plain Python sleeper (sys.executable -c \"import time; ...\"), NOT a `claude` spawn, identical to the sealed test_AC_TPI_1 sentinel shape, correctly NOT flagged by the AST keying on the first-argv-element-resolving-to-claude. AC.PROMO.4 the loud-fail mandate guard (a raw un-isolated `claude` argv — the #5 pattern — raises; a telegram-plugin marker raises via the sealed marker-guard discipline; a non-`claude` argv is NOT over-reached; an isolated argv passes). AC.PROMO.5 the mandate's teeth — a REAL Python subprocess whose CWD is a tmp dir OUTSIDE the canonical tree (exactly the #5 /tmp reharden-harness situation) reaches the mandated surface in ONE sys.path.insert + import and the guard is enforceable from there; if NOT reachable without re-architecture -> binding contract §5 Halt-1 honest-negative reported straight, NEVER papered as 'contained'. AC.PROMO.6 fence integrity — the §1a (subloam-driver / upgrade-merge-resolver / workspace-sync resolver client / odd-extractor synthesis client) + §1b (handsoff-loop _isolation.py / intake.py / goal_drive.py / orchestrator.py — the sealed prior fix) + §1c (first_run_dispatch.py / first_run_helper.py / handsoff_loop/verify.py — non-`claude`) sites are BYTE-UNCHANGED (diff vs manifest BASELINE); the promote is ADDITIVE (a new package), it does NOT re-wire the proven sites. A definite negative on AC.PROMO.1 or AC.PROMO.5 is a VALID terminal plan-success outcome reported straight, NEVER retried-to-green, NEVER softened (binding contract §5 / F2 / locked-design-not-license). OUT (hard, binding contract §3.2): the §1a/§1b/§1c already-isolated or non-`claude` sites' internals (AC.PROMO.6 — no no-op churn, no scope creep); the upstream plugin-cache hardening (~/.claude/plugins/.../telegram/.../server.ts — owner-gated, separate, NOT planned here); any token / ~/.claude/channels/.env / access.json / .mcp.json / channel-or-onboarding config change (sub-process-reach narrowing only; the contained argv+env mechanism is necessary-AND-sufficient per the sealed AC.LIPW.5/.6 + AC.TPI.*); ProgramBench / goal-refinement / .in_use-bot.pid reaper / launchd-KeepAlive respawn — orthogonal, out of fence. NAMED OWNER-GATED, NOT PLANNED (binding contract §7): the branch-merge / pos-sync / publish that would activate ANY fix (this OR b33c0a8/e0b71cb) on the operator's LIVE running framework — the operator's live pos3/framework has NO handsoff-loop and none of these commits in its git log, so this fix is INERT on the live session until that owner-gated merge/sync; this plan does NOT do it, it NAMES it as the gating owner call and very likely the real reason Telegram keeps dying despite the 'fixes.' Single-component fence: framework/workspace-bootstrap/ (sidecar framework/workspace-bootstrap/tests/SEAL_COMMIT, seal_test framework/workspace-bootstrap/tests/test_no_sealed_amendments.py — VERIFIED present this turn; LIVE allowed_prefixes admit framework/tools/ + docs/plans/, all VERIFIED this turn). Anchor rationale: the new shared package lives under framework/tools/loam-spawn-isolation/ inside the workspace-bootstrap seal-test's admitted framework/tools/ prefix; the six AC.PROMO.* test files land at framework/tools/loam-spawn-isolation/tests/ inside the same admitted prefix; mirrors the telegram-poller-isolation-fix + phase-b-intake-fix + handsoff-loop-real-build + subloam-driver-fix precedents that sealed cleanly against workspace-bootstrap on this exact branch tip. extra_allowed_prefixes EMPTY — no sealed-source edit outside the workspace-bootstrap anchor. NO Anthropic API key — real claude binary, default Sonnet (feedback_no_anthropic_api_key); the env scrub enforces this. LOCAL SEAL ONLY — NOT merged to main, NOT pushed, NOT published, NOT tagged; origin/main stays exactly at its current commit (the public step is a separate owner-asked action, NOT part of this cycle). No version bump (version derives at release-time). AC family scope-descriptive (AC.PROMO.1..6); slug NOT version-packed; one test file per AC per the one-file-per-AC convention; method-in-AC test passed per-AC (each satisfiable by more than one implementation)."
+
+# BASELINE backfilled at build-cycle source-edit commit time per
+# v0.10.x precedent (same pattern as phase-b-intake-fix /
+# telegram-poller-isolation-fix / handsoff-loop-real-build /
+# subloam-driver-fix). Placeholder pinned to the pre-build branch tip
+# (ce9d830 — HEAD at dispatch on branch amend/loam-init-persona-wiring,
+# the phase-b-intake-fix STATE sealed-local backfill commit; that cycle
+# is sealed/done, tree free) so a pre-apply `loam amend validate` has a
+# parseable anchor; the build cycle REPLACES this with the actual
+# source-edit BASELINE commit (the commit immediately preceding the
+# manifest apply).
+baseline: "ce9d830"
+
+plan: docs/plans/telegram-5-fix.md
+plan_doc_ref: docs/plans/telegram-5-fix.md
+
+ac_count: 6
+
+smoke_outcome: "Shared mandated isolation surface promoted; AC.PROMO.1 real 4-parallel poller-survives GREEN (sentinel alive); AC.PROMO.2-6 structural GREEN; fix INERT live until owner-gated merge/sync (named)"
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/.
+# The new shared package + the six AC.PROMO.* test files land at
+# framework/tools/loam-spawn-isolation/ (inside the workspace-bootstrap
+# seal-test's admitted framework/tools/ prefix). The plan-doc +
+# manifest + STATE/roadmap backfill land under the docs/plans/
+# universal prefix + docs/STATE.md universal file. All VERIFIED in
+# framework/workspace-bootstrap/tests/test_no_sealed_amendments.py this
+# turn. extra_allowed_prefixes EMPTY.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc/manifest +
+# STATE/roadmap backfill land under these universal prefixes/files, NOT
+# as a fence widening.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.telegram-5-fix
+  body: |
+    # Telegram-death-#5 fix — the shared, importable, mandated isolation surface
+
+    The verified kill vector (sealed under AC.LIPW.5/.6 + AC.TPI.*):
+    an internal loam `claude` that loads the user-enabled telegram
+    plugin spawns a competing `bun server.ts` that SIGTERMs a
+    concurrently-running operator session's single-consumer Telegram
+    poller for the one bot-token getUpdates slot. Removing the
+    telegram plugin from the spawned process's reachable set (empty
+    strict-MCP config) + scrubbing the bot-token/API-key env is
+    necessary AND sufficient operator-protection.
+
+    Death #5 specifically: the b33c0a8/e0b71cb fix isolates the three
+    §1b handsoff-loop production launch sites and HOLDS — it did NOT
+    fail and was NOT under-scoped for what it was built for. #5 came
+    through a doorway it was never positioned to reach: a
+    dispatched-agent-authored throwaway re-harden harness in /tmp
+    (/private/tmp/phase-b-reharden-2026-05-16/reharden.py:137-146)
+    that hand-rolled `subprocess.run(["claude","-p",...])` with
+    `ThreadPoolExecutor(max_workers=7)` — up to 7 parallel
+    UN-isolated spawns. That harness class — dispatched-agent-authored
+    /tmp test/judge/probe/re-harness that hand-rolls a raw claude
+    argv — is the uncovered doorway. Zero in-canonical-tree
+    uncovered sites (every in-tree spawn is §1a/§1b/§1c isolated);
+    the doorway is unbounded-but-pattern-singular.
+
+    Surface changed (ADDITIVE — a new package; §1a/§1b/§1c
+    byte-unchanged, AC.PROMO.6):
+      - framework/tools/loam-spawn-isolation/ — a new sibling tool
+        package that PROMOTES the proven handsoff-loop _isolation.py
+        adapter pattern over the SEALED subloam-driver functions
+        (build_isolated_claude_argv / build_isolated_env /
+        write_empty_mcp_config / IsolationConfig / the marker-guard)
+        into ONE shared, one-line-importable surface:
+          - spawn_isolated_claude(...) — THE mandated entry point a
+            loam-adjacent caller (in-tree OR a hand-rolled /tmp
+            harness) calls instead of subprocess.run(["claude",...]).
+          - inject_isolation / isolated_claude_argv / isolated_env —
+            the argv/env construction, preserving the caller's
+            -p/json shape; isolated_env adds the CLAUDE_PERSONA
+            belt-and-braces env-var (the independently-sufficient
+            defense the root-cause report named — would alone have
+            prevented #5).
+          - assert_loam_spawn_isolated(argv) — the structural mandate
+            guard (AC.PROMO.4): reuses the SEALED marker-guard
+            discipline verbatim AND additionally rejects an argv
+            missing the empty-strict-MCP flag pair (the literal #5
+            hand-rolled pattern); a non-claude argv is NOT
+            over-reached.
+          - canonical_src() — the one-line out-of-tree reach handle
+            (AC.PROMO.5): an arbitrary /tmp-CWD harness puts this
+            path on sys.path and imports the surface in one line.
+        No new isolation machinery (the sealed functions are wrapped
+        verbatim — zero drift); no spawn-router re-architecture
+        (contained, additive).
+      - framework/tools/loam-spawn-isolation/tests/test_AC_PROMO_*.py
+        — one file per AC. AC.PROMO.1 opt-in real-binary
+        harness-multispawn poller-survives (sentinel alive after a
+        real >=2-parallel claude multi-spawn through the surface —
+        empirical survival is the proof); AC.PROMO.2 fast structural
+        argv/env incl. CLAUDE_PERSONA; AC.PROMO.3 THE
+        dogfood-recursion closure (static AST check on AC.PROMO.1's
+        own test module — RED before the real-binary path runs if it
+        hand-rolls a raw claude spawn); AC.PROMO.4 the loud-fail
+        mandate guard; AC.PROMO.5 the real out-of-tree /tmp-CWD
+        one-line reach; AC.PROMO.6 fence integrity (§1a/§1b/§1c
+        byte-unchanged).
+
+    A definite structural-can't-reach negative on AC.PROMO.1 or
+    AC.PROMO.5 is a valid plan-success outcome — reported straight,
+    never retried to green, never softened (F2 /
+    LOCKED-DESIGN-NOT-LICENSE). Not expected (the new package's src
+    is path-resolvable from an arbitrary CWD, the same resolution the
+    sealed _isolation.py uses).
+
+    INERT-WITHOUT-MERGE, stated plainly: this fix is canonical-branch
+    code. The operator's live pos3/framework has NO handsoff-loop and
+    neither b33c0a8 nor e0b71cb nor this in its git log. Until an
+    owner-gated branch-merge / pos-sync lands it on the running
+    framework, this protects branch code only — INERT on the
+    operator's live session. The merge/sync is the §7 owner-gated
+    decision (NAMED, NOT enacted here) and very likely the real
+    reason Telegram keeps dying despite the "fixes."
+
+    Single-component fence: framework/workspace-bootstrap/. NOT merged
+    to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+    branch is the deliverable; origin/main unchanged. NO Anthropic API
+    key — real claude binary, default Sonnet; the env scrub enforces
+    it.

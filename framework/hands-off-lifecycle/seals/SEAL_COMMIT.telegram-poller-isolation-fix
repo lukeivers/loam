@@ -1,0 +1,50 @@
+# Telegram-poller-isolation fix — the three §1b handsoff-loop launch sites
+
+The verified kill vector: an internal loam `claude` that loads the
+telegram plugin spawns a competing `bun server.ts` that SIGTERMs a
+concurrently-running operator session's single-consumer Telegram
+poller for the one bot-token getUpdates slot. Removing the telegram
+plugin from the spawned process's reachable set (empty strict-MCP
+config) + scrubbing the bot-token/API-key env is necessary AND
+sufficient operator-protection (proven + sealed under AC.LIPW.5/.6
+on the subloam-driver surface).
+
+Source-verified scope correction: the ONLY unisolated `claude`-spawn
+family in this loam copy is the handsoff-loop (§1b). The §1a sites
+(subloam-driver / upgrade-merge-resolver / workspace-sync resolver
+client / odd-extractor synthesis client) already carry
+byte-equivalent isolation under their own sealed ACs; the §1c sites
+are non-`claude` subprocesses. This amendment closes ONLY the §1b
+family — more contained than the root-cause report's prose implied.
+
+Surface changed:
+  - framework/tools/handsoff-loop/src/handsoff_loop/_isolation.py —
+    a thin helper that imports the PROVEN subloam-driver functions
+    (build_isolated_claude_argv / build_isolated_env /
+    write_empty_mcp_config / IsolationConfig) and produces, for the
+    §1b sites' existing `-p`/json argv shape, the isolation-flag
+    injection (--strict-mcp-config --mcp-config <empty>) + scrubbed
+    env + empty-MCP file lifecycle. No new isolation machinery.
+  - intake.py:_claude_json, goal_drive.build_goal_drive_argv,
+    orchestrator._dispatch_subagent — each spawned `claude` now
+    carries the empty-strict-MCP isolation + scrubbed env. The
+    existing argv shape (positional `-p` prompt, --output-format
+    json, --permission-mode bypassPermissions) is preserved; only
+    the isolation flags + env scrub are added — not a reshape.
+  - framework/tools/handsoff-loop/tests/test_AC_TPI_*.py — one file
+    per AC. AC.TPI.1/.2 opt-in real-binary poller-survives
+    (sentinel alive after a real spawn — empirical survival is the
+    proof); AC.TPI.3/.4 fast structural argv/env sentinels in the
+    seal sweep; AC.TPI.5 marker-guard regression durability;
+    AC.TPI.6 fence integrity (§1a/§1c untouched).
+
+A definite structural-can't-isolate negative on AC.TPI.1/.2 is a
+valid plan-success outcome — reported straight, never retried to
+green, never softened (F2 / LOCKED-DESIGN-NOT-LICENSE). Not expected
+(the handsoff sub-agents drive via /goal + a shell check, not via an
+MCP server in the prompt).
+
+Single-component fence: framework/workspace-bootstrap/. NOT merged
+to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+branch is the deliverable; origin/main unchanged. NO Anthropic API
+key — real claude binary, default Sonnet; the env scrub enforces it.

@@ -1,0 +1,139 @@
+# ProgramBench-revival v2 — does the real sealed loop materially beat a bare LLM, judged independently?
+
+ProgramBench-revival v2 is the first GENUINE measurement of the
+real sealed v0.11.0 hands-off loop (canonical tag v0.11.0,
+ba8471e) against a bare `claude -p` baseline at hands-off task
+execution for a non-technical user — distinct from the v0.4.x
+ProgramBench history, which scored 3 hand-authored TOY tasks
+against the code-gen surface only, never the loop, never
+independently judged. The deliverable is a DEFINITE,
+independently-judged, evidence-backed three-valued verdict, NOT a
+green-only pass: "loam does not materially beat the baseline" is a
+first-class plan-success outcome.
+
+The binding reframe (settled, NOT re-litigated):
+  - Scored on the INDEPENDENT held-out adversarial tool-grounded
+    judge (the proven _independent_judge methodology +
+    spawn_isolated_claude), PROVABLY NOT the loop's own intake.py
+    AC.B.4b faithfulness judge. Canonical evidence:
+    framework/tools/handsoff-loop/.phase_verdicts/goal_refine_reharden.json
+    — I5 + I6 had loop faithful=True while the independent judge
+    correctly tagged them CHECKABLE-BUT-WRONG, run summary
+    no_fabricated_pass=false. The loop's own judge rubber-stamps
+    proxy checks on the hard intents; an independent scoring
+    authority is mandatory.
+  - The task set is the NON-SUBJECTIVE ProgramBench class
+    (owner ruling Telegram 11437); the genuinely-subjective
+    objective class is excluded BY CONSTRUCTION and is NOT a
+    blocker — v2 does not depend on the unsolved
+    subjective-acceptance problem.
+  - POSITIVE REAL-OUTCOME FLOOR (failure-boundary-as-positive-
+    objective, owner Telegram 11447). Every task's deterministic
+    check is authored as a positive assertion of the real
+    outcome: it exits 0 IFF the real outcome was ACTUALLY
+    delivered, and a nominal-but-hollow result (compiled-but-no-
+    effect / empty extraction / named-target-untouched) is a
+    NON-PASS BY CONSTRUCTION. Worked illustration (the owner's
+    email task): passes only if the user's email was ACTUALLY
+    changed in the way the issue required; a no-op / didn't-touch
+    / plausible-report-without-effect is a TOTAL failure even if a
+    minor one-time action would have sufficed. The per-task
+    floor-check authoring stays the builder's method.
+  - PER-NON-PASS FAILURE CLASS (the false-success-class map, owner
+    Telegram 11447). Every non-pass carries exactly one class from
+    a small fixed taxonomy frozen with the task set (at minimum
+    did-not-produce-output / produced-but-no-real-effect /
+    produced-but-wrong / honest-negative-refusal) so the verdict
+    is a per-arm failure-SIGNATURE map, not only a pass count —
+    this is what answers "how well does each arm do against the
+    false-success class". The taxonomy is the outcome; the
+    classification mechanism is the builder's call.
+  - The loam arm drives the REAL sealed loop through its actual
+    persona-invocable CLI (`handsoff-loop run`) established from
+    source, not a mock and not the pre-loop machinery.
+  - ZERO-INTERACTION PARITY (owner constraint Telegram 11443 —
+    ProgramBench is one-shot). Both arms receive the IDENTICAL
+    single task prompt under a CLOSED (no-answer) user channel;
+    output is produced SOLELY from that prompt; zero interactive
+    back-and-forth either arm; NO simulated/scripted/stand-in user
+    for ANY arm. The cooperative-user simulation
+    (_cooperative_user / _agrees_to_milestone) is REMOVED as the
+    loam-arm model and is NOT "the harness value under test" —
+    what is under test is the loop's INTERNAL machinery
+    (decompose -> dispatch -> independent-verify ->
+    refine-internally -> persist) operating on the SAME single
+    prompt. A task genuinely unresolvable without an answer is an
+    honest-negative the independent judge scores as a NON-PASS
+    (never simulated to success, never hung, never retried).
+    D-PBR-6, frozen by the owner constraint not builder
+    discretion. D-PBR-1 (the materially-beats margin, now
+    FROZEN-RATIFIED per owner Telegram 11447) is UNTOUCHED by this
+    zero-interaction correction.
+  - Prime-objective anchored: AC.PBR.7 ladders to both
+    VALUE_PROPOSITION tests (non-tech-user intent ->
+    AI-effective execution + harness toolkit).
+  - NO Anthropic API key — every claude spawn (both arms + judge)
+    through the sealed isolation surface, default Sonnet.
+
+Surface added (NEW; nothing sealed modified — the independent
+judge + isolation surface are CONSUMED read-only):
+  - framework/tools/programbench-revival/ — the measurement
+    executable: a baseline arm driver (one bare claude -p via
+    spawn_isolated_claude), a loam arm driver (the real
+    `handsoff-loop run` CLI, --from-intake the intent->agreed-check
+    path per AC.GR.6), a content-pinned non-subjective task set
+    loader, and a judge-scoring aggregator REUSING the proven
+    _independent_judge (Lens 1 — compose, do not reimplement).
+  - framework/tools/programbench-revival/tasks/ — the
+    content-hash-pinned non-subjective ProgramBench-class task
+    data (plain-language statement + deterministic machine check +
+    held-out anti-overfit check per task), frozen BEFORE any run.
+  - framework/tools/programbench-revival/.run_evidence/ — per
+    (arm,task) raw transcript + measured cost (from
+    --output-format json) + wall-clock + judge verdict; the
+    headline number is reproducible from this evidence.
+  - framework/hands-off-lifecycle/tests/test_AC_PBR_{1..7}_*.py —
+    one file per AC. PBR.7 (the real-claude end-to-end
+    measurement) collects-but-skips in the deterministic seal
+    sweep behind an env gate per the AC.B.5 / GR.5 /
+    subloam-driver precedent, producing a captured verdict
+    artefact.
+  - docs/experiments/programbench-revival-v2.md — the verdict
+    report a non-technical reader rules from.
+
+The materially-beats margin (D-PBR-1) is FROZEN-RATIFIED by owner
+Telegram 11447 (NO LONGER ratification-pending; a critical-call the
+operational objective did not imply): loam materially beats iff
+(i) loam is independently judged a PASS on a CLEAR MAJORITY of the
+tasks the BASELINE arm is independently judged a non-pass on, AND
+(ii) loam's TOTAL independently-judged pass count does NOT regress
+below baseline's. "Every task a pass" (the owner's all-tasks-
+complete hope) is a documented ASPIRATIONAL/SECONDARY metric,
+explicitly NOT the gate. The builder freezes EXACTLY this before
+any run and does NOT move it after runs begin; it is a fair honest
+test by construction, never weakened so loam trivially wins, never
+inflated so a real win reads as a loss. The web-research
+falsify/improve pass adopted the Agentic Benchmark Checklist (Zhu
+et al. 2025, arXiv:2507.02825) PER-PART: task-validity +
+outcome-validity + contamination-control as FRAMING (they
+corroborate loam's own sealed freeze-isolation + held-out-judge
+spine); full all-task statistical pass@k NOT adopted (the question
+is an architectural verdict per
+feedback_n1_architectural_vs_n3_statistical + cost discipline);
+public-leaderboard machinery NOT adopted (deferred HARP scope).
+The 11447 false-success correction web check (arXiv:2605.10448
+evidence-supported-bounds; arXiv:2603.03116 corrupt-success)
+adopted PER-PART: the positive-real-outcome-floor framing + the
+per-non-pass reason-class requirement adopted as FRAMING; loam's
+deterministic-check-exits-0-iff-real-outcome spine + the
+experiment's four-class false-success taxonomy KEPT as the
+implementation/outcome; the corrupt-success six-dimensional
+procedural gate + external per-model-signature taxonomies NOT
+adopted (one-shot non-subjective deterministic-outcome shape, not a
+conversational-policy construct).
+
+Single-component fence: framework/workspace-bootstrap/. NOT merged
+to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+branch is the deliverable; origin/main unchanged. No version bump
+(derives at release-time). NO Anthropic API key — real claude
+binary, default Sonnet.

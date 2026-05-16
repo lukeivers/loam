@@ -1,0 +1,47 @@
+# Real orchestrated hands-off loop — packaged + two honest phase end-tests
+
+The decompose → scoped-dispatch → independent-judge → frozen-verify
+loop was proven LIVES at unit scale by the Tier-0 probe. This
+amendment does NOT re-prove that (AC.FOUND.0) — it packages the
+proven mechanism as a primary-persona-invocable capability and runs
+the two honest end-tests for the two unknowns the probe left open:
+(A) does a packaged, reusable mechanism orchestrate as cleanly as a
+person hand-driving did; (B) can a non-technical user's fuzzy
+plain-language intent be turned into a faithful machine-checkable
+"done" without the user writing a spec.
+
+Surface added:
+  - framework/tools/handsoff-loop/ — the executable orchestration
+    package: orchestrator (decompose→dispatch real claude -p
+    sub-agents→independent tool-executing judge, composing the
+    probe-proven mechanism, NOT re-proving it), intake leg
+    (fuzzy intent → bounded elicit-the-minimum → plain-language
+    acceptance + one approval → machine-checkable + faithfulness
+    check), frozen-unseen independent + anti-overfit verifier, and
+    the /goal-under-`-p` drive/stop wiring (loam's tool-executing
+    check decides; /goal drives).
+  - plugins/loam-skills/skills/handsoff-loop/SKILL.md — the
+    persona-invocable packaging (auto-surfaces, one capability,
+    delegates to the tools package).
+  - framework/hands-off-lifecycle/tests/test_AC_HL_*.py — one file
+    per AC; deterministic structural ACs in the seal sweep; the two
+    phase end-tests real-claude-driven with captured verdict tables.
+
+Phase A and Phase B each produced a definite, evidence-backed
+per-dimension verdict table. A definite NEGATIVE on either phase is
+a valid plan-success outcome — reported straight, never retried to
+green, never softened. Tier C attempted iff both phases positive,
+else gated (not failed). Cost measured via --output-format json
+against the $2-8 / <=20 min band.
+
+Composes the verified-real /goal built-in (binary 2.1.143) for the
+drive/stop leg ONLY; loam's independent tool-executing check decides
+via its surfaced exit code — /goal's Haiku transcript-only evaluator
+keys off that surfaced verdict, never sub-agent prose. No
+re-implementation of turn-after-turn drive; /goal is never the
+artefact judge (Lens-1).
+
+Single-component fence: framework/workspace-bootstrap/. NOT merged
+to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+branch is the deliverable; origin/main unchanged. NO Anthropic API
+key — real claude binary, default Sonnet.

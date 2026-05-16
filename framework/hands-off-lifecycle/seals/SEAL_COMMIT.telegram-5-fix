@@ -1,0 +1,88 @@
+# Telegram-death-#5 fix — the shared, importable, mandated isolation surface
+
+The verified kill vector (sealed under AC.LIPW.5/.6 + AC.TPI.*):
+an internal loam `claude` that loads the user-enabled telegram
+plugin spawns a competing `bun server.ts` that SIGTERMs a
+concurrently-running operator session's single-consumer Telegram
+poller for the one bot-token getUpdates slot. Removing the
+telegram plugin from the spawned process's reachable set (empty
+strict-MCP config) + scrubbing the bot-token/API-key env is
+necessary AND sufficient operator-protection.
+
+Death #5 specifically: the b33c0a8/e0b71cb fix isolates the three
+§1b handsoff-loop production launch sites and HOLDS — it did NOT
+fail and was NOT under-scoped for what it was built for. #5 came
+through a doorway it was never positioned to reach: a
+dispatched-agent-authored throwaway re-harden harness in /tmp
+(/private/tmp/phase-b-reharden-2026-05-16/reharden.py:137-146)
+that hand-rolled `subprocess.run(["claude","-p",...])` with
+`ThreadPoolExecutor(max_workers=7)` — up to 7 parallel
+UN-isolated spawns. That harness class — dispatched-agent-authored
+/tmp test/judge/probe/re-harness that hand-rolls a raw claude
+argv — is the uncovered doorway. Zero in-canonical-tree
+uncovered sites (every in-tree spawn is §1a/§1b/§1c isolated);
+the doorway is unbounded-but-pattern-singular.
+
+Surface changed (ADDITIVE — a new package; §1a/§1b/§1c
+byte-unchanged, AC.PROMO.6):
+  - framework/tools/loam-spawn-isolation/ — a new sibling tool
+    package that PROMOTES the proven handsoff-loop _isolation.py
+    adapter pattern over the SEALED subloam-driver functions
+    (build_isolated_claude_argv / build_isolated_env /
+    write_empty_mcp_config / IsolationConfig / the marker-guard)
+    into ONE shared, one-line-importable surface:
+      - spawn_isolated_claude(...) — THE mandated entry point a
+        loam-adjacent caller (in-tree OR a hand-rolled /tmp
+        harness) calls instead of subprocess.run(["claude",...]).
+      - inject_isolation / isolated_claude_argv / isolated_env —
+        the argv/env construction, preserving the caller's
+        -p/json shape; isolated_env adds the CLAUDE_PERSONA
+        belt-and-braces env-var (the independently-sufficient
+        defense the root-cause report named — would alone have
+        prevented #5).
+      - assert_loam_spawn_isolated(argv) — the structural mandate
+        guard (AC.PROMO.4): reuses the SEALED marker-guard
+        discipline verbatim AND additionally rejects an argv
+        missing the empty-strict-MCP flag pair (the literal #5
+        hand-rolled pattern); a non-claude argv is NOT
+        over-reached.
+      - canonical_src() — the one-line out-of-tree reach handle
+        (AC.PROMO.5): an arbitrary /tmp-CWD harness puts this
+        path on sys.path and imports the surface in one line.
+    No new isolation machinery (the sealed functions are wrapped
+    verbatim — zero drift); no spawn-router re-architecture
+    (contained, additive).
+  - framework/tools/loam-spawn-isolation/tests/test_AC_PROMO_*.py
+    — one file per AC. AC.PROMO.1 opt-in real-binary
+    harness-multispawn poller-survives (sentinel alive after a
+    real >=2-parallel claude multi-spawn through the surface —
+    empirical survival is the proof); AC.PROMO.2 fast structural
+    argv/env incl. CLAUDE_PERSONA; AC.PROMO.3 THE
+    dogfood-recursion closure (static AST check on AC.PROMO.1's
+    own test module — RED before the real-binary path runs if it
+    hand-rolls a raw claude spawn); AC.PROMO.4 the loud-fail
+    mandate guard; AC.PROMO.5 the real out-of-tree /tmp-CWD
+    one-line reach; AC.PROMO.6 fence integrity (§1a/§1b/§1c
+    byte-unchanged).
+
+A definite structural-can't-reach negative on AC.PROMO.1 or
+AC.PROMO.5 is a valid plan-success outcome — reported straight,
+never retried to green, never softened (F2 /
+LOCKED-DESIGN-NOT-LICENSE). Not expected (the new package's src
+is path-resolvable from an arbitrary CWD, the same resolution the
+sealed _isolation.py uses).
+
+INERT-WITHOUT-MERGE, stated plainly: this fix is canonical-branch
+code. The operator's live pos3/framework has NO handsoff-loop and
+neither b33c0a8 nor e0b71cb nor this in its git log. Until an
+owner-gated branch-merge / pos-sync lands it on the running
+framework, this protects branch code only — INERT on the
+operator's live session. The merge/sync is the §7 owner-gated
+decision (NAMED, NOT enacted here) and very likely the real
+reason Telegram keeps dying despite the "fixes."
+
+Single-component fence: framework/workspace-bootstrap/. NOT merged
+to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+branch is the deliverable; origin/main unchanged. NO Anthropic API
+key — real claude binary, default Sonnet; the env scrub enforces
+it.

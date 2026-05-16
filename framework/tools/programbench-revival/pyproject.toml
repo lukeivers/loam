@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "programbench-revival"
+version = "0.0.0"
+description = "ProgramBench-revival v2 — the measurement harness: does the real sealed v0.11.0 hands-off loop materially beat a bare claude -p baseline at hands-off task execution, scored by the independent held-out judge (NOT the loop's own)? Composes the proven _independent_judge + the mandated spawn_isolated_claude surface (Lens 1 — does not re-implement). Plan: docs/plans/programbench-revival-v2.md (AC.PBR.1..7)."
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

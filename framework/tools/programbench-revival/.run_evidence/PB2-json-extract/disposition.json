@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "task_id": "PB2-json-extract",
+    "arm": "baseline",
+    "passed": true,
+    "judge_tag": "FAITHFUL",
+    "judge_reason": "The floor check exit-0 is grounded by the tail message 'emails.txt holds exactly the real extracted addresses', which asserts content-level correctness rather than mere file presence \u2014 the checker validated the extracted addresses match the actual source data. The held-out anti-overfit check also exits 0 with tail 'HELDOUT-PASS: re-extracted held-out addresses', which rules out the hardcoded-literal and vacuous-extraction failure modes by demonstrating the arm's extraction logic generalised to addresses not in the original example set; a script that merely echoed known values would have failed the held-out probe.",
+    "floor_exit": 0,
+    "held_out_exit": 0,
+    "failure_class": "",
+    "cost_usd": 0.0966978,
+    "wall_clock_s": 15.66,
+    "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB2-json-extract/baseline.transcript",
+    "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb2.py"
+  },
+  "loam": {
+    "task_id": "PB2-json-extract",
+    "arm": "loam",
+    "passed": true,
+    "judge_tag": "FAITHFUL",
+    "judge_reason": "The floor check exit-0 asserts 'emails.txt holds exactly the real extracted addresses' \u2014 meaning the output file exists and its content matches the actual email addresses from users.json, not a proxy or empty file; the held-out check exit-0 ('HELDOUT-PASS: re-extracted held-out addresses') closes the hardcoding failure mode, proving the arm produced a generalisable runnable extractor rather than a static literal dump, because held-out addresses not present in the training example were successfully re-extracted. Together, both exits confirm the user's two-part ask \u2014 a runnable artifact AND a correctly-populated emails.txt \u2014 was delivered with verified content and verified generalisability.",
+    "floor_exit": 0,
+    "held_out_exit": 0,
+    "failure_class": "",
+    "cost_usd": null,
+    "wall_clock_s": 14.71,
+    "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB2-json-extract/loam.transcript",
+    "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb2.py"
+  }
+}

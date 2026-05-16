@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "task_id": "PB4-rename-key",
+    "arm": "baseline",
+    "passed": true,
+    "judge_tag": "FAITHFUL",
+    "judge_reason": "The floor check exit code 0 is accompanied by an explicit message 'the REAL settings.json was actually mutated in the asserted direction', ruling out proxy/presence-test and named-target-untouched failure modes \u2014 the check verified the actual file on disk changed. The held-out anti-overfit check (also exit 0) adds 'genuine value-preserving rename, not a blind overfit rewrite', ruling out the hardcoded-literal and overfit failure modes and confirming the value was kept intact; together the two orthogonal checks cover the user's full stated requirement (key renamed, value preserved, nothing else changed).",
+    "floor_exit": 0,
+    "held_out_exit": 0,
+    "failure_class": "",
+    "cost_usd": 0.0403339,
+    "wall_clock_s": 16.89,
+    "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB4-rename-key/baseline.transcript",
+    "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb4.py"
+  },
+  "loam": {
+    "task_id": "PB4-rename-key",
+    "arm": "loam",
+    "passed": true,
+    "judge_tag": "FAITHFUL",
+    "judge_reason": "The floor check exit 0 is backed by the explicit message 'the REAL settings.json was actually mutated in the asserted direction', ruling out the proxy/copy/test-file failure mode where the wrong file is touched. The held-out exit 0 adds 'edit is a genuine value-preserving rename, not a blind overfit rewrite', which directly closes the two remaining failure modes the floor check alone cannot cover \u2014 value-clobbering and hardcoded literal substitution \u2014 leaving no residual ambiguity about whether the user's named outcome (key renamed, value intact, nothing else changed) was actually delivered.",
+    "floor_exit": 0,
+    "held_out_exit": 0,
+    "failure_class": "",
+    "cost_usd": null,
+    "wall_clock_s": 31.29,
+    "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB4-rename-key/loam.transcript",
+    "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb4.py"
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "task_set_id": "programbench-revival-v2-honest-scope-6task",
+  "task_set_sha256": "8ca7c4de98e33ea5c33a006efff409bb7024015f7ab720c1531ff14fa566921d",
+  "frozen_pass_rule": "A task is PASSED for an arm IFF the independent held-out judge tags it FAITHFUL AND the positive-real-outcome floor check exits 0 AND the held-out anti-overfit check exits 0 (verify.py:213-215 both-must-pass spine). Run ONCE per (arm,task), NO retry-to-pass for the headline. Bounded small-k re-run ONLY on margin tasks for consistency reporting, NEVER to flip a fail to a pass.",
+  "frozen_failure_taxonomy": [
+    "did-not-produce-output",
+    "produced-but-no-real-effect",
+    "produced-but-wrong",
+    "honest-negative-refusal"
+  ],
+  "tasks_total": 6,
+  "tasks_completed": [
+    "PB1-csv-sum",
+    "PB2-json-extract",
+    "PB3-dedupe-lines",
+    "PB4-rename-key",
+    "PB5-word-count-cli",
+    "PB6-fix-off-by-one"
+  ],
+  "halted_on_cost_ceiling": false,
+  "cost_ceiling_usd": 8.0,
+  "measured_spent_usd": 0.4462,
+  "wall_clock_s": 630.4,
+  "baseline_dispositions": [
+    {
+      "task_id": "PB1-csv-sum",
+      "arm": "baseline",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check (`check_pb1.py`, exit 0) ran `sum_sales.py` against the real `sales.csv` and confirmed the program produced the correct numeric total `120.74`, ruling out a presence-only or vacuous-extraction pass; the held-out anti-overfit check (also exit 0, transcript: `HELDOUT-PASS: recomputed held-out total`) ran the same program against a *different* dataset and confirmed it recomputed a different correct total, which structurally eliminates the hardcoded-literal failure mode and proves the program reads and sums dynamically from whatever CSV is present.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": 0.0517447,
+      "wall_clock_s": 18.7,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB1-csv-sum/baseline.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb1.py"
+    },
+    {
+      "task_id": "PB2-json-extract",
+      "arm": "baseline",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check exit-0 is grounded by the tail message 'emails.txt holds exactly the real extracted addresses', which asserts content-level correctness rather than mere file presence \u2014 the checker validated the extracted addresses match the actual source data. The held-out anti-overfit check also exits 0 with tail 'HELDOUT-PASS: re-extracted held-out addresses', which rules out the hardcoded-literal and vacuous-extraction failure modes by demonstrating the arm's extraction logic generalised to addresses not in the original example set; a script that merely echoed known values would have failed the held-out probe.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": 0.0966978,
+      "wall_clock_s": 15.66,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB2-json-extract/baseline.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb2.py"
+    },
+    {
+      "task_id": "PB3-dedupe-lines",
+      "arm": "baseline",
+      "passed": false,
+      "judge_tag": "CHECKABLE-BUT-WRONG",
+      "judge_reason": "The floor check (`check_pb3.py` exit 0) guarantees only that a `unique.txt` file existed at check time whose contents matched the expected first-seen deduplication of the specific fixture `words.txt` \u2014 it does not verify that a reusable command or script was produced, only that the output file satisfies the example case. The held-out check explicitly exited 1 with 'HELDOUT-FAIL: produced program did not re-dedupe on a held-out input (overfit -> non-pass)', which means the arm either hardcoded the four expected words directly into `unique.txt` or produced a program that only works for the fixture input, directly contradicting the user's real ask: 'a way to produce a new file' \u2014 a generalisable method, not a one-shot output file.",
+      "floor_exit": 0,
+      "held_out_exit": 1,
+      "failure_class": "produced-but-no-real-effect",
+      "cost_usd": 0.08012845,
+      "wall_clock_s": 15.69,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB3-dedupe-lines/baseline.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb3.py"
+    },
+    {
+      "task_id": "PB4-rename-key",
+      "arm": "baseline",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check exit code 0 is accompanied by an explicit message 'the REAL settings.json was actually mutated in the asserted direction', ruling out proxy/presence-test and named-target-untouched failure modes \u2014 the check verified the actual file on disk changed. The held-out anti-overfit check (also exit 0) adds 'genuine value-preserving rename, not a blind overfit rewrite', ruling out the hardcoded-literal and overfit failure modes and confirming the value was kept intact; together the two orthogonal checks cover the user's full stated requirement (key renamed, value preserved, nothing else changed).",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": 0.0403339,
+      "wall_clock_s": 16.89,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB4-rename-key/baseline.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb4.py"
+    },
+    {
+      "task_id": "PB5-word-count-cli",
+      "arm": "baseline",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check (check_pb5.py exit 0) explicitly reports 'FLOOR-PASS: wc_lines really counts the real file's lines', meaning the script verified actual line-count correctness against a real file \u2014 not mere executable presence or a hardcoded literal match \u2014 and the held-out anti-overfit check also exited 0 ('HELDOUT-PASS: wc_lines counted a held-out file'), confirming the program generalizes to an independently-constructed test file the arm could not have been overfit to; both independent passes together constitute genuine verification that the line-counting behavior the user requested was delivered into the world.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": 0.0896053,
+      "wall_clock_s": 16.59,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB5-word-count-cli/baseline.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb5.py"
+    },
+    {
+      "task_id": "PB6-fix-off-by-one",
+      "arm": "baseline",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check (`check_pb6.py`, exit 0) directly ran the target `avg.py` and asserted it now prints the correct average, and the held-out anti-overfit check (exit 0) independently confirmed the fix recomputes on a held-out range rather than emitting a hardcoded literal \u2014 ruling out the two most common hollow-pass failure modes (wrong file touched / answer burned in as `print(5.5)`). The arm's stated mechanism (changing `range(1, 10)` to `range(1, 11)`) is the unique legitimate root cause for this class of off-by-one average bug, and both checks corroborate it independently.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": 0.08770965,
+      "wall_clock_s": 11.84,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB6-fix-off-by-one/baseline.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb6.py"
+    }
+  ],
+  "loam_dispositions": [
+    {
+      "task_id": "PB1-csv-sum",
+      "arm": "loam",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check command ran `sum.py` via Python 3.9.17 and confirmed it produced the real numeric total `120.74` from the test `sales.csv`, satisfying the user's stated requirement (just the number, nothing else); the held-out check exiting 0 with message 'recomputed held-out total' rules out the hardcoded-literal failure mode by confirming the program generalised to a different dataset rather than emitting a fixed string.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": null,
+      "wall_clock_s": 14.61,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB1-csv-sum/loam.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb1.py"
+    },
+    {
+      "task_id": "PB2-json-extract",
+      "arm": "loam",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check exit-0 asserts 'emails.txt holds exactly the real extracted addresses' \u2014 meaning the output file exists and its content matches the actual email addresses from users.json, not a proxy or empty file; the held-out check exit-0 ('HELDOUT-PASS: re-extracted held-out addresses') closes the hardcoding failure mode, proving the arm produced a generalisable runnable extractor rather than a static literal dump, because held-out addresses not present in the training example were successfully re-extracted. Together, both exits confirm the user's two-part ask \u2014 a runnable artifact AND a correctly-populated emails.txt \u2014 was delivered with verified content and verified generalisability.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": null,
+      "wall_clock_s": 14.71,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB2-json-extract/loam.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb2.py"
+    },
+    {
+      "task_id": "PB3-dedupe-lines",
+      "arm": "loam",
+      "passed": false,
+      "judge_tag": "CHECKABLE-BUT-WRONG",
+      "judge_reason": "The floor check exit 0 confirms that unique.txt exists and its contents are a correct first-seen deduplication of the specific known input \u2014 but the held-out exit 1 ('HELDOUT-FAIL: produced program did not re-dedupe on a held-out input') is direct machine evidence that the arm's solution is overfit or hardcoded to the example rather than implementing a general deduplication method; the user's literal request was for 'a way to produce' the output (implying a reusable procedure), and the held-out failure proves that no such generalizable mechanism was delivered \u2014 only a surface-correct artifact for the one known case.",
+      "floor_exit": 0,
+      "held_out_exit": 1,
+      "failure_class": "produced-but-no-real-effect",
+      "cost_usd": null,
+      "wall_clock_s": 16.69,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB3-dedupe-lines/loam.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb3.py"
+    },
+    {
+      "task_id": "PB4-rename-key",
+      "arm": "loam",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check exit 0 is backed by the explicit message 'the REAL settings.json was actually mutated in the asserted direction', ruling out the proxy/copy/test-file failure mode where the wrong file is touched. The held-out exit 0 adds 'edit is a genuine value-preserving rename, not a blind overfit rewrite', which directly closes the two remaining failure modes the floor check alone cannot cover \u2014 value-clobbering and hardcoded literal substitution \u2014 leaving no residual ambiguity about whether the user's named outcome (key renamed, value intact, nothing else changed) was actually delivered.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": null,
+      "wall_clock_s": 31.29,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB4-rename-key/loam.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb4.py"
+    },
+    {
+      "task_id": "PB5-word-count-cli",
+      "arm": "loam",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check command exited 0 with tail 'FLOOR-PASS: wc_lines really counts the real file's lines' \u2014 the message explicitly asserts real counting behavior against an actual file, not a mere presence or import check. The held-out anti-overfit check also exited 0 with 'HELDOUT-PASS: wc_lines counted a held-out file', ruling out hardcoded line counts and confirming the binary generalizes to arbitrary input files, which is exactly the real-world outcome the user named.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": null,
+      "wall_clock_s": 188.3,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB5-word-count-cli/loam.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb5.py"
+    },
+    {
+      "task_id": "PB6-fix-off-by-one",
+      "arm": "loam",
+      "passed": true,
+      "judge_tag": "FAITHFUL",
+      "judge_reason": "The floor check (exit 0) explicitly asserts it ran against 'the REAL avg.py' and observed the correct average output, eliminating the target-untouched and proxy failure modes; the held-out check (exit 0) independently asserts 'avg.py recomputes on a held-out range (genuine fix, not a hardcoded literal)', directly falsifying the overfit/hardcoded-literal failure mode that a floor-only pass cannot rule out.",
+      "floor_exit": 0,
+      "held_out_exit": 0,
+      "failure_class": "",
+      "cost_usd": null,
+      "wall_clock_s": 14.53,
+      "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB6-fix-off-by-one/loam.transcript",
+      "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb6.py"
+    }
+  ],
+  "verdict": {
+    "verdict": "loam-does-not-materially-beat-baseline",
+    "baseline_pass_count": 5,
+    "loam_pass_count": 5,
+    "baseline_non_pass_tasks": [
+      "PB3-dedupe-lines"
+    ],
+    "loam_recovered_of_baseline_misses": [],
+    "clear_majority_threshold": 0.5,
+    "clear_majority_cleared": false,
+    "no_total_regression": true,
+    "all_tasks_pass_aspirational": {
+      "baseline_all_tasks_pass": false,
+      "loam_all_tasks_pass": false,
+      "note": "DOCUMENTED ASPIRATIONAL / SECONDARY metric \u2014 explicitly NOT the v2 pass/fail gate (the gate is the frozen (a)/(b)/(c) margin)."
+    },
+    "per_arm_failure_signature": {
+      "baseline": {
+        "did-not-produce-output": 0,
+        "produced-but-no-real-effect": 1,
+        "produced-but-wrong": 0,
+        "honest-negative-refusal": 0
+      },
+      "loam": {
+        "did-not-produce-output": 0,
+        "produced-but-no-real-effect": 1,
+        "produced-but-wrong": 0,
+        "honest-negative-refusal": 0
+      }
+    },
+    "reason": "loam does NOT materially beat the baseline on this set: loam recovered only 0/1 of the baseline's misses (not a >50% clear majority). This is a FIRST-CLASS plan-success outcome, reported straight \u2014 NOT retried to green, the margin NOT weakened.",
+    "margin_text": "loam MATERIALLY BEATS baseline IFF BOTH: (i) among the tasks the BASELINE arm is independently judged a NON-PASS on, the LOAM arm is independently judged a PASS on a CLEAR MAJORITY (strictly >50%) of them; AND (ii) loam's TOTAL independently-judged pass count does NOT regress below baseline's total. Otherwise loam does NOT materially beat baseline (a first-class plan-success outcome). If there are too few baseline non-passes to define a clear majority (0 baseline misses) OR the set is under-powered, the verdict is INDETERMINATE (a definite reportable finding naming why). 'Every task a pass' is a DOCUMENTED ASPIRATIONAL / SECONDARY metric, EXPLICITLY NOT the gate."
+  },
+  "scoring_authority": "INDEPENDENT held-out adversarial tool-grounded judge (programbench_revival.scorer.independent_judge, composing the proven _independent_judge shape via spawn_isolated_claude) \u2014 PROVABLY NOT the loop's own handsoff_loop.intake._judge_faithful AC.B.4b judge (never imported / never called by this harness)."
+}

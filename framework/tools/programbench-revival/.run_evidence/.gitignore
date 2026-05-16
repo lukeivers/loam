@@ -1,0 +1,27 @@
+# D-PBR-5 evidence-commit policy (builder's call per plan §2 / §14).
+#
+# Reproducibility of the HEADLINE (AC.PBR.6) requires the structured
+# evidence retrievable: verdict.json (the computed three-valued
+# verdict + per-arm failure-signature map + measured cost) and the
+# per-task disposition.json records ARE committed (re-running the
+# frozen scorer over them yields the same verdict). The BULKY raw
+# `claude` transcripts + per-(arm,task) work dirs + loop artefacts
+# stay LOCAL (not committed) — mirrors the v0.4.0 C4 precedent of
+# keeping raw runs out-of-tree, without bloating the repo with raw
+# model output. The structured records are sufficient to reproduce
+# and audit the headline; the raw transcripts are local-only forensic
+# depth.
+
+# bulky raw run artefacts — local only
+PB*/baseline.transcript
+PB*/loam.transcript
+PB*/baseline_work/
+PB*/loam_work/
+PB*/loam_artifacts/
+PB*/_frozen/
+SMOKE*/
+run.log
+
+# KEEP (committed, reproducibility-bearing): verdict.json,
+# PB*/disposition.json, this .gitignore
+!PB*/disposition.json

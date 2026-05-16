@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "task_id": "PB6-fix-off-by-one",
+    "arm": "baseline",
+    "passed": true,
+    "judge_tag": "FAITHFUL",
+    "judge_reason": "The floor check (`check_pb6.py`, exit 0) directly ran the target `avg.py` and asserted it now prints the correct average, and the held-out anti-overfit check (exit 0) independently confirmed the fix recomputes on a held-out range rather than emitting a hardcoded literal \u2014 ruling out the two most common hollow-pass failure modes (wrong file touched / answer burned in as `print(5.5)`). The arm's stated mechanism (changing `range(1, 10)` to `range(1, 11)`) is the unique legitimate root cause for this class of off-by-one average bug, and both checks corroborate it independently.",
+    "floor_exit": 0,
+    "held_out_exit": 0,
+    "failure_class": "",
+    "cost_usd": 0.08770965,
+    "wall_clock_s": 11.84,
+    "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB6-fix-off-by-one/baseline.transcript",
+    "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb6.py"
+  },
+  "loam": {
+    "task_id": "PB6-fix-off-by-one",
+    "arm": "loam",
+    "passed": true,
+    "judge_tag": "FAITHFUL",
+    "judge_reason": "The floor check (exit 0) explicitly asserts it ran against 'the REAL avg.py' and observed the correct average output, eliminating the target-untouched and proxy failure modes; the held-out check (exit 0) independently asserts 'avg.py recomputes on a held-out range (genuine fix, not a hardcoded literal)', directly falsifying the overfit/hardcoded-literal failure mode that a floor-only pass cannot rule out.",
+    "floor_exit": 0,
+    "held_out_exit": 0,
+    "failure_class": "",
+    "cost_usd": null,
+    "wall_clock_s": 14.53,
+    "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB6-fix-off-by-one/loam.transcript",
+    "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb6.py"
+  }
+}

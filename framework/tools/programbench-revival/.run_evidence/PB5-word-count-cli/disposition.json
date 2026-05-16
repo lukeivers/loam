@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "task_id": "PB5-word-count-cli",
+    "arm": "baseline",
+    "passed": true,
+    "judge_tag": "FAITHFUL",
+    "judge_reason": "The floor check (check_pb5.py exit 0) explicitly reports 'FLOOR-PASS: wc_lines really counts the real file's lines', meaning the script verified actual line-count correctness against a real file \u2014 not mere executable presence or a hardcoded literal match \u2014 and the held-out anti-overfit check also exited 0 ('HELDOUT-PASS: wc_lines counted a held-out file'), confirming the program generalizes to an independently-constructed test file the arm could not have been overfit to; both independent passes together constitute genuine verification that the line-counting behavior the user requested was delivered into the world.",
+    "floor_exit": 0,
+    "held_out_exit": 0,
+    "failure_class": "",
+    "cost_usd": 0.0896053,
+    "wall_clock_s": 16.59,
+    "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB5-word-count-cli/baseline.transcript",
+    "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb5.py"
+  },
+  "loam": {
+    "task_id": "PB5-word-count-cli",
+    "arm": "loam",
+    "passed": true,
+    "judge_tag": "FAITHFUL",
+    "judge_reason": "The floor check command exited 0 with tail 'FLOOR-PASS: wc_lines really counts the real file's lines' \u2014 the message explicitly asserts real counting behavior against an actual file, not a mere presence or import check. The held-out anti-overfit check also exited 0 with 'HELDOUT-PASS: wc_lines counted a held-out file', ruling out hardcoded line counts and confirming the binary generalizes to arbitrary input files, which is exactly the real-world outcome the user named.",
+    "floor_exit": 0,
+    "held_out_exit": 0,
+    "failure_class": "",
+    "cost_usd": null,
+    "wall_clock_s": 188.3,
+    "transcript_path": "/Users/lukeivers/loam/framework/tools/programbench-revival/.run_evidence/PB5-word-count-cli/loam.transcript",
+    "check_command": "/Users/lukeivers/.pyenv/versions/3.9.17/bin/python3 /Users/lukeivers/loam/framework/tools/programbench-revival/tasks/check_pb5.py"
+  }
+}

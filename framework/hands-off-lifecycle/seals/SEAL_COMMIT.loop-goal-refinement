@@ -1,0 +1,129 @@
+# Loop goal-refinement — the honest-refuse terminal becomes a bounded refinement entry + the milestone-leg seam
+
+The owner product steer (Luke, Telegram 11408; binding foundation,
+NOT re-litigated) ruled the correct behaviour at the loop's
+give-up point is neither fake nor refuse — it is REFINE: a non-tech
+user must accomplish what they want with AI; an unmeasurable goal
+is refined toward measurable (interactive-refine first, else
+self-refine); and when the real goal is not directly measurable at
+all, pick a measurable milestone ON THE PATH, get explicit
+agreement, achieve it, then check in. This amendment converts the
+sealed intake's two dead-ends into entries into a BOUNDED
+refinement construct — a CONTAINED EVOLUTION of the intake
+derivation, NOT a loop re-architecture (decompose/dispatch/judge
+UNTOUCHED, AC.FOUND.0) + ONE named in-scope prerequisite (the
+intake->loop seam, milestone-leg-only).
+
+Surface changed:
+  - intake.py — the refinement region:
+    - AC.GR.1: the _derive_defects honest-refuse terminal AND the
+      faithful=False terminal become BOUNDED refinement ENTRIES
+      (never an immediate terminal approved=False on the real-model
+      path). The sealed ceb629b honesty base is preserved — still
+      NO silent approved=True on an empty contract, still NO
+      auto-retry rubber-stamp; the deterministic structural path
+      (run_model=False) never has defects so it never enters
+      refinement (the durable AC.B.2 leg is byte-unchanged).
+    - AC.GR.2: _refine_toward_measurable attempts interactive
+      clarification FIRST via the existing elicit_answer_fn
+      callback (the bounded elicitation primitive re-scoped to the
+      measurability gap — NOT modified; reused) and only
+      self-refines when no live user is reachable (the hands-off
+      'just go' degrade). Total user-facing question count stays
+      bounded (the user is never turned into a spec author).
+    - AC.GR.3: when the whole aim is not directly measurable the
+      construct derives a measurable milestone ON THE PATH,
+      surfaces it at the SINGLE approval gate framed as a milestone
+      the loop aims at first, and on agreement records it as the
+      approved unit + the still-open fuzzy aim (milestone_toward)
+      + a structurally re-engaged check-in (check_in_pending) —
+      NOT a silent terminal replacement of the user's aim.
+    - AC.GR.4: the construct is finitely bounded
+      (_REFINE_MAX_ATTEMPTS); on exhaustion it returns a DEFINITE
+      evidence-named honest-negative naming the goal class — NOT
+      an unbounded loop, NOT a fabricated cheap test (sealed
+      ceb629b no-fake preserved), NOT a weakened acceptance. The
+      honest-negative is AC-satisfying exactly as a refinement is.
+    - AC.GR.6 (the milestone-leg prerequisite, §3b):
+      freeze_input_from_outcome derives the freeze_acceptance input
+      from the user-agreed IntakeOutcome.machine_checkable, and the
+      cli `run --from-intake` read-path consumes an IntakeOutcome
+      (instead of only a hand-authored frozen JSON) so the command
+      the loop freezes+executes is PROVABLY the agreed one. A
+      read-path connection ONLY — it feeds freeze_acceptance; it
+      does NOT change how verify decides done and does NOT touch
+      decompose/dispatch/judge (AC.FOUND.0 untouched). The
+      AC.PBF.1 honesty (refuse a non-approved / empty-check
+      outcome) is carried through the seam.
+  - __init__.py — freeze_input_from_outcome exported.
+  - framework/hands-off-lifecycle/tests/test_AC_HL_GR_{1,2,3,4,5,6}_*.py
+    — one file per AC. GR.1 (terminal->entry, both terminals,
+    bare-refusal-without-attempt does not satisfy), GR.2
+    (interactive-first, self-refine degrade, bounded question
+    count, healthy intent elicitation unchanged), GR.3
+    (milestone carries aim + check-in, gate framed as milestone,
+    no silent replacement), GR.4 (finitely bounded, exhausted
+    bound -> definite honest-negative, not a fabricated cheap
+    test, AC-satisfying like a success), GR.5 (the gated
+    real-claude honest re-harden — same 7 intents, one run/intent,
+    no retry-to-pass, cooperative-user sim, INDEPENDENT non-loop
+    Tier-0 judge; DEFINITE either-polarity verdict, net-stronger
+    than sealed 2/7, no fabricated pass; collects-but-skips in the
+    deterministic seal sweep behind HANDSOFF_RUN_GR_REHARDEN=1 per
+    the AC.B.5 / subloam-driver-fix precedent), GR.6 (executed
+    check provably derived from the agreed machine_checkable,
+    refuses non-approved/empty as a freeze source, the real cli
+    --from-intake path wires the seam without touching the core
+    loop).
+  - framework/tools/handsoff-loop/src/handsoff_loop_goal_refine_reharden.py
+    — the AC.GR.5 re-harness runner. EVERY independent-judge
+    claude spawn routes through the sealed shared
+    loam_spawn_isolation.spawn_isolated_claude surface
+    (AST-verified: no subprocess import, zero hand-rolled
+    subprocess.run — the Telegram-death #5 vector is closed for
+    the re-harness). NO Anthropic API key — real claude binary,
+    default Sonnet.
+  - plugins/loam-skills/skills/handsoff-loop/SKILL.md — the ONE
+    conditional doc-truth line: the pre-change prose was silent on
+    refinement and read as if the faithfulness check is the
+    terminal; it is now inaccurate after the change, so the
+    conditional doc-truth touch IS triggered. One behavioural-doc
+    line names the bounded-refinement / milestone-on-path /
+    honest-negative behaviour. Minimal — fence kept tight.
+
+The two test_AC_HL_PBF_2 tests were adjusted as RECORDED
+fix-driven tightenings per the sealed AC.PBF.4 precedent (the
+binding plan AC.GR.1 explicitly converts the faithful=False
+terminal to a refinement entry; the sealed AC.PBF.2 property —
+the judge sees the machine check, either polarity honest, NO
+retry-to-green — is PRESERVED exactly: the negative now flows into
+bounded refinement and lands a definite honest-negative, never
+flipped to green; this is a legitimate AC.GR.1 behaviour change,
+NOT a loosening to pass a broken test; the M5 four-step resolution
+is recorded in the build report).
+
+AC.GR.5 — the lead honest re-harden: a re-run of the EXACT
+phase-b-hardening 7-intent protocol (same 7, one run/intent, no
+retry-to-pass, cooperative-user sim) scored by an INDEPENDENT
+Tier-0 judge that is NOT the loop's own AC.B.4b judge. The bar is
+per-intent definiteness + net improvement over the sealed 2/7 +
+no fabricated pass + per-class irreducibility first-class — NOT a
+fixed >=N/7. A definite 'these classes refine, these are
+irreducible even on-the-path — here is the evidence' is a VALID
+plan-success §10.5 outcome, reported straight, NEVER retried to
+green, NEVER the bar weakened, NEVER widened into a
+re-architecture (F2 / LOCKED-DESIGN-NOT-LICENSE).
+
+The intake->loop seam is now an IN-SCOPE prerequisite for the
+milestone leg ONLY (AC.GR.6, plan §3b — the F2 disagreement with
+the sealed phase-b-fix-plan's 'candidate follow-on' framing, named
+with evidence: the milestone leg's core promise is structurally
+unverifiable without agreed==executed; it is a read-path
+connection, NOT a decompose/dispatch/judge redesign). AC.GR.1/.2/.4
+do not depend on it; AC.GR.3 + AC.GR.5's milestone-class intents
+do.
+
+Single-component fence: framework/workspace-bootstrap/. NOT merged
+to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+branch is the deliverable; origin/main unchanged. NO Anthropic API
+key — real claude binary, default Sonnet.

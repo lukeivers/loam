@@ -1,0 +1,140 @@
+schema_version: 3
+amendment:
+  slug: loop-behavioral-refine-cycle
+  title: "Loop behavioral feedback-and-refine cycle — the hands-off loop's terminal \"done\" stops requiring only structural presence (a compile.sh + a source file exist) or a trivial `true` and starts requiring a BEHAVIORAL self-check (a self-constructed functional check the loop derives from the task's plain-language intent and actually runs against the produced artefact); a failed behavioral check RE-DRIVES a BOUNDED number of refine attempts carrying the behavioral failure context back to a sub-agent, under the EXISTING cost/wall ceiling (no unbounded turn-burn), VERIFICATION-GATED each iteration (anti-erosion, SlopCodeBench-class — folded as a binding constraint not a footnote); on bound exhaustion the loop emits a definite evidence-backed honest-negative (a first-class plan-success outcome, never retried-to-green, the bound never weakened). The behavioral self-check is the loop's OWN self-constructed check, structurally PROVABLY-NOT the graded benchmark scorer / the independent held-out judge / the intake faithfulness judge (the AC.RPB.1-class freeze-isolation spine preserved by construction — coupling the self-check to the graded scorer destroys the Tier-0 honesty control AND the loop's autonomy). Composes the already-present Claude-native primitives ONLY (the /goal turn-iteration in goal_drive.py + the orchestrator's _dispatch_subagent re-dispatch + the existing verify spine) — does NOT import or re-implement an external agent framework (Lens 1); the bounded re-drive is a contained control-flow evolution of run_handsoff_loop (the single for+single verify becomes a bounded re-drive around verify), NOT a loop re-architecture and NOT a new orchestrator phase; AC.FOUND.0 (the core decompose->dispatch->judge mechanism) is consumed, NOT re-proved. The concrete realpb bug (arms.py:200 sets the in-loop check_command to literally \"true\", so the loop's keep-going condition is satisfied by a no-op) is fixed GENERICALLY by routing the in-loop check through the generic behavioral self-check construct (BRC.6), NOT a realpb-specific hack and NOT another no-op. ORTHOGONAL to the sealed loop-goal-refinement (ef59d1f): that sealed work bounded the INTAKE leg (derive_acceptance_from_intent — the acceptance DERIVATION pre-dispatch) and DELIBERATELY held orchestrator.py decompose->dispatch->verify out of scope (D-GR-1 in-intake, AC.FOUND.0 untouched); THIS cycle closes the still-open POST-DISPATCH-verify gap both that plan and handsoff-loop-real-build left open — it composes ALONGSIDE the sealed intake construct and MUST NOT modify it (a §8.4 halt). Six ACs scope-descriptive (AC.BRC.1 behavioral-done-not-structural / .2 bounded-re-drive-with-failure-context / .3 verification-gated-iteration-anti-erosion / .4 self-check-provably-not-the-scorer / .5 lead end-test definite per-dimension verdict honest-negative-valid / .6 generic \"true\"-replacement); one test file per AC; method-in-AC test passed per-AC (each satisfiable by >1 implementation; the refine/synthesis MECHANISM is deliberately the builder's call per ODD §1.1 + Lens 4 — outcome-shape confident/source-grounded, single-right-mechanism not). Gap-fix scope ONLY — the score-payoff SIZE is explicitly the SEPARATE post-aggregate fast-follow the detached 5-task verdict.json failure-class map sizes; NO AC asserts or depends on a payoff magnitude (F4 — scope tracks confidence; existence is architecturally certain + aggregate-independent, size is the post-verdict signal). Single-component fence: framework/workspace-bootstrap/ (sidecar framework/workspace-bootstrap/tests/SEAL_COMMIT, seal_test framework/workspace-bootstrap/tests/test_no_sealed_amendments.py — VERIFIED present this turn; LIVE allowed_prefixes admit framework/tools/ + framework/hands-off-lifecycle/ + framework/hands-off-lifecycle/seals/ + docs/plans/, allowed_files admit docs/STATE.md — all VERIFIED this turn at the named test-file line refs). Anchor rationale: the objective is a contained control-flow evolution of the handsoff-loop orchestration package (lands under the workspace-bootstrap-admitted framework/tools/ prefix) + its AC tests (framework/hands-off-lifecycle/ prefix); mirrors the handsoff-loop-real-build / loop-goal-refinement / programbench-revival-real-pb precedents that sealed cleanly against this exact workspace-bootstrap anchor on this branch tip. extra_allowed_prefixes EMPTY — no sealed-source edit outside the workspace-bootstrap anchor; the sealed loop-goal-refinement intake construct is NOT touched (§8.4 halt). NO Anthropic API key — sub-agents are real claude binary, default Sonnet, every spawn routed through the sealed isolation surface (feedback_no_anthropic_api_key). LOCAL SEAL ONLY — NOT merged to main, NOT pushed, NOT published, NOT tagged; origin/main stays exactly at its current commit (the public step is a separate owner-asked action, NOT part of this cycle). The build itself is FUTURE OWNER-GATED — this manifest + plan are plan-only. No version bump (version derives at release-time). NEW commits only, no --amend."
+
+# BASELINE backfilled at build-cycle source-edit commit time per the
+# handsoff-loop-real-build / loop-goal-refinement / programbench-revival-
+# real-pb precedent. Placeholder pinned to the pre-build branch tip
+# (48418ff — HEAD at plan-authoring on branch amend/loam-init-persona-
+# wiring, Tier-0 `git rev-parse HEAD` this turn) so a pre-apply
+# `loam amend validate` has a parseable anchor; the build cycle REPLACES
+# this with the actual source-edit BASELINE commit (the commit
+# immediately preceding the manifest apply).
+baseline: "48418ff"
+
+plan: docs/plans/loop-behavioral-refine-cycle.md
+plan_doc_ref: docs/plans/loop-behavioral-refine-cycle.md
+
+ac_count: 6
+
+smoke_outcome: "Sealed-local-on-branch: loop terminal done behaviorally-gated (not structural/no-op); failed check re-drives bounded verification-gated refine; self-check provably-not scorer; BRC.5 honest-neg valid."
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/.
+# The bounded re-drive + the behavioral-self-check construct land in the
+# handsoff-loop orchestration package framework/tools/handsoff-loop/
+# (inside the workspace-bootstrap seal-test's allowed framework/tools/
+# prefix, VERIFIED :302 this turn); the generic replacement of the
+# realpb in-loop `true` check_command is a consumed-by-the-harness change
+# in framework/tools/programbench-revival/ (same allowed framework/tools/
+# prefix); the one-test-file-per-AC AC.BRC.* family lands at
+# framework/hands-off-lifecycle/tests/ (inside the allowed
+# framework/hands-off-lifecycle/ prefix, VERIFIED :272 this turn); the
+# seal narrative at framework/hands-off-lifecycle/seals/ (allowed
+# framework/hands-off-lifecycle/seals/ prefix, VERIFIED :332). The
+# plan-doc + manifest + STATE/roadmap backfill land under the docs/plans/
+# universal prefix (VERIFIED :342) + the docs/STATE.md /
+# docs/release-roadmap.md universal files (docs/STATE.md VERIFIED :369).
+# All VERIFIED in
+# framework/workspace-bootstrap/tests/test_no_sealed_amendments.py this
+# turn. extra_allowed_prefixes EMPTY. The sealed loop-goal-refinement
+# intake construct (intake.py derive_acceptance_from_intent) is NOT
+# touched — composing alongside it, not modifying it (§3.3 / §8.4).
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc/manifest +
+# STATE/roadmap backfill land under these universal prefixes/files, NOT
+# as a fence widening.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.loop-behavioral-refine-cycle
+  body: |
+    # Loop behavioral feedback-and-refine cycle — the hands-off loop's
+    # terminal "done" requires behavioral evidence, and a failed
+    # behavioral check re-drives bounded verification-gated refinement
+
+    The hands-off loop's terminal "done" was, from source
+    (orchestrator.py:203-244), a SINGLE dispatch + a SINGLE structural-
+    presence verify (compile.sh + >=1 source file exist) that ran once
+    with no re-dispatch on failure and no feedback — and the realpb
+    in-loop check_command was literally "true" (arms.py:200). The loop's
+    entire definition of "done" was structural presence, architecturally
+    incapable of moving a behavioral score. This amendment makes the
+    terminal "done" require a BEHAVIORAL self-check (a self-constructed
+    functional check derived from the task's plain-language intent, run
+    against the produced artefact) and, on a failed behavioral check,
+    RE-DRIVES a BOUNDED number of refine attempts carrying the failure
+    context back to a sub-agent, under the EXISTING cost/wall ceiling,
+    VERIFICATION-GATED each iteration (anti-erosion, SlopCodeBench-class
+    — a binding constraint, not a footnote). On bound exhaustion the
+    loop emits a definite evidence-backed honest-negative — a first-class
+    plan-success outcome, reported straight, never retried-to-green, the
+    bound never weakened.
+
+    Surface changed:
+      - framework/tools/handsoff-loop/ — the orchestrator gains a
+        bounded re-drive around the existing verify (the single
+        for+single verify becomes a bounded re-drive); a behavioral-
+        self-check construct (the loop's OWN self-constructed functional
+        check, structurally provably-NOT the graded scorer / the
+        independent judge / the intake judge — the AC.RPB.1-class freeze-
+        isolation spine preserved by construction).
+      - framework/tools/programbench-revival/ — the realpb in-loop
+        check_command "true" replaced GENERICALLY by the behavioral
+        self-check construct (BRC.6), not a realpb-specific hack.
+      - framework/hands-off-lifecycle/tests/test_AC_BRC_*.py — one file
+        per AC; the BRC.5 real-claude end-test collects-but-skips behind
+        an env gate in the deterministic seal sweep (the AC.B.5 / GR.5 /
+        AC.RPB.7 precedent) with a captured per-dimension verdict table.
+
+    Composes the already-present Claude-native primitives ONLY (the
+    /goal turn-iteration + the orchestrator re-dispatch + the existing
+    verify spine) — no external agent framework imported or
+    re-implemented (Lens 1). AC.FOUND.0 (the core decompose->dispatch->
+    judge mechanism) consumed, NOT re-proved.
+
+    ORTHOGONAL to the sealed loop-goal-refinement (ef59d1f): that work
+    bounded the INTAKE leg (acceptance DERIVATION pre-dispatch) and
+    deliberately held the orchestrator post-dispatch verify out of scope;
+    this cycle closes the still-open post-dispatch-verify gap both that
+    plan and handsoff-loop-real-build left open. It composes ALONGSIDE
+    the sealed intake construct and does NOT modify it.
+
+    Gap-fix scope ONLY — the score-payoff SIZE is the SEPARATE post-
+    aggregate fast-follow the detached 5-task verdict.json failure-class
+    map sizes; no AC asserts or depends on a payoff magnitude (the gap
+    existence is architecturally certain + aggregate-independent; the
+    size is the post-verdict signal — scope tracks confidence, F4).
+
+    Single-component fence: framework/workspace-bootstrap/. NOT merged
+    to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+    branch is the deliverable; origin/main unchanged. NO Anthropic API
+    key — real claude binary, default Sonnet, every spawn routed through
+    the sealed isolation surface. The build was a separate owner-gated
+    step; this plan+manifest were plan-only.

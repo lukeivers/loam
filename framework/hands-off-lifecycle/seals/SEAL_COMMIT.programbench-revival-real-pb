@@ -1,0 +1,78 @@
+# ProgramBench-revival (REAL public ProgramBench) — does the real sealed loop materially beat a bare LLM on the REAL benchmark, judged independently?
+
+This is the REAL public ProgramBench instance of the v2
+prime-objective measurement. The predecessor `programbench-revival-v2`
+(sealed LOCAL) ran on a 6-task hand-curated SUBSTITUTE because it
+concluded the real public ProgramBench was host-blocked. A LIVE
+2026-05-16 Tier-0 recheck REFUTES that conclusion on this host:
+Docker is up (Server 27.5.1), ≥7 real public ProgramBench task
+images are present and amd64-emulation-RUNNABLE on this arm64 host
+(a real PB image ran `uname -m` → x86_64, exit 0), the real
+HuggingFace ProgramBench-Tests dataset is cached, the upstream
+programbench-eval clone is fully populated (HEAD 4e8456b, real
+eval.py — NOT an empty skeleton), and real prior *.eval.json
+verdicts were already produced under emulation. The v2 substitute
+result is a valid honest-scope record FOR ITS TIME but its
+host-block premise is superseded; the v2 substitute number MUST
+NOT be cited as a real-PB result.
+
+What this cycle REUSES from v2 (the surviving invariant spine, NOT
+re-litigated): zero-interaction parity (identical single prompt,
+closed no-answer channel, no simulated/scripted/stand-in user any
+arm — owner constraint Telegram 11443 / D-RPB-6); the INDEPENDENT
+held-out adversarial tool-grounded judge as the SOLE scoring
+authority, provably NOT the loop's own intake.py AC.B.4b judge
+(the I5/I6 evidence makes an independent authority mandatory);
+the positive real-outcome floor (a nominal-but-hollow result is a
+non-pass by construction); the four-class per-non-pass failure
+taxonomy (the verdict is a failure-signature map, not only a pass
+count); the FROZEN-RATIFIED materially-beats margin shape (owner
+Telegram 11447); honest-negative as a FIRST-CLASS plan-success
+outcome reported straight, never retried to green.
+
+What this cycle FIXES (the two named v2 defects):
+1. The TASK-SOURCE MISDIAGNOSIS — the task set IS the REAL public
+   ProgramBench (a digest-pinned subset of the real task images +
+   the real HF blobs, scored by the REAL upstream `programbench
+   eval`), NOT a hand-curated substitute. The v2 host-block
+   conclusion was an inherited 8-day-old precedent treated as
+   current reality; this cycle is built on a live recheck and
+   binds the builder to re-verify at use-time (NOT inherit §3),
+   halting with its OWN live evidence only if the real benchmark
+   is genuinely unrunnable — never a silent substitute fallback.
+2. The BINARY-VERDICT-RULE DEGENERACY (the v2 task-#44 / PB3
+   defect) — the real upstream eval signal is GRADED (score =
+   n_resolved / len(test_results), compile_failed ⇒ 0), so the
+   verdict rule is re-authored over a FROZEN per-task
+   positive-real-outcome floor threshold PLUS a FROZEN small-k
+   floor k_min ≥ 2 on the baseline-miss denominator that FORCES
+   verdict (c) indeterminate (with a machine-stated reason)
+   whenever the baseline-miss count is < k_min — a degenerate or
+   near-degenerate denominator can NEVER read as a determinate
+   loss or win.
+
+The existing pos3 programbench-derivative harness measured the
+CODE-GEN surface (single claude -p code-gen agents scored by the
+upstream test suite — ZERO handsoff-loop / independent-judge
+references), NOT the sealed loop; its real-PB PLUMBING
+(instance-id mapping, `programbench eval` invocation form, HF blob
+sync, the proven amd64-emulation runnability) is REUSED read-only
+(re-deriving it is non-objective duplication), while the
+loop-vs-bare-LLM arm drivers + the independent-judge scoring spine
+are REBUILT from the v2 surviving assets. The prior runs are a
+real-PB-plumbing existence proof + a code-gen-surface cost
+signal, NOT loop-vs-bare-LLM verdict evidence; the report must
+not conflate them.
+
+The deliverable is a DEFINITE, independently-judged,
+evidence-backed three-valued verdict over the REAL public
+benchmark at `docs/experiments/programbench-revival-real-pb.md`.
+"Loam does not materially beat the baseline on the real
+benchmark" is a first-class plan-success outcome — reported
+straight, NEVER retried to green, the FROZEN margin NEVER moved.
+Composes the sealed independent-judge + freeze-isolation spine +
+the existing real-PB plumbing read-only (Lens 1); does NOT
+re-prove the core loop (AC.FOUND.0 carried forward); does NOT
+re-derive real-PB plumbing. LOCAL SEAL ONLY — not merged, not
+pushed, not published, not tagged; the public step is a separate
+owner-asked action.

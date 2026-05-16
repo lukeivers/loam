@@ -1,0 +1,117 @@
+schema_version: 3
+amendment:
+  slug: handsoff-loop-real-build
+  title: "Real orchestrated hands-off loop — package loam's own build methodology (plan → decompose into scoped sub-tasks → dispatch real claude -p sub-agents → independent tool-executing judge against a frozen sub-agent-unseen acceptance → honest done/dead verdict) as a primary-persona-invocable capability, then run two honest phase end-tests. BUILDS ON the Tier-0 verified probe (decompose→dispatch→judge LIVES at unit scale) and DOES NOT re-prove it — re-running the core loop is a named scope violation (AC.FOUND.0). PHASE A (AC.A.1/.2/.3/.4): a packaged skill-shaped mechanism orchestrates the loop on a real non-toy task of probe-class-or-harder to a machine-checkable acceptance authored+hash-pinned+frozen BEFORE any sub-agent runs and seen by no sub-agent/judge, with an independent tool-executing verdict PLUS an anti-overfit held-out-input check carried THROUGH the packaging; the Phase-A end-test produces a definite per-dimension verdict table — (i) reached frozen done without human loop-driving, (ii) no silent regression across composed sub-tasks, (iii) honest-negative still fires when a sub-task can't be done, (iv) cost/wall-clock within the $2-8/<=20min band measured via --output-format json. PHASE B (AC.B.1/.2/.3/.4/.5): a genuinely under-specified plain-language intent (the under-specification documented) is turned by the intake leg into a machine-checkable AND faithful acceptance via bounded elicit-the-minimum + exactly one plain-English approval gate (no jargon/AC-IDs/spec-syntax surfaced), with an independent faithfulness check guarding checkable-but-wrong; the Phase-B end-test produces a definite per-dimension verdict table (i)-(iv). A definite NEGATIVE on AC.A.4 or AC.B.5 (packaged mechanism materially worse than hand-run / fuzzy intent cannot be made faithfully checkable reliably enough) SATISFIES the AC exactly as a positive does — it is a plan-success outcome reported straight, NEVER retried-to-green, NEVER softened (F2 / LOCKED-DESIGN-NOT-LICENSE; contract §10 flags Phase B as the risk most likely to retire negative — expected-possible, the plan working). TIER C (AC.C.1): end-to-end hands-off, GATED on BOTH phases positive — if either retired negative AC.C.1 is NOT attempted (gated, not failed). Lens-1: composes the verified-real /goal built-in (binary 2.1.143, present since v2.1.139) for the drive/stop leg under claude -p ONLY — loam's tool-executing independent check decides via its surfaced exit code; /goal's Haiku transcript-only evaluator keys off that surfaced verdict, never sub-agent prose; the build does NOT re-implement turn-after-turn drive and does NOT let /goal be the artefact judge. Single-component fence: framework/workspace-bootstrap/ (sidecar framework/workspace-bootstrap/tests/SEAL_COMMIT, seal_test framework/workspace-bootstrap/tests/test_no_sealed_amendments.py — VERIFIED present this turn; LIVE allowed_prefixes admit plugins/loam-skills/ + framework/hands-off-lifecycle/ + framework/hands-off-lifecycle/seals/ + framework/tools/ + docs/plans/ and allowed_files admit docs/STATE.md, all VERIFIED this turn). Anchor rationale: the loam-skills plugin's OWN seal-test is stale (predates the repo-wide docs/rebuild/->docs/ migration; would false-fail on docs/plans/); the objective requires the orchestrator be skill-shaped+persona-invocable (satisfied by the bundle under the workspace-bootstrap-admitted plugins/loam-skills/ prefix), NOT that loam-skills be the seal anchor — mirrors the subloam-driver-fix precedent that sealed cleanly against workspace-bootstrap on this exact branch tip. extra_allowed_prefixes EMPTY — no sealed-source edit outside the workspace-bootstrap anchor. NO Anthropic API key — sub-agents are real claude binary, default Sonnet (feedback_no_anthropic_api_key). LOCAL SEAL ONLY — NOT merged to main, NOT pushed, NOT published, NOT tagged; origin/main stays exactly at its current commit (the public step is a separate owner-asked action, NOT part of this cycle). No version bump (version derives at release-time). AC family scope-descriptive (AC.FOUND.0 + AC.A.* + AC.B.* + AC.C.1 + AC.HL.S); slug NOT version-packed; one test file per AC per the one-file-per-AC convention; method-in-AC test passed per-AC (each satisfiable by more than one implementation)."
+
+# BASELINE backfilled at build-cycle source-edit commit time per
+# v0.10.x precedent (same pattern as subloam-driver-fix). Placeholder
+# pinned to the pre-build branch tip (1f00d18 — HEAD at dispatch on
+# branch amend/loam-init-persona-wiring) so a pre-apply
+# `loam amend validate` has a parseable anchor; the build cycle
+# REPLACES this with the actual source-edit BASELINE commit (the commit
+# immediately preceding the manifest apply).
+baseline: "1f00d18"
+
+plan: docs/plans/handsoff-loop-real-build.md
+plan_doc_ref: docs/plans/handsoff-loop-real-build.md
+
+ac_count: 11
+
+smoke_outcome: "Packaged loop sealed; two honest phase end-tests each yield a definite per-dimension verdict (either polarity GREEN, negatives straight not retried); Tier C iff both positive else gated"
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/.
+# The packaged orchestration package lands at framework/tools/handsoff-loop/
+# (inside the workspace-bootstrap seal-test's allowed framework/tools/
+# prefix), the persona-invocable skill bundle at
+# plugins/loam-skills/skills/handsoff-loop/ (inside the allowed
+# plugins/loam-skills/ prefix), the deterministic + phase-end-test AC
+# files at framework/hands-off-lifecycle/tests/ (inside the allowed
+# framework/hands-off-lifecycle/ prefix), the seal narrative at
+# framework/hands-off-lifecycle/seals/ (inside the allowed
+# framework/hands-off-lifecycle/seals/ prefix). The plan-doc + manifest +
+# STATE/roadmap backfill land under the docs/plans/ universal prefix +
+# docs/STATE.md / docs/plans/v0-1-x-roadmap.md universal files. All
+# VERIFIED in framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+# this turn. extra_allowed_prefixes EMPTY.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc/manifest +
+# STATE/roadmap backfill land under these universal prefixes/files, NOT
+# as a fence widening.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.handsoff-loop-real-build
+  body: |
+    # Real orchestrated hands-off loop — packaged + two honest phase end-tests
+
+    The decompose → scoped-dispatch → independent-judge → frozen-verify
+    loop was proven LIVES at unit scale by the Tier-0 probe. This
+    amendment does NOT re-prove that (AC.FOUND.0) — it packages the
+    proven mechanism as a primary-persona-invocable capability and runs
+    the two honest end-tests for the two unknowns the probe left open:
+    (A) does a packaged, reusable mechanism orchestrate as cleanly as a
+    person hand-driving did; (B) can a non-technical user's fuzzy
+    plain-language intent be turned into a faithful machine-checkable
+    "done" without the user writing a spec.
+
+    Surface added:
+      - framework/tools/handsoff-loop/ — the executable orchestration
+        package: orchestrator (decompose→dispatch real claude -p
+        sub-agents→independent tool-executing judge, composing the
+        probe-proven mechanism, NOT re-proving it), intake leg
+        (fuzzy intent → bounded elicit-the-minimum → plain-language
+        acceptance + one approval → machine-checkable + faithfulness
+        check), frozen-unseen independent + anti-overfit verifier, and
+        the /goal-under-`-p` drive/stop wiring (loam's tool-executing
+        check decides; /goal drives).
+      - plugins/loam-skills/skills/handsoff-loop/SKILL.md — the
+        persona-invocable packaging (auto-surfaces, one capability,
+        delegates to the tools package).
+      - framework/hands-off-lifecycle/tests/test_AC_HL_*.py — one file
+        per AC; deterministic structural ACs in the seal sweep; the two
+        phase end-tests real-claude-driven with captured verdict tables.
+
+    Phase A and Phase B each produced a definite, evidence-backed
+    per-dimension verdict table. A definite NEGATIVE on either phase is
+    a valid plan-success outcome — reported straight, never retried to
+    green, never softened. Tier C attempted iff both phases positive,
+    else gated (not failed). Cost measured via --output-format json
+    against the $2-8 / <=20 min band.
+
+    Composes the verified-real /goal built-in (binary 2.1.143) for the
+    drive/stop leg ONLY; loam's independent tool-executing check decides
+    via its surfaced exit code — /goal's Haiku transcript-only evaluator
+    keys off that surfaced verdict, never sub-agent prose. No
+    re-implementation of turn-after-turn drive; /goal is never the
+    artefact judge (Lens-1).
+
+    Single-component fence: framework/workspace-bootstrap/. NOT merged
+    to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+    branch is the deliverable; origin/main unchanged. NO Anthropic API
+    key — real claude binary, default Sonnet.

@@ -1,0 +1,75 @@
+---
+description: When the user states a goal in plain language and wants real, verified work back without hand-driving the build — "build me X and check it actually works", "I want Y, just go", "make this and don't come back until it's done and tested" — invoke the packaged hands-off loop. It runs loam's own build methodology for the user as one capability: turn the fuzzy ask into a checkable "done" with a single plain-language approval, decompose into scoped sub-tasks, dispatch real sub-agents with /goal driving the keep-going leg, and judge the result with an independent check the sub-agents never saw. Use when the work is a real non-toy build with a verifiable outcome and the user wants to walk away. Do NOT use for trivial one-liners, for tasks with no machine-checkable outcome, or to re-prove the core loop (already Tier-0 verified).
+---
+
+# handsoff-loop
+
+The real orchestrated hands-off loop, packaged as a single
+primary-persona-invocable capability. This is loam's own build
+methodology run *for the user*.
+
+## What this is
+
+One capability the persona invokes — `handsoff-loop` (the CLI at
+`framework/tools/handsoff-loop/`). The user states intent in plain
+language, approves a plain-English "done" once, walks away, and comes
+back to real verified work.
+
+The pipeline:
+
+1. **Intake** (`intake.py`) — fuzzy plain-language intent → bounded
+   *elicit-the-minimum* (at most a few plain questions, never a spec
+   interview) → a plain-English "done when:" statement → **exactly one
+   plain-language approval gate** → a machine-checkable form, with an
+   independent faithfulness check guarding the checkable-but-wrong
+   failure.
+2. **Freeze** (`verify.py`) — the machine-checkable acceptance is
+   authored, hash-pinned, and frozen *before any sub-agent runs*; it is
+   seen by no sub-agent and no per-sub-task judge.
+3. **Decompose + dispatch** (`orchestrator.py`) — the objective is
+   decomposed into scoped sub-tasks (the **probe-proven** pattern; the
+   user never sees decomposition — D-UNIT). Each sub-task is a real
+   `claude -p` sub-agent with **`/goal` driving the keep-going leg** (no
+   human drives the loop).
+4. **Judge** (`verify.py`) — loam's **independent tool-executing
+   check** plus an **anti-overfit held-out check** decides "done". The
+   sub-agents' self-reports are never trusted; `/goal`'s Haiku
+   transcript-only evaluator only keys off the surfaced exit-code line
+   the in-turn check prints — `/goal` drives, loam decides.
+5. **Honest verdict** — a definite done, or a definite **dead-end**.
+   Both are valid: a definite negative is reported straight, **never
+   retried to green, never softened**.
+
+## How the persona invokes it
+
+```
+handsoff-loop describe          # the capability contract (JSON)
+handsoff-loop run \
+    --objective "<the user's plain-language objective>" \
+    --frozen <frozen-acceptance+subtasks.json> \
+    --work-dir <dir> --artifact-dir <dir>
+```
+
+Intake is `handsoff_loop.intake.derive_acceptance_from_intent(...)`
+(produces the single approved unit + the independent faithfulness
+verdict).
+
+## Hard rules (load-bearing — do not relax)
+
+- **AC.FOUND.0** — the decompose→dispatch→judge core is *already
+  Tier-0 verified*. This skill **composes** it; it never re-proves it.
+  Re-running the core loop to "make sure" is a named scope violation.
+- **Frozen-unseen done** — the acceptance is frozen + hash-pinned
+  before any sub-agent and seen by none. A leak into a brief/judge is a
+  refusal, not a warning.
+- **Independent judge decides** — sub-agent self-reports are never the
+  "done" signal; the tool-executing check's exit code is.
+- **Honest negative is success** — "the packaged mechanism is
+  materially worse than hand-run" or "fuzzy intent can't be made
+  faithfully checkable reliably enough" are **complete, correct
+  results**, reported plainly. There is no retry-to-green path.
+- **NO Anthropic API key** — every model call is the real `claude`
+  binary, default Sonnet. `--bare` is never used.
+- **Local only** — this capability builds and verifies; it never
+  pushes, publishes, or tags. The public step is a separate
+  owner-asked action.

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "handsoff-loop"
+version = "0.0.0"
+description = "The real orchestrated hands-off loop, packaged as a primary-persona-invocable capability: loam's own build methodology (plan -> decompose into scoped sub-tasks -> dispatch real claude -p sub-agents with /goal driving the keep-going leg -> independent tool-executing judge against a frozen sub-agent-unseen acceptance + anti-overfit held-out check -> honest done/dead verdict). BUILDS ON the Tier-0 verified probe (decompose->dispatch->judge LIVES at unit scale) and does NOT re-prove it (AC.FOUND.0). Composes the verified-real /goal built-in (binary 2.1.143) for drive/stop ONLY; loam's independent check decides. A definite negative phase verdict is a valid plan-success outcome, never retried to green. NO Anthropic API key — real claude binary, default Sonnet. Stdlib-only."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+handsoff-loop = "handsoff_loop.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

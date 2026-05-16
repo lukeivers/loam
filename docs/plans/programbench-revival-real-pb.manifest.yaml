@@ -11,7 +11,7 @@ amendment:
 # pre-apply `loam amend validate` has a parseable anchor; the build cycle
 # REPLACES this with the actual source-edit BASELINE commit (the commit
 # immediately preceding the manifest apply).
-baseline: "44eebad"
+baseline: "240d367"
 
 plan: docs/plans/programbench-revival-real-pb.md
 plan_doc_ref: docs/plans/programbench-revival-real-pb.md

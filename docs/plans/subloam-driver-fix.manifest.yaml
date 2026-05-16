@@ -8,7 +8,7 @@ amendment:
 # tip so a pre-apply `loam amend validate` has a parseable anchor;
 # the build cycle REPLACES this with the actual source-edit BASELINE
 # commit (the commit immediately preceding the manifest apply).
-baseline: "f7ccc3d"
+baseline: "356ec07"
 
 plan: docs/plans/subloam-driver-fix.md
 plan_doc_ref: docs/plans/subloam-driver-fix.md

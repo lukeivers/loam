@@ -109,6 +109,21 @@ def _cmd_run(args: argparse.Namespace) -> int:
         frozen=frozen,
         work_dir=Path(args.work_dir),
         artifact_dir=Path(args.artifact_dir),
+        # AC.BRC.1/.2/.6 — opt into the loop's OWN behavioural self-
+        # check + the bounded verification-gated re-drive.  Defaults
+        # OFF so every pre-existing caller is byte-behaviour-unchanged.
+        behavioral_done=bool(getattr(args, "behavioral_done", False)),
+        reference_artifact=getattr(args, "reference_artifact", None),
+        max_refine_attempts=int(
+            getattr(args, "max_refine_attempts", 0) or 0),
+        cost_ceiling_usd=(
+            float(args.cost_ceiling_usd)
+            if getattr(args, "cost_ceiling_usd", None) is not None
+            else None),
+        wall_ceiling_s=(
+            float(args.wall_ceiling_s)
+            if getattr(args, "wall_ceiling_s", None) is not None
+            else None),
     )
     print(json.dumps({
         "reached_done": result.reached_done,
@@ -116,6 +131,21 @@ def _cmd_run(args: argparse.Namespace) -> int:
         "cost_usd": result.cost_usd,
         "wall_clock_s": result.wall_clock_s,
         "sub_tasks": result.sub_task_results,
+        # AC.BRC.2/.3/.5 — the bounded behavioural-refine cycle's
+        # observable evidence (honest-negative is first-class:
+        # reached_done False with a definite refine_stop_reason is a
+        # plan-success outcome, never retried-to-green).  Read
+        # defensively: a pre-existing caller / test double that
+        # predates these fields stays byte-behaviour-unchanged (the
+        # AC.GR.6 seam double is intentionally narrow — AC.FOUND.0:
+        # the seam is NOT re-proved by this cycle).
+        "behavioral_gated": getattr(
+            result, "behavioral_gated", False),
+        "refine_attempts": getattr(result, "refine_attempts", 0),
+        "refine_bound": getattr(result, "refine_bound", 0),
+        "refine_stop_reason": getattr(
+            result, "refine_stop_reason", "done"),
+        "refine_log": getattr(result, "refine_log", []),
     }, indent=2))
     return 0
 
@@ -139,6 +169,40 @@ def main(argv: list[str] | None = None) -> int:
               "come from --frozen (D-UNIT)."))
     r.add_argument("--work-dir", required=True)
     r.add_argument("--artifact-dir", required=True)
+    r.add_argument(
+        "--behavioral-done", dest="behavioral_done",
+        action="store_true",
+        help=("AC.BRC.1/.6: replace the in-loop check_command "
+              "GENERICALLY with the loop's OWN behavioural self-check "
+              "derived from --objective (a structurally-present-but-"
+              "behaviourally-wrong artefact, or a `true` no-op, is "
+              "NOT reported done). The construct imports no scorer/"
+              "judge (AC.BRC.4)."))
+    r.add_argument(
+        "--reference-artifact", dest="reference_artifact",
+        default=None,
+        help=("AC.BRC.5 / D-BRC-5 (permitted, NOT mandated): a "
+              "runnable reference artefact the behavioural self-check "
+              "MAY probe/diff observable behaviour against."))
+    r.add_argument(
+        "--max-refine-attempts", dest="max_refine_attempts",
+        type=int, default=0,
+        help=("AC.BRC.2: on a NOT-done independent verify, RE-DRIVE "
+              "carrying the surfaced behavioural-failure context, "
+              "bounded by THIS finite attempt count AND the cost/wall "
+              "ceiling (whichever binds first). 0 == no re-drive "
+              "(byte-behaviour-unchanged)."))
+    r.add_argument(
+        "--cost-ceiling-usd", dest="cost_ceiling_usd",
+        type=float, default=None,
+        help=("AC.BRC.2: the existing cost ceiling — the re-drive "
+              "stops when MEASURED cost reaches it (no unbounded "
+              "turn-burn)."))
+    r.add_argument(
+        "--wall-ceiling-s", dest="wall_ceiling_s",
+        type=float, default=None,
+        help=("AC.BRC.2: the existing wall-clock ceiling — the "
+              "re-drive stops when wall time reaches it."))
     r.set_defaults(fn=_cmd_run)
 
     args = p.parse_args(argv)

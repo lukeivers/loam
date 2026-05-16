@@ -144,6 +144,11 @@ def run_loam_arm(
     work_dir: Path,
     artifact_dir: Path,
     timeout: int = 1800,
+    behavioral_done: bool = True,
+    reference_artifact: str | None = None,
+    max_refine_attempts: int = 2,
+    cost_ceiling_usd: float | None = None,
+    wall_ceiling_s: float | None = None,
 ) -> tuple[str, float, float | None]:
     """The REAL sealed v0.11.0 hands-off loop via its ACTUAL CLI.
 
@@ -197,7 +202,27 @@ def run_loam_arm(
                     "artefact exists / the real change was made), "
                     "not merely described."
                 ),
-                "check_command": "true",
+                # AC.BRC.6 — the in-loop check_command is NO LONGER
+                # the hand-authored `"true"` literal (the concrete
+                # defect: a no-op satisfied the keep-going condition).
+                # It is replaced GENERICALLY: `--behavioral-done`
+                # (below) routes the in-loop check through the loop's
+                # OWN behavioural self-check construct
+                # (handsoff_loop.behavioral_selfcheck), derived from
+                # the plain-language objective and run against the
+                # produced artefact.  This placeholder is a
+                # SELF-DESCRIBING marker (NOT another no-op — the
+                # construct's reject_no_op would refuse a `"true"`/`:`
+                # here); the orchestrator's _behavioralize() overrides
+                # it with the generic behavioural command.  The fix is
+                # the generic construct, NOT a realpb-specific hack.
+                "check_command": (
+                    "BEHAVIORAL-SELF-CHECK-PLACEHOLDER "
+                    "(replaced generically by "
+                    "handsoff_loop.behavioral_selfcheck via "
+                    "--behavioral-done; arms.py never hand-authors a "
+                    "no-op in-loop check_command — AC.BRC.6)"
+                ),
             }
         ],
     }
@@ -211,6 +236,23 @@ def run_loam_arm(
         "--work-dir", str(work_dir),
         "--artifact-dir", str(artifact_dir),
     ]
+    # AC.BRC.1/.2/.6 — drive the loop's terminal "done" through its
+    # OWN generic behavioural self-check (replacing the removed
+    # arms.py:200 `"true"` literal generically) and re-drive a
+    # BOUNDED number of refine attempts carrying the behavioural-
+    # failure context, under the EXISTING cost/wall ceiling.  These
+    # are the generic CLI flags — the construct is the loop's, not a
+    # realpb-specific hack; the realpb arm is just one consumer.
+    if behavioral_done:
+        argv.append("--behavioral-done")
+    if reference_artifact:
+        argv += ["--reference-artifact", str(reference_artifact)]
+    if max_refine_attempts:
+        argv += ["--max-refine-attempts", str(max_refine_attempts)]
+    if cost_ceiling_usd is not None:
+        argv += ["--cost-ceiling-usd", str(cost_ceiling_usd)]
+    if wall_ceiling_s is not None:
+        argv += ["--wall-ceiling-s", str(wall_ceiling_s)]
     # The handsoff-loop CLI subprocess MUST inherit the FULL real
     # environment (so the loop's internal `claude -p` sub-agents
     # resolve the keychain-stored SUBSCRIPTION credential — there is

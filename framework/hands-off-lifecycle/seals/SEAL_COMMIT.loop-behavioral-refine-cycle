@@ -1,0 +1,63 @@
+# Loop behavioral feedback-and-refine cycle — the hands-off loop's
+# terminal "done" requires behavioral evidence, and a failed
+# behavioral check re-drives bounded verification-gated refinement
+
+The hands-off loop's terminal "done" was, from source
+(orchestrator.py:203-244), a SINGLE dispatch + a SINGLE structural-
+presence verify (compile.sh + >=1 source file exist) that ran once
+with no re-dispatch on failure and no feedback — and the realpb
+in-loop check_command was literally "true" (arms.py:200). The loop's
+entire definition of "done" was structural presence, architecturally
+incapable of moving a behavioral score. This amendment makes the
+terminal "done" require a BEHAVIORAL self-check (a self-constructed
+functional check derived from the task's plain-language intent, run
+against the produced artefact) and, on a failed behavioral check,
+RE-DRIVES a BOUNDED number of refine attempts carrying the failure
+context back to a sub-agent, under the EXISTING cost/wall ceiling,
+VERIFICATION-GATED each iteration (anti-erosion, SlopCodeBench-class
+— a binding constraint, not a footnote). On bound exhaustion the
+loop emits a definite evidence-backed honest-negative — a first-class
+plan-success outcome, reported straight, never retried-to-green, the
+bound never weakened.
+
+Surface changed:
+  - framework/tools/handsoff-loop/ — the orchestrator gains a
+    bounded re-drive around the existing verify (the single
+    for+single verify becomes a bounded re-drive); a behavioral-
+    self-check construct (the loop's OWN self-constructed functional
+    check, structurally provably-NOT the graded scorer / the
+    independent judge / the intake judge — the AC.RPB.1-class freeze-
+    isolation spine preserved by construction).
+  - framework/tools/programbench-revival/ — the realpb in-loop
+    check_command "true" replaced GENERICALLY by the behavioral
+    self-check construct (BRC.6), not a realpb-specific hack.
+  - framework/hands-off-lifecycle/tests/test_AC_BRC_*.py — one file
+    per AC; the BRC.5 real-claude end-test collects-but-skips behind
+    an env gate in the deterministic seal sweep (the AC.B.5 / GR.5 /
+    AC.RPB.7 precedent) with a captured per-dimension verdict table.
+
+Composes the already-present Claude-native primitives ONLY (the
+/goal turn-iteration + the orchestrator re-dispatch + the existing
+verify spine) — no external agent framework imported or
+re-implemented (Lens 1). AC.FOUND.0 (the core decompose->dispatch->
+judge mechanism) consumed, NOT re-proved.
+
+ORTHOGONAL to the sealed loop-goal-refinement (ef59d1f): that work
+bounded the INTAKE leg (acceptance DERIVATION pre-dispatch) and
+deliberately held the orchestrator post-dispatch verify out of scope;
+this cycle closes the still-open post-dispatch-verify gap both that
+plan and handsoff-loop-real-build left open. It composes ALONGSIDE
+the sealed intake construct and does NOT modify it.
+
+Gap-fix scope ONLY — the score-payoff SIZE is the SEPARATE post-
+aggregate fast-follow the detached 5-task verdict.json failure-class
+map sizes; no AC asserts or depends on a payoff magnitude (the gap
+existence is architecturally certain + aggregate-independent; the
+size is the post-verdict signal — scope tracks confidence, F4).
+
+Single-component fence: framework/workspace-bootstrap/. NOT merged
+to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+branch is the deliverable; origin/main unchanged. NO Anthropic API
+key — real claude binary, default Sonnet, every spawn routed through
+the sealed isolation surface. The build was a separate owner-gated
+step; this plan+manifest were plan-only.

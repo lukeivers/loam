@@ -1,0 +1,27 @@
+# subloam-driver corrective cycle — three defects fixed, one honest end-test
+
+The isolated sub-loam PTY driver had three verified defects. (1) The
+submission path wrote the multi-KB frozen prompt in one write, slept a
+fixed 0.5s, then sent the submit newline unconditionally — the real TUI
+fragments a large write into multiple bracketed-paste segments and a
+newline inside an open bracketed paste is literal text, so the turn was
+never submitted. (2) The loop-ran / multi-turn classifier counted TUI
+chrome alongside genuine markers, so a zero-model-action transcript
+floated to multi-turn — the sealed AC.LIPW.4 real-binary green measured
+nothing a TUI boot would not also satisfy. (3) No per-run cost/usage was
+captured (the interactive driver emits no machine result envelope).
+
+The fix is bounded and local: a paste-settle gate submits only after the
+bracketed-paste echo goes quiet (delivery-path agnostic, any fragment
+count); the loop signal is derived from genuine markers only with a
+built-in falsification test; cost is real-or-honestly-absent via an
+in-session /cost echo parse, never fabricated. The cycle ends at exactly
+ONE honest re-test of the real frozen build_prompt — both terminal
+outcomes (lives / dead-end) are equally valid and reported straight; the
+cycle's value is the honest measurement of either polarity. The one
+contaminated recorded result (the AC.LIPW.4 real-binary row) is
+re-verified against its own written clause with an additive in-place
+provenance note; no other recorded result is touched.
+
+AC.SLF.{1,2,3,4,5,S} green against real test output. NOT merged to main,
+NOT pushed, NOT published — sealed-local-on-branch is the deliverable.

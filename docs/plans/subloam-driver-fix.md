@@ -234,7 +234,7 @@ cycle's scope (§4.3).
 
 ---
 
-## §14 — Method decisions + SHA register (post-build backfill)
+## 14. Method decisions + SHA register (post-build backfill)
 
 ### Decision outcomes (loam-builder, 2026-05-15)
 
@@ -252,7 +252,8 @@ cycle's scope (§4.3).
 
 | Commit | Scope | SHA |
 |---|---|---|
-| Source edits + AC.SLF tests + plan-doc + manifest (BASELINE) | subloam-driver 3-defect fix + tests + docs | (backfilled at build) |
-| `loam amend apply` | manifest apply (BASELINE+sidecar) | (backfilled at apply) |
-| `loam amend seal` (SEAL_COMMIT) | deterministic seal-diff sweep | (backfilled at seal) |
-| §8/§9/§14 backfill + STATE/roadmap | verdict matrix + end-test result | (backfilled at seal) |
+| Source edits + AC.SLF tests + plan-doc + manifest (BASELINE) | subloam-driver 3-defect fix + tests + docs | `356ec07` |
+| Manifest baseline backfill | manifest BASELINE → 356ec07 | `a76f0b5` |
+| `loam amend apply` | manifest apply (BASELINE+sidecar → 356ec07) | `6b0f19a` |
+| `loam amend seal` (SEAL_COMMIT) | deterministic seal-diff sweep | `a69efbf` |
+| §9/§14 backfill | end-test result + SHA register + §14 heading | (this commit) |

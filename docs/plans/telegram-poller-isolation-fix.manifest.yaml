@@ -1,0 +1,115 @@
+schema_version: 3
+amendment:
+  slug: telegram-poller-isolation-fix
+  title: "Telegram-poller-isolation fix — wire the three §1b handsoff-loop launch sites (intake._claude_json, goal_drive.build_goal_drive_argv, orchestrator._dispatch_subagent) so each spawned `claude` carries the telegram-plugin-unreachable argv (--strict-mcp-config --mcp-config <empty>) + token/API-key-scrubbed env the PROVEN subloam-driver mechanism produces, plus the empty-MCP-config file lifecycle those sites need. Closes the verified proactive-SIGTERM-by-unisolated-spawn kill vector: an internal handsoff-loop `claude` that loads the telegram plugin spawns a competing `bun server.ts` that SIGTERMs a concurrently-running operator session's single-consumer Telegram poller. The §1b handsoff-loop family is the ONLY unisolated `claude`-spawn family in this loam copy (the §1a sites — subloam-driver / upgrade-merge-resolver / workspace-sync resolver client / odd-extractor synthesis client — already carry byte-equivalent isolation under AC.FHA.3 / owner-ruling-2026-05-05; the §1c sites are non-`claude` subprocesses). Method (import the proven functions vs byte-equivalent inline vs wrapper) is the builder's call per the binding contract §2 method-note + §7 — RESOLVED: import subloam_driver's build_isolated_claude_argv / build_isolated_env / write_empty_mcp_config (highest-fidelity reuse, zero drift from sealed source, marker-guard durability free). The §1b argv shapes are NOT reshaped to the subloam interactive shape — only the isolation flags + env scrub are injected into each site's existing `-p`/json argv (necessary-and-sufficient per contract §5; reshaping would break the §1b `-p` function and breach the fence). Acceptance: AC.TPI.1..6 (contract §3.3) — AC.TPI.1/.2 opt-in real-binary poller-survives tests (sentinel holds the single-consumer slot; a full real handsoff-loop / intake spawn runs; sentinel must still be alive `.poll() is None` afterward — the empirical survival IS the proof, never a structural assertion alone, never a self-report), AC.TPI.3/.4 fast structural argv/env sentinels, AC.TPI.5 marker-guard regression durability, AC.TPI.6 fence integrity (§1a/§1c untouched). A definite structural-can't-isolate negative on AC.TPI.1/.2 is a valid terminal outcome reported straight, NEVER retried-to-green (contract §6 Halt-1; not expected — the handsoff sub-agents drive via /goal + a shell check, not via an MCP server in the prompt). OUT (hard): any bot-token / ~/.claude/channels / access.json / .mcp.json / channel-or-onboarding config change (contract §5 verifies the contained argv/env mechanism is necessary-and-sufficient; if it were not, contract §6 Halt-2 → owner-gated); the upstream plugin-cache hardening (~/.claude/plugins/.../telegram/.../server.ts) — owner-gated, separate, not planned here; the §1a already-isolated sites + §1c non-`claude` sites — forbidden to touch (AC.TPI.6). Single-component fence: framework/workspace-bootstrap/ (sidecar framework/workspace-bootstrap/tests/SEAL_COMMIT, seal_test framework/workspace-bootstrap/tests/test_no_sealed_amendments.py — VERIFIED present this turn; LIVE allowed_prefixes admit framework/tools/ + docs/plans/ and allowed_files admit docs/STATE.md, all VERIFIED this turn). Anchor rationale: the §1b sites live under framework/tools/handsoff-loop/, inside the workspace-bootstrap seal-test's admitted framework/tools/ prefix; mirrors the subloam-driver-fix + handsoff-loop-real-build precedents that sealed cleanly against workspace-bootstrap on this exact branch tip. extra_allowed_prefixes EMPTY — no sealed-source edit outside the workspace-bootstrap anchor. NO Anthropic API key — real claude binary, default Sonnet (feedback_no_anthropic_api_key); the env scrub enforces this. LOCAL SEAL ONLY — NOT merged to main, NOT pushed, NOT published, NOT tagged; origin/main stays exactly at its current commit (the public step is a separate owner-asked action, NOT part of this cycle). No version bump (version derives at release-time). AC family scope-descriptive (AC.TPI.1..6); slug NOT version-packed; one test file per AC per the one-file-per-AC convention; method-in-AC test passed per-AC (each satisfiable by more than one implementation)."
+
+# BASELINE backfilled at build-cycle source-edit commit time per
+# v0.10.x precedent (same pattern as handsoff-loop-real-build /
+# subloam-driver-fix). Placeholder pinned to the pre-build branch tip
+# (38b8f0f — HEAD at dispatch on branch amend/loam-init-persona-wiring,
+# the handsoff-loop-real-build STATE backfill commit; that cycle is
+# sealed/done) so a pre-apply `loam amend validate` has a parseable
+# anchor; the build cycle REPLACES this with the actual source-edit
+# BASELINE commit (the commit immediately preceding the manifest apply).
+baseline: "38b8f0f"
+
+plan: docs/plans/telegram-poller-isolation-fix.md
+plan_doc_ref: docs/plans/telegram-poller-isolation-fix.md
+
+ac_count: 6
+
+smoke_outcome: "Three handsoff-loop launch sites carry the proven telegram-unreachable argv + scrubbed env; AC.TPI.1/.2 real-binary poller-survives GREEN (sentinel alive after real spawn); AC.TPI.3-6 structural GREEN"
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/.
+# The three §1b launch-site edits + the new isolation helper + the six
+# AC.TPI.* test files land at framework/tools/handsoff-loop/ (inside the
+# workspace-bootstrap seal-test's admitted framework/tools/ prefix). The
+# plan-doc + manifest + STATE/roadmap backfill land under the docs/plans/
+# universal prefix + docs/STATE.md universal file. All VERIFIED in
+# framework/workspace-bootstrap/tests/test_no_sealed_amendments.py this
+# turn. extra_allowed_prefixes EMPTY.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc/manifest +
+# STATE/roadmap backfill land under these universal prefixes/files, NOT
+# as a fence widening.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.telegram-poller-isolation-fix
+  body: |
+    # Telegram-poller-isolation fix — the three §1b handsoff-loop launch sites
+
+    The verified kill vector: an internal loam `claude` that loads the
+    telegram plugin spawns a competing `bun server.ts` that SIGTERMs a
+    concurrently-running operator session's single-consumer Telegram
+    poller for the one bot-token getUpdates slot. Removing the telegram
+    plugin from the spawned process's reachable set (empty strict-MCP
+    config) + scrubbing the bot-token/API-key env is necessary AND
+    sufficient operator-protection (proven + sealed under AC.LIPW.5/.6
+    on the subloam-driver surface).
+
+    Source-verified scope correction: the ONLY unisolated `claude`-spawn
+    family in this loam copy is the handsoff-loop (§1b). The §1a sites
+    (subloam-driver / upgrade-merge-resolver / workspace-sync resolver
+    client / odd-extractor synthesis client) already carry
+    byte-equivalent isolation under their own sealed ACs; the §1c sites
+    are non-`claude` subprocesses. This amendment closes ONLY the §1b
+    family — more contained than the root-cause report's prose implied.
+
+    Surface changed:
+      - framework/tools/handsoff-loop/src/handsoff_loop/_isolation.py —
+        a thin helper that imports the PROVEN subloam-driver functions
+        (build_isolated_claude_argv / build_isolated_env /
+        write_empty_mcp_config / IsolationConfig) and produces, for the
+        §1b sites' existing `-p`/json argv shape, the isolation-flag
+        injection (--strict-mcp-config --mcp-config <empty>) + scrubbed
+        env + empty-MCP file lifecycle. No new isolation machinery.
+      - intake.py:_claude_json, goal_drive.build_goal_drive_argv,
+        orchestrator._dispatch_subagent — each spawned `claude` now
+        carries the empty-strict-MCP isolation + scrubbed env. The
+        existing argv shape (positional `-p` prompt, --output-format
+        json, --permission-mode bypassPermissions) is preserved; only
+        the isolation flags + env scrub are added — not a reshape.
+      - framework/tools/handsoff-loop/tests/test_AC_TPI_*.py — one file
+        per AC. AC.TPI.1/.2 opt-in real-binary poller-survives
+        (sentinel alive after a real spawn — empirical survival is the
+        proof); AC.TPI.3/.4 fast structural argv/env sentinels in the
+        seal sweep; AC.TPI.5 marker-guard regression durability;
+        AC.TPI.6 fence integrity (§1a/§1c untouched).
+
+    A definite structural-can't-isolate negative on AC.TPI.1/.2 is a
+    valid plan-success outcome — reported straight, never retried to
+    green, never softened (F2 / LOCKED-DESIGN-NOT-LICENSE). Not expected
+    (the handsoff sub-agents drive via /goal + a shell check, not via an
+    MCP server in the prompt).
+
+    Single-component fence: framework/workspace-bootstrap/. NOT merged
+    to main, NOT pushed, NOT published, NOT tagged — sealed-local-on-
+    branch is the deliverable; origin/main unchanged. NO Anthropic API
+    key — real claude binary, default Sonnet; the env scrub enforces it.

@@ -1,0 +1,78 @@
+# loam amend new-plan scaffold for telegram-poller-isolation-fix
+# Edit this file, then render with:
+#   loam amend template render plan/dev-discipline --vars-file <this-file> --out docs/plans/telegram-poller-isolation-fix.md --force
+
+# --- Required vars (16) ---
+
+TITLE: "Telegram-poller-isolation fix — wire the three handsoff-loop launch sites"
+TLDR: |
+  (empty — plan author fills §1 body)
+AC_PREFIX: "TPI"
+SPEC_PLACEMENT: |
+  (empty — §2 body; cite CLAUDE.md §2.5 framing)
+LENS_ANALYSIS: |
+  ### Lens 1 — Claude leverage
+
+  (plan-author fills)
+
+  ### Lens 2 — Harness + primary-persona value
+
+  (plan-author fills; trace each AC to AC.PO.1 + AC.PO.2)
+
+  ### Lens 3 — ODD authoring
+
+  (plan-author fills)
+ACCEPTANCE_CRITERIA: |
+  (empty — §4 body; one AC per behaviour, outcome-shaped, no method-in-AC)
+BEHAVIOUR_COUNT: |
+  | # | Declared behaviour | AC |
+  |---|--------------------|-----|
+  | 1 | (declared behaviour) | (ac-id) |
+HARD_CONSTRAINTS: |
+  1. **No `--amend`.** Corrective new commits only.
+  2. **Scope fence.** (plan-author edits — name the path(s) the work is fenced to).
+  3. **Plan-before-code.** This plan exists; builder writes a builder-plan before code.
+  4. **No new third-party dependency.** Stdlib + existing deps only.
+  5. **Backward-compat preserved unconditionally.**
+  6. **CDC adherence.** (plan-author extends per the work's specifics).
+OUT_OF_SCOPE: |
+  - (plan-author lists explicit out-of-scope items per ODD §2.5)
+IMPLEMENTATION_ORDER: |
+  1. Read session-start corpus per CLAUDE.md.
+  2. Read this plan + research doc + companions.
+  3. Write builder-plan to `docs/plans/telegram-poller-isolation-fix.builder-plan.md`.
+  4. Land code per plan + builder-plan.
+  5. Run tests (narrow scope first; full suite before commit).
+  6. Conventional commits land the change. No `--amend`.
+SECTION_9_HEADING: "Impact / motivation"
+SECTION_9_BODY: |
+  (plan-author fills; for sealed-component plans, replace the heading with
+  "Bookkeeping surface" and include a `loam amend` manifest YAML stub)
+HALT_TRIGGERS: |
+  1. Cross-component scope expansion beyond the scope fence. Halt.
+  2. Backward-compat cannot be preserved. Halt.
+  3. ODD-violating shape becomes strongly required. Halt; owner rules.
+  4. A new third-party dependency becomes required. Halt.
+  5. Wall-time exceeds 90 minutes. Halt with current state.
+  6. ODD violation observed in surrounding code/docs (per `feedback_subagent_odd_violation_halt`). Halt; do NOT extend a violating surface.
+DECISIONS_DETAIL: |
+  (no genuinely uncertain decisions — confirm or replace with D-1, D-2, … entries)
+DECISIONS_SUMMARY: |
+  | Decision | Recommendation | Why it matters |
+  |---|---|---|
+  | (placeholder) | | |
+HALT_FINDINGS: |
+  Per `feedback_subagent_odd_violation_halt`: halt and surface any
+  ODD violation observed in surrounding code/docs.
+
+  **(none observed during plan authoring.)**
+
+# --- Optional vars (6) — uncomment + override the template's defaults ---
+
+# COMPANIONS: ""
+# ANCESTOR_RECORD: ""
+# REFERENCES: |
+#   (override the standard refs stub if needed)
+STATUS_LINE: "plan (pre-dispatch). 2026-05-15."
+RESEARCH_PATH: "docs/plans/research/telegram-poller-isolation-fix-research.md"
+# WORKING_DIRECTORY: "/Users/lukeivers/loam/"

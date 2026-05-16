@@ -236,11 +236,42 @@ Method is the builder's; this records shape for the §14 register, not prescript
 
 | Stage | SHA |
 |---|---|
-| Plan + manifest | (pending) |
-| Source-edit (BASELINE) | (pending) |
-| Manifest apply (auto-commit) | (pending) |
-| Seal commit | (pending) |
-| §14 backfill | (pending) |
+| Plan + manifest | `08a7b94` (manifest landed in the apply auto-commit; plan-doc landed in the source-edit commit) |
+| Source-edit (BASELINE) | `fd0eda4` (the harness + 7 AC.PBR tests + report + STATE/roadmap backfill; the manifest's effective post-build BASELINE) |
+| Manifest apply (auto-commit) | `08a7b94` (workspace-bootstrap BASELINE + SEAL_COMMIT sidecar → ba8471e) |
+| Seal commit | `e273966` (deterministic; `chore(seals): programbench-revival-v2 — workspace-bootstrap at fd0eda4`; touched + sweep tests GREEN; post-seal `apply --dry-run` clean) |
+| §14 backfill | this commit (manual — `loam amend seal --plan-doc` matches a literal `## 14.` heading; this plan uses `## §14 —`, so the automated AC.D-sa.7 subsection append HALTed and the seal left the commit in place; §14 backfilled by hand per the seal's own documented fallback) |
+
+### Outcome (computed verdict, recorded at seal — first-class honest-negative)
+
+| Field | Value |
+|---|---|
+| Verdict (AC.PBR.5, computed not asserted) | **`loam-does-not-materially-beat-baseline`** |
+| Baseline independently-judged pass | 5 / 6 |
+| Loam independently-judged pass | 5 / 6 |
+| Baseline non-pass tasks | `PB3-dedupe-lines` (CHECKABLE-BUT-WRONG / produced-but-no-real-effect) |
+| Loam recovered of baseline misses | 0 / 1 (no clear majority) |
+| No total-pass regression | True (5 = 5) |
+| Per-arm false-success class (`produced-but-no-real-effect`) | baseline 1, loam 1 (both arms failed PB3 identically — the floor+held-out conjunction caught the non-generalising result on both) |
+| All-tasks-pass aspirational (NOT the gate) | baseline False, loam False |
+| Measured spend / ceiling (D-PBR-4) | $0.4462 / $8.00 (not halted on ceiling) |
+| Wall-clock | 630s |
+| Scoring authority (AC.PBR.3) | INDEPENDENT held-out adversarial tool-grounded judge (composed `_independent_judge` shape via sealed `spawn_isolated_claude`) — PROVABLY NOT the loop's own `intake.py` AC.B.4b judge (never imported/called) |
+| Task-set content hash (AC.PBR.2, frozen pre-run) | `8ca7c4de98e33ea5c33a006efff409bb7024015f7ab720c1531ff14fa566921d` |
+| FROZEN-RATIFIED D-PBR-1 margin | NOT moved after runs began (frozen exactly as owner Telegram 11447) |
+| Report (AC.PBR.7) | `docs/experiments/programbench-revival-v2.md` |
+
+**Interpretation (the §10.5 expected-possible result, named at plan-authoring):** on a well-specified non-subjective ProgramBench-class set, bare `claude -p` is already strong at single-shot execution, so the harness's distinctive value — translation-burden absorption on UNDER-specified intent (the regime owner-ruled out of scope for v2, §7) — shows no material delta. This is a true, informative, **first-class plan-success honest-negative** (AC.PBR.7), reported straight: NOT retried to green, the margin NOT weakened, the task set NOT re-picked easier. The independent judge (provably not the loop's own) correctly caught the false-success class (PB3, both arms) — the positive-real-outcome floor + held-out anti-overfit conjunction worked exactly as AC.PBR.2/.4 bind.
+
+**Build-cycle F2 surfaced (named, with evidence + alternative — not papered):**
+1. *Loam-arm env defect, caught by empirical recheck before accepting a negative.* The first run produced "loam honest-negative on every task, $0.00 cost". Tier-0 transcript inspection (`loam_artifacts/sub_0_*.transcript`) showed `"is_error":true, "result":"Not logged in"` — my `run_loam_arm` handed the `handsoff-loop` subprocess a hand-stripped 3-var env, breaking the keychain subscription credential the real `claude` binary needs (`feedback_no_anthropic_api_key` surface). Fix: inherit the full real env + add only the package PYTHONPATH (the loop applies its OWN sealed isolation internally). Verified end-to-end before the real run. Accepting that false honest-negative would have shipped a fabricated negative verdict — `feedback_agent_empirical_recheck_before_halt` was load-bearing here.
+2. *Loam-arm cost-measurement gap (honest-absent, never estimated).* The loam arm's per-task cost surfaced as $0.00 — the loop's CLI result-line `cost_usd` did not surface its sub-agent `total_cost_usd` summation through the field this harness parses. Recorded honestly as zero/absent (D-COST-BAND: never back-filled with a guess), named in the report. Does NOT move the verdict (the verdict is judge-tag + floor + held-out based, not cost-based); baseline cost + total spend are accurately measured. Follow-on loop-CLI-cost-surfacing item, out of this cycle's fence.
+3. *Manifest `smoke_outcome` exceeded the schema's ≤200-char limit (plan-author defect).* Surfaced by `loam amend validate`; tightened to a ≤200-char outcome-shaped summary (the per-AC detail lives in plan-doc §5 + the manifest title). Doc-only fix inside the universal-admitted manifest.
+4. *Seal halted on a dirty working tree carrying unrelated concurrent paths* (`docs/FUTURE_IDEAS_DRAFT.md` + two other agents' plan-docs — pre-existing/concurrent, NOT this cycle's scope per the initial git status). Stashed (reversible; preserves the other work) to isolate the seal; re-invoked clean.
+
+**Web-research per-part decision (recorded):** plan shape decided FIRST from the plan; the read-only web check on public ProgramBench host-requirements was inconclusive (the GitHub page omits them; the linked usage-guide/paper not fetched, not load-bearing). Decision rests on Tier-0 operational reality (empty local clone + sealed v0.4.0 C4 host-block record), which outranks the inconclusive web Tier-3. Per-part: **keep-ours** for every component (independent-judge spine, freeze-isolation spine, four-class false-success taxonomy, honest-scope substitute) — exactly as plan §6's per-part table pre-decided; no external pattern adopted wholesale.
+
+**LOCAL SEAL ONLY** — not merged to main, not pushed, not published, not tagged. The public step is a separate owner-asked action, not part of this cycle.
 
 ---
 

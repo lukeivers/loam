@@ -1,0 +1,53 @@
+# ProgramBench-revival real-PB harness — submission-build dependency-determinism + disposition cost-recording de-noise/honesty corrective (semantics FROZEN)
+
+This is a DE-NOISE + MEASUREMENT-HONESTY corrective on the sealed
+real-PB measurement harness (`programbench-revival-real-pb`). It
+changes NO measurement semantics — the margin, the independent
+held-out judge selection, the positive-real-outcome floor, the
+per-task frozen threshold, the k_min >= 2 small-k floor, the
+zero-interaction parity invariant, and the frozen task-set content
+hash are ALL untouched and AC-guarded (AC.PBD.6). These fixes
+DE-NOISE every subsequent real-PB measurement run so that run is
+not confounded the way the first `yj` run was.
+
+DEFECT 1 (de-noise, L2/L3). Every arm's agent-authored
+`compile.sh` installs its Python deps with
+`pip3 install --quiet ... 2>/dev/null || true`, which silently
+swallows every dependency-install failure; under amd64 Docker
+emulation that makes dependency-gated test families pass/fail by
+luck and DOMINATED the `yj` 2.4x number in BOTH directions on
+byte-identical code (the gap concentrated entirely in
+third-party-library-gated test families). This cycle binds the
+submission build's dependency step DETERMINISTIC and FAIL-LOUD (a
+failed dependency install is an observable hard build failure that
+propagates to the upstream eval as the existing `compile_failed
+=> 0` contract, never a silent swallow), conveyed BYTE-IDENTICALLY
+to both arms through the parity-safe single-prompt/task-data
+surface both arms already receive — the harness NEVER post-edits
+an arm's produced `compile.sh` (that would silently violate the
+binding zero-interaction parity invariant; it is the dominant
+design risk and a HALT).
+
+DEFECT 2 (measurement-honesty, L4.1). The loop arm's cost IS
+measured (the loop CLI emits it; the realpb runner passes it
+through faithfully) but is DROPPED before `disposition.json` by a
+fragile stdout scan that cannot match the loop's multi-line
+pretty-printed JSON result — so the loam cost reads `null` while
+the baseline records a real measured cost. This cycle binds the
+loop arm's measured cost to reach the disposition; a `null` cost
+is honest-absent ONLY when the loop genuinely did not measure one,
+never a silent consumer-side measurement loss — so cost-aware
+refine budgeting and honest cost reporting become possible.
+
+The deliverable is the de-noised + cost-honest real-PB harness:
+the submission-build dependency convention deterministic + fail-
+loud + parity-preserving, and the loop arm's measured cost faith-
+fully recorded — with the frozen sealed measurement semantics
+byte-behaviour-unchanged (the parent AC.RPB.* test family passes
+unchanged). Composes the sealed harness + loop + independent judge
+read-only (Lens 1); does NOT re-prove the core loop or the parent
+measurement spine (AC.FOUND.0 / AC.RPB.* carried forward); does
+NOT re-run or re-score the already-collected confounded runs (that
+is the parent plan's measurement step, after this lands). LOCAL
+SEAL ONLY — not merged, not pushed, not published, not tagged; the
+public step is a separate owner-asked action.

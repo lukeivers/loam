@@ -32,6 +32,7 @@ is reported either polarity, never retried to green.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -78,23 +79,59 @@ class IntakeOutcome:
 
 # Jargon the plain-language acceptance must NOT surface to the user
 # (AC.B.3).  Surfacing any of these is a structural B.3 failure.
-_JARGON_FORBIDDEN = (
-    "AC.",
-    "acceptance criterion",
-    "pytest",
-    "exit code",
-    "sha256",
-    "manifest",
-    "seal",
-    "ODD",
-    "machine-checkable",
+#
+# AC.PBF.3: each entry is matched as a *jargon token*, not a naive
+# substring of `text.lower()`.  The naive-substring form crashed the
+# whole intake non-deterministically on benign plain English — the
+# acceptance-ID prefix "AC." (lowercased "ac.") matched the substring
+# inside the ordinary word "Mac." (and "ODD" matched "odd", "seal"
+# matched "sealed"/"reveal", etc.).  Each forbidden term is compiled
+# to a word-boundary-anchored pattern so an ordinary word that merely
+# *contains* the substring does NOT trip, while a genuine jargon token
+# still does.  The acceptance-ID term is matched as its real ID shape
+# (`AC.` immediately followed by an alphanumeric — the `AC.B.4` form),
+# never the bare `ac.` inside ordinary words.  Behaviour is
+# deterministic: the same plain "done" either always raises or never
+# raises, independent of incidental phrasing.
+_JARGON_PATTERNS = (
+    # Acceptance-ID token: `AC.` followed by an alnum (AC.B.4, AC.PBF.1)
+    # — NOT the `ac.` ending an ordinary word ("Mac.", "iMac.").
+    ("AC.<id>", re.compile(r"\bAC\.[A-Za-z0-9]")),
+    ("acceptance criterion",
+     re.compile(r"\bacceptance criteri(?:on|a)\b", re.IGNORECASE)),
+    ("pytest", re.compile(r"\bpytest\b", re.IGNORECASE)),
+    ("exit code", re.compile(r"\bexit code\b", re.IGNORECASE)),
+    ("sha256", re.compile(r"\bsha-?256\b", re.IGNORECASE)),
+    ("manifest", re.compile(r"\bmanifest\b", re.IGNORECASE)),
+    # `seal` as a loam-process jargon token — the seal verb/noun in its
+    # amendment/manifest/commit collocation, NOT the ordinary English
+    # verb ("seal the envelope", "seal the deal", "revealed",
+    # "sealant").  The jargon sense always co-occurs with the loam
+    # objects it acts on; the bare ordinary verb is plain English a
+    # non-technical "done" may legitimately contain.
+    ("seal",
+     re.compile(
+         r"\bseal(?:s|ed|ing)?\b[\s\w]{0,24}"
+         r"\b(?:amendment|manifest|commit|component|cycle)\b"
+         r"|\b(?:amendment|manifest|component|cycle)\s+seal",
+         re.IGNORECASE)),
+    # `ODD` the methodology acronym — uppercase token, NOT the ordinary
+    # word "odd"/"oddly".
+    ("ODD", re.compile(r"\bODD\b")),
+    ("machine-checkable",
+     re.compile(r"\bmachine[- ]checkable\b", re.IGNORECASE)),
 )
 
 
 def assert_plain_language(text: str) -> None:
-    """AC.B.3 guard: refuse if the user-facing acceptance carries jargon."""
-    low = text.lower()
-    hits = [j for j in _JARGON_FORBIDDEN if j.lower() in low]
+    """AC.B.3 guard: refuse if the user-facing acceptance carries jargon.
+
+    AC.PBF.3 — token-boundary matching, deterministic, no naive
+    substring.  Ordinary words that merely contain a forbidden
+    substring ("Mac." → "ac.", "odd" → "ODD", "revealed" → "seal")
+    do NOT raise; genuine jargon tokens still do.
+    """
+    hits = [label for label, pat in _JARGON_PATTERNS if pat.search(text)]
     if hits:
         raise ValueError(
             f"Plain-language acceptance surfaced jargon {hits!r} — "
@@ -229,6 +266,50 @@ def derive_acceptance_from_intent(
         mc = {"check_command": "python3 verify_test.py",
               "spec": "deterministic structural placeholder"}
 
+    # --- AC.PBF.1: refuse an empty/broken done BEFORE approval. ----
+    # The derive step is format-fragile (it asks the model for plain
+    # text + `---` + JSON; when the model deviates the parser yields an
+    # empty plain "done" and/or an empty check command and/or an
+    # unparsed machine-checkable).  Previously the approval gate ran on
+    # that fragment and `bool(approval_fn(""))` could still return True,
+    # silently freezing a poisoned/empty contract (hardening I2/I7).
+    # The fix is an honest refuse-with-reason (D-PBF-A, adopted — NOT
+    # an auto-retry: a silent retry re-introduces the rubber-stamp risk
+    # by another path).  A non-approved outcome carrying the specific
+    # reason is produced *before* the approval gate can be reached, so
+    # an empty/garbage derivation can never surface as `approved=True`.
+    _check_cmd = ""
+    if isinstance(mc, dict):
+        _check_cmd = str(mc.get("check_command") or "").strip()
+    _derive_defects: list[str] = []
+    if not plain_acceptance.strip():
+        _derive_defects.append("the plain-English 'done' is empty")
+    if isinstance(mc, dict) and mc.get("_parse_failed"):
+        _derive_defects.append(
+            "the machine-checkable acceptance failed to parse")
+    if not _check_cmd:
+        _derive_defects.append("the machine check command is empty")
+    if _derive_defects:
+        reason = (
+            "Could not pin down a checkable 'done' for this request — "
+            + "; ".join(_derive_defects)
+            + ". Refusing rather than approving an empty or unparsed "
+            "contract (AC.PBF.1)."
+        )
+        transcript.append(f"[refuse] {reason}")
+        return IntakeOutcome(
+            original_intent=intent,
+            under_specification=list(under_specification),
+            elicited_questions=list(questions),
+            elicited_answers=answers,
+            plain_language_acceptance=plain_acceptance,
+            machine_checkable=mc if isinstance(mc, dict) else {},
+            approved=False,
+            faithful=False,
+            faithfulness_reason=reason,
+            transcript=transcript,
+        )
+
     assert_plain_language(plain_acceptance)  # AC.B.3 hard guard
 
     # --- AC.B.3: exactly ONE plain-English approval gate. ----------
@@ -236,19 +317,50 @@ def derive_acceptance_from_intent(
     transcript.append(f"[approval] approved={approved}")
 
     # --- AC.B.4b: INDEPENDENT faithfulness check. ------------------
+    # AC.PBF.2 — the judge must assess the GROUND-TRUTH artefact (the
+    # actual derived machine check command + spec), not only the
+    # friendly plain-English summary.  Previously this prompt
+    # interpolated only `intent` + `plain_acceptance`; the machine
+    # check command (`mc["check_command"]` / `mc["spec"]`) — a live
+    # local computed 30+ lines above — was never handed to the judge,
+    # so the loop's own judge was structurally blind to its own
+    # canonical failure mode: a cheap proxy/plumbing check (a presence
+    # test for a one-time setup file, a `--validate` dry-run flag,
+    # "≥1 filter exists") that exits 0 while the user's real outcome is
+    # unmet (hardening I3/I6, both rubber-stamped).  This IS the
+    # information-trust-ordering inversion: judge the ground truth, not
+    # the loop's own self-narrated summary.  The judge process itself
+    # is unchanged — same already-independent, already-isolated,
+    # already-either-polarity `claude -p` subprocess; only WHAT it sees
+    # and WHAT it is asked changes.
     if run_model and approved:
+        _faith_check_cmd = ""
+        _faith_spec = ""
+        if isinstance(mc, dict):
+            _faith_check_cmd = str(mc.get("check_command") or "").strip()
+            _faith_spec = str(mc.get("spec") or "").strip()
         faith_prompt = (
             "Adversarial faithfulness check. A non-technical user "
             f"originally asked:\n\n  \"{intent}\"\n\n"
             "A 'done when' was derived and the user approved it:\n\n"
             f"  \"{plain_acceptance}\"\n\n"
-            "Question: if software EXACTLY met that derived 'done "
-            "when' and NOTHING more, would it satisfy a reasonable "
-            "reading of the user's ORIGINAL request? Be adversarial — "
-            "look for checkable-but-wrong gaps (the derived 'done' is "
-            "met yet the user would say 'that's not what I asked "
-            "for'). Answer strictly as JSON: {\"faithful\": "
-            "true|false, \"reason\": <one sentence>}."
+            "The derived 'done' will actually be verified by running "
+            "this exact machine check command, and ONLY this command "
+            "decides whether the work is accepted:\n\n"
+            f"  check command: {_faith_check_cmd!r}\n"
+            f"  machine spec : {_faith_spec!r}\n\n"
+            "Assess BOTH the plain 'done when' AND, adversarially, the "
+            "machine check command above. The dangerous failure mode: "
+            "the check command is a cheap PROXY or PLUMBING stand-in "
+            "(a presence test for a one-time setup file, a dry-run / "
+            "--validate flag, an 'at least one X exists' test, an "
+            "always-true command) that exits 0 while the user's ACTUAL "
+            "outcome is NOT achieved. Ask explicitly: could this exact "
+            "command exit 0 while the user would still say 'that's not "
+            "what I asked for'? If the plain 'done' reads fine but the "
+            "machine command underneath would pass without the real "
+            "outcome, that is NOT faithful. Answer strictly as JSON: "
+            "{\"faithful\": true|false, \"reason\": <one sentence>}."
         )
         env = _claude_json(faith_prompt, model=model)
         fb = (env.get("result") or "").strip()

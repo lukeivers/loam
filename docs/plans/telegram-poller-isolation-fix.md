@@ -227,7 +227,7 @@ violation observed in surrounding code/docs.
 ratified; the §1b sites lack isolation but that is the bug being fixed,
 not a pre-existing ODD violation to extend.)**
 
-## §14 — Method-decision register + commit SHAs
+## 14. Method-decision register + commit SHAs
 
 | # | Decision | Resolution | Authority |
 |---|----------|-----------|-----------|
@@ -237,4 +237,25 @@ not a pre-existing ODD violation to extend.)**
 
 ### Commit SHAs
 
-(backfilled at cycle close by `loam amend seal --plan-doc`.)
+Single-component fence: `workspace-bootstrap`. Branch
+`amend/loam-init-persona-wiring` (LOCAL SEAL ONLY — NOT merged to
+`main`, NOT pushed, NOT published, NOT tagged).
+
+| Stage | SHA |
+|---|---|
+| BASELINE (amendment-window parent) | `38b8f0f` |
+| Plan + manifest commit | `b728ace` |
+| Source-edit commit (feature) | `e0b71cb` |
+| Apply auto-commit | `969c4bc` |
+| Seal commit | `b33c0a8` |
+
+### Per-AC GREEN evidence
+
+| AC | Outcome | Evidence |
+|---|---|---|
+| AC.TPI.1 | Handsoff-loop sub-agent dispatch cannot SIGTERM the operator poller | Opt-in real-binary (`TPI_REAL_CLAUDE=1`): real `claude` 2.1.143 spawned via `_dispatch_subagent`; sentinel `.poll() is None` afterward — PASSED |
+| AC.TPI.2 | Intake `claude -p` call cannot SIGTERM the operator poller | Opt-in real-binary: real `claude` 2.1.143 spawned via `intake._claude_json`; sentinel alive afterward — PASSED |
+| AC.TPI.3 | Every §1b argv carries empty-strict-MCP, zero telegram markers | Structural — `build_goal_drive_argv` + intake argv both isolated, `-p`/json shape preserved — PASSED |
+| AC.TPI.4 | Every §1b env scrubs bot-token + API-key spellings | Structural — `isolated_env` drops all 3 spellings; `CLAUDE_CONFIG_DIR` unset (subscription auth) — PASSED |
+| AC.TPI.5 | Telegram-reachable argv regression fails loudly | Structural — `inject_isolation` raises on telegram markers; clean argv passes — PASSED |
+| AC.TPI.6 | §1a / §1c sites untouched | Diff window `38b8f0f..HEAD`: zero §1a/§1c files; only the 4 §1b sources + tests + plan — PASSED |

@@ -1,0 +1,208 @@
+# ProgramBench-revival real-PB harness — submission-build dependency determinism + disposition cost-recording fix (de-noise + measurement-honesty, semantics frozen)
+
+> **Status:** sub-plan-doc (plan-only — NO code, NO build, NO seal; the build is a separate owner-gated step).
+> **WD (canonical):** `/Users/lukeivers/loam` (verified this turn — `git rev-parse HEAD` = `be3e269`, branch `amend/loam-init-persona-wiring`).
+> **Parent plan:** `docs/plans/programbench-revival-real-pb.md` (the sealed real-PB measurement harness — this cycle is a de-noise/honesty corrective on its submission-build convention + cost-recording, NOT a semantics change).
+> **Predecessors (load-bearing, all Tier-0 read this turn):** `programbench-revival-real-pb` (the real-PB harness under measurement; manifest `schema_version: 3`, single-component fence `workspace-bootstrap`); `loop-behavioral-refine-cycle` (sealed LOCAL, seal `dd73ad6`, §14 backfill `be3e269` — the recently-landed build that shifted `arms.py` line numbers, see §10.1); `programbench-revival-v2` (corroborates the loam-arm `cost_usd: null` drop on every disposition).
+> **BASELINE candidate:** the pre-build branch tip at source-edit time (placeholder pinned to the last landed commit `be3e269`; the build cycle replaces this with the actual source-edit BASELINE per the `loop-behavioral-refine-cycle` / `programbench-revival-real-pb` precedent — see manifest comment).
+> **Status-file target:** `docs/STATE.md` (dated entry) + `docs/release-roadmap.md` (the existing "Cost-measurement gap on the loam arm … follow-on loop-CLI-cost-surfacing item" line is closed by this cycle).
+> **Quality bar:** outcome-shaped ACs; method-in-AC test passed per-AC; no measurement-semantics change (margin / judge / floor / k_min / zero-interaction parity all frozen); single-component fence held; LOCAL SEAL ONLY.
+
+---
+
+## §1 — Summary / TL;DR (plain English, lead)
+
+The single real-ProgramBench task completed so far (`yj`) produced a 2.4x loam-over-baseline number that is **not a loop win** — both arms' `main.py` are byte-identical bar one comment line, and the score gap concentrates entirely in third-party-library-gated test families. The cause is a noise source in the *submission build*, not the loop: every arm's agent-authored `compile.sh` installs its Python deps with `pip3 install --quiet … 2>/dev/null || true`, which **silently swallows every install failure**; under amd64 Docker emulation that makes dependency-gated test families pass or fail by luck, dominating the number in both directions. Separately, the loop arm's measured cost (the loop *does* measure it — `loam.transcript` carries `cost_usd 0.467…`) never reaches `disposition.json` (`loam cost_usd: null`, corroborated on v2's every disposition), so cost-aware refine budgeting and honest cost reporting are impossible.
+
+This plan binds two outcomes and nothing else:
+
+1. **Submission-build dependency determinism (L2/L3).** The submission build's dependency step is deterministic and **fails loud** — a failed dependency install is an observable hard build failure, never a silent `|| true` swallow — so a real-PB number reflects the arm's work, not dependency luck. The convention is conveyed **identically to both arms** (input parity preserved — the harness must not post-edit either arm's produced `compile.sh`).
+2. **Disposition cost-recording fidelity (L4.1).** The loop arm's already-measured cost reaches the disposition (honest-absent **only** if the loop genuinely did not measure it — never silently `null` when the loop measured it).
+
+**AC families:** `AC.PBD.*` (ProgramBench de-noise — six ACs: .1 dep-determinism convention, .2 fail-loud observability, .3 input-parity preservation, .4 cost-recording fidelity, .5 honest-absent discipline, .6 no-regression guard on the frozen sealed semantics).
+
+**Key decisions baked (each surfaced in §3 + §10 with a recommendation):** pin-vs-vendor strategy for submission deps; how a loud-fail surfaces without breaking the zero-interaction one-shot contract; the robust cost-capture seam; scope shape (amendment of the existing real-PB harness component vs new component).
+
+**F2 on scope realism:** scope is small and reversible (a convention-text change + a cost-parse robustness fix; no semantics touched). The single material risk is mis-placing the dep-determinism fix as a harness post-edit of the agent's artefact — that would silently violate input parity (AC.RPB.1). The plan AC-guards against it (AC.PBD.3) and names it as the dominant design tension (§10.2). One Tier-2 line-number drift in the source research artefact is corrected against live source (§10.1) — the *defect class* holds, the *location* moved.
+
+---
+
+## §2 — Placement decisions (per partition rule)
+
+| Item | Placement | Rationale |
+|---|---|---|
+| The submission-build dependency convention (the text that shapes how the arm's agent authors its `compile.sh` dep step) | The per-task plain-language `statement` and/or a task-level submission-build contract under `framework/tools/programbench-revival/realpb/tasks/` | Tier-0 verified: the submission-build expectation reaches the agent **only** through the per-task `statement` in `tasks.json` (e.g. yj: "…including a script called `compile.sh` that produces a runnable program named `executable`"). There is **no harness-owned `compile.sh`** — it is agent-authored, runs inside the upstream Docker eval, and the harness must not touch it (input parity). The convention is the only parity-safe seam. Inside the `framework/tools/` LIVE-admitted `workspace-bootstrap` prefix the real-PB harness already seals against. |
+| The cost-capture robustness fix | `framework/tools/programbench-revival/src/programbench_revival/arms.py` (`run_loam_arm` cost parse) and/or the consumed structured loop result | Tier-0 verified: the loop CLI **does** emit cost (`cli.py:128-149` `json.dumps({…"cost_usd": result.cost_usd…}, indent=2)`); the realpb runner faithfully passes through whatever `run_loam_arm` returns (`runner.py:360-375`). The drop is **inside `run_loam_arm`'s stdout scan** (`arms.py:286-297`). Inside the same LIVE-admitted prefix. |
+| The AC test files (one per AC, `AC.PBD.*` family) | `framework/hands-off-lifecycle/tests/` | The SAME admitted prefix the `AC.RPB.*` + `AC.BRC.*` test families already live on (handsoff-loop-real-build / programbench-revival-real-pb / loop-behavioral-refine-cycle precedents). |
+| Plan-doc + manifest + STATE/roadmap backfill | `docs/plans/` + `docs/STATE.md` + `docs/release-roadmap.md` | Universal admitted prefixes/files per amendment #22 ruling #3 (same as the parent real-PB manifest). |
+| The verdict-confound caveat on the existing `yj` number | NOT re-written here — the parent real-PB report (`docs/experiments/programbench-revival-real-pb.md`) carries it when that report is authored (the report is the parent plan's deliverable, not this cycle's) | This cycle removes the *noise source*; the *report caveat* on already-collected confounded runs is the parent plan's surface. Naming it here as out-of-scope (§7) prevents scope drift. |
+
+---
+
+## §3 — Halt-and-surface recorded at plan-authoring (LIVE-verified this turn — what I verified and when)
+
+All reads Tier-0 from canonical `/Users/lukeivers/loam` @ `be3e269` this turn (2026-05-16). The score-improvement analysis is Tier-2 input; every load-bearing claim re-verified against live source — one drift corrected (§10.1).
+
+1. **The `compile.sh:8` fail-swallowing dep step is real and present.** Verified: `framework/tools/programbench-revival/realpb/.run_evidence/yj/{loam,baseline}_work/compile.sh:8` = `pip3 install --quiet pyyaml tomli tomli-w pyhcl 2>/dev/null || true`; the `figlet` produced `compile.sh` repeats the pattern (`:58` `pip3 install --quiet pyfiglet … || pip install … || true`). The pattern is agent-authored per task, not a harness template — there is no harness-owned `compile.sh` (grep across `realpb/` source returns only `realpb_structural_floor.py`'s `compile.sh` *presence* check, never an authored one).
+2. **The submission-build convention reaches the agent only via the per-task `statement`.** Verified: `tasks.json` per-task keys = `id / instance_id / image / image_digest / filter_regex / statement / floor_theta / setup / expected_real_outcome`; the yj `statement` carries the `compile.sh`+`executable` instruction; `_ARM_DIRECTIVE` in `arms.py:72-83` formats only `{statement}`. The convention text is the parity-safe seam.
+3. **The loam-arm `cost_usd: null` drop is real, Tier-0.** Verified by parsing `realpb/.run_evidence/yj/disposition.json`: `baseline cost_usd = 0.97955…` (measured fine), `loam cost_usd = None`. The loop CLI emits cost (`cli.py:128-149`). The realpb runner passes it through (`runner.py:360-375` `l_tr, l_dt, l_cost = run_loam_arm(...)` → `cost=l_cost`). The drop is inside `run_loam_arm`'s parse — see §10.1 for the concrete mechanism.
+4. **No measurement-semantics change is required or implied by either fix** — surfaced as a binding constraint. Both fixes are de-noise/honesty only. The frozen sealed invariants (zero-interaction parity AC.RPB.1, independent-judge-not-loop's-own AC.RPB.3, positive-real-outcome floor AC.RPB.2, honest-negative first-class AC.RPB.7, `k_min ≥ 2` AC.RPB.5) are **untouched** and AC-guarded by AC.PBD.6. If the builder finds either fix cannot land without moving any of those, that is a §8 in-flight HALT (these semantics are frozen).
+5. **No ODD violation in the surrounding harness or parent plan touched read-only.** The real-PB harness + the sealed loop are consumed as established (AC.FOUND.0 / AC.RPB.* carried forward); the only defects are the two named here, fixed as named ACs, not silent extensions.
+
+---
+
+## §4 — Spec-objective placement (the ladder)
+
+`VALUE_PROPOSITION.md` AC.PO.1 (translation-burden reduction) + AC.PO.2 (harness-toolkit)
+→ parent `programbench-revival-real-pb` AC.RPB.7 (a reader can answer "does loam materially beat bare LLM on the REAL public ProgramBench, by how much, judged independently") and AC.RPB.6 (cost/latency/eval-evidence captured and reproducible)
+→ **AC.PBD.* (this plan):** AC.PBD.1–.3 protect the *integrity of the number AC.RPB.7 reports* (a dependency-luck-confounded number cannot answer the prime-objective question honestly); AC.PBD.4–.5 make the cost half of AC.RPB.6 *actually recorded* (a `null` cost is not "captured and reproducible"); AC.PBD.6 guarantees the de-noise does not perturb the frozen semantics the parent plan locked.
+
+Every AC ladders up to AC.RPB.7 / AC.RPB.6, which ladder to both VALUE_PROPOSITION tests. No AC is non-objective.
+
+---
+
+## §5 — Acceptance criteria (`AC.PBD.*`, outcome-shape, method-in-AC test passed per-AC)
+
+Method-in-AC test applied per-AC: *can this AC be satisfied by a method other than the one I have in mind? Yes ⇒ tight scope (good). No ⇒ method stated (Lens-3 violation).* The pin-vs-vendor mechanism, the loud-fail surface form, and the cost-capture seam are deliberately the **builder's call** (§6 / §10) — the ACs name the *outcome*, not the *how*.
+
+### AC.PBD.1 — The submission build's dependency step is deterministic
+The dependency-acquisition step the arm's submission build performs resolves to a **fixed, reproducible set of dependency artefacts** — a second build of the same submission on the same host acquires the same dependencies or fails identically; the outcome of a dependency-gated test family does not vary run-to-run for an unchanged submission.
+- *Satisfiability (≥2 methods):* satisfiable by pinned version specifiers in the convention, by vendored/wheel-bundled deps, by a hash-locked requirements artefact, by a pre-provisioned image layer — multiple methods. Constrains *determinism of the dependency set*, not which mechanism delivers it. Tight.
+- *Ladders to:* AC.RPB.7 (a number that varies by dependency luck cannot answer the prime-objective question).
+- *Verification:* a test that asserts the convention conveyed to the arm specifies a deterministic dependency contract (no unpinned floating-resolution dep step) and that the same submission yields the same dependency-gated outcome across repeated builds.
+
+### AC.PBD.2 — A failed dependency install is an observable hard build failure
+When the submission build's dependency step cannot acquire a required dependency, the build **fails loud**: the failure is observable in the build's exit status / output and propagates to the upstream eval as a build failure (so it scores by the existing `compile_failed ⇒ 0` upstream contract), and is **never** swallowed by a `2>/dev/null || true`-class construct that lets the build proceed as if deps were present.
+- *Satisfiability (≥2 methods):* satisfiable by a non-zero exit on dep failure, by an explicit `set -e`-class fail-fast, by a post-install presence assertion that hard-fails, by a vendored-deps approach where a missing vendored dep is structurally impossible — multiple methods. Constrains *loud-failure observability*, not the shell construct. Tight.
+- *Ladders to:* AC.RPB.6 (the failure-class taxonomy can only be honest if a dep failure is observable as one) + AC.RPB.7.
+- *Verification:* a test that asserts the convention forbids the silent-swallow construct on the dependency step and that a simulated dep-acquisition failure produces an observable hard failure (not a silent proceed).
+
+### AC.PBD.3 — Input parity and the zero-interaction one-shot contract are preserved
+The dependency-determinism convention is conveyed **identically to both arms** through the same single-prompt / task-data surface both arms already receive; the harness does **not** post-edit, patch, or inspect either arm's produced `compile.sh` or work dir to enforce determinism; the arm still produces its submission **solely from the single prompt under the closed no-answer channel**, zero interactive back-and-forth, no harness intervention in the artefact.
+- *Satisfiability (≥2 methods):* satisfiable by extending the per-task `statement`, by a task-level submission-build contract delivered through the same setup-files surface both arms receive, by a convention block appended identically to both arms' single prompt — multiple methods. Constrains *parity + non-intervention + closed-channel preservation*, not which parity-safe channel carries the convention. Tight.
+- *Ladders to:* AC.RPB.1 (zero-interaction parity — the binding owner constraint Telegram 11443 / D-PBR-6) + AC.RPB.7.
+- *Verification:* a test that asserts the convention is delivered through a parity-preserving surface (the same surface both arms receive, byte-identical between arms) and that no harness code path reads or rewrites an arm's produced `compile.sh`/work dir to enforce the dep contract.
+
+### AC.PBD.4 — The loop arm's measured cost reaches the disposition
+When the loop measured a cost for a (loam, task) run (the loop's structured result carries a non-null cost), that measured cost is present in that task's `disposition.json` for the loam arm — the value the loop measured is the value the disposition records (no lossy reduction to `null` of a cost the loop actually measured).
+- *Satisfiability (≥2 methods):* satisfiable by parsing the loop's structured result robustly (full-document JSON parse rather than a first-`{`-line scan), by the loop emitting an additional single-line machine-readable cost record the arm reads, by the arm reading the loop's artefact-dir cost record directly — multiple methods. Constrains *the measured cost reaching the disposition*, not the parse mechanism. Tight.
+- *Ladders to:* AC.RPB.6 (cost captured and reproducible) + AC.RPB.7.
+- *Verification:* a test that, given a loop result emitting a known measured cost in the loop's actual output shape (multi-line `json.dumps(..., indent=2)` with `cost_usd`), asserts that cost reaches the loam disposition record.
+
+### AC.PBD.5 — `null` cost is honest-absent only, never a silent measurement loss
+A `null` / absent loam cost in a disposition occurs **only** when the loop genuinely did not measure a cost (no cost in the loop's structured result); a cost the loop measured is **never** silently reduced to `null` by a fragile consumption path.
+- *Satisfiability (≥2 methods):* satisfiable by a parse that distinguishes "loop emitted no cost" from "consumer failed to read an emitted cost", by an assertion/log on a consumer-side parse miss, by a structured read that cannot silently miss an emitted value — multiple methods. Constrains *the honest-absent / silent-loss distinction*, not the detection mechanism. Tight.
+- *Ladders to:* AC.RPB.6 + the measurement-honesty discipline (`feedback_specific_claims_verified_or_marked_guess` — an unmeasured cost is honest-absent, a measured-then-dropped cost is a silent falsehood).
+- *Verification:* a test that a loop result with **no** cost yields honest-absent (documented `null`, not an error) AND a loop result **with** a measured cost never yields `null` at the disposition (the two cases are distinguished, not conflated).
+
+### AC.PBD.6 — The frozen sealed real-PB semantics are not perturbed (no-regression guard)
+After this cycle, the parent real-PB harness's frozen sealed measurement semantics are byte-behaviour-unchanged: zero-interaction parity (AC.RPB.1), independent-judge-not-loop's-own (AC.RPB.3), the positive-real-outcome floor + per-task frozen threshold (AC.RPB.2), the pre-declared three-valued margin + `k_min ≥ 2` small-k floor (AC.RPB.5), honest-negative first-class (AC.RPB.7), and the frozen task-set content hash are all unchanged by the de-noise/cost fix; the existing parent `AC.RPB.*` test family still passes unchanged.
+- *Satisfiability (≥2 methods):* satisfiable by the de-noise being a convention-text-only change plus a consumer-side parse change that touches no semantics surface, by a structurally-isolated cost-capture seam, by an AST/diff guard that asserts no semantics-bearing symbol changed — multiple methods. Constrains *no-regression of the frozen semantics*, not how isolation is achieved. Tight.
+- *Ladders to:* the parent real-PB invariant spine (these are de-noise/honesty fixes, NOT measurement-semantics changes — explicitly stated, AC-guarded).
+- *Verification:* the existing `AC.RPB.*` test family runs unchanged and passes; a guard test asserts no change to the frozen-semantics surfaces (margin / judge selection / floor threshold / k_min / parity / task-set content hash).
+
+### Ladder-shape note (ODD self-check, inline)
+AC.PBD.1 (determinism) / .2 (fail-loud) / .3 (parity) are each strictly tighter than §1's first outcome; AC.PBD.4 (cost reaches disposition) / .5 (honest-absent vs silent-loss) are each strictly tighter than §1's second outcome; AC.PBD.6 is the no-regression guard binding both to the frozen parent semantics. None is "X passes" where only green satisfies (AC.PBD.2's loud-failure and AC.PBD.5's honest-absent are first-class non-green satisfying polarities). None states method (each names ≥2 satisfying methods). Decomposition stops here — a further split adds only coordination overhead without tightening any sub-acceptance (Lens 5 stopping criterion). Dependency order: {PBD.1, PBD.2} drive the convention together; PBD.3 is the parity constraint over the PBD.1/.2 delivery; {PBD.4, PBD.5} are the cost-capture pair (independent of PBD.1–.3); PBD.6 spans all and depends on all.
+
+---
+
+## §6 — Build steps (method-level guidance only; builder's call per ODD §1.1)
+
+1. **Plan-before-code; one test file per AC** under `framework/hands-off-lifecycle/tests/`, `AC.PBD.*` family, mirroring the `AC.RPB.*` / `AC.BRC.*` precedent (a real-`claude` + real-emulated-eval end-to-end leg, if any, collects-but-skips behind an env gate per the AC.RPB.7 / AC.B.5 precedent — most AC.PBD.* are deterministic and need no live leg).
+2. **Manifest:** `docs/plans/programbench-revival-realpb-denoise-and-cost-fix.manifest.yaml` (paired; single-component fence `workspace-bootstrap`; `schema_version: 3`; BASELINE pinned to the pre-build branch tip, replaced at source-edit-commit time per the parent precedent; LOCAL SEAL ONLY).
+3. **Dependency-determinism convention (D-PBD-1, recommended pin — §10.3):** author the deterministic, fail-loud dependency contract into the parity-safe seam (the per-task `statement` and/or a task-level submission-build contract under `realpb/tasks/`). Recommended: a **pinned** version contract (==-pinned specifiers + a fail-loud install) over full vendoring (vendoring adds blob-management + freeze-pinning surface for marginal determinism benefit on this host; pin is the standard reproducibility pattern — §7 web-research). The convention is conveyed **byte-identically to both arms** (AC.PBD.3 — the parity guard is the dominant constraint, §10.2).
+4. **Loud-fail surface (D-PBD-2, recommended exit-status — §10.4):** the failed dep install surfaces as a non-zero build exit that propagates to the upstream eval as `compile_failed` (which the existing upstream contract already scores 0 — no new semantics). Recommended: replace the `2>/dev/null || true` convention guidance with a fail-fast contract; do **not** introduce any interactive prompt or retry that would breach the zero-interaction one-shot contract (AC.RPB.1 / AC.PBD.3) — a loud build failure is a *non-pass by construction*, exactly the existing `produced-but-no-real-effect` / `produced-but-wrong` taxonomy, not a new outcome class.
+5. **Cost-capture seam (D-PBD-3, recommended robust structured read — §10.5):** make `run_loam_arm`'s cost consumption read the loop's **full structured result** (the loop CLI emits `json.dumps({…}, indent=2)` — a multi-line object; the current `arms.py:286-297` first-`{`-line scan cannot match `cost_usd` on the brace line, which is the concrete drop mechanism — §10.1). Recommended: parse the loop's complete JSON result block (or read the loop's artefact-dir cost record directly), distinguishing "loop emitted no cost" (honest-absent) from "consumer failed to read an emitted cost" (a logged/asserted parse miss, never a silent `null`).
+6. **No-regression guard (D-PBD-4):** run the existing parent `AC.RPB.*` test family unchanged; add the AC.PBD.6 guard asserting no frozen-semantics surface moved. The de-noise is a convention-text + consumer-parse change; it must not touch margin / judge selection / floor / k_min / parity / task-set content hash.
+7. **Apply + seal LOCAL ONLY** via `loam amend apply` + `loam amend seal` against the single-component `workspace-bootstrap` fence (the sealed-component bookkeeping mechanism — the SAME anchor the parent real-PB + loop-behavioral-refine-cycle sealed cleanly against on this branch tip). NOT merged, NOT pushed, NOT published, NOT tagged.
+
+---
+
+## §7 — Out of scope (deferred + when)
+
+- **Re-running or re-scoring the already-collected confounded `yj`/`figlet` runs.** This cycle removes the noise *source*; re-running under the fixed convention is the parent real-PB plan's measurement step (its deliverable, after this lands), not this cycle's.
+- **Authoring/editing the parent real-PB verdict report's confound caveat** (`docs/experiments/programbench-revival-real-pb.md`) — that report is the parent plan's deliverable.
+- **The loop's behavioral-refine cost-aware budgeting feature** — this cycle makes the cost *available* (AC.PBD.4/.5); *using* it for refine budgeting is the separate behavioral-refine fast-follow.
+- **Any measurement-semantics change** — margin, judge, floor, k_min, zero-interaction parity, task-set content hash are all FROZEN (§3.4 / AC.PBD.6 / §8). De-noise/honesty only.
+- **Sizing the loop's score-payoff** (the post-aggregate fast-follow the detached 5-task verdict sizes — explicitly not this cycle).
+- **Vendoring the real task images / HF blobs** — they remain digest-pinned read-only host inputs (parent plan D-RPB; unchanged).
+- **Canonical-main mutation / push / publish / tag** — LOCAL SEAL ONLY; the public step is a separate owner-asked action.
+
+**Web-research per-component (injection-safe; hypotheses formed from source FIRST; fetched content untrusted DATA):**
+
+| This plan's fix shape (formed from source first) | Established external pattern (check, not lead) | Per-component decision |
+|---|---|---|
+| Dep-determinism = pinned `==` specifiers + fail-loud install | Dependency pinning / hash-locked requirements for build reproducibility is the standard reproducible-build pattern (the score-improvement analysis §7 already records "pin/vendor + fail-loud is standard"; corroborated, not led-by) | **adopt-the-principle (pin), keep-ours on mechanism** — pin over vendor for this host (vendoring's blob-management surface is not justified by a marginal determinism gain); do not assume the heaviest pattern is best |
+| Fail-loud = non-zero exit propagating to upstream `compile_failed` | Fail-fast build (`set -e` / non-zero-exit-on-dep-failure) is the standard CI/build-reproducibility pattern | **adopt-the-principle, keep-ours on surface** — reuse the existing upstream `compile_failed ⇒ 0` contract; introduce NO new outcome semantics |
+| Cost-capture = robust structured read of the loop's emitted result | Subprocess structured-output capture (full-document JSON parse over line-scan heuristics) is the standard robust-IPC pattern | **adopt-the-principle, keep-ours on seam** — parse the loop's complete emitted JSON / artefact record; reject the fragile first-`{`-line scan |
+
+No external method adopted wholesale; the source-formed fix shape leads; the popular/heaviest pattern is not assumed best.
+
+---
+
+## §8 — Halt triggers (in-flight; abort the build + surface)
+
+1. **Either fix cannot land without changing a frozen sealed semantics surface** (margin / independent judge selection / positive-real-outcome floor / `k_min` / zero-interaction parity / task-set content hash). HALT + surface — these are de-noise/honesty fixes ONLY; semantics are frozen (§3.4). No silent semantics drift.
+2. **The dep-determinism fix can only be made by the harness post-editing or inspecting an arm's produced `compile.sh`/work dir.** HALT + surface — that silently breaks input parity (AC.RPB.1 / AC.PBD.3, the binding owner constraint). The convention must be a parity-safe single-prompt/task-data surface; if no such surface exists, surface it (do not silently intervene in the artefact).
+3. **The builder's live source recheck contradicts §3** (the `compile.sh:8` swallow pattern absent, the convention seam not the `statement`, the `cost_usd: null` drop not reproducible, or the `arms.py` cost-parse not the drop point). HALT + surface with the builder's OWN live evidence (commands + outputs + timestamp) — do NOT inherit §3 as Tier-0; §3 is the plan-author's authoring-time read.
+4. **A loud-fail surface cannot be expressed without an interactive prompt or a retry-to-green.** HALT + surface — the zero-interaction one-shot contract (AC.RPB.1) and honest-negative-first-class (AC.RPB.7) forbid converting a dep failure into an interactive recovery or a retry loop; a loud build failure is a non-pass by construction, not a recovery path.
+5. **The fix cannot be AC-anchored without free-floating prose** (an ODD §2.5 tension — a line of work maps to no AC). HALT + surface — re-frame the AC or surface that the requested fix is itself method-not-outcome.
+
+---
+
+## §9 — Bookkeeping (backfill items)
+
+- **`docs/STATE.md`:** dated `2026-05-16` entry — the real-PB submission-build dep-determinism + disposition cost-recording de-noise/honesty corrective sealed LOCAL; names the two fixed defects (silent dep-swallow confound; loam-arm `cost_usd: null` drop), the frozen-semantics no-regression guard (AC.PBD.6), and the LOCAL-SEAL-ONLY status. Cross-reference this sub-plan + the parent `programbench-revival-real-pb`.
+- **`docs/release-roadmap.md`:** close the existing follow-on line — the v2 STATE entry already names *"Cost-measurement gap on the loam arm ($0.00 surfaced — honest-absent … follow-on loop-CLI-cost-surfacing item)"*; mark it resolved by this cycle (AC.PBD.4/.5). Add the dep-determinism de-noise as a named real-PB-harness reliability fix that DE-NOISES every subsequent real-PB run.
+- **Parent plan backfill:** `docs/plans/programbench-revival-real-pb.md` — a one-line note that the submission-build convention + cost-recording were de-noised/honesty-fixed by this sub-plan BEFORE the next real-PB measurement run (so that run is not confounded the way `yj` was); no §-renumber, no semantics change to the parent.
+- **§14 register** below — populated at build/seal time (D-PBD-* decisions narrated by the builder; commit SHAs backfilled by `loam amend seal --plan-doc`).
+
+---
+
+## §10 — F2 Ruthless Feedback (honest doubts, named with evidence + alternative)
+
+1. **The score-improvement analysis's `arms.run_loam_arm:248-255` line reference is stale (Tier-2 drift) — corrected against live source.** *Disagreement:* the analysis (L4.1) names "`arms.run_loam_arm` ~lines 248-255" as the fragile stdout-cost parse. *Evidence:* live `arms.py` @ `be3e269` — lines 248-255 are now `--reference-artifact` / `--max-refine-attempts` / `--cost-ceiling-usd` / `--wall-ceiling-s` flag wiring (introduced by the recently-sealed `loop-behavioral-refine-cycle`, seal `dd73ad6`); the **actual** fragile cost parse is `arms.py:286-297`: `for line in reversed(out.splitlines()): if line.startswith("{") and "cost_usd" in line: cost = json.loads(line).get("cost_usd")`. *Concrete drop mechanism (Tier-0):* the loop CLI emits `json.dumps({…"cost_usd": …}, indent=2)` (`cli.py:128-149`) — a **multi-line, pretty-printed** object whose opening line is just `{` (no `cost_usd` on it); the `arms.py` scan requires a single line that BOTH `startswith("{")` AND contains `"cost_usd"` — structurally impossible with `indent=2`, so `cost` stays `None`. *Alternative (adopted):* AC-anchor to the *defect class* (fragile stdout scan drops a measured cost), not the stale line numbers; AC.PBD.4/.5 + §6.5 name the seam by behaviour, and §8.3 instructs the builder to re-verify the drop point with its own live read. The defect class holds; only the location moved — this strengthens, not weakens, the fix.
+
+2. **The dominant design risk is mis-placing the dep-determinism fix as a harness post-edit (a silent input-parity violation).** *Disagreement:* the intuitive fix — "the harness rewrites the swallowing `compile.sh` line" — is **wrong**: the harness must never touch an arm's produced artefact (it would silently break AC.RPB.1 zero-interaction parity, the binding owner constraint Telegram 11443 / D-PBR-6, and would not even be parity-symmetric unless applied byte-identically to both arms post-hoc, which is itself an intervention). *Evidence:* `arms.py:72-83` `_ARM_DIRECTIVE` formats only `{statement}`; `compile.sh` is agent-authored inside the work dir and tarred unmodified into the upstream submission (`upstream_eval.py:74-91`); there is no harness-owned `compile.sh`. *Alternative (adopted):* the convention is conveyed through the parity-safe single-prompt/task-data surface both arms already receive identically (AC.PBD.3 makes this a hard AC; §8.2 makes the post-edit path a HALT). This is the single most important framing in the plan — a builder who misses it ships a silent parity violation that invalidates the very number the parent plan reports.
+
+3. **Convention-shaping is necessary but not sufficient — it is a probabilistic influence on a stochastic agent, not a guarantee.** *Disagreement:* a convention in the prompt/task-data raises the probability the agent authors a deterministic fail-loud dep step; it does not *force* it (the agent could still author a swallowing step). *Evidence:* the figlet `compile.sh` already shows the agent improvising multiple `|| true` fallbacks beyond the yj pattern — agents vary the dep handling. *Alternative (named, not silently accepted):* AC.PBD.1/.2 are correctly outcome-shaped (the *convention* must specify determinism + fail-loud and forbid the swallow construct — that is the harness's controllable surface); whether a given run's agent complies is then visible in that run's `compile_failed`/eval evidence (AC.RPB.6 taxonomy already captures it). The honest scope: this fix removes the *systemic* noise (the convention itself currently invites the swallow) — it does not claim per-run determinism the harness cannot enforce without breaching parity. This is the right scope under Lens 4 (the harness's confident, controllable surface is the convention; per-run agent behaviour is observed, not asserted). If the owner wants a *stronger* guarantee than convention-shaping (e.g. a harness-provided deterministic dep layer the agent cannot bypass), that is a larger scope decision — surfaced here, not silently widened.
+
+4. **Scope realism: small, reversible, correctly bounded.** No semantics touched; convention-text + a consumer-side parse robustness fix + AC tests. The decomposition stopping criterion (Lens 5) is met — splitting further (e.g. dep-determinism and cost-fix as two cycles) adds coordination overhead without tightening any sub-AC, and both share the single `workspace-bootstrap` fence + the same no-regression guard, so one cycle is correct.
+
+---
+
+## §11 — Provenance trail (load-bearing sources, line refs where useful — all Tier-0 read this turn from canonical `/Users/lukeivers/loam` @ `be3e269`)
+
+- **Score-improvement analysis (Tier-2 input, every claim re-verified):** `/Users/lukeivers/pos3/workspace/.scratch/claude-output/loam-score-improvement-analysis-2026-05-16.md` §3 (L2), §4 (L3), §5.1 (L4.1), §11 provenance.
+- **Fail-swallowing dep step (Tier-0):** `framework/tools/programbench-revival/realpb/.run_evidence/yj/{loam,baseline}_work/compile.sh:8` (`pip3 install --quiet pyyaml tomli tomli-w pyhcl 2>/dev/null || true`); figlet produced `compile.sh:58` (repeats the `|| true` pattern).
+- **Convention seam (Tier-0):** `framework/tools/programbench-revival/realpb/tasks/tasks.json` (per-task `statement` carries the `compile.sh`+`executable` instruction; keys `id/instance_id/image/image_digest/filter_regex/statement/floor_theta/setup/expected_real_outcome`); `arms.py:72-83` `_ARM_DIRECTIVE` (formats only `{statement}`); `upstream_eval.py:74-91` `package_submission` (tars the work dir unmodified).
+- **Cost drop (Tier-0):** `realpb/.run_evidence/yj/disposition.json` (`baseline cost_usd=0.97955…`, `loam cost_usd=None`); `arms.py:286-297` (the fragile `reversed(out.splitlines())` first-`{`-line scan — the actual drop point, NOT the analysis's stale `:248-255`); `framework/tools/handsoff-loop/src/handsoff_loop/cli.py:128-149` (`json.dumps({…"cost_usd": result.cost_usd…}, indent=2)` — multi-line emit); `orchestrator.py:117-123,478-482` (`HandsoffResult.cost_usd: float | None`, `cost_usd=total_cost`); `realpb/src/programbench_revival_realpb/runner.py:360-375` (`l_cost = run_loam_arm(...)` → `cost=l_cost` pass-through, faithful).
+- **Frozen sealed semantics (no-regression target):** `docs/plans/programbench-revival-real-pb.md` §5 (AC.RPB.1 zero-interaction parity / .2 floor / .3 independent judge / .5 margin + `k_min ≥ 2` / .7 honest-negative); `docs/plans/programbench-revival-real-pb.manifest.yaml` (`schema_version: 3`, single-component `workspace-bootstrap` fence, universal prefixes/files).
+- **Recently-landed line-shift cause:** `docs/STATE.md:115` + `docs/plans/loop-behavioral-refine-cycle.md` (`loop-behavioral-refine-cycle` sealed `dd73ad6`, §14 backfill `be3e269` — added the `arms.py` refine flags that shifted lines 248-255).
+- **Convention shape:** `plugins/dev-sdlc/docs/conventions/plan-docs.md` (plan-doc + manifest authoring); scope-descriptive AC IDs per the 2026-05-09 ratification (`AC.PBD.*`, not version-packed).
+- Web sources per §7 (untrusted DATA, fetched 2026-05-16 context; hypotheses formed from source first; no scope redirect).
+
+---
+
+## §14 — Method-decision register + commit SHAs (populated at build/seal time)
+
+| ID | Decision | Recommendation (plan-author) | Resolution (builder) | SHA |
+|---|---|---|---|---|
+| D-PBD-1 | Pin vs vendor for the submission deps | **Pin** (`==`-pinned specifiers + fail-loud install) — standard reproducible-build pattern; vendoring's blob-management/freeze surface not justified by a marginal determinism gain on this host | _(build-time)_ | _(seal-time)_ |
+| D-PBD-2 | How the loud-fail surfaces without breaching the zero-interaction one-shot contract | **Non-zero build exit propagating to the existing upstream `compile_failed ⇒ 0` contract** — no new outcome semantics, no interactive prompt, no retry-to-green; a loud build failure is a non-pass by construction (existing taxonomy) | _(build-time)_ | _(seal-time)_ |
+| D-PBD-3 | The robust cost-capture seam | **Robust structured read of the loop's full emitted JSON result (or its artefact-dir cost record), distinguishing honest-absent from a consumer parse miss** — replace the fragile `arms.py:286-297` first-`{`-line scan that cannot match a multi-line pretty-printed `cost_usd` | _(build-time)_ | _(seal-time)_ |
+| D-PBD-4 | Scope shape: amend the existing real-PB harness component vs new component | **Amend within the single existing `workspace-bootstrap` fence** (the SAME anchor the parent real-PB + loop-behavioral-refine-cycle sealed cleanly against; the fixes land in the already-admitted `framework/tools/programbench-revival/` + `framework/hands-off-lifecycle/tests/` prefixes) — a new component would fragment a single coherent harness for no isolation benefit | _(build-time)_ | _(seal-time)_ |
+| D-build.* | Builder method decisions | _(builder's call per ODD §1.1)_ | _(build-time)_ | _(seal-time)_ |
+
+---
+
+## §15 — Backwards-compat verification (what existing tests must still pass)
+
+The full parent `AC.RPB.*` test family at `framework/hands-off-lifecycle/tests/` must pass unchanged (AC.PBD.6). The `loop-behavioral-refine-cycle` `AC.BRC.*` family and the `AC.FOUND.0` / `AC.HL.*` / `AC.GR.6`-seam regression set must pass unchanged (the cost-capture change touches `run_loam_arm`'s consumption only — no loop-internal or seam change). The `workspace-bootstrap` seal-test must be GREEN post-seal (fence held); `loam amend apply --dry-run` clean post-seal.
+
+## §16 — Halt-and-surface findings (raised + ruled at plan-authoring)
+
+- **Stale line reference in the source research artefact** (analysis L4.1 `:248-255`) — RULED: corrected to the live drop point `arms.py:286-297` against Tier-0 source; AC-anchored to the defect class, builder instructed to re-verify (§10.1 / §8.3). Not a blocker; the defect holds.
+- **Input-parity tension** (the intuitive harness-post-edit fix would silently violate AC.RPB.1) — RULED: AC.PBD.3 makes parity a hard AC; §8.2 makes the post-edit path a HALT; surfaced as the dominant design risk (§10.2). Not a blocker; the convention seam is parity-safe and exists (the per-task `statement` both arms receive identically).
+- **Convention-shaping is probabilistic, not a per-run guarantee** — RULED: correctly scoped under Lens 4 (the harness's controllable surface is the convention; per-run agent compliance is observed via the existing AC.RPB.6 taxonomy, not asserted); a stronger harness-enforced dep layer is a larger scope decision surfaced (§10.3), not silently widened. Not a blocker.
+- **No measurement-semantics change** — RULED: §3.4 binding constraint + AC.PBD.6 no-regression guard + §8.1 HALT; de-noise/honesty only. Not a blocker.

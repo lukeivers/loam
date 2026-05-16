@@ -69,6 +69,57 @@ _HANDSOFF_SRC = (
 # ONLY the user's sentence + the work-dir contract — NO frozen check,
 # NO ground-truth, NO held-out input (input parity; ground-truth
 # isolation, AC.PBR.1).
+#
+# The SUBMISSION-BUILD DEPENDENCY CONVENTION (AC.PBD.1 / AC.PBD.2 /
+# AC.PBD.3) is appended HERE — in the single prompt template BOTH
+# arms construct their prompt from (run_baseline_arm and run_loam_arm
+# both call `_ARM_DIRECTIVE.format(statement=...)`). This is the only
+# parity-and-hash-safe seam:
+#   * INPUT PARITY (AC.PBD.3 / AC.RPB.1): the convention reaches both
+#     arms BYTE-IDENTICALLY through the same single prompt both arms
+#     already receive; the harness NEVER post-edits, patches, or
+#     inspects an arm's PRODUCED `compile.sh`/work dir to enforce
+#     determinism — that would silently break the binding
+#     zero-interaction parity invariant. This block shapes the prompt
+#     the agent authors its `compile.sh` FROM; it never touches the
+#     produced artefact, and the closed no-answer channel is
+#     unchanged.
+#   * FROZEN TASK-SET CONTENT HASH UNTOUCHED (AC.PBD.6): the
+#     convention is NOT written into the per-task `statement` bytes in
+#     `tasks/tasks.json` (those bytes are content-hash-pinned —
+#     `load_frozen_realpb_set` sha256s the exact file; the frozen
+#     task-set content hash is a FROZEN measurement-semantics surface).
+#     Living in the directive template keeps the frozen task content
+#     and its pinned hash byte-unchanged.
+# Determinism + fail-loud only; no new outcome semantics — a failed
+# dependency install is a non-pass BY CONSTRUCTION via the EXISTING
+# upstream `compile_failed => 0` contract (NOT a new outcome class,
+# NOT an interactive prompt, NOT a retry-to-green — the zero-
+# interaction one-shot contract AC.RPB.1 / honest-negative-first-class
+# AC.RPB.7 are unchanged).
+_SUBMISSION_BUILD_DEP_CONVENTION = """\
+
+Submission-build dependency rule (applies when your build needs \
+third-party packages — produce a build that is reproducible, not one \
+that depends on install luck):
+- If `compile.sh` (or any build step) installs dependencies, pin \
+every dependency to an EXACT version (e.g. `pip3 install \
+pyyaml==6.0.2 tomli==2.0.1`), so the same submission resolves to the \
+same dependency set every time it is built.
+- The dependency-install step MUST fail loud: if a required \
+dependency cannot be installed, the build MUST exit non-zero and \
+stop. Do NOT suppress install errors and continue — never \
+`2>/dev/null`, never `|| true`, never `|| :`, never any construct \
+that lets the build proceed as if the dependency were present when \
+the install actually failed. A build that cannot get its \
+dependencies is a failed build and must report itself as one.
+- Prefer the language/runtime standard library when it can do the \
+job, so the build needs no third-party dependency at all.
+There is no one to ask and no retry: a clean reproducible build that \
+fails loudly when a dependency is missing is correct; a build that \
+silently swallows a failed install is not.
+"""
+
 _ARM_DIRECTIVE = """\
 You are given ONE task from a non-technical user, stated in plain \
 language. There is NO channel to ask them anything — you cannot ask a \
@@ -80,7 +131,7 @@ real change — do not merely describe what you would do.
 
 The user's request:
 {statement}
-"""
+""" + _SUBMISSION_BUILD_DEP_CONVENTION
 
 
 def _write_setup(work_dir: Path, setup_files: dict[str, str]) -> None:
@@ -273,28 +324,100 @@ def run_loam_arm(
         if existing_pp else str(_HANDSOFF_SRC)
     )
     t0 = time.monotonic()
+    loop_stdout = ""
+    timed_out = False
     try:
         proc = subprocess.run(
             argv, capture_output=True, text=True, timeout=timeout,
             env=env,
         )
-        out = (proc.stdout or "") + "\n" + (proc.stderr or "")
+        loop_stdout = proc.stdout or ""
+        out = loop_stdout + "\n" + (proc.stderr or "")
     except subprocess.TimeoutExpired as exc:
+        timed_out = True
         out = f"LOAM-ARM TIMEOUT after {timeout}s: {exc}"
     dt = time.monotonic() - t0
 
-    # Loop cost is MEASURED (orchestrator sums sub-agent
-    # total_cost_usd from the --output-format json envelope). Parse
-    # the loop's own JSON result line for cost_usd.
+    # Loop cost is MEASURED (the orchestrator sums sub-agent
+    # total_cost_usd from the --output-format json envelope; the CLI
+    # emits it as the top-level `cost_usd` key of a PRETTY-PRINTED
+    # multi-line `json.dumps({...}, indent=2)` result envelope on
+    # stdout — handsoff_loop/cli.py).
+    #
+    # AC.PBD.4 / AC.PBD.5 — robust structured read (D-PBD-3). The
+    # prior single-line scan (`for line in reversed(...): if
+    # line.startswith("{") and "cost_usd" in line`) STRUCTURALLY
+    # cannot match an `indent=2` object: the `{` opening line carries
+    # no `cost_usd`, and the `"cost_usd": ...` line does not start
+    # with `{` — so a MEASURED cost was silently lost to `null` on
+    # every loam disposition. We instead scan stdout for the LAST
+    # balanced top-level JSON object and parse the whole document.
+    # Three outcomes are kept DISTINCT (never conflated):
+    #   * envelope parsed, `cost_usd` present + non-null  -> the
+    #     measured cost reaches the disposition (AC.PBD.4);
+    #   * envelope parsed, `cost_usd` present but null     -> the loop
+    #     genuinely did not measure a cost: HONEST-ABSENT (AC.PBD.5);
+    #   * loop produced output but NO parseable result envelope with a
+    #     `cost_usd` key (and it did not time out) -> a CONSUMER-SIDE
+    #     parse MISS: a visible diagnostic is folded into the evidence
+    #     `out` (the independent judge + run evidence see it); cost is
+    #     left `None` but it is NOT a SILENT loss (AC.PBD.5).
+    def _last_json_object(text: str) -> dict | None:
+        """Return the last balanced, parseable top-level JSON object
+        in ``text`` (the loop CLI's pretty-printed result envelope is
+        the final such object printed before the CLI returns), or
+        ``None`` if there is no parseable top-level object."""
+        result: dict | None = None
+        depth = 0
+        start = -1
+        in_str = False
+        esc = False
+        for i, ch in enumerate(text):
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+            elif ch == "{":
+                if depth == 0:
+                    start = i
+                depth += 1
+            elif ch == "}":
+                if depth > 0:
+                    depth -= 1
+                    if depth == 0 and start >= 0:
+                        try:
+                            obj = json.loads(text[start:i + 1])
+                        except json.JSONDecodeError:
+                            obj = None
+                        if isinstance(obj, dict):
+                            result = obj
+                        start = -1
+        return result
+
     cost: float | None = None
-    for line in reversed(out.splitlines()):
-        line = line.strip()
-        if line.startswith("{") and "cost_usd" in line:
-            try:
-                cost = json.loads(line).get("cost_usd")
-            except json.JSONDecodeError:
-                pass
-            break
+    envelope = _last_json_object(loop_stdout)
+    if envelope is not None and "cost_usd" in envelope:
+        # Honest value the loop reported: a real measured cost, or an
+        # honest null when the loop genuinely measured none.
+        cost = envelope.get("cost_usd")
+    elif not timed_out and loop_stdout.strip():
+        # The loop produced output but no result envelope carrying a
+        # cost_usd key was parseable — a consumer-side parse miss, NOT
+        # an honest-absent. Make it VISIBLE in the evidence rather
+        # than silently recording null.
+        out += (
+            "\n\n[arms.run_loam_arm] cost-capture parse MISS: the "
+            "loop produced stdout but no parseable result envelope "
+            "with a `cost_usd` key was found; loam cost recorded as "
+            "absent due to a consumer-side parse miss, NOT because "
+            "the loop did not measure a cost (AC.PBD.5).\n"
+        )
     # Fold in the artefact dir's final_verify + transcript tails so
     # the independent judge sees the real machine evidence.
     fv = artifact_dir / "final_verify.json"

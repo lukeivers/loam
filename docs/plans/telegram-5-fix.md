@@ -215,10 +215,36 @@ reuse-the-proven-mechanism, the dogfood-recursion closure
   `framework/tools/` + `docs/plans/`; `docs/STATE.md` universal
   allowed_file). Mirrors the telegram-poller-isolation-fix +
   phase-b-intake-fix precedents on this exact branch tip.
-- Source-edit BASELINE / apply SHA / seal SHA: backfilled below at
-  seal.
-  - BASELINE: `<backfilled>`
-  - apply: `<backfilled>`
-  - seal: `<backfilled>`
+- Seal register (backfilled):
+  - manifest BASELINE: `ce9d830` (one commit earlier than the
+    source-edit commit — see the method-deviation note below;
+    functionally correct, the `ce9d830..SEAL` diff window captures
+    exactly this amendment).
+  - apply bookkeeping commit (manifest + sidecar + seal-test
+    BASELINE bump): `40ba92b`.
+  - source-edit commit (package + 6 AC tests + this plan-doc):
+    `1c3f7da`.
+  - AC.PROMO.6 test-text corrective (admit the amendment-ritual
+    bookkeeping surface in the affirmative-side check; load-bearing
+    §1a/§1b/§1c fence assertion unchanged): `a7ca729`.
+  - deterministic seal commit: `ca7f715`.
 - canonical `main` / `origin/main` unchanged across the cycle:
-  `<backfilled>`.
+  `f7ccc3d` (== dispatch baseline; nothing pushed/merged/published/
+  tagged; no prior commit reverted — b33c0a8/e0b71cb/ceb629b all
+  still in history).
+- Method-deviation (F2, surfaced not buried): `loam amend apply` was
+  run before the source commit, so BASELINE pins `ce9d830` (the
+  pre-build branch tip) rather than the source-edit commit's
+  immediate predecessor as the prior cycles' convention does. Per
+  critical-thinking-on-deviations the resolutions were enumerated
+  (commit-source-then-seal vs reset-and-re-apply vs halt-surface);
+  commit-source-then-seal was chosen — functionally correct (correct
+  diff window, AC.PROMO.6 reads `baseline:` from the manifest, zero
+  CDC impact), reversible, zero blast radius, no history rewrite for
+  a purely cosmetic gain. Builder-resolvable per
+  test-against-operational-objective; not an owner escalation.
+- AC.PROMO.1 real-binary result (the load-bearing empirical proof,
+  run at sealed HEAD `ca7f715`): 4 parallel real `claude -p` spawns
+  through the shared surface all `rc=0` with genuine result
+  envelopes; the single-consumer-poller-slot sentinel was ALIVE
+  (`.poll() is None`) after the harness-style multi-spawn.

@@ -22,7 +22,15 @@ The pipeline:
    interview) → a plain-English "done when:" statement → **exactly one
    plain-language approval gate** → a machine-checkable form, with an
    independent faithfulness check guarding the checkable-but-wrong
-   failure.
+   failure. When a checkable "done" cannot be pinned (the gate would
+   be empty/broken, or the faithfulness check catches a proxy), intake
+   does **not** dead-end: it enters a **bounded goal-refinement**
+   (interactive clarification first, else self-refine, else a
+   *measurable milestone on the path* the user agrees to with a
+   re-engaged check-in) — and only a definite, evidence-named
+   honest-negative when even on-the-path refinement is irreducible
+   (the bound is finite; the honest-negative is a valid outcome, never
+   a fabricated pass).
 2. **Freeze** (`verify.py`) — the machine-checkable acceptance is
    authored, hash-pinned, and frozen *before any sub-agent runs*; it is
    seen by no sub-agent and no per-sub-task judge.

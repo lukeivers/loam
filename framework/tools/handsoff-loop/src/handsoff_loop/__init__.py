@@ -29,7 +29,11 @@ subprocess, default Sonnet (feedback_no_anthropic_api_key).
 from __future__ import annotations
 
 from .verify import FrozenAcceptance, VerifyResult, freeze_acceptance, verify
-from .intake import IntakeOutcome, derive_acceptance_from_intent
+from .intake import (
+    IntakeOutcome,
+    derive_acceptance_from_intent,
+    freeze_input_from_outcome,
+)
 from .goal_drive import GoalDriveSpec, build_goal_drive_argv
 from .orchestrator import (
     HandsoffResult,
@@ -45,6 +49,7 @@ __all__ = [
     "verify",
     "IntakeOutcome",
     "derive_acceptance_from_intent",
+    "freeze_input_from_outcome",
     "GoalDriveSpec",
     "build_goal_drive_argv",
     "HandsoffResult",

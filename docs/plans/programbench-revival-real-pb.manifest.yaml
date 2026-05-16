@@ -1,0 +1,156 @@
+schema_version: 3
+amendment:
+  slug: programbench-revival-real-pb
+  title: "ProgramBench-revival (REAL public ProgramBench) — a definite, independently-judged, evidence-backed verdict on whether the real sealed v0.11.0 hands-off loop (the loam arm) MATERIALLY OUTPERFORMS a bare `claude -p` baseline (the no-harness floor arm) at executing the REAL public ProgramBench task set (the real linux/amd64 `programbench/<owner>_1776_<repo>.<sha>:task` images + the real HuggingFace ProgramBench-Tests blobs, scored by the REAL upstream `programbench eval` as the deterministic floor signal, that signal GROUNDED by the proven INDEPENDENT held-out adversarial tool-grounded judge — provably NOT the loop's own intake.py AC.B.4b faithfulness judge). This cycle REUSES the surviving invariant spine of the predecessor `programbench-revival-v2` (sealed LOCAL — plan 08a7b94 / source-edit fd0eda4 / seal e273966 / §14 backfill 44eebad) and FIXES its two defects: (1) the TASK-SOURCE MISDIAGNOSIS — v2 ran a 6-task hand-curated SUBSTITUTE (PB1..PB6) because it concluded the real public ProgramBench was host-blocked; that conclusion is Tier-0-REFUTED by a LIVE 2026-05-16 recheck on this host (Docker Server 27.5.1 up; ≥7 real public programbench/*_1776_*.<sha>:task images present, arch linux/amd64; amd64 EMULATION RUNS on this arm64 host — docker run --platform linux/amd64 a real PB image returned x86_64 exit 0; the real HF ProgramBench-Tests dataset cached at snapshot de0ddfb, 6 task dirs / 65 blobs; the upstream programbench-eval clone fully populated HEAD 4e8456b with real eval.py — NOT an empty skeleton; real prior *.eval.json verdicts already produced under emulation: figlet 458/1044, htmlq 1546/2058, gron 70/233, yj+csview compile_failed); (2) the BINARY-VERDICT-RULE DEGENERACY (the v2 task-#44 / PB3 defect) — the real upstream eval signal is GRADED (score = n_resolved / len(test_results), is_resolved iff status=='passed', compile_failed ⇒ 0), NOT binary, so the verdict rule is re-authored over a FROZEN per-task positive-real-outcome floor threshold (D-RPB-2) PLUS a FROZEN small-k floor k_min ≥ 2 on the baseline-miss denominator (D-RPB-1) that FORCES verdict (c) indeterminate with a machine-stated reason whenever the count of tasks the baseline arm is independently judged a non-pass on is < k_min — a degenerate or near-degenerate denominator can NEVER read as a determinate loss or win. AC.RPB.1 — two arms (baseline = ONE bare claude -p given only the task's plain-language statement, the documented floor; loam = the real sealed loop via the actual `handsoff-loop run` CLI, no mock, no pre-loop machinery, no code-gen-surface stand-in) run on the SAME real public ProgramBench subset, SAME model tier (default Sonnet, no model-rationale needed), SAME single plain-language non-tech statement per task, ZERO-INTERACTION PARITY (binding — REUSED v2 D-PBR-6 / owner constraint Telegram 11443: both arms produce output SOLELY from the single prompt under a CLOSED no-answer user channel, zero interactive back-and-forth either arm, NO simulated/scripted/stand-in user ANY arm; an arm that genuinely cannot resolve a task without an answer yields an HONEST-NEGATIVE the independent judge scores as a NON-PASS, never simulated to success, never hung, never retried; the cooperative-user simulation is NOT the loam-arm model), each per-task run environment-isolated + isolated from the upstream test suite / scoring command (ABC task-validity = loam's sealed FrozenAcceptance.assert_unseen_by freeze-isolation spine, REUSED, no new method; τ-bench simulate-the-user pattern explicitly NOT adopted — one-shot benchmark, owner-ruled out). AC.RPB.2 — the task set IS the REAL public ProgramBench (a NAMED digest-pinned subset of the real programbench/*_1776_*.<sha>:task images already on this host, scored by the REAL upstream programbench eval consuming the REAL HF ProgramBench-Tests blobs) — NOT a hand-curated substitute; each selected task carries a plain-language non-tech statement + the real upstream deterministic test-suite as the POSITIVE REAL-OUTCOME FLOOR SIGNAL + a held-out anti-overfit binding (the upstream held-out test branches, absent from every prompt, the agent never sees the suite); a NOMINAL-BUT-HOLLOW result is a NON-PASS BY CONSTRUCTION (compile_failed ⇒ 0, empty/vacuous submission, or a friendly summary with ~0 real tests passing drives the floor non-pass — 'it looks done' is not the real outcome); the per-task floor-pass threshold (what graded n_resolved/n_tests counts as the real outcome delivered) is FROZEN with the task set before any run (D-RPB-2); the subset is SIZED so the AC.RPB.5 baseline-miss denominator is non-degenerate (≥ k_min) OR the verdict returns the explicit (c) indeterminate polarity that NAMES the small-denominator reason — a degenerate denominator must NEVER read as a determinate loss/win (the v2 task-#44 defect fix); the genuinely-subjective objective class is EXCLUDED BY CONSTRUCTION per owner ruling Telegram 11437 (REUSED v2 ruling). AC.RPB.3 — the scoring authority for BOTH arms is the INDEPENDENT held-out adversarial tool-grounded judge (the proven _independent_judge methodology spawned through the sealed spawn_isolated_claude surface, forced to enumerate what the real upstream programbench eval result for that task would/would-NOT guarantee about the real outcome) GROUNDED in the real upstream *.eval.json test-suite result + the per-task frozen floor threshold — and PROVABLY NOT the loop's own intake.py AC.B.4b judge (ABC outcome-validity; loam's tool-executing held-out adversarial judge KEPT because it is already a STRONGER shape for the I5/I6 failure mode than ABC's generic LLM-judge; RAND judge-reliability corroborates independent+held-out+adversarial as the right shape, not a reason to add a second method — no external method adopted wholesale; REUSED v2 AC.PBR.3). AC.RPB.4 — per (arm,task) pass/fail computed by a rule FROZEN before any run (content-hash-pinned with the task set): passed iff independent judge tags faithful AND the real upstream programbench eval per-task result clears the frozen per-task positive-real-outcome floor threshold (AC.RPB.2) AND the held-out anti-overfit binding holds (the agent provably never saw the upstream suite — the proven verify.py:213-215 both-must-pass spine, real-PB-bound); each (arm,task) run ONCE for the headline, NO retry-to-pass; bounded small-k re-run ONLY on margin tasks for consistency reporting, NEVER to flip a fail to a pass (ABC contamination-prevention = loam's freeze-before-any-sub-agent spine; REUSED v2 AC.PBR.4). AC.RPB.5 — a PRE-DECLARED decision rule FROZEN before any run maps the two arms' independently-judged pass profiles to EXACTLY THREE definite verdicts; the materially-beats margin shape is REUSED from v2's FROZEN-RATIFIED D-PBR-1 (owner Telegram 11447, the builder freezes EXACTLY this and does NOT move it after runs begin): (a) loam MATERIALLY BEATS baseline iff BOTH (i) among the tasks the BASELINE arm is independently judged a NON-PASS on, the LOAM arm is independently judged a PASS on a CLEAR MAJORITY of them, AND (ii) loam's TOTAL independently-judged pass count does NOT regress below baseline's total; (b) loam does NOT materially beat baseline (margin not cleared — a FIRST-CLASS plan-success outcome reported straight); (c) indeterminate; the 'clear majority of the baseline's non-passes' computation is GATED by a FROZEN small-k floor k_min ≥ 2 on the baseline-miss denominator (D-RPB-1) — if the baseline-miss count is < k_min the verdict is FORCED to (c) indeterminate with the machine-stated reason 'baseline-miss-denominator < k_min', a degenerate/near-degenerate denominator can NEVER resolve to (a) or (b) (the named v2 task-#44 defect fix); the verdict is COMPUTED from the numbers not asserted; 'every task independently judged a pass' is a DOCUMENTED ASPIRATIONAL/SECONDARY metric EXPLICITLY NOT the gate; the margin is a FAIR honest test by construction (recovering a clear majority of the baseline's OWN real-benchmark misses while forbidding any total-pass regression — not trivially clearable, not inflated so a real win reads as a loss), NOT moved after runs begin. AC.RPB.6 — every (arm,task) records MEASURED cost (from --output-format json total_cost_usd, NEVER estimated, D-COST-BAND), wall-clock recorded distinctly as agent-wall-clock AND real-upstream-eval-emulation-wall-clock (the eval leg is wall-clock-heavy — ~8–33 min/task under amd64 emulation per the live prior signal), the raw transcript, the real upstream *.eval.json artefact (test_results + score + error_code), and the independent judge verdict+reason; AND every (arm,task) judged a NON-PASS carries exactly one class from a SMALL FIXED TAXONOMY frozen with the task set — did-not-produce-output / produced-but-no-real-effect (the false-success class: compile_failed / empty / ~0 real tests passing while reporting done) / produced-but-wrong (a compiling submission that fails the frozen floor threshold) / honest-negative-refusal (first-class, never retried-to-green) — so the verdict is a PER-ARM FAILURE-SIGNATURE MAP not only a pass count (REUSED v2 four-class taxonomy, real-PB-bound); the headline number is reproducible from the preserved evidence (re-running the frozen scorer over the preserved *.eval.json + transcripts yields the same verdict; ABC reporting PARTIAL-adopt: cost/latency+reproducibility ADOPTED, full all-task statistical pass@k NOT adopted — architectural-verdict question per feedback_n1_architectural_vs_n3_statistical + cost discipline, small-k only at the margin; the four-class false-success taxonomy KEPT as the outcome, external per-model-signature taxonomies NOT adopted wholesale). AC.RPB.7 (LEAD; honest-negative VALID) — a report at docs/experiments/programbench-revival-real-pb.md carries both arms' definite per-task disposition tables over the REAL public ProgramBench subset (each task named by its real upstream instance-id + digest) + each arm's independently-judged honest-coverage + the PER-ARM FAILURE-SIGNATURE MAP (the false-success 'produced-but-no-real-effect' class explicit per arm) + the margin (clear majority of the baseline's independently-judged real-benchmark misses recovered by loam AND no total-pass regression, with the k_min small-k floor forcing indeterminate on a degenerate denominator) + the computed three-valued verdict + the all-tasks-pass ASPIRATIONAL/SECONDARY metric reported alongside but explicitly labelled NOT the gate + measured cost/latency per arm + an EXPLICIT statement that this is the REAL public ProgramBench measurement and is a DIFFERENT/HARDER artefact than the v2 6-task substitute (the v2 substitute result MUST NOT be cited as a real-PB result; the report names the v2 substitute by slug and states the relationship) + a plain-language answer a non-technical reader can act on to 'does loam materially beat a bare LLM at hands-off task execution for a non-technical user ON THE REAL PUBLIC PROGRAMBENCH, by how much, judged by something other than loam's own judge', OR a definite evidence-backed honest-negative/indeterminate naming WHY. A 'loam does NOT materially beat the baseline on the real public set — here is the evidence' finding SATISFIES AC.RPB.7 EXACTLY as a material-win finding does, is reported straight, and is NEVER retried to green, NEVER the margin weakened, NEVER widened into re-running until loam wins (F2 / LOCKED-DESIGN-NOT-LICENSE). REUSE-VS-REBUILD (D-RPB-7, plan §3.2/§6/§10.1): the existing pos3 programbench-derivative harness measured the CODE-GEN surface (run_agent.py drives raw-llm / loam-builder / loam-builder-odd / continuum-builder-v2 — all single claude -p code-gen agents; ZERO handsoff-loop / orchestrator / spawn_isolated_claude / independent_judge refs across the entire harness; the 100 May 11–13 runs were scored by the upstream programbench eval test-suite on agent-produced codebases, NOT by the sealed loop or the independent judge), so it is NOT reusable as the loam/baseline arm drivers; the builder REUSES its real-PB PLUMBING read-only (task→instance-id map, the programbench eval --filter --image-tag task invocation form, submission.tar.gz packaging, HF blob sync, the proven amd64-emulation runnability — re-deriving this is non-objective duplication) and REBUILDS the loop+baseline arm drivers + the independent-judge scoring spine from the v2 surviving assets (D-RPB-9: the prior runs are reusable as a real-PB-plumbing existence-proof + a code-gen-surface cost/wall-clock signal, NOT as loop-vs-bare-LLM verdict evidence; the report must not conflate). FENCE (plan §2, binding): NEW executable framework/tools/programbench-revival/realpb/ (arm drivers + real-PB task-set loader + judge-scoring aggregator + the real upstream programbench eval invocation) + NEW content-pinned task-selection data framework/tools/programbench-revival/realpb/tasks/ (the chosen real instance-id subset + per-task plain-language statement + per-task floor threshold + the frozen rule — the real task IMAGES + HF blobs are NOT vendored, referenced by digest, read-only host inputs) + per-(arm,task) evidence framework/tools/programbench-revival/realpb/.run_evidence/ (incl. the real upstream *.eval.json) + the AC.RPB.* one-file-per-AC tests at framework/hands-off-lifecycle/tests/ (AC.RPB.7 collects-but-skips in the deterministic seal sweep behind an env gate per the AC.B.5/GR.5/subloam-driver/v2 AC.PBR.7 precedent) + the verdict report docs/experiments/programbench-revival-real-pb.md. REUSED NOT re-authored: handsoff_loop_goal_refine_reharden._independent_judge + loam_spawn_isolation.spawn_isolated_claude + the existing programbench-derivative real-PB plumbing (Lens 1 compose-don't-reimplement; re-authoring/re-deriving any would be non-objective duplication). OUT (hard, plan §7): the genuinely-subjective objective class (owner-ruled out Telegram 11437, NOT a blocker, REUSED); public ProgramBench/HARP leaderboard SUBMISSION machinery (deferred HARP scope docs/plans/harness-benchmark-build.md + roadmap binary-usage-observation-harness line — this cycle runs the real public benchmark LOCALLY, does NOT submit; do not copy the popular public-leaderboard shape uncritically); re-proving the core decompose->dispatch->judge loop / verify spine / intake refinement / Telegram-poller isolation / the sealed PBF fixes (AC.FOUND.0 carried forward); the v2 6-task substitute (preserved as the explicitly-labelled substitute record, NOT extended / NOT cited as a real-PB result / NOT deleted — this cycle supersedes its task-source decision ONLY, not its invariant spine); multi-vendor/non-Claude arms (subscription-only claude -p is binding architecture); canonical-main mutation/push/publish/tag; TUNING the loop to win (measures the sealed loop AS-IS on the real benchmark — if it loses that is the finding, NOT a trigger to modify the loop in this cycle); re-deriving real-PB plumbing (the existing harness's plumbing is REUSED read-only). NO Anthropic API key — every claude spawn (both arms + the independent judge) routes through the sealed loam_spawn_isolation.spawn_isolated_claude surface, real claude binary, default Sonnet; an un-isolated loam-adjacent spawn is a HARD ERROR (kills the operator's Telegram, standing rule + feedback_no_anthropic_api_key). HOST-BLOCK HALT (plan §8.2): the §3.1 Tier-0 recheck is the PLAN-AUTHOR's at authoring time — the builder re-verifies at use-time (§6.1) and does NOT inherit §3 as Tier-0; the host-block halt fires ONLY if the builder's OWN live empirical evidence (commands + outputs + timestamp) contradicts §3.1 (real images genuinely unrunnable / emulation broken / HF blobs unfetchable) — and then it surfaces that evidence and HALTS; it does NOT silently fall back to a substitute (a substitute fallback requires a fresh owner ruling, surfaced — NOT a builder default) and does NOT fake real-leaderboard numbers. LOCAL SEAL ONLY — NOT merged to main, NOT pushed, NOT published, NOT tagged; origin/main stays exactly at its current commit (the public step is a separate owner-asked action, NOT part of this cycle). No version bump (version derives at release-time per feedback_version_numbers_at_release_time). AC family scope-descriptive (AC.RPB.1..7); slug NOT version-packed; one test file per AC per the one-file-per-AC convention; method-in-AC test passed per-AC (each satisfiable by more than one implementation per plan §5 satisfiability notes)."
+
+# BASELINE backfilled at build-cycle source-edit commit time per the
+# loop-goal-refinement / handsoff-loop-real-build / programbench-revival-v2
+# precedent. Placeholder pinned to the predecessor v2's §14-backfill
+# commit (44eebad — the last sealed/landed commit on this branch tip;
+# the v2 cycle is sealed/done, tree free of concurrent amend builds) so a
+# pre-apply `loam amend validate` has a parseable anchor; the build cycle
+# REPLACES this with the actual source-edit BASELINE commit (the commit
+# immediately preceding the manifest apply).
+baseline: "44eebad"
+
+plan: docs/plans/programbench-revival-real-pb.md
+plan_doc_ref: docs/plans/programbench-revival-real-pb.md
+
+ac_count: 7
+
+smoke_outcome: "Bare claude -p vs the real sealed loop on the REAL public ProgramBench, INDEPENDENT-judge scored, yields a DEFINITE 3-valued verdict with a k_min small-k floor; honest-negative first-class."
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/.
+# The NEW real-PB measurement executable + content-pinned task-selection
+# data + run-evidence land at framework/tools/programbench-revival/realpb/
+# (inside the workspace-bootstrap seal-test's LIVE-admitted
+# framework/tools/ prefix — the SAME surface the handsoff-loop package +
+# the goal_refine_reharden runner + v2's framework/tools/programbench-
+# revival/ already live on; a realpb/ subdir keeps the real-benchmark
+# harness colocated WITHOUT overwriting v2's substitute artefact). The
+# seven AC.RPB.* test files land at framework/hands-off-lifecycle/tests/
+# (inside the admitted framework/hands-off-lifecycle/ prefix — the SAME
+# surface the test_AC_HL_B1_B4 + test_AC_HL_GR_* + v2's AC.PBR.* test
+# family lives on). The verdict report lands at docs/experiments/ + the
+# plan-doc/manifest + STATE/roadmap backfill under the docs/plans/ +
+# docs/STATE.md + docs/release-roadmap.md universal prefixes/files.
+# Admitted prefixes are the SAME ones v2 sealed cleanly against on this
+# exact anchor on this branch tip (loop-goal-refinement + handsoff-loop-
+# real-build + programbench-revival-v2 precedents). extra_allowed_prefixes
+# EMPTY — no sealed-source edit outside the workspace-bootstrap anchor;
+# the independent judge + isolation surface + the existing programbench-
+# derivative harness are CONSUMED read-only (imported / referenced), NOT
+# modified.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc/manifest +
+# the verdict report + STATE/roadmap backfill land under these universal
+# prefixes/files, NOT as a fence widening.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/papers/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.programbench-revival-real-pb
+  body: |
+    # ProgramBench-revival (REAL public ProgramBench) — does the real sealed loop materially beat a bare LLM on the REAL benchmark, judged independently?
+
+    This is the REAL public ProgramBench instance of the v2
+    prime-objective measurement. The predecessor `programbench-revival-v2`
+    (sealed LOCAL) ran on a 6-task hand-curated SUBSTITUTE because it
+    concluded the real public ProgramBench was host-blocked. A LIVE
+    2026-05-16 Tier-0 recheck REFUTES that conclusion on this host:
+    Docker is up (Server 27.5.1), ≥7 real public ProgramBench task
+    images are present and amd64-emulation-RUNNABLE on this arm64 host
+    (a real PB image ran `uname -m` → x86_64, exit 0), the real
+    HuggingFace ProgramBench-Tests dataset is cached, the upstream
+    programbench-eval clone is fully populated (HEAD 4e8456b, real
+    eval.py — NOT an empty skeleton), and real prior *.eval.json
+    verdicts were already produced under emulation. The v2 substitute
+    result is a valid honest-scope record FOR ITS TIME but its
+    host-block premise is superseded; the v2 substitute number MUST
+    NOT be cited as a real-PB result.
+
+    What this cycle REUSES from v2 (the surviving invariant spine, NOT
+    re-litigated): zero-interaction parity (identical single prompt,
+    closed no-answer channel, no simulated/scripted/stand-in user any
+    arm — owner constraint Telegram 11443 / D-RPB-6); the INDEPENDENT
+    held-out adversarial tool-grounded judge as the SOLE scoring
+    authority, provably NOT the loop's own intake.py AC.B.4b judge
+    (the I5/I6 evidence makes an independent authority mandatory);
+    the positive real-outcome floor (a nominal-but-hollow result is a
+    non-pass by construction); the four-class per-non-pass failure
+    taxonomy (the verdict is a failure-signature map, not only a pass
+    count); the FROZEN-RATIFIED materially-beats margin shape (owner
+    Telegram 11447); honest-negative as a FIRST-CLASS plan-success
+    outcome reported straight, never retried to green.
+
+    What this cycle FIXES (the two named v2 defects):
+    1. The TASK-SOURCE MISDIAGNOSIS — the task set IS the REAL public
+       ProgramBench (a digest-pinned subset of the real task images +
+       the real HF blobs, scored by the REAL upstream `programbench
+       eval`), NOT a hand-curated substitute. The v2 host-block
+       conclusion was an inherited 8-day-old precedent treated as
+       current reality; this cycle is built on a live recheck and
+       binds the builder to re-verify at use-time (NOT inherit §3),
+       halting with its OWN live evidence only if the real benchmark
+       is genuinely unrunnable — never a silent substitute fallback.
+    2. The BINARY-VERDICT-RULE DEGENERACY (the v2 task-#44 / PB3
+       defect) — the real upstream eval signal is GRADED (score =
+       n_resolved / len(test_results), compile_failed ⇒ 0), so the
+       verdict rule is re-authored over a FROZEN per-task
+       positive-real-outcome floor threshold PLUS a FROZEN small-k
+       floor k_min ≥ 2 on the baseline-miss denominator that FORCES
+       verdict (c) indeterminate (with a machine-stated reason)
+       whenever the baseline-miss count is < k_min — a degenerate or
+       near-degenerate denominator can NEVER read as a determinate
+       loss or win.
+
+    The existing pos3 programbench-derivative harness measured the
+    CODE-GEN surface (single claude -p code-gen agents scored by the
+    upstream test suite — ZERO handsoff-loop / independent-judge
+    references), NOT the sealed loop; its real-PB PLUMBING
+    (instance-id mapping, `programbench eval` invocation form, HF blob
+    sync, the proven amd64-emulation runnability) is REUSED read-only
+    (re-deriving it is non-objective duplication), while the
+    loop-vs-bare-LLM arm drivers + the independent-judge scoring spine
+    are REBUILT from the v2 surviving assets. The prior runs are a
+    real-PB-plumbing existence proof + a code-gen-surface cost
+    signal, NOT loop-vs-bare-LLM verdict evidence; the report must
+    not conflate them.
+
+    The deliverable is a DEFINITE, independently-judged,
+    evidence-backed three-valued verdict over the REAL public
+    benchmark at `docs/experiments/programbench-revival-real-pb.md`.
+    "Loam does not materially beat the baseline on the real
+    benchmark" is a first-class plan-success outcome — reported
+    straight, NEVER retried to green, the FROZEN margin NEVER moved.
+    Composes the sealed independent-judge + freeze-isolation spine +
+    the existing real-PB plumbing read-only (Lens 1); does NOT
+    re-prove the core loop (AC.FOUND.0 carried forward); does NOT
+    re-derive real-PB plumbing. LOCAL SEAL ONLY — not merged, not
+    pushed, not published, not tagged; the public step is a separate
+    owner-asked action.

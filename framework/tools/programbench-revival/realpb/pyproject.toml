@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "programbench-revival-realpb"
+version = "0.0.0"
+description = "ProgramBench-revival (REAL public ProgramBench) — the real-benchmark measurement harness: does the real sealed v0.11.0 hands-off loop materially beat a bare `claude -p` baseline on the REAL public ProgramBench task images, scored by the REAL upstream `programbench eval` as the deterministic floor signal, that signal GROUNDED by the proven INDEPENDENT held-out adversarial judge (NOT the loop's own intake.py AC.B.4b judge)? REUSES the surviving v2 invariant spine (arms/scorer read-only) + the existing programbench-derivative real-PB plumbing read-only; FIXES the v2 task-source misdiagnosis (the real public benchmark is live-verified runnable on this host) + the v2 binary-verdict-rule degeneracy (a frozen per-task floor threshold over the GRADED upstream score + a frozen k_min>=2 small-k floor that FORCES indeterminate on a degenerate baseline-miss denominator). Plan: docs/plans/programbench-revival-real-pb.md (AC.RPB.1..7)."
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

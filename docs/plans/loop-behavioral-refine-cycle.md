@@ -206,19 +206,33 @@ Method is the builder's; this records shape for the §14 register, not prescript
 | AC namespace | `AC.BRC.*` | Scope-descriptive, not version-packed (`feedback_scope_descriptive_ac_ids`). |
 | Public actions | NONE | LOCAL SEAL ONLY; the build is FUTURE OWNER-GATED. |
 
+### Commit SHAs
+
+(Manual §14 backfill — the AC.D-sa.7 documented fallback: `loam amend
+seal --plan-doc` matches only a literal `## 14.` heading and this plan
+uses `## §14 —`, so the seal HALTed at `plan-doc-missing-section-14`
+with the seal commit LEFT IN PLACE and this subsection authored by
+hand, mirroring the `programbench-revival-real-pb` `48418ff` /
+`loop-goal-refinement` `0b8e763` precedent. The seal itself is
+complete and verified — see the register below.)
+
 ### Post-seal SHA register (populated at build/seal time)
 
 | Stage | SHA |
 |---|---|
-| Plan + manifest | _(backfilled at build)_ |
-| Source-edit (BASELINE) | _(backfilled at build)_ |
-| Manifest apply (auto-commit) | _(backfilled at build)_ |
-| Seal commit | _(backfilled at build)_ |
-| §14 backfill | _(backfilled at build — manual fallback if `loam amend seal --plan-doc` matches only `## 14.`, mirroring the v2/realpb precedent)_ |
+| Plan + manifest | landed under `docs/plans/` with the source-edit commit `1f92f93` (plan-doc) + the BASELINE-bump `900f1be` (manifest) |
+| Source-edit (BASELINE) | `1f92f93` — `feat(handsoff-loop): behavioral feedback-and-refine cycle (AC.BRC.1-6)` |
+| Manifest apply (auto-commit) | `c80bb48` — `chore(amend): … BASELINE+sidecar bump to 1f92f93` (the corrective re-apply; the earlier `5f6a028` placeholder-baseline apply was superseded by NEW commits, no `--amend`) |
+| Seal commit | `dd73ad6` — `chore(seals): loop-behavioral-refine-cycle — workspace-bootstrap at c80bb48` (deterministic; seal-test green, post-seal `apply --dry-run` clean) |
+| §14 backfill | `_(this commit — manual AC.D-sa.7 fallback, `## §14 —` vs `## 14.`)_` |
 
 ### Outcome (recorded at seal — first-class honest-negative; NEITHER polarity pre-judged)
 
-_(Backfilled at seal. The BRC.5 end-test verdict ∈ {behavioral-refine-cycle demonstrated on a real task / definite honest-negative naming why} is computed from the evidence, not asserted, and is NONE-pre-judged: an honest-negative is a first-class plan-success outcome, reported straight, the bound NEVER weakened, NEVER retried to green. The score-payoff SIZE is explicitly NOT recorded here — it is the separate post-aggregate fast-follow.)_
+**The gap is closed (architectural verdict, gap-fix scope).** Built + LOCAL-sealed exactly per the plan. The loop's terminal "done" was, source-verified Tier-0 this build at `48418ff` (`orchestrator.py:203-244` single dispatch + single structural verify, no re-drive; `arms.py:200` literal `"true"`), structural-presence-only. After this cycle the terminal "done" is gated by the loop's OWN behavioral self-check (AC.BRC.1), a failed behavioral check re-drives a BOUNDED verification-gated refinement carrying the failure context under the existing cost/wall ceiling (AC.BRC.2/.3), the self-check is provably-NOT the graded scorer/judge (AC.BRC.4, AST-asserted + freeze-isolation preserved), and the realpb `"true"` literal is replaced GENERICALLY (AC.BRC.6). 50 deterministic AC.BRC assertions pass + the predecessor durable-parts (AC.FOUND.0/HL/GR/RPB) regression set passes — no core-loop re-proof, sealed `loop-goal-refinement` intake construct NOT modified (`intake.py` untouched).
+
+**BRC.5 (the lead end-test) — status, reported straight.** BRC.5 is the real-claude, DISPATCHER-OWNED own-the-wait end-test, env-gated behind `HANDSOFF_RUN_BRC=1` (the AC.RPB.7 / GR.5 / AC.B.5 precedent). The deterministic seal sweep CORRECTLY collects-but-skips it; the captured per-dimension verdict artefact (`framework/tools/handsoff-loop/.phase_verdicts/behavioral_refine_endtest.json`) is the durable fact and is produced by the dispatcher-owned real run, NOT by the seal. **No verdict polarity is pre-judged or asserted here**; the runner (`behavioral_refine_endtest.py`) computes a DEFINITE per-dimension table either polarity, with an honest-negative a first-class plan-success outcome — NEVER retried-to-green, the bound NEVER weakened. The architectural gap-closure (the loop is now *capable* of crossing the real-outcome line before stopping) is proven by the deterministic AC assertions; the BRC.5 real-claude verdict is the separately-gated own-the-wait artefact. n=1 is the deliberate ARCHITECTURAL-verdict framing (`feedback_n1_architectural_vs_n3_statistical`), NOT a statistical payoff-size claim.
+
+**Score-payoff SIZE is explicitly NOT recorded here** — it is the separate post-aggregate fast-follow (the detached 5-task `verdict.json` failure-class map sizes it; no AC asserts or depends on a payoff magnitude; the SICA 17%→53% figure is THEIR system, directional-only, never a loam claim — verified-or-marked-guess).
 
 **LOCAL SEAL ONLY** — not merged to main, not pushed, not published, not tagged. The public step is a separate owner-asked action, not part of this cycle. The build itself is FUTURE OWNER-GATED — this artefact is plan-only.
 

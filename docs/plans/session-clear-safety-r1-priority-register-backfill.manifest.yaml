@@ -1,0 +1,89 @@
+schema_version: 3
+amendment:
+  slug: session-clear-safety-r1-priority-register-backfill
+  title: "session-`/clear` safety R1 — priority-ordered open-loop digest + existing-workspace tracker backfill (sub-amendment 2 of 3). Turns the sealed-but-starved tracker-context SessionStart channel load-bearing: the digest the persona reads is ordered by open-loop priority (owner_pending > active > proposed), NOT query/recency order (the exact RESUME-STATE failure). owner_pending objectives surface as open loops tagged AWAITING OWNER, never collapsed into done (AC.SCS-R2.2, staged into R1 per D-SCS.4 — the digest surface lives in primary-persona/tracker_context.py, structurally unsatisfiable in R2's objective-tracker-only fence). AC40.5 empty-when-none preserved (AC.SCS-R1.3). New production update entry-point backfill_tracker_for_existing_workspace composes the existing classify→load→path→seed pipeline, bypassing the run_first_run_scaffold already_scaffolded short-circuit (that short-circuit IS the defect — it stops the amendment-39 seed ever running for an already-scaffolded workspace); idempotent query-then-skip (amendment-39 already_seeded precedent, no clobber). AC.SCS-R1.4 is the outcome-altitude AC: an existing, already-initialized, never-seeded workspace, run through the production entry-point with no pre-arranged tracker state, ends populated + parented (the defect's exact inverse). Build-cycle AC scope AC.SCS-R1.{1,2,3,4,S} + AC.SCS-R2.2 (D-SCS.4). Seal anchor primary-persona; objective-tracker + workspace-bootstrap admitted for the register/seed/backfill surface. ODD §4 re-extension of the sealed recency-only digest outcome contract — priority-altitude outcome added, named not silently widened (§10 finding B). R1 consumes R2 (sealed: owner_pending must be representable before the digest can rank-by-owner-pending). Parent plan: session-clear-safety-tracker-register-and-first-run-update-parity.md §7 sub-amendment 2."
+
+# BASELINE captured at the source-edit commit (seal-diff window
+# BASELINE..SEAL_COMMIT). 49f4687 = the feat(primary-persona) R1
+# source-edit commit.
+baseline: "49f4687"
+
+plan: docs/plans/session-clear-safety-tracker-register-and-first-run-update-parity.md
+plan_doc_ref: docs/plans/session-clear-safety-tracker-register-and-first-run-update-parity.md
+
+ac_count: 6
+smoke_outcome: "AC.SCS-R1.{1,2,3,4,S}+R2.2 GREEN: existing unseeded workspace backfilled via production entry-point (no pre-arranged state); digest priority-ordered; owner-pending open loop awaiting owner not done."
+
+# Seal anchor primary-persona (the priority-ordered digest + the ODD §4
+# re-extension land here). objective-tracker + workspace-bootstrap
+# admitted via extra_allowed_prefixes for the register/seed/backfill
+# surface (the backfill verb lives in workspace-bootstrap; the digest
+# consumes objective-tracker's projection). AC.SCS-R2.2 verifies in
+# this seal-diff window (D-SCS.4).
+components:
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - framework/objective-tracker/
+      - framework/workspace-bootstrap/
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - install-from-source.txt
+    - docs/odd-in-pos.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/STATE.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+
+narrative:
+  target: framework/primary-persona/seals/SEAL_COMMIT.session-clear-safety-r1-priority-register-backfill
+  body: |
+    # session-`/clear` safety R1 — priority-ordered open-loop digest + existing-workspace tracker backfill
+
+    Sub-amendment 2 of 3. Sealed local; awaiting dispatcher dogfood
+    publish per ASK-FIRST.
+
+    The sealed-but-starved tracker-context SessionStart channel became
+    load-bearing. The session-start digest the persona reads at
+    `/clear` is now ordered by open-loop priority (owner_pending >
+    active > proposed) instead of query/recency order — the exact
+    failure where the dev priority was buried below the personal
+    detour. owner-pending objectives surface as open loops tagged
+    "AWAITING OWNER", never collapsed into done (AC.SCS-R2.2, staged
+    into R1 per D-SCS.4 because the digest surface lives in
+    primary-persona, structurally unsatisfiable in R2's
+    objective-tracker-only fence). AC40.5 empty-when-none preserved
+    (AC.SCS-R1.3). A new production update entry-point
+    `backfill_tracker_for_existing_workspace` closes the
+    fresh-clone-only seeding hole: it runs the seed pipeline against an
+    EXISTING already-initialized workspace, bypassing the
+    `already_scaffolded` short-circuit that was the exact defect
+    mechanism; idempotent query-then-skip, no clobber (amendment-39
+    `already_seeded` precedent). AC.SCS-R1.4 is the outcome-altitude
+    proof — an existing, never-seeded workspace, run through the
+    production entry-point with no pre-arranged tracker state, ends
+    populated + parented (the defect's exact inverse). The sealed
+    recency-only digest outcome contract was re-extended via ODD §4 to
+    add a priority-altitude outcome (locked-design-not-license — the
+    bad post-`/clear` outcome was named, not kept). AC.SCS-R1.{1,2,3,4,S}
+    + AC.SCS-R2.2 green; full primary-persona (AC40.*/AC.MSC.*) +
+    objective-tracker suites non-regression green. SHA register +
+    method-decision record in the parent plan-doc §14.

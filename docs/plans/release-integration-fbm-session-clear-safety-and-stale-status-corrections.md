@@ -1,6 +1,6 @@
 # Release-integration plan — land FBM session-`/clear` safety onto mainline + correct three over-trusted stale status artefacts
 
-**Status:** RELEASE-SEQUENCING PLAN (loam-plan-author, 2026-05-18). No merges, no push, no build, no destructive git performed in authoring. This is a git-topology + gate plan; it is legitimately procedural. Every step names its reversibility and the LOCAL ↔ PUBLIC boundary.
+**Status:** RELEASE-SEQUENCING PLAN — **OWNER-RATIFIED 2026-05-18 (Telegram msg 11562); D1–D5 all ratified as recommended; CLEARED for the LOCAL-reversible block (L1→L2→L3); push/tag (P1–P3) remains the OWNER-ASKED public gate.** Plan authored by loam-plan-author 2026-05-18; ratification recorded by loam-plan-author 2026-05-18 (this commit). No merges, no push, no build, no destructive git performed in authoring or in recording this ratification. This is a git-topology + gate plan; it is legitimately procedural. Every step names its reversibility and the LOCAL ↔ PUBLIC boundary. **Consolidated decision register with the owner ruling + the one ratified hardening condition: see §12.**
 
 **WD:** `/Users/lukeivers/loam` (canonical loam; `origin` = `https://github.com/lukeivers/loam.git`).
 
@@ -171,6 +171,7 @@ Outcome-shaped where it touches future seal; procedural where it is pure git top
 ### D4 — HARD-smoke-per-minor scope (`feedback_hard_smoke_per_minor_before_publish`)
 
 - **One minor lands at publish:** FBM session-`/clear` safety (the runtime-affecting body — `framework/objective-tracker`, `framework/primary-persona`, `framework/workspace-bootstrap`). programbench-revival + loop-behavioral-refine are *measurement-harness / loop-internal* and do not gate the fresh-init runtime path; they ride the same FF but do not constitute a separate publishable runtime minor (STATE.md:115 frames realpb-denoise as "semantics FROZEN, no measurement-semantics change"). **One HARD smoke, scoped to the FBM minor**, is sufficient; a second programbench smoke is coordination overhead with no tighter acceptance (Lens 5 stopping criterion).
+- **→ RATIFIED HARDENING (2026-05-18, §12.F2H):** D4's one HARD smoke staying FBM-scoped is ratified — AND, because ratified D1 ships 3 sealed bodies (FBM + programbench-revival + loop-behavioral-refine) while this smoke covers only FBM, the programbench-revival + loop-behavioral-refine **seal-anchor + publish-readiness re-verification is a NON-SKIPPABLE pre-publish gate** (it runs inside the LOCAL block before the owner-asked push; its result is surfaced to the owner at the push gate alongside the FBM HARD-smoke result). This is the ratified resolution of the internal D1-ships-3 ↔ D4-smokes-1 inconsistency that §0 line 9 / §8 halt-trigger 2 / §10 RF item 2 already flagged — not a new decision. See §12.F2H.
 - **HARD bar (per the memory rule):** cold install with **no API key** + real `claude -p` + the real Eric `rd-automation` fixture end-to-end + receipts + regression ride-alongs **F-LEAK / F-TIMEOUT / F-VERIFY-ORPHAN**. RED on any → corrective + re-smoke; never publish RED.
 - **Where:** smoke runs against the FF'd local `main` (post-L2), BEFORE the publish gate, AFTER L1's doc-corrections are in (so the smoked tree == the tree that would publish).
 - **Outcome-altitude:** the smoke invokes the production fresh-init + loop entry-point with no pre-arranged state (per `feedback_test_outcome_altitude_required`); a STUB-class pass does not satisfy D4.
@@ -189,7 +190,7 @@ Outcome-shaped where it touches future seal; procedural where it is pure git top
 ## §8 — Halt triggers (in-flight conditions that abort the sequence)
 
 1. **Origin moved.** Step 1 (or L2's `--ff-only`) shows `origin/main` ≠ `ba8471e` or the FF is rejected → the 38-commit clean-FF assumption is void → HALT, re-derive topology, re-surface.
-2. **Owner wants FBM-only (D1-ALT).** If the owner rules "ship FBM but not programbench/loop," the FF model is invalid → HALT before any ref move; cherry-pick is a different (higher-risk) plan that needs its own seal re-verification pass. *This is the one planning-relevant decision that could require a pre-execution owner ruling — surfaced here, not silently resolved.*
+2. **Owner wants FBM-only (D1-ALT).** If the owner rules "ship FBM but not programbench/loop," the FF model is invalid → HALT before any ref move; cherry-pick is a different (higher-risk) plan that needs its own seal re-verification pass. *This is the one planning-relevant decision that could require a pre-execution owner ruling — surfaced here, not silently resolved.* **→ RESOLVED 2026-05-18 (owner ratified ship-all-38; see §12 / §12.F2H). This halt-trigger no longer fires for the FBM-only branch; halt-trigger 4 (seal-anchor re-verification) is now hardened into a NON-SKIPPABLE pre-publish gate by §12.F2H.**
 3. **HARD smoke RED.** Any of cold-install / `claude -p` / Eric e2e / F-LEAK / F-TIMEOUT / F-VERIFY-ORPHAN fails → do not cross the publish gate; corrective sub-amendment + re-smoke.
 4. **A seal anchor fails re-verification.** If step-1 Tier-0 finds any of the 38 commits' `chore(amend)` BASELINE self-pointer inconsistent → HALT (would indicate the chain was rewritten since seal).
 
@@ -238,3 +239,44 @@ Per `feedback_duration_estimation_rubric`: ranges with midpoints, never point es
 - `docs/STATE.md:115` — `programbench-revival-realpb-denoise-and-cost-fix SEALED LOCAL ON BRANCH`.
 - `git status --porcelain | wc -l` → 21 (drift, on no branch).
 - Release-model inspection: `git tag --sort=-creatordate`, `git cat-file tag v0.10.9` (retro-tag note), no `release/*` branches, no `CONTRIBUTING.md` integration mandate.
+
+---
+
+## §12 — Owner ruling / decision register (RATIFIED — recorded layer; §0–§11 are the recommended layer, preserved intact)
+
+**This section is the consolidated decision register the plan-as-authored did not carry; it is appended, not a rewrite. §2–§6's `### D<N> RECOMMENDATION` blocks remain verbatim as the *recommended* layer. §12 is the *ratified* layer. The recommended→ratified trail is the two layers side-by-side; neither is collapsed into the other.**
+
+**Ruling provenance:** owner, Telegram **msg 11562**, 2026-05-18 — verbatim intent: *"I want to get to a clean state. All work committed and published, local sync'd to latest, etc. agree with recommendations to get there."* (conversational source; recorded here as the durable artefact per the durable-capture rule — the ruling is not durable until it is in this doc). Recorded by loam-plan-author, 2026-05-18, in the same commit as the §0 status flip and the §6/§8 in-place RESOLVED annotations.
+
+### §12.1 — D1–D5: RATIFIED AS RECOMMENDED
+
+| D | Subject | Recommended layer (unchanged) | Ruling (msg 11562) | Maps to step |
+|---|---|---|---|---|
+| **D1** | Mainline integration model | §2 "D1 RECOMMENDATION — fast-forward, ship-all-38" + §0 line 4 | **RATIFIED.** FF `main` → `build/session-clear-safety-2026-05-18` @ `23ac61e`; ship all 38 commits (FBM 17 + programbench-revival 16 + loop-behavioral-refine 5). D1-ALT (FBM-only cherry-pick) is NOT taken. | §6 step 3 (L2); §5 L2 |
+| **D2** | Drift disposition | §3 "D2 RECOMMENDATION" + §0 line 5 | **RATIFIED.** Leave the 21-entry working-tree drift untouched (FF is refs-only; drift cannot ride the release). No stash/branch/sweep. | §3; §6 D2 guard (scoped per-path `git add`) |
+| **D3** | Stale-artefact cleanup | §4 "D3 RECOMMENDATION — one scoped doc-correction commit, BEFORE the FF" + §0 line 6 | **RATIFIED.** One scoped doc-correction commit before the FF: persona-init plan-doc line 3 + §13/§14 → PUBLISHED v0.10.9; replace the stale canonical FBM build-report. | §6 step 2 (L1); §5 L1 |
+| **D4** | HARD-smoke-per-minor scope | §6 "D4 — HARD-smoke-per-minor scope" + §0 line 7 | **RATIFIED, with hardening §12.F2H.** ONE HARD smoke, FBM-scoped, per `feedback_hard_smoke_per_minor_before_publish`. | §6 step 4 (L3); §5 L3 |
+| **D5** | Publish-gate sequencing | §5 "D5 RECOMMENDATION" + §0 line 8 | **RATIFIED.** Execute the LOCAL-reversible block (L1→L2→L3) as one autonomous block, then **STOP**. P1–P3 (push + tag + STATE/roadmap backfill) remain a single OWNER-ASKED public action — push/tag is owner-asked, never autonomous. | §5 LOCAL / PUBLISH-GATE tables; §6 steps 5–6 |
+
+**Net effect of the ruling:** the plan is CLEARED to execute L1→L2→L3 autonomously. The plan-doc's own §Halt-and-surface did not fire (established FF model, §2); halt-trigger 2 (FBM-only) is now closed by D1's ratification (annotated in place at §8). Halt-triggers 1, 3, 4 remain live in-flight conditions for the integrator (origin moved / HARD-smoke RED / seal-anchor failure) — ratification does not dissolve them.
+
+### §12.F2H — Ratified hardening condition on D1/D4 (dispatcher F2; resolution of a PRE-FLAGGED item, not a new decision)
+
+**What was already flagged (recommended/flagged layer, unchanged):** §0 line 9, §8 halt-trigger 2, and §10 RF item 2 each flagged that the ratified body ships **3 sealed bodies** (FBM + programbench-revival + loop-behavioral-refine) while D4's HARD smoke is scoped to **FBM only** — i.e. ship-all-38 publishes programbench-revival + loop-behavioral-refine, whose seal-anchor / publish-readiness re-verification the plan deferred "to the integrator step" (halt-trigger 4) and which D4's smoke does not cover. This is an internal D1-ships-3 ↔ D4-smokes-1 inconsistency the plan itself surfaced; it was left as a flagged-but-unresolved item.
+
+**Provenance of this resolution:** dispatcher F2 Ruthless Feedback (recorded 2026-05-18). This is **not a new decision** — it is the ratified resolution of the already-flagged item above. "Owner agreed to the recommendations" does not dissolve the gap that ship-all publishes two bodies the FBM-scoped smoke does not cover (locked-design-not-license): the gate is recorded, not erased by the blanket agree.
+
+**Ratified resolution:** the programbench-revival + loop-behavioral-refine **seal-anchor + publish-readiness re-verification is a NON-SKIPPABLE pre-publish gate**, with these binding properties:
+
+1. **It runs inside the LOCAL-reversible block, BEFORE the owner-asked push** (sequenced with / alongside halt-trigger-4's seal-anchor re-verification at §6 step 1 and L3; it does not move the publish gate, it gates *entry* to the publish gate).
+2. **It is NOT skippable** — neither D4's FBM-only smoke scope nor "they are sealed-local and were always queued" (D1 rationale) discharges it. The seal-anchor + publish-readiness re-verification for programbench-revival (v2 + real-pb + realpb-denoise, 16 commits) and loop-behavioral-refine (5 commits) must be positively performed, not assumed.
+3. **Its result is surfaced to the owner at the push gate, alongside the FBM HARD-smoke result** — the owner sees both the FBM HARD-smoke evidence AND the programbench/loop seal-anchor + publish-readiness re-verification result before ruling P1–P3. RED on either → do not cross the publish gate (consistent with §6 step 4 / §8 halt-trigger 3 + 4).
+
+**Scope note (recording fidelity):** this condition records a verification *gate* on the already-ratified D1/D4; it does **not** alter the FF target (`23ac61e`), the integration topology (linear FF, ship-all-38), or the substance of any D. It closes the plan's own flagged internal inconsistency as the ratified answer to it. Per the recording mandate, no D's substance was re-opened to record this; had accurate recording required that, it would have been halted-and-surfaced instead.
+
+### §12.2 — Recommended→ratified audit-trail integrity (ODD §2.5)
+
+- Every D's *recommended* prose (§2–§6) is byte-unchanged. §12.1 adds the *ratified* column beside it. The two layers are both visible — the trail is not collapsed.
+- The pre-flagged ship-all-vs-smoke-scope item retains its original flag text at §0 line 9 / §8 halt-trigger 2 / §10 RF item 2 / §6 D4-scope; each now carries an in-place `→ RESOLVED/RATIFIED (§12.F2H)` pointer so the flagged item is not silently left looking open while its origin prose stays intact.
+- Every D and the F2H condition maps to a concrete step in §5/§6 (mapping column in §12.1; explicit sequencing in §12.F2H). No ratified item is register-only with no executable step.
+- Build/FF/smoke/integrator-verify were NOT executed in recording this ratification (recording-scope only). The commit carrying this register is one tightly-scoped LOCAL `docs(plan)` child of `8194ec7` on `amend/loam-init-persona-wiring`, scoped per-path `git add`, no push/tag/branch-switch/`--amend` — same recording pattern as `5e08628` / `26fd2e5` / `8194ec7`.

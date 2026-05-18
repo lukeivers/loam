@@ -1,0 +1,31 @@
+# session-`/clear` safety G — first-run↔update parity registry + idempotent replay
+
+Sub-amendment 3 of 3 (final). Sealed local; awaiting dispatcher
+dogfood publish per ASK-FIRST.
+
+The root structural hole behind the RESUME-STATE class is closed:
+a NEW lightweight replay-on-update registry (D-SCS.2 RATIFIED —
+explicitly NOT first-run-inventory.yaml, whose already_scaffolded
+re-run no-op was the exact defect mechanism). Any state-mutating
+first-run/setup step now registers an idempotent update-path the
+workspace-update process discovers (single registry surface —
+AC.SCS-G.1) and replays against EXISTING workspaces; replay is
+idempotent and never clobbers user-authored state (AC.SCS-G.2);
+a registered step whose update-path is absent or fails surfaces
+the gap explicitly, never a silent skip (AC.SCS-G.4 — the failure
+class being fixed cannot recur). R1's existing-workspace tracker
+backfill is the first registered consumer (AC.SCS-G.3): the
+parity registry is the structural home through which an existing
+workspace's tracker gets backfilled, and the AC.SCS-R1.4
+outcome-altitude run routes through G — not a one-off bypass. G is
+a reusable harness primitive (AC.PO.2): a future setup step
+registers once and is auto-replayed against existing workspaces, so
+the persona never has to remember "did the update process run the
+new seeder." With R2 (owner-pending representable) + R1 (seeded +
+backfilled, priority-ordered digest) + G (the parity registry that
+structurally closes the fresh-clone-only hole), a workspace
+`/clear`/compaction no longer loses meaningful end-user state and
+no hand-maintained RESUME-STATE file is required. AC.SCS-G.{1,2,3,4,S}
+green; full workspace-bootstrap suite (AC39.*/AC36.3 non-regression)
+green. SHA register + method-decision record in the parent
+plan-doc §14.

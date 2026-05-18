@@ -1,0 +1,247 @@
+# session-`/clear` safety: tracker as the open-loop register + first-run↔update parity registry — a workspace `/clear` loses no meaningful end-user state without a hand-maintained RESUME-STATE file, and every state-mutating setup step has a discovered, idempotent update-path replayed against existing workspaces
+
+**Status:** OWNER-RATIFIED — BUILD-READY (ratification recorded 2026-05-18 by loam-plan-author; original plan authored 2026-05-18). The three §16 named decisions (D-SCS.1 / D-SCS.2 / D-SCS.3) were ruled by the owner via Telegram (provenance in §14 + §16) — the single gate before the build cycle is cleared. D-SCS.3's recommendation was SUPERSEDED mid-conversation (the plan-author's original "sequence-after the in-flight `amend/loam-init-persona-wiring`" rested on a false "in-flight" premise — that branch is STALE, last commit `ace6f87` 2026-05-16, no open `loam amend` cycle, Tier-0-verified twice) and re-ratified in corrected form (isolated git worktree off a CLEAN base, NO sequence-after dependency); the recommended→superseded→ratified-corrected trail is preserved in §14/§16, not collapsed. Root cause is GIVEN (verified-from-source diagnosis in the predecessor analysis artefact — see §2/§11; not re-derived here). No source edits, no build, no apply, no seal performed this turn — this turn RECORDS the owner ratification only; the objective / AC ladder / fence are unchanged. §14 SHA-register placeholders remain (SHAs backfill at seal).
+
+**Slug:** `session-clear-safety-tracker-register-and-first-run-update-parity` (scope-descriptive per `feedback_scope_descriptive_ac_ids`; no version pre-baked — version derives at release time per `feedback_version_numbers_at_release_time`).
+
+**Class (preliminary):** MINOR. R2 adds a new objective-tracker lifecycle behaviour (a representable owner-pending state) at a user-observable boundary (the session-start digest changes what the persona reads). R1 turns the sealed-but-starved `tracker-context` channel load-bearing + adds a priority-ordering AC + an existing-workspace backfill path. G adds a registry+replay mechanism at the first-run/update boundary. No existing contract is broken; all schema changes are additive (amendment-38 widening precedent). D-SCS.1 ratifies class at build-cycle; downgrade to PATCH only on explicit build-time evidence that no behaviour crosses a user-observable boundary (unlikely — the digest content change is user-observable).
+
+**Working directory (for the proposed build):** `/Users/lukeivers/loam/` (canonical loam). The predecessor analysis names the canonical-tree concern as halt-class: the defect recurs in every D-shape tree precisely because fresh-clone-only seeding never ran for the existing pos3 workspace. The fix MUST land in canonical loam and its acceptance MUST cover existing-workspace backfill, not only fresh-clone seed. The pos3 tree is the working/experiment tree and is NOT the build target.
+
+**Predecessor / context:**
+- Predecessor analysis artefact (the GIVEN diagnosis, verified-from-source): `/Users/lukeivers/pos3/workspace/.scratch/claude-output/fbm-session-clear-safety-analysis-2026-05-18.md` (Tier-3 location, but its causal claims were verified against canonical source this turn — see §11).
+- Plan-author HEAD this turn: `ace6f87` (programbench-revival §14 register backfill — current `main`/branch tip lineage).
+- Load-bearing SEALED amendments this composes against (verified by file read this turn — Tier-0):
+  - **#38** objective-tracker schema widening — `ObjectiveStatus` str-Enum `{proposed, active, achieved, abandoned}` (`framework/objective-tracker/src/loam/objective_tracker/spec.py:58-76`, verified); additive-widening precedent (`lifted_from`, D8 round-trip).
+  - **#39** workspace-bootstrap tracker-seed — `tracker_seed.py` `TrackerSeedResult` `{fresh_seed, already_seeded, skipped_no_value_prop}` (`framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/tracker_seed.py:375-388`, verified). Fires from the first-run scaffold path only.
+  - **#40** primary-persona tracker-context contributor — `IN_FLIGHT_STATUSES = frozenset({"proposed", "active"})` (`framework/primary-persona/src/loam/primary_persona/tracker_context.py:130`, verified). AC40.1 bounds "non-empty when in-flight exists"; AC40.5 bounds "empty when none" — **no AC pins priority order** (verified: amendment-40.md:26,78).
+  - **#45 / #46** multi-contributor SessionStart registry + emitter (the composer substrate the channel rides — not edited by this plan).
+  - The SEALED memory-session-continuity amendment — shipped the recency floor (AC.MSC.2 "a bounded digest of the *most-recent* active working thread", verified memory-session-continuity.md:67) and **named the residual as out-of-scope persona-discipline** (§10 risk 3). This plan REJECTS that scoping structurally (§10 F2 finding C — carried forward, not softened).
+  - The in-flight `amend/loam-init-persona-wiring` amendment (loam is on this branch now) — D-SCS.3 establishes the relationship from git + source + its own plan-doc text (§10): **sequence-after, orthogonal anchor, NOT a hard collision.**
+
+**Owner authorization:** The fix + the class-generalization are RATIFIED (owner approved the FBM-defect fix and broadened it to a class; the first-run↔update parity generalization is part of the objective, not an open question). The three §16 named decisions (D-SCS.1/D-SCS.2/D-SCS.3 — decomposition / registry-seam / sequencing) are now ALSO owner-RATIFIED (via Telegram, provenance recorded in §14 + §16) — the single gate before the build cycle is cleared. D-SCS.3 was ratified in a CORRECTED form (isolated worktree off a clean base, NOT sequence-after) — see §14/§16 for the recommended→superseded→ratified-corrected trail. Build may proceed per the §7 ship shape, observing the corrected D-SCS.3 (clean-base isolated worktree; the in-flight-amendment serialization premise no longer applies because that branch is stale).
+
+**Status-file target:** `docs/STATE.md` (shipped-state record) + `docs/release-roadmap.md` (forward-looking) — bookkeeping itemised in §9. FIDRAFT mirror: `docs/FUTURE_IDEAS_DRAFT.md` entry `F-FBM-SESSION-CLEAR-SAFETY` (this plan-doc is the primary durable surface; the FIDRAFT entry is the canonical idea-capture mirror per loam convention — authored this turn).
+
+**Quality bar:** structural over advisory (odd.md). The test applied to every mechanism: *"can a future `/clear`/compaction still lose meaningful end-user state, OR can a workspace-update still silently skip a state-mutating first-run step, without active persona discipline?"* If yes, the mechanism is advisory and a structural one is sought; if no stronger one exists it is marked advisory-fallback as a named §10 residual. The memory-session-continuity §10-risk-3 advisory framing is explicitly rejected with the structural alternative (§10 F2 finding C).
+
+---
+
+## §1 — Executive summary (≤12 lines — rule from this; the rest is evidence)
+
+1. **Objective.** A workspace `/clear`/compaction loses no meaningful end-user state without a hand-maintained RESUME-STATE file, AND every first-run/setup step that mutates workspace state has a registered, idempotent update-path the workspace-update process discovers + replays against existing workspaces. Subsumes R1 (tracker becomes the seeded+backfilled home for open owner decisions + the sequenced dev queue), R2 (an owner-pending lifecycle distinction), G (first-run↔update parity registry+replay).
+2. **D1 — decomposition: RECOMMEND ONE plan-doc, THREE sub-amendments sequenced R2→R1→G,** R1's backfill not blocked on G's general registry (G can land after R1's FBM closure). Coupling R1's existing-workspace backfill to G's general framework would make the publish-relevant FBM fix wait on the broader mechanism — split the *build* into ordered sub-amendments under one plan, do not split into unlinked plan-docs.
+3. **D2 — registry seam: RECOMMEND a NEW lightweight "replay-on-update" registry, NOT extending `first-run-inventory.yaml`.** Evidence (§11): that file is a venv/services provisioning manifest consumed by `first_run_helper.py`; it structurally carries no per-item update-path and the existing re-run model (`run_first_run_scaffold` → `already_scaffolded` short-circuit, AC36.3 "re-run is a no-op") is the *exact mechanism of the defect*. Reusing it would entrench the bug.
+4. **D3 — sequencing vs in-flight `amend/loam-init-persona-wiring`: RECOMMEND sequence-after; NOT a hard collision.** The in-flight plan-doc explicitly states it "does not touch `framework/primary-persona/` retrieval/ranking"; its seal anchor is `workspace-bootstrap`. This plan's anchors are `objective-tracker` (R2) + `primary-persona` (R1 priority) + `workspace-bootstrap`/`hands-off-lifecycle` (G). Fence overlaps at `workspace-bootstrap` only — same-tree serialization applies (`feedback_serialize_amendment_builds`), not a compose-block.
+5. **AC ladder shape.** Three families: `AC.SCS-R1.*` (seeded+backfilled+priority-ordered open-loop register), `AC.SCS-R2.*` (owner-pending representable + never-read-as-done), `AC.SCS-G.*` (registry + discovery + idempotent replay against an existing workspace). ≥1 outcome-altitude AC: `AC.SCS-R1.4` — an existing (already-initialized, **unseeded**) workspace gets its tracker backfilled via the production entry-point with no pre-arranged state (fresh-clone-only is the exact defect). All outcome-shape; method-in-AC test passed per-AC (§5).
+6. **Fence.** `objective-tracker` (R2 anchor), `primary-persona` (R1 priority/backfill-surface anchor), `workspace-bootstrap` + `hands-off-lifecycle` (G registry+replay anchor). Three sub-amendment seal anchors; §5/§7 + the manifest pin them. The sealed `tracker-context`/`active-thread` outcome contract is RE-EXTENDED via ODD §4 (§10 finding B) — named, not silently widened.
+7. **Effort band (AI-time, midpoint, per the duration rubric — owner gate-review SEPARATE).** R2 ~40-70 min (mid ~55). R1 ~55-90 min (mid ~70). G ~50-95 min (mid ~70). Total **~145-255 min, mid ~195 min**, structural, builds serialized one-tree. Owner gate-review (ruling on D-SCS.1/2/3) is a separate line item, owner-availability-bound.
+8. **Halt / surfaced concerns (§10):** (A) canonical-tree + existing-workspace-backfill — folded into `AC.SCS-R1.4` as outcome-altitude, NOT a halt-block. (B) ODD §4 re-extension of the sealed recency-only digest contract — named, owner-foldable into R1 scoping, NOT a silent branch. (C) memory-session-continuity §10-risk-3 advisory framing REJECTED structurally (carried F2 — restated, not softened). (D) cross-tree artefact-sync gap (analysis+FIDRAFT born in pos3, canonical is here) — corroborating evidence of the very class being fixed; noted, NOT fixed here. **No hard collision found** — D3 is sequence-after, not plan-blocking.
+
+---
+
+## §2 — Class + current state (the GIVEN diagnosis — verified, not re-derived)
+
+The root cause is given by the predecessor analysis artefact and was verified against canonical loam source this turn (§11). The diagnosis is NOT re-litigated; this plan builds on it.
+
+**Root cause (one paragraph, given):** A `/clear` loses meaningful end-user state because FBM's session-start reconstruction is ranked by **episode recency** (the `active-thread` contributor surfaces the N newest episodes by timestamp), while the durable surface designed to carry **open-loop priority** — the objective-tracker via the SEALED `tracker-context` SessionStart contributor — is **empty in this workspace because it was never seeded** (fresh-clone-only `tracker_seed`, amendment #39, never ran for the existing pos3 workspace; 0 `objective_state` rows verified by the analysis live-probe). Compounding this, the tracker lifecycle has **no status meaning "work shipped, owner decision pending"** (`ObjectiveStatus = {proposed, active, achieved, abandoned}`, verified `spec.py:58-76`), so even once seeded the tracker cannot represent the single distinction RESUME-STATE exists to carry. The state is not lost from disk; it is lost from *reconstruction* because reconstruction ranks by time and the priority-bearing channel is unfed + schema-incomplete.
+
+**Three gaps mapped to components (given; verified):**
+
+- **Gap (a) — no open-loop priority ordering.** Interaction of `active_thread.py` (recency-ranked, no priority AC) and an UNFED `tracker_context.py` (the designed priority channel). The structural home exists (amendments #38/#40); it is starved (no seed for existing workspaces) and under-specified (no priority-order AC — AC40.1 only requires "non-empty when in-flight exists"; verified amendment-40.md:26,78). → **R1**.
+- **Gap (b) — completed-vs-closed has no semantic.** Confirmed tracker schema gap: `IN_FLIGHT_STATUSES = {proposed, active}` (verified `tracker_context.py:130`), terminal `{achieved, abandoned}`; nothing means "shipped, owner ruling pending." Genuinely new schema behaviour. → **R2**.
+- **Gap (G) — first-run↔update parity.** GENERALIZED + ratified by owner: any first-run/setup step that mutates workspace state needs a registered, idempotent update-path the workspace-update process discovers + replays for existing workspaces. The empty tracker is the *instance*; the missing class-mechanism is the *root structural hole* (§11 evidence: `run_first_run_scaffold` short-circuits to `already_scaffolded` for an already-scaffolded workspace, AC36.3 — re-run is by-design a no-op, so a newly-added setup step is never replayed). → **G**.
+
+---
+
+## §3 — Scope
+
+**In scope:**
+- R1: the workspace objective-tracker becomes the durable, **seeded AND backfilled-for-existing-workspaces** home for open owner-facing decisions + the sequenced dev queue; the session-start digest the persona reads at `/clear` is **ordered by open-loop priority**, not episode recency.
+- R2: an **owner-pending** lifecycle distinction representable in the tracker schema (additive, amendment-38-precedent); `tracker-context` surfaces owner-pending items as *open loops awaiting the owner*, never as done.
+- G: a **registry of state-mutating setup steps** with a per-step idempotent update-path, and a **workspace-update discovery+replay** mechanism that runs the registered update-paths against an existing (already-initialized) workspace.
+- The ODD §4 re-extension of the sealed `tracker-context`/`active-thread` outcome contract to add a *priority-altitude* outcome (§10 finding B).
+- Bookkeeping: STATE.md row, roadmap row, FIDRAFT resolution, §14 register.
+
+**Out of scope (deferred, with when):**
+- R3 (re-weight `active_thread.py`'s own recency digest) — the analysis's named defence-in-depth fallback. DEFERRED as the explicit fallback adopted only if owner rejects the tracker-as-register route (§7). Not built unless D-SCS.2 path forces it.
+- Migration of *historical* tracker records to owner-pending — R2 is additive/default-preserving; no backfill of past records (amendment-38 D8 round-trip precedent).
+- A general "every config file gets a migration framework" — G is scoped to *state-mutating setup steps*, not arbitrary config schema migration.
+- Editing `docs/spec/` (objectives spec; outside any cycle's fence) — the ODD §4 re-extension is expressed as a plan AC + the sealed component's outcome contract, NOT a spec edit.
+- Any change to the in-flight `amend/loam-init-persona-wiring` surfaces — D-SCS.3 sequences after it; this plan does not touch its fence.
+- Fixing the cross-tree artefact-sync gap (analysis+FIDRAFT in pos3) — §10 finding D names it as corroborating evidence of the class; it is NOT fixed here.
+
+---
+
+## §4 — Prime-objective ladder (per `feedback_value_proposition_as_prime_objective` + plan-docs §4)
+
+- **AC.PO.1 (translation-burden test, `docs/VALUE_PROPOSITION.md`):** a user who `/clear`s and must hand-maintain a RESUME-STATE file to not lose priority + the completed-vs-closed flag is carrying maximal translation burden — they are doing the persona's reconstruction job by hand. Closing it (R1+R2) makes the two things RESUME-STATE carries structural FBM outputs → the user stops translating "where were we / what's still open." Every R1/R2 AC ladders to AC.PO.1.
+- **AC.PO.2 (harness-toolkit test):** the first-run↔update parity registry (G) is a reusable harness primitive — any future setup step that mutates workspace state registers once and is automatically replayed against existing workspaces, so the persona never has to remember "did the update process run the new seeder." It is toolkit, not a one-off. Every G AC ladders to AC.PO.2.
+
+---
+
+## §5 — Acceptance criteria (outcome-shape; method-in-AC test passed per-AC)
+
+> Method-in-AC test recorded inline per AC: *"can this AC be satisfied by a method other than the one in mind? — YES (outcome-shape) / NO (rewrite)."* Every AC below: YES.
+
+### Family AC.SCS-R1.* — tracker as the seeded+backfilled, priority-ordered open-loop register
+
+| AC | Outcome (deterministic) | Verification | Method-in-AC test |
+|---|---|---|---|
+| **AC.SCS-R1.1** | The workspace objective-tracker, after the R1 mechanism runs, contains the open owner-facing decisions + the sequenced dev queue as objectives chained to the workspace value-prop root. | Query the tracker via the production projection API after the mechanism; assert the open-loop set is present + parented. | YES — seed-script / migration verb / keep-current hook all satisfy it; method open. |
+| **AC.SCS-R1.2** | The session-start digest the persona reads is **ordered by open-loop priority** (an open owner-pending / higher-priority objective precedes a lower-priority one), NOT by episode recency, when in-flight objectives exist. | Cold session-start with a known tracker state where the highest-priority open loop is older than the newest episode; assert the digest surfaces the priority item ahead of the recent-but-lower one. | YES — recency-decay blend, explicit priority key, tracker-rank-injection all satisfy; ordering function is method. |
+| **AC.SCS-R1.3** | When no in-flight objectives exist, the digest emits no tracker block (no empty/polluting section). | Cold session-start with empty tracker; assert no tracker block (preserves AC40.5 semantics). | YES — empty-guard is method; outcome is "no pollution." |
+| **AC.SCS-R1.4** *(outcome-altitude: true)* | An **existing, already-initialized, never-seeded** workspace, run through the production update entry-point with **no pre-arranged tracker state**, ends with its objective-tracker populated (the open-loop register present) — fresh-clone-only does NOT satisfy this. | Invoke the production workspace-update entry-point against a workspace fixture that was initialized BEFORE the R1 mechanism existed and has 0 tracker rows; assert post-run the tracker is non-empty + parented. No test-pre-seeded state. | YES — backfill verb / G-driven replay / idempotent re-seed all satisfy; the *existing-workspace* outcome is pinned, the mechanism is not. **This AC is the exact defect's inverse and is the outcome-altitude proof.** |
+
+### Family AC.SCS-R2.* — owner-pending representable, never read as done
+
+| AC | Outcome (deterministic) | Verification | Method-in-AC test |
+|---|---|---|---|
+| **AC.SCS-R2.1** | The tracker can represent an objective as "work shipped, owner decision pending" — distinct from in-progress (`active`) and from closed (`achieved`/`abandoned`). | Construct an objective, transition it to the owner-pending representation via the production API, query it back; assert it is neither in the in-progress set nor the terminal set. | YES — new lifecycle value vs `owner_pending` flag vs event-kind all satisfy; representation is method. |
+| **AC.SCS-R2.2** | The session-start digest surfaces owner-pending objectives as **open loops awaiting the owner**, never collapsed into "done." | Seed an owner-pending objective; cold session-start; assert it appears in the open-loop digest tagged as owner-pending (not absent, not done-styled). | YES — projection/render shape is method; the "surfaced as open, not done" outcome is pinned. |
+| **AC.SCS-R2.3** | Existing tracker records authored before R2 are unchanged by the schema addition (additive, default-preserving — amendment-38 D8 round-trip precedent). | Run the amendment-38-style backward-compat + D8 round-trip suite against pre-R2 fixtures; assert byte/semantic stability. | YES — Optional-with-default vs separate-table vs event-derived all satisfy; the non-regression outcome is pinned. |
+
+### Family AC.SCS-G.* — first-run↔update parity registry + idempotent replay
+
+| AC | Outcome (deterministic) | Verification | Method-in-AC test |
+|---|---|---|---|
+| **AC.SCS-G.1** | Every state-mutating first-run/setup step that participates in the parity contract is discoverable from a single registry surface (the workspace-update process can enumerate "what must also run on update"). | Add a fixture state-mutating step to the registry; assert the discovery mechanism enumerates it without code change to the discoverer. | YES — yaml registry / decorator-registry / manifest-section all satisfy; the *single discoverable surface* outcome is pinned. |
+| **AC.SCS-G.2** | The workspace-update process, run against an existing workspace, replays each registered step's update-path, and replay is **idempotent** (a second run is a no-op, no clobber of user-authored state). | Run update twice against a fixture existing workspace; assert first run applies the registered step, second run is a no-op, user-authored content untouched. | YES — query-then-skip / sentinel-per-step / content-hash all satisfy; idempotent-replay outcome is pinned. |
+| **AC.SCS-G.3** | The R1 tracker-seed/backfill is registered through the G mechanism (the parity registry is the path by which an existing workspace's tracker gets backfilled — G is the structural home, R1 is its first registered consumer). | Assert R1's backfill is reachable via the G registry's discovery+replay path (not a one-off bypass); the AC.SCS-R1.4 outcome-altitude run goes *through* G. | YES — the binding is "R1 backfill is a G-registered step," mechanism of registration is method. |
+| **AC.SCS-G.4** | A registered step whose update-path is absent or fails surfaces the gap explicitly (the update process does not silently skip — the failure class being fixed cannot recur as a silent skip). | Register a step with a deliberately-failing update-path; run update; assert the gap is surfaced (non-silent), not swallowed. | YES — raise / structured-report / halt all satisfy; the non-silent outcome is pinned. |
+
+### Seal-diff AC
+
+| AC | Outcome | Verification |
+|---|---|---|
+| **AC.SCS-R2.S / AC.SCS-R1.S / AC.SCS-G.S** | Each sub-amendment's seal-diff is confined to its declared component fence + universal-admission paths. | `loam amend seal` seal-diff window per sub-amendment manifest; per-component seal_test green. |
+
+**AC ladder-up:** AC.SCS-R1.* + AC.SCS-R2.* → AC.PO.1; AC.SCS-G.* → AC.PO.2 (§4). Outcome-altitude AC = **AC.SCS-R1.4** (production entry-point, no pre-arranged state, existing-unseeded-workspace — the exact defect inverse) per `feedback_test_outcome_altitude_required`.
+
+---
+
+## §6 — Halt triggers (in-flight conditions that abort the build)
+
+1. The chosen R1 backfill method would mutate or clobber **user-authored** tracker records (not just add the open-loop register) → halt; the seed/backfill must be query-then-skip (amendment-39 `already_seeded` precedent), not clobber.
+2. The G registry mechanism, as built, would require editing a SEALED component's outcome contract beyond the named ODD §4 re-extension (§10 finding B) → halt + surface; the re-extension is scoped to the priority-altitude outcome only.
+3. The build would touch the in-flight `amend/loam-init-persona-wiring` fence surfaces (its `workspace-bootstrap` first-run-scaffold persona-binding region) → halt; D-SCS.3 sequences AFTER it, not concurrent in the same region.
+4. R2's schema addition breaks any existing objective-tracker test (the amendment-38 backward-compat suite or D8 round-trip) → halt; R2 must be additive/default-preserving.
+5. The priority-ordering AC (AC.SCS-R1.2) cannot be satisfied without injecting owner-priority data the tracker does not carry → halt + surface (the priority signal source is a design input, not a silent invention).
+6. Any AC reframes to method-in-AC during build (a method becomes the only way to satisfy it) → halt; tighten the AC text per `feedback_loose_AC_text_fix_AC_not_implementation`, do not narrow the implementation to the AC.
+
+---
+
+## §7 — Ship shape (sub-amendment series + commit ladder)
+
+**Recommended (D-SCS.1):** ONE plan-doc (this), THREE sub-amendments sequenced, each with its own manifest + §14 register, builds serialized in one tree (`feedback_serialize_amendment_builds`):
+
+1. **Sub-amendment 1 — R2 (objective-tracker owner-pending lifecycle).** Smallest, fully-additive, hard input to R1 (the digest cannot rank-by-owner-pending until owner-pending is representable). Anchor: `objective-tracker`. AC.SCS-R2.{1,2,3,S}.
+2. **Sub-amendment 2 — R1 (seeded+backfilled+priority-ordered register).** Consumes R2; turns the sealed `tracker-context` channel load-bearing; carries the ODD §4 priority-altitude re-extension. Anchor: `primary-persona` (digest priority) + `objective-tracker`/`workspace-bootstrap` admitted for the register/seed surface (build-cycle tightens). AC.SCS-R1.{1,2,3,4,S}.
+3. **Sub-amendment 3 — G (first-run↔update parity registry+replay).** R1's backfill (AC.SCS-R1.4) is its first registered consumer; G's discovery+replay is the structural home AC.SCS-R1.4 routes through (AC.SCS-G.3). Anchor: `workspace-bootstrap` + `hands-off-lifecycle`. AC.SCS-G.{1,2,3,4,S}.
+
+**Sequencing note:** R1's backfill outcome (AC.SCS-R1.4) is *specified* in sub-amendment 2 but *routed through* G's mechanism (AC.SCS-G.3) — so sub-amendment 2's AC.SCS-R1.4 verification may be staged: a minimal R1-owned backfill verb landing in sub-amendment 2, re-homed into the G registry in sub-amendment 3 with AC.SCS-R1.4 re-verified through G. The build cycle decides the staging; the OUTCOME (existing workspace gets backfilled, idempotently, discoverably) is invariant. This prevents the publish-relevant FBM closure (R1+R2) from waiting on G's general framework (D-SCS.1 rationale).
+
+**Commit ladder per sub-amendment:** source-edit commit (BASELINE captured here) → manifest+apply → seal → §14 SHA-register backfill (manual fallback per `feedback_no_amend_in_agent_dispatches` + the F-SEAL-§14 known mismatch — author `## §14 —` heading; expect manual backfill commit).
+
+---
+
+## §8 — Test scope
+
+- R2: amendment-38-style backward-compat suite + D8 round-trip against pre-R2 fixtures (AC.SCS-R2.3); new owner-pending representation tests (AC.SCS-R2.1/2).
+- R1: cold-session-start digest-ordering test with a known-state tracker (AC.SCS-R1.2); empty-tracker no-pollution test (AC.SCS-R1.3); **outcome-altitude existing-unseeded-workspace backfill test via the production update entry-point, no pre-arranged state (AC.SCS-R1.4)**.
+- G: registry-discovery test (AC.SCS-G.1); idempotent double-replay test (AC.SCS-G.2); R1-backfill-routes-through-G test (AC.SCS-G.3); failing-step-surfaces-non-silently test (AC.SCS-G.4).
+- Narrowed per `feedback_amendment_dispatch_speedups`: per-sub-amendment new+touched suites + the component seal_test; skip the full-corpus rerun pre-seal unless a cross-component regression signal appears.
+
+---
+
+## §9 — Bookkeeping (backfill items)
+
+- `docs/STATE.md`: a row recording R1+R2+G shipped-state (the tracker-as-register + parity-registry closure of the RESUME-STATE class) — one row per sub-amendment at seal time.
+- `docs/release-roadmap.md`: forward-looking row, version derived at release time (`feedback_version_numbers_at_release_time`).
+- `docs/FUTURE_IDEAS_DRAFT.md`: `F-FBM-SESSION-CLEAR-SAFETY` entry (authored this turn) moves to RESOLVED at seal of sub-amendment 3.
+- §14 method-decision register: D-SCS.1/D-SCS.2/D-SCS.3 + per-sub-amendment D-build.* narrated at build time, SHAs backfilled at seal.
+- Parent-plan / roadmap §2-equivalent backfill: none required (this is a standalone slug, not a sub-plan of a master).
+
+---
+
+## §10 — F2 Ruthless Feedback + honest doubts + halt/surfaced concerns
+
+**Finding A — canonical-tree + existing-workspace-backfill (NOT a halt-block; folded into the AC ladder).** *Disagreement with a fresh-clone-only fix:* a fix whose acceptance only covers fresh-clone seed leaves the exact defect open in every existing workspace. *Evidence:* amendment-39's `tracker_seed` is present in canonical source yet the existing pos3 workspace has 0 tracker rows (analysis live-probe) — fresh-clone-only demonstrably did not cover the existing workspace; `run_first_run_scaffold` short-circuits to `already_scaffolded` on re-run (AC36.3, verified §11). *Alternative (taken):* `AC.SCS-R1.4` is an outcome-altitude AC pinning *existing-unseeded-workspace backfill via the production entry-point with no pre-arranged state* — the defect's exact inverse. This is folded into the AC ladder, not surfaced as a blocker.
+
+**Finding B — ODD §4 re-extension of the SEALED recency-only digest contract (named, owner-foldable, NOT a silent branch).** *Disagreement:* `active_thread.py`'s digest is recency-ranked with **no AC pinning open-loop priority** — AC.MSC.2 only requires "a bounded digest of the *most-recent* active working thread" (verified memory-session-continuity.md:67); AC40.1 only requires "non-empty when in-flight exists" (verified amendment-40.md:26). *Evidence:* the analysis's live run produced a digest that was 100% personal-detour/compaction with zero dev-priority content while the dev priority was the actual open loop. *Alternative:* the sealed `tracker-context`/`active-thread` outcome contract is RE-EXTENDED via ODD §4 to add a *priority-altitude* outcome (the session-start digest must be priority-ordered for open loops, not recency-only — `AC.SCS-R1.2`). Per `feedback_locked_design_not_license`: "it's the sealed recency contract" is an answer to "did we design it this way," NOT to "is this the right outcome." The bad outcome is named here; the re-extension is owner-foldable into R1 scoping (D-SCS.1), not a silent widening of a sealed component.
+
+**Finding C — memory-session-continuity §10-risk-3 advisory framing REJECTED structurally (carried F2 — restated, not softened).** *Disagreement:* that plan shipped the recency floor and named the residual ("the deterministic recency roll-up … does not *understand* the thread") as out-of-scope **persona-discipline**. *Evidence:* the residual is not a persona-discipline axis — it is the unfed `tracker-context` channel + the missing owner-pending state (the GIVEN diagnosis, verified §11). "The persona should use the facts better" is advisory; it relocates the failure to operator vigilance. *Alternative (structural, this plan):* R1 (feed + priority-order the channel) + R2 (make owner-pending representable) eliminate the failure class — FBM *cannot* surface the wrong thing because priority, not recency, is the rank key and owner-pending is a first-class state. This is a ratified F2 finding from the dispatch and is carried forward verbatim-in-substance, not softened to "could also consider."
+
+**Finding D — cross-tree artefact-sync gap (corroborating evidence, NOT fixed here).** The predecessor analysis + the `F-FBM-SESSION-CLEAR-SAFETY` FIDRAFT were born in the pos3 runtime tree while canonical is here; this plan-doc + manifest + the canonical FIDRAFT mirror were authored in canonical loam this turn precisely to close that instance. *This gap is itself an instance of the class being fixed* (a state-mutating artefact created in one tree with no parity mechanism to the canonical tree) — it is named as corroborating evidence that G's scope is correctly drawn, NOT scoped into this plan's build (out of scope §3).
+
+**Honest doubts:**
+- D2's "new lightweight registry" risks under-scoping if "state-mutating setup step" is hard to delimit in practice (where does a setup step end and a config migration begin?). Mitigation: G's scope is explicitly *state-mutating setup steps* (§3 out-of-scope draws the boundary at "not arbitrary config schema migration"); the build cycle tightens the predicate, and AC.SCS-G.4 ensures an undecidable case surfaces rather than silently skips.
+- The priority signal source for AC.SCS-R1.2 (what makes one open loop higher-priority than another) is a design input I am NOT collapsing (halt trigger 5). Owner-pending status is one obvious priority input (R2 provides it); whether a richer ordering is needed is a build-cycle question, not a plan-time one — scope-confidence is medium here, so it is left as options+halt, not pinned.
+
+**No hard collision found.** D-SCS.3 is sequence-after with an orthogonal seal anchor (§11 verified the in-flight plan-doc's own "does not touch primary-persona retrieval/ranking" text + its `workspace-bootstrap` anchor). The dispatch's halt condition ("this effort cannot be planned without resolving the in-flight amendment first") is NOT met — the plan is authorable now; only same-tree build serialization applies.
+
+---
+
+## §11 — Provenance trail (load-bearing sources, Tier-0 verified this turn)
+
+- **Diagnosis (GIVEN):** `/Users/lukeivers/pos3/workspace/.scratch/claude-output/fbm-session-clear-safety-analysis-2026-05-18.md` — root cause, three gaps, ranked options, halt concerns. Its causal claims verified against canonical source below (information-trust-ordering: Tier-0 code over Tier-2 plan-doc intent).
+- **Tracker lifecycle (R2 anchor):** `framework/objective-tracker/src/loam/objective_tracker/spec.py:58-76` — `ObjectiveStatus = {proposed, active, achieved, abandoned}` + `re_open` corrective transition. NO owner-pending state. Verified by file read this turn. (Note: amendment-40.md prose says `{started, decomposed}` — that is stale pre-rename plan-doc language; the SEALED enum is `{proposed, active, ...}`. This plan cites the verified enum, not the stale prose.)
+- **In-flight set (R1 anchor):** `framework/primary-persona/src/loam/primary_persona/tracker_context.py:130` — `IN_FLIGHT_STATUSES = frozenset({"proposed", "active"})`. AC40.1/AC40.5 bound non-empty/empty only; **no priority-order AC** — verified `docs/plans/amendment-40-primary-persona-tracker-context-contributor.md:26,78`.
+- **Recency-only digest contract (finding B):** `docs/plans/memory-session-continuity.md:67` — AC.MSC.2 = "a bounded digest of the *most-recent* active working thread"; §10 risk 3 = the residual named as out-of-scope persona-discipline (finding C source). Verified by file read.
+- **Fresh-clone-only seed (gap G evidence):** `framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/tracker_seed.py:375-388` — `TrackerSeedResult {fresh_seed, already_seeded, skipped_no_value_prop}`; fires from the first-run scaffold path. `framework/workspace-bootstrap/tests/test_AC36_3_idempotent_re_run.py:15-22,131-140` — re-run of `run_first_run_scaffold` against a scaffolded workspace returns `already_scaffolded` short-circuit (re-run is a by-design no-op — **the exact mechanism that lets a newly-added setup step never replay**).
+- **Registry-seam evidence (D2):** `framework/first-run-inventory.yaml` — venv/services provisioning manifest (`shared_venv`, `dedicated_venvs`, `services`); schema comment: "additions require a schema_version bump"; no per-item update-path notion. Consumer `framework/hands-off-lifecycle/hooks/first_run_helper.py` (stdlib-only, invoked from `first-run.sh`) + `first_run_state.py:41-58,102-106` (`running→completed/failed` terminal per-workspace state; TERMINAL_STATES short-circuits). Verified by file read this turn — this is provisioning machinery, NOT a replay-on-update registry; reusing it would entrench the AC36.3 no-op-on-re-run defect.
+- **D3 relationship (sequencing):** `git branch` (loam on `amend/loam-init-persona-wiring`); `docs/plans/loam-init-persona-wiring-and-isolated-subloam-driver.md` §2 verbatim: *"Not a store/durability problem… This plan does not touch `framework/primary-persona/` retrieval/ranking"*; its manifest seal anchor = `framework/workspace-bootstrap/` (verified `docs/plans/loam-init-persona-wiring-and-isolated-subloam-driver.manifest.yaml` `components: - name: workspace-bootstrap`). Orthogonal anchor + explicit non-overlap text → sequence-after, not collision.
+- **Plan-doc + manifest convention:** `plugins/dev-sdlc/docs/conventions/plan-docs.md` §1-§7; recent shape exemplar `docs/plans/v0-8-3-acs-verified-removed-verdict-parser.manifest.yaml` (`schema_version`, `amendment`, `baseline`, `components`, `universal_paths`, `narrative`).
+
+---
+
+## §13 — §status
+
+OWNER-RATIFIED — BUILD-READY (ratification recorded 2026-05-18; original plan authored 2026-05-18). All AC families remain outcome-shape; method-in-AC test recorded per-AC (§5) — UNCHANGED by this recording turn. Outcome-altitude AC present (`AC.SCS-R1.4`) — UNCHANGED. Halt triggers + §10 surfaced concerns named — UNCHANGED. Owner ruled D-SCS.1 (RATIFIED), D-SCS.2 (RATIFIED), D-SCS.3 (SUPERSEDED → RATIFIED-corrected: isolated clean-base worktree, NOT sequence-after — the stale-branch premise is recorded in §14/§16). The single gate before the build cycle is cleared. No source edits, no build, no apply, no seal performed this turn — recording only; objective / AC ladder / fence unchanged.
+
+---
+
+## §14 — Method-decision register (populated at build / seal time)
+
+> Owner ruling on D-SCS.1/2/3 RECORDED 2026-05-18 by loam-plan-author (recording-only turn — no source edit, no build). Provenance is Telegram-message-ID-anchored. The decision content is recorded verbatim-faithful to the owner ruling; the recommended→superseded→ratified-corrected trail for D-SCS.3 is preserved (ODD §2.5 audit-trail integrity — not collapsed).
+
+- **D-SCS.1** (decomposition: one plan / three sequenced sub-amendments) — recommendation §1.2/§7. **OWNER RULING: RATIFIED.** One plan-doc, three sub-amendments built in sequence R2 → R1 → G; R1's FBM fix NOT blocked on G's general framework. Provenance: owner Telegram msg 11545 ("That's all fine", responding to the recommendation package in msg 11544); reaffirmed by msg 11547 ("Go ahead"). Build narrative TBD-AT-BUILD; SHA TBD-AT-SEAL.
+- **D-SCS.2** (registry seam: new lightweight registry, not `first-run-inventory.yaml`) — recommendation §1.3/§11. **OWNER RULING: RATIFIED.** A NEW lightweight replay-on-update registry; explicitly do NOT extend `first-run-inventory.yaml` (its `already_scaffolded` re-run-noop IS the defect mechanism — AC36.3, §11 evidence). Provenance: owner Telegram msg 11545 + reaffirmed msg 11547 ("Go ahead"). Build narrative TBD-AT-BUILD; SHA TBD-AT-SEAL.
+- **D-SCS.3** (sequencing vs `amend/loam-init-persona-wiring`) — recommendation §1.4/§11. **OWNER RULING: SUPERSEDED → RATIFIED IN CORRECTED FORM.** Audit trail (recommended → superseded → ratified-corrected; preserved, not overwritten):
+  - *Recommended (plan-author, original §1.4/§11):* sequence-AFTER the in-flight `amend/loam-init-persona-wiring` amendment, same-tree build serialization (`feedback_serialize_amendment_builds`), NOT a hard collision.
+  - *Superseded — why:* the recommendation rested on a FALSE "in-flight" premise. `amend/loam-init-persona-wiring` is STALE — last commit `ace6f87` (programbench-revival, 2026-05-16), NO open `loam amend` cycle on it; the branch label merely sits on the programbench HEAD. Tier-0-verified independently TWICE: dispatcher git-check + build-agent verification (`ac4d55807acca3ccc`). `feedback_locked_design_not_license` — the original recommendation's premise was wrong, so the recommendation produced a bad sequencing dependency and was correctly revisited rather than re-asserted.
+  - *Ratified (CORRECTED form):* build in an ISOLATED git worktree of canonical loam off a CLEAN base; NO sequence-after dependency on `amend/loam-init-persona-wiring`; drift-contamination eliminated STRUCTURALLY (not via serialization). Provenance: owner Telegram msg 11547 ("Go ahead", responding to the revised-path message msg 11546). SHA TBD-AT-SEAL.
+  - *Build-cycle note:* §7 ship-shape language, §6 halt-trigger 3, and §10/§11/§15 references to "sequence-after the in-flight amendment" are SUPERSEDED by this corrected ruling — the build cycle MUST operate on the corrected D-SCS.3 (clean-base isolated worktree), not the stale serialization premise. The objective / AC ladder / fence are unchanged by this correction (the correction is a build-environment decision, not an AC/fence change).
+- **D-SCS-R2.build.\*** — owner-pending representation choice (lifecycle value vs flag vs event-kind) — builder's call, narrated at build.
+- **D-SCS-R1.build.\*** — backfill method + priority-ordering function — builder's call, narrated at build.
+- **D-SCS-G.build.\*** — registry shape + discovery + idempotent-replay mechanism — builder's call, narrated at build.
+
+---
+
+## §15 — Backwards-compat verification
+
+- objective-tracker: amendment-38 backward-compat suite + D8 round-trip green against pre-R2 fixtures (AC.SCS-R2.3).
+- primary-persona: AC40.5 empty-contribution semantics preserved (AC.SCS-R1.3); existing `tracker-context`/`active-thread` tests green.
+- workspace-bootstrap: AC36.3 idempotent-re-run semantics preserved (G's replay must not regress the existing no-op-on-re-run for steps NOT in the parity registry — G adds replay only for registered steps).
+- The in-flight `amend/loam-init-persona-wiring` fence is untouched (D-SCS.3 sequence-after).
+
+---
+
+## §16 — Halt-and-surface findings (raised at plan-authoring; owner rules from §1)
+
+> **Owner ruling RECORDED 2026-05-18** (recording-only turn). Original recommendations preserved verbatim below; the `Owner ruling` column carries the ratification + Telegram provenance. D-SCS.3's recommendation was SUPERSEDED mid-conversation — the original recommendation is preserved (strikethrough) with the supersession reason + corrected ruling beneath the table (audit-trail integrity, not collapsed).
+
+| ID | Decision | Recommendation | Owner ruling (provenance) | Rationale (one line) |
+|---|---|---|---|---|
+| **D-SCS.1** | Decomposition: one plan-doc + 3 sub-amendments vs split plan-docs | **ONE plan-doc, 3 sub-amendments sequenced R2→R1→G; R1 backfill NOT blocked on G's general framework** | **RATIFIED** — Telegram msg 11545 ("That's all fine", to recommendation pkg msg 11544); reaffirmed msg 11547 ("Go ahead") | Splitting into unlinked plan-docs loses the shared objective; coupling R1's publish-relevant FBM fix to G's general mechanism makes the fix wait — ordered sub-amendments under one plan get both. |
+| **D-SCS.2** | Registry seam: extend `first-run-inventory.yaml` vs new mechanism | **NEW lightweight replay-on-update registry; do NOT extend `first-run-inventory.yaml`** | **RATIFIED** — Telegram msg 11545 + reaffirmed msg 11547 ("Go ahead") | That file is venv/services provisioning; it has no per-item update-path and the existing `already_scaffolded` re-run no-op (AC36.3) is the exact defect mechanism — reusing it entrenches the bug (§11 evidence). |
+| **D-SCS.3** | Sequencing vs `amend/loam-init-persona-wiring` | ~~**Sequence-AFTER; NOT a hard collision**~~ *(SUPERSEDED — see note below)* | **SUPERSEDED → RATIFIED in CORRECTED form** — Telegram msg 11547 ("Go ahead", to revised-path msg 11546) | Original recommendation rested on a false "in-flight" premise; corrected ruling: isolated clean-base worktree, NO sequence-after. See supersession note. |
+
+**D-SCS.3 supersession note (recommended → superseded → ratified-corrected — preserved, not overwritten):**
+
+- *Recommended (plan-author, original §1.4/§11):* sequence-AFTER the in-flight `amend/loam-init-persona-wiring`; same-tree build serialization (`feedback_serialize_amendment_builds`); NOT a hard collision. *(This is the struck-through recommendation in the table above.)*
+- *Superseded — why:* the "in-flight" premise was FALSE. `amend/loam-init-persona-wiring` is STALE — last commit `ace6f87` (programbench-revival, 2026-05-16), no open `loam amend` cycle; Tier-0-verified twice (dispatcher git-check + build-agent `ac4d55807acca3ccc`). `feedback_locked_design_not_license`: a recommendation built on a wrong premise produced a bad sequencing dependency and was correctly revisited.
+- *Ratified (CORRECTED):* build in an ISOLATED git worktree of canonical loam off a CLEAN base; NO sequence-after dependency; drift-contamination eliminated STRUCTURALLY. Owner provenance: Telegram msg 11547 ("Go ahead", to the revised-path message msg 11546). The §7/§6-trigger-3/§10/§11/§15 "sequence-after" references are superseded by this corrected ruling (build cycle operates on the corrected form). Objective / AC ladder / fence unchanged by the correction.
+| **Finding B** | ODD §4 re-extension of sealed recency-only digest contract | **Re-extend (add priority-altitude outcome AC.SCS-R1.2); fold into R1 scoping** | Recency-only digest produces the bad outcome; locked-design-not-license — "it's the sealed contract" is not a defense; named, owner-foldable, not silent. |
+| **Finding C** | memory-session-continuity §10-risk-3 advisory framing | **REJECT advisory framing; structural alternative (R1+R2)** | Ratified F2 — the residual is the unfed channel + missing owner-pending state, not persona-discipline; carried forward, not softened. |
+| **Finding D** | cross-tree artefact-sync gap (pos3↔canonical) | **Note as corroborating evidence; do NOT fix here** | It is an instance of the class G fixes; in-scope would scope-creep this plan — out of scope §3. |

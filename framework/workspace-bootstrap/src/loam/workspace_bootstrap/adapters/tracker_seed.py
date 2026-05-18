@@ -589,3 +589,69 @@ def run_seed_synchronously(
             value_prop=value_prop,
         )
     )
+
+
+# ---- session-`/clear`-safety R1 — existing-workspace backfill verb ---
+
+
+def backfill_tracker_for_existing_workspace(
+    workspace_root: Path | str,
+    *,
+    value_prop_path_override: Path | None = None,
+    runner: TrackerSeedRunner | None = None,
+) -> TrackerSeedResult:
+    """Backfill the objective-tracker for an EXISTING, already-
+    initialized workspace (session-`/clear`-safety R1; AC.SCS-R1.1 +
+    AC.SCS-R1.4).
+
+    This is the production update entry-point that closes the exact
+    defect: ``run_first_run_scaffold`` short-circuits to
+    ``already_scaffolded`` for a workspace scaffolded BEFORE the
+    tracker-seed existed (amendment #39 fires fresh-clone-only), so the
+    seed never runs and the workspace's tracker stays empty — starving
+    the sealed ``tracker-context`` SessionStart channel. This verb runs
+    the seed pipeline directly against an existing workspace, bypassing
+    that short-circuit on purpose: an already-scaffolded workspace is
+    precisely the case this verb exists to seed.
+
+    Composes the SAME classify → load-value-prop → resolve-DB-path →
+    seed pipeline ``run_first_run_scaffold`` uses for a fresh clone
+    (parity: a backfilled existing workspace ends in the same tracker
+    state a fresh clone would). Idempotent by construction: the seed
+    (`seed_tracker`) is query-then-skip via ``query_projection_view``
+    against stable objective IDs (amendment-39 ``already_seeded``
+    precedent), so a second backfill is a no-op and a user-edited
+    record is never clobbered (halt-trigger 1 satisfied structurally —
+    this verb does not clobber; it queries-then-skips).
+
+    Returns the structured ``TrackerSeedResult``:
+      - ``fresh_seed`` — the never-seeded workspace got its register
+        (the AC.SCS-R1.4 outcome-altitude path: existing workspace,
+        no pre-arranged tracker state, ends populated).
+      - ``already_seeded`` — idempotent re-run; no creates, no clobber.
+      - ``completed_partial`` — only the missing records created.
+      - ``skipped_no_value_prop`` — non-dev workspace lacking
+        ``value-prop.md`` (seed deferred; non-fatal — same contract as
+        first-run).
+
+    R1 owns this verb minimally; sub-amendment G re-homes it into the
+    first-run↔update parity registry so the update process discovers +
+    replays it (AC.SCS-G.3), with AC.SCS-R1.4 re-verified through G.
+    The OUTCOME (existing workspace gets backfilled, idempotently) is
+    invariant across that re-homing.
+    """
+    classification = classify_workspace(workspace_root)
+    value_prop = load_value_prop_source(
+        workspace_root,
+        classification,
+        value_prop_path_override=value_prop_path_override,
+    )
+    db_path = tracker_db_path_for(workspace_root)
+
+    seed_runner = runner or run_seed_synchronously
+    return seed_runner(
+        workspace_root=workspace_root,
+        tracker_db_path=db_path,
+        classification=classification,
+        value_prop=value_prop,
+    )

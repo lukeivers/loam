@@ -123,11 +123,58 @@ def tracker_db_path_for(workspace_root: Path | str) -> Path:
 # Status vocabulary the contributor treats as "in flight" — AC40.1's
 # pre-terminal set. The plan's AC40.1 names ``{started, decomposed}``;
 # the tracker's actual lifecycle (per ``objective_tracker.spec.
-# ObjectiveStatus``) is ``{proposed, active, achieved, abandoned}``.
-# "In flight" = pre-terminal = ``{proposed, active}``. Vocabulary
-# mapping is method-level (AC40.1 measures outcome: non-empty when
-# in-flight objectives exist).
+# ObjectiveStatus``) is ``{proposed, active, owner_pending, achieved,
+# abandoned}`` post session-`/clear`-safety R2. "In flight" =
+# pre-terminal AND not owner-blocked = ``{proposed, active}``.
+# Vocabulary mapping is method-level (AC40.1 measures outcome:
+# non-empty when in-flight objectives exist).
 IN_FLIGHT_STATUSES: frozenset[str] = frozenset({"proposed", "active"})
+
+# session-`/clear`-safety R2.2: ``owner_pending`` is an OPEN LOOP
+# awaiting the owner — work shipped, owner ruling pending (R2 added
+# the lifecycle state). It is NOT in ``IN_FLIGHT_STATUSES`` (it is not
+# being actively worked) and NOT terminal (it is not done). The digest
+# MUST surface it as an open loop tagged "awaiting owner", never
+# collapsed into done (AC.SCS-R2.2) and never buried below freshly-
+# active items (AC.SCS-R1.2 — it is the highest-priority open loop).
+OWNER_PENDING_STATUS: str = "owner_pending"
+
+# The set of statuses the digest surfaces as OPEN LOOPS — the persona's
+# post-`/clear` "what is still open" view. Open loops = in-flight ∪
+# owner-pending. Terminal records ({achieved, abandoned}) are NOT open
+# loops and never surface (AC40.5 / AC.SCS-R1.3 empty-when-none holds:
+# no open loops → empty contribution).
+OPEN_LOOP_STATUSES: frozenset[str] = IN_FLIGHT_STATUSES | frozenset(
+    {OWNER_PENDING_STATUS}
+)
+
+# session-`/clear`-safety R1.2: open-loop PRIORITY rank. The digest is
+# ordered by open-loop priority, NOT by query/iteration order (which is
+# effectively recency-ish — the exact RESUME-STATE failure). Lower rank
+# = higher priority = surfaced first. owner_pending is the highest open
+# loop (a shipped item awaiting the owner's call is the thing a `/clear`
+# most needs to not lose); active precedes proposed (work underway
+# precedes work merely queued). The rank is the method; the pinned
+# outcome is "an owner-pending / higher-priority open loop precedes a
+# lower-priority one" (AC.SCS-R1.2, method-in-AC test: YES).
+_OPEN_LOOP_PRIORITY_RANK: dict[str, int] = {
+    OWNER_PENDING_STATUS: 0,
+    "active": 1,
+    "proposed": 2,
+}
+
+
+def _open_loop_priority_key(projection: Any) -> int:
+    """Priority rank for an open-loop projection (AC.SCS-R1.2).
+
+    Lower = higher priority = surfaced earlier. Unknown statuses sort
+    after every known open-loop rank (defensive only against a future
+    additive status the digest has not yet been taught to prioritise —
+    it still surfaces, just last; this is an ODD-named ordering choice,
+    not an unbacked branch)."""
+    status = getattr(projection, "status", None)
+    value = getattr(status, "value", str(status)) if status is not None else ""
+    return _OPEN_LOOP_PRIORITY_RANK.get(value, len(_OPEN_LOOP_PRIORITY_RANK))
 
 
 class TrackerClient(Protocol):
@@ -196,19 +243,43 @@ class TrackerContextConfig:
 # ---- helpers (pure) -------------------------------------------------
 
 
+def _status_value(projection: Any) -> str | None:
+    """Duck-typed status string of a projection, or None."""
+    status = getattr(projection, "status", None)
+    if status is None:
+        return None
+    return getattr(status, "value", str(status))
+
+
 def _is_in_flight(projection: Any) -> bool:
-    """True iff ``projection.status`` is in the pre-terminal set.
+    """True iff ``projection.status`` is in the pre-terminal in-flight
+    set (``{proposed, active}``).
 
     The projection is duck-typed to the public
     ``ObjectiveProjection`` shape — ``.status`` is an enum-or-string
     whose ``.value`` (or string form) we compare against
     ``IN_FLIGHT_STATUSES``.
     """
-    status = getattr(projection, "status", None)
-    if status is None:
-        return False
-    value = getattr(status, "value", str(status))
-    return value in IN_FLIGHT_STATUSES
+    value = _status_value(projection)
+    return value in IN_FLIGHT_STATUSES if value is not None else False
+
+
+def _is_open_loop(projection: Any) -> bool:
+    """True iff ``projection`` is an OPEN LOOP the digest surfaces
+    post-`/clear` — in-flight OR owner-pending (R2.2).
+
+    Terminal records ({achieved, abandoned}) are NOT open loops and
+    never surface (AC.SCS-R1.3 / AC40.5 empty-when-none preserved:
+    no open loops → empty contribution)."""
+    value = _status_value(projection)
+    return value in OPEN_LOOP_STATUSES if value is not None else False
+
+
+def _is_owner_pending(projection: Any) -> bool:
+    """True iff ``projection`` is owner-pending (work shipped, owner
+    ruling pending — R2.2). Used to tag the digest line distinctly so
+    it is never read as done."""
+    return _status_value(projection) == OWNER_PENDING_STATUS
 
 
 def _trace_chain_to_root_id(
@@ -278,6 +349,14 @@ def _format_projection_line(
     oid = getattr(projection, "objective_id", "?")
     status = getattr(projection, "status", "?")
     status_value = getattr(status, "value", str(status))
+    # session-`/clear`-safety R2.2: an owner-pending objective is an
+    # open loop AWAITING THE OWNER — surface it tagged as such so the
+    # persona never reads it as done (it is not terminal) and never as
+    # merely active (it is owner-blocked, not agent-blocked). The tag
+    # is appended to the status token, so the line reads e.g.
+    # ``[owner_pending — AWAITING OWNER]``.
+    if _is_owner_pending(projection):
+        status_value = f"{status_value} — AWAITING OWNER"
     goal = getattr(projection, "goal", "")
     # Parentage chain: chain[0] is the objective itself; chain[-1] is
     # the terminal root. Intermediate elements are parents.
@@ -466,9 +545,26 @@ def build_tracker_context_contributor(
                 chains_by_id[oid] = chain
                 descendants.append(proj)
 
-            in_flight = [p for p in descendants if _is_in_flight(p)]
+            # session-`/clear`-safety R1.2 + R2.2: surface OPEN LOOPS
+            # (in-flight ∪ owner-pending), PRIORITY-ORDERED — not query
+            # iteration order (the recency-ish ordering that buried the
+            # dev priority below the personal detour, the exact
+            # RESUME-STATE failure). owner_pending sorts first (highest
+            # open loop), then active, then proposed; a stable secondary
+            # sort by objective_id keeps the digest deterministic across
+            # `/clear`s. AC.SCS-R1.3 / AC40.5 (empty-when-none) holds:
+            # terminal records are not open loops, so a tracker with
+            # only terminal/no records yields an empty open-loop set.
+            in_flight = sorted(
+                (p for p in descendants if _is_open_loop(p)),
+                key=lambda p: (
+                    _open_loop_priority_key(p),
+                    getattr(p, "objective_id", ""),
+                ),
+            )
 
-            # AC40.5 — empty contribution when nothing is in-flight.
+            # AC40.5 / AC.SCS-R1.3 — empty contribution when no open
+            # loops exist (no in-flight, no owner-pending).
             if not in_flight:
                 obs.tracker_context_composed_event(
                     handle=config.handle,

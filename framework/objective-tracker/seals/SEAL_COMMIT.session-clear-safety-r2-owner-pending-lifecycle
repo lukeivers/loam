@@ -1,0 +1,24 @@
+# session-`/clear` safety R2 — objective-tracker owner-pending lifecycle
+
+Sub-amendment 1 of 3. Sealed local; awaiting dispatcher dogfood
+publish per ASK-FIRST.
+
+The objective-tracker gained an additive `ObjectiveStatus`
+lifecycle value `owner_pending` — "work shipped, owner decision
+pending" — distinct from `active` (in progress) and from the
+terminal set `{achieved, abandoned}` (closed). This is the single
+distinction a hand-maintained RESUME-STATE file existed to carry:
+that a shipped item is awaiting the owner's call, not done. Added
+`active→owner_pending` and `owner_pending→{active,achieved,
+abandoned}` legal transitions plus the production runtime API
+`ObjectiveTracker.mark_owner_pending`; no pre-R2 transition was
+removed or altered (additive — amendment-38 widening precedent,
+default-preserving, D8 round-trip). owner_pending is NOT terminal
+and NOT default-in-flight: its own category so the session-start
+digest never collapses it into "done" (R2.2 surfaces it in R1's
+primary-persona digest fence per D-SCS.4). R2 is the hard input to
+R1 — the priority-ordered digest cannot rank-by-owner-pending until
+owner-pending is representable. AC.SCS-R2.{1,3,S} green against real
+test output; full objective-tracker suite (incl. amendment-38
+backward-compat + D8 round-trip) unchanged. SHA register +
+method-decision record in the parent plan-doc §14.

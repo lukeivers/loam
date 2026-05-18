@@ -25,12 +25,27 @@ smoke_outcome: "An existing, already-initialized, never-seeded workspace run thr
 #   additive owner-pending lifecycle state lands here. Canonical sidecar
 #   tests/SEAL_COMMIT + seal_test tests/test_no_sealed_amendments.py
 #   (both VERIFIED present at framework/objective-tracker/tests/ this turn).
+#   Build-cycle AC scope: AC.SCS-R2.{1,3,S}.
+#   (D-SCS.4 RATIFIED 2026-05-18, Telegram msg 11553: AC.SCS-R2.2 STAGED
+#   OUT of R2 / INTO R1 — its pinned digest-surface outcome is Tier-0-
+#   verified structurally unsatisfiable inside R2's objective-tracker-only
+#   fence (no digest surface in any of the 12 objective-tracker modules;
+#   the digest lives in framework/primary-persona/.../tracker_context.py).
+#   Original R2 build-cycle scope was AC.SCS-R2.{1,2,3,S} — superseded,
+#   not silently rewritten; full audit trail in plan-doc §7/§14/§16.
+#   Objective / AC outcome text / AC ladder / fences UNCHANGED — only the
+#   build-cycle sub-amendment assignment of AC.SCS-R2.2 moved.)
 # Sub-amendment 2 (R1): seal anchor framework/primary-persona/ — the
 #   priority-ordered digest + the ODD §4 re-extension of the sealed
 #   tracker-context/active-thread outcome contract land here;
 #   framework/objective-tracker/ + framework/workspace-bootstrap/ admitted
 #   via extra_allowed_prefixes for the register/seed/backfill surface (build
 #   cycle TIGHTENS to exactly what the chosen backfill method requires).
+#   Build-cycle AC scope: AC.SCS-R1.{1,2,3,4,S} + AC.SCS-R2.2 (STAGED IN
+#   from R2 per D-SCS.4 — R2.2's digest-surface outcome is satisfiable only
+#   under R1's already-primary-persona seal anchor; no new fence, no breach;
+#   R2 still ships AC.SCS-R2.1, the representable owner-pending state R2.2
+#   consumes — the R2->R1 build-order dependency is unchanged).
 # Sub-amendment 3 (G): seal anchor framework/workspace-bootstrap/ — the
 #   first-run↔update parity registry + discovery + idempotent replay land
 #   here; framework/hands-off-lifecycle/ admitted for the update-process

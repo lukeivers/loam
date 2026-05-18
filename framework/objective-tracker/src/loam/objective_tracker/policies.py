@@ -20,8 +20,20 @@ Lifecycle (spec):
     proposed → abandoned
     active   → achieved
     active   → abandoned
+    active   → owner_pending  (session-/clear-safety R2: work shipped,
+                               owner ruling pending)
+    owner_pending → active    (owner ruled: resume / re-scope)
+    owner_pending → achieved  (owner ruled: done)
+    owner_pending → abandoned (owner ruled: drop)
     achieved → active   (re_open; mandatory rationale)
     abandoned → active  (re_open; mandatory rationale)
+
+`owner_pending` is additive (amendment-38 additive-widening precedent):
+no pre-R2 transition is removed or altered, so existing records and
+every existing transition path are unchanged (AC.SCS-R2.3,
+default-preserving D8 round-trip). It is NOT in `TERMINAL_STATES` —
+an owner-pending objective is an open loop awaiting the owner, not a
+closed record.
 """
 
 from __future__ import annotations
@@ -34,6 +46,12 @@ LEGAL_TRANSITIONS: dict[ObjectiveStatus, set[ObjectiveStatus]] = {
         ObjectiveStatus.abandoned,
     },
     ObjectiveStatus.active: {
+        ObjectiveStatus.achieved,
+        ObjectiveStatus.abandoned,
+        ObjectiveStatus.owner_pending,
+    },
+    ObjectiveStatus.owner_pending: {
+        ObjectiveStatus.active,
         ObjectiveStatus.achieved,
         ObjectiveStatus.abandoned,
     },

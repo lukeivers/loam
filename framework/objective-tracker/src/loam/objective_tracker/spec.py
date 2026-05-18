@@ -61,17 +61,37 @@ class ObjectiveStatus(str, Enum):
     Lifecycle:
 
         proposed → active → {achieved | abandoned}
-                    ↑           ↓
+                    ↑  ↕        ↓
+                    │  owner_pending
+                    │  ↓     ↓     ↓
+                    │ active achieved abandoned
                     └── re_open ┘  (achieved → active, rationale mandatory)
 
     Abandoned → active via re_open is permitted too; Luke's decision
     attached `re_open` to "achieved" in the approved proposal, but the
     tracker accepts either direction as a corrective transition with
     mandatory rationale.
+
+    `owner_pending` (session-`/clear`-safety R2 — additive lifecycle
+    widening, amendment-38 additive precedent): "work shipped, owner
+    decision pending." Distinct from `active` (in progress) and from
+    the terminal set `{achieved, abandoned}` (closed). It is the single
+    distinction a hand-maintained RESUME-STATE file existed to carry —
+    that a shipped item is *awaiting the owner's call, not done*. An
+    objective enters it from `active` (work shipped) and leaves it when
+    the owner rules: back to `active` (resume / re-scope) or onward to
+    `achieved` / `abandoned` (closed). It is NOT terminal and NOT
+    treated as in-flight-by-default — it is its own category so the
+    session-start digest never collapses it into "done" (R2.2, surfaced
+    in R1's primary-persona digest fence per D-SCS.4) nor buries it as
+    just another active item. Pre-R2 records never carry this status;
+    the default lifecycle and every existing transition are unchanged
+    (default-preserving, D8 round-trip — AC.SCS-R2.3).
     """
 
     proposed = "proposed"
     active = "active"
+    owner_pending = "owner_pending"
     achieved = "achieved"
     abandoned = "abandoned"
 

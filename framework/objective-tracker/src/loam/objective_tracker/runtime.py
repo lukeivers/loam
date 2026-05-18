@@ -236,6 +236,27 @@ class ObjectiveTracker:
             operation="mark_achieved",
         )
 
+    async def mark_owner_pending(
+        self, objective_id: str, *, evidence: str | None = None
+    ) -> ObjectiveProjection:
+        """Transition `active → owner_pending`: work shipped, owner
+        ruling pending (session-`/clear`-safety R2).
+
+        Distinct from `mark_achieved` (closed) and from leaving the
+        objective `active` (no signal it is owner-blocked). The
+        session-start digest surfaces an `owner_pending` objective as
+        an open loop awaiting the owner, never as done (R2.2, in R1's
+        primary-persona digest fence per D-SCS.4). `evidence` records
+        what shipped — optional, mirroring `mark_achieved`; no mandatory
+        rationale because this is not a terminal/corrective transition.
+        """
+        return await self._transition(
+            objective_id,
+            ObjectiveStatus.owner_pending,
+            evidence=evidence,
+            operation="mark_owner_pending",
+        )
+
     async def mark_abandoned(
         self, objective_id: str, *, rationale: str
     ) -> ObjectiveProjection:

@@ -221,9 +221,23 @@ OWNER-RATIFIED — BUILD-READY (ratification recorded 2026-05-18; original plan 
   - *Basis for R1 as the home (the §7-sequencing-note authority the recommendation invoked):* R1's seal anchor IS `primary-persona` (manifest `components[].name: primary-persona` — the exact component the digest surface lives in), and the plan already designates R1 as the cycle that turns the sealed `tracker-context` channel load-bearing (§1.6, §7 sub-amendment 2, §10 finding B). The §7 sequencing note already authorises exactly this class of cross-sub-amendment AC re-homing where the OUTCOME is invariant once both sub-amendments seal. R2 still ships the *representable* owner-pending state (AC.SCS-R2.1) that R2.2's digest-surfacing consumes — the R2→R1 build-order dependency is unchanged.
   - *Invariants (unchanged by this staging):* objective UNCHANGED; every AC's outcome text UNCHANGED (AC.SCS-R2.2's wording is verbatim as §5); the AC ladder UNCHANGED (AC.SCS-R2.* → AC.PO.1, §5); all fences/seal-anchors UNCHANGED (R1's anchor was already `primary-persona`; no new fence, no breach). Only R2.2's build-cycle sub-amendment assignment + its register entry move. No AC dropped.
   - Provenance: owner Telegram msg 11553 ("Accept") → builder recommendation msg 11552. SHA TBD-AT-SEAL (R2.2 verifies green inside sub-amendment 2 / R1's seal-diff window).
-- **D-SCS-R2.build.\*** — owner-pending representation choice (lifecycle value vs flag vs event-kind) — builder's call, narrated at build.
+- **D-SCS-R2.build.1** — owner-pending representation choice (lifecycle value vs flag vs event-kind). **BUILDER RULING (narrated at build): a new additive `ObjectiveStatus` enum value `owner_pending`.** Rationale: the lifecycle is already an event-sourced str-Enum persisted as TEXT (`store.py` `status TEXT`, queried by string IN-list, projection folds `to_status` generically — verified no exhaustive enum match anywhere in the 12 modules); a new enum value is the minimal additive change with zero pre-R2 transition removed/altered, mirroring the amendment-38 additive-widening precedent (default-preserving, D8 round-trip). A bool flag would have required a parallel non-event-sourced field (breaks the single-source-of-truth event log); an event-kind would have duplicated the existing `StatusTransitioned` machinery. `owner_pending` is NOT in `TERMINAL_STATES` and NOT default-in-flight — its own category (the distinction RESUME-STATE carried). Production API `ObjectiveTracker.mark_owner_pending(objective_id, *, evidence=None)` mirrors `mark_achieved` (evidence-carrying, no mandatory rationale — not a terminal/corrective transition). AC scope built: AC.SCS-R2.{1,3,S} (AC.SCS-R2.2 staged to R1 per D-SCS.4).
 - **D-SCS-R1.build.\*** — backfill method + priority-ordering function — builder's call, narrated at build.
 - **D-SCS-G.build.\*** — registry shape + discovery + idempotent-replay mechanism — builder's call, narrated at build.
+
+### Commit SHAs (manual AC.D-sa.7 fallback — F-SEAL-§14 known heading mismatch, anticipated §7)
+
+> The seal tool's `--plan-doc` backfill matches a `## 14.` heading; this plan-doc uses the `## §14 —` convention, so the seal correctly HALTED at `plan-doc-missing-section-14` with the seal commit left in place. SHAs recorded manually here per the established `AC.D-sa.7 manual fallback` precedent (cf. `be3e269` loop-behavioral-refine-cycle, `ace6f87` programbench-revival). Local only — NOT pushed (publish is owner-gated, ASK-FIRST).
+
+- **Sub-amendment 1 — R2 (objective-tracker owner-pending lifecycle)** — manifest `docs/plans/session-clear-safety-r2-owner-pending-lifecycle.manifest.yaml`, AC scope AC.SCS-R2.{1,3,S}. SEALED LOCAL 2026-05-18.
+  - source-edit commit (BASELINE): `a96f698` — `feat(objective-tracker): owner_pending lifecycle state — session-/clear-safety R2 (AC.SCS-R2.{1,3})`
+  - manifest-baseline commit: `b2bc7ec` — `docs(plans): session-clear-safety R2 manifest BASELINE -> a96f698 (source-edit commit)`
+  - apply commit: `a9b20d1` — `chore(amend): session-clear-safety-r2-owner-pending-lifecycle manifest+apply — objective-tracker BASELINE+sidecar bump to a96f698`
+  - seal commit: `de475aa` — `chore(seals): session-clear-safety-r2-owner-pending-lifecycle — objective-tracker at a9b20d1`
+  - seal-diff window: `a96f698..a9b20d1` — confined to objective-tracker fence + universal `docs/plans/` admission (AC.SCS-R2.S green; objective-tracker seal-test 2/2 green).
+  - AC outcomes: AC.SCS-R2.1 (5 tests) GREEN; AC.SCS-R2.3 (6 tests) GREEN; full objective-tracker suite (158 tests incl. amendment-38 backward-compat + D8 round-trip) GREEN/unchanged; AC.SCS-R2.S GREEN. AC.SCS-R2.2 staged to R1 (D-SCS.4 — verifies in R1's seal-diff window).
+- **Sub-amendment 2 — R1** — SHAs TBD-AT-SEAL.
+- **Sub-amendment 3 — G** — SHAs TBD-AT-SEAL.
 
 ---
 

@@ -1,6 +1,6 @@
 # Phase-B intake fix — the ODD-shaped plan
 
-**Date:** 2026-05-16 · **Class:** ODD-shaped fix plan, plan-only (no code in this artefact)
+**Date:** 2026-05-16 · **Status (corrected 2026-05-18 pre-publish, Tier-0):** SEALED — seal `ceb629b` (authoritative register; BASELINE `07f4d35`, plan+manifest `c1fbb03`, source-edit `a8ba467`, apply `e553e80`; STATE.md change-log 2026-05-16). The three named `intake.py` corrections + re-harden were built + LOCAL-sealed against the `workspace-bootstrap` fence and ship in this release push (`ceb629b` is an ancestor of the pushed `main` tip). The re-harden returned a definite evidence-backed honest-negative (2/7 faithful) — a valid §10.5 plan-success outcome, reported straight. _Prior state (superseded, retained for audit trail): "**Class:** ODD-shaped fix plan, plan-only (no code in this artefact)." Authored 2026-05-16 before the build; went stale at seal — corrected here pre-publish so the public artefact does not ship a false plan-only status._
 **Contract input (the evidence base):** `pos3/.../phase-b-hardening-2026-05-16.md` — the honest-negative reliability test that returned **3/7 faithful** + one non-deterministic process crash.
 **Built loop under repair:** canonical `/Users/lukeivers/loam`, `framework/tools/handsoff-loop/src/handsoff_loop/intake.py` (sealed `b33c0a8` on branch `amend/loam-init-persona-wiring`; build report `handsoff-loop-build-report-2026-05-16.md`).
 **Owner-ratified sequence (Telegram 11403):** harden Phase B → fix → re-harden → THEN revive ProgramBench. This plan is the *fix* step.

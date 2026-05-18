@@ -1,0 +1,31 @@
+# session-`/clear` safety R1 — priority-ordered open-loop digest + existing-workspace tracker backfill
+
+Sub-amendment 2 of 3. Sealed local; awaiting dispatcher dogfood
+publish per ASK-FIRST.
+
+The sealed-but-starved tracker-context SessionStart channel became
+load-bearing. The session-start digest the persona reads at
+`/clear` is now ordered by open-loop priority (owner_pending >
+active > proposed) instead of query/recency order — the exact
+failure where the dev priority was buried below the personal
+detour. owner-pending objectives surface as open loops tagged
+"AWAITING OWNER", never collapsed into done (AC.SCS-R2.2, staged
+into R1 per D-SCS.4 because the digest surface lives in
+primary-persona, structurally unsatisfiable in R2's
+objective-tracker-only fence). AC40.5 empty-when-none preserved
+(AC.SCS-R1.3). A new production update entry-point
+`backfill_tracker_for_existing_workspace` closes the
+fresh-clone-only seeding hole: it runs the seed pipeline against an
+EXISTING already-initialized workspace, bypassing the
+`already_scaffolded` short-circuit that was the exact defect
+mechanism; idempotent query-then-skip, no clobber (amendment-39
+`already_seeded` precedent). AC.SCS-R1.4 is the outcome-altitude
+proof — an existing, never-seeded workspace, run through the
+production entry-point with no pre-arranged tracker state, ends
+populated + parented (the defect's exact inverse). The sealed
+recency-only digest outcome contract was re-extended via ODD §4 to
+add a priority-altitude outcome (locked-design-not-license — the
+bad post-`/clear` outcome was named, not kept). AC.SCS-R1.{1,2,3,4,S}
++ AC.SCS-R2.2 green; full primary-persona (AC40.*/AC.MSC.*) +
+objective-tracker suites non-regression green. SHA register +
+method-decision record in the parent plan-doc §14.

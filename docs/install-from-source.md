@@ -75,6 +75,7 @@ pip install -e ./framework/observability-aggregator
 pip install -e ./framework/safety-layer
 pip install -e ./framework/self-upgrade
 pip install -e ./framework/workspace-sync
+pip install -e ./framework/binary-observation-harness
 
 # Tier B — depends only on Tier A.
 pip install -e ./framework/primary-persona

@@ -12,16 +12,22 @@ How to add a new contribution to a pOS workspace without modifying
 
    ```python
    # my_package/bootstrap_adapter.py
-   from workspace_bootstrap import BaseContribution, ContributionMetadata, Phase
+   from workspace_bootstrap import (
+       BaseContribution,
+       BootstrapHostProtocol,
+       ContributionMetadata,
+       Phase,
+   )
 
    class MyContribution(BaseContribution):
        metadata = ContributionMetadata(
            name="my_component",
            phase=Phase.after_orchestrator_ready,
            after=("self_correction",),
+           api_version=1,  # plugin-contract revision; default 1
        )
 
-       def contribute(self, host) -> None:
+       def contribute(self, host: BootstrapHostProtocol) -> None:
            # Wire your component into the host.
            ...
    ```
@@ -105,9 +111,35 @@ contributions:
     attr: LocalContribution
 ```
 
+## Plugin-contract versioning (`api_version`)
+
+`ContributionMetadata.api_version: int` declares the plugin-contract
+revision your contribution was authored against. Bootstrap supports
+`SUPPORTED_API_VERSION = 1`; contributions declaring any other value
+are rejected at load time with a `-32082 BOOTSTRAP_METADATA_INVALID`
+error naming both the expected and received versions.
+
+- **Default is `1`.** Existing contributions that never set the field
+  continue to load — the default preserves backward-compat.
+- **When the contract revs.** Future contract-breaking changes
+  (renaming a host attribute, changing `contribute()` semantics,
+  reshaping `ContributionMetadata`) bump `SUPPORTED_API_VERSION` and
+  plugins must set the new value explicitly.
+- **Pyproject upper-bound is complementary, not redundant.** The
+  api_version field is the contract revision; your pyproject's
+  `loam-workspace-bootstrap>=X.Y,<X.Z` is the component-version
+  constraint. Both should be declared for a stable plugin.
+
 ## Host API
 
-The `host` object passed to `contribute(host)` exposes:
+The `host` object passed to `contribute(host)` is typed by the
+`BootstrapHostProtocol` Protocol — a structural surface documenting
+which attributes contributions may read and write. The concrete
+runtime instance is `BootstrapHost` (constructed by the framework);
+plugin authors annotate against the Protocol so type-checkers see
+the documented surface rather than `Any`.
+
+It exposes:
 
 - `host.config_dir` — where per-adapter config files live.
 - `host.workspace_root` — the workspace directory.

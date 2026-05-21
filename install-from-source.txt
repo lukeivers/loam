@@ -12,6 +12,40 @@
 #   pip install loam-cli loam-init loam-workspace-bootstrap loam-plugin-dev-sdlc
 # See docs/install-from-source.md for the prose guide and
 # troubleshooting.
+#
+# ---------------------------------------------------------------
+# Inter-component version constraints (F7-PLUGIN-VERSION, v1.0-readiness).
+#
+# Every line below is `-e ./<path>` — editable installs of the
+# in-tree source. Editable installs intentionally carry NO version
+# constraint; pip resolves the version from each component's
+# pyproject.toml at install time, and editable mode means the
+# installed package follows the working-tree source (not a fixed
+# tag). Adding `==X.Y.Z` to an `-e ./<path>` line would either be
+# ignored or fail validation depending on pip version — it is not
+# the right surface for this discipline.
+#
+# Where the version discipline actually lives:
+#
+#   1. Each component's pyproject.toml `[project] version` field is
+#      bumped per the per-component-version discipline (v0.8.0
+#      AC.HONEST.1: pyproject versions advance with shipped MINORs).
+#   2. Each component's `dependencies = [...]` block in its own
+#      pyproject.toml carries the inter-component constraints
+#      (e.g. `loam-workspace-bootstrap>=0.12,<0.13`). Those are the
+#      load-bearing upper/lower bounds — pip enforces them when
+#      resolving the dep graph, regardless of install order.
+#   3. Plugins authored against the bootstrap plugin contract MUST
+#      declare `loam-workspace-bootstrap>=<minor>,<<next-minor>` in
+#      their own pyproject.toml AND set
+#      `ContributionMetadata.api_version` (default 1) so bootstrap
+#      can fail-closed on contract mismatches at load time.
+#
+# The api_version field is the plugin-contract revision; the
+# pyproject upper-bound is the component-version constraint. Both
+# are required for a stable plugin contract; this file is the
+# install-order substrate they sit on top of.
+# ---------------------------------------------------------------
 
 # ---------------------------------------------------------------
 # Test-runtime dep (added v0.8.0 honesty cleanup AC.HONEST.6.b — closes

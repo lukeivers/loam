@@ -17,13 +17,16 @@
 Public surface:
 
     BaseContribution           — convenience base class for adapters
-    BootstrapHost              — shared singletons + per-adapter outputs
+    BootstrapHost              — shared singletons + per-adapter outputs (concrete)
+    BootstrapHostProtocol      — Protocol typing the host attribute surface
+                                 contributions see (F7-PLUGIN-VERSION)
     Bootstrapper               — top-level composition engine
     Contribution               — structural protocol
     ContributionMetadata       — Pydantic metadata record (frozen)
     Manifest                   — loaded `bootstrap.yaml`
     Phase                      — three-value enum
     PHASE_ORDER                — deterministic phase order
+    SUPPORTED_API_VERSION      — plugin-contract revision this bootstrap accepts
     load_manifest              — parse `bootstrap.yaml`
     topological_order          — ordering-engine entry point
 
@@ -79,7 +82,9 @@ from .onboarding import (
 from .ordering import topological_order
 from .spec import (
     PHASE_ORDER,
+    SUPPORTED_API_VERSION,
     BaseContribution,
+    BootstrapHostProtocol,
     Contribution,
     ContributionMetadata,
     Phase,
@@ -90,6 +95,7 @@ __all__ = [
     "BaseContribution",
     "BootstrapError",
     "BootstrapHost",
+    "BootstrapHostProtocol",
     "Bootstrapper",
     "Contribution",
     "ContributionMetadata",
@@ -114,6 +120,7 @@ __all__ = [
     "QUESTION_SLUGS",
     "ResolvedContribution",
     "SKIP_ENV_VAR",
+    "SUPPORTED_API_VERSION",
     "UnknownReferenceError",
     "cli_main",
     "load_manifest",

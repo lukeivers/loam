@@ -38,7 +38,7 @@ from .errors import (
     MetadataInvalidError,
 )
 from .manifest import ContributionRef
-from .spec import ContributionMetadata
+from .spec import SUPPORTED_API_VERSION, ContributionMetadata
 
 
 _ENTRYPOINT_GROUP = "loam.bootstrap.contributions"
@@ -183,18 +183,42 @@ def read_metadata(cls: type[Any], *, ref_label: str) -> ContributionMetadata:
             data={"ref": ref_label},
         )
     if isinstance(md, ContributionMetadata):
+        _check_api_version(md, ref_label=ref_label)
         return md
     # Accept a dict and validate.
     if isinstance(md, dict):
         try:
-            return ContributionMetadata(**md)
+            validated = ContributionMetadata(**md)
         except ValidationError as e:
             raise MetadataInvalidError(
                 f"{ref_label}: metadata failed validation: {e.errors()!r}",
                 data={"ref": ref_label, "errors": e.errors()},
             ) from e
+        _check_api_version(validated, ref_label=ref_label)
+        return validated
     raise MetadataInvalidError(
         f"{ref_label}: metadata must be a ContributionMetadata or dict; "
         f"got {type(md).__name__}",
         data={"ref": ref_label},
     )
+
+
+def _check_api_version(md: ContributionMetadata, *, ref_label: str) -> None:
+    """AC.F7P.2 — reject contributions declaring an unsupported api_version.
+
+    Bootstrap supports `SUPPORTED_API_VERSION` (currently 1). Contributions
+    declaring any other value are rejected with `MetadataInvalidError`
+    whose message names expected vs received api_version so plugin authors
+    can immediately see what to fix.
+    """
+    if md.api_version != SUPPORTED_API_VERSION:
+        raise MetadataInvalidError(
+            f"{ref_label}: plugin api_version mismatch "
+            f"(expected {SUPPORTED_API_VERSION}, received {md.api_version}); "
+            f"plugin authored against an incompatible contract revision",
+            data={
+                "ref": ref_label,
+                "expected_api_version": SUPPORTED_API_VERSION,
+                "received_api_version": md.api_version,
+            },
+        )

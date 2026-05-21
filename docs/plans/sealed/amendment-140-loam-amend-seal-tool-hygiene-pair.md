@@ -201,6 +201,22 @@ If both fixes are correct, the seal at step #4 demonstrates them: the dev-sdlc c
 
 ---
 
+### Build-agent findings (appended post-seal, 2026-05-21 by `loam-builder`)
+
+9. **Dispatch brief carried a typo'd full BASELINE SHA.** The dispatch instructed the builder to use `cd3daae` as the BASELINE; the brief's full-SHA form `cd3daaef07d92d28aa4cb55b50fe0a89dcf24ed7` was incorrect (the actual full SHA is `cd3daae6fe220b9cb7d8cd05e1bbeb34c8d88fe2`; verified via `git rev-parse cd3daae`). `loam amend apply` failed at the `is_rename_only` check with `fatal: Invalid revision range`. Recovery: new corrective commit `e0604af` updated the manifest BASELINE to the correct full SHA (per `feedback_no_amend_in_agent_dispatches` — no `git commit --amend`). **Pattern:** dispatcher-side Tier-0 verification of full SHAs is a NEW capture candidate for FIDRAFT — when the dispatch carries both a short SHA (`cd3daae`) and a full SHA, the dispatcher should `git rev-parse <short>` to verify the full form matches before the brief lands.
+
+10. **Scope A's seal-step pytest target is the component's primary `seal_test:` directory, NOT every test directory under the component's source tree.** Empirical: the `dev-sdlc` component carries `seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py`, so the per-component pytest run targets `plugins/dev-sdlc/tests/` (252 passed + 7 skipped). The loam-amend tool subtree at `plugins/dev-sdlc/tools/loam-amend/tests/` carries 4 pre-existing failures (per §16 finding #6) but those failures DO NOT block the seal because they're in a sub-tree not pointed at by the manifest's `seal_test:`. **Implication:** Scope A's fix is exactly as targeted as the schema-driven design intended — one test directory per component, the one named in the manifest. **Ruling:** capture-only; no scope change. The 4 pre-existing failures stay tracked as `ws-loam-amend-oversized-manifest-field-cleanup`. The fact that the seal-step's pytest gate runs in `plugins/dev-sdlc/tests/` (post-#139 green) confirms Scope A's fix works — the dogfood succeeded as designed.
+
+11. **Scope B's reorder dogfooded cleanly at seal time.** The dirty-tree check fired against the working tree (which carried only the untracked unrelated plan-doc admitted via `--allow-untracked-globs`); the plan-doc + manifest archive happened AFTER the gate cleared. Verified post-seal: plan-doc + manifest are in `docs/plans/sealed/` (not `docs/plans/`). The reorder works as designed — if the gate had halted, the plan-doc would still be at `docs/plans/amendment-140-…md` (the recovery-friendly outcome).
+
+12. **§14 SHA auto-backfill succeeded via amendment #136's widened regex** — landed at commit `381645b` with both Amendment + Seal commit SHAs embedded under `### Commit SHAs`. No manual fallback needed (in contrast to #139, where the regex-widening was incomplete + the post-seal dry-run halt blocked auto-backfill). **Ruling:** the regex-widening + sealed-shape composition holds; capture-only.
+
+13. **Cherry-pick from previous #138 attempt was clean** — `git cherry-pick 3a8ed06 --no-commit` produced no merge conflicts onto post-#139 main HEAD `cd3daae6`. The 11 new test files + the seal.py edits were preserved unchanged. Verified by running all 11 tests against the post-#139 baseline (7 unit + 4 smoke, all PASS). **Ruling:** the original #138 build agent's work was high-quality and survived the renumber cleanly; D-RESUME.RENUMBER mechanism (cherry-pick + message-update) is the right shape for future post-halt resumes.
+
+14. **Cross-component sweep result.** Seal commit body records "16 components green (1 skipped — no seal-diff test recognised: scope-of-work)". The 1 skip is unrelated to this amendment (a known gap in the cross-component sweep's `_seal_diff_test_path` lookup, captured in §3 out-of-scope). No regression introduced.
+
+---
+
 ## §17. Composition (M5 derivation line)
 
 - **Composes with** amendment #134 (FBM Tier 1) — Scope B revises T1.4's ordering decision; the archive mechanism itself is preserved.

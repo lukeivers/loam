@@ -12,7 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AC.WS.4, AC.WS.6, AC.WS.12 — MergeResolver tests (lifted shape)."""
+"""AC.WS.4, AC.WS.6, AC.WS.12 — MergeResolver tests (lifted shape).
+
+A.2 update: ``.resolve()`` now runs classifier-first; tests that
+exercise the generator path queue a ``mergeable=False`` classifier
+verdict ahead of the generator verdict to route through the
+fallback. The contracts asserted (budget tracking, type
+translation, prompt content) are unchanged.
+"""
 
 from __future__ import annotations
 
@@ -21,6 +28,7 @@ from pydantic import BaseModel
 
 from loam.workspace_sync.merge_resolver import (
     BudgetExhausted,
+    ClassifierVerdict,
     MergeResolver,
     MergeVerdict,
     ResolverBudget,
@@ -30,9 +38,9 @@ from loam.workspace_sync.merge_resolver import (
 
 
 class StubLLMClient:
-    """Test double returning canned MergeVerdicts."""
+    """Test double returning canned verdicts (any Pydantic model)."""
 
-    def __init__(self, queued: list[tuple[MergeVerdict, int]]) -> None:
+    def __init__(self, queued: list[tuple[BaseModel, int]]) -> None:
         self.queued = list(queued)
         self.calls: list[tuple[str, type[BaseModel]]] = []
 
@@ -61,6 +69,15 @@ def _verdict(
     )
 
 
+def _classifier_no() -> ClassifierVerdict:
+    """Classifier verdict that routes straight to the generator path."""
+    return ClassifierVerdict(
+        mergeable=False,
+        strategy="none",
+        reason="test: route to generator fallback",
+    )
+
+
 def test_verdict_validates_confidence_range() -> None:
     with pytest.raises(ValueError):
         MergeVerdict(
@@ -80,8 +97,15 @@ def test_verdict_merged_requires_content() -> None:
 
 
 def test_resolve_per_conflict_budget_smoke() -> None:
-    stub = StubLLMClient([(_verdict(), 200)])
-    resolver = MergeResolver(stub, ResolverBudget(per_conflict_token_budget=5_000))
+    # Classifier-no (50 tokens) → generator returns accept-canonical
+    # (150 tokens). Total 200 tokens billed; one call counted (the
+    # MergeVerdict-producing call; classifier alone doesn't count).
+    stub = StubLLMClient(
+        [(_classifier_no(), 50), (_verdict(), 150)]
+    )
+    resolver = MergeResolver(
+        stub, ResolverBudget(per_conflict_token_budget=5_000)
+    )
     verdict = resolver.resolve(
         path="x.py", canonical_text="a", workspace_text="b"
     )
@@ -91,7 +115,18 @@ def test_resolve_per_conflict_budget_smoke() -> None:
 
 
 def test_cumulative_budget_exhaustion() -> None:
-    stub = StubLLMClient([(_verdict(), 50_000)] * 3)
+    # Each resolve = classifier-no (1 token) + generator (50_000).
+    # After two resolves, cumulative used = 100_002 > ceiling.
+    stub = StubLLMClient(
+        [
+            (_classifier_no(), 1),
+            (_verdict(), 50_000),
+            (_classifier_no(), 1),
+            (_verdict(), 50_000),
+            (_classifier_no(), 1),
+            (_verdict(), 50_000),
+        ]
+    )
     resolver = MergeResolver(
         stub,
         ResolverBudget(
@@ -106,6 +141,10 @@ def test_cumulative_budget_exhaustion() -> None:
 
 
 def test_resolver_failure_translation() -> None:
+    # An exploding classifier call no longer fails the resolve —
+    # A.2 catches classifier failures and falls back to the
+    # generator path. So we exhaust both calls here to surface
+    # the failure end-to-end.
     class ExplodingClient:
         def invoke(self, prompt: str, response_model: type[BaseModel]):
             raise RuntimeError("kaboom")

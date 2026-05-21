@@ -77,24 +77,25 @@ components:
     # AC.LPAS.D-MIG (the live-constant fix) + AC.LPAS.E docstring sweep
     # for test_AC_E_S_seal_diff_single_component_scope.py + test_d2.
 
-  - name: hands-off-lifecycle
-    seal_test: framework/hands-off-lifecycle/tests/test_no_sealed_amendments.py
-    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
-    frozen_baseline: false
-    extra_allowed_prefixes: []
-    # AC.LPAS.E docstring sweep for test_AC45_S_seal_diff_window.py +
-    # test_AC_AG_1_wrong_wd_dispatch.py.
-    #
-    # Note: test_AC_AG_1_wrong_wd_dispatch.py:21 already correctly
-    # reads "loam amend (post-M1g rename of pre-M1g pos-amend)" —
-    # historical-context preservation; expected zero-diff for that file.
+  # NOTE: hands-off-lifecycle was enumerated at plan-time but the
+  # per-line review confirmed all its hits are historical-record
+  # references (test_AC_AG_1 already annotated; test_AC45_S "intervening
+  # commits...heavy-b-migrate / pos-amend extensions" is past-tense
+  # narrative). Zero diff against this component in this amendment;
+  # component entry removed at build-time per F-NEW-6 (no fence entry
+  # needed when no source edits land in the component). The
+  # `test_no_sealed_amendments.py` path the manifest carried is
+  # incorrect anyway — hands-off-lifecycle uses split-per-AC seal-tests
+  # (`test_AC_*_S_seal_diff_window.py`) + `test_cross_cutting.py`, not
+  # a unified `test_no_sealed_amendments.py`.
 
-  - name: workspace-sync
-    seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py
-    sidecar: framework/workspace-sync/tests/SEAL_COMMIT
-    frozen_baseline: false
-    extra_allowed_prefixes: []
-    # AC.LPAS.E docstring sweep for test_AC_D_5_5_bare_paths_absent.py.
+  # NOTE: workspace-sync per-line review confirmed all 3 hits in
+  # test_AC_D_5_5_bare_paths_absent.py:72/88/115 are historical-record
+  # references ("Pre-D.5.5: 109 files tracked under bare tools/",
+  # "Post-M1g (2026-04-29): the pos-amend CLI was renamed and MOVED",
+  # "framework/tools/loam/ — unified CLI (post-M1g rename of pos-amend)").
+  # Zero diff against this component in this amendment; entry removed
+  # at build-time per F-NEW-6.
 
   - name: objective-tracker
     seal_test: framework/objective-tracker/tests/test_no_sealed_amendments.py
@@ -122,19 +123,16 @@ components:
     extra_allowed_prefixes: []
     # AC.LPAS.E docstring sweep for test_no_sealed_amendments.py.
 
-  - name: heavy-b-migrate
-    seal_test: framework/tools/heavy-b-migrate/tests/test_no_sealed_amendments.py
-    sidecar: framework/tools/heavy-b-migrate/tests/SEAL_COMMIT
-    frozen_baseline: false
-    extra_allowed_prefixes: []
-    # Cat D — framework/tools/heavy-b-migrate/src/loam/heavy_b_migrate/
-    # verify.py line 4 docstring (per-line review — the parenthetical
-    # references a historical plan filename; preserve as historical
-    # OR adjust prose to be unambiguous).
-    #
-    # Verify at build-time whether this is a sealed component or a
-    # tool with its own seal-test path; if no seal_test exists, the
-    # build agent halts and surfaces.
+  # NOTE: heavy-b-migrate (framework/tools/heavy-b-migrate/) is a TOOL,
+  # not a sealed component — it carries no test_no_sealed_amendments.py
+  # nor an unconventional seal-test (verified by the build agent;
+  # `find framework/tools/heavy-b-migrate -name "test*"` shows only
+  # per-AC AC.D-mig.*-phase tests). Plan-doc §3 anticipated this with
+  # the halt-and-surface clause; build-agent resolution is: zero diff
+  # against this tool's tree (verify.py:4's `pos-amend-tracker-
+  # integration plan` filename reference is already explicitly
+  # annotated "historical plan filename" — no sweep needed). Component
+  # entry removed at build-time per F-NEW-6.
 
   - name: dev-sdlc
     seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py

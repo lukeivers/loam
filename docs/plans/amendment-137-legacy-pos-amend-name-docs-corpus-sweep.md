@@ -323,6 +323,13 @@ These are F2 Ruthless Feedback notes from the plan-authoring pass. Each surfaces
 - **Resolution:** Not a halt-trigger per plan §6 (none of these tests touch swept files). Surfacing for §16. Composes with build-forward / locked-design-not-license disciplines. Worth a separate amendment that either tightens the AC text (200 char limit) OR loosens the in-flight manifests' fields to fit; per `feedback_loose_AC_text_fix_AC_not_implementation` likely the former.
 - **Alternative:** A subsequent amendment audit-pass — tighten the `smoke_outcome` limit OR audit the in-flight manifests' overflow per the loose-AC fix pattern. Not on this amendment's path.
 
+### F-NEW-6. Three plan-enumerated components had zero source-diff (all hits historical-record).
+
+- **Claim:** Plan-doc §3 enumerated 8 components; per-line review confirmed three components (`hands-off-lifecycle`, `workspace-sync`, `heavy-b-migrate`) had ALL their `pos-amend`/`pos_amend` hits as historical-record references requiring no sweep.
+- **Evidence:** `git diff --name-only ad744a2..HEAD -- framework/` shows touched files only in `workspace-bootstrap/`, `objective-tracker/`, `primary-persona/`, `dormancy/`. The other three components' hits were all explicitly annotated "post-M1g rename of pre-M1g pos-amend" / "Pre-D.5.5: 109 files tracked under bare tools/" / "historical plan filename" — preserve-by-policy.
+- **Resolution:** Removed the three unused component entries from the manifest before apply. Plus: the manifest's named `seal_test:` paths for `hands-off-lifecycle` and `heavy-b-migrate` were incorrect anyway (hands-off-lifecycle uses split-per-AC `test_AC_*_S_seal_diff_window.py` + `test_cross_cutting.py`; heavy-b-migrate is a TOOL, not a sealed component — carries no seal-test). Plan-doc §3 anticipated this with the halt-and-surface clause.
+- **Composition:** Per `feedback_critical_thinking_on_deviations` — when the per-line review revealed zero-diff, the right resolution is to refine the fence, not force a no-op entry through apply/seal. Composes with F2 RF (silent inclusion of unused entries would have been silent acceptance of a known-misshapen fence).
+
 ### F-NEW-5. AC.LPAS.S outcome-altitude smoke PASSED.
 
 - **Claim:** Post-sweep grep count is 321 (pre-sweep was 334). Drop = 13 files fully cleaned. Not zero (over-sweep), not unchanged (no-op).

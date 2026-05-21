@@ -1,5 +1,20 @@
 ---
-description: Author a plan-doc per the dev-sdlc methodology — the structural execution of `feedback_plan_before_code`'s "every build writes a plan to docs/plans/<slug>.md BEFORE code" rule. Plan-doc carries objective + scope + AC family + halt triggers + smoke + bookkeeping + F2 RF + provenance + acceptance gate + `## 14.` method-decision register (per AC.D-sa.7 lint regex). Distinct from `plan-before-code-author` (which carries the WHEN — the rule that a plan must precede code); this skill carries the HOW-of-authoring — the section-by-section execution per the methodology. Trim discipline applied 2026-05-05: master plan §3 carries cycle decomposition (light per-cycle entry + AC family seed only); sub-plan §4 carries the AC enumeration; §4 per-cycle dispatch briefs drop to a stub paragraph (briefs are authored inline at dispatch time); SHA backfill centralizes at master plan §9. Use whenever a sealed-component or major-feature build is about to start in a loam dev-mode workspace.
+description: >-
+  Author a plan-doc per the dev-sdlc methodology — the structural
+  execution of `feedback_plan_before_code`'s "every build writes a plan
+  to docs/plans/<slug>.md BEFORE code" rule. Plan-doc carries objective +
+  scope + AC family + halt triggers + smoke + bookkeeping + F2 RF +
+  provenance + acceptance gate + `## 14.` method-decision register (per
+  AC.D-sa.7 lint regex). Distinct from `plan-before-code-author` (which
+  carries the WHEN — the rule that a plan must precede code); this skill
+  carries the HOW-of-authoring — the section-by-section execution per
+  the methodology. Trim discipline applied 2026-05-05: master plan §3
+  carries cycle decomposition (light per-cycle entry + AC family seed
+  only); sub-plan §4 carries the AC enumeration; §4 per-cycle dispatch
+  briefs drop to a stub paragraph (briefs are authored inline at
+  dispatch time); SHA backfill centralizes at master plan §9. Use
+  whenever a sealed-component or major-feature build is about to start
+  in a loam dev-mode workspace.
 ---
 
 # plan-docs-author

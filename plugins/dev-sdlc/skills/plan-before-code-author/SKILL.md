@@ -1,5 +1,19 @@
 ---
-description: Author an ODD-shaped plan-doc at `docs/plans/<slug>.md` BEFORE any source code is written for a sealed-component amendment cycle. The plan-doc carries Outcome shape + Lens checks + Single-component fence + AC family (every AC explicit) + Halt-and-surface BEFORE build + Smoke (six dimensions) + Out of scope + Halt triggers (in-flight) + Bookkeeping + F2 RF + Provenance + Acceptance gate + `## 14. Method-decision record` (per AC.D-sa.7 lint). Trim discipline applied 2026-05-05: master plan §3 carries the cycle decomposition (light per-cycle entry + AC family seed); sub-plan §4 carries the full AC enumeration; sub-plan §5 build dispatch brief drops to a one-paragraph stub (briefs are authored inline at dispatch time per dispatch-brief-authoring SKILL). Use when the persona is about to start any sealed-component amendment cycle. Composes on `feedback_plan_before_code` (the hard rule); this skill ships the structural skeleton.
+description: >-
+  Author an ODD-shaped plan-doc at `docs/plans/<slug>.md` BEFORE any source
+  code is written for a sealed-component amendment cycle. The plan-doc
+  carries Outcome shape + Lens checks + Single-component fence + AC family
+  (every AC explicit) + Halt-and-surface BEFORE build + Smoke (six
+  dimensions) + Out of scope + Halt triggers (in-flight) + Bookkeeping +
+  F2 RF + Provenance + Acceptance gate + `## 14. Method-decision record`
+  (per AC.D-sa.7 lint). Trim discipline applied 2026-05-05: master plan §3
+  carries the cycle decomposition (light per-cycle entry + AC family
+  seed); sub-plan §4 carries the full AC enumeration; sub-plan §5 build
+  dispatch brief drops to a one-paragraph stub (briefs are authored inline
+  at dispatch time per dispatch-brief-authoring SKILL). Use when the
+  persona is about to start any sealed-component amendment cycle. Composes
+  on `feedback_plan_before_code` (the hard rule); this skill ships the
+  structural skeleton.
 ---
 
 # plan-before-code-author

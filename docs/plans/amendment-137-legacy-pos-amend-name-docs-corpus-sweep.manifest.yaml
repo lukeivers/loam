@@ -1,0 +1,213 @@
+schema_version: 1
+amendment:
+  number: 137
+  slug: amendment-137-legacy-pos-amend-name-docs-corpus-sweep
+  title: "Legacy `pos-amend` name docs-corpus sweep (closes F-LEGACY-POS-AMEND-NAME-IN-DOCS-CORPUS; completes M1g rename programme's residual)"
+
+# BASELINE: TBD — pinned by the build agent at apply time. Plan-doc §1
+# carries the durable owner-ratification record (TG 11808/11813/11814/
+# 11837/11840) + the Tier-0 pre-flight grep numbers (332 files /
+# ~700+ occurrences across the corpus excluding venv/git/egg-info,
+# materially larger than the FIDRAFT entry framed — per plan §10 F1).
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <pre-sweep inventory commit — workspace/.scratch/claude-output/
+#    amendment-137-pre-sweep-inventory.md with the recorded
+#    per-category expected post-sweep hit counts>
+#   <AC.LPAS.A commit — Cat A active-docs sweep>
+#   <AC.LPAS.D-MIG commit — test_d2 ALLOW_LIST_PREFIXES + docstring fix
+#    in workspace-bootstrap (the ONLY stale-code residual)>
+#   <AC.LPAS.E commits — Cat E test docstrings (per-component grouping
+#    fine; one commit per affected component if the build agent prefers)>
+#   <AC.LPAS.G commit — Cat G plugins/dev-sdlc/ sweep>
+#   <`loam amend apply` auto-commit>
+#   <`loam amend seal` deterministic seal commit — §14 auto-backfill
+#    via amendment #136's widened regex; T1.4 archives plan-doc +
+#    manifest to docs/plans/sealed/>
+#   <AC.LPAS.S outcome-altitude assertion + §14 SHA-register commit
+#    (or embedded in seal if regex matches)>
+#
+# Multi-component sweep (see components: below for enumeration).
+# Categories preserved by AC.LPAS.HIST:
+#   - docs/plans/*.md (280 files) — in-flight historical-completed plans
+#   - docs/plans/sealed/*.md (2 files) — sealed history
+#   - framework/**/seals/SEAL_COMMIT.* (~25 files) — per-amendment seal
+#     narratives, historical-record by construction
+#   Plus the test-fixture exclusion AC.LPAS.FIX-FX:
+#     framework/primary-persona/tests/test_AC_MFBM_2_ups_retrieval_returns_relevant.py
+#     (UPS retrieval fixture seed data — test contract content, not docs)
+#     plugins/dev-sdlc/tests/fixtures/skill-promotion-review/synthetic-skills/well-formed-dev-specific/SKILL.md
+#     (well-formed synthetic SKILL fixture — same test-data class)
+#
+# AC families per docs/plans/amendment-137-...md §4:
+#   AC.LPAS.A — Active docs (Cat A — 9 files) carry current-tense canonical
+#     names; historical-context references preserved.
+#   AC.LPAS.D-MIG — test_d2 ALLOW_LIST_PREFIXES fixed (the only stale-code
+#     residual of the M1g rename), test still passes.
+#   AC.LPAS.E — Framework test docstrings (Cat E — 12 files across 6
+#     components) carry current-tense names; tests still pass.
+#   AC.LPAS.G — Plugins tree (Cat G — 32 files in plugins/dev-sdlc/)
+#     carries current-tense names; tests still pass.
+#   AC.LPAS.HIST — Cat B / C / F files (~305 files) untouched
+#     (zero-diff verification).
+#   AC.LPAS.FIX-FX — Test-fixture data containing pos-amend as
+#     entity-name preserved untouched.
+#   AC.LPAS.S — Outcome-altitude smoke: post-sweep grep count
+#     matches the build-time-recorded historical-preservation count
+#     (non-zero, matches the expected residual, not a flat zero).
+baseline: "TBD-pinned-at-apply-time"
+
+plan: docs/plans/amendment-137-legacy-pos-amend-name-docs-corpus-sweep.md
+
+components:
+  # Multi-component fence (per plan-doc §3 enumeration).
+  #
+  # Each component's entry covers the docstring / docstring-comment sweep
+  # within its tests/ tree. workspace-bootstrap additionally covers the
+  # AC.LPAS.D-MIG live-constant fix.
+  #
+  # Universal admissions cover docs/ (Cat A) AND the plan-doc +
+  # manifest at docs/plans/.
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # AC.LPAS.D-MIG (the live-constant fix) + AC.LPAS.E docstring sweep
+    # for test_AC_E_S_seal_diff_single_component_scope.py + test_d2.
+
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_no_sealed_amendments.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # AC.LPAS.E docstring sweep for test_AC45_S_seal_diff_window.py +
+    # test_AC_AG_1_wrong_wd_dispatch.py.
+    #
+    # Note: test_AC_AG_1_wrong_wd_dispatch.py:21 already correctly
+    # reads "loam amend (post-M1g rename of pre-M1g pos-amend)" —
+    # historical-context preservation; expected zero-diff for that file.
+
+  - name: workspace-sync
+    seal_test: framework/workspace-sync/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-sync/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # AC.LPAS.E docstring sweep for test_AC_D_5_5_bare_paths_absent.py.
+
+  - name: objective-tracker
+    seal_test: framework/objective-tracker/tests/test_no_sealed_amendments.py
+    sidecar: framework/objective-tracker/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # AC.LPAS.E docstring sweep for test_AC_SE_S_seal_diff_window.py.
+
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # AC.LPAS.E docstring sweep for:
+    #   test_AC_A_S_seal_diff_single_component_scope.py
+    #   test_AC_M_S_seal_diff_window.py
+    #   test_no_sealed_amendments.py
+    # NOT test_AC_MFBM_2_ups_retrieval_returns_relevant.py
+    # (AC.LPAS.FIX-FX preserves the fixture seed data).
+
+  - name: dormancy
+    seal_test: framework/dormancy/tests/test_no_sealed_amendments.py
+    sidecar: framework/dormancy/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # AC.LPAS.E docstring sweep for test_no_sealed_amendments.py.
+
+  - name: heavy-b-migrate
+    seal_test: framework/tools/heavy-b-migrate/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/heavy-b-migrate/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # Cat D — framework/tools/heavy-b-migrate/src/loam/heavy_b_migrate/
+    # verify.py line 4 docstring (per-line review — the parenthetical
+    # references a historical plan filename; preserve as historical
+    # OR adjust prose to be unambiguous).
+    #
+    # Verify at build-time whether this is a sealed component or a
+    # tool with its own seal-test path; if no seal_test exists, the
+    # build agent halts and surfaces.
+
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # AC.LPAS.G — Cat G sweep across plugins/dev-sdlc/{tools/loam-amend/,
+    # skills/, hooks/, docs/, tests/, dev-mode-manifest.yaml}.
+    #
+    # Excludes plugins/dev-sdlc/tests/fixtures/skill-promotion-review/
+    # synthetic-skills/well-formed-dev-specific/SKILL.md
+    # (AC.LPAS.FIX-FX — fixture content is test data).
+    #
+    # plugins/-tree component: F-SEAL-PLUGINS-TESTS-SKIPPED applies —
+    # the seal-step's automated test runner silently skips plugins/-
+    # component tests, so the build agent MUST run
+    # `pytest plugins/dev-sdlc/tests/` AND
+    # `pytest plugins/dev-sdlc/tools/loam-amend/tests/`
+    # manually pre-seal.
+
+universal_paths:
+  prefixes:
+    - "docs/"  # Cat A active-docs sweep + this plan-doc + manifest
+  files: []
+  # Cat B (docs/plans/*.md, 280 files) is NOT swept; AC.LPAS.HIST
+  # asserts zero diff against this surface.
+  # Cat C (docs/plans/sealed/*.md, 2 files) is NOT swept; same.
+  # Cat F (framework/**/seals/SEAL_COMMIT.*, ~25 files) is NOT swept;
+  # same. The historical-record preservation is structural: the
+  # universal_paths prefix `docs/` allows the active-docs sweep, but
+  # the build-agent's per-file judgment + AC.LPAS.HIST zero-diff
+  # assertion are what enforce preservation.
+
+narrative:
+  target: docs/plans/sealed/amendment-137-legacy-pos-amend-name-docs-corpus-sweep.md
+  body: |
+    Closes F-LEGACY-POS-AMEND-NAME-IN-DOCS-CORPUS (FIDRAFT entry captured
+    2026-05-21 after owner caught the legacy name in the amendment #134
+    dispatch brief, TG 11813). Completes the M1g rename programme's
+    residual: where `d64414e` (M1g sub-amendment, 2026-04-29) renamed
+    the `pos-amend` CLI to `loam amend` + renamed `framework/tools/
+    pos-amend/` to `framework/tools/loam/` + renamed the inner
+    `src/pos_amend/` package to `src/loam_cli/` (later moved to
+    `plugins/dev-sdlc/tools/loam-amend/src/loam_amend/` per M6b.1),
+    the human-readable docs across the canonical corpus carried
+    on referencing the pre-rename name.
+
+    Scope is the **active** canonical corpus only — sweeping current-
+    tense prose to the canonical post-rename names (`loam amend` as
+    CLI invocation; `loam-amend` as tool directory; `loam_amend.*`
+    as import path). Historical-record prose (sealed plan-docs,
+    in-flight plan-docs at `docs/plans/*.md` that document past
+    amendments, `framework/**/seals/SEAL_COMMIT.*` per-amendment
+    seal-commit narratives, "post-M1g rename of pre-M1g pos-amend"
+    context-prose, FUTURE_IDEAS_DRAFT entries that name the legacy
+    as a problem) is **preserved** — these are accurate-as-of-their-
+    time records and rewriting them corrupts the audit trail.
+
+    Also fixes the **single stale-code residual** of the M1g rename:
+    the ALLOW_LIST_PREFIXES constant in
+    `framework/workspace-bootstrap/tests/test_d2_no_inline_workspace_state_paths.py`
+    line 108 carries `"framework/tools/pos-amend/"` which has not
+    existed since `d64414e` — silently inert in production, but stale.
+
+    Multi-component sweep across 7 components (workspace-bootstrap,
+    hands-off-lifecycle, workspace-sync, objective-tracker,
+    primary-persona, dormancy, heavy-b-migrate) + the dev-sdlc plugin.
+    7 AC families: LPAS.A (active docs), LPAS.D-MIG (stale-constant
+    fix), LPAS.E (framework test docstrings), LPAS.G (plugins tree),
+    LPAS.HIST (zero-diff verification against the preserved historical
+    surfaces), LPAS.FIX-FX (zero-diff verification against the
+    preserved test-fixture data), LPAS.S (outcome-altitude smoke:
+    post-sweep grep matches the build-time-recorded expected residual).
+
+    Cosmetic + accuracy hygiene amendment; no behavior change for any
+    production code path; one inert-constant fix (LPAS.D-MIG).

@@ -653,52 +653,29 @@ def _finalize(
     amendment_sha = _head_sha(repo_root)
     amendment_subject = _commit_subject(repo_root, amendment_sha)
 
-    # T1.4 (AC.FBMT1.APS.1) — archive plan-doc + manifest BEFORE
-    # the dirty-tree check, so the moved files are part of the
-    # expected-writes set (staged) rather than dirty unrelated dirt.
-    # Tracks the post-archive paths for use downstream (the §14
-    # backfill must target the new plan-doc location; the post-seal
-    # dry-run must use the new manifest location).
-    effective_plan_doc = plan_doc
-    effective_manifest_path = manifest_path
-    archive_renames: list[tuple[Path, Path]] = []
-    if plan_doc is not None and plan_doc.exists():
-        archive_result = _stage_plan_doc_archive(
-            plan_doc=plan_doc,
-            manifest_path=manifest_path,
-            repo_root=repo_root,
-        )
-        if archive_result is not None:
-            new_plan_doc, new_manifest_path = archive_result
-            archive_renames.append((plan_doc, new_plan_doc))
-            archive_renames.append((manifest_path, new_manifest_path))
-            effective_plan_doc = new_plan_doc
-            effective_manifest_path = new_manifest_path
-
     # Compute the set of paths the seal step is itself expected to
     # write (so `git status` dirt-checking can ignore them).
+    # Amendment #138 Scope B (AC.DTCO.*): the dirty-tree gate now
+    # runs BEFORE the plan-doc/manifest archive, so the rename pair
+    # has NOT happened at gate time — no rename-in-expected_writes
+    # filtering needed. Earlier the rename was staged by `git mv`
+    # before the gate fired and the staged paths had to be admitted
+    # explicitly; the reorder makes that filter unnecessary and
+    # also leaves the working tree pristine when the gate halts
+    # (operator no longer needs to manually `git mv` plan-doc +
+    # manifest back from `sealed/`).
     expected_writes: set[Path] = set()
     for comp in manifest.components:
         expected_writes.add(Path(comp.sidecar))
     if manifest.narrative is not None:
         expected_writes.add(Path(manifest.narrative.target))
-    # T1.4: the plan-doc + manifest rename pair are also expected
-    # writes (their post-archive locations) — add both old (deleted)
-    # and new (added) paths so `git status --porcelain` lines for
-    # the rename pass through the dirt filter cleanly.
-    for old_path, new_path in archive_renames:
-        try:
-            expected_writes.add(old_path.resolve().relative_to(repo_root.resolve()))
-        except ValueError:
-            pass
-        try:
-            expected_writes.add(new_path.relative_to(repo_root))
-        except ValueError:
-            pass
 
     # ------------------------------------------------------------------
     # (b) Pre-flight: refuse to proceed on unrelated dirty state
-    # (case (c) of AC.D-sa.5).
+    # (case (c) of AC.D-sa.5). Amendment #138 Scope B (AC.DTCO.1):
+    # this gate fires BEFORE any file move so halt leaves the working
+    # tree pristine — operator does not need to manually `git mv`
+    # archived files back from `docs/plans/sealed/`.
     # ------------------------------------------------------------------
     dirty = _working_tree_dirty(
         repo_root,
@@ -719,6 +696,26 @@ def _finalize(
             )
         )
         return 3
+
+    # T1.4 (AC.FBMT1.APS.1) — archive plan-doc + manifest into
+    # `docs/plans/sealed/` AFTER the dirty-tree gate has passed
+    # (amendment #138 Scope B reorder; previously this ran before
+    # the gate, which left the rename half-applied on every halt).
+    # Tracks the post-archive paths for use downstream (the §14
+    # backfill must target the new plan-doc location; the post-seal
+    # dry-run must use the new manifest location).
+    effective_plan_doc = plan_doc
+    effective_manifest_path = manifest_path
+    if plan_doc is not None and plan_doc.exists():
+        archive_result = _stage_plan_doc_archive(
+            plan_doc=plan_doc,
+            manifest_path=manifest_path,
+            repo_root=repo_root,
+        )
+        if archive_result is not None:
+            new_plan_doc, new_manifest_path = archive_result
+            effective_plan_doc = new_plan_doc
+            effective_manifest_path = new_manifest_path
 
     # ------------------------------------------------------------------
     # (c) Advance sidecars + append narrative (today's behaviour).
@@ -790,10 +787,19 @@ def _finalize(
     # AC.D-sa.1 step (c) — touched components only here; the
     # cross-component sweep at step (e) handles every other component
     # via the seal-diff test only (per dispatch-speedups CDC).
+    #
+    # Amendment #138 Scope A (AC.STSP.*): derive the tests directory
+    # from the manifest's `seal_test:` field (the mandatory schema
+    # field already consumed by `apply.py` + `dry_run.py`) instead of
+    # hardcoding `framework/<comp>/tests/`. Both framework/-tree and
+    # plugins/-tree components now have their tests run by the seal
+    # step (previously plugins/-tree components silently skipped).
+    # No fallback to legacy `framework/<comp>/tests/`: `seal_test:`
+    # is mandatory per manifest.py line 58 + `_require_str` at line
+    # 423 — `load_manifest` rejects any manifest lacking it.
     # ------------------------------------------------------------------
     for comp in manifest.components:
-        # Post-D.1: components live under framework/<name>/.
-        comp_tests = repo_root / "framework" / comp.name / "tests"
+        comp_tests = (repo_root / Path(comp.seal_test)).parent
         if not comp_tests.exists():
             continue
         rc, output = _run_pytest(repo_root, comp_tests)

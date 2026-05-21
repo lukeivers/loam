@@ -197,10 +197,10 @@ See §3 for the in-scope/out-of-scope list. Additional notes:
 
 ### Commit SHAs
 
-(Placeholder — auto-populated by `loam amend seal --plan-doc <this-path>` per AC.D-sa.7 (widened by AC.LAS14R.{1,2} from amendment #136 and now defended unconditionally by this amendment's AC.SCT.\* family). The amendment commit + seal commit each appear here on completion.)
-
----
-
+- Amendment commit: `d334ad58d2401dcf5987ae1ecebec56a21d044a2` —
+  `chore(amend): loam-amend seal: decouple §14 SHA backfill from post-seal dry-run gate. Pre-fix (b46162f canonical), `_finalize` step (g) at seal.py:947-969 early-returns on `loam amend apply --dry-run` non-zero exit, blocking step (h) (the §14 SHA-backfill at seal.py:971-1086) from firing. Empirically: amendment #138's orphan-file dry-run failure forced operator to author a manual §14 backfill commit (7d893b0), defeating amendment #136's no-manual-fallback promise.`
+- Seal commit: `c144c2d2098f3fc1b022a873be0d15c6812fcb7f` —
+  `chore(seals): loam-amend seal: decouple §14 SHA backfill from post-seal dry-run gate. Pre-fix (b46162f canonical), `_finalize` step (g) at seal.py:947-969 early-returns on `loam amend apply --dry-run` non-zero exit, blocking step (h) (the §14 SHA-backfill at seal.py:971-1086) from firing. Empirically: amendment #138's orphan-file dry-run failure forced operator to author a manual §14 backfill commit (7d893b0), defeating amendment #136's no-manual-fallback promise.`
 ## §16. Halt-and-surface findings (raised + ruled at plan-authoring)
 
 1. **The dispatch brief framed the decision as "investigate the current code path + recommend (a) or (b)".** Tier-0 verification confirms the code-path inspection: step (g) at `seal.py:947-969` early-returns on dry-run failure; step (h) at `seal.py:971-1086` is only reached when (g) returns 0. The decouple is mechanically straightforward; the question is purely shape-of-fix. **Ruling:** shape (a) recommended per the FIDRAFT's primary proposal + the §10 F2 rationale; recorded as D-SCT.SHAPE.

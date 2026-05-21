@@ -1,5 +1,5 @@
 ---
-description: When a user-facing session opens fresh, structure the first turn as a context-restoration greeting — surface what is in flight, what needs attention, what just completed. Use when the persona detects a session-start state (fresh CLAUDE.md load, no prior conversation memory) or when the user explicitly asks "where are we?" or "what's the state?". Replaces the bare "How can I help?" greeting with a useful one.
+description: "When a user-facing session opens fresh, structure the first turn as a context-restoration greeting — surface what is in flight, what needs attention, what just completed. Use when the persona detects a session-start state (fresh CLAUDE.md load, no prior conversation memory) or when the user explicitly asks 'where are we?' or 'what's the state?'. Replaces the bare 'How can I help?' greeting with a useful one."
 ---
 
 # onboarding-conversation

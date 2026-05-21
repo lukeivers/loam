@@ -30,14 +30,6 @@ pytest-asyncio>=0.23
 -e ./framework/safety-layer
 -e ./framework/self-upgrade
 -e ./framework/workspace-sync
-# binary-observation-harness — leaf component (pydantic-only deps).
-# Required: odd-extractor's binary-feeder mode imports
-# `loam-binary-observation-harness` (lazy-loaded at the CLI seam for
-# `--binary` flag); without this line, `pip install -r install-from-
-# source.txt` fails at the odd-extractor line because no PyPI fallback
-# exists for the in-flight wheel. Added 2026-05-21 (Task #12,
-# fresh-install breakage, pre-existing).
--e ./framework/binary-observation-harness
 
 # ---------------------------------------------------------------
 # Tier B — depend only on Tier A.

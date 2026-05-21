@@ -1,5 +1,5 @@
 ---
-description: When replying via Telegram (or any user-visible channel), structure an audit-block under the message body that names what was Executed, what was Deferred-to-owner, and what was Missed — but surface the block only when meaningful (a ✗ exists, a decision was made, a commit landed, or the user explicitly asked). The thinking-block always walks the list internally; the visible audit-block surfaces only when there is something to surface, preventing one-liner regression. Use when authoring any reply that lands in a user-visible channel.
+description: "When replying via Telegram (or any user-visible channel), structure an audit-block under the message body that names what was Executed, what was Deferred-to-owner, and what was Missed — but surface the block only when meaningful (a ✗ exists, a decision was made, a commit landed, or the user explicitly asked). The thinking-block always walks the list internally; the visible audit-block surfaces only when there is something to surface, preventing one-liner regression. Use when authoring any reply that lands in a user-visible channel."
 ---
 
 # audit-block-on-telegram

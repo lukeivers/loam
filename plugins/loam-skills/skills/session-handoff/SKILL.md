@@ -1,5 +1,5 @@
 ---
-description: Before a session closes (or a long task is being deferred), capture every pending item, blocker, follow-up, and newly-identified work to a durable surface — never session-locked storage. Use when the user signals end-of-session ("ok bye", "let's pick this up later", "going to bed"), when a task hits a natural pause point, or when work is being deferred to a future session. Prevents "I'll remember next session" failures.
+description: "Before a session closes (or a long task is being deferred), capture every pending item, blocker, follow-up, and newly-identified work to a durable surface — never session-locked storage. Use when the user signals end-of-session ('ok bye', 'let's pick this up later', 'going to bed'), when a task hits a natural pause point, or when work is being deferred to a future session. Prevents 'I'll remember next session' failures."
 ---
 
 # session-handoff

@@ -1,5 +1,5 @@
 ---
-description: Before starting a multi-part task, check whether it can be partitioned into subtasks each with a measurably tighter acceptance criterion than the parent. Use when the user gives a task that feels large, multi-faceted, or could plausibly run as a single agent loop but might benefit from parallel decomposition. Stops decomposition when further splits add only coordination overhead. Never silently extends a single-agent loop on work that should be swarmed.
+description: "Before starting a multi-part task, check whether it can be partitioned into subtasks each with a measurably tighter acceptance criterion than the parent. Use when the user gives a task that feels large, multi-faceted, or could plausibly run as a single agent loop but might benefit from parallel decomposition. Stops decomposition when further splits add only coordination overhead. Never silently extends a single-agent loop on work that should be swarmed."
 ---
 
 # scope-decompose

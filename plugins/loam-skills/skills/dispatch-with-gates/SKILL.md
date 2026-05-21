@@ -1,5 +1,5 @@
 ---
-description: When invoking a sub-agent (Task tool, dispatched background agent, or shell-out to claude), pass objective + scope + constraints + halt triggers + ODD-check ONLY. Never enumerate files, symbols, acceptance criteria, layouts, or commit prose in the dispatch prompt itself — that prescribes method and reduces the plan to paperwork. Use when the persona is about to invoke any sub-agent surface, especially for build / research / authoring work.
+description: "When invoking a sub-agent (Task tool, dispatched background agent, or shell-out to claude), pass objective + scope + constraints + halt triggers + ODD-check ONLY. Never enumerate files, symbols, acceptance criteria, layouts, or commit prose in the dispatch prompt itself — that prescribes method and reduces the plan to paperwork. Use when the persona is about to invoke any sub-agent surface, especially for build / research / authoring work."
 ---
 
 # dispatch-with-gates

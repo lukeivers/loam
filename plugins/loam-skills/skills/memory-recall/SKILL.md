@@ -1,5 +1,5 @@
 ---
-description: Recall prior-session context from a file-based memory store before answering a question or starting a task. Use when the user references prior work ("what we discussed", "the thing we were doing"), when answering would benefit from continuity across sessions, or when the persona needs to ground a response in earlier decisions. Reads markdown episode files; falls back to filesystem search when no structured store is present.
+description: "Recall prior-session context from a file-based memory store before answering a question or starting a task. Use when the user references prior work ('what we discussed', 'the thing we were doing'), when answering would benefit from continuity across sessions, or when the persona needs to ground a response in earlier decisions. Reads markdown episode files; falls back to filesystem search when no structured store is present."
 ---
 
 # memory-recall

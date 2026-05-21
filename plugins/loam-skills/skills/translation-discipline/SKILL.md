@@ -1,5 +1,5 @@
 ---
-description: Apply the translation-discipline anti-pattern checklist before sending any user-facing message — strip commit SHAs, AC IDs, doc-section pointers, and other internal jargon unless the user explicitly asked. Use when authoring any reply (Telegram, email, chat) where the audience is the user (not a sub-agent or another developer-shape consumer). The persona's job is translation between user intent and AI execution; this skill keeps that translation crisp.
+description: "Apply the translation-discipline anti-pattern checklist before sending any user-facing message — strip commit SHAs, AC IDs, doc-section pointers, and other internal jargon unless the user explicitly asked. Use when authoring any reply (Telegram, email, chat) where the audience is the user (not a sub-agent or another developer-shape consumer). The persona's job is translation between user intent and AI execution; this skill keeps that translation crisp."
 ---
 
 # translation-discipline

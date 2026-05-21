@@ -1,5 +1,5 @@
 ---
-description: When surfacing a plan, research artefact, or design analysis to the owner for ruling, format the head as a Summary plus Named Decisions with Recommendations — never ask the owner to read the full doc to find the questions. Use when the persona has authored or received any document the owner needs to rule on (plan-doc, research artefact, vendor evaluation, design choice). The summary leads; named decisions follow with one-line recommendations and rationales; the doc is depth, not the entry-point. Prevents the doc-section-pointer regression where a reply says "see §3 of the plan" without the answer.
+description: "When surfacing a plan, research artefact, or design analysis to the owner for ruling, format the head as a Summary plus Named Decisions with Recommendations — never ask the owner to read the full doc to find the questions. Use when the persona has authored or received any document the owner needs to rule on (plan-doc, research artefact, vendor evaluation, design choice). The summary leads; named decisions follow with one-line recommendations and rationales; the doc is depth, not the entry-point. Prevents the doc-section-pointer regression where a reply says 'see §3 of the plan' without the answer."
 ---
 
 # owner-decision-summary

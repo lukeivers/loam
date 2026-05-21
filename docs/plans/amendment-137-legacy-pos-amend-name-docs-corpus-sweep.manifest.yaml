@@ -56,7 +56,7 @@ amendment:
 #   AC.LPAS.S — Outcome-altitude smoke: post-sweep grep count
 #     matches the build-time-recorded historical-preservation count
 #     (non-zero, matches the expected residual, not a flat zero).
-baseline: "TBD-pinned-at-apply-time"
+baseline: "ad744a2eb5c09981cdebdd489dae772f8993c997"
 
 plan: docs/plans/amendment-137-legacy-pos-amend-name-docs-corpus-sweep.md
 
@@ -158,7 +158,12 @@ components:
 universal_paths:
   prefixes:
     - "docs/"  # Cat A active-docs sweep + this plan-doc + manifest
-  files: []
+  files:
+    - "CLAUDE.dev.md"  # top-level dev-mode auto-load file (lines 83/87/88
+                       # carry current-tense `pos-amend` prose; admitted
+                       # under AC.LPAS.A by build-agent finding F-NEW-1;
+                       # precedent: M6c manifest at
+                       # docs/plans/oss-v0-1-0-publish-dev-sdlc-plugin-m6c.manifest.yaml)
   # Cat B (docs/plans/*.md, 280 files) is NOT swept; AC.LPAS.HIST
   # asserts zero diff against this surface.
   # Cat C (docs/plans/sealed/*.md, 2 files) is NOT swept; same.

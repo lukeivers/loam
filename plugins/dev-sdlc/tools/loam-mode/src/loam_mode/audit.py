@@ -27,6 +27,7 @@ from typing import Iterable
 
 from loam_mode.manifest import (
     Manifest,
+    RootEntry,
     _glob_match,
     expand_entry,
 )
@@ -86,12 +87,18 @@ class AuditReport:
 
 def _walk_audit_tree(
     workspace_root: Path,
-    roots: Iterable[str],
+    roots: Iterable[RootEntry],
     audit_excludes: Iterable[str],
 ) -> list[str]:
     """Walk the workspace tree under ``roots`` returning workspace-
     relative POSIX paths, with ``audit_excludes`` patterns subtracted
     and the standard transient-dir prune list applied.
+
+    ``roots`` is an iterable of ``RootEntry`` objects. Runtime-shape
+    roots (``runtime=True``) that don't exist on disk are silently
+    skipped — same code path as a non-runtime root that doesn't
+    exist; the test corpus is what differentiates "expected absent"
+    from "regression" per AC.DCR.TEST.{1,2}.
     """
     pruned_dirs = {
         ".git",
@@ -102,8 +109,8 @@ def _walk_audit_tree(
     }
     excludes_list = list(audit_excludes)
     seen: set[str] = set()
-    for root_str in roots:
-        root_path = workspace_root / root_str
+    for root in roots:
+        root_path = workspace_root / root.path
         if not root_path.exists():
             continue
         if root_path.is_file():

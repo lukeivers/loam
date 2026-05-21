@@ -8,6 +8,7 @@ companion) — SessionStart emitter that consumes the partition.
 from loam_mode.manifest import (
     Manifest,
     ManifestEntry,
+    RootEntry,
     load_manifest,
     expand_entry,
 )
@@ -28,6 +29,7 @@ from loam_mode.session_start import (
 __all__ = [
     "Manifest",
     "ManifestEntry",
+    "RootEntry",
     "load_manifest",
     "expand_entry",
     "select_corpus",

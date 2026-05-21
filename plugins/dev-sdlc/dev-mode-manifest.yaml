@@ -13,14 +13,25 @@
 #                 + files the audit walks. Anything outside roots is
 #                 not audited; transient dirs (.git, .venv, .pytest_*,
 #                 .scratch, *.egg-info, __pycache__) are excluded.
+#                 Each entry is either a bare string (must exist on
+#                 disk in the canonical tree) OR a mapping
+#                 ``{path: <str>, runtime: <bool>}`` where
+#                 ``runtime: true`` declares a runtime-shape path
+#                 (workspace telemetry, first-run-populated indices)
+#                 that may not exist in the canonical tree but
+#                 populates on first-run — the audit walks it when
+#                 present and silently skips when absent.
 #   audit_excludes: glob patterns excluded from the audit walk.
 #   always_loaded: list of entries — each is either
 #                  - {path: <workspace-relative path>}, or
 #                  - {glob: <fnmatch pattern>, exclude: [<patterns>]}
-#                  Globs match recursively (** semantics) when the
-#                  pattern contains ``**``; otherwise plain fnmatch.
-#                  Exclusions are subtractive — globs minus exclude
-#                  patterns. Unique by entry; sets must be disjoint.
+#                  Any entry may additionally carry
+#                  ``runtime: true`` to declare a runtime-shape path
+#                  (semantics as above). Globs match recursively (**
+#                  semantics) when the pattern contains ``**``;
+#                  otherwise plain fnmatch. Exclusions are subtractive
+#                  — globs minus exclude patterns. Unique by entry;
+#                  sets must be disjoint.
 #   dev_only:     same shape as always_loaded.
 #
 # AC.F1: ``always_loaded ∩ dev_only`` is empty (path-resolved sets).
@@ -46,7 +57,6 @@ roots:
   - framework/cost-governance/
   - framework/dormancy/
   - framework/hands-off-lifecycle/
-  - framework/memory-system/
   - framework/objective-tracker/
   - framework/observability-aggregator/
   - framework/orchestrator/
@@ -61,10 +71,12 @@ roots:
   - framework/workspace-sync/
   # Top-level non-component surfaces. tools/ MOVED to framework/tools/
   # post-M6b.0; data/ STAYS top-level (workspace runtime telemetry,
-  # not a component source surface).
+  # not a component source surface) and carries `runtime: true` per
+  # amendment #139 — it may not exist in the canonical tree but
+  # populates on first-run via the observability aggregator.
   - docs/
   - framework/tools/
-  - data/
+  - {path: data/, runtime: true}
   # Root files. first-run-inventory.yaml MOVED to framework/ post-M6b.0.
   - CLAUDE.md
   - CLAUDE.dev.md
@@ -94,7 +106,6 @@ always_loaded:
   - glob: "framework/cost-governance/**"
   - glob: "framework/dormancy/**"
   - glob: "framework/hands-off-lifecycle/**"
-  - glob: "framework/memory-system/**"
   - glob: "framework/objective-tracker/**"
   - glob: "framework/observability-aggregator/**"
   - glob: "framework/orchestrator/**"
@@ -123,8 +134,10 @@ always_loaded:
   # Post-M6b.0: MOVED to framework/first-run-inventory.yaml.
   - path: framework/first-run-inventory.yaml
   # Observability data dir is runtime telemetry, not dev surface.
-  # STAYS top-level (workspace-side runtime path).
-  - glob: "data/**"
+  # STAYS top-level (workspace-side runtime path); carries
+  # `runtime: true` per amendment #139 — populates on first-run, may
+  # not exist in the canonical tree.
+  - {glob: "data/**", runtime: true}
 
 dev_only:
   # Dev-mode CLAUDE.md fragment (B's AC.B3 surface). Created by F's

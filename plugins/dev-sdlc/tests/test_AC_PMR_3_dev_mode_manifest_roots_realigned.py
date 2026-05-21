@@ -57,15 +57,25 @@ def _load_manifest():
 
 def test_AC_PMR_3_every_root_resolves_on_disk() -> None:
     """Every entry under `roots:` resolves to an existing on-disk
-    path within the canonical workspace."""
+    path within the canonical workspace.
+
+    Per AC.DCR.TEST.1 (amendment #139): root entries marked
+    ``runtime: true`` are runtime-shape declarations that may not
+    exist in the canonical tree (workspace telemetry, first-run-
+    populated indices) — the existence assertion is skipped for
+    those. Non-flagged entries still must exist (safety property
+    preserved per AC.DCR.TEST.2).
+    """
     manifest = _load_manifest()
     for root in manifest.roots:
+        if root.runtime:
+            continue
         # Strip trailing `/` for path-resolution; both files and dirs
         # are admissible roots.
-        rel = root.rstrip("/")
+        rel = root.path.rstrip("/")
         target = REPO_ROOT / rel
         assert target.exists(), (
-            f"roots: entry {root!r} does not resolve at {target}"
+            f"roots: entry {root.path!r} does not resolve at {target}"
         )
 
 
@@ -74,7 +84,7 @@ def test_AC_PMR_3_dormancy_renamed_not_graceful_degradation() -> None:
     landed: the new path is in roots, the old name (with or without
     `framework/` prefix) is NOT."""
     manifest = _load_manifest()
-    roots = set(manifest.roots)
+    roots = {r.path for r in manifest.roots}
     assert "framework/dormancy/" in roots
     # Old name in either form must be gone.
     assert "graceful-degradation/" not in roots
@@ -85,7 +95,7 @@ def test_AC_PMR_3_workspace_sync_added() -> None:
     """`framework/workspace-sync/` is admitted in roots (it was
     missing from the original sub-plan F authoring)."""
     manifest = _load_manifest()
-    roots = set(manifest.roots)
+    roots = {r.path for r in manifest.roots}
     assert "framework/workspace-sync/" in roots
 
 
@@ -116,7 +126,7 @@ def test_AC_PMR_3_no_top_level_component_refs_remain() -> None:
         "workspace-sync/",  # never had a top-level admission, but defensive
         "tools/",
     }
-    roots = set(manifest.roots)
+    roots = {r.path for r in manifest.roots}
     intersection = roots & stale_top_level
     assert intersection == set(), (
         f"stale top-level roots remain: {intersection}"
@@ -129,6 +139,13 @@ def test_AC_PMR_4_every_always_loaded_glob_resolves() -> None:
 
     Path-shaped entries: existence check via the workspace tree.
     Glob-shaped entries: at least one matching file in the tree.
+
+    Per AC.DCR.TEST.3 (amendment #139): entries marked
+    ``runtime: true`` are runtime-shape declarations that may resolve
+    to an empty match-set in the canonical tree (workspace telemetry,
+    first-run-populated indices) — the non-empty assertion is
+    skipped for those. Non-flagged entries still must resolve
+    non-empty (safety property preserved per AC.DCR.TEST.4).
     """
     import sys
 
@@ -146,6 +163,8 @@ def test_AC_PMR_4_every_always_loaded_glob_resolves() -> None:
 
     manifest = _load_manifest()
     for entry in manifest.always_loaded:
+        if entry.runtime:
+            continue
         matches = expand_entry(entry, REPO_ROOT)
         assert matches, (
             f"always_loaded entry expanded empty: "

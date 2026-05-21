@@ -47,11 +47,24 @@ class ManifestEntry:
 
     Exactly one of ``path`` or ``glob`` is set. ``exclude`` is empty
     unless ``glob`` is set and the YAML provided exclusions.
+
+    ``runtime`` (default ``False``) marks the entry as a runtime-shape
+    declaration — a path that may not exist in the canonical tree but
+    populates on first-run (workspace telemetry, runtime-generated
+    indices, first-run-populated caches). Audit + selector behaviour
+    is unchanged: ``expand_entry`` already tolerates non-existent
+    paths for ``path:`` entries (returns ``{entry.path}``
+    unconditionally) and returns an empty match-set for ``glob:``
+    entries pointing at non-existent paths. The flag is what
+    differentiates "expected empty" from "regression" for the test
+    corpus that audits manifest-shape integrity. Per AC.DCR.SCHEMA.1
+    + AC.DCR.SCHEMA.2.
     """
 
     path: str | None = None
     glob: str | None = None
     exclude: tuple[str, ...] = ()
+    runtime: bool = False
 
     def __post_init__(self) -> None:
         if (self.path is None) == (self.glob is None):
@@ -65,13 +78,44 @@ class ManifestEntry:
 
 
 @dataclass(frozen=True)
+class RootEntry:
+    """A single ``roots:`` entry.
+
+    ``path`` is the workspace-relative path (file or directory). The
+    bare-string YAML form (``- src/``) and the mapping YAML form
+    (``- {path: src/, runtime: <bool>}``) both parse to this
+    dataclass. ``runtime`` (default ``False``) carries the same
+    semantics as on ``ManifestEntry`` — declares a root that may not
+    exist in the canonical tree but populates on first-run. Per
+    AC.DCR.SCHEMA.3.
+    """
+
+    path: str
+    runtime: bool = False
+
+
+@dataclass(frozen=True)
 class Manifest:
     """Parsed dev-mode partition manifest."""
 
-    roots: tuple[str, ...]
+    roots: tuple[RootEntry, ...]
     audit_excludes: tuple[str, ...]
     always_loaded: tuple[ManifestEntry, ...]
     dev_only: tuple[ManifestEntry, ...]
+
+
+def _coerce_runtime(raw: object, where: str) -> bool:
+    """Parse an optional ``runtime:`` field from a YAML mapping.
+
+    Returns ``False`` when absent. Accepts only booleans (rejects
+    ``"true"``/``"yes"`` etc. — explicit YAML booleans only).
+    Per AC.DCR.SCHEMA.{1,2,3}.
+    """
+    if not isinstance(raw, bool):
+        raise ValueError(
+            f"{where}: runtime must be a boolean; got {type(raw).__name__}"
+        )
+    return raw
 
 
 def _coerce_entry(raw: object, where: str) -> ManifestEntry:
@@ -83,11 +127,12 @@ def _coerce_entry(raw: object, where: str) -> ManifestEntry:
         raise ValueError(
             f"{where}: entry sets both path and glob; pick one"
         )
+    runtime = _coerce_runtime(raw["runtime"], where) if "runtime" in raw else False
     if "path" in raw:
         path = raw["path"]
         if not isinstance(path, str) or not path:
             raise ValueError(f"{where}: path must be a non-empty string")
-        return ManifestEntry(path=path)
+        return ManifestEntry(path=path, runtime=runtime)
     if "glob" in raw:
         glob = raw["glob"]
         if not isinstance(glob, str) or not glob:
@@ -102,7 +147,9 @@ def _coerce_entry(raw: object, where: str) -> ManifestEntry:
                     f"{where}: each exclude pattern must be a non-empty string"
                 )
             excludes.append(ex)
-        return ManifestEntry(glob=glob, exclude=tuple(excludes))
+        return ManifestEntry(
+            glob=glob, exclude=tuple(excludes), runtime=runtime
+        )
     raise ValueError(f"{where}: entry needs either path or glob")
 
 
@@ -149,10 +196,43 @@ def load_manifest(manifest_path: Path) -> Manifest:
     )
 
 
-def _coerce_root(raw: object, where: str) -> str:
-    if not isinstance(raw, str) or not raw:
-        raise ValueError(f"{where}: root must be a non-empty string")
-    return raw
+def _coerce_root(raw: object, where: str) -> RootEntry:
+    """Parse a ``roots:`` entry.
+
+    Accepts either the bare-string form (``- src/``) — backwards-
+    compat — or the mapping form (``- {path: src/, runtime: <bool>}``)
+    — new at AC.DCR.SCHEMA.3. The bare-string form yields a
+    ``RootEntry`` with ``runtime=False``; the mapping form yields a
+    ``RootEntry`` with the provided fields.
+    """
+    if isinstance(raw, str):
+        if not raw:
+            raise ValueError(f"{where}: root must be a non-empty string")
+        return RootEntry(path=raw)
+    if isinstance(raw, dict):
+        if "path" not in raw:
+            raise ValueError(
+                f"{where}: root mapping must carry a 'path' key"
+            )
+        path = raw["path"]
+        if not isinstance(path, str) or not path:
+            raise ValueError(f"{where}: path must be a non-empty string")
+        runtime = (
+            _coerce_runtime(raw["runtime"], where)
+            if "runtime" in raw
+            else False
+        )
+        unexpected = set(raw.keys()) - {"path", "runtime"}
+        if unexpected:
+            raise ValueError(
+                f"{where}: unexpected keys in root mapping: "
+                f"{sorted(unexpected)}"
+            )
+        return RootEntry(path=path, runtime=runtime)
+    raise ValueError(
+        f"{where}: root must be a non-empty string or a mapping with"
+        f" 'path' (+ optional 'runtime'); got {type(raw).__name__}"
+    )
 
 
 def _coerce_pattern(raw: object, where: str) -> str:

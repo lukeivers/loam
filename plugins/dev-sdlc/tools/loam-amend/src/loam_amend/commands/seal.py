@@ -17,7 +17,10 @@ the working tree at a recoverable checkpoint.
 
 Plan-doc projection (per AC.D-sa.7): when ``--plan-doc <path>`` is
 supplied, append a ``### Commit SHAs`` subsection under the plan
-doc's ``## 14.`` heading and create a follow-up
+doc's ``## 14.`` OR ``## §14`` heading (per AC.LAS14R.{1,2}, the
+canonical plan-doc convention uses ``## §14 — Method-decision
+register``; the legacy ``## 14.`` shape is also accepted for
+backwards compatibility) and create a follow-up
 ``docs(plans): record amendment #N commit SHAs ...`` commit.
 
 Per AC.LAE.2 (v0.1.2 item 6 — loam-amend ergonomics sweep):
@@ -333,20 +336,29 @@ def _backfill_plan_doc_shas(
         )
     text = plan_doc.read_text(encoding="utf-8")
 
-    # Locate the "## 14." heading. Accept "## 14. " or "## 14 " as
-    # the canonical shape per AC.D-sa.7 wording.
-    section_header_re = re.compile(r"^## 14[.\s]", re.MULTILINE)
+    # Locate the §14 heading. Accept BOTH the canonical
+    # plan-doc-convention ``## §14<sep>`` shape AND the legacy
+    # ``## 14<sep>`` shape, where <sep> is one of ``.``, whitespace,
+    # or em-dash (U+2014). Per AC.LAS14R.{1,2}; the optional ``§``
+    # and the widened separator class make the widening additive +
+    # backwards-compatible.
+    section_header_re = re.compile(r"^## §?14[.\s—]", re.MULTILINE)
     m = section_header_re.search(text)
     if m is None:
         return _FailureCheckpoint(
             code=3,
             klass="plan-doc-missing-section-14",
             detail=(
-                f"plan doc has no '## 14.' heading: {plan_doc}\n"
-                "AC.D-sa.7 requires the designated plan doc to "
-                "carry the §14 method-decision-record heading. The "
-                "seal commit has been left in place. Operator may "
-                "author the §14 prose + SHA subsection by hand."
+                f"plan doc has no '## 14.' or '## §14' heading: "
+                f"{plan_doc}\n"
+                "AC.D-sa.7 (widened by AC.LAS14R.{1,2}) requires "
+                "the designated plan doc to carry the §14 "
+                "method-decision-record heading in either the "
+                "canonical ``## §14<sep>`` shape or the legacy "
+                "``## 14<sep>`` shape, where <sep> is ``.``, "
+                "whitespace, or em-dash. The seal commit has been "
+                "left in place. Operator may author the §14 prose + "
+                "SHA subsection by hand."
             ),
         )
 

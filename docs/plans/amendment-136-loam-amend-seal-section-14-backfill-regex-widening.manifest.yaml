@@ -29,7 +29,7 @@ amendment:
 #     a fixture plan-doc using the canonical `## §14 — ...` heading
 #     produces a clean seal + auto-backfill, no manual operator
 #     intervention.
-baseline: "TBD"
+baseline: "48e7b29cca6a58a040f74c679db94231f7785cc8"
 
 plan: docs/plans/amendment-136-loam-amend-seal-section-14-backfill-regex-widening.md
 

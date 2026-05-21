@@ -296,6 +296,15 @@ Populated at build time + sealed in by `loam amend seal --plan-doc`. The four me
 
 **Alternative:** per-component `framework/<comp>/seals/plans/`. **Recommendation:** rejected — fragments multi-component plans.
 
+### Commit SHAs
+
+- Amendment commit: `034776063ee64020f7e4250368dede8c8e57790b` —
+  `chore(amend): amendment-134-fbm-tier1-foundations apply — primary-persona+dev-sdlc BASELINE+sidecar bump to ed8d3bf`
+- Seal commit: `612500304c5ad6d17ec8440d9fd551ba723b981d` —
+  `chore(seals): amendment-134-fbm-tier1-foundations — primary-persona+dev-sdlc at 0347760`
+
+Note: the §14 backfill ran via manual fallback (the `loam amend seal --plan-doc` automated backfill's regex matches `## 14.` but not `## §14.` which this plan-doc uses; the seal-tool's regex narrowness is a pre-existing limitation surfaced by this amendment — see §16 finding #5).
+
 ---
 
 ## §15. Backwards-compat verification
@@ -336,6 +345,30 @@ Tests that must still pass after this amendment seals:
 **Surface:** TG 11804 ruled YES on F-ENCODING-CONTEXT-LOSS as a real failure mode, but the v2 artifact itself flags it as "agent-surfaced candidate; owner ruling pending" with no concrete forensic evidence. T1.2 ships on hypothesis-class evidence + schema-minimal directive.
 
 **Resolution (autonomous, plan-author):** §10 F2-RF doubt #4 names this explicitly; the schema-minimal directive (§16 finding #2) bounds the cost. T1.2 ships per owner ratification; future evidence of F-ENCODING firing in operation will inform whether the schema needs expansion.
+
+### Finding #5 (no halt — seal-tool §14 backfill regex narrowness)
+
+**Surface:** the seal-tool's automated `--plan-doc` §14 SHA backfill (AC.D-sa.7) uses regex `^## 14[.\s]` which matches `## 14.` and `## 14 ` but NOT `## §14.` (the §-prefixed heading shape this plan-doc uses). On seal of amendment #134 the backfill halted with `plan-doc-missing-section-14`. The seal commit itself landed cleanly; only the §14 backfill commit failed.
+
+**Resolution (autonomous, builder):** manual §14 SHA register backfill — the `### Commit SHAs` subsection is authored by hand under the `## §14. Method-decision register` heading. The seal commit (`612500304c5ad6d17ec8440d9fd551ba723b981d`) carries the rename of plan-doc + manifest into `docs/plans/sealed/` as designed (AC.FBMT1.APS.1); only the §14-backfill follow-up commit needed manual authoring.
+
+**Why this is not a halt-and-surface back to dispatcher:** the seal commit succeeded; the backfill is a paper-trail bookkeeping step that's recoverable by manual authoring. Per the operational-objective test, the objective (durable seal SHA registration) is satisfied via the manual fallback. The downstream fix — widening the seal-tool's regex to also accept `## §<digit>.` — is named here for a future loam-amend amendment.
+
+### Finding #6 (no halt — retroactive sweep deferred per dispatcher-named halt trigger #5)
+
+**Surface:** the one-shot retroactive sweep (§6 step 8, Q3 owner-ratified) was dry-run against canonical with this amendment's source edits in place. Results: 265 plan-docs cleanly attributable to a seal commit; 146 classified as in-flight; 16 ambiguous. Spot-checking the in-flight bucket revealed many FALSE NEGATIVES — sealed amendments whose seal commit's subject names a different slug than the plan-doc filename (e.g. `amendment-22-pos-amend-cli.md` whose seal commit is `chore(seals): pos-amend-cli-and-universal-paths seal — ...`). The narrow heuristic (`git log --grep=^chore(seals): --grep=<slug> --all-match`) misses these. Additionally, downstream production code globs `docs/plans/<slug>*.md` (release gates, heavy-b-migrate, etc.) — a retroactive sweep would break those code paths' plan-doc resolution.
+
+**Resolution (autonomous, builder):** the retroactive sweep is **skipped** for this amendment's seal. The behavior is verified at tmpfs-test altitude via AC.FBMT1.APS.3 (which exercises both clean-match and ambiguous-match paths). The amendment's seal is the first forward-only user of T1.4 (this plan-doc archives itself). A future amendment can land the canonical retroactive sweep once: (a) the heuristic is refined to handle the older slug-naming conventions, AND (b) the downstream consumers (`release/gates.py`, `heavy_b_migrate/verify.py`, etc.) are updated to walk both `docs/plans/` and `docs/plans/sealed/`. Surfaced as a FIDRAFT-class follow-up (capture in dispatcher report, not in this plan-doc's body).
+
+**Why this is not a halt-and-surface back to dispatcher:** the AC family (AC.FBMT1.APS.*) is verified at behavior altitude via the tmpfs tests. The "one-shot retroactive sweep" framing in §6 step 8 names the sweep as in-scope, but §8 halt trigger #5 explicitly authorizes leaving ambiguous plan-docs in place. The 146 false-negative classifications fall under the "no clear seal-commit attribution" branch of the halt trigger; per the trigger's contract, these stay in `docs/plans/`. The retroactive sweep behavior IS landed (`loam_amend.plan_archive.sweep_sealed_plan_docs`) — it's the production-tree invocation that's deferred until the heuristic+consumers are ready.
+
+### Finding #7 (no halt — pre-existing schema-validation reds on unrelated manifests)
+
+**Surface:** during the build, `test_AC_DPS1_13_existing_manifests_validate_clean` and `test_AC_DPS2_10_existing_manifests_validate_clean` were RED at baseline (canonical `ed8d3bf`, before any of this amendment's source edits). The cause is a pre-existing manifest at `docs/plans/session-clear-safety-tracker-register-and-first-run-update-parity.manifest.yaml` carrying a `smoke_outcome` field 575 chars long (schema cap is 200). This is unrelated to amendment #134.
+
+**Resolution (autonomous, builder):** verified pre-existing via stash-and-replay against canonical baseline. Both reds carry through to the meta-tests `test_AC_D_sa_6_existing_test_suite_still_green` and `test_AC_D_1_5_4_existing_loam_amend_test_suite_still_green` that wrap the broader suite. None of the four reds gate this amendment's seal (the seal step's touched-component + cross-component sweep doesn't include these tests). Surfaced here so the dispatcher can route a corrective cleanup amendment.
+
+**Why this is not a halt-and-surface back to dispatcher mid-build:** the operational objective is to ship the four T1 primitives; the pre-existing reds do not block that objective (verified empirically — seal commit `612500304c5ad6d17ec8440d9fd551ba723b981d` landed cleanly with both reds still in place at baseline).
 
 ---
 

@@ -325,10 +325,10 @@ The output of the seed pass is a populated access log (not a populated graph); t
 
 ### Commit SHAs
 
-To be backfilled at seal time (manual fallback per §10 doubt #5).
-
----
-
+- Amendment commit: `32608d2b3fe2739dda3cc2137fdac2704d096d35` —
+  `chore(amend): amendment-135-fbm-tier2-retrieval-mechanics apply — primary-persona BASELINE+sidecar bump to b41b52b`
+- Seal commit: `d4fcbe3b336a30509e5efdef3ecd0e55e1095cdb` —
+  `chore(seals): amendment-135-fbm-tier2-retrieval-mechanics — primary-persona at 32608d2`
 ## §15. Backwards-compat verification
 
 Tests that must still pass after this amendment seals:

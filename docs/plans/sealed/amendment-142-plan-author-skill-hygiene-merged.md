@@ -263,11 +263,10 @@ See §3 for the in-scope/out-of-scope list. Additional notes:
 
 ### Commit SHAs
 
-- Amendment commit: TBD (populated by §14 backfill at seal time).
-- Seal commit: TBD (populated by §14 backfill at seal time).
-
----
-
+- Amendment commit: `2974b956ba6889dfd57b83a2ff495b2d7b14c23e` —
+  `chore(amend): dev-sdlc: plan-author SKILL + dev-sdlc methodology hygiene (merged three-scope amendment per TG 11847 queue-merge directive). Pre-fix at canonical HEAD `2686101`, plan-author SKILLs (plan-docs-author / plan-before-code-author / loam- amend-cycle / seal-narrative-writer) and convention docs (plan-docs.md / commit-ladder.md / amendment-cycle.md) do NOT prescribe: (A) the canonical `narrative.target` form for manifests; (B) the BASELINE walk-forward discipline when a predecessor seal is followed by `chore(amend-fixup):` commits; (C) the explicit "commit source edits BEFORE `loam amend apply`" step (apply runs against committed HEAD per apply.py:158). Empirically: #138 manifest authored `narrative.target: dev- sdlc` per the unprescribed default, seal-tool wrote 2778-byte orphan file `<repo>/dev-sdlc`, recovered via fixup `26f3a9e`; #139 pinned BASELINE to #138's seal `01e63ac` missing the `26f3a9e` fixup, builder authored corrective `ca16e41` to bump BASELINE; #138 first build attempt ran `loam amend apply` against uncommitted source edits, recovered via `git reset --mixed` + manual re-commit.`
+- Seal commit: `f99827d6dc6c5769bcf8368349934e133d6a8138` —
+  `chore(seals): dev-sdlc: plan-author SKILL + dev-sdlc methodology hygiene (merged three-scope amendment per TG 11847 queue-merge directive). Pre-fix at canonical HEAD `2686101`, plan-author SKILLs (plan-docs-author / plan-before-code-author / loam- amend-cycle / seal-narrative-writer) and convention docs (plan-docs.md / commit-ladder.md / amendment-cycle.md) do NOT prescribe: (A) the canonical `narrative.target` form for manifests; (B) the BASELINE walk-forward discipline when a predecessor seal is followed by `chore(amend-fixup):` commits; (C) the explicit "commit source edits BEFORE `loam amend apply`" step (apply runs against committed HEAD per apply.py:158). Empirically: #138 manifest authored `narrative.target: dev- sdlc` per the unprescribed default, seal-tool wrote 2778-byte orphan file `<repo>/dev-sdlc`, recovered via fixup `26f3a9e`; #139 pinned BASELINE to #138's seal `01e63ac` missing the `26f3a9e` fixup, builder authored corrective `ca16e41` to bump BASELINE; #138 first build attempt ran `loam amend apply` against uncommitted source edits, recovered via `git reset --mixed` + manual re-commit.`
 ## §16. Halt-and-surface findings (raised + ruled at plan-authoring)
 
 1. **The dispatch brief framed the three scopes as a single merged amendment per the queue-merge directive (TG 11847).** Tier-0 verification (FIDRAFT line 336 explicitly says "consolidate with F-PLAN-AUTHOR-SKILL-MANIFEST-TARGET-DEFAULT-GAP into a plan-author hardening pass"; the three entries name the same component surface; the AC families are scope-disjoint). **Ruling:** merge proceed; recorded as D-PASH.MERGE.

@@ -84,6 +84,14 @@ def test_AC_FBE_2_S_only_loam_cli_changed() -> None:
     allowed_prefixes = (
         "framework/tools/loam/",
         "framework/tools/pos-publish-framework-only/",
+        # Amendment #143 cross-component partner: heavy-b-migrate's
+        # downstream-consumer source-edit (amendment_acs.py routes
+        # through the shared plan_locator helper). The cross-component
+        # prefix machinery defaults to ``framework/<name>/`` which
+        # misses the ``tools/`` segment, so this admission is named
+        # explicitly. Mirror of dev-sdlc seal-test's existing
+        # framework/tools/heavy-b-migrate/ admission.
+        "framework/tools/heavy-b-migrate/",
         "docs/rebuild/plans/",
         "cost-governance/",
         "dev-sdlc/",

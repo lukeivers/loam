@@ -231,9 +231,23 @@ def _candidate_manifest_paths(
             if manifest_p.is_file():
                 candidates.append(manifest_p)
     if not candidates:
+        # Amendment #143 Scope B (D-T1RS.GLOB-UPDATE): walk BOTH
+        # docs/plans/ and docs/plans/sealed/ via the shared
+        # ``iter_all_manifests`` helper. Sealed manifests remain
+        # valid manifests for the dry-run probe (the loam amend
+        # apply --dry-run code path operates correctly on either
+        # location). Local import: loam-amend may not be installed
+        # in non-dev modes, but this hook only fires in dev mode.
         plans_dir = workspace_root / "docs" / "plans"
         if plans_dir.is_dir():
-            candidates = sorted(plans_dir.glob("*.manifest.yaml"))
+            try:
+                from loam_amend.plan_locator import iter_all_manifests
+
+                candidates = list(iter_all_manifests(workspace_root))
+            except ImportError:
+                # Fallback: live-tree only (preserves pre-#143
+                # behaviour when loam-amend isn't importable).
+                candidates = sorted(plans_dir.glob("*.manifest.yaml"))
     return candidates
 
 

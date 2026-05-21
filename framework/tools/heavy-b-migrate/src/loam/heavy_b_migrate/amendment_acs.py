@@ -84,25 +84,37 @@ def discover_amendment_plans(
     Excludes ``.builder-plan.md`` companions (they contain method-level
     detail, not the canonical AC declarations) — only the
     ``amendment-NN-<name>.md`` (no ``.builder-plan``) files are lifted.
+
+    Amendment #143 Scope B (D-T1RS.GLOB-UPDATE): walks BOTH
+    ``docs/plans/`` and ``docs/plans/sealed/`` via the shared
+    ``iter_all_plan_docs`` helper. ``relpath`` reflects each file's
+    actual location so the tracker carries an accurate source-doc
+    reference whether the plan-doc is still in-flight or archived.
     """
-    plans_dir = Path(workspace_root) / PLANS_DIR_REL
-    if not plans_dir.is_dir():
+    from loam_amend.plan_locator import iter_all_plan_docs
+
+    workspace_path = Path(workspace_root)
+    if not (workspace_path / PLANS_DIR_REL).is_dir():
         return []
     out: list[AmendmentPlanFile] = []
-    for child in sorted(plans_dir.iterdir()):
-        if not child.is_file() or child.suffix != ".md":
-            continue
+    for child in iter_all_plan_docs(workspace_path, include_sealed=True):
         if ".builder-plan." in child.name:
             continue
         m = _AMENDMENT_PLAN_RE.match(child.name)
         if not m:
             continue
         number = int(m.group(1))
+        # Preserve relpath semantics: the path inside the workspace,
+        # whether in docs/plans/ or docs/plans/sealed/.
+        try:
+            rel = child.relative_to(workspace_path).as_posix()
+        except ValueError:
+            rel = f"{PLANS_DIR_REL}/{child.name}"
         out.append(
             AmendmentPlanFile(
                 number=number,
                 path=child,
-                relpath=f"{PLANS_DIR_REL}/{child.name}",
+                relpath=rel,
             )
         )
     out.sort(key=lambda p: p.number)

@@ -183,13 +183,16 @@ def _find_plan_doc(
         )
         return resolved if resolved.is_file() else None
     slug = _version_to_slug(version)
-    plans_dir = repo_root / "docs" / "plans"
-    if not plans_dir.is_dir():
-        return None
-    matches = sorted(plans_dir.glob(f"{slug}-*.md")) + sorted(
-        plans_dir.glob(f"{slug}.md")
-    )
-    return matches[0] if matches else None
+    # Amendment #143 Scope B (D-T1RS.GLOB-UPDATE + D-T1RS.GLOB-PRIORITY):
+    # walk BOTH docs/plans/ and docs/plans/sealed/ via the shared
+    # ``find_plan_doc_by_slug_glob`` helper. Sealed-first when both
+    # versions exist (canonical archive wins during transition window).
+    # Local import so the dependency is at call-time (release gates
+    # are dev-mode-only callers; loam-amend may not be installed in
+    # non-dev modes).
+    from loam_amend.plan_locator import find_plan_doc_by_slug_glob
+
+    return find_plan_doc_by_slug_glob(repo_root, slug)
 
 
 def _extract_section_4_body(body: str) -> str | None:

@@ -29,6 +29,7 @@ from loam_amend.commands import apply as apply_cmd
 from loam_amend.commands import new_memory as new_memory_cmd
 from loam_amend.commands import new_plan as new_plan_cmd
 from loam_amend.commands import seal as seal_cmd
+from loam_amend.commands import sweep_archive as sweep_archive_cmd
 from loam_amend.commands import template as template_cmd
 from loam_amend.commands import validate as validate_cmd
 
@@ -123,6 +124,45 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
             "a 'did you mark this actioned?' surface; this flag "
             "skips the scan entirely."
         ),
+    )
+
+    # ``sweep-archive`` subcommand — retroactive sweep of cleanly-
+    # attributable plan-docs into ``docs/plans/sealed/``. Amendment
+    # #143 Scope C + D-T1RS.LIVE-SWEEP-MECHANISM. The CLI demands
+    # ``--dry-run`` OR ``--apply`` explicitly (no implicit default)
+    # so an operator who types ``loam amend sweep-archive`` without
+    # a flag gets a useful error rather than an accidental real run.
+    p_sweep = sub.add_parser(
+        "sweep-archive",
+        help=(
+            "retroactive sweep: archive plan-docs with single-match "
+            "seal commits into docs/plans/sealed/ (per amendment #143)"
+        ),
+    )
+    sweep_mode = p_sweep.add_mutually_exclusive_group(required=True)
+    sweep_mode.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "preview sweep WITHOUT modifying the tree; lists moves "
+            "grouped by attribution strategy + ambiguous + in-flight "
+            "counts"
+        ),
+    )
+    sweep_mode.add_argument(
+        "--apply",
+        action="store_true",
+        help=(
+            "execute the sweep + create one chore(retroactive-sweep): "
+            "commit; do --dry-run first per the halt-trigger #3 "
+            "discipline"
+        ),
+    )
+    p_sweep.add_argument(
+        "--repo-root",
+        type=Path,
+        default=None,
+        help="repo root (default: current working directory)",
     )
 
     # ``template`` subcommand family — markdown template engine for
@@ -361,6 +401,15 @@ def dispatch(args: argparse.Namespace) -> int:
             plan_doc=plan_doc,
             allow_untracked_globs=tuple(args.allow_untracked_globs),
             skip_fidraft_cleanup=args.skip_fidraft_cleanup,
+        )
+    if args.command == "sweep-archive":
+        # ``--dry-run`` and ``--apply`` are mutually exclusive +
+        # required; argparse enforces that. ``dry_run=True`` IFF
+        # ``--dry-run`` set; ``dry_run=False`` IFF ``--apply`` set.
+        repo_root = args.repo_root if args.repo_root is not None else Path.cwd()
+        return sweep_archive_cmd.run(
+            repo_root,
+            dry_run=bool(args.dry_run),
         )
     if args.command == "template":
         templates_root = args.templates_root or template_cmd.DEFAULT_TEMPLATES_ROOT

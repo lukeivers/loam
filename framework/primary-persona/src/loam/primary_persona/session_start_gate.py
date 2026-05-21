@@ -157,6 +157,11 @@ def enumerate_amendments_in_flight(workspace_root: Path) -> list[str]:
     The returned paths remain workspace-relative; when the framework
     copy is the source, the returned strings carry the ``framework/``
     prefix so the caller can read them at the right location.
+
+    Amendment #143 Scope B (D-T1RS.SESSION-START-SEMANTICS): semantics
+    unchanged — this function continues to walk live-tree only. The
+    new sibling ``enumerate_sealed_amendments`` walks the sealed
+    archive separately.
     """
     plans_dir = workspace_root / "docs" / "plans"
     base_root = workspace_root
@@ -171,6 +176,40 @@ def enumerate_amendments_in_flight(workspace_root: Path) -> list[str]:
     matches = sorted(
         p.relative_to(base_root).as_posix()
         for p in plans_dir.glob("amendment-*.md")
+    )
+    return matches
+
+
+def enumerate_sealed_amendments(workspace_root: Path) -> list[str]:
+    """Return sorted ``amendment-*.md`` paths under the workspace's
+    SEALED plan directory (``docs/plans/sealed/``). Empty list when
+    the directory is absent or holds no matching files.
+
+    Amendment #143 Scope B (D-T1RS.SESSION-START-SEMANTICS): a new
+    sibling to ``enumerate_amendments_in_flight``. Semantics mirror
+    the in-flight enumerator (workspace-root first, framework-clone
+    fallback, workspace-relative POSIX paths in deterministic order)
+    so a future digest-enhancement amendment can surface sealed
+    amendments alongside in-flight ones without further plumbing.
+
+    The session-start digest's current caller is NOT modified by
+    amendment #143 — this function is exposed for the future digest
+    enhancement; today it is unused except by direct callers + the
+    AC.T1RS.GLOB.2 test.
+    """
+    sealed_dir = workspace_root / "docs" / "plans" / "sealed"
+    base_root = workspace_root
+    if not sealed_dir.is_dir():
+        framework_sealed_dir = (
+            workspace_root / "framework" / "docs" / "plans" / "sealed"
+        )
+        if not framework_sealed_dir.is_dir():
+            return []
+        sealed_dir = framework_sealed_dir
+        base_root = workspace_root  # paths are still rooted at workspace
+    matches = sorted(
+        p.relative_to(base_root).as_posix()
+        for p in sealed_dir.glob("amendment-*.md")
     )
     return matches
 

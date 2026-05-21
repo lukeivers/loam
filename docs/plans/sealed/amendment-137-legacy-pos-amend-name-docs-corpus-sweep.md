@@ -288,6 +288,12 @@ These are F2 Ruthless Feedback notes from the plan-authoring pass. Each surfaces
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `282bfb76bc6e56765acacf3cd514bd45d2d9ca9e` —
+  `chore(amend): amendment-137-legacy-pos-amend-name-docs-corpus-sweep apply — workspace-bootstrap+objective-tracker+primary-persona+dormancy+dev-sdlc BASELINE+sidecar bump to ad744a2`
+- Seal commit: `43d1dedaa6427b2bab4cecf0cd4986cc8f098af0` —
+  `chore(seals): amendment-137-legacy-pos-amend-name-docs-corpus-sweep — workspace-bootstrap+objective-tracker+primary-persona+dormancy+dev-sdlc at 282bfb7`
 ## §15. Backwards-compat verification
 
 - **All component tests must still pass post-sweep** — per AC.LPAS.D-MIG, AC.LPAS.E, AC.LPAS.G.

@@ -233,24 +233,27 @@ components:
     #   - D-T1RS.GLOB-PRIORITY — sealed-first when ambiguous (during
     #     the transition window).
 
-  - name: heavy-b-migrate
-    seal_test: framework/tools/heavy-b-migrate/tests/test_no_sealed_amendments.py
-    sidecar: framework/tools/heavy-b-migrate/tests/SEAL_COMMIT
-    frozen_baseline: false
-    extra_allowed_prefixes: []
-
-    # Observable outcomes (Scope B AC lands in heavy-b-migrate):
-    #
-    #   - AC.T1RS.GLOB.2 — `iter_all_plan_docs(include_sealed=
-    #     True)` returns union of live + sealed; `discover_-
-    #     amendment_plans` (now routed through helper) yields
-    #     `AmendmentPlanFile` records from both directories;
-    #     `_AMENDMENT_PLAN_RE` filter + `.builder-plan.` exclusion
-    #     + numeric-sort preserved.
-
-    # Method-level choices (see plan-doc §14):
-    #   - D-T1RS.GLOB-UPDATE — shared helper consumed across tree
-    #     boundary (cross-tree import precedented).
+  # NOTE — amendment #143 build-time correction (per F2 RUTHLESS
+  # FEEDBACK + operational-objective test): the plan-author named
+  # `heavy-b-migrate` as a sealed component but the tree has NO
+  # seal-test infrastructure at framework/tools/heavy-b-migrate/
+  # tests/test_no_sealed_amendments.py — `apply` halted at the
+  # missing-file gate. The heavy-b-migrate source edit
+  # (amendment_acs.py routing through plan_locator) STILL lands
+  # cleanly because it's admitted by:
+  #   - the dev-sdlc seal-test's existing
+  #     `framework/tools/heavy-b-migrate/` prefix admission, and
+  #   - the loam seal-test's newly-added
+  #     `framework/tools/heavy-b-migrate/` admission (this
+  #     amendment's cross-cutting widening edit).
+  # The component entry is removed at build-time per F-NEW-6 (no
+  # fence entry needed when no seal-test exists for the component);
+  # observable AC.T1RS.GLOB.2 is verified by the new test files in
+  # plugins/dev-sdlc/tools/loam-amend/tests/test_AC_T1RS_GLOB.py
+  # (helper semantics) + the outcome-altitude end-to-end smoke
+  # (production consumer paths). Mirrors amendment #137's pre-flight
+  # correction pattern when a brief-listed component proved to have
+  # no seal-test infrastructure.
 
   - name: primary-persona
     seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
@@ -274,30 +277,27 @@ components:
     #   - D-T1RS.SESSION-START-SEMANTICS — additive new helper;
     #     no behavioral drift in existing function.
 
-  - name: dev-sdlc-outcome-altitude
-    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
-    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
-    frozen_baseline: false
-    extra_allowed_prefixes: []
-
-    # Note: this is a marker entry for the outcome-altitude AC
-    # which lives logically in dev-sdlc (the sweep mechanism is
-    # the SUT). If the seal-test runner enforces unique component
-    # names, fold this into the dev-sdlc entry above and remove
-    # this stub. The AC remains the same:
-    #
-    #   - AC.T1RS.S (outcome-altitude: true) — synthetic amendment
-    #     cycle exercises all three scopes end-to-end (pre-#134-
-    #     style plan-doc + body-slug-only seal moved via Strategy
-    #     2; post-#134-style plan-doc + full-slug seal moved via
-    #     Strategy 1; in-flight + ambiguous stay in place; each
-    #     of the four downstream consumers iterates correctly
-    #     across both directories); production CLI + helper entry-
-    #     points invoked; no pre-arrangement of partial-sweep
-    #     state. Per `feedback_test_outcome_altitude_required` the
-    #     `outcome-altitude: true` mark guarantees this AC is
-    #     verified by a test invoking the production sweep CLI
-    #     against an un-pre-arranged tmpfs fixture.
+  # Build-time correction: `dev-sdlc-outcome-altitude` stub folded
+  # into the dev-sdlc entry above (per the manifest comment's own
+  # "If the seal-test runner enforces unique component names, fold
+  # this into the dev-sdlc entry above and remove this stub"
+  # instruction). The duplicate component name `dev-sdlc` would
+  # cause the apply step to bump the sidecar twice; removing the
+  # stub keeps the AC.T1RS.S outcome-altitude smoke logically
+  # parented to the dev-sdlc fence (the sweep mechanism IS dev-sdlc).
+  #
+  #   - AC.T1RS.S (outcome-altitude: true) — synthetic amendment
+  #     cycle exercises all three scopes end-to-end (pre-#134-
+  #     style plan-doc + body-slug-only seal moved via Strategy
+  #     2; post-#134-style plan-doc + full-slug seal moved via
+  #     Strategy 1; in-flight + ambiguous stay in place; each
+  #     of the four downstream consumers iterates correctly
+  #     across both directories); production CLI + helper entry-
+  #     points invoked; no pre-arrangement of partial-sweep state.
+  #     Per `feedback_test_outcome_altitude_required` the
+  #     `outcome-altitude: true` mark guarantees this AC is
+  #     verified by a test invoking the production sweep CLI
+  #     against an un-pre-arranged tmpfs fixture.
 
     # Out of scope (per plan-doc §3):
     #

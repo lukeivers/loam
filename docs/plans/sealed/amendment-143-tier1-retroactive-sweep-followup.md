@@ -247,6 +247,12 @@ Per `plugins/dev-sdlc/docs/conventions/amendment-cycle.md` commit ladder:
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `47e5da71b0b4b34df31321f30b3603b37ab0ae5e` —
+  `chore(amend): Tier 1 retroactive sweep follow-up: tighten heuristic + widen downstream globs + live sweep (closes #134 §16 finding #6, three-scope merge per causal dependency).`
+- Seal commit: `f83260fb38cb0e9e72aedfe40672953a57bab084` —
+  `chore(seals): Tier 1 retroactive sweep follow-up: tighten heuristic + widen downstream globs + live sweep (closes #134 §16 finding #6, three-scope merge per causal dependency).`
 ## §16. Halt-and-surface findings (raised + ruled at plan-authoring)
 
 1. **Finding #1 — fence expansion from brief's 2 consumers to 4.** The dispatching brief named `release/gates.py` and `heavy_b_migrate/verify.py` as the two known downstream consumers (with "verify these are still the only consumers" as the pre-flight rider). Pre-flight Tier-0 grep surfaced TWO additional consumers: `primary_persona/session_start_gate.py:163` (`plans_dir.glob("amendment-*.md")`) and `dev-sdlc/hooks/bash_guard.py:236` (`plans_dir.glob("*.manifest.yaml")`). Also, the brief's named `heavy_b_migrate/verify.py` does NOT glob `docs/plans/` at runtime — it carries plan-doc paths in fixture-build strings only; the actual heavy-b-migrate consumer is `amendment_acs.py:88` (`discover_amendment_plans`). **Resolution (autonomous, plan-author):** the operational objective is "every downstream consumer can find plans in both locations." The two additional consumers AND the corrected heavy-b-migrate path are named in §5 (sealed-component fence). The fence widens from the brief's 2 to this amendment's 4. Per the operational-objective test (`feedback_test_against_operational_objective_before_escalating`): the objective implies a clear answer (all four consumers in-fence); autonomous fence widening is the correct call. This is NOT a halt-and-surface back to dispatcher — the fence widening is an in-scope correction of an incomplete brief, surfaced here in the plan-doc for dispatcher visibility.

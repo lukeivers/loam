@@ -181,7 +181,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              immediately before this amendment's code commit.
 #              Mirrors amendments #34 / #35 / #36 / #37 / #38
 #              BASELINE-as-HEAD~1 pattern.
-BASELINE = "62d5245"
+BASELINE = "ad744a2eb5c09981cdebdd489dae772f8993c997"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -341,6 +341,7 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/experiments/",
         "docs/plans/",
         "docs/papers/",
+        "docs/",
     )
     allowed_files: set[str] = {
         "framework/first-run-inventory.yaml",

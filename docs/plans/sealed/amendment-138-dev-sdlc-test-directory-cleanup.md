@@ -212,10 +212,13 @@ All ACs are outcome-shape: each asserts a measurable property of the post-amendm
 | **D-DSTC.OSS-M6-RESOLUTION** | **No action.** Pre-flight Tier-0 evidence shows the 6 collection errors are a Python-version artifact (pyenv shim defaulting to 3.9.17 while the package requires `>=3.13`); the seal-tool's `_run_pytest` uses `.venv/bin/python` which is Python 3.13, so OSS_M6 already collects and runs cleanly under the production verification path. **Recommend: ratify.** | persona (build-strategy delegation TG 11808 — explicit halt-and-surface trigger in the dispatch brief; resolution is "no action needed" rather than triggering the product-work halt). | Plan-author Tier-0 verified. |
 | **D-DSTC.AC-LADDER** | AC families: `AC.DSTC.PMR.{1,2}` + `AC.DSTC.SKILLS.{1..4}` + `AC.DSTC.S` (outcome-altitude smoke). **Recommend: ratify.** | persona (build-strategy delegation TG 11808) | Plan-author convention (scope-descriptive AC IDs per the M5 ratification 2026-05-09). |
 
-**Commit SHAs (backfilled by `loam amend seal --plan-doc`):**
+**Commit SHAs (manual backfill — seal-tool's auto-backfill did not fire due to post-seal dry-run halt; F2 surface in §16):**
 
-- Amendment commit: `<SHA>` — `chore(amend): amendment-138-dev-sdlc-test-directory-cleanup apply — dev-sdlc BASELINE+sidecar bump to <SHA>`
-- Seal commit: `<SHA>` — `chore(seals): amendment-138-dev-sdlc-test-directory-cleanup — dev-sdlc at <SHA>`
+- Plan-doc commits: `f7008fd` (initial plan + manifest) + `c1880ce` (NARROWING ADDENDUM)
+- Source-edit commit: `1da9350` — `fix(dev-sdlc): SKILL.md description fields as >- block scalar (AC.DSTC.SKILLS.1-4)`
+- Amendment commit: `a6fd874` — `chore(amend): amendment-138-dev-sdlc-test-directory-cleanup apply — dev-sdlc BASELINE+sidecar bump to 43d1ded`
+- Seal commit: `01e63ac` — `chore(seals): amendment-138-dev-sdlc-test-directory-cleanup — dev-sdlc at a6fd874`
+- Corrective fixup commit: `26f3a9e` — `chore(amend-fixup): remove orphan dev-sdlc file from #138 seal commit` (cleanup of seal-tool's misinterpretation of `narrative.target: dev-sdlc` as a write-path — see §16 finding #2)
 
 ---
 
@@ -238,3 +241,19 @@ All ACs are outcome-shape: each asserts a measurable property of the post-amendm
 - **Composes with** the post-#136 seal-tool widening — the §14 backfill uses the canonical `## §14 — Method-decision register` heading; no manual fallback expected.
 - **Independent of** F4 (this amendment's scope is small enough that scope-confidence-tightening doesn't drive any structural decision).
 - **PREREQUISITE OF** the unwritten seal-tool hygiene pair amendment (F-SEAL-PLUGINS-TESTS-SKIPPED + F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE) — that amendment will exercise the full plugins/dev-sdlc test suite via the seal-step automation; without this cleanup, that exercise would fail on baseline.
+
+---
+
+## §16. Halt-and-surface findings (build-agent backfill)
+
+Backfilled by `loam-builder` subagent post-seal per `feedback_subagent_odd_violation_halt` + F2 Ruthless Feedback. Surfaces beyond the plan-author + first-builder findings:
+
+1. **F2 — manifest narrative.target field was authored as `dev-sdlc` (component name) instead of a file path.** The seal-tool interpreted `narrative.target` as a write-target and dumped the 2778-byte narrative body to a literal file at `<repo-root>/dev-sdlc`. Compare #137's manifest (`narrative.target: docs/plans/sealed/amendment-137-….md`). **Effect:** seal commit `01e63ac` added an orphan `dev-sdlc` file at repo root; post-seal `loam amend apply --dry-run` flagged `MISSING_ADMISSION: dev-sdlc`. **Recovery:** corrective fixup commit `26f3a9e` removed the orphan. **Alternative recommended:** plan-author SKILL's manifest-template should emit `narrative.target: docs/plans/sealed/<slug>.md` by default, not the component name. Per `feedback_loose_AC_text_fix_AC_not_implementation` and `feedback_information_trust_ordering`, this is a plan-author surface gap that warrants a follow-up patch to the manifest template.
+
+2. **F2 — seal-tool's `--plan-doc` §14 auto-backfill DID NOT fire** because the seal command halted at post-seal dry-run (the orphan-file MISSING_ADMISSION halt). The plan-doc §6 step 9's expectation ("no manual fallback expected") was unmet. **Recovery:** manual SHA backfill in §14 (this commit). **Composition with the post-#136 seal-tool widening:** the §14 heading regex matched, but the auto-backfill step is GATED on the post-seal dry-run passing. A future seal-tool patch should either (a) decouple §14 backfill from post-seal verification, or (b) auto-retry §14 backfill after corrective fixup commits land. F2 on the plan-doc's "no manual fallback expected" claim — that claim assumes post-seal dry-run clean, which the narrative.target bug above broke.
+
+3. **F2 — workflow ordering misstep during the first build attempt (recovered).** The builder ran `loam amend apply` BEFORE committing the SKILL.md source edits, expecting the apply auto-commit to pick up working-tree edits. It does NOT — `loam amend apply` advances sidecar bookkeeping only against the committed HEAD. Recovery: `git reset --mixed` to pre-apply state (no `--amend`; branch unpushed, local-only history adjustment), then the proper ladder: source-edit commit → apply → seal. This is a builder-side discipline gap; the plan-doc §6 build steps name "2. Source edit 1 ... 7. loam amend apply" but the IMPLICIT ordering — source edits must be COMMITTED before apply — should be made explicit in the methodology. **Composition:** `feedback_dispatch_explicit_loam_amend_apply` names the apply step but doesn't surface the source-must-be-committed prerequisite.
+
+4. **Narrowed AC.DSTC.S smoke confirmed.** Final pytest: 250 passed (was 241 pre-amendment) + 7 skipped + 2 failed. The 2 failures are the known-deferred PMR cases (test_AC_PMR_3_every_root_resolves_on_disk + test_AC_PMR_4_every_always_loaded_glob_resolves) admitted per §0 NARROWING ADDENDUM. 9 SKILL failures cleared (4 SKILL AC families satisfied: AC.DSTC.SKILLS.{1,2,3,4} all green). 0 new regressions, 0 collection errors.
+
+5. **Component fence held.** The seal-test `test_only_dev_sdlc_changed` passed against the SEAL_COMMIT sidecar (`a6fd874`). The orphan `dev-sdlc` file landed in the seal commit but the sidecar pins to the apply commit, so the seal-test's diff window predates the orphan. The corrective fixup commit (`26f3a9e`) removes the orphan in a post-seal HEAD-only state.

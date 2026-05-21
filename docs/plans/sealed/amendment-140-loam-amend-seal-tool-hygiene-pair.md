@@ -177,15 +177,10 @@ If both fixes are correct, the seal at step #4 demonstrates them: the dev-sdlc c
 
 ### Commit SHAs
 
-(Backfilled at seal time by amendment #136's widened regex against this §14 heading. If the regex auto-backfill succeeds, this section gets populated automatically; otherwise a manual follow-up commit lands the SHAs here.)
-
-- Plan-doc commit: TBD
-- Source-edits commit: TBD
-- Amendment apply commit: TBD
-- Seal commit: TBD
-
----
-
+- Amendment commit: `7eaf8d01afe899069572f4ae4978a345a2035964` —
+  `chore(amend): loam-amend seal-tool hygiene pair (Scope A + Scope B merged per TG 11847 queue-merge directive). Two sibling fixes to the seal step's _finalize routine:`
+- Seal commit: `8a41e7ba50a0f5b3e31d2843d3b0938b8b8feee3` —
+  `chore(seals): loam-amend seal-tool hygiene pair (Scope A + Scope B merged per TG 11847 queue-merge directive). Two sibling fixes to the seal step's _finalize routine:`
 ## §16. Halt-and-surface findings (raised + ruled at plan-authoring + resume)
 
 1. **The dispatch brief proposed a `D-STSP.FALLBACK` fallback to legacy `framework/<comp>/tests/` lookup.** Tier-0 verification revealed `seal_test:` is mandatory on every `ComponentEntry` (manifest.py line 58 + `_require_str` at line 423; consumed by `apply.py` + `dry_run.py`). The fallback is unreachable. **Ruling:** drop D-STSP.FALLBACK; record the dispatch-brief proposal in this §16 + the §10 F2 honest-doubt; D-STSP.PATH-RESOLUTION carries the no-fallback decision.

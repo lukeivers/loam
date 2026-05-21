@@ -36,7 +36,7 @@ amendment:
 #   AC.FBMT2.S — outcome-altitude smoke (both primitives exercised
 #     end-to-end against the production retrieval contributor with
 #     no pre-arranged state).
-baseline: TBD
+baseline: "b41b52b"
 
 plan: docs/plans/amendment-135-fbm-tier2-retrieval-mechanics.md
 

@@ -298,7 +298,36 @@ These are F2 Ruthless Feedback notes from the plan-authoring pass. Each surfaces
 
 ## §16. Halt-and-surface findings (build-agent backfill — reserved for build-time additions)
 
-> Reserved for findings the build agent surfaces during the sweep.
+### F-NEW-1. CLAUDE.dev.md (top-level dev-mode auto-load file) needed universal admission.
+
+- **Claim:** Plan-doc §3 universal_paths admits `docs/` as prefix but `CLAUDE.dev.md` sits at top-level repo root and is outside any sealed component's fence.
+- **Evidence:** Tier-0 grep this turn surfaced 3 hits in `CLAUDE.dev.md` at lines 83/87/88 (current-tense `pos-amend` tool + CLI references). The file is at top-level, not under `docs/`. Precedent: M6c manifest (`docs/plans/oss-v0-1-0-publish-dev-sdlc-plugin-m6c.manifest.yaml`) admitted this same file via `universal_paths.files`.
+- **Resolution:** Pre-sweep inventory commit (8a9cbe6) added `CLAUDE.dev.md` to `universal_paths.files`. Classified under AC.LPAS.A as expansion of "active docs" to include the top-level repo-root file.
+
+### F-NEW-2. `plugins/dev-sdlc/docs/cdcs/amendment-dispatch-test-scope.md` enumerated by extension, not by name.
+
+- **Claim:** Plan-doc §1 plugins/dev-sdlc/ enumeration named `tools/loam-amend/`, `skills/`, `tests/`, `docs/odd-in-loam.md`, `hooks/bash_guard.py`, `dev-mode-manifest.yaml` — but not `docs/cdcs/amendment-dispatch-test-scope.md` (which has 1 hit).
+- **Evidence:** Per-line review reached it via the universal `plugins/dev-sdlc/` sweep prefix; no halt fired.
+- **Resolution:** Swept per AC.LPAS.G (line 9 — amendment #22 attribution + `pos-amend apply --dry-run` mechanism reference).
+
+### F-NEW-3. Cat E count calibration: 11 actual vs 12 in plan-doc §1.
+
+- **Claim:** Plan-doc §1 said Cat E = 12 files; Tier-0 grep this turn shows 11.
+- **Evidence:** Per-category breakdown in the build-agent inventory file at `workspace/.scratch/claude-output/amendment-137-pre-sweep-inventory.md`.
+- **Resolution:** No halt-trigger fires; calibration only. AC.LPAS.FIX-FX excludes `test_AC_MFBM_2_*` per plan; sweep target was 10 (11 - 1 FIX-FX exclusion).
+
+### F-NEW-4. Pre-existing test failures in `plugins/dev-sdlc/tools/loam-amend/tests/` unrelated to amendment #137.
+
+- **Claim:** `pytest plugins/dev-sdlc/tools/loam-amend/tests/` shows 4 failures: `test_AC_DPS1_dev_pattern_simplifications_1::test_AC_DPS1_13_existing_manifests_validate_clean`, `test_AC_DPS2_seal_narrative_compression::test_AC_DPS2_10_existing_manifests_validate_clean`, `test_AC_D_1_5_4_backwards_compat::test_AC_D_1_5_4_existing_loam_amend_test_suite_still_green`, `test_seal::test_AC_D_sa_6_existing_test_suite_still_green`.
+- **Evidence:** `git stash` baseline run (pre-edit, on the AC.LPAS.E commit `4180f9b`) shows the SAME 4 failures. Failures are oversized YAML field violations in in-flight `docs/plans/*.manifest.yaml` files (e.g., `session-clear-safety-tracker-register-and-first-run-update-parity.manifest.yaml`'s `smoke_outcome` field is 575 chars vs 200 limit). Unrelated to legacy-name sweep — the manifests in question don't reference `pos-amend`/`pos_amend`.
+- **Resolution:** Not a halt-trigger per plan §6 (none of these tests touch swept files). Surfacing for §16. Composes with build-forward / locked-design-not-license disciplines. Worth a separate amendment that either tightens the AC text (200 char limit) OR loosens the in-flight manifests' fields to fit; per `feedback_loose_AC_text_fix_AC_not_implementation` likely the former.
+- **Alternative:** A subsequent amendment audit-pass — tighten the `smoke_outcome` limit OR audit the in-flight manifests' overflow per the loose-AC fix pattern. Not on this amendment's path.
+
+### F-NEW-5. AC.LPAS.S outcome-altitude smoke PASSED.
+
+- **Claim:** Post-sweep grep count is 321 (pre-sweep was 334). Drop = 13 files fully cleaned. Not zero (over-sweep), not unchanged (no-op).
+- **Evidence:** See post-sweep verification in `workspace/.scratch/claude-output/amendment-137-pre-sweep-inventory.md` (per-category breakdown). All categories preserved per the per-category policy register zero diff.
+- **Resolution:** Smoke verdict PASS; the historical-vs-current policy was correctly enforced across all 6 ACs + the FIX-FX + HIST verification.
 
 ---
 

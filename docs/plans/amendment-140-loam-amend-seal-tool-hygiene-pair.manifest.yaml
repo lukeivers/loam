@@ -1,0 +1,207 @@
+schema_version: 1
+amendment:
+  number: 140
+  slug: amendment-140-loam-amend-seal-tool-hygiene-pair
+  title: "loam-amend seal-tool hygiene pair: read seal_test from manifest (Scope A) + dirty-tree check before plan-doc archive (Scope B) — resume of original #138 attempt onto post-#139 main, renumbered #138 → #140"
+
+# BASELINE: amendment #139 publish-state commit `cd3daae` (current
+# main HEAD post-#139 publish). The seal-diff window is
+# BASELINE..seal_commit per the single-component fence convention.
+# Plan-doc §1 carries the durable owner-ratification record
+# (TG 11808/11837/11840/11847/11852/11858/11861) and the full
+# pre-flight Tier-0 evidence.
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <source-edits + tests commit — Scope A (read seal_test from
+#    manifest at step (d)) + Scope B (reorder: dirty-tree check
+#    before archive, drop rename-in-expected-writes filter) + 11 new
+#    AC test files; cherry-picked from previous #138 attempt commit
+#    3a8ed06 with commit message updated to amendment #140>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit — dogfoods both fixes:
+#    Scope A runs dev-sdlc's plugins/dev-sdlc/tests/ pytest (now green
+#    post-#139); Scope B's dirty-tree check runs against the pristine
+#    working tree BEFORE plan-doc/manifest rename. T1.4 archives this
+#    plan-doc + manifest to docs/plans/sealed/. §14 auto-backfill via
+#    amendment #136's widened regex (canonical heading shape).>
+#
+# Single-component fence on `plugins/dev-sdlc/tools/loam-amend/`
+# (which lives inside the `dev-sdlc` sealed component). The amendment
+# closes BOTH FIDRAFT entries: F-SEAL-PLUGINS-TESTS-SKIPPED +
+# F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE.
+#
+# Resume of the original #138 attempt (branch
+# `plan/amendment-138-seal-tool-hygiene-pair`, commits 2cea328 plan +
+# 3a8ed06 source-edits + 067e3de apply) that halted at seal time on
+# 11 pre-existing dev-sdlc test failures. Those failures were
+# resolved by #138-narrowed (sealed at 7d893b0) + #139 (sealed at
+# cd3daae). Renumber #138 → #140 because slot #138 was reassigned
+# during queue triage. See plan-doc §14 D-RESUME.RENUMBER.
+#
+# AC families per docs/plans/amendment-140-...md §4:
+#   AC.STSP.{1,2,3,S} — Scope A: seal-step reads seal_test: from
+#     manifest; per-component pytest runs against the parent dir of
+#     that path (plugins/-tree + framework/-tree both work; no
+#     hardcoded framework/ prefix in step (d)).
+#   AC.DTCO.{1,2,3,S} — Scope B: dirty-tree validation gate runs
+#     BEFORE plan-doc/manifest archive; halt leaves files at original
+#     locations; rename-in-expected-writes filter removed.
+#   AC.HYG.S — Shared outcome-altitude smoke: ONE synthetic seal cycle
+#     combining plugins-tree component + clean tree → seal succeeds,
+#     plugins-tree pytest runs, plan-doc archives, seal commit lands.
+baseline: "cd3daaef07d92d28aa4cb55b50fe0a89dcf24ed7"
+
+plan: docs/plans/amendment-140-loam-amend-seal-tool-hygiene-pair.md
+
+seal_description: |
+  loam-amend seal-tool hygiene pair (Scope A + Scope B merged per
+  TG 11847 queue-merge directive). Two sibling fixes to the seal
+  step's _finalize routine:
+
+  Scope A (F-SEAL-PLUGINS-TESTS-SKIPPED) — _finalize step (d)
+  previously hardcoded framework/<comp>/tests/ for the per-component
+  pytest run, silently skipping plugins-tree components (e.g.,
+  dev-sdlc). Switch to Path(comp.seal_test).parent — the manifest's
+  mandatory seal_test: field's parent directory. Both framework- and
+  plugins-located components now run. No fallback to legacy
+  framework/<comp>/tests/: seal_test: is mandatory per manifest
+  schema (manifest.py line 58 + _require_str at line 423).
+
+  Scope B (F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE) — Pre-fix,
+  the T1.4 plan-doc archive step ran BEFORE the dirty-tree validation
+  gate. When the gate halted, git mv had already moved the plan-doc +
+  manifest into docs/plans/sealed/ and the operator had to manually
+  move them back. Reorder so the gate fires FIRST against a pristine
+  working tree — halt now leaves nothing to undo. The archive_renames
+  bookkeeping + expected_writes filter that admitted the staged-rename
+  pair into the dirt-check are removed: the rename hasn't happened at
+  gate time so no admission is needed.
+
+  Revises amendment #134's T1.4 docstring-justified ordering ("archive
+  plan-doc + manifest BEFORE the dirty-tree check, so the moved files
+  are part of the expected-writes set") per feedback_locked_design_-
+  not_license_for_bad_outcomes: the operational recovery cost on every
+  dirty-tree halt is bad enough to revisit.
+
+  Composes with amendment #139 (sealed at cd3daae — dev-sdlc manifest
+  runtime-flag schema) — completes the dev-sdlc test corpus baseline
+  that this amendment's Scope A dogfoods against. Composes with
+  amendment #136 (sealed §14 backfill regex widening) — auto-backfill
+  of §14 SHAs expected at seal time, no manual fallback expected.
+
+  Resume of the original #138 attempt; renumbered #138 → #140 because
+  slot #138 was reassigned during queue triage. See plan-doc §14
+  D-RESUME.RENUMBER for the renumber rationale.
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+    # Observable outcomes (the ACs are the contract):
+    #
+    #   - AC.STSP.1 — Manifest with plugins-tree seal_test: → pytest
+    #     invocation runs against plugins/<plugin>/<comp>/tests/.
+    #   - AC.STSP.2 — Manifest with framework-tree seal_test: → pytest
+    #     invocation runs against framework/<comp>/tests/ (unchanged).
+    #   - AC.STSP.3 — No hardcoded "framework/" prefix in step (d).
+    #   - AC.STSP.S — Outcome-altitude smoke: synthetic seal cycle on
+    #     plugins-tree component runs the plugins-tree pytest before
+    #     producing the seal commit.
+    #   - AC.DTCO.1 — Dirty-tree gate fires BEFORE any file move; halt
+    #     leaves plan-doc at docs/plans/<slug>.md (NOT sealed/).
+    #   - AC.DTCO.2 — _stage_plan_doc_archive runs only after the gate
+    #     passes (verifiable by source line-order).
+    #   - AC.DTCO.3 — The rename-pair-in-expected_writes filter is
+    #     removed (the rename hasn't happened when the gate runs).
+    #   - AC.DTCO.S — Outcome-altitude smoke: synthetic dirty-tree seal
+    #     cycle halts cleanly; post-halt plan-doc still at original
+    #     location.
+    #   - AC.HYG.S — Shared outcome-altitude smoke: ONE synthetic seal
+    #     cycle combining BOTH fixes (plugins-tree component + clean
+    #     tree) succeeds end-to-end with no manual intervention.
+
+    # Method-level choices (builder's call per ODD §1.1) — see plan-doc
+    # §14 method-decision register for the rationale:
+    #
+    #   - D-STSP.PATH-RESOLUTION — read seal_test: from manifest;
+    #     Path(seal_test).parent is the pytest target directory. No
+    #     fallback — seal_test: is mandatory per manifest.py line 58 +
+    #     _require_str at line 423.
+    #   - D-DTCO.SEQUENCE — strict sequence in _finalize: (i) compute
+    #     expected_writes WITHOUT rename pair → (ii) dirty-tree check →
+    #     (iii) _stage_plan_doc_archive → (iv) seal commit. Halt at
+    #     (ii) leaves working tree pristine.
+    #   - D-MERGE.AC-LADDER — separate AC families per scope plus
+    #     shared outcome-altitude smoke (AC.HYG.S).
+    #   - D-RESUME.RENUMBER — renumber #138 → #140 on resume because
+    #     slot #138 was reassigned to the narrowed dev-sdlc SKILL-
+    #     frontmatter cleanup (sealed at 7d893b0) and #139 to the
+    #     manifest runtime-flag schema (sealed at cd3daae).
+
+    # Out of scope (per plan-doc §3):
+    #
+    #   - Any other path-resolution logic in seal.py (the cross-
+    #     component sweep at step (e) uses _seal_diff_test_path which
+    #     has its own framework/-hardcoded convention; not in scope
+    #     here — separate FIDRAFT entry if it surfaces).
+    #   - The oversized YAML field cleanup queued as
+    #     ws-loam-amend-oversized-manifest-field-cleanup (separate
+    #     queue item; pre-existing 4-failure set on canonical HEAD
+    #     unrelated to this amendment's edits, per plan-doc §16 #6).
+    #   - Any change to the manifest schema (no new fields; consumes
+    #     the existing mandatory seal_test:).
+    #   - The cocitation-extractor heuristic (separate FIDRAFT entry;
+    #     different component).
+
+    # Predecessor (load-bearing): amendment #139 publish-state commit
+    # cd3daae (current HEAD). Composes against amendment #134 (T1.4
+    # plan-archive mechanism preserved, ordering revised), amendment
+    # #136 (this plan-doc's canonical §14 heading shape relies on
+    # #136's widened backfill regex for seal-time auto-fill),
+    # amendment #138-narrowed (SKILL-frontmatter cleanup; joint
+    # precondition for Scope A dogfood), amendment #139 (manifest
+    # runtime-flag schema admission; completes dev-sdlc test corpus
+    # baseline for Scope A dogfood).
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/amendment-140-loam-amend-seal-tool-hygiene-pair.md
+  body: |
+    loam-amend seal-tool hygiene pair (Scope A + Scope B merged
+    per TG 11847 queue-merge directive). Resume of the original
+    #138 attempt; renumbered #138 → #140 because slot #138 was
+    reassigned during queue triage (to the narrowed dev-sdlc
+    SKILL-frontmatter cleanup, sealed at 7d893b0) and #139 to the
+    manifest runtime-flag schema (sealed at cd3daae). See plan-doc
+    §14 D-RESUME.RENUMBER for the renumber rationale.
+
+    Scope A (F-SEAL-PLUGINS-TESTS-SKIPPED) — _finalize step (d)
+    previously hardcoded framework/<comp>/tests/ for the per-
+    component pytest run, silently skipping plugins-tree components
+    (e.g., dev-sdlc). Switch to Path(comp.seal_test).parent — the
+    manifest's mandatory seal_test: field's parent directory. Both
+    framework- and plugins-located components now run.
+
+    Scope B (F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE) — Pre-fix,
+    the T1.4 plan-doc archive step ran BEFORE the dirty-tree
+    validation gate. Halt at the gate left the plan-doc + manifest
+    already moved into docs/plans/sealed/, requiring manual git mv
+    recovery. Reorder so the gate fires FIRST against a pristine
+    working tree — halt now leaves nothing to undo.
+
+    Composes with amendment #134 (T1.4 ordering revision per
+    feedback_locked_design_not_license_for_bad_outcomes), amendment
+    #136 (auto-backfill of §14 SHAs at this seal), amendment
+    #138-narrowed + amendment #139 (joint precondition for Scope A's
+    dogfood — dev-sdlc test corpus baseline green at cd3daae).
+
+    Closes F-SEAL-PLUGINS-TESTS-SKIPPED (Scope A) + F-SEAL-DIRTY-
+    TREE-CHECK-AFTER-PLAN-ARCHIVE (Scope B) on seal.

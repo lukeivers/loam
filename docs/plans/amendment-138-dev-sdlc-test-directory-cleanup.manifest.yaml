@@ -1,0 +1,239 @@
+schema_version: 1
+amendment:
+  number: 138
+  slug: amendment-138-dev-sdlc-test-directory-cleanup
+  title: "dev-sdlc test directory cleanup: PMR stale path refs + SKILL.md YAML scalar shape (prerequisite for seal-tool hygiene pair)"
+
+# BASELINE: amendment #137 seal `43d1ded` (legacy `pos-amend` name
+# docs-corpus sweep — the most-recent sealed amendment). The seal-diff
+# window is BASELINE..seal_commit per the cross-component sweep
+# convention. Plan-doc §1 carries the durable owner-ratification record
+# (TG 11808/11837/11840/11847/11850) and the full pre-flight Tier-0
+# evidence table.
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <source-edits commit — delete two memory-system lines from
+#    dev-mode-manifest.yaml + rewrite description: in both SKILL.md
+#    files as `>-` block scalar>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence on `dev-sdlc` (the sealed component at
+# `plugins/dev-sdlc/`). Edits are confined to:
+#   - plugins/dev-sdlc/dev-mode-manifest.yaml (two lines deleted)
+#   - plugins/dev-sdlc/skills/plan-before-code-author/SKILL.md
+#     (description: rewritten as >- block scalar; body unchanged)
+#   - plugins/dev-sdlc/skills/plan-docs-author/SKILL.md
+#     (description: rewritten as >- block scalar; body unchanged)
+#
+# No edit under plugins/dev-sdlc/src/ — the loam.plugins.dev_sdlc
+# package is unchanged (per plan-doc §5 + §15 backwards-compat
+# verification).
+#
+# This amendment is a PREREQUISITE for the unwritten seal-tool hygiene
+# pair amendment (F-SEAL-PLUGINS-TESTS-SKIPPED + F-SEAL-DIRTY-TREE-
+# CHECK-AFTER-PLAN-ARCHIVE in docs/FUTURE_IDEAS_DRAFT.md); that
+# amendment will exercise the full plugins/dev-sdlc test suite via the
+# seal-step automation, which requires this cleanup as baseline.
+#
+# AC families per docs/plans/amendment-138-...md §4:
+#   AC.DSTC.PMR.{1,2} — dev-mode-manifest.yaml stale-path-refs cleaned.
+#     AC.DSTC.PMR.1 verified by test_AC_PMR_3_every_root_resolves_on_disk.
+#     AC.DSTC.PMR.2 verified by test_AC_PMR_4_every_always_loaded_glob_resolves.
+#   AC.DSTC.SKILLS.{1..4} — SKILL.md frontmatter YAML scalar shape
+#     valid for both plan-before-code-author + plan-docs-author.
+#     Verified by the corresponding presence + discovery tests across
+#     v0.1.8 + v0.1.9 + v0.5.0 SKILL passes.
+#   AC.DSTC.S — outcome-altitude smoke: `python3.13 -m pytest
+#     plugins/dev-sdlc/tests/ -q` returns 0 failures + 0 collection
+#     errors against the post-amendment HEAD (the 7 pre-existing skips
+#     are admissible).
+baseline: "43d1ded"
+
+plan: docs/plans/amendment-138-dev-sdlc-test-directory-cleanup.md
+
+seal_description: |
+  Cleanup of the dev-sdlc test directory baseline so future seal-tool
+  work (notably the unwritten F-SEAL-PLUGINS-TESTS-SKIPPED +
+  F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE hygiene pair) lands on
+  green pytest output for the full plugins/dev-sdlc test suite.
+
+  Two concrete fixes:
+
+  1. `plugins/dev-sdlc/dev-mode-manifest.yaml` — delete the
+     `framework/memory-system/` root entry + glob (the directory was
+     deleted at v0.3.0 Cycle 2 commit b92aaea, "graphiti rip-out"; the
+     manifest entries are post-removal residual). Test
+     AC.PMR.3 + AC.PMR.4 (both currently failing) verify every
+     remaining root + glob resolves under the canonical workspace.
+
+  2. `plugins/dev-sdlc/skills/plan-before-code-author/SKILL.md` +
+     `plugins/dev-sdlc/skills/plan-docs-author/SKILL.md` — rewrite the
+     frontmatter `description:` field as a `>-` (folded, strip-trailing-
+     newline) block scalar so English colons inside the description
+     content ("applied 2026-05-05:" etc.) no longer parse as inline
+     YAML key/value separators. 9 currently-failing tests across 4
+     test files clear on the same fix; body of each SKILL.md is
+     unchanged.
+
+  Pre-flight Tier-0 evidence resolved the dispatch brief's framing of
+  a third scope (OSS_M6 packaging regression) as a Python-version
+  artifact rather than a product-code gap: the `pyenv` shim defaults
+  to Python 3.9.17 for `python`/`pytest`, but the plugin requires
+  `>=3.13`; under the seal-tool's actual invocation path
+  (`.venv/bin/python` → Python 3.13), the 6 OSS_M6 collection errors
+  disappear and all OSS_M6 tests collect cleanly. No code change is
+  needed for OSS_M6 — D-DSTC.OSS-M6-RESOLUTION = "no action".
+
+  No edit under `plugins/dev-sdlc/src/`. The `loam.plugins.dev_sdlc`
+  Python package is unchanged; entry-point discovery, CLI subcommand
+  registration, and the contribution surface are behaviour-preserved.
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+    # Observable outcomes (the ACs are the contract — per ODD §2.5):
+    #
+    #   - AC.DSTC.PMR.1 — `framework/memory-system/` no longer appears
+    #     in dev-mode-manifest.yaml's `roots:` block; every remaining
+    #     `roots:` entry resolves to an existing on-disk path under
+    #     the canonical workspace.
+    #   - AC.DSTC.PMR.2 — `framework/memory-system/**` no longer
+    #     appears in the manifest's `always_loaded:` block; every
+    #     remaining glob expands to a non-empty match-set against the
+    #     canonical workspace tree.
+    #   - AC.DSTC.SKILLS.1 — Frontmatter of plan-before-code-author/
+    #     SKILL.md parses as valid YAML mapping with `description:`
+    #     returning non-empty string ≤ 1536 chars (the Anthropic-
+    #     combined-cap DESCRIPTION_MAX_CHARS the SKILL tests enforce).
+    #   - AC.DSTC.SKILLS.2 — Frontmatter of plan-docs-author/SKILL.md
+    #     parses as valid YAML mapping with `description:` returning
+    #     non-empty string ≤ 1536 chars.
+    #   - AC.DSTC.SKILLS.3 — All 6 v0.1.8-Cycle-5 SKILLs parse as
+    #     valid YAML at the canonical discovery path
+    #     (test_AC_SKILLS_DSDLC1_7 family).
+    #   - AC.DSTC.SKILLS.4 — All 15 dev-sdlc SKILLs parse as valid
+    #     YAML at the canonical discovery path (test_AC_SKILLS_DSDLC2_7
+    #     family, including plan-before-code-author + plan-docs-author).
+    #   - AC.DSTC.S — Outcome-altitude smoke: `python3.13 -m pytest
+    #     plugins/dev-sdlc/tests/ -q` against post-amendment HEAD
+    #     returns 0 failures + 0 collection errors. The 7 pre-existing
+    #     skips are admissible.
+
+    # Method-level choices (builder's call per ODD §1.1) — see plan-doc
+    # §14 method-decision register for the rationale:
+    #
+    #   - D-DSTC.PMR-FIX — Delete the two `framework/memory-system/`
+    #     lines from `plugins/dev-sdlc/dev-mode-manifest.yaml` (L49
+    #     root entry + L97 always_loaded glob). The directory was
+    #     deleted at v0.3.0 Cycle 2 (`b92aaea`); deletion is the
+    #     correct cleanup, not relocation.
+    #   - D-DSTC.SKILLS-FRONTMATTER — Rewrite each affected
+    #     `description:` field as a `>-` (folded, strip-trailing-newline)
+    #     block scalar; body content unchanged. Preserves the long-form
+    #     description without escape-character whack-a-mole; verified
+    #     by direct YAML parse test that the resulting string is
+    #     identical modulo whitespace normalization.
+    #   - D-DSTC.OSS-M6-RESOLUTION — No action. The 6 collection
+    #     errors the dispatch brief flagged are a Python-version
+    #     artifact (pyenv shim → 3.9.17; plugin requires >=3.13). The
+    #     seal-tool uses `.venv/bin/python` (= python3.13) per
+    #     `_run_pytest`, so the production verification path already
+    #     handles OSS_M6 cleanly.
+    #   - D-DSTC.AC-LADDER — AC families:
+    #     AC.DSTC.PMR.{1,2} + AC.DSTC.SKILLS.{1..4} + AC.DSTC.S.
+    #     Scope-descriptive (per 2026-05-09 Telegram-10644 ratification),
+    #     not version-packed.
+
+    # Out of scope (per plan-doc §3 + §8):
+    #
+    #   - Any change to the `loam.plugins.dev_sdlc` package source
+    #     under `plugins/dev-sdlc/src/`. The package is unchanged.
+    #   - Any change to test files under `plugins/dev-sdlc/tests/`.
+    #     The tests are already correct — they audit the artefacts
+    #     this amendment fixes.
+    #   - The seal-tool hygiene pair itself (F-SEAL-PLUGINS-TESTS-
+    #     SKIPPED + F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE) —
+    #     separate amendment with its own scope; this amendment is
+    #     its prerequisite, not its closure.
+    #   - Oversized YAML manifest field cleanup (`ws-loam-amend-
+    #     oversized-manifest-field-cleanup`) — stays in queue
+    #     separately per dispatch brief.
+    #   - F5 orphan audit on `framework/` subdirs not in the manifest
+    #     (`binary-observation-harness/`, `claude-p-client/`,
+    #     `loam-init/`, `per-project-pm/`, `principle-foundation/`).
+    #     Surfaced in plan-doc §10 RF #2; separate audit pass.
+
+    # Predecessor (load-bearing): amendment #137 seal `43d1ded`
+    # (legacy `pos-amend` name docs-corpus sweep — the most-recent
+    # sealed amendment).
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: dev-sdlc
+  body: |
+    Cleanup of two stale-shape residuals in the dev-sdlc sealed
+    component so the test directory under `plugins/dev-sdlc/tests/`
+    returns to 0-failure baseline (under the production
+    verification Python — 3.13 via `.venv/bin/python`).
+
+    Fix 1 (D-DSTC.PMR-FIX) — `plugins/dev-sdlc/dev-mode-manifest.yaml`
+    delete two lines referencing `framework/memory-system/`. That
+    directory was deleted at v0.3.0 Cycle 2 (`b92aaea`, "graphiti
+    rip-out"); the manifest residuals are post-removal stale
+    references that the M6b.0 partition-realignment pass missed.
+    `framework/primary-persona/` consumes memory via a callable
+    provider (loose coupling per its docs/relationship-map.md), so
+    relocation to primary-persona is NOT the correct fix —
+    deletion is.
+
+    Fix 2 (D-DSTC.SKILLS-FRONTMATTER) — both
+    `plan-before-code-author/SKILL.md` and `plan-docs-author/SKILL.md`
+    carry a long single-line `description:` value containing English
+    colons that PyYAML's flow scanner interprets as inline key/value
+    separators, raising
+    `yaml.scanner.ScannerError: mapping values are not allowed here`
+    on `yaml.safe_load(frontmatter)`. Each `description:` field is
+    rewritten as a `>-` (folded, strip-trailing-newline) block
+    scalar so internal colons stay part of the string value. Body
+    of each SKILL.md is unchanged. 9 currently-failing tests across
+    4 test files clear on the same fix.
+
+    No edit under `plugins/dev-sdlc/src/`; the `loam.plugins.dev_sdlc`
+    Python package is unchanged. Entry-point discovery, CLI subcommand
+    registration, and the contribution surface are behaviour-preserved.
+
+    Pre-flight Tier-0 evidence resolved a third dispatch-brief scope
+    (OSS_M6 packaging "regression") as a Python-version artifact:
+    `pyenv`'s `python`/`pytest` shims default to 3.9.17 while
+    `plugins/dev-sdlc/pyproject.toml` requires `>=3.13`. Under the
+    seal-tool's invocation path (`.venv/bin/python` → 3.13), the 6
+    OSS_M6 collection errors disappear and all 6 OSS_M6 tests
+    collect + run cleanly. No code change needed for OSS_M6 —
+    D-DSTC.OSS-M6-RESOLUTION = "no action; production verification
+    path already handles it".
+
+    Outcome-altitude smoke (AC.DSTC.S):
+    `python3.13 -m pytest plugins/dev-sdlc/tests/ -q` against
+    post-amendment HEAD returns 0 failures + 0 errors. Pre-existing
+    skips (7) are admissible and unrelated.
+
+    This amendment is a PREREQUISITE for the unwritten seal-tool
+    hygiene pair amendment (F-SEAL-PLUGINS-TESTS-SKIPPED +
+    F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE in
+    docs/FUTURE_IDEAS_DRAFT.md) — that amendment will exercise the
+    full plugins/dev-sdlc test suite via the seal-step automation,
+    which this cleanup makes green.
+
+    Composes with: post-#136 seal-tool §14 backfill regex widening
+    (canonical `## §14 — Method-decision register` heading auto-
+    backfills with no manual fallback expected at this seal).

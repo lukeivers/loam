@@ -365,3 +365,55 @@ amendment's own seal-time auto-backfill).
 Closes F-PLAN-AUTHOR-SKILL-MANIFEST-TARGET-DEFAULT-GAP,
 F-LOAM-AMEND-APPLY-IMPLICIT-COMMITTED-HEAD-DEPENDENCY, and
 F-BASELINE-SELECTION-VS-POST-SEAL-CORRECTIVE-FIXUPS on seal.
+
+dev-sdlc: plan-author SKILL + dev-sdlc methodology hygiene
+(merged three-scope amendment per TG 11847 queue-merge
+directive). Closes F-PLAN-AUTHOR-SKILL-MANIFEST-TARGET-
+DEFAULT-GAP (FIDRAFT line 330), F-LOAM-AMEND-APPLY-IMPLICIT-
+COMMITTED-HEAD-DEPENDENCY (line 334), and F-BASELINE-
+SELECTION-VS-POST-SEAL-CORRECTIVE-FIXUPS (line 336) on seal.
+
+Scope A — manifest `narrative.target` canonical form.
+Plan-author SKILLs + convention docs prescribe
+`docs/plans/sealed/<slug>.md` as the canonical default,
+matching the post-#134 T1.4 archive convention and the
+empirical convergence at #137/#139/#140/#141. Replaces the
+legacy `framework/<comp>/seals/SEAL_COMMIT.<slug>` shape;
+prevents the component-name-only bug shape that triggered
+#138's orphan file `<repo>/dev-sdlc` (recovered via fixup
+`26f3a9e`).
+
+Scope B — BASELINE walk-forward from predecessor seal.
+SKILLs prescribe: walk forward from predecessor seal
+commit; if any `chore(amend-fixup):` commits exist between
+seal and HEAD, pick the latest fixup as BASELINE; else
+the seal commit itself. Discipline-only (no new tooling).
+Prevents the stale-BASELINE pattern that forced #139's
+corrective re-baseline `ca16e41`.
+
+Scope C — source-edit-commit-before-apply step. Convention
+docs (commit-ladder.md / amendment-cycle.md) + loam-amend-
+cycle SKILL explicitly name "commit source edits BEFORE
+`loam amend apply`" as a step (apply runs against committed
+HEAD per `apply.py:158`). Plus a soft (non-blocking) stderr
+warning emitted by `apply.run` when tracked-but-unstaged
+changes exist OUTSIDE the partition's admitted union (the
+precise form per D-PASH.WARN-PRECISION; reuses `_diff_with
+_working_tree` from `dry_run.py`). Prevents the apply-
+against-uncommitted-edits halt #138's first build attempt
+hit.
+
+Shape (merged) chosen per D-PASH.MERGE: three scopes touch
+the same `dev-sdlc` component + same SKILL + methodology
+surface; AC families are scope-disjoint (.A / .B / .C);
+the dogfood discipline (D-PASH.DOGFOOD) exercises all three
+scopes at the amendment's own authoring + build time.
+
+Composes with amendment #134 (T1.4 archive convention; this
+amendment closes the SKILL-prose gap), #138 (empirical
+trigger for A + C — retires `26f3a9e` and manual-re-commit
+workarounds), #139 (empirical trigger for B — retires
+`ca16e41` workaround), #140 (queue-merge precedent), #141
+(decoupled §14 backfill is load-bearing for this seal).
+
+Closes the three FIDRAFTs on seal.

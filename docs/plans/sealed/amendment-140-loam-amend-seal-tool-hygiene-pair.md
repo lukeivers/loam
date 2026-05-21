@@ -220,3 +220,34 @@ If both fixes are correct, the seal at step #4 demonstrates them: the dev-sdlc c
 - **Closes** F-SEAL-PLUGINS-TESTS-SKIPPED (Scope A) on seal.
 - **Closes** F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE (Scope B) on seal.
 - **Independent of** F4 — outcome shape is well-pinned regardless of scope-confidence framing.
+
+loam-amend seal-tool hygiene pair (Scope A + Scope B merged
+per TG 11847 queue-merge directive). Resume of the original
+#138 attempt; renumbered #138 → #140 because slot #138 was
+reassigned during queue triage (to the narrowed dev-sdlc
+SKILL-frontmatter cleanup, sealed at 7d893b0) and #139 to the
+manifest runtime-flag schema (sealed at cd3daae). See plan-doc
+§14 D-RESUME.RENUMBER for the renumber rationale.
+
+Scope A (F-SEAL-PLUGINS-TESTS-SKIPPED) — _finalize step (d)
+previously hardcoded framework/<comp>/tests/ for the per-
+component pytest run, silently skipping plugins-tree components
+(e.g., dev-sdlc). Switch to Path(comp.seal_test).parent — the
+manifest's mandatory seal_test: field's parent directory. Both
+framework- and plugins-located components now run.
+
+Scope B (F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE) — Pre-fix,
+the T1.4 plan-doc archive step ran BEFORE the dirty-tree
+validation gate. Halt at the gate left the plan-doc + manifest
+already moved into docs/plans/sealed/, requiring manual git mv
+recovery. Reorder so the gate fires FIRST against a pristine
+working tree — halt now leaves nothing to undo.
+
+Composes with amendment #134 (T1.4 ordering revision per
+feedback_locked_design_not_license_for_bad_outcomes), amendment
+#136 (auto-backfill of §14 SHAs at this seal), amendment
+#138-narrowed + amendment #139 (joint precondition for Scope A's
+dogfood — dev-sdlc test corpus baseline green at cd3daae).
+
+Closes F-SEAL-PLUGINS-TESTS-SKIPPED (Scope A) + F-SEAL-DIRTY-
+TREE-CHECK-AFTER-PLAN-ARCHIVE (Scope B) on seal.

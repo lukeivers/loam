@@ -1,0 +1,390 @@
+schema_version: 1
+amendment:
+  number: 143
+  slug: amendment-143-tier1-retroactive-sweep-followup
+  title: "Tier 1 retroactive sweep follow-up: tighten heuristic + widen downstream globs + live sweep (closes #134 §16 finding #6, three-scope merge per causal dependency)"
+
+# BASELINE: amendment #142 publish-state commit `b278cc6` (current
+# main HEAD post-#142 publish — `docs(readme): bump current-release
+# to v0.12.19 (amendment #142 plan-author SKILL hygiene)`). Per
+# amendment #142 Scope B's walk-forward discipline (D-PASH.BASELINE-WALK):
+# walked forward from #142's seal `f99827d`; found NO
+# `chore(amend-fixup):` commits between `f99827d` and `b278cc6`;
+# defaulted BASELINE to the publish-state commit `b278cc6`.
+# Plan-doc §1 carries the durable owner-ratification record (TG
+# 11808 / 11837 / 11854 + implicit TG 11873) and the full pre-flight
+# Tier-0 evidence including empirical recovery stats and the
+# downstream-consumer enumeration that corrects the dispatching
+# brief's 2-consumer count to the actual 4 (§16 finding #1).
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <source-edits + tests commit — `feat(dev-sdlc, loam, heavy-b-
+#    migrate, primary-persona): tighten retroactive sweep
+#    heuristic + widen downstream globs + add live-sweep CLI
+#    (amendment #143, AC.T1RS.HEURISTIC.{1..4} + AC.T1RS.GLOB.
+#    {1..3} + AC.T1RS.SWEEP.{1,2} + AC.T1RS.S)`. Includes:
+#    Strategy 2/3 helpers in plan_archive.py, new plan_locator.py
+#    module + helpers, four-consumer re-routes (release/gates.py,
+#    heavy_b_migrate/amendment_acs.py, primary_persona/session_-
+#    start_gate.py, dev-sdlc/hooks/bash_guard.py), CLI subcommand
+#    `loam amend sweep-archive`, and new test files
+#    test_AC_T1RS_*.py. Per #142 Scope C discipline, this commit
+#    lands BEFORE `loam amend apply`.>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit — T1.4 archives this
+#    plan-doc + manifest to docs/plans/sealed/ via the existing
+#    post-#134 plan_archive.py integration (Strategy 1 match on
+#    the full slug `amendment-143-tier1-retroactive-sweep-
+#    followup`). §14 auto-backfill via #141's decoupled path.>
+#   <§14 backfill commit — auto-embedded by `_finalize` step (h)
+#    per amendment-141's decoupled path; populates D-T1RS.* SHAs +
+#    closes the §134 §16 finding #6 retro-sweep deferral on seal.>
+#   <chore(retroactive-sweep): live archive commit (per amendment
+#    #143 Scope C) — operator-typed `loam amend sweep-archive`
+#    invocation moving cleanly-attributable plan-docs + manifests
+#    into docs/plans/sealed/. Subject body lists moved slugs
+#    grouped by attribution strategy (narrow / body / hash) for
+#    forward auditability. NOT part of the seal commit's diff
+#    window (bookkeeping-class, not source-class).>
+#
+# Multi-component fence (four sealed components per §5 placement
+# decisions): `dev-sdlc` (sweep mechanism + CLI subcommand),
+# `loam` (release-gate `_find_plan_doc`), `heavy-b-migrate`
+# (Phase γ amendment-AC `discover_amendment_plans`), and
+# `primary-persona` (session-start `enumerate_amendments_in_flight`
+# + new sibling `enumerate_sealed_amendments`). The four
+# components are scope-disjoint at the file level (no shared
+# source-file edits); each per-component seal-diff window is
+# clean.
+#
+# Closes #134 §16 finding #6 on seal. Composes with amendment
+# #134 (T1.4 archive convention at the code level — this
+# amendment provides the canonical heuristic + downstream
+# consumer updates that #134 deferred); amendment #142 (codified
+# `narrative.target` SKILL prescription + BASELINE walk-forward
+# discipline; THIS amendment exercises both at its own seal).
+#
+# AC families per docs/plans/amendment-143-...md §4:
+#   AC.T1RS.HEURISTIC.{1..4} — Scope A: tightened seal-commit
+#     attribution heuristic (three-strategy fallback chain)
+#     correctly classifies pre-#134-style + #134+-style plan-docs;
+#     ambiguous + no-signal cases preserve the §134 contract
+#     verbatim.
+#   AC.T1RS.GLOB.{1..3} — Scope B: shared `iter_all_plan_docs` /
+#     `iter_all_manifests` / `find_plan_doc_by_slug_glob` helpers
+#     route each of the four consumers across both `docs/plans/`
+#     and `docs/plans/sealed/`; existing semantics preserved.
+#   AC.T1RS.SWEEP.{1,2} — Scope C: `loam amend sweep-archive`
+#     CLI subcommand (dry-run + real-run) produces exactly one
+#     corrective commit moving the cleanly-attributable plan-docs;
+#     ambiguous + in-flight stay in place per contract.
+#   AC.T1RS.S — outcome-altitude smoke: synthetic amendment cycle
+#     exercises all three scopes end-to-end (pre-#134-style plan-
+#     doc with body-slug-only seal commit moved via Strategy 2;
+#     post-#134-style plan-doc with full-slug seal moved via
+#     Strategy 1; in-flight + ambiguous stay in place; each of the
+#     four downstream consumers iterates correctly across both
+#     directories); production CLI entry-points invoked; no pre-
+#     arrangement of partial-sweep state.
+baseline: "b278cc6a08b5c7ff127036d009b8d7ae22a3c2c6"
+
+plan: docs/plans/amendment-143-tier1-retroactive-sweep-followup.md
+
+seal_description: |
+  Tier 1 retroactive sweep follow-up: tighten heuristic + widen
+  downstream globs + live sweep (closes #134 §16 finding #6,
+  three-scope merge per causal dependency).
+
+  Scope A — seal-commit attribution heuristic tightening. The
+  existing narrow heuristic (`git log --grep=^chore(seals):
+  --grep=<slug> --all-match`) missed sealed amendments whose
+  seal-commit subject names a different slug than the plan-doc
+  filename (e.g., `amendment-22-pos-amend-cli.md` whose seal
+  commit `60dc0c6` is `chore(seals): pos-amend-cli-and-universal-
+  paths seal — ...`). Empirical recovery: 13 plan-docs at
+  canonical HEAD `b278cc6` (~5% of corpus) recoverable by
+  Strategy 2's body-slug second-pass. Three-strategy fallback
+  chain (current narrow / body-slug second-pass / `amendment #NN`
+  third-pass); first non-empty result determines attribution;
+  multi-match in ANY strategy stays in `result.ambiguous`
+  preserving the §134 halt-trigger #5 contract verbatim.
+
+  Scope B — downstream consumer glob widening. Pre-flight Tier-0
+  grep widened the brief's 2-consumer count to the actual 4
+  (§16 finding #1): release-gate `_find_plan_doc` at
+  `framework/tools/loam/src/loam_cli/release/gates.py:189`,
+  Phase γ `discover_amendment_plans` at `framework/tools/heavy-b-
+  migrate/src/loam/heavy_b_migrate/amendment_acs.py:88`, session-
+  start `enumerate_amendments_in_flight` at `framework/primary-
+  persona/src/loam/primary_persona/session_start_gate.py:163`,
+  and bash-guard `_candidate_manifests` at `plugins/dev-sdlc/
+  hooks/bash_guard.py:236`. Shared helpers `iter_all_plan_docs`,
+  `iter_all_manifests`, and `find_plan_doc_by_slug_glob` in a
+  new `plan_locator.py` module under `loam_amend` (D-T1RS.GLOB-
+  LOCATION); DRY across consumers; sealed-first priority for
+  ambiguous slugs during the transition window (D-T1RS.GLOB-
+  PRIORITY); session-start gets a new sibling
+  `enumerate_sealed_amendments` rather than modifying the
+  existing in-flight semantics (D-T1RS.SESSION-START-SEMANTICS).
+
+  Scope C — live sweep against canonical. New CLI subcommand
+  `loam amend sweep-archive [--dry-run]` (D-T1RS.LIVE-SWEEP-
+  MECHANISM) makes the sweep durably reproducible. Operator-
+  typed real-run AFTER seal as a separate `chore(retroactive-
+  sweep):` commit (D-T1RS.LIVE-SWEEP-TIMING) — keeps the seal-
+  diff window clean. Dry-run-first discipline gates the ~150-
+  plan-doc tree restructure (halt-trigger #3 in §6); §134 halt-
+  trigger #5 contract preserved verbatim. THIS plan-doc + manifest
+  themselves move via the existing post-#134 seal-time archive
+  path (Strategy 1 match on full slug); the live-sweep CLI is a
+  no-op for this plan-doc (already moved by seal) and operates
+  on the OTHER cleanly-attributable plan-docs.
+
+  Shape (merged single amendment) chosen per D-T1RS.MERGE: three
+  scopes with causal dependency (C depends on A + B); merging
+  saves two apply + seal cycles vs three sequential amendments.
+  AC families are scope-disjoint at the AC-family level
+  (.HEURISTIC / .GLOB / .SWEEP). Multi-component fence (four)
+  scope-disjoint at the file level. Dogfood discipline
+  (D-T1RS.DOGFOOD): THIS amendment's own seal exercises the
+  post-#134 plan_archive.py integration (Strategy 1); the live-
+  sweep CLI invocation exercises the rest of the corpus.
+
+  Composes with amendment #134 (closes the deferred T1.4 retro-
+  sweep at §16 finding #6 — heuristic tightening AND downstream
+  consumer widening AND live sweep land together); amendment
+  #142 (exercises the SKILL-prose `narrative.target` canonical
+  form + BASELINE walk-forward + source-edit-commit-before-apply
+  conventions). Per `feedback_locked_design_not_license_for_bad_-
+  outcomes`, the #134 narrow heuristic's locked design is
+  revisited because the operational outcome (35% false-negative
+  rate against the canonical corpus) is bad enough to merit
+  re-extension; the fix is ADDITIVE (Strategies 2 + 3 augment,
+  not replace, Strategy 1).
+
+  Closes amendment #134 §16 finding #6 on seal.
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - docs/plans/
+      - docs/plans/sealed/
+
+    # Observable outcomes (Scope A + Scope C ACs land in dev-sdlc):
+    #
+    #   - AC.T1RS.HEURISTIC.1 — Strategy 2 recovers pre-#134-style
+    #     body-slug-only seal attribution (`amendment-22-pos-
+    #     amend-cli.md` whose seal subject is `chore(seals): pos-
+    #     amend-cli-and-universal-paths seal — ...`).
+    #   - AC.T1RS.HEURISTIC.2 — Strategy 2/3 recovers `amendment
+    #     #NN`-style attribution.
+    #   - AC.T1RS.HEURISTIC.3 — no-signal plan-docs stay in-flight
+    #     (negative case; §134 contract preserved).
+    #   - AC.T1RS.HEURISTIC.4 — multi-match in ANY strategy → stay
+    #     in `result.ambiguous` (ambiguous case; §134 contract
+    #     preserved).
+    #   - AC.T1RS.SWEEP.1 — `loam amend sweep-archive --dry-run`
+    #     against canonical-mirror fixture returns SweepResult
+    #     with `moved` count ≥ the 13 empirically-known-recoverable
+    #     cases.
+    #   - AC.T1RS.SWEEP.2 — real-run produces exactly one corrective
+    #     commit moving the cleanly-attributable plan-docs;
+    #     ambiguous + in-flight not moved; commit subject + body
+    #     match D-T1RS.LIVE-SWEEP-MECHANISM convention.
+
+    # Method-level choices (see plan-doc §14):
+    #   - D-T1RS.MERGE — three FIDRAFT scopes merged per causal
+    #     dependency + scope-disjoint AC families.
+    #   - D-T1RS.HEURISTIC — three-strategy fallback chain.
+    #   - D-T1RS.HEURISTIC.4 — `.builder-plan.md` companions excluded.
+    #   - D-T1RS.LIVE-SWEEP-TIMING — after seal, not during apply.
+    #   - D-T1RS.LIVE-SWEEP-MECHANISM — new CLI subcommand.
+    #   - D-T1RS.AC-LADDER — 9 mechanism-level ACs + 1 outcome-
+    #     altitude smoke.
+    #   - D-T1RS.DOGFOOD — this amendment's own seal exercises
+    #     the existing T1.4 archive path; CLI exercises the rest.
+
+  - name: loam
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+    # Observable outcomes (Scope B AC lands in loam):
+    #
+    #   - AC.T1RS.GLOB.1 — `find_plan_doc_by_slug_glob` (the new
+    #     helper) against a fixture with a sealed plan-doc at
+    #     `docs/plans/sealed/<slug>.md` (no live copy) returns the
+    #     sealed path. The release-gate `_find_plan_doc` resolves
+    #     version-slug lookups for sealed plans without changing
+    #     its public signature.
+
+    # Method-level choices (see plan-doc §14):
+    #   - D-T1RS.GLOB-UPDATE — shared helper, not inline duplicate
+    #     glob.
+    #   - D-T1RS.GLOB-LOCATION — helpers under
+    #     `loam_amend/plan_locator.py` for cohesion with archive
+    #     semantics; cross-tree import precedented by heavy-b-
+    #     migrate.
+    #   - D-T1RS.GLOB-PRIORITY — sealed-first when ambiguous (during
+    #     the transition window).
+
+  - name: heavy-b-migrate
+    seal_test: framework/tools/heavy-b-migrate/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/heavy-b-migrate/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+    # Observable outcomes (Scope B AC lands in heavy-b-migrate):
+    #
+    #   - AC.T1RS.GLOB.2 — `iter_all_plan_docs(include_sealed=
+    #     True)` returns union of live + sealed; `discover_-
+    #     amendment_plans` (now routed through helper) yields
+    #     `AmendmentPlanFile` records from both directories;
+    #     `_AMENDMENT_PLAN_RE` filter + `.builder-plan.` exclusion
+    #     + numeric-sort preserved.
+
+    # Method-level choices (see plan-doc §14):
+    #   - D-T1RS.GLOB-UPDATE — shared helper consumed across tree
+    #     boundary (cross-tree import precedented).
+
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+    # Observable outcomes (Scope B ACs land in primary-persona):
+    #
+    #   - AC.T1RS.GLOB.2 (overlap) — `enumerate_amendments_in_-
+    #     flight` keeps live-tree-only semantics (no behavioral
+    #     drift); new sibling `enumerate_sealed_amendments` walks
+    #     `docs/plans/sealed/`. Session-start digest caller NOT
+    #     modified (D-T1RS.SESSION-START-SEMANTICS).
+    #   - AC.T1RS.GLOB.3 — `iter_all_manifests` returns sealed +
+    #     live; bash_guard route preserves dry-run probe semantics
+    #     on either location (this AC's primary home is dev-sdlc
+    #     but enumerated here for cross-component visibility).
+
+    # Method-level choices (see plan-doc §14):
+    #   - D-T1RS.SESSION-START-SEMANTICS — additive new helper;
+    #     no behavioral drift in existing function.
+
+  - name: dev-sdlc-outcome-altitude
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+    # Note: this is a marker entry for the outcome-altitude AC
+    # which lives logically in dev-sdlc (the sweep mechanism is
+    # the SUT). If the seal-test runner enforces unique component
+    # names, fold this into the dev-sdlc entry above and remove
+    # this stub. The AC remains the same:
+    #
+    #   - AC.T1RS.S (outcome-altitude: true) — synthetic amendment
+    #     cycle exercises all three scopes end-to-end (pre-#134-
+    #     style plan-doc + body-slug-only seal moved via Strategy
+    #     2; post-#134-style plan-doc + full-slug seal moved via
+    #     Strategy 1; in-flight + ambiguous stay in place; each
+    #     of the four downstream consumers iterates correctly
+    #     across both directories); production CLI + helper entry-
+    #     points invoked; no pre-arrangement of partial-sweep
+    #     state. Per `feedback_test_outcome_altitude_required` the
+    #     `outcome-altitude: true` mark guarantees this AC is
+    #     verified by a test invoking the production sweep CLI
+    #     against an un-pre-arranged tmpfs fixture.
+
+    # Out of scope (per plan-doc §3):
+    #
+    #   - Changes to the EXISTING narrow heuristic semantics
+    #     (Strategy 1 unchanged; Strategies 2 + 3 are ADDITIVE).
+    #   - Automatic moving of ambiguous plan-docs (§134 halt-
+    #     trigger #5 preserved verbatim).
+    #   - Recursive sweep into sub-dirs (direct children only,
+    #     per existing plan_archive.py:99-106).
+    #   - `_AMENDMENT_PLAN_RE` regex modification.
+    #   - A NEW seal-commit subject convention.
+    #   - Pre-existing 4 RED tests rooted in oversized
+    #     smoke_outcome (per #140/#141/#142 — tracked as
+    #     ws-loam-amend-oversized-manifest-field-cleanup).
+    #   - Phase γ source_commit backfill from git log.
+    #   - Auto-graduation of in-flight plan-docs without seal
+    #     commits (the 88 no-signal cases per F2 doubt #1; needs
+    #     a semantic-shape parser, separate workstream).
+    #   - Cross-tree sweep against derived workspaces (canonical
+    #     tree only).
+
+    # Predecessor (load-bearing): amendment #142 publish-state
+    # commit `b278cc6` (current main HEAD post-#142 publish).
+    # Composes with #134 (closes §16 finding #6); #142 (exercises
+    # SKILL-prose `narrative.target` + BASELINE walk-forward +
+    # source-edit-commit-before-apply at this amendment's own
+    # build).
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/amendment-143-tier1-retroactive-sweep-followup.md
+  body: |
+    Tier 1 retroactive sweep follow-up: tighten heuristic + widen
+    downstream globs + live sweep (closes amendment #134 §16
+    finding #6, three-scope merge per causal dependency).
+
+    Scope A — seal-commit attribution heuristic tightening. The
+    existing narrow heuristic missed sealed amendments whose seal-
+    commit subject names a different slug than the plan-doc
+    filename (e.g., `amendment-22-pos-amend-cli.md` sealed via
+    `chore(seals): pos-amend-cli-and-universal-paths seal —`).
+    Three-strategy fallback chain: Strategy 1 (existing narrow);
+    Strategy 2 (`amendment-NN-<body>` → retry with body-slug);
+    Strategy 3 (`amendment #NN` in any commit, filtered to
+    `chore(seals):` subjects). First non-empty result determines
+    attribution; multi-match in ANY strategy preserves the §134
+    halt-trigger #5 ambiguous-bucket contract. Empirical recovery:
+    13 plan-docs at canonical HEAD `b278cc6` (~5% of corpus).
+
+    Scope B — downstream consumer glob widening. Pre-flight Tier-0
+    grep widened the dispatching brief's 2-consumer count to the
+    actual 4 (§16 finding #1): release-gate `_find_plan_doc`,
+    Phase γ `discover_amendment_plans`, session-start `enumerate_-
+    amendments_in_flight`, and bash-guard `_candidate_manifests`.
+    Shared helpers `iter_all_plan_docs`, `iter_all_manifests`, and
+    `find_plan_doc_by_slug_glob` in a new `plan_locator.py`
+    module under `loam_amend` (cohesion with archive semantics;
+    cross-tree import precedented by heavy-b-migrate). Sealed-
+    first priority for ambiguous slugs during the transition
+    window; session-start gets a new sibling `enumerate_sealed_-
+    amendments` rather than modifying the existing in-flight
+    semantics.
+
+    Scope C — live sweep against canonical. New CLI subcommand
+    `loam amend sweep-archive [--dry-run]` makes the sweep
+    reproducible. Operator-typed real-run AFTER seal as a
+    separate `chore(retroactive-sweep):` commit — keeps the
+    seal-diff window clean. Dry-run-first discipline gates the
+    ~150-plan-doc tree restructure (halt-trigger #3); §134 halt-
+    trigger #5 contract preserved verbatim. THIS plan-doc +
+    manifest move via the existing post-#134 seal-time archive
+    path (Strategy 1 match on full slug); the live-sweep CLI is
+    a no-op for this plan-doc (already moved by seal) and
+    operates on the OTHER cleanly-attributable plan-docs.
+
+    Shape (merged single amendment) chosen per causal dependency
+    (C depends on A + B); scope-disjoint AC families; multi-
+    component fence scope-disjoint at the file level.
+
+    Composes with amendment #134 (closes §16 finding #6 — the
+    deferred retroactive sweep) and amendment #142 (exercises the
+    SKILL-prose `narrative.target` + BASELINE walk-forward +
+    source-edit-commit-before-apply conventions at this
+    amendment's own build).
+
+    Closes amendment #134 §16 finding #6 on seal.

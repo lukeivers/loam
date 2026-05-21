@@ -1,7 +1,9 @@
 # Loam Skills plugin for loam
 
-Five SKILL.md packages capturing loam's load-bearing translation
-patterns. Discoverable by Claude Code via the standard
+Twenty-one SKILL.md packages: 12 translation-pattern skills
+capturing loam's load-bearing translation patterns + 9 per-
+primitive auto-loaders for Claude Code's scheduling / background /
+hook surface. Discoverable by Claude Code via the standard
 `<plugin>/skills/<skill-name>/SKILL.md` filesystem walk. Composes
 with raw Claude Code — a stranger can install this plugin and
 benefit from loam's patterns without committing to the full
@@ -9,7 +11,10 @@ harness.
 
 ## What this plugin contains
 
-Five skills in `skills/<skill-name>/SKILL.md` shape:
+Twenty-one skills in `skills/<skill-name>/SKILL.md` shape, in two
+clusters:
+
+### Translation-pattern skills (12)
 
 - **`memory-recall`** — when prior-session context is needed,
   retrieve from loam's file-based memory store (or graceful-degrade
@@ -27,6 +32,48 @@ Five skills in `skills/<skill-name>/SKILL.md` shape:
 - **`session-handoff`** — when a session is about to close (or a
   long task is being deferred), capture pending items to a durable
   surface. Prevents "I'll remember next session" failures.
+- **`audit-block-on-telegram`** — closing audit block on every
+  Telegram reply per the principle-application discipline.
+- **`time-claims-discipline`** — verify every time-related claim
+  before stating it; translate human-developer-time to AI-time at
+  citation.
+- **`translation-discipline`** — outbound communication shape:
+  prose first, no SHAs / AC-IDs / agent-IDs / un-introduced
+  abbreviations.
+- **`owner-decision-summary`** — every plan/research artefact gets
+  a summary + named-decisions-with-recommendations.
+- **`meta-decision-haiku`** — when a small decision needs an LLM
+  call and Sonnet is overkill, reach for Haiku via the appropriate
+  wrapper.
+- **`skill-capture-proposal`** — when a pattern recurs and would
+  benefit from being externalized, propose a new SKILL.
+- **`handsoff-loop`** — loam's packaged build methodology as one
+  capability the persona invokes for the user.
+
+### Per-primitive auto-loaders (9 — added v0.12.5)
+
+Each fires on a specific Claude Code primitive's work-shape so
+Claude's auto-loader picks the right one when the matching
+dispatch shape appears.
+
+- **`monitor-tool`** — watching a long-running local subprocess
+  for completion or event streams (event-driven local wait).
+- **`run-in-background-bash`** — backgrounding a Bash call with
+  fire-on-exit notification (`run_in_background: true`).
+- **`schedule-wakeup`** — polling external state I can't event-
+  stream OR long idle ticks (clock-based one-shot wake).
+- **`cron-create`** — scheduled work at specific times, session-
+  scoped (5-field cron expression).
+- **`loop-command`** — self-paced iteration with judge (the
+  `/loop` slash command).
+- **`goal-command`** — goal-directed multi-step with autonomous
+  halt (the `/goal` slash command).
+- **`launchd-plist`** — durable cross-session scheduling on macOS
+  that survives Claude sessions.
+- **`claude-agents-view`** — native `claude agents` view of
+  background-agent inventory.
+- **`precompact-hook`** — PreCompact hook event (fires before
+  auto-compaction; can block via exit-code-2).
 
 ## How skills are discovered
 
@@ -63,12 +110,12 @@ Skills plugin" (see top-level `install-from-source.txt`).
   raw-Claude-Code path.
 - **Loam Dev/SDLC plugin** (`plugins/dev-sdlc/`) — the
   `start-project` skill there is task-shaped (kicks off a project);
-  these five are reference-content shaped (knowledge applied
+  these twenty-one are reference-content shaped (knowledge applied
   alongside conversation). Different roles, complementary surfaces.
 
 ## v0.2 trajectory
 
-These five packages will publish to PyPI alongside the loam
+These packages will publish to PyPI alongside the loam
 component family at v0.2 (per v0.1.x roadmap §3 deferred items).
 At that point, install becomes:
 

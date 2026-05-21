@@ -129,6 +129,12 @@ If the regex widening is correct, NO §14 backfill follow-up commit is needed fo
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `5c73a30e2b0901cd2cd0cf971408bf853761dd28` —
+  `chore(amend): amendment-136-loam-amend-seal-section-14-backfill-regex-widening apply — dev-sdlc BASELINE+sidecar bump to 48e7b29`
+- Seal commit: `83c88608ad6c3d77b641531c80b088874ec27820` —
+  `chore(seals): amendment-136-loam-amend-seal-section-14-backfill-regex-widening — dev-sdlc at 5c73a30`
 ## §17. Composition (M5 derivation line)
 
 - **Composes with** `feedback_workaround_masks_rootcause_urgency` — this amendment IS the urgent root-cause fix the rule predicts at 3+ recurrence.

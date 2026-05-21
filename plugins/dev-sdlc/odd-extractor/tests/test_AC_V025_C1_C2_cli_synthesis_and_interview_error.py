@@ -24,6 +24,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 
 from loam_odd_extractor.cli import main
@@ -201,6 +202,15 @@ def _setup_jsts_repo(tmp_path: Path) -> Path:
 # ---- AC.V025-C1 — CLI synthesis wire-through -----------------------
 
 
+@pytest.mark.skip(
+    reason="STALE STUB POST-v0.2.5 C4-PIVOT: this test monkeypatches "
+    "synthesis.build_default_anthropic_client but runtime moved to "
+    "claude_print_synthesis_client.build_default_synthesis_client (claude -p "
+    "subprocess; no Anthropic SDK). The stub never intercepts the real call "
+    "path; the test invokes real claude (~3-5 min wall-clock + subscription "
+    "tokens). Skip until stub is rewritten to mimic ClaudePrintSynthesisClient "
+    "interface. Captured 2026-05-21 from Task #9 investigation."
+)
 def test_AC_V025_C1_cli_live_produces_real_objectives_via_synthesis(
     tmp_path: Path, monkeypatch
 ) -> None:

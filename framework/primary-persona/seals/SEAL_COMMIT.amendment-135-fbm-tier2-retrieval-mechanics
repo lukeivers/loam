@@ -1,0 +1,138 @@
+# Amendment #135 — FBM Tier 2 retrieval mechanics — apply ladder
+
+2026-05-21. FBM Tier 2 retrieval mechanics per
+`docs/plans/amendment-135-fbm-tier2-retrieval-mechanics.md`,
+implementing the two scope-disjoint retrieval primitives named
+in the v2 FBM rethink (`fbm-end-to-end-rethink-v2-synthesized-
+2026-05-21.md` in the dispatcher's workspace artifacts) — Tier 2
+section T2.1 (power-law base-level activation) + T2.2 (co-
+citation graph + one-hop spreading activation). T2.3 working-set
+is owner-deferred per Q4 (TG 11810) and explicitly out of scope.
+
+Composes against Tier 1 substrate sealed in amendment-134
+(`612500304c5ad6d17ec8440d9fd551ba723b981d`): the supersession-
+marker convention (`SUPERSEDED_PENALTY`) composes multiplicatively
+with the activation column; the encoding-context schema
+(`ENCODING_CONTEXT_FIELDS`) is substrate Tier 2 may consume later
+but does NOT condition the activation + co-citation primitives at
+v0.1 of Tier 2.
+
+Owner ratification durably recorded in plan-doc §1:
+  - TG 11804 (2026-05-21T16:10:07Z) — Q1=(a) keep T1.2; encoding-
+    context capture is now substrate. Tier 2 does not yet consume
+    the substrate.
+  - TG 11808 (2026-05-21T16:14:01Z) — Build-strategy delegation.
+    All eight §14 method-decisions are persona-class per this
+    ruling.
+  - TG 11809 (2026-05-21T16:15:00Z) — Q3=both forward + one-shot
+    retroactive seed for B.1 co-citation graph.
+  - TG 11810 — Q4=(b) defer T2.3 working-set; explicitly NOT in
+    this plan-doc.
+  - TG 11817 — dogfood-then-autonomous-publish process ratified;
+    §6 step 12 wires the dogfood pass.
+
+Single-component fence (corrected at plan-author time per §16
+finding #1 — the dispatching brief framed Tier 2 as a "multi-
+component plan-doc" for consistency with Tier 1, but every Tier 2
+source edit lands in `framework/primary-persona/`; there is no
+dev-sdlc change):
+
+  - primary-persona — T2.1 access-log writer + reader, activation-
+    column computer, ranker composition (multiplicative replacement
+    of the existing recency-blend channel per D-T2.1.SCORE); T2.2
+    co-citation graph data structure + builder + retrieval-time
+    one-hop spread; retroactive seed utility mining the canonical
+    memory-write log + agent-transcript JSONL files.
+
+AC families locked per plan-doc §4:
+
+  - AC.FBMT2.PLBLA.1 — Every memory touch (write via worker;
+    read/cite via retrieval contributor surfacing) appends a
+    `{file, ts, op}` entry to the sidecar access log.
+  - AC.FBMT2.PLBLA.2 — Multiplicative composition observable:
+    high-BM25 + low-activation ranks below moderate-BM25 +
+    high-activation when activation differential exceeds BM25
+    differential.
+  - AC.FBMT2.PLBLA.3 — Formula matches Anderson & Schooler 1991:
+    `B_i = ln(Σ_j (now − t_j)^(−d))` to within 1e-9.
+  - AC.FBMT2.PLBLA.4 — Graceful on absent log (fresh workspace
+    returns pure-BM25 ranking without raising).
+  - AC.FBMT2.PLBLA.5 — Backwards-compat: pre-amendment memory
+    files retrieve cleanly under new ranker.
+  - AC.FBMT2.COCG.1 — Edge weight matches Anderson HAM/ACT-R:
+    `S_ji = log(P(i|j)/P(i))`; epsilon floor on never-co-occurring
+    pairs.
+  - AC.FBMT2.COCG.2 — One-hop spread observable: query lexically
+    matching only A returns B when A↔B edge exists.
+  - AC.FBMT2.COCG.3 — Retroactive seed pass populates graph from
+    existing memory-write log entries + agent-transcript JSONL
+    files (Q3-ratified); idempotent on re-invocation.
+  - AC.FBMT2.COCG.4 — Graceful on empty graph (fresh workspace
+    returns BM25 + activation without spread).
+  - AC.FBMT2.COCG.5 — Strictly one hop: two-hop reachable file
+    (A→B→C, no A↔C edge) does NOT enter result set.
+  - AC.FBMT2.S — Outcome-altitude smoke: single test exercises
+    both primitives against `build_file_memory_retrieval_
+    contributor` with no pre-arranged state; production code
+    path, NOT stubbed internal helpers (V025-C1 lesson).
+
+Method-level choices (builder's call per ODD §1.1) — see plan-doc
+§14 method-decision register for the rationale:
+
+  - D-T2.1.DECAY — `d = 0.5` (canonical Anderson & Schooler 1991
+    / ACT-R value); hard-coded at v0.1; configurability deferred.
+  - D-T2.1.LOGFMT — JSONL at `<workspace>/workspace/.loam/memory/
+    .access-log.jsonl`; fields `{file, ts (ISO-8601-UTC),
+    op (enum: read|write|cite)}`.
+  - D-T2.1.SCORE — Multiplicative: final = BM25 × activation;
+    **replaces** existing recency-blend channel (the activation
+    IS the recency model the v2 research argues should win).
+    AC.MSC.1's assertion will need updating to reflect new
+    ranker behavior — in-scope as a test-update commit.
+  - D-T2.1.FLOOR — Floor `t_j = now − epsilon` with epsilon =
+    1.0 second when `t_j >= now`; consistent with second-
+    precision ISO-8601 ts emit.
+  - D-T2.2.GRAPH — In-memory dict-of-dicts rebuilt at session-
+    start from the access log; NOT persisted on disk;
+    invalidation-by-rebuild.
+  - D-T2.2.EDGEWEIGHT — `S_ji = log(P(i|j)/P(i))` per Anderson
+    HAM/ACT-R; epsilon floor on never-co-occurring pairs.
+  - D-T2.2.SEED — Mine `<workspace>/workspace/.pos/memory-
+    writes.log` + `~/.claude/projects/<slug>/<session>.jsonl`
+    agent transcripts; emit synthetic `read` events into access
+    log with turn-timestamp; idempotent one-shot.
+  - D-T2.2.SPREAD — Strictly one hop at v0.1; multi-hop deferred.
+
+Out of scope (per plan-doc §3):
+
+  - T2.3 pinned working set — owner-deferred per Q4 ratification
+    TG 11810; explicitly NOT in this plan-doc.
+  - Tier 3 orchestration (C.1 session-end + C.2 scheduled
+    consolidation) — depends on Tier 1 + Tier 2 done first;
+    separate amendment.
+  - Embedding-based retrieval — v2 research rejected; B.1
+    spreading activation is the cure for F-PHRASING.
+  - Multi-hop spreading — strictly one hop at v0.1 per
+    D-T2.2.SPREAD.
+  - Activation-decay tuning — `d` hard-coded at 0.5;
+    configurability deferred per D-T2.1.DECAY.
+  - Persisted graph file — rebuild-at-session-start per
+    D-T2.2.GRAPH; persistence deferred until rebuild cost
+    becomes a measured problem.
+  - Encoding-context retrieval lane — Tier 1's `context:` block
+    IS substrate Tier 2 may consume later, but at v0.1 of Tier 2
+    the primitives do NOT condition on encoding-context fields.
+
+Predecessor commits (load-bearing):
+  - 612500304c5ad6d17ec8440d9fd551ba723b981d — amendment-134 seal
+    (FBM Tier 1 foundations).
+  - 1a1f830 — M-FBM operational-health AC family seal (file-
+    based memory baseline).
+  - canonical loam HEAD at plan-author time (48e7b29) — BASELINE
+    candidate; pinned at apply time.
+
+BASELINE TBD — pinned at apply time. Single-component fence on
+`framework/primary-persona/`. Sidecar advances to the amendment
+#135 seal SHA at apply time. The seal commit IS the second non-
+trivial user of T1.4 (the plan-doc archives itself into
+`docs/plans/sealed/` on seal).

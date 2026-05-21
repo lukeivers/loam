@@ -1,0 +1,346 @@
+schema_version: 1
+amendment:
+  number: 139
+  slug: amendment-139-dev-sdlc-manifest-runtime-flag
+  title: "dev-sdlc manifest runtime flag: resolve PMR_4 mutual contradiction; close F-DEV-SDLC-MANIFEST-DRIFT-VS-TEST-CORPUS"
+
+# BASELINE: amendment #138 seal `01e63ac` (dev-sdlc test directory
+# cleanup — SKILL-frontmatter narrowed; PMR scope DEFERRED per §0
+# NARROWING ADDENDUM). The seal-diff window is BASELINE..seal_commit
+# per the single-component fence convention. Plan-doc §1 carries the
+# durable owner-ratification record (TG 11808/11837/11854/11856/11858)
+# and the full pre-flight Tier-0 evidence table.
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <source-edit commit(s) — manifest.py dataclass extension +
+#    __init__.py re-export + audit.py consumer update (if needed) +
+#    dev-mode-manifest.yaml edits (delete memory-system + flag data/) +
+#    test_AC_PMR_3_*.py admit-runtime edits + new
+#    test_manifest_runtime_field.py>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Source-edit commit MUST land BEFORE `loam amend apply` (per #138 §16
+# finding #3 — apply advances sidecar bookkeeping against the
+# committed HEAD, not the working tree).
+#
+# Single-component fence on `dev-sdlc` (the sealed component at
+# `plugins/dev-sdlc/`). Edits are confined to:
+#   - plugins/dev-sdlc/tools/loam-mode/src/loam_mode/manifest.py
+#     (dataclass + parser extension; new RootEntry)
+#   - plugins/dev-sdlc/tools/loam-mode/src/loam_mode/__init__.py
+#     (re-export RootEntry)
+#   - plugins/dev-sdlc/tools/loam-mode/src/loam_mode/audit.py
+#     (consumer of manifest.roots — dereference root.path)
+#   - plugins/dev-sdlc/tools/loam-mode/src/loam_mode/selector.py
+#     (verify per pre-flight — may not need edits)
+#   - plugins/dev-sdlc/dev-mode-manifest.yaml
+#     (delete memory-system entries; mark data/ entries
+#     runtime: true; update schema docstring + explanatory comments)
+#   - plugins/dev-sdlc/tests/test_AC_PMR_3_dev_mode_manifest_roots_realigned.py
+#     (admit runtime entries in PMR_3 + PMR_4 tests;
+#     dereference root.path in set-construction tests)
+#   - plugins/dev-sdlc/tools/loam-mode/tests/test_manifest_runtime_field.py
+#     (NEW FILE — schema tests + safety-property tests)
+#   - plugins/dev-sdlc/tools/loam-mode/tests/test_partition_audit.py
+#     (synthetic-manifest tests at L29 + L106 + L126 — wrap bare-string
+#     roots in RootEntry; per pre-flight)
+#   - plugins/dev-sdlc/tools/loam-mode/tests/test_partition_references.py
+#     + test_selector_partition.py
+#     (verify per pre-flight; may not need edits if they pass YAML
+#     through load_manifest)
+#
+# No edit under plugins/dev-sdlc/src/. The loam.plugins.dev_sdlc
+# Python package is unchanged.
+#
+# This amendment CLOSES F-DEV-SDLC-MANIFEST-DRIFT-VS-TEST-CORPUS
+# (FIDRAFT L328) and UNBLOCKS the unwritten seal-tool hygiene pair
+# amendment (ws-seal-tool-hygiene-pair / F-SEAL-PLUGINS-TESTS-SKIPPED
+# + F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE).
+#
+# AC families per docs/plans/amendment-139-...md §4:
+#   AC.DCR.SCHEMA.{1,2,3} — schema extension accepts optional
+#     `runtime: <bool>` on every entry; defaults preserve
+#     backwards-compat; roots: block accepts either bare strings or
+#     `{path, runtime}` mappings.
+#     Verified by tests in NEW
+#     plugins/dev-sdlc/tools/loam-mode/tests/test_manifest_runtime_field.py.
+#   AC.DCR.TEST.{1,2,3,4} — PMR_3 + PMR_4 tests admit runtime entries;
+#     safety property preserved for non-flagged entries pointing at
+#     non-existent paths / empty match-sets.
+#     Verified by the amended PMR tests + new safety-property tests.
+#   AC.DCR.MANIFEST.{1,2} — `framework/memory-system/` deleted (zero
+#     references remaining); both `data/` entries (root + glob)
+#     carry `runtime: true`.
+#     Verified by grep + parsed-manifest field inspection.
+#   AC.DCR.S — outcome-altitude smoke: `python3.13 -m pytest
+#     plugins/dev-sdlc/tests/test_AC_PMR_3_dev_mode_manifest_roots_realigned.py
+#     plugins/dev-sdlc/tools/loam-mode/tests/ -v` against
+#     post-amendment HEAD returns 0 failures + 0 collection errors.
+baseline: "01e63ac"
+
+plan: docs/plans/amendment-139-dev-sdlc-manifest-runtime-flag.md
+
+seal_description: |
+  Schema extension + test-corpus admission resolving the
+  F-DEV-SDLC-MANIFEST-DRIFT-VS-TEST-CORPUS HIGH-severity capture
+  (#137 §16 / #138 builder F2 halts). Two related deltas:
+
+  1. `ManifestEntry` dataclass gains an optional `runtime: bool =
+     False` field; the `roots:` block schema gains a `RootEntry`
+     dataclass accepting either bare-string entries (existing —
+     preserved) or `{path, runtime}` mapping entries (new). The
+     PMR_3 + PMR_4 tests skip their existence/non-empty-match
+     assertions when the entry's `runtime` is `True`. Safety
+     property preserved: non-flagged entries pointing at
+     non-existent paths still fail (new safety-property tests
+     explicitly verify this).
+
+  2. `plugins/dev-sdlc/dev-mode-manifest.yaml` —
+     `framework/memory-system/` root + glob entries deleted (the
+     directory was permanently deleted at v0.3.0 Cycle 2 commit
+     b92aaea, "graphiti rip-out"; runtime-flag semantics do not
+     apply to permanently-deleted paths). Both `data/` entries
+     (root + glob) marked `runtime: true` (workspace runtime
+     telemetry, populates on first-run per the existing comments).
+
+  Owner ruled path (a) test-corpus edit + schema flag over path
+  (b) sentinel-directory at TG 11858 because (a) has less
+  architectural blast radius — the test-corpus + schema edits are
+  the smaller surface than touching the canonical-vs-runtime tree
+  philosophy.
+
+  No edit under `plugins/dev-sdlc/src/`. The `loam.plugins.dev_sdlc`
+  Python package is unchanged. The `loam-mode` toolkit's public API
+  surface (`__init__.py`) gains a new export (`RootEntry`) but
+  loses none. Backwards-compat for downstream importers preserved.
+
+  Outcome-altitude smoke (AC.DCR.S):
+  `python3.13 -m pytest
+   plugins/dev-sdlc/tests/test_AC_PMR_3_dev_mode_manifest_roots_realigned.py
+   plugins/dev-sdlc/tools/loam-mode/tests/ -v` against
+  post-amendment HEAD returns 0 failures + 0 errors. The 2
+  PMR-cases #138's NARROWING ADDENDUM admitted as known-deferred
+  are now green; no regressions introduced elsewhere.
+
+  This amendment CLOSES F-DEV-SDLC-MANIFEST-DRIFT-VS-TEST-CORPUS
+  (FIDRAFT L328) and UNBLOCKS the unwritten seal-tool hygiene
+  pair amendment.
+
+  Composes with: post-#136 seal-tool §14 backfill regex widening
+  (canonical `## §14 — Method-decision register` heading auto-
+  backfills with no manual fallback expected at this seal).
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+    # Observable outcomes (the ACs are the contract — per ODD §2.5):
+    #
+    #   - AC.DCR.SCHEMA.1 — Manifest parsed from dev-mode-manifest.yaml
+    #     admits entries (in roots: OR always_loaded: OR dev_only:) with
+    #     `runtime: true`. The parsed entry's `runtime` field equals True.
+    #   - AC.DCR.SCHEMA.2 — Entry without a `runtime:` key parses with
+    #     `runtime` defaulting to False; existing manifests parse
+    #     without modification (backwards-compat).
+    #   - AC.DCR.SCHEMA.3 — Root entry expressed as mapping
+    #     `{path: <str>, runtime: <bool>}` parses to RootEntry with
+    #     named fields; bare-string root entry parses to RootEntry
+    #     with `runtime=False` and `path` equal to the string.
+    #   - AC.DCR.TEST.1 — test_AC_PMR_3_every_root_resolves_on_disk
+    #     passes when a root entry has `runtime: True` and points at
+    #     a non-existent path.
+    #   - AC.DCR.TEST.2 — Same test FAILS when a root entry without
+    #     `runtime: True` points at a non-existent path. Safety
+    #     property preserved.
+    #   - AC.DCR.TEST.3 — test_AC_PMR_4_every_always_loaded_glob_resolves
+    #     passes when an always-loaded entry has `runtime: True` and
+    #     resolves to an empty match-set.
+    #   - AC.DCR.TEST.4 — Same test FAILS when an always-loaded entry
+    #     without `runtime: True` resolves to an empty match-set.
+    #     Safety property preserved.
+    #   - AC.DCR.MANIFEST.1 — `plugins/dev-sdlc/dev-mode-manifest.yaml`
+    #     no longer contains any `framework/memory-system/` reference
+    #     (grep returns 0).
+    #   - AC.DCR.MANIFEST.2 — Both `data/` entries (root + glob) in
+    #     dev-mode-manifest.yaml carry `runtime: true`.
+    #   - AC.DCR.S — Outcome-altitude smoke: `python3.13 -m pytest
+    #     plugins/dev-sdlc/tests/test_AC_PMR_3_*.py
+    #     plugins/dev-sdlc/tools/loam-mode/tests/ -v` against
+    #     post-amendment HEAD returns 0 failures + 0 collection errors.
+
+    # Method-level choices (builder's call per ODD §1.1) — see plan-doc
+    # §14 method-decision register for the rationale:
+    #
+    #   - D-DCR.FLAG-SHAPE — Optional boolean `runtime:` field on each
+    #     entry; additive to existing {path:...} / {glob:..., exclude:...}
+    #     shape; default False. Absent or False preserves traditional
+    #     must-exist-on-disk semantics. Alternative (separate
+    #     runtime_roots: / runtime_globs: blocks) considered + rejected:
+    #     doubles schema surface for marginal benefit.
+    #   - D-DCR.ROOT-SHAPE — Extend roots: block to accept either bare
+    #     strings (existing — preserved) OR `{path, runtime}` mappings
+    #     (new). Introduce a RootEntry dataclass to carry both forms
+    #     uniformly downstream. Alternative (lift ManifestEntry to
+    #     subsume roots) considered + rejected: roots don't carry
+    #     glob/exclude semantics; cleaner shape is dedicated RootEntry.
+    #   - D-DCR.TEST-LOGIC — PMR_3 + PMR_4 tests skip the
+    #     existence/non-empty-match assertions when entry.runtime is
+    #     True. New tests in test_manifest_runtime_field.py preserve
+    #     the safety property for non-flagged entries pointing at
+    #     non-existent paths / empty match-sets.
+    #   - D-DCR.DATA-ENTRIES — Mark the two `data/` entries (root L67
+    #     + glob L127) with `runtime: true`. They stay in the manifest
+    #     as runtime-shape declarations because `data/` is workspace
+    #     runtime telemetry that populates on first-run.
+    #   - D-DCR.MEMORY-SYSTEM-ENTRIES — Delete the two
+    #     `framework/memory-system/` entries (root L49 + glob L97).
+    #     The directory was permanently deleted at b92aaea
+    #     (v0.3.0 Cycle 2, "graphiti rip-out"); runtime-flag pattern
+    #     applies only to "may not exist yet but will populate at
+    #     first-run" cases, NOT to "deleted permanently" cases.
+    #     #138's NARROWING ADDENDUM deferred this deletion because it
+    #     would unmask the data/ PMR_4 contradiction; #139's
+    #     runtime-flag schema resolves the contradiction so the
+    #     deletion can finally land.
+    #   - D-DCR.AC-LADDER — AC families:
+    #     AC.DCR.SCHEMA.{1,2,3} + AC.DCR.TEST.{1,2,3,4} +
+    #     AC.DCR.MANIFEST.{1,2} + AC.DCR.S.
+    #     Scope-descriptive (per 2026-05-09 ratification), not
+    #     version-packed.
+
+    # Out of scope (per plan-doc §3 + §8):
+    #
+    #   - Any change to the `loam.plugins.dev_sdlc` package source
+    #     under `plugins/dev-sdlc/src/`. The package is unchanged.
+    #   - Any extension of the runtime-flag semantics to `dev_only:`.
+    #     dev_only entries are dev-tooling paths that DO exist in the
+    #     canonical tree; no runtime semantics needed today. (Schema
+    #     IS symmetric — future extension is trivial if a case
+    #     surfaces.)
+    #   - The seal-tool hygiene pair itself (F-SEAL-PLUGINS-TESTS-
+    #     SKIPPED + F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE).
+    #     This amendment is its prerequisite, not its closure.
+    #   - Oversized YAML manifest field cap, F5 orphan audit on
+    #     framework/ subdirs not in the manifest — stay queued
+    #     separately per #138 §3 + §10 RF #2.
+
+    # Predecessor (load-bearing): amendment #138 seal `01e63ac`
+    # (dev-sdlc test directory cleanup — SKILL-frontmatter narrowed;
+    # PMR scope DEFERRED per §0 NARROWING ADDENDUM).
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/amendment-139-dev-sdlc-manifest-runtime-flag.md
+  body: |
+    Schema extension + test-corpus admission resolving the
+    F-DEV-SDLC-MANIFEST-DRIFT-VS-TEST-CORPUS HIGH-severity FIDRAFT
+    capture (originally surfaced across #137 §16 finding #4, #138
+    builder F2 halt, and #138 second builder F2 halt; activation gate
+    was "owner ruling on (a) vs (b)"; owner ruled (a) at TG 11858).
+
+    Two related deltas:
+
+    Delta 1 (D-DCR.FLAG-SHAPE + D-DCR.ROOT-SHAPE + D-DCR.TEST-LOGIC).
+    The `ManifestEntry` dataclass at
+    `plugins/dev-sdlc/tools/loam-mode/src/loam_mode/manifest.py`
+    gains an optional `runtime: bool = False` field. The `roots:`
+    block parser gains a new `RootEntry` dataclass accepting either
+    bare-string entries (existing — preserved for backwards-compat)
+    or `{path, runtime}` mapping entries (new). The PMR_3 + PMR_4
+    tests at
+    `plugins/dev-sdlc/tests/test_AC_PMR_3_dev_mode_manifest_roots_realigned.py`
+    skip their existence/non-empty-match assertions when the entry's
+    `runtime` is `True`. A new test file
+    `plugins/dev-sdlc/tools/loam-mode/tests/test_manifest_runtime_field.py`
+    carries the schema-acceptance tests + safety-property tests that
+    preserve the original "every glob must expand to non-empty"
+    invariant for non-flagged entries.
+
+    Delta 2 (D-DCR.DATA-ENTRIES + D-DCR.MEMORY-SYSTEM-ENTRIES).
+    `plugins/dev-sdlc/dev-mode-manifest.yaml` —
+    `framework/memory-system/` root entry (L49) + always_loaded glob
+    (L97) are DELETED. That directory was permanently deleted at
+    v0.3.0 Cycle 2 commit `b92aaea` ("graphiti rip-out"); the
+    runtime-flag pattern does NOT apply to permanently-deleted
+    paths. Both `data/` entries (root L67 + always_loaded glob L127)
+    are MARKED `runtime: true` — `data/` is workspace runtime
+    telemetry that populates on first-run per the existing comments
+    at L62-64 + L125-126. The manifest's schema docstring at L11-24
+    is updated to name `runtime:` as an optional boolean field.
+
+    Owner rationale (TG 11858): path (a) test-corpus edit + schema
+    flag was chosen over path (b) sentinel-directory because (a)
+    has less architectural blast radius — the test-corpus + schema
+    edits are the smaller surface than touching the
+    canonical-vs-runtime tree philosophy. A sentinel `data/`
+    directory in the canonical tree would conflate "directory
+    exists at canonical commit time" with "directory will populate
+    at runtime"; the runtime-flag schema keeps that distinction
+    explicit.
+
+    No edit under `plugins/dev-sdlc/src/`. The
+    `loam.plugins.dev_sdlc` Python package is unchanged. Entry-point
+    discovery, CLI subcommand registration, and the contribution
+    surface are behaviour-preserved.
+
+    Downstream consumer impact: the `loam-mode` toolkit's
+    `__init__.py` gains a new export (`RootEntry`) but loses none.
+    `audit.py`'s consumer of `manifest.roots` dereferences
+    `root.path` instead of the bare string (mechanical change,
+    behavior-preserving). `selector.py` per pre-flight evidence
+    does not consume `manifest.roots` directly (verifies via the
+    builder during edit). All synthetic-manifest unit tests under
+    `plugins/dev-sdlc/tools/loam-mode/tests/` that construct bare-
+    string roots get a one-line wrapper edit (`RootEntry(path="x")`).
+
+    Pre-flight Tier-0 evidence (carried in plan-doc §1):
+    - `framework/memory-system/` directory: absent (deleted at
+      `b92aaea`).
+    - `data/` directory: absent (deleted at `39cfbb1` per FIDRAFT
+      L328 — to be Tier-0 re-verified by builder via
+      `git log --all --oneline --diff-filter=D -- data`).
+    - Both stale entry sets still present in
+      `plugins/dev-sdlc/dev-mode-manifest.yaml` at L49 + L67 + L97
+      + L127.
+    - `expand_entry` on `path:` entries already tolerates non-
+      existent paths (manifest.py:256 returns `{entry.path}`
+      unconditionally), so the runtime flag is documentation-only
+      for `path:` entries in always_loaded/dev_only. For `glob:`
+      entries (the failing case) and for `roots:` entries (where
+      the test explicitly calls `target.exists()`), the runtime
+      flag is load-bearing.
+    - The only production consumer of `manifest.roots` outside
+      manifest.py itself is `audit.py`; no external consumers under
+      `framework/` (pre-flight grep returns empty).
+
+    Outcome-altitude smoke (AC.DCR.S): `python3.13 -m pytest
+    plugins/dev-sdlc/tests/test_AC_PMR_3_dev_mode_manifest_roots_realigned.py
+    plugins/dev-sdlc/tools/loam-mode/tests/ -v` against the
+    post-amendment HEAD returns 0 failures + 0 collection errors.
+    The 2 PMR cases #138's NARROWING ADDENDUM admitted as known-
+    deferred (`test_AC_PMR_3_every_root_resolves_on_disk` +
+    `test_AC_PMR_4_every_always_loaded_glob_resolves`) are now
+    green. No regressions introduced elsewhere.
+
+    Composes with: post-#136 seal-tool §14 backfill regex widening
+    (canonical `## §14 — Method-decision register` heading auto-
+    backfills with no manual fallback expected at this seal,
+    modulo the post-seal dry-run gating caveat from #138 §16 #2).
+
+    This amendment CLOSES `F-DEV-SDLC-MANIFEST-DRIFT-VS-TEST-CORPUS`
+    (FIDRAFT L328) and UNBLOCKS the unwritten seal-tool hygiene
+    pair amendment (`ws-seal-tool-hygiene-pair` /
+    F-SEAL-PLUGINS-TESTS-SKIPPED +
+    F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE in
+    docs/FUTURE_IDEAS_DRAFT.md) — that amendment will exercise the
+    full plugins/dev-sdlc test suite via the seal-step automation,
+    which this cleanup makes green.

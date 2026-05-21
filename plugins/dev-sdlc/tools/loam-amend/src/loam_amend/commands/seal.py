@@ -946,7 +946,14 @@ def _finalize(
     # ------------------------------------------------------------------
     # (g) Post-seal apply --dry-run verification (AC.D-sa.1 step (g)).
     # On non-zero, leave the seal commit in place per D-4 ruling and
-    # emit operator-actionable diagnostic.
+    # emit operator-actionable diagnostic. Per amendment #141
+    # (AC.SCT.* family): the dry-run result is CAPTURED here and the
+    # diagnostic emits at the failure point, but the early-return is
+    # DEFERRED until after step (h) §14 backfill so the operator's
+    # plan-doc method-decision register lands deterministically
+    # regardless of dry-run outcome. The seal command's final return
+    # code STILL equals ``dry_rc`` (AC.SCT.2); only step-(h)
+    # reachability changes (AC.SCT.1).
     # T1.4: the manifest may have moved into ``docs/plans/sealed/``
     # as part of the seal commit; dry-run uses the post-archive path.
     # ------------------------------------------------------------------
@@ -962,14 +969,28 @@ def _finalize(
                     "LEFT IN PLACE per the no-amend CDC. Operator must "
                     "inspect the dry-run report above, identify the "
                     "missing admission or invariant violation, and "
-                    "author a corrective commit (do not --amend)."
+                    "author a corrective commit (do not --amend). "
+                    "Per amendment #141 AC.SCT.1, the §14 SHA backfill "
+                    "(step (h) below) STILL fires when a --plan-doc was "
+                    "supplied, so the plan-doc's method-decision "
+                    "register lands as a separate follow-up commit "
+                    "regardless of this dry-run failure."
                 ),
             )
         )
-        return dry_rc
+        # NOTE: do NOT early-return here. The dry-run exit code is
+        # captured in ``dry_rc`` and surfaces as the final return
+        # value at the end of ``_finalize`` (AC.SCT.2). Falling
+        # through allows step (h) to run unconditionally (AC.SCT.1).
 
     # ------------------------------------------------------------------
     # (h) Optional: plan-doc §14 SHA backfill (AC.D-sa.7).
+    # Per amendment #141 AC.SCT.1: this step is reached
+    # UNCONDITIONALLY on plan-doc presence after a seal commit lands,
+    # regardless of the dry-run exit code captured in step (g). The
+    # §14 register documents the seal commit SHA (not HEAD); the SHA
+    # is computed at ``seal_sha`` above and is independent of any
+    # corrective fixups the operator may author after a dry-run halt.
     # T1.4: when the archive step ran, ``effective_plan_doc`` points
     # at the new ``docs/plans/sealed/<slug>.md`` location; backfill
     # targets that path so the moved file is the one carrying the
@@ -1014,76 +1035,82 @@ def _finalize(
 
         # If `git add` produced no staged change (idempotent re-run),
         # skip the commit instead of erroring on empty.
+        # Per amendment #141 AC.SCT.3: the idempotent-no-op path no
+        # longer early-returns; it falls through to step (i) FIDRAFT
+        # cleanup-surface + the final ``return dry_rc`` so the FIDRAFT
+        # cleanup surface fires + the dry-run exit code surfaces
+        # unconditionally (preserving AC.SCT.2's exit-code contract).
         diff_check = subprocess.run(
             ["git", "diff", "--cached", "--quiet"],
             cwd=repo_root,
         )
-        if diff_check.returncode == 0:
+        backfill_committed = diff_check.returncode != 0
+        if not backfill_committed:
             # Nothing staged — backfill was a no-op. That's fine.
             print(f"plan-doc {rel_plan_doc}: §14 SHAs already current.")
-            return 0
 
         # AC.DPS1.11: schema v3 manifests may omit ``amendment.number``;
         # the backfill subject + body identify by slug instead. The
         # commit-SHAs subsection itself is still keyed by the amendment
         # commit SHA, so it remains addressable.
-        if manifest.number is None:
-            backfill_subject = (
-                f"docs(plans): record {manifest.slug} commit SHAs "
-                "in method-decision register"
-            )
-            backfill_intro = (
-                f"Backfills the §14 commit-SHAs subsection of the "
-                f"{manifest.slug} plan with the actual amendment "
-                f"commit ({_short_sha(amendment_sha)}) and seal "
-                f"commit ({_short_sha(seal_sha)}) SHAs."
-            )
-        else:
-            backfill_subject = (
-                f"docs(plans): record amendment #{manifest.number} "
-                "commit SHAs in method-decision register"
-            )
-            backfill_intro = (
-                f"Backfills the §14 commit-SHAs subsection of the "
-                f"amendment #{manifest.number} plan with the actual "
-                f"amendment commit ({_short_sha(amendment_sha)}) and "
-                f"seal commit ({_short_sha(seal_sha)}) SHAs."
-            )
-        backfill_body_lines = [
-            backfill_subject,
-            "",
-            backfill_intro,
-            "",
-            "Mechanised by `loam amend seal --plan-doc` per AC.D-sa.7.",
-        ]
-        if _claude_environment():
-            backfill_body_lines.extend(["", _CO_AUTHORED_BY])
-        backfill_message = "\n".join(backfill_body_lines) + "\n"
-
-        backfill_commit = subprocess.run(
-            ["git", "commit", "-m", backfill_message],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-        )
-        if backfill_commit.returncode != 0:
-            _emit_diagnostic(
-                _FailureCheckpoint(
-                    code=3,
-                    klass="plan-doc-commit-failed",
-                    detail=(
-                        "plan-doc git commit failed:\n"
-                        + (backfill_commit.stdout or "")
-                        + (backfill_commit.stderr or "")
-                    ),
+        if backfill_committed:
+            if manifest.number is None:
+                backfill_subject = (
+                    f"docs(plans): record {manifest.slug} commit SHAs "
+                    "in method-decision register"
                 )
+                backfill_intro = (
+                    f"Backfills the §14 commit-SHAs subsection of the "
+                    f"{manifest.slug} plan with the actual amendment "
+                    f"commit ({_short_sha(amendment_sha)}) and seal "
+                    f"commit ({_short_sha(seal_sha)}) SHAs."
+                )
+            else:
+                backfill_subject = (
+                    f"docs(plans): record amendment #{manifest.number} "
+                    "commit SHAs in method-decision register"
+                )
+                backfill_intro = (
+                    f"Backfills the §14 commit-SHAs subsection of the "
+                    f"amendment #{manifest.number} plan with the actual "
+                    f"amendment commit ({_short_sha(amendment_sha)}) and "
+                    f"seal commit ({_short_sha(seal_sha)}) SHAs."
+                )
+            backfill_body_lines = [
+                backfill_subject,
+                "",
+                backfill_intro,
+                "",
+                "Mechanised by `loam amend seal --plan-doc` per AC.D-sa.7.",
+            ]
+            if _claude_environment():
+                backfill_body_lines.extend(["", _CO_AUTHORED_BY])
+            backfill_message = "\n".join(backfill_body_lines) + "\n"
+
+            backfill_commit = subprocess.run(
+                ["git", "commit", "-m", backfill_message],
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
             )
-            return 3
-        backfill_sha = _head_sha(repo_root)
-        print(
-            f"plan-doc {rel_plan_doc}: §14 SHAs backfilled at "
-            f"{_short_sha(backfill_sha)}"
-        )
+            if backfill_commit.returncode != 0:
+                _emit_diagnostic(
+                    _FailureCheckpoint(
+                        code=3,
+                        klass="plan-doc-commit-failed",
+                        detail=(
+                            "plan-doc git commit failed:\n"
+                            + (backfill_commit.stdout or "")
+                            + (backfill_commit.stderr or "")
+                        ),
+                    )
+                )
+                return 3
+            backfill_sha = _head_sha(repo_root)
+            print(
+                f"plan-doc {rel_plan_doc}: §14 SHAs backfilled at "
+                f"{_short_sha(backfill_sha)}"
+            )
 
     # ------------------------------------------------------------------
     # (i) T1.3 (AC.FBMT1.FCS family) — FIDRAFT cleanup-on-seal hook.
@@ -1097,7 +1124,14 @@ def _finalize(
             plan_doc=effective_plan_doc, repo_root=repo_root
         )
 
-    return 0
+    # Per amendment #141 AC.SCT.2: the seal command's final return
+    # code equals the post-seal dry-run exit code (captured in step
+    # (g) above). When dry-run passed cleanly, ``dry_rc`` is 0 and
+    # this matches the pre-fix behaviour byte-for-byte. When dry-run
+    # failed but step (h) §14 backfill landed (the AC.SCT.1 case),
+    # the operator sees BOTH the dry-run failure diagnostic + the
+    # §14 backfill commit + a non-zero exit code.
+    return dry_rc
 
 
 def run(

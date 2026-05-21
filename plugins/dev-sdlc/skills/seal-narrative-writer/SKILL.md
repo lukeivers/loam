@@ -5,12 +5,21 @@ description: Write the short-form seal narrative for a sealed-component amendmen
 # seal-narrative-writer
 
 The short-form seal narrative is the deterministic 5–15 line
-summary that lands in `plugins/<plugin>/seals/SEAL_COMMIT.<slug>`
-when `loam amend seal` runs. Pre-amendment-2, seal narratives
-duplicated the plan-doc body — verbose, redundant, drift-prone.
-Post-amendment-2 (dev-pattern-simplifications-2 sealed at
-`df3f50f`), the seal narrative is a pointer + summary: it
-references the plan-doc rather than re-stating it.
+summary that lands at the manifest's `narrative.target` path
+when `loam amend seal` runs. The canonical post-T1.4 (amendment
+#134) target form is `docs/plans/sealed/<slug>.md` — the same
+path the T1.4 archive-on-seal step moves the plan-doc to, so the
+seal narrative and the archived plan-doc converge at one path.
+Pre-amendment-2, seal narratives duplicated the plan-doc body —
+verbose, redundant, drift-prone. Post-amendment-2 (dev-pattern-
+simplifications-2 sealed at `df3f50f`), the seal narrative is a
+pointer + summary: it references the plan-doc rather than re-
+stating it. The pre-T1.4 legacy target form
+`plugins/<plugin>/seals/SEAL_COMMIT.<slug>` is still allowed as
+a back-compat surface for historical manifests but is NOT the
+default for new amendments — authoring agents emit the canonical
+`docs/plans/sealed/<slug>.md` form by default per Scope A of
+amendment #142 (closes FIDRAFT 330).
 
 This skill captures the post-amendment-2 short-form shape so a
 session-fresh persona authoring a manifest, reviewing a seal
@@ -64,6 +73,38 @@ The required parts:
    in a single line; full per-dimension detail lives in the
    plan-doc §6.
 
+## Canonical `narrative.target` form (per amendment #142 Scope A)
+
+The manifest's `narrative.target` field MUST be a file path,
+NOT a component name. The canonical post-T1.4 default is:
+
+```yaml
+narrative:
+  target: docs/plans/sealed/<slug>.md
+```
+
+This path matches the T1.4 archive-on-seal convention introduced
+by amendment #134 (`plugins/dev-sdlc/src/dev_sdlc/plan_archive.py`):
+the plan-doc moves to `docs/plans/sealed/<slug>.md` on seal AND
+the seal narrative writes to the same path. The narrative body
+sits at the top; the archived plan-doc body sits below (the seal
+command synthesises the layered file deterministically).
+
+Empirical convergence at canonical HEAD: amendments #137 / #139 /
+#140 / #141 all use this form. The pre-T1.4 legacy form
+`plugins/<plugin>/seals/SEAL_COMMIT.<slug>` (or the pre-amendment-2
+shape `framework/<component>/seals/SEAL_COMMIT.<slug>`) is still
+accepted by the seal tool for historical back-compat but MUST NOT
+be the default for new amendments.
+
+The bug-shape to avoid: `narrative.target: <component-name>`
+(a component name with no path component, no `.md` suffix). The
+seal tool dutifully writes the narrative to `<repo>/<component-
+name>` — an orphan top-level file outside any tracked tree. This
+is the failure mode amendment #138's `target: dev-sdlc` triggered
+(orphan file `<repo>/dev-sdlc`, recovered via corrective fixup
+`26f3a9e`).
+
 What the seal narrative does NOT contain:
 
 - Per-AC text (lives in plan-doc §4).
@@ -87,8 +128,9 @@ Trigger conditions:
 - About to run `loam amend seal --plan-doc <abs path>
   <manifest>` — verify the manifest's three narrative-input
   fields are accurate before seal lands.
-- Reviewing a draft seal commit's narrative target file at
-  `plugins/<plugin>/seals/SEAL_COMMIT.<slug>` — verify the
+- Reviewing a draft seal commit's narrative target file (canonical
+  post-T1.4 path `docs/plans/sealed/<slug>.md`; legacy back-compat
+  path `plugins/<plugin>/seals/SEAL_COMMIT.<slug>`) — verify the
   shape matches the post-amendment-2 short form.
 - Repairing a drifted narrative — if a prior cycle's seal
   narrative duplicates plan-doc body content (pre-
@@ -125,14 +167,16 @@ Skip when:
    — lands the manifest+apply merged commit per AC.DPS1.6.
 6. **Run `loam amend seal --plan-doc <abs path> <manifest>`**
    — synthesizes the short-form narrative from manifest +
-   commit graph + sweep result; writes to
-   `plugins/<plugin>/seals/SEAL_COMMIT.<slug>`; creates the
+   commit graph + sweep result; writes to the manifest's
+   `narrative.target` path (canonical
+   `docs/plans/sealed/<slug>.md`); creates the
    `chore(seals): <slug> — <component> at <BASELINE>` commit.
 7. **Verify the narrative on disk matches the expected
-   short-form shape.** `cat
-   plugins/<plugin>/seals/SEAL_COMMIT.<slug>` post-seal;
-   confirm 5–15 lines, no plan-doc duplication, all 7 fields
-   present.
+   short-form shape.** `cat docs/plans/sealed/<slug>.md`
+   post-seal (or the legacy back-compat
+   `plugins/<plugin>/seals/SEAL_COMMIT.<slug>` for pre-T1.4
+   historical manifests); confirm 5–15 lines, no plan-doc
+   duplication, all 7 fields present.
 8. **Halt + RF if the narrative is verbose or duplicates
    plan-doc body.** A drifted narrative says either (a) the
    manifest's three narrative-input fields are over-filled

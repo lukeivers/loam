@@ -27,19 +27,47 @@ The amendment-cycle ladder in canonical order:
    lowercase-hex SHA) + `plan` + `plan_doc_ref` + `ac_count` +
    `smoke_outcome` + `components` (list of `{name, seal_test, sidecar,
    frozen_baseline, extra_allowed_prefixes}`) + `universal_paths` +
-   `narrative.target`. The `baseline` SHA is the source-edit feat
-   commit; fill it in after step 4 below.
+   `narrative.target`. The canonical `narrative.target` form is
+   `docs/plans/sealed/<slug>.md` (per amendment #142 Scope A; closes
+   FIDRAFT 330 — matches the post-#134 T1.4 archive convention and
+   the empirical convergence at #137 / #139 / #140 / #141). NEVER
+   author `narrative.target` as a bare component name (e.g.,
+   `dev-sdlc`) — the seal tool writes the narrative to that exact
+   path, producing an orphan top-level file (the #138 bug shape).
+   The `baseline` SHA is the source-edit feat commit; for a NEW
+   amendment, BASELINE selection follows the **walk-forward
+   discipline** (per Scope B; closes FIDRAFT 336): walk forward
+   from the predecessor seal commit — if any
+   `chore(amend-fixup):` commits exist between the predecessor
+   seal and current HEAD, BASELINE is the latest such fixup;
+   else BASELINE is the seal commit itself (or, when the
+   predecessor is fully published with no intervening fixups,
+   the publish-state commit per the post-#141 convention). Fill
+   it in after step 4 below.
 3. **Plan-doc + manifest commit.** A single `docs(plans):` commit
    carrying both files. Plan-doc commits BEFORE source code per
    `feedback_plan_before_code`.
 4. **Source-edit feat commit (BASELINE).** The actual code +
    tests changes for the amendment. Commit message shape:
    `feat(<component>): <one-line summary>`. The resulting commit
-   SHA is the `baseline:` field's value.
+   SHA is the `baseline:` field's value. **This commit MUST land
+   BEFORE step 5 — `loam amend apply` runs against committed HEAD,
+   not against working-tree state** (per amendment #142 Scope C;
+   closes FIDRAFT 334; verified at
+   `loam_amend/commands/apply.py:158` — `head_sha =
+   _git_head_sha(repo_root)`). Source edits that remain tracked-
+   but-unstaged at apply time will NOT land in the apply commit;
+   the apply step's auto-`git add` is scoped to seal-tests +
+   sidecars + the manifest, not the source-edit surface.
 5. **`loam amend apply --plan-doc <abs-path-to-plan-doc>
    <abs-path-to-manifest>`.** Single semantic commit per AC.DPS1.6
    (v3 schema): manifest + sidecar `SEAL_COMMIT` advancement +
-   any extra_allowed_prefix mutations land together.
+   any extra_allowed_prefix mutations land together. **Apply runs
+   against committed HEAD** (Scope C); if the working tree carries
+   tracked-but-unstaged changes outside the partition's admitted
+   union at apply time, the tool emits a soft stderr warning
+   (non-blocking) — heed the warning + commit the changes first
+   if intended.
 6. **`loam amend seal --plan-doc <abs-path-to-plan-doc>
    <abs-path-to-manifest>`.** Deterministic short-form seal commit
    per AC.DPS2.{1,4,6}: stages the seal narrative, runs the

@@ -169,6 +169,30 @@ Skip when:
 15. **Commit the plan-doc + manifest as a single
     `docs(plans):` commit BEFORE source code.** This is the
     gate. Per `loam-amend-cycle` skill step 4.
+16. **Author the paired manifest's `narrative.target` to the
+    canonical form `docs/plans/sealed/<slug>.md`** (per
+    amendment #142 Scope A; closes FIDRAFT 330). This matches
+    the post-#134 T1.4 archive convention and the empirical
+    convergence at amendments #137 / #139 / #140 / #141. NEVER
+    author `narrative.target` as a bare component name — the
+    seal tool writes the narrative to that exact path,
+    producing an orphan top-level file (the #138 bug shape).
+    Pre-T1.4 legacy form `plugins/<plugin>/seals/SEAL_COMMIT.
+    <slug>` allowed as back-compat for historical manifests,
+    NOT the default for new amendments.
+17. **Author the paired manifest's `baseline:` via the
+    walk-forward discipline** (per amendment #142 Scope B;
+    closes FIDRAFT 336). Walk forward from the predecessor
+    seal commit: if any `chore(amend-fixup):` commits exist
+    between the predecessor seal and current HEAD, BASELINE
+    is the latest such fixup; else BASELINE is the seal
+    commit itself (or, when the predecessor is fully
+    published with no intervening fixups, the publish-state
+    commit per the post-#141 convention). Pinning BASELINE
+    to a stale seal SHA forces a `MISSING_ADMISSION` halt
+    requiring corrective re-baseline (the #139 pattern,
+    recovered via `ca16e41`). Tier-0 verify via
+    `git rev-parse` + `git log --oneline <pred-seal>..HEAD`.
 
 ## Trim discipline (Luke 2026-05-05)
 

@@ -45,7 +45,7 @@ A manifest at `docs/plans/<slug>.manifest.yaml` drives `loam amend apply` + `loa
 - `seal_description:` — long-form narrative copied to the seal commit's body.
 - `components:` — list of `{name, seal_test, sidecar, frozen_baseline, extra_allowed_prefixes}` entries.
 - `universal_paths:` — `{prefixes, files}` admitted across all components per amendment #22 ruling #3.
-- `narrative:` — `{target, body}` for the per-amendment seal narrative.
+- `narrative:` — `{target, body}` for the per-amendment seal narrative. **Canonical `narrative.target` form: `docs/plans/sealed/<slug>.md`** (per amendment #142 Scope A; closes FIDRAFT 330 — matches the post-#134 T1.4 archive convention and the empirical convergence at amendments #137 / #139 / #140 / #141). `narrative.target` MUST be a file path; NEVER a bare component name. The pre-T1.4 legacy form `plugins/<plugin>/seals/SEAL_COMMIT.<slug>` is allowed as a back-compat surface for historical manifests but is NOT the default for new amendments.
 
 ## 4. AC ladder-up
 

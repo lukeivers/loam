@@ -11,8 +11,8 @@ A standard amendment cycle, in order:
 1. **Research** (if non-trivial). Produces `docs/plans/research/<slug>.md` or inline research section in the plan.
 2. **Spec** (if a new component / capability — uses the master plan-doc as the spec).
 3. **Plan + manifest**. Produces `docs/plans/<slug>.md` + `<slug>.manifest.yaml`. Committed first per `feedback_plan_before_code`.
-4. **Build**. Feature commits per the plan. Corrective commits if the plan's seal-diff fence misses a path or a test reveals an empirical issue.
-5. **Apply**. `loam amend apply` commit. Auto-generated; deterministic.
+4. **Build**. Feature commits per the plan. Corrective commits if the plan's seal-diff fence misses a path or a test reveals an empirical issue. **Source edits MUST commit BEFORE step 5 — `loam amend apply` runs against committed HEAD, not against working-tree state** (per amendment #142 Scope C; closes FIDRAFT 334; verified at `plugins/dev-sdlc/tools/loam-amend/src/loam_amend/commands/apply.py:158`). Tracked-but-unstaged changes at apply time will NOT land in the apply commit.
+5. **Apply**. `loam amend apply` commit. Auto-generated; deterministic. **Runs against committed HEAD; emits a soft stderr warning (non-blocking) when tracked-but-unstaged changes exist outside the partition's admitted union at apply time** (per amendment #142 Scope C).
 6. **Seal**. `loam amend seal` commit. Advances SEAL_COMMIT sidecars; writes the per-amendment seal narrative; runs the seal-tests.
 7. **§14 SHA backfill**. `docs(plans):` commit recording all the cycle's SHAs in the plan-doc's §14 register. Runs after the seal commit lands so all SHAs are known.
 

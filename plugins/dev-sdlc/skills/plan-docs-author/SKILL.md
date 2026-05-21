@@ -211,6 +211,35 @@ Skip when:
     placeholders for plan-doc commit / source-edit commit /
     apply commit / seal commit / §14 backfill commit. Filled
     post-cycle by the §14 backfill.
+18. **Author the paired manifest's `narrative.target` to the
+    canonical form `docs/plans/sealed/<slug>.md`** (per amendment
+    #142 Scope A; closes FIDRAFT 330). This matches the
+    post-#134 T1.4 archive convention and the empirical
+    convergence at amendments #137 / #139 / #140 / #141. NEVER
+    author `narrative.target` as a bare component name (e.g.,
+    `dev-sdlc`) — the seal tool writes the narrative to that
+    exact path, producing an orphan top-level file (the #138 bug
+    shape, recovered via fixup `26f3a9e`). The pre-T1.4 legacy
+    form `plugins/<plugin>/seals/SEAL_COMMIT.<slug>` is allowed
+    as back-compat for historical manifests but is NOT the
+    default for new amendments.
+19. **Author the paired manifest's `baseline:` via the
+    walk-forward discipline** (per amendment #142 Scope B;
+    closes FIDRAFT 336). Walk forward from the predecessor
+    seal commit: if any `chore(amend-fixup):` commits exist
+    between the predecessor seal and current HEAD, BASELINE is
+    the latest such fixup; else BASELINE is the seal commit
+    itself (or, when the predecessor is fully published with
+    no intervening fixups, the publish-state commit per the
+    post-#141 convention — e.g., the
+    `docs(readme): bump current-release to v0.X.Y` commit).
+    Pinning BASELINE to a bare seal SHA that is now stale
+    relative to a corrective fixup forces a `MISSING_ADMISSION`
+    halt at apply time, requiring a corrective re-baseline
+    commit (the #139 → #138 pattern, recovered via `ca16e41`).
+    Tier-0 verify the chosen BASELINE SHA via `git rev-parse`
+    + `git log --oneline <pred-seal>..HEAD` before authoring
+    the manifest.
 18. **Run `loam amend validate` against the manifest companion**
     — if the manifest is invalid, the plan-doc commit lands but
     the apply will fail; catch early.

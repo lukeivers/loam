@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 from loam_amend.baseline import BaselineNotFound, read_baseline, set_baseline
@@ -94,6 +95,93 @@ def _partner_prefix(component_seal_test: str, component_name: str) -> str:
     return f"framework/{component_name}/"
 
 
+def _unstaged_outside_partition(
+    repo_root: Path, manifest: Manifest
+) -> list[str]:
+    """Return tracked-but-unstaged paths outside the partition union.
+
+    Per amendment #142 Scope C (AC.PASH.C.2; closes FIDRAFT 334).
+    Detects the failure-mode FIDRAFT 334 names: source edits the
+    operator forgot to commit before `loam amend apply`. The
+    apply step's auto-`git add` is scoped to seal-tests + sidecars
+    + the manifest YAML — tracked-but-unstaged changes outside
+    that admitted union will NOT land in the apply commit.
+
+    Detection rule (the *precise* form per D-PASH.WARN-PRECISION):
+    a path triggers the warning only when (a) it is tracked-but-
+    unstaged (the working-tree side of `git status --porcelain`
+    shows a modification) AND (b) it does NOT match the partition's
+    admitted union (universal_paths + per-component
+    extra_allowed_prefixes + extra_allowed_files + per-component
+    seal_test/sidecar paths). The precise form avoids the false-
+    positive noise the simpler "fire on any tracked-but-unstaged"
+    form would produce during well-formed mid-edit cycles where
+    the operator HAS staged changes intentionally inside the
+    partition.
+
+    Returns the sorted unique list of offending paths.
+    """
+    # Build the admitted union.
+    admitted_prefixes: set[str] = set(manifest.universal_paths.prefixes)
+    admitted_files: set[str] = set(manifest.universal_paths.files)
+    for comp in manifest.components:
+        admitted_prefixes.update(comp.extra_allowed_prefixes)
+        admitted_files.update(comp.extra_allowed_files)
+        # The seal_test + sidecar paths the apply step itself
+        # auto-stages are admitted by definition.
+        admitted_files.add(comp.seal_test)
+        admitted_files.add(comp.sidecar)
+        # Also admit each component's directory tree as a prefix
+        # (so edits inside the component's tree are inside the
+        # partition).
+        admitted_prefixes.add(_partner_prefix(comp.seal_test, comp.name))
+
+    # Walk `git status --porcelain` and pick the lines whose
+    # WORKING-TREE side (Y column) shows a modification — these
+    # are the tracked-but-unstaged changes. The INDEX side (X
+    # column) is separately tracked but not the failure mode
+    # Scope C cares about (staged changes WILL land in the
+    # apply commit's auto-stage, since the apply step does its
+    # own `git add` for the per-component paths).
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        # Git status failure: don't block apply for warning detection.
+        return []
+
+    unstaged_paths: list[str] = []
+    for line in result.stdout.splitlines():
+        if not line or len(line) < 3:
+            continue
+        x, y = line[0], line[1]
+        # Untracked: ignored (the operator chose not to track).
+        if x == "?" and y == "?":
+            continue
+        # Working-tree column = ' ' means index-only (staged) — skip.
+        # Anything else in Y means tracked-but-unstaged modification.
+        if y == " " or y == "":
+            continue
+        path = line[3:]
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        path = path.strip()
+        if not path:
+            continue
+        # Check against the partition's admitted union.
+        if path in admitted_files:
+            continue
+        if any(path.startswith(p) for p in admitted_prefixes):
+            continue
+        unstaged_paths.append(path)
+    return sorted(set(unstaged_paths))
+
+
 def run(manifest_path: Path, *, dry_run: bool) -> int:
     try:
         manifest = load_manifest(manifest_path)
@@ -112,6 +200,29 @@ def run(manifest_path: Path, *, dry_run: bool) -> int:
         if any(r.missing_admissions or r.skipped_reason for r in reports):
             return 1
         return 0
+
+    # AC.PASH.C.2 (amendment #142 Scope C; closes FIDRAFT 334):
+    # soft pre-flight warning. `loam amend apply` runs against
+    # committed HEAD (see `head_sha = _git_head_sha(...)` below);
+    # tracked-but-unstaged changes outside the partition's
+    # admitted union will NOT land in the apply commit. Emit a
+    # stderr warning + continue (non-blocking per
+    # D-PASH.WARN-NON-BLOCKING — operator stays in control of
+    # commits). Precise form per D-PASH.WARN-PRECISION: fires
+    # ONLY on paths OUTSIDE the partition's admitted union.
+    unstaged_offending = _unstaged_outside_partition(repo_root, manifest)
+    if unstaged_offending:
+        print(
+            f"warning: working tree has {len(unstaged_offending)} "
+            "tracked-but-unstaged change(s) outside the partition's "
+            "admitted union that will NOT land in this apply commit; "
+            "commit them first if intended (per amendment-cycle "
+            "convention — `loam amend apply` runs against committed "
+            "HEAD).",
+            file=sys.stderr,
+        )
+        for p in unstaged_offending:
+            print(f"  ! {p}", file=sys.stderr)
 
     # AC.D-pa.1 + AC.D-pa.2 + AC.D-pa.5: register the manifest's
     # ``objectives`` block (if any) BEFORE the BASELINE / sidecar /

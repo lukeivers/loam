@@ -50,7 +50,7 @@ amendment:
 #   AC.HYG.S — Shared outcome-altitude smoke: ONE synthetic seal cycle
 #     combining plugins-tree component + clean tree → seal succeeds,
 #     plugins-tree pytest runs, plan-doc archives, seal commit lands.
-baseline: "cd3daaef07d92d28aa4cb55b50fe0a89dcf24ed7"
+baseline: "cd3daae6fe220b9cb7d8cd05e1bbeb34c8d88fe2"
 
 plan: docs/plans/amendment-140-loam-amend-seal-tool-hygiene-pair.md
 

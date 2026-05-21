@@ -244,10 +244,13 @@ All ACs are outcome-shape: each asserts a measurable property of the post-amendm
 
 **Commit SHAs (manual backfill — populated post-seal by builder per #138 §14 pattern + seal-tool auto-backfill caveat):**
 
-- Plan-doc commit: `<TBD>`
-- Source-edit commit(s): `<TBD>`
-- Amendment commit: `<TBD>`
-- Seal commit: `<TBD>`
+- Plan-doc commit: `3a758a7` (plan-author dispatch — plan-doc + manifest + ratification table)
+- Source-edit commit: `e3d0024` (feat(dev-sdlc): manifest runtime-flag schema + PMR test admission)
+- Amendment commit (apply auto-commit): `4cf9be2` (chore(amend): BASELINE+sidecar bump to 01e63ac)
+- Seal commit: `1f3d8d7` (chore(seals): amendment #139 seal commit — SEAL_COMMIT → 4cf9be2)
+- Post-seal corrective: `ca16e41` (chore(amend-fixup): BASELINE bump 01e63ac → 26f3a9e — see §16 finding #2)
+
+Auto-backfill of this section was BLOCKED by the post-seal dry-run halt (the `dev-sdlc` orphan-deletion in the diff window — see §16 finding #2). Manual backfill landed in the corrective commit `ca16e41`.
 
 ---
 
@@ -292,6 +295,51 @@ Reserved for the `loam-builder` subagent to backfill post-seal per `feedback_sub
 - Component fence verification (seal-test `test_only_dev_sdlc_changed` against the SEAL_COMMIT sidecar).
 
 Builder appends findings here under sub-section bullets 1, 2, 3, … as discoveries land.
+
+### Finding 1 — Dirty-tree check fires on unrelated untracked files (F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE-confirms)
+
+First `loam amend seal` invocation halted at `dirty-working-tree` because the working tree carried `docs/plans/promote-multi-channel-extractor-and-iteration-loop-family.md` — an unrelated untracked plan-doc that pre-existed the #139 dispatch (visible in the session-start `git status`). The seal-tool's pre-flight purity check is correctly strict; the surface friction is that the message names the offending path but not a stash-or-skip remediation. Resolution applied: `git stash push --include-untracked -- <path>`, re-invoke seal, `git stash pop` afterward. This is empirical confirmation of the sibling capture `F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE` that #139 was supposed to unblock — the capture's hypothesis (dirty-tree check is over-eager on cross-cycle drift) holds.
+
+**Severity:** medium ergonomics. No data loss, recoverable by stash. **Surface for the hygiene-pair amendment.**
+
+### Finding 2 — Predecessor-seal BASELINE selection vs post-seal corrective fixups (sibling of F-PLAN-AUTHOR-SKILL-MANIFEST-TARGET-DEFAULT-GAP)
+
+The plan-author selected BASELINE = `01e63ac` (the #138 seal) per the natural "predecessor seal → BASELINE" rule. But the corrective fixup `26f3a9e` ("remove orphan dev-sdlc file from #138 seal commit") landed AFTER the #138 seal and BEFORE the #139 build. The seal-test's diff window `BASELINE..SEAL_COMMIT` then included the orphan-file deletion, which the seal-test classified as a sealed-component-path modification, failing `test_only_dev_sdlc_changed`.
+
+The post-seal dry-run correctly detected this as `MISSING_ADMISSION: dev-sdlc` and halted, leaving the seal commit `1f3d8d7e` in place per the no-amend CDC. Corrective commit `ca16e41` bumped BASELINE from `01e63ac` to `26f3a9e` in both surfaces (the seal-test constant + the sealed manifest YAML's `baseline:` field), re-running the seal-test + post-seal dry-run cleanly afterward.
+
+**Root-cause hypothesis:** the plan-author SKILL's pre-flight Tier-0 evidence collection should include "is there a post-seal corrective fixup commit between the predecessor seal and HEAD?" as a check. If yes, BASELINE should default to the corrective-fixup commit, not the predecessor seal. The current SKILL appears to default to "predecessor seal" without this guard.
+
+**Severity:** medium — recoverable by corrective commit, but adds a cycle to every amendment landing after a fixup. The seal-tool's auto-backfill of §14 is BLOCKED by the post-seal dry-run halt, so §14 SHA backfill becomes manual.
+
+**Composes with:** F-PLAN-AUTHOR-SKILL-MANIFEST-TARGET-DEFAULT-GAP (FIDRAFT L330) — same SKILL, different default. **Surface for FIDRAFT capture.**
+
+### Finding 3 — AC.DCR.S text broader than §6 step 10 (pre-existing F3 drift surfaces)
+
+AC.DCR.S §4 text reads `python3.13 -m pytest plugins/dev-sdlc/tests/test_AC_PMR_3_*.py plugins/dev-sdlc/tools/loam-mode/tests/ -v` → 0 failures. §6 step 10 names the narrower scope `pytest plugins/dev-sdlc/tests/ -q` → ≥252 passed + 7 skipped. The narrow scope is GREEN (post-amendment HEAD: 252 passed + 7 skipped, exactly matches the plan-doc expectation). The broader scope including `plugins/dev-sdlc/tools/loam-mode/tests/` carries 1 pre-existing failure: `test_AC_F3_always_loaded_no_dev_refs` (the AC.F3 KNOWN_CROSS_MODE_DEBT allowlist drift captured at FIDRAFT L143). That failure existed at the BASELINE before any #139 edit (verified via `git stash` + re-run on the pre-edit state) and is OUT OF SCOPE per plan-doc §3 ("any other manifest cleanup ... stay queued separately").
+
+Per `feedback_loose_AC_text_fix_AC_not_implementation`: the AC text was over-broad; the §6 step 10 expectation is the right verification scope; the broader scope swept in pre-existing AC.F3 drift unrelated to the runtime-flag schema. AC.DCR.S as intended (the deferred PMR contradiction is closed; runtime flag works) is satisfied.
+
+**Severity:** documentation drift. No regression introduced; pre-existing failure documented at FIDRAFT L143 is unchanged. **Surface for plan-doc post-mortem note (already captured here in §16).**
+
+### Finding 4 — F3 cross-mode debt continues to drift independent of fence
+
+While reviewing Finding 3, the F3 test failure surfaced FIVE new cross-mode references not in `KNOWN_CROSS_MODE_DEBT`:
+- `README.md` → `docs/STATE.md`
+- `framework/primary-persona/skills/implementation-tier-picker.md` → `docs/FUTURE_IDEAS_DRAFT.md`
+- `framework/primary-persona/skills/implementation-tier-picker.md` → `docs/plans/v0-7-0-non-tech-user-surface.md`
+- `framework/primary-persona/skills/light-touch-narration.md` → `docs/FUTURE_IDEAS.md`
+- `framework/primary-persona/skills/light-touch-narration.md` → `docs/plans/v0-7-0-non-tech-user-surface.md`
+
+These are new cross-mode debt arrived via post-v0.3.0 work (skills + README content authored by recent amendments). The `KNOWN_CROSS_MODE_DEBT` allowlist is empty per the v0.3.0 Cycle 4 shrink-to-zero pass; the new debt should either be paid down (preferred — edit the cross-references) or explicitly allowlisted in a new commit (worse — grows the debt surface). **Surface for FIDRAFT capture** — this is new debt and should land as a separate amendment, NOT silently tacked onto #139.
+
+### Finding 5 — Touched-test sweep methodology
+
+The 21-test sweep (`pytest plugins/dev-sdlc/tests/test_AC_PMR_3_*.py plugins/dev-sdlc/tools/loam-mode/tests/test_manifest_runtime_field.py -v`) covers:
+- 8 PMR_3/PMR_4 tests (2 previously-failing now green, 6 unchanged behaviour)
+- 13 new schema + safety-property + AC.DCR.MANIFEST tests
+
+All 21 green. The full `plugins/dev-sdlc/tests/` directory: 252 passed + 7 skipped (matches plan-doc §6 step 10 exact expectation). The full `plugins/dev-sdlc/tools/loam-mode/tests/`: 71 passed + 1 skipped + 1 failed (the pre-existing F3 drift documented in Finding 3 + 4).
 
 Schema extension + test-corpus admission resolving the
 F-DEV-SDLC-MANIFEST-DRIFT-VS-TEST-CORPUS HIGH-severity FIDRAFT

@@ -346,3 +346,44 @@ These are F2 Ruthless Feedback notes from the plan-authoring pass. Each surfaces
 - Plan-doc convention — `plugins/dev-sdlc/docs/conventions/plan-docs.md`.
 - Exemplar canonical-shape — `docs/plans/sealed/amendment-136-loam-amend-seal-section-14-backfill-regex-widening.md`.
 - Pre-flight scope grep — Tier-0 this turn (332 files, ~700+ occurrences across the corpus excluding venv/git/egg-info).
+
+Closes F-LEGACY-POS-AMEND-NAME-IN-DOCS-CORPUS (FIDRAFT entry captured
+2026-05-21 after owner caught the legacy name in the amendment #134
+dispatch brief, TG 11813). Completes the M1g rename programme's
+residual: where `d64414e` (M1g sub-amendment, 2026-04-29) renamed
+the `pos-amend` CLI to `loam amend` + renamed `framework/tools/
+pos-amend/` to `framework/tools/loam/` + renamed the inner
+`src/pos_amend/` package to `src/loam_cli/` (later moved to
+`plugins/dev-sdlc/tools/loam-amend/src/loam_amend/` per M6b.1),
+the human-readable docs across the canonical corpus carried
+on referencing the pre-rename name.
+
+Scope is the **active** canonical corpus only — sweeping current-
+tense prose to the canonical post-rename names (`loam amend` as
+CLI invocation; `loam-amend` as tool directory; `loam_amend.*`
+as import path). Historical-record prose (sealed plan-docs,
+in-flight plan-docs at `docs/plans/*.md` that document past
+amendments, `framework/**/seals/SEAL_COMMIT.*` per-amendment
+seal-commit narratives, "post-M1g rename of pre-M1g pos-amend"
+context-prose, FUTURE_IDEAS_DRAFT entries that name the legacy
+as a problem) is **preserved** — these are accurate-as-of-their-
+time records and rewriting them corrupts the audit trail.
+
+Also fixes the **single stale-code residual** of the M1g rename:
+the ALLOW_LIST_PREFIXES constant in
+`framework/workspace-bootstrap/tests/test_d2_no_inline_workspace_state_paths.py`
+line 108 carries `"framework/tools/pos-amend/"` which has not
+existed since `d64414e` — silently inert in production, but stale.
+
+Multi-component sweep across 7 components (workspace-bootstrap,
+hands-off-lifecycle, workspace-sync, objective-tracker,
+primary-persona, dormancy, heavy-b-migrate) + the dev-sdlc plugin.
+7 AC families: LPAS.A (active docs), LPAS.D-MIG (stale-constant
+fix), LPAS.E (framework test docstrings), LPAS.G (plugins tree),
+LPAS.HIST (zero-diff verification against the preserved historical
+surfaces), LPAS.FIX-FX (zero-diff verification against the
+preserved test-fixture data), LPAS.S (outcome-altitude smoke:
+post-sweep grep matches the build-time-recorded expected residual).
+
+Cosmetic + accuracy hygiene amendment; no behavior change for any
+production code path; one inert-constant fix (LPAS.D-MIG).

@@ -70,7 +70,7 @@ def _seal_commit_from_sidecar() -> str | None:
 
     Originally this read the live SEAL_COMMIT sidecar — but that
     sidecar is shared across every objective-tracker amendment and
-    advances with each pos-amend seal. The test's intent is "A1's
+    advances with each ``loam amend seal``. The test's intent is "A1's
     amendment window stayed clean" — a HISTORICAL fact about a single
     amendment, not a live property. Tighten the AC per ODD §4 / the
     loose-AC-text-fix convention by hardcoding A1's seal SHA. Same

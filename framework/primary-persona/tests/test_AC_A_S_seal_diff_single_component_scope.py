@@ -96,7 +96,7 @@ def test_AC_A_S_universal_seal_diff_test_present():
 
 def test_AC_A_S_seal_commit_sidecar_present():
     """The ``SEAL_COMMIT`` sidecar that pins the diff endpoint is
-    present (B23). ``pos-amend seal`` advances it to the seal commit
+    present (B23). ``loam amend seal`` advances it to the seal commit
     SHA on the seal commit; sub-plan A's amendment commit becomes
     visible to the seal-diff machinery once the sidecar is updated."""
     sidecar = (

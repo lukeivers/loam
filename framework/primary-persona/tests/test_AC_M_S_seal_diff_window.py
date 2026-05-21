@@ -114,7 +114,7 @@ def test_AC_M_S_seal_diff_within_amendment_48_fence() -> None:
 
 _AMENDMENT_69_BASELINE = "76cec04e0ececa483dba2dd0f22a5d04a571dda9"
 # Amendment #69's seal commit SHA (chore-seal commit produced by
-# `pos-amend seal`). Filled by post-seal corrective commit per the
+# `loam amend seal`). Filled by post-seal corrective commit per the
 # AC.MS-fix.S authoring pattern (the seal SHA isn't knowable at
 # amendment-author time).
 _AMENDMENT_69_SEAL_COMMIT = "3be9a783fe2cf95315780c835f0d10bb7e0bf6bb"

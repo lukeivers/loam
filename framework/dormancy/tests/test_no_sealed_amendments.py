@@ -88,7 +88,7 @@ def test_seal_commit_pinning_pattern() -> None:
     """
     source = Path(__file__).read_text()
     # Shape check: BASELINE is declared as a module-top constant
-    # (advanced by ``pos-amend apply``, not hardcoded to a fixed SHA).
+    # (advanced by ``loam amend apply``, not hardcoded to a fixed SHA).
     assert "BASELINE = " in source
     assert "SEAL_COMMIT_PATH" in source
     # Diff call must route through _seal_commit(), not hardcoded HEAD.

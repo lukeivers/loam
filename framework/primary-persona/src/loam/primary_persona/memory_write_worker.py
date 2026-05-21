@@ -116,6 +116,14 @@ def _build_episode_args(
     byte-identically so AC.M.6 invariants survive (turn_id-encoded
     name, group_id=workspace_slug, source="message", body carries
     both halves under labelled blocks).
+
+    AC.FBMT1.ENCC.1: the four encoding-context fields are threaded
+    into the ``context`` kwarg, which the writer
+    (:meth:`FileMemoryStore.write_episode`) emits inside the
+    frontmatter ``context:`` block. The schema is exactly the four
+    fields per TG 11805; AC.FBMT1.ENCC.3 coerces a non-list
+    ``active_files`` input to a single-element list rather than
+    raising.
     """
     user_message = str(record.get("user_message", ""))
     assistant_reply = str(record.get("assistant_reply", ""))
@@ -135,6 +143,25 @@ def _build_episode_args(
             reference_time = datetime.now(timezone.utc)
     else:
         reference_time = datetime.now(timezone.utc)
+    # AC.FBMT1.ENCC.3: coerce a non-list ``active_files`` to a
+    # single-element list. The schema-validation surface stays soft
+    # (don't raise inside the worker drain) — the coerced value
+    # round-trips through the writer cleanly and a downstream
+    # diagnostic on the rendered shape can flag the coercion if
+    # needed.
+    active_files_raw = record.get("active_files")
+    if active_files_raw is None:
+        active_files: list[str] = []
+    elif isinstance(active_files_raw, list):
+        active_files = [str(item) for item in active_files_raw]
+    else:
+        active_files = [str(active_files_raw)]
+    context = {
+        "triggering_msg_id": record.get("triggering_msg_id"),
+        "active_task_id": record.get("active_task_id"),
+        "cwd": record.get("cwd"),
+        "active_files": active_files,
+    }
     return {
         "name": f"turn:{turn_id}",
         "body": body,
@@ -142,6 +169,7 @@ def _build_episode_args(
         "reference_time": reference_time,
         "source": "message",
         "group_id": workspace_slug,
+        "context": context,
     }
 
 
@@ -156,8 +184,27 @@ async def _call_add_episode(
     ``LiveMCPMemoryClient`` per-call session shape as #48 — open
     the session, call the tool, close. No held session across
     drain cycles.
+
+    AC.FBMT1.ENCC.1: the ``context`` kwarg is forwarded when the
+    client accepts it (the M-FBM file-backed client does). Clients
+    that pre-date the amendment (the retired MCP path retained in
+    the module for non-runtime callers) lack the kwarg; the worker
+    drops ``context`` from the forwarded kwargs for those clients
+    so the call still succeeds. The encoding-context is durable on
+    the queue entry regardless — re-driving the entry through an
+    AC.FBMT1.ENCC.1-aware client recovers the field set.
     """
-    result = await client.add_episode(**arguments)
+    try:
+        result = await client.add_episode(**arguments)
+    except TypeError:
+        # Older client without ``context`` kwarg — strip it and
+        # retry. AC.FBMT1.ENCC.4 backwards-compat: the existing
+        # write path keeps working; the encoding-context is
+        # silently dropped only when the client cannot accept it.
+        legacy_args = {
+            k: v for k, v in arguments.items() if k != "context"
+        }
+        result = await client.add_episode(**legacy_args)
     return result if isinstance(result, dict) else {}
 
 

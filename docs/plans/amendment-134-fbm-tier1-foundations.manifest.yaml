@@ -38,7 +38,7 @@ amendment:
 #     one-shot retroactive sweep per Q3 ratification).
 #   AC.FBMT1.S — outcome-altitude smoke (all four exercised end-to-
 #     end in one test).
-baseline: "TBD-PINNED-AT-APPLY"
+baseline: "ed8d3bf"
 
 plan: docs/plans/amendment-134-fbm-tier1-foundations.md
 

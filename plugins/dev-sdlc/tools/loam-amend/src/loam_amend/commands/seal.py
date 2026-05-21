@@ -39,6 +39,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from loam_amend.commands import apply as apply_cmd
+from loam_amend.fidraft_cleanup import plan_slug_from_path, scan_fidraft
 from loam_amend.manifest import Manifest, ManifestError, load_manifest
 from loam_amend.narrative import append_narrative
 from loam_amend.paths import find_repo_root
@@ -47,6 +48,13 @@ from loam_amend.tracker_registration import (
     TrackerUnavailableError,
     update_source_commits,
 )
+
+
+# AC.FBMT1.APS.1 — sealed plan-docs land here. Sibling to
+# ``docs/plans/`` (NOT per-component) per §14 D-T1.4.DIR ruling:
+# plan-docs are universal admissions; per-component placement would
+# fragment multi-component plans.
+SEALED_PLANS_SUBDIR = Path("docs/plans/sealed")
 
 
 # Co-Authored-By trailer per D-5: include only when invoked under a
@@ -391,6 +399,124 @@ def _apply_dry_run_post_seal(manifest_path: Path) -> int:
     return apply_cmd.run(manifest_path, dry_run=True)
 
 
+# AC.FBMT1.APS.1 — compute the archive-target paths for a plan-doc
+# and its sibling manifest. The manifest filename convention is
+# ``<slug>.manifest.yaml`` adjacent to ``<slug>.md``; both move
+# together. Returns ``(plan_target, manifest_target)`` resolved
+# relative to ``repo_root``.
+def _archive_targets(
+    plan_doc: Path, manifest_path: Path, repo_root: Path
+) -> tuple[Path, Path]:
+    """Resolve where a plan-doc + manifest pair archive to.
+
+    Per §14 D-T1.4.DIR: ``docs/plans/sealed/<slug>.md`` and
+    ``docs/plans/sealed/<slug>.manifest.yaml`` (siblings under
+    ``docs/plans/sealed/``).
+    """
+    sealed_dir = repo_root / SEALED_PLANS_SUBDIR
+    plan_target = sealed_dir / plan_doc.name
+    manifest_target = sealed_dir / manifest_path.name
+    return plan_target, manifest_target
+
+
+def _plan_doc_already_sealed(plan_doc: Path, repo_root: Path) -> bool:
+    """Return ``True`` when ``plan_doc`` is already under
+    ``docs/plans/sealed/``.
+
+    Used to make T1.4's archive step idempotent: a re-seal that
+    points at an already-archived plan-doc skips the move (the
+    file is where it should be). Also guards the bootstrap case
+    where this very amendment's plan-doc has already been moved
+    by an earlier dry-run.
+    """
+    try:
+        rel = plan_doc.resolve().relative_to(repo_root.resolve())
+    except ValueError:
+        return False
+    return str(rel).startswith(str(SEALED_PLANS_SUBDIR) + "/") or (
+        str(rel).startswith(str(SEALED_PLANS_SUBDIR) + os.sep)
+    )
+
+
+def _stage_plan_doc_archive(
+    *,
+    plan_doc: Path,
+    manifest_path: Path,
+    repo_root: Path,
+) -> tuple[Path, Path] | None:
+    """Move plan-doc + manifest into ``docs/plans/sealed/`` (T1.4).
+
+    AC.FBMT1.APS.1: the moves are performed BEFORE the seal commit
+    so the rename lands IN the seal commit (the deterministic-
+    content invariant accommodates the rename via git's standard
+    rename detection — the seal commit's tree carries the new
+    paths, the old paths are deleted, and ``git log -- <new>``
+    threads back through the rename).
+
+    AC.FBMT1.APS.2: ``git mv`` preserves byte-identical content;
+    the move is rename-only.
+
+    Returns ``(new_plan_doc, new_manifest_path)`` on success; raises
+    on git failure (caller emits the failure-checkpoint diagnostic).
+    Returns ``None`` when the plan-doc is already at the sealed
+    location (idempotent re-seal).
+    """
+    if _plan_doc_already_sealed(plan_doc, repo_root):
+        return None
+    plan_target, manifest_target = _archive_targets(
+        plan_doc, manifest_path, repo_root
+    )
+    # Ensure the sealed/ directory exists (git mv won't create it).
+    plan_target.parent.mkdir(parents=True, exist_ok=True)
+    # Plan-doc move.
+    plan_rel_src = plan_doc.resolve().relative_to(repo_root.resolve())
+    plan_rel_dst = plan_target.relative_to(repo_root)
+    subprocess.run(
+        ["git", "mv", str(plan_rel_src), str(plan_rel_dst)],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    # Manifest move (sibling). The manifest_path may have been
+    # passed as a relative arg; resolve before computing the
+    # relative-to-repo path.
+    manifest_rel_src = manifest_path.resolve().relative_to(repo_root.resolve())
+    manifest_rel_dst = manifest_target.relative_to(repo_root)
+    subprocess.run(
+        ["git", "mv", str(manifest_rel_src), str(manifest_rel_dst)],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return plan_target, manifest_target
+
+
+def _emit_fidraft_cleanup_surface(
+    *,
+    plan_doc: Path,
+    repo_root: Path,
+) -> None:
+    """Emit the FIDRAFT cleanup surface (T1.3 / AC.FBMT1.FCS family).
+
+    AC.FBMT1.FCS.1: post-seal hook reads the just-sealed plan-doc's
+    slug, scans ``docs/FUTURE_IDEAS_DRAFT.md`` for entries above
+    the slug-overlap threshold, prints a structured surface to
+    stdout. AC.FBMT1.FCS.2: never writes to FIDRAFT (the
+    ``scan_fidraft`` helper is read-only). AC.FBMT1.FCS.3: no-
+    false-positive shape — an unmatched scan prints "no matching
+    entries; nothing to clean up".
+    """
+    fidraft_path = repo_root / "docs" / "FUTURE_IDEAS_DRAFT.md"
+    slug = plan_slug_from_path(plan_doc)
+    surface = scan_fidraft(plan_slug=slug, fidraft_path=fidraft_path)
+    # Always print the surface (even on no-match — the operator
+    # knows the hook fired and decided not-to-clean rather than
+    # silently skipping).
+    print(surface.render())
+
+
 def _legacy_seal(manifest: Manifest, repo_root: Path) -> int:
     """Pre-extension behaviour: advance sidecars + append narrative.
 
@@ -496,14 +622,46 @@ def _finalize(
     scoped_sweep: bool,
     plan_doc: Path | None,
     allow_untracked_globs: Sequence[str] = (),
+    skip_fidraft_cleanup: bool = False,
 ) -> int:
-    """Full finalisation per AC.D-sa.1 + AC.D-sa.5 + AC.D-sa.7."""
+    """Full finalisation per AC.D-sa.1 + AC.D-sa.5 + AC.D-sa.7.
+
+    T1.4 (AC.FBMT1.APS.*): when ``plan_doc`` is supplied, move the
+    plan-doc + manifest into ``docs/plans/sealed/`` BEFORE the seal
+    commit so the rename lands inside the seal commit.
+
+    T1.3 (AC.FBMT1.FCS.*): after the seal commit lands, emit the
+    FIDRAFT cleanup-surface unless ``skip_fidraft_cleanup`` is True
+    (AC.FBMT1.FCS.4 emergency-bypass flag).
+    """
 
     # ------------------------------------------------------------------
     # (a) Resolve the amendment SHA (current HEAD).
     # ------------------------------------------------------------------
     amendment_sha = _head_sha(repo_root)
     amendment_subject = _commit_subject(repo_root, amendment_sha)
+
+    # T1.4 (AC.FBMT1.APS.1) — archive plan-doc + manifest BEFORE
+    # the dirty-tree check, so the moved files are part of the
+    # expected-writes set (staged) rather than dirty unrelated dirt.
+    # Tracks the post-archive paths for use downstream (the §14
+    # backfill must target the new plan-doc location; the post-seal
+    # dry-run must use the new manifest location).
+    effective_plan_doc = plan_doc
+    effective_manifest_path = manifest_path
+    archive_renames: list[tuple[Path, Path]] = []
+    if plan_doc is not None and plan_doc.exists():
+        archive_result = _stage_plan_doc_archive(
+            plan_doc=plan_doc,
+            manifest_path=manifest_path,
+            repo_root=repo_root,
+        )
+        if archive_result is not None:
+            new_plan_doc, new_manifest_path = archive_result
+            archive_renames.append((plan_doc, new_plan_doc))
+            archive_renames.append((manifest_path, new_manifest_path))
+            effective_plan_doc = new_plan_doc
+            effective_manifest_path = new_manifest_path
 
     # Compute the set of paths the seal step is itself expected to
     # write (so `git status` dirt-checking can ignore them).
@@ -512,6 +670,19 @@ def _finalize(
         expected_writes.add(Path(comp.sidecar))
     if manifest.narrative is not None:
         expected_writes.add(Path(manifest.narrative.target))
+    # T1.4: the plan-doc + manifest rename pair are also expected
+    # writes (their post-archive locations) — add both old (deleted)
+    # and new (added) paths so `git status --porcelain` lines for
+    # the rename pass through the dirt filter cleanly.
+    for old_path, new_path in archive_renames:
+        try:
+            expected_writes.add(old_path.resolve().relative_to(repo_root.resolve()))
+        except ValueError:
+            pass
+        try:
+            expected_writes.add(new_path.relative_to(repo_root))
+        except ValueError:
+            pass
 
     # ------------------------------------------------------------------
     # (b) Pre-flight: refuse to proceed on unrelated dirty state
@@ -691,6 +862,9 @@ def _finalize(
 
     # ------------------------------------------------------------------
     # (f) Stage + commit (AC.D-sa.1 steps (e) + (f), AC.D-sa.2).
+    # T1.4 (AC.FBMT1.APS.1): the plan-doc + manifest rename pair (if
+    # the archive step ran) is already staged by ``git mv``; ``git
+    # add`` here covers sidecars + narrative target.
     # ------------------------------------------------------------------
     paths_to_stage: list[str] = []
     for comp in manifest.components:
@@ -755,8 +929,10 @@ def _finalize(
     # (g) Post-seal apply --dry-run verification (AC.D-sa.1 step (g)).
     # On non-zero, leave the seal commit in place per D-4 ruling and
     # emit operator-actionable diagnostic.
+    # T1.4: the manifest may have moved into ``docs/plans/sealed/``
+    # as part of the seal commit; dry-run uses the post-archive path.
     # ------------------------------------------------------------------
-    dry_rc = _apply_dry_run_post_seal(manifest_path)
+    dry_rc = _apply_dry_run_post_seal(effective_manifest_path)
     if dry_rc != 0:
         _emit_diagnostic(
             _FailureCheckpoint(
@@ -776,10 +952,14 @@ def _finalize(
 
     # ------------------------------------------------------------------
     # (h) Optional: plan-doc §14 SHA backfill (AC.D-sa.7).
+    # T1.4: when the archive step ran, ``effective_plan_doc`` points
+    # at the new ``docs/plans/sealed/<slug>.md`` location; backfill
+    # targets that path so the moved file is the one carrying the
+    # SHA register.
     # ------------------------------------------------------------------
-    if plan_doc is not None:
+    if effective_plan_doc is not None:
         ck = _backfill_plan_doc_shas(
-            plan_doc=plan_doc,
+            plan_doc=effective_plan_doc,
             amendment_sha=amendment_sha,
             amendment_subject=amendment_subject,
             seal_sha=seal_sha,
@@ -790,7 +970,7 @@ def _finalize(
             return ck.code
 
         # Stage + commit the plan-doc edit.
-        rel_plan_doc = plan_doc.relative_to(repo_root)
+        rel_plan_doc = effective_plan_doc.relative_to(repo_root)
         backfill_add = subprocess.run(
             ["git", "add", "--", str(rel_plan_doc)],
             cwd=repo_root,
@@ -887,6 +1067,18 @@ def _finalize(
             f"{_short_sha(backfill_sha)}"
         )
 
+    # ------------------------------------------------------------------
+    # (i) T1.3 (AC.FBMT1.FCS family) — FIDRAFT cleanup-on-seal hook.
+    # Fires AFTER the seal commit + §14 backfill so the surface
+    # appears as the final line of seal output. AC.FBMT1.FCS.4: the
+    # ``skip_fidraft_cleanup`` flag bypasses the hook for emergency
+    # seals where the operator wants to skip the surface.
+    # ------------------------------------------------------------------
+    if effective_plan_doc is not None and not skip_fidraft_cleanup:
+        _emit_fidraft_cleanup_surface(
+            plan_doc=effective_plan_doc, repo_root=repo_root
+        )
+
     return 0
 
 
@@ -897,6 +1089,7 @@ def run(
     scoped_sweep: bool = False,
     plan_doc: Path | None = None,
     allow_untracked_globs: Sequence[str] = (),
+    skip_fidraft_cleanup: bool = False,
 ) -> int:
     try:
         manifest = load_manifest(manifest_path)
@@ -922,4 +1115,5 @@ def run(
         scoped_sweep=scoped_sweep,
         plan_doc=plan_doc,
         allow_untracked_globs=allow_untracked_globs,
+        skip_fidraft_cleanup=skip_fidraft_cleanup,
     )

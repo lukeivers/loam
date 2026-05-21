@@ -245,6 +245,18 @@ RECENCY_CANDIDATE_FLOOR = 40
 # trade away retrieval quality).
 RECENCY_BLEND_WEIGHT = 0.5
 
+# AC.FBMT1.SUPM.2 — multiplicative penalty applied to the blended
+# score of a memory file whose frontmatter carries a
+# ``superseded-by:`` field (the supersession-marker convention; mark-
+# don't-delete per the v2 FBM rethink's reading of Anderson & Green
+# 2001). Per D-T1.1.PENALTY (plan-doc §14): hard-coded ``0.1`` at
+# v0.1 — keeps a high-relevance superseded file visible in the
+# candidate set (AC.FBMT1.SUPM.3: ``score=10`` superseded beats
+# ``score=0.5`` unsuperseded) but demotes it below comparably-scored
+# unsuperseded files. Configurability deferred until a concrete
+# tuning request lands.
+SUPERSEDED_PENALTY = 0.1
+
 
 @dataclass
 class FileMemoryStore:
@@ -285,6 +297,7 @@ class FileMemoryStore:
         reference_time: datetime,
         source: str,
         group_id: str,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Write one markdown episode file.
 
@@ -303,6 +316,11 @@ class FileMemoryStore:
             ``source_description: <source_description>``
             ``reference_time: <ISO-8601-utc>``
             ``group_id: <group_id>``
+            ``context:``                  # AC.FBMT1.ENCC.1
+            ``  triggering_msg_id: <v>``
+            ``  active_task_id: <v>``
+            ``  cwd: <v>``
+            ``  active_files: [<list>]``
             ``---``
             ``<body>``
 
@@ -315,6 +333,16 @@ class FileMemoryStore:
         Atomic via ``tmp + os.replace`` so a crash mid-write does
         not produce a partially-readable file (Hard Constraint
         analogue from amendment-J).
+
+        AC.FBMT1.ENCC.1: ``context`` (optional) is the four-field
+        encoding-context dict per the TG 11805 schema-minimal
+        directive. When supplied, the writer emits a ``context:``
+        nested block with EXACTLY the four named fields
+        (:data:`ENCODING_CONTEXT_FIELDS`); missing / ``None`` fields
+        render as ``null``. When ``context`` itself is ``None`` the
+        block is still emitted with all four fields ``null`` — the
+        schema is always present, only the values vary (AC.FBMT1.
+        ENCC.2's null-when-absent contract).
         """
         ref_utc = reference_time.astimezone(timezone.utc)
         date_dir = ref_utc.strftime("%Y-%m-%d")
@@ -335,6 +363,12 @@ class FileMemoryStore:
         target_dir.mkdir(parents=True, exist_ok=True)
         target_path = target_dir / f"{stem}.md"
         tmp_path = target_path.with_suffix(target_path.suffix + ".tmp")
+        # AC.FBMT1.ENCC.1 + AC.FBMT1.ENCC.2: emit the four-field
+        # context block (always present, values vary). Per the
+        # schema-minimal directive the block carries exactly the
+        # four fields named in :data:`ENCODING_CONTEXT_FIELDS` —
+        # adding a fifth field is a structural-test failure.
+        context_block = _render_context_block(context)
         front = (
             "---\n"
             f"name: {name}\n"
@@ -342,6 +376,7 @@ class FileMemoryStore:
             f"source_description: {source_description}\n"
             f"reference_time: {ref_utc.isoformat()}\n"
             f"group_id: {group_id}\n"
+            f"{context_block}"
             "---\n"
         )
         # Single write, then atomic rename. Any IOError surfaces to
@@ -735,11 +770,15 @@ class FileMemoryStore:
             )
         # Blend BM25 relevance with recency-decay, then return the
         # top ``num_results``. ``now`` is injected so the AC.MSC.1
-        # fixture + §10 smoke are deterministic.
+        # fixture + §10 smoke are deterministic. ``memory_root`` is
+        # threaded through so AC.FBMT1.SUPM.4's missing-target
+        # warning has a base path against which to resolve the
+        # ``superseded-by`` relative path.
         return _blend_recency(
             pool,
             num_results=num_results,
             now=datetime.now(timezone.utc),
+            memory_root=self.memory_dir,
         )
 
     def _grep_search(
@@ -815,6 +854,14 @@ class FileMemoryStore:
             # skipped above so doclen is strictly > 0 here.
             score = raw_score / max(len(content), 1)
             front, body = _split_frontmatter(content)
+            # AC.FBMT1.SUPM.2: apply the supersession penalty in the
+            # grep-fallback path too so the ranker demotes superseded
+            # files regardless of which retrieval path fires. AC.
+            # FBMT1.SUPM.3: scoring (not filtering) keeps the file in
+            # the candidate set.
+            marker = front.get("superseded-by")
+            if isinstance(marker, str) and marker:
+                score = score * SUPERSEDED_PENALTY
             scored.append((score, path, body, front))
 
         scored.sort(key=lambda x: x[0], reverse=True)
@@ -915,24 +962,148 @@ def _sanitise_filename(stem: str) -> str:
 _FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 
 
-def _split_frontmatter(content: str) -> tuple[dict[str, str], str]:
+# AC.FBMT1.ENCC family — fields the worker emits inside the nested
+# ``context:`` block, in order. The schema is exactly these four
+# fields per TG 11805 schema-minimal directive; AC.FBMT1.ENCC.1
+# verifies the count structurally.
+ENCODING_CONTEXT_FIELDS: tuple[str, ...] = (
+    "triggering_msg_id",
+    "active_task_id",
+    "cwd",
+    "active_files",
+)
+
+
+def _split_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     """Parse the YAML-ish frontmatter block authored by
     :meth:`FileMemoryStore.write_episode`. Stdlib-only — this is not
-    a full YAML parser; the writer authors flat ``key: value`` lines.
-    Unknown shapes return ``({}, content)``.
+    a full YAML parser; the writer authors flat ``key: value`` lines
+    plus a single optional nested ``context:`` block (AC.FBMT1.ENCC.1)
+    whose four indented child fields are the four-field encoding-
+    context schema. Unknown shapes return ``({}, content)``.
+
+    AC.FBMT1.SUPM.1: the optional ``superseded-by: <relative-path>``
+    field parses as a flat scalar (the supersession-marker
+    convention; mark-not-delete). When absent the key is missing from
+    the returned dict (callers use ``front.get("superseded-by")``
+    which returns ``None`` and the ranker treats the file as not
+    superseded). When present the value is exposed as a string.
+
+    AC.FBMT1.ENCC.1: the optional ``context:`` block parses as a
+    nested mapping under ``front["context"]``. Each child line is
+    parsed as ``key: value`` and contributes to the dict; ``null``
+    scalar values map to Python ``None``; bracketed list literals
+    (``[a, b]``) map to a Python list of trimmed strings. The
+    four-field schema is structurally bounded by the writer (see
+    :func:`_render_context_block`); the parser accepts whatever the
+    writer emits and never expands the schema speculatively.
     """
     match = _FRONTMATTER_RE.match(content)
     if not match:
         return ({}, content)
     front_text = match.group(1)
     body = content[match.end() :]
-    front: dict[str, str] = {}
-    for ln in front_text.splitlines():
+    front: dict[str, Any] = {}
+    lines = front_text.splitlines()
+    i = 0
+    while i < len(lines):
+        ln = lines[i]
         if ":" not in ln:
+            i += 1
             continue
         key, _, value = ln.partition(":")
-        front[key.strip()] = value.strip()
+        key = key.strip()
+        value = value.strip()
+        # AC.FBMT1.ENCC.1: a bare ``context:`` header with no inline
+        # value opens the nested block; subsequent indented lines are
+        # child fields. The block ends at the next non-indented line
+        # (or end of frontmatter).
+        if key == "context" and value == "":
+            ctx: dict[str, Any] = {}
+            j = i + 1
+            while j < len(lines):
+                child = lines[j]
+                # An indented line (leading space/tab) is a child
+                # field; anything else closes the block.
+                if not child or (child[:1] not in (" ", "\t")):
+                    break
+                if ":" not in child:
+                    j += 1
+                    continue
+                ck, _, cv = child.partition(":")
+                ctx[ck.strip()] = _parse_context_value(cv.strip())
+                j += 1
+            front["context"] = ctx
+            i = j
+            continue
+        front[key] = value
+        i += 1
     return (front, body)
+
+
+def _parse_context_value(value: str) -> Any:
+    """Parse one scalar / list value from a ``context:`` child line.
+
+    AC.FBMT1.ENCC.2: ``null`` maps to Python ``None`` (so the YAML
+    field is still present but unset). Empty values also map to
+    ``None`` for parser symmetry with the writer's ``null`` emit.
+
+    AC.FBMT1.ENCC.3: a bracketed list literal ``[a, b, c]`` maps to
+    a Python list of trimmed strings (the writer authors
+    ``active_files`` this way); ``[]`` maps to an empty list.
+
+    Anything else is returned as a stripped string.
+    """
+    if value == "" or value == "null":
+        return None
+    if value.startswith("[") and value.endswith("]"):
+        inner = value[1:-1].strip()
+        if not inner:
+            return []
+        return [item.strip() for item in inner.split(",") if item.strip()]
+    return value
+
+
+def _render_context_block(context: dict[str, Any] | None) -> str:
+    """Render the four-field ``context:`` block for the frontmatter.
+
+    AC.FBMT1.ENCC.1: emits EXACTLY the four named fields in
+    :data:`ENCODING_CONTEXT_FIELDS` order — no more, no less. A
+    field missing from the input dict (or set to ``None``) renders
+    as ``null``; ``active_files`` (a list) renders as a bracketed
+    list literal.
+
+    Returns the multi-line block including the ``context:`` header.
+    Trailing newline included for direct concatenation into the
+    frontmatter string.
+    """
+    if context is None:
+        context = {}
+    out = ["context:"]
+    for field_name in ENCODING_CONTEXT_FIELDS:
+        value = context.get(field_name)
+        if field_name == "active_files":
+            if value is None:
+                rendered = "[]"
+            elif isinstance(value, list):
+                rendered = (
+                    "[" + ", ".join(str(item) for item in value) + "]"
+                )
+            else:
+                # AC.FBMT1.ENCC.3: non-list input is a schema-validation
+                # error. The writer coerces a string to a single-element
+                # list rather than emitting a bare scalar (which would
+                # then mis-parse on read-back). Surfaces the coercion
+                # via the rendered shape; the worker's diagnostic log
+                # captures the original input.
+                rendered = "[" + str(value) + "]"
+        else:
+            if value is None:
+                rendered = "null"
+            else:
+                rendered = str(value)
+        out.append(f"  {field_name}: {rendered}")
+    return "\n".join(out) + "\n"
 
 
 def _parse_reference_time(raw: str) -> datetime | None:
@@ -977,8 +1148,61 @@ def _recency_weight(ref_time: datetime | None, *, now: datetime) -> float:
     return 0.5 ** (age_days / RECENCY_HALF_LIFE_DAYS)
 
 
+def _superseded_marker(path_str: str) -> str | None:
+    """Read the memory file at ``path_str`` and return its
+    ``superseded-by`` value, or ``None`` when absent / unreadable.
+
+    AC.FBMT1.SUPM.2 + AC.FBMT1.SUPM.4: the ranker reads the file's
+    frontmatter at re-rank time to decide whether to apply the
+    multiplicative penalty. Unreadable files (deleted between
+    enqueue and rank, permission errors) return ``None`` — the file
+    is treated as not superseded rather than the call raising
+    (AC.MSC.5 fail-soft is the surrounding contract).
+    """
+    if not path_str:
+        return None
+    try:
+        content = Path(path_str).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    front, _ = _split_frontmatter(content)
+    value = front.get("superseded-by")
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
+def _superseded_marker_target_missing(
+    marker: str | None, memory_root: Path | None
+) -> bool:
+    """Return ``True`` when ``marker`` names a path that does not
+    resolve to an existing file under ``memory_root``.
+
+    AC.FBMT1.SUPM.4: a ``superseded-by:`` value pointing at a non-
+    existent file is a soft error — the ranker still applies the
+    penalty (so the superseded file stays demoted) and the warning
+    is observable to the caller via the contributor's diagnostic
+    surface. This helper is the predicate; the warning emission
+    happens in :func:`_blend_recency` where the memory_root is in
+    scope.
+    """
+    if not marker or memory_root is None:
+        return False
+    target = (memory_root / marker).resolve()
+    return not target.exists()
+
+
+# AC.FBMT1.SUPM.4: warnings collected during a single ``_blend_recency``
+# call are appended here so tests and the contributor can observe the
+# soft-error surface without a stdlib ``logging`` dependency. Cleared at
+# the start of each call. Module-level so an in-process test can read
+# it without threading a logger through the call stack.
+_LAST_RANKER_WARNINGS: list[str] = []
+
+
 def _blend_recency(
-    rows: list[dict[str, Any]], *, num_results: int, now: datetime
+    rows: list[dict[str, Any]], *, num_results: int, now: datetime,
+    memory_root: Path | None = None,
 ) -> list[dict[str, Any]]:
     """Re-rank a BM25-ordered candidate pool by a recency-blended
     score and return the top ``num_results`` (AC.MSC.1 / D-MSC.2).
@@ -996,7 +1220,21 @@ def _blend_recency(
     still surfaces a directly-relevant older answer (§12 halt
     trigger 4). Stable: equal blended scores preserve the incoming
     BM25 order (Python sort is stable).
+
+    AC.FBMT1.SUPM.2 + AC.FBMT1.SUPM.3: rows pointing at memory files
+    whose frontmatter carries ``superseded-by:`` are multiplicatively
+    penalised by :data:`SUPERSEDED_PENALTY`. The penalty applies at
+    the blended-score step so the row stays in the candidate set
+    (not filtered) — a sufficiently-high-relevance superseded file
+    can still surface, just demoted.
+
+    AC.FBMT1.SUPM.4: when ``memory_root`` is supplied and the marker
+    points at a non-existent path, the warning is appended to
+    :data:`_LAST_RANKER_WARNINGS` (a soft error — the penalty still
+    applies; ranker does not crash).
     """
+    global _LAST_RANKER_WARNINGS  # noqa: PLW0603 — AC.FBMT1.SUPM.4 surface
+    _LAST_RANKER_WARNINGS = []
     if not rows:
         return []
     total = len(rows)
@@ -1010,6 +1248,20 @@ def _blend_recency(
             (1.0 - RECENCY_BLEND_WEIGHT) * relevance_channel
             + RECENCY_BLEND_WEIGHT * recency_channel
         )
+        # AC.FBMT1.SUPM.2: apply the multiplicative demotion when the
+        # file's frontmatter carries ``superseded-by``.
+        marker = _superseded_marker(str(row.get("path", "")))
+        if marker is not None:
+            blended = blended * SUPERSEDED_PENALTY
+            # AC.FBMT1.SUPM.4: surface the warning when the marker
+            # points at a non-existent file. The penalty already
+            # applied above so the demotion still holds even when
+            # the target is missing.
+            if _superseded_marker_target_missing(marker, memory_root):
+                _LAST_RANKER_WARNINGS.append(
+                    f"superseded-by target missing: "
+                    f"{row.get('path')!s} -> {marker}"
+                )
         scored.append((blended, idx, row))
     # Sort by blended score desc; ``idx`` as a stable secondary key so
     # equal-blend ties preserve the original BM25 ordering.
@@ -1148,11 +1400,19 @@ class FileBackedMemoryClient:
         reference_time: datetime,
         source: str,
         group_id: str,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Async-shaped surface; delegates to the synchronous
         :meth:`FileMemoryStore.write_episode`. The async signature
         keeps wire-compat with the worker's ``await client.add_episode``
-        call site (AC.J.5)."""
+        call site (AC.J.5).
+
+        AC.FBMT1.ENCC.1: the optional ``context`` kwarg threads the
+        four-field encoding-context block through to the writer. The
+        production worker fills these from the queue record; tests
+        and non-worker callers can pass ``None`` for null fields
+        (the block is still emitted; the schema is always present).
+        """
         return self._store.write_episode(
             name=name,
             body=body,
@@ -1160,6 +1420,7 @@ class FileBackedMemoryClient:
             reference_time=reference_time,
             source=source,
             group_id=group_id,
+            context=context,
         )
 
     async def search(

@@ -104,6 +104,10 @@ def enqueue(
     session_id: str,
     user_message: str,
     assistant_reply: str,
+    triggering_msg_id: str | None = None,
+    active_task_id: str | None = None,
+    cwd: str | None = None,
+    active_files: list[str] | None = None,
 ) -> Path:
     """Write a queue entry to disk via atomic tmp+rename.
 
@@ -124,6 +128,14 @@ def enqueue(
     The record's ``enqueued_at`` timestamp is the worker's
     FIFO-ordering hint when filesystem mtime granularity is
     coarse (HFS+ stored 1-second resolution; APFS stores ns).
+
+    AC.FBMT1.ENCC.1: the four encoding-context fields
+    (``triggering_msg_id``, ``active_task_id``, ``cwd``,
+    ``active_files``) are durable per-queue-entry per the TG 11805
+    schema-minimal directive. The worker reads these on drain and
+    threads them into the writer's frontmatter ``context:`` block.
+    All four are optional; missing values map to ``null`` on the
+    written-out file (the block schema is always present).
     """
     qdir = queue_dir(workspace_root)
     qdir.mkdir(parents=True, exist_ok=True)
@@ -134,6 +146,13 @@ def enqueue(
         "assistant_reply": assistant_reply,
         "enqueued_at": datetime.now(timezone.utc).isoformat(),
         "retry_count": 0,
+        # AC.FBMT1.ENCC.1 — encoding-context capture at write-time.
+        # Stored on the queue entry so the worker (which may run
+        # post-session-end) has the values the original turn carried.
+        "triggering_msg_id": triggering_msg_id,
+        "active_task_id": active_task_id,
+        "cwd": cwd,
+        "active_files": list(active_files) if active_files else [],
     }
     final = qdir / _safe_turn_filename(turn_id)
     tmp = final.with_suffix(final.suffix + ".tmp")

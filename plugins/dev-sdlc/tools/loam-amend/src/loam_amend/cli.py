@@ -112,6 +112,18 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
             "for in-flight capture state. Per AC.LAE.2."
         ),
     )
+    p_seal.add_argument(
+        "--skip-fidraft-cleanup",
+        action="store_true",
+        help=(
+            "bypass the post-seal FIDRAFT cleanup surface "
+            "(AC.FBMT1.FCS.4 — emergency-seal escape hatch). The "
+            "hook normally scans `docs/FUTURE_IDEAS_DRAFT.md` for "
+            "slug-overlap with the just-sealed plan-doc and prints "
+            "a 'did you mark this actioned?' surface; this flag "
+            "skips the scan entirely."
+        ),
+    )
 
     # ``template`` subcommand family — markdown template engine for
     # high-repetition authored artefacts. Per
@@ -348,6 +360,7 @@ def dispatch(args: argparse.Namespace) -> int:
             scoped_sweep=args.scoped_sweep,
             plan_doc=plan_doc,
             allow_untracked_globs=tuple(args.allow_untracked_globs),
+            skip_fidraft_cleanup=args.skip_fidraft_cleanup,
         )
     if args.command == "template":
         templates_root = args.templates_root or template_cmd.DEFAULT_TEMPLATES_ROOT

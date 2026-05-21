@@ -682,8 +682,14 @@ def test_AC_D_sa_7_plan_doc_backfill_appends_subsection_and_commits(
     )
     assert rc == 0
 
+    # AC.FBMT1.APS.1 (amendment #134 T1.4): the seal step moves the
+    # plan-doc into docs/plans/sealed/ as part of the seal commit;
+    # the §14 SHA backfill runs against the post-archive location.
+    sealed_plan_path = (
+        repo / "docs" / "plans" / "sealed" / plan_path.name
+    )
     # (a) Plan doc carries `### Commit SHAs` under §14
-    plan_text = plan_path.read_text(encoding="utf-8")
+    plan_text = sealed_plan_path.read_text(encoding="utf-8")
     assert "### Commit SHAs" in plan_text
     assert amendment_sha in plan_text
 
@@ -816,8 +822,13 @@ def test_AC_D_sa_7_plan_doc_accepts_relative_path(
     )
     assert rc == 0, "relative --plan-doc must not crash relative_to"
 
-    # Plan doc carries `### Commit SHAs` under §14
-    plan_text = plan_path.read_text(encoding="utf-8")
+    # AC.FBMT1.APS.1 (amendment #134 T1.4): plan-doc archives into
+    # docs/plans/sealed/ as part of the seal commit; the §14 backfill
+    # targets the post-archive location.
+    sealed_plan_path = (
+        repo / "docs" / "plans" / "sealed" / plan_path.name
+    )
+    plan_text = sealed_plan_path.read_text(encoding="utf-8")
     assert "### Commit SHAs" in plan_text
     assert amendment_sha in plan_text
 

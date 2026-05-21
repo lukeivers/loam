@@ -1,0 +1,345 @@
+schema_version: 1
+amendment:
+  number: 142
+  slug: amendment-142-plan-author-skill-hygiene-merged
+  title: "plan-author SKILL + dev-sdlc methodology hygiene (merged three-scope: manifest-target default + BASELINE walk-forward + source-edit-commit-before-apply step + apply pre-flight warning) — closes FIDRAFTs 330/334/336"
+
+# BASELINE: amendment #141 publish-state commit `2686101` (current
+# main HEAD post-#141 publish — `docs(readme): bump current-release
+# to v0.12.18 (amendment #141 section-14 backfill decouple)`). Per
+# Scope B's own walk-forward discipline (D-PASH.BASELINE-WALK):
+# walked forward from #141's seal `c144c2d`; found NO
+# `chore(amend-fixup):` commits between `c144c2d` and `2686101`;
+# defaulted BASELINE to the publish-state commit `2686101`. This
+# matches the post-#141 standard convention (the publish-state
+# commit is the load-bearing predecessor when no fixup intervenes).
+# The seal-diff window is BASELINE..seal_commit per the
+# single-component fence convention. Plan-doc §1 carries the
+# durable owner-ratification record (TG 11808 / 11837 / 11847)
+# and the full pre-flight Tier-0 evidence.
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <source-edits + tests commit — `fix(dev-sdlc):` patches to
+#    9 source files: 4 plan-author SKILLs (Scope A prescription
+#    + Scope B prescription as applicable per SKILL),
+#    2 convention docs (`plan-docs.md` + `commit-ladder.md` for
+#    Scope A + Scope C ordering), 1 additional convention doc
+#    (`amendment-cycle.md` for Scope C ordering), 1 apply.py
+#    edit (Scope C soft-warning emission per AC.PASH.C.2), plus
+#    ~7 new test files (AC.PASH.A.{1,2}, AC.PASH.B.{1,2},
+#    AC.PASH.C.{1,2}, AC.PASH.S). Per Scope C's own prescription
+#    (D-PASH.METHOD-DOC), the source-edit commit MUST land BEFORE
+#    `loam amend apply` — apply runs against committed HEAD per
+#    `apply.py:158`. THIS amendment dogfoods Scope C at its own
+#    build (D-PASH.DOGFOOD).>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit — dogfoods Scope A
+#    (this manifest's `narrative.target` IS the canonical post-fix
+#    form `docs/plans/sealed/amendment-142-plan-author-skill-
+#    hygiene-merged.md`); T1.4 archives this plan-doc + manifest
+#    to `docs/plans/sealed/`. §14 auto-backfill via #141's
+#    decoupled path (per amendment-141 D-SCT.SHAPE, the backfill
+#    runs unconditionally on seal when `--plan-doc` is supplied,
+#    regardless of dry-run outcome).>
+#   <§14 backfill commit — auto-embedded by `_finalize` step (h)
+#    per amendment-141's decoupled path; populates D-PASH-* SHAs
+#    + closes the three FIDRAFT entries per the seal-time
+#    FIDRAFT-cleanup hook (`_emit_fidraft_cleanup_surface` at
+#    `_finalize` step (i)).>
+#
+# Single-component fence on `plugins/dev-sdlc/` (covers SKILLs,
+# convention docs, and `loam-amend/` tool source under the
+# `dev-sdlc` sealed component). The amendment closes three
+# FIDRAFT entries at FUTURE_IDEAS_DRAFT.md lines 330 / 334 / 336.
+#
+# Defends amendment #134's T1.4 archive convention at the SKILL-
+# prose level — #134 established `docs/plans/sealed/<slug>.md` at
+# the code level (`plan_archive.py`); this amendment makes the
+# SKILL prose prescribe the same form so authoring agents
+# converge on it. Defends amendment #141's decoupled §14
+# backfill at runtime — this amendment's own seal exercises
+# #141's auto-backfill cleanly.
+#
+# AC families per docs/plans/amendment-142-...md §4:
+#   AC.PASH.A.{1,2} — Scope A: `narrative.target` canonical-form
+#     prescription is reachable for an agent reading the plan-
+#     author SKILLs + convention docs; consistency across all
+#     six surfaces.
+#   AC.PASH.B.{1,2} — Scope B: BASELINE walk-forward picks the
+#     latest `chore(amend-fixup):` commit when one exists between
+#     predecessor seal and HEAD; defaults to seal commit otherwise.
+#   AC.PASH.C.{1,2} — Scope C: dev-sdlc methodology docs +
+#     loam-amend-cycle SKILL prescribe "commit source edits BEFORE
+#     apply" step explicitly; `loam amend apply` emits a soft
+#     stderr warning when tracked-but-unstaged changes exist
+#     outside the partition's admitted union, non-blocking.
+#   AC.PASH.S — outcome-altitude smoke: synthetic amendment cycle
+#     exercises all three scopes end-to-end (canonical-form
+#     manifest authored per SKILL, BASELINE selected via walk-
+#     forward against fixup-bearing predecessor, source-edit-
+#     commit-before-apply step with stderr warning on the
+#     unstaged case); production seal + apply entry-points
+#     invoked; no pre-arrangement of orphan or stale-baseline
+#     conditions.
+baseline: "2686101683264a21f938a1dc1eca21f530ba9a67"
+
+plan: docs/plans/amendment-142-plan-author-skill-hygiene-merged.md
+
+seal_description: |
+  dev-sdlc: plan-author SKILL + dev-sdlc methodology hygiene
+  (merged three-scope amendment per TG 11847 queue-merge
+  directive). Pre-fix at canonical HEAD `2686101`, plan-author
+  SKILLs (plan-docs-author / plan-before-code-author / loam-
+  amend-cycle / seal-narrative-writer) and convention docs
+  (plan-docs.md / commit-ladder.md / amendment-cycle.md) do
+  NOT prescribe: (A) the canonical `narrative.target` form for
+  manifests; (B) the BASELINE walk-forward discipline when a
+  predecessor seal is followed by `chore(amend-fixup):` commits;
+  (C) the explicit "commit source edits BEFORE `loam amend apply`"
+  step (apply runs against committed HEAD per apply.py:158).
+  Empirically: #138 manifest authored `narrative.target: dev-
+  sdlc` per the unprescribed default, seal-tool wrote 2778-byte
+  orphan file `<repo>/dev-sdlc`, recovered via fixup `26f3a9e`;
+  #139 pinned BASELINE to #138's seal `01e63ac` missing the
+  `26f3a9e` fixup, builder authored corrective `ca16e41` to
+  bump BASELINE; #138 first build attempt ran `loam amend apply`
+  against uncommitted source edits, recovered via `git reset
+  --mixed` + manual re-commit.
+
+  Post-fix: all four plan-author SKILLs + both convention docs
+  prescribe `narrative.target: docs/plans/sealed/<slug>.md` as
+  the canonical default (Scope A; matches the post-#134 T1.4
+  archive convention and the empirical convergence at #137 /
+  #139 / #140 / #141). All four plan-author SKILLs prescribe
+  BASELINE walk-forward from predecessor seal — pick latest
+  `chore(amend-fixup):` commit between seal and HEAD if any,
+  else seal itself (Scope B; discipline-only, no new tooling).
+  Convention docs (commit-ladder.md / amendment-cycle.md) and
+  loam-amend-cycle SKILL explicitly name "commit source edits
+  BEFORE `loam amend apply`; apply runs against committed HEAD"
+  (Scope C). `loam amend apply` emits a soft stderr warning
+  when tracked-but-unstaged changes exist OUTSIDE the
+  partition's `universal_paths + extra_allowed_prefixes`
+  admitted union (the precise form per D-PASH.WARN-PRECISION;
+  reuses `_diff_with_working_tree` from dry_run.py; non-blocking
+  per D-PASH.WARN-NON-BLOCKING).
+
+  Shape (merged single amendment) chosen per D-PASH.MERGE: all
+  three scopes touch the same `dev-sdlc` component + same SKILL
+  + methodology surface; AC families are scope-disjoint
+  (.A / .B / .C); the dogfood discipline (D-PASH.DOGFOOD)
+  exercises all three scopes at the amendment's own authoring
+  + build time. Saves one apply + seal cycle vs three sequential
+  amendments per TG 11847 queue-merge directive.
+
+  Dogfood discipline (D-PASH.DOGFOOD): THIS manifest's
+  `narrative.target` uses the canonical Scope A form (this very
+  line); THIS amendment's BASELINE is selected per Scope B's
+  walk-forward discipline (no fixup commits between #141 seal
+  `c144c2d` and publish-state `2686101`, BASELINE = `2686101`);
+  THIS amendment's source-edit commit lands BEFORE its apply
+  per Scope C's prescription. The plan-doc dogfoods all three
+  scopes at authoring time.
+
+  Composes with amendment #134 (T1.4 archive convention at the
+  code level via `plan_archive.py`; this amendment closes the
+  SKILL-prose gap); #138 (empirical trigger for Scopes A + C —
+  retires the manual `26f3a9e` orphan-removal and manual
+  re-commit workarounds per `feedback_workaround_masks_-
+  rootcause_urgency`); #139 (empirical trigger for Scope B —
+  retires the manual `ca16e41` re-baseline workaround); #140
+  (queue-merge precedent — same merge-multi-scope-into-one-cycle
+  pattern that #140 demonstrated for the seal-tool); #141
+  (post-#141 decoupled §14 backfill is load-bearing for this
+  amendment's own seal-time auto-backfill).
+
+  Closes F-PLAN-AUTHOR-SKILL-MANIFEST-TARGET-DEFAULT-GAP
+  (FIDRAFT line 330), F-LOAM-AMEND-APPLY-IMPLICIT-COMMITTED-HEAD-
+  DEPENDENCY (line 334), and F-BASELINE-SELECTION-VS-POST-SEAL-
+  CORRECTIVE-FIXUPS (line 336) on seal.
+
+  Revises the legacy `framework/<comp>/seals/SEAL_COMMIT.<slug>`
+  narrative-target shape per `feedback_locked_design_not_-
+  license_for_bad_outcomes`: locked from pre-T1.4 amendments;
+  operational outcome (authoring agents converge on component-
+  name or framework-path shape when no canonical-form
+  prescription exists, leading to orphan files like #138's
+  `<repo>/dev-sdlc`) is bad enough to revisit + replace.
+  Post-T1.4 `docs/plans/sealed/<slug>.md` is the empirically
+  established canonical form; this amendment locks it in the
+  SKILL prose.
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+    # Observable outcomes (the ACs are the contract):
+    #
+    #   - AC.PASH.A.1 — A fresh persona/agent following the plan-
+    #     author SKILLs emits `narrative.target: docs/plans/
+    #     sealed/<slug>.md` by default. The canonical-form
+    #     prescription is reachable from grep over the four
+    #     plan-author SKILL files.
+    #   - AC.PASH.A.2 — Both convention docs (`plan-docs.md`
+    #     + `commit-ladder.md`) prescribe the same canonical
+    #     form; the prescription is consistent across all six
+    #     surfaces (4 SKILLs + 2 convention docs).
+    #   - AC.PASH.B.1 — BASELINE walk-forward picks the latest
+    #     `chore(amend-fixup):` commit between predecessor seal
+    #     and HEAD when one exists (synthetic-fixture verifies).
+    #   - AC.PASH.B.2 — When no fixup exists, BASELINE defaults
+    #     to the seal commit itself (no regression vs the
+    #     pre-fix discipline).
+    #   - AC.PASH.C.1 — Convention docs (`commit-ladder.md` +
+    #     `amendment-cycle.md`) AND `loam-amend-cycle` SKILL
+    #     explicitly name "commit source edits BEFORE apply"
+    #     ordering; reachable from grep.
+    #   - AC.PASH.C.2 — `loam amend apply` (real-apply, not
+    #     dry-run) emits a soft stderr warning when the working
+    #     tree carries tracked-but-unstaged changes outside the
+    #     partition's admitted union; non-blocking (return code
+    #     unchanged).
+    #   - AC.PASH.S — outcome-altitude smoke: synthetic
+    #     amendment cycle exercises all three scopes end-to-end
+    #     (canonical-form manifest authored per SKILL prose,
+    #     BASELINE selected via walk-forward against fixup-
+    #     bearing predecessor, source-edit-commit-before-apply
+    #     ordering with stderr warning on the unstaged case);
+    #     production seal + apply entry-points invoked; T1.4
+    #     archive lands plan-doc + manifest at `docs/plans/
+    #     sealed/<slug>.md` per #134 convention.
+
+    # Method-level choices (builder's call per ODD §1.1) — see
+    # plan-doc §14 method-decision register for the rationale:
+    #
+    #   - D-PASH.MERGE — three FIDRAFT scopes merged into a
+    #     single amendment per TG 11847 queue-merge directive.
+    #     Same component, same SKILL + methodology surface,
+    #     scope-disjoint AC families.
+    #   - D-PASH.TARGET-DEFAULT — `narrative.target: docs/plans/
+    #     sealed/<slug>.md` as the canonical default in all four
+    #     SKILLs + both convention docs.
+    #   - D-PASH.BASELINE-WALK — walk forward from predecessor
+    #     seal commit; if any `chore(amend-fixup):` commits exist
+    #     between seal and HEAD, pick the latest fixup; else
+    #     the seal commit itself. SKILL-prose prescription
+    #     only (no new tooling).
+    #   - D-PASH.METHOD-DOC — explicit "commit source edits
+    #     BEFORE `loam amend apply`" step in convention docs
+    #     + SKILL prose. Plus soft (non-blocking) stderr warning
+    #     emitted by `apply.run` on tracked-but-unstaged outside-
+    #     partition changes.
+    #   - D-PASH.WARN-PRECISION — warning fires ONLY on changes
+    #     OUTSIDE the partition's `universal_paths + extra_-
+    #     allowed_prefixes` admitted union (the precise form;
+    #     reduces false-positive noise during well-formed
+    #     mid-edit cycles).
+    #   - D-PASH.WARN-NON-BLOCKING — warning emits to stderr,
+    #     return code unchanged. Operator stays in control;
+    #     warning is signal, not gate.
+    #   - D-PASH.AC-LADDER — six mechanism-level ACs (AC.PASH.A.
+    #     {1,2} + AC.PASH.B.{1,2} + AC.PASH.C.{1,2}) + one
+    #     outcome-altitude smoke (AC.PASH.S). Lens 5
+    #     EVAL_DIMENSIONS: three orthogonal axes (.A / .B / .C)
+    #     + one aggregator judge (.S).
+    #   - D-PASH.DOGFOOD — THIS amendment's manifest dogfoods
+    #     Scope A (canonical `narrative.target`); BASELINE
+    #     selection dogfoods Scope B; source-edit commit
+    #     ladder dogfoods Scope C.
+
+    # Out of scope (per plan-doc §3):
+    #
+    #   - Any change that automatically commits source edits
+    #     before apply (operator stays in control).
+    #   - Any change that BLOCKS apply on a dirty working tree
+    #     (per FIDRAFT 334: warns, not blocks).
+    #   - Any change to the apply algorithm itself beyond the
+    #     pre-flight warning emission.
+    #   - Any change to the per-component BASELINE constant
+    #     literal editor (`baseline.py` — unrelated to
+    #     manifest BASELINE).
+    #   - Any change to `loam amend new-plan` CLI's vars-file
+    #     scaffold (doesn't produce a manifest; out of fence).
+    #   - PreToolUse hook for dispatch-brief SHA verification
+    #     (FIDRAFT 340 — separate FIDRAFT, separate amendment).
+    #   - 4 pre-existing loam-amend test failures rooted in
+    #     oversized `smoke_outcome` field (tracked as `ws-loam-
+    #     amend-oversized-manifest-field-cleanup`; per #140 §16
+    #     #6 and #141 §16 #5).
+    #   - Cross-component touches (`framework/<comp>/`, other
+    #     plugins).
+
+    # Predecessor (load-bearing): amendment #141 publish-state
+    # commit `2686101` (current main HEAD post-#141 publish).
+    # Composes with #134 (T1.4 archive convention at the code
+    # level; this amendment closes the SKILL-prose gap), #138
+    # (empirical trigger for Scopes A + C — manual workarounds
+    # `26f3a9e` orphan-removal and re-commit), #139 (empirical
+    # trigger for Scope B — manual `ca16e41` re-baseline
+    # workaround), #140 (queue-merge precedent), #141 (post-#141
+    # decoupled §14 backfill is load-bearing for this
+    # amendment's own seal-time auto-backfill).
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/amendment-142-plan-author-skill-hygiene-merged.md
+  body: |
+    dev-sdlc: plan-author SKILL + dev-sdlc methodology hygiene
+    (merged three-scope amendment per TG 11847 queue-merge
+    directive). Closes F-PLAN-AUTHOR-SKILL-MANIFEST-TARGET-
+    DEFAULT-GAP (FIDRAFT line 330), F-LOAM-AMEND-APPLY-IMPLICIT-
+    COMMITTED-HEAD-DEPENDENCY (line 334), and F-BASELINE-
+    SELECTION-VS-POST-SEAL-CORRECTIVE-FIXUPS (line 336) on seal.
+
+    Scope A — manifest `narrative.target` canonical form.
+    Plan-author SKILLs + convention docs prescribe
+    `docs/plans/sealed/<slug>.md` as the canonical default,
+    matching the post-#134 T1.4 archive convention and the
+    empirical convergence at #137/#139/#140/#141. Replaces the
+    legacy `framework/<comp>/seals/SEAL_COMMIT.<slug>` shape;
+    prevents the component-name-only bug shape that triggered
+    #138's orphan file `<repo>/dev-sdlc` (recovered via fixup
+    `26f3a9e`).
+
+    Scope B — BASELINE walk-forward from predecessor seal.
+    SKILLs prescribe: walk forward from predecessor seal
+    commit; if any `chore(amend-fixup):` commits exist between
+    seal and HEAD, pick the latest fixup as BASELINE; else
+    the seal commit itself. Discipline-only (no new tooling).
+    Prevents the stale-BASELINE pattern that forced #139's
+    corrective re-baseline `ca16e41`.
+
+    Scope C — source-edit-commit-before-apply step. Convention
+    docs (commit-ladder.md / amendment-cycle.md) + loam-amend-
+    cycle SKILL explicitly name "commit source edits BEFORE
+    `loam amend apply`" as a step (apply runs against committed
+    HEAD per `apply.py:158`). Plus a soft (non-blocking) stderr
+    warning emitted by `apply.run` when tracked-but-unstaged
+    changes exist OUTSIDE the partition's admitted union (the
+    precise form per D-PASH.WARN-PRECISION; reuses `_diff_with
+    _working_tree` from `dry_run.py`). Prevents the apply-
+    against-uncommitted-edits halt #138's first build attempt
+    hit.
+
+    Shape (merged) chosen per D-PASH.MERGE: three scopes touch
+    the same `dev-sdlc` component + same SKILL + methodology
+    surface; AC families are scope-disjoint (.A / .B / .C);
+    the dogfood discipline (D-PASH.DOGFOOD) exercises all three
+    scopes at the amendment's own authoring + build time.
+
+    Composes with amendment #134 (T1.4 archive convention; this
+    amendment closes the SKILL-prose gap), #138 (empirical
+    trigger for A + C — retires `26f3a9e` and manual-re-commit
+    workarounds), #139 (empirical trigger for B — retires
+    `ca16e41` workaround), #140 (queue-merge precedent), #141
+    (decoupled §14 backfill is load-bearing for this seal).
+
+    Closes the three FIDRAFTs on seal.

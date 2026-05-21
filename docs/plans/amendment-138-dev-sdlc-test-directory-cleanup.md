@@ -6,6 +6,26 @@
 
 ---
 
+## §0. NARROWING ADDENDUM (2026-05-21, post-builder F2 halt — Telegram 11852)
+
+**This amendment was narrowed from its original two-scope authoring to SKILL-frontmatter-only.** The PMR scope (AC.DSTC.PMR.{1,2}) is DEFERRED to a separate follow-on amendment because the builder's first cycle surfaced a structural test-corpus contradiction the plan-author's pre-flight missed:
+
+After deleting the `framework/memory-system/` manifest entries (Scope A's intended fix), `test_AC_PMR_4_every_always_loaded_glob_resolves` exposed a second stale entry — `data/` (root at L66 + glob at L124). The `data/` directory was deleted from canonical at commit `39cfbb1` (2026-04-28). But two PMR_4 tests MUTUALLY CONTRADICT on the `data/` case:
+
+- `test_AC_PMR_4_every_always_loaded_glob_resolves` requires every glob to expand to a non-empty match-set.
+- `test_AC_PMR_4_data_stays_top_level` requires `data/**` to stay in the `always_loaded` block.
+
+No manifest-only edit satisfies both. Resolution requires either (a) test-corpus edit (out of this amendment's fence per §5) or (b) a sentinel `data/` directory creation (architectural decision). Neither is in this amendment's authorized scope.
+
+**Narrowed scope for the in-flight build:**
+- IN: AC.DSTC.SKILLS.{1,2,3,4} + AC.DSTC.S (smoke scoped to SKILL fix only, NOT the full directory).
+- DEFERRED: AC.DSTC.PMR.{1,2} — re-scoped in a separate amendment that names the test-corpus resolution explicitly.
+- The narrowed outcome-altitude smoke admits the 2 pre-existing PMR failures as known-and-deferred (not regressions introduced by this amendment).
+
+**Persona ratification of the narrowing (TG 11852):** under owner build-strategy delegation TG 11808 + 11850; the narrowing preserves the SKILL-frontmatter delta (9-of-11 failures cleared) and queues the PMR/data work as its own ratified follow-on rather than ad-hoc extending this amendment's fence.
+
+---
+
 ## §1. Objective / Summary / TL;DR
 
 Bring `plugins/dev-sdlc/tests/` to green so future seal-tool work (notably the unwritten seal-tool hygiene pair — F-SEAL-PLUGINS-TESTS-SKIPPED + F-SEAL-DIRTY-TREE-CHECK-AFTER-PLAN-ARCHIVE — which will invoke the full test suite for plugins/-tree components) lands on a clean baseline. Two concrete fixes:

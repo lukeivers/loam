@@ -30,6 +30,15 @@ Subcommands:
     background subprocess that ``stop`` spawns. Drives one
     ``add_episode`` synchronously to completion against the live
     MCP memory client (AC.M.6 / AC.M.10). Always exits 0.
+  - ``trait-reflection-stop`` — independent Stop-hook contributor
+    (AC.EOTTR.{1-5}). Reads the same Stop envelope as ``stop``,
+    recovers the assistant reply from ``transcript_path``, runs a
+    deterministic seven-trait self-reflection check, and appends
+    one NDJSON entry per turn to
+    ``<workspace>/workspace/.pos/trait-reflection/<session>.jsonl``.
+    Observer + reporter only; always exits 0. Wired side-by-side
+    with ``stop`` via a second entry in the operator's
+    ``.claude/settings.json`` Stop array.
 
 Invoked from Claude Code's ``hooks.SessionStart``,
 ``hooks.UserPromptSubmit``, and ``hooks.Stop`` arrays via the
@@ -54,6 +63,7 @@ from .stop_emitter import (
     cli_stop,
 )
 from .memory_write_worker import cli_memory_worker
+from .end_of_turn_trait_reflection import cli_trait_reflection_stop
 
 
 def _resolve_workspace(workspace: Path | None) -> Path:
@@ -91,6 +101,11 @@ def _cmd_memory_write(args: argparse.Namespace) -> int:
 def _cmd_memory_worker(args: argparse.Namespace) -> int:
     workspace_root = _resolve_workspace(args.workspace)
     return cli_memory_worker(workspace_root=workspace_root)
+
+
+def _cmd_trait_reflection_stop(args: argparse.Namespace) -> int:
+    workspace_root = _resolve_workspace(args.workspace)
+    return cli_trait_reflection_stop(workspace_root=workspace_root)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -165,6 +180,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_worker.add_argument("--workspace", type=Path, default=None)
     p_worker.set_defaults(func=_cmd_memory_worker)
+
+    p_tr = sub.add_parser(
+        "trait-reflection-stop",
+        help=(
+            "End-of-turn trait-reflection Stop-hook contributor "
+            "(AC.EOTTR.{1-5}). Reads Claude Code's Stop envelope from "
+            "stdin, recovers the assistant reply from "
+            "``transcript_path``, runs a deterministic seven-trait "
+            "self-reflection check, and appends one NDJSON entry per "
+            "turn to ``<workspace>/workspace/.pos/trait-reflection/"
+            "<session>.jsonl``. Observer + reporter only; always "
+            "exits 0 (a non-zero Stop-hook exit blocks Claude Code's "
+            "normal stop behaviour)."
+        ),
+    )
+    p_tr.add_argument("--workspace", type=Path, default=None)
+    p_tr.set_defaults(func=_cmd_trait_reflection_stop)
 
     return parser
 

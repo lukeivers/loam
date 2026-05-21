@@ -29,10 +29,12 @@ Allow-list:
   constants because of the stdlib-only contract — they cannot import
   workspace_bootstrap before the .venv exists).
 - Universal admissions ``framework/tools/heavy-b-migrate/`` and
-  ``framework/tools/pos-amend/`` — these reference ``<repo_root>/
+  ``framework/tools/loam/`` — these reference ``<repo_root>/
   objective_tracker.sqlite`` for canonical-pos-v2's own tracker DB,
   NOT a derived workspace's workspace-state. Per D.2-build.D they
-  stay unchanged.
+  stay unchanged. (The ``framework/tools/loam/`` prefix replaced
+  the pre-M1g ``framework/tools/pos-amend/`` prefix at the M1g
+  rename; the latter has been inert since commit ``d64414e``.)
 - Comments / docstrings carrying ``<workspace>/.pos/`` etc. as
   prose; the test pattern requires the inline computation, not the
   prose mention.
@@ -102,10 +104,11 @@ ALLOW_LIST_PREFIXES = (
     "framework/hands-off-lifecycle/hooks/",
     # Test fixtures construct fake state for tests; mechanical.
     "/tests/",
-    # heavy-b-migrate + pos-amend reference canonical-pos-v2's own
-    # tracker DB (NOT a derived workspace) — per D.2-build.D.
+    # heavy-b-migrate + loam (post-M1g rename of pre-M1g pos-amend)
+    # reference canonical-pos-v2's own tracker DB (NOT a derived
+    # workspace) — per D.2-build.D.
     "framework/tools/heavy-b-migrate/",
-    "framework/tools/pos-amend/",
+    "framework/tools/loam/",
     # Cache directory.
     "/__pycache__/",
 )

@@ -1,0 +1,191 @@
+schema_version: 1
+amendment:
+  number: 134
+  slug: amendment-134-fbm-tier1-foundations
+  title: "FBM Tier 1 foundations — supersession marker (T1.1) + encoding-context capture (T1.2) + FIDRAFT cleanup-on-seal (T1.3) + amendment-plan archive-on-seal (T1.4)"
+
+# BASELINE: TBD — pinned by the build agent at apply time. Plan-doc §1
+# carries the pre-flight verification (no prior implementation of any
+# T1 item in canonical) and the durable owner-ratification record
+# (TG 11804/11805/11807/11808/11809).
+#
+# Commit ladder pre-apply (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <retroactive-sweep commit — per Q3 ratification §6 step 8>
+#   <source-edits commit (primary-persona + loam-amend)>
+#   <loam amend apply auto-commit per v0.1.2 item 6>
+#   <loam amend seal deterministic seal commit — THIS commit is the
+#    first user of T1.4 (the plan-doc archives itself on seal)>
+#
+# Multi-component fence — single cycle per Q2 owner ratification (TG
+# 11809). The two component clusters are:
+#   - primary-persona — T1.1 (supersession-marker frontmatter parser +
+#     retrieval-ranker multiplicative penalty branch) + T1.2 (memory-
+#     write worker emits 4-field context: block on every write).
+#   - dev-sdlc/loam-amend — T1.3 (post-seal FIDRAFT cleanup hook
+#     surfaces matching entries; never auto-writes FIDRAFT) + T1.4
+#     (loam amend seal moves plan-doc + manifest into
+#     docs/plans/sealed/ as part of the seal commit; one-shot
+#     retroactive sweep folds in existing sealed-but-not-archived
+#     plans).
+#
+# AC families per docs/plans/amendment-134-fbm-tier1-foundations.md §4:
+#   AC.FBMT1.SUPM.{1,2,3,4} — supersession marker + ranker.
+#   AC.FBMT1.ENCC.{1,2,3,4} — encoding-context capture (4-field
+#     schema; schema-minimal per TG 11805).
+#   AC.FBMT1.FCS.{1,2,3,4} — FIDRAFT cleanup-on-seal surfacing.
+#   AC.FBMT1.APS.{1,2,3,4} — amendment-plan archive-on-seal (forward +
+#     one-shot retroactive sweep per Q3 ratification).
+#   AC.FBMT1.S — outcome-altitude smoke (all four exercised end-to-
+#     end in one test).
+baseline: "TBD-PINNED-AT-APPLY"
+
+plan: docs/plans/amendment-134-fbm-tier1-foundations.md
+
+components:
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3 + this
+# amendment's retroactive sweep needing to touch docs/plans/ paths.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/plans/sealed/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/primary-persona/seals/SEAL_COMMIT.amendment-134-fbm-tier1-foundations
+  body: |
+    # Amendment #134 — FBM Tier 1 foundations — apply ladder
+
+    2026-05-21. FBM Tier 1 foundations per
+    `docs/plans/amendment-134-fbm-tier1-foundations.md`, implementing
+    the four scope-disjoint write-side / discipline primitives named
+    in the v2 FBM rethink (`fbm-end-to-end-rethink-v2-synthesized-
+    2026-05-21.md` in the dispatcher's workspace artifacts).
+
+    Owner ratification durably recorded in plan-doc §1:
+      - TG 11804 (2026-05-21T16:10:07Z) — Q1=(a) keep T1.2.
+      - TG 11805 (2026-05-21T16:11:00Z) — schema-minimal caveat on
+        T1.2 (4 fields only; no speculative expansion).
+      - TG 11807 (2026-05-21T16:13:00Z) — Q2 framed.
+      - TG 11808 (2026-05-21T16:14:01Z) — build-strategy delegation.
+      - TG 11809 (2026-05-21T16:15:00Z) — Q2=(b) parallel multi-
+        component; Q3=both forward + one-shot retroactive seed.
+
+    Multi-component fence (corrected at plan-author time per §16
+    finding #1 — dispatcher brief named `framework/memory-system/`
+    + `framework/pos-amend/` which do not exist in canonical; the
+    memory implementation lives in `framework/primary-persona/` per
+    `docs/components/memory.md`, and pos-amend is at
+    `plugins/dev-sdlc/tools/loam-amend/`):
+
+      - primary-persona — T1.1 supersession-marker frontmatter +
+        retrieval-ranker multiplicative penalty (0.1×); T1.2 memory-
+        write worker emits 4-field `context:` block.
+      - dev-sdlc — T1.3 FIDRAFT cleanup-on-seal hook (surfaces only;
+        never writes); T1.4 amendment-plan archive-on-seal (`loam
+        amend seal` moves plan-doc + manifest into
+        `docs/plans/sealed/` as part of the seal commit; one-shot
+        retroactive sweep handles existing sealed plan-docs).
+
+    AC families locked per plan-doc §4:
+
+      - AC.FBMT1.SUPM.1 — `superseded-by: <relative-path>` parses;
+        value exposed on parsed memory-file representation.
+      - AC.FBMT1.SUPM.2 — Retrieval ranker demotes superseded files
+        relative to comparable unsuperseded files (multiplicative
+        penalty observable).
+      - AC.FBMT1.SUPM.3 — Superseded files NOT filtered (still
+        returned, just demoted) per "mark, don't delete".
+      - AC.FBMT1.SUPM.4 — `superseded-by` pointing at a non-existent
+        file is a soft error (logged; penalty still applies).
+      - AC.FBMT1.ENCC.1 — Worker emits `context:` block with EXACTLY
+        the four named fields (`triggering_msg_id`, `active_task_id`,
+        `cwd`, `active_files`) — no more, no less. Structurally
+        enforces TG 11805 schema-minimal directive.
+      - AC.FBMT1.ENCC.2 — Fields carry values when input has them;
+        `null` (still present in YAML) when absent.
+      - AC.FBMT1.ENCC.3 — `active_files` is a list; non-list input
+        is a schema-validation error.
+      - AC.FBMT1.ENCC.4 — Pre-amendment memory files (no `context:`)
+        still parse + retrieve cleanly (backwards-compat).
+      - AC.FBMT1.FCS.1 — Post-seal hook reads sealed plan-doc, scans
+        FIDRAFT for slug-overlap above confidence threshold, emits
+        surfacing payload (NOT a file edit).
+      - AC.FBMT1.FCS.2 — Hook never writes FIDRAFT (SHA + mtime
+        unchanged after hook fires).
+      - AC.FBMT1.FCS.3 — Zero false-positive surfacing when no
+        FIDRAFT entry matches above threshold.
+      - AC.FBMT1.FCS.4 — `--skip-fidraft-cleanup` (or equivalent
+        flag) bypasses the hook for emergency seals.
+      - AC.FBMT1.APS.1 — Plan-doc + manifest at `docs/plans/sealed/`
+        after `loam amend seal`; seal commit includes the rename.
+      - AC.FBMT1.APS.2 — Plan-doc content byte-identical post-move;
+        internal cross-references functional.
+      - AC.FBMT1.APS.3 — One-shot retroactive sweep moves
+        sealed-but-not-archived plan-docs; in-flight plans stay in
+        `docs/plans/`.
+      - AC.FBMT1.APS.4 — Session-start "amendments-in-flight"
+        contributor lists exactly the unsealed plans.
+      - AC.FBMT1.S — Outcome-altitude smoke: single end-to-end test
+        exercises T1.1 + T1.2 + T1.3 + T1.4 against production
+        entry-points with no pre-arranged state.
+
+    Method-level choices (builder's call per ODD §1.1) — see plan-doc
+    §14 method-decision register for the rationale:
+
+      - D-T1.2.SCHEMA — 4-field encoding-context schema
+        (`triggering_msg_id`, `active_task_id`, `cwd`,
+        `active_files`); schema-minimal per TG 11805.
+      - D-T1.1.PENALTY — `0.1×` multiplicative ranker penalty; hard-
+        coded at v0.1; configurability deferred.
+      - D-T1.3.MATCH — slug-overlap with loose ~30% token threshold;
+        operator triages false positives; full-text similarity
+        deferred until evidence of slug-overlap insufficiency.
+      - D-T1.4.DIR — `docs/plans/sealed/` (sibling to in-flight);
+        per-component placement rejected as fragmenting multi-
+        component plans.
+
+    Out of scope (per plan-doc §3):
+
+      - Tier 2 retrieval mechanics (B.1 co-citation graph + spreading
+        activation; A.1 power-law base-level activation) — separate
+        amendment.
+      - Tier 3 orchestration (C.1 session-end + C.2 scheduled
+        consolidation) — depends on Tier 1 + Tier 2 done first.
+      - T2.3 working-set — separate design conversation per Q4
+        (not yet ruled).
+      - Speculative T1.2 schema expansion — explicitly forbidden by
+        TG 11805 + structurally enforced by AC.FBMT1.ENCC.1.
+      - Auto-edit of FIDRAFT by T1.3 — owner-gated surface only.
+      - Memory-rule archive directory — v2 supersedes v1 with
+        mark-don't-delete; no archive directory needed.
+      - Retroactive memory-rule supersedes-annotation cleanup pass —
+        separate amendment; T1.1 ships the primitive.
+
+    Predecessor commits (load-bearing):
+      - 1a1f830 — M-FBM operational-health AC family seal (file-
+        based memory baseline).
+      - canonical loam HEAD at plan-author time — BASELINE candidate;
+        pinned at apply time.
+
+    BASELINE TBD — pinned at apply time. Multi-component fence on
+    `framework/primary-persona/` and `plugins/dev-sdlc/tools/loam-
+    amend/`. Sidecars advance to the amendment #134 seal SHA at
+    apply time. The seal commit IS the first user of T1.4 (the
+    plan-doc archives itself).

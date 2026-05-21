@@ -313,7 +313,7 @@ When raw Claude Code without loam:
 - **`feedback_agent_prompts_scope_only`** — the principle
   ancestor of this skill. The prohibition on method-in-
   prompt smuggling lives in that feedback memory.
-- **`feedback_dispatch_explicit_pos_amend_apply`** — the brief
+- **`feedback_dispatch_explicit_loam_amend_apply`** — the brief
   must explicitly name `loam amend apply` (not rely on the
   agent inferring).
 - **`feedback_subagent_odd_violation_halt`** — the brief

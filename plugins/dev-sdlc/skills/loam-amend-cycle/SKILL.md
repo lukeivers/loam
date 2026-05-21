@@ -69,7 +69,7 @@ Trigger conditions:
   ladder is complete.
 - Persona is dispatching a build agent for a sealed-component cycle
   — the dispatch brief should reference this skill explicitly per
-  `feedback_dispatch_explicit_pos_amend_apply`.
+  `feedback_dispatch_explicit_loam_amend_apply`.
 
 Skip when:
 
@@ -144,7 +144,7 @@ When raw Claude Code without loam dev-sdlc plugin:
 - **`dispatch-brief-authoring` skill** — when dispatching a build
   agent for the cycle, the dispatch brief follows that skill's
   shape. Reference this skill explicitly in the dispatch
-  (`feedback_dispatch_explicit_pos_amend_apply`).
+  (`feedback_dispatch_explicit_loam_amend_apply`).
 - **`audit-finding-triage` skill** — applied to any halt-and-
   surface findings the build agent returns mid-cycle.
 - **`feedback_no_amend_in_agent_dispatches`** — the agent-side
@@ -153,7 +153,7 @@ When raw Claude Code without loam dev-sdlc plugin:
 - **`feedback_serialize_amendment_builds`** — two amendment
   cycles cannot run in parallel in the same git tree without
   worktree isolation. This skill is single-cycle scope.
-- **`feedback_dispatch_explicit_pos_amend_apply`** — the dispatch
+- **`feedback_dispatch_explicit_loam_amend_apply`** — the dispatch
   brief must explicitly name `loam amend apply` (not rely on the
   agent inferring usage from corpus).
 

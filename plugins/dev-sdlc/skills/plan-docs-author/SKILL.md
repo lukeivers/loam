@@ -80,7 +80,7 @@ The required sections + each one's purpose:
 9. **§8 Halt triggers (in-flight).** Conditions that fire mid-build
    stop the build for surface-and-RF. Different from §5 (pre-build
    gates).
-10. **§9 Bookkeeping.** pos-amend usage, manifest schema version,
+10. **§9 Bookkeeping.** `loam amend` usage, manifest schema version,
     commit ladder shape, §14 backfill, master-plan §9 row update,
     tag-push policy.
 11. **§10 F2 Ruthless Feedback.** Gaps named at plan-author time.
@@ -177,7 +177,7 @@ Skip when:
 11. **Author §8 Halt triggers (in-flight).** Conditions that fire
     mid-build. Different from §5; these are the build-agent's
     halt-and-surface conditions.
-12. **Author §9 Bookkeeping.** pos-amend / manifest schema /
+12. **Author §9 Bookkeeping.** `loam amend` / manifest schema /
     commit ladder / §14 backfill / master-plan §9 row / tag-push
     policy.
 13. **Author §10 F2 RF.** 2–6 honest doubts named. Each with

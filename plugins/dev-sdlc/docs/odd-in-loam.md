@@ -1057,7 +1057,7 @@ worked corrective-commit mechanics.
   (tuple widening, a new AC), the author is free to pin any existing
   point-in-time invariant at that time. No audit sweep; conversion
   is opportunistic.
-- The `pos-amend` tool's manifest accepts a per-component
+- The `loam amend` tool's manifest accepts a per-component
   `frozen_baseline: bool` field (introduced amendment #23). When
   `true`, `apply` skips the module-top BASELINE literal bump for
   that component while still advancing sidecars and tuples. Use

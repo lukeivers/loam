@@ -328,7 +328,7 @@ these as worked examples:
 ## Graceful degradation
 
 When raw Claude Code is invoked without the loam-amend tooling
-installed (no `loam` binary on PATH; no `pos-amend apply`
+installed (no `loam` binary on PATH; no `loam amend apply`
 shorthand):
 
 - The 7-step walk through steps 1–5 still applies — Read /
@@ -388,7 +388,7 @@ Composing feedback memories:
   ruling.
 - `feedback_no_amend_in_agent_dispatches` — prohibits
   `git commit --amend`; corrective commits only.
-- `feedback_dispatch_explicit_pos_amend_apply` — the
+- `feedback_dispatch_explicit_loam_amend_apply` — the
   graduation cycle's dispatch brief explicitly names
   `loam amend apply` as the bookkeeping mechanism.
 - `feedback_summarize_and_surface_decisions` — the

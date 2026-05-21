@@ -394,7 +394,7 @@ This idea is the umbrella for the broader two-modes-and-multi-workspace programm
 
 - `classify_workspace` in amendment #39 is replaced by sub-plan E — `VALUE_PROPOSITION.md` presence is no longer a viable dev-marker since every GitHub-cloned user has it; classification tracks the user's own dev-intent answer instead.
 - Host-global `~/.pos/` SQLite files migrate to workspace-local on a per-file basis (extending amendment #28's pattern); the global-vs-workspace partition mirrors Claude Code's own `~/.claude/` + `<workspace>/.claude/` pattern.
-- What auto-loads in DEV MODE: `pos-amend`, plan docs, manifest YAMLs, BASELINE conventions, SEAL_COMMITs, sealed-component conventions, dispatch-template, spec docs, component proposals + seal narratives, ODD methodology, dev CDCs from FUTURE_IDEAS.md.
+- What auto-loads in DEV MODE: `loam-amend`, plan docs, manifest YAMLs, BASELINE conventions, SEAL_COMMITs, sealed-component conventions, dispatch-template, spec docs, component proposals + seal narratives, ODD methodology, dev CDCs from FUTURE_IDEAS.md.
 - What stays loaded in NORMAL USE: the runtime harness (memory-system, scope-of-work, primary-persona, objective-tracker, all the Phase 1–4 sealed components), `VALUE_PROPOSITION.md` (still load-bearing for tracker root), basic settings, plus end-user-facing docs/help.
 
 The deferred sub-plans (C, D, G) reactivate when the multi-workspace cycle is picked up. They compose under this idea's umbrella; the master plan's §11.5 explains the deferral rationale. Full reactivation requires a fresh proposal cycle (the sub-plan files on disk are the design seed, not the final shape).
@@ -411,7 +411,7 @@ Owner-leaned fix direction (recorded mid-session 2026-04-25): **B (#39 writes to
 
 **Active fix.** Folded into sub-plan E (the `classify_workspace` replacement, in-flight as the active two-modes programme): a small additive change to `tracker_seed.py` — change the write path argument from `pos_root` to `workspace_root` to match #40's read path. Because E already touches `tracker_seed.py`, the fix folds in without expanding scope (single-component, single amendment). Documented in the master plan's §11.5.
 
-**Comprehensive resolver (deferred under Idea 13's multi-workspace umbrella).** A more thorough fix would extract a workspace-aware path-resolver pattern that all multi-workspace path consumers share (`tracker_seed`, `tracker_context`, `pos_amend.tracker_registration`, the cost / scope-of-work / orchestrator adapters per sub-plan C). The shared resolver enforces consistency: callers can't pass the wrong root because they don't pass a root at all — they pass a workspace handle, and the resolver derives both `pos_root` and `workspace_root` consistently. This deeper fix waits for sub-plan C's reactivation; the active fix in E is sufficient for the single-workspace v1.
+**Comprehensive resolver (deferred under Idea 13's multi-workspace umbrella).** A more thorough fix would extract a workspace-aware path-resolver pattern that all multi-workspace path consumers share (`tracker_seed`, `tracker_context`, `loam_amend.tracker_registration`, the cost / scope-of-work / orchestrator adapters per sub-plan C). The shared resolver enforces consistency: callers can't pass the wrong root because they don't pass a root at all — they pass a workspace handle, and the resolver derives both `pos_root` and `workspace_root` consistently. This deeper fix waits for sub-plan C's reactivation; the active fix in E is sufficient for the single-workspace v1.
 
 **Trigger to activate the comprehensive direction:** when sub-plan C reactivates (multi-workspace cycle), the path-resolver pattern absorbs C's per-component path-rewriting work. Composes with Idea 15 (shared `pos_paths` helper) — the resolver lives in or alongside that helper module.
 
@@ -421,7 +421,7 @@ Owner-leaned fix direction (recorded mid-session 2026-04-25): **B (#39 writes to
 
 Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced by amendment #16 build agent).
 
-The constant `"objective_tracker.sqlite"` is now duplicated across three consumers: `workspace_bootstrap.adapters.tracker_seed` (writer per #39), `primary_persona.tracker_context` (reader per #40), and `pos_amend.tracker_registration` (registrar per the pos-amend-tracker-integration plan post-#16). Each consumer hard-codes the filename. A fourth consumer would warrant extraction; the third was the trigger flagged at #16 build, but the extraction cost was not worth a dedicated amendment then.
+The constant `"objective_tracker.sqlite"` is now duplicated across three consumers: `workspace_bootstrap.adapters.tracker_seed` (writer per #39), `primary_persona.tracker_context` (reader per #40), and `loam_amend.tracker_registration` (registrar per the pos-amend-tracker-integration plan post-#16; plan filename retained as historical reference). Each consumer hard-codes the filename. A fourth consumer would warrant extraction; the third was the trigger flagged at #16 build, but the extraction cost was not worth a dedicated amendment then.
 
 **Direction.** A shared helper module — working name `pos_paths` — that single-sources the workspace-relative path constants every cross-component consumer needs. Tracker DB filename is the first; sibling candidates include the orchestrator SQLite filename, the scope-of-work SQLite filename, the first-run state filename (per amendment #28), the persona-contract directory layout (per amendment #36), and the memory-yaml override path (per amendment #29).
 
@@ -433,19 +433,19 @@ The constant `"objective_tracker.sqlite"` is now duplicated across three consume
 
 ---
 
-## Idea 16 — Tracker public API for source-commit rewriting (replace pos-amend's direct SQLite poke)
+## Idea 16 — Tracker public API for source-commit rewriting (replace loam-amend's direct SQLite poke)
 
 Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced by amendment #16 build agent).
 
-`pos_amend.tracker_registration.update_source_commits` currently reaches into the tracker's SQLite directly to rewrite the `lifted_from.source_commit` JSON field after seal. Works against amendment #38's stable schema, but a future tracker amendment changing the `lifted_from` JSON shape would silently break pos-amend without an obvious test signal in pos-amend's own test surface — pos-amend doesn't own the schema, so it can't detect schema drift.
+`loam_amend.tracker_registration.update_source_commits` currently reaches into the tracker's SQLite directly to rewrite the `lifted_from.source_commit` JSON field after seal. Works against amendment #38's stable schema, but a future tracker amendment changing the `lifted_from` JSON shape would silently break loam-amend without an obvious test signal in loam-amend's own test surface — loam-amend doesn't own the schema, so it can't detect schema drift.
 
-**Direction.** A tracker public API — working name `tracker.rewrite_lifted_from_source_commit(objective_id, sha)` (or equivalent) — that owns the SQLite read/write at the tracker layer. pos-amend calls the API; the tracker enforces the schema; schema changes break the API contract (which pos-amend's test suite catches via the API surface), not the storage layout silently.
+**Direction.** A tracker public API — working name `tracker.rewrite_lifted_from_source_commit(objective_id, sha)` (or equivalent) — that owns the SQLite read/write at the tracker layer. loam-amend calls the API; the tracker enforces the schema; schema changes break the API contract (which loam-amend's test suite catches via the API surface), not the storage layout silently.
 
 **Composition.** This is a sealed-component amendment to `objective-tracker` — small surface, narrow API addition, no schema change at first. The amendment's AC count is small (one new public function, one test verifying the function rewrites the SHA, one test verifying the schema-error path).
 
-**Trigger to activate.** Either: (a) a fourth tracker SQLite consumer appears (each new consumer multiplies the schema-drift surface area), OR (b) the next tracker amendment touches `lifted_from`'s shape (which would break pos-amend silently today; the API guard prevents the silent failure). Lightly-coupled to Heavy-B Phase γ — when continuous registration runs at every amendment, pos-amend's poke happens more often, raising the value of the API guard.
+**Trigger to activate.** Either: (a) a fourth tracker SQLite consumer appears (each new consumer multiplies the schema-drift surface area), OR (b) the next tracker amendment touches `lifted_from`'s shape (which would break loam-amend silently today; the API guard prevents the silent failure). Lightly-coupled to Heavy-B Phase γ — when continuous registration runs at every amendment, loam-amend's poke happens more often, raising the value of the API guard.
 
-**Out of scope.** Migrating other pos-amend ↔ tracker boundaries to API form (e.g. the `objectives` block's apply-time write path) is a separate cycle. This idea names only the post-seal source-commit rewrite.
+**Out of scope.** Migrating other loam-amend ↔ tracker boundaries to API form (e.g. the `objectives` block's apply-time write path) is a separate cycle. This idea names only the post-seal source-commit rewrite.
 
 ---
 
@@ -471,7 +471,7 @@ Captured 2026-04-25 (graduated from `FUTURE_IDEAS_DRAFT.md`; surfaced by the 202
 
 The "fresh-clone first-run with sandbox isolation + Monitors" pattern that the 2026-04-25 integration-test agent used is a one-shot today — the agent's prompt + scratch fixtures + post-run analysis carry the harness shape. The pattern could become a reusable harness for any future integration test (post-amendment regression checks, cross-clone sanity checks, multi-workspace fixtures per sub-plan C / Idea 13's deferred parts, etc.).
 
-**Direction.** A `tools/integration-test/` script (or sub-package under `tools/pos-amend/`) that captures the pattern: fresh-clone bootstrap → first-run dispatch under Monitor → controlled-fixture state inspection → structured findings report. The harness is dev-discipline (`tools/`-resident, no sealed-component changes); each integration test is a small recipe that names what to scaffold, what to run, what to inspect. The harness handles sandbox isolation, Monitor wiring, output paths, and findings-report shape.
+**Direction.** A `tools/integration-test/` script (or sub-package under `plugins/dev-sdlc/tools/loam-amend/`) that captures the pattern: fresh-clone bootstrap → first-run dispatch under Monitor → controlled-fixture state inspection → structured findings report. The harness is dev-discipline (`tools/`-resident, no sealed-component changes); each integration test is a small recipe that names what to scaffold, what to run, what to inspect. The harness handles sandbox isolation, Monitor wiring, output paths, and findings-report shape.
 
 **Composition.** Future integration tests (sub-plan C's two-workspace fixture per AC.PROG.1, sub-plan G's cross-workspace memory-isolation test, post-amendment regression sweeps) all benefit. The harness is the difference between "spin up a fresh agent prompt with the entire fixture-shape inline" (today) and "write a 30-line recipe that the harness expands" (future).
 
@@ -572,11 +572,11 @@ amendment on top.
 
 Captured 2026-04-29 (graduated from `FUTURE_IDEAS_DRAFT.md`).
 
-The dispatch-template (`framework/tools/pos-amend/templates/dispatch/sealed-component-build.md`) and plan-doc-template (`framework/tools/pos-amend/templates/plan/dev-discipline.md`) shipped during the amendment cycle. Both follow the same shape: frontmatter (description + required + optional vars), then a `{{placeholder}}`-shaped body. Memory-doc authoring (the per-feedback files at `~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_*.md`) follows the same per-document structure — frontmatter (name / description / type) + Why + How-to-apply — but is propagated by precedent rather than mechanised.
+The dispatch-template (`plugins/dev-sdlc/tools/loam-amend/templates/dispatch/sealed-component-build.md`) and plan-doc-template (`plugins/dev-sdlc/tools/loam-amend/templates/plan/dev-discipline.md`) shipped during the amendment cycle. Both follow the same shape: frontmatter (description + required + optional vars), then a `{{placeholder}}`-shaped body. Memory-doc authoring (the per-feedback files at `~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_*.md`) follows the same per-document structure — frontmatter (name / description / type) + Why + How-to-apply — but is propagated by precedent rather than mechanised.
 
-**Direction.** A third template at `framework/tools/pos-amend/templates/memory/feedback.md` (or similar) standardising the frontmatter fields and ensuring no field drifts over time as the memory ecosystem grows.
+**Direction.** A third template at `plugins/dev-sdlc/tools/loam-amend/templates/memory/feedback.md` (or similar) standardising the frontmatter fields and ensuring no field drifts over time as the memory ecosystem grows.
 
-**Composition.** Same template engine as the existing two templates; same `description` frontmatter doubles as `pos-amend template list` one-liner (per the DRAFT entry on the introspection-surface pattern). Memory authoring becomes `pos-amend new-memory <slug>` (parallel to the future `pos-amend new-plan <slug>` orchestration).
+**Composition.** Same template engine as the existing two templates; same `description` frontmatter doubles as `loam amend template list` one-liner (per the DRAFT entry on the introspection-surface pattern). Memory authoring becomes `loam amend new-memory <slug>` (parallel to the future `loam amend new-plan <slug>` orchestration).
 
 **Trigger to activate.** Either: (a) a fourth memory file with drifted frontmatter is observed, OR (b) the memory-graphiti integration (Idea 7 GLiNER2) starts consuming memory-doc structure programmatically and benefits from rigid frontmatter.
 
@@ -607,12 +607,12 @@ Captured 2026-04-29 (graduated from `FUTURE_IDEAS_DRAFT.md` from two related fin
 The Bash tool wraps commands in an `eval`-style shell that produces non-interactive-shell behaviour distinct from the user's interactive zsh. Two observed hazards:
 
 1. **Glob expansion failure** — `(eval):1: no matches found: <glob>` errors when a glob fails to expand, even when the interactive shell has `setopt nomatch` UNset. The same pattern via `bash -c '...'` or `find -name` works. Caused at least one false-positive "files don't exist" diagnosis during agent dispatches.
-2. **Stderr capture drop** — when pos-amend was invoked from a main session via the Bash tool, stderr (where halt diagnostics emit) was filtered/dropped and the tool appeared to silently return rc=0. A fresh agent session running pos-amend saw the halts correctly. Workaround for in-session pos-amend invocations: `2>&1 | tee /tmp/log` or wrap in a script that explicitly captures stderr to a file.
+2. **Stderr capture drop** — when `loam amend` was invoked from a main session via the Bash tool (the same hazard applied historically to the pre-rename `pos-amend` CLI), stderr (where halt diagnostics emit) was filtered/dropped and the tool appeared to silently return rc=0. A fresh agent session running `loam amend` saw the halts correctly. Workaround for in-session `loam amend` invocations: `2>&1 | tee /tmp/log` or wrap in a script that explicitly captures stderr to a file.
 
 **Direction.** Two structural-enforcement candidates compose:
 
 - A PreToolUse hook (matcher Bash) that warns when an unquoted glob is passed to the tool (zero-result glob would expand surprisingly), suggesting `find -name` or quoted alternatives. Composes with amendment #72 A4's `bash_guard.py` — extends its classifier surface, no new file.
-- A pos-amend-side wrapper that always emits structured halt diagnostics to stdout (or a log file), not just stderr, eliminating the stderr-drop failure class regardless of harness behaviour.
+- A loam-amend-side wrapper that always emits structured halt diagnostics to stdout (or a log file), not just stderr, eliminating the stderr-drop failure class regardless of harness behaviour.
 
 **Composition.** Composes with Idea 1's three-lens Claude-leverage lens (PreToolUse is the right Claude primitive here) and Idea 21's persona own-behaviour structural enforcement (similar Stop-hook contributor shape). Lens 1 leverage: PreToolUse hook is a Claude-native primitive that exactly fits the shape.
 

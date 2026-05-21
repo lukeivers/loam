@@ -62,7 +62,7 @@ The SOFT-classified work that can run in parallel:
 
 ## Worktree-level constraints (build-time only)
 
-`feedback_serialize_amendment_builds` rules: BUILD agents in the same worktree race on `git index.lock` / `pos-amend` / tests. Therefore:
+`feedback_serialize_amendment_builds` rules: BUILD agents in the same worktree race on `git index.lock` / `loam amend` / tests. Therefore:
 
 - **Plan-author + research agents** — parallel-safe across any number, even in the same worktree.
 - **Build agents** — serialize per worktree. Different worktrees (e.g., canonical vs BallotPath) parallelize freely.

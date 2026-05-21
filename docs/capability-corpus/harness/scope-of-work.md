@@ -52,7 +52,7 @@ primitive:
 
 - With **objective-tracker**: ScopeSpecs bind to objective
   records via the tracker's `register_objectives` call (per
-  `pos-amend apply`'s schema-v2 `objectives` block).
+  `loam amend apply`'s schema-v2 `objectives` block).
 - With **cost-governance**: budgets surface budget-line
   events that cost-governance subscribes to; fire-once
   warnings fire at named percentiles.

@@ -63,7 +63,7 @@ other primitive:
 **Critical composition gotcha.** Per the harness's
 serialize-amendment-builds rule, two background-agent
 *build* dispatches in the same git working tree race on
-`index.lock`, `pos-amend`, and tests. Builds serialize at
+`index.lock`, `loam amend`, and tests. Builds serialize at
 the working-tree level even when they target distinct
 sealed components. Research and plan-author agents are
 safe in parallel (read-only or doc-authoring); only build

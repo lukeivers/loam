@@ -80,13 +80,14 @@ require the read. If in doubt, read.
   component.
 - `plugins/dev-sdlc/dev-mode-manifest.yaml` — the user-vs-dev auto-load
   partition (sub-plan F). `tools/loam-mode/` parses + audits it.
-- `tools/pos-amend/` — amendment-dispatch tooling. The `pos-amend` CLI
-  mechanises sealed-component amendment-cycle bookkeeping (BASELINE
-  advances, allowed_prefixes/allowed_files widening, SEAL_COMMIT sidecar
-  bumps, narrative appends) driven by a per-amendment YAML manifest
-  committed alongside the plan doc. Per the pos-amend convention
-  (amendment #22), `pos-amend apply --dry-run` green is a hard
-  prereq for amendment commits.
+- `plugins/dev-sdlc/tools/loam-amend/` — amendment-dispatch tooling. The
+  `loam amend` CLI (originally `pos-amend` per amendment #22; renamed at
+  M1g and moved at M6b.1) mechanises sealed-component amendment-cycle
+  bookkeeping (BASELINE advances, allowed_prefixes/allowed_files widening,
+  SEAL_COMMIT sidecar bumps, narrative appends) driven by a per-amendment
+  YAML manifest committed alongside the plan doc. Per the amendment
+  convention, `loam amend apply --dry-run` green is a hard prereq for
+  amendment commits.
 
 ---
 

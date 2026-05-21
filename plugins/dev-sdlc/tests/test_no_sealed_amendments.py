@@ -32,7 +32,16 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "01e63ac"
+# Post-#138 corrective fixup `26f3a9e` removed an orphan top-level
+# `dev-sdlc` file (the F-PLAN-AUTHOR-SKILL-MANIFEST-TARGET-DEFAULT-GAP
+# regression — the plan-author SKILL's manifest template used a
+# component-name `narrative.target` instead of a file path). The
+# corrective fixup was authored AFTER the #138 seal `01e63ac` but
+# BEFORE the #139 build, so the orphan-deletion shows up in the
+# #139 diff window when BASELINE points at #138's seal. Bumping
+# BASELINE to the corrective fixup commit takes the orphan-cleanup
+# out of #139's diff window per amendment #139 §16 finding.
+BASELINE = "26f3a9e"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

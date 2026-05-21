@@ -78,7 +78,7 @@ amendment:
 #     plugins/dev-sdlc/tests/test_AC_PMR_3_dev_mode_manifest_roots_realigned.py
 #     plugins/dev-sdlc/tools/loam-mode/tests/ -v` against
 #     post-amendment HEAD returns 0 failures + 0 collection errors.
-baseline: "01e63ac"
+baseline: "26f3a9e"
 
 plan: docs/plans/amendment-139-dev-sdlc-manifest-runtime-flag.md
 

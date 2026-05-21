@@ -207,7 +207,7 @@ AC IDs per `feedback_scope_descriptive_ac_ids` — scope-descriptive (FBMT2.*), 
 - One semantic commit per ladder step (see §7).
 - Update `docs/STATE.md` with the amendment #135 row.
 - §14 method-decision register populated by the builder at apply time.
-- §14 SHA backfill via `loam amend seal --plan-doc docs/plans/amendment-135-fbm-tier2-retrieval-mechanics.md` (which, post-T1.4, will land at `docs/plans/sealed/amendment-135-fbm-tier2-retrieval-mechanics.md`). Note from Tier 1's §16 Finding #5: the seal-tool's `--plan-doc` §14 backfill regex matches `## 14.` but NOT `## §14.`. **This plan-doc uses `## §14.`** for consistency with #134 — the builder should expect to do the §14 SHA backfill manually as #134's builder did. The corrective amendment to widen the regex is a separate follow-up (named in §10 doubt #5).
+- §14 SHA backfill via `loam amend seal --plan-doc docs/plans/amendment-135-fbm-tier2-retrieval-mechanics.md` (which, post-T1.4, will land at `docs/plans/sealed/amendment-135-fbm-tier2-retrieval-mechanics.md`). **UPDATE 2026-05-21 post-amendment-#136 seal:** the seal-tool's regex was widened by amendment #136 (sealed at `83c8860`) to accept both `## 14<sep>` and `## §14<sep>` shapes. The auto-backfill now works on this plan-doc's canonical heading. **NO manual fallback is needed; the seal-step auto-backfills.**
 - Retroactive seed pass is a bookkeeping step (not a commit); the access log written by the pass is workspace-local data under `~/.claude/projects/*/memory/.access-log.jsonl`.
 - Post-seal: append an FIDRAFT entry capturing any T2.2 graph-quality observations from the dogfood pass that warrant future tuning (D-T2.1.DECAY, D-T2.2.SPREAD, D-T2.2.GRAPH all named as candidates for future revisit per the v2 research's "Conjectures explicitly flagged" §).
 
@@ -225,7 +225,7 @@ Five named doubts on this plan, surfaced per `feedback_ruthless_feedback`:
 
 4. **`d = 0.5` is the canonical ACT-R value, but loam's memory corpus is not ACT-R's experimental dataset.** Anderson & Schooler 1991 derived `d ≈ 0.5` from empirical fits to child-directed speech, NYT headlines, and email logs. Loam's memory corpus (personal rules, plan-docs, agent transcripts) is in a different distribution. The value may need tuning. Recommendation per D-T2.1.DECAY: ship `d = 0.5` hard-coded at v0.1; configurability deferred per `feedback_principle_application_front_load_and_audit` (don't expose tuning knobs until evidence of need lands). FIDRAFT entry on post-seal observations covers the tuning lane.
 
-5. **The seal-tool §14 backfill regex narrowness (Tier 1 finding #5) is still in place.** This plan-doc uses `## §14.` heading; the seal-tool's `--plan-doc` backfill regex won't match. The builder MUST do the §14 SHA register backfill manually, exactly as #134's builder did. A separate corrective amendment to widen the regex is the right durable fix — FIDRAFT entry post-seal. Surfacing here so the builder is not surprised.
+5. **The seal-tool §14 backfill regex narrowness — RESOLVED 2026-05-21 by amendment #136 (sealed at `83c8860`).** The regex was widened to accept both `## 14<sep>` and `## §14<sep>` heading shapes. This plan-doc's `## §14.` heading now matches the auto-backfill; no manual fallback needed. Original doubt retained here for audit-trail; doubt is closed.
 
 ---
 

@@ -72,12 +72,16 @@ Per ODD §2.5 every code path traces back to a named AC; defensive
 
 from __future__ import annotations
 
+import math
 import re
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Protocol
+
+from . import access_log as _access_log
+from . import cocitation_graph as _cocitation_graph
 
 
 # ---- public dir resolver (D-Q.MFBM.3) -------------------------------
@@ -758,7 +762,7 @@ class FileMemoryStore:
             return []
         pool: list[dict[str, Any]] = []
         for row in cur:
-            name, body, path, group_id, ref_time, _score = row
+            name, body, path, group_id, ref_time, score = row
             pool.append(
                 {
                     "name": name,
@@ -766,15 +770,23 @@ class FileMemoryStore:
                     "path": path,
                     "group_id": group_id,
                     "valid_at": ref_time,
+                    # AC.FBMT2.PLBLA.2 — preserve the BM25 score so the
+                    # downstream activation composition can compute
+                    # ``final = BM25 × activation × supersession``. SQLite's
+                    # ``bm25()`` returns a negative score (lower = better);
+                    # we negate so larger = stronger relevance, matching
+                    # the ranker semantics of the rest of the pipeline.
+                    "_bm25_raw": -float(score) if score is not None else 0.0,
                 }
             )
-        # Blend BM25 relevance with recency-decay, then return the
-        # top ``num_results``. ``now`` is injected so the AC.MSC.1
-        # fixture + §10 smoke are deterministic. ``memory_root`` is
-        # threaded through so AC.FBMT1.SUPM.4's missing-target
-        # warning has a base path against which to resolve the
-        # ``superseded-by`` relative path.
-        return _blend_recency(
+        # AC.FBMT2.PLBLA.2 / D-T2.1.SCORE — compose BM25 with the power-law
+        # base-level activation column (multiplicatively); the activation
+        # **replaces** the pre-amendment recency-blend channel (which is
+        # itself a recency model). ``now`` is injected so the AC.FBMT2.PLBLA.3
+        # fixture is deterministic. ``memory_root`` is threaded through so
+        # AC.FBMT1.SUPM.4's missing-target warning has a base path against
+        # which to resolve the ``superseded-by`` relative path.
+        return _compose_score_and_spread(
             pool,
             num_results=num_results,
             now=datetime.now(timezone.utc),
@@ -854,29 +866,32 @@ class FileMemoryStore:
             # skipped above so doclen is strictly > 0 here.
             score = raw_score / max(len(content), 1)
             front, body = _split_frontmatter(content)
-            # AC.FBMT1.SUPM.2: apply the supersession penalty in the
-            # grep-fallback path too so the ranker demotes superseded
-            # files regardless of which retrieval path fires. AC.
-            # FBMT1.SUPM.3: scoring (not filtering) keeps the file in
-            # the candidate set.
-            marker = front.get("superseded-by")
-            if isinstance(marker, str) and marker:
-                score = score * SUPERSEDED_PENALTY
             scored.append((score, path, body, front))
 
+        # AC.FBMT2.PLBLA.* — route grep-fallback pool through the same
+        # composition pipeline as the FTS5 path so the activation column
+        # + supersession penalty apply uniformly regardless of which
+        # retrieval surface fires. The grep path's ``raw_score / doclen``
+        # is the BM25-equivalent relevance channel in this fallback.
         scored.sort(key=lambda x: x[0], reverse=True)
-        out: list[dict[str, Any]] = []
-        for _score, path, body, front in scored[:num_results]:
-            out.append(
+        pool: list[dict[str, Any]] = []
+        for score, path, body, front in scored:
+            pool.append(
                 {
                     "name": front.get("name", path.stem),
                     "content": body,
                     "path": str(path),
                     "group_id": front.get("group_id", ""),
                     "valid_at": front.get("reference_time", ""),
+                    "_bm25_raw": float(score),
                 }
             )
-        return out
+        return _compose_score_and_spread(
+            pool,
+            num_results=num_results,
+            now=datetime.now(timezone.utc),
+            memory_root=self.memory_dir,
+        )
 
 
 # ---- helpers --------------------------------------------------------
@@ -1269,6 +1284,160 @@ def _blend_recency(
     return [row for _, _, row in scored[:num_results]]
 
 
+def _compose_score_and_spread(
+    rows: list[dict[str, Any]],
+    *,
+    num_results: int,
+    now: datetime,
+    memory_root: Path,
+) -> list[dict[str, Any]]:
+    """Compose BM25 with power-law activation + supersession penalty,
+    then apply one-hop co-citation spread; return top ``num_results``.
+
+    Per plan-doc ``amendment-135-fbm-tier2-retrieval-mechanics.md``:
+
+      - **D-T2.1.SCORE** — final = BM25 × activation × supersession.
+        The activation column **replaces** the pre-amendment recency-
+        blend channel; activation IS a (better) recency model anchored
+        in Anderson & Schooler 1991. Composing both would double-count.
+      - **AC.FBMT1.SUPM.2** — supersession penalty is multiplied through
+        AFTER activation; the SUPM family's "high-relevance superseded
+        still surfaces, just demoted" outcome remains.
+      - **AC.FBMT2.COCG.2** — one-hop spread: after BM25 × activation,
+        add neighbor scores ``score(c) × S_cn`` from the co-citation
+        graph for every direct neighbor of every candidate.
+      - **AC.FBMT2.PLBLA.4** — graceful on absent log: when no access
+        log exists, activation is a neutral multiplier (1.0); ranking
+        degrades to pure-BM25-times-supersession.
+      - **AC.FBMT2.COCG.4** — graceful on empty graph: spread step
+        returns an empty addition set; BM25 × activation result is
+        unchanged.
+
+    AC.FBMT1.SUPM.4 surface preserved: ``_LAST_RANKER_WARNINGS`` is
+    populated when ``superseded-by`` points at a missing target.
+    """
+    global _LAST_RANKER_WARNINGS  # noqa: PLW0603 — AC.FBMT1.SUPM.4 surface
+    _LAST_RANKER_WARNINGS = []
+    if not rows:
+        return []
+    # AC.FBMT2.PLBLA.1 / PLBLA.4 — read the access log + build the
+    # activation map. Absent log → empty dict → neutral activation per
+    # path below.
+    events_by_file = _access_log.read_access_log(memory_root)
+    # AC.FBMT2.COCG.1 / COCG.4 — build the co-citation graph. Empty
+    # events → empty graph → spread step contributes nothing.
+    graph = _cocitation_graph.build_cocitation_graph(events_by_file)
+
+    # Compose BM25 × activation × supersession for the primary pool.
+    # Build a path → activation cache so the spread step can also look up
+    # neighbors' activation (when present).
+    activation_cache: dict[str, float] = {}
+
+    def _activation_multiplier(file_key: str) -> float:
+        """Convert the activation log-sum into a multiplicative factor.
+
+        ``compute_activation`` returns ``ln(Σ t^-d)`` — the canonical
+        Anderson & Schooler 1991 functional form (signed; negative for
+        small sums, positive for repeated-recent access).
+
+        For the ranker, we want a multiplier that is:
+          - 1.0 when no signal exists (so absent-log degrades to
+            pure-BM25 ranking — AC.FBMT2.PLBLA.4),
+          - increasing monotonically with B_i (so high-activation files
+            climb — AC.FBMT2.PLBLA.2),
+          - finite and well-defined when B_i is ``-inf`` (the empty
+            iterable case from :func:`access_log.compute_activation`).
+
+        Implementation: ``exp(B_i)`` undoes the ``ln`` so the multiplier
+        IS ``Σ t^-d`` — the raw activation. The empty-sum case
+        (``B_i = -inf``) maps to ``exp(-inf) = 0.0``; we clamp to 1.0
+        in that case so the file ranks on pure BM25 (PLBLA.4 contract).
+        Repeated recent access produces a multiplier > 1.0 (boost);
+        long-ago single access produces a multiplier < 1.0 (decay).
+        """
+        if file_key in activation_cache:
+            return activation_cache[file_key]
+        ts_list = events_by_file.get(file_key, [])
+        if not ts_list:
+            activation_cache[file_key] = 1.0
+            return 1.0
+        b_i = _access_log.compute_activation(ts_list, now=now)
+        if math.isinf(b_i):
+            activation_cache[file_key] = 1.0
+            return 1.0
+        mult = math.exp(b_i)
+        activation_cache[file_key] = mult
+        return mult
+
+    scored: list[tuple[float, int, dict[str, Any]]] = []
+    for idx, row in enumerate(rows):
+        bm25_raw = float(row.get("_bm25_raw", 0.0))
+        path_str = str(row.get("path", ""))
+        activation = _activation_multiplier(path_str)
+        composed = bm25_raw * activation
+        # AC.FBMT1.SUPM.2 / SUPM.3 — supersession penalty applies AFTER
+        # activation; the file stays in the candidate set, just demoted.
+        marker = _superseded_marker(path_str)
+        if marker is not None:
+            composed = composed * SUPERSEDED_PENALTY
+            if _superseded_marker_target_missing(marker, memory_root):
+                _LAST_RANKER_WARNINGS.append(
+                    f"superseded-by target missing: "
+                    f"{path_str!s} -> {marker}"
+                )
+        scored.append((composed, idx, row))
+
+    # AC.FBMT2.COCG.2 / COCG.4 / COCG.5 — one-hop spread additions.
+    candidates_for_spread = [
+        (str(row.get("path", "")), composed)
+        for composed, _idx, row in scored
+    ]
+    spread_additions = _cocitation_graph.spread_one_hop(
+        candidates_for_spread, graph
+    )
+
+    # Materialise the spread additions as result rows. The neighbor
+    # files must be readable on disk to populate the result dict.
+    # AC.FBMT2.COCG.2 fixture seeds them; production runtime should
+    # see them too because the graph only has edges from observed
+    # accesses.
+    neighbor_idx_base = len(scored)
+    for offset, (n_file, n_score) in enumerate(spread_additions.items()):
+        n_path = Path(n_file)
+        if not n_path.is_absolute():
+            # Edges are typically stored as the resolved absolute path
+            # because :class:`FileMemoryStore.search` populates the
+            # access log with the absolute path. Relative paths are
+            # tolerated for the seed-from-transcripts pass which
+            # extracts ``episodes/.../*.md`` substrings.
+            n_path = (memory_root / n_file).resolve()
+        try:
+            content = n_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        front, body = _split_frontmatter(content)
+        n_row = {
+            "name": front.get("name", n_path.stem),
+            "content": body,
+            "path": str(n_path),
+            "group_id": front.get("group_id", ""),
+            "valid_at": front.get("reference_time", ""),
+            "_bm25_raw": 0.0,
+            "_spread_from": True,
+        }
+        # AC.FBMT1.SUPM.2 — apply supersession penalty to spread-in
+        # neighbors too so the demotion is uniform.
+        marker = front.get("superseded-by")
+        if isinstance(marker, str) and marker:
+            n_score = n_score * SUPERSEDED_PENALTY
+        scored.append((n_score, neighbor_idx_base + offset, n_row))
+
+    # Sort by composed score desc; ``idx`` as a stable secondary key so
+    # equal-score ties preserve the original incoming order.
+    scored.sort(key=lambda t: (-t[0], t[1]))
+    return [row for _, _, row in scored[:num_results]]
+
+
 def _empty_result(query: str) -> dict[str, Any]:
     return {
         "query": query,
@@ -1332,6 +1501,33 @@ def build_file_memory_retrieval_contributor(
             )
         except Exception:  # noqa: BLE001 — AC.MFBM.2 fail-closed
             return ""
+        # AC.FBMT2.PLBLA.1 — emit a ``read`` access-log event for every
+        # episode the retrieval contributor surfaces. The event records
+        # that this memory file was touched at retrieval time; downstream
+        # ranker calls compose the resulting activation column. Fail-soft:
+        # any access-log error is swallowed so the retrieval block still
+        # reaches the persona (AC.MFBM.2 fail-closed surrounding contract).
+        try:
+            now = datetime.now(timezone.utc)
+            for episode in result.get("episodes", []):
+                path = episode.get("path")
+                if not isinstance(path, str) or not path:
+                    continue
+                try:
+                    _access_log.append_access_event(
+                        config.store.memory_dir,
+                        file=path,
+                        ts=now,
+                        op="read",
+                    )
+                except (OSError, ValueError):
+                    # AC.FBMT2.PLBLA.1: bookkeeping failure must not
+                    # propagate to the persona. Move on; the missing
+                    # event will rejoin the access log on the next
+                    # successful touch.
+                    continue
+        except Exception:  # noqa: BLE001 — defensive; never raise through
+            pass
         return _render_retrieval(result, cap=config.char_cap)
 
     return contributor
@@ -1413,7 +1609,7 @@ class FileBackedMemoryClient:
         and non-worker callers can pass ``None`` for null fields
         (the block is still emitted; the schema is always present).
         """
-        return self._store.write_episode(
+        result = self._store.write_episode(
             name=name,
             body=body,
             source_description=source_description,
@@ -1422,6 +1618,27 @@ class FileBackedMemoryClient:
             group_id=group_id,
             context=context,
         )
+        # AC.FBMT2.PLBLA.1 — emit a ``write`` access-log event for every
+        # successful add_episode call. The store's ``write_episode``
+        # return shape carries the on-disk path of the newly-written
+        # file; we record it as the touched-file key so the activation
+        # column composes correctly at retrieval time.
+        try:
+            written_path = result.get("path") if isinstance(result, dict) else None
+            if isinstance(written_path, str) and written_path:
+                _access_log.append_access_event(
+                    self._store.memory_dir,
+                    file=written_path,
+                    ts=datetime.now(timezone.utc),
+                    op="write",
+                )
+        except (OSError, ValueError):
+            # AC.FBMT2.PLBLA.1: bookkeeping failure does not propagate
+            # back through the worker (AC.J.4 / AC.MFBM.2 fail-closed
+            # surrounding contract — the episode write IS the durable
+            # signal; the access-log entry is a bookkeeping replay).
+            pass
+        return result
 
     async def search(
         self,

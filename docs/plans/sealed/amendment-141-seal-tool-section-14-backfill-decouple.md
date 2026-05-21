@@ -233,3 +233,29 @@ See §3 for the in-scope/out-of-scope list. Additional notes:
 - **Independent of** F4 — outcome shape is well-pinned regardless of scope-confidence framing.
 
 ---
+
+loam-amend seal: decouple §14 SHA backfill from post-seal
+dry-run gate. Pre-fix, `_finalize` step (g) early-returned on
+dry-run non-zero exit, blocking step (h) (§14 SHA backfill)
+from firing. Empirically: amendment #138's orphan-file dry-run
+failure forced operator to author manual backfill commit
+`7d893b0`, defeating #136's no-manual-fallback promise.
+
+Post-fix: §14 backfill runs unconditionally when a `--plan-doc`
+was supplied AND a seal commit landed, regardless of dry-run
+outcome. Dry-run diagnostic still emits at failure point; seal
+command return code still equals dry-run exit code. Operator-
+visible signals preserved; only step-(h) reachability changes.
+
+Shape (a) "always-run backfill" chosen over shape (b) "auto-
+retry-after-fixup" per §14 D-SCT.SHAPE: mechanically simpler,
+preserves all signals, §14 register documents seal SHA (not
+HEAD — corrective fixups land separately).
+
+Composes with amendment #136 (defends its no-manual-fallback
+promise unconditionally), amendment #138 (empirical trigger —
+retires the manual `7d893b0` workaround per `feedback_-
+workaround_masks_rootcause_urgency`), amendment #140 (same
+`_finalize` function, disjoint scope).
+
+Closes F-SEAL-TOOL-§14-BACKFILL-COUPLED-TO-DRY-RUN on seal.

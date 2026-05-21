@@ -88,6 +88,7 @@ import yaml
 from ._audit import confirmed_by_operator, summarize_resolver_runs
 from .canonical import CanonicalPullError, resolve_canonical
 from .canonical_cache import CanonicalCacheError, ensure_cache_clone
+from .just_behind_check import is_just_behind
 from .merge_resolver import (
     BudgetExhausted,
     MergeResolver,
@@ -413,6 +414,34 @@ def _record_resolver_run(
     return target
 
 
+def _read_bytes_at_stage(
+    framework_root: Path, stage: int, rel_path: str
+) -> bytes | None:
+    """Read the index-stage blob's raw bytes; ``None`` on git failure.
+
+    Used by the just-behind fast-path to compare workspace content
+    against canonical-ancestor content byte-exact (no text decode).
+    Stage 2 = "ours" = pre-merge HEAD content during a conflicted
+    merge.
+    """
+    completed = subprocess.run(  # noqa: S603 — argv constructed from typed args
+        [
+            "git",
+            "-C",
+            str(framework_root),
+            "show",
+            f":{stage}:{rel_path}",
+        ],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    return completed.stdout
+
+
 def _resolve_conflicts_via_llm(
     *,
     framework_root: Path,
@@ -420,16 +449,25 @@ def _resolve_conflicts_via_llm(
     target_sha: str,
     resolver: MergeResolver,
 ) -> list[tuple[str, MergeVerdict]]:
-    """Iterate unresolved conflicts; invoke resolver per file.
+    """Iterate unresolved conflicts; resolve via just-behind fast-path
+    or LLM resolver per file.
 
     For each conflicted path:
-      1. Read canonical content (FETCH_HEAD:<path>).
-      2. Read workspace content (HEAD:<path>) — pre-merge state.
-      3. Read merge-base content (merge-base canonical/HEAD HEAD:<path>) for
-         prior_text.
-      4. Invoke ``MergeResolver.resolve``.
-      5. Write resolution to disk; ``git add <path>``.
-      6. Append (path, verdict) to results.
+      1. **Just-behind fast-path (Bundle A.1):** read workspace
+         content from index stage 2 ("ours") as raw bytes; if those
+         bytes byte-equal some ancestor of ``target_sha`` for the
+         file, ``git checkout --theirs <path>`` + ``git add <path>``,
+         append a synthetic ``inferred-accept-canonical`` verdict
+         (confidence=1.0), and skip the LLM resolver. Reduces
+         first-sync cost from O(diverged-files × LLM) to
+         O(diverged-files × git-rev-walk).
+      2. **LLM fallback** (when the fast-path returns False):
+         a. Read canonical content (``target_sha:<path>``).
+         b. Read workspace content (``:2:<path>``) — pre-merge state.
+         c. Read merge-base content for ``prior_text``.
+         d. Invoke ``MergeResolver.resolve``.
+         e. Write resolution to disk; ``git add <path>``.
+         f. Append (path, verdict) to results.
 
     Returns the list of (rel_path, verdict). Raises
     ``BudgetExhausted`` / ``ResolverFailure`` on resolver halt.
@@ -440,7 +478,7 @@ def _resolve_conflicts_via_llm(
     if not paths:
         return results
 
-    # Resolve merge-base once.
+    # Resolve merge-base once (used only on the LLM-fallback path).
     base_completed = _git(
         framework_root,
         ["merge-base", "HEAD", target_sha],
@@ -453,6 +491,48 @@ def _resolve_conflicts_via_llm(
     )
 
     for rel_path in paths:
+        # AC.JBC.4 — fast-path attempt before LLM call.
+        workspace_bytes = _read_bytes_at_stage(
+            framework_root, 2, rel_path
+        )
+        if workspace_bytes is not None:
+            matched, ancestor_sha = is_just_behind(
+                framework_root,
+                rel_path,
+                workspace_bytes,
+                target_sha,
+            )
+            if matched:
+                # Accept canonical version: workspace is just behind.
+                checkout_completed = _git(
+                    framework_root,
+                    ["checkout", "--theirs", "--", rel_path],
+                    check=False,
+                )
+                if checkout_completed.returncode == 0:
+                    _git(framework_root, ["add", rel_path])
+                    results.append(
+                        (
+                            rel_path,
+                            MergeVerdict(
+                                resolution="inferred-accept-canonical",
+                                merged_content=None,
+                                rationale=(
+                                    "just-behind fast-path: workspace "
+                                    f"content byte-equals ancestor "
+                                    f"{(ancestor_sha or '')[:8]} of "
+                                    f"canonical@{target_sha[:8]}; "
+                                    "accepting canonical version "
+                                    "without LLM call."
+                                ),
+                                confidence=1.0,
+                            ),
+                        )
+                    )
+                    continue
+                # Fall through to LLM path if `git checkout --theirs`
+                # failed for any reason (defensive).
+
         canonical_text = _read_text_at_ref(
             framework_root, target_sha, rel_path
         )

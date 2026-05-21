@@ -275,3 +275,58 @@ Per `plugins/dev-sdlc/docs/conventions/amendment-cycle.md` commit ladder:
 - **Supersedes** the implicit "post-#134 sweep is a future-work item" framing — this amendment IS the future-work item.
 
 ---
+
+Tier 1 retroactive sweep follow-up: tighten heuristic + widen
+downstream globs + live sweep (closes amendment #134 §16
+finding #6, three-scope merge per causal dependency).
+
+Scope A — seal-commit attribution heuristic tightening. The
+existing narrow heuristic missed sealed amendments whose seal-
+commit subject names a different slug than the plan-doc
+filename (e.g., `amendment-22-pos-amend-cli.md` sealed via
+`chore(seals): pos-amend-cli-and-universal-paths seal —`).
+Three-strategy fallback chain: Strategy 1 (existing narrow);
+Strategy 2 (`amendment-NN-<body>` → retry with body-slug);
+Strategy 3 (`amendment #NN` in any commit, filtered to
+`chore(seals):` subjects). First non-empty result determines
+attribution; multi-match in ANY strategy preserves the §134
+halt-trigger #5 ambiguous-bucket contract. Empirical recovery:
+13 plan-docs at canonical HEAD `b278cc6` (~5% of corpus).
+
+Scope B — downstream consumer glob widening. Pre-flight Tier-0
+grep widened the dispatching brief's 2-consumer count to the
+actual 4 (§16 finding #1): release-gate `_find_plan_doc`,
+Phase γ `discover_amendment_plans`, session-start `enumerate_-
+amendments_in_flight`, and bash-guard `_candidate_manifests`.
+Shared helpers `iter_all_plan_docs`, `iter_all_manifests`, and
+`find_plan_doc_by_slug_glob` in a new `plan_locator.py`
+module under `loam_amend` (cohesion with archive semantics;
+cross-tree import precedented by heavy-b-migrate). Sealed-
+first priority for ambiguous slugs during the transition
+window; session-start gets a new sibling `enumerate_sealed_-
+amendments` rather than modifying the existing in-flight
+semantics.
+
+Scope C — live sweep against canonical. New CLI subcommand
+`loam amend sweep-archive [--dry-run]` makes the sweep
+reproducible. Operator-typed real-run AFTER seal as a
+separate `chore(retroactive-sweep):` commit — keeps the
+seal-diff window clean. Dry-run-first discipline gates the
+~150-plan-doc tree restructure (halt-trigger #3); §134 halt-
+trigger #5 contract preserved verbatim. THIS plan-doc +
+manifest move via the existing post-#134 seal-time archive
+path (Strategy 1 match on full slug); the live-sweep CLI is
+a no-op for this plan-doc (already moved by seal) and
+operates on the OTHER cleanly-attributable plan-docs.
+
+Shape (merged single amendment) chosen per causal dependency
+(C depends on A + B); scope-disjoint AC families; multi-
+component fence scope-disjoint at the file level.
+
+Composes with amendment #134 (closes §16 finding #6 — the
+deferred retroactive sweep) and amendment #142 (exercises the
+SKILL-prose `narrative.target` + BASELINE walk-forward +
+source-edit-commit-before-apply conventions at this
+amendment's own build).
+
+Closes amendment #134 §16 finding #6 on seal.

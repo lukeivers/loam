@@ -270,6 +270,12 @@ Total new tests: 8. Total backwards-compat-protected existing tests: ≥3 named 
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `98e3cfcd3e2b64fd14c57fcf94418b80338ace12` —
+  `fix(hands-off-lifecycle): amendment-144 sweep-blockers — AC45.S sealed-archive path + d1 in-band rebaselines`
+- Seal commit: `9223715dd4be5d902fd7803fd1dffccb779f5bd4` —
+  `chore(seals): Closed-loop engagement canonical promotion: intent-classifier UserPromptSubmit hook + persona-prompt/hook reconciliation + fresh-workspace SKILL-discovery audit + operator rescaffold-skills CLI. Three merged scopes:`
 ## §15. Backwards-compat verification
 
 The following existing tests MUST remain green post-amendment:

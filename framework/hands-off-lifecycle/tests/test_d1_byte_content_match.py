@@ -80,7 +80,16 @@ _SAMPLE_FILES = (
      # `feedback_loose_AC_text_fix_AC_not_implementation` analog —
      # implementation matches AC.OSS.4 intent; the byte-content sample
      # SHA updates to reflect the legitimate header addition.
-     "5817efd950a3d7c24f6ec6e3e5e5f01759f12f7fdf92898226ee3ce6806515cb"),
+     # Amendment #144 SHA bump (closed-loop engagement canonical
+     # promotion — Scope A): added the `intent-classifier` subcommand
+     # entry alongside the existing `user-prompt-submit` /
+     # `session-start` / `stop` / `memory-write` / `memory-worker` /
+     # `trait-reflection-stop` subparsers; new import of
+     # `cli_intent_classifier` from the new `intent_classifier`
+     # module + new `_cmd_intent_classifier` handler. ODD §4 in-band
+     # retire-and-rebaseline per
+     # `feedback_loose_AC_text_fix_AC_not_implementation`.
+     "8c128307cf9be06f6aebed557bef108812679f0302bb4dc9b18422d91dba7116"),
     ("framework/primary-persona/src/loam/primary_persona/__init__.py",
      # M4 (amendment #85) SHA bump: re-export of NEW public function
      # ``write_dispatcher_stub`` (and ``NewACSpec`` made public for
@@ -140,7 +149,14 @@ _SAMPLE_FILES = (
      # start emit + persona session-start + user-prompt-submit
      # timeouts" per C2-prime amendment §5.4 file 17 (RW shape;
      # AC.OSS.3 banned-literal removal). ODD §4 in-band rebaseline.
-     "2bda61f0133048c04c14967b2e0cf51059d956da368a3010dec5411c869afe9e"),
+     # Amendment #144 §16 finding rebaseline: pre-existing drift
+     # (NOT caused by amendment #144 edits) — surfaced when amendment
+     # #144's hands-off-lifecycle full-suite ran at seal; the prior
+     # snapshot lagged a legitimate post-C2-prime edit to this file.
+     # ODD §4 in-band retire-and-rebaseline per
+     # `feedback_loose_AC_text_fix_AC_not_implementation`. Discovery-
+     # driven (the seal sweep IS the discovery mechanism).
+     "7893d8a7292b651d2c79f243edfc7975cb9cc56b5c0bf36b9c3e5c4522ecf14c"),
     ("framework/primary-persona/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,
@@ -150,7 +166,11 @@ _SAMPLE_FILES = (
      # leakage per HIGH-FBE6.1; pin-rationale prose preserved).
      # ODD §4 in-band retire-and-rebaseline per
      # `feedback_loose_AC_text_fix_AC_not_implementation`.
-     "9b64f101bc0d9d6675fef9da4f567ec3bc9c00e5bf0836262b15c657f1122336"),
+     # Amendment #144 §16 finding rebaseline: pre-existing drift
+     # (NOT caused by amendment #144) — pyproject's post-FBE.8 state
+     # diverged from the snapshot in a later amendment that did not
+     # rebaseline. Discovery-driven rebaseline.
+     "825589c1844d69f5bd207a95e5b1d87ca52c61d9771ff6b43a6bd7f44d01b51f"),
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -158,12 +178,18 @@ _SAMPLE_FILES = (
      # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
      # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
      # retire-and-rebaseline.
-     "435335e4b69818ebcaa03292d5eb4d57fd44b535abb40a02c95cf58e3b6f24dd"),
+     # Amendment #144 §16 finding rebaseline: pre-existing drift
+     # (NOT caused by amendment #144) — workspace-bootstrap's
+     # __init__.py drifted in a later amendment that did not
+     # rebaseline. Discovery-driven rebaseline.
+     "df013a63a75dacd661c6123a45814ea9b7abbfb2f64e535fa9209850bb343960"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/spec.py",
      # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
      # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
      # retire-and-rebaseline.
-     "8d7f1aa04bc8ca8ab6f4b1aa96722f99e3144d53ce22453854f21aff862ebae5"),
+     # Amendment #144 §16 finding rebaseline: pre-existing drift
+     # (NOT caused by amendment #144) — discovery-driven rebaseline.
+     "e341d5f346258805af9917916d86eede8389e537a9432fa5f906b1127b86f1bd"),
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/host.py",
      # M1f SHA bump: workspace-bootstrap host.py field rename
      # (self.graceful_degradation → self.dormancy + docstring entry)
@@ -182,7 +208,9 @@ _SAMPLE_FILES = (
      # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
      # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
      # retire-and-rebaseline.
-     "813d646ae7b49df5806999ea46a8e9383b12af11fd0182a251a70f9de1f5942d"),
+     # Amendment #144 §16 finding rebaseline: pre-existing drift
+     # (NOT caused by amendment #144) — discovery-driven rebaseline.
+     "bbf1fa90ed86264c0ce60c5d45e5f9f7954053b2dc49ceed0318a9f2c5a60c41"),
     # scope-of-work — leaf component (no test_no_sealed sidecar; the
     # leaf shape is the cleanest regression target for HC#4).
     ("framework/scope-of-work/src/loam/scope_of_work/spec.py",
@@ -204,7 +232,9 @@ _SAMPLE_FILES = (
      # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
      # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
      # retire-and-rebaseline.
-     "9ce28c3207f7873102e7e0f7c0bc49dce3adbeb5f05c399b9be041bd3d4995c1"),
+     # Amendment #144 §16 finding rebaseline: pre-existing drift
+     # (NOT caused by amendment #144) — discovery-driven rebaseline.
+     "98d9d8f21b754c6ba99cce90426ac2a0d6c37d76d19de6ed56f8b5575f781ed0"),
     ("framework/scope-of-work/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `scope_of_work` → `loam-scope-of-work`).
@@ -212,7 +242,9 @@ _SAMPLE_FILES = (
      # FBE.5's source delta but the byte-content sample was not
      # retired-and-rebaselined at FBE.5 seal; FBE.8 closes the gap.
      # ODD §4 in-band retire-and-rebaseline.
-     "f847bf944381f8efadb873cd1199782a4cb5b2450afd7be081445064b41f0305"),
+     # Amendment #144 §16 finding rebaseline: pre-existing drift
+     # (NOT caused by amendment #144) — discovery-driven rebaseline.
+     "9160b5bfe3d78d68250e6aba86a211fd3076e9ec7a833e415210f206d9e4a580"),
 )
 
 

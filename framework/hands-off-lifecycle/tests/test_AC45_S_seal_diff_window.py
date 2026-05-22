@@ -104,17 +104,36 @@ def test_AC45_S_no_path_outside_admitted_prefixes_against_HEAD() -> None:
     upper bound now resolves through ``_seal_commit()`` per the
     project-wide convention.
     """
-    manifest_path = (
+    # Amendment #134/#143 retroactive sweep archived sealed plan-docs
+    # + manifests from `docs/plans/` to `docs/plans/sealed/`. The
+    # baseline lookup checks both locations so the test survives the
+    # archive move (the manifest's `baseline:` field is the load-
+    # bearing input, not the file's pre-archive path). Per amendment
+    # #144 §16 finding: pre-archive lookup-only would treat the
+    # sealed manifest as "absent" → fall through to
+    # `baseline = "HEAD"` → `git diff HEAD..<seal>` returns
+    # subsequent-amendment paths that look "outside" amendment #45's
+    # admitted prefixes. The fix is a path-resolution backstop, not
+    # an admitted-prefix widening.
+    manifest_candidates = (
         REPO_ROOT
         / "docs"
         / "plans"
-        / "amendment-45-merge-session-start-multi-contributor.manifest.yaml"
+        / "amendment-45-merge-session-start-multi-contributor.manifest.yaml",
+        REPO_ROOT
+        / "docs"
+        / "plans"
+        / "sealed"
+        / "amendment-45-merge-session-start-multi-contributor.manifest.yaml",
     )
     baseline: str | None = None
-    if manifest_path.is_file():
-        for line in manifest_path.read_text().splitlines():
-            if line.strip().startswith("baseline:"):
-                baseline = line.split(":", 1)[1].strip()
+    for manifest_path in manifest_candidates:
+        if manifest_path.is_file():
+            for line in manifest_path.read_text().splitlines():
+                if line.strip().startswith("baseline:"):
+                    baseline = line.split(":", 1)[1].strip()
+                    break
+            if baseline is not None:
                 break
     if baseline is None:
         # Pre-manifest-author state — the diff window is empty (no

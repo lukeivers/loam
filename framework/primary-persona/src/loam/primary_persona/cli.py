@@ -20,6 +20,12 @@ Subcommands:
   - ``user-prompt-submit`` — read Claude Code's UserPromptSubmit JSON
     envelope from stdin, extract ``prompt``, and emit per-turn memory-
     retrieval additionalContext (AC46.2). Always exits 0.
+  - ``intent-classifier`` — read Claude Code's UserPromptSubmit JSON
+    envelope from stdin, classify the embedded prompt, and emit
+    ``hookSpecificOutput.additionalContext`` injecting the closed-
+    loop methodology directive (the ``handsoff-loop`` SKILL) when
+    the classification is build-with-verification (amendment #144
+    Scope A / AC.CLE.HOOK.*). Always exits 0.
   - ``stop`` — read Claude Code's Stop envelope from stdin, recover
     the user message + assistant reply from the envelope's
     ``transcript_path``, derive a stable per-turn id, deduplicate on
@@ -64,6 +70,7 @@ from .stop_emitter import (
 )
 from .memory_write_worker import cli_memory_worker
 from .end_of_turn_trait_reflection import cli_trait_reflection_stop
+from .intent_classifier import cli_intent_classifier
 
 
 def _resolve_workspace(workspace: Path | None) -> Path:
@@ -80,6 +87,15 @@ def _cmd_session_start(args: argparse.Namespace) -> int:
 def _cmd_user_prompt_submit(args: argparse.Namespace) -> int:
     workspace_root = _resolve_workspace(args.workspace)
     return cli_user_prompt_submit(workspace_root=workspace_root)
+
+
+def _cmd_intent_classifier(args: argparse.Namespace) -> int:
+    # The intent classifier is workspace-independent (it operates on
+    # the user's prompt body alone, no workspace state required). The
+    # ``--workspace`` flag is accepted for argparse-shape uniformity
+    # with the sibling subcommands; the resolved path is unused.
+    _resolve_workspace(args.workspace)
+    return cli_intent_classifier()
 
 
 def _cmd_stop(args: argparse.Namespace) -> int:
@@ -137,6 +153,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_ups.add_argument("--workspace", type=Path, default=None)
     p_ups.set_defaults(func=_cmd_user_prompt_submit)
+
+    p_ic = sub.add_parser(
+        "intent-classifier",
+        help=(
+            "Read Claude Code's UserPromptSubmit JSON envelope from "
+            "stdin, classify the embedded prompt (deterministic "
+            "regex, no LLM), and emit hookSpecificOutput."
+            "additionalContext injecting the closed-loop methodology "
+            "directive (the handsoff-loop SKILL) on build-with-"
+            "verification intent. Always exits 0 (amendment #144 "
+            "Scope A / AC.CLE.HOOK.{1,2,3,4})."
+        ),
+    )
+    p_ic.add_argument("--workspace", type=Path, default=None)
+    p_ic.set_defaults(func=_cmd_intent_classifier)
 
     p_stop = sub.add_parser(
         "stop",

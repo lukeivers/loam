@@ -309,6 +309,36 @@ def _persona_user_prompt_submit_stanza(loam_root: Path) -> dict | None:
         return None
 
 
+def _persona_intent_classifier_inner_hook(
+    loam_root: Path,
+) -> dict | None:
+    """Return the persona's intent-classifier inner hook entry, or
+    ``None`` when the primary-persona package is unavailable.
+
+    Amendment #144 Scope A — Lazy import + fail-soft mirroring
+    ``_persona_user_prompt_submit_stanza``. The intent classifier is
+    the persona's second UserPromptSubmit contributor; it composes as
+    an ``extra_inner_hooks`` entry alongside the persona's existing
+    ``user-prompt-submit`` contributor via the multi-contributor
+    generalisation of ``merge_user_prompt_submit`` (closes AC46.6).
+    Returning ``None`` signals the caller to fall back to the
+    single-contributor shape (pre-amendment-#144 behaviour preserved).
+    """
+    try:
+        venv_site = loam_root / ".venv" / "lib"
+        if venv_site.is_dir():
+            for site_dir in venv_site.iterdir():
+                site_pkgs = site_dir / "site-packages"
+                if site_pkgs.is_dir() and str(site_pkgs) not in sys.path:
+                    sys.path.insert(0, str(site_pkgs))
+        from loam.primary_persona.intent_classifier import (  # type: ignore[import-not-found]
+            build_persona_intent_classifier_inner_hook,
+        )
+        return build_persona_intent_classifier_inner_hook(loam_root)
+    except Exception:  # noqa: BLE001 — fail-soft mirroring AC46.4
+        return None
+
+
 def _maybe_merge_user_prompt_submit(
     *, loam_root: Path, settings_path: Path
 ) -> None:
@@ -319,14 +349,27 @@ def _maybe_merge_user_prompt_submit(
     write failures are caught (matching the surrounding Phase-3d /
     Phase-4c / Phase-6 settings.json handling — those phases also
     tolerate transient I/O errors).
+
+    Amendment #144 Scope A (closes AC46.6): when the persona's
+    intent-classifier inner hook is available, it is passed as
+    ``extra_inner_hooks`` to compose alongside the persona's
+    ``user-prompt-submit`` contributor. When the intent-classifier is
+    NOT available (older primary-persona installs that predate
+    amendment #144), the call degrades to the single-contributor
+    shape (AC46.5 backwards-compat preserved).
     """
     stanza = _persona_user_prompt_submit_stanza(loam_root)
     if stanza is None:
         return
+    extra_inner_hooks: list[dict] | None = None
+    intent_classifier_hook = _persona_intent_classifier_inner_hook(loam_root)
+    if intent_classifier_hook is not None:
+        extra_inner_hooks = [intent_classifier_hook]
     try:
         merge_user_prompt_submit(
             settings_path=settings_path,
             new_entry=stanza,
+            extra_inner_hooks=extra_inner_hooks,
         )
     except Exception:  # noqa: BLE001 — fail-soft per AC46.4
         # Settings.json write failure or merge exception. The

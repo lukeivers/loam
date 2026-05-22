@@ -64,8 +64,13 @@ pos-new-workspace = "loam.workspace_bootstrap.new_workspace:cli_main"
 # subcommand of the unified loam CLI via the `loam.cli.subcommands`
 # entry-point group (mirrors loam-init's wiring at
 # framework/loam-init/pyproject.toml).
+#
+# Amendment #144 Scope C / AC.CLE.SCAFFOLD-AUDIT.2 — `loam workspace`
+# registers a parent verb with `rescaffold-skills` as its first
+# sub-verb (operator-recovery path for pre-v0.1.7 workspaces).
 [project.entry-points."loam.cli.subcommands"]
 onboard = "loam.workspace_bootstrap.onboarding_cli:build_onboard_subcommand"
+workspace = "loam.workspace_bootstrap.workspace_cli:build_workspace_subcommand"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -77,6 +77,7 @@ After a successful `loam release` invocation:
 
 - If the next-scope proposal looks wrong (priorities shifted; a higher-leverage item surfaced in `FUTURE_IDEAS_DRAFT.md`), re-rank the §4 queue + edit the roadmap before authoring the next plan-doc.
 - If post-ship review surfaced a `post-1.0-review-needed` verdict (only after v1.0 ships), inspect the accumulated commits since the last major for breaking-change markers + plugin-contract revision evidence per `release-versioning-policy.md` triggers.
+- **Fresh-workspace closed-loop engagement gate (amendment #144 / AC.CLE.SCAFFOLD-AUDIT.1):** verify `_symlink_plugin_skills` symlinks `handsoff-loop` into `.claude/skills/handsoff-loop/` from session-zero — without this, non-tech users in fresh workspaces cannot engage the closed-loop methodology on soft prompts (the SKILL is unreachable to Claude Code's matcher, the intent classifier hook's `additionalContext` injection has no SKILL to route to). The structural test at `framework/workspace-bootstrap/tests/test_AC_CLE_SCAFFOLD_AUDIT_1_handsoff_loop_discoverable_post_scaffold.py` is the gate.
 
 ---
 

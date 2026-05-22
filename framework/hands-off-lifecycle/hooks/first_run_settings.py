@@ -127,14 +127,20 @@ _LOAM_COMMAND_MARKERS: tuple[str, ...] = (
 
 
 # Set of substrings that mark a UserPromptSubmit inner hook as pos-v2-
-# owned. Single-contributor for now (AC46.6 defers multi-contributor
-# generalisation analogous to amendment #45's SessionStart registry).
-# When a future amendment introduces additional UserPromptSubmit
-# contributors, generalise this set + the merge function the same way
-# amendment #45 generalised the SessionStart counterparts.
+# owned. Multi-contributor as of amendment #144 (Scope A): the
+# persona's intent-classifier subcommand registers as an
+# ``extra_inner_hooks`` entry alongside the persona's
+# ``user-prompt-submit`` contributor. Both contributors share the
+# ``primary_persona.cli`` prefix; the ``-m loam.primary_persona``
+# substring is the catch-all that covers any future subcommand the
+# persona may ship. Amendment #144 closes AC46.6 (deferred multi-
+# contributor generalisation, originally anticipated to mirror
+# amendment #45's SessionStart registry).
 _LOAM_USER_PROMPT_SUBMIT_COMMAND_MARKERS: tuple[str, ...] = (
     "primary_persona.cli user-prompt-submit",
     "primary_persona.cli user_prompt_submit",
+    "primary_persona.cli intent-classifier",
+    "primary_persona.cli intent_classifier",
     "-m loam.primary_persona",
 )
 
@@ -438,19 +444,34 @@ def merge_user_prompt_submit(
     *,
     settings_path: Path,
     new_entry: dict[str, Any],
+    extra_inner_hooks: list[dict[str, Any]] | None = None,
     now_iso: str | None = None,
 ) -> SettingsMergeResult:
     """Merge ``new_entry`` into settings.json's UserPromptSubmit stanza.
 
-    AC46.5: writes ``hooks.UserPromptSubmit = [new_entry]``. Single-
-    contributor (AC46.6) — multi-contributor generalisation is a
-    future amendment analogous to #45's SessionStart registry.
+    Amendment #144 Scope A (closes AC46.6): the merger accepts an
+    optional ``extra_inner_hooks`` list of additional inner-hook
+    entries to compose inside ``new_entry``'s envelope. The composition
+    mirrors amendment #45's SessionStart generalisation at
+    :func:`_compose_inner_hooks` (line 207-222) — the existing
+    inner-hook list inside ``new_entry["hooks"]`` is the base, and
+    extras are appended after so Claude Code's UserPromptSubmit
+    fan-out invokes the persona's existing ``user-prompt-submit``
+    contributor BEFORE each additional contributor.
+
+    Backwards-compat (AC46.5): when ``extra_inner_hooks`` is ``None``
+    or empty, the resulting stanza is byte-identical to the pre-
+    amendment-#144 single-contributor shape. The existing AC46.5
+    test suite (test_AC46_5_settings_json_carries_user_prompt_submit_hook.py)
+    exercises that default and must remain green.
 
     Behaviour mirrors ``merge_session_start``:
-      * no prior stanza: write ``[new_entry]``.
+      * no prior stanza: write ``[new_entry]`` (post-extras
+        composition).
       * prior stanza is pos-v2's own (command matches the persona's
-        user-prompt-submit markers): replace with ``[new_entry]``,
-        no backup.
+        user-prompt-submit markers — extended at amendment #144 Scope
+        A to include the intent-classifier marker): replace with
+        ``[new_entry]``, no backup.
       * prior stanza is user-authored: write the whole prior
         settings.json to a timestamped backup and replace the
         UserPromptSubmit stanza with ``[new_entry]``.
@@ -461,6 +482,17 @@ def merge_user_prompt_submit(
     """
     settings_path = Path(settings_path)
     existing = _load_existing(settings_path)
+
+    # Amendment #144 (closes AC46.6): compose extra contributors into
+    # the envelope's inner-hook list BEFORE writing. The composition is
+    # an explicit copy so the caller-supplied ``new_entry`` is never
+    # mutated (the SessionStart envelope-builder counterparts share
+    # this discipline by composing internally via _compose_inner_hooks).
+    if extra_inner_hooks:
+        composed_entry: dict[str, Any] = dict(new_entry)
+        base_hooks_list = list(new_entry.get("hooks", []))
+        composed_entry["hooks"] = [*base_hooks_list, *extra_inner_hooks]
+        new_entry = composed_entry
 
     backup_path: Path | None = None
     displaced = False

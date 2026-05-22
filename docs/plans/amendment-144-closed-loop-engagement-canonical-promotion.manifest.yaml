@@ -1,0 +1,281 @@
+schema_version: 1
+amendment:
+  number: 144
+  slug: amendment-144-closed-loop-engagement-canonical-promotion
+  title: "Closed-loop engagement canonical promotion: intent-classifier UserPromptSubmit hook + persona-prompt/hook reconciliation + fresh-workspace SKILL-discovery audit + operator rescaffold-skills CLI — closes the architectural gap surfaced today (non-tech users in fresh workspaces must engage closed-loop methodology on soft prompts without typing slash commands)"
+
+# BASELINE: amendment #143 publish-state commit `b2b46a2` (current
+# main HEAD post-#143 publish — `docs(readme): bump current-release
+# to v0.12.20 (amendment #143 tier-1 retroactive sweep follow-on +
+# live sweep)`). Per D-CLE.BASELINE-WALK (amendment #142 D-PASH.BASELINE-WALK
+# discipline): walked forward from #143's seal `f83260f`; found NO
+# `chore(amend-fixup):` commits between `f83260f` and `b2b46a2`;
+# defaulted BASELINE to the publish-state commit `b2b46a2`. This
+# matches the post-#142 standard convention (the publish-state
+# commit is the load-bearing predecessor when no fixup intervenes).
+# The seal-diff window is BASELINE..seal_commit per the
+# multi-component fence convention. Plan-doc §1 carries the durable
+# owner-ratification record (TG 11808 / 11878 / 11881 / 11885) and
+# the full pre-flight Tier-0 evidence.
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <source-edits + tests commit — Scope A (new intent-classifier
+#    module + CLI subcommand + multi-contributor merge_user_prompt_submit
+#    generalization + persona contribution adapter wiring) + Scope B
+#    (persona-prompt edit at prompt.md:433-454 — remove verbatim-slash-
+#    command directive, add reconciled prescription) + Scope C (operator
+#    rescaffold-skills CLI verb + release-process doc edit) + 8 new
+#    test files (AC.CLE.HOOK.{1,2,3,4} + AC.CLE.RECONCILE.1 +
+#    AC.CLE.SCAFFOLD-AUDIT.{1,2} + AC.CLE.S outcome-altitude).
+#    Per amendment #142 D-PASH.METHOD-DOC, the source-edit commit
+#    MUST land BEFORE `loam amend apply` — apply runs against
+#    committed HEAD per apply.py:158. THIS amendment dogfoods that
+#    discipline (D-CLE.SOURCE-EDIT-COMMIT-BEFORE-APPLY).>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit — runs the four-
+#    component pytest suite (primary-persona + hands-off-lifecycle +
+#    workspace-bootstrap + dev-sdlc as applicable). T1.4 archives
+#    this plan-doc + manifest to `docs/plans/sealed/amendment-144-
+#    closed-loop-engagement-canonical-promotion.{md,manifest.yaml}`
+#    (dogfood: this amendment's own plan-doc moves to sealed/ at
+#    seal time per canonical T1.4 convention; the `narrative.target`
+#    below points at the post-archive path per amendment #142 Scope
+#    A's canonical-form prescription). §14 auto-backfill via
+#    amendment #141's decoupled path (per amendment-141 D-SCT.SHAPE,
+#    the backfill runs unconditionally on seal when `--plan-doc` is
+#    supplied).>
+#   <§14 backfill commit — auto-embedded by `_finalize` step (h) per
+#    amendment-141's decoupled path; populates D-CLE-* SHAs.>
+#
+# Multi-component fence:
+#   - primary-persona: new intent-classifier module + CLI subcommand
+#     + persona contribution adapter wiring (extra_inner_hooks=[...])
+#     + persona-prompt edit (Scope B) + 5 new test files.
+#   - hands-off-lifecycle: generalize merge_user_prompt_submit to
+#     accept extra_inner_hooks (mirroring amendment #45's SessionStart
+#     pattern at _compose_inner_hooks line 207-222) + extend
+#     _LOAM_USER_PROMPT_SUBMIT_COMMAND_MARKERS to recognize the
+#     intent-classifier marker + 1 new test file. H19 frozen-BASELINE
+#     per amendment #23 ruling.
+#   - workspace-bootstrap: new operator rescaffold-skills CLI verb
+#     (lives at `loam workspace rescaffold-skills` or closest existing
+#     operator surface per D-CLE.RESCAFFOLD-LOCATION; build-time
+#     Tier-0 names the right module) + 3 new test files (2 for
+#     scaffold-audit + 1 for outcome-altitude).
+#
+# Defends amendment #45's multi-contributor SessionStart precedent
+# at the UserPromptSubmit equivalent layer — AC46.6 explicitly
+# deferred this generalization; THIS amendment closes it.
+#
+# Defends amendment #46's UserPromptSubmit single-contributor merge
+# at backwards-compat — empty extra_inner_hooks default returns
+# byte-identical [base_entry] output (preserves AC46.5).
+#
+# Defends amendment v0.1.7 Cycle 3's _symlink_plugin_skills at the
+# operator-rescaffold surface — Scope C's rescaffold-skills CLI verb
+# composes on top without semantic change.
+#
+# AC families per docs/plans/amendment-144-closed-loop-engagement-canonical-promotion.md §4:
+#   AC.CLE.HOOK.{1,2,3,4} — Scope A: classifier classifies
+#     build-with-verification correctly; additionalContext template
+#     renders with handsoff-loop + auto-load reference, no verbatim
+#     slash command directive; CLI subcommand reads stdin/writes
+#     hook-output JSON to stdout; generalized merge_user_prompt_submit
+#     composes intent-classifier alongside persona's user-prompt-submit.
+#   AC.CLE.RECONCILE.1 — Scope B: canonical persona prompt does NOT
+#     prescribe verbatim slash-command typing and DOES prescribe
+#     following the auto-loaded SKILL's procedure (TG 11881 ruling).
+#   AC.CLE.SCAFFOLD-AUDIT.{1,2} — Scope C: fresh workspace post-
+#     scaffold has handsoff-loop discoverable at
+#     <workspace>/.claude/skills/handsoff-loop/SKILL.md; operator
+#     rescaffold-skills CLI verb is idempotent + collision-aware on
+#     pre-existing workspaces missing some plugin SKILL symlinks.
+#   AC.CLE.S — Outcome-altitude smoke (true per
+#     feedback_test_outcome_altitude_required): end-to-end synthetic
+#     test scaffolds fresh workspace + writes settings.json via
+#     generalized merger + invokes intent-classifier CLI subprocess
+#     with a soft user prompt + asserts the additionalContext output
+#     would inject the closed-loop directive AND handsoff-loop SKILL
+#     is discoverable. Prime-objective ladder: AC.PO.1 + AC.PO.2
+#     depend on non-tech users engaging full loam power via plain
+#     language.
+
+baseline: "b2b46a22b0cbdc7580bd9d612015362e682ac9cb"
+
+plan: docs/plans/amendment-144-closed-loop-engagement-canonical-promotion.md
+
+seal_description: |
+  Closed-loop engagement canonical promotion: intent-classifier
+  UserPromptSubmit hook + persona-prompt/hook reconciliation +
+  fresh-workspace SKILL-discovery audit + operator rescaffold-skills
+  CLI. Three merged scopes:
+
+    Scope A — promote pos3-local intent_classifier_inbound.py hook
+    to canonical primary-persona (new
+    framework/primary-persona/src/loam/primary_persona/intent_classifier.py
+    module + new CLI subcommand `primary_persona.cli intent-classifier`
+    + multi-contributor generalization of `merge_user_prompt_submit`
+    mirroring amendment #45's SessionStart pattern + extension of
+    _LOAM_USER_PROMPT_SUBMIT_COMMAND_MARKERS to recognize the
+    intent-classifier marker + wiring of the intent-classifier
+    inner hook as extra_inner_hooks alongside the persona's
+    existing user-prompt-submit contributor).
+
+    Scope B — reconcile the canonical persona prompt's translate-
+    inbound stanza (framework/primary-persona/templates/persona-
+    template/prompt.md:433-454) with the hook's structural-
+    enforcement prescription. Per TG 11881 ruling: slash commands
+    are NOT user-facing; the persona MUST NOT type `/handsoff-loop`
+    verbatim into responses. Rewrite the persona prompt to match
+    the hook's prescription (no verbatim slash command; persona
+    follows the auto-loaded SKILL's procedure); the hook is the
+    structural backstop, the persona prompt is the documented
+    discipline, both speak the same prescription.
+
+    Scope C — fresh-workspace SKILL-discovery audit (assert
+    handsoff-loop is discoverable at
+    <workspace>/.claude/skills/handsoff-loop/SKILL.md post-scaffold;
+    composes alongside existing AC.LAYERED.2 test) + operator-facing
+    rescaffold-skills CLI verb for pre-existing workspaces (pos3
+    case — pos3 was scaffolded pre-v0.1.7 and scaffold is
+    idempotent, so pos3's .claude/skills/ carries only the manual
+    handsoff-loop symlink; the rescaffold verb is the operator's
+    recovery path) + one-sentence addition to docs/release-process.md
+    under fresh-workspace verification.
+
+  Closes the closed-loop engagement architectural gap surfaced this
+  session: non-tech users in fresh workspaces typing soft phrasing
+  ("I want a tool that does X. show me it works") must engage the
+  closed-loop methodology without knowing or typing any slash command.
+  Owner ratification: TG 11808 (build-strategy delegation), TG 11878
+  (closed-loop engagement directive), TG 11881 (slash command not
+  user-facing), TG 11885 (proceed-on-your-own).
+
+  Closes AC46.6 (deferred multi-contributor UserPromptSubmit
+  generalization from amendment #46). Dogfoods amendment #142
+  D-PASH.BASELINE-WALK + D-PASH.METHOD-DOC at this amendment's own
+  baseline computation + commit-ladder. Dogfoods amendment #141's
+  decoupled §14 backfill at this amendment's seal. Composes on top
+  of amendment v0.1.7 Cycle 3's _symlink_plugin_skills (no semantic
+  change to the symlinker; new operator entry point).
+
+# Multi-component fence on `primary-persona` + `hands-off-lifecycle`
+# + `workspace-bootstrap`. Each component carries its own seal_test
+# convention; H19 frozen-BASELINE on `hands-off-lifecycle` per
+# amendment #23 ruling.
+components:
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+
+# Universal admissions per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/release-process.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+# Canonical narrative.target form per amendment #142 Scope A
+# (docs/plans/sealed/<slug>.md). T1.4 archives this plan-doc + manifest
+# to docs/plans/sealed/ at seal time per amendment #134's archive
+# convention; the target points at the post-archive path so the
+# seal narrative lands in the file the operator finds via standard
+# sealed-plan-doc browsing.
+narrative:
+  target: docs/plans/sealed/amendment-144-closed-loop-engagement-canonical-promotion.md
+  body: |
+    # Amendment #144 — Closed-loop engagement canonical promotion: intent-classifier hook + persona/hook reconciliation + fresh-workspace SKILL discovery audit
+
+    2026-05-21. Closes the closed-loop-engagement architectural gap
+    surfaced this session: non-tech users in fresh workspaces typing
+    soft phrasing ("I want a tool that does X. show me it works")
+    must engage closed-loop methodology without knowing or typing
+    any slash command. Pos3-local fixes today (manual handsoff-loop
+    symlink + patched intent-classifier hook + wired UserPromptSubmit
+    chain) are promoted to canonical via three merged scopes:
+
+      Scope A — promote pos3-local intent_classifier_inbound.py to
+      canonical primary-persona (new intent_classifier module + CLI
+      subcommand + multi-contributor merge_user_prompt_submit
+      generalization mirroring amendment #45's SessionStart pattern
+      at _compose_inner_hooks).
+
+      Scope B — reconcile the canonical persona prompt's translate-
+      inbound stanza (prompt.md:433-454) with the hook's structural-
+      enforcement prescription per TG 11881 ruling (no verbatim
+      slash-command typing; persona follows auto-loaded SKILL's
+      procedure).
+
+      Scope C — fresh-workspace SKILL-discovery audit (extends
+      AC.LAYERED.2 with handsoff-loop-specific discoverability
+      assertion) + operator-facing rescaffold-skills CLI verb for
+      pre-existing workspaces missing plugin SKILL symlinks (the
+      pos3 case — pos3 was scaffolded pre-v0.1.7 + scaffold is
+      idempotent).
+
+    Tier-0 verification at canonical HEAD `b2b46a2` (2026-05-21)
+    surfaced one critical finding: `_symlink_plugin_skills`
+    (v0.1.7 AC.LAYERED.2 at first_run_scaffold.py:1224) ALREADY
+    symlinks every plugin-shipped SKILL into a fresh workspace's
+    `.claude/skills/<name>/` at scaffold time. Fresh workspaces
+    ALREADY get full plugin-skill discovery. The dispatch brief's
+    framing of SKILL-discovery as an open design question (symlink
+    vs copy vs plugin-path config) was answered by the existing
+    codebase; the actual gap is the intent-classifier hook (absent
+    in canonical) + the persona-prompt/hook prescription conflict
+    + the operator-recovery path for pre-existing workspaces.
+
+    Closes AC46.6 (deferred multi-contributor UserPromptSubmit
+    generalization from amendment #46). The empty extra_inner_hooks
+    default to the generalized merge_user_prompt_submit returns
+    byte-identical [base_entry] output (preserves AC46.5 backwards
+    compat).
+
+    Dogfoods amendment #142 D-PASH.BASELINE-WALK + D-PASH.METHOD-DOC
+    at this amendment's own baseline computation + commit-ladder.
+    Dogfoods amendment #141's decoupled §14 backfill at this
+    amendment's seal. Composes on top of amendment v0.1.7 Cycle 3's
+    _symlink_plugin_skills without semantic change (new operator
+    entry point only).
+
+    Outcome-altitude smoke (AC.CLE.S per
+    feedback_test_outcome_altitude_required): synthetic end-to-end
+    test scaffolds a fresh workspace, writes settings.json via the
+    generalized merger, invokes the intent-classifier CLI
+    subprocess with a soft user prompt, asserts the resulting
+    additionalContext would inject the closed-loop directive into
+    the persona's context AND the handsoff-loop SKILL is
+    discoverable from the scaffolded `.claude/skills/`. Prime-
+    objective ladder: AC.PO.1 + AC.PO.2 in VALUE_PROPOSITION.md
+    depend on non-tech users invoking loam's full power via plain
+    language.
+
+    Owner ratification trail (per
+    feedback_record_owner_ratification_before_dispatch):
+      TG 11808 — build-strategy delegation.
+      TG 11878 — closed-loop engagement directive (non-tech-user goal).
+      TG 11881 — slash command not user-facing ruling.
+      TG 11885 — proceed-on-your-own autonomy ratification.
+
+    F2 ruthless-feedback finding from plan-author Tier-0 verification:
+    the dispatch brief framed three SKILL-discovery options as a
+    build-time decision, but the answer was already in the codebase.
+    The plan-doc reframes Scope C as "audit + rescaffold for pre-
+    existing workspaces" not "design SKILL discovery from scratch."
+    This is the plan-author's job per ODD §2.5 — verify the dispatch
+    brief's framing against canonical state before committing to it
+    in the plan.
+
+    Method-decision register (D-CLE.*) populated post-build via
+    amendment #141's decoupled §14 auto-backfill.

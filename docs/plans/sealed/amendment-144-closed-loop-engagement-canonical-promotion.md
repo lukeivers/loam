@@ -306,3 +306,88 @@ _To be filled by the builder at build time per the existing convention. Initial 
 Every load-bearing source named in the plan-doc has been verified by direct shell invocation or direct file read at canonical HEAD `b2b46a2` between 2026-05-21T~23:30Z and 2026-05-21T~23:50Z. The plan-author subagent did not transcribe SHAs or line numbers from the dispatch brief without verification; the brief's pointers were used as starting points + verified independently.
 
 Owner ratification record per `feedback_record_owner_ratification_before_dispatch`: §1 carries the four msg-IDs (TG 11808 / 11878 / 11881 / 11885). The plan-doc commit IS the durable artefact the builder Tier-0-verifies before dispatching the build — per the discipline, a builder finding "pending" status here is correct to halt; "ratified" status with the four-row table is correct to proceed.
+
+# Amendment #144 — Closed-loop engagement canonical promotion: intent-classifier hook + persona/hook reconciliation + fresh-workspace SKILL discovery audit
+
+2026-05-21. Closes the closed-loop-engagement architectural gap
+surfaced this session: non-tech users in fresh workspaces typing
+soft phrasing ("I want a tool that does X. show me it works")
+must engage closed-loop methodology without knowing or typing
+any slash command. Pos3-local fixes today (manual handsoff-loop
+symlink + patched intent-classifier hook + wired UserPromptSubmit
+chain) are promoted to canonical via three merged scopes:
+
+  Scope A — promote pos3-local intent_classifier_inbound.py to
+  canonical primary-persona (new intent_classifier module + CLI
+  subcommand + multi-contributor merge_user_prompt_submit
+  generalization mirroring amendment #45's SessionStart pattern
+  at _compose_inner_hooks).
+
+  Scope B — reconcile the canonical persona prompt's translate-
+  inbound stanza (prompt.md:433-454) with the hook's structural-
+  enforcement prescription per TG 11881 ruling (no verbatim
+  slash-command typing; persona follows auto-loaded SKILL's
+  procedure).
+
+  Scope C — fresh-workspace SKILL-discovery audit (extends
+  AC.LAYERED.2 with handsoff-loop-specific discoverability
+  assertion) + operator-facing rescaffold-skills CLI verb for
+  pre-existing workspaces missing plugin SKILL symlinks (the
+  pos3 case — pos3 was scaffolded pre-v0.1.7 + scaffold is
+  idempotent).
+
+Tier-0 verification at canonical HEAD `b2b46a2` (2026-05-21)
+surfaced one critical finding: `_symlink_plugin_skills`
+(v0.1.7 AC.LAYERED.2 at first_run_scaffold.py:1224) ALREADY
+symlinks every plugin-shipped SKILL into a fresh workspace's
+`.claude/skills/<name>/` at scaffold time. Fresh workspaces
+ALREADY get full plugin-skill discovery. The dispatch brief's
+framing of SKILL-discovery as an open design question (symlink
+vs copy vs plugin-path config) was answered by the existing
+codebase; the actual gap is the intent-classifier hook (absent
+in canonical) + the persona-prompt/hook prescription conflict
++ the operator-recovery path for pre-existing workspaces.
+
+Closes AC46.6 (deferred multi-contributor UserPromptSubmit
+generalization from amendment #46). The empty extra_inner_hooks
+default to the generalized merge_user_prompt_submit returns
+byte-identical [base_entry] output (preserves AC46.5 backwards
+compat).
+
+Dogfoods amendment #142 D-PASH.BASELINE-WALK + D-PASH.METHOD-DOC
+at this amendment's own baseline computation + commit-ladder.
+Dogfoods amendment #141's decoupled §14 backfill at this
+amendment's seal. Composes on top of amendment v0.1.7 Cycle 3's
+_symlink_plugin_skills without semantic change (new operator
+entry point only).
+
+Outcome-altitude smoke (AC.CLE.S per
+feedback_test_outcome_altitude_required): synthetic end-to-end
+test scaffolds a fresh workspace, writes settings.json via the
+generalized merger, invokes the intent-classifier CLI
+subprocess with a soft user prompt, asserts the resulting
+additionalContext would inject the closed-loop directive into
+the persona's context AND the handsoff-loop SKILL is
+discoverable from the scaffolded `.claude/skills/`. Prime-
+objective ladder: AC.PO.1 + AC.PO.2 in VALUE_PROPOSITION.md
+depend on non-tech users invoking loam's full power via plain
+language.
+
+Owner ratification trail (per
+feedback_record_owner_ratification_before_dispatch):
+  TG 11808 — build-strategy delegation.
+  TG 11878 — closed-loop engagement directive (non-tech-user goal).
+  TG 11881 — slash command not user-facing ruling.
+  TG 11885 — proceed-on-your-own autonomy ratification.
+
+F2 ruthless-feedback finding from plan-author Tier-0 verification:
+the dispatch brief framed three SKILL-discovery options as a
+build-time decision, but the answer was already in the codebase.
+The plan-doc reframes Scope C as "audit + rescaffold for pre-
+existing workspaces" not "design SKILL discovery from scratch."
+This is the plan-author's job per ODD §2.5 — verify the dispatch
+brief's framing against canonical state before committing to it
+in the plan.
+
+Method-decision register (D-CLE.*) populated post-build via
+amendment #141's decoupled §14 auto-backfill.

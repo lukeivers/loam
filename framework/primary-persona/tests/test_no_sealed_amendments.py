@@ -67,7 +67,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              `pos-amend apply` to the commit immediately preceding
 #              the amendment commit (HEAD~1 pattern). Sub-plan §10's
 #              manifest records the BASELINE rationale.
-BASELINE = "b278cc6a08b5c7ff127036d009b8d7ae22a3c2c6"
+BASELINE = "b2b46a22b0cbdc7580bd9d612015362e682ac9cb"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

@@ -15,7 +15,7 @@ plan: docs/plans/per-component-pyproject-version-lockstep-regression-closure.md
 plan_doc_ref: docs/plans/per-component-pyproject-version-lockstep-regression-closure.md
 
 ac_count: 4
-smoke_outcome: "PATCH AC.PCVR.{1-4,S} GREEN; 26 pyprojects bumped 0.10.0 -> 0.12.0; docs/ACTIVE_MINOR anchor + regression test + mutation-detection fixture in place; structural enforcement closes the v0.11/v0.12 silent-skip defect."
+smoke_outcome: "AC.PCVR.{1-4,S} GREEN; 27 pyprojects swept 0.10.0->0.12.0; docs/ACTIVE_MINOR anchor + regression test + mutation-detection in place; closes v0.11/v0.12 silent-skip defect."
 
 # Multi-component PATCH fence per the v0.8.0 / v0.8.1 / v0.8.2 / v0.9.0
 # precedent: single fence-anchor (dev-sdlc plugin) carries the seal_test

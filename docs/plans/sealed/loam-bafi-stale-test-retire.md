@@ -238,3 +238,51 @@ This plan-doc follows the canonical shape per `plugins/dev-sdlc/docs/conventions
 ## §14. Method-decision register (populated at build time)
 
 Placeholders for builder narration; SHAs backfilled by `loam amend seal --plan-doc`. This amendment carries no novel D-* decisions — all builder choices ratified at plan-author time per §10 F1-F5. §14 entries (if any are added by the builder for build-time discoveries) get appended here.
+
+Retire the single stale `assert "start-project" not in body`
+assertion at lines 71-75 of plugins/loam-skills/tests/test_AC_
+BAFI_S_post_fix_state.py::test_AC_BAFI_ARCH_skills_section_
+reflects_current_reality. The assertion encoded Batch A
+(amendment #145) decision D-BAFI.START-PROJECT, which removed
+the `start-project` reference from docs/architecture.md.
+A-PROMOTE-START-PROJECT (amendment #147, seal `389dac7`)
+semantically reversed that decision by promoting the SKILL to
+discoverable subdirectory shape AND restoring the architecture.
+md reference with refined wording naming the subdirectory shape
++ auto-symlink mechanism. From A-PROMOTE's seal forward, the
+assertion was stale-RED in canonical; this amendment closes the
+surfaced finding A-PROMOTE's builder raised by Option A —
+surgical deletion of the single stale assertion, preserving the
+function's 4 other still-load-bearing assertions.
+
+AC.BAFISTR.RETIRE — surgical deletion of lines 71-75 only. The
+function's other 4 assertions (stale-framing absence, loam-
+skills presence, dev-sdlc presence, _symlink_plugin_skills
+presence) remain unmodified in substance; full-file pytest at
+plan-author time confirmed they are all load-bearing properties
+of current docs/architecture.md. Whole-function deletion
+(Option B from the dispatcher brief) was rejected per the
+evidence.
+
+AC.BAFISTR.AUDIT — audit-trail comment inside the function names
+the retirement reason (A-PROMOTE seal `389dac7` + D-BAFI.START-
+PROJECT). In-file context for readers who don't load the seal
+narrative.
+
+AC.BAFISTR.S — outcome-altitude smoke: full test_AC_BAFI_S_post_
+fix_state.py file passes 5/5 against canonical docs/architecture.
+md (production-altitude filesystem-walk read, no pre-arranged
+state). RED-on-mutation: temporarily re-introduce the deleted
+assertion + observe RED + re-apply deletion.
+
+Five plan-author halt-and-surface findings (plan §10) all
+surfaced + autonomous-decision-recorded: F1 (Option A wins per
+Tier-0 evidence); F2 (AUDIT comment recommended, builder may
+collapse); F3 (no widening — only one function affected); F4
+(sealed Batch A AC text NOT modified); F5 (seal-time `--allow-
+untracked-globs` admission per dispatcher direction).
+
+Test-only amendment; no behavior change for any production code
+path; no source-code edits. Composes with A-PROMOTE (closes
+surfaced finding) + Batch A (removes now-stale assertion).
+Sub-cycle-time amendment.

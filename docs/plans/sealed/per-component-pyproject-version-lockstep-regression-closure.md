@@ -381,15 +381,12 @@ TBD.
 
 The plan-doc's §5 names the build-time decisions (D-PCVR.1.a sweep target, D-PCVR.1.b `0.0.0` ruling honoring §16 finding #1, D-PCVR.2.a anchor shape, D-PCVR.2.b anchor placement, D-PCVR.3.a/b/c regression test mechanism, D-PCVR.4.a/b mutation-detection fixture + helper signature, D-PCVR.5 AC ID family, D-PCVR.6 test discoverability). Build-time deviations recorded inline.
 
-### Commit SHAs (populated at build time)
+### Commit SHAs
 
-- Plan-doc + manifest authoring: TBD
-- Source-edit batch (26 bumps + ACTIVE_MINOR + policy paragraph + regression test + smoke writeup + FIDRAFT entries + STATE/roadmap admin): TBD
-- Manifest baseline bump: TBD (if needed)
-- Apply auto-commit: TBD
-- Seal commit: TBD
-- §status SHA backfill (this update): TBD
-
+- Amendment commit: `9d71af62befd362716d47528aafc1666105f1751` —
+  `chore(amend): per-component-pyproject-version-lockstep-regression-closure manifest+apply — dev-sdlc BASELINE+sidecar bump to 7b774b1`
+- Seal commit: `7402a0971aab514d5f68cc8dff9fc041f8253303` —
+  `chore(seals): per-component-pyproject-version-lockstep-regression-closure — dev-sdlc at 9d71af6`
 ### Build-time decision deviations (populated at build time)
 
 TBD.

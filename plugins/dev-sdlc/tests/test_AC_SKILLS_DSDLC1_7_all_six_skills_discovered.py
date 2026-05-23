@@ -1,9 +1,11 @@
 """AC.SKILLS-DSDLC1.7 — all 6 dev-sdlc SKILLs auto-discoverable.
 
 Per v0.1.8 Cycle 5 plan-doc §4 AC.SKILLS-DSDLC1.7: walking
-`plugins/dev-sdlc/skills/` yields exactly the 6 expected SKILL
-packages (each containing a valid SKILL.md), in addition to the
-flat-file `start-project.md` shipped with v0.1.0 of the plugin.
+`plugins/dev-sdlc/skills/` yields the 6 expected SKILL packages
+(each containing a valid SKILL.md), alongside the `start-project/`
+SKILL package promoted from flat-shape to subdirectory shape by
+amendment-A-PROMOTE-START-PROJECT (slug
+`loam-skills-start-project-discoverable`).
 
 The Anthropic SKILL.md auto-discovery primitive walks
 `<plugin>/skills/<name>/SKILL.md` files; v0.1.7 Cycle 3

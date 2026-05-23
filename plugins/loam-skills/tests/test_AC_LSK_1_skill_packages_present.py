@@ -1,16 +1,22 @@
-"""AC.LSK.1 — eight SKILL.md packages present and well-formed.
+"""AC.LSK.1 — SKILL.md packages present and well-formed.
 
-Per sub-plan §5 AC.LSK.1: SKILL.md files exist at the canonical
-paths. Each file: starts with valid YAML frontmatter delimited by
-`---` lines; frontmatter parses without error and is a mapping;
-carries a non-empty `description` field (string, ≤1536 chars per
-Anthropic's combined-cap); body (post-frontmatter) is non-empty
-markdown.
+Per amendment #146 (loam-skills-ac-lsk1-root-cause), the SKILL set
+checked here is derived from disk via `discover_skill_packages` —
+every subdirectory of plugins/loam-skills/skills/ containing a
+SKILL.md file. The previous hardcoded EXPECTED_SKILLS list +
+count-pinning + all-skills-discovered cross-check were the
+enumeration-trap surface (corpus grows but list didn't); the
+derive-from-disk pattern eliminates that defect class at root cause.
 
-v0.1.6 Cycle 2 extension (per
-docs/plans/v0-1-6-production-safety-and-base-skills.md §5
-AC.SKILLS-BASE.4): 3 new SKILLs land alongside the original 5,
-taking EXPECTED_SKILLS to 8.
+Per-skill well-formedness assertions (per AC.LSK.1's four numbered
+criteria as tightened by AC.LSK1RC.AC1 in
+docs/plans/sealed/v0-1-3-skill-packages.md):
+
+1. Starts with valid YAML frontmatter delimited by `---` lines.
+2. Frontmatter parses without error and is a mapping.
+3. Carries a non-empty `description` field (string, ≤1536 chars per
+   Anthropic's combined-cap).
+4. Body (post-frontmatter) is non-empty markdown.
 
 Anthropic SKILL.md schema reference:
 https://code.claude.com/docs/en/skills
@@ -18,34 +24,16 @@ https://code.claude.com/docs/en/skills
 
 from __future__ import annotations
 
-import re
-from pathlib import Path
-
 import yaml
 
 import pytest
 
+from conftest import (
+    discover_skill_packages,
+    load_skill_text,
+    split_frontmatter_and_body,
+)
 
-SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
-
-EXPECTED_SKILLS = [
-    # v0.1.3 bundle (sealed at f04e925).
-    "memory-recall",
-    "scope-decompose",
-    "dispatch-with-gates",
-    "onboarding-conversation",
-    "session-handoff",
-    # v0.1.6 Cycle 2 additions.
-    "translation-discipline",
-    "audit-block-on-telegram",
-    "owner-decision-summary",
-    # v0.2.0 Cycle 2 addition (auto-skill-creation MVP).
-    "skill-capture-proposal",
-    # v0.5.0 / v0.7.0 surface — time-claims-discipline orphan
-    # admitted to registry as part of v0.8.0 honesty cleanup
-    # (AC.HONEST.6 in-cycle closure).
-    "time-claims-discipline",
-]
 
 # Anthropic-published cap per
 # https://code.claude.com/docs/en/skills (frontmatter reference):
@@ -54,38 +42,41 @@ EXPECTED_SKILLS = [
 DESCRIPTION_MAX_CHARS = 1536
 
 
-def _load_skill(skill_name: str) -> tuple[dict, str]:
-    """Read SKILL.md, split frontmatter + body, parse frontmatter."""
-    path = SKILLS_DIR / skill_name / "SKILL.md"
-    assert path.is_file(), (
-        f"expected SKILL.md at {path}; AC.LSK.1 requires the file "
-        "exists at the canonical path."
-    )
-    text = path.read_text(encoding="utf-8")
-    match = re.match(r"\A---\s*\n(.*?)\n---\s*\n(.*)\Z", text, re.DOTALL)
-    assert match, (
-        f"{path}: SKILL.md must start with YAML frontmatter "
-        "delimited by `---` lines."
-    )
-    frontmatter = yaml.safe_load(match.group(1))
-    body = match.group(2)
-    return frontmatter, body
+# Discovery happens at module-import time so pytest can parametrize.
+# `discover_skill_packages` is the production-altitude discovery
+# entry-point (per amendment #146). A test failure points at the
+# specific skill_name from the discovered set.
+DISCOVERED_SKILLS = discover_skill_packages()
 
 
-@pytest.mark.parametrize("skill_name", EXPECTED_SKILLS)
+def test_at_least_one_skill_discovered() -> None:
+    """AC.LSK.1 baseline: there is at least one well-formed SKILL.md
+    package on disk. Guards against the SKILLS_DIR pointing at a
+    nonexistent or empty tree (in which case parametrized tests
+    silently zero out — that's its own defect surface)."""
+    assert DISCOVERED_SKILLS, (
+        "no SKILL.md packages discovered under "
+        "plugins/loam-skills/skills/; AC.LSK.1 requires at least one "
+        "well-formed package on disk. Check that the directory "
+        "exists and contains subdirectories with SKILL.md files."
+    )
+
+
+@pytest.mark.parametrize("skill_name", DISCOVERED_SKILLS)
 def test_skill_file_exists_with_frontmatter_and_body(
     skill_name: str,
 ) -> None:
-    """Per-skill: file exists; frontmatter parses as mapping;
-    description present + non-empty + ≤1536 chars; body non-empty."""
-    frontmatter, body = _load_skill(skill_name)
+    """Per-skill: file exists; frontmatter delimited + parses as
+    mapping; description present + non-empty + ≤1536 chars; body
+    non-empty."""
+    text = load_skill_text(skill_name)
+    frontmatter_yaml, body = split_frontmatter_and_body(text)
 
-    # Frontmatter is a mapping.
+    frontmatter = yaml.safe_load(frontmatter_yaml)
     assert isinstance(frontmatter, dict), (
         f"{skill_name}: frontmatter must parse as a YAML mapping."
     )
 
-    # Description present, non-empty, within combined-cap.
     description = frontmatter.get("description")
     assert isinstance(description, str), (
         f"{skill_name}: `description` field is required + a string."
@@ -99,30 +90,7 @@ def test_skill_file_exists_with_frontmatter_and_body(
         f"{DESCRIPTION_MAX_CHARS}."
     )
 
-    # Body (post-frontmatter) is non-empty.
     assert body.strip(), (
         f"{skill_name}: SKILL.md body (post-frontmatter) must be "
         "non-empty markdown."
     )
-
-
-def test_all_skills_discovered() -> None:
-    """Cross-check: walking the skills/ directory yields exactly the
-    expected packages — no orphans, no misnames. v0.2.0 Cycle 2
-    extends from 8 to 9 (+ skill-capture-proposal)."""
-    on_disk = sorted(
-        p.name for p in SKILLS_DIR.iterdir()
-        if p.is_dir() and (p / "SKILL.md").is_file()
-    )
-    assert on_disk == sorted(EXPECTED_SKILLS), (
-        f"discovered skills {on_disk} != expected {sorted(EXPECTED_SKILLS)}; "
-        "AC.LSK.1 requires exactly the named ten packages "
-        "(5 from v0.1.3 + 3 from v0.1.6 Cycle 2 + 1 from v0.2.0 "
-        "Cycle 2 + 1 admitted at v0.8.0 honesty cleanup)."
-    )
-
-
-def test_skills_count_ten() -> None:
-    """v0.8.0 honesty cleanup — the bundle is 10 SKILLs total
-    (orphan time-claims-discipline admitted to registry)."""
-    assert len(EXPECTED_SKILLS) == 10

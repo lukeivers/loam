@@ -192,8 +192,12 @@ The first-run scaffold (`run_first_run_scaffold`) calls
 - **Promotion rubric (workspace-local → plugin / base).** Deferred to
   v0.2.1.
 - **Flat-file `<plugin>/skills/<name>.md` shape.** Out of fence. Anthropic
-  spec walks per-directory; flat-file skills (e.g.,
-  `plugins/dev-sdlc/skills/start-project.md`) are not auto-symlinked.
+  spec walks per-directory; flat-file skills (e.g., a hypothetical
+  `plugins/<some-plugin>/skills/<some-skill>.md`) are not auto-symlinked.
+  No canonical loam plugin ships flat-shape skills as of A-PROMOTE-
+  START-PROJECT (the v0.1.0 `start-project.md` was promoted to
+  subdirectory shape at `plugins/dev-sdlc/skills/start-project/SKILL.md`
+  to restore auto-discoverability).
 
 ---
 

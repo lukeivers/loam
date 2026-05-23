@@ -43,6 +43,8 @@ pip install -r install-from-source.txt
 
 # 3. Bootstrap a fresh workspace from this clone.
 loam init ~/loam-workspace
+# First run opens an interactive 6-question onboarding ritual; set
+# LOAM_ONBOARDING_SKIP=1 to defer it and configure later.
 
 # 4. Open Claude Code in the new workspace.
 cd ~/loam-workspace
@@ -157,11 +159,9 @@ review-circle expansion is the project's biggest non-technical need.
 - [`docs/positioning.md`](docs/positioning.md) — the full pitch:
   what loam is, who it's for, what it explicitly is not.
 - [`docs/architecture.md`](docs/architecture.md) — component map +
-  how the pieces compose. *(authored alongside this README in the
-  v0.1.0 docs lane.)*
+  how the pieces compose.
 - [`docs/getting-started.md`](docs/getting-started.md) — clone to
-  first session, step by step. *(authored alongside this README in
-  the v0.1.0 docs lane.)*
+  first session, step by step.
 - [`docs/design/odd.md`](docs/design/odd.md) — Objective-Driven
   Design: the methodology loam practices natively and the Dev/SDLC
   plugin defaults new projects to.

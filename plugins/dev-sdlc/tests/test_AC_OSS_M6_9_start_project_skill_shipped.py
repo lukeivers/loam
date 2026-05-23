@@ -1,16 +1,20 @@
 """AC.OSS-M6.9 — `/start-project` Claude skill discoverable +
 invocable.
 
-Per plan §4 AC.OSS-M6.9 + D-Q.M6.4 ship ruling: the skill at
-`plugins/dev-sdlc/skills/start-project.md` exists with frontmatter
-naming the user-facing intent. The persona's skill loader uses
-workspace-relative-or-framework-relative reader-fall-through (per
-Idea 26 — already live in
-`framework/hands-off-lifecycle/hooks/corpus_inline_session_start.py`'s
-`_resolve_corpus_path`); plugin-relative paths under
-`<workspace>/plugins/<name>/skills/` resolve through the
-workspace-root probe naturally (no additive `_resolve_corpus_path`
-change required at v0.1.0).
+Per plan §4 AC.OSS-M6.9 + D-Q.M6.4 ship ruling: the skill exists with
+frontmatter naming the user-facing intent. At v0.1.0 ship, the SKILL
+was shipped flat-shape at `plugins/dev-sdlc/skills/start-project.md`
+and was discoverable via Idea 26 reader-fall-through
+(`_resolve_corpus_path`). At v0.1.7 AC.LAYERED.2, the auto-symlinker
+`_symlink_plugin_skills` shipped — per-directory walk only; flat-file
+shapes were silently undiscoverable from that point. Per
+amendment-A-PROMOTE-START-PROJECT (this amendment, slug
+`loam-skills-start-project-discoverable`) the SKILL is promoted to
+subdirectory shape at `plugins/dev-sdlc/skills/start-project/SKILL.md`,
+restoring discoverability through the auto-symlink mechanism. The
+original AC.OSS-M6.9 contract (frontmatter parses, description names
+Dev/SDLC, body names `start_project` API + `loam project` operator
+surface) is preserved at the relocated path per AC.SPDISC.OSSM69.
 """
 
 from __future__ import annotations
@@ -22,7 +26,10 @@ import yaml
 
 
 SKILL_PATH = (
-    Path(__file__).resolve().parent.parent / "skills" / "start-project.md"
+    Path(__file__).resolve().parent.parent
+    / "skills"
+    / "start-project"
+    / "SKILL.md"
 )
 
 
@@ -61,10 +68,14 @@ def test_skill_resolves_via_workspace_root_path_lookup(
 ) -> None:
     """Plugin-relative skill paths resolve through the workspace-root
     probe in the standard `_resolve_corpus_path` reader-fall-through
-    (Idea 26 composition; no additive change at v0.1.0)."""
+    (Idea 26 composition; no additive change at v0.1.0).
+
+    Post-A-PROMOTE-START-PROJECT (this amendment): the SKILL lives at
+    the subdirectory path `plugins/dev-sdlc/skills/start-project/SKILL.md`
+    — the reader-fall-through path tracks the new location."""
     # Mirror the resolver's contract: workspace_root + relative path,
     # with framework/ fall-through.
-    rel = "plugins/dev-sdlc/skills/start-project.md"
+    rel = "plugins/dev-sdlc/skills/start-project/SKILL.md"
     # When the skill file is present at the workspace_root probe,
     # resolution returns that path directly (the framework/ fall-
     # through is not exercised).

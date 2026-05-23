@@ -1,12 +1,14 @@
 """AC.SKILLS-DSDLC2.7 — all dev-sdlc SKILLs auto-discoverable.
 
 Per v0.1.9 Cycle 3 plan-doc §4 AC.SKILLS-DSDLC2.7 (extended by
-v0.2.1 Cycle 2 to admit `skill-promotion-review`): walking
-`plugins/dev-sdlc/skills/` yields exactly the 13 expected SKILL
-packages (each containing a valid SKILL.md) — 6 from v0.1.8
-Cycle 5 first pass + 6 from v0.1.9 Cycle 3 second pass + 1 from
-v0.2.1 Cycle 2 — in addition to the flat-file `start-project.md`
-shipped with v0.1.0.
+v0.2.1 Cycle 2 to admit `skill-promotion-review`; v0.5.0 AC.V050.4
+to admit `odd-test-altitude-discipline` and `subagent-routing`;
+A-PROMOTE-START-PROJECT to admit `start-project` promoted from
+flat-shape to subdirectory shape): walking `plugins/dev-sdlc/skills/`
+yields exactly the expected SKILL packages (each containing a
+valid SKILL.md) — 6 from v0.1.8 Cycle 5 first pass + 6 from v0.1.9
+Cycle 3 second pass + 1 from v0.2.1 Cycle 2 + 2 from v0.5.0 +
+1 from A-PROMOTE-START-PROJECT = 16 total.
 
 The Anthropic SKILL.md auto-discovery primitive walks
 `<plugin>/skills/<name>/SKILL.md` files; v0.1.7 Cycle 3
@@ -39,7 +41,10 @@ SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
 # discipline) admitted into the registry as part of the v0.5.0
 # AC.V050.4 no-regression closure (pre-existing orphan from the
 # odd-test-altitude-discipline shipping cycle, surfaced by AC.V050.4)
-# + 1 from v0.5.0 Cycle 1 (subagent-routing) = 15 total.
+# + 1 from v0.5.0 Cycle 1 (subagent-routing) + 1 from
+# A-PROMOTE-START-PROJECT (start-project promoted from flat-shape
+# to subdirectory shape; closes the silent v0.1.7 AC.LAYERED.2
+# divergence regression) = 16 total.
 EXPECTED_SKILLS = [
     # First pass (v0.1.8 Cycle 5, sealed e4512b9):
     "loam-amend-cycle",
@@ -64,6 +69,11 @@ EXPECTED_SKILLS = [
     # Fifth pass (v0.5.0 Cycle 1, subagent-routing — closes the
     # consumption-gap on the v0.1.7 typed personas):
     "subagent-routing",
+    # Sixth pass (A-PROMOTE-START-PROJECT — promotes start-project
+    # from flat-shape to subdirectory shape; restores discoverability
+    # via _symlink_plugin_skills which silently skipped flat-shape
+    # since v0.1.7 AC.LAYERED.2 ship):
+    "start-project",
 ]
 
 DESCRIPTION_MAX_CHARS = 1536
@@ -129,7 +139,10 @@ def test_all_twelve_dev_sdlc_skills_discovered() -> None:
     directory yields the expected dev-sdlc SKILL packages.
     Asserts no orphans (no extra subdirectories with SKILL.md)
     and no misnames. Extended by v0.2.1 Cycle 2 to include
-    `skill-promotion-review` (13th SKILL)."""
+    `skill-promotion-review` (13th SKILL); v0.5.0 to admit
+    `odd-test-altitude-discipline` + `subagent-routing` (15);
+    A-PROMOTE-START-PROJECT to admit `start-project` (16th
+    SKILL — promoted from flat-shape to subdirectory shape)."""
     discovered = sorted(
         p.name for p in SKILLS_DIR.iterdir()
         if p.is_dir() and (p / "SKILL.md").is_file()
@@ -147,11 +160,13 @@ def test_skills_count_thirteen() -> None:
     Cycle 2 added `skill-promotion-review` as the 13th. v0.5.0 AC.V050.4
     extended the registry to 15 — admitted `odd-test-altitude-
     discipline` (pre-existing orphan; clears that regression) and
-    `subagent-routing` (new this cycle).
+    `subagent-routing` (new this cycle). A-PROMOTE-START-PROJECT
+    extended to 16 — admitted `start-project` (promoted from
+    flat-shape to subdirectory shape).
 
     The function name retains the historical 'thirteen' wording for
     git-blame continuity with the v0.2.1 + v0.5.0 amendment record;
     the assertion tracks the current count. Future amendments that
     add SKILLs update this value + the EXPECTED_SKILLS list together.
     """
-    assert len(EXPECTED_SKILLS) == 15
+    assert len(EXPECTED_SKILLS) == 16

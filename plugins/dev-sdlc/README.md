@@ -23,8 +23,10 @@ directory pattern that v0.2+ plugins inherit.
 - Exposes a persona-invocable Python API at
   `loam.plugins.dev_sdlc.api`.
 - Ships the `/start-project` Claude skill at
-  `plugins/dev-sdlc/skills/start-project.md` for first-click
-  intent routing.
+  `plugins/dev-sdlc/skills/start-project/SKILL.md` (subdirectory
+  shape) for first-click intent routing — auto-symlinked into
+  `<workspace>/.claude/skills/start-project/` at scaffold time by
+  `_symlink_plugin_skills` (per AC.LAYERED.2).
 
 ## Quickstart
 

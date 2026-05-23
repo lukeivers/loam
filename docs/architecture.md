@@ -89,9 +89,22 @@ servers (the user's own choices).
 ### Skills
 
 Skills are Claude-native domain capabilities the user can opt into.
-loam does not ship skills directly in v0.1.0 — but the Dev/SDLC
-plugin contributes a `start-project` skill that the primary persona
-can invoke when the intent matches.
+loam ships two SKILL-contributing plugins: `loam-skills` (20 layered
+SKILLs capturing loam's load-bearing translation patterns) and
+`dev-sdlc` (15 layered SKILLs covering plan-doc authoring, amendment-
+cycle discipline, audit-finding triage, and related dev workflows).
+Both plugins' layered SKILLs are auto-discovered via Claude Code's
+`.claude/skills/` directory after `loam init` symlinks them at
+scaffold time (`_symlink_plugin_skills` in
+`framework/workspace-bootstrap/src/loam/workspace_bootstrap/adapters/first_run_scaffold.py`).
+SKILL counts grow as the corpus grows; the numbers cited here are
+plan-time anchors, not contract values.
+
+The Dev/SDLC plugin additionally contributes a user-facing
+`start-project` SKILL (at `plugins/dev-sdlc/skills/start-project/SKILL.md`)
+for first-click intent routing — auto-symlinked into
+`<workspace>/.claude/skills/start-project/` at scaffold time by the
+same `_symlink_plugin_skills` mechanism.
 
 ### Plugins
 

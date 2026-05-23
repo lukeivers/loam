@@ -210,8 +210,13 @@ def test_symlink_plugin_skills_skips_flat_file_skills(
     auto-symlinked. Anthropic discovery is per-directory; flat-file
     skills are out of fence for the auto-symlinking layer.
 
-    Mirrors plugins/dev-sdlc/skills/start-project.md (real-tree shape
-    that exists today)."""
+    Mirrors the historical pre-promotion shape of
+    `plugins/dev-sdlc/skills/start-project.md` (which existed at
+    v0.1.0 ship; promoted to subdirectory shape by amendment-
+    A-PROMOTE-START-PROJECT, slug
+    `loam-skills-start-project-discoverable`). The flat-file
+    skip-contract remains exercised against a realistic input shape
+    — no real-tree flat-shape SKILL exists post-promotion."""
     workspace = tmp_path / "ws"
     workspace.mkdir()
     plugins = workspace / "plugins"

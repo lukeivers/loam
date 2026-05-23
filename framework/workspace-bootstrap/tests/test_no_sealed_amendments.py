@@ -181,7 +181,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              immediately before this amendment's code commit.
 #              Mirrors amendments #34 / #35 / #36 / #37 / #38
 #              BASELINE-as-HEAD~1 pattern.
-BASELINE = "b2b46a22b0cbdc7580bd9d612015362e682ac9cb"
+BASELINE = "852d49c6b8dd7caf2566e09bc25270fbbb059c8a"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -377,6 +377,7 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/architecture.md",
         "docs/components/index.md",
         "docs/public-surface-manifest.md",
+        "docs/design/layered-skill-architecture.md",
     }
 
     offending = []

@@ -41,7 +41,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 # #139 diff window when BASELINE points at #138's seal. Bumping
 # BASELINE to the corrective fixup commit takes the orphan-cleanup
 # out of #139's diff window per amendment #139 §16 finding.
-BASELINE = "b278cc6a08b5c7ff127036d009b8d7ae22a3c2c6"
+BASELINE = "852d49c6b8dd7caf2566e09bc25270fbbb059c8a"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -195,6 +195,7 @@ def test_only_dev_sdlc_changed() -> None:
         "docs/components/index.md",
         "docs/components/memory.md",
         "docs/public-surface-manifest.md",
+        "docs/design/layered-skill-architecture.md",
     }
 
     offending = []

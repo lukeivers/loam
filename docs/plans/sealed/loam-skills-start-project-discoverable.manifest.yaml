@@ -1,0 +1,230 @@
+schema_version: 1
+amendment:
+  # number: assigned at apply-time. #146 was loam-skills-ac-lsk1-root-cause
+  # (Batch A unblock); this amendment lands as #147 — the next
+  # available global amendment counter post-Batch-A-seal sequence.
+  number: 147
+  slug: loam-skills-start-project-discoverable
+  title: "PATCH — Promote the v0.1.0 `start-project` SKILL from flat-shape to subdirectory shape so the v0.1.7 auto-symlinker actually discovers it; restore the architecture.md reference Batch A deleted; close the silent-undiscoverable regression introduced at v0.1.7 ship by AC.LAYERED.2's per-directory-only walk."
+
+# baseline: walked at apply-time per #142 D-PASH.BASELINE-WALK from
+# the canonical-clean pre-this-amendment commit. Resolved sequence:
+#   6b82a62 — Batch A (amendment #145) seal commit.
+#   c5df872 — Amendment #146 (AC.LSK root-cause) seal commit
+#             (Batch A unblock; sealed before Batch A's own seal).
+#   d96926e — Amendment #146 §14 backfill.
+#   852d49c — Amendment #145 §14 backfill (current canonical-clean
+#             pre-this-amendment HEAD; THIS is the BASELINE).
+#   215c9c1 — This amendment's source-edit commit (lands BEFORE
+#             `loam amend apply`).
+#   <loam amend apply auto-commit (this amendment)>.
+#   <loam amend seal deterministic seal commit (this amendment)>.
+baseline: 852d49c6b8dd7caf2566e09bc25270fbbb059c8a
+
+plan: docs/plans/loam-skills-start-project-discoverable.md
+
+seal_description: |
+  PATCH — Promote /start-project SKILL to discoverable subdirectory
+  shape; close the silent v0.1.7 AC.LAYERED.2 divergence regression.
+
+  At v0.1.0 ship, AC.OSS-M6.9 verified the start-project SKILL via
+  `_resolve_corpus_path` reader-fall-through (Idea 26). Flat-shape
+  `plugins/dev-sdlc/skills/start-project.md` was correct AT THE TIME.
+  At v0.1.7, AC.LAYERED.2 shipped `_symlink_plugin_skills` —
+  per-directory walk only; flat-file skills explicitly skipped at
+  `framework/workspace-bootstrap/src/loam/workspace_bootstrap/
+  adapters/first_run_scaffold.py:1262-1267`. No test detected the
+  divergence: AC.OSS-M6.9's verification was downsized to file-
+  existence + frontmatter + manual reader-fall-through simulation,
+  never an outcome-altitude check that the SKILL actually reaches
+  `<workspace>/.claude/skills/` in a fresh workspace. The SKILL has
+  been silently undiscoverable since v0.1.7.
+
+  Batch A (amendment #145, apply commit 140767c pending seal)
+  accepted the silent-undiscoverable state and DELETED the
+  `start-project` reference from docs/architecture.md (per
+  D-BAFI.START-PROJECT). This amendment course-corrects: promote
+  the SKILL to discoverable shape AND restore the architecture.md
+  reference with refined wording.
+
+  AC families locked per docs/plans/loam-skills-start-project-
+  discoverable.md §4:
+
+    - AC.SPDISC.MV — `git mv` plugins/dev-sdlc/skills/start-
+      project.md → plugins/dev-sdlc/skills/start-project/SKILL.md.
+      Body byte-identical.
+    - AC.SPDISC.DSCV — OUTCOME-ALTITUDE: `_symlink_plugin_skills`
+      walked against a synthetic workspace produces the symlink at
+      `<workspace>/.claude/skills/start-project` and resolves to
+      a readable SKILL.md. RED-on-mutation: revert the `git mv`
+      and assert the test fails.
+    - AC.SPDISC.OSSM69 — original AC.OSS-M6.9 contract still
+      passes against the relocated file (frontmatter + body +
+      reader-fall-through resolution).
+    - AC.SPDISC.ARCH — docs/architecture.md `### Skills` section
+      names start-project as Dev/SDLC plugin's first-click intent-
+      routing surface; cites the auto-symlink mechanism.
+    - AC.SPDISC.COLLAT — collateral references reflect subdirectory
+      shape across 5 files: README, two DSDLC test docstrings,
+      AC.LAYERED.2 test docstring, layered-skill-architecture.md.
+      Includes EXPECTED_SKILLS update in both DSDLC1.7 + DSDLC2.7
+      tests to admit `start-project` as the 16th SKILL (per §11 of
+      the plan-doc; merged into COLLAT scope).
+    - AC.SPDISC.S — smoke: fresh workspace produced by the
+      production fresh-scaffold entry-point carries
+      `<workspace>/.claude/skills/start-project/SKILL.md` reachable
+      as a normal file. OUTCOME-ALTITUDE.
+
+  Method-level choices (builder's call per ODD §1.1; recommendations
+  in §10 of the plan-doc):
+
+    - D-SPDISC.MV-METHOD: `git mv` (preserve history).
+    - D-SPDISC.NAME-FIELD: keep frontmatter `name: start-project`
+      for v0.1.0 contract continuity (subdirectory-name and
+      frontmatter-name agreeing is benign).
+    - D-SPDISC.ARCH-WORDING: parallel-paragraph addition to the
+      existing loam-skills / dev-sdlc paragraph.
+    - D-SPDISC.LAYERED-DOC-WORDING: replace real-tree flat-shape
+      example with a hypothetical example.
+    - D-SPDISC.LAYERED-2-TEST-COMMENT: historical-context wording.
+    - D-SPDISC.BAFI-TEST-COLLISION: verification deferred to
+      builder; if Batch A's test_AC_BAFI_S_post_fix_state.py
+      asserts start-project absence from architecture.md, builder
+      updates that test as part of this amendment's source-edit
+      commit (preferred path — on-shape semantic correction).
+
+  Out of scope (per sub-plan §3):
+
+    - SKILL body content revision (move only).
+    - Migrating other flat-shape skills (none exist in canonical loam).
+    - Revising AC.LAYERED.2's skip-flat-file test LOGIC (logic stays;
+      only comment example updates).
+    - Broader currency review of layered-skill-architecture.md.
+    - MCP section of architecture.md (per Batch A's D-BAFI.ARCH-SCOPE).
+    - Tightening AC.OSS-M6.9's text language (text was correct; only
+      the verification ladder tightens per
+      `feedback_loose_AC_text_fix_AC_not_implementation`).
+
+  Predecessor commits:
+    - 21c1ddf — Batch A plan-doc + manifest commit.
+    - 140767c — Batch A apply commit (pending seal at plan-author
+                time; this amendment's apply WAITS for Batch A's
+                seal SHA which becomes this amendment's baseline).
+    - <Batch A seal SHA> — baseline for this amendment (backfilled
+                           at apply-time).
+    - <any Batch A-FIX seals> — additional baseline-walks if needed.
+
+  HALT TRIGGERS (per §6 of the plan-doc):
+
+    - WD drifts → halt.
+    - Batch A unsealed at apply-time → halt; architecture.md edit
+      will conflict.
+    - SKILL body non-byte-identical post-move → halt.
+    - `_symlink_plugin_skills` mechanism deviates from
+      D-SPDISC.MECHANISM expectation → halt + RF.
+    - Cross-plugin `start-project` name collision → halt.
+    - AC.SPDISC.DSCV test fails RED-on-mutation → halt; not at
+      outcome-altitude.
+    - Additional hard-coded flat-shape references discovered beyond
+      the 5 named in §3 → halt + surface; scope might widen.
+    - SKILL frontmatter requires per-directory shape divergence
+      (e.g., `allowed-tools` field with companion files) → halt
+      + RF (Tier-0-verified at plan-time: no such fields).
+    - Batch A's BAFI test asserts start-project absence from
+      architecture.md AND that update is contentious → halt + RF.
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/architecture.md
+    - docs/design/layered-skill-architecture.md
+
+narrative:
+  target: docs/plans/sealed/loam-skills-start-project-discoverable.md
+  body: |
+    # loam-skills-start-project-discoverable — apply ladder
+
+    2026-05-22. Sealed-component PATCH amendment correcting the
+    Batch A (amendment #145) over-deletion + closing the silent
+    discoverability regression introduced at v0.1.7 ship.
+
+    Plan: `docs/plans/loam-skills-start-project-discoverable.md`.
+
+    Scope (per plan §3 / §5): two-component fence on
+    `plugins/dev-sdlc/` (load-bearing — the SKILL relocation +
+    test updates + README touch + two DSDLC test docstring updates)
+    + `framework/workspace-bootstrap/` (secondary — one
+    AC.LAYERED.2 test docstring comment update). Universal
+    admissions: `docs/architecture.md` (reference restoration),
+    `docs/design/layered-skill-architecture.md` (line 196 example
+    rewrite).
+
+    Single-cycle, single-seal ladder per §7 of the plan-doc.
+
+    AC families (full text in plan §4):
+
+      - AC.SPDISC.MV — `git mv` flat → subdirectory; body byte-
+        identical.
+      - AC.SPDISC.DSCV — OUTCOME-ALTITUDE discoverability via
+        `_symlink_plugin_skills` against synthetic tmpfs workspace.
+      - AC.SPDISC.OSSM69 — original v0.1.0 AC.OSS-M6.9 contract
+        still satisfied at the relocated path.
+      - AC.SPDISC.ARCH — docs/architecture.md reference restored
+        with refined wording naming the subdirectory shape +
+        auto-symlink mechanism.
+      - AC.SPDISC.COLLAT — collateral updates across 5 sites +
+        EXPECTED_SKILLS admission in both DSDLC tests.
+      - AC.SPDISC.S — smoke: fresh workspace via production
+        fresh-scaffold entry-point carries the discoverable SKILL.
+
+    Method-level choices (recommendations in plan §10; rulings
+    backfilled at build time):
+
+      - D-SPDISC.MV-METHOD — `git mv` recommended (history).
+      - D-SPDISC.NAME-FIELD — frontmatter `name:` stays.
+      - D-SPDISC.ARCH-WORDING — parallel-paragraph addition.
+      - D-SPDISC.LAYERED-DOC-WORDING — hypothetical example.
+      - D-SPDISC.LAYERED-2-TEST-COMMENT — historical-context
+        wording.
+      - D-SPDISC.MECHANISM — Tier-0-verified at plan-time
+        (`_symlink_plugin_skills` walks per-directory; flat-file
+        skipped at line 1264 of
+        `framework/workspace-bootstrap/src/loam/workspace_bootstrap/
+        adapters/first_run_scaffold.py`).
+      - D-SPDISC.BAFI-TEST-COLLISION — verification at apply-time;
+        builder updates Batch A's BAFI test in this amendment's
+        source-edit commit if collision detected.
+
+    Predecessor commits (per plan §2):
+      - 21c1ddf — Batch A plan-doc + manifest commit.
+      - 140767c — Batch A apply commit (pre-seal at plan-author
+                  time).
+      - <Batch A seal SHA> — baseline for this amendment.
+
+    Audit-trail honesty (per plan §13 finding #1): this amendment
+    closes a regression introduced at v0.1.7 AC.LAYERED.2 ship,
+    not a v0.1.0 bug. At v0.1.0 the flat-shape SKILL was
+    discoverable via `_resolve_corpus_path` reader-fall-through;
+    v0.1.7's `_symlink_plugin_skills` per-directory-only walk
+    introduced the divergence silently. The original AC.OSS-M6.9
+    test was loose-by-divergence (outcome-altitude gap that
+    became load-bearing at v0.1.7), not loose-at-authoring.
+
+    BASELINE — Batch A seal SHA (backfilled at apply-time). Two-
+    component fence on `plugins/dev-sdlc/` +
+    `framework/workspace-bootstrap/`. Sidecars advance to this
+    amendment's seal SHA at apply time.

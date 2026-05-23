@@ -267,3 +267,86 @@ Predecessor commits:
 BASELINE e3e5eb4 — single-component fence on
 `plugins/loam-skills/`. Sidecar advances to the v0.1.6 Cycle 2
 seal SHA at apply time.
+
+# loam-skills-ac-lsk1-root-cause — AC.LSK.{1,2,3} derive-from-
+disk rewrite + AC.LSK.1 prose tightening
+
+2026-05-22. Root-cause fix for the enumeration-trap defect in
+the AC.LSK family that blocked Batch A's seal. Sub-plan:
+`docs/plans/loam-skills-ac-lsk1-root-cause.md` (archived to
+`docs/plans/sealed/` at T1.4).
+
+Scope: single-component fence on `plugins/loam-skills/`.
+Three test rewrites + one sealed-plan-doc prose tightening +
+one new outcome-altitude test. No SKILL package content
+changes. No pyproject changes (Batch A's territory).
+
+Defect: `test_AC_LSK_1_skill_packages_present.py::test_all_
+skills_discovered` failed because EXPECTED_SKILLS hardcoded
+10 names while 20 well-formed packages exist on disk
+(verified pre-flight). 10 packages added since the test was
+last touched (v0.8.0 `4f1dcf6`) with no list bump:
+claude-agents-view, cron-create, goal-command, handsoff-loop,
+launchd-plist, loop-command, monitor-tool, precompact-hook,
+run-in-background-bash, schedule-wakeup. The same enumeration-
+trap exists silently in AC.LSK.2 + AC.LSK.3 tests (10
+packages × 2 ACs = 20 unverified assertions); only AC.LSK.1's
+cross-check surfaced the defect.
+
+AC families (Option-1-WIDENED, turn-3 dispatcher ratification):
+
+  - AC.LSK1RC.TEST1 — test_AC_LSK_1_skill_packages_present.py
+    rewrite: derive SKILL set from disk; remove EXPECTED_
+    SKILLS; remove test_skills_count_ten; per-skill well-
+    formedness assertions preserved + executing against ≥20
+    packages.
+  - AC.LSK1RC.TEST2 — test_AC_LSK_2_frontmatter_well_formed.
+    py rewrite: same derive-from-disk pattern; per-skill
+    frontmatter assertions preserved.
+  - AC.LSK1RC.TEST3 — test_AC_LSK_3_body_content_shape.py
+    rewrite: derive-from-disk + conditional logic per the
+    `is_claude_primitive_package` heuristic (presence of
+    `## When to load me` OR `## What this is` H2 header
+    signals primitive-subject → exempt from loam-pattern +
+    graceful-degradation checks); section-shape predicate
+    flexible per AC.LSK1RC.AC3.
+  - AC.LSK1RC.AC1 — docs/plans/sealed/v0-1-3-skill-packages.
+    md AC.LSK.1 prose tightening (lines 123-141): heading
+    no longer pins count "five"; body no longer enumerates
+    v0.1.3-era paths; four well-formedness criteria
+    preserved; explicit derived-from-disk note added.
+  - AC.LSK1RC.AC3 — docs/plans/sealed/v0-1-3-skill-packages.
+    md AC.LSK.3 prose tightening (lines 153-161, Option-1-
+    WIDENED): widens the three body-shape assertion families
+    to admit both v0.1.3-era and post-v0.1.6 claude-primitive
+    conventions; section-shape is a semantic predicate;
+    loam-pattern + graceful-degradation checks are
+    conditional (skipped for claude-primitive-subject
+    packages).
+  - AC.LSK1RC.S — outcome-altitude smoke: production-altitude
+    invocation against real skills/ tree + four synthetic
+    fixtures (malformed loam-pattern → fails; valid claude-
+    primitive without GD → passes via exemption; empty body
+    → fails; positive cases → pass). RED-on-regression proof.
+
+Eight plan-author halt-and-surface findings (plan §10) all
+surfaced + autonomous-decision-recorded:
+  F1 — AC.LSK.1 text is loose, NOT load-bearing enumeration
+       (fix-the-AC discipline applies per `feedback_loose_AC_
+       text_fix_AC_not_implementation`).
+  F2 — Scope widens from AC.LSK.1-only to AC.LSK.{1,2,3}
+       (same defect class; asymmetric-problem-solving).
+  F3 — meta-decision-haiku not-yet-packaged dir correctly
+       excluded by per-directory SKILL.md filter.
+  F4 — AC.LSK1RC.S synthetic-fixture path is the RED-on-
+       regression proof (pass-only insufficient).
+  F5 — Single-component fence sufficient.
+  F6 — No method-in-AC trap per ODD §2.5.
+  F7 — No sub-amendment split per Lens 5 stopping criterion.
+  F8 — AC.LSK.3 has three assertion families, not one
+       (Option-1-WIDENED; section-shape + loam-pattern +
+       graceful-degradation each get conditional treatment
+       via the claude-primitive heuristic).
+
+Unblocks Batch A's seal. Sequence: A-FIX seals → Batch A
+re-seals → B → C.

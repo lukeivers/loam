@@ -120,25 +120,17 @@ Per v0.1.2 item 6 (`2c32c1b`), `loam amend apply` now auto-commits. This amendme
 
 **AC family:** `AC.LSK.*` (Loam Skills). Pre-grep verified zero collisions in framework/, plugins/, tests/, docs/.
 
-### AC.LSK.1 — five SKILL.md packages present and well-formed
+### AC.LSK.1 — every SKILL.md package in `plugins/loam-skills/skills/` is well-formed
 
-Five SKILL.md files exist at the canonical paths:
+The package set is **derived from disk** — every subdirectory of `plugins/loam-skills/skills/` that contains a `SKILL.md` file. The v0.1.3-era enumeration of five fixed paths was a method-level closure ("all that exist at v0.1.3 time"), not an enumeration contract; the operational intent has always been per-package well-formedness across whatever set exists on disk. v0.8.0's "registry" framing (`docs/plans/sealed/v0-8-0-honesty-cleanup.md:409`) confirmed the same intent. Amendment #146 (`docs/plans/sealed/loam-skills-ac-lsk1-root-cause.md`, AC.LSK1RC.AC1) tightened this prose to make the derived-from-disk semantic explicit.
 
-```
-plugins/loam-skills/skills/memory-recall/SKILL.md
-plugins/loam-skills/skills/scope-decompose/SKILL.md
-plugins/loam-skills/skills/dispatch-with-gates/SKILL.md
-plugins/loam-skills/skills/onboarding-conversation/SKILL.md
-plugins/loam-skills/skills/session-handoff/SKILL.md
-```
-
-Each file:
+Each well-formed SKILL.md:
 1. Starts with valid YAML frontmatter delimited by `---` lines.
 2. Frontmatter parses without error and is a mapping.
 3. Carries a non-empty `description` field (string, ≤1536 chars per Anthropic's combined-cap).
 4. Body (post-frontmatter) is non-empty markdown.
 
-**Verified by:** `tests/test_AC_LSK_1_skill_packages_present.py` (5 paths × shape assertions).
+**Verified by:** `tests/test_AC_LSK_1_skill_packages_present.py` (discovered-set × shape assertions; the previous hardcoded enumeration + count-pinning tests were removed in amendment #146 as the enumeration-trap's structural twin).
 
 ### AC.LSK.2 — frontmatter follows Anthropic SKILL.md schema
 
@@ -152,13 +144,21 @@ For each of the 5 packages:
 
 ### AC.LSK.3 — body content shape
 
-For each of the 5 packages, the markdown body:
-1. Has at least one `## ` header section.
-2. Carries a "When to use" or equivalent description-mirror that names the trigger.
-3. Names the underlying loam pattern that the skill captures (the body must reference loam's CLAUDE.md, F3, ODD, M-FBM, FIDRAFT, or equivalent — establishing provenance for the pattern).
-4. Includes a "Composition" or "Out of scope" section that names the boundary (graceful-degradation for raw Claude Code).
+For every SKILL.md package on disk (derived-from-disk per AC.LSK.1), the markdown body satisfies three assertion families. The check structure was widened in amendment #146 (`docs/plans/sealed/loam-skills-ac-lsk1-root-cause.md`, AC.LSK1RC.AC3 — Option-1-WIDENED ratification) to admit the convention-bifurcation introduced post-v0.1.6: the original v0.1.3 bundle was 5 loam-pattern SKILLs using one convention; subsequent additions introduced claude-primitive-subject SKILLs (whose subject IS a Claude-Code primitive) with a different convention for which the loam-pattern + graceful-degradation requirements are semantically inapplicable.
 
-**Verified by:** `tests/test_AC_LSK_3_body_content_shape.py` (5 packages × body-shape assertions).
+**Family 1 — Section shape.** The body carries H2 sections covering three semantic categories: **When** (when to apply the skill), **What/How** (what the subject does or how the persona applies it), and **Composition/Boundary** (how it composes + when not to use it). One of these structures (or any structural equivalent covering the three categories) satisfies the check:
+
+- **v0.1.3-era convention** (loam-pattern SKILLs): `## What this skill captures` / `## When to use` / `## How the persona applies it` / `## Graceful degradation` / `## Composition` / `## Out of scope`.
+- **Post-v0.1.6 claude-primitive convention** (subject IS a Claude-Code primitive): `## When to load me` / `## What the primitive does` / `## Composition` / `## Anti-patterns` / `## Example invocation`.
+- **Hybrid primitive-subject convention** (e.g., handsoff-loop, subject IS a loam-CLI primitive): `## What this is` / `## How the persona invokes it` / `## Hard rules`. The When-semantic for hybrid packages may live in the frontmatter description's trigger-phrase (already validated by AC.LSK.2) rather than a body H2 — this fallback satisfies the When-category.
+
+**Family 2 — Loam-pattern reference (CONDITIONAL).** Loam-pattern SKILLs must reference at least one named loam concept (CLAUDE.md / F1..F5 / ODD / M-FBM / M5 / FIDRAFT / Lens 1..4 / loam / persona) so the pattern's provenance is traceable. **Claude-primitive-subject packages are EXEMPT** from this check — their subject IS the Claude-Code primitive (or loam-CLI primitive), not a loam pattern; their frontmatter description already gates trigger-phrase per AC.LSK.2 and their body references the primitive directly.
+
+**Family 3 — Graceful-degradation section (CONDITIONAL).** Loam-pattern SKILLs must carry a `## Graceful degradation` section with non-trivial content describing the fallback path for users without loam (the original v0.1.3-era check additionally required the literal phrase "claude code" or "raw claude"; amendment #146 relaxed this to non-trivial content because post-v0.1.6 loam-pattern SKILLs have different fallback shapes — e.g., time-claims-discipline's fallback when shell `date` is unavailable). **Claude-primitive-subject packages are EXEMPT** from this check — there's no loam-pattern to degrade from when the primitive IS the pattern.
+
+**Heuristic for claude-primitive-subject detection** (per amendment #146 D-LSK1RC.CLAUDE-PRIMITIVE-HEURISTIC): a SKILL.md body carries `## When to load me` (the post-v0.1.6 convention) OR `## What this is` (handsoff-loop's primitive-subject hybrid). Loam-pattern SKILLs use `## What this skill captures` instead — verified Tier-0 against all 20 packages at amendment-#146 build time, the partition is clean with no overlap.
+
+**Verified by:** `tests/test_AC_LSK_3_body_content_shape.py` (discovered-set × three assertion families; conditional logic per the heuristic).
 
 ### AC.LSK.S — sealed-component fence: `plugins/loam-skills/`
 

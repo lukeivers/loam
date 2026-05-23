@@ -1,0 +1,346 @@
+schema_version: 1
+amendment:
+  number: 146
+  slug: loam-skills-ac-lsk1-root-cause
+  title: "AC.LSK.1 enumeration-trap root-cause fix — rewrite AC.LSK.{1,2,3} tests to derive-from-disk + tighten AC.LSK.1 prose (unblocks Batch A seal)"
+
+# BASELINE: Batch A's apply commit `2e3cfbf` (current main HEAD,
+# `chore(amend): Doc-only consistency fixes (Batch A)...`). Per
+# amendment #142 D-PASH.BASELINE-WALK, the build agent walks forward
+# from this baseline at apply-time. Plan-doc §1 carries the per-
+# surface Tier-0 re-check verification table; §10 F1 carries the
+# AC-text load-bearing question + resolution (AC text is loose, NOT
+# load-bearing enumeration; fix-the-AC discipline per
+# `feedback_loose_AC_text_fix_AC_not_implementation` applies); §10
+# F2 carries the scope-widening from AC.LSK.1-only to AC.LSK.{1,2,3}
+# (same enumeration-trap defect class across the three tests).
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <pre-edit verification commit (OPTIONAL) — build-side scratch
+#    capture of pre-edit pytest output + grep -c EXPECTED_SKILLS
+#    counts across the three test files; skip if builder prefers
+#    single edit commit>
+#   <test-rewrite commit(s) — three test rewrites per AC.LSK1RC.
+#    {TEST1, TEST2, TEST3}; builder may group into one commit or
+#    per-test commits>
+#   <sealed-plan-doc prose-tightening commit — AC.LSK1RC.AC1 edit
+#    to docs/plans/sealed/v0-1-3-skill-packages.md:123-141>
+#   <AC.LSK1RC.S test authoring commit — tests/test_AC_LSK1RC_S_
+#    outcome_altitude.py (or equivalent path per builder's call)>
+#   <`loam amend apply` auto-commit>
+#   <`loam amend seal` deterministic seal commit — T1.4 archives
+#    this plan-doc + manifest to docs/plans/sealed/ via the
+#    existing post-#134 plan_archive.py integration (Strategy 1
+#    match on the full slug `loam-skills-ac-lsk1-root-cause`).
+#    §14 auto-backfill via #141's decoupled path.>
+#
+# Single-component fence (loam-skills) — the only component touched.
+# Sealed-plan-doc edit (docs/plans/sealed/v0-1-3-skill-packages.md)
+# lands under the docs/plans/ universal admission.
+#
+# AC families per docs/plans/loam-skills-ac-lsk1-root-cause.md §4
+# (Option-1-WIDENED revision, turn-3 dispatcher ratification):
+#   AC.LSK1RC.TEST1 — test_AC_LSK_1_skill_packages_present.py
+#     rewrite: derive SKILL set from disk; remove EXPECTED_SKILLS
+#     hardcoded list; preserve per-skill well-formedness assertions;
+#     remove test_skills_count_ten (count-pinning is the
+#     enumeration-trap's structural twin).
+#   AC.LSK1RC.TEST2 — test_AC_LSK_2_frontmatter_well_formed.py
+#     rewrite: same derive-from-disk pattern; preserve all per-skill
+#     frontmatter assertions.
+#   AC.LSK1RC.TEST3 — test_AC_LSK_3_body_content_shape.py rewrite:
+#     same derive-from-disk pattern; conditional logic per the
+#     `is_claude_primitive_package` heuristic (presence of
+#     `## When to load me` OR `## What this is` H2 header signals
+#     primitive-subject → exempt from loam-pattern + graceful-
+#     degradation checks); section-shape predicate flexible per
+#     AC.LSK1RC.AC3's tightened semantics.
+#   AC.LSK1RC.AC1 — docs/plans/sealed/v0-1-3-skill-packages.md
+#     AC.LSK.1 prose tightening (lines 123-141): heading no longer
+#     pins count "five"; body no longer enumerates v0.1.3-era paths
+#     as contract; explicit derived-from-disk note added; four
+#     numbered well-formedness criteria preserved.
+#   AC.LSK1RC.AC3 — docs/plans/sealed/v0-1-3-skill-packages.md
+#     AC.LSK.3 prose tightening (lines 153-161, Option-1-WIDENED):
+#     widens the three body-shape assertion families to admit both
+#     the v0.1.3-era convention AND the post-v0.1.6 claude-primitive
+#     convention; section-shape is a semantic predicate; loam-pattern
+#     reference + graceful-degradation are conditional (skipped for
+#     claude-primitive-subject packages).
+#   AC.LSK1RC.S — outcome-altitude smoke: production-altitude
+#     invocation of the discovery + AC.LSK.{1,2,3} assertions
+#     against the real plugins/loam-skills/skills/ tree (no pre-
+#     arranged state) AND four synthetic fixtures in tmp_path
+#     (malformed loam-pattern → fails; valid claude-primitive
+#     without GD → passes via exemption; empty body → fails; positive
+#     cases per category → pass). RED-on-regression proof per
+#     `feedback_test_outcome_altitude_required`.
+baseline: "2e3cfbfaacd48f8d12dcb2e67c257f0cff699690"
+# Per amendment #142 D-PASH.BASELINE-WALK: walked forward from
+# Batch A's apply commit (current main HEAD) at plan-author time.
+# Verified Tier-0 this turn: `git rev-parse HEAD` returns the full
+# 40-char SHA above. Build agent re-walks at apply-time per the
+# discipline; this baseline is the plan-time pin.
+
+plan: docs/plans/loam-skills-ac-lsk1-root-cause.md
+
+seal_description: |
+  AC.LSK enumeration-trap + convention-bifurcation root-cause fix
+  (Option-1-WIDENED, turn-3 dispatcher ratification). Rewrite the
+  three AC.LSK.{1,2,3} test files to derive the SKILL set from
+  disk (every subdirectory of plugins/loam-skills/skills/
+  containing a SKILL.md file) instead of from a hardcoded
+  EXPECTED_SKILLS list, AND add conditional logic in AC.LSK.3 so
+  the loam-pattern + graceful-degradation checks correctly apply
+  to loam-pattern SKILLs and exempt claude-primitive-subject
+  SKILLs (whose subject IS a Claude-Code primitive — no loam-
+  pattern to degrade from). Tighten AC.LSK.1 + AC.LSK.3 prose in
+  the sealed plan-doc to make both the well-formedness semantic
+  (AC.LSK.1) AND the dual-convention semantic (AC.LSK.3) explicit.
+  Unblocks Batch A's seal.
+
+  Defect summary (Tier-0 verified at plan-author time):
+  test_all_skills_discovered failed against Batch A's apply
+  commit 2e3cfbf with discovered=[<20 well-formed SKILL packages>]
+  != expected=[<10 names>]. 10 packages added since the test was
+  last touched (v0.8.0 honesty cleanup 4f1dcf6): claude-agents-
+  view, cron-create, goal-command, handsoff-loop, launchd-plist,
+  loop-command, monitor-tool, precompact-hook, run-in-background-
+  bash, schedule-wakeup. None of the 10 additions bumped
+  EXPECTED_SKILLS. The same enumeration-trap defect exists silently
+  in AC.LSK.2 + AC.LSK.3 tests (10 packages × 2 ACs = 20
+  currently-unverified assertions); only AC.LSK.1's test surfaces
+  because only it carries a cross-check (test_all_skills_discovered)
+  that compares the literal list to disk.
+
+  AC.LSK1RC.TEST1 — test_AC_LSK_1_skill_packages_present.py
+  rewrite: derive the SKILL set from disk via a per-directory
+  SKILL.md check; remove EXPECTED_SKILLS; remove test_skills_count_
+  ten (the count-pinning test is the enumeration-trap's structural
+  twin — corpus grows). Per-skill well-formedness assertions
+  (frontmatter delimited, parses as mapping, description present
+  + non-empty + ≤1536 chars, body non-empty) preserved verbatim
+  and now execute against every discovered package (≥20 currently,
+  vs the previous 10).
+
+  AC.LSK1RC.TEST2 — test_AC_LSK_2_frontmatter_well_formed.py
+  rewrite: same derive-from-disk pattern; remove EXPECTED_SKILLS;
+  per-skill frontmatter assertions (directory-name shape, optional
+  name-field match, description trigger-phrase, no unknown fields)
+  preserved and now execute against every discovered package.
+
+  AC.LSK1RC.TEST3 — test_AC_LSK_3_body_content_shape.py rewrite:
+  same derive-from-disk pattern; remove EXPECTED_SKILLS; per-skill
+  body assertions (header present, when-to-use mirror, loam-pattern
+  reference, Composition/Out-of-scope section) preserved and now
+  execute against every discovered package.
+
+  Shared discovery helper recommended (e.g., a module-level
+  function in conftest.py or tests/_helpers.py) to keep the three
+  tests in lockstep; per-test discovery acceptable. Builder's call
+  per D-LSK1RC.DISCOVERY.
+
+  AC.LSK1RC.AC1 — docs/plans/sealed/v0-1-3-skill-packages.md
+  AC.LSK.1 prose tightening (lines 123-141). Heading no longer
+  reads "five SKILL.md packages present and well-formed" (the
+  count "five" is the enumeration-trap surface); body no longer
+  enumerates the v0.1.3-era five paths as the AC's contract
+  surface. The four numbered well-formedness criteria are
+  preserved. An explicit note added stating the package set is
+  derived from disk. Doc-only AC tightening per
+  `feedback_loose_AC_text_fix_AC_not_implementation` — the AC
+  text is loose (implicit enumeration via "five"); the operational
+  intent has always been well-formedness (per the heading's
+  "**and well-formed**" conjunction + v0.8.0's "registry" framing
+  at docs/plans/sealed/v0-8-0-honesty-cleanup.md:409); tightening
+  the prose closes the implicit-pinning surface for future readers.
+
+  AC.LSK1RC.AC3 — docs/plans/sealed/v0-1-3-skill-packages.md
+  AC.LSK.3 prose tightening (lines 153-161, Option-1-WIDENED
+  per turn-3 dispatcher ratification). The original AC.LSK.3
+  required v0.1.3-era convention (6-section shape + loam-pattern
+  marker + `## Graceful degradation` section). Post-v0.1.6
+  introduced claude-primitive-subject packages with a 5-section
+  convention (`## When to load me` / `## What the primitive does`
+  / `## Composition` / `## Anti-patterns` / `## Example invocation`)
+  whose subject IS a Claude-Code primitive — they don't have a
+  loam-pattern-to-degrade-from. AC.LSK.3 prose is widened to:
+  (1) section shape: accept either convention OR any structural
+  equivalent covering When + What/How + Composition/Boundary;
+  (2) loam-pattern reference: required only for loam-pattern
+  SKILLs (claude-primitive-subject packages exempted, detected by
+  header convention `## When to load me` OR `## What this is`);
+  (3) graceful-degradation section: required only for loam-pattern
+  SKILLs (same conditional exemption). Doc-only AC tightening per
+  `feedback_loose_AC_text_fix_AC_not_implementation` — the v0.1.3
+  AC text was authored against a homogeneous bundle; subsequent
+  convention-bifurcation made the original text inapplicable to
+  the new family without revising the operational intent.
+
+  AC.LSK1RC.S — outcome-altitude smoke. tests/test_AC_LSK1RC_S_
+  outcome_altitude.py (or equivalent path per builder's call)
+  invokes the discovery + AC.LSK.{1,2,3} assertion flow against
+  the actual plugins/loam-skills/skills/ tree (production altitude,
+  no pre-arranged state) AND constructs four synthetic fixtures
+  in tmp_path mirrors: malformed loam-pattern package (missing
+  required section) → fails; valid claude-primitive package
+  without `## Graceful degradation` → passes (conditional
+  exemption works); package with empty body → fails; positive
+  cases per category → pass. RED-on-regression proof per
+  `feedback_test_outcome_altitude_required` — pass-only against
+  the current tree doesn't prove malformedness-detection survives
+  the rewrite or that conditional exemptions correctly waive
+  checks only for genuine claude-primitive packages. Assertion
+  messages name the failing skill by directory name.
+
+  Seven plan-author halt-and-surface findings (per plan §10)
+  all surfaced + autonomous-decision-recorded per
+  `feedback_test_against_operational_objective_before_escalating`:
+  F1 (AC.LSK.1 text is loose, NOT load-bearing enumeration —
+  fix-the-AC discipline applies per `feedback_loose_AC_text_fix_
+  AC_not_implementation`); F2 (scope widens from AC.LSK.1-only
+  to AC.LSK.{1,2,3} per asymmetric-problem-solving — same defect
+  class across the three tests); F3 (meta-decision-haiku not-yet-
+  packaged directory correctly excluded by per-directory SKILL.md
+  filter); F4 (AC.LSK1RC.S synthetic-fixture path is the
+  RED-on-regression proof); F5 (single-component fence sufficient);
+  F6 (no method-in-AC trap per ODD §2.5); F7 (no sub-amendment
+  split per Lens 5 stopping criterion).
+
+  Test-tightening + AC-text-tightening hygiene amendment; no
+  behavior change for any production code path; no SKILL package
+  content edits. Composes with v0.8.0 honesty cleanup (same
+  registry semantic; A-FIX closes the implementation-side gap
+  v0.8.0 surfaced via the orphan-admission framing). Closes the
+  AC.LSK family enumeration-trap defect class at root cause.
+  Unblocks Batch A's seal (sequence: A-FIX seals → Batch A
+  re-seals → B → C).
+
+components:
+  - name: loam-skills
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+    # Single-component fence. The loam-skills plugin is the only
+    # component whose tree is touched. Source edits land in:
+    #   plugins/loam-skills/tests/test_AC_LSK_1_skill_packages_
+    #     present.py (rewrite per AC.LSK1RC.TEST1)
+    #   plugins/loam-skills/tests/test_AC_LSK_2_frontmatter_well_
+    #     formed.py (rewrite per AC.LSK1RC.TEST2)
+    #   plugins/loam-skills/tests/test_AC_LSK_3_body_content_
+    #     shape.py (rewrite per AC.LSK1RC.TEST3)
+    #   plugins/loam-skills/tests/test_AC_LSK1RC_S_outcome_
+    #     altitude.py (NEW; path per builder's call per
+    #     AC.LSK1RC.S — recommended location keeps the test
+    #     adjacent to the family it verifies)
+    #   plugins/loam-skills/tests/conftest.py OR plugins/loam-
+    #     skills/tests/_helpers.py (OPTIONAL — shared discovery
+    #     helper per D-LSK1RC.DISCOVERY; builder's call)
+    #   plugins/loam-skills/tests/SEAL_COMMIT (sidecar; bumped at
+    #     apply)
+    #
+    # Sealed-plan-doc edit (docs/plans/sealed/v0-1-3-skill-
+    # packages.md AC.LSK.1 prose per AC.LSK1RC.AC1) lands under
+    # the docs/plans/ universal admission below.
+    #
+    # No edits to plugins/loam-skills/skills/ (no SKILL.md content
+    # changes), no edits to plugins/loam-skills/pyproject.toml
+    # (Batch A's territory; do not re-touch), no edits to
+    # plugins/loam-skills/README.md, no edits to any other plugin
+    # or framework tree.
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - "docs/plans/"  # AC.LSK1RC.AC1 — docs/plans/sealed/v0-1-3-
+                     # skill-packages.md prose tightening + this
+                     # plan-doc + manifest archival to docs/plans/
+                     # sealed/ on T1.4.
+
+narrative:
+  target: plugins/loam-skills/tests/SEAL_COMMIT.notes
+  body: |
+    # loam-skills-ac-lsk1-root-cause — AC.LSK.{1,2,3} derive-from-
+    disk rewrite + AC.LSK.1 prose tightening
+
+    2026-05-22. Root-cause fix for the enumeration-trap defect in
+    the AC.LSK family that blocked Batch A's seal. Sub-plan:
+    `docs/plans/loam-skills-ac-lsk1-root-cause.md` (archived to
+    `docs/plans/sealed/` at T1.4).
+
+    Scope: single-component fence on `plugins/loam-skills/`.
+    Three test rewrites + one sealed-plan-doc prose tightening +
+    one new outcome-altitude test. No SKILL package content
+    changes. No pyproject changes (Batch A's territory).
+
+    Defect: `test_AC_LSK_1_skill_packages_present.py::test_all_
+    skills_discovered` failed because EXPECTED_SKILLS hardcoded
+    10 names while 20 well-formed packages exist on disk
+    (verified pre-flight). 10 packages added since the test was
+    last touched (v0.8.0 `4f1dcf6`) with no list bump:
+    claude-agents-view, cron-create, goal-command, handsoff-loop,
+    launchd-plist, loop-command, monitor-tool, precompact-hook,
+    run-in-background-bash, schedule-wakeup. The same enumeration-
+    trap exists silently in AC.LSK.2 + AC.LSK.3 tests (10
+    packages × 2 ACs = 20 unverified assertions); only AC.LSK.1's
+    cross-check surfaced the defect.
+
+    AC families (Option-1-WIDENED, turn-3 dispatcher ratification):
+
+      - AC.LSK1RC.TEST1 — test_AC_LSK_1_skill_packages_present.py
+        rewrite: derive SKILL set from disk; remove EXPECTED_
+        SKILLS; remove test_skills_count_ten; per-skill well-
+        formedness assertions preserved + executing against ≥20
+        packages.
+      - AC.LSK1RC.TEST2 — test_AC_LSK_2_frontmatter_well_formed.
+        py rewrite: same derive-from-disk pattern; per-skill
+        frontmatter assertions preserved.
+      - AC.LSK1RC.TEST3 — test_AC_LSK_3_body_content_shape.py
+        rewrite: derive-from-disk + conditional logic per the
+        `is_claude_primitive_package` heuristic (presence of
+        `## When to load me` OR `## What this is` H2 header
+        signals primitive-subject → exempt from loam-pattern +
+        graceful-degradation checks); section-shape predicate
+        flexible per AC.LSK1RC.AC3.
+      - AC.LSK1RC.AC1 — docs/plans/sealed/v0-1-3-skill-packages.
+        md AC.LSK.1 prose tightening (lines 123-141): heading
+        no longer pins count "five"; body no longer enumerates
+        v0.1.3-era paths; four well-formedness criteria
+        preserved; explicit derived-from-disk note added.
+      - AC.LSK1RC.AC3 — docs/plans/sealed/v0-1-3-skill-packages.
+        md AC.LSK.3 prose tightening (lines 153-161, Option-1-
+        WIDENED): widens the three body-shape assertion families
+        to admit both v0.1.3-era and post-v0.1.6 claude-primitive
+        conventions; section-shape is a semantic predicate;
+        loam-pattern + graceful-degradation checks are
+        conditional (skipped for claude-primitive-subject
+        packages).
+      - AC.LSK1RC.S — outcome-altitude smoke: production-altitude
+        invocation against real skills/ tree + four synthetic
+        fixtures (malformed loam-pattern → fails; valid claude-
+        primitive without GD → passes via exemption; empty body
+        → fails; positive cases → pass). RED-on-regression proof.
+
+    Eight plan-author halt-and-surface findings (plan §10) all
+    surfaced + autonomous-decision-recorded:
+      F1 — AC.LSK.1 text is loose, NOT load-bearing enumeration
+           (fix-the-AC discipline applies per `feedback_loose_AC_
+           text_fix_AC_not_implementation`).
+      F2 — Scope widens from AC.LSK.1-only to AC.LSK.{1,2,3}
+           (same defect class; asymmetric-problem-solving).
+      F3 — meta-decision-haiku not-yet-packaged dir correctly
+           excluded by per-directory SKILL.md filter.
+      F4 — AC.LSK1RC.S synthetic-fixture path is the RED-on-
+           regression proof (pass-only insufficient).
+      F5 — Single-component fence sufficient.
+      F6 — No method-in-AC trap per ODD §2.5.
+      F7 — No sub-amendment split per Lens 5 stopping criterion.
+      F8 — AC.LSK.3 has three assertion families, not one
+           (Option-1-WIDENED; section-shape + loam-pattern +
+           graceful-degradation each get conditional treatment
+           via the claude-primitive heuristic).
+
+    Unblocks Batch A's seal. Sequence: A-FIX seals → Batch A
+    re-seals → B → C.

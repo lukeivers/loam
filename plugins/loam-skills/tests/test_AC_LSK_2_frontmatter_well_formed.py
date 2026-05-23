@@ -1,7 +1,9 @@
 """AC.LSK.2 — frontmatter follows Anthropic SKILL.md schema.
 
-Per sub-plan §5 AC.LSK.2 (and Anthropic's published schema at
-https://code.claude.com/docs/en/skills):
+Per amendment #146 (loam-skills-ac-lsk1-root-cause), the SKILL set
+checked here is derived from disk via `discover_skill_packages` —
+no hardcoded EXPECTED_SKILLS list. Per-skill frontmatter assertions
+(per AC.LSK.2's four numbered criteria):
 
 1. Directory name is kebab-case (lowercase letters/numbers/hyphens
    only; ≤64 chars per Anthropic's `name` field rule).
@@ -10,44 +12,31 @@ https://code.claude.com/docs/en/skills):
 3. `description` informs Claude when to apply the skill — contains
    a "use when" or trigger-phrase clause.
 4. No unknown frontmatter fields beyond `name` (optional) and
-   `description` — keeps the v0.1.3 surface minimal.
+   `description` — keeps the surface minimal.
+
+Anthropic SKILL.md schema reference:
+https://code.claude.com/docs/en/skills
 """
 
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 import yaml
 
 import pytest
 
+from conftest import discover_skill_packages, load_skill_text
 
-SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
-
-EXPECTED_SKILLS = [
-    # v0.1.3 bundle.
-    "memory-recall",
-    "scope-decompose",
-    "dispatch-with-gates",
-    "onboarding-conversation",
-    "session-handoff",
-    # v0.1.6 Cycle 2 additions.
-    "translation-discipline",
-    "audit-block-on-telegram",
-    "owner-decision-summary",
-    # v0.2.0 Cycle 2 addition (auto-skill-creation MVP).
-    "skill-capture-proposal",
-]
 
 # Per Anthropic schema: lowercase letters, numbers, and hyphens;
 # max 64 characters.
 NAME_PATTERN = re.compile(r"\A[a-z0-9][a-z0-9-]*\Z")
 NAME_MAX_LEN = 64
 
-# v0.1.3 minimal surface — only these two fields are used. Future
-# packages may extend (allowed-tools, paths, when_to_use, etc.) but
-# the v0.1.3 fence keeps the surface minimal.
+# Allowed frontmatter fields — kept minimal. Future packages may
+# extend (allowed-tools, paths, when_to_use, etc.) but the AC.LSK.2
+# fence keeps the surface minimal.
 ALLOWED_FRONTMATTER_FIELDS = {"name", "description"}
 
 # Common trigger-phrase / when-clause markers that indicate the
@@ -62,15 +51,17 @@ WHEN_CLAUSE_MARKERS = (
 )
 
 
+DISCOVERED_SKILLS = discover_skill_packages()
+
+
 def _load_frontmatter(skill_name: str) -> dict:
-    path = SKILLS_DIR / skill_name / "SKILL.md"
-    text = path.read_text(encoding="utf-8")
+    text = load_skill_text(skill_name)
     match = re.match(r"\A---\s*\n(.*?)\n---\s*\n", text, re.DOTALL)
-    assert match, f"{path}: missing frontmatter"
+    assert match, f"{skill_name}: missing frontmatter delimiters"
     return yaml.safe_load(match.group(1))
 
 
-@pytest.mark.parametrize("skill_name", EXPECTED_SKILLS)
+@pytest.mark.parametrize("skill_name", DISCOVERED_SKILLS)
 def test_directory_name_kebab_case(skill_name: str) -> None:
     """Directory name is lowercase letters/numbers/hyphens, ≤64
     chars (Anthropic schema)."""
@@ -84,7 +75,7 @@ def test_directory_name_kebab_case(skill_name: str) -> None:
     )
 
 
-@pytest.mark.parametrize("skill_name", EXPECTED_SKILLS)
+@pytest.mark.parametrize("skill_name", DISCOVERED_SKILLS)
 def test_name_field_matches_dir_when_present(skill_name: str) -> None:
     """If `name` field is present, it matches the directory name.
     Per Anthropic schema, omitting `name` causes it to default to
@@ -98,7 +89,7 @@ def test_name_field_matches_dir_when_present(skill_name: str) -> None:
         )
 
 
-@pytest.mark.parametrize("skill_name", EXPECTED_SKILLS)
+@pytest.mark.parametrize("skill_name", DISCOVERED_SKILLS)
 def test_description_carries_trigger_phrase(skill_name: str) -> None:
     """The description tells Claude WHEN to apply the skill — must
     contain a "use when" / "before" / "after" / "when X" clause per
@@ -115,14 +106,13 @@ def test_description_carries_trigger_phrase(skill_name: str) -> None:
     )
 
 
-@pytest.mark.parametrize("skill_name", EXPECTED_SKILLS)
+@pytest.mark.parametrize("skill_name", DISCOVERED_SKILLS)
 def test_no_unknown_frontmatter_fields(skill_name: str) -> None:
-    """v0.1.3 surface is minimal: only `name` (optional) and
-    `description`. Future packages may extend; AC.LSK.2 fences
-    the surface for v0.1.3."""
+    """Surface is minimal: only `name` (optional) and `description`.
+    Future packages may extend; AC.LSK.2 fences the surface."""
     frontmatter = _load_frontmatter(skill_name)
     unknown = set(frontmatter.keys()) - ALLOWED_FRONTMATTER_FIELDS
     assert not unknown, (
         f"{skill_name}: unknown frontmatter fields {unknown}. "
-        f"v0.1.3 surface allows {ALLOWED_FRONTMATTER_FIELDS}."
+        f"Allowed: {ALLOWED_FRONTMATTER_FIELDS}."
     )

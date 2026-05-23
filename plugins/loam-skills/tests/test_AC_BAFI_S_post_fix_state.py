@@ -61,17 +61,25 @@ def test_AC_BAFI_ARCH_skills_section_reflects_current_reality() -> None:
     """AC.BAFI.ARCH — docs/architecture.md Skills section names the
     two SKILL-contributing plugins + the auto-symlink mechanism, and
     no longer carries the stale "loam does not ship skills directly"
-    framing or the `start-project` reference."""
+    framing.
+
+    Audit-trail (amendment #148 loam-bafi-stale-test-retire): the
+    sibling `assert "start-project" not in body` assertion was retired
+    here. It encoded Batch A decision D-BAFI.START-PROJECT (which
+    removed the `start-project` reference from docs/architecture.md).
+    A-PROMOTE-START-PROJECT (amendment #147, seal `389dac7`)
+    semantically reversed that decision by promoting the SKILL to
+    discoverable subdirectory shape AND restoring the architecture.md
+    reference with refined wording naming the subdirectory shape +
+    auto-symlink mechanism. From `389dac7` forward the absence
+    assertion was stale-RED in canonical; retirement preserves the
+    function's 4 other still-load-bearing assertions intact.
+    """
     body = (REPO / "docs" / "architecture.md").read_text(encoding="utf-8")
     # Stale framing absent.
     assert "loam does not ship skills directly" not in body, (
         "stale `loam does not ship skills directly` framing still "
         "present in docs/architecture.md — AC.BAFI.ARCH regressed."
-    )
-    assert "start-project" not in body, (
-        "stale `start-project` reference still present in "
-        "docs/architecture.md — AC.BAFI.ARCH regressed "
-        "(D-BAFI.START-PROJECT removes it entirely)."
     )
     # Corrected framing present: both plugins named + symlink mechanism cited.
     assert "loam-skills" in body, (

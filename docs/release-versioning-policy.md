@@ -126,6 +126,14 @@ Every shipped minor and patch gets an annotated git tag. The tag annotation is t
 
 ---
 
+## Per-component pyproject version anchor — `docs/ACTIVE_MINOR`
+
+`docs/ACTIVE_MINOR` is the single-line machine-readable source-of-truth file containing the current shipped MINOR (e.g., `0.12.0`). Component `pyproject.toml` `version` fields track this anchor per AC.HONEST.1 (established v0.8.0) + AC.PCVR.{1,3} (regression-closure structural enforcement). The anchor advances at every MINOR's source-edit batch; PATCHes never touch it per D-NFCLEAN.4 (v0.8.1) + D-SDPD (v0.8.2) precedents — per-component-version discipline advances with MINORs only; PATCHes ride predecessor MINOR.
+
+The anchor is consumed by `plugins/dev-sdlc/tests/test_AC_PCVR_pyproject_version_lockstep.py`, which fails CI when any in-scope component pyproject's `version` drifts from the anchor. The in-scope set EXCLUDES measurement/experimental harnesses with deliberate `version = "0.0.0"` semantics (handsoff-loop, loam-spawn-isolation, programbench-revival, programbench-revival/realpb) — these are not versioned runtime components shipped to end-users.
+
+---
+
 ## Authority
 
 This file overrides any version-numbering convention that pre-dates it. Disputes between this file and other planning docs resolve in favor of this file.

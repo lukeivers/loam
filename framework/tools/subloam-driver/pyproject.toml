@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "subloam-driver"
-version = "0.10.0"
+version = "0.12.0"
 description = "Isolated sub-loam test-instance driver (loam-init-persona-wiring-and-isolated-subloam-driver MINOR, Part 2). Stands up a scratch loam workspace via the production bootstrap path (made persona-active by Part 1), then drives an INTERACTIVE claude session in it over a PTY harness under ONE isolation mechanism — isolated CLAUDE_CONFIG_DIR + empty MCP (--strict-mcp-config) + no telegram plugin/channel + namespaced workspace slug + service_bootstrap=False — that simultaneously protects a concurrently-running operator session's telegram/bun poller AND yields an operator-environment-free bench measurement (AC.LIPW.6: the two are the same configuration, not two). Feeds a frozen build_prompt unchanged (owner constraint — bench + paper integrity). NO Anthropic API key — uses the real claude binary, default Sonnet. Stdlib-only."
 requires-python = ">=3.11"
 dependencies = []

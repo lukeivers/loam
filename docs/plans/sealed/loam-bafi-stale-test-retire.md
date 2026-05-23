@@ -286,3 +286,10 @@ Test-only amendment; no behavior change for any production code
 path; no source-code edits. Composes with A-PROMOTE (closes
 surfaced finding) + Batch A (removes now-stale assertion).
 Sub-cycle-time amendment.
+
+### Commit SHAs
+
+- Amendment commit: `65a8db3aa90e04541bdc08fcf3ae29d044035b11` —
+  `chore(amend): Retire the single stale `assert "start-project" not in body` assertion at lines 71-75 of plugins/loam-skills/tests/test_AC_BAFI_ S_post_fix_state.py::test_AC_BAFI_ARCH_skills_section_reflects_ current_reality. The assertion encoded Batch A (amendment #145) decision D-BAFI.START-PROJECT, which removed the `start-project` reference from docs/architecture.md. A-PROMOTE-START-PROJECT (amendment #147, seal `389dac7`) semantically reversed that decision by promoting the SKILL to discoverable subdirectory shape AND restoring the architecture.md reference with refined wording naming the subdirectory shape + auto-symlink mechanism. From A-PROMOTE's seal forward, the assertion is stale-RED in canonical.`
+- Seal commit: `8fea4b9130d2327b2ca24ad909f0447b3aa6c425` —
+  `chore(seals): Retire the single stale `assert "start-project" not in body` assertion at lines 71-75 of plugins/loam-skills/tests/test_AC_BAFI_ S_post_fix_state.py::test_AC_BAFI_ARCH_skills_section_reflects_ current_reality. The assertion encoded Batch A (amendment #145) decision D-BAFI.START-PROJECT, which removed the `start-project` reference from docs/architecture.md. A-PROMOTE-START-PROJECT (amendment #147, seal `389dac7`) semantically reversed that decision by promoting the SKILL to discoverable subdirectory shape AND restoring the architecture.md reference with refined wording naming the subdirectory shape + auto-symlink mechanism. From A-PROMOTE's seal forward, the assertion is stale-RED in canonical.`

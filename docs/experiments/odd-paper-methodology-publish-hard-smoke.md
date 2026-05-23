@@ -79,7 +79,7 @@ The first three sections of `docs/papers/odd-methodology.md`:
 
 ### Step 5 — case-study-altitude framing legibility
 
-The "On this artefact" section makes the case-study framing explicit before any methodology claims appear. An external reader (the intended Boris-equivalent reviewer) reads the framing first, then the abstract, then §1 — establishing what the paper is and is not before evaluating its content. H-MAJOR-2 §5B.2 corrective ("coincides with" not "is attributable to" for the substrate→quality finding) is reachable from §1's outcome shape pointer.
+The "On this artefact" section makes the case-study framing explicit before any methodology claims appear. An external reader (the intended external reviewer) reads the framing first, then the abstract, then §1 — establishing what the paper is and is not before evaluating its content. H-MAJOR-2 §5B.2 corrective ("coincides with" not "is attributable to" for the substrate→quality finding) is reachable from §1's outcome shape pointer.
 
 **Verdict:** GREEN. The cold-clone discovery flow completes through five steps with no breakage. External reader can evaluate ODD on its own terms via this paper without prior loam-codebase context.
 

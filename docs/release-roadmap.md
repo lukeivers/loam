@@ -484,7 +484,6 @@ These items are real work but do not name a version's outcome shape. They live h
 
 | Action | Trigger | Notes |
 |---|---|---|
-| **Boris paper push** | Captured as session-discussion item; calibration anchor (13min wall-clock at ~76 tool calls per duration-estimation rubric). | Owner-action; not AI-routed in the version path. |
 | **Eric re-engagement** | Owner directive 2026-05-06 ("ignore eric, he's busy at his real job"). v0.2.5.1 closes Eric's three findings. Re-engagement is owner-driven, not version-gated. | Surface for ruling: should v0.6.0 (non-tech user) wait on Eric re-engagement, or proceed against a synthetic non-tech-user proxy? |
 | **ProgramBench leaderboard submission** | `binary-usage-observation-harness` AC.BUOH.4. The act of submitting is the action. | Submission is what makes the candidate's outcome public. |
 | **Public-remote tag pushes** | Each minor's tag push is owner-gated. v0.2.1 / v0.2.2 / v0.2.3 / v0.2.4 / v0.1.7 / v0.1.8 / v0.1.9 / v0.2.0 currently sit as local releases per their respective STATE.md entries. | Tag push is a per-minor owner action, not a roadmap line. The roadmap names what each minor delivers; the policy doc names tag dance shape. |

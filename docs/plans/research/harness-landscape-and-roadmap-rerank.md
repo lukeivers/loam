@@ -232,7 +232,7 @@ Per AC.HL.7, ≥3 specific moves loam could make in the next 1–3 minor version
 
 ### EV.3 — Public methodology video + stranger-clone walkthrough
 
-**Action:** A 15-25 minute screen-recording of (a) loam install on a fresh machine, (b) reverse-ODD on a real codebase (e.g., a Boris-paper-class small project), (c) build-next dispatch producing working code. Published to YouTube / X with cross-post to Hacker News / Reddit r/MachineLearning / r/LocalLLaMA.
+**Action:** A 15-25 minute screen-recording of (a) loam install on a fresh machine, (b) reverse-ODD on a real codebase (e.g., a small representative project), (c) build-next dispatch producing working code. Published to YouTube / X with cross-post to Hacker News / Reddit r/MachineLearning / r/LocalLLaMA.
 
 **VP:** Indirect — recording forces user-flow coherence (gaps in the video surface gaps in the v0.6.0 non-tech-user-readiness surface).
 **EV:** High — video is the highest-conversion attention format. Loam has zero video assets right now; one good walkthrough is asymmetric-leverage.
@@ -248,7 +248,7 @@ Per AC.HL.7, ≥3 specific moves loam could make in the next 1–3 minor version
 | EV.2 Methodology paper / arXiv | Pass-weak (forces coherence) | Pass-strong | Unnamed — propose v0.5.0/v0.6.0 successor item |
 | EV.3 Public walkthrough video | Pass (forces flow coherence) | Pass-strong | Unnamed — propose v0.6.0 companion item |
 
-All three pass both tests; EV.2 + EV.3 are currently unnamed in the roadmap and are the cheapest external-visibility moves available. **Recommend: name EV.2 and EV.3 as External Action lines in §6 of the roadmap, parallel to the existing Boris paper push line.**
+All three pass both tests; EV.2 + EV.3 are currently unnamed in the roadmap and are the cheapest external-visibility moves available. **Recommend: name EV.2 and EV.3 as External Action lines in §6 of the roadmap.**
 
 ---
 

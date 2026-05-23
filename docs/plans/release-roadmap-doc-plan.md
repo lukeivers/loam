@@ -17,9 +17,9 @@ A reader of `docs/release-roadmap.md` answers: "what does the next minor commit 
 - **Versions as objective targets, not feature lists.** Each version's name IS an outcome sentence ("loam helps you ship working code from extracted objectives"). Multiple ideas roll up under one version's outcome. Don't map individual features to versions; map them to outcomes.
 - **Map EVERY non-backlog item to a version.** No artificial cap on the number of versions. If more items surface, recalculate.
 - **Backlog is "maybe-someday."** Items going to backlog explicitly per Luke 2026-05-08: graphiti re-implementation; multi-LLM via OpenRouter; M-GMP plugin-shaped graphiti.
-- **Specific carve-outs:** graphiti rip-out goes IN the version file (likely v0.3.0). Methodology paper push to Boris is external action, not a version entry. Eric re-engagement is external action.
+- **Specific carve-outs:** graphiti rip-out goes IN the version file (likely v0.3.0). Eric re-engagement is external action.
 - **NO "rebuild" terminology.** Loam is its own project. The doc lands at `docs/release-roadmap.md` (not `docs/rebuild/...`).
-- **AI-time bands per the rubric.** `wall_clock_minutes ≈ tool_calls × 0.1–0.15`; 10–50× faster than human-developer estimates. Calibration anchor: Boris paper ran 13 min wall-clock at ~76 tool calls.
+- **AI-time bands per the rubric.** `wall_clock_minutes ≈ tool_calls × 0.1–0.15`; 10–50× faster than human-developer estimates. Calibration anchor: a comparable long-form authoring task ran 13 min wall-clock at ~76 tool calls.
 - **Composes with `docs/release-versioning-policy.md` + `docs/odd-semver-pinning.md`.** Cites both; doesn't restate.
 - **Length:** target 3000–5000 words.
 - **Loam-aligned terminology consistent.** substrate / seed / cultivar / amend / seal used with single definitions where used.
@@ -31,7 +31,7 @@ A reader of `docs/release-roadmap.md` answers: "what does the next minor commit 
 3. **AC.RR.3 — §3 Active version (v0.3.0).** Full ODD shape: objective sentence + constraints + AC + scope items + AI-time band + dependencies. v0.3.0's outcome must be the feature-honesty + terminology-consistency umbrella per Luke 2026-05-08 ruling.
 4. **AC.RR.4 — §4 Mapped versions (v0.4.0+).** Every non-backlog item from the source aggregation maps to a named version. Each version entry includes objective sentence + source items + constraints + AC + AI-time band + dependencies.
 5. **AC.RR.5 — §5 Backlog reference.** Pointer to FUTURE_IDEAS.md as the maybe-someday list; explicit allocation of items going to backlog per Luke 2026-05-08.
-6. **AC.RR.6 — §6 External actions.** Non-version work named: Boris paper push, Eric re-engagement, ProgramBench leaderboard submission as the action.
+6. **AC.RR.6 — §6 External actions.** Non-version work named: Eric re-engagement, ProgramBench leaderboard submission as the action.
 7. **AC.RR.7 — Source aggregation completeness.** Every source surveyed: STATE.md, FUTURE_IDEAS.md (26 ideas), FUTURE_IDEAS_DRAFT.md, BACKLOG.md, the three workspace/.scratch/claude-output/* artefacts (Eric run issues; Claude conference research; ProgramBench experiment shape), TaskList pending items #8/9/10/11/22/25/26/30/34-37/55, this-session-discussed items not yet captured (paper push, graphiti rip-out, memory honesty audit, conference compositions). No source unaccounted-for.
 8. **AC.RR.8 — No "rebuild" terminology in body.** Verified by grep.
 9. **AC.RR.9 — Word count 3000–5000.** Verified by `wc -w`.
@@ -67,5 +67,5 @@ Things I'll specifically check for:
 - Did the agent map every source item from AC.RR.7's exhaustive list? The risk is items getting silently dropped (FIDRAFT entries are dense; easy to miss).
 - Is each version's name an outcome sentence (AC.RR.10)? The risk is feature-list framing creeping back in.
 - Did v0.3.0 absorb the directory-rename scope per Luke 2026-05-08? My brief sketched it; agent should have it.
-- AI-time bands actually use the rubric, not human-developer-time? The Boris-paper anchor is in the brief; agent should apply it consistently.
+- AI-time bands actually use the rubric, not human-developer-time? The long-form-authoring calibration anchor is in the brief; agent should apply it consistently.
 - Software-as-deliverable framing for v0.4.0+? Risk: extraction-as-deliverable framing slips back in.

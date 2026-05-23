@@ -9,7 +9,7 @@ amendment:
 # to the source-edit batch SHA per the v0.8.0 / v0.8.1 / v0.8.2 / v0.9.0
 # precedent (baseline captured at source-edit batch commit, NOT at plan-
 # author commit; see v0.7.4 D-BACKFL.1.b for the baseline-bump pattern).
-baseline: "4ef56c4"
+baseline: "7b774b1"
 
 plan: docs/plans/per-component-pyproject-version-lockstep-regression-closure.md
 plan_doc_ref: docs/plans/per-component-pyproject-version-lockstep-regression-closure.md

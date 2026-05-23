@@ -167,6 +167,12 @@ The DSDLC2.7 test's `test_all_twelve_dev_sdlc_skills_discovered` enforces exact-
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `25308cfb409f660fae9db82b6de7b5d9c35ed365` —
+  `chore(amend): PATCH — Promote /start-project SKILL to discoverable subdirectory shape; close the silent v0.1.7 AC.LAYERED.2 divergence regression.`
+- Seal commit: `389dac72ed315fba94c1d2fad292d8bff790ea01` —
+  `chore(seals): PATCH — Promote /start-project SKILL to discoverable subdirectory shape; close the silent v0.1.7 AC.LAYERED.2 divergence regression.`
 ## §15. Backwards-compat verification
 
 See §8 + §11 above.

@@ -255,6 +255,12 @@ Placeholder structure for the D-SRMNR.* + D-build.* IDs:
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `7c6f525a5c7f3fac94d083fba9a9aaf5d9d97a14` —
+  `chore(amend): STATE.md leading-title Active-Version + release-roadmap.md §3 Active version flip + v0.12.1..v0.12.21 series rollup change-log entry — narrow Option-2 course-correction of the prior state-md-release- roadmap-v012x-backfill plan-author dispatch. Doc-only fence.`
+- Seal commit: `668c25107a430adb2b49b4706b4f5fa14f7879ce` —
+  `chore(seals): STATE.md leading-title Active-Version + release-roadmap.md §3 Active version flip + v0.12.1..v0.12.21 series rollup change-log entry — narrow Option-2 course-correction of the prior state-md-release- roadmap-v012x-backfill plan-author dispatch. Doc-only fence.`
 ## §15 Backwards-compat verification
 
 Tests that MUST still pass post-seal:

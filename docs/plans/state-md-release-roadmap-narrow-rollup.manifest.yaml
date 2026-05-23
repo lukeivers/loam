@@ -1,0 +1,242 @@
+schema_version: 1
+amendment:
+  slug: state-md-release-roadmap-narrow-rollup
+  title: "STATE.md leading-title Active-Version + release-roadmap.md §3 Active version flip + v0.12.1..v0.12.21 series rollup change-log entry — narrow Option-2 course-correction of the prior state-md-release-roadmap-v012x-backfill plan-author dispatch. Doc-only fence (docs/STATE.md + docs/release-roadmap.md + docs/plans/ + docs/experiments/); NO source code touched; NO sealed plan-doc touched; NO apply_backfill helper change; NO new CLI verb. Class PATCH (D-SRMNR.2 — doc-only state-record correction; no user-observable behaviour boundary; version derives at release time per feedback_version_numbers_at_release_time). Five ACs AC.SRMNR.{1,2,3,4,S} — AC.SRMNR.4 outcome-altitude (verification doc at docs/experiments/state-md-release-roadmap-narrow-rollup-smoke.md records four canonical-git-ref ground-truth checks against post-fix STATE.md + release-roadmap.md). Rollup shape: single dated change-log entry summarising the 21-tag v0.12.1..v0.12.21 series as 17 README-bump-tracking + 4 distinguishable feat/fix tags (v0.12.5/6 workspace-bootstrap api_version + BootstrapHostProtocol; v0.12.7 persona-prompt translate-inbound; v0.12.8 primary-persona end-of-turn trait-reflection; v0.12.9 workspace-sync just-behind-canonical) + 4 in-arc sealed-plan-doc citations (Batch A loam-doc-consistency-batch-a; A-FIX loam-skills-ac-lsk1-root-cause; A-PROMOTE loam-skills-start-project-discoverable seal 389dac7; BAFI-stale-test-retire loam-bafi-stale-test-retire seal 8fea4b9). Two future-work concerns named for dispatcher-side FIDRAFT capture post-seal: F-STATE-FROMSCRATCH-AUTHOR (apply_backfill from-scratch row-authoring extension) + F-LOAM-RELEASE-BACKFILL-TAG-CLI-VERB (recovery CLI verb composing the extended helper). Four F2 disagreements with prior framing surfaced in plan §10 (F2-1 dispatcher conflated STATE.md count-line with release-roadmap.md count-line; F2-2 line-3 amendment claim is 8 amendments stale not just version-stale; F2-3 21 v0.12.x tags split 17/4 README-bumps vs distinguishable feat; F2-4 #145 + #146 seal SHAs not visible in main log, cite by plan-doc path not fabricated SHA per claim-or-cite-no-fake-sources). Parent: pos3/workspace/.scratch/claude-output/loam-fresh-install-consistency-review-2026-05-23.md (Batch B MAJOR finding; dispatcher Option-2 ruling)."
+
+# BASELINE = current HEAD at plan-authoring. Tier-0 verified this turn
+# via `git rev-parse HEAD` returning 6e0de79. Build agent walks forward
+# at apply-time per #142 D-PASH.BASELINE-WALK if any chore(amend-fixup):
+# commits land between plan-authoring and apply.
+baseline: "6e0de79"
+
+plan: docs/plans/state-md-release-roadmap-narrow-rollup.md
+
+seal_description: |
+  STATE.md leading-title Active-Version + release-roadmap.md §3 Active
+  version flip + v0.12.1..v0.12.21 series rollup change-log entry —
+  narrow Option-2 course-correction of the prior state-md-release-
+  roadmap-v012x-backfill plan-author dispatch. Doc-only fence.
+
+  Closes the Batch B MAJOR finding of the 2026-05-23 loam fresh-install
+  consistency review at the narrow surfaces the dispatcher Option-2
+  ruling authorised:
+
+  (1) STATE.md line 3's leading-title `**Status:**` paragraph stale
+      `currently #140 — loam-amend seal-tool hygiene pair` clause
+      surgically updated to name the current latest-sealed amendment
+      (#148 BAFI-stale-test-retire, seal `8fea4b9`, apply `65a8db3` per
+      Tier-0 SEAL_COMMIT sidecar walk) + current-published version
+      v0.12.21. All other prose in the paragraph (`All thirteen sealed
+      components built`, OSS publish history, v0.1.6 SHIPPED claim,
+      etc.) preserved byte-identically.
+
+  (2) release-roadmap.md §3 Active version section gains exactly one
+      new bold entry for v0.12.21 SHIPPED PUBLIC. Existing v0.12.0
+      entry at line 162 retained byte-identically as historical anchor
+      (matches the §3 pattern across v0.4/5/6/7/10).
+
+  (3) STATE.md change-log gains exactly one new dated rollup entry
+      prepended above the 2026-05-18 v0.12.0 entry. The rollup names
+      the v0.12.1..v0.12.21 series as 21 tags (Tier-0 verified
+      lightweight via `git for-each-ref refs/tags/v0.12.*`); 17 are
+      docs/README-bump-tracking amendment cycles + 4 distinguishable
+      feat/fix tags called out individually (v0.12.5/6 workspace-
+      bootstrap api_version + BootstrapHostProtocol; v0.12.7 persona-
+      prompt translate-inbound + explicit-slash-invocation discipline;
+      v0.12.8 primary-persona end-of-turn trait-reflection Stop-hook;
+      v0.12.9 workspace-sync just-behind-canonical fast-path). The
+      entry cites the 4 in-arc sealed plan-docs by docs/plans/sealed/
+      <slug>.md paths (loam-doc-consistency-batch-a; loam-skills-ac-
+      lsk1-root-cause; loam-skills-start-project-discoverable; loam-
+      bafi-stale-test-retire) and explicitly states per-cycle SHA
+      provenance lives there, not in the rollup entry itself.
+
+  Honest about being a rollup. Honest about being narrow — §7
+  enumerates the out-of-scope deferrals (release-roadmap.md §2 Shipped
+  table v0.10.9 / v0.11.0 / v0.12.x row authoring; Total shipped count
+  line recount; new CLI verb; apply_backfill helper extension). Two
+  future-work concerns named for dispatcher-side FIDRAFT capture post-
+  seal: F-STATE-FROMSCRATCH-AUTHOR + F-LOAM-RELEASE-BACKFILL-TAG-CLI-
+  VERB. The plan-doc does not write to FIDRAFT directly to preserve
+  seal-diff narrowness.
+
+  AC.SRMNR.4 outcome-altitude verification: four canonical-git-ref
+  ground-truth checks recorded at docs/experiments/state-md-release-
+  roadmap-narrow-rollup-smoke.md. Each check is a one-liner shell
+  command against the sealed-tip state — every v0.12.x tag resolves
+  via `git rev-parse`; every sealed-plan-doc path exists on disk;
+  STATE.md line-3 amendment claim matches SEAL_COMMIT sidecar walk;
+  release-roadmap §3 v0.12.21 tag-SHA cite matches `git rev-parse
+  v0.12.21`. Per feedback_test_outcome_altitude_required, outcome-
+  altitude verification by audit-doc-against-canonical pattern rather
+  than a pytest file is the right shape for a doc-content-vs-canonical-
+  git-ref claim.
+
+  Single-component fence (dev-sdlc seal anchor) per the recent loam-
+  bafi-stale-test-retire precedent — only docs/ paths are touched,
+  admitted via universal_paths.prefixes. dev-sdlc is the anchor since
+  loam-skills is not touched (the prior amendment cycle's anchor) and
+  no source-code component's tree is modified.
+
+  Class PATCH (D-SRMNR.2 — doc-only state-record correction; no
+  user-observable behaviour boundary; version derives at release time
+  per feedback_version_numbers_at_release_time).
+
+  Four F2 disagreements with the dispatcher's framing surfaced in
+  plan §10: F2-1 conflation of STATE.md vs release-roadmap.md count
+  surfaces; F2-2 line-3 amendment claim is 8 amendments stale not
+  just version-stale; F2-3 21-tag split is 17 README-bumps + 4
+  distinguishable feat; F2-4 #145 + #146 seal SHAs not visible in
+  main log so cite by plan-doc path per feedback_claim_or_cite_no_
+  fake_sources. All four surfaced + autonomous-decision-recorded per
+  feedback_test_against_operational_objective_before_escalating.
+
+  Composes with the prior consistency-review fix arc (Batch A → A-FIX
+  → A-PROMOTE → BAFI-stale-test-retire) by closing the docs-vs-reality
+  drift on the state-record surfaces those amendments left in their
+  wake. The superseded prior plan-doc + manifest at docs/plans/state-
+  md-release-roadmap-v012x-backfill.{md,manifest.yaml} (still
+  uncommitted in working tree at plan-author time) is recommended for
+  deletion before seal per §7 item 7; the dispatcher may include them
+  in --allow-untracked-globs admission if preferred.
+
+  Sub-cycle-time amendment (estimated 15-25 min AI-time per
+  feedback_duration_estimation_rubric — narrow doc-only scope).
+
+# Single-component fence (dev-sdlc — the anchor component for doc-only
+# amendments per the loam-bafi-stale-test-retire / amendment-141 path).
+# No framework/ or other plugins/ source tree touched.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions per amendment #22 ruling #3. docs/ prefix admits
+# this plan-doc + manifest + experiments smoke writeup (AC.SRMNR.4) +
+# plan-doc archival to docs/plans/sealed/ at T1.4. docs/STATE.md +
+# docs/release-roadmap.md admitted explicitly as files.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/state-md-release-roadmap-narrow-rollup.md
+  body: |
+    # STATE.md + release-roadmap.md narrow rollup — Active-Version flip + v0.12.x series rollup entry
+
+    Closes the Batch B MAJOR finding of the 2026-05-23 loam fresh-
+    install consistency review at the narrow surfaces the dispatcher
+    Option-2 ruling authorised. Doc-only fence.
+
+    **Course-correction context.** The prior plan-author dispatch
+    (`docs/plans/state-md-release-roadmap-v012x-backfill.md`, still
+    uncommitted in working tree at plan-author time) proposed Option-B
+    (root-cause closure via a new `loam release backfill-tag` CLI verb
+    composing the existing `apply_backfill` helper). The builder
+    halted with three Tier-0 F2 findings: (a) STATE.md §2 ALREADY
+    contains scope-descriptive slug rows for v0.10.9/v0.11.0/v0.12.0
+    work; the dispatcher's grep `^\| v0\.` missed them; the "24
+    missing" count was overstated; (b) `apply_backfill` only FLIPS
+    pre-existing SHIPPED-LOCAL rows — every flip function requires a
+    pre-existing row; the proposed `backfill-tag` verb would
+    idempotent-noop on every off-runner tag; the prior plan's chosen
+    mechanism cannot satisfy its objective; (c) 17 of 21 v0.12.x tags
+    are README-current-release-bumps tracking amendment cycles, not
+    independent semantic releases. Dispatcher ruled Option-2 (narrow):
+    flip the Active-Version line + add one rollup change-log entry;
+    explicitly defer the CLI verb + helper extension.
+
+    **What ships in three parts (doc-only).**
+
+    (1) **STATE.md line 3's leading-title `**Status:**` paragraph stale
+    `currently #140 — loam-amend seal-tool hygiene pair` clause**
+    surgically updated to name the current latest-sealed amendment
+    (#148 BAFI-stale-test-retire, seal `8fea4b9`, apply `65a8db3` per
+    Tier-0 SEAL_COMMIT sidecar walk) + current-published version
+    v0.12.21. All other prose in the paragraph preserved byte-
+    identically. Per F2-2 in plan §10: the stale claim is 8 amendments
+    stale (#141..#148), not just version-stale; the flip corrects both
+    surfaces (amendment + version).
+
+    (2) **release-roadmap.md §3 Active version section** gains exactly
+    one new bold entry for v0.12.21 SHIPPED PUBLIC (underlying commit
+    `1d40311` per `git rev-parse v0.12.21`). Existing v0.12.0 entry at
+    line 162 retained byte-identically as historical anchor.
+
+    (3) **STATE.md change-log** gains exactly one new dated rollup
+    entry prepended above the 2026-05-18 v0.12.0 entry (chronological-
+    newest-first preserved). The rollup names the v0.12.1..v0.12.21
+    series as 21 lightweight tags (Tier-0 verified via `git for-each-
+    ref refs/tags/v0.12.* --format='%(refname:short) %(objecttype)'`);
+    17 are docs/README-bump-tracking amendment cycles; 4 are
+    distinguishable feat/fix tags called out individually (v0.12.5/6
+    workspace-bootstrap api_version + BootstrapHostProtocol; v0.12.7
+    persona-prompt translate-inbound + explicit-slash-invocation
+    discipline; v0.12.8 primary-persona end-of-turn trait-reflection
+    Stop-hook; v0.12.9 workspace-sync just-behind-canonical fast-
+    path). The entry cites the 4 in-arc sealed plan-docs by
+    docs/plans/sealed/<slug>.md paths (loam-doc-consistency-batch-a;
+    loam-skills-ac-lsk1-root-cause; loam-skills-start-project-
+    discoverable, seal `389dac7`; loam-bafi-stale-test-retire, seal
+    `8fea4b9`). Honest about being a rollup: states explicitly that
+    per-cycle SHA-level provenance lives in the cited sealed plan-
+    docs, not in the rollup entry. Per F2-4 in plan §10: Batch A
+    (#145) + A-FIX (#146) seal SHAs are not visible in the main-
+    branch git log; the rollup cites them by plan-doc path only per
+    feedback_claim_or_cite_no_fake_sources.
+
+    **Honest about being narrow.** §7 enumerates out-of-scope
+    deferrals: release-roadmap.md §2 Shipped table v0.10.9 / v0.11.0 /
+    v0.12.0..v0.12.21 row authoring; `Total shipped` count line
+    (release-roadmap.md:94) recount; new `loam release backfill-tag`
+    CLI verb; `apply_backfill` helper extension to author rows from
+    scratch. Two future-work concerns named for dispatcher-side
+    FIDRAFT capture post-seal: **F-STATE-FROMSCRATCH-AUTHOR** (the
+    `apply_backfill` helper needs a from-scratch row-authoring
+    extension — currently flips pre-existing rows only, which is why
+    v0.10.9 / v0.11.0 / v0.12.x are missing from §2; real defect
+    blocking §2 auto-convergence) and **F-LOAM-RELEASE-BACKFILL-TAG-
+    CLI-VERB** (once F-STATE-FROMSCRATCH-AUTHOR lands, the recovery
+    CLI verb becomes reachable + composable for any pushed-but-not-
+    backfilled tag). The present amendment intentionally does NOT
+    write to FIDRAFT to preserve seal-diff narrowness; capture is a
+    dispatcher-side post-seal step.
+
+    Five ACs AC.SRMNR.{1,2,3,4,S}. AC.SRMNR.4 outcome-altitude
+    (verification doc at docs/experiments/state-md-release-roadmap-
+    narrow-rollup-smoke.md records four canonical-git-ref ground-
+    truth checks against the post-fix STATE.md + release-roadmap.md
+    at sealed-tip: every v0.12.x tag resolves via `git rev-parse`;
+    every sealed-plan-doc path exists; STATE.md line-3 amendment
+    claim matches SEAL_COMMIT sidecar walk; release-roadmap §3
+    v0.12.21 tag-SHA cite matches `git rev-parse v0.12.21`). Per
+    feedback_test_outcome_altitude_required, outcome-altitude
+    verification by audit-doc-against-canonical pattern rather than a
+    pytest file is the right shape for a doc-content-vs-canonical-
+    git-ref claim.
+
+    Single-component fence (dev-sdlc seal anchor) per the loam-bafi-
+    stale-test-retire precedent — only docs/ paths touched, admitted
+    via universal_paths.prefixes (docs/plans/, docs/experiments/) +
+    universal_paths.files (docs/STATE.md, docs/release-roadmap.md).
+    dev-sdlc is the anchor since no source-code component's tree is
+    modified. No framework/ or other plugins/ source tree touched.
+
+    Class PATCH (D-SRMNR.2 — doc-only state-record correction; no
+    user-observable behaviour boundary; version derives at release
+    time per feedback_version_numbers_at_release_time).
+
+    Composes with the prior consistency-review fix arc (Batch A →
+    A-FIX → A-PROMOTE → BAFI-stale-test-retire) by closing the docs-
+    vs-reality drift on the state-record surfaces those amendments
+    left in their wake.
+
+    Parent: pos3/workspace/.scratch/claude-output/loam-fresh-install-
+    consistency-review-2026-05-23.md (Batch B MAJOR finding;
+    dispatcher Option-2 ruling).

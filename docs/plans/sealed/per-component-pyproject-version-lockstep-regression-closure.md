@@ -478,3 +478,57 @@ Tier-0 read of each pyproject's `description` field shows they are **measurement
 ### No other halt-and-surface findings at plan-authoring time.
 
 The remaining ACs / decisions land cleanly per the v0.8.0 precedent. Build-time discoveries surface inline per §13.
+
+# PATCH — Per-component pyproject version lockstep regression closure
+
+2026-05-23. Defects against v0.8.0 AC.HONEST.1 outcome shape
+(per-component-version discipline established). The discipline
+silently broke between v0.10.0 (last honored at commit 3354f73)
+and v0.11.0 / v0.12.0 (skipped). 26 in-scope component pyprojects
+currently at 0.10.0; target current shipped MINOR 0.12.0 per
+D-NFCLEAN.4 (v0.8.1) + D-SDPD (v0.8.2) precedents: PATCHes ride
+predecessor MINOR; per-component-version discipline advances with
+MINORs only. The v0.12.1-21 PATCHes do NOT bump per-component
+pyprojects per the established rule.
+
+AC.PCVR.1 — Sweep: 26 in-scope component pyprojects bumped from
+0.10.0 to 0.12.0. Enumerated via Tier-0 find at plan-time. Excludes
+the 4 pyprojects at 0.0.0 (handsoff-loop, loam-spawn-isolation,
+programbench-revival, programbench-revival/realpb) per §16 finding
+#1 ruling — these are measurement / experimental harnesses with
+deliberate version-unset semantics; bumping them would falsely imply
+they are versioned runtime components on the same release cadence
+as e.g. primary-persona or workspace-bootstrap.
+
+AC.PCVR.2 — Anchor: new file docs/ACTIVE_MINOR contains a single
+line (the current shipped MINOR version string, 0.12.0 at build
+time). The file is the machine-readable source-of-truth the
+regression test consumes. One-paragraph header in
+docs/release-versioning-policy.md explains the anchor's role.
+
+AC.PCVR.3 — Regression test: new test at
+plugins/dev-sdlc/tests/test_AC_PCVR_pyproject_version_lockstep.py
+reads docs/ACTIVE_MINOR, enumerates every in-scope pyproject,
+asserts each version field equals the anchor's MINOR. On drift the
+test emits a clear corrective message naming the drifted files +
+the expected version + the corrective command shape. The in-scope
+enumeration uses the same allowlist mechanism the AC.PCVR.1 sweep
+used (single source-of-truth shared between sweep and assertion).
+
+AC.PCVR.4 — Outcome-altitude: mutation-detection fixture test in
+the same test file deliberately writes a stale value to a fixture
+pyproject (in tmp_path, NEVER against a real component pyproject),
+invokes the assertion helper, asserts it raises with the corrective-
+message shape, reverts, asserts it passes. Proves the regression
+test detects mutation; without this AC.PCVR.3 could pass vacuously.
+
+AC.PCVR.S — Seal-diff discipline: 26 pyproject.toml files +
+docs/ACTIVE_MINOR (new) + docs/release-versioning-policy.md
+(anchor paragraph) + the new test file + STATE/roadmap admin +
+FIDRAFT capture + experiments writeup + plan-doc + manifest +
+component sidecar bookkeeping.
+
+Plan-doc + manifest authoring TBD-AT-COMMIT; source-edit batch
+(26 pyproject bumps + ACTIVE_MINOR + policy paragraph + regression
+test + mutation-detection fixture + smoke writeup + FIDRAFT entries
++ STATE/roadmap admin) TBD-AT-COMMIT; pre-apply admin TBD-AT-COMMIT.

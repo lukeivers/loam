@@ -25,6 +25,7 @@ Stdlib only (json, pathlib, datetime, shutil). No external dependencies.
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -180,6 +181,17 @@ _LOAM_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
     "bash_guard.py",
     "agent_guard.py",
     "dispatch_setup_hook.py",
+    # Wave 1 ECC absorption (2026-05-24, security-hooks-bundle):
+    # three new always-on PreToolUse safety-layer hooks. Each is a
+    # separate inner-hook entry in the stanza (matcher independence —
+    # secret_pattern_guard fires on Bash + Edit + Write + MultiEdit;
+    # dangerous_flag_guard fires on Bash only; config_write_guard
+    # fires on Edit + Write + MultiEdit only). Markers MUST appear
+    # here so re-merge over a stanza pos-v2 already wrote does NOT
+    # treat them as user-authored.
+    "secret_pattern_guard.py",
+    "dangerous_flag_guard.py",
+    "config_write_guard.py",
 )
 
 
@@ -766,6 +778,121 @@ def merge_pre_tool_use(
         prior_session_start_displaced=displaced,
         preserved_user_keys=preserved_keys,
     )
+
+
+# ---- Wave 1 ECC absorption (2026-05-24) — safety-layer hooks --------
+#
+# Three new PreToolUse hooks composed alongside the existing A2 / A3 /
+# A4 stanzas. Each builder returns a ``{matcher, hooks: [...]}``
+# envelope suitable for use as a ``new_entries`` element to
+# ``merge_pre_tool_use``. The hooks live at
+# ``framework/safety-layer/hooks/`` and share a single PreToolUse
+# matcher per Claude Code's matcher-independence semantics (hooks
+# whose matcher doesn't match the active tool name are not invoked).
+
+
+def build_secret_pattern_guard_stanza(
+    loam_root: Path,
+) -> dict[str, Any]:
+    """Wave 1 ECC absorption (security-hooks-bundle, AC.SECHK.1 +
+    AC.SECHK.B2-MIGRATION-*) — secret-pattern guard.
+
+    Matcher: ``Bash|Edit|Write|MultiEdit`` (the hook scans Bash
+    commands AND Edit/Write/MultiEdit content for the 14-pattern
+    floor + the B2 file-pattern surface migrated from bash_guard).
+    """
+    script = (
+        Path(loam_root)
+        / "framework"
+        / "safety-layer"
+        / "hooks"
+        / "secret_pattern_guard.py"
+    )
+    return {
+        "matcher": "Bash|Edit|Write|MultiEdit",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{sys.executable} {script}",
+                "async": False,
+                "timeout": 5,
+            }
+        ],
+    }
+
+
+def build_dangerous_flag_guard_stanza(
+    loam_root: Path,
+) -> dict[str, Any]:
+    """Wave 1 ECC absorption (security-hooks-bundle, AC.SECHK.2) —
+    dangerous-flag guard.
+
+    Matcher: ``Bash`` only (the hook fires on git push --no-verify /
+    git commit --no-verify / git push --force <protected-ref>).
+    """
+    script = (
+        Path(loam_root)
+        / "framework"
+        / "safety-layer"
+        / "hooks"
+        / "dangerous_flag_guard.py"
+    )
+    return {
+        "matcher": "Bash",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{sys.executable} {script}",
+                "async": False,
+                "timeout": 5,
+            }
+        ],
+    }
+
+
+def build_config_write_guard_stanza(
+    loam_root: Path,
+) -> dict[str, Any]:
+    """Wave 1 ECC absorption (security-hooks-bundle, AC.SECHK.3) —
+    config-write guard.
+
+    Matcher: ``Edit|Write|MultiEdit`` (the hook fires on writes to
+    .eslintrc / biome.json / .pre-commit-config.yaml / .git/config /
+    root .gitignore).
+    """
+    script = (
+        Path(loam_root)
+        / "framework"
+        / "safety-layer"
+        / "hooks"
+        / "config_write_guard.py"
+    )
+    return {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{sys.executable} {script}",
+                "async": False,
+                "timeout": 5,
+            }
+        ],
+    }
+
+
+def build_safety_layer_stanzas(
+    loam_root: Path,
+) -> list[dict[str, Any]]:
+    """Return all three Wave 1 ECC-absorption safety-layer
+    PreToolUse stanzas in registration order. Convenience helper
+    for callers that want to compose all three alongside the
+    existing A2 / A3 / A4 contributors via ``new_entries=``.
+    """
+    return [
+        build_secret_pattern_guard_stanza(loam_root),
+        build_dangerous_flag_guard_stanza(loam_root),
+        build_config_write_guard_stanza(loam_root),
+    ]
 
 
 # ---- amendment #49 — top-level ``statusLine`` merge -----------------

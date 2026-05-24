@@ -1,6 +1,12 @@
-"""PreToolUse gate — refuses Bash commands that match one of the
-five A4 failure classes (B1 amend-in-subagent, B2 secret-commit, B3
-loam-amend-dry-run-failure, B4 wrong-tree-write, B5 blast-radius).
+"""PreToolUse gate — refuses Bash commands that match one of four
+A4 failure classes (B1 amend-in-subagent, B3 loam-amend-dry-run-
+failure, B4 wrong-tree-write, B5 blast-radius). B2 (secret-FILE
+commit) was MIGRATED to ``framework/safety-layer/hooks/
+secret_pattern_guard.py`` per D-SECHK.OVERLAP partial-absorb
+(2026-05-24, Wave 1 ECC absorption). The safety-layer hook fires
+on the same B2 surface in ALL workspaces (was DEV-MODE-irrelevant /
+UNIVERSAL even pre-migration; the migration moves the canonical
+detection to safety-layer so secret-detection lives in one place).
 
 Added by structural-enforcement A4 (Bash/Agent-context guards). The
 gate fires on the Claude Code PreToolUse matcher ``Bash`` (every shell
@@ -9,19 +15,29 @@ TDD-guard in the multi-contributor PreToolUse stanza; matcher
 independence (Bash matcher vs Edit|Write|MultiEdit matcher) means no
 cross-matcher interference.
 
-## Failure classes covered (AC.BAG.1 .. AC.BAG.7)
+## Failure classes covered (AC.BAG.2 .. AC.BAG.7)
 
 UNIVERSAL (fire regardless of workspace mode):
 
-  - **B2 / AC.BAG.1** — secret-file commit. Detects a ``git add /
-    commit / stash`` whose argument list names a secret-class file
-    (``.env``, ``*.pem``, ``id_rsa``, etc.). The env-var override
-    ``POS_BASH_GUARD_ALLOW=1`` does NOT bypass this gate.
   - **B5 / AC.BAG.2** — blast-radius destructive command (force-push
     to protected branch; ``rm -rf`` outside ``.scratch/`` + ``/tmp/``;
     ``chmod -R 777|0`` against home; ``dd`` to device; ``curl |
     bash``; ``mkfs`` to device). The env-var override does NOT
     bypass this gate.
+
+MIGRATED OUT:
+
+  - **B2 / AC.BAG.1** — secret-file commit detection. As of the
+    Wave 1 ECC absorption (2026-05-24), the canonical detection
+    lives at ``framework/safety-layer/hooks/secret_pattern_guard.py``
+    (AC.SECHK.B2-MIGRATION-{1,2,3}). The AC.BAG.1 tests still exist
+    as regression coverage that the migration preserved behavior;
+    the AC.BAG.1 surface in this file no longer fires (returns
+    no-op / allow on the secret-commit input). The
+    ``_reason_secret_commit`` builder + the
+    ``failure_class="secret-commit"`` decision shape are retained
+    in dead-code form for one release cycle to ease bisect /
+    rollback; they are NOT reachable from ``evaluate()``.
 
 DEV-MODE-only (fire only when ``corpus_load_sentinel.workspace_mode``
 returns ``"dev-mode"``):
@@ -405,16 +421,11 @@ def evaluate(
         return Decision("no-op")
 
     # ---- Universal-leg checks (fire regardless of mode) -----
-    # AC.BAG.1 — secret-file commit. NOT bypassable by env var.
-    matched_secret, paths = _helpers.is_secret_commit_command(command)
-    if matched_secret:
-        reason = _reason_secret_commit(command, paths)
-        return Decision(
-            "deny",
-            reason=reason,
-            failure_class="secret-commit",
-            matched=", ".join(paths),
-        )
+    # AC.BAG.1 (B2 secret-file commit) — MIGRATED 2026-05-24 to
+    # ``framework/safety-layer/hooks/secret_pattern_guard.py`` per
+    # D-SECHK.OVERLAP partial-absorb. The safety-layer hook fires on
+    # the same B2 surface; this gate no longer checks for it.
+    # AC.SECHK.B2-MIGRATION-2 asserts no double-fire here.
 
     # AC.BAG.2 — blast-radius. NOT bypassable by env var.
     matched_blast, reason_class, matched_text = (

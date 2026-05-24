@@ -1,0 +1,314 @@
+schema_version: 1
+amendment:
+  # number: assigned at apply-time. Wave 1.4 — final Wave 1 ECC
+  # absorption build. Predecessor in the chain: token-defaults-
+  # optin-skill apply at e4c3123 (Wave 1.3), strategic-compact-
+  # skill-graduation seal at 84aa38a (Wave 1.2), readme-ac3-
+  # synonym-list-widening corrective seal at 0a76e12 (Wave 1.1).
+  number: 152
+  slug: security-hooks-bundle
+  title: "PATCH — Wave 1 ECC absorption WI-2 (final, Wave 1.4): install three PreToolUse safety-layer hooks (secret_pattern_guard / dangerous_flag_guard / config_write_guard) in `framework/safety-layer/hooks/`, register via `merge_pre_tool_use` extension in `framework/hands-off-lifecycle/hooks/first_run_settings.py`, AND migrate B2 secret-FILE detection from `plugins/dev-sdlc/hooks/bash_guard.py` to the new safety-layer secret-pattern hook per D-SECHK.OVERLAP option B (partial absorb, owner-ratified 2026-05-24 via Telegram 12311). Three-component multi-component fence (safety-layer + hands-off-lifecycle + dev-sdlc) admitting the cross-component sealed-component edit on bash_guard.py. 11 ACs (SECHK.1-7, S1-S4, B2-MIGRATION-1/2/3); always-on hooks composing alongside the existing SafetyController (no refusal-chain modification); fail-open + structured JSON diagnostics + toggle-off env vars per D-SECHK.FAIL-OPEN + D-SECHK.TOGGLE-GRANULARITY + D-SECHK.DIAGNOSTIC-SHAPE."
+
+# BASELINE — current canonical-clean pre-this-amendment HEAD per
+# Tier-0 `git -C /Users/lukeivers/loam log -1 --format=%H` returning
+# 51e8ef7 (docs(state): backfill token-defaults-optin-skill seal
+# SHAs — the final post-cycle bookkeeping commit of Wave 1.3).
+# Walk:
+#   0a76e12 — readme-ac3-synonym-list-widening corrective seal (Wave 1.1)
+#   84aa38a — strategic-compact-skill-graduation seal (Wave 1.2)
+#   e4c3123 — token-defaults-optin-skill workspace-bootstrap chore-seal (Wave 1.3 seal)
+#   51e8ef7 — token-defaults seal-SHA backfill (BASELINE for this amendment)
+#   <this amendment's source-edit commit (lands BEFORE `loam amend apply`)>
+#   <loam amend apply auto-commit (this amendment)>
+#   <loam amend seal deterministic seal commit (this amendment)>
+baseline: 51e8ef73c17d454e0bb34e45fe1eac811b085444
+
+plan: docs/plans/security-hooks-bundle.md
+
+seal_description: |
+  PATCH — Wave 1 ECC absorption WI-2 (final, Wave 1.4): three new
+  PreToolUse safety-layer hooks (secret-pattern + dangerous-flag +
+  config-write) installed in framework/safety-layer/hooks/,
+  registered via the existing merge_pre_tool_use multi-contributor
+  mechanism, with the B2 secret-FILE detection MIGRATED from
+  plugins/dev-sdlc/hooks/bash_guard.py to the new safety-layer
+  secret-pattern hook per D-SECHK.OVERLAP option B (partial absorb,
+  owner-ratified 2026-05-24 via Telegram 12311 overriding plan-
+  author's recommended option A).
+
+  Three-component multi-component fence:
+
+    - framework/safety-layer/ (load-bearing — new hooks/ subdir +
+      shared _secret_patterns.py + 6 SECHK test files + architecture
+      doc update)
+    - framework/hands-off-lifecycle/ (load-bearing — first_run_
+      settings.py marker-set extension + three new build_*_stanza
+      helpers + AC.SECHK.6 settings-merge integration test + two
+      pre-existing AC.BAG.{1,7} test fixture updates for B2 migration)
+    - plugins/dev-sdlc/ (sealed-component edit — bash_guard.py
+      docstring update + removal of the AC.BAG.1 / B2 secret-commit
+      universal-leg check from evaluate(); B1/B3/B4/B5 preserved)
+
+  Universal admissions: docs/plans/ (this plan-doc + manifest +
+  sealed/-narrative landing).
+
+  AC families locked per docs/plans/security-hooks-bundle.md §2:
+
+    - AC.SECHK.1 — secret-pattern hook fires on Bash + Edit/Write/
+      MultiEdit; blocks the 14-pattern ECC floor; emits structured
+      permissionDecisionReason; workspace-additions loader extends
+      the floor (additive only).
+    - AC.SECHK.2 — dangerous-flag hook blocks git push|commit
+      --no-verify + git push --force on protected branches
+      (default {main, master, pos-v2, production} + workspace-
+      additions).
+    - AC.SECHK.3 — config-write hook blocks Edit/Write/MultiEdit
+      against .eslintrc{,.json,.js,.yaml,.cjs}, biome.json,
+      .pre-commit-config.yaml, .git/config, root .gitignore.
+    - AC.SECHK.4 — all three hooks fail-open on internal exception
+      (non-JSON stdin, missing tool_input, malformed envelope).
+    - AC.SECHK.5 — toggle-off env vars disable hooks at declared
+      granularity (LOAM_SAFETY_HOOKS=off all; per-hook env vars
+      individually); toggled-off no-op logged for audit.
+    - AC.SECHK.6 — three new hook entries land in settings.json at
+      first-run scaffold + on re-merge idempotently; user-authored
+      stanzas preserved via backup.
+    - AC.SECHK.7 — existing AC.BAG.2-7 tests continue to pass
+      (bash_guard B5 + DEV-MODE B1/B3/B4 preserved; AC.BAG.1 test
+      file rewritten as post-migration regression).
+    - AC.SECHK.S1/S2/S3 — outcome-altitude tests invoke production
+      hook dispatch path via subprocess with no pre-arranged state.
+    - AC.SECHK.B2-MIGRATION-1 — behavior parity (secret-FILE
+      detection moved to safety-layer fires on the same inputs +
+      preserves the carve-outs).
+    - AC.SECHK.B2-MIGRATION-2 — no double-fire (bash_guard.evaluate()
+      returns allow/no-op on the migrated inputs).
+    - AC.SECHK.B2-MIGRATION-3 — bash_guard B1/B3/B4/B5 surfaces
+      preserved (regression coverage).
+
+  Method-level choices (ratified at plan-author time per §0 + §14):
+
+    - D-SECHK.OVERLAP — OPTION B (partial absorb) — owner override
+      via Telegram 12311; B2 logic moves to safety-layer,
+      bash_guard B2 surface removed.
+    - D-SECHK.FAIL-OPEN — FAIL-OPEN + structured NDJSON log
+      (belt-not-suspenders framing per D-SEC.HOOKS rationale).
+    - D-SECHK.PATTERN-SET — ECC 14-pattern set verbatim as v1
+      floor + workspace-additions via .loam/secret-patterns.yaml
+      (additive only).
+    - D-SECHK.TOGGLE-GRANULARITY — BOTH single env var
+      (LOAM_SAFETY_HOOKS) and per-hook env vars
+      (LOAM_SAFETY_HOOKS_{SECRET,DANGEROUS_FLAG,CONFIG_WRITE}).
+    - D-SECHK.DIAGNOSTIC-SHAPE — STRUCTURED JSON per Claude Code's
+      hookSpecificOutput.permissionDecisionReason shape (matches
+      existing bash_guard convention).
+    - D-SECHK.CYCLE-SHAPE — SINGLE CYCLE (per the §4 cycle-merge
+      condition: Cycle 2's workspace-bootstrap edits were not
+      needed because the workspace-bootstrap scaffold composes
+      first_run_settings.merge_pre_tool_use via the existing
+      multi-contributor stanza builders — extending the marker set
+      and ladder helper alone is sufficient. Cycle 2 collapsed
+      into Cycle 1 per plan-author-time discretion).
+
+  Out of scope (per plan §1.3):
+
+    - Content-deep secret scanning (entropy-based, AI-verify) —
+      pattern-class only.
+    - PostToolUse cleanup hooks — separate work-item.
+    - Refusal-chain extensions — new hooks compose alongside
+      SafetyController; no refusal-chain modification.
+    - bash_guard B1/B3/B4/B5 migration — D-SECHK.OVERLAP B only
+      addresses B2.
+    - Persona-side translation of structured diagnostics —
+      covered by existing feedback_translate_outbound_too.
+    - Workspace allowlist mechanism for false-positive
+      whitelisting — FIDRAFT for v0.2+.
+    - Per-pattern severity tiers (warn/block/require-confirm) —
+      v1 ships block-only with toggle-off.
+
+  Predecessor commits (per plan §6 + Wave 1 sequence):
+    - 0a76e12 — readme-ac3-synonym-list-widening corrective seal
+                (Wave 1.1 cycle close)
+    - 84aa38a — strategic-compact-skill-graduation seal (Wave 1.2)
+    - e4c3123 — token-defaults-optin-skill workspace-bootstrap
+                chore-seal (Wave 1.3 seal)
+    - 51e8ef7 — token-defaults seal-SHA backfill (Wave 1.3 close)
+    - <this amendment's source-edit commit (lands BEFORE
+       `loam amend apply`)>
+
+  HALT TRIGGERS (per §9 of the plan-doc — none fired at build
+  time; all cleared Tier-0 pre-source-edit):
+
+    - #1 WD drift → cleared (cd /Users/lukeivers/loam confirmed
+      pre-source-edit; PWD verified).
+    - #2 bash_guard.py touched outside D-SECHK.OVERLAP B scope →
+      cleared (only AC.BAG.1 B2 surface removed; B1/B3/B4/B5
+      preserved verbatim per the docstring + evaluate() diff).
+    - #3 Pattern-set false-positive rate exceeds ~1/session →
+      N/A in build-time smoke (the only "real" content scanned is
+      the test fixtures, all synthetic credential literals).
+    - #4 Outcome-altitude AC test cannot invoke production path
+      with no pre-arranged state → cleared (S1/S2/S3 + every
+      AC.SECHK.{1,2,3} test invokes the hook via subprocess
+      against the real production script; no mocks/fakes/stubs).
+    - #5 Fail-open path fires >0 times during build-time smoke →
+      cleared (the AC.SECHK.4 fail-open tests exercise the
+      fail-open path intentionally; the production tests do NOT
+      trigger fail-open during pattern matching).
+    - #6 Existing AC.BAG.* tests regress → cleared (post-migration:
+      AC.BAG.1 rewritten as no-double-fire regression, AC.BAG.7
+      test_AC_BAG_7_deny_writes_one_ndjson_line fixture updated
+      from B2 to B5 input; AC.BAG.2-6 + AC.BAG.7 second/third
+      tests untouched and passing).
+    - #7 More than 5 in-build decisions require maintainer
+      escalation → cleared (zero escalations; all decisions
+      pre-ratified in §14 of the plan-doc).
+    - #8 Cycle 1 seal fails → cleared (this IS Cycle 1; no Cycle 2).
+    - #9 merge_pre_tool_use extension breaks settings.json merge
+      tests → cleared (AC.SECHK.6 passes 6/6; AC.OBG/AC.TDG merge
+      regressions pass unchanged).
+    - #10 Any AC ships partial → cleared (all 11 ACs satisfied
+      per the test suite).
+
+components:
+  - name: safety-layer
+    seal_test: framework/safety-layer/tests/test_no_sealed_amendments.py
+    sidecar: framework/safety-layer/tests/SEAL_COMMIT
+    frozen_baseline: false
+    # safety-layer's test_no_sealed_amendments.py is an integration-
+    # invariant test (not the standard allowed_prefixes BASELINE-aware
+    # seal-test); it does NOT carry an allowed_prefixes binding. The
+    # dry-run admission set falls through to manifest universal_paths
+    # + extra_allowed_prefixes + cross-component prefixes. Admit:
+    extra_allowed_prefixes:
+      - framework/safety-layer/
+      - framework/hands-off-lifecycle/
+      - plugins/dev-sdlc/
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/security-hooks-bundle.md
+  body: |
+    # security-hooks-bundle — apply ladder
+
+    2026-05-24. Wave 1.4 — final Wave 1 ECC absorption build.
+    Three-component multi-component fence on
+    `framework/safety-layer/` + `framework/hands-off-lifecycle/` +
+    `plugins/dev-sdlc/` per D-SECHK.OVERLAP option B (partial-
+    absorb, owner-ratified 2026-05-24 via Telegram 12311).
+
+    Plan: `docs/plans/security-hooks-bundle.md`.
+
+    Shape:
+      - Three new PreToolUse hook scripts at
+        `framework/safety-layer/hooks/` (secret_pattern_guard,
+        dangerous_flag_guard, config_write_guard) + shared
+        `_secret_patterns.py` data + loader + `__init__.py` for
+        the new subpackage.
+      - 11 AC test files at
+        `framework/safety-layer/tests/test_AC_SECHK_*.py`
+        (AC.SECHK.1, 2, 3, 4, 5, B2_MIGRATION, S_outcome_altitude).
+      - `framework/safety-layer/docs/architecture.md` updated with
+        the hooks subdir + composition with refusal-chain.
+      - `framework/hands-off-lifecycle/hooks/first_run_settings.py`
+        marker-set extension (3 new hook script basenames added to
+        `_LOAM_PRE_TOOL_USE_COMMAND_MARKERS`) + three new
+        `build_*_guard_stanza` helpers + `build_safety_layer_stanzas`
+        convenience helper.
+      - `framework/hands-off-lifecycle/tests/test_AC_SECHK_6_settings_merge.py`
+        for the 6-test settings-merge integration coverage.
+      - `framework/hands-off-lifecycle/tests/test_AC_BAG_1_secret_commit.py`
+        rewritten as a post-migration regression suite (bash_guard
+        no longer fires on secret-FILE commits).
+      - `framework/hands-off-lifecycle/tests/test_AC_BAG_7_audit_log.py`
+        fixture updated: `test_AC_BAG_7_deny_writes_one_ndjson_line`
+        uses a B5 `curl | bash` input (still firing) instead of
+        the prior B2 `git add .env` input (migrated out).
+      - `plugins/dev-sdlc/hooks/bash_guard.py` docstring updated
+        + AC.BAG.1 B2 universal-leg check removed from `evaluate()`
+        (B1/B3/B4/B5 surfaces preserved verbatim).
+
+    Single-cycle, single-seal ladder per the cycle-merge condition
+    in plan §4 (D-SECHK.CYCLE-SHAPE default-merge-when-no-overlap;
+    Cycle-1-plan time found Cycle 2's workspace-bootstrap edits
+    unnecessary because the scaffold composes
+    `merge_pre_tool_use` via the existing multi-contributor
+    stanza builders; extending the marker set + adding builder
+    helpers in Cycle 1 is sufficient for fresh workspaces to
+    receive the hooks at first-run).
+
+    AC families (full text in plan §2):
+
+      - AC.SECHK.1 — secret-pattern (14-pattern ECC floor +
+        workspace-additions) on Bash + Edit/Write/MultiEdit
+        content; structured deny diagnostic.
+      - AC.SECHK.2 — dangerous-flag (git push|commit --no-verify;
+        git push --force protected-branch); protected-branch
+        floor + workspace-additions.
+      - AC.SECHK.3 — config-write (.eslintrc family / biome.json /
+        .pre-commit-config.yaml / .git/config / root .gitignore).
+      - AC.SECHK.4 — fail-open on internal exception (NDJSON log
+        + exit-0 + empty stdout default-allow).
+      - AC.SECHK.5 — toggle-off env vars at single + per-hook
+        granularity; logged for audit.
+      - AC.SECHK.6 — settings.json merge composes the three hooks
+        idempotently; user-authored stanzas backed up.
+      - AC.SECHK.7 — bash_guard B5 + DEV-MODE B1/B3/B4 preserved
+        (B2 migrated out, AC.BAG.1 file rewritten as
+        post-migration regression).
+      - AC.SECHK.S1/S2/S3 — outcome-altitude (real subprocess,
+        production hook scripts, no pre-arranged state).
+      - AC.SECHK.B2-MIGRATION-{1,2,3} — behavior parity +
+        no-double-fire + B1/B3/B4/B5 preservation.
+
+    Method-level choices (ratified at plan-author time per §0 +
+    §14):
+
+      - D-SECHK.OVERLAP — OPTION B (partial absorb) — owner
+        override via Telegram 12311.
+      - D-SECHK.FAIL-OPEN — FAIL-OPEN + structured NDJSON log.
+      - D-SECHK.PATTERN-SET — ECC 14-pattern floor + workspace-
+        additions loader (additive only).
+      - D-SECHK.TOGGLE-GRANULARITY — BOTH single env var and
+        per-hook env vars.
+      - D-SECHK.DIAGNOSTIC-SHAPE — STRUCTURED JSON per Claude
+        Code's hookSpecificOutput convention.
+      - D-SECHK.CYCLE-SHAPE — SINGLE CYCLE (cycles merged per
+        plan-author-time discretion; Cycle 2's workspace-bootstrap
+        scope absorbed into Cycle 1 via the marker-set extension).
+
+    Halt triggers (per plan §9): none fired; all ten cleared
+    Tier-0 pre-source-edit per the manifest's HALT TRIGGERS
+    section above.
+
+    Predecessor commits (per plan §6 + Wave 1 sequence):
+      - 0a76e12 — readme-ac3-synonym-list-widening corrective
+                  seal (Wave 1.1).
+      - 84aa38a — strategic-compact-skill-graduation seal
+                  (Wave 1.2).
+      - e4c3123 — token-defaults-optin-skill workspace-bootstrap
+                  chore-seal (Wave 1.3 seal).
+      - 51e8ef7 — token-defaults seal-SHA backfill (Wave 1.3
+                  close; BASELINE for this amendment).
+      - <source-edit commit (this amendment; lands BEFORE
+         `loam amend apply`)>.
+
+    BASELINE — 51e8ef7 (canonical-clean pre-this-amendment HEAD).
+    Three-component fence on `framework/safety-layer/` +
+    `framework/hands-off-lifecycle/` + `plugins/dev-sdlc/`.
+    Sidecars advance to this amendment's seal SHA at apply time.

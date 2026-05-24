@@ -20,7 +20,118 @@ safety-layer/src/
 ├── controller.py     — SafetyController: composed runtime
 ├── ipc_wiring.py     — register_safety_ipc: workspace-bootstrap glue
 └── cli.py            — `pos kill ...` + `pos safety ...`
+
+safety-layer/hooks/  — PreToolUse safety hooks (Wave 1 ECC absorption)
+├── _secret_patterns.py     — 14-pattern ECC floor + B2 FILE patterns (migrated from bash_guard) + workspace-additions loader
+├── secret_pattern_guard.py — AC.SECHK.1 + AC.SECHK.B2-MIGRATION (Bash/Edit/Write/MultiEdit content + Bash file-staging)
+├── dangerous_flag_guard.py — AC.SECHK.2 (git push|commit --no-verify; git push --force protected-branch)
+└── config_write_guard.py   — AC.SECHK.3 (.eslintrc / biome.json / .pre-commit-config.yaml / .git/config / root .gitignore)
 ```
+
+## Hooks subsystem (Wave 1 ECC absorption, 2026-05-24)
+
+Three PreToolUse hooks ship as part of the safety-layer component
+(per D-SEC.HOOKS — security primitives are core-loam, always-on).
+The hooks compose alongside (do NOT replace or modify) the
+SafetyController + DangerousOpGate; they fire BEFORE the
+orchestrator's `activate_scope` dispatch via Claude Code's
+PreToolUse hook event.
+
+| Hook                       | Matcher                          | What it blocks                                                                   |
+|----------------------------|----------------------------------|----------------------------------------------------------------------------------|
+| `secret_pattern_guard.py`  | `Bash\|Edit\|Write\|MultiEdit`   | 14-pattern ECC content floor (sk-..., ghp_..., AKIA..., etc.) + secret-FILE commits (B2 migration from bash_guard) |
+| `dangerous_flag_guard.py`  | `Bash`                           | `git push --no-verify`, `git commit --no-verify`, `git push --force <protected-branch>` |
+| `config_write_guard.py`    | `Edit\|Write\|MultiEdit`         | Writes to `.eslintrc{,.json,.js,.yaml,.cjs}`, `biome.json`, `.pre-commit-config.yaml`, `.git/config`, root `.gitignore` |
+
+### Fail-open policy (D-SECHK.FAIL-OPEN)
+
+Per the always-on rationale: real security is defense-in-depth and
+loam's hooks are belt-not-suspenders. Failing closed on an internal
+hook fault (regex engine error, malformed envelope) creates a worse
+failure mode than the one being defended against (legitimate work
+blocked for a self-inflicted reason). Each hook:
+
+- Catches every internal exception at the top-level `try/except`
+- Returns exit-0 + empty stdout (default-allow)
+- Appends a structured NDJSON failure-log line to
+  `<workspace>/.loam/safety-hooks.log`
+
+### Toggle-off mechanism (D-SECHK.TOGGLE-GRANULARITY)
+
+Two granularities:
+
+- `LOAM_SAFETY_HOOKS=off` — disables all three hooks
+- `LOAM_SAFETY_HOOKS_SECRET=off` — disables `secret_pattern_guard`
+- `LOAM_SAFETY_HOOKS_DANGEROUS_FLAG=off` — disables `dangerous_flag_guard`
+- `LOAM_SAFETY_HOOKS_CONFIG_WRITE=off` — disables `config_write_guard`
+
+A toggled-off hook records the no-op in the NDJSON log so a later
+audit can confirm it was actually disabled, not silently broken.
+
+### Workspace-additions (D-SECHK.PATTERN-SET)
+
+The secret-pattern hook's CONTENT pattern set is the ECC 14-pattern
+floor + an additive workspace override at
+`<workspace>/.loam/secret-patterns.yaml`. Schema:
+
+```yaml
+patterns:
+  - name: workspace-internal-token
+    regex: "internal-key-[A-Z0-9]{16}"
+```
+
+Additive only — the loader cannot remove framework-floor patterns.
+Invalid regexes silently drop (fail-open at the loader); the floor
+plus any valid additions ship as the effective pattern set.
+
+The dangerous-flag hook's protected-branch set is the
+`{main, master, pos-v2, production}` floor + an additive workspace
+override at `<workspace>/.loam/protected-branches.yaml`. Schema:
+
+```yaml
+branches:
+  - release-train
+```
+
+### Registration into workspace settings.json
+
+The three hooks register into `<workspace>/.claude/settings.json`
+via the existing `framework/hands-off-lifecycle/hooks/first_run_settings.py`
+multi-contributor `merge_pre_tool_use` helper:
+
+- `build_secret_pattern_guard_stanza(loam_root)` →
+  `Bash|Edit|Write|MultiEdit` matcher
+- `build_dangerous_flag_guard_stanza(loam_root)` → `Bash` matcher
+- `build_config_write_guard_stanza(loam_root)` →
+  `Edit|Write|MultiEdit` matcher
+- `build_safety_layer_stanzas(loam_root)` → convenience helper
+  returning all three in registration order
+
+The three hooks compose alongside the existing pos-v2 PreToolUse
+contributors (A2 objective-binding gate, A3 TDD-guard, A4
+bash_guard / agent_guard) via matcher independence — Claude Code
+only invokes hooks whose matcher matches the active tool name.
+
+### Overlap with `plugins/dev-sdlc/hooks/bash_guard.py` (D-SECHK.OVERLAP)
+
+Per the owner ruling on D-SECHK.OVERLAP (option B — partial absorb,
+ratified 2026-05-24 via Telegrams 12310/12311): the B2 secret-FILE
+detection MIGRATED from `bash_guard.py` to
+`secret_pattern_guard.py`. `bash_guard.py` retains B1 (amend-in-
+subagent, DEV-MODE), B3 (loam-amend-dry-run-failure, DEV-MODE), B4
+(wrong-tree-write, DEV-MODE), B5 (blast-radius, UNIVERSAL). The
+canonical secret-detection layer is now the safety-layer; the
+universally-available B2 surface continues firing via the
+safety-layer hook in ALL workspaces (was UNIVERSAL pre-migration).
+
+Verified by AC.SECHK.B2-MIGRATION-{1,2,3}:
+
+- MIGRATION-1: behavior parity (the same inputs that fired
+  bash_guard's B2 now fire safety-layer's secret_pattern_guard)
+- MIGRATION-2: no double-fire (bash_guard.evaluate() returns
+  allow/no-op on the migrated inputs)
+- MIGRATION-3: B1/B3/B4/B5 surfaces preserved (regression coverage
+  via existing AC.BAG.2-7 tests)
 
 ## Non-amendment discipline
 

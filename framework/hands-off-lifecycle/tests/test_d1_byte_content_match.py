@@ -170,7 +170,15 @@ _SAMPLE_FILES = (
      # (NOT caused by amendment #144) — pyproject's post-FBE.8 state
      # diverged from the snapshot in a later amendment that did not
      # rebaseline. Discovery-driven rebaseline.
-     "825589c1844d69f5bd207a95e5b1d87ca52c61d9771ff6b43a6bd7f44d01b51f"),
+     # Wave 1.4 security-hooks-bundle (2026-05-24, amendment #152)
+     # rebaseline: pre-existing drift surfaced by the touched-component
+     # full-sweep — `7b774b1` (per-component-pyproject-version-
+     # lockstep regression closure PATCH) edited this pyproject.toml
+     # without rebaselining the byte-content sample. Discovery-driven
+     # rebaseline; OUT-OF-CYCLE-FENCE but in-band retire-and-rebaseline
+     # per the established pattern in this file. F2 ruthlessly surfaced
+     # in the dispatcher report.
+     "674d6bbba7b4a707a3a5c62627e64e0a3c71413ba2bd15905da43e2b723dab54"),
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -244,7 +252,12 @@ _SAMPLE_FILES = (
      # ODD §4 in-band retire-and-rebaseline.
      # Amendment #144 §16 finding rebaseline: pre-existing drift
      # (NOT caused by amendment #144) — discovery-driven rebaseline.
-     "9160b5bfe3d78d68250e6aba86a211fd3076e9ec7a833e415210f206d9e4a580"),
+     # Wave 1.4 security-hooks-bundle (2026-05-24, amendment #152)
+     # rebaseline: same shape as the primary-persona/pyproject.toml
+     # rebaseline above. `7b774b1` edited this pyproject without
+     # rebaselining. Discovery-driven retire-and-rebaseline; F2
+     # surfaced in the dispatcher report.
+     "39e29a52ec8df7765c1b921f316fe9ea057e61163e09f0a4ffa8da2c9e8dee34"),
 )
 
 

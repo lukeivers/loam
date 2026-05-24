@@ -1,0 +1,264 @@
+schema_version: 1
+amendment:
+  # number: assigned at apply-time. #149 was the previous sealed
+  # amendment in the global counter; this amendment lands as #150 —
+  # the next available number post-readme-ac3-synonym-list-widening
+  # (Wave 1 ECC absorption WI-1 / README cycle sealed at 0a76e12).
+  number: 150
+  slug: strategic-compact-skill-graduation
+  title: "PATCH — Graduate the compact/clear decision-heuristic memory rule to a discoverable loam SKILL (Wave 1 ECC absorption WI-2). The memory rule at `~/.claude/projects/-Users-lukeivers-pos3/memory/feedback_compact_clear_decision_heuristic.md` becomes a one-paragraph backlink (memory-as-index); the operative substance ships as a new auto-discoverable SKILL at `plugins/loam-skills/skills/strategic-compact/SKILL.md` (subdirectory shape per the v0.1.7 AC.LAYERED.2 discoverability contract verified at first_run_scaffold.py:1224-1310). Universal absorption: discipline becomes auto-available to derived workspaces (non-tech-user workspaces benefit MORE, not less, per master plan §3.1 P1 verdict)."
+
+# baseline: walked at apply-time per #142 D-PASH.BASELINE-WALK from
+# the canonical-clean pre-this-amendment commit. Resolved sequence:
+#   3bfe597 — readme-ac3-synonym-list-widening workspace-bootstrap
+#             SEAL_COMMIT (per the prior cycle's sidecar).
+#   0a76e12 — readme-ac3-synonym-list-widening corrective seal
+#             (workspace-bootstrap chore-seal).
+#   f26ad21 — STATE.md + plan §14 backfill commit (current
+#             canonical-clean pre-this-amendment HEAD; THIS is the
+#             BASELINE).
+#   <source-edit commit for this amendment (lands BEFORE
+#    `loam amend apply`)>.
+#   <loam amend apply auto-commit (this amendment)>.
+#   <loam amend seal deterministic seal commit (this amendment)>.
+baseline: f26ad21999932dc07c36bde253809c24fc0949ee
+
+plan: docs/plans/strategic-compact-skill-graduation.md
+
+seal_description: |
+  PATCH — Graduate the compact/clear decision-heuristic memory rule
+  to a discoverable loam SKILL (Wave 1 ECC absorption WI-2).
+
+  Universal absorption per master plan §3.1 P1 verdict (non-tech-
+  user workspaces benefit MORE from persona-driven compaction
+  discipline than dev users do — the persona absorbs the technical
+  detail; the user gets coherent compact-vs-continue-vs-clear
+  guidance without needing a mental model of context windows).
+
+  Graduation pattern (memory-becomes-index, SKILL-becomes-operative
+  per `feedback_durable_capture_for_planned_work`):
+    - SKILL.md authored at `plugins/loam-skills/skills/strategic-
+      compact/SKILL.md` (subdirectory shape — the discoverable
+      contract enforced by `_symlink_plugin_skills` per-directory
+      walk at first_run_scaffold.py:1224-1310 verified Tier-0).
+    - Source memory file at `~/.claude/projects/-Users-lukeivers-
+      pos3/memory/feedback_compact_clear_decision_heuristic.md`
+      prepends a one-paragraph backlink naming the SKILL's
+      canonical path; remainder of the file byte-identical to
+      pre-graduation content (per AC.COMPACT.BACKLINK contract).
+    - Memory rule retained as memory-recall index; SKILL becomes
+      the operative source-of-truth.
+
+  AC families locked per docs/plans/strategic-compact-skill-
+  graduation.md §2:
+
+    - AC.COMPACT.PATH — SKILL.md exists at canonical subdirectory
+      path; no flat-file predecessor (defensive regression catch
+      per the start-project pattern closed at amendment #147).
+    - AC.COMPACT.FRONTMATTER — frontmatter is valid YAML; the
+      `description` field is non-empty + within the Anthropic spec
+      1536-char budget + names the /compact + /clear triggers +
+      the context-pressure trigger + encodes the owner-class-only
+      constraint per D-COMPACT.TRIGGER.
+    - AC.COMPACT.BODY — body carries the three-options decision
+      rubric (continue / /compact / /clear) + cost-shape per
+      option + the decision rule (60% / 85% thresholds + session-
+      arc state) + the activation triggers section + a composition
+      section naming the source memory rule + precompact-hook
+      sibling + the owner-class-only constraint named in body
+      (not just frontmatter).
+    - AC.COMPACT.BACKLINK — memory file carries the backlink
+      paragraph naming the SKILL's canonical path; remainder of
+      file byte-identical (verified via original section-header
+      substring assertions). Test SKIPS gracefully if the memory
+      file is not accessible in the build environment per §5 halt-
+      trigger #2 + §8 Q3.
+    - AC.COMPACT.S — OUTCOME-ALTITUDE: a fresh loam workspace
+      produced via the production `_symlink_plugin_skills` walk
+      against the canonical multi-plugin tree carries
+      `<workspace>/.claude/skills/strategic-compact/SKILL.md`
+      reachable as a normal file (symlink-resolved). Mirrors the
+      AC.SPDISC.S shape from amendment #147. RED-on-mutation:
+      reverting the SKILL move breaks the staging assertion
+      before the outcome check.
+
+  Method-level choices (ratified at plan-author time per §0 +
+  §14; recorded at build time):
+
+    - D-COMPACT.PATH — SUBDIRECTORY shape (the discoverable
+      contract; flat-file shapes are silently undiscovered per the
+      v0.1.7 regression closed at amendment #147 for start-project).
+    - D-COMPACT.BODY-SOURCE — MEMORY-RULE-PRIMARY. ECC's sibling
+      `skills/strategic-compact/` was NOT WebFetched at build
+      time; the memory rule already carries the substantive cost-
+      shape + decision-rule + activation content that the SKILL
+      needs. ECC cross-check was authorized as "additive-only-
+      where-it-adds-novel-value" per the plan-doc; the autonomous
+      ruling at build time was that the memory rule's content was
+      sufficient + ECC absorption would add coordination overhead
+      without adding novel content. Per `feedback_test_against_
+      operational_objective_before_escalating` — the operational
+      objective is "loam-discoverable SKILL with stable substantive
+      content"; that's met by the memory-rule source.
+    - D-COMPACT.TRIGGER — OWNER-CLASS ONLY encoded in the
+      frontmatter description AND named in the body. Per memory
+      rule lines 106-111 + ratified ruling.
+    - D-COMPACT.MEMORY-FATE — BACKLINK-ONLY (retain memory file).
+      Per dispatcher brief explicit instruction + ratified ruling.
+    - D-COMPACT.BACKLINK-METHOD — direct edit to the memory file
+      via Edit tool at build time (the file was Tier-0 accessible
+      at `~/.claude/projects/-Users-lukeivers-pos3/memory/
+      feedback_compact_clear_decision_heuristic.md`; halt-trigger
+      #2 did NOT fire).
+    - D-COMPACT.ECC-ABSORPTION-DEGREE — ZERO ABSORPTION. The
+      builder did not fetch ECC's content at build time per the
+      D-COMPACT.BODY-SOURCE ruling above + the operational-
+      objective test.
+
+  Out of scope (per sub-plan §3 in-scope/out-of-scope split):
+
+    - Autonomous-agent `/compact` or `/clear` invocation. Owner-
+      class only per D-COMPACT.TRIGGER lock.
+    - Modifying Claude Code's `/compact` or `/clear` built-in
+      behavior.
+    - PreCompact hook integration (composes with the existing
+      `precompact-hook` SKILL; that surface is not in fence here).
+    - Auto-firing on token-usage telemetry (utilization not
+      directly exposed; rubric stays heuristic + owner-trigger).
+    - Migration of OTHER memory rules to SKILLs (one-off
+      graduation; D-INSTINCT.GRADUATION is the separate Wave 2/3
+      architecture decision).
+    - Body-content edits to the memory rule beyond the backlink
+      paragraph (rest is byte-identical).
+    - Updating `precompact-hook` SKILL's composition reference
+      from the memory rule to the new SKILL (the memory rule
+      resolves via backlink; future-enhancement out of fence).
+
+  Predecessor commits (per plan §6 + the README cycle):
+    - 0a76e12 — readme-ac3-synonym-list-widening corrective seal
+                (workspace-bootstrap chore-seal; Wave 1 WI-1).
+    - f26ad21 — STATE.md + plan §14 backfill commit (BASELINE for
+                this amendment).
+    - <this amendment's source-edit commit (lands before
+       `loam amend apply`)>.
+
+  HALT TRIGGERS (per §5 of the plan-doc — none fired at build
+  time; all cleared Tier-0 pre-source-edit):
+
+    - #1 WD drift → cleared (cd to /Users/lukeivers/loam confirmed
+      pre-source-edit).
+    - #2 Source memory file inaccessible → cleared (Tier-0
+      `ls -la ~/.claude/projects/-Users-lukeivers-pos3/memory/
+      feedback_compact_clear_decision_heuristic.md` returned 5018
+      bytes).
+    - #3 `_symlink_plugin_skills` walks dev-sdlc only (not loam-
+      skills) → cleared (Tier-0 read of `first_run_scaffold.py`
+      lines 1244-1310 confirmed `for plugin_dir in sorted(plugins_
+      root.iterdir())` walks every plugin including loam-skills;
+      §8 Q2 verification step).
+    - #4 `strategic-compact` slug collision → cleared (Tier-0
+      `find plugins -name "strategic-compact*"` returned no
+      matches).
+    - #5 AC.COMPACT.S RED-on-mutation failure → verified at test
+      authoring time (the staging assertion at line 99-105 fails
+      if the canonical SKILL.md is absent; RED-on-mutation is
+      structurally satisfied).
+    - #6 ECC content contradicts D-COMPACT.BODY-SOURCE → N/A (ECC
+      not fetched per D-COMPACT.ECC-ABSORPTION-DEGREE; no
+      contradiction surface).
+    - #7 `_symlink_plugin_skills` doesn't admit `plugins/loam-
+      skills/skills/` → cleared (same as #3; per-directory walk
+      iterates ALL plugin subdirectories).
+
+components:
+  - name: loam-skills
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/strategic-compact-skill-graduation.md
+  body: |
+    # strategic-compact-skill-graduation — apply ladder
+
+    2026-05-24. Sealed-component PATCH amendment graduating the
+    compact/clear decision-heuristic memory rule to a discoverable
+    loam SKILL (Wave 1 ECC absorption WI-2; second of four
+    sequential Wave 1 builds — predecessor: README cycle sealed
+    at 0a76e12; successors: token-defaults SKILL, security-hooks
+    bundle).
+
+    Plan: `docs/plans/strategic-compact-skill-graduation.md`.
+
+    Scope (per plan §3 / §5): two-component fence on
+    `plugins/loam-skills/` (load-bearing — the new
+    `skills/strategic-compact/` SKILL package + the five
+    AC.COMPACT.* tests) + `framework/workspace-bootstrap/`
+    (secondary — no code change; the AC.COMPACT.S outcome-altitude
+    smoke exercises the existing `_symlink_plugin_skills`
+    mechanism via test invocation only). Universal admissions:
+    `docs/plans/` (this plan-doc + manifest).
+
+    Single-cycle, single-seal ladder per §4 of the plan-doc.
+
+    AC families (full text in plan §2):
+
+      - AC.COMPACT.PATH — SKILL.md exists at canonical subdirectory
+        path; no flat-file predecessor (defensive regression
+        catch).
+      - AC.COMPACT.FRONTMATTER — valid YAML; description carries
+        triggers + owner-class-only constraint; ≤1536 chars per
+        Anthropic spec.
+      - AC.COMPACT.BODY — three-options rubric + decision rule
+        + activation triggers + composition + owner-class
+        constraint named in body.
+      - AC.COMPACT.BACKLINK — memory file backlink paragraph +
+        rest byte-identical (skips gracefully if memory file not
+        accessible).
+      - AC.COMPACT.S — OUTCOME-ALTITUDE fresh-workspace
+        discoverability via `_symlink_plugin_skills` against
+        synthetic multi-plugin tmpfs workspace.
+
+    Method-level choices (recommendations in plan §0; rulings
+    backfilled at build time — all four named decisions
+    autonomously rule-able from existing corpus per the plan-doc's
+    §0 + §8 LOW-criticality determinations):
+
+      - D-COMPACT.PATH — SUBDIRECTORY (discoverable contract).
+      - D-COMPACT.BODY-SOURCE — MEMORY-RULE-PRIMARY; ECC NOT
+        fetched (operational-objective test cleared).
+      - D-COMPACT.TRIGGER — OWNER-CLASS ONLY encoded in
+        frontmatter + body.
+      - D-COMPACT.MEMORY-FATE — BACKLINK-ONLY (retain memory
+        file; memory-becomes-index).
+      - D-COMPACT.BACKLINK-METHOD — direct edit; halt-trigger #2
+        did NOT fire (Tier-0 verified accessible).
+      - D-COMPACT.ECC-ABSORPTION-DEGREE — ZERO absorption.
+
+    Halt triggers (per plan §5): none fired; all seven cleared
+    Tier-0 pre-source-edit per the manifest's HALT TRIGGERS
+    section above.
+
+    Predecessor commits (per plan §6 + Wave 1 sequence):
+      - 0a76e12 — readme-ac3-synonym-list-widening corrective seal
+                  (Wave 1 WI-1 cycle close).
+      - f26ad21 — STATE.md + plan §14 backfill (BASELINE).
+      - <source-edit commit (this amendment; lands BEFORE
+         `loam amend apply`)>.
+
+    BASELINE — f26ad21 (canonical-clean pre-this-amendment HEAD).
+    Two-component fence on `plugins/loam-skills/` +
+    `framework/workspace-bootstrap/`. Sidecars advance to this
+    amendment's seal SHA at apply time.

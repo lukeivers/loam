@@ -1,15 +1,13 @@
 # loam
 
-**Cultivate a Claude agent in a substrate that remembers, schedules,
-governs, and gets out of your way.**
-
-loam is a Claude-attached harness: a long-running primary persona that
-translates your natural-language intent into AI-effective execution,
-backed by persistent memory, structural safety gates, cost governance,
-and autonomous background work. You open a Claude Code session; the
-primary persona greets you with what needs attention; you describe
-what you want; the persona picks the execution path. You never pick
-the mechanism.
+loam is a Claude-attached harness: a long-running primary persona
+that translates your natural-language intent into AI-effective
+execution, backed by persistent memory, structural safety gates, cost
+governance, and autonomous background work. You open a Claude Code
+session; the persona greets you with what needs attention, you
+describe what you want, and the persona picks the mechanism. State
+persists across sessions; the substrate gets out of your way until
+you need it.
 
 > **One-line pitch:** loam is the substrate you cultivate a Claude
 > agent in — single trusted persona, persistent memory, structural
@@ -28,6 +26,17 @@ execution.
 The full positioning lives at [`docs/positioning.md`](docs/positioning.md);
 the design choice to scaffold (rather than ship a thin agent) is
 articulated at [`docs/design/why-loam-scaffolds.md`](docs/design/why-loam-scaffolds.md).
+
+### Is this for you?
+
+**Non-technical user who wants a Claude that remembers.** You'll want loam if you want one trusted persona that holds state across sessions, schedules its own work, and refuses unsafe actions structurally.
+You probably won't want loam if you prefer launching a tool on demand and forgetting it between sessions.
+
+**Claude Code power-user adding harness on top.** You'll want loam if you want persistent memory, cost ceilings, autonomous background work, and structural safety gates layered on the session you already run.
+You probably won't want loam if your workflow is shaped around stateless one-off tasks.
+
+**Contributor or researcher evaluating the methodology.** You'll want loam if Objective-Driven Design, principle-conflict resolution, and swarming-as-recursive-decomposition look like the right shape to study or extend.
+You probably won't want loam if you want a turn-key product with no opinions about how work is authored.
 
 ## Quickstart
 

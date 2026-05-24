@@ -306,3 +306,62 @@ Raised + ruled this turn:
 Authored 2026-05-24 by `loam-plan-author` subagent, dispatched by the master-absorption-plan dispatcher per the D-TOKEN.ENFORCE ratification (Telegram 12301 / "B" ruling). Working directory verified: `/Users/lukeivers/loam/`. WD-as-literal-first-action discipline per `feedback_dispatch_cd_literal_first_action` honored (this dispatch's first tool call was `cd /Users/lukeivers/loam && pwd`).
 
 Plan-doc ratification: pending. Build dispatches against this contract on maintainer ratification + any Q1-Q4 (§8) rulings.
+
+# Token-optimization defaults documenter + opt-in writer SKILL
+
+Loam absorbs ECC's recommended token-optimization settings (Sonnet
+default, MAX_THINKING_TOKENS=10000, CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=50,
+MCP/tool caps) via two complementary surfaces: a documented preset in
+docs/getting-started.md so docs-first user discovery sees the
+recommended settings + their cost-rationale before they hit cost pain,
+and an opt-in SKILL at plugins/loam-skills/skills/cost-optimised-
+defaults/ that the persona invokes on user cost-signal, presents the
+settings + awaits explicit user approval, and on approval merges them
+into ~/.claude/settings.json non-destructively (existing user keys
+preserved; collisions surfaced + accept user's choice; atomic
+write-temp-then-rename).
+
+Per D-TOKEN.ENFORCE (maintainer ruling Telegram 12301 / "B"): NO
+auto-mutation of ~/.claude/settings.json on install — user-config
+sovereignty preserved; SKILL is the only mutation surface and writes
+only on explicit user approval. Install-time scripts verified not to
+touch ~/.claude/settings.json (AC.TOKEN.5 negative AC).
+
+Surface added:
+  - docs/getting-started.md — "Token-optimization defaults" section
+    after the five-step bootstrap; lists the 4 recommended settings
+    with one-sentence rationale per setting (ECC cost-savings
+    percentages attributed to ECC explicitly per CLAIM-OR-CITE — loam
+    has not independently measured); single-line pointer to the SKILL.
+  - plugins/loam-skills/skills/cost-optimised-defaults/SKILL.md —
+    opt-in SKILL with frontmatter naming invocation criteria (user
+    cost-signal patterns + explicit /skill invocation); body
+    documenting the four settings, user-approval flow, non-destructive
+    merge guarantee, toggle-back-off instructions.
+  - plugins/loam-skills/skills/cost-optimised-defaults/merge.py
+    (location at builder's call per D-build.TOKEN.1) — settings-merge
+    implementation: reads existing settings.json (preserves content if
+    absent), merges recommended keys WITHOUT overwriting pre-existing
+    user values (collisions surfaced + accept user's choice per-key),
+    writes atomically (temp-then-rename), emits structured diagnostic.
+  - plugins/loam-skills/skills/cost-optimised-defaults/tests/ — one
+    test file per AC (AC.TOKEN.1 / .2 / .3 / .4 / .5 / .S); AC.TOKEN.S
+    is the outcome-altitude smoke invoking the production persona-
+    dispatch path with no pre-arranged state.
+
+Composes with Lens-1 (Claude Code ~/.claude/settings.json hierarchy
+primitive + SKILL primitive — no custom invocation surface), Lens-2
+(primary-persona translation-burden absorption: user says "loam is
+expensive" → persona handles the technical detail; SKILL added to the
+persona's toolkit), the existing feedback_compact_clear_decision_
+heuristic memory rule (heuristic informs WHEN to apply discipline;
+SKILL+docs install the SETTINGS that make the discipline effective),
+and the global Token-efficiency discipline in ~/.claude/CLAUDE.md
+(this generalises maintainer-only discipline to a user-facing surface).
+
+Single-component fence: framework/workspace-bootstrap/. NOT merged to
+main, NOT pushed, NOT published, NOT tagged — sealed-local-on-branch
+is the deliverable; origin/main unchanged. NO Anthropic API key — all
+smoke + dispatch via real claude binary per feedback_no_anthropic_api_key.
+No version bump (version derives at release-time per feedback_version_
+numbers_at_release_time).

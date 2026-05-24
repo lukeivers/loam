@@ -1,0 +1,122 @@
+schema_version: 3
+amendment:
+  slug: readme-restructure-decision-doc-positioning
+  title: "Doc-only — README restructure for audience-routing decision-doc framing (P4 Wave 1). Hoists a tightened ~60-word positioning paragraph + preserved italicised pitch into the lead (replacing the current 3-paragraph open at lines 3-17 per D-README.LEAD ratification); inserts a new `### Is this for you?` H3 subsection under `## Why` and before `## Quickstart`, naming three reader-segments (non-technical user / Claude Code power-user / contributor-researcher) each with a YES-signal + NO-signal sentence (per D-README.AUDIENCE-SEGMENTS + D-README.SECTION-ORDER ratifications); preserves the rest of the README verbatim (Quickstart, two-copies-on-disk note, What ships table, Design lenses, Workflow chain, Status, Documentation, Contributing, Security, License). Hard length ceiling 194 lines (5% over current 185 per D-README.LENGTH-DELTA ratification). Three ACs scope-descriptive (AC.README.1 lead-paragraph + pitch shape / AC.README.2 `Is this for you?` subsection shape / AC.README.3 outcome-altitude non-developer first-touch comprehension smoke per feedback_test_outcome_altitude_required). Single-component fence anchor: framework/workspace-bootstrap/ (README.md admitted via its existing universal-files admission alongside docs/install-from-source.md / docs/getting-started.md / docs/dev-mode-getting-started.md — verified Tier-0 at fence-decision time). AC test files land at framework/workspace-bootstrap/tests/test_AC_README_{1,2,3}_*.py alongside the existing test_AC_CLE_S* + test_AC_FBE_* tests in the same anchor. Smoke writeup lands at workspace/.scratch/claude-output/readme-restructure-ac3-smoke-2026-05-24.md (gitignored ephemeral path per output-to-disk convention). Method-in-AC test passed per AC (lead paragraph satisfiable by multiple phrasings within the word budget; subsection satisfiable by multiple reader-segment cuts as long as YES + NO signals present; outcome-altitude probe satisfiable regardless of phrasing as long as a fresh `claude -p` extracts the shape). extra_allowed_prefixes EMPTY — no sealed-source edit outside the workspace-bootstrap anchor (the README.md edit is the entire source-of-truth change). No version bump (version derives at release-time per feedback_version_numbers_at_release_time). Wall-clock cost band: xs (~15-25 min AI-time per the duration rubric × ~10-15 tool calls × 0.1-0.15 wall-clock/call). LOCAL SEAL ONLY — sealed-local-on-branch is the deliverable; publish is a separate owner-asked action."
+
+baseline: "9aea0f6"
+
+plan: docs/plans/readme-restructure-decision-doc-positioning.md
+plan_doc_ref: docs/plans/readme-restructure-decision-doc-positioning.md
+
+ac_count: 3
+
+smoke_outcome: "README.md restructured; AC.README.{1,2,3} GREEN. Lead 55-80w + pitch; `### Is this for you?` between Why and Quickstart with 3 segments + YES/NO; claude -p comprehension smoke passes."
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/.
+# README.md is admitted as a universal-file by the existing
+# workspace-bootstrap seal-test (verified Tier-0 at fence-decision time
+# via `grep '"README.md"' framework/workspace-bootstrap/tests/
+# test_no_sealed_amendments.py`). AC test files at framework/workspace-
+# bootstrap/tests/ are inside the component anchor; no extra prefixes
+# needed. Plan-doc + manifest at docs/plans/ admitted via universal
+# prefix. Smoke writeup at workspace/.scratch/claude-output/ is
+# gitignored + outside the fence (informational artefact only,
+# referenced by the AC.README.3 test runner). extra_allowed_prefixes
+# EMPTY.
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc +
+# manifest land under docs/plans/. STATE + roadmap + master plan
+# backfill land in their existing universal files.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/readme-restructure-decision-doc-positioning.md
+  body: |
+    # Doc-only — README restructure for audience-routing decision-doc framing
+
+    2026-05-24. Wave 1 of the everything-claude-code-absorption master
+    plan (P4 — README-as-decision-doc framing). The current loam README
+    opens with a 3-paragraph positioning summary (lines 3-17) then
+    routes to Quickstart at line 32 without an explicit audience-routing
+    section; non-technical readers who would bounce on the install
+    instructions never get a chance to self-identify as in-scope or
+    out-of-scope before they hit the four-step install + two-copies-on-
+    disk note. This amendment restructures the lead for audience-routing.
+
+    Three changes (one cycle, one amendment, scope = README.md only):
+
+    1. Hoist a tightened ~60-word positioning paragraph into the lead
+       position (D-README.LEAD ratification 2026-05-24). The italicised
+       one-line pitch quote is preserved verbatim as the post-paragraph
+       anchor.
+
+    2. Insert a new `### Is this for you?` H3 subsection between the
+       existing `## Why` and `## Quickstart` (D-README.SECTION-ORDER
+       ratification). Three reader-segments named (D-README.AUDIENCE-
+       SEGMENTS ratification): non-technical user looking for a Claude
+       that remembers and handles itself / Claude Code power-user
+       adding harness on top / contributor or researcher evaluating the
+       methodology. Each segment carries a one-sentence YES-signal +
+       one-sentence NO-signal (the NO-signal half names the locked-design
+       scaffold choice from docs/design/why-loam-scaffolds.md honestly
+       without apology or gate-keeping).
+
+    3. Preserve the rest of the README verbatim. Quickstart, two-copies-
+       on-disk note (lines 65-78 preserved per Surface #4 — install pain
+       is real, do not sanitise the note out before marketplace-install
+       ships under Wave 2 P7), What ships table, Design lenses, Workflow
+       chain, Status, Documentation, Contributing, Security, License all
+       unchanged.
+
+    Hard length ceiling 194 lines (5% over current 185 per D-README.LENGTH-
+    DELTA ratification). The new lead is shorter by 2 paragraphs; the new
+    `Is this for you?` subsection adds ~150 words. Net delta absorbed
+    within ceiling.
+
+    AC.README.1 — Lead positioning paragraph (55-80 words) + italicised
+    pitch blockquote present in the H1-to-first-H2 region. Structural
+    shape test. Method-in-AC test passed (multiple phrasings satisfy).
+
+    AC.README.2 — `### Is this for you?` H3 subsection present between
+    `## Why` and `## Quickstart`; three bold-led reader-segment blocks;
+    each carries "You'll want loam if" AND "You probably won't want loam
+    if" signal phrases. Structural shape test. Method-in-AC test passed
+    (multiple segment cuts + phrasings satisfy).
+
+    AC.README.3 — outcome-altitude: true. Fresh `claude -p` session is
+    given ONLY the first 25 lines of README.md plus a two-question
+    comprehension prompt; UNCLEAR on either answer fails. Per
+    feedback_test_outcome_altitude_required (every AC set has >=1
+    outcome-altitude AC; the first two are STUB-class structural-shape
+    tests). Smoke writeup recorded at workspace/.scratch/claude-output/
+    readme-restructure-ac3-smoke-2026-05-24.md.
+
+    Composes with: Lens-1 Claude-leverage-first (the README is loam's
+    front door; audience-routing reduces install-then-bounce friction
+    that the persona-translation primitive can't reach until the user
+    has installed); Lens-2 harness + primary-persona value (primary-
+    persona test passes — translation burden absorbed at the front door
+    before persona is running; harness-test N/A for documentation);
+    Lens-4 prompt-scope-confidence (high confidence in outcome shape,
+    scope tight at AC stage); LOCKED-DESIGN-NOT-LICENSE (current README
+    shape revisitable; the maintainer ratification of Wave 1 is the
+    license for the change).
+
+    Single-component fence: framework/workspace-bootstrap/. README.md
+    admitted via the existing workspace-bootstrap seal-test universal-
+    files admission. NOT merged to main, NOT pushed beyond local, NOT
+    published, NOT tagged — sealed-local-on-branch is the deliverable;
+    publish is a separate owner-asked action. NO Anthropic API key —
+    all comprehension smoke via real `claude -p` per
+    feedback_no_anthropic_api_key. No version bump (version derives at
+    release-time per feedback_version_numbers_at_release_time).

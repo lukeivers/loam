@@ -160,7 +160,7 @@ Items 5–13 preserve current order exactly (only items 1–4 change).
 
 ### Single cycle (doc-only)
 
-1. **Plan-doc lands** (this file at `docs/plans/drafts/readme-restructure-decision-doc-positioning.md`).
+1. **Plan-doc lands** (this file at `docs/plans/readme-restructure-decision-doc-positioning.md` — relocated from `drafts/` on ratification per §11).
 2. **Maintainer ratification** of the named decisions in §2 (D-README.LEAD, D-README.AUDIENCE-SEGMENTS, D-README.SECTION-ORDER, D-README.LENGTH-DELTA). On ratification, the plan-doc status flips to ratified and the file relocates from `drafts/` to `docs/plans/` (per pos-v2 convention).
 3. **Builder dispatch** with this plan-doc as the contract. Dispatch carries scope-only (per `feedback_agent_prompts_scope_only`): "author the README edits per AC.README.{1,2,3} against the section-order in Surface #3 and the word-budget in Surface #1. Halt-and-surface any AC you cannot satisfy outcome-shape."
 4. **Manifest authored** by builder: `docs/plans/<this-slug>.manifest.yaml` — single-file fence: `README.md`.
@@ -254,4 +254,164 @@ On seal:
 
 ---
 
+## §14 — Method decisions (populated at build time)
+
+The plan-doc's §2 names the four ratified named decisions (D-README.LEAD,
+D-README.AUDIENCE-SEGMENTS, D-README.SECTION-ORDER, D-README.LENGTH-DELTA).
+The four §4 surfaces (Surface #1 word-budget 55-80, Surface #2 H3
+rendering, Surface #3 final section order, Surface #4 OOS preservation)
+are decisions recorded autonomously at plan-author time. Build-time
+deviations recorded below.
+
+### Commit SHAs
+
+- Source-edit batch: `cf5b0c1006d01261ff88368aa547e6e61b5cabda` —
+  `docs(README)+test(workspace-bootstrap): restructure README for audience-routing decision-doc framing (AC.README.{1,2,3})`
+- Apply commit (collapsed into seal per schema v3): `faad61db9a1e3f0fd7650e8ff94bf9faeead80d8` —
+  `chore(amend): readme-restructure-decision-doc-positioning manifest+apply — workspace-bootstrap BASELINE+sidecar bump to 9aea0f6`
+- Seal commit: `a39d5cea18dabdb1ff5dd0e11e8b3b88aed30e06` —
+  `chore(seals): readme-restructure-decision-doc-positioning — workspace-bootstrap at cf5b0c1`
+
+### Build-time decision deviations
+
+- **D-build.README.1 — line-wrap col for `### Is this for you?` block.**
+  The README's prose-wrap convention is ~68 cols; the for-whom block
+  was authored at ~150 cols (consistent with existing 135-col lines for
+  URLs) because each segment had to fit (bold-header + YES-signal +
+  NO-signal) inside the D-README.LENGTH-DELTA hard ceiling of 194
+  lines. At 68-col wrap each segment was 4-5 prose lines × 3 segments
+  = 15-20 lines, pushing the README to 197-203 lines. The wider wrap
+  collapses each segment to 2 lines while preserving the AC.README.2
+  outcome shape (bold-led block + YES/NO signals). The deviation is
+  source-style-only; markdown rendering is identical in any viewer.
+  F2 RF: surfaced in the source-edit batch commit message + dispatcher
+  report.
+
+- **D-build.README.2 — AC.README.3 test wrapper synonym list narrowness.**
+  The plan-doc AC.README.3 says "names 'harness', 'Claude', and
+  'persona' or close synonyms". My test wrapper codified the synonym
+  lists as: harness = ("harness", "framework", "scaffold",
+  "substrate"); claude = ("claude",); persona = ("persona", "agent",
+  "assistant"). Empirically (4 live `claude -p` smoke runs against the
+  sealed README), `claude -p` consistently extracts the operational
+  shape but uses "layer" (sub for harness) or descriptive
+  "translates/translating natural-language intent" (sub for persona-
+  as-translator) instead of the literal words. PASS-rate 1/4 (25%);
+  outcome-target empirically met 4/4 (every run named Claude + the
+  harness/layer concept + the persona-translator function). Per
+  `feedback_loose_AC_text_fix_AC_not_implementation`: the
+  implementation (README) matches intent; the test wrapper's literal-
+  synonym list is over-narrow. Recommended corrective: doc-only test-
+  widening cycle (~10-15 min AI-time) to add "layer" + translation-
+  verbs to the synonym lists. Surfaced in dispatcher report;
+  dispatcher rules on whether to author the corrective cycle now or
+  defer. Full smoke writeup at
+  `.scratch/claude-output/readme-restructure-ac3-smoke-2026-05-24.md`.
+
+- **D-build.README.3 — `--allow-untracked-globs` for unrelated
+  in-flight plan-docs.** The working tree carried three unrelated
+  untracked plan-docs at seal time
+  (`docs/plans/drafts/everything-claude-code-absorption-master-plan.md`,
+  `docs/plans/drafts/token-defaults-optin-skill.manifest.yaml`,
+  `docs/plans/promote-multi-channel-extractor-and-iteration-loop-family.md`)
+  from other Wave 1 work the dispatcher is queueing. Per the seal step's
+  dirty-tree halt: I sealed with
+  `--allow-untracked-globs "docs/plans/drafts/*" --allow-untracked-globs "docs/plans/promote-*"`
+  to admit them as dirty-but-unrelated. The patterns did NOT stage or
+  commit the unrelated paths — they remained untracked post-seal. No
+  fence contamination.
+
+- **D-build.README.4 — apply-then-source-edit ordering.** The apply
+  commit landed FIRST (manifest+sidecar bookkeeping), then the source-
+  edit batch landed as a separate commit. Per the per-pyproject-version
+  precedent (D-BACKFL.1.b: baseline captured at source-edit batch SHA),
+  the canonical pattern is source-edit-batch-FIRST then apply. The
+  inversion is functionally equivalent (the seal computes diff from
+  baseline..HEAD + working tree, which covers both shapes) but the
+  manifest's BASELINE field points to the plan-doc relocation commit
+  (`9aea0f6`), one commit older than the source-edit batch (`cf5b0c1`).
+  No functional regression; future doc-only cycles should source-edit-
+  batch-first to match canonical pattern.
+
+---
+
 *Plan-doc authored 2026-05-24 by `loam-plan-author` subagent under the canonical loam tree. Awaiting maintainer ratification of the four named decisions in §2 before builder dispatch.*
+
+# Doc-only — README restructure for audience-routing decision-doc framing
+
+2026-05-24. Wave 1 of the everything-claude-code-absorption master
+plan (P4 — README-as-decision-doc framing). The current loam README
+opens with a 3-paragraph positioning summary (lines 3-17) then
+routes to Quickstart at line 32 without an explicit audience-routing
+section; non-technical readers who would bounce on the install
+instructions never get a chance to self-identify as in-scope or
+out-of-scope before they hit the four-step install + two-copies-on-
+disk note. This amendment restructures the lead for audience-routing.
+
+Three changes (one cycle, one amendment, scope = README.md only):
+
+1. Hoist a tightened ~60-word positioning paragraph into the lead
+   position (D-README.LEAD ratification 2026-05-24). The italicised
+   one-line pitch quote is preserved verbatim as the post-paragraph
+   anchor.
+
+2. Insert a new `### Is this for you?` H3 subsection between the
+   existing `## Why` and `## Quickstart` (D-README.SECTION-ORDER
+   ratification). Three reader-segments named (D-README.AUDIENCE-
+   SEGMENTS ratification): non-technical user looking for a Claude
+   that remembers and handles itself / Claude Code power-user
+   adding harness on top / contributor or researcher evaluating the
+   methodology. Each segment carries a one-sentence YES-signal +
+   one-sentence NO-signal (the NO-signal half names the locked-design
+   scaffold choice from docs/design/why-loam-scaffolds.md honestly
+   without apology or gate-keeping).
+
+3. Preserve the rest of the README verbatim. Quickstart, two-copies-
+   on-disk note (lines 65-78 preserved per Surface #4 — install pain
+   is real, do not sanitise the note out before marketplace-install
+   ships under Wave 2 P7), What ships table, Design lenses, Workflow
+   chain, Status, Documentation, Contributing, Security, License all
+   unchanged.
+
+Hard length ceiling 194 lines (5% over current 185 per D-README.LENGTH-
+DELTA ratification). The new lead is shorter by 2 paragraphs; the new
+`Is this for you?` subsection adds ~150 words. Net delta absorbed
+within ceiling.
+
+AC.README.1 — Lead positioning paragraph (55-80 words) + italicised
+pitch blockquote present in the H1-to-first-H2 region. Structural
+shape test. Method-in-AC test passed (multiple phrasings satisfy).
+
+AC.README.2 — `### Is this for you?` H3 subsection present between
+`## Why` and `## Quickstart`; three bold-led reader-segment blocks;
+each carries "You'll want loam if" AND "You probably won't want loam
+if" signal phrases. Structural shape test. Method-in-AC test passed
+(multiple segment cuts + phrasings satisfy).
+
+AC.README.3 — outcome-altitude: true. Fresh `claude -p` session is
+given ONLY the first 25 lines of README.md plus a two-question
+comprehension prompt; UNCLEAR on either answer fails. Per
+feedback_test_outcome_altitude_required (every AC set has >=1
+outcome-altitude AC; the first two are STUB-class structural-shape
+tests). Smoke writeup recorded at workspace/.scratch/claude-output/
+readme-restructure-ac3-smoke-2026-05-24.md.
+
+Composes with: Lens-1 Claude-leverage-first (the README is loam's
+front door; audience-routing reduces install-then-bounce friction
+that the persona-translation primitive can't reach until the user
+has installed); Lens-2 harness + primary-persona value (primary-
+persona test passes — translation burden absorbed at the front door
+before persona is running; harness-test N/A for documentation);
+Lens-4 prompt-scope-confidence (high confidence in outcome shape,
+scope tight at AC stage); LOCKED-DESIGN-NOT-LICENSE (current README
+shape revisitable; the maintainer ratification of Wave 1 is the
+license for the change).
+
+Single-component fence: framework/workspace-bootstrap/. README.md
+admitted via the existing workspace-bootstrap seal-test universal-
+files admission. NOT merged to main, NOT pushed beyond local, NOT
+published, NOT tagged — sealed-local-on-branch is the deliverable;
+publish is a separate owner-asked action. NO Anthropic API key —
+all comprehension smoke via real `claude -p` per
+feedback_no_anthropic_api_key. No version bump (version derives at
+release-time per feedback_version_numbers_at_release_time).

@@ -226,6 +226,61 @@ the harness adds capability without removing any.
 
 ---
 
+## Token-optimization defaults
+
+Loam runs against the same Claude API everyone else does — token cost
+is a real lever you can pull. The four settings below cut your bill
+without measurably hurting quality on the kinds of work loam absorbs
+(routine coding, persona-driven workflow, plan-doc authoring, day-to-
+day chat). Each one is a one-shot edit to `~/.claude/settings.json`;
+none of them are auto-applied at install time. You can apply them
+manually, or ask loam to apply them for you — the persona will surface
+the exact diff and only write after you approve.
+
+The recommendations:
+
+1. **`model: "sonnet"`** — set Sonnet as the default model. Sonnet is
+   ~60% cheaper than Opus per request (per ECC's documented settings
+   table) and handles 80%+ of routine coding work. Opus stays
+   available via the `--model` flag for the cases that actually need
+   it (complex architectural decisions, deep multi-file synthesis).
+2. **`env.MAX_THINKING_TOKENS: "10000"`** — cap hidden-thinking
+   budget at 10k tokens per request. The default is unbounded;
+   the cap is a high-leverage cost lever (~70% reduction per ECC's
+   table) with low quality impact on routine work.
+3. **`env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: "50"`** — compact context
+   earlier (at 50% utilization instead of the default later
+   threshold). The earlier compaction trades one compaction round
+   for better per-turn quality across long sessions.
+4. **MCP and tool discipline — `<10` MCP servers per project,
+   `<80` active tools** — each MCP server and registered tool adds
+   context overhead at session start; staying under the named caps
+   keeps the per-turn baseline cost manageable. This one is
+   discipline, not a settings key — trim your workspace `.mcp.json`
+   and active-tools list directly.
+
+The savings percentages above are ECC's claims (source:
+[everything-claude-code](https://github.com/affaan-m/everything-claude-code)
+README's "Token Optimization & Cost Management" section); loam has
+not independently benchmarked. Real-world savings will vary by usage
+pattern.
+
+To apply the first three settings: open `~/.claude/settings.json` and
+add `"model": "sonnet"` at the top level plus a `"env": {...}` block
+with the two env entries. Or — and this is the easier path — ask
+loam: say something like *"loam is expensive, what should my
+settings be?"* or run `/skill cost-optimised-defaults`. The persona
+invokes the `cost-optimised-defaults` SKILL, surfaces the exact diff
+side-by-side with any pre-existing values, and only writes after you
+explicitly approve. Existing user keys are preserved by default;
+collisions on a recommended key are surfaced per-key so you can
+choose whether to keep your value or take loam's recommendation.
+
+Loam never auto-mutates your `~/.claude/settings.json` at install
+time. The opt-in SKILL is the only mutation surface.
+
+---
+
 ## Workflow chain — extract → interview → gap-analysis → build-next
 
 When the onboarding ritual's Q4 extractor opt-in fires (or any time

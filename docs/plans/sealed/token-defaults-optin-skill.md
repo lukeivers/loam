@@ -278,6 +278,12 @@ SHAs backfilled by `loam amend seal --plan-doc` per convention §5.
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `b0f44fa540cdb561e0ba6769511be7d2530a7533` —
+  `chore(amend): token-defaults-optin-skill manifest+apply — workspace-bootstrap BASELINE+sidecar bump to cc994fa`
+- Seal commit: `e4c31231d133a23fb40e952d118773cfc4484b05` —
+  `chore(seals): token-defaults-optin-skill — workspace-bootstrap at b0f44fa`
 ## §15 — Backwards-compat verification
 
 Existing tests that MUST still pass post-seal:

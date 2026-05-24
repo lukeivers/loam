@@ -187,7 +187,9 @@ components:
   - name: hands-off-lifecycle
     seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
     sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
-    frozen_baseline: false
+    # H19 BASELINE pinned at project-start per amendment #23
+    # (frozen-BASELINE convention); do NOT advance.
+    frozen_baseline: true
     extra_allowed_prefixes: []
   - name: dev-sdlc
     seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py

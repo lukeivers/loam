@@ -1,6 +1,6 @@
 # Security hooks bundle — per-work-item plan-doc (Wave 1 of ECC absorption)
 
-**Status:** per-work-item plan-doc, plan-before-code, DRAFT — pending owner ratification of this plan. Authored 2026-05-24 by `loam-plan-author` subagent.
+**Status:** per-work-item plan-doc, plan-before-code, **RATIFIED 2026-05-24** with maintainer override on D-SECHK.OVERLAP. Owner ratification provenance: Telegrams 12310 (decision surface) + 12311 (ruling "B"). D-SECHK.OVERLAP ruled to **partial-absorb (option B)** overriding original plan-author recommendation of divert (option A). All other decisions (D-SECHK.FAIL-OPEN, D-SECHK.PATTERN-SET, D-SECHK.TOGGLE-GRANULARITY, D-SECHK.DIAGNOSTIC-SHAPE, D-SECHK.CYCLE-SHAPE) ratified per plan-author recommendations via the recommendation-bundle implicit-yes shape. See §14 for the override delta. Authored 2026-05-24 by `loam-plan-author` subagent.
 **Working directory:** `/Users/lukeivers/loam/` (canonical loam tree).
 **Parent plan:** `docs/plans/drafts/everything-claude-code-absorption-master-plan.md` (Wave 1, WI-2).
 **Predecessors:**
@@ -403,3 +403,49 @@ Plan-doc ratification: pending. Build dispatches conditional on:
 4. Maintainer implicit-confirms Q4 (fail-open + toggle-granularity + diagnostic-shape) unless objection.
 
 On ratification: this file moves from `docs/plans/drafts/` to `docs/plans/` (per the master plan's draft → ratified convention) + the status field at the top updates to "ratified; build pending"; the ratifying commit becomes the BASELINE for the Cycle 1 manifest.
+
+---
+
+## §14 — Owner ratification record + D-SECHK.OVERLAP override delta
+
+**Ratification provenance:** Telegram 12310 (decision surface from dispatcher) + Telegram 12311 (owner ruling "B" — partial absorb). Other decisions ratified per recommendation-bundle implicit-yes shape from Telegram 12310 ("going with their recommendations as-bundle unless you flag specific ones").
+
+**D-SECHK.OVERLAP — RATIFIED: B (partial absorb).** Plan-author's original recommendation was option A (divert). Owner overrode to B.
+
+### What partial absorb (B) means concretely
+
+- **Extract** the secret-FILE commit detection logic from `plugins/dev-sdlc/hooks/bash_guard.py` (the B2 surface — detection of `.env`, `*.pem`, `id_rsa` patterns in file paths being committed) INTO the new safety-layer secret-pattern hook(s).
+- **Leave** `bash_guard.py`'s other functions intact: B1 amend-in-subagent, B3 amend-dry-run-fail, B4 wrong-tree-write, B5 blast-radius destructive Bash.
+
+### Additional in-scope items the build must address under B
+
+1. **Migrate B2 secret-FILE detection** from `plugins/dev-sdlc/hooks/bash_guard.py` to `framework/safety-layer/hooks/secret_pattern_guard.py` (or a sibling hook if the path-class-vs-content-class distinction warrants separation). The migrated logic uses the same patterns + matcher behavior as the original to preserve dev-mode behavior parity.
+2. **Remove B2 logic** from `bash_guard.py` after migration — `bash_guard.py` no longer fires on secret-FILE patterns; the new safety-layer hook fires instead in ALL workspaces (not just dev-mode). This is the load-bearing change of partial absorb.
+3. **Sealed-component impact**: `plugins/dev-sdlc/hooks/bash_guard.py` is sealed. Removing B2 from it is a sealed-component edit. The Cycle 1 fence MUST include `plugins/dev-sdlc/hooks/` to admit this change. Verify the `loam amend apply` accepts the multi-component fence.
+
+### Additional ACs the build must satisfy under B
+
+- **AC.SECHK.B2-MIGRATION-1** (existing-detection-preserved): synthetic envelope of a `git add .env` operation passes through the new safety-layer secret-FILE detection and is BLOCKED with the same diagnostic shape as the prior bash_guard behavior. Test invokes the production hook chain end-to-end, NOT via parsed input alone.
+- **AC.SECHK.B2-MIGRATION-2** (no-double-fire): the same envelope does NOT also fire bash_guard's B2 logic (bash_guard's B2 surface has been removed). Test asserts the bash_guard hook does not emit any block-diagnostic for the same envelope.
+- **AC.SECHK.B2-MIGRATION-3** (dev-mode-functions-preserved): bash_guard.py's B1, B3, B4, B5 surfaces all continue to fire on their respective inputs (regression test against existing dev-sdlc tests).
+
+### Override rationale (owner-decision, not dispatcher-justified)
+
+Owner ruled B over plan-author's A recommendation. Possible owner-side rationale (not stated; recorded here as inferred context for the build agent):
+- Reduces long-term maintenance surface (B2 lives in one place, not two)
+- Aligns with the absorption-as-net-improvement frame from the master plan (improve loam coherence, not just add new surfaces)
+- The dev-sdlc plugin's bash_guard becomes simpler; safety-layer becomes the canonical secret-detection layer
+
+The build agent treats this as the ruling and does not revisit. Per LOCKED-DESIGN-NOT-LICENSE, the ruling is revisitable post-build if outcomes prove bad — but in-build the agent executes B.
+
+### Other decisions (all ratified per plan-author recommendation)
+
+- D-SECHK.FAIL-OPEN: **ratified.** Hooks fail-open + structured log.
+- D-SECHK.PATTERN-SET: **ratified.** ECC's 14-pattern set verbatim as v1 floor + workspace-additions allowed.
+- D-SECHK.TOGGLE-GRANULARITY: **ratified.** Both single env var and per-hook env vars.
+- D-SECHK.DIAGNOSTIC-SHAPE: **ratified.** Structured JSON per Claude Code's `hookSpecificOutput.permissionDecisionReason` shape.
+- D-SECHK.CYCLE-SHAPE: **ratified.** Default to two cycles serialized; merge permitted if Cycle-1-plan finds zero overlap.
+
+### Build dispatch gating
+
+This file is now RATIFIED. Build dispatch awaits separate owner go-ahead (per dispatcher's commitment in Telegram 12302: "you still ratify each per-work-item plan-doc before any build dispatches"). The plan-doc is build-ready; the build does not auto-fire on ratification.

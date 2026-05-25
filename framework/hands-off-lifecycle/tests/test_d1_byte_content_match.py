@@ -178,7 +178,16 @@ _SAMPLE_FILES = (
      # rebaseline; OUT-OF-CYCLE-FENCE but in-band retire-and-rebaseline
      # per the established pattern in this file. F2 ruthlessly surfaced
      # in the dispatcher report.
-     "674d6bbba7b4a707a3a5c62627e64e0a3c71413ba2bd15905da43e2b723dab54"),
+     # v0.13.0 MINOR publish (2026-05-24) rebaseline: per-component
+     # pyproject version lockstep bumped 0.12.0 -> 0.13.0 in the
+     # release-staging worktree, invalidating this SHA. SECOND
+     # consecutive recurrence of the SAME drift pattern (Wave 1.4 = 1st,
+     # v0.13.0 = 2nd) — per `feedback_workaround_masks_rootcause_urgency`,
+     # the root-cause fix (stop pinning pyproject.toml byte content
+     # because pyprojects MUST mutate every MINOR by design) is
+     # scheduled + surfaced as a FIDRAFT entry by the v0.13.0 release
+     # integrator; this entry is the in-cycle workaround landing.
+     "a67ccb7ed714994bf572c01efc676f46579a6eeac9115906f9c0541818fe6765"),
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -257,7 +266,13 @@ _SAMPLE_FILES = (
      # rebaseline above. `7b774b1` edited this pyproject without
      # rebaselining. Discovery-driven retire-and-rebaseline; F2
      # surfaced in the dispatcher report.
-     "39e29a52ec8df7765c1b921f316fe9ea057e61163e09f0a4ffa8da2c9e8dee34"),
+     # v0.13.0 MINOR publish (2026-05-24) rebaseline: same shape as
+     # the primary-persona/pyproject.toml rebaseline above (per-component
+     # version lockstep bumped 0.12.0 -> 0.13.0). SECOND consecutive
+     # recurrence of the SAME drift pattern; root-cause-fix FIDRAFT
+     # entry scheduled by the v0.13.0 release integrator per
+     # `feedback_workaround_masks_rootcause_urgency`.
+     "8b5c9f553cbb9e5ca59b6e31fb74ce98fb2c7129937cb5470b373cb804945b61"),
 )
 
 

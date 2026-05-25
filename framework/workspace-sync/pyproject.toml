@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-workspace-sync"
-version = "0.12.0"
+version = "0.13.0"
 description = "loam workspace-sync — canonical-to-workspace git-shaped sync with three-class workspace-data envelope and LLM-mediated semantic-merge gate. Companion to self-upgrade."
 requires-python = ">=3.13"
 dependencies = [

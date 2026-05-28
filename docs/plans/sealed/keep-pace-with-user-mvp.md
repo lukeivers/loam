@@ -278,6 +278,12 @@ Method-level guidance only (the builder's call per ODD §1.1). Each cycle: manif
 | D-KP7.2 (build-finding) | pre-existing stale-test fix (orchestrator, in-fence) | `test_pos_session_start.py` lines 65 + 165: `"pos v2 ready"` → `"loam ready"` (matches the long-standing source emit since `1f6d4c1`). Not caused by KP7; surfaced by KP7's full-suite seal gate. In-fence + reversible + zero-ambiguity → fixed, not halted. | _(apply)_ | _(seal)_ |
 | D-RF1 | memory-architecture.md §1/§3.5 false-claim correction | Re-verified Tier-0 (`import graphiti_core` → ModuleNotFoundError; no `kuzu_db` on disk; consumer is a Protocol shim) then marked the S3 graphiti store DESIGN-ASPIRATIONAL-NOT-LIVE at every operative-presented site: §1 table S3 row + a marked note, §1 consumer-machinery line, §2 P1 line, §3.5 search line, §6 Lens-1 "already exists and is sealed" line. Marked-not-deleted (design intent preserved; running-shape corrected). | `a5946f3` | `ccfdc22` |
 
+### Commit SHAs
+
+- Amendment commit: `08dc0401cc457153c45ca1436dac75a8cadb3d4e` —
+  `feat(orchestrator): KP7 SessionStart objective + last-state surface`
+- Seal commit: `07d3b59a9e30c3d47e23ac5257cafaa77e6345a3` —
+  `chore(seals): keep-pace-with-user-mvp-kp7 — orchestrator at 08dc040`
 ## §15. Backwards-compat verification
 
 - Existing hands-off-lifecycle component tests pass (KP0/KP1/KP9 share its hook home).

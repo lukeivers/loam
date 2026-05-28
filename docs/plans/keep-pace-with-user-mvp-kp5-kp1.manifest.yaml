@@ -37,7 +37,7 @@ amendment:
 #                        work surfaces the canon pointer via the objective anchor;
 #                        production entry-point, NO pre-arranged retrieval state)
 #   AC.KP.S.1          — live-session-safety fence
-baseline: "REPLACE_WITH_CYCLE1_SEAL_SHA"
+baseline: "ccfdc22"
 
 plan: docs/plans/keep-pace-with-user-mvp.md
 

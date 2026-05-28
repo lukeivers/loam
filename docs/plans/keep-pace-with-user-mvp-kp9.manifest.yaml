@@ -1,0 +1,96 @@
+schema_version: 1
+amendment:
+  number: 0  # PLACEHOLDER — builder fills against the live counter at apply-time.
+  slug: keep-pace-with-user-mvp-kp9
+  title: "keep-pace MVP Cycle 3 — KP9 abstraction-voice draft gate: NEW PreToolUse hook reusing the translation-discipline jargon logic (Layer 1 deterministic lint: file-names/paths/IDs/un-introduced ALLCAPS) + Layer C draft-vs-active-constraint-memory check (the mid-draft tonight-failure catch); routes EVERY user-facing surface; gate feedback model-facing only; fail-open; pre-filter hook-point reserved for post-MVP KP10 judge"
+
+# BASELINE: advance to Cycle 2's seal commit at apply (re-confirm).
+#
+# Single-component fence — Cycle 3 (KP9):
+#   - hands-off-lifecycle — the hook-script home (KP0 wired the PreToolUse event
+#     here; KP9's PreToolUse draft-gate hook + the extracted/reused jargon module
+#     land here). The translation-discipline SKILL is NOT mutated — KP9 reuses its
+#     logic via extraction/import (Surface: NEW wiring, not "extend a running hook").
+#
+# AC families locked per docs/plans/keep-pace-with-user-mvp.md §5:
+#   AC.KP9.{1,2,3,4} — Layer 1 lint / Layer C constraint-check / routes-every-
+#                      surface / model-facing-feedback + fail-open
+#   AC.KP.S.1        — live-session-safety fence
+baseline: "REPLACE_WITH_CYCLE2_SEAL_SHA"
+
+plan: docs/plans/keep-pace-with-user-mvp.md
+
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/keep-pace-with-user-mvp-kp9.md
+  body: |
+    # keep-pace MVP Cycle 3 — KP9 abstraction-voice + constraint draft gate — apply ladder
+
+    2026-05-28. keep-pace MVP Cycle 3 per
+    `docs/plans/keep-pace-with-user-mvp.md` §6 Cycle 3, executing the
+    `docs/design/keep-pace-with-user.md` §3 MVP table KP9 row. KP9 is
+    KP1's necessary partner: Layer C catches the mid-draft
+    contradiction the UserPromptSubmit hook structurally cannot see
+    (design §1 fix #2).
+
+    Scope (per sub-plan §6 Cycle 3, single-component fence on
+    hands-off-lifecycle): a NEW PreToolUse draft-gate hook reusing the
+    existing translation-discipline jargon logic:
+      - Layer 1 — deterministic jargon lint (block on file-name / path /
+        AC-ID / un-introduced ALLCAPS leak); immune to attention decay.
+      - Layer C — check the draft vs active high-salience
+        constraint-memories (seeded canon rules, sealed rulings); flag
+        contradiction before send. THE tonight-failure catch.
+      - Routes EVERY user-facing surface (persona free-text, drift
+        proposals, the SessionStart summary, any miss-recovery).
+      - Gate feedback model-facing only (a "your reply was blocked"
+        user-visible message is itself a mechanism-leak); fail-open.
+      - A deterministic pre-filter hook-point reserved for the post-MVP
+        KP10 claude -p register judge (Surface #4: pre-filter-then-
+        judge, fail-open, log-to-tune).
+
+    AC families:
+      - AC.KP9.1 — Layer 1 blocks each leak class; clean draft passes.
+      - AC.KP9.2 — Layer C flags draft-vs-active-constraint
+        contradiction (litrpg draft contradicting a seeded canon rule
+        -> flagged); compliant draft passes.
+      - AC.KP9.3 — routes EVERY user-facing surface (a non-free-text
+        surface carrying a leak is also blocked).
+      - AC.KP9.4 — gate feedback model-facing only; fail-open on
+        gate error/timeout (draft sent).
+      - AC.KP.S.1 — fence confined to hands-off-lifecycle + universal.
+
+    Method-level choices (builder's call per ODD §1.1):
+      - jargon-module reuse mechanism (extract a shared module vs
+        import from the SKILL surface) — the SKILL is NOT mutated.
+      - Layer C active-constraint scope (RF-4 recommendation:
+        start NARROW — seeded canon rules + sealed rulings only — and
+        expand only when KP10's judge lands; over-flag is fail-open,
+        a missed contradiction re-arms tonight's failure).
+
+    Out of scope (per sub-plan §7): KP7 (Cycle 4); the post-MVP KP10
+    Layer-2 judge (this cycle only reserves its pre-filter hook-point);
+    all other post-MVP items.
+
+    Predecessor: Cycle 2 (KP5+KP1) seal — this cycle's pre-build tip.
+    Serialized after Cycle 2 per feedback_serialize_amendment_builds.
+    BASELINE = Cycle 2 seal SHA. Single-component fence on
+    hands-off-lifecycle (frozen_baseline true, H19).

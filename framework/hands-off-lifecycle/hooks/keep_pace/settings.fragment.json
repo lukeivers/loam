@@ -1,0 +1,29 @@
+{
+  "_comment": "STAGED keep-pace KP0 hook wiring — NOT a live-harness edit. This fragment is the authoritative shape of the `hooks` block that activates the keep-pace UserPromptSubmit + PreToolUse chain in the user-scope ~/.claude/settings.json. It is NOT merged automatically by this cycle: per the keep-pace MVP plan (RF-6, highest-blast-radius step) the live activation is a GATED final step the dispatcher times for when the live litrpg production is quiescent. Activation = merge this `hooks` block into ~/.claude/settings.json (preserving any existing entries). Replace ${LOAM_REPO} with the absolute repo root (/Users/lukeivers/loam). The chain is fail-open-whole-chain (AC.KP0.4): a broken memory hook lets the turn proceed. Optional env overrides: KEEP_PACE_PER_HOOK_TIMEOUT_S (default 1.5), KEEP_PACE_PER_TURN_BUDGET_S (default 3.0), KEEP_PACE_LATENCY_LOG (default <workspace>/.scratch/keep-pace/hook-latency.log).",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${LOAM_REPO}/.venv/bin/python ${LOAM_REPO}/framework/hands-off-lifecycle/hooks/keep_pace/user_prompt_submit.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${LOAM_REPO}/.venv/bin/python ${LOAM_REPO}/framework/hands-off-lifecycle/hooks/keep_pace/pre_tool_use.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -468,10 +468,39 @@ def _maybe_reseat_stop_hook(loam_root: Path) -> None:
         return
 
 
+def _emit_keep_pace_surface() -> None:
+    """KP7: append the plain-language last-state surface to stdout.
+
+    The surface ("last session you were on X; next likely Y" — active
+    objectives + last subgoal + likely-next-action, plain language,
+    routed through KP9's gate) is emitted as a SECOND additionalContext
+    line AFTER the existing service-health line, so the health-probe
+    behaviour is preserved (KP7 ADDS a step, AC.KP.S.1). Fail-soft: any
+    failure here MUST NOT block the SessionStart hook — the surface is
+    additive UX, the health probe is load-bearing.
+    """
+    try:
+        scripts_dir = Path(__file__).resolve().parent
+        if str(scripts_dir) not in sys.path:
+            sys.path.insert(0, str(scripts_dir))
+        from session_surface import build_session_surface  # type: ignore[import-not-found]
+
+        surface = build_session_surface()
+        if surface:
+            print(surface)
+    except BaseException:  # noqa: BLE001 — fail-soft: never break the hook
+        return
+
+
 def main(argv: list[str] | None = None) -> int:
     result = run_session_start()
     # Stdout becomes additionalContext per Claude Code convention.
     print(result["additional_context"])
+    # KP7 (keep-pace MVP Cycle 4): plain-language last-state surface,
+    # routed through KP9's gate, emitted AFTER the health line so the
+    # existing probe behaviour is preserved (AC.KP7.1 / AC.KP.S.1).
+    # Fail-soft.
+    _emit_keep_pace_surface()
     # Amendment #49: best-effort retrofit of the top-level statusLine
     # entry for workspaces already past first-run. Fail-soft so a
     # transient settings.json I/O error never blocks the supervisor.

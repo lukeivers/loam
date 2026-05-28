@@ -1,6 +1,6 @@
 schema_version: 1
 amendment:
-  number: 0  # PLACEHOLDER — builder fills against the live counter at apply-time.
+  number: 152  # Live counter: base #148; #149 KP0, #150 KP5+KP1, #151 KP9, #152 KP7 (this cycle).
   slug: keep-pace-with-user-mvp-kp7
   title: "keep-pace MVP Cycle 4 — KP7 SessionStart objective + last-state surface: a NEW surfacing step on the existing pos_session_start.py (active objectives + last subgoal + likely-next-action, plain-language, routed through KP9's gate); re-asserted via the first UserPromptSubmit (the #15174 SessionStart-compact mitigation); self-description uses plain words"
 
@@ -16,7 +16,7 @@ amendment:
 #                    compaction via UserPromptSubmit re-assert / self-description
 #                    in plain words
 #   AC.KP.S.1      — live-session-safety fence
-baseline: "REPLACE_WITH_CYCLE3_SEAL_SHA"
+baseline: "6b37490"
 
 plan: docs/plans/keep-pace-with-user-mvp.md
 

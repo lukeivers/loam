@@ -62,7 +62,7 @@ def test_ready_path_when_both_services_up() -> None:
     assert r["status"] == "ready"
     assert r["memory_up"] is True
     assert r["orchestrator_up"] is True
-    assert r["additional_context"] == "pos v2 ready"
+    assert r["additional_context"] == "loam ready"
     assert r["exit_code"] == 0
 
 
@@ -162,7 +162,7 @@ def test_AC_V11_E_1_memory_skipped_when_plist_absent() -> None:
     assert r["memory_expected"] is False
     assert r["status"] == "ready"
     assert r["exit_code"] == 0
-    assert r["additional_context"] == "pos v2 ready"
+    assert r["additional_context"] == "loam ready"
 
 
 def test_AC_V11_E_1_partial_warning_text_drops_memory_up_when_not_expected() -> None:

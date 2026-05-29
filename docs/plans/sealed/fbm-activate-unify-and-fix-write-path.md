@@ -253,3 +253,94 @@ The plan §3 D3 + STATE.md #152 modelled activation as flipping ONE owner-gated 
 **AC.FBMA.2 (settings scope):** confirmed — global keep-pace UPS wiring is in `~/.claude/`; the project-scoped write/session hooks are in `pos3/.claude/`. A `~/.claude`-only edit would NOT reach the writer. The corrected step (a) targets the runtime TREE, sidestepping the settings-scope trap entirely.
 </content>
 </invoke>
+
+# Amendment #154 — FBM Cycle 1: activate + unify + fix-write-path
+
+2026-05-29. Cycle 1 of the FBM activation lineage (Cycles 2/3 are
+separate later plans), per sub-plan
+`docs/plans/fbm-activate-unify-and-fix-write-path.md` + research
+artefacts `docs/design/fbm-state-and-memory-roadmap-2026-05-29.md`
+(CYCLE 1 / R1) and the three-root inventory sweep
+(`workspace-inventory-and-routing-map-2026-05-29.md` PART B). Owner
+authorization Luke TG 12960 / 12962. The comprehensive episode-
+memory system is ~80% built (FBM Tier 0 `1a1f830`, Tier 1 #134
+`0347760`, Tier 2 #135 `32608d2`; keep-pace KP1 #150 `aadf2b7`,
+KP7 #152 `07d3b59`) but sitting dark behind an un-flipped
+activation switch, split into two disconnected retrieval indexes,
+AND silently discarding writes into a doubled-nesting dead shadow
+dir. This amendment turns it on, unifies the indexes, and fixes
+the write-path.
+
+Three coupled deliverables (dependency order):
+
+  1. FIX-WRITE-PATH (D1) — caller-side correction. Root cause
+     (Tier-0): `memory_write_queue.queue_dir` and
+     `file_memory.memory_dir_for_workspace` both append
+     `WORKSPACE_STATE_SUBDIR = "workspace"` to their workspace_root
+     argument; the live enqueue caller passed the operator
+     workspace (`pos3/workspace`) instead of the repo root
+     (`pos3`), doubling the path to
+     `pos3/workspace/workspace/.pos/memory-write-queue/` — where
+     ~17 write JSONs (newest 15:07 on 2026-05-29) were stranded
+     while the live single-`workspace` queue sat empty/drained.
+     The resolver contract is preserved (it is the designed
+     D-Q.MFBM.3 shape and is depended on by the worker + prewarm +
+     the drained live queue); the fix corrects the caller's
+     workspace_root. A tested migration helper recovers the
+     stranded JSONs into the live queue (P2 trust — no episode
+     lost), then the dead `.pos` shadow is removed (operator
+     action). AC.FBMW.1/2/3.
+
+  2. UNIFY (D2) — merge-at-retrieval, not merge-the-index. The
+     FBM episode index (`file_memory.py`, mature T2.1/T2.2 ranking
+     at :1294-1313) and the KP1 corpus index
+     (`keep_pace/corpus_index.py`, BM25/FTS5 over feedback_*.md +
+     CLAUDE.md + OBJECTIVES.md) stay two physical stores; the live
+     KP1 UserPromptSubmit contributor is extended to query
+     `FileMemoryStore.search()` and merge episodes into the result
+     set under the existing top-N <= 5 + byte budget. Both rankers
+     preserved. The seam pre-exists: `corpus_index.py:110`
+     `discover_corpus(..., memory_dir, ...)` already takes
+     `memory_dir`, and `:58-59` documents the episode store as the
+     deliberately-separate other half. Fail-open envelope
+     (`chain_runner.py:18`) inherited: empty episode index =>
+     corpus-side output byte-identical to pre-unify KP1.
+     AC.FBMU.1/2/3.
+
+  3. ACTIVATION (D3, owner-gated, RUNTIME — NOT in this seal
+     diff). The single owner-gated live `~/.claude/settings.json`
+     activation switch (the keep-pace chain + OBJECTIVES.md seed
+     bundled into one step per STATE.md #152) is flipped backup-
+     first and verified-it-fires (a real turn produces a real
+     episode at the live path + retrieval through the merged
+     surface). Split-settings reality honoured (sweep B1:
+     `~/.claude/settings.json` wires keep-pace + spawn-guard;
+     `pos3/.claude/settings.json` wires 13 more). Any verification
+     `claude -p` goes through ClaudePrintClient + the live spawn-
+     isolation guard. AC.FBMA.1/2.
+
+Outcome-altitude AC (AC.FBM1.S, `outcome-altitude: true`): a fresh
+session with no pre-arranged state writes an episode that lands at
+the single-`workspace` live store AND is retrievable through the
+unified surface — proving write-path + activation + unify compose
+end-to-end. STUB-class tests do not satisfy it.
+
+Seal-diff fence (AC.FBM1.SEAL): only `framework/primary-persona/`
++ `docs/plans/` + universal paths changed; verified by
+`primary-persona/tests/test_no_sealed_amendments.py` at BASELINE +
+the per-component sweep. The live settings.json edit + the
+operator-workspace stranded-JSON migration are not loam-tree
+changes and are out of the seal diff by construction.
+
+Out of scope (plan §7): consolidation (Cycle 3); claim-guard /
+guaranteed-surface (Cycle 2); remaining deferred tiers (Cycle 4+);
+graphiti-residue kill (task #19, same lineage — graphiti is DEAD
+per Luke TG 12955, file-based only, never re-proposed); doubled-
+nesting cleanup beyond what the write-path fix needs; FBE->FBM
+naming sweep (Cycle 4+); memory-architecture M1/M2 (MEMORY.md
+verified 20,669B < 24.4KB cap — not urgent).
+
+Method-level choices recorded in plan §11 register at build time;
+BASELINE = HEAD~1 of the amendment commit; primary-persona's
+SEAL_COMMIT sidecar advances on the empty-diff window then to the
+seal SHA via `loam amend seal --plan-doc`.

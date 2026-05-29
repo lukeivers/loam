@@ -251,8 +251,16 @@ The plan §3 D3 + STATE.md #152 modelled activation as flipping ONE owner-gated 
 - **(d) OPTIONAL — episode-merge in the live keep-pace UPS hook.** D2's unify is in the sealed `retrieval.py` (`build_keep_pace_contributor` resolves `episode_memory_dir` automatically when the live store exists). It activates with the same propagate step (a) since the keep-pace UPS hook lazy-imports from the same `primary_persona` package. No separate settings edit. **Note:** the `~/.claude/settings.json` keep-pace UPS hook imports from canonical `/Users/lukeivers/loam` directly (not the pos3 tree) — so the unify is live in the global keep-pace hook the moment #154 seals into canonical loam; the writer fix (a) is the pos3-runtime-tree propagate.
 
 **AC.FBMA.2 (settings scope):** confirmed — global keep-pace UPS wiring is in `~/.claude/`; the project-scoped write/session hooks are in `pos3/.claude/`. A `~/.claude`-only edit would NOT reach the writer. The corrected step (a) targets the runtime TREE, sidestepping the settings-scope trap entirely.
-</content>
-</invoke>
+
+---
+
+## §14 Method-decision record (seal SHA backfill)
+
+The build-time method-decision register is §12; this section carries the
+deterministic apply + seal commit SHAs appended by `loam amend seal
+--plan-doc`.
+
+---
 
 # Amendment #154 — FBM Cycle 1: activate + unify + fix-write-path
 

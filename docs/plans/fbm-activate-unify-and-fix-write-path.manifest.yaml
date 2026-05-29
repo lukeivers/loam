@@ -34,8 +34,8 @@ plan: docs/plans/fbm-activate-unify-and-fix-write-path.md
 # AC.FBM1.SEAL enforces the fence.
 components:
   - name: primary-persona
-    seal_test: primary-persona/tests/test_no_sealed_amendments.py
-    sidecar: primary-persona/tests/SEAL_COMMIT
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
     frozen_baseline: false
     extra_allowed_prefixes: []
 

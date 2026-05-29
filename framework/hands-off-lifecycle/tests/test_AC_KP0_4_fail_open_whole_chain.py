@@ -160,11 +160,23 @@ def _run_cli(entry: str, stdin_bytes: bytes, env_extra: dict | None = None):
 
 def test_AC_KP0_4_user_prompt_submit_cli_exits_0_on_garbage_stdin():
     """The UserPromptSubmit CLI entry must exit 0 even on garbage stdin
-    (fail-open) — a malformed envelope never breaks the turn."""
+    (fail-open) — a malformed envelope never breaks the turn.
+
+    Activation note (wiring cycle): the original assertion here was
+    ``stdout == b""`` — correct ONLY while ``contributors()`` was the
+    empty KP0 list. Live wiring registers the KP7 re-assert contributor,
+    which surfaces the last-state objective summary regardless of the
+    prompt (that is AC.KP7.2's whole purpose — repair a compaction on the
+    first prompt, even a malformed one). So a garbage envelope now yields a
+    VALID UserPromptSubmit hook envelope (the seed-fallback surface), not
+    empty. The AC.KP0.4 contract is unchanged: exit 0, and any stdout is a
+    well-formed envelope the live harness can parse — never garbage."""
     proc = _run_cli("user_prompt_submit.py", b"not json at all {{{")
     assert proc.returncode == 0
-    # Nothing injected on a no-contributor / bad-input chain (silent).
-    assert proc.stdout.strip() == b""
+    out = proc.stdout.strip()
+    if out:
+        parsed = json.loads(out)
+        assert parsed["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
 
 
 def test_AC_KP0_4_pre_tool_use_cli_exits_0_on_garbage_stdin():
@@ -175,7 +187,16 @@ def test_AC_KP0_4_pre_tool_use_cli_exits_0_on_garbage_stdin():
 
 
 def test_AC_KP0_4_user_prompt_submit_cli_exits_0_on_empty_stdin():
-    """Empty stdin → clean exit, no injection."""
+    """Empty stdin → clean exit; any stdout is a well-formed envelope.
+
+    Activation note (wiring cycle): same stale-precondition fix as the
+    garbage-stdin test above. With the KP7 re-assert contributor wired,
+    empty stdin still yields the seed-fallback last-state surface (a valid
+    envelope), not empty stdout. The fail-open contract (exit 0, parseable
+    output) holds."""
     proc = _run_cli("user_prompt_submit.py", b"")
     assert proc.returncode == 0
-    assert proc.stdout.strip() == b""
+    out = proc.stdout.strip()
+    if out:
+        parsed = json.loads(out)
+        assert parsed["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"

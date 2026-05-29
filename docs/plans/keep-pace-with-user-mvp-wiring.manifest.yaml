@@ -1,0 +1,142 @@
+schema_version: 1
+amendment:
+  number: 153  # Live counter: base #148; #149 KP0, #150 KP5+KP1, #151 KP9, #152 KP7, #153 wiring (this cycle).
+  slug: keep-pace-with-user-mvp-wiring
+  title: "keep-pace MVP activation — in-tree contributor wiring: register the staged UserPromptSubmit contributors (KP1 work-anchored retrieval + KP7 #15174 re-assert) and the staged PreToolUse contributor (KP9 draft-gate) onto the KP0 chain's contributors() surfaces via best-effort lazy imports (the same cross-component discipline KP7 uses); the chain stays FAIL-OPEN-WHOLE-CHAIN (a raising/slow/absent contributor still lets the turn proceed) so a broken memory hook never breaks the live session"
+
+# BASELINE: the keep-pace MVP final-cycle (KP7) seal — the latest overall
+# seal at dispatch time. This wiring cycle is serialized AFTER KP7 per
+# feedback_serialize_amendment_builds (no concurrent build in this tree).
+#
+# Single-component fence — activation (in-tree wiring):
+#   - hands-off-lifecycle — home of the KP0 hook chain entries
+#     (framework/hands-off-lifecycle/hooks/keep_pace/user_prompt_submit.py
+#     + pre_tool_use.py). This cycle edits ONLY their contributors()
+#     surfaces (+ best-effort lazy-import wrappers) to register the
+#     contributors the prior cycles BUILT but left out of their fences
+#     (D-KP1.1 / D-KP7.1 / KP9 staging, RF-6). The KP1 retrieval factory
+#     (primary-persona) and the KP7 re-assert (orchestrator) are reached
+#     by lazy import; their source is NOT modified (no cross-component
+#     fence breach). The KP9 draft_gate factory is in this same component.
+#
+# AC ladder (EXISTING staged ACs per docs/plans/sealed/keep-pace-with-user-mvp.md §5 —
+# no new family; the activation ladders to the ACs each cycle staged against):
+#   AC.KP1.*  — KP1 work-anchored retrieval contributor registered + fires
+#   AC.KP7.2  — KP7 #15174 SessionStart-compact re-assert registered + fires
+#   AC.KP9.*  — KP9 draft-gate contributor registered + fires on a leak,
+#               silent on a clean draft
+#   AC.KP0.4  — wired chain stays fail-open-whole-chain (raise/slow isolated)
+#   AC.KP0.5  — wired chain writes the per-run latency log line
+#   AC.KP.S.1 — live-session-safety fence: a broken wired contributor never
+#               breaks the live session; fence confined to hands-off-lifecycle
+baseline: "07d3b59"
+
+plan: docs/plans/sealed/keep-pace-with-user-mvp.md
+
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/keep-pace-with-user-mvp-wiring.md
+  body: |
+    # keep-pace MVP activation — in-tree contributor wiring — apply ladder
+
+    2026-05-28. The keep-pace MVP activation step (owner-authorized,
+    Telegram 12873), executing the in-tree half of the GATED activation
+    the four sealed cycles deferred out of their fences (per
+    `docs/plans/sealed/keep-pace-with-user-mvp.md` §14 D-KP0.1 /
+    D-KP1.1 / D-KP5.1 / D-KP7.1, RF-6). The four cycles each BUILT a
+    chain-shaped contributor but left the registration onto the KP0
+    chain's `contributors()` surface for activation, so the live wiring
+    could be timed for a quiescent production window.
+
+    Scope (single-component fence on hands-off-lifecycle): edit ONLY
+    the two KP0 hook entries' `contributors()` surfaces (+ their
+    best-effort lazy-import wrappers):
+
+      - `user_prompt_submit.py` `contributors()` → registers, in chain
+        order: (1) KP1 work-anchored retrieval via
+        `loam.primary_persona.keep_pace.retrieval.build_keep_pace_contributor`
+        (AC.KP1.*); (2) the KP7 `#15174` re-assert via
+        `framework/orchestrator/scripts/session_surface.reassert_surface_for_user_prompt_submit`
+        (AC.KP7.2). Both reached by BEST-EFFORT lazy import (the same
+        cross-component discipline KP7's own readers use): an
+        import/runtime failure degrades to "no injection" and the turn
+        proceeds.
+
+      - `pre_tool_use.py` `contributors()` → registers the KP9
+        draft-gate via the sibling `draft_gate.build_draft_gate_contributor`
+        (AC.KP9.*): on BLOCK/FLAG it yields the model-facing report,
+        on PASS/no-draft it is silent.
+
+    The KP1 retrieval factory (primary-persona) and the KP7 re-assert
+    (orchestrator) are reached by lazy import; their source is NOT
+    modified — no cross-component fence breach. The KP9 `draft_gate`
+    factory lives in this same component.
+
+    AC ladder (EXISTING staged ACs — no new family):
+      - AC.KP1.* — KP1 retrieval contributor registered + fires through
+        the chain.
+      - AC.KP7.2 — KP7 `#15174` re-assert contributor registered + fires
+        (the seed-fallback last-state surface is emitted even on an
+        empty/garbage prompt — that is the compaction-repair purpose).
+      - AC.KP9.* — KP9 draft-gate contributor registered; fires on a
+        leaking draft (model-facing report), silent on a clean draft.
+      - AC.KP0.4 — the wired chain stays fail-open-whole-chain: a
+        raising / slow wired contributor is isolated, the turn / tool
+        proceeds, the CLI exits 0 on every path.
+      - AC.KP0.5 — the wired chain writes the per-run latency log line
+        naming the registered contributors.
+      - AC.KP.S.1 — live-session-safety fence: a broken wired
+        contributor never breaks the live session; fence confined to
+        hands-off-lifecycle + universal paths.
+
+    Method-level choices (builder's call per ODD §1.1):
+      - The lazy-import wrappers mirror KP7's `_loam_root()` /
+        sys.path-insert / fail-soft pattern (D-KP7.1 discipline) so the
+        live hooks never wedge on a sibling component absent/mid-edit.
+      - Two PRE-EXISTING AC.KP0.4 CLI assertions
+        (`test_AC_KP0_4_fail_open_whole_chain.py`) asserted
+        `stdout == b""` on garbage/empty stdin — correct ONLY while
+        `contributors()` was the empty KP0 list. With the KP7 re-assert
+        wired, the seed-fallback last-state surface is now emitted on
+        any prompt (AC.KP7.2's compaction-repair purpose). In-fence,
+        zero-ambiguity (impl-matches-activation-intent, stale empty-
+        contributors precondition), trivially reversible → updated both
+        assertions to the actual AC.KP0.4 contract (exit 0 + any stdout
+        is a well-formed UserPromptSubmit envelope), sibling of
+        `feedback_loose_AC_text_fix_AC_not_implementation` and the KP7
+        `pos v2 ready`→`loam ready` precedent (D-KP7.1). Surfaced per F2.
+
+    Out of scope (the OUT-OF-TREE half of activation, done AFTER this
+    seal — NOT a committed loam source edit): merging the
+    `settings.fragment.json` `hooks` block into `~/.claude/settings.json`
+    and copying `OBJECTIVES.seed.md` → `~/.claude/OBJECTIVES.md`. Those
+    are the live-harness side-effects RF-6 named; they are performed +
+    verified out-of-tree after the in-tree wiring seals. Also out of
+    scope: all post-MVP KP2/KP3/KP4/KP6/KP8/KP10; any PreToolUse
+    model-facing emission route beyond recording the gate report in the
+    chain result (the substrate records it; surfacing it to the model
+    via stderr/decision-envelope is a separate, post-activation concern
+    — surfaced per F2, not extended here).
+
+    Predecessor: Cycle 4 (KP7) seal `07d3b59` — this cycle's pre-build
+    tip + BASELINE. Serialized after Cycle 4 per
+    feedback_serialize_amendment_builds. Single-component fence on
+    hands-off-lifecycle (frozen_baseline true, H19).

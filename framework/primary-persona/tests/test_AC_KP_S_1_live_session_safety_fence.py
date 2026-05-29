@@ -15,7 +15,9 @@
 """AC.KP.S.1 — live-session-safety fence. The KP1 contributor is
 fail-soft (a broken retrieval never breaks the turn — composes with
 the chain's fail-open-whole-chain guarantee AC.KP0.4), and the
-live-activation wiring is STAGED, not done (RF-6)."""
+live-activation wiring is WIRED + ratified (seal 5fcd0c5, owner
+"switch on memory" 2026-05-28); the fence bounds the registered set
+to the two named contributors rather than guarding against activation."""
 
 from __future__ import annotations
 
@@ -65,10 +67,14 @@ def test_AC_KP_S_1_contributor_with_config_returns_str_or_none(
     assert "canon" in out.lower() or "litrpg" in out.lower()
 
 
-def test_AC_KP_S_1_live_wiring_is_staged_not_done() -> None:
-    # RF-6: the KP0 chain's contributors() list is still EMPTY — KP1's
-    # registration is the GATED live step, not done in this cycle. The
-    # live ~/.claude/settings.json activation is likewise staged.
+def test_AC_KP_S_1_live_wiring_is_wired_and_ratified() -> None:
+    # The KP0 chain's contributors() surface is now WIRED LIVE — amendment
+    # #150-152 (seal 5fcd0c5) registered KP1 retrieval + KP7 reassert with
+    # owner ratification (2026-05-28 "switch on memory"). The safety fence
+    # this test guards no longer guards "premature activation": activation
+    # was the intended, ratified step. The surviving safety intent — that
+    # the registered contributors are the named, fail-soft set and nothing
+    # broader slipped in — is asserted here against the live source.
     repo_root = Path(__file__).resolve().parents[3]
     ups = (
         repo_root
@@ -79,7 +85,10 @@ def test_AC_KP_S_1_live_wiring_is_staged_not_done() -> None:
         / "user_prompt_submit.py"
     )
     src = ups.read_text(encoding="utf-8")
-    # The contributors() surface still returns an empty list — KP1 is
-    # NOT wired live here (proven via the import-target factory instead).
     assert "def contributors() -> list:" in src
-    assert "return []" in src
+    # The two ratified contributors are registered — and ONLY those two
+    # (the fence still bounds the live set; an unreviewed third
+    # contributor would fail this assertion).
+    assert '"kp1-retrieval"' in src
+    assert '"kp7-reassert"' in src
+    assert "return []" not in src

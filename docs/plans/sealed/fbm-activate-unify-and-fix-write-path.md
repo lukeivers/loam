@@ -352,3 +352,10 @@ Method-level choices recorded in plan §11 register at build time;
 BASELINE = HEAD~1 of the amendment commit; primary-persona's
 SEAL_COMMIT sidecar advances on the empty-diff window then to the
 seal SHA via `loam amend seal --plan-doc`.
+
+### Commit SHAs
+
+- Amendment commit: `505b32ebd15d5266e318b0d52e47a9e7cfdd6556` —
+  `docs(plans): add §14 method-decision-record heading to #154 plan-doc`
+- Seal commit: `4b258218a7a173905e7aae1534bdbb4ae251d463` —
+  `chore(seals): fbm-activate-unify-and-fix-write-path — primary-persona at 505b32e`

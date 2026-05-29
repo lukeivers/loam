@@ -74,6 +74,17 @@ DEFAULT_TOP_N = 5
 # this is a generous ceiling.
 INJECTION_CHAR_CAP = 1200
 
+# AC.FBMU.1 — neutral merge score for an episode hit that arrived via
+# the store's grep-fallback path (no BM25 score). Placed at the corpus
+# relevance floor so a scored corpus hit outranks an unscored episode
+# but the episode still merges into the result set rather than dropping.
+MERGE_NEUTRAL_SCORE = 0.1
+
+# AC.FBMU.1 — cap the episode pointer summary so a long turn body cannot
+# bloat a single pointer line; the block byte budget (INJECTION_CHAR_CAP)
+# is the outer ceiling, this keeps any one episode pointer glanceable.
+_EPISODE_POINTER_CAP = 160
+
 
 @dataclass
 class RetrievalConfig:
@@ -82,6 +93,15 @@ class RetrievalConfig:
     All paths are injectable so AC.KP1.6's cold-walk + the unit tests
     point at fixture dirs rather than the live machine. In live wiring
     these default to the user-scope memory dir + ``~/.claude`` home.
+
+    ``episode_memory_dir`` (AC.FBMU.1) is the FBM episode store's
+    ``<workspace>/workspace/.loam/memory/`` dir — distinct from
+    ``memory_dir`` (the ``feedback_*.md`` markdown corpus). When set,
+    :func:`retrieve` queries the episode store via
+    ``FileMemoryStore.search`` and merges its episode hits into the
+    corpus result set by score (D2 unify). When ``None`` or empty the
+    merge contributes zero and the corpus-side output is byte-identical
+    to the pre-unify KP1 output (AC.FBMU.2 — fail-open / no-regression).
     """
 
     workspace_root: Path
@@ -89,6 +109,12 @@ class RetrievalConfig:
     claude_homes: tuple[Path, ...] = ()
     objectives_home: Optional[Path] = None  # base for OBJECTIVES.md
     top_n: int = DEFAULT_TOP_N
+    # AC.FBMU.1 — FBM episode store dir; None => unify contributes
+    # nothing (pre-unify behaviour preserved, AC.FBMU.2).
+    episode_memory_dir: Optional[Path] = None
+    # AC.FBMU.1 — episode group ids to scope the episode search; None
+    # => the store searches every group (the live workspace slug).
+    episode_group_ids: Optional[tuple[str, ...]] = None
 
     def objectives_path(self) -> Path:
         return _objectives.user_scope_objectives_path(self.objectives_home)
@@ -136,6 +162,93 @@ def _render_injection(hits: list[dict[str, object]], *, cap: int) -> str:
     return block if len(lines) > 1 else ""
 
 
+def _episode_hits(
+    *, query_tokens: list[str], config: RetrievalConfig, num_results: int
+) -> list[dict[str, object]]:
+    """Query the FBM episode store + shape hits like corpus hits (AC.FBMU.1).
+
+    Returns ``[{pointer, score}]`` shaped to merge with the corpus
+    hits' ``{path, title, pointer, score}`` shape under
+    :func:`_render_injection` (which reads ``pointer`` + ``score``).
+    Empty / absent episode store => ``[]`` (AC.FBMU.2 — corpus-side
+    output unchanged). Fail-soft: any boundary error yields ``[]`` so
+    the merge degrades to corpus-only (chain fail-open, AC.KP0.4).
+    """
+    if config.episode_memory_dir is None or num_results <= 0 or not query_tokens:
+        return []
+    try:
+        from ..file_memory import FileMemoryStore
+
+        store = FileMemoryStore(memory_dir=Path(config.episode_memory_dir))
+        group_ids = (
+            list(config.episode_group_ids)
+            if config.episode_group_ids is not None
+            else None
+        )
+        # The episode FTS index is term-OR ranked the same way the
+        # corpus index OR-joins the work-anchored tokens.
+        result = store.search(
+            query=" ".join(query_tokens),
+            group_ids=group_ids,
+            num_results=num_results,
+        )
+    except Exception:  # noqa: BLE001 — fail-soft; merge degrades to corpus-only
+        return []
+    hits: list[dict[str, object]] = []
+    for ep in result.get("episodes", []):
+        if not isinstance(ep, dict):
+            continue
+        # The episode store's ranking (BM25 × activation × supersession
+        # × co-citation) is preserved on the ``_bm25_raw`` slot; fall
+        # back to a neutral score when the grep-fallback path produced
+        # the hit (no BM25 score) so the episode still merges.
+        score = ep.get("_bm25_raw")
+        try:
+            score_val = float(score) if score is not None else MERGE_NEUTRAL_SCORE
+        except (TypeError, ValueError):
+            score_val = MERGE_NEUTRAL_SCORE
+        pointer = _episode_pointer(ep)
+        if not pointer:
+            continue
+        hits.append({"pointer": pointer, "score": score_val, "_episode": True})
+    return hits
+
+
+def _episode_pointer(ep: dict[str, object]) -> str:
+    """Plain-language pointer for an episode hit (AC.FBMU.1).
+
+    Plain English, NO file path / no ``.md`` name (mirrors
+    :func:`corpus_index._doc_pointer` so the merged surface passes the
+    same KP9 plain-language lint). Surfaces the episode's CONTENT
+    summary (the first sentence of the turn body — the on-file topic
+    the prior turn carried), NOT the opaque ``turn/<id>`` name (an
+    internal id is never a user-facing pointer). Falls back to a
+    cleaned name only when the body is empty.
+    """
+    content = str(ep.get("content", "") or "").strip()
+    summary = ""
+    if content:
+        # First sentence / first line — the meaningful topical pointer.
+        first = content.replace("\n", " ").strip()
+        for sep in (". ", "! ", "? "):
+            idx = first.find(sep)
+            if 0 < idx < len(first):
+                first = first[: idx + 1]
+                break
+        summary = first[:_EPISODE_POINTER_CAP].rstrip()
+    if not summary:
+        name = str(ep.get("name", "") or "").strip()
+        # Strip the internal ``turn/`` prefix; an opaque turn-id is not
+        # a user-facing pointer, so a name-only episode degrades to no
+        # pointer (dropped by _render_injection) rather than leaking it.
+        if name.startswith("turn/"):
+            return ""
+        summary = name
+    if not summary:
+        return ""
+    return f"From an earlier turn: {summary}"
+
+
 def retrieve(
     *,
     prompt: str,
@@ -153,6 +266,14 @@ def retrieve(
     AC.KP1.6: a vague "continue" + an active fiction objective surfaces
     the litrpg canon pointer via the objective anchor — the objective
     text supplies the tokens the bare prompt cannot.
+    AC.FBMU.1: when an episode store is configured, a single retrieval
+    call returns BOTH a corpus hit AND an episode hit for a query that
+    matches both corpora — the two physical indexes are merged at the
+    retrieval call by score, under the same top-N + byte budget.
+    AC.FBMU.2: an absent / empty episode store leaves the corpus-side
+    output byte-identical to the pre-unify KP1 output.
+    AC.FBMU.3: the merged surface respects the top-N <= 5 cap +
+    INJECTION_CHAR_CAP byte budget (episode hits cannot blow it).
     """
     if is_trivial_prompt(prompt):
         return ""
@@ -176,12 +297,54 @@ def retrieve(
 
     index = _build_index(config)
     try:
-        hits = index.search(query_tokens=query_tokens, num_results=config.top_n)
+        corpus_hits = index.search(
+            query_tokens=query_tokens, num_results=config.top_n
+        )
     except Exception:  # noqa: BLE001 — fail-soft per chain fail-open contract
-        hits = []
+        corpus_hits = []
     finally:
         index.close()
-    return _render_injection(hits, cap=INJECTION_CHAR_CAP)
+
+    # D2 unify (AC.FBMU.1) — query the FBM episode store and merge its
+    # hits with the corpus hits by score. With no episode store
+    # configured this returns [] and the merged set equals corpus_hits
+    # exactly (AC.FBMU.2 byte-identical no-regression).
+    episode_hits = _episode_hits(
+        query_tokens=query_tokens, config=config, num_results=config.top_n
+    )
+    merged = _merge_by_score(corpus_hits, episode_hits, top_n=config.top_n)
+    return _render_injection(merged, cap=INJECTION_CHAR_CAP)
+
+
+def _merge_by_score(
+    corpus_hits: list[dict[str, object]],
+    episode_hits: list[dict[str, object]],
+    *,
+    top_n: int,
+) -> list[dict[str, object]]:
+    """Merge corpus + episode hits by descending score, capped at top_n.
+
+    AC.FBMU.1 — one merged result set across both physical indexes.
+    AC.FBMU.2 — when ``episode_hits`` is empty the returned list IS
+    ``corpus_hits`` (same objects, same order) so the rendered output
+    is byte-identical to the pre-unify KP1 output.
+    AC.FBMU.3 — the merge truncates to ``top_n`` so the combined hit
+    count never exceeds the cap regardless of how many episode hits
+    arrive; the byte budget is then applied by :func:`_render_injection`.
+
+    Sort is stable on ``-score`` so equal-scored hits keep their
+    arrival order (corpus hits enumerated before episode hits) —
+    deterministic truncation (AC.FBMU.3).
+    """
+    if not episode_hits:
+        return corpus_hits
+    combined = list(corpus_hits) + list(episode_hits)
+    combined.sort(
+        key=lambda h: float(h.get("score", 0.0) or 0.0), reverse=True
+    )
+    if top_n > 0:
+        combined = combined[:top_n]
+    return combined
 
 
 # ---- KP0-chain contributor (STAGED live wiring import target) ------
@@ -213,11 +376,43 @@ def _resolve_live_config(envelope: dict) -> RetrievalConfig:
         candidate = projects_root / slug / "memory"
         if candidate.is_dir():
             memory_dir = candidate
+
+    # AC.FBMU.1 — resolve the FBM episode store dir for the unify merge.
+    # ``memory_dir_for_workspace`` appends the ``workspace`` segment
+    # (the designed resolver contract), so it needs the REPO ROOT, not
+    # the operator workspace ``project_dir`` (which already ends in
+    # ``workspace``). Honour ``LOAM_WORKSPACE_ROOT`` (the worker's
+    # canonical repo-root env, shared single source of truth), else
+    # strip a trailing ``workspace`` segment off the project dir. This
+    # mirrors the writer-side caller fix (AC.FBMW.1) so the contributor
+    # reads episodes from exactly where the writer/worker land them.
+    episode_memory_dir = None
+    try:
+        from ..file_memory import memory_dir_for_workspace
+        from loam.workspace_bootstrap.workspace_paths import (
+            WORKSPACE_STATE_SUBDIR,
+        )
+        import os as _os
+
+        env_root = _os.environ.get("LOAM_WORKSPACE_ROOT")
+        if env_root:
+            repo_root = Path(env_root)
+        elif workspace_root.name == WORKSPACE_STATE_SUBDIR:
+            repo_root = workspace_root.parent
+        else:
+            repo_root = workspace_root
+        candidate_ep = memory_dir_for_workspace(repo_root)
+        if candidate_ep.exists():
+            episode_memory_dir = candidate_ep
+    except Exception:  # noqa: BLE001 — fail-soft; unify degrades to corpus-only
+        episode_memory_dir = None
+
     return RetrievalConfig(
         workspace_root=workspace_root,
         memory_dir=memory_dir,
         claude_homes=(claude_home,),
         objectives_home=claude_home,
+        episode_memory_dir=episode_memory_dir,
     )
 
 

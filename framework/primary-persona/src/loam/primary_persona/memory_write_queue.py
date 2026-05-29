@@ -327,6 +327,69 @@ def cleanup_stale_tmp(workspace_root: Path, *, age_seconds: float = 3600.0) -> i
     return removed
 
 
+# ---- stranded-shadow migration (AC.FBMW.2) --------------------------
+
+
+def migrate_stranded_queue(
+    *, shadow_queue_dir: Path, live_queue_dir: Path
+) -> dict[str, Any]:
+    """Recover stranded queue JSONs into the live queue (AC.FBMW.2).
+
+    The pre-fix write-path bug (AC.FBMW.1) doubled the resolver's
+    ``workspace`` segment, so writes landed in a dead shadow queue
+    (``<repo>/workspace/workspace/.pos/memory-write-queue/``) the live
+    worker never read. Those JSONs are real episodes (P2 trust: never
+    silently lose what the user said to keep). This helper moves each
+    stranded ``*.json`` into the live queue so the worker drains it.
+
+    Collision discipline (plan §8 H5): a stranded entry whose filename
+    already exists in the live queue is NOT overwritten — silent
+    overwrite would violate P2. Such entries are returned in
+    ``collisions`` (left in place in the shadow) for the operator to
+    reconcile; the migration does not guess which copy is canonical.
+
+    Count preservation (AC.FBMW.2): ``migrated + collisions ==`` the
+    stranded ``*.json`` count; no episode is dropped.
+
+    Returns ``{"migrated": [Path, ...], "collisions": [Path, ...],
+    "stranded_total": int}`` (paths are the SOURCE shadow paths). The
+    caller (an operator action, not loam source) removes the emptied
+    shadow dir after a clean migration — that removal is out of this
+    helper's surface (it owns the move, not the directory teardown).
+    """
+    shadow_queue_dir = Path(shadow_queue_dir)
+    live_queue_dir = Path(live_queue_dir)
+    migrated: list[Path] = []
+    collisions: list[Path] = []
+    if not shadow_queue_dir.exists():
+        return {
+            "migrated": migrated,
+            "collisions": collisions,
+            "stranded_total": 0,
+        }
+    stranded = sorted(
+        p
+        for p in shadow_queue_dir.iterdir()
+        if p.is_file() and p.suffix == ".json"
+    )
+    if stranded:
+        live_queue_dir.mkdir(parents=True, exist_ok=True)
+    for src in stranded:
+        dest = live_queue_dir / src.name
+        if dest.exists():
+            # H5 — never overwrite a live entry; surface for operator
+            # reconciliation, leave the stranded copy in place.
+            collisions.append(src)
+            continue
+        os.replace(src, dest)
+        migrated.append(src)
+    return {
+        "migrated": migrated,
+        "collisions": collisions,
+        "stranded_total": len(stranded),
+    }
+
+
 # ---- worker config (AC.J.4 — workspace-tunable retry policy) --------
 
 

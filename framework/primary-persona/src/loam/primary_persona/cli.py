@@ -57,8 +57,11 @@ Mirrors ``loam_mode.cli`` (amendment #45) shape.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
+
+from loam.workspace_bootstrap.workspace_paths import WORKSPACE_STATE_SUBDIR
 
 from .session_start_emitter import (
     cli_session_start,
@@ -74,9 +77,44 @@ from .intent_classifier import cli_intent_classifier
 
 
 def _resolve_workspace(workspace: Path | None) -> Path:
+    """Resolve the REPO-ROOT workspace_root for the hook subcommands.
+
+    AC.FBMW.1 — the resolvers ``memory_write_queue.queue_dir`` /
+    ``file_memory.memory_dir_for_workspace`` append
+    ``WORKSPACE_STATE_SUBDIR`` (``"workspace"``) to the value returned
+    here (the designed D-Q.MFBM.3 contract — preserved unchanged). The
+    correct argument is therefore the REPO ROOT (e.g. ``pos3``), NOT
+    the operator workspace (``pos3/workspace``). Claude Code fires the
+    Stop / UserPromptSubmit / SessionStart hooks with cwd set to the
+    project dir, which IS the operator workspace ``<repo>/workspace/``
+    — so a bare ``Path.cwd()`` doubles the resolver's segment to
+    ``<repo>/workspace/workspace/.pos/...`` (the stranded dead shadow).
+    The launchd-supervised memory-write-worker is already launched with
+    the repo root (``--workspace {workspace}`` + ``LOAM_WORKSPACE_ROOT``
+    = repo root in its plist), so writes must resolve the same repo
+    root for writer and worker to agree on one queue location.
+
+    Resolution order (caller-side fix; the resolver contract is
+    untouched):
+      1. an explicit ``--workspace`` flag (the worker's plist path);
+      2. ``LOAM_WORKSPACE_ROOT`` — the canonical repo-root env the
+         worker plist already sets (single source of truth shared with
+         the worker);
+      3. cwd with a trailing ``workspace`` segment stripped — when the
+         hook fires from the operator workspace ``<repo>/workspace/``,
+         this recovers the repo root;
+      4. bare cwd — a hook fired from the repo root already (no
+         trailing ``workspace`` segment) needs no adjustment.
+    """
     if workspace is not None:
         return workspace.resolve()
-    return Path.cwd().resolve()
+    env_root = os.environ.get("LOAM_WORKSPACE_ROOT")
+    if env_root:
+        return Path(env_root).resolve()
+    cwd = Path.cwd().resolve()
+    if cwd.name == WORKSPACE_STATE_SUBDIR:
+        return cwd.parent
+    return cwd
 
 
 def _cmd_session_start(args: argparse.Namespace) -> int:

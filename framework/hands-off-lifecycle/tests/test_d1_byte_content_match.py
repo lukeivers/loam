@@ -201,7 +201,18 @@ _SAMPLE_FILES = (
      # because pyprojects MUST mutate every MINOR by design) is
      # scheduled + surfaced as a FIDRAFT entry by the v0.13.0 release
      # integrator; this entry is the in-cycle workaround landing.
-     "a67ccb7ed714994bf572c01efc676f46579a6eeac9115906f9c0541818fe6765"),
+     # v0.14.0 MINOR publish (2026-05-29) rebaseline: per-component
+     # pyproject version lockstep bumped 0.13.0 -> 0.14.0 in the
+     # release/v0-14-0 worktree, invalidating this SHA. THIRD
+     # consecutive recurrence of the SAME drift pattern (Wave 1.4 = 1st,
+     # v0.13.0 = 2nd, v0.14.0 = 3rd). The root-cause structural fix
+     # (exclude pyproject.toml from the byte-content sample — they MUST
+     # mutate every MINOR by design, so pinning their bytes enforces an
+     # invariant that contradicts the per-component-version lockstep
+     # discipline) is now OWED + surfaced as a hard F2 finding to the
+     # dispatcher; this entry is the in-cycle workaround landing pending
+     # that dispatched fix.
+     "2d27684c5c643c8bc583892437a84641faad2c5e1bd89b0f729cca13ac34094f"),
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -286,7 +297,12 @@ _SAMPLE_FILES = (
      # recurrence of the SAME drift pattern; root-cause-fix FIDRAFT
      # entry scheduled by the v0.13.0 release integrator per
      # `feedback_workaround_masks_rootcause_urgency`.
-     "8b5c9f553cbb9e5ca59b6e31fb74ce98fb2c7129937cb5470b373cb804945b61"),
+     # v0.14.0 MINOR publish (2026-05-29) rebaseline: same shape
+     # (per-component version lockstep bumped 0.13.0 -> 0.14.0). THIRD
+     # consecutive recurrence; root-cause structural fix now OWED +
+     # surfaced as a hard F2 finding to the dispatcher (exclude
+     # pyproject.toml from the byte-content sample).
+     "13383b1afe22bba6de6c6fda71297884e42a9acff96dcedae4e3d22e6cf4d7ca"),
 )
 
 

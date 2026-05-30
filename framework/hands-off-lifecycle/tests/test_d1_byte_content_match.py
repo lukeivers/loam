@@ -89,7 +89,21 @@ _SAMPLE_FILES = (
      # module + new `_cmd_intent_classifier` handler. ODD §4 in-band
      # retire-and-rebaseline per
      # `feedback_loose_AC_text_fix_AC_not_implementation`.
-     "8c128307cf9be06f6aebed557bef108812679f0302bb4dc9b18422d91dba7116"),
+     # Amendment #154 SHA bump (FBM Cycle 1 — fix-write-path + unify
+     # retrieval surface, sealed at `fd5fe6a`): cli.py was legitimately
+     # content-edited by #154's write-path fix. #154 sealed on the
+     # primary-persona fence and never ran this D.1 byte-content test
+     # (it lives in hands-off-lifecycle), so the frozen hash went stale-
+     # RED at HEAD `f23deda` — surfaced during the #155 first-run-
+     # message-retired-deps-sweep seal sweep (the seal sweep IS the
+     # discovery mechanism). NOT introduced by #155. Blast radius = 1
+     # of 16 samples; the git-mv-corruption guard stays intact for the
+     # other 15. ODD §4 in-band retire-and-rebaseline per
+     # `feedback_loose_AC_text_fix_AC_not_implementation` — the test's
+     # own docstring (lines 36-40) directs re-baselining intentionally-
+     # edited files; #154's edit is exactly that. F2 surfaced in the
+     # dispatcher report.
+     "260c580308bc0a3bc4a53e2608d88b8912e607c696e8e2105e131f2df5920ac0"),
     ("framework/primary-persona/src/loam/primary_persona/__init__.py",
      # M4 (amendment #85) SHA bump: re-export of NEW public function
      # ``write_dispatcher_stub`` (and ``NewACSpec`` made public for

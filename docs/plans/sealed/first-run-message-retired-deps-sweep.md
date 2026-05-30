@@ -113,3 +113,46 @@ Lens 7; left for a separate task-#19 cycle.
   this edit → a pre-existing fence breach surfaced → halt + surface.
 - Any surrounding-code ODD violation surfaces → halt + surface.
 - 5-hour wall-clock ceiling.
+
+# first-run message — retired-deps accuracy sweep — apply ladder
+
+2026-05-29. PATCH-class defect closure (user-visible factual
+correction), riding into v0.14.0 as a named sub-fix; the
+user-visible subset of task #19. Per
+`docs/plans/first-run-message-retired-deps-sweep.md`.
+
+Scope: the fresh-start first-run message
+(`first_run_dispatch.py:_msg_fresh_start`) told a fresh user the
+install "pulls graphiti-core, neo4j, and kuzu." That dependency set
+RETIRED at v0.1.0 (AC.MFBM.7 — file-based memory is the default
+substrate). The message lied about what installs. This cycle
+replaces the retired-dep sentence with an accurate file-based-memory
+description and proves it via AC.FRMSG.
+
+AC families:
+  - AC.FRMSG.1 — no graphiti/neo4j/kuzu reference in the fresh-start
+    message (the retired-dependency claim is gone).
+  - AC.FRMSG.2 — the message states current install reality
+    (file-based memory; no external memory store / heavy memory
+    deps).
+  - AC.FRMSG.S — outcome-altitude: the production message-builder
+    `_msg_fresh_start(log, helper_version)`, called with no
+    pre-arranged state, returns accurate text (no retired-dep name;
+    names file-based memory).
+
+Method-level choices (builder's call per ODD §1.1):
+  - The exact replacement wording for the file-based-memory sentence.
+  - The test layout (one parametrized AC.FRMSG file).
+
+Out of scope (surfaced, NOT fixed): the `pos-v2` product-name
+residue in the first-run messages (task #19 proper, separate cycle);
+the inventory-comment text (accurate documentation, not
+user-visible); non-first-run graphiti references (intentional —
+retirement assertions, archive/seal records).
+
+Predecessor commits:
+  - 4b258218 — last sealed amendment (#154) seal.
+  - f23deda  — current loam HEAD (#154 STATE backfill tip).
+
+BASELINE f23deda — re-confirm + advance to the source-edit commit
+at apply. Single-component fence on hands-off-lifecycle.

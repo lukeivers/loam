@@ -1,0 +1,96 @@
+schema_version: 1
+amendment:
+  number: 155  # Derived at apply-time against the live counter. STATE.md base
+               # #154 (fbm-activate-unify-and-fix-write-path, sealed 4b258218).
+               # This is the next sequential amendment.
+  slug: first-run-message-retired-deps-sweep
+  title: "first-run message — retired-deps accuracy sweep: _msg_fresh_start no longer claims the install pulls graphiti-core/neo4j/kuzu (RETIRED at v0.1.0, AC.MFBM.7); states current file-based-memory reality (AC.FRMSG.1/.2/.S)"
+
+# BASELINE: f23deda — current loam HEAD (re-confirm + advance to the
+# source-edit commit at apply).
+#
+# Commit ladder pre-apply:
+#   4b258218 — last sealed amendment (#154) seal commit per STATE.md.
+#   f23deda  — current loam HEAD (#154 STATE backfill tip / BASELINE candidate).
+#   <plan-doc + this manifest commit lands>
+#   <source-edit commit (becomes BASELINE)>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic commit>
+#
+# Single-component fence:
+#   - hands-off-lifecycle — the first-run hook home; _msg_fresh_start text
+#     + its AC.FRMSG test land here.
+#
+# AC families locked per docs/plans/first-run-message-retired-deps-sweep.md §5:
+#   AC.FRMSG.1 — no graphiti/neo4j/kuzu reference in the fresh-start message
+#   AC.FRMSG.2 — message states current file-based-memory install reality
+#   AC.FRMSG.S — outcome-altitude: _msg_fresh_start production call is accurate
+baseline: "f23deda"
+
+plan: docs/plans/first-run-message-retired-deps-sweep.md
+
+components:
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/first-run-message-retired-deps-sweep.md
+  body: |
+    # first-run message — retired-deps accuracy sweep — apply ladder
+
+    2026-05-29. PATCH-class defect closure (user-visible factual
+    correction), riding into v0.14.0 as a named sub-fix; the
+    user-visible subset of task #19. Per
+    `docs/plans/first-run-message-retired-deps-sweep.md`.
+
+    Scope: the fresh-start first-run message
+    (`first_run_dispatch.py:_msg_fresh_start`) told a fresh user the
+    install "pulls graphiti-core, neo4j, and kuzu." That dependency set
+    RETIRED at v0.1.0 (AC.MFBM.7 — file-based memory is the default
+    substrate). The message lied about what installs. This cycle
+    replaces the retired-dep sentence with an accurate file-based-memory
+    description and proves it via AC.FRMSG.
+
+    AC families:
+      - AC.FRMSG.1 — no graphiti/neo4j/kuzu reference in the fresh-start
+        message (the retired-dependency claim is gone).
+      - AC.FRMSG.2 — the message states current install reality
+        (file-based memory; no external memory store / heavy memory
+        deps).
+      - AC.FRMSG.S — outcome-altitude: the production message-builder
+        `_msg_fresh_start(log, helper_version)`, called with no
+        pre-arranged state, returns accurate text (no retired-dep name;
+        names file-based memory).
+
+    Method-level choices (builder's call per ODD §1.1):
+      - The exact replacement wording for the file-based-memory sentence.
+      - The test layout (one parametrized AC.FRMSG file).
+
+    Out of scope (surfaced, NOT fixed): the `pos-v2` product-name
+    residue in the first-run messages (task #19 proper, separate cycle);
+    the inventory-comment text (accurate documentation, not
+    user-visible); non-first-run graphiti references (intentional —
+    retirement assertions, archive/seal records).
+
+    Predecessor commits:
+      - 4b258218 — last sealed amendment (#154) seal.
+      - f23deda  — current loam HEAD (#154 STATE backfill tip).
+
+    BASELINE f23deda — re-confirm + advance to the source-edit commit
+    at apply. Single-component fence on hands-off-lifecycle.

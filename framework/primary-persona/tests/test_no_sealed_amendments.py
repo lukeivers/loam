@@ -121,7 +121,23 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              immediately preceding the fix slice, the HEAD~1 pattern);
 #              SEAL_COMMIT -> c82131e (the fix slice). Seal-diff stays within
 #              the primary-persona + docs/ allowed surfaces.
-BASELINE = "055f937d299f44e83f7027523e406f848cef2a99"
+#   - c82131e  at the FBM path-consolidation slice. The live user-prompt-submit
+#              hook surfaced episodes via the UNGATED file_memory path (no
+#              salience gate — the task-notification junk source); the gated
+#              keep_pace path (rank-normalize + rule-weight/floor + salience
+#              gate) was sealed but never wired live. Repoints
+#              build_session_composer's production branch to the gated keep_pace
+#              turn contributor (register_keep_pace_turn_contributor), keeping
+#              the "memory-retrieval" name; the retired file_memory functions
+#              stay defined+exported (MCP branch + tests). Silent-on-no-match
+#              replaces the ungated empty-state block (AC.M.3 + AC46.2 updated).
+#              Adds AC-FBM-CON-1/-2/-3 + AC-FBM-CON-S (outcome-altitude: the
+#              REAL cli_user_prompt_submit hook on real-shape fixtures). Pure
+#              rewire (no stored-field change; migration is a forward no-op).
+#              Advanced BASELINE to c82131e (the prior FBM-SAL seal commit,
+#              the HEAD~1 pattern); SEAL_COMMIT -> 7dcb95b (the consolidation
+#              slice). Seal-diff stays within primary-persona + docs/ surfaces.
+BASELINE = "c82131e78b38f2ef895d9a4a8450e0b677269ac8"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

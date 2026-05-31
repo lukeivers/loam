@@ -388,8 +388,10 @@ def test_seal_reachable_red_when_seal_unreachable(
 def test_run_all_returns_six_results_in_declaration_order(
     staged_repo: Path, fixture_version: str
 ) -> None:
+    # The migration-declared gate (AC.MIG-GATE.*, P1.3) appended a seventh
+    # gate in declaration order; run_all now returns seven verdicts.
     rs = gates.run_all(staged_repo, fixture_version)
-    assert len(rs) == 6
+    assert len(rs) == 7
     names = [r.name for r in rs]
     assert names == [
         "hard-smoke",
@@ -398,6 +400,7 @@ def test_run_all_returns_six_results_in_declaration_order(
         "clean-tree",
         "branch-main",
         "seal-reachable",
+        "migration-declared",
     ]
 
 

@@ -11,41 +11,41 @@ replaced by it.
 
 ```
 WORKFLOW: loam v-next build
-SLICE:    FBM episode SALIENCE gate (B3 — the recall-quality safety-pair to B1)
-STEP:     5 INTEGRATE+RECORD COMPLETE (PROVE done — 5/5 ACs PASS; sealed + committed)
-DISPOSITION: extend (two sealed functions — file_memory write_episode/search + retrieval merge)
-GATE-STATUS: none pending — fail-safe verified on BOTH every-turn hot paths (ingest AND recall):
-             compute_salience is exception-wrapped to SALIENCE_FULL; the search paths compute
-             salience fresh from each body (no I/O, correct for pre-salience episodes without
-             rewrite); the no-episode early-return stays byte-identical (FBMU.2). HARD INVARIANT
-             proven: gates surfacing only — every turn still on disk (SAL-3), re-tunable (SAL-4),
-             no not-store/delete path. No ~/.claude/settings.json, no Cairn; the live 1288-episode
-             store was READ-ONLY-copied into a temp root for the cold-walk, never written.
+SLICE:    P1.3 user-state migration engine + RELEASE-GATE
+STEP:     5 INTEGRATE+RECORD COMPLETE (PROVE done — all ACs PASS; sealed + committed)
+DISPOSITION: build-new (framework/state-migration-engine) + extend (loam_cli/release gate #7)
+GATE-STATUS: none pending — fail-safe verified on the user-facing entry-point (`loam migrate`):
+             every replay is wrapped backup-first (snapshot of .loam/ before any step) and rolls
+             back to that snapshot on any failure (no half-migrated state); the protection floor
+             composes the sealed reversibility-primitive's ActivationGate as a LIBRARY CALL (a
+             migration declaring removes_user_state=true is refused unless a compensation binding
+             exists). NEVER writes live user-state — the outcome-altitude AC seeds a SEPARATE temp
+             instance. Declarative-only (D2): no embedded-script exec path this slice.
 PROVE-RESULT:
-  AC-FBM-SAL-1 JUNK-FILTERED (load-bearing) ...... PASS — a <task-notification> episode tagged
-             salience 0.0 at ingest does NOT surface even sharing the query token; boilerplate
-             tokens (task-id/tool-use-id) don't leak.
-  AC-FBM-SAL-2 NO-REGRESSION ..................... PASS — a substantive episode still surfaces;
-             empty-episode merge returns the SAME corpus list object (FBMU.2 byte-identical);
-             corpus hits never gated.
-  AC-FBM-SAL-3 NEVER-DELETE (load-bearing) ....... PASS — the junk episode is still WRITTEN to disk
-             with its full body verbatim (salience: 0.0 tagged, not deleted) + retrievable by
-             direct recent_episodes lookup.
-  AC-FBM-SAL-4 RE-TUNABLE (load-bearing) ......... PASS — at the default threshold the junk is
-             gated; lowering salience_threshold re-admits it through production retrieve() (gate
-             reversible, nothing lost).
-  AC-FBM-SAL-5 LIVE-STORE COLD-WALK (the bar) .... PASS — real <task-notification> + real
-             <channel>-wrapped Luke-message episodes copied from the live store shape into a temp
-             root: junk suppressed AND the real channel message scores salient (protect-real-
-             messages proven, not just junk-drop). Live store untouched (still 1288).
-  Tests: framework/primary-persona full suite GREEN (813 passed = 804 prior + 9 SAL, 1 pre-existing
-         skip); FBMU 1/2/3 + rank-normalize + rule-weighting (AC-FBM-W) green; seal-fence green.
-  Commit: fb26be2 (slice) + the seal-advance follow-up (BASELINE d871910, SEAL_COMMIT fb26be2).
-  Migration: docs/state-migrations/fbm-episode-salience-slice.migration.yaml (real forward-additive
-             schema-add; non-destructive, non-rewriting). Plan:
-             docs/plans/fbm-episode-salience-slice-plan.md.
+  AC.MIG-SCHEMA.1/2/3 ............................ PASS — malformed file rejected w/ corrective
+             message; ALL SIX existing migration files validate UNCHANGED (no schema adjustment
+             forced — the formalization was faithful); effect derived solely from the declared file.
+  AC.MIG-REPLAY.1/2/3 ............................ PASS — pending set correct + release-version
+             ordered; N→N+k plays THROUGH intermediates (not jumping); cursor advances; re-run noop.
+  AC.MIG-SAFE.1/2/3/4 ............................ PASS — backup-first; rollback-on-failure leaves
+             seeded state intact + cursor un-advanced; idempotent re-run; protection-floor
+             classification (destructive→irreversible→refused w/o binding; benign→fully_reversible).
+  AC.MIG-GATE.1/2/3 .............................. PASS — gate #7 RED on gate-less release w/ hint,
+             GREEN on a stamped migration; no-op declaration PASSES; runs in the SAME ALL_GATES
+             pass (7 verdicts, no short-circuit).
+  ★ AC.MIG-UPGRADE.1 (outcome-altitude) .......... PASS — a SEPARATE seeded instance at v0.1.0
+             upgraded to v0.4.0 by driving the REAL `loam migrate` verb through the unified CLI
+             dispatcher (not the inner replay fn); intermediates replayed in order, seeded episodes
+             survived, cursor reads v0.4.0, re-run noop. Live smoke at /tmp confirmed the same.
+  Tests: framework/state-migration-engine full suite GREEN (12 passed); framework/tools/loam full
+         suite GREEN (103 passed incl. the 7-gate runner/backfill regressions); reversibility-
+         primitive suite GREEN (untouched — composed on, not modified).
+  Commit: <backfilled at seal>.
+  Migration: docs/state-migrations/migration-engine-and-release-gate-slice.migration.yaml
+             (structural-only — the engine writes .loam/migrations/.cursor; non-destructive). Plan:
+             docs/plans/loam-migration-engine-and-release-gate-slice-plan.md.
 UPDATED:  2026-05-31
-NEXT:     P1.3 user-state migration engine + RELEASE-GATE
+NEXT:     P1.4 onboarding / init
 ```
 
 ## This slice — FBM episode SALIENCE gate (B3, the recall-quality safety-pair to B1)

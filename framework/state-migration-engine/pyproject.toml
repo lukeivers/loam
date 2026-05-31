@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-state-migration-engine"
+version = "0.13.0"
+description = "loam user-state migration engine — declared-migration schema/validator, ordered cumulative replay wrapped in the reversibility safety envelope, and the per-workspace applied cursor."
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6",
+    "loam-scope-of-work",
+    "loam-reversibility-primitive",
+]
+
+[tool.setuptools]
+package-dir = {"loam.state_migration_engine" = "src/loam/state_migration_engine"}
+packages = ["loam.state_migration_engine"]
+
+# `loam migrate` verb registration — resolves through the unified loam CLI
+# dispatcher's `loam.cli.subcommands` entry-point group, sibling to the
+# `release` adapter. Canonical (every loam codebase migrates its user-state).
+[project.entry-points."loam.cli.subcommands"]
+migrate = "loam.state_migration_engine.cli:build_migrate_subcommand"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

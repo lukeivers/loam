@@ -134,6 +134,20 @@ def staged_repo(
         encoding="utf-8",
     )
 
+    # Declared user-state migration (gate 7, AC.MIG-GATE.*). A staged release
+    # MUST declare what it changes in a user's .loam/ state (hard-block, no
+    # override); a code-only fixture release declares a no-op stamped with the
+    # version. Without this the migration-declared gate goes RED and the full
+    # gate pass aborts.
+    (docs / "state-migrations").mkdir(parents=True)
+    (docs / "state-migrations" / "fixture-release.migration.yaml").write_text(
+        f"slug: fixture-release\n"
+        f"operation: no-op\n"
+        f"reversible: true\n"
+        f"version: {fixture_version}\n",
+        encoding="utf-8",
+    )
+
     # Stage + commit so HEAD has these files; then capture the seal SHA.
     subprocess.run(
         ["git", "add", "docs/"], cwd=scratch_repo, check=True

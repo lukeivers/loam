@@ -1,6 +1,6 @@
-"""Per-gate pre-publish verification (AC.V060.2).
+"""Per-gate pre-publish verification (AC.V060.2 + AC.MIG-GATE.*).
 
-Six structural gates, each returning a :class:`GateResult` carrying
+Seven structural gates, each returning a :class:`GateResult` carrying
 a verdict + a corrective hint on RED. The orchestrator
 (:mod:`loam_cli.release.runner`) runs every gate (does NOT short-
 circuit on first RED) so the operator sees the full state in one
@@ -23,6 +23,9 @@ Gates:
      ``main`` (revised from ``pos-v2`` per the plan-doc revision).
   6. ``check_seal_commit_reachable`` — the seal SHA from
      ``docs/release-roadmap.md`` §2 row is reachable from HEAD.
+  7. ``check_migration_declared`` — ``docs/state-migrations/`` declares a
+     user-state migration for the version (a ``no-op`` declaration is valid).
+     HARD-BLOCK, no override (the load-bearing migration release-gate, P1.3).
 
 Each gate is independently testable; per-gate test pairs (one passing,
 one failing) live in
@@ -628,6 +631,120 @@ def check_seal_commit_reachable(
 
 
 # --------------------------------------------------------------------
+# Gate 7 — declared user-state migration present (AC.MIG-GATE.*)
+# --------------------------------------------------------------------
+
+
+def _migration_matches_version(
+    migrations_dir: Path,
+    version: str,
+    *,
+    plan_doc: Path | None = None,
+) -> Path | None:
+    """Locate the declared migration file for *version* in *migrations_dir*.
+
+    Two resolution paths, mirroring how ``check_acs_verified`` /
+    ``check_hard_smoke`` resolve plan-docs:
+
+    1. **Release-version stamp (D1):** a ``*.migration.yaml`` whose body
+       declares ``version: <version>`` (the stamp the release-gate writes at
+       release time). This is the primary key once a migration is released.
+    2. **Scope-descriptive plan-doc slug (dogfood / pre-release):** when
+       *plan_doc* is provided, the migration file whose slug stem matches the
+       plan-doc stem (``<slug>.migration.yaml`` vs ``<slug>.md`` /
+       ``<slug>-slice-plan.md``). This supports versions whose plan-doc is
+       scope-descriptive rather than version-named
+       (``feedback_version_numbers_at_release_time``).
+
+    Returns the matched file path, or ``None`` when no declared migration
+    matches.
+    """
+    if not migrations_dir.is_dir():
+        return None
+    files = sorted(migrations_dir.glob("*.migration.yaml"))
+
+    # Path 1 — release-version stamp.
+    version_re = re.compile(
+        r"(?m)^\s*version\s*:\s*['\"]?" + re.escape(version) + r"['\"]?\s*$"
+    )
+    for f in files:
+        if version_re.search(f.read_text(encoding="utf-8")):
+            return f
+
+    # Path 2 — scope-descriptive plan-doc slug match.
+    if plan_doc is not None:
+        stem = plan_doc.stem
+        # Strip the conventional plan-doc tail so a `<slug>-slice-plan` doc
+        # resolves to `<slug>.migration.yaml` / `<slug>-slice.migration.yaml`.
+        candidates = {
+            stem,
+            stem.removesuffix("-plan"),
+            stem.removesuffix("-slice-plan"),
+            stem.removesuffix("-slice-plan") + "-slice",
+        }
+        for f in files:
+            mig_stem = f.name.removesuffix(".migration.yaml")
+            if mig_stem in candidates:
+                return f
+
+    return None
+
+
+def check_migration_declared(
+    repo_root: Path,
+    version: str,
+    *,
+    plan_doc: Path | None = None,
+) -> GateResult:
+    """Verify the version declares a user-state migration (AC.MIG-GATE.*).
+
+    HARD-BLOCK, no override (D3): a version that declares no migration file in
+    ``docs/state-migrations/`` returns RED and publish cannot proceed. A
+    declared ``operation: no-op`` migration PASSES (AC.MIG-GATE.2) -- the gate
+    forces a DECLARATION + a moment's thought, not a non-trivial migration;
+    declaring a no-op is the ~30-second valid answer, so the gate never blocks
+    legitimate work.
+
+    Runs in the SAME ``loam release`` gate pass as the other gates
+    (AC.MIG-GATE.3) -- one report, no parallel CI.
+    """
+    migrations_dir = repo_root / "docs" / "state-migrations"
+    matched = _migration_matches_version(
+        migrations_dir, version, plan_doc=plan_doc
+    )
+    if matched is None:
+        hint_path = (
+            f"docs/state-migrations/<slug>.migration.yaml declaring "
+            f"`version: {version}`"
+        )
+        if plan_doc is not None:
+            hint_path += (
+                f" (or a slug matching the plan-doc stem "
+                f"`{plan_doc.stem}`)"
+            )
+        return GateResult(
+            name="migration-declared",
+            ok=False,
+            message=(
+                f"{version} declares NO user-state migration. Every release "
+                f"must declare what it changes in a user's .loam/ state so "
+                f"the migration engine can carry that state forward (the "
+                f"load-bearing release-gate, P1.3). Author {hint_path}; a "
+                f"code-only release declares `operation: no-op` (a valid "
+                f"~30-second declaration). Re-run once present."
+            ),
+        )
+    return GateResult(
+        name="migration-declared",
+        ok=True,
+        message=(
+            f"{version} declares a user-state migration at "
+            f"{matched.relative_to(repo_root)}"
+        ),
+    )
+
+
+# --------------------------------------------------------------------
 # Aggregation
 # --------------------------------------------------------------------
 
@@ -639,6 +756,7 @@ ALL_GATES = (
     check_clean_tree,
     check_branch_main,
     check_seal_commit_reachable,
+    check_migration_declared,
 )
 
 
@@ -669,6 +787,7 @@ def run_all(
         check_clean_tree(repo_root, version),
         check_branch_main(repo_root, version),
         check_seal_commit_reachable(repo_root, version),
+        check_migration_declared(repo_root, version, plan_doc=plan_doc),
     ]
 
 

@@ -1,0 +1,90 @@
+schema_version: 1
+amendment:
+  number: 156  # Next sequential amendment. STATE.md base #154
+               # (fbm-activate-unify-and-fix-write-path, sealed 4b258218);
+               # #155 is claimed by first-run-message-retired-deps-sweep (in
+               # flight). This is the next free counter.
+  slug: loam-migration-engine-and-release-gate-slice
+  title: "loam user-state migration engine + release-gate (slice P1.3) — declared-migration schema/validator, ordered cumulative replay wrapped in the reversibility safety envelope, the `loam migrate` CLI verb, and the 7th ALL_GATES release-gate (hard-block, no-op-declaration valid). AC.MIG-SCHEMA/REPLAY/SAFE/GATE/UPGRADE."
+
+# BASELINE: 31dc9ca — HEAD of slice/p1.2-loam-layout (the P1.2 FBM-path-
+# consolidation seal-advance), this slice's confirmed predecessor seal.
+baseline: "31dc9ca"
+
+plan: docs/plans/loam-migration-engine-and-release-gate-slice-plan.md
+
+components:
+  # NEW framework component — the schema/validator + replay engine + the
+  # reversibility-envelope composition + the `loam migrate` verb. self-upgrade
+  # is the WRONG home (it migrates the framework CODEBASE; this migrates
+  # USER-STATE — plan §2 / §10 boundary).
+  - name: state-migration-engine
+    seal_test: framework/state-migration-engine/tests/test_no_sealed_amendments.py
+    sidecar: framework/state-migration-engine/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+  # EXTEND the release-gate framework with the 7th gate
+  # (check_migration_declared); the `loam migrate` verb registers via the
+  # loam-cli entry-point group.
+  - name: loam-cli
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/state-migrations/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: docs/plans/sealed/loam-migration-engine-and-release-gate-slice.md
+  body: |
+    # loam user-state migration engine + release-gate (slice P1.3) — apply ladder
+
+    2026-05-31. Phase-1 kernel slice P1.3 per
+    `docs/plans/loam-migration-engine-and-release-gate-slice-plan.md`.
+    Builds the mechanism that AUTOMATES the manual care-flow (backup →
+    apply pending migrations in order → verify → roll back on failure →
+    advance cursor) so a loam instance — including a non-technical
+    user's — upgrades its `.loam/` user-state in place, safely and
+    repeatably.
+
+    Four parts, one slice:
+      1. The declared-migration SCHEMA + validator — formalizes the
+         contract already emerging in `docs/state-migrations/*.migration.yaml`
+         (the FBM quartet + layout + live). All six existing files validate
+         UNCHANGED; no schema adjustment was forced.
+      2. The REPLAY engine — read the per-instance applied cursor
+         (`.loam/migrations/.cursor`) → enumerate pending in release-version
+         order (D1) → apply declarative steps IN ORDER through intermediates
+         (D2 declarative-only; no embedded scripts) → advance the cursor;
+         the whole replay WRAPPED in the reversibility-primitive safety
+         envelope (backup-first / protection-floor gate / rollback-on-failure)
+         composed as a LIBRARY CALL (ActivationGate + ReversibilityStore +
+         ReversibilityClass — not a parallel backup mechanism).
+      3. The `loam migrate` CLI verb (D4) — the real, testable entry-point;
+         the session-start auto-detect hook is a fast-follow, OUT of fence.
+      4. The release-gate — the 7th gate in loam_cli/release ALL_GATES
+         (D3 hard-block, no override; a no-op declaration is valid).
+
+    AC families: AC.MIG-SCHEMA.* (validated, declared-not-guessed),
+    AC.MIG-REPLAY.* (ordered through-not-jump replay + cursor advance),
+    AC.MIG-SAFE.* (backup-first / rollback-on-failure / idempotent /
+    protection-floor classification), AC.MIG-GATE.* (rejects gate-less
+    release, no-op valid, composes in the existing gate set), and the
+    ★ outcome-altitude AC.MIG-UPGRADE.1 (a SEPARATE seeded instance at
+    version N upgraded to N+k by driving the REAL `loam migrate` verb
+    through the unified CLI dispatcher — not the inner replay function).
+
+    BOUNDARY (plan §2 / §10): this migrates USER-STATE.
+    `framework/self-upgrade/` migrates the framework CODEBASE — a different,
+    non-conflated concern reusing NONE of it.
+
+    BASELINE 31dc9ca — HEAD of slice/p1.2-loam-layout. Two-component fence:
+    the new `state-migration-engine` + the `loam-cli` release-gate surface.

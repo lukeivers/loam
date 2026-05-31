@@ -1,0 +1,54 @@
+# User-state migration — migration engine + release-gate slice (P1.3)
+#
+# Declared per the v-next build workflow Step-5 (INTEGRATE+RECORD) and the
+# migration release-gate convention this very slice ships (G4, P1.3): every
+# release declares a user-state migration; a STRUCTURAL-ONLY migration is a
+# valid declared migration. Version number is intentionally NOT pre-assigned
+# (versions derive at release time — feedback_version_numbers_at_release_time);
+# this file is keyed by the scope-descriptive slug. The release-gate stamps
+# `version:` at release time (D1).
+
+slug: migration-engine-and-release-gate-slice
+slice: P1.3 user-state migration engine + release-gate
+date: 2026-05-31
+disposition: build-new   # the replay engine + schema validator + gate are new
+predecessor: loam-layout-slice   # P1.2 established .loam/migrations/ (the cursor home)
+
+# What user-state this slice creates on first `loam migrate`:
+operation: structural-only
+creates:
+  - .loam/migrations/.cursor   # the per-workspace applied-migration cursor
+leaves_in_place:
+  - .loam/memory/                # the live FBM episode store — UNTOUCHED
+  - .loam/migrations/            # the cursor HOME (P1.2) — only .cursor is added
+  - .loam/user-model/            # declared home — untouched by this slice
+changes_user_state_schema: false
+
+rationale: >
+  This slice ships the user-state migration ENGINE (schema validator +
+  ordered cumulative replay wrapped in the reversibility safety envelope +
+  the `loam migrate` verb) and the release-gate (the 7th gate in
+  loam_cli/release ALL_GATES — hard-block, no-op-declaration valid). Its only
+  effect on a user's .loam/ state is to WRITE the applied-migration cursor
+  (.loam/migrations/.cursor) recording which declared migrations the
+  workspace has applied. The cursor home (.loam/migrations/) was already
+  established by P1.2's establish_loam_layout; this slice only adds the
+  .cursor file inside it. No existing episode, field, or schema changes —
+  hence structural-only, not a data migration.
+
+# Reversibility (G-star / protection floor): the engine NEVER removes,
+# compresses, or overwrites existing user-state. Every replay is wrapped
+# backup-first (a snapshot of .loam/ before any step) and rolls back to that
+# snapshot on any failure (rollback-on-failure), composing the sealed
+# reversibility-primitive's ActivationGate class-dispatch as the protection
+# floor (a migration declaring removes_user_state=true is refused unless a
+# compensation binding exists). The .cursor itself is reverted by removing it.
+reversible: true
+removes_user_state: false
+idempotent: true   # re-running a fully-migrated workspace is a clean no-op
+
+# Boundary note (master plan §2 / §10 F2): this engine migrates USER-STATE
+# (the workspace .loam/). framework/self-upgrade/ migrates the framework
+# CODEBASE — a different, non-conflated concern; this slice reuses NONE of it.
+# The declared contract lives on the FRAMEWORK side (docs/state-migrations/,
+# tracked); the .cursor it writes lives on the USER side (gitignored).

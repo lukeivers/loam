@@ -1584,6 +1584,16 @@ def _compose_score_and_spread(
             "path": str(n_path),
             "group_id": front.get("group_id", ""),
             "valid_at": front.get("reference_time", ""),
+            # B3 (AC-FBM-SAL-1) — tag the spread-activated neighbor with
+            # its structural salience, computed from the body exactly as
+            # the FTS5 + grep candidate pools do (above). Without this the
+            # spread-in ``n_row`` arrives at the salience gate with NO
+            # ``_salience`` slot → ``_salience_of`` returns the full-
+            # salience default → a junk neighbor reachable ONLY via
+            # co-citation spread BYPASSES the gate and leaks into recall.
+            # The gate must see spread neighbors on the same footing as
+            # direct BM25 hits (HARD INVARIANT: gate SURFACING uniformly).
+            "_salience": _salience_from_body(body),
             "_bm25_raw": 0.0,
             "_spread_from": True,
         }

@@ -1,0 +1,54 @@
+# User-state migration — FBM spread-path salience-gate fix slice (AC-FBM-SAL-6)
+#
+# Declared per the v-next build workflow Step-5 (INTEGRATE+RECORD) and the
+# migration release-gate convention: every release declares a user-state
+# migration (no-op when code-only). Version number is intentionally NOT
+# pre-assigned (versions derive at release time —
+# feedback_version_numbers_at_release_time); keyed by the scope-descriptive
+# slug.
+
+slug: fbm-spread-salience-gate-fix-slice
+slice: FBM spread-path salience-gate leak fix (AC-FBM-SAL-6)
+date: 2026-05-31
+predecessor: fbm-episode-salience-slice   # this fixes a gap in B3's salience gate
+disposition: extend   # one sealed framework function (file_memory spread step)
+
+# What user-state this migration changes: NOTHING. This is a CODE-ONLY fix.
+operation: none-code-only
+creates: []
+leaves_in_place:
+  - .loam/memory/episodes/                # ALL existing episodes — UNTOUCHED
+  - .loam/memory/search-index.sqlite      # episode FTS index — UNTOUCHED
+  # No episode file is written, rewritten, re-tagged, removed, or compressed.
+changes_user_state_schema: false   # no new/changed frontmatter field
+
+rationale: >
+  B3 tagged each FTS5/grep retrieval-candidate row with an in-memory
+  ``_salience`` slot so the recall-side salience gate could force-drop junk
+  episodes. The one-hop co-citation SPREAD step
+  (file_memory._compose_score_and_spread) materialises spread-in neighbor
+  episodes as ``n_row`` dicts that carried ``_spread_from`` + ``_bm25_raw``
+  but NOT ``_salience`` — so a junk episode reachable ONLY via spread arrived
+  at the gate with no salience, defaulted to FULL salience (the never-drop
+  floor), and BYPASSED the gate, leaking ~1 junk pointer per query into the
+  rendered recall block. The fix tags ``"_salience":
+  _salience_from_body(body)`` on the spread-neighbor ``n_row`` (reusing the
+  SAME helper the FTS/grep pools use), so the gate sees spread neighbors on
+  identical footing to direct BM25 hits.
+  .
+  ``_salience`` is an in-memory result-row slot computed FRESH from each
+  episode body at retrieval time — it is NOT a stored frontmatter field. No
+  episode on disk is read-modified-written by this change; existing episodes
+  are unaffected. Therefore this migration is a forward NO-OP on user-state.
+
+# HARD INVARIANT (unchanged from B3): salience gates SURFACING ONLY. Every
+# turn is still STORED on disk verbatim; nothing is not-stored or deleted. The
+# fix only prevents a junk neighbor from SURFACING via the spread path; it adds
+# no not-store path and no delete path.
+
+# Reversibility (G-star / protection floor): the change overwrites NO
+# user-state. On a code revert, spread neighbors simply stop being salience-
+# gated again (the original leak returns); no data move, reverted by git.
+reversible: true
+removes_user_state: false
+idempotent: true   # salience recomputes identically from the same body

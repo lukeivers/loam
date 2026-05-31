@@ -250,3 +250,41 @@ as the multiplicative factor + the below-threshold force-drop.
 - HALT-and-surface if: the never-delete or re-tunable invariant cannot be
   proven, or a real Luke message is found to be mis-gated as junk by the
   structural signatures (the protect-real-messages property is load-bearing).
+
+---
+
+## Follow-up fix — spread-path × salience-gate leak (AC-FBM-SAL-6)
+
+**Bug (confirmed Tier-0, line-level; caught by the live-store activation
+smoke, missed by the 813-test suite).** The one-hop co-citation SPREAD step
+in `file_memory._compose_score_and_spread` materialises spread-in neighbor
+episodes as `n_row` dicts carrying `_spread_from: True` + `_bm25_raw` but
+**no `_salience` key**. The B3 salience gate tags `_salience` on the FTS5 +
+grep candidate pools (`_salience_from_body(body)` at the two pool-build
+sites) but NOT on these spread-activated neighbors. A junk episode (e.g. a
+`<task-notification>` turn) reachable ONLY via co-citation spread therefore
+arrived at the gate with no `_salience`, `_salience_of` returned the
+full-salience default, and it BYPASSED the gate — leaking ~1 junk pointer
+per query into the rendered recall block.
+
+**Fix (minimal, surgical, mirrors existing code).** Tag
+`"_salience": _salience_from_body(body)` on the spread-neighbor `n_row`
+dict, reusing the SAME `_salience_from_body` helper B3 already uses for the
+FTS/grep candidate rows (no second scorer). The gate now sees spread
+neighbors on identical footing to direct BM25 hits.
+
+**New test — the missing coverage (SAL family × COCG family intersection).**
+`tests/test_AC_FBM_SAL_6_spread_neighbor_junk_gated.py`: a junk
+`<task-notification>` episode reachable ONLY via co-citation spread (NOT a
+direct BM25 match) must be salience-gated out of the production `retrieve()`
+block (outcome-altitude — real access-log-driven spread, real `retrieve()`
+entry-point, no pre-arranged retrieval state). A precondition guard proves
+the neighbor IS spread-reachable (so the gate test isn't a no-op) and that
+the spread row now carries `_salience == 0.0`. The test FAILS on old code
+(spread row's `_salience` is `None`) / PASSES on fixed code.
+
+**Verification.** New test 2/2 PASS on fixed code, precondition guard FAILS
+on old code (proving the gap). Full primary-persona suite: 815 passed / 1
+skipped (813 prior + 2 new). Seal-fence + SAL/COCG families green.
+Code-only (no stored-field change — `_salience` is an in-memory result-row
+slot, not new frontmatter); the slice migration is a forward no-op.

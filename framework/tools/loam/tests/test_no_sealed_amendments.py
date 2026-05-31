@@ -45,7 +45,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 # The prior baseline (b278cc6a) sat 95 sibling commits behind HEAD; advancing
 # to the immediate predecessor seal bounds the window to THIS slice's loam-cli
 # changes (the standard "advance sidecar + BASELINE" seal pattern).
-BASELINE = "31dc9ca"
+BASELINE = "b234bfd"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -156,6 +156,7 @@ def test_AC_FBE_2_S_only_loam_cli_changed() -> None:
         "docs/release-roadmap-dependency-map.md",
         "docs/release-roadmap.md",
         "docs/release-versioning-policy.md",
+        "docs/plans/loam-roadmap.md",
     }
 
     offending = []

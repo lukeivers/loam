@@ -1,0 +1,15 @@
+# N1 — framework↔user-state boundary LOCK: ADR-0001 (the seam contract + two-tier home + G2-ratified evolve-in-place repo shape) + the declared user-state-home allowlist (single source for doc + check, D-2) + the 9th release gate `check_boundary_respected` (HARD-BLOCK; a framework-code write of user-state outside the two homes is CAUGHT at the real `loam release` run_all pass). Closes the boundary lock the whole kernel cutover (N3/N4/Phase-3) reads + writes through.
+
+slug: n1-loam-boundary-lock-adr-and-enforcement-gate
+components: loam
+baseline: 890ac5e
+seal-commit: 8d160b999e661d686e11dff6a4c0578b6e9074b6
+plan-doc: docs/plans/n1-loam-boundary-lock-adr-and-enforcement-gate.md
+acs-satisfied: 8
+smoke: AC.BLOCK-ADR.{1-4} + AC.BLOCK-ENFORCE.{1-4} GREEN via 7 new tests under framework/tools/loam/tests/test_AC_BLOCK_ENFORCE_boundary_respected.py; ★ AC.BLOCK-ENFORCE.3 (outcome-altitude) — planted real violation CAUGHT at the real run_all entry-point. No pre-existing boundary leak in the real canonical tree (check_boundary_respected GREEN on /Users/lukeivers/loam). Full loam-cli suite 130 passed / 3 pre-existing environmental failures (cross-package amend-entry-point discovery — needs the full multi-package install; identical on untouched code per git-stash probe).
+
+Forks ruled (per N1 plan §11): D-1 = docs/design/adr/ (new ADR-series convention); D-2 = declared allowlist read by both ADR + gate (rejects convention-only — permits doc↔code drift). G2 ratified: EVOLVE-IN-PLACE repo shape (supersedes v-next §3 decision-#1 clean-tree recommendation, dated-and-noted in that doc + recorded in ADR-0001 §4).
+
+Sealed-component fence: BASELINE advanced 890ac5e (N1 plan-doc tip); SEAL_COMMIT sidecar → 8d160b9; git diff BASELINE..SEAL_COMMIT --name-only contains only framework/tools/loam/ + docs/design/ + docs/plans/ (universal-paths admissions). test_no_sealed_amendments.py GREEN.
+
+Bookkeeping: roadmap §4 N1 re-marked (boundary lock SHIPPED, scaffold was already DONE at 01f3b40, size M); v-next F0.2 marked DELIVERED + P1.2 marked SCAFFOLD-DONE; v-next §3 decision-#1 dated-and-superseded.

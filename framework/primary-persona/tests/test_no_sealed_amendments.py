@@ -107,7 +107,21 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              HEAD~1 (the B1 seal-advance commit immediately preceding the
 #              slice commit, the HEAD~1 pattern). Seal-diff stays within the
 #              primary-persona + docs/ allowed surfaces.
-BASELINE = "d8719101d0d4cec34a7b933937b6f94fdbea4aa7"
+#   - 055f937  at the FBM spread-path salience-gate fix slice (AC-FBM-SAL-6).
+#              The B3 salience gate tagged `_salience` on the FTS/grep candidate
+#              pools but NOT on co-citation SPREAD-activated neighbor rows, so a
+#              junk episode reachable ONLY via spread bypassed the gate and
+#              leaked into recall (caught by the live-store activation smoke,
+#              missed by the 813-test suite). Fix: tag
+#              `_salience = _salience_from_body(body)` on the spread-neighbor
+#              n_row (same helper the pools use). Adds AC-FBM-SAL-6 (spread x
+#              junk gated, outcome-altitude). Code-only (in-memory result-row
+#              slot, no stored-field change; migration is a forward no-op).
+#              Advanced BASELINE to 055f937 (the B3 seal-advance commit
+#              immediately preceding the fix slice, the HEAD~1 pattern);
+#              SEAL_COMMIT -> c82131e (the fix slice). Seal-diff stays within
+#              the primary-persona + docs/ allowed surfaces.
+BASELINE = "055f937d299f44e83f7027523e406f848cef2a99"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

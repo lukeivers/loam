@@ -77,7 +77,21 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              P1.2 layout commit) — the commit immediately preceding the
 #              slice commit, the HEAD~1 pattern. Seal-diff stays within the
 #              primary-persona + docs/ allowed surfaces.
-BASELINE = "01f3b40aa82b16658949e03e50e3c89c6079bb27"
+#   - 62081d8  at the FBM rule-weighting + hard-floor slice (B1 — the
+#              rank-normalize safety-pair). Single-component primary-persona
+#              edit: corpus_index.read_corpus_docs parses optional weight/
+#              pinned frontmatter (fail-soft to a baseline no-op) + the FTS
+#              corpus-index gains weight/pinned UNINDEXED columns + search
+#              force-fetches pinned docs the query did not match; retrieval.
+#              _merge_by_score boosts each hit's normalized score by its
+#              weight (baseline 50 => 1.0 no-op) and force-includes pinned
+#              rules ahead of the relevance cut (the hard floor — a multiplier
+#              alone cannot guarantee never-drop). No doc currently declares a
+#              weight, so the current corpus is byte-identical (no-regression).
+#              Advanced to HEAD~1 (the prior seal-advance commit immediately
+#              preceding the slice commit, the HEAD~1 pattern). Seal-diff
+#              stays within the primary-persona + docs/ allowed surfaces.
+BASELINE = "62081d8a568a6e8484a7419efc002f70dc244290"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

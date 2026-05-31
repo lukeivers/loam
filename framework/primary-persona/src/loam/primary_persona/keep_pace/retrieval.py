@@ -316,32 +316,77 @@ def retrieve(
     return _render_injection(merged, cap=INJECTION_CHAR_CAP)
 
 
+def _minmax_norm(hits: list[dict[str, object]]) -> list[float]:
+    """Min-max-normalize one source's raw scores onto ``[0, 1]``.
+
+    AC-FBM-RN — the two physical indexes emit BM25 on incompatible,
+    regime-dependent scales (corpus ~15–285 vs episode 0–40 in the live
+    store, and ~0.0 for a freshly-written episode in a sparse FTS index —
+    BM25's IDF term collapses with few documents). Raw-score merging
+    therefore buries every episode below the corpus head (scale mismatch)
+    AND truncates a fresh relevant episode out entirely (it scores ~0).
+    Min-max maps each source's BEST matched hit to ``1.0`` and worst to
+    ``0.0`` so the genuinely-best result per source competes fairly.
+
+    A single-element or all-equal source maps every hit to ``1.0`` — a
+    present, FTS-matched hit is fully its-source-best. This is what
+    rescues the sparse-store regime (a lone relevant episode at raw 0.0
+    still surfaces). Relevance is gated upstream: ``_episode_hits`` /
+    ``CorpusIndex.search`` only return hits the query actually matched, so
+    normalization never force-surfaces noise.
+    """
+    if not hits:
+        return []
+    scores = [float(h.get("score", 0.0) or 0.0) for h in hits]
+    lo = min(scores)
+    span = max(scores) - lo
+    if span <= 0.0:
+        return [1.0] * len(hits)
+    return [(s - lo) / span for s in scores]
+
+
 def _merge_by_score(
     corpus_hits: list[dict[str, object]],
     episode_hits: list[dict[str, object]],
     *,
     top_n: int,
 ) -> list[dict[str, object]]:
-    """Merge corpus + episode hits by descending score, capped at top_n.
+    """Merge corpus + episode hits by descending NORMALIZED score, capped
+    at top_n.
 
     AC.FBMU.1 — one merged result set across both physical indexes.
     AC.FBMU.2 — when ``episode_hits`` is empty the returned list IS
     ``corpus_hits`` (same objects, same order) so the rendered output
-    is byte-identical to the pre-unify KP1 output.
+    is byte-identical to the pre-unify KP1 output. This early-return path
+    is preserved UNCHANGED (no normalization runs) so the no-regression /
+    fail-open envelope is byte-exact.
     AC.FBMU.3 — the merge truncates to ``top_n`` so the combined hit
     count never exceeds the cap regardless of how many episode hits
     arrive; the byte budget is then applied by :func:`_render_injection`.
+    AC-FBM-RN-1 — when episodes ARE present, each source's raw scores are
+    min-max-normalized onto a common ``[0, 1]`` scale BEFORE the combined
+    sort (:func:`_minmax_norm`), so a relevant episode co-surfaces against
+    a live corpus regardless of the two indexes' incompatible BM25
+    magnitudes. The raw-score merge buried/truncated episodes (the
+    AC-FBM-LIVE-2 gap); the normalized merge lets the best per-source hit
+    compete fairly.
 
-    Sort is stable on ``-score`` so equal-scored hits keep their
-    arrival order (corpus hits enumerated before episode hits) —
-    deterministic truncation (AC.FBMU.3).
+    Sort is stable on the descending NORMALIZED score so equal-normalized
+    hits keep their arrival order (corpus hits enumerated before episode
+    hits) — the strongest corpus hit still leads a ``1.0``/``1.0`` tie, and
+    truncation stays deterministic (AC.FBMU.3 / AC-FBM-RN-2).
     """
     if not episode_hits:
         return corpus_hits
     combined = list(corpus_hits) + list(episode_hits)
-    combined.sort(
-        key=lambda h: float(h.get("score", 0.0) or 0.0), reverse=True
+    # Normalize per source so the two incompatible BM25 scales compete
+    # fairly (AC-FBM-RN-1). Pure arithmetic on already-fetched hit lists —
+    # no new I/O, no new failure surface on the every-turn live hook.
+    norms = _minmax_norm(corpus_hits) + _minmax_norm(episode_hits)
+    order = sorted(
+        range(len(combined)), key=lambda i: (-norms[i], i)
     )
+    combined = [combined[i] for i in order]
     if top_n > 0:
         combined = combined[:top_n]
     return combined

@@ -1,0 +1,44 @@
+# User-state migration — FBM rank-normalize slice (AC-FBM-LIVE-2 fix)
+#
+# Declared per the v-next build workflow Step-5 (INTEGRATE+RECORD) and the
+# migration release-gate convention (G4, P1.3): every release declares a
+# user-state migration; a STRUCTURAL/NO-OP migration is a valid declared
+# migration. Version number is intentionally NOT pre-assigned (versions
+# derive at release time — feedback_version_numbers_at_release_time); this
+# file is keyed by the scope-descriptive slug.
+
+slug: fbm-rank-normalize-slice
+slice: FBM rank-normalize (AC-FBM-LIVE-2 fix)
+date: 2026-05-31
+predecessor: fbm-live-slice   # the P1.1 slice that surfaced+HALTed this gap
+disposition: extend           # one sealed framework function (retrieval merge)
+
+# What user-state this migration changes: NONE.
+operation: no-op
+creates: []
+leaves_in_place:
+  - .loam/memory/                # the live FBM episode store — UNTOUCHED (no schema/field/episode change)
+  - .loam/memory/search-index.sqlite   # the episode FTS index — UNTOUCHED (no reindex needed)
+changes_user_state_schema: false
+
+rationale: >
+  This slice changes ONLY framework code: the keep-pace retrieval merge
+  (primary_persona/keep_pace/retrieval.py:_merge_by_score) now min-max-
+  normalizes each source's raw BM25 scores onto a common [0,1] scale before
+  merging, so a relevant FBM episode co-surfaces alongside the rules corpus
+  in the live unified retrieval (closing the AC-FBM-LIVE-2 gap). It is a
+  pure ranking change over already-fetched, already-indexed hit lists — no
+  new fields, no schema change, no reindex, no on-disk user-state touched.
+  The episode store and its FTS index are read exactly as before. Hence
+  no-op as a user-state migration.
+
+# Reversibility (G-star / protection floor): the change removes/compresses/
+# overwrites NO user-state; it is a code-only ranking change reverted by git.
+reversible: true
+removes_user_state: false
+idempotent: true   # re-running retrieval is deterministic; no migration step runs at all (no-op)
+
+# Boundary note (master plan §2 F2): this declared contract lives on the
+# FRAMEWORK side (docs/state-migrations/, tracked). No per-workspace applied-
+# migration cursor entry is required since nothing is applied to user-state;
+# the engine (P1.3) records it as a declared no-op for release-gate accounting.

@@ -1,0 +1,50 @@
+# User-state migration — .loam/ workspace-layout slice (P1.2)
+#
+# Declared per the v-next build workflow Step-5 (INTEGRATE+RECORD) and the
+# migration release-gate convention (G4, P1.3): every release declares a
+# user-state migration; a STRUCTURAL-ONLY migration is a valid declared
+# migration. Version number is intentionally NOT pre-assigned (versions
+# derive at release time — feedback_version_numbers_at_release_time); this
+# file is keyed by the scope-descriptive slug.
+
+slug: loam-layout-slice
+slice: P1.2 .loam/ workspace layout
+date: 2026-05-31
+disposition: build-new   # the layout contract + home dirs are new; the live memory/ tree is leave
+
+# What user-state this migration creates on a fresh init / establish:
+operation: structural-only
+creates:
+  - .loam/                       # the per-workspace user-state root
+  - .loam/README.md              # self-describing contract + boundary rule
+  - .loam/migrations/            # applied-migration cursor home (.cursor written by the P1.3 engine)
+  - .loam/user-model/            # home for the per-user model + config (P1.5 fills it)
+  - .loam/session-model/         # home for the session-model (later slice fills it)
+  - .loam/environment-model/     # home for the per-user environment/perception model (later slice)
+leaves_in_place:
+  - .loam/memory/                # the live FBM episode store — created only if wholly absent; never recreated/cleared
+  - .loam/claude_p_policy.toml   # pre-existing workspace-scoped user-state
+  - .pos/                        # legacy sibling user-state — NOT absorbed (would be a destructive move, G-star)
+
+rationale: >
+  This slice declares the complete .loam/ workspace-state layout and
+  establishes it via the idempotent, fail-safe establish_loam_layout()
+  helper (framework code under framework/workspace-bootstrap; its OUTPUT is
+  user-state). A fresh init creates the empty home dirs + a self-describing
+  README; an existing memory/ tree is detected and left byte-for-byte intact
+  (proven against the live pos3 store: 1,283 episodes + index mtime/size
+  unchanged before/after). No existing field, episode, or schema changes —
+  hence structural-only, not a data migration.
+
+# Reversibility (G-star / protection floor): the establish step only ever
+# CREATES absent paths and writes a README if absent; it removes, compresses,
+# and overwrites NOTHING. Fully reversible (rmdir the empty new dirs).
+reversible: true
+removes_user_state: false
+idempotent: true
+
+# Boundary note (master plan §2 F2): this declared contract lives on the
+# FRAMEWORK side (docs/state-migrations/, tracked). The per-workspace
+# applied-migration CURSOR it will be checked against lives on the USER side
+# (<workspace>/.loam/migrations/.cursor, gitignored). The migration ENGINE
+# that reads/writes that cursor and replays pending migrations is slice P1.3.

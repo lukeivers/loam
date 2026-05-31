@@ -1,0 +1,47 @@
+# RELOCATED to docs/state-migrations/ by slice P1.2 (F2 corrective): the
+# original under .loam/migrations/ was gitignored and never committed.
+# This tracked copy is the canonical declared-migration contract.
+#
+# User-state migration — FBM-LIVE slice (P1.1)
+#
+# Declared per the v-next build workflow Step-5 (INTEGRATE+RECORD) and the
+# migration release-gate convention (G4, P1.3): every version declares a
+# user-state migration; a NO-OP is a valid declared migration. Version
+# number is intentionally NOT pre-assigned (versions derive at release
+# time — feedback_version_numbers_at_release_time); this file is keyed by
+# the scope-descriptive slug.
+
+slug: fbm-live-slice
+slice: P1.1 FBM-LIVE
+date: 2026-05-31
+disposition: leave   # already-live; D1/D2/D3 of amendment #154 shipped + owner-activated 2026-05-29
+
+# What user-state this slice changes:
+operation: no-op
+rationale: >
+  The FBM episode store + the memory-write-queue already exist on the
+  user-state side of the boundary (<workspace>/.loam/memory/episodes/ and
+  <workspace>/.pos/memory-write-queue/) — created and populated by the
+  already-shipped amendment #154 activation (1281 live episodes; backup
+  snapshot at .scratch/fbm-activation-backup-2026-05-29-fbm-activation/).
+  This slice introduced NO new user-state schema, no new on-disk layout,
+  no field change to existing episodes. Proving cross-session continuity
+  required no migration. Therefore: declared no-op.
+
+# Reversibility (G-star / protection floor): nothing is removed, compressed,
+# or overwritten by this slice. The cold-walk wrote only to an ephemeral
+# /tmp repo root, never to the live store.
+reversible: true
+removes_user_state: false
+
+# Open follow-up recorded with the migration (does NOT block this no-op):
+followups:
+  - id: AC-FBM-LIVE-2-unify-effectiveness
+    status: surfaced-owner-gated
+    note: >
+      The unify seam is wired but the merge-by-raw-score in the sealed
+      retrieval.py truncates episodes out of top_n against the live corpus
+      (score-scale mismatch: corpus BM25 30-285 vs episode bm25 ~0-1). A
+      next-cycle scoring fix (reserve-slot / rank-normalize / per-source
+      quota) is owner/next-cycle work. Evidence:
+      .scratch/claude-output/fbm-cold-walk/COLD-WALK-RESULTS.md

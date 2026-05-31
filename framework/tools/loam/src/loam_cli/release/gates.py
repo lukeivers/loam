@@ -26,6 +26,12 @@ Gates:
   7. ``check_migration_declared`` — ``docs/state-migrations/`` declares a
      user-state migration for the version (a ``no-op`` declaration is valid).
      HARD-BLOCK, no override (the load-bearing migration release-gate, P1.3).
+  8. ``check_substrate_audit`` — no shipping doc carries a structured
+     status claim that DIVERGES from the STATE-OF-LOAM record derived
+     fresh from ground truth (refs + live config + real probes). HARD-
+     BLOCK (AC.SOL-GATE.*, N2): a stale "dark"-for-live status claim
+     shipping in a release is the exact failure this gate exists to
+     stop. Composes on the SAME comparator the ``loam audit`` verb uses.
 
 Each gate is independently testable; per-gate test pairs (one passing,
 one failing) live in
@@ -745,6 +751,115 @@ def check_migration_declared(
 
 
 # --------------------------------------------------------------------
+# Gate 8 — substrate audit: no shipping status claim diverges from the
+#          ground-truth-derived STATE-OF-LOAM record (AC.SOL-GATE.*)
+# --------------------------------------------------------------------
+
+
+# The canonical status docs the release-gate audits for divergence. A
+# release that ships a stale "dark"-for-live status claim in one of
+# these is the exact failure N2 prevents. Bounded set (D4 = structured
+# status fields only; NOT free-prose scanning).
+_AUDITED_STATUS_DOCS = (
+    "docs/STATE.md",
+    "docs/release-roadmap.md",
+)
+
+
+def check_substrate_audit(
+    repo_root: Path,
+    version: str,
+    *,
+    audited_docs: tuple[str, ...] | None = None,
+    settings_path: Path | None = None,
+) -> GateResult:
+    """Verify no shipping doc carries a structured status claim that
+    DIVERGES from the STATE-OF-LOAM record derived fresh from ground
+    truth (AC.SOL-GATE.{1,3}).
+
+    HARD-BLOCK (D3): a divergence returns RED and publish cannot
+    proceed until the stale claim is corrected — mirroring the six
+    structural siblings. Agreement passes clean (AC.SOL-GATE.2 — low
+    false-positive). Composes on the SAME comparator the ``loam audit``
+    verb uses (AC.SOL-GATE.3 — one mechanism, two entry points; no
+    parallel CI).
+
+    Fail-safe (plan principle): the audit must NEVER crash the release
+    path. Any error generating the record or reading a doc degrades to a
+    clear GREEN-with-caveat ("could not determine"), never a false RED
+    that would block a legitimate publish on the audit's own failure.
+    Indeterminate ground truth (an UNKNOWN derived class) yields no
+    divergence by construction in the comparator.
+    """
+    docs = audited_docs if audited_docs is not None else _AUDITED_STATUS_DOCS
+    try:
+        # Local import: the audit package is a sibling subcommand; keep
+        # the dependency at call time so the release gates load even if
+        # the audit module is mid-refactor.
+        from loam_cli.audit.comparator import (
+            compare_claims,
+            extract_claims_from_doc,
+        )
+        from loam_cli.audit.loam_state import default_state_record
+
+        record = default_state_record(
+            repo_root, settings_path=settings_path
+        )
+    except Exception as exc:  # pragma: no cover — fail-safe path
+        return GateResult(
+            name="substrate-audit",
+            ok=True,
+            message=(
+                f"substrate audit could not derive the STATE-OF-LOAM "
+                f"record ({type(exc).__name__}: {exc}); degraded to "
+                f"pass-with-caveat (fail-safe — the audit never blocks a "
+                f"publish on its own failure). Run `loam audit` manually "
+                f"to investigate."
+            ),
+        )
+
+    covered = frozenset(r.name for r in record.components)
+    divergences = []
+    for rel in docs:
+        path = repo_root / rel
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:  # pragma: no cover — fail-safe path
+            continue
+        claims = extract_claims_from_doc(
+            text, source=rel, components=covered
+        )
+        divergences.extend(compare_claims(claims, record))
+
+    if divergences:
+        lines = "\n".join(
+            f"    {d.source}: {d.detail}" for d in divergences
+        )
+        return GateResult(
+            name="substrate-audit",
+            ok=False,
+            message=(
+                f"{len(divergences)} doc status claim(s) DIVERGE from the "
+                f"ground-truth STATE-OF-LOAM record:\n{lines}\n  A shipping "
+                f"doc claims a status that contradicts ground truth (refs + "
+                f"live config + real probe). Correct the stale claim(s); "
+                f"re-run `loam release {version}` once the audit is clean. "
+                f"(`loam audit --doc <path>` reproduces the finding.)"
+            ),
+        )
+    return GateResult(
+        name="substrate-audit",
+        ok=True,
+        message=(
+            "no shipping status claim diverges from the derived "
+            "STATE-OF-LOAM record (ground truth agrees)"
+        ),
+    )
+
+
+# --------------------------------------------------------------------
 # Aggregation
 # --------------------------------------------------------------------
 
@@ -757,6 +872,7 @@ ALL_GATES = (
     check_branch_main,
     check_seal_commit_reachable,
     check_migration_declared,
+    check_substrate_audit,
 )
 
 
@@ -788,6 +904,7 @@ def run_all(
         check_branch_main(repo_root, version),
         check_seal_commit_reachable(repo_root, version),
         check_migration_declared(repo_root, version, plan_doc=plan_doc),
+        check_substrate_audit(repo_root, version),
     ]
 
 

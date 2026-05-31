@@ -1,0 +1,24 @@
+# User-state migration — STATE-OF-LOAM record + substrate-audit gate (N2)
+#
+# Declared per the migration release-gate convention (gate 7, P1.3): every
+# release declares a user-state migration; a no-op declaration is a valid
+# ~30-second answer when a release changes NO user .loam/ state. Version
+# number is intentionally NOT pre-assigned (versions derive at release time —
+# feedback_version_numbers_at_release_time); keyed by the scope-descriptive
+# slug.
+
+slug: state-of-loam-record-and-substrate-audit-gate-slice
+slice: N2 STATE-OF-LOAM operative-reality record + substrate-audit gate (R-1 + R-3)
+date: 2026-05-31
+disposition: code-only   # the audit module + the 8th release-gate are framework
+                         # code; the record is GENERATED FRESH from ground truth
+                         # on every read (D1) — there is NO persisted user-state
+                         # artefact, by construction.
+
+# What user-state this migration changes: NONE. The STATE-OF-LOAM record is
+# derived-on-demand from ground truth (git refs + seal sidecars + live config +
+# real probes); it is never persisted into a user's .loam/, so there is no
+# user-state schema to migrate. The `loam audit` verb + the release-gate read
+# ground truth at invocation time.
+operation: no-op
+reversible: true

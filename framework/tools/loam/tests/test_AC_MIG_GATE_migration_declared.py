@@ -74,7 +74,8 @@ def test_AC_MIG_GATE_3_composes_in_all_gates(
     """The gate is part of ALL_GATES and runs in the same run_all pass — one
     report, no short-circuit (leverage-loam-first, not a parallel CI)."""
     assert gates.check_migration_declared in gates.ALL_GATES
-    assert len(gates.ALL_GATES) == 7
+    # The substrate-audit gate (AC.SOL-GATE.*, N2) appended an 8th gate.
+    assert len(gates.ALL_GATES) == 8
 
     # run_all (against the canonical staged-release fixture, which declares a
     # migration) returns a verdict for every gate including the migration gate,
@@ -82,6 +83,6 @@ def test_AC_MIG_GATE_3_composes_in_all_gates(
     results = gates.run_all(staged_repo, fixture_version)
     names = [r.name for r in results]
     assert "migration-declared" in names
-    assert len(results) == 7
+    assert len(results) == 8
     by_name = {r.name: r for r in results}
     assert by_name["migration-declared"].ok is True

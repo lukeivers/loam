@@ -21,6 +21,11 @@ loam = "loam_cli.cli:main"
 # being installed).
 [project.entry-points."loam.cli.subcommands"]
 release = "loam_cli.release.cli:build_release_subcommand"
+# AC.SOL-GATE.* (N2) — `loam audit` verb registration. The real entry-
+# point that derives the STATE-OF-LOAM record from ground truth + surfaces
+# any doc claim that diverges from it. Canonical (every loam codebase has
+# the substrate-audit surface); sibling to `release`.
+audit = "loam_cli.audit.cli:build_audit_subcommand"
 
 [tool.setuptools.packages.find]
 where = ["src"]

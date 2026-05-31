@@ -67,7 +67,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              `pos-amend apply` to the commit immediately preceding
 #              the amendment commit (HEAD~1 pattern). Sub-plan §10's
 #              manifest records the BASELINE rationale.
-BASELINE = "14e972e63ceaef904bb817b4a0b83739cea1573c"
+#   - 01f3b40  at the FBM rank-normalize slice (close AC-FBM-LIVE-2 unify
+#              gap). Single-component primary-persona edit: _merge_by_score
+#              now min-max-normalizes each source's BM25 scores before the
+#              merge so a relevant FBM episode co-surfaces against the live
+#              rules corpus (the two indexes' incompatible scales no longer
+#              bury/truncate episodes). FBMU.3 raw-score-ordering tests
+#              restated to the normalized contract. Advanced to HEAD~1 (the
+#              P1.2 layout commit) — the commit immediately preceding the
+#              slice commit, the HEAD~1 pattern. Seal-diff stays within the
+#              primary-persona + docs/ allowed surfaces.
+BASELINE = "01f3b40aa82b16658949e03e50e3c89c6079bb27"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

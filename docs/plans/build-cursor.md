@@ -11,32 +11,64 @@ replaced by it.
 
 ```
 WORKFLOW: loam v-next build
-SLICE:    FBM rule-weighting + hard-floor (B1 — the rank-normalize safety-pair)
-STEP:     5 INTEGRATE+RECORD (PROVE done — 4/4 ACs PASS)
-DISPOSITION: extend (two sealed functions — corpus_index read/search + retrieval merge)
-GATE-STATUS: none pending — fail-safe verified on the every-turn live hook (boost + partition are
-             pure arithmetic/set-ops on already-fetched hits; frontmatter parse is fail-soft to the
-             no-op baseline; the no-episode early-return is byte-identical, FBMU.2 green). No
-             ~/.claude/settings.json, no Cairn, no touch of the live episode store (cold-walk copied
-             the real feedback_*.md corpus into a temp repo root; never wrote the live store).
+SLICE:    FBM episode SALIENCE gate (B3 — the recall-quality safety-pair to B1)
+STEP:     5 INTEGRATE+RECORD COMPLETE (PROVE done — 5/5 ACs PASS; sealed + committed)
+DISPOSITION: extend (two sealed functions — file_memory write_episode/search + retrieval merge)
+GATE-STATUS: none pending — fail-safe verified on BOTH every-turn hot paths (ingest AND recall):
+             compute_salience is exception-wrapped to SALIENCE_FULL; the search paths compute
+             salience fresh from each body (no I/O, correct for pre-salience episodes without
+             rewrite); the no-episode early-return stays byte-identical (FBMU.2). HARD INVARIANT
+             proven: gates surfacing only — every turn still on disk (SAL-3), re-tunable (SAL-4),
+             no not-store/delete path. No ~/.claude/settings.json, no Cairn; the live 1288-episode
+             store was READ-ONLY-copied into a temp root for the cold-walk, never written.
 PROVE-RESULT:
-  AC-FBM-W-1 GRADIENT ............................. PASS — at equal relevance a higher-weighted rule
-             out-ranks a lower-weighted one; weight 50 (baseline) boosts by 1.0 (no-op).
-  AC-FBM-W-2 FLOOR/SAFETY (load-bearing) ......... PASS — a pinned rule co-surfaces at ~0 relevance
-             against a hyper-relevant episode flood; the SAME rule at MAX weight but UNPINNED drops
-             (multiplier-alone-can't-do-it, proven in the same test).
-  AC-FBM-W-3 NO-REGRESSION ....................... PASS — no-frontmatter doc => baseline weight,
-             body byte-identical; empty-episode merge returns corpus list unchanged.
-  AC-FBM-W-4 LIVE-CORPUS COLD-WALK (the bar) ..... PASS — through production retrieve() on a temp
-             copy of the REAL feedback_*.md corpus: a pinned doc that the query does NOT match at
-             all still surfaces (force-fetch); the unpinned variant drops.
-  Tests: framework/primary-persona full suite GREEN (804 passed, 1 pre-existing skip); AC-FBM-W
-         9/9; FBMU 1/2/3 + rank-normalize green; seal-fence green.
+  AC-FBM-SAL-1 JUNK-FILTERED (load-bearing) ...... PASS — a <task-notification> episode tagged
+             salience 0.0 at ingest does NOT surface even sharing the query token; boilerplate
+             tokens (task-id/tool-use-id) don't leak.
+  AC-FBM-SAL-2 NO-REGRESSION ..................... PASS — a substantive episode still surfaces;
+             empty-episode merge returns the SAME corpus list object (FBMU.2 byte-identical);
+             corpus hits never gated.
+  AC-FBM-SAL-3 NEVER-DELETE (load-bearing) ....... PASS — the junk episode is still WRITTEN to disk
+             with its full body verbatim (salience: 0.0 tagged, not deleted) + retrievable by
+             direct recent_episodes lookup.
+  AC-FBM-SAL-4 RE-TUNABLE (load-bearing) ......... PASS — at the default threshold the junk is
+             gated; lowering salience_threshold re-admits it through production retrieve() (gate
+             reversible, nothing lost).
+  AC-FBM-SAL-5 LIVE-STORE COLD-WALK (the bar) .... PASS — real <task-notification> + real
+             <channel>-wrapped Luke-message episodes copied from the live store shape into a temp
+             root: junk suppressed AND the real channel message scores salient (protect-real-
+             messages proven, not just junk-drop). Live store untouched (still 1288).
+  Tests: framework/primary-persona full suite GREEN (813 passed = 804 prior + 9 SAL, 1 pre-existing
+         skip); FBMU 1/2/3 + rank-normalize + rule-weighting (AC-FBM-W) green; seal-fence green.
+  Commit: fb26be2 (slice) + the seal-advance follow-up (BASELINE d871910, SEAL_COMMIT fb26be2).
+  Migration: docs/state-migrations/fbm-episode-salience-slice.migration.yaml (real forward-additive
+             schema-add; non-destructive, non-rewriting). Plan:
+             docs/plans/fbm-episode-salience-slice-plan.md.
 UPDATED:  2026-05-31
 NEXT:     P1.3 user-state migration engine + RELEASE-GATE
 ```
 
-## This slice — FBM rule-weighting + hard-floor (B1, the rank-normalize safety-pair)
+## This slice — FBM episode SALIENCE gate (B3, the recall-quality safety-pair to B1)
+Junk turns (agent task-notification turns, empty/near-empty channel-header events, bare acks) were
+logged as episodes and ranked HIGH on shared boilerplate tokens, polluting recall. B3: (1) TAG AT
+INGEST — `file_memory.write_episode` computes a cheap structural salience score (`compute_salience`)
+from the turn's user half and stores a `salience: <float>` frontmatter field. Four junk signatures
+verified against the live 1288-episode store: task-notification (494), channel/scaffolding-empty (38),
+empty-user (17), bare-ack (12). A `<channel>`-wrapped REAL Luke message is fully salient (the scorer
+keys on the residual inner text, not the wrapper tag — the load-bearing protect-real-messages
+property; 687 such real messages must NOT be gated). (2) FILTER AT RECALL — `retrieval._merge_by_score`
+multiplies each episode hit's weighted-normalized score by its salience AND force-DROPS any hit below
+the named, tunable `SALIENCE_THRESHOLD` (default 0.5) — the episode mirror of B1's pinned force-include.
+Salience is the episode side of the SAME weight knob B1 added. The search paths compute salience FRESH
+from each body, so the 1288 pre-salience episodes get the correct gate WITHOUT any rewrite. HARD
+INVARIANT (load-bearing): gates SURFACING only, never storage — no not-store path, no delete path; a
+mis-judged junk turn stays on disk verbatim and is re-admittable by lowering the threshold. Fail-safe:
+every default/error path resolves to SALIENCE_FULL. Migration:
+`docs/state-migrations/fbm-episode-salience-slice.migration.yaml` (REAL forward-additive schema-add —
+a new frontmatter field on NEW episodes only; non-destructive, non-rewriting). Plan:
+`docs/plans/fbm-episode-salience-slice-plan.md`.
+
+## PRIOR SLICE — FBM rule-weighting + hard-floor (B1, the rank-normalize safety-pair)
 Rank-normalize made rules + episodes compete fairly on RELEVANCE, opening the hole that a
 hyper-relevant episode can out-rank a CRITICAL rule. B1 closes it with a per-rule WEIGHT carried as
 optional corpus-doc frontmatter: (1) `weight: 1-100` boosts a rule's normalized score

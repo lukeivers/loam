@@ -91,7 +91,23 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              Advanced to HEAD~1 (the prior seal-advance commit immediately
 #              preceding the slice commit, the HEAD~1 pattern). Seal-diff
 #              stays within the primary-persona + docs/ allowed surfaces.
-BASELINE = "62081d8a568a6e8484a7419efc002f70dc244290"
+#   - d871910  at the FBM episode SALIENCE gate slice (B3 — the recall-quality
+#              safety-pair to B1). Single-component primary-persona edit:
+#              file_memory.write_episode tags each turn at ingest with a cheap
+#              structural salience score (compute_salience) stored as a
+#              `salience` frontmatter field; the FTS/grep search paths compute
+#              salience fresh from each body (so pre-salience episodes get the
+#              gate without rewrite); retrieval._merge_by_score multiplies each
+#              episode hit's weighted-normalized score by its salience and
+#              force-DROPS below-threshold (junk) episodes from the surfaced
+#              set (named, tunable SALIENCE_THRESHOLD). HARD INVARIANT: gates
+#              surfacing only, never storage — every turn still on disk, gate
+#              re-tunable. Fail-safe defaults to full salience everywhere so
+#              the gate only suppresses affirmatively-junk turns. Advanced to
+#              HEAD~1 (the B1 seal-advance commit immediately preceding the
+#              slice commit, the HEAD~1 pattern). Seal-diff stays within the
+#              primary-persona + docs/ allowed surfaces.
+BASELINE = "d8719101d0d4cec34a7b933937b6f94fdbea4aa7"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

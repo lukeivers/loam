@@ -1,0 +1,54 @@
+# User-state migration — FBM rule-weighting + hard-floor slice (B1)
+#
+# Declared per the v-next build workflow Step-5 (INTEGRATE+RECORD) and the
+# migration release-gate convention (G4, P1.3): every release declares a
+# user-state migration; a STRUCTURAL/NO-OP migration is a valid declared
+# migration. Version number is intentionally NOT pre-assigned (versions derive
+# at release time — feedback_version_numbers_at_release_time); this file is
+# keyed by the scope-descriptive slug.
+
+slug: fbm-rule-weighting-slice
+slice: FBM rule-weighting + hard-floor (B1 — the rank-normalize safety-pair)
+date: 2026-05-31
+predecessor: fbm-rank-normalize-slice   # the slice this is the safety-pair for
+disposition: extend   # two sealed framework functions (corpus_index + retrieval merge)
+
+# What user-state this migration changes: NONE.
+operation: no-op
+creates: []
+leaves_in_place:
+  - .loam/memory/                       # the live FBM episode store — UNTOUCHED
+  - .loam/memory/search-index.sqlite    # episode FTS index — UNTOUCHED
+  # the feedback_*.md rules corpus is user-authored markdown; the weight/pinned
+  # frontmatter keys are OPTIONAL and backward-compatible (absent => baseline),
+  # so existing corpus docs need no edit and none is performed by this slice.
+changes_user_state_schema: false
+
+rationale: >
+  This slice changes ONLY framework code plus an OPTIONAL, backward-compatible
+  corpus-frontmatter convention. (1) corpus_index.read_corpus_docs now parses an
+  optional `weight:` (1-100 importance gradient) + `pinned: true` (hard floor)
+  from a corpus doc's leading YAML frontmatter; a doc with no such keys resolves
+  to the baseline default (weight 50, unpinned) and indexes byte-identically, so
+  no existing corpus doc requires a change. (2) The derived FTS corpus-index gains
+  two UNINDEXED columns (weight, pinned); the index is a runtime .scratch/ cache
+  (the markdown is the source of truth) and is REBUILT on schema mismatch, never
+  migrated. (3) retrieval._merge_by_score applies the weight as a boost on the
+  normalized [0,1] score and force-includes pinned rules ahead of the relevance
+  cut; corpus_index.search also force-FETCHES pinned docs the query did not match
+  (the always-include floor). None of this touches on-disk user-state: no new
+  user-state field, no schema change to any user-owned store, no reindex of the
+  episode store. Hence no-op as a user-state migration.
+
+# Reversibility (G-star / protection floor): the change removes/compresses/
+# overwrites NO user-state; it is a code-only ranking change (plus an optional
+# frontmatter convention) reverted by git. The derived corpus index rebuilds
+# itself from the markdown on the next sync after a revert.
+reversible: true
+removes_user_state: false
+idempotent: true   # retrieval is deterministic; no migration step runs (no-op)
+
+# Boundary note (master plan §2 F2): this declared contract lives on the
+# FRAMEWORK side (docs/state-migrations/, tracked). No per-workspace applied-
+# migration cursor entry is required since nothing is applied to user-state; the
+# engine (P1.3) records it as a declared no-op for release-gate accounting.

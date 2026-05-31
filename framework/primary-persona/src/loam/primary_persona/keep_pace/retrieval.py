@@ -59,6 +59,7 @@ from typing import Callable, Optional
 
 from . import objectives as _objectives
 from .corpus_index import (
+    BASELINE_WEIGHT,
     CorpusIndex,
     default_index_path,
     discover_corpus,
@@ -345,21 +346,45 @@ def _minmax_norm(hits: list[dict[str, object]]) -> list[float]:
     return [(s - lo) / span for s in scores]
 
 
+def _weight_of(hit: dict[str, object]) -> int:
+    """The hit's importance weight (AC-FBM-W-1), fail-soft to BASELINE_WEIGHT.
+
+    Episode hits and any hit without a declared weight ride at the baseline,
+    where the gradient boost factor is exactly ``1.0`` (no-op) — so the merge
+    is byte-identical for a corpus where no doc declares a weight (today's
+    corpus, AC-FBM-W-3).
+    """
+    w = hit.get("weight")
+    try:
+        return int(w) if w is not None else BASELINE_WEIGHT
+    except (TypeError, ValueError):
+        return BASELINE_WEIGHT
+
+
+def _is_pinned(hit: dict[str, object]) -> bool:
+    """Whether the hit is the hard floor (AC-FBM-W-2) — an always-include rule.
+
+    Episode hits are never pinned (no frontmatter surface); a hit without the
+    key is unpinned (fail-soft).
+    """
+    return bool(hit.get("pinned"))
+
+
 def _merge_by_score(
     corpus_hits: list[dict[str, object]],
     episode_hits: list[dict[str, object]],
     *,
     top_n: int,
 ) -> list[dict[str, object]]:
-    """Merge corpus + episode hits by descending NORMALIZED score, capped
-    at top_n.
+    """Merge corpus + episode hits by descending WEIGHTED-NORMALIZED score,
+    with pinned rules force-included, capped at top_n.
 
     AC.FBMU.1 — one merged result set across both physical indexes.
     AC.FBMU.2 — when ``episode_hits`` is empty the returned list IS
     ``corpus_hits`` (same objects, same order) so the rendered output
     is byte-identical to the pre-unify KP1 output. This early-return path
-    is preserved UNCHANGED (no normalization runs) so the no-regression /
-    fail-open envelope is byte-exact.
+    is preserved UNCHANGED (no normalization / no boost / no partition runs)
+    so the no-regression / fail-open envelope is byte-exact.
     AC.FBMU.3 — the merge truncates to ``top_n`` so the combined hit
     count never exceeds the cap regardless of how many episode hits
     arrive; the byte budget is then applied by :func:`_render_injection`.
@@ -367,25 +392,45 @@ def _merge_by_score(
     min-max-normalized onto a common ``[0, 1]`` scale BEFORE the combined
     sort (:func:`_minmax_norm`), so a relevant episode co-surfaces against
     a live corpus regardless of the two indexes' incompatible BM25
-    magnitudes. The raw-score merge buried/truncated episodes (the
-    AC-FBM-LIVE-2 gap); the normalized merge lets the best per-source hit
-    compete fairly.
+    magnitudes.
 
-    Sort is stable on the descending NORMALIZED score so equal-normalized
-    hits keep their arrival order (corpus hits enumerated before episode
-    hits) — the strongest corpus hit still leads a ``1.0``/``1.0`` tie, and
-    truncation stays deterministic (AC.FBMU.3 / AC-FBM-RN-2).
+    AC-FBM-W-1 (GRADIENT) — each hit's normalized score is BOOSTED by its
+    importance weight: ``boosted = norm * (weight / BASELINE_WEIGHT)``. A hit
+    at the baseline weight (every episode + any rule that declares no weight)
+    boosts by ``1.0`` (no-op — the AC-FBM-W-3 no-regression guarantee); a
+    higher-weighted rule out-ranks an equally-relevant lower-weighted one.
+    AC-FBM-W-2 (FLOOR / SAFETY) — a ``pinned`` rule is FORCE-INCLUDED at the
+    FRONT of the result regardless of its relevance, ahead of the relevance
+    cut. This is the property a multiplier ALONE cannot deliver: a pinned rule
+    at ~0 relevance has boosted score ~0, so a pure-weight merge would still
+    drop it under a hyper-relevant episode; the force-include guarantees it
+    survives. Pinned rules occupy the leading top_n slots and are never
+    displaced by a non-pinned hit.
+
+    Sort within each partition is stable on the descending BOOSTED score so
+    equal hits keep their arrival order (corpus hits enumerated before episode
+    hits) — the strongest corpus hit still leads a tie, and truncation stays
+    deterministic (AC.FBMU.3 / AC-FBM-RN-2).
     """
     if not episode_hits:
         return corpus_hits
     combined = list(corpus_hits) + list(episode_hits)
-    # Normalize per source so the two incompatible BM25 scales compete
-    # fairly (AC-FBM-RN-1). Pure arithmetic on already-fetched hit lists —
-    # no new I/O, no new failure surface on the every-turn live hook.
+    # Per-source min-max normalize so the two incompatible BM25 scales compete
+    # fairly (AC-FBM-RN-1), then apply the per-hit weight boost (AC-FBM-W-1).
+    # Pure arithmetic on already-fetched hit lists — no new I/O, no new failure
+    # surface on the every-turn live hook.
     norms = _minmax_norm(corpus_hits) + _minmax_norm(episode_hits)
-    order = sorted(
-        range(len(combined)), key=lambda i: (-norms[i], i)
-    )
+    boosted = [
+        norms[i] * (_weight_of(combined[i]) / BASELINE_WEIGHT)
+        for i in range(len(combined))
+    ]
+    # Partition: pinned rules are the hard floor (AC-FBM-W-2) — force-included
+    # at the front regardless of relevance; the rest sort by boosted score.
+    pinned_idx = [i for i in range(len(combined)) if _is_pinned(combined[i])]
+    rest_idx = [i for i in range(len(combined)) if not _is_pinned(combined[i])]
+    pinned_order = sorted(pinned_idx, key=lambda i: (-boosted[i], i))
+    rest_order = sorted(rest_idx, key=lambda i: (-boosted[i], i))
+    order = pinned_order + rest_order
     combined = [combined[i] for i in order]
     if top_n > 0:
         combined = combined[:top_n]

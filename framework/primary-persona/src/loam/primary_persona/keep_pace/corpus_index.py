@@ -78,15 +78,35 @@ CORPUS_DOC_BODY_CAP = 60_000
 # is the honest reading of AC.KP1.4's silent-on-no-match contract.
 MIN_RELEVANCE_SCORE = 0.1
 
+# AC-FBM-W (rule-weighting slice) — the per-rule importance gradient is a
+# 1..100 scalar carried as optional ``weight`` frontmatter on a corpus doc.
+# BASELINE_WEIGHT is the default a doc resolves to when it declares no weight;
+# it is chosen so the gradient boost at the default is a NO-OP multiplier
+# (boost = weight / BASELINE_WEIGHT = 1.0), preserving today's behaviour for
+# the entire current corpus (no doc declares a weight). Kept here next to the
+# corpus-doc reader, re-exported into retrieval where the boost is applied.
+BASELINE_WEIGHT = 50
+WEIGHT_MIN = 1
+WEIGHT_MAX = 100
+
 
 @dataclass
 class CorpusDoc:
-    """One corpus document to index."""
+    """One corpus document to index.
+
+    AC-FBM-W — ``weight`` (1..100 importance gradient) + ``pinned`` (the hard
+    floor: an always-include rule) are read from the doc's optional leading
+    YAML frontmatter. A doc with no frontmatter resolves to
+    ``weight=BASELINE_WEIGHT, pinned=False`` (the no-op baseline that keeps the
+    current corpus byte-identical).
+    """
 
     path: str
     title: str
     body: str
     pointer: str  # the plain-language pointer surfaced on a hit
+    weight: int = BASELINE_WEIGHT  # AC-FBM-W-1 importance gradient
+    pinned: bool = False  # AC-FBM-W-2 hard floor (always-include)
 
 
 def default_index_path(workspace_root: Path | str) -> Path:
@@ -194,14 +214,70 @@ def _doc_pointer(path: Path, title: str) -> str:
     return title
 
 
+# AC-FBM-W — a leading YAML frontmatter block, ``---`` on its own first line
+# through the next ``---`` line. Only the ``weight`` + ``pinned`` keys are read;
+# the rest of the block (name/description/type/derivation) is metadata, not
+# topical corpus prose, so it is stripped from the indexed body.
+_FRONTMATTER_RE = re.compile(r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*\r?\n", re.DOTALL)
+_FM_WEIGHT_RE = re.compile(r"^weight:[ \t]*(\S+)", re.MULTILINE)
+_FM_PINNED_RE = re.compile(r"^pinned:[ \t]*(\S+)", re.MULTILINE)
+
+
+def _split_frontmatter(body: str) -> tuple[str, str]:
+    """Split a leading YAML frontmatter block off the body.
+
+    Returns ``(frontmatter_text, remaining_body)``. No leading ``---`` block
+    => ``("", body)`` unchanged — the 102-of-132 no-frontmatter docs index
+    byte-identically (AC-FBM-W-3 no-regression).
+    """
+    m = _FRONTMATTER_RE.match(body)
+    if not m:
+        return "", body
+    return m.group(1), body[m.end():]
+
+
+def _weight_pinned_from_frontmatter(fm_text: str) -> tuple[int, bool]:
+    """Read ``weight`` (1..100, clamped) + ``pinned`` (bool) from frontmatter.
+
+    Fail-soft: a missing key, a malformed value, or an empty block resolves to
+    the no-op baseline ``(BASELINE_WEIGHT, False)`` — the every-turn hot path
+    never raises on a malformed frontmatter block (AC-FBM-W-3).
+    """
+    weight = BASELINE_WEIGHT
+    pinned = False
+    if not fm_text:
+        return weight, pinned
+    wm = _FM_WEIGHT_RE.search(fm_text)
+    if wm:
+        try:
+            w = int(wm.group(1).strip().strip("\"'"))
+            weight = max(WEIGHT_MIN, min(WEIGHT_MAX, w))
+        except (TypeError, ValueError):
+            weight = BASELINE_WEIGHT
+    pm = _FM_PINNED_RE.search(fm_text)
+    if pm:
+        pinned = pm.group(1).strip().strip("\"'").lower() in {"true", "yes", "1"}
+    return weight, pinned
+
+
 def read_corpus_docs(paths: Iterable[Path]) -> list[CorpusDoc]:
-    """Read + shape the corpus docs for indexing (AC.KP1.1)."""
+    """Read + shape the corpus docs for indexing (AC.KP1.1).
+
+    AC-FBM-W — reads the optional ``weight``/``pinned`` frontmatter and strips
+    the frontmatter block from the indexed body (the block is metadata, not
+    topical prose, so dropping it removes only spurious metadata-key matches —
+    the ``# Title`` + prose that carry the real topical signal are untouched).
+    A doc with no frontmatter is unchanged: empty frontmatter, full body,
+    baseline weight, unpinned.
+    """
     docs: list[CorpusDoc] = []
     for p in paths:
         try:
-            body = p.read_text(encoding="utf-8")
+            raw = p.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
+        fm_text, body = _split_frontmatter(raw)
+        weight, pinned = _weight_pinned_from_frontmatter(fm_text)
         title = _doc_title(p, body)
         docs.append(
             CorpusDoc(
@@ -209,6 +285,8 @@ def read_corpus_docs(paths: Iterable[Path]) -> list[CorpusDoc]:
                 title=title,
                 body=body[:CORPUS_DOC_BODY_CAP],
                 pointer=_doc_pointer(p, title),
+                weight=weight,
+                pinned=pinned,
             )
         )
     return docs
@@ -243,8 +321,25 @@ class CorpusIndex:
         conn.execute(
             "CREATE VIRTUAL TABLE IF NOT EXISTS corpus "
             "USING fts5(path UNINDEXED, title, body, pointer UNINDEXED, "
-            "mtime UNINDEXED)"
+            "mtime UNINDEXED, weight UNINDEXED, pinned UNINDEXED)"
         )
+        # AC-FBM-W — the index is a DERIVED .scratch/ cache (the markdown is the
+        # source of truth). When an older-schema index (pre-weight, 5 columns)
+        # is on disk, ``IF NOT EXISTS`` leaves it untouched and later INSERTs
+        # of the new weight/pinned columns would raise. Detect the schema
+        # mismatch and rebuild from scratch rather than migrate (the documented
+        # derived-cache contract).
+        try:
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(corpus)")]
+            if "weight" not in cols or "pinned" not in cols:
+                conn.execute("DROP TABLE IF EXISTS corpus")
+                conn.execute(
+                    "CREATE VIRTUAL TABLE corpus "
+                    "USING fts5(path UNINDEXED, title, body, pointer UNINDEXED, "
+                    "mtime UNINDEXED, weight UNINDEXED, pinned UNINDEXED)"
+                )
+        except sqlite3.Error:
+            pass
         conn.commit()
         self._conn = conn
         return conn
@@ -296,9 +391,18 @@ class CorpusIndex:
                 mtime = on_disk.get(resolved, 0.0)
                 conn.execute("DELETE FROM corpus WHERE path = ?", (resolved,))
                 conn.execute(
-                    "INSERT INTO corpus (path, title, body, pointer, mtime) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (resolved, doc.title, doc.body, doc.pointer, mtime),
+                    "INSERT INTO corpus "
+                    "(path, title, body, pointer, mtime, weight, pinned) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        resolved,
+                        doc.title,
+                        doc.body,
+                        doc.pointer,
+                        mtime,
+                        int(doc.weight),
+                        1 if doc.pinned else 0,
+                    ),
                 )
                 count += 1
         conn.commit()
@@ -315,7 +419,16 @@ class CorpusIndex:
         Re-syncs first (AC.KP1.5 fresh read). ``query_tokens`` is an
         already-sanitised OR-of-tokens (see :mod:`work_anchor`); an
         empty token list returns ``[]`` (silent-on-no-match composes
-        upstream). Returns ``[{path, title, pointer, score}]``.
+        upstream). Returns ``[{path, title, pointer, score, weight, pinned}]``.
+
+        AC-FBM-W-2 (the hard floor) — a ``pinned`` doc is the always-include
+        floor: it is returned REGARDLESS of whether the query matched it, so a
+        critical rule that is currently irrelevant to the prompt still surfaces.
+        This is the load-bearing semantic ("always included regardless of
+        relevance"): the relevance-ranked MATCH query alone cannot deliver it
+        because a non-matching doc never appears in the MATCH result at all.
+        Pinned docs the query did NOT match enter at relevance ``0.0`` (the
+        floor); the downstream merge force-includes them ahead of the cut.
         """
         if num_results <= 0 or not query_tokens:
             return []
@@ -328,7 +441,8 @@ class CorpusIndex:
         conn = self._connection()
         match = " OR ".join(query_tokens)
         sql = (
-            "SELECT path, title, pointer, bm25(corpus) AS score "
+            "SELECT path, title, pointer, weight, pinned, "
+            "bm25(corpus) AS score "
             "FROM corpus WHERE corpus MATCH ? "
             "ORDER BY score LIMIT ?"
         )
@@ -338,20 +452,50 @@ class CorpusIndex:
         except sqlite3.Error:
             return []
         out: list[dict[str, object]] = []
-        for path, title, pointer, score in rows:
-            # SQLite bm25() is negative (lower = better); negate so
-            # larger = stronger relevance.
-            rel = -float(score) if score is not None else 0.0
-            # AC.KP1.4 — drop pure-noise zero-IDF hits below the
-            # relevance floor (silent-on-no-match).
-            if rel < MIN_RELEVANCE_SCORE:
-                continue
+        seen: set[str] = set()
+
+        def _emit(path, title, pointer, weight, pinned, rel) -> None:
+            try:
+                w = int(weight) if weight is not None else BASELINE_WEIGHT
+            except (TypeError, ValueError):
+                w = BASELINE_WEIGHT
             out.append(
                 {
                     "path": path,
                     "title": title,
                     "pointer": pointer,
                     "score": rel,
+                    "weight": w,
+                    "pinned": bool(pinned),
                 }
             )
+            seen.add(str(path))
+
+        for path, title, pointer, weight, pinned, score in rows:
+            # SQLite bm25() is negative (lower = better); negate so
+            # larger = stronger relevance.
+            rel = -float(score) if score is not None else 0.0
+            is_pinned = bool(pinned)
+            # AC.KP1.4 — drop pure-noise zero-IDF hits below the relevance
+            # floor (silent-on-no-match). A PINNED hit bypasses the cut — the
+            # hard floor is carried regardless of relevance (AC-FBM-W-2).
+            if rel < MIN_RELEVANCE_SCORE and not is_pinned:
+                continue
+            _emit(path, title, pointer, weight, pinned, rel)
+
+        # AC-FBM-W-2 — force-fetch every pinned doc the MATCH query did NOT
+        # surface, so an always-include rule that is currently IRRELEVANT to
+        # the prompt still enters the result set (at the relevance floor, 0.0).
+        # This is the half a relevance-ranked query cannot do. Best-effort: a
+        # sqlite error here degrades to the matched set (fail-soft hot path).
+        try:
+            pin_rows = conn.execute(
+                "SELECT path, title, pointer, weight FROM corpus WHERE pinned = 1"
+            ).fetchall()
+        except sqlite3.Error:
+            pin_rows = []
+        for path, title, pointer, weight in pin_rows:
+            if str(path) in seen:
+                continue
+            _emit(path, title, pointer, weight, 1, 0.0)
         return out

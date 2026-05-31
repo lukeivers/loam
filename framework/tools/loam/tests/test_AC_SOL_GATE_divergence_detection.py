@@ -147,12 +147,13 @@ def test_AC_SOL_GATE_3_composes_in_all_gates(
     """The substrate-audit gate is part of ALL_GATES and runs in the SAME
     run_all pass — one report, no parallel CI (leverage-loam-first)."""
     assert gates.check_substrate_audit in gates.ALL_GATES
-    assert len(gates.ALL_GATES) == 8
+    # The boundary-respected gate (AC.BLOCK-ENFORCE.*, N1) appended a 9th.
+    assert len(gates.ALL_GATES) == 9
 
     results = gates.run_all(staged_repo, fixture_version)
     names = [r.name for r in results]
     assert "substrate-audit" in names
-    assert len(results) == 8
+    assert len(results) == 9
     # The staged fixture carries no diverging status doc → the gate passes.
     by_name = {r.name: r for r in results}
     assert by_name["substrate-audit"].ok is True

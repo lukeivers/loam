@@ -190,3 +190,30 @@ Two AC families:
 ---
 
 *Principles applied at authoring: RECONCILE-against-reality (examined P1.2's actual `01f3b40` scaffold + verified the audit subpackage is uncommitted on the ref graph — did not assume the dispatch's premise); EXAMINE-before-designing (read the layout module, the gates spine, the migrations README, the v-next plan §2/§3 before authoring); plan-before-code (PLAN-ONLY — no code written); outcome-altitude AC at the real `loam release` gate entry-point (AC.BLOCK-ENFORCE.3); Claude/loam-leverage-first (enforcement composes on the committed release-gate `ALL_GATES`, not new machinery); ODD authoring (every AC outcome-shape, method-in-AC test passed); F2 (named the clean-tree-vs-evolve-in-place doc/reality divergence + the audit-uncommitted premise gap, each with evidence + an alternative); scope↔confidence (TIGHT where practice settled it; D-2 forked with a recommendation where the declaration mechanism is genuinely novel).*
+
+---
+
+## §13 §status — verdict matrix (backfilled at seal 2026-05-31)
+
+Built on branch `n1-loam-boundary-lock-adr-and-enforcement-gate`.
+Artefacts: ADR-0001 (`docs/design/adr/boundary-framework-vs-user-state.md`);
+the declared allowlist (`docs/design/adr/user-state-homes.yaml`); gate 9
+`check_boundary_respected` in
+`framework/tools/loam/src/loam_cli/release/gates.py` (wired into
+`ALL_GATES` + `run_all`); test pair
+`framework/tools/loam/tests/test_AC_BLOCK_ENFORCE_boundary_respected.py`
+(7 tests). Forks ruled: D-1 = `docs/design/adr/` (a); D-2 = declared
+allowlist (a). G2 ratified evolve-in-place. No pre-existing boundary leak
+found in the real tree (`check_boundary_respected` GREEN on the canonical
+repo).
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.BLOCK-ADR.1 | GREEN | ADR exists + tracked at `docs/design/adr/boundary-framework-vs-user-state.md` (committed). |
+| AC.BLOCK-ADR.2 | GREEN | ADR §2 names framework vs user-state + classification-by-what-it's-about; §3 names the two-tier home (`~/.claude/` + `<ws>/.loam/`). |
+| AC.BLOCK-ADR.3 | GREEN | ADR §4 records the seam contract (replaced-wholesale / migrated-never-overwritten) + the G2-ratified evolve-in-place repo shape + the dated supersede of the v-next §3 clean-tree recommendation. |
+| AC.BLOCK-ADR.4 | GREEN | ADR §5 names the declared allowlist (`user-state-homes.yaml`) as the single source the gate reads. |
+| AC.BLOCK-ENFORCE.1 | GREEN | `check_boundary_respected` ∈ `ALL_GATES`; `run_all` invokes it; `len(ALL_GATES)==9`. (`test_AC_BLOCK_ENFORCE_1`.) |
+| AC.BLOCK-ENFORCE.2 | GREEN | Clean fixture tree + the real canonical tree are both GREEN (no false-positive on legitimate framework→home writes). (`test_AC_BLOCK_ENFORCE_2`, `_2b`.) |
+| AC.BLOCK-ENFORCE.3 | GREEN ★ outcome-altitude:true | Planted real violation (framework module writing `OBJECTIVES.md` under `framework/`) CAUGHT at the real `run_all` entry-point, no pre-arranged state; hint names the path + legal homes. (`test_AC_BLOCK_ENFORCE_3`, `_3b`.) |
+| AC.BLOCK-ENFORCE.4 | GREEN | Mutating ONLY the allowlist flips the gate verdict → gate reads the declared file, not a hardcoded parallel rule. (`test_AC_BLOCK_ENFORCE_4`, `_4b`.) |

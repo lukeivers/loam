@@ -1,0 +1,59 @@
+# user-state-homes.yaml — the DECLARED ALLOWLIST of legal user-state homes
+#
+# This file is the SINGLE SOURCE OF TRUTH for "where may framework code
+# legally land user-state." BOTH read it:
+#
+#   - The boundary ADR (docs/design/adr/boundary-framework-vs-user-state.md)
+#     cites this list as the enumerated legal homes (AC.BLOCK-ADR.4).
+#   - The release gate `check_boundary_respected` in
+#     framework/tools/loam/src/loam_cli/release/gates.py reads this file as
+#     its allowlist (AC.BLOCK-ENFORCE.4) — so the doc-rule and the code-rule
+#     are ONE rule and cannot drift.
+#
+# This mirrors how gate-7 (`check_migration_declared`) reads the declared
+# migration contract under `docs/state-migrations/` rather than hardcoding a
+# parallel rule. D-2 ruling (N1 plan §11): a small declared allowlist read by
+# both sides, rejecting convention-only precisely because convention-only
+# permits the doc<->code drift this file exists to prevent.
+#
+# The boundary classification (N1 plan Surface #1): a path is user-state by
+# what it is ABOUT (this user + their work), not by what writes it. Framework
+# code routinely WRITES user-state — that is its job. The boundary the gate
+# enforces is not "framework must not write user-state"; it is "framework-
+# written user-state must LAND inside one of the homes below."
+
+# version of the allowlist schema (bump if the shape changes; the gate
+# tolerates absence and degrades to a clear caveat — fail-safe).
+schema: 1
+
+# The ONLY two legal physical homes for user-state. A framework-code write
+# of user-state to anywhere outside these is the boundary violation the gate
+# catches.
+homes:
+  - id: global
+    path: "~/.claude/"
+    scope: cross-workspace
+    description: >-
+      Global, cross-workspace user-state: CLAUDE.md, OBJECTIVES.md, the
+      feedback corpus, the per-user interaction model. Lives in the user's
+      home, gitignored on the user side (.gitignore: .claude/).
+  - id: workspace
+    path: "<workspace>/.loam/"
+    scope: workspace-scoped
+    description: >-
+      Workspace-scoped user-state: the FBM episode store (memory/), the
+      applied-migration cursor (migrations/.cursor), the user/session/
+      environment model homes. Established by establish_loam_layout()
+      (slice P1.2). Gitignored (.gitignore: .loam/).
+
+# Path patterns that signal a write is USER-STATE (used by the gate to
+# decide which writes to check for home-membership). These are the
+# user-state SHAPES the boundary protects; a framework write matching one
+# of these patterns must land under a `homes` path. NOT an exhaustive
+# taxonomy — the representative shapes the gate scans write-sites for.
+user_state_markers:
+  - ".loam/"          # the workspace-scoped home marker itself
+  - ".claude/"        # the global home marker itself
+  - "OBJECTIVES.md"   # global user-state file
+  - "INTERACTION-MODEL.md"
+  - ".cursor"         # the applied-migration cursor (user-state)

@@ -69,6 +69,18 @@ This is the seam the whole cutover strategy rests on, and it must be built in fr
 
 ### Decision #1 — where the new kernel is built
 
+> **⚠️ SUPERSEDED 2026-05-31 by G2 (evolve-in-place) — see ADR-0001
+> (`docs/design/adr/boundary-framework-vs-user-state.md` §4).** The
+> recommendation below was (a) "a clean new structure inside the
+> canonical loam repo … its own tree." That was **never executed**:
+> today's v-next work (migration engine, audit subpackage, keep-pace)
+> all landed *inside* the existing `framework/` tree on `main` — there is
+> no separate `kernel/` tree. G2 ratifies **evolve-in-place on the
+> existing canonical tree** (git history is the fallback, not a parallel
+> intact `framework/`). A future kernel author must NOT build toward a
+> clean tree that is not coming. The text below is retained for the
+> reasoning record only; the ratified decision is in ADR-0001.
+
 **Three candidates:**
 
 - **(a) Clean new structure inside the canonical loam repo** (a new top-level tree, e.g. `kernel/` or a versioned `framework/`-successor, built alongside the existing `framework/` which stays as the fallback source).
@@ -105,7 +117,7 @@ Notation: each item names its **dependency**, its **Claude-primitive leverage** 
 | Step | What | Dependency | Owner-gate |
 |---|---|---|---|
 | **F0.1** | Enshrine the doctrine: paste Insert A into `VALUE_PROPOSITION.md` (prime objective) + Insert B into `CLAUDE.md` (Lens 0), per `doctrine-inserts.md`. | none | **Owner verifies the wording** (single-pass, already assembled). Non-blocking for the rest of Phase 0/1 — the doctrine doc itself is already the cornerstone; the inserts are the enshrinement. |
-| **F0.2** | Lock the framework↔user-state boundary (§2) as a written architectural decision record: name the two sides, the physical homes (per decision #1), and the rule "framework replaced wholesale, user-state migrated never overwritten." | decision #1 ratified | **Owner ratifies decision #1** (repo shape + user-state home). |
+| **F0.2** ✅ **DELIVERED** by N1 (2026-05-31) | Lock the framework↔user-state boundary (§2) as a written architectural decision record: name the two sides, the physical homes (per decision #1), and the rule "framework replaced wholesale, user-state migrated never overwritten." **Delivered as ADR-0001 (`docs/design/adr/boundary-framework-vs-user-state.md`) + the declared allowlist (`docs/design/adr/user-state-homes.yaml`) + the `boundary-respected` release gate (gate 9 in `gates.py`).** | decision #1 ratified (→ G2 evolve-in-place) | **Owner ratifies decision #1** (repo shape + user-state home). |
 
 *Sequencing note:* F0.1 is non-blocking (the doctrine is already captured; enshrinement is owner-wording-gated and can ride alongside Phase 1). F0.2 **is** blocking — Phase 1 cannot lay out `.loam/` without the boundary locked.
 
@@ -116,7 +128,7 @@ Dependency-ordered. **FBM-LIVE is the first brick** and the first build step of 
 | Step | What | Dependency | Primitive leverage | Owner-gate |
 |---|---|---|---|---|
 | **P1.1 — FBM-LIVE (FIRST BRICK)** | Wire the already-built FBM episode store live behind the boundary; prove cross-session continuity. Full crisp definition + outcome-altitude ACs in §6. | F0.2 (boundary located) | The live keep-pace UserPromptSubmit/Stop hooks (already wired) + the built `file_memory.py` store. | **The `~/.claude/settings.json` activation flip is owner-class** (it changes runtime behavior). Then mostly wiring. |
-| **P1.2 — `.loam/` workspace layout** | Define + scaffold the per-workspace `.loam/` dir: user-state store, `migrations/` dir, `migrations/.cursor` state, the workspace's profile/rules/objectives homes. | F0.2 + P1.1 (knows where episodes live) | `workspace-bootstrap` component (exists) extended to scaffold `.loam/`. | Owner-gated layout review (it's the durable on-disk contract). |
+| **P1.2 — `.loam/` workspace layout** ✅ **SCAFFOLD DONE** (`01f3b40`) | Define + scaffold the per-workspace `.loam/` dir: user-state store, `migrations/` dir, `migrations/.cursor` state, the workspace's profile/rules/objectives homes. **`establish_loam_layout()` + the declared dirs + the self-describing README shipped at `01f3b40`.** | F0.2 + P1.1 (knows where episodes live) | `workspace-bootstrap` component (exists) extended to scaffold `.loam/`. | Owner-gated layout review (it's the durable on-disk contract). |
 | **P1.3 — user-state migration engine + RELEASE-GATE** | Versioned migration files `.loam/migrations/<version>/`; a cursor; cumulative replay of pending migrations; author-declared, idempotent, ordered. **AND in the same slice:** the repo release-gate that blocks publishing any version without its migration file ("no-op" is a valid declared migration). Protection-floor governs execution (reversible; surface-don't-delete user-state). | P1.2 (`.loam/migrations/` exists) | Composes on the proven DB-migration pattern; distinct from `framework/self-upgrade` (§2 F2). The gate is a repo CI/seal check. | Owner-gated (the gate blocks releases — a process change). |
 | **P1.4 — onboarding / init flow** | The "translate-in" intake for a brand-new instance: the operating loop run on a new user (infer end-intent → propose healthy enablement → surface → learn), seeding the initial user-state (profile defaults, first objectives). This is what Phase 3 dogfoods. | P1.2 (somewhere to write seeded state) | `loam-init` component (exists) + the primary-persona operating loop; `start-project` skill precedent. | Owner-gated flow review. |
 | **P1.5 — MVP user-model + config** | The smallest adaptive layer: `INTERACTION-MODEL.md` seeded openness-biased (AIM-0); the read-path that maps work-anchor→area and injects the cell on the live hook (AIM-1, exposure + autonomy axes only); the explicit-statement override + plain-language inspect (AIM-3). Includes the **session-usage model** field (single-continuous vs clears-often — per `feedback_session_is_a_surface...`) and **cautious-autonomy-on-consequence** default. | **P1.1's same activation** (the hooks are live) | The live keep-pace hooks (AIM-1 rides UserPromptSubmit; AIM-2 enforces at the live draft-gate). | Owner ratifies the **openness-default revision of `abstraction_first_default.md`** (AIM §6.1) before seeding; hook edits owner-gated. |

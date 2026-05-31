@@ -40,12 +40,13 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
-# Advanced to 31dc9ca (the P1.2 FBM-path-consolidation seal — this slice's
-# predecessor on slice/p1.2-loam-layout) at the P1.3 migration-engine seal.
-# The prior baseline (b278cc6a) sat 95 sibling commits behind HEAD; advancing
-# to the immediate predecessor seal bounds the window to THIS slice's loam-cli
-# changes (the standard "advance sidecar + BASELINE" seal pattern).
-BASELINE = "b234bfd"
+# Advanced to 890ac5e (the N1 boundary-lock plan-doc commit — this slice's
+# pre-build tip on n1-loam-boundary-lock-adr-and-enforcement-gate) at the N1
+# boundary-lock seal. The prior baseline (b234bfd, the N2 plan commit) sat
+# behind this slice's apply; advancing to the immediate pre-build tip bounds
+# the diff window to THIS slice's loam-cli changes (the standard "advance
+# sidecar + BASELINE" seal pattern).
+BASELINE = "890ac5e"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

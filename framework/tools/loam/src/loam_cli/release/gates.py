@@ -1,6 +1,6 @@
 """Per-gate pre-publish verification (AC.V060.2 + AC.MIG-GATE.*).
 
-Seven structural gates, each returning a :class:`GateResult` carrying
+Nine structural gates, each returning a :class:`GateResult` carrying
 a verdict + a corrective hint on RED. The orchestrator
 (:mod:`loam_cli.release.runner`) runs every gate (does NOT short-
 circuit on first RED) so the operator sees the full state in one
@@ -32,6 +32,13 @@ Gates:
      BLOCK (AC.SOL-GATE.*, N2): a stale "dark"-for-live status claim
      shipping in a release is the exact failure this gate exists to
      stop. Composes on the SAME comparator the ``loam audit`` verb uses.
+  9. ``check_boundary_respected`` — no framework code writes user-state
+     OUTSIDE the two declared homes (``~/.claude/`` global +
+     ``<workspace>/.loam/`` scoped). HARD-BLOCK (AC.BLOCK-ENFORCE.*, N1):
+     the framework ↔ user-state boundary (ADR-0001). Reads the declared
+     allowlist ``docs/design/adr/user-state-homes.yaml`` — the same single
+     source the ADR cites (no doc<->code drift) — exactly as gate 7 reads
+     the declared migration contract.
 
 Each gate is independently testable; per-gate test pairs (one passing,
 one failing) live in
@@ -40,6 +47,7 @@ one failing) live in
 
 from __future__ import annotations
 
+import ast
 import re
 import subprocess
 from dataclasses import dataclass
@@ -860,6 +868,291 @@ def check_substrate_audit(
 
 
 # --------------------------------------------------------------------
+# Gate 9 — framework ↔ user-state boundary respected (AC.BLOCK-ENFORCE.*)
+# --------------------------------------------------------------------
+
+
+# The declared allowlist of legal user-state homes — the SINGLE SOURCE OF
+# TRUTH shared with the boundary ADR (ADR-0001). The gate reads THIS file;
+# it does not hardcode a parallel rule (AC.BLOCK-ENFORCE.4 — no doc<->code
+# drift). Mirrors how gate-7 reads docs/state-migrations/ rather than
+# hardcoding the migration contract.
+_BOUNDARY_ALLOWLIST_REL = "docs/design/adr/user-state-homes.yaml"
+
+# The framework trees whose source is scanned for write-sites. A path is
+# FRAMEWORK by what it is about (loam's own machinery); these are the two
+# roots that hold it (ADR-0001 §2).
+_FRAMEWORK_ROOTS = ("framework", "plugins")
+
+# The write-call methods whose target-path argument is checked. A write to
+# a user-state-marked path landing outside a home is the violation.
+_WRITE_METHODS = frozenset({"write_text", "write_bytes", "mkdir", "touch"})
+
+
+def _load_boundary_allowlist(
+    repo_root: Path,
+) -> tuple[tuple[str, ...], tuple[str, ...]] | None:
+    """Read the declared allowlist; return ``(home_paths, user_state_markers)``.
+
+    Returns ``None`` when the allowlist is absent or unparseable — the
+    caller degrades to a clear pass-with-caveat (fail-safe: the gate never
+    blocks a legitimate publish on its OWN failure, and never a false RED).
+
+    Parsed without a YAML dependency (the release gates declare only
+    PyYAML-optional surfaces): the two fields are flat string lists with a
+    stable shape, extracted by line scan so the gate has no import-time
+    dependency that could fail in a minimal release env.
+    """
+    path = repo_root / _BOUNDARY_ALLOWLIST_REL
+    if not path.is_file():
+        return None
+    try:
+        body = path.read_text(encoding="utf-8")
+    except OSError:  # pragma: no cover — fail-safe path
+        return None
+    # `path:` lines under `homes:` carry the legal home tokens; we want the
+    # home MARKER (the .loam/ or .claude/ fragment), normalised so a
+    # write-target containing it counts as "inside a home".
+    home_paths = re.findall(r"(?m)^\s*-?\s*path:\s*[\"']?([^\"'\n]+)", body)
+    homes = tuple(p.strip() for p in home_paths if p.strip())
+    # `user_state_markers:` list items.
+    markers_block = re.search(
+        r"(?ms)^user_state_markers:\s*\n(.*?)(?=^\S|\Z)", body
+    )
+    markers: list[str] = []
+    if markers_block:
+        markers = re.findall(
+            r'(?m)^\s*-\s*["\']?([^"\'#\n]+)', markers_block.group(1)
+        )
+        markers = [m.strip() for m in markers if m.strip()]
+    return homes, tuple(markers)
+
+
+def _home_markers(homes: tuple[str, ...]) -> tuple[str, ...]:
+    """Reduce declared home paths to the directory marker that identifies
+    a target as landing INSIDE that home.
+
+    ``~/.claude/`` → ``.claude``; ``<workspace>/.loam/`` → ``.loam``.
+    A write target string containing one of these markers lands in a home.
+    """
+    markers: list[str] = []
+    for h in homes:
+        # Strip the placeholder/home prefix down to the home dir token.
+        token = h.replace("~/", "").replace("<workspace>/", "").strip("/")
+        if token:
+            markers.append(token)
+    return tuple(markers)
+
+
+def _path_literals_in_write_sites(source: str) -> list[str]:
+    """Return the joined string-path literals that flow into a write-call's
+    target in *source*.
+
+    Conservative static read: parse the module, find calls whose method is
+    a write-method (``.write_text`` / ``.mkdir`` / …) on a Path-expression,
+    and reconstruct the string-literal path fragments composing that target
+    (``Path(root) / 'framework' / 'leaky' / 'OBJECTIVES.md'`` →
+    ``framework/leaky/OBJECTIVES.md``). Non-literal fragments (variables) are
+    skipped — they cannot be statically resolved, so they are not flagged
+    (false-negative-safe over false-positive-noisy; the planted-violation
+    AC uses literal paths, the representative real-leak shape).
+    """
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:  # pragma: no cover — skip unparseable source
+        return []
+
+    # Symbol table of local `name = <path-chain>` bindings so a write
+    # called on a variable (``target = Path(root) / 'a' / 'b';
+    # target.write_text(...)``) — the realistic leak shape — resolves to
+    # its path-chain fragments. Single-assignment, last-write-wins; good
+    # enough for the representative static read (the AC pins the caught
+    # violation, not a full dataflow engine).
+    bindings: dict[str, list[str]] = {}
+
+    def _binop_path_fragments(node: ast.AST) -> list[str]:
+        """Collect string literals from a ``Path(...) / 'a' / 'b'`` chain,
+        resolving bare ``Name`` receivers through *bindings*."""
+        frags: list[str] = []
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+            frags.extend(_binop_path_fragments(node.left))
+            frags.extend(_binop_path_fragments(node.right))
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            frags.append(node.value)
+        elif isinstance(node, ast.Name):
+            frags.extend(bindings.get(node.id, []))
+        elif isinstance(node, ast.Call):
+            # Path('lit') / open('lit', ...) — first str-literal arg.
+            for arg in node.args:
+                if isinstance(arg, ast.Constant) and isinstance(
+                    arg.value, str
+                ):
+                    frags.append(arg.value)
+                    break
+        return frags
+
+    # First pass: record local path-chain bindings (in source order so a
+    # later binding can reference an earlier one).
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            tgt = node.targets[0]
+            if isinstance(tgt, ast.Name):
+                frags = _binop_path_fragments(node.value)
+                if frags:
+                    bindings[tgt.id] = frags
+
+    # Second pass: write-call sites, resolving variable receivers.
+    targets: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if not (
+            isinstance(func, ast.Attribute)
+            and func.attr in _WRITE_METHODS
+        ):
+            continue
+        frags = _binop_path_fragments(func.value)
+        if frags:
+            targets.append("/".join(frags))
+    return targets
+
+
+def check_boundary_respected(
+    repo_root: Path,
+    version: str,
+    *,
+    allowlist_rel: str | None = None,
+) -> GateResult:
+    """Verify no framework code writes user-state OUTSIDE the two declared
+    homes (AC.BLOCK-ENFORCE.*, ADR-0001 — gate 9).
+
+    HARD-BLOCK (twin of gate 7): a framework-code write of user-state to a
+    path outside ``~/.claude/`` / ``<workspace>/.loam/`` returns RED with a
+    corrective hint naming the offending path + the legal homes; publish
+    cannot proceed. Legitimate framework→user-state writes (those landing
+    IN a home — ``establish_loam_layout`` writing under ``.loam/``) pass
+    clean (AC.BLOCK-ENFORCE.2 — no false-positive).
+
+    The set of legal homes + the user-state markers is sourced from the
+    DECLARED ALLOWLIST (``docs/design/adr/user-state-homes.yaml``) — the
+    same single source the ADR cites (AC.BLOCK-ENFORCE.4). The gate reads
+    the file; it does not hardcode a parallel rule, so the doc-rule and the
+    code-rule cannot drift.
+
+    Detection method (builder's call per ODD — the AC pins the caught
+    violation, not the how): a conservative static scan of every ``.py``
+    under ``framework/`` and ``plugins/`` for write-call sites whose target
+    path-literal carries a user-state marker but does NOT land inside a
+    legal home. Non-literal (variable) targets are not flagged (false-
+    negative-safe); the representative leak shape — a framework module
+    writing a per-user file to a literal path under ``framework/`` — IS
+    caught.
+
+    Fail-safe (plan principle): the gate NEVER crashes the release path.
+    An absent/unparseable allowlist degrades to a clear GREEN-with-caveat
+    ("could not determine"), never a false RED that would block a
+    legitimate publish on the gate's own failure.
+    """
+    rel = allowlist_rel if allowlist_rel is not None else _BOUNDARY_ALLOWLIST_REL
+    loaded = _load_boundary_allowlist(
+        repo_root if allowlist_rel is None else repo_root
+    )
+    if loaded is None:
+        return GateResult(
+            name="boundary-respected",
+            ok=True,
+            message=(
+                f"could not read the declared user-state-home allowlist at "
+                f"{rel}; degraded to pass-with-caveat (fail-safe — the "
+                f"boundary gate never blocks a publish on its own failure). "
+                f"Restore the allowlist (ADR-0001) so the gate can enforce."
+            ),
+        )
+    homes, markers = loaded
+    home_markers = _home_markers(homes)
+    if not home_markers or not markers:
+        return GateResult(
+            name="boundary-respected",
+            ok=True,
+            message=(
+                f"the declared allowlist at {rel} names no homes/markers; "
+                f"degraded to pass-with-caveat (fail-safe). Check the "
+                f"allowlist shape (ADR-0001)."
+            ),
+        )
+
+    violations: list[tuple[str, str]] = []  # (source_file, target_path)
+    for root_name in _FRAMEWORK_ROOTS:
+        root = repo_root / root_name
+        if not root.is_dir():
+            continue
+        for py in root.rglob("*.py"):
+            try:
+                source = py.read_text(encoding="utf-8")
+            except OSError:  # pragma: no cover — fail-safe path
+                continue
+            for target in _path_literals_in_write_sites(source):
+                # Is this a user-state write? (target carries a marker)
+                if not any(m in target for m in markers):
+                    continue
+                # Does it land in a legal home? A target whose path carries
+                # a home marker (``.loam`` / ``.claude``) lands in a home —
+                # legitimate. The cursor/store/model writes inside a home
+                # are addressed relative to the home dir, so the home marker
+                # is present (``.loam/migrations/.cursor``) OR the marker IS
+                # the home (``.cursor`` written under a ``.loam`` Path
+                # variable — see below).
+                if any(hm in target for hm in home_markers):
+                    continue
+                # The violation signal: the write lands under a FRAMEWORK
+                # tree. A legitimate user-state write is addressed relative
+                # to a home (a ``.loam`` / ``.claude`` Path) — it never has
+                # a ``framework/`` or ``plugins/`` segment in its literal
+                # target. A leak writes user-state to a path rooted under
+                # the framework tree (``framework/<x>/OBJECTIVES.md``). Only
+                # framework-rooted user-state targets are violations; a
+                # home-relative literal (``migrations/.cursor``) without a
+                # framework segment is a legitimate in-home write the static
+                # scan cannot fully resolve (the home dir is a Path variable)
+                # and is NOT flagged (false-negative-safe per the ADR).
+                segments = target.split("/")
+                if not any(seg in _FRAMEWORK_ROOTS for seg in segments):
+                    continue
+                rel_src = _display_path(py, repo_root)
+                violations.append((rel_src, target))
+
+    if violations:
+        lines = "\n".join(
+            f"    {src} writes user-state to `{tgt}`"
+            for src, tgt in violations
+        )
+        legal = " / ".join(f"`{h}`" for h in homes) or "the two declared homes"
+        return GateResult(
+            name="boundary-respected",
+            ok=False,
+            message=(
+                f"{len(violations)} framework-code write(s) land user-state "
+                f"OUTSIDE the legal homes:\n{lines}\n  The framework ↔ "
+                f"user-state boundary (ADR-0001) requires every framework-"
+                f"written user-state path to land in one of {legal}. Move "
+                f"the write into a legal home (or, if the path is NOT user-"
+                f"state, the marker scan misfired — narrow the write target). "
+                f"Re-run `loam release {version}` once the leak is closed. "
+                f"(The legal homes are declared in {rel}.)"
+            ),
+        )
+    return GateResult(
+        name="boundary-respected",
+        ok=True,
+        message=(
+            "no framework-code write lands user-state outside the two "
+            "declared homes (boundary respected)"
+        ),
+    )
+
+
+# --------------------------------------------------------------------
 # Aggregation
 # --------------------------------------------------------------------
 
@@ -873,6 +1166,7 @@ ALL_GATES = (
     check_seal_commit_reachable,
     check_migration_declared,
     check_substrate_audit,
+    check_boundary_respected,
 )
 
 
@@ -905,6 +1199,7 @@ def run_all(
         check_seal_commit_reachable(repo_root, version),
         check_migration_declared(repo_root, version, plan_doc=plan_doc),
         check_substrate_audit(repo_root, version),
+        check_boundary_respected(repo_root, version),
     ]
 
 

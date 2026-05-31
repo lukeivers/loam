@@ -389,10 +389,11 @@ def test_run_all_returns_six_results_in_declaration_order(
     staged_repo: Path, fixture_version: str
 ) -> None:
     # The migration-declared gate (AC.MIG-GATE.*, P1.3) appended a seventh
-    # gate; the substrate-audit gate (AC.SOL-GATE.*, N2) appended an eighth.
-    # run_all now returns eight verdicts in declaration order.
+    # gate; the substrate-audit gate (AC.SOL-GATE.*, N2) appended an eighth;
+    # the boundary-respected gate (AC.BLOCK-ENFORCE.*, N1) appended a ninth.
+    # run_all now returns nine verdicts in declaration order.
     rs = gates.run_all(staged_repo, fixture_version)
-    assert len(rs) == 8
+    assert len(rs) == 9
     names = [r.name for r in rs]
     assert names == [
         "hard-smoke",
@@ -403,6 +404,7 @@ def test_run_all_returns_six_results_in_declaration_order(
         "seal-reachable",
         "migration-declared",
         "substrate-audit",
+        "boundary-respected",
     ]
 
 

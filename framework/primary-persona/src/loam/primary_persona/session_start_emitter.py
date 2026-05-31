@@ -188,31 +188,35 @@ def build_session_composer(
         except Exception:  # noqa: BLE001 — AC46.2 graceful empty
             pass
     else:
-        # M-FBM production path: register the file-based memory
-        # retrieval contributor (AC.MFBM.2). The store reads from
-        # ``<workspace>/workspace/.loam/memory/episodes/<slug>/...``.
-        # AC.MFBM.2 fail-closed: any boundary error inside the
-        # contributor returns an empty block; the turn proceeds.
+        # M-FBM production path, CONSOLIDATED (AC-FBM-CON-1): register the
+        # GATED keep-pace turn contributor instead of the ungated
+        # file-based ``register_file_memory_retrieval``. The gated path runs
+        # ``keep_pace.retrieval.retrieve`` — rank-normalize + rule-weight/
+        # hard-floor + SALIENCE GATE — and surfaces corpus/rules AND episodes
+        # from the SAME live store ``<workspace>/workspace/.loam/memory/...``,
+        # junk-gated (task-notification / empty-channel / bare-ack episodes
+        # dropped). The contributor keeps the name ``memory-retrieval`` so no
+        # downstream consumer keying on the block name changes. The retired
+        # ungated ``register_file_memory_retrieval`` / ``build_file_memory_
+        # retrieval_contributor`` / ``_render_retrieval`` stay DEFINED and
+        # exported (the MCP client branch above + the file-memory tests still
+        # use them) — only this LIVE registration is repointed.
+        # AC-FBM-CON-2 fail-closed: any boundary error inside the contributor
+        # returns an empty string; the turn proceeds. AC46.2 graceful-empty.
         try:
-            from .file_memory import (  # noqa: WPS433
-                FileMemoryStore,
-                memory_dir_for_workspace,
-                register_file_memory_retrieval,
+            from .keep_pace.retrieval import (  # noqa: WPS433
+                register_keep_pace_turn_contributor,
             )
 
             slug = resolve_workspace_slug(workspace_root)
-            store = FileMemoryStore(
-                memory_dir=memory_dir_for_workspace(workspace_root)
-            )
-            register_file_memory_retrieval(
+            register_keep_pace_turn_contributor(
                 composer,
-                store=store,
+                workspace_root=workspace_root,
                 workspace_slug=slug,
             )
         except Exception:  # noqa: BLE001 — AC46.2 graceful empty
-            # Slug resolution / store construction / contributor
-            # registration failed; the turn payload omits the
-            # retrieval block. AC46.2 holds.
+            # Slug resolution / contributor registration failed; the turn
+            # payload omits the retrieval block. AC46.2 holds.
             pass
 
     # AC.MSC.2 (Gap A part b) — register the session-start

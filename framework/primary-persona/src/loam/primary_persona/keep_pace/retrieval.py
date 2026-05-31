@@ -644,3 +644,105 @@ def build_keep_pace_contributor(
             return None
 
     return contributor
+
+
+def _resolve_composer_config(
+    workspace_root: Path,
+    workspace_slug: str,
+) -> RetrievalConfig:
+    """Resolve a RetrievalConfig for the ComposedContextPayload turn
+    contributor (AC-FBM-CON-1).
+
+    The composer surface (``session_start_emitter.build_session_composer``)
+    knows the ``workspace_root`` + ``workspace_slug`` explicitly — it does
+    NOT pass a UserPromptSubmit ``workspace.project_dir`` envelope. So this
+    resolver threads those two values directly rather than re-deriving them
+    from an envelope (the live-chain path's :func:`_resolve_live_config`).
+
+    The episode store dir is resolved via ``memory_dir_for_workspace`` so the
+    GATED path reads exactly the same live episode store the retired ungated
+    ``register_file_memory_retrieval`` contributor read; the corpus + objectives
+    home is the user-scope ``~/.claude``. Fail-soft on the episode-store
+    resolution: an absent store leaves ``episode_memory_dir=None`` and the
+    merge degrades to corpus-only (AC.FBMU.2).
+    """
+    claude_home = Path.home() / ".claude"
+    # The feedback_*.md corpus lives under the project-scoped auto-memory
+    # path; resolve it by the workspace_root path-shape slug (mirrors
+    # _resolve_live_config so the corpus is discoverable without threading
+    # the auto-memory slug separately).
+    memory_dir: Optional[Path] = None
+    projects_root = claude_home / "projects"
+    if projects_root.is_dir():
+        slug = "-" + str(workspace_root).strip("/").replace("/", "-")
+        candidate = projects_root / slug / "memory"
+        if candidate.is_dir():
+            memory_dir = candidate
+
+    episode_memory_dir: Optional[Path] = None
+    try:
+        from ..file_memory import memory_dir_for_workspace
+
+        candidate_ep = memory_dir_for_workspace(workspace_root)
+        if candidate_ep.exists():
+            episode_memory_dir = candidate_ep
+    except Exception:  # noqa: BLE001 — fail-soft; unify degrades to corpus-only
+        episode_memory_dir = None
+
+    return RetrievalConfig(
+        workspace_root=workspace_root,
+        memory_dir=memory_dir,
+        claude_homes=(claude_home,),
+        objectives_home=claude_home,
+        episode_memory_dir=episode_memory_dir,
+        episode_group_ids=(workspace_slug,) if workspace_slug else None,
+    )
+
+
+def register_keep_pace_turn_contributor(
+    composer: object,
+    *,
+    workspace_root: Path,
+    workspace_slug: str,
+    name: str = "memory-retrieval",
+) -> Callable[[dict], str]:
+    """Register the GATED keep-pace retrieval contributor on a
+    ``ComposedContextPayload`` at ``TriggerKind.turn`` (AC-FBM-CON-1).
+
+    This is the CONSOLIDATION entry-point: it replaces the live
+    registration of the ungated ``file_memory.register_file_memory_retrieval``
+    contributor inside ``build_session_composer``'s production (client-None)
+    branch. The contributor it registers runs the GATED :func:`retrieve`
+    entry-point — rank-normalize + rule-weight/hard-floor + salience gate —
+    so the live ``user-prompt-submit`` hook surfaces corpus/rules AND episodes
+    junk-gated, instead of the raw ungated episode dump.
+
+    The contributor name defaults to ``memory-retrieval`` (the same name the
+    retired ungated contributor used) so no downstream consumer keying on the
+    block name changes.
+
+    The contributor callable returns a ``str`` ALWAYS (never ``None``):
+    :func:`retrieve` already returns ``""`` on no-match, and the wrapper coerces
+    any falsy result to ``""`` so ``context_composer._serialise_turn``'s
+    ``text.strip()`` is safe (AC-FBM-CON-2). Fail-closed: any boundary error
+    yields ``""`` (matches the retired contributor's AC.MFBM.2 fail-closed +
+    AC46.2 graceful-empty contract).
+    """
+    from ..context_composer import TriggerKind  # noqa: WPS433
+
+    cfg = _resolve_composer_config(workspace_root, workspace_slug)
+
+    def contributor(context: dict) -> str:
+        try:
+            prompt = ""
+            if isinstance(context, dict):
+                prompt = str(context.get("prompt", "") or "")
+            if not prompt.strip():
+                return ""
+            block = retrieve(prompt=prompt, config=cfg)
+            return block or ""
+        except Exception:  # noqa: BLE001 — fail-closed; turn proceeds
+            return ""
+
+    composer.register(name=name, trigger_kind=TriggerKind.turn, fn=contributor)
+    return contributor

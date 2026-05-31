@@ -69,29 +69,30 @@ def test_AC46_2_emit_returns_text_when_memory_client_returns_results(
 def test_AC46_2_emit_returns_empty_retrieval_block_when_memory_dir_empty(
     tmp_path: Path,
 ) -> None:
-    """Post-M-FBM (memory-substrate pivot, 2026-05-01): when the
-    workspace's file-based memory dir has no episodes, the
-    contributor IS registered (file-based store ships in every
-    workspace) and emits the empty-state ``(no results for this
-    query)`` block per AC.MPF.2.
+    """FBM path consolidation (2026-05-31): when the workspace's
+    memory dir + corpus have no hit for the query, the GATED keep-pace
+    contributor (the consolidation production default) is SILENT — it
+    emits no retrieval block at all.
 
-    Pre-M-FBM, this test asserted the contributor was not registered
-    (no MCP client at production-default); post-M-FBM the file-based
-    contributor is the production default. AC46.2's graceful-empty
-    contract is satisfied by the empty-state-rendered block —
-    structurally graceful, fail-closed-on-error, no exception
-    bubbles. The AC46.2 textual reading is updated to match the
-    M-FBM surface; the underlying invariant (no exception, no
-    blocked turn) is unchanged.
+    Pre-M-FBM this asserted no contributor registered; the M-FBM pivot
+    changed it to the ungated file-memory empty-state ``(no results for
+    this query)`` block; the FBM path consolidation repoints the
+    production contributor to the gated keep-pace ``retrieve`` path,
+    which is silent-on-no-match (AC.KP1.4) — the empty-state block was
+    itself low-value prompt noise. AC46.2's graceful-empty contract is
+    satisfied by the silent surface: no exception, no blocked turn, no
+    memory-contributing text. The underlying invariant is unchanged.
     """
     seed_baseline_workspace(tmp_path)
     text = emit_user_prompt_submit_context(
         tmp_path, "any prompt"
     )
-    # The block IS present (file-based contributor is the production
-    # default post-M-FBM) and shows the empty-state diagnostic.
-    assert "[memory-retrieval]" in text
-    assert "(no results for this query)" in text
+    # Consolidated: the gated contributor is silent on no-match — no
+    # empty-state retrieval block is rendered. Graceful-empty holds via
+    # the silent surface (the session-level frame still serialises).
+    assert "(no results for this query)" not in text
+    assert "[keep-pace]" not in text  # no hit on this query
+    assert "[pos-v2 user-prompt-submit]" in text  # session frame intact
 
 
 def test_AC46_2_emit_no_fact_when_memory_client_raises(

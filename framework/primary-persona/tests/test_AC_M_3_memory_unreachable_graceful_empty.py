@@ -43,17 +43,20 @@ def test_AC_M_3_no_mcp_json_means_empty_retrieval_block_and_exit_zero(
     tmp_path: Path, monkeypatch, capsys
 ) -> None:
     """No ``.mcp.json`` in the workspace → no MCP client constructed →
-    file-based contributor (M-FBM default) is registered → CLI emits
-    the empty-state retrieval block, exits 0.
+    the GATED keep-pace turn contributor (FBM path-consolidation default)
+    is registered → on a no-match query it is SILENT (emits no block);
+    the CLI exits 0 and blocks nothing.
 
-    Post-M-FBM (memory-substrate pivot, 2026-05-01) the file-based
-    contributor IS the production default. AC.M.3's graceful-empty
-    contract is satisfied by ``[memory-retrieval]\\n  (no results
-    for this query)`` — structurally graceful, no exception bubbles,
-    hook fan-out unblocked. The "no retrieval block at all" reading
-    of AC.M.3 was pre-M-FBM specific to the MCP-only substrate; the
-    post-M-FBM AC.M.3 surface always carries the block (file-based
-    is always-ready).
+    FBM path consolidation (2026-05-31) repointed the production
+    memory-retrieval contributor from the ungated file-memory path (which
+    always rendered an empty-state ``[memory-retrieval]\\n  (no results
+    for this query)`` block) to the gated keep-pace ``retrieve`` path,
+    which is SILENT-on-no-match (AC.KP1.4) — the empty-state diagnostic
+    block was itself low-value prompt noise. AC.M.3's graceful-empty
+    contract is satisfied by the silent surface: exit 0, no exception,
+    hook fan-out unblocked, no memory-contributing text. This matches the
+    ORIGINAL AC.M.3 wording ("empty or non-memory-contributing payload");
+    the intervening M-FBM empty-block reading is superseded.
     """
     seed_baseline_workspace(tmp_path)
     envelope = json.dumps(
@@ -69,9 +72,12 @@ def test_AC_M_3_no_mcp_json_means_empty_retrieval_block_and_exit_zero(
     rc = cli_user_prompt_submit(workspace_root=tmp_path)
     assert rc == 0
     out = capsys.readouterr().out
-    # Post-M-FBM: block IS present, body is the empty-state diagnostic.
-    assert "[memory-retrieval]" in out
-    assert "(no results for this query)" in out
+    # Consolidated: the gated contributor is silent on no-match — no
+    # retrieval block is rendered (no empty-state noise in the prompt).
+    # The graceful-empty invariant holds: exit 0, no exception bubbled,
+    # no memory-contributing text.
+    assert "(no results for this query)" not in out
+    assert "[keep-pace]" not in out  # no episode/corpus hit on this query
 
 
 def test_AC_M_3_search_raises_connection_refused_then_exit_zero(

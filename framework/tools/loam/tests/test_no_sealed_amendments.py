@@ -40,7 +40,12 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
-BASELINE = "b278cc6a08b5c7ff127036d009b8d7ae22a3c2c6"
+# Advanced to 31dc9ca (the P1.2 FBM-path-consolidation seal — this slice's
+# predecessor on slice/p1.2-loam-layout) at the P1.3 migration-engine seal.
+# The prior baseline (b278cc6a) sat 95 sibling commits behind HEAD; advancing
+# to the immediate predecessor seal bounds the window to THIS slice's loam-cli
+# changes (the standard "advance sidecar + BASELINE" seal pattern).
+BASELINE = "31dc9ca"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -83,6 +88,13 @@ def test_AC_FBE_2_S_only_loam_cli_changed() -> None:
     # (FBE.2 sub-plan + manifest YAML + parent plan-doc backfill).
     allowed_prefixes = (
         "framework/tools/loam/",
+        # P1.3 partner-admission: the migration engine slice lands its NEW
+        # component + the tracked migration contract + the slice plan/cursor
+        # alongside the loam-cli gate edit (the same cross-component partner
+        # admission reversibility-primitive's fence already uses).
+        "framework/state-migration-engine/",
+        "docs/state-migrations/",
+        "docs/plans/",
         "framework/tools/pos-publish-framework-only/",
         # Amendment #143 cross-component partner: heavy-b-migrate's
         # downstream-consumer source-edit (amendment_acs.py routes

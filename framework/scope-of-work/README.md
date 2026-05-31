@@ -57,7 +57,7 @@ That is the entire runtime footprint. (Test infra adds `pytest` and
 
 ```python
 from scope_of_work.adapter import RealScopeSourceAdapter
-api = MemoryAPI(graphiti, scope_source=RealScopeSourceAdapter(rt))
+api = MemoryAPI(memory_store, scope_source=RealScopeSourceAdapter(rt))
 ```
 
 Memory's `MockScopeSource` is preserved as a test-only fixture; new

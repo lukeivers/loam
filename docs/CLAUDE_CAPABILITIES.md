@@ -382,7 +382,7 @@ _Unclear from available sources as of 2026-04-23 whether loam's current usage pa
 
 Anthropic's server-side memory tool (distinct from `memory-system` the loam component) — a model-managed key/value store that the API can read and write across conversations. Offered as a client-tool type in some configurations.
 
-**Composes with loam.** Potential shortcut for simple workspace memory needs, but loam's `memory-system` is substantially richer (graphiti-based knowledge graph, entity+relationship extraction, deep personalisation per Idea 4). The Anthropic Memory API is a thin alternative; the loam memory-system is the durable answer for this workspace.
+**Composes with loam.** Potential shortcut for simple workspace memory needs. loam's current memory substrate is the file-based FBM corpus (the `MEMORY.md` index + `feedback_*.md` topic files, read just-in-time) plus the per-workspace `FileMemoryStore` episodic store — NOT the retired graphiti/kuzu knowledge-graph runtime (removed post-v0.3.0; a graphiti-class re-implementation is backlog-only per `docs/release-roadmap.md`). The Anthropic Memory API is a thin alternative; loam's file-based memory is the durable answer for this workspace, with a public `MemoryProvider` Protocol that future substrates can implement.
 
 _Unclear from available sources as of 2026-04-23; flagged for Idea 1 Step 4 refresh._
 

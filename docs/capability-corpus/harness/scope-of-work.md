@@ -60,7 +60,10 @@ primitive:
   binds to scopes via `bind_scope` / `activate_scope`; the
   IPC contract delivers progress updates across compaction.
 - With **memory-system**: scope lifecycle events flow into
-  graphiti via the Stop-hook learning-extraction subscriber.
+  the file-based memory store (`FileMemoryStore`) via the
+  Stop-hook learning-extraction subscriber. (The prior
+  graphiti/kuzu runtime was retired post-v0.3.0; the
+  subscriber now writes episodes through the file substrate.)
 - With **observability-aggregator**: every `start` /
   `debit` / `complete` emits OTel spans the awareness-block
   contributor surfaces.

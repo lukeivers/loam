@@ -125,7 +125,7 @@ from scope_of_work.adapter import RealScopeSourceAdapter
 
 adapter = RealScopeSourceAdapter(rt)
 # Inject into memory:
-api = MemoryAPI(graphiti, scope_source=adapter)
+api = MemoryAPI(memory_store, scope_source=adapter)
 ```
 
 The adapter satisfies memory's `ScopeSource` protocol; unknown scope

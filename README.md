@@ -152,7 +152,7 @@ machine-readable artefacts under
 ## Status
 
 loam shipped v0.1.0 as the first public release on 2026-04-29; the
-current public release is v0.13.0. The project remains intentionally
+current public release is v0.14.0. The project remains intentionally
 narrow: infrastructure components, one demonstration plugin (Dev/SDLC),
 and enough scaffolding for a stranger to clone, run, and reach a useful
 session without reading source. See `docs/STATE.md` and

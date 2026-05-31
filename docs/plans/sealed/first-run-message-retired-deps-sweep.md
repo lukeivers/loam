@@ -113,3 +113,89 @@ Lens 7; left for a separate task-#19 cycle.
   this edit → a pre-existing fence breach surfaced → halt + surface.
 - Any surrounding-code ODD violation surfaces → halt + surface.
 - 5-hour wall-clock ceiling.
+
+# first-run message — retired-deps accuracy sweep — apply ladder
+
+2026-05-29. PATCH-class defect closure (user-visible factual
+correction), riding into v0.14.0 as a named sub-fix; the
+user-visible subset of task #19. Per
+`docs/plans/first-run-message-retired-deps-sweep.md`.
+
+Scope: the fresh-start first-run message
+(`first_run_dispatch.py:_msg_fresh_start`) told a fresh user the
+install "pulls graphiti-core, neo4j, and kuzu." That dependency set
+RETIRED at v0.1.0 (AC.MFBM.7 — file-based memory is the default
+substrate). The message lied about what installs. This cycle
+replaces the retired-dep sentence with an accurate file-based-memory
+description and proves it via AC.FRMSG.
+
+AC families:
+  - AC.FRMSG.1 — no graphiti/neo4j/kuzu reference in the fresh-start
+    message (the retired-dependency claim is gone).
+  - AC.FRMSG.2 — the message states current install reality
+    (file-based memory; no external memory store / heavy memory
+    deps).
+  - AC.FRMSG.S — outcome-altitude: the production message-builder
+    `_msg_fresh_start(log, helper_version)`, called with no
+    pre-arranged state, returns accurate text (no retired-dep name;
+    names file-based memory).
+
+Method-level choices (builder's call per ODD §1.1):
+  - The exact replacement wording for the file-based-memory sentence.
+  - The test layout (one parametrized AC.FRMSG file).
+
+Out of scope (surfaced, NOT fixed): the `pos-v2` product-name
+residue in the first-run messages (task #19 proper, separate cycle);
+the inventory-comment text (accurate documentation, not
+user-visible); non-first-run graphiti references (intentional —
+retirement assertions, archive/seal records).
+
+Predecessor commits:
+  - 4b258218 — last sealed amendment (#154) seal.
+  - f23deda  — current loam HEAD (#154 STATE backfill tip).
+
+BASELINE f23deda — re-confirm + advance to the source-edit commit
+at apply. Single-component fence on hands-off-lifecycle.
+
+## 14. Method-decision record
+
+Amendment **#155** — first-run-message-retired-deps-sweep.
+Single-component fence on **hands-off-lifecycle**. BASELINE
+advanced f23deda → 2a019c3 (the D.1 re-baseline corrective; new
+sidecar value).
+
+Method-level choices (builder's call per ODD §1.1):
+  - Replacement wording: the retired-dep sentence
+    (graphiti-core / neo4j / kuzu) was replaced with an accurate
+    file-based-memory description; no external memory store / heavy
+    memory deps named.
+  - Test layout: one parametrized AC.FRMSG file
+    (`test_AC_FRMSG_first_run_message_retired_deps.py`) over
+    AC.FRMSG.{1,2,S}.
+
+In-flight finding (F2, surfaced + ruled at seal): the
+hands-off-lifecycle full-sweep at seal surfaced a pre-existing
+stale-RED D.1 byte-content frozen hash for
+`framework/primary-persona/src/loam/primary_persona/cli.py`. cli.py
+was legitimately content-edited by amendment **#154** (FBM Cycle 1
+fix-write-path, sealed `fd5fe6a`); #154 sealed on the
+primary-persona fence and never ran this hands-off-lifecycle D.1
+test, so the frozen SHA (`8c128307…`) went stale-RED at HEAD
+`f23deda` — NOT introduced by #155. Blast radius = 1 of 16 samples;
+the git-mv-corruption guard stayed intact for the other 15. Ruled
+YES (in-fence ODD §4 in-band retire-and-rebaseline per the test's
+own docstring direction for intentionally-edited files): re-baseline
+`8c128307…` → `260c580308bc0a3bc4a53e2608d88b8912e607c696e8e2105e131f2df5920ac0`
+(the recomputed sha256 of the sealed cli.py) as a NEW corrective
+commit. The §14 SHA subsection below was authored by hand because the
+plan-doc carried no `## 14.` heading at seal-time (the seal's
+`--plan-doc` finalize HALTed on plan-doc-missing-section-14; the seal
+commit itself landed clean).
+
+### Commit SHAs
+
+- plan + manifest:   `2a15c4d`
+- source edit:       `2edf2f4`
+- apply:             `71215e1`
+- D.1 re-baseline corrective (in-fence, #154-edit driven): `2a019c3`
+- seal:              `e0ff5bd`

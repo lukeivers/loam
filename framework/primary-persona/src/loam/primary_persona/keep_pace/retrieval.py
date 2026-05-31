@@ -86,6 +86,24 @@ MERGE_NEUTRAL_SCORE = 0.1
 # is the outer ceiling, this keeps any one episode pointer glanceable.
 _EPISODE_POINTER_CAP = 160
 
+# B3 (AC-FBM-SAL-1/-4) — the salience gate threshold. An episode hit whose
+# structural salience is BELOW this is force-DROPPED from the SURFACED set
+# (the recall side of the never-not-store / gate-surfacing-only invariant).
+# A NAMED, tunable constant: lowering it re-admits previously-gated junk
+# episodes (AC-FBM-SAL-4 re-tunable), proving the gate is reversible and
+# nothing was lost. Structural junk scores 0.0 (< 0.5 → gated); a
+# substantive turn scores 1.0 (>= 0.5 → surfaces). Corpus hits + any hit
+# with no declared salience ride at the full-salience default (never gated).
+SALIENCE_THRESHOLD = 0.5
+
+# B3 — the full-salience default. A hit with no ``_salience`` slot (every
+# corpus hit; any episode written before the salience field, whose body
+# nonetheless scores fresh in the search path) rides at full salience so the
+# gate can only ever drop a hit affirmatively scored as junk (never-drop
+# floor). Mirrors ``file_memory.SALIENCE_FULL`` without importing across the
+# package boundary on the hot path.
+_SALIENCE_FULL_DEFAULT = 1.0
+
 
 @dataclass
 class RetrievalConfig:
@@ -211,7 +229,26 @@ def _episode_hits(
         pointer = _episode_pointer(ep)
         if not pointer:
             continue
-        hits.append({"pointer": pointer, "score": score_val, "_episode": True})
+        # B3 (AC-FBM-SAL-1) — carry the episode's structural salience onto
+        # the hit so the merge can gate below-threshold (junk) episodes out
+        # of the surfaced set. Absent => full salience (never-drop default).
+        salience = ep.get("_salience")
+        try:
+            salience_val = (
+                float(salience)
+                if salience is not None
+                else _SALIENCE_FULL_DEFAULT
+            )
+        except (TypeError, ValueError):
+            salience_val = _SALIENCE_FULL_DEFAULT
+        hits.append(
+            {
+                "pointer": pointer,
+                "score": score_val,
+                "_episode": True,
+                "_salience": salience_val,
+            }
+        )
     return hits
 
 
@@ -255,6 +292,7 @@ def retrieve(
     prompt: str,
     config: RetrievalConfig,
     last_topic: str = "",
+    salience_threshold: float = SALIENCE_THRESHOLD,
 ) -> str:
     """The PRODUCTION work-anchored retrieval entry-point (AC.KP1.6).
 
@@ -275,6 +313,13 @@ def retrieve(
     output byte-identical to the pre-unify KP1 output.
     AC.FBMU.3: the merged surface respects the top-N <= 5 cap +
     INJECTION_CHAR_CAP byte budget (episode hits cannot blow it).
+    AC-FBM-SAL-1: a structural-junk episode (a ``<task-notification>``
+    turn, an empty channel event, a bare ack) is tagged near-zero
+    salience at ingest and is force-DROPPED from the surfaced set here,
+    so it does not surface even when it shares tokens with the query.
+    AC-FBM-SAL-4: ``salience_threshold`` is tunable per call — lowering
+    it re-admits previously-gated junk episodes (the gate is reversible;
+    the episode was never removed from disk, only gated from surfacing).
     """
     if is_trivial_prompt(prompt):
         return ""
@@ -313,7 +358,12 @@ def retrieve(
     episode_hits = _episode_hits(
         query_tokens=query_tokens, config=config, num_results=config.top_n
     )
-    merged = _merge_by_score(corpus_hits, episode_hits, top_n=config.top_n)
+    merged = _merge_by_score(
+        corpus_hits,
+        episode_hits,
+        top_n=config.top_n,
+        salience_threshold=salience_threshold,
+    )
     return _render_injection(merged, cap=INJECTION_CHAR_CAP)
 
 
@@ -370,14 +420,44 @@ def _is_pinned(hit: dict[str, object]) -> bool:
     return bool(hit.get("pinned"))
 
 
+def _salience_of(hit: dict[str, object]) -> float:
+    """The hit's structural salience (B3, AC-FBM-SAL-1), fail-soft to full.
+
+    Junk episodes carry a near-zero salience; substantive episodes + every
+    corpus hit (which never declares the slot) ride at the full-salience
+    default. Any malformed value also resolves to full salience — the
+    never-drop floor, so the gate only ever suppresses an affirmatively
+    junk-scored hit.
+    """
+    s = hit.get("_salience")
+    try:
+        return float(s) if s is not None else _SALIENCE_FULL_DEFAULT
+    except (TypeError, ValueError):
+        return _SALIENCE_FULL_DEFAULT
+
+
 def _merge_by_score(
     corpus_hits: list[dict[str, object]],
     episode_hits: list[dict[str, object]],
     *,
     top_n: int,
+    salience_threshold: float = SALIENCE_THRESHOLD,
 ) -> list[dict[str, object]]:
     """Merge corpus + episode hits by descending WEIGHTED-NORMALIZED score,
-    with pinned rules force-included, capped at top_n.
+    with pinned rules force-included, below-salience episodes gated, capped
+    at top_n.
+
+    B3 (AC-FBM-SAL-1) — each hit's boosted score is multiplied by its
+    structural SALIENCE, and any hit whose salience is BELOW
+    ``salience_threshold`` is force-DROPPED from the surfaced set BEFORE the
+    relevance cut (the episode mirror of the pinned force-INCLUDE). A junk
+    episode (salience 0.0) therefore cannot surface even on a query with no
+    competition — the recall side of the never-not-store / gate-surfacing-only
+    invariant. Corpus hits + substantive episodes ride at full salience
+    (>= the threshold) and are never gated. ``salience_threshold`` is a NAMED,
+    tunable parameter (default :data:`SALIENCE_THRESHOLD`): lowering it
+    re-admits previously-gated junk episodes (AC-FBM-SAL-4 re-tunable),
+    proving the gate is reversible and nothing was lost.
 
     AC.FBMU.1 — one merged result set across both physical indexes.
     AC.FBMU.2 — when ``episode_hits`` is empty the returned list IS
@@ -414,14 +494,33 @@ def _merge_by_score(
     """
     if not episode_hits:
         return corpus_hits
+    # B3 (AC-FBM-SAL-1) — SALIENCE GATE. Force-drop any episode hit whose
+    # structural salience is below the threshold BEFORE the merge so a junk
+    # episode never occupies a slot, even with no competition. Pinned rules
+    # are never gated (they ride at full salience — a corpus hit declares no
+    # ``_salience`` slot, so ``_salience_of`` returns the full-salience
+    # default). This gates SURFACING only; the episode is still on disk
+    # verbatim (HARD INVARIANT — storage is untouched). Re-tunable: a lower
+    # ``salience_threshold`` re-admits the gated episodes (AC-FBM-SAL-4).
+    episode_hits = [
+        h for h in episode_hits if _salience_of(h) >= salience_threshold
+    ]
+    if not episode_hits:
+        # Every episode was gated out as junk — fall back to the
+        # byte-identical corpus-only path (AC-FBM-SAL-2 no-regression: a
+        # turn with no surviving episode renders exactly the corpus output).
+        return corpus_hits
     combined = list(corpus_hits) + list(episode_hits)
     # Per-source min-max normalize so the two incompatible BM25 scales compete
-    # fairly (AC-FBM-RN-1), then apply the per-hit weight boost (AC-FBM-W-1).
-    # Pure arithmetic on already-fetched hit lists — no new I/O, no new failure
-    # surface on the every-turn live hook.
+    # fairly (AC-FBM-RN-1), then apply the per-hit weight boost (AC-FBM-W-1)
+    # and the per-hit salience factor (AC-FBM-SAL-1). Pure arithmetic on
+    # already-fetched hit lists — no new I/O, no new failure surface on the
+    # every-turn live hook.
     norms = _minmax_norm(corpus_hits) + _minmax_norm(episode_hits)
     boosted = [
-        norms[i] * (_weight_of(combined[i]) / BASELINE_WEIGHT)
+        norms[i]
+        * (_weight_of(combined[i]) / BASELINE_WEIGHT)
+        * _salience_of(combined[i])
         for i in range(len(combined))
     ]
     # Partition: pinned rules are the hard floor (AC-FBM-W-2) — force-included

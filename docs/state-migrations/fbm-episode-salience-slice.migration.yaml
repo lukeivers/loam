@@ -1,0 +1,68 @@
+# User-state migration — FBM episode SALIENCE gate slice (B3)
+#
+# Declared per the v-next build workflow Step-5 (INTEGRATE+RECORD) and the
+# migration release-gate convention (G4, P1.3): every release declares a
+# user-state migration. Version number is intentionally NOT pre-assigned
+# (versions derive at release time — feedback_version_numbers_at_release_time);
+# this file is keyed by the scope-descriptive slug.
+
+slug: fbm-episode-salience-slice
+slice: FBM episode SALIENCE gate (B3 — the recall-quality safety-pair)
+date: 2026-05-31
+predecessor: fbm-rule-weighting-slice   # B3 consumes B1's merge weight-knob
+disposition: extend   # two sealed framework functions (file_memory + retrieval)
+
+# What user-state this migration changes: a REAL but NON-DESTRUCTIVE,
+# NON-REWRITING schema addition to the episode store.
+operation: schema-add-forward-additive
+creates:
+  # A new optional `salience: <float>` frontmatter field on every episode
+  # WRITTEN AFTER this slice lands. It is authored by FileMemoryStore.
+  # write_episode at ingest from the turn's structural shape.
+  - .loam/memory/episodes/**/*.md   # new field on NEWLY-WRITTEN episodes only
+leaves_in_place:
+  - .loam/memory/episodes/                # ALL existing episodes — UNTOUCHED
+  - .loam/memory/search-index.sqlite      # episode FTS index — UNTOUCHED
+  # No existing episode file is rewritten, re-tagged, removed, or compressed.
+  # The feedback_*.md rules corpus is not involved.
+changes_user_state_schema: true   # a new frontmatter field on new episodes
+
+rationale: >
+  B3 adds an episode SALIENCE gate. (1) AT INGEST, FileMemoryStore.write_episode
+  computes a cheap structural salience score (compute_salience) from the turn's
+  user half and records it as a `salience: <float>` frontmatter scalar on the
+  newly-written episode. Structural junk (a <task-notification> turn, an
+  empty/near-empty <channel> event, a bare ack) scores 0.0; everything else
+  (and every error/default) scores 1.0. (2) AT RECALL, retrieval._merge_by_score
+  multiplies each episode hit's normalized-and-weighted score by its salience
+  AND force-DROPS any hit whose salience is below the named, tunable
+  SALIENCE_THRESHOLD (default 0.5), so a junk episode does not surface even on a
+  query it lexically matches.
+  .
+  This is a schema ADDITION (a new field), so it is NOT a no-op — but it is
+  forward-additive and NON-DESTRUCTIVE: existing episodes (which lack the field)
+  are NOT rewritten. The search path computes salience FRESH from each episode's
+  body (which the FTS index already stores), so pre-salience episodes get the
+  correct gate WITHOUT any rewrite. A missing/absent salience defaults to FULL
+  salience everywhere (the never-drop floor).
+
+# HARD INVARIANT (load-bearing — the doctrine's "delete something load-bearing"
+# failure this slice explicitly does NOT commit): salience gates SURFACING ONLY.
+# Every turn is still STORED on disk verbatim; nothing is not-stored or deleted.
+# A mis-judged junk turn remains on disk and is RE-ADMITTABLE by lowering the
+# threshold (proven by AC-FBM-SAL-3 never-delete + AC-FBM-SAL-4 re-tunable).
+# There is NO not-store path and NO delete path in this slice.
+
+# Reversibility (G-star / protection floor): the change removes/compresses/
+# overwrites NO user-state. On a code revert, NEW episodes simply stop gaining
+# the field; the field already present on episodes written under B3 is harmless
+# (an unknown frontmatter key the parser ignores), and the gate logic is gone so
+# nothing reads it. Reverted by git, no data move.
+reversible: true
+removes_user_state: false
+idempotent: true   # write is deterministic; salience recomputes identically
+
+# Boundary note (master plan §2 F2): this declared contract lives on the
+# FRAMEWORK side (docs/state-migrations/, tracked). No destructive per-workspace
+# applied step runs against user-state; the engine (P1.3) records it as a
+# declared forward-additive schema-add for release-gate accounting.

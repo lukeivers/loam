@@ -102,6 +102,147 @@ ERRORS_LOG_NAME = ".errors"
 SEARCH_INDEX_NAME = "search-index.sqlite"
 
 
+# ---- episode SALIENCE gate (B3 — AC-FBM-SAL family) -----------------
+#
+# Junk turns (agent task-notification turns, empty/near-empty channel
+# header events, bare acks) get logged as episodes and rank HIGH on
+# shared boilerplate tokens, polluting recall. The salience gate tags
+# each turn at INGEST with a structural salience score; the retrieval
+# merge force-DROPS below-threshold episodes from the SURFACED set.
+#
+# HARD INVARIANT (load-bearing): salience gates SURFACING only. Every
+# turn is still STORED on disk verbatim; nothing is not-stored or
+# deleted. A mis-judged junk turn stays on disk and is re-admittable by
+# lowering the retrieval threshold (the gate is re-tunable, nothing
+# lost). Every default / error path resolves to SALIENCE_FULL so the
+# gate can only suppress a turn it AFFIRMATIVELY recognized as junk.
+
+# AC-FBM-SAL-1/-2 — the two salience poles. A turn whose USER half is
+# pure scaffolding is tagged SALIENCE_JUNK; everything else (and every
+# error / default) is SALIENCE_FULL — fail toward surfacing.
+SALIENCE_FULL = 1.0
+SALIENCE_JUNK = 0.0
+
+# A user half (residual inner text, after scaffolding wrappers are
+# stripped) shorter than this is treated as content-free (empty-user /
+# channel-empty junk classes). 8 chars is below any real instruction but
+# above a wrapper remnant; calibrated against the live store (the
+# channel-empty class had 1-7-char residuals like "Go", "Accept").
+_SALIENCE_MIN_CHARS = 8
+
+# AC-FBM-SAL-1 — bare-ack tokens. A user half whose residual inner text
+# (lowercased, surrounding punctuation/whitespace stripped) is exactly
+# one of these is plumbing, not a memory.
+_ACK_TOKENS: frozenset[str] = frozenset(
+    {
+        "ok", "okay", "k", "yes", "no", "yep", "yeah", "ty",
+        "thanks", "thank you", "got it", "nice", "cool", "great",
+        "perfect", "sounds good", "done",
+    }
+)
+
+# Scaffolding wrapper tags whose OUTER markup is plumbing but whose
+# INNER text may be real (a <channel>-wrapped Luke message is fully
+# salient — the load-bearing protect-real-messages property). The
+# residual is what's left after these open/close tags are removed.
+_SCAFFOLD_WRAPPER_RE = re.compile(
+    r"</?(?:channel|system-reminder)[^>]*>", re.IGNORECASE
+)
+
+
+def _salience_user_residual(user_text: str) -> str:
+    """Strip scaffolding wrapper tags from a user half, keep inner text.
+
+    A ``<channel …>`` / ``<system-reminder>`` wrapper is plumbing; the
+    text INSIDE it may be a real Luke message. Returns the residual so
+    the junk signatures key on actual content, never on the mere
+    presence of a wrapper tag (AC-FBM-SAL-5 protect-real-messages).
+    """
+    return _SCAFFOLD_WRAPPER_RE.sub("", user_text).strip()
+
+
+def compute_salience(user_text: str, assistant_text: str = "") -> float:
+    """Structural salience score for a turn (B3, AC-FBM-SAL-1/-2).
+
+    Cheap, deterministic, stdlib-only. Returns :data:`SALIENCE_JUNK`
+    (0.0) when the turn's USER half matches a structural junk signature,
+    else :data:`SALIENCE_FULL` (1.0). The four junk signatures (verified
+    against the live 1288-episode store):
+
+    1. **task-notification** — the user half (lstripped) starts with
+       ``<task-notification>`` (an agent-completion notification that
+       got logged as a turn; pollutes recall on ``task-id`` /
+       ``tool-use-id`` / ``status`` boilerplate tokens).
+    2. **channel/scaffolding-empty** — after stripping ``<channel …>`` /
+       ``<system-reminder>`` wrappers, the residual inner text is
+       shorter than :data:`_SALIENCE_MIN_CHARS` (an empty channel
+       event).
+    3. **empty-user** — the whole user half is shorter than
+       :data:`_SALIENCE_MIN_CHARS` and not real content.
+    4. **bare-ack** — the residual inner text (lowercased,
+       punctuation-stripped) is a pure ack token (:data:`_ACK_TOKENS`).
+
+    The scorer keys on the USER half only: a substantive ASSISTANT half
+    does NOT rescue a turn whose user half is pure plumbing, because the
+    recall-polluting boilerplate tokens live in the user half. A
+    ``<channel>``-wrapped Luke message with real text inside is fully
+    salient (the residual is the real text) — the load-bearing
+    protect-real-messages property.
+
+    Fail-safe (the hot ingest path): ANY exception returns
+    :data:`SALIENCE_FULL` — a scorer error fails toward
+    storing-at-full-salience + surfacing, never toward dropping (the
+    never-drop floor / HARD INVARIANT).
+    """
+    try:
+        u = (user_text or "").strip()
+        # (1) task-notification turn.
+        if u.lstrip().startswith("<task-notification>"):
+            return SALIENCE_JUNK
+        residual = _salience_user_residual(u)
+        # (2) channel/scaffolding-empty: a wrapper with no real content.
+        if u.lstrip().startswith(("<channel", "<system-reminder")):
+            if len(residual) < _SALIENCE_MIN_CHARS:
+                return SALIENCE_JUNK
+        # (3) empty-user: the whole user half is content-free.
+        if len(u) < _SALIENCE_MIN_CHARS:
+            return SALIENCE_JUNK
+        # (4) bare-ack: residual inner text is a pure ack token.
+        ack_key = residual.lower().strip(" .!?,;:\n\t")
+        if ack_key in _ACK_TOKENS:
+            return SALIENCE_JUNK
+        return SALIENCE_FULL
+    except Exception:  # noqa: BLE001 — never-drop floor on the hot path
+        return SALIENCE_FULL
+
+
+def _salience_from_body(body: str) -> float:
+    """Compute salience from a written episode body (B3, AC-FBM-SAL-1).
+
+    The worker authors the body as ``[user]\\n<msg>\\n\\n[assistant]\\n
+    <reply>\\n`` (see ``memory_write_worker._build_episode_args``). This
+    splits on those markers and scores the user half. Fail-safe:
+    unparseable body → :data:`SALIENCE_FULL`.
+    """
+    try:
+        text = body or ""
+        u = ""
+        a = ""
+        mu = re.search(r"\[user\]\n(.*?)(?:\n\[assistant\]|\Z)", text, re.S)
+        ma = re.search(r"\[assistant\]\n(.*)\Z", text, re.S)
+        if mu:
+            u = mu.group(1).strip()
+        if ma:
+            a = ma.group(1).strip()
+        if not mu and not ma:
+            # No [user]/[assistant] markers — treat the whole body as
+            # the user half (a non-persona writer's plain body).
+            u = text.strip()
+        return compute_salience(u, a)
+    except Exception:  # noqa: BLE001 — never-drop floor
+        return SALIENCE_FULL
+
+
 def memory_dir_for_workspace(workspace_root: Path | str) -> Path:
     """Resolve the file-based memory dir for ``workspace_root``.
 
@@ -373,6 +514,12 @@ class FileMemoryStore:
         # four fields named in :data:`ENCODING_CONTEXT_FIELDS` —
         # adding a fifth field is a structural-test failure.
         context_block = _render_context_block(context)
+        # B3 (AC-FBM-SAL-1/-2): tag the turn with a structural salience
+        # score AT INGEST. Stored as a flat frontmatter scalar; the
+        # retrieval merge force-drops below-threshold episodes from the
+        # SURFACED set. The episode is still written verbatim regardless
+        # of salience (HARD INVARIANT: gate surfacing, never storage).
+        salience = _salience_from_body(body)
         front = (
             "---\n"
             f"name: {name}\n"
@@ -380,6 +527,7 @@ class FileMemoryStore:
             f"source_description: {source_description}\n"
             f"reference_time: {ref_utc.isoformat()}\n"
             f"group_id: {group_id}\n"
+            f"salience: {salience}\n"
             f"{context_block}"
             "---\n"
         )
@@ -770,6 +918,16 @@ class FileMemoryStore:
                     "path": path,
                     "group_id": group_id,
                     "valid_at": ref_time,
+                    # B3 (AC-FBM-SAL-1) — structural salience for the
+                    # retrieval gate. Computed from the body so it is
+                    # correct for episodes written before the salience
+                    # field existed (those have no stored field but the
+                    # body is in the index). Old episodes thus get the
+                    # right gate without any rewrite (never-touch-stored
+                    # / HARD INVARIANT). A turn whose user half is pure
+                    # scaffolding scores SALIENCE_JUNK; everything else
+                    # SALIENCE_FULL (the never-drop default).
+                    "_salience": _salience_from_body(body),
                     # AC.FBMT2.PLBLA.2 — preserve the BM25 score so the
                     # downstream activation composition can compute
                     # ``final = BM25 × activation × supersession``. SQLite's
@@ -883,6 +1041,10 @@ class FileMemoryStore:
                     "path": str(path),
                     "group_id": front.get("group_id", ""),
                     "valid_at": front.get("reference_time", ""),
+                    # B3 (AC-FBM-SAL-1) — structural salience for the
+                    # retrieval gate, computed from the body (correct
+                    # for pre-salience episodes too; no rewrite).
+                    "_salience": _salience_from_body(body),
                     "_bm25_raw": float(score),
                 }
             )

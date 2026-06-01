@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-acceptance-smoke"
+version = "0.1.0"
+description = "loam 1.0 acceptance smoke — drives the real fresh loam init + first-run intake through three role-played non-technical white-collar users and judges the end-state against the prime-objective promise on named orthogonal dimensions. The 1.0 gate (design: docs/plans/loam-1.0-acceptance-smoke.md)."
+requires-python = ">=3.11"
+dependencies = [
+    "loam-workspace-bootstrap",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+loam-acceptance-smoke = "loam_acceptance_smoke.cli:main"
+
+[tool.setuptools]
+package-dir = {"loam_acceptance_smoke" = "src/loam_acceptance_smoke"}
+packages = ["loam_acceptance_smoke"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "outcome_altitude: drives the production loam init + first-run intake with no pre-arranged state (AC.SMOKE.1)",
+    "live: spawns real isolated claude -p (role-play + judge); minutes, local-only, subscription-routed",
+]

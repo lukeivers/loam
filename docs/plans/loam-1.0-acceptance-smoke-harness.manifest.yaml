@@ -1,0 +1,92 @@
+schema_version: 1
+amendment:
+  number: 164  # Next free counter (highest seen = 163). Re-check at build
+               # time; advance if another cycle seals first.
+  slug: loam-1.0-acceptance-smoke-harness
+  title: "loam 1.0 acceptance smoke — NET-NEW reusable acceptance-test component (framework/tools/loam-acceptance-smoke): drives the REAL fresh `loam init` + first-run intake through three role-played non-technical white-collar users (idea-rich / day-derived / idea-vacuum), judges the end-state against the prime-objective promise on named orthogonal dimensions (deterministic + isolated claude -p LLM-as-judge), and emits a 1.0-readiness report. Every claude -p (role-play + judge) spawn-isolated via loam_spawn_isolation; throwaway self-cleaning workspace; no API key. AC.SMOKE.1 (outcome-altitude cold-walk) / .2 (cross-variant materially-different seeds) / .3 (deep-research only-in-C within ≤3 budget) / .4 (every rubric dimension scored with cited evidence) / .5 (re-runnable + self-cleaning) / .S (fence)."
+
+# BASELINE: f614d5af — the foundation-polish tip the smoke was dispatched off
+# (working install + auto-upgrade + skill triage sealed). The new component is
+# introduced on the plan branch off this tip; the apply + seal commits land it.
+baseline: "f614d5af"
+
+plan: docs/plans/loam-1.0-acceptance-smoke-harness.md
+
+seal_description: "loam 1.0 acceptance smoke — new acceptance-test component + first NOT-READY run-report (real init + intake, three role-played users, spawn-isolated judge)"
+
+components:
+  # NET-NEW component. First seal: frozen_baseline:false so the introduction
+  # diff (BASELINE..SEAL) is the component's birth. Composes (lazy-import, no
+  # edits) on loam-workspace-bootstrap (run_first_run_intake + the real
+  # RoleResearchProvider) and loam-spawn-isolation (the mandated isolation
+  # surface). No other sealed component is touched.
+  - name: loam-acceptance-smoke
+    seal_test: framework/tools/loam-acceptance-smoke/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam-acceptance-smoke/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions (admitted across all components per amendment #22 ruling).
+# The run-report is an experiment doc; the plan + manifest are plan-docs.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/loam-1.0-acceptance-smoke-harness.md
+  body: |
+    # loam 1.0 acceptance smoke — harness build + first run — apply ladder
+
+    The 1.0 acceptance gate (design:
+    `docs/plans/loam-1.0-acceptance-smoke.md`). A NET-NEW reusable
+    acceptance-test component that answers the owner's question in the
+    owner's terms: does a freshly-instantiated loam deliver its
+    prime-objective promise — per-user-tuned translation — to a genuinely
+    non-technical white-collar user told only "use this to get more
+    efficient"?
+
+    It is an OUTCOME-ALTITUDE test: it drives the REAL production `loam init`
+    + the REAL first-run intake (run_first_run_intake) through a full
+    role-played conversation per variant, with the user side supplied by an
+    isolated `claude -p`, then judges the END STATE against the
+    VALUE_PROPOSITION rubric on named orthogonal dimensions — NOT a unit test
+    of inner modules.
+
+    The three variants exercise the three onboarding paths the pipeline was
+    built to handle: A (idea-rich real-estate agent) and B (day-derived
+    claims adjuster) reach ZERO research; C (idea-vacuum paralegal) is the
+    NEED-trigger for the opt-in deep-role-research, bounded to the sealed
+    ≤3 round-trip / ≤3 idea caps. The judge runs deterministic checks where
+    checkable (seed written? cross-variant seeds differ? budget respected?
+    deep-research fired only in C?) and one isolated `claude -p` LLM-as-judge
+    probe per soft dimension (no-user-translation-burden / learned-this-person
+    / four-step-loop-ran / no-over-engineering / closed-on-one-thing /
+    non-interrogating-feel / protection-floor-held).
+
+    THE SAFETY FLOOR (non-negotiable, design F-5): every `claude -p` — the
+    role-played user side AND every judge probe — spawns ONLY through
+    `loam_spawn_isolation.spawn_isolated_claude` (--strict-mcp-config + empty
+    MCP config + TELEGRAM_BOT_TOKEN/ANTHROPIC_API_KEY-scrubbed env), so an
+    un-isolated spawn cannot SIGTERM-steal the operator's single Telegram bot
+    slot. No Anthropic API key — subscription-only. Throwaway self-cleaning
+    workspace + isolated global home; the operator's real `~/.claude` is never
+    written.
+
+    FIRST-RUN VERDICT: NOT-READY. The infrastructure is sound (real init exit
+    0 every variant; 28 spawns all isolated; seeds written; self-clean held),
+    but the smoke caught four real production bugs in the intake's
+    natural-language handling, all in
+    `framework/workspace-bootstrap/.../translate_in_intake.py`: (1) the
+    proposal echo pastes the user's whole raw reply into a template slot;
+    (2) the affirmation parser fails on natural replies with trailing
+    punctuation ("Yeah, ..."), which suppressed variant C's deep-research
+    opt-in despite the user accepting it; (3) the idea-vacuum classifier is a
+    brittle keyword match that mis-routed variant B; (4) the role-mined
+    leverage close leaves the role-noun slot unresolved. Full evidence +
+    root-cause + fix shape:
+    `docs/experiments/loam-1.0-acceptance-smoke-run.md`. The harness is
+    re-runnable; the owner re-runs it as the tail of the 1.0 queue lands the
+    fixes.

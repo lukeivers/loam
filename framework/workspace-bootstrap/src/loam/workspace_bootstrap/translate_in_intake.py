@@ -1036,11 +1036,20 @@ _Q_LADDER_CHECK = (
 # "can it really …?", "I don't really understand how this thing would do that").
 _DOUBT_SIGNAL = re.compile(
     r"\?|"
-    r"\b(does|can|could|would|will)\s+(it|this|that|loam|you)\b|"
+    r"\b(does|can|could|would|will)\s+(?:it|this|that|loam|you)\b|"
+    r"\b(does|can|could|would|will)\s+\w+\s+(?:it|this|that|loam|you)\b|"
     r"\bhow\s+(would|does|do|can)\b|"
-    r"\bnot\s+sure\s+(it|this|that|you)\b|"
+    r"\bnot\s+sure\s+(it|this|that|you|how|what)\b|"
     r"\b(don'?t|do\s+not)\s+(really\s+)?(understand|get|see)\s+how\b|"
-    r"\bis\s+(it|this|that)\s+(even|really|actually)\b",
+    r"\bis\s+(it|this|that)\s+(even|really|actually)\b|"
+    # A guidance/hedge tell: "I don't (even) know what … would look like",
+    # "you'd have to walk me through it", "not sure where to even begin with it"
+    # — the user is open but needs hand-holding. Leg 4 addresses it by offering
+    # to walk them through it (the rerun8 variant-C ladder hedge; AC.INTENT.4).
+    r"\b(don'?t|do\s+not)\s+(?:even\s+|really\s+)?know\s+what\b(?:\s+\w+){0,6}\s+"
+    r"(?:look|looks|would\s+look|work|works)\b|"
+    r"\bwalk\s+me\s+through\b|"
+    r"\bwhere\s+(?:to|do\s+i|would\s+i)\s+even\s+(?:start|begin)\b",
     flags=re.IGNORECASE,
 )
 
@@ -1050,6 +1059,27 @@ def _confirmation_has_doubt(reply: str) -> bool:
     capability — the leg-4 adjustment must ADDRESS it honestly (protection-floor;
     AC.INTENT.4)."""
     return bool(_DOUBT_SIGNAL.search(reply or ""))
+
+
+# A GUIDANCE hedge: the user is open but needs hand-holding ("I don't even know
+# what taking it off my plate would look like", "you'd have to walk me through
+# it", "not sure where to even start with it"). Distinct from a capability doubt:
+# leg 4 responds by OFFERING to walk them through it (the rerun8 variant-C ladder
+# hedge; AC.INTENT.4).
+_GUIDANCE_HEDGE = re.compile(
+    r"\b(don'?t|do\s+not)\s+(?:even\s+|really\s+)?know\s+what\b(?:\s+\w+){0,6}\s+"
+    r"(?:look|looks|would\s+look|work|works)\b|"
+    r"\bwalk\s+me\s+through\b|"
+    r"\b(?:not\s+sure|no\s+idea)\s+where\s+(?:to|i'?d)\s+(?:even\s+)?(?:start|begin)\b|"
+    r"\bwhere\s+(?:to|do\s+i|would\s+i)\s+even\s+(?:start|begin)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _confirmation_wants_guidance(reply: str) -> bool:
+    """True when the confirmation reply is a GUIDANCE hedge (open but needs
+    hand-holding) — leg 4 offers to walk them through it (AC.INTENT.4)."""
+    return bool(_GUIDANCE_HEDGE.search(reply or ""))
 
 
 # The DOWNSTREAM-GOAL clause a user adds in their confirmation ("…so I'd have
@@ -1099,6 +1129,16 @@ def _leg4_adjustment_text(
     confirmation rather than restating the proposal. Returns "" when the
     confirmation added nothing to adjust from."""
     item = (intent.clean_item or intent.raw_answer).strip().rstrip(".")
+    if _confirmation_wants_guidance(confirm_reply):
+        # A guidance hedge ("I don't even know what that would look like", "you'd
+        # have to walk me through it") — loam OFFERS to walk them through it, no
+        # invented capability, no interrogation (a statement, not a question).
+        return (
+            f" And no worries that you're not sure what this looks like yet — "
+            f"loam will walk you through '{item}' step by step the first time: "
+            f"you bring one real example, it does the draft, and you keep what "
+            f"works. No prep needed on your end."
+        )
     if _confirmation_has_doubt(confirm_reply):
         # Address the doubt HONESTLY — name what loam actually does (draft/assist
         # from what the user provides), never claim an unverified capability.
@@ -1339,7 +1379,25 @@ def _run_fallback_ladder(
         corrected = _distill_intent(check) or check.strip()
         named_task = corrected
         one_thing = f"taking '{corrected}' off your plate"
-    # Land EXACTLY one close idea on the checked/corrected thing (AC.ONCLOSE.2).
-    result.leverage_ideas.append(_leverage_from_role(role, named_task=named_task))
+    # Land EXACTLY one close idea on the checked/corrected thing (AC.ONCLOSE.2),
+    # then LEG 4 (adjust from the answer): the ladder's ``ladder_check`` reply is
+    # the confirmation turn — it may carry a hedge/doubt ("I don't even know what
+    # taking it off my plate would look like") or a downstream goal. Fold the same
+    # leg-4 adjustment into the ladder close so the four-step loop's fourth leg is
+    # visible HERE too, not just on the CLEAR/PARTIAL path (the rerun8 variant-C
+    # PARTIAL: the ladder close ignored the paralegal's hedge; AC.INTENT.4).
+    idea = _leverage_from_role(role, named_task=named_task)
+    ladder_item = named_task or f"the most repetitive part of a {role}'s day"
+    ladder_intent = ProposedEndIntent(
+        slug=_slugify(ladder_item),
+        disposition=Disposition.STOP,
+        objective_text=result.seeded_objective_text or "",
+        raw_answer=ladder_item,
+        clean_item=ladder_item,
+    )
+    adjustment = _leg4_adjustment_text(check, ladder_intent)
+    if adjustment:
+        idea = LeverageIdea(text=idea.text + adjustment, references=idea.references)
+    result.leverage_ideas.append(idea)
 
     return result

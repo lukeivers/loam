@@ -1,0 +1,83 @@
+schema_version: 1
+amendment:
+  number: 173
+  slug: intake-disposition-word-boundary
+  title: "Intake disposition word-boundary fix — _detect_disposition matches stop/start tells on WORD BOUNDARIES (and reads cessation tells like 'not … anymore' / 'no longer' / 'off my plate' as STOP), so 'I'd love to just… not do that anymore' is no longer inverted to START via a 'more' substring match inside 'anymore' (AC.DISPOS.1)"
+
+# BASELINE: 560bf5c7 — the #172 intake-llm-intent-seam seal, immediately
+# preceding the #173 source-edit commit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   560bf5c7 — #172 LLM intent-seam seal. ← BASELINE
+#   <source-edit commit> — _detect_disposition word-boundary + cessation tells;
+#     1 NEW AC.DISPOS.1 test file.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _detect_disposition: _STOP_TELLS / _START_TELLS regex tells matched on
+#       word boundaries (no "more"-in-"anymore" false START); cessation tells
+#       ("not … anymore", "no longer", "off my plate", "sick of", "done with")
+#       read STOP; tie favours STOP.
+#   tests/test_AC_DISPOS_1_word_boundary_cessation.py — NEW.
+#
+# AC families: NEW AC.DISPOS.1 (disposition word-boundary + cessation-as-STOP).
+#   Born from the rerun8 acceptance smoke (variant A inverted STOP→START via the
+#   'more' substring in 'anymore'); a PRE-EXISTING latent bug (verified present
+#   on BASELINE b8817c71), not a regression from the #172 seam.
+baseline: "560bf5c7"
+
+plan: docs/plans/intake-llm-intent-seam.md
+
+seal_description: "Intake disposition word-boundary fix (AC.DISPOS.1) — _detect_disposition matches tells on word boundaries + reads 'not … anymore' / cessation phrasings as STOP; no STOP→START inversion via 'more' inside 'anymore'"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-disposition-word-boundary
+  body: |
+    # Intake disposition word-boundary fix — apply ladder
+
+    The acceptance-smoke RE-RUN after the #172 LLM intent-extraction seal
+    (`docs/experiments/loam-1.0-acceptance-smoke-rerun8.md`) surfaced a residual
+    gap on variant A: the role-play opener "I spend two hours every night writing
+    up the listing descriptions … I'd love to just… not do that anymore" was
+    classified START — because `_detect_disposition`'s START token "more" matched
+    the TAIL of "any-more". loam fed back the INVERTED proposal ("help you
+    reliably GET TO writing …"), the user had to correct it, and seven soft
+    dimensions FAILed off that single inversion.
+
+    A CLEAR-DIRECTION fix, not a design fork — and a PRE-EXISTING latent bug
+    (verified present on BASELINE b8817c71, NOT a regression from the #172 seam).
+    `_detect_disposition` now matches stop/start tells on WORD BOUNDARIES so
+    "more" never matches inside "anymore", and reads cessation phrasings
+    ("not … anymore", "no longer", "off my plate", "sick of", "tired of",
+    "done with") as STOP; a tie favours STOP (the cessation tell is the stronger
+    intent). Genuine STARTs ("I want to start journaling", "I should do more
+    reviews") still read START.
+
+    Predecessor commits:
+      - 560bf5c7 — #172 LLM intent-extraction seam seal (BASELINE).
+
+    BASELINE 560bf5c7. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

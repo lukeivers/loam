@@ -43,10 +43,19 @@ BASELINE = "46352988"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
-# The component's own prefix + the universal admissions a first-seal of an
+# The component's own prefix + the universal admissions a seal of an
 # acceptance-test component legitimately touches (the plan-doc + manifest that
-# introduce it, and the run-report experiment doc the smoke produces).
-_ALLOWED_PREFIXES = (
+# introduce/amend it, and the run-report experiment doc the smoke produces).
+#
+# NAMED ``allowed_prefixes`` (not ``_ALLOWED_PREFIXES``) so the loam-amend
+# seal-diff binding reader (``loam_amend.seal_diff.read_entries`` /
+# ``loam amend apply`` widening + ``apply --dry-run`` admission) can PARSE it:
+# the binding regex matches a top-level ``allowed_prefixes`` identifier. Under
+# the old underscore-uppercase name the reader saw ``BindingNotFound`` and the
+# post-seal dry-run treated the component's OWN paths as unadmitted (a false
+# MISSING_ADMISSION on an interleaved multi-component branch). Mirrors the
+# workspace-bootstrap seal-test's ``allowed_prefixes`` binding precedent.
+allowed_prefixes = (
     "framework/tools/loam-acceptance-smoke/",
     "docs/plans/",
     "docs/experiments/",
@@ -79,7 +88,7 @@ def test_AC_SMOKE_S_only_acceptance_smoke_changed() -> None:
     offenders = [
         ln
         for ln in changed
-        if not any(ln.startswith(p) for p in _ALLOWED_PREFIXES)
+        if not any(ln.startswith(p) for p in allowed_prefixes)
     ]
     assert not offenders, (
         "sealed-component fence breach: the introduction diff touched paths "

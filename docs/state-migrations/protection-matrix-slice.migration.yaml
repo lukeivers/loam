@@ -1,0 +1,24 @@
+# User-state migration — protection-matrix slice (failure-mode-guard matrix)
+#
+# Declared per the migration release-gate convention (G4 / check_migration_declared):
+# every release declares a user-state migration; a STRUCTURAL/NO-OP migration is
+# a valid declared migration. Version number is intentionally NOT pre-assigned
+# (versions derive at release time — feedback_version_numbers_at_release_time);
+# this file is keyed by the scope-descriptive slug.
+
+slug: protection-matrix-slice
+slice: failure-mode-guard matrix + `loam guards` coverage-check verb
+date: 2026-05-31
+predecessor: state-of-loam-record-and-substrate-audit-gate-slice
+disposition: create           # net-new component (framework/protection-matrix/)
+
+# What user-state this migration changes: NONE. The protection-matrix adds a
+# new CLI verb (`loam guards`) + a shipped data catalogue + a generated
+# companion doc. It reads the live tree to derive the guard set; it never
+# writes, schema-changes, or migrates any per-workspace `.loam/` user-state.
+operation: no-op
+creates: []
+leaves_in_place:
+  - .loam/                      # all per-workspace user-state — UNTOUCHED
+reversible: true
+removes_user_state: false

@@ -97,7 +97,13 @@ well-known ways an AI betrays user expectations by default:
 These are "all the known places an AI would, by default, betray the user."
 
 **Several things loam already does are protection guards — they were just never
-named as one category.**
+named as one category.** That category is now an explicit, living, machine-
+checkable instrument: the **protection matrix** (`docs/design/protection-matrix.md`,
+generated from `framework/protection-matrix/data/failure-mode-guard-matrix.yaml`;
+run `loam guards` to see the live coverage + the gaps). Each known failure mode ×
+loam's actual guard × default-on? × floor-vs-proportional × how we verify it fires —
+and, honestly, which floor-class failures are still guarded only by persona
+discipline (the gaps the matrix exists to surface).
 
 - **Objective-driven authoring** guards against silent regression and goal
   drift (an AI fixes a bug and quietly breaks something else, or loses the point

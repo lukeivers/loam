@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-protection-matrix"
+version = "0.1.0"
+description = "loam protection-pillar matrix — a living, machine-checkable catalogue of every known way an AI betrays a user by default x loam's actual guard x default-on? x floor-vs-proportional x how we verify it fires; plus the `loam guards` coverage-check verb that derives the live guard set from ground truth, reconciles it against the catalogue, and NAMES the gaps."
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6",
+]
+
+[tool.setuptools]
+package-dir = {"loam.protection_matrix" = "src/loam/protection_matrix"}
+packages = ["loam.protection_matrix"]
+
+[tool.setuptools.package-data]
+"loam.protection_matrix" = ["../../data/*.yaml"]
+
+# `loam guards` verb registration — resolves through the unified loam CLI
+# dispatcher's `loam.cli.subcommands` entry-point group, sibling to
+# `release` / `audit` / `migrate`. Canonical (every loam codebase carries a
+# protection pillar; the coverage-check verb ships with the framework).
+[project.entry-points."loam.cli.subcommands"]
+guards = "loam.protection_matrix.cli:build_guards_subcommand"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

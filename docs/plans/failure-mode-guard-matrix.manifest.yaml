@@ -1,6 +1,7 @@
-schema_version: 1
+schema_version: 3
 amendment:
-  number: null  # assigned at build time from the amendment register (NOT pre-allocated, per feedback_version_numbers_at_release_time)
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
   slug: failure-mode-guard-matrix
   title: "failure-mode-guard matrix — loam's protection pillar as a living, machine-checkable catalogue + a loam guards coverage-check verb"
 
@@ -61,7 +62,7 @@ amendment:
 # Out of scope (plan §7): building new guards to CLOSE the gaps; the
 #   release-gate HARD-block arm (FORK F-4); auto-remediation; per-user
 #   proportional tuning.
-baseline: "f1f6116"
+baseline: "d9ece972"
 
 plan: docs/plans/failure-mode-guard-matrix.md
 

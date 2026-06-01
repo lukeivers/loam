@@ -384,5 +384,49 @@ the manifest does NOT satisfy this AC — the entry-point must walk the real tre
 
 ## §14 — Method-decision record (builder, post-build)
 
-*(Reserved — the builder records D-build.x method choices here at build time per ODD
-§1.1: builder owns method, this plan owns scope.)*
+Builder method choices (ODD §1.1: builder owns method, this plan owns scope).
+Build BASELINE: `d9ece972` (main tip + merge-base of `plan/failure-mode-guard-matrix`).
+
+- **D-build.1 — package layout = `loam.protection_matrix` namespace under
+  `src/loam/`** mirroring `loam.state_migration_engine` (the template component).
+  Modules: `catalogue.py` (loader+schema), `derive.py` (ground-truth resolution),
+  `check.py` (reconcile+gap+renderers), `cli.py` (the verb). One module per
+  concern keeps the reconcile (`derive`) separable from the report (`check`).
+- **D-build.2 — guard_ref resolution = static path + symbol inspection, no
+  import/exec.** `derive.resolve_guard_ref` splits `path:symbol`, confirms the
+  file exists, and regex-matches a `def`/`class`/module-assignment of the symbol
+  in the file text. Deterministic, no LLM, no import side-effects, no network
+  (`feedback_no_anthropic_api_key`; plan §8 halt-trigger #3 avoided by design).
+  This is the AC.FMG-CHECK.2 ground-truth derivation — it never trusts the
+  manifest's own claim.
+- **D-build.3 — divergence vs gap are orthogonal axes.** `gap` = floor AND
+  default_on≠YES (the coverage signal). `divergence` = a guard-ref-required row
+  whose ref does NOT resolve (the over-claim signal — the recursive-hallucination
+  guard, plan §10 item 2). A persona-discipline/none row never diverges (empty
+  ref is legitimate); only hook/release-gate/comparator/memory rows must resolve.
+- **D-build.4 — `default_on` YAML-boolean coercion.** YAML 1.1 reads a bare
+  `YES` as boolean `True`. The shipped catalogue quotes the tokens; the loader
+  ALSO coerces a parsed `True`→`"YES"` so a maintainer who writes the natural
+  unquoted `default_on: YES` is not tripped (defensive — the same trap the
+  build hit once).
+- **D-build.5 — AC.FMG-LIVE.1 wiring = `loam guards --refresh` as the
+  recurring-maintenance ITEM + the doctrine §"protection around" backfill pointer
+  naming it.** No standalone canonical "pruning-flow" file artifact exists to slot
+  a line into (the cadence is doctrine prose + the self-correction/dormancy
+  engines). The honest, proportionate wiring: the refresh is an idempotent,
+  generated-not-hand-maintained re-derivation (the property the cadence relies on),
+  pointed-to from the doctrine. Building a net-new scheduler is explicitly NOT done
+  (Lens 1). The AC test verifies the refresh item exists + is idempotent + the
+  companion carries the do-not-hand-edit banner.
+- **D-build.6 — the gap report surfaces 6 rows, not 5.** FORK F-3 named five
+  floor gaps; the real run ALSO surfaces `FM.HALLUCINATION` as a (partial) floor
+  gap (the comparator covers shipping-doc status claims only, not broad
+  fact-recall). Surfacing it is the honest derivation (F2 / plan §8 halt-trigger
+  #4: an under-count would be the false-negative the plan forbids); the five F-3
+  gaps are asserted present by an explicit test, the sixth is a correct addition.
+- **D-build.7 — seal-fence BASELINE = `d9ece972`**, allowed prefixes
+  `framework/protection-matrix/` + `docs/plans/`, allowed files the manifest
+  `universal_paths` set (CLAUDE.md, the odd docs, STATE.md, release-roadmap.md,
+  loam-doctrine.md, protection-matrix.md) + `docs/state-migrations/` for the
+  no-op migration. Sidecar `SEAL_COMMIT` reads HEAD pre-seal, the seal SHA
+  post-seal (the established pattern).

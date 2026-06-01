@@ -24,7 +24,13 @@ components:
     seal_test: framework/tools/loam-acceptance-smoke/tests/test_no_sealed_amendments.py
     sidecar: framework/tools/loam-acceptance-smoke/tests/SEAL_COMMIT
     frozen_baseline: false
-    extra_allowed_prefixes: []
+    # The component lives under framework/tools/ (deeper nesting than the
+    # framework/<name>/ auto-derivation expects). Admit its own birth-prefix
+    # explicitly so the introduction diff (all NEW files under the component)
+    # is in-fence. Mirrors the tools-nested precedent (handsoff-loop /
+    # programbench seal under an anchor whose seal-test admits framework/tools/).
+    extra_allowed_prefixes:
+      - framework/tools/loam-acceptance-smoke/
 
 # Universal admissions (admitted across all components per amendment #22 ruling).
 # The run-report is an experiment doc; the plan + manifest are plan-docs.

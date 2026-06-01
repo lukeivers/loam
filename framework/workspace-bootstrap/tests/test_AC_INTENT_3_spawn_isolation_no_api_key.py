@@ -76,6 +76,39 @@ def test_AC_INTENT_3_argv_is_spawn_isolated_and_timeout_bounded(monkeypatch):
     assert argv[0] == "claude" and "-p" in argv
 
 
+def test_AC_INTENT_3_adjustment_dispatch_is_spawn_isolated(monkeypatch):
+    """The leg-4 adjustment call ALSO routes exclusively through the mandated
+    spawn-isolated primitive (AC.INTENT.3/.4) — never a raw spawn."""
+    captured: dict[str, object] = {}
+
+    def recording_spawn(argv, **kwargs):
+        spawn_iso.assert_loam_spawn_isolated(spawn_iso.inject_isolation(argv))
+        captured["argv"] = argv
+        captured["timeout"] = kwargs.get("timeout")
+        envelope = {"result": json.dumps({"adjustment": "you stay in control"})}
+        return _fake_proc(json.dumps(envelope))
+
+    monkeypatch.setattr(spawn_iso, "spawn_isolated_claude", recording_spawn)
+    out = ClaudeIntentExtractor().extract_adjustment(
+        "yes, I just want to tweak the draft", item="writing reports"
+    )
+    assert out == "you stay in control"
+    assert captured["timeout"] == DEFAULT_INTENT_TIMEOUT_SECONDS
+    assert captured["argv"][0] == "claude" and "-p" in captured["argv"]
+
+
+def test_AC_INTENT_3_adjustment_failure_fails_soft(monkeypatch):
+    """A leg-4 adjustment spawn failure raises the sentinel (caught upstream to
+    fall back to the deterministic reflection)."""
+
+    def boom(argv, **kwargs):
+        raise subprocess.TimeoutExpired(cmd="claude", timeout=1)
+
+    monkeypatch.setattr(spawn_iso, "spawn_isolated_claude", boom)
+    with pytest.raises(IntentExtractUnavailableError):
+        ClaudeIntentExtractor().extract_adjustment("yes", item="x")
+
+
 def test_AC_INTENT_3_no_anthropic_sdk_no_api_key_in_module():
     """The module imports no Anthropic SDK and READS no API-key env var — every
     call is subscription-routed via claude -p (feedback_no_anthropic_api_key).

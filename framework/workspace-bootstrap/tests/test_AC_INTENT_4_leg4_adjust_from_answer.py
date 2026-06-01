@@ -114,6 +114,74 @@ def test_AC_INTENT_4_downstream_goal_from_confirmation_is_reflected():
     assert "real goal" in close or "aiming you" in close
 
 
+def test_AC_INTENT_4_llm_adjustment_is_primary_failsoft_to_deterministic():
+    """The LLM seam's read of the CONFIRMATION turn is the PRIMARY leg-4 source
+    (it generalises across arbitrary novel phrasings the deterministic heuristics
+    miss); on failure it FALLS BACK to the deterministic reflection."""
+    from loam.workspace_bootstrap.intent_extract import IntentExtractUnavailableError
+    from loam.workspace_bootstrap.translate_in_intake import (
+        Disposition,
+        ProposedEndIntent,
+        _leg4_adjustment_text,
+    )
+
+    intent = ProposedEndIntent(
+        slug="x",
+        disposition=Disposition.STOP,
+        objective_text="offload writing listing descriptions",
+        raw_answer="writing listing descriptions",
+        clean_item="writing listing descriptions",
+    )
+
+    class GoodExtractor:
+        def extract(self, *a, **k):
+            raise IntentExtractUnavailableError("n/a")
+
+        def extract_adjustment(self, confirm_reply, *, item, proposal=""):
+            return (
+                "you just want to hand it the basics and tweak the draft — you "
+                "stay in control of the final wording"
+            )
+
+    out = _leg4_adjustment_text(
+        "yes, give it the basics and I'll tweak it a little",
+        intent,
+        extractor=GoodExtractor(),
+    )
+    assert "stay in control" in out.lower()
+
+    class FailingExtractor:
+        def extract(self, *a, **k):
+            raise IntentExtractUnavailableError("n/a")
+
+        def extract_adjustment(self, *a, **k):
+            raise IntentExtractUnavailableError("timeout")
+
+    # Fail-soft: a downstream-goal confirmation still gets the deterministic read.
+    out2 = _leg4_adjustment_text(
+        "yes, so I could finally leave the office by five",
+        intent,
+        extractor=FailingExtractor(),
+    )
+    assert "leave the office by five" in out2.lower()
+
+    class OverPromiseExtractor:
+        def extract(self, *a, **k):
+            raise IntentExtractUnavailableError("n/a")
+
+        def extract_adjustment(self, *a, **k):
+            return "loam will run this fully automated, hands-off, on autopilot"
+
+    # An LLM adjustment that over-promises is rejected -> deterministic fallback.
+    out3 = _leg4_adjustment_text(
+        "yes, so I could finally leave the office by five",
+        intent,
+        extractor=OverPromiseExtractor(),
+    )
+    assert "fully automated" not in out3.lower()
+    assert "autopilot" not in out3.lower()
+
+
 def test_AC_INTENT_4_leg4_never_over_promises_automation():
     """The leg-4 adjustment must NEVER over-promise automation (AC.ONCLOSE.3) —
     even when the LLM seam's adjustment read drifts into 'fully automated' (the

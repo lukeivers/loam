@@ -117,6 +117,16 @@ class IntentExtractor(Protocol):
     ) -> ExtractedIntent:  # pragma: no cover - structural
         ...
 
+    def extract_adjustment(
+        self, confirm_reply: str, *, item: str, proposal: str = ""
+    ) -> str:  # pragma: no cover - structural
+        """ONE bounded read of the CONFIRMATION reply for the leg-4 adjustment —
+        the one-line, right-sized reflection of the substantive detail/doubt the
+        confirmation added (the four-step loop's learn step). Raises
+        ``IntentExtractUnavailableError`` on any failure so the caller falls back
+        to the deterministic leg-4 reflection."""
+        ...
+
 
 class DisabledIntentExtractor:
     """The DEFAULT baseline extractor — always declines (D-SEAM-1).
@@ -132,6 +142,14 @@ class DisabledIntentExtractor:
         raise IntentExtractUnavailableError(
             "intent extraction disabled by default (baseline stays pure-regex); "
             "register a real extractor to enable the LLM path"
+        )
+
+    def extract_adjustment(
+        self, confirm_reply: str, *, item: str, proposal: str = ""
+    ) -> str:
+        raise IntentExtractUnavailableError(
+            "intent extraction disabled by default; leg-4 adjustment falls back "
+            "to the deterministic reflection"
         )
 
 
@@ -168,6 +186,29 @@ _PRIOR_BLOCK = (
     "Earlier loam proposed this back to them and they were responding to it:\n"
     "\"\"\"{prior_proposal}\"\"\"\n\n"
 )
+
+
+# The leg-4 adjustment prompt: ONE bounded read of the CONFIRMATION reply, asking
+# for a single short sentence loam can append to its close that LEARNS from what
+# the confirmation revealed (the four-step loop's adjust leg). It must reflect the
+# SUBSTANTIVE detail or answer a doubt honestly, and NEVER over-promise automation.
+_ADJUSTMENT_PROMPT = """\
+You are loam's leg-4 "adjust from the answer" step in a first-touch onboarding \
+conversation. loam proposed helping a non-technical professional with this one \
+thing: "{item}". {proposal_block}They just CONFIRMED, and in confirming they \
+added something. Their confirmation reply:
+\"\"\"{confirm_reply}\"\"\"
+
+Write ONE short sentence (<= 30 words) loam can add to its closing message that \
+visibly LEARNS from what they just added — reflect the SPECIFIC new detail or \
+goal they named, or if they raised a doubt/question, answer it honestly. Speak \
+TO them in second person ("you"). Right-sized + honest: NEVER promise unattended \
+automation ("fully automated", "runs itself", "hands-off"), and NEVER claim a \
+capability loam hasn't shown (no database/integration claims). If the \
+confirmation added nothing substantive (a bare "yes"), return an empty string.
+
+Return ONLY a JSON object: {{"adjustment": "<the one sentence, or empty>"}}
+"""
 
 
 class ClaudeIntentExtractor:
@@ -214,6 +255,43 @@ class ClaudeIntentExtractor:
         prompt = _EXTRACT_PROMPT.format(
             raw_reply=raw_reply.strip(), prior_block=prior_block
         )
+        result_text = self._dispatch(spawn_isolated_claude, prompt, "intent-extract")
+        return _parse_extraction(result_text)
+
+    def extract_adjustment(
+        self, confirm_reply: str, *, item: str, proposal: str = ""
+    ) -> str:
+        """ONE bounded read of the CONFIRMATION reply for the leg-4 adjustment —
+        same spawn-isolated dispatch as :meth:`extract`, a SEPARATE turn (the
+        confirmation turn), fail-soft on any failure (AC.INTENT.4)."""
+        if not (confirm_reply or "").strip():
+            raise IntentExtractUnavailableError("empty confirmation — nothing to adjust")
+        try:
+            from loam_spawn_isolation import spawn_isolated_claude
+        except ImportError as exc:  # pragma: no cover - environmental
+            raise IntentExtractUnavailableError(
+                f"loam_spawn_isolation not importable ({exc}); leg-4 adjustment "
+                "degrades to the deterministic reflection."
+            ) from exc
+        proposal_block = (
+            f"loam's proposal back to them was: \"{proposal.strip()}\". "
+            if (proposal or "").strip()
+            else ""
+        )
+        prompt = _ADJUSTMENT_PROMPT.format(
+            item=item.strip(),
+            proposal_block=proposal_block,
+            confirm_reply=confirm_reply.strip(),
+        )
+        result_text = self._dispatch(
+            spawn_isolated_claude, prompt, "leg4-adjust"
+        )
+        return _parse_adjustment(result_text)
+
+    def _dispatch(self, spawn_isolated_claude, prompt: str, label: str) -> str:
+        """The shared spawn-isolated ``claude -p`` dispatch + envelope unwrap. ONE
+        bounded call, hard timeout, raises :class:`IntentExtractUnavailableError`
+        on ANY failure so the caller fails soft. No API key, no SDK."""
         argv = [
             "claude",
             "-p",
@@ -234,12 +312,12 @@ class ClaudeIntentExtractor:
             )
         except Exception as exc:  # noqa: BLE001 — any spawn/timeout failure -> fallback
             raise IntentExtractUnavailableError(
-                f"intent-extract dispatch failed: {exc}"
+                f"{label} dispatch failed: {exc}"
             ) from exc
 
         if proc.returncode != 0:
             raise IntentExtractUnavailableError(
-                f"intent-extract subagent exited {proc.returncode}: "
+                f"{label} subagent exited {proc.returncode}: "
                 f"{(proc.stderr or '')[:300]}"
             )
         raw = (proc.stdout or "").strip()
@@ -247,14 +325,34 @@ class ClaudeIntentExtractor:
             envelope = json.loads(raw)
         except (json.JSONDecodeError, ValueError) as exc:
             raise IntentExtractUnavailableError(
-                f"intent-extract stdout not a claude -p JSON envelope: {exc}"
+                f"{label} stdout not a claude -p JSON envelope: {exc}"
             ) from exc
         if not isinstance(envelope, dict):
-            raise IntentExtractUnavailableError(
-                "intent-extract envelope not an object"
-            )
-        result_text = envelope.get("result") or ""
-        return _parse_extraction(result_text)
+            raise IntentExtractUnavailableError(f"{label} envelope not an object")
+        return envelope.get("result") or ""
+
+
+def _parse_adjustment(result_text: str) -> str:
+    """Parse the leg-4 adjustment subagent's JSON result into the one-line
+    adjustment string (AC.INTENT.4). An empty/whitespace adjustment is a valid
+    'nothing substantive to add' signal and is returned as ""; an unparseable
+    result raises ``IntentExtractUnavailableError`` so the caller falls back to the
+    deterministic reflection."""
+    text = (result_text or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.lower().startswith("json"):
+            text = text[4:]
+        text = text.strip()
+    try:
+        payload = json.loads(text)
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise IntentExtractUnavailableError(
+            f"leg4-adjust result not JSON: {exc}"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise IntentExtractUnavailableError("leg4-adjust result not an object")
+    return str(payload.get("adjustment", "") or "").strip()
 
 
 def _parse_extraction(result_text: str) -> ExtractedIntent:

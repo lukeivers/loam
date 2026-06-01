@@ -1149,16 +1149,34 @@ def _is_over_promise(text: str) -> bool:
 def _leg4_adjustment_text(
     confirm_reply: str,
     intent: ProposedEndIntent,
+    *,
+    extractor: IntentExtractor | None = None,
 ) -> str:
     """The leg-4 adjustment sentence loam appends to the close (AC.INTENT.4).
 
-    Reads what the confirmation REVEALED and reflects it: a capability DOUBT is
-    answered honestly (no invented capability — protection-floor), otherwise the
-    concrete DETAIL the user added (preferring the LLM seam's ``adjustment`` read
-    when present) is reflected back so the close visibly LEARNS from the
-    confirmation rather than restating the proposal. Returns "" when the
+    PRIMARY path: the LLM seam reads the CONFIRMATION reply and writes a one-line,
+    right-sized adjustment that reflects the substantive detail/doubt it added —
+    the free-form-extraction the deterministic heuristics cannot generalise across
+    arbitrary phrasings (rerun8-10: leg 4 flickered on whichever novel detail the
+    role-play added). FAIL-SOFT: on any extractor failure / unavailable / empty,
+    the deterministic heuristics below run (guidance hedge -> walk-through; doubt
+    -> honest answer; downstream goal; distilled detail). The LLM output is still
+    passed through the over-promise guard (defense-in-depth). Returns "" when the
     confirmation added nothing to adjust from."""
     item = (intent.clean_item or intent.raw_answer).strip().rstrip(".")
+    # PRIMARY: the LLM seam's read of the confirmation turn (AC.INTENT.4), bounded
+    # + fail-soft. The over-promise guard still binds it (AC.ONCLOSE.3).
+    if extractor is not None:
+        try:
+            llm_adj = extractor.extract_adjustment(
+                confirm_reply, item=item, proposal=intent.objective_text
+            )
+        except IntentExtractUnavailableError:
+            llm_adj = ""
+        except Exception:  # noqa: BLE001 — fail-soft: a misbehaving extractor must NOT break onboarding
+            llm_adj = ""
+        if llm_adj and not _is_over_promise(llm_adj):
+            return f" {llm_adj.strip().rstrip('.')}."
     if _confirmation_wants_guidance(confirm_reply):
         # A guidance hedge ("I don't even know what that would look like", "you'd
         # have to walk me through it") — loam OFFERS to walk them through it, no
@@ -1250,7 +1268,7 @@ def run_translate_in_intake(
 
     # --- 2a. Idea-vacuum -> the fallback ladder. ---
     if result.richness is IdeaRichness.EMPTY:
-        return _run_fallback_ladder(ask, result, provider)
+        return _run_fallback_ladder(ask, result, provider, extractor=extractor)
 
     # --- 2b. CLEAR / PARTIAL -> infer, propose, verify. ---
     # Distill via the LLM intent-extraction seam FIRST (AC.INTENT.1), fail-soft to
@@ -1310,7 +1328,9 @@ def run_translate_in_intake(
     # honestly (protection-floor — no invented capability).
     if result.confirmed and result.proposal is not None:
         idea = _leverage_from_intent(result.proposal)
-        adjustment = _leg4_adjustment_text(confirm, result.proposal)
+        adjustment = _leg4_adjustment_text(
+            confirm, result.proposal, extractor=extractor
+        )
         if adjustment:
             idea = LeverageIdea(
                 text=idea.text + adjustment, references=idea.references
@@ -1324,6 +1344,8 @@ def _run_fallback_ladder(
     ask,
     result: IntakeResult,
     provider: ResearchProvider,
+    *,
+    extractor: IntentExtractor | None = None,
 ) -> IntakeResult:
     """The graceful fallback ladder for an idea-vacuum user (AC.ONINTAKE.5).
 
@@ -1433,7 +1455,7 @@ def _run_fallback_ladder(
         raw_answer=ladder_item,
         clean_item=ladder_item,
     )
-    adjustment = _leg4_adjustment_text(check, ladder_intent)
+    adjustment = _leg4_adjustment_text(check, ladder_intent, extractor=extractor)
     if adjustment:
         idea = LeverageIdea(text=idea.text + adjustment, references=idea.references)
     result.leverage_ideas.append(idea)

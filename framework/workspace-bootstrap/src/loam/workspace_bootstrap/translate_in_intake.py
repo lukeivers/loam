@@ -421,7 +421,53 @@ _WANT_SPAN = re.compile(
     r"(?=[.!?;,]|—|–|\s+so\s+|\s+because\s+|\s+and\s+(?:have|get)\b|$)",
     flags=re.IGNORECASE,
 )
+# A want-span is NEGATED when the asserted want is "to NOT do X" / "to not have
+# to X myself" — the user is asserting they want X done FOR them, not that they
+# want to keep doing X. The negated span must distill the ASSERTED intent (the
+# work the user wants offloaded), never the negated clause (AC.ONCLOSE.5). The
+# residual after stripping the negation lead-in IS that asserted work.
+_NEGATED_WANT_LEAD = re.compile(
+    r"^(?:to\s+)?(?:just\s+)?not\s+(?:have\s+to\s+|be\s+)?",
+    flags=re.IGNORECASE,
+)
+# An explicit "do it FOR me" assertion the user states inside a negated
+# correction ("Can it just do the writing for me if I give it the basics?"). The
+# span between the verb and "for me" is the asserted work to offload — preferred
+# over the negated want when present (AC.ONCLOSE.5).
+_DO_FOR_ME_SPAN = re.compile(
+    r"\b(?:can\s+(?:it|you)\s+(?:just\s+)?|(?:could|would)\s+(?:it|you)\s+|"
+    r"i\s+(?:just\s+)?want\s+(?:it|you)\s+to\s+|just\s+)"
+    r"(?P<span>(?:do|write|draft|handle|make|build|format|prepare|create)\b"
+    r"(?:\s+\w+){0,8}?)\s+for\s+me\b",
+    flags=re.IGNORECASE,
+)
+# A leading negated-correction frame ("it's not that I have trouble starting
+# it") that the user OPENS a correction with to reject loam's misread. Its
+# content is the REJECTED framing, not the asserted intent — it must be dropped
+# so the distilled item is the ASSERTED work that follows (AC.ONCLOSE.5).
+_NEGATED_CORRECTION_LEAD = re.compile(
+    r"^(?:well,?\s+)?(?:it'?s|its|that'?s)\s+not\s+(?:that\s+|about\s+)?"
+    r"[^.!?;—–]*?(?=[.!?;]|—|–|$)",
+    flags=re.IGNORECASE,
+)
 _DISTILL_MAX_WORDS = 12
+
+
+# Verb + pronoun-only object ("write them", "do it", "handle those") — an
+# asserted-work span that names no concrete noun. The close prefers a named-noun
+# span over one of these so it lands on the person's actual item (AC.ONCLOSE.4).
+_PRONOUN_OBJECT = re.compile(
+    r"^\s*(?:write|writing|do|doing|handle|handling|make|making|draft|drafting|"
+    r"format|formatting|finish|finishing)?\s*"
+    r"(?:them|it|those|these|that|this|all|everything)\s*$",
+    flags=re.IGNORECASE,
+)
+
+
+def _is_pronoun_only_object(span: str) -> bool:
+    """True when the span's object is a bare pronoun ("write them", "do it") with
+    no concrete noun — the close defers to a more specific named span."""
+    return bool(_PRONOUN_OBJECT.match(span.strip()))
 
 
 def _strip_lead_filler(text: str) -> str:
@@ -444,11 +490,44 @@ def _distill_intent(answer: str) -> str:
     me"), and cap at a bounded word budget. A reply that is already a short
     phrase passes through essentially unchanged."""
     text = answer.strip().rstrip(".!?").strip()
+    # Drop a leading negated-correction frame ("it's not that I have trouble
+    # starting it") so the distilled item is the ASSERTED intent that follows,
+    # never the rejected framing the user is correcting (AC.ONCLOSE.5). Only the
+    # OPENING negated-correction clause is dropped; later content is preserved.
+    decorrected = _NEGATED_CORRECTION_LEAD.sub("", text).strip().lstrip(",.!?—–").strip()
+    if decorrected and decorrected != text:
+        text = decorrected
+    # An explicit "do X for me" assertion ("Can it just do the writing for me?")
+    # is the asserted work to offload — preferred over a negated want-span so a
+    # negated correction distills the asserted intent, not the negated clause
+    # (AC.ONCLOSE.5). BUT only when X names a concrete noun: a pronoun-only object
+    # ("write THEM for me", "do IT for me") is less specific than a named want-span
+    # in the same reply ("stop writing those listing descriptions"), so a
+    # pronoun-only do-for-me defers to the want-span below (AC.ONCLOSE.4).
+    do_for_me = _DO_FOR_ME_SPAN.search(text)
+    if do_for_me:
+        span = do_for_me.group("span").strip().rstrip(",").strip()
+        span = re.sub(
+            r"^(do|handle|make)\s+",  # "do the writing" -> "the writing"
+            "",
+            span,
+            flags=re.IGNORECASE,
+        ).strip() or span
+        if not _is_pronoun_only_object(span):
+            words = span.split()
+            if 0 < len(words) <= _DISTILL_MAX_WORDS:
+                return span
+            if words:
+                return " ".join(words[:_DISTILL_MAX_WORDS])
     # If the user states an explicit intent ("I want to stop writing those listing
     # descriptions"), that span IS the item — prefer it over clause heuristics.
     want = _WANT_SPAN.search(text)
     if want:
         span = want.group("span").strip().rstrip(",").strip()
+        # A NEGATED want ("not have to write them myself") asserts the user wants
+        # the work DONE FOR them — distill the work, not the negation. Strip the
+        # negation lead-in so the residual is the asserted item (AC.ONCLOSE.5).
+        span = _NEGATED_WANT_LEAD.sub("", span).strip() or span
         # Drop a leading disposition verb the enablement framing re-adds later.
         span = re.sub(
             r"^(stop|start|quit|begin|avoid)\s+(doing\s+|to\s+)?",
@@ -525,19 +604,36 @@ def _propose_end_intent(answer: str, disposition: Disposition) -> ProposedEndInt
 
 
 def _leverage_from_intent(intent: ProposedEndIntent) -> LeverageIdea:
-    """Build a person-SPECIFIC leverage idea referencing the user's stated item
-    (AC.ONINTAKE.6 — distinguishable from generic boilerplate)."""
+    """Build the SINGLE person-specific leverage idea that the close lands on
+    (AC.ONINTAKE.6 + AC.ONCLOSE.2/.3/.4).
+
+    Design constraints (the owner's onboarding spec):
+
+      - ONE landed thing (AC.ONCLOSE.2) — this is the single close idea; nothing
+        else is emitted as a co-equal close line.
+      - person-SPECIFIC (AC.ONCLOSE.4) — references the user's NAMED item
+        (``clean_item``), never a generic-assistant triad.
+      - NO over-promised automation (AC.ONCLOSE.3) — the close proposes
+        right-sized help scaled to what the person showed they want; it does NOT
+        claim the thing "happens reliably without you having to push it forward."
+        The recurring/elaborate version stays the opt-in ``one_level_up_offer``,
+        never the default the close commits to.
+    """
     core = (intent.clean_item or intent.raw_answer).strip().rstrip(".")
     if intent.disposition == Disposition.STOP:
+        # Right-sized: loam can DO this for you when you ask — a proposal scaled
+        # to the literal ask (offload the task), not a promise of unattended
+        # recurrence (that's the opt-in offer).
         text = (
-            f"Here's what loam can do for you: take '{core}' off your plate — "
-            f"loam can watch for it and handle it so you never have to think "
-            f"about it again."
+            f"Here's the one thing to start with: let loam take '{core}' off "
+            f"your plate — you hand it the basics and loam does it for you, so "
+            f"it stops eating the time you'd rather spend elsewhere."
         )
     else:
         text = (
-            f"Here's what loam can do for you: turn '{core}' into something that "
-            f"happens reliably without you having to push it forward each time."
+            f"Here's the one thing to start with: let loam help you with "
+            f"'{core}' — you bring what you've got and loam does the heavy part, "
+            f"so it actually gets done without it being all on you."
         )
     return LeverageIdea(text=text, references=core)
 
@@ -573,18 +669,55 @@ def _extract_role_noun(role: str) -> str:
     return first_clause or text
 
 
-def _leverage_from_role(role: str) -> LeverageIdea:
-    """A person-specific leverage idea mined DIRECTLY from a described role
-    (the ladder's mine-the-role rung — AC.ONINTAKE.5, before any deep research).
+# Gerund-led named tasks a user lists when describing their day ("cite-checking
+# briefs", "drafting discovery requests", "writing up claim summaries"). The
+# ladder mines ONE of these as the concrete thing to land on (AC.ONCLOSE.4) —
+# the person's OWN named work, not a generic "status updates / formatting"
+# triad. A leading verb + its object, captured up to a list/clause boundary.
+_NAMED_TASK = re.compile(
+    r"\b(?P<task>(?:cite-?checking|drafting|writing(?:\s+up)?|reviewing|"
+    r"formatting|reconciling|chasing|filing|tracking|managing|organi[sz]ing|"
+    r"keeping|calendaring|answering|preparing|summari[sz]ing|building|pulling|"
+    r"handling|processing)\b(?:\s+\w+){1,4}?)"
+    r"(?=[,.;]|—|–|\s+and\b|\s+so\b|\s+but\b|\s+for\b|$)",
+    flags=re.IGNORECASE,
+)
 
-    The ``{role}`` slot is filled with the extracted role NOUN, not the raw
-    multi-sentence description (AC.INTAKE-ROLE.1)."""
+
+def _named_task_from_description(description: str) -> str | None:
+    """Pull ONE concrete named task the user listed when describing their work
+    ("cite-checking briefs") so the ladder can land on the person's OWN words,
+    not a generic triad (AC.ONCLOSE.4). Returns None when no clear task surfaces
+    (the close then falls back to a role-level framing)."""
+    m = _NAMED_TASK.search(description)
+    if not m:
+        return None
+    task = m.group("task").strip().rstrip(",").strip()
+    return " ".join(task.split()[:5]) or None
+
+
+def _leverage_from_role(role: str, *, named_task: str | None = None) -> LeverageIdea:
+    """The SINGLE person-specific leverage idea the ladder lands on (AC.ONINTAKE.5
+    + AC.ONCLOSE.2/.4).
+
+    When the user named a concrete task ("cite-checking briefs"), the close lands
+    on THAT — their own words — not a generic "status updates / formatting /
+    chasing" triad (the genericisation rerun2 flagged on learned-this-person).
+    The ``{role}`` slot is the extracted role NOUN, never the raw description
+    (AC.INTAKE-ROLE.1)."""
     noun = _extract_role_noun(role)
+    if named_task:
+        text = (
+            f"Here's the one thing to start with: let loam take '{named_task}' "
+            f"off your plate — it's repetitive, it's a real chunk of a {noun}'s "
+            f"day, and loam can do the grunt of it so you spend your time on the "
+            f"part only a {noun} can do."
+        )
+        return LeverageIdea(text=text, references=named_task)
     text = (
-        f"Here's what loam can do for a {noun}: take the repetitive parts of "
-        f"that work — the status updates, the formatting, the chasing — and "
-        f"handle them for you, so you spend your time on the part only a "
-        f"{noun} can do."
+        f"Here's the one thing to start with: pick the most repetitive part of "
+        f"a {noun}'s day and let loam take the grunt of it off your plate, so "
+        f"you spend your time on the part only a {noun} can do."
     )
     return LeverageIdea(text=text, references=noun)
 
@@ -610,6 +743,14 @@ _Q_DEEP_OPT_IN = (
     "I can do a deeper dive — research what makes someone in your role most "
     "effective, what tends to get people promoted, and which tools could give "
     "you an edge — then bring you specific ideas. Want me to? (yes / no)"
+)
+# The ladder's surface-and-check (AC.ONCLOSE.1): before landing the close on the
+# day-derived/idea-vacuum paths, loam SURFACES the single inferred starting point
+# as a checkable hypothesis the user can confirm or correct (the four-step loop's
+# verify leg). ``{one_thing}`` is filled with the inferred concrete start.
+_Q_LADDER_CHECK = (
+    "Based on that, the single highest-leverage place to start looks like: "
+    "{one_thing}. Want to start there? (yes / no — or tell me what to change)"
 )
 
 
@@ -680,12 +821,15 @@ def run_translate_in_intake(
         result.seeded_objective_text = (
             f"Help the user with: {corrected} (as they corrected the proposal)"
         )
-        # The leverage idea must reference the CORRECTED item.
+        # The leverage idea must reference the CORRECTED item. ``clean_item``
+        # carries the distilled corrected item so the close lands on it (and a
+        # negated correction lands the ASSERTED intent — AC.ONCLOSE.4/.5).
         proposal = ProposedEndIntent(
             slug=result.seeded_objective_slug,
             disposition=disposition,
             objective_text=result.seeded_objective_text,
             raw_answer=corrected,
+            clean_item=corrected,
         )
         result.proposal = proposal
 
@@ -731,8 +875,9 @@ def _run_fallback_ladder(
     # the noun, never the raw blob (AC.INTAKE-ROLE.1).
     role = _extract_role_noun(role_answer)
     result.described_role = role
-    # Mine the role DIRECTLY for ideas first (before ever offering the research).
-    result.leverage_ideas.append(_leverage_from_role(role))
+    # Mine a CONCRETE named task from the description ("cite-checking briefs") so
+    # the close lands on the person's OWN words, not a generic triad (AC.ONCLOSE.4).
+    named_task = _named_task_from_description(role_answer)
     # Seed a baseline objective from the described role so the run is useful.
     result.confirmed = True
     result.seeded_objective_slug = _slugify(role + "-leverage")
@@ -748,7 +893,44 @@ def _run_fallback_ladder(
         result.invoked_deep_research = True
         research = provider.research_role(role)
         result.research_result = research
-        for idea in research.as_leverage_ideas():
-            result.leverage_ideas.append(LeverageIdea(text=idea, references=role))
+        # Fold the research synthesis INTO the seed (the seed carries the role's
+        # tooling/effectiveness axes); it is NOT emitted as extra co-equal close
+        # ideas — the close lands on ONE thing (AC.ONCLOSE.2).
+        result.seeded_objective_text = (
+            f"Help the user (a {role}) start with the highest-leverage offload "
+            f"in their day; deep-role-research surfaced: "
+            f"{research.existing_ai_tools}"
+        )
+
+    # --- Surface-and-check, then land ONE thing (AC.ONCLOSE.1/.2). ---
+    # The single inferred starting point: the named task if one surfaced, else a
+    # role-level "most repetitive part of your day" framing.
+    one_thing = (
+        f"taking '{named_task}' off your plate"
+        if named_task
+        else f"taking the most repetitive part of a {role}'s day off your plate"
+    )
+    check = ask("ladder_check", _Q_LADDER_CHECK.format(one_thing=one_thing))
+    if _is_no(check):
+        # The user rejected the inferred start — do NOT force it; offer to come
+        # at it again rather than landing a thing they declined.
+        result.leverage_ideas.append(
+            LeverageIdea(
+                text=(
+                    "No problem — we don't have to start there. Tell me which "
+                    "part of your day you'd most like off your plate and we'll "
+                    "start with that instead."
+                ),
+                references=role,
+            )
+        )
+        return result
+    if not _is_yes(check):
+        # A correction names a DIFFERENT start — land on the corrected item.
+        corrected = _distill_intent(check) or check.strip()
+        named_task = corrected
+        one_thing = f"taking '{corrected}' off your plate"
+    # Land EXACTLY one close idea on the checked/corrected thing (AC.ONCLOSE.2).
+    result.leverage_ideas.append(_leverage_from_role(role, named_task=named_task))
 
     return result

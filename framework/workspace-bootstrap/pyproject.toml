@@ -71,6 +71,12 @@ pos-new-workspace = "loam.workspace_bootstrap.new_workspace:cli_main"
 [project.entry-points."loam.cli.subcommands"]
 onboard = "loam.workspace_bootstrap.onboarding_cli:build_onboard_subcommand"
 workspace = "loam.workspace_bootstrap.workspace_cli:build_workspace_subcommand"
+# N3 — the translate-in first-run intake orchestrator (D-4 (a)). Named
+# `init-intake` (NOT `init`) to avoid shadowing the existing sealed
+# `loam init` tree-bootstrap verb in framework/loam-init/ (plan §11
+# collision resolution). Drives run_first_run_intake — the real
+# production entry-point the outcome-altitude AC.ONFIRE.3 walks.
+init-intake = "loam.workspace_bootstrap.first_run_intake_cli:build_init_intake_subcommand"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -892,9 +892,72 @@ FOR THEM, not data collection).*
 
 ---
 
+### D-1..D-5 — OWNER RULINGS (RATIFIED 2026-05-31, recorded before build)
+
+The five forks are ratified to their recommendations:
+- **D-1 = (a)** verification-heavy intake (infer → propose → confirm before commit).
+- **D-2 = (a)** minimal global seed (confirmed end-intent objective + openness-biased
+  interaction-model at `confidence: prior` + voice/channel basics; nothing more).
+- **D-3 = (a)** over-reach guard: at most one level up, opt-in, never auto-built.
+- **D-4 = (a)** entry = a `loam init`-class CLI verb orchestrating scaffold →
+  capability-ritual → translate-in intake → seed.
+- **D-5 = (a)** deep role-research = its own fast-follow slice; N3 baseline ships
+  ONLY the featherlight opt-in SEAM (interface + offer), NOT the research pass.
+
+Plus the owner's **idea-quality continuum** (sharpens the deep-research TRIGGER):
+the effort the system expends scales INVERSELY with the user's own idea-richness.
+CLEAR idea → capture + leverage-close (no ladder, no research). PARTIAL idea →
+draw out more. NOTHING/overwhelmed → the fallback ladder + the (seam to) deep
+role-research — these are the NEED-triggered way to bring ideas to an idea-vacuum
+user, not an opt-in preference. The deep-research SEAM is reached by the
+idea-vacuum path (bottom of the continuum), never offered to a user with ideas.
+
+### Build-time fork NOT covered by D-1..D-5 — the `loam init` name-collision (RESOLVED autonomously, surfaced)
+
+**The conflict (Lens 7 / Surface #5 / M5).** The plan's D-4 names the orchestrating
+verb `loam init`. **Tier-0 finding (the plan's Predecessors scan MISSED this):**
+`loam init` ALREADY EXISTS as a *separate sealed component*
+(`framework/loam-init/`, SEAL `77029ec`) — it bootstraps a fresh workspace TREE
+(clones `framework/`, scaffolds `workspace/` + `.claude/`) and already fires the
+existing capability-activation `run_onboarding` ritual as a post-bootstrap callout.
+The plan's §2 placement table mandates ALL new machinery (intake, seed-writer,
+trigger orchestrator) land in `workspace-bootstrap` (single component). These two
+collide: the named verb lives in a *different* sealed component than the plan's
+build home.
+
+**Signals (M5 step 2):** single-component-fence discipline (the plan's §2 table +
+the seal-fence cost of pulling a 2nd sealed component into the diff) weighs HEAVY;
+blast-radius of editing the sealed `loam-init/cli.py` is real (its own seal-fence
++ its negative AC.FBE.1.6 forbids signature changes); reversibility of a wiring
+line is high; the outcome-altitude AC only needs *a real production entry-point*,
+not literally the `loam-init` package's verb.
+
+**Resolution (M5 step 3, autonomous — high confidence the outcome is unaffected):**
+build the orchestrator + intake + seed-writer entirely INSIDE `workspace-bootstrap`
+(the plan's mandated home) and expose it as a REAL CLI verb registered through the
+same `loam.cli.subcommands` entry-point group the existing verbs use. The verb is
+named **`loam init-intake`** (the translate-in first-run orchestrator) to avoid
+shadowing the existing sealed `loam init` tree-bootstrap verb. It orchestrates:
+capability-ritual (compose on existing `run_onboarding`) → translate-in intake
+(new) → seed (new). The outcome-altitude AC.ONFIRE.3 drives THIS real entry-point
+(`run_first_run_intake()` + the `init-intake` subcommand) on an empty instance —
+which satisfies "the real onboarding entry-point" exactly. The existing `loam init`
+tree-bootstrap verb is left untouched (zero edits to the sealed `loam-init/`),
+honoring compose-don't-rebuild + single-component-fence.
+
+**Surfaced (M5 step 4):** the owner ruled D-4 = "`loam init` orchestrates." This
+resolution delivers the orchestration + a real verb, but under a non-colliding name
+(`init-intake`) so it does not edit the sealed `loam-init/` component. Folding the
+intake into the literal `loam init` verb (so a brand-new user runs ONE command) is
+a clean fast-follow wiring slice that amends `loam-init/cli.py`'s post-bootstrap
+callout to call `run_first_run_intake` instead of bare `run_onboarding` — deferred
+out of this single-component fence. **If the owner wants the literal `loam init`
+verb to carry the intake in N3, that is a one-line callout amend to a 2nd sealed
+component — surfaced for the ruling; the baseline ships the orchestrator + verb now.**
+
 ## §13 §status — verdict matrix (backfilled at seal)
 
-*Populated at seal time per the standard ladder. Forks D-1..D-4 ruling recorded
+*Populated at seal time per the standard ladder. Forks D-1..D-5 ruling recorded
 in §11 BEFORE the build dispatch.*
 
 | AC | Verdict | Evidence |

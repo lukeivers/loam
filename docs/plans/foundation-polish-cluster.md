@@ -270,6 +270,47 @@ as a Tier-F partner line. The component itself is NOT bumped/edited (it sits at
 the prior pass proved the full closure resolves with it at 0.13.0). No fourth
 component is touched.
 
+### SUB-ITEM 1a — build SHAs + the seal HALT (2026-06-01)
+
+Branch `plan/foundation-polish-install` (worktree `/Users/lukeivers/loam-wt-pkg`):
+- **apply** `da8f7c88` — `loam amend apply` auto-commit (new meta-package + AC tests +
+  seal-test widenings + sidecar bumps; BASELINE confirmed `cc512b1f`).
+- **corrective** `95996e23` — folds the apply-missed modified-tracked source (the
+  workspace-bootstrap resolver fix, the install-from-source.txt completion, the
+  loam-init pytest markers, the manifest 3-component fence + this register). The apply
+  step only auto-stages the NEW files handed to it pre-staged + its own tool-managed
+  edits; modified tracked files not pre-staged were left in the working tree, so a NEW
+  corrective commit folds them in (never `--amend`).
+- **corrective** `84906b51` — makes AC.INST.S hermetic: builds wheels from tmp copies
+  so `python -m build` leaves no `build/` artefact in the source tree (which had
+  tripped workspace-bootstrap's d2 inline-path scanner on `build/lib/...`).
+
+**AC verification (all GREEN locally):** AC.PYPKG.1/2 (7 tests), the resolver-unit
+half of AC.INST.S (7 tests), and ★ the outcome-altitude AC.INST.S end-to-end (real
+wheel build → clean throwaway venv → `pip install loam` from a local wheelhouse →
+`loam --help` lists `init/amend/release` → real `loam init` → persona template
+resolves from the cloned framework → runtime data present). The full workspace-
+bootstrap suite is 556 passed / 15 skipped EXCEPT the LIVI family (below).
+
+**SEAL HALT (surfaced, not silently worked around).** `loam amend seal` runs the
+touched components' FULL suites; workspace-bootstrap's `AC.LIVI.*` integration tests
+bootstrap a workspace from canonical-`main` (`git clone <LOAM_ROOT>` then
+`checkout origin/main`). The worktree's local `main` is pinned at `5999fb95` (checked
+out at the sibling `/Users/lukeivers/loam` worktree; not movable here), so the LIVI
+clone gets the OLD `install-from-source.txt` WITHOUT the state-migration-engine line →
+`_provision_framework_venv`'s `pip install -r install-from-source.txt` fails on the
+unresolvable bare-name dep → 10 errors + 1 fail. This is **pre-existing** (verified
+identical on pristine `5999fb95` with all 1a changes stashed — the four-test
+no-false-fault passes: NOT this amendment's regression) and is exactly the
+install-graph hole this amendment REPAIRS — it clears the moment `main` carries the
+fix. Proven transitively: AC.INST.S green (the same `bootstrap_new_workspace` path,
+driven from a FIXED canonical) ⟹ LIVI green from fixed `main`. The seal cannot
+observe green in this worktree because making it so requires advancing local `main` =
+a merge-to-main action the dispatch reserves to the dispatcher (merge-on-seal).
+Recommended sequencing: dispatcher merges `da8f7c88..84906b51` to `main`, THEN runs
+`loam amend seal` (LIVI then clones fixed main and passes); or seals with the LIVI
+family acknowledged as pre-existing-cleared-by-this-fix.
+
 ## §15 Backwards-compat verification (per sub-item)
 
 - SUB-ITEM 1a: the existing `install-from-source.txt` editable path STILL WORKS (contributors/dev); the published surface is ADDITIVE, not a replacement of the dev path.

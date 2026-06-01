@@ -1,0 +1,48 @@
+# User-state migration — defined-workflow system + position cursor + pause-if-lost (P2.3)
+#
+# Declared per the v-next build workflow Step-5 (INTEGRATE+RECORD) and the
+# migration release-gate convention (G4, P1.3): every release declares a
+# user-state migration; a STRUCTURAL-ONLY migration is a valid declared
+# migration. Version number is intentionally NOT pre-assigned (versions
+# derive at release time — feedback_version_numbers_at_release_time); this
+# file is keyed by the scope-descriptive slug.
+
+slug: defined-workflow-system-slice
+slice: P2.3 defined-workflow system + position cursor + pause-if-lost
+date: 2026-05-31
+disposition: build-new   # the flow-definition format + cursor library + pause check + re-injection hook are new
+
+# What user-state this migration creates on a fresh init / establish:
+#
+# The ONLY user-state surface this slice introduces is the per-workspace home
+# for USER-FACING flow-INSTANCE cursors (D2 / AC.CURSOR.4): a user's live
+# position in THEIR run of a shipped flow. It is gitignored user-state under
+# .loam/. The methodology-flow cursor (the dogfood, docs/flows/*.cursor.yaml)
+# is TRACKED build-methodology, NOT user-state — it is committed, not migrated.
+operation: structural-only
+creates:
+  - .loam/flows/                 # home for user-facing flow-INSTANCE cursors (created only when a user-facing flow first runs)
+leaves_in_place:
+  - .loam/memory/                # the live FBM episode store — UNTOUCHED
+  - docs/flows/                  # TRACKED methodology flow definitions + cursors — committed, not user-state
+changes_user_state_schema: false
+
+rationale: >
+  This slice builds framework code (the flow-definition format + validator,
+  the position-cursor library, the pause-if-lost check, and the re-injection
+  hook entry-point) under framework/tools/loam/, plus a tracked methodology
+  flow definition + cursor under docs/flows/ (the loam-vnext-build dogfood)
+  and the flow-definition convention under docs/conventions/. None of those
+  are user-state. The single user-state surface is .loam/flows/ — the
+  gitignored home a USER's flow-instance cursor would live in when a shipped
+  user-facing flow runs; no such instance exists yet, so this migration only
+  declares the home, creating it lazily when first needed. No existing field,
+  episode, schema, or user file changes — hence structural-only, not a data
+  migration.
+
+# Reversibility (G-star / protection floor): the slice only ever CREATES the
+# .loam/flows/ home when absent and writes tracked artefacts; it removes,
+# compresses, or overwrites no user-state. Fully reversible via git
+# (tracked artefacts) and by deleting the empty .loam/flows/ home.
+reversible: true
+removes_user_state: false

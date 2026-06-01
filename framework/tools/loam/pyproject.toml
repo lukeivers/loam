@@ -26,6 +26,13 @@ release = "loam_cli.release.cli:build_release_subcommand"
 # any doc claim that diverges from it. Canonical (every loam codebase has
 # the substrate-audit surface); sibling to `release`.
 audit = "loam_cli.audit.cli:build_audit_subcommand"
+# AC.FLOWDEF.* / AC.CURSOR.* / AC.PAUSE.* (P2.3) — `loam flow` verb
+# registration. The operator-facing surface over the defined-workflow
+# system: validate a flow definition + resolve the active position
+# cursor (the pause-if-lost positive-resolution check). Canonical
+# (every loam codebase has the defined-workflow process surface);
+# sibling to `release` + `audit`.
+flow = "loam_cli.flows.cli:build_flow_subcommand"
 
 [tool.setuptools.packages.find]
 where = ["src"]

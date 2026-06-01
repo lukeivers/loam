@@ -1,0 +1,16 @@
+# Persisted position cursor for the loam-vnext-build flow (P2.3 dogfood).
+#
+# This is the TRACKED (committable) home for the build position cursor
+# (AC.CURSOR.4 / D2): docs/flows/<flow>.cursor.yaml. It is driven by the
+# defined-workflow system as a persisted cursor, replacing the manual
+# block in docs/plans/build-cursor.md (per the build-workflow §5
+# forward-reference). It resolves against docs/flows/loam-vnext-build.flow.md.
+#
+# At authoring it names the SAME position the manual build-cursor.md
+# block names today (AC.DOGFOOD.1): slice P1.3, step 5 INTEGRATE+RECORD.
+# `step` is the machine-graph node id (integrate_record); `branch_state`
+# carries the slice + disposition + gate-status the human prose needs.
+flow: loam-vnext-build
+step: integrate_record
+branch_state: "slice P1.3 user-state migration engine + RELEASE-GATE; disposition build-new(state-migration-engine)+extend(loam_cli release gate #7); gate-status none pending; next P1.4 onboarding/init"
+updated_at: "2026-05-31T00:00:00Z"

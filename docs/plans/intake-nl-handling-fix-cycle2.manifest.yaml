@@ -1,0 +1,112 @@
+schema_version: 1
+amendment:
+  number: 165
+  slug: intake-nl-handling-fix-cycle2
+  title: "Intake NL-handling fix cycle 2 — re-run hardening (filler-led affirmation, action/correction distill, vacuum pain split)"
+
+# BASELINE: 5a4667eb — the cycle-2 plan-section + first-re-run-report doc commit
+# immediately preceding the cycle-2 source-edit commit (8487ffe8).
+# BASELINE-as-HEAD~1 pattern.
+#
+# Commit ladder pre-apply:
+#   21deccec — cycle-1 seal (amendment #164).
+#   84c61dae — cycle-1 SHA backfill.
+#   5a4667eb — cycle-2 plan section + first smoke re-run report. ← BASELINE
+#   8487ffe8 — fix(intake): cycle-2 source edit + 4 hardening tests.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — same file as cycle 1:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _leading_polarity / _tokens — filler-skipping, agreement-pivot
+#       affirmation parser (AC.INTAKE-AFFIRM.1 hardening).
+#     - _ACTION_PREAMBLE / _WANT_SPAN / _distill_intent — action-leading
+#       distillation + correction-branch distillation (AC.INTAKE-ECHO.1).
+#     - _HARD_VACUUM_REGEXES / _DERIVABLE_PAIN_REGEXES / _looks_empty —
+#       day-derived-vs-vacuum split (AC.INTAKE-VACUUM.1, fixes the
+#       featherlight-invariant regression the first re-run surfaced).
+#   tests/test_AC_INTAKE_NL_natural_language_handling.py — 4 NEW hardening
+#     tests on the verbatim FIRST-re-run replies (10 tests total).
+#
+# AC families: same four as cycle 1 (refinements, not new ACs) —
+#   AC.INTAKE-ECHO.1 / AC.INTAKE-AFFIRM.1 / AC.INTAKE-VACUUM.1 / AC.INTAKE-ROLE.1.
+baseline: "5a4667eb"
+
+plan: docs/plans/intake-nl-handling-fix.md
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-nl-handling-fix-cycle2
+  body: |
+    # Intake NL-handling fix cycle 2 — re-run hardening — apply ladder
+
+    Cycle 2 of the intake natural-language-handling fix. The first
+    acceptance-smoke re-run
+    (`docs/experiments/loam-1.0-acceptance-smoke-rerun.md`) confirmed cycle 1
+    (amendment #164) landed Bug 3 (vacuum-routing for the clear cases) and
+    Bug 4 (role-noun) cleanly, but surfaced three residuals — all ladder to
+    the SAME four ACs (refinements, not new ACs):
+
+      - AC.INTAKE-AFFIRM.1 — a confirm LEADING with a hedge interjection
+        ("Ha, that's a mouthful — but yes, basically!") was routed to the
+        correction branch because the first word-token was "ha".
+        `_leading_polarity` now skips leading filler tokens and promotes an
+        explicit agreement pivot ("but yes"); a bare affirmation word buried
+        in "not sure" / "sort of" is NOT promoted (it stays a correction).
+      - AC.INTAKE-ECHO.1 — (a) the proposal distillation grabbed a temporal
+        preamble ("every single night I'm sitting at my kitchen table writing
+        up listing") rather than the action. `_ACTION_PREAMBLE` drops the
+        scene-setting and `_WANT_SPAN` extracts an explicit stated intent
+        ("I want to stop writing those listing descriptions") so the action
+        leads. (b) the CORRECTION branch echoed the raw reply into the seed +
+        close; it now distills the correction too.
+      - AC.INTAKE-VACUUM.1 — cycle 1's widened classifier over-fired: a
+        day-derived reply ("I don't know, but the thing that eats my day is
+        the write-ups") reached the deep-research ladder, breaking the
+        featherlight invariant. A `_HARD_VACUUM` override ("nothing's broken
+        / it's just constant" stays a vacuum) plus a `_DERIVABLE_PAIN`
+        demotion (one concrete singled-out pain → PARTIAL, off the ladder)
+        separate the claims-adjuster (PARTIAL, no research) from the paralegal
+        (vacuum, opt-in research reachable).
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - The distillation stays deterministic (clause/preamble/want-span
+        heuristics). The report named an LLM-classify alternative; the
+        deterministic path handles every observed transcript case and keeps
+        the intake dependency-free. The residual judge findings on
+        four-step-loop-ran / no-over-engineering are DEEPER intake-design
+        surfaces beyond the four NL bugs (surfaced to the dispatcher, not
+        silently widened).
+      - The agreement-pivot promotion is intentionally narrow ("but yes" /
+        "okay yes" …) so a buried "sure" in "not sure" never reads as a
+        confirmation.
+
+    Predecessor commits:
+      - 21deccec — cycle-1 seal (#164).
+      - 84c61dae — cycle-1 SHA backfill.
+      - 5a4667eb — cycle-2 plan section + first smoke re-run report.
+      - 8487ffe8 — cycle-2 source edit + 4 hardening tests (BASELINE+1).
+
+    BASELINE 5a4667eb — the doc commit before the cycle-2 source edit.
+    Single-component fence on `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated. Build-forward stops at local
+    seal + the second updated run-report.

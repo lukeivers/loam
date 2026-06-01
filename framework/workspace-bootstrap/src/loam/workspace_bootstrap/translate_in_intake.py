@@ -550,7 +550,11 @@ _DISTILL_MAX_WORDS = 12
 _PRONOUN_OBJECT = re.compile(
     r"^\s*(?:write|writing|do|doing|handle|handling|make|making|draft|drafting|"
     r"format|formatting|finish|finishing)?\s*"
-    r"(?:them|it|those|these|that|this|all|everything)\s*$",
+    r"(?:them|it|those|these|that|this|all|everything)"
+    # A trailing manner adverbial ("that BY HAND", "it MYSELF", "this MANUALLY")
+    # is still pronoun-anaphora — no concrete object (rerun6 variant-A
+    # "stop doing that by hand").
+    r"(?:\s+(?:by\s+hand|myself|manually|on\s+my\s+own|every\s+\w+))?\s*$",
     flags=re.IGNORECASE,
 )
 
@@ -650,11 +654,16 @@ def _distill_intent(answer: str) -> str:
             flags=re.IGNORECASE,
         ).strip() or span
         span = _ACTION_PREAMBLE.sub("", span).strip()
-        words = span.split()
-        if 0 < len(words) <= _DISTILL_MAX_WORDS:
-            return span
-        if words:
-            return " ".join(words[:_DISTILL_MAX_WORDS])
+        # A want-span that resolves to a pronoun-anaphora ("stop doing that by
+        # hand" -> "that by hand") names no concrete item — defer to the clause /
+        # day-pain heuristics, which recover the named task from an earlier clause
+        # (rerun6 variant-A; AC.ONCLOSE.4).
+        if span and not _is_pronoun_only_object(span):
+            words = span.split()
+            if 0 < len(words) <= _DISTILL_MAX_WORDS:
+                return span
+            if words:
+                return " ".join(words[:_DISTILL_MAX_WORDS])
     # A free-form DAY-NARRATIVE names several activities; the PAIN is the one a
     # derivable-pain signal points at ("…afternoon disappears into writing up the
     # claim-summary narratives … piles up on me"), NOT the first clause. When the
@@ -843,7 +852,7 @@ _NAMED_TASK = re.compile(
     r"keeping|calendaring|answering|preparing|summari[sz]ing|building|pulling|"
     # Object words may carry hyphens ("claim-summary narratives") and a leading
     # article ("the write-ups") — \w+ alone broke on the hyphen (rerun4 B).
-    r"handling|processing)\b(?:\s+(?:the\s+|those\s+)?[\w-]+){1,4}?)"
+    r"handling|processing)\b(?:\s+(?:the\s+|those\s+|these\s+|my\s+|up\s+)?[\w-]+){1,4}?)"
     r"(?=[,.;]|—|–|\s+and\b|\s+so\b|\s+but\b|\s+for\b|\s+that\b|$)",
     flags=re.IGNORECASE,
 )

@@ -477,3 +477,40 @@ def test_AC_ONINTAKE_2_unknown_disposition_proposal_reads_coherently():
     assert "reliably the listing descriptions" not in obj
     # The proposal is a coherent sentence (offload framing for the no-verb case).
     assert "help the user offload" in obj or "help the user reliably get to" in obj
+
+
+# ---- Sixth re-run hardening (rerun6 pronoun-anaphora 'stop doing that by hand'). ----
+
+
+def test_AC_ONCLOSE_4_pronoun_anaphora_want_defers_to_named_clause():
+    """'… writing these property descriptions … I'd love to stop doing that by
+    hand' must distill the NAMED item ('property descriptions'), not the pronoun-
+    anaphora want-span 'that by hand' (the rerun6 variant-A garble 'let loam take
+    that by hand off your plate')."""
+    distilled = _distill_intent(
+        "Honestly? Every single night I'm sitting at my kitchen table writing "
+        "these property descriptions — you know, the 'charming craftsman "
+        "bungalow' type stuff for MLS and Zillow — and it eats up two hours I "
+        "could be spending with my family or following up on leads. I'd love to "
+        "stop doing that by hand."
+    ).lower()
+    assert "property descriptions" in distilled
+    assert "that by hand" not in distilled
+
+
+def test_AC_ONCLOSE_4_close_lands_named_item_not_pronoun_anaphora():
+    result = run_translate_in_intake(
+        answerer=ScriptedAnswerer(
+            {
+                "stop_start": (
+                    "Every single night I'm writing these property descriptions "
+                    "for MLS and Zillow, it eats up two hours. I'd love to stop "
+                    "doing that by hand."
+                ),
+                "confirm_proposal": "yes",
+            }
+        )
+    )
+    close = result.leverage_ideas[0].text.lower()
+    assert "property descriptions" in close
+    assert "that by hand" not in close

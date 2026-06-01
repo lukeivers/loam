@@ -1116,6 +1116,36 @@ def _downstream_goal_from_confirmation(reply: str) -> str:
     return goal
 
 
+# An OVER-PROMISE the leg-4 adjustment must NEVER make (AC.ONCLOSE.3 — the close
+# proposes right-sized help, NOT unattended/recurring automation; the recurring
+# version stays the opt-in offer). The LLM seam's adjustment read CAN drift into
+# "this could be fully automated" (rerun9 variant-A no-over-engineering FAIL); any
+# adjustment carrying one of these is REJECTED so leg 4 never over-promises.
+_OVERPROMISE_PHRASES = (
+    "fully automat",  # fully automated / fully automate
+    "fully-automat",
+    "completely automat",
+    "automated, not just",
+    "automate it entirely",
+    "unattended",
+    "happens reliably",
+    "without you having to push",
+    "without you having to lift",
+    "set it and forget",
+    "runs itself",
+    "on autopilot",
+    "hands-off",
+    "no involvement from you",
+)
+
+
+def _is_over_promise(text: str) -> bool:
+    """True when a candidate leg-4 adjustment over-promises automation — it must be
+    rejected so the close stays right-sized (AC.ONCLOSE.3 / AC.INTENT.4)."""
+    low = (text or "").lower()
+    return any(p in low for p in _OVERPROMISE_PHRASES)
+
+
 def _leg4_adjustment_text(
     confirm_reply: str,
     intent: ProposedEndIntent,
@@ -1161,9 +1191,17 @@ def _leg4_adjustment_text(
             f"we're aiming you at, not just clearing the task."
         )
     extracted = intent.extracted
-    if extracted is not None and extracted.adjustment.strip():
+    if (
+        extracted is not None
+        and extracted.adjustment.strip()
+        and not _is_over_promise(extracted.adjustment)
+    ):
         return f" {extracted.adjustment.strip().rstrip('.')}, exactly as you said."
-    if extracted is not None and extracted.deeper_end_intent.strip():
+    if (
+        extracted is not None
+        and extracted.deeper_end_intent.strip()
+        and not _is_over_promise(extracted.deeper_end_intent)
+    ):
         return (
             f" The point is to {extracted.deeper_end_intent.strip().rstrip('.')} "
             f"— that's what we're really after here."

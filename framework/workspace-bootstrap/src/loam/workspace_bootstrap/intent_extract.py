@@ -159,7 +159,9 @@ or raised a DOUBT/QUESTION about whether loam can actually do it, a ONE-LINE \
 honest read of that detail/doubt loam should acknowledge; otherwise "".
 
 Be honest in "adjustment": if they doubt a capability, name the doubt — do NOT \
-invent a capability claim.
+invent a capability claim. And NEVER promise unattended/recurring AUTOMATION \
+("fully automated", "runs itself", "set it and forget", "hands-off") — loam \
+proposes right-sized help the user drives, not a system that runs without them.
 """
 
 _PRIOR_BLOCK = (

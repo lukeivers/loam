@@ -114,6 +114,42 @@ def test_AC_INTENT_4_downstream_goal_from_confirmation_is_reflected():
     assert "real goal" in close or "aiming you" in close
 
 
+def test_AC_INTENT_4_leg4_never_over_promises_automation():
+    """The leg-4 adjustment must NEVER over-promise automation (AC.ONCLOSE.3) —
+    even when the LLM seam's adjustment read drifts into 'fully automated' (the
+    rerun9 variant-A no-over-engineering FAIL). The over-promise is rejected and
+    leg 4 falls through to a right-sized reflection."""
+    from loam.workspace_bootstrap.intent_extract import ExtractedIntent
+    from loam.workspace_bootstrap.translate_in_intake import (
+        Disposition,
+        ProposedEndIntent,
+        _is_over_promise,
+        _leg4_adjustment_text,
+    )
+
+    assert _is_over_promise("this could be fully automated, not just assisted")
+    intent = ProposedEndIntent(
+        slug="x",
+        disposition=Disposition.STOP,
+        objective_text="",
+        raw_answer="writing property descriptions",
+        clean_item="writing property descriptions",
+        extracted=ExtractedIntent(
+            intent="writing property descriptions",
+            adjustment=(
+                "the volume and routine cadence suggest this could be fully "
+                "automated, not just assisted"
+            ),
+        ),
+    )
+    out = _leg4_adjustment_text(
+        "yes exactly, I just want to describe the house and have it come out ready",
+        intent,
+    )
+    assert "fully automat" not in out.lower()
+    assert "automated, not just" not in out.lower()
+
+
 def test_AC_INTENT_4_no_added_detail_yields_clean_close():
     """A bare 'yes' that adds nothing leaves the close clean (no forced, empty
     adjustment turn) — leg 4 reflects ONLY what the confirmation actually added."""

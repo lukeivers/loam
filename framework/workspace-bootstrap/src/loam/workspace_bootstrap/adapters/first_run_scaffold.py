@@ -1645,31 +1645,68 @@ _PERSONA_CONTRACT_FILENAME = "contract.yaml"
 _PERSONA_PROMPT_FILENAME = "prompt.md"
 
 
+# AC.INST.S — relative path of the persona template under a framework
+# tree root. Pinned once so the workspace-relative and __file__-relative
+# resolution branches agree on the shape they search for.
+_PERSONA_TEMPLATE_RELPATH = Path("primary-persona") / "templates" / "persona-template"
+
+
 def _resolve_persona_template_dir(
     template_override: Path | None = None,
+    workspace_root: Path | None = None,
 ) -> Path:
     """Locate the framework-shipped persona template directory.
 
-    Returns ``<repo>/primary-persona/templates/persona-template/``.
-    The scaffold consumes this as a read-only source. ``template_
-    override`` is exposed for tests so a tmpfs template can be
-    substituted without touching the framework copy.
+    Returns the resolved ``primary-persona/templates/persona-template/``
+    directory. The scaffold consumes this as a read-only source.
+
+    AC.INST.S — resolution order (the install-vs-checkout fix):
+
+      1. ``template_override`` when given (test seam; unchanged).
+      2. The CLONED ``<workspace_root>/framework/`` tree, which ``loam
+         init`` populates by ``git clone``-ing canonical INTO
+         ``<ws>/framework/``. Because canonical itself carries
+         ``framework/<comp>/`` paths, that clone-into produces the
+         doubled ``<ws>/framework/framework/primary-persona/...`` shape
+         (new_workspace.py ``_clone_canonical`` docstring / FBE.2c.5);
+         the single-level ``<ws>/framework/primary-persona/...`` and the
+         canonical-pos-v2 ``<ws>/primary-persona/...`` shapes are checked
+         too. This mirrors the two-case workspace-relative resolution
+         ``_resolve_plugins_root`` already does — composing on it, not
+         reinventing it.
+      3. The legacy ``Path(__file__).parents`` walk, which finds the
+         template in an EDITABLE source-tree install (the dev/
+         contributor path) but MISSES under a wheel install where
+         ``__file__`` lives under ``site-packages/``.
+
+    Branch 2 is the load-bearing addition: it is the only branch that
+    holds for a clean-env wheel/pipx install, where the framework data
+    the scaffold needs is present in the cloned workspace but
+    unreachable from the installed module's ``__file__``.
     """
     if template_override is not None:
         return Path(template_override).resolve()
+    if workspace_root is not None:
+        ws = Path(workspace_root).resolve()
+        for base in (
+            ws / "framework" / "framework",
+            ws / "framework",
+            ws,
+        ):
+            candidate = base / _PERSONA_TEMPLATE_RELPATH
+            if candidate.is_dir():
+                return candidate.resolve()
     here = Path(__file__).resolve()
     for parent in here.parents:
-        candidate = (
-            parent
-            / "primary-persona"
-            / "templates"
-            / "persona-template"
-        )
+        candidate = parent / _PERSONA_TEMPLATE_RELPATH
         if candidate.is_dir():
             return candidate.resolve()
     raise BootstrapError(
         "persona-template-not-found",
-        data={"searched_from": str(here)},
+        data={
+            "searched_from": str(here),
+            "workspace_root": str(workspace_root) if workspace_root else None,
+        },
     )
 
 
@@ -1732,7 +1769,12 @@ def _install_persona_directory(
             )
         return (False, persona_dir)
 
-    template_dir = _resolve_persona_template_dir(template_override)
+    # AC.INST.S — pass the workspace root so the resolver can find the
+    # template in the CLONED ``<workspace>/framework/`` tree under a
+    # wheel/pipx install (where the ``__file__``-relative walk misses).
+    template_dir = _resolve_persona_template_dir(
+        template_override, workspace_root=workspace_root
+    )
 
     personas_dir.mkdir(parents=True, exist_ok=True)
     # Stage into a sibling temp dir so the rename into place is the

@@ -90,6 +90,18 @@ pytest-asyncio>=0.23
 # ---------------------------------------------------------------
 # Tier F — depend on Tier A through Tier E.
 # ---------------------------------------------------------------
+# loam-state-migration-engine is a transitive RUNTIME dep of the install
+# closure (self-correction → state-migration-engine; self-correction is
+# pulled by workspace-bootstrap at Tier G). It was MISSING from this file
+# — a stranger following install-from-source.txt did not install it, so
+# the documented editable-install path was incomplete. Added here (before
+# self-correction, which imports it) by SUB-ITEM 1a / AC.PYPKG.2 (the
+# install-graph-completeness half). The migrate subcommand entry-point it
+# carries (loam.cli.subcommands -> migrate) thus resolves on a fresh
+# source install too. (It sits at 0.13.0 while siblings are 0.14.0; the
+# unpinned inter-component deps absorb the skew — the component is not
+# version-bumped here, which would be a fourth-component edit.)
+-e ./framework/state-migration-engine
 -e ./framework/self-correction
 
 # ---------------------------------------------------------------

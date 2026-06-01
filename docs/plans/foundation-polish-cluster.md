@@ -218,6 +218,58 @@ SUB-ITEM 2 (flatten) ── DEFERRED pending F-FLATTEN ruling ── does NOT ga
 
 Placeholder — each sub-item's builder narrates its D-decisions (D-INST.\*, D-UPGR.\*, D-SKTRI.\*) + backfills commit SHAs at seal. The owner rulings (F-FLATTEN, F-PUBLISH, F-INSTALL-MECH) are recorded here once issued, before the gated sub-items dispatch (`feedback_record_owner_ratification_before_dispatch`).
 
+### SUB-ITEM 1a — rulings + D-decisions (2026-06-01)
+
+**R-INST.A — Option-A fence-widen (dispatcher ruling, 2026-06-01).** SUB-ITEM 1a's
+fence is WIDENED from two components (loam-init + loam-cli) to **three** (adds
+`workspace-bootstrap`). Rationale: the prior EXAMINE pass proved that conventional
+install is NOT pure packaging for the outcome-altitude AC.INST.S — a clean-env
+`loam init` fails with `persona-template-not-found` because the first-run scaffold's
+framework-data resolver (`first_run_scaffold.py:_resolve_persona_template_dir`)
+walks `Path(__file__).parents` for the persona template, which from a wheel install
+sits under `site-packages/` and never finds the template even though `loam init`
+clones it into `<ws>/framework/`. The fix resolves framework data against the cloned
+workspace; it lives in `workspace-bootstrap`. The 1a amendment ships the packaging
+surface + this resolver fix + the install-from-source.txt completion as ONE
+multi-component sealed amendment. AC.INST.S stays the LOAD-BEARING outcome-altitude
+AC (NOT downgraded). Recorded into the manifest's `components` block + title before
+any source edit (plan-before-code + record-ratification-before-dispatch).
+
+**Correction to §2 / §10.3 'pure packaging' assumption.** The plan asserted
+conventional install is "pure packaging — none of that requires moving a single
+import path / touching source." That holds for AC.PYPKG.\* + AC.INST.1 (the CLI
+surface) but is FALSE for AC.INST.S (the working `loam init`): that AC requires the
+workspace-bootstrap resolver source fix. The assumption is corrected here; the fix
+is folded into 1a under the Option-A widen. (This does NOT reopen F-FLATTEN — no
+flatten is involved; the fix is a 30-line resolver change inside one component.)
+
+**D-INST.1 — install surface = dependencies-only `loam` meta-distribution + the
+README published-set.** `loam` is a PEP 420 implicit-namespace package (no top-level
+`loam/__init__.py` exists; every component ships `loam.<sub>` only). A meta-package
+literally named `loam` must therefore ship ZERO `loam/` package code — it is a
+dependencies-only distribution whose `dependencies` pull the CLI closure. `pipx
+install loam` (the F-INSTALL-MECH-recommended primary) then resolves the whole graph
+in one command. The README's explicit published-set (`pip install loam-cli loam-init
+…`) is documented as the equivalent form. Meta-package home: inside the loam-init
+fence (`framework/loam-init/meta/`) so no new root-level file is needed (a root
+`pyproject.toml` would also trip every seal-test's fence — it is in no allowed set).
+
+**D-INST.2 — resolver fix composes on `_resolve_plugins_root`.** The persona-template
+resolver gains a `workspace_root` parameter and checks the cloned-framework
+locations first (the doubled `<ws>/framework/framework/...`, the single-level
+`<ws>/framework/...`, and `<ws>/...` for canonical pos-v2), then falls back to the
+existing `__file__` parents-walk for the editable dev tree. This mirrors the
+two-case workspace-relative pattern `_resolve_plugins_root` already uses (Lens 1 —
+no reinvention).
+
+**D-INST.3 — install-from-source.txt completion.** `loam-state-migration-engine`
+(a transitive runtime dep: self-correction → state-migration-engine; self-correction
+is pulled by workspace-bootstrap) was MISSING from `install-from-source.txt`. Added
+as a Tier-F partner line. The component itself is NOT bumped/edited (it sits at
+0.13.0 while the rest are 0.14.0; the unpinned inter-component deps absorb the skew —
+the prior pass proved the full closure resolves with it at 0.13.0). No fourth
+component is touched.
+
 ## §15 Backwards-compat verification (per sub-item)
 
 - SUB-ITEM 1a: the existing `install-from-source.txt` editable path STILL WORKS (contributors/dev); the published surface is ADDITIVE, not a replacement of the dev path.
@@ -229,3 +281,4 @@ Placeholder — each sub-item's builder narrates its D-decisions (D-INST.\*, D-U
 - **Stale flatten target** (§10.1) — the roadmap's `framework/framework` doubling is absent on disk; surfaced, recorded as the F-FLATTEN evidence, roadmap row to be corrected at bookkeeping.
 - **Flatten SEPARABLE from install** (F-FLATTEN) — surfaced as the dispatch demanded; recommend DEFER; OWNER RULES.
 - **Public PyPI flip is a public action** (F-PUBLISH) — surfaced; everything up to the flip is autonomous; OWNER RULES the flip + name/index.
+- **AC.INST.S needs a workspace-bootstrap source fix, not just packaging** (raised at 1a EXAMINE, RULED Option-A 2026-06-01) — the clean-env `loam init` fails with `persona-template-not-found` because the first-run scaffold resolves the persona template `__file__`-relative (misses under a wheel install). This overturned the §2/§10.3 'pure packaging' assumption for AC.INST.S only. Dispatcher RULED Option-A (widen the 1a fence to add workspace-bootstrap); recorded in §14 R-INST.A + the manifest. NOT a flatten and NOT a fourth component — the fix is contained in workspace-bootstrap.

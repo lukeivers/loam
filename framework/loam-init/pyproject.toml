@@ -29,3 +29,7 @@ packages = ["loam.loam_init"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "outcome_altitude: drives the production entry-point with no pre-arranged state (AC.INST.S)",
+    "slow: builds wheels / a clean venv / a real loam init; minutes, local-only",
+]

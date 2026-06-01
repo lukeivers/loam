@@ -15,7 +15,7 @@ amendment:
                # flip) is OWNER-GATED (F-PUBLISH) and NOT a manifest-driven amend.
                # SUB-ITEM 2 (flatten) is DEFERRED pending the F-FLATTEN ruling.
   slug: foundation-polish-cluster-install
-  title: "foundation-polish cluster — SUB-ITEM 1a: conventional install / packaging readiness (the 1.0-load-bearing install path). One documented install surface (meta-package OR named published-set) composing the existing per-component loam-* pyproject graph; every wheel builds + the inter-component dependency bounds resolve into a consistent set; a genuinely CLEAN environment reaches a working `loam init` from the unified surface with NO source-tree literacy — proven against a LOCAL wheelhouse with ZERO public registry push (the public PyPI flip is owner-gated SUB-ITEM 1b, F-PUBLISH). The structure flatten is SEPARABLE + DEFERRED (F-FLATTEN). AC.PYPKG.* + AC.INST.* incl. the outcome-altitude AC.INST.S."
+  title: "foundation-polish cluster — SUB-ITEM 1a: conventional install / packaging readiness (the 1.0-load-bearing install path). THREE-COMPONENT fence per the dispatcher Option-A ruling (loam-init + loam-cli + workspace-bootstrap): one documented install surface (a dependencies-only `loam` meta-distribution + the README's equivalent published-set) composing the existing per-component loam-* pyproject graph; every wheel builds + the inter-component dependency bounds resolve into a consistent set; AND the first-run-scaffold framework-data resolver fixed so a genuinely CLEAN environment reaches a WORKING `loam init` from the unified surface with NO source-tree literacy — proven against a LOCAL wheelhouse with ZERO public registry push (the public PyPI flip is owner-gated SUB-ITEM 1b, F-PUBLISH). install-from-source.txt completed (loam-state-migration-engine added — a transitive runtime dep of the closure that was missing). The structure flatten is SEPARABLE + DEFERRED (F-FLATTEN). AC.PYPKG.* + AC.INST.* incl. the outcome-altitude AC.INST.S. CORRECTION to the parent plan's §2/§10.3 'conventional install is pure packaging' assumption: it holds for AC.PYPKG.* + AC.INST.1 (CLI surface) but NOT for AC.INST.S (working loam init) — that needs the workspace-bootstrap resolver source fix; folded in here."
 
 # BASELINE: cc512b1f — HEAD of main at plan-authoring (work-visibility-surface
 # SHA-register backfill). The builder CONFIRMS this against the actual
@@ -45,6 +45,25 @@ components:
   - name: loam-cli
     seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
     sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+  # OPTION-A RULING (dispatcher, 2026-06-01) — fence WIDENED to add
+  # workspace-bootstrap. The prior EXAMINE pass proved conventional
+  # install is NOT pure-packaging: the outcome-altitude AC.INST.S (a
+  # clean-env `loam init` that SUCCEEDS) is UNSATISFIABLE without a
+  # source fix in the first-run scaffold's framework-data resolver. The
+  # scaffold resolves the persona template via a `Path(__file__)`-
+  # relative parents-walk (first_run_scaffold.py:_resolve_persona_
+  # template_dir); from a wheel install `__file__` is under site-
+  # packages so the walk misses, and `loam init` fails with
+  # `persona-template-not-found` even though the template IS present in
+  # the cloned `<ws>/framework/`. The fix resolves framework data
+  # against the cloned workspace (composes on the existing
+  # `_resolve_plugins_root` workspace-relative pattern — Lens 1, no
+  # reinvention). This is the FOURTH-component halt's negative: the fix
+  # stays INSIDE workspace-bootstrap; no further component is touched.
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
     extra_allowed_prefixes: []
 
 # Universal admissions — per amendment #22 ruling #3. The install surface edits

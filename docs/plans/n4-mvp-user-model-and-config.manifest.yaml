@@ -1,0 +1,146 @@
+schema_version: 1
+amendment:
+  number: 159  # Next free counter after #158 (N3 onboarding, in flight on its own
+               # branch). Re-check at build time — if another slice seals first,
+               # advance to the next free number.
+  slug: n4-mvp-user-model-and-config
+  title: "N4 — MVP user-model + config (the adaptive interaction-model's first real brick): READ the openness-biased INTERACTION-MODEL.md matrix N3 seeded and INJECT the per-area exposure/autonomy cell onto the LIVE keep-pace UserPromptSubmit hook every turn (compose on the existing contributors() seam + the KP1 work-anchor — NO new hook), so the persona's behaviour actually adapts per area; PLUS explicit-override (stated preference -> cell hard-set + confidence high + locked) + plain-language inspect (render the cells in prose, never the raw file) + the FBM rule auto-weighting HOME (infer a coarse weight band + surface for confirm over the B1 weight: frontmatter mechanism — never silent-write). Openness-default is PRE-RULED (G5: expose substance, adapt only vocabulary). MVP FENCE: read + inject + override + inspect + auto-weight-surface ONLY; the full engine (behavioural signal counters + hysteresis + fast-down-on-distress + tone/learning-appetite adaptive axes + weekly re-eval consolidation + drift judge = design AIM-4..8) is the LATER remainder, explicitly OUT — cells move ONLY by explicit statement in this slice. AC.UM.READ/AREA/OVR/INSP/WT/FENCE incl. the ★ outcome-altitude AC.UM.READ.4 (the REAL user-prompt-submit hook, given a seeded matrix, injects the correct per-area cell — verified at the live entry-point, not a unit test of an inner function). Forks D-N4.1..4 (area-classifier mechanism / enforce-path inclusion / override-lock / auto-weight aggressiveness) carry recommendations — dispatcher in FULL-AUTONOMY rules them fast."
+
+# BASELINE: f1f6116 — current main HEAD (carries the full kernel + onboarding;
+# N3's seed-writer that WRITES ~/.claude/INTERACTION-MODEL.md at confidence:prior
+# is live on main). N4 reads that file; it does NOT re-seed or re-shape it. N4
+# evolves in place on main. The plan branch (plan/n4-mvp-user-model-and-config)
+# is off f1f6116; code lands on the build branch. Re-check at build time if main
+# advances (N3 may merge first — re-baseline onto the merged tip).
+baseline: "f1f6116"
+
+plan: docs/plans/n4-mvp-user-model-and-config.md
+
+components:
+  # EXTEND hands-off-lifecycle: the read+inject path is a NEW fail-soft
+  # Contributor registered in the LIVE keep_pace contributors() list
+  # (framework/hands-off-lifecycle/hooks/keep_pace/user_prompt_submit.py) — NO
+  # new hook, NO chain-runner change. The enforce-path (D-N4.2, recommended IN)
+  # parameterizes the KP9 draft_gate threshold by the active area's
+  # technical-exposure cell. Both surfaces live here.
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+  # EXTEND primary-persona: the area-classifier reads the EXISTING WorkAnchor
+  # (keep_pace/work_anchor.py) — it does NOT recompute the anchor. The matrix
+  # reader/writer (override hard-set in the seed-writer's format) + the
+  # plain-language inspect renderer (prose, never raw file) land here alongside
+  # the per-turn read-path the persona already owns. Exact module layout is the
+  # builder's call per ODD §1.1.
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions (admitted across all components per amendment #22 ruling).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/state-migrations/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/plans/loam-roadmap.md
+    - docs/plans/loam-vnext-build-plan.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+# OUT-OF-TREE side-effect (documented in the status file, NOT committed source):
+#   - the live ~/.claude/INTERACTION-MODEL.md is READ by the read-path and
+#     WRITTEN by the explicit-override path (a user-state file, not framework
+#     source). Tests drive an ISOLATED fixture matrix (a tmp .claude home), never
+#     the developer's real ~/.claude — same discipline as the N3 seed-writer's
+#     cold-walk (global_home is a parameter). The outcome-altitude AC.UM.READ.4
+#     seeds a fixture matrix and runs the REAL hook entry-point against it.
+
+narrative:
+  target: docs/plans/sealed/n4-mvp-user-model-and-config.md
+  body: |
+    # N4 — MVP user-model + config (the adaptive interaction-model's first brick) — apply ladder
+
+    2026-05-31. Roadmap N4 (critical path N1 -> N3 -> N4 -> Phase 3) per
+    `docs/plans/n4-mvp-user-model-and-config.md`. The FLAGSHIP pillar-1
+    engine's FIRST REAL BRICK: N3 built the front door (seed the openness-
+    biased INTERACTION-MODEL.md matrix at confidence:prior); N4 makes that
+    prior STEER BEHAVIOUR and gives the user the controls. This is the
+    per-user-tuned-translation engine (PRIME DIRECTIVE / Lens 0) starting to
+    function: the persona's exposure/autonomy adapts per area from seeded
+    per-user state.
+
+    The load-bearing design stance: DETERMINISTIC LOOKUP, not model-decides.
+    The persona reads the matrix CELL from the file every turn via the LIVE
+    keep-pace UserPromptSubmit hook (a new fail-soft Contributor on the
+    existing contributors() seam — NO new hook, Lens 1) and injects it as a
+    plain behavioural directive; the model never has to REMEMBER the
+    preference because the hook re-states it from the file each turn (the
+    design's answer to instruction-decay + register self-correction failure).
+    Determinism lives in the lookup; adaptivity lives in the file contents.
+
+    G5 PRE-RULED (not re-opened): exposure default = OPEN — expose the
+    SUBSTANCE always, adapt only the VOCABULARY. The N3 seed-writer already
+    encodes this (open exposure + invite learning, with the autonomy floor at
+    surface for ops-and-money/decisions — openness applies to TALKING, never
+    to consequence-bearing ACTING). The syntactic-leak floor (no SHAs/paths/
+    IDs in prose) survives unconditionally regardless of any cell (AC.UM.READ.3).
+
+    Composes on (rebuilds none): the LIVE keep_pace contributors() seam
+    (user_prompt_submit.py), the EXISTING KP1 WorkAnchor (work_anchor.py —
+    the classifier maps it -> an area slug, no anchor recompute), the N3
+    seed-writer's matrix FORMAT (render_interaction_model() — the read
+    contract), the KP9 draft_gate (D-N4.2 enforce-path), and the B1
+    weight: frontmatter mechanism (auto-weighting composes on it — infer +
+    surface for confirm, never silent-write).
+
+    AC families: AC.UM.READ.* (the cell reaches the turn via the live hook;
+    fail-open to the openness prior on any matrix error, NO regression; clean
+    plain injection, no mechanism-leak) incl. the ★ AC.UM.READ.4 OUTCOME-
+    ALTITUDE (the REAL user-prompt-submit entry-point, a seeded fixture
+    matrix, a real envelope -> the correct per-area cell in additionalContext;
+    a STUB of an inner lookup does NOT satisfy it); AC.UM.AREA.* (work-anchor
+    -> area, unknown -> default fail-open, composes not recomputes); AC.UM.OVR.*
+    (stated preference -> cell hard-set + confidence high + locked, survives a
+    re-read); AC.UM.INSP.* (inspect renders in prose never the raw file,
+    truthful to the file); AC.UM.WT.* (infer a coarse weight band + surface
+    for confirm; on confirm the B1 mechanism carries it; no-confirm = no-op);
+    AC.UM.FENCE.* (cells move ONLY by explicit statement — behavioural signals
+    do NOT move a cell in this slice; NO new hook/loop/consolidation).
+
+    MVP FENCE (design AIM-4..8 = the LATER remainder, OUT): behavioural signal
+    counters + hysteresis (auto-learn-from-behaviour); fast-down-on-distress
+    trigger (the STATIC floor is in; the dynamic trigger needs the distress
+    detector + trusted classification); tone + learning-appetite as ADAPTIVE
+    axes (seeded + readable, not yet moved); weekly re-eval consolidation +
+    drift judge (FBM-T3.1-gated); capability-auto-adoption + non-tech-recovery
+    consumers; even dark-launch signal LOGGING is OUT — N4 ships zero
+    behavioural instrumentation. The per-area-adaptive OUTCOME ships without
+    them (Lens 4: ship the high-confidence structure, defer the low-confidence
+    learning top).
+
+    Forks (recommendations in plan §10; dispatcher in FULL-AUTONOMY rules fast):
+      D-N4.1 = area-classifier mechanism (recommend: DETERMINISTIC keyword/
+               objective-tag map, fail-open to default — NOT an LLM call on the
+               hot path; the design forbids model-decides-each-turn; this is the
+               single biggest N4 risk, mitigated by coarse + fail-open).
+      D-N4.2 = does the enforce-path (draft-gate threshold) land in N4
+               (recommend: YES include — it's the seam that makes the model
+               structural not advisory; split via the §8 halt only if it needs
+               register-judge surgery rather than a threshold lookup).
+      D-N4.3 = explicit-override lock semantics (recommend: hard-set high
+               confidence + a locked marker recorded NOW — forward-compatible
+               with AIM-4's "never silently override").
+      D-N4.4 = auto-weight inference aggressiveness (recommend: coarse band ->
+               weight value, ALWAYS surface for confirm, never silent-write —
+               keeps auto-weighting inside the MVP fence).
+
+    Unblocks the Phase-2 "Full adaptive user-model (remainder)" (its N4
+    predecessor satisfied) and is the brick that makes the behavioural
+    auto-learn engine (AIM-4) possible.

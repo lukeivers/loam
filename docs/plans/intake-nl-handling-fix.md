@@ -139,3 +139,13 @@ ACs (refinements, not new ACs):
 
 Cycle-2 component suite: 577 passed / 15 skipped / 0 failed. 4 NEW hardening
 tests added to the same AC test file (10 tests total across the 4 families).
+
+### Cycle-2 commit SHAs (amendment #165)
+
+- Plan section + first re-run report: `5a4667eb` (manifest baseline anchor).
+- Source edit + 4 hardening tests (BASELINE+1): `8487ffe8`.
+- Manifest: `62f58fe0`.
+- `loam amend apply`: `27fc13b6` (BASELINE + sidecar → `5a4667eb` / `27fc13b6`).
+- `loam amend seal`: `30b418b4` (cross-component sweep green).
+
+NOT pushed, NOT merged — owner-gated.

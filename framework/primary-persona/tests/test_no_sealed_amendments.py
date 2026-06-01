@@ -285,6 +285,7 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         "install-from-source.txt",
         "docs/plans/loam-roadmap.md",
         "docs/plans/loam-vnext-build-plan.md",
+        "docs/design/adaptive-interaction-model.md",
     }
 
     offending = []

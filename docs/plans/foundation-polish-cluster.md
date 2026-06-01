@@ -318,7 +318,11 @@ Branch `plan/foundation-polish-skill-triage` (worktree
 `plugins/loam-skills/`; BASELINE `19a14b91` (the SUB-ITEM 1a seal —
 this branch's HEAD; `git rebase main` was a no-op). Amendment #162
 (highest manifest counter on disk was 161 = 1a; confirmed at apply
-time). Apply + seal SHAs backfilled at cycle close.
+time). Commit ladder: BASELINE `19a14b91` → source-edit `5584ef17` →
+apply auto-commit `676be4d6` → deterministic seal `9c2b90c0` (branch
+ref advanced cleanly to the seal — no seal-anomaly). Sidecar
+`plugins/loam-skills/tests/SEAL_COMMIT` advanced to the apply commit
+`676be4d6` (standard pattern; the seal-test diffs `BASELINE..676be4d6`).
 
 **Scope held: REMAINING scope only.** Verify-triggers + retire-dead on
 the EXISTING 22-skill surface. The skill-ecosystem re-architecture and

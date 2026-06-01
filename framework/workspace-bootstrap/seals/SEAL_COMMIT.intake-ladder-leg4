@@ -1,0 +1,26 @@
+# Intake leg-4 on the fallback ladder — apply ladder
+
+The acceptance-smoke rerun8 showed variant C's `four-step-loop-ran` still
+PARTIAL: the paralegal (idea-vacuum) reached the close via the fallback
+ladder, confirmed at `ladder_check`, but added a GUIDANCE hedge ("I honestly
+don't even know what 'taking it off my plate' would look like, so you'd have
+to walk me through it") — and the ladder close ignored it. Leg 4 had only been
+wired into the CLEAR/PARTIAL close.
+
+This cycle wires the SAME leg-4 adjustment into the ladder close: the
+`ladder_check` reply is the confirmation turn, so the close now folds in
+`_leg4_adjustment_text`. A GUIDANCE hedge (distinct from a capability doubt)
+is answered by OFFERING to walk the user through it ("loam will walk you
+through '<item>' step by step the first time … no prep needed") — no invented
+capability (protection-floor), no interrogation (a statement, not a question).
+A clean ladder_check "yes" with nothing added still yields no forced
+adjustment.
+
+Predecessor commits:
+  - 3e9b4f9a — #174 leg-4 downstream-goal seal (BASELINE).
+
+BASELINE 3e9b4f9a. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
++ the READY verdict surface after the smoke re-run.

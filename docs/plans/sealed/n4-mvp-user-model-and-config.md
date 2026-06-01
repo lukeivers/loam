@@ -258,3 +258,83 @@ roadmap §5a "Full adaptive user-model … remainder"):
 - **`docs/plans/loam-roadmap.md`** §4 row N4 (the fence + the FBM-auto-weight home) + §5a "Full adaptive user-model (remainder)" (the LATER engine) + the `N1→N3→N4→Phase 3` critical path.
 - **`docs/plans/n3-onboarding-init-flow-translate-in-intake.md`** — the predecessor; N3 seeds the prior-confidence matrix N4 reads ("N4 is the engine that moves the cells from evidence").
 - **`feedback_abstraction_first_default.md`** — the memory rule G5 revises (the `minimal`→`open` default; the syntactic-leak floor that survives unconditionally — §10 doubt 4).
+
+# N4 — MVP user-model + config (the adaptive interaction-model's first brick) — apply ladder
+
+2026-05-31. Roadmap N4 (critical path N1 -> N3 -> N4 -> Phase 3) per
+`docs/plans/n4-mvp-user-model-and-config.md`. The FLAGSHIP pillar-1
+engine's FIRST REAL BRICK: N3 built the front door (seed the openness-
+biased INTERACTION-MODEL.md matrix at confidence:prior); N4 makes that
+prior STEER BEHAVIOUR and gives the user the controls. This is the
+per-user-tuned-translation engine (PRIME DIRECTIVE / Lens 0) starting to
+function: the persona's exposure/autonomy adapts per area from seeded
+per-user state.
+
+The load-bearing design stance: DETERMINISTIC LOOKUP, not model-decides.
+The persona reads the matrix CELL from the file every turn via the LIVE
+keep-pace UserPromptSubmit hook (a new fail-soft Contributor on the
+existing contributors() seam — NO new hook, Lens 1) and injects it as a
+plain behavioural directive; the model never has to REMEMBER the
+preference because the hook re-states it from the file each turn (the
+design's answer to instruction-decay + register self-correction failure).
+Determinism lives in the lookup; adaptivity lives in the file contents.
+
+G5 PRE-RULED (not re-opened): exposure default = OPEN — expose the
+SUBSTANCE always, adapt only the VOCABULARY. The N3 seed-writer already
+encodes this (open exposure + invite learning, with the autonomy floor at
+surface for ops-and-money/decisions — openness applies to TALKING, never
+to consequence-bearing ACTING). The syntactic-leak floor (no SHAs/paths/
+IDs in prose) survives unconditionally regardless of any cell (AC.UM.READ.3).
+
+Composes on (rebuilds none): the LIVE keep_pace contributors() seam
+(user_prompt_submit.py), the EXISTING KP1 WorkAnchor (work_anchor.py —
+the classifier maps it -> an area slug, no anchor recompute), the N3
+seed-writer's matrix FORMAT (render_interaction_model() — the read
+contract), the KP9 draft_gate (D-N4.2 enforce-path), and the B1
+weight: frontmatter mechanism (auto-weighting composes on it — infer +
+surface for confirm, never silent-write).
+
+AC families: AC.UM.READ.* (the cell reaches the turn via the live hook;
+fail-open to the openness prior on any matrix error, NO regression; clean
+plain injection, no mechanism-leak) incl. the ★ AC.UM.READ.4 OUTCOME-
+ALTITUDE (the REAL user-prompt-submit entry-point, a seeded fixture
+matrix, a real envelope -> the correct per-area cell in additionalContext;
+a STUB of an inner lookup does NOT satisfy it); AC.UM.AREA.* (work-anchor
+-> area, unknown -> default fail-open, composes not recomputes); AC.UM.OVR.*
+(stated preference -> cell hard-set + confidence high + locked, survives a
+re-read); AC.UM.INSP.* (inspect renders in prose never the raw file,
+truthful to the file); AC.UM.WT.* (infer a coarse weight band + surface
+for confirm; on confirm the B1 mechanism carries it; no-confirm = no-op);
+AC.UM.FENCE.* (cells move ONLY by explicit statement — behavioural signals
+do NOT move a cell in this slice; NO new hook/loop/consolidation).
+
+MVP FENCE (design AIM-4..8 = the LATER remainder, OUT): behavioural signal
+counters + hysteresis (auto-learn-from-behaviour); fast-down-on-distress
+trigger (the STATIC floor is in; the dynamic trigger needs the distress
+detector + trusted classification); tone + learning-appetite as ADAPTIVE
+axes (seeded + readable, not yet moved); weekly re-eval consolidation +
+drift judge (FBM-T3.1-gated); capability-auto-adoption + non-tech-recovery
+consumers; even dark-launch signal LOGGING is OUT — N4 ships zero
+behavioural instrumentation. The per-area-adaptive OUTCOME ships without
+them (Lens 4: ship the high-confidence structure, defer the low-confidence
+learning top).
+
+Forks (recommendations in plan §10; dispatcher in FULL-AUTONOMY rules fast):
+  D-N4.1 = area-classifier mechanism (recommend: DETERMINISTIC keyword/
+           objective-tag map, fail-open to default — NOT an LLM call on the
+           hot path; the design forbids model-decides-each-turn; this is the
+           single biggest N4 risk, mitigated by coarse + fail-open).
+  D-N4.2 = does the enforce-path (draft-gate threshold) land in N4
+           (recommend: YES include — it's the seam that makes the model
+           structural not advisory; split via the §8 halt only if it needs
+           register-judge surgery rather than a threshold lookup).
+  D-N4.3 = explicit-override lock semantics (recommend: hard-set high
+           confidence + a locked marker recorded NOW — forward-compatible
+           with AIM-4's "never silently override").
+  D-N4.4 = auto-weight inference aggressiveness (recommend: coarse band ->
+           weight value, ALWAYS surface for confirm, never silent-write —
+           keeps auto-weighting inside the MVP fence).
+
+Unblocks the Phase-2 "Full adaptive user-model (remainder)" (its N4
+predecessor satisfied) and is the brick that makes the behavioural
+auto-learn engine (AIM-4) possible.

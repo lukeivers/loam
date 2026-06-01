@@ -1,0 +1,115 @@
+schema_version: 1
+amendment:
+  number: 168
+  slug: intake-close-rerun3-distillation-fixes
+  title: "Intake close rerun3 distillation/role-detail fixes — the three deterministic regressions the third acceptance-smoke re-run surfaced: the 'Oh, easy —' opener distilling to 'easy' (AC.INTAKE-ECHO.1), a bare-rejection correction distilling the rejection phrase not the asserted span (AC.ONCLOSE.5), and a hedged real role-description dropped to the generic starter so the opt-in research never fired (AC.INTAKE-VACUUM.1 / AC.ONDEEP.1)"
+
+# BASELINE: 0a762066 — the #167 smoke seal, immediately preceding the rerun3
+# source-edit commit (fc3e8537). BASELINE-as-HEAD~1 pattern.
+#
+# Commit ladder pre-apply:
+#   b474fec6 — #166 close-redesign seal (workspace-bootstrap).
+#   0a762066 — #167 smoke variant-B seal. ← BASELINE
+#   fc3e8537 — fix(intake): rerun3 distillation/role-detail regressions + tests.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _PURE_DIFFICULTY + extended _LEAD_FILLER + clause loop — skip a bare
+#       difficulty-only clause ("Oh, easy —") and read the next content clause
+#       (AC.INTAKE-ECHO.1).
+#     - _REJECTION_LEAD + _ASSERTED_AFTER_REJECTION + _distill_intent — a
+#       rejection-opener correction distills the asserted span (AC.ONCLOSE.5).
+#     - _PURE_NON_ANSWER + _looks_like_pure_non_answer + _run_fallback_ladder —
+#       the describe_work rung gates on extractable role detail, not the strict
+#       stop/start vacuum check (AC.INTAKE-VACUUM.1 / AC.ONDEEP.1).
+#   tests/test_AC_INTAKE_NL_natural_language_handling.py — 2 NEW tests (Oh-easy
+#     distill + hedged-role research-ladder).
+#   tests/test_AC_ONCLOSE_5_negated_correction_distills_asserted.py — 2 NEW tests
+#     (rejection-opener distill + close lands the asserted pain).
+#
+# AC families: refinements to AC.INTAKE-ECHO.1 / AC.ONCLOSE.5 /
+#   AC.INTAKE-VACUUM.1 (no new AC family — these are the same families the
+#   close redesign + NL fixes own).
+baseline: "0a762066"
+
+plan: docs/plans/intake-leverage-close-redesign.md
+
+seal_description: "Intake close rerun3 distillation/role-detail fixes (AC.INTAKE-ECHO.1 / AC.ONCLOSE.5 / AC.INTAKE-VACUUM.1) — Oh-easy opener, rejection-correction span, hedged-role describe_work gate"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-close-rerun3-distillation-fixes
+  body: |
+    # Intake close rerun3 distillation/role-detail fixes — apply ladder
+
+    The THIRD acceptance-smoke re-run
+    (`docs/experiments/loam-1.0-acceptance-smoke-rerun3.md`) — run against the
+    sealed close redesign (#166) + variant-B hardening (#167) — confirmed the
+    redesign's CORE behaviors land on clean inputs (variant B routed
+    day-derived + zero research; surface-and-check fires) but surfaced THREE
+    deterministic regressions the role-play sampled this run, all clear-direction
+    and fixed here (refinements to the same AC families, not new ACs):
+
+      - AC.INTAKE-ECHO.1 — the variant-A opener "Oh, easy — writing listing
+        descriptions" distilled to the bare difficulty word "easy" (the em-dash
+        clause split left "Oh, easy" as the first clause; lead-filler stripped
+        "Oh,"). The proposal read "Help the user reliably easy — …". A
+        _PURE_DIFFICULTY guard + an extended _LEAD_FILLER now skip a clause that
+        reduces to a difficulty-only fragment and read the next content clause,
+        so the distilled item is "writing listing descriptions".
+      - AC.ONCLOSE.5 — the variant-B correction OPENED with a bare rejection
+        ("Uh — that didn't quite land right, no. What I was saying is the
+        claim-summary write-ups…"). The correction branch distilled the
+        rejection phrase ("that didn't quite land right, no") into the seed +
+        close. _REJECTION_LEAD drops a bare rejection opener and
+        _ASSERTED_AFTER_REJECTION pulls the asserted span ("claim-summary
+        write-ups") so the close lands the real pain.
+      - AC.INTAKE-VACUUM.1 / AC.ONDEEP.1 — the variant-C describe_work answer
+        ("I'm a paralegal — discovery requests, cite-checking… but I don't know,
+        I can't point to one thing") is a genuine role description with named
+        tasks, but the ladder's strict stop/start _looks_empty over-fired on the
+        hedging and dropped it to the generic starter — so the opt-in
+        deep-research never fired (the AC.SMOKE.3 featherlight expectation for C
+        is that research DOES fire on the idea-vacuum-with-role path). The
+        describe_work rung now gates on EXTRACTABLE role detail
+        (_looks_like_pure_non_answer): a role noun or named task means there is
+        content to mine + the opt-in research stays reachable.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - All three stay deterministic (regex + clause heuristics). Each maps to a
+        verbatim rerun3 transcript case now covered by a test; the FOURTH
+        acceptance-smoke re-run is the outcome-altitude proof.
+      - The describe_work gate distinguishes a PURE non-answer ("I don't know",
+        short, no role) from a hedged real description (role + tasks present) —
+        the former still routes to the gentle generic starter, the latter mines
+        the role + offers the deep dive.
+
+    Predecessor commits:
+      - b474fec6 — #166 close-redesign seal.
+      - 0a762066 — #167 smoke variant-B seal (BASELINE).
+      - fc3e8537 — rerun3 distillation/role-detail fixes + 4 tests (BASELINE+1).
+
+    BASELINE 0a762066. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated.

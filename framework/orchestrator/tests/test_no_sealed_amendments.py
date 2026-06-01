@@ -109,7 +109,27 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              SEAL_COMMIT + cross-cutting allowed-set bump). f1ff28b
 #              is the pre-amendment tip — the amendment-#18 seal
 #              commit immediately before amendment #19's code commit.
-BASELINE = "6b37490"
+#   - 19a14b91  when the foundation-polish cluster SUB-ITEM 3 amendment
+#              (migration auto-detect / auto-upgrade trigger) opened. The
+#              amendment adds a NEW fail-soft SessionStart contributor
+#              (scripts/auto_upgrade.py) that COMPOSES the SEALED migration
+#              engine + reversibility envelope to auto-detect a behind
+#              applied-migration cursor at session-start, replay the pending
+#              migrations through the wrapped envelope, and surface the
+#              outcome in plain language (AC.UPGR.1/2/3 + the outcome-altitude
+#              AC.UPGR.S cold-walk). orchestrator-only code surface
+#              (scripts/auto_upgrade.py + four AC test files + the pyproject
+#              runtime-dep additions for the composed engine/envelope). The
+#              LIVE session-start ARM is OWNER-GATED and NOT wired into main()
+#              in this amendment (plan §8.4 — built + proven, not flipped
+#              live). 19a14b91 is the pre-amendment tip — HEAD of the
+#              plan/foundation-polish-auto-upgrade branch (off main at
+#              cluster-plan-authoring) immediately before this amendment's
+#              code commit. BASELINE re-pins here so the diff narrows to this
+#              amendment's own orchestrator surface (the intervening
+#              amendments since f1ff28b landed outside orchestrator/ but did
+#              touch paths the whole-repo sweep would otherwise flag).
+BASELINE = "19a14b91"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -218,6 +238,12 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
         "framework/observability-aggregator/",
         "framework/safety-layer/",
         "framework/reversibility-primitive/",
+        # SUB-ITEM 3 (auto-upgrade trigger): the orchestrator's new
+        # session-start contributor composes the SEALED migration engine; the
+        # engine's prefix is admitted so a future BASELINE re-pin that walks a
+        # window including engine paths does not flag the composed dependency.
+        # This amendment does NOT touch the engine — composition only.
+        "framework/state-migration-engine/",
         "framework/self-correction/",
         "framework/telegram-interface/",
         "framework/tools/",
@@ -276,6 +302,7 @@ def test_B20_only_orchestrator_unification_surfaces_changed() -> None:
         "docs/FUTURE_IDEAS_DRAFT.md",
         "docs/STATE.md",
         "docs/release-roadmap.md",
+        "docs/plans/loam-roadmap.md",
     }
 
     offending = []

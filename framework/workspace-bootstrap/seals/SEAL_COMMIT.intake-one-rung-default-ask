@@ -1,0 +1,33 @@
+# Intake one-rung default-ask leverage-ladder close — apply ladder
+
+The 1.0 acceptance smoke's last gap was a JUDGE-vs-CONTRACT contradiction: the
+`four-step-loop-ran` rubric demanded committed concrete structure while
+`no-over-engineering` PASSED because loam proposed none — the two demanded
+opposite things on the same transcript.
+
+The owner's ratified resolution (Luke 13401 + 13403): the close's bar is
+RELATIVE. loam LANDS the literal request as the ONE thing, then BY DEFAULT
+ASKS about moving EXACTLY ONE rung up a leverage ladder (doc -> reusable
+TEMPLATE; never a WORKFLOW/SYSTEM) — opt-in, ask-only, phrased as a question
+the user can decline. The user's signal is a SUPPRESSOR ONLY: the rung+1 ask
+turns OFF only on a clear one-off / "no thanks" / overwhelmed / explicit
+decline. Absent a suppressing signal -> ASK (the default).
+
+This component lands the close + the LLM extractor activation:
+  - the leverage ladder + rung+1 read (AC.ONRUNG.1);
+  - the single opt-in rung+1 rider folded into the ONE landed idea on both the
+    CLEAR/PARTIAL path and the fallback ladder (AC.ONRUNG.2);
+  - the DEFAULT-ASK signal-gate with a one-off suppressor (AC.ONRUNG.3);
+  - the real ClaudeIntentExtractor as the PRODUCTION default, fail-soft
+    retained (AC.INTENT.5);
+  - disposition read by the extractor, regex fail-soft (AC.INTENT.6).
+
+Predecessor commits:
+  - f9ba2fe — #178 disposition-intent-frame seal (BASELINE).
+
+BASELINE f9ba2fe. Single-component fence on
+`framework/workspace-bootstrap/`. The loam-acceptance-smoke judge
+contract-alignment (AC.SMOKE.7) is a SEPARATE sibling amendment.
+
+DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
++ the READY verdict surface after the smoke re-run.

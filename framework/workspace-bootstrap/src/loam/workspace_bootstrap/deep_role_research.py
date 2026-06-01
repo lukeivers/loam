@@ -117,3 +117,25 @@ def default_research_provider() -> ResearchProvider:
     importing it (graceful degradation — the seam is present, the pass is not).
     """
     return _DEFAULT_PROVIDER
+
+
+def register_research_provider(provider: ResearchProvider) -> None:
+    """Swap the default provider the baseline intake resolves at call time.
+
+    The registration seam the fast-follow slice fills (AC.DRRSEAM.*): it swaps
+    the featherlight ``StubResearchProvider`` for a real web-research provider
+    WITHOUT the baseline importing it and WITHOUT touching the intake's gating
+    logic. The featherlight invariant (AC.ONDEEP.1) is unaffected — only the
+    idea-vacuum + role + opt-in path ever reaches the provider at all, regardless
+    of which provider is registered here.
+    """
+    global _DEFAULT_PROVIDER
+    _DEFAULT_PROVIDER = provider
+
+
+def reset_research_provider() -> None:
+    """Restore the baseline featherlight stub provider (test-hygiene seam so a
+    test that registers a real provider can undo it without leaking module
+    state across the suite)."""
+    global _DEFAULT_PROVIDER
+    _DEFAULT_PROVIDER = StubResearchProvider()

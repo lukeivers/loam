@@ -628,6 +628,25 @@ call per the scope-confidence stopping criterion).
 > BEFORE the build. Recorded here is the durable ratification surface the builder
 > Tier-0-reads (record-ratification-before-dispatch).
 
+### ★ RULINGS (owner-ratified 2026-05-31, build-dispatch brief) — recorded BEFORE build
+
+- **D-RES-1 → (a) RULED.** Research primitive = a **bounded `claude -p`
+  research-subagent** (the subprocess IS a Claude session with WebSearch/WebFetch;
+  subscription-routed; NO Anthropic API key — `feedback_no_anthropic_api_key`).
+  **Spawn-isolated** via the mandated `loam_spawn_isolation.spawn_isolated_claude`
+  primitive (`--strict-mcp-config` + empty `mcpServers`, token/API-key-scrubbed
+  env) — compose the sealed primitive, do NOT hand-roll. Lazy-imported inside the
+  dispatch so the provider degrades gracefully (AC.DRRGRACE.1) when the primitive /
+  `claude` binary is absent (mirrors the README_3 live-test consumption convention;
+  `loam-spawn-isolation` is not a workspace-bootstrap dependency and every consumer
+  imports it lazily).
+- **D-RES-2 → (a) RULED — TIGHT.** Budget = **~3 round-trips ceiling** + **≤3
+  surfaced leverage ideas** total. Over-reach-guard-tight (the only user who reaches
+  this seam is already overwhelmed). The budget is a HARD cap, asserted by AC.DRR.2.
+- **D-RES-3 → (a) RULED — SYNCHRONOUS.** The provider blocks the intake turn with a
+  **hard timeout + graceful fallback** (AC.DRRGRACE.1). Async re-surfacing is a
+  fast-follow on this fast-follow (§7, deferred).
+
 ### D-RES-1 — the research PRIMITIVE shape (how the in-process provider reaches the Claude-native primitive)
 
 - **(a) Bounded `claude -p` research-subagent dispatch (recommended).** The provider

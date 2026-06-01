@@ -430,3 +430,10 @@ Build BASELINE: `d9ece972` (main tip + merge-base of `plan/failure-mode-guard-ma
   loam-doctrine.md, protection-matrix.md) + `docs/state-migrations/` for the
   no-op migration. Sidecar `SEAL_COMMIT` reads HEAD pre-seal, the seal SHA
   post-seal (the established pattern).
+
+### Commit SHAs
+
+- Amendment commit: `68fb6f892becbc7a010db09f048c07c1e8c7fc6f` —
+  `chore(amend): failure-mode-guard-matrix manifest+apply — protection-matrix BASELINE+sidecar bump to d9ece97`
+- Seal commit: `729ce44d414b46fe2b7cfbd924714aec02dcfa5c` —
+  `chore(seals): failure-mode-guard-matrix — protection-matrix at 68fb6f8`

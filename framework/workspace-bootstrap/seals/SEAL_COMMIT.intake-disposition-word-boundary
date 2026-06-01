@@ -1,0 +1,28 @@
+# Intake disposition word-boundary fix — apply ladder
+
+The acceptance-smoke RE-RUN after the #172 LLM intent-extraction seal
+(`docs/experiments/loam-1.0-acceptance-smoke-rerun8.md`) surfaced a residual
+gap on variant A: the role-play opener "I spend two hours every night writing
+up the listing descriptions … I'd love to just… not do that anymore" was
+classified START — because `_detect_disposition`'s START token "more" matched
+the TAIL of "any-more". loam fed back the INVERTED proposal ("help you
+reliably GET TO writing …"), the user had to correct it, and seven soft
+dimensions FAILed off that single inversion.
+
+A CLEAR-DIRECTION fix, not a design fork — and a PRE-EXISTING latent bug
+(verified present on BASELINE b8817c71, NOT a regression from the #172 seam).
+`_detect_disposition` now matches stop/start tells on WORD BOUNDARIES so
+"more" never matches inside "anymore", and reads cessation phrasings
+("not … anymore", "no longer", "off my plate", "sick of", "tired of",
+"done with") as STOP; a tie favours STOP (the cessation tell is the stronger
+intent). Genuine STARTs ("I want to start journaling", "I should do more
+reviews") still read START.
+
+Predecessor commits:
+  - 560bf5c7 — #172 LLM intent-extraction seam seal (BASELINE).
+
+BASELINE 560bf5c7. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
++ the READY verdict surface after the smoke re-run.

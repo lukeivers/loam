@@ -1,0 +1,66 @@
+# Intake leverage-close redesign — apply ladder
+
+The loam 1.0 acceptance smoke's SECOND re-run
+(`docs/experiments/loam-1.0-acceptance-smoke-rerun2.md`, NOT-READY)
+confirmed the four natural-language bugs (#164+#165) were fixed but
+surfaced a DEEPER layer: the demonstrate-leverage CLOSE itself failed four
+prime-objective judge dimensions across all three variants —
+four-step-loop-ran, closed-on-one-thing, no-over-engineering,
+learned-this-person. These are NOT open design forks: the target is the
+owner's already-specified onboarding design (the prime-objective four-step
+loop: infer -> propose -> SURFACE-AND-CHECK -> adjust; close on ONE thing;
+no interrogation; don't over-engineer). This cycle implements the close to
+that spec, with a NEW AC family AC.ONCLOSE.1-5 (one AC + test per close
+behavior; ladders up from AC.ONINTAKE.6):
+
+  - AC.ONCLOSE.1 — surface-and-check on EVERY path. The four-step loop's
+    verify leg (the inferred intent surfaced as a checkable hypothesis) ran
+    only on the CLEAR/PARTIAL path (confirm_proposal). The day-derived +
+    idea-vacuum-after-research paths jumped straight to a close. A
+    ladder_check turn now surfaces a single inferred starting point on the
+    ladder paths before landing the close.
+  - AC.ONCLOSE.2 — land EXACTLY one thing. The CLI prints every
+    leverage_ideas entry as a co-equal close line, so the day-mined idea +
+    role-mined idea + each research idea read as a 2-3 item MENU. The close
+    now lands exactly ONE primary leverage idea; the research synthesis
+    folds INTO the seed text, not into extra close lines.
+  - AC.ONCLOSE.3 — no over-promised automation. The START-disposition close
+    promised "happens reliably without you having to push it forward each
+    time" — an unattended-automation over-promise. The close now proposes
+    right-sized help (loam does the work when you bring it the basics); the
+    recurring version stays the opt-in one_level_up_offer.
+  - AC.ONCLOSE.4 — person-specific named item. The ladder close led with a
+    generic "status updates / formatting / the chasing" triad. It now mines
+    ONE concrete named task from the description ("cite-checking briefs")
+    and lands on the person's own words.
+  - AC.ONCLOSE.5 — a negated correction distills the ASSERTED intent.
+    Variant A's "it's not that I have trouble starting it — I want you to
+    write them for me" distilled the NEGATED clause. The distiller now
+    drops the negated-correction lead frame, inverts a negated want
+    ("not have to write them myself" -> the writing), and prefers a named
+    want-span over a pronoun-only "do it for me", so the close + seed
+    reference the asserted writing intent.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - The close stays deterministic (regex distillation + named-task mining).
+    The rerun2 judge findings were soft (LLM-judged) but each maps to a
+    concrete, checkable close behavior the deterministic close now
+    satisfies; the smoke re-run is the outcome-altitude proof.
+  - The ladder_check turn is a genuine surface-and-check: a "no" does NOT
+    force the inferred thing (it invites a re-pick); a correction lands the
+    corrected item. This is the four-step loop's adjust leg, not a rubber
+    stamp.
+
+Predecessor commits:
+  - 519147db — merged intake NL-handling fixes (#164+#165).
+  - 27a72fa2 — close-redesign plan-doc (BASELINE).
+  - 5e2ef11d — close redesign source + 5 AC.ONCLOSE test files (BASELINE+1).
+
+BASELINE 27a72fa2 — the plan-doc commit before the source edit.
+Single-component fence on `framework/workspace-bootstrap/`. The smoke
+variant-B hardening is a SEPARATE cycle (#167) on
+`framework/tools/loam-acceptance-smoke/`.
+
+DO NOT push, DO NOT merge — owner-gated. Build-forward stops at local seal
++ the third updated run-report.

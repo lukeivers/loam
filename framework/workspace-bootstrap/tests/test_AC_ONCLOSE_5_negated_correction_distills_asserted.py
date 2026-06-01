@@ -88,3 +88,42 @@ def test_AC_ONCLOSE_5_short_negated_correction_distills_asserted_noun():
     ).lower()
     assert "listing descriptions" in distilled
     assert "trouble" not in distilled
+
+
+# The verbatim rerun3 variant-B correction (a rejection opener + asserted intent).
+RERUN3_B_CORRECTION = (
+    "Uh — that didn't quite land right, no. What I was saying is the "
+    "claim-summary write-ups are the thing that's eating my afternoons, that's "
+    "what I can never seem to get ahead of. That's the part I need help with."
+)
+
+
+def test_AC_ONCLOSE_5_rejection_opener_distills_the_asserted_span():
+    """A correction that OPENS with a bare rejection ('that didn't quite land
+    right, no') then states the real intent ('What I was saying is the
+    claim-summary write-ups…') distills the ASSERTED span, never the rejection
+    phrase (the rerun3 variant-B regression: the close landed 'that didn't quite
+    land right, no')."""
+    distilled = _distill_intent(RERUN3_B_CORRECTION).lower()
+    assert "claim-summary write-ups" in distilled or "claim-summary" in distilled
+    assert "didn't quite land" not in distilled
+    assert "land right" not in distilled
+
+
+def test_AC_ONCLOSE_5_rejection_correction_close_lands_the_asserted_pain():
+    result = run_translate_in_intake(
+        answerer=ScriptedAnswerer(
+            {
+                "stop_start": (
+                    "honestly I don't really think in stop/start terms, but my "
+                    "afternoons disappear into writing up the claim-summary "
+                    "narratives and that piles up on me."
+                ),
+                "confirm_proposal": RERUN3_B_CORRECTION,
+            }
+        )
+    )
+    assert result.confirmed is True
+    close = result.leverage_ideas[0].text.lower()
+    assert "claim-summary" in close
+    assert "didn't quite land" not in close

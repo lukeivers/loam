@@ -350,6 +350,39 @@ def _looks_empty(answer: str) -> bool:
     return True
 
 
+# A describe_work answer is a PURE non-answer only when it is SHORT and carries
+# no role/task content at all ("I don't know", "nothing comes to mind", "I'm not
+# sure"). A genuine role description that hedges ("I'm a paralegal — cite-checking
+# … but I can't point to one thing") is NOT a pure non-answer: it has real role
+# detail to mine. The describe_work rung gates on this (NOT the strict stop/start
+# `_looks_empty`, which over-fired on the hedging — Bug-3 rerun3 regression).
+_PURE_NON_ANSWER = re.compile(
+    r"^\s*(?:uh+|um+|oh|well|honestly|i\s+mean)?[\s,]*"
+    r"(?:i\s+(?:really\s+)?(?:don'?t|do\s+not)\s+know|"
+    r"i'?m\s+not\s+sure|no\s+idea|nothing(?:\s+comes\s+to\s+mind)?|"
+    r"not\s+sure|i\s+can'?t\s+think\s+of\s+anything|i\s+dunno)"
+    r"[\s,.!?]*$",
+    flags=re.IGNORECASE,
+)
+
+
+def _looks_like_pure_non_answer(answer: str) -> bool:
+    """True only when the describe_work answer is a CONTENTLESS non-answer (no
+    role noun, no named task) — a short 'I don't know' with nothing to mine. A
+    role description that names a job/tasks (even while hedging) is NOT pure."""
+    a = answer.strip()
+    if not a:
+        return True
+    if _PURE_NON_ANSWER.match(a):
+        return True
+    # If a role noun or named task is extractable, there IS content to mine.
+    if _named_task_from_description(a):
+        return False
+    # Short replies with a negated-knowledge tell and no extractable role are
+    # pure non-answers; long descriptive replies are not.
+    return len(a.split()) <= 8 and bool(re.search(r"\b(don'?t|do not)\s+know\b", a.lower()))
+
+
 def _classify_richness(answer: str) -> IdeaRichness:
     """Route the user on the idea-quality continuum from their stop/start answer."""
     if _looks_empty(answer):
@@ -389,7 +422,19 @@ _LEAD_FILLER = re.compile(
     r"^(oh|ok|okay|well|so|hmm+|ha+|um+|uh+|honestly|look|see|right|yeah|yep|"
     r"i mean|you know|i guess|i think|i'd say|i would say|let me think|"
     r"that'?s (an? )?(easy|hard|good|tough|tricky)( one)?|"
+    # A BARE difficulty-assessment fragment a human emits after a lead dash
+    # ("Oh, easy — writing listing descriptions"): once "Oh," is peeled the
+    # residual "easy"/"simple"/"hard" is itself filler, not the item.
+    r"(easy|simple|hard|tough|tricky|good question)|"
     r"that'?s a (mouthful|good question|hard one))\b[\s,.!?:;—–-]*",
+    flags=re.IGNORECASE,
+)
+# A clause that, after lead-filler stripping, reduces to nothing but a
+# difficulty-assessment word ("easy", "the easy one") carries no item — the
+# clause loop skips it and reads the NEXT content-bearing clause (the Bug-1
+# regression the rerun3 surfaced on the "Oh, easy — writing listing" opener).
+_PURE_DIFFICULTY = re.compile(
+    r"^(the\s+)?(easy|simple|hard|tough|tricky)(\s+one)?$",
     flags=re.IGNORECASE,
 )
 # Trailing emphatic filler a human appends ("… is killing me", "… every evening",
@@ -441,13 +486,38 @@ _DO_FOR_ME_SPAN = re.compile(
     r"(?:\s+\w+){0,8}?)\s+for\s+me\b",
     flags=re.IGNORECASE,
 )
-# A leading negated-correction frame ("it's not that I have trouble starting
-# it") that the user OPENS a correction with to reject loam's misread. Its
-# content is the REJECTED framing, not the asserted intent — it must be dropped
-# so the distilled item is the ASSERTED work that follows (AC.ONCLOSE.5).
+# A leading REJECTION frame that the user OPENS a correction with to reject
+# loam's misread — its content is the REJECTED framing, not the asserted intent,
+# so the leading rejection CLAUSE(S) are dropped and the distiller reads the
+# ASSERTED work that follows (AC.ONCLOSE.5). Two shapes:
+#   (a) "it's/that's not that … / not about …" — the explicit negation frame.
+#   (b) "uh — that didn't quite land right, no" / "no, not quite" / "not exactly"
+#       — a bare rejection-of-the-proposal opener with no asserted item in it.
 _NEGATED_CORRECTION_LEAD = re.compile(
     r"^(?:well,?\s+)?(?:it'?s|its|that'?s)\s+not\s+(?:that\s+|about\s+)?"
     r"[^.!?;—–]*?(?=[.!?;]|—|–|$)",
+    flags=re.IGNORECASE,
+)
+# A bare rejection clause ("uh, that didn't quite land right, no", "no not quite",
+# "not exactly", "that's not it") — dropped wholesale so the asserted span leads.
+_REJECTION_LEAD = re.compile(
+    r"^(?:uh+,?\s+|um+,?\s+|oh,?\s+|well,?\s+|no,?\s+|nope,?\s+)*"
+    r"(?:that\s+(?:did|does)(?:n'?t| not)\s+(?:quite\s+)?(?:land|sound|seem|"
+    r"feel|come out)\s*(?:right|quite right)?|"
+    r"that'?s\s+not\s+(?:quite\s+)?(?:it|right)|not\s+(?:quite|exactly|really)|"
+    r"that'?s\s+not\s+what\s+i\s+(?:meant|said))"
+    r"[^.!?;—–]*?(?=[.!?;]|—|–|$)",
+    flags=re.IGNORECASE,
+)
+# An asserted-intent span the user states AFTER a rejection ("What I was saying
+# is the claim-summary write-ups are the thing…", "what I meant is X"). The span
+# after the frame, up to the verb/clause boundary, is the asserted item.
+_ASSERTED_AFTER_REJECTION = re.compile(
+    r"\b(?:what\s+i\s+(?:was\s+saying|meant|mean|said)\s+(?:is|was)|"
+    r"what\s+i\s+(?:actually\s+)?(?:want|need)\s+(?:is|help\s+with\s+is)|"
+    r"the\s+(?:thing|part)\s+i\s+need\s+help\s+with\s+is)\s+"
+    r"(?P<span>.+?)"
+    r"(?=\s+(?:are|is)\s+the\s+thing|[.!?;]|—|–|\s+that'?s\s+(?:what|the)\b|$)",
     flags=re.IGNORECASE,
 )
 _DISTILL_MAX_WORDS = 12
@@ -490,13 +560,30 @@ def _distill_intent(answer: str) -> str:
     me"), and cap at a bounded word budget. A reply that is already a short
     phrase passes through essentially unchanged."""
     text = answer.strip().rstrip(".!?").strip()
+    # A correction that REJECTS loam's read then states the real intent ("that
+    # didn't quite land right, no. What I was saying is the claim-summary
+    # write-ups …") — pull the ASSERTED span after the rejection, never the
+    # rejection phrase itself (Bug-2 rerun3 regression on variant B). Preferred
+    # over every clause heuristic when present (AC.ONCLOSE.5).
+    asserted = _ASSERTED_AFTER_REJECTION.search(text)
+    if asserted:
+        span = asserted.group("span").strip().rstrip(",.").strip()
+        # Drop a leading article so "the claim-summary write-ups" -> distillable.
+        span_words = span.split()
+        if 0 < len(span_words) <= _DISTILL_MAX_WORDS:
+            return span
+        if span_words:
+            return " ".join(span_words[:_DISTILL_MAX_WORDS])
     # Drop a leading negated-correction frame ("it's not that I have trouble
-    # starting it") so the distilled item is the ASSERTED intent that follows,
+    # starting it") OR a bare rejection clause ("uh, that didn't quite land
+    # right, no") so the distilled item is the ASSERTED intent that follows,
     # never the rejected framing the user is correcting (AC.ONCLOSE.5). Only the
-    # OPENING negated-correction clause is dropped; later content is preserved.
-    decorrected = _NEGATED_CORRECTION_LEAD.sub("", text).strip().lstrip(",.!?—–").strip()
-    if decorrected and decorrected != text:
-        text = decorrected
+    # OPENING rejection clause is dropped; later content is preserved.
+    for _lead in (_REJECTION_LEAD, _NEGATED_CORRECTION_LEAD):
+        decorrected = _lead.sub("", text).strip().lstrip(",.!?—– ").strip()
+        if decorrected and decorrected != text:
+            text = decorrected
+            break
     # An explicit "do X for me" assertion ("Can it just do the writing for me?")
     # is the asserted work to offload — preferred over a negated want-span so a
     # negated correction distills the asserted intent, not the negated clause
@@ -544,11 +631,13 @@ def _distill_intent(answer: str) -> str:
     clauses = [c.strip() for c in re.split(r"[.!?;]|—|–|\s-\s", text) if c.strip()]
     if not clauses:
         clauses = [text]
-    # Drop leading clauses that are nothing but conversational filler.
+    # Drop leading clauses that are nothing but conversational filler OR a bare
+    # difficulty-assessment ("easy", "the easy one") — read the NEXT content
+    # clause (Bug-1 rerun3 regression on "Oh, easy — writing listing").
     core = ""
     for clause in clauses:
         stripped = _strip_lead_filler(clause)
-        if stripped:
+        if stripped and not _PURE_DIFFICULTY.match(stripped):
             core = stripped
             break
     if not core:
@@ -855,7 +944,21 @@ def _run_fallback_ladder(
     role_answer = ask("describe_work", _Q_DESCRIBE_WORK)
     result.reached_describe_work = True
 
-    if _looks_empty(role_answer):
+    # The describe_work rung's bar is ROLE DETAIL, not a clean stop/start: a
+    # genuine role description ("I'm a paralegal — cite-checking, drafting
+    # discovery requests …") carries a role noun AND/OR named tasks even when it
+    # also hedges ("I don't know, I can't point to one thing"). The strict
+    # stop/start `_looks_empty` over-fired on that hedging and dropped a real
+    # role to the generic starter (Bug-3 rerun3 regression on variant C). Here we
+    # gate on EXTRACTABLE role detail: a role noun or a named task means we have
+    # enough to mine + offer the deep dive.
+    role = _extract_role_noun(role_answer)
+    named_task = _named_task_from_description(role_answer)
+    has_role_detail = bool(named_task) or (
+        bool(role) and not _looks_like_pure_non_answer(role_answer)
+    )
+
+    if not has_role_detail:
         # Still nothing — surface a gentle generic starting idea and stop (never
         # force the deep research on a user who gave no role detail; AC.ONDEEP.1).
         result.leverage_ideas.append(
@@ -870,14 +973,7 @@ def _run_fallback_ladder(
         )
         return result
 
-    # Reduce a (possibly multi-sentence) description to a concise role NOUN so
-    # every downstream slot (idea text, seeded objective, research call) carries
-    # the noun, never the raw blob (AC.INTAKE-ROLE.1).
-    role = _extract_role_noun(role_answer)
     result.described_role = role
-    # Mine a CONCRETE named task from the description ("cite-checking briefs") so
-    # the close lands on the person's OWN words, not a generic triad (AC.ONCLOSE.4).
-    named_task = _named_task_from_description(role_answer)
     # Seed a baseline objective from the described role so the run is useful.
     result.confirmed = True
     result.seeded_objective_slug = _slugify(role + "-leverage")

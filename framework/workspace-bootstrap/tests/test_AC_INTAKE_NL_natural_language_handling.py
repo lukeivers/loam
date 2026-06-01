@@ -39,6 +39,7 @@ from loam.workspace_bootstrap.deep_role_research import (
 from loam.workspace_bootstrap.translate_in_intake import (
     IdeaRichness,
     _classify_richness,
+    _distill_intent,
     _is_no,
     _is_yes,
     _looks_empty,
@@ -296,3 +297,68 @@ def test_AC_INTAKE_VACUUM_1_explicit_nothing_broken_stays_a_vacuum():
     just constant' IS a genuine idea-vacuum — it routes to the ladder even amid
     the activity list (so the opt-in research path stays reachable)."""
     assert _classify_richness(RERUN_C_STOP_START_VACUUM) is IdeaRichness.EMPTY
+
+
+# ---- Third re-run hardening (the rerun3 distillation/role-detail regressions). ----
+
+# The verbatim rerun3 variant-A opener ("Oh, easy — writing listing …").
+RERUN3_A_STOP_START = (
+    "Oh, easy — writing listing descriptions. Every single evening I'm sitting "
+    "there trying to make \"three-bed, two-bath ranch on a corner lot\" sound "
+    "like something out of Architectural Digest, and it eats two hours I'd "
+    "rather spend anywhere else."
+)
+# The verbatim rerun3 variant-C describe_work answer (real role + named tasks,
+# but hedged with "I can't really point to one thing").
+RERUN3_C_DESCRIBE_WORK = (
+    "I'm a paralegal at a litigation firm — so mostly I'm supporting the "
+    "attorneys with discovery requests, making sure citations in briefs are "
+    "accurate, keeping case files organized, and docketing all the deadlines so "
+    "nothing slips through the cracks. It's a lot of detail work, honestly, but "
+    "I don't know, it just feels like that's the job — I can't really point to "
+    "one thing and say \"that's the one I'd want help with.\""
+)
+
+
+def test_AC_INTAKE_ECHO_1_oh_easy_opener_distills_the_item_not_easy():
+    """The 'Oh, easy — writing listing descriptions' opener must distill to the
+    ITEM, not the leading difficulty word 'easy' (the rerun3 variant-A garble:
+    'Help the user reliably easy …')."""
+    distilled = _distill_intent(RERUN3_A_STOP_START).lower()
+    assert "listing descriptions" in distilled
+    assert distilled.strip() != "easy"
+    assert not distilled.startswith("easy")
+    result = run_translate_in_intake(
+        answerer=ScriptedAnswerer(
+            {"stop_start": RERUN3_A_STOP_START, "confirm_proposal": "yes"}
+        )
+    )
+    assert "listing descriptions" in (result.proposal.objective_text or "").lower()
+    assert "reliably easy" not in (result.proposal.objective_text or "").lower()
+
+
+def test_AC_INTAKE_VACUUM_1_hedged_role_description_reaches_research_ladder():
+    """A real role description that names tasks but hedges ('I don't know, I
+    can't point to one thing') must NOT be dropped to the generic starter — the
+    describe_work rung has role detail to mine + the opt-in research stays
+    reachable (the rerun3 variant-C regression: research never fired)."""
+    spy = SpyProvider()
+    result = run_translate_in_intake(
+        answerer=ScriptedAnswerer(
+            {
+                "stop_start": (
+                    "I really don't know, I just do my job — I'm not sure what "
+                    "this thing is even supposed to do for me."
+                ),
+                "describe_work": RERUN3_C_DESCRIBE_WORK,
+                "deep_opt_in": "yes",
+                "ladder_check": "yes",
+            }
+        ),
+        research_provider=spy,
+    )
+    assert result.reached_describe_work is True
+    assert result.described_role is not None and "paralegal" in result.described_role
+    assert result.offered_deep_research is True
+    assert result.invoked_deep_research is True
+    assert spy.invoked_with != []

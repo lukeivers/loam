@@ -65,7 +65,7 @@ point — see finding R-1.
 
 | Item | What's left | Dependency | Owner-gated? | Size |
 |---|---|---|---|---|
-| **loam upgrade mechanism — full non-tech-automatic flow** | Migration ENGINE is done (§2). What remains: the **auto-detect-on-upgrade hook** (detect a version bump → run pending migrations automatically) + the **carry-forward manifest** flow. The engine exists; the automatic *trigger + UX* around it does not. | migration engine (DONE) | The auto-run-on-upgrade behaviour is owner-class (runtime). | M (single-component, ~30–60 min) |
+| **loam upgrade mechanism — full non-tech-automatic flow** | Migration ENGINE done (§2); the **auto-detect-on-upgrade trigger MODULE is now BUILT + SEALED** (amendment #163, `framework/orchestrator/scripts/auto_upgrade.py`; composes the sealed `loam migrate` verb + reversibility envelope; outcome-altitude cold-walk GREEN). REMAINING: the **live SessionStart wiring** (owner-class, ~one line into `pos_session_start.py:main()`) + the **carry-forward manifest** flow. The trigger + UX now exist; only the live-flip + carry-forward remain. | migration engine (DONE) + auto-upgrade module (DONE) | The auto-run-on-upgrade live wiring is owner-class (runtime). | S (live-wire) + M (carry-forward) |
 | **Doctrine ENSHRINEMENT into VALUE_PROPOSITION + CLAUDE.md** | Inserts A (VALUE_PROPOSITION prime-objective) + B (CLAUDE.md Lens 0) are *assembled and ready to paste* (`docs/design/doctrine-inserts.md`) but **NOT yet applied** — grep of both live docs returns no prime-objective/Lens-0 section. Purely owner-wording-gated. | none (non-blocking) | **Yes — owner verifies the wording** (single-pass; TG 13221 pending). | S (doc-only, 1–3 min once approved) |
 
 ---

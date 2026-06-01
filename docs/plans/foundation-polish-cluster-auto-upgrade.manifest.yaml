@@ -1,6 +1,11 @@
 schema_version: 1
 amendment:
-  number: 162  # Next sequential amendment. Highest manifest counter on disk is
+  number: 163  # RENUMBERED 162→163 post-merge: the parallel sibling SUB-ITEM 4
+               # (skill-triage) independently claimed 162 off the same 19a14b91
+               # baseline (worktree isolation prevents tree races but not the
+               # number computation). Sequence: 161=1a, 162=skill-triage, 163=this.
+               # Original pre-merge note follows:
+               # [Next sequential amendment. Highest manifest counter on disk is
                # 161 (the sibling SUB-ITEM 1a). 162 is the next free slot for
                # SUB-ITEM 3 (the migration auto-detect / auto-upgrade trigger).
                # The builder CONFIRMS the exact number at `loam amend apply`

@@ -1,0 +1,79 @@
+schema_version: 1
+amendment:
+  number: 181
+  slug: intake-smoke-sealtest-binding-name
+  title: "Acceptance-smoke seal-test admission var renamed _ALLOWED_PREFIXES -> allowed_prefixes so the loam-amend seal-diff binding reader parses it (the dry-run/widening reader matches a top-level allowed_prefixes identifier; the underscore-uppercase name was BindingNotFound, producing a false MISSING_ADMISSION on the component's own paths on an interleaved multi-component branch) (AC.SMOKE.S hardening)"
+
+# BASELINE: 4475a910 — the #180 acceptance-smoke four-step-rubric-alignment SEAL,
+# the smoke component's prior seal commit, immediately preceding this corrective
+# source edit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   4475a910 — #180 four-step-rubric-alignment seal. ← BASELINE
+#   b49100dc — source edit: rename _ALLOWED_PREFIXES -> allowed_prefixes.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — loam-acceptance-smoke only:
+#   framework/tools/loam-acceptance-smoke/tests/test_no_sealed_amendments.py
+#     - the module-level admission tuple renamed to ``allowed_prefixes`` so the
+#       loam-amend binding reader (read_entries / apply widening / apply --dry-run
+#       admission) parses it; same data, parseable name. Mirrors the
+#       workspace-bootstrap seal-test ``allowed_prefixes`` binding precedent.
+#
+# AC families: AC.SMOKE.S hardening (the sealed-component fence invariant test's
+#   admission binding made machine-parseable). Born from the #180 post-seal
+#   dry-run HALT (false MISSING_ADMISSION) on this interleaved branch.
+baseline: "4475a910"
+
+plan: docs/plans/intake-one-rung-v2.md
+
+seal_description: "Acceptance-smoke seal-test admission renamed to allowed_prefixes (binding-parseable) — fixes the false MISSING_ADMISSION the loam-amend dry-run reader produced under the underscore-uppercase name (AC.SMOKE.S hardening)"
+
+components:
+  - name: loam-acceptance-smoke
+    seal_test: framework/tools/loam-acceptance-smoke/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam-acceptance-smoke/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/tools/loam-acceptance-smoke/seals/SEAL_COMMIT.intake-smoke-sealtest-binding-name
+  body: |
+    # Acceptance-smoke seal-test admission binding-name fix — apply ladder
+
+    The #180 seal's post-seal `loam amend apply --dry-run` HALTed with a false
+    MISSING_ADMISSION on the smoke component's OWN paths. Root cause: the smoke
+    seal-test named its admission tuple `_ALLOWED_PREFIXES`, but the loam-amend
+    seal-diff binding reader (`loam_amend.seal_diff.read_entries`, used by both
+    `loam amend apply` widening and `apply --dry-run` admission) matches a
+    top-level `allowed_prefixes` identifier — so the reader saw `BindingNotFound`,
+    admitted no component prefix, and flagged the component's own files. On a
+    SINGLE-component branch this never surfaced (the window was empty post-seal);
+    the #179/#180 interleaved multi-component branch put the component's own files
+    in-window and exposed it.
+
+    The fix renames the tuple to `allowed_prefixes` (same data, parseable name),
+    matching the workspace-bootstrap seal-test precedent. Root-cause fix — the
+    fence invariant test itself is unchanged in BEHAVIOUR (it still rejects any
+    non-admitted path); only the binding NAME changed so the harness reads it.
+
+    Predecessor commits:
+      - 4475a910 — #180 four-step-rubric-alignment seal (BASELINE).
+
+    BASELINE 4475a910. Single-component fence on
+    `framework/tools/loam-acceptance-smoke/`.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

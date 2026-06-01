@@ -496,6 +496,84 @@ primitives. Per-cycle:
 
 ## §14 — Method-decision record (builder, post-build)
 
-*(Reserved — the builder records D-build.* method choices + the commit SHAs here
-post-build, per the failure-mode-guard-matrix plan's §14 pattern. ODD §1.1:
-builder owns method, this plan owns scope.)*
+ODD §1.1: builder owns method, this plan owns scope. The fork rulings
+(F-1=(c) both, F-2=bias-early, F-3=require explicit confirm, **F-4=REMOVED
+from this cycle** — the matrix backfill is a dispatcher-owned follow-on,
+since the matrix rows live in the protection-matrix sealed component, a
+DIFFERENT fence) were baked into the dispatch and are honored below.
+
+**D-build.1 — Distress detection (AC.SR-DISTRESS.1).** A deterministic
+phrase/escalation rubric (`classify_distress`) + a persistent rolling-window
+counter (`DistressDetector`, JSON state, atomic write). Three qualifying
+classes (presence / broken / unfulfilled) matching the silent-night distress
+shapes. The 2nd qualifying signal in the window trips (default threshold 2,
+window 600s; both tunable per F-2 bias-early). No LLM, no network
+(`feedback_no_anthropic_api_key`). The hook entry-point
+(`hooks/distress_detector.py:main`) reads the inbound JSON, advances the
+counter, emits a trip decision on stdout. **The hook entry-point + tests are
+the SEALED deliverable; wiring into a live `settings.json` is owner-gated
+instance-config, left out of this cycle.**
+
+**D-build.2 — Self-diagnosis content (AC.SR-DISTRESS.2).** `self_diagnosis.py`
+— two pure checks: comms-path liveness (injected probe; a probe error counts
+as "not reaching") + recent-actions-vs-claims (artifact-on-disk existence per
+`ClaimCheck`). `open_user_reported_correction` feeds the EXISTING
+`build_trigger_from_user_report` → `controller.intake` — the trip opens a real
+correction episode via the sealed engine; no parallel engine (Lens 1).
+
+**D-build.3 — Watchdog (AC.SR-WATCH.1/.2).** `watchdog.py` — `StallWatchdog`
+heartbeat (progress quiet past a tunable threshold = stuck, no user signal)
++ `check_channel_and_self_heal` (injected async channel probe → on dead, the
+out-of-band self-heal delivery). `availability_probe_to_channel_probe` adapts
+the telegram-interface `AvailabilityProbe.probe_once` to the thin bool the
+watchdog consumes — composition is a public-surface library call, the sealed
+primitives are not edited. The stall heartbeat is the route-to-recovery leg,
+NOT a re-implementation of dormancy's degradation FSM (plan §10 #4 — the
+distress leg is the deliberate redundant backstop for a clean-narration stall).
+
+**D-build.4 — Plain-language recovery surface (AC.SR-RECOVER.1/.2).**
+`recovery_surface.py` — five situation blocks (headline + concrete next
+action, both plain-English) + a zero-internal-vocabulary probe
+(`find_internal_vocabulary`) covering AC-IDs / SHAs / file+module paths /
+tracebacks / agent-IDs / ODD-methodology vocab. `render_recovery` self-checks
+and RAISES `RecoverySurfaceLeak` on a leak (the hard invariant, plan §8 — not
+best-effort).
+
+**D-build.5 — Safe FBM hard-reset (AC.SR-RESET.1/.2, highest-stakes).**
+`safe_reset.py` — `SafeFbmReset` orchestration that DELEGATES
+`MigrationSafetyEnvelope.snapshot/.guard/.restore`; never touches `.loam/`
+bytes except through the envelope (plan §8 halt-trigger 1). Order: require the
+explicit plain-English confirm (F-3 → `ResetNotConfirmed` before any
+destructive step) → snapshot (backup-first) → register the snapshot as the
+compensation binding → `guard` (irreversible class; no-binding ⇒
+`ProtectionFloorRefusal` — fail-closed) → destructive remove. `restore` brings
+the pre-reset store back byte-for-byte. The backup/snapshot lives OUTSIDE
+`.loam/` (`.loam-recovery/`) so it survives the reset.
+
+**D-build.6 — User-facing recover verb (F-1 = (c) both).** `recover_cli.py`
+— `loam recover check` (read-only plain-language status) + `loam recover reset`
+(the safe reset, requires `--confirm "yes, start fresh"`). Registered via the
+`loam.cli.subcommands` entry-point group (symmetric to `loam amend`) +
+standalone `loam-recover` script. The persona-flow half of F-1 is the
+in-conversation distress trip (D-build.1/.2 sharing the same core).
+
+**Outcome-altitude (★ AC.SR-S.1).**
+`test_AC_SR_S_outcome_altitude_real_entrypoint.py` drives the real
+entry-points with NO pre-arranged state: an empty distress counter takes a
+real 2nd-signal trip; a real recovery surface is rendered + vocab-probed; the
+real `loam recover reset` verb runs (refused without confirm, then confirmed)
+and the user's real `.loam/` data is restored byte-for-byte from the snapshot
+the production path made. No stubbed detector, no pre-seeded text, no faked
+snapshot.
+
+**Env note.** The worktree had no installed loam env; the build used a
+worktree-local gitignored venv (`.venv-build/`, excluded via git
+`info/exclude`, not committed) with the loam component packages
+editable-installed so the cross-importing `loam.*` namespace resolved. Pure
+dev-mode bootstrap.
+
+**Commit SHAs (backfilled post-seal):**
+- BASELINE (source-edit): `fa618f45` (the plan-doc commit; re-baselined from
+  the plan-time `6b76f9ef` so the seal-diff window narrows to this surface).
+- `loam amend apply`: _backfilled at §9 post-apply._
+- `loam amend seal`: _backfilled at §9 post-seal._

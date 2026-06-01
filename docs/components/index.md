@@ -1,6 +1,8 @@
 # Components
 
-loam ships eighteen runtime components in v0.8.0. Each has one short
+loam ships twenty runtime components as of the 1.0 cut (eighteen
+through v0.8.0, plus `state-migration-engine` and `protection-matrix`
+which landed during the v0.13.x–v0.14.x arc). Each has one short
 reference page in this directory. The summary below is the
 one-paragraph "what does it do" view; the per-component pages cover
 how-to-invoke and observable surfaces.
@@ -34,6 +36,8 @@ loam minor can pin against the corresponding component version. See
 | [`telegram-interface`](telegram-interface.md) | Telegram channel adapter — multi-identity allowlist, availability probe, direct Bot API fallback. |
 | [`workspace-sync`](workspace-sync.md) | Canonical-to-workspace git-shaped sync; three-class workspace-data envelope; LLM-mediated semantic-merge gate. |
 | [`self-upgrade`](self-upgrade.md) | Coordinates per-component upgrade fidelity into a single atomic operation; seven-clause acceptance contract. |
+| [`state-migration-engine`](state-migration-engine.md) | Carries a user's `.loam/` state forward across upgrades; declared-migration schema + ordered cumulative replay in the reversibility envelope; the `loam migrate` verb + per-workspace applied cursor. |
+| [`protection-matrix`](protection-matrix.md) | Machine-checkable protection pillar — a living failure-mode × guard catalogue + the `loam guards` coverage-check verb that reconciles the live guard set against the catalogue and names the gaps. |
 
 ### Dev/SDLC plugin verbs (composable, not core runtime)
 

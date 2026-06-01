@@ -36,7 +36,11 @@ amendment:
 # Outcome-altitude: the loam 1.0 acceptance smoke is RE-RUN against the fixed
 # loam (real init + intake + 3 role-played spawn-isolated users); the updated
 # run-report (docs/experiments/) carries the new verdict — the real proof.
-baseline: "REPLACED_AT_COMMIT"
+# c820aead — the plan+manifest commit immediately preceding the source-edit
+# commit (b446f54c). BASELINE-as-HEAD~1 pattern (mirrors N3): diff
+# c820aead..seal captures only this amendment's source edit + tests + apply +
+# seal narrative.
+baseline: "c820aead"
 
 plan: docs/plans/intake-nl-handling-fix.md
 

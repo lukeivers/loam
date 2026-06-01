@@ -40,9 +40,11 @@ from loam.workspace_bootstrap.translate_in_intake import (
     IdeaRichness,
     _classify_richness,
     _distill_intent,
+    _extract_role_noun,
     _is_no,
     _is_yes,
     _looks_empty,
+    _named_task_from_description,
     run_translate_in_intake,
 )
 
@@ -362,3 +364,55 @@ def test_AC_INTAKE_VACUUM_1_hedged_role_description_reaches_research_ladder():
     assert result.offered_deep_research is True
     assert result.invoked_deep_research is True
     assert spy.invoked_with != []
+
+
+# ---- Fourth re-run hardening (the rerun4 role-noun / pain / named-task / preamble). ----
+
+
+def test_AC_INTAKE_ROLE_1_role_noun_skips_leading_i_just_told_you():
+    """A role description that OPENS with a conversational rejection ('I just told
+    you — I'm a claims adjuster, six years in') must resolve to the ROLE noun, not
+    the rejection phrase (the rerun4 variant-B garble: 'a I just told you's day')."""
+    role = _extract_role_noun(
+        "I just told you — I'm a claims adjuster, six years in, and my afternoons "
+        "are eaten up by writing those claim-summary narratives."
+    )
+    assert role == "claims adjuster"
+    # The plain "I'm a X, six years in" shape (trailing comma, no space) also works.
+    assert _extract_role_noun("I'm a claims adjuster, six years in") == "claims adjuster"
+
+
+def test_AC_INTAKE_VACUUM_1_piling_up_pain_classifies_day_derived():
+    """A day-description whose named pain uses 'piling up' / 'disappears into'
+    (not just 'piles up') is a day-derived PARTIAL idea — the rerun4 variant-B
+    opener that previously stayed EMPTY and routed to the ladder."""
+    opener = (
+        "Honestly, I don't really think about my job in terms of stop/start — but "
+        "I can tell you where my day goes: mornings are FNOL calls, and then my "
+        "whole afternoon just disappears into writing up the claim-summary "
+        "narratives, and that part just keeps piling up on me."
+    )
+    assert _classify_richness(opener) is not IdeaRichness.EMPTY
+
+
+def test_AC_ONCLOSE_4_named_task_handles_hyphenated_object():
+    """The named-task miner captures a hyphenated object ('claim-summary
+    narratives') — \\w+ alone broke on the hyphen (rerun4 variant-B)."""
+    task = _named_task_from_description(
+        "my afternoons are eaten up by writing those claim-summary narratives"
+    )
+    assert task is not None
+    assert "claim-summary" in task
+
+
+def test_AC_INTAKE_ECHO_1_spend_hours_preamble_stripped_to_action():
+    """'Every single night I spend like two hours writing up the listing
+    descriptions' distills to the ACTION, not the temporal/spend preamble (the
+    rerun4 variant-A garble: 'Help the user stop Every single night I spend …')."""
+    distilled = _distill_intent(
+        "Honestly? Every single night I spend like two hours writing up the "
+        "listing descriptions for MLS and Zillow. It's eating my evenings."
+    ).lower()
+    assert "listing descriptions" in distilled
+    assert "every single night" not in distilled
+    assert "two hours" not in distilled

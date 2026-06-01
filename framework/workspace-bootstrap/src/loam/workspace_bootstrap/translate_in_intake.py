@@ -162,9 +162,11 @@ _HARD_VACUUM_REGEXES = (
 _DERIVABLE_PAIN_REGEXES = (
     r"\beats? (up )?my (day|afternoon|evening|morning|time)\b",
     r"\bit eats\b",
-    r"\bpiles? up\b",
+    r"\bpil(?:es?|ing) up\b",  # "piles up" / "piling up" (rerun4 B opener)
     r"\bpile up\b",
+    r"\b(?:disappears?|disappearing) into\b",  # "afternoon disappears into …"
     r"\bgrinding through\b",
+    r"\bkeeps? piling\b",
     r"\bthe thing that\b(\s+\w+){0,4}\s+(is|eats|kills|gets|takes)\b",
     r"\btwo hours\b",
 )
@@ -452,7 +454,10 @@ _ACTION_PREAMBLE = re.compile(
     r"each (night|evening|day|morning|week)|all day|most of my day|honestly|"
     r"i'?m (always |constantly |usually |just )?)"
     r"[\w,'\s]*?\b"
-    r"(sitting|stuck|grinding|spending|buried|stuck)\b[\w,'\s]*?\b"
+    # The scene-setting verb: "sitting/grinding/buried" OR "spend(ing) [like] N
+    # hours" — the latter is the rerun4 variant-A shape ("spend like two hours
+    # writing up the listing descriptions").
+    r"(sitting|stuck|grinding|spend(?:ing)?|buried)\b[\w,'\s]*?\b"
     r"(?=(writing|drafting|formatting|chasing|reconciling|filing|tracking|"
     r"doing|making|handling|managing|answering|pulling|building|preparing))",
     flags=re.IGNORECASE,
@@ -729,10 +734,24 @@ def _leverage_from_intent(intent: ProposedEndIntent) -> LeverageIdea:
 
 # Filler that leads a multi-sentence role description before the actual title
 # ("I'm a paralegal …", "I work as a nurse …", "So basically I'm a teacher …").
+# The title boundary is EITHER whitespace+connector ("paralegal AT a firm") OR a
+# directly-attached punctuation delimiter ("claims adjuster, six years in") — the
+# latter must NOT require a preceding space (the rerun4 'I'm a claims adjuster,'
+# extraction bug, where the mandatory `\s+` before the comma failed the match).
 _ROLE_TITLE = re.compile(
     r"\b(?:i'?m|i am|i work as|i'?m working as|my (?:job|role|title) is|"
     r"they call me)\s+(?:an?\s+)?(?P<title>[a-z][a-z' -]*?)"
-    r"(?=\s+(?:at|in|for|with|so|and|but|—|–|,|;|\.|$))",
+    r"(?=\s+(?:at|in|for|with|so|and|but)\b|\s*[—–,;.]|\s*$)",
+    flags=re.IGNORECASE,
+)
+# A leading conversational/rejection clause a role description can OPEN with
+# ("I just told you — I'm a claims adjuster", "like I said, I'm a nurse") whose
+# content is NOT the role — dropped before the first-clause fallback so the role
+# noun is not "I just told you" (the rerun4 variant-B regression).
+_ROLE_LEAD_FILLER = re.compile(
+    r"^(?:uh+|um+|oh|well|so|honestly|look|see|i mean|you know|"
+    r"(?:like\s+)?i\s+(?:just\s+)?(?:told|said|already\s+told)\s+you|"
+    r"(?:like|as)\s+i\s+said|i\s+already\s+said)\b[\s,.!?:;—–-]*",
     flags=re.IGNORECASE,
 )
 _ROLE_MAX_WORDS = 4
@@ -744,6 +763,9 @@ def _extract_role_noun(role: str) -> str:
     ``{role}`` slot. A reply that is already a bare title ("civil engineer")
     passes through unchanged."""
     text = role.strip().rstrip(".!?").strip()
+    # Drop a leading conversational/rejection clause ("I just told you —") so the
+    # first-clause fallback does not capture it as the role (rerun4 variant-B).
+    text = _ROLE_LEAD_FILLER.sub("", text).strip().lstrip(",.!?—– ").strip() or role.strip()
     m = _ROLE_TITLE.search(text)
     if m:
         title = m.group("title").strip().rstrip(",").strip()
@@ -767,8 +789,10 @@ _NAMED_TASK = re.compile(
     r"\b(?P<task>(?:cite-?checking|drafting|writing(?:\s+up)?|reviewing|"
     r"formatting|reconciling|chasing|filing|tracking|managing|organi[sz]ing|"
     r"keeping|calendaring|answering|preparing|summari[sz]ing|building|pulling|"
-    r"handling|processing)\b(?:\s+\w+){1,4}?)"
-    r"(?=[,.;]|—|–|\s+and\b|\s+so\b|\s+but\b|\s+for\b|$)",
+    # Object words may carry hyphens ("claim-summary narratives") and a leading
+    # article ("the write-ups") — \w+ alone broke on the hyphen (rerun4 B).
+    r"handling|processing)\b(?:\s+(?:the\s+|those\s+)?[\w-]+){1,4}?)"
+    r"(?=[,.;]|—|–|\s+and\b|\s+so\b|\s+but\b|\s+for\b|\s+that\b|$)",
     flags=re.IGNORECASE,
 )
 

@@ -1,0 +1,106 @@
+schema_version: 1
+amendment:
+  number: 158  # Next free counter. #157 = the N2 audit slice (in flight on its
+               # own branch); #158 is the next free number for N3 onboarding.
+               # Re-check at build time — if another slice seals first, advance.
+  slug: n3-onboarding-init-flow-translate-in-intake
+  title: "N3 — onboarding / init flow (the translate-in intake for a brand-new instance): run the operating loop (infer -> propose -> verify -> learn) on a brand-new user, verification-heavy (inference most fallible for a barely-known user), and SEED the minimum-useful initial user-state (confirmed end-intent as an objective + an openness-biased INTERACTION-MODEL.md at confidence:prior + channel/voice basics) into the two-tier home (~/.claude/ global + <ws>/.loam/ scoped), gate-9 clean, idempotent/non-destructive. Composes on the EXISTING capability-activation ritual (does NOT extend it) + establish_loam_layout() + the AIM matrix schema, fired by a `loam init` verb. AC.ONINTAKE/ONSEED/ONFIRE incl. the cold-walk outcome-altitude AC. Forks D-1..D-4 (ask-vs-infer / minimum-seed / over-reach-line / entry-trigger) are OWNER-FACING product calls — ruled in plan §11 BEFORE build."
+
+# BASELINE: 9aa611b — current main HEAD (carries the N1 boundary lock + ADR-0001
+# + gate 9 + the migration engine + FBM-LIVE + the STATE-OF-LOAM audit). N3
+# evolves in place on main (G2 evolve-in-place ratified). The plan branch
+# (n3-onboarding-init-flow-translate-in-intake) is off 9aa611b; code lands here.
+# Re-check at build time if main advances (N2 may merge first).
+baseline: "9aa611b"
+
+plan: docs/plans/n3-onboarding-init-flow-translate-in-intake.md
+
+components:
+  # EXTEND the workspace-bootstrap component: first-run already lives here
+  # (onboarding.py, loam_layout.py, new_workspace.py). N3 adds a NET-NEW
+  # translate-in intake phase + a seed-writer + the `loam init` trigger that
+  # COMPOSES ON the existing six-question capability-activation ritual (it does
+  # NOT extend the ritual's question list — see plan §10.1). No NEW framework
+  # component. The seed-writer's output lands ONLY in the two declared homes
+  # (~/.claude/ + <ws>/.loam/); gate 9 enforces it.
+  - name: loam-workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+
+# Universal admissions (admitted across all components per amendment #22 ruling).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/state-migrations/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/plans/loam-roadmap.md
+    - docs/plans/loam-vnext-build-plan.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: docs/plans/sealed/n3-onboarding-init-flow-translate-in-intake.md
+  body: |
+    # N3 — onboarding / init flow (the translate-in intake) — apply ladder
+
+    2026-05-31. Roadmap N3 (critical path N1 -> N3 -> N4 -> Phase 3) per
+    `docs/plans/n3-onboarding-init-flow-translate-in-intake.md`. Builds the
+    prime directive's front door: the first run of the operating loop on a
+    brand-new user. Per-user-tuned translation STARTS here, with the user
+    loam knows least about — which is exactly why the loop's VERIFICATION
+    discipline is load-bearing at this moment above all others.
+
+    The central stance: for a brand-new user, infer little and verify
+    almost everything. A small set of high-leverage intake prompts -> an
+    inferred PROPOSED end-intent -> SURFACED for confirmation -> seeded only
+    AFTER the user confirms or corrects. Inference is a hypothesis, never a
+    silent write. The over-reach guard bounds the ambition: seed the MINIMUM
+    useful prior, not an elaborate model (the elaborate version is what N4
+    grows from evidence).
+
+    The load-bearing F2 (plan §10.1): an "onboarding" component ALREADY
+    EXISTS (onboarding.py) but it is a six-question CAPABILITY-ACTIVATION
+    ritual (language/channel/safety-profile/extractor/watch/auto-skill-
+    capture) — it does NOT infer the user's end-intent, propose-and-verify,
+    or seed a per-user profile. N3 is NET-NEW intake + seed machinery that
+    COMPOSES ON that ritual (runs after it, inside `loam init`); it does NOT
+    extend the ritual's question list. Mistaking the two is the #1 scope
+    risk; the plan names it in Surface #1, the placement table, the build
+    steps, and halt trigger #4.
+
+    Forks ruled BEFORE build (owner-facing product/UX calls, plan §11):
+      D-1 = ask-vs-infer balance (recommend: verification-heavy / confirm-
+            the-proposal — few asks, an inferred proposal, confirmed before
+            seed).
+      D-2 = the minimum seed (recommend: minimal four-item GLOBAL seed —
+            confirmed end-intent as an OBJECTIVES.md objective + an openness-
+            biased INTERACTION-MODEL.md at confidence:prior + channel/voice
+            basics; nothing in the workspace model homes — leave them for N4).
+      D-3 = the over-reach line (recommend: one-level-up, opt-in — a proposal
+            goes at most one level up from the literal ask, the elaborate
+            version always an opt-in offer, never auto-built; the D-2 seed-
+            bound is the hard backstop).
+      D-4 = the entry trigger (recommend: a `loam init` verb that orchestrates
+            scaffold -> capability ritual (existing) -> translate-in intake
+            (new) -> seed; auto-fire-on-first-run is a later layer, deferred).
+
+    AC families: AC.ONINTAKE.* (the operating loop runs on a new user —
+    bounded prompts, a PROPOSED end-intent, surfaced for verification BEFORE
+    any commit, over-reach guarded), AC.ONSEED.* (verified result seeded into
+    the two homes, gate-9 GREEN, interaction-model at confidence:prior,
+    confirmed end-intent as an objective, minimum-seed bounded), AC.ONFIRE.*
+    (fires through a real entry-point on first-run, idempotent/non-
+    destructive on re-run) and the ★ cold-walk outcome-altitude AC.ONFIRE.3
+    (a GENUINELY-EMPTY instance run through the REAL entry-point ends with
+    correctly-homed seeded state, gate-9 GREEN, prior matrix, confirmed
+    objective — NOT a stub of an inner function).
+
+    Composes on (rebuilds none): the existing capability ritual
+    (onboarding.py), establish_loam_layout() for the scaffold, the AIM
+    INTERACTION-MODEL.md matrix schema, the live OBJECTIVES.md file-shape,
+    and the N1 boundary allowlist (gate 9). Unblocks N4 (the user-model that
+    ADAPTS the seeded state — gated on G5).

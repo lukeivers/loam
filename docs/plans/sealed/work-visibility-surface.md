@@ -182,6 +182,12 @@ The dispatch carries scope; this section is guidance the builder may adapt. The 
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `39d0e98a8ff9f340825083400cfcc1e2817531a7` —
+  `chore(amend): work-visibility-surface manifest+apply — primary-persona BASELINE+sidecar bump to 1b400bb`
+- Seal commit: `3951f2ee38ce30a00325ba5d6a9cc720b17bde0f` —
+  `chore(seals): work-visibility-surface — primary-persona at 39d0e98`
 ## §15 — Backwards-compat verification
 
 - The existing `primary-persona` AC40.* tracker-context contributor and its tests stay GREEN (the outward surface ADDS a reader; it does not change the inward contributor).

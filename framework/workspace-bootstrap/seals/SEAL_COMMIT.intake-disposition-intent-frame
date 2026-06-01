@@ -1,0 +1,24 @@
+# Intake disposition intent-frame fix — apply ladder
+
+The acceptance-smoke rerun11 inverted variant A again — but on a NEW shape the
+#173 word-boundary fix did not cover: "I want to stop doing it by hand
+completely" read START because the "want to" START tell appeared BEFORE the
+"stop" STOP tell (earliest-wins), so the intent-frame beat the cessation verb
+it governs.
+
+A CLEAR-DIRECTION fix: an intent-frame ("want to / need to / 'd love to / 'd
+like to / have to / trying to") governing a stop-verb ("stop / quit / avoid /
+cut out / drop / get rid of / hand off / offload") is a STOP at the frame
+position; and the bare "want to / need to" START tells carry a NEGATIVE
+LOOKAHEAD so they do NOT fire when the frame governs a cessation verb. Genuine
+STARTs ("I want to start journaling", "I need to begin reviewing") still read
+START.
+
+Predecessor commits:
+  - f569f2b5 — #177 leg4-llm-adjustment seal (BASELINE).
+
+BASELINE f569f2b5. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
++ the READY verdict surface after the smoke re-run.

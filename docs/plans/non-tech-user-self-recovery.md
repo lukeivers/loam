@@ -575,5 +575,9 @@ dev-mode bootstrap.
 **Commit SHAs (backfilled post-seal):**
 - BASELINE (source-edit): `fa618f45` (the plan-doc commit; re-baselined from
   the plan-time `6b76f9ef` so the seal-diff window narrows to this surface).
-- `loam amend apply`: _backfilled at §9 post-apply._
-- `loam amend seal`: _backfilled at §9 post-seal._
+- `loam amend apply` auto-commit: `6811fcd2`.
+- §14 builder-record corrective (amendment tip): `ec28630e`.
+- `loam amend seal`: `73090c97` (sidecar `SEAL_COMMIT` → `ec28630e`).
+- Component: `self-correction` (existing — sidecar advanced; `new_component: false`).
+- Branch `plan/non-tech-self-recovery` — NOT pushed, NOT merged (owner-gated;
+  the dispatcher handles merge-on-seal).

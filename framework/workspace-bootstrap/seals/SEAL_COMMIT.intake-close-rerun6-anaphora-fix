@@ -1,0 +1,37 @@
+# Intake close rerun6 pronoun-anaphora fix — apply ladder
+
+The SIXTH acceptance-smoke re-run
+(`docs/experiments/loam-1.0-acceptance-smoke-rerun6.md`, READY-WITH-GAPS)
+showed the strongest grid yet: variant B (day-derived) scored ALL SEVEN soft
+dimensions PASS — including four-step-loop-ran — and variant C scored 6/7
+(only four-step-loop-ran PARTIAL). The last clear-direction distillation miss
+was variant A: "… writing these property descriptions … I'd love to stop
+doing that by hand" distilled the pronoun-anaphora want-span "that by hand".
+Fixed: the named-task miner accepts "these/my/up" articles; _PRONOUN_OBJECT
+also matches a trailing manner adverbial ("that by hand", "it myself"); a
+want-span resolving to a pronoun-anaphora defers to the clause/day-pain
+heuristics, recovering "writing these property descriptions".
+
+THE REMAINING GAP IS THE OWNER'S CALL (surfaced, not patched): the ONLY
+soft-dimension that did not reach PASS on clean extraction across the last
+runs is `four-step-loop-ran`, and it splits into two non-regex facets —
+(1) leg 4 (loam ADJUSTS from a hedged/embedded-correction answer or a
+post-close follow-up); (2) the judge's standing wish that the proposal NAME
+a DEEPER inferred end-intent than the literal ask. Both want a richer
+conversational close than the current ONE-surface-and-check + ONE-landed-
+thing shape — which is exactly the owner's HARD no-interrogation /
+close-on-ONE-thing / featherlight contract. Closing this gap is a design
+decision (a post-close adjustment turn and/or an LLM intent-extraction seam
+replacing the deterministic regex distillation), NOT a bug fix. Surfaced to
+the owner per Ruthless Feedback; the six rounds of regex hardening have
+driven the EXTRACTION layer clean (every observed transcript case now has a
+test), and further regex rounds on novel phrasings are diminishing returns.
+
+Predecessor commits:
+  - 34032df5 — #170 rerun5-fixes seal (BASELINE).
+  - d1893a31 — rerun6 pronoun-anaphora fix + 2 tests (BASELINE+1).
+
+BASELINE 34032df5. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated.

@@ -1,0 +1,26 @@
+# Intake leg-4 downstream-goal fix — apply ladder
+
+The acceptance-smoke rerun8 showed variant B's `four-step-loop-ran` still
+PARTIAL after the #172 seam: the leg-4 adjustment echoed the seam's read of
+the FIRST reply and IGNORED the new downstream goal the CONFIRMATION revealed
+("…if I could get some help there, I'd actually have time to return calls and
+close files out before the end of the day"). The judge: "leg 4 … is absent:
+the closing leverage idea ignores the user's elaboration about returning calls
+and closing files."
+
+A CLEAR-DIRECTION refinement of leg 4: the adjustment now reads the
+CONFIRMATION turn's new downstream-goal clause FIRST (a "so I'd have time to …
+/ then I could … / I could actually …" purpose/result connector), reflecting
+what the confirmation ADDED, and only falls back to the seam's adjustment read
+/ deeper-end-intent / a deterministic distill when no downstream goal is
+present. A bare "yes" still yields no forced adjustment (leg 4 reflects ONLY
+what the confirmation actually added).
+
+Predecessor commits:
+  - 54942c10 — #173 disposition word-boundary seal (BASELINE).
+
+BASELINE 54942c10. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
++ the READY verdict surface after the smoke re-run.

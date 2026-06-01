@@ -1,0 +1,104 @@
+schema_version: 1
+amendment:
+  number: 170
+  slug: intake-close-rerun5-distillation-fixes
+  title: "Intake close rerun5 distillation fixes — deflection-lead day-narrative distilling the deflection (AC.INTAKE-ECHO.1), an 'I'm not sure what that says … I was just saying X' correction distilling the confusion phrase (AC.ONCLOSE.5), and an UNKNOWN-disposition named pain producing a garbled 'reliably the X — hard to self-start' proposal (AC.ONINTAKE.2)"
+
+# BASELINE: e9e08d0f — the #169 seal, immediately preceding the rerun5 source-edit
+# commit (59e69d10). BASELINE-as-HEAD~1 pattern.
+#
+# Commit ladder pre-apply:
+#   e9e08d0f — #169 rerun4-fixes seal. ← BASELINE
+#   59e69d10 — fix(intake): rerun5 distillation fixes + tests.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _DEFLECTION_LEAD + day-pain named-task selection in _distill_intent
+#       (AC.INTAKE-ECHO.1).
+#     - _ASSERTED_AFTER_REJECTION 'I was just saying X' frame (AC.ONCLOSE.5).
+#     - _propose_end_intent coherent per-disposition proposal templates,
+#       UNKNOWN -> offload framing (AC.ONINTAKE.2).
+#   tests/test_AC_INTAKE_NL_natural_language_handling.py — 3 NEW rerun5 tests.
+#   tests/test_AC_ONINTAKE_intake_operating_loop.py — AC.ONINTAKE.2 assertion
+#     updated to the new proposal shape (loose-text -> fix-AC, doc/test-only).
+#
+# AC families: refinements to AC.INTAKE-ECHO.1 / AC.ONCLOSE.5 / AC.ONINTAKE.2.
+baseline: "e9e08d0f"
+
+plan: docs/plans/intake-leverage-close-redesign.md
+
+seal_description: "Intake close rerun5 distillation fixes (AC.INTAKE-ECHO.1 / AC.ONCLOSE.5 / AC.ONINTAKE.2) — deflection-lead, day-pain selection, coherent UNKNOWN-disposition proposal"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-close-rerun5-distillation-fixes
+  body: |
+    # Intake close rerun5 distillation fixes — apply ladder
+
+    The FIFTH acceptance-smoke re-run
+    (`docs/experiments/loam-1.0-acceptance-smoke-rerun5.md`, READY-WITH-GAPS)
+    held the routing + safety floor (all three variants confirmed; A/B
+    zero-research; C fired the opt-in research within budget; 29 isolated
+    spawns) and confirmed variant C's close is near-all-PASS. It surfaced three
+    more distillation misses, fixed here (clear-direction refinements):
+
+      - AC.INTAKE-ECHO.1 — variant B's opener led with a deflection ("I don't
+        really think about it that way — but I'll tell you where my day goes:
+        … claim-summary narratives … piles up") and distilled the deflection.
+        _DEFLECTION_LEAD drops the deflection + bridge, and a day-narrative
+        carrying a _DERIVABLE_PAIN signal now distills the named PAIN task (the
+        write-ups), not the first morning activity.
+      - AC.ONCLOSE.5 — variant B's correction ("I'm not sure what that says, but
+        no, that's not quite it. I was just saying the write-ups …") distilled
+        the confusion phrase; _ASSERTED_AFTER_REJECTION now covers the "I was
+        just saying X" frame, landing "the write-ups".
+      - AC.ONINTAKE.2 — variant A's opener named a pain with NO explicit
+        stop/start verb ("if you can take that off my plate"), so disposition
+        was UNKNOWN and the proposal read "Help the user reliably the listing
+        descriptions — … hard to self-start" (incoherent). The proposal
+        templates now read coherently for any core: STOP/UNKNOWN -> offload
+        framing, START -> get-to framing.
+
+    THE HONEST REMAINING GAP — `four-step-loop-ran` (FAIL/PARTIAL on A/B/C even
+    with clean extraction) — is the architectural judgment call surfaced to the
+    owner, NOT silently patched. Two facets: (1) leg 4 (loam ADJUSTS from a
+    mid-reply correction — variant C said "the deadlines one is more stressful …
+    I guess yes?" and the close landed the original "pulling case files");
+    detecting an embedded re-prioritisation inside a hedged affirmation, and
+    responding to a post-close follow-up ("How would that even work?"), needs a
+    post-close adjustment turn that tensions with the HARD no-interrogation /
+    close-on-ONE-thing constraints. (2) The recurring novel-phrasing
+    distillation misses across five re-runs indicate the deterministic regex
+    distillation is at its ceiling for free-form openers/corrections — the
+    robust fix is an LLM-distillation seam (a small claude -p intent-extract on
+    the raw reply), explicitly deferred since N3 ("the deterministic path handles
+    every OBSERVED transcript case"). Owner ruling: keep patching regex
+    (converging slowly, never fully) vs adopt LLM-distillation.
+
+    Predecessor commits:
+      - e9e08d0f — #169 rerun4-fixes seal (BASELINE).
+      - 59e69d10 — rerun5 distillation fixes + tests (BASELINE+1).
+
+    BASELINE e9e08d0f. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated.

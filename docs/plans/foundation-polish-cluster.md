@@ -311,6 +311,75 @@ Recommended sequencing: dispatcher merges `da8f7c88..84906b51` to `main`, THEN r
 `loam amend seal` (LIVI then clones fixed main and passes); or seals with the LIVI
 family acknowledged as pre-existing-cleared-by-this-fix.
 
+### SUB-ITEM 4 — skill triage rulings + D-decisions (2026-06-01)
+
+Branch `plan/foundation-polish-skill-triage` (worktree
+`/Users/lukeivers/loam-wt-skilltri`); single-component fence on
+`plugins/loam-skills/`; BASELINE `19a14b91` (the SUB-ITEM 1a seal —
+this branch's HEAD; `git rebase main` was a no-op). Amendment #162
+(highest manifest counter on disk was 161 = 1a; confirmed at apply
+time). Apply + seal SHAs backfilled at cycle close.
+
+**Scope held: REMAINING scope only.** Verify-triggers + retire-dead on
+the EXISTING 22-skill surface. The skill-ecosystem re-architecture and
+the automated capability-adoption loop are a SEPARATE roadmap lane and
+were NOT touched (§10 item 5 fence honoured; no drift halt fired).
+
+**D-SKTRI.MATCH — deterministic trigger-match, NOT a live LLM probe.**
+Claude's skill-load decision reads the `description` frontmatter; the
+ODD-deterministic proxy for "the trigger fires on the intended shape"
+is discriminating-token overlap between a curated representative-
+phrasing table (the intended NL shapes) and each skill's trigger
+surface (description + body). Composes on the in-plugin AC.SKILLCAP.
+{2,3,4} substring-trigger-match technique (Lens 1 — no new matcher).
+A live `claude -p` probe would be non-deterministic + trip the
+no-API-key / determinism discipline; rejected. Tolerance: one
+non-matching content token per phrasing (a user's phrasing need not be
+a verbatim substring); two+ absent = a non-firing trigger.
+
+**D-SKTRI.TABLE — the phrasing table is asserted to EXACTLY mirror the
+installed surface.** A phantom table entry would mask a real
+retirement; a missing entry would leave a skill unverified. Drift
+between table and disk is itself a test failure
+(`test_table_matches_installed_surface`).
+
+**D-SKTRI.CONSUMER — "live consumer" = any tracked file outside the
+skill's own directory + the plugin tests that names the skill (git
+grep).** This IS the §15 no-live-consumer retirement gate. A retained
+skill at zero consumers fails AC.SKTRI.2 (graveyard surface) → the
+retire-or-wire-a-consumer signal.
+
+**D-SKTRI.RETIRE-NONE — ZERO retirements.** TRIAGE OUTCOME: all 22
+installed skills meet all three retention criteria — (1) firing
+trigger on intended shape (AC.SKTRI.1 green), (2) not superseded
+(substantive bodies; each owns a distinct intended-shape band — the
+four scheduling primitives cron-create / launchd-plist /
+schedule-wakeup / loop-command partition the cadence axis and name
+each other COMPOSES-WITH, not supersedes), (3) ≥3 live consumers each
+(lowest: cron-create, monitor-tool, run-in-background-bash,
+schedule-wakeup at 3). No skill meets a retirement criterion; the
+RETIRED map is empty. **F2 on the roadmap framing:** the §5b row's
+"retire dead ones" assumed a graveyard the evidence does not show —
+the installed surface is already the live set. Recorded, not silently
+carried.
+
+**HALT TRIGGERS (cluster §8 / §10 item 5 — none fired):** no scope
+drift into ecosystem re-architecture / adoption loop; no retirement
+that would break a live consumer (zero retirements; the live-consumer
+scan is the gate); no ODD violation / method-in-AC (both AC.SKTRI.*
+satisfiable by outcome-shape tests, method left to the builder); no
+rebase conflict (`git rebase main` no-op); no sealed-component fence
+touched without a manifest entry (single-component loam-skills fence;
+only `plugins/loam-skills/` + `docs/` bookkeeping touched).
+
+**AC → test map:**
+- AC.SKTRI.1 → `plugins/loam-skills/tests/test_AC_SKTRI_1_triggers_
+  fire_on_intended_shape.py` (table-mirror assertion + per-skill
+  trigger-fire on intended shape).
+- AC.SKTRI.2 → `plugins/loam-skills/tests/test_AC_SKTRI_2_dead_skills_
+  retired.py` (retired-dir-absent + retirement-recorded + per-skill
+  live-set invariant / no-live-consumer gate).
+
 ## §15 Backwards-compat verification (per sub-item)
 
 - SUB-ITEM 1a: the existing `install-from-source.txt` editable path STILL WORKS (contributors/dev); the published surface is ADDITIVE, not a replacement of the dev path.

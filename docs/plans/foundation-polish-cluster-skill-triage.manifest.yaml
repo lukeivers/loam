@@ -1,0 +1,219 @@
+schema_version: 1
+amendment:
+  # number: confirmed at apply-time per feedback_version_numbers_at_release_time.
+  # Highest manifest counter on disk is 161 (foundation-polish-cluster-install,
+  # SUB-ITEM 1a). This amendment — SUB-ITEM 4, skill triage — lands as the next
+  # sequential number; #162 at authoring time. The builder confirms the exact
+  # number at apply time.
+  number: 162
+  slug: foundation-polish-cluster-skill-triage
+  title: "PATCH — Skill triage (foundation-polish cluster SUB-ITEM 4, REMAINING scope only). Verify every installed loam-skills skill's frontmatter trigger fires on its intended natural-language shape (deterministic trigger-match check against a representative-phrasing table covering the whole retained surface) and retire any dead skill (no working trigger / superseded / non-functional / no live consumer), recording each removal with its no-live-consumer proof per §15. TRIAGE OUTCOME: the retirement set is EMPTY on evidence — all 22 installed skills are verified-KEPT (each carries a firing trigger on its intended shape AND ≥3 live consumers; none superseded; none non-functional). Ships two new AC tests (AC.SKTRI.1 trigger-fire, AC.SKTRI.2 dead-skills-retired + live-set invariant) on the existing plugins/loam-skills/ surface. REMAINING scope only — no re-architecture of the skill ecosystem, no automated-adoption loop (cluster plan §10 item 5)."
+
+# baseline: the canonical-clean pre-this-amendment HEAD of this worktree's
+# branch (plan/foundation-polish-skill-triage), which is the SUB-ITEM 1a seal
+# commit `19a14b91` (the deterministic chore(seals) commit closing
+# foundation-polish-cluster-install). Predecessor lineage:
+#   cc512b1f — cluster plan-authoring-time main HEAD (1a manifest BASELINE).
+#   f1aaee9  — 1a's source-edit / seal-target tree (per the 1a chore(seals) msg).
+#   19a14b91 — 1a deterministic seal commit (THIS branch's HEAD; THIS BASELINE).
+#   <source-edit commit for this amendment (the two AC test files; lands
+#    BEFORE `loam amend apply`)>.
+#   <loam amend apply auto-commit (this amendment)>.
+#   <loam amend seal deterministic seal commit (this amendment)>.
+baseline: "19a14b91"
+
+plan: docs/plans/foundation-polish-cluster.md
+
+seal_description: |
+  PATCH — Skill triage (foundation-polish cluster SUB-ITEM 4,
+  REMAINING scope only).
+
+  Per docs/plans/foundation-polish-cluster.md §5 (AC.SKTRI.1/2),
+  §6 step 4 (build shape), §10 item 5 (scope fence: REMAINING
+  scope only — verify-triggers + retire-dead on the EXISTING
+  22-skill surface; the automated capability-adoption loop is a
+  SEPARATE roadmap lane and is explicitly OUT), and §15
+  (backwards-compat: verify no live consumer before retiring).
+
+  WHAT THIS AMENDMENT DOES:
+    - Verifies each retained skill in plugins/loam-skills/skills/
+      has a frontmatter trigger that FIRES on its intended natural-
+      language shape, via a deterministic trigger-match check
+      (discriminating-token overlap between a curated representative-
+      phrasing table and each skill's trigger surface). Composes on
+      the existing AC.SKILLCAP.{2,3,4} substring-trigger-match
+      technique (Lens 1 — no new matcher primitive) and generalizes
+      it across the whole retained surface (AC.SKTRI.1).
+    - Records the triage verdict that the retirement set is EMPTY on
+      evidence and enforces the LIVE-SET INVARIANT: every retained
+      skill has >=1 live consumer outside its own package + the test
+      suite (AC.SKTRI.2). The no-live-consumer scan IS the §15
+      backwards-compat gate that would precede any genuine removal.
+
+  TRIAGE OUTCOME (verified Tier-0 at build time):
+    All 22 installed skills are verified-KEPT. Each meets all three
+    retention criteria:
+      1. WORKING TRIGGER — fires on its intended NL shape
+         (AC.SKTRI.1, all green).
+      2. NOT SUPERSEDED — substantive body (80-440 lines, 3-12 H2
+         sections); each owns a distinct intended-shape band (the
+         four scheduling primitives cron-create / launchd-plist /
+         schedule-wakeup / loop-command partition the cadence axis
+         and name each other as COMPOSES-WITH, not supersedes).
+      3. LIVE CONSUMER — >=3 consumers each outside its own dir +
+         tests (git-grep verified; the lowest, cron-create /
+         monitor-tool / run-in-background-bash / schedule-wakeup,
+         each carry 3).
+    No skill meets a retirement criterion → the RETIRED set is empty
+    → no directory is removed. Retiring any would be an unjustified
+    removal that AC.SKTRI.2's twin contract ("not silently retained"
+    AND "not silently retired") guards against.
+
+  AC families (full text in cluster plan §5):
+    - AC.SKTRI.1 (triggers work) — each retained skill's trigger
+      fires on its intended NL shape (verified by a trigger-match
+      check against representative phrasings) OR the skill is
+      explicitly removed.
+    - AC.SKTRI.2 (dead skills retired) — skills with no working
+      trigger / superseded / non-functional are REMOVED, with the
+      removal recorded; verified empty here + the live-set invariant
+      enforced.
+
+  Method-level choices (builder's call per ODD §1.1; recorded):
+    - D-SKTRI.MATCH — DETERMINISTIC discriminating-token overlap
+      (NOT a live LLM probe). Claude's skill-load decision reads the
+      `description` frontmatter; a faithful ODD-deterministic proxy
+      for "the trigger fires on the intended shape" is: the
+      discriminating content tokens of a representative phrasing the
+      user would actually say are present in the skill's trigger
+      surface (description + body). Tolerance: one non-matching
+      content token per phrasing (a user's phrasing need not be a
+      verbatim substring); two+ absent = a non-firing trigger.
+      Rationale: a live `claude -p` probe would be non-deterministic
+      + violate the no-API-key / determinism discipline; the
+      substring technique is the established in-plugin pattern
+      (AC.SKILLCAP.{2,3,4}).
+    - D-SKTRI.TABLE — the representative-phrasing table is driven
+      from disk and asserted to EXACTLY mirror the installed surface
+      (no phantom entry masking a real retirement; no missing entry
+      leaving a skill unverified). Drift between table and surface
+      is itself a test failure.
+    - D-SKTRI.CONSUMER — "live consumer" = any tracked file outside
+      the skill's own directory + the plugin tests that names the
+      skill (git grep). This IS the §15 no-live-consumer gate; a
+      retained skill at zero consumers fails AC.SKTRI.2 (graveyard
+      surface).
+    - D-SKTRI.RETIRE-NONE — ZERO retirements. The evidence (all
+      three criteria met by all 22 skills) does not justify any
+      removal; the RETIRED map is empty.
+
+  Out of scope (cluster plan §7 + §10 item 5 — REMAINING scope only):
+    - Re-planning / re-architecting the skill ecosystem.
+    - The automated capability-adoption loop (a SEPARATE roadmap
+      lane; explicitly OUT — HALT on drift per §8/§10.5).
+    - Authoring NEW skills or rewriting existing skill bodies.
+    - Editing the skill-load mechanism in workspace-bootstrap
+      (`_symlink_plugin_skills`) — not in this fence.
+
+  Predecessor commit:
+    - 19a14b91 — foundation-polish-cluster-install (SUB-ITEM 1a)
+      deterministic seal commit; THIS branch's HEAD + THIS
+      amendment's BASELINE.
+
+  HALT TRIGGERS (cluster plan §8 / §10 item 5 — none fired; cleared
+  Tier-0 pre-source-edit):
+    - Scope drift into ecosystem re-architecture / adoption loop →
+      did NOT fire (stayed in verify-triggers + retire-dead).
+    - A retirement that would break a live consumer → did NOT fire
+      (zero retirements; live-consumer scan is the gate).
+    - ODD violation / AC unsatisfiable without method-in-AC →
+      did NOT fire (both AC.SKTRI.* satisfiable by outcome-shape
+      tests; method left to the builder).
+    - Unexpected rebase conflict → did NOT fire (`git rebase main`
+      was a no-op; branch up to date with main).
+    - Fence touches a sealed component without a manifest entry →
+      did NOT fire (single-component loam-skills fence; only
+      plugins/loam-skills/ + docs/ bookkeeping touched).
+
+components:
+  - name: loam-skills
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. The triage edits
+# touch only the loam-skills plugin tree (the two new AC tests) + the
+# cluster plan-doc/manifest + the cluster bookkeeping rows.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/plans/loam-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/foundation-polish-cluster-skill-triage.md
+  body: |
+    # foundation-polish-cluster-skill-triage — apply ladder
+
+    2026-06-01. Sealed-component PATCH amendment — foundation-polish
+    cluster SUB-ITEM 4 (skill triage, REMAINING scope only). The
+    autonomous, kernel-independent ride-along of the cluster; does
+    NOT gate 1a/1b/3 and is not gated by them (cluster plan §6
+    gating sequence).
+
+    Plan: `docs/plans/foundation-polish-cluster.md` (§5 AC.SKTRI.*,
+    §6 step 4 build shape, §10 item 5 scope fence, §15
+    backwards-compat).
+
+    Scope (per cluster plan §2 / §5 / §10 item 5): single-component
+    fence on `plugins/loam-skills/` — the two new AC tests
+    (test_AC_SKTRI_1_triggers_fire_on_intended_shape.py,
+    test_AC_SKTRI_2_dead_skills_retired.py). Universal admissions:
+    `docs/plans/` (this plan-doc + manifest + sealed narrative) +
+    `docs/STATE.md` + `docs/plans/loam-roadmap.md` (the §5b skill-
+    triage row-move at bookkeeping).
+
+    Single-cycle, single-seal ladder.
+
+    AC families (full text in cluster plan §5):
+      - AC.SKTRI.1 — each retained skill's trigger fires on its
+        intended NL shape (deterministic trigger-match against a
+        representative-phrasing table mirroring the installed
+        surface) OR the skill is removed.
+      - AC.SKTRI.2 — dead skills (no working trigger / superseded /
+        non-functional) are removed with the removal recorded;
+        verified EMPTY on evidence + the live-set invariant enforced
+        (every retained skill has >=1 live consumer — the §15
+        no-live-consumer gate).
+
+    Triage outcome: all 22 installed skills verified-KEPT; zero
+    retirements (each carries a firing trigger + >=3 live consumers;
+    none superseded; none non-functional). The installed surface is
+    already the live set — not an accreting graveyard.
+
+    Method-level choices (builder's call per ODD §1.1):
+      - D-SKTRI.MATCH — deterministic discriminating-token overlap
+        (no live LLM probe; composes on the AC.SKILLCAP substring-
+        trigger-match pattern).
+      - D-SKTRI.TABLE — phrasing table asserted to exactly mirror
+        the installed surface (drift is a failure).
+      - D-SKTRI.CONSUMER — git-grep live-consumer scan = the §15
+        no-live-consumer gate.
+      - D-SKTRI.RETIRE-NONE — zero retirements (evidence does not
+        justify any removal).
+
+    Halt triggers (cluster plan §8 / §10 item 5): none fired;
+    stayed in REMAINING scope (verify-triggers + retire-dead); no
+    ecosystem re-architecture; no adoption-loop work; zero
+    retirements so no live-consumer breakage.
+
+    Predecessor commit:
+      - 19a14b91 — foundation-polish-cluster-install (1a) seal
+        commit; THIS branch's HEAD + this amendment's BASELINE.
+
+    BASELINE — 19a14b91 (canonical-clean pre-this-amendment HEAD of
+    plan/foundation-polish-skill-triage). Single-component fence on
+    `plugins/loam-skills/`. Sidecar advances to this amendment's seal
+    SHA at apply time.

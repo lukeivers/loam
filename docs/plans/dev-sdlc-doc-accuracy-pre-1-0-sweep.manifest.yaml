@@ -1,0 +1,73 @@
+schema_version: 1
+amendment:
+  number: 182
+  slug: dev-sdlc-doc-accuracy-pre-1-0-sweep
+  title: "dev-sdlc doc-accuracy pre-1.0 sweep: apply.py line-ref 158->269 (convention + SKILL) + stale present-tense thirteen-component count removed (odd-in-loam.md:31)"
+
+# BASELINE: the current dev-sdlc seal `5d53983` (the most-recent dev-sdlc
+# seal, ancestor of HEAD). The seal-diff window is BASELINE..seal_commit.
+# Plan-doc §1 carries the durable owner-ratification record (Telegram 13414
+# + task #58 / docs/design/pre-1.0-documentation-health-check.md §A).
+#
+# Commit ladder (expected):
+#   <plan-doc + manifest commit (this manifest)>
+#   <source-edits commit — three one-line doc fixes>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence on `dev-sdlc` (the sealed component at
+# plugins/dev-sdlc/). Edits confined to three files:
+#   - plugins/dev-sdlc/docs/conventions/amendment-cycle.md (apply.py:158 -> :269)
+#   - plugins/dev-sdlc/skills/loam-amend-cycle/SKILL.md      (apply.py:158 -> :269)
+#   - plugins/dev-sdlc/docs/odd-in-loam.md                    (drop stale ":31" count)
+#
+# No edit under plugins/dev-sdlc/src/ — the loam.plugins.dev_sdlc package is
+# unchanged.
+#
+# F-SEAL-PLUGINS-TESTS-SKIPPED applies — the seal-step's automated test runner
+# silently skips plugins/-component tests, so the builder runs
+# `python3.13 -m pytest plugins/dev-sdlc/tests/ -q` manually pre-seal.
+#
+# AC families per docs/plans/dev-sdlc-doc-accuracy-pre-1-0-sweep.md §4:
+#   AC.DSDA.1 — amendment-cycle.md cites apply.py:269 (not :158).
+#   AC.DSDA.2 — loam-amend-cycle/SKILL.md cites apply.py:269 (not :158).
+#   AC.DSDA.3 — odd-in-loam.md:31 no longer pins "thirteen sealed components".
+#   AC.DSDA.S — pytest plugins/dev-sdlc/tests/ green + grep proofs zero.
+baseline: "5d53983"
+
+plan: docs/plans/dev-sdlc-doc-accuracy-pre-1-0-sweep.md
+
+seal_description: |
+  Doc-accuracy pre-1.0 sweep on the sealed dev-sdlc plugin. Closes the three
+  stale-reference items the pre-1.0 documentation health check surfaced
+  (docs/design/pre-1.0-documentation-health-check.md §A):
+
+  1. plugins/dev-sdlc/docs/conventions/amendment-cycle.md — the committed-HEAD
+     binding citation `apply.py:158` is stale; the actual location of
+     `head_sha = _git_head_sha(repo_root)` is apply.py:269 (Tier-0 grep
+     verified). Corrected.
+  2. plugins/dev-sdlc/skills/loam-amend-cycle/SKILL.md — same stale
+     `apply.py:158` ref; same correction to apply.py:269.
+  3. plugins/dev-sdlc/docs/odd-in-loam.md:31 — "four of the thirteen sealed
+     components of loam" pins a present-tense count that the live roster long
+     ago grew past (the dev-mode-manifest names 15 framework sealed components
+     plus state-migration-engine + protection-matrix + the dev-sdlc plugin).
+     The brittle count is dropped (the walkthrough still names its four
+     examples); the historical-record uses of "thirteen" at :589/:601
+     (accurate as-of-foundation-audit) are preserved.
+
+  Doc-only accuracy hygiene; no behaviour change; no edit under
+  plugins/dev-sdlc/src/. The loam.plugins.dev_sdlc package is behaviour-
+  preserved.
+
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - "docs/"  # this plan-doc + manifest at docs/plans/
+  files: []

@@ -1,0 +1,174 @@
+schema_version: 1
+amendment:
+  number: null  # assigned at build time from the amendment register (NOT pre-allocated, per feedback_version_numbers_at_release_time)
+  slug: failure-mode-guard-matrix
+  title: "failure-mode-guard matrix — loam's protection pillar as a living, machine-checkable catalogue + a loam guards coverage-check verb"
+
+# BASELINE: f1f6116 (current main tip @ plan-authoring time:
+#   `chore(seals): N3 translate-in onboarding intake`).
+# The builder re-baselines to the actual source-edit BASELINE commit at
+# build time; this manifest is authored alongside the PLAN on the
+# plan/failure-mode-guard-matrix branch and is NOT yet applied.
+#
+# Commit ladder (plan-time → build-time):
+#   f1f6116 — main tip @ plan-authoring (predecessor).
+#   <this plan + manifest commit on plan/failure-mode-guard-matrix> — NEW commit; PLAN-ONLY.
+#   --- build phase (downstream dispatch, separate cycle) ---
+#   <feat: protection-matrix source-edit BASELINE>
+#   <loam amend apply>
+#   <loam amend seal>
+#
+# NEW-COMPONENT first-seal fence — framework/protection-matrix/:
+#   The catalogue + the coverage-check verb are a NET-NEW component
+#   (grep across framework/ + docs/ @ f1f6116 found NO existing
+#   guard-matrix/registry — see plan §3 R-1). A new component is the
+#   correct placement: the matrix is a catalogue ABOUT every other
+#   component and belongs in none of them (plan §2; doctrine
+#   §"How loam is built — in layers" — clean boundary).
+#
+#   Files authored (builder's exact layout is the builder's call per
+#   ODD §1.1; the SHAPE below is the plan's contract):
+#     framework/protection-matrix/
+#       pyproject.toml + package scaffold
+#       src/loam/protection_matrix/__init__.py
+#       src/loam/protection_matrix/cli.py            # build_guards_subcommand — registers `loam guards` via loam.cli.subcommands
+#       src/loam/protection_matrix/catalogue.py      # manifest loader + schema validation (AC.FMG-CAT.1/.2)
+#       src/loam/protection_matrix/derive.py         # live-guard-set derivation from ground truth (AC.FMG-CHECK.2)
+#       src/loam/protection_matrix/check.py          # reconcile + gap computation + report (AC.FMG-CHECK.1, AC.FMG-GAP.1)
+#       data/failure-mode-guard-matrix.yaml          # THE catalogue — source of truth (plan §5 schema + row set)
+#       tests/ — one AC test file per AC family below
+#     docs/design/protection-matrix.md               # generated human-readable companion (rendered from the YAML, never hand-edited)
+#
+# AC families locked per docs/plans/failure-mode-guard-matrix.md §6:
+#   AC.FMG-CAT.1   — manifest parses + every row schema-conformant (all §5 fields, enum-valid).
+#   AC.FMG-CAT.2   — every non-persona-discipline row's guard_ref resolves to a real path+symbol; an unresolved guard is reported (no invented guards).
+#   AC.FMG-CHECK.1 — `loam guards` registered via loam.cli.subcommands; runs against the live tree; emits the floor-class coverage report.
+#   AC.FMG-CHECK.2 — the check DERIVES the guard set from ground truth (hook registrations + ALL_GATES) and reconciles against the manifest; an over-claim is flagged.
+#   AC.FMG-LIVE.1  — refresh wired to the doctrine's EXISTING recurring maintenance/pruning flow (NOT a net-new scheduler).
+#   AC.FMG-GAP.1   — the run NAMES the gaps (floor-class modes with default_on != YES) as a distinct report section; non-empty iff such modes exist.
+#   AC.FMG-S.1 ★   — outcome-altitude: production `loam guards` entry-point, NO pre-arranged state, against the REAL installed guard set, asserts the floor invariant + emits each uncovered floor row in the gap section. STUB-class (pre-seeded manifest) does NOT satisfy it.
+#
+# Outcome-altitude AC (feedback_test_outcome_altitude_required):
+#   AC.FMG-S.1 is marked outcome-altitude:true and is verified by a test
+#   that invokes the production verb entry-point with no pre-arranged
+#   state, walking the real tree's guard set.
+#
+# Smoke: a single real `loam guards` invocation in a cold workspace
+#   (no pre-seeded manifest beyond the shipped data file) producing the
+#   floor-coverage report + the gap section. Verifies the verb is
+#   reachable from the unified `loam` dispatcher post-install.
+#
+# Out of scope (plan §7): building new guards to CLOSE the gaps; the
+#   release-gate HARD-block arm (FORK F-4); auto-remediation; per-user
+#   proportional tuning.
+baseline: "f1f6116"
+
+plan: docs/plans/failure-mode-guard-matrix.md
+
+components:
+  - name: protection-matrix
+    new_component: true            # first-seal; no pre-existing sidecar to advance
+    seal_test: framework/protection-matrix/tests/test_no_sealed_amendments.py
+    sidecar: framework/protection-matrix/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/design/loam-doctrine.md     # doc-only backfill pointer (plan §9) — protection-pillar → matrix instrument
+    - docs/design/protection-matrix.md # generated companion (committed; regenerable)
+
+narrative:
+  target: framework/protection-matrix/seals/SEAL_COMMIT.failure-mode-guard-matrix
+  body: |
+    # failure-mode-guard matrix — loam's protection pillar as a living,
+    machine-checkable catalogue — apply ladder
+
+    Per `docs/plans/failure-mode-guard-matrix.md` and parent doctrine
+    `docs/design/loam-doctrine.md` §"The two sides of leg 2 —
+    translation in, protection around" (the protection pillar this
+    component operationalises).
+
+    Plan: `docs/plans/failure-mode-guard-matrix.md`.
+
+    Scope (per plan §2 + §6 + §7): NEW component
+    `framework/protection-matrix/`. loam's protection guards — today
+    implicit across nine release gates, a dozen hooks, ODD, file-based
+    memory, and the audit comparator — become an EXPLICIT, single-
+    source, living, machine-checkable catalogue: each known way an AI
+    betrays a user by default × loam's actual guard × whether that
+    guard is default-on × floor-vs-proportional × how we verify it
+    fires. A `loam guards` coverage-check verb derives the live guard
+    set from ground truth, reconciles it against the catalogue, and
+    NAMES the gaps (floor-class failure modes with no default-on
+    programmatic guard — the actionable output).
+
+    AC families:
+
+      - AC.FMG-CAT.1 — the manifest at data/failure-mode-guard-matrix.yaml
+        parses; every row carries every plan-§5 field with an enum-valid
+        value.
+      - AC.FMG-CAT.2 — every row whose guard_kind is not none/persona-
+        discipline binds a guard_ref that resolves to a real path+symbol
+        at check-time; an unresolved guard is reported (no invented
+        coverage — the protection pillar must not itself hallucinate).
+      - AC.FMG-CHECK.1 — `loam guards` is registered through the
+        loam.cli.subcommands entry-point group (sibling to `loam audit`
+        / `loam release`), runs against the live tree, and emits a
+        floor-class coverage report.
+      - AC.FMG-CHECK.2 — the check derives the guard set from GROUND
+        TRUTH (settings hook registrations + the release ALL_GATES
+        tuple) and reconciles against the manifest; a manifest claim of
+        default_on:YES that ground truth contradicts is flagged as a
+        divergence (mirrors the substrate-audit comparator).
+      - AC.FMG-LIVE.1 — the catalogue refresh is registered as an item
+        in loam's EXISTING recurring maintenance/pruning flow (doctrine
+        §3 recurring schedule), NOT a net-new launchd/cron entry
+        (Lens 1).
+      - AC.FMG-GAP.1 — a run against the actual guard set emits, as a
+        distinct section, the floor-class failure modes whose
+        default_on != YES (the gaps); non-empty iff such modes exist.
+      - AC.FMG-S.1 ★ (outcome-altitude) — the production `loam guards`
+        entry-point, invoked with NO pre-arranged state against the
+        REAL installed guard set, succeeds, asserts the floor invariant
+        (every class:floor row checked for a default-on guard), and
+        emits each uncovered floor row in the gap section. A STUB-class
+        test that pre-seeds the manifest does NOT satisfy this AC
+        (feedback_test_outcome_altitude_required).
+
+    Method-level choices are the builder's call per ODD §1.1; the plan
+    fixes the schema (§5), the row set (§5 table), and the entry-point
+    composition (loam.cli.subcommands), not the implementation.
+
+    The LOAD-BEARING finding (plan §10 F2): four-to-five floor-class
+    failure modes are today guarded ONLY by persona discipline
+    (FM.NARRATION-NOT-ACTION, FM.ENV-PERCEPTION-MVC,
+    FM.PROCESS-DRIFT-UNDER-PRESSURE, partially FM.BUILT-NE-LIVE /
+    FM.DESTRUCTIVE-PRUNE) — prose rules the doctrine itself says "decay
+    first under pressure," each born from a real recurring failure.
+    These ship as VISIBLE `default_on: NO-PROGRAMMATIC` gap rows, not
+    omissions; the gap report drives downstream structural-enforcement
+    cycles (feedback_structural_enforcement_on_recurrence). Building the
+    missing guards is OUT of scope (plan §7) — downstream, per-gap,
+    proportionality-prioritised.
+
+    Out of scope (plan §7): authoring new guards to close the gaps;
+    the release-gate HARD-block arm (check_floor_guards_present —
+    FORK F-4); auto-remediation; per-user proportional-tier tuning.
+
+    Predecessor:
+      - f1f6116 — main tip @ plan-authoring (N3 translate-in onboarding
+        intake seal).
+
+    BASELINE f1f6116 (re-baselined by the builder to the actual
+    source-edit commit). NEW-component first-seal fence on
+    `framework/protection-matrix/`. The sidecar is created at this seal
+    (no prior seal to advance).

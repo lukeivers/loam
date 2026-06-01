@@ -4,17 +4,25 @@ amendment:
   slug: intake-smoke-four-step-rubric-alignment
   title: "Acceptance-smoke four-step-loop-ran rubric contract-alignment — the judge rubric REWARDS landing the literal ask + asking at most one opt-in rung up BY DEFAULT (suppressed only on a clear one-off signal) + all four legs visible/adapted, and PENALIZES two+ rung jumps / asserted structure / a missing ask absent a suppressing signal; it no longer demands committed concrete structure (the contradiction with no-over-engineering) (AC.SMOKE.7)"
 
-# BASELINE: 625303cf — the loam-acceptance-smoke sidecar HEAD (the variant-B
-# day-derived hardening seal), immediately preceding this cycle's source-edit
-# commit. BASELINE-as-HEAD~N pattern.
+# BASELINE: 46352988 — the smoke component's TRUE pre-introduction tip ON THIS
+# BRANCH (the #179 workspace-bootstrap one-rung-default-ask SEAL, the last commit
+# before this cycle's smoke source-edit). The component's prior seal was 625303cf,
+# but the #179 sibling-component cycle (workspace-bootstrap) interleaved on this
+# branch BETWEEN 625303cf and this smoke edit; baselining at 625303cf would make
+# the seal-test's BASELINE..SEAL fence window span those sibling-component
+# commits (a false fence breach). Baselining at 46352988 scopes the window to
+# EXACTLY this amendment's smoke-only diff. BASELINE-as-HEAD~N pattern, applied
+# correctly to an interleaved multi-component branch.
 #
 # Commit ladder pre-apply:
-#   625303cf — loam-acceptance-smoke variant-B hardening seal. ← BASELINE
+#   625303cf — loam-acceptance-smoke variant-B hardening seal (component's prior seal).
 #   ... (the workspace-bootstrap #179 cycle commits — a different component fence)
+#   46352988 — #179 workspace-bootstrap one-rung-default-ask SEAL. ← BASELINE
 #   9d40fc6e — source edit: four-step-loop-ran rubric contract-alignment +
 #     AC.SMOKE.7 test.
-#   <this manifest commit>
-#   <loam amend apply auto-commit>
+#   1286edf7 — this manifest commit.
+#   adbba1df — revert of the first (wrong-baseline 625303cf) apply.
+#   <re-apply auto-commit at BASELINE 46352988>
 #   <loam amend seal deterministic seal commit>
 #
 # Single-component fence — loam-acceptance-smoke only:
@@ -26,7 +34,7 @@ amendment:
 # AC families: NEW AC.SMOKE.7 (judge contract-alignment). Born from the
 #   1.0-finishing round (owner ruling Luke 13401 + 13403): the old rubric demanded
 #   the OPPOSITE of the ratified design (committed structure) — this aligns it.
-baseline: "625303cf"
+baseline: "46352988"
 
 plan: docs/plans/intake-one-rung-v2.md
 

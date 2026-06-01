@@ -97,3 +97,17 @@ real proof; the four unit ACs are the regression floor.
 Out-of-fence drift; a fix needing a second component; ODD violation; an AC
 unsatisfiable without method-in-AC; a re-run regression or new failure; any
 un-isolatable `claude -p`.
+
+## 9. Commit SHAs (amendment #164)
+
+- Plan + manifest: `c820aead` (manifest baseline-as-HEAD~1 anchor).
+- Source edit + AC tests (BASELINE): `b446f54c`.
+- Manifest baseline set: `38906716`.
+- `loam amend apply`: `ae469be` (BASELINE + sidecar → `c820aead` / `ae469be`).
+- `loam amend seal`: `21deccec` (cross-component sweep 18 green).
+- Component suite: 573 passed / 15 skipped / 0 failed (full env).
+- AC→test map: AC.INTAKE-ECHO.1 / AC.INTAKE-AFFIRM.1 (×2) /
+  AC.INTAKE-VACUUM.1 (×2) / AC.INTAKE-ROLE.1 — all in
+  `framework/workspace-bootstrap/tests/test_AC_INTAKE_NL_natural_language_handling.py`.
+
+NOT pushed, NOT merged — owner-gated.

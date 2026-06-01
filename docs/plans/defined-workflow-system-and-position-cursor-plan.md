@@ -158,6 +158,45 @@ Per-cycle shape for the eventual build dispatch (this plan does NOT build):
 
 ---
 
+## §13 §status — SHA register + AC verdicts (backfilled post-seal)
+
+**Amendment #160** `defined-workflow-system-and-position-cursor` — SEALED (local; not published, not merged to main — merge is dispatcher-gated).
+
+| Commit | SHA | Role |
+|---|---|---|
+| BASELINE | `1d6c8705` | plan-doc commit (pre-build tip, post-rebase onto main `7af6a035`) |
+| feature | `d9ed4f2c` | `feat(loam-cli)`: flows subpackage + tests + dogfood flow/cursor + convention + migration |
+| apply | `73754790` | `chore(amend)`: BASELINE + sidecar bump; seal-test `allowed_prefixes += docs/flows/, docs/conventions/` |
+| seal | `345d5008` | `chore(seals)`: deterministic seal at apply `73754790` |
+
+**AC → test verdicts (all GREEN; loam-cli suite 159 passed, 26 new):**
+
+| AC | Test (file::name) | Verdict |
+|---|---|---|
+| AC.FLOWDEF.1 | `test_AC_FLOWDEF_format::test_AC_FLOWDEF_1_carries_machine_graph_and_human_narrative` (+ empty-body) | GREEN |
+| AC.FLOWDEF.2 | `test_AC_FLOWDEF_format::test_AC_FLOWDEF_2_build_workflow_expressible_without_loss` | GREEN |
+| AC.FLOWDEF.3 | `test_AC_FLOWDEF_format::test_AC_FLOWDEF_3_malformed_rejected_with_named_defect` (parametrized) | GREEN |
+| AC.FLOWDEF.4 (Fork C1) | `test_AC_FLOWDEF_format::test_AC_FLOWDEF_4_flat_action_list_rejected_as_not_a_flow` (+ admitted) | GREEN |
+| AC.CURSOR.1 | `test_AC_CURSOR_position::test_AC_CURSOR_1_*` | GREEN |
+| AC.CURSOR.2 | `test_AC_CURSOR_position::test_AC_CURSOR_2_*` | GREEN |
+| AC.CURSOR.3 (staleness) | `test_AC_CURSOR_position::test_AC_CURSOR_3_stale_cursor_resolves_unresolved_not_false` | GREEN |
+| AC.CURSOR.4 | `test_AC_CURSOR_position::test_AC_CURSOR_4_methodology_cursor_path_is_tracked` | GREEN |
+| AC.PAUSE.1 | `test_AC_PAUSE_if_lost::test_AC_PAUSE_1_resolved_cursor_surfaces_position` | GREEN |
+| AC.PAUSE.2 | `test_AC_PAUSE_if_lost::test_AC_PAUSE_2_*` | GREEN |
+| AC.PAUSE.3 | `test_AC_PAUSE_if_lost::test_AC_PAUSE_3_lost_is_the_default` | GREEN |
+| AC.DOGFOOD.1 | `test_AC_DOGFOOD_build_workflow::test_AC_DOGFOOD_1_build_workflow_validates_and_cursor_resolves` | GREEN |
+| ★ AC.REINJECT.1 (outcome-altitude) | `test_AC_REINJECT_outcome_altitude::test_AC_REINJECT_1_real_hook_reestablishes_position_from_disk` (+ corrupt-cursor-PAUSE) | GREEN |
+| (verb surface) | `test_AC_FLOW_cli_verb::*` (validate / position / pause through the real `loam flow` dispatch) | GREEN |
+
+**Forks ruled to the plan's recommended options (NOT re-opened):** A1 (additive context on SessionStart-compact + PreCompact + UserPromptSubmit; PreToolUse advisory), B1 (single-active-flow), C1 (AC.FLOWDEF.4 flat-list rejection), D1 (tracked YAML file per flow).
+
+**Follow-ons surfaced (out of this fence, per F2 / scope-discipline — NOT silently extended):**
+- **build-cursor.md replacement** (plan §9): the manual §5 block in `docs/plans/build-cursor.md` is replaced by the persisted cursor it drives. Deferred to a doc-only follow-on so the dogfood's manual + persisted cursors stay cross-checkable in the same seal (AC.DOGFOOD.1 asserts they agree); flipping the manual block now would remove the cross-check the AC relies on.
+- **FM.PROCESS-DRIFT matrix entry** (plan §9): adding the failure-mode-matrix row naming this system as the structural guard touches the protection-matrix component — a DIFFERENT sealed fence, out of this cycle's loam-cli fence. Owed as its own micro-amendment.
+- **Live instance-config wiring** (D3 / A1): registering the framework `loam_cli.flows.reinject` hook on a live instance's `settings.json` (UserPromptSubmit / PreToolUse banks) is an instance-config step, owner-gated like G3 — outside this sealed framework cycle.
+
+---
+
 ## §10 F2 Ruthless Feedback (honest doubts + named design risks)
 
 1. **Cursor staleness is the real risk, not cursor absence.** *Disagreement:* a naive cursor design optimizes for "always have a position." *Evidence:* the owner law itself says "a stale flow you're forced to follow is worse than none" (memory F2 constraint; doctrine line 253), and build-cursor.md §1 documents a real near-miss where a cursor was *silently dropped from a commit*. A confidently-wrong cursor is the worst outcome — it defeats the pause-check by making the agent *think* it knows its position. *Alternative:* make staleness-detection (AC.CURSOR.3) and positive-resolution (AC.PAUSE.3, "lost is the default") first-class, not afterthoughts — which this plan does. The cursor must be willing to say "I don't know where I am" more readily than a human would.

@@ -111,3 +111,31 @@ un-isolatable `claude -p`.
   `framework/workspace-bootstrap/tests/test_AC_INTAKE_NL_natural_language_handling.py`.
 
 NOT pushed, NOT merged — owner-gated.
+
+## 10. Cycle 2 — re-run hardening (amendment #165)
+
+The first smoke re-run (`docs/experiments/loam-1.0-acceptance-smoke-rerun.md`)
+confirmed cycle-1 landed Bug 3 (vacuum-routing for clear cases) + Bug 4
+(role-noun) cleanly, but surfaced three residuals — all ladder to the SAME four
+ACs (refinements, not new ACs):
+
+- **AC.INTAKE-AFFIRM.1** — a confirm that LEADS with a hedge interjection
+  ("Ha, that's a mouthful — but yes, basically!") was routed to the correction
+  branch (first token "ha"). `_leading_polarity` now skips leading filler +
+  promotes an explicit agreement pivot ("but yes"); a bare affirmation buried in
+  "not sure"/"sort of" is NOT promoted (stays a correction).
+- **AC.INTAKE-ECHO.1** — (a) the proposal distillation grabbed a temporal
+  preamble ("every single night I'm sitting at my kitchen table writing up
+  listing") instead of the action; `_ACTION_PREAMBLE` + a `_WANT_SPAN` extractor
+  now surface the action ("writing up listing descriptions"). (b) the CORRECTION
+  branch echoed the raw reply into the close; it now distills the correction.
+- **AC.INTAKE-VACUUM.1** — the widened classifier over-fired: a day-derived
+  reply ("I don't know, but the thing that eats my day is the write-ups")
+  reached the research ladder, breaking the featherlight invariant. A
+  `_HARD_VACUUM` override ("nothing's broken / it's just constant" → stays
+  vacuum) + a `_DERIVABLE_PAIN` demotion (single concrete pain → PARTIAL,
+  off the ladder) separate the claims-adjuster (PARTIAL) from the paralegal
+  (vacuum).
+
+Cycle-2 component suite: 577 passed / 15 skipped / 0 failed. 4 NEW hardening
+tests added to the same AC test file (10 tests total across the 4 families).

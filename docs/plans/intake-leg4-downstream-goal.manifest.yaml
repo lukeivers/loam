@@ -1,0 +1,80 @@
+schema_version: 1
+amendment:
+  number: 174
+  slug: intake-leg4-downstream-goal
+  title: "Intake leg-4 reads the CONFIRMATION's new downstream goal — the leg-4 adjustment now reflects what the confirmation REVEALED ('…so I'd have time to return calls and close files'), prioritized over a re-read of the first reply, so four-step-loop-ran's leg 4 visibly LEARNS from the confirmation instead of echoing turn 1 (AC.INTENT.4)"
+
+# BASELINE: 54942c10 — the #173 disposition-word-boundary seal, immediately
+# preceding the #174 source-edit commit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   54942c10 — #173 disposition word-boundary seal. ← BASELINE
+#   <source-edit commit> — _DOWNSTREAM_GOAL + _downstream_goal_from_confirmation;
+#     _leg4_adjustment_text prioritizes the confirmation's downstream goal; 1 NEW
+#     AC.INTENT.4 test case.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _DOWNSTREAM_GOAL regex + _downstream_goal_from_confirmation; the leg-4
+#       adjustment reflects the confirmation's NEW downstream-goal clause first.
+#   tests/test_AC_INTENT_4_leg4_adjust_from_answer.py — 1 NEW test case.
+#
+# AC families: refinement to AC.INTENT.4 (leg-4 reads the confirmation turn, not
+#   a re-read of turn 1). Born from the rerun8 acceptance smoke (variant B's
+#   four-step-loop-ran PARTIAL: leg 4 echoed turn-1's read + ignored the
+#   confirmation's 'return calls and close files' downstream goal).
+baseline: "54942c10"
+
+plan: docs/plans/intake-llm-intent-seam.md
+
+seal_description: "Intake leg-4 reads the confirmation's new downstream goal (AC.INTENT.4) — leg 4 reflects what the confirmation revealed, not a re-read of the first reply"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-leg4-downstream-goal
+  body: |
+    # Intake leg-4 downstream-goal fix — apply ladder
+
+    The acceptance-smoke rerun8 showed variant B's `four-step-loop-ran` still
+    PARTIAL after the #172 seam: the leg-4 adjustment echoed the seam's read of
+    the FIRST reply and IGNORED the new downstream goal the CONFIRMATION revealed
+    ("…if I could get some help there, I'd actually have time to return calls and
+    close files out before the end of the day"). The judge: "leg 4 … is absent:
+    the closing leverage idea ignores the user's elaboration about returning calls
+    and closing files."
+
+    A CLEAR-DIRECTION refinement of leg 4: the adjustment now reads the
+    CONFIRMATION turn's new downstream-goal clause FIRST (a "so I'd have time to …
+    / then I could … / I could actually …" purpose/result connector), reflecting
+    what the confirmation ADDED, and only falls back to the seam's adjustment read
+    / deeper-end-intent / a deterministic distill when no downstream goal is
+    present. A bare "yes" still yields no forced adjustment (leg 4 reflects ONLY
+    what the confirmation actually added).
+
+    Predecessor commits:
+      - 54942c10 — #173 disposition word-boundary seal (BASELINE).
+
+    BASELINE 54942c10. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

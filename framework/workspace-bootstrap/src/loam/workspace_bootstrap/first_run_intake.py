@@ -55,9 +55,25 @@ from pathlib import Path
 from typing import Any
 
 from .deep_role_research import ResearchProvider
-from .intent_extract import IntentExtractor
+from .intent_extract import ClaudeIntentExtractor, IntentExtractor
 from .seed_writer import SeedResult, default_global_home, seed_user_state
 from .translate_in_intake import Answerer, IntakeResult, run_translate_in_intake
+
+
+def production_intent_extractor() -> IntentExtractor:
+    """The PRODUCTION-default intent extractor (AC.INTENT.5).
+
+    The library seam default (``translate_in_intake.default_intent_extractor`` ->
+    ``DisabledIntentExtractor``) stays pure-regex so the baseline distillation suite
+    is byte-identical and the featherlight path takes no spawn. The PRODUCTION
+    front door — ``loam init-intake`` (and the acceptance smoke, which drives the
+    same orchestrator) — activates the REAL ``ClaudeIntentExtractor`` so the
+    four-step loop is LIVE in production, not only when a consumer registers it.
+    Fail-soft is unchanged: ``run_translate_in_intake`` still catches
+    ``IntentExtractUnavailableError`` and degrades to the regex distillation, so
+    onboarding NEVER breaks if the bounded ``claude -p`` call fails
+    (``feedback_no_anthropic_api_key`` — subscription-only, no SDK)."""
+    return ClaudeIntentExtractor()
 
 
 @dataclass
@@ -160,10 +176,19 @@ def run_first_run_intake(
             result.capability_ritual_error = str(exc)
 
     # --- Phase 3: the translate-in intake (the load-bearing N3 phase). ---
+    # AC.INTENT.5: production activates the REAL extractor by default (the library
+    # seam stays disabled/pure-regex). An explicit injection (tests) still wins.
+    # Fail-soft is retained — the intake degrades to the regex distillation on any
+    # extractor failure, so onboarding never breaks.
+    effective_extractor = (
+        intent_extractor
+        if intent_extractor is not None
+        else production_intent_extractor()
+    )
     intake = run_translate_in_intake(
         answerer=answerer,
         research_provider=research_provider,
-        intent_extractor=intent_extractor,
+        intent_extractor=effective_extractor,
     )
     result.intake = intake
 

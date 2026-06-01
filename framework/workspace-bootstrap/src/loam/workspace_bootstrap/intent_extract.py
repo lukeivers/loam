@@ -79,12 +79,16 @@ class ExtractedIntent:
     step beyond the literal ask — the four-step loop's infer leg, richer than the
     literal phrasing). ``adjustment`` is an optional one-line read of any detail
     or doubt the reply added that the leg-4 close should reflect (AC.INTENT.4);
-    it is None when the reply added nothing to adjust from.
+    it is None when the reply added nothing to adjust from. ``disposition`` is the
+    model's STOP-vs-START read of the reply (AC.INTENT.6) — "stop" / "start" / ""
+    (the empty string when the model could not tell; the caller falls back to the
+    deterministic ``_detect_disposition`` regex).
     """
 
     intent: str
     deeper_end_intent: str = ""
     adjustment: str = ""
+    disposition: str = ""
 
     @property
     def is_usable(self) -> bool:
@@ -175,6 +179,11 @@ really after (one step beyond the literal ask), e.g. "get their evenings back".
   - "adjustment": if their reply added a concrete DETAIL worth reflecting back, \
 or raised a DOUBT/QUESTION about whether loam can actually do it, a ONE-LINE \
 honest read of that detail/doubt loam should acknowledge; otherwise "".
+  - "disposition": "stop" if they want to STOP/offload/hand off something that \
+drags them down, "start" if they want to START/get-to something important they \
+can't make time for, or "" if you genuinely cannot tell. Read intent over \
+keywords: "I want to STOP doing it by hand" is "stop"; "I'd love to finally START \
+journaling" is "start".
 
 Be honest in "adjustment": if they doubt a capability, name the doubt — do NOT \
 invent a capability claim. And NEVER promise unattended/recurring AUTOMATION \
@@ -377,10 +386,14 @@ def _parse_extraction(result_text: str) -> ExtractedIntent:
         ) from exc
     if not isinstance(payload, dict):
         raise IntentExtractUnavailableError("intent-extract result not an object")
+    disposition = str(payload.get("disposition", "") or "").strip().lower()
+    if disposition not in ("stop", "start"):
+        disposition = ""  # only the two valid reads survive; else the caller falls back
     extracted = ExtractedIntent(
         intent=str(payload.get("intent", "") or "").strip(),
         deeper_end_intent=str(payload.get("deeper_end_intent", "") or "").strip(),
         adjustment=str(payload.get("adjustment", "") or "").strip(),
+        disposition=disposition,
     )
     if not extracted.is_usable:
         raise IntentExtractUnavailableError(

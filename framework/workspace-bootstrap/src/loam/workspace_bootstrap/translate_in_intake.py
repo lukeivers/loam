@@ -469,6 +469,24 @@ def _detect_disposition(answer: str) -> Disposition:
     return Disposition.STOP if stop_at <= start_at else Disposition.START
 
 
+def _disposition_from(raw: str, extracted: ExtractedIntent | None) -> Disposition:
+    """STOP-vs-START via the LLM extractor PRIMARY, regex FAIL-SOFT (AC.INTENT.6).
+
+    The extractor's ``disposition`` read ("stop"/"start") drives the close when the
+    model produced a usable read; on a declined/empty/unparseable read (the
+    extractor failing soft yields ``extracted is None``, or an explicit "") the
+    deterministic ``_detect_disposition`` regex classifies the raw reply. This
+    keeps onboarding independent of the model call: the prior AC.DISPOS.1
+    intent-frame cases still hold through the regex fallback."""
+    if extracted is not None:
+        d = (extracted.disposition or "").strip().lower()
+        if d == "stop":
+            return Disposition.STOP
+        if d == "start":
+            return Disposition.START
+    return _detect_disposition(raw)
+
+
 # Leading conversational filler a real human opens with before the actual item
 # ("Oh, that's an easy one —", "Honestly?", "Well,", "Ha,"). Stripped before the
 # intent is distilled so the proposal reads as the item, not the preamble.
@@ -862,6 +880,180 @@ def _propose_end_intent(
         one_level_up_offer=one_level_up,
         clean_item=core_clean,
         extracted=extracted,
+    )
+
+
+# --------------------------------------------------------------------
+# The leverage ladder + the one-rung default-ask rider (AC.ONRUNG.*).
+# --------------------------------------------------------------------
+#
+# Owner ruling (Luke 13401 + 13403): the close's bar is RELATIVE. loam LANDS the
+# literal request as the ONE thing, then may ASK about moving EXACTLY ONE rung up
+# from where the request sits on a leverage ladder — opt-in, ask-only, NEVER two+
+# rungs (a doc may ask about a TEMPLATE, never a WORKFLOW/SYSTEM). This SHARPENS
+# AC.ONCLOSE.3 "proportional" to "one rung, ask-only".
+#
+# DEFAULT IS TO ASK (owner-corrected, 13403). The one-rung ask is present BY
+# DEFAULT. The user's signal is a SUPPRESSOR ONLY: it turns the ask OFF when the
+# user clearly signals one-off / "no thanks" / overwhelmed-just-this-once /
+# explicit decline. With NO clear suppressing signal -> ASK. This is NOT
+# "ask only when a recurrence signal is present" — that would invert the default.
+
+# Each ladder is an ordered list of rungs; the request lands on a rung and rung+1
+# is the IMMEDIATE next entry (never rung+2). The first ladder whose any-rung
+# token matches the distilled request governs; an unmatched request uses the
+# GENERIC deliverable ladder (one-off-task -> recurring-helper -> automation) so
+# every request has a well-defined rung+1 (AC.ONRUNG.1).
+_LEVERAGE_LADDERS: tuple[tuple[tuple[str, tuple[str, ...]], ...], ...] = (
+    # document artefacts.
+    (
+        ("doc", ("doc", "document", "write-up", "writeup", "description",
+                 "descriptions", "letter", "letters", "narrative", "narratives",
+                 "summary", "summaries", "email", "draft", "drafts", "post",
+                 "listing", "listings", "note", "notes", "memo", "report")),
+        ("template", ("template", "boilerplate", "reusable draft")),
+        ("workflow", ("workflow", "intake form", "pipeline of docs")),
+        ("system", ("system", "generator", "platform")),
+    ),
+    # spreadsheet artefacts.
+    (
+        ("spreadsheet", ("spreadsheet", "sheet", "tracker", "log", "reconcil",
+                         "reconciliation", "ledger")),
+        ("reusable-formula", ("formula", "reusable formula", "macro")),
+        ("dashboard", ("dashboard", "rollup", "roll-up")),
+        ("pipeline", ("pipeline", "data pipeline", "etl")),
+    ),
+)
+# The generic deliverable ladder — the fallback every unmatched request uses.
+_GENERIC_LADDER: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("one-off-task", ()),  # the default starting rung for an unmatched request
+    ("recurring-helper", ("recurring", "every week", "each week", "weekly",
+                          "routine", "regular")),
+    ("automation", ("automation", "automated", "automate", "hands-off")),
+)
+
+
+@dataclass
+class LadderRead:
+    """Where a request sits on a leverage ladder + the immediate next rung.
+
+    ``rung`` is the matched rung name (or the ladder's starting rung when only the
+    fallback applied); ``next_rung`` is EXACTLY rung+1 (the next entry), or "" when
+    the request is already at the top rung (nothing one-rung-up to ask about).
+    ``next_phrase`` is the user-facing noun for rung+1 the ask is phrased around.
+    """
+
+    rung: str
+    next_rung: str
+    next_phrase: str
+
+
+# A user-facing phrasing for each rung+1 the opt-in ask is built around — what the
+# "one rung up" concretely IS for the user (NEVER rung+2 language).
+_RUNG_PHRASE = {
+    "template": "a reusable template you can run again whenever it comes up",
+    "workflow": "a small repeatable workflow",
+    "system": "a system",
+    "reusable-formula": "a reusable formula you can drop in again",
+    "dashboard": "a simple dashboard view",
+    "pipeline": "a data pipeline",
+    "recurring-helper": "a repeatable thing loam handles for you, rather than a "
+    "one-off",
+    "automation": "an automation that runs in the background",
+}
+
+
+def _read_leverage_ladder(request: str) -> LadderRead:
+    """Read where ``request`` sits on a leverage ladder + compute EXACTLY rung+1
+    (AC.ONRUNG.1).
+
+    The first NAMED ladder whose any-rung token appears in the request governs;
+    the request's rung is the HIGHEST-index rung whose token matches (so a request
+    that already names a "template" sits at template, and rung+1 is "workflow").
+    An unmatched request falls to the GENERIC deliverable ladder at its starting
+    rung, so rung+1 is "recurring-helper". rung+1 is ALWAYS the immediate next
+    entry — never rung+2.
+    """
+    low = (request or "").lower()
+
+    def _scan(ladder: tuple[tuple[str, tuple[str, ...]], ...]) -> int:
+        """Index of the HIGHEST rung whose token matches, or -1 if none match."""
+        hit = -1
+        for i, (_name, tokens) in enumerate(ladder):
+            if any(tok and tok in low for tok in tokens):
+                hit = i
+        return hit
+
+    for ladder in _LEVERAGE_LADDERS:
+        idx = _scan(ladder)
+        if idx >= 0:
+            rung = ladder[idx][0]
+            if idx + 1 < len(ladder):
+                nxt = ladder[idx + 1][0]
+                return LadderRead(rung, nxt, _RUNG_PHRASE.get(nxt, nxt))
+            return LadderRead(rung, "", "")  # already at the top — nothing to ask
+    # Unmatched -> the generic deliverable ladder. A request that itself names a
+    # recurrence/automation token sits higher; otherwise it's a one-off-task and
+    # rung+1 is recurring-helper.
+    gidx = 0
+    for i, (_name, tokens) in enumerate(_GENERIC_LADDER):
+        if tokens and any(tok in low for tok in tokens):
+            gidx = i
+    rung = _GENERIC_LADDER[gidx][0]
+    if gidx + 1 < len(_GENERIC_LADDER):
+        nxt = _GENERIC_LADDER[gidx + 1][0]
+        return LadderRead(rung, nxt, _RUNG_PHRASE.get(nxt, nxt))
+    return LadderRead(rung, "", "")
+
+
+# Clear one-off / decline SIGNALS that SUPPRESS the one-rung ask (AC.ONRUNG.3). The
+# DEFAULT is to ASK; one of these turning up in the user's words is the ONLY thing
+# that turns the ask off. Open list — overwhelmed / just-this-once / explicit
+# decline / "no thanks" shapes.
+_ONE_OFF_SUPPRESS = re.compile(
+    r"\bjust\s+this\s+(?:one|once)\b|"
+    r"\bjust\s+(?:the\s+)?(?:one|this)\s+thing\b|"
+    r"\bone[\s-]?off\b|"
+    r"\bno\s+thanks\b|"
+    r"\bno\s+need\b|"
+    r"\bnot?\s+(?:right\s+)?now\b|"
+    r"\bkeep\s+it\s+simple\b|"
+    r"\bnothing\s+(?:fancy|more)\b|"
+    r"\bi'?m\s+(?:so\s+|really\s+)?overwhelmed\b|"
+    r"\boverwhelmed\b(?:\s+\w+){0,4}\s+just\b|"
+    r"\bdon'?t\s+(?:want|need)\s+(?:anything\s+)?(?:more|fancy|else)\b|"
+    r"\bjust\s+want\s+(?:this|it)\s+done\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _one_off_signal_present(*texts: str) -> bool:
+    """True when ANY of the user's turns carries a clear one-off / decline signal
+    that SUPPRESSES the one-rung ask (AC.ONRUNG.3). The default is to ASK; this is
+    the suppressor."""
+    for t in texts:
+        if t and _ONE_OFF_SUPPRESS.search(t):
+            return True
+    return False
+
+
+def _one_rung_ask(request: str, *, suppress: bool) -> str:
+    """Build the SINGLE opt-in rung+1 rider QUESTION appended to the close
+    (AC.ONRUNG.2/.3).
+
+    Returns "" when the ask is SUPPRESSED (a clear one-off signal) OR when the
+    request is already at the top of its ladder (no rung+1 to ask about). Otherwise
+    returns a one-sentence opt-in ASK phrased around EXACTLY rung+1 — never rung+2,
+    never an assertion of structure. The default (no suppressing signal) is to ASK.
+    """
+    if suppress:
+        return ""
+    read = _read_leverage_ladder(request)
+    if not read.next_rung or not read.next_phrase:
+        return ""
+    return (
+        f" And if it'd help, I could set this up as {read.next_phrase} — entirely "
+        f"optional, just say the word (or ignore it and we keep this a one-off)."
     )
 
 
@@ -1294,8 +1486,14 @@ def run_translate_in_intake(
     # --- 2b. CLEAR / PARTIAL -> infer, propose, verify. ---
     # Distill via the LLM intent-extraction seam FIRST (AC.INTENT.1), fail-soft to
     # the deterministic regex distillation (AC.INTENT.2). ONE extraction per turn.
-    disposition = _detect_disposition(raw)
     distilled = _distill_intent_via_seam(raw, extractor=extractor)
+    # AC.INTENT.6: the LLM extractor reads STOP-vs-START as the PRIMARY path; the
+    # deterministic ``_detect_disposition`` regex is the FAIL-SOFT fallback (used
+    # when the extractor declined / could not tell). This retires the keyword-regex
+    # disposition as the SOLE reader while keeping the regex as the safety net so
+    # onboarding never depends on the model call (the prior AC.DISPOS.1 cases still
+    # hold via the fallback).
+    disposition = _disposition_from(raw, distilled.extracted)
     proposal = _propose_end_intent(raw, disposition, distilled=distilled)
     result.proposal = proposal
 
@@ -1356,6 +1554,15 @@ def run_translate_in_intake(
             idea = LeverageIdea(
                 text=idea.text + adjustment, references=idea.references
             )
+        # The one-rung default-ask rider (AC.ONRUNG.2/.3): ASK about EXACTLY
+        # rung+1 by DEFAULT; a clear one-off signal in the user's words (the
+        # stop/start reply OR the confirmation) SUPPRESSES it. Appended to the
+        # SAME single landed idea so the close stays ONE thing (AC.ONCLOSE.2).
+        rung_request = result.proposal.clean_item or result.proposal.raw_answer
+        suppress = _one_off_signal_present(raw, confirm)
+        rider = _one_rung_ask(rung_request, suppress=suppress)
+        if rider:
+            idea = LeverageIdea(text=idea.text + rider, references=idea.references)
         result.leverage_ideas.append(idea)
 
     return result
@@ -1479,6 +1686,13 @@ def _run_fallback_ladder(
     adjustment = _leg4_adjustment_text(check, ladder_intent, extractor=extractor)
     if adjustment:
         idea = LeverageIdea(text=idea.text + adjustment, references=idea.references)
+    # The one-rung default-ask rider (AC.ONRUNG.2/.3) on the ladder path too: ASK
+    # about EXACTLY rung+1 by DEFAULT; a clear one-off signal across the user's
+    # ladder turns SUPPRESSES it. Appended to the SAME single landed idea.
+    suppress = _one_off_signal_present(role_answer, check)
+    rider = _one_rung_ask(ladder_item, suppress=suppress)
+    if rider:
+        idea = LeverageIdea(text=idea.text + rider, references=idea.references)
     result.leverage_ideas.append(idea)
 
     return result

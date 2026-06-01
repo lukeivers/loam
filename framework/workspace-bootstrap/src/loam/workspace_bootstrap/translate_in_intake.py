@@ -515,14 +515,30 @@ _REJECTION_LEAD = re.compile(
     flags=re.IGNORECASE,
 )
 # An asserted-intent span the user states AFTER a rejection ("What I was saying
-# is the claim-summary write-ups are the thing…", "what I meant is X"). The span
-# after the frame, up to the verb/clause boundary, is the asserted item.
+# is the claim-summary write-ups are the thing…", "I was just saying the
+# write-ups are the thing…", "what I meant is X"). The span after the frame, up
+# to the verb/clause boundary, is the asserted item.
 _ASSERTED_AFTER_REJECTION = re.compile(
-    r"\b(?:what\s+i\s+(?:was\s+saying|meant|mean|said)\s+(?:is|was)|"
+    r"\b(?:(?:i\s+was\s+)?just\s+saying|what\s+i\s+(?:was\s+saying|meant|mean|"
+    r"said)\s+(?:is|was)|i\s+was\s+saying|"
     r"what\s+i\s+(?:actually\s+)?(?:want|need)\s+(?:is|help\s+with\s+is)|"
     r"the\s+(?:thing|part)\s+i\s+need\s+help\s+with\s+is)\s+"
     r"(?P<span>.+?)"
-    r"(?=\s+(?:are|is)\s+the\s+thing|[.!?;]|—|–|\s+that'?s\s+(?:what|the)\b|$)",
+    r"(?=\s+(?:are|is)\s+the\s+(?:thing|part)|[.!?;]|—|–|"
+    r"\s+that'?s\s+(?:what|the)\b|\s+kills?\b|\s+eats?\b|$)",
+    flags=re.IGNORECASE,
+)
+# A leading DEFLECTION frame the user opens a day-description with: "I don't
+# (really) think about it/my job (in terms of stop/start) that way — but I'll
+# tell you where my day goes: …". Its content is the deflection, not the item —
+# dropped (with the "but I'll tell you where my day goes:" bridge) so the
+# distiller lands on the named day-pain that follows (rerun5 variant-B).
+_DEFLECTION_LEAD = re.compile(
+    r"^(?:honestly,?\s+)?i\s+(?:don'?t|do\s+not)\s+(?:really\s+)?think\s+about\s+"
+    r"(?:it|my\s+job|that)[^.!?;—–]*?"
+    r"(?:[—–-]\s*|\.\s*|,\s*)?"
+    r"(?:but\s+)?(?:i'?ll|i\s+will|let\s+me)\s+tell\s+you\s+"
+    r"(?:where\s+my\s+day\s+goes|what\s+my\s+day\s+looks\s+like)\s*[:,]?\s*",
     flags=re.IGNORECASE,
 )
 _DISTILL_MAX_WORDS = 12
@@ -565,6 +581,12 @@ def _distill_intent(answer: str) -> str:
     me"), and cap at a bounded word budget. A reply that is already a short
     phrase passes through essentially unchanged."""
     text = answer.strip().rstrip(".!?").strip()
+    # A day-description that OPENS with a deflection ("I don't really think about
+    # it that way — but I'll tell you where my day goes: …") — drop the deflection
+    # + bridge so the distiller lands on the named day-pain (rerun5 variant-B).
+    dedeflected = _DEFLECTION_LEAD.sub("", text).strip().lstrip(",.!?—– ").strip()
+    if dedeflected and dedeflected != text:
+        text = dedeflected
     # A correction that REJECTS loam's read then states the real intent ("that
     # didn't quite land right, no. What I was saying is the claim-summary
     # write-ups …") — pull the ASSERTED span after the rejection, never the
@@ -633,6 +655,21 @@ def _distill_intent(answer: str) -> str:
             return span
         if words:
             return " ".join(words[:_DISTILL_MAX_WORDS])
+    # A free-form DAY-NARRATIVE names several activities; the PAIN is the one a
+    # derivable-pain signal points at ("…afternoon disappears into writing up the
+    # claim-summary narratives … piles up on me"), NOT the first clause. When the
+    # answer carries a derivable-pain signal AND a concrete named task is
+    # mineable, the named task IS the pain — distill it, not the first activity
+    # (rerun5 variant-B: distilling grabbed "mornings I'm taking FNOL calls").
+    norm_pain = re.sub(r"[^a-z0-9']+", " ", text.lower()).strip()
+    if any(re.search(rx, norm_pain) for rx in _DERIVABLE_PAIN_REGEXES):
+        pain_task = _named_task_from_description(text)
+        # Only land a named pain-task when it names a CONCRETE object — a
+        # pronoun-only task ("writing them") defers to the clause heuristics,
+        # which can recover a named noun from an earlier clause (AC.ONCLOSE.4).
+        if pain_task and not _is_pronoun_only_object(pain_task):
+            words = pain_task.split()
+            return " ".join(words[:_DISTILL_MAX_WORDS])
     clauses = [c.strip() for c in re.split(r"[.!?;]|—|–|\s-\s", text) if c.strip()]
     if not clauses:
         clauses = [text]
@@ -674,13 +711,28 @@ def _propose_end_intent(answer: str, disposition: Disposition) -> ProposedEndInt
         distilled,
         flags=re.IGNORECASE,
     ).strip() or distilled
-    objective_text = (
-        f"Help the user stop {core_clean} so it stops getting in the way of the "
-        f"work that matters to them"
-        if disposition == Disposition.STOP
-        else f"Help the user reliably {core_clean} — the thing they know is "
-        f"critical but find hard to self-start"
-    )
+    # The surfaced hypothesis must read as a COHERENT sentence for any core
+    # (a noun phrase like "the listing descriptions" or a verb phrase like
+    # "writing the report"). UNKNOWN disposition — the user named a pain but no
+    # explicit stop/start verb ("if you can take that off my plate") — defaults
+    # to the OFFLOAD framing (take it off their plate), NOT the "self-start"
+    # framing which only fits a START intent (the rerun5 variant-A garble
+    # "Help the user reliably the listing descriptions — … hard to self-start").
+    if disposition == Disposition.STOP:
+        objective_text = (
+            f"Help the user offload {core_clean} so it stops eating the time "
+            f"they'd rather spend on the work that matters to them"
+        )
+    elif disposition == Disposition.START:
+        objective_text = (
+            f"Help the user reliably get to {core_clean} — the thing they know "
+            f"is important but find hard to make time for"
+        )
+    else:
+        objective_text = (
+            f"Help the user offload {core_clean} so it stops eating the time "
+            f"they'd rather spend elsewhere"
+        )
     # Over-reach guard: ONE level up = offer to make it repeatable, OPT-IN only.
     # Quote the DISTILLED item (not the raw multi-sentence reply) — AC.INTAKE-ECHO.1.
     one_level_up = (

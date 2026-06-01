@@ -416,3 +416,64 @@ def test_AC_INTAKE_ECHO_1_spend_hours_preamble_stripped_to_action():
     assert "listing descriptions" in distilled
     assert "every single night" not in distilled
     assert "two hours" not in distilled
+
+
+# ---- Fifth re-run hardening (rerun5 deflection-lead / day-pain / disposition). ----
+
+
+def test_AC_INTAKE_ECHO_1_deflection_lead_day_narrative_distills_the_pain():
+    """A day-narrative opening with a deflection ('I don't really think about it
+    that way — but I'll tell you where my day goes: mornings … and then my whole
+    afternoon disappears into writing up the claim-summary narratives … piles up')
+    distills the PAIN task, not the deflection or the first morning activity (the
+    rerun5 variant-B garble 'I don't really think about it that way')."""
+    distilled = _distill_intent(
+        "Honestly, I don't really think about it that way — but I'll tell you "
+        "where my day goes: mornings I'm taking first-notice-of-loss calls and "
+        "looking at damage photos, and then my whole afternoon just disappears "
+        "into writing up the claim-summary narratives for the file and the "
+        "policyholder. That part just piles up on me."
+    ).lower()
+    assert "claim-summary" in distilled
+    assert "don't really think" not in distilled
+    assert "first-notice-of-loss" not in distilled
+
+
+def test_AC_ONCLOSE_5_im_not_sure_rejection_distills_the_asserted_pain():
+    """A correction opening 'I'm not sure what that says, but no, that's not quite
+    it. I was just saying the write-ups are the thing…' distills the asserted
+    'write-ups', not the rejection/confusion phrase (the rerun5 variant-B close
+    garble)."""
+    distilled = _distill_intent(
+        "Uh — I'm not sure what that says, but no, that's not quite it. I was "
+        "just saying the write-ups are the thing that kills my afternoons — "
+        "that's the part I can never get ahead of."
+    ).lower()
+    assert "write-ups" in distilled
+    assert "not sure what that says" not in distilled
+
+
+def test_AC_ONINTAKE_2_unknown_disposition_proposal_reads_coherently():
+    """An opener that names a pain but no explicit stop/start verb ('the listing
+    descriptions … if you can take that off my plate') yields a COHERENT proposal
+    (the offload framing), not the garbled 'Help the user reliably the listing
+    descriptions — hard to self-start' (rerun5 variant-A)."""
+    result = run_translate_in_intake(
+        answerer=ScriptedAnswerer(
+            {
+                "stop_start": (
+                    "Oh, easy — the listing descriptions. Every single evening "
+                    "I'm sitting there trying to make a three-bedroom ranch sound "
+                    "like a dream come true, and it takes me two hours I'd rather "
+                    "spend anywhere else. If you can take that off my plate, I'm "
+                    "all in."
+                ),
+                "confirm_proposal": "yes",
+            }
+        )
+    )
+    obj = (result.proposal.objective_text or "").lower()
+    assert "listing descriptions" in obj
+    assert "reliably the listing descriptions" not in obj
+    # The proposal is a coherent sentence (offload framing for the no-verb case).
+    assert "help the user offload" in obj or "help the user reliably get to" in obj

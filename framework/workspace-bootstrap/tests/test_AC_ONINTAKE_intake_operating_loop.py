@@ -76,9 +76,13 @@ def test_AC_ONINTAKE_2_proposal_is_not_a_verbatim_echo():
     result = run_translate_in_intake(answerer=answerer)
     assert result.proposal is not None
     # The proposal is a healthy-enablement SHAPE over the raw answer, distinct
-    # from the verbatim echo (it adds the why/enablement framing).
+    # from the verbatim echo (it adds the why/enablement framing). The exact
+    # wording is the builder's call (ODD) — the AC pins that it carries an
+    # offload/enablement frame, not the raw echo.
     assert result.proposal.objective_text != raw
-    assert "stops getting in the way" in result.proposal.objective_text
+    obj = result.proposal.objective_text.lower()
+    assert "help the user" in obj
+    assert "so it stops eating the time" in obj or "find hard to make time" in obj
 
 
 # ---- ★ AC.ONINTAKE.3 — the load-bearing verify gate. ----

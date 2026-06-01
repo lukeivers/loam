@@ -1,0 +1,28 @@
+# Intake leg-4 LLM adjustment — apply ladder
+
+Across acceptance-smoke rerun8/9/10 the `four-step-loop-ran` dimension reached
+PASS on 2/3 variants per run, but the third FLICKERED PARTIAL on whichever
+novel detail that run's role-play added at the confirmation turn — a
+deterministic leg-4 reflection cannot generalise across arbitrary free-form
+confirmation phrasings (the same free-form-extraction problem the #172 LLM
+seam solved for the FIRST turn, now at the confirmation turn).
+
+This cycle routes the leg-4 adjustment through the SAME LLM seam: the real
+extractor reads the CONFIRMATION reply (one bounded spawn-isolated `claude -p`
+on the confirmation turn — a DISTINCT turn, within the owner-ratified "one
+small call per onboarding turn") and writes a one-line, right-sized adjustment
+that reflects the substantive detail/doubt it added. FAIL-SOFT: on any
+extractor failure / unavailable / empty the deterministic heuristics run
+(guidance hedge -> walk-through; doubt -> honest answer; downstream goal;
+distilled detail). The over-promise guard (AC.ONCLOSE.3) still binds the LLM
+output. With NO extractor registered (the baseline default) the path stays
+purely deterministic — the existing leg-4 tests are unaffected.
+
+Predecessor commits:
+  - c08dd4fe — #176 leg4-no-overpromise seal (BASELINE).
+
+BASELINE c08dd4fe. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
++ the READY verdict surface after the smoke re-run.

@@ -1,0 +1,135 @@
+schema_version: 1
+amendment:
+  number: 164
+  slug: intake-nl-handling-fix
+  title: "Intake natural-language-handling fix — 4 bugs the loam 1.0 acceptance smoke caught"
+
+# BASELINE: the source-edit commit (pre-apply tip) for this amendment.
+#
+# Commit ladder pre-apply:
+#   e222c1d1 — loam 1.0 acceptance smoke seal (the NOT-READY run-report).
+#   <plan + manifest commit (THIS file + the plan-doc)>
+#   <feat source-edit commit: translate_in_intake.py fixes + AC tests> ← BASELINE
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — the four bugs all live in
+# framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py:
+#   - _is_yes / _is_no — punctuation-tolerant first-word-token affirmation
+#     recognition (BUG 2; AC.INTAKE-AFFIRM.1).
+#   - _looks_empty + _EMPTY_REGEXES_LEAD/_ANYWHERE — natural-phrasing-robust
+#     idea-vacuum classifier (BUG 3; AC.INTAKE-VACUUM.1).
+#   - _distill_intent + _propose_end_intent — distill a SHORT intent phrase
+#     instead of echoing the raw reply (BUG 1; AC.INTAKE-ECHO.1).
+#   - _extract_role_noun + _leverage_from_role + fallback-ladder seeding —
+#     resolve the role slot to a NOUN (BUG 4; AC.INTAKE-ROLE.1).
+#   - tests/test_AC_INTAKE_NL_natural_language_handling.py — 6 NEW AC tests on
+#     the real raw replies from the smoke transcript.
+#
+# AC families locked per docs/plans/intake-nl-handling-fix.md §5:
+#   AC.INTAKE-ECHO.1   — proposal distills, does not echo the raw reply.
+#   AC.INTAKE-AFFIRM.1 — natural punctuated affirmations recognized; deep-
+#                        research gate fires on "Yeah, that'd actually help".
+#   AC.INTAKE-VACUUM.1 — idea-vacuum classifier robust to natural phrasings.
+#   AC.INTAKE-ROLE.1   — the role slot resolves to a NOUN, not the raw blob.
+#
+# Outcome-altitude: the loam 1.0 acceptance smoke is RE-RUN against the fixed
+# loam (real init + intake + 3 role-played spawn-isolated users); the updated
+# run-report (docs/experiments/) carries the new verdict — the real proof.
+baseline: "REPLACED_AT_COMMIT"
+
+plan: docs/plans/intake-nl-handling-fix.md
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-nl-handling-fix
+  body: |
+    # Intake natural-language-handling fix — apply ladder
+
+    Fixes the FOUR natural-language-handling bugs the loam 1.0 acceptance
+    smoke caught in the onboarding intake
+    (`docs/experiments/loam-1.0-acceptance-smoke-run.md`, top-line
+    NOT-READY). All four live in a single file:
+    `framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py`.
+
+    Sub-plan: `docs/plans/intake-nl-handling-fix.md`.
+
+    Scope: single-component fence on `framework/workspace-bootstrap/`.
+    Composes on the N3 translate-in intake; edits no other component.
+
+    AC families (each fix → a NAMED AC + a test on the natural-language case):
+
+      - AC.INTAKE-ECHO.1 — the proposal DISTILLS the stop/start reply to a
+        short intent phrase (`_distill_intent`): leading conversational
+        filler ("Oh, that's an easy one —") is peeled, the first content
+        clause is taken, trailing emphatic filler ("… is killing me") is
+        dropped, and the phrase is capped at a bounded word budget. A reply
+        that is already a short phrase passes through unchanged. The raw
+        multi-sentence reply no longer appears verbatim in the proposal or
+        the opt-in offer (the Bug-1 garble).
+      - AC.INTAKE-AFFIRM.1 — `_is_yes`/`_is_no` match the first WORD-TOKEN
+        with surrounding punctuation stripped (`_first_token`), so
+        "Yeah, that'd actually help" / "yes, basically!" / "Sure." read as
+        affirmations and the deep-research opt-in gate fires (the
+        AC.SMOKE.3 gate failure). A reply whose first token is neither an
+        affirmation nor a negation still routes to the correction branch,
+        so substantive rewrites ("actually I want X") replace the seed.
+      - AC.INTAKE-VACUUM.1 — `_looks_empty` adds normalised-token regexes
+        robust to inserted adverbs ("I don't EVEN know where to start").
+        The negated-knowledge tell is LEAD-sensitive (only the opening
+        clause) so a substantive role description with a late aside
+        ("…I couldn't tell you which one I'd hand off") is NOT misread as
+        empty; unambiguous tells (where-to-start / just-do-my-job) match
+        anywhere.
+      - AC.INTAKE-ROLE.1 — `_extract_role_noun` reduces a multi-sentence
+        role description ("I'm a paralegal at a small litigation firm — …")
+        to the role NOUN ("paralegal") before the `{role}` substitution in
+        `_leverage_from_role`, the seeded objective text, the slug, and the
+        deep-research call. A bare title ("civil engineer") passes through.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - `_is_yes`/`_is_no` use first-word-token matching (the report's
+        named fix shape). No test or report evidence required a "no, X"
+        reply to route to the correction branch; a reply LEADING with an
+        affirmation/negation is a confirm/reject, and the correction branch
+        is reached when the first token is neither.
+      - The idea-vacuum regexes are split LEAD-sensitive vs ANYWHERE to
+        avoid the over-match where a rich role description containing
+        "couldn't tell you which one" was wrongly classified empty.
+      - `_distill_intent` is deterministic (clause split + filler peeling +
+        word-budget cap), not an LLM call — the report offered an LLM
+        intent-classify as an option; the deterministic distillation is
+        sufficient for the observed failures and keeps the intake
+        dependency-free.
+      - Tests = 1 NEW file (6 tests across the 4 AC families) driving the
+        VERBATIM raw replies from the smoke transcript; 23 existing
+        intake-family tests pass unchanged.
+
+    Predecessor commits:
+      - e222c1d1 — loam 1.0 acceptance smoke seal (the NOT-READY run-report
+        this amendment closes).
+
+    BASELINE is the source-edit commit. Single-component fence on
+    `framework/workspace-bootstrap/`. Sidecar advances to this amendment's
+    seal SHA at apply time.
+
+    DO NOT push, DO NOT merge — owner-gated. Build-forward stops at local
+    seal + the updated run-report; the dispatcher handles merge + surfacing.

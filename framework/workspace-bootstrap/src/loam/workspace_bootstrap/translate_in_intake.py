@@ -140,13 +140,60 @@ _EMPTY_REGEXES_ANYWHERE = (
     r"\b(just|kinda|kind of)\b(\s+\w+){0,3}\s+do(ing)?\s+my\s+job\b",
 )
 
+# HARD vacuum override: an explicit "nothing is broken / it's just everything /
+# constant" tell marks a genuine idea-vacuum even when an activity LIST is
+# present — the paralegal who lists tasks but says "I don't have a thing that's
+# broken, it's just constant" IS a vacuum (route to the ladder + opt-in
+# research). Beats the single-pain demotion below.
+_HARD_VACUUM_REGEXES = (
+    r"\bnothing('?s)?\s+(broken|wrong)\b",
+    r"\bdon'?t\s+(really\s+)?have a thing\b",
+    r"\bit'?s\s+(just\s+)?(more\s+)?(just\s+)?(sort of\s+)?constant\b",
+    r"\bjust\s+everything\b",
+    r"\beverything,?\s+all day\b",
+)
+
+# Single-pain demotion: a reply that SAYS "I don't know" but then singles out
+# ONE concrete pain ("the thing that eats my day is the write-ups") is a
+# day-derived PARTIAL idea, not a vacuum — it must NOT route to the deep-research
+# ladder (the featherlight invariant: only a true idea-vacuum reaches research).
+# This fixes the day-derived variant reaching research after the vacuum-classifier
+# widening (AC.INTAKE-VACUUM.1).
+_DERIVABLE_PAIN_REGEXES = (
+    r"\beats? (up )?my (day|afternoon|evening|morning|time)\b",
+    r"\bit eats\b",
+    r"\bpiles? up\b",
+    r"\bpile up\b",
+    r"\bgrinding through\b",
+    r"\bthe thing that\b(\s+\w+){0,4}\s+(is|eats|kills|gets|takes)\b",
+    r"\btwo hours\b",
+)
+
 # Phrases that, in a stop/start answer, signal the user has a CLEAR concrete
 # idea (rich + specific) — route straight to capture + the leverage close.
 _CLEAR_SIGNALS_MIN_WORDS = 4
 
 # Affirmative / negative tokens for the verify gate + opt-in gates.
-_YES = ("y", "yes", "yeah", "yep", "sure", "ok", "okay", "confirm", "correct", "right")
+_YES = (
+    "y", "yes", "yeah", "yep", "yup", "yea", "sure", "ok", "okay", "confirm",
+    "correct", "right", "absolutely", "definitely", "exactly", "totally",
+)
 _NO = ("n", "no", "nope", "nah", "wrong", "incorrect")
+
+# Leading conversational filler a human emits before the actual yes/no
+# ("Ha, ... yes", "Oh, sure", "I mean, yeah"). When the first word-token is one
+# of these, the affirmation parser looks PAST it to the next meaningful token.
+_AFFIRM_FILLER = frozenset(
+    {
+        "ha", "haha", "heh", "oh", "well", "hmm", "hmmm", "um", "uh", "so",
+        "like", "i", "mean", "lol", "ah", "okay", "ok", "yeah",
+    }
+)
+# An explicit agreement pivot that promotes a trailing affirmation to a clean yes
+# ("Ha, that's a mouthful — but yes, basically!"). Only these promote an
+# embedded affirmation — a bare "sure"/"yes" buried in "not sure"/"for sure"
+# does NOT (those are caught by _CONTRA_SIGNALS or simply not pivoted).
+_AGREE_PIVOTS = ("but yes", "but yeah", "but sure", "okay yes", "ok yes", "well yes")
 
 
 @dataclass
@@ -213,56 +260,94 @@ def _slugify(text: str) -> str:
     return "-".join(s.split("-")[:6]) or "first-objective"
 
 
-def _first_token(answer: str) -> str:
-    """The leading word-token, lower-cased with surrounding punctuation stripped.
+def _tokens(answer: str) -> list[str]:
+    """Lower-cased word-tokens with surrounding punctuation stripped.
 
     Real humans punctuate their affirmations — "Yeah, that'd help",
-    "yes, basically!", "Sure." The bare-token / ``token + " "`` match missed
-    every one of these because the trailing comma / bang fused to the token
-    (AC.INTAKE-AFFIRM.1). Splitting on whitespace then stripping non-alphanumerics
-    off the first word recovers the affirmation/negation intent regardless of
-    leading or trailing punctuation."""
-    words = answer.strip().lower().split()
-    if not words:
+    "yes, basically!", "Sure." Splitting on whitespace then stripping
+    non-alphanumerics off each word recovers the affirmation/negation intent
+    regardless of leading or trailing punctuation (AC.INTAKE-AFFIRM.1)."""
+    out = []
+    for w in answer.strip().lower().split():
+        t = re.sub(r"[^a-z0-9']", "", w).strip("'")
+        if t:
+            out.append(t)
+    return out
+
+
+def _leading_polarity(answer: str) -> str:
+    """Classify the reply's affirmation polarity: "yes" / "no" / "" (neither).
+
+    Punctuation-tolerant + filler-skipping: a reply that opens with a hedge
+    interjection ("Ha, that's a mouthful — but yes, basically!") is still a
+    confirmation, because the parser skips leading filler tokens and reads the
+    first meaningful yes/no. A reply with a contradiction pivot ("not quite",
+    "instead") is NOT a clean yes even if it contains "yes" — it routes to the
+    correction branch. A substantive rewrite with no leading yes/no token
+    ("actually I want X") returns "" so the caller treats it as a correction
+    (AC.INTAKE-AFFIRM.1)."""
+    toks = _tokens(answer)
+    if not toks:
         return ""
-    return re.sub(r"[^a-z0-9']", "", words[0]).strip("'")
+    low = " ".join(toks)
+    # The first NON-filler token is the strongest signal.
+    for t in toks:
+        if t in _YES:
+            return "yes"
+        if t in _NO:
+            return "no"
+        if t in _AFFIRM_FILLER:
+            continue
+        break  # a substantive non-filler token that is neither yes nor no
+    # First meaningful token was substantive. An explicit agreement PIVOT
+    # ("but yes, basically!") promotes it to a clean yes — even when the user
+    # tacks on a restatement ("…I just want to stop X"), because the pivot is the
+    # strong confirm signal. Absent a pivot, any hedge / contradiction signal
+    # ("not sure", "sort of", "I want X") routes it to the correction branch — a
+    # bare affirmation word buried in "not sure"/"for sure" is NOT a confirmation.
+    if any(p in low for p in _AGREE_PIVOTS):
+        return "yes"
+    return ""
 
 
 def _is_yes(answer: str) -> bool:
-    """True when the reply LEADS with an affirmation token (punctuation-tolerant).
-
-    A reply that opens with "yes"/"yeah"/"sure"/… is a confirmation even when it
-    carries trailing filler ("yes, basically!"). A reply whose first word is
-    neither an affirmation nor a negation is treated as a correction by the
-    caller, so substantive rewrites ("actually I want X") still replace the seed
-    (AC.INTAKE-AFFIRM.1)."""
-    return _first_token(answer) in _YES
+    return _leading_polarity(answer) == "yes"
 
 
 def _is_no(answer: str) -> bool:
-    return _first_token(answer) in _NO
+    return _leading_polarity(answer) == "no"
 
 
 def _looks_empty(answer: str) -> bool:
     a = answer.strip().lower()
     if a == "":
         return True
-    if any(sig and sig in a for sig in _EMPTY_SIGNALS if sig):
-        return True
     # Punctuation-normalised copy so "I don't even know where to start…" matches
     # the negated-knowledge regex the literal substring "don't know" missed
     # (AC.INTAKE-VACUUM.1). Apostrophes are preserved (don't / can't); other
     # punctuation collapses to spaces.
     norm = re.sub(r"[^a-z0-9']+", " ", a).strip()
-    # The negated-knowledge tell ("I don't even know …") only signals a VACUUM
-    # when the user LEADS with it — a substantive role description that merely
-    # contains a late aside ("…I couldn't tell you which one I'd hand off") is
-    # NOT empty. Restrict the lead-sensitive regexes to the opening clause; the
-    # unambiguous vacuum tells (where-to-start / just-do-my-job) match anywhere.
     lead = " ".join(norm.split()[:12])
-    if any(re.search(rx, lead) for rx in _EMPTY_REGEXES_LEAD):
+    # A vacuum SIGNAL from any source: a literal phrase, a lead-sensitive
+    # negated-knowledge tell (opening clause only, so a substantive role
+    # description with a late aside is NOT empty), or an unambiguous anywhere tell.
+    has_signal = (
+        any(sig and sig in a for sig in _EMPTY_SIGNALS if sig)
+        or any(re.search(rx, lead) for rx in _EMPTY_REGEXES_LEAD)
+        or any(re.search(rx, norm) for rx in _EMPTY_REGEXES_ANYWHERE)
+    )
+    if not has_signal:
+        return False
+    # An explicit "nothing's broken / it's just constant" tell is a true vacuum
+    # even amid an activity list (the paralegal shape).
+    if any(re.search(rx, norm) for rx in _HARD_VACUUM_REGEXES):
         return True
-    return any(re.search(rx, norm) for rx in _EMPTY_REGEXES_ANYWHERE)
+    # A single concrete derivable pain demotes the reply to a day-derived PARTIAL
+    # idea (the claims-adjuster shape) so it does NOT reach the research ladder
+    # (the featherlight invariant — only a true idea-vacuum reaches research).
+    if any(re.search(rx, norm) for rx in _DERIVABLE_PAIN_REGEXES):
+        return False
+    return True
 
 
 def _classify_richness(answer: str) -> IdeaRichness:
@@ -313,6 +398,29 @@ _TRAIL_FILLER = re.compile(
     r"\b(is|are|'?s)\s+(killing|driving|exhausting|destroying|wrecking)\s+me\b.*$",
     flags=re.IGNORECASE,
 )
+# A temporal / "sitting-there" preamble that precedes the actual action in a
+# narrated reply ("every single night I'm sitting at my kitchen table writing up
+# listing descriptions" → "writing up listing descriptions"). Dropped so the
+# distilled phrase leads with the ACTION, not the scene-setting (AC.INTAKE-ECHO.1).
+_ACTION_PREAMBLE = re.compile(
+    r"^(every (single )?(night|evening|day|morning|afternoon|week)s?|"
+    r"each (night|evening|day|morning|week)|all day|most of my day|honestly|"
+    r"i'?m (always |constantly |usually |just )?)"
+    r"[\w,'\s]*?\b"
+    r"(sitting|stuck|grinding|spending|buried|stuck)\b[\w,'\s]*?\b"
+    r"(?=(writing|drafting|formatting|chasing|reconciling|filing|tracking|"
+    r"doing|making|handling|managing|answering|pulling|building|preparing))",
+    flags=re.IGNORECASE,
+)
+# An explicit intent span the user states inside a correction / narration
+# ("…I want to stop writing those listing descriptions myself…"). When present,
+# the span after "want to" / "stop" / "start" / "to" is the distilled item.
+_WANT_SPAN = re.compile(
+    r"\b(?:i\s+(?:just\s+)?want\s+(?:to|you\s+to)|i'?d\s+(?:love|like)\s+to|"
+    r"i\s+need\s+to)\s+(?P<span>.+?)"
+    r"(?=[.!?;,]|—|–|\s+so\s+|\s+because\s+|\s+and\s+(?:have|get)\b|$)",
+    flags=re.IGNORECASE,
+)
 _DISTILL_MAX_WORDS = 12
 
 
@@ -336,6 +444,24 @@ def _distill_intent(answer: str) -> str:
     me"), and cap at a bounded word budget. A reply that is already a short
     phrase passes through essentially unchanged."""
     text = answer.strip().rstrip(".!?").strip()
+    # If the user states an explicit intent ("I want to stop writing those listing
+    # descriptions"), that span IS the item — prefer it over clause heuristics.
+    want = _WANT_SPAN.search(text)
+    if want:
+        span = want.group("span").strip().rstrip(",").strip()
+        # Drop a leading disposition verb the enablement framing re-adds later.
+        span = re.sub(
+            r"^(stop|start|quit|begin|avoid)\s+(doing\s+|to\s+)?",
+            "",
+            span,
+            flags=re.IGNORECASE,
+        ).strip() or span
+        span = _ACTION_PREAMBLE.sub("", span).strip()
+        words = span.split()
+        if 0 < len(words) <= _DISTILL_MAX_WORDS:
+            return span
+        if words:
+            return " ".join(words[:_DISTILL_MAX_WORDS])
     clauses = [c.strip() for c in re.split(r"[.!?;]|—|–|\s-\s", text) if c.strip()]
     if not clauses:
         clauses = [text]
@@ -349,6 +475,8 @@ def _distill_intent(answer: str) -> str:
     if not core:
         # Everything read as filler — fall back to the lead-stripped whole text.
         core = _strip_lead_filler(text) or text
+    # Drop a temporal / "sitting-there" preamble so the ACTION leads.
+    core = _ACTION_PREAMBLE.sub("", core).strip()
     core = _TRAIL_FILLER.sub("", core).strip().rstrip(",").strip()
     words = core.split()
     if len(words) > _DISTILL_MAX_WORDS:
@@ -543,7 +671,10 @@ def run_translate_in_intake(
     else:
         # A correction ("no, simpler" / "yes, and also...") REPLACES the seed —
         # the seed is gated on what the user VERIFIED, not the raw inference.
-        corrected = confirm.strip()
+        # DISTILL the correction too (AC.INTAKE-ECHO.1) so the seed + the
+        # leverage close carry the corrected ITEM, not a verbatim paste of the
+        # whole reply (the residual the smoke re-run surfaced on variant A).
+        corrected = _distill_intent(confirm) or confirm.strip()
         result.confirmed = True
         result.seeded_objective_slug = _slugify(corrected)
         result.seeded_objective_text = (

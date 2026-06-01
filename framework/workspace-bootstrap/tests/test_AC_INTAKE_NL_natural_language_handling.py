@@ -205,3 +205,94 @@ def test_AC_INTAKE_ROLE_1_role_slot_resolves_to_a_noun():
         result.seeded_objective_text or ""
     )
     assert "paralegal" in (result.seeded_objective_text or "")
+
+
+# ---- Re-run hardening (same four AC families; cases the live smoke surfaced). ----
+
+# Verbatim replies the SECOND smoke re-run produced.
+RERUN_A_CONFIRM_CORRECTION = (
+    "Uh, sort of? I'm not sure what that sentence even means, honestly. What I "
+    "want is simple: I want to stop writing those listing descriptions myself — "
+    "I want you to write them for me so I can get my evenings back."
+)
+RERUN_A_STOP_START = (
+    "Oh, that's easy — every single night I'm sitting at my kitchen table writing "
+    "up listing descriptions for my properties. You know, the sun-drenched open "
+    "floor plan stuff for MLS and Zillow."
+)
+RERUN_B_STOP_START_WITH_PAIN = (
+    "Honestly? I don't know, I just kind of do my job — nobody's ever really "
+    "asked me that before. I mean, I guess the thing that eats my day is the "
+    "afternoons, once the inspection calls are done, just sitting there grinding "
+    "through the write-ups on all the claims I handled that morning."
+)
+RERUN_C_STOP_START_VACUUM = (
+    "I really don't know, I just do my job — I'm not sure what this thing is even "
+    "supposed to do for me. Like, I answer emails, I pull case files, I calendar "
+    "deadlines, I draft discovery requests... it's just kind of everything, all "
+    "day. I don't really have a thing that's broken, it's more just sort of... "
+    "constant."
+)
+
+
+def test_AC_INTAKE_AFFIRM_1_filler_led_affirmation_reads_as_yes():
+    """A warm confirm that OPENS with a hedge interjection ('Ha, … but yes,
+    basically!') is a confirmation — the parser skips leading filler and reads
+    the agreement pivot."""
+    assert _is_yes("Ha, that's a mouthful — but yes, basically!") is True
+    assert _is_yes("yes, exactly that") is True
+    assert _is_yes("sure, if you think it helps") is True
+    # A hedge with NO clean affirmation ('not sure', 'sort of') is NOT a yes —
+    # it routes to the correction branch (a bare 'sure' in 'not sure' must not
+    # read as agreement).
+    assert _is_yes(RERUN_A_CONFIRM_CORRECTION) is False
+    assert _is_no(RERUN_A_CONFIRM_CORRECTION) is False
+
+
+def test_AC_INTAKE_ECHO_1_correction_is_distilled_not_echoed():
+    """When the user corrects the proposal, the seed + leverage close carry the
+    distilled ITEM, not a verbatim paste of the whole correction reply (the
+    residual the live re-run surfaced on variant A)."""
+    answerer = ScriptedAnswerer(
+        {
+            "stop_start": RERUN_A_STOP_START,
+            "confirm_proposal": RERUN_A_CONFIRM_CORRECTION,
+        }
+    )
+    result = run_translate_in_intake(answerer=answerer)
+    assert result.confirmed is True
+    # The whole raw correction is NOT pasted into the seed or the close.
+    assert RERUN_A_CONFIRM_CORRECTION.strip().rstrip(".") not in (
+        result.seeded_objective_text or ""
+    )
+    assert result.has_leverage_idea
+    close = result.leverage_ideas[0].text
+    assert RERUN_A_CONFIRM_CORRECTION.strip().rstrip(".") not in close
+    # The distilled item (listing descriptions) is what the close references.
+    assert "listing descriptions" in close
+
+
+def test_AC_INTAKE_VACUUM_1_single_pain_does_not_reach_research_ladder():
+    """A reply that says 'I don't know' but singles out ONE concrete pain ('the
+    thing that eats my day is the write-ups') is a day-derived PARTIAL idea — it
+    must NOT route to the deep-research ladder (the featherlight invariant; the
+    regression the live re-run surfaced on variant B)."""
+    assert _classify_richness(RERUN_B_STOP_START_WITH_PAIN) is not IdeaRichness.EMPTY
+    spy = SpyProvider()
+    result = run_translate_in_intake(
+        answerer=ScriptedAnswerer(
+            {"stop_start": RERUN_B_STOP_START_WITH_PAIN, "confirm_proposal": "yes"}
+        ),
+        research_provider=spy,
+    )
+    # The day-derived pain went down the propose/verify path, never the ladder.
+    assert result.reached_describe_work is False
+    assert result.invoked_deep_research is False
+    assert spy.invoked_with == []
+
+
+def test_AC_INTAKE_VACUUM_1_explicit_nothing_broken_stays_a_vacuum():
+    """A reply that lists activities but explicitly says 'nothing's broken / it's
+    just constant' IS a genuine idea-vacuum — it routes to the ladder even amid
+    the activity list (so the opt-in research path stays reachable)."""
+    assert _classify_richness(RERUN_C_STOP_START_VACUUM) is IdeaRichness.EMPTY

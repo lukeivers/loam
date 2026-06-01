@@ -1,0 +1,81 @@
+schema_version: 1
+amendment:
+  number: 175
+  slug: intake-ladder-leg4
+  title: "Intake leg-4 wired into the idea-vacuum FALLBACK LADDER close — the ladder's ladder_check confirmation now triggers the same leg-4 adjustment as the CLEAR/PARTIAL path, and a GUIDANCE hedge ('I don't even know what taking it off my plate would look like, walk me through it') is answered by OFFERING to walk the user through it (no invented capability, no interrogation) (AC.INTENT.4)"
+
+# BASELINE: 3e9b4f9a — the #174 leg-4-downstream-goal seal, immediately preceding
+# the #175 source-edit commit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   3e9b4f9a — #174 leg-4 downstream-goal seal. ← BASELINE
+#   <source-edit commit> — leg-4 wired into _run_fallback_ladder close;
+#     _GUIDANCE_HEDGE + _confirmation_wants_guidance; _DOUBT_SIGNAL widened;
+#     1 NEW AC.INTENT.4 ladder test file.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _run_fallback_ladder close appends _leg4_adjustment_text(check, …);
+#       _GUIDANCE_HEDGE regex + _confirmation_wants_guidance; _leg4_adjustment_text
+#       guidance-hedge branch (offer to walk them through it); _DOUBT_SIGNAL widened.
+#   tests/test_AC_INTENT_4_ladder_leg4.py — NEW.
+#
+# AC families: refinement to AC.INTENT.4 (leg 4 visible on the fallback-ladder
+#   close, not just CLEAR/PARTIAL). Born from the rerun8 acceptance smoke
+#   (variant C's four-step-loop-ran PARTIAL: the ladder close ignored the
+#   paralegal's guidance hedge at ladder_check).
+baseline: "3e9b4f9a"
+
+plan: docs/plans/intake-llm-intent-seam.md
+
+seal_description: "Intake leg-4 wired into the fallback-ladder close (AC.INTENT.4) — a guidance hedge at ladder_check is answered by offering to walk the user through it"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-ladder-leg4
+  body: |
+    # Intake leg-4 on the fallback ladder — apply ladder
+
+    The acceptance-smoke rerun8 showed variant C's `four-step-loop-ran` still
+    PARTIAL: the paralegal (idea-vacuum) reached the close via the fallback
+    ladder, confirmed at `ladder_check`, but added a GUIDANCE hedge ("I honestly
+    don't even know what 'taking it off my plate' would look like, so you'd have
+    to walk me through it") — and the ladder close ignored it. Leg 4 had only been
+    wired into the CLEAR/PARTIAL close.
+
+    This cycle wires the SAME leg-4 adjustment into the ladder close: the
+    `ladder_check` reply is the confirmation turn, so the close now folds in
+    `_leg4_adjustment_text`. A GUIDANCE hedge (distinct from a capability doubt)
+    is answered by OFFERING to walk the user through it ("loam will walk you
+    through '<item>' step by step the first time … no prep needed") — no invented
+    capability (protection-floor), no interrogation (a statement, not a question).
+    A clean ladder_check "yes" with nothing added still yields no forced
+    adjustment.
+
+    Predecessor commits:
+      - 3e9b4f9a — #174 leg-4 downstream-goal seal (BASELINE).
+
+    BASELINE 3e9b4f9a. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

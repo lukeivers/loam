@@ -405,25 +405,46 @@ def _classify_richness(answer: str) -> IdeaRichness:
     return IdeaRichness.PARTIAL
 
 
+# Cessation tells: a "not do that anymore / no longer / not have to / done with"
+# phrasing is a STOP even with no literal "stop" token — and must NOT be misread
+# as START by a "more" substring inside "anymore" (the rerun8 variant-A inversion:
+# "I'd love to just... not do that anymore" was classed START via `more` in
+# `anymore`, inverting the intent). Matched as whole tells, earliest-wins.
+_STOP_TELLS = (
+    r"\bstop\b", r"\bquit\b", r"\bless\b", r"\bavoid\b", r"\bhate\b",
+    r"\btired of\b", r"\bsick of\b", r"\bno longer\b",
+    # A negation anywhere ahead of "anymore" ("don't want to do this anymore",
+    # "not do that anymore") is a cessation tell — STOP. Up to 6 intervening
+    # words so the negation+anymore pairing is recognised regardless of phrasing.
+    r"(?:\bnot|n'?t|\bnever)(?:\s+\w+){0,6}\s+anymore\b",
+    r"\bnot\s+have\s+to\b",
+    r"\bdone with\b", r"\boff my plate\b", r"\bget\s+\w+\s+off my plate\b",
+)
+# START tells use WORD BOUNDARIES so "more" matches the standalone word, never the
+# tail of "anymore" (the bug). "anymore" is excluded explicitly.
+_START_TELLS = (
+    r"\bstart\b", r"\bbegin\b", r"\bshould\b", r"\bwant to\b", r"\bneed to\b",
+    r"\bmore\b",
+)
+
+
 def _detect_disposition(answer: str) -> Disposition:
     a = answer.lower()
-    # Prefer the FIRST signal that appears so "stop doing X to start Y" reads stop.
-    stop_at = min(
-        (a.find(t) for t in ("stop", "quit", "less", "avoid", "hate", "tired of")
-         if t in a),
-        default=-1,
-    )
-    start_at = min(
-        (a.find(t) for t in ("start", "begin", "should", "want to", "need to", "more")
-         if t in a),
-        default=-1,
-    )
+
+    def _earliest(patterns: tuple[str, ...]) -> int:
+        hits = [m.start() for p in patterns for m in [re.search(p, a)] if m]
+        return min(hits) if hits else -1
+
+    stop_at = _earliest(_STOP_TELLS)
+    start_at = _earliest(_START_TELLS)
     if stop_at == -1 and start_at == -1:
         return Disposition.UNKNOWN
     if stop_at == -1:
         return Disposition.START
     if start_at == -1:
         return Disposition.STOP
+    # Prefer the FIRST signal that appears so "stop doing X to start Y" reads stop;
+    # a tie (same index) favours STOP (the cessation tell is the stronger intent).
     return Disposition.STOP if stop_at <= start_at else Disposition.START
 
 

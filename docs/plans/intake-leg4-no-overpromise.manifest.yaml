@@ -1,0 +1,82 @@
+schema_version: 1
+amendment:
+  number: 176
+  slug: intake-leg4-no-overpromise
+  title: "Intake leg-4 never over-promises automation — the leg-4 adjustment REJECTS any 'fully automated / runs itself / hands-off' over-promise (the LLM seam's adjustment read can drift there), and the extraction prompt forbids it at the source, so the close stays right-sized (AC.INTENT.4 + AC.ONCLOSE.3)"
+
+# BASELINE: 2eb5c965 — the #175 ladder-leg4 seal, immediately preceding the #176
+# source-edit commit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   2eb5c965 — #175 ladder-leg4 seal. ← BASELINE
+#   <source-edit commit> — _OVERPROMISE_PHRASES + _is_over_promise guard on the
+#     leg-4 adjustment/deeper-end-intent branches; extraction prompt forbids
+#     automation over-promise; 1 NEW AC test case.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _OVERPROMISE_PHRASES + _is_over_promise; the leg-4 adjustment + deeper-
+#       end-intent branches reject an over-promising read (fall through to a
+#       right-sized reflection).
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/intent_extract.py
+#     - the extraction prompt instructs NEVER to promise unattended automation.
+#   tests/test_AC_INTENT_4_leg4_adjust_from_answer.py — 1 NEW test case.
+#
+# AC families: refinement to AC.INTENT.4 composing with AC.ONCLOSE.3 (the close's
+#   no-over-promised-automation contract now binds the leg-4 adjustment too). Born
+#   from the rerun9 acceptance smoke (variant A's no-over-engineering FAIL: the
+#   leg-4 adjustment surfaced the extractor's 'this could be fully automated').
+baseline: "2eb5c965"
+
+plan: docs/plans/intake-llm-intent-seam.md
+
+seal_description: "Intake leg-4 never over-promises automation (AC.INTENT.4 / AC.ONCLOSE.3) — the leg-4 adjustment rejects a 'fully automated / runs itself' read; the close stays right-sized"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-leg4-no-overpromise
+  body: |
+    # Intake leg-4 no-over-promise fix — apply ladder
+
+    The acceptance-smoke rerun9 flipped variants A + B `four-step-loop-ran` to
+    PASS (the leg-4 fixes worked), but surfaced a NEW variant-A
+    `no-over-engineering` FAIL: the leg-4 adjustment surfaced the LLM seam's
+    adjustment read verbatim — "the volume and routine cadence suggest this could
+    be fully automated, not just assisted" — which over-promises unattended
+    automation, violating the close's right-sized contract (AC.ONCLOSE.3).
+
+    A CLEAR-DIRECTION fix composing two existing contracts: the leg-4 adjustment
+    (AC.INTENT.4) must respect the no-over-promised-automation contract
+    (AC.ONCLOSE.3). `_is_over_promise` REJECTS any adjustment / deeper-end-intent
+    carrying an automation over-promise ("fully automated", "runs itself",
+    "set it and forget", "hands-off", "unattended", …); leg 4 then falls through
+    to a right-sized reflection. The extraction prompt also forbids the
+    over-promise at the source (defense-in-depth).
+
+    Predecessor commits:
+      - 2eb5c965 — #175 ladder-leg4 seal (BASELINE).
+
+    BASELINE 2eb5c965. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

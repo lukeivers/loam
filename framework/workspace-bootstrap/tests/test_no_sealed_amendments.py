@@ -181,7 +181,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              immediately before this amendment's code commit.
 #              Mirrors amendments #34 / #35 / #36 / #37 / #38
 #              BASELINE-as-HEAD~1 pattern.
-BASELINE = "cc994fa"
+# N3 (translate-in onboarding intake + seed): the first-run
+#              translate-in intake + seed-writer + the `loam init-intake`
+#              orchestrator land as NEW modules under
+#              framework/workspace-bootstrap/. Single-component fence
+#              (the plan §2 home); composes on establish_loam_layout +
+#              the existing capability ritual, edits neither. b56e638 is
+#              the pre-amendment tip — the N3 plan-revision commit
+#              immediately before this amendment's code commit
+#              (BASELINE-as-HEAD~1 pattern). docs/plans/ admitted (the
+#              N3 plan-doc lives with the amendment, already an allowed
+#              prefix at line ~342).
+BASELINE = "b56e638"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

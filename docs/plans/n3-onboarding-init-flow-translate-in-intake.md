@@ -960,20 +960,23 @@ component — surfaced for the ruling; the baseline ships the orchestrator + ver
 *Populated at seal time per the standard ladder. Forks D-1..D-5 ruling recorded
 in §11 BEFORE the build dispatch.*
 
+**Sealed at `96aae8a` (N3, single-component on workspace-bootstrap). 27 AC
+tests GREEN; full component suite 549 passed / 14 skipped / 0 failed.**
+
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.ONINTAKE.1 | (pending) | |
-| AC.ONINTAKE.2 | (pending) | |
-| AC.ONINTAKE.3 | (pending) | |
-| AC.ONINTAKE.4 | (pending) | |
-| AC.ONINTAKE.5 (fallback ladder) | (pending) | |
-| AC.ONINTAKE.6 ★ leverage-idea close | (pending) | |
-| AC.ONSEED.1 | (pending) | |
-| AC.ONSEED.2 | (pending) | |
-| AC.ONSEED.3 | (pending) | |
-| AC.ONSEED.4 | (pending) | |
-| AC.ONFIRE.1 | (pending) | |
-| AC.ONFIRE.2 | (pending) | |
-| AC.ONFIRE.3 ★ outcome-altitude:true | (pending) | |
-| AC.ONDEEP.1 ★ opt-in/featherlight gate | (pending) | |
-| AC.ONDEEP.2 (3-axis synthesis — D-5 fast-follow slice if ruled (a)) | (pending) | |
+| AC.ONINTAKE.1 | ✓ GREEN | `test_AC_ONINTAKE_1_closes_on_one_stop_start_thing` + `_detects_start_disposition` — bounded set, closes on one, <=3 turns (no list) |
+| AC.ONINTAKE.2 | ✓ GREEN | `test_AC_ONINTAKE_2_proposal_is_not_a_verbatim_echo` — proposal is a healthy-enablement shape, != raw answer |
+| AC.ONINTAKE.3 | ✓ GREEN | `test_AC_ONINTAKE_3_reject_vs_confirm_yield_different_seed` + `_correction_replaces_the_seed` — seed gated on verification |
+| AC.ONINTAKE.4 | ✓ GREEN | `test_AC_ONINTAKE_4_one_time_ask_does_not_silently_seed_a_framework` — recurring option opt-in, not seeded |
+| AC.ONINTAKE.5 (fallback ladder) | ✓ GREEN | `test_AC_ONINTAKE_5_empty_user_reaches_describe_work_and_gets_role_ideas` + `_ladder_does_not_run_for_a_user_with_an_idea` |
+| AC.ONINTAKE.6 ★ leverage-idea close | ✓ GREEN | `test_AC_ONINTAKE_6_close_surfaces_a_person_specific_leverage_idea` + `_two_different_answers_yield_two_different_leverage_ideas` (specificity probe) |
+| AC.ONSEED.1 | ✓ GREEN | `test_AC_ONSEED_1_seed_lands_only_under_the_global_home` + `_no_seed_file_carries_a_framework_path_segment`; live gate-9 in AC.ONFIRE.3 |
+| AC.ONSEED.2 | ✓ GREEN | `test_AC_ONSEED_2_interaction_model_every_cell_at_confidence_prior` + `_openness_biased_defaults_and_autonomy_floor` |
+| AC.ONSEED.3 | ✓ GREEN | `test_AC_ONSEED_3_objective_in_objectives_md_shape` — confirmed intent as OBJECTIVES.md objective, status: active |
+| AC.ONSEED.4 | ✓ GREEN | `test_AC_ONSEED_4_workspace_model_homes_not_pre_filled` + `_only_two_global_seed_files` (D-2 minimum) |
+| AC.ONFIRE.1 | ✓ GREEN | `test_AC_ONFIRE_1_real_entry_point_runs_the_full_flow` + `_subcommand_entry_point_registered`; live CLI smoke (`loam init-intake`) |
+| AC.ONFIRE.2 | ✓ GREEN | `test_AC_ONFIRE_2_rerun_does_not_clobber_existing_seed` — re-run byte-for-byte intact |
+| AC.ONFIRE.3 ★ outcome-altitude:true | ✓ GREEN | `test_AC_ONFIRE_3_cold_walk_empty_instance_ends_with_homed_seed` — real entry-point on empty instance, 4 post-conditions + live `check_boundary_respected` |
+| AC.ONDEEP.1 ★ opt-in/featherlight gate | ✓ GREEN | `test_AC_ONDEEP_1_*` (4 cases) — baseline never triggers research; only idea-vacuum+role+opt-in reaches it |
+| AC.ONDEEP.2 (3-axis synthesis — D-5 fast-follow slice) | ✓ SEAM GREEN / PASS deferred | `test_AC_ONDEEP_2_stub_provider_returns_the_three_named_axes` + `_baseline_degrades_gracefully` — the seam + graceful-degrade; the real web-research PASS is the D-5 fast-follow slice |

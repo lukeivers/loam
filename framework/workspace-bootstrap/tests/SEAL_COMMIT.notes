@@ -1,3 +1,64 @@
+# N3 — translate-in onboarding intake + seed (`loam init-intake`)
+
+2026-05-31. SEAL_COMMIT 96aae8a. BASELINE advanced to b56e638 (the
+N3 plan-revision commit, the pre-amendment tip). Single-component
+amendment on `workspace-bootstrap` (the plan's §2 home).
+
+N3 ships the first-run TRANSLATE-IN intake (loam's operating loop on
+a brand-new user) + the seed-writer + the `loam init-intake`
+orchestrator + the deep-role-research opt-in seam. NEW modules:
+translate_in_intake.py, seed_writer.py, deep_role_research.py,
+first_run_intake.py, first_run_intake_cli.py (+ the init-intake
+entry-point in pyproject). Composes on establish_loam_layout (P1.2)
++ the existing capability ritual (run_onboarding) — edits NEITHER
+(§10.1 compose-don't-extend).
+
+Forks D-1..D-5 ratified to the recommendations (plan §11):
+verification-heavy intake; minimal global seed; one-level-up opt-in
+over-reach guard; `loam init`-class orchestration; deep-role-research
+as its own fast-follow slice (N3 ships only the seam). The owner's
+idea-quality continuum sharpens the deep-research trigger: the seam
+is reached ONLY by the idea-vacuum path (empty user + role detail +
+opt-in), never offered to a user with ideas.
+
+The `loam init` name-collision (plan §11): `loam init` already exists
+as a SEALED separate component (framework/loam-init/, SEAL 77029ec)
+that bootstraps a fresh workspace TREE. To keep this build
+single-component + not edit the sealed loam-init/, the orchestrator
+is the non-colliding verb `loam init-intake`. The outcome-altitude
+AC.ONFIRE.3 drives run_first_run_intake (a real production
+entry-point) on an empty instance. Folding the intake into the
+literal `loam init` verb is a one-line callout amend to loam-init/ —
+surfaced as a fast-follow.
+
+AC surface (27 tests, all GREEN):
+  - AC.ONINTAKE.1..6 — single stop/start close; propose-not-echo;
+    the verify gate (reject vs confirm yield DIFFERENT seed); the
+    over-reach guard; the graceful fallback ladder; the
+    person-specific leverage close.
+  - AC.ONSEED.1..4 — seed lands in the two homes (gate-9 clean);
+    AIM matrix at confidence:prior; confirmed end-intent as an
+    OBJECTIVES.md objective; the D-2 minimum (model homes not
+    pre-filled).
+  - AC.ONFIRE.1..3 — real entry-point fires on first-run; idempotent
+    / non-destructive on re-run; ★ outcome-altitude cold-walk drives
+    the REAL entry-point on a genuinely-empty instance with a live
+    check_boundary_respected (gate 9) assertion.
+  - AC.ONDEEP.1 — the opt-in seam is OFF the baseline path (the
+    featherlight invariant); the stub degrades gracefully without
+    the fast-follow pass. AC.ONDEEP.2 (the 3-axis web-research
+    synthesis) is the fast-follow slice.
+
+Full workspace-bootstrap suite: 549 passed, 14 skipped, 0 failed.
+Seal-fence (test_no_sealed_amendments + test_AC_E_S): GREEN — the
+b56e638..96aae8a window touches only framework/workspace-bootstrap/
++ docs/plans/ (both allowed prefixes).
+
+OUT of fence (deferred): the deep-role-research web-research +
+synthesis PASS (D-5 fast-follow); folding init-intake into the
+literal `loam init` verb (one-line loam-init/ amend); the runtime
+first-run-detection auto-fire hook (§7).
+
 # FBE.7 — drop memory-graphiti from v0.1.0 first-run shape (M-FBM is the v0.1.0 floor)
 
 2026-05-03. Luke's 2026-05-03 16:53 + 16:55 UTC ruling: graphiti

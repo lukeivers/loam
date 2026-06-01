@@ -132,6 +132,8 @@ Every shipped minor and patch gets an annotated git tag. The tag annotation is t
 
 The anchor is consumed by `plugins/dev-sdlc/tests/test_AC_PCVR_pyproject_version_lockstep.py`, which fails CI when any in-scope component pyproject's `version` drifts from the anchor. The in-scope set EXCLUDES measurement/experimental harnesses with deliberate `version = "0.0.0"` semantics (handsoff-loop, loam-spawn-isolation, programbench-revival, programbench-revival/realpb) — these are not versioned runtime components shipped to end-users.
 
+At the **v1.0.0 release cut (2026-06-01)** the two runtime components that had ridden off-lockstep as documented intentional outliers — `state-migration-engine` (was 0.13.0) and `protection-matrix` (was 0.1.0) — were FOLDED INTO the in-scope lockstep set and bumped to `1.0.0`. Both ship user-facing entry-point verbs (`loam migrate` / `loam guards`), are sealed, and live in the install graph, so by this policy's "shipped runtime components" criterion they belong in-scope; they were simply tree-added after the in-scope set's last enumeration. The user-facing `pipx install loam` meta-package (`framework/loam-init/meta/pyproject.toml`) was likewise advanced to `1.0.0` at the cut so its declared version is honest about the release it corresponds to.
+
 ---
 
 ## Authority

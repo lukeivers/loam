@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-workspace-bootstrap"
-version = "0.14.0"
+version = "1.0.0"
 description = "loam workspace bootstrap — two-layer framework composing the foundational components into a running orchestrator + three-gate chain, plus the published plugin contribution protocol."
 requires-python = ">=3.13"
 dependencies = [

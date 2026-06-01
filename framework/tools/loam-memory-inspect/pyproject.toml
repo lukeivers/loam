@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-memory-inspect"
-version = "0.14.0"
+version = "1.0.0"
 description = "One-shot inspection script that surfaces episode count + size + group_id distribution from an existing kuzu_db before discard. Authored at M-FBM per D-Q.MFBM.6 to verify research §5 evidence (1 episode after weeks); halts the M-FBM build via halt-trigger §9.8 if findings contradict the research. Stdlib-only."
 requires-python = ">=3.11"
 dependencies = []

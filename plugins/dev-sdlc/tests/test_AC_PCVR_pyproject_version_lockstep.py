@@ -49,6 +49,16 @@ import pytest
 # and AC.PCVR.3's regression assertion. Adding a new shipped component
 # pyproject requires adding it here AND running the sweep at the
 # next MINOR.
+#
+# v1.0.0 release cut (2026-06-01): state-migration-engine + protection-
+# matrix FOLDED INTO lockstep. Both are shipped runtime components (the
+# `loam migrate` + `loam guards` entry-point verbs), sealed (own
+# SEAL_COMMIT sidecars), and in the install graph — so by the policy's
+# own "shipped runtime components" criterion they belong in-scope. They
+# were tree-added after the 2026-05-23 enumeration and rode off-lockstep
+# (0.13.0 / 0.1.0) through v0.14.0 as documented intentional outliers;
+# the pre-1.0 documentation health check flagged the fold-in "at the
+# next release-cut" — this cut. Bumped 0.13.0/0.1.0 -> 1.0.0.
 IN_SCOPE_PYPROJECTS: tuple[str, ...] = (
     "framework/cost-governance/pyproject.toml",
     "framework/dormancy/pyproject.toml",
@@ -58,11 +68,13 @@ IN_SCOPE_PYPROJECTS: tuple[str, ...] = (
     "framework/orchestrator/pyproject.toml",
     "framework/per-project-pm/pyproject.toml",
     "framework/primary-persona/pyproject.toml",
+    "framework/protection-matrix/pyproject.toml",
     "framework/reversibility-primitive/pyproject.toml",
     "framework/safety-layer/pyproject.toml",
     "framework/scope-of-work/pyproject.toml",
     "framework/self-correction/pyproject.toml",
     "framework/self-upgrade/pyproject.toml",
+    "framework/state-migration-engine/pyproject.toml",
     "framework/telegram-interface/pyproject.toml",
     "framework/tools/heavy-b-migrate/pyproject.toml",
     "framework/tools/loam-memory-inspect/pyproject.toml",

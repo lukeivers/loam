@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-state-migration-engine"
-version = "0.13.0"
+version = "1.0.0"
 description = "loam user-state migration engine — declared-migration schema/validator, ordered cumulative replay wrapped in the reversibility safety envelope, and the per-workspace applied cursor."
 requires-python = ">=3.11"
 dependencies = [

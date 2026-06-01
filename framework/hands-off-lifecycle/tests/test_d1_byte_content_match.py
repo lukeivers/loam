@@ -221,7 +221,13 @@ _SAMPLE_FILES = (
      # discipline) is now OWED + surfaced as a hard F2 finding to the
      # dispatcher; this entry is the in-cycle workaround landing pending
      # that dispatched fix.
-     "2d27684c5c643c8bc583892437a84641faad2c5e1bd89b0f729cca13ac34094f"),
+     # v1.0.0 release cut (2026-06-01) rebaseline: same shape — per-
+     # component version lockstep bumped 0.14.0 -> 1.0.0 (the owner-
+     # declared major). FOURTH consecutive recurrence of the SAME drift
+     # pattern; the root-cause structural fix (exclude pyproject.toml
+     # from the byte-content sample) remains OWED + re-surfaced as a
+     # hard F2 finding at the 1.0 cut.
+     "6548640d564e26edae93bb9bff31d3819c66a8a891c151327faeba8d726898f0"),
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -311,7 +317,12 @@ _SAMPLE_FILES = (
      # consecutive recurrence; root-cause structural fix now OWED +
      # surfaced as a hard F2 finding to the dispatcher (exclude
      # pyproject.toml from the byte-content sample).
-     "13383b1afe22bba6de6c6fda71297884e42a9acff96dcedae4e3d22e6cf4d7ca"),
+     # v1.0.0 release cut (2026-06-01) rebaseline: same shape (per-
+     # component version lockstep bumped 0.14.0 -> 1.0.0, the owner-
+     # declared major). FOURTH consecutive recurrence; root-cause
+     # structural fix still OWED + re-surfaced as a hard F2 finding
+     # at the 1.0 cut.
+     "2dda4fb2d0a94f223eef96a62a0876edf3fb7056b6a78cfcd18788424a9aeb07"),
 )
 
 

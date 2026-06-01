@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-amend"
-version = "0.14.0"
+version = "1.0.0"
 description = "loam amend — amendment-dispatch tooling subcommand for the unified loam CLI. MOVED from framework/tools/loam/src/loam_cli/amend/ to plugins/dev-sdlc/tools/loam-amend/ at M6b.1 per master plan AC.OSS-M6.15 + §10 D-build.M6.15 (shadow-then-flip)."
 requires-python = ">=3.11"
 dependencies = ["PyYAML>=6", "loam-cli"]

@@ -1052,6 +1052,40 @@ def _confirmation_has_doubt(reply: str) -> bool:
     return bool(_DOUBT_SIGNAL.search(reply or ""))
 
 
+# The DOWNSTREAM-GOAL clause a user adds in their confirmation ("…so I'd have
+# time to return calls and close files", "…then I could actually leave at five").
+# Leg 4 must reflect THIS — the new thing the confirmation revealed — not a re-read
+# of the first reply (the rerun8 variant-B PARTIAL: leg 4 echoed turn-1's read and
+# ignored "return calls and close files out"). The clause after a purpose/result
+# connector is the added downstream goal.
+_DOWNSTREAM_GOAL = re.compile(
+    r"\b(?:so (?:i|that i)?(?:\s+(?:could|can|can'?t|would|will|d))?|"
+    r"(?:so\s+)?i'?d\s+(?:actually\s+)?have\s+time\s+to|"
+    r"then\s+i\s+(?:could|can|would|d)|"
+    r"(?:and|so)\s+(?:then\s+)?(?:actually\s+)?(?:get|have)\s+to|"
+    r"i\s+could\s+(?:actually\s+)?)\s+"
+    r"(?P<goal>.+?)"
+    r"(?=[.!?;]|—|–|$)",
+    flags=re.IGNORECASE,
+)
+
+
+def _downstream_goal_from_confirmation(reply: str) -> str:
+    """Pull the NEW downstream goal the confirmation revealed ("…so I'd have time
+    to return calls and close files") so leg 4 reflects what the confirmation
+    ADDED, not a re-read of the first reply (AC.INTENT.4)."""
+    m = _DOWNSTREAM_GOAL.search(reply or "")
+    if not m:
+        return ""
+    goal = m.group("goal").strip().rstrip(",.").strip()
+    # Drop a leading filler verb-stub the connector already implied.
+    goal = re.sub(r"^(?:actually\s+|just\s+)", "", goal, flags=re.IGNORECASE).strip()
+    words = goal.split()
+    if not (2 <= len(words) <= 14):
+        return ""
+    return goal
+
+
 def _leg4_adjustment_text(
     confirm_reply: str,
     intent: ProposedEndIntent,
@@ -1073,9 +1107,19 @@ def _leg4_adjustment_text(
             f"'{item}': you hand it what you've got and it does the heavy "
             f"drafting, then you review and correct it, so the call stays yours."
         )
-    # No doubt — reflect a concrete detail the confirmation added. Prefer the LLM
-    # seam's one-line adjustment read; else surface the deeper end-intent; else
-    # echo the user's own added phrasing so the close is not a verbatim restate.
+    # No doubt — reflect what the CONFIRMATION revealed, in priority order:
+    #   1. the NEW downstream goal the confirmation added ("…so I'd have time to
+    #      return calls and close files") — this is what leg 4 must learn from
+    #      (the rerun8 variant-B PARTIAL: leg 4 ignored exactly this clause);
+    #   2. the LLM seam's one-line adjustment read of the confirmation;
+    #   3. the deeper end-intent the seam inferred;
+    #   4. a deterministic distill of any other added phrasing.
+    downstream = _downstream_goal_from_confirmation(confirm_reply)
+    if downstream:
+        return (
+            f" And I heard the real goal — so you can {downstream}; that's what "
+            f"we're aiming you at, not just clearing the task."
+        )
     extracted = intent.extracted
     if extracted is not None and extracted.adjustment.strip():
         return f" {extracted.adjustment.strip().rstrip('.')}, exactly as you said."

@@ -89,6 +89,31 @@ def test_AC_INTENT_4_capability_doubt_answered_honestly():
     assert "you review" in close or "the call stays yours" in close
 
 
+def test_AC_INTENT_4_downstream_goal_from_confirmation_is_reflected():
+    """The confirmation's NEW downstream goal ('…so I'd have time to return calls
+    and close files') is what leg 4 reflects — NOT a re-read of the first reply
+    (the rerun8 variant-B PARTIAL: leg 4 ignored exactly this clause)."""
+    answerer = ScriptedAnswerer(
+        {
+            "stop_start": (
+                "my whole afternoon disappears into writing up the claim-summary "
+                "narratives, six or eight of them piling up by five-thirty"
+            ),
+            "confirm_proposal": (
+                "yeah that's exactly it — if I could get some help there, I'd "
+                "actually have time to return calls and close files out before "
+                "the end of the day"
+            ),
+        }
+    )
+    result = run_translate_in_intake(answerer=answerer)
+    assert result.confirmed
+    close = _close_text(result).lower()
+    # Leg 4 reflects the DOWNSTREAM GOAL the confirmation added, not turn 1.
+    assert "return calls" in close or "close files" in close
+    assert "real goal" in close or "aiming you" in close
+
+
 def test_AC_INTENT_4_no_added_detail_yields_clean_close():
     """A bare 'yes' that adds nothing leaves the close clean (no forced, empty
     adjustment turn) — leg 4 reflects ONLY what the confirmation actually added."""

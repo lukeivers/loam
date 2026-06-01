@@ -81,14 +81,18 @@ runs surface what needs attention without you opening a terminal.
 > on your first `claude` turn). The workspace is genuinely
 > self-contained from that point. The install clone is *disposable*
 > once the workspace is bootstrapped: keep it if you want to reinstall
-> or pull updates; delete it if you don't. A future minor will ship
-> the CLI from PyPI directly, eliminating the install clone — for the
-> v0.x series, the source-only install path is intentional + the two
-> copies are the price of being self-contained.
+> or pull updates; delete it if you don't. The single-command install
+> surface (`pipx install loam` / `pip install loam`, a
+> dependencies-only meta-package that resolves the whole loam CLI
+> graph) is already built and proven against a local wheelhouse; the
+> public PyPI publish that makes it work for a stranger is
+> owner-gated and has not happened yet, so for the v0.x series the
+> source-clone install above is the path that works today. Once the
+> meta-package is published, the install clone disappears.
 
 ## What ships
 
-Eighteen runtime components plus the Dev/SDLC plugin. Highlights:
+Twenty runtime components plus the Dev/SDLC plugin. Highlights:
 
 | Component | Role |
 |-----------|------|
@@ -101,12 +105,16 @@ Eighteen runtime components plus the Dev/SDLC plugin. Highlights:
 | `cost-governance` | Token / time / money ceilings + drift detection. |
 | `observability-aggregator` | OTel-shaped span + log routing. |
 | `dormancy` | Pause / resume / fail-loud policy under outage. |
+| `state-migration-engine` | Versioned user-state migrations; the `loam migrate` verb. |
+| `protection-matrix` | AI-failure-mode guard catalogue; the `loam guards` verb. |
 | `dev-sdlc` plugin | ODD-by-default for new projects under loam. |
 
 The full architecture map lives at
 [`docs/architecture.md`](docs/architecture.md); per-component
-references for all eighteen live under
-[`docs/components/`](docs/components/).
+references live under [`docs/components/`](docs/components/) (the two
+most recent components — `state-migration-engine` and
+`protection-matrix` — ship as runtime verbs and are documented in
+`docs/STATE.md` and the roadmap pending a dedicated component page).
 
 ## Design lenses
 

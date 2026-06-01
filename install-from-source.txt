@@ -65,6 +65,15 @@ pytest-asyncio>=0.23
 -e ./framework/self-upgrade
 -e ./framework/workspace-sync
 
+# protection-matrix ships the user-facing `loam guards` verb (the
+# failure-mode-guard coverage-check / protection pillar). It is a leaf
+# (PyYAML only) and registers a `loam.cli.subcommands` entry-point, so
+# without this line a fresh source install has no `loam guards` verb —
+# the same install-graph-completeness class as the state-migration-engine
+# line below. Added by the pre-1.0 documentation health check
+# (2026-06-01) after the component shipped without an install-graph line.
+-e ./framework/protection-matrix
+
 # ---------------------------------------------------------------
 # Tier B — depend only on Tier A.
 # ---------------------------------------------------------------

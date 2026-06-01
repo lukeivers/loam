@@ -8,6 +8,32 @@
 **Doc class:** architecture / strategy (design)
 **Trigger:** owner directive (Telegram 13383–13388) — what should loam build as plugins, what is default vs opt-in, and how does dev-sdlc generalize into the build-publish substrate.
 
+---
+
+> ## ★ OWNER REFINEMENT — Tier-2 scope correction (Telegram 13392, 2026-06-01)
+>
+> The Tier-2 (opt-in capability) candidate list below is CORRECTED by the owner. The
+> load-bearing distinction: **loam plugins are GENERIC capabilities that ship to all loam
+> users; the owner's own products built *with* loam are NOT loam plugins.**
+>
+> - **Cause-coordination (Cairn) — REMOVED as a loam plugin.** It is its own entirely separate
+>   GitHub repo (confirmed: `github.com/lukeivers/cairn`), a standalone product built *on* loam,
+>   not a capability loam ships to its users. Do not list it as a Tier-2 plugin.
+> - **Book-writing / litrpg pipeline — REMOVED.** Same reason: the owner's own product built with
+>   loam, not a loam plugin.
+> - **★ THE REORIENTATION: Tier-2 targets CORPORATE / business knowledge-workers, not the owner's
+>   personal projects.** This is the white-collar-automating-their-job audience the 1.0 acceptance
+>   smoke role-plays (real-estate agent, claims adjuster, paralegal). loam's opt-in plugin catalog
+>   serves *those* people — the generic things corporate knowledge-workers do daily.
+> - **Data analysis — CONFIRMED IN** (corporate-oriented: business data, reporting, dashboards).
+>
+> **Reoriented corporate Tier-2 candidate set** (replaces any personal-project entries): data
+> analysis & reporting · document/deck/proposal/contract generation · spreadsheet & Excel
+> automation · internal dashboards & small-tool building · CRM / sales-ops automation · workflow
+> automation · email & comms drafting · compliance/reporting packs. The test stays the same
+> (opt-in, suggested by the learning engine per the user's actual job); the *orientation* is
+> corporate-work, not personal-creative.
+
 **Reads this composes on (Tier-0 verified on disk 2026-06-01):**
 - `docs/VALUE_PROPOSITION.md` — the prime objective (per-user-tuned translation: user brings WHAT, loam owns HOW) + the protection floor (§52–58) + the harness-as-builder token discipline (§83–85). This is the north star every tier ladders to.
 - `docs/design/shared-artefact-quality-catalogue.md` — the WHAT-quality. Its **profile-class axis** (`ALWAYS-ON-FLOOR / LEARNED-PROFILE / PER-BUILD`, §14) is the organizing axis this architecture reuses for the default-vs-opt-in rule. 11 categories, 58 items, 7-item security floor.

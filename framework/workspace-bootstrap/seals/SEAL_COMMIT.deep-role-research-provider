@@ -1,0 +1,74 @@
+# deep role-research provider — the REAL ResearchProvider (N3 fast-follow) — apply ladder
+
+2026-05-31. Roadmap N3 fast-follow (fork D-5 (a)) per
+`docs/plans/deep-role-research-provider.md`. Fills the seam N3 sealed
+(`framework/workspace-bootstrap/src/loam/workspace_bootstrap/deep_role_research.py`,
+SEAL 96aae8a): the deep role-research PASS itself (the baseline shipped
+ONLY the opt-in gate + the featherlight stub seam).
+
+The slice: given a user's role + their explicit opt-in (both already
+established by the sealed intake — this slice NEVER re-gates), run a
+BOUNDED three-axis research pass — (i) what makes someone EFFECTIVE at
+the role, (ii) what gets people PROMOTED, (iii) which EXISTING AI tools
+loam could wrap or rebuild — then SYNTHESIZE a SHORT, person-specific set
+of <=3 leverage ideas and return the sealed RoleResearchResult with
+is_stub=False, which the intake's as_leverage_ideas() fold-back consumes
+UNCHANGED.
+
+The central stance: the synthesis IS the deliverable, not the research.
+The user who reaches this seam is — by the sealed intake's routing — at
+the bottom of the idea-quality continuum (already overwhelmed). The
+over-reach guard therefore applies TWICE: the research runs on a HARD
+fixed budget (~3 round-trips, NOT an unbounded agent loop), and the
+output is a FEW person-specific ideas (NOT a citation dump that
+re-overwhelms).
+
+The LOAD-BEARING finding (plan §10.1): WebSearch/WebFetch/the Agent tool
+are Claude-Code SESSION tools, NOT importable functions a standalone
+Python provider can call; and loam forbids the Anthropic SDK / API key
+(feedback_no_anthropic_api_key). So "compose the forked-research-subagent"
+resolves to a bounded `claude -p` subprocess — the subprocess IS a Claude
+session with the web-research toolset — spawned through the MANDATED
+loam_spawn_isolation.spawn_isolated_claude primitive (--strict-mcp-config
++ empty mcpServers + token/API-key-scrubbed env) so it cannot steal the
+operator's Telegram bot slot
+(feedback_spawned_claude_must_isolate_telegram_plugin).
+loam_spawn_isolation is not a workspace-bootstrap dependency; the provider
+LAZY-imports it inside the dispatch and DEGRADES GRACEFULLY when it (or the
+claude binary) is absent (AC.DRRGRACE.1) — the same convention the
+README_3 outcome-altitude test uses.
+
+Forks ruled BEFORE build (plan §11, owner-ratified, recorded on the
+plan-only commit):
+  D-RES-1 (a) — bounded claude -p research-subagent via loam_spawn_isolation;
+                no API key; lazy-import + graceful degrade.
+  D-RES-2 (a) — TIGHT budget: ~3 round-trips ceiling + <=3 ideas (HARD caps).
+  D-RES-3 (a) — synchronous + hard timeout + graceful fallback.
+
+AC families: AC.DRR.* (real provider, bounded, short+person-specific),
+AC.DRRSEAM.* (satisfies the sealed Protocol; the featherlight AC.ONDEEP.1
+invariant STILL holds with the real provider registered),
+AC.DRRGRACE.1 (unavailable/timeout/over-budget -> clearly-marked fallback,
+never raise/hang), and the ★ AC.DRROUT.1 outcome-altitude AC (a real
+provider on a sample role through the real seam — is_stub=False + three
+axes + <=count person-specific ideas + within budget; deterministic source
+variant runs every pass exercising the real dispatch+parse+synthesis, plus
+an env-gated live claude -p smoke).
+
+Composes on (rebuilds none): the sealed deep_role_research seam (the
+Protocol + RoleResearchResult + default_research_provider() resolver — the
+real provider registers behind the resolver via a new
+register_research_provider() seam, with the resolver's contract unchanged),
+the sealed translate_in_intake.py fold-back (UNCHANGED — the intake's
+gating logic is sealed and untouched), and the loam_spawn_isolation
+primitive (the Lens-1 compose-don't-rebuild answer for the research
+dispatch). Backfills N3's AC.ONDEEP.2 from "SEAM GREEN / PASS deferred" to
+PASS (the deferred research PASS is now filled).
+
+Predecessor:
+  - 96aae8a — N3 translate-in onboarding intake seal (the seam this fills).
+  - 6b76f9ef — main tip @ rebase (carries the N3 seal + N4 + failure-mode
+    matrix).
+
+BASELINE be7487cb (the plan-only commit; the source-edit 7f54fe55 lands on
+top). Single-component fence on framework/workspace-bootstrap/.

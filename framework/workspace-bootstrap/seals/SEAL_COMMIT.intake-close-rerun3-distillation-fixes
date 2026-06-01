@@ -1,0 +1,54 @@
+# Intake close rerun3 distillation/role-detail fixes — apply ladder
+
+The THIRD acceptance-smoke re-run
+(`docs/experiments/loam-1.0-acceptance-smoke-rerun3.md`) — run against the
+sealed close redesign (#166) + variant-B hardening (#167) — confirmed the
+redesign's CORE behaviors land on clean inputs (variant B routed
+day-derived + zero research; surface-and-check fires) but surfaced THREE
+deterministic regressions the role-play sampled this run, all clear-direction
+and fixed here (refinements to the same AC families, not new ACs):
+
+  - AC.INTAKE-ECHO.1 — the variant-A opener "Oh, easy — writing listing
+    descriptions" distilled to the bare difficulty word "easy" (the em-dash
+    clause split left "Oh, easy" as the first clause; lead-filler stripped
+    "Oh,"). The proposal read "Help the user reliably easy — …". A
+    _PURE_DIFFICULTY guard + an extended _LEAD_FILLER now skip a clause that
+    reduces to a difficulty-only fragment and read the next content clause,
+    so the distilled item is "writing listing descriptions".
+  - AC.ONCLOSE.5 — the variant-B correction OPENED with a bare rejection
+    ("Uh — that didn't quite land right, no. What I was saying is the
+    claim-summary write-ups…"). The correction branch distilled the
+    rejection phrase ("that didn't quite land right, no") into the seed +
+    close. _REJECTION_LEAD drops a bare rejection opener and
+    _ASSERTED_AFTER_REJECTION pulls the asserted span ("claim-summary
+    write-ups") so the close lands the real pain.
+  - AC.INTAKE-VACUUM.1 / AC.ONDEEP.1 — the variant-C describe_work answer
+    ("I'm a paralegal — discovery requests, cite-checking… but I don't know,
+    I can't point to one thing") is a genuine role description with named
+    tasks, but the ladder's strict stop/start _looks_empty over-fired on the
+    hedging and dropped it to the generic starter — so the opt-in
+    deep-research never fired (the AC.SMOKE.3 featherlight expectation for C
+    is that research DOES fire on the idea-vacuum-with-role path). The
+    describe_work rung now gates on EXTRACTABLE role detail
+    (_looks_like_pure_non_answer): a role noun or named task means there is
+    content to mine + the opt-in research stays reachable.
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - All three stay deterministic (regex + clause heuristics). Each maps to a
+    verbatim rerun3 transcript case now covered by a test; the FOURTH
+    acceptance-smoke re-run is the outcome-altitude proof.
+  - The describe_work gate distinguishes a PURE non-answer ("I don't know",
+    short, no role) from a hedged real description (role + tasks present) —
+    the former still routes to the gentle generic starter, the latter mines
+    the role + offers the deep dive.
+
+Predecessor commits:
+  - b474fec6 — #166 close-redesign seal.
+  - 0a762066 — #167 smoke variant-B seal (BASELINE).
+  - fc3e8537 — rerun3 distillation/role-detail fixes + 4 tests (BASELINE+1).
+
+BASELINE 0a762066. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated.

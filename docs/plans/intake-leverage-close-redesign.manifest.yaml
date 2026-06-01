@@ -1,0 +1,128 @@
+schema_version: 1
+amendment:
+  number: 166
+  slug: intake-leverage-close-redesign
+  title: "Intake leverage-close redesign — implement the owner's onboarding spec for the demonstrate-leverage close (AC.ONCLOSE.1-5): surface-and-check on every path, land ONE thing, no over-promised automation, person-specific named item, negated-correction distills the asserted intent"
+
+# BASELINE: 27a72fa2 — the close-redesign plan-doc commit immediately preceding
+# the source-edit commit (5e2ef11d). BASELINE-as-HEAD~1 pattern.
+#
+# Commit ladder pre-apply:
+#   519147db — merged intake NL-handling fixes (#164+#165), branch tip.
+#   27a72fa2 — close-redesign plan-doc. ← BASELINE
+#   5e2ef11d — fix(intake): close redesign source + 5 AC.ONCLOSE test files.
+#   <smoke source commit 03a71e8c — OTHER component, not in this fence>
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _leverage_from_intent — single, person-specific, non-over-promising close
+#       (AC.ONCLOSE.3/.4).
+#     - _NEGATED_CORRECTION_LEAD / _NEGATED_WANT_LEAD / _DO_FOR_ME_SPAN /
+#       _is_pronoun_only_object / _distill_intent — negated-correction distills
+#       the asserted intent (AC.ONCLOSE.5).
+#     - _NAMED_TASK / _named_task_from_description / _leverage_from_role —
+#       person's NAMED task, not the generic triad (AC.ONCLOSE.4).
+#     - _Q_LADDER_CHECK / _run_fallback_ladder / run_translate_in_intake —
+#       surface-and-check on the day-derived + idea-vacuum-after-research paths,
+#       land EXACTLY one close idea, fold research into the seed (AC.ONCLOSE.1/.2).
+#   tests/test_AC_ONCLOSE_1..5_*.py — 5 NEW test files (15 tests) on the close
+#     behaviors (the rerun2 four-step-loop-ran / closed-on-one-thing /
+#     no-over-engineering / learned-this-person FAILs).
+#
+# New AC family: AC.ONCLOSE.1-5 (the demonstrate-leverage close's prime-objective
+#   quality; ladders up from AC.ONINTAKE.6).
+baseline: "27a72fa2"
+
+plan: docs/plans/intake-leverage-close-redesign.md
+
+seal_description: "Intake leverage-close redesign — AC.ONCLOSE.1-5: surface-and-check on every path, land ONE thing, no over-promise, person-specific named item, negated-correction distills the asserted intent"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-leverage-close-redesign
+  body: |
+    # Intake leverage-close redesign — apply ladder
+
+    The loam 1.0 acceptance smoke's SECOND re-run
+    (`docs/experiments/loam-1.0-acceptance-smoke-rerun2.md`, NOT-READY)
+    confirmed the four natural-language bugs (#164+#165) were fixed but
+    surfaced a DEEPER layer: the demonstrate-leverage CLOSE itself failed four
+    prime-objective judge dimensions across all three variants —
+    four-step-loop-ran, closed-on-one-thing, no-over-engineering,
+    learned-this-person. These are NOT open design forks: the target is the
+    owner's already-specified onboarding design (the prime-objective four-step
+    loop: infer -> propose -> SURFACE-AND-CHECK -> adjust; close on ONE thing;
+    no interrogation; don't over-engineer). This cycle implements the close to
+    that spec, with a NEW AC family AC.ONCLOSE.1-5 (one AC + test per close
+    behavior; ladders up from AC.ONINTAKE.6):
+
+      - AC.ONCLOSE.1 — surface-and-check on EVERY path. The four-step loop's
+        verify leg (the inferred intent surfaced as a checkable hypothesis) ran
+        only on the CLEAR/PARTIAL path (confirm_proposal). The day-derived +
+        idea-vacuum-after-research paths jumped straight to a close. A
+        ladder_check turn now surfaces a single inferred starting point on the
+        ladder paths before landing the close.
+      - AC.ONCLOSE.2 — land EXACTLY one thing. The CLI prints every
+        leverage_ideas entry as a co-equal close line, so the day-mined idea +
+        role-mined idea + each research idea read as a 2-3 item MENU. The close
+        now lands exactly ONE primary leverage idea; the research synthesis
+        folds INTO the seed text, not into extra close lines.
+      - AC.ONCLOSE.3 — no over-promised automation. The START-disposition close
+        promised "happens reliably without you having to push it forward each
+        time" — an unattended-automation over-promise. The close now proposes
+        right-sized help (loam does the work when you bring it the basics); the
+        recurring version stays the opt-in one_level_up_offer.
+      - AC.ONCLOSE.4 — person-specific named item. The ladder close led with a
+        generic "status updates / formatting / the chasing" triad. It now mines
+        ONE concrete named task from the description ("cite-checking briefs")
+        and lands on the person's own words.
+      - AC.ONCLOSE.5 — a negated correction distills the ASSERTED intent.
+        Variant A's "it's not that I have trouble starting it — I want you to
+        write them for me" distilled the NEGATED clause. The distiller now
+        drops the negated-correction lead frame, inverts a negated want
+        ("not have to write them myself" -> the writing), and prefers a named
+        want-span over a pronoun-only "do it for me", so the close + seed
+        reference the asserted writing intent.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - The close stays deterministic (regex distillation + named-task mining).
+        The rerun2 judge findings were soft (LLM-judged) but each maps to a
+        concrete, checkable close behavior the deterministic close now
+        satisfies; the smoke re-run is the outcome-altitude proof.
+      - The ladder_check turn is a genuine surface-and-check: a "no" does NOT
+        force the inferred thing (it invites a re-pick); a correction lands the
+        corrected item. This is the four-step loop's adjust leg, not a rubber
+        stamp.
+
+    Predecessor commits:
+      - 519147db — merged intake NL-handling fixes (#164+#165).
+      - 27a72fa2 — close-redesign plan-doc (BASELINE).
+      - 5e2ef11d — close redesign source + 5 AC.ONCLOSE test files (BASELINE+1).
+
+    BASELINE 27a72fa2 — the plan-doc commit before the source edit.
+    Single-component fence on `framework/workspace-bootstrap/`. The smoke
+    variant-B hardening is a SEPARATE cycle (#167) on
+    `framework/tools/loam-acceptance-smoke/`.
+
+    DO NOT push, DO NOT merge — owner-gated. Build-forward stops at local seal
+    + the third updated run-report.

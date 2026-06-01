@@ -43,12 +43,27 @@ Single-component fence: `dev-sdlc` (`plugins/dev-sdlc/`). Seal-test:
 
 ## §4 — Acceptance criteria
 
-### AC.DSDA.1 — apply.py line-ref corrected in the convention doc
+### AC.DSDA.1 — apply.py line-ref corrected across every present-tense surface
 
-`plugins/dev-sdlc/docs/conventions/amendment-cycle.md` no longer cites
-`apply.py:158` for the committed-HEAD binding; it cites the actual current
-location of `head_sha = _git_head_sha(repo_root)`, which is **`apply.py:269`**
-(verified Tier-0: `grep -n "head_sha = _git_head_sha" apply.py` → line 269).
+No present-tense methodology surface under `plugins/dev-sdlc/` cites
+`apply.py:158` for the committed-HEAD binding; every one cites the actual
+current location of `head_sha = _git_head_sha(repo_root)`, which is
+**`apply.py:269`** (verified Tier-0: `grep -n "head_sha = _git_head_sha"
+apply.py` → line 269). Surfaces corrected:
+`plugins/dev-sdlc/docs/conventions/amendment-cycle.md`,
+`plugins/dev-sdlc/docs/conventions/commit-ladder.md`, and the AC.PASH.C.1
+test's docstring/message prose at
+`plugins/dev-sdlc/tools/loam-amend/tests/test_AC_PASH_C_1_methodology_prescribes_ordering.py`
+(lines 64 + 83 — prose only; the test's anchor regex `apply\.py(?::\d+|\b)`
+already matched any line number, so the assertion stays green).
+
+**Scope-widening note (F2):** the dispatch named two surfaces (amendment-cycle.md
++ the SKILL). A Tier-0 grep at build-time found two MORE present-tense instances
+of the identical stale ref — `commit-ladder.md:12` (the third surface of the
+same methodology trio the AC.PASH.C.1 test fences) and the test's own prose.
+Leaving them re-seeds the exact inaccuracy this amendment removes; all are
+in-fence (`plugins/dev-sdlc/`), identical-class, doc-only. Widened in-cycle and
+named here rather than silently extended.
 
 ### AC.DSDA.2 — apply.py line-ref corrected in the SKILL
 
@@ -92,6 +107,7 @@ returns zero matches.
 | Decision | Resolution |
 |---|---|
 | D-DSDA.1 | Correct apply.py:158 → apply.py:269 (Tier-0 grep verified). |
+| D-DSDA.1b | Scope widened in-cycle to ALL present-tense surfaces (commit-ladder.md + the AC.PASH.C.1 test prose) beyond the two the dispatch named — identical-class, in-fence, doc-only; named in §4 AC.DSDA.1 per F2 (not silently extended). |
 | D-DSDA.2 | Drop the brittle present-tense count rather than re-pin a new number (per the health-check guidance "re-point to the live roster rather than pinning a possibly-wrong count"; avoids a future stale-count recurrence). |
 | D-DSDA.3 | Preserve historical "thirteen" at :589/:601 (accurate as-of-time record). |
 

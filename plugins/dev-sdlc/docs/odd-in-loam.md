@@ -28,7 +28,7 @@ the objective — library choice, file layout, algorithm — is the builder's
 internal concern and not the delegator's business.
 
 This document shows how that contract is authored and enforced in practice
-by walking through four of the thirteen sealed components of loam:
+by walking through four of the sealed components of loam:
 
 - **safety-layer A1–A20** — the canonical re-extension example.
 - **self-upgrade clause (g)** — the canonical structural-enforcement example.

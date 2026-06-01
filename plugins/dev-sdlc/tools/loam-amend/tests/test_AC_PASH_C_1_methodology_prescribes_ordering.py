@@ -61,7 +61,7 @@ def test_AC_PASH_C_1_committed_HEAD_invariant_named() -> None:
 
 
 def test_AC_PASH_C_1_apply_py_158_anchor_cited() -> None:
-    """The methodology docs cite the source anchor (`apply.py:158`)
+    """The methodology docs cite the source anchor (`apply.py:269`)
     or a path-only reference to the verified location for the
     committed-HEAD invariant — reachability check for the
     Tier-0 evidence."""
@@ -80,6 +80,6 @@ def test_AC_PASH_C_1_apply_py_158_anchor_cited() -> None:
             break
     assert found_anchor, (
         "No methodology surface cites the source anchor "
-        "(`apply.py:158` or equivalent) for the committed-HEAD "
+        "(`apply.py:269` or equivalent) for the committed-HEAD "
         "invariant; the prescription should carry a Tier-0 pointer."
     )

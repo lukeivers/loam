@@ -54,7 +54,7 @@ The amendment-cycle ladder in canonical order:
    BEFORE step 5 — `loam amend apply` runs against committed HEAD,
    not against working-tree state** (per amendment #142 Scope C;
    closes FIDRAFT 334; verified at
-   `loam_amend/commands/apply.py:158` — `head_sha =
+   `loam_amend/commands/apply.py:269` — `head_sha =
    _git_head_sha(repo_root)`). Source edits that remain tracked-
    but-unstaged at apply time will NOT land in the apply commit;
    the apply step's auto-`git add` is scoped to seal-tests +

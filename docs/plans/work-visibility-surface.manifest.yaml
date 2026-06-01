@@ -122,7 +122,10 @@ amendment:
 # plan-doc commit (HEAD at build start) the source edits land on top of, so
 # the seal-diff window narrows to exactly this amendment's surface.
 # (Plan-time value 067e3435 — the main tip at plan authoring.)
-baseline: "067e3435"
+# Re-baselined at build start to 1b400bb1 — the PLAN-ONLY commit
+# (plan + manifest landed on this branch) the source edits land on top
+# of, narrowing the seal-diff window to exactly this amendment's surface.
+baseline: "1b400bb1"
 
 plan: docs/plans/work-visibility-surface.md
 

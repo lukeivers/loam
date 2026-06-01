@@ -137,7 +137,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              Advanced BASELINE to c82131e (the prior FBM-SAL seal commit,
 #              the HEAD~1 pattern); SEAL_COMMIT -> 7dcb95b (the consolidation
 #              slice). Seal-diff stays within primary-persona + docs/ surfaces.
-BASELINE = "f1f6116"
+BASELINE = "1b400bb1"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -250,6 +250,8 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         "docs/plans/sealed/",
         "docs/",
         "docs/state-migrations/",
+        "framework/primary-persona/hooks/",
+        "framework/primary-persona/scripts/",
     )
     # Universal-file admissions per amendment #22 ruling #3. Written
     # by ``loam amend apply``; kept stable across amendments.

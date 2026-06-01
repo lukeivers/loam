@@ -170,7 +170,16 @@ _SAMPLE_FILES = (
      # ODD §4 in-band retire-and-rebaseline per
      # `feedback_loose_AC_text_fix_AC_not_implementation`. Discovery-
      # driven (the seal sweep IS the discovery mechanism).
-     "7893d8a7292b651d2c79f243edfc7975cb9cc56b5c0bf36b9c3e5c4522ecf14c"),
+     # N4 (amendment #159, 2026-05-31) rebaseline: pre-existing drift
+     # NOT caused by N4 — `session_start_emitter.py` is byte-identical
+     # to the N4 BASELINE f1f6116 (N4 does not touch it; verified via
+     # `git diff f1f6116 HEAD`). The prior snapshot lagged a legitimate
+     # N3-onboarding edit to this file (sealed at f1f6116 without a D-1
+     # rebaseline). Surfaced by N4's hands-off-lifecycle full-suite at
+     # seal; fails IDENTICALLY on the stashed clean baseline tree. ODD
+     # §4 in-band retire-and-rebaseline (same established pattern as the
+     # amendment #144 §16 + v0.13.0/v0.14.0 rebaselines above).
+     "4649cd0df477af87534aa53c4f80995c9868645e6de630f253e7648cd2a2bcf4"),
     ("framework/primary-persona/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,

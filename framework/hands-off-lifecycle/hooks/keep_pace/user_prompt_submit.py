@@ -94,6 +94,32 @@ def _kp1_retrieval_contributor(envelope: dict):
         return None
 
 
+def _n4_interaction_model_contributor(envelope: dict):
+    """Best-effort N4 interaction-model read-path contributor (AC.UM.READ.*).
+
+    Lazy-imports ``build_interaction_model_contributor`` from the
+    primary-persona component and delegates to it: per turn it builds the
+    work-anchor, classifies it to an AIM area (deterministic, fail-open
+    to ``default``), reads the live ``~/.claude/INTERACTION-MODEL.md``
+    matrix (fail-open to the openness prior on any error), and injects
+    the area's exposure + autonomy cell as a clean plain behavioural
+    directive. Any import / runtime failure → ``None`` (no injection);
+    composed with the chain's fail-open guarantee the turn always
+    proceeds (AC.UM.READ.2 no-regression).
+    """
+    try:
+        pkg = _loam_root() / "framework" / "primary-persona" / "src"
+        if pkg.is_dir() and str(pkg) not in sys.path:
+            sys.path.insert(0, str(pkg))
+        from loam.primary_persona.keep_pace.interaction_model import (  # type: ignore[import-not-found]
+            build_interaction_model_contributor,
+        )
+
+        return build_interaction_model_contributor()(envelope)
+    except BaseException:  # noqa: BLE001 — fail-soft; chain fail-open
+        return None
+
+
 def _kp7_reassert_contributor(envelope: dict):
     """Best-effort KP7 SessionStart re-assert contributor (AC.KP7.2).
 
@@ -129,6 +155,7 @@ def contributors() -> list:
     return [
         Contributor("kp1-retrieval", _kp1_retrieval_contributor),
         Contributor("kp7-reassert", _kp7_reassert_contributor),
+        Contributor("n4-interaction-model", _n4_interaction_model_contributor),
     ]
 
 

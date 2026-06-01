@@ -55,13 +55,18 @@ from chain_runner import Contributor, run_chain  # noqa: E402
 
 
 def test_AC_KP_WIRE_1_both_staged_contributors_registered():
-    """The UserPromptSubmit ``contributors()`` surface is no longer empty:
-    it registers exactly the two staged contributors (KP1 retrieval, KP7
-    re-assert), in chain order, each a ``Contributor``."""
+    """The UserPromptSubmit ``contributors()`` surface registers the staged
+    contributors in chain order, each a ``Contributor``: KP1 retrieval, KP7
+    re-assert, then the N4 interaction-model read-path (amendment #159 —
+    N4 composed a third contributor on this EXISTING seam, no new hook)."""
     registered = ups.contributors()
-    assert len(registered) == 2, f"expected 2 contributors, got {len(registered)}"
+    assert len(registered) == 3, f"expected 3 contributors, got {len(registered)}"
     names = [c.name for c in registered]
-    assert names == ["kp1-retrieval", "kp7-reassert"], names
+    assert names == [
+        "kp1-retrieval",
+        "kp7-reassert",
+        "n4-interaction-model",
+    ], names
     for c in registered:
         assert isinstance(c, Contributor)
         assert callable(c.fn)
@@ -77,7 +82,11 @@ def test_AC_KP_WIRE_1_contributors_fire_through_the_chain():
         ups.contributors(),
     )
     fired = {r.name for r in result.results}
-    assert fired == {"kp1-retrieval", "kp7-reassert"}, fired
+    assert fired == {
+        "kp1-retrieval",
+        "kp7-reassert",
+        "n4-interaction-model",
+    }, fired
     # Every contributor produced a real status (it was invoked, not skipped
     # for being absent). skipped-budget is the only "didn't run" status and
     # must not appear on a fast 2-hop chain.
@@ -196,4 +205,8 @@ def test_AC_KP_WIRE_1_cli_emits_latency_log_line_with_wired_contributors():
         assert log_path.exists(), "no latency log written by the wired chain"
         line = json.loads(log_path.read_text().strip().splitlines()[-1])
         logged = {c["name"] for c in line["contributors"]}
-        assert logged == {"kp1-retrieval", "kp7-reassert"}, logged
+        assert logged == {
+            "kp1-retrieval",
+            "kp7-reassert",
+            "n4-interaction-model",
+        }, logged

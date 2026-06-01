@@ -238,6 +238,45 @@ _LAYER1_PATTERNS: tuple[tuple[str, "re.Pattern[str]"], ...] = (
      re.compile(r"\b(?:M-FBM|FIDRAFT|M5|F[0-9])\b")),
 )
 
+# ====================================================================
+# N4 enforce-path (D-N4.2 / AIM-2) — threshold parameterized by the
+# active area's technical-exposure cell.
+# ====================================================================
+#
+# The draft-gate threshold is parameterized by the active area's
+# ``technical-exposure`` cell so the model is STRUCTURAL (the gate
+# enforces the injected directive), not merely ADVISORY (a self-injected
+# directive the persona may ignore — the instruction-decay failure the
+# design names, §4b). This is a THRESHOLD LOOKUP (D-N4.2 stays small —
+# it does NOT touch Layer C or the register-judge core): the Layer-1
+# leak classes are partitioned into a SYNTACTIC-LEAK FLOOR that is
+# ALWAYS enforced regardless of any cell (G5 doubt 4 — no exposure value
+# ever loosens it) and an EXPOSURE-DEPENDENT jargon set that a ``deep``
+# exposure cell relaxes (the user wants full technical depth in that
+# area, so process-jargon / mechanism tokens are not leaks there).
+#
+# THE FLOOR (never relaxed): file paths, abs-paths, source/.md file
+# names, AC-IDs, commit SHAs, §-doc pointers, un-introduced ALLCAPS.
+# These are syntactic leaks (a path/SHA/ID is never the user-facing
+# answer) — the floor survives unconditionally (AC.UM.READ.3 / G5).
+_SYNTACTIC_LEAK_FLOOR: frozenset[str] = frozenset(
+    {
+        "file-path",
+        "abs-path",
+        "file-name",
+        "ac-id",
+        "commit-sha",
+        "doc-section-pointer",
+        "un-introduced-allcaps",
+    }
+)
+
+# Valid technical-exposure cell values (mirrors the N4 matrix vocabulary).
+# Only ``deep`` relaxes the exposure-dependent jargon set; ``plain`` and
+# ``open`` enforce every class (the default behaviour pre-N4).
+_EXPOSURE_RELAXES_JARGON: frozenset[str] = frozenset({"deep"})
+
+
 # Common ALLCAPS words that are ordinary English, not internal tokens —
 # these never trip the un-introduced-ALLCAPS class.
 _ALLCAPS_ALLOWLIST: frozenset[str] = frozenset(
@@ -275,7 +314,9 @@ def _allcaps_leaks(text: str) -> list[str]:
     return hits
 
 
-def layer1_lint(text: str) -> list[GateReason]:
+def layer1_lint(
+    text: str, *, exposure: Optional[str] = None
+) -> list[GateReason]:
     """Layer 1 — deterministic jargon / abstraction-voice lint.
 
     AC.KP9.1: returns one :class:`GateReason` per leak class present
@@ -285,9 +326,24 @@ def layer1_lint(text: str) -> list[GateReason]:
 
     Deterministic + token-boundary (AC.PBF.3 discipline): an ordinary
     word that merely contains a forbidden substring does NOT trip.
+
+    N4 enforce-path (D-N4.2): ``exposure`` is the active area's
+    ``technical-exposure`` cell value. When it is ``deep`` the
+    EXPOSURE-DEPENDENT jargon classes (loam-process jargon + internal
+    mechanism tokens) are relaxed — the user wants full technical depth
+    in that area, so naming a mechanism is not a leak there. The
+    SYNTACTIC-LEAK FLOOR (:data:`_SYNTACTIC_LEAK_FLOOR` — paths, SHAs,
+    AC-IDs, ALLCAPS) is enforced UNCONDITIONALLY regardless of
+    ``exposure`` (G5 doubt 4 — no cell value ever loosens it). ``None``
+    / any non-``deep`` value enforces every class (the pre-N4 default).
     """
+    relax_jargon = exposure in _EXPOSURE_RELAXES_JARGON
     reasons: list[GateReason] = []
     for label, pat in _LAYER1_PATTERNS:
+        # N4 enforce-path: at deep exposure, skip the exposure-dependent
+        # jargon classes (everything not in the syntactic-leak floor).
+        if relax_jargon and label not in _SYNTACTIC_LEAK_FLOOR:
+            continue
         m = pat.search(text)
         if m:
             reasons.append(
@@ -302,6 +358,8 @@ def layer1_lint(text: str) -> list[GateReason]:
                     ),
                 )
             )
+    # The un-introduced-ALLCAPS class is part of the syntactic-leak floor
+    # — always enforced (never relaxed by exposure).
     for tok in _allcaps_leaks(text):
         reasons.append(
             GateReason(
@@ -494,6 +552,7 @@ def gate(
     *,
     surface_kind: str = "persona-free-text",
     constraints: Optional[tuple[Constraint, ...]] = None,
+    exposure: Optional[str] = None,
 ) -> GateResult:
     """Run the draft-to-send gate over ``draft`` (AC.KP9.1-.4).
 
@@ -502,6 +561,15 @@ def gate(
     (jargon lint) then Layer C (constraint check). The verdict is the
     worst outcome: BLOCK (any Layer 1 leak) > FLAG (any Layer C
     contradiction) > PASS.
+
+    N4 enforce-path (D-N4.2 / AIM-2): ``exposure`` is the active area's
+    ``technical-exposure`` cell — threaded to :func:`layer1_lint` so a
+    ``deep`` exposure area relaxes the exposure-dependent jargon classes
+    (the user wants depth there) while the syntactic-leak floor stays
+    enforced unconditionally. ``None`` (the default) is the pre-N4
+    behaviour — every class enforced. This is what makes the injected
+    interaction-model directive STRUCTURAL (the gate backs it), not
+    merely advisory.
 
     FAIL-OPEN (AC.KP9.4 / AC.KP.S.1): any internal error yields a PASS —
     a broken gate must NEVER block a send. The block/flag reasons are
@@ -512,7 +580,7 @@ def gate(
     try:
         if not isinstance(draft, str):
             return GateResult(verdict=Verdict.PASS)
-        l1 = layer1_lint(draft)
+        l1 = layer1_lint(draft, exposure=exposure)
         lc = layerC_check(draft, constraints=constraints)
         reasons = l1 + lc
         if l1:

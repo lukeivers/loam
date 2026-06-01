@@ -53,6 +53,8 @@ universal_paths:
     - docs/plans/loam-vnext-build-plan.md
     - docs/FUTURE_IDEAS.md
     - docs/FUTURE_IDEAS_DRAFT.md
+    # N4 §9 bookkeeping: mark AIM-1/AIM-2/AIM-3 built in the flagship design.
+    - docs/design/adaptive-interaction-model.md
 
 # OUT-OF-TREE side-effect (documented in the status file, NOT committed source):
 #   - the live ~/.claude/INTERACTION-MODEL.md is READ by the read-path and

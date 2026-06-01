@@ -146,11 +146,28 @@ def _build_wheelhouse(wheelhouse: Path) -> None:
     is a PULL of public wheels — never a PUSH (AC.PYPKG.3: zero publish).
     """
     wheelhouse.mkdir(parents=True, exist_ok=True)
+    # Build each component from a COPY in a tmp dir, never in-place.
+    # ``python -m build`` writes a setuptools ``build/`` artifact into the
+    # package directory it is pointed at; building in-place would pollute
+    # the live source tree (and trip the workspace-bootstrap d2 inline-path
+    # scanner on the copied ``build/lib/...``). Copying first keeps the
+    # repo tree pristine across the seal's full-suite run.
+    build_root = wheelhouse.parent / "build-trees"
+    build_root.mkdir(parents=True, exist_ok=True)
     for rel in _COMPONENT_DIRS:
         comp = REPO_ROOT / rel
         assert comp.is_dir(), f"component dir missing: {rel}"
+        # Flat unique key per component so nested paths (loam-init vs
+        # loam-init/meta) never collide on copy.
+        comp_copy = build_root / rel.replace("/", "__")
+        shutil.copytree(
+            comp, comp_copy,
+            ignore=shutil.ignore_patterns(
+                ".venv", "__pycache__", "*.pyc", "build", "dist", "*.egg-info"
+            ),
+        )
         _run([sys.executable, "-m", "build", "--wheel",
-              "--outdir", str(wheelhouse), str(comp)])
+              "--outdir", str(wheelhouse), str(comp_copy)])
     # Resolve the meta-distribution's third-party transitive closure into
     # the wheelhouse using the just-built loam-* wheels as the local index
     # for the loam-* edges; pip fetches only the non-loam wheels remotely.

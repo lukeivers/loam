@@ -1,0 +1,89 @@
+schema_version: 1
+amendment:
+  number: 180
+  slug: intake-smoke-four-step-rubric-alignment
+  title: "Acceptance-smoke four-step-loop-ran rubric contract-alignment — the judge rubric REWARDS landing the literal ask + asking at most one opt-in rung up BY DEFAULT (suppressed only on a clear one-off signal) + all four legs visible/adapted, and PENALIZES two+ rung jumps / asserted structure / a missing ask absent a suppressing signal; it no longer demands committed concrete structure (the contradiction with no-over-engineering) (AC.SMOKE.7)"
+
+# BASELINE: 625303cf — the loam-acceptance-smoke sidecar HEAD (the variant-B
+# day-derived hardening seal), immediately preceding this cycle's source-edit
+# commit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   625303cf — loam-acceptance-smoke variant-B hardening seal. ← BASELINE
+#   ... (the workspace-bootstrap #179 cycle commits — a different component fence)
+#   9d40fc6e — source edit: four-step-loop-ran rubric contract-alignment +
+#     AC.SMOKE.7 test.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — loam-acceptance-smoke only:
+#   framework/tools/loam-acceptance-smoke/src/loam_acceptance_smoke/judge.py
+#     - the SOFT_DIMENSIONS["four-step-loop-ran"] rubric string, contract-aligned
+#       to the owner's ratified one-rung default-ask close.
+#   tests/test_AC_SMOKE_7_four_step_rubric_contract_alignment.py — NEW.
+#
+# AC families: NEW AC.SMOKE.7 (judge contract-alignment). Born from the
+#   1.0-finishing round (owner ruling Luke 13401 + 13403): the old rubric demanded
+#   the OPPOSITE of the ratified design (committed structure) — this aligns it.
+baseline: "625303cf"
+
+plan: docs/plans/intake-one-rung-v2.md
+
+seal_description: "Acceptance-smoke four-step-loop-ran rubric contract-alignment (AC.SMOKE.7) — rewards the one-rung opt-in default-ask, penalizes two+ rung jumps / asserted structure / a missing ask absent a suppressing signal; no longer demands committed concrete structure"
+
+components:
+  - name: loam-acceptance-smoke
+    seal_test: framework/tools/loam-acceptance-smoke/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam-acceptance-smoke/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/tools/loam-acceptance-smoke/seals/SEAL_COMMIT.intake-smoke-four-step-rubric-alignment
+  body: |
+    # Acceptance-smoke four-step-loop-ran rubric contract-alignment — apply ladder
+
+    The 1.0 acceptance smoke's last gap was a JUDGE-vs-CONTRACT contradiction: the
+    `four-step-loop-ran` rubric demanded leg 2 show committed CONCRETE STRUCTURE
+    (a recurring workflow / template / designed enablement pattern) while
+    `no-over-engineering` PASSED precisely BECAUSE loam proposed no structure — the
+    two dimensions demanded OPPOSITE things on the same transcript (rerun12 A+B
+    PARTIAL/PASS).
+
+    The owner's ratified resolution (Luke 13401 + 13403): the close LANDS the
+    literal ask as the ONE thing and BY DEFAULT ASKS about EXACTLY ONE rung up a
+    leverage ladder (opt-in), suppressed only on a clear one-off signal. This cycle
+    aligns the judge rubric to that contract:
+      - REWARD: landed the literal ask + asked at most one opt-in rung up BY
+        DEFAULT (suppressed only on a clear one-off signal) + all four legs
+        visible and adapted (infer -> surface -> check -> learn).
+      - PENALIZE (FAIL): jumped TWO+ rungs (a workflow/system for a single doc);
+        ASSERTED/already-built structure instead of an opt-in ASK; or FAILED to
+        offer the one-rung ask absent any suppressing signal.
+      - It no longer demands committed concrete structure (the contradiction).
+
+    This is a contract-ALIGNMENT — the old rubric demanded the OPPOSITE of the
+    ratified design — auditable, NOT bar-lowering: the four-leg requirement
+    (surfaced hypothesis + adapt) is preserved.
+
+    Predecessor commits:
+      - 625303cf — loam-acceptance-smoke variant-B hardening seal (BASELINE).
+
+    BASELINE 625303cf. Single-component fence on
+    `framework/tools/loam-acceptance-smoke/`. The workspace-bootstrap close +
+    extractor activation (AC.ONRUNG.*/AC.INTENT.5/.6) is a SEPARATE sibling
+    amendment (#179), sealed first.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

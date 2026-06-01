@@ -1,0 +1,39 @@
+# User-state migration — v1.0.0 release cut
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration (the ~30-second answer
+# for a code/metadata-only release). The v1.0.0 cut is the owner-declared
+# major (Luke, Telegram 13414: "calling this 1.0") over v0.14.0 — it ships
+# documentation-accuracy fixes + a per-component version lockstep bump
+# (0.14.0 -> 1.0.0) + the fold-in of state-migration-engine /
+# protection-matrix into lockstep. None of that touches a user's stored
+# state shape.
+
+version: v1.0.0
+slug: v1-0-0-release-cut
+slice: v1.0.0 release cut (owner-declared major over v0.14.0)
+date: 2026-06-01
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.0.0 is a release cut, not a feature. Its substance is (1) the pre-1.0
+  documentation health-check fixes (the sealed dev-sdlc doc-accuracy amendment
+  + two new component-reference pages + STATE/roadmap entry), and (2) the
+  per-component pyproject version lockstep bump 0.14.0 -> 1.0.0 plus the
+  fold-in of state-migration-engine + protection-matrix into the lockstep set.
+  Pyproject `version` fields, doc prose, and the ACTIVE_MINOR anchor are
+  FRAMEWORK-side metadata — none of them lives under a user's `.loam/` state
+  home. No new on-disk user-state schema, no new layout, no field change to
+  any existing user-state artifact (episode store, applied-migration cursor,
+  scope ledgers, audit logs). A user upgrading from v0.14.0 to v1.0.0 needs no
+  state migration. Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a pure
+# code/metadata revert; no data move.
+reversible: true
+removes_user_state: false
+idempotent: true

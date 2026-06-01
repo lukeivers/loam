@@ -1,0 +1,112 @@
+schema_version: 1
+amendment:
+  number: 162  # Next sequential amendment. Highest manifest counter on disk is
+               # 161 (the sibling SUB-ITEM 1a). 162 is the next free slot for
+               # SUB-ITEM 3 (the migration auto-detect / auto-upgrade trigger).
+               # The builder CONFIRMS the exact number at `loam amend apply`
+               # time against the live counter
+               # (feedback_version_numbers_at_release_time — never pre-bake a
+               # number that drifts). SUB-ITEM 1b (public PyPI flip) is
+               # OWNER-GATED (F-PUBLISH) and NOT a manifest-driven amend;
+               # SUB-ITEM 2 (flatten) is DEFERRED pending the F-FLATTEN ruling.
+  slug: foundation-polish-cluster-auto-upgrade
+  title: "foundation-polish cluster — SUB-ITEM 3: migration auto-detect / auto-upgrade trigger (the D4 fast-follow). SINGLE-COMPONENT fence (orchestrator): a NEW fail-soft SessionStart contributor (scripts/auto_upgrade.py) that NOTICES a behind applied-migration cursor at session-start (AC.UPGR.1), replays the pending declared migrations by COMPOSING the SEALED `loam migrate` engine wrapped in the existing reversibility-primitive backup-verify-rollback envelope — a THIN consumer, ZERO re-implementation of any apply/replay/backup path (AC.UPGR.2) — and surfaces the outcome in PLAIN language with no SHAs / cursor internals / AC-IDs; on a failure the inherited rollback fires and the user is told the state was RESTORED, not left half-migrated (AC.UPGR.3). Proven by the outcome-altitude AC.UPGR.S COLD-WALK: a genuinely SEPARATE temp instance seeded at a real prior cursor with real seeded user-state reaches the live-shaped SessionStart entry-point with NO pre-arranged trigger state; auto-detect fires, the wrapped replay runs the intermediates, the cursor reads the target, the seeded user-state survives intact, the plain-language surface reports it (never writes the live store — the FBM cold-walk discipline). The always-on LIVE SessionStart ARM is OWNER-GATED (plan §8.4): the module is BUILT + PROVEN here, but it is NOT wired into pos_session_start.py:main() — registering an auto-upgrade that mutates user-state on every session is a runtime-behaviour flip in the same owner-class as the FBM / KP7 live activations. Built as a KP7-pattern fail-soft contributor: a broken auto-upgrade contributor NEVER breaks session-start."
+
+# BASELINE: 19a14b91 — HEAD of the plan/foundation-polish-auto-upgrade branch
+# (off main at cluster-plan-authoring; the pre-amendment tip immediately before
+# this amendment's code commit). The builder CONFIRMS this against the actual
+# predecessor seal-advance commit at apply time.
+baseline: "19a14b91"
+
+plan: docs/plans/foundation-polish-cluster.md
+
+components:
+  # SINGLE-COMPONENT fence (plan §2 — a session-start contributor). The
+  # orchestrator owns the live SessionStart hook chain (pos_session_start.py)
+  # and the fail-soft-contributor pattern (session_surface.py / KP7); the new
+  # auto-upgrade contributor lives alongside them at
+  # framework/orchestrator/scripts/auto_upgrade.py. The contributor COMPOSES
+  # the SEALED migration engine + reversibility envelope (it does NOT touch
+  # them — the engine/reversibility prefixes are admitted in the orchestrator
+  # seal-test for composition robustness, NOT modified). The pyproject gains
+  # the two runtime deps so the composed import resolves in a real install.
+  - name: orchestrator
+    seal_test: framework/orchestrator/tests/test_no_sealed_amendments.py
+    sidecar: framework/orchestrator/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. This amendment is
+# orchestrator-only code; the universal surfaces below carry the plan-docs +
+# the bookkeeping files (STATE.md, roadmap) the cycle-close backfills.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/plans/loam-roadmap.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: docs/plans/sealed/foundation-polish-cluster-auto-upgrade.md
+  body: |
+    # foundation-polish cluster — SUB-ITEM 3: migration auto-detect / auto-upgrade trigger — apply ladder
+
+    Foundation-polish cluster per `docs/plans/foundation-polish-cluster.md`.
+    The D4 fast-follow: wire the ALREADY-SEALED migration engine + `loam migrate`
+    verb to a session-start auto-detect so a non-technical user's stale
+    user-state is upgraded automatically, safely, and explained in plain words.
+
+    SUB-ITEM 3 (this amendment — AUTONOMOUS module build; the LIVE arm is
+    owner-gated):
+      1. AUTO-DETECT (AC.UPGR.1) — a NEW fail-soft SessionStart contributor
+         (`framework/orchestrator/scripts/auto_upgrade.py`) reads the
+         per-workspace applied-migration cursor and enumerates the pending
+         declared migrations in release-version order, WITHOUT the user running
+         anything. Composes the SEALED engine's own pending-set computation
+         (`read_cursor` → `load_migration_dir` → `enumerate_pending`).
+      2. WRAPPED REPLAY (AC.UPGR.2) — on a gap, the contributor builds the
+         envelope EXACTLY as the sealed `loam migrate` verb does
+         (`ReversibilityStore` + `MigrationSafetyEnvelope`) and calls the
+         SEALED `replay.replay`. Backup-first / protection-floor /
+         rollback-on-failure are INHERITED. ZERO re-implementation of any
+         apply/replay/backup path (plan §8.3 — the #1 boundary-leak risk).
+      3. PLAIN-LANGUAGE SURFACE (AC.UPGR.3) — after an upgrade the user is told
+         in plain words what happened ("loam brought your saved settings up to
+         date (N updates applied); your existing work was preserved") — NO
+         SHAs / cursor internals / AC-IDs. On a FAILURE the inherited rollback
+         fires and the user is told the state was put back exactly as it was,
+         nothing left half-changed.
+      4. ★ outcome-altitude AC.UPGR.S COLD-WALK: a genuinely SEPARATE temp
+         instance seeded at a real prior cursor with real seeded user-state
+         reaches the live-shaped SessionStart entry-point
+         (`emit_auto_upgrade_surface`) with NO pre-arranged trigger state;
+         auto-detect fires, the wrapped replay runs the intermediates, the
+         cursor reads the target, the seeded user-state survives intact, and
+         the plain-language surface is EMITTED as the live additionalContext
+         line. Drives the real session-start entry-point against a real stale
+         instance — NOT a unit test of the trigger function
+         (feedback_test_outcome_altitude_required). The live pos3 store is
+         NEVER written (the FBM cold-walk discipline, plan §8.6).
+
+    Composes on (Lens 1, NO re-implementation): the SEALED migration engine
+    (`framework/state-migration-engine/` — `replay`, `enumerate_pending`,
+    `read_cursor`, `load_migration_dir`); the SEALED reversibility envelope
+    (`ReversibilityStore` + `MigrationSafetyEnvelope`); the live SessionStart
+    hook chain's fail-soft-contributor pattern (`pos_session_start.py` /
+    `session_surface.py` — KP7). The orchestrator pyproject gains
+    `loam-state-migration-engine` + `loam-reversibility-primitive` as runtime
+    deps so the composed import resolves in a real install.
+
+    OWNER-GATED, NOT in this amendment (plan §8.4): the LIVE SessionStart ARM.
+    `emit_auto_upgrade_surface` is the contributor entry-point the live
+    `pos_session_start.py:main()` wiring would call (one-line addition,
+    mirroring `_emit_keep_pace_surface`), but it is NOT wired into `main()`
+    here — flipping an always-on auto-upgrade that mutates user-state on every
+    session is owner-class runtime behaviour (the FBM / KP7 activation class).
+    The module is BUILT + PROVEN; the live wiring is surfaced for owner
+    sign-off, not flipped.
+
+    BASELINE 19a14b91 — HEAD of the plan/foundation-polish-auto-upgrade branch
+    (the pre-amendment tip); confirm at apply time. Counter 162 is the next
+    free slot; confirm at apply time. Single-component fence (orchestrator).

@@ -16,6 +16,13 @@ dependencies = [
     "loam-scope-of-work",
     "loam-objective-tracker",
     "loam-primary-persona",
+    # SUB-ITEM 3 (auto-upgrade trigger): the auto-detect session-start
+    # contributor (scripts/auto_upgrade.py) COMPOSES the SEALED migration
+    # engine + the reversibility envelope (a thin consumer; AC.UPGR.2). These
+    # runtime deps make the engine/envelope import resolve in a real install
+    # the same way it resolves in the editable dev tree.
+    "loam-state-migration-engine",
+    "loam-reversibility-primitive",
 ]
 
 [tool.setuptools]

@@ -15,9 +15,69 @@ codebase.
 
 ## Design lenses for every feature
 
-Seven principles must become part of the research of every future
-feature — not one-time exercises, but always-on lenses. A feature
-proposal that does not answer all seven is incomplete.
+A prime lens (Lens 0) and seven supporting principles must become
+part of the research of every future feature — not one-time exercises,
+but always-on lenses. A feature proposal that does not answer all
+eight is incomplete.
+
+### Lens 0 — the prime lens: per-user-tuned translation
+
+> **AI only becomes truly useful to a person when it is tuned to that
+> specific person. loam's job is to continuously learn the specific
+> user and translate what they want — customised to them — down into
+> the underlying machinery (the frontier model, Claude Code, whatever
+> sits beneath), so the user only ever has to know *what* they need,
+> never *how.* The seven lenses below all serve this one.**
+
+This is the lens the other seven serve. Where they shape *how* a
+feature is researched and built, this one states *what* loam is for,
+and every feature answers it first.
+
+The translation must be **learned and customised per person,
+continuously** — the same request does not translate the same way for
+two people. loam runs this through a four-step loop, which is what it
+adds on top of a raw model: (1) infer the action-oriented end-intent
+behind the literal ask; (2) design a healthy way to enable it — should
+it recur, need a framework, be deterministic?; (3) surface it back to
+the user to verify; (4) learn from the answer, then repeat. The
+inferred intent is always a hypothesis surfaced for checking, never an
+assumption silently built on; verification both corrects the
+hypothesis and teaches the per-user model. Guard the loop's own
+failure mode: do not meet every "do this once" with "make it an
+automated framework" — scale proposed structure to what this person
+has shown they want.
+
+Translation is only one side. The other is **protection**: what loam
+delivers toward the user's intent must avoid the known ways AI betrays
+its users by default (inventing things, missing context, breaking the
+surrounding work or the original goal, having no real memory). A floor
+of protection — the failures that betray *any* user — is always on for
+everyone and not tunable; above the floor, rigor flexes with user and
+stakes, and every guard is sized in proportion to the damage its
+failure would do.
+
+Two standing commitments fall out of this lens and bind every feature
+and every reply:
+
+- **Expose the substance; adapt only the vocabulary.** Always expose
+  the actions, consequences, and decisions — what is actually
+  happening — and never hide the substance. What adapts is the
+  *words*: describe that substance in the vocabulary the user knows.
+  loam's own coined terms count, even for a technical user; any
+  coined or narrow term the user has not shown they know gets
+  translated by default.
+- **Follow the defined workflow; if you lose your place, pause.**
+  Real multi-step processes are defined as structured flows that stay
+  in context during the work. Follow the flow — and if you are unsure
+  where in it you are, pause all other work until you re-establish
+  your position, the way a pilot re-establishes location before
+  touching anything.
+
+The required research question: **"How does this serve learning the
+user and translating for them specifically — and what known AI failure
+mode does its delivery need guarding against?"**
+
+Full statement of the doctrine this lens heads: `docs/design/loam-doctrine.md`.
 
 ### Lens 1 — Claude-leverage-first
 

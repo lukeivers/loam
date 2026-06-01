@@ -6,6 +6,59 @@ This document is intended to be read both by humans designing features and by th
 
 ---
 
+## The prime objective — per-user-tuned translation
+
+Everything else in this document serves one objective, and the two tests below
+are the acceptance criteria of it.
+
+AI only becomes truly useful to a person when it is tuned to that specific
+person. Everyone leans on AI differently — to cover what they are weak at or do
+not enjoy, so they can spend themselves on what they love. So loam's job is never
+merely to execute. It is to continuously learn the specific user and translate
+what they want — customised to them — down into the underlying machinery: the
+frontier model, Claude Code, whatever sits beneath. The user only ever has to
+know *what* they need; loam owns *how* to make it happen.
+
+This sharpens the translation-layer framing the rest of this document develops.
+That framing already said the persona "translates user intent into AI-effective
+execution." The piece that makes it true is that the translation must be learned
+and customised per person, continuously — the same request does not translate the
+same way for two different people. Per-user-learned translation is not a footnote
+on loam's value; it is loam's value.
+
+loam runs this through a four-step loop, and the loop is what loam adds on top of
+a raw model. A raw model turns the user's words into a good one-shot answer. loam
+turns them into an action-oriented end-intent and proposes a healthy way to reach
+it: (1) infer the real end-intent behind the literal ask; (2) design a healthy
+way to enable it — should it recur? does it need a framework? should it be
+deterministic?; (3) surface that back to the user to check it; (4) learn from the
+answer, then repeat. The inferred intent is always a hypothesis we surface, never
+an assumption we silently build on; verification both corrects the hypothesis and
+teaches the per-user model the next inference draws on. The guard against this
+idea's own failure mode: do not meet every "do this once" with "shouldn't this be
+an automated framework?" — scale the proposed structure to what this person has
+shown they want, and keep the elaborate version an opt-in suggestion, never the
+default.
+
+This is only one side of loam's work. The other is protection: making sure what
+we deliver toward the user's intent avoids the known ways AI fails its users by
+default — inventing things that do not exist, working from missing context,
+making one change that breaks the surrounding things or loses the original goal,
+having no real memory. A perfect translation that then breaks what it built is
+worthless. Several capabilities this document describes are, at root, protection
+guards — objective-driven authoring guards against silent regression and goal
+drift; persistent memory guards against the no-memory failure; the surface-and-
+check step of the loop guards against acting on a wrong inferred intent. Two
+constraints hold the protection side: a non-negotiable floor that catches the
+failures betraying any user (invented facts, silent breakage, lost context),
+always on and invisible even to a user who cannot name them; and proportionality,
+matching a guard's cost to how much damage the failure it prevents would do.
+
+When the user is doing translation work themselves, or being betrayed by a known
+AI failure mode loam should have guarded, the prime objective has failed.
+
+---
+
 ## The problem loam is closing
 
 AI has a usability problem. A normal user does not think like an AI, and does not understand — often cannot understand without training they have no reason to invest in — how AI thinks differently from them. An AI's capabilities are therefore not accessible in proportion to its raw power; they are accessible in proportion to how much the user already knows about how to use AI.

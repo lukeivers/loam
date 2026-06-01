@@ -810,15 +810,18 @@ an alternative).*
 
 ## §13 §status — verdict matrix (backfilled at seal)
 
-*Populated at seal time per the standard ladder. Forks D-RES-1..D-RES-3 ruling
-recorded in §11 BEFORE the build dispatch.*
+*Backfilled at seal (2026-05-31). Forks D-RES-1..D-RES-3 ruled in §11 BEFORE the
+build dispatch. All ACs GREEN; tests in
+`framework/workspace-bootstrap/tests/test_AC_DRR_deep_role_research_provider.py`
+(11 deterministic + 1 env-gated live `claude -p` smoke). Sealed on the
+`workspace-bootstrap` fence.*
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.DRR.1 (real provider, 3 axes, is_stub=False) | _pending build_ | |
-| AC.DRR.2 (research bounded — fixed budget) | _pending build_ | |
-| ★ AC.DRR.3 (output short + person-specific — not a dump) | _pending build_ | |
-| AC.DRRSEAM.1 (satisfies sealed Protocol; fold-back unchanged) | _pending build_ | |
-| ★ AC.DRRSEAM.2 (featherlight invariant AC.ONDEEP.1 still holds) | _pending build_ | |
-| AC.DRRGRACE.1 (unavailable → fallback, never raise/hang) | _pending build_ | |
-| ★ AC.DRROUT.1 (outcome-altitude — real provider through real seam) | _pending build_ | |
+| AC.DRR.1 (real provider, 3 axes, is_stub=False) | ✓ GREEN | `test_AC_DRR_1_real_provider_returns_three_axes_is_stub_false` — three axes role-derived, is_stub=False, distinguishable from the stub |
+| AC.DRR.2 (research bounded — fixed budget) | ✓ GREEN | `test_AC_DRR_2_research_is_bounded_never_exceeds_the_fixed_budget` + `_over_budget_source_is_rejected_to_fallback` — subagent told the cap; ≤budget observed; overshoot → fallback (hard cap, halt-trigger #4) |
+| ★ AC.DRR.3 (output short + person-specific — not a dump) | ✓ GREEN | `test_AC_DRR_3_output_is_short_and_person_specific_not_a_dump` — ≤MAX_LEVERAGE_IDEAS, each references the role, two roles → two sets |
+| AC.DRRSEAM.1 (satisfies sealed Protocol; fold-back unchanged) | ✓ GREEN | `test_AC_DRRSEAM_1_real_provider_satisfies_protocol_and_foldback_unchanged` — driven through `run_translate_in_intake`; `translate_in_intake.py` untouched |
+| ★ AC.DRRSEAM.2 (featherlight invariant AC.ONDEEP.1 still holds) | ✓ GREEN | `test_AC_DRRSEAM_2_featherlight_invariant_holds_with_real_provider_registered` — real provider registered as default; 3 non-(vacuum+role+opt-in) paths invoke zero research; only the opt-in path reaches it |
+| AC.DRRGRACE.1 (unavailable → fallback, never raise/hang) | ✓ GREEN | `test_AC_DRRGRACE_1_unavailable_primitive_returns_marked_fallback_never_raises` + `_claude_subagent_source_degrades_when_spawn_isolation_absent` — marked fallback (is_stub=True), never raises; close still surfaces ≥1 idea |
+| ★ AC.DRROUT.1 (outcome-altitude — real provider through real seam) | ✓ GREEN | `test_AC_DRROUT_1_real_provider_through_real_seam_deterministic` (real provider via `default_research_provider()` + production intake opt-in path; 4 post-conditions) + env-gated `_live_claude_p` smoke (`LOAM_AC_DRROUT_LIVE=1`) |

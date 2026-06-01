@@ -1,0 +1,184 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: deep-role-research-provider
+  title: "deep role-research provider — the REAL ResearchProvider (N3 fast-follow / D-5): fills the seam N3 sealed with a bounded claude -p three-axis research-subagent + synthesis to a few person-specific leverage ideas (is_stub=False), graceful-degrading, behind default_research_provider()"
+
+# BASELINE: be7487cb — the pre-amendment tip of the plan/deep-role-research
+# branch (the PLAN-ONLY commit, rebased onto main 6b76f9ef which carries the N3
+# seal 96aae8a + N4 + the failure-mode-guard matrix). The source-edit commit
+# (7f54fe55 feat(workspace-bootstrap): real ResearchProvider) lands on top; this
+# manifest captures the diff scope of THIS amendment (the provider + its tests +
+# the registration seam), not the rebased-main history.
+#
+# Commit ladder:
+#   6b76f9ef — main HEAD @ rebase (N3 seal + N4 + failure-mode matrix).
+#   be7487cb — plan-only commit (this slice's plan §11 fork rulings recorded). BASELINE.
+#   7f54fe55 — feat: the real ResearchProvider source-edit + tests.
+#   <loam amend apply>  — admissions check.
+#   <loam amend seal>   — sidecar/BASELINE bump + deterministic seal commit.
+#
+# Single-component fence: workspace-bootstrap (the component that owns
+# deep_role_research.py — the sealed seam, the Protocol, the RoleResearchResult,
+# the default_research_provider() resolver). The new provider + its tests + the
+# register_research_provider() seam all land in this one component. NO other
+# sealed component is touched; the intake's gating logic (translate_in_intake.py)
+# is UNTOUCHED (the featherlight AC.ONDEEP.1 invariant stays sealed).
+#
+# Files authored (builder's exact layout per ODD §1.1):
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/
+#     deep_role_research_provider.py   # the real RoleResearchProvider + the
+#                                      # bounded claude -p ClaudeSubagentResearchSource
+#                                      # + the synthesis + the AC.DRRGRACE fallback.
+#     deep_role_research.py            # + register_research_provider()/reset_research_provider()
+#                                      # (the registration seam; the sealed Protocol/
+#                                      # RoleResearchResult/resolver are UNCHANGED).
+#   framework/workspace-bootstrap/tests/
+#     test_AC_DRR_deep_role_research_provider.py  # AC.DRR.*/DRRSEAM.*/DRRGRACE.*/DRROUT.*
+#
+# AC families locked per docs/plans/deep-role-research-provider.md §5:
+#   AC.DRR.1     — real provider, given a role, returns a synthesis on all three
+#                  axes, is_stub=False, distinguishable from the stub.
+#   AC.DRR.2     — the research is BOUNDED to the fixed D-RES-2 budget (~3
+#                  round-trips); an over-budget source is rejected to fallback.
+#   AC.DRR.3 ★   — the output is SHORT (<=3 ideas) + person-specific (references
+#                  the role); two roles yield two different sets (not a template).
+#   AC.DRRSEAM.1 — the real provider satisfies the sealed ResearchProvider
+#                  Protocol; the intake's as_leverage_ideas() fold-back consumes
+#                  it with NO change to translate_in_intake.py.
+#   AC.DRRSEAM.2 ★ — the sealed featherlight invariant (AC.ONDEEP.1) STILL holds
+#                  with the real provider registered behind default_research_provider().
+#   AC.DRRGRACE.1 — unavailable/timeout/over-budget primitive -> a clearly-marked
+#                  fallback (is_stub=True), never raises / hangs / returns empty;
+#                  the intake's close still surfaces >=1 leverage idea.
+#   AC.DRROUT.1 ★ (outcome-altitude) — a REAL provider on a sample role through the
+#                  REAL seam (default_research_provider() resolving to the real
+#                  provider + the production intake's idea-vacuum opt-in path) ends
+#                  with is_stub=False / three axes / <=count person-specific ideas /
+#                  within budget. Deterministic source variant runs every pass
+#                  (exercises the real dispatch+parse+budget+synthesis — the
+#                  provider itself is NOT stubbed); an env-gated (LOAM_AC_DRROUT_LIVE=1)
+#                  live claude -p variant drives the real subagent for the smoke.
+#
+# Forks ruled BEFORE build (plan §11, recorded on the plan-only commit be7487cb):
+#   D-RES-1 (a) — bounded claude -p research-subagent via the mandated
+#                 loam_spawn_isolation primitive (--strict-mcp-config + empty
+#                 mcpServers + token/API-key-scrubbed env); NO Anthropic API key
+#                 (feedback_no_anthropic_api_key); lazy-imported + graceful degrade
+#                 (feedback_spawned_claude_must_isolate_telegram_plugin).
+#   D-RES-2 (a) — TIGHT: ~3 round-trips ceiling + <=3 surfaced ideas (HARD caps;
+#                 the over-reach guard applied twice to an already-overwhelmed user).
+#   D-RES-3 (a) — SYNCHRONOUS with a hard timeout + graceful fallback (async is a
+#                 fast-follow on this fast-follow, §7 out-of-scope).
+#
+# Out of scope (plan §7): editing the sealed intake gate (who reaches the seam);
+#   async/background re-surfacing; persisting a research cache; non-role research
+#   axes; an LLM-as-judge synthesis-quality gate; a general-purpose deep-research
+#   module.
+baseline: "be7487cb"
+
+plan: docs/plans/deep-role-research-provider.md
+
+components:
+  # EXTEND the existing sealed workspace-bootstrap component (the seam, the
+  # Protocol, the RoleResearchResult, the default_research_provider() resolver
+  # all live here). The real provider + its tests + the registration seam are
+  # NET-NEW files/additions in the SAME component. No new framework component;
+  # the intake's gating logic is untouched.
+  - name: loam-workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+
+# Universal admissions (admitted across all components per amendment #22 ruling).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/state-migrations/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/plans/loam-roadmap.md
+    - docs/plans/n3-onboarding-init-flow-translate-in-intake.md  # AC.ONDEEP.2 PASS backfill (§9)
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.deep-role-research-provider
+  body: |
+    # deep role-research provider — the REAL ResearchProvider (N3 fast-follow) — apply ladder
+
+    2026-05-31. Roadmap N3 fast-follow (fork D-5 (a)) per
+    `docs/plans/deep-role-research-provider.md`. Fills the seam N3 sealed
+    (`framework/workspace-bootstrap/src/loam/workspace_bootstrap/deep_role_research.py`,
+    SEAL 96aae8a): the deep role-research PASS itself (the baseline shipped
+    ONLY the opt-in gate + the featherlight stub seam).
+
+    The slice: given a user's role + their explicit opt-in (both already
+    established by the sealed intake — this slice NEVER re-gates), run a
+    BOUNDED three-axis research pass — (i) what makes someone EFFECTIVE at
+    the role, (ii) what gets people PROMOTED, (iii) which EXISTING AI tools
+    loam could wrap or rebuild — then SYNTHESIZE a SHORT, person-specific set
+    of <=3 leverage ideas and return the sealed RoleResearchResult with
+    is_stub=False, which the intake's as_leverage_ideas() fold-back consumes
+    UNCHANGED.
+
+    The central stance: the synthesis IS the deliverable, not the research.
+    The user who reaches this seam is — by the sealed intake's routing — at
+    the bottom of the idea-quality continuum (already overwhelmed). The
+    over-reach guard therefore applies TWICE: the research runs on a HARD
+    fixed budget (~3 round-trips, NOT an unbounded agent loop), and the
+    output is a FEW person-specific ideas (NOT a citation dump that
+    re-overwhelms).
+
+    The LOAD-BEARING finding (plan §10.1): WebSearch/WebFetch/the Agent tool
+    are Claude-Code SESSION tools, NOT importable functions a standalone
+    Python provider can call; and loam forbids the Anthropic SDK / API key
+    (feedback_no_anthropic_api_key). So "compose the forked-research-subagent"
+    resolves to a bounded `claude -p` subprocess — the subprocess IS a Claude
+    session with the web-research toolset — spawned through the MANDATED
+    loam_spawn_isolation.spawn_isolated_claude primitive (--strict-mcp-config
+    + empty mcpServers + token/API-key-scrubbed env) so it cannot steal the
+    operator's Telegram bot slot
+    (feedback_spawned_claude_must_isolate_telegram_plugin).
+    loam_spawn_isolation is not a workspace-bootstrap dependency; the provider
+    LAZY-imports it inside the dispatch and DEGRADES GRACEFULLY when it (or the
+    claude binary) is absent (AC.DRRGRACE.1) — the same convention the
+    README_3 outcome-altitude test uses.
+
+    Forks ruled BEFORE build (plan §11, owner-ratified, recorded on the
+    plan-only commit):
+      D-RES-1 (a) — bounded claude -p research-subagent via loam_spawn_isolation;
+                    no API key; lazy-import + graceful degrade.
+      D-RES-2 (a) — TIGHT budget: ~3 round-trips ceiling + <=3 ideas (HARD caps).
+      D-RES-3 (a) — synchronous + hard timeout + graceful fallback.
+
+    AC families: AC.DRR.* (real provider, bounded, short+person-specific),
+    AC.DRRSEAM.* (satisfies the sealed Protocol; the featherlight AC.ONDEEP.1
+    invariant STILL holds with the real provider registered),
+    AC.DRRGRACE.1 (unavailable/timeout/over-budget -> clearly-marked fallback,
+    never raise/hang), and the ★ AC.DRROUT.1 outcome-altitude AC (a real
+    provider on a sample role through the real seam — is_stub=False + three
+    axes + <=count person-specific ideas + within budget; deterministic source
+    variant runs every pass exercising the real dispatch+parse+synthesis, plus
+    an env-gated live claude -p smoke).
+
+    Composes on (rebuilds none): the sealed deep_role_research seam (the
+    Protocol + RoleResearchResult + default_research_provider() resolver — the
+    real provider registers behind the resolver via a new
+    register_research_provider() seam, with the resolver's contract unchanged),
+    the sealed translate_in_intake.py fold-back (UNCHANGED — the intake's
+    gating logic is sealed and untouched), and the loam_spawn_isolation
+    primitive (the Lens-1 compose-don't-rebuild answer for the research
+    dispatch). Backfills N3's AC.ONDEEP.2 from "SEAM GREEN / PASS deferred" to
+    PASS (the deferred research PASS is now filled).
+
+    Predecessor:
+      - 96aae8a — N3 translate-in onboarding intake seal (the seam this fills).
+      - 6b76f9ef — main tip @ rebase (carries the N3 seal + N4 + failure-mode
+        matrix).
+
+    BASELINE be7487cb (the plan-only commit; the source-edit 7f54fe55 lands on
+    top). Single-component fence on framework/workspace-bootstrap/.

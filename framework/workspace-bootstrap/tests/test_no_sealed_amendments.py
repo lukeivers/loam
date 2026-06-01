@@ -192,7 +192,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              (BASELINE-as-HEAD~1 pattern). docs/plans/ admitted (the
 #              N3 plan-doc lives with the amendment, already an allowed
 #              prefix at line ~342).
-BASELINE = "c820aead"
+BASELINE = "5a4667eb"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

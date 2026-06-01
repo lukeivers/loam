@@ -1,0 +1,91 @@
+# non-tech-user self-recovery — the protection floor's last-resort
+safety net for a stuck non-technical user — apply ladder
+
+Per `docs/plans/non-tech-user-self-recovery.md` and parent doctrine
+`docs/design/loam-doctrine.md` §"Two standing constraints" #1 (the
+non-negotiable floor — "always on for everyone … invisibly,
+especially for a non-technical user who cannot even name [the
+failures]"). This system IS that floor's safety net: when a guard
+fails anyway and the user is stuck, the floor must still get them
+unstuck. Owner directive Telegram 13231/13225, born from the real
+6-hour silent-night comms failure.
+
+Plan: `docs/plans/non-tech-user-self-recovery.md`.
+
+Scope (per plan §2 + §5 + §7): EXTEND the `self-correction`
+component + COMPOSE on four sealed primitives (the self-correction
+user_reported trigger, dormancy detection, telegram-interface
+availability+fallback, and the state-migration-engine
+MigrationSafetyEnvelope snapshot/guard/restore). Four parts:
+
+  1. Distress detection → forced self-diagnosis. A deterministic
+     inbound-path hook + counter (no LLM — feedback_no_anthropic_api_key)
+     trips a self-diagnosis by the 2nd distress signal (the fire-alarm
+     law: 2nd signal at the latest). The diagnosis checks comms-path
+     liveness + recent-actions-vs-claims — the two silent-night root
+     causes. Composes the existing build_trigger_from_user_report.
+  2. Watchdog. Detects a stuck/silent agent (dormancy rubric) OR a
+     dead comms channel (AvailabilityProbe) proactively — no user
+     signal required — and routes to recovery / outage self-heal.
+  3. Plain-language recovery. The surface a non-technical user sees
+     is plain-English + actionable + carries ZERO internal vocabulary
+     (the abstraction-first contract; the v0.7.0 stranger-clone probe
+     shape applied to the recovery surface).
+  4. Safe FBM hard-reset. Resets corrupted .loam/ user-state
+     BACKUP-FIRST and FAIL-CLOSED — delegating
+     MigrationSafetyEnvelope.snapshot/.guard/.restore so the
+     irreplaceable store is NEVER lost (a reset with no recoverable
+     snapshot is REFUSED — ProtectionFloorRefusal).
+
+AC families:
+
+  - AC.SR-DISTRESS.1 — 2nd qualifying distress signal trips
+    self-diagnosis (does not wait for an explicit "diagnose this").
+  - AC.SR-DISTRESS.2 — the diagnosis checks comms-path liveness +
+    recent-actions-vs-claims (the narration-not-action check).
+  - AC.SR-WATCH.1 — a stuck/silent agent is detected proactively and
+    routed to recovery (no user signal required).
+  - AC.SR-WATCH.2 — a dead comms channel is detected and self-heal
+    attempted (reconnect + out-of-band notify + queue low-confidence).
+  - AC.SR-RECOVER.1 — the recovery surface is plain-language +
+    actionable + satisfiable by a non-technical user.
+  - AC.SR-RECOVER.2 — the recovery surface carries ZERO internal
+    vocabulary (no stack traces / AC-IDs / SHAs / paths / ODD vocab).
+  - AC.SR-RESET.1 — the FBM hard-reset is backup-first AND fail-closed
+    (a reset with no recoverable snapshot is REFUSED).
+  - AC.SR-RESET.2 — after a reset the prior .loam/ store is restorable
+    byte-for-byte (the irreplaceable store is never lost).
+  - AC.SR-S.1 ★ (outcome-altitude) — a real stuck/distress scenario at
+    the production entry-point, NO pre-arranged state, trips detection
+    → produces a real plain-language recovery (zero internal vocab) →
+    for the reset branch leaves the prior store restorable
+    byte-for-byte. A STUB-class test (pre-arranged trip / pre-seeded
+    snapshot) does NOT satisfy it (feedback_test_outcome_altitude_required).
+
+Method-level choices are the builder's call per ODD §1.1; the plan
+fixes the four-part scope, the composition on the four named
+primitives, and the AC set — not the implementation.
+
+The LOAD-BEARING design (plan §10 F2): the highest-stakes piece is the
+FBM reset (it touches the irreplaceable store). A too-eager reset is
+itself the FM.DESTRUCTIVE-PRUNE betrayal applied to the user's whole
+memory — so backup-first + fail-closed-refusal is a HARD invariant
+(delegated to the migration-safety envelope), NOT a discipline. This
+system also CLOSES named protection-matrix floor gaps: it is the first
+programmatic guard over FM.NARRATION-NOT-ACTION (the silent-night
+stall) and over the currently-UNNAMED FM.COMMS-PATH-DEAD (the
+invisible-text bug — replies to a terminal the user never sees). FORK
+F-4 decides whether this cycle also backfills those two matrix rows.
+
+Out of scope (plan §7): a new correction/self-diagnosis engine; a new
+comms transport; auto-repair of an arbitrary stuck build; the adaptive
+user-model fast-down tone shift; the owner visibility window (#37).
+
+Predecessor:
+  - 6b76f9ef — main tip @ plan-authoring (failure-mode-guard-matrix
+    SHA-record seal).
+
+BASELINE 6b76f9ef (re-baselined by the builder to the actual
+source-edit commit). EXISTING-component fence on
+`framework/self-correction/` (+ the hooks/ prefix); the sidecar is
+ADVANCED at this seal (prior seal exists).

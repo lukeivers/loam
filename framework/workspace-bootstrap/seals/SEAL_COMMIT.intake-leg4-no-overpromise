@@ -1,0 +1,25 @@
+# Intake leg-4 no-over-promise fix — apply ladder
+
+The acceptance-smoke rerun9 flipped variants A + B `four-step-loop-ran` to
+PASS (the leg-4 fixes worked), but surfaced a NEW variant-A
+`no-over-engineering` FAIL: the leg-4 adjustment surfaced the LLM seam's
+adjustment read verbatim — "the volume and routine cadence suggest this could
+be fully automated, not just assisted" — which over-promises unattended
+automation, violating the close's right-sized contract (AC.ONCLOSE.3).
+
+A CLEAR-DIRECTION fix composing two existing contracts: the leg-4 adjustment
+(AC.INTENT.4) must respect the no-over-promised-automation contract
+(AC.ONCLOSE.3). `_is_over_promise` REJECTS any adjustment / deeper-end-intent
+carrying an automation over-promise ("fully automated", "runs itself",
+"set it and forget", "hands-off", "unattended", …); leg 4 then falls through
+to a right-sized reflection. The extraction prompt also forbids the
+over-promise at the source (defense-in-depth).
+
+Predecessor commits:
+  - 2eb5c965 — #175 ladder-leg4 seal (BASELINE).
+
+BASELINE 2eb5c965. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
++ the READY verdict surface after the smoke re-run.

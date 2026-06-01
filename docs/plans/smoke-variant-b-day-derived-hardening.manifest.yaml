@@ -4,16 +4,19 @@ amendment:
   slug: smoke-variant-b-day-derived-hardening
   title: "Smoke variant-B persona hardening — reliably exercise the day-derived path (AC.SMOKE.6): the brief now steers Marcus to name his day AND the claim-summary write-up pile-up in the same first answer (day-derived PARTIAL, off the research ladder), forbidding the contentless vacuum opener that tripped the featherlight gate in rerun2"
 
-# BASELINE: 5e2ef11d — the workspace-bootstrap close-redesign source commit
-# immediately preceding the smoke source-edit commit (03a71e8c). BASELINE-as-
-# HEAD~1 pattern (the close-redesign commit is the close-component's source; this
-# smoke component's source edit follows it).
+# BASELINE: ab5762dc — the revert commit immediately preceding the REPLAYED
+# smoke source-edit commit (3b53fc97). BASELINE-as-HEAD~1 pattern.
+#
+# Serialized-build note: the smoke change first landed at 03a71e8c (before the
+# #166 close-redesign apply/seal). A BASELINE..HEAD fence diff from there caught
+# #166's workspace-bootstrap seal files (out-of-fence). The smoke change was
+# reverted (ab5762dc) and replayed as a fresh delta (3b53fc97) ON TOP of the
+# #166 seal, isolating the #167 fence to the smoke component only. No --amend.
 #
 # Commit ladder pre-apply:
-#   27a72fa2 — close-redesign plan-doc.
-#   5e2ef11d — close redesign source (#166 component). ← BASELINE
-#   03a71e8c — fix(smoke): variant-B persona hardening + AC.SMOKE.6 test.
-#   <#166 manifest commit>  (OTHER component, not in this fence)
+#   b474fec6 — #166 close-redesign seal (workspace-bootstrap).
+#   ab5762dc — revert of the early smoke edit (replay setup). ← BASELINE
+#   3b53fc97 — fix(smoke): variant-B persona hardening + AC.SMOKE.6 (replayed).
 #   <this manifest commit>
 #   <loam amend apply auto-commit>
 #   <loam amend seal deterministic seal commit>
@@ -30,7 +33,7 @@ amendment:
 #     loosening).
 #
 # New AC: AC.SMOKE.6 (variant-B input fidelity; does NOT loosen AC.SMOKE.3).
-baseline: "5e2ef11d"
+baseline: "ab5762dc"
 
 plan: docs/plans/intake-leverage-close-redesign.md
 
@@ -83,10 +86,11 @@ narrative:
     presents the day-derived shape, rather than papering over the gate.
 
     Predecessor commits:
-      - 5e2ef11d — close-redesign source (#166 component, BASELINE).
-      - 03a71e8c — variant-B persona hardening + AC.SMOKE.6 test (BASELINE+1).
+      - b474fec6 — #166 close-redesign seal (workspace-bootstrap).
+      - ab5762dc — revert of the early smoke edit, replay setup (BASELINE).
+      - 3b53fc97 — variant-B persona hardening + AC.SMOKE.6 (replayed, BASELINE+1).
 
-    BASELINE 5e2ef11d. Single-component fence on
+    BASELINE ab5762dc. Single-component fence on
     `framework/tools/loam-acceptance-smoke/`.
 
     DO NOT push, DO NOT merge — owner-gated.

@@ -195,3 +195,106 @@ The dispatch carries scope; this section is guidance the builder may adapt. The 
 - **★ FORK F-1 (OPEN — owner/dispatcher rules):** what the surface physically IS — generated file (a) / on-demand `/status` (b) / hook-driven in-context block (c) / combination (d). **Recommendation: (d)** with (a)+(c) load-bearing and (b) a free thin wrapper, on a SHARED aggregator. Full reasoning + signal-weighting in §3. If unruled, builder defaults to (d)'s shared-core with (a)+(c) first.
 - **Surfaced dependency (not a fork):** the loam 1.0 acceptance smoke (#48) plausibly wants this surface as a variable; named in §10 #5 so the 1.0-smoke author wires it in. Not made an AC of this cycle.
 - **No locked-decision contradiction, no method-in-AC I could not reframe, no sealed-component edit required** — the three other halt-and-surface triggers did not fire.
+
+# work-visibility surface — an always-current, self-maintaining view of
+loam's work + status the user SEES without asking — apply ladder
+
+Per `docs/plans/work-visibility-surface.md` and the prime objective
+`docs/VALUE_PROPOSITION.md` (the translation side — the user does ZERO
+translation work to learn the state of his own system — and the
+protection side — guarding "working from missing context" / "no real
+memory" by making current work-state always visible rather than
+reconstructed-on-ask). Owner directive Telegram 13231, task #37: the
+named root problem is the STATUS-ANXIETY STRESSOR — not knowing what is
+happening is itself the harm; the surface is the fix.
+
+Plan: `docs/plans/work-visibility-surface.md`.
+
+Scope (per plan §2 + §7): an AGGREGATION + WIRING cycle (NOT a new
+tracking system — plan §10 F2 #1). EXTEND the `primary-persona`
+component (the outward-facing twin of its inward tracker-context
+contributor) and COMPOSE on four sealed surfaces, READ-ONLY:
+
+  1. Aggregator. A deterministic, no-LLM reader
+     (feedback_no_anthropic_api_key) that reads the EXISTING tracker
+     projections (in-flight / open-loop / owner-pending, chained to the
+     value-prop root — AC40.*) + the resolved position-cursor
+     (read_cursor / resolve_cursor — which process + where, with the
+     UNRESOLVED-over-confident posture) + the watchdog health signal
+     (stuck/silent-agent + dead-channel — the "is it stuck?" answer)
+     into ONE snapshot. Every source is best-effort lazy-imported +
+     fail-soft (the session_surface.py precedent): a broken/missing/
+     UNRESOLVED source degrades to "unknown", never breaks the snapshot
+     or the host hook.
+  2. Plain-language renderer. The snapshot renders to a status a
+     non-technical reader understands at a glance, explicitly answering
+     the three anxiety questions — what's happening now / what's next /
+     is anything stuck — and carrying ZERO internal vocabulary, routed
+     through the EXISTING contains_internal_vocabulary probe. A render
+     that cannot avoid leaking an internal token is a HALT, not
+     best-effort (mirrors AC.SR-RECOVER.2's halt posture).
+  3. Self-maintaining presenter wiring (FORK F-1 — owner-ruled). The
+     surface is persona-owned, not user-pulled: it reflects current
+     work-state without the user asking, refreshed on the events that
+     change work-state. FORK F-1 (RECOMMENDATION (d)): a generated
+     status file the user opens (durable, beyond-Telegram-ready) + a
+     hook-driven in-context block (proactive persona awareness) on a
+     SHARED aggregator, with an on-demand render falling out as a thin
+     wrapper. One snapshot, many thin presenters (the anti-fragmentation
+     invariant).
+
+AC families:
+
+  - AC.WVS-AGG.1 — ONE aggregator snapshot distinguishes running-now /
+    queued / owner-pending / position, sourced from the existing tracker
+    projections + resolved cursor (NOT re-derived).
+  - AC.WVS-AGG.2 — every source read is fail-soft: missing/broken/
+    UNRESOLVED degrades to "unknown", never breaks the snapshot/host hook.
+  - AC.WVS-AGG.3 — the snapshot carries a watchdog-sourced health signal
+    so the surface answers "is it stuck?", not just "what's there?".
+  - AC.WVS-RENDER.1 — renders plain-language now/next/health a
+    non-technical reader understands at a glance.
+  - AC.WVS-RENDER.2 — ZERO internal vocabulary (verified by the existing
+    contains_internal_vocabulary probe); a leak is a HALT.
+  - AC.WVS-FRESH.1 — self-maintaining: reflects current work-state
+    without the user asking; a change shows on the next refresh event.
+  - AC.WVS-FRESH.2 — persona-owned: refresh driven by work-state-change /
+    lifecycle events, not a user command (carrier = FORK F-1).
+  - AC.WVS-S.1 ★ (outcome-altitude) — a REAL workspace with genuine live
+    work-state (no pre-arranged snapshot / hand-fed status / mocked
+    sources) produces the real plain-language surface at the production
+    entry-point, sourced end-to-end from the live tracker + cursor +
+    watchdog. STUB-class does NOT satisfy it
+    (feedback_test_outcome_altitude_required).
+
+Method-level choices are the builder's call per ODD §1.1; the plan fixes
+the aggregation-not-tracking scope, the composition on the four named
+sealed surfaces, the AC set, and the SHARED-aggregator invariant — not
+the implementation.
+
+The LOAD-BEARING design (plan §10 F2 #1): this is a WIRING cycle, and the
+risk is OVER-building a dashboard when the correct shape is a thin
+aggregator over existing state. Every signal already exists sealed; the
+bootstrap-progress-statusline cycle already proved the
+renderer-over-state-file + statusLine shape for the exact same "is it
+stuck?" anxiety. Building a parallel tracker is the failure mode — fenced
+out (plan §7 / §8 halt #3/#4). Named secondary risks: the owner-pending
+bucket must render prominently (a large slice of the anxiety is "is it
+waiting on ME?"); the health render must say "no problems detected" not
+"everything is fine" (the watchdog is conservative); presenter (c)'s
+per-turn in-context cost is bounded by keeping it thin.
+
+Surfaced dependency (plan §10 #5): the loam 1.0 acceptance smoke (#48)
+plausibly wants this surface as a variable; named so the 1.0-smoke author
+wires it in. NOT made an AC of this cycle.
+
+Predecessor:
+  - 067e3435 — main tip @ plan-authoring
+    (protection-matrix-catalogue-track-and-rows seal).
+
+BASELINE 067e3435 (re-baselined by the builder to the actual source-edit
+commit). EXISTING-component fence on `framework/primary-persona/` (+ the
+hooks/ and scripts/ prefixes); the sidecar is ADVANCED at this seal
+(prior seal exists). Cross-component READS on self-correction (watchdog +
+recovery_surface probe), loam_cli.flows.cursor, and the orchestrator
+precedent — none edited.

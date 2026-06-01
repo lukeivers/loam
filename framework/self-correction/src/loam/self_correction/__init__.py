@@ -90,6 +90,46 @@ from .triggers import (
     build_trigger_from_user_report,
 )
 
+# --- non-tech-user self-recovery (the protection floor's safety net) ---
+# Four composable parts on four sealed primitives (plan
+# docs/plans/non-tech-user-self-recovery.md). Detection feeds the EXISTING
+# correction engine above; the safe-reset delegates the migration-safety
+# envelope. These are NEW surfaces on the existing component, not a new
+# engine.
+from .recovery_surface import (
+    RecoveryMessage,
+    RecoverySituation,
+    RecoverySurfaceLeak,
+    contains_internal_vocabulary,
+    find_internal_vocabulary,
+    render_recovery,
+)
+from .safe_reset import (
+    ResetNotConfirmed,
+    SafeFbmReset,
+    SafeResetResult,
+    is_reset_confirmed,
+    reset_would_fail_closed,
+)
+from .self_diagnosis import (
+    ActionsVsClaimsFinding,
+    ClaimCheck,
+    CommsPathFinding,
+    SelfDiagnosis,
+    check_actions_vs_claims,
+    check_comms_path,
+    open_user_reported_correction,
+    run_self_diagnosis,
+)
+from .watchdog import (
+    ChannelVerdict,
+    StallWatchdog,
+    StuckVerdict,
+    availability_probe_to_channel_probe,
+    check_channel_and_self_heal,
+    evaluate_stall,
+)
+
 
 __all__ = [
     "CauseDiagnosed",
@@ -127,4 +167,30 @@ __all__ = [
     "render_cascade_depth_text",
     "render_cascade_same_class_text",
     "render_cost_refusal_text",
+    # --- non-tech-user self-recovery ---
+    "ActionsVsClaimsFinding",
+    "ChannelVerdict",
+    "ClaimCheck",
+    "CommsPathFinding",
+    "RecoveryMessage",
+    "RecoverySituation",
+    "RecoverySurfaceLeak",
+    "ResetNotConfirmed",
+    "SafeFbmReset",
+    "SafeResetResult",
+    "SelfDiagnosis",
+    "StallWatchdog",
+    "StuckVerdict",
+    "availability_probe_to_channel_probe",
+    "check_actions_vs_claims",
+    "check_channel_and_self_heal",
+    "check_comms_path",
+    "contains_internal_vocabulary",
+    "evaluate_stall",
+    "find_internal_vocabulary",
+    "is_reset_confirmed",
+    "open_user_reported_correction",
+    "render_recovery",
+    "reset_would_fail_closed",
+    "run_self_diagnosis",
 ]

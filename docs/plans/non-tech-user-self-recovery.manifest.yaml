@@ -71,7 +71,12 @@ amendment:
 #   user-model's fast-down-on-distress tone shift (shares the detector, ships
 #   separately); the owner work-visibility window (#37); the matrix-row backfill
 #   (FORK F-4 — may fold in or be a separate doc cycle).
-baseline: "6b76f9ef"
+# Re-baselined by the builder to the actual source-edit BASELINE: the
+# plan-doc commit (HEAD at build start) the source edits land on top of, so
+# the seal-diff window narrows to exactly this amendment's surface. (Plan-time
+# value was 6b76f9ef — the main tip at plan authoring; the manifest header
+# explicitly anticipated this re-baseline.)
+baseline: "fa618f45"
 
 plan: docs/plans/non-tech-user-self-recovery.md
 

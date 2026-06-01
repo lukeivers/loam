@@ -20,10 +20,20 @@ dependencies = [
     "loam-reversibility-primitive",
     "loam-cost-governance",
     "loam-observability-aggregator",
+    # non-tech-user self-recovery (safe FBM hard-reset delegates the
+    # migration-safety envelope's snapshot/guard/restore — plan §2/§3 R-3).
+    "loam-state-migration-engine",
 ]
 
 [project.scripts]
 loam-correction = "loam.self_correction.cli:main"
+loam-recover = "loam.self_correction.recover_cli:main"
+
+# `loam recover` — the user-facing self-recovery verb (FORK F-1), surfaced
+# on the unified `loam` CLI via the subcommand entry-point group (symmetric
+# to `loam amend`).
+[project.entry-points."loam.cli.subcommands"]
+recover = "loam.self_correction.recover_cli:build_recover_subcommand"
 
 [tool.setuptools]
 package-dir = {"loam.self_correction" = "src/loam/self_correction"}

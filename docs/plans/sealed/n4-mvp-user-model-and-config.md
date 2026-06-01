@@ -338,3 +338,46 @@ Forks (recommendations in plan §10; dispatcher in FULL-AUTONOMY rules fast):
 Unblocks the Phase-2 "Full adaptive user-model (remainder)" (its N4
 predecessor satisfied) and is the brick that makes the behavioural
 auto-learn engine (AIM-4) possible.
+
+## §14. Method-decision register (build-time rulings)
+
+Build dispatched in FULL-AUTONOMY (owner away); the four forks were ruled
+in the dispatch and confirmed at build with no halt:
+
+- **D-N4.1 — area-classifier = DETERMINISTIC keyword/objective-tag map**,
+  fail-open to `default`, no LLM on the hot path. Consequence-bearing
+  areas (ops-and-money / decisions-and-tradeoffs) win keyword ties so a
+  money/decision turn never under-routes to the bolder default. Reads the
+  EXISTING WorkAnchor tokens (no recompute). Taxonomy asserted equal to
+  the N3 seed-writer's `AIM_AREAS` so a seed-writer drift is caught.
+- **D-N4.2 — enforce-path INCLUDED** as a THRESHOLD LOOKUP on the KP9
+  draft-gate (`gate(exposure=)` / `layer1_lint(exposure=)`). NOT
+  register-judge surgery: Layer C is untouched; the exposure parameter
+  only partitions Layer 1's classes into the syntactic-leak FLOOR
+  (always enforced, G5) and the exposure-dependent jargon set (`deep`
+  relaxes). The §8 split-halt did NOT fire — it was a threshold lookup.
+- **D-N4.3 — override hard-sets** the cell value at `confidence: high`
+  with a `locked: true` marker, validated against the per-axis
+  vocabulary (a bad area/axis/value is rejected, file untouched). The
+  lock is recorded in the file now for forward-compat with AIM-4.
+- **D-N4.4 — auto-weight = coarse band** (low/normal/high → a B1 weight
+  value; normal == BASELINE_WEIGHT, the no-op band), ALWAYS surfaced for
+  confirm, NEVER silent-written; on confirm writes the B1 `weight:`
+  frontmatter the existing corpus_index boost reads.
+
+**Build-time deviations / surfaces (F2):**
+
+- **D-build.N4.1 — pre-existing D-1 byte-match drift (OUT-OF-FENCE,
+  rebaselined in-band).** The hands-off-lifecycle full-suite (run by the
+  seal) carried a pre-existing failure: `test_d1_byte_content_match.py`
+  for `session_start_emitter.py`. The file is byte-identical to the N4
+  BASELINE `f1f6116` (N4 does not touch it); the failure reproduces
+  IDENTICALLY on the stashed clean tree. Root cause: the D-1 snapshot
+  lagged a legitimate N3-onboarding edit to that file (sealed at
+  `f1f6116` without a D-1 rebaseline). Resolved by an ODD §4 in-band
+  retire-and-rebaseline of the snapshot hash — the same established
+  pattern as the amendment #144 §16 and v0.13.0/v0.14.0 rebaselines in
+  that test. The seal-fence could not advance otherwise (the seal runs
+  the touched component's full suite). Surfaced per F2.
+
+### Commit SHAs

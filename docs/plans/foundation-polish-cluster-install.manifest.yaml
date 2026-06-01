@@ -1,0 +1,119 @@
+schema_version: 1
+amendment:
+  number: 161  # Next sequential amendment. Highest manifest counter on disk
+               # is 160; STATE.md base is at #157 (work-visibility-surface).
+               # 161 is the next free counter for the cluster HEAD (SUB-ITEM 1a,
+               # packaging readiness). The builder CONFIRMS the exact number at
+               # `loam amend apply` time against the live counter
+               # (feedback_version_numbers_at_release_time — never pre-bake a
+               # number that drifts). SUB-ITEMs 3 + 4 get their OWN sibling
+               # manifests (foundation-polish-cluster-auto-upgrade.manifest.yaml,
+               # foundation-polish-cluster-skill-triage.manifest.yaml), each
+               # advancing the counter; serialize the builds (seal before next
+               # applies) OR run in worktree-isolation
+               # (feedback_serialize_amendment_builds). SUB-ITEM 1b (public PyPI
+               # flip) is OWNER-GATED (F-PUBLISH) and NOT a manifest-driven amend.
+               # SUB-ITEM 2 (flatten) is DEFERRED pending the F-FLATTEN ruling.
+  slug: foundation-polish-cluster-install
+  title: "foundation-polish cluster — SUB-ITEM 1a: conventional install / packaging readiness (the 1.0-load-bearing install path). One documented install surface (meta-package OR named published-set) composing the existing per-component loam-* pyproject graph; every wheel builds + the inter-component dependency bounds resolve into a consistent set; a genuinely CLEAN environment reaches a working `loam init` from the unified surface with NO source-tree literacy — proven against a LOCAL wheelhouse with ZERO public registry push (the public PyPI flip is owner-gated SUB-ITEM 1b, F-PUBLISH). The structure flatten is SEPARABLE + DEFERRED (F-FLATTEN). AC.PYPKG.* + AC.INST.* incl. the outcome-altitude AC.INST.S."
+
+# BASELINE: cc512b1f — HEAD of main at plan-authoring (work-visibility-surface
+# SHA-register backfill). The builder CONFIRMS this against the actual
+# predecessor seal-advance commit at apply time.
+baseline: "cc512b1f"
+
+plan: docs/plans/foundation-polish-cluster.md
+
+components:
+  # The install surface composes the EXISTING per-component loam-* pyproject
+  # graph into one documented installable surface (meta-package OR the README's
+  # already-named published-set) + proves every wheel builds + the dep bounds
+  # resolve. The builder selects the meta-package home (root meta-package vs a
+  # `loam` umbrella vs the published-set) — that shape is method, inferable from
+  # the AC constraint "one documented command resolves the graph" (plan §10.3),
+  # the builder's call per ODD §1.1. The loam-init component anchors the documented
+  # `loam init` entry-point the outcome-altitude AC.INST.S drives; name the actual
+  # fenced component(s) at EXAMINE time once the meta-package home is chosen.
+  - name: loam-init
+    seal_test: framework/loam-init/tests/test_no_sealed_amendments.py
+    sidecar: framework/loam-init/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+  # The unified CLI dispatcher whose `loam.cli.subcommands` entry-point discovery
+  # the clean-env install must resolve (loam --help listing the real subcommands —
+  # AC.INST.1). Fenced because the install surface composes its entry-point graph;
+  # touch only if the meta-package surface lands here.
+  - name: loam-cli
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. The install surface edits
+# touch packaging metadata across components + the install docs; the builder
+# admits the specific per-component pyproject paths it locks via
+# extra_allowed_prefixes at EXAMINE time once the meta-package home is chosen.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - README.md
+    - install-from-source.txt
+    - docs/install-from-source.md
+    - docs/STATE.md
+    - docs/plans/loam-roadmap.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: docs/plans/sealed/foundation-polish-cluster-install.md
+  body: |
+    # foundation-polish cluster — SUB-ITEM 1a: conventional install / packaging readiness — apply ladder
+
+    Foundation-polish cluster per `docs/plans/foundation-polish-cluster.md`.
+    The 1.0-load-bearing install path: a non-technical user reaches a working
+    loam through a documented, normal command — NOT a dev-tree checkout.
+
+    SUB-ITEM 1a (this amendment — AUTONOMOUS, no public action):
+      1. ONE documented install surface — a meta-package OR the README's
+         already-named published-set (`pip install loam-cli loam-init …`) —
+         composing the EXISTING per-component loam-* pyproject dependency
+         graph into a single documented install command (AC.PYPKG.1). The
+         meta-package shape is the builder's call (plan §10.3); the AC pins
+         the OUTCOME (one command resolves the graph), not the method.
+      2. The dependency graph LOCKS + BUILDS — every loam-* wheel builds from
+         its pyproject; the inter-component bounds (already declared in each
+         component's `dependencies` block per the install-from-source header)
+         resolve into a consistent install set (AC.PYPKG.2).
+      3. PROVEN against a LOCAL artefact index (a wheelhouse / --find-links
+         dir) with ZERO push to any public registry (AC.PYPKG.3) — packaging
+         readiness is decoupled from + precedes the owner-gated public flip.
+      4. ★ outcome-altitude AC.INST.S: a genuinely CLEAN environment (a
+         throwaway venv / fresh container, no source clone on PATH, no
+         pre-arranged loam state) installs from the unified surface, then
+         `loam init <tmpdir>` produces a WORKING freshly-initialized workspace
+         (the REAL `loam init` entry-point → scaffolded `.loam/` + persona
+         greeting), NO step requiring a framework-tree clone or edit. Drives
+         the real install + the real `loam init`, not packaging metadata in
+         isolation (feedback_test_outcome_altitude_required).
+
+    Composes on (Lens 1, NO re-implementation, NO new CI): pip/pipx; the
+    existing per-component pyproject graph + install-from-source.txt
+    constraints; the `loam.cli.subcommands` entry-point discovery loop
+    (loam --help must list the real subcommands post-install); the existing
+    `loam release` gate chain as the pre-flight for the later public flip.
+
+    SEPARABILITY VERDICT (plan F-FLATTEN / §10.1): the structure flatten is
+    SEPARABLE — NOT a prerequisite for this install path — and the roadmap's
+    named `framework/framework` doubling DOES NOT EXIST on disk (components sit
+    one level deep under framework/). Install ships on the CURRENT layout; the
+    flatten is DEFERRED pending an owner ruling and bundling it here is an
+    explicit scope error this plan prevents.
+
+    OWNER-GATED, NOT in this amendment: SUB-ITEM 1b (the public PyPI flip +
+    name claim — a public action, F-PUBLISH); the README source-only caveat
+    (lines 84-87) is superseded for the published surface only after the flip.
+
+    BASELINE cc512b1f — HEAD of main at plan-authoring; confirm at apply time.
+    Counter 161 is the next free slot; confirm at apply time. Two-component
+    fence head (loam-init + loam-cli); the builder admits the specific
+    per-component pyproject paths it locks via extra_allowed_prefixes at
+    EXAMINE once the meta-package home is chosen.

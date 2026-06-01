@@ -1,0 +1,91 @@
+schema_version: 1
+amendment:
+  number: 177
+  slug: intake-leg4-llm-adjustment
+  title: "Intake leg-4 adjustment goes through the LLM seam (the confirmation turn) — leg 4 now reads the CONFIRMATION reply via a bounded spawn-isolated claude -p and writes the one-line right-sized adjustment, generalising across arbitrary novel confirmation phrasings the deterministic heuristics flickered on; FAIL-SOFT to the deterministic reflection; the over-promise guard still binds it (AC.INTENT.4)"
+
+# BASELINE: c08dd4fe — the #176 leg4-no-overpromise seal, immediately preceding
+# the #177 source-edit commit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   c08dd4fe — #176 leg4-no-overpromise seal. ← BASELINE
+#   <source-edit commit> — IntentExtractor.extract_adjustment (+ _ADJUSTMENT_PROMPT
+#     + _parse_adjustment + shared _dispatch); _leg4_adjustment_text LLM-primary
+#     fail-soft; extractor threaded to both close callsites + the ladder; 3 NEW
+#     AC test cases.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/intent_extract.py
+#     - IntentExtractor.extract_adjustment (Protocol + Disabled + Claude);
+#       _ADJUSTMENT_PROMPT; _parse_adjustment; shared _dispatch helper.
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _leg4_adjustment_text: LLM seam read of the confirmation turn is the
+#       PRIMARY source (fail-soft to the deterministic heuristics; over-promise
+#       guard still binds); extractor threaded to the CLEAR/PARTIAL close + the
+#       fallback-ladder close.
+#   tests/test_AC_INTENT_4_leg4_adjust_from_answer.py — 1 NEW test case.
+#   tests/test_AC_INTENT_3_spawn_isolation_no_api_key.py — 2 NEW test cases
+#     (adjustment dispatch spawn-isolated + fail-soft).
+#
+# AC families: refinement to AC.INTENT.4 (leg-4 adjustment through the LLM seam).
+#   Bounded: ONE adjustment call per CONFIRMATION turn (a distinct turn — within
+#   the owner-ratified "one small call per onboarding turn"); fail-soft to the
+#   deterministic reflection. Born from rerun8-10: leg 4 flickered PARTIAL on
+#   whichever novel confirmation detail the deterministic heuristics missed.
+baseline: "c08dd4fe"
+
+plan: docs/plans/intake-llm-intent-seam.md
+
+seal_description: "Intake leg-4 adjustment through the LLM seam (AC.INTENT.4) — leg 4 reads the confirmation turn via a bounded spawn-isolated call, fail-soft to deterministic; over-promise guard still binds"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-leg4-llm-adjustment
+  body: |
+    # Intake leg-4 LLM adjustment — apply ladder
+
+    Across acceptance-smoke rerun8/9/10 the `four-step-loop-ran` dimension reached
+    PASS on 2/3 variants per run, but the third FLICKERED PARTIAL on whichever
+    novel detail that run's role-play added at the confirmation turn — a
+    deterministic leg-4 reflection cannot generalise across arbitrary free-form
+    confirmation phrasings (the same free-form-extraction problem the #172 LLM
+    seam solved for the FIRST turn, now at the confirmation turn).
+
+    This cycle routes the leg-4 adjustment through the SAME LLM seam: the real
+    extractor reads the CONFIRMATION reply (one bounded spawn-isolated `claude -p`
+    on the confirmation turn — a DISTINCT turn, within the owner-ratified "one
+    small call per onboarding turn") and writes a one-line, right-sized adjustment
+    that reflects the substantive detail/doubt it added. FAIL-SOFT: on any
+    extractor failure / unavailable / empty the deterministic heuristics run
+    (guidance hedge -> walk-through; doubt -> honest answer; downstream goal;
+    distilled detail). The over-promise guard (AC.ONCLOSE.3) still binds the LLM
+    output. With NO extractor registered (the baseline default) the path stays
+    purely deterministic — the existing leg-4 tests are unaffected.
+
+    Predecessor commits:
+      - c08dd4fe — #176 leg4-no-overpromise seal (BASELINE).
+
+    BASELINE c08dd4fe. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

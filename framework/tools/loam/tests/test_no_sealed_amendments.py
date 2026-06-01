@@ -46,7 +46,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 # behind this slice's apply; advancing to the immediate pre-build tip bounds
 # the diff window to THIS slice's loam-cli changes (the standard "advance
 # sidecar + BASELINE" seal pattern).
-BASELINE = "890ac5e"
+BASELINE = "1d6c8705"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -140,6 +140,8 @@ def test_AC_FBE_2_S_only_loam_cli_changed() -> None:
         "docs/design/",
         "docs/experiments/",
         "docs/plans/",
+        "docs/conventions/",
+        "docs/flows/",
     )
     allowed_files: set[str] = {
         "CLAUDE.md",

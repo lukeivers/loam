@@ -192,7 +192,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              (BASELINE-as-HEAD~1 pattern). docs/plans/ admitted (the
 #              N3 plan-doc lives with the amendment, already an allowed
 #              prefix at line ~342).
-BASELINE = "b56e638"
+BASELINE = "be7487cb"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -353,6 +353,7 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/plans/",
         "docs/papers/",
         "docs/",
+        "docs/state-migrations/",
     )
     allowed_files: set[str] = {
         "framework/first-run-inventory.yaml",
@@ -390,6 +391,8 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/public-surface-manifest.md",
         "docs/design/layered-skill-architecture.md",
         "docs/plans/v0-1-x-roadmap.md",
+        "docs/plans/loam-roadmap.md",
+        "docs/plans/n3-onboarding-init-flow-translate-in-intake.md",
     }
 
     offending = []

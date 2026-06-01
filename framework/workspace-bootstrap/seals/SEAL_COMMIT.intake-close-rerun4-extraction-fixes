@@ -1,0 +1,48 @@
+# Intake close rerun4 extraction fixes — apply ladder
+
+The FOURTH acceptance-smoke re-run
+(`docs/experiments/loam-1.0-acceptance-smoke-rerun4.md`) moved the verdict
+NOT-READY -> READY-WITH-GAPS: all three variants confirmed an objective, all
+three routed correctly (A idea-rich zero-research; B day-derived zero-research;
+C idea-vacuum fired the opt-in research within the ≤3 budget), the
+surface-and-check + close-on-one-thing + person-specific behaviors landed on
+variants A and C. It surfaced four more deterministic extraction regressions,
+all clear-direction and fixed here (refinements, not new ACs):
+
+  - AC.INTAKE-ROLE.1 — variant B's describe_work answer opened with a
+    conversational rejection ("I just told you — I'm a claims adjuster, six
+    years in"), and the role noun resolved to "I just told you" (the
+    _ROLE_TITLE lookahead required a space before a trailing comma — "claims
+    adjuster," failed — and the first-clause fallback grabbed the rejection
+    clause). This garbled SIX of B's dimensions ("a I just told you's day").
+    _ROLE_LEAD_FILLER drops the leading rejection clause; the lookahead now
+    accepts a directly-attached punctuation boundary.
+  - AC.INTAKE-VACUUM.1 — B's opener day-pain ("my afternoon disappears into …
+    keeps piling up on me") stayed EMPTY (the demotion covered "piles up" but
+    not "piling up" / "disappears into") and routed to the ladder rather than
+    the propose/verify path. _DERIVABLE_PAIN now covers those forms.
+  - AC.ONCLOSE.4 — the named-task miner broke on a hyphenated object
+    ("claim-summary narratives") because \w+ does not span the hyphen; the
+    object char-class now allows hyphens + a leading article.
+  - AC.INTAKE-ECHO.1 — variant A's opener "every single night I spend like
+    two hours writing up the listing descriptions" distilled the
+    temporal/spend preamble into the proposal; _ACTION_PREAMBLE now strips
+    "spend [like] N hours <verb>".
+
+The ONE remaining honest gap — `four-step-loop-ran` (PARTIAL/FAIL on A/B/C
+even with clean extraction) — is surfaced to the owner as a judgment call,
+NOT silently patched: the judge wants leg 4 (loam ADJUSTS from the user's
+answer / responds to a post-close follow-up like "How would that even
+work?"). That requires a post-close turn, which tensions with the owner's
+HARD no-interrogation / close-on-ONE-thing / featherlight constraints. The
+leg-1 part (name the inferred intent coherently) IS addressed by the
+distillation fixes; the leg-4 post-close-adjustment turn is the fork.
+
+Predecessor commits:
+  - b7d9d1cd — #168 rerun3-fixes seal (BASELINE).
+  - b56b1567 — rerun4 extraction fixes + 4 tests (BASELINE+1).
+
+BASELINE b7d9d1cd. Single-component fence on
+`framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated.

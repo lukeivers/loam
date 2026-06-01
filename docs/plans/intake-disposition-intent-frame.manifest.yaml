@@ -1,0 +1,77 @@
+schema_version: 1
+amendment:
+  number: 178
+  slug: intake-disposition-intent-frame
+  title: "Intake disposition reads an intent-frame governing a stop-verb as STOP — 'I want to stop doing it by hand' now reads STOP (not START via the 'want to' frame preceding 'stop'); the bare 'want to / need to' START tells carry a negative lookahead so they don't fire when the frame governs a cessation verb (AC.DISPOS.1)"
+
+# BASELINE: f569f2b5 — the #177 leg4-llm-adjustment seal, immediately preceding
+# the #178 source-edit commit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   f569f2b5 — #177 leg4-llm-adjustment seal. ← BASELINE
+#   <source-edit commit> — _detect_disposition intent-frame STOP tell +
+#     negative-lookahead START tells; AC.DISPOS.1 test cases.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _INTENT_FRAME + _STOP_VERB; _STOP_TELLS registers a STOP when an intent-
+#       frame governs a stop-verb; the bare want-to/need-to START tells carry a
+#       negative lookahead for a following stop-verb.
+#   tests/test_AC_DISPOS_1_word_boundary_cessation.py — NEW test cases.
+#
+# AC families: refinement to AC.DISPOS.1 (intent-frame + cessation-verb ordering).
+#   Born from the rerun11 acceptance smoke (variant A: "I want to stop doing it by
+#   hand" read START because the "want to" START tell preceded "stop").
+baseline: "f569f2b5"
+
+plan: docs/plans/intake-llm-intent-seam.md
+
+seal_description: "Intake disposition intent-frame fix (AC.DISPOS.1) — 'I want to stop X' reads STOP, not START via the 'want to' frame preceding 'stop'"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-disposition-intent-frame
+  body: |
+    # Intake disposition intent-frame fix — apply ladder
+
+    The acceptance-smoke rerun11 inverted variant A again — but on a NEW shape the
+    #173 word-boundary fix did not cover: "I want to stop doing it by hand
+    completely" read START because the "want to" START tell appeared BEFORE the
+    "stop" STOP tell (earliest-wins), so the intent-frame beat the cessation verb
+    it governs.
+
+    A CLEAR-DIRECTION fix: an intent-frame ("want to / need to / 'd love to / 'd
+    like to / have to / trying to") governing a stop-verb ("stop / quit / avoid /
+    cut out / drop / get rid of / hand off / offload") is a STOP at the frame
+    position; and the bare "want to / need to" START tells carry a NEGATIVE
+    LOOKAHEAD so they do NOT fire when the frame governs a cessation verb. Genuine
+    STARTs ("I want to start journaling", "I need to begin reviewing") still read
+    START.
+
+    Predecessor commits:
+      - f569f2b5 — #177 leg4-llm-adjustment seal (BASELINE).
+
+    BASELINE f569f2b5. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

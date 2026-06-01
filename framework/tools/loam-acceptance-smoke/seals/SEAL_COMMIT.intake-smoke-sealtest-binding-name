@@ -1,0 +1,26 @@
+# Acceptance-smoke seal-test admission binding-name fix — apply ladder
+
+The #180 seal's post-seal `loam amend apply --dry-run` HALTed with a false
+MISSING_ADMISSION on the smoke component's OWN paths. Root cause: the smoke
+seal-test named its admission tuple `_ALLOWED_PREFIXES`, but the loam-amend
+seal-diff binding reader (`loam_amend.seal_diff.read_entries`, used by both
+`loam amend apply` widening and `apply --dry-run` admission) matches a
+top-level `allowed_prefixes` identifier — so the reader saw `BindingNotFound`,
+admitted no component prefix, and flagged the component's own files. On a
+SINGLE-component branch this never surfaced (the window was empty post-seal);
+the #179/#180 interleaved multi-component branch put the component's own files
+in-window and exposed it.
+
+The fix renames the tuple to `allowed_prefixes` (same data, parseable name),
+matching the workspace-bootstrap seal-test precedent. Root-cause fix — the
+fence invariant test itself is unchanged in BEHAVIOUR (it still rejects any
+non-admitted path); only the binding NAME changed so the harness reads it.
+
+Predecessor commits:
+  - 4475a910 — #180 four-step-rubric-alignment seal (BASELINE).
+
+BASELINE 4475a910. Single-component fence on
+`framework/tools/loam-acceptance-smoke/`.
+
+DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
++ the READY verdict surface after the smoke re-run.

@@ -1,0 +1,101 @@
+schema_version: 1
+amendment:
+  number: 179
+  slug: intake-one-rung-default-ask
+  title: "Intake one-rung default-ask leverage-ladder close — loam lands the literal ask as the ONE thing and BY DEFAULT asks about EXACTLY rung+1 (opt-in), suppressed only on a clear one-off signal; the LLM intent-extractor is activated as the production default (fail-soft retained); disposition is read by the extractor with the regex fallback (AC.ONRUNG.1/.2/.3, AC.INTENT.5/.6)"
+
+# BASELINE: f9ba2fe — the #178 intake-disposition-intent-frame seal, the current
+# workspace-bootstrap sidecar HEAD immediately preceding this cycle's source-edit
+# commit. BASELINE-as-HEAD~N pattern.
+#
+# Commit ladder pre-apply:
+#   f9ba2fe — #178 disposition-intent-frame seal. ← BASELINE
+#   fc72b43a — the intake-one-rung-v2 plan-doc (universal-admitted).
+#   c38fa0c0 — source edits: leverage-ladder one-rung default-ask close +
+#     production-default extractor + disposition-via-extractor; AC tests.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - the leverage ladder (_LEVERAGE_LADDERS / _GENERIC_LADDER /
+#       _read_leverage_ladder), the one-off suppressor (_ONE_OFF_SUPPRESS /
+#       _one_off_signal_present), the rung+1 rider (_one_rung_ask), both close
+#       paths wired (CLEAR/PARTIAL + fallback ladder), and _disposition_from
+#       (extractor-primary, _detect_disposition fallback).
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/intent_extract.py
+#     - ExtractedIntent.disposition field + the extraction prompt/parse for it.
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/first_run_intake.py
+#     - production_intent_extractor() (the real ClaudeIntentExtractor as the
+#       production default) + the orchestrator resolving it when none injected.
+#   tests/test_AC_ONRUNG_1_leverage_ladder_rung_plus_one.py — NEW.
+#   tests/test_AC_ONRUNG_2_close_asks_one_rung_opt_in.py — NEW.
+#   tests/test_AC_ONRUNG_3_default_ask_signal_suppresses.py — NEW.
+#   tests/test_AC_INTENT_5_production_default_extractor.py — NEW.
+#   tests/test_AC_INTENT_6_disposition_via_extractor.py — NEW.
+#
+# AC families: NEW AC.ONRUNG.* (one-rung default-ask, ladders up from
+#   AC.ONCLOSE.2/.3); AC.INTENT.5/.6 (production-default extractor + disposition
+#   via extractor). Born from the 1.0-finishing round (owner ruling Luke 13401 +
+#   13403): the close's bar is RELATIVE — one rung up, ask-only, ask-by-default,
+#   suppressed only on a clear one-off signal.
+baseline: "f9ba2fe"
+
+plan: docs/plans/intake-one-rung-v2.md
+
+seal_description: "Intake one-rung default-ask leverage-ladder close + production-default extractor + disposition-via-extractor (AC.ONRUNG.1/.2/.3, AC.INTENT.5/.6) — loam lands the literal ask and BY DEFAULT asks about exactly rung+1, opt-in, suppressed only on a clear one-off signal"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-one-rung-default-ask
+  body: |
+    # Intake one-rung default-ask leverage-ladder close — apply ladder
+
+    The 1.0 acceptance smoke's last gap was a JUDGE-vs-CONTRACT contradiction: the
+    `four-step-loop-ran` rubric demanded committed concrete structure while
+    `no-over-engineering` PASSED because loam proposed none — the two demanded
+    opposite things on the same transcript.
+
+    The owner's ratified resolution (Luke 13401 + 13403): the close's bar is
+    RELATIVE. loam LANDS the literal request as the ONE thing, then BY DEFAULT
+    ASKS about moving EXACTLY ONE rung up a leverage ladder (doc -> reusable
+    TEMPLATE; never a WORKFLOW/SYSTEM) — opt-in, ask-only, phrased as a question
+    the user can decline. The user's signal is a SUPPRESSOR ONLY: the rung+1 ask
+    turns OFF only on a clear one-off / "no thanks" / overwhelmed / explicit
+    decline. Absent a suppressing signal -> ASK (the default).
+
+    This component lands the close + the LLM extractor activation:
+      - the leverage ladder + rung+1 read (AC.ONRUNG.1);
+      - the single opt-in rung+1 rider folded into the ONE landed idea on both the
+        CLEAR/PARTIAL path and the fallback ladder (AC.ONRUNG.2);
+      - the DEFAULT-ASK signal-gate with a one-off suppressor (AC.ONRUNG.3);
+      - the real ClaudeIntentExtractor as the PRODUCTION default, fail-soft
+        retained (AC.INTENT.5);
+      - disposition read by the extractor, regex fail-soft (AC.INTENT.6).
+
+    Predecessor commits:
+      - f9ba2fe — #178 disposition-intent-frame seal (BASELINE).
+
+    BASELINE f9ba2fe. Single-component fence on
+    `framework/workspace-bootstrap/`. The loam-acceptance-smoke judge
+    contract-alignment (AC.SMOKE.7) is a SEPARATE sibling amendment.
+
+    DO NOT push, DO NOT merge — owner-gated; the dispatcher handles merge-on-seal
+    + the READY verdict surface after the smoke re-run.

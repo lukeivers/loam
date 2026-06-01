@@ -55,6 +55,7 @@ from pathlib import Path
 from typing import Any
 
 from .deep_role_research import ResearchProvider
+from .intent_extract import IntentExtractor
 from .seed_writer import SeedResult, default_global_home, seed_user_state
 from .translate_in_intake import Answerer, IntakeResult, run_translate_in_intake
 
@@ -95,6 +96,7 @@ def run_first_run_intake(
     answerer: Answerer,
     global_home: Path | None = None,
     research_provider: ResearchProvider | None = None,
+    intent_extractor: IntentExtractor | None = None,
     run_capability_ritual: bool = True,
     capability_answerer: Any | None = None,
 ) -> FirstRunIntakeResult:
@@ -107,6 +109,9 @@ def run_first_run_intake(
             isolated fixture dir so the cold-walk never touches the real home.
         research_provider: the deep-role-research provider (default: the
             featherlight stub — the baseline degrades gracefully, AC.ONDEEP.1).
+        intent_extractor: the LLM intent-extraction seam (default: the disabled
+            extractor — the baseline distillation stays pure-regex, AC.INTENT.2;
+            the smoke / production CLI register the real ClaudeIntentExtractor).
         run_capability_ritual: when True (default), compose the existing
             capability-activation ritual (phase 2). Best-effort — its failure
             does NOT abort the intake.
@@ -156,7 +161,9 @@ def run_first_run_intake(
 
     # --- Phase 3: the translate-in intake (the load-bearing N3 phase). ---
     intake = run_translate_in_intake(
-        answerer=answerer, research_provider=research_provider
+        answerer=answerer,
+        research_provider=research_provider,
+        intent_extractor=intent_extractor,
     )
     result.intake = intake
 

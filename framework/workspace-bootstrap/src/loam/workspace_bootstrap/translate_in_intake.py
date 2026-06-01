@@ -66,6 +66,12 @@ from .deep_role_research import (
     RoleResearchResult,
     default_research_provider,
 )
+from .intent_extract import (
+    ExtractedIntent,
+    IntentExtractor,
+    IntentExtractUnavailableError,
+    default_intent_extractor,
+)
 
 
 class Answerer(Protocol):
@@ -225,6 +231,10 @@ class ProposedEndIntent:
     raw_answer: str  # what the user literally said (for the not-a-verbatim-echo check)
     one_level_up_offer: str | None = None  # the opt-in "shall I make it recurring?"
     clean_item: str = ""  # the user's item with a leading disposition verb stripped
+    # The LLM seam's richer read when it produced one (AC.INTENT.1/.4): the
+    # slightly-deeper inferred end-intent + the leg-4 adjustment read. None when
+    # the regex fallback ran. Carried so the close's leg-4 turn can reflect it.
+    extracted: ExtractedIntent | None = None
 
 
 @dataclass
@@ -703,23 +713,77 @@ def _distill_intent(answer: str) -> str:
     return core or text
 
 
-def _propose_end_intent(answer: str, disposition: Disposition) -> ProposedEndIntent:
+@dataclass
+class DistilledIntent:
+    """The distillation result + any richer read the LLM seam surfaced.
+
+    ``phrase`` is the short distilled intent (the drop-in for the regex
+    ``_distill_intent`` output). ``extracted`` is the model's full structured read
+    when the LLM seam produced one (carries the deeper end-intent + the leg-4
+    adjustment read), or ``None`` when the regex fallback ran (AC.INTENT.1/.2)."""
+
+    phrase: str
+    extracted: ExtractedIntent | None = None
+
+
+def _distill_intent_via_seam(
+    answer: str,
+    *,
+    extractor: IntentExtractor,
+    prior_proposal: str = "",
+) -> DistilledIntent:
+    """Distill the reply via the LLM intent-extraction seam FIRST, FAIL-SOFT to
+    the deterministic regex ``_distill_intent`` (AC.INTENT.1/.2).
+
+    The extractor is consulted at most ONCE per distillation (bounded). On ANY
+    failure — unavailable / timeout / error / empty / unparseable — the regex
+    distillation result is used and the run continues; the model call is a quality
+    LIFT on a path that already works, never a dependency. With the default
+    (disabled) extractor the extractor declines immediately, so this returns the
+    byte-identical regex distillation with no spawn (the baseline stays
+    pure-regex)."""
+    try:
+        extracted = extractor.extract(answer, prior_proposal=prior_proposal)
+    except IntentExtractUnavailableError:
+        return DistilledIntent(phrase=_distill_intent(answer), extracted=None)
+    except Exception:  # noqa: BLE001 — fail-soft: a misbehaving extractor must NOT break onboarding
+        return DistilledIntent(phrase=_distill_intent(answer), extracted=None)
+    if not extracted.is_usable:
+        return DistilledIntent(phrase=_distill_intent(answer), extracted=None)
+    return DistilledIntent(phrase=extracted.intent.strip(), extracted=extracted)
+
+
+def _propose_end_intent(
+    answer: str,
+    disposition: Disposition,
+    *,
+    distilled: DistilledIntent | None = None,
+) -> ProposedEndIntent:
     """Infer + PROPOSE a healthy-enablement shape over the raw answer (NOT a
     verbatim echo — AC.ONINTAKE.2), bounded by the over-reach guard
     (AC.ONINTAKE.4: the recurring framework is an OPT-IN offer, never the
-    proposal that gets seeded)."""
+    proposal that gets seeded).
+
+    ``distilled`` is the pre-computed distillation when the caller already ran the
+    LLM intent-extraction seam (AC.INTENT.1) — its ``phrase`` is the distilled
+    item and its ``extracted`` carries the richer read for leg 4. When ``None``
+    (the regex-only callers) the deterministic ``_distill_intent`` runs here."""
     # Distill a SHORT intent phrase first (AC.INTAKE-ECHO.1) so a real human's
     # multi-sentence reply does not get pasted verbatim into the proposal slot.
-    distilled = _distill_intent(answer)
+    # Prefer the seam's distillation when the caller computed it (AC.INTENT.1).
+    extracted = distilled.extracted if distilled is not None else None
+    distilled_phrase = (
+        distilled.phrase if distilled is not None else _distill_intent(answer)
+    )
     # Strip a leading disposition verb the user already said, so the proposal
     # doesn't read "stop stop X" / "start start Y" (copy-edit; the verb is added
     # back by the enablement framing below).
     core_clean = re.sub(
         r"^(stop|start|quit|begin|avoid)\s+(doing\s+|to\s+)?",
         "",
-        distilled,
+        distilled_phrase,
         flags=re.IGNORECASE,
-    ).strip() or distilled
+    ).strip() or distilled_phrase
     # The surfaced hypothesis must read as a COHERENT sentence for any core
     # (a noun phrase like "the listing descriptions" or a verb phrase like
     # "writing the report"). UNKNOWN disposition — the user named a pain but no
@@ -755,6 +819,7 @@ def _propose_end_intent(answer: str, disposition: Disposition) -> ProposedEndInt
         raw_answer=answer.strip(),
         one_level_up_offer=one_level_up,
         clean_item=core_clean,
+        extracted=extracted,
     )
 
 
@@ -928,10 +993,87 @@ _Q_LADDER_CHECK = (
 )
 
 
+# --------------------------------------------------------------------
+# Leg 4 — adjust from the answer (the four-step loop's learn step).
+# --------------------------------------------------------------------
+#
+# After the user confirms, loam ADJUSTS from what the confirmation revealed — a
+# concrete DETAIL they added, or a DOUBT/QUESTION they raised — rather than
+# restating the proposal verbatim (the gap the acceptance smoke's
+# ``four-step-loop-ran`` PARTIAL named). This is a STATEMENT, not a new question
+# (the no-interrogation contract): one adjustment turn folded into the close.
+#
+# A capability DOUBT ("does it actually know how to read a Bluebook citation?")
+# is addressed HONESTLY — loam acknowledges the question and frames what it can
+# actually do (draft/assist from provided inputs) WITHOUT inventing an unverified
+# capability (the protection-floor — variant C's FAIL). The read is deterministic
+# (the doubt/detail is in the confirmation's plain text); the LLM seam's
+# ``adjustment`` field is preferred when present, no extra model round-trip.
+
+# A reply that raises a DOUBT/QUESTION about whether loam can actually do the
+# thing ("does it actually know how to …?", "but how would that even work?",
+# "can it really …?", "I don't really understand how this thing would do that").
+_DOUBT_SIGNAL = re.compile(
+    r"\?|"
+    r"\b(does|can|could|would|will)\s+(it|this|that|loam|you)\b|"
+    r"\bhow\s+(would|does|do|can)\b|"
+    r"\bnot\s+sure\s+(it|this|that|you)\b|"
+    r"\b(don'?t|do\s+not)\s+(really\s+)?(understand|get|see)\s+how\b|"
+    r"\bis\s+(it|this|that)\s+(even|really|actually)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _confirmation_has_doubt(reply: str) -> bool:
+    """True when the confirmation reply raises a doubt/question about loam's
+    capability — the leg-4 adjustment must ADDRESS it honestly (protection-floor;
+    AC.INTENT.4)."""
+    return bool(_DOUBT_SIGNAL.search(reply or ""))
+
+
+def _leg4_adjustment_text(
+    confirm_reply: str,
+    intent: ProposedEndIntent,
+) -> str:
+    """The leg-4 adjustment sentence loam appends to the close (AC.INTENT.4).
+
+    Reads what the confirmation REVEALED and reflects it: a capability DOUBT is
+    answered honestly (no invented capability — protection-floor), otherwise the
+    concrete DETAIL the user added (preferring the LLM seam's ``adjustment`` read
+    when present) is reflected back so the close visibly LEARNS from the
+    confirmation rather than restating the proposal. Returns "" when the
+    confirmation added nothing to adjust from."""
+    item = (intent.clean_item or intent.raw_answer).strip().rstrip(".")
+    if _confirmation_has_doubt(confirm_reply):
+        # Address the doubt HONESTLY — name what loam actually does (draft/assist
+        # from what the user provides), never claim an unverified capability.
+        return (
+            f" And to your question — loam doesn't replace your judgment on "
+            f"'{item}': you hand it what you've got and it does the heavy "
+            f"drafting, then you review and correct it, so the call stays yours."
+        )
+    # No doubt — reflect a concrete detail the confirmation added. Prefer the LLM
+    # seam's one-line adjustment read; else surface the deeper end-intent; else
+    # echo the user's own added phrasing so the close is not a verbatim restate.
+    extracted = intent.extracted
+    if extracted is not None and extracted.adjustment.strip():
+        return f" {extracted.adjustment.strip().rstrip('.')}, exactly as you said."
+    if extracted is not None and extracted.deeper_end_intent.strip():
+        return (
+            f" The point is to {extracted.deeper_end_intent.strip().rstrip('.')} "
+            f"— that's what we're really after here."
+        )
+    added = _distill_intent(confirm_reply)
+    if added and added.lower() not in item.lower() and len(added.split()) >= 2:
+        return f" Heard you on that — {added}; we'll keep it focused there."
+    return ""
+
+
 def run_translate_in_intake(
     *,
     answerer: Answerer,
     research_provider: ResearchProvider | None = None,
+    intent_extractor: IntentExtractor | None = None,
 ) -> IntakeResult:
     """Run the operating loop on a brand-new user; return what to seed.
 
@@ -951,6 +1093,7 @@ def run_translate_in_intake(
     rejected outright and gave no usable correction) + the leverage idea(s).
     """
     provider = research_provider or default_research_provider()
+    extractor = intent_extractor or default_intent_extractor()
     result = IntakeResult(richness=IdeaRichness.EMPTY)
 
     def ask(slug: str, prompt: str) -> str:
@@ -967,8 +1110,11 @@ def run_translate_in_intake(
         return _run_fallback_ladder(ask, result, provider)
 
     # --- 2b. CLEAR / PARTIAL -> infer, propose, verify. ---
+    # Distill via the LLM intent-extraction seam FIRST (AC.INTENT.1), fail-soft to
+    # the deterministic regex distillation (AC.INTENT.2). ONE extraction per turn.
     disposition = _detect_disposition(raw)
-    proposal = _propose_end_intent(raw, disposition)
+    distilled = _distill_intent_via_seam(raw, extractor=extractor)
+    proposal = _propose_end_intent(raw, disposition, distilled=distilled)
     result.proposal = proposal
 
     # Surface the inferred proposal for VERIFICATION before any commit.
@@ -986,10 +1132,15 @@ def run_translate_in_intake(
     else:
         # A correction ("no, simpler" / "yes, and also...") REPLACES the seed —
         # the seed is gated on what the user VERIFIED, not the raw inference.
-        # DISTILL the correction too (AC.INTAKE-ECHO.1) so the seed + the
-        # leverage close carry the corrected ITEM, not a verbatim paste of the
-        # whole reply (the residual the smoke re-run surfaced on variant A).
-        corrected = _distill_intent(confirm) or confirm.strip()
+        # DISTILL the correction too via the seam (AC.INTENT.1, fail-soft to regex
+        # AC.INTENT.2 / AC.INTAKE-ECHO.1) so the seed + the leverage close carry
+        # the corrected ITEM, not a verbatim paste of the whole reply (the residual
+        # the smoke re-run surfaced on variant A). The prior proposal is passed so
+        # the extractor reads the correction in the context loam proposed.
+        corrected_distilled = _distill_intent_via_seam(
+            confirm, extractor=extractor, prior_proposal=proposal.objective_text
+        )
+        corrected = corrected_distilled.phrase or confirm.strip()
         result.confirmed = True
         result.seeded_objective_slug = _slugify(corrected)
         result.seeded_objective_text = (
@@ -1004,12 +1155,24 @@ def run_translate_in_intake(
             objective_text=result.seeded_objective_text,
             raw_answer=corrected,
             clean_item=corrected,
+            extracted=corrected_distilled.extracted,
         )
         result.proposal = proposal
 
-    # --- 3. The demonstrate-leverage close (only on a confirmed intent). ---
+    # --- 3. The demonstrate-leverage close + LEG 4 (adjust from the answer). ---
+    # The close lands the single person-specific leverage idea (AC.ONINTAKE.6),
+    # then ADJUSTS from what the confirmation revealed — a concrete detail or a
+    # capability doubt — so the loop's fourth leg is visible and the close is not
+    # a verbatim restatement (AC.INTENT.4). A capability doubt is answered
+    # honestly (protection-floor — no invented capability).
     if result.confirmed and result.proposal is not None:
-        result.leverage_ideas.append(_leverage_from_intent(result.proposal))
+        idea = _leverage_from_intent(result.proposal)
+        adjustment = _leg4_adjustment_text(confirm, result.proposal)
+        if adjustment:
+            idea = LeverageIdea(
+                text=idea.text + adjustment, references=idea.references
+            )
+        result.leverage_ideas.append(idea)
 
     return result
 

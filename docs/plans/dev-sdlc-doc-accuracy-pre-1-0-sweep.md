@@ -1,6 +1,6 @@
 # dev-sdlc doc-accuracy pre-1.0 sweep
 
-**Status:** PLANNED → in-flight (sealed dev-sdlc single-component amendment)
+**Status:** SEALED (`e335e6f9`) — sealed dev-sdlc single-component amendment
 **Working tree:** `/Users/lukeivers/loam` (main)
 **Fence:** single-component — `dev-sdlc` (sealed, at `plugins/dev-sdlc/`)
 **Class:** doc-only accuracy fix (no production code; no behaviour change)
@@ -113,4 +113,15 @@ returns zero matches.
 
 | SHA | Commit |
 |---|---|
-| (backfilled at cycle close) | plan+manifest / source-edits / apply / seal |
+| `eafa1a12` | plan-doc + manifest (`docs(plans):`) |
+| `be4d6604` | source-edits / BASELINE (`fix(dev-sdlc):`) |
+| `5a5c29a5` | `loam amend apply` auto-commit |
+| `e335e6f9` | `loam amend seal` deterministic seal commit |
+
+**Cycle outcome:** SEALED at `e335e6f9`. Seal-test
+`plugins/dev-sdlc/tests/test_no_sealed_amendments.py` green; post-seal
+`loam amend apply --dry-run` clean. Grep proofs: `apply.py:158` in
+`plugins/dev-sdlc/` = 0; `thirteen sealed components` in `odd-in-loam.md` = 0.
+
+§status — AC verdicts: AC.DSDA.1 GREEN; AC.DSDA.2 GREEN; AC.DSDA.3 GREEN;
+AC.DSDA.S GREEN.

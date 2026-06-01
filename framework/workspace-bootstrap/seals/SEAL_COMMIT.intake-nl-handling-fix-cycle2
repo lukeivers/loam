@@ -1,0 +1,55 @@
+# Intake NL-handling fix cycle 2 — re-run hardening — apply ladder
+
+Cycle 2 of the intake natural-language-handling fix. The first
+acceptance-smoke re-run
+(`docs/experiments/loam-1.0-acceptance-smoke-rerun.md`) confirmed cycle 1
+(amendment #164) landed Bug 3 (vacuum-routing for the clear cases) and
+Bug 4 (role-noun) cleanly, but surfaced three residuals — all ladder to
+the SAME four ACs (refinements, not new ACs):
+
+  - AC.INTAKE-AFFIRM.1 — a confirm LEADING with a hedge interjection
+    ("Ha, that's a mouthful — but yes, basically!") was routed to the
+    correction branch because the first word-token was "ha".
+    `_leading_polarity` now skips leading filler tokens and promotes an
+    explicit agreement pivot ("but yes"); a bare affirmation word buried
+    in "not sure" / "sort of" is NOT promoted (it stays a correction).
+  - AC.INTAKE-ECHO.1 — (a) the proposal distillation grabbed a temporal
+    preamble ("every single night I'm sitting at my kitchen table writing
+    up listing") rather than the action. `_ACTION_PREAMBLE` drops the
+    scene-setting and `_WANT_SPAN` extracts an explicit stated intent
+    ("I want to stop writing those listing descriptions") so the action
+    leads. (b) the CORRECTION branch echoed the raw reply into the seed +
+    close; it now distills the correction too.
+  - AC.INTAKE-VACUUM.1 — cycle 1's widened classifier over-fired: a
+    day-derived reply ("I don't know, but the thing that eats my day is
+    the write-ups") reached the deep-research ladder, breaking the
+    featherlight invariant. A `_HARD_VACUUM` override ("nothing's broken
+    / it's just constant" stays a vacuum) plus a `_DERIVABLE_PAIN`
+    demotion (one concrete singled-out pain → PARTIAL, off the ladder)
+    separate the claims-adjuster (PARTIAL, no research) from the paralegal
+    (vacuum, opt-in research reachable).
+
+Method-level choices (builder's call per ODD §1.1):
+
+  - The distillation stays deterministic (clause/preamble/want-span
+    heuristics). The report named an LLM-classify alternative; the
+    deterministic path handles every observed transcript case and keeps
+    the intake dependency-free. The residual judge findings on
+    four-step-loop-ran / no-over-engineering are DEEPER intake-design
+    surfaces beyond the four NL bugs (surfaced to the dispatcher, not
+    silently widened).
+  - The agreement-pivot promotion is intentionally narrow ("but yes" /
+    "okay yes" …) so a buried "sure" in "not sure" never reads as a
+    confirmation.
+
+Predecessor commits:
+  - 21deccec — cycle-1 seal (#164).
+  - 84c61dae — cycle-1 SHA backfill.
+  - 5a4667eb — cycle-2 plan section + first smoke re-run report.
+  - 8487ffe8 — cycle-2 source edit + 4 hardening tests (BASELINE+1).
+
+BASELINE 5a4667eb — the doc commit before the cycle-2 source edit.
+Single-component fence on `framework/workspace-bootstrap/`.
+
+DO NOT push, DO NOT merge — owner-gated. Build-forward stops at local
+seal + the second updated run-report.

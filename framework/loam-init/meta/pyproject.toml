@@ -1,0 +1,59 @@
+# loam — the single documented install surface (AC.PYPKG.1 / D-INST.1).
+#
+# This is a DEPENDENCIES-ONLY meta-distribution. It ships ZERO package
+# code: `loam` is a PEP 420 implicit-namespace package (every component
+# ships `loam.<sub>` only; there is no top-level `loam/__init__.py`
+# anywhere in the tree). A distribution literally named `loam` that
+# shipped a `loam/` package would SHADOW that namespace and break every
+# component import — so this meta-package declares no packages at all.
+# Its sole job is to resolve + pull the loam CLI dependency graph so a
+# single documented command installs the whole surface:
+#
+#     pipx install loam        # F-INSTALL-MECH-recommended primary
+#     pip  install loam        # equivalent
+#
+# The README's explicit published-set
+# (`pip install loam-cli loam-init loam-amend …`) is the equivalent
+# form for users who want to name the components directly; both resolve
+# the same closure.
+#
+# AC.PYPKG.2 — the inter-component version bounds live in each named
+# dependency's own pyproject `dependencies` block; pip enforces them
+# transitively when resolving this surface. AC.PYPKG.3 — proven against
+# a LOCAL wheelhouse (`--find-links`) with zero public registry push;
+# the public PyPI flip is the owner-gated SUB-ITEM 1b (F-PUBLISH).
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam"
+version = "0.14.0"
+description = "loam — single-command install surface for the loam CLI. Dependencies-only meta-distribution that resolves the whole loam command-line dependency graph (loam init / amend / migrate / release / audit / flow / pr-safety …). Install with `pipx install loam`."
+readme = "README.md"
+requires-python = ">=3.11"
+# The documented CLI install closure. Each entry's OWN pyproject carries
+# the transitive inter-component bounds; listing the user-facing verbs +
+# the console-script package here pulls the full graph.
+dependencies = [
+    "loam-cli",                  # the `loam` console-script + release/audit/flow verbs
+    "loam-init",                 # `loam init` verb (→ workspace-bootstrap → the runtime graph)
+    "loam-amend",                # `loam amend` verb
+    "loam-pr-safety",            # `loam pr-safety` verb
+    "loam-mode",                 # dev-mode partition selector
+    "loam-plugin-dev-sdlc",      # dev/SDLC plugin
+    "loam-odd-extractor",        # ODD extraction surface
+    "loam-per-project-pm",       # per-project PM runtime
+    "loam-plugin-loam-skills",   # installed SKILL packages
+    "loam-workspace-sync",       # pos-sync surface
+    "loam-self-upgrade",         # self-upgrade surface
+]
+
+[project.urls]
+Homepage = "https://github.com/lukeivers/loam"
+
+# Dependencies-only: NO packages, NO modules. The meta-distribution
+# installs nothing into the `loam` namespace.
+[tool.setuptools]
+packages = []

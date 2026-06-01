@@ -3,7 +3,14 @@
 **Status:** sub-plan-doc, PLAN-ONLY (plan-before-code). **Research-grade** —
 this is USER-FACING product design; the UX/voice calls are surfaced as
 forks-with-recommendations for an owner ruling, NOT locked unilaterally.
-Authored 2026-05-31.
+Authored 2026-05-31; **revised 2026-05-31** to fold in the owner's onboarding
+vision (the single stop/start close + the fallback ladder + the opt-in deep
+role-research sub-capability + the demonstrate-leverage success criterion) and
+the proportionality refinement (featherlight baseline; deep role-research is an
+OPT-IN DEEPENING, a separately-scoped slice, never first-touch weight). The
+revision SHARPENS the existing operating-loop intake's *content*; it keeps every
+prior ruled decision (the 4 UX forks, the verification-heavy stance, the
+minimum-seed + over-reach guards, the compose-don't-extend finding).
 **Working directory:** `/Users/lukeivers/loam/`.
 **Parent plans:**
 - `docs/plans/loam-roadmap.md` §4 row **N3** (critical path `N1 → N3 → N4 → Phase 3`; N3 is now the next unblocked kernel slice — N1 is sealed to `main`).
@@ -15,7 +22,8 @@ Authored 2026-05-31.
 - `8d160b9` — ADR-0001 + `docs/design/adr/user-state-homes.yaml` (the two legal homes: `~/.claude/` global, `<ws>/.loam/` scoped). **N3's seeded state MUST land inside these homes — gate 9 enforces it.**
 - The **existing onboarding ritual** (NOT a seal SHA — a live component): `framework/workspace-bootstrap/src/loam/workspace_bootstrap/onboarding.py` + `onboarding_cli.py`. A six-question **capability-activation** ritual (language / channel / safety-profile / extractor / watch / auto-skill-capture), wired as the `loam … onboard` subcommand. **CRITICAL F2 (§10.1): this is NOT the doctrine's operating-loop intake — it activates capabilities; it does not infer the user's action-oriented end-intent or seed a per-user profile. N3 COMPOSES ON it; it does not duplicate or replace it.**
 - `docs/design/adaptive-interaction-model.md` (AIM) — the **N4 adapter's** target schema: `~/.claude/INTERACTION-MODEL.md`, a `component × axis → {value, confidence, evidence}` matrix, openness-biased, every cell starting at `confidence: prior`. **N3 seeds the prior-confidence initial state this matrix begins from; N4 is the engine that moves the cells from evidence.** Build the intake before the adapter (the adapter needs seeded state to adapt).
-- `docs/design/loam-doctrine.md` — THE operating loop (infer → propose → verify → learn), the over-reach guard, the "just lost my job as a CTO" worked example. **This IS onboarding's spine.**
+- `docs/design/loam-doctrine.md` — THE operating loop (infer → propose → verify → learn), the over-reach guard, the "evaluate my engineers"→framework worked example, and the "just lost my job as a CTO" human-problem worked example. **This IS onboarding's spine.** The owner's onboarding vision (this revision) is the *content shape* of leg 1 (infer the end-intent): the **single stop/start ask** is the concrete form of "infer the action-oriented end-intent"; the **fallback ladder** (describe-your-work → mine-the-role → opt-in deep role-research) is how the loop handles a low-information user who can't name an end-intent unprompted.
+- **The deep role-research sub-capability (NET-NEW, own slice — see §7 / fork D-5):** a per-user web-research + synthesis pass that, given a user's stated role, researches (i) what makes someone EFFECTIVE at it, (ii) what gets people PROMOTED to the next level, (iii) which existing AI solutions loam could wrap or rebuild for them. There is **no pre-built loam research component** to extend (Tier-0: no `deep-research` module under `framework/`); the Claude-native primitive it composes on is a **forked-context-skill / background-research-subagent dispatch** using `WebSearch` + `WebFetch` (per `docs/CLAUDE_CAPABILITIES.md` lines 601, 704 — research-shaped work runs in an isolated subagent and returns a synthesis). N3 onboarding **offers/composes** this; it is NOT inline first-touch weight (the proportionality refinement).
 
 **BASELINE (pre-build tip):** `9aa611b` (current `main` HEAD).
 **Status-file target:** `<workspace>/.scratch/claude-output/n3-onboarding-status.md` (builder writes build progress here).
@@ -44,12 +52,52 @@ ambition: onboarding seeds the *minimum useful* prior, not an elaborate model �
 the elaborate version is something N4 grows from evidence, not something the
 first touch front-loads.
 
-Three AC families:
+**The owner's vision sharpens WHAT the intake asks (this revision).** The real
+goal is a baseline read on a new user AND **leading them — gently, never as an
+interrogation — toward the one conversation that produces a positive outcome FOR
+THEM.** Many users will be non-AI-savvy, told to use loam for their jobs, from
+every walk of life; the intake must LEAD them, not quiz them. Three load-bearing
+shapes, all *content* of the operating loop's infer-leg, not new machinery:
 
-- **AC.ONINTAKE.\*** — the intake runs the operating loop on a new user: it
-  surfaces a small set of intake prompts, **proposes** an inferred end-intent
-  shape, and **surfaces the proposal for verification** before committing —
-  inference is never silently written as fact.
+1. **The single stop/start close.** The intake aims to land on **ONE concrete
+   thing** the user either (a) wants to **STOP** doing because it slows them from
+   the work that matters most, or (b) wants to **START** doing because they know
+   it's critical but don't know how / lack the motivation to self-start. ONE
+   thing — a list stresses people. The intake leans into whatever else the user
+   says to surface more ideas *organically*, but it closes on one.
+2. **The fallback ladder (when they can't name a thing).** A defined flow:
+   stuck → **describe what you do** (for work: title + role + day-to-day; for
+   personal: what you do for entertainment / what you want AI to help with) →
+   **mine that role directly** for ideas → **[OPT-IN] deep role-research** (the
+   separately-scoped sub-capability). Each rung is only reached if the prior one
+   doesn't land — the ladder is graceful, not a gauntlet.
+3. **The demonstrate-leverage close.** The point of all of it is to **produce at
+   least one concrete, person-specific leverage idea** that DEMONSTRATES what
+   loam brings — a worked, person-specific example, not just a bag of collected
+   preferences — until the user can keep pushing loam forward themselves.
+
+**The proportionality refinement (owner-surfaced + recommended).** The BASELINE
+intake stays **featherlight**: the single stop/start ask + the simple
+describe-your-work fallback. The **deep role-research** (effectiveness /
+promotion-criteria / existing-AI-tools) is an **OPT-IN DEEPENING** — offered only
+when a user gives real role detail and signals they want it — **never the default
+first-touch weight.** This is the no-interrogation hard constraint made
+structural: the powerful capability is *available*, not *imposed*. The deep
+role-research is itself a substantial sub-capability (per-user web research +
+synthesis); the plan treats it as a **distinct, separately-scopable slice** that
+baseline onboarding COMPOSES/offers behind a clean interface, with **its own AC**,
+not baked into the required first-touch path (fork D-5; §7 defers it as a
+fast-follow slice).
+
+Four AC families:
+
+- **AC.ONINTAKE.\*** — the intake runs the operating loop on a new user: it leads
+  the user toward **one concrete stop/start thing**, falls back **gracefully** to
+  describe-your-work → mine-the-role when they're stuck, **proposes** an inferred
+  end-intent shape, **surfaces the proposal for verification** before committing,
+  and **ends with at least one person-specific leverage idea surfaced** —
+  inference is never silently written as fact, and the flow never feels like an
+  interrogation.
 - **AC.ONSEED.\*** — the verified result is **seeded as initial user-state into
   the two-tier home**, respecting the N1 boundary (gate 9 GREEN): the global
   half lands under `~/.claude/`, the workspace-scoped half under `<ws>/.loam/`;
@@ -59,6 +107,14 @@ Three AC families:
   it never clobbers existing user-state on a re-run (the protection floor).
   Includes the ★ **outcome-altitude** AC: a genuinely-empty instance, run through
   the real entry-point, ends with correctly-homed seeded state.
+- **AC.ONDEEP.\*** — the **deep role-research sub-capability** (the opt-in
+  deepening, its own slice) is reachable **only as an opt-in** from the fallback
+  ladder, is **never on the baseline first-touch path**, and — given a role —
+  returns a synthesis of the three named axes (effectiveness / promotion criteria
+  / existing-AI-tools-to-wrap-or-rebuild) through a **clean interface** the
+  baseline intake composes on. The baseline-stays-featherlight invariant is the
+  load-bearing AC here: a run where the user gives no role detail / declines the
+  deepening **never triggers** the research pass.
 
 **Key stances surfaced (the OWNER-FACING product calls — §11 forks):**
 1. **D-1 — ask-vs-infer balance.** Verification-heavy: a *small* set of asked
@@ -77,14 +133,28 @@ Three AC families:
    composes the existing capability-activation ritual + the new translate-in
    intake into one front door. (Recommended: `loam init` orchestrates; the
    existing `onboard` ritual becomes one phase inside it.)
+5. **D-5 — deep role-research: own slice + interface (NEW, this revision).**
+   Whether the opt-in deep role-research ships *inside* the N3 baseline slice or
+   as a **separate fast-follow slice** the baseline composes via a clean
+   interface. (Recommended: a **separate fast-follow slice**; N3 baseline ships
+   the featherlight intake + the *interface seam* + a thin/stub deepening offer,
+   and the full web-research+synthesis pass lands as its own slice with its own
+   AC. This keeps the baseline featherlight and the no-interrogation constraint
+   structural.)
 
-**F2 on scope realism:** N3 is **M–L** as the roadmap estimates, and the single
-biggest scope risk is **mistaking it for the existing ritual** (§10.1). The
+**F2 on scope realism:** N3's BASELINE is **M–L** as the roadmap estimates. Two
+named scope risks. **(1) Mistaking it for the existing ritual** (§10.1): the
 existing six-question ritual is capability-activation, not intake; N3 is net-new
 *intake + seed* machinery that composes on it. If a builder reads "onboarding"
 and extends the existing `onboarding.py` question list, that is the wrong shape —
 N3 adds a translate-in phase + a seed-writer, behind the boundary, with its own
-ACs. Named here so the dispatch carries the distinction.
+ACs. **(2) The deep role-research bloating the baseline** (NEW, §10.6): the
+per-user web-research + synthesis pass is a substantial sub-capability (its own
+L slice). If it is built inline into the baseline first-touch, the baseline stops
+being featherlight and the no-interrogation constraint is violated by weight, not
+by question-count. The plan holds it as a **separate slice behind an interface**
+(D-5) so the baseline ships light and the deepening lands as a fast-follow. Both
+risks are named here so the dispatch carries the distinction.
 
 ---
 
@@ -93,6 +163,9 @@ ACs. Named here so the dispatch carries the distinction.
 | Item | Placement | Rationale |
 |---|---|---|
 | The translate-in intake (operating-loop runner for a new user) | A new module/phase under `framework/workspace-bootstrap/` — the component that already owns first-run (`onboarding.py`, `loam_layout.py`, `new_workspace.py`) | Lens 1 / compose-don't-rebuild: first-run already lives here. The intake is a *new phase* in the same component, NOT an extension of the existing question list. The builder owns the exact module boundary. |
+| The single stop/start close + the fallback ladder (describe-work → mine-role → opt-in deepen) | The *content* of the translate-in intake module above — not a new component | The stop/start ask is the concrete shape of the loop's infer-leg; the ladder is its low-information branch. Both are intake *behaviour*, behind the same boundary. The exact wording is owner-call (not pinned — would be method-in-AC). |
+| The person-specific leverage idea (the demonstrate-leverage output) | Surfaced by the intake at close; if durable, recorded alongside the seeded objective under `~/.claude/` | The leverage idea is the intake's *success artefact* — at minimum surfaced to the user; whether it persists (vs is purely conversational) is the builder's call within the D-2 minimum-seed bound. |
+| **The deep role-research sub-capability (web-research + synthesis)** | **Its OWN slice (D-5).** Composes the forked-context-research-subagent primitive (`WebSearch`+`WebFetch`); N3 baseline ships the **interface seam** the intake calls, the full pass lands as a fast-follow | Lens 1 / Lens 5: research-shaped work is a Claude-native forked-subagent dispatch, not net-new orchestration; it is a separately-scopable subtask with a *tighter* AC than the baseline (decompose per swarming). Output writes only under the two homes (gate 9). |
 | The seed-writer (writes verified state into the two homes) | Same component; writes **only** under `~/.claude/` (global) + `<ws>/.loam/` (scoped) | The seed-writer is framework code whose *output* is user-state (the `establish_loam_layout` shape exactly). Gate 9 enforces it lands in-home. It composes on `establish_loam_layout()` for the scaffold, then *fills* the declared homes. |
 | The seeded interaction-model file | `~/.claude/INTERACTION-MODEL.md` (global, cross-workspace) | The AIM design declares this exact path; it is global (the user's voice/exposure prefs cross workspaces). N3 seeds it at `confidence: prior`; N4 moves the cells. |
 | The seeded objective(s) (the inferred end-intent) | `~/.claude/OBJECTIVES.md` (global) — the live file-shape precedent | OBJECTIVES.md already exists with the `status`/`last-touched`/`cadence`/`detail-path` header pattern (Tier-0: live, 1689 bytes). The user's stated end-intent seeds as an objective in this exact shape; `status` is owner-gated (the user confirmed it — that IS the gate). |
@@ -151,12 +224,29 @@ proceeds on the loop-as-behaviour, not on the loop-as-ratified-doc.
 ### Surface #5 (no halt — recorded; product/UX forks are owner-facing, not author-locked)
 
 **Decision (per the dispatch + F2):** the ask-vs-infer balance (D-1), the
-minimum-seed set (D-2), the over-reach line (D-3), and the entry trigger (D-4)
-are **product/UX calls** where reasonable people weigh signals differently
-(M5 / scope↔confidence: confidence in a single correct UX shape is medium, not
-high). Each is therefore a **fork with a recommendation** in §11, surfaced for
-an owner ruling — NOT locked unilaterally. The build does not start until the
-owner rules the four forks (or ratifies the recommendations).
+minimum-seed set (D-2), the over-reach line (D-3), the entry trigger (D-4), and
+**now the deep-role-research slice boundary (D-5)** are **product/UX calls** where
+reasonable people weigh signals differently (M5 / scope↔confidence: confidence in
+a single correct UX shape is medium, not high). Each is therefore a **fork with a
+recommendation** in §11, surfaced for an owner ruling — NOT locked unilaterally.
+The build does not start until the owner rules the **five** forks (or ratifies
+the recommendations).
+
+### Surface #6 (no halt — recorded; the no-interrogation constraint is a HARD constraint, not a fork)
+
+**Decision (autonomous, per the owner's vision — a hard constraint, NOT a tunable
+choice):** onboarding must **NOT feel like an interrogation.** This is the
+owner's stated hard constraint, and it pins three things that are therefore *not*
+forks: (a) the intake closes on **ONE** concrete stop/start thing, never presents
+a big list to fill in (a list stresses people); (b) the fallback ladder is
+**graceful** — each rung is reached only if the prior one didn't land, never run
+as a gauntlet; (c) the deep role-research is **opt-in only**, never imposed
+weight on the first touch. The *wording/voice* of how this is achieved is the
+owner's product call (D-1 question set), but the no-interrogation property itself
+is load-bearing and the ACs are written to make a list-style or
+research-on-everyone implementation an observable violation (AC.ONINTAKE.1
+bounds the close to one; AC.ONDEEP guards the opt-in gate). Surfaced so the
+builder treats it as a constraint, not a preference.
 
 ---
 
@@ -189,12 +279,15 @@ per-user-tuned-translation directive.
 
 ### AC.ONINTAKE.\* — the intake runs the operating loop on a new user
 
-- **AC.ONINTAKE.1 (the intake surfaces a bounded set of intake prompts).** On a
-  brand-new instance, onboarding presents a **small, bounded** set of
-  intake prompts that gather the high-leverage signals needed to infer an
-  end-intent (the count + wording resolve from D-1; the AC pins *bounded and
-  small*, not the number). *Verified by:* a run with a scripted answerer
-  observes the intake ask its bounded set and stop — it does not interrogate.
+- **AC.ONINTAKE.1 (the intake leads toward ONE concrete stop/start thing — bounded,
+  never a list).** On a brand-new instance, onboarding presents a **small,
+  bounded** set of intake prompts that **lead the user toward naming ONE concrete
+  thing they want to STOP or START doing** (the count + wording resolve from D-1;
+  the AC pins *bounded, small, and closing-on-one*, not the number). It does NOT
+  present a multi-field list for the user to fill in (a list is the interrogation
+  failure). *Verified by:* a run with a scripted answerer observes the intake ask
+  its bounded set, lead toward a single stop/start item, and stop — it does not
+  interrogate and does not demand a list.
 - **AC.ONINTAKE.2 (an end-intent is PROPOSED, not assumed).** From the answers,
   the intake composes a **proposed** action-oriented end-intent shape (e.g. "it
   sounds like you want X as a repeatable thing — shall I set that up?") and
@@ -217,6 +310,25 @@ per-user-tuned-translation directive.
   that gets built. *Verified by:* a "one-time" answer yields a proposal that
   does not silently seed a recurring framework; the recurring option is offered,
   not assumed. (Per D-3.)
+- **AC.ONINTAKE.5 (the fallback ladder is reachable and graceful when the user is
+  stuck).** When the user **cannot name** a stop/start thing, the intake falls
+  back along a defined ladder — **describe-your-work** (role / day-to-day, or for
+  personal use: entertainment / what-AI-should-help-with) → **mine that
+  description for ideas** → **[opt-in] deep role-research** — where each rung is
+  reached only if the prior one did not land. The ladder mines a given role
+  *directly* for ideas before ever offering the deep research. *Verified by:* a
+  run where the scripted answerer says "I can't think of anything" reaches the
+  describe-your-work rung and produces ideas from the described role, without
+  jumping straight to (or being forced into) the deep research pass.
+- **★ AC.ONINTAKE.6 (the intake ends with ≥1 person-specific leverage idea
+  surfaced — the demonstrate-leverage close).** A completed intake ends with **at
+  least one concrete, person-specific leverage idea** surfaced to the user — a
+  worked example of what loam can do FOR THEM, derived from what they said — not
+  merely a set of collected preferences. *Verified by:* a run with a scripted
+  answerer ends with at least one surfaced idea that is specific to the answers
+  given (it references the user's stated stop/start item or role), distinguishable
+  from a generic boilerplate suggestion. (This is the success criterion of the
+  whole intake; the seed without a surfaced leverage idea is an incomplete run.)
 
 ### AC.ONSEED.\* — the verified result is seeded into the two-tier home
 
@@ -273,6 +385,38 @@ per-user-tuned-translation directive.
   - **`outcome-altitude: true`** (per `feedback_test_outcome_altitude_required` —
     invokes the production entry-point with no pre-seeded state).
 
+### AC.ONDEEP.\* — the deep role-research sub-capability (opt-in, own slice, behind an interface)
+
+> These ACs govern the **opt-in deepening** (fork D-5). If the owner rules D-5
+> as a separate fast-follow slice (recommended), AC.ONDEEP.1 (the gate +
+> interface seam) is in the N3 baseline; AC.ONDEEP.2 (the research pass itself)
+> moves to the fast-follow slice's own plan. If the owner rules D-5 as inline,
+> both land in N3. The AC text is written to hold either way.
+
+- **★ AC.ONDEEP.1 (the deepening is OPT-IN and OFF the baseline path — the
+  featherlight invariant).** The deep role-research is reachable **only** as an
+  explicit opt-in from the fallback ladder's deepest rung, offered **only** when
+  the user has given real role detail AND signalled they want it. A baseline run
+  — one where the user names a stop/start thing directly, OR gives no role
+  detail, OR declines the deepening — **never triggers** the research pass.
+  *Verified by:* a baseline run (stop/start named, or deepening declined) does NOT
+  invoke the research interface; only a run that gives role detail AND opts in
+  does. This is the no-interrogation-by-weight backstop.
+- **AC.ONDEEP.2 (given a role, the research pass returns the three named axes via
+  a clean interface).** When invoked, the deep role-research takes a user's role
+  and returns a synthesis covering (i) what makes someone **effective** at the
+  role, (ii) what gets people **promoted** to the next level, (iii) which
+  **existing AI solutions** loam could wrap or rebuild for the user — through an
+  interface the baseline intake composes on (input: role + opt-in signal; output:
+  the synthesis, surfaced to the user and optionally fed back as leverage ideas).
+  Any persisted output lands only under the two homes (gate 9 GREEN). *Verified
+  by:* invoking the interface with a sample role returns a synthesis addressing
+  all three axes, and the seam is callable from the baseline intake without the
+  baseline depending on the research pass being present (graceful when the slice
+  is stubbed/absent). *(If D-5 = fast-follow, this AC is verified in the
+  fast-follow slice; the baseline only proves the seam is callable + degrades
+  gracefully.)*
+
 ---
 
 ## §6. Build steps (method-level guidance only — builder's call per ODD §1.1)
@@ -282,11 +426,21 @@ per-user-tuned-translation directive.
 > the four §11 forks (D-1..D-4) or ratifies the recommendations** (§5 ACs that
 > reference a fork resolve once the fork is ruled).
 
-**Likely a single cycle** (one component — `workspace-bootstrap` — one fence),
-unless the builder finds the intake + seed-writer + `loam init` wiring large
-enough to warrant decomposition into (a) intake + (b) seed-writer + (c) trigger
-sub-cycles with tighter ACs (Lens 5; the builder's call per the scope-confidence
-stopping criterion).
+**The BASELINE is likely a single cycle** (one component — `workspace-bootstrap`
+— one fence): the featherlight intake (stop/start close + fallback ladder +
+leverage close) + the seed-writer + the `loam init` trigger + the deep-research
+**interface seam** (the stub/offer, not the full pass). The builder may decompose
+into (a) intake + (b) seed-writer + (c) trigger sub-cycles with tighter ACs
+(Lens 5; the builder's call per the scope-confidence stopping criterion).
+
+**The deep role-research pass is a SEPARATE FAST-FOLLOW SLICE** (per the
+recommended D-5): a per-user web-research + synthesis sub-capability with its own
+plan-doc + its own ACs (AC.ONDEEP.2), composing the forked-context-research-
+subagent primitive. Its AC is strictly tighter than the baseline's (it judges a
+synthesis on three named axes — `EVAL_DIMENSIONS` shape), which is exactly the
+swarming stopping-criterion signal to split it out rather than inline it. N3
+baseline ships the seam (AC.ONDEEP.1); the fast-follow fills it (AC.ONDEEP.2).
+If the owner rules D-5 inline, fold the pass into this cycle's step 4.
 
 1. **Confirm the fork rulings are recorded** in this plan-doc's §11 before any
    code (record-ratification-before-dispatch). The build reads the ruled forks,
@@ -303,8 +457,14 @@ stopping criterion).
    confirmed objective). Then the verify-gate test (AC.ONINTAKE.3 — reject vs
    confirm yields different seed) and the idempotency test (AC.ONFIRE.2).
 4. **Build the translate-in intake** (the infer → propose → verify legs on a new
-   user) per the ruled D-1 shape. The propose+verify gate is the load-bearing
-   bit (AC.ONINTAKE.2/.3); the over-reach guard is AC.ONINTAKE.4 (per D-3).
+   user) per the ruled D-1 shape. It **leads toward one stop/start thing**
+   (AC.ONINTAKE.1), **falls back gracefully** along the ladder when the user is
+   stuck (AC.ONINTAKE.5), and **ends on a person-specific leverage idea**
+   (AC.ONINTAKE.6 — the demonstrate-leverage close). The propose+verify gate is
+   the load-bearing bit (AC.ONINTAKE.2/.3); the over-reach guard is AC.ONINTAKE.4
+   (per D-3). Build the **deep-research interface seam** here as a stub/offer
+   gated opt-in (AC.ONDEEP.1) — the baseline must degrade gracefully when the
+   research pass is absent; the full pass is the D-5 fast-follow.
 5. **Build the seed-writer** — composes on `establish_loam_layout()`, then fills
    the D-2 minimum seed into the two homes (interaction-model at `prior`;
    confirmed objective in OBJECTIVES.md shape). Idempotent / non-destructive
@@ -349,6 +509,14 @@ stopping criterion).
 - **A runtime first-run-detection hook** (auto-firing onboarding on a fresh
   session with no `loam init`) — deferred. N3's trigger is the explicit `loam
   init` verb (D-4); an auto-detect hook is a later convenience, not N3.
+- **The deep role-research PASS itself (web-research + synthesis) — a FAST-FOLLOW
+  SLICE** (per the recommended D-5). N3 baseline ships the **opt-in gate + the
+  interface seam** (AC.ONDEEP.1); the actual per-user web research + the
+  three-axis synthesis (effectiveness / promotion criteria / existing-AI-tools-to-
+  wrap-or-rebuild — AC.ONDEEP.2) lands as its own slice with its own plan-doc,
+  composing the forked-context-research-subagent primitive. Deferred OUT of the
+  baseline to keep the first-touch featherlight (the no-interrogation constraint).
+  If the owner rules D-5 inline, it moves in-scope for N3.
 
 ---
 
@@ -374,6 +542,15 @@ stopping criterion).
 5. **`workspace-bootstrap` is a sealed component without an amend path named.**
    If sealed and the dispatch did not name `loam amend apply`, HALT
    (sealed-component-dispatch rule).
+6. **The deep role-research is bloating the baseline.** If building the baseline
+   intake pulls the full web-research + synthesis pass inline (and D-5 was ruled
+   fast-follow), HALT — the baseline must stay featherlight; the pass is a
+   separate slice behind the interface seam. A baseline that cannot run without
+   the research pass present violates AC.ONDEEP.1's graceful-degradation clause.
+7. **The intake degenerates into a list / interrogation.** If the only way to
+   satisfy the intake is to present a multi-field form for the user to fill in,
+   HALT — that violates the owner's hard no-interrogation constraint (Surface #6);
+   the close is ONE stop/start thing, the ladder is graceful, not a gauntlet.
 
 ---
 
@@ -450,6 +627,35 @@ stopping criterion).
    says don't (leave them for N4's evidence). *The alternative:* if the owner
    wants a workspace-scoped first-touch (e.g. a per-repo intent), D-2 moves it
    in-scope. Forked in §11 D-2 with the global-only recommendation.
+
+6. **The deep role-research is a real sub-capability — keeping it OUT of the
+   baseline is what keeps the baseline honest.** *The disagreement:* the owner's
+   vision asks for a powerful deep role-research pass; the naive read is to build
+   it into onboarding so onboarding "feels complete." *The evidence:* the pass is
+   a per-user web-research + three-axis synthesis — a substantial L-sized
+   capability (Tier-0: no existing loam research module to lean on; it is net-new
+   over `WebSearch`/`WebFetch` + a forked research subagent). Inlining it makes
+   the *first touch* a heavyweight research event, which is exactly the
+   interrogation-by-weight the owner forbids. *The alternative:* hold it as a
+   separate fast-follow slice behind a clean interface (D-5), gated opt-in
+   (AC.ONDEEP.1); the baseline ships the seam and degrades gracefully without it.
+   This is the swarming stopping-criterion applied: the pass has a *strictly
+   tighter* AC than the baseline (judge a synthesis on three axes), so it splits
+   out. Named so the owner sees the slice boundary is a deliberate
+   proportionality call, not a deferral of the owner's vision.
+
+7. **Risk: the demonstrate-leverage close (AC.ONINTAKE.6) is the point, and it is
+   soft to verify.** *The disagreement:* "ends with a person-specific leverage
+   idea" is a quality, not a deterministic check — a weak implementation could
+   emit a generic suggestion and claim the AC. *The evidence:* the same shape as
+   the over-reach guard (§10.4) — a quality the model exercises, not a gate.
+   *The alternative / mitigation:* AC.ONINTAKE.6 requires the surfaced idea to
+   **reference the user's stated stop/start item or role** — a specificity check a
+   generic-boilerplate implementation fails; a reject-vs-different-answer probe
+   (the AC.ONINTAKE.3 pattern) can assert two different answer sets yield two
+   different leverage ideas. The deep-quality judgement (is the idea *good*?) is
+   an LLM-as-judge / review concern, not a unit assertion. Named so the builder
+   authors the specificity probe, not just an "an idea was printed" assertion.
 
 ---
 
@@ -562,6 +768,38 @@ stopping criterion).
   translate-in intake — recommend BEFORE (capabilities first, then intent), the
   builder's call on exact ordering if the owner has no preference.**
 
+### D-5 — deep role-research: own fast-follow slice, or inline in N3? (NEW, this revision)
+
+- **(a) Separate fast-follow slice + interface seam in N3 baseline (recommended).**
+  N3 baseline ships the **featherlight intake** + the **opt-in deep-research
+  interface seam** (the offer + a thin/stub deepening, AC.ONDEEP.1). The full
+  per-user web-research + three-axis synthesis pass (AC.ONDEEP.2) lands as **its
+  own fast-follow slice** with its own plan-doc, composing the
+  forked-context-research-subagent primitive. The baseline degrades gracefully
+  when the pass is absent.
+- **(b) Inline in N3.** Build the full deep role-research pass inside the N3
+  baseline cycle. One slice, no seam handoff — but it makes N3 an L–XL slice,
+  pulls a substantial web-research capability onto the critical path (N3 → N4 →
+  Phase 3), and risks the first-touch becoming heavyweight (the
+  interrogation-by-weight the owner forbids if the deepening ever runs by default).
+- **(c) Defer the deepening entirely (no seam, no slice yet).** Ship only the
+  featherlight baseline; add the deep-research later with no interface designed
+  now. Lightest N3, but it means the baseline has no seam to compose the deepening
+  onto later, so the fast-follow has to retrofit the intake — and the owner's
+  vision (the deep role-research is load-bearing for low-information users) waits
+  with no scaffold.
+- **Recommendation: (a).** It honours the proportionality refinement exactly: the
+  baseline stays featherlight (the no-interrogation hard constraint), the powerful
+  capability is *available* behind a clean opt-in interface, and the substantial
+  web-research+synthesis work is a separately-scopable slice with a strictly
+  tighter AC (swarming: split when the subtask's AC is tighter than the parent's).
+  (b) is defensible only if the owner wants the deepening shipped day-one and
+  accepts the larger N3; (c) is rejected because it leaves no seam and forces a
+  retrofit. **Confidence: high on (a) as the slice boundary** (proportionality +
+  swarming both point the same way); **medium on exactly how thin the N3 seam is
+  — a pure interface + "coming soon" offer vs a minimal single-source first cut —
+  the builder's call within AC.ONDEEP.1, surfaced if the owner has a preference.**
+
 ---
 
 ## §12. Provenance trail (load-bearing sources, with refs)
@@ -596,8 +834,25 @@ stopping criterion).
 - **The roadmap placement:** `docs/plans/loam-roadmap.md` §4 N3 (`N1 → N3 → N4`
   critical path; N3 unblocks N4 which is gated on G5), §4 N4 (what N3 seeds that
   N4 adapts).
+- **The owner's onboarding vision (this revision's load-bearing intent):** the
+  dispatch brief — the single stop/start close, the fallback ladder
+  (describe-work → mine-role → opt-in deep role-research), the three role-research
+  axes (effectiveness / promotion / existing-AI-tools), the demonstrate-leverage
+  success criterion, and the no-interrogation hard constraint. Reconciled against
+  the doctrine's loop (the stop/start ask = the infer-leg's content; the ladder =
+  its low-information branch). The proportionality refinement (featherlight
+  baseline + opt-in deepening) is owner-surfaced + Ren-recommended.
+- **The deep-research primitive the D-5 slice composes on:**
+  `docs/CLAUDE_CAPABILITIES.md` line 601 (forked-context skills `context: fork`
+  for research-shaped work in an isolated subagent), line 704 (`background: true`
+  research subagents), line 218 (`WebSearch` / `WebFetch` available to the Agent
+  tool). Tier-0: no pre-built `deep-research` module under `framework/` to extend
+  — the slice is net-new over the Claude-native research-subagent dispatch.
 - **Methodology:** `docs/conventions/plan-docs.md` (this plan's shape);
-  `feedback_test_outcome_altitude_required` (AC.ONFIRE.3);
+  `feedback_test_outcome_altitude_required` (AC.ONFIRE.3, AC.ONINTAKE.6,
+  AC.ONDEEP.1);
+  `feedback_swarming_recursive_decomposition` (the D-5 split: the deep-research
+  AC is strictly tighter than the baseline's, so it splits to its own slice);
   `feedback_loose_AC_text_fix_AC_not_implementation` (halt trigger 2);
   `feedback_record_owner_ratification_before_dispatch` (the §11 fork-ruling gate);
   `feedback_value_proposition_as_prime_objective` (the AC ladder-up).
@@ -616,11 +871,24 @@ rebuild (Lens 1 — N3 composes on the existing ritual + `establish_loam_layout`
 the AIM schema; it rebuilds none of them); plan-before-code (PLAN-ONLY — no code
 written); outcome-altitude AC at the real init entry-point (AC.ONFIRE.3); ODD
 authoring (every AC outcome-shape, method-in-AC test passed, question wording/
-count deliberately NOT pinned); F2 (named the wrong-surface risk, the
-proposed-doctrine tension, the fake-verify-gate risk, the over-reach-is-judgment
-risk — each with evidence + an alternative); scope↔confidence (TIGHT where the
-doctrine + N1 settled it; the four UX/product calls FORKED with recommendations
-where confidence in a single correct shape is medium, not high — owner rules).*
+count + the stop/start exact wording deliberately NOT pinned — pinning them would
+be method-in-AC); F2 (named the wrong-surface risk, the proposed-doctrine
+tension, the fake-verify-gate risk, the over-reach-is-judgment risk, the
+deep-research-bloat risk, the soft-leverage-close-verification risk — each with
+evidence + an alternative); scope↔confidence (TIGHT where the doctrine + N1
+settled it; the FIVE UX/product calls FORKED with recommendations where confidence
+in a single correct shape is medium, not high — owner rules); swarming (the deep
+role-research splits to its own slice because its AC is strictly tighter than the
+baseline's). REVISION principles (2026-05-31): integrate-don't-duplicate (the
+owner's vision SHARPENS the existing operating-loop intake's content; the
+stop/start ask is the infer-leg's concrete form, the ladder its low-information
+branch — kept every prior ruled decision); proportionality + over-reach guard
+(featherlight baseline + opt-in deepening — the no-interrogation HARD constraint
+made structural via AC.ONINTAKE.1's close-on-one + AC.ONDEEP.1's opt-in gate);
+compose-don't-rebuild (the deep-research slice composes the forked-research-
+subagent primitive, not net-new orchestration); PRIME DIRECTIVE (the
+demonstrate-leverage close is per-user-tuned translation made visible — leverage
+FOR THEM, not data collection).*
 
 ---
 
@@ -635,6 +903,8 @@ in §11 BEFORE the build dispatch.*
 | AC.ONINTAKE.2 | (pending) | |
 | AC.ONINTAKE.3 | (pending) | |
 | AC.ONINTAKE.4 | (pending) | |
+| AC.ONINTAKE.5 (fallback ladder) | (pending) | |
+| AC.ONINTAKE.6 ★ leverage-idea close | (pending) | |
 | AC.ONSEED.1 | (pending) | |
 | AC.ONSEED.2 | (pending) | |
 | AC.ONSEED.3 | (pending) | |
@@ -642,3 +912,5 @@ in §11 BEFORE the build dispatch.*
 | AC.ONFIRE.1 | (pending) | |
 | AC.ONFIRE.2 | (pending) | |
 | AC.ONFIRE.3 ★ outcome-altitude:true | (pending) | |
+| AC.ONDEEP.1 ★ opt-in/featherlight gate | (pending) | |
+| AC.ONDEEP.2 (3-axis synthesis — D-5 fast-follow slice if ruled (a)) | (pending) | |

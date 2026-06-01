@@ -1,0 +1,92 @@
+schema_version: 1
+amendment:
+  number: 167
+  slug: smoke-variant-b-day-derived-hardening
+  title: "Smoke variant-B persona hardening — reliably exercise the day-derived path (AC.SMOKE.6): the brief now steers Marcus to name his day AND the claim-summary write-up pile-up in the same first answer (day-derived PARTIAL, off the research ladder), forbidding the contentless vacuum opener that tripped the featherlight gate in rerun2"
+
+# BASELINE: 5e2ef11d — the workspace-bootstrap close-redesign source commit
+# immediately preceding the smoke source-edit commit (03a71e8c). BASELINE-as-
+# HEAD~1 pattern (the close-redesign commit is the close-component's source; this
+# smoke component's source edit follows it).
+#
+# Commit ladder pre-apply:
+#   27a72fa2 — close-redesign plan-doc.
+#   5e2ef11d — close redesign source (#166 component). ← BASELINE
+#   03a71e8c — fix(smoke): variant-B persona hardening + AC.SMOKE.6 test.
+#   <#166 manifest commit>  (OTHER component, not in this fence)
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — loam-acceptance-smoke only:
+#   framework/tools/loam-acceptance-smoke/src/loam_acceptance_smoke/variants.py
+#     - _VARIANT_B.persona_brief — day-with-named-pain opener; forbids the
+#       contentless vacuum opener (AC.SMOKE.6).
+#   framework/tools/loam-acceptance-smoke/scripts/variant_b_claims_adjuster.md
+#     - the human-readable mirror updated to match.
+#   tests/test_AC_SMOKE_6_variant_b_reliably_day_derived.py — NEW test (3 cases):
+#     the brief instructs the opener; the prescribed opener classifies non-EMPTY
+#     via the production classifier; B still expects zero research (no AC.SMOKE.3
+#     loosening).
+#
+# New AC: AC.SMOKE.6 (variant-B input fidelity; does NOT loosen AC.SMOKE.3).
+baseline: "5e2ef11d"
+
+plan: docs/plans/intake-leverage-close-redesign.md
+
+seal_description: "Smoke variant-B persona hardening — reliably day-derived (AC.SMOKE.6); does not loosen AC.SMOKE.3"
+
+components:
+  - name: loam-acceptance-smoke
+    seal_test: framework/tools/loam-acceptance-smoke/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam-acceptance-smoke/tests/SEAL_COMMIT
+    frozen_baseline: false
+    # The component lives under framework/tools/ (deeper than the
+    # framework/<name>/ auto-derivation expects). Admit its own prefix
+    # explicitly (mirrors the harness-build manifest #164).
+    extra_allowed_prefixes:
+      - framework/tools/loam-acceptance-smoke/
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/smoke-variant-b-day-derived-hardening.md
+  body: |
+    # Smoke variant-B day-derived hardening — apply ladder
+
+    The loam 1.0 acceptance smoke's SECOND re-run
+    (`docs/experiments/loam-1.0-acceptance-smoke-rerun2.md`) sampled a
+    PURE-VACUUM opener for variant B ("afternoons just disappear, not sure
+    where the time goes" — no concrete pain), so B routed to the idea-vacuum
+    ladder + deep-research and tripped the featherlight gate
+    (deep-research-correctly-(not)-triggered FAIL). loam routed CORRECTLY for
+    that input — the defect was the persona script allowing a contentless
+    opener (harness non-determinism), NOT a loam bug.
+
+    This cycle hardens variant B's persona brief (and its human-readable
+    mirror) so its FIRST stop/start answer reliably describes the day AND names
+    the concrete pain (the claim-summary write-ups) in the SAME reply — the
+    day-derived PARTIAL shape the production classifier demotes OFF the research
+    ladder via the single-derivable-pain demotion. The brief explicitly forbids
+    the contentless "the time just disappears" opener.
+
+    AC.SMOKE.6 asserts (a) the brief instructs a day-with-named-pain opener and
+    (b) the prescribed opener classifies non-EMPTY via the REAL production
+    classifier (`_classify_richness`) — coupling the smoke-input fix to the loam
+    behavior it must exercise. It does NOT loosen AC.SMOKE.3: variant B is still
+    asserted to reach zero research there; this AC fixes the INPUT so B reliably
+    presents the day-derived shape, rather than papering over the gate.
+
+    Predecessor commits:
+      - 5e2ef11d — close-redesign source (#166 component, BASELINE).
+      - 03a71e8c — variant-B persona hardening + AC.SMOKE.6 test (BASELINE+1).
+
+    BASELINE 5e2ef11d. Single-component fence on
+    `framework/tools/loam-acceptance-smoke/`.
+
+    DO NOT push, DO NOT merge — owner-gated.

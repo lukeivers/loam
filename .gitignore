@@ -47,6 +47,18 @@ data/
 workspace/
 personas/
 
+# The protection-matrix catalogue is the matrix's hand-authored SOURCE OF
+# TRUTH (NOT generated runtime data) — the over-broad `*/data/` + `data/`
+# rules above wrongly swept it, leaving a fresh clone unable to load the
+# flagship matrix. A bare file-negation cannot re-include a file whose
+# parent dir is excluded by a `data/` rule, so the dir must be re-included
+# first, then the single catalogue file. The protection-matrix `data/` dir
+# holds ONLY this hand-authored catalogue (no generated runtime files), so
+# the dir-negation tracks nothing unintended; the other components'
+# generated runtime `data/` dirs stay ignored.
+!framework/protection-matrix/data/
+!framework/protection-matrix/data/failure-mode-guard-matrix.yaml
+
 # odd-extractor per-extraction state (v0.2.5 corrective C6 F-DESIGN-3
 # fix). Pre-C6 default workspace-root was cwd; running smoke / dev
 # invocations of `loam odd-extract` from inside pos-v2 would write to

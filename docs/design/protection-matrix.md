@@ -7,7 +7,7 @@ loam's *protection pillar* (doctrine §"The two sides of leg 2 — translation i
 
 This page is generated from the machine-checkable catalogue and reflects the live coverage verdict as of the date below. The **gaps** — floor-class failure modes guarded today only by persona discipline — are the actionable output, not a defect to hide.
 
-*Coverage checked: 2026-05-31. 6 floor-class gap(s) open.*
+*Coverage checked: 2026-06-01. 8 floor-class gap(s) open.*
 
 ## The matrix
 
@@ -18,7 +18,7 @@ This page is generated from the machine-checkable catalogue and reflects the liv
 | **FM.SILENT-BREAKAGE** — One change breaks the surrounding work | ODD objective-binding gate + TDD guard + the pre-publish release-gate chain | hook | floor | YES | — |
 | **FM.GOAL-DRIFT** — Loses the original goal | ODD authoring (every line maps to a named AC) + the active-scope sentinel hook | hook | floor | YES | — |
 | **FM.NO-MEMORY** — Has no real memory | file-based memory (the FBM corpus) + the loam-memory-inspect tooling over it | memory | floor | YES | — |
-| **FM.NARRATION-NOT-ACTION** — Narrates intent without taking the action | persona-discipline only — the channel auto-route fix closed ONE hole (un-replied conversational text); no general programmatic guard that a work-turn ends on a work/reply tool call | persona-discipline | floor | NO-PROGRAMMATIC | **YES** |
+| **FM.NARRATION-NOT-ACTION** — Narrates intent without taking the action | the self-recovery distress-detector — its unfulfilled-claim class (you-keep-saying / you-said-but) deterministically catches the narration-not-action distress shape on the inbound path and trips self-diagnosis by the 2nd signal; partial — a DOWNSTREAM catch on recurrence, not a prevention that a work-turn ends on a work/reply tool call | hook | floor | NO-PROGRAMMATIC | **YES** |
 | **FM.INFERRED-RHYTHM** — Infers the user's session, time, or rhythm | persona-discipline only | persona-discipline | proportional | NO-PROGRAMMATIC | — |
 | **FM.ENV-PERCEPTION-MVC** — Confuses its internal env-model with the user's view | persona-discipline only | persona-discipline | floor | NO-PROGRAMMATIC | **YES** |
 | **FM.PROCESS-DRIFT-UNDER-PRESSURE** — Abandons the defined flow under pressure | the keep-pace flow-position hooks (partial — they re-assert flow position) + mostly persona-discipline | persona-discipline | floor | NO-PROGRAMMATIC | **YES** |
@@ -29,6 +29,8 @@ This page is generated from the machine-checkable catalogue and reflects the liv
 | **FM.BOUNDARY-VIOLATION** — Framework writes user-state outside its declared homes | the boundary-respected release gate | release-gate | floor | YES | — |
 | **FM.MIGRATION-GAP** — Ships a state change with no migration | the migration-declared release gate | release-gate | floor | YES | — |
 | **FM.FALSE-FAULT** — Manufactures a fault that isn't real | persona-discipline only — the four-test discipline before writing an audit ✗ | persona-discipline | proportional | NO-PROGRAMMATIC | — |
+| **FM.PROCESS-DRIFT** — Drops the defined flow mid-task | the defined-workflow position re-injection hook — reads the active flow's cursor from disk and re-injects flow + step + branch-state (plus the pause-if-lost directive) on every context-loss point (SessionStart=compact / PreCompact / UserPromptSubmit / PreToolUse); partial — it RE-ASSERTS position advisorily, it does not hard-block a step taken out of order | hook | floor | NO-PROGRAMMATIC | **YES** |
+| **FM.COMMS-PATH-DEAD** — Goes silent when the user-visible channel dies | the self-recovery watchdog's dead-channel detection + out-of-band self-heal — proactively probes whether the user-visible channel is live and, on a negative probe, delivers an out-of-band notice via the durable fallback surface so a down channel does not become silence; no user distress signal required to fire it | hook | floor | NO-PROGRAMMATIC | **YES** |
 
 ## The gaps (floor-class, no default-on guard)
 
@@ -44,9 +46,9 @@ Each of these floor-class failure modes is today guarded only by persona discipl
 ### FM.NARRATION-NOT-ACTION — Narrates intent without taking the action
 
 - **Betrayal:** Says it will do the work (or claims it did) without ever emitting the tool call — terminal-only intent-text the user never sees as a result.
-- **Today's guard:** persona-discipline only — the channel auto-route fix closed ONE hole (un-replied conversational text); no general programmatic guard that a work-turn ends on a work/reply tool call
+- **Today's guard:** the self-recovery distress-detector — its unfulfilled-claim class (you-keep-saying / you-said-but) deterministically catches the narration-not-action distress shape on the inbound path and trips self-diagnosis by the 2nd signal; partial — a DOWNSTREAM catch on recurrence, not a prevention that a work-turn ends on a work/reply tool call
 - **Source:** feedback_narration_is_not_action.md (born from the 2026-05-31 silent-night failure; fired four times in one night)
-- **Why it's a gap:** UNVERIFIABLE by a deterministic check — a prose rule the doctrine itself says "decays first under pressure." This is a GAP: the recurrence (four fires in one night despite the corpus rule) is the structural-enforcement trigger (feedback_structural_enforcement_on_recurrence).
+- **Why it's a gap:** PARTIAL: the distress detector's unfulfilled-claim rubric (_UNFULFILLED_PATTERNS — "the narration-not-action distress shape") deterministically classifies the user's distress and trips self-diagnosis, a real programmatic DOWNSTREAM catch; but there is no programmatic guard that PREVENTS the narration (a work-turn ending on the work/reply tool call) — wiring the detector into settings is owner-gated. Floor gap on prevention; the recurrence is the structural-enforcement trigger (feedback_structural_enforcement_on_recurrence).
 
 ### FM.ENV-PERCEPTION-MVC — Confuses its internal env-model with the user's view
 
@@ -75,4 +77,18 @@ Each of these floor-class failure modes is today guarded only by persona discipl
 - **Today's guard:** the reversibility primitive (every prune tracked in version control, rollback-able) + the surface-before-destructive discipline + the depends-on-it check (partial — reversibility is programmatic, the depends-on check is persona-discipline)
 - **Source:** docs/design/loam-doctrine.md §pruning (every prune reversible + destructive cuts surfaced before they happen + check 'does anything still depend on it?')
 - **Why it's a gap:** PARTIAL: the reversibility primitive (framework/reversibility-primitive/) makes prunes rollback-able (real, programmatic), but "does anything still depend on it?" + the surface-before-cut step are persona discipline → floor gap on the decision-to-cut, covered programmatically only on the undo side.
+
+### FM.PROCESS-DRIFT — Drops the defined flow mid-task
+
+- **Betrayal:** Loses its place in the structured flow it was following — abandons the defined workflow when the work gets long or hard, exactly when the flow's structure matters most (doctrine: "a defined flow decays first under pressure").
+- **Today's guard:** the defined-workflow position re-injection hook — reads the active flow's cursor from disk and re-injects flow + step + branch-state (plus the pause-if-lost directive) on every context-loss point (SessionStart=compact / PreCompact / UserPromptSubmit / PreToolUse); partial — it RE-ASSERTS position advisorily, it does not hard-block a step taken out of order
+- **Source:** docs/design/loam-doctrine.md §Follow-the-defined-workflow; feedback_defined_workflow_in_context_pause_if_lost.md (owed from the defined-workflow build)
+- **Why it's a gap:** PARTIAL: build_reinjection_context re-injects the on-disk cursor position (real, deterministic — the AC.REINJECT.1 outcome-altitude test drives the production entry-point); but the re-injection is ADVISORY (every path returns 0, never blocks a tool call) and wiring it into a live settings.json is owner-gated instance-config. Floor gap on enforcement; the residual that the flow is actually FOLLOWED under pressure is persona discipline. (Companion to the persona-discipline FM.PROCESS-DRIFT-UNDER-PRESSURE row — this row binds the now-merged re-injection guard the older row only anticipated.)
+
+### FM.COMMS-PATH-DEAD — Goes silent when the user-visible channel dies
+
+- **Betrayal:** The channel the user actually reads (Telegram) goes down and the agent becomes silent — the user is left in the dark with no signal that work is still happening (the silent-night failure on the OUTBOUND path).
+- **Today's guard:** the self-recovery watchdog's dead-channel detection + out-of-band self-heal — proactively probes whether the user-visible channel is live and, on a negative probe, delivers an out-of-band notice via the durable fallback surface so a down channel does not become silence; no user distress signal required to fire it
+- **Source:** feedback_telegram_outage_selfheal_and_confident_continue.md; feedback_user_distress_is_priority_diagnostic_signal.md (self-recovery F-4)
+- **Why it's a gap:** PARTIAL: the watchdog's dead-channel leg (ChannelVerdict — "the result of a dead-channel check + self-heal attempt") proactively probes channel liveness and routes to the out-of-band notify, a real deterministic guard (the AC.SR-WATCH.2 tests drive it); but wiring the watchdog into a live settings.json / runtime loop is owner-gated instance-config, so it is not default-on for every user yet. Floor gap on default-on activation; the detection + self-heal mechanism itself is real and sealed.
 

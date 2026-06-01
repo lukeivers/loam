@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BASELINE = "d9ece972"
+BASELINE = "ec7b666"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -72,6 +72,7 @@ def test_only_protection_matrix_and_partners_changed() -> None:
         "docs/release-roadmap.md",
         "docs/design/loam-doctrine.md",
         "docs/design/protection-matrix.md",
+        ".gitignore",
     }
 
     offending = []

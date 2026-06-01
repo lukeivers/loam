@@ -1,0 +1,385 @@
+# loam protection-pillar — the failure-mode × guard matrix (SOURCE OF TRUTH).
+#
+# This file is the single machine-checkable catalogue of loam's protection
+# pillar (doctrine §"The two sides of leg 2 — translation in, protection
+# around"). Each row binds ONE known way an AI betrays a user by default to
+# loam's ACTUAL guard against it, whether that guard is default-on, whether
+# the failure mode is floor-class (non-negotiable) or proportional, and how
+# we verify the guard fires.
+#
+# The `loam guards` verb reads THIS file, derives the live guard set from
+# ground truth (guard_ref resolution against the real tree + hook/gate
+# registration), reconciles the two, and NAMES the gaps. The human-readable
+# companion at docs/design/protection-matrix.md is GENERATED from this file —
+# never hand-edited (avoids a second drift surface; dogfoods the reconcile
+# discipline).
+#
+# Schema (plan §5). Every row carries:
+#   id            scope-descriptive failure-mode id (FM.*), never version-packed.
+#   name          plain-language name (doctrine vocabulary, user-facing).
+#   description   one sentence: how this betrays a user by default.
+#   source        the doctrine § or feedback_*.md that names this mode.
+#   guard         the actual loam guard (named hook / gate / ODD / FBM /
+#                 reconcile discipline / persona-discipline).
+#   guard_kind    hook | release-gate | odd | memory | comparator |
+#                 persona-discipline | none
+#   guard_ref     the path (or path:symbol) that IS the guard — the check
+#                 resolves this against the real tree. Empty for
+#                 persona-discipline / none rows (unverifiable by construction).
+#   default_on    YES | NO-PROGRAMMATIC | NONE — is the guard on by default
+#                 for every user, no opt-in?
+#   class         floor | proportional.
+#   proportionality_note  (proportional rows) what stakes dial this guard.
+#   verification  HOW we know the guard fires — a test ref / probe / the
+#                 registration check.
+#   gap           DERIVED by the check (class==floor AND default_on!=YES);
+#                 never authored here.
+#
+# Guard refs are Tier-0 sourced — every non-persona-discipline guard_ref was
+# read in the loam tree at build time. No guard is invented to make a row look
+# covered (doctrine §"a confident hallucination with a delete key" — the
+# protection pillar must not itself hallucinate coverage).
+
+schema_version: 1
+
+rows:
+  - id: FM.HALLUCINATION
+    name: "Invents things that do not exist"
+    description: >-
+      Confidently states facts, sources, counts, or statuses it has not
+      verified — the canonical AI betrayal (doctrine: "inventing things that
+      do not exist").
+    source: "docs/design/loam-doctrine.md §two-sides-of-leg-2; feedback_information_trust_ordering.md; feedback_claim_or_cite_no_fake_sources.md"
+    guard: "information-trust-ordering + claim-or-cite discipline + the substrate-audit comparator (catches a shipping doc's stale status claim)"
+    guard_kind: comparator
+    guard_ref: "framework/tools/loam/src/loam_cli/audit/comparator.py:compare_claim"
+    default_on: "NO-PROGRAMMATIC"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      The comparator IS exercised on shipping docs at publish
+      (check_substrate_audit); but broad fact-recall has no programmatic
+      check — the comparator covers status-claim drift only, persona
+      discipline covers the rest. PARTIAL coverage → floor gap on
+      non-doc claims.
+
+  - id: FM.MISSING-CONTEXT
+    name: "Works from missing or degraded context"
+    description: >-
+      Acts without the context it needed — never loaded the operating
+      corpus, or lost it to compaction (doctrine: "not always having the
+      right context").
+    source: "docs/design/loam-doctrine.md §two-sides-of-leg-2; feedback_session_start_discipline.md"
+    guard: "SessionStart corpus-load gate (loads the operating corpus at session start) + the precompact reinject skill (re-asserts discipline across compaction)"
+    guard_kind: hook
+    guard_ref: "framework/hands-off-lifecycle/hooks/corpus_load_session_start.py"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      The corpus-load hook is registered on SessionStart in the dev
+      settings template; the precompact-hook skill ships at
+      plugins/loam-skills/skills/precompact-hook/SKILL.md. Registration
+      ground truth confirms the SessionStart wiring.
+
+  - id: FM.SILENT-BREAKAGE
+    name: "One change breaks the surrounding work"
+    description: >-
+      Fixes one thing and quietly breaks another — silent regression
+      (doctrine: "making one change that breaks the surrounding things").
+    source: "docs/design/loam-doctrine.md §two-sides-of-leg-2 (objective-driven authoring guards silent regression); feedback_odd_no_non_objective_code.md"
+    guard: "ODD objective-binding gate + TDD guard + the pre-publish release-gate chain"
+    guard_kind: hook
+    guard_ref: "plugins/dev-sdlc/hooks/objective_binding_gate.py"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      The objective-binding gate + tdd_guard ship in the dev-sdlc plugin
+      hook set; ALL_GATES runs the structural release chain at publish.
+      Dev-mode default-on; proportional in derived workspaces (doctrine
+      §"above the floor, rigor flexes").
+
+  - id: FM.GOAL-DRIFT
+    name: "Loses the original goal"
+    description: >-
+      Drifts off the original objective mid-task — the work no longer maps
+      to what was asked (doctrine: "loses the original goal").
+    source: "docs/design/loam-doctrine.md §two-sides-of-leg-2; feedback_odd_no_non_objective_code.md"
+    guard: "ODD authoring (every line maps to a named AC) + the active-scope sentinel hook"
+    guard_kind: hook
+    guard_ref: "framework/hands-off-lifecycle/hooks/active_scope_sentinel.py"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      The active-scope sentinel ships in the hands-off-lifecycle hook set;
+      ODD objective-binding is the authoring discipline. Dev-mode
+      default-on.
+
+  - id: FM.NO-MEMORY
+    name: "Has no real memory"
+    description: >-
+      Forgets across sessions — no durable record of what was learned or
+      decided (doctrine: "having no real memory").
+    source: "docs/design/loam-doctrine.md §two-sides-of-leg-2 (file-based memory guards the no-real-memory failure)"
+    guard: "file-based memory (the FBM corpus) + the loam-memory-inspect tooling over it"
+    guard_kind: memory
+    guard_ref: "framework/tools/loam-memory-inspect/src/loam_memory_inspect/cli.py"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      The memory-inspect CLI surfaces + audits the file-based memory
+      corpus; the corpus itself is the durable store. The tool's presence
+      in the tree is the registration ground truth.
+
+  - id: FM.NARRATION-NOT-ACTION
+    name: "Narrates intent without taking the action"
+    description: >-
+      Says it will do the work (or claims it did) without ever emitting the
+      tool call — terminal-only intent-text the user never sees as a result.
+    source: "feedback_narration_is_not_action.md (born from the 2026-05-31 silent-night failure; fired four times in one night)"
+    guard: "the self-recovery distress-detector — its unfulfilled-claim class (you-keep-saying / you-said-but) deterministically catches the narration-not-action distress shape on the inbound path and trips self-diagnosis by the 2nd signal; partial — a DOWNSTREAM catch on recurrence, not a prevention that a work-turn ends on a work/reply tool call"
+    guard_kind: hook
+    guard_ref: "framework/self-correction/hooks/distress_detector.py:classify_distress"
+    default_on: "NO-PROGRAMMATIC"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      PARTIAL: the distress detector's unfulfilled-claim rubric
+      (_UNFULFILLED_PATTERNS — "the narration-not-action distress shape")
+      deterministically classifies the user's distress and trips
+      self-diagnosis, a real programmatic DOWNSTREAM catch; but there is no
+      programmatic guard that PREVENTS the narration (a work-turn ending on
+      the work/reply tool call) — wiring the detector into settings is
+      owner-gated. Floor gap on prevention; the recurrence is the
+      structural-enforcement trigger (feedback_structural_enforcement_on_recurrence).
+
+  - id: FM.INFERRED-RHYTHM
+    name: "Infers the user's session, time, or rhythm"
+    description: >-
+      Guesses when the user is around, how long they've been gone, or what
+      their cadence is from session signals it cannot actually observe.
+    source: "feedback_session_is_a_surface_never_infer_user_rhythm.md"
+    guard: "persona-discipline only"
+    guard_kind: persona-discipline
+    guard_ref: ""
+    default_on: "NO-PROGRAMMATIC"
+    class: proportional
+    proportionality_note: >-
+      Stakes scale with how much an action depends on the inferred rhythm
+      (a low-stakes greeting vs scheduling a real external action off a
+      wrong assumption about the user's availability).
+    verification: >-
+      UNVERIFIABLE by a deterministic check — proportional, so NOT a floor
+      gap, but recorded as a known persona-discipline-only guard.
+
+  - id: FM.ENV-PERCEPTION-MVC
+    name: "Confuses its internal env-model with the user's view"
+    description: >-
+      Treats its own model of the environment (files, state, what's on
+      screen) as what the user actually sees — a model/view confusion.
+    source: "feedback_environment_perception_model_dont_assume.md (explicitly the THIRD instance in one session)"
+    guard: "persona-discipline only"
+    guard_kind: persona-discipline
+    guard_ref: ""
+    default_on: "NO-PROGRAMMATIC"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      UNVERIFIABLE by a deterministic check. This is a GAP — a floor-class
+      betrayal guarded only by a prose rule that has already recurred
+      (third instance in one session).
+
+  - id: FM.PROCESS-DRIFT-UNDER-PRESSURE
+    name: "Abandons the defined flow under pressure"
+    description: >-
+      Drops the structured flow it was following when the work gets hard or
+      urgent — exactly when the flow matters most (doctrine: "a defined flow
+      decays first under pressure").
+    source: "docs/design/loam-doctrine.md §Follow-the-defined-workflow; feedback_defined_workflow_in_context_pause_if_lost.md"
+    guard: "the keep-pace flow-position hooks (partial — they re-assert flow position) + mostly persona-discipline"
+    guard_kind: persona-discipline
+    guard_ref: ""
+    default_on: "NO-PROGRAMMATIC"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      PARTIAL: keep-pace re-asserts flow position
+      (framework/hands-off-lifecycle/hooks/keep_pace/), but there is no
+      programmatic guard that the flow is actually FOLLOWED under pressure.
+      Floor gap — the residual is persona discipline.
+
+  - id: FM.BUILT-NE-LIVE
+    name: "Claims built/published from prose, not git refs"
+    description: >-
+      Reports a thing as built/sealed/merged/published from a status line
+      or a prior agent's summary rather than the git ref graph — stale-prone
+      Tier-2 prose treated as ground truth.
+    source: "feedback_published_state_only_from_git_refs.md"
+    guard: "the substrate-audit gate (catches a shipping DOC claiming a live component is dark / vice-versa) — partial: shipping docs only, not arbitrary in-conversation claims"
+    guard_kind: release-gate
+    guard_ref: "framework/tools/loam/src/loam_cli/release/gates.py:check_substrate_audit"
+    default_on: "NO-PROGRAMMATIC"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      The substrate-audit gate IS wired into ALL_GATES + runs at publish
+      against shipping docs (real, default-on for THAT surface). But a
+      built/published CLAIM made in conversation (not in an audited doc)
+      has no programmatic check → PARTIAL → floor gap for non-doc claims.
+
+  - id: FM.STALE-MEMORY-VS-TRUTH
+    name: "Trusts a stored claim over live ground truth"
+    description: >-
+      Believes a stored memory/note over the cheapest available live
+      evidence — a stale note denies present reality.
+    source: "feedback_notes_and_users_are_pointers_evidence_resolves.md"
+    guard: "the FBM reconcile entry-point — the SAME comparator the doc-audit uses, routing a stored claim through compare_claim for checkable claims"
+    guard_kind: comparator
+    guard_ref: "framework/tools/loam/src/loam_cli/audit/reconcile.py:reconcile_stored_claim"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      reconcile_stored_claim routes a checkable stored claim through the
+      same comparator as the doc audit; the finding is dated + scoped (never
+      an eternal negative). Default-on for CHECKABLE claims; a non-checkable
+      stored claim is surfaced, owner rules (by construction, not a gap).
+
+  - id: FM.SECRET-LEAK
+    name: "Commits secrets or .env files"
+    description: >-
+      Writes a credential, token, or .env into version control — a
+      universal, high-blast-radius betrayal.
+    source: "CLAUDE.md §Universal-principles (NEVER commit secrets or .env); feedback corpus (no-secrets rule)"
+    guard: "the secret-pattern guard hook + the dangerous-flag guard hook"
+    guard_kind: hook
+    guard_ref: "framework/safety-layer/hooks/secret_pattern_guard.py"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      secret_pattern_guard + dangerous_flag_guard ship in the safety-layer
+      hook set — UNIVERSAL (not dev-mode-gated). Their presence in the
+      safety-layer is the registration ground truth.
+
+  - id: FM.DESTRUCTIVE-PRUNE
+    name: "Deletes a load-bearing thing while pruning"
+    description: >-
+      Cuts a "vestigial" rule or compresses a sentence that was actually
+      load-bearing — the pruning leg's signature betrayal (doctrine: "a
+      confident hallucination with a delete key").
+    source: "docs/design/loam-doctrine.md §pruning (every prune reversible + destructive cuts surfaced before they happen + check 'does anything still depend on it?')"
+    guard: "the reversibility primitive (every prune tracked in version control, rollback-able) + the surface-before-destructive discipline + the depends-on-it check (partial — reversibility is programmatic, the depends-on check is persona-discipline)"
+    guard_kind: persona-discipline
+    guard_ref: ""
+    default_on: "NO-PROGRAMMATIC"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      PARTIAL: the reversibility primitive
+      (framework/reversibility-primitive/) makes prunes rollback-able
+      (real, programmatic), but "does anything still depend on it?" + the
+      surface-before-cut step are persona discipline → floor gap on the
+      decision-to-cut, covered programmatically only on the undo side.
+
+  - id: FM.BOUNDARY-VIOLATION
+    name: "Framework writes user-state outside its declared homes"
+    description: >-
+      The framework writes into directories that belong to the user's
+      project, crossing the framework/user-state boundary (ADR-0001).
+    source: "framework boundary ADR-0001; the check_boundary_respected gate"
+    guard: "the boundary-respected release gate"
+    guard_kind: release-gate
+    guard_ref: "framework/tools/loam/src/loam_cli/release/gates.py:check_boundary_respected"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      check_boundary_respected is a member of ALL_GATES — runs at every
+      publish; its membership in the tuple is the registration ground truth.
+
+  - id: FM.MIGRATION-GAP
+    name: "Ships a state change with no migration"
+    description: >-
+      Changes the user-state schema without declaring a migration, leaving
+      existing workspaces unable to upgrade safely.
+    source: "the check_migration_declared gate; state-migration-engine component"
+    guard: "the migration-declared release gate"
+    guard_kind: release-gate
+    guard_ref: "framework/tools/loam/src/loam_cli/release/gates.py:check_migration_declared"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      check_migration_declared is a member of ALL_GATES — runs at every
+      publish; its membership in the tuple is the registration ground truth.
+
+  - id: FM.FALSE-FAULT
+    name: "Manufactures a fault that isn't real"
+    description: >-
+      Admits an error it did not actually make — a low-trust introspective
+      self-output dressed up as an honest audit finding.
+    source: "feedback_no_false_fault_admission.md"
+    guard: "persona-discipline only — the four-test discipline before writing an audit ✗"
+    guard_kind: persona-discipline
+    guard_ref: ""
+    default_on: "NO-PROGRAMMATIC"
+    class: proportional
+    proportionality_note: >-
+      Stakes scale with what the false admission triggers (a throwaway
+      self-correction vs a fabricated fault that reverses a correct
+      decision or damages trust).
+    verification: >-
+      UNVERIFIABLE by a deterministic check — proportional, so NOT a floor
+      gap, but recorded as a known persona-discipline-only guard.
+
+  - id: FM.PROCESS-DRIFT
+    name: "Drops the defined flow mid-task"
+    description: >-
+      Loses its place in the structured flow it was following — abandons the
+      defined workflow when the work gets long or hard, exactly when the
+      flow's structure matters most (doctrine: "a defined flow decays first
+      under pressure").
+    source: "docs/design/loam-doctrine.md §Follow-the-defined-workflow; feedback_defined_workflow_in_context_pause_if_lost.md (owed from the defined-workflow build)"
+    guard: "the defined-workflow position re-injection hook — reads the active flow's cursor from disk and re-injects flow + step + branch-state (plus the pause-if-lost directive) on every context-loss point (SessionStart=compact / PreCompact / UserPromptSubmit / PreToolUse); partial — it RE-ASSERTS position advisorily, it does not hard-block a step taken out of order"
+    guard_kind: hook
+    guard_ref: "framework/tools/loam/src/loam_cli/flows/reinject.py:build_reinjection_context"
+    default_on: "NO-PROGRAMMATIC"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      PARTIAL: build_reinjection_context re-injects the on-disk cursor
+      position (real, deterministic — the AC.REINJECT.1 outcome-altitude
+      test drives the production entry-point); but the re-injection is
+      ADVISORY (every path returns 0, never blocks a tool call) and wiring
+      it into a live settings.json is owner-gated instance-config. Floor gap
+      on enforcement; the residual that the flow is actually FOLLOWED under
+      pressure is persona discipline. (Companion to the persona-discipline
+      FM.PROCESS-DRIFT-UNDER-PRESSURE row — this row binds the now-merged
+      re-injection guard the older row only anticipated.)
+
+  - id: FM.COMMS-PATH-DEAD
+    name: "Goes silent when the user-visible channel dies"
+    description: >-
+      The channel the user actually reads (Telegram) goes down and the agent
+      becomes silent — the user is left in the dark with no signal that work
+      is still happening (the silent-night failure on the OUTBOUND path).
+    source: "feedback_telegram_outage_selfheal_and_confident_continue.md; feedback_user_distress_is_priority_diagnostic_signal.md (self-recovery F-4)"
+    guard: "the self-recovery watchdog's dead-channel detection + out-of-band self-heal — proactively probes whether the user-visible channel is live and, on a negative probe, delivers an out-of-band notice via the durable fallback surface so a down channel does not become silence; no user distress signal required to fire it"
+    guard_kind: hook
+    guard_ref: "framework/self-correction/src/loam/self_correction/watchdog.py:ChannelVerdict"
+    default_on: "NO-PROGRAMMATIC"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      PARTIAL: the watchdog's dead-channel leg (ChannelVerdict —
+      "the result of a dead-channel check + self-heal attempt") proactively
+      probes channel liveness and routes to the out-of-band notify, a real
+      deterministic guard (the AC.SR-WATCH.2 tests drive it); but wiring the
+      watchdog into a live settings.json / runtime loop is owner-gated
+      instance-config, so it is not default-on for every user yet. Floor gap
+      on default-on activation; the detection + self-heal mechanism itself
+      is real and sealed.

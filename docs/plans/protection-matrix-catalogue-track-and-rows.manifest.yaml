@@ -1,0 +1,128 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: protection-matrix-catalogue-track-and-rows
+  title: "protection-matrix follow-on — track the gitignored source-of-truth catalogue + add the FM.PROCESS-DRIFT and FM.COMMS-PATH-DEAD rows + fold the narration row to the distress-detector"
+
+# BASELINE: ec7b666 (current main tip @ build time — the plan-doc commit on
+# this branch, sequenced after the self-recovery seal ca0241b1 so both new
+# guard symbols exist + resolve).
+#
+# Single-component amendment on the EXISTING protection-matrix component
+# (NOT a new component — the first seal was 68fb6f8). This cycle:
+#   1. AC.PMTRACK.1 (outcome-altitude) — the source-of-truth catalogue
+#      framework/protection-matrix/data/failure-mode-guard-matrix.yaml was
+#      gitignored by the over-broad `data/` rule, so it shipped UNTRACKED
+#      and a fresh clone could not load the flagship matrix. Fix: negate the
+#      ignore for this one file + git-add it; the catalogue now ships tracked.
+#   2. AC.PMROW.1 — add the FM.PROCESS-DRIFT row (owed from the
+#      defined-workflow build); guard_ref → the merged re-injection guard
+#      (flows/reinject.py:build_reinjection_context).
+#   3. AC.PMROW.2 — add the FM.COMMS-PATH-DEAD row (self-recovery F-4);
+#      guard_ref → the merged watchdog comms-liveness guard
+#      (self_correction/watchdog.py:ChannelVerdict); AND fold the
+#      FM.NARRATION-NOT-ACTION row's guard → the distress-detector
+#      (distress_detector.py:classify_distress).
+#   4. AC.PMGEN.1 — regenerate the companion docs/design/protection-matrix.md
+#      (the md↔yaml sync test stays green).
+#
+# Forks ruled in the plan §F: F-a (file-negation + git add -f, keep the path
+# the loader resolves) and F-b (ONE cycle — all three are protection-matrix,
+# same fence).
+
+baseline: "ec7b666"
+
+plan: docs/plans/protection-matrix-catalogue-track-and-rows.md
+
+components:
+  - name: protection-matrix
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/protection-matrix/tests/test_no_sealed_amendments.py
+    sidecar: framework/protection-matrix/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - .gitignore                       # the catalogue-tracking negation (plan §F-a; universal-path edit, admitted)
+    - docs/design/protection-matrix.md # generated companion (committed; regenerable via `loam guards --refresh`)
+
+narrative:
+  target: framework/protection-matrix/seals/SEAL_COMMIT.failure-mode-guard-matrix
+  body: |
+    # protection-matrix follow-on — track the catalogue + add the two
+    owed rows + fold the narration row — apply ladder
+
+    Per `docs/plans/protection-matrix-catalogue-track-and-rows.md`.
+    Sequenced after the self-recovery seal (main `ca0241b1`) so both new
+    guard symbols exist and resolve. Single-component amendment on the
+    EXISTING `framework/protection-matrix/` component (first seal was
+    `68fb6f8`); this seal advances the existing sidecar.
+
+    Three protection-matrix defects/owed-items closed in one cycle:
+
+      - AC.PMTRACK.1 (outcome-altitude) — the source-of-truth catalogue
+        `framework/protection-matrix/data/failure-mode-guard-matrix.yaml`
+        was gitignored by the over-broad `.gitignore` `data/` rule, so it
+        shipped UNTRACKED — a fresh clone resolved `default_catalogue_path()`
+        to a missing file and could NOT load the flagship matrix. Fix: a
+        `.gitignore` negation re-includes just this one hand-authored
+        catalogue (the generated runtime `data/` dirs stay ignored) and the
+        file is force-added. The AC asserts from `git ls-files` (NOT the
+        working-tree copy) that the catalogue is tracked AND
+        `load_catalogue(default_catalogue_path())` parses the full row set —
+        it fails if the file is untracked/gitignored.
+
+      - AC.PMROW.1 — the FM.PROCESS-DRIFT row (owed from the defined-workflow
+        build) exists, schema-conformant, with a `guard_ref` resolving to the
+        merged re-injection guard
+        (`framework/tools/loam/src/loam_cli/flows/reinject.py:build_reinjection_context`).
+
+      - AC.PMROW.2 — the FM.COMMS-PATH-DEAD row (self-recovery F-4) exists,
+        schema-conformant, with a `guard_ref` resolving to the merged
+        watchdog comms-liveness guard
+        (`framework/self-correction/src/loam/self_correction/watchdog.py:ChannelVerdict`);
+        AND the FM.NARRATION-NOT-ACTION row, formerly an empty-ref
+        persona-discipline gap, is folded to bind the distress-detector
+        (`framework/self-correction/hooks/distress_detector.py:classify_distress`)
+        — its unfulfilled-claim class catches the narration-not-action
+        distress shape on the inbound path.
+
+      - AC.PMGEN.1 — the generated companion `docs/design/protection-matrix.md`
+        is regenerated from the updated catalogue (the md↔yaml sync test
+        stays green; the companion is GENERATED, never hand-edited).
+
+    Both new rows resolve to REAL importable symbols via the production
+    resolver — no hallucinated guard (the recursive-FM.HALLUCINATION risk the
+    matrix exists to prevent). Both ship `default_on: NO-PROGRAMMATIC`,
+    `class: floor` — VISIBLE gap rows (the guards exist + are sealed but
+    wiring into a live settings.json is owner-gated), not silent omissions.
+
+    The rows REFERENCE the other components' existing public symbols; they do
+    NOT edit those components. The fence stays `framework/protection-matrix/`
+    plus the two admitted universal paths (`.gitignore` negation + the
+    generated companion).
+
+    Surfaced (NOT fixed here — separate candidate): (1) the seal-fence
+    verifies committed diff scope but NOT that every runtime-required file is
+    git-tracked — a gitignored source file passes seal silently (this cycle's
+    AC.PMTRACK.1 catches it for THIS file; the general fix is a seal-time
+    "every runtime-resolved path is tracked" check). (2) the guard_ref
+    resolver (`derive.py:_symbol_defined_in`) matches `def`/`class` but NOT
+    `async def`, so an async guard symbol cannot be bound — `ChannelVerdict`
+    (a class) was selected for FM.COMMS-PATH-DEAD rather than the
+    `async def check_channel_and_self_heal` it wraps.
+
+    Predecessor:
+      - ec7b666 — main tip @ build time (this plan-doc commit; follows the
+        self-recovery seal ca0241b1).
+
+    BASELINE ec7b666 (re-baselined by the builder to the actual source-edit
+    commit). Follow-on seal on the EXISTING `framework/protection-matrix/`
+    component — the sidecar advances from the prior seal `68fb6f8`.

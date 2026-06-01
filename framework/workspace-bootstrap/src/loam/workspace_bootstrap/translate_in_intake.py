@@ -410,8 +410,25 @@ def _classify_richness(answer: str) -> IdeaRichness:
 # as START by a "more" substring inside "anymore" (the rerun8 variant-A inversion:
 # "I'd love to just... not do that anymore" was classed START via `more` in
 # `anymore`, inverting the intent). Matched as whole tells, earliest-wins.
+# The cessation verbs an intent-frame ("want to / need to / would love to") can
+# govern — "I want to STOP doing X" is a STOP, the frame is not a START tell.
+_STOP_VERB = r"(?:stop|quit|avoid|cut\s+out|drop|get\s+rid\s+of|hand\s+off|offload)"
+# An intent-frame ("want to / need to / 'd love to / 'd like to / have to") that
+# may govern a stop-verb. Used to (a) register a STOP at the frame and (b) stop
+# the bare "want to / need to" START tells from firing on "want to stop".
+_INTENT_FRAME = (
+    r"(?:want(?:s|ed)?\s+to|need(?:s|ed)?\s+to|"
+    r"(?:i'?d|would)\s+(?:love|like|prefer)\s+to|have\s+to|trying\s+to|"
+    r"looking\s+to|hoping\s+to|just\s+want\s+to)"
+)
 _STOP_TELLS = (
-    r"\bstop\b", r"\bquit\b", r"\bless\b", r"\bavoid\b", r"\bhate\b",
+    # An intent-frame governing a stop-verb ("want to stop", "need to quit",
+    # "I'd love to offload") is a STOP at the frame — the rerun11 variant-A
+    # inversion: "I want to stop doing it by hand" was classed START because the
+    # "want to" START tell preceded "stop".
+    rf"\b{_INTENT_FRAME}(?:\s+\w+){{0,3}}\s+{_STOP_VERB}\b",
+    rf"\b{_STOP_VERB}\b",
+    r"\bless\b", r"\bhate\b",
     r"\btired of\b", r"\bsick of\b", r"\bno longer\b",
     # A negation anywhere ahead of "anymore" ("don't want to do this anymore",
     # "not do that anymore") is a cessation tell — STOP. Up to 6 intervening
@@ -421,9 +438,13 @@ _STOP_TELLS = (
     r"\bdone with\b", r"\boff my plate\b", r"\bget\s+\w+\s+off my plate\b",
 )
 # START tells use WORD BOUNDARIES so "more" matches the standalone word, never the
-# tail of "anymore" (the bug). "anymore" is excluded explicitly.
+# tail of "anymore" (the bug). The bare intent-frame START tells ("want to / need
+# to") carry a NEGATIVE LOOKAHEAD so they do NOT fire when the frame governs a
+# stop-verb ("want to stop") — that case is a STOP above (rerun11 variant-A).
 _START_TELLS = (
-    r"\bstart\b", r"\bbegin\b", r"\bshould\b", r"\bwant to\b", r"\bneed to\b",
+    r"\bstart\b", r"\bbegin\b", r"\bshould\b",
+    rf"\bwant(?:s|ed)?\s+to\b(?!(?:\s+\w+){{0,3}}\s+{_STOP_VERB}\b)",
+    rf"\bneed(?:s|ed)?\s+to\b(?!(?:\s+\w+){{0,3}}\s+{_STOP_VERB}\b)",
     r"\bmore\b",
 )
 

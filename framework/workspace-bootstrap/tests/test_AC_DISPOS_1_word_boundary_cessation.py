@@ -48,6 +48,14 @@ from loam.workspace_bootstrap.translate_in_intake import (
         ("take cite-checking briefs off my plate", Disposition.STOP),
         ("I'm sick of writing the claim summaries", Disposition.STOP),
         ("I'm so tired of formatting the reports", Disposition.STOP),
+        # An intent-frame governing a stop-verb is a STOP, not a START — the
+        # rerun11 variant-A inversion ("I want to stop ..." read START because
+        # "want to" preceded "stop").
+        ("Writing descriptions is killing me. I want to stop doing it by hand", Disposition.STOP),
+        ("I want to stop writing them myself", Disposition.STOP),
+        ("I need to quit chasing invoices", Disposition.STOP),
+        ("I'd love to offload the nightly write-ups", Disposition.STOP),
+        ("I want to get rid of the manual export", Disposition.STOP),
         # Genuine STARTs still read START (no over-correction).
         ("I want to start journaling every morning", Disposition.START),
         ("I should begin reviewing more of the contracts", Disposition.START),

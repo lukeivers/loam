@@ -1,0 +1,103 @@
+schema_version: 1
+amendment:
+  number: 169
+  slug: intake-close-rerun4-extraction-fixes
+  title: "Intake close rerun4 extraction fixes — the four deterministic regressions the fourth acceptance-smoke re-run (READY-WITH-GAPS) surfaced: role-noun resolving to a leading rejection clause 'I just told you' (AC.INTAKE-ROLE.1), a 'keeps piling up' day-pain staying EMPTY (AC.INTAKE-VACUUM.1), the named-task miner breaking on a hyphenated object 'claim-summary narratives' (AC.ONCLOSE.4), and a 'spend like two hours <verb>' temporal preamble not stripped (AC.INTAKE-ECHO.1)"
+
+# BASELINE: b7d9d1cd — the #168 seal, immediately preceding the rerun4 source-edit
+# commit (b56b1567). BASELINE-as-HEAD~1 pattern.
+#
+# Commit ladder pre-apply:
+#   b7d9d1cd — #168 rerun3-fixes seal. ← BASELINE
+#   b56b1567 — fix(intake): rerun4 extraction regressions + 4 tests.
+#   <this manifest commit>
+#   <loam amend apply auto-commit>
+#   <loam amend seal deterministic seal commit>
+#
+# Single-component fence — workspace-bootstrap only:
+#   framework/workspace-bootstrap/src/loam/workspace_bootstrap/translate_in_intake.py
+#     - _ROLE_TITLE lookahead + _ROLE_LEAD_FILLER + _extract_role_noun — role
+#       noun skips a leading rejection clause; trailing-punct boundary (AC.INTAKE-ROLE.1).
+#     - _DERIVABLE_PAIN_REGEXES — "piling up" / "disappears into" day-pain forms
+#       (AC.INTAKE-VACUUM.1).
+#     - _NAMED_TASK object char-class — hyphenated objects + articles (AC.ONCLOSE.4).
+#     - _ACTION_PREAMBLE — "spend [like] N hours <verb>" preamble strip (AC.INTAKE-ECHO.1).
+#   tests/test_AC_INTAKE_NL_natural_language_handling.py — 4 NEW tests on the
+#     verbatim rerun4 transcript cases.
+#
+# AC families: refinements to AC.INTAKE-ROLE.1 / AC.INTAKE-VACUUM.1 /
+#   AC.ONCLOSE.4 / AC.INTAKE-ECHO.1 (no new AC family).
+baseline: "b7d9d1cd"
+
+plan: docs/plans/intake-leverage-close-redesign.md
+
+seal_description: "Intake close rerun4 extraction fixes (AC.INTAKE-ROLE.1 / AC.INTAKE-VACUUM.1 / AC.ONCLOSE.4 / AC.INTAKE-ECHO.1) — role-noun rejection-clause skip, piling-up pain, hyphenated named-task, spend-hours preamble"
+
+components:
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.intake-close-rerun4-extraction-fixes
+  body: |
+    # Intake close rerun4 extraction fixes — apply ladder
+
+    The FOURTH acceptance-smoke re-run
+    (`docs/experiments/loam-1.0-acceptance-smoke-rerun4.md`) moved the verdict
+    NOT-READY -> READY-WITH-GAPS: all three variants confirmed an objective, all
+    three routed correctly (A idea-rich zero-research; B day-derived zero-research;
+    C idea-vacuum fired the opt-in research within the ≤3 budget), the
+    surface-and-check + close-on-one-thing + person-specific behaviors landed on
+    variants A and C. It surfaced four more deterministic extraction regressions,
+    all clear-direction and fixed here (refinements, not new ACs):
+
+      - AC.INTAKE-ROLE.1 — variant B's describe_work answer opened with a
+        conversational rejection ("I just told you — I'm a claims adjuster, six
+        years in"), and the role noun resolved to "I just told you" (the
+        _ROLE_TITLE lookahead required a space before a trailing comma — "claims
+        adjuster," failed — and the first-clause fallback grabbed the rejection
+        clause). This garbled SIX of B's dimensions ("a I just told you's day").
+        _ROLE_LEAD_FILLER drops the leading rejection clause; the lookahead now
+        accepts a directly-attached punctuation boundary.
+      - AC.INTAKE-VACUUM.1 — B's opener day-pain ("my afternoon disappears into …
+        keeps piling up on me") stayed EMPTY (the demotion covered "piles up" but
+        not "piling up" / "disappears into") and routed to the ladder rather than
+        the propose/verify path. _DERIVABLE_PAIN now covers those forms.
+      - AC.ONCLOSE.4 — the named-task miner broke on a hyphenated object
+        ("claim-summary narratives") because \w+ does not span the hyphen; the
+        object char-class now allows hyphens + a leading article.
+      - AC.INTAKE-ECHO.1 — variant A's opener "every single night I spend like
+        two hours writing up the listing descriptions" distilled the
+        temporal/spend preamble into the proposal; _ACTION_PREAMBLE now strips
+        "spend [like] N hours <verb>".
+
+    The ONE remaining honest gap — `four-step-loop-ran` (PARTIAL/FAIL on A/B/C
+    even with clean extraction) — is surfaced to the owner as a judgment call,
+    NOT silently patched: the judge wants leg 4 (loam ADJUSTS from the user's
+    answer / responds to a post-close follow-up like "How would that even
+    work?"). That requires a post-close turn, which tensions with the owner's
+    HARD no-interrogation / close-on-ONE-thing / featherlight constraints. The
+    leg-1 part (name the inferred intent coherently) IS addressed by the
+    distillation fixes; the leg-4 post-close-adjustment turn is the fork.
+
+    Predecessor commits:
+      - b7d9d1cd — #168 rerun3-fixes seal (BASELINE).
+      - b56b1567 — rerun4 extraction fixes + 4 tests (BASELINE+1).
+
+    BASELINE b7d9d1cd. Single-component fence on
+    `framework/workspace-bootstrap/`.
+
+    DO NOT push, DO NOT merge — owner-gated.

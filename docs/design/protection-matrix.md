@@ -7,7 +7,7 @@ loam's *protection pillar* (doctrine §"The two sides of leg 2 — translation i
 
 This page is generated from the machine-checkable catalogue and reflects the live coverage verdict as of the date below. The **gaps** — floor-class failure modes guarded today only by persona discipline — are the actionable output, not a defect to hide.
 
-*Coverage checked: 2026-06-01. 8 floor-class gap(s) open.*
+*Coverage checked: 2026-06-02. 9 floor-class gap(s) open.*
 
 ## The matrix
 
@@ -31,6 +31,7 @@ This page is generated from the machine-checkable catalogue and reflects the liv
 | **FM.FALSE-FAULT** — Manufactures a fault that isn't real | persona-discipline only — the four-test discipline before writing an audit ✗ | persona-discipline | proportional | NO-PROGRAMMATIC | — |
 | **FM.PROCESS-DRIFT** — Drops the defined flow mid-task | the defined-workflow position re-injection hook — reads the active flow's cursor from disk and re-injects flow + step + branch-state (plus the pause-if-lost directive) on every context-loss point (SessionStart=compact / PreCompact / UserPromptSubmit / PreToolUse); partial — it RE-ASSERTS position advisorily, it does not hard-block a step taken out of order | hook | floor | NO-PROGRAMMATIC | **YES** |
 | **FM.COMMS-PATH-DEAD** — Goes silent when the user-visible channel dies | the self-recovery watchdog's dead-channel detection + out-of-band self-heal — proactively probes whether the user-visible channel is live and, on a negative probe, delivers an out-of-band notice via the durable fallback surface so a down channel does not become silence; no user distress signal required to fire it | hook | floor | NO-PROGRAMMATIC | **YES** |
+| **FM.SILENT-EGRESS** — Sends your data off your machine without asking | the egress-consent gate (DESIGNED, not yet built) — a fail-closed, nothing-leaves-by-default release gate that assembles every off-machine send into a reviewable bundle, shows the user exactly what would leave in plain language, takes per-item approve/redact/decline, binds the approval to the content identity, and refuses to release on any uncertainty through a single audited choke point; until that layer is built + sealed the floor is held only by persona discipline | none | floor | NONE | **YES** |
 
 ## The gaps (floor-class, no default-on guard)
 
@@ -91,4 +92,11 @@ Each of these floor-class failure modes is today guarded only by persona discipl
 - **Today's guard:** the self-recovery watchdog's dead-channel detection + out-of-band self-heal — proactively probes whether the user-visible channel is live and, on a negative probe, delivers an out-of-band notice via the durable fallback surface so a down channel does not become silence; no user distress signal required to fire it
 - **Source:** feedback_telegram_outage_selfheal_and_confident_continue.md; feedback_user_distress_is_priority_diagnostic_signal.md (self-recovery F-4)
 - **Why it's a gap:** PARTIAL: the watchdog's dead-channel leg (ChannelVerdict — "the result of a dead-channel check + self-heal attempt") proactively probes channel liveness and routes to the out-of-band notify, a real deterministic guard (the AC.SR-WATCH.2 tests drive it); but wiring the watchdog into a live settings.json / runtime loop is owner-gated instance-config, so it is not default-on for every user yet. Floor gap on default-on activation; the detection + self-heal mechanism itself is real and sealed.
+
+### FM.SILENT-EGRESS — Sends your data off your machine without asking
+
+- **Betrayal:** Sends a user's data or files off their machine for troubleshooting or analytics WITHOUT explicit, transparent, per-item user consent — the default-leak privacy betrayal (nothing should leave the machine the user has not seen, in plain language, and approved).
+- **Today's guard:** the egress-consent gate (DESIGNED, not yet built) — a fail-closed, nothing-leaves-by-default release gate that assembles every off-machine send into a reviewable bundle, shows the user exactly what would leave in plain language, takes per-item approve/redact/decline, binds the approval to the content identity, and refuses to release on any uncertainty through a single audited choke point; until that layer is built + sealed the floor is held only by persona discipline
+- **Source:** docs/design (privacy-safe data-sharing layer §0.1 — the silent-egress matrix-gap finding); CLAUDE.md §Universal-principles (NEVER commit secrets / leak user data)
+- **Why it's a gap:** UNVERIFIABLE by a deterministic check today — the named guard (the egress-consent gate) is DESIGNED but not yet built, so there is no symbol to resolve and no programmatic binding to confirm. This is the honest "named-but-not-yet-bound" status the FM.COMMS-PATH-DEAD row holds for its gap-visibility (here the guard has no symbol yet, so the row carries an empty guard_ref legitimately rather than a hallucinated binding — the protection pillar must not invent coverage it does not have). A floor-class GAP: until the egress-consent gate is built and default-on, the silent-egress floor is held only by persona discipline.
 

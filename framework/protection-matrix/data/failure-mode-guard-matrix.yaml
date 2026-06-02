@@ -383,3 +383,28 @@ rows:
       instance-config, so it is not default-on for every user yet. Floor gap
       on default-on activation; the detection + self-heal mechanism itself
       is real and sealed.
+
+  - id: FM.SILENT-EGRESS
+    name: "Sends your data off your machine without asking"
+    description: >-
+      Sends a user's data or files off their machine for troubleshooting or
+      analytics WITHOUT explicit, transparent, per-item user consent — the
+      default-leak privacy betrayal (nothing should leave the machine the user
+      has not seen, in plain language, and approved).
+    source: "docs/design (privacy-safe data-sharing layer §0.1 — the silent-egress matrix-gap finding); CLAUDE.md §Universal-principles (NEVER commit secrets / leak user data)"
+    guard: "the egress-consent gate (DESIGNED, not yet built) — a fail-closed, nothing-leaves-by-default release gate that assembles every off-machine send into a reviewable bundle, shows the user exactly what would leave in plain language, takes per-item approve/redact/decline, binds the approval to the content identity, and refuses to release on any uncertainty through a single audited choke point; until that layer is built + sealed the floor is held only by persona discipline"
+    guard_kind: none
+    guard_ref: ""
+    default_on: "NONE"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      UNVERIFIABLE by a deterministic check today — the named guard (the
+      egress-consent gate) is DESIGNED but not yet built, so there is no
+      symbol to resolve and no programmatic binding to confirm. This is the
+      honest "named-but-not-yet-bound" status the FM.COMMS-PATH-DEAD row holds
+      for its gap-visibility (here the guard has no symbol yet, so the row
+      carries an empty guard_ref legitimately rather than a hallucinated
+      binding — the protection pillar must not invent coverage it does not
+      have). A floor-class GAP: until the egress-consent gate is built and
+      default-on, the silent-egress floor is held only by persona discipline.

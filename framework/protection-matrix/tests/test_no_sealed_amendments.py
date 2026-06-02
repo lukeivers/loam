@@ -23,6 +23,19 @@ HEAD so a build on an unfinished seal still exercises the test.
 BASELINE: d9ece972 — the current main tip + merge-base of
 ``plan/failure-mode-guard-matrix`` (N4 §14 method-decision register backfill).
 This NEW component's first seal fences against it.
+
+BASELINE history:
+  ec7b666 — the catalogue-track-and-rows follow-on (track the gitignored
+            source-of-truth catalogue + the FM.PROCESS-DRIFT / FM.COMMS-PATH-DEAD
+            rows + the narration fold).
+  949fced9 — the silent-egress-row follow-on (add FM.SILENT-EGRESS). The prior
+            BASELINE ec7b666 predated the entire v1.0.0 lockstep release, so the
+            stale BASELINE..SEAL_COMMIT window spanned every release-cut
+            component and would falsely trip the single-component fence. Advanced
+            BASELINE to 949fced9 (the main tip immediately before this
+            amendment's source commit — the documented HEAD~1 advance pattern)
+            so the window shows only this amendment's protection-matrix +
+            docs/plans/ + generated-companion surfaces.
 """
 
 from __future__ import annotations
@@ -32,7 +45,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BASELINE = "ec7b666"
+BASELINE = "949fced9"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

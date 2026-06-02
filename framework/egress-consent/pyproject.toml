@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-egress-consent"
+version = "1.0.0"
+description = "loam egress-consent — the privacy floor in front of EVERYTHING loam might send off the user's machine. A fail-closed, nothing-leaves-by-default release gate: every off-machine send is assembled into a reviewable EgressBundle, the user sees exactly what would leave in plain language (with an exact-bytes expansion), approves/redacts/declines per item, the approval binds to the content identity of the approved set (any mutation invalidates), and a single audited choke point refuses to release on any uncertainty. Plus the bug-report consumer: a non-tech user reports a problem with files/logs default-declined, secrets auto-redacted pre-review, and an always-available local-only fallback. Deterministic — no LLM in the gate."
+requires-python = ">=3.11"
+dependencies = [
+    "loam-safety-layer",
+    "loam-self-correction",
+]
+
+[project.scripts]
+loam-report = "loam.egress_consent.report_cli:main"
+
+# `loam report` — the user-facing bug-report verb, surfaced on the unified
+# `loam` CLI via the subcommand entry-point group (symmetric to `loam recover`
+# / `loam amend`).
+[project.entry-points."loam.cli.subcommands"]
+report = "loam.egress_consent.report_cli:build_report_subcommand"
+
+[tool.setuptools]
+package-dir = {"loam.egress_consent" = "src/loam/egress_consent"}
+packages = ["loam.egress_consent"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

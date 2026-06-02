@@ -1,0 +1,168 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: claude-p-to-insession-subagent-fanout-slice1
+  title: "Slice 1 — deep-research provider claude -p → in-session subagent fan-out"
+
+# BASELINE: aa759aa8 — the v1.0.1 post-publish backfill tip (the clean
+# released tree this minor builds on; HEAD at apply time). Single-
+# component fence on framework/workspace-bootstrap/. The minor's first
+# slice converts the deep-research provider's production ResearchSource
+# from a detached `claude -p` subprocess (spawn_isolated_claude) to an
+# in-session subagent dispatched through a host-session-registered
+# dispatcher callable. The injectable ResearchSource Protocol + the
+# MAX_RESEARCH_ROUNDTRIPS budget + the _parse_research_envelope parse +
+# the AC.DRRGRACE.1 fallback are UNCHANGED — the deterministic AC.DRR.*
+# suite stays green by construction. The residual `claude -p` source
+# (ClaudeSubagentResearchSource) STAYS in the module (no longer the
+# production default) and the loam_spawn_isolation guard is NOT deleted
+# (its scope narrows to residual-only). Plan:
+# docs/plans/claude-p-to-insession-subagent-fanout.md §5 AC.RES1.*.
+baseline: "aa759aa8"
+
+plan: docs/plans/claude-p-to-insession-subagent-fanout.md
+
+# Single-component amendment — workspace-bootstrap only. The conversion
+# lives entirely in deep_role_research_provider.py + a new user-facing
+# notice doc + new AC.RES1.* tests; no surface change to any other
+# sealed component (the seal-diff AC enforces this).
+components:
+  - name: workspace-bootstrap
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.claude-p-to-insession-subagent-fanout-slice1
+  body: |
+    # Slice 1 — deep-research provider claude -p → in-session subagent
+    #           fan-out (in-session-subagent-migration minor)
+
+    2026-06-02. First slice of the in-session-subagent-migration minor
+    per `docs/plans/claude-p-to-insession-subagent-fanout.md` §5
+    AC.RES1.*. Owner-greenlit (Luke, TG 13481) as the lowest-risk first
+    slice; it also sets up the post-June-15 live billing test.
+
+    MOTIVE (economic). Post-June-15-2026 `claude -p` / Agent-SDK usage
+    draws from a separate metered Agent SDK credit; in-session
+    subagents (the Task primitive a live Claude Code session uses) are
+    accounted against the subscription plan limits. This slice swaps the
+    SPAWN PRIMITIVE of the deep-research provider's production
+    ResearchSource — not the swarm shape, not the budget, not the
+    graceful-degradation contract.
+
+    Single-component fence on `framework/workspace-bootstrap/`. The
+    conversion lands entirely inside
+    `deep_role_research_provider.py` (+ one user-facing notice doc +
+    the AC.RES1.* tests):
+
+      - NEW: an in-session dispatcher seam — a process-level registry
+        (`set_in_session_dispatcher` / `get_in_session_dispatcher` /
+        `clear_in_session_dispatcher`) the live host session wires with
+        its Task-primitive dispatcher callable
+        `(prompt: str, *, model: str) -> str`. The standalone Python
+        provider is NOT itself a Claude session; the live session that
+        runs onboarding registers the dispatcher. No dispatcher
+        registered → graceful fallback (the same degrade path the old
+        `claude` -absent case took).
+
+      - NEW: `InSessionResearchSource` — the production ResearchSource.
+        Builds the SAME bounded research prompt, dispatches it through
+        the registered in-session dispatcher, and parses the result
+        through the UNCHANGED `_parse_research_envelope`. No detached
+        `claude -p` subprocess; no `spawn_isolated_claude` call; no
+        Anthropic SDK / `ANTHROPIC_API_KEY` (subscription-routed via the
+        host session's own auth). On no-dispatcher / dispatch-raise /
+        unparseable-result → `ResearchUnavailableError` → the
+        AC.DRRGRACE.1 fallback.
+
+      - CHANGED: `make_default_research_provider` now constructs the
+        provider with the `InSessionResearchSource` as the production
+        default (was `ClaudeSubagentResearchSource`).
+
+      - KEPT (NOT deleted): `ClaudeSubagentResearchSource` (the residual
+        `claude -p` mechanism) + its `spawn_isolated_claude` call.
+        `loam_spawn_isolation`'s scope narrows to residual-only; the
+        converted in-session path never touches it (no subprocess argv
+        to isolate). Narrated in-code so a future reader does not "clean
+        up" a still-load-bearing guard (the residual `-p` path + the
+        launchd-sessionless path still need it).
+
+      - NEW user-facing surface:
+        `docs/insession-subagent-keep-open-notice.md` — the plain-
+        language "keep loam open in the background to finish while
+        you're away; close it and it pauses" notice (AC.RES1.5).
+
+    AC surface — AC.RES1.1, .2, .3, .5 (the Slice-1 code/behaviour ACs;
+    AC.RES1.4 is the DEFERRED calendar-gated billing gate, below):
+
+      - AC.RES1.1 — the production ResearchSource produces a usable
+        three-axis result WITHOUT spawning a detached `claude -p`
+        child (verified by asserting the in-session path is taken and
+        no subprocess is launched).
+      - AC.RES1.2 — the bounded budget is still enforced
+        (`total_roundtrips ≤ MAX_RESEARCH_ROUNDTRIPS`; overshoot folds
+        to the marked fallback).
+      - AC.RES1.3 — graceful degradation preserved: no dispatcher /
+        dispatcher raises / unparseable result → the clearly-marked
+        `is_stub=True` fallback, never raises / hangs.
+      - AC.RES1.5 (outcome-altitude) — the keep-open USER NOTICE is
+        present on the user-facing path and discoverable cold.
+
+    DEFERRED MINOR-LEVEL GATE (does NOT block this seal):
+
+      - AC.RES1.4 — post-June-15-2026 `/usage` read confirming the
+        converted workload draws from plan-limits, not the Agent SDK
+        meter. CALENDAR-GATED — physically cannot verify before
+        June-15. NOT a Slice-1 code AC; NOT faked/stubbed to green;
+        tracked separately (plan §9) as the gate on the later
+        high-volume Slice 3.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - D-build.1 (dispatcher as an injected callable via a process-
+        level registry): the live host session — the only context with
+        the Task primitive — registers a `(prompt, *, model) -> str`
+        dispatcher. A registry (not a constructor arg threaded through
+        the whole intake) lets the production
+        `make_default_research_provider()` resolve the dispatcher at
+        call time without N call sites passing it down. No-registration
+        is the natural degrade trigger (AC.RES1.3), mirroring the old
+        `claude` -absent degrade.
+
+      - D-build.2 (keep `ClaudeSubagentResearchSource`): the `-p` source
+        stays as the residual mechanism so the spawn-isolation guard
+        stays exercised + load-bearing for the launchd-sessionless
+        residual path. Deleting it would re-expose that path's spawns
+        to the proven Telegram kill vector (plan §3 Surface #3 / H-3).
+
+      - D-build.3 (notice as a standalone doc): a top-level
+        `docs/insession-subagent-keep-open-notice.md` is reachable
+        through the normal docs path (vs buried in a code comment),
+        satisfying AC.RES1.5's "reachable through the normal user-
+        facing path" + the cold-walk outcome-altitude check.
+
+    Out of scope (plan §7): Slices 2 (handsoff-loop) + 3 (LitRPG); the
+    launchd-sessionless residual `-p`; the bench-PTY path; deleting
+    `loam_spawn_isolation`; the spend-cap setup; pushing to origin
+    (owner-gated release later — LOCAL seal only).
+
+    BASELINE aa759aa8 — the v1.0.1 post-publish backfill tip.
+    workspace-bootstrap's SEAL_COMMIT sidecar advances to this slice's
+    seal SHA at seal time. LOCAL seal only — the minor ships as its own
+    release later under owner gate.

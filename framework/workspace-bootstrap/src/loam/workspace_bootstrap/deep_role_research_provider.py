@@ -34,22 +34,34 @@ agent loop), and (b) the output is a SHORT, person-specific set of a FEW leverag
 ideas (D-RES-2: at most ``MAX_LEVERAGE_IDEAS``), never the raw research, never a
 dump that re-overwhelms the person the intake just coaxed out of overwhelm.
 
-**The research primitive (D-RES-1 (a), RULED).** A standalone Python provider is
-NOT a Claude session — it cannot import ``WebSearch`` / ``WebFetch`` / the
-``Agent`` tool directly. Loam's standing rule (``feedback_no_anthropic_api_key``)
-forbids the Anthropic SDK / ``ANTHROPIC_API_KEY`` path. So the provider COMPOSES
-the Claude-native research subagent via a bounded ``claude -p`` subprocess — the
-subprocess IS a Claude session with the web-research toolset — spawned through the
-MANDATED ``loam_spawn_isolation.spawn_isolated_claude`` primitive
-(``--strict-mcp-config`` + empty ``mcpServers`` + token/API-key-scrubbed env), so
-the spawn cannot steal the operator's Telegram bot slot
-(``feedback_spawned_claude_must_isolate_telegram_plugin``).
+**The research primitive (D-RES-1 (a), RULED; CONVERTED — AC.RES1.1).** A
+standalone Python provider is NOT a Claude session — it cannot import
+``WebSearch`` / ``WebFetch`` / the ``Agent`` tool directly. Loam's standing rule
+(``feedback_no_anthropic_api_key``) forbids the Anthropic SDK /
+``ANTHROPIC_API_KEY`` path. The PRODUCTION source (:class:`InSessionResearchSource`)
+COMPOSES the Claude-native research subagent as an IN-SESSION subagent (the Task
+primitive), dispatched through a callable the live host session registers
+(:func:`set_in_session_dispatcher`). In-session subagents are accounted against
+the subscription plan limits — NOT the post-June-15 metered Agent SDK credit a
+detached ``claude -p`` would draw from — and share the parent's MCP, so they
+never re-load the Telegram plugin and cannot steal the operator's bot slot. The
+converted path therefore NEVER touches the ``loam_spawn_isolation`` chokepoint
+(no subprocess argv to isolate).
 
-``loam_spawn_isolation`` is a separate package, NOT a workspace-bootstrap
-dependency; like every loam consumer (the README_3 outcome-altitude test) the
-provider LAZY-imports it inside the dispatch and DEGRADES GRACEFULLY when it (or
-the ``claude`` binary) is absent — the same no-interrogation-by-weight protection
-the N3 baseline relied on, now at the real-provider layer (AC.DRRGRACE.1).
+The RESIDUAL source (:class:`ClaudeSubagentResearchSource`) STAYS in this module
+for the path that has no living parent session to fan an in-session subagent from
+(it spawns the bounded ``claude -p`` subprocess through the MANDATED
+``loam_spawn_isolation.spawn_isolated_claude`` primitive — ``--strict-mcp-config``
++ empty ``mcpServers`` + token/API-key-scrubbed env — so that spawn cannot steal
+the operator's Telegram bot slot,
+``feedback_spawned_claude_must_isolate_telegram_plugin``). The spawn-isolation
+guard's scope NARROWS to residual-only; it is NOT deleted.
+
+Both sources DEGRADE GRACEFULLY when the capability is unavailable (no in-session
+dispatcher registered / dispatch failure / ``loam_spawn_isolation`` or the
+``claude`` binary absent) — raising :class:`ResearchUnavailableError` so the
+provider returns the same no-interrogation-by-weight fallback the N3 baseline
+relied on (AC.DRRGRACE.1).
 
 **Sync vs async (D-RES-3 (a), RULED).** The research runs SYNCHRONOUSLY at the
 opt-in moment with a HARD timeout; on timeout / failure / unavailable primitive,
@@ -65,6 +77,52 @@ from dataclasses import dataclass
 from typing import Callable, Protocol
 
 from .deep_role_research import RoleResearchResult
+
+# === In-session subagent dispatch seam (AC.RES1.1) ============================
+#
+# The standalone Python provider is NOT itself a Claude session — it cannot
+# import the Task primitive directly. The LIVE host session that runs onboarding
+# (the only context with the Task tool) registers a dispatcher callable here; the
+# production research source resolves it at call time. A registered dispatcher is
+# accounted against the subscription plan limits (in-session subagent billing),
+# NOT the post-June-15 metered Agent SDK credit a detached `claude -p` would draw
+# from — the whole motive of this slice.
+#
+# The dispatcher takes the bounded research prompt + the model name and returns
+# the subagent's raw result TEXT (the JSON the prompt asks for, possibly fenced —
+# parsed by the UNCHANGED _parse_research_envelope). No dispatcher registered →
+# the in-session capability is unavailable → ResearchUnavailableError → the
+# AC.DRRGRACE.1 fallback (the SAME degrade path the old `claude`-absent case
+# took). This is the honest shape of "the provider is not a session": when no
+# live session wired a dispatcher, it degrades exactly as before.
+
+InSessionDispatcher = Callable[[str], str]
+
+_in_session_dispatcher: InSessionDispatcher | None = None
+
+
+def set_in_session_dispatcher(dispatcher: InSessionDispatcher) -> None:
+    """Register the live host session's in-session subagent dispatcher.
+
+    Called by the live Claude Code session that runs onboarding: it passes a
+    callable ``(prompt: str) -> str`` that fans out an in-session subagent (the
+    Task primitive) with that prompt and returns the subagent's raw result text.
+    The production :class:`InSessionResearchSource` resolves this at call time so
+    no intake call site has to thread the dispatcher through.
+    """
+    global _in_session_dispatcher
+    _in_session_dispatcher = dispatcher
+
+
+def get_in_session_dispatcher() -> InSessionDispatcher | None:
+    """Return the registered in-session dispatcher, or ``None`` if none wired."""
+    return _in_session_dispatcher
+
+
+def clear_in_session_dispatcher() -> None:
+    """Unregister the in-session dispatcher (test hygiene + session teardown)."""
+    global _in_session_dispatcher
+    _in_session_dispatcher = None
 
 # --- D-RES-2 (a), RULED — the TIGHT budget + idea count (HARD caps). ----------
 #
@@ -232,7 +290,18 @@ def _parse_research_envelope(role: str, result_text: str, max_roundtrips: int) -
 
 
 class ClaudeSubagentResearchSource:
-    """Production ResearchSource: a bounded ``claude -p`` research-subagent.
+    """RESIDUAL ResearchSource: a bounded ``claude -p`` research-subagent.
+
+    **No longer the production default** (AC.RES1.1) — the production source is
+    :class:`InSessionResearchSource`, which fans out an in-session subagent
+    accounted against the subscription plan limits rather than the post-June-15
+    metered Agent SDK credit a detached ``claude -p`` draws from. This class
+    STAYS as the residual / explicit-opt-in mechanism: it is the only research
+    source that runs WITHOUT a living parent session to dispatch an in-session
+    subagent from, and keeping it preserves the ``loam_spawn_isolation`` guard's
+    residual-only role (do NOT delete it — the launchd-sessionless residual `-p`
+    path still needs the guard; deleting this would re-expose those spawns to the
+    proven Telegram kill vector — plan §3 Surface #3 / H-3).
 
     Composes the Claude-native forked-research-subagent primitive via a
     subprocess spawned through the MANDATED ``loam_spawn_isolation`` primitive
@@ -311,6 +380,63 @@ class ClaudeSubagentResearchSource:
         return _parse_research_envelope(role, result_text, max_roundtrips)
 
 
+# --- The PRODUCTION research source: an in-session subagent (AC.RES1.1). ------
+
+
+class InSessionResearchSource:
+    """Production ResearchSource: a bounded IN-SESSION research subagent.
+
+    The default the production provider uses (AC.RES1.1). Instead of spawning a
+    detached ``claude -p`` subprocess, it dispatches the SAME bounded research
+    prompt as an in-session subagent (the Task primitive) through the dispatcher
+    the live host session registered via :func:`set_in_session_dispatcher`, and
+    parses the subagent's result text through the UNCHANGED
+    :func:`_parse_research_envelope`.
+
+    **Why this is the win:** in-session subagents share the parent session — they
+    are accounted against the subscription plan limits, NOT the post-June-15
+    metered Agent SDK credit a ``claude -p`` spawn draws from. They also share
+    the parent's MCP, so they do NOT re-load the Telegram plugin and SIGTERM the
+    operator's bot-poller slot — the kill vector ``loam_spawn_isolation`` guards
+    does not exist on this path, which is why the converted path NEVER touches
+    the spawn-isolation chokepoint (no subprocess argv to isolate). NO Anthropic
+    API key — the host session is subscription-routed
+    (``feedback_no_anthropic_api_key``).
+
+    **Graceful degradation (AC.RES1.3 / AC.DRRGRACE.1).** When no dispatcher is
+    registered (running outside a live session, or the session never wired one),
+    the dispatcher raises, or its result is unparseable, this raises
+    :class:`ResearchUnavailableError` so the provider returns the clearly-marked
+    fallback — the SAME degrade the old ``claude``-absent case produced. The
+    provider is honestly not-a-session: with no live session, it degrades.
+    """
+
+    def __init__(self, *, model: str = "sonnet") -> None:
+        self._model = model
+
+    def research(self, role: str, *, max_roundtrips: int) -> RawRoleResearch:
+        dispatcher = get_in_session_dispatcher()
+        if dispatcher is None:
+            raise ResearchUnavailableError(
+                "no in-session subagent dispatcher registered — the bounded "
+                "research subagent cannot be fanned out (running outside a live "
+                "session, or the session has not wired one). Degrading to the "
+                "fallback synthesis (AC.DRRGRACE.1)."
+            )
+        prompt = _RESEARCH_PROMPT.format(role=role, max_roundtrips=max_roundtrips)
+        try:
+            result_text = dispatcher(prompt)
+        except Exception as exc:  # noqa: BLE001 — any dispatch failure -> fallback
+            raise ResearchUnavailableError(
+                f"in-session research subagent dispatch failed for role "
+                f"{role!r}: {exc}"
+            ) from exc
+        # The in-session subagent returns its result text directly (the JSON the
+        # prompt asks for, possibly fenced) — there is no `claude -p` JSON
+        # envelope to unwrap; the parse path is shared with the residual source.
+        return _parse_research_envelope(role, result_text, max_roundtrips)
+
+
 # --- The synthesis: raw three-axis research -> a few person-specific ideas. ---
 
 
@@ -382,7 +508,7 @@ class RoleResearchProvider:
         max_roundtrips: int = MAX_RESEARCH_ROUNDTRIPS,
         synthesize: Callable[[RawRoleResearch], RoleResearchResult] = _synthesize,
     ) -> None:
-        self._source: ResearchSource = research_source or ClaudeSubagentResearchSource()
+        self._source: ResearchSource = research_source or InSessionResearchSource()
         self._max_roundtrips = max_roundtrips
         self._synthesize = synthesize
         # Bound-enforcement telemetry the AC.DRR.2 test reads.
@@ -404,8 +530,12 @@ class RoleResearchProvider:
 
 
 def make_default_research_provider() -> RoleResearchProvider:
-    """Construct the production real provider (the ``claude -p`` research
-    subagent source, the tight D-RES-2 budget). This is what
-    ``register_real_provider`` registers behind
-    ``deep_role_research.default_research_provider()``."""
+    """Construct the production real provider (the IN-SESSION research subagent
+    source, the tight D-RES-2 budget). This is what ``register_real_provider``
+    registers behind ``deep_role_research.default_research_provider()``.
+
+    AC.RES1.1: the default source is :class:`InSessionResearchSource` — no
+    detached ``claude -p`` subprocess; the research is fanned out as an
+    in-session subagent through the host-session-registered dispatcher
+    (subscription-pool billing, not the metered Agent SDK credit)."""
     return RoleResearchProvider()

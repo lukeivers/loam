@@ -122,3 +122,60 @@ affirmatively recognized as junk. No new error path is introduced.
 - **D-WGATE.2** — the read-side gate is RETAINED (not removed). Rationale: defence in
   depth for the ~600 pre-amendment junk episodes still in the hot tier until the
   owner-gated purge; removing it would un-gate them at read. The write gate is additive.
+
+## §14 — Method-decision record
+
+The build-time method decisions (the "HOW", left to the builder per ODD §2.5).
+The §12 register above carries the objective-level decisions (D-WGATE.1/.2);
+this section records the implementation-level choices and the seal SHAs.
+
+- **§14.1 — single-seam change.** The write-path gate is implemented entirely
+  inside `FileMemoryStore.write_episode`: salience is computed once at the top
+  (the value the read-side gate already used), `is_cold = salience <=
+  SALIENCE_JUNK` selects the write subdir, and the FTS index call is wrapped in
+  `if not is_cold`. No new method, no edit to `search` / `recent_episodes` /
+  `archive_before` (the cold subdir is excluded from those by construction).
+- **§14.2 — sealed-test mechanism shift (Ruthless Feedback surface).** The
+  write-path move forced edits to four SEALED SAL ACs whose tests asserted the
+  OLD read-side model (junk in the hot `episodes/` tier, suppressed only at
+  retrieval). The AC INTENTS are preserved; only the MECHANISMS shifted to the
+  cold tier: SAL-3 never-delete now reads through a cold-tier file; SAL-4
+  reversible/nothing-lost now via cold-tier re-read (threshold-lowering can no
+  longer re-admit never-indexed junk — and a new assertion proves it does not);
+  SAL-5 junk-on-disk now under `cold/`; SAL-6 read-side spread gate now seeds
+  hot-tier junk directly (simulating a pre-amendment hot-tier episode the
+  read-side gate must still catch). Per `feedback_loose_AC_text_fix_AC_not_
+  implementation`, the test text was updated to the surviving mechanism after
+  verifying the protected property still holds objectively.
+- **§14.3 — fixture corrections.** ENCC-1/2/3 + OPS-3 used <8-char user
+  messages (`"hi"` / `"hello"` / `"u"`) that the SEALED empty-user signature
+  classifies as junk; harmless pre-amendment (junk still landed hot), now
+  diverted to the cold tier and breaking their hot-tier assertions. Fixed by
+  lengthening the fixture messages past the 8-char floor — the AC intent
+  (encoding-context shape / drain mechanics) is unchanged.
+
+### Commit SHAs
+
+- BASELINE: `9a050196` (branch tip immediately before the source commit — the
+  HEAD~1 advance pattern; also the manifest baseline).
+- Source commit: `f0ae5397` (`feat(fbm): write-time salience gate — divert junk
+  to a cold tier at ingest (Slice A)` — code + WGATE-1..4 tests + sealed-test
+  updates + plan + manifest).
+- Seal-fence BASELINE advance: `8f22c6a5` (`test(primary-persona): advance FBM
+  seal-fence BASELINE for write-time salience gate`).
+- Seal commit: `871ab9d5` (`chore(seals): fbm-write-time-salience-gate-cold-tier
+  — primary-persona at 8f22c6a`).
+- primary-persona `tests/SEAL_COMMIT` sidecar: `8f22c6a5`.
+- LOCAL seal only — NOT pushed. The minor ships as its own release later under
+  owner gate.
+
+### Verification (Tier-0)
+
+- Full primary-persona suite: 904 passed, 1 skipped (the live-store SAL-5
+  cold-walk skips when `~/pos3/workspace/.loam/memory/episodes` is absent in
+  this tree — expected; it is read-only against the live store).
+- AC-FBM-WGATE-1..4 all pass, including the outcome-altitude WGATE-4 driving the
+  real `memory_write_worker.drain_once` ingest path (queue → drain →
+  add_episode → write_episode) with no pre-arranged store state.
+- Seal-fence window `git diff --name-only 9a050196..871ab9d5` shows ONLY
+  primary-persona + `docs/plans/sealed/` surfaces (single-component fence holds).

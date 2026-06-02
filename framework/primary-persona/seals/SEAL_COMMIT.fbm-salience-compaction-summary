@@ -1,0 +1,40 @@
+# FBM salience-gate — drop compaction-summary context-dump episodes
+
+Per `docs/plans/fbm-salience-gate-compaction-summary-dump.md`.
+Single-component amendment on the EXISTING `framework/primary-persona/`
+component; advances the existing sidecar.
+
+The episode salience gate (`compute_salience`,
+`framework/primary-persona/src/loam/primary_persona/file_memory.py`)
+recognized only four structural junk shapes (task-notification,
+channel/scaffolding-empty, empty-user, bare-ack). A compaction-summary
+context-dump — a turn whose user half OPENS with "This session is being
+continued from a previous conversation that ran out of context", followed
+by a multi-thousand-word summary naming every active objective — matched
+none of them, so it rode at full salience and BM25-dominated almost every
+work-anchored query (it is long + carries every objective keyword). It was
+the single worst recall polluter on the live episode store (19 such
+episodes; diagnosis: loam-fbm-relevance-assessment §1.3).
+
+This cycle adds the 5th junk signature inside the existing, tested gate —
+same mechanism, same `SALIENCE_JUNK` return, same never-drop floor (the
+episode stays on disk; only its retrieval salience drops). Deterministic,
+no LLM, stdlib-only (`feedback_no_anthropic_api_key`).
+
+  - AC-FBM-SAL-7 — `compute_salience` returns `SALIENCE_JUNK` for a user
+    half opening with the compaction-summary continuation marker
+    (`_COMPACTION_SUMMARY_MARKER`); the four prior signatures untouched.
+  - AC-FBM-SAL-8 — a genuine Luke turn that merely MENTIONS a continuation
+    in prose stays `SALIENCE_FULL` (no false positive; the signature keys
+    on the dump's structural OPENING, not incidental token overlap —
+    protect-real-messages, sibling of AC-FBM-SAL-5).
+  - AC-FBM-SAL-9 (outcome-altitude) — a real `retrieve()` call through the
+    production write -> search -> merge path, no pre-arranged retrieval
+    state: the dump does NOT surface; a genuinely-relevant episode does.
+
+Non-regression: AC-FBM-SAL-1..6 stay green (the four prior signatures
+unchanged, substantive turns still surface, the never-delete floor holds,
+the threshold stays re-tunable, the spread-neighbor gating holds).
+
+No ODD violation in surrounding code; the fix adds one deterministic
+signature, no defensive code for unnamed cases.

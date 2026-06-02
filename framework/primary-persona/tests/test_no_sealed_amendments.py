@@ -148,7 +148,25 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              main tip immediately before this amendment's source commit — the
 #              HEAD~1 pattern) so the seal-diff window shows ONLY this
 #              amendment's primary-persona + docs/plans/ surfaces.
-BASELINE = "7d103826"
+#   fbm-write-time-salience-gate-cold-tier (slug; schema v3) — moves the sealed
+#              compute_salience gate onto the WRITE path (its first write-path
+#              caller). FileMemoryStore.write_episode diverts a SALIENCE_JUNK
+#              turn to a new COLD_SUBDIR ("cold") and skips FTS indexing instead
+#              of writing it to the hot EPISODES_SUBDIR + indexing it
+#              unconditionally; substantive turns are byte-identical. Adds
+#              AC-FBM-WGATE-1/-2/-3/-4 (the last outcome-altitude via the real
+#              memory_write_worker.drain_once ingest path). Sealed SAL-3/-4/-5/-6
+#              tests updated (AC intent preserved; mechanism shifted to the cold
+#              tier — never-delete/reversible now read through cold-tier
+#              recovery, SAL-6 seeds hot-tier junk directly to keep the read-side
+#              spread gate meaningful). The prior BASELINE 7d103826 predated the
+#              compaction-summary seal commits (949fced9 et al.), so it would
+#              span them and falsely trip the single-component fence. Advanced
+#              BASELINE to 9a050196 (the branch tip immediately before this
+#              amendment's source commit — the HEAD~1 pattern) so the seal-diff
+#              window shows ONLY this amendment's primary-persona + docs/plans/
+#              surfaces.
+BASELINE = "9a050196"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

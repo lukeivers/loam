@@ -1,0 +1,158 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: usage-window-guard-foundation
+  title: "usage-window-guard Slice 1 (foundation) — real Anthropic rolling-window probe + parse + fail-open"
+
+# BASELINE: a315ed0b — current main/HEAD at plan-authoring time on branch
+#   slice2-insession-subagent-swarm:
+#   `chore(seals): claude-p-to-insession-subagent-fanout-slice2-swarm`.
+#   The builder re-baselines to the actual source-edit commit at build time
+#   if it differs.
+#
+# NEW-COMPONENT first-seal fence — framework/usage-window-guard/:
+#   The real-usage probe is a NET-NEW capability (grep across framework/ +
+#   docs/ found NO existing surface reading /api/oauth/usage — plan §2). A
+#   new component is the correct placement: the read belongs in none of
+#   cost-governance (token/cost-based — the explicitly-rejected approach),
+#   claude-p-client (LLM calls, not keychain/REST), or observability-
+#   aggregator (consumes events, does not source the read). Clean boundary
+#   (doctrine §"How loam is built — in layers").
+#
+#   Files authored (builder's exact layout is the builder's call per
+#   ODD §1.1; the SHAPE below is the plan's contract — plan §5):
+#     framework/usage-window-guard/
+#       pyproject.toml + package scaffold (loam.usage_window_guard)
+#       src/loam/usage_window_guard/__init__.py    # public surface: read() + result types
+#       src/loam/usage_window_guard/credential.py  # transient keychain read (no persist/log)
+#       src/loam/usage_window_guard/probe.py        # production entry-point read() → GET → parse
+#       src/loam/usage_window_guard/model.py        # UsageWindows | UsageUnavailable (parse-only)
+#       tests/ — one AC test file per AC family below + no-secret + no-token-counting guards
+#     (no docs/design companion this slice — foundation is code-only)
+#
+# AC families locked per docs/plans/usage-window-guard-foundation.md §6:
+#   AC.USG.1   — real-window read: fixture HTTP 200 (live nested shape) → UsageWindows
+#                with BOTH five_hour + seven_day {utilization, resets_at}; value sourced from
+#                the endpoint field, NOT any token count (source-identity).
+#   AC.USG.5   — fail-open: missing-credential / 401-403 / non-200 / unreachable-timeout /
+#                malformed-200 → UsageUnavailable with NO number, no raise, categorical reason.
+#   AC.USG.S ★ — outcome-altitude: production read() entry-point, NO pre-arranged state, real
+#                keychain + real endpoint → real UsageWindows in [0,100] OR genuine fail-open
+#                through the SAME real code path (never a stub). STUB-class does NOT satisfy it.
+#
+# Outcome-altitude AC (feedback_test_outcome_altitude_required):
+#   AC.USG.S is marked outcome-altitude:true and is verified by a test that
+#   invokes the production read() entry-point with no pre-arranged state,
+#   hitting the real keychain + real /api/oauth/usage endpoint.
+#
+# Smoke: a single real read() invocation with no fixtures — either returns the
+#   real five_hour/seven_day utilization (live endpoint reachable: probed
+#   HTTP 200 at plan time, five_hour 18.0 / seven_day 11.0) OR fails open with
+#   a categorical reason and no number. Exercises the production path end-to-end.
+#
+# Out of scope (plan §7): the threshold ladder (AC.USG.2); the plain-language
+#   surfacing contract (AC.USG.3); hook wiring (AC.USG.4); the Linux file-path
+#   credential read (D-USG.4 — owner set macOS-only for v1); per-model weekly
+#   buckets + extra_usage parsing; pushing to origin (LOCAL seal only).
+baseline: "a315ed0b"
+
+plan: docs/plans/usage-window-guard-foundation.md
+plan_doc_ref: docs/plans/usage-window-guard-foundation.md
+
+ac_count: 3
+
+smoke_outcome: "read() with no fixtures returns the REAL five_hour + seven_day utilization (live HTTP 200) OR fails open with a categorical reason and NO fabricated number — production path, no pre-arranged state"
+
+# Single-component fence. Seal anchor: framework/usage-window-guard/.
+# NEW component — no pre-existing sidecar to advance; the SEAL_COMMIT sidecar
+# is created at this first seal. The plan-doc + manifest land under the
+# docs/plans/ universal prefix. extra_allowed_prefixes EMPTY — mirrors the
+# protection-matrix new-component first-seal precedent.
+components:
+  - name: usage-window-guard
+    new_component: true            # first-seal; no pre-existing sidecar to advance
+    seal_test: framework/usage-window-guard/tests/test_no_sealed_amendments.py
+    sidecar: framework/usage-window-guard/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+
+narrative:
+  target: framework/usage-window-guard/seals/SEAL_COMMIT.usage-window-guard-foundation
+  body: |
+    # usage-window-guard Slice 1 (foundation) — real Anthropic rolling-window
+    probe + parse + fail-open — apply ladder
+
+    Per `docs/plans/usage-window-guard-foundation.md` and the owner-greenlit
+    design `loam-nontech-usage-limit-guard-design.md` (Slice 1 =
+    usage-window-guard-foundation, AC.USG.{1,5,S}).
+
+    Plan: `docs/plans/usage-window-guard-foundation.md`.
+
+    Scope (per plan §1 + §6 + §7): NEW component
+    `framework/usage-window-guard/`. The foundation slice of the non-tech-user
+    usage-limit guard (owner-greenlit, Luke 13512): a probe that reads the REAL
+    Anthropic-side rolling-window utilization — the rolling 5-hour window + the
+    7-day weekly window — directly from
+    `GET https://api.anthropic.com/api/oauth/usage` with an OAuth token read
+    TRANSIENTLY from the macOS keychain ("Claude Code-credentials" →
+    claudeAiOauth.accessToken), parses the nested `{utilization, resets_at}`
+    struct per window, and FAILS OPEN (reports "usage unavailable" with a
+    categorical reason and NO fabricated number) on a missing credential, a
+    transient 401, a non-200, an unreachable endpoint, or a malformed body.
+
+    This is the REAL enforced cap utilization — Anthropic's server-side
+    accounting — NOT token-counting, NOT cost-estimation, NOT a tool-call
+    tally. loam's cost-governance (token/cost ceilings) is explicitly NOT the
+    foundation and is untouched.
+
+    AC families:
+
+      - AC.USG.1 — real-window read (source-identity). read() against a fixture
+        HTTP 200 body (the live nested shape) returns a UsageWindows carrying
+        BOTH five_hour + seven_day {utilization (float %), resets_at}, each
+        sourced from that window's endpoint field — never a token count.
+      - AC.USG.5 — fail-open. Missing/empty credential, 401/403, other non-200,
+        unreachable/timeout, and malformed-200 each yield a UsageUnavailable
+        with NO utilization number, no raised exception, no indefinite block,
+        and a categorical reason. The information-trust-ordering AC: never
+        confabulate a usage number.
+      - AC.USG.S ★ (outcome-altitude) — the production read() entry-point,
+        invoked with NO pre-arranged state (no injected transport, no fixture
+        credential, no monkeypatch), hits the real keychain + real endpoint and
+        yields EITHER a real UsageWindows (utilizations in [0,100] with parsed
+        resets_at) OR a genuine fail-open UsageUnavailable through the SAME real
+        code path. A STUB-class test does NOT satisfy this AC
+        (feedback_test_outcome_altitude_required).
+
+    The single load-bearing risk (Tier-0 measured at design time): the OAuth
+    access token rotates ~hourly. The probe re-reads the keychain on EVERY call
+    (never caches the token across calls), never persists or logs the token,
+    and treats a transient 401 as fail-open. It piggybacks on Claude Code's own
+    refresh; it does NOT implement the OAuth refresh dance.
+
+    Method-level choices are the builder's call per ODD §1.1; the plan fixes
+    the source (the OAuth endpoint), the nested data shape, the no-secrets
+    discipline, and the fail-open contract — not the implementation (urllib vs
+    requests, the parse internals).
+
+    Out of scope (plan §7): the threshold ladder (AC.USG.2); the plain-language
+    surfacing contract (AC.USG.3); hook wiring (AC.USG.4); the Linux
+    file-path credential read (owner set macOS-only for v1); per-model weekly
+    buckets + extra_usage parsing; pushing to origin (LOCAL seal only).
+
+    Predecessor:
+      - a315ed0b — main tip @ plan-authoring (claude-p-to-insession-subagent-
+        fanout-slice2-swarm seal).
+
+    BASELINE a315ed0b (re-baselined by the builder to the actual source-edit
+    commit if it differs). NEW-component first-seal fence on
+    `framework/usage-window-guard/`. The sidecar is created at this seal (no
+    prior seal to advance).

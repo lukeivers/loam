@@ -1,0 +1,45 @@
+# User-state migration — v1.0.1 (the two minor fixes PATCH)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration (the ~30-second answer
+# for a code/metadata-only release). v1.0.1 is the PATCH increment over the
+# published v1.0.0, bundling two already-sealed minor fixes:
+#   1. FBM salience-gate fix (seal 949fced9) — the file-memory episode
+#      retrieval drops compaction-summary context-dumps (a 5th salience
+#      signature in framework/.../primary_persona/file_memory.py).
+#   2. FM.SILENT-EGRESS protection-matrix floor row (seal 5c1021c9) — a new
+#      data row recording the silent-data-egress floor gap in
+#      framework/protection-matrix/data/failure-mode-guard-matrix.yaml.
+
+version: v1.0.1
+slug: v1-0-1-minor-fixes
+slice: v1.0.1 PATCH (two minor fixes over v1.0.0)
+date: 2026-06-02
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.0.1 is a PATCH that closes/records two defects in framework code +
+  framework data, neither of which touches a user's stored .loam/ state.
+  (1) The FBM salience-gate fix changes which episodes the in-session
+  retrieval surfaces (it gates out compaction-summary context-dumps) — it
+  reads the existing episode store and changes retrieval RANKING, it does
+  not alter the on-disk episode schema, the applied-migration cursor, or any
+  persisted artifact. (2) The FM.SILENT-EGRESS row is a new entry in a
+  framework-side data catalogue (the protection failure-mode/guard matrix),
+  surfaced by `loam guards`; it is framework data, not user state. Per PATCH
+  discipline (docs/release-versioning-policy.md §131, D-NFCLEAN.4 / D-SDPD):
+  PATCHes never touch docs/ACTIVE_MINOR and ride the predecessor MINOR's
+  per-component versions — no pyproject bump, no new on-disk user-state
+  schema, no layout change, no field change to any existing user-state
+  artifact. A user upgrading from v1.0.0 to v1.0.1 needs no state migration.
+  Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a pure
+# code/data revert; no data move.
+reversible: true
+removes_user_state: false
+idempotent: true

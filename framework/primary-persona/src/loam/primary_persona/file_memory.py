@@ -149,6 +149,22 @@ _SCAFFOLD_WRAPPER_RE = re.compile(
     r"</?(?:channel|system-reminder)[^>]*>", re.IGNORECASE
 )
 
+# AC-FBM-SAL-7 — compaction-summary context-dump signature. A
+# compaction-summary turn is the auto-generated context-restoration block the
+# CLI logs as a turn; its user half OPENS with this continuation marker,
+# followed by a multi-thousand-word summary naming every active objective. It
+# matches none of the four prior junk shapes, so it rode at full salience and
+# BM25-dominated almost every work-anchored query (it is long + contains every
+# objective keyword) — the single worst recall polluter on the live store (19
+# such episodes; diagnosis: loam-fbm-relevance-assessment §1.3). The signature
+# keys on the dump's STRUCTURAL OPENING — the marker leading the residual user
+# half — never on incidental token overlap, so a genuine Luke turn that merely
+# mentions a continuation in prose is NOT mis-classified (AC-FBM-SAL-8,
+# protect-real-messages, sibling of AC-FBM-SAL-5).
+_COMPACTION_SUMMARY_MARKER = (
+    "this session is being continued from a previous conversation"
+)
+
 
 def _salience_user_residual(user_text: str) -> str:
     """Strip scaffolding wrapper tags from a user half, keep inner text.
@@ -166,8 +182,8 @@ def compute_salience(user_text: str, assistant_text: str = "") -> float:
 
     Cheap, deterministic, stdlib-only. Returns :data:`SALIENCE_JUNK`
     (0.0) when the turn's USER half matches a structural junk signature,
-    else :data:`SALIENCE_FULL` (1.0). The four junk signatures (verified
-    against the live 1288-episode store):
+    else :data:`SALIENCE_FULL` (1.0). The five junk signatures (verified
+    against the live episode store):
 
     1. **task-notification** — the user half (lstripped) starts with
        ``<task-notification>`` (an agent-completion notification that
@@ -181,6 +197,12 @@ def compute_salience(user_text: str, assistant_text: str = "") -> float:
        :data:`_SALIENCE_MIN_CHARS` and not real content.
     4. **bare-ack** — the residual inner text (lowercased,
        punctuation-stripped) is a pure ack token (:data:`_ACK_TOKENS`).
+    5. **compaction-summary dump** — the residual user half OPENS with the
+       compaction-summary continuation marker
+       (:data:`_COMPACTION_SUMMARY_MARKER`) — the auto-generated
+       context-restoration block logged as a turn; keyed on the structural
+       opening so a real turn that merely mentions a continuation is not
+       mis-classified (AC-FBM-SAL-7/-8).
 
     The scorer keys on the USER half only: a substantive ASSISTANT half
     does NOT rescue a turn whose user half is pure plumbing, because the
@@ -210,6 +232,14 @@ def compute_salience(user_text: str, assistant_text: str = "") -> float:
         # (4) bare-ack: residual inner text is a pure ack token.
         ack_key = residual.lower().strip(" .!?,;:\n\t")
         if ack_key in _ACK_TOKENS:
+            return SALIENCE_JUNK
+        # (5) compaction-summary context-dump (AC-FBM-SAL-7): the residual
+        # user half OPENS with the continuation marker. Keying on the
+        # structural opening (not mere token presence) protects a real Luke
+        # turn that only mentions a continuation in prose (AC-FBM-SAL-8).
+        if residual.lower().lstrip(" \t\n#*->").startswith(
+            _COMPACTION_SUMMARY_MARKER
+        ):
             return SALIENCE_JUNK
         return SALIENCE_FULL
     except Exception:  # noqa: BLE001 — never-drop floor on the hot path

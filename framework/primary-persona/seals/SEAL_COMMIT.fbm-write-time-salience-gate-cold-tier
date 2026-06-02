@@ -1,0 +1,57 @@
+# FBM write-time salience gate — divert junk to a cold tier at ingest (Slice A)
+
+Per `docs/plans/fbm-write-time-salience-gate-cold-tier.md` and the
+owner-greenlit unified plan
+`workspace/.scratch/claude-output/loam-fbm-quality-and-accuracy-unified-plan.md`
+(Slice A, P2; Luke 13512). Single-component amendment on the EXISTING
+`framework/primary-persona/` component; advances the existing sidecar.
+
+The structural bug (Tier-0, verified at build time): `compute_salience`
+(`file_memory.py`) had ZERO write-path callers. The gate computed a salience
+score at ingest and stored it as a `salience` frontmatter field, but
+`FileMemoryStore.write_episode` wrote EVERY turn — junk included — to the hot
+`episodes/` dir AND FTS-indexed it unconditionally. Junk was suppressed only at
+READ via the stored field. So 44.1% of the live store (600 of 1361 episodes by
+the current 5-signature gate) is boilerplate the system writes, indexes, and
+re-filters forever. After two reactive read-side patches
+(`feedback_structural_enforcement_on_recurrence`), the owed fix is structural:
+gate at WRITE so junk never enters the hot index.
+
+This cycle makes `write_episode` the gate's first write-path caller. When the
+already-computed salience is `SALIENCE_JUNK`, the episode is written to a new
+cold tier (`COLD_SUBDIR = "cold"`, a sibling of the existing `archived/`) under
+`<memory_dir>/cold/<group_id>/<date>/<stem>.md` and is NOT FTS-indexed. A
+substantive turn (`SALIENCE_FULL`) writes to `EPISODES_SUBDIR` + FTS-indexes
+exactly as before — byte-identical for non-junk. The hot retrieval paths
+(`search`, `recent_episodes`) scan `EPISODES_SUBDIR` only, so the cold subdir is
+excluded by construction with no search/recency edit. Reuse of the sealed gate
+verbatim; no sixth signature; stdlib-only (`feedback_no_anthropic_api_key`).
+
+Never-drop HARD INVARIANT preserved: a gated turn is WRITTEN to the cold tier
+with its full body + `salience: 0.0` frontmatter verbatim, never deleted, and is
+recoverable by direct cold-tier read. Fail-open preserved end-to-end:
+`compute_salience` / `_salience_from_body` return `SALIENCE_FULL` on any
+exception, so a classifier error routes the turn to the HOT tier — the gate can
+only divert a turn it affirmatively recognized as junk.
+
+  - AC-FBM-WGATE-1 — a `<task-notification>`-opening turn through `write_episode`
+    is NOT under `EPISODES_SUBDIR`, NOT FTS-indexed, absent from the surfaced
+    search set; it IS under `COLD_SUBDIR`.
+  - AC-FBM-WGATE-2 — a substantive Luke turn IS under `EPISODES_SUBDIR` AND
+    FTS-indexed at full salience; cold tier empty for it. Write-gate precision
+    matches read-gate precision (no new false positives).
+  - AC-FBM-WGATE-3 — a gated turn is recoverable from the cold tier (file on
+    disk, full body verbatim, `salience: 0.0`); never-drop holds.
+  - AC-FBM-WGATE-4 (outcome-altitude) — the REAL `memory_write_worker.drain_once`
+    ingest path (disk-backed queue, no pre-arranged store state) with one
+    boilerplate + one substantive entry: post-drain the hot tier holds exactly
+    the substantive turn and the cold tier holds exactly the boilerplate turn.
+
+Non-regression: AC-FBM-SAL-1..9 stay green. The read-side gate is RETAINED as
+defence in depth for the ~600 pre-amendment hot-tier junk episodes (purge is
+owner-gated, deferred per the parent plan §7) — the write gate is additive, not a
+replacement. `recent_episodes` / `search` / `archive_before` are untouched.
+
+No ODD violation in surrounding code; the change adds one ingest-time route
+decision keyed on the existing salience value, no defensive code for unnamed
+cases.

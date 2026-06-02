@@ -22,8 +22,24 @@ AC.A.4 / AC.B.5 — `PhaseVerdict` is the per-dimension verdict-table
          regardless of whether the dimensions came back positive or
          negative.  There is deliberately no retry-to-green path.
 
-NO Anthropic API key — sub-agents are real `claude -p` subprocesses
-via goal_drive.build_goal_drive_argv, default Sonnet.
+NO Anthropic API key — sub-agents stay subscription-routed (the host
+session's own auth for the in-session path; the keychain-stored
+subscription credential for the residual `claude -p` path).
+
+IN-SESSION SUBAGENT CONVERSION (AC.SWARM.* — in-session-subagent-
+migration minor, Slice 2). The leaf dispatch (`_dispatch_subagent`)
+fans out the per-sub-task `/goal`-driven work as an IN-SESSION subagent
+(the Task primitive) through a host-session-registered dispatcher
+callable (`set_swarm_in_session_dispatcher`), NOT a detached
+`claude -p` subprocess. In-session subagents are accounted against the
+subscription plan limits — NOT the post-June-15 metered Agent SDK
+credit a detached `claude -p` would draw from — and share the parent's
+MCP, so they never re-load the Telegram plugin and cannot SIGTERM-steal
+the operator's bot-poller slot. The RESIDUAL `claude -p` path (via
+goal_drive.build_goal_drive_argv + `_isolation`) STAYS for the
+launchd-sessionless case that has no living parent session to fan an
+in-session subagent from; `loam_spawn_isolation`'s scope narrows to
+residual-only (do NOT delete it — the residual path still needs it).
 """
 
 from __future__ import annotations
@@ -33,6 +49,7 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 from ._isolation import isolated_env
 from .behavioral_selfcheck import (
@@ -45,6 +62,55 @@ from .goal_drive import (
     build_goal_drive_argv,
 )
 from .verify import FrozenAcceptance, VerifyResult, verify
+
+
+# === In-session subagent dispatch seam (AC.SWARM.1) ==========================
+#
+# The standalone Python orchestrator is NOT itself a Claude session — it cannot
+# import the Task primitive directly. The LIVE host session that invokes the
+# handsoff loop (the only context with the Task tool) registers a dispatcher
+# callable here; `_dispatch_subagent` resolves it at call time. A registry (vs
+# threading a dispatcher arg through run_handsoff_loop -> _run_subtask_pass ->
+# _dispatch_subagent) keeps every pre-existing caller/test byte-behaviour-
+# unchanged. A registered dispatcher is accounted against the subscription plan
+# limits (in-session subagent billing), NOT the post-June-15 metered Agent SDK
+# credit a detached `claude -p` would draw from — the whole motive of this
+# slice. Mirrors Slice 1's deep_role_research_provider seam.
+#
+# The dispatcher takes the `/goal`-driven sub-task prompt (`spec.prompt()`) +
+# the per-sub-task timeout and returns the in-session subagent's raw transcript
+# TEXT (the same text the residual `-p` path's stdout+stderr would carry — the
+# DONE_SENTINEL detection downstream is unchanged). No dispatcher registered ->
+# the orchestrator falls through to the residual `-p` path (the natural degrade,
+# preserving the sealed behaviour for the launchd-sessionless case).
+
+SwarmInSessionDispatcher = Callable[..., str]
+
+_swarm_in_session_dispatcher: SwarmInSessionDispatcher | None = None
+
+
+def set_swarm_in_session_dispatcher(dispatcher: SwarmInSessionDispatcher) -> None:
+    """Register the live host session's in-session swarm-subagent dispatcher.
+
+    Called by the live Claude Code session that invokes the handsoff loop: it
+    passes a callable ``(prompt: str, *, timeout: int) -> str`` that fans out an
+    in-session subagent (the Task primitive) with that prompt and returns the
+    subagent's raw transcript text. ``_dispatch_subagent`` resolves this at call
+    time so no orchestrator call site has to thread the dispatcher through.
+    """
+    global _swarm_in_session_dispatcher
+    _swarm_in_session_dispatcher = dispatcher
+
+
+def get_swarm_in_session_dispatcher() -> SwarmInSessionDispatcher | None:
+    """Return the registered in-session swarm dispatcher, or ``None`` if none."""
+    return _swarm_in_session_dispatcher
+
+
+def clear_swarm_in_session_dispatcher() -> None:
+    """Unregister the swarm dispatcher (test hygiene + session teardown)."""
+    global _swarm_in_session_dispatcher
+    _swarm_in_session_dispatcher = None
 
 
 @dataclass(frozen=True)
@@ -149,22 +215,53 @@ def _dispatch_subagent(
     work_dir: Path,
     timeout: int,
 ) -> tuple[str, float, float | None]:
-    """Run ONE real /goal-driven `claude -p` sub-agent.
+    """Run ONE /goal-driven sub-agent — in-session by default (AC.SWARM.1).
 
     No human drives the loop — `/goal` (inside the prompt) keeps
     Claude taking turns until the surfaced-exit-code condition holds.
-    Returns (transcript, wall_clock_s, cost_usd|None).  Cost is
-    MEASURED from the --output-format json envelope (D-COST-BAND).
+    Returns (transcript, wall_clock_s, cost_usd|None).
 
-    AC.TPI.1/.4: telegram-poller-isolated.  `build_goal_drive_argv`
-    returns an argv already carrying the empty-strict-MCP isolation
-    (AC.TPI.3); this consumer owns the spawn env and scrubs the
-    bot-token / API-key spellings (so this sub-agent `claude` can
-    neither load the telegram plugin nor steal the operator's
-    single-consumer poller slot — closing both halves of the verified
-    kill vector).  Reuses the PROVEN subloam-driver env-scrub via
-    `_isolation` (no new isolation machinery).
+    IN-SESSION PATH (the production default — AC.SWARM.1). When the live
+    host session has registered a swarm dispatcher
+    (`set_swarm_in_session_dispatcher`), the per-sub-task `/goal`-driven
+    prompt (`spec.prompt()`) is dispatched as an IN-SESSION subagent (the
+    Task primitive) and its raw transcript returned.  This path spawns NO
+    detached `claude -p` subprocess, touches NEITHER `subprocess.run` NOR
+    the `_isolation` chokepoint (there is no subprocess argv to isolate —
+    in-session subagents share the parent's MCP, so the Telegram kill
+    vector the isolation guards does not exist here), and reaches no
+    Anthropic SDK / `ANTHROPIC_API_KEY` (the host session is subscription-
+    routed).  `cost_usd` is an honest `None` on this path: in-session
+    subagents have no per-call `claude -p --output-format json` envelope to
+    read `total_cost_usd` from — the plan-level cost signal moves to the
+    `/usage` read (AC.SWARM.4; the honest-None fold is already in the spine
+    via `_run_subtask_pass`).  This is NOT a regression — fabricating a
+    per-call cost would be the dishonesty.
+
+    RESIDUAL `claude -p` PATH (no dispatcher registered — the launchd-
+    sessionless case with no living parent session to fan an in-session
+    subagent from).  `build_goal_drive_argv` returns an argv already
+    carrying the empty-strict-MCP isolation (AC.TPI.3); this consumer owns
+    the spawn env and scrubs the bot-token / API-key spellings via
+    `_isolation` (so this sub-agent `claude` can neither load the telegram
+    plugin nor steal the operator's single-consumer poller slot — closing
+    both halves of the verified kill vector).  `loam_spawn_isolation`'s
+    scope is RESIDUAL-ONLY now; it is NOT deleted (the residual path still
+    needs it — do NOT "clean up" a still-load-bearing guard).  Cost is
+    MEASURED from the `--output-format json` envelope (D-COST-BAND).
     """
+    dispatcher = get_swarm_in_session_dispatcher()
+    if dispatcher is not None:
+        # In-session subagent fan-out (AC.SWARM.1): the SAME `/goal`-driven
+        # prompt the residual path would build, dispatched through the host-
+        # registered Task-primitive callable.  No subprocess; no `-p`
+        # envelope -> honest cost_usd=None (AC.SWARM.4).
+        t0 = time.monotonic()
+        transcript = dispatcher(spec.prompt(), timeout=timeout)
+        dt = time.monotonic() - t0
+        return transcript, dt, None
+
+    # --- Residual `claude -p` path (launchd-sessionless; isolation-guarded).
     argv = build_goal_drive_argv(spec, cost_json=True)
     t0 = time.monotonic()
     proc = subprocess.run(

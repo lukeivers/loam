@@ -39,7 +39,10 @@ from .orchestrator import (
     HandsoffResult,
     PhaseVerdict,
     SubTask,
+    clear_swarm_in_session_dispatcher,
+    get_swarm_in_session_dispatcher,
     run_handsoff_loop,
+    set_swarm_in_session_dispatcher,
 )
 
 __all__ = [
@@ -56,4 +59,11 @@ __all__ = [
     "PhaseVerdict",
     "SubTask",
     "run_handsoff_loop",
+    # In-session subagent dispatch seam (AC.SWARM.* — Slice 2). The live
+    # host session registers its Task-primitive dispatcher here so the swarm
+    # leaf dispatch fans out in-session (subscription-pool billing) instead
+    # of spawning a detached, metered `claude -p` subprocess.
+    "set_swarm_in_session_dispatcher",
+    "get_swarm_in_session_dispatcher",
+    "clear_swarm_in_session_dispatcher",
 ]

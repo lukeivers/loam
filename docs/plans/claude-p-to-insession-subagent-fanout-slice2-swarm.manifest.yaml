@@ -1,0 +1,186 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: claude-p-to-insession-subagent-fanout-slice2-swarm
+  title: "Slice 2 — handsoff-loop swarm core claude -p → in-session subagent fan-out"
+
+# BASELINE: 34daa5a2 — Slice 1's apply commit (the workspace-bootstrap
+# SEAL_COMMIT sidecar tip after Slice 1). The handsoff-loop family seals
+# against the workspace-bootstrap component anchor (the source lives under
+# framework/tools/handsoff-loop/, inside the workspace-bootstrap seal-test's
+# admitted framework/tools/ prefix — same pattern as the AC.TPI / AC.BRC
+# seals), so the Slice-2 seal-diff is scoped 34daa5a2..<seal> to capture only
+# Slice 2's work. This slice converts the swarm core's leaf dispatch
+# (orchestrator._dispatch_subagent) from a detached `claude -p` subprocess
+# (subprocess.run(build_goal_drive_argv(spec), env=isolated_env())) to an
+# in-session subagent dispatched through a host-session-registered dispatcher
+# callable (the same seam shape Slice 1 established). The decompose → dispatch
+# → independent-judge → frozen-verify spine (run_handsoff_loop /
+# _run_subtask_pass / verify / frozen.assert_unseen_by / the bounded re-drive)
+# is byte-behaviour-equivalent — only the per-sub-task spawn primitive changes.
+# The residual `claude -p` path (build_goal_drive_argv + isolated_env +
+# _isolation) STAYS for the launchd-sessionless path; loam_spawn_isolation is
+# NOT deleted (its scope narrows to residual-only). Plan:
+# docs/plans/claude-p-to-insession-subagent-fanout-slice2-swarm.md §5
+# AC.SWARM.*.
+baseline: "34daa5a2"
+
+plan: docs/plans/claude-p-to-insession-subagent-fanout-slice2-swarm.md
+plan_doc_ref: docs/plans/claude-p-to-insession-subagent-fanout-slice2-swarm.md
+
+ac_count: 4
+
+smoke_outcome: "Swarm leaf dispatch fans out in-session via a host dispatcher (no detached `claude -p`); ordering preserved; honesty spine byte-equivalent; converted dispatches report cost_usd=None"
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/. The
+# orchestrator._dispatch_subagent conversion + the new swarm dispatcher-seam
+# registry + the AC.SWARM.* test files land at framework/tools/handsoff-loop/
+# (inside the workspace-bootstrap seal-test's admitted framework/tools/
+# prefix). The plan-doc + manifest land under the docs/plans/ universal
+# prefix. All admitted by framework/workspace-bootstrap/tests/
+# test_no_sealed_amendments.py. extra_allowed_prefixes EMPTY — mirrors the
+# telegram-poller-isolation-fix + claude-p-to-insession-subagent-fanout-slice1
+# precedents that sealed cleanly against workspace-bootstrap on this exact
+# handsoff-loop surface.
+components:
+  - name: workspace-bootstrap
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.claude-p-to-insession-subagent-fanout-slice2-swarm
+  body: |
+    # Slice 2 — handsoff-loop swarm core claude -p → in-session subagent
+    #           fan-out (in-session-subagent-migration minor)
+
+    2026-06-02. Second slice of the in-session-subagent-migration minor per
+    `docs/plans/claude-p-to-insession-subagent-fanout-slice2-swarm.md` §5
+    AC.SWARM.*. Owner-greenlit (Luke, TG 13512) as the flagship leaf-dispatch
+    conversion, built after Slice 1 sealed (557a904e). Reuses the dispatcher-
+    seam pattern Slice 1 established.
+
+    MOTIVE (economic, identical to Slice 1). Post-June-15-2026 `claude -p` /
+    Agent-SDK usage draws from a separate metered Agent SDK credit; in-session
+    subagents (the Task primitive a live Claude Code session uses) are
+    accounted against the subscription plan limits. This slice swaps the SPAWN
+    PRIMITIVE of the swarm core's leaf dispatch — not the swarm shape, not the
+    decompose/judge/verify spine, not the honesty controls.
+
+    Single-component fence on the workspace-bootstrap anchor (the handsoff-loop
+    family's seal anchor — the source lives under framework/tools/handsoff-loop/,
+    inside the workspace-bootstrap seal-test's admitted framework/tools/ prefix;
+    same pattern as the AC.TPI / AC.BRC seals). The conversion lands inside
+    `orchestrator.py` (+ the AC.SWARM.* tests):
+
+      - NEW: a swarm in-session dispatcher seam — a process-level registry
+        (`set_swarm_in_session_dispatcher` / `get_swarm_in_session_dispatcher`
+        / `clear_swarm_in_session_dispatcher`) the live host session wires with
+        its Task-primitive dispatcher callable `(prompt: str, *, timeout: int)
+        -> str`. The standalone Python orchestrator is NOT itself a Claude
+        session; the live session that invokes the handsoff loop registers the
+        dispatcher. No dispatcher registered → the residual `-p` path (graceful;
+        preserves the sealed behaviour for the launchd-sessionless case).
+
+      - CHANGED: `_dispatch_subagent` — resolves the registered swarm
+        dispatcher; if present, builds the SAME `/goal`-driven prompt
+        (`spec.prompt()`), dispatches it in-session, and returns
+        (transcript, wall_clock_s, cost_usd=None). No detached `claude -p`
+        subprocess; no `subprocess.run`; no `build_goal_drive_argv` /
+        `isolated_env` call; no Anthropic SDK / `ANTHROPIC_API_KEY`
+        (subscription-routed via the host session's own auth). If no dispatcher
+        is registered, it falls through to the UNCHANGED residual `-p` path.
+
+      - KEPT (NOT deleted): the residual `-p` path — `build_goal_drive_argv` +
+        `isolated_env` + the `_isolation` helper (the AC.TPI seal surface).
+        `loam_spawn_isolation`'s scope narrows to residual-only; the converted
+        in-session path never touches it (no subprocess argv to isolate).
+        Narrated in-code so a future reader does not "clean up" a still-load-
+        bearing guard (the launchd-sessionless residual `-p` path still needs
+        it). The AC.TPI.* family stays green by construction (`_isolation`
+        unchanged; the residual path still routes through it).
+
+      - `cost_usd` becomes an honest `None` on converted dispatches — in-session
+        subagents have no per-call `claude -p --output-format json` envelope to
+        read `total_cost_usd` from. The honest-None fold is ALREADY in the spine
+        (`_run_subtask_pass` collapses any `None` pass-cost to `None`); the
+        converted leaf returns `None` rather than fabricating a per-call cost.
+        The plan-level cost signal becomes the `/usage` read (NOT a regression).
+
+    AC surface — AC.SWARM.1, .2, .3, .4 (the Slice-2 code/behaviour ACs):
+
+      - AC.SWARM.1 — a run over ≥2 sub-tasks dispatches each via the in-session
+        path; NO detached `claude -p` child is created for the leaf dispatch
+        (the subprocess.run spawn surface is booby-trapped); a usable per-sub-
+        task transcript/result is produced.
+      - AC.SWARM.2 — dispatch-ordering semantics preserved (no silent re-
+        serialization or re-ordering). RE-SCOPED from the parent plan's "full
+        parallelism preserved": VERIFIED this session, the current spine is
+        SEQUENTIAL (a `for` loop over a blocking subprocess.run; zero
+        concurrency primitives in framework/tools/handsoff-loop/src/). The swap
+        is dispatch-for-dispatch equivalent (N sub-tasks → N in-session
+        dispatches in sub_tasks order); it does NOT collapse, re-order, or drop
+        a sub-task, and does NOT introduce parallelism (a swarm-shape change,
+        out of scope — surfaced for owner disposition, SAL-2).
+      - AC.SWARM.3 — the independent-judge honesty controls are intact: frozen-
+        acceptance isolation (`frozen.assert_unseen_by`) still holds; "done" is
+        decided by loam's independent tool-executing `verify`, never a sub-agent
+        self-report; the bounded verification-gated re-drive (`refine_log` gated
+        on `independent-verify`) is unchanged. The sealed AC.A.* / AC.BRC.* /
+        AC.TPI.* suites stay green (the spine is byte-behaviour-equivalent).
+      - AC.SWARM.4 (outcome-altitude) — a converted run over a real objective
+        with a real on-disk verify check reports `cost_usd=None` (honest
+        measurement-gap) AND completes with a definite final_verify verdict +
+        human_loop_driving=False. Walked with no pre-arranged transcript state.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - D-build.1 (swarm dispatcher as an injected callable via a process-level
+        registry, mirrors Slice 1): the live host session registers a
+        `(prompt, *, timeout) -> str` dispatcher; `_dispatch_subagent` resolves
+        it at call time. A registry (not a constructor/arg threaded through
+        run_handsoff_loop → _run_subtask_pass → _dispatch_subagent) keeps every
+        pre-existing caller/test byte-behaviour-unchanged. No-registration is
+        the natural degrade trigger → the residual `-p` path.
+
+      - D-build.2 (keep the residual `-p` path + `_isolation`): the `-p`
+        machinery stays as the residual mechanism so the spawn-isolation guard
+        stays exercised + load-bearing for the launchd-sessionless residual
+        path. Deleting it would re-expose those spawns to the proven Telegram
+        kill vector (plan §3 Surface #3 / H-3).
+
+      - D-build.3 (AC.SWARM.2 re-scoped — SAL-2): the parent plan's "full
+        parallelism" premise was factually wrong (the spine is sequential,
+        verified this session). AC.SWARM.2 is re-scoped to the truthful outcome
+        of a spawn-primitive swap (dispatch-ordering preserved). Genuine
+        parallelism is a swarm-shape change, out of scope, surfaced for owner
+        disposition — NOT silently introduced, NOT silently asserted-as-present.
+
+      - D-build.4 (cost_usd=None on converted dispatches — SAL-3): honest
+        measurement-gap (no `-p` JSON envelope). The honest-None fold is already
+        in the spine; the converted leaf returns `None`.
+
+    Out of scope (plan §7): Slice 3 (LitRPG, gated behind post-June-15
+    AC.RES1.4); the launchd-sessionless residual `-p`; deleting
+    `loam_spawn_isolation` / `_isolation`; introducing genuine concurrency
+    (swarm-shape change, surfaced); pushing to origin (owner-gated release later
+    — LOCAL seal only).
+
+    BASELINE 34daa5a2 — Slice 1's apply commit. workspace-bootstrap's
+    SEAL_COMMIT sidecar advances to this slice's seal SHA at seal time. LOCAL
+    seal only — the minor ships as its own release later under owner gate.

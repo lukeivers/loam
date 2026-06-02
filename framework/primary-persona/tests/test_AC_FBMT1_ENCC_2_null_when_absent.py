@@ -41,7 +41,7 @@ def test_AC_FBMT1_ENCC_2_all_null_when_no_input(tmp_path: Path):
         workspace_root=ws_root,
         turn_id="testturn1",
         session_id="testsess",
-        user_message="hi",
+        user_message="walk me through the encoding context fields",
         assistant_reply="hello",
     )
     counters = mww.drain_once(
@@ -78,7 +78,7 @@ def test_AC_FBMT1_ENCC_2_mixed_input_renders_per_field(tmp_path: Path):
         workspace_root=ws_root,
         turn_id="testturn2",
         session_id="testsess",
-        user_message="hi",
+        user_message="walk me through the encoding context fields",
         assistant_reply="hello",
         triggering_msg_id="msg-99",
         # active_task_id, cwd intentionally absent

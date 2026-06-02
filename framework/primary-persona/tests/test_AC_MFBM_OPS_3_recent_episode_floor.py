@@ -63,7 +63,7 @@ def test_AC_MFBM_OPS_3_single_drain_writes_episode_file_with_current_mtime(
         workspace_root=tmp_path,
         turn_id="sess-floor:abc123",
         session_id="sess-floor",
-        user_message="hello",
+        user_message="walk me through the recent episode floor",
         assistant_reply="world",
     )
 

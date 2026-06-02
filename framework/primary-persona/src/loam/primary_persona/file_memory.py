@@ -98,6 +98,17 @@ LOAM_SUBDIR = ".loam"
 MEMORY_SUBDIR = "memory"
 EPISODES_SUBDIR = "episodes"
 ARCHIVED_SUBDIR = "archived"
+# AC-FBM-WGATE-1/-3 — the write-time salience COLD tier. A turn the ingest
+# gate classifies as SALIENCE_JUNK is written here instead of EPISODES_SUBDIR
+# and is NOT FTS-indexed, so it never enters the hot retrieval index. It is a
+# sibling of ARCHIVED_SUBDIR (NOT a reuse — ``archived/`` carries age-based
+# semantics consumed by ``archive_before`` / ``/memory:archive``; the salience
+# cold tier is junk-classification-based and must not be conflated). The hot
+# retrieval paths (``search`` / ``recent_episodes``) scan EPISODES_SUBDIR only,
+# so this subdir is excluded from surfacing by construction. The episode body
+# is written here verbatim — never-drop HARD INVARIANT (the turn is on disk,
+# just out of the hot index; recoverable by direct read).
+COLD_SUBDIR = "cold"
 ERRORS_LOG_NAME = ".errors"
 SEARCH_INDEX_NAME = "search-index.sqlite"
 
@@ -534,7 +545,21 @@ class FileMemoryStore:
         # since the persona's turn_id shape is
         # ``"<session>:<digest>"`` and that's recoverable.
         stem = _sanitise_filename(stem)
-        target_dir = self.memory_dir / EPISODES_SUBDIR / group_id / date_dir
+        # B3 (AC-FBM-SAL-1/-2): tag the turn with a structural salience score
+        # AT INGEST, computed from the body. AC-FBM-WGATE-1/-2: the salience
+        # value now ALSO selects the write tier. A SALIENCE_JUNK turn is
+        # diverted to COLD_SUBDIR (never indexed → never enters the hot
+        # retrieval index); a SALIENCE_FULL turn writes to EPISODES_SUBDIR +
+        # FTS-indexes exactly as before (byte-identical for non-junk). The
+        # ``salience`` frontmatter scalar is still emitted on both tiers so the
+        # read-side gate (defence in depth for pre-amendment hot-tier episodes)
+        # stays correct. Fail-open: _salience_from_body returns SALIENCE_FULL on
+        # any error, so a classifier error routes the turn to the HOT tier — the
+        # write gate only diverts a turn it affirmatively recognized as junk.
+        salience = _salience_from_body(body)
+        is_cold = salience <= SALIENCE_JUNK
+        write_subdir = COLD_SUBDIR if is_cold else EPISODES_SUBDIR
+        target_dir = self.memory_dir / write_subdir / group_id / date_dir
         target_dir.mkdir(parents=True, exist_ok=True)
         target_path = target_dir / f"{stem}.md"
         tmp_path = target_path.with_suffix(target_path.suffix + ".tmp")
@@ -544,12 +569,6 @@ class FileMemoryStore:
         # four fields named in :data:`ENCODING_CONTEXT_FIELDS` —
         # adding a fifth field is a structural-test failure.
         context_block = _render_context_block(context)
-        # B3 (AC-FBM-SAL-1/-2): tag the turn with a structural salience
-        # score AT INGEST. Stored as a flat frontmatter scalar; the
-        # retrieval merge force-drops below-threshold episodes from the
-        # SURFACED set. The episode is still written verbatim regardless
-        # of salience (HARD INVARIANT: gate surfacing, never storage).
-        salience = _salience_from_body(body)
         front = (
             "---\n"
             f"name: {name}\n"
@@ -567,18 +586,23 @@ class FileMemoryStore:
         # contributor-side caller fail-closes (AC.MFBM.2 / AC-D7.7).
         tmp_path.write_text(front + body, encoding="utf-8")
         tmp_path.replace(target_path)
-        # Best-effort FTS5 index update; failure is non-fatal —
-        # next search rebuilds index from scratch via grep fallback.
-        try:
-            self._index_episode(
-                path=target_path,
-                name=name,
-                body=body,
-                group_id=group_id,
-                reference_time=ref_utc,
-            )
-        except (sqlite3.Error, OSError):
-            pass
+        # AC-FBM-WGATE-1: a cold-tier (junk) turn is NOT FTS-indexed — that is
+        # what keeps it out of the hot retrieval index. AC-FBM-WGATE-2: a
+        # hot-tier (substantive) turn is indexed exactly as before. Best-effort
+        # FTS5 index update; failure is non-fatal — next search rebuilds the
+        # index from scratch via grep fallback (which also scans EPISODES_SUBDIR
+        # only, so the cold tier stays excluded even on a rebuild).
+        if not is_cold:
+            try:
+                self._index_episode(
+                    path=target_path,
+                    name=name,
+                    body=body,
+                    group_id=group_id,
+                    reference_time=ref_utc,
+                )
+            except (sqlite3.Error, OSError):
+                pass
         return {
             "path": str(target_path),
             "name": name,

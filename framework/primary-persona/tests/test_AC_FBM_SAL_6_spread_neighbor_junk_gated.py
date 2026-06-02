@@ -100,20 +100,40 @@ def _seed_store(tmp_path: Path) -> tuple[FileMemoryStore, Path, Path]:
         source="message",
         group_id="pos3",
     )
-    store.write_episode(
+    # Seed the junk neighbor DIRECTLY into the HOT episodes tier + FTS index,
+    # simulating a junk episode already stored in the hot store (e.g. a
+    # pre-fbm-write-time-salience-gate-cold-tier episode written before the
+    # write gate existed, or any hot-tier junk the owner-gated purge has not yet
+    # moved). The write gate (Slice A) would now divert such junk to the cold
+    # tier at ingest, so it could never be a hot-tier spread neighbour for a
+    # fresh write — but the READ-side spread gate this AC protects must still
+    # catch junk already in the hot index. ``store.write_episode`` would route
+    # this body to the cold tier, so we bypass it to reproduce the hot-tier
+    # condition the read gate defends.
+    junk_dir = memory_dir / "episodes" / "pos3" / now.strftime("%Y-%m-%d")
+    junk_dir.mkdir(parents=True, exist_ok=True)
+    junk_path = junk_dir / "junk-task-notif-neighbor.md"
+    junk_front = (
+        "---\n"
+        "name: turn/junk-task-notif-neighbor\n"
+        "source: message\n"
+        "source_description: t\n"
+        f"reference_time: {now.isoformat()}\n"
+        "group_id: pos3\n"
+        "salience: 0.0\n"
+        "---\n"
+    )
+    junk_path.write_text(junk_front + JUNK_NEIGHBOR_BODY, encoding="utf-8")
+    store._index_episode(
+        path=junk_path,
         name="turn/junk-task-notif-neighbor",
         body=JUNK_NEIGHBOR_BODY,
-        source_description="t",
-        reference_time=now,
-        source="message",
         group_id="pos3",
+        reference_time=now,
     )
 
     anchor_path = next(
         (memory_dir / "episodes" / "pos3").rglob("anchor-lexically-matched.md")
-    )
-    junk_path = next(
-        (memory_dir / "episodes" / "pos3").rglob("junk-task-notif-neighbor.md")
     )
 
     # Drive a strong anchor<->junk co-citation edge: many co-occurring access

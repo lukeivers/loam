@@ -28,7 +28,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from loam.primary_persona.file_memory import FileMemoryStore
+from loam.primary_persona.file_memory import COLD_SUBDIR, FileMemoryStore
 
 
 _JUNK_BODY = (
@@ -69,15 +69,21 @@ def test_AC_FBM_SAL_3_junk_episode_still_written_to_disk(tmp_path: Path) -> None
     )
 
 
-def test_AC_FBM_SAL_3_junk_episode_retrievable_by_direct_lookup(
+def test_AC_FBM_SAL_3_junk_episode_recoverable_by_direct_read(
     tmp_path: Path,
 ) -> None:
-    """The junk episode is reachable by DIRECT recency lookup
-    (``recent_episodes``), proving storage is untouched — only the keyword
-    SURFACING path is gated."""
+    """The junk episode is reachable by a DIRECT cold-tier read, proving
+    storage is untouched — never-drop holds.
+
+    Post fbm-write-time-salience-gate-cold-tier (Slice A) the write gate diverts
+    a junk turn to the COLD tier at ingest (it is NOT in the hot ``episodes/``
+    tier or the recency scan, which both scan ``EPISODES_SUBDIR`` only). The
+    never-drop invariant now reads through the cold tier: the file exists on
+    disk verbatim and is recoverable by a direct cold-tier walk — the re-admit
+    path. Storage is untouched; only the HOT-INDEX surfacing is gated."""
     episode_dir = tmp_path / "episodes-store"
     store = FileMemoryStore(memory_dir=episode_dir)
-    store.write_episode(
+    result = store.write_episode(
         name="turn/junk-keepme",
         body=_JUNK_BODY,
         source_description="test seed",
@@ -85,9 +91,17 @@ def test_AC_FBM_SAL_3_junk_episode_retrievable_by_direct_lookup(
         source="message",
         group_id="pos3",
     )
+    # The junk went to the cold tier (not the hot recency scan).
+    assert COLD_SUBDIR in Path(result["path"]).parts
     recents = store.recent_episodes(group_ids=["pos3"], limit=10)
     names = [r.get("name", "") for r in recents]
-    assert any("junk-keepme" in n for n in names), (
-        "the junk episode must remain reachable by direct lookup — salience "
-        f"gates surfacing, not storage; recents={names!r}"
+    assert not any("junk-keepme" in n for n in names), (
+        "the junk turn must NOT appear in the hot recency scan (it is cold); "
+        f"recents={names!r}"
     )
+    # But it IS recoverable by a direct cold-tier read — never-drop holds.
+    cold_files = list((episode_dir / COLD_SUBDIR).rglob("*junk-keepme*.md"))
+    assert len(cold_files) == 1, (
+        f"the junk turn must remain recoverable from the cold tier; {cold_files}"
+    )
+    assert "keepme123" in cold_files[0].read_text(encoding="utf-8")

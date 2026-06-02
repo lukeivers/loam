@@ -40,6 +40,7 @@ from pathlib import Path
 import pytest
 
 from loam.primary_persona.file_memory import (
+    COLD_SUBDIR,
     SALIENCE_JUNK,
     FileMemoryStore,
     _salience_from_body,
@@ -166,6 +167,11 @@ def test_AC_FBM_SAL_5_live_store_cold_walk(tmp_path: Path) -> None:
     assert "task-notification" not in block and "tool-use-id" not in block, (
         f"the task-notification junk must be suppressed; block={block!r}"
     )
-    # The junk episode is still on disk (storage untouched).
-    junk_on_disk = list((episode_dir / "episodes" / "pos3").rglob("live-junk*.md"))
-    assert junk_on_disk, "the junk episode must remain stored on disk"
+    # The junk episode is still on disk (storage untouched). Post
+    # fbm-write-time-salience-gate-cold-tier (Slice A) the write gate diverts it
+    # to the COLD tier at ingest (out of the hot index), never deleted — so it
+    # is on disk under the cold tier rather than the hot ``episodes/`` tier.
+    junk_on_disk = list((episode_dir / COLD_SUBDIR / "pos3").rglob("live-junk*.md"))
+    assert junk_on_disk, (
+        "the junk episode must remain stored on disk (cold tier — never-drop)"
+    )

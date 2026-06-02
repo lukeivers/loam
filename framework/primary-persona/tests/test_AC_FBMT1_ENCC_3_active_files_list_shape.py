@@ -39,7 +39,7 @@ def test_AC_FBMT1_ENCC_3_list_input_renders_as_list(tmp_path: Path):
         workspace_root=ws_root,
         turn_id="testturn1",
         session_id="testsess",
-        user_message="hi",
+        user_message="walk me through the encoding context fields",
         assistant_reply="hello",
         active_files=["a.py", "b.py", "c.py"],
     )
@@ -67,7 +67,7 @@ def test_AC_FBMT1_ENCC_3_string_input_coerced_to_single_element_list(tmp_path: P
     record = {
         "turn_id": "testturn2",
         "session_id": "testsess",
-        "user_message": "u",
+        "user_message": "walk me through the encoding context fields",
         "assistant_reply": "a",
         "enqueued_at": datetime.now(timezone.utc).isoformat(),
         "retry_count": 0,
@@ -104,7 +104,7 @@ def test_AC_FBMT1_ENCC_3_empty_list_renders_as_empty_brackets(tmp_path: Path):
         workspace_root=ws_root,
         turn_id="testturn3",
         session_id="testsess",
-        user_message="hi",
+        user_message="walk me through the encoding context fields",
         assistant_reply="hello",
         active_files=[],
     )

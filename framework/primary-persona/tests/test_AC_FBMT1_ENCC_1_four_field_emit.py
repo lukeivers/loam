@@ -43,8 +43,12 @@ def test_AC_FBMT1_ENCC_1_exactly_four_fields(tmp_path: Path):
         workspace_root=ws_root,
         turn_id="testturn1",
         session_id="testsess",
-        user_message="hello",
-        assistant_reply="hi there",
+        # Substantive (>8 chars, no junk signature) so the turn lands in the
+        # HOT episodes tier the encoding-context assertions read — the
+        # write-time salience gate (fbm-write-time-salience-gate-cold-tier)
+        # diverts a too-short/junk user half to the cold tier.
+        user_message="walk me through the encoding context fields",
+        assistant_reply="here are the four context fields",
         triggering_msg_id="msg-123",
         active_task_id="task-7",
         cwd="/Users/me/proj",
@@ -97,7 +101,7 @@ def test_AC_FBMT1_ENCC_1_no_fifth_field_creeps_in(tmp_path: Path):
     record = {
         "turn_id": "testturn2",
         "session_id": "testsess",
-        "user_message": "u",
+        "user_message": "walk me through the encoding context fields",
         "assistant_reply": "a",
         "enqueued_at": datetime.now(timezone.utc).isoformat(),
         "retry_count": 0,

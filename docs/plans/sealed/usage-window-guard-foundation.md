@@ -279,3 +279,10 @@ thresholds-deferred, and shape-parsing are all settled.
 ## §14 — Method-decision record (builder, post-build)
 
 (Backfilled at seal.)
+
+### Commit SHAs
+
+- Amendment commit: `1958e9cafce9af66ff64742035d1271884e2a0c9` —
+  `chore(amend): usage-window-guard-foundation manifest+apply — usage-window-guard BASELINE+sidecar bump to a315ed0`
+- Seal commit: `4eceaacc1f3adce21c0988049ba56ab6ab022990` —
+  `chore(seals): usage-window-guard-foundation — usage-window-guard at 1958e9c`

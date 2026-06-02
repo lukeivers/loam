@@ -1,0 +1,41 @@
+# protection-matrix — add the FM.SILENT-EGRESS floor row — apply ladder
+
+Per `docs/plans/protection-matrix-silent-egress-row.md`.
+Single-component amendment on the EXISTING `framework/protection-matrix/`
+component (first seal `68fb6f8`); this seal advances the existing sidecar.
+
+The protection matrix had no row for "loam sends a user's data / files off
+their machine for troubleshooting or analytics WITHOUT explicit,
+transparent, per-item user consent" — a floor-class privacy betrayal not on
+loam's failure ledger (privacy-safe data-sharing design §0.1 finding).
+
+  - AC.PMROW.3 — the FM.SILENT-EGRESS row exists + is schema-conformant.
+    Modelled on the FM.COMMS-PATH-DEAD precedent (a documented floor gap
+    whose guard is named but not yet default-on-bound). The named guard
+    (the egress-consent gate) is DESIGNED-not-yet-built, so it has no
+    symbol to resolve; the row therefore carries the schema's legitimate
+    unbuilt-guard shape (`guard_kind: none`, empty `guard_ref`,
+    `default_on: NONE`) — recording an HONEST floor gap rather than a
+    hallucinated guard binding (the protection pillar must not invent
+    coverage it does not have). The empty ref on a non-obligating kind is
+    NOT a divergence.
+  - AC.PMROW.4 — the row surfaces in the distinct GAP section (floor-class,
+    default_on != YES), so the gap is named, not silently omitted.
+  - AC.PMROW.5 (outcome-altitude) — a real `load_catalogue()` +
+    `run_coverage_check()` over the shipped catalogue + live tree, no
+    pre-arranged state: the row parses, adds zero new divergence, and
+    appears among the live coverage gaps.
+
+The generated companion `docs/design/protection-matrix.md` is regenerated
+from the updated catalogue via `loam guards --refresh` (the md↔yaml sync
+test stays green; the companion is GENERATED, never hand-edited).
+
+Non-regression: AC.FMG-CAT.1 (schema), AC.FMG-GAP.1 (EXPECTED_FLOOR_GAPS is
+a subset assertion — a 6th gap is additive), AC.FMG-CHECK.2 (no new
+divergence), AC.PMGEN.1 (companion sync), AC.PMROW.2 all stay green.
+
+BASELINE re-baselined to 949fced9 — the prior protection-matrix seal
+(054ccb40) predated the v1.0.0 lockstep release, so the stale window
+spanned every release-cut component; the pre-amendment main tip restores a
+clean single-component window. No ODD violation in surrounding code; the
+row references no other component's code and adds no programmatic guard.

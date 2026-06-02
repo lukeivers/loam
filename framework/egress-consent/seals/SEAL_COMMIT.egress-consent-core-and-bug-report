@@ -1,0 +1,97 @@
+# egress-consent Slice 1 — fail-closed never-leak core + bug-report
+consumer — apply ladder
+
+Per `docs/plans/egress-consent-core-and-bug-report.md` and the owner-greenlit
+design `loam-privacy-safe-data-sharing-design.md` (Slice 1 = the egress-consent
+CORE §1 + the bug-report consumer §2; the health/analytics evaluator §3 is a
+LATER slice, OUT OF SCOPE here).
+
+Plan: `docs/plans/egress-consent-core-and-bug-report.md`.
+
+Scope (plan §2 / §6 / §8): NEW component `framework/egress-consent/`. The
+privacy floor that sits in front of EVERYTHING loam might send off the user's
+machine, plus one consumer (the bug-report tool) that uses it.
+
+The never-leak guarantee, enforced by construction (NOT a runtime promise):
+the EgressBundle FSM defaults to a no-egress state and EVERY error path
+(crash, timeout, abandoned review, ambiguous input) lands in a no-egress
+state; the ONLY transition to RELEASED runs through a single, grep-audited
+choke point — a deterministic, no-LLM, fail-closed release gate that refuses
+(raising BEFORE any socket opens, mirroring the reversibility gate's
+-32050-before-activate) on each of: not-approved, absent approval-binding,
+binding-mismatch (the bundle mutated after approval — content-identity broke),
+any still-pending item, unknown destination. The approval binds to the
+content identity of the approved-or-redacted item set (structural_hash
+semantics); any mutation invalidates it. The released payload contains EXACTLY
+the approved + redacted items; declined items are STRUCTURALLY excluded; a
+redacted item ships its replacement bytes, never the original.
+
+Two-layer review surface (resolving the design's transparency-vs-simplicity
+tension): a plain-language default view (numbered, abstraction-first voice,
+ZERO internal vocabulary — reusing self-correction's find_internal_vocabulary
+probe) + an always-available exact-bytes expansion that is byte-faithful to
+what the gate would actually send (the label cannot lie about the contract).
+Per-item approve / redact / decline.
+
+The bug-report consumer: a `loam report` verb (registered on
+loam.cli.subcommands, symmetric to `loam recover`) + a programmatic
+entry-point. A short plain-language interview characterizes the issue, a
+candidate bundle is assembled from LOCAL signals only (the user's note, loam
+version, coarse OS — never username/paths), files and logs default to
+DECLINED, and every candidate item's bytes are scanned against the
+safety-layer secret floor (CONTENT_PATTERNS) and auto-redacted BEFORE the
+user ever sees the review surface. The user then sends to a friendly intake
+(no "GitHub" jargon shown) OR takes the always-available local-only fallback
+(loam writes the report to the user's own disk + plain instructions, zero
+egress). The fallback is first-class, never a dead end.
+
+Lens 1 — almost entirely a wiring cycle over sealed primitives, consumed via
+their public surfaces ONLY (zero sealed-component edits): the reversibility
+ActivationGate's fail-closed posture, safety-layer's structural_hash +
+CONTENT_PATTERNS secret floor, self-correction's vocab probe, the
+loam.cli.subcommands group, and the output-to-disk convention. The only
+genuinely-new code is the EgressBundle lifecycle + the release gate + the
+review-surface controller + the bug-report assembly logic.
+
+feedback_no_anthropic_api_key: the gate is DETERMINISTIC — no LLM inside the
+gate, no network except the single allow-listed send at the very end of a PASS.
+
+AC families (plan §7):
+
+  - AC.EG-CORE.1 — default is no-egress.
+  - AC.EG-CORE.2 — fail-closed release gate (5 refusal conditions, raised
+    pre-send).
+  - AC.EG-CORE.3 — single choke point (tree-grep + no gate-bypass).
+  - AC.EG-CORE.4 — content-identity binding (mutation invalidates).
+  - AC.EG-CORE.5 — per-item approve/redact/decline (payload = exactly
+    approved+redacted; declined structurally excluded; redacted ships
+    replacement).
+  - AC.EG-REVIEW.1 — plain-language, ZERO internal vocab.
+  - AC.EG-REVIEW.2 — exact-bytes faithfulness.
+  - AC.BR.1 — interactive triage before DRAFTING leaves.
+  - AC.BR.2 — files/logs default-declined.
+  - AC.BR.3 — secret auto-redaction PRE-review.
+  - AC.BR.4 — friendly destination + always-available local fallback.
+  - AC.EG-S.1 ★ (outcome-altitude) — real end-to-end assemble→review→
+    decline-one+redact-one+approve-rest→release; payload = exactly
+    approved/redacted, NOT declined; mutated-bundle release REFUSED. No
+    stubbed gate, no pre-seeded payload.
+  - AC.BR-S.1 ★ (outcome-altitude) — real "loam broke" entry →
+    interview→assemble→review(one declined)→local-fallback → REAL file on
+    disk + zero egress; second run "send" → approved set (minus declined)
+    posts through the REAL gate.
+
+Out of scope (plan §8): the health/self-behavior evaluator consumer (§3 —
+slices 2/3); the concrete live network transport to the friendly intake
+(config follow-on F-BR-1); the FM.SILENT-EGRESS matrix binding (deferred —
+needs a NEW runtime-gate guard_kind on the SEALED protection-matrix schema,
+a separate fence; plan §9); pushing to origin (LOCAL seal only).
+
+Predecessor:
+  - 9fd5593e — loam HEAD @ plan-authoring (docs(plans): record
+    usage-window-guard-foundation commit SHAs).
+
+BASELINE 9fd5593e (re-baselined by the builder to the actual source-edit
+commit if it differs). NEW-component first-seal fence on
+`framework/egress-consent/`. The sidecar is created at this seal (no prior
+seal to advance).

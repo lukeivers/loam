@@ -137,7 +137,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              Advanced BASELINE to c82131e (the prior FBM-SAL seal commit,
 #              the HEAD~1 pattern); SEAL_COMMIT -> 7dcb95b (the consolidation
 #              slice). Seal-diff stays within primary-persona + docs/ surfaces.
-BASELINE = "1b400bb1"
+#   fbm-salience-gate-compaction-summary-dump (slug; schema v3) — adds the 5th
+#              junk signature to compute_salience (compaction-summary dumps) +
+#              AC-FBM-SAL-7/-8/-9 (the last outcome-altitude via real
+#              retrieve()). The prior BASELINE 1b400bb1 predated the entire
+#              v1.0.0 lockstep release (loam-init / loam-skills / per-project-pm
+#              landed on main between the last primary-persona seal 39d0e98a and
+#              now), so the stale BASELINE spanned every release-cut component
+#              and falsely tripped the fence. Advanced BASELINE to 7d103826 (the
+#              main tip immediately before this amendment's source commit — the
+#              HEAD~1 pattern) so the seal-diff window shows ONLY this
+#              amendment's primary-persona + docs/plans/ surfaces.
+BASELINE = "7d103826"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

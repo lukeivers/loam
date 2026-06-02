@@ -1,0 +1,69 @@
+# usage-window-guard Slice 1 (foundation) — real Anthropic rolling-window
+probe + parse + fail-open — apply ladder
+
+Per `docs/plans/usage-window-guard-foundation.md` and the owner-greenlit
+design `loam-nontech-usage-limit-guard-design.md` (Slice 1 =
+usage-window-guard-foundation, AC.USG.{1,5,S}).
+
+Plan: `docs/plans/usage-window-guard-foundation.md`.
+
+Scope (per plan §1 + §6 + §7): NEW component
+`framework/usage-window-guard/`. The foundation slice of the non-tech-user
+usage-limit guard (owner-greenlit, Luke 13512): a probe that reads the REAL
+Anthropic-side rolling-window utilization — the rolling 5-hour window + the
+7-day weekly window — directly from
+`GET https://api.anthropic.com/api/oauth/usage` with an OAuth token read
+TRANSIENTLY from the macOS keychain ("Claude Code-credentials" →
+claudeAiOauth.accessToken), parses the nested `{utilization, resets_at}`
+struct per window, and FAILS OPEN (reports "usage unavailable" with a
+categorical reason and NO fabricated number) on a missing credential, a
+transient 401, a non-200, an unreachable endpoint, or a malformed body.
+
+This is the REAL enforced cap utilization — Anthropic's server-side
+accounting — NOT token-counting, NOT cost-estimation, NOT a tool-call
+tally. loam's cost-governance (token/cost ceilings) is explicitly NOT the
+foundation and is untouched.
+
+AC families:
+
+  - AC.USG.1 — real-window read (source-identity). read() against a fixture
+    HTTP 200 body (the live nested shape) returns a UsageWindows carrying
+    BOTH five_hour + seven_day {utilization (float %), resets_at}, each
+    sourced from that window's endpoint field — never a token count.
+  - AC.USG.5 — fail-open. Missing/empty credential, 401/403, other non-200,
+    unreachable/timeout, and malformed-200 each yield a UsageUnavailable
+    with NO utilization number, no raised exception, no indefinite block,
+    and a categorical reason. The information-trust-ordering AC: never
+    confabulate a usage number.
+  - AC.USG.S ★ (outcome-altitude) — the production read() entry-point,
+    invoked with NO pre-arranged state (no injected transport, no fixture
+    credential, no monkeypatch), hits the real keychain + real endpoint and
+    yields EITHER a real UsageWindows (utilizations in [0,100] with parsed
+    resets_at) OR a genuine fail-open UsageUnavailable through the SAME real
+    code path. A STUB-class test does NOT satisfy this AC
+    (feedback_test_outcome_altitude_required).
+
+The single load-bearing risk (Tier-0 measured at design time): the OAuth
+access token rotates ~hourly. The probe re-reads the keychain on EVERY call
+(never caches the token across calls), never persists or logs the token,
+and treats a transient 401 as fail-open. It piggybacks on Claude Code's own
+refresh; it does NOT implement the OAuth refresh dance.
+
+Method-level choices are the builder's call per ODD §1.1; the plan fixes
+the source (the OAuth endpoint), the nested data shape, the no-secrets
+discipline, and the fail-open contract — not the implementation (urllib vs
+requests, the parse internals).
+
+Out of scope (plan §7): the threshold ladder (AC.USG.2); the plain-language
+surfacing contract (AC.USG.3); hook wiring (AC.USG.4); the Linux
+file-path credential read (owner set macOS-only for v1); per-model weekly
+buckets + extra_usage parsing; pushing to origin (LOCAL seal only).
+
+Predecessor:
+  - a315ed0b — main tip @ plan-authoring (claude-p-to-insession-subagent-
+    fanout-slice2-swarm seal).
+
+BASELINE a315ed0b (re-baselined by the builder to the actual source-edit
+commit if it differs). NEW-component first-seal fence on
+`framework/usage-window-guard/`. The sidecar is created at this seal (no
+prior seal to advance).

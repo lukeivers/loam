@@ -289,3 +289,55 @@ the §14 method-decision register at build time.
 **Convention exemplar:** `plugins/dev-sdlc/docs/conventions/plan-docs.md`
 (plan-doc shape, scope-descriptive AC IDs, manifest fields). Shape exemplar:
 recent single-component manifests under `docs/plans/`.
+
+---
+
+## §14. Method-decision record (builder's call, recorded at build/seal time)
+
+Slice 1 build-time method decisions (the in-session dispatch wiring chosen per
+ODD §1.1 — outcome-shape ACs leave method to the builder):
+
+- **D-build.1 — dispatcher as an injected callable via a process-level
+  registry.** The live host session (the only context with the Task primitive)
+  registers a `(prompt: str) -> str` dispatcher via
+  `set_in_session_dispatcher`; `make_default_research_provider()` resolves it at
+  call time through `InSessionResearchSource`. A registry (vs threading a
+  dispatcher arg through every intake call site) keeps the production resolver
+  zero-argument. No-registration is the natural degrade trigger (AC.RES1.3),
+  mirroring the old `claude`-absent degrade.
+
+- **D-build.2 — keep `ClaudeSubagentResearchSource` as the residual mechanism.**
+  The headless-`-p` source stays so the `loam_spawn_isolation` guard stays
+  exercised + load-bearing for the launchd-sessionless residual path. Deleting it
+  would re-expose those spawns to the proven Telegram kill vector (H-3).
+
+- **D-build.3 — notice as a standalone top-level docs file.**
+  `docs/insession-subagent-keep-open-notice.md` is reachable through the normal
+  docs path (vs buried in a code comment), satisfying AC.RES1.5's "reachable
+  through the normal user-facing path" + the cold-walk outcome-altitude check.
+
+- **AC.RES1.4 disposition (DEFERRED minor-level gate).** AC.RES1.4 (post-June-15
+  `/usage` billing confirmation) is NOT a Slice-1 code AC and did NOT block this
+  seal. It is calendar-gated (physically unverifiable before June-15-2026), NOT
+  faked/stubbed to green, and gates the later high-volume Slice 3. Tracked
+  separately per §9.
+
+### Commit SHAs
+
+- BASELINE: `aa759aa8` (v1.0.1 post-publish backfill tip).
+- Code commit: `353e5692` (the Slice-1 source + tests + notice + plan + manifest).
+- Apply (sidecar/BASELINE bump): `34daa5a2`.
+- Seal commit: `557a904e` (`chore(seals): claude-p-to-insession-subagent-fanout-slice1 — workspace-bootstrap at 34daa5a`).
+- workspace-bootstrap `tests/SEAL_COMMIT` sidecar: `34daa5a2` (the empty-diff
+  window tip; BASELINE-as-HEAD~1 convention).
+- LOCAL seal only — NOT pushed. The minor ships as its own release later under
+  owner gate.
+
+### Verification (Tier-0)
+
+- Full workspace-bootstrap suite: 674 passed / 16 skipped (no regression from the
+  default-source swap).
+- AC.RES1.* suite: 9 passed (`test_AC_RES1_insession_subagent_research.py`).
+- Seal-diff (`test_no_sealed_amendments.py`): 2 passed — only
+  `framework/workspace-bootstrap/` + universal paths changed; zero sealed-
+  component deltas.

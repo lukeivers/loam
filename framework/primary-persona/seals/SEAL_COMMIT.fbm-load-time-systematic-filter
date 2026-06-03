@@ -1,0 +1,62 @@
+# FBM load-time systematic relevance+quality filter — absolute floor + near-dup dedup (Slice B)
+
+Per `docs/plans/fbm-load-time-systematic-filter.md` and the owner-greenlit unified
+plan `workspace/.scratch/claude-output/loam-fbm-quality-and-accuracy-unified-plan.md`
+(Slice B, P3; Luke 13582). Single-component amendment on the EXISTING
+`framework/primary-persona/` component; advances the existing sidecar. The read-side
+counterpart to Slice A (write-time salience gate → cold tier, sealed).
+
+The structural bug (Tier-0, verified at build time): the episode min-max path
+(`_minmax_norm`) maps each source's BEST matched hit to `1.0`, so a weak-but-best
+episode at raw negated-BM25 `~0.5` is promoted to `1.0` and competes head-to-head
+with a genuine corpus rule — the FM-4 min-max-promotion failure. The CORPUS source
+already floors `rel < MIN_RELEVANCE_SCORE (0.1)` at source (`CorpusIndex.search`);
+the EPISODE source had no absolute floor. And no dedup existed anywhere on the load
+path — adjacent near-identical episodes could occupy multiple of the ≤5 slots.
+
+This cycle extends the `_merge_by_score` pre-merge filter stage in place with two
+mechanisms, unified with the already-sealed salience gate into ONE systematic stage:
+
+  - **Absolute floor** — episode hits with `_bm25_raw < EPISODE_MIN_RELEVANCE_SCORE`
+    (`0.1`, mirroring the corpus floor on the identical negated-BM25 scale) are
+    dropped BEFORE `_minmax_norm`, BUT ONLY when another episode clears the floor
+    (the self-disable over-filter safeguard). Applied to RAW BM25, not the
+    composed/normalized value. In the sparse / IDF-collapsed regime (verified Tier-0:
+    relevant and noise episodes both score ~0) the floor self-disables so a lone
+    relevant-but-sparse episode is never over-filtered — this reconciles B1 with the
+    SEALED AC-FBM-RN-2 / AC.FBMU.1 (no sealed AC behaviour changes; M5 resolution in
+    the plan-doc). Corpus + pinned hits are never floored.
+  - **Near-dup dedup** — over the combined, ordered, pre-truncate hit list, a later
+    hit whose token-Jaccard with an already-kept hit exceeds
+    `DEDUP_JACCARD_THRESHOLD` (`0.85`, GBrain; stdlib token-set Jaccard, no
+    embeddings, no API key) collapses; the higher-ranked member is kept and the next
+    distinct hit fills the freed slot. Pinned hits are never deduped away.
+
+Thresholds are conservative (floor EQUAL to the corpus floor; Jaccard at the high
+0.85 end) because OVER-filtering genuine memory is the load-bearing risk; the
+outcome-altitude AC proves a genuinely-relevant distinct episode still surfaces.
+
+  - AC-FBM-FLOOR-1 — in a populated set a below-floor episode is dropped so it cannot
+    out-rank a corpus rule after min-max; an above-floor episode still surfaces (FM-4
+    closed). Safeguard: when NO episode clears the floor (sparse regime) it
+    self-disables and a lone relevant sub-floor episode still co-surfaces.
+  - AC-FBM-DEDUP-1 — two hits > 0.85 token-Jaccard collapse to one top-N slot; the
+    freed slot is filled by the next distinct hit.
+  - AC-FBM-FILTER-STAGE-1 — salience gate + absolute floor + dedup are a single named
+    pre-merge stage in `_merge_by_score`; no per-case signature lives outside it (the
+    reactive-patch pattern is retired structurally; no sixth signature).
+  - AC-FBM-FILTER-2 (outcome-altitude) — production `retrieve()` over a real store
+    with NO pre-arranged state, seeded with a below-floor episode + a near-dup pair +
+    a genuinely-relevant distinct episode: the injected block excludes the below-floor
+    one, contains only ONE of the near-dup pair, and STILL contains the distinct
+    relevant one. Driven through `retrieve → _episode_hits → store.search →
+    _merge_by_score → _render_injection`, no internal-call shortcut.
+
+Non-regression: AC-FBM-SAL-1..9 (salience gate sub-stage unchanged), AC.FBMU.1/.2/.3
+(no-episode byte-identical early-return preserved; top-N + byte budget bound the
+surface), AC-FBM-RN-1/.2 + AC-FBM-W-1/.2 (min-max, weight boost, pinned force-include
+run after the floor exactly as before; pinned rules never floored or deduped) all
+stay green.
+
+No ODD violation in surrounding code; the change adds two pre-merge filter steps keyed
+on named tunable constants, no defensive code for unnamed cases.

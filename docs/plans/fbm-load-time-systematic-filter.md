@@ -209,3 +209,63 @@ the safeguard structurally prevents it.
 - **D-FILTER.3** — thresholds set conservative (floor EQUAL to the corpus floor; Jaccard
   at the high 0.85 end) so over-filtering of genuine memory is structurally minimized;
   B4 proves a real memory still surfaces.
+
+## §14 — Method-decision record
+
+The build-time method decisions (the "HOW", left to the builder per ODD §2.5).
+The register above carries the objective-level decisions (D-FILTER.1..4); this
+section records the implementation-level choices and the seal SHAs.
+
+- **§14.1 — single-seam change.** Both Slice-B mechanisms are implemented inside the
+  ONE pre-merge filter stage of `_merge_by_score` (keep_pace/retrieval.py), composed on
+  the already-sealed salience-gate sub-stage. The floor is a list-filter
+  (`_apply_episode_floor`) applied after the salience gate and before `_minmax_norm`; the
+  dedup (`_dedup_hits`) runs after the boosted sort and before the top-N truncation. No
+  new retrieval entry point, no edit to `retrieve` / `_episode_hits` / `_render_injection`
+  / the search path. Three named tunable module constants
+  (`EPISODE_MIN_RELEVANCE_SCORE`, `DEDUP_JACCARD_THRESHOLD`, plus the existing
+  `SALIENCE_THRESHOLD`).
+- **§14.2 — the floor self-disable safeguard (Ruthless-Feedback surface).** Building the
+  outcome-altitude AC surfaced that an UNCONDITIONAL absolute floor at `0.1` breaks four
+  SEALED tests (AC-FBM-RN-2, AC.FBMU.1, AC-FBM-SAL-2, AC-FBM-SAL-9) — all seed a single
+  relevant episode that, in a sparse test store, legitimately scores ~0 (IDF collapse).
+  Tier-0 verification: a relevant sparse episode scored `6e-06` and a noise sparse
+  episode `1e-06` — raw BM25 is NOT a discriminator in the sparse regime; against the
+  LIVE 1400-episode store genuine matches score 5–20 (the floor is operative only in the
+  populated regime). Per `feedback_principle_conflict_resolution_multi_signal` (M5), the
+  resolution makes the floor self-disable when no episode clears it — closing FM-4 in
+  production WITHOUT over-filtering a lone relevant-but-sparse episode and WITHOUT editing
+  any sealed test. No sealed AC's behaviour changes.
+- **§14.3 — the dedup signal is the rendered pointer.** Token-Jaccard keys on the hit's
+  plain-language `pointer` (the exact text that would be surfaced), so two hits that would
+  render near-identically are recognized as duplicates regardless of source. Pinned hits
+  are exempt (the hard floor must survive — AC-FBM-W-2).
+
+### Commit SHAs
+
+- BASELINE: `f1548494` (branch tip immediately before the source commit — the HEAD~1
+  advance pattern; also the manifest baseline).
+- Source commit: `39cb9791` (`feat(fbm): load-time systematic relevance+quality filter —
+  absolute floor + near-dup dedup (Slice B)` — code + the four new AC tests + plan +
+  manifest; NO sealed test edited).
+- Apply auto-commit: `543b8b87` (`chore(amend): fbm-load-time-systematic-filter
+  manifest+apply` — primary-persona BASELINE + `tests/SEAL_COMMIT` sidecar + seal-fence
+  BASELINE advanced to `f1548494`).
+- Seal-fence ledger comment: `3a60416a` (`test(primary-persona): record
+  fbm-load-time-systematic-filter in seal-fence ledger`).
+- Seal commit: `b574c340` (`chore(seals): fbm-load-time-systematic-filter —
+  primary-persona at 3a60416`; cross-component sweep 20 components green).
+- primary-persona `tests/SEAL_COMMIT` sidecar: `3a60416a`.
+- LOCAL seal only — NOT pushed.
+
+### Verification (Tier-0)
+
+- Full primary-persona suite: 915 passed, 1 skipped (the live-store SAL-5 cold-walk skips
+  when `~/pos3/workspace/.loam/memory/episodes` is absent in this tree — expected).
+- AC-FBM-FLOOR-1 / AC-FBM-DEDUP-1 / AC-FBM-FILTER-STAGE-1 / AC-FBM-FILTER-2 all pass,
+  including the outcome-altitude FILTER-2 driving production `retrieve()` over a real
+  store with no pre-arranged state.
+- Seal cross-component sweep: 20 components green (1 skipped — scope-of-work has no
+  seal-diff test). Post-seal `loam amend apply --dry-run` clean; seal-fence test green.
+- Seal-diff window `git diff --name-only f1548494..3a60416a` shows ONLY primary-persona +
+  `docs/plans/` surfaces (single-component fence holds).

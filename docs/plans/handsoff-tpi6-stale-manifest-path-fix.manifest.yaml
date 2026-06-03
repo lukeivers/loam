@@ -1,0 +1,106 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: handsoff-tpi6-stale-manifest-path-fix
+  title: "handsoff-loop AC.TPI.6 — re-point the fence test at the sealed manifest path AND bound its diff window at the seal commit (durable fence; no later unrelated amendment can trip it)"
+
+# BASELINE: the current main tip @ build time (immediately before this
+# amendment's source commit — the documented HEAD~1 advance pattern).
+# Single-component maintenance amendment fencing against the EXISTING
+# workspace-bootstrap anchor (the same anchor the original
+# telegram-poller-isolation-fix sealed against). The touched surface —
+# the AC.TPI.6 test file + its new SEAL_COMMIT sidecar — lives under
+# framework/tools/handsoff-loop/, inside the workspace-bootstrap
+# seal-test's admitted framework/tools/ prefix; the plan-doc + manifest
+# land under the admitted docs/plans/ universal prefix.
+baseline: "cd7aed01"
+
+plan: docs/plans/handsoff-tpi6-stale-manifest-path-fix.md
+plan_doc_ref: docs/plans/handsoff-tpi6-stale-manifest-path-fix.md
+
+ac_count: 1
+
+smoke_outcome: "AC.TPI.6 reads the sealed manifest path; all 8 cases green; diff window bounded at the seal (e0b71cbc via sidecar), so a later fenced-file amendment cannot trip it — durable"
+
+components:
+  - name: workspace-bootstrap
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc + manifest
+# land under the docs/plans/ universal prefix.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+
+narrative:
+  target: framework/workspace-bootstrap/seals/SEAL_COMMIT.handsoff-tpi6-stale-manifest-path-fix
+  body: |
+    # handsoff-loop AC.TPI.6 — sealed-manifest-path + seal-bounded-window fix
+
+    Per `docs/plans/handsoff-tpi6-stale-manifest-path-fix.md`. Single-
+    component maintenance amendment fencing against the EXISTING
+    `framework/workspace-bootstrap/` anchor (the same anchor the original
+    telegram-poller-isolation-fix sealed against); this seal advances the
+    existing workspace-bootstrap sidecar.
+
+    AC.TPI.6's fence-integrity test
+    (`framework/tools/handsoff-loop/tests/test_AC_TPI_6_fence_integrity.py`)
+    had TWO faults, both fixed here:
+
+      1. STALE PATH (maintenance). The test read the manifest at
+         `docs/plans/telegram-poller-isolation-fix.manifest.yaml`;
+         amendment #143's `loam amend sweep-archive` moved that file to
+         `docs/plans/sealed/`. The test's `_baseline()` helper raised
+         `FileNotFoundError`, erroring every parametrised case. The
+         `_MANIFEST` constant now points at the sealed location. The
+         BASELINE the test recovers is identical (`38b8f0f`); only the
+         file it reads it from moved.
+
+      2. UNBOUNDED DIFF WINDOW (the load-bearing fault). The test
+         computed `git diff {baseline}..HEAD` with NO upper bound. The
+         TPI amendment sealed at `e0b71cbc`; HEAD is now ~462 commits
+         past it, so the unbounded window swept in every later unrelated
+         amendment — and once one of them touched a fenced §1a/§1c file
+         (verified: `2edf2f43` touched
+         `framework/hands-off-lifecycle/hooks/first_run_dispatch.py`,
+         a §1c site) the fence FALSELY tripped. The window is now bounded
+         `BASELINE..SEAL_COMMIT` at BOTH ends, with the upper bound read
+         via the SEAL_COMMIT-sidecar pattern the sibling fence tests
+         (protection-matrix / workspace-bootstrap) already use: a new
+         `framework/tools/handsoff-loop/tests/SEAL_COMMIT` sidecar holds
+         the seal SHA `e0b71cbc40d000c53a0c1c953bdd4678a3fdae04`; the
+         `_seal_commit()` helper reads the sidecar (else the pinned seal
+         SHA, else HEAD pre-seal). Bounding at the seal makes the fence
+         PERMANENT — only THIS amendment's deltas are ever in scope, so
+         no future unrelated amendment can trip it.
+
+      - AC.TPI.6 (re-greened, outcome-altitude) — the real fence test
+        file runs against the real tree with no pre-arranged state: all
+        8 parametrised cases pass, AND the window is seal-bounded (the
+        durability proof: `_seal_commit()` resolves to the full seal SHA,
+        the §1c offender `first_run_dispatch.py` is NOT in the window).
+        This is durable, not just today-green.
+
+    SCOPE-DISCIPLINE: this is the ONE greenlit fence-test fix (Luke
+    13579). The other seal-hardening findings (tracked-ness, chicken-egg,
+    ref-advance, parallel-collision, stale-baseline) are NOT touched —
+    the seal-bounded-window change exposed none of them as requiring a
+    change here. The verified `38b8f0f..e0b71cbc` window is clean for the
+    §1a/§1c fenced files (permanent fence pass).
+
+    Non-regression: the broader handsoff-loop suite stays green
+    (22 passed, 2 skipped — the 2 skips are the opt-in real-binary
+    AC.TPI.1/.2 poller-survives tests). No ODD violation in surrounding
+    code; the fix touches only the fence test + its sidecar.
+
+    LOCAL SEAL ONLY — NOT merged to main, NOT pushed, NOT published, NOT
+    tagged; origin/main stays exactly at its current commit. NEW commits
+    only; never `--amend`. No version bump (version derives at
+    release-time).

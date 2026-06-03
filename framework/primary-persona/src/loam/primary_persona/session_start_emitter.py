@@ -219,6 +219,26 @@ def build_session_composer(
             # payload omits the retrieval block. AC46.2 holds.
             pass
 
+        # Slice D (AC-FBM-STATE-LENS-1) — register the GROUND-TRUTH per-project
+        # STATE contributor ALONGSIDE the gated memory-retrieval one, as a
+        # SEPARATE turn block. It surfaces a CONCISE, accurate, live-derived
+        # build/sealed/merged status for the registered projects (loam + cairn,
+        # via Slice C's ``derive_project_state``) so the turn-start context
+        # carries the REAL status instead of stale prose (the failure that made
+        # the persona wrong about Cairn). Independently fail-soft: a STATE-probe
+        # failure must not suppress the memory-retrieval block, and the
+        # contributor itself OMITS any project whose probe errors (never a hang,
+        # never a partial/wrong status). Registered fail-soft (AC46.2
+        # graceful-empty) — a registration-time error simply omits the block.
+        try:
+            from .keep_pace.project_state import (  # noqa: WPS433
+                register_project_state_contributor,
+            )
+
+            register_project_state_contributor(composer)
+        except Exception:  # noqa: BLE001 — AC46.2 graceful empty
+            pass
+
     # AC.MSC.2 (Gap A part b) — register the session-start
     # active-thread contributor at TriggerKind.session so a fresh
     # session reconstructs the most-recent active working thread from

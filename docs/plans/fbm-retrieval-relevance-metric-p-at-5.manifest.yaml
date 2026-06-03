@@ -1,0 +1,142 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: fbm-retrieval-relevance-metric-p-at-5
+  title: "FBM retrieval-relevance metric — P@5 (Slice F, final)"
+
+# BASELINE: current branch tip @ build time (the Slice E seal's descendant).
+# Single-component amendment on the EXISTING primary-persona component (NOT a new
+# component). This cycle — the FINAL slice of the FBM quality-and-accuracy overhaul —
+# adds a BrainBench-style precision-at-5 (P@5) retrieval-quality METRIC + a sealed
+# regression-guard test, so relevance quality cannot silently rot after the A-E
+# changes. The metric MEASURES the production retrieval (the sealed
+# index.search + _episode_hits + _merge_by_score pipeline that retrieve() runs) over a
+# HONEST labeled probe set whose relevance labels are authored on topical relevance,
+# NEVER reverse-engineered from the ranker (which would make the metric tautological).
+# Adds keep_pace/retrieval_metric.py: rank() (production-faithful ranked accessor —
+# the same pipeline retrieve() runs, returning the ordered merged hits pre-render),
+# Probe / P5Report dataclasses, precision_at_k(). retrieve() is refactored to delegate
+# to rank() + _render_injection (byte-identical output) so the metric measures the
+# exact code path that ships. Adds AC.FBM-P5-METRIC.1 (honest P@5 + seeded-regression
+# guard fires), AC.FBM-P5-METRIC.2 (deterministic + non-tautological labels), and
+# AC.FBM-P5-METRIC.S (outcome-altitude: the real metric end-to-end over the LIVE
+# store/corpus computes an actual P@5 and clears a conservative floor). Read-only
+# against the live FBM store/corpus. SCOPE = Slice F only; NOT the ~600-junk-episode
+# purge (owner-gated, HELD).
+baseline: "02133e48"
+
+plan: docs/plans/fbm-retrieval-relevance-metric-p-at-5.md
+
+components:
+  - name: primary-persona
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/primary-persona/seals/SEAL_COMMIT.fbm-retrieval-relevance-metric-p-at-5
+  body: |
+    # FBM retrieval-relevance metric — P@5 (Slice F, final)
+
+    Per `docs/plans/fbm-retrieval-relevance-metric-p-at-5.md` and the
+    owner-greenlit unified plan
+    `workspace/.scratch/claude-output/loam-fbm-quality-and-accuracy-unified-plan.md`
+    (Slice F; Luke 13582). Single-component amendment on the EXISTING primary-persona
+    component — the FINAL slice of the FBM quality-and-accuracy overhaul. Read-only
+    against the live FBM store/corpus.
+
+    A BrainBench-style precision-at-5 (P@5) retrieval-quality METRIC + a sealed
+    regression-guard test, so relevance quality cannot silently rot after the A-E
+    changes (write-gate, load-filter, per-project STATE, lens injection, multi-repo
+    visibility). The metric MEASURES the production retrieval — the sealed
+    `index.search` (corpus BM25) + `_episode_hits` (episode store) + `_merge_by_score`
+    (salience gate + absolute floor + dedup + weight/salience boost + top-N) pipeline
+    that `retrieve()` runs — over a HONEST labeled probe set, and a sealed test asserts
+    the live retrieval clears a CONSERVATIVE P@5 floor. P@5 = (# of the top-5 surfaced
+    hits that are labeled-relevant) / 5, averaged over the probe set.
+
+    The honesty problem (named + resolved — the whole point of the metric): a
+    relevance metric whose labels are reverse-engineered from the ranker passes by
+    construction and guards nothing (a tautology). Resolution: relevance is defined by
+    AUTHORED TOPIC MEMBERSHIP, decided BEFORE any ranking is run — each probe's
+    relevant set is the doc/episode signatures authored into that probe's topic, plus
+    deliberate DISTRACTORS (off-topic docs, junk-salience episodes) that share surface
+    tokens but are NOT topically relevant. A ranker that surfaces a distractor in the
+    top-5 LOWERS P@5 — the regression signal the metric exists to catch. The floor is
+    CONSERVATIVE (a margin below the honestly-measured value) and the ranker is
+    DETERMINISTIC (per-source min-max + weight/salience boost, sorted on
+    (-boosted, arrival_index) — a total order, no randomness / no embeddings / no
+    clock), so noise cannot flip the guard red; the metric verifies determinism by
+    running twice and comparing.
+
+    Ruthless-Feedback pre-commitment honored: the floor was set at/below the honestly
+    measured P@5; a low value would have been surfaced, never floored-up, and the
+    labels were never edited to match ranker output.
+
+    Reuse, not re-implement (Lens 1/2, Tier-0 at build time): the metric drives the
+    SAME `index.search` + `_episode_hits` + `_merge_by_score` the production
+    `retrieve()` runs. A new `keep_pace/retrieval_metric.py` adds:
+      - `rank(...)` — the production-faithful ranked accessor: runs the EXACT steps
+        `retrieve()` runs (trivial-skip, fresh objectives, work-anchor, corpus search,
+        episode hits, merge) and returns the ordered merged hit list PRE-render.
+        `retrieve()` is refactored to delegate to `rank()` + `_render_injection` so the
+        metric measures the same code path that ships (no drift between measured and
+        shipped) — a byte-identical refactor verified by the pre-existing KP1 / FBMU /
+        FBM-FILTER suite staying green.
+      - `Probe(query, relevant, last_topic)` + `P5Report(mean, per_probe, k,
+        num_probes)` frozen dataclasses.
+      - `precision_at_k(probes, config, *, k=5, ...)` — runs `rank()` per probe, takes
+        the top-k, counts how many carry a relevance signature in the probe's authored
+        relevant set, divides by k, averages over probes. Deterministic.
+    The controlled probe FIXTURE (topical clusters + distractors + authored relevant
+    sets) lives in the TEST — the module is the reusable metric; the fixture is the
+    honest labeled set. Episodes are seeded through the REAL `write_episode` ingest so
+    salience is computed by production, not hand-stamped; the corpus fixture is plain
+    `*.md` indexed via the existing `discover_corpus`.
+
+    ACs (each → a named test; >=1 outcome-altitude):
+      - AC.FBM-P5-METRIC.1 (F1) — over a controlled probe fixture (topical clusters +
+        distractors, relevance labeled on topic not on ranker output) the metric
+        computes a P@5 number that clears a conservative floor with the salience gate
+        ACTIVE, and DROPS below the floor under a SEEDED regression (junk re-admitted
+        by dropping the gate to 0.0) — the guard fires.
+        (`test_AC_FBM_P5_METRIC_1_honest_p_at_5_and_seeded_regression.py`.)
+      - AC.FBM-P5-METRIC.2 (F2) — two runs over the same probes + config produce
+        IDENTICAL reports (determinism verified), AND a probe scores STRICTLY below 1.0
+        in the presence of an unfiltered distractor (the labels are independent of the
+        ranker — a tautological set would force 1.0).
+        (`test_AC_FBM_P5_METRIC_2_deterministic_and_non_tautological.py`.)
+      - AC.FBM-P5-METRIC.S (F3, outcome-altitude) — the REAL metric end-to-end over the
+        PRODUCTION retrieval against the LIVE FBM store + corpus, NO pre-arranged
+        scores, probe relevance authored on genuine topical relevance to known durable
+        corpus topics: produces an ACTUAL P@5 number from real `rank()` and asserts it
+        clears the conservative sealed floor. A STUB-class test (mocked rank / hand-fed
+        hits) does NOT satisfy this. Skips cleanly if the live store is absent. Measured
+        live P@5 recorded in §14.
+        (`test_AC_FBM_P5_METRIC_S_live_retrieval_p_at_5_floor.py`.)
+
+    SCOPE = Slice F only — the FINAL slice. NOT in this cycle: the ~600-junk-episode
+    purge (owner-gated, HELD for Luke's explicit go). The sealed retrieval pipeline is
+    consumed unchanged; `retrieve()`'s delegation refactor preserves its output
+    byte-for-byte.
+
+    No ODD violation in surrounding code; every new function/branch traces to a named
+    AC (F1/F2/F3). The metric harness is separate from the hot retrieval path (zero
+    per-turn cost). No defensive code for unnamed cases.
+
+    Pre-existing (NOT introduced by this cycle, flagged per Ruthless Feedback): some
+    audit-CLI / entry-point-discovery tests fail on this Python 3.9 host because
+    `importlib.metadata.entry_points(group=...)` is unsupported on 3.9 — a latent
+    host-Python fragility, out of Slice F scope. The Slice F suite is run under
+    python3.13.

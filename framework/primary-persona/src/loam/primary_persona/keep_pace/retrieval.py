@@ -327,6 +327,75 @@ def _episode_pointer(ep: dict[str, object]) -> str:
     return f"From an earlier turn: {summary}"
 
 
+def rank(
+    *,
+    prompt: str,
+    config: RetrievalConfig,
+    last_topic: str = "",
+    salience_threshold: float = SALIENCE_THRESHOLD,
+) -> list[dict[str, object]]:
+    """The PRODUCTION ranked-hit accessor — the ordered merged hit list,
+    PRE-render, that :func:`retrieve` injects (AC.KP1.6 + AC.FBM-P5-METRIC.*).
+
+    Runs the EXACT production retrieval pipeline — trivial-skip, fresh
+    objectives, work-anchor key, corpus :meth:`CorpusIndex.search`, episode
+    :func:`_episode_hits`, and :func:`_merge_by_score` (salience gate +
+    absolute floor + dedup + weight/salience boost + top-N) — and returns the
+    ordered list of merged hits. :func:`retrieve` delegates to this then
+    renders; the P@5 retrieval-relevance metric reads this to inspect each
+    top-N hit's identity (the rendered string discards per-hit identity).
+    There is exactly ONE ranking code path: what the metric measures IS what
+    the production turn injects.
+
+    Returns ``[]`` for a trivial prompt (AC.KP1.4 skip) or an empty
+    work-anchor key (silent-on-no-match); fail-soft on the corpus search
+    (chain fail-open, AC.KP0.4).
+    """
+    if is_trivial_prompt(prompt):
+        return []
+
+    # Read objectives FRESH (AC.KP5.5 binding; seed fallback => no
+    # pre-arranged state needed for AC.KP1.6).
+    try:
+        objs = _objectives.load_user_scope_register(config.objectives_home)
+    except Exception:  # noqa: BLE001 — fail-soft; anchor degrades to prompt-only
+        objs = list(_objectives.SEEDED_OBJECTIVES)
+
+    anchor = WorkAnchor(
+        prompt=prompt,
+        objective_texts=_objectives.active_objective_texts(objs),
+        subgoals=_objectives.active_subgoals(objs),
+        last_topic=last_topic,
+    )
+    query_tokens = anchor.query_tokens()
+    if not query_tokens:
+        return []
+
+    index = _build_index(config)
+    try:
+        corpus_hits = index.search(
+            query_tokens=query_tokens, num_results=config.top_n
+        )
+    except Exception:  # noqa: BLE001 — fail-soft per chain fail-open contract
+        corpus_hits = []
+    finally:
+        index.close()
+
+    # D2 unify (AC.FBMU.1) — query the FBM episode store and merge its
+    # hits with the corpus hits by score. With no episode store
+    # configured this returns [] and the merged set equals corpus_hits
+    # exactly (AC.FBMU.2 byte-identical no-regression).
+    episode_hits = _episode_hits(
+        query_tokens=query_tokens, config=config, num_results=config.top_n
+    )
+    return _merge_by_score(
+        corpus_hits,
+        episode_hits,
+        top_n=config.top_n,
+        salience_threshold=salience_threshold,
+    )
+
+
 def retrieve(
     *,
     prompt: str,
@@ -339,6 +408,11 @@ def retrieve(
     Invoked with no pre-arranged retrieval state — it reads the
     objectives fresh, builds the work-anchored key, syncs + searches
     the corpus, and returns the plain-language injection (or ``""``).
+
+    Delegates to :func:`rank` for the ranking (the single ranking code
+    path) then renders the ordered merged hits via :func:`_render_injection`
+    — the output is byte-identical to the pre-refactor inline pipeline (the
+    KP1 / FBMU / FBM-FILTER suite is the no-regression guard).
 
     AC.KP1.4: a trivial prompt returns ``""`` (skipped) before any
     work; a no-match returns ``""`` (silent).
@@ -361,47 +435,10 @@ def retrieve(
     it re-admits previously-gated junk episodes (the gate is reversible;
     the episode was never removed from disk, only gated from surfacing).
     """
-    if is_trivial_prompt(prompt):
-        return ""
-
-    # Read objectives FRESH (AC.KP5.5 binding; seed fallback => no
-    # pre-arranged state needed for AC.KP1.6).
-    try:
-        objs = _objectives.load_user_scope_register(config.objectives_home)
-    except Exception:  # noqa: BLE001 — fail-soft; anchor degrades to prompt-only
-        objs = list(_objectives.SEEDED_OBJECTIVES)
-
-    anchor = WorkAnchor(
+    merged = rank(
         prompt=prompt,
-        objective_texts=_objectives.active_objective_texts(objs),
-        subgoals=_objectives.active_subgoals(objs),
+        config=config,
         last_topic=last_topic,
-    )
-    query_tokens = anchor.query_tokens()
-    if not query_tokens:
-        return ""
-
-    index = _build_index(config)
-    try:
-        corpus_hits = index.search(
-            query_tokens=query_tokens, num_results=config.top_n
-        )
-    except Exception:  # noqa: BLE001 — fail-soft per chain fail-open contract
-        corpus_hits = []
-    finally:
-        index.close()
-
-    # D2 unify (AC.FBMU.1) — query the FBM episode store and merge its
-    # hits with the corpus hits by score. With no episode store
-    # configured this returns [] and the merged set equals corpus_hits
-    # exactly (AC.FBMU.2 byte-identical no-regression).
-    episode_hits = _episode_hits(
-        query_tokens=query_tokens, config=config, num_results=config.top_n
-    )
-    merged = _merge_by_score(
-        corpus_hits,
-        episode_hits,
-        top_n=config.top_n,
         salience_threshold=salience_threshold,
     )
     return _render_injection(merged, cap=INJECTION_CHAR_CAP)

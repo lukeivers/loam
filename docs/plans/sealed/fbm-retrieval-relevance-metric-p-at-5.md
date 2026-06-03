@@ -276,4 +276,7 @@ output byte-for-byte).
 
 ### Commit SHAs
 
-(appended by the seal's `--plan-doc §14` step.)
+- Amendment commit: `3b82a4b9a7e7df00a38b90caab7e9ca7eff18b34` —
+  `chore(amend): fbm-retrieval-relevance-metric-p-at-5 manifest+apply — primary-persona BASELINE+sidecar bump to 02133e4`
+- Seal commit: `97b1d6c069354fedb784f98d89b1b83e3406c72a` —
+  `chore(seals): fbm-retrieval-relevance-metric-p-at-5 — primary-persona at 3b82a4b`

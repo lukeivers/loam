@@ -1,0 +1,59 @@
+# protection-matrix — re-bind the FM.SILENT-EGRESS row to the now-built egress-consent gate — apply ladder
+
+Per `docs/plans/protection-matrix-silent-egress-rebind.md`.
+Single-component amendment on the EXISTING `framework/protection-matrix/`
+component; this seal advances the existing sidecar.
+
+The FM.SILENT-EGRESS row stated the egress-consent gate was
+"DESIGNED, not yet built" and carried the unbuilt-guard shape
+(`guard_kind: none`, empty `guard_ref`, `default_on: NONE`). That status
+is STALE: `framework/egress-consent/` is BUILT + SEALED — the fail-closed
+`EgressReleaseGate.release` choke point, sealed at 2304dea. This was the
+planned follow-on explicitly surfaced as MISMATCH #71 in the prior
+dropped-open-loops cycle's seal narrative.
+
+  - AC.PMROW.3 (re-greened) — the row now binds the REAL sealed guard:
+    `guard_kind: release-gate`, `guard_ref:
+    framework/egress-consent/src/loam/egress_consent/gate.py:EgressReleaseGate`.
+    The ref resolves against the real tree via the production resolver
+    (EgressReleaseGate is a `class` — symbol-defined). Mirrors the
+    FM.COMMS-PATH-DEAD shape: a sealed, resolvable guard whose wiring into
+    every runtime send-path as the default-on choke point is owner-gated
+    instance-config, so the row carries `default_on: NO-PROGRAMMATIC` and
+    stays a visible floor GAP. NOT a divergence (the bound ref resolves);
+    NOT a hallucinated binding (the symbol is real + sealed); NOT a stale
+    not-yet-built status.
+  - AC.PMROW.4 — the row still surfaces in the distinct GAP section
+    (floor-class, default_on != YES — sealed but not yet default-on for
+    every send), so the gap is named, not silently omitted.
+  - AC.PMROW.5 (outcome-altitude) — a real `load_catalogue()` +
+    `run_coverage_check()` over the shipped catalogue + live tree, no
+    pre-arranged state: the row parses, its guard_ref resolves to the real
+    EgressReleaseGate symbol, appears among the live coverage gaps, and
+    adds zero new divergence.
+
+Sibling-row cross-reference repair: the FM.DROPPED-OPEN-LOOPS row's
+`verification` text + its test docstring referenced FM.SILENT-EGRESS as the
+canonical example of the unbuilt-guard shape. That reference is now stale
+(SILENT-EGRESS just got re-bound). Re-pointed to a self-describing
+statement of the unbuilt-guard shape — no semantic change to the
+DROPPED-OPEN-LOOPS row's own guard/coverage (it stays guard_kind none,
+empty ref, default_on NONE — still the honest unbuilt-guard gap).
+
+The generated companion `docs/design/protection-matrix.md` is regenerated
+from the updated catalogue via `loam guards --refresh` (the md↔yaml sync
+test stays green; the companion is GENERATED, never hand-edited).
+
+Non-regression: AC.FMG-CAT.1 (schema), AC.FMG-CAT.2 (no invented guards —
+the new ref resolves; `DIVERGENCES — none`), AC.FMG-GAP.1
+(EXPECTED_FLOOR_GAPS is a subset assertion — SILENT-EGRESS stays a named
+gap), AC.FMG-CHECK.2 (no new divergence), AC.PMGEN.1 (companion sync),
+AC.PMROW.4 (dropped-open-loops row), AC.PMTRACK.1 all stay green. Full
+suite: 42 passed.
+
+BASELINE f3e24663 — the current main tip @ build time (the documented
+HEAD~1 advance pattern), keeping a clean single-component window. No ODD
+violation in surrounding code; the row references the egress-consent
+component's public symbol but does NOT edit that component.
+
+LOCAL SEAL ONLY — NOT merged, NOT pushed, NOT published, NOT tagged.

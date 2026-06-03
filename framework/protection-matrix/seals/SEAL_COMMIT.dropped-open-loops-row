@@ -1,0 +1,64 @@
+# protection-matrix — add the FM.DROPPED-OPEN-LOOPS floor row — apply ladder
+
+Per `docs/plans/protection-matrix-dropped-open-loops-row.md`.
+Single-component amendment on the EXISTING `framework/protection-matrix/`
+component; this seal advances the existing sidecar.
+
+The protection matrix had no row for "the assistant DROPS ITS OWN OPEN
+LOOPS — deferred work, follow-ups, and rechecks it intended to revisit are
+never revisited; it acts only when prompted and silently forgets its
+outstanding obligations" — a genuine, currently-uncatalogued failure mode
+(owner-prompted, Telegram 13573).
+
+  - AC.PMROW.6 — the FM.DROPPED-OPEN-LOOPS row exists + is
+    schema-conformant. Modelled on the FM.SILENT-EGRESS precedent (a
+    documented floor gap whose guard is named but not yet bound in the
+    canonical tree). The named guard — the persona self-scheduled-recheck
+    mechanism (task #79) — has its FIRST INSTANCE LIVE, but that instance
+    lives in the operator's personal environment (launchd jobs), NOT in
+    canonical loam, and the reusable, productized, default-on self-recheck
+    SKILL + pending-rechecks register is SCOPED, not yet built. There is
+    therefore no symbol in the loam tree to resolve, so the row carries the
+    schema's legitimate unbuilt-guard shape (`guard_kind: none`, empty
+    `guard_ref`, `default_on: NONE`) — recording an HONEST PARTIAL floor
+    gap rather than a hallucinated guard binding (the protection pillar
+    must not invent coverage it does not have). The empty ref on a
+    non-obligating kind is NOT a divergence.
+  - AC.PMROW.7 — the row is NOT a divergence (non-obligating kind, empty
+    ref → adds zero new over-claim).
+  - AC.PMROW.8 — the row surfaces in the distinct GAP section (floor-class,
+    default_on != YES), so the gap is named, not silently omitted.
+  - AC.PMROW.9 (outcome-altitude) — a real `load_catalogue()` +
+    `run_coverage_check()` over the shipped catalogue + live tree, no
+    pre-arranged state: the row parses, adds zero new divergence, appears
+    among the live coverage gaps, and the coverage is honest-partial
+    (guard text names both the live instance and the not-yet-built
+    productized capability).
+
+SECOND candidate row (Lens-1 own-tooling) — DISPOSITION: NOT ADDED. A
+"persona hand-rolls bespoke infra instead of the Claude-native primitive"
+row is a build-time / design-discipline lapse, not a runtime user-facing
+betrayal with a runtime guard, so it does not cleanly fit the matrix
+schema/intent; it stays the standing discipline rule
+(feedback_apply_claude_leverage_to_own_tooling.md, task #79).
+
+MISMATCH SURFACED (#71, out of scope this cycle): the existing
+FM.SILENT-EGRESS row is now stale — it states the egress-consent gate is
+"designed-not-yet-built", but framework/egress-consent/ is now built +
+sealed (gate.py:EgressReleaseGate, sealed at 2304dea). Surfaced for an
+owner-gated follow-on re-bind; NOT fixed here (scope-discipline).
+
+The generated companion `docs/design/protection-matrix.md` is regenerated
+from the updated catalogue via `loam guards --refresh` (the md↔yaml sync
+test stays green; the companion is GENERATED, never hand-edited).
+
+Non-regression: AC.FMG-CAT.1 (schema), AC.FMG-GAP.1 (EXPECTED_FLOOR_GAPS is
+a subset assertion — a new floor gap is additive), AC.FMG-CHECK.2 (no new
+divergence), AC.PMGEN.1 (companion sync), AC.PMROW.2/.3, AC.PMTRACK.1 all
+stay green.
+
+BASELINE re-baselined to ffb99af2 — the prior sidecar BASELINE 949fced9
+predated the egress-consent release, so the stale window spanned unrelated
+release-cut components; the pre-amendment main tip restores a clean
+single-component window. No ODD violation in surrounding code; the row
+references no other component's code and adds no programmatic guard.

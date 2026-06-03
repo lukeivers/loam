@@ -210,4 +210,7 @@ follow-on.
 
 ### Commit SHAs
 
-(appended by `loam amend seal --plan-doc`)
+- Amendment commit: `51cbbd354d1900bf3f3a485cc758419d8692bbe6` —
+  `chore(amend): fbm-retrieval-quality-anchor-cap-omnibus-norm manifest+apply — primary-persona BASELINE+sidecar bump to 52efe3c`
+- Seal commit: `73b3eea382af6dd73ab5236ee7824e5330291db1` —
+  `chore(seals): fbm-retrieval-quality-anchor-cap-omnibus-norm — primary-persona at 51cbbd3`

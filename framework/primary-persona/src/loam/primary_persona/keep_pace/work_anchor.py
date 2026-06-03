@@ -66,6 +66,37 @@ _STOPWORDS: frozenset[str] = frozenset(
 )
 
 
+# AC.RQ80.1 (#80 anchor-flood de-flood) — the PROMPT-RELATIVE anchor cap. The
+# prompt tokens (the user's topical signal) are NEVER capped — always included
+# in full; the standing-context ANCHOR (objective + subgoal) is bounded so it
+# stops FLOODING the OR-query and crowding the focused topical rule out of the
+# top-5. Measured (Tier-0, live pos3 corpus): an 8-token topical prompt became
+# an 80-token query (72 generic objective words), letting every objective-
+# mentioning omnibus doc match on every turn and burying the focused rule at
+# rank ~12-14.
+#
+# The cap is PROMPT-RELATIVE because the anchor's job changes with prompt
+# strength: a RICH topical prompt needs the anchor TIGHT (the prompt carries
+# retrieval; the anchor must not flood); a VAGUE prompt ("continue the batch")
+# needs the anchor LOOSER (the anchor is the ONLY retrieval signal — the
+# AC.KP1.6 cold-walk rescue). So the anchor budget is:
+#
+#     anchor_cap = max(MIN_ANCHOR_FLOOR, MAX_QUERY_TOKENS - len(prompt_tokens))
+#
+# A rich 8-token prompt → max(4, 10-8) = 4 anchor tokens (de-flooded; live P@5
+# 0.0 → 0.133). A vague 2-token prompt → max(4, 10-2) = 8 anchor tokens (the
+# objective anchor still surfaces the litrpg canon doc — AC.KP1.6 preserved).
+# The anchor is CAPPED, NOT DELETED (AC.RQ80.3): MIN_ANCHOR_FLOOR keeps >= 1
+# anchor token present whenever the anchor has tokens. The cap is drawn
+# ROUND-ROBIN across anchor components so every component contributes its
+# leading token first (AC.KP1.2 graceful degradation). NAMED, tunable constants:
+# raising MAX_QUERY_TOKENS or MIN_ANCHOR_FLOOR re-admits more anchor (the flood)
+# — reversibility; MIN_ANCHOR_FLOOR is the lower rail that forbids deleting the
+# anchor.
+MAX_QUERY_TOKENS = 10
+MIN_ANCHOR_FLOOR = 4
+
+
 def tokenize(text: str) -> list[str]:
     """Token-sanitize ``text`` into the FTS5 OR-token survivors.
 
@@ -145,8 +176,16 @@ class WorkAnchor:
 
         AC.KP1.2: every present component contributes its tokens; an
         absent component contributes nothing (graceful degradation).
-        Surface #7: the objective tokens are weighted EQUALLY with the
-        others — they are merged into one OR-token set, not boosted.
+
+        AC.RQ80.1 (#80 anchor-flood de-flood): the PROMPT + LAST-TOPIC
+        tokens (the user's topical signal) are always included in full;
+        the ANCHOR tokens (objective + subgoal — the standing-context
+        rotation key) are CAPPED to the leading :data:`MAX_ANCHOR_TOKENS`
+        distinct survivors so the standing objective vocabulary stops
+        FLOODING the OR-query and crowding the focused topical rule out
+        of the top-5. The anchor is bounded, NOT deleted (AC.RQ80.3):
+        when the anchor has tokens, >= 1 survives, so the AC.KP1.6
+        vague-"continue" objective-rescue still fires.
         """
         merged: list[str] = []
         seen: set[str] = set()
@@ -157,13 +196,61 @@ class WorkAnchor:
                     seen.add(tok)
                     merged.append(tok)
 
+        # Prompt tokens — the user's topical signal — are NEVER capped.
         _extend(self.prompt)
+        prompt_token_count = len(merged)
+
+        # Anchor tokens (objective + subgoal) — the standing-context
+        # rotation key — are CAPPED so they do not flood the query
+        # (AC.RQ80.1). The cap is PROMPT-RELATIVE: a rich prompt leaves a
+        # small anchor budget (de-flood); a vague prompt leaves a larger
+        # budget (the anchor is the only retrieval signal). The budget is
+        # drawn ROUND-ROBIN across the anchor components (each objective
+        # text + each subgoal) so that, when the cap is reached, EVERY
+        # component still contributes its leading token(s) before any
+        # single component's tail consumes the budget — preserving the
+        # AC.KP1.2 "every present component contributes" graceful-
+        # degradation invariant. Anchor token order within the merged
+        # query is otherwise not load-bearing (the corpus index OR-joins
+        # the set).
+        anchor_cap = max(
+            MIN_ANCHOR_FLOOR, MAX_QUERY_TOKENS - prompt_token_count
+        )
+        anchor_seen: set[str] = set(seen)
+        component_token_lists: list[list[str]] = []
         for obj in self.objective_texts:
-            _extend(obj)
+            component_token_lists.append(tokenize(obj))
         for sg in self.subgoals:
             # Subgoal slugs are hyphen/underscore-joined; tokenize
             # splits them into their words.
-            _extend(sg.replace("-", " ").replace("_", " "))
+            component_token_lists.append(
+                tokenize(sg.replace("-", " ").replace("_", " "))
+            )
+
+        anchor_added = 0
+        round_idx = 0
+        while anchor_added < anchor_cap and component_token_lists:
+            progressed = False
+            for toks in component_token_lists:
+                if round_idx >= len(toks):
+                    continue
+                progressed = True
+                tok = toks[round_idx]
+                if tok not in anchor_seen:
+                    anchor_seen.add(tok)
+                    if tok not in seen:
+                        seen.add(tok)
+                        merged.append(tok)
+                        anchor_added += 1
+                        if anchor_added >= anchor_cap:
+                            break
+            if not progressed:
+                break
+            round_idx += 1
+
+        # Last-turn topic (the continuity signal) is also a topical
+        # signal the bare prompt may lack — included in full like the
+        # prompt, after the bounded anchor.
         _extend(self.last_topic)
         return merged
 

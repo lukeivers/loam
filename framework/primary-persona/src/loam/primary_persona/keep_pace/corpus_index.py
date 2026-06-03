@@ -47,11 +47,14 @@ Stdlib-only (``sqlite3`` + ``pathlib`` + ``re``).
 
 from __future__ import annotations
 
+import math
 import re
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
+
+from .work_anchor import tokenize as _tokenize_for_length
 
 
 # The corpus-index file name under .scratch/keep-pace/. Distinct from
@@ -77,6 +80,47 @@ CORPUS_DOC_BODY_CAP = 60_000
 # genuine match — "no-match" means "nothing scored above noise," which
 # is the honest reading of AC.KP1.4's silent-on-no-match contract.
 MIN_RELEVANCE_SCORE = 0.1
+
+# AC.RQ80.2 (#80 omnibus length-normalization) — the OMNIBUS-BIAS lever. SQLite
+# FTS5 ``bm25()`` length-normalizes at its fixed internal ``b=0.75``, but that is
+# too weak against the OR-token query: a large omnibus doc matches MORE DISTINCT
+# query terms (each weakly) and out-scores a focused single-rule doc on term
+# mass. Measured (Tier-0, live pos3 corpus): a 1041-token omnibus and the
+# 1188-token MEMORY index occupied top-5 slots for THREE unrelated queries. The
+# fix applies a GENTLE, BOUNDED post-``bm25()`` length penalty to a doc longer
+# than ``LENGTH_NORM_PIVOT_TOKENS``:
+#     penalty = max(LENGTH_NORM_FLOOR, 1 / (1 + log(doclen / PIVOT)))
+# (penalty = 1.0 for doclen <= PIVOT). BOUNDED BELOW by ``LENGTH_NORM_FLOOR`` so
+# an omnibus doc is NUDGED DOWN, never penalized to zero — it stays retrievable
+# (AC.RQ80.3). The pivot is set ABOVE the live corpus's longest genuinely-
+# relevant FOCUSED rule (the 1217-token Telegram self-heal rule) so the penalty
+# bites only true omnibus / index docs, never a relevant long rule — verified
+# neutral on the live number and positive on a controlled fixture (a short
+# focused doc beats an off-topic omnibus). TRUE token-length (not a char/space
+# proxy, which over-penalizes a prose-dense relevant doc) is indexed at sync time
+# as an UNINDEXED column (computed once, not per-query; UNINDEXED so FTS matching
+# is byte-identical — AC-FBM-W-3 no-regression). NAMED, tunable constants:
+# raising the pivot or the floor weakens the penalty (reversibility).
+LENGTH_NORM_PIVOT_TOKENS = 1250
+LENGTH_NORM_FLOOR = 0.5
+
+
+def _length_penalty(doc_token_len: int) -> float:
+    """The bounded omnibus length penalty for a doc's token length (AC.RQ80.2).
+
+    Returns ``1.0`` (no-op) for a doc at or below
+    :data:`LENGTH_NORM_PIVOT_TOKENS`; for a longer doc returns a multiplier in
+    ``[LENGTH_NORM_FLOOR, 1.0)`` that shrinks gently with length and is BOUNDED
+    BELOW by :data:`LENGTH_NORM_FLOOR` (never zero — the omnibus stays
+    retrievable, AC.RQ80.3). A non-positive / malformed length resolves to the
+    no-op ``1.0`` (fail-soft on the every-turn hot path).
+    """
+    if doc_token_len <= LENGTH_NORM_PIVOT_TOKENS or doc_token_len <= 0:
+        return 1.0
+    return max(
+        LENGTH_NORM_FLOOR,
+        1.0 / (1.0 + math.log(doc_token_len / LENGTH_NORM_PIVOT_TOKENS)),
+    )
 
 # AC-FBM-W (rule-weighting slice) — the per-rule importance gradient is a
 # 1..100 scalar carried as optional ``weight`` frontmatter on a corpus doc.
@@ -107,6 +151,10 @@ class CorpusDoc:
     pointer: str  # the plain-language pointer surfaced on a hit
     weight: int = BASELINE_WEIGHT  # AC-FBM-W-1 importance gradient
     pinned: bool = False  # AC-FBM-W-2 hard floor (always-include)
+    # AC.RQ80.2 — TRUE token-length of the indexed body, computed once at read
+    # time and carried into the FTS5 UNINDEXED ``doclen`` column so the omnibus
+    # length penalty (:func:`_length_penalty`) needs no per-query tokenization.
+    doc_token_len: int = 0
 
 
 def default_index_path(workspace_root: Path | str) -> Path:
@@ -279,14 +327,18 @@ def read_corpus_docs(paths: Iterable[Path]) -> list[CorpusDoc]:
         fm_text, body = _split_frontmatter(raw)
         weight, pinned = _weight_pinned_from_frontmatter(fm_text)
         title = _doc_title(p, body)
+        indexed_body = body[:CORPUS_DOC_BODY_CAP]
         docs.append(
             CorpusDoc(
                 path=str(p),
                 title=title,
-                body=body[:CORPUS_DOC_BODY_CAP],
+                body=indexed_body,
                 pointer=_doc_pointer(p, title),
                 weight=weight,
                 pinned=pinned,
+                # AC.RQ80.2 — true token-length of the indexed body (the
+                # same FTS tokenizer the query uses), for the omnibus penalty.
+                doc_token_len=len(_tokenize_for_length(indexed_body)),
             )
         )
     return docs
@@ -321,22 +373,28 @@ class CorpusIndex:
         conn.execute(
             "CREATE VIRTUAL TABLE IF NOT EXISTS corpus "
             "USING fts5(path UNINDEXED, title, body, pointer UNINDEXED, "
-            "mtime UNINDEXED, weight UNINDEXED, pinned UNINDEXED)"
+            "mtime UNINDEXED, weight UNINDEXED, pinned UNINDEXED, "
+            "doclen UNINDEXED)"
         )
-        # AC-FBM-W — the index is a DERIVED .scratch/ cache (the markdown is the
-        # source of truth). When an older-schema index (pre-weight, 5 columns)
-        # is on disk, ``IF NOT EXISTS`` leaves it untouched and later INSERTs
-        # of the new weight/pinned columns would raise. Detect the schema
+        # AC-FBM-W / AC.RQ80.2 — the index is a DERIVED .scratch/ cache (the
+        # markdown is the source of truth). When an older-schema index (pre-weight
+        # or pre-doclen) is on disk, ``IF NOT EXISTS`` leaves it untouched and
+        # later INSERTs of the new columns would raise. Detect the schema
         # mismatch and rebuild from scratch rather than migrate (the documented
         # derived-cache contract).
         try:
             cols = [r[1] for r in conn.execute("PRAGMA table_info(corpus)")]
-            if "weight" not in cols or "pinned" not in cols:
+            if (
+                "weight" not in cols
+                or "pinned" not in cols
+                or "doclen" not in cols
+            ):
                 conn.execute("DROP TABLE IF EXISTS corpus")
                 conn.execute(
                     "CREATE VIRTUAL TABLE corpus "
                     "USING fts5(path UNINDEXED, title, body, pointer UNINDEXED, "
-                    "mtime UNINDEXED, weight UNINDEXED, pinned UNINDEXED)"
+                    "mtime UNINDEXED, weight UNINDEXED, pinned UNINDEXED, "
+                    "doclen UNINDEXED)"
                 )
         except sqlite3.Error:
             pass
@@ -392,8 +450,9 @@ class CorpusIndex:
                 conn.execute("DELETE FROM corpus WHERE path = ?", (resolved,))
                 conn.execute(
                     "INSERT INTO corpus "
-                    "(path, title, body, pointer, mtime, weight, pinned) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    "(path, title, body, pointer, mtime, weight, pinned, "
+                    "doclen) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         resolved,
                         doc.title,
@@ -402,6 +461,7 @@ class CorpusIndex:
                         mtime,
                         int(doc.weight),
                         1 if doc.pinned else 0,
+                        int(doc.doc_token_len),
                     ),
                 )
                 count += 1
@@ -440,14 +500,21 @@ class CorpusIndex:
             pass
         conn = self._connection()
         match = " OR ".join(query_tokens)
+        # AC.RQ80.2 — fetch the per-doc ``doclen`` (UNINDEXED) for the omnibus
+        # length penalty. Fetch a WIDER candidate window than ``num_results``
+        # (ORDER BY raw bm25) so that when the penalty demotes an omnibus doc the
+        # freed top-N slot can be filled by a focused doc that was just outside
+        # the raw-bm25 cut. The penalized re-rank + truncation to ``num_results``
+        # happens below.
+        candidate_limit = max(num_results * 5, num_results)
         sql = (
-            "SELECT path, title, pointer, weight, pinned, "
+            "SELECT path, title, pointer, weight, pinned, doclen, "
             "bm25(corpus) AS score "
             "FROM corpus WHERE corpus MATCH ? "
             "ORDER BY score LIMIT ?"
         )
         try:
-            cur = conn.execute(sql, (match, num_results))
+            cur = conn.execute(sql, (match, candidate_limit))
             rows = cur.fetchall()
         except sqlite3.Error:
             return []
@@ -471,17 +538,43 @@ class CorpusIndex:
             )
             seen.add(str(path))
 
-        for path, title, pointer, weight, pinned, score in rows:
+        for path, title, pointer, weight, pinned, doclen, score in rows:
             # SQLite bm25() is negative (lower = better); negate so
             # larger = stronger relevance.
             rel = -float(score) if score is not None else 0.0
+            # AC.RQ80.2 — apply the bounded omnibus length penalty. A doc longer
+            # than the pivot is NUDGED DOWN (never to zero — bounded by
+            # LENGTH_NORM_FLOOR) so a focused single-rule doc can out-rank a big
+            # omnibus that matched many query terms weakly. A pinned hit is the
+            # hard floor and is NOT length-penalized (its inclusion is by-design,
+            # not by relevance — AC-FBM-W-2).
             is_pinned = bool(pinned)
+            if not is_pinned:
+                try:
+                    rel = rel * _length_penalty(int(doclen) if doclen else 0)
+                except (TypeError, ValueError):
+                    pass
             # AC.KP1.4 — drop pure-noise zero-IDF hits below the relevance
-            # floor (silent-on-no-match). A PINNED hit bypasses the cut — the
-            # hard floor is carried regardless of relevance (AC-FBM-W-2).
+            # floor (silent-on-no-match), applied to the PENALIZED score. A
+            # PINNED hit bypasses the cut — the hard floor is carried regardless
+            # of relevance (AC-FBM-W-2).
             if rel < MIN_RELEVANCE_SCORE and not is_pinned:
                 continue
             _emit(path, title, pointer, weight, pinned, rel)
+
+        # AC.RQ80.2 — re-rank by the PENALIZED relevance (descending) and
+        # truncate the NON-PINNED matched hits to num_results: the wider
+        # candidate window was fetched in raw bm25 order, so the penalty's
+        # demotion of an omnibus only takes effect after this re-sort. Pinned
+        # matched hits are NEVER truncated (the hard floor survives at its real
+        # matched score — AC-FBM-W-2), so they are partitioned out and kept ahead
+        # of the truncation. Stable on a secondary path key so the order is
+        # deterministic for equal penalized scores (no clock / no randomness).
+        pinned_out = [h for h in out if bool(h.get("pinned"))]
+        rest_out = [h for h in out if not bool(h.get("pinned"))]
+        rest_out.sort(key=lambda h: (-float(h["score"]), str(h["path"])))
+        out = pinned_out + rest_out[:num_results]
+        seen = {str(h["path"]) for h in out}
 
         # AC-FBM-W-2 — force-fetch every pinned doc the MATCH query did NOT
         # surface, so an always-include rule that is currently IRRELEVANT to

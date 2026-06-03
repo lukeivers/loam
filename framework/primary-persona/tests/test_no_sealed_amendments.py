@@ -166,6 +166,22 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              amendment's source commit — the HEAD~1 pattern) so the seal-diff
 #              window shows ONLY this amendment's primary-persona + docs/plans/
 #              surfaces.
+#   fbm-load-time-systematic-filter (slug; schema v3) — the read-side counterpart
+#              to Slice A. Extends the keep_pace/retrieval.py _merge_by_score
+#              pre-merge filter stage with an absolute episode RAW-BM25 floor
+#              (EPISODE_MIN_RELEVANCE_SCORE = 0.1, mirroring the corpus floor,
+#              applied with a self-disable safeguard so it never over-filters a
+#              lone relevant-but-sparse episode — reconciles B1 with the sealed
+#              AC-FBM-RN-2 / AC.FBMU.1) and a stdlib token-Jaccard near-dup dedup
+#              (DEDUP_JACCARD_THRESHOLD = 0.85). Consolidates the reactive per-case
+#              load patches into the one systematic stage. Adds
+#              AC-FBM-FLOOR-1 / AC-FBM-DEDUP-1 / AC-FBM-FILTER-STAGE-1 /
+#              AC-FBM-FILTER-2 (the last outcome-altitude via production retrieve()
+#              over a real store, no pre-arranged state). No sealed test edited.
+#              Advanced BASELINE to f1548494 (the branch tip immediately before
+#              this amendment's source commit — the HEAD~1 pattern) so the
+#              seal-diff window shows ONLY this amendment's primary-persona +
+#              docs/plans/ surfaces.
 BASELINE = "f1548494"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"

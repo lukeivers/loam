@@ -83,6 +83,35 @@ HEALTH_UNKNOWN = "unknown"
 
 
 @dataclass(frozen=True)
+class ProjectStateSummary:
+    """One registered project's ground-truth build state, COUNT-level
+    (AC.WVS-MR.1).
+
+    The multi-repo addition (Slice E): the work-visibility snapshot
+    reflects every registered project's REAL build state (loam + Cairn),
+    derived fresh from ground truth via Slice C's ``derive_project_state``
+    — never stale prose. This summary carries COUNTS + a plain display
+    name ONLY (``built`` of ``total`` pieces), never the module names or
+    SHAs the underlying ``StateOfLoam`` record holds. That is load-bearing:
+    the renderer routes the whole surface through the zero-internal-vocab
+    probe (AC.WVS-RENDER.2), so a project line must be plain by
+    construction.
+
+      - ``name``    — the project's plain display name (e.g. "loam").
+      - ``built``   — count of modules in a BUILT liveness class
+                      (merged / sealed / wired / built).
+      - ``total``   — count of all classified modules.
+      - ``unknown`` — True when this project's state could not be derived
+                      (rendered honestly, never a false "all built").
+    """
+
+    name: str
+    built: int = 0
+    total: int = 0
+    unknown: bool = False
+
+
+@dataclass(frozen=True)
 class WorkSnapshot:
     """One work-state snapshot the surface renders.
 
@@ -132,6 +161,17 @@ class WorkSnapshot:
     work_unknown: bool = False
     position_unknown: bool = False
     health_unknown: bool = False
+
+    # The multi-repo addition (Slice E, AC.WVS-MR.1): one COUNT-level
+    # summary per registered project (loam + Cairn), each derived fresh
+    # from ITS ground-truth spec. Default empty — existing loam-only
+    # callers are unchanged; the field populates only when the
+    # project-state read runs (default-on in production, opt-out for the
+    # work-state-only callers). ``project_states_unknown`` is the
+    # per-source unknown marker (the AC.WVS-AGG.2 / AC.WVS-MR.2 pattern):
+    # True when the registry could not be read at all.
+    project_states: tuple[ProjectStateSummary, ...] = ()
+    project_states_unknown: bool = False
 
     # Plain-language position phrase (a step name + flow name, already
     # plain — sourced from the cursor's ``one_sentence``). Held for the
@@ -313,6 +353,101 @@ def _read_health(stall_watchdog: Any | None) -> tuple[str, bool]:
         return HEALTH_UNKNOWN, True
 
 
+@dataclass
+class _ProjectStatesRead:
+    summaries: tuple[ProjectStateSummary, ...] = ()
+    unknown: bool = False
+
+
+def _summarize_record(name: str, record: Any) -> ProjectStateSummary:
+    """Reduce a freshly-derived ``StateOfLoam`` to a COUNT-level summary
+    (AC.WVS-MR.1).
+
+    Counts modules in a BUILT liveness class (merged / sealed / wired /
+    built) over the total classified. Carries NO module names / SHAs — the
+    zero-internal-vocab + counts-only invariant the snapshot already
+    holds. Fail-soft on a malformed record: an unreadable ``components``
+    yields ``unknown=True`` with zero counts (never a false "all built").
+    """
+    built_values = {"merged", "sealed", "wired", "built"}
+    try:
+        rows = list(getattr(record, "components", ()) or ())
+    except Exception:
+        return ProjectStateSummary(name=name, unknown=True)
+    total = 0
+    built = 0
+    for row in rows:
+        try:
+            cls = str(getattr(getattr(row, "liveness", None), "value", "") or "")
+        except Exception:
+            # A malformed row is skipped, not counted — never a false
+            # built/total. AC.WVS-MR.2 fail-soft.
+            continue
+        if not cls:
+            continue
+        total += 1
+        if cls in built_values:
+            built += 1
+    return ProjectStateSummary(name=name, built=built, total=total)
+
+
+def _read_project_states(
+    project_state_reader: Callable[[], tuple[ProjectStateSummary, ...]] | None,
+) -> _ProjectStatesRead:
+    """Read every registered project's ground-truth build state into
+    COUNT-level summaries (AC.WVS-MR.1 / .2).
+
+    The multi-repo addition. Reuses Slice C's ``derive_project_state`` over
+    the live ``PROJECT_REGISTRY`` (loam + Cairn), summarizing each derived
+    record to counts. Each source is lazy-imported (the ``loam_cli``
+    discipline ``work_visibility`` already follows) so an absent
+    ``loam_cli`` degrades to no project buckets, never an import-time
+    crash.
+
+    Fail-soft (AC.WVS-MR.2): a per-project derivation error OMITS that
+    project (survivors still summarize); a derivation returning ``None``
+    (unregistered / no spec) yields NO row (never a fabricated bucket); a
+    registry-absent / all-fail path yields an empty tuple with
+    ``unknown=True``. Never raises, never hangs.
+
+    ``project_state_reader`` is the test seam (mirrors ``tracker_factory``):
+    when provided it supplies the summaries directly; production resolves
+    them from the live registry.
+    """
+    if project_state_reader is not None:
+        try:
+            return _ProjectStatesRead(
+                summaries=tuple(project_state_reader()), unknown=False
+            )
+        except Exception:
+            return _ProjectStatesRead(summaries=(), unknown=True)
+    try:
+        from loam_cli.audit.registry import (
+            derive_project_state,
+            registered_project_names,
+        )
+
+        names = registered_project_names()
+    except Exception:
+        # No registry / loam_cli absent — no project buckets, honest
+        # unknown (never a fabricated row). AC.WVS-MR.2.
+        return _ProjectStatesRead(summaries=(), unknown=True)
+
+    summaries: list[ProjectStateSummary] = []
+    for name in names:
+        try:
+            record = derive_project_state(name)
+        except Exception:
+            # This project's probe failed — OMIT it (survivors still
+            # render); never a partial/wrong row. AC.WVS-MR.2.
+            continue
+        if record is None:
+            # Unregistered / no spec — NO fabricated bucket. AC.WVS-MR.2.
+            continue
+        summaries.append(_summarize_record(name, record))
+    return _ProjectStatesRead(summaries=tuple(summaries), unknown=False)
+
+
 # ---------------------------------------------------------------------------
 # The aggregator (AC.WVS-AGG.1 / .2 / .3).
 # ---------------------------------------------------------------------------
@@ -325,6 +460,10 @@ def build_snapshot(
     cursor_path: Path | str | None = None,
     flow_loader: Callable[[str], Any] | None = None,
     stall_watchdog: Any | None = None,
+    include_project_states: bool = True,
+    project_state_reader: (
+        Callable[[], tuple[ProjectStateSummary, ...]] | None
+    ) = None,
 ) -> WorkSnapshot:
     """Aggregate the live work-state into ONE snapshot (AC.WVS-AGG.*).
 
@@ -343,6 +482,12 @@ def build_snapshot(
         and a flow-definition loader; absent → "between steps".
       - ``stall_watchdog`` — a ``StallWatchdog`` whose ``evaluate_stall``
         verdict drives the health field; absent → health unknown.
+      - ``include_project_states`` — when True (default), the snapshot
+        also carries every registered project's COUNT-level ground-truth
+        build state (loam + Cairn, the Slice E multi-repo addition); a
+        work-state-only caller opts out with False.
+      - ``project_state_reader`` — the project-state test seam (mirrors
+        ``tracker_factory``); production resolves the live registry.
 
     No LLM, no API key — a pure read over on-disk state.
     """
@@ -356,6 +501,11 @@ def build_snapshot(
     )
     health, health_unknown = _read_health(stall_watchdog)
 
+    if include_project_states:
+        project_states = _read_project_states(project_state_reader)
+    else:
+        project_states = _ProjectStatesRead(summaries=(), unknown=False)
+
     return WorkSnapshot(
         running_now=counts.running_now,
         queued=counts.queued,
@@ -366,6 +516,8 @@ def build_snapshot(
         work_unknown=counts.unknown,
         position_unknown=position.unknown,
         health_unknown=health_unknown,
+        project_states=project_states.summaries,
+        project_states_unknown=project_states.unknown,
     )
 
 
@@ -469,6 +621,32 @@ def _render_health_line(snapshot: WorkSnapshot) -> str:
     return "Health: I could not check whether anything is stuck."
 
 
+def _render_project_state_lines(snapshot: WorkSnapshot) -> list[str]:
+    """The per-project ground-truth build-state lines (AC.WVS-MR.1).
+
+    One short, plain-language COUNT line per registered project — e.g.
+    ``Project loam: 18 of 18 pieces built.`` — so the owner's work view
+    reflects EVERY active repo's real state, not just loam's. Counts +
+    plain display name only (no module names / SHAs): the line is plain
+    by construction and survives the zero-internal-vocab HARD invariant
+    (AC.WVS-RENDER.2). An unknown project states that honestly; an empty
+    project set emits nothing.
+    """
+    lines: list[str] = []
+    for proj in snapshot.project_states:
+        name = proj.name.capitalize() if proj.name else "a project"
+        if proj.unknown or proj.total == 0:
+            lines.append(
+                f"Project {name}: I could not read its build state."
+            )
+            continue
+        piece = _plural(proj.total, "piece", "pieces")
+        lines.append(
+            f"Project {name}: {proj.built} of {proj.total} {piece} built."
+        )
+    return lines
+
+
 def render_surface(snapshot: WorkSnapshot) -> str:
     """Render the snapshot to a plain-language status (AC.WVS-RENDER.*).
 
@@ -490,6 +668,9 @@ def render_surface(snapshot: WorkSnapshot) -> str:
     if position_line is not None:
         lines.append(position_line)
     lines.append(_render_health_line(snapshot))
+    # The multi-repo addition (Slice E): each registered project's
+    # ground-truth build state, COUNT-level + plain (AC.WVS-MR.1).
+    lines.extend(_render_project_state_lines(snapshot))
 
     text = "\n".join(lines)
 
@@ -530,6 +711,10 @@ def render_work_visibility(
     cursor_path: Path | str | None = None,
     flow_loader: Callable[[str], Any] | None = None,
     stall_watchdog: Any | None = None,
+    include_project_states: bool = True,
+    project_state_reader: (
+        Callable[[], tuple[ProjectStateSummary, ...]] | None
+    ) = None,
 ) -> str:
     """The production surface entry-point: live work-state → plain-
     language status, sourced end-to-end from the tracker + cursor +
@@ -551,5 +736,7 @@ def render_work_visibility(
         cursor_path=cursor_path,
         flow_loader=flow_loader,
         stall_watchdog=stall_watchdog,
+        include_project_states=include_project_states,
+        project_state_reader=project_state_reader,
     )
     return render_surface(snapshot)

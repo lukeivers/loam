@@ -123,5 +123,27 @@ status reaches the lens-injection surface, which is the whole point of Slice D.
 The host default `python3` is 3.9 (below the >=3.11 floor); some pre-existing entry-point-discovery
 tests fail on 3.9 (`importlib.metadata.entry_points(group=...)`). The suite for this cycle is run under
 python3.13. Those 3.9-only failures are a latent host issue, not a Slice D regression.
-</content>
-</invoke>
+
+## §14 — Method-decision record
+
+- **Injection seam.** Registered a SEPARATE `project-state` turn contributor in
+  `build_session_composer`'s production (client-None) branch, alongside the gated
+  `memory-retrieval` contributor (not folded into it) — independent fail-soft so a STATE-probe
+  failure cannot suppress the memory-retrieval block, and a distinct auditable block.
+- **Consumes Slice C unchanged.** `render_project_state_block` calls
+  `loam_cli.audit.registry.derive_project_state` (lazy import, mirroring `work_visibility.py`); the
+  git/disk probes + `StateOfLoam`/`Liveness` records are all Slice C. New logic = concise renderer +
+  TTL cache + contributor + registration only.
+- **Conciseness.** One line per project, modules grouped by liveness class, hard-capped at 600 chars,
+  no per-module evidence dump. Live block measures 276 chars for both projects.
+- **TTL cache.** Module-level `dict[name -> (monotonic_ts, StateOfLoam)]`, 60 s TTL — zero git I/O
+  within the window, nothing persisted (no drift surface). A `None` (probe failure) is never cached
+  (re-tried next turn).
+- **Fail-soft.** A raising project derivation is OMITTED; an all-fail / registry-error / `loam_cli`-
+  absent path returns `""`. Never a hang, never a partial/wrong status.
+
+### Commit SHAs
+
+- feat (source + tests + plan + manifest): `f7725309`
+- manifest+apply (sidecar bump to apply commit): `68faa503`
+- seal: `4c439b4b`

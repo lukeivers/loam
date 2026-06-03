@@ -1,0 +1,120 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: fbm-cairn-state-probe-project-registry
+  title: "FBM per-project STATE record + project registry + Cairn probe (Slice C)"
+
+# BASELINE: current branch tip @ build time (the plan-doc commit's parent on this
+# branch). Single-component amendment on the EXISTING loam-cli component
+# (NOT a new component). This cycle generalizes the repo-agnostic STATE engine
+# (audit/record.py::generate_record) into a per-project STATE record behind a
+# PROJECT REGISTRY: a project name resolves to its repo root + a ground-truth
+# derivation keyed to ITS real markers. Registers `loam` (existing seal-sidecar
+# derivation, unchanged) and `cairn` (NEW present-module + merged-introducing-commit
+# classifier — Cairn has NO seal sidecars). Adds audit/cairn_state.py +
+# audit/registry.py + audit/__init__ re-exports. Adds AC-CAIRN-REG-1 /
+# AC-CAIRN-MARKER-2 / AC-CAIRN-LIVE-3 (the last outcome-altitude: the production
+# derivation against the LIVE /Users/lukeivers/cairn classifies verify/ledger/
+# execute/pilot/cause as built — reproducing the verdict the persona got WRONG).
+baseline: "55579dbe"
+
+plan: docs/plans/fbm-cairn-state-probe-project-registry.md
+
+components:
+  - name: loam-cli
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/tools/loam/seals/SEAL_COMMIT.fbm-cairn-state-probe-project-registry
+  body: |
+    # FBM per-project STATE record + project registry + Cairn probe (Slice C)
+
+    Per `docs/plans/fbm-cairn-state-probe-project-registry.md` and the owner-greenlit
+    unified plan
+    `workspace/.scratch/claude-output/loam-fbm-quality-and-accuracy-unified-plan.md`
+    (Slice C, P4-1; Luke 13582). Diagnosis:
+    `workspace/.scratch/claude-output/loam-fbm-project-status-accuracy-diagnosis-and-fix.md`.
+    Single-component amendment on the EXISTING loam-cli component
+    (`framework/tools/loam`). Read-only against `/Users/lukeivers/cairn`
+    (never modified).
+
+    The accuracy anchor: it generalizes the repo-agnostic STATE engine
+    (`audit/record.py::generate_record`) into a per-project STATE record behind a
+    PROJECT REGISTRY, so the persona can derive ANY registered project's REAL status
+    from ground truth instead of stale prose (the exact failure that made the persona
+    wrong about Cairn — claiming "the engine isn't usable, verify/execute/ledger
+    remain" when those modules exist on disk + landed via merged feature PRs).
+
+    Reuse, not re-implement (Tier-0 at build time): the derivation engine, the
+    `ComponentState` / `StateOfLoam` record types, the renderer, the `Liveness`
+    classes, and the `merge-base --is-ancestor` git probe are reused verbatim. The
+    ONLY new logic is Cairn's build classifier — Cairn has NO seal sidecars, so its
+    durable ground-truth markers are: the `src/cairn/<module>/` directory is present
+    with >=1 non-`__init__` impl file, AND the git commit that FIRST added that module
+    is an ancestor of HEAD (it landed on the mainline via its merged feature PR). Both
+    are Tier-0 git/disk facts that cannot drift — the direct analogue of loam's
+    seal-sidecar ancestry classifier, re-keyed to Cairn's real markers. (The 8
+    BUILD-PLAN docs the diagnosis cited were removed by Cairn's professionalism scrub,
+    commit `c0e750a`; `pytest --collect-only` on a single cairn module returns "no
+    tests collected" — neither is a durable signal. The plan documents this fork.)
+
+    Added surface:
+      - `audit/cairn_state.py` — `ModuleProbeSpec` + `classify_module_build_status`
+        (present-with-impl-file AND introducing-commit-ancestor -> MERGED; present but
+        introducing commit off HEAD -> SEALED; absent/stub -> UNBUILT; git-indeterminate
+        -> UNKNOWN, fail-safe) + `default_cairn_module_specs()` (verify/ledger/execute/
+        pilot/cause) + `cairn_state_record()` assembling `ComponentState` rows into a
+        `StateOfLoam` (engine record type reused).
+      - `audit/registry.py` — `ProjectStateSpec(name, repo_root, derive)` +
+        `PROJECT_REGISTRY` (`loam` -> `default_state_record`, `cairn` ->
+        `cairn_state_record`) + `resolve_project` (unregistered -> None, clean) +
+        `registered_project_names` + `derive_project_state` (the production entry point;
+        generate-fresh, never persisted).
+      - `audit/__init__` re-exports the new registry + Cairn surface.
+
+    ACs (each maps to a named test; >=1 outcome-altitude):
+      - AC-CAIRN-REG-1 — the registry resolves loam + cairn to distinct repo roots +
+        derivations; an unregistered name returns a clean None, not a crash.
+        (`test_AC_CAIRN_REG_1_registry_resolution.py`.)
+      - AC-CAIRN-MARKER-2 — Cairn's build classifier keys on Cairn's real markers
+        (present module + introducing-commit ancestry) with NO loam seal-sidecar
+        dependency: a fixture repo with present modules + merged introducing commits and
+        NO SEAL_COMMIT file classifies MERGED; an absent/stub module classifies UNBUILT.
+        Proves generalization, not a second hardcode.
+        (`test_AC_CAIRN_MARKER_2_real_markers_no_seal_sidecar.py`.)
+      - AC-CAIRN-LIVE-3 (outcome-altitude) — the production derivation
+        (`derive_project_state("cairn")`) run against the LIVE `/Users/lukeivers/cairn`
+        with NO pre-arranged state classifies verify / ledger / execute / pilot / cause
+        as built (MERGED), evidence = present modules + merged introducing commits —
+        reproducing from ground truth the verdict the persona got WRONG. Verified at
+        build time: all five derive MERGED.
+        (`test_AC_CAIRN_LIVE_3_outcome_altitude.py`.)
+
+    SCOPE = Slice C only. NOT in this cycle: Slice D (inject derived STATE into the
+    keep-pace lens), E (multi-repo work-visibility snapshot), F (BrainBench), the junk
+    purge — each a later serialized slice.
+
+    No ODD violation in surrounding code; the change adds a registry seam + a Cairn
+    marker classifier keyed on named markers, no defensive code for unnamed cases. The
+    engine + loam derivation are untouched except the `__init__` re-export.
+
+    Pre-existing (NOT introduced by this cycle, flagged per Ruthless Feedback): four
+    audit-CLI tests (`test_AC_SOL_PLANTED_*`, `test_AC_SOL_GATE_3`,
+    `test_AC_OSS_M6_6` amend-discovery) fail on this Python 3.9.17 host because
+    `importlib.metadata.entry_points(group=...)` is unsupported on 3.9 — they fail
+    identically with this cycle's changes stashed out (verified). Out of Slice C scope;
+    a latent host-Python fragility in the existing CLI entry-point discovery, surfaced
+    here, not fixed here.

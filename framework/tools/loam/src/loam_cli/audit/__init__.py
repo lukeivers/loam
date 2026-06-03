@@ -54,20 +54,40 @@ from loam_cli.audit.record import (
     generate_record,
     render_record,
 )
+from loam_cli.audit.cairn_state import (
+    ModuleProbeSpec,
+    cairn_state_record,
+    classify_module_build_status,
+)
+from loam_cli.audit.registry import (
+    PROJECT_REGISTRY,
+    ProjectStateSpec,
+    derive_project_state,
+    registered_project_names,
+    resolve_project,
+)
 
 __all__ = [
     "ClaimedStatus",
     "ComponentState",
     "Divergence",
     "Liveness",
+    "ModuleProbeSpec",
+    "PROJECT_REGISTRY",
+    "ProjectStateSpec",
     "StateOfLoam",
     "StoredClaim",
+    "cairn_state_record",
     "classify_backend_liveness",
     "classify_build_status",
     "classify_hook_wired",
+    "classify_module_build_status",
     "compare_claim",
+    "derive_project_state",
     "extract_claims_from_doc",
     "generate_record",
     "reconcile_stored_claim",
+    "registered_project_names",
     "render_record",
+    "resolve_project",
 ]

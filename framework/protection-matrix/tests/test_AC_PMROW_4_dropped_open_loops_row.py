@@ -24,7 +24,7 @@ self-scheduled-recheck mechanism (task #79) — has its first instance LIVE, but
 that instance lives in the OPERATOR's personal environment (launchd jobs), NOT
 in canonical loam; the reusable, productized, default-on self-recheck SKILL +
 pending-rechecks register is SCOPED, not yet built. There is therefore no
-symbol in the loam tree to resolve, so the row takes the FM.SILENT-EGRESS
+symbol in the loam tree to resolve, so the row takes the schema's legitimate
 unbuilt-guard shape (``guard_kind: none``, empty ``guard_ref``,
 ``default_on: NONE``) — an HONEST floor gap, NOT a hallucinated full-coverage
 claim (the protection pillar must not invent coverage it does not have).

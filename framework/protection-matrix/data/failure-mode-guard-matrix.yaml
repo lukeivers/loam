@@ -392,22 +392,24 @@ rows:
       default-leak privacy betrayal (nothing should leave the machine the user
       has not seen, in plain language, and approved).
     source: "docs/design (privacy-safe data-sharing layer §0.1 — the silent-egress matrix-gap finding); CLAUDE.md §Universal-principles (NEVER commit secrets / leak user data)"
-    guard: "the egress-consent gate (DESIGNED, not yet built) — a fail-closed, nothing-leaves-by-default release gate that assembles every off-machine send into a reviewable bundle, shows the user exactly what would leave in plain language, takes per-item approve/redact/decline, binds the approval to the content identity, and refuses to release on any uncertainty through a single audited choke point; until that layer is built + sealed the floor is held only by persona discipline"
-    guard_kind: none
-    guard_ref: ""
-    default_on: "NONE"
+    guard: "the egress-consent gate — a fail-closed, nothing-leaves-by-default release gate that assembles every off-machine send into a reviewable bundle, shows the user exactly what would leave in plain language, takes per-item approve/redact/decline, binds the approval to the content identity, and refuses to release on any uncertainty through a single audited choke point. BUILT + SEALED (framework/egress-consent/, EgressReleaseGate.release, sealed at 2304dea); wiring it into every off-machine send path as the default choke point is owner-gated instance-config, so it is not default-on for every send yet — until that wiring is default-on the floor is held by the sealed gate where it is invoked plus persona discipline elsewhere"
+    guard_kind: release-gate
+    guard_ref: "framework/egress-consent/src/loam/egress_consent/gate.py:EgressReleaseGate"
+    default_on: "NO-PROGRAMMATIC"
     class: floor
     proportionality_note: ""
     verification: >-
-      UNVERIFIABLE by a deterministic check today — the named guard (the
-      egress-consent gate) is DESIGNED but not yet built, so there is no
-      symbol to resolve and no programmatic binding to confirm. This is the
-      honest "named-but-not-yet-bound" status the FM.COMMS-PATH-DEAD row holds
-      for its gap-visibility (here the guard has no symbol yet, so the row
-      carries an empty guard_ref legitimately rather than a hallucinated
-      binding — the protection pillar must not invent coverage it does not
-      have). A floor-class GAP: until the egress-consent gate is built and
-      default-on, the silent-egress floor is held only by persona discipline.
+      PARTIAL: the named guard (the egress-consent gate) is now BUILT + SEALED
+      — the EgressReleaseGate fail-closed release symbol resolves against the
+      real tree (framework/egress-consent/src/loam/egress_consent/gate.py),
+      so the row binds a REAL guard rather than carrying an empty unbuilt-guard
+      ref. This mirrors the FM.COMMS-PATH-DEAD shape: a sealed, resolvable guard
+      whose wiring into every runtime send-path as the default-on choke point is
+      owner-gated instance-config, so it is not yet default-on for every user.
+      Floor gap on default-on activation; the consent-gate mechanism itself is
+      real and sealed (the protection pillar reports the honest now-built
+      binding, not a hallucinated full-coverage claim and not a stale
+      not-yet-built status).
 
   - id: FM.DROPPED-OPEN-LOOPS
     name: "Forgets its own open loops"
@@ -440,11 +442,11 @@ rows:
       personal environment (launchd jobs), NOT in canonical loam, and the
       reusable, productized, default-on self-recheck SKILL + pending-rechecks
       register is SCOPED, not yet built, so there is no symbol in the loam tree
-      to resolve. This is the honest "named-but-not-yet-bound" status the
-      FM.SILENT-EGRESS row holds (an instance-level guard exists; the general
-      default-on capability does not) — the row carries the unbuilt-guard shape
-      (guard_kind none, empty guard_ref, default_on NONE) rather than a
-      hallucinated binding (the protection pillar must not invent coverage it
-      does not have). A floor-class GAP: until the self-recheck capability is
+      to resolve. This is the honest "named-but-not-yet-bound" status — an
+      instance-level guard exists (the operator's launchd jobs) but the general
+      default-on canonical capability does not — so the row carries the
+      unbuilt-guard shape (guard_kind none, empty guard_ref, default_on NONE)
+      rather than a hallucinated binding (the protection pillar must not invent
+      coverage it does not have). A floor-class GAP: until the self-recheck capability is
       built + default-on in the canonical tree, the keep-your-own-open-loops
       floor is held only by persona discipline.

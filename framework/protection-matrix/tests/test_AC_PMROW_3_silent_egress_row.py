@@ -17,28 +17,32 @@
 Documents the silent off-machine data-egress failure mode: "loam sends a
 user's data / files off their machine for troubleshooting or analytics WITHOUT
 explicit, transparent, per-item user consent." Modelled on the
-FM.COMMS-PATH-DEAD precedent (a documented floor gap whose guard is named but
-not yet default-on-bound) — but the named guard here (the egress-consent gate)
-is DESIGNED-not-yet-built, so it has no symbol to resolve. The row therefore
-carries the schema's legitimate unbuilt-guard shape (``guard_kind: none``,
-empty ``guard_ref``, ``default_on: NONE``) so it records an HONEST floor gap
-rather than a hallucinated guard binding — the protection pillar must not
-invent coverage it does not have.
+FM.COMMS-PATH-DEAD precedent (a sealed, resolvable guard whose wiring into the
+runtime as the default-on choke point is owner-gated, so the row stays a
+visible floor GAP). The named guard here — the egress-consent gate — is now
+BUILT + SEALED (``framework/egress-consent/.../gate.py:EgressReleaseGate``,
+sealed at 2304dea), so the row binds a REAL, resolvable guard_ref rather than
+the earlier unbuilt-guard empty ref. It is NOT yet default-on for every
+off-machine send (wiring is owner-gated instance-config), so it remains a
+floor gap — an HONEST now-built binding, neither a hallucinated full-coverage
+claim nor a stale not-yet-built status.
 
-  * AC.PMROW.3 — the row exists + is schema-conformant + is NOT a divergence
-    (its empty guard_ref is legitimate for its guard_kind).
+  * AC.PMROW.3 — the row exists + is schema-conformant + its guard_ref
+    resolves against the real tree + is NOT a divergence (a real sealed guard,
+    not an empty unbuilt ref, not a claimed-but-absent over-claim).
   * AC.PMROW.4 — the row surfaces as a visible floor GAP (not silently
-    omitted).
+    omitted) — sealed but not yet default-on.
   * AC.PMROW.5 (outcome-altitude) — a real ``load_catalogue()`` +
     ``run_coverage_check()`` at the production entry-point, no pre-arranged
-    state: the row parses, adds zero new divergence, and appears among the
-    live coverage gaps.
+    state: the row parses, its guard_ref resolves to the real EgressReleaseGate
+    symbol, adds zero new divergence, and appears among the live coverage gaps.
 """
 
 from __future__ import annotations
 
 from loam.protection_matrix.catalogue import load_catalogue
 from loam.protection_matrix.check import render_report, run_coverage_check
+from loam.protection_matrix.derive import find_repo_root, resolve_guard_ref
 
 
 _ROW_ID = "FM.SILENT-EGRESS"
@@ -52,40 +56,45 @@ def _row(row_id: str):
 
 
 def test_AC_PMROW_3_silent_egress_row_present_and_schema_conformant() -> None:
-    """FM.SILENT-EGRESS exists, floor-class, with a legitimate empty ref."""
+    """FM.SILENT-EGRESS exists, floor-class, binding the real sealed guard."""
     row = _row(_ROW_ID)
     assert row.klass == "floor"
-    # The named guard (egress-consent gate) is designed-not-yet-built → no
-    # symbol → the unbuilt-guard shape: a kind that does NOT obligate a
-    # resolvable guard_ref, with an empty ref (NOT a hallucinated binding).
-    assert row.guard_kind == "none"
-    assert not row.guard_ref_required
-    assert row.guard_ref == "", (
-        "the unbuilt egress-consent gate has no symbol — the ref must be "
-        "empty, never a hallucinated binding"
+    # The named guard (egress-consent gate) is now BUILT + SEALED → a real,
+    # resolvable symbol. The row binds it (a guard_ref-obligating kind) rather
+    # than carrying the earlier unbuilt-guard empty ref.
+    assert row.guard_ref_required
+    assert row.guard_ref == (
+        "framework/egress-consent/src/loam/egress_consent/gate.py:"
+        "EgressReleaseGate"
+    ), "the row must bind the real sealed EgressReleaseGate symbol"
+    res = resolve_guard_ref(row.id, row.guard_ref, find_repo_root())
+    assert res.resolved, (
+        "the bound guard_ref must resolve against the real tree — never a "
+        "hallucinated binding"
     )
-    assert row.default_on == "NONE"
+    # Sealed but not yet wired default-on for every send → still a floor gap.
+    assert row.default_on != "YES"
     # Every other required field is present + meaningful.
     assert row.name
     assert row.description
     assert row.source
-    assert row.guard  # names the future egress-consent gate
+    assert row.guard  # names the now-built egress-consent gate
     assert row.verification
 
 
 def test_AC_PMROW_3_silent_egress_row_is_not_a_divergence() -> None:
-    """The empty-ref row is NOT flagged as a claimed-but-absent over-claim.
+    """The bound row is NOT flagged as a claimed-but-absent over-claim.
 
     A divergence is a row whose kind OBLIGATES a resolvable guard_ref but whose
-    ref does not resolve. FM.SILENT-EGRESS uses a non-obligating kind with an
-    empty ref, so it must not appear in the divergence set — the honest gap is
-    recorded without the matrix hallucinating coverage.
+    ref does not resolve. FM.SILENT-EGRESS now binds a real sealed symbol that
+    resolves, so it must not appear in the divergence set — the matrix reports
+    the now-built guard honestly without over-claiming.
     """
     report = run_coverage_check()
     diverged = {v.row.id for v in report.divergences}
     assert _ROW_ID not in diverged, (
-        f"{_ROW_ID} must not be a divergence — its empty guard_ref is "
-        f"legitimate for guard_kind 'none'"
+        f"{_ROW_ID} must not be a divergence — its guard_ref resolves to the "
+        f"real sealed EgressReleaseGate symbol"
     )
 
 
@@ -106,11 +115,19 @@ def test_AC_PMROW_5_outcome_altitude_real_load_and_coverage() -> None:
     """Outcome-altitude: real shipped-catalogue load + live coverage check.
 
     No pre-arranged state — ``load_catalogue()`` over the shipped file and
-    ``run_coverage_check()`` over the shipped catalogue + the live tree.
+    ``run_coverage_check()`` over the shipped catalogue + the live tree: the
+    row parses, its guard_ref resolves to the real sealed EgressReleaseGate
+    symbol, it is a gap (sealed-not-default-on), and adds zero new divergence.
     """
     # Real load of the shipped catalogue parses the row.
     cat = load_catalogue()
-    assert any(r.id == _ROW_ID for r in cat.rows)
+    matches = [r for r in cat.rows if r.id == _ROW_ID]
+    assert matches
+    row = matches[0]
+    # The bound guard_ref resolves against the real tree (the now-built gate).
+    res = resolve_guard_ref(row.id, row.guard_ref, find_repo_root())
+    assert res.resolved
+    assert res.symbol_part == "EgressReleaseGate"
     # Real coverage check over ground truth: the row is a gap, not a divergence.
     report = run_coverage_check()
     assert _ROW_ID in {v.row.id for v in report.gaps}

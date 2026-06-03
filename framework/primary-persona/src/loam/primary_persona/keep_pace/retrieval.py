@@ -53,6 +53,7 @@ fail-open-whole-chain guarantee, AC.KP0.4).
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
@@ -103,6 +104,45 @@ SALIENCE_THRESHOLD = 0.5
 # floor). Mirrors ``file_memory.SALIENCE_FULL`` without importing across the
 # package boundary on the hot path.
 _SALIENCE_FULL_DEFAULT = 1.0
+
+# AC-FBM-FLOOR-1 (Slice B / B1) — the ABSOLUTE EPISODE RELEVANCE FLOOR. An
+# episode hit whose RAW BM25 relevance (the ``_bm25_raw`` slot — the negated
+# sqlite ``bm25()``, larger = stronger) is below this is dropped from the
+# surfaced set BEFORE the per-source min-max normalization (:func:`_minmax_norm`)
+# — BUT ONLY when at least one OTHER episode in the same result set clears the
+# floor (see :func:`_apply_episode_floor`). Rationale (Tier-0, verified against
+# the live 1400-episode store this session): in a POPULATED index a genuine
+# multi-term episode match scores 5–20 on this scale, so ``0.1`` filters only
+# the pure-noise zero-IDF single-common-word hits (the FM-4 keyword-density bug —
+# a weak episode min-max-promoted to ``1.0`` out-ranking a real corpus
+# feedback-rule). The value MIRRORS the corpus floor
+# ``corpus_index.MIN_RELEVANCE_SCORE = 0.1`` on the identical negated-BM25 scale.
+# The "at least one other episode clears it" guard is the OVER-FILTER SAFEGUARD:
+# in the SPARSE / fresh-write regime BM25's IDF term collapses and EVERY episode
+# (relevant or not) scores ~0 — there raw BM25 is not a relevance discriminator,
+# so the floor SELF-DISABLES and the min-max rescue of a lone relevant episode is
+# preserved (the sealed AC-FBM-RN-2 / AC.FBMU.1 contract). A NAMED, tunable
+# constant: lowering it re-admits previously-floored episodes (reversibility,
+# mirroring the salience threshold). Corpus hits are floored at source; pinned
+# rules are never floored (the hard floor survives).
+EPISODE_MIN_RELEVANCE_SCORE = 0.1
+
+# AC-FBM-DEDUP-1 (Slice B / B2) — the NEAR-DUPLICATE token-Jaccard threshold.
+# Among the surfaced hits, a later hit whose token-set Jaccard with an
+# already-kept hit EXCEEDS this collapses (only one occupies a top-N slot; the
+# freed slot is filled by the next distinct hit). 0.85 is the GBrain near-dup
+# threshold the parent plan specifies — high enough that only near-identical
+# openings collapse (two genuinely-distinct turns that merely share vocabulary
+# score well below 0.85 on full token sets), which is the conservative end
+# (a lower threshold risks collapsing distinct context — the named over-filter
+# risk). Stdlib token-set Jaccard — NO embeddings, NO API key
+# (``feedback_no_anthropic_api_key``). A NAMED, tunable constant.
+DEDUP_JACCARD_THRESHOLD = 0.85
+
+# Token-shape for the dedup Jaccard — alnum/underscore runs, lowercased. Mirrors
+# the FTS tokenizer's content shape so the duplicate signal keys on content
+# tokens, not punctuation.
+_DEDUP_TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 
 
 @dataclass
@@ -436,6 +476,113 @@ def _salience_of(hit: dict[str, object]) -> float:
         return _SALIENCE_FULL_DEFAULT
 
 
+def _bm25_raw_of(hit: dict[str, object]) -> float:
+    """The episode hit's RAW BM25 relevance (AC-FBM-FLOOR-1), fail-soft to 0.0.
+
+    Carried on the ``score`` slot for an episode hit (``_episode_hits`` set it
+    to ``_bm25_raw`` — the negated sqlite ``bm25()``, larger = stronger). A hit
+    with no usable score resolves to ``0.0`` so a malformed episode floors out
+    rather than surfacing on a noise score (the floor is a quality gate; a
+    score-less episode carries no relevance evidence).
+    """
+    s = hit.get("score")
+    try:
+        return float(s) if s is not None else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _apply_episode_floor(
+    episode_hits: list[dict[str, object]], *, floor: float
+) -> list[dict[str, object]]:
+    """Drop sub-floor episode hits when the floor is a meaningful discriminator.
+
+    AC-FBM-FLOOR-1 (B1) — the ABSOLUTE EPISODE RELEVANCE FLOOR with its
+    over-filter safeguard. An episode whose raw BM25 (the ``score`` slot =
+    ``_bm25_raw``) is below ``floor`` is dropped — BUT ONLY when at least one
+    OTHER episode clears the floor. The guard distinguishes the two regimes:
+
+      - POPULATED index (production) — genuine matches score well above the
+        floor; a pure-noise zero-IDF episode below the floor is dropped (FM-4:
+        it can no longer be min-max-promoted to 1.0 and out-rank a corpus rule).
+      - SPARSE / fresh-write index — BM25's IDF term collapses and EVERY episode
+        scores ~0, relevant or not. Raw BM25 is not a discriminator here, so the
+        floor self-disables (nothing clears it → no drop) and the sealed min-max
+        rescue of a lone relevant episode is preserved (AC-FBM-RN-2 / AC.FBMU.1).
+
+    Conservative by construction: the floor only ever removes an episode that is
+    BOTH below the absolute floor AND out-competed by another above-floor episode
+    — never a lone relevant-but-sparse hit (the named over-filter risk).
+    """
+    if not episode_hits:
+        return episode_hits
+    if not any(_bm25_raw_of(h) >= floor for h in episode_hits):
+        # Sparse regime — no episode is a meaningful-BM25 discriminator; the
+        # floor self-disables so a lone relevant episode is not over-filtered.
+        return episode_hits
+    return [h for h in episode_hits if _bm25_raw_of(h) >= floor]
+
+
+def _dedup_tokens(hit: dict[str, object]) -> frozenset[str]:
+    """The hit's content token-set for the near-dup Jaccard (AC-FBM-DEDUP-1).
+
+    Tokens are the lowercased alnum/underscore runs of the hit's plain-language
+    ``pointer`` — the exact text that would be surfaced — so two hits that would
+    render near-identically are recognized as duplicates. Stdlib-only; no
+    embeddings, no API key.
+    """
+    pointer = str(hit.get("pointer", "") or "")
+    return frozenset(t.lower() for t in _DEDUP_TOKEN_RE.findall(pointer))
+
+
+def _is_near_duplicate(
+    a: frozenset[str], b: frozenset[str], *, threshold: float
+) -> bool:
+    """Whether two token-sets exceed the near-dup Jaccard ``threshold``.
+
+    AC-FBM-DEDUP-1 — token-set Jaccard ``|a ∩ b| / |a ∪ b|``. Two empty sets are
+    NOT duplicates (no content to compare — fail toward keeping distinct hits,
+    the conservative side against over-collapse).
+    """
+    union = a | b
+    if not union:
+        return False
+    return (len(a & b) / len(union)) > threshold
+
+
+def _dedup_hits(
+    ordered: list[dict[str, object]], *, threshold: float
+) -> list[dict[str, object]]:
+    """Collapse near-duplicate hits in a ranked list (AC-FBM-DEDUP-1 / B2).
+
+    Walks ``ordered`` (already sorted best-first) and keeps a hit only when its
+    content token-set is not a near-duplicate (token-Jaccard > ``threshold``) of
+    any already-kept hit. The HIGHER-ranked member of a near-dup pair is kept
+    (it is reached first); the freed slot is filled by the next distinct hit
+    downstream because the truncation to ``top_n`` happens AFTER this collapse.
+
+    A pinned hit is NEVER deduped away (the hard floor must survive — AC-FBM-W-2)
+    and never suppresses a later hit (it is kept unconditionally and not added to
+    the comparison set, so a pinned always-include rule cannot collapse a
+    distinct episode).
+    """
+    kept: list[dict[str, object]] = []
+    kept_tokens: list[frozenset[str]] = []
+    for hit in ordered:
+        if _is_pinned(hit):
+            kept.append(hit)
+            continue
+        toks = _dedup_tokens(hit)
+        if any(
+            _is_near_duplicate(toks, prev, threshold=threshold)
+            for prev in kept_tokens
+        ):
+            continue
+        kept.append(hit)
+        kept_tokens.append(toks)
+    return kept
+
+
 def _merge_by_score(
     corpus_hits: list[dict[str, object]],
     episode_hits: list[dict[str, object]],
@@ -446,6 +593,18 @@ def _merge_by_score(
     """Merge corpus + episode hits by descending WEIGHTED-NORMALIZED score,
     with pinned rules force-included, below-salience episodes gated, capped
     at top_n.
+
+    Slice B — the SYSTEMATIC pre-merge filter stage. Three mechanisms run in one
+    named stage here, replacing the reactive per-case load patches
+    (AC-FBM-FILTER-STAGE-1): (1) the SALIENCE GATE (drop ``_salience <
+    salience_threshold``); (2) the ABSOLUTE EPISODE FLOOR (AC-FBM-FLOOR-1 — drop
+    raw BM25 below :data:`EPISODE_MIN_RELEVANCE_SCORE`, mirroring the corpus floor,
+    BEFORE min-max so a weak-but-best episode cannot be promoted to 1.0 and
+    out-rank a corpus rule — FM-4 closed on the episode side); (3) NEAR-DUPLICATE
+    DEDUP (AC-FBM-DEDUP-1 — collapse hits with token-Jaccard >
+    :data:`DEDUP_JACCARD_THRESHOLD` over the ranked list before the top-N cut, so
+    duplicates do not crowd out distinct context). All three are named tunable
+    constants consumed in this one function; no per-case signature lives outside it.
 
     B3 (AC-FBM-SAL-1) — each hit's boosted score is multiplied by its
     structural SALIENCE, and any hit whose salience is BELOW
@@ -505,10 +664,24 @@ def _merge_by_score(
     episode_hits = [
         h for h in episode_hits if _salience_of(h) >= salience_threshold
     ]
+    # AC-FBM-FLOOR-1 (Slice B / B1) — ABSOLUTE EPISODE RELEVANCE FLOOR (with the
+    # over-filter safeguard). Drop a sub-floor episode BEFORE the per-source
+    # min-max normalization below — but only when another episode clears the
+    # floor (the populated-index regime where raw BM25 is a real discriminator).
+    # This closes FM-4 on the episode side (``_minmax_norm`` would otherwise
+    # promote the EPISODE source's best hit to 1.0 no matter how weak it is,
+    # letting a pure-noise weak-but-best episode out-rank a genuine corpus rule)
+    # WITHOUT over-filtering a lone relevant-but-sparse episode (the floor
+    # self-disables in the IDF-collapsed sparse regime — AC-FBM-RN-2 / AC.FBMU.1
+    # preserved). Applied to RAW BM25 (the ``score`` slot = ``_bm25_raw``), never
+    # the composed/normalized value (D-FILTER.1).
+    episode_hits = _apply_episode_floor(
+        episode_hits, floor=EPISODE_MIN_RELEVANCE_SCORE
+    )
     if not episode_hits:
-        # Every episode was gated out as junk — fall back to the
-        # byte-identical corpus-only path (AC-FBM-SAL-2 no-regression: a
-        # turn with no surviving episode renders exactly the corpus output).
+        # Every episode was gated out as junk OR sub-floor — fall back to the
+        # byte-identical corpus-only path (AC-FBM-SAL-2 / AC.FBMU.2 no-regression:
+        # a turn with no surviving episode renders exactly the corpus output).
         return corpus_hits
     combined = list(corpus_hits) + list(episode_hits)
     # Per-source min-max normalize so the two incompatible BM25 scales compete
@@ -531,6 +704,15 @@ def _merge_by_score(
     rest_order = sorted(rest_idx, key=lambda i: (-boosted[i], i))
     order = pinned_order + rest_order
     combined = [combined[i] for i in order]
+    # AC-FBM-DEDUP-1 (Slice B / B2) — NEAR-DUPLICATE COLLAPSE over the combined,
+    # ranked, pre-truncate list (D-FILTER.2). A later hit whose content
+    # token-Jaccard with an already-kept hit exceeds DEDUP_JACCARD_THRESHOLD is
+    # dropped; the higher-ranked member of a near-dup pair is kept (it is reached
+    # first in best-first order) and — because truncation to ``top_n`` happens
+    # AFTER this collapse — the freed slot is filled by the next distinct hit.
+    # Pinned hits are never deduped away (the hard floor survives). Pure
+    # arithmetic on already-fetched hits; no new I/O.
+    combined = _dedup_hits(combined, threshold=DEDUP_JACCARD_THRESHOLD)
     if top_n > 0:
         combined = combined[:top_n]
     return combined

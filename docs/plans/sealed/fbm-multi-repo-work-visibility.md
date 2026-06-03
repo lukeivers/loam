@@ -184,3 +184,40 @@ Every new branch traces to a named AC (E1/E2/E3). The fail-soft branches
 are AC.WVS-MR-2; the zero-vocab path is the pre-existing
 AC.WVS-RENDER.2 invariant. No defensive code for unnamed cases; the
 Slice C derivation + the work-state half are consumed/left unchanged.
+
+## §14 — Method-decision record
+
+- **Design fork — work-state stays loam-only, build-state goes multi-repo.**
+  The tracker DB / cursor / watchdog are per-workspace OPERATIONAL signals with
+  no cross-repo analogue (Cairn has no loam tracker DB / cursor / watchdog), so
+  running them against Cairn would read a non-existent DB and fabricate state.
+  The multi-repo ADDITION is therefore the per-project ground-truth BUILD-STATE
+  bucket (counts of built modules), reusing Slice C's `derive_project_state`.
+  This is the part the diagnosis flagged ("the work-visibility window … has no
+  concept of a second repo") and the part the brief explicitly blessed as the
+  acceptable split.
+- **NOT a second Slice-D surface (Ruthless Feedback).** Slice D injects per-module
+  status into the keep-pace turn-START LENS; work-visibility is the on-demand
+  counts-only status surface. Slice E REUSES the same `derive_project_state`
+  derivation, folding a COUNT-level summary into `build_snapshot` + `render_surface`
+  — no cloned renderer, no second derivation.
+- **Counts-only, zero-internal-vocab by construction.** `ProjectStateSummary`
+  carries `built` / `total` + a plain display name only (no module names / SHAs),
+  so the rendered project lines pass the pre-existing AC.WVS-RENDER.2 HARD
+  invariant without special handling.
+- **Default-on, opt-out + test seam.** `include_project_states=True` makes
+  production multi-repo by default; `project_state_reader` mirrors the existing
+  `tracker_factory` seam for tests. The `loam_cli` import is lazy inside the read
+  (the existing `work_visibility.py` discipline) so an absent `loam_cli` degrades
+  to no project buckets, never an import-time crash.
+- **Fail-soft throughout.** A per-project derivation raise OMITS that project; a
+  `None` derivation yields NO row (never fabricated); a registry-absent / all-fail
+  read yields zero buckets + `project_states_unknown=True`; the snapshot + surface
+  always return. Verified at build time: the live surface renders
+  `Project Cairn: 5 of 5 pieces built.` + `Project Loam: 4 of 4 pieces built.`
+
+### Commit SHAs
+
+- feat (source + tests + plan + manifest): `d47269f4`
+- manifest+apply (sidecar bump to apply commit): `f1e0188a`
+- seal: `14142c67`

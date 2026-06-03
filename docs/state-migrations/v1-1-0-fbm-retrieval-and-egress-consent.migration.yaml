@@ -1,0 +1,49 @@
+# User-state migration — v1.1.0 (the FBM-retrieval + never-leak MINOR)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.1.0 is the MINOR
+# increment over the published v1.0.1, bundling 13 features + 1 fix as a
+# single linear stack. The objective sentence: "loam's file-backed memory
+# retrieves the right thing, and loam never silently leaks user data
+# off-machine."
+
+version: v1.1.0
+slug: v1-1-0-fbm-retrieval-and-egress-consent
+slice: v1.1.0 MINOR (FBM retrieval-quality A-F+#80 + egress-consent never-leak gate + usage-window-guard + in-session-subagent migrations)
+date: 2026-06-03
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.1.0 changes which episodes the in-session FBM retrieval surfaces and
+  how it ranks/filters them, adds two NEW framework components
+  (egress-consent, usage-window-guard), rebinds + adds protection-matrix
+  data rows, and advances the per-component lockstep version 1.0.0 -> 1.1.0.
+  NONE of these touch a user's stored .loam/ on-disk state. (1) The FBM
+  retrieval changes (write-time cold-tier salience gate, load-time
+  systematic filter + dedup, P@5 metric + guard, #80 anchor-flood cap +
+  omnibus length-norm) read the existing episode store and change retrieval
+  RANKING/FILTERING at read time — they do not alter the on-disk episode
+  schema, the applied-migration cursor, or any persisted artifact. The
+  per-project STATE record + project registry are new DERIVED surfaces
+  written under the workspace's own .loam/ derived area, created on demand
+  and fail-open; they introduce no migration of pre-existing user state.
+  (2) egress-consent + usage-window-guard are new framework components with
+  their own config/runtime; they read no pre-existing user-state artifact
+  and require no schema migration of one. (3) The protection-matrix rows
+  (FM.SILENT-EGRESS rebind, FM.DROPPED-OPEN-LOOPS) are new/changed entries
+  in a framework-side data catalogue (the failure-mode/guard matrix),
+  surfaced by `loam guards`; framework data, not user state. (4) The
+  lockstep version bump 1.0.0 -> 1.1.0 changes pyproject version fields +
+  docs/ACTIVE_MINOR + the meta-package --version literal; metadata, not
+  user state. A user upgrading from v1.0.1 to v1.1.0 needs no state
+  migration. Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a pure
+# code/data revert; no data move.
+reversible: true
+removes_user_state: false
+idempotent: true

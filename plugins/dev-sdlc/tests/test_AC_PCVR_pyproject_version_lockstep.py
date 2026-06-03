@@ -59,9 +59,18 @@ import pytest
 # (0.13.0 / 0.1.0) through v0.14.0 as documented intentional outliers;
 # the pre-1.0 documentation health check flagged the fold-in "at the
 # next release-cut" — this cut. Bumped 0.13.0/0.1.0 -> 1.0.0.
+#
+# v1.1.0 release cut (2026-06-03): egress-consent + usage-window-guard
+# FOLDED INTO lockstep. Both are NEW shipped runtime components introduced
+# in this MINOR (the egress-consent privacy gate + the usage-window-guard
+# OAuth usage probe), sealed and in the install graph, so by the policy's
+# "shipped runtime components" criterion they belong in-scope. They were
+# tree-added at 1.0.0 and join the lockstep at this cut. Bumped 1.0.0 ->
+# 1.1.0 alongside the existing cohort.
 IN_SCOPE_PYPROJECTS: tuple[str, ...] = (
     "framework/cost-governance/pyproject.toml",
     "framework/dormancy/pyproject.toml",
+    "framework/egress-consent/pyproject.toml",
     "framework/loam-init/pyproject.toml",
     "framework/objective-tracker/pyproject.toml",
     "framework/observability-aggregator/pyproject.toml",
@@ -81,6 +90,7 @@ IN_SCOPE_PYPROJECTS: tuple[str, ...] = (
     "framework/tools/loam/pyproject.toml",
     "framework/tools/subloam-driver/pyproject.toml",
     "framework/tools/upgrade-merge-resolver/pyproject.toml",
+    "framework/usage-window-guard/pyproject.toml",
     "framework/workspace-bootstrap/pyproject.toml",
     "framework/workspace-sync/pyproject.toml",
     "plugins/dev-sdlc/odd-extractor/pyproject.toml",

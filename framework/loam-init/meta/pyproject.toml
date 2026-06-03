@@ -29,7 +29,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam"
-version = "1.0.0"
+version = "1.1.0"
 description = "loam — single-command install surface for the loam CLI. Dependencies-only meta-distribution that resolves the whole loam command-line dependency graph (loam init / amend / migrate / release / audit / flow / pr-safety …). Install with `pipx install loam`."
 readme = "README.md"
 requires-python = ">=3.11"

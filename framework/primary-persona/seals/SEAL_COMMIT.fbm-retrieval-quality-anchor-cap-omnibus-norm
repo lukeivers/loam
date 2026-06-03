@@ -1,0 +1,104 @@
+# FBM retrieval-quality fix (#80) — anchor-flood cap + omnibus length-norm
+
+Per `docs/plans/fbm-retrieval-quality-anchor-cap-omnibus-norm.md` and the
+GBrain-validated research artefact
+`workspace/.scratch/claude-output/garry-tan-memory-retrieval-vs-fbm-and-80-fix.md`
+(owner-greenlit, Luke Telegram 13595: "g2g on the memory retrieval fix").
+Single-component amendment on the EXISTING `framework/primary-persona/`
+component; advances the existing sidecar.
+
+The failure (Tier-0, re-measured this session via the sealed Slice-F P@5
+metric over the live production `rank()`): live topical-recall P@5 = **0.0**.
+The genuinely-relevant focused rule for each probe exists on disk but ranks
+at position ~12-14, crowded out of the top-5 on EVERY query. Two root causes,
+located exactly by the research and re-verified empirically:
+
+  1. **Anchor flood** (`keep_pace/work_anchor.py`, `WorkAnchor.query_tokens()`)
+     — the objective + subgoal anchor tokens were merged UNBOUNDED and
+     equal-weighted into the OR-token query. Measured: an 8-token topical
+     prompt became an 80-token query (72 generic objective words), so every
+     objective-mentioning omnibus/index doc matched the flood on every turn,
+     out-ranking the focused rule on term mass.
+  2. **Omnibus bias** (`keep_pace/corpus_index.py`, `CorpusIndex.search()`) —
+     FTS5 `bm25()` length-normalizes only at its fixed internal `b=0.75`, too
+     weak against the OR-query; a long omnibus matched MORE distinct query
+     terms (each weakly) and out-scored a focused single-rule doc.
+
+This cycle fixes BOTH as a tight two-lever slice (NO API key, NO embeddings,
+NO reranker, NO compiled-truth consolidation — all stdlib / SQLite-native):
+
+  - **Lever 1 — prompt-relative anchor cap.** Prompt tokens (the user's
+    topical signal) are NEVER capped; the anchor (objective + subgoal) is
+    bounded to `max(MIN_ANCHOR_FLOOR=4, MAX_QUERY_TOKENS=10 -
+    prompt_token_count)` tokens, drawn ROUND-ROBIN across the anchor
+    components so every component still contributes its leading token
+    (AC.KP1.2 graceful degradation preserved). A rich topical prompt → 4
+    anchor tokens (de-flooded); a vague "continue" → a larger budget (the
+    objective anchor is the only retrieval signal — AC.KP1.6 rescue
+    preserved). The anchor is CAPPED, NOT DELETED: `MIN_ANCHOR_FLOOR` keeps
+    >= 1 anchor token present.
+  - **Lever 2 — omnibus length-normalization.** Each doc's TRUE token-length
+    is indexed once at sync time as an UNINDEXED `doclen` column (FTS
+    matching byte-identical — AC-FBM-W-3); `search()` applies a gentle,
+    BOUNDED post-`bm25()` penalty `max(LENGTH_NORM_FLOOR=0.5, 1/(1 +
+    log(doclen/PIVOT)))` for docs longer than `LENGTH_NORM_PIVOT_TOKENS=1250`,
+    then re-ranks the candidate window by the penalized score. Bounded below
+    — an omnibus is NUDGED DOWN, NEVER zeroed (stays retrievable). The pivot
+    is set ABOVE the live corpus's longest genuinely-relevant focused rule
+    (1217 tokens) so the penalty bites only true omnibus/index docs — verified
+    NEUTRAL on the live number and POSITIVE on a controlled fixture.
+
+Measured P@5 (Tier-0, live pos3 corpus + episode store): **0.0 -> 0.133** —
+the Telegram self-heal and no-API-key focused rules now land in the top-5.
+
+Ruthless-Feedback findings (named, NOT silently resolved):
+
+  - A NAIVE doc-length penalty is dangerous on THIS corpus: the most-relevant
+    doc for the Telegram probe (1217 tokens) is itself the 2nd-longest doc.
+    Every low-pivot penalty config regressed that probe to 0.0. Resolution:
+    high pivot (above the longest relevant doc) + bounded floor; the lever's
+    general value is proven by the controlled fixture AC, its live
+    no-regression by the live AC.
+  - The live `_S` probe set has an achievable CEILING of 0.133, not 1.0: the
+    background-agents probe is STRUCTURALLY UNSATISFIABLE — its doc
+    (`feedback_background_agents.md`) opens with YAML frontmatter and no `# `
+    heading, so its surfaced pointer falls back to the filename stem
+    "feedback background agents", which lacks the label tokens "by"/"default".
+    No ranking change can satisfy it; fixing the doc heading or the probe
+    label is OUT of this two-lever scope. Surfaced for the owner.
+
+ACs (each → a named test; AC.RQ80.S is outcome-altitude):
+  - AC.RQ80.1 — `query_tokens()` includes ALL prompt tokens and at most the
+    prompt-relative anchor cap; the vague-prompt budget exceeds the rich-
+    prompt budget. (`test_AC_RQ80_1_anchor_flood_capped.py`.)
+  - AC.RQ80.2 — `search()` length-normalizes: a short focused doc out-ranks a
+    long omnibus, and the penalty STRICTLY demotes the omnibus's score versus
+    the penalty-neutralized control. (`test_AC_RQ80_2_omnibus_length_normalized.py`.)
+  - AC.RQ80.3 — cap-not-delete / norm-not-zero guard: >= 1 anchor token
+    survives a rich prompt, the AC.KP1.6 vague-"continue" canon rescue still
+    fires, and an omnibus's penalized score stays strictly positive (floored,
+    never zeroed). (`test_AC_RQ80_3_anchor_present_omnibus_not_zeroed.py`.)
+  - AC.RQ80.S (outcome-altitude) — the REAL Slice-F P@5 metric over the
+    PRODUCTION `rank()` against the LIVE store + corpus, NO pre-arranged
+    state, computes an actual P@5 STRICTLY GREATER THAN the pre-fix 0.0
+    baseline. A STUB-class test does not satisfy it; skips cleanly if the
+    live store is absent. (`test_AC_RQ80_S_live_retrieval_p_at_5_rises.py`.)
+
+Non-regression: AC.KP1.2 (all four components contribute — the round-robin
+cap preserves it), AC.KP1.6 (vague-continue surfaces canon — the prompt-
+relative budget preserves it), AC.KP5.5 (anchor reads active objective),
+AC.FBMU.1/.2/.3 (merge unchanged; the levers sit upstream of the merge),
+AC-FBM-W-1/.2/.3 (doclen UNINDEXED; pinned never length-penalized; no-weight
+corpus byte-identical for docs <= pivot), AC-FBM-RN / FLOOR / DEDUP / SAL
+(merge stage untouched), and AC.FBM-P5-METRIC.S (its `>= 0.0` floor still
+passes — this cycle RAISES the value above 0.0) all stay green.
+
+No ODD violation in surrounding code; every new function/branch/test traces
+to a named AC (RQ80.1/.2/.3/.S). No defensive code for unnamed cases.
+
+Pre-existing (NOT introduced by this cycle, flagged per Ruthless Feedback):
+`test_AC_MSC_3_named_thread_surface_in_corpus.py` fails identically at the
+pre-amendment baseline (a dev-mode session-start / CLAUDE.dev.md fixture
+issue, unrelated to retrieval); some audit-CLI entry-point tests fail on the
+host's Python 3.9 — both out of #80 scope. The suite is run under
+python3.13.

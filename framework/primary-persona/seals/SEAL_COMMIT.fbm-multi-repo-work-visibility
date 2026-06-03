@@ -1,0 +1,100 @@
+# FBM multi-repo work-visibility snapshot (Slice E)
+
+Per `docs/plans/fbm-multi-repo-work-visibility.md` and the owner-greenlit
+unified plan
+`workspace/.scratch/claude-output/loam-fbm-quality-and-accuracy-unified-plan.md`
+(Slice E, P4-3; Luke 13582). Diagnosis:
+`workspace/.scratch/claude-output/loam-fbm-project-status-accuracy-diagnosis-and-fix.md`
+(flagged `work_visibility.py` as loam-centric / single `workspace_root`).
+Single-component amendment on the EXISTING primary-persona component. Read-only
+against `/Users/lukeivers/cairn` (git probes via Slice C; never modified).
+
+The work-visibility snapshot was single-`workspace_root` / loam-centric: it read
+loam's objective-tracker DB + flow cursor + stall watchdog through one workspace
+root and had no concept of a second repo. This cycle generalizes it to MULTI-REPO
+so the owner's live "what's happening" view reflects EVERY registered project's
+real build state (loam + Cairn), derived fresh from ground truth — never stale
+prose (the exact failure that made the persona wrong about Cairn).
+
+Design fork (named + resolved per the brief's explicit allowance): the work-STATE
+half — running-now / queued / owner-pending (tracker DB), position (cursor),
+health (watchdog) — is a per-workspace OPERATIONAL signal with NO cross-repo
+analogue (Cairn has no loam tracker DB / cursor / watchdog). Running the loam
+tracker against Cairn would read a non-existent DB and fabricate state. So that
+half stays loam-only. The multi-repo ADDITION is a separate per-project
+ground-truth BUILD-STATE bucket: each registered project's freshly-derived
+`StateOfLoam` reduced to COUNTS (built of total pieces), reusing Slice C's
+`derive_project_state`. This is the part the diagnosis flagged and the genuinely-
+additive part; the brief explicitly blesses the split.
+
+Ruthless Feedback — NOT redundant with Slice D: Slice D's `project_state.py`
+injects the per-module build-status block into the keep-pace turn-START LENS (a
+retrieval contributor the persona reads each turn, internal context, module-level
+detail). Work-visibility is a DIFFERENT surface — the on-demand plain-language
+"what's happening / what's next / is anything stuck" status the owner pulls,
+counts-only + zero-internal-vocab. Slice E does NOT clone Slice D's renderer: it
+REUSES the same `derive_project_state` derivation and folds a COUNT-level summary
+into the work-visibility snapshot + renderer, preserving work-visibility's
+counts-only + zero-internal-vocab invariant.
+
+Reuse, not re-implement (Lens 1/2, Tier-0 at build time): `derive_project_state`
+/ `registered_project_names` (Slice C), the `StateOfLoam` / `ComponentState`
+records + `Liveness` vocabulary, and the existing `build_snapshot` /
+`render_surface` / `WorkSnapshot` surface are all reused/extended — no new
+component, no new tracking system, no re-implemented git probe. `loam_cli` is
+imported LAZILY inside the project-state read (the existing `work_visibility.py`
+discipline) so an absent `loam_cli` degrades to no project buckets, never an
+import-time crash.
+
+Added / changed surface (all in `work_visibility.py`):
+  - `ProjectStateSummary(name, built, total, unknown)` — a frozen dataclass:
+    COUNTS + a plain display name only (no module names / SHAs — the counts-only +
+    zero-internal-vocab invariant).
+  - `WorkSnapshot.project_states` (tuple, default empty, back-compat) +
+    `project_states_unknown` (the AC.WVS-AGG.2-pattern per-source unknown marker).
+  - `_read_project_states(...)` — fail-soft reader: lazy-import the registry,
+    derive each registered project, summarize to counts. A per-project derivation
+    error OMITS that project; a `None` derivation yields NO row (never fabricated);
+    a registry-absent / all-fail path yields an empty tuple + unknown=True. Never
+    raises, never hangs.
+  - `_summarize_record` — reduces a `StateOfLoam` to built/total counts (BUILT
+    classes = merged / sealed / wired / built); malformed → unknown, never a false
+    "all built".
+  - `_render_project_state_lines` — one short plain-language COUNT line per project
+    (`Project loam: 18 of 18 pieces built.`); routed through the pre-existing
+    zero-internal-vocab HARD invariant (AC.WVS-RENDER.2) by construction.
+  - `build_snapshot(..., include_project_states=True, project_state_reader=None)`
+    + `render_work_visibility(...)` thread the new params (default-on so production
+    is multi-repo by default; opt-out + test seam available).
+
+ACs (each maps to a named test; >=1 outcome-altitude):
+  - AC.WVS-MR.1 (E1) — the snapshot carries a per-project bucket for BOTH
+    registered projects, each with its own built/total counts; the surface names
+    both projects' build state in plain language.
+    (`test_AC_WVS_MR_1_multi_repo_buckets.py`.)
+  - AC.WVS-MR.2 (E2) — no fabricated row: a `None` derivation yields NO bucket; a
+    per-project raise omits that project (survivors stay); a registry-absent /
+    all-fail read yields zero buckets + `project_states_unknown=True` and the
+    snapshot + surface still return (fail-soft, never a hang / partial / wrong row).
+    (`test_AC_WVS_MR_2_no_fabricated_row_failsoft.py`.)
+  - AC.WVS-MR.3 (E3, outcome-altitude) — the PRODUCTION snapshot builder run with
+    NO pre-arranged state against the LIVE registry (loam + `/Users/lukeivers/cairn`)
+    shows BOTH repos, Cairn's engine modules (verify/ledger/execute/pilot/cause)
+    counted BUILT, with zero internal vocabulary — reproducing from ground truth the
+    verdict the persona got WRONG. Verified at build time: live surface renders
+    `Project Cairn: 5 of 5 pieces built.` + `Project Loam: 4 of 4 pieces built.`
+    (`test_AC_WVS_MR_3_outcome_altitude.py`.)
+
+SCOPE = Slice E only. NOT in this cycle: Slice F (BrainBench P@5 metric — the
+final serialized slice), the junk purge — each separate. The work-STATE half + the
+Slice C derivation engine are consumed unchanged.
+
+No ODD violation in surrounding code; every new branch traces to a named AC
+(E1/E2/E3). The fail-soft branches are AC.WVS-MR.2; the zero-vocab path is the
+pre-existing AC.WVS-RENDER.2 invariant. No defensive code for unnamed cases.
+
+Pre-existing (NOT introduced by this cycle, flagged per Ruthless Feedback): some
+audit-CLI / entry-point-discovery tests fail on this Python 3.9 host because
+`importlib.metadata.entry_points(group=...)` is unsupported on 3.9 — a latent
+host-Python fragility, out of Slice E scope. The Slice E suite is run under
+python3.13 (9/9 new tests + 45 WVS + 87 WVS/keep-pace/composer tests green).

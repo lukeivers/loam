@@ -1,0 +1,87 @@
+# WORK-STREAMS — FBM-derived cross-cutting attention tracks
+
+Per `docs/plans/work-streams-fbm-derived-tracks.md` (owner-greenlit task #70,
+Telegram 13652/13654). The consumer layer atop the FBM quality+accuracy program
+(parent: `workspace/.scratch/claude-output/loam-fbm-quality-and-accuracy-unified-plan.md`,
+Slices C/D/E). Single-component amendment on the EXISTING primary-persona
+component — an extension of keep-pace, NOT a new component (Decision D1).
+
+THE TIE (load-bearing, Luke 13654): each stream's STATE + NEXT-ACTION is DERIVED
+from real project status via the FBM `derive_project_state` engine (Slice C,
+`loam_cli.audit.registry`) and surfaced concisely every turn through the keep-pace
+lens (Slice D, `keep_pace/project_state.py`). The work-streams layer CONSUMES that
+derivation — it does NOT re-implement state-tracking (Lens-1). This is the literal
+answer to "ensure proper context/state for projects is maintained and surfaced
+during conversations."
+
+Reuse, not re-implement (Tier-0 at plan-time): the per-project STATE derivation
+(`derive_project_state` / `PROJECT_REGISTRY`), the concise turn-renderer +
+TTL-cache + hard char-cap (`render_project_state_block`,
+`_STATE_BLOCK_CHAR_CAP=600`, `_STATE_TTL_SECONDS=60`), the composer `TriggerKind.turn`
+registration seam, and the `OBJECTIVES.md` index/detail register schema + loader
+(KP5 `objectives.py`) are all reused. The ONLY new surface is the stream register
+(a superset of the `Objective` schema) + the per-stream surfacer that composes the
+derived STATE into a per-stream "where it's at + next".
+
+Added surface:
+  - `keep_pace/work_streams.py` — the `WorkStream` schema (extends `Objective`
+    with `projects: [<fbm-registry-name>,...]` + `attention: active|deep-dive|paused`
+    + optional `nest-under: <stream-slug>`), the `~/.claude/WORK-STREAMS.md`
+    user-scope register (header `# work-streams`, same index/detail markdown shape
+    as `OBJECTIVES.md`), loader + renderer, and the 5-stream seed from
+    `CURRENT-WORK.md` (Money / LitRPG / loam / Cairn / Personal-Home).
+  - the per-turn stream surfacer (sibling to `project_state.py`) — composes
+    `render_project_state_block` + per-stream `derive_project_state` into ONE
+    concise block that SUBSUMES (does not duplicate) the bare project-state block,
+    within the hard char-cap; honors deep-dive (full + mute others' nudges) / pause
+    (drop line + nudge) / collapse-on-overflow; registered as a keep-pace
+    `TriggerKind.turn` contributor.
+  - the deviation→#71 fail-soft seam — compares a stream's expected state
+    (detail-path status / last-touched) vs its derived FBM STATE; emits a
+    structured `{stream, expected, derived, evidence}` mismatch record to the
+    memory-reality mismatch side-channel (task #71) when present, no-ops fail-soft
+    when absent.
+  - the one-time consolidation pass — indexes the three backlog sources (FIDRAFT
+    graduated items, persona task list, dev `ws-*` queue) by stream; the dev-queue
+    items resolve UNDER the `loam` stream and the register header documents the
+    `ws-*`-vs-cross-cutting-stream distinction (the naming collision, resolved).
+
+Named decisions surfaced to Luke (recommendations in plan §3): D1 extend-keep-pace
+(not new component); D2 sibling `WORK-STREAMS.md` register, shared schema (not
+collapse into OBJECTIVES); D3 `projects:` mapping + `nest-under:` (no-registered-
+project streams use detail-path/cadence staleness, marked "no ground-truth bound");
+D4 reuse Slice-D renderer + subsume project-state block, N4-tuned verbosity; D5
+`attention:` deep-dive/pause owner-gated write; D6 dev-queue UNDER loam stream,
+no file rename; D7 deviation→#71 fail-soft seam.
+
+ACs (each maps to a named test; >=1 outcome-altitude — plan §5):
+  - AC.WS.REG.1/.2 — register loads/round-trips; a stream may span projects AND
+    nest under one.
+  - AC.WS.DERIVE.1 — STATE + next-action composed from a FRESH `derive_project_state`
+    call, never stored-stale (verifiable by changing ground truth + re-reading).
+  - AC.WS.DERIVE.2 — a no-registered-project stream surfaces a staleness-based
+    next-action + a "no ground-truth project bound" mark; never fakes a derived STATE.
+  - AC.WS.SURFACE.1/.2/.3 — one concise capped block subsuming the project-state
+    block; deep-dive mutes others' nudges + pause drops a stream (owner-gated);
+    overflow collapses paused/stale streams to a count, cap never exceeded.
+  - AC.WS.DEVIATE.1 — expected-vs-real deviation emits a structured record to the
+    #71 side-channel; fail-soft no-op when the channel is absent.
+  - AC.WS.IMPORT.1 — the register indexes all three backlog sources grouped by
+    stream; dev-queue items resolve under `loam`; the header documents the
+    `ws-*` collision resolution.
+  - AC.WS.LIVE.1 (OUTCOME-ALTITUDE) — a real keep-pace turn against the LIVE loam +
+    cairn repos with NO pre-arranged state surfaces a per-stream block where a
+    project-bound stream (loam->loam, Cairn->cairn) shows a STATE + next-action
+    DERIVED from the live `derive_project_state` (e.g. Cairn verify/ledger/execute
+    built) — the persona cannot mis-state a bound project's status from this block.
+
+SCOPE this cycle: the register + surfacer + deviation seam + consolidation pass on
+primary-persona. NOT in this cycle (plan §7): registering Money/LitRPG/Personal-Home
+as FBM projects (named follow-on); collapsing OBJECTIVES into WORK-STREAMS; the #71
+channel itself (this ships the detection + fail-soft emit seam); behavioural
+auto-mutation of `attention` (owner-gated only, mirroring N4's MVP fence).
+
+No ODD violation introduced: every added line maps to a named AC; the stream
+surfacer composes the sealed Slice C/D entry points read-only (no re-derivation),
+the `OBJECTIVES.md` read-contract (KP1/N4) is untouched (a sibling register, not a
+schema change — halt trigger §8 #2 if a build would require touching it).

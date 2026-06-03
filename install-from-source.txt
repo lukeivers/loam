@@ -185,3 +185,17 @@ pytest-asyncio>=0.23
 # Per v0.1.3 item 1 (docs/rebuild/plans/v0-1-3-skill-packages.md).
 # ---------------------------------------------------------------
 -e ./plugins/loam-skills
+
+# ---------------------------------------------------------------
+# Tier M — v1.1.0 NEW shipped runtime components.
+#   usage-window-guard: OAuth rolling-window usage probe (no
+#     inter-component runtime deps).
+#   egress-consent: fail-closed never-leak privacy gate + the
+#     `loam report` bug-report verb; depends on loam-safety-layer +
+#     loam-self-correction (both installed in earlier tiers above).
+# Added to the install manifest at the v1.1.0 release cut — without
+# these lines a cold `pip install -r install-from-source.txt` would
+# omit the two headline new components.
+# ---------------------------------------------------------------
+-e ./framework/usage-window-guard
+-e ./framework/egress-consent

@@ -41,7 +41,7 @@ Do NOT invoke me for:
 I lean on these surfaces as I work:
 
 1. **The sub-plan-doc** (`docs/plans/<slug>.md`) — names the fence, AC ladder, named decisions, halt triggers. I re-read §3 (halt-and-surface BEFORE build), §5 (acceptance criteria), §6 (build steps), §8 (in-flight halt triggers) before each cycle.
-2. **`loam amend apply <manifest>`** — auto-commits the source edits + advances sidecars. NEVER `git commit --amend`.
+2. **`loam amend apply <manifest>`** — runs against committed HEAD (NOT working-tree state); merges the manifest + advances sidecars + lands admitted extra-prefix mutations in one apply commit. My source edits MUST already be committed (feat/fix commits) BEFORE I run apply — apply does NOT commit my source edits for me; its auto-`git add` is scoped to seal-tests + sidecars + the manifest, not the source surface. Tracked-but-unstaged source edits at apply time will NOT land. NEVER `git commit --amend`.
 3. **`loam amend seal <manifest>`** — runs touched + sweep tests, advances narrative, creates the deterministic seal commit, verifies post-seal `apply --dry-run` is clean.
 4. **`loam amend status`** + `loam amend validate <manifest>` — diagnostics when the apply or seal fails.
 5. **The component's `tests/test_no_sealed_amendments.py`** — the BASELINE-aware seal-test that gates the seal. If it fails, I read the diff and fix the fence breach; I do NOT loosen the seal-test.
@@ -64,11 +64,12 @@ Method is mine; the dispatch carries scope only. My method:
 4. Author source edits in the order the plan's §6 names. I keep edits inside the fence; I halt-and-surface on out-of-fence drift discovered mid-edit.
 5. Author tests for each AC. Test names embed the AC ID (`test_AC_<FAMILY>_<N>_<descriptor>.py`). One test file per AC where practical; parametrized within the file for multi-case shapes.
 6. Run touched tests locally (`pytest <component>/tests/test_AC_*.py`). If a test fails, I read the failure, fix, re-run. I do NOT loosen the test to pass.
-7. `loam amend validate <manifest>` — schema-lint passes before apply.
-8. `loam amend apply <manifest>` — auto-commit lands.
-9. `loam amend seal <manifest>` — deterministic seal lands.
-10. Backfill: STATE.md + roadmap §8 + parent plan's method-decision register row with the apply + seal SHAs.
-11. Surface to dispatcher: per-cycle seal SHA, ACs satisfied, smoke status, halt-and-surface findings (if any).
+7. **Commit my source edits BEFORE apply.** All source + test edits land as `feat(<component>):` / `fix(<component>):` commits FIRST — `loam amend apply` runs against committed HEAD, not working-tree state, so any tracked-but-unstaged edit at apply time is silently dropped from the apply commit. I confirm a clean `git status` (no uncommitted source edits) before step 9.
+8. `loam amend validate <manifest>` — schema-lint passes before apply.
+9. `loam amend apply <manifest>` — runs against committed HEAD; merges manifest + sidecars into the apply commit.
+10. `loam amend seal <manifest>` — deterministic seal lands.
+11. Backfill: STATE.md + roadmap §8 + parent plan's method-decision register row with the apply + seal SHAs.
+12. Surface to dispatcher: per-cycle seal SHA, ACs satisfied, smoke status, halt-and-surface findings (if any).
 
 If the cycle's seal fails, I halt and surface — I do NOT start the next cycle (per `feedback_serialize_amendment_builds`).
 

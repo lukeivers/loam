@@ -1,0 +1,102 @@
+# FBM inject derived per-project STATE record into the keep-pace lens (Slice D)
+
+Per `docs/plans/fbm-state-record-into-keep-pace-lens.md` and the owner-greenlit
+unified plan
+`workspace/.scratch/claude-output/loam-fbm-quality-and-accuracy-unified-plan.md`
+(Slice D, P4-2; Luke 13582). Diagnosis:
+`workspace/.scratch/claude-output/loam-fbm-project-status-accuracy-diagnosis-and-fix.md`.
+Single-component amendment on the EXISTING primary-persona component. Read-only
+against `/Users/lukeivers/cairn` and `/Users/lukeivers/loam` (git probes only,
+never modified).
+
+The load-bearing accuracy fix. Slice C built the per-project STATE derivation
+(`loam_cli.audit.registry.derive_project_state` over a `PROJECT_REGISTRY` of
+loam + cairn, each keyed to its REAL ground-truth markers) but it reached only a
+CLI verb + a release gate — never the lens the persona reads each turn. Slice D
+CONSUMES that derivation and surfaces a CONCISE, accurate per-project status into
+the turn-start context, so the persona's session-start context carries the REAL
+build/sealed/merged status (e.g. Cairn's verify/ledger/execute = BUILT) instead
+of stale written prose — the exact failure that made the persona wrong about
+Cairn ("the engine isn't usable, verify/execute/ledger remain").
+
+Reuse, not re-implement (Lens 1/2, Tier-0 at build time): the STATE derivation,
+the `StateOfLoam` / `ComponentState` records, the `Liveness` classes, and the git
+probes are all Slice C, reused verbatim via `derive_project_state`. The ONLY new
+logic is (a) a concise per-project renderer, (b) a short-TTL in-process cache, and
+(c) the keep-pace turn contributor + its registration. The injection SEAM is the
+one the diagnosis named: the keep-pace turn-contributor surface in
+`session_start_emitter.build_session_composer`'s production (client-None) branch,
+where the gated `memory-retrieval` contributor registers. `loam_cli` is imported
+LAZILY inside the derivation call (mirroring `work_visibility.py`'s `loam_cli`
+import) so an absent `loam_cli` degrades to no block, never an import-time crash.
+
+PERF + CONCISENESS GUARDS (load-bearing — the overhaul's point is LESS junk +
+MORE accuracy in the turn-start context):
+  - The block is SHORT: one line per project, modules grouped by liveness class
+    (`Cairn: verify, ledger, execute, pilot, cause = built (merged)`), hard-capped
+    at `_STATE_BLOCK_CHAR_CAP` (600). NOT a per-module evidence dump. The live
+    block measures 276 chars for both projects. The removed junk is not traded for
+    a new wall of status text.
+  - Deriving STATE runs git probes (~0.1 s for both projects measured at build
+    time); they are TTL-cached (`_STATE_TTL_SECONDS` = 60) in-process so a turn
+    within the window is a dict lookup, not a git probe. The cache is in-process +
+    expiring (never persisted — no drift surface).
+  - FAIL-SOFT throughout: any probe error for a project OMITS that project (never a
+    hang, never a partial/wrong status); an all-fail / registry-error / `loam_cli`-
+    absent path returns "" (no block). A status surface that is slow or wrong is
+    worse than absent.
+
+Design forks (picked + documented per the constraint's "sensible conservative
+approach" clause):
+  - SEPARATE turn contributor named `project-state`, registered ALONGSIDE the gated
+    `memory-retrieval` contributor (not folded into it) — independent fail-soft so a
+    STATE-probe failure cannot suppress the memory-retrieval block, and a distinct
+    auditable block. No downstream consumer keys on `project-state` today.
+  - Module-level `dict[name -> (monotonic_ts, StateOfLoam)]` short-TTL cache — zero
+    git I/O within the TTL window, nothing persisted to disk, 60 s bounds staleness
+    to a single working burst (a fresh session re-derives cold).
+
+Added surface:
+  - `keep_pace/project_state.py` — `_derive_cached` (TTL-cached, fail-soft wrapper
+    over `derive_project_state`) + `_project_line` (one concise liveness-grouped
+    status line) + `render_project_state_block` (the production derive+render entry
+    point; no pre-arranged state) + `build_project_state_contributor`
+    (`fn(context) -> str`, fail-soft to "") + `register_project_state_contributor`
+    (registers at `TriggerKind.turn`).
+  - `session_start_emitter.build_session_composer` — registers the `project-state`
+    turn contributor in the production (client-None) branch, fail-soft (AC46.2
+    graceful-empty).
+
+ACs (each maps to a named test; >=1 outcome-altitude):
+  - AC-FBM-STATE-LENS-1 (D1) — the production composer registers a `project-state`
+    turn contributor; a composed turn surfaces a STATE block naming a registered
+    project + its derived status.
+    (`test_AC_FBM_STATE_LENS_1_composer_registers_project_state.py`.)
+  - AC-FBM-STATE-CONCISE-2 (conciseness guard) — the rendered block is SHORT: one
+    line per project, under the cap, modules liveness-grouped, NO per-module
+    evidence dump.
+    (`test_AC_FBM_STATE_CONCISE_2_block_is_short.py`.)
+  - AC-FBM-STATE-FAILSOFT-3 (fail-soft guard) — a project whose derivation raises is
+    OMITTED (survivors still render); an all-fail path returns "" — never a hang,
+    never a partial/wrong status.
+    (`test_AC_FBM_STATE_FAILSOFT_3_probe_error_omits_no_hang.py`.)
+  - AC-FBM-STATE-LIVE-4 (outcome-altitude) — the production `render_project_state_block()`
+    run with NO pre-arranged state against the LIVE loam + cairn repos produces an
+    accurate block: loam AND cairn both present, Cairn's verify/ledger/execute shown
+    BUILT — so the persona cannot, from this turn-start context, claim they "remain
+    to be built". Verified at build time: the live block renders both projects, Cairn
+    engine = built (merged).
+    (`test_AC_FBM_STATE_LIVE_4_outcome_altitude.py`.)
+
+SCOPE = Slice D only. NOT in this cycle: Slice E (multi-repo work-visibility
+snapshot), F (BrainBench metric), the junk purge — each a later serialized slice.
+
+No ODD violation in surrounding code; the change adds a contributor seam + a concise
+renderer keyed on the named ACs, no defensive code for unnamed cases. The Slice C
+derivation engine + registry are consumed unchanged.
+
+Pre-existing (NOT introduced by this cycle, flagged per Ruthless Feedback): some
+audit-CLI / entry-point-discovery tests fail on this Python 3.9.17 host because
+`importlib.metadata.entry_points(group=...)` is unsupported on 3.9 — a latent
+host-Python fragility, out of Slice D scope. The Slice D suite is run under
+python3.13 (8/8 new tests + 84 keep-pace/composer tests green).

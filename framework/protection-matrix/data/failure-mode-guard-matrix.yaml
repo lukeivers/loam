@@ -408,3 +408,43 @@ rows:
       binding — the protection pillar must not invent coverage it does not
       have). A floor-class GAP: until the egress-consent gate is built and
       default-on, the silent-egress floor is held only by persona discipline.
+
+  - id: FM.DROPPED-OPEN-LOOPS
+    name: "Forgets its own open loops"
+    description: >-
+      Drops its OWN deferred work — the follow-ups, rechecks, and revisits it
+      intended to come back to are never revisited; it acts only when prompted
+      and silently forgets its outstanding obligations (an assistant that
+      cannot keep pace with the user because it loses its own future work).
+    source: >-
+      feedback_apply_claude_leverage_to_own_tooling.md (self-scheduled
+      follow-up is CORE to keep-pace); CLAUDE.md §keep-pace; task #79
+      (the persona self-scheduled-recheck mechanism)
+    guard: >-
+      the persona self-scheduled-recheck mechanism (task #79) — first instance
+      LIVE in the operator environment (launchd self-recheck jobs that wake an
+      agent, re-run the analysis, and message the owner on a material change);
+      the loam-canonical reusable "self-recheck" SKILL + pending-rechecks
+      register (a durable register of the persona's own outstanding
+      obligations, default-on, built on a Claude-native scheduling primitive
+      per Lens 1) is SCOPED, not yet built — until that capability is built +
+      sealed in the canonical tree the floor is held only by persona discipline
+    guard_kind: none
+    guard_ref: ""
+    default_on: "NONE"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      UNVERIFIABLE by a deterministic check in the canonical tree today —
+      the named guard's first instance is LIVE but lives in the operator's
+      personal environment (launchd jobs), NOT in canonical loam, and the
+      reusable, productized, default-on self-recheck SKILL + pending-rechecks
+      register is SCOPED, not yet built, so there is no symbol in the loam tree
+      to resolve. This is the honest "named-but-not-yet-bound" status the
+      FM.SILENT-EGRESS row holds (an instance-level guard exists; the general
+      default-on capability does not) — the row carries the unbuilt-guard shape
+      (guard_kind none, empty guard_ref, default_on NONE) rather than a
+      hallucinated binding (the protection pillar must not invent coverage it
+      does not have). A floor-class GAP: until the self-recheck capability is
+      built + default-on in the canonical tree, the keep-your-own-open-loops
+      floor is held only by persona discipline.

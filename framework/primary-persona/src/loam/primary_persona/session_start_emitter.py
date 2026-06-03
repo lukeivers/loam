@@ -219,23 +219,29 @@ def build_session_composer(
             # payload omits the retrieval block. AC46.2 holds.
             pass
 
-        # Slice D (AC-FBM-STATE-LENS-1) — register the GROUND-TRUTH per-project
-        # STATE contributor ALONGSIDE the gated memory-retrieval one, as a
-        # SEPARATE turn block. It surfaces a CONCISE, accurate, live-derived
-        # build/sealed/merged status for the registered projects (loam + cairn,
-        # via Slice C's ``derive_project_state``) so the turn-start context
-        # carries the REAL status instead of stale prose (the failure that made
-        # the persona wrong about Cairn). Independently fail-soft: a STATE-probe
-        # failure must not suppress the memory-retrieval block, and the
-        # contributor itself OMITS any project whose probe errors (never a hang,
-        # never a partial/wrong status). Registered fail-soft (AC46.2
-        # graceful-empty) — a registration-time error simply omits the block.
+        # WORK-STREAMS (Increment 1, AC.WS.SURFACE.1) — register the
+        # cross-cutting streams contributor at TriggerKind.turn. This SUBSUMES
+        # the Slice-D project-state block (D4 / WMS-D7): the streams block IS
+        # the per-turn ground-truth STATE surface, now organized by stream —
+        # ONE block, not two (the anti-bloat constraint, F2 #1). For a stream
+        # bound to >=1 FBM-registered project (loam->loam, cairn->cairn,
+        # litrpg->litrpg) it composes a FRESH ``derive_project_state`` call
+        # (Slice C, TTL-cached) — derived live, never stored-stale; an unbound
+        # stream surfaces a staleness-based next-action marked "no ground-truth
+        # project bound" (never a faked STATE). Honors deep-dive (full + mute
+        # others' nudges) / pause (drop + collapse) / collapse-on-overflow
+        # within Slice D's hard char-cap. The deviation->#71 fail-soft seam
+        # rides inside the surfacer. The bare ``register_project_state_
+        # contributor`` stays DEFINED + exported (Slice D tests still use it) —
+        # only this LIVE registration is repointed to the streams surfacer.
+        # Registered fail-soft (AC46.2 graceful-empty) — a registration-time
+        # error simply omits the block.
         try:
-            from .keep_pace.project_state import (  # noqa: WPS433
-                register_project_state_contributor,
+            from .keep_pace.work_streams_surface import (  # noqa: WPS433
+                register_work_streams_contributor,
             )
 
-            register_project_state_contributor(composer)
+            register_work_streams_contributor(composer)
         except Exception:  # noqa: BLE001 — AC46.2 graceful empty
             pass
 

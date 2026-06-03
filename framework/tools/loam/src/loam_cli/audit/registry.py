@@ -7,7 +7,7 @@ markers. This registry generalizes it to ANY registered project: a
 project name resolves to its repo root + a fresh-derivation callable,
 each keyed to THAT project's real ground-truth markers.
 
-Two projects are registered:
+Three projects are registered:
 
   * ``loam``  → :func:`loam_state.default_state_record` — loam's
     seal-sidecar + hook + backend markers (unchanged).
@@ -15,6 +15,14 @@ Two projects are registered:
     present-module + merged-introducing-commit markers (Cairn has NO
     seal sidecars; the markers are its own, proving the engine
     generalizes rather than re-hardcoding loam's).
+  * ``litrpg`` → :func:`litrpg_state.litrpg_state_record` — the LitRPG
+    production pipeline's present-layer + introducing-commit markers
+    (LitRPG is a CONTENT project, not code; its "state" is production
+    progress — which pipeline layers have output — derived from the
+    litrpg-writer workspace, proving the engine generalizes to a
+    content project too). Registered per owner mandate (work-streams
+    Increment 1) so the LitRPG stream surfaces a ground-truth-derived
+    production state, not a faked one.
 
 An unregistered name resolves to ``None`` (a clean "not registered"
 result), never a crash — the caller decides what to do with an unknown
@@ -32,6 +40,10 @@ from pathlib import Path
 from typing import Callable
 
 from loam_cli.audit.cairn_state import DEFAULT_CAIRN_REPO_ROOT, cairn_state_record
+from loam_cli.audit.litrpg_state import (
+    DEFAULT_LITRPG_REPO_ROOT,
+    litrpg_state_record,
+)
 from loam_cli.audit.loam_state import default_state_record
 from loam_cli.audit.record import StateOfLoam
 
@@ -65,6 +77,10 @@ def _cairn_derive(repo_root: Path) -> StateOfLoam:
     return cairn_state_record(repo_root)
 
 
+def _litrpg_derive(repo_root: Path) -> StateOfLoam:
+    return litrpg_state_record(repo_root)
+
+
 #: The default repo root for loam: the canonical checkout. Overridable
 #: per resolved spec (tests point at a fixture / their own tree).
 DEFAULT_LOAM_REPO_ROOT = Path("/Users/lukeivers/loam")
@@ -81,6 +97,11 @@ def _default_registry() -> dict[str, ProjectStateSpec]:
             name="cairn",
             repo_root=DEFAULT_CAIRN_REPO_ROOT,
             derive=_cairn_derive,
+        ),
+        "litrpg": ProjectStateSpec(
+            name="litrpg",
+            repo_root=DEFAULT_LITRPG_REPO_ROOT,
+            derive=_litrpg_derive,
         ),
     }
 

@@ -13,14 +13,25 @@
 # limitations under the License.
 
 """AC-FBM-STATE-LENS-1 (Slice D / D1) — the production composer registers
-the GROUND-TRUTH project-state turn contributor, and a composed turn surfaces a
+the GROUND-TRUTH per-turn STATE contributor, and a composed turn surfaces a
 STATE block naming a registered project + its derived status.
 
 This is the wiring + surfacing AC: it proves (a) the production (client-None)
-branch of ``build_session_composer`` registers a ``project-state`` turn
+branch of ``build_session_composer`` registers the ground-truth STATE turn
 contributor, and (b) when a turn is composed, the rendered turn payload carries
 a STATE block whose text names a registered project + its derived status — the
 ground-truth status now reaching the turn-start lens, which was the missing edge.
+
+SUBSUME UPDATE (work-streams Increment 1, AC.WS.SURFACE.1 / WMS-D7): the
+production registration is REPOINTED from the bare ``project-state`` contributor
+to the ``work-streams`` contributor, which SUBSUMES it — the streams block IS the
+per-turn ground-truth STATE surface, now organized by stream (ONE block, not two,
+the anti-bloat constraint). The ``render_project_state_block`` engine stays
+DEFINED + exported (Slice D) and is exercised directly in
+``test_composed_turn_surfaces_state_block`` below; only the LIVE production
+contributor NAME changed. This is the plan-specified subsume (plan §6 step 3 /
+architecture §8), resolved as a doc-only AC update per the
+loose-AC-text-fix-the-AC discipline.
 """
 
 from __future__ import annotations
@@ -39,7 +50,12 @@ def test_production_composer_registers_project_state_contributor(
     tmp_path: Path,
 ) -> None:
     """The production (client-None) branch registers exactly one
-    ``project-state`` turn contributor."""
+    ground-truth STATE turn contributor.
+
+    SUBSUME UPDATE: the registration is now the ``work-streams`` contributor
+    (it SUBSUMES the bare project-state block — ONE block, organized by
+    stream). The bare ``project-state`` contributor is NOT separately
+    registered (no double STATE block — the anti-bloat constraint)."""
     ws = tmp_path / "myws"
     ws.mkdir()
 
@@ -51,11 +67,18 @@ def test_production_composer_registers_project_state_contributor(
 
     turn_contribs = composer.contributors(trigger_kind=TriggerKind.turn)
     names = [c.name for c in turn_contribs]
-    assert "project-state" in names, (
-        "the production composer must register a turn-level project-state "
-        f"contributor; registered turn contributors: {names}"
+    assert "work-streams" in names, (
+        "the production composer must register the turn-level ground-truth "
+        "STATE contributor (work-streams, which subsumes project-state); "
+        f"registered turn contributors: {names}"
     )
-    assert names.count("project-state") == 1, "no double-register"
+    assert names.count("work-streams") == 1, "no double-register"
+    # The subsume: there is exactly ONE ground-truth STATE block, not two
+    # (the bare project-state block is NOT also registered in production).
+    assert "project-state" not in names, (
+        "the bare project-state block must be SUBSUMED by work-streams (one "
+        f"block, not two); registered turn contributors: {names}"
+    )
 
 
 def test_composed_turn_surfaces_state_block(tmp_path: Path) -> None:

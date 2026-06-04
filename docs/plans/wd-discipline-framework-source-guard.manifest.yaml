@@ -21,7 +21,7 @@ amendment:
 #     local / override-hatch / fail-open.
 #   AC.WDGUARD.S — outcome-altitude (real subprocess, two throwaway
 #     git repos, four sub-cases).
-baseline: "PLACEHOLDER_FEAT_SHA"
+baseline: "e8a25a7a"
 
 plan: docs/plans/wd-discipline-framework-source-guard.md
 

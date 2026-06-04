@@ -100,22 +100,60 @@ def test_AC_SURF_1_no_store_renders_no_block() -> None:
     assert block == ""
 
 
-def test_AC_SURF_1_production_composer_registers_relational(tmp_path) -> None:
-    """The PRODUCTION (client-None) composer registers the relational
-    turn contributor live — the lens is wired, not merely registerable
-    (mirrors the projects/work-streams production-registration ACs)."""
+def test_AC_SURF_1_production_composer_registers_relational(
+    tmp_path, monkeypatch
+) -> None:
+    """The PRODUCTION (client-None) composer registers the relational lens
+    live when the user's lens CHOICE includes it — the lens is wired, not
+    merely registerable.
+
+    WMS increment 6 made the per-turn surface CHOICE-AWARE (D-WMS6.3): the
+    relational lens is no longer registered UNCONDITIONALLY — it is
+    registered when the user's #34 work-tracking/preferred-lens profile
+    chooses it (and on the fail-open path, which preserves the inc-4 trio).
+    This test pins the wired-live contract under the new chooser: a
+    relational-choice profile surfaces the relational turn block through the
+    production composer."""
     from loam.primary_persona.session_start_emitter import build_session_composer
+    from loam.workspace_bootstrap.seed_writer import render_interaction_model
 
     ws = tmp_path / "myws"
     ws.mkdir()
+    # A REAL #34 home (an isolated fixture home) that chooses the relational
+    # lens. The production resolver reads ~/.claude/INTERACTION-MODEL.md via
+    # Path.home(); monkeypatching HOME points it at the fixture home so no
+    # real machine state is touched (the choice-aware production path
+    # registers exactly the chosen lens — AC.SURFACE.1).
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    matrix = render_interaction_model()
+    matrix += (
+        "\n## work-tracking\n"
+        "preferred-lens: { value: relational, confidence: high, "
+        "evidence: [], locked: true }\n"
+    )
+    (home / ".claude" / "INTERACTION-MODEL.md").write_text(
+        matrix, encoding="utf-8"
+    )
+    monkeypatch.setenv("HOME", str(home))
+
     composer = build_session_composer(
         ws,
-        memory_client_factory=lambda _root: None,  # production client-None branch
+        memory_client_factory=lambda _root: None,  # production client-None
         register_tracker=False,
     )
     names = [c.name for c in composer.contributors(trigger_kind=TriggerKind.turn)]
     assert "relational" in names, (
-        f"the production composer must register the relational lens at the "
-        f"turn seat; registered turn contributors: {names}"
+        f"the choice-aware production composer must register the relational "
+        f"lens when the user chooses it; registered turn contributors: {names}"
     )
     assert names.count("relational") == 1, "no double-register"
+
+
+def test_AC_SURF_1_relational_in_failopen_default_set() -> None:
+    """The relational lens stays in the fail-open always-on default-set —
+    a resolver/registration error never drops it (the inc-4 trio is the
+    never-zero-blocks floor, AC.SURFACE.4)."""
+    from loam.primary_persona.keep_pace import lens_choice as lc
+
+    assert lc.LENS_RELATIONAL in lc.DEFAULT_ALWAYS_ON_SET

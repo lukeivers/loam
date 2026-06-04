@@ -219,71 +219,51 @@ def build_session_composer(
             # payload omits the retrieval block. AC46.2 holds.
             pass
 
-        # WORK-STREAMS (Increment 1, AC.WS.SURFACE.1) — register the
-        # cross-cutting streams contributor at TriggerKind.turn. This SUBSUMES
-        # the Slice-D project-state block (D4 / WMS-D7): the streams block IS
-        # the per-turn ground-truth STATE surface, now organized by stream —
-        # ONE block, not two (the anti-bloat constraint, F2 #1). For a stream
-        # bound to >=1 FBM-registered project (loam->loam, cairn->cairn,
-        # litrpg->litrpg) it composes a FRESH ``derive_project_state`` call
-        # (Slice C, TTL-cached) — derived live, never stored-stale; an unbound
-        # stream surfaces a staleness-based next-action marked "no ground-truth
-        # project bound" (never a faked STATE). Honors deep-dive (full + mute
-        # others' nudges) / pause (drop + collapse) / collapse-on-overflow
-        # within Slice D's hard char-cap. The deviation->#71 fail-soft seam
-        # rides inside the surfacer. The bare ``register_project_state_
-        # contributor`` stays DEFINED + exported (Slice D tests still use it) —
-        # only this LIVE registration is repointed to the streams surfacer.
-        # Registered fail-soft (AC46.2 graceful-empty) — a registration-time
-        # error simply omits the block.
+        # WMS increment 6 (AC.SURFACE.* / AC.WMS6.LIVE.1) — the per-turn
+        # surface is CHOICE-AWARE. Pre-inc-6 this branch registered the
+        # work-streams (inc-1) + projects (inc-2) + relational (inc-4)
+        # lenses UNCONDITIONALLY at TriggerKind.turn — three always-on
+        # blocks every turn for every user, the per-turn bloat the L4
+        # layer exists to fix. The L4 chooser (``lens_choice``) resolves
+        # the user's #34 ``work-tracking`` / ``preferred-lens`` profile and
+        # registers exactly the CHOSEN lens(es) (the FBM-don't-bloat
+        # composition — the right lens, not all of them). The un-chosen
+        # lenses keep their inc-5 on-demand ``render_*_block`` entry points
+        # (rendered when asked, never removed — D-WMS6.3 replace-not-delete).
+        # FAIL-OPEN: any resolver/registration error degrades to the
+        # CURRENT always-on default-set (the streams+projects+relational
+        # trio, ``DEFAULT_ALWAYS_ON_SET``), NEVER to zero blocks — a user
+        # never loses their per-turn surface because the choice machinery
+        # degraded (AC.SURFACE.4 / §8 #3). The resolver is DETERMINISTIC +
+        # fail-open (no LLM on the hot path, D-WMS6.2); it consumes
+        # interaction_model.py READ-ONLY and widens no #34 taxonomy.
         try:
-            from .keep_pace.work_streams_surface import (  # noqa: WPS433
-                register_work_streams_contributor,
+            from .keep_pace.lens_choice import (  # noqa: WPS433
+                register_chosen_lenses,
             )
 
-            register_work_streams_contributor(composer)
-        except Exception:  # noqa: BLE001 — AC46.2 graceful empty
-            pass
-
-        # WMS increment 2 (AC.PROJ.* / AC.WMS2.LIVE.1) — register the
-        # PROJECTS lens at TriggerKind.turn alongside the streams lens. A
-        # SEPARATE named block: the projects + streams lenses are two
-        # distinct VIEWS over the ONE work-item store (the architecture's
-        # multi-lens-over-one-model insight). The projects lens filters
-        # belongs-to-project -> groups -> sorts by priority -> renders a
-        # capped block via the Slice-D discipline, deriving live STATE per
-        # FBM-bound project (loam/cairn/litrpg) and honestly marking the
-        # unbound ones. Registered fail-soft (AC46.2 graceful-empty) — a
-        # registration-time error simply omits the block.
-        try:
-            from .keep_pace.projects import (  # noqa: WPS433
-                register_projects_contributor,
-            )
-
-            register_projects_contributor(composer)
-        except Exception:  # noqa: BLE001 — AC46.2 graceful empty
-            pass
-
-        # WMS increment 4 (AC.SURF.* / AC.WMS4.LIVE.1) — register the
-        # RELATIONAL lens at TriggerKind.turn alongside the projects +
-        # streams lenses. A SEPARATE named block: it turns the inc-2 edge
-        # graph + its unblocked_next/waiting_on_other/trace_to_root
-        # queries into the answers that make the graph valuable — the
-        # PRIORITIZED next-thing + its transparent reason (prioritize.py),
-        # what's blocked + on what, what's waiting on ME vs on OTHERS, and
-        # the decomposition tree — in ONE concise capped fail-soft block
-        # (the Slice-D discipline). The store is CONSUMED via its existing
-        # READ API, never modified (D-PRI.1). Registered fail-soft
-        # (AC46.2 graceful-empty) — a registration-time error simply omits
-        # the block.
-        try:
-            from .keep_pace.relational import (  # noqa: WPS433
-                register_relational_contributor,
-            )
-
-            register_relational_contributor(composer)
-        except Exception:  # noqa: BLE001 — AC46.2 graceful empty
-            pass
+            register_chosen_lenses(composer)
+        except Exception:  # noqa: BLE001 — AC.SURFACE.4 / AC46.2 graceful
+            # The choice-aware registration itself failed to import/run;
+            # fall open to the inc-4 always-on trio directly so the user
+            # never loses their per-turn surface (defence-in-depth — the
+            # never-zero-blocks floor).
+            for _lens_import, _register in (
+                (
+                    "work_streams_surface",
+                    "register_work_streams_contributor",
+                ),
+                ("projects", "register_projects_contributor"),
+                ("relational", "register_relational_contributor"),
+            ):
+                try:
+                    mod = __import__(
+                        f"loam.primary_persona.keep_pace.{_lens_import}",
+                        fromlist=[_register],
+                    )
+                    getattr(mod, _register)(composer)
+                except Exception:  # noqa: BLE001 — AC46.2 graceful empty
+                    pass
 
     # AC.MSC.2 (Gap A part b) — register the session-start
     # active-thread contributor at TriggerKind.session so a fresh

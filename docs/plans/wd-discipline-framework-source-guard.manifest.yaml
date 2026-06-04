@@ -1,0 +1,100 @@
+schema_version: 1
+amendment:
+  slug: wd-discipline-framework-source-guard
+  title: "WD-discipline framework-source guard — PreToolUse block on framework-source edits inside a derived workspace (task #89 structural enforcement)"
+
+# BASELINE: the feat(safety-layer) source-edit commit (pre-apply tip).
+#
+# Commit ladder pre-apply:
+#   32f36291 — canonical main v1.2.0 published tip (pre-amendment HEAD).
+#   <plan>   — docs(plans): sub-plan-doc + manifest (NEW commit).
+#   <feat>   — feat(safety-layer): WD-discipline guard + tests (BASELINE).
+#   <this manifest commit's apply lands next>
+#   <loam amend seal lands as the deterministic seal commit>
+#
+# Single-component fence — framework/safety-layer/:
+#   - one new PreToolUse(Write|Edit|MultiEdit) hook + its AC tests.
+#   - no cross-component widening (installer wiring deferred per §3).
+#
+# AC families locked per docs/plans/wd-discipline-framework-source-guard.md §4:
+#   AC.WDGUARD.{1,2,3,4,5} — block / allow-canonical / allow-workspace-
+#     local / override-hatch / fail-open.
+#   AC.WDGUARD.S — outcome-altitude (real subprocess, two throwaway
+#     git repos, four sub-cases).
+baseline: "PLACEHOLDER_FEAT_SHA"
+
+plan: docs/plans/wd-discipline-framework-source-guard.md
+
+components:
+  - name: safety-layer
+    seal_test: framework/safety-layer/tests/test_no_sealed_amendments.py
+    sidecar: framework/safety-layer/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/safety-layer/seals/SEAL_COMMIT.wd-discipline-framework-source-guard
+  body: |
+    # WD-discipline framework-source guard — apply ladder
+
+    Structural enforcement for task #89 (twice-seen WD-discipline
+    violation: framework code edited directly inside a derived
+    workspace's vendored `framework/` copy instead of canonical
+    `~/loam`, where it diverged and was nearly clobbered by the
+    v1.2.0 upgrade — task #88).
+
+    Sub-plan: `docs/plans/wd-discipline-framework-source-guard.md`.
+
+    Scope (per sub-plan §3): single-component fence on
+    `framework/safety-layer/`. One new PreToolUse(Write|Edit|
+    MultiEdit) hook + its AC tests. Installer auto-wiring into
+    `first_run_settings.py` is a deferred follow-on (keeps the fence
+    to one component).
+
+    AC families:
+
+      - AC.WDGUARD.1 — derived-workspace framework-source edit →
+        permissionDecision: deny, reason names the WD-discipline rule
+        + redirects to canonical /Users/lukeivers/loam.
+      - AC.WDGUARD.2 — canonical-identity framework-source edit →
+        ALLOW (no false-positive on canonical or its worktrees).
+      - AC.WDGUARD.3 — workspace-local content (.loam / .scratch /
+        products / workspace / memory / docs/plans / CLAUDE.md /
+        .claude) → ALLOW everywhere.
+      - AC.WDGUARD.4 — override hatch (LOAM_WD_GUARD=off /
+        LOAM_SAFETY_HOOKS=off / .loam/.wd-guard-override sentinel) →
+        no-op + logged.
+      - AC.WDGUARD.5 — fail-open on malformed / non-content-tool /
+        unresolvable input.
+      - AC.WDGUARD.S — outcome-altitude: production script as a
+        subprocess against two throwaway git repos (canonical-origin
+        + non-canonical-origin), four sub-cases.
+
+    Method-level choices (builder's call per ODD §1.1):
+
+      - Detection signal: canonical-IDENTITY by git-remote-URL match
+        (positive identity), NOT derived-marker presence. A framework-
+        source edit is allowed iff its enclosing git repo carries a
+        remote URL matching github.com[:/]…/loam(.git)?; otherwise
+        blocked. Empirically verified clean against the real canonical
+        tree + four canonical worktrees + the real derived pos3 layout
+        (sub-plan §16) — no false-positive on canonical.
+      - Hook home: framework/safety-layer/ (shipped) so the guard
+        travels with the framework to every derived workspace.
+      - Framework-source classification: repo-relative framework/ or
+        plugins/ tree, minus the workspace-local exclusion set.
+      - Override + toggle + log idiom mirrors the host safety-layer
+        guards (config_write_guard), not the workspace in-thread
+        guard's .scratch sentinel.
+
+    Fail-open per D-SECHK.FAIL-OPEN; toggle-off via LOAM_SAFETY_HOOKS
+    / LOAM_WD_GUARD; decisions logged to <workspace>/.loam/
+    safety-hooks.log.

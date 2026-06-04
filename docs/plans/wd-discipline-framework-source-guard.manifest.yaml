@@ -1,5 +1,7 @@
-schema_version: 1
+schema_version: 3
 amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
   slug: wd-discipline-framework-source-guard
   title: "WD-discipline framework-source guard — PreToolUse block on framework-source edits inside a derived workspace (task #89 structural enforcement)"
 

@@ -1,0 +1,201 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: wms-increment-6-per-user-lens-choice
+  title: "WMS Increment 6 — PER-USER LENS CHOICE (the L4 wiring): the mechanism that decides WHICH lens(es) a given user sees by default per-turn, derived from their #34 profile, owner-settable, with a plain-language switch path. Builds NO new lens (inc-5 re-bundled goals/plate/waiting-on, so the lens SET is complete) — it is the CHOOSER over that set. Three pieces on the SEALED primary-persona, all composing built primitives read-only: (a) a deterministic fail-open lens-choice RESOLVER reading the #34 work-tracking/preferred-lens cell via the SAME cell_or_prior path intake.py uses, mapping the profile to a default lens-SET; (b) the per-turn surface made choice-aware — session_start_emitter.py registers the CHOSEN lens(es) at TriggerKind.turn instead of unconditionally piling work-streams+projects+relational on every turn (the FBM-don't-bloat composition: the right lens, not all of them), keeping the un-chosen lenses as the inc-5 on-demand render_*_block entry points; (c) a plain-language SWITCH writer that persists the work-tracking/preferred-lens cell in the #34 matrix line-shape WITHOUT widening AIM_AREAS or apply_override's area-gate (apply_override REJECTS the work-tracking area — verified line 694 — so the switch CANNOT round-trip through it). NO store mutation, no #34-taxonomy mutation, no workspace-bootstrap seed-writer edit, no new lens."
+
+# BASELINE: build/wms-increment-5 tip @ build time (the plan-doc commit's parent on THAT
+# branch). The five lenses (work_streams_surface.py / projects.py / relational.py +
+# goals.py / plate.py / waiting_on.py) + their render_*_block on-demand entry points + the
+# always-on TriggerKind.turn registrations in session_start_emitter.py + the #34 read engine
+# (interaction_model.py: load_interaction_model / cell_or_prior / classify_area /
+# render_matrix / Cell + the apply_override area-gate) + intake.py's work-tracking read
+# precedent + the shared lens_render.py factory all live on this branch + its inc-2/3/4
+# ancestors, NOT on main — building on main finds no lenses to choose among (plan §8 halt #1).
+# SINGLE-component amendment on the SEALED `primary-persona`: one new keep-pace module +
+# one edit to the per-turn registration site +
+#   (a) `lens_choice.py` RESOLVER — load_interaction_model -> cell_or_prior("work-tracking",
+#       "preferred-lens") -> a deterministic value->lens-SET map; fail-open to a NON-EMPTY
+#       default derived from the existing technical-exposure cell (D-WMS6.5: plain ->
+#       on-my-plate the simplest actionable view; open -> work-streams the architecture's
+#       broadest openness default; deep -> the user's explicit pick / a multi-lens set). NO
+#       LLM on the hot path (mirrors classify_area), NO store mutation, NEVER raises
+#       (D-WMS6.2 / AC.CHOICE.3/.4). NEVER returns an empty set (the anti-regression floor,
+#       RF #3 / §8 #3).
+#   (b) `lens_choice.py` SWITCH WRITER — persists the work-tracking/preferred-lens cell by
+#       re-emitting the matrix via interaction_model.render_matrix + Cell(value=<lens>,
+#       confidence=high, locked=True), WITHOUT calling apply_override (which rejects the
+#       work-tracking area, line 694) and WITHOUT adding work-tracking to AIM_AREAS or
+#       editing the workspace-bootstrap seed-writer (the fence; D-WMS6.4 / §5). Owner-
+#       initiated explicit statement; the plain-language confirm is the verify step
+#       (D-WMS6.6); stays inside the #34 MVP fence (cells move only by explicit statement).
+#   (c) `session_start_emitter.py` made CHOICE-AWARE — before the M-FBM branch registers the
+#       work-streams + projects + relational turn blocks, it calls the resolver and registers
+#       exactly the CHOSEN lens(es); the un-chosen lenses' register_*_contributor functions
+#       stay DEFINED + exported so their on-demand render_*_block path is unchanged
+#       (AC.SURFACE.2). Fail-OPEN: a resolver/registration error registers the CURRENT
+#       always-on default-set, never zero blocks (AC.SURFACE.4 / §8 #3).
+# The objective-tracker store is CONSUMED read-only (the chosen lens reads it via the
+# existing API exactly as inc-2/4/5 do) — NOT modified (D-WMS6.1). interaction_model.py is
+# CONSUMED read-only for the resolver (load_interaction_model / cell_or_prior) and REUSE-only
+# for the writer (render_matrix / Cell line-shape) — its AIM_AREAS taxonomy and apply_override
+# area-gate are NOT widened, no new injected axis. If the build decides it truly needs
+# work-tracking in AIM_AREAS (to write through apply_override), OR a workspace-bootstrap
+# seed-writer change, OR any store MUTATION, it HALTS rather than reaching into those sealed
+# taxonomy surfaces (plan §8 #2/#4) — that is a SEPARATE workspace-bootstrap + interaction-
+# model cycle, not this one.
+# Confirms architecture roadmap row 6 (per-user lens choice / L4 wiring) + WMS-D3 (lens-
+# choice-as-#34-preference). Carries forward the inc-5 re-bundling (increment 6 is re-scoped
+# to per-user lens-CHOICE ONLY; the lenses already shipped — plan §9 / §10 RF #4).
+# Adds AC.CHOICE.* (profile -> default lens-set / fail-open-to-non-empty-default / fail-open-
+# on-matrix-error / deterministic-no-LLM-no-mutation) + AC.SURFACE.* (turn surface = the
+# chosen set / un-chosen lens still on-demand / block-count = set-size not all-lenses /
+# fail-open-to-the-old-default-not-empty) + AC.SWITCH.* (plain-language switch changes next
+# turn's surface / no #34-taxonomy mutation round-trips through the live reader / zero-
+# internal-vocab confirmation / explicit-pick-sticky-over-the-derived-default) + AC.WMS6.LIVE.1
+# (the outcome-altitude: a REAL #34 profile + REAL store with NO pre-arranged state -> the
+# right lens surfaces by default live through the production entry points, a plain-language
+# switch writes the cell so a fresh resolve returns the switched-to set, and the un-chosen
+# lenses still render on demand).
+# ★ OWNER product-shape calls surfaced (plan §3): D-WMS6.3 (choosing a lens REPLACES the
+# always-on inc-4 default-set vs ADDS to it — RECOMMEND replace-with-a-multi-select-set so a
+# power user expresses "add" as "choose a larger set" and the default-set is never empty) +
+# D-WMS6.4 (the switch writer is a WMS-area-scoped path that does NOT widen the #34 taxonomy /
+# apply_override gate — RECOMMEND the fence-respecting writer; the taxonomy-widening cleaner
+# end-state is a named SEPARATE workspace-bootstrap follow-on) + D-WMS6.5 (the DEFAULT lens
+# per tech-level — RECOMMEND map to the existing technical-exposure axis: plain -> on-my-plate,
+# open -> work-streams, deep -> explicit pick) + D-WMS6.6 (the switch is autonomous-write-
+# after-plain-confirm, treated as an explicit #34 statement, not a separate gate). The rest
+# (D-WMS6.1 choice-as-a-read-only-#34-cell, D-WMS6.2 deterministic-fail-open-resolver) are
+# autonomous method-calls the architecture + the intake precedent already rule.
+baseline: "a236e4905be24bc894aa18a03e2a32bdd7884fc4"
+
+plan: docs/plans/wms-increment-6-per-user-lens-choice.md
+
+components:
+  - name: primary-persona
+    new_component: false           # follow-on; advances the existing sidecar (the
+                                    # objective-tracker store + interaction_model.py are
+                                    # CONSUMED read-only — D-WMS6.1; interaction_model's
+                                    # AIM_AREAS / apply_override gate are NOT widened — §5;
+                                    # the only edit to an existing surface is making
+                                    # session_start_emitter.py's registration choice-aware,
+                                    # fail-open to the current always-on default-set)
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/wms-increment-6-per-user-lens-choice.md
+  body: |
+    # WMS Increment 6 — PER-USER LENS CHOICE (the L4 wiring)
+
+    Per `docs/plans/wms-increment-6-per-user-lens-choice.md` and the parent
+    architecture `docs/design/work-management-system-architecture.md` (roadmap row 6 —
+    per-user lens choice / the L4 wiring; §1 the L4 layer "which lens fits THIS person";
+    §3 "lens choice is per-user (L4 / #34) ... a cell in the interaction-model matrix (a new
+    area-slug, e.g. work-tracking, with an axis for preferred-lens)"; §6 the non-tech surface
+    "the right lens, surfaced per-turn, per-user"; WMS-D3 §9). WMS is a MAJOR sub-component
+    (owner-elevated TG 13656). This increment builds NO new lens — increment 5 re-bundled
+    goals / on-my-plate / waiting-on, so the lens SET is complete; increment 6 is the CHOOSER
+    over that set, the per-user lens-CHOICE the whole multi-lens architecture was built to
+    enable. SINGLE-component amendment on the SEALED `primary-persona`: one new keep-pace
+    module (`lens_choice.py` — the resolver + the switch writer) + a choice-aware edit to the
+    per-turn registration site (`session_start_emitter.py`) + a plain-language switch handler.
+    Stacks on `build/wms-increment-5` (the five lenses + the #34 read engine + intake.py's
+    work-tracking read precedent + the shared lens_render.py factory live there + on the
+    inc-2/3/4 ancestors). It composes built primitives read-only (Lens-1: compose, don't
+    duplicate) — the five lenses, the #34 interaction-model read/inject/override engine, and
+    intake's work-tracking consumption precedent — and adds NO new store, field, lifecycle,
+    lens, or #34-taxonomy area.
+
+    The RESOLVER reads the user's #34 profile and resolves the set of lens(es) that surface
+    by DEFAULT per-turn. It mirrors intake.py's work-tracking read EXACTLY: load the
+    interaction-model, read the work-tracking / preferred-lens cell via cell_or_prior, and map
+    a recognised value to a lens-set. When the cell is absent (an un-seeded or fresh user) it
+    fails open to a NON-EMPTY default derived from the existing technical-exposure axis — a
+    plain-exposure (non-tech, meet-them-simply) user gets the on-my-plate lens (the simplest
+    actionable view), an open-exposure (engaged) user gets the work-streams lens (the
+    architecture's broadest openness default), a deep-exposure user gets their explicit pick
+    or a multi-lens set. It is DETERMINISTIC (no model call on the per-turn path, mirroring
+    classify_area), performs no store mutation, and NEVER raises or returns an empty set — a
+    user can never lose their per-turn surface because the choice machinery degraded.
+
+    The per-turn surface is made CHOICE-AWARE. Today the M-FBM branch of
+    session_start_emitter.py registers work-streams + projects + relational unconditionally at
+    TriggerKind.turn — three always-on blocks every turn for every user, the per-turn bloat
+    the L4 layer exists to fix. Increment 6 makes that registration consult the resolver and
+    register exactly the CHOSEN lens(es); the un-chosen lenses keep their inc-5 on-demand
+    render_*_block entry points (rendered when the question is asked, never removed). The
+    chosen lens REPLACES the always-on default-set rather than adding to it (the FBM-load-
+    filter / don't-bloat composition — the right lens, not all of them); a power user expresses
+    "I want several always-on" as "choose a larger lens-set" (the resolver returns a SET, so
+    multi-select subsumes the add case without a second code path). The registration fails
+    OPEN to the current always-on default-set on any error — never to zero blocks (the anti-
+    regression floor).
+
+    The SWITCH path is how a user changes their lens. A plain-language ask ("just show me
+    what's on my plate", "I think in projects") is treated as an explicit user statement — the
+    highest-confidence, classifier-free #34 signal that hard-sets a cell — so the persona
+    confirms in plain language ("Okay — I'll lead with what's on your plate from now on") and
+    writes the work-tracking / preferred-lens cell so the next turn's resolver returns the
+    switched-to set. The write is owner-INITIATED (the user asked); the plain confirm IS the
+    verify-before-write step, so it needs no separate ratification gate, and it stays inside
+    the #34 MVP fence (cells move only by explicit statement). CRITICAL fence constraint
+    (verified): interaction_model.apply_override REJECTS any area not in AIM_AREAS (line 694),
+    and work-tracking is NOT in AIM_AREAS — so the switch CANNOT round-trip through the
+    existing override writer. The writer is a WMS-area-scoped path that re-emits the matrix in
+    the seed-writer's line-shape (reusing render_matrix + the Cell format) WITHOUT adding
+    work-tracking to AIM_AREAS, WITHOUT changing apply_override's area-gate, and WITHOUT
+    editing the workspace-bootstrap seed-writer (the #34 taxonomy owner, a separate component).
+    If the build decides it truly needs work-tracking in AIM_AREAS to write through
+    apply_override, it HALTS — that is a separate workspace-bootstrap + interaction-model
+    cycle, not this fence.
+
+    The objective-tracker store and interaction_model.py are CONSUMED read-only (the resolver
+    reads the #34 cell; the chosen lens reads the store via the existing API exactly as
+    inc-2/4/5 do) — NOT modified. The switch writer REUSES interaction_model's render_matrix +
+    Cell line-shape but does not widen its taxonomy. If the build discovers a needed store-side
+    change, a #34-taxonomy change, or any store mutation, it HALTS rather than opening a sealed
+    amendment (plan §8 #2/#4).
+
+    The outcome-altitude AC (AC.WMS6.LIVE.1) exercises the live production entry points (the
+    resolver, the registration assembly, the switch writer) against a REAL #34 matrix file (an
+    isolated fixture home) carrying a REAL technical-exposure / preferred-lens profile and a
+    REAL work-item store, with NO pre-arranged lens / registration state: a plain/plate profile
+    surfaces the on-my-plate block and NOT the always-on streams/projects/relational trio; a
+    projects profile surfaces the projects block; a plain-language switch WRITES the cell so a
+    fresh live resolve returns the switched-to set; and the un-chosen lenses' live
+    render_*_block entry points still render correctly on demand. No mocks at the #34-file or
+    store boundary, no pre-seeded registration.
+
+    ★ Owner product-shape calls surfaced (plan §3): does choosing a lens REPLACE the always-on
+    inc-4 default-set or ADD to it (D-WMS6.3 — RECOMMEND replace-with-a-multi-select-set);
+    does the switch writer stay a WMS-area-scoped path or widen the #34 taxonomy (D-WMS6.4 —
+    RECOMMEND the fence-respecting writer; the taxonomy-widening cleaner end-state is a named
+    separate follow-on); what is the DEFAULT lens per tech-level (D-WMS6.5 — RECOMMEND map to
+    the existing technical-exposure axis: plain -> on-my-plate, open -> work-streams, deep ->
+    explicit pick); and the switch-as-autonomous-write-after-plain-confirm (D-WMS6.6). The rest
+    (choice-as-a-read-only-#34-cell, deterministic-fail-open-resolver) are autonomous method-
+    calls the architecture + the intake precedent already rule.
+
+    Out of scope (later increments / separate cycles): analytics — throughput / aging /
+    bottleneck / plate-load aggregates (increment 7); the behavioural AUTO-LEARN of the lens
+    choice (move the cell from observed signal) — the #34 AIM-4..8 behavioural-engine remainder
+    (inc-6's switch is an EXPLICIT statement, never a behavioural inference); widening the #34
+    seed taxonomy so work-tracking is a first-class AIM_AREAS area written uniformly through
+    apply_override (a clean workspace-bootstrap + interaction-model follow-on if the WMS-scoped
+    writer's separateness proves a maintenance cost); the edge-MUTATING relational-graph self-
+    heal against FBM ground truth (#71). Increment 6 adds NO store, field, edge, lifecycle,
+    lens, or #34-taxonomy area — it is one resolver + one fence-respecting writer + one choice-
+    aware registration edit on `primary-persona`.

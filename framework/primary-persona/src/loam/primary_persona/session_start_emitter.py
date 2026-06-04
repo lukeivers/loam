@@ -245,6 +245,25 @@ def build_session_composer(
         except Exception:  # noqa: BLE001 — AC46.2 graceful empty
             pass
 
+        # WMS increment 2 (AC.PROJ.* / AC.WMS2.LIVE.1) — register the
+        # PROJECTS lens at TriggerKind.turn alongside the streams lens. A
+        # SEPARATE named block: the projects + streams lenses are two
+        # distinct VIEWS over the ONE work-item store (the architecture's
+        # multi-lens-over-one-model insight). The projects lens filters
+        # belongs-to-project -> groups -> sorts by priority -> renders a
+        # capped block via the Slice-D discipline, deriving live STATE per
+        # FBM-bound project (loam/cairn/litrpg) and honestly marking the
+        # unbound ones. Registered fail-soft (AC46.2 graceful-empty) — a
+        # registration-time error simply omits the block.
+        try:
+            from .keep_pace.projects import (  # noqa: WPS433
+                register_projects_contributor,
+            )
+
+            register_projects_contributor(composer)
+        except Exception:  # noqa: BLE001 — AC46.2 graceful empty
+            pass
+
     # AC.MSC.2 (Gap A part b) — register the session-start
     # active-thread contributor at TriggerKind.session so a fresh
     # session reconstructs the most-recent active working thread from

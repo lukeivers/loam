@@ -92,8 +92,54 @@ class ObjectiveStatus(str, Enum):
     proposed = "proposed"
     active = "active"
     owner_pending = "owner_pending"
+    blocked = "blocked"
     achieved = "achieved"
     abandoned = "abandoned"
+
+    # ---- WMS increment 2 — the `blocked` lifecycle distinction --------
+    #
+    # `blocked` (WMS-D1 / AC.WI.1 — additive lifecycle widening, the
+    # `owner_pending` R2 precedent): "work is started but cannot proceed
+    # because it waits on an unresolved blocker (another work item or an
+    # external party)." Distinct from `active` (in progress, unblocked),
+    # from `owner_pending` (shipped, owner-blocked), and from the terminal
+    # set `{achieved, abandoned}`. The work-management unblocked-next query
+    # (AC.WI.EDGE.2) reads the `waits-on`/`blocks` edge graph to answer
+    # "what is the next unblocked thing"; the `blocked` status is the
+    # lifecycle signal an item is parked on a blocker. An objective enters
+    # it from `active` (a blocker surfaced) and leaves it back to `active`
+    # when the blocker clears. It is NOT terminal. Pre-increment-2 records
+    # never carry this status; the default lifecycle and every existing
+    # transition are unchanged (default-preserving D8 round-trip —
+    # AC.WI.1).
+
+
+class WorkEdgeKind(str, Enum):
+    """The kind of a non-tree relational edge between two work items.
+
+    WMS increment 2 (AC.WI.EDGE.1). The objective tracker's native
+    structure is a single-parent forest (the `parent_id` tree); these
+    are the NON-tree relationships memory has no concept of:
+
+    - `blocks`     — the `from` item blocks the `to` item (the `to` item
+                     cannot proceed until the `from` item resolves). The
+                     inverse the unblocked-next query reads.
+    - `waits_on`   — the `from` item waits on the `to` item (or, when an
+                     external `party` is named on the edge, on a party
+                     outside the work graph — "the launch waits on Eric").
+    - `relates_to` — a soft, non-blocking link (the `from` and `to`
+                     items are related but neither blocks the other).
+
+    Edges are recorded as append-only `WorkEdge` / `WorkEdgeCleared`
+    events (D-WMS2.2), not in-spec fields — the spec is frozen and edges
+    are mutable relationships (a `waits_on` clears when the blocker
+    ships). The event-pair keeps the single-source-of-truth + the D8
+    replay round-trip.
+    """
+
+    blocks = "blocks"
+    waits_on = "waits_on"
+    relates_to = "relates_to"
 
 
 class ParentClosePolicy(str, Enum):
@@ -331,6 +377,37 @@ class ObjectiveSpec(BaseModel):
     """Optional source-document provenance (amendment #38). Defaults
     to None for records authored without provenance — preserves the
     pre-widening shape under D8 semantic round-trip."""
+
+    # ---- WMS increment 2 — the work-item field-groups (AC.WI.1) -------
+    #
+    # All three are ADDITIVE optional fields with defaults that preserve
+    # the pre-increment-2 shape under the D8 round-trip (the `lifted_from`
+    # additive precedent above). A work item constructed without any of
+    # them is still well-formed; every pre-existing record deserialises
+    # unchanged.
+
+    belongs_to_project: str | None = None
+    """Optional binding to a project (resolved at render time against
+    the FBM `PROJECT_REGISTRY`). A bound item's STATE derives live from
+    `derive_project_state`; an unbound item is honestly marked. WMS-D1
+    (AC.PROJ.1/AC.PROJ.3). Defaults to None — pre-increment-2 records
+    deserialise unbound."""
+
+    tagged_streams: tuple[str, ...] = ()
+    """The cross-cutting work-streams this item is tagged with (the
+    streams-lens membership the increment-1 streams re-point reads —
+    WMS-D7 / AC.REPOINT.1). A single item may be tagged with several
+    streams AND bound to a project; it appears in both lenses without
+    being stored twice. Defaults to the empty tuple — pre-increment-2
+    records deserialise untagged."""
+
+    priority: str | None = None
+    """Optional priority signal the projects-lens sort reads (AC.PROJ.1).
+    This cycle the field EXISTS and is populated from the existing
+    `tracker_context` open-loop priority vocabulary (D-WMS2.5); the
+    multi-signal WMS-D5 derived weighting is increment 4, not here.
+    Defaults to None — an item with no priority sorts after prioritised
+    items. Pre-increment-2 records deserialise with priority None."""
 
     @field_validator("acceptance_criteria")
     @classmethod

@@ -65,7 +65,13 @@ CREATE TABLE IF NOT EXISTS objective_state (
     last_event_id        INTEGER NOT NULL,
     last_transition_at   TEXT NOT NULL,
     criteria_latest_json TEXT NOT NULL DEFAULT '{}',
-    lifted_from_json     TEXT NOT NULL DEFAULT 'null'
+    lifted_from_json     TEXT NOT NULL DEFAULT 'null',
+    -- WMS increment 2 — work-item field-groups (AC.WI.1). Additive
+    -- columns with default-preserving sentinels; the event log stays the
+    -- source of truth (the cache rebuilds from events alone — AC.WI.2).
+    belongs_to_project   TEXT,
+    tagged_streams_json  TEXT NOT NULL DEFAULT '[]',
+    priority             TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_obj_state_parent   ON objective_state(parent_id);
 CREATE INDEX IF NOT EXISTS idx_obj_state_status   ON objective_state(status);
@@ -166,6 +172,23 @@ class EventStore:
             self._conn.execute(
                 "ALTER TABLE objective_state ADD COLUMN "
                 "lifted_from_json TEXT NOT NULL DEFAULT 'null'"
+            )
+        # WMS increment 2 — the same in-place additive widening for
+        # pre-increment-2 databases missing the work-item columns
+        # (AC.WI.1). Existing rows take the default-preserving sentinels.
+        if "belongs_to_project" not in cols:
+            self._conn.execute(
+                "ALTER TABLE objective_state ADD COLUMN "
+                "belongs_to_project TEXT"
+            )
+        if "tagged_streams_json" not in cols:
+            self._conn.execute(
+                "ALTER TABLE objective_state ADD COLUMN "
+                "tagged_streams_json TEXT NOT NULL DEFAULT '[]'"
+            )
+        if "priority" not in cols:
+            self._conn.execute(
+                "ALTER TABLE objective_state ADD COLUMN priority TEXT"
             )
 
     @property

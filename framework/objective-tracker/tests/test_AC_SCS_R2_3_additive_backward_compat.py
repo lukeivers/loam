@@ -113,11 +113,16 @@ def test_AC_SCS_R2_3_no_pre_r2_state_gained_unexpected_transitions() -> None:
     assert LEGAL_TRANSITIONS[ObjectiveStatus.abandoned] == {
         ObjectiveStatus.active,
     }
-    # active: pre-R2 {achieved, abandoned} PLUS owner_pending only.
+    # active: pre-R2 {achieved, abandoned} PLUS owner_pending (R2) PLUS
+    # blocked (WMS increment 2 — same additive precedent: the `active`
+    # source gains one out-edge to the new non-terminal lifecycle member;
+    # no pre-existing out-edge is removed or altered, AC.WI.1). The
+    # proposed / achieved / abandoned out-edges above stay byte-identical.
     assert LEGAL_TRANSITIONS[ObjectiveStatus.active] == {
         ObjectiveStatus.achieved,
         ObjectiveStatus.abandoned,
         ObjectiveStatus.owner_pending,
+        ObjectiveStatus.blocked,
     }
 
 

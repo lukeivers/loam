@@ -26,13 +26,14 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-from .projection import CriterionEvalRecord, ObjectiveProjectionData
+from .projection import CriterionEvalRecord, ObjectiveProjectionData, WorkEdgeRecord
 from .spec import (
     Criterion,
     LiftedFrom,
     ObjectiveStatus,
     ParentClosePolicy,
     TimeBound,
+    WorkEdgeKind,
 )
 
 
@@ -44,6 +45,22 @@ class CriterionEvaluation(BaseModel):
     rationale: str | None
     source: str
     event_id: int
+
+
+class WorkEdgeView(BaseModel):
+    """Public immutable view of one active non-tree edge (AC.WI.EDGE.1).
+
+    `from_id --edge_kind--> to_id` (or `--waits_on--> party` with
+    `to_id is None` for an external-party wait). Surfaced on the
+    projection of BOTH endpoints: it appears in the `from` item's
+    `edges_out` and the `to` item's `edges_in`."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    from_id: str
+    to_id: str | None
+    edge_kind: WorkEdgeKind
+    party: str | None = None
 
 
 class ObjectiveProjection(BaseModel):
@@ -70,6 +87,33 @@ class ObjectiveProjection(BaseModel):
     """Amendment #38: optional source-document provenance pointer
     surfaced from `ObjectiveSpec.lifted_from`. `None` for records
     authored without provenance — preserves the pre-widening shape."""
+
+    # ---- WMS increment 2 — work-item field-groups (AC.WI.1) ----------
+    belongs_to_project: str | None = None
+    """The project this work item is bound to (resolved at render time
+    against the FBM registry by the projects lens). `None` for unbound
+    records — preserves the pre-increment-2 shape."""
+
+    tagged_streams: tuple[str, ...] = ()
+    """The cross-cutting streams this item is tagged with (the streams
+    lens reads this for membership — AC.REPOINT.1). Empty for untagged
+    records."""
+
+    priority: str | None = None
+    """The priority signal the projects-lens sort reads (AC.PROJ.1).
+    Populated this cycle from the `tracker_context` priority vocabulary
+    (D-WMS2.5). `None` sorts last."""
+
+    edges_out: tuple[WorkEdgeView, ...] = ()
+    """Active non-tree edges where THIS item is the `from` (AC.WI.EDGE.1).
+    Empty when no outgoing edge is recorded (no edge fabrication —
+    AC.WI.EDGE.3)."""
+
+    edges_in: tuple[WorkEdgeView, ...] = ()
+    """Active non-tree edges where THIS item is the `to` (AC.WI.EDGE.1).
+    Resolved at the runtime layer by scanning every item's stream; the
+    same edge surfaces on both endpoints. Empty when nothing points at
+    this item."""
 
     @property
     def is_root(self) -> bool:
@@ -100,7 +144,25 @@ def _eval_to_public(rec: CriterionEvalRecord) -> CriterionEvaluation:
     )
 
 
-def public_projection(data: ObjectiveProjectionData) -> ObjectiveProjection:
+def _edge_to_public(rec: WorkEdgeRecord) -> WorkEdgeView:
+    return WorkEdgeView(
+        from_id=rec.from_id,
+        to_id=rec.to_id,
+        edge_kind=rec.edge_kind,
+        party=rec.party,
+    )
+
+
+def public_projection(
+    data: ObjectiveProjectionData,
+    *,
+    edges_in: tuple[WorkEdgeRecord, ...] = (),
+) -> ObjectiveProjection:
+    """Build the public read-model. `edges_in` is the set of active
+    edges pointing AT this item, resolved by the runtime from other
+    items' streams (a per-stream projection only sees its own outgoing
+    edges — AC.WI.EDGE.1). Defaults to empty so every existing caller
+    (which does not pass it) keeps the pre-increment-2 behaviour."""
     assert data.time_bound is not None, (
         "cannot build public projection before ObjectiveCreated has been applied"
     )
@@ -123,4 +185,9 @@ def public_projection(data: ObjectiveProjectionData) -> ObjectiveProjection:
         scope_bindings=tuple(data.scope_bindings),
         parent_close_notifications=tuple(data.parent_close_notifications),
         lifted_from=data.lifted_from,
+        belongs_to_project=data.belongs_to_project,
+        tagged_streams=tuple(data.tagged_streams),
+        priority=data.priority,
+        edges_out=tuple(_edge_to_public(e) for e in data.edges_out),
+        edges_in=tuple(_edge_to_public(e) for e in edges_in),
     )

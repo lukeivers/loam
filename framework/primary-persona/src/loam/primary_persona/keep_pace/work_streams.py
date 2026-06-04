@@ -515,6 +515,73 @@ def seed_user_scope_register(
     return path
 
 
+# ---- WMS increment 2 — the streams RE-POINT (WMS-D7 / AC.REPOINT.*) --
+#
+# Under the unified L1 work-item model a stream is a VIEW (a tag) over
+# work items, NOT a register-local store of bindings. Increment 2
+# satisfies the WMS-D7 re-pointability AC: a stream's MEMBERSHIP — its
+# bound projects and its backlog — resolves from the work items carrying
+# that stream in ``tagged_streams``, not from the register's ``projects``
+# / ``backlog`` lists. The register keeps ONLY the lens-presentation
+# config (``attention`` / ``nest-under``); no register rewrite is needed
+# (AC.REPOINT.2). The shim ``projects`` / ``backlog`` fields stay on the
+# dataclass as a fallback for an environment with no work-item store yet,
+# but the surfacer prefers the graph-resolved membership when the tracker
+# is present (AC.REPOINT.1).
+
+
+@dataclass(frozen=True)
+class StreamMembership:
+    """A stream's membership RESOLVED FROM THE WORK-ITEM GRAPH (AC.REPOINT.1).
+
+    ``projects`` — the distinct ``belongs_to_project`` bindings of the
+    work items tagged with this stream (the stream's bound projects,
+    resolved THROUGH the graph, NOT a register-local list).
+    ``item_ids`` — the ids of the tagged work items (the stream's backlog,
+    resolved THROUGH the graph). A work item tagged with the stream AND
+    bound to a project appears here AND in the projects lens, without
+    being stored twice (the architecture's whole point)."""
+
+    stream: str
+    projects: tuple[str, ...]
+    item_ids: tuple[str, ...]
+
+
+def resolve_stream_membership(
+    stream_slug: str,
+    work_items: Iterable,
+) -> StreamMembership:
+    """Resolve a stream's membership from work items carrying it in
+    ``tagged_streams`` (AC.REPOINT.1).
+
+    A stream's bound ``projects`` are the distinct ``belongs_to_project``
+    bindings of its tagged items (resolved THROUGH the graph, not a
+    register-local list); its backlog is the tagged items themselves.
+    Fail-soft on a malformed item (skipped). The resolution reads the
+    tags off the work items — the register's own ``projects`` / ``backlog``
+    are NOT consulted (the shim is dissolved, not duplicated)."""
+    projects: list[str] = []
+    item_ids: list[str] = []
+    for it in work_items:
+        try:
+            tags = tuple(getattr(it, "tagged_streams", ()) or ())
+        except Exception:  # noqa: BLE001 — fail-soft; skip malformed item
+            continue
+        if stream_slug not in tags:
+            continue
+        oid = str(getattr(it, "objective_id", "") or "")
+        if oid:
+            item_ids.append(oid)
+        proj = getattr(it, "belongs_to_project", None)
+        if proj and str(proj) not in projects:
+            projects.append(str(proj))
+    return StreamMembership(
+        stream=stream_slug,
+        projects=tuple(projects),
+        item_ids=tuple(item_ids),
+    )
+
+
 def load_user_scope_register(
     claude_home: Path | str | None = None,
 ) -> list[WorkStream]:

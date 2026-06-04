@@ -49,10 +49,21 @@ LEGAL_TRANSITIONS: dict[ObjectiveStatus, set[ObjectiveStatus]] = {
         ObjectiveStatus.achieved,
         ObjectiveStatus.abandoned,
         ObjectiveStatus.owner_pending,
+        # WMS increment 2 — `active → blocked` (a blocker surfaced;
+        # AC.WI.1). Additive, the `owner_pending` precedent: no existing
+        # transition is removed or altered.
+        ObjectiveStatus.blocked,
     },
     ObjectiveStatus.owner_pending: {
         ObjectiveStatus.active,
         ObjectiveStatus.achieved,
+        ObjectiveStatus.abandoned,
+    },
+    # WMS increment 2 — `blocked` is a non-terminal open state; it leaves
+    # back to `active` when the blocker clears, or to `abandoned` if the
+    # item is dropped while blocked (AC.WI.1). NOT terminal.
+    ObjectiveStatus.blocked: {
+        ObjectiveStatus.active,
         ObjectiveStatus.abandoned,
     },
     ObjectiveStatus.achieved: {

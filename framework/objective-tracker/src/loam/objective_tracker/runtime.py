@@ -51,11 +51,14 @@ from .events import (
     ParentClosed,
     ScopeBound,
     StatusTransitioned,
+    WorkEdge,
+    WorkEdgeCleared,
 )
 from .filter import ObjectiveFilter
 from .policies import is_legal, is_terminal
 from .projection import (
     ObjectiveProjectionData,
+    WorkEdgeRecord,
     project,
     projection_to_state_row,
 )
@@ -67,6 +70,7 @@ from .spec import (
     ParentCloseEventKind,
     ParentClosePolicy,
     ScopeSuccessCriterion,
+    WorkEdgeKind,
 )
 from .store import EventStore
 
@@ -174,6 +178,9 @@ class ObjectiveTracker:
                         owner=spec.owner,
                         parent_close_policy=spec.parent_close_policy,
                         lifted_from=spec.lifted_from,
+                        belongs_to_project=spec.belongs_to_project,
+                        tagged_streams=spec.tagged_streams,
+                        priority=spec.priority,
                     ),
                     span=span,
                 )
@@ -255,6 +262,37 @@ class ObjectiveTracker:
             ObjectiveStatus.owner_pending,
             evidence=evidence,
             operation="mark_owner_pending",
+        )
+
+    async def mark_blocked(
+        self, objective_id: str, *, evidence: str | None = None
+    ) -> ObjectiveProjection:
+        """Transition `active → blocked`: started but parked on a blocker
+        (WMS increment 2, AC.WI.1).
+
+        Distinct from `active` (in progress, unblocked) and
+        `owner_pending` (shipped, owner-blocked). `evidence` records what
+        the item is blocked on — optional, mirroring `mark_owner_pending`.
+        The unblocked-next query (AC.WI.EDGE.2) reads the edge graph; this
+        status is the lifecycle signal that an item is parked. Not
+        terminal; leaves back to `active` via :meth:`unblock`."""
+        return await self._transition(
+            objective_id,
+            ObjectiveStatus.blocked,
+            evidence=evidence,
+            operation="mark_blocked",
+        )
+
+    async def unblock(
+        self, objective_id: str, *, evidence: str | None = None
+    ) -> ObjectiveProjection:
+        """Transition `blocked → active`: the blocker cleared (WMS
+        increment 2, AC.WI.1)."""
+        return await self._transition(
+            objective_id,
+            ObjectiveStatus.active,
+            evidence=evidence,
+            operation="unblock",
         )
 
     async def mark_abandoned(
@@ -558,6 +596,189 @@ class ObjectiveTracker:
         return self._store.read_binding(scope_id) is not None
 
     # ------------------------------------------------------------------
+    # Public API: the relational graph (WMS increment 2 — AC.WI.EDGE.*)
+    # ------------------------------------------------------------------
+
+    async def record_edge(
+        self,
+        from_id: str,
+        *,
+        edge_kind: WorkEdgeKind,
+        to_id: str | None = None,
+        party: str | None = None,
+    ) -> ObjectiveProjection:
+        """Record a non-tree edge `from_id --edge_kind--> to_id`
+        (AC.WI.EDGE.1).
+
+        A `waits_on` edge may name an external ``party`` (with ``to_id``
+        left None) — "the launch waits on Eric". An item-to-item edge
+        names ``to_id``; the edge then surfaces on BOTH endpoints'
+        projections (the `from`'s `edges_out`, the `to`'s `edges_in`).
+        ``from_id`` must exist; an item-to-item edge's ``to_id`` must
+        exist too (no edge fabrication against a non-existent item —
+        AC.WI.EDGE.3). Re-recording an active edge is idempotent.
+
+        Returns the updated projection of ``from_id``."""
+        if to_id is None and party is None:
+            raise ValueError(
+                "record_edge requires either a to_id (item-to-item edge) "
+                "or a party (external-party wait)"
+            )
+        if self._store.read_state(from_id) is None and not self._store.events_for(from_id):
+            raise UnresolvedObjectiveError(from_id)
+        if to_id is not None:
+            if self._store.read_state(to_id) is None and not self._store.events_for(to_id):
+                raise UnresolvedObjectiveError(to_id)
+        async with await self._lock_for(from_id):
+            ev = self._append(
+                WorkEdge(
+                    objective_id=from_id,
+                    to_id=to_id,
+                    edge_kind=edge_kind,
+                    party=party,
+                )
+            )
+            self._fan_out(from_id, ev)
+            self._persist(self._project(from_id))
+        return self.get(from_id)  # type: ignore[return-value]
+
+    async def clear_edge(
+        self,
+        from_id: str,
+        *,
+        edge_kind: WorkEdgeKind,
+        to_id: str | None = None,
+        party: str | None = None,
+    ) -> ObjectiveProjection:
+        """Retract a previously-recorded edge (AC.WI.EDGE.1).
+
+        Matches on (``from_id``, ``to_id``, ``edge_kind``, ``party``);
+        after clearing, the edge no longer surfaces on either endpoint.
+        Clearing an edge that was never recorded is a no-op (idempotent —
+        AC.WI.EDGE.3). Returns the updated projection of ``from_id``."""
+        async with await self._lock_for(from_id):
+            ev = self._append(
+                WorkEdgeCleared(
+                    objective_id=from_id,
+                    to_id=to_id,
+                    edge_kind=edge_kind,
+                    party=party,
+                )
+            )
+            self._fan_out(from_id, ev)
+            self._persist(self._project(from_id))
+        return self.get(from_id)  # type: ignore[return-value]
+
+    def _edges_in_for(self, objective_id: str) -> tuple[WorkEdgeRecord, ...]:
+        """Resolve the active edges pointing AT ``objective_id`` by folding
+        every item's outgoing edges (AC.WI.EDGE.1).
+
+        Enumerates the source objective-ids from the EVENT LOG (not the
+        projection cache) so incoming edges reconstruct from events alone
+        after a cold rebuild — the single-source-of-truth invariant
+        (AC.WI.2). A per-stream projection only sees its own outgoing
+        edges; this scans every other item's stream so an edge surfaces
+        on the `to` endpoint too. Cleared edges are already removed by the
+        per-item fold, so only currently-active incoming edges return."""
+        source_ids: set[str] = set()
+        for ev in self._store.all_events():
+            other_id = getattr(ev, "objective_id", None)
+            if other_id is not None and other_id != objective_id:
+                source_ids.add(other_id)
+        incoming: list[WorkEdgeRecord] = []
+        for other_id in source_ids:
+            proj = self._project(other_id)
+            for e in proj.edges_out:
+                if e.to_id == objective_id:
+                    incoming.append(e)
+        return tuple(incoming)
+
+    def unblocked_next(
+        self,
+        *,
+        authored_by: str | None = None,
+    ) -> tuple[ObjectiveProjection, ...]:
+        """Return the open work items that are NOT waiting on any
+        unresolved blocker — the "next unblocked thing" query
+        (AC.WI.EDGE.2).
+
+        An item is "next" iff it is OPEN (proposed / active / blocked /
+        owner_pending — not terminal) AND has no active `waits_on` edge
+        AND is not the `to` of an active `blocks` edge from an OPEN item.
+        An item whose only outstanding wait is on an EXTERNAL party is
+        reported as waiting-on-other (NOT next) — it is excluded from the
+        unblocked set. Method-level note: terminal blockers do not count
+        (a `waits_on` an achieved/abandoned item no longer blocks)."""
+        open_states = {
+            ObjectiveStatus.proposed,
+            ObjectiveStatus.active,
+            ObjectiveStatus.blocked,
+            ObjectiveStatus.owner_pending,
+        }
+        rows = self._store.list_states(authored_by=authored_by)
+        all_open = [
+            self.get(r["objective_id"])
+            for r in rows
+            if (g := self.get(r["objective_id"])) is not None
+            and g.status in open_states
+        ]
+        open_ids = {p.objective_id for p in all_open}
+
+        def _is_unresolved_target(target_id: str | None) -> bool:
+            if target_id is None:
+                return False
+            tgt = self.get(target_id)
+            return tgt is not None and tgt.status in open_states
+
+        out: list[ObjectiveProjection] = []
+        for proj in all_open:
+            waiting = False
+            # The item's own waits_on edges: unresolved if the target is
+            # an open item, OR if it waits on an external party.
+            for e in proj.edges_out:
+                if e.edge_kind == WorkEdgeKind.waits_on:
+                    if e.party is not None or _is_unresolved_target(e.to_id):
+                        waiting = True
+                        break
+            if waiting:
+                continue
+            # An active `blocks` edge from an OPEN item targeting this
+            # item means this item is blocked (the inverse direction).
+            for e in self._edges_in_for(proj.objective_id):
+                if (
+                    e.edge_kind == WorkEdgeKind.blocks
+                    and e.from_id in open_ids
+                ):
+                    waiting = True
+                    break
+            if not waiting:
+                out.append(proj)
+        return tuple(out)
+
+    def waiting_on_other(self) -> tuple[ObjectiveProjection, ...]:
+        """Return the open items whose only outstanding wait is on an
+        EXTERNAL party (AC.WI.EDGE.2) — reported as waiting-on-other, not
+        as next. An item with a `waits_on` edge that names a ``party`` is
+        in this set."""
+        open_states = {
+            ObjectiveStatus.proposed,
+            ObjectiveStatus.active,
+            ObjectiveStatus.blocked,
+            ObjectiveStatus.owner_pending,
+        }
+        out: list[ObjectiveProjection] = []
+        for r in self._store.list_states():
+            proj = self.get(r["objective_id"])
+            if proj is None or proj.status not in open_states:
+                continue
+            if any(
+                e.edge_kind == WorkEdgeKind.waits_on and e.party is not None
+                for e in proj.edges_out
+            ):
+                out.append(proj)
+        return tuple(out)
+
+    # ------------------------------------------------------------------
     # Public API: queries
     # ------------------------------------------------------------------
 
@@ -565,7 +786,14 @@ class ObjectiveTracker:
         events = self._store.events_for(objective_id)
         if not events:
             return None
-        return public_projection(project(objective_id, events))
+        # WMS increment 2 — resolve the incoming edges (where this item is
+        # the `to`) so an edge surfaces on BOTH endpoints (AC.WI.EDGE.1).
+        # The per-stream projection only carries this item's outgoing
+        # edges; incoming edges are folded from the other items' streams.
+        edges_in = self._edges_in_for(objective_id)
+        return public_projection(
+            project(objective_id, events), edges_in=edges_in
+        )
 
     def list(
         self,

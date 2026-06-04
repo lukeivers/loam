@@ -38,6 +38,7 @@ from .spec import (
     ParentClosePolicy,
     ParentCloseEventKind,
     TimeBound,
+    WorkEdgeKind,
 )
 
 
@@ -80,6 +81,17 @@ class ObjectiveCreated(_EventBase):
     lifted_from: LiftedFrom | None = None
     """Amendment #38: optional source-document provenance pointer.
     Pre-widening events deserialise with `None` (additive default)."""
+
+    # ---- WMS increment 2 — the work-item field-groups (AC.WI.1) -------
+    #
+    # Additive optional payload fields mirroring the `ObjectiveSpec`
+    # additions. The defaults preserve the pre-increment-2 event shape:
+    # a pre-widening `ObjectiveCreated` row deserialises with
+    # `belongs_to_project=None`, `tagged_streams=()`, `priority=None`
+    # (the D8 round-trip).
+    belongs_to_project: str | None = None
+    tagged_streams: tuple[str, ...] = ()
+    priority: str | None = None
 
 
 class StatusTransitioned(_EventBase):
@@ -146,6 +158,56 @@ class ParentClosed(_EventBase):
     applied_policy: ParentClosePolicy
 
 
+# ---- WMS increment 2 — the relational graph (WorkEdge events) --------
+#
+# D-WMS2.2: a non-tree relational edge is a typed event in THIS
+# append-only log (a new kind alongside `ObjectiveCreated`), NOT a side
+# table and NOT an in-spec field-list. The event envelope's
+# `objective_id` is the edge's `from_id` (the edge lives in the `from`
+# item's stream); `to_id`, `edge_kind`, and the optional external
+# `party` carry the relationship. A `WorkEdge` records an edge; a
+# matching `WorkEdgeCleared` (same `from_id`/`to_id`/`edge_kind`)
+# retracts it. The projection folds the pair so a cleared edge no longer
+# surfaces (AC.WI.EDGE.1) — and the whole graph rebuilds from the events
+# alone (AC.WI.2 / the D8 round-trip). An edge as a mutable spec field
+# would contradict the frozen spec; an edge in a side table would break
+# "projection rebuilds from events alone."
+
+
+class WorkEdge(_EventBase):
+    """Record a non-tree relational edge `from_id --kind--> to_id`.
+
+    The event envelope `objective_id` is the edge's `from_id`. A
+    `waits_on` edge may name an external `party` (e.g. "Eric") with
+    `to_id` left empty — "the launch waits on an external party". For an
+    item-to-item edge `to_id` names the other work item and `party` is
+    None (AC.WI.EDGE.1).
+    """
+
+    kind: Literal["work_edge"] = "work_edge"
+    to_id: str | None = None
+    edge_kind: WorkEdgeKind
+    party: str | None = None
+    """Optional external party a `waits_on` edge names (the work item is
+    waiting on someone/something outside the work graph). When set,
+    `to_id` is typically None — the wait is on the party, not an item."""
+
+
+class WorkEdgeCleared(_EventBase):
+    """Retract a previously-recorded `WorkEdge` (AC.WI.EDGE.1).
+
+    Matches on `from_id` (the envelope `objective_id`) + `to_id` +
+    `edge_kind` + `party`; after clearing, the edge no longer surfaces on
+    either endpoint's projection. The append-only retraction (rather than
+    a row delete) keeps the event log the single source of truth and
+    gives increment 4's edge self-heal a clean mutation path."""
+
+    kind: Literal["work_edge_cleared"] = "work_edge_cleared"
+    to_id: str | None = None
+    edge_kind: WorkEdgeKind
+    party: str | None = None
+
+
 # ---- discriminated union ---------------------------------------------
 
 
@@ -156,6 +218,8 @@ ObjectiveEvent = Annotated[
         CriterionEvaluated,
         ScopeBound,
         ParentClosed,
+        WorkEdge,
+        WorkEdgeCleared,
     ],
     Field(discriminator="kind"),
 ]
@@ -167,6 +231,8 @@ _EVENT_CLASSES = [
     CriterionEvaluated,
     ScopeBound,
     ParentClosed,
+    WorkEdge,
+    WorkEdgeCleared,
 ]
 
 

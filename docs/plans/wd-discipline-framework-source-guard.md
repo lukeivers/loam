@@ -159,16 +159,44 @@ LOCAL SEAL ONLY — no push, no publish.
 
 Populated at build + seal time.
 
-- D-Q.1 — signal: canonical-identity-by-remote-URL — SHA: `<feat>` / `<seal>`
-- D-build.1 — home: framework/safety-layer/ (shipped) — SHA: `<feat>`
-- D-build.2 — classification: prefix + workspace-local exclusion — SHA: `<feat>`
-- D-build.3 — override idiom: safety-layer toggle — SHA: `<feat>`
+- D-Q.1 — signal: canonical-identity-by-remote-URL — feat `e8a25a7a`, sealed `7ebbe45a`.
+- D-build.1 — home: framework/safety-layer/ (shipped) — feat `e8a25a7a`.
+- D-build.2 — classification: prefix + workspace-local exclusion — feat `e8a25a7a`.
+- D-build.3 — override idiom: safety-layer toggle — feat `e8a25a7a`.
 
-Commit ladder SHAs (backfilled post-seal):
-- plan+manifest: `<sha>`
-- feat (BASELINE): `<sha>`
-- apply: `<sha>`
-- seal: `<sha>`
+Commit ladder SHAs:
+- plan+manifest: `9f7f4e63` (+ `d28b521e` baseline-pin, `e5386d12` schema-v3 bump).
+- feat (BASELINE): `e8a25a7a`.
+- apply: `039d4a31`.
+- seal: `7ebbe45a` (LOCAL only — not pushed, not published).
+
+Branch: `build/fbm-89-wd-guard` (isolated worktree off main `32f36291`,
+per task #87). Component suite at sealed HEAD: 178/178 green (28 new
+WDGUARD tests incl. AC.WDGUARD.S outcome-altitude).
+
+### §14.1 Post-seal dry-run note (NOT a fence breach)
+
+`loam amend seal` ran the seal-tests + sweep GREEN and landed the seal
+commit `7ebbe45a`; the subsequent `loam amend apply --dry-run` gate
+reported `MISSING_ADMISSION` for the two paths the seal itself wrote:
+
+- `framework/safety-layer/seals/SEAL_COMMIT.wd-discipline-framework-source-guard`
+- `framework/safety-layer/tests/SEAL_COMMIT`
+
+Root cause (verified): `loam_amend/dry_run.py` reads a component's
+admitted prefixes from the seal-test's `allowed_prefixes` binding.
+`framework/safety-layer/`'s seal-test is STRUCTURAL (A15/A17/A18
+invariants — no `allowed_prefixes` / `allowed_files` / `allowed`
+binding), so the dry-run never adds the component's own partner-prefix
+`framework/safety-layer/` to the admitted set (unlike `apply.py`, which
+DOES add `_partner_prefix`). The seal's own bookkeeping writes then
+read as un-admitted. The complete `039d4a31..7ebbe45a` diff is EXACTLY
+those two seal-written files — no source-code path outside the fence.
+This is a `dry_run.py` structural-seal-test gap (task #50 family:
+"seal-mechanism hardening — 3 findings"), NOT a breach in this work.
+Per the no-`--amend` CDC the seal commit is left in place. Surfaced to
+the dispatcher for the seal-mechanism hardening backlog; the local
+seal is complete and correct.
 
 ## §15 Backwards-compat verification
 

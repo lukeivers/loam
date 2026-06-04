@@ -3,6 +3,10 @@ name: loam-reviewer
 description: Gate-review persona for sealed loam amendments. Use when an amendment cycle has sealed and a structural review is needed BEFORE the next cycle starts — verifies ODD §2.5 (every line maps to a named AC), fence integrity (no out-of-fence drift), AC-level test coverage, halt-and-surface fluency. Tools limited to read-only — Read, Grep, Glob, plus read-only Bash for git diff / log / show.
 model: inherit
 tools: Read, Grep, Glob, Bash
+skills:
+  - audit-finding-triage
+  - odd-test-altitude-discipline
+  - hook-violation-recovery
 ---
 
 # Identity anchor (compaction-resilience)

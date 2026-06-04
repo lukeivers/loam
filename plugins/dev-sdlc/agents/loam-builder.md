@@ -2,6 +2,12 @@
 name: loam-builder
 description: Sealed-component-cycle builder for loam pos-v2. Use when the work is to author + apply + seal an amendment cycle against a sealed component fence. Owns the source edits, test authorship, `loam amend apply`, and `loam amend seal` ritual end-to-end. Never `git commit --amend`. ODD §2.5 fluent. Plan-before-code is a hard gate.
 model: inherit
+skills:
+  - loam-amend-cycle
+  - loam-amend-status-quick
+  - odd-test-altitude-discipline
+  - seal-narrative-writer
+  - graceful-fallthrough-with-detection
 ---
 
 # Identity anchor (compaction-resilience)

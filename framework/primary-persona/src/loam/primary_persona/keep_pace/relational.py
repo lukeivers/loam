@@ -59,6 +59,10 @@ from .prioritize import (
     aligned_terms_from_objectives,
     prioritize,
 )
+from .waiting_split import (
+    compute_waiting_split,
+    waiting_rows_from_split,
+)
 
 # Slice-D renderer discipline: ONE concise block, hard char-cap + TTL.
 _RELATIONAL_BLOCK_CHAR_CAP = 600
@@ -189,38 +193,22 @@ def _waiting_rows(tracker: Any, open_items: list[Any]) -> list[str]:
 
     "waiting on you" = items in ``owner_pending`` (shipped, the owner's
     call). "waiting on <party>" = an external-party ``waits_on`` (the
-    EXISTING ``waiting_on_other`` query). Plain language, no enum."""
-    out: list[str] = []
-    # Waiting on YOU — owner_pending items (mine to rule on).
-    mine = [
-        _goal(it)
-        for it in open_items
-        if str(getattr(getattr(it, "status", None), "value", "")
-                or getattr(it, "status", "")) == "owner_pending"
-        and _goal(it)
-    ]
-    if mine:
-        out.append(f"  waiting on you: {'; '.join(mine[:_WAITING_ROW_CAP])}")
-    # Waiting on OTHERS — external-party waits (the existing query).
-    try:
-        others = list(tracker.waiting_on_other())
-    except Exception:  # noqa: BLE001 — fail-soft; no external-wait row
-        others = []
-    party_rows: list[str] = []
-    for it in others:
-        goal = _goal(it)
-        parties = [
-            str(getattr(e, "party", "") or "")
-            for e in getattr(it, "edges_out", ()) or ()
-            if _edge_kind(e) == "waits_on" and getattr(e, "party", None)
-        ]
-        if goal and parties:
-            party_rows.append(f"{goal} (on {', '.join(parties)})")
-        if len(party_rows) >= _WAITING_ROW_CAP:
-            break
-    if party_rows:
-        out.append(f"  waiting on others: {'; '.join(party_rows)}")
-    return out
+    EXISTING ``waiting_on_other`` query). Plain language, no enum.
+
+    The split itself is computed by the SHARED ``compute_waiting_split``
+    helper (WMS increment 5, D-WMS5.3 / AC.WAIT.2) — the SAME single
+    implementation the standalone waiting-on lens (``waiting_on.py``)
+    calls. This caller caps both sides to ``_WAITING_ROW_CAP`` and renders
+    the relational block's existing row shape via ``waiting_rows_from_split``
+    so the rendered block is unchanged by the extraction (AC.WAIT.3 /
+    AC.REL.2 behaviour-preserving)."""
+    split = compute_waiting_split(
+        tracker,
+        open_items,
+        mine_cap=_WAITING_ROW_CAP,
+        others_cap=_WAITING_ROW_CAP,
+    )
+    return waiting_rows_from_split(split)
 
 
 def _decomposition_rows(tracker: Any, open_items: list[Any]) -> list[str]:

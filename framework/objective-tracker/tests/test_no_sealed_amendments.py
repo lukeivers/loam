@@ -48,7 +48,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              seal-diff test + SEAL_COMMIT sidecar; BASELINE pins at
 #              the pre-amendment tip (HEAD~1 of the amendment commit,
 #              mirroring amendments #34 / #35 / #36 / #37).
-BASELINE = "ad744a2eb5c09981cdebdd489dae772f8993c997"
+BASELINE = "23282c9edca5be96030903bcc040d14ad52cbee5"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

@@ -25,7 +25,7 @@ amendment:
 # ★ OWNER product-shape calls surfaced (plan §3): D-INTK.2 (intake aggressiveness default
 # + auto-create-vs-propose) + D-INTK.3 (dedup-against-existing behavior + conservative
 # bias). The rest are autonomous method-calls.
-baseline: "BUILD_TIME_TIP"
+baseline: "e0afa9c1b3b9f52d79b4b206db4168f3baeffe60"
 
 plan: docs/plans/wms-increment-3-intake-conversational-work-capture.md
 

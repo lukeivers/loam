@@ -288,3 +288,44 @@ writer's separateness proves a maintenance cost); the edge-MUTATING relational-g
 heal against FBM ground truth (#71). Increment 6 adds NO store, field, edge, lifecycle,
 lens, or #34-taxonomy area — it is one resolver + one fence-respecting writer + one choice-
 aware registration edit on `primary-persona`.
+
+## §14 — Method-decision register
+
+The ★ owner product-shape calls (plan §3) were ruled as recommended and
+realised as built:
+
+- **D-WMS6.3 (REPLACE-with-a-multi-select-set):** choosing a lens REPLACES
+  the always-on inc-4 default-set; the resolver returns a SET, so a power
+  user expresses "add" as "choose a larger set," and the default-set is
+  never empty. Built: the per-turn surface registers exactly the chosen
+  lens(es); un-chosen lenses keep their on-demand render entry points.
+- **D-WMS6.4 (WMS-area-scoped writer, no taxonomy widen):** the switch
+  writer re-emits the #34 matrix line-shape via `render_matrix` + a locked
+  `Cell` WITHOUT routing through `apply_override` (which rejects the
+  `work-tracking` area) and WITHOUT widening `AIM_AREAS` or the
+  workspace-bootstrap seed-writer. The cleaner taxonomy-widening end-state
+  is a named SEPARATE workspace-bootstrap + interaction-model follow-on.
+- **D-WMS6.5 (exposure-derived default lens):** mapped to the EXISTING
+  `technical-exposure` axis — `plain` → on-my-plate (simplest actionable),
+  `open` → work-streams (broadest openness default), `deep` → the broad
+  set / an explicit pick. No new #34 signal.
+- **D-WMS6.6 (autonomous-write-after-plain-confirm):** a plain-language
+  ask is treated as an explicit #34 statement; the plain confirmation is
+  the verify step, no separate ratification gate.
+
+The autonomous method-calls (D-WMS6.1 choice-as-a-read-only-#34-cell,
+D-WMS6.2 deterministic-fail-open-resolver) were built as the architecture +
+the intake precedent already ruled.
+
+Fence held: `interaction_model.py` (the #34 engine) + the objective-tracker
+store were CONSUMED read-only; no #34-taxonomy mutation, no store mutation,
+no new lens. The only behavioural change to an existing surface is the
+choice-aware `session_start_emitter.py` registration, fail-open to the
+inc-4 always-on trio (never zero blocks).
+
+### Commit SHAs
+
+- Amendment commit: `2ec0ecd21997f7591d2d21ba05a21ebcdc8e6f96` —
+  `chore(amend): wms-increment-6-per-user-lens-choice manifest+apply — primary-persona BASELINE+sidecar bump to a236e49`
+- Seal commit: `91d9a6bff80c5e7f070719168471a2945b031577` —
+  `chore(seals): wms-increment-6-per-user-lens-choice — primary-persona at 2ec0ecd`

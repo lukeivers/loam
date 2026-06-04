@@ -1,0 +1,55 @@
+# User-state migration — v1.2.0 (the Work Management System MINOR)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.2.0 is the MINOR
+# increment over the published v1.1.0, bundling the 7-increment Work
+# Management System roadmap (task #84) as a single linear stack. The
+# objective sentence: "loam has a unified, work-items-first Work Management
+# System — one event-sourced work graph surfaced through multiple
+# per-user-chosen lenses (streams / projects / goals / plate / waiting-on /
+# relational), with conversational intake, transparent derived
+# prioritization, and action-ending analytics."
+
+version: v1.2.0
+slug: v1-2-0-work-management-system
+slice: v1.2.0 MINOR (WMS 7-increment roadmap — unified L1 work model + projects/streams/goals/plate/waiting-on/relational lenses + intake + prioritization + per-user lens choice + analytics)
+date: 2026-06-04
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.2.0 adds the Work Management System: it extends the sealed
+  objective_tracker (additively, under a manifest — no read-contract
+  widened) to the §2a work-item schema (additive work-item fields,
+  blocks-on/waits-on edges + an unblocked_next query, cold-rebuild-from-
+  events), and lands a family of read-only lens modules in the
+  primary-persona keep-pace package plus a LitRPG stream-source deriver in
+  tools/loam. NONE of these touch a user's pre-existing stored .loam/
+  on-disk state. (1) The objective_tracker schema additions are additive +
+  event-sourced: a cold rebuild from the existing event log reconstructs
+  the projection with the new fields defaulted; no existing persisted
+  event, projection cursor, or applied-migration marker is rewritten, and
+  the work-item store is created lazily on first use. (2) The WMS lenses
+  (streams / projects / goals / plate / waiting-on / relational / analytics)
+  are live computed queries over the work graph — they derive at read time
+  and write no new source-of-truth user artifact (the streams-lens register
+  is lens-definition + attention config, the pre-L1 shim re-pointed at the
+  L1 graph in increment 2). (3) Intake creates work items in a `proposed`
+  state on confirm; it adds no schema migration of pre-existing state. (4)
+  Per-user lens choice reads the existing #34 interaction-model
+  `work-tracking` profile; it persists no new user-state requiring
+  migration and fails open to a deterministic default. (5) The lockstep
+  version bump 1.1.0 -> 1.2.0 changes pyproject version fields +
+  docs/ACTIVE_MINOR + the meta-package --version literal; metadata, not
+  user state. A user upgrading from v1.1.0 to v1.2.0 needs no state
+  migration. Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a pure
+# code/data revert; no data move. (The additive event-sourced work-item
+# fields are forward-only-defaulted, never destructive.)
+reversible: true
+removes_user_state: false
+idempotent: true

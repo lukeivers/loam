@@ -1,0 +1,100 @@
+# WMS Increment 2 — the unified WORK-ITEM model (L1) + the PROJECTS lens
+
+Per `docs/plans/wms-increment-2-unified-work-item-model-and-projects-lens.md` and the
+parent architecture `docs/design/work-management-system-architecture.md` (roadmap item
+2; owner-greenlit "build it all the way through", Luke 13704). Two-component amendment:
+the SEALED `objective-tracker` (L1 extension, ADDITIVE-ONLY) + `primary-persona`
+keep-pace (the projects lens + the work-streams re-point). Composes on objective_tracker
++ FBM Slice C/D + increment-1's streams (Lens-1: extend, don't duplicate).
+
+The unified WORK-ITEM model (L1): the architecture's central insight is multi-lens over
+ONE underlying work model — streams/projects/goals/plate/waiting-on are VIEWS, not five
+stores that drift five ways. This increment lands the L1 foundation by EXTENDING the
+sealed event-sourced `objective_tracker` (WMS-D1 confirmed — verified on disk it already
+carries 6 of the 7 work-item field-groups: identity, the 5-state lifecycle +
+owner_pending, the single-parent forest + trace_to_root, criteria, LiftedFrom provenance,
+and an event-sourced replay store). What this increment ADDS, all additive (the
+amendment-#38 LiftedFrom + R2 owner_pending widening precedent, both D8-round-trip
+preserving):
+
+  - **The relational graph** — `blocks` / `waits-on` / `relates-to` edges (the structure
+    memory has no concept of), as typed `WorkEdge`/`WorkEdgeCleared` events in the
+    EXISTING append-only log (NOT a side table — keeps the projection-rebuilds-from-events
+    D8 round-trip; NOT in-spec fields — the spec is frozen). A `waits-on` may name an
+    external party ("the launch waits on Eric"). The unblocked-next query reads the graph
+    to answer "what is the next unblocked thing" — a question memory cannot answer.
+  - **Project-binding + stream-tags + priority** — additive optional `belongs_to_project`,
+    `tagged_streams`, `priority` fields (default-preserving). `priority` is populated from
+    the EXISTING tracker_context open-loop key this cycle; the multi-signal WMS-D5
+    weighting is increment 4, not here.
+  - **A `blocked` lifecycle member** — additive enum value (the R2 owner_pending
+    precedent).
+
+The PROJECTS lens: a VIEW over the graph (filter `belongs-to-project` → group by project
+→ sort by priority → render one capped block via the Slice-D renderer discipline). For a
+project bound to a registered FBM project its STATE is composed from a FRESH
+`derive_project_state` call (Slice C) — derived-not-stored, never stale. A project bound
+to no registered FBM project surfaces a staleness/cadence next-action and is honestly
+marked "no ground-truth project bound" (the architecture §5 gap; loam + cairn are the only
+registered projects today). Computed, not materialized (WMS-D2): a live query + the
+per-turn Slice-D TTL cache; a materialized index is a named halt-trigger escape hatch,
+not built speculatively.
+
+The streams re-point (WMS-D7): the work-streams lens resolves a stream's membership from
+work-items carrying that stream in `tagged_streams`, NOT a register-local backlog list;
+the `WORK-STREAMS.md` register keeps ONLY lens-presentation config (attention
+active/deep-dive/paused; nest-under). A work item tagged with a stream AND bound to a
+project appears in BOTH lenses without being stored twice — the architecture's whole
+point. This dissolves the OBJECTIVES-vs-WORK-STREAMS duplication increment-1's plan §10 #4
+flagged.
+
+⚠ Load-bearing pre-build ruling (plan §10 RF #1 / §8 halt #1 / D-WMS2.4): increment 1 is
+NOT yet built (`work_streams.py` confirmed absent on disk; the incr-1 plan is PLAN-ONLY;
+task #70's "completed" marks the PLAN sealed, not the build — git/filesystem ground truth
+over task-note per feedback_published_state_only_from_git_refs). The re-point cannot
+re-point a store that does not exist. Two viable orderings, Luke rules: (a) FOLD-FORWARD
+(recommended) — build the streams lens directly graph-backed inside this increment, the
+pre-L1 shim never ships, AC.REPOINT.* satisfied by construction, strictly less total work;
+(b) build incr-1 first (its plan is ready) with the WMS-D7 shim, then re-point here —
+valid only if the cheapest-possible incr-1 proof is wanted shipped before L1.
+
+ACs:
+  - AC.WI.1 — additive schema (belongs-to-project, tagged-streams, priority); a record
+    without them is well-formed; every pre-existing record deserialises unchanged (D8).
+  - AC.WI.2 — full state including edges reconstructs from the event log alone after a
+    cold projection rebuild (single-source-of-truth preserved).
+  - AC.WI.EDGE.1 — blocks/waits-on/relates-to edge recordable (waits-on may name an
+    external party), surfaces on both endpoints, clearable, gone after clearing.
+  - AC.WI.EDGE.2 — the unblocked-next query returns items not waiting on any unresolved
+    blocker; an item waiting on an external party is reported waiting-on-other, not next.
+  - AC.WI.EDGE.3 — no edge fabricated where none recorded; a binding to an unregistered
+    FBM project synthesizes no relationship (honest-graph invariant).
+  - AC.PROJ.1 — the projects lens filters belongs-to-project → groups → sorts by priority
+    → renders one capped block via Slice-D discipline (no second wall of text).
+  - AC.PROJ.2 — a registered-FBM-bound project's STATE composes from a FRESH
+    derive_project_state; changing repo ground truth and re-reading reflects it without
+    editing any register (derived-not-stored).
+  - AC.PROJ.3 — an unbound project surfaces a staleness/cadence next-action + is marked
+    "no ground-truth project bound", never faking STATE.
+  - AC.REPOINT.1 — the streams lens resolves membership from tagged-streams, not a
+    register-local list; an item tagged with a stream AND bound to a project appears in
+    BOTH lenses without double-storage.
+  - AC.REPOINT.2 — post re-point, the register carries only attention/nest config; the
+    stream's binding/backlog is no longer a register-owned parallel list; no register
+    rewrite required.
+  - AC.WMS2.LIVE.1 (outcome-altitude) — ONE real keep-pace turn against the LIVE loam +
+    cairn repos, NO pre-arranged state: work surfaces through BOTH the projects lens AND
+    the re-pointed streams lens; an item belonging to a project AND tagged with a stream
+    appears in both; the project's STATE is derived live from derive_project_state; both
+    lenses read the SAME work-item store (no parallel store, no stored-stale status).
+    Production entry points only, no fixtures.
+
+Fence: objective-tracker is ADDITIVE-ONLY (changing an existing field/event/filter-key or
+breaking the D8 round-trip → HALT, plan §8 #2); primary-persona must not modify the
+OBJECTIVES.md read-contract (§8 #4) nor widen the read-only TrackerClient Protocol into a
+write surface. No scope creep into increments 3–7 (intake / WMS-D5 weighting / the other
+lenses / lens-choice wiring / analytics → HALT, §8 #6).
+
+No ODD violation in surrounding code; every added path traces to a named AC
+(AC.WI.*/AC.WI.EDGE.*/AC.PROJ.*/AC.REPOINT.*/AC.WMS2.LIVE.1), no defensive code for
+unnamed cases.

@@ -327,3 +327,57 @@ belong in the workspace's `.scratch/` (gitignored via
 `.scratch/.gitignore`, already in place) so they're (a) visible to
 the human operator while browsing the repo, (b) survive session
 boundaries on disk, and (c) don't disappear on system reboot.
+
+---
+
+## Operating discipline (always-on)
+
+These rules govern how the **primary (interactive) session** spends
+its turns. They are durable doctrine; a workspace that has already
+seen one of them fail to hold on discipline alone should back it with
+structural enforcement (a Claude Code hook on the relevant event)
+rather than a second behavioural promise. The doctrine below is
+enforcement-agnostic — each workspace wires whatever mechanism its
+platform offers; the rule is the same regardless of how it is enforced.
+
+### Heavy generative/mutating work is dispatched
+
+> **The primary session does NOT grind heavy generative or mutating
+> work in-thread. Authoring files, multi-step builds, and
+> multi-artefact generation are DISPATCHED to a background agent.**
+> Read-only investigation, diagnosis, and conversation (reading
+> files, searching, running diagnostics, answering questions) are
+> EXEMPT and may use many in-thread tool calls — the dividing line is
+> work-TYPE (generative/mutating vs read-only/diagnostic), not raw
+> tool-call count.
+
+The persona's own legitimate bookkeeping is exempt: scratch space,
+memory files, plan-docs, the workspace's own instruction and settings
+files, and harness-infrastructure config. Small surgical edits are
+always frictionless. A workspace that enforces this structurally
+should warn on the first heavy deliverable write to a non-exempt path
+and block the runaway pattern, with an explicit escape hatch for the
+cases where heavy in-thread authoring genuinely is correct.
+
+### A failed agent is fixed at the agent path, never absorbed in-thread
+
+> **When a background agent FAILS (content-filter block, crash,
+> timeout), the correct response is to diagnose-and-fix the agent
+> path — re-dispatch with a workaround, split the work, adjust the
+> brief — NEVER to fall back to grinding the work out in-thread.**
+
+A failed dispatch is a signal to fix the dispatch, not a license to
+absorb the work into the primary session.
+
+### Compaction is a hardened risk point
+
+> **Context compaction can silently thin load-bearing discipline.
+> Immediately after any compaction, the core operating discipline and
+> the current active-work state are re-injected so the compaction
+> cannot quietly drop them.**
+
+Discipline that matters across a compaction lives in enforcement that
+survives the compaction event, not only in fragile in-context memory.
+A workspace that enforces this structurally should front-load a
+preservation block before the summarizer runs and re-inject the full
+discipline when a session resumes from a compaction.

@@ -44,7 +44,7 @@ amendment:
 # unblocked-next surfacing shape — single-top-plus-short-tail vs a flat dump). The rest are
 # autonomous method-calls. The #71 edge-mutation graph self-heal is explicitly DEFERRED
 # (D-PRI.5 / plan §10 RF #2): inc-4 READS FBM STATE as a priority signal only.
-baseline: "BUILD_TIME_TIP"
+baseline: "8e29e4c7a17b381fbcbc13e8b1f9ee826bd9c9c0"
 
 plan: docs/plans/wms-increment-4-prioritization-and-relational-web.md
 

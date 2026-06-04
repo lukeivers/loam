@@ -264,6 +264,27 @@ def build_session_composer(
         except Exception:  # noqa: BLE001 — AC46.2 graceful empty
             pass
 
+        # WMS increment 4 (AC.SURF.* / AC.WMS4.LIVE.1) — register the
+        # RELATIONAL lens at TriggerKind.turn alongside the projects +
+        # streams lenses. A SEPARATE named block: it turns the inc-2 edge
+        # graph + its unblocked_next/waiting_on_other/trace_to_root
+        # queries into the answers that make the graph valuable — the
+        # PRIORITIZED next-thing + its transparent reason (prioritize.py),
+        # what's blocked + on what, what's waiting on ME vs on OTHERS, and
+        # the decomposition tree — in ONE concise capped fail-soft block
+        # (the Slice-D discipline). The store is CONSUMED via its existing
+        # READ API, never modified (D-PRI.1). Registered fail-soft
+        # (AC46.2 graceful-empty) — a registration-time error simply omits
+        # the block.
+        try:
+            from .keep_pace.relational import (  # noqa: WPS433
+                register_relational_contributor,
+            )
+
+            register_relational_contributor(composer)
+        except Exception:  # noqa: BLE001 — AC46.2 graceful empty
+            pass
+
     # AC.MSC.2 (Gap A part b) — register the session-start
     # active-thread contributor at TriggerKind.session so a fresh
     # session reconstructs the most-recent active working thread from

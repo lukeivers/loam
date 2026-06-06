@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-egress-consent"
-version = "1.2.0"
+version = "1.3.0"
 description = "loam egress-consent — the privacy floor in front of EVERYTHING loam might send off the user's machine. A fail-closed, nothing-leaves-by-default release gate: every off-machine send is assembled into a reviewable EgressBundle, the user sees exactly what would leave in plain language (with an exact-bytes expansion), approves/redacts/declines per item, the approval binds to the content identity of the approved set (any mutation invalidates), and a single audited choke point refuses to release on any uncertainty. Plus the bug-report consumer: a non-tech user reports a problem with files/logs default-declined, secrets auto-redacted pre-review, and an always-available local-only fallback. Deterministic — no LLM in the gate."
 requires-python = ">=3.11"
 dependencies = [

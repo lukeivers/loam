@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-plugin-loam-skills"
-version = "1.2.0"
+version = "1.3.0"
 description = "Loam Skills plugin — SKILL.md packages capturing loam's load-bearing translation patterns. Discoverable by Claude Code via the standard <plugin>/skills/<skill-name>/SKILL.md filesystem walk; no bootstrap-time wiring required. Composes with raw Claude Code: a stranger can pip install this plugin and benefit from loam's patterns without committing to the full harness."
 requires-python = ">=3.13"
 # No runtime dependencies — the plugin ships static markdown files

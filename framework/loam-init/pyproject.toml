@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-init"
-version = "1.2.0"
+version = "1.3.0"
 description = "loam init subcommand — registers `loam init <path> --from <canonical>` as a loam.cli.subcommands entry-point. Wraps the existing workspace-bootstrap fresh-workspace primitive so the documented onboarding verb works end-to-end."
 requires-python = ">=3.11"
 dependencies = [

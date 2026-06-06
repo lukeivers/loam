@@ -75,20 +75,77 @@ Out of scope:
   bash_guard family owns Bash; this hook matches content tools only,
   matching `config_write_guard`'s scoping decision.
 
-## §4 Acceptance criteria
+## §4 — Acceptance criteria
 
-| AC ID | Outcome | Verification |
-|-------|---------|--------------|
-| AC.WDGUARD.1 | A `Write`/`Edit`/`MultiEdit` whose `file_path` is framework-source AND whose enclosing git repo is NOT canonical loam → hook emits `permissionDecision: deny` with a reason naming the WD-discipline rule + redirecting to canonical `/Users/lukeivers/loam`. | `test_AC_WDGUARD_1_*`: synthetic envelope at a simulated derived-workspace framework-source path (repo with non-canonical / empty origin) → assert deny + reason substrings. |
-| AC.WDGUARD.2 | The same framework-source edit under CANONICAL loam (origin matches `github.com/.../loam`) → hook ALLOWS (no deny; exit 0, empty stdout decision). | `test_AC_WDGUARD_2_*`: synthetic envelope at a canonical framework-source path → assert NO deny. |
-| AC.WDGUARD.3 | Workspace-local content — `.loam/`, `.scratch/`, `products/`, `workspace/`, memory files, `docs/plans/`, `CLAUDE.md`, `.claude/` infra — is ALLOWED everywhere, including inside a derived workspace. | `test_AC_WDGUARD_3_*`: parametrized envelopes for each workspace-local class at a derived-workspace path → assert NO deny for any. |
-| AC.WDGUARD.4 | Override hatch: env `LOAM_WD_GUARD=off` (or the all-safety toggle `LOAM_SAFETY_HOOKS=off`), or a `<repo>/.loam/.wd-guard-override` sentinel file, makes the hook no-op (ALLOW) even for the derived×framework-source cell; the bypass is logged. | `test_AC_WDGUARD_4_*`: derived×framework-source envelope WITH each override active → assert NO deny + a `toggled-off`/`override` log line. |
-| AC.WDGUARD.5 | Fail-open: malformed / empty / non-content-tool / unparseable-repo input → hook ALLOWS (exit 0, no deny), never wedges the session. | `test_AC_WDGUARD_5_*`: empty stdin, non-Write tool, missing file_path, and an unresolvable path → assert exit 0 + no deny for each. |
-| AC.WDGUARD.S | OUTCOME-ALTITUDE: the real hook script, invoked as a `python <script>` subprocess receiving a PreToolUse envelope on stdin (no pre-arranged internal state, no fakes), (a) BLOCKS a framework-source edit at a simulated derived-workspace path, (b) ALLOWS the same-shaped edit under a canonical-identity repo, (c) ALLOWS a workspace-state edit at the derived path, (d) ALLOWS the derived×framework-source edit when the override env is set. | `test_AC_WDGUARD_S_*`: builds two throwaway temp git repos (one with canonical-matching origin, one with non-canonical origin), runs the production script as a subprocess for each of the four sub-cases, asserts the production deny/allow shape on stdout. |
+ODD §2.5 heading-form AC declarations. Every line of the hook maps to
+one of AC.WDGUARD.{1,2,3,4,5}; AC.WDGUARD.S is the cross-cutting
+outcome-altitude proof through the production entry point. No unnamed
+branch.
 
-Every line of the hook maps to one of AC.WDGUARD.{1,2,3,4,5}; AC.WDGUARD.S
-is the cross-cutting outcome-altitude proof through the production
-entry point. No unnamed branch.
+### AC.WDGUARD.1
+
+A `Write`/`Edit`/`MultiEdit` whose `file_path` is framework-source AND
+whose enclosing git repo is NOT canonical loam → hook emits
+`permissionDecision: deny` with a reason naming the WD-discipline rule +
+redirecting to canonical `/Users/lukeivers/loam`.
+
+Verification — `test_AC_WDGUARD_1_*`: synthetic envelope at a simulated
+derived-workspace framework-source path (repo with non-canonical / empty
+origin) → assert deny + reason substrings.
+
+### AC.WDGUARD.2
+
+The same framework-source edit under CANONICAL loam (origin matches
+`github.com/.../loam`) → hook ALLOWS (no deny; exit 0, empty stdout
+decision).
+
+Verification — `test_AC_WDGUARD_2_*`: synthetic envelope at a canonical
+framework-source path → assert NO deny.
+
+### AC.WDGUARD.3
+
+Workspace-local content — `.loam/`, `.scratch/`, `products/`,
+`workspace/`, memory files, `docs/plans/`, `CLAUDE.md`, `.claude/` infra
+— is ALLOWED everywhere, including inside a derived workspace.
+
+Verification — `test_AC_WDGUARD_3_*`: parametrized envelopes for each
+workspace-local class at a derived-workspace path → assert NO deny for
+any.
+
+### AC.WDGUARD.4
+
+Override hatch: env `LOAM_WD_GUARD=off` (or the all-safety toggle
+`LOAM_SAFETY_HOOKS=off`), or a `<repo>/.loam/.wd-guard-override` sentinel
+file, makes the hook no-op (ALLOW) even for the derived×framework-source
+cell; the bypass is logged.
+
+Verification — `test_AC_WDGUARD_4_*`: derived×framework-source envelope
+WITH each override active → assert NO deny + a `toggled-off`/`override`
+log line.
+
+### AC.WDGUARD.5
+
+Fail-open: malformed / empty / non-content-tool / unparseable-repo input
+→ hook ALLOWS (exit 0, no deny), never wedges the session.
+
+Verification — `test_AC_WDGUARD_5_*`: empty stdin, non-Write tool,
+missing file_path, and an unresolvable path → assert exit 0 + no deny
+for each.
+
+### AC.WDGUARD.S
+
+OUTCOME-ALTITUDE: the real hook script, invoked as a `python <script>`
+subprocess receiving a PreToolUse envelope on stdin (no pre-arranged
+internal state, no fakes), (a) BLOCKS a framework-source edit at a
+simulated derived-workspace path, (b) ALLOWS the same-shaped edit under
+a canonical-identity repo, (c) ALLOWS a workspace-state edit at the
+derived path, (d) ALLOWS the derived×framework-source edit when the
+override env is set.
+
+Verification — `test_AC_WDGUARD_S_*`: builds two throwaway temp git
+repos (one with canonical-matching origin, one with non-canonical
+origin), runs the production script as a subprocess for each of the four
+sub-cases, asserts the production deny/allow shape on stdout.
 
 ## §5 Sealed-component fence
 
@@ -154,6 +211,21 @@ LOCAL SEAL ONLY — no push, no publish.
   guard-override` sentinel), not the in-thread-guard's `.scratch/`
   sentinel.** Consistency with the host component. Recommendation:
   ADOPT.
+
+## §13 — §status verdict matrix
+
+Post-seal AC verdicts (component suite at sealed HEAD `7ebbe45a`:
+178/178 green, incl. 28 new WDGUARD tests + the AC.WDGUARD.S
+outcome-altitude subprocess proof). Backfilled at the v1.3.0 release run.
+
+| AC ID | Verdict | Evidence |
+|-------|---------|----------|
+| AC.WDGUARD.1 | GREEN | `test_AC_WDGUARD_1_*` — derived×framework-source deny + reason substrings pass. |
+| AC.WDGUARD.2 | GREEN | `test_AC_WDGUARD_2_*` — canonical-identity framework edit ALLOWED (no deny). |
+| AC.WDGUARD.3 | GREEN | `test_AC_WDGUARD_3_*` — every workspace-local class ALLOWED at a derived path. |
+| AC.WDGUARD.4 | GREEN | `test_AC_WDGUARD_4_*` — each override hatch makes the cell no-op + logs the bypass. |
+| AC.WDGUARD.5 | GREEN | `test_AC_WDGUARD_5_*` — malformed/empty/non-content-tool/unparseable input fail-open. |
+| AC.WDGUARD.S | GREEN | `test_AC_WDGUARD_S_*` — production-script subprocess proves all four sub-cases at outcome altitude. |
 
 ## §14 Method-decision register
 

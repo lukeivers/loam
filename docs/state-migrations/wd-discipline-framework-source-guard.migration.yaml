@@ -1,0 +1,58 @@
+# User-state migration — v1.3.0 (the WD-discipline framework-source guard MINOR)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.3.0 is the MINOR
+# increment over the published v1.2.0, shipping a NEW safety-layer
+# PreToolUse(Write|Edit|MultiEdit) guard that BLOCKS framework-source
+# edits inside a derived/vendored workspace (redirecting to canonical
+# loam) while ALLOWING the same edit under canonical loam and ALLOWING
+# all workspace-local content edits everywhere (task #89, the
+# twice-seen WD-discipline violation this guard structurally enforces).
+# The objective sentence: "loam structurally refuses framework-source
+# edits inside a derived workspace — the working-directory discipline
+# becomes a shipped guard that travels with the framework to every
+# vendored copy, instead of a behavioural promise."
+
+version: v1.3.0
+slug: wd-discipline-framework-source-guard
+slice: v1.3.0 MINOR (new framework/safety-layer/ WD-discipline guard — blocks framework-source edits in derived workspaces, allows under canonical + allows all workspace-local content; + dev-sdlc skills:preload frontmatter on the 5 dev agents + the genericized operating-discipline doctrine doc in CLAUDE.md)
+date: 2026-06-05
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.3.0 adds a stdlib-only PreToolUse safety hook under
+  framework/safety-layer/hooks/ plus its AC tests, a dev-sdlc
+  skills:preload frontmatter addition on the five dev-mode agents, and
+  a genericized operating-discipline doctrine block in CLAUDE.md. NONE
+  of these touch a user's pre-existing stored .loam/ on-disk state.
+  (1) The WD-guard is a PreToolUse classifier: it reads the incoming
+  Write/Edit/MultiEdit envelope + the enclosing git repo identity and
+  emits an allow/deny decision. It persists no user-state; its only
+  writes are append-only bypass lines to .loam/safety-hooks.log (the
+  existing safety-layer log, created lazily on first toggle-off, NOT a
+  migratable state artifact) and it reads an optional
+  .loam/.wd-guard-override sentinel that the user creates by hand. No
+  pre-existing .loam/ file is read-for-migration, rewritten, moved, or
+  removed. (2) The guard ships in framework/safety-layer/ so it travels
+  with the framework upgrade; activating it in a workspace's
+  settings.json is an OUT-OF-SCOPE follow-on (the installer wiring is a
+  separate cycle), so v1.3.0 lands no settings.json mutation in any
+  user workspace. (3) The dev-sdlc skills:preload frontmatter + the
+  CLAUDE.md doctrine block are framework-source + project-instruction
+  text, not user state. (4) The lockstep version bump 1.2.0 -> 1.3.0
+  changes pyproject version fields + docs/ACTIVE_MINOR + the
+  meta-package --version literal; metadata, not user state. A user
+  upgrading from v1.2.0 to v1.3.0 needs no state migration. Therefore:
+  declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a pure
+# code revert; no data move. (The guard only ever ADDS append-only log
+# lines under .loam/safety-hooks.log on an explicit toggle-off; it never
+# rewrites prior state.)
+reversible: true
+removes_user_state: false
+idempotent: true

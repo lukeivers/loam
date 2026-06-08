@@ -169,3 +169,83 @@ Method (file-read vs hardcode, exact memory top-N, delimiter format, stub-resolv
 - **Component-placement ruled NEW `frame-kernel`** (D-SACH.1) — not owner-gated (method-level); recommendation in §2.
 - **Project-keying ruled OUT (stubbed)** for 1a (D-SACH.3) — keeps 1a bounded to the IN-handoff per dispatch constraint; the `P`-layer is the separate project-summary build.
 - **Fragment-auto-composition ruled OUT** (RF-1 / §7-5) — the dispatch's "ships to ANY workspace" is true of the artefact, not yet of live auto-merge; surfaced rather than silently claimed.
+
+# SLICE 1a — SubagentStart auto-context handoff (the IN-handoff / keystone)
+
+loam-realignment SLICE 1a. NEW component `frame-kernel`. Sealed
+local; awaiting dispatcher dogfood publish per ASK-FIRST.
+
+The keystone of the realignment: extends loam's governance from the
+human→persona boundary (where every governance hook fires today —
+SessionStart / UserPromptSubmit / Stop) DOWN to the persona→subagent
+boundary, by lifting the currently-UNUSED `SubagentStart` primitive
+(zero subagent matchers in settings.json before this amendment). One
+move collapses the ~6 hand-written-per-brief principle/context
+propagation disciplines into structural inheritance.
+
+AC.SACH.1 (microkernel present in the subagent's bundle) — the
+`SubagentStart` hook reads `kernel/loam-microkernel.md` and emits its
+content as the bundle's first tier; a dispatched subagent's received
+`additionalContext` contains the prime directive (per-user
+translation) + three-role identity (runtime/platform/product) +
+protection floor + pause-if-lost.
+
+AC.SACH.2 (if-then form) — the microkernel's governing lines are
+if-then implementation intentions (antecedent + consequent), per
+Gollwitzer & Sheeran 2006; the flat-declarative form goal-neglect
+predicts fails is rejected by the test.
+
+AC.SACH.3 (workstream + memory tiers) — the bundle carries a
+workstream-context tier (resolver STUBBED to current-workstream for
+1a; project-keying is the deferred P-layer) + a memory tier
+(reuses `memory_consumer.search(query=<task text>,
+group_ids=[workspace_slug])` unchanged).
+
+AC.SACH.4 (fail-soft — never aborts a dispatch) — absent/unreadable
+kernel file, malformed/empty envelope, memory backend error: the
+hook degrades the bundle (missing-marker) but exits cleanly and the
+subagent still starts. Mirrors `corpus_inline_session_start.py`'s
+fail-soft exit-0 contract.
+
+AC.SACH.5 (portable fragment registration) — `framework/frame-kernel/
+hooks/settings.fragment.json` declares a `SubagentStart` matcher
+block invoking the hook under the workspace venv Python with the
+`${LOAM_REPO}` placeholder; any loam workspace can compose it with no
+per-workspace hand-authoring of the registration. (Live merge into a
+workspace's `.claude/settings.json` is the same gated hand-merge step
+keep-pace uses — out-of-scope per plan §7-4.)
+
+AC.SACH.S (outcome-altitude) — a REAL subagent dispatch through the
+production entry-point, with no pre-arranged in-test bundle, returns
+a report containing the microkernel's prime-directive marker. n=1
+architectural verdict (does SubagentStart additionalContext reach the
+subagent AT ALL?) per `feedback_n1_architectural_vs_n3_statistical`.
+This IS the build's feasibility de-risking act — if it comes back
+without the microkernel, the build HALTS per plan §8 trigger #1.
+
+D-SACH.1 ruled NEW component `frame-kernel` (not an extension of
+primary-persona or hands-off-lifecycle) — the realignment's slices
+1b/4/5/6 hang off this surface; the microkernel is a TCB deserving
+its own fence.
+
+D-SACH.2 ruled the microkernel lives in `kernel/loam-microkernel.md`
+(read from file, not hardcoded), ~10 lines, version-pinned, if-then.
+
+D-SACH.3 ruled the workstream-context resolver STUBBED to
+current-workstream for 1a; project-keying OUT (the deferred P-layer /
+project-summary build).
+
+D-SACH.4 ruled memory selection REUSES the existing memory_consumer
+retrieval path unchanged (Lens 1 — compose, don't reinvent).
+
+D-SACH.5 ruled the output envelope is `hookSpecificOutput.
+additionalContext` JSON (mirrors `principle_reminder.py` — the
+documented subagent-targeting shape), not bare stdout.
+
+NEW single-component fence (`frame-kernel`); `kernel/` admitted as a
+new top-level dir via extra_allowed_prefixes. No existing sealed
+component's fence widens; no live hook wiring changes.
+
+Plan-doc + manifest authored by loam-plan-author; source-edit batch
+(microkernel + component scaffold + hook + fragment + tests) +
+apply + seal TBD-AT-BUILD.

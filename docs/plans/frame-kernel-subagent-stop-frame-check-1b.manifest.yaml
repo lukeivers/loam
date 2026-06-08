@@ -1,0 +1,167 @@
+schema_version: 3
+amendment:
+  slug: frame-kernel-subagent-stop-frame-check-1b
+  title: "loam-realignment SLICE 1b — SubagentStop out-of-band frame-consistency check (the OUT-guarantee). EXTENDS the sealed `frame-kernel` component: a `SubagentStop` hook (`framework/frame-kernel/hooks/subagent_stop_frame_check.py`) that, when a CONSEQUENTIAL dispatched subagent FINISHES (wrote a deliverable / mutated state — a STRUCTURAL cue read off its transcript), evaluates the subagent's result OUT-OF-BAND: a fresh evaluation seeded with ONLY the microkernel (`kernel/loam-microkernel.md`) + the subagent's stated objective + its result — explicitly NOT the polluted parent conversation — judging frame-consistency (is this output consistent with loam's core? was the objective the one actually requested?). Off-frame → SURFACES a non-blocking flag to the dispatcher (never silently passes); on-frame → silent no-op. The judge runs as an ISOLATED subscription `claude -p` via the SEALED `spawn_isolated_claude` entry-point (no Anthropic API key — `feedback_no_anthropic_api_key`; spawn-isolation MANDATORY — un-isolated spawn steals the Telegram bot slot, `feedback_spawned_claude_must_isolate_telegram_plugin`). Every path FAIL-SOFT (exits 0; a judge error never aborts/blocks a return). Lifts the previously-UNUSED `SubagentStop` primitive; this is component J from the integrated design instantiated at the persona->subagent FINISH boundary — the structural OUT-side pair of 1a's IN-handoff (a drifted doer can't police itself; a fresh-context judge can — Lerner & Tetlock unknown-verdict accountability). The judge composition lives in `framework/frame-kernel/src/loam/frame_kernel/frame_judge.py` (structural-cue trigger + fresh-context seed + isolated-claude-p call + verdict parse + surface render); the hook stays thin (mirrors 1a's hook/bundle.py split). Registered by EXTENDING the existing `settings.fragment.json` with a `SubagentStop` matcher block beside the 1a `SubagentStart` block. AC.SSFC.{1,2,3,4,5,6,S}: trigger gates on the structural cue not every finish (1); seed = microkernel + objective + result, parent conversation ABSENT (2); judge spawn is isolated — no bot-token, no API key (3); off-frame surfaces a flag, on-frame silent (4); fail-soft non-blocking — never aborts a return (5); portable SubagentStop fragment block (6); REAL off-frame subagent finish -> flagged, outcome-altitude (S). Feasibility CONFIRMED (Tier-0): a SubagentStop hook reads the finished subagent's result via the `transcript_path` common-input field (official hook-development SKILL + changelog); residual live-version risk carried as the AC.SSFC.S build-time probe + a §8 halt trigger. Hard-block on off-frame, the intent-derivation half of the objective check (needs OBJECTIVES.md / keep-pace KP5), the rubric-leakage open question, live-activation merge, and workspace-sync fragment auto-composition are explicitly OUT OF SCOPE. EXTENDS the `frame-kernel` fence (frozen_baseline: false); does NOT widen any other sealed fence (the spawn-isolation surface is IMPORTED, never edited)."
+
+# BASELINE captured at source-edit commit — backfilled to the actual
+# source-edit SHA post-source-edit commit per the 1a / v0.10.x precedent.
+baseline: "bf1108dfa1f7585333636e9a505e60015e226165"
+
+plan: docs/plans/frame-kernel-subagent-stop-frame-check-1b.md
+plan_doc_ref: docs/plans/frame-kernel-subagent-stop-frame-check-1b.md
+
+ac_count: 7
+smoke_outcome: "AC.SSFC.{1,2,3,4,5,6,S} GREEN (30 tests). AC.SSFC.S: a REAL off-frame finished-subagent transcript drives the production hook to FLAG it (on-frame control not flagged); §8 trigger #1 did NOT fire. Only subprocess.run stubbed; REAL isolated argv+env (1a AC.SACH.S posture)."
+
+# EXTEND the sealed `frame-kernel` component. This widens the existing
+# `frame-kernel` fence to admit the SubagentStop OUT-guarantee: the new
+# hook (`framework/frame-kernel/hooks/subagent_stop_frame_check.py`), the
+# judge module (`framework/frame-kernel/src/loam/frame_kernel/frame_judge.py`),
+# the extended fragment (a `SubagentStop` block beside 1a's `SubagentStart`
+# block), and the new AC.SSFC.* tests. `frozen_baseline: false` advances
+# the `frame-kernel` seal baseline (the intended fence-widening of an
+# EXTEND). NO OTHER sealed component's fence widens: the spawn-isolation
+# surface (`spawn_isolated_claude`) is IMPORTED + called, NEVER edited
+# (plan §8 halt-trigger #3 guards this); `memory_consumer` / the 1a
+# `bundle.py` microkernel-render path are reused read-only. Sidecar at
+# `tests/SEAL_COMMIT` — the UNIVERSAL convention (all sibling sealed
+# components; the seal sweep's `_discover_sealed_components` globs
+# `framework/*/tests/SEAL_COMMIT`, the B23 seal-test reads
+# `Path(__file__).parent/"SEAL_COMMIT"`). `kernel/` retained in
+# extra_allowed_prefixes (the judge reads the TCB; no kernel edit
+# expected, but the prefix stays admitted as in 1a).
+components:
+  - name: frame-kernel
+    seal_test: framework/frame-kernel/tests/test_no_sealed_amendments.py
+    sidecar: framework/frame-kernel/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - framework/frame-kernel/
+      - kernel/
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: docs/plans/sealed/frame-kernel-subagent-stop-frame-check-1b.md
+  body: |
+    # SLICE 1b — SubagentStop out-of-band frame-consistency check (the OUT-guarantee)
+
+    loam-realignment SLICE 1b. EXTENDS the sealed `frame-kernel`
+    component. Sealed local; awaiting dispatcher dogfood publish per
+    ASK-FIRST.
+
+    The OUT-side guarantee that pairs with 1a's IN-handoff: when a
+    CONSEQUENTIAL dispatched subagent FINISHES, a `SubagentStop` hook
+    evaluates its result OUT-OF-BAND — a fresh evaluation seeded with
+    ONLY the microkernel + the subagent's stated objective + its result,
+    explicitly NOT the polluted parent conversation — judging
+    frame-consistency. Off-frame → a non-blocking flag SURFACES to the
+    dispatcher (never silently passes); on-frame → silent no-op. Lifts
+    the previously-UNUSED `SubagentStop` primitive (zero subagent-stop
+    matchers in any loam settings.json before this amendment). This is
+    component J from the integrated design instantiated at the
+    persona→subagent FINISH boundary — the structural enforcement a
+    drifted doer cannot give itself (a fresh-context judge IS the
+    unknown-verdict audience; Lerner & Tetlock 1999).
+
+    AC.SSFC.1 (structural-cue trigger) — the hook evaluates a
+    CONSEQUENTIAL subagent (wrote a deliverable / mutated state, a
+    structural cue read off the transcript) and does NOT spawn a judge
+    for a trivial read-only finish. The cue SHAPE is pinned; the exact
+    cue list is the build-time-empirical knob (integrated-design §6-Q1).
+
+    AC.SSFC.2 (fresh-context seed) — the judge is seeded with the
+    microkernel prime-marker + the subagent's stated objective + its
+    result, and the parent-conversation transcript is ABSENT from the
+    seed (the load-bearing fresh-context guarantee).
+
+    AC.SSFC.3 (isolated judge) — the judge runs as an isolated
+    subscription `claude -p`: the spawned argv carries the
+    spawn-isolation flags (`--strict-mcp-config` + empty MCP config) and
+    the scrubbed env (no Telegram bot-token, no `ANTHROPIC_API_KEY`),
+    via the SEALED `spawn_isolated_claude` entry-point — never a bare
+    un-isolated spawn (the PROVEN Telegram-drop kill-vector).
+
+    AC.SSFC.4 (off-frame surfaces, on-frame silent) — an off-frame
+    verdict surfaces a flag naming the subagent + the inconsistency +
+    the reason; an on-frame verdict surfaces nothing. Off-frame is never
+    silently passed.
+
+    AC.SSFC.5 (fail-soft, non-blocking) — absent/unreadable kernel,
+    unreadable transcript, judge-spawn failure/timeout, malformed
+    verdict: the hook exits cleanly with the subagent's return
+    UN-blocked; and the off-frame surface is a non-blocking flag, not a
+    hard block, for v1. Mirrors 1a's AC.SACH.4 exit-0 contract.
+
+    AC.SSFC.6 (portable fragment) — `settings.fragment.json` declares a
+    `SubagentStop` matcher block (beside 1a's `SubagentStart` block)
+    invoking the hook under the workspace venv Python with the
+    `${LOAM_REPO}` placeholder; any loam workspace can compose it with
+    no per-workspace hand-authoring. (Live merge into a workspace's
+    `.claude/settings.json` is the same gated hand-merge step — out of
+    scope per plan §7-4.)
+
+    AC.SSFC.S (outcome-altitude) — a REAL subagent finishing with an
+    off-frame result, exercised through the production hook entry-point
+    with no pre-arranged in-test verdict + the REAL on-disk kernel,
+    causes the hook to FLAG it (an on-frame control is not flagged). The
+    probe exercises the REAL hook + trigger-gate + seed-assembly +
+    `spawn_isolated_claude` argv/env construction end-to-end; the live
+    model-verdict leg may be stubbed at the spawn boundary if a live
+    in-test `claude -p` is infeasible in CI (the 1a AC.SACH.S posture),
+    and the test SAYS SO. n=1 architectural verdict (does SubagentStop
+    deliver a readable result AT ALL?) per
+    `feedback_n1_architectural_vs_n3_statistical`. This IS the build's
+    feasibility de-risking act — if it comes back unable to read the
+    off-frame result, the build HALTS per plan §8 trigger #1.
+
+    D-SSFC.1 ruled EXTEND the sealed `frame-kernel` component (not a new
+    component) — IN + OUT are one matched mechanism on one boundary;
+    `frozen_baseline: false` advances the frame-kernel seal baseline.
+
+    D-SSFC.2 ruled the judge runs as an isolated subscription `claude -p`
+    via the SEALED `spawn_isolated_claude` entry-point — spawn-isolation
+    is a HARD constraint (PROVEN Telegram kill-vector + no-API-key
+    reality), composed on the sealed isolation surface (Lens 1).
+
+    D-SSFC.3 ruled the trigger fires on STRUCTURAL cues (consequential
+    subagents only — wrote-deliverable / mutated-state), not every
+    finish; the exact cue list is the build-time-empirical knob.
+
+    D-SSFC.4 ruled the off-frame action is a NON-BLOCKING surface to the
+    dispatcher for v1 (judge fallibility; hard-block deferred pending
+    verdict-reliability measurement) — off-frame always surfaces.
+
+    D-SSFC.5 ruled the judge's seed is the microkernel + stated objective
+    + result ONLY (the fresh-context guarantee) — the parent conversation
+    is explicitly EXCLUDED.
+
+    EXTENDS the `frame-kernel` fence (frozen_baseline: false); the
+    spawn-isolation surface is IMPORTED, never edited; no other sealed
+    component's fence widens; no live hook wiring changes (the fragment
+    block is authored + tested, not merged into any live
+    `.claude/settings.json`).
+
+    Plan-doc + manifest authored by loam-plan-author; source-edit batch
+    (frame_judge module + SubagentStop hook + fragment extension + tests)
+    + apply + seal TBD-AT-BUILD.

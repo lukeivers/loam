@@ -11,7 +11,7 @@ plan: docs/plans/frame-kernel-subagent-context-handoff-1a.md
 plan_doc_ref: docs/plans/frame-kernel-subagent-context-handoff-1a.md
 
 ac_count: 6
-smoke_outcome: "AC.SACH.{1,2,3,4,5,S} GREEN (26 tests). AC.SACH.S (outcome-altitude): real production hook invocation injects the microkernel into the subagent context — §8 halt-trigger #1 did NOT fire (mechanism feasible)."
+smoke_outcome: "AC.SACH.{1,2,3,4,5,S} GREEN (26 tests). AC.SACH.S outcome-altitude: real production hook invocation injects the microkernel — §8 halt-trigger #1 did NOT fire (mechanism feasible)."
 
 # NEW single-component fence. `frame-kernel` is a net-new component:
 # the SubagentStart hook + the version-pinned microkernel TCB + the

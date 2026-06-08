@@ -1,0 +1,147 @@
+schema_version: 3
+amendment:
+  slug: frame-kernel-subagent-context-handoff-1a
+  title: "loam-realignment SLICE 1a — SubagentStart auto-context handoff (the IN-handoff / keystone). NEW component `frame-kernel`: a `SubagentStart` hook (`framework/frame-kernel/hooks/subagent_start_context.py`) that injects ONE `additionalContext` bundle into every dispatched subagent's context, carrying three tiers — (a) the always-on MICROKERNEL (`kernel/loam-microkernel.md`: prime directive (per-user translation) + three-role identity (runtime/platform/product) + protection floor + pause-if-lost, authored as if-then implementation intentions, version-pinned, read from the file not hardcoded); (b) the active workstream context (resolver STUBBED to current-workstream for 1a — project-keying is the deferred P-layer); (c) relevant memory (reuses `memory_consumer.search(query=<task text>, group_ids=[workspace_slug])` unchanged). Registered via a portable `settings.fragment.json` (mirrors keep-pace's fragment shape; `${LOAM_REPO}` placeholder + SubagentStart matcher block). Output = `hookSpecificOutput.additionalContext` JSON envelope (mirrors `principle_reminder.py`). Extends loam governance from the human→persona boundary DOWN to persona→subagent, lifts the unused SubagentStart primitive, retires hand-written principle/context propagation in dispatch briefs. AC.SACH.{1,2,3,4,5,S}: bundle carries microkernel (1); microkernel in if-then form (2); workstream + memory tiers present (3); fail-soft — never aborts a dispatch (4); registered via portable settings-fragment (5); REAL subagent dispatch receives the microkernel — outcome-altitude (S). Feasibility CONFIRMED from the claude-feature-awareness catalogue (SubagentStart + additionalContext-in-hookSpecificOutput both first-class); residual live-version risk carried as the AC.SACH.S build-time probe + a §8 halt trigger. SLICE 1b (SubagentStop frame-check), project-keyed selective loading, live-activation merge, and workspace-sync fragment auto-composition are explicitly OUT OF SCOPE. NEW single-component fence: `frame-kernel`."
+
+# BASELINE captured at source-edit commit — backfilled to the actual
+# source-edit SHA post-source-edit commit per v0.10.x precedent.
+baseline: "22df86831a94c16b39e2e4f9f2415639e6256ab1"
+
+plan: docs/plans/frame-kernel-subagent-context-handoff-1a.md
+plan_doc_ref: docs/plans/frame-kernel-subagent-context-handoff-1a.md
+
+ac_count: 6
+smoke_outcome: "TBD-AT-SEAL — AC.SACH.{1-5,S} GREEN expected; AC.SACH.S (outcome-altitude) = a REAL subagent dispatch through the production entry-point receives the microkernel in its context (n=1 architectural verdict per feedback_n1_architectural_vs_n3_statistical). If the real-dispatch probe comes back WITHOUT the microkernel, HALT per plan §8 trigger #1 — the mechanism is infeasible in the running Claude Code version."
+
+# NEW single-component fence. `frame-kernel` is a net-new component:
+# the SubagentStart hook + the version-pinned microkernel TCB + the
+# settings-fragment registration + its own test surface. No existing
+# sealed component's fence widens; no existing hook wiring changes
+# (the fragment is authored + tested but NOT merged into any live
+# .claude/settings.json in this seal — live-activation is out-of-scope
+# per plan §7-4). `kernel/` is a new top-level dir admitted via
+# extra_allowed_prefixes (the microkernel TCB's home, per integrated-
+# design §2-K). The new component's own seal anchor + sidecar are
+# created by this amendment.
+components:
+  - name: frame-kernel
+    seal_test: framework/frame-kernel/tests/test_no_sealed_amendments.py
+    # Sidecar at tests/SEAL_COMMIT — the UNIVERSAL convention (all 21
+    # sibling sealed components; the seal sweep's
+    # _discover_sealed_components globs `framework/*/tests/SEAL_COMMIT`,
+    # and the B23 seal-test reads `Path(__file__).parent/"SEAL_COMMIT"`).
+    # Corrected from the plan-author's `seals/SEAL_COMMIT` draft at
+    # build-time: a `seals/` sidecar would NOT be discovered by the
+    # cross-component sweep and the standard sidecar-reader would not
+    # find it. Tier-0 evidence: 21 components use tests/SEAL_COMMIT, 0
+    # use seals/. Surfaced in the build report (F2).
+    sidecar: framework/frame-kernel/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - framework/frame-kernel/
+      - kernel/
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: docs/plans/sealed/frame-kernel-subagent-context-handoff-1a.md
+  body: |
+    # SLICE 1a — SubagentStart auto-context handoff (the IN-handoff / keystone)
+
+    loam-realignment SLICE 1a. NEW component `frame-kernel`. Sealed
+    local; awaiting dispatcher dogfood publish per ASK-FIRST.
+
+    The keystone of the realignment: extends loam's governance from the
+    human→persona boundary (where every governance hook fires today —
+    SessionStart / UserPromptSubmit / Stop) DOWN to the persona→subagent
+    boundary, by lifting the currently-UNUSED `SubagentStart` primitive
+    (zero subagent matchers in settings.json before this amendment). One
+    move collapses the ~6 hand-written-per-brief principle/context
+    propagation disciplines into structural inheritance.
+
+    AC.SACH.1 (microkernel present in the subagent's bundle) — the
+    `SubagentStart` hook reads `kernel/loam-microkernel.md` and emits its
+    content as the bundle's first tier; a dispatched subagent's received
+    `additionalContext` contains the prime directive (per-user
+    translation) + three-role identity (runtime/platform/product) +
+    protection floor + pause-if-lost.
+
+    AC.SACH.2 (if-then form) — the microkernel's governing lines are
+    if-then implementation intentions (antecedent + consequent), per
+    Gollwitzer & Sheeran 2006; the flat-declarative form goal-neglect
+    predicts fails is rejected by the test.
+
+    AC.SACH.3 (workstream + memory tiers) — the bundle carries a
+    workstream-context tier (resolver STUBBED to current-workstream for
+    1a; project-keying is the deferred P-layer) + a memory tier
+    (reuses `memory_consumer.search(query=<task text>,
+    group_ids=[workspace_slug])` unchanged).
+
+    AC.SACH.4 (fail-soft — never aborts a dispatch) — absent/unreadable
+    kernel file, malformed/empty envelope, memory backend error: the
+    hook degrades the bundle (missing-marker) but exits cleanly and the
+    subagent still starts. Mirrors `corpus_inline_session_start.py`'s
+    fail-soft exit-0 contract.
+
+    AC.SACH.5 (portable fragment registration) — `framework/frame-kernel/
+    hooks/settings.fragment.json` declares a `SubagentStart` matcher
+    block invoking the hook under the workspace venv Python with the
+    `${LOAM_REPO}` placeholder; any loam workspace can compose it with no
+    per-workspace hand-authoring of the registration. (Live merge into a
+    workspace's `.claude/settings.json` is the same gated hand-merge step
+    keep-pace uses — out-of-scope per plan §7-4.)
+
+    AC.SACH.S (outcome-altitude) — a REAL subagent dispatch through the
+    production entry-point, with no pre-arranged in-test bundle, returns
+    a report containing the microkernel's prime-directive marker. n=1
+    architectural verdict (does SubagentStart additionalContext reach the
+    subagent AT ALL?) per `feedback_n1_architectural_vs_n3_statistical`.
+    This IS the build's feasibility de-risking act — if it comes back
+    without the microkernel, the build HALTS per plan §8 trigger #1.
+
+    D-SACH.1 ruled NEW component `frame-kernel` (not an extension of
+    primary-persona or hands-off-lifecycle) — the realignment's slices
+    1b/4/5/6 hang off this surface; the microkernel is a TCB deserving
+    its own fence.
+
+    D-SACH.2 ruled the microkernel lives in `kernel/loam-microkernel.md`
+    (read from file, not hardcoded), ~10 lines, version-pinned, if-then.
+
+    D-SACH.3 ruled the workstream-context resolver STUBBED to
+    current-workstream for 1a; project-keying OUT (the deferred P-layer /
+    project-summary build).
+
+    D-SACH.4 ruled memory selection REUSES the existing memory_consumer
+    retrieval path unchanged (Lens 1 — compose, don't reinvent).
+
+    D-SACH.5 ruled the output envelope is `hookSpecificOutput.
+    additionalContext` JSON (mirrors `principle_reminder.py` — the
+    documented subagent-targeting shape), not bare stdout.
+
+    NEW single-component fence (`frame-kernel`); `kernel/` admitted as a
+    new top-level dir via extra_allowed_prefixes. No existing sealed
+    component's fence widens; no live hook wiring changes.
+
+    Plan-doc + manifest authored by loam-plan-author; source-edit batch
+    (microkernel + component scaffold + hook + fragment + tests) +
+    apply + seal TBD-AT-BUILD.

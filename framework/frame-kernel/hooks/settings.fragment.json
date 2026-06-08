@@ -1,0 +1,17 @@
+{
+  "_comment": "STAGED frame-kernel SubagentStart auto-context handoff wiring (loam-realignment SLICE 1a) — NOT a live-harness edit. This fragment is the authoritative, PORTABLE shape of the `hooks` block that registers the SubagentStart context-injection hook. It is NOT merged automatically: per plan §7-4 the live activation (merge into a workspace's .claude/settings.json) is a GATED final step the dispatcher times, the same posture keep-pace's fragment uses; workspace-sync does NOT auto-compose fragments today (plan §7-5 / RF-1). Activation = merge this `hooks` block into the target .claude/settings.json (preserving any existing entries) and replace ${LOAM_REPO} with the absolute repo root (e.g. /Users/lukeivers/loam). The hook is fail-soft (AC.SACH.4): it exits 0 on every path and never blocks a subagent dispatch — a degraded bundle (structured [missing]/[unavailable] markers) still lets the subagent start.",
+  "hooks": {
+    "SubagentStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${LOAM_REPO}/.venv/bin/python ${LOAM_REPO}/framework/frame-kernel/hooks/subagent_start_context.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

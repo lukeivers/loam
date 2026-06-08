@@ -87,6 +87,10 @@ import yaml
 
 from ._audit import confirmed_by_operator, summarize_resolver_runs
 from .canonical import CanonicalPullError, resolve_canonical
+from .fragment_composer import (
+    MalformedSettingsError,
+    compose_settings_fragments,
+)
 from .canonical_cache import CanonicalCacheError, ensure_cache_clone
 from .just_behind_check import is_just_behind
 from .merge_resolver import (
@@ -582,6 +586,44 @@ def _resolve_conflicts_via_llm(
 # ---- main flow -----------------------------------------------------
 
 
+def _compose_after_sync(
+    workspace_root: Path,
+    *,
+    compose_mode: str,
+) -> None:
+    """Run the settings-fragment composer on a terminal-success path.
+
+    RF-1 closure: turns the discovered ``settings.fragment.json`` files
+    under the just-synced ``<workspace>/framework/`` into live hook
+    wiring in ``<workspace>/.claude/settings.json`` — additively,
+    idempotently, non-clobbering (see ``fragment_composer``).
+
+    ``compose_mode`` is one of:
+      * ``"auto"``  — compose + write (the default; safe because of the
+                      non-clobber guarantee, D-SFC.4).
+      * ``"dry-run"`` — compute + print the plan, write nothing
+                        (``--dry-run-compose``, AC.SFC.7).
+      * ``"off"``   — skip the composer entirely (``--no-compose``).
+
+    A malformed/unparseable existing settings.json HALTS the compose
+    (surfaces an error, writes nothing) — the sync itself already
+    succeeded and stands (D-SFC.5 / AC.SFC.7). This is a POST-merge
+    NON-git write; it does not touch the framework git tree.
+    """
+    if compose_mode == "off":
+        return
+    try:
+        compose_settings_fragments(
+            workspace_root,
+            dry_run=(compose_mode == "dry-run"),
+        )
+    except MalformedSettingsError as exc:
+        print(
+            f"[workspace-sync] settings-compose skipped: {exc}",
+            file=sys.stderr,
+        )
+
+
 def _execute_sync(
     *,
     workspace_root: Path,
@@ -591,6 +633,7 @@ def _execute_sync(
     resolver_budget: ResolverBudget | None,
     auto_accept: bool,
     confidence_floor: float,
+    compose_mode: str = "auto",
 ) -> int:
     """Execute the full sync. Returns CLI exit code."""
     framework_root = _ensure_framework_git_tree(workspace_root)
@@ -651,6 +694,7 @@ def _execute_sync(
             ),
             workspace_root,
         )
+        _compose_after_sync(workspace_root, compose_mode=compose_mode)
         return 0
 
     # Capture pre-merge SHA for audit log range.
@@ -695,6 +739,7 @@ def _execute_sync(
         )
         for line in log_lines:
             print(f"  {line}", file=sys.stderr)
+        _compose_after_sync(workspace_root, compose_mode=compose_mode)
         return 0
 
     # Non-FF fallback: try `git merge` (may auto-resolve some conflicts
@@ -738,6 +783,7 @@ def _execute_sync(
             f"{pre_merge_sha[:8]} + {target_sha[:8]} → {new_head[:8]}.",
             file=sys.stderr,
         )
+        _compose_after_sync(workspace_root, compose_mode=compose_mode)
         return 0
 
     # Conflicts present. Hand off to LLM resolver.
@@ -861,6 +907,7 @@ def _execute_sync(
         "resolved).",
         file=sys.stderr,
     )
+    _compose_after_sync(workspace_root, compose_mode=compose_mode)
     return 0
 
 
@@ -961,6 +1008,27 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Minimum confidence for --auto-accept on the fallback "
             "path (default 0.90)."
+        ),
+    )
+    compose_group = parser.add_mutually_exclusive_group()
+    compose_group.add_argument(
+        "--no-compose",
+        action="store_true",
+        help=(
+            "Skip the post-sync settings-fragment composer entirely. "
+            "By default a successful sync auto-composes every loam "
+            "component's settings.fragment.json hooks into "
+            "<workspace>/.claude/settings.json (additively, "
+            "idempotently, non-clobbering)."
+        ),
+    )
+    compose_group.add_argument(
+        "--dry-run-compose",
+        action="store_true",
+        help=(
+            "Run the sync, then PREVIEW the settings-fragment compose "
+            "plan (what would be added/refreshed/removed) and write "
+            "NOTHING to <workspace>/.claude/settings.json."
         ),
     )
     return parser
@@ -1069,6 +1137,12 @@ def main(argv: list[str] | None = None) -> int:
             "loam.sync.ref_arg": args.ref or "canonical/HEAD",
         },
     ):
+        if args.no_compose:
+            compose_mode = "off"
+        elif args.dry_run_compose:
+            compose_mode = "dry-run"
+        else:
+            compose_mode = "auto"
         return _execute_sync(
             workspace_root=workspace_root,
             canonical_url_or_path=canonical_url_or_path,
@@ -1077,6 +1151,7 @@ def main(argv: list[str] | None = None) -> int:
             resolver_budget=budget_override,
             auto_accept=args.auto_accept,
             confidence_floor=args.confidence_floor,
+            compose_mode=compose_mode,
         )
 
 

@@ -158,6 +158,12 @@ Method (file-read vs hardcode, exact memory top-N, delimiter format, stub-resolv
 - **D-SACH.5** (bundle output envelope) — narrative TBD-AT-BUILD; SHA TBD-AT-SEAL.
 - **D-build.\*** (builder-discovered method decisions) — TBD-AT-BUILD.
 
+### Commit SHAs
+
+- Amendment commit: `b338ab70105a03e8b5e2e3fdd94dc09dd5ab6382` —
+  `chore(amend): frame-kernel-subagent-context-handoff-1a manifest+apply — frame-kernel BASELINE+sidecar bump to 22df868`
+- Seal commit: `053379fa82acf579badf70bcaacd4017bc460bac` —
+  `chore(seals): frame-kernel-subagent-context-handoff-1a — frame-kernel at b338ab7`
 ## §15 Backwards-compat verification
 
 - No existing test touched (new component, new files only). The `frame-kernel` seal_test is new; no other component's seal anchor moves.

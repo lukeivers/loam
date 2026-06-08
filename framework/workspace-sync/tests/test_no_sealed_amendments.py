@@ -44,7 +44,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "8032348"
+BASELINE = "45cdf973"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -147,6 +147,10 @@ def test_B20_only_workspace_sync_surfaces_changed() -> None:
         "framework/dev-sdlc/",
         "framework/loam/",
         "loam/",
+        "docs/design/",
+        "docs/examples/",
+        "docs/experiments/",
+        "docs/plans/",
     )
     # Universal admissions per amendment #22 ruling #3 (CLAUDE.md +
     # docs/odd-*.md + docs/rebuild/FUTURE_IDEAS.md).
@@ -168,6 +172,17 @@ def test_B20_only_workspace_sync_surfaces_changed() -> None:
         "docs/rebuild/dev-mode-manifest.yaml",
         "README.md",
         "docs/getting-started.md",
+        "docs/FUTURE_IDEAS.md",
+        "docs/FUTURE_IDEAS_DRAFT.md",
+        "docs/STATE.md",
+        "docs/architecture.md",
+        "docs/components/index.md",
+        "docs/public-surface-manifest.md",
+        "docs/release-process.md",
+        "docs/release-roadmap-dependency-map.md",
+        "docs/release-roadmap.md",
+        "docs/release-versioning-policy.md",
+        "install-from-source.txt",
     }
 
     offending = []

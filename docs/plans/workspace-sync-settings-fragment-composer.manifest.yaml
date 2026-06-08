@@ -6,13 +6,13 @@ amendment:
 # BASELINE captured at source-edit commit — backfilled to the actual
 # source-edit SHA post-source-edit commit per the 1a/1b / v0.10.x
 # precedent. Placeholder until the source-edit batch lands.
-baseline: "TBD-AT-BUILD-source-edit-commit"
+baseline: "45cdf973"
 
 plan: docs/plans/workspace-sync-settings-fragment-composer.md
 plan_doc_ref: docs/plans/workspace-sync-settings-fragment-composer.md
 
 ac_count: 8
-smoke_outcome: "AC.SFC.{1,2,3,4,5,6,7,S} GREEN. AC.SFC.S: a REAL fixture sync composes the REAL frame-kernel SubagentStart+SubagentStop fragments into the fixture `.claude/settings.json`; the user `Stop` hook + `statusLine` key survive byte-untouched; a SECOND real sync adds no duplicate — asserted by reading settings.json. §8 halt triggers did NOT fire. TBD-AT-BUILD."
+smoke_outcome: "AC.SFC.{1-7,S} GREEN; 126-test workspace-sync suite passes. AC.SFC.S: real FF sync composes real frame-kernel fragments; user Stop hook + statusLine survive; 2nd sync idempotent."
 
 # EXTEND the sealed `workspace-sync` component. This widens the existing
 # `workspace-sync` fence to admit the settings-fragment auto-composer: the

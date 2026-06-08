@@ -159,19 +159,19 @@ Method (exact tag field shape, the reconcile diff algorithm, the atomic-write me
 
 ## §14 Method-decision register (populated at build + seal time)
 
-- **D-SFC.0** (fence: EXTEND `workspace-sync`) — TBD-AT-BUILD: the manifest names `workspace-sync` `frozen_baseline: false` with `extra_allowed_prefixes: [framework/workspace-sync/]`; no new component; no other sealed fence widened (`claude_dir` + the two fragments IMPORTED/READ, never edited). SHA TBD-AT-SEAL.
-- **D-SFC.1** (merge strategy + dedupe key — idempotency) — TBD-AT-BUILD: the loam-ownership tag shape actually used + the reconcile diff (add/refresh/remove) + the dedupe key (source-fragment identity + resolved command). SHA TBD-AT-SEAL.
-- **D-SFC.2** (non-clobber — tag-scoped write set) — TBD-AT-BUILD: how loam-owned vs user-owned is distinguished in the live schema (the tag field OR the RF-2 fallback marker); the proof that user entries + non-`hooks` keys are outside the write set. SHA TBD-AT-SEAL.
-- **D-SFC.3** (discovery glob + presence-opt-in) — TBD-AT-BUILD: the exact glob + the fragment-parse + the malformed-fragment skip-with-warning (RF-5). SHA TBD-AT-SEAL.
-- **D-SFC.4** (automatic-on-sync + surfaced summary) — TBD-AT-BUILD: which terminal-success paths compose; the summary render; the `--no-compose` opt-out. SHA TBD-AT-SEAL.
-- **D-SFC.5** (dry-run + never-destructive + atomic-write) — TBD-AT-BUILD: the `--dry-run-compose` plan format; the atomic-write mechanism; the malformed-settings.json HALT-not-overwrite path. SHA TBD-AT-SEAL.
+- **D-SFC.0** (fence: EXTEND `workspace-sync`) — BUILT: the manifest names `workspace-sync` `frozen_baseline: false` with `extra_allowed_prefixes: [framework/workspace-sync/]`; no new component; no other sealed fence widened — `workspace_bootstrap.workspace_paths.claude_dir` is IMPORTED + called (`fragment_composer.py`), the frame-kernel + keep_pace `settings.fragment.json` files are READ (discovered + parsed), never edited. Seal `728b2ef0`.
+- **D-SFC.1** (merge strategy + dedupe key — idempotency) — BUILT: composer APPENDS each discovered fragment's matcher-groups into `settings["hooks"][<event>]`, each stamped with a `_loam` ownership tag (`LOAM_TAG_KEY`). Dedupe key = `(source_fragment, event, component, resolved-command-tuple)` (`ComposedGroup.dedupe_key`); the reconcile (`plan_compose`) diffs desired-vs-present loam-owned sets → ADD missing / leave present-and-identical / REFRESH on changed resolved command / REMOVE vanished. A 2nd no-op compose does not rewrite the file (`is_noop` short-circuit). Seal `728b2ef0`.
+- **D-SFC.2** (non-clobber — tag-scoped write set) — BUILT: loam-owned vs user-owned is distinguished by the `_loam` sibling key (`_is_loam_group`). `_apply_plan` copies every non-`hooks` key through verbatim, preserves untagged (user) groups in place, and only adds/refreshes/removes `_loam`-tagged groups. The unknown-field marker was VERIFIED tolerated by Claude Code 2.1.168 at build time (RF-2 / §8 trigger-1 resolved — a tagged hook fired normally); no fallback marker needed. Seal `728b2ef0`.
+- **D-SFC.3** (discovery glob + presence-opt-in) — BUILT: glob `*/hooks/**/settings.fragment.json` under the synced framework root (`FRAGMENT_GLOB` / `discover_fragments`), sorted for deterministic order; verified to catch both shipped fragments at their differing depths. `_parse_fragment` ignores `_comment`, validates the `hooks` mapping, and a malformed fragment is SKIPPED with a surfaced warning (RF-5; `plan.skipped_fragments`), never aborting the whole compose. Seal `728b2ef0`.
+- **D-SFC.4** (automatic-on-sync + surfaced summary) — BUILT: `_compose_after_sync` is called on ALL FOUR terminal-success paths (up-to-date / FF / plain-merge / LLM-resolved); a one-line stderr summary (`ComposePlan.summary_line`) names +added/~refreshed/-removed + user-entries-touched (always 0). `--no-compose` → `compose_mode="off"` (skip); default → `"auto"`. Seal `728b2ef0`.
+- **D-SFC.5** (dry-run + never-destructive + atomic-write) — BUILT: `--dry-run-compose` → `compose_mode="dry-run"` prints the per-entry plan + writes NOTHING. Real writes are atomic (`_atomic_write`: temp `.settings.json.compose-tmp` in the same dir + `os.replace`). A malformed existing settings.json raises `MalformedSettingsError` in `_read_settings` → the compose HALTS + writes nothing (the CLI surfaces it; the sync itself stands). Seal `728b2ef0`.
 
 ### Commit SHAs
 
-- Source-edit / amendment BASELINE commit: TBD-AT-BUILD.
-- Apply commit: TBD-AT-BUILD.
-- Seal commit: TBD-AT-BUILD.
-- Post-seal `apply --dry-run`: TBD-AT-BUILD. `BASELINE..SEAL_COMMIT` diff window: only `framework/workspace-sync/` surfaces + the manifest (no other sealed fence moved).
+- Source-edit / amendment BASELINE commit: `45cdf973` (`feat(workspace-sync): settings-fragment auto-composer (RF-1 closure)`).
+- Apply commit: `5825803` (`chore(amend): ... manifest+apply — workspace-sync BASELINE+sidecar bump to 45cdf97`).
+- Seal commit: `728b2ef0` (`chore(seals): workspace-sync-settings-fragment-composer — workspace-sync at 5825803`).
+- Post-seal `apply --dry-run`: CLEAN (`ok`). `BASELINE..SEAL_COMMIT` diff window: only `framework/workspace-sync/` surfaces + the manifest (no other sealed fence moved). Sidecar `framework/workspace-sync/tests/SEAL_COMMIT` advanced to `5825803d`.
 
 ## §15 Backwards-compat verification (to confirm at build)
 

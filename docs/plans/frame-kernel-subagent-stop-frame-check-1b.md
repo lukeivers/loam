@@ -163,9 +163,10 @@ Method (exact cue set, seed prompt wording, verdict schema, surface render shape
 
 ### Commit SHAs
 
-- Source-edit / amendment BASELINE commit: TBD-AT-SOURCE-EDIT (backfilled).
-- Apply commit: TBD-AT-APPLY.
-- Seal commit: TBD-AT-SEAL.
+- Source-edit / amendment BASELINE commit: `bf1108df` (`feat(frame-kernel): SubagentStop out-of-band frame-consistency check (1b OUT-guarantee)`).
+- Apply commit: `69e28416` (`chore(amend): … frame-kernel BASELINE+sidecar bump to bf1108d`).
+- Seal commit: `3b0e4eaa` (`chore(seals): frame-kernel-subagent-stop-frame-check-1b — frame-kernel at 69e2841`).
+- Post-seal `apply --dry-run`: clean. `BASELINE..SEAL_COMMIT` diff window: only `framework/frame-kernel/` surfaces + the manifest (no other sealed fence moved). The 1a AC.SACH.* tests preserved; the 1a `SubagentStart` fragment block preserved beside the new `SubagentStop` block.
 
 ## §15 Backwards-compat verification (to confirm at build)
 

@@ -11,7 +11,7 @@ plan: docs/plans/frame-kernel-subagent-stop-frame-check-1b.md
 plan_doc_ref: docs/plans/frame-kernel-subagent-stop-frame-check-1b.md
 
 ac_count: 7
-smoke_outcome: "AC.SSFC.{1,2,3,4,5,6,S} GREEN (30 tests). AC.SSFC.S: a REAL off-frame finished-subagent transcript drives the production hook to FLAG it (on-frame control not flagged); §8 trigger #1 did NOT fire. Only subprocess.run stubbed; REAL isolated argv+env (1a AC.SACH.S posture)."
+smoke_outcome: "AC.SSFC.{1,2,3,4,5,6,S} GREEN (30 tests). AC.SSFC.S: a REAL off-frame finish drives the production hook to FLAG it; §8 trigger #1 did NOT fire. Only subprocess.run stubbed; REAL isolated argv+env."
 
 # EXTEND the sealed `frame-kernel` component. This widens the existing
 # `frame-kernel` fence to admit the SubagentStop OUT-guarantee: the new

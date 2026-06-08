@@ -59,3 +59,97 @@ def make_envelope(workspace_root: Path, *, task_text: str = "") -> dict:
     if task_text:
         env["prompt"] = task_text
     return env
+
+
+# ---------------------------------------------------------------------
+# SLICE 1b — SubagentStop transcript + envelope helpers (AC.SSFC.*)
+# ---------------------------------------------------------------------
+
+
+def write_transcript(
+    path: Path,
+    *,
+    objective: str,
+    result: str,
+    consequential: bool,
+) -> Path:
+    """Write a JSONL transcript of the real shape Claude Code emits.
+
+    Records: a user message (the dispatch objective at the head), an
+    optional consequential tool_use (a ``Write`` block — the structural
+    cue for AC.SSFC.1), and an assistant message (the result at the
+    tail). When *consequential* is False, NO write/mutation tool_use is
+    present (a trivial read-only finish), so :func:`is_consequential`
+    returns False and the judge is not spawned.
+    """
+    records: list[dict] = [
+        {"type": "user", "message": {"role": "user", "content": objective}},
+    ]
+    if consequential:
+        records.append(
+            {
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "Write",
+                            "input": {
+                                "file_path": "/tmp/deliverable.md",
+                                "content": "x",
+                            },
+                        }
+                    ],
+                },
+            }
+        )
+    else:
+        # A read-only tool use — NOT a consequential cue.
+        records.append(
+            {
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "Bash",
+                            "input": {"command": "ls -la /tmp"},
+                        }
+                    ],
+                },
+            }
+        )
+    records.append(
+        {
+            "type": "assistant",
+            "message": {
+                "role": "assistant",
+                "content": [{"type": "text", "text": result}],
+            },
+        }
+    )
+    import json as _json
+
+    path.write_text(
+        "\n".join(_json.dumps(r) for r in records) + "\n", encoding="utf-8"
+    )
+    return path
+
+
+def make_stop_envelope(
+    workspace_root: Path,
+    transcript_path: Path,
+    *,
+    subagent_id: str = "sub-test-1",
+) -> dict:
+    """Build a SubagentStop envelope of the shape the hook parses (the
+    ``transcript_path`` common-input field + workspace + a subagent id)."""
+    return {
+        "hook_event_name": "SubagentStop",
+        "transcript_path": str(transcript_path),
+        "workspace": {"project_dir": str(workspace_root)},
+        "cwd": str(workspace_root),
+        "subagent_id": subagent_id,
+    }

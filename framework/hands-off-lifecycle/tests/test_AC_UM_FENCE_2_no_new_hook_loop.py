@@ -58,9 +58,21 @@ def test_AC_UM_FENCE_2_no_new_hook_module_added() -> None:
     # The keep_pace hook modules are the pre-N4 set — N4 added none here
     # (the new code is a contributor in primary-persona + a registration
     # line in the existing user_prompt_submit.py).
+    # FBM correctness cycle (2026-06-09) rebaseline: `claim_guard.py`
+    # added to the expected set — it is a routed SIBLING module the
+    # existing draft-gate calls (the same non-entry-point class as
+    # `draft_gate.py` itself: no `main()`, no stdin envelope, no
+    # settings-fragment registration), explicitly authorized by that
+    # cycle's plan §5 fence ("a new claim-guard layer or routed
+    # sibling module"). N4's contract — no new hook ENTRY-POINT
+    # module, no new hook EVENT — is untouched: the event surface
+    # still consists of `pre_tool_use.py` + `user_prompt_submit.py`
+    # only. In-band retire-and-rebaseline per the loose-AC-text
+    # discipline (`feedback_loose_AC_text_fix_AC_not_implementation`).
     expected = {
         "__init__.py",
         "chain_runner.py",
+        "claim_guard.py",
         "draft_gate.py",
         "pre_tool_use.py",
         "user_prompt_submit.py",

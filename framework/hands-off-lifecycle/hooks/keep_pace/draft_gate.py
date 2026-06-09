@@ -529,6 +529,50 @@ def layerC_check(
 
 
 # ====================================================================
+# Layer CG — claim-vs-stored-state guard (AC.CLG.1–4, FBM correctness
+# cycle Slice 2; D2 ★ STEER + fail-open)
+# ====================================================================
+#
+# A NEW live layer alongside Layer C: where Layer C checks the draft
+# against the hardcoded SEEDED_CONSTRAINTS tuple, Layer CG verifies
+# WORK-STATE assertions (positive AND negative) against LIVE ground
+# truth — the Slice-1 plan-state query over the git-derived index. The
+# detection + verification live in the sibling ``claim_guard`` module;
+# this wrapper inherits the gate's contracts: model-facing-only
+# feedback (AC.KP9.4), fail-open on ANY internal error (AC.CLG.4 — a
+# guard error can never block a send), no LLM/API call in the send
+# path (D4). The steer is a FLAG (steer-not-block, owner ruling D2):
+# the model receives the claim + the contradicting evidence and
+# revises; the send is never refused by this layer.
+
+
+def _claim_guard_reasons(text: str) -> list[GateReason]:
+    """Run the sibling claim guard; wrap its steers as model-facing
+    ``GateReason``s (layer ``"CG"``). FAIL-OPEN: any error — sibling
+    import, ground-truth reach, detection — yields ``[]`` so the
+    gate's availability contract holds (AC.CLG.4)."""
+    try:
+        try:
+            from claim_guard import check_claims  # type: ignore[import-not-found]  # noqa: WPS433
+        except ImportError:
+            # The gate was imported without the keep_pace hooks dir on
+            # sys.path (AC.CLG.OA — the production entry point catches
+            # the live failure however the gate was loaded).
+            import sys as _sys
+            from pathlib import Path as _Path
+
+            _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+            from claim_guard import check_claims  # noqa: WPS433
+
+        return [
+            GateReason(layer="CG", label=s.label, detail=s.detail)
+            for s in check_claims(text)
+        ]
+    except BaseException:  # noqa: BLE001 — AC.CLG.4 fail-open; never block a send
+        return []
+
+
+# ====================================================================
 # The gate (AC.KP9.3 routes every surface; AC.KP9.4 fail-open)
 # ====================================================================
 
@@ -582,10 +626,15 @@ def gate(
             return GateResult(verdict=Verdict.PASS)
         l1 = layer1_lint(draft, exposure=exposure)
         lc = layerC_check(draft, constraints=constraints)
-        reasons = l1 + lc
+        # Layer CG (AC.CLG.1–4) — work-state claims verified against
+        # live ground truth; a contradicted/unverifiable-negative claim
+        # contributes a FLAG-class model-facing steer (D2 ★ steer-not-
+        # block). Internally fail-open: an error contributes nothing.
+        cg = _claim_guard_reasons(draft)
+        reasons = l1 + lc + cg
         if l1:
             verdict = Verdict.BLOCK
-        elif lc:
+        elif lc or cg:
             verdict = Verdict.FLAG
         else:
             verdict = Verdict.PASS

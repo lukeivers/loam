@@ -179,7 +179,16 @@ _SAMPLE_FILES = (
      # seal; fails IDENTICALLY on the stashed clean baseline tree. ODD
      # §4 in-band retire-and-rebaseline (same established pattern as the
      # amendment #144 §16 + v0.13.0/v0.14.0 rebaselines above).
-     "4649cd0df477af87534aa53c4f80995c9868645e6de630f253e7648cd2a2bcf4"),
+     # FBM correctness cycle (2026-06-09) rebaseline, two folds:
+     # (1) pre-existing drift NOT caused by this cycle — the file at
+     # the cycle's plan commit 7f647161 already hashed a8932360… (a
+     # post-v1.0.0 amendment edited it without rebaselining; verified
+     # via `git show 7f647161:<path> | shasum -a 256`); (2) this
+     # cycle's own AC.PSI.2 edit (the plans-block contributor
+     # registration in `build_session_composer`) — the amendment's
+     # intent, not a regression. ODD §4 in-band retire-and-rebaseline
+     # per the established pattern; F2-surfaced in the cycle report.
+     "62bc098f69bd78114c96883c6a5796db3b3a2f4731f13f70f8e5aa334bcbbaa4"),
     ("framework/primary-persona/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,
@@ -227,7 +236,16 @@ _SAMPLE_FILES = (
      # pattern; the root-cause structural fix (exclude pyproject.toml
      # from the byte-content sample) remains OWED + re-surfaced as a
      # hard F2 finding at the 1.0 cut.
-     "6548640d564e26edae93bb9bff31d3819c66a8a891c151327faeba8d726898f0"),
+     # FBM correctness cycle (2026-06-09) rebaseline: FIFTH consecutive
+     # recurrence — post-v1.0.0 lockstep bumps (current published
+     # v1.3.0) invalidated this SHA again; pre-existing on the cycle's
+     # plan commit 7f647161, NOT caused by this cycle (it does not
+     # touch any pyproject). The owed root-cause fix (exclude
+     # pyproject.toml from the byte-content sample) is OUTSIDE this
+     # cycle's three-component fence; re-surfaced as a hard F2 finding
+     # in the cycle report. In-band retire-and-rebaseline per the
+     # established pattern.
+     "5659bcc4241dc48a839c645150c73aa656c570d751d28d4585d57774291e601d"),
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -322,7 +340,15 @@ _SAMPLE_FILES = (
      # declared major). FOURTH consecutive recurrence; root-cause
      # structural fix still OWED + re-surfaced as a hard F2 finding
      # at the 1.0 cut.
-     "2dda4fb2d0a94f223eef96a62a0876edf3fb7056b6a78cfcd18788424a9aeb07"),
+     # FBM correctness cycle (2026-06-09) rebaseline: FIFTH consecutive
+     # recurrence — post-v1.0.0 lockstep bumps (current published
+     # v1.3.0) invalidated this SHA; pre-existing on the cycle's plan
+     # commit 7f647161, NOT caused by this cycle. Root-cause fix
+     # (exclude pyproject.toml from the sample) is outside this
+     # cycle's fence; re-surfaced as a hard F2 finding in the cycle
+     # report. In-band retire-and-rebaseline per the established
+     # pattern.
+     "01e7723bfab7f1e3d14c9b8876766d8bd07c0fca33631d0178275626a1b4fa34"),
 )
 
 

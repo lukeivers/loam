@@ -306,6 +306,23 @@ def build_session_composer(
         # live-thread digest).
         pass
 
+    # AC.PSI.2 (FBM correctness cycle, Slice 1) — register the ONE
+    # concise plans block as a turn contributor: in-flight plans +
+    # their REAL build-state, derived live from git (never from a
+    # plan's own prose status line), TTL-cached + hard-capped +
+    # fail-soft per the Slice-D discipline. Registered ADDITIVELY and
+    # independently of the memory-client branch above (plan-state is
+    # ground truth, not memory). Fail-soft on registration: a failure
+    # simply omits the plans block; every sibling block is unaffected.
+    try:
+        from .keep_pace.plans_state import (  # noqa: WPS433
+            register_plans_contributor,
+        )
+
+        register_plans_contributor(composer)
+    except Exception:  # noqa: BLE001 — AC.PSI.2 fail-soft
+        pass
+
     return composer
 
 

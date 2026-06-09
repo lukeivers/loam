@@ -133,6 +133,18 @@ BASELINE_WEIGHT = 50
 WEIGHT_MIN = 1
 WEIGHT_MAX = 100
 
+# AC.SUP.2 (FBM correctness cycle, Slice 3) — corpus-side honor of the
+# T1.1 ``superseded-by`` marker convention: a marked doc's relevance is
+# multiplicatively DEMOTED (mirroring the episode-side
+# ``file_memory.SUPERSEDED_PENALTY`` semantics — demote, never blanket-
+# delete from the index) so a superseded rule no longer outranks its
+# successor for queries both match. ADDITIVE ranking factor: a doc with
+# no marker multiplies by 1.0 exactly (today's corpus is byte-identical
+# in score and rank). The episode-side constant is NOT imported across
+# the package boundary on the hot path (mirrors the salience-default
+# pattern) and its semantics are untouched.
+CORPUS_SUPERSEDED_PENALTY = 0.1
+
 
 @dataclass
 class CorpusDoc:
@@ -155,6 +167,10 @@ class CorpusDoc:
     # time and carried into the FTS5 UNINDEXED ``doclen`` column so the omnibus
     # length penalty (:func:`_length_penalty`) needs no per-query tokenization.
     doc_token_len: int = 0
+    # AC.SUP.2 — the doc's ``superseded-by`` marker value ("" = not
+    # superseded). Read from frontmatter at index time; drives the
+    # ranking demotion + the surfaced-hit annotation.
+    superseded_by: str = ""
 
 
 def default_index_path(workspace_root: Path | str) -> Path:
@@ -269,6 +285,10 @@ def _doc_pointer(path: Path, title: str) -> str:
 _FRONTMATTER_RE = re.compile(r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*\r?\n", re.DOTALL)
 _FM_WEIGHT_RE = re.compile(r"^weight:[ \t]*(\S+)", re.MULTILINE)
 _FM_PINNED_RE = re.compile(r"^pinned:[ \t]*(\S+)", re.MULTILINE)
+# AC.SUP.2 — the T1.1 supersession-marker key (the same key
+# ``file_memory._split_frontmatter`` parses episode-side and the
+# Slice-3 marking entry point writes).
+_FM_SUPERSEDED_RE = re.compile(r"^superseded-by:[ \t]*(\S+)", re.MULTILINE)
 
 
 def _split_frontmatter(body: str) -> tuple[str, str]:
@@ -308,6 +328,40 @@ def _weight_pinned_from_frontmatter(fm_text: str) -> tuple[int, bool]:
     return weight, pinned
 
 
+def _superseded_from_frontmatter(fm_text: str) -> str:
+    """The ``superseded-by`` marker value, or ``""`` (AC.SUP.2).
+
+    Fail-soft like the weight/pinned readers: no block / no key / a
+    malformed line resolves to the unmarked no-op."""
+    if not fm_text:
+        return ""
+    m = _FM_SUPERSEDED_RE.search(fm_text)
+    if not m:
+        return ""
+    return m.group(1).strip().strip("\"'")
+
+
+def _plain_successor(successor: str) -> str:
+    """A plain-language rendering of the successor pointer (AC.SUP.2 —
+    the annotation the reader sees; never a file path / ``.md`` name,
+    matching the ``_doc_pointer`` plain-by-construction discipline)."""
+    stem = Path(successor).stem
+    plain = stem.replace("_", " ").replace("-", " ").strip()
+    if plain.lower().startswith("feedback "):
+        plain = plain[len("feedback "):]
+    return plain or "a newer rule"
+
+
+def _annotate_superseded(pointer: str, superseded_by: str) -> str:
+    """AC.SUP.2 — a surfaced superseded doc carries its supersession
+    annotation: the reader sees "superseded by X", never the bare
+    stale rule. An empty pointer stays empty (the doc is not a
+    user-facing pointer at all)."""
+    if not pointer or not superseded_by:
+        return pointer
+    return f"{pointer} (superseded by: {_plain_successor(superseded_by)})"
+
+
 def read_corpus_docs(paths: Iterable[Path]) -> list[CorpusDoc]:
     """Read + shape the corpus docs for indexing (AC.KP1.1).
 
@@ -317,6 +371,11 @@ def read_corpus_docs(paths: Iterable[Path]) -> list[CorpusDoc]:
     the ``# Title`` + prose that carry the real topical signal are untouched).
     A doc with no frontmatter is unchanged: empty frontmatter, full body,
     baseline weight, unpinned.
+
+    AC.SUP.2 — additionally reads the ``superseded-by`` marker; a
+    marked doc's pointer is annotated at read time so EVERY surfaced
+    occurrence carries the supersession notice. An unmarked doc is
+    byte-identical to its pre-Slice-3 shape.
     """
     docs: list[CorpusDoc] = []
     for p in paths:
@@ -326,6 +385,7 @@ def read_corpus_docs(paths: Iterable[Path]) -> list[CorpusDoc]:
             continue
         fm_text, body = _split_frontmatter(raw)
         weight, pinned = _weight_pinned_from_frontmatter(fm_text)
+        superseded_by = _superseded_from_frontmatter(fm_text)
         title = _doc_title(p, body)
         indexed_body = body[:CORPUS_DOC_BODY_CAP]
         docs.append(
@@ -333,12 +393,15 @@ def read_corpus_docs(paths: Iterable[Path]) -> list[CorpusDoc]:
                 path=str(p),
                 title=title,
                 body=indexed_body,
-                pointer=_doc_pointer(p, title),
+                pointer=_annotate_superseded(
+                    _doc_pointer(p, title), superseded_by
+                ),
                 weight=weight,
                 pinned=pinned,
                 # AC.RQ80.2 — true token-length of the indexed body (the
                 # same FTS tokenizer the query uses), for the omnibus penalty.
                 doc_token_len=len(_tokenize_for_length(indexed_body)),
+                superseded_by=superseded_by,
             )
         )
     return docs
@@ -374,27 +437,28 @@ class CorpusIndex:
             "CREATE VIRTUAL TABLE IF NOT EXISTS corpus "
             "USING fts5(path UNINDEXED, title, body, pointer UNINDEXED, "
             "mtime UNINDEXED, weight UNINDEXED, pinned UNINDEXED, "
-            "doclen UNINDEXED)"
+            "doclen UNINDEXED, superseded UNINDEXED)"
         )
-        # AC-FBM-W / AC.RQ80.2 — the index is a DERIVED .scratch/ cache (the
-        # markdown is the source of truth). When an older-schema index (pre-weight
-        # or pre-doclen) is on disk, ``IF NOT EXISTS`` leaves it untouched and
-        # later INSERTs of the new columns would raise. Detect the schema
-        # mismatch and rebuild from scratch rather than migrate (the documented
-        # derived-cache contract).
+        # AC-FBM-W / AC.RQ80.2 / AC.SUP.2 — the index is a DERIVED .scratch/
+        # cache (the markdown is the source of truth). When an older-schema
+        # index (pre-weight, pre-doclen, or pre-superseded) is on disk,
+        # ``IF NOT EXISTS`` leaves it untouched and later INSERTs of the new
+        # columns would raise. Detect the schema mismatch and rebuild from
+        # scratch rather than migrate (the documented derived-cache contract).
         try:
             cols = [r[1] for r in conn.execute("PRAGMA table_info(corpus)")]
             if (
                 "weight" not in cols
                 or "pinned" not in cols
                 or "doclen" not in cols
+                or "superseded" not in cols
             ):
                 conn.execute("DROP TABLE IF EXISTS corpus")
                 conn.execute(
                     "CREATE VIRTUAL TABLE corpus "
                     "USING fts5(path UNINDEXED, title, body, pointer UNINDEXED, "
                     "mtime UNINDEXED, weight UNINDEXED, pinned UNINDEXED, "
-                    "doclen UNINDEXED)"
+                    "doclen UNINDEXED, superseded UNINDEXED)"
                 )
         except sqlite3.Error:
             pass
@@ -451,8 +515,8 @@ class CorpusIndex:
                 conn.execute(
                     "INSERT INTO corpus "
                     "(path, title, body, pointer, mtime, weight, pinned, "
-                    "doclen) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    "doclen, superseded) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         resolved,
                         doc.title,
@@ -462,6 +526,7 @@ class CorpusIndex:
                         int(doc.weight),
                         1 if doc.pinned else 0,
                         int(doc.doc_token_len),
+                        doc.superseded_by,
                     ),
                 )
                 count += 1
@@ -509,7 +574,7 @@ class CorpusIndex:
         candidate_limit = max(num_results * 5, num_results)
         sql = (
             "SELECT path, title, pointer, weight, pinned, doclen, "
-            "bm25(corpus) AS score "
+            "superseded, bm25(corpus) AS score "
             "FROM corpus WHERE corpus MATCH ? "
             "ORDER BY score LIMIT ?"
         )
@@ -521,7 +586,9 @@ class CorpusIndex:
         out: list[dict[str, object]] = []
         seen: set[str] = set()
 
-        def _emit(path, title, pointer, weight, pinned, rel) -> None:
+        def _emit(
+            path, title, pointer, weight, pinned, rel, superseded=""
+        ) -> None:
             try:
                 w = int(weight) if weight is not None else BASELINE_WEIGHT
             except (TypeError, ValueError):
@@ -534,11 +601,14 @@ class CorpusIndex:
                     "score": rel,
                     "weight": w,
                     "pinned": bool(pinned),
+                    # AC.SUP.2 — the marker rides the hit so consumers
+                    # can see the supersession ("" = not superseded).
+                    "superseded_by": str(superseded or ""),
                 }
             )
             seen.add(str(path))
 
-        for path, title, pointer, weight, pinned, doclen, score in rows:
+        for path, title, pointer, weight, pinned, doclen, superseded, score in rows:
             # SQLite bm25() is negative (lower = better); negate so
             # larger = stronger relevance.
             rel = -float(score) if score is not None else 0.0
@@ -554,13 +624,23 @@ class CorpusIndex:
                     rel = rel * _length_penalty(int(doclen) if doclen else 0)
                 except (TypeError, ValueError):
                     pass
+            # AC.SUP.2 — demote a superseded doc multiplicatively (the
+            # episode-side SUPERSEDED_PENALTY semantics mirrored): a
+            # marked rule no longer outranks its successor for queries
+            # both match. Demote-not-filter at this step; the relevance
+            # floor below applies to the final score exactly as it does
+            # for the length penalty. A pinned hit is the hard floor and
+            # is not demoted (its inclusion is by-design); it still
+            # carries its annotation.
+            if superseded and not is_pinned:
+                rel = rel * CORPUS_SUPERSEDED_PENALTY
             # AC.KP1.4 — drop pure-noise zero-IDF hits below the relevance
             # floor (silent-on-no-match), applied to the PENALIZED score. A
             # PINNED hit bypasses the cut — the hard floor is carried regardless
             # of relevance (AC-FBM-W-2).
             if rel < MIN_RELEVANCE_SCORE and not is_pinned:
                 continue
-            _emit(path, title, pointer, weight, pinned, rel)
+            _emit(path, title, pointer, weight, pinned, rel, superseded)
 
         # AC.RQ80.2 — re-rank by the PENALIZED relevance (descending) and
         # truncate the NON-PINNED matched hits to num_results: the wider
@@ -583,12 +663,13 @@ class CorpusIndex:
         # sqlite error here degrades to the matched set (fail-soft hot path).
         try:
             pin_rows = conn.execute(
-                "SELECT path, title, pointer, weight FROM corpus WHERE pinned = 1"
+                "SELECT path, title, pointer, weight, superseded "
+                "FROM corpus WHERE pinned = 1"
             ).fetchall()
         except sqlite3.Error:
             pin_rows = []
-        for path, title, pointer, weight in pin_rows:
+        for path, title, pointer, weight, superseded in pin_rows:
             if str(path) in seen:
                 continue
-            _emit(path, title, pointer, weight, 1, 0.0)
+            _emit(path, title, pointer, weight, 1, 0.0, superseded)
         return out

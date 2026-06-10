@@ -6,10 +6,10 @@ amendment:
   title: "Memory recall cycle — decision ledger (owner rulings as first-class structured records written at ruling time, entity-indexed, loaded whole before related work begins, gate-backed write-side contract), surfacing rebuild (file paths restored to model-facing context, salient pointer text, ~5KB-class budget, whole-record injection, on BOTH render paths — per-turn keep-pace AND the dispatch-bundle memory tier), eval-verdict execution (the June-7 measured KILL of the co-citation spread finally lands; power-law activation neutralized behind a default-off flag), dispatch memory packs (the sealed frame-kernel SubagentStart bundle becomes decision-aware so background agents stop being memory-blind by construction), and decision-claim guard (the sealed claim guard's ground truth widens to the ledger so settled rulings cannot be silently re-opened). The RECALL tier on top of the sealed FBM-correctness GUARD tier; the merged A/B north-star build."
 
 # BASELINE: walked at apply-time per the #142 D-PASH.BASELINE-WALK pattern.
-# At authoring time the tree tip is 3b060f14 (the correctness cycle's apply
-# commit) with that cycle's sealed-plan renames pending commit; the walk
-# starts from the commit that carries this plan.
-baseline: null
+# Walked 2026-06-09 at build: 122099e7 is the commit that carries this plan
+# (owner-ratified, `docs(plans): memory-recall cycle plan`) and the direct
+# parent of the cycle's first slice commit (1ba0ee29).
+baseline: 122099e70da9a586f756c0546a71061a96bf7e9c
 
 plan: docs/plans/memory-decision-ledger-surfacing-dispatch-packs.md
 

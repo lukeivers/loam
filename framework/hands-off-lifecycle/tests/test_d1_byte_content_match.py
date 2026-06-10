@@ -252,7 +252,15 @@ _SAMPLE_FILES = (
      # cycle's three-component fence; re-surfaced as a hard F2 finding
      # in the cycle report. In-band retire-and-rebaseline per the
      # established pattern.
-     "5659bcc4241dc48a839c645150c73aa656c570d751d28d4585d57774291e601d"),
+     # v1.4.0 MINOR publish (2026-06-10) rebaseline: per-component
+     # version lockstep bumped 1.3.0 -> 1.4.0 (release commit), the
+     # SAME mechanical drift shape as every prior MINOR. SIXTH
+     # consecutive recurrence; the owed root-cause fix (exclude
+     # pyproject.toml from the byte-content sample — pyprojects MUST
+     # mutate every MINOR by design) remains scheduled. In-band
+     # retire-and-rebaseline per the established pattern; F2-surfaced
+     # in the v1.4.0 release report.
+     "d9ce92dae3271557e98bcbf9b8107012ea6ccea590eaeb7af2cf358380084986"),
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -355,7 +363,12 @@ _SAMPLE_FILES = (
      # cycle's fence; re-surfaced as a hard F2 finding in the cycle
      # report. In-band retire-and-rebaseline per the established
      # pattern.
-     "01e7723bfab7f1e3d14c9b8876766d8bd07c0fca33631d0178275626a1b4fa34"),
+     # v1.4.0 MINOR publish (2026-06-10) rebaseline: same shape as the
+     # primary-persona/pyproject.toml rebaseline above (lockstep bump
+     # 1.3.0 -> 1.4.0). SIXTH consecutive recurrence; root-cause fix
+     # still owed. In-band retire-and-rebaseline; F2-surfaced in the
+     # v1.4.0 release report.
+     "16ca5923f00fa25d39058086d8e662164935b98dccb0c5a72b540bf56d3fc7c2"),
 )
 
 

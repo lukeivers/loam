@@ -145,17 +145,27 @@ dispatched subagents) → AC.PO.1 + AC.PO.2.
 - D-build.2 — floor caps reuse the sealed constants (`OPEN_DECISION_CAP`,
   `DECISION_TOP_N`, `INJECTION_CHAR_CAP`) with fail-soft local fallbacks, so
   no second budget exists to drift.
-- D-build.3 — RED-on-revert: to be verified at build (the new ACs must fail
-  against pre-fix `bundle.py`); result recorded here at backfill.
+- D-build.3 — RED-on-revert verified at build: with the `bundle.py` edit
+  stashed, 6 of the 11 new tests FAIL (AC.RDM.1 derivation + tool_result-skip
+  + synthetic-skip; AC.RDM.2 floor + budget; AC.RDM.S) and the remaining 5
+  pass pre-fix BY DESIGN (they pin preserved behavior: envelope-field
+  priority, fail-soft empties, no-ledger byte-identical degradation,
+  never-raises). All 11 pass post-fix; full suite 79/79 (68 pre-existing +
+  11 new) under the venv Python.
+- D-build.4 — seal-time dirty-tree handling repeated from the previous
+  cycle's D-build.3: the 13 pre-existing untracked plan-docs from other
+  in-flight cycles were scoped-stashed (`git stash push -u <paths>`) around
+  the seal, then popped — all 13 restored; no unrelated path entered any
+  commit.
 
 **Cycle SHAs (backfilled post-seal):**
 
 | Step | SHA |
 |---|---|
-| Plan + manifest (`docs(plans):`) | `f6ee0945` |
-| Source + tests (`feat(frame-kernel):`) | _backfilled post-seal_ |
-| Apply (`chore(amend):`) | _backfilled post-seal_ |
-| **Seal** (`chore(seals):`) | _backfilled post-seal_ |
+| Plan + manifest (`docs(plans):`) | `f6ee0945` (+ correction `2d383fe0`) |
+| Source + tests (`feat(frame-kernel):`) | `2d69c8ea` |
+| Apply (`chore(amend):`) | `760a4bb7` |
+| **Seal** (`chore(seals):`) | `9eeef654` |
 
 ## §15 Backwards-compat verification
 

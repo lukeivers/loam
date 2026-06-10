@@ -205,8 +205,16 @@ def run_build_from_intent(
         "do it, so the finished tool is checked against real practice.",
         say=_say, next_step="I'll plan the build around what I find.",
         expected_wait_plain="usually a minute or two")
-    grounding = research_domain(
-        intent.objective, workspace_dir=workspace_dir, model=model)
+    # AC.PRG.1: the research leg can run long — heartbeats cover it
+    # (no user-visible silence beyond the bound while work is active).
+    beat_stop = start_heartbeat(
+        record, watch_dir=run_dir, say=_say,
+        interval_s=heartbeat_interval_s)
+    try:
+        grounding = research_domain(
+            intent.objective, workspace_dir=workspace_dir, model=model)
+    finally:
+        beat_stop.set()
     if grounding.grounded:
         record.narrate(
             "researching",
@@ -233,6 +241,10 @@ def run_build_from_intent(
         "pre-made.", say=_say,
         next_step="I'll lock the check in before any building starts.",
         expected_wait_plain="a few minutes")
+    # AC.PRG.1: the generation leg runs long too — heartbeats cover it.
+    beat_stop = start_heartbeat(
+        record, watch_dir=run_dir, say=_say,
+        interval_s=heartbeat_interval_s)
     try:
         design = generate_design(intent, grounding, answers=answers,
                                  model=model)
@@ -244,6 +256,8 @@ def run_build_from_intent(
             "on a broken plan.", say=_say)
         result.terminal = "generation-failed"
         return _finish(record, result, t0)
+    finally:
+        beat_stop.set()
     result.design = design
 
     gate_dir = run_dir / "gate"

@@ -129,11 +129,12 @@ def start_heartbeat(
         while not stop.wait(interval_s):
             state = probe(Path(watch_dir))
             if state.get("alive"):
-                msg = ("Still building — work is actively touching "
-                       f"disk ({state['evidence']}).")
+                msg = ("Still working — progress is actively landing "
+                       f"on disk ({state['evidence']}).")
             else:
-                msg = ("Waiting on the build agent — no new work on "
-                       f"disk yet ({state['evidence']}).")
+                msg = ("Still here — the current step is running and "
+                       "hasn't written new files yet "
+                       f"({state['evidence']}).")
             record.narrate("heartbeat", msg, say=say,
                            liveness=state)
 

@@ -327,6 +327,18 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         "dev-sdlc",
         "loam",
         "loam-init",
+        # FBM correctness cycle (fbm-correctness-claim-guard-plan-
+        # index-supersession) is the first H/L amendment whose
+        # SEAL_COMMIT window crosses the frame-kernel SLICE-1a
+        # commit `b16b49f2` (`feat(frame-kernel): SubagentStart
+        # auto-context handoff`), which introduced the top-level
+        # `kernel/` prefix (`kernel/loam-microkernel.md`). Admitted
+        # here at H/L's first opportunity per ODD §10's
+        # per-invariant-BASELINE convention (the H19 frozen BASELINE
+        # is project-start; interim top-level prefix changes are
+        # admitted when H/L's next SEAL_COMMIT advances past them).
+        # This amendment itself does not touch `kernel/`.
+        "kernel",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

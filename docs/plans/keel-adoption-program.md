@@ -213,6 +213,18 @@ Each skeleton below expands to a full sub-plan (`docs/plans/keel-adoption-<cycle
 
 Populated per-cycle at build time; SHAs backfilled by `loam amend seal --plan-doc`.
 
+### Phase 1 (built 2026-06-10)
+
+| ID | Decision (method-level, builder's call) | Why |
+|---|---|---|
+| P1-M1 | Rewritten spec preserves the pre-KEEL section numbers for the heavily-cited rules (§1.1, §2.4, §2.5, §3.3, §3.4, §4.x, §5.1.1, §5.3, §7.4, §8.2, §10) and carries an old→new section map at §11; full pre-rewrite text archived at `docs/archive/odd-methodology-2026-06-10-pre-keel.md` | Halt trigger 3 (sealed plans cite "ODD §N" 900+ times for §2.5 alone — Tier-0 grep count; renumbering would alter cited meanings) |
+| P1-M2 | Landed at exactly 360 lines (the AC ceiling) — element-complete; the deeper ~300 target was not reachable without cutting spine documentation, which halt trigger 2 forbids | "~300-line target is an outcome of honest cutting, not a quota" (dispatch principle 5) |
+| P1-M3 | AC.KDOC.4/.S write-time-gating sweep scoped to DOCTRINE surfaces (docs root + docs/design + plugins/*/docs), not docs/plans/ | The AC's own "doctrine half" clause; historical plan/research records legitimately document the gates' build and are work records, not doctrine |
+| P1-M4 | Charter hash discipline: `content-sha256` = SHA-256 of the verbatim statement's UTF-8 bytes; chain rule `chain(N) = SHA-256(chain(N-1) + "\n" + statement(N))`; entry #0 chain = its content hash (genesis) | Verifiable from the file alone (Cycle A's AC.CHCAP.1 builds on this); simplest scheme that is byte-checkable |
+| P1-M5 | Adapter tables → `plugins/dev-sdlc/odd-extractor/docs/adapter-conventions.md` (new package-docs dir, old §11.2–§13 verbatim + ASSERTED mapping header); old §14 → `plugins/dev-sdlc/docs/odd-methodology-CHANGELOG.md` (new changelog-class file — repo had none) | AC.KDOC.5; both paths inside the dev-sdlc fence |
+| P1-M6 | Derivation doc archived via `git mv` + dated retraction note prepended + redirect stub at the old path | D5; the stub keeps the five on-demand pointer references (CLAUDE.dev.md, corpus hook comment, dev-mode-manifest comment, SKILL.md, leverage-discipline.md) resolvable with zero out-of-fence edits — no tooling loads the path programmatically (Tier-0 verified), so halt trigger 4 did not fire |
+| P1-M7 | In-scope honesty ride-alongs: `docs/odd-llm-grounding.lean.md` ("What's specifically new…Novel." → distinctive-vs-ancestors + V/P/H-as-evidence-grades restatement; derivation pointers → archive path) and `docs/glossary.md` (banded-AC entry gains the D4 ASSERTED mapping note; authority pointer §11 → §6) | AC.KDOC.2/.3's sweep surfaces include these live docs; leaving them would fail the very sweeps Phase 1 installs |
+
 ## §16 Halt-and-surface findings at plan-authoring
 
 The six §2 items. None required a hard halt: items 1–3 are resolvable from the inputs themselves and are recorded as named decisions (D1, D3) or bookkeeping; items 4–6 are verified-current preconditions. Ratification of THIS plan (the program plan) is the one owner gate before Phase 1 dispatches.

@@ -167,15 +167,39 @@ dispatch; the surface is intelligible) → AC.PO.1 + AC.PO.2.
 ## §14 Method-decision register (populated at build time)
 
 - D-FJO.1 / D-FJO.2 / D-FJO.3 — see §2 (ruled at plan time, evidence-pinned).
+- D-build.1 — conftest's `make_stop_envelope` reshaped to the captured real
+  envelope rather than adding a parallel fixture: every existing SSFC test
+  now exercises the corrected source, and the decoy parent transcript
+  (must-not-leak marker + Write cue) turns any future parent-read regression
+  into a visible marker leak / false cue. Existing assertions untouched.
+- D-build.2 — `StopContext`'s new fields (`agent_transcript_path`,
+  `agent_type`) and `render_surface`'s `result` param are DEFAULTED, keeping
+  every existing construction/call shape valid (AC.SSFC.4's direct
+  `render_surface(verdict, ctx)` test passes unchanged).
+- D-build.3 — RED-on-revert verified: with the `frame_judge.py` +hook edits
+  stashed, 11 of the 13 new tests FAIL and 2 pass pre-fix BY DESIGN
+  (preserved-behavior pins: envelope-field objective priority; the
+  missing-objective marker never excerpted). All 13 pass post-fix; full
+  suite 92/92 (79 pre-existing + 13 new) under the venv Python.
+- D-build.4 — seal-time dirty-tree handling repeated from the previous two
+  cycles: the 13 pre-existing untracked plan-docs from other in-flight
+  cycles were scoped-stashed (`git stash push -u <paths>`) around the seal,
+  then popped — all 13 restored; no unrelated path entered any commit.
+- D-build.5 — mid-cycle corrective `415fcdea`: the manifest's baseline
+  carried an UNVERIFIED full-SHA expansion of short `976959f8` (caught by
+  apply's diff walk failing; `git rev-parse <40-hex>` echoes well-formed hex
+  back without verifying, which masked it). Corrected to the
+  `rev-parse --verify`-confirmed SHA via a NEW commit (never `--amend`).
+  Lesson re-affirmed: full SHAs are Tier-0-verified, never expanded by hand.
 
 **Cycle SHAs (backfilled post-seal):**
 
 | Step | SHA |
 |---|---|
-| Plan + manifest (`docs(plans):`) | _pending_ |
-| Source + tests (`feat(frame-kernel):`) | _pending_ |
-| Apply (`chore(amend):`) | _pending_ |
-| **Seal** (`chore(seals):`) | _pending_ |
+| Plan + manifest (`docs(plans):`) | `00fe86fc` (+ baseline correction `415fcdea`) |
+| Source + tests (`feat(frame-kernel):`) | `5a75d832` |
+| Apply (`chore(amend):`) | `9a808123` |
+| **Seal** (`chore(seals):`) | `9e4c0727` |
 
 ## §15 Backwards-compat verification
 

@@ -1,0 +1,55 @@
+{
+  "probe": "S2",
+  "ts": "2026-06-09T22:56:42",
+  "objective": "Build a command-line tool that matches a day's payment records against open invoices, pairs each payment with at most one invoice on amount and invoice number, and writes the unmatched items from each side to review files",
+  "wall_s": 68.0,
+  "grounded": true,
+  "n_live_citations": 6,
+  "citations": [
+    {
+      "norm_id": "N1",
+      "url": "https://www.jpmorgan.com/insights/treasury/receivables/the-cash-application-process-a-how-to-guide",
+      "http_status": 200,
+      "norm": "Invoice number is the primary matching key; amount is the confirming criterion. A payment is matched to an invoice only when both the invoice reference and the payment amount agree \u2014 partial or ambiguous matches go to the exception queue, not to a forced pairing."
+    },
+    {
+      "norm_id": "N2",
+      "url": "https://beancount.io/blog/2026/04/24/invoice-reconciliation-complete-guide-process-best-practices",
+      "http_status": 200,
+      "norm": "Unmatched items from both sides must be explicitly captured and written out: unmatched payments (cash received with no corresponding invoice) AND unmatched invoices (open invoices with no matching payment) both belong in exception output, not discarded."
+    },
+    {
+      "norm_id": "N3",
+      "url": "https://optimus.tech/knowledge-base/payment-reconciliation",
+      "http_status": 200,
+      "norm": "Exception output must be audit-ready: each unmatched record should carry the full original data (amount, reference, date) plus a reason it did not match, so a reviewer can investigate without re-running the tool."
+    },
+    {
+      "norm_id": "N4",
+      "url": "https://beancount.io/blog/2026/04/24/invoice-reconciliation-complete-guide-process-best-practices",
+      "http_status": 200,
+      "norm": "Tolerance thresholds are a practitioner decision: some shops require exact-amount matches; others define a small variance (e.g. rounding, bank fees) that posts automatically while larger variances go to exceptions. The reconciliation tool should make its tolerance policy explicit and configurable."
+    },
+    {
+      "norm_id": "N5",
+      "url": "https://www.emagia.com/blog/what-is-cash-application/",
+      "http_status": 200,
+      "norm": "Each payment should be applied to at most one invoice per match cycle; one payment legitimately covering multiple invoices is common in practice (a single remittance can reference 40\u201350 invoices), so the tool's one-to-one constraint is a known simplification that reviewers must be told about."
+    },
+    {
+      "norm_id": "N6",
+      "url": "https://www.emagia.com/blog/what-is-cash-application/",
+      "http_status": 200,
+      "norm": "Exception items should be flagged and resolved within 24\u201348 hours in world-class operations; the review files produced by a matching tool directly feed this SLA, so their format should be immediately actionable (sortable, dated, with all fields needed for a one-step decision)."
+    }
+  ],
+  "expert_gate_flags": [
+    "Tolerance threshold policy: whether the tool should require exact-amount matches or allow a small configurable variance (e.g. bank fees, rounding) that still counts as matched \u2014 this is organisation-specific and cannot be settled by research alone.",
+    "The tool constrains each payment to at most one invoice, but real-world cash application frequently sees one payment remittance covering many invoices simultaneously; a human expert should confirm whether the one-to-one constraint is intentional for this specific use case or whether multi-invoice matching must be supported.",
+    "Output file format and field requirements (CSV columns, field order, required metadata) depend on the downstream review workflow and ERP or accounting system in use \u2014 a practitioner familiar with the target environment should specify these."
+  ],
+  "dropped_citations": [],
+  "ungrounded_reason": "",
+  "record_excerpt": "---\nkind: domain-grounding-record\ndate: 2026-06-09\nobjective: \"Build a command-line tool that matches a day's payment records against open invoices, pairs each payment with at most one invoice on amount and invoice number, and writes the unmatched items from each side to review files\"\ncitations: 6\nexpert_gate_flags: 3\n---\n\n# How practitioners do this work\n\nIn accounts receivable (cash application) practice, matching payments to invoices is called 'cash application.' Practitioners match each incoming payment to an open invoice primarily by invoice number, then confirm with the payment amount; u",
+  "prediction_passed": true
+}

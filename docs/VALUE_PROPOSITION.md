@@ -106,17 +106,29 @@ Consider a user wanting something done every 12 hours.
 
 ## The test for any future feature
 
-Every feature proposal should answer two questions.
+Every feature proposal should answer two questions. The two tests are
+labeled `AC.PO.1` and `AC.PO.2`: they are the first acceptance criteria
+derived from loam's root contract — Charter entry #0, the founding
+intent statement at `docs/charter.md` — and every plan that cites
+`AC.PO.1` / `AC.PO.2` is laddering to that entry through them.
 
-### Primary-persona test
+### AC.PO.1 — Primary-persona test
 
 **Does this reduce the translation burden between the user's natural-language intent and AI-effective execution?**
 
+*(`AC.PO.1` — first derived criterion of Charter entry #0,
+`docs/charter.md`. A harness whose user must do the translation work
+themselves is not delivering "people … more effectively … hands-off".)*
+
 A feature that makes the user do translation work themselves — pick between execution modalities, understand mechanisms, manage orchestration, remember syntax — is a feature that works against the primary persona's function. Features that push translation work onto the user turn the primary persona into a dispatcher rather than a translator, and the user pays the usability cost.
 
-### Harness test
+### AC.PO.2 — Harness test
 
 **Does this add to the toolkit the primary persona can draw from?**
+
+*(`AC.PO.2` — second derived criterion of Charter entry #0,
+`docs/charter.md`. The toolkit is how "an AI does the development for
+them" stays true as the asks grow past what a raw model can carry.)*
 
 A feature that only enables a user action the primary persona cannot itself invoke is a feature that works against the harness's function. The harness exists to expand what the primary persona can accomplish when translating requests — new capabilities that live outside the primary persona's reach are new capabilities the user has to orchestrate themselves, which defeats the point.
 

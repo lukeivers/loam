@@ -27,6 +27,12 @@ Verification (per plan-doc): construct two memory files with
 controlled BM25 scores; seed the access log so file_A has many recent
 accesses and file_B has none; assert file_A ranks above file_B even
 when file_B's pre-activation BM25 score is higher.
+
+Memory recall cycle Slice 1 (AC.EVX.2): activation is now DEFAULT-OFF
+per the June-7 eval verdict; this composition behavior is preserved
+BEHIND the named re-enable switch, so the test sets the
+``LOAM_FBM_ACTIVATION`` flag — verifying re-enable needs no code
+change. The default-off floor ranking is covered by AC.EVX.1/AC.EVX.OA.
 """
 
 from __future__ import annotations
@@ -39,10 +45,12 @@ from loam.primary_persona.file_memory import FileMemoryStore
 
 
 def test_AC_FBMT2_PLBLA_2_activation_overrides_bm25_when_differential_dominates(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch,
 ) -> None:
     """File A with moderate BM25 + high activation ranks above file B
-    with higher BM25 + zero activation."""
+    with higher BM25 + zero activation — with the AC.EVX.2 switch ON
+    (the flag-gated re-enable path; default-off is the floor arm)."""
+    monkeypatch.setenv("LOAM_FBM_ACTIVATION", "1")
     memory_dir = tmp_path / "mem"
     store = FileMemoryStore(memory_dir=memory_dir)
     now = datetime.now(timezone.utc)

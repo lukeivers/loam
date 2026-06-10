@@ -12,39 +12,28 @@
 # implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""AC.FBMT2.S — outcome-altitude smoke for FBM Tier 2 retrieval mechanics.
+"""AC.FBMT2.S — outcome-altitude smoke for FBM retrieval mechanics.
 
 Marked ``outcome-altitude: true`` per
 ``feedback_test_outcome_altitude_required``. Invokes the production
 :func:`build_file_memory_retrieval_contributor` with no pre-arranged
-state beyond a synthetic memory corpus + a synthetic access-log seed;
-verifies both primitives' behaviors in one synthetic flow.
+state beyond a synthetic memory corpus + a synthetic access-log seed.
 
-Per plan-doc ``amendment-135-fbm-tier2-retrieval-mechanics.md`` §4
-AC.FBMT2.S:
+Memory recall cycle Slice 1 (AC.EVX.1 / AC.EVX.2) — updated to the
+June-7 eval verdict's FLOOR configuration:
 
-    A single test exercises the full Tier 2 retrieval surface:
-      (a) seed a memory corpus of >=3 files with controlled lexical
-          overlap;
-      (b) seed an access log with >=5 events showing the frequency
-          pattern observable (file_A many touches recent, file_B once
-          recent, file_C never) — verifies the activation column
-          observable (T2.1);
-      (c) seed the co-citation graph with a strong A↔C edge — verifies
-          the one-hop spread observable when a query lexically matches
-          A and the result includes C without C being lexically
-          matched (T2.2);
-      (d) issue the query through the production
-          :func:`build_file_memory_retrieval_contributor` factory —
-          the contributor is the production entry-point, not a test
-          stub.
+  - the one-hop co-citation spread is DELETED (measured net-harmful:
+    worse on every metric, 2x latency, 0-of-88 rescues on its own
+    target subset). A lexically-mismatched file must NOT surface —
+    the old T2.2 spread observable is now asserted ABSENT.
+  - power-law activation is DEFAULT-OFF behind the named
+    ``LOAM_FBM_ACTIVATION`` switch; the default-path smoke asserts
+    pure BM25 x supersession ordering, and the flag-on path is
+    covered by AC.FBMT2.PLBLA.2.
 
-The test asserts the returned result set contains file_C (the spread
-observable, T2.2); asserts file_A ranks above file_B despite higher
-BM25 for file_B's irrelevant noise (the activation observable, T2.1);
-asserts the test does not patch internal helpers like
-``_blend_recency`` or ``_superseded_marker`` (the production code
-path is what's exercised — V025-C1 risk-band HIGH).
+The test still patches NO internal helpers — the production
+contributor is invoked exactly as the persona's composer invokes it
+on every UserPromptSubmit (V025-C1 risk-band HIGH lesson).
 """
 
 from __future__ import annotations
@@ -63,10 +52,10 @@ from loam.primary_persona.file_memory import (
 def test_AC_FBMT2_S_end_to_end_via_production_contributor(
     tmp_path: Path,
 ) -> None:
-    """Full Tier 2 retrieval surface exercised through the production
-    contributor factory. NO internal-helper patching — the contributor
-    is invoked as the persona's composer invokes it on every
-    UserPromptSubmit."""
+    """Floor-configuration smoke through the production contributor
+    factory (AC.EVX.1): BM25 ranks; seeded access events change
+    NOTHING by default; the lexically-mismatched file does NOT
+    surface (spread deleted)."""
     memory_dir = tmp_path / "mem"
     store = FileMemoryStore(memory_dir=memory_dir)
     now = datetime.now(timezone.utc)
@@ -81,8 +70,7 @@ def test_AC_FBMT2_S_end_to_end_via_production_contributor(
         source="message",
         group_id="ws",
     )
-    # File B: matches some query terms (will compete with A on BM25)
-    # but is touched only once — activation differential pushes A above.
+    # File B: weaker lexical match than A.
     store.write_episode(
         name="turn/b",
         body="alpha beta noise here different scheduling matter",
@@ -91,8 +79,9 @@ def test_AC_FBMT2_S_end_to_end_via_production_contributor(
         source="message",
         group_id="ws",
     )
-    # File C: lexically MISMATCHED with the query (only surfaces via
-    # one-hop co-citation spread from A).
+    # File C: lexically MISMATCHED with the query. Pre-verdict it
+    # surfaced via the one-hop co-citation spread; post-deletion it
+    # must NOT appear for this query (AC.EVX.1).
     store.write_episode(
         name="turn/c",
         body="entirely separate vocabulary xenon yttrium zinc",
@@ -103,25 +92,20 @@ def test_AC_FBMT2_S_end_to_end_via_production_contributor(
     )
 
     a_path = next((memory_dir / "episodes" / "ws").rglob("a.md"))
-    b_path = next((memory_dir / "episodes" / "ws").rglob("b.md"))
     c_path = next((memory_dir / "episodes" / "ws").rglob("c.md"))
 
-    # (b) Access-log seed: A touched many times recent + co-occurring
-    # with C; B touched once recent; C touched alongside A so they
-    # co-occur (drives the A↔C edge for T2.2).
+    # (b) Access-log seed that would (pre-verdict) have boosted A and
+    # co-cited C alongside it. With activation default-off and spread
+    # deleted, these events must contribute NOTHING to the ranking.
     for i in range(12):
         ts = now - timedelta(seconds=i * 60)
         append_access_event(memory_dir, file=str(a_path), ts=ts, op="read")
         append_access_event(
             memory_dir, file=str(c_path), ts=ts + timedelta(seconds=2), op="read"
         )
-    append_access_event(
-        memory_dir, file=str(b_path), ts=now - timedelta(hours=1), op="read"
-    )
 
     # (d) Build the PRODUCTION contributor via the factory — no patching
-    # of internal helpers (V025-C1 lesson: don't stub past the
-    # production retrieval entry-point).
+    # of internal helpers.
     config = FileMemoryRetrievalConfig(
         store=store,
         workspace_slug="ws",
@@ -130,15 +114,13 @@ def test_AC_FBMT2_S_end_to_end_via_production_contributor(
     contributor = build_file_memory_retrieval_contributor(config)
 
     rendered = contributor({"prompt": "alpha beta gamma query terms topic"})
-    # The contributor returns a rendered string; assert both A and C
-    # appear in the rendering (A from BM25 + activation; C via spread).
     assert "turn/a" in rendered, (
-        f"AC.FBMT2.S (T2.1): A must surface as the top BM25+activation "
-        f"result; rendering={rendered!r}"
+        f"AC.EVX.1: A must surface as the top BM25 result; "
+        f"rendering={rendered!r}"
     )
-    assert "turn/c" in rendered, (
-        f"AC.FBMT2.S (T2.2): C must surface via one-hop spread from A "
-        f"despite lexical mismatch; rendering={rendered!r}"
+    assert "turn/c" not in rendered, (
+        f"AC.EVX.1: C is lexically mismatched and the co-citation "
+        f"spread is deleted — it must NOT surface; rendering={rendered!r}"
     )
 
 

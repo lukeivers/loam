@@ -73,6 +73,7 @@ Per ODD §2.5 every code path traces back to a named AC; defensive
 from __future__ import annotations
 
 import math
+import os
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -81,7 +82,6 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from . import access_log as _access_log
-from . import cocitation_graph as _cocitation_graph
 
 
 # ---- public dir resolver (D-Q.MFBM.3) -------------------------------
@@ -442,6 +442,15 @@ RECENCY_BLEND_WEIGHT = 0.5
 # unsuperseded files. Configurability deferred until a concrete
 # tuning request lands.
 SUPERSEDED_PENALTY = 0.1
+
+# AC.EVX.2 (memory recall cycle, Slice 1) — the NAMED switch that
+# re-enables the power-law activation multiplier with no code change.
+# DEFAULT-OFF: the June-7 eval measured activation net-harmful on the
+# current store (the BM25 floor arm beat the live ranker ~2×), so
+# production ranks BM25 × supersession until a live-access-log re-run
+# of the harness beats the floor (plan §7 re-enable gate). See
+# :func:`activation_enabled`.
+ACTIVATION_FLAG_ENV = "LOAM_FBM_ACTIVATION"
 
 
 @dataclass
@@ -991,14 +1000,14 @@ class FileMemoryStore:
                     "_bm25_raw": -float(score) if score is not None else 0.0,
                 }
             )
-        # AC.FBMT2.PLBLA.2 / D-T2.1.SCORE — compose BM25 with the power-law
-        # base-level activation column (multiplicatively); the activation
-        # **replaces** the pre-amendment recency-blend channel (which is
-        # itself a recency model). ``now`` is injected so the AC.FBMT2.PLBLA.3
-        # fixture is deterministic. ``memory_root`` is threaded through so
-        # AC.FBMT1.SUPM.4's missing-target warning has a base path against
-        # which to resolve the ``superseded-by`` relative path.
-        return _compose_score_and_spread(
+        # AC.EVX.1 — compose BM25 with the supersession penalty (the
+        # June-7 floor arm); activation participates only behind the
+        # default-off AC.EVX.2 switch. ``now`` is injected so the
+        # flag-on activation fixture stays deterministic. ``memory_root``
+        # is threaded through so AC.FBMT1.SUPM.4's missing-target
+        # warning has a base path against which to resolve the
+        # ``superseded-by`` relative path.
+        return _compose_score(
             pool,
             num_results=num_results,
             now=datetime.now(timezone.utc),
@@ -1080,11 +1089,12 @@ class FileMemoryStore:
             front, body = _split_frontmatter(content)
             scored.append((score, path, body, front))
 
-        # AC.FBMT2.PLBLA.* — route grep-fallback pool through the same
-        # composition pipeline as the FTS5 path so the activation column
-        # + supersession penalty apply uniformly regardless of which
-        # retrieval surface fires. The grep path's ``raw_score / doclen``
-        # is the BM25-equivalent relevance channel in this fallback.
+        # AC.EVX.1 — route the grep-fallback pool through the same
+        # composition pipeline as the FTS5 path so the supersession
+        # penalty (and the flag-gated activation, AC.EVX.2) apply
+        # uniformly regardless of which retrieval surface fires. The
+        # grep path's ``raw_score / doclen`` is the BM25-equivalent
+        # relevance channel in this fallback.
         scored.sort(key=lambda x: x[0], reverse=True)
         pool: list[dict[str, Any]] = []
         for score, path, body, front in scored:
@@ -1102,7 +1112,7 @@ class FileMemoryStore:
                     "_bm25_raw": float(score),
                 }
             )
-        return _compose_score_and_spread(
+        return _compose_score(
             pool,
             num_results=num_results,
             now=datetime.now(timezone.utc),
@@ -1500,34 +1510,59 @@ def _blend_recency(
     return [row for _, _, row in scored[:num_results]]
 
 
-def _compose_score_and_spread(
+def activation_enabled() -> bool:
+    """Whether the power-law activation multiplier is live (AC.EVX.2).
+
+    The June-7 retrieval eval measured activation net-harmful against
+    the current store (BM25-floor beat the live ranker ~2× on
+    recall@10 / MRR / miss-rate): on a stale access log the power-law
+    decay collapses into a frequency prior that fights relevance. The
+    verdict was FIX-not-kill — the theory is sound for a live,
+    continuously-refreshed log — so the machinery stays in code,
+    DEFAULT-OFF, behind this named switch.
+
+    The switch is the :data:`ACTIVATION_FLAG_ENV` environment variable
+    (truthy values: ``1`` / ``on`` / ``true``, case-insensitive).
+    Default (unset / any other value) is OFF → activation contributes
+    a neutral 1.0 factor and the ranking is BM25 × supersession (the
+    eval's measured-best floor arm — AC.EVX.1). Re-enabling requires
+    no code change (AC.EVX.2) and is gated on a live-access-log
+    re-measurement beating the floor arm (plan §7).
+    """
+    return os.environ.get(ACTIVATION_FLAG_ENV, "").strip().lower() in (
+        "1",
+        "on",
+        "true",
+    )
+
+
+def _compose_score(
     rows: list[dict[str, Any]],
     *,
     num_results: int,
     now: datetime,
     memory_root: Path,
 ) -> list[dict[str, Any]]:
-    """Compose BM25 with power-law activation + supersession penalty,
-    then apply one-hop co-citation spread; return top ``num_results``.
+    """Compose BM25 with the supersession penalty (and, only when the
+    :func:`activation_enabled` switch is ON, the power-law activation
+    multiplier); return the top ``num_results``.
 
-    Per plan-doc ``amendment-135-fbm-tier2-retrieval-mechanics.md``:
+    Memory recall cycle, Slice 1 (AC.EVX.1 / AC.EVX.2) — executes the
+    owner's June-7 eval verdict:
 
-      - **D-T2.1.SCORE** — final = BM25 × activation × supersession.
-        The activation column **replaces** the pre-amendment recency-
-        blend channel; activation IS a (better) recency model anchored
-        in Anderson & Schooler 1991. Composing both would double-count.
-      - **AC.FBMT1.SUPM.2** — supersession penalty is multiplied through
-        AFTER activation; the SUPM family's "high-relevance superseded
-        still surfaces, just demoted" outcome remains.
-      - **AC.FBMT2.COCG.2** — one-hop spread: after BM25 × activation,
-        add neighbor scores ``score(c) × S_cn`` from the co-citation
-        graph for every direct neighbor of every candidate.
-      - **AC.FBMT2.PLBLA.4** — graceful on absent log: when no access
-        log exists, activation is a neutral multiplier (1.0); ranking
-        degrades to pure-BM25-times-supersession.
-      - **AC.FBMT2.COCG.4** — graceful on empty graph: spread step
-        returns an empty addition set; BM25 × activation result is
-        unchanged.
+      - **Co-citation spread: KILLED.** The one-hop spread step lowered
+        retrieval quality on every measured metric (recall@10 −12% rel,
+        precision@10 −15% rel, MRR −0.035, 2× latency) and rescued 0 of
+        the 88 phrasing-mismatch queries it existed for. The spread
+        path and ``cocitation_graph.py`` are deleted; re-adding
+        requires fresh evidence (re-build from git history).
+      - **Activation: NEUTRALIZED, default-off** (AC.EVX.2 — see
+        :func:`activation_enabled`). With the switch off the access
+        log is not read at all on the search path (the floor arm's
+        single-search latency, AC.EVX.OA).
+      - **AC.FBMT1.SUPM.2** — the supersession penalty is unchanged:
+        multiplied through after (neutral or live) activation; a
+        high-relevance superseded file still surfaces, just demoted.
 
     AC.FBMT1.SUPM.4 surface preserved: ``_LAST_RANKER_WARNINGS`` is
     populated when ``superseded-by`` points at a missing target.
@@ -1536,40 +1571,22 @@ def _compose_score_and_spread(
     _LAST_RANKER_WARNINGS = []
     if not rows:
         return []
-    # AC.FBMT2.PLBLA.1 / PLBLA.4 — read the access log + build the
-    # activation map. Absent log → empty dict → neutral activation per
-    # path below.
-    events_by_file = _access_log.read_access_log(memory_root)
-    # AC.FBMT2.COCG.1 / COCG.4 — build the co-citation graph. Empty
-    # events → empty graph → spread step contributes nothing.
-    graph = _cocitation_graph.build_cocitation_graph(events_by_file)
-
-    # Compose BM25 × activation × supersession for the primary pool.
-    # Build a path → activation cache so the spread step can also look up
-    # neighbors' activation (when present).
+    # AC.EVX.2 — the default-off switch. OFF: the access log is never
+    # read; every multiplier is the neutral 1.0 (the floor arm).
+    events_by_file: dict[str, list[Any]] = (
+        _access_log.read_access_log(memory_root) if activation_enabled() else {}
+    )
     activation_cache: dict[str, float] = {}
 
     def _activation_multiplier(file_key: str) -> float:
         """Convert the activation log-sum into a multiplicative factor.
 
-        ``compute_activation`` returns ``ln(Σ t^-d)`` — the canonical
-        Anderson & Schooler 1991 functional form (signed; negative for
-        small sums, positive for repeated-recent access).
-
-        For the ranker, we want a multiplier that is:
-          - 1.0 when no signal exists (so absent-log degrades to
-            pure-BM25 ranking — AC.FBMT2.PLBLA.4),
-          - increasing monotonically with B_i (so high-activation files
-            climb — AC.FBMT2.PLBLA.2),
-          - finite and well-defined when B_i is ``-inf`` (the empty
-            iterable case from :func:`access_log.compute_activation`).
-
-        Implementation: ``exp(B_i)`` undoes the ``ln`` so the multiplier
-        IS ``Σ t^-d`` — the raw activation. The empty-sum case
-        (``B_i = -inf``) maps to ``exp(-inf) = 0.0``; we clamp to 1.0
-        in that case so the file ranks on pure BM25 (PLBLA.4 contract).
-        Repeated recent access produces a multiplier > 1.0 (boost);
-        long-ago single access produces a multiplier < 1.0 (decay).
+        ``compute_activation`` returns ``ln(Σ t^-d)`` (Anderson &
+        Schooler 1991). ``exp(B_i)`` undoes the ``ln``; the empty-sum
+        case (``B_i = -inf``) clamps to 1.0 so a never-accessed file
+        ranks on pure BM25. With the switch OFF ``events_by_file`` is
+        empty, so every lookup short-circuits to the neutral 1.0
+        (AC.EVX.1 — zero activation contribution by default).
         """
         if file_key in activation_cache:
             return activation_cache[file_key]
@@ -1589,10 +1606,9 @@ def _compose_score_and_spread(
     for idx, row in enumerate(rows):
         bm25_raw = float(row.get("_bm25_raw", 0.0))
         path_str = str(row.get("path", ""))
-        activation = _activation_multiplier(path_str)
-        composed = bm25_raw * activation
-        # AC.FBMT1.SUPM.2 / SUPM.3 — supersession penalty applies AFTER
-        # activation; the file stays in the candidate set, just demoted.
+        composed = bm25_raw * _activation_multiplier(path_str)
+        # AC.FBMT1.SUPM.2 / SUPM.3 — supersession penalty applies last;
+        # the file stays in the candidate set, just demoted.
         marker = _superseded_marker(path_str)
         if marker is not None:
             composed = composed * SUPERSEDED_PENALTY
@@ -1602,61 +1618,6 @@ def _compose_score_and_spread(
                     f"{path_str!s} -> {marker}"
                 )
         scored.append((composed, idx, row))
-
-    # AC.FBMT2.COCG.2 / COCG.4 / COCG.5 — one-hop spread additions.
-    candidates_for_spread = [
-        (str(row.get("path", "")), composed)
-        for composed, _idx, row in scored
-    ]
-    spread_additions = _cocitation_graph.spread_one_hop(
-        candidates_for_spread, graph
-    )
-
-    # Materialise the spread additions as result rows. The neighbor
-    # files must be readable on disk to populate the result dict.
-    # AC.FBMT2.COCG.2 fixture seeds them; production runtime should
-    # see them too because the graph only has edges from observed
-    # accesses.
-    neighbor_idx_base = len(scored)
-    for offset, (n_file, n_score) in enumerate(spread_additions.items()):
-        n_path = Path(n_file)
-        if not n_path.is_absolute():
-            # Edges are typically stored as the resolved absolute path
-            # because :class:`FileMemoryStore.search` populates the
-            # access log with the absolute path. Relative paths are
-            # tolerated for the seed-from-transcripts pass which
-            # extracts ``episodes/.../*.md`` substrings.
-            n_path = (memory_root / n_file).resolve()
-        try:
-            content = n_path.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
-            continue
-        front, body = _split_frontmatter(content)
-        n_row = {
-            "name": front.get("name", n_path.stem),
-            "content": body,
-            "path": str(n_path),
-            "group_id": front.get("group_id", ""),
-            "valid_at": front.get("reference_time", ""),
-            # B3 (AC-FBM-SAL-1) — tag the spread-activated neighbor with
-            # its structural salience, computed from the body exactly as
-            # the FTS5 + grep candidate pools do (above). Without this the
-            # spread-in ``n_row`` arrives at the salience gate with NO
-            # ``_salience`` slot → ``_salience_of`` returns the full-
-            # salience default → a junk neighbor reachable ONLY via
-            # co-citation spread BYPASSES the gate and leaks into recall.
-            # The gate must see spread neighbors on the same footing as
-            # direct BM25 hits (HARD INVARIANT: gate SURFACING uniformly).
-            "_salience": _salience_from_body(body),
-            "_bm25_raw": 0.0,
-            "_spread_from": True,
-        }
-        # AC.FBMT1.SUPM.2 — apply supersession penalty to spread-in
-        # neighbors too so the demotion is uniform.
-        marker = front.get("superseded-by")
-        if isinstance(marker, str) and marker:
-            n_score = n_score * SUPERSEDED_PENALTY
-        scored.append((n_score, neighbor_idx_base + offset, n_row))
 
     # Sort by composed score desc; ``idx`` as a stable secondary key so
     # equal-score ties preserve the original incoming order.

@@ -64,6 +64,23 @@ ODD is about *what you delegate* — the contract between a delegator
 and a builder is the objective, not the procedure. The three are
 adjacent, not interchangeable.
 
+ODD is not a novel discipline, and loam does not claim it is. It
+descends from named ancestors — goal-oriented requirements
+engineering (KAOS), Outcome-Driven Innovation (Ulwick),
+Specification by Example (Adzic), and Design by Contract (Meyer) —
+combined as: ATDD + goal-reverse-engineering + a strict
+reverse-coverage rule + evidence banding, tuned for work delegated
+to an LLM builder.
+
+One scope split to hold onto: **ODD is how criteria are written;
+KEEL is how they are enforced.** ODD is the authoring grammar inside
+the KEEL contract lifecycle (Capture → Translate → Ratify → Bind →
+Build → Verify → Deliver, Amend user-only); the root contract every
+criterion ladders to is Charter entry #0 in
+[`../charter.md`](../charter.md), whose first derived criteria are
+`AC.PO.1` / `AC.PO.2` in
+[`../VALUE_PROPOSITION.md`](../VALUE_PROPOSITION.md).
+
 ---
 
 ## How to read an acceptance criterion

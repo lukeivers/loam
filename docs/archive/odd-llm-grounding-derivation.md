@@ -1,5 +1,20 @@
 # ODD — LLM grounding derivation
 
+> **RETRACTION + ARCHIVE NOTE (2026-06-10).** This document is archived,
+> not live doctrine. Its §1 claim that "ODD is genuinely new" / "not in my
+> training data" is **retracted** per the owner-ratified
+> methodology-synthesis verdict (2026-06-10, Discord 1514360242): ODD
+> descends from named ancestors — KAOS goal-oriented requirements
+> engineering, Ulwick's Outcome-Driven Innovation, Adzic's Specification by
+> Example, Meyer's Design by Contract — and is honestly repositioned as
+> ATDD + goal-reverse-engineering + a strict reverse-coverage rule +
+> evidence banding, tuned for LLM delegation. The load-bearing material
+> here (the §6 altitude tests, §7 drift modes, §8 self-checks) was promoted
+> into the live spec at `plugins/dev-sdlc/docs/odd-methodology.md` §9; the
+> load-first form lives in `docs/odd-llm-grounding.lean.md`. The §5
+> derivation chain is retired with the novelty claim. Kept verbatim below
+> for the audit trail.
+
 **Authored:** 2026-05-05 by main session, per Luke directive.
 **Audience:** the LLM agent (or future agent) about to do ODD work.
 **Status:** load deliberately into context BEFORE ODD-shaped tasks (extraction, ratification, gap-analysis, plan-authoring, AC-tightening). Read this whole file first; then proceed to the task with the altitude tests at §7 active in working memory.

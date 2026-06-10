@@ -1,6 +1,6 @@
 # ODD — LLM context prime (lean)
 
-**Load before ODD-shaped tasks.** Verbose derivation: `docs/odd-llm-grounding-derivation.md`. **Glossary** of the recurring ODD-cluster vocabulary (objective, capability, contract, banded AC, ratification): `docs/glossary.md`.
+**Load before ODD-shaped tasks.** Operational spec: `plugins/dev-sdlc/docs/odd-methodology.md` (§9 carries these tools in normative form). **Glossary** of the recurring ODD-cluster vocabulary (objective, capability, contract, banded AC, ratification): `docs/glossary.md`. The long-form derivation doc is archived (novelty claim retracted 2026-06-10) at `docs/archive/odd-llm-grounding-derivation.md`.
 
 ## Failure mode this prevents
 
@@ -15,10 +15,10 @@ Mistaking implementation facts for objectives. v0.1.8 odd-extractor shipped this
 | Capability | Feature/function serving objectives; one of many possible HOWs | Could different system deliver the same objectives without this exact thing? Yes → capability |
 | Implementation | Specific symbol/file/line/library | Names a specific symbol/file/line/library? Yes → implementation |
 
-## What's specifically new in ODD (vs BDD/TDD/ATDD/DbC/user-stories/DDD/RE)
+## What's distinctive in ODD (vs BDD/TDD/ATDD/DbC/user-stories/DDD/RE — its named ancestors; no novelty claimed)
 
-- **§2.5 strict mapping** — every line of code/branch/test maps to named AC; no orphan code. Stricter than any adjacent methodology.
-- **Banding** — V/P/H confidence-graded, not binary. Novel.
+- **§2.5 strict mapping** — every line of code/branch/test maps to named AC; no orphan code. Stricter than the adjacent methodologies on this axis.
+- **Banding** — V/P/H evidence grades, criteria stay binary (doctrine §6: VERIFIED = ran green at a known SHA; assumed-green = ASSERTED).
 - **Method-loose** — objective + constraints + ACs pin WHAT; HOW is builder's call. Tight scope, loose method.
 - **ODD-RE** — reverse-engineer from existing code as first-class workflow.
 - **LLM-as-builder** — natural-language-statable, observable, banding-honest-on-uncertainty.
@@ -81,4 +81,6 @@ AC schema marks each AC `outcome-altitude: true|false` so plan-authors and revie
 2. Hold altitudes + drift-modes + self-checks in working memory.
 3. For any declared AC / objective / constraint / capability, run self-checks.
 4. Any check fails → restate.
-5. For depth, load `docs/odd-llm-grounding-derivation.md`.
+5. For depth, load `plugins/dev-sdlc/docs/odd-methodology.md` (the archived
+   derivation doc at `docs/archive/odd-llm-grounding-derivation.md` keeps
+   the worked rd-automation example).

@@ -239,8 +239,16 @@ Hand-authored ACs in plan-docs for new loam work are NOT banded —
 they are authored under ODD methodology §2.3 directly. Banding
 applies to derived ACs only.
 
-**Authority:** `plugins/dev-sdlc/docs/odd-methodology.md` §11
-(Confidence bands for derived ACs).
+*Doctrine mapping (2026-06-10):* under the evidence grades in
+`plugins/dev-sdlc/docs/odd-methodology.md` §6, VERIFIED means *ran
+green at a known SHA*; the extractor grants its `VERIFIED` band on a
+test-pass assumption without executing the foreign suite, so the
+extractor's `VERIFIED` (and `PLAUSIBLE`) bands map to the **ASSERTED**
+evidence grade until the enum rename lands.
+
+**Authority:** `plugins/dev-sdlc/docs/odd-methodology.md` §6
+(check-kinds + evidence grades); extractor mechanics at
+`plugins/dev-sdlc/odd-extractor/docs/adapter-conventions.md`.
 
 **See also:** objective, contract, ratification; acceptance criterion
 (plain AC; defined in `docs/odd-llm-grounding.lean.md` +

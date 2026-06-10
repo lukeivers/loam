@@ -17,7 +17,7 @@ plan: docs/plans/frame-kernel-subagent-envelope-cwd-fallback.md
 plan_doc_ref: docs/plans/frame-kernel-subagent-envelope-cwd-fallback.md
 
 ac_count: 2
-smoke_outcome: "AC.EWR.1 + AC.EWR.S GREEN (6 tests); full frame-kernel suite 68/68 under the venv Python. RED-on-revert verified: AC.EWR.S FAILS against pre-fix bundle.py (degraded microkernel tier on the real cwd-only envelope) and passes post-fix."
+smoke_outcome: "AC.EWR.1 + AC.EWR.S GREEN (6 tests); frame-kernel suite 68/68 under the venv Python. RED-on-revert verified: AC.EWR.S FAILS against pre-fix bundle.py, passes post-fix."
 
 seal_description: "frame-kernel SubagentStart envelope cwd-fallback — parse_envelope resolves workspace_root from real envelopes (cwd), all three bundle tiers populate on real dispatches"
 

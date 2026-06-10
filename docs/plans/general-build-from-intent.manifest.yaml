@@ -19,6 +19,18 @@ components:
     sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
     frozen_baseline: false
     extra_allowed_prefixes: []
+    # Owner-ruled post-seal corrective admission (2026-06-10): the seal
+    # sweep halted on a PRE-EXISTING AC.D.2.5 breach at baseline 775d32af
+    # (frame-kernel bundle.py:228 inline workspace-state path — fails
+    # workspace-bootstrap's test_d2_no_inline_workspace_state_paths at
+    # seal step (d)). The corrective landed as chore(amend-fixup)
+    # 17529112 (the 26f3a9e / ca16e41 post-seal-corrective precedent)
+    # and necessarily sits inside this amendment's BASELINE..SEAL
+    # window. Admitted file-precise — NOT a fence widening for new
+    # work; frame-kernel edits remain a §8 #4 halt.
+    extra_allowed_files:
+      - framework/frame-kernel/src/loam/frame_kernel/bundle.py
+      - framework/frame-kernel/tests/test_AC_SACH_3_workstream_and_memory_tiers.py
 
 # Universal admissions — per amendment #22 ruling #3.
 universal_paths:

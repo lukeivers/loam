@@ -17,8 +17,11 @@ subagent (loam-realignment SLICE 1b, AC.SSFC.*).
 
 The OUT-side guarantee that pairs with 1a's IN-handoff. When a dispatched
 subagent FINISHES, this hook reads the SubagentStop envelope (the
-``transcript_path`` common-input field points at the finished subagent's
-transcript), delegates to :func:`loam.frame_kernel.frame_judge.evaluate`
+``agent_transcript_path`` field points at the finished subagent's OWN
+transcript — probe-verified 2026-06-10; the ``transcript_path``
+common-input field points at the PARENT session's transcript and is
+never used for the judge seed — AC.FJO.1), delegates to
+:func:`loam.frame_kernel.frame_judge.evaluate`
 — which GATES on a structural cue (consequential subagents only), seeds a
 FRESH out-of-band judge (microkernel + objective + result ONLY, never the
 parent conversation), runs it as an ISOLATED ``claude -p``, and renders a

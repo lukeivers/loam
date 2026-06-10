@@ -207,8 +207,10 @@ def _is_consequential_tool_use(block: dict[str, Any]) -> bool:
 def _load_transcript_records(transcript_path: Path | None) -> list[Any]:
     """Load a JSONL transcript into a list of records, fail-soft.
 
-    The SubagentStop ``transcript_path`` common-input field points at the
-    finished subagent's transcript (official hook-development SKILL).
+    The judge path feeds this the SubagentStop ``agent_transcript_path``
+    — the finished subagent's OWN transcript (probe-verified, plan §2;
+    the common-input ``transcript_path`` points at the PARENT session's
+    transcript and is never loaded — AC.FJO.1 / D-FJO.1).
     Reads the documented JSONL shape (one JSON object per line); a
     missing / unreadable / non-JSONL file yields ``[]`` so the caller
     degrades rather than raises (AC.SSFC.5 / plan §8 trigger #1's
@@ -330,13 +332,21 @@ def _extract_result(records: list[Any], envelope_result: str) -> str:
 class StopContext:
     """The fields read off a SubagentStop envelope.
 
-    ``transcript_path`` is the common-input field pointing at the
-    finished subagent's transcript (official hook contract).
-    ``workspace_root`` seeds the kernel-path resolution.
-    ``envelope_objective`` / ``envelope_result`` capture an objective/
-    result the envelope itself carries (some versions may), preferred
-    over transcript recovery. ``subagent_id`` names the subagent in the
-    surface (AC.SSFC.4). Any field may be empty (AC.SSFC.5).
+    ``agent_transcript_path`` points at the finished SUBAGENT'S OWN
+    transcript — empirically verified (n=2 probe captures, 2026-06-10,
+    Claude Code 2.1.170; plan §2): it exists and is complete at fire
+    time and its first user message IS the literal dispatch prompt.
+    It is the SOLE transcript source for the judge path (D-FJO.1 /
+    AC.FJO.1). ``transcript_path`` is the common-input field and points
+    at the PARENT session's transcript (NOT the subagent's — the
+    2026-06-10 live-incident root cause); it is parsed for completeness
+    but NEVER loaded for the seed. ``workspace_root`` seeds the
+    kernel-path resolution. ``envelope_objective`` / ``envelope_result``
+    capture an objective/result the envelope itself carries (real
+    envelopes carry ``last_assistant_message``), preferred over
+    transcript recovery. ``subagent_id`` + ``agent_type`` name the
+    judged dispatch in the advisory surface (AC.SSFC.4 / AC.FJO.2).
+    Any field may be empty (AC.SSFC.5).
     """
 
     transcript_path: Path | None
@@ -344,6 +354,8 @@ class StopContext:
     envelope_objective: str
     envelope_result: str
     subagent_id: str
+    agent_transcript_path: Path | None = None
+    agent_type: str = ""
 
 
 def parse_stop_envelope(envelope: Any) -> StopContext:
@@ -359,12 +371,22 @@ def parse_stop_envelope(envelope: Any) -> StopContext:
             envelope_objective="",
             envelope_result="",
             subagent_id="",
+            agent_transcript_path=None,
+            agent_type="",
         )
 
     transcript_path: Path | None = None
     tp = envelope.get("transcript_path")
     if isinstance(tp, str) and tp.strip():
         transcript_path = Path(tp)
+
+    # The finished subagent's OWN transcript (AC.FJO.1 / D-FJO.1) — the
+    # judge path's sole transcript source. Probe-verified field name
+    # (n=2, 2026-06-10): ``agent_transcript_path``.
+    agent_transcript_path: Path | None = None
+    atp = envelope.get("agent_transcript_path")
+    if isinstance(atp, str) and atp.strip():
+        agent_transcript_path = Path(atp)
 
     workspace_root: Path | None = None
     workspace = envelope.get("workspace")
@@ -401,25 +423,42 @@ def parse_stop_envelope(envelope: Any) -> StopContext:
             subagent_id = value.strip()
             break
 
+    # The dispatch's agent flavor (probe-verified field) — names the
+    # judged dispatch in the advisory surface (AC.FJO.2 / D-FJO.2).
+    agent_type = ""
+    at = envelope.get("agent_type")
+    if isinstance(at, str) and at.strip():
+        agent_type = at.strip()
+
     return StopContext(
         transcript_path=transcript_path,
         workspace_root=workspace_root,
         envelope_objective=envelope_objective,
         envelope_result=envelope_result,
         subagent_id=subagent_id,
+        agent_transcript_path=agent_transcript_path,
+        agent_type=agent_type,
     )
 
 
 def read_subagent_result(ctx: StopContext) -> SubagentResult:
-    """Read the finished subagent's objective + result + cue (AC.SSFC.1/2).
+    """Read the finished subagent's objective + result + cue (AC.SSFC.1/2
+    / AC.FJO.1).
 
-    Loads the transcript, computes the structural-cue verdict, and
-    recovers the stated objective + result. Fail-soft throughout: an
-    unreadable/absent transcript yields ``consequential=False`` + missing
-    -markers, so a degenerate SubagentStop payload degrades rather than
-    aborts (AC.SSFC.5 / plan §8 trigger #1).
+    Loads the SUBAGENT'S OWN transcript (``agent_transcript_path`` — the
+    sole transcript source per D-FJO.1), computes the structural-cue
+    verdict off the subagent's actual actions (D-FJO.3), and recovers
+    the stated objective (the transcript's first user message — the
+    literal dispatch prompt, probe-verified) + result. The parent
+    ``transcript_path`` is NEVER loaded here: deriving the objective
+    from the parent transcript's user messages was the 2026-06-10
+    live-incident root cause (a channel message judged as the
+    objective). Fail-soft throughout: an unreadable/absent agent
+    transcript yields ``consequential=False`` + missing-markers — a
+    silent no-op, never a parent-message approximation (AC.SSFC.5 /
+    AC.FJO.1 degraded mode; no advisory beats a wrong advisory).
     """
-    records = _load_transcript_records(ctx.transcript_path)
+    records = _load_transcript_records(ctx.agent_transcript_path)
     return SubagentResult(
         objective=_extract_objective(records, ctx.envelope_objective),
         result=_extract_result(records, ctx.envelope_result),
@@ -650,12 +689,21 @@ def _first_reason_line(text: str) -> str:
     return ""
 
 
-def render_surface(verdict: Verdict, ctx: StopContext) -> dict[str, Any] | None:
-    """Render the dispatcher surface for an off-frame verdict (AC.SSFC.4).
+def render_surface(
+    verdict: Verdict,
+    ctx: StopContext,
+    result: SubagentResult | None = None,
+) -> dict[str, Any] | None:
+    """Render the dispatcher surface for an off-frame verdict (AC.SSFC.4
+    / AC.FJO.2).
 
-    Off-frame -> a NON-BLOCKING ``systemMessage`` naming the subagent +
-    the inconsistency + the judge's reason (D-SSFC.4: surface, never
-    silently pass; never a hard block for v1). On-frame (or an
+    Off-frame -> a NON-BLOCKING ``systemMessage`` that SELF-IDENTIFIES as
+    a frame-judge advisory naming the judged dispatch — agent flavor +
+    subagent id + a first-line excerpt of the judged objective — so a
+    human reading the flag out of context understands what it is
+    (AC.FJO.2 / D-FJO.2; the 2026-06-10 incident surfaced a bare verdict
+    with no provenance). Plus the judge's reason (D-SSFC.4: surface,
+    never silently pass; never a hard block for v1). On-frame (or an
     unparsed/degraded verdict) -> ``None`` (a silent no-op). The shape is
     a ``hookSpecificOutput`` envelope with a ``systemMessage`` — the
     documented non-blocking surface, NOT a ``decision: block``.
@@ -664,10 +712,23 @@ def render_surface(verdict: Verdict, ctx: StopContext) -> dict[str, Any] | None:
         return None
     subagent = ctx.subagent_id or "(unidentified subagent)"
     reason = verdict.reason or "(no reason given)"
+    # The judged dispatch's identity, from authoritative envelope /
+    # agent-transcript sources only (D-FJO.2 — no parent Task-tool_use
+    # scan; stale-dispatch hazard).
+    dispatch_desc = " ".join(bit for bit in (ctx.agent_type, subagent) if bit)
+    task_head = ""
+    if result is not None and result.objective.strip():
+        first_line = result.objective.strip().splitlines()[0].strip()
+        if first_line and first_line != SEED_OBJECTIVE_MISSING_MARKER:
+            task_head = first_line[:120]
     message = (
-        f"{OFF_FRAME_SURFACE_MARKER}: subagent {subagent} returned an "
-        f"off-frame result. Judge reason: {reason}. This is a non-blocking "
-        f"flag — the subagent's return is NOT blocked; re-aim if warranted."
+        f"{OFF_FRAME_SURFACE_MARKER}: frame-judge advisory on dispatch "
+        f"{dispatch_desc}"
+        + (f' (task: "{task_head}")' if task_head else "")
+        + f" — the subagent's result was judged off-frame against its "
+        f"dispatched objective. Judge reason: {reason}. This is a "
+        f"non-blocking advisory — the subagent's return is NOT blocked; "
+        f"re-aim if warranted."
     )
     return {
         "hookSpecificOutput": {
@@ -727,6 +788,6 @@ def evaluate(
         prompt = build_judge_prompt(seed)
         raw = judge(prompt)
         verdict = parse_verdict(raw)
-        return render_surface(verdict, ctx)
+        return render_surface(verdict, ctx, result)
     except Exception:  # noqa: BLE001 — fail-soft per AC.SSFC.5
         return None

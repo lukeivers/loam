@@ -138,18 +138,85 @@ def write_transcript(
     return path
 
 
+# A marker planted in the decoy PARENT transcript every stop envelope
+# carries. If it ever reaches the judge seed, the 2026-06-10 live bug
+# has regressed (the parent transcript's user message judged as the
+# subagent's objective). AC.FJO.1 asserts its absence explicitly; every
+# existing SSFC test pins the corrected source implicitly (a pre-fix
+# read of transcript_path recovers THIS instead of the objective).
+PARENT_TRANSCRIPT_MARKER = "PARENT-SESSION-CHANNEL-MESSAGE-MUST-NOT-SEED-THE-JUDGE"
+
+
+def write_parent_transcript(path: Path) -> Path:
+    """Write a decoy PARENT-session transcript of the real shape.
+
+    Its first user message is a channel-shaped owner message (the live
+    -incident objective leak) and it carries a consequential ``Write``
+    tool_use — so a pre-fix cue scan of the parent would wrongly fire
+    (D-FJO.3) and a pre-fix objective read would recover the marker.
+    """
+    import json as _json
+
+    records = [
+        {
+            "type": "user",
+            "message": {"role": "user", "content": PARENT_TRANSCRIPT_MARKER},
+        },
+        {
+            "type": "assistant",
+            "message": {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "name": "Write",
+                        "input": {"file_path": "/tmp/x.md", "content": "x"},
+                    }
+                ],
+            },
+        },
+    ]
+    path.write_text(
+        "\n".join(_json.dumps(r) for r in records) + "\n", encoding="utf-8"
+    )
+    return path
+
+
 def make_stop_envelope(
     workspace_root: Path,
     transcript_path: Path,
     *,
     subagent_id: str = "sub-test-1",
+    agent_type: str = "general-purpose",
+    last_assistant_message: str = "",
 ) -> dict:
-    """Build a SubagentStop envelope of the shape the hook parses (the
-    ``transcript_path`` common-input field + workspace + a subagent id)."""
-    return {
-        "hook_event_name": "SubagentStop",
-        "transcript_path": str(transcript_path),
-        "workspace": {"project_dir": str(workspace_root)},
+    """Build a SubagentStop envelope of the REAL captured shape (n=2
+    probe captures, 2026-06-10, Claude Code 2.1.170 — plan §2).
+
+    *transcript_path* (the subagent transcript fixture the tests build)
+    is routed to ``agent_transcript_path`` — where the real envelope
+    carries the subagent's own transcript — and the common-input
+    ``transcript_path`` points at a DECOY parent transcript carrying
+    :data:`PARENT_TRANSCRIPT_MARKER`, so any read of the parent for the
+    judge seed surfaces as a marker leak.
+    """
+    parent = write_parent_transcript(
+        workspace_root / "parent-session-transcript.jsonl"
+    )
+    env = {
+        "session_id": "parent-session-0000",
+        "transcript_path": str(parent),
         "cwd": str(workspace_root),
-        "subagent_id": subagent_id,
+        "permission_mode": "auto",
+        "agent_id": subagent_id,
+        "agent_type": agent_type,
+        "effort": {"level": "high"},
+        "hook_event_name": "SubagentStop",
+        "stop_hook_active": False,
+        "agent_transcript_path": str(transcript_path),
+        "background_tasks": [],
+        "session_crons": [],
     }
+    if last_assistant_message:
+        env["last_assistant_message"] = last_assistant_message
+    return env

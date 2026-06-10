@@ -57,3 +57,22 @@ python3.13 framework/tools/handsoff-loop/smoke/run_smoke.py \
   PYTHONPATH=/Users/lukeivers/loam/framework/tools/handsoff-loop/src python3.13 -m handsoff_loop.cli build-from-intent --ask "we merged with another company and now we have two customer lists that overlap a lot. both are csv files with name, email, and phone, but the same person is often spelled a bit differently in each or missing a phone in one. I need one clean combined list where each customer appears only once, and I want to see which rows it merged so I can spot-check it didn't combine two different people" --workspace /var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-app3-customer-dedupe-tddgkdca --yes
   ```
 
+## 2026-06-10 00:52:19 — app2-books-migration — terminal: **done**
+
+- run-of-origin: this entry (loam commit `00f7e044`, workspace `/var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-app2-books-migration-aivhx4yb`, started 2026-06-10 00:52:19)
+- ask (verbatim): we're moving our bookkeeping to a new system and the export from the old one uses category names that don't line up with the new system's categories. I have the old export as a csv with date, description, amount, and old category, and a small csv that maps old category names to new ones. I need something that converts the old file into the new format using that mapping and gives me a list of any entries it couldn't map so a person can decide those
+- wall-clock: 443.3s [this run]
+- result: done — fails included by contract; an honest negative is logged exactly like a pass
+- grounding: grounded=True | live-verified citations=5 | dropped=0 [this run]
+- gate criteria: 5 total, 4 traceable to practitioner norms [this run]
+- convergence: stop_reason=done | refine_attempts=0 | timed_out=False | timeout_retries=0 [this run]
+- progress audit: user-visible updates=13 | max gap=120.0s (monotonic clock; wall 120.0s) | within heartbeat bound=True | unverifiable claims=0 [this run]
+- human gates fired this run:
+  - expert-gate flag: The exact format of the unmapped-rows output file is not settled by practitioner convention — whether it should carry extra columns (e.g. an 'error reason' column), use the same header schema as the main output, or differ in structure is a judgment call for the owner.
+  - expert-gate flag: Whether category matching should be exact-string-only or should tolerate minor variations (case, whitespace, common abbreviations) depends on how messy the real export data is — this requires a human familiar with the specific bookkeeping software's export behavior to decide.
+  - expert-gate flag: What to do when the same source category maps to multiple target categories (a one-to-many ambiguity in the mapping CSV) is not addressed by any source retrieved; a human expert should specify the desired behavior before implementation.
+- reproduce this run:
+  ```
+  PYTHONPATH=/Users/lukeivers/loam/framework/tools/handsoff-loop/src python3.13 -m handsoff_loop.cli build-from-intent --ask "we're moving our bookkeeping to a new system and the export from the old one uses category names that don't line up with the new system's categories. I have the old export as a csv with date, description, amount, and old category, and a small csv that maps old category names to new ones. I need something that converts the old file into the new format using that mapping and gives me a list of any entries it couldn't map so a person can decide those" --workspace /var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-app2-books-migration-aivhx4yb --yes
+  ```
+

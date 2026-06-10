@@ -228,3 +228,49 @@ Populated per-cycle at build time; SHAs backfilled by `loam amend seal --plan-do
 ## §16 Halt-and-surface findings at plan-authoring
 
 The six §2 items. None required a hard halt: items 1–3 are resolvable from the inputs themselves and are recorded as named decisions (D1, D3) or bookkeeping; items 4–6 are verified-current preconditions. Ratification of THIS plan (the program plan) is the one owner gate before Phase 1 dispatches.
+
+# KEEL adoption program — Phase 1: doctrine rewrite + Charter genesis
+
+Per `docs/plans/keel-adoption-program.md` and the ratified methodology-synthesis
+verdict (`methodology-synthesis-recommendation-2026-06-10.md`, owner-ratified
+2026-06-10 15:06 CDT, Discord 1514360242). The proven spine (ratified plan →
+precise ACs at declared altitude → one `.S` smoke → seal-time executed suites →
+seal-diff fence → recorded live probes) is untouched — this phase documents it
+AS the system and installs the root contract everything ladders to.
+
+What it ships:
+  - **`docs/charter.md` genesis** — the founding intent statement verbatim as
+    entry #0 ("Make a harness which can run entirely off of the Claude Max
+    subscription whose purpose is to make a tool for people to more effectively
+    be hands-off while an AI does the development for them."), timestamped,
+    source-tagged (Discord 1514355792709685389), hash-chained; the bootstrap
+    exception documented as the genesis record, not silently exempted.
+  - **AC.PO.1 / AC.PO.2 defined for real** in `docs/VALUE_PROPOSITION.md` as
+    the first criteria derived from Charter #0 — closing the audit's
+    phantom-anchor finding (D6) at the root.
+  - **`plugins/dev-sdlc/docs/odd-methodology.md` rewritten 1,264 → ~300 honest
+    lines**: spine-as-system; §2.5 reverse coverage + the altitude tests /
+    drift-mode catalogue promoted in; banding restated as evidence grades under
+    mechanical/judged/attested check-kinds with criteria binary; VERIFIED =
+    ran green at a known SHA (assumed-green = ASSERTED, extractor mapping note
+    pending the deferred code rename); per-criterion altitude declaration
+    canonized; change-management unbundled ("ODD is how criteria are written;
+    KEEL is how they are enforced"); honest ancestry (KAOS, Ulwick, Adzic,
+    Meyer); the KEEL lifecycle frame.
+  - **Honesty debts paid:** novelty claim retracted (derivation doc archived
+    with a dated note; altitude tests salvaged into the spec); adapter tables →
+    extractor package docs; §14 → changelog; `odd-vs-outcomes.md` equivalence
+    overclaim restated honestly; dormant write-time gates
+    (objective_binding_gate.py, tdd_guard.py) archived with a dated note naming
+    dispatch contract-carriage (the dispatch_setup_hook.py extension, built in
+    Cycle A) as the salvaged component.
+
+Fence: docs-only — dev-sdlc docs subtree + tests; any diff touching
+plugins/dev-sdlc/hooks/ or tools/ source is a fence breach. Cuts staged
+separately from grafts per the verdict's risk register; Cycles A–F (charter
+capture, gate binding, conversation-blind judge, promise-delivery contract,
+proportionality dial, convergence + regeneration scheduling) follow as their
+own amendments.
+
+No ODD violation in surrounding work; every edit traces to a named AC
+(AC.CH0.1-2, AC.KDOC.1-5, AC.KDOC.S); no changes for unnamed cases.

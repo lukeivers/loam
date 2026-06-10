@@ -223,11 +223,20 @@ def _resolve_workstream(workspace_root: Path | None) -> str:
         return ""
     # The work-streams register's current-workstream pointer. Probed
     # best-effort; absence is not an error (AC.SACH.4) — the tier is
-    # still present, carrying the none-marker.
-    candidates = (
-        workspace_root / ".pos" / "active-workstream",
-        workspace_root / "docs" / "active-workstream.txt",
-    )
+    # still present, carrying the none-marker. The workspace-state
+    # location routes through the workspace_paths helper (AC.D.2.5 —
+    # path-helper centralisation); the import + construction are
+    # guarded so a missing helper or a refused workspace_root degrades
+    # to the docs/ fallback rather than aborting the bundle (AC.SACH.4).
+    try:
+        from loam.workspace_bootstrap.workspace_paths import pos_subdir
+
+        candidates: tuple[Path, ...] = (
+            pos_subdir(workspace_root) / "active-workstream",
+            workspace_root / "docs" / "active-workstream.txt",
+        )
+    except Exception:
+        candidates = (workspace_root / "docs" / "active-workstream.txt",)
     for candidate in candidates:
         try:
             if candidate.exists():

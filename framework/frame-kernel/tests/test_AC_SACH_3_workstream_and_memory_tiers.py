@@ -38,7 +38,11 @@ def test_workstream_tier_present_and_reflects_current_workstream(
 ) -> None:
     """With a known active workstream on disk, the bundle's workstream
     tier names it (D-SACH.3 stub: reads the work-streams STATE pointer)."""
-    pos_dir = real_kernel_workspace / ".pos"
+    # Post-D.2 workspace-state layout: the pointer lives under
+    # ``<workspace>/workspace/.pos/`` (the resolver routes through
+    # ``workspace_paths.pos_subdir`` per AC.D.2.5). Mechanical fixture
+    # path-construction per the d2 test's fixture allowance.
+    pos_dir = real_kernel_workspace / "workspace" / ".pos"
     pos_dir.mkdir(parents=True, exist_ok=True)
     (pos_dir / "active-workstream").write_text(
         "loam-realignment\n", encoding="utf-8"

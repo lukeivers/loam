@@ -130,6 +130,14 @@ def parse_envelope(envelope: Any) -> DispatchContext:
     present the memory tier degrades to a workspace-scoped marker
     rather than inventing a query (plan §8 halt-trigger #2's named
     fallback).
+
+    Workspace-root resolution (AC.EWR.1): real Claude Code
+    SubagentStart envelopes carry the standard hook common-input
+    ``cwd`` field, NOT ``workspace.project_dir`` (Tier-0 live finding,
+    2026-06-10 — on real dispatches the project_dir-only read left
+    workspace_root None and degraded all three tiers). Priority order:
+    ``workspace.project_dir`` when present, else ``cwd`` — mirroring
+    the resolution slice 1b already ships in ``frame_judge.py``.
     """
     if not isinstance(envelope, dict):
         return DispatchContext(workspace_root=None, task_text="", workstream="")
@@ -140,6 +148,12 @@ def parse_envelope(envelope: Any) -> DispatchContext:
         root_str = workspace.get("project_dir")
         if isinstance(root_str, str) and root_str.strip():
             workspace_root = Path(root_str)
+    if workspace_root is None:
+        # The common-input ``cwd`` field is the fallback workspace root
+        # (AC.EWR.1) — the shape real envelopes actually carry.
+        cwd = envelope.get("cwd")
+        if isinstance(cwd, str) and cwd.strip():
+            workspace_root = Path(cwd)
 
     # Task-text seed for the memory query (D-SACH.4). Accept the
     # documented dispatch-text fields in priority order; the first

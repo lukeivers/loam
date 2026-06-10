@@ -17,11 +17,16 @@
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Callable
 
 import pytest
 import yaml
+
+# The real canonical loam root (this checkout): parents[3] of a tests/
+# file == the repo root.
+LOAM_ROOT = Path(__file__).resolve().parents[3]
 
 
 def write_manifest(path: Path, contributions: list, **extras: Any) -> Path:
@@ -130,3 +135,58 @@ def make_fixture_canonical() -> Callable[..., Path]:
     bootstrap tests can reuse the same canonical-shape.
     """
     return _make_fixture_canonical
+
+
+# ---- AC.LIVI shared fixture — isolated real-canonical clone ---------
+
+
+def _real_main_sha() -> str:
+    """Tier-0 read of the REAL checkout's ``refs/heads/main``."""
+    completed = subprocess.run(  # noqa: S603 — argv constructed
+        ["git", "-C", str(LOAM_ROOT), "rev-parse", "refs/heads/main"],
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        check=True,
+        text=True,
+    )
+    return completed.stdout.strip()
+
+
+@pytest.fixture(scope="session")
+def isolated_canonical_clone(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[Path]:
+    """An ISOLATED local ``git clone`` of the real checkout, for tests
+    that bootstrap from real canonical (the AC.LIVI family).
+
+    Bootstrapping ``--from`` the REAL checkout is destructive: the
+    local-path branch of ``bootstrap_new_workspace`` runs
+    ``_materialise_canonical_branch(<source>)``, which re-points the
+    SOURCE's ``refs/heads/main`` at ``refs/remotes/origin/main`` —
+    rewinding the live repo's main whenever local is ahead of origin
+    (always true mid-amendment). The isolated clone reproduces the
+    documented-Quickstart topology MORE faithfully (a stranger's
+    ``git clone`` of canonical, where main == origin/main and the
+    materialise step is the intended no-op) without mutating the
+    real checkout. A local clone hardlinks objects, so it is cheap
+    relative to the bootstraps that consume it.
+
+    Teardown guard (the regression assertion): the real checkout's
+    ``refs/heads/main`` must be byte-identical before and after the
+    consuming tests ran — if any test bootstrapped from the real
+    checkout instead of the clone, this fails the session loudly.
+    """
+    before = _real_main_sha()
+    clone = tmp_path_factory.mktemp("canonical-clone") / "loam"
+    subprocess.run(  # noqa: S603 — argv constructed
+        ["git", "clone", "--quiet", str(LOAM_ROOT), str(clone)],
+        stdin=subprocess.DEVNULL,
+        check=True,
+    )
+    yield clone
+    after = _real_main_sha()
+    assert after == before, (
+        f"REGRESSION: the real checkout's refs/heads/main moved during "
+        f"the test session ({before} -> {after}); a test bootstrapped "
+        f"from the real checkout instead of the isolated clone."
+    )

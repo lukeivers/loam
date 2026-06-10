@@ -42,11 +42,14 @@ from loam.workspace_bootstrap.adapters.first_run_scaffold import (
     DEFAULT_PERSONA_HANDLE,
 )
 
-LOAM_ROOT = Path(__file__).resolve().parents[3]
-
-
 @pytest.fixture(scope="module")
-def fresh_init_workspace(tmp_path_factory: pytest.TempPathFactory) -> Path:
+def fresh_init_workspace(
+    tmp_path_factory: pytest.TempPathFactory,
+    isolated_canonical_clone: Path,
+) -> Path:
+    # Bootstraps from conftest's isolated_canonical_clone, NOT the real
+    # checkout (bootstrapping from the real checkout rewinds its main;
+    # see the conftest fixture docstring).
     from loam.workspace_bootstrap.new_workspace import (
         bootstrap_new_workspace,
     )
@@ -55,7 +58,7 @@ def fresh_init_workspace(tmp_path_factory: pytest.TempPathFactory) -> Path:
     ws = base / "ws"
     bootstrap_new_workspace(
         new_ws_path=ws,
-        canonical_source=str(LOAM_ROOT),
+        canonical_source=str(isolated_canonical_clone),
         service_bootstrap=False,
         service_manager_dir_override=base / "LaunchAgents",
     )
@@ -130,6 +133,7 @@ def test_AC_LIVI_3_both_sessionstart_hooks_still_present(
 
 def test_AC_LIVI_3_custom_handle_still_binds(
     tmp_path_factory: pytest.TempPathFactory,
+    isolated_canonical_clone: Path,
 ) -> None:
     """Predecessor AC.LIPW.1 custom-handle invariant preserved under
     the fix (a non-default persona handle still binds + provisions)."""
@@ -141,7 +145,7 @@ def test_AC_LIVI_3_custom_handle_still_binds(
     ws = base / "ws"
     bootstrap_new_workspace(
         new_ws_path=ws,
-        canonical_source=str(LOAM_ROOT),
+        canonical_source=str(isolated_canonical_clone),
         persona_handle="iris",
         service_bootstrap=False,
         service_manager_dir_override=base / "LaunchAgents",

@@ -44,21 +44,22 @@ from pathlib import Path
 
 import pytest
 
-# The real canonical loam root (this checkout): parents[3] of a tests/
-# file == the repo root. The documented Quickstart clones THIS tree;
-# bootstrapping `--from` it reproduces the real clone+install topology.
-LOAM_ROOT = Path(__file__).resolve().parents[3]
-
 
 @pytest.fixture(scope="module")
-def fresh_init_workspace(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """Bootstrap one real workspace from real canonical and reuse it
-    across the AC.LIVI family (the real bootstrap + venv install is the
-    heavy step ~tens of seconds; module scope amortises it).
+def fresh_init_workspace(
+    tmp_path_factory: pytest.TempPathFactory,
+    isolated_canonical_clone: Path,
+) -> Path:
+    """Bootstrap one real workspace from an isolated clone of real
+    canonical (conftest's ``isolated_canonical_clone`` — bootstrapping
+    from the REAL checkout rewinds its main; see the fixture docstring)
+    and reuse it across the AC.LIVI family (the real bootstrap + venv
+    install is the heavy step ~tens of seconds; module scope amortises
+    it).
 
     Mirrors the documented Quickstart exactly: ``bootstrap_new_workspace
-    --from <real canonical>`` with NO manual venv-build or hook-fix step
-    inside the workspace (``service_bootstrap=False`` = the default
+    --from <clone of canonical>`` with NO manual venv-build or hook-fix
+    step inside the workspace (``service_bootstrap=False`` = the default
     fresh-init path)."""
     from loam.workspace_bootstrap.new_workspace import (
         bootstrap_new_workspace,
@@ -68,7 +69,7 @@ def fresh_init_workspace(tmp_path_factory: pytest.TempPathFactory) -> Path:
     ws = base / "ws"
     bootstrap_new_workspace(
         new_ws_path=ws,
-        canonical_source=str(LOAM_ROOT),
+        canonical_source=str(isolated_canonical_clone),
         service_bootstrap=False,
         service_manager_dir_override=base / "LaunchAgents",
     )

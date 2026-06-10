@@ -46,16 +46,17 @@ from pathlib import Path
 
 import pytest
 
-LOAM_ROOT = Path(__file__).resolve().parents[3]
-
 
 @pytest.fixture(scope="module")
 def sealed_fresh_workspace(
     tmp_path_factory: pytest.TempPathFactory,
+    isolated_canonical_clone: Path,
 ) -> Path:
-    """A real fresh bootstrap from real canonical (documented-Quickstart
-    topology). Module-scoped: the real venv install is the heavy step;
-    amortise it across this file's assertions."""
+    """A real fresh bootstrap from an isolated clone of real canonical
+    (documented-Quickstart topology; bootstrapping from the REAL
+    checkout rewinds its main — see conftest's
+    ``isolated_canonical_clone``). Module-scoped: the real venv install
+    is the heavy step; amortise it across this file's assertions."""
     from loam.workspace_bootstrap.new_workspace import (
         bootstrap_new_workspace,
     )
@@ -64,7 +65,7 @@ def sealed_fresh_workspace(
     ws = base / "ws"
     bootstrap_new_workspace(
         new_ws_path=ws,
-        canonical_source=str(LOAM_ROOT),
+        canonical_source=str(isolated_canonical_clone),
         service_bootstrap=False,
         service_manager_dir_override=base / "LaunchAgents",
     )

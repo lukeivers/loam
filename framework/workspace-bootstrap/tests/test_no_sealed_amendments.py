@@ -393,6 +393,8 @@ def test_B20_only_workspace_bootstrap_changed() -> None:
         "docs/plans/v0-1-x-roadmap.md",
         "docs/plans/loam-roadmap.md",
         "docs/plans/n3-onboarding-init-flow-translate-in-intake.md",
+        "framework/frame-kernel/src/loam/frame_kernel/bundle.py",
+        "framework/frame-kernel/tests/test_AC_SACH_3_workstream_and_memory_tiers.py",
     }
 
     offending = []

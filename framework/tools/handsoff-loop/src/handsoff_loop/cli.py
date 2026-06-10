@@ -201,22 +201,23 @@ def _cmd_build_from_intent(args: argparse.Namespace) -> int:
     negative is a first-class outcome, not a process failure; non-zero
     means the pipeline itself could not run the path.
     """
-    from .build_from_intent import run_build_from_intent
+    from .build_from_intent import (
+        interactive_answer,
+        interactive_approve,
+        run_build_from_intent,
+    )
     from .convergence import (
         DEFAULT_LEG_CEILING_S,
         DEFAULT_MAX_REFINE_ATTEMPTS,
     )
     from .progress import HEARTBEAT_INTERVAL_S
 
-    approve_fn = None
-    answer_fn = None
-    if not args.yes:
-        def approve_fn(confirm_text):  # noqa: F811
-            return input("\nProceed? [y/N] ").strip().lower() in (
-                "y", "yes")
-
-        def answer_fn(question):  # noqa: F811
-            return input(f"\n{question}\n> ").strip()
+    # The interactive intake-surface gates (single approval +
+    # meaningful questions) live in the pipeline module — the CLI
+    # carries NO interactive surface (sealed AC.HL.A1: no
+    # human-loop-driving knob here).
+    approve_fn = None if args.yes else interactive_approve
+    answer_fn = None if args.yes else interactive_answer
 
     result = run_build_from_intent(
         args.ask,

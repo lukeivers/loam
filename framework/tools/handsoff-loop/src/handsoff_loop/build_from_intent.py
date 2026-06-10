@@ -63,6 +63,25 @@ from .request_intent import (
 from .verify import freeze_acceptance
 
 
+def interactive_approve(confirm_text: str) -> bool:
+    """The interactive form of the SINGLE plain-language approval gate.
+
+    Intake-surface machinery (the sealed AC.B.3 one-approval contract),
+    NOT loop-driving: it fires once, before any build, and never steps
+    decompose/dispatch/judge.  Lives here (not in the CLI) because the
+    approval gate belongs to the intake surface; the CLI must carry no
+    interactive surface at all (the sealed AC.HL.A1 guarantee).
+    """
+    return input("\nProceed? [y/N] ").strip().lower() in ("y", "yes")
+
+
+def interactive_answer(question: str) -> str:
+    """Interactive answers to the bounded meaningful questions
+    (AC.REQ.2) — intake-surface, fired before the confirm, never
+    inside the build loop."""
+    return input(f"\n{question}\n> ").strip()
+
+
 @dataclass
 class BuildFromIntentResult:
     """The end-to-end run outcome, evidence-first."""

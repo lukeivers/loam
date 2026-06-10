@@ -106,9 +106,28 @@ HEAD). No push (publish is owner-gated; rides the next release).
 
 ## §14 Method-decision register (populated at build time)
 
-- D-build.1 — fallback branch placement + shape (mirror 1b's
-  `frame_judge.py` vs shared helper). *(builder)*
-- SHAs backfilled post-seal.
+- D-build.1 — fallback branch placement + shape: in-function fallback inside
+  `parse_envelope`, mirroring 1b's `frame_judge.py` block verbatim-in-shape
+  (project_dir-first, cwd-else, same str/strip type guards). NO shared-helper
+  extraction (kept small per §16; extraction surfaced as a future idea, not
+  done here). *(builder, ruled at build)*
+- D-build.2 — RED-on-revert verified at build: AC.EWR.S FAILS against the
+  pre-fix `bundle.py` (degraded microkernel tier on the real cwd-only
+  envelope) and passes post-fix. Suite 68/68 (62 pre-existing + 6 new).
+- D-build.3 — seal-time dirty-tree halt: 13 pre-existing untracked plan-docs
+  from other in-flight cycles blocked `loam amend seal`; resolved by scoped
+  `git stash push -u` of exactly those paths → seal → `git stash pop`
+  (byte-preserving; all 13 restored). No unrelated path entered any commit.
+
+**Cycle SHAs (backfilled post-seal):**
+
+| Step | SHA |
+|---|---|
+| Plan + manifest (`docs(plans):`) | `327e19af` |
+| Source + tests (`fix(frame-kernel):`) | `39bb45d7` |
+| Manifest smoke_outcome trim (`docs(plans):`) | `032b5c5f` |
+| Apply (`chore(amend):`) | `4f9ba3e9` |
+| **Seal** (`chore(seals):`) | `c39de619` |
 
 ## §15 Backwards-compat verification
 

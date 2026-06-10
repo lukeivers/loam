@@ -145,18 +145,17 @@ dispatched subagents) → AC.PO.1 + AC.PO.2.
 - D-build.2 — floor caps reuse the sealed constants (`OPEN_DECISION_CAP`,
   `DECISION_TOP_N`, `INJECTION_CHAR_CAP`) with fail-soft local fallbacks, so
   no second budget exists to drift.
-- D-build.3 — RED-on-revert verified: with the `bundle.py` edit stashed,
-  AC.RDM.1 fails 6/6, AC.RDM.2 fails 4/5 (the no-ledger byte-identical case
-  passes pre-fix by design), AC.RDM.S fails 1/1; all pass post-fix.
+- D-build.3 — RED-on-revert: to be verified at build (the new ACs must fail
+  against pre-fix `bundle.py`); result recorded here at backfill.
 
 **Cycle SHAs (backfilled post-seal):**
 
 | Step | SHA |
 |---|---|
-| Plan + manifest (`docs(plans):`) | `4239b53b` |
-| Source + tests (`feat(frame-kernel):`) | `52d0a131` |
-| Apply (`chore(amend):`) | `e0c95686` |
-| **Seal** (`chore(seals):`) | `697b0972` |
+| Plan + manifest (`docs(plans):`) | `f6ee0945` |
+| Source + tests (`feat(frame-kernel):`) | _backfilled post-seal_ |
+| Apply (`chore(amend):`) | _backfilled post-seal_ |
+| **Seal** (`chore(seals):`) | _backfilled post-seal_ |
 
 ## §15 Backwards-compat verification
 

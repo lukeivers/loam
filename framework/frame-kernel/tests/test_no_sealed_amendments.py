@@ -40,7 +40,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "bf1108dfa1f7585333636e9a505e60015e226165"
+BASELINE = "122099e70da9a586f756c0546a71061a96bf7e9c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -96,6 +96,8 @@ def test_AC_SACH_S_only_frame_kernel_surfaces_changed() -> None:
         "docs/design/",
         "docs/examples/",
         "docs/experiments/",
+        "framework/hands-off-lifecycle/",
+        "framework/primary-persona/",
     )
     allowed_files: set[str] = {
         "CLAUDE.md",

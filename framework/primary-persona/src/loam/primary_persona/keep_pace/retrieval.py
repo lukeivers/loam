@@ -384,6 +384,55 @@ def _episode_pointer(ep: dict[str, object]) -> str:
     return f"From an earlier turn: {summary}"
 
 
+def _decision_hits(
+    *, query_tokens: list[str], config: RetrievalConfig
+) -> list[dict[str, object]]:
+    """Decision-ledger hits shaped for whole-record injection
+    (AC.DLG.3 + AC.SRF.3 — memory recall cycle, Slice 3).
+
+    The ledger lives beside the episode store
+    (``<episode_memory_dir>/decisions/``); no separate config knob —
+    where episodes go, decisions go. Two sub-sources, deduped by path:
+
+      - query-matched records (entity-vocabulary match), and
+      - ``status: open`` records, surfaced WITHOUT an explicit query
+        (an open owner question rides along on work-anchored turns).
+
+    Every hit carries ``_whole_record`` + ``record_text`` so
+    :func:`_render_injection` emits the ruling WHOLE — question,
+    ruling, reasoning, source pointer — never a one-line pointer.
+    Fail-soft: no ledger / any boundary error contributes nothing.
+    """
+    if config.episode_memory_dir is None:
+        return []
+    try:
+        from ..decision_ledger import open_decisions, search_decisions
+
+        matched = search_decisions(
+            config.episode_memory_dir, query_tokens
+        )
+        opens = open_decisions(config.episode_memory_dir)
+    except Exception:  # noqa: BLE001 — fail-soft; ledger degrades to absent
+        return []
+    hits: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for rec in list(matched) + list(opens):
+        if rec.path in seen:
+            continue
+        seen.add(rec.path)
+        hits.append(
+            {
+                "pointer": rec.question or rec.ruling,
+                "path": rec.path,
+                "score": 1.0,
+                "_whole_record": True,
+                "record_text": rec.record_text(),
+                "_decision": True,
+            }
+        )
+    return hits
+
+
 def rank(
     *,
     prompt: str,
@@ -445,12 +494,21 @@ def rank(
     episode_hits = _episode_hits(
         query_tokens=query_tokens, config=config, num_results=config.top_n
     )
-    return _merge_by_score(
+    merged = _merge_by_score(
         corpus_hits,
         episode_hits,
         top_n=config.top_n,
         salience_threshold=salience_threshold,
     )
+    # AC.DLG.3 (memory recall cycle, Slice 3) — decision records are a
+    # THIRD merged source, positioned FIRST for whole-record injection
+    # (a matched ruling IS the answer's substance; AC.SRF.3 renders it
+    # whole). Query-matched records + ``status: open`` records on the
+    # ledger (the latter surface WITHOUT an explicit query). With no
+    # ledger on disk this contributes nothing and the merged output is
+    # unchanged (the AC.FBMU.2 no-regression envelope extends here).
+    decision_hits = _decision_hits(query_tokens=query_tokens, config=config)
+    return decision_hits + merged
 
 
 def retrieve(
@@ -1015,8 +1073,24 @@ def register_keep_pace_turn_contributor(
                 prompt = str(context.get("prompt", "") or "")
             if not prompt.strip():
                 return ""
-            block = retrieve(prompt=prompt, config=cfg)
-            return block or ""
+            block = retrieve(prompt=prompt, config=cfg) or ""
+            # AC.DLG.2 (memory recall cycle, Slice 3) — the pending
+            # ruling-gap steer flagged at the previous turn-close is
+            # delivered model-facing on THIS turn (steer-not-block;
+            # consume-on-read). Fail-open: a steer that cannot be read
+            # is dropped, never blocks the turn.
+            try:
+                if cfg.episode_memory_dir is not None:
+                    from ..decision_ledger import (  # noqa: WPS433
+                        consume_pending_steer,
+                    )
+
+                    steer = consume_pending_steer(cfg.episode_memory_dir)
+                    if steer:
+                        block = steer + ("\n\n" + block if block else "")
+            except Exception:  # noqa: BLE001 — steer is fail-open
+                pass
+            return block
         except Exception:  # noqa: BLE001 — fail-closed; turn proceeds
             return ""
 

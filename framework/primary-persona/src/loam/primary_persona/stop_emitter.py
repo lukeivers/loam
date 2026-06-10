@@ -440,6 +440,31 @@ def handle_stop_envelope(
             },
         )
         return
+    # AC.DLG.2 (memory recall cycle, Slice 3) — deterministic ruling-gap
+    # check on the existing turn-close seam: a ruling-shaped turn that
+    # closed with no decision record written during it flags a pending
+    # model-facing steer for the next turn (steer-not-block). The turn
+    # window is anchored on the previous turn-close marker's mtime
+    # (read BEFORE this turn's marker overwrites it). Fail-open: any
+    # error here is swallowed — the Stop hook's exit-0/fast contract
+    # (AC.M.4) outranks the steer; NO LLM/API call (hot path).
+    try:
+        from .decision_ledger import detect_and_flag_ruling_gap
+        from .file_memory import memory_dir_for_workspace
+
+        try:
+            _turn_anchor: float | None = (
+                _last_turn_id_path(workspace_root).stat().st_mtime
+            )
+        except OSError:
+            _turn_anchor = None
+        detect_and_flag_ruling_gap(
+            memory_dir=memory_dir_for_workspace(workspace_root),
+            user_message=user_message,
+            turn_started_at=_turn_anchor,
+        )
+    except Exception:  # noqa: BLE001 — AC.M.4 fail-soft; steer is best-effort
+        pass
     _write_last_turn_id(workspace_root, turn_id)
     _spawn_memory_write(
         workspace_root=workspace_root,

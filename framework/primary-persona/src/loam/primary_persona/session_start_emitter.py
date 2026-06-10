@@ -323,6 +323,35 @@ def build_session_composer(
     except Exception:  # noqa: BLE001 — AC.PSI.2 fail-soft
         pass
 
+    # AC.DLG.2 (memory recall cycle, Slice 3) — register the decision-
+    # ledger catch-up sweep at TriggerKind.session: ruling-shaped turns
+    # recorded since the last sweep that still lack a decision record
+    # surface once at session-start (the backstop behind the per-turn
+    # Stop-seam steer — D2's write-side contract is gate-backed, not
+    # promised). Deterministic + bounded + fail-soft; a sweep failure
+    # omits the block and the session proceeds.
+    try:
+        from .decision_ledger import run_catch_up_sweep  # noqa: WPS433
+        from .file_memory import (  # noqa: WPS433
+            memory_dir_for_workspace as _dlg_memory_dir,
+        )
+
+        _dlg_mem = _dlg_memory_dir(workspace_root)
+
+        def _decision_catch_up(context: dict) -> str:
+            try:
+                return run_catch_up_sweep(_dlg_mem)
+            except Exception:  # noqa: BLE001 — fail-soft
+                return ""
+
+        composer.register(
+            name="decision-ledger-catch-up",
+            trigger_kind=TriggerKind.session,
+            fn=_decision_catch_up,
+        )
+    except Exception:  # noqa: BLE001 — AC.DLG.2 fail-soft registration
+        pass
+
     return composer
 
 

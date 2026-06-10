@@ -47,7 +47,11 @@ def live_bfi_run():
     narrated_ts: list[float] = []
 
     def _say(line: str) -> None:
-        narrated_ts.append(time.time())
+        # Monotonic on purpose: AC.PRG.1's bound covers ACTIVE work —
+        # the observer measures silence on the same clock the
+        # heartbeat scheduler runs on, which does not advance while
+        # the OS has the process suspended (system sleep).
+        narrated_ts.append(time.monotonic())
 
     result = run_build_from_intent(
         LIVE_OA_ASK,

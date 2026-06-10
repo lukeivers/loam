@@ -113,6 +113,8 @@ def format_log_entry(
         f"[this run]",
         f"- progress audit: user-visible updates="
         f"{audit.get('n_user_visible')} | max gap={audit.get('max_gap_s')}s "
+        f"({audit.get('gap_clock', 'wall')} clock; wall "
+        f"{audit.get('max_gap_wall_s', audit.get('max_gap_s'))}s) "
         f"| within heartbeat bound={audit.get('gap_within_bound')} | "
         f"unverifiable claims="
         f"{len(audit.get('unverifiable_claims') or [])} [this run]",

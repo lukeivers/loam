@@ -1,0 +1,4 @@
+2026-06-09 23:31:29 -0500 Assertions          	PID 340(powerd) Created InternalPreventSleep "Holding in darkwake for up to 20 seconds to query model for inactivity prediction" 00:00:00  id:0x0xd00008d96 [System: PrevIdle BGTask SRPrevSleep kCPU]          
+2026-06-09 23:31:29 -0500 Assertions          	PID 340(powerd) Released InternalPreventSleep "Holding in darkwake for up to 20 seconds to query model for inactivity prediction" 00:00:00  id:0x0xd00008d96 [System: PrevIdle BGTask kCPU]          
+2026-06-09 23:32:51 -0500 Sleep               	Entering Sleep state due to 'Maintenance Sleep':TCPKeepAlive=active Using AC (Charge:100%) 355 secs  
+2026-06-09 23:38:46 -0500 DarkWake            	DarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty/ Using AC (Charge:100%) 180 secs  

@@ -91,6 +91,27 @@ def test_audit_flags_over_the_bound_silence(tmp_path):
     assert audit["gap_within_bound"] is False
 
 
+def test_audit_measures_active_silence_not_system_sleep(tmp_path):
+    """AC.PRG.1 — the bound covers ACTIVE work: a wall-clock gap whose
+    monotonic counterpart is inside the bound (the whole process was
+    OS-suspended, e.g. macOS maintenance sleep) is NOT a breach — and
+    the wall gap is still reported honestly, never hidden."""
+    rec = RunRecord(tmp_path)
+    rec.emit("understanding", "start", user_visible=True)
+    ev = rec.events()[0]
+    # Forge the sleep shape from OA live run 2: wall advances 415s,
+    # the active (monotonic) clock only 63s.
+    forged = {"ts": ev["ts"] + 415.0, "ts_mono": ev["ts_mono"] + 63.0,
+              "stage": "verdict", "message": "end", "user_visible": True}
+    with rec.path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(forged) + "\n")
+    audit = audit_progress(rec.path, [], heartbeat_bound_s=120.0)
+    assert audit["gap_clock"] == "monotonic"
+    assert audit["max_gap_s"] == 63.0
+    assert audit["gap_within_bound"] is True
+    assert audit["max_gap_wall_s"] == 415.0  # suspension visible, not hidden
+
+
 def test_heartbeat_events_carry_liveness_evidence(tmp_path):
     rec = RunRecord(tmp_path / "run")
     watch = tmp_path / "w"

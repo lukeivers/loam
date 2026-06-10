@@ -67,8 +67,8 @@ class RunRecord:
         if stage not in STAGES:
             raise ValueError(f"unknown stage {stage!r} — the stage "
                              f"vocabulary is {STAGES}")
-        event = {"ts": time.time(), "stage": stage,
-                 "message": str(message), **fields}
+        event = {"ts": time.time(), "ts_mono": time.monotonic(),
+                 "stage": stage, "message": str(message), **fields}
         line = json.dumps(event)
         with self._lock:
             with self.path.open("a", encoding="utf-8") as fh:
@@ -152,6 +152,7 @@ def audit_progress(
     """After-the-fact audit of a finished run (AC.PRG.2 / AC.PRG.OA).
 
     Returns ``{"unverifiable_claims": [...], "max_gap_s": float,
+    "max_gap_wall_s": float, "gap_clock": str,
     "gap_within_bound": bool, "n_user_visible": int}``:
 
       * every narrated line must exist verbatim as a user-visible
@@ -161,6 +162,18 @@ def audit_progress(
         the active window (first event → verdict event) must stay
         within the heartbeat bound (a small grace factor covers
         scheduler jitter, not silence).
+
+    AC.PRG.1's bound covers ACTIVE work, so the bound is checked on
+    the MONOTONIC clock (``ts_mono``) when the record carries it —
+    the same clock the heartbeat scheduler runs on, and one that does
+    not advance while the OS has the whole process suspended (system
+    sleep).  Wall-clock counts suspension as silence and manufactures
+    breaches no watching human experienced and no emitter could
+    physically have prevented (OA live run 2's 415.1s "gap" was 355s
+    of pmset-verified macOS maintenance sleep).  The wall-clock max
+    gap is still reported (``max_gap_wall_s``) so suspension is
+    visible, never hidden; records without ``ts_mono`` (older runs)
+    fall back to wall-clock and say so via ``gap_clock``.
     """
     record_path = Path(record_path)
     events = []
@@ -174,12 +187,22 @@ def audit_progress(
                     if ln not in recorded_messages]
 
     max_gap = 0.0
+    max_wall_gap = 0.0
+    gap_clock = "wall"
     if len(visible) >= 2:
-        ts = sorted(e["ts"] for e in visible)
-        max_gap = max(b - a for a, b in zip(ts, ts[1:]))
+        wall = sorted(e["ts"] for e in visible)
+        max_wall_gap = max(b - a for a, b in zip(wall, wall[1:]))
+        if all("ts_mono" in e for e in visible):
+            mono = sorted(e["ts_mono"] for e in visible)
+            max_gap = max(b - a for a, b in zip(mono, mono[1:]))
+            gap_clock = "monotonic"
+        else:
+            max_gap = max_wall_gap
     return {
         "unverifiable_claims": unverifiable,
         "max_gap_s": round(max_gap, 1),
+        "max_gap_wall_s": round(max_wall_gap, 1),
+        "gap_clock": gap_clock,
         "gap_within_bound": max_gap <= heartbeat_bound_s * 1.25,
         "n_user_visible": len(visible),
     }

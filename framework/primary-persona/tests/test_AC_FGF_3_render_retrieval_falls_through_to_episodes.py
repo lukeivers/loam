@@ -125,11 +125,16 @@ def test_AC_FGF_3_episode_with_empty_content_renders_name_only() -> None:
     assert "- [episode] name-only-episode: " not in out
 
 
-def test_AC_FGF_3_long_content_truncated_with_ellipsis() -> None:
-    """Per-episode content preview is truncated at 200 chars with
-    a trailing ellipsis to keep a single dense episode from
-    exhausting the whole cap."""
-    long = "x" * 500
+def test_AC_FGF_3_long_content_preview_bounded() -> None:
+    """Per-episode content preview is bounded so a single dense episode
+    cannot exhaust the whole cap.
+
+    AC.SRF.2/3 (memory recall cycle, Slice 2) UPDATED this pin: the
+    preview is now the salient snippet capped at ``EPISODE_PREVIEW_CAP``
+    (400, raised from 200 with the budget raise) and the old trailing
+    ellipsis marker is gone — the bound is the contract, not the marker.
+    """
+    long = "x" * 900
     out = _render_retrieval(
         {
             "query": "x",
@@ -144,16 +149,13 @@ def test_AC_FGF_3_long_content_truncated_with_ellipsis() -> None:
                 },
             ],
         },
-        cap=1600,
+        cap=5000,
     )
-    # The ellipsis marker should be present; the rendered line should
-    # carry roughly 200 chars of content (not the full 500).
-    assert "…" in out
     rendered_line = next(
         ln for ln in out.splitlines() if ln.startswith("- [episode]")
     )
-    # Sanity: the rendered preview is bounded — not the full 500 chars.
-    assert len(rendered_line) < 250
+    # Sanity: the rendered preview is bounded — not the full 900 chars.
+    assert len(rendered_line) < 450
 
 
 def test_AC_FGF_3_empty_results_and_empty_episodes_keeps_mpf_fallthrough() -> None:

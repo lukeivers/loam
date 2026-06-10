@@ -174,13 +174,88 @@ def resolve_workspace_slug(workspace_root: Path | str) -> str:
 # ---- turn aggregation + write dispatch ------------------------------
 
 
-# Soft cap on the memory-retrieval contribution (characters). Research
-# §4.3 set this at 200–400 tokens (~800–1600 chars); we pin at 1600 so
-# the combined turn payload (awareness block + retrieval block) stays
-# well inside the composer's structural 10 000-char refusal (AC-D7.6).
-# The composer's Pydantic ``_cap_guard`` remains the authoritative
-# structural refusal; this soft cap is proactive trimming.
-MEMORY_RETRIEVAL_CHAR_CAP = 1600
+# Soft cap on the memory-retrieval contribution (characters).
+# AC.SRF.3 (memory recall cycle, Slice 2): a NAMED, tunable ~5KB-class
+# budget sized to accommodate at least THREE whole structured records
+# (decision records and equivalents) plus substantive pointer lines.
+# The pre-cycle 1600-char cap was tuned for a context-scarcity regime
+# that 1M-token context windows ended; the truncated path-less pointer
+# block it produced was one of the three legs of the 2026-06-09 $750k
+# recall failure. The composer's Pydantic ``_cap_guard`` (10 000 chars)
+# remains the authoritative structural refusal; this soft cap is
+# proactive trimming below it.
+MEMORY_RETRIEVAL_CHAR_CAP = 5000
+
+# AC.SRF.3 — per-episode preview cap inside the block. Substantive
+# previews (raised from 200 with the budget raise) so a pointer carries
+# enough content to act on without opening the file.
+EPISODE_PREVIEW_CAP = 400
+
+# AC.SRF.2 — envelope / notification / structural-metadata line shapes
+# that must NEVER be surfaced as pointer text. These are transport
+# artifacts of how turns are recorded ("[user]" / "[persona]" labels,
+# task-notification headers, channel envelopes, frontmatter fences),
+# not content. ``salient_snippet`` skips them and strips inline
+# leading tags so the surfaced text is the substance of the turn.
+_ENVELOPE_LINE_PREFIXES: tuple[str, ...] = (
+    "<task-notification",
+    "<channel",
+    "<system-reminder",
+    "<local-command",
+    "---",
+)
+_ENVELOPE_LABEL_RE = re.compile(r"^\[(?:user|persona|assistant|system)\]\s*$")
+_LEADING_TAG_RE = re.compile(r"^(?:<[^<>]{0,200}>\s*)+")
+
+
+def salient_snippet(text: str, *, cap: int = EPISODE_PREVIEW_CAP) -> str:
+    """The first SUBSTANTIVE content line of ``text`` (AC.SRF.2).
+
+    Shared by BOTH model-facing render paths (the per-turn keep-pace
+    block and the dispatch-bundle memory tier) so surfaced pointer
+    text is derived from salient content — never a channel envelope,
+    task-notification header, or structural-metadata prefix.
+
+    Walks the lines, skipping role labels (``[user]`` / ``[persona]``),
+    envelope/notification headers, and a leading frontmatter block
+    (everything between the opening ``---`` fence and its close —
+    structural metadata, never content); strips any leading inline
+    ``<...>`` tag wrap (a real message wrapped in a channel header
+    surfaces as the message, not the header); returns the first
+    surviving line truncated to ``cap``. Returns ``""`` when nothing
+    substantive survives (the caller drops the pointer rather than
+    surfacing junk).
+    """
+    in_frontmatter = False
+    seen_content = False
+    for raw_line in (text or "").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("---"):
+            # Frontmatter fence: a fence before any content opens the
+            # metadata block; the matching fence closes it. The fence
+            # line itself is structural either way, never content.
+            if not seen_content:
+                in_frontmatter = not in_frontmatter
+            continue
+        if in_frontmatter:
+            continue  # structural metadata between fences
+        if _ENVELOPE_LABEL_RE.match(line):
+            continue
+        seen_content = True
+        # Strip a leading inline tag wrap FIRST so a real message on
+        # the same line as its channel header surfaces as the message
+        # (a bare-header line strips to nothing and is skipped).
+        stripped = _LEADING_TAG_RE.sub("", line).strip()
+        if stripped != line:
+            if not stripped:
+                continue  # the line WAS the envelope — skip it
+            return stripped[:cap].rstrip()
+        if any(line.startswith(p) for p in _ENVELOPE_LINE_PREFIXES):
+            continue
+        return line[:cap].rstrip()
+    return ""
 
 
 @dataclass
@@ -447,6 +522,24 @@ def _render_retrieval(result: dict[str, Any], *, cap: int) -> str:
     fix-blocker. The MCP tool still returns ``nodes`` so other
     consumers (e.g. an explicit graph-explorer) can use it.
 
+    Memory recall cycle, Slice 2 (AC.SRF.1–3) — this is the SHARED
+    model-facing render for the dispatch-bundle memory tier AND the
+    file-backed per-turn contributor:
+
+      - **AC.SRF.1** — every episode line carries its source path
+        (``(path)``) when the result row has one, so the model can
+        follow the pointer. (User-facing prose stays path-free via
+        the KP9 gate, whose scope is unchanged.)
+      - **AC.SRF.2** — the preview is :func:`salient_snippet`, never
+        a channel envelope / task-notification header / role label.
+        An episode with no substantive content renders name+path only.
+      - **AC.SRF.3** — small structured hits arrive WHOLE: a
+        ``result["records"]`` list (decision records and equivalents,
+        each ``{"name", "path", "record_text"}``) renders verbatim
+        record blocks FIRST, never truncated to a one-line pointer —
+        a record that does not fit the remaining budget is dropped
+        whole, never half-emitted.
+
     The ``cap`` truncation is line-boundary aware: we never emit a
     half-line. When the cap forces truncation mid-list, the
     remaining items are dropped (no ellipsis marker needed; the
@@ -454,9 +547,34 @@ def _render_retrieval(result: dict[str, Any], *, cap: int) -> str:
     """
     edges = result.get("results") or []
     episodes = result.get("episodes") or []
+    records = result.get("records") or []
+
+    lines: list[str] = ["[memory-retrieval]"]
+
+    # AC.SRF.3 — whole-record blocks first (highest signal density:
+    # a matched decision record IS the answer's substance).
+    if isinstance(records, list):
+        budget_used = len(lines[0]) + 1
+        for item in records:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name", "") or "").strip()
+            path = str(item.get("path", "") or "").strip()
+            record_text = str(item.get("record_text", "") or "").strip()
+            if not record_text:
+                continue
+            header = f"=== record: {name or 'unnamed'}" + (
+                f" ({path}) ===" if path else " ==="
+            )
+            block = header + "\n" + record_text
+            if budget_used + len(block) + 1 > cap:
+                # Never truncate a record to a pointer (AC.SRF.3);
+                # drop it whole when it cannot fit.
+                continue
+            lines.append(block)
+            budget_used += len(block) + 1
 
     if isinstance(edges, list) and edges:
-        lines: list[str] = ["[memory-retrieval]"]
         for item in edges:
             if not isinstance(item, dict):
                 continue
@@ -464,7 +582,6 @@ def _render_retrieval(result: dict[str, Any], *, cap: int) -> str:
             if isinstance(fact, str) and fact.strip():
                 lines.append(f"- {fact.strip()}")
     elif isinstance(episodes, list) and episodes:
-        lines = ["[memory-retrieval]"]
         for item in episodes:
             if not isinstance(item, dict):
                 continue
@@ -474,19 +591,23 @@ def _render_retrieval(result: dict[str, Any], *, cap: int) -> str:
                 continue
             if not isinstance(content, str):
                 content = ""
-            content_preview = content.strip().replace("\n", " ")
-            # Per-episode line cap: keep the preview compact so a
-            # single dense episode doesn't exhaust the contributor
-            # cap. The line-level cap below still applies.
-            if len(content_preview) > 200:
-                content_preview = content_preview[:200].rstrip() + "…"
+            # AC.SRF.2 — substantive preview, never envelope junk.
+            content_preview = salient_snippet(content)
+            # AC.SRF.1 — carry the source path when the row has one.
+            path = item.get("path")
+            path_part = (
+                f" ({path.strip()})"
+                if isinstance(path, str) and path.strip()
+                else ""
+            )
             if content_preview:
                 lines.append(
-                    f"- [episode] {name.strip()}: {content_preview}"
+                    f"- [episode] {name.strip()}{path_part}: {content_preview}"
                 )
             else:
-                lines.append(f"- [episode] {name.strip()}")
-    else:
+                lines.append(f"- [episode] {name.strip()}{path_part}")
+
+    if len(lines) == 1:
         return "[memory-retrieval]\n  (no results for this query)"
 
     text = "\n".join(lines)

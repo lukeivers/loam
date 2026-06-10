@@ -31,8 +31,18 @@ from loam.primary_persona.keep_pace.retrieval import RetrievalConfig, retrieve
 from _helpers_keep_pace import write_corpus
 
 
-def _base_cfg(tmp_path: Path, *, episode_memory_dir=None) -> RetrievalConfig:
-    memory_dir = tmp_path / "memory"
+def _base_cfg(
+    tmp_path: Path,
+    *,
+    episode_memory_dir=None,
+    memory_dir: Path | None = None,
+) -> RetrievalConfig:
+    # AC.SRF.1 (memory recall cycle, Slice 2) made source paths part of
+    # the rendered block, so the byte-identity comparisons below share
+    # ONE corpus dir across both configs — the property under test is
+    # episode-store invariance, not corpus-location invariance.
+    if memory_dir is None:
+        memory_dir = tmp_path / "memory"
     write_corpus(memory_dir)
     return RetrievalConfig(
         workspace_root=tmp_path,
@@ -45,14 +55,19 @@ def _base_cfg(tmp_path: Path, *, episode_memory_dir=None) -> RetrievalConfig:
 
 def test_AC_FBMU_2_no_episode_dir_is_byte_identical(tmp_path: Path) -> None:
     """episode_memory_dir=None → output identical to corpus-only KP1."""
+    shared_corpus = tmp_path / "shared-memory"
     pre = retrieve(
         prompt="continue the batch",
-        config=_base_cfg(tmp_path / "a", episode_memory_dir=None),
+        config=_base_cfg(
+            tmp_path / "a", episode_memory_dir=None, memory_dir=shared_corpus
+        ),
     )
     # A separate cold workspace, same corpus, no episode dir.
     post = retrieve(
         prompt="continue the batch",
-        config=_base_cfg(tmp_path / "b", episode_memory_dir=None),
+        config=_base_cfg(
+            tmp_path / "b", episode_memory_dir=None, memory_dir=shared_corpus
+        ),
     )
     assert pre == post
     # And the canon pointer still surfaces (KP1.6 behaviour preserved).
@@ -62,9 +77,14 @@ def test_AC_FBMU_2_no_episode_dir_is_byte_identical(tmp_path: Path) -> None:
 def test_AC_FBMU_2_empty_episode_store_is_byte_identical(tmp_path: Path) -> None:
     """An episode dir that exists but holds zero episodes contributes
     nothing — output equals the corpus-only path."""
+    shared_corpus = tmp_path / "shared-memory"
     corpus_only = retrieve(
         prompt="continue the batch",
-        config=_base_cfg(tmp_path / "corpus-only", episode_memory_dir=None),
+        config=_base_cfg(
+            tmp_path / "corpus-only",
+            episode_memory_dir=None,
+            memory_dir=shared_corpus,
+        ),
     )
 
     empty_episode_dir = tmp_path / "empty-episodes"
@@ -72,7 +92,9 @@ def test_AC_FBMU_2_empty_episode_store_is_byte_identical(tmp_path: Path) -> None
     with_empty_store = retrieve(
         prompt="continue the batch",
         config=_base_cfg(
-            tmp_path / "with-empty", episode_memory_dir=empty_episode_dir
+            tmp_path / "with-empty",
+            episode_memory_dir=empty_episode_dir,
+            memory_dir=shared_corpus,
         ),
     )
     assert corpus_only == with_empty_store, (

@@ -71,10 +71,14 @@ from .work_anchor import WorkAnchor, is_trivial_prompt
 # AC.KP1.3 — top-N injection cap. The design recipe is N <= 5.
 DEFAULT_TOP_N = 5
 
-# Soft cap on the injected block so a long corpus title set cannot
-# bloat the turn payload. The pointers are short plain-language titles;
-# this is a generous ceiling.
-INJECTION_CHAR_CAP = 1200
+# AC.SRF.3 (memory recall cycle, Slice 2) — the NAMED, tunable
+# ~5KB-class per-turn injection budget, sized to accommodate at least
+# THREE whole structured records (decision records and equivalents)
+# plus substantive pointer lines. The pre-cycle 1200-char cap was
+# tuned for a context-scarcity regime that 1M-token context windows
+# ended; the truncated, path-less pointer block it produced was one of
+# the three legs of the 2026-06-09 $750k recall failure.
+INJECTION_CHAR_CAP = 5000
 
 # AC.FBMU.1 — neutral merge score for an episode hit that arrived via
 # the store's grep-fallback path (no BM25 score). Placed at the corpus
@@ -85,7 +89,8 @@ MERGE_NEUTRAL_SCORE = 0.1
 # AC.FBMU.1 — cap the episode pointer summary so a long turn body cannot
 # bloat a single pointer line; the block byte budget (INJECTION_CHAR_CAP)
 # is the outer ceiling, this keeps any one episode pointer glanceable.
-_EPISODE_POINTER_CAP = 160
+# AC.SRF.3: raised with the budget so pointers carry substantive text.
+_EPISODE_POINTER_CAP = 320
 
 # B3 (AC-FBM-SAL-1/-4) — the salience gate threshold. An episode hit whose
 # structural salience is BELOW this is force-DROPPED from the SURFACED set
@@ -201,24 +206,59 @@ def _build_index(config: RetrievalConfig) -> CorpusIndex:
 
 
 def _render_injection(hits: list[dict[str, object]], *, cap: int) -> str:
-    """Render the top-N corpus hits as plain-language additionalContext.
+    """Render the top-N merged hits as MODEL-facing additionalContext.
 
     AC.KP1.3: a ``[keep-pace]`` block listing the on-file topics the
-    live work points at — plain English, NO file paths / ``.md`` names
-    (authored plain-by-construction so it passes KP9's Cycle-3 lint).
-    Silent on no hits (AC.KP1.4) — returns ``""``.
+    live work points at, in plain language. Silent on no hits
+    (AC.KP1.4) — returns ``""``.
+
+    Memory recall cycle, Slice 2 (AC.SRF.1–3):
+
+      - **AC.SRF.1** — every pointer line carries its source path
+        (``[source: <path>]``) when the hit has one, so the model can
+        follow the pointer. This block is MODEL-facing context (the
+        pre-cycle "NO file paths" rule mis-applied the KP9 user-prose
+        lint here — a scope error this cycle reverses; the lint keeps
+        its correct user-facing scope on outbound drafts).
+      - **AC.SRF.3** — a hit flagged ``_whole_record`` (decision
+        records and equivalents) renders its ``record_text`` WHOLE —
+        ruling + reasoning + source pointer — never truncated to a
+        one-line pointer. A record that does not fit the remaining
+        budget is dropped whole, never half-emitted; pointer lines
+        keep filling the remaining budget.
     """
     if not hits:
         return ""
-    lines = ["[keep-pace] On-file context relevant to what you're working on:"]
+    header = "[keep-pace] On-file context relevant to what you're working on:"
+    lines: list[str] = [header]
+    budget_used = len(header) + 1
     for h in hits:
+        path = str(h.get("path", "") or "").strip()
+        if h.get("_whole_record"):
+            record_text = str(h.get("record_text", "") or "").strip()
+            if not record_text:
+                continue
+            title = str(h.get("pointer", "") or "").strip() or "record"
+            block = (
+                f"  === record: {title}"
+                + (f" (source: {path}) ===" if path else " ===")
+                + "\n"
+                + record_text
+            )
+            if budget_used + len(block) + 1 > cap:
+                continue  # AC.SRF.3 — drop whole, never half-emit
+            lines.append(block)
+            budget_used += len(block) + 1
+            continue
         pointer = str(h.get("pointer", "")).strip()
-        if pointer:
-            lines.append(f"  - {pointer}")
-    block = "\n".join(lines)
-    if len(block) > cap:
-        block = block[:cap].rstrip()
-    return block if len(lines) > 1 else ""
+        if not pointer:
+            continue
+        line = f"  - {pointer}" + (f" [source: {path}]" if path else "")
+        if budget_used + len(line) + 1 > cap:
+            break
+        lines.append(line)
+        budget_used += len(line) + 1
+    return "\n".join(lines) if len(lines) > 1 else ""
 
 
 def _episode_hits(
@@ -226,9 +266,12 @@ def _episode_hits(
 ) -> list[dict[str, object]]:
     """Query the FBM episode store + shape hits like corpus hits (AC.FBMU.1).
 
-    Returns ``[{pointer, score}]`` shaped to merge with the corpus
-    hits' ``{path, title, pointer, score}`` shape under
-    :func:`_render_injection` (which reads ``pointer`` + ``score``).
+    Returns ``[{pointer, path, score}]`` shaped to merge with the
+    corpus hits' ``{path, title, pointer, score}`` shape under
+    :func:`_render_injection` (which reads ``pointer`` + ``path`` +
+    ``score``). AC.SRF.1 (memory recall cycle, Slice 2): the episode's
+    source path rides on the hit so the rendered pointer line carries
+    a followable ``[source: <path>]``, same as corpus hits.
     Empty / absent episode store => ``[]`` (AC.FBMU.2 — corpus-side
     output unchanged). Fail-soft: any boundary error yields ``[]`` so
     the merge degrades to corpus-only (chain fail-open, AC.KP0.4).
@@ -281,9 +324,13 @@ def _episode_hits(
             )
         except (TypeError, ValueError):
             salience_val = _SALIENCE_FULL_DEFAULT
+        # AC.SRF.1 — carry the episode's source path onto the hit so
+        # the model-facing render can emit a followable pointer.
+        path = str(ep.get("path", "") or "").strip()
         hits.append(
             {
                 "pointer": pointer,
+                "path": path,
                 "score": score_val,
                 "_episode": True,
                 "_salience": salience_val,
@@ -295,25 +342,35 @@ def _episode_hits(
 def _episode_pointer(ep: dict[str, object]) -> str:
     """Plain-language pointer for an episode hit (AC.FBMU.1).
 
-    Plain English, NO file path / no ``.md`` name (mirrors
-    :func:`corpus_index._doc_pointer` so the merged surface passes the
-    same KP9 plain-language lint). Surfaces the episode's CONTENT
-    summary (the first sentence of the turn body — the on-file topic
-    the prior turn carried), NOT the opaque ``turn/<id>`` name (an
-    internal id is never a user-facing pointer). Falls back to a
-    cleaned name only when the body is empty.
+    Surfaces the episode's CONTENT summary, NOT the opaque
+    ``turn/<id>`` name (an internal id is never a useful pointer).
+    Falls back to a cleaned name only when the body is empty.
+
+    AC.SRF.2 (memory recall cycle, Slice 2): the summary is the shared
+    :func:`memory_consumer.salient_snippet` — the first SUBSTANTIVE
+    line of the turn body, never a channel envelope /
+    task-notification header / role label — so both model-facing
+    render paths derive pointer text from salient content. (The
+    pointer text itself stays path-free; the source path rides
+    separately on the hit per AC.SRF.1 and is rendered by
+    :func:`_render_injection`.)
     """
     content = str(ep.get("content", "") or "").strip()
     summary = ""
     if content:
-        # First sentence / first line — the meaningful topical pointer.
-        first = content.replace("\n", " ").strip()
+        # Lazy cross-module import (module convention — keep_pace stays
+        # importable without the persona's full consumer surface).
+        from ..memory_consumer import salient_snippet
+
+        # AC.SRF.2 — first substantive line, envelope junk skipped.
+        first = salient_snippet(content, cap=_EPISODE_POINTER_CAP)
+        # Trim to the first sentence so the pointer stays glanceable.
         for sep in (". ", "! ", "? "):
             idx = first.find(sep)
             if 0 < idx < len(first):
                 first = first[: idx + 1]
                 break
-        summary = first[:_EPISODE_POINTER_CAP].rstrip()
+        summary = first.rstrip()
     if not summary:
         name = str(ep.get("name", "") or "").strip()
         # Strip the internal ``turn/`` prefix; an opaque turn-id is not

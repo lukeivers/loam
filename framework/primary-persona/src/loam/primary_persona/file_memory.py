@@ -385,7 +385,9 @@ class MemoryProvider(Protocol):
 # Soft cap on search result rendering — mirrors
 # ``memory_consumer.MEMORY_RETRIEVAL_CHAR_CAP`` so the file-based
 # block matches the shape the existing turn payload already carries.
-MEMORY_RETRIEVAL_CHAR_CAP = 1600
+# AC.SRF.3 (memory recall cycle, Slice 2): raised in lockstep with the
+# consumer-side budget to the ~5KB-class whole-record budget.
+MEMORY_RETRIEVAL_CHAR_CAP = 5000
 
 # Maximum episode files scanned per search when the FTS5 index is
 # unavailable (degraded grep-only path). Bound prevents pathological

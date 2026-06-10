@@ -63,10 +63,24 @@ def test_AC_KP1_3_capped_at_top_n(tmp_path: Path) -> None:
     assert 1 <= len(bullets) <= 5
 
 
-def test_AC_KP1_3_no_file_path_in_injection(tmp_path: Path) -> None:
-    # Plain-language pointer: NO file path / .md filename leaks (authored
-    # plain-by-construction so it passes KP9's Cycle-3 lint).
+def test_AC_KP1_3_pointer_text_plain_with_source_path_suffix(
+    tmp_path: Path,
+) -> None:
+    # AC.SRF.1 (memory recall cycle, Slice 2) UPDATED this pin: the
+    # injection block is MODEL-facing context, so every pointer line now
+    # carries a followable ``[source: <path>]`` suffix. The pre-cycle
+    # "NO file paths anywhere in the block" assertion encoded the KP9
+    # user-prose lint mis-applied to model-facing context (the named
+    # scope error the cycle reverses; the lint keeps its user-facing
+    # scope on outbound drafts). The pointer TEXT itself stays plain
+    # language — paths appear only in the source suffix.
     cfg = _config(tmp_path)
     block = retrieve(prompt="git safety protocol secrets", config=cfg)
-    assert ".md" not in block
-    assert "/" not in block.replace("[keep-pace]", "")
+    bullets = [ln for ln in block.splitlines() if ln.strip().startswith("- ")]
+    assert bullets, "expected at least one injected pointer line"
+    for ln in bullets:
+        assert "[source: " in ln, f"pointer line missing source path: {ln!r}"
+        text_part = ln.split("[source: ")[0]
+        # The plain-language pointer text itself carries no path.
+        assert ".md" not in text_part
+        assert "/" not in text_part.replace("- ", "")

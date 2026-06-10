@@ -86,7 +86,7 @@ Completed steps, in order:
 1. Full test suite run (canonical venv) — GREEN.
 2. Hard smoke (cold clone `.scratch/smokes/v1-4-1-smoke/`) — GREEN.
 3. This plan-doc + §13 §status.
-4. `docs/experiments/v1-5-0-hard-smoke.md` authored.
+4. `docs/experiments/release-integration-v1-5-0-hard-smoke.md` authored.
 5. `docs/state-migrations/v1-5-0-frame-kernel-patches-and-keel-p1.migration.yaml` authored.
 6. `docs/release-roadmap.md` §2 row for v1.5.0 + seal anchor added.
 7. `docs/STATE.md` v1.5.0 SHIPPED LOCAL entry added.
@@ -104,7 +104,7 @@ path resolvable via `--plan-doc docs/plans/release-integration-v1-5-0.md`.
 test 5 passed. The meta-package `--version` literal updated to `1.5.0`.
 
 ### AC.REL150.3 — HARD smoke GREEN
-`docs/experiments/v1-5-0-hard-smoke.md` exists and contains the
+`docs/experiments/release-integration-v1-5-0-hard-smoke.md` exists and contains the
 `GREEN` aggregate-verdict token. The smoke runs the full v1.4.0 ride-along
 suite from a cold clone of the local repo at HEAD.
 
@@ -137,7 +137,7 @@ including the new real-dispatch envelope tests. GREEN.
 |---|---|---|
 | AC.REL150.1 | GREEN | this doc exists with §1 + §4 + §13; resolved via `--plan-doc docs/plans/release-integration-v1-5-0.md` |
 | AC.REL150.2 | GREEN | `docs/ACTIVE_MINOR` == `1.5.0`; 32 in-scope pyprojects at 1.5.0; lockstep test 5 passed; `loam --version` → `loam 1.5.0` after bump commit |
-| AC.REL150.3 | GREEN | `docs/experiments/v1-5-0-hard-smoke.md` aggregate verdict GREEN (frame-kernel 92, dev-sdlc 336, spawn-isolated `claude -p` SMOKE OK, system binary operational) |
+| AC.REL150.3 | GREEN | `docs/experiments/release-integration-v1-5-0-hard-smoke.md` aggregate verdict GREEN (frame-kernel 92, dev-sdlc 336, spawn-isolated `claude -p` SMOKE OK, system binary operational) |
 | AC.REL150.4 | GREEN | frame-kernel 92 / dev-sdlc 336/7skip / primary-persona 1190/1skip/1fail (pre-existing-environmental Tier-0-verified at v1.4.0 tip) / workspace-sync 126 / tools-loam 179 / lockstep 5 |
 | AC.REL150.5 | GREEN | STATE.md change-log v1.5.0 SHIPPED LOCAL entry |
 | AC.REL150.6 | GREEN | release-roadmap §2 `| v1.5.0 |` row; seal token `31ac1d70` reachable from HEAD |

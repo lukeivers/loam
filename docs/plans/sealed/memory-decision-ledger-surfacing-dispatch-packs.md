@@ -248,6 +248,12 @@ AC IDs scope-descriptive. Each AC is satisfiable by more than one method; method
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `935cb0db4bd10b24c1079cc43b86c7f697e8a4ae` —
+  `chore(amend): memory-decision-ledger-surfacing-dispatch-packs manifest+apply — primary-persona+frame-kernel+hands-off-lifecycle BASELINE+sidecar bump to 122099e`
+- Seal commit: `926bdf07f0cf799c7c6634361a53f40cf1b50258` —
+  `chore(seals): memory-decision-ledger-surfacing-dispatch-packs — primary-persona+frame-kernel+hands-off-lifecycle at 935cb0d`
 ## Build path + effort estimate (AI-time per the duration rubric; ranges with midpoint)
 
 Sequence: S1 → S2 → S3 → S4 → S5, one amendment, one tree (builds serialize). Each slice's measured prediction is logged per the tracked-value-predictions rule and reported in the seal summary.

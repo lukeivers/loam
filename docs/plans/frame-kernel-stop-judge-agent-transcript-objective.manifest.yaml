@@ -10,7 +10,7 @@ amendment:
 # hooks/subagent_stop_frame_check.py (docstring) + tests/conftest.py +
 # three new test files (AC.FJO.1 / AC.FJO.2 / AC.FJO.S) + this
 # plan/manifest under docs/plans/.
-baseline: "976959f8a4c4a48635df59538dc7f72204e95046"
+baseline: "976959f8af120c0aef2ee561de6d5a886ceed7b1"
 
 plan: docs/plans/frame-kernel-stop-judge-agent-transcript-objective.md
 plan_doc_ref: docs/plans/frame-kernel-stop-judge-agent-transcript-objective.md

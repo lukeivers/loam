@@ -211,7 +211,30 @@ AC IDs scope-descriptive (`feedback_scope_descriptive_ac_ids`). Each AC is satis
 
 ## §14 Method-decision register (populated at build time)
 
-*Placeholder — D1..D6 narratives + commit SHAs backfilled by the builder + `loam amend seal --plan-doc`.*
+Build note: the build resumed from a stalled agent (stream watchdog, no progress 600s) two-thirds through — Slices 1+2 feature-committed, Slice 3 in progress. The resuming builder Tier-0 verified the inherited state (all PSI/CLG AC tests re-run green from the committed tree; the uncommitted Slice-3 source read in full) and KEPT the inherited Slice-3 work whole (`supersession.py` complete; `corpus_index.py` honor complete — schema column, insert, demotion, annotation all present despite the stall narration suggesting otherwise); the resuming builder authored the missing AC.SUP.2/3/OA tests and completed the cycle.
+
+| Decision | Resolution at build time | Evidence |
+|---|---|---|
+| D1 (rootcause framing over roadmap literal text) | Built as planned — plan-state index + claim guard + supersession; roadmap addendum backfilled (§9) recording Cycle-1 DONE + Cycle-2 delivered-in-rootcause-framing. | `docs/design/fbm-state-and-memory-roadmap-2026-05-29.md` addendum 2026-06-09 |
+| D2 ★ (STEER + fail-open — owner ruling) | Layer CG is FLAG-class: model-facing steer carrying claim + evidence; never a BLOCK; any internal guard error yields PASS. | `10776ee5` (`claim_guard.py` + `draft_gate.py`); AC.CLG.1/4 tests |
+| D3 (one amendment, slices 1→2→3) | Held — three sequenced feature commits inside one apply+seal window. | `6f7deb1f` → `10776ee5` → `7f163755` → apply `3b060f14` → seal `cb0082b6` |
+| D4 (deterministic detection, no LLM in hot path) | Held — lexical/structural assertion grammar; precision AC (AC.CLG.3) green against the true-claim + ordinary-prose corpus; halt trigger §8 #1 did NOT fire. | `claim_guard.py`; `test_AC_CLG_3_true_claims_and_prose_pass.py` |
+| D5 (defer premise-flip auto-detection) | Held — mechanism + honor shipped; no auto-detection anywhere. | `supersession.py` module docstring names the deferral |
+| D6 (per-registered-project plan roots via PROJECT_REGISTRY) | Held — derivation iterates the registry, fail-soft on a project with no plans dir. | `framework/tools/loam/src/loam_cli/audit/plan_state.py` |
+
+**Deviations / in-flight findings (none required a halt; all documented in-band):**
+
+1. **Slice-2 d1 byte-content pin retire-and-rebaseline** (pre-existing drift at plan commit, 5th pyproject-lockstep recurrence — root-cause fix still owed out-of-fence) + UM_FENCE_2 expected-set gains `claim_guard.py`. Documented in `10776ee5`'s commit message by the original builder.
+2. **H19 interim top-level prefix admission (`kernel/`)** — the frame-kernel SLICE-1a amendment (`b16b49f2`) introduced top-level `kernel/`; this cycle is the first hands-off-lifecycle SEAL_COMMIT window to cross it, so the frozen-baseline scope test H19 failed at first seal attempt. Resolved per the test's own documented per-invariant-BASELINE convention (precedents: `data`, `LICENSE`, `install-from-source.txt`, `plugins`) — admission commit `7e6621f9`. NOT a loosening; this amendment touches nothing under `kernel/`.
+3. **Seal dirty-tree HALT on 13 pre-existing unrelated untracked `docs/plans/` files** (context-management-\*, conventional-install-\*, hourly-autonomous-restart-\*, self-maintaining-work-loop.\*) — admitted dirty-check-only via the seal tool's `--allow-untracked-globs` (AC.LAE.2 mechanism); the files were never staged, committed, or modified.
+4. **AC.SUP.2 floor-composition note:** the corpus demotion multiplies BEFORE the relevance floor (the same contract as the AC.RQ80.2 length penalty), so a weakly-relevant superseded doc can drop below the floor entirely rather than surface annotated. Consistent with AC.SUP.2's conditional annotation clause ("when a superseded document IS surfaced"); named here for the record.
+5. **FIDRAFT cleanup candidate NOT marked actioned:** the seal's cleanup pass surfaced `F-STALE-CONTEXT-RECENCY-FRAMING` at 33% overlap; that item (dated-claims-read-as-current hardening) is related to but NOT delivered by this amendment — left unmarked.
+
+### Commit SHAs (full ladder)
+
+- Plan + manifest (owner-ratified): `7f647161` — also the walked BASELINE (#142 D-PASH.BASELINE-WALK: predecessor seal `728b2ef0` → `99cff1fd` docs → `7f647161`).
+- Slice 1 source: `6f7deb1f` · Slice 2 source: `10776ee5` · Slice 3 source: `7f163755`.
+- Apply: `3b060f14` · H19 admission + archive: `7e6621f9` · Seal: `cb0082b6` · §14 auto-backfill: `7ab972a6`.
 
 ---
 

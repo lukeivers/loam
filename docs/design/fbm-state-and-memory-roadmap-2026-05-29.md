@@ -140,3 +140,14 @@ The single highest-leverage move is **not** building new tiers — it is **turni
 4. **The "~1 week re-evaluate" trigger on Tier 3 / T2.3 lapsed silently** (deferred 2026-05-21, never re-evaluated by 2026-05-29). This is a `feedback_workaround_masks_rootcause_urgency` instance — recommend the re-eval be a durable task, not a queue comment.
 
 **Derivation line (M5):** this artefact composes with `feedback_notes_and_users_are_pointers_evidence_resolves.md` (Q4 mechanizes its reconciliation protocol), `feedback_information_trust_ordering.md` (the trust-tier frame Q4 enforces), and `feedback_workaround_masks_rootcause_urgency.md` (the lapsed-deferral finding in Q1). Independent of Lens 4.
+
+---
+
+## ADDENDUM 2026-06-09 — Cycle status backfill (FBM correctness cycle sealed)
+
+Backfilled at the seal of `docs/plans/sealed/fbm-correctness-claim-guard-plan-index-supersession.md` (seal `cb0082b6`):
+
+1. **Cycle 1 (activate + unify) — DONE.** Keep-pace is activated live (`~/.claude/settings.json` wires `keep_pace/user_prompt_submit.py` + `keep_pace/pre_tool_use.py`); FBM episode retrieval + the KP1 corpus index are unified at `retrieval.py` (merge-at-retrieval; sealed in `fbm-activate-unify-and-fix-write-path`). The §"F2 open items" #2 verification is thereby closed.
+2. **Cycle 2 — DELIVERED in the rootcause framing (plan D1), not the literal R2+MM1 text.** R2's guaranteed-surface substance had already shipped by other routes (Slice D per-project STATE block in the turn-start lens; the WMS census, sealed `029f82ba`); the remaining R2-shaped hole — plan-docs + their build-state in no surfaced or queryable index — is delivered as the **git-derived plan-state index** (AC.PSI.\*, `loam_cli.audit.plan_state` + `keep_pace.plans_state`). **MM1 is delivered as designed:** the claim-vs-stored-state guard on the KP9 draft-gate seam (AC.CLG.\*, Layer CG — steer-not-block, fail-open, deterministic detection). Additionally delivered ahead of the Cycle-4+ backlog: **supersession correctness** (AC.SUP.\* — production marking mechanism + corpus-retrieval honor of the `superseded-by` convention), pulled forward because it was one of the two legs of the live 2026-06-09 failure.
+3. **Cycle 3 (consolidation C1 + C2) — remains the open item.** Its warm-up precondition (live retrieval running) has been satisfied since Cycle 1's activation. The C2 work-state-projection half is substantially delivered by the sealed WMS census; the residual is consolidation of *episodic* memory.
+4. **Cycle 4+ backlog:** MM2 claim metadata + MM3 storage lint remain deferred (named in the correctness plan §7); premise-flip AUTO-detection for supersession deferred per D5 (composes with C1 later).

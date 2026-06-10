@@ -226,3 +226,74 @@ AC IDs scope-descriptive (`feedback_scope_descriptive_ac_ids`). Each AC is satis
 | **Total** | | **80–175 min, midpoint ≈ 125 min** |
 
 Owner gate-review time is a separate line item (owner availability). Log actuals post-build for calibration.
+
+# FBM correctness cycle — plan-state index + claim guard + supersession correctness
+
+Per `docs/plans/fbm-correctness-claim-guard-plan-index-supersession.md`, motivated by the
+live 2026-06-09 failure (the persona confidently asserted the claude-p→subagent migration
+"wasn't planned" while the plan, greenlight, and 2/3 of its seals sat in docs/plans/ + git)
+and the FBM roadmap's Cycle-2 metamemory gap (Q4). The behavioral rule that should have
+caught it (feedback_published_state_only_from_git_refs) had already been promoted to hard
++ extended twice and failed anyway — recurrence-despite-corpus is the corpus's own trigger
+to build structure. This amendment IS that structure.
+
+Three sequenced slices, one amendment, three sealed components touched ADDITIVELY:
+
+  1. **Plan-state index (Slice 1 — loam-cli + primary-persona).** A derivation in the
+     Slice-C audit orbit that enumerates, per registered project (PROJECT_REGISTRY),
+     the plan-docs + each plan's REAL build-state — fresh from disk + the git ref graph
+     (seal-commit evidence), never from a plan's own prose status line. Surfaced as ONE
+     concise capped TTL'd fail-soft plans block in the turn-start lens (the Slice-D
+     discipline verbatim) and exposed as a production query entry point ("what stored
+     plan/decision state matches this topic?") whose empty result is explicitly scoped
+     ("searched X; Y unchecked") — never a bare "nothing exists".
+
+  2. **Claim-vs-stored-state guard (Slice 2 — hands-off-lifecycle).** A new live layer on
+     the KP9 draft-gate seam (the exact seam the roadmap's MM1 names; today Layer C checks
+     only a hardcoded SEEDED_CONSTRAINTS tuple). When an outbound draft asserts work-state
+     — positive ("X is built/sealed/shipped") or NEGATIVE ("X isn't planned / doesn't
+     exist") — the guard verifies against ground truth (the plan-state query +
+     derive_project_state + git evidence) and on contradiction injects a MODEL-FACING
+     steer naming the claim + the contradicting evidence before the send. Steer-not-block
+     (owner call D2 ★): fail-open on any internal error, never a blocked send, never
+     user-facing guard text, no LLM/API call in the send path (deterministic detection
+     only — precision is a first-class AC; can't-reach-precision is a HALT, never a
+     silent LLM fallback). True claims and ordinary prose pass un-steered.
+
+  3. **Supersession correctness (Slice 3 — primary-persona).** A production entry point
+     that durably marks a corpus document superseded-by a named successor (the existing
+     T1.1 superseded-by frontmatter convention — which file_memory honors on the episode
+     side but the KP1 corpus retrieval ignored entirely, grep-verified), plus corpus-
+     retrieval honor of the marker: a superseded rule no longer outranks its successor,
+     and when surfaced carries its supersession annotation. Marking never deletes content;
+     un-marking restores prior behavior. Premise-flip AUTO-detection is a named deferral
+     (D5) — this ships the mechanism + the honor.
+
+Framing decision (D1, named per F2): the roadmap's literal Cycle-2 text (R2 + MM1) is
+partially stale — R2's guaranteed-surface substance shipped 06-05/06-09 via Slice D +
+the WMS census, and keep-pace is activated live. This amendment follows the fresher
+owner-validated rootcause framing (plan-state index + claim guard + supersession), which
+covers the two failure legs the roadmap deferred. Consolidation (roadmap Cycle 3), MM2
+claim metadata, MM3 storage lint, and scratch-artefact indexing are named deferrals.
+
+AC families (each with an outcome-altitude AC against production entry points + the LIVE
+repo, no pre-arranged state):
+  - AC.PSI.1–3 + AC.PSI.OA — derived-not-stored plan-state; ambient capped surfacing;
+    scoped-negative queryability; live-repo state matching independent git verification.
+  - AC.CLG.1–4 + AC.CLG.OA — contradicted work-state claims (positive AND negative)
+    steered with evidence; unresolvable flat negatives prompted to the scoped-honest
+    form; true claims + ordinary prose pass clean; fail-open + no-API-key + AC.KP9.*
+    preserved; the literal 2026-06-09 failure replayed and caught.
+  - AC.SUP.1–3 + AC.SUP.OA — durable machine-readable marking; retrieval honor +
+    annotation; reversible/non-destructive; live-corpus mark-then-retrieve.
+
+Fence: all three components ADDITIVE-ONLY. loam-cli: no change to existing Slice-C
+contracts (derive_project_state / ProjectStateSpec / registry) — HALT otherwise.
+primary-persona: no broken AC.KP1.* / P@5 regression-guard test, no change to episode-side
+SUPERSEDED_PENALTY semantics, marker annotates-never-deletes. hands-off-lifecycle: the
+gate's fail-open + model-facing-only contracts and every AC.KP9.* behavior preserved;
+a guard that can block a send or leak text to the user is a HALT. Latency/char budgets
+per the Slice-D / #80 anti-bloat mandate — exceed → HALT.
+
+No ODD violation in surrounding code; every added path traces to a named AC
+(AC.PSI.* / AC.CLG.* / AC.SUP.*), no defensive code for unnamed cases.

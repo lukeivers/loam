@@ -186,11 +186,87 @@ def _cmd_understand(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_build_from_intent(args: argparse.Namespace) -> int:
+    """The general build-from-intent path, end to end (S1–S5).
+
+    THE documented reproducible command the proof runs use (AC.SMK.3):
+
+        handsoff-loop build-from-intent \
+            --ask "<the user's words>" --workspace <fresh-dir> --yes
+
+    `--yes` is the standing hands-off agreement at the single
+    plain-language approval gate; without it the gate (and any
+    meaningful questions) prompt interactively on stdin.  Exit code 0
+    for BOTH honest terminals (done / honest-negative) — an honest
+    negative is a first-class outcome, not a process failure; non-zero
+    means the pipeline itself could not run the path.
+    """
+    from .build_from_intent import run_build_from_intent
+    from .convergence import (
+        DEFAULT_LEG_CEILING_S,
+        DEFAULT_MAX_REFINE_ATTEMPTS,
+    )
+    from .progress import HEARTBEAT_INTERVAL_S
+
+    approve_fn = None
+    answer_fn = None
+    if not args.yes:
+        def approve_fn(confirm_text):  # noqa: F811
+            return input("\nProceed? [y/N] ").strip().lower() in (
+                "y", "yes")
+
+        def answer_fn(question):  # noqa: F811
+            return input(f"\n{question}\n> ").strip()
+
+    result = run_build_from_intent(
+        args.ask,
+        workspace_dir=Path(args.workspace),
+        approve_fn=approve_fn,
+        answer_fn=answer_fn,
+        model=args.model,
+        leg_ceiling_s=(args.leg_ceiling_s
+                       if args.leg_ceiling_s is not None
+                       else DEFAULT_LEG_CEILING_S),
+        max_refine_attempts=(args.max_refine_attempts
+                             if args.max_refine_attempts is not None
+                             else DEFAULT_MAX_REFINE_ATTEMPTS),
+        heartbeat_interval_s=(args.heartbeat_interval_s
+                              if args.heartbeat_interval_s is not None
+                              else HEARTBEAT_INTERVAL_S),
+        wall_ceiling_s=args.wall_ceiling_s,
+    )
+    print(json.dumps({
+        "terminal": result.terminal,
+        "run_dir": result.run_dir,
+        "wall_clock_s": result.wall_clock_s,
+        "run_summary": str(Path(result.run_dir) / "run_summary.json"),
+    }))
+    return 0 if result.terminal in (
+        "done", "honest-negative", "not-approved") else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="handsoff-loop")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("describe").set_defaults(fn=_cmd_describe)
+
+    b = sub.add_parser("build-from-intent")
+    b.add_argument("--ask", required=True,
+                   help="the user's vague build-shaped ask, verbatim")
+    b.add_argument("--workspace", required=True,
+                   help="the (fresh) workspace directory to build in")
+    b.add_argument("--yes", action="store_true",
+                   help="standing hands-off agreement at the single "
+                        "plain-language approval gate")
+    b.add_argument("--model", default="sonnet")
+    b.add_argument("--leg-ceiling-s", type=float, default=None,
+                   help="single generous per-leg ceiling (timeout is "
+                        "terminal; never auto-retried)")
+    b.add_argument("--max-refine-attempts", type=int, default=None)
+    b.add_argument("--heartbeat-interval-s", type=float, default=None)
+    b.add_argument("--wall-ceiling-s", type=float, default=None)
+    b.set_defaults(fn=_cmd_build_from_intent)
 
     u = sub.add_parser("understand")
     u.add_argument("--ask", required=True,

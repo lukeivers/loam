@@ -72,12 +72,42 @@ their own vocabulary, collects answers, and only then proceeds. A
 failed live read is surfaced honestly ("I couldn't get a reliable read
 of this ask") — nothing is built on an un-understood intent.
 
+## The general build-from-intent path (end to end)
+
+`handsoff-loop build-from-intent` runs the whole general path on one
+vague ask — the one identical code path every domain flows through
+(nothing pre-built, no hardcoded objectives, zero vertical code):
+
+1. **understanding** — live intent read + plain-language confirm;
+2. **asking** — meaningful questions only when genuinely open;
+3. **researching** — bounded live web research into how practitioners
+   actually do this work → a durable grounding record (citations
+   verified live in-run; failure = an explicitly-flagged ungrounded
+   build, never fake grounding);
+4. **planning** — loam GENERATES the tool design, data shape, and
+   acceptance gate, then hash-pins the gate before any build agent
+   sees work (frozen-unseen preserved);
+5. **building** — convergence by default: bounded re-drive toward the
+   frozen gate; one generous leg ceiling, timeout terminal, never
+   auto-retried; heartbeats with artifact-probe evidence so there is
+   no silent stretch;
+6. **verdict** — judge-scope honesty: what the gate did and did not
+   verify, in plain words; honest negative is first-class.
+
+The persona's narration duty (the S5 contract): relay each stage
+update in the user's vocabulary — through the connected channel when
+one exists, terminal otherwise. Every line the user sees exists in
+the run record (`runs/<stamp>/run_record.jsonl`) BEFORE it is shown;
+never narrate progress that is not in the record.
+
 ## How the persona invokes it
 
 ```
 handsoff-loop describe          # the capability contract (JSON)
 handsoff-loop understand \
     --ask "<the user's vague build-shaped ask, verbatim>"
+handsoff-loop build-from-intent \
+    --ask "<the user's words>" --workspace <dir> [--yes]
 handsoff-loop run \
     --objective "<the user's plain-language objective>" \
     --frozen <frozen-acceptance+subtasks.json> \

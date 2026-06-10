@@ -188,7 +188,14 @@ _SAMPLE_FILES = (
      # registration in `build_session_composer`) — the amendment's
      # intent, not a regression. ODD §4 in-band retire-and-rebaseline
      # per the established pattern; F2-surfaced in the cycle report.
-     "62bc098f69bd78114c96883c6a5796db3b3a2f4731f13f70f8e5aa334bcbbaa4"),
+     # Memory recall cycle (2026-06-09) rebaseline: this cycle's own
+     # AC.DLG.2 edit — the decision-ledger catch-up-sweep contributor
+     # registration at TriggerKind.session in `build_session_composer`
+     # (plan: memory-decision-ledger-surfacing-dispatch-packs, Slice
+     # 3) — the amendment's intent, not a regression. ODD §4 in-band
+     # retire-and-rebaseline per the established pattern; F2-surfaced
+     # in the cycle report.
+     "ce4dd0b33ea836dfd8699556db0c77e38a775a259e2a1cf62810769078cfbf44"),
     ("framework/primary-persona/pyproject.toml",
      # M1e SHA bump: Phase B pyproject restructure
      # (project name `primary_persona` → `loam-primary-persona`,

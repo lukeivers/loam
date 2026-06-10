@@ -318,6 +318,195 @@ def _scoped_negative_steer(
     )
 
 
+# ====================================================================
+# Decision-state assertions (AC.DCG.1–2 — memory recall cycle, Slice 5)
+# ====================================================================
+#
+# The guard's ground truth WIDENS to the decision ledger: a draft
+# asserting a question is OPEN / undecided / never-decided about a
+# subject resolvable to a ``status: ruled`` decision record draws a
+# model-facing steer carrying the record's ruling + source evidence —
+# settled questions cannot be silently re-opened (the second half of
+# the 2026-06-09 $750k failure surface). True decision-state claims
+# (genuinely-open questions called open) and ordinary prose pass with
+# no steer (AC.DCG.2). Same contracts as the work-state class:
+# deterministic detection, steer-not-block, fail-open at the gate
+# wrapper, NO LLM/API call.
+
+# Open-state shapes: "is (still) an open question/decision/
+# contradiction/item/issue", "remains undecided/unresolved/unsettled",
+# "up in the air". Bare "is open" is NOT a decision-state claim (a
+# door, a PR, a port can be open) — the open-noun or an
+# undecided-class adjective is required.
+_OPEN_STATE_RE = re.compile(
+    r"\b(?:is|are|remains?|stays?)\s+(?:still\s+)?(?:an?\s+)?"
+    r"(?:open\s+(?:question|item|decision|contradiction|issue)"
+    r"|undecided|unresolved|unsettled|up\s+in\s+the\s+air)\b",
+    re.IGNORECASE,
+)
+
+# Never-decided shapes: "we never decided", "was never decided",
+# "hasn't been decided", "haven't decided", "no decision/ruling on X".
+# "no decision needed/required" is NOT a decision-state claim (it
+# asserts the absence of a question, not an open one).
+_NEVER_DECIDED_RE = re.compile(
+    r"\b(?:(?:we|you|i)\s+(?:have\s+)?never\s+decided"
+    r"|was\s+never\s+decided"
+    r"|has(?:n't| not)\s+been\s+decided"
+    r"|have(?:n't| not)\s+decided"
+    r"|no\s+(?:decision|ruling)\b(?!\s+(?:needed|required|necessary)))",
+    re.IGNORECASE,
+)
+
+_SUBJECT_TOKEN_RE = re.compile(r"[A-Za-z0-9_$]+")
+
+
+@dataclass(frozen=True)
+class DecisionStateClaim:
+    """One detected decision-state assertion (open/undecided/
+    never-decided), scoped to its sentence like
+    :class:`WorkStateClaim`."""
+
+    subject: str
+    snippet: str
+    sentence: str
+
+
+def detect_decision_state_claims(text: str) -> list[DecisionStateClaim]:
+    """Deterministic decision-state detection (AC.DCG.1). Ordinary
+    prose with no open/undecided assertion yields ``[]`` and no
+    ledger query ever runs for it (AC.DCG.2)."""
+    claims: list[DecisionStateClaim] = []
+    for sentence in _SENTENCE_SPLIT_RE.split(text or ""):
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        for pat in (_OPEN_STATE_RE, _NEVER_DECIDED_RE):
+            m = pat.search(sentence)
+            if not m:
+                continue
+            subject = (
+                sentence[: m.start()] + " " + sentence[m.end():]
+            ).strip()
+            claims.append(
+                DecisionStateClaim(
+                    subject=subject,
+                    snippet=m.group(0),
+                    sentence=sentence,
+                )
+            )
+            break  # one decision-state claim per sentence
+    return claims
+
+
+def _default_ledger_query(subject: str) -> list[Any]:
+    """The production decision-ledger ground truth: the persona's
+    sealed ``search_decisions`` over the live workspace memory tree
+    (resolved from the hook's runtime cwd — the same workspace-identity
+    convention the gate's sibling hooks use). LAZY cross-component
+    import per the D-KP9.1 hook discipline; failures propagate to the
+    fail-open wrapper."""
+    from pathlib import Path as _Path
+
+    from loam.primary_persona.decision_ledger import (  # type: ignore[import-not-found]  # noqa: WPS433
+        search_decisions,
+    )
+    from loam.primary_persona.file_memory import (  # type: ignore[import-not-found]  # noqa: WPS433
+        memory_dir_for_workspace,
+    )
+
+    tokens = [t for t in _SUBJECT_TOKEN_RE.findall(subject) if len(t) > 1]
+    if not tokens:
+        return []
+    return search_decisions(
+        memory_dir_for_workspace(_Path.cwd()), tokens
+    )
+
+
+def _reopened_ruling_steer(
+    claim: DecisionStateClaim, record: Any
+) -> ClaimSteer:
+    """AC.DCG.1 — the steer carries the ruling + its source evidence
+    (model-facing; the user never sees this text)."""
+    return ClaimSteer(
+        label="decision-claim-contradicts-ledger",
+        detail=(
+            f"draft asserts {claim.snippet!r} (in: {claim.sentence!r}) "
+            f"but the decision ledger holds a RULED record: "
+            f"question {record.question!r}; ruling {record.ruling!r}; "
+            f"source {record.source!r} — this question is settled; "
+            f"cite the ruling instead of re-opening it."
+        ),
+    )
+
+
+def check_decision_claims(
+    text: str,
+    *,
+    ledger_query: Optional[Callable[[str], list[Any]]] = None,
+) -> list[ClaimSteer]:
+    """Verify decision-state assertions against the decision ledger
+    (AC.DCG.1–2). A claim whose subject resolves to a ``status:
+    ruled`` record steers with the ruling + source; a genuinely-open
+    subject (``status: open`` record, or no record at all) passes —
+    the guard fires ONLY on re-opened settled questions. Boundary
+    errors propagate to the gate's fail-open envelope; no LLM/API
+    call (the send hot path)."""
+    claims = detect_decision_state_claims(text)
+    if not claims:
+        return []
+    query_fn = ledger_query if ledger_query is not None else _default_ledger_query
+    steers: list[ClaimSteer] = []
+    for claim in claims:
+        if not claim.subject.strip():
+            continue
+        subject_tokens = {
+            t.lower()
+            for t in _SUBJECT_TOKEN_RE.findall(claim.subject)
+            if len(t) > 1
+        }
+        records = list(query_fn(claim.subject) or ())
+        # Best-match-first (the search is score-ordered): when the
+        # subject's best-resolving record is OPEN, the question is
+        # genuinely open — pass, even if a weaker ruled record shares
+        # a stray token (the live-ledger FP shape caught at build
+        # time: "activation timing" resolving a different ruled
+        # record on the single common token "activation").
+        for record in records:
+            overlap = _declared_vocab_overlap(record, subject_tokens)
+            # "Resolvable to" requires >= 2 declared-vocabulary token
+            # matches — a one-common-word brush is not resolution.
+            if overlap < 2:
+                continue
+            if getattr(record, "status", "") == "ruled":
+                steers.append(_reopened_ruling_steer(claim, record))
+            break  # the best real resolution decides; open => pass
+    return steers
+
+
+def _declared_vocab_overlap(record: Any, subject_tokens: set) -> int:
+    """Distinct subject-token matches against the record's DECLARED
+    vocabulary (entities + aliases + question + workstream — the
+    encode-time index, per the ledger's design)."""
+    declared: set = set()
+    for field in ("entities", "aliases"):
+        for value in getattr(record, field, ()) or ():
+            declared |= {
+                t.lower()
+                for t in _SUBJECT_TOKEN_RE.findall(str(value))
+                if len(t) > 1
+            }
+    for field in ("question", "workstream"):
+        declared |= {
+            t.lower()
+            for t in _SUBJECT_TOKEN_RE.findall(
+                str(getattr(record, field, "") or "")
+            )
+            if len(t) > 1
+        }
+    return len(declared & subject_tokens)
+
+
 def check_claims(
     text: str,
     *,

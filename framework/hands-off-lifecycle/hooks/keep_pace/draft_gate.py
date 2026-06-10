@@ -564,10 +564,26 @@ def _claim_guard_reasons(text: str) -> list[GateReason]:
             _sys.path.insert(0, str(_Path(__file__).resolve().parent))
             from claim_guard import check_claims  # noqa: WPS433
 
-        return [
+        reasons = [
             GateReason(layer="CG", label=s.label, detail=s.detail)
             for s in check_claims(text)
         ]
+        # AC.DCG.1–2 (memory recall cycle, Slice 5) — decision-state
+        # assertions verified against the decision ledger: a settled
+        # ruling re-opened as "open / never decided" steers with the
+        # ruling + source. Independently fail-open so a ledger error
+        # never drops the work-state steers above (and vice versa the
+        # outer envelope still holds).
+        try:
+            from claim_guard import check_decision_claims  # noqa: WPS433
+
+            reasons += [
+                GateReason(layer="CG", label=s.label, detail=s.detail)
+                for s in check_decision_claims(text)
+            ]
+        except BaseException:  # noqa: BLE001 — AC.DCG fail-open leg
+            pass
+        return reasons
     except BaseException:  # noqa: BLE001 — AC.CLG.4 fail-open; never block a send
         return []
 

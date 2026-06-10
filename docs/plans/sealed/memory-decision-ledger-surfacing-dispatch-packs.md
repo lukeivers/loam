@@ -273,3 +273,82 @@ Owner gate-review time is a separate line item (owner availability). Post-seal s
 3. **Writing further "verify before claiming / check the ledger" behavioral rules** — the guard tier + recall tier ARE the structure; rule-writing on this axis stops.
 4. **Per-session "where were we / what did we decide" reconstruction searches** — ambient plan-state (sealed) + open-decision injection + whole-record loading make these redundant in the common case.
 5. **Re-litigating settled rulings** — the costliest burden, paid in owner attention; the ledger + dispatch packs + decision-claim guard close all three legs of the $750k case.
+
+# Memory recall cycle — decision ledger + surfacing rebuild + dispatch packs + decision-claim guard
+
+Per `docs/plans/memory-decision-ledger-surfacing-dispatch-packs.md`, the reconciled
+A/B north-star build for the owner's memory objective ("just by me asking, it should
+load up everything related, and focus on the components most related to the prompt").
+The sealed FBM-correctness cycle is the GUARD tier (stops false work-state claims at
+send time); this amendment is the RECALL tier (loads the right substance at ask time).
+Motivated by the live 2026-06-09 $750k-Tilth-ruling failure, which failed on three
+independent legs: the ruling was never written as a decision (write-side), the
+injection surface showed 1,200 chars of path-less pointer junk (surfacing), and the
+dispatched planning agent received zero memory (dispatch blindness).
+
+Five sequenced slices, one amendment, three sealed components:
+
+  1. **Eval-verdict execution (Slice 1 — primary-persona).** The owner's June-7
+     measurement ruled the co-citation spread KILL (worse on every metric, 2x
+     latency, 0.0->0.0 on its own target subset) and power-law activation FIX
+     (BM25-floor beats it ~2x on the frozen store). Verified still live at
+     file_memory.py's compose path two days later. The spread path +
+     cocitation_graph.py are deleted; activation neutralizes to 1.0 behind a
+     default-off flag gated on a live-log re-measurement. The ONLY non-additive
+     edits in the cycle, pre-authorized by the measured verdict.
+
+  2. **Surfacing rebuild (Slice 2 — primary-persona, BOTH render paths).**
+     Model-facing memory injection gains file paths (the KP9 plain-prose lint was
+     mis-applied to model-facing context — it keeps its correct user-facing scope),
+     substantive salient pointer text (never channel envelopes / task-notification
+     headers), a ~5KB-class named budget (the 1,200-char cap was tuned for a
+     context-scarcity regime 1M context ended), and a whole-record contract for
+     structured hits. Covers BOTH keep_pace/retrieval.py (per-turn) AND
+     memory_consumer.py (the dispatch-bundle render — a seam neither source plan
+     named; found and verified during reconciliation).
+
+  3. **Decision ledger (Slice 3 — primary-persona).** Owner rulings become
+     first-class structured records — entities + aliases, question, ruling,
+     reasoning, source pointer, workstream, status — written at ruling time by the
+     in-session persona (D2: the persona holds the entity context that makes the
+     record retrievable; the $750k deciding turn contains neither "Tilth" nor
+     "750"), with a deterministic ruling-detector steer on the existing turn-close
+     seam when a ruling-shaped turn closed recordless, a session-start catch-up
+     sweep, unified-retrieval integration with whole-record injection, and a
+     >=5-ruling backfill seeded with the Tilth record. Write-side contract is
+     gate-backed, not promised. Detector precision >=80% on a labeled sample or
+     HALT — never a silent LLM call on a hot path.
+
+  4. **Dispatch memory packs (Slice 4 — frame-kernel).** The sealed SubagentStart
+     auto-context bundle (built, sealed 69e28416, NOT yet live in any settings.json
+     — verified) becomes the structural carrier: its memory tier gains
+     decision-awareness + the Slice-2 whole-record render, so every dispatched
+     agent inherits relevant rulings by construction. Activation composes via the
+     sealed workspace-sync fragment auto-composer; live pos3 activation is
+     dispatcher-timed. Supersedes Plan A's pack-CLI + PreToolUse-steer design
+     (Lens 1: compose on the sealed primitive; structural beats advisory).
+
+  5. **Decision-claim guard (Slice 5 — hands-off-lifecycle).** The sealed claim
+     guard's ground truth widens to the ledger: drafts asserting "X is open / we
+     never decided X" against a status-ruled record draw a model-facing steer
+     carrying the ruling + source, under the guard's existing steer-not-block /
+     fail-open / no-LLM contracts. Existing precision corpus must still pass clean.
+
+Both 2026-06-09 failures become STANDING outcome-altitude regressions: the $750k
+replay (AC.DLG.OA ask-time whole-record load + AC.DMP.OA dispatch-bundle load +
+AC.DCG.OA re-open caught) and the unplanned-migration replay (sealed AC.CLG.OA,
+riding along). AC families: AC.EVX.1-2+OA, AC.SRF.1-3+OA, AC.DLG.1-3+OA,
+AC.DMP.1-2+OA, AC.DCG.1-2+OA — every AC outcome-shape, production entry points,
+no pre-arranged state on the OAs.
+
+Fence: primary-persona — Slice 1's deletion is the only non-additive edit
+(verdict-authorized; any other weakened retrieval guarantee is a HALT); no change
+to write_episode's contract, episode never-not-store, SUPERSEDED_PENALTY semantics,
+or AC.KP1/PSI/SUP tests. frame-kernel — tier order, microkernel verbatim-read, and
+the fail-soft never-block-a-dispatch contract preserved; subagent_stop surface
+untouched. hands-off-lifecycle — fail-open, model-facing-only, no-LLM, and every
+AC.KP9/CLG behavior preserved; a blockable send is a HALT. No LLM/API call on any
+Stop/turn/send/dispatch hot path anywhere in the cycle.
+
+No ODD violation in surrounding code; every added path traces to a named AC
+(AC.EVX/SRF/DLG/DMP/DCG.*), no defensive code for unnamed cases.

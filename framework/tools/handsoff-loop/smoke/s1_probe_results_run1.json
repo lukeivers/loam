@@ -1,0 +1,87 @@
+{
+  "probe": "S1",
+  "ts": "2026-06-09T22:51:24",
+  "asks": [
+    {
+      "label": "ambiguous",
+      "ask": "can you make something to deal with our files",
+      "wall_s": 11.2,
+      "n_questions": 3,
+      "questions": [
+        "What do you actually want to do to the files \u2014 for example, rename them, sort or organize them into folders, find duplicates, convert them, or something else?",
+        "Where do these files live and what kind of files are they (documents, photos, code files, downloads, something else)?",
+        "Should this run once when you ask it to, or watch a folder and handle new files automatically?"
+      ],
+      "objective": "Build a tool that performs a specific operation on a folder of files to make them easier to manage.",
+      "passed": true
+    },
+    {
+      "label": "ambiguous",
+      "ask": "I need help getting our numbers to match up",
+      "wall_s": 13.9,
+      "n_questions": 3,
+      "questions": [
+        "What are the two sets of numbers \u2014 for example, two spreadsheets, a bank statement vs a ledger, two reports from different systems, or something else?",
+        "What format is the data in right now \u2014 CSV files, an Excel workbook, a database, copy-pasted text, or something else?",
+        "When you say 'match up,' do you mean finding rows that don't agree (and flagging them), or actually computing what the correct number should be and producing a corrected output?"
+      ],
+      "objective": "Build a tool that compares two sets of numbers, finds the discrepancies between them, and helps reconcile or explain the differences.",
+      "passed": true
+    },
+    {
+      "label": "ambiguous",
+      "ask": "build me a thing for the customer stuff",
+      "wall_s": 12.6,
+      "n_questions": 3,
+      "questions": [
+        "What does 'customer stuff' cover \u2014 for example, are you tracking who your customers are, logging conversations or orders, sending invoices, or something else?",
+        "Where does the customer data live right now \u2014 a spreadsheet, a CSV, your head, somewhere else?",
+        "What's the main thing you want to be able to *do* with this tool \u2014 look things up, add new entries, get a summary, send something?"
+      ],
+      "objective": "Build a tool that handles the user's customer-related workflow, once the core task and data involved are defined.",
+      "passed": true
+    },
+    {
+      "label": "clear",
+      "ask": "make a command-line tool that reads orders.csv, removes rows whose 'email' column duplicates an earlier row, and writes the result to orders_deduped.csv",
+      "wall_s": 6.2,
+      "n_questions": 0,
+      "questions": [],
+      "objective": "Build a CLI tool that reads orders.csv, deduplicates rows by keeping only the first occurrence of each email address, and writes the result to orders_deduped.csv.",
+      "passed": true
+    },
+    {
+      "label": "clear",
+      "ask": "I want a script that takes a folder of .txt meeting notes and produces one summary.md listing each file's name and its first line",
+      "wall_s": 7.3,
+      "n_questions": 0,
+      "questions": [],
+      "objective": "Build a script that reads all .txt files in a given folder and writes a summary.md listing each filename alongside its first line.",
+      "passed": true
+    },
+    {
+      "label": "clear",
+      "ask": "build a tool that reads payments.csv and invoices.csv, matches rows where amount and invoice_id are equal, and writes unmatched rows from each file to two report files",
+      "wall_s": 8.2,
+      "n_questions": 2,
+      "questions": [
+        "Where should the tool look for payments.csv and invoices.csv \u2014 in the current directory, or should the paths be passed as arguments when you run it?",
+        "What should happen if an invoice_id appears multiple times in either file \u2014 should a payment match any one invoice with that id and amount, or must it match exactly one?"
+      ],
+      "objective": "Build a CLI tool that reads payments.csv and invoices.csv, matches rows on invoice_id and amount, and writes unmatched rows from each file to separate report files (e.g. unmatched_payments.csv and unmatched_invoices.csv).",
+      "passed": false
+    }
+  ],
+  "reword": {
+    "ask_a": "merge our three customer spreadsheets into one list without duplicate people in it",
+    "ask_b": "take the three separate spreadsheets of customers we have and combine them so each person appears only once",
+    "intent_a": "The user has three separate customer spreadsheets and wants them combined into a single unified list, with duplicate people removed so each customer only appears once. The end goal is one clean spreadsheet they can work from instead of three overlapping ones.",
+    "intent_b": "You have three separate spreadsheet files, each containing customer records, and you want to merge them into one spreadsheet where every customer shows up exactly once \u2014 no duplicates. The result should be a single clean list you can work from instead of juggling three files.",
+    "objective_a": "Build a tool that reads three customer spreadsheet files, deduplicates the people across them by matching on a shared identifier (like name or email), and writes a single merged spreadsheet as output.",
+    "objective_b": "Build a tool that reads three customer spreadsheets, deduplicates the records so each person appears only once, and writes a single combined spreadsheet as the output.",
+    "non_identical_strings": true,
+    "equivalent_substance": true,
+    "passed": true
+  },
+  "prediction_passed": false
+}

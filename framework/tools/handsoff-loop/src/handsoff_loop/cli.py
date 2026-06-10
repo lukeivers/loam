@@ -150,11 +150,53 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_understand(args: argparse.Namespace) -> int:
+    """S1 (AC.REQ.1/.2/.OA): live per-request intent understanding.
+
+    Reads the vague build-shaped ask, derives the inferred end-intent +
+    objective + bounded meaningful questions LIVE from THAT ask (one
+    spawn-isolated `claude -p` call), and prints the plain-language
+    confirm + the structured evidence as JSON.  The production entry
+    the persona (and the build-from-intent pipeline) invokes for the
+    opening segment.  A failed live read exits non-zero with a plain
+    reason — never a canned fallback understanding.
+    """
+    from .request_intent import (
+        RequestUnderstandingUnavailable,
+        build_confirm_text,
+        understand_request,
+    )
+
+    try:
+        intent = understand_request(args.ask, model=args.model)
+    except RequestUnderstandingUnavailable as exc:
+        print(json.dumps({
+            "understood": False,
+            "reason": (
+                "I couldn't get a reliable read of this ask just now: "
+                f"{exc}. Nothing was built."
+            ),
+        }, indent=2))
+        return 1
+    print(json.dumps({
+        "understood": True,
+        "confirm_text": build_confirm_text(intent),
+        **intent.as_evidence(),
+    }, indent=2))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="handsoff-loop")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("describe").set_defaults(fn=_cmd_describe)
+
+    u = sub.add_parser("understand")
+    u.add_argument("--ask", required=True,
+                   help="the user's vague build-shaped ask, verbatim")
+    u.add_argument("--model", default="sonnet")
+    u.set_defaults(fn=_cmd_understand)
 
     r = sub.add_parser("run")
     r.add_argument("--objective", required=True)

@@ -1,0 +1,83 @@
+{
+  "probe": "S1",
+  "ts": "2026-06-09T22:53:44",
+  "asks": [
+    {
+      "label": "ambiguous",
+      "ask": "can you make something to deal with our files",
+      "wall_s": 14.7,
+      "n_questions": 3,
+      "questions": [
+        "What do you need to actually DO with the files \u2014 for example, rename them, sort them into folders, find duplicates, convert them, clean up old ones, or something else?",
+        "What kind of files are they, and where do they live \u2014 for example, photos on your desktop, documents in a shared folder, downloads mixed together?",
+        "Is this a one-time cleanup or something you'd want to run regularly as new files come in?"
+      ],
+      "objective": "Build a file-handling tool that solves the specific problem you're running into with your files.",
+      "passed": true
+    },
+    {
+      "label": "ambiguous",
+      "ask": "I need help getting our numbers to match up",
+      "wall_s": 19.8,
+      "n_questions": 3,
+      "questions": [
+        "What are the two sources that need to match \u2014 for example, two spreadsheet files, a bank statement versus an internal ledger, an accounting system versus a report?",
+        "What does 'match up' mean here \u2014 should row-by-row line items agree, should the grand totals agree, or both?",
+        "What format is the data in \u2014 CSV files, Excel, copy-pasted text, a database, something else?"
+      ],
+      "objective": "Build a reconciliation tool that reads two sources of numbers, identifies where they diverge, and summarises what doesn't match so the user can fix it.",
+      "passed": true
+    },
+    {
+      "label": "ambiguous",
+      "ask": "build me a thing for the customer stuff",
+      "wall_s": 12.9,
+      "n_questions": 2,
+      "questions": [
+        "What do you actually do with customers that you want this to help with \u2014 for example, track who they are, send them messages, manage invoices, log support issues, or something else?",
+        "Is this for just you to use, or would other people (a team, the customers themselves) also interact with it?"
+      ],
+      "objective": "Build a tool that handles the user's customer-related workflow, once we know what that workflow actually is.",
+      "passed": true
+    },
+    {
+      "label": "clear",
+      "ask": "make a command-line tool that reads orders.csv, removes rows whose 'email' column duplicates an earlier row, and writes the result to orders_deduped.csv",
+      "wall_s": 5.5,
+      "n_questions": 0,
+      "questions": [],
+      "objective": "Build a CLI tool that reads orders.csv, deduplicates rows by keeping only the first occurrence of each email address, and writes the result to orders_deduped.csv.",
+      "passed": true
+    },
+    {
+      "label": "clear",
+      "ask": "I want a script that takes a folder of .txt meeting notes and produces one summary.md listing each file's name and its first line",
+      "wall_s": 5.3,
+      "n_questions": 0,
+      "questions": [],
+      "objective": "Build a script that reads every .txt file in a given folder and writes a summary.md listing each filename alongside its first line.",
+      "passed": true
+    },
+    {
+      "label": "clear",
+      "ask": "build a tool that reads payments.csv and invoices.csv from the current directory, matches each payment to at most one invoice where amount and invoice_id are both equal (first match wins if an invoice_id repeats), and writes unmatched rows to unmatched_payments.csv and unmatched_invoices.csv",
+      "wall_s": 6.2,
+      "n_questions": 0,
+      "questions": [],
+      "objective": "Build a CLI tool that reads payments.csv and invoices.csv from the current directory, matches each payment to at most one invoice where both amount and invoice_id are equal (first match wins on duplicate invoice_ids), and writes unmatched rows to unmatched_payments.csv and unmatched_invoices.csv.",
+      "passed": true
+    }
+  ],
+  "reword": {
+    "ask_a": "merge our three customer spreadsheets into one list without duplicate people in it",
+    "ask_b": "take the three separate spreadsheets of customers we have and combine them so each person appears only once",
+    "intent_a": "The user has three separate spreadsheet files containing customer records and wants them combined into a single spreadsheet where each person appears only once \u2014 duplicates across the files should be removed so the final list is clean and non-redundant.",
+    "intent_b": "You have three separate spreadsheet files, each containing a list of customers, and you want them merged into one file where every customer shows up exactly once \u2014 no duplicates. The end result is a single clean customer list you can actually use.",
+    "objective_a": "Build a tool that reads three customer spreadsheets and merges them into one deduplicated list of people.",
+    "objective_b": "Build a tool that reads three customer spreadsheets and merges them into a single deduplicated file where each customer appears only once.",
+    "non_identical_strings": true,
+    "equivalent_substance": true,
+    "passed": true
+  },
+  "prediction_passed": true
+}

@@ -48,10 +48,36 @@ The pipeline:
    Both are valid: a definite negative is reported straight, **never
    retried to green, never softened**.
 
+## Per-request intent understanding (the general build-from-intent path)
+
+Any vague build-shaped ask — per-request, in an established workspace,
+not only at first-run onboarding — gets a LIVE intent read before
+anything is built (`handsoff-loop understand --ask "<their words>"`,
+one bounded spawn-isolated model call):
+
+- the inferred end-intent is surfaced back **in plain language for
+  confirmation**, derived from THAT ask (never canned — two different
+  asks produce two different inferences);
+- **meaningful questions only when a build-shaping decision is
+  genuinely open** — at most 3, never a spec interview; an unambiguous
+  ask proceeds with zero questions;
+- the stated objective echoes the ask's specifics; no objective text
+  exists anywhere in pipeline source;
+- the proposed form factor (something you click around in / a command
+  you run / something that runs on its own) is surfaced in the confirm
+  in plain words.
+
+The persona relays the confirm (and any questions) to the user in
+their own vocabulary, collects answers, and only then proceeds. A
+failed live read is surfaced honestly ("I couldn't get a reliable read
+of this ask") — nothing is built on an un-understood intent.
+
 ## How the persona invokes it
 
 ```
 handsoff-loop describe          # the capability contract (JSON)
+handsoff-loop understand \
+    --ask "<the user's vague build-shaped ask, verbatim>"
 handsoff-loop run \
     --objective "<the user's plain-language objective>" \
     --frozen <frozen-acceptance+subtasks.json> \

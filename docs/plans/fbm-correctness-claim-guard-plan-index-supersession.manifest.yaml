@@ -5,9 +5,12 @@ amendment:
   slug: fbm-correctness-claim-guard-plan-index-supersession
   title: "FBM correctness cycle — git-derived plan-state index (what plans exist + how built they REALLY are, fresh from git, surfaced + queryable), claim-vs-stored-state guard (work-state assertions — positive AND negative — verified against ground truth at claim-time, model-facing steer on contradiction, fail-open), and supersession correctness (a production marking mechanism + corpus-retrieval honor of the superseded-by convention so premise-flipped rules stop mis-pointing). The structural replacement for the twice-extended published-state-only-from-git-refs behavioral rule; Memory Cycle 2 in the rootcause framing."
 
-# BASELINE: walked at apply-time per the #142 D-PASH.BASELINE-WALK pattern
-# (current main tip at build time; today's tip is 22df8683, v1.3.0 post-publish).
-baseline: null
+# BASELINE: walked at apply-time per the #142 D-PASH.BASELINE-WALK pattern.
+# Walk (2026-06-09 apply):
+# predecessor seal 728b2ef0 (workspace-sync-settings-fragment-composer) →
+# 99cff1fd (docs/state backfill) → 7f647161 (THIS amendment's plan commit,
+# the last commit before its own slice commits 6f7deb1f / 10776ee5 / 7f163755).
+baseline: 7f647161c47f0082c53f33de7db8ce6997b500d2
 
 plan: docs/plans/fbm-correctness-claim-guard-plan-index-supersession.md
 
